@@ -833,4 +833,38 @@ bool FileGDBTable::AlterField(int iField,
     return true;
 }
 
+/************************************************************************/
+/*                          AlterGeomField()                            */
+/************************************************************************/
+
+bool FileGDBTable::AlterGeomField( const std::string& osName,
+                                   const std::string& osAlias,
+                                   bool bNullable,
+                                   const std::string& osWKT)
+{
+    if( !m_bUpdate )
+        return false;
+    if( m_iGeomField < 0 )
+        return false;
+
+    const bool bRenameField = m_apoFields[m_iGeomField]->GetName() != osName;
+
+    auto poGeomField = cpl::down_cast<FileGDBGeomField*>(
+        m_apoFields[m_iGeomField].get());
+    poGeomField->m_osName = osName;
+    poGeomField->m_osAlias = osAlias;
+    poGeomField->m_bNullable = bNullable;
+    poGeomField->m_osWKT = osWKT;
+    auto poIndex = poGeomField->m_poIndex;
+    if( poIndex && bRenameField )
+    {
+        poIndex->m_osExpression = osName;
+        m_bDirtyGdbIndexesFile = true;
+    }
+    m_bDirtyFieldDescriptors = true;
+
+    return true;
+}
+
+
 } /* namespace OpenFileGDB */

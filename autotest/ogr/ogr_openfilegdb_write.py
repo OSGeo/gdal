@@ -2583,3 +2583,124 @@ def test_ogr_openfilegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_implicit():
 
     finally:
         gdal.RmdirRecursive(dirname)
+
+
+###############################################################################
+# Test AlterGeomFieldDefn()
+
+
+def test_ogr_openfilegdb_write_alter_geom_field_defn():
+
+    dirname = '/vsimem/test_ogr_openfilegdb_alter_geom_field_defn.gdb'
+    try:
+        ds = ogr.GetDriverByName('OpenFileGDB').CreateDataSource(dirname)
+
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(4326)
+
+        ds.CreateLayer('test', srs=srs, geom_type=ogr.wkbLineString)
+        ds = None
+
+        ds = ogr.Open(dirname, update=1)
+        lyr = ds.GetLayer(0)
+
+        assert lyr.TestCapability(ogr.OLCAlterGeomFieldDefn)
+
+        # Change name
+        fld_defn = ogr.GeomFieldDefn('shape_renamed', ogr.wkbLineString)
+        assert lyr.AlterGeomFieldDefn(0, fld_defn, ogr.ALTER_GEOM_FIELD_DEFN_NAME_FLAG) == ogr.OGRERR_NONE
+        assert lyr.GetGeometryColumn() == 'shape_renamed'
+        ds = None
+
+        ds = ogr.Open(dirname, update=1)
+        lyr = ds.GetLayer(0)
+
+        sql_lyr = ds.ExecuteSQL('GetLayerDefinition test')
+        assert sql_lyr
+        f = sql_lyr.GetNextFeature()
+        xml = f.GetField(0)
+        f = None
+        ds.ReleaseResultSet(sql_lyr)
+        assert '<Name>shape_renamed</Name>' in xml
+        assert 'WKID' in xml
+
+        assert lyr.GetGeometryColumn() == 'shape_renamed'
+        assert lyr.GetSpatialRef().GetAuthorityCode(None) == '4326'
+
+        # Set SRS to None
+        fld_defn = ogr.GeomFieldDefn('shape_renamed', ogr.wkbLineString)
+        fld_defn.SetSpatialRef(None)
+        assert lyr.AlterGeomFieldDefn(0, fld_defn, ogr.ALTER_GEOM_FIELD_DEFN_SRS_FLAG) == ogr.OGRERR_NONE
+        assert lyr.GetSpatialRef() is None
+        ds = None
+
+        ds = ogr.Open(dirname, update=1)
+        lyr = ds.GetLayer(0)
+        assert lyr.GetSpatialRef() is None
+
+        sql_lyr = ds.ExecuteSQL('GetLayerDefinition test')
+        assert sql_lyr
+        f = sql_lyr.GetNextFeature()
+        xml = f.GetField(0)
+        f = None
+        ds.ReleaseResultSet(sql_lyr)
+        assert 'WKID' not in xml
+
+        # Set SRS to EPSG:4326
+        fld_defn = ogr.GeomFieldDefn('shape_renamed', ogr.wkbLineString)
+        fld_defn.SetSpatialRef(srs)
+        assert lyr.AlterGeomFieldDefn(0, fld_defn, ogr.ALTER_GEOM_FIELD_DEFN_SRS_FLAG) == ogr.OGRERR_NONE
+        assert lyr.GetSpatialRef() is not None
+        ds = None
+
+        ds = ogr.Open(dirname, update=1)
+        lyr = ds.GetLayer(0)
+        assert lyr.GetSpatialRef() is not None
+
+        sql_lyr = ds.ExecuteSQL('GetLayerDefinition test')
+        assert sql_lyr
+        f = sql_lyr.GetNextFeature()
+        xml = f.GetField(0)
+        f = None
+        ds.ReleaseResultSet(sql_lyr)
+        assert '<WKID>4326</WKID>' in xml
+
+        srs4269 = osr.SpatialReference()
+        srs4269.ImportFromEPSG(4269)
+
+        # Set SRS to EPSG:4269
+        fld_defn = ogr.GeomFieldDefn('shape_renamed', ogr.wkbLineString)
+        fld_defn.SetSpatialRef(srs4269)
+        assert lyr.AlterGeomFieldDefn(0, fld_defn, ogr.ALTER_GEOM_FIELD_DEFN_SRS_FLAG) == ogr.OGRERR_NONE
+        assert lyr.GetSpatialRef() is not None
+        assert lyr.GetSpatialRef().GetAuthorityCode(None) == '4269'
+        ds = None
+
+        ds = ogr.Open(dirname, update=1)
+        lyr = ds.GetLayer(0)
+        assert lyr.GetSpatialRef() is not None
+        assert lyr.GetSpatialRef().GetAuthorityCode(None) == '4269'
+
+        sql_lyr = ds.ExecuteSQL('GetLayerDefinition test')
+        assert sql_lyr
+        f = sql_lyr.GetNextFeature()
+        xml = f.GetField(0)
+        f = None
+        ds.ReleaseResultSet(sql_lyr)
+        assert '<WKID>4269</WKID>' in xml
+
+        # Changing geometry type not supported
+        fld_defn = ogr.GeomFieldDefn('shape_renamed', ogr.wkbPolygon)
+        with gdaltest.error_handler():
+            assert lyr.AlterGeomFieldDefn(0, fld_defn, ogr.ALTER_GEOM_FIELD_DEFN_TYPE_FLAG) != ogr.OGRERR_NONE
+
+        # Changing nullable state not supported
+        fld_defn = ogr.GeomFieldDefn('shape_renamed', ogr.wkbPolygon)
+        fld_defn.SetNullable(False)
+        with gdaltest.error_handler():
+            assert lyr.AlterGeomFieldDefn(0, fld_defn, ogr.ALTER_GEOM_FIELD_DEFN_NULLABLE_FLAG) != ogr.OGRERR_NONE
+
+        ds = None
+
+    finally:
+        gdal.RmdirRecursive(dirname)

@@ -1378,6 +1378,223 @@ OGRErr OGROpenFileGDBLayer::AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poN
 }
 
 /************************************************************************/
+/*                         AlterGeomFieldDefn()                         */
+/************************************************************************/
+
+OGRErr OGROpenFileGDBLayer::AlterGeomFieldDefn( int iGeomFieldToAlter,
+                                                const OGRGeomFieldDefn* poNewGeomFieldDefn,
+                                                int nFlagsIn )
+{
+    if( !m_bEditable )
+        return OGRERR_FAILURE;
+
+    if( !BuildLayerDefinition() )
+        return OGRERR_FAILURE;
+
+    if( m_poDS->IsInTransaction() &&
+        ((!m_bHasCreatedBackupForTransaction && !BeginEmulatedTransaction()) ||
+         !m_poDS->BackupSystemTablesForTransaction()) )
+    {
+        return OGRERR_FAILURE;
+    }
+
+    if (iGeomFieldToAlter < 0 || iGeomFieldToAlter >= m_poFeatureDefn->GetGeomFieldCount())
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Invalid field index");
+        return OGRERR_FAILURE;
+    }
+
+    const int nGDBIdx = m_poLyrTable->GetFieldIdx(
+            m_poFeatureDefn->GetGeomFieldDefn(iGeomFieldToAlter)->GetNameRef());
+    if( nGDBIdx < 0 )
+        return OGRERR_FAILURE;
+
+    const auto poGeomFieldDefn = m_poFeatureDefn->GetGeomFieldDefn(iGeomFieldToAlter);
+    OGRGeomFieldDefn oField(poGeomFieldDefn);
+
+    if( (nFlagsIn & ALTER_GEOM_FIELD_DEFN_TYPE_FLAG) != 0 )
+    {
+        if( poGeomFieldDefn->GetType() != poNewGeomFieldDefn->GetType() )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Altering the geometry field type is not supported for "
+                     "the FileGeodatabase format");
+            return OGRERR_FAILURE;
+        }
+    }
+
+    const std::string osOldFieldName = poGeomFieldDefn->GetNameRef();
+    const bool bRenamedField =
+        (nFlagsIn & ALTER_GEOM_FIELD_DEFN_NAME_FLAG) != 0 && poNewGeomFieldDefn->GetNameRef() != osOldFieldName;
+    if( (nFlagsIn & ALTER_GEOM_FIELD_DEFN_NAME_FLAG) != 0 )
+    {
+        if( bRenamedField )
+        {
+            const std::string osFieldNameOri(poNewGeomFieldDefn->GetNameRef());
+            const std::string osFieldNameLaundered = GetLaunderedFieldName(osFieldNameOri);
+            if (osFieldNameLaundered != osFieldNameOri)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid field name: %s. "
+                         "A potential valid name would be: %s",
+                         osFieldNameOri.c_str(),
+                         osFieldNameLaundered.c_str());
+                return OGRERR_FAILURE;
+            }
+
+            oField.SetName(poNewGeomFieldDefn->GetNameRef());
+        }
+        // oField.SetAlternativeName(poNewGeomFieldDefn->GetAlternativeNameRef());
+    }
+
+    if( (nFlagsIn & ALTER_GEOM_FIELD_DEFN_NULLABLE_FLAG) != 0 )
+    {
+        // could be potentially done.
+        if( poGeomFieldDefn->IsNullable() != poNewGeomFieldDefn->IsNullable() )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Altering the nullable state of the geometry field "
+                     "is not currently supported for OpenFileGDB");
+            return OGRERR_FAILURE;
+        }
+    }
+
+    if( (nFlagsIn & ALTER_GEOM_FIELD_DEFN_SRS_FLAG) != 0 )
+    {
+        const auto poOldSRS = poGeomFieldDefn->GetSpatialRef();
+        const auto poNewSRS = poNewGeomFieldDefn->GetSpatialRef();
+
+        const char* const apszOptions[] =
+        {
+            "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES",
+            nullptr
+        };
+        if( (poOldSRS == nullptr && poNewSRS != nullptr) ||
+            (poOldSRS != nullptr && poNewSRS == nullptr) ||
+            (poOldSRS != nullptr && poNewSRS != nullptr &&
+             !poOldSRS->IsSame(poNewSRS, apszOptions)) )
+        {
+            if( !m_osFeatureDatasetGUID.empty() )
+            {
+                // Could potentially be done (would require changing the SRS
+                // in all layers of the feature dataset)
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Altering the SRS of the geometry field of a layer "
+                         "in a feature daaset is not currently supported "
+                         "for OpenFileGDB");
+                return OGRERR_FAILURE;
+            }
+
+            if( poNewSRS )
+            {
+                auto poNewSRSClone = poNewSRS->Clone();
+                oField.SetSpatialRef(poNewSRSClone);
+                poNewSRSClone->Release();
+            }
+            else
+            {
+                oField.SetSpatialRef(nullptr);
+            }
+        }
+    }
+
+    std::string osWKT = "{B286C06B-0879-11D2-AACA-00C04FA33C20}"; // No SRS
+    if( oField.GetSpatialRef() )
+    {
+        const char* const apszOptions[] = { "FORMAT=WKT1_ESRI", nullptr };
+        char* pszWKT;
+        oField.GetSpatialRef()->exportToWkt(&pszWKT, apszOptions);
+        osWKT = pszWKT;
+        CPLFree(pszWKT);
+    }
+
+    if( !m_poLyrTable->AlterGeomField(
+            oField.GetNameRef(),
+            std::string(), // Alias
+            CPL_TO_BOOL(oField.IsNullable()),
+            osWKT) )
+    {
+        return OGRERR_FAILURE;
+    }
+
+    poGeomFieldDefn->SetName(oField.GetNameRef());
+    poGeomFieldDefn->SetSpatialRef(oField.GetSpatialRef());
+
+    if( m_bRegisteredTable )
+    {
+        // If the table is already registered (that is updating an existing
+        // layer), patch the XML definition
+        CPLXMLTreeCloser oTree(CPLParseXMLString(m_osDefinition.c_str()));
+        if( oTree )
+        {
+            CPLXMLNode* psGPFieldInfoExs = GetGPFieldInfoExsNode(oTree.get());
+            if( psGPFieldInfoExs )
+            {
+                for( CPLXMLNode* psIter = psGPFieldInfoExs->psChild; psIter; psIter = psIter->psNext )
+                {
+                    if( psIter->eType == CXT_Element &&
+                        strcmp(psIter->pszValue, "GPFieldInfoEx") == 0 &&
+                        CPLGetXMLValue(psIter, "Name", "") == osOldFieldName )
+                    {
+                        CPLXMLNode* psNode = CPLGetXMLNode(psIter, "Name");
+                        if( psNode && psNode->psChild && psNode->psChild->eType == CXT_Text )
+                        {
+                            CPLFree(psNode->psChild->pszValue);
+                            psNode->psChild->pszValue = CPLStrdup(poGeomFieldDefn->GetNameRef());
+                        }
+                        break;
+                    }
+                }
+
+                CPLXMLNode* psNode = CPLSearchXMLNode(oTree.get(), "=ShapeFieldName");
+                if( psNode )
+                {
+                    CPLSetXMLValue(psNode, "", poGeomFieldDefn->GetNameRef());
+                }
+
+                CPLXMLNode* psFeatureClassInfo =
+                    CPLSearchXMLNode( oTree.get(), "=DEFeatureClassInfo" );
+                if( psFeatureClassInfo == nullptr )
+                    psFeatureClassInfo = CPLSearchXMLNode( oTree.get(), "=typens:DEFeatureClassInfo" );
+                if( psFeatureClassInfo )
+                {
+                    psNode = CPLGetXMLNode(psFeatureClassInfo, "Extent");
+                    if( psNode )
+                    {
+                        if( CPLRemoveXMLChild(psFeatureClassInfo, psNode) )
+                            CPLDestroyXMLNode(psNode);
+                    }
+
+                    psNode = CPLGetXMLNode(psFeatureClassInfo, "SpatialReference");
+                    if( psNode )
+                    {
+                        if( CPLRemoveXMLChild(psFeatureClassInfo, psNode) )
+                            CPLDestroyXMLNode(psNode);
+                    }
+
+                    XMLSerializeGeomFieldBase(psFeatureClassInfo,
+                                              m_poLyrTable->GetGeomField(), GetSpatialRef());
+                }
+
+                char* pszDefinition = CPLSerializeXMLTree(oTree.get());
+                m_osDefinition = pszDefinition;
+                CPLFree(pszDefinition);
+
+                m_poDS->UpdateXMLDefinition(m_osName.c_str(),
+                                            m_osDefinition.c_str());
+            }
+        }
+    }
+    else
+    {
+        RefreshXMLDefinitionInMemory();
+    }
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                             DeleteField()                            */
 /************************************************************************/
 

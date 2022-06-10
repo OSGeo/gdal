@@ -492,6 +492,11 @@ class FileGDBTable
                                            bool bNullable,
                                            int nMaxWidth,
                                            const OGRField& sDefault);
+       bool                     AlterGeomField(
+                                           const std::string& osName,
+                                           const std::string& osAlias,
+                                           bool bNullable,
+                                           const std::string& osWKT);
 
        bool                     CreateFeature(const std::vector<OGRField>& asRawFields,
                                               const OGRGeometry* poGeom,
