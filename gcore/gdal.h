@@ -534,6 +534,23 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  */
 #define GDAL_DMD_CREATION_FIELD_DOMAIN_TYPES "DMD_CREATION_FIELD_DOMAIN_TYPES"
 
+/** List of (space separated) flags support by the OGRLayer::AlterGeomFieldDefn() API.
+ *
+ * Supported values are "Name", "Type", "Nullable", "SRS", "CoordinateEpoch",
+ * corresponding respectively to the ALTER_GEOM_FIELD_DEFN_NAME_FLAG,
+ * ALTER_GEOM_FIELD_DEFN_TYPE_FLAG, ALTER_GEOM_FIELD_DEFN_NULLABLE_FLAG,
+ * ALTER_GEOM_FIELD_DEFN_SRS_FLAG, ALTER_GEOM_FIELD_DEFN_SRS_COORD_EPOCH_FLAG
+ * flags. Note that advertizing one of this flag doesn't necessarily mean that
+ * all modifications of the corresponding property can be made. For example,
+ * altering the geometry type may be restricted by the type of the geometries in
+ * the field, or changing the nullable state to non-nullable is not possible if
+ * null geometries are present, etc.
+ *
+ * @since GDAL 3.6
+ */
+#define GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS "DMD_ALTER_GEOM_FIELD_DEFN_FLAGS"
+
+
 /** Value for GDALDimension::GetType() specifying the X axis of a horizontal CRS.
  * @since GDAL 3.1
  */

@@ -1025,7 +1025,7 @@ by the OGRSFDriverManager.
  OGRGeometry::getEnvelope()) overlaps the envelope of the spatial filter
  will be returned.  This can result in more shapes being returned that
  should strictly be the case.
- 
+
  Starting with GDAL 2.3, features with null or empty geometries will never
  be considered as matching a spatial filter.
 
@@ -1802,6 +1802,9 @@ existing fields on the current layer using ReorderField() or ReorderFields(), ot
  <li> <b>OLCAlterFieldDefn</b> / "AlterFieldDefn": TRUE if this layer can alter
 the definition of an existing field on the current layer using AlterFieldDefn(), otherwise FALSE.<p>
 
+ <li> <b>OLCAlterGeomFieldDefn</b> / "AlterGeomFieldDefn": TRUE if this layer can alter
+the definition of an existing geometry field on the current layer using AlterGeomFieldDefn(), otherwise FALSE.<p>
+
  <li> <b>OLCDeleteFeature</b> / "DeleteFeature": TRUE if the DeleteFeature()
 method is supported on this layer, otherwise FALSE.<p>
 
@@ -1898,6 +1901,9 @@ existing fields on the current layer using ReorderField() or ReorderFields(), ot
 
  <li> <b>OLCAlterFieldDefn</b> / "AlterFieldDefn": TRUE if this layer can alter
 the definition of an existing field on the current layer using AlterFieldDefn(), otherwise FALSE.<p>
+
+ <li> <b>OLCAlterGeomFieldDefn</b> / "AlterGeomFieldDefn": TRUE if this layer can alter
+the definition of an existing geometry field on the current layer using AlterGeomFieldDefn(), otherwise FALSE.<p>
 
  <li> <b>OLCDeleteFeature</b> / "DeleteFeature": TRUE if the DeleteFeature()
 method is supported on this layer, otherwise FALSE.<p>
@@ -2390,6 +2396,81 @@ definition must be taken into account.
 @return OGRERR_NONE on success.
 
 @since OGR 1.9.0
+*/
+
+/**
+\fn OGRErr OGRLayer::AlterGeomFieldDefn( int iGeomField, const OGRFieldDefn* poNewGeomFieldDefn, int nFlagsIn );
+
+\brief Alter the definition of an existing geometry field on a layer.
+
+You must use this to alter the definition of an existing geometry field of a real layer.
+Internally the OGRFeatureDefn for the layer will be updated
+to reflect the altered field.  Applications should never modify the OGRFeatureDefn
+used by a layer directly.
+
+Note that altering the SRS does *not* cause coordinate reprojection to occur:
+this is simply a modification of the layer metadata (correcting a wrong SRS
+definition). No modification to existing geometries will ever be performed,
+so this method cannot be used to e.g. promote single part geometries to their
+multipart equivalents.
+
+This method should not be called while there are feature objects in existence that
+were obtained or created with the previous layer definition.
+
+Not all drivers support this method. You can query a layer to check if it supports it
+with the OLCAlterGeomFieldDefn capability. Some drivers might not support
+all update flags. The GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS driver metadata item
+can be queried to examine which flags may be supported by a driver.
+
+This function is the same as the C function OGR_L_AlterGeomFieldDefn().
+
+@param iGeomField index of the field whose definition must be altered.
+@param poNewGeomFieldDefn new field definition
+@param nFlagsIn combination of ALTER_GEOM_FIELD_DEFN_NAME_FLAG, ALTER_GEOM_FIELD_DEFN_TYPE_FLAG, ALTER_GEOM_FIELD_DEFN_NULLABLE_FLAG, ALTER_GEOM_FIELD_DEFN_SRS_FLAG, ALTER_GEOM_FIELD_DEFN_SRS_COORD_EPOCH_FLAG
+to indicate which of the name and/or type and/or nullability and/or SRS and/or coordinate epoch from the new field
+definition must be taken into account. Or ALTER_GEOM_FIELD_DEFN_ALL_FLAG to update all members.
+
+@return OGRERR_NONE on success.
+
+@since OGR 3.6.0
+*/
+
+/**
+\fn OGRErr OGR_L_AlterGeomFieldDefn( OGRLayerH hLayer, int iGeomField, OGRGeomFieldDefnH hNewGeomFieldDefn, int nFlags )
+
+\brief Alter the definition of an existing geometry field on a layer.
+
+You must use this to alter the definition of an existing geometry field of a real layer.
+Internally the OGRFeatureDefn for the layer will be updated
+to reflect the altered field.  Applications should never modify the OGRFeatureDefn
+used by a layer directly.
+
+Note that altering the SRS does *not* cause coordinate reprojection to occur:
+this is simply a modification of the layer metadata (correcting a wrong SRS
+definition). No modification to existing geometries will ever be performed,
+so this method cannot be used to e.g. promote single part geometries to their
+multipart equivalents.
+
+This function should not be called while there are feature objects in existence that
+were obtained or created with the previous layer definition.
+
+Not all drivers support this function. You can query a layer to check if it supports it
+with the OLCAlterGeomFieldDefn capability. Some drivers might not support
+all update flags. The GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS driver metadata item
+can be queried to examine which flags may be supported by a driver.
+
+This function is the same as the C++ method OGRLayer::AlterFieldDefn().
+
+@param hLayer handle to the layer.
+@param iGeomField index of the field whose definition must be altered.
+@param hNewGeomFieldDefn new field definition
+@param nFlags combination of ALTER_GEOM_FIELD_DEFN_NAME_FLAG, ALTER_GEOM_FIELD_DEFN_TYPE_FLAG, ALTER_GEOM_FIELD_DEFN_NULLABLE_FLAG, ALTER_GEOM_FIELD_DEFN_SRS_FLAG, ALTER_GEOM_FIELD_DEFN_SRS_COORD_EPOCH_FLAG
+to indicate which of the name and/or type and/or nullability and/or SRS and/or coordinate epoch from the new field
+definition must be taken into account. Or ALTER_GEOM_FIELD_DEFN_ALL_FLAG to update all members.
+
+@return OGRERR_NONE on success.
+
+@since OGR 3.6.0
 */
 
 

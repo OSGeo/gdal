@@ -543,7 +543,8 @@ int OGRMemLayer::TestCapability( const char *pszCap )
              EQUAL(pszCap, OLCCreateGeomField) ||
              EQUAL(pszCap, OLCDeleteField) ||
              EQUAL(pszCap, OLCReorderFields) ||
-             EQUAL(pszCap, OLCAlterFieldDefn) )
+             EQUAL(pszCap, OLCAlterFieldDefn) ||
+             EQUAL(pszCap, OLCAlterGeomFieldDefn) )
         return m_bUpdatable;
 
     else if( EQUAL(pszCap, OLCFastSetNextByIndex) )
@@ -812,6 +813,74 @@ OGRErr OGRMemLayer::AlterFieldDefn( int iField, OGRFieldDefn *poNewFieldDefn,
     {
         poFieldDefn->SetWidth(poNewFieldDefn->GetWidth());
         poFieldDefn->SetPrecision(poNewFieldDefn->GetPrecision());
+    }
+
+    m_bUpdated = true;
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                         AlterGeomFieldDefn()                         */
+/************************************************************************/
+
+OGRErr OGRMemLayer::AlterGeomFieldDefn( int iGeomField,
+                                        const OGRGeomFieldDefn* poNewGeomFieldDefn,
+                                        int nFlagsIn )
+{
+    if( !m_bUpdatable )
+        return OGRERR_FAILURE;
+
+    if( iGeomField < 0 || iGeomField >= m_poFeatureDefn->GetGeomFieldCount() )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Invalid field index");
+        return OGRERR_FAILURE;
+    }
+
+    auto poFieldDefn = m_poFeatureDefn->GetGeomFieldDefn(iGeomField);
+
+    if( nFlagsIn & ALTER_GEOM_FIELD_DEFN_NAME_FLAG )
+        poFieldDefn->SetName(poNewGeomFieldDefn->GetNameRef());
+    if( nFlagsIn & ALTER_GEOM_FIELD_DEFN_TYPE_FLAG )
+    {
+        if( poNewGeomFieldDefn->GetType() == wkbNone )
+            return OGRERR_FAILURE;
+        poFieldDefn->SetType(poNewGeomFieldDefn->GetType());
+    }
+    if( nFlagsIn & ALTER_GEOM_FIELD_DEFN_NULLABLE_FLAG )
+        poFieldDefn->SetNullable(poNewGeomFieldDefn->IsNullable());
+
+    if( nFlagsIn & ALTER_GEOM_FIELD_DEFN_SRS_FLAG )
+    {
+        OGRSpatialReference* poSRSNew = nullptr;
+        const auto poSRSNewRef = poNewGeomFieldDefn->GetSpatialRef();
+        if( poSRSNewRef )
+        {
+            poSRSNew = poSRSNewRef->Clone();
+            if( (nFlagsIn & ALTER_GEOM_FIELD_DEFN_SRS_COORD_EPOCH_FLAG) == 0 )
+            {
+                const auto poSRSOld = poFieldDefn->GetSpatialRef();
+                if( poSRSOld )
+                    poSRSNew->SetCoordinateEpoch(poSRSOld->GetCoordinateEpoch());
+                else
+                    poSRSNew->SetCoordinateEpoch(0);
+            }
+        }
+        poFieldDefn->SetSpatialRef(poSRSNew);
+        if( poSRSNew )
+            poSRSNew->Release();
+    }
+    else if( nFlagsIn & ALTER_GEOM_FIELD_DEFN_SRS_COORD_EPOCH_FLAG )
+    {
+        const auto poSRSOld = poFieldDefn->GetSpatialRef();
+        const auto poSRSNewRef = poNewGeomFieldDefn->GetSpatialRef();
+        if( poSRSOld && poSRSNewRef )
+        {
+            auto poSRSNew = poSRSOld->Clone();
+            poSRSNew->SetCoordinateEpoch(poSRSNewRef->GetCoordinateEpoch());
+            poFieldDefn->SetSpatialRef(poSRSNew);
+            poSRSNew->Release();
+        }
     }
 
     m_bUpdated = true;

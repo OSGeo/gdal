@@ -59,6 +59,7 @@ class OGRLayerWithTransaction final: public OGRLayerDecorator
     virtual OGRErr      DeleteField( int iField ) override;
     virtual OGRErr      ReorderFields( int* panMap ) override;
     virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags ) override;
+    virtual OGRErr      AlterGeomFieldDefn( int iField, const OGRGeomFieldDefn* poNewGeomFieldDefn, int nFlags ) override;
 
     virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poField,
                                      int bApproxOK = TRUE ) override;
@@ -613,6 +614,23 @@ OGRErr      OGRLayerWithTransaction::AlterFieldDefn( int iField,
     return eErr;
 }
 
+OGRErr      OGRLayerWithTransaction::AlterGeomFieldDefn( int iGeomField,
+                                                         const OGRGeomFieldDefn* poNewGeomFieldDefn,
+                                                         int nFlagsIn )
+{
+    if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
+    OGRErr eErr = m_poDecoratedLayer->AlterGeomFieldDefn(iGeomField, poNewGeomFieldDefn, nFlagsIn);
+    if( m_poFeatureDefn && eErr == OGRERR_NONE )
+    {
+        const auto poSrcFieldDefn = m_poDecoratedLayer->GetLayerDefn()->GetGeomFieldDefn(iGeomField);
+        auto poDstFieldDefn = m_poFeatureDefn->GetGeomFieldDefn(iGeomField);
+        poDstFieldDefn->SetName(poSrcFieldDefn->GetNameRef());
+        poDstFieldDefn->SetType(poSrcFieldDefn->GetType());
+        poDstFieldDefn->SetSpatialRef(poSrcFieldDefn->GetSpatialRef());
+        poDstFieldDefn->SetNullable(poSrcFieldDefn->IsNullable());
+    }
+    return eErr;
+}
 OGRFeature * OGRLayerWithTransaction::GetNextFeature()
 {
     if( !m_poDecoratedLayer ) return nullptr;

@@ -676,6 +676,7 @@ OGRErr CPL_DLL OGR_L_DeleteField( OGRLayerH, int iField );
 OGRErr CPL_DLL OGR_L_ReorderFields( OGRLayerH, int* panMap );
 OGRErr CPL_DLL OGR_L_ReorderField( OGRLayerH, int iOldFieldPos, int iNewFieldPos );
 OGRErr CPL_DLL OGR_L_AlterFieldDefn( OGRLayerH, int iField, OGRFieldDefnH hNewFieldDefn, int nFlags );
+OGRErr CPL_DLL OGR_L_AlterGeomFieldDefn( OGRLayerH, int iField, OGRGeomFieldDefnH hNewGeomFieldDefn, int nFlags );
 OGRErr CPL_DLL OGR_L_StartTransaction( OGRLayerH )  CPL_WARN_UNUSED_RESULT;
 OGRErr CPL_DLL OGR_L_CommitTransaction( OGRLayerH )  CPL_WARN_UNUSED_RESULT;
 OGRErr CPL_DLL OGR_L_RollbackTransaction( OGRLayerH );
