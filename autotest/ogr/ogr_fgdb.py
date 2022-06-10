@@ -2513,7 +2513,7 @@ def test_ogr_filegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_explicit(fgdb_drv):
 
     lyr = ds.CreateLayer('area', srs=srs, geom_type=ogr.wkbPolygon, options=['CREATE_SHAPE_AREA_AND_LENGTH_FIELDS=YES'])
     f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,1 0,0 0))'))
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,1 0,0 0),(0.2 0.2,0.2 0.8,0.8 0.8,0.8 0.2,0.2 0.2))'))
     lyr.CreateFeature(f)
 
     ds = None
@@ -2535,8 +2535,8 @@ def test_ogr_filegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_explicit(fgdb_drv):
     assert lyr_defn.GetFieldIndex('Shape_Area') >= 0
     assert lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('Shape_Area')).GetDefault() == 'FILEGEODATABASE_SHAPE_AREA'
     assert lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('Shape_Length')).GetDefault() == 'FILEGEODATABASE_SHAPE_LENGTH'
-    assert f['Shape_Length'] == 4
-    assert f['Shape_Area'] == 1
+    assert f['Shape_Length'] == pytest.approx(6.4)
+    assert f['Shape_Area'] == pytest.approx(0.64)
 
     ds = None
 
