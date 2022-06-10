@@ -818,12 +818,16 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
                 oFieldDefn.SetDomainName(pszDomainName);
         }
 
-        if( osAreaFieldName == poGDBField->GetName() )
+        if( osAreaFieldName == poGDBField->GetName() &&
+            oFieldDefn.GetType() == OFTReal )
         {
+            m_iAreaField = m_poFeatureDefn->GetFieldCount();
             oFieldDefn.SetDefault("FILEGEODATABASE_SHAPE_AREA");
         }
-        else if( osLengthFieldName == poGDBField->GetName() )
+        else if( osLengthFieldName == poGDBField->GetName() &&
+                 oFieldDefn.GetType() == OFTReal )
         {
+            m_iLengthField = m_poFeatureDefn->GetFieldCount();
             oFieldDefn.SetDefault("FILEGEODATABASE_SHAPE_LENGTH");
         }
 

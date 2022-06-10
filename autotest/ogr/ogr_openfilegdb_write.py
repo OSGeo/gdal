@@ -2424,3 +2424,162 @@ def test_ogr_openfilegdb_layer_documentation():
 
     finally:
         gdal.RmdirRecursive(dirname)
+
+
+###############################################################################
+# Test explicit CREATE_SHAPE_AREA_AND_LENGTH_FIELDS=YES option
+
+
+def test_ogr_openfilegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_explicit():
+
+    dirname = '/vsimem/test_ogr_openfilegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_explicit.gdb'
+
+    try:
+        ds = ogr.GetDriverByName('OpenFileGDB').CreateDataSource(dirname)
+
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(4326)
+
+        lyr = ds.CreateLayer('line', srs=srs, geom_type=ogr.wkbLineString, options=['CREATE_SHAPE_AREA_AND_LENGTH_FIELDS=YES'])
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING(0 0,2 0)'))
+        lyr.CreateFeature(f)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('COMPOUNDCURVE((0 0,2 0))'))
+        lyr.CreateFeature(f)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('MULTILINESTRING((0 0,2 0),(10 0,15 0))'))
+        lyr.CreateFeature(f)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('MULTICURVE((0 0,2 0),(10 0,15 0))'))
+        lyr.CreateFeature(f)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        lyr.CreateFeature(f)
+
+        lyr = ds.CreateLayer('area', srs=srs, geom_type=ogr.wkbPolygon, options=['CREATE_SHAPE_AREA_AND_LENGTH_FIELDS=YES'])
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,1 0,0 0),(0.2 0.2,0.2 0.8,0.8 0.8,0.8 0.2,0.2 0.2))'))
+        lyr.CreateFeature(f)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('CURVEPOLYGON((0 0,0 1,1 1,1 0,0 0),(0.2 0.2,0.2 0.8,0.8 0.8,0.8 0.2,0.2 0.2))'))
+        lyr.CreateFeature(f)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('MULTIPOLYGON(((0 0,0 1,1 1,1 0,0 0),(0.2 0.2,0.2 0.8,0.8 0.8,0.8 0.2,0.2 0.2)),((10 0,10 1,11 1,11 0,10 0)))'))
+        lyr.CreateFeature(f)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('MULTISURFACE(((0 0,0 1,1 1,1 0,0 0),(0.2 0.2,0.2 0.8,0.8 0.8,0.8 0.2,0.2 0.2)),((10 0,10 1,11 1,11 0,10 0)))'))
+        lyr.CreateFeature(f)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        lyr.CreateFeature(f)
+
+        ds = None
+
+        ds = ogr.Open(dirname, update = 1)
+
+        lyr = ds.GetLayerByName('line')
+        lyr_defn = lyr.GetLayerDefn()
+        assert lyr_defn.GetFieldIndex('Shape_Length') >= 0
+        assert lyr_defn.GetFieldIndex('Shape_Area') < 0
+        assert lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('Shape_Length')).GetDefault() == 'FILEGEODATABASE_SHAPE_LENGTH'
+        f = lyr.GetNextFeature()
+        assert f['Shape_Length'] == 2
+        f = lyr.GetNextFeature()
+        assert f['Shape_Length'] == 2
+        f = lyr.GetNextFeature()
+        assert f['Shape_Length'] == 2 + 5
+        f = lyr.GetNextFeature()
+        assert f['Shape_Length'] == 2 + 5
+        f = lyr.GetNextFeature()
+        assert f['Shape_Length'] is None
+
+        lyr = ds.GetLayerByName('area')
+        lyr_defn = lyr.GetLayerDefn()
+        assert lyr_defn.GetFieldIndex('Shape_Length') >= 0
+        assert lyr_defn.GetFieldIndex('Shape_Area') >= 0
+        assert lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('Shape_Area')).GetDefault() == 'FILEGEODATABASE_SHAPE_AREA'
+        assert lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('Shape_Length')).GetDefault() == 'FILEGEODATABASE_SHAPE_LENGTH'
+        f = lyr.GetNextFeature()
+        assert f['Shape_Length'] == pytest.approx(6.4)
+        assert f['Shape_Area'] == pytest.approx(0.64)
+        f = lyr.GetNextFeature()
+        assert f['Shape_Length'] == pytest.approx(6.4)
+        assert f['Shape_Area'] == pytest.approx(0.64)
+        f = lyr.GetNextFeature()
+        assert f['Shape_Length'] == pytest.approx(6.4 + 4)
+        assert f['Shape_Area'] == pytest.approx(0.64 + 1)
+        f = lyr.GetNextFeature()
+        assert f['Shape_Length'] == pytest.approx(6.4 + 4)
+        assert f['Shape_Area'] == pytest.approx(0.64 + 1)
+        f = lyr.GetNextFeature()
+        assert f['Shape_Length'] is None
+        assert f['Shape_Area'] is None
+
+        # Rename Shape_Length and Shape_Area fields (not sure the FileGDB SDK likes it)
+        iShapeLength = lyr_defn.GetFieldIndex('Shape_Length')
+        fld_defn = ogr.FieldDefn('Shape_Length_renamed', ogr.OFTReal)
+        assert lyr.AlterFieldDefn(iShapeLength, fld_defn, ogr.ALTER_NAME_FLAG) == ogr.OGRERR_NONE
+
+        iShapeArea = lyr_defn.GetFieldIndex('Shape_Area')
+        fld_defn = ogr.FieldDefn('Shape_Area_renamed', ogr.OFTReal)
+        assert lyr.AlterFieldDefn(iShapeArea, fld_defn, ogr.ALTER_NAME_FLAG) == ogr.OGRERR_NONE
+
+        ds = ogr.Open(dirname, update = 1)
+
+        sql_lyr = ds.ExecuteSQL('GetLayerDefinition area')
+        assert sql_lyr
+        f = sql_lyr.GetNextFeature()
+        xml = f.GetField(0)
+        f = None
+        ds.ReleaseResultSet(sql_lyr)
+        assert '<AreaFieldName>Shape_Area_renamed</AreaFieldName>' in xml
+        assert '<LengthFieldName>Shape_Length_renamed</LengthFieldName>' in xml
+
+        lyr = ds.GetLayerByName('area')
+        lyr_defn = lyr.GetLayerDefn()
+
+        # Delete Shape_Length and Shape_Area fields
+        assert lyr.DeleteField(lyr_defn.GetFieldIndex('Shape_Length_renamed')) == ogr.OGRERR_NONE
+        assert lyr.DeleteField(lyr_defn.GetFieldIndex('Shape_Area_renamed')) == ogr.OGRERR_NONE
+
+        f = ogr.Feature(lyr_defn)
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,1 0,0 0))'))
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+        ds = None
+
+        ds = ogr.Open(dirname)
+
+        sql_lyr = ds.ExecuteSQL('GetLayerDefinition area')
+        assert sql_lyr
+        f = sql_lyr.GetNextFeature()
+        xml = f.GetField(0)
+        f = None
+        ds.ReleaseResultSet(sql_lyr)
+        assert '<AreaFieldName />' in xml
+        assert '<LengthFieldName />' in xml
+
+        ds = None
+
+    finally:
+        gdal.RmdirRecursive(dirname)
+
+
+###############################################################################
+# Test explicit CREATE_SHAPE_AREA_AND_LENGTH_FIELDS=YES option
+
+
+def test_ogr_openfilegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_implicit():
+
+    dirname = '/vsimem/test_ogr_openfilegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_implicit.gdb'
+    try:
+        gdal.VectorTranslate(dirname, 'data/filegdb/filegdb_polygonzm_m_not_closing_with_curves.gdb', options = '-f OpenFileGDB -fid 1')
+
+        ds = ogr.Open(dirname)
+        lyr = ds.GetLayer(0)
+        lyr_defn = lyr.GetLayerDefn()
+        assert lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('Shape_Area')).GetDefault() == 'FILEGEODATABASE_SHAPE_AREA'
+        assert lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('Shape_Length')).GetDefault() == 'FILEGEODATABASE_SHAPE_LENGTH'
+
+        ds = None
+
+    finally:
+        gdal.RmdirRecursive(dirname)

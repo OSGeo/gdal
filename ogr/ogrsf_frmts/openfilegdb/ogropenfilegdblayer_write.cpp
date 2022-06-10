@@ -695,6 +695,43 @@ bool OGROpenFileGDBLayer::Create(const OGRSpatialReference* poSRS)
         return false;
     }
 
+    const bool bCreateShapeLength =
+        (eTableGeomType == FGTGT_LINE || eTableGeomType == FGTGT_POLYGON) &&
+        CPLTestBool(m_aosCreationOptions.FetchNameValueDef(
+            "CREATE_SHAPE_AREA_AND_LENGTH_FIELDS", "NO"));
+    // Setting a non-default value doesn't work
+    const char* pszLengthFieldName = m_aosCreationOptions.FetchNameValueDef(
+        "LENGTH_FIELD_NAME", "Shape_Length");
+
+    const bool bCreateShapeArea =
+        eTableGeomType == FGTGT_POLYGON &&
+        CPLTestBool(m_aosCreationOptions.FetchNameValueDef(
+            "CREATE_SHAPE_AREA_AND_LENGTH_FIELDS", "NO"));
+    // Setting a non-default value doesn't work
+    const char* pszAreaFieldName = m_aosCreationOptions.FetchNameValueDef(
+        "AREA_FIELD_NAME", "Shape_Area");
+
+    if( bCreateShapeArea )
+    {
+        OGRFieldDefn oField(pszAreaFieldName, OFTReal);
+        oField.SetDefault("FILEGEODATABASE_SHAPE_AREA");
+        if( CreateField(&oField, false) != OGRERR_NONE )
+        {
+            Close();
+            return false;
+        }
+    }
+    if( bCreateShapeLength )
+    {
+        OGRFieldDefn oField(pszLengthFieldName, OFTReal);
+        oField.SetDefault("FILEGEODATABASE_SHAPE_LENGTH");
+        if( CreateField(&oField, false) != OGRERR_NONE )
+        {
+            Close();
+            return false;
+        }
+    }
+
     m_poLyrTable->CreateIndex("FDO_OBJECTID", osFIDName);
 
     // Just to immitate the FileGDB SDK which register the index on the
@@ -1076,6 +1113,15 @@ OGRErr OGROpenFileGDBLayer::CreateField(OGRFieldDefn* poField, int bApproxOK)
         return OGRERR_FAILURE;
     }
 
+    if( poField->GetType() == OFTReal )
+    {
+        const char* pszDefault = poField->GetDefault();
+        if( pszDefault && EQUAL(pszDefault, "FILEGEODATABASE_SHAPE_AREA") )
+            m_iAreaField = m_poFeatureDefn->GetFieldCount();
+        else if( pszDefault && EQUAL(pszDefault, "FILEGEODATABASE_SHAPE_LENGTH") )
+            m_iLengthField = m_poFeatureDefn->GetFieldCount();
+    }
+
     m_poFeatureDefn->AddFieldDefn(poField);
 
     if( m_bRegisteredTable )
@@ -1145,6 +1191,8 @@ OGRErr OGROpenFileGDBLayer::AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poN
     OGRFieldDefn oField(poFieldDefn);
     const std::string osOldFieldName(poFieldDefn->GetNameRef());
     const std::string osOldDomainName(std::string(poFieldDefn->GetDomainName()));
+    const bool bRenamedField =
+        (nFlagsIn & ALTER_NAME_FLAG) != 0 && poNewFieldDefn->GetNameRef() != osOldFieldName;
 
     if (nFlagsIn & ALTER_TYPE_FLAG)
     {
@@ -1154,9 +1202,9 @@ OGRErr OGROpenFileGDBLayer::AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poN
     }
     if (nFlagsIn & ALTER_NAME_FLAG)
     {
-        const std::string osFieldNameOri(poNewFieldDefn->GetNameRef());
-        if( osOldFieldName != osFieldNameOri )
+        if( bRenamedField )
         {
+            const std::string osFieldNameOri(poNewFieldDefn->GetNameRef());
             const std::string osFieldNameLaundered = GetLaunderedFieldName(osFieldNameOri);
             if (osFieldNameLaundered != osFieldNameOri)
             {
@@ -1266,6 +1314,23 @@ OGRErr OGROpenFileGDBLayer::AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poN
                     psLastChild = psIter;
                 }
 
+                if( bRenamedField && m_iAreaField == iFieldToAlter )
+                {
+                    CPLXMLNode* psNode = CPLSearchXMLNode(oTree.get(), "=AreaFieldName");
+                    if( psNode )
+                    {
+                        CPLSetXMLValue(psNode, "", poFieldDefn->GetNameRef());
+                    }
+                }
+                else if( bRenamedField && m_iLengthField == iFieldToAlter )
+                {
+                    CPLXMLNode* psNode = CPLSearchXMLNode(oTree.get(), "=LengthFieldName");
+                    if( psNode )
+                    {
+                        CPLSetXMLValue(psNode, "", poFieldDefn->GetNameRef());
+                    }
+                }
+
                 char* pszDefinition = CPLSerializeXMLTree(oTree.get());
                 m_osDefinition = pszDefinition;
                 CPLFree(pszDefinition);
@@ -1353,6 +1418,24 @@ OGRErr OGROpenFileGDBLayer::DeleteField( int iFieldToDelete )
 
     m_poFeatureDefn->DeleteFieldDefn( iFieldToDelete );
 
+    if( iFieldToDelete < m_iAreaField )
+        m_iAreaField --;
+    if( iFieldToDelete < m_iLengthField )
+        m_iLengthField --;
+
+    bool bEmptyAreaFieldName = false;
+    bool bEmptyLengthFieldName = false;
+    if( m_iAreaField == iFieldToDelete )
+    {
+        bEmptyAreaFieldName = true;
+        m_iAreaField = -1;
+    }
+    else if( m_iLengthField == iFieldToDelete )
+    {
+        bEmptyLengthFieldName = true;
+        m_iLengthField = -1;
+    }
+
     if( m_bRegisteredTable )
     {
         // If the table is already registered (that is updating an existing
@@ -1379,6 +1462,25 @@ OGRErr OGROpenFileGDBLayer::DeleteField( int iFieldToDelete )
                         break;
                     }
                     psLastChild = psIter;
+                }
+
+                if( bEmptyAreaFieldName )
+                {
+                    CPLXMLNode* psNode = CPLSearchXMLNode(oTree.get(), "=AreaFieldName");
+                    if( psNode && psNode->psChild )
+                    {
+                        CPLDestroyXMLNode(psNode->psChild);
+                        psNode->psChild = nullptr;
+                    }
+                }
+                else if( bEmptyLengthFieldName )
+                {
+                    CPLXMLNode* psNode = CPLSearchXMLNode(oTree.get(), "=LengthFieldName");
+                    if( psNode && psNode->psChild )
+                    {
+                        CPLDestroyXMLNode(psNode->psChild);
+                        psNode->psChild = nullptr;
+                    }
                 }
 
                 char* pszDefinition = CPLSerializeXMLTree(oTree.get());
@@ -1420,18 +1522,42 @@ OGRErr OGROpenFileGDBLayer::DeleteField( int iFieldToDelete )
 }
 
 /************************************************************************/
+/*                            GetLength()                               */
+/************************************************************************/
+
+static double GetLength( const OGRCurvePolygon* poPoly )
+{
+    double dfLength = 0;
+    for( const auto* poRing: *poPoly )
+        dfLength += poRing->get_Length();
+    return dfLength;
+}
+
+static double GetLength( const OGRMultiSurface* poMS )
+{
+    double dfLength = 0;
+    for( const auto* poPoly: *poMS )
+    {
+        auto poCurvePolygon = dynamic_cast<const OGRCurvePolygon*>(poPoly);
+        if( poCurvePolygon )
+            dfLength += GetLength(poCurvePolygon);
+    }
+    return dfLength;
+}
+
+/************************************************************************/
 /*                      PrepareFileGDBFeature()                         */
 /************************************************************************/
 
-bool OGROpenFileGDBLayer::PrepareFileGDBFeature( const OGRFeature *poFeature,
+bool OGROpenFileGDBLayer::PrepareFileGDBFeature( OGRFeature *poFeature,
                                                  std::vector<OGRField>& fields,
                                                  const OGRGeometry*& poGeom )
 {
     // Check geometry type
     poGeom = poFeature->GetGeometryRef();
+    const auto eFlattenType = poGeom ? wkbFlatten(poGeom->getGeometryType()) : wkbNone;
     if( poGeom )
     {
-        const auto eFlattenType = wkbFlatten(poGeom->getGeometryType());
         switch( m_poLyrTable->GetGeometryType() )
         {
             case FGTGT_NONE: break;
@@ -1499,6 +1625,46 @@ bool OGROpenFileGDBLayer::PrepareFileGDBFeature( const OGRFeature *poFeature,
         // Treat empty geometries as NULL, like the FileGDB driver
         if( poGeom->IsEmpty() )
             poGeom = nullptr;
+    }
+
+    if( m_iAreaField >= 0 )
+    {
+        const int i = m_iAreaField;
+        if( poGeom != nullptr )
+        {
+            if( eFlattenType == wkbPolygon || eFlattenType == wkbCurvePolygon )
+                poFeature->SetField(i, poGeom->toCurvePolygon()->get_Area());
+            else if( eFlattenType == wkbMultiPolygon || eFlattenType == wkbMultiSurface )
+                poFeature->SetField(i, poGeom->toMultiSurface()->get_Area());
+            else
+                poFeature->SetFieldNull(i); // shouldn't happen in nominal situation
+        }
+        else
+        {
+            poFeature->SetFieldNull(i);
+        }
+    }
+
+    if( m_iLengthField >= 0 )
+    {
+        const int i = m_iLengthField;
+        if( poGeom != nullptr )
+        {
+            if( OGR_GT_IsCurve(eFlattenType) )
+                poFeature->SetField(i, poGeom->toCurve()->get_Length());
+            else if( OGR_GT_IsSubClassOf(eFlattenType, wkbMultiCurve) )
+                poFeature->SetField(i, poGeom->toMultiCurve()->get_Length());
+            else if( eFlattenType == wkbPolygon || eFlattenType == wkbCurvePolygon )
+                poFeature->SetField(i, GetLength(poGeom->toCurvePolygon()));
+            else if( eFlattenType == wkbMultiPolygon ||  eFlattenType == wkbMultiSurface )
+                poFeature->SetField(i, GetLength(poGeom->toMultiSurface()));
+            else
+                poFeature->SetFieldNull(i); // shouldn't happen in nominal situation
+        }
+        else
+        {
+            poFeature->SetFieldNull(i);
+        }
     }
 
     fields.resize(m_poLyrTable->GetFieldCount(), FileGDBField::UNSET_FIELD);
@@ -1842,8 +2008,12 @@ void OGROpenFileGDBLayer::RefreshXMLDefinitionInMemory()
         CPLCreateXMLElementAndValue(psRoot, "HasM", bGeomTypeHasM ? "true" : "false");
         CPLCreateXMLElementAndValue(psRoot, "HasZ", bGeomTypeHasZ ? "true" : "false");
         CPLCreateXMLElementAndValue(psRoot, "HasSpatialIndex", "false");
-        CPLCreateXMLElementAndValue(psRoot, "AreaFieldName", "");
-        CPLCreateXMLElementAndValue(psRoot, "LengthFieldName", "");
+        const char* pszAreaFieldName = m_iAreaField >= 0 ?
+             m_poFeatureDefn->GetFieldDefn(m_iAreaField)->GetNameRef() : "";
+        CPLCreateXMLElementAndValue(psRoot, "AreaFieldName", pszAreaFieldName);
+        const char* pszLengthFieldName = m_iLengthField >= 0 ?
+             m_poFeatureDefn->GetFieldDefn(m_iLengthField)->GetNameRef() : "";
+        CPLCreateXMLElementAndValue(psRoot, "LengthFieldName",pszLengthFieldName);
 
         XMLSerializeGeomFieldBase(psRoot, poGeomFieldDefn, GetSpatialRef());
     }
