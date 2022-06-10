@@ -57,15 +57,15 @@ jobs:
     #  run: |
     #    make spelling
     #  working-directory: ./doc
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: PDF
         path: doc/build/latex/gdal.pdf
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: HTML
         path: doc/build/html/*
-    #- uses: actions/upload-artifact@v2
+    #- uses: actions/upload-artifact@v3
     #  with:
     #    name: Misspelled
     #    path: doc/build/spelling/output.txt
