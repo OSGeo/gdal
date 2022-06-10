@@ -308,6 +308,10 @@ void RegisterOGROpenFileGDB()
 "    <Value>TEXT_UTF16</Value>"
 "  </Option>"
 "  <Option name='TIME_IN_UTC' type='boolean' description='Whether datetime fields should be considered to be in UTC' default='NO'/>"
+"  <Option name='CREATE_SHAPE_AREA_AND_LENGTH_FIELDS' type='boolean' description='Whether to create special Shape_Length and Shape_Area fields' default='NO'/>"
+// Setting to another value than the default one doesn't really work with the SDK
+//"  <Option name='AREA_FIELD_NAME' type='string' description='Name of the column that contains the geometry area' default='Shape_Area'/>"
+//"  <Option name='length_field_name' type='string' description='Name of the column that contains the geometry length' default='Shape_Length'/>"
 "</LayerCreationOptionList>");
 
     poDriver->pfnOpen = OGROpenFileGDBDriverOpen;

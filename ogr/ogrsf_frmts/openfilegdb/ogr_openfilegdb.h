@@ -107,6 +107,8 @@ class OGROpenFileGDBLayer final: public OGRLayer
     FileGDBTable     *m_poLyrTable = nullptr;
     OGROpenFileGDBFeatureDefn   *m_poFeatureDefn = nullptr;
     int               m_iGeomFieldIdx = -1;
+    int               m_iAreaField = -1; // index of Shape_Area field
+    int               m_iLengthField = -1; // index of Shape_Length field
     int               m_iCurFeat = 0;
     std::string       m_osDefinition{};
     std::string       m_osDocumentation{};
@@ -159,7 +161,7 @@ class OGROpenFileGDBLayer final: public OGRLayer
     std::string         GetLaunderedLayerName(const std::string& osNameOri) const;
 
     mutable std::vector<std::string> m_aosTempStrings{};
-    bool                PrepareFileGDBFeature( const OGRFeature *poFeature,
+    bool                PrepareFileGDBFeature( OGRFeature *poFeature,
                                                std::vector<OGRField>& fields,
                                                const OGRGeometry*& poGeom );
 
