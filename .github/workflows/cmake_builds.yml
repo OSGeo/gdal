@@ -28,7 +28,7 @@ jobs:
     - name: Checkout GDAL
       uses: actions/checkout@v2
     - name: Setup cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       id: cache
       with:
           path: ${{ github.workspace }}/.ccache
@@ -270,7 +270,7 @@ jobs:
             mingw-w64-x86_64-libgeotiff mingw-w64-x86_64-libpng mingw-w64-x86_64-libtiff mingw-w64-x86_64-openjpeg
             mingw-w64-x86_64-python-pip mingw-w64-x86_64-python-numpy mingw-w64-x86_64-python-pytest mingw-w64-x86_64-python-setuptools mingw-w64-x86_64-python-lxml
       - name: Setup cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache
         with:
           path: ${{ github.workspace }}\.ccache
@@ -378,7 +378,7 @@ jobs:
         tar xvzf proj-datumgrid-1.8.tar.gz
         cd $OLDPWD
     - name: Setup cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       id: cache
       with:
           path: ${{ github.workspace }}\.clcache
@@ -519,7 +519,7 @@ jobs:
     - name: Checkout GDAL
       uses: actions/checkout@v2
     - name: Setup cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       id: cache
       with:
           path: ${{ github.workspace }}/.ccache
