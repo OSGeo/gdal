@@ -19,7 +19,7 @@ jobs:
     if: github.repository == 'OSGeo/gdal'
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Cache deps
         uses: actions/cache@v3
