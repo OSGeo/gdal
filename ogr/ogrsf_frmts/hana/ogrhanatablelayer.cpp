@@ -35,6 +35,7 @@
 #include <cstdio>
 #include <cstring>
 #include <regex>
+#include <sstream>
 
 #include "odbc/Exception.h"
 #include "odbc/ResultSet.h"
