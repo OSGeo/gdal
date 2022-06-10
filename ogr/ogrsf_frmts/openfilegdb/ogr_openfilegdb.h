@@ -244,6 +244,9 @@ public:
   virtual OGRErr      CreateField( OGRFieldDefn *poField, int bApproxOK ) override;
   virtual OGRErr      DeleteField( int iFieldToDelete ) override;
   virtual OGRErr      AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poNewFieldDefn, int nFlags ) override;
+  virtual OGRErr      AlterGeomFieldDefn( int iGeomFieldToAlter,
+                                          const OGRGeomFieldDefn* poNewGeomFieldDefn,
+                                          int nFlagsIn ) override;
 
   virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
   virtual OGRErr      ISetFeature( OGRFeature *poFeature ) override;

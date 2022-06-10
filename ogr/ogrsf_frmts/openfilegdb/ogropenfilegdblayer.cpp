@@ -2095,6 +2095,7 @@ int OGROpenFileGDBLayer::TestCapability( const char * pszCap )
     if( EQUAL(pszCap, OLCCreateField) ||
         EQUAL(pszCap, OLCDeleteField) ||
         EQUAL(pszCap, OLCAlterFieldDefn) ||
+        EQUAL(pszCap, OLCAlterGeomFieldDefn) ||
         EQUAL(pszCap, OLCSequentialWrite) ||
         EQUAL(pszCap, OLCRandomWrite) ||
         EQUAL(pszCap, OLCDeleteFeature) ||
