@@ -22,7 +22,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Cache deps
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache-deps
         with:
           path: /tmp/docker
