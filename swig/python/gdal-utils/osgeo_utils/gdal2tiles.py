@@ -825,7 +825,10 @@ def scale_query_to_tile(dsquery, dstile, options, tilefilename=''):
 
         params = {}
         if options.tiledriver == 'WEBP':
-            params['quality'] = options.webp_quality
+            if options.webp_lossless:
+                params['lossless'] = True
+            else:
+                params['quality'] = options.webp_quality
         im1.save(tilefilename, options.tiledriver, **params)
 
     else:
@@ -1145,6 +1148,17 @@ def nb_data_bands(dataset: gdal.Dataset) -> int:
         return dataset.RasterCount - 1
     return dataset.RasterCount
 
+
+def _get_creation_options(options):
+    copts = []
+    if options.tiledriver == 'WEBP':
+        if options.webp_lossless:
+            copts = [ 'LOSSLESS=True' ]
+        else:
+            copts = [ 'QUALITY=' + str(options.webp_quality) ]
+    return copts
+
+
 def create_base_tile(tile_job_info: 'TileJobInfo', tile_detail: 'TileDetail') -> None:
 
     dataBandsCount = tile_job_info.nb_data_bands
@@ -1234,10 +1248,7 @@ def create_base_tile(tile_job_info: 'TileJobInfo', tile_detail: 'TileDetail') ->
 
     if options.resampling != 'antialias':
         # Write a copy of tile to png/jpg
-        copts = []
-        if options.tiledriver == 'WEBP':
-            copts = [ 'QUALITY=' + str(options.webp_quality) ]
-        out_drv.CreateCopy(tilefilename, dstile, strict=0, options=copts)
+        out_drv.CreateCopy(tilefilename, dstile, strict=0, options=_get_creation_options(options))
 
     del dstile
 
@@ -1252,6 +1263,7 @@ def create_base_tile(tile_job_info: 'TileJobInfo', tile_detail: 'TileDetail') ->
                         tx, ty, tz, tile_job_info.tile_extension, tile_job_info.tile_size,
                         swne, tile_job_info.options
                     ).encode('utf-8'))
+
 
 def create_overview_tile(base_tz: int, base_tiles: List[Tuple[int, int]], output_folder: str, tile_job_info: 'TileJobInfo', options: Options):
     """ Generating an overview tile from no more than 4 underlying tiles(base tiles) """
@@ -1346,10 +1358,7 @@ def create_overview_tile(base_tz: int, base_tiles: List[Tuple[int, int]], output
     # Write a copy of tile to png/jpg
     if options.resampling != 'antialias':
         # Write a copy of tile to png/jpg
-        copts = []
-        if options.tiledriver == 'WEBP':
-            copts = [ 'QUALITY=' + str(options.webp_quality) ]
-        out_driver.CreateCopy(tilefilename, dstile, strict=0, options=copts)
+        out_driver.CreateCopy(tilefilename, dstile, strict=0, options=_get_creation_options(options))
         # Remove useless side car file
         aux_xml = tilefilename + '.aux.xml'
         if gdal.VSIStatL(aux_xml) is not None:
@@ -1501,6 +1510,8 @@ def optparse_init() -> optparse.OptionParser:
                     "Options for WEBP tiledriver")
     g.add_option("--webp-quality", dest='webp_quality', type=int, default=70,
                  help='quality of webp image')
+    g.add_option("--webp-lossless", dest='webp_lossless', action="store_true",
+                 help='use lossless compression for the webp image')
     p.add_option_group(g)
 
 
@@ -1604,8 +1615,10 @@ def options_post_processing(options: Options, input_file: str, output_folder: st
         if gdal.GetDriverByName(options.tiledriver) is None:
             exit_with_error('WEBP driver is not available')
 
-        if options.webp_quality < 0 or options.webp_quality > 100:
-            exit_with_error('webp_quality should be in the range [0-100]')
+        if not options.webp_lossless:
+            if options.webp_quality < 0 or options.webp_quality > 100:
+                exit_with_error('webp_quality should be in the range [0-100]')
+            options.webp_quality = int(options.webp_quality)
 
     # Output the results
     if options.verbose:
