@@ -847,10 +847,17 @@ bool FileGDBTable::AlterGeomField( const std::string& osName,
     if( m_iGeomField < 0 )
         return false;
 
-    const bool bRenameField = m_apoFields[m_iGeomField]->GetName() != osName;
-
     auto poGeomField = cpl::down_cast<FileGDBGeomField*>(
         m_apoFields[m_iGeomField].get());
+    if( poGeomField->IsNullable() != bNullable )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "AlterGeomField() does not support modifying the nullable state");
+        return false;
+    }
+
+    const bool bRenameField = poGeomField->GetName() != osName;
+
     poGeomField->m_osName = osName;
     poGeomField->m_osAlias = osAlias;
     poGeomField->m_bNullable = bNullable;
