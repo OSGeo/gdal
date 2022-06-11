@@ -37,6 +37,7 @@ from unittest import mock, TestCase
 from osgeo import gdal
 from osgeo_utils import gdal2tiles
 
+import pytest
 
 class AttrDict(dict):
     def __init__(self, *args, **kwargs):
