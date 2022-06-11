@@ -475,9 +475,7 @@ def test_gdal2tiles_py_mapml():
 def _convert_png_to_webp(frm, to, quality):
     src_ds = gdal.Open(frm)
     driver = gdal.GetDriverByName('WEBP')
-    dst_ds = driver.CreateCopy(to, src_ds, 0, options=['LOSSLESS=True'])
-    dst_ds = None
-    src_ds = None
+    driver.CreateCopy(to, src_ds, 0, options=['LOSSLESS=True'])
 
 
 def _run_webp_test(script_path, resampling):
@@ -531,7 +529,10 @@ def test_gdal2tiles_py_webp():
 
     _run_webp_test(script_path, 'average')
     try:
-        import PIL
+        from PIL import Image
+        import numpy
+        import osgeo.gdal_array as gdalarray
+        del Image, numpy, gdalarray
         pil_available = True
     except ImportError:
         pil_available = False
