@@ -42,7 +42,7 @@ wget -q https://github.com/ubarsc/kealib/archive/kealib-${KEA_VERSION}.zip \
     && rm -rf kealib-kealib-${KEA_VERSION}
 
 # Build tiledb
-TILEDB_VERSION=2.0.2
+TILEDB_VERSION=2.9.4
 mkdir tiledb \
     && wget -q https://github.com/TileDB-Inc/TileDB/archive/${TILEDB_VERSION}.tar.gz -O - \
         | tar xz -C tiledb --strip-components=1 \
