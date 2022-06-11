@@ -220,6 +220,9 @@ class OptionParserPostProcessingTest(TestCase):
         self.assertEqual(options.tiledriver, "PNG")
 
     def test_tiledriver_webp_quality_option_valid(self):
+        if gdal.GetDriverByName('WEBP') is None:
+            pytest.skip()
+
         self.DEFAULT_ATTRDICT_OPTIONS['tiledriver'] = "WEBP"
         self.DEFAULT_ATTRDICT_OPTIONS["webp_quality"] = 0
         self.DEFAULT_ATTRDICT_OPTIONS["webp_lossless"] = False
@@ -254,6 +257,9 @@ class OptionParserPostProcessingTest(TestCase):
         self.assertEqual(options.webp_quality, 10)
 
     def test_tiledriver_webp_quality_option_invalid(self):
+        if gdal.GetDriverByName('WEBP') is None:
+            pytest.skip()
+
         self.DEFAULT_ATTRDICT_OPTIONS['tiledriver'] = "WEBP"
         self.DEFAULT_ATTRDICT_OPTIONS["webp_quality"] = -20
         self.DEFAULT_ATTRDICT_OPTIONS["webp_lossless"] = False
