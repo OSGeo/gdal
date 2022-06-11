@@ -1196,9 +1196,13 @@ OGRErr OGROpenFileGDBLayer::AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poN
 
     if (nFlagsIn & ALTER_TYPE_FLAG)
     {
-        oField.SetSubType(OFSTNone);
-        oField.SetType(poNewFieldDefn->GetType());
-        oField.SetSubType(poNewFieldDefn->GetSubType());
+        if( poFieldDefn->GetType() != poNewFieldDefn->GetType() ||
+            poFieldDefn->GetSubType() != poNewFieldDefn->GetSubType() )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Altering the field type is not supported");
+            return OGRERR_FAILURE;
+        }
     }
     if (nFlagsIn & ALTER_NAME_FLAG)
     {
@@ -1231,7 +1235,14 @@ OGRErr OGROpenFileGDBLayer::AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poN
     }
     if (nFlagsIn & ALTER_NULLABLE_FLAG)
     {
-        oField.SetNullable(poNewFieldDefn->IsNullable());
+        // could be potentially done, but involves .gdbtable rewriting
+        if( poFieldDefn->IsNullable() != poNewFieldDefn->IsNullable() )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Altering the nullable state of a field "
+                     "is not currently supported for OpenFileGDB");
+            return OGRERR_FAILURE;
+        }
     }
     if (nFlagsIn & ALTER_DOMAIN_FLAG)
     {
@@ -1450,7 +1461,7 @@ OGRErr OGROpenFileGDBLayer::AlterGeomFieldDefn( int iGeomFieldToAlter,
 
     if( (nFlagsIn & ALTER_GEOM_FIELD_DEFN_NULLABLE_FLAG) != 0 )
     {
-        // could be potentially done.
+        // could be potentially done, but involves .gdbtable rewriting
         if( poGeomFieldDefn->IsNullable() != poNewGeomFieldDefn->IsNullable() )
         {
             CPLError(CE_Failure, CPLE_NotSupported,

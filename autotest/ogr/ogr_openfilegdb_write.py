@@ -1955,6 +1955,15 @@ def test_ogr_openfilegdb_write_alter_field_defn():
             fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
             assert fld_defn.GetType() == ogr.OFTString
 
+        # Changing subtype not supported
+        fld_defn = ogr.FieldDefn('str', ogr.OFTString)
+        fld_defn.SetSubType(ogr.OFSTUUID)
+        with gdaltest.error_handler():
+            assert lyr.AlterFieldDefn(0, fld_defn, ogr.ALTER_ALL_FLAG) != ogr.OGRERR_NONE
+            fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
+            assert fld_defn.GetType() == ogr.OFTString
+            assert fld_defn.GetSubType() == ogr.OFSTNone
+
         # Changing nullable state not supported
         fld_defn = ogr.FieldDefn('str', ogr.OFTString)
         fld_defn.SetNullable(False)
