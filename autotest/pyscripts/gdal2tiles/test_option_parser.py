@@ -34,6 +34,7 @@ import os
 import tempfile
 from unittest import mock, TestCase
 
+from osgeo import gdal
 from osgeo_utils import gdal2tiles
 
 
@@ -81,6 +82,12 @@ class OptionParserInputOutputTest(TestCase):
         self._asserts_exits_with_code_2([folder])
 
 
+def mock_GetDriverByName_wo_webp(name, orig_GetDriverByName=gdal.GetDriverByName):
+    if name == 'WEBP':
+        return None
+    return orig_GetDriverByName(name)
+
+
 # pylint:disable=E1101
 class OptionParserPostProcessingTest(TestCase):
 
@@ -90,6 +97,7 @@ class OptionParserPostProcessingTest(TestCase):
             'resampling': 'near',
             'title': '',
             'url': '',
+            'tiledriver': 'PNG'
         }
         self.DEFAULT_ATTRDICT_OPTIONS = AttrDict(self.DEFAULT_OPTIONS)
 
@@ -194,3 +202,68 @@ class OptionParserPostProcessingTest(TestCase):
         options = gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", "baz")
 
         self.assertEqual(options.zoom, [14, None])
+
+    @mock.patch('osgeo_utils.gdal2tiles.gdal.GetDriverByName', side_effect=mock_GetDriverByName_wo_webp)
+    def test_tiledriver_wout_webp(self, mock_GetDriverByName_wo_webp):
+        self.DEFAULT_ATTRDICT_OPTIONS['tiledriver'] = "WEBP"
+        self.DEFAULT_ATTRDICT_OPTIONS['webp_quality'] = 70
+
+        with self.assertRaises(SystemExit):
+            gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", "/bar/")
+ 
+    @mock.patch('osgeo_utils.gdal2tiles.gdal.GetDriverByName', side_effect=mock_GetDriverByName_wo_webp)
+    def test_tiledriver_wout_webp_png_accepted(self, mock_GetDriverByName_wo_webp):
+        self.DEFAULT_ATTRDICT_OPTIONS['tiledriver'] = "PNG"
+
+        options = gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", "/bar/")
+
+        self.assertEqual(options.tiledriver, "PNG")
+
+    def test_tiledriver_webp_quality_option_valid(self):
+        self.DEFAULT_ATTRDICT_OPTIONS['tiledriver'] = "WEBP"
+        self.DEFAULT_ATTRDICT_OPTIONS["webp_quality"] = 0
+
+        options = gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", "/bar/")
+
+        self.assertEqual(options.tiledriver, 'WEBP')
+        self.assertEqual(options.webp_quality, 0)
+
+
+        self.DEFAULT_ATTRDICT_OPTIONS["webp_quality"] = 100
+
+        options = gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", "/bar/")
+
+        self.assertEqual(options.tiledriver, 'WEBP')
+        self.assertEqual(options.webp_quality, 100)
+
+
+        self.DEFAULT_ATTRDICT_OPTIONS["webp_quality"] = 50
+
+        options = gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", "/bar/")
+
+        self.assertEqual(options.tiledriver, 'WEBP')
+        self.assertEqual(options.webp_quality, 50)
+
+
+        #TODO: clarify
+        self.DEFAULT_ATTRDICT_OPTIONS["webp_quality"] = 10.5
+
+        options = gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", "/bar/")
+
+        self.assertEqual(options.tiledriver, 'WEBP')
+        self.assertEqual(options.webp_quality, 10.5)
+
+    def test_tiledriver_webp_quality_option_invalid(self):
+        self.DEFAULT_ATTRDICT_OPTIONS['tiledriver'] = "WEBP"
+        self.DEFAULT_ATTRDICT_OPTIONS["webp_quality"] = -20
+
+        with self.assertRaises(SystemExit):
+            gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", "/bar/")
+
+
+        self.DEFAULT_ATTRDICT_OPTIONS["webp_quality"] = 140
+
+        with self.assertRaises(SystemExit):
+            gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", "/bar/")
+
+

@@ -1602,10 +1602,10 @@ def options_post_processing(options: Options, input_file: str, output_folder: st
 
     if options.tiledriver == 'WEBP':
         if gdal.GetDriverByName(options.tiledriver) is None:
-            raise Exception('WEBP driver is not available')
+            exit_with_error('WEBP driver is not available')
 
         if options.webp_quality < 0 or options.webp_quality > 100:
-            raise Exception('webp_quality should be in the range of [0-100]')
+            exit_with_error('webp_quality should be in the range [0-100]')
 
     # Output the results
     if options.verbose:
