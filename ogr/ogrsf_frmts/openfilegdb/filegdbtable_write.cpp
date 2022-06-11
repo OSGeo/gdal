@@ -411,7 +411,10 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
 {
     m_abyGeomBuffer.clear();
 
-    const auto WriteEndOfCurveOrSurface = [this, poGeomField, poGeom](int nCurveDescrCount)
+    const auto bIs3D = poGeom->Is3D();
+    const auto bIsMeasured = poGeom->IsMeasured();
+
+    const auto WriteEndOfCurveOrSurface = [this, bIs3D, bIsMeasured, poGeomField, poGeom](int nCurveDescrCount)
     {
         WriteVarUInt(m_abyGeomBuffer, static_cast<uint32_t>(m_adfX.size()));
         if( m_adfX.empty() )
@@ -448,7 +451,7 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
             }
         }
 
-        if( poGeom->Is3D() )
+        if( bIs3D )
         {
             int64_t nLastZ = 0;
             for( size_t i = 0; i < m_adfZ.size(); ++i )
@@ -462,7 +465,7 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
             }
         }
 
-        if( poGeom->IsMeasured() )
+        if( bIsMeasured )
         {
             int64_t nLastM = 0;
             for( size_t i = 0; i < m_adfM.size(); ++i )
@@ -486,13 +489,14 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
         return true;
     };
 
-    switch( wkbFlatten(poGeom->getGeometryType()) )
+    const auto eFlatType = wkbFlatten(poGeom->getGeometryType());
+    switch( eFlatType )
     {
         case wkbPoint:
         {
-            if( poGeom->Is3D() )
+            if( bIs3D )
             {
-                if( poGeom->IsMeasured() )
+                if( bIsMeasured )
                 {
                     WriteUInt8(m_abyGeomBuffer, static_cast<uint8_t>(SHPT_POINTZM));
                 }
@@ -503,7 +507,7 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
             }
             else
             {
-                if( poGeom->IsMeasured() )
+                if( bIsMeasured )
                 {
                     WriteUInt8(m_abyGeomBuffer, static_cast<uint8_t>(SHPT_POINTM));
                 }
@@ -523,14 +527,14 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
             CHECK_CAN_BE_ENCODED_ON_VARUINT(dfVal, "Cannot encode Y value");
             WriteVarUInt(m_abyGeomBuffer, static_cast<uint64_t>(dfVal + 0.5));
 
-            if( poGeom->Is3D() )
+            if( bIs3D )
             {
                 dfVal = (poPoint->getZ() - poGeomField->GetZOrigin()) * poGeomField->GetZScale() + 1;
                 CHECK_CAN_BE_ENCODED_ON_VARUINT(dfVal, "Cannot encode Z value");
                 WriteVarUInt(m_abyGeomBuffer, static_cast<uint64_t>(dfVal + 0.5));
             }
 
-            if( poGeom->IsMeasured() )
+            if( bIsMeasured )
             {
                 dfVal = (poPoint->getM() - poGeomField->GetMOrigin()) * poGeomField->GetMScale() + 1;
                 CHECK_CAN_BE_ENCODED_ON_VARUINT(dfVal, "Cannot encode M value");
@@ -542,9 +546,9 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
 
         case wkbMultiPoint:
         {
-            if( poGeom->Is3D() )
+            if( bIs3D )
             {
-                if( poGeom->IsMeasured() )
+                if( bIsMeasured )
                 {
                     WriteUInt8(m_abyGeomBuffer, static_cast<uint8_t>(SHPT_MULTIPOINTZM));
                 }
@@ -555,7 +559,7 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
             }
             else
             {
-                if( poGeom->IsMeasured() )
+                if( bIsMeasured )
                 {
                     WriteUInt8(m_abyGeomBuffer, static_cast<uint8_t>(SHPT_MULTIPOINTM));
                 }
@@ -597,7 +601,7 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
                 }
             }
 
-            if( poGeom->Is3D() )
+            if( bIs3D )
             {
                 int64_t nLastZ = 0;
                 for( const auto* poPoint: *poMultiPoint )
@@ -613,7 +617,7 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
                 }
             }
 
-            if( poGeom->IsMeasured() )
+            if( bIsMeasured )
             {
                 int64_t nLastM = 0;
                 for( const auto* poPoint: *poMultiPoint )
@@ -633,27 +637,11 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
         }
 
         case wkbLineString:
-        {
-            OGRMultiLineString mls;
-            mls.addGeometryDirectly(const_cast<OGRLineString*>(poGeom->toLineString()));
-            bool bRet = false;
-            try
-            {
-                bRet = EncodeGeometry(poGeomField, &mls);
-                mls.removeGeometry(0, false);
-            }
-            catch( const std::exception& )
-            {
-                mls.removeGeometry(0, false);
-                throw;
-            }
-            return bRet;
-        }
-
+        case wkbCircularString:
+        case wkbCompoundCurve:
         case wkbMultiLineString:
         case wkbMultiCurve:
         {
-            const auto poMultiCurve = poGeom->toMultiCurve();
             m_abyCurvePart.clear();
             m_anNumberPointsPerPart.clear();
             m_adfX.clear();
@@ -662,7 +650,7 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
             m_adfM.clear();
 
             int nCurveDescrCount = 0;
-            for( const auto* poCurve: *poMultiCurve )
+            const auto ProcessCurve = [this, bIs3D, bIsMeasured, &nCurveDescrCount](const OGRCurve* poCurve)
             {
                 if( auto poCC = dynamic_cast<const OGRCompoundCurve*>(poCurve) )
                 {
@@ -670,20 +658,20 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
                     bool bFirstSubCurve = true;
                     for( const auto* poSubCurve: *poCC )
                     {
-                        if( auto poLS = dynamic_cast<const OGRLineString*>(poSubCurve) )
+                        if( const auto poLS = dynamic_cast<const OGRLineString*>(poSubCurve) )
                         {
                             const int nNumPoints = poLS->getNumPoints();
                             for( int i = (bFirstSubCurve ? 0 : 1); i < nNumPoints; ++i)
                             {
                                 m_adfX.push_back(poLS->getX(i));
                                 m_adfY.push_back(poLS->getY(i));
-                                if( poGeom->Is3D() )
+                                if( bIs3D )
                                     m_adfZ.push_back(poLS->getZ(i));
-                                if( poGeom->IsMeasured() )
+                                if( bIsMeasured )
                                     m_adfM.push_back(poLS->getM(i));
                             }
                         }
-                        else if( auto poCS = dynamic_cast<const OGRCircularString*>(poSubCurve) )
+                        else if( const auto poCS = dynamic_cast<const OGRCircularString*>(poSubCurve) )
                         {
                             const int nNumPoints = poCS->getNumPoints();
                             for( int i = 0; i < nNumPoints; i++)
@@ -692,9 +680,9 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
                                 {
                                     m_adfX.push_back(poCS->getX(i));
                                     m_adfY.push_back(poCS->getY(i));
-                                    if( poGeom->Is3D() )
+                                    if( bIs3D )
                                         m_adfZ.push_back(poCS->getZ(i));
-                                    if( poGeom->IsMeasured() )
+                                    if( bIsMeasured )
                                         m_adfM.push_back(poCS->getM(i));
                                 }
                                 if( i + 1 < nNumPoints )
@@ -717,7 +705,7 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
                     }
                     m_anNumberPointsPerPart.push_back(static_cast<uint32_t>(m_adfX.size() - nSizeBefore));
                 }
-                else if( auto poLS = dynamic_cast<const OGRLineString*>(poCurve) )
+                else if( const auto poLS = dynamic_cast<const OGRLineString*>(poCurve) )
                 {
                     const int nNumPoints = poLS->getNumPoints();
                     m_anNumberPointsPerPart.push_back(nNumPoints);
@@ -725,13 +713,13 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
                     {
                         m_adfX.push_back(poLS->getX(i));
                         m_adfY.push_back(poLS->getY(i));
-                        if( poGeom->Is3D() )
+                        if( bIs3D )
                             m_adfZ.push_back(poLS->getZ(i));
-                        if( poGeom->IsMeasured() )
+                        if( bIsMeasured )
                             m_adfM.push_back(poLS->getM(i));
                     }
                 }
-                else if( auto poCS = dynamic_cast<const OGRCircularString*>(poCurve) )
+                else if( const auto poCS = dynamic_cast<const OGRCircularString*>(poCurve) )
                 {
                     const int nNumPoints = poCS->getNumPoints();
                     const size_t nSizeBefore = m_adfX.size();
@@ -739,9 +727,9 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
                     {
                         m_adfX.push_back(poCS->getX(i));
                         m_adfY.push_back(poCS->getY(i));
-                        if( poGeom->Is3D() )
+                        if( bIs3D )
                             m_adfZ.push_back(poCS->getZ(i));
-                        if( poGeom->IsMeasured() )
+                        if( bIsMeasured )
                             m_adfM.push_back(poCS->getM(i));
                         if( i + 1 < nNumPoints )
                         {
@@ -760,18 +748,32 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
                 {
                     CPLAssert(false);
                 }
+
+            };
+
+            if( eFlatType == wkbMultiLineString || eFlatType == wkbMultiCurve )
+            {
+                const auto poMultiCurve = poGeom->toMultiCurve();
+                for( const auto* poCurve: *poMultiCurve )
+                {
+                    ProcessCurve(poCurve);
+                }
+            }
+            else
+            {
+                ProcessCurve(poGeom->toCurve());
             }
 
             if( nCurveDescrCount > 0 )
             {
                 WriteVarUInt(m_abyGeomBuffer, SHPT_GENERALPOLYLINE |
                                        (1U << 29) | // has curves
-                                       ((poGeom->IsMeasured() ? 1U : 0U) << 30) |
-                                       ((poGeom->Is3D() ? 1U : 0U) << 31));
+                                       ((bIsMeasured ? 1U : 0U) << 30) |
+                                       ((bIs3D ? 1U : 0U) << 31));
             }
-            else if( poGeom->Is3D() )
+            else if( bIs3D )
             {
-                if( poGeom->IsMeasured() )
+                if( bIsMeasured )
                 {
                     WriteUInt8(m_abyGeomBuffer, static_cast<uint8_t>(SHPT_ARCZM));
                 }
@@ -782,7 +784,7 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
             }
             else
             {
-                if( poGeom->IsMeasured() )
+                if( bIsMeasured )
                 {
                     WriteUInt8(m_abyGeomBuffer, static_cast<uint8_t>(SHPT_ARCM));
                 }
@@ -795,48 +797,11 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
             return WriteEndOfCurveOrSurface(nCurveDescrCount);
         }
 
-        case wkbCircularString:
-        case wkbCompoundCurve:
-        {
-            OGRMultiCurve multiCurve;
-            multiCurve.addGeometryDirectly(const_cast<OGRCurve*>(poGeom->toCurve()));
-            bool bRet = false;
-            try
-            {
-                bRet = EncodeGeometry(poGeomField, &multiCurve);
-                multiCurve.removeGeometry(0, false);
-            }
-            catch( const std::exception& )
-            {
-                multiCurve.removeGeometry(0, false);
-                throw;
-            }
-            return bRet;
-        }
-
         case wkbPolygon:
         case wkbCurvePolygon:
-        {
-            OGRMultiSurface msurface;
-            msurface.addGeometryDirectly(const_cast<OGRSurface*>(poGeom->toSurface()));
-            bool bRet = false;
-            try
-            {
-                bRet = EncodeGeometry(poGeomField, &msurface);
-                msurface.removeGeometry(0, false);
-            }
-            catch( const std::exception& )
-            {
-                msurface.removeGeometry(0, false);
-                throw;
-            }
-            return bRet;
-        }
-
         case wkbMultiPolygon:
         case wkbMultiSurface:
         {
-            const auto poMultiSurface = poGeom->toMultiSurface();
             m_abyCurvePart.clear();
             m_anNumberPointsPerPart.clear();
             m_adfX.clear();
@@ -845,9 +810,9 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
             m_adfM.clear();
 
             int nCurveDescrCount = 0;
-            for( const auto* poSurface: *poMultiSurface )
+            const auto ProcessSurface = [this, bIs3D, bIsMeasured, &nCurveDescrCount](const OGRSurface* poSurface)
             {
-                if( auto poPolygon = dynamic_cast<const OGRPolygon*>(poSurface) )
+                if( const auto poPolygon = dynamic_cast<const OGRPolygon*>(poSurface) )
                 {
                     bool bFirstRing = true;
                     for( const auto* poLS: *poPolygon )
@@ -862,14 +827,14 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
                             const int j = bReverseOrder ? nNumPoints - 1 - i : i;
                             m_adfX.push_back(poLS->getX(j));
                             m_adfY.push_back(poLS->getY(j));
-                            if( poGeom->Is3D() )
+                            if( bIs3D )
                                 m_adfZ.push_back(poLS->getZ(j));
-                            if( poGeom->IsMeasured() )
+                            if( bIsMeasured )
                                 m_adfM.push_back(poLS->getM(j));
                         }
                     }
                 }
-                else if( auto poCurvePoly = dynamic_cast<const OGRCurvePolygon*>(poSurface) )
+                else if( const auto poCurvePoly = dynamic_cast<const OGRCurvePolygon*>(poSurface) )
                 {
                     bool bFirstRing = true;
                     for( const auto* poRing: *poCurvePoly )
@@ -894,9 +859,9 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
                                         const int j = bReverseOrder ? nNumPoints - 1 - i : i;
                                         m_adfX.push_back(poLS->getX(j));
                                         m_adfY.push_back(poLS->getY(j));
-                                        if( poGeom->Is3D() )
+                                        if( bIs3D )
                                             m_adfZ.push_back(poLS->getZ(j));
-                                        if( poGeom->IsMeasured() )
+                                        if( bIsMeasured )
                                             m_adfM.push_back(poLS->getM(j));
                                     }
                                 }
@@ -910,9 +875,9 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
                                             const int j = bReverseOrder ? nNumPoints - 1 - i : i;
                                             m_adfX.push_back(poCS->getX(j));
                                             m_adfY.push_back(poCS->getY(j));
-                                            if( poGeom->Is3D() )
+                                            if( bIs3D )
                                                 m_adfZ.push_back(poCS->getZ(j));
-                                            if( poGeom->IsMeasured() )
+                                            if( bIsMeasured )
                                                 m_adfM.push_back(poCS->getM(j));
                                         }
                                         if( i + 1 < nNumPoints )
@@ -936,7 +901,7 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
                             }
                             m_anNumberPointsPerPart.push_back(static_cast<uint32_t>(m_adfX.size() - nSizeBefore));
                         }
-                        else if( auto poLS = dynamic_cast<const OGRLineString*>(poRing) )
+                        else if( const auto poLS = dynamic_cast<const OGRLineString*>(poRing) )
                         {
                             const int nNumPoints = poLS->getNumPoints();
                             m_anNumberPointsPerPart.push_back(nNumPoints);
@@ -945,13 +910,13 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
                                 const int j = bReverseOrder ? nNumPoints - 1 - i : i;
                                 m_adfX.push_back(poLS->getX(j));
                                 m_adfY.push_back(poLS->getY(j));
-                                if( poGeom->Is3D() )
+                                if( bIs3D )
                                     m_adfZ.push_back(poLS->getZ(j));
-                                if( poGeom->IsMeasured() )
+                                if( bIsMeasured )
                                     m_adfM.push_back(poLS->getM(j));
                             }
                         }
-                        else if( auto poCS = dynamic_cast<const OGRCircularString*>(poRing) )
+                        else if( const auto poCS = dynamic_cast<const OGRCircularString*>(poRing) )
                         {
                             const int nNumPoints = poCS->getNumPoints();
                             const size_t nSizeBefore = m_adfX.size();
@@ -960,9 +925,9 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
                                 int j = bReverseOrder ? nNumPoints - 1 - i : i;
                                 m_adfX.push_back(poCS->getX(j));
                                 m_adfY.push_back(poCS->getY(j));
-                                if( poGeom->Is3D() )
+                                if( bIs3D )
                                     m_adfZ.push_back(poCS->getZ(j));
-                                if( poGeom->IsMeasured() )
+                                if( bIsMeasured )
                                     m_adfM.push_back(poCS->getM(j));
                                 if( i + 1 < nNumPoints )
                                 {
@@ -988,18 +953,31 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
                 {
                     CPLAssert(false);
                 }
+            };
+
+            if( eFlatType == wkbMultiPolygon || eFlatType == wkbMultiSurface )
+            {
+                const auto poMultiSurface = poGeom->toMultiSurface();
+                for( const auto* poSurface: *poMultiSurface )
+                {
+                    ProcessSurface(poSurface);
+                }
+            }
+            else
+            {
+                ProcessSurface(poGeom->toSurface());
             }
 
             if( nCurveDescrCount > 0 )
             {
                 WriteVarUInt(m_abyGeomBuffer, SHPT_GENERALPOLYGON |
                                        (1U << 29) | // has curves
-                                       ((poGeom->IsMeasured() ? 1U : 0U) << 30) |
-                                       ((poGeom->Is3D() ? 1U : 0U) << 31));
+                                       ((bIsMeasured ? 1U : 0U) << 30) |
+                                       ((bIs3D ? 1U : 0U) << 31));
             }
-            else if( poGeom->Is3D() )
+            else if( bIs3D )
             {
-                if( poGeom->IsMeasured() )
+                if( bIsMeasured )
                 {
                     WriteUInt8(m_abyGeomBuffer, static_cast<uint8_t>(SHPT_POLYGONZM));
                 }
@@ -1010,7 +988,7 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField* poGeomField,
             }
             else
             {
-                if( poGeom->IsMeasured() )
+                if( bIsMeasured )
                 {
                     WriteUInt8(m_abyGeomBuffer, static_cast<uint8_t>(SHPT_POLYGONM));
                 }
