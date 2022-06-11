@@ -492,7 +492,7 @@ namespace tut
     void object::test<7>()
     {
       OGRStyleMgrH hSM = OGR_SM_Create(nullptr);
-      OGR_SM_InitStyleString(hSM, "PEN(w:2px,c:#000000,id:\"mapinfo-pen-2,ogr-pen-0\")");
+      ensure(OGR_SM_InitStyleString(hSM, "PEN(w:2px,c:#000000,id:\"mapinfo-pen-2,ogr-pen-0\")"));
       OGRStyleToolH hTool = OGR_SM_GetPart(hSM, 0, nullptr);
       int bValueIsNull;
 
@@ -1835,6 +1835,23 @@ namespace tut
             ensure(s1 != s2);
             ensure(!(s1 == s2));
         }
+    }
+
+    // Test OGRStyleMgr::InitStyleString() with a style name
+    // (https://github.com/OSGeo/gdal/issues/5555)
+    template<>
+    template<>
+    void object::test<23>()
+    {
+        OGRStyleTableH hStyleTable = OGR_STBL_Create();
+        OGR_STBL_AddStyle(hStyleTable, "@my_style", "PEN(c:#FF0000,w:5px)");
+        OGRStyleMgrH hSM = OGR_SM_Create(hStyleTable);
+        ensure_equals(OGR_SM_GetPartCount(hSM, nullptr), 0);
+        ensure(OGR_SM_InitStyleString(hSM, "@my_style"));
+        ensure_equals(OGR_SM_GetPartCount(hSM, nullptr), 1);
+        ensure(!OGR_SM_InitStyleString(hSM, "@i_do_not_exist"));
+        OGR_SM_Destroy(hSM);
+        OGR_STBL_Destroy(hStyleTable);
     }
 
 } // namespace tut
