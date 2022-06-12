@@ -41,6 +41,7 @@ check_include_file("dlfcn.h" HAVE_DLFCN_H)
 check_type_size("int" SIZEOF_INT)
 check_type_size("unsigned long" SIZEOF_UNSIGNED_LONG)
 check_type_size("void*" SIZEOF_VOIDP)
+check_type_size("size_t" SIZEOF_SIZE_T)
 
 if (MSVC)
   set(HAVE_VSNPRINTF 1)

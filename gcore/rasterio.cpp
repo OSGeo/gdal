@@ -5261,7 +5261,7 @@ bool GDALBufferHasOnlyNoData( const void* pBuffer,
 {
     // In the case where the nodata is 0, we can compare several bytes at
     // once. Select the largest natural integer type for the architecture.
-#if SIZEOF_VOIDP == 8 || defined(__x86_64__)
+#if SIZEOF_VOIDP >= 8 || defined(__x86_64__)
     // We test __x86_64__ for x32 arch where SIZEOF_VOIDP == 4
     typedef std::uint64_t WordType;
 #else
@@ -5275,7 +5275,7 @@ bool GDALBufferHasOnlyNoData( const void* pBuffer,
         size_t i = 0;
         const size_t nInitialIters = std::min(
             sizeof(WordType) -
-                (reinterpret_cast<std::uintptr_t>(pabyBuffer) % sizeof(WordType)),
+                static_cast<size_t>(reinterpret_cast<std::uintptr_t>(pabyBuffer) % sizeof(WordType)),
             nSize);
         for( ; i < nInitialIters; i++ )
         {
