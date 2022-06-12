@@ -128,3 +128,7 @@
 #define HAVE_DECL_NAN
 
 #include "cpl_config.h"
+
+#ifndef SIZE_T_MAX
+#define SIZE_T_MAX  (~(size_t)0)
+#endif

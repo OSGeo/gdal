@@ -1719,7 +1719,7 @@ void MEMAbstractMDArray::ReadWrite(bool bIsWrite,
                 CPLAssert(false);
             }
             else if ( bBothAreNumericDT
-#if SIZEOF_VOIDP == 8
+#if SIZEOF_VOIDP >= 8
                       && src_inc_offset <= std::numeric_limits<int>::max()
                       && dst_inc_offset <= std::numeric_limits<int>::max()
 #endif
