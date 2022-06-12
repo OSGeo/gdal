@@ -156,6 +156,7 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL: public GDALPamDataset
 
     sqlite3            *GetDB() { return hDB; }
     inline bool         GetUpdate() const { return eAccess == GA_Update; }
+    VSILFILE*           GetVSILFILE() const { return fpMainFile; }
 
     void                NotifyFileOpened (const char* pszFilename,
                                           VSILFILE* fp);
