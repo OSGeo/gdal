@@ -61,16 +61,16 @@ PThreadMutex::PThreadMutex()
 {
     hMutex = (pthread_mutex_t *) malloc(sizeof(pthread_mutex_t));
 
-#if defined(PTHREAD_MUTEX_RECURSIVE)
+#if defined(PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP)
+    pthread_mutex_t tmp_mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+    *hMutex = tmp_mutex;
+#elif defined(PTHREAD_MUTEX_RECURSIVE) || defined(HAVE_PTHREAD_MUTEX_RECURSIVE)
     {
         pthread_mutexattr_t  attr;
         pthread_mutexattr_init( &attr );
         pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_RECURSIVE );
         pthread_mutex_init( hMutex, &attr );
     }
-#elif defined(PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP)
-    pthread_mutex_t tmp_mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
-    *hMutex = tmp_mutex;
 #else
 #error "Recursive mutexes apparently unsupported, configure --without-threads"
 #endif
