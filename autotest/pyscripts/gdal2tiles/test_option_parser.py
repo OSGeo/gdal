@@ -225,13 +225,13 @@ class OptionParserPostProcessingTest(TestCase):
             pytest.skip()
 
         self.DEFAULT_ATTRDICT_OPTIONS['tiledriver'] = "WEBP"
-        self.DEFAULT_ATTRDICT_OPTIONS["webp_quality"] = 0
+        self.DEFAULT_ATTRDICT_OPTIONS["webp_quality"] = 1
         self.DEFAULT_ATTRDICT_OPTIONS["webp_lossless"] = False
 
         options = gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", "/bar/")
 
         self.assertEqual(options.tiledriver, 'WEBP')
-        self.assertEqual(options.webp_quality, 0)
+        self.assertEqual(options.webp_quality, 1)
 
 
         self.DEFAULT_ATTRDICT_OPTIONS["webp_quality"] = 100
@@ -262,8 +262,14 @@ class OptionParserPostProcessingTest(TestCase):
             pytest.skip()
 
         self.DEFAULT_ATTRDICT_OPTIONS['tiledriver'] = "WEBP"
-        self.DEFAULT_ATTRDICT_OPTIONS["webp_quality"] = -20
         self.DEFAULT_ATTRDICT_OPTIONS["webp_lossless"] = False
+        self.DEFAULT_ATTRDICT_OPTIONS["webp_quality"] = -20
+
+        with self.assertRaises(SystemExit):
+            gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", "/bar/")
+
+
+        self.DEFAULT_ATTRDICT_OPTIONS["webp_quality"] = 0
 
         with self.assertRaises(SystemExit):
             gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", "/bar/")

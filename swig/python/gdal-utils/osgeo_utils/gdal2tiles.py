@@ -1508,8 +1508,8 @@ def optparse_init() -> optparse.OptionParser:
     # Webp options
     g = optparse.OptionGroup(p, "WEBP options",
                     "Options for WEBP tiledriver")
-    g.add_option("--webp-quality", dest='webp_quality', type=int, default=70,
-                 help='quality of webp image')
+    g.add_option("--webp-quality", dest='webp_quality', type=int, default=75,
+                 help='quality of webp image, integer between 1 and 100, default is 75')
     g.add_option("--webp-lossless", dest='webp_lossless', action="store_true",
                  help='use lossless compression for the webp image')
     p.add_option_group(g)
@@ -1616,8 +1616,8 @@ def options_post_processing(options: Options, input_file: str, output_folder: st
             exit_with_error('WEBP driver is not available')
 
         if not options.webp_lossless:
-            if options.webp_quality < 0 or options.webp_quality > 100:
-                exit_with_error('webp_quality should be in the range [0-100]')
+            if options.webp_quality <= 0 or options.webp_quality > 100:
+                exit_with_error('webp_quality should be in the range [1-100]')
             options.webp_quality = int(options.webp_quality)
 
     # Output the results
