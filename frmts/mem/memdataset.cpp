@@ -933,10 +933,11 @@ CPLErr MEMDataset::IBuildOverviews( const char *pszResampling,
         // for it
         MEMRasterBand* poMEMBand = reinterpret_cast<MEMRasterBand*>(poBand);
         const bool bMustGenerateMaskOvr =
-                ( (poMEMBand->bOwnMask && poMEMBand->poMask != nullptr) ||
+            ( (poMEMBand->bOwnMask && poMEMBand->poMask != nullptr) ||
         // Or if it is a per-dataset mask, in which case just do it for the
         // first band
-                  ((poMEMBand->nMaskFlags & GMF_PER_DATASET) != 0 && iBand == 0) );
+                  ((poMEMBand->nMaskFlags & GMF_PER_DATASET) != 0 && iBand == 0) ) &&
+            dynamic_cast<MEMRasterBand*>(poBand->GetMaskBand()) != nullptr;
 
         if( nNewOverviews > 0 && bMustGenerateMaskOvr )
         {
