@@ -228,7 +228,7 @@ class VSIUnixStdioHandle final : public VSIVirtualHandle
     int Close() override;
     int Truncate( vsi_l_offset nNewSize ) override;
     void *GetNativeFileDescriptor() override {
-        return reinterpret_cast<void *>(static_cast<size_t>(fileno(fp))); }
+        return reinterpret_cast<void *>(static_cast<uintptr_t>(fileno(fp))); }
     VSIRangeStatus GetRangeStatus( vsi_l_offset nOffset,
                                    vsi_l_offset nLength ) override;
 };
