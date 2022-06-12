@@ -897,6 +897,8 @@ class VRTDriver final: public GDALDriver
 {
     CPL_DISALLOW_COPY_ASSIGN(VRTDriver)
 
+    std::map<std::string, VRTSourceParser> m_oMapSourceParser{};
+
   public:
                  VRTDriver();
     virtual ~VRTDriver();
