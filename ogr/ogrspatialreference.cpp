@@ -3787,7 +3787,8 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition,
             // PROJ < 9.0.1 doesn't like a datum_ensemble whose member have
             // a unknown id.
             CPLJSONDocument oCRSDoc;
-            oCRSDoc.LoadMemory(pszDefinition);
+            if( !oCRSDoc.LoadMemory(pszDefinition) )
+                return OGRERR_CORRUPT_DATA;
             CPLJSONObject oCRSRoot = oCRSDoc.GetRoot();
             RemoveIDFromMemberOfEnsembles(oCRSRoot);
             pj = proj_create(d->getPROJContext(), oCRSRoot.ToString().c_str());
