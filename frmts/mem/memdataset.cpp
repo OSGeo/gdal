@@ -65,7 +65,7 @@ GDALRasterBandH MEMCreateRasterBand( GDALDataset *poDS, int nBand,
                                      int bAssumeOwnership )
 
 {
-    return reinterpret_cast<GDALRasterBandH>(
+    return GDALRasterBand::ToHandle(
         new MEMRasterBand( poDS, nBand, pabyData, eType, nPixelOffset,
                            nLineOffset, bAssumeOwnership ) );
 }
@@ -81,7 +81,7 @@ GDALRasterBandH MEMCreateRasterBandEx( GDALDataset *poDS, int nBand,
                                        int bAssumeOwnership )
 
 {
-    return reinterpret_cast<GDALRasterBandH>(
+    return GDALRasterBand::ToHandle(
         new MEMRasterBand( poDS, nBand, pabyData, eType, nPixelOffset,
                            nLineOffset, bAssumeOwnership ) );
 }
@@ -183,7 +183,7 @@ CPLErr MEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
         for( int iPixel = 0; iPixel < nBlockXSize; iPixel++ )
         {
-            memcpy( reinterpret_cast<GByte *>(pImage) + iPixel*nWordSize,
+            memcpy( static_cast<GByte *>(pImage) + iPixel*nWordSize,
                     pabyCur + iPixel*nPixelOffset,
                     nWordSize );
         }
@@ -217,7 +217,7 @@ CPLErr MEMRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
         for( int iPixel = 0; iPixel < nBlockXSize; iPixel++ )
         {
             memcpy( pabyCur + iPixel*nPixelOffset,
-                    reinterpret_cast<GByte *>( pImage ) + iPixel*nWordSize,
+                    static_cast<GByte *>( pImage ) + iPixel*nWordSize,
                     nWordSize );
         }
     }
@@ -259,8 +259,8 @@ CPLErr MEMRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 nXOff*nPixelOffset,
                 eDataType,
                 static_cast<int>(nPixelOffset),
-                reinterpret_cast<GByte*>( pData ) +
-                nLineSpaceBuf * static_cast<GPtrDiff_t>(iLine),
+                static_cast<GByte*>( pData ) +
+                    nLineSpaceBuf * static_cast<GPtrDiff_t>(iLine),
                 eBufType,
                 static_cast<int>(nPixelSpaceBuf),
                 nXSize );
@@ -271,8 +271,8 @@ CPLErr MEMRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         for( int iLine = 0; iLine < nYSize; iLine++ )
         {
             GDALCopyWords(
-                reinterpret_cast<GByte *>( pData ) +
-                nLineSpaceBuf*static_cast<GPtrDiff_t>(iLine),
+                static_cast<GByte *>( pData ) +
+                    nLineSpaceBuf*static_cast<GPtrDiff_t>(iLine),
                 eBufType,
                 static_cast<int>(nPixelSpaceBuf),
                 pabyData + nLineOffset*static_cast<GPtrDiff_t>(iLine + nYOff) +
@@ -319,7 +319,7 @@ CPLErr MEMDataset::IRasterIO( GDALRWFlag eRWFlag,
             if( panBandMap[iBandIndex] != iBandIndex + 1 )
                 break;
 
-            MEMRasterBand *poBand = reinterpret_cast<MEMRasterBand *>(
+            MEMRasterBand *poBand = cpl::down_cast<MEMRasterBand *>(
                 GetRasterBand(iBandIndex + 1) );
             if( iBandIndex == 0 )
             {
@@ -352,8 +352,8 @@ CPLErr MEMDataset::IRasterIO( GDALRWFlag eRWFlag,
                         nXOff*nPixelOffset,
                         eDT,
                         eDTSize,
-                        reinterpret_cast<GByte *>( pData ) +
-                        nLineSpaceBuf * static_cast<size_t>(iLine),
+                        static_cast<GByte *>( pData ) +
+                            nLineSpaceBuf * static_cast<size_t>(iLine),
                         eBufType,
                         eBufTypeSize,
                         nXSize * nBands );
@@ -364,8 +364,8 @@ CPLErr MEMDataset::IRasterIO( GDALRWFlag eRWFlag,
                 for(int iLine=0;iLine<nYSize;iLine++)
                 {
                     GDALCopyWords(
-                        reinterpret_cast<GByte *>( pData ) +
-                        nLineSpaceBuf*(size_t)iLine,
+                        static_cast<GByte *>( pData ) +
+                            nLineSpaceBuf*(size_t)iLine,
                         eBufType,
                         eBufTypeSize,
                         pabyData +
@@ -433,7 +433,7 @@ CPLErr MEMRasterBand::CreateMaskBand( int nFlagsIn )
     if( (nFlagsIn & GMF_PER_DATASET) != 0 && nBand != 1 && poMemDS != nullptr )
     {
         MEMRasterBand* poFirstBand =
-            reinterpret_cast<MEMRasterBand*>(poMemDS->GetRasterBand(1));
+            dynamic_cast<MEMRasterBand*>(poMemDS->GetRasterBand(1));
         if( poFirstBand != nullptr)
             return poFirstBand->CreateMaskBand( nFlagsIn );
     }
@@ -454,7 +454,7 @@ CPLErr MEMRasterBand::CreateMaskBand( int nFlagsIn )
         for( int i = 2; i <= poMemDS->GetRasterCount(); ++i )
         {
             MEMRasterBand* poOtherBand =
-                reinterpret_cast<MEMRasterBand*>(poMemDS->GetRasterBand(i));
+                cpl::down_cast<MEMRasterBand*>(poMemDS->GetRasterBand(i));
             poOtherBand->InvalidateMaskBand();
             poOtherBand->nMaskFlags = nFlagsIn;
             poOtherBand->bOwnMask = false;
@@ -605,7 +605,7 @@ void *MEMDataset::GetInternalHandle( const char * pszRequest )
         if(int BandNumber = static_cast<int>(CPLScanLong(&pszRequest[6], 10)))
         {
             MEMRasterBand *RequestedRasterBand =
-                reinterpret_cast<MEMRasterBand *>( GetRasterBand(BandNumber) );
+                cpl::down_cast<MEMRasterBand *>( GetRasterBand(BandNumber) );
 
             // we're within a MEMDataset so the only thing a RasterBand
             // could be is a MEMRasterBand
@@ -697,7 +697,7 @@ CPLErr MEMDataset::AddBand( GDALDataType eType, char **papszOptions )
 #if SIZEOF_VOIDP == 4
             ( nTmp > INT_MAX ) ? nullptr :
 #endif
-            reinterpret_cast<GByte *>(
+            static_cast<GByte *>(
                 VSI_CALLOC_VERBOSE((size_t)nTmp, GetRasterYSize() ) );
 
         if( pData == nullptr )
@@ -716,7 +716,7 @@ CPLErr MEMDataset::AddBand( GDALDataType eType, char **papszOptions )
 /*      Get layout of memory and other flags.                           */
 /* -------------------------------------------------------------------- */
     const char *pszDataPointer = CSLFetchNameValue(papszOptions, "DATAPOINTER");
-    GByte *pData = reinterpret_cast<GByte *>(
+    GByte *pData = static_cast<GByte *>(
         CPLScanPointer( pszDataPointer,
                         static_cast<int>(strlen(pszDataPointer)) ) );
 
@@ -931,7 +931,7 @@ CPLErr MEMDataset::IBuildOverviews( const char *pszResampling,
 
         // If the band has an explicit mask, we need to create overviews
         // for it
-        MEMRasterBand* poMEMBand = reinterpret_cast<MEMRasterBand*>(poBand);
+        MEMRasterBand* poMEMBand = cpl::down_cast<MEMRasterBand*>(poBand);
         const bool bMustGenerateMaskOvr =
             ( (poMEMBand->bOwnMask && poMEMBand->poMask != nullptr) ||
         // Or if it is a per-dataset mask, in which case just do it for the
@@ -944,7 +944,7 @@ CPLErr MEMDataset::IBuildOverviews( const char *pszResampling,
             for( int i = 0; i < nNewOverviews; i++ )
             {
                 MEMRasterBand* poMEMOvrBand =
-                    reinterpret_cast<MEMRasterBand*>(papoOverviewBands[i]);
+                    cpl::down_cast<MEMRasterBand*>(papoOverviewBands[i]);
                 if( !(poMEMOvrBand->bOwnMask && poMEMOvrBand->poMask != nullptr) &&
                     (poMEMOvrBand->nMaskFlags & GMF_PER_DATASET) == 0 )
                 {
@@ -958,7 +958,7 @@ CPLErr MEMDataset::IBuildOverviews( const char *pszResampling,
                     1.0 * (iBand+0.5) / nBands,
                     pfnProgress, pProgressData );
 
-            MEMRasterBand* poMaskBand = reinterpret_cast<MEMRasterBand*>(
+            MEMRasterBand* poMaskBand = cpl::down_cast<MEMRasterBand*>(
                                                         poBand->GetMaskBand());
             // Make the mask band to be its own mask, similarly to what is
             // done for alpha bands in GDALRegenerateOverviews() (#5640)
@@ -1132,7 +1132,7 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
                                      static_cast<int>(strlen(pszOption)));
 
     const char *pszDataPointer = CSLFetchNameValue(papszOptions,"DATAPOINTER");
-    GByte *pabyData = reinterpret_cast<GByte *>(
+    GByte *pabyData = static_cast<GByte *>(
         CPLScanPointer( pszDataPointer,
                         static_cast<int>(strlen(pszDataPointer)) ) );
 
