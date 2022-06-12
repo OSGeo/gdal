@@ -4899,11 +4899,11 @@ void GDALMDArrayTransposed::PrepareParentArrays(const GUInt64* arrayStartIdx,
         {
             m_parentStart[iOldAxis] = arrayStartIdx[i];
             m_parentCount[iOldAxis] = count[i];
-            if( arrayStep )
+            if( arrayStep ) // only null when called from IAdviseRead()
             {
                 m_parentStep[iOldAxis] = arrayStep[i];
             }
-            if( bufferStride )
+            if( bufferStride ) // only null when called from IAdviseRead()
             {
                 m_parentStride[iOldAxis] = bufferStride[i];
             }
