@@ -96,7 +96,6 @@ TIFFClientOpen(
 	assert(sizeof(int32_t) == 4);
 	assert(sizeof(uint64_t) == 8);
 	assert(sizeof(int64_t) == 8);
-	assert(sizeof(tmsize_t)==sizeof(void*));
 	{
 		union{
 			uint8_t a8[2];
