@@ -31,6 +31,14 @@
 
 #include "gdal_priv.h"
 
+// If modifying the below declaration, modify it in gdal_array.i too
+std::shared_ptr<GDALMDArray> CPL_DLL MEMGroupCreateMDArray(GDALGroup* poGroup,
+                                                   const std::string& osName,
+                                                   const std::vector<std::shared_ptr<GDALDimension>>& aoDimensions,
+                                                   const GDALExtendedDataType& oDataType,
+                                                   void* pData,
+                                                   CSLConstList papszOptions);
+
 /************************************************************************/
 /*                               MEMGroup                               */
 /************************************************************************/
@@ -66,6 +74,12 @@ public:
                                                        const std::vector<std::shared_ptr<GDALDimension>>& aoDimensions,
                                                        const GDALExtendedDataType& oDataType,
                                                        CSLConstList papszOptions) override;
+
+    std::shared_ptr<GDALMDArray> CreateMDArray(const std::string& osName,
+                                                       const std::vector<std::shared_ptr<GDALDimension>>& aoDimensions,
+                                                       const GDALExtendedDataType& oDataType,
+                                                       void* pData,
+                                                       CSLConstList papszOptions);
 
     std::shared_ptr<GDALAttribute> GetAttribute(const std::string& osName) const override;
 

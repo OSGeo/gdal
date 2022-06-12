@@ -1747,8 +1747,8 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
     GDALDriver* l_poDriver = (GDALDriver*) GDALGetDriverByName(pszDriverName);
     if( l_poDriver != nullptr)
     {
-        GDALDataset* poMEMDS = MEMDataset::Create("", nBlockXSize, nBlockYSize,
-                                                  0, eTileDT, nullptr);
+        auto poMEMDS = MEMDataset::Create("", nBlockXSize, nBlockYSize,
+                                          0, eTileDT, nullptr);
         int nTileBands = nBands;
         if( bPartialTile && nBands == 1 && m_poCT == nullptr && bTileDriverSupports2Bands )
             nTileBands = 2;
@@ -1963,15 +1963,10 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                 }
             }
 
-            char** papszOptions = nullptr;
-            char szDataPointer[32];
-            int nRet = CPLPrintPointer(szDataPointer, pTempTileBuffer,
-                                       sizeof(szDataPointer));
-            szDataPointer[nRet] = '\0';
-            papszOptions = CSLSetNameValue(papszOptions,
-                                            "DATAPOINTER", szDataPointer);
-            poMEMDS->AddBand(GDT_UInt16, papszOptions);
-            CSLDestroy(papszOptions);
+            auto hBand = MEMCreateRasterBandEx( poMEMDS, 1,
+                                                reinterpret_cast<GByte*>(pTempTileBuffer),
+                                                GDT_UInt16, 0, 0, false );
+            poMEMDS->AddMEMBand(hBand);
         }
         else if( m_eTF == GPKG_TF_TIFF_32BIT_FLOAT )
         {
@@ -2013,24 +2008,15 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             if( nValidPixels )
                 dfTileStdDev = sqrt( dfM2 / nValidPixels );
 
-            char** papszOptions = nullptr;
-            char szDataPointer[32];
-            int nRet = CPLPrintPointer(szDataPointer,
-                        m_pabyCachedTiles,
-                        sizeof(szDataPointer));
-            szDataPointer[nRet] = '\0';
-            papszOptions = CSLSetNameValue(papszOptions,
-                                            "DATAPOINTER", szDataPointer);
-            poMEMDS->AddBand(GDT_Float32, papszOptions);
-            CSLDestroy(papszOptions);
+            auto hBand = MEMCreateRasterBandEx( poMEMDS, 1, m_pabyCachedTiles,
+                                                GDT_Float32, 0, 0, false );
+            poMEMDS->AddMEMBand(hBand);
         }
         else
         {
             CPLAssert( m_eDT == GDT_Byte );
             for( int i = 0; i < nTileBands; i++ )
             {
-                char** papszOptions = nullptr;
-                char szDataPointer[32];
                 int iSrc = i;
                 if( nBands == 1 && m_poCT == nullptr && nTileBands == 3 )
                     iSrc = 0;
@@ -2039,16 +2025,15 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                     iSrc = (i < 3) ? 0 : 3;
                 else if( nBands == 2 && nTileBands >= 3 )
                     iSrc = (i < 3) ? 0 : 1;
-                int nRet = CPLPrintPointer(szDataPointer,
-                        m_pabyCachedTiles + iSrc * nBlockXSize * nBlockYSize,
-                        sizeof(szDataPointer));
-                szDataPointer[nRet] = '\0';
-                papszOptions = CSLSetNameValue(papszOptions,
-                                               "DATAPOINTER", szDataPointer);
-                poMEMDS->AddBand(GDT_Byte, papszOptions);
+
+                auto hBand = MEMCreateRasterBandEx(
+                    poMEMDS, i + 1,
+                    m_pabyCachedTiles + iSrc * nBlockXSize * nBlockYSize,
+                    GDT_Byte, 0, 0, false );
+                poMEMDS->AddMEMBand(hBand);
+
                 if( i == 0 && nTileBands == 1 && m_poCT != nullptr )
                     poMEMDS->GetRasterBand(1)->SetColorTable(m_poCT);
-                CSLDestroy(papszOptions);
             }
         }
 
@@ -2075,19 +2060,16 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
         {
             CPLAssert( bAllDirty );
 
-            GDALDataset* poMEM_RGB_DS = MEMDataset::Create("", nBlockXSize, nBlockYSize,
+            auto poMEM_RGB_DS = MEMDataset::Create(
+                                                  "", nBlockXSize, nBlockYSize,
                                                   0, GDT_Byte, nullptr);
             for( int i = 0; i < 3; i++ )
             {
-                char** papszOptions = nullptr;
-                char szDataPointer[32];
-                int nRet = CPLPrintPointer(szDataPointer,
-                                        m_pabyCachedTiles + i * nBandBlockSize,
-                                        sizeof(szDataPointer));
-                szDataPointer[nRet] = '\0';
-                papszOptions = CSLSetNameValue(papszOptions, "DATAPOINTER", szDataPointer);
-                poMEM_RGB_DS->AddBand(GDT_Byte, papszOptions);
-                CSLDestroy(papszOptions);
+                auto hBand = MEMCreateRasterBandEx(
+                    poMEMDS, i + 1,
+                    m_pabyCachedTiles + i * nBandBlockSize,
+                    GDT_Byte, 0, 0, false );
+                poMEM_RGB_DS->AddMEMBand(hBand);
             }
 
             if( m_pabyHugeColorArray == nullptr )

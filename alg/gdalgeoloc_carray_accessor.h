@@ -177,14 +177,13 @@ GDALDataset* GDALGeoLocCArrayAccessors::GetBackmapDataset()
 
     for( int i = 1; i <= 2; i++ )
     {
-        char szBuffer[32] = { '\0' };
-        char szBuffer0[64] = { '\0' };
-        char* apszOptions[] = { szBuffer0, nullptr };
-
         void* ptr = (i == 1) ? m_pafBackMapX : m_pafBackMapY;
-        szBuffer[CPLPrintPointer(szBuffer, ptr, sizeof(szBuffer))] = '\0';
-        snprintf(szBuffer0, sizeof(szBuffer0), "DATAPOINTER=%s", szBuffer);
-        poMEMDS->AddBand(GDT_Float32, apszOptions);
+        GDALRasterBandH hMEMBand = MEMCreateRasterBandEx( poMEMDS,
+                                                      i, static_cast<GByte*>(ptr),
+                                                      GDT_Float32,
+                                                      0, 0,
+                                                      false );
+        poMEMDS->AddMEMBand(hMEMBand);
         poMEMDS->GetRasterBand(i)->SetNoDataValue(INVALID_BMXY);
     }
     return poMEMDS;

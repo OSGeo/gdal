@@ -34,6 +34,7 @@
 #include "cpl_string.h"
 #include "gdal_pam.h"
 #include "gdalwarper.h"
+#include "memdataset.h"
 #include "ogr_spatialref.h"
 
 #include <cmath>
@@ -1300,37 +1301,17 @@ static int USGSDEMLoadRaster( CPL_UNUSED USGSDEMWriteInfo *psWInfo,
 /* -------------------------------------------------------------------- */
 /*      Make a "memory dataset" wrapper for this data array.            */
 /* -------------------------------------------------------------------- */
-    GDALDriver  *poMemDriver = reinterpret_cast<GDALDriver *>(
-        GDALGetDriverByName( "MEM" ) );
-
-    if( poMemDriver == nullptr )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to find MEM driver." );
-        return FALSE;
-    }
-
-    GDALDataset *poMemDS
-        = poMemDriver->Create( "USGSDEM_temp", psWInfo->nXSize, psWInfo->nYSize,
-                               0, GDT_Int16, nullptr );
-    if( poMemDS == nullptr )
-        return FALSE;
+    auto poMemDS = std::unique_ptr<MEMDataset>(
+        MEMDataset::Create( "USGSDEM_temp", psWInfo->nXSize, psWInfo->nYSize,
+                            0, GDT_Int16, nullptr ));
 
 /* -------------------------------------------------------------------- */
 /*      Now add the array itself as a band.                             */
 /* -------------------------------------------------------------------- */
-    char szDataPointer[100];
-    char *apszOptions[] = { szDataPointer, nullptr };
-
-    memset( szDataPointer, 0, sizeof(szDataPointer) );
-    // cppcheck-suppress redundantCopy
-    snprintf( szDataPointer, sizeof(szDataPointer), "DATAPOINTER=" );
-    CPLPrintPointer( szDataPointer+strlen(szDataPointer),
-                     psWInfo->panData,
-                     static_cast<int>(sizeof(szDataPointer) - strlen(szDataPointer)) );
-
-    if( poMemDS->AddBand( GDT_Int16, apszOptions ) != CE_None )
-        return FALSE;
+    auto hBand = MEMCreateRasterBandEx( poMemDS.get(), 1,
+                                        reinterpret_cast<GByte*>(psWInfo->panData),
+                                        GDT_Int16, 0, 0, false );
+    poMemDS->AddMEMBand(hBand);
 
 /* -------------------------------------------------------------------- */
 /*      Assign geotransform and nodata indicators.                      */
@@ -1383,15 +1364,10 @@ static int USGSDEMLoadRaster( CPL_UNUSED USGSDEMWriteInfo *psWInfo,
 /* -------------------------------------------------------------------- */
     CPLErr eErr = GDALReprojectImage( (GDALDatasetH) psWInfo->poSrcDS,
                                psWInfo->poSrcDS->GetProjectionRef(),
-                               (GDALDatasetH) poMemDS,
+                               GDALDataset::ToHandle(poMemDS.get()),
                                psWInfo->pszDstSRS,
                                eResampleAlg, 0.0, 0.0, nullptr, nullptr,
                                nullptr );
-
-/* -------------------------------------------------------------------- */
-/*      Deallocate memory wrapper for the buffer.                       */
-/* -------------------------------------------------------------------- */
-    delete poMemDS;
 
     return eErr == CE_None;
 }

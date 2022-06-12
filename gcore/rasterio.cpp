@@ -1091,27 +1091,14 @@ CPLErr GDALRasterBand::RasterIOResampled(
     poMEMDS = MEMDataset::Create( "", nDestXOffVirtual + nBufXSize,
                                   nDestYOffVirtual + nBufYSize, 0,
                                   eDTMem, nullptr );
-    char szBuffer[32] = { '\0' };
-    int nRet =
-        CPLPrintPointer(
-            szBuffer, static_cast<GByte*>(pDataMem)
-            - nPSMem * nDestXOffVirtual
-            - nLSMem * nDestYOffVirtual, sizeof(szBuffer));
-    szBuffer[nRet] = '\0';
-
-    char szBuffer0[64] = { '\0' };
-    snprintf(szBuffer0, sizeof(szBuffer0), "DATAPOINTER=%s", szBuffer);
-    char szBuffer1[64] = { '\0' };
-    snprintf( szBuffer1, sizeof(szBuffer1),
-              "PIXELOFFSET=" CPL_FRMT_GIB, static_cast<GIntBig>(nPSMem) );
-    char szBuffer2[64] = { '\0' };
-    snprintf( szBuffer2, sizeof(szBuffer2),
-              "LINEOFFSET=" CPL_FRMT_GIB, static_cast<GIntBig>(nLSMem) );
-    char* apszOptions[4] = { szBuffer0, szBuffer1, szBuffer2, nullptr };
-
-    poMEMDS->AddBand(eDTMem, apszOptions);
-
-    GDALRasterBandH hMEMBand = poMEMDS->GetRasterBand(1);
+    GByte* pabyData = static_cast<GByte*>(pDataMem)
+                        - nPSMem * nDestXOffVirtual
+                        - nLSMem * nDestYOffVirtual;
+    GDALRasterBandH hMEMBand = MEMCreateRasterBandEx( poDS, 1, pabyData,
+                                                      eDTMem,
+                                                      nPSMem, nLSMem,
+                                                      false );
+    poMEMDS->SetBand(1, GDALRasterBand::FromHandle(hMEMBand));
 
     const char* pszNBITS = GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
     if( pszNBITS )
