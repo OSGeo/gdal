@@ -2493,20 +2493,16 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
                     nBufferDTSize );
 #endif
 
-        poTileDS = MEMDataset::Create(
+        auto poMEMDS = MEMDataset::Create(
             "", nRequestWidth, nRequestHeight, 0, eBufferDataType, nullptr);
+        poTileDS = poMEMDS;
         for( int i = 0; i < static_cast<int>(anRequestedBands.size()); i++ )
         {
-            char szBuffer0[128] = {};
-            char szBuffer[64] = {};
-            int nRet = CPLPrintPointer(
-                szBuffer,
+            auto hBand = MEMCreateRasterBandEx(
+                poMEMDS, i + 1,
                 pabySrcData + i * nGotHeight * nGotWidth * nBufferDTSize,
-                sizeof(szBuffer));
-            szBuffer[nRet] = 0;
-            snprintf(szBuffer0, sizeof(szBuffer0), "DATAPOINTER=%s", szBuffer);
-            char* apszOptions[2] = { szBuffer0, nullptr };
-            poTileDS->AddBand(eBufferDataType, apszOptions);
+                eBufferDataType, 0, 0, false );
+            poMEMDS->AddMEMBand(hBand);
         }
     }
     else

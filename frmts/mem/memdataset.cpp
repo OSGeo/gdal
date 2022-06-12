@@ -742,6 +742,17 @@ CPLErr MEMDataset::AddBand( GDALDataType eType, char **papszOptions )
 }
 
 /************************************************************************/
+/*                           AddMEMBand()                               */
+/************************************************************************/
+
+void MEMDataset::AddMEMBand(GDALRasterBandH hMEMBand)
+{
+    auto poBand = GDALRasterBand::FromHandle(hMEMBand);
+    CPLAssert( dynamic_cast<MEMRasterBand*>(poBand) != nullptr );
+    SetBand( 1 + nBands, poBand);
+}
+
+/************************************************************************/
 /*                          IBuildOverviews()                           */
 /************************************************************************/
 
@@ -1177,7 +1188,7 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                               Create()                               */
 /************************************************************************/
 
-GDALDataset *MEMDataset::Create( const char * /* pszFilename */,
+MEMDataset *MEMDataset::Create( const char * /* pszFilename */,
                                  int nXSize,
                                  int nYSize,
                                  int nBandsIn,
@@ -1227,7 +1238,7 @@ GDALDataset *MEMDataset::Create( const char * /* pszFilename */,
     if( bPixelInterleaved )
     {
         apbyBandData.push_back(
-            reinterpret_cast<GByte *>( VSI_CALLOC_VERBOSE( 1, nGlobalSize ) ) );
+            static_cast<GByte *>( VSI_CALLOC_VERBOSE( 1, nGlobalSize ) ) );
 
         if( apbyBandData[0] == nullptr )
             bAllocOK = FALSE;
@@ -1242,7 +1253,7 @@ GDALDataset *MEMDataset::Create( const char * /* pszFilename */,
         for( int iBand = 0; iBand < nBandsIn; iBand++ )
         {
             apbyBandData.push_back(
-                reinterpret_cast<GByte *>(
+                static_cast<GByte *>(
                     VSI_CALLOC_VERBOSE(
                         1,
                         static_cast<size_t>(nWordSize) * nXSize * nYSize ) ) );
@@ -1304,6 +1315,17 @@ GDALDataset *MEMDataset::Create( const char * /* pszFilename */,
 /*      Try to return a regular handle on the file.                     */
 /* -------------------------------------------------------------------- */
     return poDS;
+}
+
+GDALDataset *MEMDataset::CreateBase( const char * pszFilename,
+                                 int nXSize,
+                                 int nYSize,
+                                 int nBandsIn,
+                                 GDALDataType eType,
+                                 char **papszOptions )
+{
+    return Create(pszFilename, nXSize, nYSize, nBandsIn,
+                  eType, papszOptions);
 }
 
 /************************************************************************/
@@ -1387,6 +1409,7 @@ std::shared_ptr<GDALGroup> MEMGroup::CreateGroup(const std::string& osName,
 std::shared_ptr<GDALMDArray> MEMGroup::CreateMDArray(const std::string& osName,
                                                      const std::vector<std::shared_ptr<GDALDimension>>& aoDimensions,
                                                      const GDALExtendedDataType& oType,
+                                                     void* pData,
                                                      CSLConstList papszOptions)
 {
     if( osName.empty() )
@@ -1403,15 +1426,11 @@ std::shared_ptr<GDALMDArray> MEMGroup::CreateMDArray(const std::string& osName,
     }
     auto newArray(MEMMDArray::Create(GetFullName(), osName, aoDimensions, oType));
 
-    // Used by NUMPYMultiDimensionalDataset
-    const char *pszDataPointer = CSLFetchNameValue(papszOptions, "DATAPOINTER");
-    GByte* pData = nullptr;
+    GByte* pabyData = nullptr;
     std::vector<GPtrDiff_t> anStrides;
-    if( pszDataPointer )
+    if( pData )
     {
-        pData = reinterpret_cast<GByte *>(
-            CPLScanPointer( pszDataPointer,
-                            static_cast<int>(strlen(pszDataPointer)) ) );
+        pabyData = static_cast<GByte *>(pData);
         const char* pszStrides = CSLFetchNameValue(papszOptions, "STRIDES");
         if( pszStrides )
         {
@@ -1429,10 +1448,43 @@ std::shared_ptr<GDALMDArray> MEMGroup::CreateMDArray(const std::string& osName,
             }
         }
     }
-    if( !newArray->Init(pData, anStrides) )
+    if( !newArray->Init(pabyData, anStrides) )
         return nullptr;
     m_oMapMDArrays[osName] = newArray;
     return newArray;
+}
+
+std::shared_ptr<GDALMDArray> MEMGroup::CreateMDArray(const std::string& osName,
+                                                     const std::vector<std::shared_ptr<GDALDimension>>& aoDimensions,
+                                                     const GDALExtendedDataType& oType,
+                                                     CSLConstList papszOptions)
+{
+    void* pData = nullptr;
+    const char *pszDataPointer = CSLFetchNameValue(papszOptions, "DATAPOINTER");
+    if( pszDataPointer )
+    {
+        // Will not work on architectures with "capability pointers"
+        pData =
+            CPLScanPointer( pszDataPointer,
+                            static_cast<int>(strlen(pszDataPointer)) );
+    }
+    return CreateMDArray(osName, aoDimensions, oType, pData, papszOptions);
+}
+
+/************************************************************************/
+/*                      MEMGroupCreateMDArray()                         */
+/************************************************************************/
+
+// Used by NUMPYMultiDimensionalDataset
+std::shared_ptr<GDALMDArray> MEMGroupCreateMDArray(GDALGroup* poGroup,
+                                                   const std::string& osName,
+                                                   const std::vector<std::shared_ptr<GDALDimension>>& aoDimensions,
+                                                   const GDALExtendedDataType& oDataType,
+                                                   void* pData,
+                                                   CSLConstList papszOptions)
+{
+    return dynamic_cast<MEMGroup*>(poGroup)->CreateMDArray(
+        osName, aoDimensions, oDataType, pData, papszOptions);
 }
 
 /************************************************************************/
@@ -2209,7 +2261,7 @@ void GDALRegister_MEM()
     poDriver->pfnOpen = MEMDataset::Open;
     poDriver->pfnIdentify = MEMDatasetIdentify;
 #endif
-    poDriver->pfnCreate = MEMDataset::Create;
+    poDriver->pfnCreate = MEMDataset::CreateBase;
     poDriver->pfnCreateMultiDimensional = MEMDataset::CreateMultiDimensional;
     poDriver->pfnDelete = MEMDatasetDelete;
 

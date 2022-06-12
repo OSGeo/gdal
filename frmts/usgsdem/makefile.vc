@@ -1,7 +1,7 @@
 
 OBJ	=	usgsdemdataset.obj usgsdem_create.obj
 
-EXTRAFLAGS = 	-I..\..\alg
+EXTRAFLAGS = 	-I..\..\alg -I..\mem
 
 GDAL_ROOT	=	..\..
 

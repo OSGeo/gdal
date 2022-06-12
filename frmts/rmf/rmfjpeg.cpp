@@ -159,29 +159,17 @@ size_t RMFDataset::JPEGCompress(const GByte* pabyIn, GUInt32 nSizeIn,
         return 0;
     }
 
-    GDALDataType    eType = GDT_Byte;
-    GDALDataset*    poMemDS = MEMDataset::Create("", nRawXSize, nRawYSize, 0,
-                                                 eType, nullptr);
+    const GDALDataType    eType = GDT_Byte;
+    auto poMemDS = std::unique_ptr<MEMDataset>(
+        MEMDataset::Create("", nRawXSize, nRawYSize, 0, eType, nullptr));
 
     for(int iBand = 0; iBand < RMF_JPEG_BAND_COUNT; ++iBand)
     {
-        char szBuffer[32] = {};
         const GByte* pabyBand = pabyIn + (RMF_JPEG_BAND_COUNT - iBand - 1);
-        int nRet = CPLPrintPointer(szBuffer, (void*)(pabyBand),
-                                   sizeof(szBuffer));
-        szBuffer[nRet] = 0;
-
-        char szBuffer0[64] = {};
-        snprintf( szBuffer0, sizeof(szBuffer0), "DATAPOINTER=%s", szBuffer );
-
-        char szBuffer1[64] = "PIXELOFFSET=3";
-        char szBuffer2[64] = {};
-        snprintf( szBuffer2, sizeof(szBuffer2),
-                  "LINEOFFSET=%d", nRawXSize*RMF_JPEG_BAND_COUNT );
-
-        char* apszOptions[4] = { szBuffer0, szBuffer1, szBuffer2, nullptr };
-
-        poMemDS->AddBand(eType, apszOptions);
+        auto hBand = MEMCreateRasterBandEx( poMemDS.get(), iBand + 1,
+                                            const_cast<GByte*>(pabyBand),
+                                            eType, 3, nRawXSize*RMF_JPEG_BAND_COUNT, false );
+        poMemDS->AddMEMBand(hBand);
     }
 
     CPLString   osTmpFilename;
@@ -200,9 +188,9 @@ size_t RMFDataset::JPEGCompress(const GByte* pabyIn, GUInt32 nSizeIn,
 
     char* apszJpegOptions[2] = {szQuality, nullptr};
 
-    GDALDatasetH   hJpeg = GDALCreateCopy(hJpegDriver, osTmpFilename, poMemDS,
+    GDALDatasetH   hJpeg = GDALCreateCopy(hJpegDriver, osTmpFilename, poMemDS.get(),
                                           0, apszJpegOptions, nullptr, nullptr);
-    GDALClose(poMemDS);
+    poMemDS.reset();
 
     if(hJpeg == nullptr)
     {

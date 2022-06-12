@@ -1,7 +1,7 @@
 
 OBJ	=	rasterlitedataset.obj rasterlitecreatecopy.obj rasterliteoverviews.obj
 
-EXTRAFLAGS = -I../../ogr
+EXTRAFLAGS = -I../../ogr -I../mem
 
 GDAL_ROOT	=	..\..
 
