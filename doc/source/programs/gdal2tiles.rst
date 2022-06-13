@@ -234,7 +234,7 @@ The following configuration options are available to further customize the webp 
 
 .. note::
 
-    GDAL WEBP driver documentation is available at https://gdal.org/drivers/raster/webp.html
+    GDAL :ref:`WEBP driver <raster.webp>` documentation can be consulted
 
 
 
