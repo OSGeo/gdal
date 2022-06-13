@@ -1176,14 +1176,16 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
     if (STARTS_WITH_CI(pszSQLCommand, "GetLayerDefinition "))
     {
-        auto poLayer = GetLayerByName(pszSQLCommand + strlen("GetLayerDefinition "));
+        const char* pszLayerName = pszSQLCommand + strlen("GetLayerDefinition ");
+        auto poLayer = GetLayerByName(pszLayerName);
         if (poLayer)
         {
             OGRLayer* poRet = new OGROpenFileGDBSingleFeatureLayer(
                 "LayerDefinition", poLayer->GetXMLDefinition().c_str() );
             return poRet;
         }
-
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid layer name: %s", pszLayerName);
         return nullptr;
     }
 
@@ -1192,14 +1194,16 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
     if (STARTS_WITH_CI(pszSQLCommand, "GetLayerMetadata "))
     {
-        auto poLayer = GetLayerByName(pszSQLCommand + strlen("GetLayerMetadata "));
+        const char* pszLayerName = pszSQLCommand + strlen("GetLayerMetadata ");
+        auto poLayer = GetLayerByName(pszLayerName);
         if (poLayer)
         {
             OGRLayer* poRet = new OGROpenFileGDBSingleFeatureLayer(
                 "LayerMetadata", poLayer->GetXMLDocumentation().c_str() );
             return poRet;
         }
-
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid layer name: %s", pszLayerName);
         return nullptr;
     }
 
@@ -1254,11 +1258,14 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
     if( STARTS_WITH_CI(pszSQLCommand, "CREATE SPATIAL INDEX ON ") )
     {
-        auto poLayer = GetLayerByName(pszSQLCommand + strlen("CREATE SPATIAL INDEX ON "));
+        const char* pszLayerName = pszSQLCommand + strlen("CREATE SPATIAL INDEX ON ");
+        auto poLayer = GetLayerByName(pszLayerName);
         if( poLayer )
         {
             poLayer->CreateSpatialIndex();
         }
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid layer name: %s", pszLayerName);
         return nullptr;
     }
 
@@ -1284,6 +1291,9 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
                     poLayer->CreateIndex(osIdxName, osExpression);
                     return nullptr;
                 }
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid layer name: %s", osLayerName.c_str());
+                return nullptr;
             }
         }
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -1296,10 +1306,16 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
     if( STARTS_WITH_CI(pszSQLCommand, "RECOMPUTE EXTENT ON ") )
     {
-        auto poLayer = GetLayerByName(pszSQLCommand + strlen("RECOMPUTE EXTENT ON "));
+        const char* pszLayerName = pszSQLCommand + strlen("RECOMPUTE EXTENT ON ");
+        auto poLayer = GetLayerByName(pszLayerName);
         if( poLayer )
         {
             poLayer->RecomputeExtent();
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid layer name: %s", pszLayerName);
         }
         return nullptr;
     }
@@ -1315,9 +1331,11 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
             if( strcmp(pszLayerName, m_apoLayers[i]->GetName()) == 0 )
             {
                 DeleteLayer(i);
-                break;
+                return nullptr;
             }
         }
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid layer name: %s", pszLayerName);
         return nullptr;
     }
 
@@ -1327,14 +1345,15 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
     if( STARTS_WITH_CI(pszSQLCommand, "CHECK_FREELIST_CONSISTENCY:") )
     {
         const char* pszLayerName = pszSQLCommand + strlen("CHECK_FREELIST_CONSISTENCY:");
-        OGROpenFileGDBLayer* poLayer =
-            cpl::down_cast<OGROpenFileGDBLayer *>(GetLayerByName( pszLayerName));
+        auto poLayer = GetLayerByName( pszLayerName );
         if( poLayer )
         {
             return new OGROpenFileGDBSingleFeatureLayer(
                 "result",
                 CPLSPrintf( "%d", static_cast<int>(poLayer->CheckFreeListConsistency())));
         }
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid layer name: %s", pszLayerName);
         return nullptr;
     }
 
@@ -1351,6 +1370,20 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
         }
         return new OGROpenFileGDBSingleFeatureLayer(
                 "result", bSuccess ? "true" : "false" );
+    }
+    else if( STARTS_WITH(pszSQLCommand, "REPACK ") )
+    {
+        const char* pszLayerName = pszSQLCommand + strlen("REPACK ");
+        auto poLayer = GetLayerByName( pszLayerName );
+        if( poLayer )
+        {
+            const bool bSuccess = poLayer->Repack();
+            return new OGROpenFileGDBSingleFeatureLayer(
+                "result", bSuccess ? "true" : "false" );
+        }
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid layer name: %s", pszLayerName);
+        return nullptr;
     }
 
     bLastSQLUsedOptimizedImplementation = false;

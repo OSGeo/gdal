@@ -62,9 +62,19 @@ can be used as special SQL requests to get respectively the definition
 and metadata of a FileGDB table as XML content (only available in
 Geodatabases created with ArcGIS 10 or above)
 
-The "CREATE INDEX idx_name ON table_name(field_name)" SQL request can be
+The "CREATE INDEX idx_name ON layer_name(field_name)" SQL request can be
 used to create an attribute index. idx_name must have 16 characters or less,
 start with a letter and contain only alpha-numeric characters or underscore.
+
+The "RECOMPUTE EXTENT ON layer_name" SQL request can be used to trigger
+an update of the layer extent in layer metadata. This is useful when updating
+or deleting features that modify the general layer extent.
+
+The "REPACK" or "REPACK layer_name" SQL requests can be used respectively to
+compact the whole database or a given layer. This is useful when doing editions
+(updates or feature deletions) that may leave holes in .gdbtable files. The REPACK
+command causes the .gdbtable to be rewritten without holes. Note that compaction
+does not involve extent recomputation.
 
 Dataset open options
 --------------------
