@@ -6640,10 +6640,11 @@ void OGRFeature::FillUnsetWithDefault( int bNotNullableOnly,
     {
         if( IsFieldSet(i) )
             continue;
-        if( bNotNullableOnly && poDefn->GetFieldDefn(i)->IsNullable() )
+        const auto poFieldDefn = poDefn->GetFieldDefn(i);
+        if( bNotNullableOnly && poFieldDefn->IsNullable() )
             continue;
-        const char* pszDefault = poDefn->GetFieldDefn(i)->GetDefault();
-        OGRFieldType eType = poDefn->GetFieldDefn(i)->GetType();
+        const char* pszDefault = poFieldDefn->GetDefault();
+        OGRFieldType eType = poFieldDefn->GetType();
         if( pszDefault != nullptr )
         {
             if( eType == OFTDate || eType == OFTTime || eType == OFTDateTime )
@@ -6688,7 +6689,7 @@ void OGRFeature::FillUnsetWithDefault( int bNotNullableOnly,
                 SetField(i, pszTmp);
                 CPLFree(pszTmp);
             }
-            else
+            else if ( !poFieldDefn->IsDefaultDriverSpecific() )
                 SetField(i, pszDefault);
         }
     }

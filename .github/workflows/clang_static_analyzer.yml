@@ -22,7 +22,7 @@ jobs:
     if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Run
         run: docker run --rm -v $PWD:$PWD ubuntu:16.04 sh -c "cd $PWD && apt update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends sudo software-properties-common && DEBIAN_FRONTEND=noninteractive sh ./ci/travis/csa_part_1/before_install.sh && sh ./ci/travis/csa_part_1/install.sh && sh ./ci/travis/csa_part_1/script.sh"
@@ -32,7 +32,7 @@ jobs:
     if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Run
         run: docker run --rm -v $PWD:$PWD ubuntu:16.04 sh -c "cd $PWD && apt update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends sudo software-properties-common && DEBIAN_FRONTEND=noninteractive sh ./ci/travis/csa_part_2/before_install.sh && sh ./ci/travis/csa_part_2/install.sh && sh ./ci/travis/csa_part_2/script.sh"

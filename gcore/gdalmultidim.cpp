@@ -1320,7 +1320,7 @@ bool GDALExtendedDataType::CopyValue(const void* pSrc,
         const char* srcStrPtr;
         memcpy(&srcStrPtr, pSrc, sizeof(const char*));
         char* pszDup = srcStrPtr ? CPLStrdup(srcStrPtr) : nullptr;
-        memcpy(pDst, &pszDup, sizeof(char*));
+        *reinterpret_cast<void**>(pDst) = pszDup;
         return true;
     }
     if( srcType.GetClass() == GEDTC_NUMERIC &&
@@ -1386,7 +1386,7 @@ bool GDALExtendedDataType::CopyValue(const void* pSrc,
                 break;
         }
         char* pszDup = str ? CPLStrdup(str) : nullptr;
-        memcpy(pDst, &pszDup, sizeof(char*));
+        *reinterpret_cast<void**>(pDst) = pszDup;
         return true;
     }
     if( srcType.GetClass() == GEDTC_STRING &&
@@ -4899,11 +4899,11 @@ void GDALMDArrayTransposed::PrepareParentArrays(const GUInt64* arrayStartIdx,
         {
             m_parentStart[iOldAxis] = arrayStartIdx[i];
             m_parentCount[iOldAxis] = count[i];
-            if( arrayStep )
+            if( arrayStep ) // only null when called from IAdviseRead()
             {
                 m_parentStep[iOldAxis] = arrayStep[i];
             }
-            if( bufferStride )
+            if( bufferStride ) // only null when called from IAdviseRead()
             {
                 m_parentStride[iOldAxis] = bufferStride[i];
             }

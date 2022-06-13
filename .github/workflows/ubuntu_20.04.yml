@@ -24,10 +24,10 @@ jobs:
         HANA_CONNECTION_STR: "DRIVER=/usr/sap/hdbclient/libodbcHDB.so;HOST=917df316-4e01-4a10-be54-eac1b6ab15fb.hana.prod-us10.hanacloud.ondemand.com;PORT=443;USER=GDALCI;PASSWORD=u7t!Ukeugzq7"
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Cache deps
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache-deps
         with:
           path: /tmp/docker
@@ -53,7 +53,7 @@ jobs:
           echo "::set-output name=arch::$ARCH"
 
       - name: Cache build
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache-build
         with:
           path: ${{ github.workspace }}/ccache.tar.gz

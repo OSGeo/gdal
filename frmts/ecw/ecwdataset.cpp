@@ -1943,27 +1943,15 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
         if( eErr == CE_None )
         {
             /* Create a MEM dataset that wraps the input buffer */
-            GDALDataset* poMEMDS = MEMDataset::Create("", nXSize, nYSize, 0,
-                                                      eBufType, nullptr);
-            char szBuffer[64];
-            int nRet;
+            auto poMEMDS = std::unique_ptr<MEMDataset>(
+                MEMDataset::Create("", nXSize, nYSize, 0, eBufType, nullptr));
 
             for( int i = 0; i < nBandCount; i++ )
             {
-                nRet = CPLPrintPointer(szBuffer,
-                                       pabyTemp + static_cast<size_t>(i) * nBufDataTypeSize * nXSize * nYSize,
-                                       sizeof(szBuffer));
-                szBuffer[nRet] = 0;
-                char** papszOptions = CSLSetNameValue(nullptr, "DATAPOINTER", szBuffer);
-
-                papszOptions = CSLSetNameValue(papszOptions, "PIXELOFFSET",
-                    CPLSPrintf("%d", nBufDataTypeSize));
-
-                papszOptions = CSLSetNameValue(papszOptions, "LINEOFFSET",
-                    CPLSPrintf(CPL_FRMT_GIB, (GIntBig)nBufDataTypeSize * nXSize));
-
-                poMEMDS->AddBand(eBufType, papszOptions);
-                CSLDestroy(papszOptions);
+                auto hBand = MEMCreateRasterBandEx( poMEMDS.get(), i + 1,
+                                                    pabyTemp + static_cast<size_t>(i) * nBufDataTypeSize * nXSize * nYSize,
+                                                    eBufType, 0, 0, false );
+                poMEMDS->AddMEMBand(hBand);
 
                 const char* pszNBITS = GetRasterBand(i+1)->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
                 if( pszNBITS )
@@ -1980,8 +1968,6 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
                                 nBandCount, nullptr,
                                 nPixelSpace, nLineSpace, nBandSpace,
                                 &sExtraArgTmp));
-
-            GDALClose(poMEMDS);
         }
 
         VSIFree(pabyTemp);

@@ -1091,27 +1091,14 @@ CPLErr GDALRasterBand::RasterIOResampled(
     poMEMDS = MEMDataset::Create( "", nDestXOffVirtual + nBufXSize,
                                   nDestYOffVirtual + nBufYSize, 0,
                                   eDTMem, nullptr );
-    char szBuffer[32] = { '\0' };
-    int nRet =
-        CPLPrintPointer(
-            szBuffer, static_cast<GByte*>(pDataMem)
-            - nPSMem * nDestXOffVirtual
-            - nLSMem * nDestYOffVirtual, sizeof(szBuffer));
-    szBuffer[nRet] = '\0';
-
-    char szBuffer0[64] = { '\0' };
-    snprintf(szBuffer0, sizeof(szBuffer0), "DATAPOINTER=%s", szBuffer);
-    char szBuffer1[64] = { '\0' };
-    snprintf( szBuffer1, sizeof(szBuffer1),
-              "PIXELOFFSET=" CPL_FRMT_GIB, static_cast<GIntBig>(nPSMem) );
-    char szBuffer2[64] = { '\0' };
-    snprintf( szBuffer2, sizeof(szBuffer2),
-              "LINEOFFSET=" CPL_FRMT_GIB, static_cast<GIntBig>(nLSMem) );
-    char* apszOptions[4] = { szBuffer0, szBuffer1, szBuffer2, nullptr };
-
-    poMEMDS->AddBand(eDTMem, apszOptions);
-
-    GDALRasterBandH hMEMBand = poMEMDS->GetRasterBand(1);
+    GByte* pabyData = static_cast<GByte*>(pDataMem)
+                        - nPSMem * nDestXOffVirtual
+                        - nLSMem * nDestYOffVirtual;
+    GDALRasterBandH hMEMBand = MEMCreateRasterBandEx( poDS, 1, pabyData,
+                                                      eDTMem,
+                                                      nPSMem, nLSMem,
+                                                      false );
+    poMEMDS->SetBand(1, GDALRasterBand::FromHandle(hMEMBand));
 
     const char* pszNBITS = GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
     if( pszNBITS )
@@ -3130,9 +3117,8 @@ static inline void GDALUnrolledCopy( T* CPL_RESTRICT pDest,
 
 #ifdef HAVE_SSSE3_AT_COMPILE_TIME
 
-void GDALUnrolledCopy_GByte_3_1_SSSE3( GByte* CPL_RESTRICT pDest,
-                                             const GByte* CPL_RESTRICT pSrc,
-                                             GPtrDiff_t nIters );
+#include "rasterio_ssse3.h"
+
 #endif
 
 
@@ -5261,7 +5247,7 @@ bool GDALBufferHasOnlyNoData( const void* pBuffer,
 {
     // In the case where the nodata is 0, we can compare several bytes at
     // once. Select the largest natural integer type for the architecture.
-#if SIZEOF_VOIDP == 8 || defined(__x86_64__)
+#if SIZEOF_VOIDP >= 8 || defined(__x86_64__)
     // We test __x86_64__ for x32 arch where SIZEOF_VOIDP == 4
     typedef std::uint64_t WordType;
 #else
@@ -5275,7 +5261,7 @@ bool GDALBufferHasOnlyNoData( const void* pBuffer,
         size_t i = 0;
         const size_t nInitialIters = std::min(
             sizeof(WordType) -
-                (reinterpret_cast<std::uintptr_t>(pabyBuffer) % sizeof(WordType)),
+                static_cast<size_t>(reinterpret_cast<std::uintptr_t>(pabyBuffer) % sizeof(WordType)),
             nSize);
         for( ; i < nInitialIters; i++ )
         {

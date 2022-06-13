@@ -78,7 +78,7 @@
 #error "Unexpected value for SIZEOF_UNSIGNED_LONG"
 #endif
 
-#if !defined(SIZEOF_VOIDP) || (SIZEOF_VOIDP != 4 && SIZEOF_VOIDP != 8)
+#if !defined(SIZEOF_VOIDP)
 #error "Unexpected value for SIZEOF_VOIDP"
 #endif
 
@@ -257,8 +257,11 @@ typedef GUIntBig         GUInt64;
 /** Minimum GUInt64 value */
 #define GUINT64_MAX     GUINTBIG_MAX
 
-
-#if SIZEOF_VOIDP == 8
+#if SIZEOF_VOIDP > 8
+#include <stddef.h> // ptrdiff_t
+/** Integer type large enough to hold the difference between 2 addresses */
+typedef ptrdiff_t        GPtrDiff_t;
+#elif SIZEOF_VOIDP == 8
 /** Integer type large enough to hold the difference between 2 addresses */
 typedef GIntBig          GPtrDiff_t;
 #else

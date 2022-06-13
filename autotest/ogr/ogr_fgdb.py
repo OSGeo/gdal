@@ -2480,3 +2480,90 @@ def test_ogr_filegdb_inconsistent_crs_feature_dataset_and_feature_table():
     srs = lyr.GetSpatialRef()
     assert srs is not None
     assert srs.GetAuthorityCode(None) == '4326'
+
+
+###############################################################################
+# Test reading .gdb with LengthFieldName / AreaFieldName
+
+
+def test_ogr_filegdb_shape_length_shape_area_as_default_in_field_defn(fgdb_drv):
+    ds = ogr.Open('data/filegdb/filegdb_polygonzm_m_not_closing_with_curves.gdb')
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    assert lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('Shape_Area')).GetDefault() == 'FILEGEODATABASE_SHAPE_AREA'
+    assert lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('Shape_Length')).GetDefault() == 'FILEGEODATABASE_SHAPE_LENGTH'
+
+
+###############################################################################
+# Test explicit CREATE_SHAPE_AREA_AND_LENGTH_FIELDS=YES option
+
+
+def test_ogr_filegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_explicit(fgdb_drv):
+
+    dirname = 'tmp/test_ogr_filegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_explicit.gdb'
+    ds = fgdb_drv.CreateDataSource(dirname)
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+
+    lyr = ds.CreateLayer('line', srs=srs, geom_type=ogr.wkbLineString, options=['CREATE_SHAPE_AREA_AND_LENGTH_FIELDS=YES'])
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING(0 0,2 0)'))
+    lyr.CreateFeature(f)
+
+    lyr = ds.CreateLayer('area', srs=srs, geom_type=ogr.wkbPolygon, options=['CREATE_SHAPE_AREA_AND_LENGTH_FIELDS=YES'])
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,1 0,0 0))'))
+    lyr.CreateFeature(f)
+
+    ds = None
+
+    ds = ogr.Open(dirname)
+
+    lyr = ds.GetLayerByName('line')
+    f = lyr.GetNextFeature()
+    lyr_defn = lyr.GetLayerDefn()
+    assert lyr_defn.GetFieldIndex('Shape_Length') >= 0
+    assert lyr_defn.GetFieldIndex('Shape_Area') < 0
+    assert lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('Shape_Length')).GetDefault() == 'FILEGEODATABASE_SHAPE_LENGTH'
+    assert f['Shape_Length'] == 2
+
+    lyr = ds.GetLayerByName('area')
+    f = lyr.GetNextFeature()
+    lyr_defn = lyr.GetLayerDefn()
+    assert lyr_defn.GetFieldIndex('Shape_Length') >= 0
+    assert lyr_defn.GetFieldIndex('Shape_Area') >= 0
+    assert lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('Shape_Area')).GetDefault() == 'FILEGEODATABASE_SHAPE_AREA'
+    assert lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('Shape_Length')).GetDefault() == 'FILEGEODATABASE_SHAPE_LENGTH'
+    assert f['Shape_Length'] == 4
+    assert f['Shape_Area'] == 1
+
+    ds = None
+
+    try:
+        shutil.rmtree(dirname)
+    except OSError:
+        pass
+
+
+###############################################################################
+# Test explicit CREATE_SHAPE_AREA_AND_LENGTH_FIELDS=YES option
+
+
+def test_ogr_filegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_implicit(fgdb_drv):
+
+    dirname = 'tmp/test_ogr_filegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_implicit.gdb'
+    gdal.VectorTranslate(dirname, 'data/filegdb/filegdb_polygonzm_m_not_closing_with_curves.gdb', options = '-f FileGDB -unsetfid -fid 1')
+
+    ds = ogr.Open(dirname)
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    assert lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('Shape_Area')).GetDefault() == 'FILEGEODATABASE_SHAPE_AREA'
+    assert lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('Shape_Length')).GetDefault() == 'FILEGEODATABASE_SHAPE_LENGTH'
+
+    ds = None
+
+    try:
+        shutil.rmtree(dirname)
+    except OSError:
+        pass

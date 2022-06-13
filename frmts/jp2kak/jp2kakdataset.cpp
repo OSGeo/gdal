@@ -1546,35 +1546,18 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
             else
             {
                 // Create a MEM dataset that wraps the input buffer.
-                GDALDataset* poMEMDS = MEMDataset::Create( "", l_dims.size.x,
-                                                           l_dims.size.y, 0,
-                                                           eBufType, nullptr);
-                char szBuffer[64] = { '\0' };
-                int nRet = 0;
-
+                auto poMEMDS = std::unique_ptr<MEMDataset>(
+                    MEMDataset::Create( "", l_dims.size.x,
+                    l_dims.size.y, 0,
+                    eBufType, nullptr));
                 for( int i = 0; i < nBandCount; i++ )
                 {
-
-                    nRet = CPLPrintPointer(
-                        szBuffer, pabyIntermediate + i * nDataTypeSize,
-                        sizeof(szBuffer) );
-                    szBuffer[nRet] = 0;
-                    char **papszOptions =
-                        CSLSetNameValue(nullptr, "DATAPOINTER", szBuffer);
-
-                    papszOptions = CSLSetNameValue(papszOptions, "PIXELOFFSET",
-                        CPLSPrintf(
-                            CPL_FRMT_GIB,
-                            static_cast<GIntBig>(nDataTypeSize) * nBandCount));
-
-                    papszOptions = CSLSetNameValue(papszOptions, "LINEOFFSET",
-                        CPLSPrintf(
-                            CPL_FRMT_GIB,
-                            static_cast<GIntBig>(nDataTypeSize)
-                            * nBandCount * l_dims.size.x) );
-
-                    poMEMDS->AddBand(eBufType, papszOptions);
-                    CSLDestroy(papszOptions);
+                    auto hBand = MEMCreateRasterBandEx( poMEMDS.get(), i + 1,
+                                        pabyIntermediate + i * nDataTypeSize, eBufType,
+                                        static_cast<GSpacing>(nDataTypeSize) * nBandCount,
+                                        static_cast<GSpacing>(nDataTypeSize) * nBandCount * l_dims.size.x,
+                                        false );
+                    poMEMDS->AddMEMBand( hBand );
 
                     const char *pszNBITS =
                         GetRasterBand(i + 1)
@@ -1596,8 +1579,6 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
                         nBandCount, nullptr,
                         nPixelSpace, nLineSpace, nBandSpace,
                         &sExtraArgTmp ) );
-
-                GDALClose(poMEMDS);
             }
 
             CPLFree(pabyIntermediate);

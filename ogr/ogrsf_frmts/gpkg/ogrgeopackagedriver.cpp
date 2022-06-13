@@ -483,6 +483,8 @@ COMPRESSION_OPTIONS
     poDriver->SetMetadataItem( GDAL_DCAP_RENAME_LAYERS, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATION_FIELD_DOMAIN_TYPES, "Coded Range Glob" );
 
+    poDriver->SetMetadataItem( GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS, "Name SRS CoordinateEpoch" );
+
 #ifdef ENABLE_SQL_GPKG_FORMAT
     poDriver->SetMetadataItem("ENABLE_SQL_GPKG_FORMAT", "YES");
 #endif

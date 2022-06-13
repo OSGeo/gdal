@@ -112,5 +112,7 @@ void RegisterOGRMEM()
     poDriver->SetMetadataItem( GDAL_DCAP_FIELD_DOMAINS, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATION_FIELD_DOMAIN_TYPES, "Coded Range Glob" );
 
+    poDriver->SetMetadataItem( GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS, "Name Type Nullable SRS CoordinateEpoch" );
+
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }

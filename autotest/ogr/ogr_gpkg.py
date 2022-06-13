@@ -3757,7 +3757,7 @@ def test_ogr_gpkg_48():
     # No geom field, one single field with default value
     lyr = ds.CreateLayer('default_field_no_geom', geom_type=ogr.wkbNone)
     fld_defn = ogr.FieldDefn('foo')
-    fld_defn.SetDefault('x')
+    fld_defn.SetDefault("'x'")
     lyr.CreateField(fld_defn)
     f = ogr.Feature(lyr.GetLayerDefn())
     assert lyr.CreateFeature(f) == 0
@@ -5448,7 +5448,6 @@ def test_ogr_gpkg_CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE():
     assert gdal.ReadDir('/vsimem/temporary_location') is None
     gdal.Unlink(filename)
 
-
 ###############################################################################
 # Test (currently minimum) support for related tables extension
 
@@ -5502,5 +5501,109 @@ def test_ogr_gpkg_relations():
     ds = None
 
     assert validate(filename), 'validation failed'
+
+    gdal.Unlink(filename)
+
+###############################################################################
+# Test AlterGeomFieldDefn()
+
+
+def test_ogr_gpkg_alter_geom_field_defn():
+
+    filename = '/vsimem/test_ogr_gpkg_alter_geom_field_defn.gpkg'
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    srs_4326 = osr.SpatialReference()
+    srs_4326.ImportFromEPSG(4326)
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbPoint, srs = srs_4326)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (1 2)'))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+
+    sql_lyr = ds.ExecuteSQL('SELECT sqlite_version()')
+    f = sql_lyr.GetNextFeature()
+    version = f.GetField(0)
+    ds.ReleaseResultSet(sql_lyr)
+
+    ds = None
+
+    # Test renaming column (only supported for SQLite >= 3.26)
+    if tuple([int(x) for x in version.split('.')[0:2]]) >= (3,26):
+        ds = ogr.Open(filename, update=1)
+        lyr = ds.GetLayer(0)
+        assert lyr.TestCapability(ogr.OLCAlterGeomFieldDefn)
+
+        new_geom_field_defn = ogr.GeomFieldDefn('new_geom_name', ogr.wkbNone)
+        assert lyr.AlterGeomFieldDefn(0, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_NAME_FLAG) == ogr.OGRERR_NONE
+        assert lyr.GetGeometryColumn() == 'new_geom_name'
+
+        ds = None
+
+        assert validate(filename), 'validation failed'
+
+        ds = ogr.Open(filename)
+        lyr = ds.GetLayer(0)
+        assert lyr.GetGeometryColumn() == 'new_geom_name'
+        srs = lyr.GetSpatialRef()
+        assert srs is not None
+        assert srs.GetAuthorityCode(None) == '4326'
+        ds = None
+
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    new_geom_field_defn = ogr.GeomFieldDefn('', ogr.wkbNone)
+    assert lyr.AlterGeomFieldDefn(0, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_SRS_FLAG) == ogr.OGRERR_NONE
+    ds = None
+
+    assert validate(filename), 'validation failed'
+
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    srs = lyr.GetSpatialRef()
+    assert srs is not None
+    assert srs.GetName() == 'Undefined geographic SRS'
+
+    new_geom_field_defn = ogr.GeomFieldDefn('', ogr.wkbNone)
+    new_geom_field_defn.SetSpatialRef(srs_4326)
+    assert lyr.AlterGeomFieldDefn(0, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_SRS_FLAG) == ogr.OGRERR_NONE
+    ds = None
+
+    assert validate(filename), 'validation failed'
+
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    srs = lyr.GetSpatialRef()
+    assert srs is not None
+    assert srs.GetAuthorityCode(None) == '4326'
+
+    new_geom_field_defn = ogr.GeomFieldDefn('', ogr.wkbNone)
+    other_srs = osr.SpatialReference()
+    other_srs.ImportFromEPSG(4269)
+    new_geom_field_defn.SetSpatialRef(other_srs)
+    assert lyr.AlterGeomFieldDefn(0, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_SRS_FLAG) == ogr.OGRERR_NONE
+    ds = None
+
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    srs = lyr.GetSpatialRef()
+    assert srs is not None
+    assert srs.GetAuthorityCode(None) == '4269'
+
+    new_geom_field_defn = ogr.GeomFieldDefn('', ogr.wkbNone)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4269)
+    srs.SetCoordinateEpoch(2022)
+    new_geom_field_defn.SetSpatialRef(srs)
+    assert lyr.AlterGeomFieldDefn(0, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_SRS_COORD_EPOCH_FLAG) == ogr.OGRERR_NONE
+    ds = None
+
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    srs = lyr.GetSpatialRef()
+    assert srs is not None
+    assert srs.GetAuthorityCode(None) == '4269'
+    assert srs.GetCoordinateEpoch() == 2022
+    ds = None
 
     gdal.Unlink(filename)

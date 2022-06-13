@@ -28,7 +28,7 @@ jobs:
       PLATFORM: ${{ matrix.platform }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - uses: conda-incubator/setup-miniconda@v2
       with:
@@ -53,7 +53,7 @@ jobs:
     - uses: ilammy/msvc-dev-cmd@v1
       if: matrix.platform == 'windows-latest'
 
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: ${{ matrix.platform }}-conda-package
         path: ./gdal-feedstock/packages/

@@ -109,6 +109,15 @@ typedef void GDALDatasetShadow;
 typedef void GDALRasterAttributeTableShadow;
 #endif
 
+// Declaration from memmultidim.h
+std::shared_ptr<GDALMDArray> CPL_DLL MEMGroupCreateMDArray(GDALGroup* poGroup,
+                                                   const std::string& osName,
+                                                   const std::vector<std::shared_ptr<GDALDimension>>& aoDimensions,
+                                                   const GDALExtendedDataType& oDataType,
+                                                   void* pData,
+                                                   CSLConstList papszOptions);
+
+
 CPL_C_START
 
 GDALRasterBandH CPL_DLL MEMCreateRasterBandEx( GDALDataset *, int, GByte *,
@@ -621,16 +630,11 @@ GDALDataset* NUMPYMultiDimensionalDataset::Open( PyArrayObject *psArray )
                               static_cast<GIntBig>(PyArray_STRIDES(psArray)[i]));
     }
     CPLStringList aosOptions;
-    char szDataPointer[128] = { '\0' };
-    int nChars = CPLPrintPointer( szDataPointer,
-                                  PyArray_DATA(psArray),
-                                  sizeof(szDataPointer) );
-    szDataPointer[nChars] = 0;
-    aosOptions.SetNameValue("DATAPOINTER", szDataPointer);
     aosOptions.SetNameValue("STRIDES", strides.c_str());
-    auto mdArray = poGroup->CreateMDArray("array",
+    auto mdArray = MEMGroupCreateMDArray(poGroup.get(), "array",
                                       apoDims,
                                       GDALExtendedDataType::Create(eType),
+                                      PyArray_DATA(psArray),
                                       aosOptions.List());
     if( !mdArray )
     {

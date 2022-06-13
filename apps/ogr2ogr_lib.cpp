@@ -3863,6 +3863,28 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
             CPLDebug("GDALVectorTranslate", "Transferring layer NATIVE_DATA");
         }
 
+        // For FileGeodatabase, automatically set CREATE_SHAPE_AREA_AND_LENGTH_FIELDS=YES
+        // creation option if the source layer has a Shape_Area/Shape_Length field
+        if( papszDestCreationOptions &&
+            strstr(papszDestCreationOptions, "CREATE_SHAPE_AREA_AND_LENGTH_FIELDS") != nullptr &&
+            CSLFetchNameValue(m_papszLCO, "CREATE_SHAPE_AREA_AND_LENGTH_FIELDS") == nullptr )
+        {
+            const auto poSrcLayerDefn = poSrcLayer->GetLayerDefn();
+            const int nIdxShapeArea = poSrcLayerDefn->GetFieldIndex("Shape_Area");
+            const int nIdxShapeLength = poSrcLayerDefn->GetFieldIndex("Shape_Length");
+            if( (nIdxShapeArea >= 0 && poSrcLayerDefn->GetFieldDefn(nIdxShapeArea)->GetDefault() != nullptr &&
+                 EQUAL(poSrcLayerDefn->GetFieldDefn(nIdxShapeArea)->GetDefault(), "FILEGEODATABASE_SHAPE_AREA") &&
+                 (m_papszSelFields == nullptr || CSLFindString(m_papszSelFields, "Shape_Area") >= 0)) ||
+                (nIdxShapeLength >= 0 && poSrcLayerDefn->GetFieldDefn(nIdxShapeLength)->GetDefault() != nullptr &&
+                 EQUAL(poSrcLayerDefn->GetFieldDefn(nIdxShapeLength)->GetDefault(), "FILEGEODATABASE_SHAPE_LENGTH") &&
+                 (m_papszSelFields == nullptr || CSLFindString(m_papszSelFields, "Shape_Length") >= 0)) )
+            {
+                papszLCOTemp = CSLSetNameValue(papszLCOTemp,
+                               "CREATE_SHAPE_AREA_AND_LENGTH_FIELDS", "YES");
+                CPLDebug("GDALVectorTranslate", "Setting CREATE_SHAPE_AREA_AND_LENGTH_FIELDS=YES");
+            }
+        }
+
         OGRSpatialReference* poOutputSRSClone = nullptr;
         if( poOutputSRS != nullptr )
         {

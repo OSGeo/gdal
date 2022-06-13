@@ -692,6 +692,8 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
     CPLXMLTreeCloser oTree(nullptr);
     const CPLXMLNode* psGPFieldInfoExs = nullptr;
 
+    std::string osAreaFieldName;
+    std::string osLengthFieldName;
     if( !m_osDefinition.empty() )
     {
         oTree.reset(CPLParseXMLString(m_osDefinition.c_str()));
@@ -703,8 +705,12 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
             if( psInfo == nullptr )
                 psInfo = CPLSearchXMLNode( oTree.get(), "=DETableInfo" );
             if( psInfo != nullptr )
+            {
                 psGPFieldInfoExs =
                     CPLGetXMLNode(psInfo, "GPFieldInfoExs");
+                osAreaFieldName = CPLGetXMLValue(psInfo, "AreaFieldName", "");
+                osLengthFieldName = CPLGetXMLValue(psInfo, "LengthFieldName", "");
+            }
         }
     }
 
@@ -895,6 +901,15 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
             const char* pszDomainName = CPLGetXMLValue(psFieldDef, "DomainName", nullptr);
             if( pszDomainName )
                 oFieldDefn.SetDomainName(pszDomainName);
+        }
+
+        if( osAreaFieldName == poGDBField->GetName() )
+        {
+            oFieldDefn.SetDefault("FILEGEODATABASE_SHAPE_AREA");
+        }
+        else if( osLengthFieldName == poGDBField->GetName() )
+        {
+            oFieldDefn.SetDefault("FILEGEODATABASE_SHAPE_LENGTH");
         }
 
         m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
@@ -1724,7 +1739,7 @@ OGRFeature* OGROpenFileGDBLayer::GetCurrentFeature()
                         sBounds.maxx = sFeatureEnvelope.MaxX;
                         sBounds.maxy = sFeatureEnvelope.MaxY;
                         CPLQuadTreeInsertWithBounds(m_pQuadTree,
-                                                    (void*)(size_t)iRow,
+                                                    reinterpret_cast<void*>(static_cast<uintptr_t>(iRow)),
                                                     &sBounds);
                     }
                 }
@@ -2097,7 +2112,7 @@ GIntBig OGROpenFileGDBLayer::GetFeatureCount( int bForce )
                         sBounds.maxx = sFeatureEnvelope.MaxX;
                         sBounds.maxy = sFeatureEnvelope.MaxY;
                         CPLQuadTreeInsertWithBounds(m_pQuadTree,
-                                                    (void*)(size_t)i,
+                                                    reinterpret_cast<void*>(static_cast<uintptr_t>(i)),
                                                     &sBounds);
                     }
                 }
@@ -2119,7 +2134,7 @@ GIntBig OGROpenFileGDBLayer::GetFeatureCount( int bForce )
                                         sizeof(void*) *
                                         nFilteredFeatureCountAlloc));
                             }
-                            m_pahFilteredFeatures[nCount] = (void*)(size_t)i;
+                            m_pahFilteredFeatures[nCount] = reinterpret_cast<void*>(static_cast<uintptr_t>(i));
                         }
                         nCount ++;
                     }

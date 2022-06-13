@@ -498,6 +498,9 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     bool                StartDeferredSpatialIndexUpdate();
     bool                FlushPendingSpatialIndexUpdate();
 
+    OGRErr              RenameFieldInAuxiliaryTables(
+                            const char* pszOldName, const char* pszNewName);
+
     public:
                         OGRGeoPackageTableLayer( GDALGeoPackageDataset *poDS,
                                                  const char * pszTableName );
@@ -517,6 +520,9 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
                                          int bApproxOK = TRUE ) override;
     virtual OGRErr      DeleteField(  int iFieldToDelete ) override;
     virtual OGRErr      AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poNewFieldDefn, int nFlagsIn ) override;
+    virtual OGRErr      AlterGeomFieldDefn( int iGeomFieldToAlter,
+                                            const OGRGeomFieldDefn* poNewGeomFieldDefn,
+                                            int nFlagsIn ) override;
     virtual OGRErr      ReorderFields( int* panMap ) override;
     void                ResetReading() override;
     OGRErr              ICreateFeature( OGRFeature *poFeater ) override;
@@ -562,7 +568,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     void                CreateSpatialIndexIfNecessary();
     bool                CreateSpatialIndex(const char* pszTableName = nullptr);
     bool                DropSpatialIndex(bool bCalledFromSQLFunction = false);
-    CPLString           ReturnSQLCreateSpatialIndexTriggers(const char* pszTableName);
+    CPLString           ReturnSQLCreateSpatialIndexTriggers(const char* pszTableName,
+                                                            const char* pszGeomColName);
     CPLString           ReturnSQLDropSpatialIndexTriggers();
 
     virtual char **     GetMetadata( const char *pszDomain = "" ) override;

@@ -648,6 +648,7 @@ int         OGREditableLayer::TestCapability( const char * pszCap )
         EQUAL(pszCap, OLCDeleteField) ||
         EQUAL(pszCap, OLCReorderFields) ||
         EQUAL(pszCap, OLCAlterFieldDefn) ||
+        EQUAL(pszCap, OLCAlterGeomFieldDefn) ||
         EQUAL(pszCap, OLCDeleteFeature) )
     {
         return m_poDecoratedLayer->TestCapability(OLCCreateField) == TRUE ||
@@ -774,6 +775,29 @@ OGRErr      OGREditableLayer::AlterFieldDefn( int iField,
     return eErr;
 }
 
+/************************************************************************/
+/*                         AlterGeomFieldDefn()                         */
+/************************************************************************/
+
+OGRErr      OGREditableLayer::AlterGeomFieldDefn( int iGeomField,
+                                                  const OGRGeomFieldDefn* poNewGeomFieldDefn,
+                                                  int nFlagsIn )
+{
+    if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
+
+    OGRErr eErr = m_poMemLayer->AlterGeomFieldDefn(iGeomField, poNewGeomFieldDefn, nFlagsIn);
+    if( eErr == OGRERR_NONE )
+    {
+        OGRGeomFieldDefn* poFieldDefn = m_poEditableFeatureDefn->GetGeomFieldDefn(iGeomField);
+        OGRGeomFieldDefn* poMemFieldDefn = m_poMemLayer->GetLayerDefn()->GetGeomFieldDefn(iGeomField);
+        poFieldDefn->SetName(poMemFieldDefn->GetNameRef());
+        poFieldDefn->SetType(poMemFieldDefn->GetType());
+        poFieldDefn->SetNullable(poMemFieldDefn->IsNullable());
+        poFieldDefn->SetSpatialRef(poMemFieldDefn->GetSpatialRef());
+        m_bStructureModified = true;
+    }
+    return eErr;
+}
 /************************************************************************/
 /*                          CreateGeomField()                          */
 /************************************************************************/

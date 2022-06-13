@@ -196,6 +196,12 @@ OGRErr      OGRMutexedLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFiel
     return OGRLayerDecorator::AlterFieldDefn(iField, poNewFieldDefn, nFlagsIn);
 }
 
+OGRErr      OGRMutexedLayer::AlterGeomFieldDefn( int iGeomField, const OGRGeomFieldDefn* poNewGeomFieldDefn, int nFlagsIn )
+{
+    CPLMutexHolderOptionalLockD(m_hMutex);
+    return OGRLayerDecorator::AlterGeomFieldDefn(iGeomField, poNewGeomFieldDefn, nFlagsIn);
+}
+
 OGRErr      OGRMutexedLayer::SyncToDisk()
 {
     CPLMutexHolderOptionalLockD(m_hMutex);

@@ -388,6 +388,8 @@ void RegisterOGRShape()
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_RENAME_LAYERS, "YES" );
 
+    poDriver->SetMetadataItem( GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS, "SRS" );
+
     poDriver->pfnOpen = OGRShapeDriverOpen;
     poDriver->pfnIdentify = OGRShapeDriverIdentify;
     poDriver->pfnCreate = OGRShapeDriverCreate;

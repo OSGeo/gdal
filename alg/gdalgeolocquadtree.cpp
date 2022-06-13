@@ -186,7 +186,7 @@ bool GDALGeoLocBuildQuadTree( GDALGeoLocTransformInfo *psTransform )
         }
 
         CPLQuadTreeInsert(psTransform->hQuadTree,
-                          reinterpret_cast<void*>(i));
+                          reinterpret_cast<void*>(static_cast<uintptr_t>(i)));
 
         // For a geometry crossing the antimeridian, we've insert before
         // the "version" around -180 deg. Insert its corresponding version around
@@ -201,7 +201,7 @@ bool GDALGeoLocBuildQuadTree( GDALGeoLocTransformInfo *psTransform )
                      std::fabs(x3-x0) > 180) )
         {
             CPLQuadTreeInsert(psTransform->hQuadTree,
-                              reinterpret_cast<void*>(i | BIT_IDX_RANGE_180_SET));
+                              reinterpret_cast<void*>(static_cast<uintptr_t>(i | BIT_IDX_RANGE_180_SET)));
         }
     }
 

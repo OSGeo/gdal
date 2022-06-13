@@ -298,8 +298,8 @@ void NTv2Dataset::FlushCache(bool bAtClosing)
         }
         else if( EQUAL(pszKey,"SUB_NAME") )
         {
-            memcpy( achGridHeader + 0*nRecordSize+8, "        ", 8 );
-            memcpy( achGridHeader + 0*nRecordSize+8,
+            memcpy( achGridHeader + /*0*nRecordSize+*/8, "        ", 8 );
+            memcpy( achGridHeader + /*0*nRecordSize+*/8,
                     pszValue,
                     std::min(nMinLen, strlen(pszValue)) );
         }
