@@ -515,14 +515,14 @@ not at the level of the result of the union.
 SPECIAL FIELDS
 --------------
 
-The OGR SQL query processor treats some of the attributes of the features as
-built-in special fields can be used in the SQL statements likewise the
-other fields. These fields can be placed in the select list, the WHERE clause
-and the ORDER BY clause respectively. The special field will not be included
-in the result by default but it may be explicitly included by adding it to
-the select list.
-When accessing the field values the special fields will take precedence over
-the other fields with the same names in the data source.
+The OGR SQL query processor treats some attributes of the features as
+built-in special fields which can be used in SQL statements alongside the
+other fields. These fields can be placed in the SELECT list, the WHERE clause
+and the ORDER BY clause respectively. Special fields will not be included
+in the result by default but they may be explicitly included by adding them to
+the SELECT list.
+When accessing field values, the special fields will take precedence over
+other fields in the data source with the same names.
 
 FID
 +++
