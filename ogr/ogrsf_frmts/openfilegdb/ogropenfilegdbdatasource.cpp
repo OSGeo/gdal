@@ -257,7 +257,7 @@ int OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo )
                 }
                 else if( strcmp(psField->String, "GDB_Items") == 0 )
                 {
-                    // Normally a00000004
+                    // Normally a00000004 but it has been seen in some datasets to not be a00000004
                     m_osGDBItemsFilename = CPLFormFilename(m_osDirName,
                             CPLSPrintf("a%08x.gdbtable", i + 1), nullptr);
                     iGDBItems = i;
