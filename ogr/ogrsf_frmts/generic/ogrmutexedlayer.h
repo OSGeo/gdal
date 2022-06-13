@@ -77,6 +77,10 @@ class CPL_DLL OGRMutexedLayer : public OGRLayerDecorator
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
     virtual OGRErr      DeleteFeature( GIntBig nFID ) override;
 
+    virtual GDALDataset* GetDataset() override;
+    virtual bool         GetArrowStream(struct ArrowArrayStream* out_stream,
+                                        CSLConstList papszOptions = nullptr) override;
+
     virtual const char *GetName() override;
     virtual OGRwkbGeometryType GetGeomType() override;
     virtual OGRFeatureDefn *GetLayerDefn() override;
