@@ -6145,6 +6145,9 @@ const char* OGRLayer::GetLastErrorArrowArrayStream(struct ArrowArrayStream*)
     stream.release(&stream);
 \endcode
  *
+ * A full example is available in the
+ * <a href="https://gdal.org/tutorials/vector_api_tut.html#reading-from-ogr-using-the-arrow-c-stream-data-interface">Reading From OGR using the Arrow C Stream data interface</a> tutorial.
+ *
  * Options may be driver specific. The default implementation recognizes the
  * following options:
  * <ul>
@@ -6261,6 +6264,9 @@ bool OGRLayer::GetArrowStream(struct ArrowArrayStream* out_stream,
     }
     stream.release(&stream);
 \endcode
+ *
+ * A full example is available in the
+ * <a href="https://gdal.org/tutorials/vector_api_tut.html#reading-from-ogr-using-the-arrow-c-stream-data-interface">Reading From OGR using the Arrow C Stream data interface</a> tutorial.
  *
  * Options may be driver specific. The default implementation recognizes the
  * following options:
