@@ -93,6 +93,19 @@ OGRFeature *OGRMutexedLayer::GetNextFeature()
     return OGRLayerDecorator::GetNextFeature();
 }
 
+GDALDataset *OGRMutexedLayer::GetDataset()
+{
+    CPLMutexHolderOptionalLockD(m_hMutex);
+    return OGRLayerDecorator::GetDataset();
+}
+
+bool OGRMutexedLayer::GetArrowStream(struct ArrowArrayStream* out_stream,
+                                     CSLConstList papszOptions)
+{
+    CPLMutexHolderOptionalLockD(m_hMutex);
+    return OGRLayerDecorator::GetArrowStream(out_stream, papszOptions);
+}
+
 OGRErr      OGRMutexedLayer::SetNextByIndex( GIntBig nIndex )
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
