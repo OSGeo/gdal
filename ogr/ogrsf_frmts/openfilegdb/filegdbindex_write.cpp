@@ -201,6 +201,8 @@ bool FileGDBTable::CreateIndex(const std::string& osIndexName,
         eFieldType != FGFT_STRING &&
         eFieldType != FGFT_DATETIME )
     {
+        // FGFT_GUID could potentially be added (cf a00000007.gdbindexes / GDBItemRelationshipTypes )
+        // Not sure about FGFT_GLOBALID, FGFT_XML or FGFT_RASTER
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unsupported field type for index creation");
         return false;
