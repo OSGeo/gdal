@@ -1739,7 +1739,7 @@ OGRFeature* OGROpenFileGDBLayer::GetCurrentFeature()
                         sBounds.maxx = sFeatureEnvelope.MaxX;
                         sBounds.maxy = sFeatureEnvelope.MaxY;
                         CPLQuadTreeInsertWithBounds(m_pQuadTree,
-                                                    (void*)(size_t)iRow,
+                                                    reinterpret_cast<void*>(static_cast<uintptr_t>(iRow)),
                                                     &sBounds);
                     }
                 }
@@ -2112,7 +2112,7 @@ GIntBig OGROpenFileGDBLayer::GetFeatureCount( int bForce )
                         sBounds.maxx = sFeatureEnvelope.MaxX;
                         sBounds.maxy = sFeatureEnvelope.MaxY;
                         CPLQuadTreeInsertWithBounds(m_pQuadTree,
-                                                    (void*)(size_t)i,
+                                                    reinterpret_cast<void*>(static_cast<uintptr_t>(i)),
                                                     &sBounds);
                     }
                 }
@@ -2134,7 +2134,7 @@ GIntBig OGROpenFileGDBLayer::GetFeatureCount( int bForce )
                                         sizeof(void*) *
                                         nFilteredFeatureCountAlloc));
                             }
-                            m_pahFilteredFeatures[nCount] = (void*)(size_t)i;
+                            m_pahFilteredFeatures[nCount] = reinterpret_cast<void*>(static_cast<uintptr_t>(i));
                         }
                         nCount ++;
                     }

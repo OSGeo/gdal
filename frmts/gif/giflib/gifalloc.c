@@ -370,10 +370,10 @@ MakeSavedImage(GifFileType * GifFile,
         return ((SavedImage *)NULL);
     else {
         sp = &GifFile->SavedImages[GifFile->ImageCount++];
-        memset((char *)sp, '\0', sizeof(SavedImage));
+        memset(sp, '\0', sizeof(SavedImage));
 
         if (CopyFrom) {
-            memcpy((char *)sp, CopyFrom, sizeof(SavedImage));
+            memcpy(sp, CopyFrom, sizeof(SavedImage));
 
             /* 
              * Make our own allocated copies of the heap fields in the

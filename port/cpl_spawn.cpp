@@ -57,7 +57,11 @@
         #include <crt_externs.h>
         #define environ (*_NSGetEnviron())
     #else
-        extern char** environ;
+        #if defined(__FreeBSD__)
+            extern __attribute__((__weak__)) char **environ;
+        #else
+            extern char** environ;
+        #endif
     #endif
 #endif
 #endif

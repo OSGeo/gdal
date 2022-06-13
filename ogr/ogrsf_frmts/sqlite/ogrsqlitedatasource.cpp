@@ -2640,20 +2640,6 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Special case GetVSILFILE() command (used by GDAL MBTiles driver)*/
-/* -------------------------------------------------------------------- */
-    if (strcmp(pszSQLCommand, "GetVSILFILE()") == 0)
-    {
-        if (fpMainFile == nullptr)
-            return nullptr;
-
-        char szVal[64];
-        int nRet = CPLPrintPointer( szVal, fpMainFile, sizeof(szVal)-1 );
-        szVal[nRet] = '\0';
-        return new OGRSQLiteSingleFeatureLayer( "VSILFILE", szVal );
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Special case for SQLITE_HAS_COLUMN_METADATA()                   */
 /* -------------------------------------------------------------------- */
     if (strcmp(pszSQLCommand, "SQLITE_HAS_COLUMN_METADATA()") == 0)

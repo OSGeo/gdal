@@ -41,6 +41,7 @@
 #include "gdalwarper.h"
 #include "mvtutils.h"
 #include "ogrsqlitevfs.h"
+#include "ogrsqlitebase.h"
 
 #include "zlib.h"
 #include "ogrgeojsonreader.h"
@@ -2395,29 +2396,15 @@ int MBTilesGetBandCountAndTileSize(
     int nBands = -1;
     nTileSize = 0;
 
-    /* Small trick to get the VSILFILE associated with the OGR SQLite */
-    /* DB */
+    /* Get the VSILFILE associated with the OGR SQLite DB */
     CPLString osDSName(OGR_DS_GetName(hDS));
     if (bIsVSICURL)
     {
-        CPLErrorReset();
-        CPLPushErrorHandler(CPLQuietErrorHandler);
-        hSQLLyr = OGR_DS_ExecuteSQL(hDS, "GetVSILFILE()", nullptr, nullptr);
-        CPLPopErrorHandler();
-        CPLErrorReset();
-        if (hSQLLyr != nullptr)
+        auto poDS = dynamic_cast<OGRSQLiteBaseDataSource*>(GDALDataset::FromHandle(hDS));
+        CPLAssert(poDS);
+        if( poDS )
         {
-            hFeat = OGR_L_GetNextFeature(hSQLLyr);
-            if (hFeat)
-            {
-                if (OGR_F_IsFieldSetAndNotNull(hFeat, 0))
-                {
-                    const char* pszPointer = OGR_F_GetFieldAsString(hFeat, 0);
-                    fpCURLOGR = (VSILFILE* )CPLScanPointer( pszPointer, static_cast<int>(strlen(pszPointer)) );
-                }
-                OGR_F_Destroy(hFeat);
-            }
-            OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+            fpCURLOGR = poDS->GetVSILFILE();
         }
     }
 
