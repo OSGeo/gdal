@@ -296,6 +296,10 @@ const char *OGR_SM_InitFromFeature( OGRStyleMgrH hSM, OGRFeatureH hFeat )
 /**
  * \brief Initialize style manager from the style string.
  *
+ * Style string can be an expanded style string (e.g. "PEN(c:#FF0000,w:5px)"),
+ * or (starting with GDAL 3.5.1), a reference to a style name starting with @
+ * (e.g. "@my_style") registered in the associated style table.
+ *
  * This method is the same as the C function OGR_SM_InitStyleString().
  *
  * @param pszStyleString the style string to use (can be NULL).
@@ -308,11 +312,13 @@ GBool OGRStyleMgr::InitStyleString( const char *pszStyleString )
     m_pszStyleString = nullptr;
 
     if( pszStyleString && pszStyleString[0] == '@' )
-        m_pszStyleString = CPLStrdup(GetStyleByName(pszStyleString));
-    else
-        m_pszStyleString = nullptr;
-
-    if( m_pszStyleString == nullptr && pszStyleString )
+    {
+        const char* pszStyleStringFromName = GetStyleByName(pszStyleString + 1);
+        if( pszStyleStringFromName == nullptr )
+            return FALSE;
+        m_pszStyleString = CPLStrdup(pszStyleStringFromName);
+    }
+    else if( pszStyleString )
         m_pszStyleString = CPLStrdup(pszStyleString);
 
     return TRUE;
@@ -324,6 +330,10 @@ GBool OGRStyleMgr::InitStyleString( const char *pszStyleString )
 
 /**
  * \brief Initialize style manager from the style string.
+ *
+ * Style string can be an expanded style string (e.g. "PEN(c:#FF0000,w:5px)"),
+ * or (starting with GDAL 3.5.1), a reference to a style name starting with @
+ * (e.g. "@my_style") registered in the associated style table.
  *
  * This function is the same as the C++ method OGRStyleMgr::InitStyleString().
  *
