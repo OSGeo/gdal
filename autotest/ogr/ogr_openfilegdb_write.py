@@ -1467,8 +1467,14 @@ def test_ogr_openfilegdb_write_delete_layer():
         assert ds.DeleteLayer(1) != ogr.OGRERR_NONE
 
         # The following should not work
-        ds.ExecuteSQL('DELLAYER:not_existing')
-        ds.ExecuteSQL('DELLAYER:GDB_SystemCatalog')
+        with gdaltest.error_handler():
+            gdal.ErrorReset()
+            ds.ExecuteSQL('DELLAYER:not_existing')
+            assert gdal.GetLastErrorMsg() != ''
+        with gdaltest.error_handler():
+            gdal.ErrorReset()
+            ds.ExecuteSQL('DELLAYER:GDB_SystemCatalog')
+            assert gdal.GetLastErrorMsg() != ''
 
         ds = None
 
@@ -1808,6 +1814,9 @@ def test_ogr_openfilegdb_write_repack():
         lyr.SyncToDisk()
         filesize = gdal.VSIStatL(table_filename).size
 
+        with gdaltest.error_handler():
+            assert ds.ExecuteSQL("REPACK unexisting_table") is None
+
         # Repack: nothing to do
         sql_lyr = ds.ExecuteSQL("REPACK")
         assert sql_lyr
@@ -1821,7 +1830,7 @@ def test_ogr_openfilegdb_write_repack():
         assert lyr.DeleteFeature(3) == 0
 
         # Repack: truncate file
-        sql_lyr = ds.ExecuteSQL("REPACK")
+        sql_lyr = ds.ExecuteSQL("REPACK test")
         assert sql_lyr
         f = sql_lyr.GetNextFeature()
         assert f[0] == 'true'
@@ -1896,7 +1905,14 @@ def test_ogr_openfilegdb_write_recompute_extent_on():
 
         assert lyr.GetExtent() == (1, 5, 2, 6)
 
-        ds.ExecuteSQL("RECOMPUTE EXTENT ON test")
+        gdal.ErrorReset()
+        assert ds.ExecuteSQL("RECOMPUTE EXTENT ON test") is None
+        assert gdal.GetLastErrorMsg() == ''
+
+        with gdaltest.error_handler():
+            gdal.ErrorReset()
+            assert ds.ExecuteSQL("RECOMPUTE EXTENT ON non_existing_layer") is None
+            assert gdal.GetLastErrorMsg() != ''
 
         assert lyr.GetExtent() == (3, 5, 4, 6)
 
@@ -1909,7 +1925,7 @@ def test_ogr_openfilegdb_write_recompute_extent_on():
         assert lyr.DeleteFeature(2) == ogr.OGRERR_NONE
         assert lyr.DeleteFeature(3) == ogr.OGRERR_NONE
 
-        ds.ExecuteSQL("RECOMPUTE EXTENT ON test")
+        assert ds.ExecuteSQL("RECOMPUTE EXTENT ON test") is None
 
         assert lyr.GetExtent(can_return_null=True) is None
 
