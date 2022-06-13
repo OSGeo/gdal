@@ -3130,9 +3130,8 @@ static inline void GDALUnrolledCopy( T* CPL_RESTRICT pDest,
 
 #ifdef HAVE_SSSE3_AT_COMPILE_TIME
 
-void GDALUnrolledCopy_GByte_3_1_SSSE3( GByte* CPL_RESTRICT pDest,
-                                             const GByte* CPL_RESTRICT pSrc,
-                                             GPtrDiff_t nIters );
+#include "rasterio_ssse3.h"
+
 #endif
 
 
