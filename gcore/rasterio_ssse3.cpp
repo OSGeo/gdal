@@ -32,16 +32,14 @@ CPL_CVSID("$Id$")
 
 #if defined(HAVE_SSSE3_AT_COMPILE_TIME) && ( defined(__x86_64) || defined(_M_X64) )
 
+#include "rasterio_ssse3.h"
+
 #include <tmmintrin.h>
 #include "gdal_priv_templates.hpp"
 
 void GDALUnrolledCopy_GByte_3_1_SSSE3( GByte* CPL_RESTRICT pDest,
                                              const GByte* CPL_RESTRICT pSrc,
-                                             GInt64 nIters );
-
-void GDALUnrolledCopy_GByte_3_1_SSSE3( GByte* CPL_RESTRICT pDest,
-                                             const GByte* CPL_RESTRICT pSrc,
-                                             GInt64 nIters )
+                                             GPtrDiff_t nIters )
 {
     decltype(nIters) i;
     const __m128i xmm_shuffle0 = _mm_set_epi8(-1  ,-1  ,-1  ,-1,
