@@ -72,9 +72,14 @@ Layer
 
 An :cpp:class:`OGRLayer` represents a layer of features within a data source. All features in an OGRLayer share a common schema and are of the same :cpp:class:`OGRFeatureDefn`. An OGRLayer class also contains methods for reading features from the data source. The OGRLayer can be thought of as a gateway for reading and writing features from an underlying data source, normally a file format. In SFCOM and other table based simple features implementation an OGRLayer represents a spatial table.
 
-The OGRLayer includes methods for sequential and random reading and writing. Read access (via the :cpp:func:`OGRLayer::GetNextFeature` method) normally reads all features, one at a time sequentially; however, it can be limited to return features intersecting a particular geographic region by installing a spatial filter on the OGRLayer (via the :cpp:func:`OGRLayer::SetSpatialFilter` method).
+The OGRLayer includes methods for sequential and random reading and writing. Read access (via the :cpp:func:`OGRLayer::GetNextFeature` method) normally reads all features, one at a time sequentially; however, it can be limited to return features intersecting a particular geographic region by installing a spatial filter on the OGRLayer (via the :cpp:func:`OGRLayer::SetSpatialFilter` method). A filter on attributes can only be set with the :cpp:func:`OGRLayer::SetAttributeFilter` method.
 
-One flaw in the current OGR architecture is that the spatial filter is set directly on the OGRLayer which is intended to be the only representative of a given layer in a data source. This means it isn't possible to have multiple read operations active at one time with different spatial filters on each. This aspect may be revised in the future to introduce an OGRLayerView class or something similar.
+Starting with GDAL 3.6, as an alternative to getting features through ``GetNextFeature``, it is possible to retrieve them by batches, with a column-oriented memory layout, using the  :cpp:func:`OGRLayer::GetArrowStream` method (cf :ref:`vector_api_tut_arrow_stream`).
+
+One flaw in the current OGR architecture is that the spatial and attribute filters are set directly on the OGRLayer which is intended to be the only representative of a given layer in a data source. This means it isn't possible to have multiple read operations active at one time with different spatial filters on each.
+
+..
+    This aspect may be revised in the future to introduce an OGRLayerView class or something similar.
 
 Another question that might arise is why the OGRLayer and OGRFeatureDefn classes are distinct. An OGRLayer always has a one-to-one relationship to an OGRFeatureDefn, so why not amalgamate the classes. There are two reasons:
 - As defined now OGRFeature and OGRFeatureDefn don't depend on OGRLayer, so they can exist independently in memory without regard to a particular layer in a data store.

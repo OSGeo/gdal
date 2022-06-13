@@ -733,7 +733,7 @@ by the OGRSFDriverManager.
 
  \brief Reset feature reading to start on the first feature.
 
- This affects GetNextFeature().
+ This affects GetNextFeature() and GetArrowStream().
 
  This method is the same as the C function OGR_L_ResetReading().
 
@@ -744,7 +744,7 @@ by the OGRSFDriverManager.
 
  \brief Reset feature reading to start on the first feature.
 
- This affects GetNextFeature().
+ This affects GetNextFeature() and GetArrowStream().
 
  This function is the same as the C++ method OGRLayer::ResetReading().
 
@@ -767,6 +767,9 @@ by the OGRSFDriverManager.
 
  This method implements sequential access to the features of a layer.  The
  ResetReading() method can be used to start at the beginning again.
+
+ Starting with GDAL 3.6, it is possible to retrieve them by batches, with a
+ column-oriented memory layout, using the GetArrowStream() method.
 
  Features returned by GetNextFeature() may or may not be affected by
  concurrent modifications depending on drivers. A guaranteed way of seeing
@@ -800,6 +803,9 @@ by the OGRSFDriverManager.
  This function implements sequential access to the features of a layer.
  The OGR_L_ResetReading() function can be used to start at the beginning
  again.
+
+ Starting with GDAL 3.6, it is possible to retrieve them by batches, with a
+ column-oriented memory layout, using the OGR_L_GetArrowStream() function.
 
  Features returned by OGR_GetNextFeature() may or may not be affected by
  concurrent modifications depending on drivers. A guaranteed way of seeing
