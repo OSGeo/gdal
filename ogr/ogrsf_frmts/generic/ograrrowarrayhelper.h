@@ -30,6 +30,8 @@
 
 //! @cond Doxygen_Suppress
 
+#include <algorithm>
+
 #include "cpl_time.h"
 
 #include "ogrsf_frmts.h"

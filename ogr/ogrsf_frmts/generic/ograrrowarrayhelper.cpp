@@ -64,7 +64,7 @@ OGRArrowArrayHelper::OGRArrowArrayHelper(GDALDataset* poDS,
     for(int i = 0; i < nFieldCount; i++ )
     {
         const auto poFieldDefn = poFeatureDefn->GetFieldDefn(i);
-        abNullableFields[i] = poFieldDefn->IsNullable();
+        abNullableFields[i] = CPL_TO_BOOL(poFieldDefn->IsNullable());
         if( !poFieldDefn->IsIgnored() )
         {
             mapOGRFieldToArrowField[i] = nChildren;

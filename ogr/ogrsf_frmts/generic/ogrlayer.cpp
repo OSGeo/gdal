@@ -5480,7 +5480,7 @@ static bool FillWKBGeometryArray(struct ArrowArray* psChild,
                                  const OGRGeomFieldDefn* poFieldDefn,
                                  const int i)
 {
-    const bool bIsNullable = poFieldDefn->IsNullable();
+    const bool bIsNullable = CPL_TO_BOOL(poFieldDefn->IsNullable());
     psChild->n_buffers = 3;
     psChild->buffers = static_cast<const void**>(CPLCalloc(3, sizeof(void*)));
     uint8_t* pabyNull = nullptr;
@@ -5814,7 +5814,7 @@ int OGRLayer::GetNextArrowArray(struct ArrowArrayStream*,
         ++iSchemaChild;
         psChild->release = OGRLayerDefaultReleaseArray;
         psChild->length = apoFeatures.size();
-        const bool bIsNullable = poFieldDefn->IsNullable();
+        const bool bIsNullable = CPL_TO_BOOL(poFieldDefn->IsNullable());
         const auto eSubType = poFieldDefn->GetSubType();
         switch( poFieldDefn->GetType() )
         {
