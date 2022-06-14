@@ -246,7 +246,7 @@ OGRFeatureDefn* OGRWFSLayer::DescribeFeatureType()
     }
     CPLHTTPDestroyResult(psResult);
 
-    CPLXMLNode* psSchema = WFSFindNode(psXML, "schema");
+    const CPLXMLNode* psSchema = WFSFindNode(psXML, "schema");
     if (psSchema == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find <Schema>");
@@ -267,7 +267,7 @@ OGRFeatureDefn* OGRWFSLayer::DescribeFeatureType()
 /*                            ParseSchema()                             */
 /************************************************************************/
 
-OGRFeatureDefn* OGRWFSLayer::ParseSchema(CPLXMLNode* psSchema)
+OGRFeatureDefn* OGRWFSLayer::ParseSchema(const CPLXMLNode* psSchema)
 {
     osTargetNamespace = CPLGetXMLValue(psSchema, "targetNamespace", "");
 
