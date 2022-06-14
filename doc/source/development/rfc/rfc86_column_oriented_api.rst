@@ -8,7 +8,8 @@ RFC 86: Column-oriented read API for vector layers
 Author:        Even Rouault
 Contact:       even.rouault @ spatialys.com
 Started:       2022-May-24
-Status:        Development
+Updated:       2022-June-14
+Status:        Adopted
 Target:        GDAL 3.6
 ============== =============================================
 
@@ -689,4 +690,4 @@ GeoPandas GeoDataFrame from the concatenation of the returned arrays.
 Voting history
 --------------
 
-TBD
++1 from PSC members MateuszL, JukkaR, HowardB and EvenR
