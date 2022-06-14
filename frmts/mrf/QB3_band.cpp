@@ -52,34 +52,40 @@ CPLErr QB3_Band::Compress(buf_mgr& dst, buf_mgr& src)
         return CE_Failure;
     }
 
-    if (dst.size < qb3_max_encoded_size(pQB3)) {
-        CPLError(CE_Failure, CPLE_AssertionFailed, "MRF:QB3 encoded buffer size too small");
-        return CE_Failure;
+    CPLErr status = CE_None;
+    try {
+        if (dst.size < qb3_max_encoded_size(pQB3)) {
+            CPLError(CE_Failure, CPLE_AssertionFailed, "MRF:QB3 encoded buffer size too small");
+            throw CE_Failure;
+        }
+
+        // Use independent band compression when by default band 1 is core band
+        if ((3 == bands || 4 == bands) &&
+            EQUAL(poMRFDS->GetPhotometricInterpretation(), "MULTISPECTRAL")) {
+            size_t corebands[] = { 0, 1, 2, 3 }; // Identity, no core bands
+            qb3_set_encoder_coreband(pQB3, bands, corebands);
+        }
+
+        // Quality of 90 and above trigger the better encoding
+        qb3_set_encoder_mode(pQB3, (img.quality > 90) ? QB3M_BEST : QB3M_BASE);
+
+        dst.size = qb3_encode(pQB3, src.buffer, dst.buffer);
+        if (0 == dst.size) {
+            CPLError(CE_Failure, CPLE_AssertionFailed, "MRF:QB3 encoding failed");
+            throw CE_Failure;
+        }
+
+        // Never happens if qb3_max_encoded doesn't lie
+        if (dst.size > qb3_max_encoded_size(pQB3)) {
+            CPLError(CE_Failure, CPLE_AssertionFailed, "MRF:QB3 encoded size exceeds limit, check QB3 library");
+            throw CE_Failure;
+        }
     }
-
-    // Use independent band compression when by default band 1 is core band
-    if ((3 == bands || 4 == bands) &&
-        EQUAL(poMRFDS->GetPhotometricInterpretation(), "MULTISPECTRAL")) {
-        size_t corebands[] = {0, 1, 2, 3}; // Identity, no core bands
-        qb3_set_encoder_coreband(pQB3, bands, corebands);
+    catch (CPLErr error) {
+        status = error;
     }
-
-    // Quality of 90 and above trigger the better encoding
-    qb3_set_encoder_mode(pQB3, (img.quality > 90) ? QB3M_BEST : QB3M_BASE);
-
-    dst.size = qb3_encode(pQB3, src.buffer, dst.buffer);
-    if (0 == dst.size) {
-        CPLError(CE_Failure, CPLE_AssertionFailed, "MRF:QB3 encoding failed");
-        return CE_Failure;
-    }
-
-    // Never happens if qb3_max_encoded doesn't lie
-    if (dst.size > qb3_max_encoded_size(pQB3)) {
-        CPLError(CE_Failure, CPLE_AssertionFailed, "MRF:QB3 encoded size exceeds limit, check QB3 library");
-        return CE_Failure;
-    }
-
-    return CE_None;
+    qb3_destroy_encoder(pQB3);
+    return status;
 }
 
 CPLErr QB3_Band::Decompress(buf_mgr& dst, buf_mgr& src)
@@ -90,33 +96,37 @@ CPLErr QB3_Band::Decompress(buf_mgr& dst, buf_mgr& src)
         CPLError(CE_Failure, CPLE_AppDefined, "MRF: QB3 can't create decoder, is it a valid QB3 stream?");
         return CE_Failure;
     }
-    if (img_size[0] != static_cast<size_t>(img.pagesize.x)
-        || img_size[1] != static_cast<size_t>(img.pagesize.y)
-        || img_size[2] != static_cast<size_t>(img.pagesize.c)) {
-        CPLError(CE_Failure, CPLE_AppDefined, "MRF: QB Page has invalid size");
-        return CE_Failure;
-    }
 
-    if (!qb3_read_info(pdQB3)) {
-        CPLError(CE_Failure, CPLE_AppDefined, "MRF: QB3 metadata read failure");
-        qb3_destroy_decoder(pdQB3);
-        return CE_Failure;
-    }
+    CPLErr status = CE_None;
+    try {
+        if (img_size[0] != static_cast<size_t>(img.pagesize.x)
+            || img_size[1] != static_cast<size_t>(img.pagesize.y)
+            || img_size[2] != static_cast<size_t>(img.pagesize.c)) {
+            CPLError(CE_Failure, CPLE_AppDefined, "MRF: QB Page has invalid size");
+            throw CE_Failure;
+        }
 
-    if (static_cast<size_t>(img.pageSizeBytes) != qb3_decoded_size(pdQB3)) {
-        CPLError(CE_Failure, CPLE_AppDefined, "MRF: QB3 incorect decoded tile size");
-        qb3_destroy_decoder(pdQB3);
-        return CE_Failure;
-    }
+        if (!qb3_read_info(pdQB3)) {
+            CPLError(CE_Failure, CPLE_AppDefined, "MRF: QB3 metadata read failure");
+            throw CE_Failure;
+        }
 
-    dst.size = qb3_read_data(pdQB3, dst.buffer);
-    if (static_cast<size_t>(img.pageSizeBytes) != dst.size) {
-        CPLError(CE_Failure, CPLE_AppDefined, "MRF: QB3 decoding error");
-        qb3_destroy_decoder(pdQB3);
-        return CE_Failure;
+        if (static_cast<size_t>(img.pageSizeBytes) != qb3_decoded_size(pdQB3)) {
+            CPLError(CE_Failure, CPLE_AppDefined, "MRF: QB3 incorect decoded tile size");
+            throw CE_Failure;
+        }
+
+        dst.size = qb3_read_data(pdQB3, dst.buffer);
+        if (static_cast<size_t>(img.pageSizeBytes) != dst.size) {
+            CPLError(CE_Failure, CPLE_AppDefined, "MRF: QB3 decoding error");
+            throw CE_Failure;
+        }
+    }
+    catch (CPLErr error) {
+        status = error;
     }
     qb3_destroy_decoder(pdQB3);
-    return CE_None;
+    return status;
 }
 
 QB3_Band::QB3_Band(MRFDataset* pDS, const ILImage& image, int b, int level)
