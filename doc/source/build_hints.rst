@@ -242,6 +242,7 @@ It is used by the :ref:`raster.zarr` driver.
 
     Control whether to use Blosc. Defaults to ON when Blosc is found.
 
+
 BRUNSLI
 *******
 
@@ -263,6 +264,17 @@ by the :ref:`raster.marfa` driver.
 .. option:: GDAL_USE_BRUNSLI=ON/OFF
 
     Control whether to use BRUNSLI. Defaults to ON when Brunsli is found.
+
+
+QB3
+*******
+
+The `QB3 <https://github.com/lucianpls/QB3>`_ compression, used
+by the :ref:`raster.marfa` driver.
+
+.. option:: GDAL_USE_QB3=ON/OFF
+
+    Control whether to use QB3. Defaults to ON when QB3 is found.
 
 
 CFITSIO
