@@ -124,6 +124,15 @@ can publish a picture without proper georeferencing too.
 
   .. versionadded:: 3.1
 
+.. option:: --tiledriver=<DRIVER>
+
+  Which output driver to use for the tiles, determines the file format of the tiles.
+  Currently PNG and WEBP are supported. Default is PNG.
+  Additional configuration for the WEBP driver are documented below.
+
+  .. versionadded:: 3.6
+
+
 .. option:: -h, --help
 
   Show help message and exit.
@@ -205,6 +214,30 @@ Available options are:
     will be used
 
 The --url option is also used to substitute ``${URL}`` in the template MapML file.
+
+WEBP options
++++++++++++++
+
+WEBP tiledriver support is new to GDAL 3.6. It is enabled by using --tiledriver=WEBP.
+
+
+The following configuration options are available to further customize the webp output:
+
+.. option:: --webp-quality=<QUALITY>
+
+    QUALITY is a integer between 1-100. Default is 75.
+
+.. option:: --webp-lossless
+
+    Use WEBP lossless compression, default is lossy
+
+
+.. note::
+
+    GDAL :ref:`WEBP driver <raster.webp>` documentation can be consulted
+
+
+
 
 Examples
 --------

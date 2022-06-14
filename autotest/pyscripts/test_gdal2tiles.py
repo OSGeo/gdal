@@ -30,11 +30,14 @@
 ###############################################################################
 
 import os
+import os.path
 import sys
+import glob
 import shutil
 
 
 from osgeo import gdal      # noqa
+from osgeo_utils.gdalcompare import compare_db
 import test_py_scripts      # noqa  # pylint: disable=E0401
 import pytest
 
@@ -467,3 +470,73 @@ def test_gdal2tiles_py_mapml():
 
     shutil.rmtree('tmp/out_gdal2tiles_mapml', ignore_errors=True)
     gdal.Unlink('tmp/byte_APS.tif')
+
+
+def _convert_png_to_webp(frm, to, quality):
+    src_ds = gdal.Open(frm)
+    driver = gdal.GetDriverByName('WEBP')
+    driver.CreateCopy(to, src_ds, 0, options=['LOSSLESS=True'])
+
+
+def _run_webp_test(script_path, resampling):
+
+    shutil.rmtree('tmp/out_gdal2tiles_smallworld_png', ignore_errors=True)
+    shutil.rmtree('tmp/out_gdal2tiles_smallworld_webp_from_png', ignore_errors=True)
+    shutil.rmtree('tmp/out_gdal2tiles_smallworld_webp', ignore_errors=True)
+
+    base_args = '-q --processes=2 -z 0-1 -r '+resampling+' '
+    test_py_scripts.run_py_script_as_external_script(
+        script_path,
+        'gdal2tiles',
+        base_args+test_py_scripts.get_data_path('gdrivers')+'small_world.tif tmp/out_gdal2tiles_smallworld_png')
+
+    quality = 50
+    test_py_scripts.run_py_script_as_external_script(
+        script_path,
+        'gdal2tiles',
+        base_args + '--tiledriver=WEBP --webp-lossless '+test_py_scripts.get_data_path('gdrivers')+'small_world.tif tmp/out_gdal2tiles_smallworld_webp')
+
+    to_convert = glob.glob('tmp/out_gdal2tiles_smallworld_png/*/*/*.png')
+    for filename in to_convert:
+        to_filename = filename.replace('tmp/out_gdal2tiles_smallworld_png/', 'tmp/out_gdal2tiles_smallworld_webp_from_png/')
+        to_filename = to_filename.replace('.png', '.webp')
+        to_folder = os.path.dirname(to_filename)
+        os.makedirs(to_folder, exist_ok=True)
+
+        _convert_png_to_webp(filename, to_filename, quality)
+
+    to_compare = glob.glob('tmp/out_gdal2tiles_smallworld_webp_from_png/*/*/*.webp')
+    for filename in to_compare:
+        webp_filename = filename.replace('tmp/out_gdal2tiles_smallworld_webp_from_png/', 'tmp/out_gdal2tiles_smallworld_webp/')
+        diff_found = compare_db(gdal.Open(webp_filename), gdal.Open(filename))
+        assert not diff_found, (resampling, filename)
+        
+    shutil.rmtree('tmp/out_gdal2tiles_smallworld_png', ignore_errors=True)
+    shutil.rmtree('tmp/out_gdal2tiles_smallworld_webp_from_png', ignore_errors=True)
+    shutil.rmtree('tmp/out_gdal2tiles_smallworld_webp', ignore_errors=True)
+
+
+
+def test_gdal2tiles_py_webp():
+
+    script_path = test_py_scripts.get_py_script('gdal2tiles')
+    if script_path is None:
+        pytest.skip()
+
+    if gdal.GetDriverByName('WEBP') is None:
+        pytest.skip()
+
+
+    _run_webp_test(script_path, 'average')
+    try:
+        from PIL import Image
+        import numpy
+        import osgeo.gdal_array as gdalarray
+        del Image, numpy, gdalarray
+        pil_available = True
+    except ImportError:
+        pil_available = False
+
+    if pil_available:
+        _run_webp_test(script_path, 'antialias')
+
