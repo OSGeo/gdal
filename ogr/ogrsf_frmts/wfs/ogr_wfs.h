@@ -40,7 +40,7 @@
 #include "cpl_http.h"
 #include "ogr_swq.h"
 
-CPLXMLNode* WFSFindNode(CPLXMLNode* psXML, const char* pszRootName);
+const CPLXMLNode* WFSFindNode(const CPLXMLNode* psXML, const char* pszRootName);
 void OGRWFSRecursiveUnlink( const char *pszName );
 CPLString WFS_TurnSQLFilterToOGCFilter( const swq_expr_node* poExpr,
                                         OGRDataSource* poDS,
@@ -194,7 +194,7 @@ class OGRWFSLayer final: public OGRLayer
 
     int                 HasLayerDefn() { return poFeatureDefn != nullptr; }
 
-    OGRFeatureDefn*     ParseSchema(CPLXMLNode* psSchema);
+    OGRFeatureDefn*     ParseSchema(const CPLXMLNode* psSchema);
     OGRFeatureDefn*     BuildLayerDefn(OGRFeatureDefn* poSrcFDefn = nullptr);
 
     OGRErr              DeleteFromFilter( CPLString osOGCFilter );
@@ -299,11 +299,11 @@ class OGRWFSDataSource final: public OGRDataSource
     bool                bUseFeatureId;
     bool                bGmlObjectIdNeedsGMLPrefix;
     bool                bRequiresEnvelopeSpatialFilter;
-    static bool                DetectRequiresEnvelopeSpatialFilter( CPLXMLNode* psRoot );
+    static bool                DetectRequiresEnvelopeSpatialFilter( const CPLXMLNode* psRoot );
 
     bool                bTransactionSupport;
     char**              papszIdGenMethods;
-    bool                DetectTransactionSupport( CPLXMLNode* psRoot );
+    bool                DetectTransactionSupport( const CPLXMLNode* psRoot );
 
     CPLString           osBaseURL;
     CPLString           osPostTransactionURL;
@@ -317,10 +317,11 @@ class OGRWFSDataSource final: public OGRDataSource
     bool                bPagingAllowed;
     int                 nPageSize;
     int                 nBaseStartIndex;
-    bool                DetectSupportPagingWFS2(CPLXMLNode* psRoot);
+    bool                DetectSupportPagingWFS2(const CPLXMLNode* psGetCapabilitiesResponse,
+                                                const CPLXMLNode* psConfigurationRoot);
 
     bool                bStandardJoinsWFS2;
-    bool                DetectSupportStandardJoinsWFS2( CPLXMLNode* psRoot );
+    bool                DetectSupportStandardJoinsWFS2( const CPLXMLNode* psRoot );
 
     bool                bLoadMultipleLayerDefn;
     std::set<CPLString> aoSetAlreadyTriedLayers;
@@ -394,7 +395,7 @@ class OGRWFSDataSource final: public OGRDataSource
 
     CPLString                   GetPostTransactionURL();
 
-    void                        SaveLayerSchema(const char* pszLayerName, CPLXMLNode* psSchema);
+    void                        SaveLayerSchema(const char* pszLayerName, const CPLXMLNode* psSchema);
 
     CPLHTTPResult*              HTTPFetch( const char* pszURL, char** papszOptions );
 
