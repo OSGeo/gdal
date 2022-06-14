@@ -790,7 +790,7 @@ class QB3_Band final : public MRFRasterBand {
     friend class MRFDataset;
 public:
     QB3_Band(MRFDataset* pDS, const ILImage& image, int b, int level);
-    virtual ~QB3_Band() {};
+    virtual ~QB3_Band() {}
 protected:
     virtual CPLErr Decompress(buf_mgr& dst, buf_mgr& src) override;
     virtual CPLErr Compress(buf_mgr& dst, buf_mgr& src) override;
