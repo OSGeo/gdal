@@ -90,17 +90,17 @@ None.
 Layer Creation Options
 ----------------------
 
--  **FEATURE_DATASET**: When this option is set, the new layer will be
+-  **FEATURE_DATASET**\=string: When this option is set, the new layer will be
    created inside the named FeatureDataset folder. If the folder does
    not already exist, it will be created.
--  **LAYER_ALIAS**\ =string: Set layer name alias.
--  **GEOMETRY_NAME**: Set name of geometry column in new layer. Defaults
+-  **LAYER_ALIAS**\=string: Set layer name alias.
+-  **GEOMETRY_NAME**\=string: Set name of geometry column in new layer. Defaults
    to "SHAPE".
--  **GEOMETRY_NULLABLE**: Whether the values of the
+-  **GEOMETRY_NULLABLE**\=YES/NO: Whether the values of the
    geometry column can be NULL. Can be set to NO so that geometry is
    required. Default to "YES"
 -  **FID**: Name of the OID column to create. Defaults to "OBJECTID".
--  **XYTOLERANCE, ZTOLERANCE, MTOLERANCE**: These parameters control the snapping
+-  **XYTOLERANCE, ZTOLERANCE, MTOLERANCE**\=value: These parameters control the snapping
    tolerance used for advanced ArcGIS features like network and topology
    rules. They won't effect any OGR operations, but they will by used by
    ArcGIS. The units of the parameters are the units of the coordinate
@@ -111,7 +111,7 @@ Layer Creation Options
    for geographic coordinate systems.
    ArcMap 10.0 and OGR defaults for ZTOLERANCE and MTOLERANCE are 0.0001.
 
--  **XORIGIN, YORIGIN, ZORIGIN, MORIGIN, XYSCALE, ZSCALE, ZORIGIN**: These parameters
+-  **XORIGIN, YORIGIN, ZORIGIN, MORIGIN, XYSCALE, ZSCALE, ZORIGIN**\=value: These parameters
    control the `coordinate precision
    grid <http://help.arcgis.com/en/sdk/10.0/java_ao_adf/conceptualhelp/engine/index.html#//00010000037m000000>`__
    inside the file geodatabase. The dimensions of the grid are
@@ -139,15 +139,15 @@ Layer Creation Options
    -  ZORIGIN and MORIGIN: -100000
    -  ZSCALE and MSCALE: 10000
 
--  **COLUMN_TYPES**\= string. A list of strings of format field_name=fgdb_filed_type
+-  **COLUMN_TYPES**\=string. A list of strings of format field_name=fgdb_filed_type
    (separated by comma) to force the FileGDB column type of fields to be created.
 
--  **DOCUMENTATION**\= string. XML documentation for the layer.
+-  **DOCUMENTATION**\=string. XML documentation for the layer.
 
--  **CONFIGURATION_KEYWORD**\ =DEFAULTS/MAX_FILE_SIZE_4GB/MAX_FILE_SIZE_256TB:
+-  **CONFIGURATION_KEYWORD**\=DEFAULTS/MAX_FILE_SIZE_4GB/MAX_FILE_SIZE_256TB:
    Customize how data is stored. By default text in UTF-8 and data up to 1TB
 
--  **CREATE_SHAPE_AREA_AND_LENGTH_FIELDS**\ =YES/NO.
+-  **CREATE_SHAPE_AREA_AND_LENGTH_FIELDS**\=YES/NO.
    Defaults to NO (through CreateLayer() API). When this option is set,
    a Shape_Area and Shape_Length special fields will be created for polygonal
    layers (Shape_Length only for linear layers). These fields will automatically
