@@ -36,8 +36,7 @@
 
 #include <map>
 #include <vector>
-
-#include <limits.h>
+#include <limits>
 
 CPL_CVSID("$Id$")
 
@@ -592,7 +591,7 @@ uint64_t KEARasterBand::GetNoDataValueAsUInt64(int *pbSuccess)
     {
         if( pbSuccess != nullptr )
             *pbSuccess = 0;
-        return -1;
+        return std::numeric_limits<uint64_t>::max();
     }
 }
 
