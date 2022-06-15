@@ -391,9 +391,9 @@ MRFRasterBand::MRFRasterBand( MRFDataset *parent_dataset,
         zstd_level = image.quality;
 
 #if !defined(ZSTD_SUPPORT)
-    if (dodeflate) { // signal error condition to caller
+    if (dozstd) { // signal error condition to caller
         CPLError(CE_Failure, CPLE_AssertionFailed, "MRF: ZSTD support is not available");
-        dodeflate = FALSE;
+        dozstd = FALSE;
     }
 #endif
         // Chose zstd over deflate if both are enabled and available
