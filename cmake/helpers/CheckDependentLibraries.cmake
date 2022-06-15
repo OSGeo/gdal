@@ -576,7 +576,7 @@ gdal_check_package(GEOS "Geometry Engine - Open Source (GDAL core dependency)" R
 )
 gdal_check_package(HDF4 "Enable HDF4 driver" CAN_DISABLE)
 
-define_find_package2(KEA libkea/KEACommon.h kea)
+define_find_package2(KEA libkea/KEACommon.h kea;libkea)
 gdal_check_package(KEA "Enable KEA driver" CAN_DISABLE)
 
 gdal_check_package(ECW "Enable ECW driver" CAN_DISABLE)
