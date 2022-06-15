@@ -3289,7 +3289,7 @@ int CPLCheckForFile( char *pszFilename, char **papszSiblingFiles )
     {
         VSIStatBufL sStatBuf;
 
-        return VSIStatL(pszFilename, &sStatBuf) == 0;
+        return VSIStatExL(pszFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG) == 0;
     }
 
 /* -------------------------------------------------------------------- */
