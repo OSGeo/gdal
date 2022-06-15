@@ -581,7 +581,23 @@ This file system handler also allows sequential writing of files (no seeks or re
 
 The filename syntax must be only :file:`/vsistdin/`.
 
-The file operations available are of course limited to Read() and forward Seek(). Full seek in the first MB of a file is possible, and it is cached so that closing, re-opening :file:`/vsistdin/` and reading within this first megabyte is possible multiple times in the same process.
+The file operations available are of course limited to Read() and forward Seek().
+Full seek in the first MB of a file is possible, and it is cached so that closing,
+re-opening :file:`/vsistdin/` and reading within this first megabyte is possible
+multiple times in the same process.
+
+Starting with GDAL 3.6, the size of the in-memory cache can be controlled with
+the :decl_configoption:`CPL_VSISTDIN_BUFFER_LIMIT` configuration option, by
+specifying a size in bytes (or using a MB or GB suffix, e.g. "1GB"), or -1 for unlimited.
+The "/vsistdin?buffer_limit=value" syntax can also be used.
+
+/vsistdin filenames can be combined with other file system. For example, to
+read a file within a potentially big ZIP file streamed to gdal_translate:
+
+::
+
+    cat file.tif.zip | gdal_translate /vsizip/{/vsistdin?buffer_limit=-1}/path/to/some.tif out.tif
+
 
 .. _vsistdout:
 
