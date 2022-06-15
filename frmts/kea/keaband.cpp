@@ -558,6 +558,44 @@ double KEARasterBand::GetNoDataValue(int *pbSuccess)
     }
 }
 
+int64_t KEARasterBand::GetNoDataValueAsInt64(int *pbSuccess)
+{
+    try
+    {
+        int64_t nVal;
+        this->m_pImageIO->getNoDataValue(this->nBand, &nVal, kealib::kea_64int);
+        if( pbSuccess != nullptr )
+            *pbSuccess = 1;
+
+        return nVal;
+    }
+    catch (const kealib::KEAIOException &)
+    {
+        if( pbSuccess != nullptr )
+            *pbSuccess = 0;
+        return -1;
+    }
+}
+
+uint64_t KEARasterBand::GetNoDataValueAsUInt64(int *pbSuccess)
+{
+    try
+    {
+        uint64_t nVal;
+        this->m_pImageIO->getNoDataValue(this->nBand, &nVal, kealib::kea_64uint);
+        if( pbSuccess != nullptr )
+            *pbSuccess = 1;
+
+        return nVal;
+    }
+    catch (const kealib::KEAIOException &)
+    {
+        if( pbSuccess != nullptr )
+            *pbSuccess = 0;
+        return -1;
+    }
+}
+
 // set the no data value
 CPLErr KEARasterBand::SetNoDataValue(double dfNoData)
 {
@@ -602,6 +640,32 @@ CPLErr KEARasterBand::SetNoDataValue(double dfNoData)
     {
         return CE_Failure;
     }
+}
+
+CPLErr KEARasterBand::SetNoDataValueAsInt64(int64_t nNoData)
+{
+    try
+    {
+        this->m_pImageIO->setNoDataValue(this->nBand, &nNoData, kealib::kea_64int);
+    }
+    catch (const kealib::KEAIOException &)
+    {
+        return CE_Failure;
+    }
+    return CE_None;
+}
+
+CPLErr KEARasterBand::SetNoDataValueAsUInt64(uint64_t nNoData)
+{
+    try
+    {
+        this->m_pImageIO->setNoDataValue(this->nBand, &nNoData, kealib::kea_64uint);
+    }
+    catch (const kealib::KEAIOException &)
+    {
+        return CE_Failure;
+    }
+    return CE_None;
 }
 
 CPLErr KEARasterBand::DeleteNoDataValue()
