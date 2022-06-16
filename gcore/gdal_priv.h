@@ -1936,7 +1936,14 @@ public:
 
     static
     bool CopyValue(const void* pSrc, const GDALExtendedDataType& srcType,
-                     void* pDst, const GDALExtendedDataType& dstType);
+                   void* pDst, const GDALExtendedDataType& dstType);
+
+    static
+    bool CopyValues(const void* pSrc, const GDALExtendedDataType& srcType,
+                    GPtrDiff_t nSrcStrideInElts,
+                    void* pDst, const GDALExtendedDataType& dstType,
+                    GPtrDiff_t nDstStrideInElts,
+                    size_t nValues);
 
 private:
     GDALExtendedDataType(size_t nMaxStringLength, GDALExtendedDataTypeSubType eSubType);
@@ -2473,6 +2480,18 @@ protected:
 
     std::shared_ptr<GDALGroup> GetCacheRootGroup(bool bCanCreate,
                                                  std::string& osCacheFilenameOut) const;
+
+    // Returns if bufferStride values express a transposed view of the array
+    bool IsTransposedRequest(const size_t* count,
+                             const GPtrDiff_t* bufferStride) const;
+
+    // Should only be called if IsTransposedRequest() returns true
+    bool ReadForTransposedRequest(const GUInt64* arrayStartIdx,
+                                  const size_t* count,
+                                  const GInt64* arrayStep,
+                                  const GPtrDiff_t* bufferStride,
+                                  const GDALExtendedDataType& bufferDataType,
+                                  void* pDstBuffer) const;
 //! @endcond
 
 public:

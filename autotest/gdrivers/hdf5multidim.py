@@ -532,3 +532,21 @@ def test_hdf5_multidim_dimension_labels_with_null():
 def test_hdf5_multidim_family_driver():
 
     assert gdal.OpenEx('data/hdf5/test_family_0.h5', gdal.OF_MULTIDIM_RASTER)
+
+
+def test_hdf5_multidim_read_transposed():
+
+    ds = gdal.OpenEx('HDF5:data/netcdf/trmm-nc4.nc', gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray('pcp')
+    dims = ar.GetDimensions()
+    y_size = dims[-2].GetSize()
+    x_size = dims[-1].GetSize()
+    transposed_ar = ar.Transpose([0, 2, 1])
+    data = list(struct.unpack('f' * (y_size * x_size), ar.Read()))
+    transposed_data = list(struct.unpack('f' * (y_size * x_size), transposed_ar.Read()))
+    manually_transposed_data = []
+    for x in range(x_size):
+        for y in range(y_size):
+            manually_transposed_data.append(data[y * x_size + x])
+    assert transposed_data == manually_transposed_data
