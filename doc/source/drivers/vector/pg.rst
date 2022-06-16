@@ -143,7 +143,6 @@ Dataset open options
 -  **USER**\ =string: User name.
 -  **PASSWORD**\ =string: Password.
 -  **HOST**\ =string: Server hostname.
--  **DBNAME**\ =string: Database name.
 -  **SERVICE**\ =string: Service name (GDAL >= 3.1)
 -  **ACTIVE_SCHEMA**\ =string: Active schema.
 -  **SCHEMAS**\ =string: Restricted sets of schemas to explore (comma
