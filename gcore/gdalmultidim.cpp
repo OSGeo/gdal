@@ -1446,6 +1446,52 @@ bool GDALExtendedDataType::CopyValue(const void* pSrc,
 }
 
 /************************************************************************/
+/*                             CopyValues()                             */
+/************************************************************************/
+
+/** Convert severals value from a source type to a destination type.
+ *
+ * If dstType is GEDTC_STRING, the written value will be a pointer to a char*,
+ * that must be freed with CPLFree().
+ */
+bool GDALExtendedDataType::CopyValues(
+    const void* pSrc, const GDALExtendedDataType& srcType,
+    GPtrDiff_t nSrcStrideInElts,
+    void* pDst, const GDALExtendedDataType& dstType,
+    GPtrDiff_t nDstStrideInElts,
+    size_t nValues)
+{
+    const auto nSrcStrideInBytes = nSrcStrideInElts * static_cast<GPtrDiff_t>(srcType.GetSize());
+    const auto nDstStrideInBytes = nDstStrideInElts * static_cast<GPtrDiff_t>(dstType.GetSize());
+    if( srcType.GetClass() == GEDTC_NUMERIC &&
+        dstType.GetClass() == GEDTC_NUMERIC &&
+        nSrcStrideInBytes >= std::numeric_limits<int>::min() &&
+        nSrcStrideInBytes <= std::numeric_limits<int>::max() &&
+        nDstStrideInBytes >= std::numeric_limits<int>::min() &&
+        nDstStrideInBytes <= std::numeric_limits<int>::max() )
+    {
+        GDALCopyWords64( pSrc, srcType.GetNumericDataType(),
+                         static_cast<int>(nSrcStrideInBytes),
+                         pDst, dstType.GetNumericDataType(),
+                         static_cast<int>(nDstStrideInBytes),
+                         nValues );
+    }
+    else
+    {
+        const GByte* pabySrc = static_cast<const GByte*>(pSrc);
+        GByte* pabyDst = static_cast<GByte*>(pDst);
+        for( size_t i = 0; i < nValues; ++i )
+        {
+            if( !CopyValue(pabySrc, srcType, pabyDst, dstType) )
+                return false;
+            pabySrc += nSrcStrideInBytes;
+            pabyDst += nDstStrideInBytes;
+        }
+    }
+    return true;
+}
+
+/************************************************************************/
 /*                       CheckReadWriteParams()                         */
 /************************************************************************/
 //! @cond Doxygen_Suppress
@@ -3885,6 +3931,355 @@ bool GDALMDArray::Read(const GUInt64* arrayStartIdx,
     return array->IRead(arrayStartIdx, count, arrayStep,
                         bufferStride, bufferDataType, pDstBuffer);
 }
+
+//! @cond Doxygen_Suppress
+
+/************************************************************************/
+/*                       IsTransposedRequest()                          */
+/************************************************************************/
+
+bool GDALMDArray::IsTransposedRequest(const size_t* count,
+                                      const GPtrDiff_t* bufferStride) const  // stride in elements
+{
+    /*
+    For example:
+    count = [2,3,4]
+    strides = [12, 4, 1]            (2-1)*12+(3-1)*4+(4-1)*1=23   ==> row major stride
+              [12, 1, 3]            (2-1)*12+(3-1)*1+(4-1)*3=23   ==> (axis[0],axis[2],axis[1]) transposition
+              [1, 8, 2]             (2-1)*1+ (3-1)*8+(4-1)*2=23   ==> (axis[2],axis[1],axis[0]) transposition
+    */
+    const size_t nDims(GetDimensionCount());
+    size_t nCurStrideForRowMajorStrides = 1;
+    bool bRowMajorStrides = true;
+    size_t nElts = 1;
+    size_t nLastIdx = 0;
+    for( size_t i = nDims; i > 0; )
+    {
+        --i;
+        if( bufferStride[i] < 0 )
+            return false;
+        if( static_cast<size_t>(bufferStride[i]) != nCurStrideForRowMajorStrides )
+        {
+            bRowMajorStrides = false;
+        }
+        // Integer overflows have already been checked in CheckReadWriteParams()
+        nCurStrideForRowMajorStrides *= count[i];
+        nElts *= count[i];
+        nLastIdx += static_cast<size_t>(bufferStride[i]) * (count[i] - 1);
+    }
+    if( bRowMajorStrides )
+        return false;
+    return nLastIdx == nElts - 1;
+}
+
+/************************************************************************/
+/*                   CopyToFinalBufferSameDataType()                    */
+/************************************************************************/
+
+template<size_t N> void CopyToFinalBufferSameDataType(const void* pSrcBuffer,
+                                                      void* pDstBuffer,
+                                                      size_t nDims,
+                                                      const size_t* count,
+                                                      const GPtrDiff_t* bufferStride)
+{
+    std::vector<size_t> anStackCount(nDims);
+    std::vector<GByte*> pabyDstBufferStack(nDims + 1);
+    const GByte* pabySrcBuffer = static_cast<const GByte*>(pSrcBuffer);
+    pabyDstBufferStack[0] = static_cast<GByte*>(pDstBuffer);
+    size_t iDim = 0;
+
+lbl_next_depth:
+    if( iDim == nDims - 1 )
+    {
+        size_t n = count[iDim];
+        GByte* pabyDstBuffer = pabyDstBufferStack[iDim];
+        const auto bufferStrideLastDim = bufferStride[iDim] * N;
+        while( n > 0 )
+        {
+            --n;
+            memcpy(pabyDstBuffer, pabySrcBuffer, N);
+            pabyDstBuffer += bufferStrideLastDim;
+            pabySrcBuffer += N;
+        }
+    }
+    else
+    {
+        anStackCount[iDim] = count[iDim];
+        while( true )
+        {
+            ++ iDim;
+            pabyDstBufferStack[iDim] = pabyDstBufferStack[iDim-1];
+            goto lbl_next_depth;
+lbl_return_to_caller_in_loop:
+            -- iDim;
+            -- anStackCount[iDim];
+            if( anStackCount[iDim] == 0 )
+                break;
+            pabyDstBufferStack[iDim] += bufferStride[iDim] * N;
+        }
+    }
+    if( iDim > 0 )
+        goto lbl_return_to_caller_in_loop;
+}
+
+/************************************************************************/
+/*                        CopyToFinalBuffer()                           */
+/************************************************************************/
+
+static void CopyToFinalBuffer(const void* pSrcBuffer,
+                              const GDALExtendedDataType& eSrcDataType,
+                              void* pDstBuffer,
+                              const GDALExtendedDataType& eDstDataType,
+                              size_t nDims,
+                              const size_t* count,
+                              const GPtrDiff_t* bufferStride)
+{
+    const size_t nSrcDataTypeSize(eSrcDataType.GetSize());
+    // Use specialized implementation for well-known data types when no
+    // type conversion is needed
+    if( eSrcDataType == eDstDataType )
+    {
+        if( nSrcDataTypeSize == 1 )
+        {
+            CopyToFinalBufferSameDataType<1>(pSrcBuffer, pDstBuffer, nDims, count, bufferStride);
+            return;
+        }
+        else if( nSrcDataTypeSize == 2 )
+        {
+            CopyToFinalBufferSameDataType<2>(pSrcBuffer, pDstBuffer, nDims, count, bufferStride);
+            return;
+        }
+        else if( nSrcDataTypeSize == 4 )
+        {
+            CopyToFinalBufferSameDataType<4>(pSrcBuffer, pDstBuffer, nDims, count, bufferStride);
+            return;
+        }
+        else if( nSrcDataTypeSize == 8 )
+        {
+            CopyToFinalBufferSameDataType<8>(pSrcBuffer, pDstBuffer, nDims, count, bufferStride);
+            return;
+        }
+    }
+
+    const size_t nDstDataTypeSize(eDstDataType.GetSize());
+    std::vector<size_t> anStackCount(nDims);
+    std::vector<GByte*> pabyDstBufferStack(nDims + 1);
+    const GByte* pabySrcBuffer = static_cast<const GByte*>(pSrcBuffer);
+    pabyDstBufferStack[0] = static_cast<GByte*>(pDstBuffer);
+    size_t iDim = 0;
+
+lbl_next_depth:
+    if( iDim == nDims - 1 )
+    {
+        GDALExtendedDataType::CopyValues(
+            pabySrcBuffer, eSrcDataType, 1,
+            pabyDstBufferStack[iDim], eDstDataType, bufferStride[iDim],
+            count[iDim]);
+        pabySrcBuffer += count[iDim] * nSrcDataTypeSize;
+    }
+    else
+    {
+        anStackCount[iDim] = count[iDim];
+        while( true )
+        {
+            ++ iDim;
+            pabyDstBufferStack[iDim] = pabyDstBufferStack[iDim-1];
+            goto lbl_next_depth;
+lbl_return_to_caller_in_loop:
+            -- iDim;
+            -- anStackCount[iDim];
+            if( anStackCount[iDim] == 0 )
+                break;
+            pabyDstBufferStack[iDim] += bufferStride[iDim] * nDstDataTypeSize;
+        }
+    }
+    if( iDim > 0 )
+        goto lbl_return_to_caller_in_loop;
+}
+
+/************************************************************************/
+/*                          Transpose2D()                               */
+/************************************************************************/
+
+template <class T>
+static void Transpose2D(T *dst, const T *src, size_t src_height, size_t src_width)
+{
+    constexpr size_t blocksize = 32;
+    for (size_t i = 0; i < src_height; i += blocksize)
+    {
+        for (size_t j = 0; j < src_width; j += blocksize)
+        {
+            // transpose the block beginning at [i,j]
+            const size_t max_k = std::min(i + blocksize, src_height);
+            for (size_t k = i; k < max_k; ++k)
+            {
+                const size_t max_l = std::min(j + blocksize, src_width);
+                for (size_t l = j; l < max_l; ++l)
+                {
+                    dst[k + l*src_height] = src[l + k*src_width];
+                }
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                      TransposeLast2Dims()                            */
+/************************************************************************/
+
+static bool TransposeLast2Dims(void* pDstBuffer,
+                               const GDALExtendedDataType& eDT,
+                               const size_t nDims,
+                               const size_t* count,
+                               const size_t nEltsNonLast2Dims)
+{
+    const size_t nEltsLast2Dims = count[nDims-2] * count[nDims-1];
+    const auto nDTSize = eDT.GetSize();
+    void* pTempBufferForLast2DimsTranspose = VSI_MALLOC2_VERBOSE(nEltsLast2Dims, nDTSize);
+    if( pTempBufferForLast2DimsTranspose == nullptr )
+        return false;
+
+    GByte* pabyDstBuffer = static_cast<GByte*>(pDstBuffer);
+    for(size_t i = 0; i < nEltsNonLast2Dims; ++i )
+    {
+        if( nDTSize == 1 )
+        {
+            Transpose2D(static_cast<uint8_t*>(pTempBufferForLast2DimsTranspose),
+                        reinterpret_cast<const uint8_t*>(pabyDstBuffer),
+                        count[nDims-2],
+                        count[nDims-1]);
+        }
+        else if( nDTSize == 2 )
+        {
+            Transpose2D(static_cast<uint16_t*>(pTempBufferForLast2DimsTranspose),
+                        reinterpret_cast<const uint16_t*>(pabyDstBuffer),
+                        count[nDims-2],
+                        count[nDims-1]);
+        }
+        else if( nDTSize == 4 )
+        {
+            Transpose2D(static_cast<uint32_t*>(pTempBufferForLast2DimsTranspose),
+                        reinterpret_cast<const uint32_t*>(pabyDstBuffer),
+                        count[nDims-2],
+                        count[nDims-1]);
+        }
+        else if( nDTSize == 8 )
+        {
+            Transpose2D(static_cast<uint64_t*>(pTempBufferForLast2DimsTranspose),
+                        reinterpret_cast<const uint64_t*>(pabyDstBuffer),
+                        count[nDims-2],
+                        count[nDims-1]);
+        }
+        else
+        {
+            CPLAssert(false);
+        }
+        memcpy(pabyDstBuffer, pTempBufferForLast2DimsTranspose, nDTSize * nEltsLast2Dims);
+        pabyDstBuffer += nDTSize * nEltsLast2Dims;
+    }
+
+    VSIFree(pTempBufferForLast2DimsTranspose);
+
+    return true;
+}
+
+/************************************************************************/
+/*                      ReadForTransposedRequest()                      */
+/************************************************************************/
+
+// Using the netCDF/HDF5 APIs to read a slice with strides that express a
+// transposed view yield to extremely poor/unusable performance. This fixes
+// this by using temporary memory to read in a contiguous buffer in a
+// row-major order, and then do the transposition to the final buffer.
+
+bool GDALMDArray::ReadForTransposedRequest(const GUInt64* arrayStartIdx,
+                                           const size_t* count,
+                                           const GInt64* arrayStep,
+                                           const GPtrDiff_t* bufferStride,
+                                           const GDALExtendedDataType& bufferDataType,
+                                           void* pDstBuffer) const
+{
+    const size_t nDims(GetDimensionCount());
+    if( nDims == 0)
+    {
+        CPLAssert(false);
+        return false; // shouldn't happen
+    }
+    size_t nElts = 1;
+    for( size_t i = 0; i < nDims; ++i )
+        nElts *= count[i];
+
+    std::vector<GPtrDiff_t> tmpBufferStrides(nDims);
+    tmpBufferStrides.back() = 1;
+    for( size_t i = nDims - 1; i > 0; )
+    {
+        --i;
+        tmpBufferStrides[i] =
+            tmpBufferStrides[i+1] * count[i+1];
+    }
+
+    const auto& eDT = GetDataType();
+    const auto nDTSize = eDT.GetSize();
+    if( bufferDataType == eDT &&
+        nDims >= 2 &&
+        bufferStride[nDims-2] == 1 &&
+        static_cast<size_t>(bufferStride[nDims-1]) == count[nDims-2] &&
+        (nDTSize == 1 || nDTSize == 2 || nDTSize == 4 || nDTSize == 8) )
+    {
+        // Optimization of the optimization if only the last 2 dims are transposed
+        // that saves on temporary buffer allocation
+        const size_t nEltsLast2Dims = count[nDims-2] * count[nDims-1];
+        size_t nCurStrideForRowMajorStrides = nEltsLast2Dims;
+        bool bRowMajorStridesForNonLast2Dims = true;
+        size_t nEltsNonLast2Dims = 1;
+        for( size_t i = nDims-2; i > 0; )
+        {
+            --i;
+            if( static_cast<size_t>(bufferStride[i]) != nCurStrideForRowMajorStrides )
+            {
+                bRowMajorStridesForNonLast2Dims = false;
+            }
+            // Integer overflows have already been checked in CheckReadWriteParams()
+            nCurStrideForRowMajorStrides *= count[i];
+            nEltsNonLast2Dims *= count[i];
+        }
+        if( bRowMajorStridesForNonLast2Dims )
+        {
+            // We read in the final buffer!
+            if( !IRead(arrayStartIdx, count, arrayStep, tmpBufferStrides.data(),
+                       eDT, pDstBuffer) )
+            {
+                return false;
+            }
+
+            return TransposeLast2Dims(pDstBuffer, eDT,
+                                      nDims,
+                                      count,
+                                      nEltsNonLast2Dims);
+        }
+    }
+
+    void* pTempBuffer = VSI_MALLOC2_VERBOSE(nElts, eDT.GetSize());
+    if( pTempBuffer == nullptr )
+        return false;
+
+    if( !IRead(arrayStartIdx, count, arrayStep, tmpBufferStrides.data(),
+               eDT, pTempBuffer) )
+    {
+        VSIFree(pTempBuffer);
+        return false;
+    }
+    CopyToFinalBuffer(pTempBuffer, eDT,
+                      pDstBuffer, bufferDataType,
+                      nDims,
+                      count,
+                      bufferStride);
+
+    VSIFree(pTempBuffer);
+    return true;
+}
+
+//! @endcond
 
 /************************************************************************/
 /*                       GDALSlicedMDArray                              */
