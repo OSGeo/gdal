@@ -65,8 +65,8 @@ def test_kea_2():
                  '../../gcore/data/uint16.tif',
                  '../../gcore/data/int32.tif',
                  '../../gcore/data/uint32.tif',
-                 '../../gcore/data/gtiff/int64.tif',
-                 '../../gcore/data/gtiff/uint64.tif',
+                 '../../gcore/data/int64.tif',
+                 '../../gcore/data/uint64.tif',
                  '../../gcore/data/float32.tif',
                  '../../gcore/data/float64.tif']
 
@@ -88,8 +88,8 @@ def test_kea_3():
                  '../../gcore/data/uint16.tif',
                  '../../gcore/data/int32.tif',
                  '../../gcore/data/uint32.tif',
-                 '../../gcore/data/gtiff/int64.tif',
-                 '../../gcore/data/gtiff/uint64.tif',
+                 '../../gcore/data/int64.tif',
+                 '../../gcore/data/uint64.tif',
                  '../../gcore/data/float32.tif',
                  '../../gcore/data/float64.tif']
 
