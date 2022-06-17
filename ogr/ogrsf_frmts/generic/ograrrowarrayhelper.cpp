@@ -85,7 +85,7 @@ OGRArrowArrayHelper::OGRArrowArrayHelper(GDALDataset* poDS,
     out_array->release = OGRLayer::ReleaseArray;
 
     out_array->length = nMaxBatchSize;
-    out_array->null_count = -1;
+    out_array->null_count = 0;
 
     out_array->n_children = nChildren;
     out_array->children = static_cast<struct ArrowArray**>(

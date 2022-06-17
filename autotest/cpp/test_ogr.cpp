@@ -2005,6 +2005,9 @@ namespace tut
         ensure(array.release != nullptr);
         ensure_equals(array.n_children, 1 + poFDefn->GetFieldCount() + poFDefn->GetGeomFieldCount());
         ensure_equals(array.length, poLayer->GetFeatureCount(false));
+        ensure_equals(array.null_count, 0);
+        ensure_equals(array.n_buffers, 1);
+        ensure(array.buffers[0] == nullptr); // no bitmap
         for( int i = 0; i < array.n_children; i++ )
         {
             ensure(array.children[i]->release != nullptr);
