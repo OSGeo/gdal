@@ -5770,7 +5770,7 @@ int OGRLayer::GetNextArrowArray(struct ArrowArrayStream*,
     }
 
     out_array->length = apoFeatures.size();
-    out_array->null_count = -1;
+    out_array->null_count = 0;
 
     out_array->n_children = nMaxChildren;
     out_array->children = static_cast<struct ArrowArray**>(
