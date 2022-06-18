@@ -102,7 +102,7 @@ transform_list = [
      'Geocentric', None, None, None),
 
     # Test Vertical Datum Shift with a change of horizontal units.
-    ('+proj=utm +zone=11 +datum=WGS84', (100000.0, 3500000.0, 0.0), 0.1,
+    ('EPSG:4979', (31.5656461890308, -121.213327277021, 0.0), 0.1,
      '+proj=utm +zone=11 +datum=WGS84 +geoidgrids=egm96_15.gtx +units=us-ft', (328083.333225467, 11482916.6665952, 41.4697855726348), 0.01,
      'EGM 96 Conversion', None, "egm96_15.gtx", '6.2.1'),
 
