@@ -114,6 +114,8 @@ public:
                                          const char* pszDomain = "" ) override;
         char**          GetMetadata( const char* pszDomain = "" ) override;
 
+        GDALDataset*    GetDataset() override;
+
         std::unique_ptr<OGRFieldDomain> BuildDomain(const std::string& osDomainName,
                                                     int iFieldIndex) const override;
 };
@@ -125,7 +127,7 @@ public:
 class OGRFeatherDataset final: public OGRArrowDataset
 {
 public:
-    explicit OGRFeatherDataset(std::unique_ptr<arrow::MemoryPool>&& poMemoryPool);
+    explicit OGRFeatherDataset(const std::shared_ptr<arrow::MemoryPool>& poMemoryPool);
 };
 
 /************************************************************************/

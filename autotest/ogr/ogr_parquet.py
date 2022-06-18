@@ -1220,6 +1220,7 @@ def test_ogr_parquet_read_partitioned_geo():
 
     gdal.RmdirRecursive('/vsimem/somedir')
 
+
 ###############################################################################
 # Test that we don't write an id in members of datum ensemble
 # Cf https://github.com/opengeospatial/geoparquet/discussions/110
@@ -1253,3 +1254,54 @@ def test_ogr_parquet_write_crs_without_id_in_datum_ensemble_members():
 
     gdal.Unlink(outfilename)
 
+
+###############################################################################
+
+
+def test_ogr_parquet_arrow_stream_numpy():
+    pytest.importorskip('osgeo.gdal_array')
+    numpy = pytest.importorskip('numpy')
+
+    ds = ogr.Open('data/parquet/test.parquet')
+    lyr = ds.GetLayer(0)
+    assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
+
+    stream = lyr.GetArrowStreamAsNumPy(options = ['MAX_FEATURES_IN_BATCH=5', 'USE_MASKED_ARRAYS=NO'])
+    with gdaltest.error_handler():
+        batches = [ batch for batch in stream ]
+    assert len(batches) == 2
+    batch = batches[0]
+    assert batch.keys() == { 'boolean', 'uint8', 'int8', 'uint16', 'int16', 'uint32', 'int32', 'uint64', 'int64', 'float32', 'float64', 'string', 'timestamp_ms_gmt', 'timestamp_ms_gmt_plus_2', 'timestamp_ms_gmt_minus_0215', 'timestamp_s_no_tz', 'time32_s', 'time32_ms', 'time64_us', 'date32', 'date64', 'binary', 'fixed_size_binary', 'list_boolean', 'list_uint8', 'list_int8', 'list_uint16', 'list_int16', 'list_uint32', 'list_int32', 'list_uint64', 'list_int64', 'list_float32', 'list_float64', 'list_string', 'fixed_size_list_boolean', 'fixed_size_list_uint8', 'fixed_size_list_int8', 'fixed_size_list_uint16', 'fixed_size_list_int16', 'fixed_size_list_uint32', 'fixed_size_list_int32', 'fixed_size_list_uint64', 'fixed_size_list_int64', 'fixed_size_list_float32', 'fixed_size_list_float64', 'fixed_size_list_string', 'dict', 'geometry' }
+    assert batch["boolean"][0] == True
+    assert batch["boolean"][1] == False
+    assert batch["boolean"][2] == False
+    assert batches[1]["boolean"][0] == False
+    assert batches[1]["boolean"][1] == True
+    assert batch["uint8"][0] == 1
+    assert batch["int8"][0] == -2
+    assert numpy.array_equal(batch["list_boolean"][0], numpy.array([]))
+    assert numpy.array_equal(batch["list_boolean"][1], numpy.array([False]))
+    assert numpy.array_equal(batch["fixed_size_list_boolean"][0], numpy.array([True, False]))
+    assert numpy.array_equal(batches[1]["fixed_size_list_boolean"][0], numpy.array([True, False]))
+    assert numpy.array_equal(batches[1]["fixed_size_list_boolean"][1], numpy.array([False, True]))
+    assert numpy.array_equal(batch["fixed_size_list_uint8"][0], numpy.array([0, 1]))
+    assert numpy.array_equal(batch["list_uint64"][1], numpy.array([0])), batch["list_uint64"][1]
+    assert numpy.array_equal(batch["fixed_size_list_string"][0], numpy.array([b'a', b'b'], dtype='|S1'))
+    assert batch["geometry"][0] is not None
+    assert batch["geometry"][1] is None
+    assert batch["geometry"][0] is not None
+    assert batches[1]["geometry"][0] is not None
+    assert batches[1]["geometry"][1] is not None
+    assert numpy.array_equal(batches[1]["list_string"][0], numpy.array([b'A', b'BC', b'CDE']))
+    assert numpy.array_equal(batches[1]["list_string"][1], numpy.array([b'A', b'BC', b'CDE', b'DEFG']))
+
+    ignored_fields = [ 'geometry' ]
+    lyr_defn = lyr.GetLayerDefn()
+    for i in range(lyr_defn.GetFieldCount()):
+        if lyr_defn.GetFieldDefn(i).GetNameRef() != 'string':
+            ignored_fields.append(lyr_defn.GetFieldDefn(i).GetNameRef())
+    lyr.SetIgnoredFields(ignored_fields)
+    stream = lyr.GetArrowStreamAsNumPy()
+    batches = [ batch for batch in stream ]
+    batch = batches[0]
+    assert batch.keys() == { 'string' }

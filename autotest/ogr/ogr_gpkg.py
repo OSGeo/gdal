@@ -5607,3 +5607,156 @@ def test_ogr_gpkg_alter_geom_field_defn():
     ds = None
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test GetArrowStreamAsNumPy()
+
+
+def test_ogr_gpkg_arrow_stream_numpy():
+    pytest.importorskip('osgeo.gdal_array')
+    numpy = pytest.importorskip('numpy')
+
+    ds = gdal.GetDriverByName('GPKG').Create('/vsimem/test.gpkg', 0, 0, 0, gdal.GDT_Unknown)
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbPoint)
+    assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
+
+    field = ogr.FieldDefn("str", ogr.OFTString)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("bool", ogr.OFTInteger)
+    field.SetSubType(ogr.OFSTBoolean)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("int16", ogr.OFTInteger)
+    field.SetSubType(ogr.OFSTInt16)
+    lyr.CreateField(field)
+
+    assert ds.AddFieldDomain(ogr.CreateCodedFieldDomain('enum_domain', '', ogr.OFTInteger, ogr.OFSTNone, {1: "one", "2": None}))
+    field = ogr.FieldDefn("int32", ogr.OFTInteger)
+    field.SetDomainName('enum_domain')
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("int64", ogr.OFTInteger64)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("float32", ogr.OFTReal)
+    field.SetSubType(ogr.OFSTFloat32)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("float64", ogr.OFTReal)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("date", ogr.OFTDate)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("datetime", ogr.OFTDateTime)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("binary", ogr.OFTBinary)
+    lyr.CreateField(field)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("bool", 1)
+    f.SetField("int16", -12345)
+    f.SetField("int32", 12345678)
+    f.SetField("int64", 12345678901234)
+    f.SetField("float32", 1.25)
+    f.SetField("float64", 1.250123)
+    f.SetField("str", "abc")
+    f.SetField("date", "2022-05-31")
+    f.SetField("datetime", "2022-05-31T12:34:56.789Z")
+    f.SetFieldBinaryFromHexString("binary", 'DEAD')
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(1 2)'))
+    lyr.CreateFeature(f)
+
+    f2 = ogr.Feature(lyr.GetLayerDefn())
+    f2.SetField("bool", 0)
+    lyr.CreateFeature(f2)
+
+    f3 = ogr.Feature(lyr.GetLayerDefn())
+    f3.SetField("int16", 123)
+    f3.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(-1 2)'))
+    lyr.CreateFeature(f3)
+
+    ds = None
+    ds = ogr.Open('/vsimem/test.gpkg')
+    lyr = ds.GetLayer(0)
+
+    try:
+        import pyarrow
+        pyarrow.__version__
+        has_pyarrow = True
+    except ImportError:
+        has_pyarrow = False
+    if has_pyarrow:
+        stream = lyr.GetArrowStreamAsPyArrow()
+        batches = [ batch for batch in stream ]
+        #print(batches)
+
+    stream = lyr.GetArrowStreamAsNumPy(options = ['USE_MASKED_ARRAYS=NO',
+                                                  'MAX_FEATURES_IN_BATCH=2'])
+    batches = [ batch for batch in stream ]
+    assert len(batches) == 2
+    batch = batches[0]
+
+    assert batch.keys() == {
+        'fid', 'str', 'bool', 'int16', 'int32', 'int64',
+        'float32', 'float64', 'date', 'datetime', 'binary', 'geom' }
+
+    assert batch["fid"][0] == 1
+    assert len(batch["fid"]) == 2
+    for fieldname in ('bool', 'int16', 'int32', 'int64',
+                      'float32', 'float64'):
+        assert batch[fieldname][0] == f.GetField(fieldname)
+    assert batch['str'][0] == f.GetField('str').encode('utf-8')
+    assert batch['date'][0] == numpy.datetime64('2022-05-31')
+    assert batch['datetime'][0] == numpy.datetime64('2022-05-31T12:34:56.789')
+    assert bytes(batch['binary'][0]) == b'\xDE\xAD'
+    assert len(bytes(batch["geom"][0])) == 21
+
+    assert batch["fid"][1] == 2
+    assert batch['bool'][1] == False
+    assert batch["geom"][1] is None
+
+    batch = batches[1]
+    assert batch.keys() == {
+        'fid', 'str', 'bool', 'int16', 'int32', 'int64',
+        'float32', 'float64', 'date', 'datetime', 'binary', 'geom' }
+
+    assert batch["fid"][0] == 3
+    assert batch["int16"][0] == 123
+    assert len(batch["fid"]) == 1
+
+    # Test attribute filter
+    lyr.SetAttributeFilter("int16 = 123")
+    stream = lyr.GetArrowStreamAsNumPy()
+    batches = [ batch for batch in stream ]
+    lyr.SetAttributeFilter(None)
+    assert len(batches) == 1
+    assert len(batches[0]["fid"]) == 1
+    assert batches[0]["fid"][0] == 3
+
+    # Test spatial filter
+    lyr.SetSpatialFilterRect(0, 0, 10, 10)
+    stream = lyr.GetArrowStreamAsNumPy()
+    batches = [ batch for batch in stream ]
+    lyr.SetSpatialFilter(None)
+    assert len(batches) == 1
+    assert len(batches[0]["fid"]) == 1
+    assert batches[0]["fid"][0] == 1
+
+    # Test ignored fields
+    assert lyr.SetIgnoredFields(["geom", "int16"]) == ogr.OGRERR_NONE
+    stream = lyr.GetArrowStreamAsNumPy(options = ['INCLUDE_FID=NO'])
+    batches = [ batch for batch in stream ]
+    lyr.SetIgnoredFields([])
+    batch = batches[0]
+    assert batch.keys() == {
+        'str', 'bool', 'int32', 'int64',
+        'float32', 'float64', 'date', 'datetime', 'binary' }
+
+
+    ds = None
+
+    ogr.GetDriverByName('GPKG').DeleteDataSource('/vsimem/test.gpkg')

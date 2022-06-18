@@ -207,11 +207,12 @@ static GDALDataset *OGRFeatherDriverOpen( GDALOpenInfo* poOpenInfo )
         infile = *result;
     }
 
-    auto poMemoryPool = arrow::MemoryPool::CreateDefault();
+    auto poMemoryPool = std::shared_ptr<arrow::MemoryPool>(
+        arrow::MemoryPool::CreateDefault().release());
     auto options = arrow::ipc::IpcReadOptions::Defaults();
     options.memory_pool = poMemoryPool.get();
 
-    auto poDS = cpl::make_unique<OGRFeatherDataset>(std::move(poMemoryPool));
+    auto poDS = cpl::make_unique<OGRFeatherDataset>(poMemoryPool);
     if( bIsStreamingFormat )
     {
         auto result = arrow::ipc::RecordBatchStreamReader::Open(infile, options);

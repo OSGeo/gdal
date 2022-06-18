@@ -29,6 +29,7 @@
 #ifndef DOXYGEN_SKIP
 
 #include "ogrlayerpool.h"
+#include "ogr_recordbatch.h"
 
 CPL_CVSID("$Id$")
 
@@ -285,6 +286,31 @@ OGRFeature *OGRProxiedLayer::GetNextFeature()
 {
     if( poUnderlyingLayer == nullptr && !OpenUnderlyingLayer() ) return nullptr;
     return poUnderlyingLayer->GetNextFeature();
+}
+
+/************************************************************************/
+/*                            GDALDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRProxiedLayer::GetDataset()
+{
+    if( poUnderlyingLayer == nullptr && !OpenUnderlyingLayer() ) return nullptr;
+    return poUnderlyingLayer->GetDataset();
+}
+
+/************************************************************************/
+/*                          GetArrowStream()                            */
+/************************************************************************/
+
+bool OGRProxiedLayer::GetArrowStream(struct ArrowArrayStream* out_stream,
+                                     CSLConstList papszOptions)
+{
+    if( poUnderlyingLayer == nullptr && !OpenUnderlyingLayer() )
+    {
+        memset(out_stream, 0, sizeof(*out_stream));
+        return false;
+    }
+    return poUnderlyingLayer->GetArrowStream(out_stream, papszOptions);
 }
 
 /************************************************************************/

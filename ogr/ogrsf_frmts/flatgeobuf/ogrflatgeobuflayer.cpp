@@ -31,7 +31,10 @@
 #include "cpl_conv.h"
 #include "cpl_json.h"
 #include "cpl_http.h"
+#include "cpl_time.h"
 #include "ogr_p.h"
+#include "ograrrowarrayhelper.h"
+#include "ogr_recordbatch.h"
 
 #include "ogr_flatgeobuf.h"
 #include "cplerrors.h"
@@ -1145,6 +1148,479 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
 }
 
 
+/************************************************************************/
+/*                      GetNextArrowArray()                             */
+/************************************************************************/
+
+int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
+                                           struct ArrowArray* out_array)
+{
+    if( m_poAttrQuery != nullptr ||
+        (m_poFilterGeom != nullptr && !(m_poHeader != nullptr && m_poHeader->index_node_size() > 0)) ||
+        CPLTestBool(CPLGetConfigOption("OGR_FLATGEOBUF_STREAM_BASE_IMPL", "NO")) )
+    {
+        return OGRLayer::GetNextArrowArray(stream, out_array);
+    }
+
+    int errorErrno = EIO;
+    memset(out_array, 0, sizeof(*out_array));
+
+    if (m_create)
+        return EINVAL;
+
+    if (m_bEOF || (m_featuresCount > 0 && m_featuresPos >= m_featuresCount))
+    {
+        return 0;
+    }
+
+    if (readIndex() != OGRERR_NONE)
+        return EIO;
+
+    OGRArrowArrayHelper sHelper(nullptr, // dataset pointer. only used for field domains (not used by FlatGeobuf)
+                                m_poFeatureDefn, m_aosArrowArrayStreamOptions,
+                                out_array);
+    if( out_array->release == nullptr )
+    {
+        return ENOMEM;
+    }
+
+    std::vector<bool> abSetFields(sHelper.nFieldCount);
+
+    struct tm brokenDown;
+    memset(&brokenDown, 0, sizeof(brokenDown));
+
+    int iFeat = 0;
+    bool bEOFOrError = true;
+
+    if (m_queriedSpatialIndex && m_featuresCount == 0) {
+        CPLDebugOnly("FlatGeobuf", "GetNextFeature: no features found");
+        sHelper.nMaxBatchSize = 0;
+    }
+
+    for(; iFeat < sHelper.nMaxBatchSize; iFeat++ )
+    {
+        bEOFOrError = true;
+        if (m_featuresCount > 0 && m_featuresPos >= m_featuresCount) {
+            CPLDebugOnly("FlatGeobuf", "GetNextFeature: iteration end at %lu", static_cast<long unsigned int>(m_featuresPos));
+            break;
+        }
+
+        GIntBig fid;
+        auto seek = false;
+        if (m_queriedSpatialIndex && !m_ignoreSpatialFilter) {
+            const auto item = m_foundItems[m_featuresPos];
+            m_offset = m_offsetFeatures + item.offset;
+            fid = item.index;
+            seek = true;
+        } else {
+            fid = m_featuresPos;
+        }
+
+        if( sHelper.panFIDValues )
+            sHelper.panFIDValues[iFeat] = fid;
+
+        if (m_featuresPos == 0)
+            seek = true;
+
+        if (seek && VSIFSeekL(m_poFp, m_offset, SEEK_SET) == -1) {
+            break;
+        }
+        uint32_t featureSize;
+        if (VSIFReadL(&featureSize, sizeof(featureSize), 1, m_poFp) != 1) {
+            if (VSIFEofL(m_poFp))
+                break;
+            CPLErrorIO("reading feature size");
+            goto error;
+        }
+        CPL_LSBPTR32(&featureSize);
+
+        // Sanity check to avoid allocated huge amount of memory on corrupted
+        // feature
+        if (featureSize > 100 * 1024 * 1024 )
+        {
+            if (featureSize > feature_max_buffer_size)
+            {
+                CPLErrorInvalidSize("feature");
+                goto error;
+            }
+
+            if( m_nFileSize == 0 )
+            {
+                VSIStatBufL sStatBuf;
+                if( VSIStatL(m_osFilename.c_str(), &sStatBuf) == 0 )
+                {
+                    m_nFileSize = sStatBuf.st_size;
+                }
+            }
+            if( m_offset + featureSize > m_nFileSize )
+            {
+                CPLErrorIO("reading feature size");
+                goto error;
+            }
+        }
+
+        const auto err = ensureFeatureBuf(featureSize);
+        if (err != OGRERR_NONE)
+            goto error;
+        if (VSIFReadL(m_featureBuf, 1, featureSize, m_poFp) != featureSize)
+        {
+            CPLErrorIO("reading feature");
+            goto error;
+        }
+        m_offset += featureSize + sizeof(featureSize);
+
+        if (m_bVerifyBuffers) {
+            const auto vBuf = const_cast<const uint8_t *>(reinterpret_cast<uint8_t *>(m_featureBuf));
+            Verifier v(vBuf, featureSize);
+            const auto ok = VerifyFeatureBuffer(v);
+            if (!ok) {
+                CPLError(CE_Failure, CPLE_AppDefined, "Buffer verification failed");
+                CPLDebugOnly("FlatGeobuf", "m_offset: %lu", static_cast<long unsigned int>(m_offset));
+                CPLDebugOnly("FlatGeobuf", "m_featuresPos: %lu", static_cast<long unsigned int>(m_featuresPos));
+                CPLDebugOnly("FlatGeobuf", "featureSize: %d", featureSize);
+                goto error;
+            }
+        }
+
+        const auto feature = GetRoot<Feature>(m_featureBuf);
+        const auto geometry = feature->geometry();
+        if (!m_poFeatureDefn->IsGeometryIgnored() && geometry != nullptr) {
+            auto geometryType = m_geometryType;
+            if (geometryType == GeometryType::Unknown)
+                geometryType = geometry->type();
+            auto poOGRGeometry = std::unique_ptr<OGRGeometry>(GeometryReader(geometry, geometryType, m_hasZ, m_hasM).read());
+            if (poOGRGeometry == nullptr) {
+                CPLError(CE_Failure, CPLE_AppDefined, "Failed to read geometry");
+                goto error;
+            }
+
+            const int iArrowField = sHelper.mapOGRGeomFieldToArrowField[0];
+            const size_t nWKBSize = poOGRGeometry->WkbSize();
+            GByte* outPtr = sHelper.GetPtrForStringOrBinary(iArrowField, iFeat, nWKBSize);
+            if( outPtr == nullptr )
+            {
+                errorErrno = ENOMEM;
+                goto error;
+            }
+            poOGRGeometry->exportToWkb(wkbNDR, outPtr, wkbVariantIso);
+        }
+
+        abSetFields.clear();
+        abSetFields.resize(sHelper.nFieldCount);
+
+        const auto properties = feature->properties();
+        if (properties != nullptr)
+        {
+            const auto data = properties->data();
+            const auto size = properties->size();
+
+            uoffset_t offset = 0;
+            // size must be at least large enough to contain
+            // a single column index and smallest value type
+            if (size > 0 && size < (sizeof(uint16_t) + sizeof(uint8_t)))
+            {
+                CPLErrorInvalidSize("property value");
+                goto error;
+            }
+
+            while (offset + 1 < size) {
+                if (offset + sizeof(uint16_t) > size)
+                {
+                    CPLErrorInvalidSize("property value");
+                    goto error;
+                }
+                uint16_t i = *((uint16_t *)(data + offset));
+                CPL_LSBPTR16(&i);
+                offset += sizeof(uint16_t);
+                // TODO: use columns from feature if defined
+                const auto columns = m_poHeader->columns();
+                if (columns == nullptr) {
+                    CPLErrorInvalidPointer("columns");
+                    goto error;
+                }
+                if (i >= columns->size()) {
+                    CPLError(CE_Failure, CPLE_AppDefined, "Column index %hu out of range", i);
+                    goto error;
+                }
+
+                abSetFields[i] = true;
+                const auto column = columns->Get(i);
+                const auto type = column->type();
+                const int iArrowField = sHelper.mapOGRFieldToArrowField[i];
+                const bool isIgnored = iArrowField < 0;
+                auto psArray = isIgnored ? nullptr: out_array->children[iArrowField];
+
+                switch (type) {
+                    case ColumnType::Bool:
+                        if (offset + sizeof(unsigned char) > size)
+                        {
+                            CPLErrorInvalidSize("bool value");
+                            goto error;
+                        }
+                        if (!isIgnored)
+                        {
+                            if( *(data + offset) )
+                            {
+                                sHelper.SetBoolOn(psArray, iFeat);
+                            }
+                        }
+                        offset += sizeof(unsigned char);
+                        break;
+
+                    case ColumnType::Byte:
+                        if (offset + sizeof(signed char) > size)
+                        {
+                            CPLErrorInvalidSize("byte value");
+                            goto error;
+                        }
+                        if (!isIgnored)
+                        {
+                            sHelper.SetInt8(psArray, iFeat,
+                                *reinterpret_cast<const int8_t*>(data + offset));
+                        }
+                        offset += sizeof(signed char);
+                        break;
+
+                    case ColumnType::UByte:
+                        if (offset + sizeof(unsigned char) > size)
+                        {
+                            CPLErrorInvalidSize("ubyte value");
+                            goto error;
+                        }
+                        if (!isIgnored)
+                        {
+                            sHelper.SetUInt8(psArray, iFeat,
+                                *reinterpret_cast<const uint8_t*>(data + offset));
+                        }
+                        offset += sizeof(unsigned char);
+                        break;
+
+                    case ColumnType::Short:
+                        if (offset + sizeof(int16_t) > size)
+                        {
+                            CPLErrorInvalidSize("short value");
+                            goto error;
+                        }
+                        if (!isIgnored)
+                        {
+                            short s;
+                            memcpy(&s, data + offset, sizeof(int16_t));
+                            CPL_LSBPTR16(&s);
+                            sHelper.SetInt16(psArray, iFeat, s);
+                        }
+                        offset += sizeof(int16_t);
+                        break;
+
+                    case ColumnType::UShort:
+                        if (offset + sizeof(uint16_t) > size)
+                        {
+                            CPLErrorInvalidSize("ushort value");
+                            goto error;
+                        }
+                        if (!isIgnored)
+                        {
+                            uint16_t s;
+                            memcpy(&s, data + offset, sizeof(uint16_t));
+                            CPL_LSBPTR16(&s);
+                            sHelper.SetInt32(psArray, iFeat, s);
+                        }
+                        offset += sizeof(uint16_t);
+                        break;
+
+                    case ColumnType::Int:
+                        if (offset + sizeof(int32_t) > size)
+                        {
+                            CPLErrorInvalidSize("int32 value");
+                            goto error;
+                        }
+                        if (!isIgnored)
+                        {
+                            int32_t nVal;
+                            memcpy(&nVal, data + offset, sizeof(int32_t));
+                            CPL_LSBPTR32(&nVal);
+                            sHelper.SetInt32(psArray, iFeat, nVal);
+                        }
+                        offset += sizeof(int32_t);
+                        break;
+
+                    case ColumnType::UInt:
+                        if (offset + sizeof(uint32_t) > size)
+                        {
+                            CPLErrorInvalidSize("uint value");
+                            goto error;
+                        }
+                        if (!isIgnored)
+                        {
+                            uint32_t v;
+                            memcpy(&v, data + offset, sizeof(int32_t));
+                            CPL_LSBPTR32(&v);
+                            sHelper.SetInt64(psArray, iFeat, v);
+                        }
+                        offset += sizeof(int32_t);
+                        break;
+
+                    case ColumnType::Long:
+                        if (offset + sizeof(int64_t) > size)
+                        {
+                            CPLErrorInvalidSize("int64 value");
+                            goto error;
+                        }
+                        if (!isIgnored)
+                        {
+                            int64_t v;
+                            memcpy(&v, data + offset, sizeof(int64_t));
+                            CPL_LSBPTR64(&v);
+                            sHelper.SetInt64(psArray, iFeat, v);
+                        }
+                        offset += sizeof(int64_t);
+                        break;
+
+                    case ColumnType::ULong:
+                        if (offset + sizeof(uint64_t) > size)
+                        {
+                            CPLErrorInvalidSize("uint64 value");
+                            goto error;
+                        }
+                        if (!isIgnored)
+                        {
+                            uint64_t v;
+                            memcpy(&v, data + offset, sizeof(v));
+                            CPL_LSBPTR64(&v);
+                            sHelper.SetDouble(psArray, iFeat, static_cast<double>(v));
+                        }
+                        offset += sizeof(int64_t);
+                        break;
+
+                    case ColumnType::Float:
+                        if (offset + sizeof(float) > size)
+                        {
+                            CPLErrorInvalidSize("float value");
+                            goto error;
+                        }
+                        if (!isIgnored)
+                        {
+                            float f;
+                            memcpy(&f, data + offset, sizeof(float));
+                            CPL_LSBPTR32(&f);
+                            sHelper.SetFloat(psArray, iFeat, f);
+                        }
+                        offset += sizeof(float);
+                        break;
+
+                    case ColumnType::Double:
+                        if (offset + sizeof(double) > size)
+                        {
+                            CPLErrorInvalidSize("double value");
+                            goto error;
+                        }
+                        if (!isIgnored)
+                        {
+                            double v;
+                            memcpy(&v, data + offset, sizeof(double));
+                            CPL_LSBPTR64(&v);
+                            sHelper.SetDouble(psArray, iFeat, v);
+                        }
+                        offset += sizeof(double);
+                        break;
+
+                    case ColumnType::String:
+                    case ColumnType::Json:
+                    case ColumnType::Binary:
+                    {
+                        if (offset + sizeof(uint32_t) > size)
+                        {
+                            CPLErrorInvalidSize("string length");
+                            goto error;
+                        }
+                        uint32_t len;
+                        memcpy(&len, data + offset, sizeof(int32_t));
+                        CPL_LSBPTR32(&len);
+                        offset += sizeof(uint32_t);
+                        if (len > size - offset)
+                        {
+                            CPLErrorInvalidSize("string value");
+                            goto error;
+                        }
+                        if (!isIgnored )
+                        {
+                            GByte* outPtr = sHelper.GetPtrForStringOrBinary(iArrowField, iFeat, len);
+                            if( outPtr == nullptr )
+                            {
+                                errorErrno = ENOMEM;
+                                goto error;
+                            }
+                            memcpy(outPtr, data + offset, len);
+                        }
+                        offset += len;
+                        break;
+                    }
+
+                    case ColumnType::DateTime: {
+                        if (offset + sizeof(uint32_t) > size)
+                        {
+                            CPLErrorInvalidSize("datetime length ");
+                            goto error;
+                        }
+                        uint32_t len;
+                        memcpy(&len, data + offset, sizeof(int32_t));
+                        CPL_LSBPTR32(&len);
+                        offset += sizeof(uint32_t);
+                        if (len > size - offset || len > 32)
+                        {
+                            CPLErrorInvalidSize("datetime value");
+                            goto error;
+                        }
+                        if (!isIgnored)
+                        {
+                            char str[32+1];
+                            memcpy(str, data + offset, len);
+                            str[len] = '\0';
+                            OGRField ogrField;
+                            if( OGRParseDate(str, &ogrField, 0) )
+                            {
+                                sHelper.SetDateTime(psArray, iFeat, brokenDown, ogrField);
+                            }
+                        }
+                        offset += len;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Mark null fields
+        for( int i = 0; i < sHelper.nFieldCount; i++ )
+        {
+            if( !abSetFields[i] && sHelper.abNullableFields[i] )
+            {
+                const int iArrowField = sHelper.mapOGRFieldToArrowField[i];
+                if( iArrowField >= 0 )
+                {
+                    sHelper.SetNull(iArrowField, iFeat);
+                }
+            }
+        }
+
+        if (VSIFEofL(m_poFp)) {
+            CPLDebug("FlatGeobuf", "GetNextFeature: iteration end due to EOF");
+            break;
+        }
+
+        m_featuresPos++;
+        bEOFOrError = false;
+    }
+
+    if( bEOFOrError && m_featuresCount > 0 )
+        m_bEOF = true;
+
+    sHelper.Shrink(iFeat);
+    return 0;
+
+error:
+    sHelper.ClearArray();
+    return errorErrno;
+}
+
 OGRErr OGRFlatGeobufLayer::CreateField(OGRFieldDefn *poField, int /* bApproxOK */)
 {
     // CPLDebugOnly("FlatGeobuf", "CreateField %s %s", poField->GetNameRef(), poField->GetFieldTypeName(poField->GetType()));
@@ -1429,6 +1905,9 @@ int OGRFlatGeobufLayer::TestCapability(const char *pszCap)
         return m_poHeader != nullptr && m_poHeader->index_node_size() > 0;
     else if (EQUAL(pszCap, OLCStringsAsUTF8))
         return true;
+    else if ( EQUAL(pszCap, OLCFastGetArrowStream) &&
+              m_poAttrQuery == nullptr && m_poFilterGeom == nullptr )
+        return true;
     else
         return false;
 }
@@ -1437,6 +1916,7 @@ void OGRFlatGeobufLayer::ResetReading()
 {
     CPLDebugOnly("FlatGeobuf", "ResetReading");
     m_offset = m_offsetFeatures;
+    m_bEOF = false;
     m_featuresPos = 0;
     m_foundItems.clear();
     m_featuresCount = m_poHeader ? m_poHeader->features_count() : 0;

@@ -888,6 +888,7 @@ int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
 #define OLCCurveGeometries     "CurveGeometries"    /**< Layer capability for curve geometries support */
 #define OLCMeasuredGeometries  "MeasuredGeometries" /**< Layer capability for measured geometries support */
 #define OLCRename              "Rename"             /**< Layer capability for a layer that supports Rename() */
+#define OLCFastGetArrowStream  "FastGetArrowStream" /**< Layer capability for fast GetArrowStream() implementation */
 
 #define ODsCCreateLayer        "CreateLayer"        /**< Dataset capability for layer creation */
 #define ODsCDeleteLayer        "DeleteLayer"        /**< Dataset capability for layer deletion */

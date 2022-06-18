@@ -57,6 +57,7 @@
 
 %init %{
   import_array();
+  PyDateTime_IMPORT;
   GDALRegister_NUMPY();
 %}
 
@@ -89,12 +90,16 @@ static void _StoreLastException()
 %{
 #include <vector>
 #include "gdal_priv.h"
+#include "ogr_recordbatch.h"
+
 #ifdef _DEBUG
 #undef _DEBUG
 #include "Python.h"
+#include "datetime.h"
 #define _DEBUG
 #else
 #include "Python.h"
+#include "datetime.h"
 #endif
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include "numpy/arrayobject.h"
@@ -972,10 +977,693 @@ static bool CheckNumericDataType(GDALExtendedDataTypeHS* dt)
   }
 %}
 
-
 #ifdef SWIGPYTHON
 %nothread;
 #endif
+
+%newobject _RecordBatchAsNumpy;
+%inline %{
+typedef void* VoidPtrAsLong;
+
+/* Internal method used by ogr.Layer.GetNextRecordBatchAsNumpy() */
+PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
+                              VoidPtrAsLong schemaPtr,
+                              PyObject* pointerArrayKeeper)
+{
+    const struct ArrowSchema* schema = (const struct ArrowSchema* )schemaPtr;
+    const struct ArrowArray* array = (const struct ArrowArray* )recordBatchPtr;
+    if( strcmp(schema->format, "+s") != 0 )
+    {
+      CPLError(CE_Failure, CPLE_AppDefined, "schema->format != '+s'");
+      Py_RETURN_NONE;
+    }
+    if( schema->n_children != array->n_children )
+    {
+      CPLError(CE_Failure, CPLE_AppDefined,
+               "schema->n_children(=%d) != array->n_children(=%d)",
+               static_cast<int>(schema->n_children),
+               static_cast<int>(array->n_children));
+      Py_RETURN_NONE;
+    }
+    PyObject *dict = PyDict_New();
+    for( int iField = 0; iField < array->n_children; iField++ )
+    {
+        const struct ArrowArray* arrayField = array->children[iField];
+        const struct ArrowSchema* schemaField = schema->children[iField];
+        npy_intp dims = arrayField->length;
+        const char* arrowType = schemaField->format;
+        int typenum = -1;
+        int sizeOfType = 0;
+        const struct
+        {
+            char        arrowType;
+            int         numpyType;
+            int         sizeOfType;
+        } MapArrowTypeToNumpyType[] = {
+            { 'b', NPY_BOOL,    1 },
+            { 'C', NPY_UINT8,   1 },
+            { 'c', NPY_INT8,    1 },
+            { 'S', NPY_UINT16,  2 },
+            { 's', NPY_INT16,   2 },
+            { 'I', NPY_UINT32,  4 },
+            { 'i', NPY_INT32,   4 },
+            { 'L', NPY_UINT64,  8 },
+            { 'l', NPY_INT64,   8 },
+            { 'e', NPY_FLOAT16, 2 },
+            { 'f', NPY_FLOAT32, 4 },
+            { 'g', NPY_FLOAT64, 8 },
+        };
+        const size_t nEltsInMapArrowTypeToNumpyType =
+            sizeof(MapArrowTypeToNumpyType) / sizeof(MapArrowTypeToNumpyType[0]);
+        const bool bIsList = (arrowType[0] == '+' &&
+                              arrowType[1] == 'l' &&
+                              arrowType[2] == '\0' &&
+                              schemaField->n_children == 1);
+        const bool bIsFixedSizeList = (arrowType[0] == '+' &&
+                                       arrowType[1] == 'w' &&
+                                       arrowType[2] == ':' &&
+                                       schemaField->n_children == 1);
+        for( size_t j = 0; j < nEltsInMapArrowTypeToNumpyType; ++j )
+        {
+            if( arrowType[0] == MapArrowTypeToNumpyType[j].arrowType &&
+                arrowType[1] == '\0' )
+            {
+                typenum = MapArrowTypeToNumpyType[j].numpyType;
+                break;
+            }
+            else if( (bIsList || bIsFixedSizeList) &&
+                     schemaField->children[0]->format[0] == MapArrowTypeToNumpyType[j].arrowType &&
+                     schemaField->children[0]->format[1] == '\0' )
+            {
+                typenum = MapArrowTypeToNumpyType[j].numpyType;
+                sizeOfType = MapArrowTypeToNumpyType[j].sizeOfType;
+                break;
+            }
+        }
+
+        PyObject* numpyArray = NULL;
+        if( typenum != -1 && !bIsList && schemaField->n_children == 0 )
+        {
+            if( arrayField->n_buffers != 2 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field %s: arrayField->n_buffers != 2",
+                         schemaField->name);
+                Py_DECREF(dict);
+                Py_RETURN_NONE;
+            }
+            if( typenum == NPY_BOOL )
+            {
+                numpyArray = PyArray_SimpleNew(1, &dims, NPY_BOOL);
+                for( npy_intp j = 0; j < dims; j++ )
+                {
+                    size_t srcOffset = static_cast<size_t>(arrayField->offset + j);
+                    uint8_t val = (((uint8_t*)arrayField->buffers[1])[srcOffset/8] >> (srcOffset % 8)) & 1;
+                    *(uint8_t*)PyArray_GETPTR1((PyArrayObject *) numpyArray, j) = val;
+                }
+            }
+            else
+            {
+                numpyArray = PyArray_SimpleNewFromData(1, &dims, typenum,
+                                            (char*)arrayField->buffers[1] + static_cast<size_t>(arrayField->offset) * sizeOfType);
+
+                /* Keep a reference to the owner object */
+#if NPY_API_VERSION >= 0x00000007
+                PyArray_SetBaseObject((PyArrayObject *) numpyArray, pointerArrayKeeper);
+#else
+                PyArray_BASE((PyArrayObject *) numpyArray) = pointerArrayKeeper;
+#endif
+                Py_INCREF(pointerArrayKeeper);
+            }
+        }
+        else if( typenum != -1 && bIsList )
+        {
+            if( arrayField->n_buffers != 2 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field %s: arrayField->n_buffers != 2",
+                         schemaField->name);
+                Py_DECREF(dict);
+                Py_RETURN_NONE;
+            }
+            if( arrayField->n_children != 1 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field %s: arrayField->n_children != 1",
+                         schemaField->name);
+                Py_DECREF(dict);
+                Py_RETURN_NONE;
+            }
+            if( arrayField->children[0]->n_buffers != 2 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field %s: arrayField->children[0]->n_buffers != 2",
+                         schemaField->name);
+                Py_DECREF(dict);
+                Py_RETURN_NONE;
+            }
+            const int32_t* offsets = (const int32_t*)arrayField->buffers[1] + arrayField->offset;
+            numpyArray = PyArray_SimpleNew(1, &dims, NPY_OBJECT);
+            for( npy_intp j = 0; j < dims; j++ )
+            {
+                npy_intp nvalues = offsets[j+1] - offsets[j];
+                PyObject* subObj;
+                if( typenum == NPY_BOOL )
+                {
+                    subObj = PyArray_SimpleNew(1, &nvalues, NPY_BOOL);
+                    for( npy_intp k = 0; k < nvalues; k++ )
+                    {
+                        size_t srcOffset = static_cast<size_t>(arrayField->children[0]->offset + offsets[j] + k);
+                        uint8_t val = (((uint8_t*)arrayField->children[0]->buffers[1])[srcOffset / 8]  >> (srcOffset % 8)) & 1;
+                        *(uint8_t*)PyArray_GETPTR1((PyArrayObject *) subObj, k) = val;
+                    }
+                }
+                else
+                {
+                    subObj = PyArray_SimpleNewFromData(
+                        1, &nvalues, typenum,
+                        (char*)arrayField->children[0]->buffers[1] + (static_cast<size_t>(arrayField->children[0]->offset) + offsets[j]) * sizeOfType);
+                    /* Keep a reference to the owner object */
+#if NPY_API_VERSION >= 0x00000007
+                    PyArray_SetBaseObject((PyArrayObject *) subObj, pointerArrayKeeper);
+#else
+                    PyArray_BASE((PyArrayObject *) subObj) = pointerArrayKeeper;
+#endif
+                    Py_INCREF(pointerArrayKeeper);
+                }
+                memcpy(PyArray_GETPTR1((PyArrayObject *) numpyArray, j),
+                       &subObj,
+                       sizeof(PyObject*));
+            }
+        }
+        else if( typenum != -1 && bIsFixedSizeList )
+        {
+            if( arrayField->n_buffers != 1 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field %s: arrayField->n_buffers != 1",
+                         schemaField->name);
+                Py_DECREF(dict);
+                Py_RETURN_NONE;
+            }
+            if( arrayField->n_children != 1 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field %s: arrayField->n_children != 1",
+                         schemaField->name);
+                Py_DECREF(dict);
+                Py_RETURN_NONE;
+            }
+            if( arrayField->children[0]->n_buffers != 2 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field %s: arrayField->children[0]->n_buffers != 2",
+                         schemaField->name);
+                Py_DECREF(dict);
+                Py_RETURN_NONE;
+            }
+            const int nLength = atoi(arrowType + strlen("+w:"));
+            numpyArray = PyArray_SimpleNew(1, &dims, NPY_OBJECT);
+            for( npy_intp j = 0; j < dims; j++ )
+            {
+                PyObject* subObj;
+                npy_intp nvalues = nLength;
+                if( typenum == NPY_BOOL )
+                {
+                    subObj = PyArray_SimpleNew(1, &nvalues, NPY_BOOL);
+                    for( npy_intp k = 0; k < nvalues; k++ )
+                    {
+                        size_t srcOffset = static_cast<size_t>(arrayField->children[0]->offset + j * nLength + k);
+                        uint8_t val = (((uint8_t*)arrayField->children[0]->buffers[1])[srcOffset / 8]  >> (srcOffset % 8)) & 1;
+                        *(uint8_t*)PyArray_GETPTR1((PyArrayObject *) subObj, k) = val;
+                    }
+                }
+                else
+                {
+                    subObj = PyArray_SimpleNewFromData(
+                        1, &nvalues, typenum,
+                        (char*)arrayField->children[0]->buffers[1] + static_cast<size_t>(arrayField->children[0]->offset) + j * nLength * sizeOfType);
+                    /* Keep a reference to the owner object */
+#if NPY_API_VERSION >= 0x00000007
+                    PyArray_SetBaseObject((PyArrayObject *) subObj, pointerArrayKeeper);
+#else
+                    PyArray_BASE((PyArrayObject *) subObj) = pointerArrayKeeper;
+#endif
+                    Py_INCREF(pointerArrayKeeper);
+                }
+                memcpy(PyArray_GETPTR1((PyArrayObject *) numpyArray, j),
+                       &subObj,
+                       sizeof(PyObject*));
+            }
+        }
+        else if( (arrowType[0] == 'u' || /* string */
+                  arrowType[0] == 'z'    /* binary */) && arrowType[1] == '\0' &&
+                  schemaField->n_children == 0 )
+        {
+            if( arrayField->n_buffers != 3 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field %s: arrayField->n_buffers != 3",
+                         schemaField->name);
+                Py_DECREF(dict);
+                Py_RETURN_NONE;
+            }
+            const int32_t* offsets = (const int32_t*)arrayField->buffers[1] + static_cast<size_t>(arrayField->offset);
+            // numpy can't deal with zero length strings
+            int32_t maxLength = 1;
+            int32_t minLength = 0x7FFFFFFF;
+            for( npy_intp j = 0; j < dims; j++ )
+            {
+                const int32_t nLength = offsets[j+1] - offsets[j];
+                if( nLength < minLength )
+                    minLength = nLength;
+                if( nLength > maxLength )
+                    maxLength = nLength;
+            }
+
+            if( arrowType[0] == 'z' && (minLength == 0 || minLength != maxLength) )
+            {
+                const uint8_t* panNotNulls =
+                     arrayField->null_count == 0 ? NULL :
+                    (const uint8_t*)arrayField->buffers[0];
+                numpyArray = PyArray_SimpleNew(1, &dims, NPY_OBJECT);
+                for( npy_intp j = 0; j < dims; j++ )
+                {
+                    PyObject* subObj;
+                    size_t srcOffset = static_cast<size_t>(arrayField->offset + j);
+                    if( panNotNulls && (panNotNulls[srcOffset / 8] & (1 << (srcOffset%8))) == 0 )
+                    {
+                        subObj = Py_None;
+                        Py_INCREF(subObj);
+                    }
+                    else
+                    {
+                        const int32_t nLength = offsets[j+1] - offsets[j];
+                        subObj = PyBytes_FromStringAndSize(
+                            ((const char*)arrayField->buffers[2]) + offsets[j],
+                            nLength);
+                    }
+                    memcpy(PyArray_GETPTR1((PyArrayObject *) numpyArray, j),
+                           &subObj,
+                           sizeof(PyObject*));
+                }
+            }
+            else
+            {
+                // create the dtype string
+                PyObject *pDTypeString = PyUnicode_FromFormat("%c%u",
+                    arrowType[0] == 'u' ? 'S' : 'V', maxLength);
+                // out type description object
+                PyArray_Descr *pDescr = NULL;
+                PyArray_DescrConverter(pDTypeString, &pDescr);
+                Py_DECREF(pDTypeString);
+
+                if( minLength == maxLength )
+                {
+                    numpyArray = PyArray_NewFromDescr(
+                        &PyArray_Type, pDescr, 1, &dims, NULL,
+                        (char*)arrayField->buffers[2] + offsets[0], 0, NULL);
+
+                    /* Keep a reference to the owner object */
+#if NPY_API_VERSION >= 0x00000007
+                    PyArray_SetBaseObject((PyArrayObject *) numpyArray, pointerArrayKeeper);
+#else
+                    PyArray_BASE((PyArrayObject *) numpyArray) = pointerArrayKeeper;
+#endif
+                    Py_INCREF(pointerArrayKeeper);
+                }
+                else
+                {
+                    // create array
+                    numpyArray = PyArray_SimpleNewFromDescr(1, &dims, pDescr);
+                    for( npy_intp j = 0; j < dims; j++ )
+                    {
+                        const int32_t nLength = offsets[j+1] - offsets[j];
+                        if( nLength > 0 )
+                        {
+                            memcpy(PyArray_GETPTR1((PyArrayObject *) numpyArray, j),
+                                   ((const char*)arrayField->buffers[2]) + offsets[j],
+                                   nLength);
+                        }
+                        if( nLength < maxLength )
+                        {
+                            memset(((char*)PyArray_GETPTR1((PyArrayObject *) numpyArray, j)) + nLength,
+                                   0,
+                                   maxLength - nLength);
+                        }
+                    }
+                }
+            }
+        }
+        else if( arrowType[0] == 'w' && arrowType[1] == ':' &&
+                 schemaField->n_children == 0 )
+        {
+            // Fixed width binary
+            if( arrayField->n_buffers != 2 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "field %s:arrayField->n_buffers != 2",
+                         schemaField->name);
+                Py_DECREF(dict);
+                Py_RETURN_NONE;
+            }
+            const int nLength = atoi(arrowType + strlen("w:"));
+            numpyArray = PyArray_SimpleNew(1, &dims, NPY_OBJECT);
+            for( npy_intp j = 0; j < dims; j++ )
+            {
+                PyObject* subObj = PyBytes_FromStringAndSize(
+                        ((const char*)arrayField->buffers[1]) + static_cast<size_t>(arrayField->offset) + j * nLength,
+                        nLength);
+                memcpy(PyArray_GETPTR1((PyArrayObject *) numpyArray, j),
+                       &subObj,
+                       sizeof(PyObject*));
+            }
+        }
+        else if( bIsList &&
+                 schemaField->children[0]->format[0] == 'u' &&
+                 schemaField->children[0]->format[1] == '\0' )
+        {
+            // List of strings
+            if( arrayField->n_buffers != 2 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field %s: arrayField->n_buffers != 2",
+                         schemaField->name);
+                Py_DECREF(dict);
+                Py_RETURN_NONE;
+            }
+            if( arrayField->n_children != 1 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field %s: arrayField->n_children != 1",
+                         schemaField->name);
+                Py_DECREF(dict);
+                Py_RETURN_NONE;
+            }
+            if( arrayField->children[0]->n_buffers != 3 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field %s: arrayField->children[0]->n_buffers != 3",
+                         schemaField->name);
+                Py_DECREF(dict);
+                Py_RETURN_NONE;
+            }
+            const int32_t* offsets = (const int32_t*)arrayField->buffers[1] + static_cast<size_t>(arrayField->offset);
+            const int32_t* offsetsToBytes = (const int32_t*)arrayField->children[0]->buffers[1] + static_cast<size_t>(arrayField->children[0]->offset);
+            const char* bytes = (const char*)arrayField->children[0]->buffers[2] + static_cast<size_t>(arrayField->children[0]->offset);
+            numpyArray = PyArray_SimpleNew(1, &dims, NPY_OBJECT);
+            for( npy_intp j = 0; j < dims; j++ )
+            {
+                npy_intp nStrings = offsets[j+1] - offsets[j];
+                int32_t maxLength = 1;
+                for( npy_intp k = 0; k < nStrings; k++ )
+                {
+                    const int32_t nLength = offsetsToBytes[offsets[j] + k + 1] - offsetsToBytes[offsets[j] + k];
+                    if( nLength > maxLength )
+                        maxLength = nLength;
+                }
+
+                // create the dtype string
+                PyObject *pDTypeString = PyUnicode_FromFormat("S%d", maxLength);
+                // out type description object
+                PyArray_Descr *pDescr = NULL;
+                PyArray_DescrConverter(pDTypeString, &pDescr);
+                Py_DECREF(pDTypeString);
+
+                PyObject* subArray = PyArray_SimpleNewFromDescr(1, &nStrings, pDescr);
+                for( npy_intp k = 0; k < nStrings; k++ )
+                {
+                    const int32_t nLength = offsetsToBytes[offsets[j] + k + 1] - offsetsToBytes[offsets[j] + k];
+                    if( nLength > 0 )
+                    {
+                        memcpy(PyArray_GETPTR1((PyArrayObject *) subArray, k),
+                               bytes + offsetsToBytes[offsets[j] + k],
+                               nLength);
+                    }
+                    if( nLength < maxLength )
+                    {
+                        memset(((char*)PyArray_GETPTR1((PyArrayObject *) subArray, k)) + nLength,
+                               0,
+                               maxLength - nLength);
+                    }
+                }
+
+                memcpy(PyArray_GETPTR1((PyArrayObject *) numpyArray, j),
+                       &subArray,
+                       sizeof(PyObject*));
+            }
+        }
+        else if( bIsFixedSizeList &&
+                 schemaField->children[0]->format[0] == 'u' &&
+                 schemaField->children[0]->format[1] == '\0' )
+        {
+            // Fixed size list of strings
+            const int nStrings = atoi(arrowType + strlen("+w:"));
+            if( arrayField->n_buffers != 1 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field %s: arrayField->n_buffers != 1",
+                         schemaField->name);
+                Py_DECREF(dict);
+                Py_RETURN_NONE;
+            }
+            if( arrayField->n_children != 1 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field %s: arrayField->n_children != 1",
+                         schemaField->name);
+                Py_DECREF(dict);
+                Py_RETURN_NONE;
+            }
+            if( arrayField->children[0]->n_buffers != 3 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field %s: arrayField->children[0]->n_buffers != 3",
+                         schemaField->name);
+                Py_DECREF(dict);
+                Py_RETURN_NONE;
+            }
+            const int32_t* offsetsToBytes = (const int32_t*)arrayField->children[0]->buffers[1] + static_cast<size_t>(arrayField->children[0]->offset);
+            const char* bytes = (const char*)arrayField->children[0]->buffers[2] + static_cast<size_t>(arrayField->children[0]->offset);
+            numpyArray = PyArray_SimpleNew(1, &dims, NPY_OBJECT);
+            for( npy_intp j = 0; j < dims; j++ )
+            {
+                int32_t maxLength = 1;
+                for( int k = 0; k < nStrings; k++ )
+                {
+                    const int32_t nLength = offsetsToBytes[j * nStrings + k + 1] - offsetsToBytes[j * nStrings + k];
+                    if( nLength > maxLength )
+                        maxLength = nLength;
+                }
+
+                // create the dtype string
+                PyObject *pDTypeString = PyUnicode_FromFormat("S%u", maxLength);
+                // out type description object
+                PyArray_Descr *pDescr = NULL;
+                PyArray_DescrConverter(pDTypeString, &pDescr);
+                Py_DECREF(pDTypeString);
+
+                npy_intp nStringsNpyIntp = nStrings;
+                PyObject* subArray = PyArray_SimpleNewFromDescr(1, &nStringsNpyIntp, pDescr);
+                for( int k = 0; k < nStrings; k++ )
+                {
+                    const int32_t nLength = offsetsToBytes[j * nStrings + k + 1] - offsetsToBytes[j * nStrings + k];
+                    if( nLength > 0 )
+                    {
+                        memcpy(PyArray_GETPTR1((PyArrayObject *) subArray, k),
+                               bytes + offsetsToBytes[j * nStrings + k],
+                               nLength);
+                    }
+                    if( nLength < maxLength )
+                    {
+                        memset(((char*)PyArray_GETPTR1((PyArrayObject *) subArray, k)) + nLength,
+                               0,
+                               maxLength - nLength);
+                    }
+                }
+
+                memcpy(PyArray_GETPTR1((PyArrayObject *) numpyArray, j),
+                       &subArray,
+                       sizeof(PyObject*));
+            }
+        }
+        else if( strcmp(arrowType, "tdD") == 0 &&
+                 schemaField->n_children == 0 )
+        {
+            // Date(32) in days since Epoch
+            if( arrayField->n_buffers != 2 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field %s: arrayField->n_buffers != 2",
+                         schemaField->name);
+                Py_DECREF(dict);
+                Py_RETURN_NONE;
+            }
+
+            // create the dtype string
+            PyObject *pDTypeString = PyUnicode_FromString("datetime64[D]");
+            // out type description object
+            PyArray_Descr *pDescr = NULL;
+            PyArray_DescrConverter(pDTypeString, &pDescr);
+            Py_DECREF(pDTypeString);
+            CPLAssert(pDescr);
+
+            // create array
+            numpyArray = PyArray_SimpleNewFromDescr(1, &dims, pDescr);
+            for( npy_intp j = 0; j < dims; j++ )
+            {
+                *(int64_t*)PyArray_GETPTR1((PyArrayObject *) numpyArray, j) =
+                    ((int*)arrayField->buffers[1])[j + static_cast<size_t>(arrayField->offset)];
+            }
+        }
+        else if( strcmp(arrowType, "ttm") == 0 &&
+                 schemaField->n_children == 0 )
+        {
+            // Time(32) in milliseconds
+            if( arrayField->n_buffers != 2 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field %s: arrayField->n_buffers != 2",
+                         schemaField->name);
+                Py_DECREF(dict);
+                Py_RETURN_NONE;
+            }
+#if 0
+            // create the dtype string
+            PyObject *pDTypeString = PyUnicode_FromString("datetime64[ms]");
+            // out type description object
+            PyArray_Descr *pDescr = NULL;
+            PyArray_DescrConverter(pDTypeString, &pDescr);
+            Py_DECREF(pDTypeString);
+            CPLAssert(pDescr);
+
+            // create array
+            numpyArray = PyArray_SimpleNewFromDescr(1, &dims, pDescr);
+            for( npy_intp j = 0; j < dims; j++ )
+            {
+                *(int64_t*)PyArray_GETPTR1((PyArrayObject *) numpyArray, j) =
+                    ((int*)arrayField->buffers[1])[j + static_cast<size_t>(arrayField->offset)];
+            }
+#else
+            // create array
+            numpyArray = PyArray_SimpleNew(1, &dims, NPY_OBJECT);
+            for( npy_intp j = 0; j < dims; j++ )
+            {
+                int timeMs = ((int*)arrayField->buffers[1])[j + static_cast<size_t>(arrayField->offset)];
+                PyObject* subObj = PyTime_FromTime((timeMs / 1000) / 3600,
+                                                   ((timeMs / 1000) % 3600) / 60,
+                                                   ((timeMs / 1000) % 3600) % 60,
+                                                   (timeMs % 1000) * 1000);
+                memcpy(PyArray_GETPTR1((PyArrayObject *) numpyArray, j),
+                       &subObj,
+                       sizeof(PyObject*));
+            }
+#endif
+        }
+        else if( strcmp(arrowType, "ttu") == 0 &&
+                 schemaField->n_children == 0 )
+        {
+            // Time(64) in microseconds
+            if( arrayField->n_buffers != 2 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field %s: arrayField->n_buffers != 2",
+                         schemaField->name);
+                Py_DECREF(dict);
+                Py_RETURN_NONE;
+            }
+
+            // create array
+            numpyArray = PyArray_SimpleNew(1, &dims, NPY_OBJECT);
+            for( npy_intp j = 0; j < dims; j++ )
+            {
+                const int64_t timeUs = ((int64_t*)arrayField->buffers[1])[j + static_cast<size_t>(arrayField->offset)];
+                PyObject* subObj = PyTime_FromTime(static_cast<int>((timeUs / 1000000) / 3600),
+                                                   static_cast<int>(((timeUs / 1000000) % 3600) / 60),
+                                                   static_cast<int>(((timeUs / 1000000) % 3600) % 60),
+                                                   static_cast<int>(timeUs % 1000000));
+                memcpy(PyArray_GETPTR1((PyArrayObject *) numpyArray, j),
+                       &subObj,
+                       sizeof(PyObject*));
+            }
+        }
+        else if( (strncmp(arrowType, "tsm:", 4) == 0 || // DateTime in milliseconds
+                  strncmp(arrowType, "tsu:", 4) == 0) &&  // DateTime in microseconds
+                 schemaField->n_children == 0 )
+        {
+            // DateTime(64) in milliseconds
+            if( arrayField->n_buffers != 2 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field %s: arrayField->n_buffers != 2",
+                         schemaField->name);
+                Py_DECREF(dict);
+                Py_RETURN_NONE;
+            }
+
+            // create the dtype string
+            PyObject *pDTypeString = PyUnicode_FromString(
+                strncmp(arrowType, "tsm:", 4) == 0 ? "datetime64[ms]" :
+                                                     "datetime64[us]");
+            // out type description object
+            PyArray_Descr *pDescr = NULL;
+            PyArray_DescrConverter(pDTypeString, &pDescr);
+            Py_DECREF(pDTypeString);
+            CPLAssert(pDescr);
+
+            // create array
+            numpyArray = PyArray_NewFromDescr(
+                        &PyArray_Type, pDescr, 1, &dims, NULL,
+                        (int64_t*)arrayField->buffers[1] + static_cast<size_t>(arrayField->offset), 0, NULL);
+
+            /* Keep a reference to the owner object */
+#if NPY_API_VERSION >= 0x00000007
+            PyArray_SetBaseObject((PyArrayObject *) numpyArray, pointerArrayKeeper);
+#else
+            PyArray_BASE((PyArrayObject *) numpyArray) = pointerArrayKeeper;
+#endif
+            Py_INCREF(pointerArrayKeeper);
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Field %s: Unhandled arrow type: %s",
+                     schemaField->name,
+                     arrowType);
+        }
+
+        if( numpyArray )
+        {
+            const uint8_t* panNotNulls = (const uint8_t*)arrayField->buffers[0];
+            if( panNotNulls && arrayField->null_count != 0 )
+            {
+                PyObject* maskArray = PyArray_SimpleNew(1, &dims, NPY_BOOL);
+                for( npy_intp j = 0; j < dims; j++ )
+                {
+                    size_t srcOffset = static_cast<size_t>(arrayField->offset + j);
+                    // Inverse convention between arrow not-null bitmap, where
+                    // 1 means valid, and numpy masks where 1 means invalid
+                    *(char*)PyArray_GETPTR1((PyArrayObject *) maskArray, j) =
+                        ((panNotNulls[srcOffset / 8] & (1 << (srcOffset%8))) == 0) ? 1 : 0;
+                }
+                PyObject *subdict = PyDict_New();
+                PyDict_SetItemString( subdict, "mask", maskArray );
+                PyDict_SetItemString( subdict, "data", numpyArray );
+                PyDict_SetItemString( dict, schemaField->name, subdict);
+                Py_DECREF(maskArray);
+                Py_DECREF(subdict);
+            }
+            else
+            {
+                PyDict_SetItemString( dict, schemaField->name, numpyArray );
+            }
+            Py_DECREF(numpyArray);
+        }
+    }
+    return dict;
+}
+
+%}
 
 %typemap(in,numinputs=0) (CPLVirtualMemShadow** pvirtualmem, int numpytypemap) (CPLVirtualMemShadow* virtualmem)
 {

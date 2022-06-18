@@ -193,6 +193,135 @@
         return output
     schema = property(schema)
 
+
+    def GetArrowStreamAsPyArrow(self, options = []):
+        """ Return an ArrowStream as PyArrow Schema and Array objects """
+
+        import pyarrow as pa
+
+        class Stream:
+            def __init__(self, stream):
+                self.stream = stream
+                self.end_of_stream = False
+
+            def schema(self):
+                """ Return the schema as a PyArrow DataType """
+
+                schema_ptr = self.stream._GetSchemaPtr()
+                if schema_ptr == 0:
+                    raise Exception("cannot get schema")
+                try:
+                    return pa.DataType._import_from_c(schema_ptr)
+                finally:
+                    self.stream._FreeSchemaPtr(schema_ptr)
+
+            schema = property(schema)
+
+
+            def _GetNextRecordBatchAsPyArrow(self, l_schema):
+                """ Return the next RecordBatch as a PyArrow StructArray, or None at end of iteration """
+
+                array_ptr = self.stream._GetNextRecordBatchPtr()
+                if array_ptr == 0:
+                    return None
+                try:
+                    return pa.Array._import_from_c(array_ptr, l_schema)
+                finally:
+                    self.stream._FreeRecordBatchPtr(array_ptr)
+
+
+            def __iter__(self):
+                """ Return an iterator over record batches as a PyArrow StructArray """
+                if self.end_of_stream:
+                    raise Exception("Stream has already been iterated over")
+
+                l_schema = self.schema
+                while True:
+                    batch = self._GetNextRecordBatchAsPyArrow(l_schema)
+                    if not batch:
+                        break
+                    yield batch
+                self.end_of_stream = True
+                self.stream = None
+
+        stream = self.GetArrowStream(options)
+        if not stream:
+            raise Exception("GetArrowStream() failed")
+        return Stream(stream)
+
+
+    def GetArrowStreamAsNumPy(self, options = []):
+        """ Return an ArrowStream as NumPy Array objects.
+            A specific option to this method is USE_MASKED_ARRAYS=YES/NO (default is YES).
+        """
+
+        from osgeo import gdal_array
+
+        class Stream:
+            def __init__(self, stream, use_masked_arrays):
+                self.stream = stream
+                self.end_of_stream = False
+                self.use_masked_arrays = use_masked_arrays
+
+            def _GetNextRecordBatchAsNumpy(self, schema_ptr):
+                """ Return the next RecordBatch as a dictionary of Numpy arrays, or None at end of iteration """
+
+                array_ptr = self.stream._GetNextRecordBatchPtr()
+                if array_ptr == 0:
+                    return None
+
+                class ArrayPointerKeeper:
+                    def __init__(self, array_ptr):
+                        self.array_ptr = array_ptr
+
+                    def __del__(self):
+                        ArrowArrayStream._FreeRecordBatchPtr(self.array_ptr)
+
+                ret = gdal_array._RecordBatchAsNumpy(array_ptr,
+                                                     schema_ptr,
+                                                     ArrayPointerKeeper(array_ptr))
+                if ret is None:
+                    gdal_array._RaiseException()
+                    return ret
+                for key, val in ret.items():
+                    if isinstance(val, dict):
+                        if self.use_masked_arrays:
+                            import numpy.ma as ma
+                            ret[key] = ma.masked_array(val["data"], val["mask"])
+                        else:
+                            ret[key] = val["data"]
+                return ret
+
+            def __iter__(self):
+                """ Return an iterator over record batches as a dictionary of Numpy arrays """
+
+                if self.end_of_stream:
+                    raise Exception("Stream has already been iterated over")
+
+                schema_ptr = self.stream._GetSchemaPtr()
+                try:
+                    while True:
+                        batch = self._GetNextRecordBatchAsNumpy(schema_ptr)
+                        if not batch:
+                            break
+                        yield batch
+                finally:
+                    self.stream._FreeSchemaPtr(schema_ptr)
+                    self.end_of_stream = True
+                    self.stream = None
+
+        stream = self.GetArrowStream(options)
+        if not stream:
+            raise Exception("GetArrowStream() failed")
+
+        use_masked_arrays = True
+        for opt in options:
+            opt = opt.upper()
+            if opt.startswith('USE_MASKED_ARRAYS='):
+                use_masked_arrays = opt[len('USE_MASKED_ARRAYS='):] in ('YES', 'TRUE', 'ON', '1')
+
+        return Stream(stream, use_masked_arrays)
+
   %}
 
 }

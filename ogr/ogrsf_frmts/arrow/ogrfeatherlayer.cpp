@@ -80,6 +80,15 @@ OGRFeatherLayer::OGRFeatherLayer(OGRFeatherDataset* poDS,
 }
 
 /************************************************************************/
+/*                           GetDataset()                               */
+/************************************************************************/
+
+GDALDataset* OGRFeatherLayer::GetDataset()
+{
+    return m_poDS;
+}
+
+/************************************************************************/
 /*                          LoadGeoMetadata()                           */
 /************************************************************************/
 
@@ -660,13 +669,10 @@ int OGRFeatherLayer::TestCapability(const char* pszCap)
         return true;
     }
 
-    if( EQUAL(pszCap, OLCStringsAsUTF8) )
-        return true;
-
     if( EQUAL(pszCap, OLCMeasuredGeometries) )
         return true;
 
-    return false;
+    return OGRArrowLayer::TestCapability(pszCap);
 }
 
 /************************************************************************/

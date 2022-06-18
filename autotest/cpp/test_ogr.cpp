@@ -31,6 +31,7 @@
 #include "ogr_p.h"
 #include "ogrsf_frmts.h"
 #include "../../ogr/ogrsf_frmts/osm/gpb.h"
+#include "ogr_recordbatch.h"
 
 #include <string>
 
@@ -1852,6 +1853,249 @@ namespace tut
         ensure(!OGR_SM_InitStyleString(hSM, "@i_do_not_exist"));
         OGR_SM_Destroy(hSM);
         OGR_STBL_Destroy(hStyleTable);
+    }
+
+    // Test OGR_L_GetArrowStream
+    template<>
+    template<>
+    void object::test<24>()
+    {
+        auto poDS = std::unique_ptr<GDALDataset>(
+            GetGDALDriverManager()->GetDriverByName("Memory")->
+                Create("", 0, 0, 0, GDT_Unknown, nullptr));
+        auto poLayer = poDS->CreateLayer("test");
+        {
+            OGRFieldDefn oFieldDefn("str", OFTString);
+            poLayer->CreateField(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("bool", OFTInteger);
+            oFieldDefn.SetSubType(OFSTBoolean);
+            poLayer->CreateField(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("int16", OFTInteger);
+            oFieldDefn.SetSubType(OFSTInt16);
+            poLayer->CreateField(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("int32", OFTInteger);
+            poLayer->CreateField(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("int64", OFTInteger64);
+            poLayer->CreateField(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("float32", OFTReal);
+            oFieldDefn.SetSubType(OFSTFloat32);
+            poLayer->CreateField(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("float64", OFTReal);
+            poLayer->CreateField(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("date", OFTDate);
+            poLayer->CreateField(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("time", OFTTime);
+            poLayer->CreateField(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("datetime", OFTDateTime);
+            poLayer->CreateField(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("binary", OFTBinary);
+            poLayer->CreateField(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("strlist", OFTStringList);
+            poLayer->CreateField(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("boollist", OFTIntegerList);
+            oFieldDefn.SetSubType(OFSTBoolean);
+            poLayer->CreateField(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("int16list", OFTIntegerList);
+            oFieldDefn.SetSubType(OFSTInt16);
+            poLayer->CreateField(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("int32list", OFTIntegerList);
+            poLayer->CreateField(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("int64list", OFTInteger64List);
+            poLayer->CreateField(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("float32list", OFTRealList);
+            oFieldDefn.SetSubType(OFSTFloat32);
+            poLayer->CreateField(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("float64list", OFTRealList);
+            poLayer->CreateField(&oFieldDefn);
+        }
+        auto poFDefn = poLayer->GetLayerDefn();
+        struct ArrowArrayStream stream;
+        ensure(OGR_L_GetArrowStream(OGRLayer::ToHandle(poLayer), &stream, nullptr));
+        {
+            // Cannot start a new stream while one is active
+            struct ArrowArrayStream stream2;
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            ensure(OGR_L_GetArrowStream(OGRLayer::ToHandle(poLayer), &stream2, nullptr) == false);
+            CPLPopErrorHandler();
+        }
+        ensure(stream.release != nullptr);
+
+        struct ArrowSchema schema;
+        CPLErrorReset();
+        ensure(stream.get_last_error(&stream) == nullptr);
+        ensure_equals(stream.get_schema(&stream, &schema), 0);
+        ensure(stream.get_last_error(&stream) == nullptr);
+        ensure(schema.release != nullptr);
+        ensure_equals(schema.n_children, 1 + poFDefn->GetFieldCount() + poFDefn->GetGeomFieldCount());
+        schema.release(&schema);
+
+        struct ArrowArray array;
+        // Next batch ==> End of stream
+        ensure_equals(stream.get_next(&stream, &array), 0);
+        ensure(array.release == nullptr);
+
+        // Release stream
+        stream.release(&stream);
+
+        {
+            auto poFeature = std::unique_ptr<OGRFeature>(new OGRFeature(poFDefn));
+            poFeature->SetField("bool", 1);
+            poFeature->SetField("int16", -12345);
+            poFeature->SetField("int32", 12345678);
+            poFeature->SetField("int64", static_cast<GIntBig>(12345678901234));
+            poFeature->SetField("float32", 1.25);
+            poFeature->SetField("float64", 1.250123);
+            poFeature->SetField("str", "abc");
+            poFeature->SetField("date", "2022-05-31");
+            poFeature->SetField("time", "12:34:56.789");
+            poFeature->SetField("datetime", "2022-05-31T12:34:56.789Z");
+            poFeature->SetField("boollist", "[False,True]");
+            poFeature->SetField("int16list", "[-12345,12345]");
+            poFeature->SetField("int32list", "[-12345678,12345678]");
+            poFeature->SetField("int64list", "[-12345678901234,12345678901234]");
+            poFeature->SetField("float32list", "[-1.25,1.25]");
+            poFeature->SetField("float64list", "[-1.250123,1.250123]");
+            poFeature->SetField("strlist", "[\"abc\",\"defghi\"]");
+            poFeature->SetField( poFDefn->GetFieldIndex("binary"), 2, "\xDE\xAD");
+            OGRGeometry* poGeom = nullptr;
+            OGRGeometryFactory::createFromWkt( "POINT(1 2)", nullptr, &poGeom);
+            poFeature->SetGeometryDirectly(poGeom);
+            ensure_equals(poLayer->CreateFeature(poFeature.get()), OGRERR_NONE);
+        }
+
+        // Get a new stream now that we've released it
+        ensure(OGR_L_GetArrowStream(OGRLayer::ToHandle(poLayer), &stream, nullptr));
+        ensure(stream.release != nullptr);
+
+        ensure_equals(stream.get_next(&stream, &array), 0);
+        ensure(array.release != nullptr);
+        ensure_equals(array.n_children, 1 + poFDefn->GetFieldCount() + poFDefn->GetGeomFieldCount());
+        ensure_equals(array.length, poLayer->GetFeatureCount(false));
+        ensure_equals(array.null_count, 0);
+        ensure_equals(array.n_buffers, 1);
+        ensure(array.buffers[0] == nullptr); // no bitmap
+        for( int i = 0; i < array.n_children; i++ )
+        {
+            ensure(array.children[i]->release != nullptr);
+            ensure_equals(array.children[i]->length, array.length);
+            ensure(array.children[i]->n_buffers >= 2);
+            ensure(array.children[i]->buffers[0] == nullptr); // no bitmap
+            ensure_equals(array.children[i]->null_count, 0);
+            ensure(array.children[i]->buffers[1] != nullptr);
+            if(array.children[i]->n_buffers == 3 )
+                ensure(array.children[i]->buffers[2] != nullptr);
+        }
+        array.release(&array);
+
+        // Next batch ==> End of stream
+        ensure_equals(stream.get_next(&stream, &array), 0);
+        ensure(array.release == nullptr);
+
+        // Release stream
+        stream.release(&stream);
+
+        // Insert 2 empty features
+        {
+            auto poFeature = std::unique_ptr<OGRFeature>(new OGRFeature(poFDefn));
+            ensure_equals(poLayer->CreateFeature(poFeature.get()), OGRERR_NONE);
+        }
+
+        {
+            auto poFeature = std::unique_ptr<OGRFeature>(new OGRFeature(poFDefn));
+            ensure_equals(poLayer->CreateFeature(poFeature.get()), OGRERR_NONE);
+        }
+
+        // Get a new stream now that we've released it
+        {
+            char** papszOptions = CSLSetNameValue(nullptr, "MAX_FEATURES_IN_BATCH", "2");
+            ensure(OGR_L_GetArrowStream(OGRLayer::ToHandle(poLayer), &stream, papszOptions));
+            CSLDestroy(papszOptions);
+        }
+        ensure(stream.release != nullptr);
+
+        ensure_equals(stream.get_next(&stream, &array), 0);
+        ensure(array.release != nullptr);
+        ensure_equals(array.n_children, 1 + poFDefn->GetFieldCount() + poFDefn->GetGeomFieldCount());
+        ensure_equals(array.length, 2);
+        for( int i = 0; i < array.n_children; i++ )
+        {
+            ensure(array.children[i]->release != nullptr);
+            ensure_equals(array.children[i]->length, array.length);
+            ensure(array.children[i]->n_buffers >= 2);
+            if( i > 0 )
+            {
+                ensure(array.children[i]->buffers[0] != nullptr); // we have a bitmap
+                ensure_equals(array.children[i]->null_count, 1);
+            }
+            ensure(array.children[i]->buffers[1] != nullptr);
+            if(array.children[i]->n_buffers == 3 )
+                ensure(array.children[i]->buffers[2] != nullptr);
+        }
+        array.release(&array);
+
+        // Next batch
+        ensure_equals(stream.get_next(&stream, &array), 0);
+        ensure(array.release != nullptr);
+        ensure_equals(array.n_children, 1 + poFDefn->GetFieldCount() + poFDefn->GetGeomFieldCount());
+        ensure_equals(array.length, 1);
+        array.release(&array);
+
+        // Next batch ==> End of stream
+        ensure_equals(stream.get_next(&stream, &array), 0);
+        ensure(array.release == nullptr);
+
+        // Release stream
+        stream.release(&stream);
+
+        // Get a new stream now that we've released it
+        ensure(OGR_L_GetArrowStream(OGRLayer::ToHandle(poLayer), &stream, nullptr));
+        ensure(stream.release != nullptr);
+
+        // Free dataset & layer
+        poDS.reset();
+
+        // Test releasing the stream after the dataset/layer has been closed
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        CPLErrorReset();
+        ensure(stream.get_schema(&stream, &schema) != 0);
+        ensure(stream.get_last_error(&stream) != nullptr);
+        ensure(stream.get_next(&stream, &array) != 0);
+        CPLPopErrorHandler();
+        stream.release(&stream);
     }
 
 } // namespace tut

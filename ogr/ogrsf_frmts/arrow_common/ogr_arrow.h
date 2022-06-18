@@ -87,6 +87,7 @@ private:
 
         bool                     SkipToNextFeatureDueToAttributeFilter() const;
         void                     ExploreExprNode(const swq_expr_node* poNode);
+        bool                     UseRecordBatchBaseImplementation() const;
 
 protected:
         OGRArrowDataset*                            m_poArrowDS = nullptr;
@@ -162,6 +163,9 @@ protected:
         OGRErr             GetExtentFromMetadata(const CPLJSONObject& oJSONDef,
                                                  OGREnvelope *psExtent) const;
 
+        int GetArrowSchema(struct ArrowArrayStream*, struct ArrowSchema* out) override;
+        int GetNextArrowArray(struct ArrowArrayStream*, struct ArrowArray* out) override;
+
 public:
         virtual ~OGRArrowLayer() override;
 
@@ -178,6 +182,8 @@ public:
                             { SetSpatialFilter(0, poGeom); }
         void            SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override;
 
+        int             TestCapability(const char* pszCap) override;
+
         virtual std::unique_ptr<OGRFieldDomain> BuildDomain(const std::string& osDomainName,
                                                              int iFieldIndex) const = 0;
 
@@ -192,15 +198,16 @@ public:
 
 class OGRArrowDataset CPL_NON_FINAL: public GDALPamDataset
 {
-    std::unique_ptr<arrow::MemoryPool> m_poMemoryPool{};
+    std::shared_ptr<arrow::MemoryPool> m_poMemoryPool{};
     std::unique_ptr<OGRArrowLayer>     m_poLayer{};
     std::vector<std::string>           m_aosDomainNames{};
     std::map<std::string, int>         m_oMapDomainNameToCol{};
 
 public:
-    explicit OGRArrowDataset(std::unique_ptr<arrow::MemoryPool>&& poMemoryPool);
+    explicit OGRArrowDataset(const std::shared_ptr<arrow::MemoryPool>& poMemoryPool);
 
     inline arrow::MemoryPool* GetMemoryPool() const { return m_poMemoryPool.get(); }
+    inline const std::shared_ptr<arrow::MemoryPool>& GetSharedMemoryPool() const { return m_poMemoryPool; }
     void SetLayer(std::unique_ptr<OGRArrowLayer>&& poLayer);
 
     void RegisterDomainName(const std::string& osDomainName, int iFieldIndex);

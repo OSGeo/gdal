@@ -86,6 +86,7 @@ class OGRFlatGeobufLayer final : public OGRLayer, public OGRFlatGeobufBaseLayerI
         OGRSpatialReference *m_poSRS = nullptr;
 
         // iteration
+        bool m_bEOF = false;
         size_t m_featuresPos = 0; // current iteration position
         uint64_t m_offset = 0; // current read offset
         uint64_t m_offsetFeatures = 0; // offset of feature data
@@ -126,6 +127,10 @@ class OGRFlatGeobufLayer final : public OGRLayer, public OGRFlatGeobufBaseLayerI
         // construction
         OGRFlatGeobufLayer(const FlatGeobuf::Header *, GByte *headerBuf, const char *pszFilename, VSILFILE *poFp, uint64_t offset);
         OGRFlatGeobufLayer(const char *pszLayerName, const char *pszFilename, OGRSpatialReference *poSpatialRef, OGRwkbGeometryType eGType, bool bCreateSpatialIndexAtClose, VSILFILE *poFpWrite, std::string &osTempFile);
+
+    protected:
+        virtual int GetNextArrowArray(struct ArrowArrayStream*,
+                                       struct ArrowArray* out_array) override;
 
     public:
         virtual ~OGRFlatGeobufLayer();

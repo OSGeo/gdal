@@ -29,6 +29,9 @@
 
 #ifdef SWIGPYTHON
 %nothread;
+%inline %{
+typedef void* VoidPtrAsLong;
+%}
 #endif
 
 #ifndef FROM_GDAL_I
@@ -265,6 +268,7 @@ using namespace std;
 #include "cpl_port.h"
 #include "cpl_string.h"
 #include "ogr_srs_api.h"
+#include "ogr_recordbatch.h"
 
 #define FIELD_INDEX_ERROR_TMPL "Invalid field index: '%i'"
 #define FIELD_NAME_ERROR_TMPL "Invalid field name: '%s'"
@@ -481,6 +485,7 @@ typedef void retGetPoints;
 %constant char *OLCCurveGeometries     = "CurveGeometries";
 %constant char *OLCMeasuredGeometries  = "MeasuredGeometries";
 %constant char *OLCRename              = "Rename";
+%constant char *OLCFastGetArrowStream  = "FastGetArrowStream";
 
 %constant char *ODsCCreateLayer        = "CreateLayer";
 %constant char *ODsCDeleteLayer        = "DeleteLayer";
@@ -529,6 +534,7 @@ typedef int OGRErr;
 #define OLCCurveGeometries     "CurveGeometries"
 #define OLCMeasuredGeometries  "MeasuredGeometries"
 #define OLCRename              "Rename"
+#define OLCFastGetArrowStream  "FastGetArrowStream";
 
 #define ODsCCreateLayer        "CreateLayer"
 #define ODsCDeleteLayer        "DeleteLayer"
@@ -983,6 +989,68 @@ public:
 
 #endif /* FROM_GDAL_I */
 
+#ifdef SWIGPYTHON
+class ArrowArrayStream {
+  ArrowArrayStream();
+public:
+%extend {
+
+  ~ArrowArrayStream() {
+    if( self->release )
+      self->release(self);
+    free(self);
+  }
+
+  VoidPtrAsLong _GetSchemaPtr()
+  {
+      struct ArrowSchema* schema = (struct ArrowSchema* )malloc(sizeof(struct ArrowSchema));
+      if( self->get_schema(self, schema) == 0 )
+      {
+          return schema;
+      }
+      else
+      {
+          free(schema);
+          return 0;
+      }
+  }
+
+  static void _FreeSchemaPtr(VoidPtrAsLong ptr)
+  {
+      struct ArrowSchema* schema = (struct ArrowSchema* )ptr;
+      if( schema && schema->release )
+          schema->release(schema);
+      free(schema);
+  }
+
+  VoidPtrAsLong _GetNextRecordBatchPtr(char** options = NULL)
+  {
+      struct ArrowArray* array = (struct ArrowArray* )malloc(sizeof(struct ArrowArray));
+      if( self->get_next(self, array) == 0 && array->release != NULL )
+      {
+          return array;
+      }
+      else
+      {
+          free(array);
+          return 0;
+      }
+  }
+
+  static void _FreeRecordBatchPtr(VoidPtrAsLong ptr)
+  {
+      struct ArrowArray* array = (struct ArrowArray* )ptr;
+      if( array && array->release )
+          array->release(array);
+      free(array);
+  }
+
+} /* %extend */
+
+
+}; /* class ArrowArrayStream */
+#endif
+
 /************************************************************************/
 /*                               OGRLayer                               */
 /************************************************************************/
@@ -1309,6 +1377,21 @@ public:
     if( table != NULL )
         OGR_L_SetStyleTable(self, (OGRStyleTableH) table);
   }
+
+#ifdef SWIGPYTHON
+
+%newobject GetArrowStream;
+  ArrowArrayStream* GetArrowStream(char** options = NULL) {
+      struct ArrowArrayStream* stream = (struct ArrowArrayStream* )malloc(sizeof(struct ArrowArrayStream));
+      if( OGR_L_GetArrowStream(self, stream, options) )
+          return stream;
+      else
+      {
+          free(stream);
+          return NULL;
+      }
+  }
+#endif
 
 } /* %extend */
 

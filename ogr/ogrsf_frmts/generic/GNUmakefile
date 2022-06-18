@@ -7,7 +7,8 @@ OBJ	=	ogrsfdriverregistrar.o ogrlayer.o ogrdatasource.o \
 		ogr_attrind.o ogr_miattrind.o ogrlayerdecorator.o \
 		ogrwarpedlayer.o ogrunionlayer.o ogrlayerpool.o \
 		ogrmutexedlayer.o ogrmutexeddatasource.o \
-		ogremulatedtransaction.o ogreditablelayer.o
+		ogremulatedtransaction.o ogreditablelayer.o \
+		ograrrowarrayhelper.o
 
 CXXFLAGS :=     $(CXXFLAGS) $(SHADOW_WFLAGS) -DINST_DATA=\"$(INST_DATA)\"
 

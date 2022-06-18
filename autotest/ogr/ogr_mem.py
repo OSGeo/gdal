@@ -672,3 +672,170 @@ def test_ogr_mem_alter_geom_field_defn():
     new_geom_field_defn.SetSpatialRef(None)
     assert lyr.AlterGeomFieldDefn(0, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_ALL_FLAG) == ogr.OGRERR_NONE
     assert lyr.GetSpatialRef() is None
+
+###############################################################################
+
+
+def test_ogr_mem_arrow_stream_numpy():
+    pytest.importorskip('osgeo.gdal_array')
+    numpy = pytest.importorskip('numpy')
+    import datetime
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('foo')
+    stream = lyr.GetArrowStreamAsNumPy()
+
+    with pytest.raises(Exception):
+        with gdaltest.error_handler():
+            lyr.GetArrowStreamAsNumPy()
+
+    it = iter(stream)
+    with pytest.raises(StopIteration):
+        next(it)
+
+    lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
+
+    stream = lyr.GetArrowStreamAsNumPy(options = ['USE_MASKED_ARRAYS=NO'])
+    batches = [ batch for batch in stream ]
+    assert len(batches) == 1
+    assert batches[0].keys() == { "OGC_FID", "wkb_geometry" }
+    assert batches[0]["OGC_FID"][0] == 0
+    assert batches[0]["wkb_geometry"][0] is None
+
+    field = ogr.FieldDefn("str", ogr.OFTString)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("bool", ogr.OFTInteger)
+    field.SetSubType(ogr.OFSTBoolean)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("int16", ogr.OFTInteger)
+    field.SetSubType(ogr.OFSTInt16)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("int32", ogr.OFTInteger)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("int64", ogr.OFTInteger64)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("float32", ogr.OFTReal)
+    field.SetSubType(ogr.OFSTFloat32)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("float64", ogr.OFTReal)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("date", ogr.OFTDate)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("time", ogr.OFTTime)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("datetime", ogr.OFTDateTime)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("binary", ogr.OFTBinary)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("strlist", ogr.OFTStringList)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("boollist", ogr.OFTIntegerList)
+    field.SetSubType(ogr.OFSTBoolean)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("int16list", ogr.OFTIntegerList)
+    field.SetSubType(ogr.OFSTInt16)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("int32list", ogr.OFTIntegerList)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("int64list", ogr.OFTInteger64List)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("float32list", ogr.OFTRealList)
+    field.SetSubType(ogr.OFSTFloat32)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("float64list", ogr.OFTRealList)
+    lyr.CreateField(field)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("bool", 1)
+    f.SetField("int16", -12345)
+    f.SetField("int32", 12345678)
+    f.SetField("int64", 12345678901234)
+    f.SetField("float32", 1.25)
+    f.SetField("float64", 1.250123)
+    f.SetField("str", "abc")
+    f.SetField("date", "2022-05-31")
+    f.SetField("time", "12:34:56.789")
+    f.SetField("datetime", "2022-05-31T12:34:56.789Z")
+    f.SetField("boollist", "[False,True]")
+    f.SetField("int16list", "[-12345,12345]")
+    f.SetField("int32list", "[-12345678,12345678]")
+    f.SetField("int64list", "[-12345678901234,12345678901234]")
+    f.SetField("float32list", "[-1.25,1.25]")
+    f.SetField("float64list", "[-1.250123,1.250123]")
+    f.SetField("strlist", "[\"abc\",\"defghi\"]")
+    f.SetFieldBinaryFromHexString("binary", 'DEAD')
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(1 2)'))
+    lyr.CreateFeature(f)
+
+    stream = lyr.GetArrowStreamAsNumPy(options = ['USE_MASKED_ARRAYS=NO'])
+    batches = [ batch for batch in stream ]
+    assert len(batches) == 1
+    batch = batches[0]
+    assert batch.keys() == {
+        'OGC_FID', 'str', 'bool', 'int16', 'int32', 'int64',
+        'float32', 'float64', 'date', 'time', 'datetime', 'binary',
+        'strlist', 'boollist', 'int16list', 'int32list', 'int64list',
+        'float32list', 'float64list', 'wkb_geometry' }
+    assert batch["OGC_FID"][1] == 1
+    for fieldname in ('bool', 'int16', 'int32', 'int64',
+                      'float32', 'float64'):
+        assert batch[fieldname][1] == f.GetField(fieldname)
+    assert batch['str'][1] == f.GetField('str').encode('utf-8')
+    assert batch['date'][1] == numpy.datetime64('2022-05-31')
+    assert batch['time'][1] == datetime.time(12, 34, 56, 789000)
+    assert batch['datetime'][1] == numpy.datetime64('2022-05-31T12:34:56.789')
+    assert numpy.array_equal(batch['boollist'][1], numpy.array([False,  True]))
+    assert numpy.array_equal(batch['int16list'][1], numpy.array([-12345, 12345]))
+    assert numpy.array_equal(batch['int32list'][1], numpy.array([-12345678, 12345678]))
+    assert numpy.array_equal(batch['int64list'][1], numpy.array([-12345678901234, 12345678901234]))
+    assert numpy.array_equal(batch['float32list'][1], numpy.array([-1.25, 1.25]))
+    assert numpy.array_equal(batch['float64list'][1], numpy.array([-1.250123, 1.250123]))
+    assert numpy.array_equal(batch['strlist'][1], numpy.array([b'abc', b'defghi'], dtype='|S6'))
+    assert batch['binary'][1] == b'\xDE\xAD'
+    assert len(batch["wkb_geometry"][1]) == 21
+
+###############################################################################
+
+
+def test_ogr_mem_arrow_stream_pyarrow():
+    pytest.importorskip('pyarrow')
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('foo')
+    stream = lyr.GetArrowStreamAsPyArrow()
+
+    with pytest.raises(Exception):
+        with gdaltest.error_handler():
+            lyr.GetArrowStreamAsPyArrow()
+
+    it = iter(stream)
+    with pytest.raises(StopIteration):
+        next(it)
+
+    lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
+    stream = lyr.GetArrowStreamAsPyArrow()
+    assert str(stream.schema) == 'struct<OGC_FID: int64 not null, wkb_geometry: binary>'
+    md = stream.schema['wkb_geometry'].metadata
+    assert b'ARROW:extension:name' in md
+    assert md[b'ARROW:extension:name'] == b'ogc.wkb'
+    batches = [ batch for batch in stream ]
+    assert len(batches) == 1
+    arrays = batches[0].flatten()
+    assert len(arrays) == 2

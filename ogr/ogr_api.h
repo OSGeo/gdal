@@ -656,6 +656,13 @@ OGRFeatureH CPL_DLL OGR_L_GetNextFeature( OGRLayerH ) CPL_WARN_UNUSED_RESULT;
         OGR_F_Destroy(hFeat); \
     }
 
+/** Data type for a Arrow C stream Include ogr_recordbatch.h to get the definition. */
+struct ArrowArrayStream;
+
+bool CPL_DLL OGR_L_GetArrowStream(OGRLayerH hLayer,
+                                  struct ArrowArrayStream* out_stream,
+                                  char** papszOptions);
+
 OGRErr CPL_DLL OGR_L_SetNextByIndex( OGRLayerH, GIntBig );
 OGRFeatureH CPL_DLL OGR_L_GetFeature( OGRLayerH, GIntBig )  CPL_WARN_UNUSED_RESULT;
 OGRErr CPL_DLL OGR_L_SetFeature( OGRLayerH, OGRFeatureH ) CPL_WARN_UNUSED_RESULT;
