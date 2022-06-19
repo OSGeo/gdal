@@ -341,7 +341,7 @@ void OSRSetPROJSearchPaths( const char* const * papszPaths )
 char** OSRGetPROJSearchPaths()
 {
     std::lock_guard<std::mutex> oLock(g_oSearchPathMutex);
-    if( g_searchPathGenerationCounter > 0 )
+    if( g_searchPathGenerationCounter > 0 && !g_aosSearchpaths.empty() )
     {
         return CSLDuplicate(g_aosSearchpaths.List());
     }
