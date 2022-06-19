@@ -57,6 +57,7 @@
 #include <ostream>
 #include <iostream>
 #include <sstream>
+#include <chrono>
 #if defined(ZSTD_SUPPORT)
 #include <zstd.h>
 #endif
@@ -108,6 +109,9 @@ enum ILCompression {
 #endif
 #if defined(ZSTD_SUPPORT)
     IL_ZSTD,
+#endif
+#if defined(QB3_SUPPORT)
+    IL_QB3,
 #endif
     IL_ERR_COMP
 };
@@ -355,8 +359,10 @@ public:
     CPLErr SetVersion(int version);
 
     const CPLString GetFname() { return fname; }
+
     // Patches a region of all the next overview, argument counts are in blocks
-    virtual CPLErr PatchOverview(int BlockX, int BlockY, int Width, int Height,
+    // Exported for mrf_insert utility
+    virtual CPL_DLL CPLErr PatchOverview(int BlockX, int BlockY, int Width, int Height,
         int srcLevel = 0, int recursive = false, int sampling_mode = SAMPLING_Avg);
 
     // Creates an XML tree from the current MRF.  If written to a file it becomes an MRF
@@ -521,6 +527,8 @@ protected:
         return static_cast<ZSTD_DCtx *>(pzsdctx);
     }
 #endif
+    // Time duration spend for decompression and compression
+    std::chrono::nanoseconds read_timer, write_timer;
 };
 
 class MRFRasterBand CPL_NON_FINAL: public GDALPamRasterBand {
@@ -774,6 +782,18 @@ private:
         static const char L2sig[] = "Lerc2 ";
         return !strncmp(s, L2sig, sizeof(L2sig) - 1);
     }
+};
+#endif
+
+#if defined(QB3_SUPPORT)
+class QB3_Band final : public MRFRasterBand {
+    friend class MRFDataset;
+public:
+    QB3_Band(MRFDataset* pDS, const ILImage& image, int b, int level);
+    virtual ~QB3_Band() {}
+protected:
+    virtual CPLErr Decompress(buf_mgr& dst, buf_mgr& src) override;
+    virtual CPLErr Compress(buf_mgr& dst, buf_mgr& src) override;
 };
 #endif
 

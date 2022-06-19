@@ -114,6 +114,19 @@ jobs:
             && cd ../.. \
             && rm -rf libjxl
 
+    - name: Buid libQB3
+      run: |
+        # Build libQB3
+        # Used by the MRF driver
+        git clone https://github.com/lucianpls/QB3.git \
+            && mkdir QB3/QB3lib/build \
+            && cd QB3/QB3lib/build \
+            && /usr/bin/cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr .. \
+            && make -j$(nproc) \
+            && sudo make -j$(nproc) install \
+            && cd ../../.. \
+            && rm -rf QB3
+
     - name: Install pdfium
       run: |
         wget -q https://github.com/rouault/pdfium_build_gdal_3_5/releases/download/v1_pdfium_5106/install-ubuntu2004-rev5106.tar.gz \

@@ -70,6 +70,11 @@ ifeq ($(ZSTD_SETTING),yes)
 XTRA_OPT		:=	$(XTRA_OPT) -DZSTD_SUPPORT
 endif
 
+ifeq ($(QB3_ENABLED),yes)
+XTRA_OPT	:=	$(XTRA_OPT) -DQB3_SUPPORT $(QB3_INCLUDE)
+OBJ	:=	$(OBJ) QB3_band.o
+endif
+
 CPPFLAGS        :=  $(XTRA_OPT)  $(CPPFLAGS)
 
 default:  $(PREDEPEND)	$(OBJ:.o=.$(OBJ_EXT)) $(SUBLIBS)

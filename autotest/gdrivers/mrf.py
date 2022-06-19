@@ -35,33 +35,38 @@ import gdaltest
 
 pytestmark = pytest.mark.require_driver('MRF')
 
-mrf_list = [
+mrf_tests = (
     ('byte.tif', 4672, [4672], []),
     ('byte.tif', 4672, [4672], ['COMPRESS=ZSTD']),
     ('byte.tif', 4672, [4672], ['COMPRESS=DEFLATE']),
     ('byte.tif', 4672, [4672], ['COMPRESS=NONE']),
     ('byte.tif', 4672, [4672], ['COMPRESS=LERC']),
+    ('byte.tif', 4672, [4672], ['COMPRESS=QB3']),
     ('byte.tif', 4672, [5015], ['COMPRESS=LERC', 'OPTIONS:LERC_PREC=10']),
     ('byte.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('int16.tif', 4672, [4672], []),
     ('int16.tif', 4672, [4672], ['COMPRESS=ZSTD']),
     ('int16.tif', 4672, [4672], ['COMPRESS=DEFLATE']),
     ('int16.tif', 4672, [4672], ['COMPRESS=LERC']),
+    ('int16.tif', 4672, [4672], ['COMPRESS=QB3']),
     ('int16.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('../../gcore/data/uint16.tif', 4672, [4672], []),
     ('../../gcore/data/uint16.tif', 4672, [4672], ['COMPRESS=DEFLATE']),
     ('../../gcore/data/uint16.tif', 4672, [4672], ['COMPRESS=ZSTD']),
     ('../../gcore/data/uint16.tif', 4672, [4672], ['COMPRESS=LERC']),
+    ('../../gcore/data/uint16.tif', 4672, [4672], ['COMPRESS=QB3']),
     ('../../gcore/data/uint16.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('int32.tif', 4672, [4672], ['COMPRESS=DEFLATE']),
     ('int32.tif', 4672, [4672], ['COMPRESS=ZSTD']),
     ('int32.tif', 4672, [4672], ['COMPRESS=TIF']),
     ('int32.tif', 4672, [4672], ['COMPRESS=LERC']),
+    ('int32.tif', 4672, [4672], ['COMPRESS=QB3']),
     ('int32.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('../../gcore/data/uint32.tif', 4672, [4672], ['COMPRESS=DEFLATE']),
     ('../../gcore/data/uint32.tif', 4672, [4672], ['COMPRESS=ZSTD']),
     ('../../gcore/data/uint32.tif', 4672, [4672], ['COMPRESS=TIF']),
     ('../../gcore/data/uint32.tif', 4672, [4672], ['COMPRESS=LERC']),
+    ('../../gcore/data/uint32.tif', 4672, [4672], ['COMPRESS=QB3']),
     ('../../gcore/data/uint32.tif', 4672, [4672], ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('float32.tif', 4672, [4672], ['COMPRESS=DEFLATE']),
     ('float32.tif', 4672, [4672], ['COMPRESS=ZSTD']),
@@ -77,6 +82,9 @@ mrf_list = [
     ('../../gcore/data/utmsmall.tif', 50054, [50054], []),
     ('small_world.tif', 30111, [30111], ['COMPRESS=ZSTD']),
     ('small_world.tif', 30111, [30111], ['COMPRESS=ZSTD', 'INTERLEAVE=PIXEL']),
+    ('small_world.tif', 30111, [30111], ['COMPRESS=QB3']),
+    ('small_world.tif', 30111, [30111], ['COMPRESS=QB3',  'INTERLEAVE=PIXEL']),
+    ('small_world.tif', 30111, [30111], ['COMPRESS=QB3', 'QUALITY=99']),
     ('small_world.tif', 30111, [30111], ['COMPRESS=LERC', 'INTERLEAVE=PIXEL']),
     ('small_world.tif', 30111, [30111], ['COMPRESS=LERC', 'OPTIONS=V1:1', 'INTERLEAVE=PIXEL']),
     ('small_world_pct.tif', 14890, [14890], ['COMPRESS=PPNG']),
@@ -89,22 +97,20 @@ mrf_list = [
     ('jpeg/12bit_rose_extract.jpg', 30075, [29650, 29680, 29680, 29650], ['COMPRESS=JPEG']),
     # checksum depends on floating point precision
     ('f32nan_data.tif', 54061, [54052, 54050], ['COMPRESS=LERC', 'OPTIONS=V1:Yes LERC_PREC:0.01']),
-]
+)
 
 @pytest.mark.parametrize(
     'src_filename,chksum,chksum_after_reopening,options',
-    mrf_list,
-    ids=['{0}-{3}'.format(*r) for r in mrf_list],
+    mrf_tests,
+    ids=('{0}-{3}'.format(*r) for r in mrf_tests),
 )
 def test_mrf(src_filename, chksum, chksum_after_reopening, options):
 
     mrf_co = gdal.GetDriverByName('MRF').GetMetadataItem('DMD_CREATIONOPTIONLIST')
 
-    if 'COMPRESS=LERC' in options and 'LERC' not in mrf_co:
-        pytest.skip()
-
-    if 'COMPRESS=ZSTD' in options and 'ZSTD' not in mrf_co:
-        pytest.skip()
+    for comp in "LERC", "ZSTD", "QB3":
+        if ("COMPRESS=" + comp) in options and comp not in mrf_co:
+            pytest.skip()
 
     if 'jpg' in src_filename:
         import jpeg
@@ -127,7 +133,7 @@ def test_mrf(src_filename, chksum, chksum_after_reopening, options):
     return ut.testCreateCopy(check_minmax=check_minmax)
 
 def cleanup(base = '/vsimem/out.'):
-    for ext in ['mrf', 'mrf.aux.xml', 'idx', 'ppg', 'til', 'lrc', 'pjg', 'pzp', 'psz']:
+    for ext in 'mrf', 'mrf.aux.xml', 'idx', 'ppg', 'til', 'lrc', 'pjg', 'pzp', 'psz', 'pq3':
         gdal.Unlink(base + ext)
 
 def test_mrf_zen_test():
@@ -166,9 +172,9 @@ def test_mrf_zen_test():
 def test_mrf_overview_nnb_fact_2():
 
     expected_cs = 1087
-    for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
+    for dt in (gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
                gdal.GDT_Int32, gdal.GDT_UInt32,
-               gdal.GDT_Float32, gdal.GDT_Float64]:
+               gdal.GDT_Float32, gdal.GDT_Float64):
 
         out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
                                 format='MRF',
@@ -230,9 +236,9 @@ def test_mrf_overview_avg_fact_2():
 
 def test_mrf_overview_avg_with_nodata_fact_2():
 
-    for dt in [gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
+    for dt in (gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
                gdal.GDT_Int32, gdal.GDT_UInt32,
-               gdal.GDT_Float32, gdal.GDT_Float64]:
+               gdal.GDT_Float32, gdal.GDT_Float64):
 
         out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
                                 format='MRF',
@@ -493,7 +499,7 @@ def test_mrf_versioned():
 
 def test_mrf_cleanup():
 
-    files = [
+    files = (
         '12bit_rose_extract.jpg.*',
         'byte.tif.*',
         'int16.tif.*',
@@ -507,9 +513,9 @@ def test_mrf_cleanup():
         'utmsmall.tif.*',
         'cloning.*',
         'f32nan_data.*'
-        ]
+    )
 
-    for f in [fname for n in files for fname in glob.glob('tmp/' + n)]:
+    for f in (fname for n in files for fname in glob.glob('tmp/' + n)):
         gdal.Unlink(f)
 
     cleanup()

@@ -42,9 +42,10 @@
 #include <algorithm>
 #include <limits>
 
-// LERC is not ready for big endian hosts for now
-#if defined(LERC) && defined(WORDS_BIGENDIAN)
+// LERC and QB3 only work on little endian machines
+#if defined(WORDS_BIGENDIAN)
 #undef LERC
+#undef QB3_SUPPORT
 #endif
 
 CPL_C_START
@@ -71,6 +72,9 @@ static const char * const ILC_N[] = {
 #if defined(ZSTD_SUPPORT)
         "ZSTD",
 #endif
+#if defined(QB3_SUPPORT)
+        "QB3",
+#endif
         "Unknown" };
 
 static const char * const ILC_E[]={
@@ -89,6 +93,9 @@ static const char * const ILC_E[]={
 #endif
 #if defined(ZSTD_SUPPORT)
     ".pzs",
+#endif
+#if defined(QB3_SUPPORT)
+    ".pq3"
 #endif
     "" };
 
@@ -324,6 +331,9 @@ MRFRasterBand *newMRFRasterBand(MRFDataset *pDS, const ILImage &image, int b, in
 #if defined(LERC)
     case IL_LERC: bnd = new LERC_Band(pDS, image, b, level); break;
 #endif
+#if defined(QB3_SUPPORT)
+    case IL_QB3: bnd = new QB3_Band(pDS, image, b, level); break;
+#endif
     // ZLIB is just raw + deflate
     case IL_ZLIB:
         bnd = new Raw_Band(pDS, image, b, level);
@@ -342,6 +352,7 @@ MRFRasterBand *newMRFRasterBand(MRFDataset *pDS, const ILImage &image, int b, in
         bnd = new TIF_Band(pDS, image, b, level);
         break;
     default:
+        CPLError(CE_Failure, CPLE_AssertionFailed, "Unsupported MRF compression");
         return nullptr;
     }
 
@@ -544,6 +555,9 @@ void GDALRegister_mrf() {
 #endif
 #if defined(ZSTD_SUPPORT)
         "       <Value>ZSTD</Value>"
+#endif
+#if defined(QB3_SUPPORT)
+        "       <Value>QB3</Value>"
 #endif
         "   </Option>"
         "   <Option name='INTERLEAVE' type='string-select' default='PIXEL'>"
