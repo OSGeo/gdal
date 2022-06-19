@@ -913,6 +913,15 @@ HAVE_LERC=internal
 #!ENDIF
 #BRUNSLI_LIB = $(BRUNSLI_LIB_DIR)/brunslienc-c.lib $(BRUNSLI_LIB_DIR)/brunslidec-c.lib
 
+# QB3 in MRF
+#QB3_DIR = "C:\Program Files\QB3"
+#QB3_INC = $(QB3_DIR)\include
+#!IFDEF DEBUG
+#QB3_LIB = $(QB3_DIR)\lib\libQB3d.lib
+#!ELSE
+#QB3_LIB = $(QB3_DIR)\lib\libQB3.lib
+#!ENDIF
+
 # Comment out for DDS driver
 #CRUNCH_INC = -Ic:\dev\install-crunch\include\crunch
 #CRUNCH_LIB = c:\dev\install-crunch\lib\crunch.lib
@@ -1130,5 +1139,5 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(LIBKML_LIBS) $(SOSI_LIBS) $(PDF_LIB_LINK) $(LZMA_LIBS) $(ZSTD_LIBS) $(BLOSC_LIBS) $(LZ4_LIBS) \
 	$(LIBICONV_LIBRARY) $(WEBP_LIBS) $(TILEDB_LIBS) $(FGDB_LIB_LINK) $(FREEXL_LIBS) $(GTA_LIBS) \
 	$(LIBXML2_LIB) $(PCRE_LIB) $(PCRE2_LIB) $(MONGODBV3_LIB_LINK) $(CRYPTOPP_LIB) $(OPENSSL_LIB) ws2_32.lib \
-	$(RDB_LIB) $(CRUNCH_LIB) $(OPENEXR_LIB) $(HEIF_LIB) $(LERC_LIB) $(JXL_LIB) $(BRUNSLI_LIB) $(QHULL_LIB) \
+	$(RDB_LIB) $(CRUNCH_LIB) $(OPENEXR_LIB) $(HEIF_LIB) $(LERC_LIB) $(JXL_LIB) $(BRUNSLI_LIB) $(QB3_LIB) $(QHULL_LIB) \
     kernel32.lib psapi.lib wbemuuid.lib

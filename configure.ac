@@ -5149,6 +5149,22 @@ if test "$with_brunsli" != "" -a "$with_brunsli" != "no" ; then
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl QB3 support
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(QB3,[  --with-QB3    Include QB3 support for MRF],,)
+
+QB3_ENABLED=no
+
+if test "$with_QB3" != "" -a "$with_QB3" != "no" ; then
+  QB3_ENABLED="yes"
+  AC_SUBST(QB3_ENABLED, $QB3_ENABLED)
+  AC_SUBST(QB3_INCLUDE, -I$prefix/include)
+  AC_SUBST(QB3_LIB, "-lQB3")
+fi
+
+
+dnl ---------------------------------------------------------------------------
 dnl RDB support
 dnl ---------------------------------------------------------------------------
 
