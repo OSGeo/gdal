@@ -176,6 +176,18 @@ RUN . /buildscripts/bh-set-envvars.sh \
   && rm -rf FileGDB_API-RHEL7-64gcc83.tar.gz \
   ) ; fi
 
+# Build libqb3
+RUN . /buildscripts/bh-set-envvars.sh \
+    && git clone https://github.com/lucianpls/QB3.git \
+    && cd QB3/QB3lib \
+    && mkdir build \
+    && cd build \
+    && cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release .. \
+    && make -j$(nproc) \
+    && make -j$(nproc) install \
+    && make install DESTDIR="/build_thirdparty" \
+    && cd ../../.. \
+    && rm -rf QB3
 
 ARG WITH_PDFIUM=yes
 RUN if echo "$WITH_PDFIUM" | grep -Eiq "^(y(es)?|1|true)$"  ; then ( \
