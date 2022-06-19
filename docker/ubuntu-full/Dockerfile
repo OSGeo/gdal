@@ -198,10 +198,12 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && cd libjxl \
     && mkdir build \
     && cd build \
-    && cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
+    && cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DJPEGXL_ENABLE_TOOLS=OFF -DJPEGXL_ENABLE_BENCHMARK=OFF .. \
     && make -j$(nproc) \
     && make -j$(nproc) install \
     && make install DESTDIR="/build_thirdparty" \
+    && rm -f /lib/${GCC_ARCH}-linux-gnu/libjxl*.a \
+    && rm -f /build_thirdparty/lib/${GCC_ARCH}-linux-gnu/libjxl*.a \
     && cd ../.. \
     && rm -rf libjxl \
     && rm -rf /var/lib/apt/lists/*
