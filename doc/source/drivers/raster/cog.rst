@@ -59,6 +59,10 @@ General creation options
 
    * ``LERC_ZSTD`` is available when ``LERC`` and ``ZSTD`` are available.
 
+   * ``JXL`` is for JPEG-XL, and is only available when using internal libtiff and building GDAL against
+     https://github.com/libjxl/libjxl . JXL compression may only be used on datasets with 4 bands or less.
+     Option added in GDAL 3.4
+
 -  **LEVEL=integer_value**: DEFLATE/ZSTD/LERC_DEFLATE/LERC_ZSTD/LZMA compression level.
    A lower number will
    result in faster compression but less efficient compression rate.
@@ -75,6 +79,17 @@ General creation options
 -  **QUALITY=integer_value**: JPEG/WEBP quality setting. A value of 100 is best
    quality (least compression), and 1 is worst quality (best compression).
    The default is 75. For WEBP, QUALITY=100 automatically turns on lossless mode.
+
+-  **JXL_LOSSLESS=YES/NO**: Set whether JPEG-XL compression should be lossless
+   (YES, default) or lossy (NO). For lossy compression, the underlying data
+   should be either gray, gray+alpha, rgb or rgb+alpha.
+
+-  **JXL_EFFORT=[1-9]**: Level of effort for JPEG-XL compression.
+   The higher, the smaller file and slower compression time. Default is 5.
+
+-  **JXL_DISTANCE=[0.1-15]**: Distance level for lossy JPEG-XL compression
+   0=mathematically lossless, 1.0=visually lossless, usual range [0.5,3].
+   Default is 1.0
 
 -  **NUM_THREADS=number_of_threads/ALL_CPUS**: Enable
    multi-threaded compression by specifying the number of worker
