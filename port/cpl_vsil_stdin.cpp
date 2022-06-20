@@ -534,7 +534,10 @@ static bool ParseFilename(const char* pszFilename)
                 fclose(gStdinFile);
             gStdinFile = fopen(pszStdinFilename, "rb");
             if( gStdinFile == nullptr )
+            {
+                gStdinFile = stdin;
                 return false;
+            }
             gosStdinFilename = pszStdinFilename;
             bReset = true;
         }
