@@ -137,6 +137,10 @@ int main(int argc, char* argv[])
 
     CSLDestroy(argv);
     GDALDestroyDriverManager();
+
+    GDALAllRegister();
+    GDALDestroyDriverManager();
+
     OGRCleanupAll();
 
     CPLDumpSharedList( nullptr );
