@@ -211,6 +211,21 @@ asCompressionNames[] =
     COMPRESSION_ENTRY(JP2000, false),
 };
 
+/************************************************************************/
+/*                      GetCompressionMethodName()                      */
+/************************************************************************/
+
+static const char* GetCompressionMethodName(int nCompressionCode)
+{
+    for( const auto& entry: asCompressionNames )
+    {
+        if( entry.nCode == nCompressionCode )
+        {
+            return entry.pszText;
+        }
+    }
+    return nullptr;
+}
 
 /************************************************************************/
 /*                         GTIFFSupportsPredictor()                     */
@@ -14839,8 +14854,20 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     if( m_nCompression != COMPRESSION_NONE &&
         !TIFFIsCODECConfigured(m_nCompression) )
     {
-        ReportError( CE_Failure, CPLE_AppDefined,
-                  "Cannot open TIFF file due to missing codec." );
+        const char* pszCompressionMethodName =
+            GetCompressionMethodName(m_nCompression);
+        if( pszCompressionMethodName )
+        {
+            ReportError( CE_Failure, CPLE_AppDefined,
+                         "Cannot open TIFF file due to missing codec %s.",
+                         pszCompressionMethodName);
+        }
+        else
+        {
+            ReportError( CE_Failure, CPLE_AppDefined,
+                         "Cannot open TIFF file due to missing codec of code %d.",
+                         m_nCompression);
+        }
         return CE_Failure;
     }
 
@@ -15349,18 +15376,15 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 
     if( m_nCompression != COMPRESSION_NONE )
     {
-        bool foundCompressionName = false;
-        for( const auto& entry: asCompressionNames )
+        const char* pszCompressionMethodName =
+            GetCompressionMethodName(m_nCompression);
+        if( pszCompressionMethodName )
         {
-            if( entry.nCode == m_nCompression )
-            {
-                foundCompressionName = true;
-                m_oGTiffMDMD.SetMetadataItem( "COMPRESSION", entry.pszText,
-                                              "IMAGE_STRUCTURE" );
-                break;
-            }
+            m_oGTiffMDMD.SetMetadataItem( "COMPRESSION",
+                                          pszCompressionMethodName,
+                                          "IMAGE_STRUCTURE" );
         }
-        if( !foundCompressionName )
+        else
         {
             CPLString oComp;
             oComp.Printf( "%d", m_nCompression);

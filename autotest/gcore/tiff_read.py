@@ -3522,3 +3522,27 @@ def test_tiff_read_overprecision_nodata_float32():
     assert struct.unpack('f', ds.GetRasterBand(1).ReadRaster())[0] == ds.GetRasterBand(1).GetNoDataValue()
     ds = None
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test reading a file with a unhandled codec of a known name
+
+
+def test_tiff_read_unhandled_codec_known_name():
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        assert gdal.Open('data/gtiff/unsupported_codec_jp2000.tif') is None
+    assert 'missing codec JP2000' in gdal.GetLastErrorMsg()
+
+
+###############################################################################
+# Test reading a file with a unhandled codec of a unknown name
+
+
+def test_tiff_read_unhandled_codec_unknown_name():
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        assert gdal.Open('data/gtiff/unsupported_codec_unknown.tif') is None
+    assert 'missing codec of code 44510' in gdal.GetLastErrorMsg()
