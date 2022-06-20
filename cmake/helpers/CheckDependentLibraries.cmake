@@ -266,11 +266,6 @@ gdal_check_package(Iconv "Character set recoding (used in GDAL portability libra
 if (Iconv_FOUND)
   set(CMAKE_REQUIRED_INCLUDES ${Iconv_INCLUDE_DIR})
   set(CMAKE_REQUIRED_LIBRARIES ${Iconv_LIBRARY})
-  if (MSVC)
-    set(CMAKE_REQUIRED_FLAGS "/WX")
-  else ()
-    set(CMAKE_REQUIRED_FLAGS "-Werror")
-  endif ()
 
   set(ICONV_CONST_TEST_CODE
       "#include <stdlib.h>
