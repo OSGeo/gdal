@@ -397,7 +397,7 @@ VSIStdinFilesystemHandler::~VSIStdinFilesystemHandler()
 {
     if( gStdinFile != stdin )
         fclose(gStdinFile);
-    gStdinFile = nullptr;
+    gStdinFile = stdin;
     CPLFree(gpabyBuffer);
     gpabyBuffer = nullptr;
     gnBufferLimit = 0;
