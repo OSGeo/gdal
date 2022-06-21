@@ -12,9 +12,8 @@ File Geodatabases (.gdb directories) created by ArcGIS 10 and above. The
 dataset name must be the directory/folder name, and it must end with the
 .gdb extension.
 
-Note : the :ref:`OpenFileGDB
-driver <vector.openfilegdb>` driver exists as an alternative
-built-in i.e. not depending on a third-party library) read-only driver.
+Note : the :ref:`OpenFileGDB driver <vector.openfilegdb>` driver exists as an
+alternative built-in (i.e. not depending on a third-party library) driver.
 
 Driver capabilities
 -------------------
@@ -183,10 +182,13 @@ Layer Creation Options
 -  **CREATE_SHAPE_AREA_AND_LENGTH_FIELDS**\ =YES/NO. (GDAL >= 3.6.0)
    Defaults to NO (through CreateLayer() API). When this option is set,
    a Shape_Area and Shape_Length special fields will be created for polygonal
-   layers (Shape_Length only for linear layers). When using ogr2ogr with a
-   source layer that has Shape_Area/Shape_Length special fields, and this option
-   is not explicitly set, it will be automatically set, so that the resulting
-   FileGeodatabase has those fields properly tagged.
+   layers (Shape_Length only for linear layers). These fields will automatically
+   be populated with the feature's area or length whenever a new feature is
+   added to the dataset or an existing feature is amended.
+   When using ogr2ogr with a source layer that has Shape_Area/Shape_Length
+   special fields, and this option is not explicitly specified, it will be
+   automatically set, so that the resulting FileGeodatabase has those fields
+   properly tagged.
 
 Configuration options
 ---------------------

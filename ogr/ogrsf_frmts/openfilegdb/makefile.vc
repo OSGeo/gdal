@@ -1,5 +1,9 @@
 
-OBJ	=	ogropenfilegdbdriver.obj ogropenfilegdbdatasource.obj ogropenfilegdblayer.obj filegdbtable.obj filegdbindex.obj
+OBJ	=	ogropenfilegdbdriver.obj \
+		ogropenfilegdbdatasource.obj ogropenfilegdbdatasource_write.obj \
+		ogropenfilegdblayer.obj ogropenfilegdblayer_write.obj \
+		filegdbtable.obj filegdbtable_write.obj filegdbindex.obj filegdbindex_write.obj \
+		filegdbtable_write_fields.obj filegdbtable_freelist.obj
 
 GDAL_ROOT	=	..\..\..
 

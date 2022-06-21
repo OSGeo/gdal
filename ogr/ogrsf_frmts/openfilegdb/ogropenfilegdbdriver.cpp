@@ -164,9 +164,6 @@ static int OGROpenFileGDBDriverIdentify( GDALOpenInfo* poOpenInfo )
 static GDALDataset* OGROpenFileGDBDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    if( poOpenInfo->eAccess == GA_Update )
-        return nullptr;
-
     const char* pszFilename = poOpenInfo->pszFilename;
 #ifdef FOR_FUSIL
     CPLString osOrigFilename(pszFilename);
@@ -222,6 +219,29 @@ static GDALDataset* OGROpenFileGDBDriverOpen( GDALOpenInfo* poOpenInfo )
     return nullptr;
 }
 
+/************************************************************************/
+/*                              Create()                                */
+/************************************************************************/
+
+static GDALDataset* OGROpenFileGDBDriverCreate( const char * pszName,
+                                                int nXSize, int nYSize, int nBands,
+                                                GDALDataType eType,
+                                                char ** /* papszOptions*/ )
+
+{
+    if( !(nXSize == 0 && nYSize == 0 && nBands == 0 && eType == GDT_Unknown) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Only vector datasets supported");
+        return nullptr;
+    }
+
+    auto poDS = cpl::make_unique<OGROpenFileGDBDataSource>();
+    if( !poDS->Create(pszName) )
+        return nullptr;
+    return poDS.release();
+}
+
 /***********************************************************************/
 /*                       RegisterOGROpenFileGDB()                      */
 /***********************************************************************/
@@ -243,8 +263,19 @@ void RegisterOGROpenFileGDB()
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gdb" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/openfilegdb.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
+                               "Integer Real String Date DateTime Binary" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATASUBTYPES, "Int16 Float32" );
+    poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_FIELD_DOMAINS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RENAME_LAYERS, "YES" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_CREATION_FIELD_DOMAIN_TYPES, "Coded Range" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS, "Name SRS" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList>"
 "  <Option name='LIST_ALL_TABLES' type='string-select' scope='vector' description='Whether all tables, including system and internal tables (such as GDB_* tables) should be listed' default='NO'>"
@@ -253,8 +284,41 @@ void RegisterOGROpenFileGDB()
 "  </Option>"
 "</OpenOptionList>");
 
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+"<LayerCreationOptionList>"
+"  <Option name='FEATURE_DATASET' type='string' description='FeatureDataset folder into which to put the new layer'/>"
+"  <Option name='LAYER_ALIAS' type='string' description='Alias of layer name'/>"
+"  <Option name='GEOMETRY_NAME' type='string' description='Name of geometry column' default='SHAPE'/>"
+"  <Option name='GEOMETRY_NULLABLE' type='boolean' description='Whether the values of the geometry column can be NULL' default='YES'/>"
+"  <Option name='FID' type='string' description='Name of OID column' default='OBJECTID'/>"
+"  <Option name='XYTOLERANCE' type='float' description='Snapping tolerance, used for advanced ArcGIS features like network and topology rules, on 2D coordinates, in the units of the CRS'/>"
+"  <Option name='ZTOLERANCE' type='float' description='Snapping tolerance, used for advanced ArcGIS features like network and topology rules, on Z coordinates, in the units of the CRS'/>"
+"  <Option name='MTOLERANCE' type='float' description='Snapping tolerance, used for advanced ArcGIS features like network and topology rules, on M coordinates'/>"
+"  <Option name='XORIGIN' type='float' description='X origin of the coordinate precision grid'/>"
+"  <Option name='YORIGIN' type='float' description='Y origin of the coordinate precision grid'/>"
+"  <Option name='ZORIGIN' type='float' description='Z origin of the coordinate precision grid'/>"
+"  <Option name='MORIGIN' type='float' description='M origin of the coordinate precision grid'/>"
+"  <Option name='XYSCALE' type='float' description='X,Y scale of the coordinate precision grid'/>"
+"  <Option name='ZSCALE' type='float' description='Z scale of the coordinate precision grid'/>"
+"  <Option name='MSCALE' type='float' description='M scale of the coordinate precision grid'/>"
+"  <Option name='COLUMN_TYPES' type='string' description='A list of strings of format field_name=fgdb_filed_type (separated by comma) to force the FileGDB column type of fields to be created'/>"
+"  <Option name='DOCUMENTATION' type='string' description='XML documentation'/>"
+"  <Option name='CONFIGURATION_KEYWORD' type='string-select' description='Customize how data is stored. By default text in UTF-8 and data up to 1TB' default='DEFAULTS'>"
+"    <Value>DEFAULTS</Value>"
+"    <Value>MAX_FILE_SIZE_4GB</Value>"
+"    <Value>MAX_FILE_SIZE_256TB</Value>"
+"    <Value>TEXT_UTF16</Value>"
+"  </Option>"
+"  <Option name='TIME_IN_UTC' type='boolean' description='Whether datetime fields should be considered to be in UTC' default='NO'/>"
+"  <Option name='CREATE_SHAPE_AREA_AND_LENGTH_FIELDS' type='boolean' description='Whether to create special Shape_Length and Shape_Area fields' default='NO'/>"
+// Setting to another value than the default one doesn't really work with the SDK
+//"  <Option name='AREA_FIELD_NAME' type='string' description='Name of the column that contains the geometry area' default='Shape_Area'/>"
+//"  <Option name='length_field_name' type='string' description='Name of the column that contains the geometry length' default='Shape_Length'/>"
+"</LayerCreationOptionList>");
+
     poDriver->pfnOpen = OGROpenFileGDBDriverOpen;
     poDriver->pfnIdentify = OGROpenFileGDBDriverIdentify;
+    poDriver->pfnCreate = OGROpenFileGDBDriverCreate;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }

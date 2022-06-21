@@ -62,7 +62,7 @@ ogrtest.openfilegdb_datalist = [["none", ogr.wkbNone, None],
 
 
 ogrtest.openfilegdb_datalist_m = [["pointm", ogr.wkbPointM, "POINT M (1 2 3)"],
-                                  ["pointzm", ogr.wkbPointM, "POINT ZM (1 2 3 4)"],
+                                  ["pointzm", ogr.wkbPointZM, "POINT ZM (1 2 3 4)"],
                                   ["multipointm", ogr.wkbMultiPointM, "MULTIPOINT M ((1 2 3),(4 5 6))"],
                                   ["multipointzm", ogr.wkbMultiPointZM, "MULTIPOINT ZM ((1 2 3 4),(5 6 7 8))"],
                                   ["linestringm", ogr.wkbLineStringM, "LINESTRING M (1 2 3,4 5 6)", "MULTILINESTRING M ((1 2 3,4 5 6))"],
@@ -118,7 +118,7 @@ def ogr_openfilegdb_make_test_data():
         shutil.rmtree("data/filegdb/testopenfilegdb.gdb")
     except OSError:
         pass
-    ds = ogrtest.fgdb_drv.CreateDataSource('data/filegdb/testopenfilegdb.gdb')
+    ds = ogr.GetDriverByName('FileGDB').CreateDataSource('data/filegdb/testopenfilegdb.gdb')
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput("WGS84")
@@ -151,7 +151,7 @@ def ogr_openfilegdb_make_test_data():
             if data[1] != ogr.wkbNone and data[2] is not None:
                 feat.SetGeometry(ogr.CreateGeometryFromWkt(data[2]))
             feat.SetField("id", i + 1)
-            feat.SetField("str", "foo_\xc3\xa9")
+            feat.SetField("str", "foo_é")
             feat.SetField("smallint", -13)
             feat.SetField("int", 123)
             feat.SetField("float", 1.5)
@@ -1517,16 +1517,12 @@ def test_ogr_fgdb_alias():
 ###############################################################################
 # Test reading field domains
 
-
-def test_ogr_openfilegdb_read_domains():
-
-    ds = gdal.OpenEx('data/filegdb/Domains.gdb', gdal.OF_VECTOR)
+def _check_domains(ds):
 
     assert set(ds.GetFieldDomainNames()) == {'MedianType', 'RoadSurfaceType', 'SpeedLimit'}
 
     with gdaltest.error_handler():
         assert ds.GetFieldDomain('i_dont_exist') is None
-
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
@@ -1554,6 +1550,62 @@ def test_ogr_openfilegdb_read_domains():
     assert domain.GetFieldType() == fld_defn.GetType()
     assert domain.GetFieldSubType() == fld_defn.GetSubType()
     assert domain.GetEnumeration() == {'0': 'None', '1': 'Cement'}
+
+
+###############################################################################
+# Test reading field domains
+
+
+def test_ogr_openfilegdb_read_domains():
+
+    ds = gdal.OpenEx('data/filegdb/Domains.gdb', gdal.OF_VECTOR)
+    _check_domains(ds)
+
+
+###############################################################################
+# Test writing field domains
+
+
+def test_ogr_openfilegdb_write_domains_from_other_gdb():
+
+    out_dir = "tmp/test_ogr_fgdb_write_domains.gdb"
+    try:
+        shutil.rmtree(out_dir)
+    except OSError:
+        pass
+
+    ds = gdal.VectorTranslate(out_dir, 'data/filegdb/Domains.gdb',
+                              options = '-f OpenFileGDB')
+    _check_domains(ds)
+
+    assert ds.TestCapability(ogr.ODsCAddFieldDomain) == 1
+    assert ds.TestCapability(ogr.ODsCDeleteFieldDomain) == 1
+    assert ds.TestCapability(ogr.ODsCUpdateFieldDomain) == 1
+
+    with gdaltest.error_handler():
+        assert not ds.DeleteFieldDomain('not_existing')
+
+    domain = ogr.CreateCodedFieldDomain('unused_domain', 'desc', ogr.OFTInteger, ogr.OFSTNone, {1: "one", "2": None})
+    assert ds.AddFieldDomain(domain)
+    assert ds.DeleteFieldDomain('unused_domain')
+    domain = ds.GetFieldDomain('unused_domain')
+    assert domain is None
+
+    domain = ogr.CreateRangeFieldDomain('SpeedLimit', 'desc', ogr.OFTInteger, ogr.OFSTNone, 1, True, 2, True)
+    assert ds.UpdateFieldDomain(domain)
+
+    ds = None
+
+    ds = gdal.OpenEx(out_dir, allowed_drivers = ['OpenFileGDB'])
+    assert ds.GetFieldDomain('unused_domain') is None
+    domain = ds.GetFieldDomain('SpeedLimit')
+    assert domain.GetDescription() == 'desc'
+    ds = None
+
+    try:
+        shutil.rmtree(out_dir)
+    except OSError:
+        pass
 
 
 ###############################################################################

@@ -358,7 +358,7 @@ def test_ogr_fgdb_3():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/poly.gdb')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/poly.gdb --config DRIVER_WISHED FileGDB')
     # print ret
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
@@ -1017,7 +1017,7 @@ def ogr_fgdb_19_open_update(openfilegdb_drv, fgdb_drv, filename):
             if val == 'TRUE' or val == 'YES' or val == 'ON':
                 bPerLayerCopyingForTransaction = True
 
-    ds = ogr.Open(filename, update=1)
+    ds = fgdb_drv.Open(filename, update=1)
 
     if openfilegdb_drv is not None:
         openfilegdb_drv.Deregister()
@@ -1048,7 +1048,7 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
         pass
 
     # Error case: try in read-only
-    ds = ogr.Open('tmp/test.gdb')
+    ds = fgdb_drv.Open('tmp/test.gdb')
     gdal.PushErrorHandler()
     ret = ds.StartTransaction(force=True)
     gdal.PopErrorHandler()
@@ -1086,7 +1086,7 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
     assert ret != 0
 
     # Error case: try StartTransaction() with another active connection
-    ds2 = ogr.Open('tmp/test.gdb', update=1)
+    ds2 = fgdb_drv.Open('tmp/test.gdb', update=1)
     gdal.PushErrorHandler()
     ret = ds2.StartTransaction(force=True)
     gdal.PopErrorHandler()
@@ -1568,7 +1568,7 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv):
 
     # We need the OpenFileGDB driver for CreateFeature() with user defined FID
     openfilegdb_drv.Register()
-    ds = ogr.Open('tmp/test.gdb', update=1)
+    ds = fgdb_drv.Open('tmp/test.gdb', update=1)
     openfilegdb_drv.Deregister()
     fgdb_drv.Deregister()
     # Force OpenFileGDB first
@@ -1592,7 +1592,7 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv):
     assert f.GetFID() == 2147483647
     ds = None
 
-    ds = ogr.Open('tmp/test.gdb', update=1)
+    ds = fgdb_drv.Open('tmp/test.gdb', update=1)
     lyr = ds.GetLayerByName('test_2147483647')
     # GetNextFeature() is excruciatingly slow on such huge FID with the SDK driver
     f = lyr.GetFeature(2147483647)
@@ -1637,7 +1637,7 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv):
     f.SetField('id', 4)
 
     # Cannot call CreateFeature() with a set FID when a dataset is opened more than once
-    ds2 = ogr.Open('tmp/test.gdb', update=1)
+    ds2 = fgdb_drv.Open('tmp/test.gdb', update=1)
     gdal.PushErrorHandler()
     ret = lyr.CreateFeature(f)
     gdal.PopErrorHandler()
@@ -1651,7 +1651,7 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv):
 
     #  Cannot open geodatabase at the moment since it is in 'FID hack mode'
     gdal.PushErrorHandler()
-    ds2 = ogr.Open('tmp/test.gdb', update=1)
+    ds2 = fgdb_drv.Open('tmp/test.gdb', update=1)
     gdal.PopErrorHandler()
     assert ds2 is None
     ds2 = None
@@ -1831,7 +1831,7 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv):
     # Check consistency after re-opening
     gdal.ErrorReset()
     for update in [0, 1]:
-        ds = ogr.Open('tmp/test.gdb', update=update)
+        ds = fgdb_drv.Open('tmp/test.gdb', update=update)
         lyr = ds.GetLayerByName('ogr_fgdb_20')
         assert lyr.GetFeatureCount() == 10
         lyr.ResetReading()
@@ -1878,7 +1878,7 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv):
                 assert f.GetFID() == fid
 
     # Insert new features
-    ds = ogr.Open('tmp/test.gdb', update=1)
+    ds = fgdb_drv.Open('tmp/test.gdb', update=1)
     lyr = ds.GetLayerByName('ogr_fgdb_20')
     for (fid, fgdb_fid) in [(10000000, 2050), (10000001, 2051), (8191, 2052), (16384, 2053)]:
         f = ogr.Feature(lyr.GetLayerDefn())
@@ -1894,7 +1894,7 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv):
     # Insert a new intermediate FIDs
     for (fid, fgdb_fid) in [(1000000, 10000002), (1000001, 10000002)]:
 
-        ds = ogr.Open('tmp/test.gdb', update=1)
+        ds = fgdb_drv.Open('tmp/test.gdb', update=1)
         lyr = ds.GetLayerByName('ogr_fgdb_20')
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetFID(fid)
@@ -1908,7 +1908,7 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv):
     # Check consistency after re-opening
     gdal.ErrorReset()
     for update in [0, 1]:
-        ds = ogr.Open('tmp/test.gdb', update=update)
+        ds = fgdb_drv.Open('tmp/test.gdb', update=update)
         lyr = ds.GetLayerByName('ogr_fgdb_20')
         assert lyr.GetFeatureCount() == 16
         lyr.ResetReading()
@@ -2513,7 +2513,7 @@ def test_ogr_filegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_explicit(fgdb_drv):
 
     lyr = ds.CreateLayer('area', srs=srs, geom_type=ogr.wkbPolygon, options=['CREATE_SHAPE_AREA_AND_LENGTH_FIELDS=YES'])
     f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,1 0,0 0))'))
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,1 0,0 0),(0.2 0.2,0.2 0.8,0.8 0.8,0.8 0.2,0.2 0.2))'))
     lyr.CreateFeature(f)
 
     ds = None
@@ -2535,8 +2535,8 @@ def test_ogr_filegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_explicit(fgdb_drv):
     assert lyr_defn.GetFieldIndex('Shape_Area') >= 0
     assert lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('Shape_Area')).GetDefault() == 'FILEGEODATABASE_SHAPE_AREA'
     assert lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('Shape_Length')).GetDefault() == 'FILEGEODATABASE_SHAPE_LENGTH'
-    assert f['Shape_Length'] == 4
-    assert f['Shape_Area'] == 1
+    assert f['Shape_Length'] == pytest.approx(6.4)
+    assert f['Shape_Area'] == pytest.approx(0.64)
 
     ds = None
 
