@@ -2242,6 +2242,9 @@ const char * CPL_STDCALL GDALVersionInfo( const char *pszRequest )
     {
         CPLString osBuildInfo;
 
+#define STRINGIFY_HELPER(x) #x
+#define STRINGIFY(x) STRINGIFY_HELPER(x)
+
 #ifdef ESRI_BUILD
         osBuildInfo += "ESRI_BUILD=YES\n";
 #endif
@@ -2252,15 +2255,36 @@ const char * CPL_STDCALL GDALVersionInfo( const char *pszRequest )
 #ifdef HAVE_GEOS
         osBuildInfo += "GEOS_ENABLED=YES\n";
 #ifdef GEOS_CAPI_VERSION
-        osBuildInfo += CPLString("GEOS_VERSION=") + GEOS_CAPI_VERSION + "\n";
+        osBuildInfo += "GEOS_VERSION=" GEOS_CAPI_VERSION "\n";
 #endif
 #endif
-        osBuildInfo += CPLSPrintf("PROJ_BUILD_VERSION=%d.%d.%d\n",
-                                  PROJ_VERSION_MAJOR,
-                                  PROJ_VERSION_MINOR,
-                                  PROJ_VERSION_PATCH);
-        osBuildInfo += CPLSPrintf("PROJ_RUNTIME_VERSION=%s\n",
-                                  proj_info().version);
+        osBuildInfo += "PROJ_BUILD_VERSION="
+                       STRINGIFY(PROJ_VERSION_MAJOR) "."
+                       STRINGIFY(PROJ_VERSION_MINOR) "."
+                       STRINGIFY(PROJ_VERSION_PATCH) "\n";
+        osBuildInfo += "PROJ_RUNTIME_VERSION=";
+        osBuildInfo += proj_info().version;
+        osBuildInfo += '\n';
+
+#ifdef __VERSION__
+#  ifdef __clang_version__
+        osBuildInfo += "COMPILER=" __clang_version__ "\n";
+#  elif defined(__GNUC__ )
+        osBuildInfo += "COMPILER=GCC " __VERSION__ "\n";
+#  elif defined(__INTEL_COMPILER)
+        osBuildInfo += "COMPILER=" __VERSION__ "\n";
+#  else
+        // STRINGIFY() as we're not sure if its a int or a string
+        osBuildInfo += "COMPILER=unknown compiler " STRINGIFY(__VERSION__) "\n";
+#  endif
+#elif defined(_MSC_FULL_VER)
+        osBuildInfo += "COMPILER=MSVC " STRINGIFY(_MSC_FULL_VER) "\n";
+#elif defined(__INTEL_COMPILER)
+        osBuildInfo += "COMPILER=Intel compiler " STRINGIFY(__INTEL_COMPILER) "\n";
+#endif
+
+#undef STRINGIFY_HELPER
+#undef STRINGIFY
 
         CPLFree(CPLGetTLS(CTLS_VERSIONINFO));
         CPLSetTLS(CTLS_VERSIONINFO, CPLStrdup(osBuildInfo), TRUE );
@@ -2331,11 +2355,22 @@ const char * CPL_STDCALL GDALVersionInfo( const char *pszRequest )
     else if( EQUAL(pszRequest,"RELEASE_NAME") )
         osVersionInfo.Printf( GDAL_RELEASE_NAME );
     else // --version
+    {
         osVersionInfo.Printf( "GDAL %s, released %d/%02d/%02d",
                               GDAL_RELEASE_NAME,
                               GDAL_RELEASE_DATE / 10000,
                               (GDAL_RELEASE_DATE % 10000) / 100,
                               GDAL_RELEASE_DATE % 100 );
+#if defined(__GNUC__) && !defined(__OPTIMIZE__)
+        // Cf https://gcc.gnu.org/onlinedocs/cpp/Common-Predefined-Macros.html
+        // also true for CLang
+        osVersionInfo += " (debug build)";
+#elif defined(_ITERATOR_DEBUG_LEVEL) && _ITERATOR_DEBUG_LEVEL == 2
+        // https://docs.microsoft.com/en-us/cpp/standard-library/iterator-debug-level?view=msvc-170
+        // In release mode, the compiler generates an error if you specify _ITERATOR_DEBUG_LEVEL as 2.
+        osVersionInfo += " (debug build)";
+#endif
+    }
 
     CPLFree(CPLGetTLS(CTLS_VERSIONINFO)); // clear old value.
     CPLSetTLS(CTLS_VERSIONINFO, CPLStrdup(osVersionInfo), TRUE );
