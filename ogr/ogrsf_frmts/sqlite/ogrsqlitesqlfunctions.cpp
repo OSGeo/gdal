@@ -1192,8 +1192,12 @@ void* OGRSQLiteRegisterSQLFunctions(sqlite3* hDB)
 #ifdef MINIMAL_SPATIAL_FUNCTIONS
     if( !bSpatialiteAvailable && bAllowOGRSQLiteSpatialFunctions )
     {
-        CPLDebug("SQLITE",
+        static const auto DebugOnce = []() {
+            CPLDebug("SQLITE",
                  "Spatialite not available. Implementing a few functions");
+            return true;
+        }();
+        CPL_IGNORE_RET_VAL(DebugOnce);
 
         REGISTER_ST_op(1, AsText);
         REGISTER_ST_op(1, AsBinary);
@@ -1232,27 +1236,38 @@ void* OGRSQLiteRegisterSQLFunctions(sqlite3* hDB)
 
     if( bAllowOGRSQLiteSpatialFunctions )
     {
-        bool bRegisterMakeValid = false;
-        if( bSpatialiteAvailable )
-        {
-            // ST_MakeValid() only available (at time of writing) in
-            // Spatialite builds against (GPL) liblwgeom
-            // In the future, if they use GEOS 3.8 MakeValid, we could
-            // get rid of this.
-            rc = sqlite3_exec(hDB,
-                "SELECT ST_MakeValid(ST_GeomFromText('POINT (0 0)'))",
-                nullptr, nullptr, nullptr);
+        static bool gbRegisterMakeValid = [bSpatialiteAvailable, hDB]() {
+            bool bRegisterMakeValid = false;
+            if( bSpatialiteAvailable )
+            {
+                // ST_MakeValid() only available (at time of writing) in
+                // Spatialite builds against (GPL) liblwgeom
+                // In the future, if they use GEOS 3.8 MakeValid, we could
+                // get rid of this.
+                int l_rc = sqlite3_exec(hDB,
+                    "SELECT ST_MakeValid(ST_GeomFromText('POINT (0 0)'))",
+                    nullptr, nullptr, nullptr);
 
-            /* Reset error flag */
-            sqlite3_exec(hDB, "SELECT 1", nullptr, nullptr, nullptr);
+                /* Reset error flag */
+                sqlite3_exec(hDB, "SELECT 1", nullptr, nullptr, nullptr);
 
-            bRegisterMakeValid = (rc != SQLITE_OK);
-        }
-        else
-        {
-            bRegisterMakeValid = true;
-        }
-        if( bRegisterMakeValid )
+                bRegisterMakeValid = (l_rc != SQLITE_OK);
+            }
+            else
+            {
+                bRegisterMakeValid = true;
+            }
+            if( bRegisterMakeValid )
+            {
+                OGRPoint p(0, 0);
+                CPLErrorStateBackuper oBackuper;
+                CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
+                auto validGeom = std::unique_ptr<OGRGeometry>(p.MakeValid());
+                return validGeom != nullptr;
+            }
+            return false;
+        }();
+        if( gbRegisterMakeValid )
         {
             REGISTER_ST_op(1, MakeValid);
         }

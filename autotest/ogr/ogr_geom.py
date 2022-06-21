@@ -740,13 +740,13 @@ def test_ogr_geom_segmentize():
     geom = ogr.CreateGeometryFromWkt('LINESTRING(0 0,0 10)')
     geom.Segmentize(1.00001)
 
-    assert geom.ExportToWkt() == 'LINESTRING (0 0,0 1,0 2,0 3,0 4,0 5,0 6,0 7,0 8,0 9,0 10)'
+    assert ogrtest.check_feature_geometry(geom, 'LINESTRING (0 0,0 1,0 2,0 3,0 4,0 5,0 6,0 7,0 8,0 9,0 10)') == 0
 
     # 2D + Z
     geom = ogr.CreateGeometryFromWkt('LINESTRING(0 0 1,0 10 1)')
     geom.Segmentize(1.00001)
 
-    assert geom.ExportToWkt() == 'LINESTRING (0 0 1,0 1 1,0 2 1,0 3 1,0 4 1,0 5 1,0 6 1,0 7 1,0 8 1,0 9 1,0 10 1)'
+    assert ogrtest.check_feature_geometry(geom, 'LINESTRING (0 0 1,0 1 1,0 2 1,0 3 1,0 4 1,0 5 1,0 6 1,0 7 1,0 8 1,0 9 1,0 10 1)') == 0
 
     # 2D + M
     geom = ogr.CreateGeometryFromWkt('LINESTRING M(0 0 1,0 10 2)')

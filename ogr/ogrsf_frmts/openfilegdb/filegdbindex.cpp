@@ -1184,7 +1184,6 @@ bool FileGDBIndexIterator::FindPages(int iLevel, int nPage)
             }
 
             case FGFT_FLOAT64:
-            case FGFT_DATETIME:
             {
                 const double dfVal =
                     GetFloat64(abyPage[iLevel] + nOffsetFirstValInPage, i);
@@ -1193,6 +1192,23 @@ bool FileGDBIndexIterator::FindPages(int iLevel, int nPage)
                 dfLastMax = dfVal;
 #endif
                 nComp = COMPARE(sValue.Real, dfVal);
+                break;
+            }
+
+            case FGFT_DATETIME:
+            {
+                const double dfVal =
+                    GetFloat64(abyPage[iLevel] + nOffsetFirstValInPage, i);
+#ifdef DEBUG_INDEX_CONSISTENCY
+                returnErrorIf(i > 0 && dfVal < dfLastMax);
+                dfLastMax = dfVal;
+#endif
+                if( sValue.Real + 1e-10 < dfVal )
+                    nComp = -1;
+                else if( sValue.Real - 1e-10 > dfVal )
+                    nComp = 1;
+                else
+                    nComp = 0;
                 break;
             }
 
@@ -1526,12 +1542,25 @@ int FileGDBIndexIterator::GetNextRow()
                 }
 
                 case FGFT_FLOAT64:
-                case FGFT_DATETIME:
                 {
                     const double dfVal =
                         GetFloat64(abyPageFeature + nOffsetFirstValInPage,
                                    iCurFeatureInPage);
                     nComp = COMPARE(sValue.Real, dfVal);
+                    break;
+                }
+
+                case FGFT_DATETIME:
+                {
+                    const double dfVal =
+                        GetFloat64(abyPageFeature + nOffsetFirstValInPage,
+                                   iCurFeatureInPage);
+                    if( sValue.Real + 1e-10 < dfVal )
+                        nComp = -1;
+                    else if( sValue.Real - 1e-10 > dfVal )
+                        nComp = 1;
+                    else
+                        nComp = 0;
                     break;
                 }
 

@@ -192,12 +192,43 @@ endif ()
 
 # message(STATUS "GDAL_C_WARNING_FLAGS: ${GDAL_C_WARNING_FLAGS}") message(STATUS "GDAL_CXX_WARNING_FLAGS: ${GDAL_CXX_WARNING_FLAGS}")
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
+if (CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   check_cxx_compiler_flag(-fno-finite-math-only HAVE_FLAG_NO_FINITE_MATH_ONLY)
   if (HAVE_FLAG_NO_FINITE_MATH_ONLY)
     # Intel CXX compiler based on clang defaults to -ffinite-math-only, which breaks std::isinf(), std::isnan(), etc.
-    set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -fno-finite-math-only)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-finite-math-only")
   endif ()
+
+  set(TEST_LINK_STDCPP_SOURCE_CODE
+      "#include <string>
+    int main(){
+      std::string s;
+      s += \"x\";
+      return 0;
+    }")
+  check_cxx_source_compiles("${TEST_LINK_STDCPP_SOURCE_CODE}" _TEST_LINK_STDCPP)
+  if( NOT _TEST_LINK_STDCPP )
+      message(WARNING "Cannot link code using standard C++ library. Automatically adding -lstdc++ to CMAKE_EXE_LINKER_FLAGS")
+      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lstdc++")
+
+      check_cxx_source_compiles("${TEST_LINK_STDCPP_SOURCE_CODE}" _TEST_LINK_STDCPP_AGAIN)
+      if( NOT _TEST_LINK_STDCPP_AGAIN )
+          message(FATAL_ERROR "Cannot link C++ program")
+      endif()
+  endif()
+
+  check_c_compiler_flag(-wd188 HAVE_WD188) # enumerated type mixed with another type
+  if( HAVE_WD188 )
+    set(GDAL_C_WARNING_FLAGS ${GDAL_C_WARNING_FLAGS} -wd188)
+  endif()
+  check_c_compiler_flag(-wd2259 HAVE_WD2259) # non-pointer conversion from ... may lose significant bits
+  if( HAVE_WD2259 )
+    set(GDAL_C_WARNING_FLAGS ${GDAL_C_WARNING_FLAGS} -wd2259)
+  endif()
+  check_c_compiler_flag(-wd2312 HAVE_WD2312) # pointer cast involving 64-bit pointed-to type
+  if( HAVE_WD2259 )
+    set(GDAL_C_WARNING_FLAGS ${GDAL_C_WARNING_FLAGS} -wd2312)
+  endif()
 endif ()
 
 # ######################################################################################################################

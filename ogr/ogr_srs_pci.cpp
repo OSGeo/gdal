@@ -1243,7 +1243,7 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
                     if( dfScale >= 0.999 && dfScale <= 1.001 )
                         dfScale = (dfScale-1.0) * 1000000.0;
 
-                    if( !CPLIsEqual(adfTOWGS84[6], dfScale) )
+                    if( fabs(adfTOWGS84[6] - dfScale) > 1e-11 * fabs(adfTOWGS84[6]) )
                         bTOWGS84Match = false;
                 }
 
