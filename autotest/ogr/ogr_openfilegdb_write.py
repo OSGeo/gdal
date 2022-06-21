@@ -2203,6 +2203,11 @@ def test_ogr_openfilegdb_write_emulated_transactions():
         assert ds.RollbackTransaction() == ogr.OGRERR_NONE
         assert lyr.GetFeatureCount() == 1
 
+        # Test that StartTransaction() / RollbackTransaction() doesn't destroy
+        # unmodified layers! (https://github.com/OSGeo/gdal/issues/5952)
+        assert ds.StartTransaction(True) == ogr.OGRERR_NONE
+        assert ds.RollbackTransaction() == ogr.OGRERR_NONE
+
         ds = None
 
         ds = ogr.Open(dirname, update=1)

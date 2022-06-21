@@ -2452,6 +2452,9 @@ bool OGROpenFileGDBLayer::CommitEmulatedTransaction()
 
 bool OGROpenFileGDBLayer::RollbackEmulatedTransaction()
 {
+    if( !m_bHasCreatedBackupForTransaction )
+        return true;
+
     SyncToDisk();
 
     // Restore feature definition
