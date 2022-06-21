@@ -143,7 +143,7 @@ def test_mbtiles_3():
             pytest.skip()
         pytest.fail('did not get expected LocationInfo on overview')
 
-    
+
 ###############################################################################
 #
 
@@ -160,7 +160,7 @@ def test_mbtiles_start_webserver():
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
-    
+
 ###############################################################################
 #
 
@@ -248,7 +248,7 @@ def test_mbtiles_stop_webserver():
     if gdaltest.webserver_port != 0:
         webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
-    
+
 ###############################################################################
 # Basic test without any option
 
@@ -273,8 +273,7 @@ def test_mbtiles_4():
 
     gt = ds.GetGeoTransform()
     expected_gt = (-20037508.342789244, 78271.516964020484, 0.0, 19971868.880408563, 0.0, -78271.516964020484)
-    for i in range(6):
-        assert gt[i] == pytest.approx(expected_gt[i], abs=1e-15), 'bad gt'
+    assert gt == pytest.approx(expected_gt, rel=1e-15), 'bad gt'
 
     ds = None
 
