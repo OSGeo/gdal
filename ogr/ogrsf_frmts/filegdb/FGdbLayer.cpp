@@ -3083,9 +3083,9 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
             }
             fieldTemplate.SetSubType(eSubType);
             /* On creation (GDBFieldTypeToWidthPrecision) if string width is 0, we pick up */
-            /* 65535 by default to mean unlimited string length, but we don't want */
+            /* 65536 by default to mean unlimited string length, but we don't want */
             /* to advertise such a big number */
-            if( ogrType == OFTString && nLength < 65535 )
+            if( ogrType == OFTString && nLength < 65536 )
                 fieldTemplate.SetWidth(nLength);
             //fieldTemplate.SetPrecision(nPrecision);
             fieldTemplate.SetNullable(bNullable);
