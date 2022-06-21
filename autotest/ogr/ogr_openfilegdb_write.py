@@ -34,6 +34,7 @@ import struct
 import sys
 
 import gdaltest
+import ogrtest
 import pytest
 
 
@@ -346,7 +347,7 @@ def test_ogr_openfilegdb_write_all_geoms(geom_type, read_geom_type, wkt, expecte
                 expected_geom = ogr.CreateGeometryFromWkt(expected_wkt)
             else:
                 expected_geom = ogr.ForceTo(ref_geom, read_geom_type)
-            assert got_geom.ExportToIsoWkt() == expected_geom.ExportToIsoWkt()
+            assert ogrtest.check_feature_geometry(got_geom, expected_geom) == 0
 
         # Test presence of a spatial index
         if ref_geom is not None and not ref_geom.IsEmpty() and \
