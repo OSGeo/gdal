@@ -427,6 +427,8 @@ bool CPLJSONDocument::LoadUrl(const std::string & /*osUrl*/, const char* const* 
 
     return bResult;
 #else
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "LoadUrl() not supported in a build without Curl");
     return false;
 #endif
 }
