@@ -68,8 +68,8 @@ init_list = [
     ('contig_tiled.tif', 2, 15234),
     ('contig_strip.tif', 2, 15234),
     ('empty1bit.tif', 1, 0),
-    ('gtiff/int64.tif', 1, 65535),
-    ('gtiff/uint64.tif', 1, 1),
+    ('gtiff/int64_full_range.tif', 1, 65535),
+    ('gtiff/uint64_full_range.tif', 1, 1),
 ]
 
 
