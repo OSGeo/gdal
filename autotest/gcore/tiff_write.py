@@ -8317,7 +8317,7 @@ def test_tiff_write_predictor_2_float64():
 
 def test_tiff_write_uint64():
 
-    ut = gdaltest.GDALTest('GTiff', 'gtiff/uint64.tif', 1, 1)
+    ut = gdaltest.GDALTest('GTiff', 'gtiff/uint64_full_range.tif', 1, 1)
     return ut.testCreateCopy()
 
 
@@ -8351,7 +8351,7 @@ def test_tiff_write_uint64_nodata():
 
 def test_tiff_write_int64():
 
-    ut = gdaltest.GDALTest('GTiff', 'gtiff/int64.tif', 1, 65535)
+    ut = gdaltest.GDALTest('GTiff', 'gtiff/int64_full_range.tif', 1, 65535)
     return ut.testCreateCopy()
 
 
