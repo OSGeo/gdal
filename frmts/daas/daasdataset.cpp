@@ -569,6 +569,11 @@ bool GDALDAASDataset::GetAuthorization()
     CPLHTTPResult* psResult = DAAS_CPLHTTPFetch( m_osAuthURL, papszOptions);
     CSLDestroy(papszOptions);
 
+    if( psResult == nullptr )
+    {
+        return false;
+    }
+
     if( psResult->pszErrBuf != nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
