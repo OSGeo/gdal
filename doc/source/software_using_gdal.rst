@@ -90,6 +90,7 @@ Software using GDAL
 - `QGIS <http://www.qgis.org>`_ A cross platform desktop GIS.
 - `QLandkarte GT <http://qlandkarte.org>`_  GT is the ultimate outdoor aficionado's tool for GPS maps in GeoTiff format as well as Garmin's img vector map format.
 - `R <http://www.r-project.org>`_ A free software environment for statistical computing and graphics, with bindings to GDAL via the rgdal package.
+- `Rasterio  <https://rasterio.readthedocs.io>`_  Python library and command line utilities to read and write GDAL rasters.
 - `Rasterix  <https://github.com/mogasw/rasterix/>`_  A cross platform open source utility to process raster data based on Qt and GDAL.
 - `SAGA GIS  <http://www.saga-gis.org/en/index.html>`_ A free geographic information system (GIS), with a special 'Application Programming Interface' (API) for geographic data processing.
 - `ScanMagic  <http://www.scanex.ru>`_ Win32 application for visualization, analysis and processing of remote sensing data.
