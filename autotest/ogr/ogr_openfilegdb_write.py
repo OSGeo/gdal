@@ -111,7 +111,13 @@ def test_ogr_openfilegdb_write_field_types(use_synctodisk):
 
         fld_defn = ogr.FieldDefn('str_not_nullable', ogr.OFTString)
         fld_defn.SetNullable(False)
+        with gdaltest.config_option('OPENFILEGDB_DEFAULT_STRING_WIDTH', '12345'):
+            assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+        assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldCount() - 1).GetWidth() == 12345
+
+        fld_defn = ogr.FieldDefn('str_default_width', ogr.OFTString)
         assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+        assert lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldCount() - 1).GetWidth() == 0
 
         fld_defn = ogr.FieldDefn('int32', ogr.OFTInteger)
         fld_defn.SetDefault('-12345')
@@ -188,6 +194,10 @@ def test_ogr_openfilegdb_write_field_types(use_synctodisk):
 
         fld_defn = lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('str_not_nullable'))
         assert fld_defn.IsNullable() == False
+        assert fld_defn.GetWidth() == 12345
+
+        fld_defn = lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('str_default_width'))
+        assert fld_defn.GetWidth() == 0
 
         fld_defn = lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('int16'))
         assert fld_defn.GetSubType() == ogr.OFSTInt16
@@ -233,6 +243,13 @@ def test_ogr_openfilegdb_write_field_types(use_synctodisk):
 
 
         ds = None
+
+        with gdaltest.config_option('OPENFILEGDB_REPORT_GENUINE_FIELD_WIDTH', 'YES'):
+            ds = ogr.Open(dirname)
+            lyr = ds.GetLayer(0)
+            fld_defn = lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('str_default_width'))
+            assert fld_defn.GetWidth() == 65536
+            ds = None
 
     finally:
         gdal.RmdirRecursive(dirname)
@@ -2202,6 +2219,11 @@ def test_ogr_openfilegdb_write_emulated_transactions():
         assert lyr.GetFeatureCount() == 2
         assert ds.RollbackTransaction() == ogr.OGRERR_NONE
         assert lyr.GetFeatureCount() == 1
+
+        # Test that StartTransaction() / RollbackTransaction() doesn't destroy
+        # unmodified layers! (https://github.com/OSGeo/gdal/issues/5952)
+        assert ds.StartTransaction(True) == ogr.OGRERR_NONE
+        assert ds.RollbackTransaction() == ogr.OGRERR_NONE
 
         ds = None
 

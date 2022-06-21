@@ -1082,9 +1082,11 @@ OGRErr OGROpenFileGDBLayer::CreateField(OGRFieldDefn* poField, int bApproxOK)
         nWidth = poField->GetWidth();
         if( nWidth == 0 )
         {
-            // Can be useful to try to replicate FileGDB driver, but do
-            // not use its 65536 default value.
-            nWidth = atoi(CPLGetConfigOption("OPENFILEGDB_STRING_WIDTH", "0"));
+            // We can't use a 0 width value since that prevents ArcMap
+            // from editing (#5952)
+            nWidth = atoi(CPLGetConfigOption("OPENFILEGDB_DEFAULT_STRING_WIDTH", "65536"));
+            if( nWidth < 65536 )
+                poField->SetWidth(nWidth);
         }
     }
 
@@ -2452,6 +2454,9 @@ bool OGROpenFileGDBLayer::CommitEmulatedTransaction()
 
 bool OGROpenFileGDBLayer::RollbackEmulatedTransaction()
 {
+    if( !m_bHasCreatedBackupForTransaction )
+        return true;
+
     SyncToDisk();
 
     // Restore feature definition
