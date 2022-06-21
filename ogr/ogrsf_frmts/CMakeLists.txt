@@ -79,7 +79,7 @@ ogr_dependent_driver(mvt "MVT" "GDAL_USE_SQLITE3;OGR_ENABLE_DRIVER_OSM")
 
 # ODBC/POSTGRES/MYSQL
 ogr_dependent_driver(amigocloud AMIGOCLOUD "GDAL_USE_CURL;OGR_ENABLE_DRIVER_PGDUMP")
-ogr_dependent_driver(carto CARTO "OGR_ENABLE_DRIVER_PGDUMP")
+ogr_dependent_driver(carto CARTO "GDAL_USE_CURL;OGR_ENABLE_DRIVER_PGDUMP")
 ogr_dependent_driver(ili ILI "GDAL_USE_XERCESC")
 ogr_dependent_driver(mysql MySQL "GDAL_USE_MYSQL")
 ogr_dependent_driver(pg PostGIS "GDAL_USE_POSTGRESQL;OGR_ENABLE_DRIVER_PGDUMP")
