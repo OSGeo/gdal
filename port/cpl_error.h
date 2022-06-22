@@ -170,7 +170,7 @@ void CPL_DLL CPL_STDCALL CPLPopErrorHandler(void);
 #ifdef WITHOUT_CPLDEBUG
 #define CPLDebug(...)  /* Eat all CPLDebug calls. */
 #else
-void CPL_DLL CPL_STDCALL CPLDebug(const char *, CPL_FORMAT_STRING(const char *), ...)
+void CPL_DLL CPLDebug(const char *, CPL_FORMAT_STRING(const char *), ...)
     CPL_PRINT_FUNC_FORMAT(2, 3);
 #endif
 
