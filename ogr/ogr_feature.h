@@ -1066,10 +1066,13 @@ public:
                         bool        bMaxIsInclusive);
 
     OGRRangeFieldDomain* Clone() const override {
-        return new OGRRangeFieldDomain(m_osName, m_osDescription,
+        auto poDomain = new OGRRangeFieldDomain(m_osName, m_osDescription,
                                        m_eFieldType, m_eFieldSubType,
                                        m_sMin, m_bMinIsInclusive,
                                        m_sMax, m_bMaxIsInclusive);
+        poDomain->SetMergePolicy(m_eMergePolicy);
+        poDomain->SetSplitPolicy(m_eSplitPolicy);
+        return poDomain;
     }
 
     /** Get the minimum value.
@@ -1135,9 +1138,12 @@ public:
                        const std::string& osBlob);
 
     OGRGlobFieldDomain* Clone() const override {
-        return new OGRGlobFieldDomain(m_osName, m_osDescription,
+        auto poDomain = new OGRGlobFieldDomain(m_osName, m_osDescription,
                                       m_eFieldType, m_eFieldSubType,
                                       m_osGlob);
+        poDomain->SetMergePolicy(m_eMergePolicy);
+        poDomain->SetSplitPolicy(m_eSplitPolicy);
+        return poDomain;
     }
 
     /** Get the glob expression.
