@@ -2098,4 +2098,57 @@ namespace tut
         stream.release(&stream);
     }
 
+    // Test field domain cloning
+    template<>
+    template<>
+    void object::test<25>()
+    {
+        // range domain
+        OGRField min;
+        min.Real = 5.5;
+        OGRField max;
+        max.Real = 6.5;
+        OGRRangeFieldDomain oRange("name", "description", OGRFieldType::OFTReal, OGRFieldSubType::OFSTBoolean, min, true, max, true);
+        oRange.SetMergePolicy(OGRFieldDomainMergePolicy::OFDMP_GEOMETRY_WEIGHTED);
+        oRange.SetSplitPolicy(OGRFieldDomainSplitPolicy::OFDSP_GEOMETRY_RATIO);
+        std::unique_ptr< OGRRangeFieldDomain > poClonedRange( oRange.Clone() );
+        ensure_equals(poClonedRange->GetName(), oRange.GetName());
+        ensure_equals(poClonedRange->GetDescription(), oRange.GetDescription());
+        bool originalInclusive = false;
+        bool cloneInclusive = false;
+        ensure_equals(poClonedRange->GetMin(originalInclusive).Real, oRange.GetMin(cloneInclusive).Real);
+        ensure_equals(originalInclusive, cloneInclusive);
+        ensure_equals(poClonedRange->GetMax(originalInclusive).Real, oRange.GetMax(cloneInclusive).Real);
+        ensure_equals(originalInclusive, cloneInclusive);
+        ensure_equals(poClonedRange->GetFieldType(), oRange.GetFieldType());
+        ensure_equals(poClonedRange->GetFieldSubType(), oRange.GetFieldSubType());
+        ensure_equals(poClonedRange->GetSplitPolicy(), oRange.GetSplitPolicy());
+        ensure_equals(poClonedRange->GetMergePolicy(), oRange.GetMergePolicy());
+
+        // glob domain
+        OGRGlobFieldDomain oGlob("name", "description", OGRFieldType::OFTString, OGRFieldSubType::OFSTBoolean, "*a*");
+        oGlob.SetMergePolicy(OGRFieldDomainMergePolicy::OFDMP_GEOMETRY_WEIGHTED);
+        oGlob.SetSplitPolicy(OGRFieldDomainSplitPolicy::OFDSP_GEOMETRY_RATIO);
+        std::unique_ptr< OGRGlobFieldDomain > poClonedGlob( oGlob.Clone() );
+        ensure_equals(poClonedGlob->GetName(), oGlob.GetName());
+        ensure_equals(poClonedGlob->GetDescription(), oGlob.GetDescription());
+        ensure_equals(poClonedGlob->GetGlob(), oGlob.GetGlob());
+        ensure_equals(poClonedGlob->GetFieldType(), oGlob.GetFieldType());
+        ensure_equals(poClonedGlob->GetFieldSubType(), oGlob.GetFieldSubType());
+        ensure_equals(poClonedGlob->GetSplitPolicy(), oGlob.GetSplitPolicy());
+        ensure_equals(poClonedGlob->GetMergePolicy(), oGlob.GetMergePolicy());
+
+        // coded value domain
+        OGRCodedFieldDomain oCoded("name", "description", OGRFieldType::OFTString, OGRFieldSubType::OFSTBoolean, {OGRCodedValue()});
+        oCoded.SetMergePolicy(OGRFieldDomainMergePolicy::OFDMP_GEOMETRY_WEIGHTED);
+        oCoded.SetSplitPolicy(OGRFieldDomainSplitPolicy::OFDSP_GEOMETRY_RATIO);
+        std::unique_ptr< OGRCodedFieldDomain > poClonedCoded( oCoded.Clone() );
+        ensure_equals(poClonedCoded->GetName(), oCoded.GetName());
+        ensure_equals(poClonedCoded->GetDescription(), oCoded.GetDescription());
+        ensure_equals(poClonedCoded->GetFieldType(), oCoded.GetFieldType());
+        ensure_equals(poClonedCoded->GetFieldSubType(), oCoded.GetFieldSubType());
+        ensure_equals(poClonedCoded->GetSplitPolicy(), oCoded.GetSplitPolicy());
+        ensure_equals(poClonedCoded->GetMergePolicy(), oCoded.GetMergePolicy());
+    }
+
 } // namespace tut
