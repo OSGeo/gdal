@@ -310,29 +310,23 @@ horAcc8(TIFF* tif, uint8_t* cp0, tmsize_t cc)
 			unsigned int cr = cp[0];
 			unsigned int cg = cp[1];
 			unsigned int cb = cp[2];
-			cc -= 3;
-			cp += 3;
-			while (cc>0) {
-				cp[0] = (unsigned char) ((cr += cp[0]) & 0xff);
-				cp[1] = (unsigned char) ((cg += cp[1]) & 0xff);
-				cp[2] = (unsigned char) ((cb += cp[2]) & 0xff);
-				cc -= 3;
-				cp += 3;
+			tmsize_t i = stride;
+			for ( ; i < cc; i += stride) {
+				cp[i+0] = (unsigned char) ((cr += cp[i+0]) & 0xff);
+				cp[i+1] = (unsigned char) ((cg += cp[i+1]) & 0xff);
+				cp[i+2] = (unsigned char) ((cb += cp[i+2]) & 0xff);
 			}
 		} else if (stride == 4)  {
 			unsigned int cr = cp[0];
 			unsigned int cg = cp[1];
 			unsigned int cb = cp[2];
 			unsigned int ca = cp[3];
-			cc -= 4;
-			cp += 4;
-			while (cc>0) {
-				cp[0] = (unsigned char) ((cr += cp[0]) & 0xff);
-				cp[1] = (unsigned char) ((cg += cp[1]) & 0xff);
-				cp[2] = (unsigned char) ((cb += cp[2]) & 0xff);
-				cp[3] = (unsigned char) ((ca += cp[3]) & 0xff);
-				cc -= 4;
-				cp += 4;
+			tmsize_t i = stride;
+			for ( ; i < cc; i += stride) {
+				cp[i+0] = (unsigned char) ((cr += cp[i+0]) & 0xff);
+				cp[i+1] = (unsigned char) ((cg += cp[i+1]) & 0xff);
+				cp[i+2] = (unsigned char) ((cb += cp[i+2]) & 0xff);
+				cp[i+3] = (unsigned char) ((ca += cp[i+3]) & 0xff);
 			}
 		} else  {
 			cc -= stride;
