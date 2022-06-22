@@ -4,8 +4,8 @@ on:
     push:
         paths-ignore:
             - 'doc/**'
-        branches:
-            - '!backport**'
+        branches-ignore:
+            - 'backport**'
     pull_request:
         paths-ignore:
             - 'doc/**'
