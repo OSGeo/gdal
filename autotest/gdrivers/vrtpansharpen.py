@@ -1497,7 +1497,8 @@ def test_vrtpansharpen_9():
     assert vrt_ds is not None
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
     expected_cs_list = ([7056, 11779, 9026],
-                        [7052, 11770, 9018] # s390x
+                        [7052, 11770, 9018], # s390x
+                        [7067, 11745, 8992], # Intel(R) oneAPI DPC++/C++ Compiler 2022.1.0
                         )
     assert cs in expected_cs_list
 

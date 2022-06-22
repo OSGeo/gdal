@@ -1777,7 +1777,10 @@ def test_warp_rms_2():
 
     ds = gdal.Open('data/utmsmall_rms.vrt')
     # 29818 on non-Intel archs
-    assert ds.GetRasterBand(1).Checksum() in (29818, 29819)
+    assert ds.GetRasterBand(1).Checksum() in (29818,
+                                              29819,
+                                              29828, # Intel(R) oneAPI DPC++/C++ Compiler 2022.1.0
+                                              )
 
 
 def test_warp_mode_ties():
