@@ -4,8 +4,8 @@ on:
     push:
         paths-ignore:
             - 'doc/**'
-        branches:
-            - '!backport**'
+        branches-ignore:
+            - 'backport**'
     # Disabled because of https://github.com/OSGeo/gdal/issues/5618
     #pull_request:
     #    paths-ignore:
