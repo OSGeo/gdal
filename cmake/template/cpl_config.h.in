@@ -3,7 +3,7 @@
 #ifndef CPL_CONFIG_H
 #define CPL_CONFIG_H
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 # ifndef CPL_DISABLE_STDCALL
 #  define CPL_STDCALL __stdcall
 # endif
