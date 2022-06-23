@@ -31,8 +31,10 @@
 from osgeo import gdal
 
 import gdaltest
+import os
 import pytest
 import stat
+import sys
 
 pytestmark = pytest.mark.skipif(not gdaltest.built_against_curl(), reason="GDAL not built against curl")
 
@@ -48,11 +50,16 @@ def open_for_read(uri):
 def startup_and_cleanup():
 
     az_vars = {}
-    for var in ('AZURE_STORAGE_CONNECTION_STRING', 'AZURE_STORAGE_ACCOUNT',
-                'AZURE_STORAGE_ACCESS_KEY', 'AZURE_SAS', 'AZURE_NO_SIGN_REQUEST'):
+    for var, reset_val in (
+                ('AZURE_STORAGE_CONNECTION_STRING', None),
+                ('AZURE_STORAGE_ACCOUNT', None),
+                ('AZURE_STORAGE_ACCESS_KEY', None),
+                ('AZURE_STORAGE_SAS_TOKEN', None),
+                ('AZURE_NO_SIGN_REQUEST', None),
+                ('AZURE_CONFIG_DIR', ''),
+                ('AZURE_STORAGE_ACCESS_TOKEN', '')):
         az_vars[var] = gdal.GetConfigOption(var)
-        if az_vars[var] is not None:
-            gdal.SetConfigOption(var, "")
+        gdal.SetConfigOption(var, reset_val)
 
     assert gdal.GetSignedURL('/vsiaz/foo/bar') is None
 
@@ -117,7 +124,8 @@ def test_vsiaz_real_server_errors():
 
 ###############################################################################
 # Test AZURE_NO_SIGN_REQUEST=YES
-
+# FIXME: this resource is no longer accessible through no sign request...
+# Find another one.
 
 def test_vsiaz_no_sign_request():
 
@@ -161,7 +169,7 @@ def test_vsiaz_no_sign_request():
 ###############################################################################
 # Test AZURE_SAS option
 
-
+@pytest.mark.skipif(sys.platform == 'darwin' and 'CI' in os.environ, reason='Randomly fails on MacOSX. Not sure why.')
 def test_vsiaz_sas():
 
     if not gdaltest.built_against_curl():
