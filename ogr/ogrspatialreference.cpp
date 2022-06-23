@@ -8425,6 +8425,8 @@ char * OGRSpatialReference::GetOGCURN() const
  *
  * If this is not a compound coordinate system then nothing is changed.
  *
+ * This method is the same as the C function OSRStripVertical().
+ *
  * @since OGR 1.8.0
  */
 
@@ -8473,6 +8475,23 @@ OGRErr OGRSpatialReference::StripVertical()
     }
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            OSRStripVertical()                             */
+/************************************************************************/
+/**
+ * \brief Convert a compound cs into a horizontal CS.
+ *
+ * This function is the same as the C++ method
+ * OGRSpatialReference::StripVertical().
+ */
+OGRErr OSRStripVertical( OGRSpatialReferenceH hSRS )
+
+{
+    VALIDATE_POINTER1( hSRS, "OSRStripVertical", OGRERR_FAILURE );
+
+    return OGRSpatialReference::FromHandle(hSRS)->StripVertical();
 }
 
 /************************************************************************/
