@@ -344,6 +344,15 @@ def test_ogr_geos_unioncascaded():
 ###############################################################################
 
 
+def test_ogr_geos_unioncascaded_empty_multipolygon():
+
+    g1 = ogr.Geometry(ogr.wkbMultiPolygon)
+    cascadedunion = g1.UnionCascaded()
+    assert cascadedunion.IsEmpty()
+
+###############################################################################
+
+
 def test_ogr_geos_convexhull():
 
     g1 = ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION(POINT(0 1), POINT(0 0), POINT(1 0), POINT(1 1))')
