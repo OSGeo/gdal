@@ -1583,34 +1583,40 @@ OGRFeature *OGRGenSQLResultsLayer::GetNextFeature()
 /* -------------------------------------------------------------------- */
     while( true )
     {
-        OGRFeature *poFeature = nullptr;
-
+        std::unique_ptr<OGRFeature> poSrcFeat;
         if( panFIDIndex != nullptr )
-            poFeature = GetFeature( nNextIndexFID++ );
-        else
         {
-            OGRFeature *poSrcFeat = poSrcLayer->GetNextFeature();
+/* -------------------------------------------------------------------- */
+/*      Are we running in sorted mode?  If so, run the fid through      */
+/*      the index.                                                      */
+/* -------------------------------------------------------------------- */
 
-            if( poSrcFeat == nullptr )
+            if( nNextIndexFID >= static_cast<GIntBig>(nIndexSize) )
                 return nullptr;
 
-            poFeature = TranslateFeature( poSrcFeat );
-            delete poSrcFeat;
+            poSrcFeat.reset(poSrcLayer->GetFeature( panFIDIndex[nNextIndexFID] ));
+            nNextIndexFID ++;
+        }
+        else
+        {
+            poSrcFeat.reset(poSrcLayer->GetNextFeature());
         }
 
+        if( poSrcFeat == nullptr )
+            return nullptr;
+
+        auto poFeature = std::unique_ptr<OGRFeature>(TranslateFeature( poSrcFeat.get() ));
         if( poFeature == nullptr )
             return nullptr;
 
         if( (m_poAttrQuery == nullptr
-            || m_poAttrQuery->Evaluate( poFeature )) &&
+            || m_poAttrQuery->Evaluate( poFeature.get() )) &&
             (!bEvaluateSpatialFilter ||
              FilterGeometry( poFeature->GetGeomFieldRef(m_iGeomFieldFilter) )) )
         {
             nIteratedFeatures ++;
-            return poFeature;
+            return poFeature.release();
         }
-
-        delete poFeature;
     }
 
     return nullptr;
@@ -1707,31 +1713,13 @@ OGRFeature *OGRGenSQLResultsLayer::GetFeature( GIntBig nFID )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Are we running in sorted mode?  If so, run the fid through      */
-/*      the index.                                                      */
-/* -------------------------------------------------------------------- */
-    if( panFIDIndex != nullptr )
-    {
-        if( nFID < 0 || nFID >= static_cast<GIntBig>(nIndexSize) )
-            return nullptr;
-        else
-            nFID = panFIDIndex[nFID];
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Handle request for random record.                               */
 /* -------------------------------------------------------------------- */
-    OGRFeature *poSrcFeature = poSrcLayer->GetFeature( nFID );
-
+    auto poSrcFeature = std::unique_ptr<OGRFeature>(poSrcLayer->GetFeature( nFID ));
     if( poSrcFeature == nullptr )
         return nullptr;
 
-    OGRFeature *poResult = TranslateFeature( poSrcFeature );
-    poResult->SetFID( nFID );
-
-    delete poSrcFeature;
-
-    return poResult;
+    return TranslateFeature( poSrcFeature.get() );
 }
 
 /************************************************************************/
