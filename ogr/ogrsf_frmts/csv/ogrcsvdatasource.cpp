@@ -754,14 +754,18 @@ bool OGRCSVDataSource::OpenTable( const char *pszFilename,
 
     // Read and parse a line.  Did we get multiple fields?
 
-    const char *pszLine = CPLReadLineL(fp);
-    if( pszLine == nullptr )
+    std::string osLine;
     {
-        VSIFCloseL(fp);
-        return false;
+        const char *pszLine = CPLReadLine2L(fp, OGR_CSV_MAX_LINE_SIZE, nullptr);
+        if( pszLine == nullptr )
+        {
+            VSIFCloseL(fp);
+            return false;
+        }
+        osLine = pszLine;
     }
-    char chDelimiter = CSVDetectSeperator(pszLine);
-    if( chDelimiter != '\t' && strchr(pszLine, '\t') != nullptr )
+    char chDelimiter = CSVDetectSeperator(osLine.c_str());
+    if( chDelimiter != '\t' && osLine.find('\t') != std::string::npos )
     {
         // Force the delimiter to be TAB for a .tsv file that has a tabulation
         // in its first line */
@@ -832,7 +836,7 @@ bool OGRCSVDataSource::OpenTable( const char *pszFilename,
 #endif
 
     // GNIS specific.
-    if( pszGeonamesGeomFieldPrefix != nullptr && strchr(pszLine, '|') != nullptr )
+    if( pszGeonamesGeomFieldPrefix != nullptr && osLine.find('|') != std::string::npos )
         chDelimiter = '|';
 
     char szDelimiter[2];
