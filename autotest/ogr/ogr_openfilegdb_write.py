@@ -2141,29 +2141,51 @@ def test_ogr_openfilegdb_write_emulated_transactions():
     try:
         ds = ogr.GetDriverByName('OpenFileGDB').CreateDataSource(dirname)
 
+        gdal.Mkdir(dirname + '/.ogrtransaction_backup', 0o755)
+        with gdaltest.error_handler():
+            assert ds.StartTransaction(True) == ogr.OGRERR_FAILURE
+        gdal.Rmdir(dirname + '/.ogrtransaction_backup')
+
+        assert ds.TestCapability(ogr.ODsCEmulatedTransactions)
         assert ds.StartTransaction(True) == ogr.OGRERR_NONE
+
+        assert gdal.VSIStatL(dirname + '/.ogrtransaction_backup') is not None
+
         assert ds.CommitTransaction() == ogr.OGRERR_NONE
+
+        assert gdal.VSIStatL(dirname + '/.ogrtransaction_backup') is None
 
         assert ds.StartTransaction(True) == ogr.OGRERR_NONE
         assert ds.RollbackTransaction() == ogr.OGRERR_NONE
+
+        assert gdal.VSIStatL(dirname + '/.ogrtransaction_backup') is None
 
         assert ds.StartTransaction(True) == ogr.OGRERR_NONE
         with gdaltest.error_handler():
             assert ds.StartTransaction(True) != ogr.OGRERR_NONE
         assert ds.RollbackTransaction() == ogr.OGRERR_NONE
 
+        assert gdal.VSIStatL(dirname + '/.ogrtransaction_backup') is None
+
         with gdaltest.error_handler():
             assert ds.CommitTransaction() != ogr.OGRERR_NONE
+
+        assert gdal.VSIStatL(dirname + '/.ogrtransaction_backup') is None
 
         with gdaltest.error_handler():
             assert ds.RollbackTransaction() != ogr.OGRERR_NONE
 
+        assert gdal.VSIStatL(dirname + '/.ogrtransaction_backup') is None
+
         assert ds.StartTransaction(True) == ogr.OGRERR_NONE
         lyr = ds.CreateLayer('foo', geom_type = ogr.wkbNone)
+        assert gdal.VSIStatL(dirname + '/.ogrtransaction_backup') is not None
         assert lyr is not None
         assert lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn())) == ogr.OGRERR_NONE
         assert lyr.GetFeatureCount() == 1
         assert ds.RollbackTransaction() == ogr.OGRERR_NONE
+
+        assert gdal.VSIStatL(dirname + '/.ogrtransaction_backup') is None
 
         # It is in a ghost state after rollback
         assert lyr.GetFeatureCount() == 0
@@ -2173,7 +2195,32 @@ def test_ogr_openfilegdb_write_emulated_transactions():
         # Implicit rollback
         ds = None
 
+        gdal.Mkdir(dirname + '/.ogrtransaction_backup', 0o755)
+        with gdaltest.error_handler():
+            # Cannot open in update mode with an existing backup directory
+            assert ogr.Open(dirname, update=1) is None
+
+            # Emit warning in read-only mode when opening with an existing backup directory
+            gdal.ErrorReset()
+            assert ogr.Open(dirname) is not None
+            assert 'A previous backup directory' in gdal.GetLastErrorMsg()
+        gdal.Rmdir(dirname + '/.ogrtransaction_backup')
+
+        # Transaction not supported in read-only mode
+        ds = ogr.Open(dirname)
+        assert ds.TestCapability(ogr.ODsCEmulatedTransactions) == 0
+        with gdaltest.error_handler():
+            assert ds.StartTransaction(True) == ogr.OGRERR_FAILURE
+
         ds = ogr.Open(dirname, update=1)
+        assert ds.StartTransaction(True) == ogr.OGRERR_NONE
+        gdal.Rmdir(dirname + '/.ogrtransaction_backup')
+        with gdaltest.error_handler():
+            assert ds.RollbackTransaction() == ogr.OGRERR_FAILURE
+            ds = None
+
+        ds = ogr.Open(dirname, update=1)
+        assert ds.TestCapability(ogr.ODsCEmulatedTransactions)
         assert ds.GetLayerCount() == 0
         assert gdal.VSIStatL(dirname + '/a00000009.gdbtable') is None
 

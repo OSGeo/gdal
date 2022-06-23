@@ -1649,6 +1649,10 @@ OGRErr OGROpenFileGDBDataSource::StartTransaction(int bForce)
                  "Transactions only supported in forced mode");
         return OGRERR_UNSUPPORTED_OPERATION;
     }
+
+    if( eAccess != GA_Update )
+        return OGRERR_FAILURE;
+
     if( m_bInTransaction )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -1658,7 +1662,19 @@ OGRErr OGROpenFileGDBDataSource::StartTransaction(int bForce)
 
     m_osTransactionBackupDirname = CPLFormFilename(m_osDirName.c_str(),
                                            ".ogrtransaction_backup", nullptr);
-    if( VSIMkdir(m_osTransactionBackupDirname.c_str(), 0755) != 0 )
+    VSIStatBufL sStat;
+    if( VSIStatL(m_osTransactionBackupDirname.c_str(), &sStat) == 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "A previous backup directory %s already exists, which means "
+                 "that a previous transaction was not cleanly committed or "
+                 "rolled back.\n"
+                 "Either manually restore the previous state from that "
+                 "directory or remove it, before creating a new transaction.",
+                 m_osTransactionBackupDirname.c_str());
+        return OGRERR_FAILURE;
+    }
+    else if( VSIMkdir(m_osTransactionBackupDirname.c_str(), 0755) != 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot create directory %s",
@@ -1746,6 +1762,14 @@ OGRErr OGROpenFileGDBDataSource::RollbackTransaction()
     // Restore system tables
     {
         char** papszFiles = VSIReadDir(m_osTransactionBackupDirname.c_str());
+        if( papszFiles == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Backup directory %s no longer found! Original database "
+                     "cannot be restored",
+                     m_osTransactionBackupDirname.c_str());
+            return OGRERR_FAILURE;
+        }
         for( char** papszIter = papszFiles; papszIter != nullptr && *papszIter != nullptr; ++papszIter )
         {
             const std::string osBasename = CPLGetBasename(*papszIter);
@@ -1789,7 +1813,24 @@ OGRErr OGROpenFileGDBDataSource::RollbackTransaction()
         CSLDestroy(papszFiles);
     }
 
-    VSIRmdirRecursive(m_osTransactionBackupDirname.c_str());
+    if( eErr == OGRERR_NONE )
+    {
+        if( VSIRmdirRecursive(m_osTransactionBackupDirname.c_str()) != 0 )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                 "Backup directory %s could not be destroyed. But original dataset "
+                 "should have been properly restored. You will need to manually "
+                 "remove the backup directory.",
+                 m_osTransactionBackupDirname.c_str());
+        }
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Backup directory %s could not be properly restored onto "
+                 "live database. Corruption is likely!",
+                 m_osTransactionBackupDirname.c_str());
+    }
 
     m_bInTransaction = false;
     m_bSystemTablesBackedup = false;
