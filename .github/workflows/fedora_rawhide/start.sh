@@ -26,6 +26,9 @@ export USER
 TRAVIS=yes
 export TRAVIS
 
+BUILD_NAME=fedora
+export BUILD_NAME
+
 cd "$WORK_DIR"
 
 if test -f "$WORK_DIR/ccache.tar.gz"; then
