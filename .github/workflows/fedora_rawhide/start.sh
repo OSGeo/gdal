@@ -18,7 +18,7 @@ dnf install -y clang automake make diffutils ccache \
               armadillo-devel qhull-devel \
               hdf-devel hdf5-devel netcdf-devel \
               mongo-cxx-driver-devel libpq-devel \
-              python3-pip python3-devel
+              python3-pip python3-devel python3-lxml
 
 USER=root
 export USER
@@ -74,7 +74,8 @@ projsync --system-directory --file ca_nrc_ntv1_can.tif
 (cd autotest/cpp && make quick_test)
 
 # install pip and use it to install test dependencies
-pip3 install -U -r autotest/requirements.txt
+#pip3 install -U -r autotest/requirements.txt
+pip3 install -U pytest pytest-sugar pytest-env
 
 (cd autotest && $PYTEST)
 
