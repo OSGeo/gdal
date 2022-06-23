@@ -2250,7 +2250,7 @@ GDALDatasetH GDALWarpDirect( const char *pszDest, GDALDatasetH hDstDS,
         bool bDstHasVertAxis = false;
         OGRSpatialReference oSRSSrc;
         OGRSpatialReference oSRSDst;
-        
+
         if( MustApplyVerticalShift( pahSrcDS[0], psOptions,
                                     oSRSSrc, oSRSDst,
                                     bSrcHasVertAxis,
@@ -2654,8 +2654,16 @@ GDALDatasetH GDALWarpDirect( const char *pszDest, GDALDatasetH hDstDS,
 
         if( !bVRT )
         {
-            psWO->pfnProgress = Progress::ProgressFunc;
-            psWO->pProgressArg = &oProgress;
+            if( psOptions->pfnProgress == GDALDummyProgress )
+            {
+                psWO->pfnProgress = GDALDummyProgress;
+                psWO->pProgressArg = nullptr;
+            }
+            else
+            {
+                psWO->pfnProgress = Progress::ProgressFunc;
+                psWO->pProgressArg = &oProgress;
+            }
         }
 
         if( psOptions->dfWarpMemoryLimit != 0.0 )
