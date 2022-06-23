@@ -2055,16 +2055,14 @@ int OGRProjCT::Transform( int nCount, double *x, double *y, double *z,
                           double *t, int *pabSuccess )
 
 {
-    std::vector<int> anErrorCodes(nCount+1);
-
     bool bOverallSuccess =
-        CPL_TO_BOOL(TransformWithErrorCodes( nCount, x, y, z, t, &anErrorCodes[0] ));
+        CPL_TO_BOOL(TransformWithErrorCodes( nCount, x, y, z, t, pabSuccess ));
 
     if( pabSuccess )
     {
         for( int i = 0; i < nCount; i++ )
         {
-            pabSuccess[i] = ( anErrorCodes[i] == 0 );
+            pabSuccess[i] = ( pabSuccess[i] == 0 );
         }
     }
 
