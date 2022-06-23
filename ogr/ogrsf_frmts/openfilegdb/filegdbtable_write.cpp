@@ -303,7 +303,7 @@ bool FileGDBTable::Sync(VSILFILE* fpTable, VSILFILE* fpTableX)
         bRet &= WriteUInt32(fpTableX, n1024BlocksTotal);
         bRet &= WriteUInt32(fpTableX, m_n1024BlocksPresent);
         uint32_t nTrailingZero32BitWords = 0;
-        for( int i = static_cast<int>(m_abyTablXBlockMap.size() / 4 - 1); i >= 0; -- i)
+        for( int i = static_cast<int>(m_abyTablXBlockMap.size() / 4) - 1; i >= 0; -- i)
         {
             if( m_abyTablXBlockMap[4 * i] != 0 ||
                 m_abyTablXBlockMap[4 * i + 1] != 0 ||
