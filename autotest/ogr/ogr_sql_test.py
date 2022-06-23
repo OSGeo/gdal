@@ -997,7 +997,7 @@ def test_ogr_sql_36():
             pytest.fail('field %s' % fieldname)
         ds.ReleaseResultSet(sql_lyr)
 
-    
+
 ###############################################################################
 # Test select count([distinct] column) with null values (#4354)
 
@@ -1229,7 +1229,7 @@ def test_ogr_sql_44():
             pytest.fail(sql)
         gdaltest.ds.ReleaseResultSet(sql_lyr)
 
-    
+
 ###############################################################################
 # Test 64 bit GetFeatureCount()
 
@@ -1359,14 +1359,20 @@ def test_ogr_sql_48():
             f.SetField(0, 1001 - i)
         lyr.CreateFeature(f)
     sql_lyr = ds.ExecuteSQL('SELECT * FROM test ORDER BY int_field')
-    i = 1
-    for f in sql_lyr:
-        if f['int_field'] != i:
-            f.DumpReadable()
-            pytest.fail()
-        i = i + 1
-    ds.ReleaseResultSet(sql_lyr)
-    assert i == 1001
+    try:
+        i = 1
+        for f in sql_lyr:
+            if f['int_field'] != i:
+                f.DumpReadable()
+                pytest.fail()
+            i = i + 1
+
+        assert i == 1001
+
+        for i in range(1000):
+            assert sql_lyr.GetFeature(i)['int_field'] == lyr.GetFeature(i)['int_field']
+    finally:
+        ds.ReleaseResultSet(sql_lyr)
 
 ###############################################################################
 # Test arithmetic expressions
