@@ -51,7 +51,7 @@ def check_no_file_leaks():
 
     diff = len(gdaltest.get_opened_files()) - num_files
 
-    if diff != 0 and gdaltest.is_travis_branch('ubuntu_1804'):
+    if diff != 0 and (gdaltest.is_travis_branch('ubuntu_1804') or gdaltest.is_travis_branch('ubuntu_1804_32bit')):
         print('Mysterious leak of file handle on ubuntu_1804')
         return
 
