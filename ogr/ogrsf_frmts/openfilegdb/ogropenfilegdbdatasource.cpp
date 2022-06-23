@@ -191,6 +191,34 @@ int OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo )
         CSLDestroy(papszDir);
     }
 
+    const std::string osTransactionBackupDirname = CPLFormFilename(
+        m_osDirName.c_str(), ".ogrtransaction_backup", nullptr);
+    VSIStatBufL sStat;
+    if( VSIStatL(osTransactionBackupDirname.c_str(), &sStat) == 0 )
+    {
+        if( poOpenInfo->eAccess == GA_Update )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "A previous backup directory %s already exists, which means "
+                     "that a previous transaction was not cleanly committed or "
+                     "rolled back.\n"
+                     "Either manually restore the previous state from that "
+                     "directory or remove it, before opening in update mode.",
+                     osTransactionBackupDirname.c_str());
+            return FALSE;
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "A previous backup directory %s already exists, which means "
+                     "that a previous transaction was not cleanly committed or "
+                     "rolled back.\n"
+                     "You may want to restore the previous state from that "
+                     "directory or remove it.",
+                     osTransactionBackupDirname.c_str());
+        }
+    }
+
     m_papszFiles = VSIReadDir(m_osDirName);
 
     /* Explore catalog table */
