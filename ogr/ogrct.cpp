@@ -643,6 +643,7 @@ class OGRProjCT : public OGRCoordinateTransformation
     };
 
     OGRSpatialReference *poSRSSource = nullptr;
+    OGRAxisOrientation m_eSourceFirstAxisOrient = OAO_Other;
     bool        bSourceLatLong = false;
     bool        bSourceWrap = false;
     double      dfSourceWrapLong = 0.0;
@@ -651,6 +652,7 @@ class OGRProjCT : public OGRCoordinateTransformation
     std::string m_osSrcSRS{}; // WKT, PROJ4 or AUTH:CODE
 
     OGRSpatialReference *poSRSTarget = nullptr;
+    OGRAxisOrientation m_eTargetFirstAxisOrient = OAO_Other;
     bool        bTargetLatLong = false;
     bool        bTargetWrap = false;
     double      dfTargetWrapLong = 0.0;
@@ -1159,6 +1161,7 @@ OGRProjCT::OGRProjCT()
 
 OGRProjCT::OGRProjCT(const OGRProjCT& other) :
     poSRSSource((other.poSRSSource != nullptr) ? (other.poSRSSource->Clone()) : (nullptr)),
+    m_eSourceFirstAxisOrient(other.m_eSourceFirstAxisOrient),
     bSourceLatLong(other.bSourceLatLong),
     bSourceWrap(other.bSourceWrap),
     dfSourceWrapLong(other.dfSourceWrapLong),
@@ -1166,6 +1169,7 @@ OGRProjCT::OGRProjCT(const OGRProjCT& other) :
     dfSourceCoordinateEpoch(other.dfSourceCoordinateEpoch),
     m_osSrcSRS(other.m_osSrcSRS),
     poSRSTarget((other.poSRSTarget != nullptr) ? (other.poSRSTarget->Clone()) : (nullptr)),
+    m_eTargetFirstAxisOrient(other.m_eTargetFirstAxisOrient),
     bTargetLatLong(other.bTargetLatLong),
     bTargetWrap(other.bTargetWrap),
     dfTargetWrapLong(other.dfTargetWrapLong),
@@ -1274,12 +1278,14 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
         bSourceLatLong = CPL_TO_BOOL(poSRSSource->IsGeographic());
         bSourceIsDynamicCRS = poSRSSource->IsDynamic();
         dfSourceCoordinateEpoch = poSRSSource->GetCoordinateEpoch();
+        poSRSSource->GetAxis(nullptr, 0, &m_eSourceFirstAxisOrient);
     }
     if( poSRSTarget )
     {
         bTargetLatLong = CPL_TO_BOOL(poSRSTarget->IsGeographic());
         bTargetIsDynamicCRS = poSRSTarget->IsDynamic();
         dfTargetCoordinateEpoch = poSRSTarget->GetCoordinateEpoch();
+        poSRSTarget->GetAxis(nullptr, 0, &m_eTargetFirstAxisOrient);
     }
 
     if( bSourceIsDynamicCRS && bTargetIsDynamicCRS &&
@@ -2141,10 +2147,7 @@ int OGRProjCT::TransformWithErrorCodes(
 /* -------------------------------------------------------------------- */
     if( bSourceLatLong && bSourceWrap )
     {
-        OGRAxisOrientation orientation;
-        assert( poSRSSource );
-        poSRSSource->GetAxis(nullptr, 0, &orientation);
-        if( orientation == OAO_East )
+        if( m_eSourceFirstAxisOrient == OAO_East )
         {
             for( int i = 0; i < nCount; i++ )
             {
@@ -2180,16 +2183,11 @@ int OGRProjCT::TransformWithErrorCodes(
     {
         constexpr double REVERSE_SPHERE_RADIUS = 1.0 / 6378137.0;
 
-        if( poSRSSource )
+        if( m_eSourceFirstAxisOrient != OAO_East )
         {
-            OGRAxisOrientation orientation;
-            poSRSSource->GetAxis(nullptr, 0, &orientation);
-            if( orientation != OAO_East )
+            for( int i = 0; i < nCount; i++ )
             {
-                for( int i = 0; i < nCount; i++ )
-                {
-                    std::swap(x[i], y[i]);
-                }
+                std::swap(x[i], y[i]);
             }
         }
 
@@ -2267,16 +2265,11 @@ int OGRProjCT::TransformWithErrorCodes(
             }
         }
 
-        if( poSRSTarget )
+        if( m_eTargetFirstAxisOrient != OAO_East )
         {
-            OGRAxisOrientation orientation;
-            poSRSTarget->GetAxis(nullptr, 0, &orientation);
-            if( orientation != OAO_East )
+            for( int i = 0; i < nCount; i++ )
             {
-                for( int i = 0; i < nCount; i++ )
-                {
-                    std::swap(x[i], y[i]);
-                }
+                std::swap(x[i], y[i]);
             }
         }
 
@@ -2592,10 +2585,7 @@ int OGRProjCT::TransformWithErrorCodes(
 /* -------------------------------------------------------------------- */
     if( bTargetLatLong && bTargetWrap )
     {
-        OGRAxisOrientation orientation;
-        assert( poSRSTarget );
-        poSRSTarget->GetAxis(nullptr, 0, &orientation);
-        if( orientation == OAO_East )
+        if( m_eTargetFirstAxisOrient == OAO_East )
         {
             for( int i = 0; i < nCount; i++ )
             {
@@ -2971,27 +2961,23 @@ int OGRProjCT::TransformBounds(
     {
         degree_input = fabs(poSRSSource->GetAngularUnits(nullptr) -
                             CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-8;
-        OGRAxisOrientation source_orientation;
         const auto& mapping = poSRSSource->GetDataAxisToSRSAxisMapping();
-        int axis_index = 0;
-        if( mapping[0] != 1 && mapping[0] != -1 )
-            axis_index = 1;
-        poSRSSource->GetAxis(nullptr, axis_index, &source_orientation);
-        if( source_orientation == OAO_East )
+        if( (mapping[0] == 1 && m_eSourceFirstAxisOrient == OAO_East) ||
+            (mapping[0] == 2 && m_eSourceFirstAxisOrient != OAO_East) )
+        {
             input_lon_lat_order = true;
+        }
     }
     if( bTargetLatLong )
     {
         degree_output = fabs(poSRSTarget->GetAngularUnits(nullptr) -
                             CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-8;
-        OGRAxisOrientation target_orientation;
         const auto& mapping = poSRSTarget->GetDataAxisToSRSAxisMapping();
-        int axis_index = 0;
-        if( mapping[0] != 1 && mapping[0] != -1 )
-            axis_index = 1;
-        poSRSTarget->GetAxis(nullptr, axis_index, &target_orientation);
-        if( target_orientation == OAO_East )
+        if( (mapping[0] == 1 && m_eTargetFirstAxisOrient == OAO_East) ||
+            (mapping[0] == 2 && m_eTargetFirstAxisOrient != OAO_East) )
+        {
             output_lon_lat_order = true;
+        }
     }
 
     if (degree_output && densify_pts < 2) {
@@ -3183,6 +3169,7 @@ OGRCoordinateTransformation* OGRProjCT::GetInverse() const
 
     if( poSRSTarget )
         poNewCT->poSRSSource = poSRSTarget->Clone();
+    poNewCT->m_eSourceFirstAxisOrient = m_eTargetFirstAxisOrient;
     poNewCT->bSourceLatLong = bTargetLatLong;
     poNewCT->bSourceWrap = bTargetWrap;
     poNewCT->dfSourceWrapLong = dfTargetWrapLong;
@@ -3192,6 +3179,7 @@ OGRCoordinateTransformation* OGRProjCT::GetInverse() const
 
     if( poSRSSource )
         poNewCT->poSRSTarget = poSRSSource->Clone();
+    poNewCT->m_eTargetFirstAxisOrient = m_eSourceFirstAxisOrient;
     poNewCT->bTargetLatLong = bSourceLatLong;
     poNewCT->bTargetWrap = bSourceWrap;
     poNewCT->dfTargetWrapLong = dfSourceWrapLong;
