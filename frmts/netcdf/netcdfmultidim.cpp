@@ -2886,6 +2886,12 @@ bool netCDFVariable::IRead(const GUInt64* arrayStartIdx,
         }
     }
 
+    if( IsTransposedRequest(count, bufferStride) )
+    {
+        return ReadForTransposedRequest(arrayStartIdx, count, arrayStep,
+                                        bufferStride, bufferDataType, pDstBuffer);
+    }
+
     return IReadWrite
                 (true,
                  arrayStartIdx, count, arrayStep, bufferStride,
