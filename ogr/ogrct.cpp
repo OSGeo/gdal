@@ -713,6 +713,7 @@ class OGRProjCT : public OGRCoordinateTransformation
     OGRCoordinateTransformationOptions m_options{};
 
     void ComputeThreshold();
+    void DetectWebMercatorToWGS84();
 
     OGRProjCT(const OGRProjCT& other);
     OGRProjCT& operator= (const OGRProjCT& ) = delete;
@@ -1230,6 +1231,113 @@ void OGRProjCT::ComputeThreshold()
 }
 
 /************************************************************************/
+/*                        DetectWebMercatorToWGS84()                    */
+/************************************************************************/
+
+void OGRProjCT::DetectWebMercatorToWGS84()
+{
+    // Detect webmercator to WGS84
+    if( m_options.d->osCoordOperation.empty() &&
+        poSRSSource && poSRSTarget &&
+        poSRSSource->IsProjected() && poSRSTarget->IsGeographic() &&
+        ((m_eTargetFirstAxisOrient == OAO_North &&
+          poSRSTarget->GetDataAxisToSRSAxisMapping() == std::vector<int>{2,1}) ||
+         (m_eTargetFirstAxisOrient == OAO_East &&
+          poSRSTarget->GetDataAxisToSRSAxisMapping() == std::vector<int>{1,2})) )
+    {
+        // Examine SRS ID before going to Proj4 string for faster execution
+        // This assumes that the SRS definition is "not lying", that is, it
+        // is equivalent to the resolution of the official EPSG code.
+        const char* pszSourceAuth = poSRSSource->GetAuthorityName(nullptr);
+        const char* pszSourceCode = poSRSSource->GetAuthorityCode(nullptr);
+        const char* pszTargetAuth = poSRSTarget->GetAuthorityName(nullptr);
+        const char* pszTargetCode = poSRSTarget->GetAuthorityCode(nullptr);
+        if( pszSourceAuth && pszSourceCode &&
+            pszTargetAuth && pszTargetCode &&
+            EQUAL(pszSourceAuth, "EPSG") &&
+            EQUAL(pszTargetAuth, "EPSG") )
+        {
+            bWebMercatorToWGS84LongLat = (EQUAL(pszSourceCode, "3857") ||
+                                          EQUAL(pszSourceCode, "3785") || // deprecated
+                                          EQUAL(pszSourceCode, "900913")) && // deprecated
+                                         EQUAL(pszTargetCode, "4326");
+        }
+        else
+        {
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            char *pszSrcProj4Defn = nullptr;
+            poSRSSource->exportToProj4( &pszSrcProj4Defn );
+
+            char *pszDstProj4Defn = nullptr;
+            poSRSTarget->exportToProj4( &pszDstProj4Defn );
+            CPLPopErrorHandler();
+
+            if( pszSrcProj4Defn && pszDstProj4Defn )
+            {
+                if( pszSrcProj4Defn[0] != '\0' &&
+                    pszSrcProj4Defn[strlen(pszSrcProj4Defn)-1] == ' ' )
+                    pszSrcProj4Defn[strlen(pszSrcProj4Defn)-1] = 0;
+                if( pszDstProj4Defn[0] != '\0' &&
+                    pszDstProj4Defn[strlen(pszDstProj4Defn)-1] == ' ' )
+                    pszDstProj4Defn[strlen(pszDstProj4Defn)-1] = 0;
+                char* pszNeedle = strstr(pszSrcProj4Defn, "  ");
+                if( pszNeedle )
+                    memmove(pszNeedle, pszNeedle + 1, strlen(pszNeedle + 1)+1);
+                pszNeedle = strstr(pszDstProj4Defn, "  ");
+                if( pszNeedle )
+                    memmove(pszNeedle, pszNeedle + 1, strlen(pszNeedle + 1)+1);
+
+                if( (strstr(pszDstProj4Defn, "+datum=WGS84") != nullptr ||
+                    strstr(pszDstProj4Defn,
+                            "+ellps=WGS84 +towgs84=0,0,0,0,0,0,0 ") != nullptr) &&
+                    strstr(pszSrcProj4Defn, "+nadgrids=@null ") != nullptr &&
+                    strstr(pszSrcProj4Defn, "+towgs84") == nullptr )
+                {
+                    char* pszDst = strstr(pszDstProj4Defn, "+towgs84=0,0,0,0,0,0,0 ");
+                    if( pszDst != nullptr)
+                    {
+                        char* pszSrc = pszDst + strlen("+towgs84=0,0,0,0,0,0,0 ");
+                        memmove(pszDst, pszSrc, strlen(pszSrc)+1);
+                    }
+                    else
+                    {
+                        memcpy(strstr(pszDstProj4Defn, "+datum=WGS84"), "+ellps", 6);
+                    }
+
+                    pszDst = strstr(pszSrcProj4Defn, "+nadgrids=@null ");
+                    char* pszSrc = pszDst + strlen("+nadgrids=@null ");
+                    memmove(pszDst, pszSrc, strlen(pszSrc)+1);
+
+                    pszDst = strstr(pszSrcProj4Defn, "+wktext ");
+                    if( pszDst )
+                    {
+                        pszSrc = pszDst + strlen("+wktext ");
+                        memmove(pszDst, pszSrc, strlen(pszSrc)+1);
+                    }
+                    bWebMercatorToWGS84LongLat =
+                        strcmp(pszDstProj4Defn,
+                            "+proj=longlat +ellps=WGS84 +no_defs") == 0 &&
+                        (strcmp(pszSrcProj4Defn,
+                            "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 "
+                            "+x_0=0.0 +y_0=0 +k=1.0 +units=m +no_defs") == 0 ||
+                        strcmp(pszSrcProj4Defn,
+                            "+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 "
+                            "+x_0=0 +y_0=0 +k=1 +units=m +no_defs") == 0);
+                }
+            }
+
+            CPLFree(pszSrcProj4Defn);
+            CPLFree(pszDstProj4Defn);
+        }
+
+        if( bWebMercatorToWGS84LongLat )
+        {
+            CPLDebug("OGRCT", "Using WebMercator to WGS84 optimization");
+        }
+    }
+}
+
+/************************************************************************/
 /*                             Initialize()                             */
 /************************************************************************/
 
@@ -1361,83 +1469,7 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
 
     ComputeThreshold();
 
-    // Detect webmercator to WGS84
-    OGRAxisOrientation orientAxis0, orientAxis1;
-    if( options.d->osCoordOperation.empty() &&
-        poSRSSource && poSRSTarget &&
-        poSRSSource->IsProjected() && poSRSTarget->IsGeographic() &&
-        poSRSTarget->GetAxis(nullptr, 0, &orientAxis0) != nullptr &&
-        poSRSTarget->GetAxis(nullptr, 1, &orientAxis1) != nullptr &&
-        ((orientAxis0 == OAO_North && orientAxis1 == OAO_East &&
-          poSRSTarget->GetDataAxisToSRSAxisMapping() == std::vector<int>{2,1}) ||
-         (orientAxis0 == OAO_East && orientAxis1 == OAO_North &&
-          poSRSTarget->GetDataAxisToSRSAxisMapping() == std::vector<int>{1,2})) )
-    {
-        CPLPushErrorHandler(CPLQuietErrorHandler);
-        char *pszSrcProj4Defn = nullptr;
-        poSRSSource->exportToProj4( &pszSrcProj4Defn );
-
-        char *pszDstProj4Defn = nullptr;
-        poSRSTarget->exportToProj4( &pszDstProj4Defn );
-        CPLPopErrorHandler();
-
-        if( pszSrcProj4Defn && pszDstProj4Defn )
-        {
-            if( pszSrcProj4Defn[0] != '\0' &&
-                pszSrcProj4Defn[strlen(pszSrcProj4Defn)-1] == ' ' )
-                pszSrcProj4Defn[strlen(pszSrcProj4Defn)-1] = 0;
-            if( pszDstProj4Defn[0] != '\0' &&
-                pszDstProj4Defn[strlen(pszDstProj4Defn)-1] == ' ' )
-                pszDstProj4Defn[strlen(pszDstProj4Defn)-1] = 0;
-            char* pszNeedle = strstr(pszSrcProj4Defn, "  ");
-            if( pszNeedle )
-                memmove(pszNeedle, pszNeedle + 1, strlen(pszNeedle + 1)+1);
-            pszNeedle = strstr(pszDstProj4Defn, "  ");
-            if( pszNeedle )
-                memmove(pszNeedle, pszNeedle + 1, strlen(pszNeedle + 1)+1);
-
-            if( (strstr(pszDstProj4Defn, "+datum=WGS84") != nullptr ||
-                strstr(pszDstProj4Defn,
-                        "+ellps=WGS84 +towgs84=0,0,0,0,0,0,0 ") != nullptr) &&
-                strstr(pszSrcProj4Defn, "+nadgrids=@null ") != nullptr &&
-                strstr(pszSrcProj4Defn, "+towgs84") == nullptr )
-            {
-                char* pszDst = strstr(pszDstProj4Defn, "+towgs84=0,0,0,0,0,0,0 ");
-                if( pszDst != nullptr)
-                {
-                    char* pszSrc = pszDst + strlen("+towgs84=0,0,0,0,0,0,0 ");
-                    memmove(pszDst, pszSrc, strlen(pszSrc)+1);
-                }
-                else
-                {
-                    memcpy(strstr(pszDstProj4Defn, "+datum=WGS84"), "+ellps", 6);
-                }
-
-                pszDst = strstr(pszSrcProj4Defn, "+nadgrids=@null ");
-                char* pszSrc = pszDst + strlen("+nadgrids=@null ");
-                memmove(pszDst, pszSrc, strlen(pszSrc)+1);
-
-                pszDst = strstr(pszSrcProj4Defn, "+wktext ");
-                if( pszDst )
-                {
-                    pszSrc = pszDst + strlen("+wktext ");
-                    memmove(pszDst, pszSrc, strlen(pszSrc)+1);
-                }
-                bWebMercatorToWGS84LongLat =
-                    strcmp(pszDstProj4Defn,
-                        "+proj=longlat +ellps=WGS84 +no_defs") == 0 &&
-                    (strcmp(pszSrcProj4Defn,
-                        "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 "
-                        "+x_0=0.0 +y_0=0 +k=1.0 +units=m +no_defs") == 0 ||
-                    strcmp(pszSrcProj4Defn,
-                        "+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 "
-                        "+x_0=0 +y_0=0 +k=1 +units=m +no_defs") == 0);
-            }
-        }
-
-        CPLFree(pszSrcProj4Defn);
-        CPLFree(pszDstProj4Defn);
-    }
+    DetectWebMercatorToWGS84();
 
     const char* pszCTOpSelection = CPLGetConfigOption("OGR_CT_OP_SELECTION", nullptr);
     if( pszCTOpSelection )
@@ -3192,6 +3224,9 @@ OGRCoordinateTransformation* OGRProjCT::GetInverse() const
     poNewCT->bNoTransform = bNoTransform;
     poNewCT->m_eStrategy = m_eStrategy;
     poNewCT->m_options = newOptions;
+
+    poNewCT->DetectWebMercatorToWGS84();
+
     return poNewCT;
 }
 
