@@ -108,9 +108,9 @@ but no projection checking is performed (unless projectionCheck option is used).
     
     ``fail`` - the dimensions and the extent (bounds) of the rasters must agree, otherwise the operation will fail.
     
-    ``union`` - the extent (bounds) of the output will be the minimal rectangle that contains all the input extents.
+    ``intersect`` - the extent (bounds) of the output will be the minimal rectangle that contains all the input extents.
     
-    ``intersect`` - the extent (bounds) of the output will be the maximal rectangle that is contained in all the input extents.
+    ``union`` - the extent (bounds) of the output will be the maximal rectangle that is contained in all the input extents.
 
 .. option:: --projwin <ulx> <uly> <lrx> <lry>
 
