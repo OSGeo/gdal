@@ -8,7 +8,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
 
 TRAVIS=yes
 export TRAVIS
-TRAVIS_BRANCH=32bit
+TRAVIS_BRANCH=ubuntu_1804_32bit
 export TRAVIS_BRANCH
 
 LANG=en_US.UTF-8
