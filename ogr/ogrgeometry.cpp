@@ -4613,6 +4613,17 @@ OGRGeometry *OGRGeometry::UnionCascaded() const
               "GEOS support not enabled." );
     return nullptr;
 #else
+
+#if GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR < 11
+    if( wkbFlatten(getGeometryType()) == wkbMultiPolygon &&
+        IsEmpty() )
+    {
+        // GEOS < 3.11 crashes on an empty multipolygon input
+        auto poRet = new OGRGeometryCollection();
+        poRet->assignSpatialReference(getSpatialReference());
+        return poRet;
+    }
+#endif
     OGRGeometry *poOGRProduct = nullptr;
 
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
