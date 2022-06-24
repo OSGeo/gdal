@@ -2077,4 +2077,96 @@ namespace tut
         TestCachedPixelAccessor<double>();
     }
 
+    // Test VRT and caching of sources w.r.t open options (https://github.com/OSGeo/gdal/issues/5989)
+    template<> template<> void object::test<26>()
+    {
+        class TestRasterBand: public GDALRasterBand
+        {
+            protected:
+                CPLErr IReadBlock(int, int, void* pImage) override
+                {
+                    static_cast<GByte*>(pImage)[0] = 0;
+                    return CE_None;
+                }
+            public:
+                TestRasterBand()
+                {
+                    nBlockXSize = 1;
+                    nBlockYSize = 1;
+                    eDataType = GDT_Byte;
+                }
+        };
+
+        static int nCountZeroOpenOptions = 0;
+        static int nCountWithOneOpenOptions = 0;
+        class TestDataset : public GDALDataset
+        {
+            public:
+                TestDataset()
+                {
+                    nRasterXSize = 1;
+                    nRasterYSize = 1;
+                    SetBand(1, new TestRasterBand());
+                }
+
+                static GDALDataset* TestOpen(GDALOpenInfo* poOpenInfo)
+                {
+                    if( strcmp(poOpenInfo->pszFilename, ":::DUMMY:::") != 0 )
+                        return nullptr;
+                    if( poOpenInfo->papszOpenOptions == nullptr )
+                        nCountZeroOpenOptions ++;
+                    else
+                        nCountWithOneOpenOptions ++;
+                    return new TestDataset();
+                }
+        };
+
+        std::unique_ptr<GDALDriver> driver(new GDALDriver());
+        driver->SetDescription("TEST_VRT_SOURCE_OPEN_OPTION");
+        driver->pfnOpen = TestDataset::TestOpen;
+        GetGDALDriverManager()->RegisterDriver(driver.get());
+
+        const char* pszVRT = R"(
+<VRTDataset rasterXSize="1" rasterYSize="1">
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTSourcedRasterBand">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">:::DUMMY:::</SourceFilename>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">:::DUMMY:::</SourceFilename>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">:::DUMMY:::</SourceFilename>
+      <OpenOptions>
+          <OOI key="TESTARG">present</OOI>
+      </OpenOptions>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">:::DUMMY:::</SourceFilename>
+      <OpenOptions>
+          <OOI key="TESTARG">present</OOI>
+      </OpenOptions>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">:::DUMMY:::</SourceFilename>
+      <OpenOptions>
+          <OOI key="TESTARG">another_one</OOI>
+      </OpenOptions>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>)";
+        auto ds = std::unique_ptr<GDALDataset>(GDALDataset::Open(pszVRT));
+
+        // Trigger reading data, which triggers opening of source datasets
+        auto rb = ds->GetRasterBand(1);
+        double minmax[2];
+        GDALComputeRasterMinMax(GDALRasterBand::ToHandle(rb), TRUE, minmax);
+
+        ds.release();
+        GetGDALDriverManager()->DeregisterDriver(driver.get());
+
+        ensure_equals(nCountZeroOpenOptions, 1);
+        ensure_equals(nCountWithOneOpenOptions, 2);
+    }
+
 } // namespace tut
