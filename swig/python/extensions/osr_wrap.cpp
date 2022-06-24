@@ -4045,6 +4045,9 @@ SWIGINTERN OSRSpatialReferenceShadow *OSRSpatialReferenceShadow_CloneGeogCS(OSRS
 SWIGINTERN OSRSpatialReferenceShadow *OSRSpatialReferenceShadow_Clone(OSRSpatialReferenceShadow *self){
     return (OSRSpatialReferenceShadow*) OSRClone(self);
   }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_StripVertical(OSRSpatialReferenceShadow *self){
+    return OSRStripVertical(self);
+  }
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_Validate(OSRSpatialReferenceShadow *self){
     return OSRValidate(self);
   }
@@ -14696,6 +14699,59 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_SpatialReference_StripVertical(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  OGRErr result;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_StripVertical" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (OGRErr)OSRSpatialReferenceShadow_StripVertical(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if ( ReturnSame(resultobj == Py_None || resultobj == 0) ) {
+      resultobj = PyInt_FromLong( result );
+    }
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_SpatialReference_Validate(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
@@ -18034,6 +18090,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "SpatialReference_ExportToMICoordSys", _wrap_SpatialReference_ExportToMICoordSys, METH_O, "SpatialReference_ExportToMICoordSys(SpatialReference self) -> OGRErr"},
 	 { "SpatialReference_CloneGeogCS", _wrap_SpatialReference_CloneGeogCS, METH_O, "SpatialReference_CloneGeogCS(SpatialReference self) -> SpatialReference"},
 	 { "SpatialReference_Clone", _wrap_SpatialReference_Clone, METH_O, "SpatialReference_Clone(SpatialReference self) -> SpatialReference"},
+	 { "SpatialReference_StripVertical", _wrap_SpatialReference_StripVertical, METH_O, "SpatialReference_StripVertical(SpatialReference self) -> OGRErr"},
 	 { "SpatialReference_Validate", _wrap_SpatialReference_Validate, METH_O, "SpatialReference_Validate(SpatialReference self) -> OGRErr"},
 	 { "SpatialReference_MorphToESRI", _wrap_SpatialReference_MorphToESRI, METH_O, "SpatialReference_MorphToESRI(SpatialReference self) -> OGRErr"},
 	 { "SpatialReference_MorphFromESRI", _wrap_SpatialReference_MorphFromESRI, METH_O, "SpatialReference_MorphFromESRI(SpatialReference self) -> OGRErr"},
