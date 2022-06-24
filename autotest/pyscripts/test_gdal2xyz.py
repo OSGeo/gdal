@@ -28,7 +28,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 import pytest
+import test_py_scripts
 
 # test that osgeo_utils is available, if not skip all tests
 pytest.importorskip('osgeo_utils')
@@ -80,4 +82,40 @@ def test_gdal2xyz_py_1():
         data2[data2 == src_nodata] = dst_nodata
         assert np.all(np.equal(data, data2))
 
+###############################################################################
+# Test -b at beginning
 
+def test_gdal2xyz_py_2():
+
+    script = 'gdal2xyz'
+    folder = test_py_scripts.get_py_script(script)
+    if folder is None:
+        pytest.skip()
+
+    arguments = '-b 1'
+    arguments += ' '+ test_py_scripts.get_data_path('gcore') + 'byte.tif'
+    arguments += ' tmp/out.xyz'
+
+    test_py_scripts.run_py_script(folder, script, arguments)
+
+    assert os.path.exists('tmp/out.xyz')
+    os.unlink('tmp/out.xyz')
+
+###############################################################################
+# Test -b at end
+
+def test_gdal2xyz_py_3():
+
+    script = 'gdal2xyz'
+    folder = test_py_scripts.get_py_script(script)
+    if folder is None:
+        pytest.skip()
+
+    arguments = test_py_scripts.get_data_path('gcore') + 'byte.tif'
+    arguments += ' tmp/out.xyz'
+    arguments += ' -b 1'
+
+    test_py_scripts.run_py_script(folder, script, arguments)
+
+    assert os.path.exists('tmp/out.xyz')
+    os.unlink('tmp/out.xyz')
