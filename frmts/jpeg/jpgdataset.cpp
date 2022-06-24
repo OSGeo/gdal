@@ -2707,6 +2707,7 @@ GDALDataset* JPGDatasetCommon::OpenFLIRRawThermalImage()
 
         auto poRawDS = new JPEGRawDataset(m_nRawThermalImageWidth,
                                             m_nRawThermalImageHeight);
+        poRawDS->SetDescription(osTmpFilename.c_str());
         poRawDS->SetBand(1, poBand);
         poRawDS->MarkSuppressOnClose();
         return poRawDS;
