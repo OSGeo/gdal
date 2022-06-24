@@ -839,6 +839,10 @@ class SpatialReference(object):
         r"""Clone(SpatialReference self) -> SpatialReference"""
         return _osr.SpatialReference_Clone(self, *args)
 
+    def StripVertical(self, *args):
+        r"""StripVertical(SpatialReference self) -> OGRErr"""
+        return _osr.SpatialReference_StripVertical(self, *args)
+
     def Validate(self, *args):
         r"""Validate(SpatialReference self) -> OGRErr"""
         return _osr.SpatialReference_Validate(self, *args)

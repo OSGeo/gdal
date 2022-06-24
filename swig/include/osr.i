@@ -1108,6 +1108,10 @@ public:
     return (OSRSpatialReferenceShadow*) OSRClone(self);
   }
 
+  OGRErr StripVertical() {
+    return OSRStripVertical(self);
+  }
+
   OGRErr Validate() {
     return OSRValidate(self);
   }

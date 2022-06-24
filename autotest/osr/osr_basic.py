@@ -1663,6 +1663,17 @@ def test_osr_promote_to_3D():
     assert sr.GetAuthorityCode(None) == '4326'
 
 
+def test_osr_strip_vertical():
+
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(3901)  # "KKJ / Finland Uniform Coordinate System + N60 height"
+    assert sr.IsCompound()
+
+    assert sr.StripVertical() == 0
+    assert not sr.IsCompound()
+    assert sr.GetAuthorityCode(None) == '2393'  # KKJ / Finland Uniform Coordinate System
+
+
 def test_osr_SetVerticalPerspective():
 
     sr = osr.SpatialReference()
