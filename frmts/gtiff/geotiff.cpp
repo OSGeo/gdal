@@ -10476,12 +10476,16 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId, bool bReadFromDisk )
 /*      The bottom most partial tiles and strips are sometimes only     */
 /*      partially encoded.  This code reduces the requested data so     */
 /*      an error won't be reported in this case. (#1179)                */
+/*      We exclude tiled WEBP, because as it is a new codec, whole tiles*/
+/*      are written by libtiff. This helps avoiding creating a temporary*/
+/*      decode buffer.                                                  */
 /* -------------------------------------------------------------------- */
     auto nBlockReqSize = nBlockBufSize;
     const int nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, m_nBlockXSize);
     const int nBlockYOff = (nBlockId % m_nBlocksPerBand) / nBlocksPerRow;
 
-    if( nBlockYOff * m_nBlockYSize > nRasterYSize - m_nBlockYSize )
+    if( nBlockYOff * m_nBlockYSize > nRasterYSize - m_nBlockYSize &&
+        !(m_nCompression == COMPRESSION_WEBP && TIFFIsTiled(m_hTIFF)) )
     {
         nBlockReqSize = (nBlockBufSize / m_nBlockYSize)
             * (m_nBlockYSize - static_cast<int>(
@@ -10518,6 +10522,17 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId, bool bReadFromDisk )
 
     if( eErr == CE_None )
     {
+        if( m_nCompression == COMPRESSION_WEBP && TIFFIsTiled(m_hTIFF) &&
+            nBlockYOff * m_nBlockYSize > nRasterYSize - m_nBlockYSize )
+        {
+            const auto nValidBytes = (nBlockBufSize / m_nBlockYSize)
+                * (m_nBlockYSize - static_cast<int>(
+                    (static_cast<GIntBig>(nBlockYOff + 1) * m_nBlockYSize) %
+                        nRasterYSize));
+            // Zero-out unused area
+            memset( m_pabyBlockBuf + nValidBytes, 0, nBlockBufSize - nValidBytes );
+        }
+
         m_nLoadedBlock = nBlockId;
     }
     else
