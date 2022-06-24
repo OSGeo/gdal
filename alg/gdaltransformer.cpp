@@ -2710,33 +2710,48 @@ int GDALTransformLonLatToDestGenImgProjTransformer(void* hTransformArg,
         psReprojInfo->poForwardTransform->GetSourceCS() == nullptr )
         return false;
 
-    auto poSourceCRS = psReprojInfo->poForwardTransform->GetSourceCS();
-    auto poLongLat = std::unique_ptr<OGRSpatialReference>(
-        poSourceCRS->CloneGeogCS());
-    if ( poLongLat == nullptr )
-        return false;
-    poLongLat->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-
-    const bool bCurrentCheckWithInvertProj = GetCurrentCheckWithInvertPROJ();
-    if( !bCurrentCheckWithInvertProj )
-        CPLSetThreadLocalConfigOption("CHECK_WITH_INVERT_PROJ", "YES");
-    auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
-        OGRCreateCoordinateTransformation(poLongLat.get(), poSourceCRS));
-    if( !bCurrentCheckWithInvertProj )
-        CPLSetThreadLocalConfigOption("CHECK_WITH_INVERT_PROJ", nullptr);
-    if( poCT == nullptr )
-        return false;
-
-    poCT->SetEmitErrors(false);
-    if( !poCT->Transform(1, pdfX, pdfY) )
-        return false;
-
     double z = 0;
     int success = true;
-    if( !psInfo->pReproject( psInfo->pReprojectArg, false,
-                             1, pdfX, pdfY, &z, &success ) || !success )
+    auto poSourceCRS = psReprojInfo->poForwardTransform->GetSourceCS();
+    if( poSourceCRS->IsGeographic() )
     {
-        return false;
+        // Optimization to avoid creating a OGRCoordinateTransformation
+        OGRAxisOrientation eSourceFirstAxisOrient = OAO_Other;
+        poSourceCRS->GetAxis(nullptr, 0, &eSourceFirstAxisOrient);
+        const auto& mapping = poSourceCRS->GetDataAxisToSRSAxisMapping();
+        if( (mapping[0] == 2 && eSourceFirstAxisOrient == OAO_East) ||
+            (mapping[0] == 1 && eSourceFirstAxisOrient != OAO_East) )
+        {
+            std::swap(*pdfX, *pdfY);
+        }
+    }
+    else
+    {
+        auto poLongLat = std::unique_ptr<OGRSpatialReference>(
+            poSourceCRS->CloneGeogCS());
+        if ( poLongLat == nullptr )
+            return false;
+        poLongLat->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
+        const bool bCurrentCheckWithInvertProj = GetCurrentCheckWithInvertPROJ();
+        if( !bCurrentCheckWithInvertProj )
+            CPLSetThreadLocalConfigOption("CHECK_WITH_INVERT_PROJ", "YES");
+        auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
+            OGRCreateCoordinateTransformation(poLongLat.get(), poSourceCRS));
+        if( !bCurrentCheckWithInvertProj )
+            CPLSetThreadLocalConfigOption("CHECK_WITH_INVERT_PROJ", nullptr);
+        if( poCT == nullptr )
+            return false;
+
+        poCT->SetEmitErrors(false);
+        if( !poCT->Transform(1, pdfX, pdfY) )
+            return false;
+
+        if( !psInfo->pReproject( psInfo->pReprojectArg, false,
+                                 1, pdfX, pdfY, &z, &success ) || !success )
+        {
+            return false;
+        }
     }
 
     double* padfGeoTransform = psInfo->adfDstInvGeoTransform;
