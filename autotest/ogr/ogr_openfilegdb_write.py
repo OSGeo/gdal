@@ -459,13 +459,16 @@ def gdbtablx_has_bitmap(gdbtablx_filename):
     (False, (1, 1025, 2)),
     (False, (1, 1025, 2, 2049)),
     (True,  (1025,)),    # First feature of second page
-    (True,  (1025,(1, False))), # Cannot add 1 as it is in the first page, which is unallocated
     (True,  (1025,1026)),
     (True,  (1026,2049,1025)),
     (True,  (1026,2049,1025,2050)),
     (True,  (1025,1+4*1024)),
     (True,  (1025,1+9*1024)), # 2-byte bitmap
     (True,  ((1 << 31) - 1,)), # Biggest possible FID
+    (True,  (1025,1)),
+    (True,  (2049,1025,1)),
+    (True,  (1,2049,1025)),
+    (True,  (1,2049,2048,2050,1025)),
     (False, (((1 << 31), False),)), # Illegal FID
     (False, ((0, False),)), # Illegal FID
     (False, ((-2, False),)), # Illegal FID
