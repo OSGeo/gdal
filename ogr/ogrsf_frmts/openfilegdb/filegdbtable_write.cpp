@@ -64,6 +64,8 @@ namespace OpenFileGDB
 {
 
 constexpr uint8_t EXT_SHAPE_SEGMENT_ARC = 1;
+constexpr int TABLX_HEADER_SIZE = 16;
+constexpr int TABLX_FEATURES_PER_PAGE = 1024;
 
 /************************************************************************/
 /*                               Create()                               */
@@ -288,16 +290,18 @@ bool FileGDBTable::Sync(VSILFILE* fpTable, VSILFILE* fpTableX)
 
     if( m_bDirtyTableXTrailer && fpTableX )
     {
-        m_nOffsetTableXTrailer = 16 + m_nTablxOffsetSize * 1024 * (vsi_l_offset)m_n1024BlocksPresent;
+        m_nOffsetTableXTrailer = TABLX_HEADER_SIZE +
+            m_nTablxOffsetSize * TABLX_FEATURES_PER_PAGE * (vsi_l_offset)m_n1024BlocksPresent;
         VSIFSeekL( fpTableX, m_nOffsetTableXTrailer, SEEK_SET );
-        const uint32_t n1024BlocksTotal = DIV_ROUND_UP(m_nTotalRecordCount, 1024);
+        const uint32_t n1024BlocksTotal = DIV_ROUND_UP(m_nTotalRecordCount, TABLX_FEATURES_PER_PAGE);
         if( !m_abyTablXBlockMap.empty() )
         {
             CPLAssert( m_abyTablXBlockMap.size() >= (n1024BlocksTotal + 7) / 8 );
         }
         // Size of the bitmap in terms of 32-bit words, rounded to a multiple
         // of 32.
-        const uint32_t nBitmapInt32Words = ((static_cast<uint32_t>(m_abyTablXBlockMap.size()) + 3) / 4 + 31) / 32 * 32;
+        const uint32_t nBitmapInt32Words = DIV_ROUND_UP(DIV_ROUND_UP(
+            static_cast<uint32_t>(m_abyTablXBlockMap.size()), 4), 32) * 32;
         m_abyTablXBlockMap.resize(nBitmapInt32Words * 4);
         bRet &= WriteUInt32(fpTableX, nBitmapInt32Words);
         bRet &= WriteUInt32(fpTableX, n1024BlocksTotal);
@@ -1362,53 +1366,100 @@ bool FileGDBTable::EncodeFeature(const std::vector<OGRField>& asRawFields,
 bool FileGDBTable::SeekIntoTableXForNewFeature(int nObjectID)
 {
     int iCorrectedRow;
+    bool bWriteEmptyPageAtEnd = false;
     if( m_abyTablXBlockMap.empty() )
     {
         // Is the OID to write in the current allocated pages, or in the next
         // page ?
-        if( (nObjectID - 1) / 1024 <=
-                ((m_nTotalRecordCount == 0) ? 0 : (1 + (m_nTotalRecordCount - 1) / 1024)) )
+        if( (nObjectID - 1) / TABLX_FEATURES_PER_PAGE <=
+                ((m_nTotalRecordCount == 0) ? 0 : (1 + (m_nTotalRecordCount - 1) / TABLX_FEATURES_PER_PAGE)) )
         {
             iCorrectedRow = nObjectID - 1;
-            m_n1024BlocksPresent = (std::max(m_nTotalRecordCount, nObjectID) + 1023) / 1024;
+            const auto n1024BlocksPresentBefore = m_n1024BlocksPresent;
+            m_n1024BlocksPresent = DIV_ROUND_UP(std::max(m_nTotalRecordCount, nObjectID), TABLX_FEATURES_PER_PAGE);
+            bWriteEmptyPageAtEnd = m_n1024BlocksPresent > n1024BlocksPresentBefore;
         }
         else
         {
             // No, then we have a sparse table, and need to use a bitmap
-            m_abyTablXBlockMap.resize( (DIV_ROUND_UP(nObjectID, 1024) + 7) / 8 );
-            for(int i = 0; i < DIV_ROUND_UP(m_nTotalRecordCount, 1024); ++i )
+            m_abyTablXBlockMap.resize( (DIV_ROUND_UP(nObjectID, TABLX_FEATURES_PER_PAGE) + 7) / 8 );
+            for(int i = 0; i < DIV_ROUND_UP(m_nTotalRecordCount, TABLX_FEATURES_PER_PAGE); ++i )
                 m_abyTablXBlockMap[i / 8] |= (1 << (i % 8));
-            const int iBlock = (nObjectID - 1) / 1024;
+            const int iBlock = (nObjectID - 1) / TABLX_FEATURES_PER_PAGE;
             m_abyTablXBlockMap[iBlock / 8] |= (1 << (iBlock % 8));
-            iCorrectedRow = DIV_ROUND_UP(m_nTotalRecordCount, 1024) * 1024 + ((nObjectID - 1) % 1024);
+            iCorrectedRow = DIV_ROUND_UP(m_nTotalRecordCount, TABLX_FEATURES_PER_PAGE) *
+                TABLX_FEATURES_PER_PAGE + ((nObjectID - 1) % TABLX_FEATURES_PER_PAGE);
             m_n1024BlocksPresent ++;
+            bWriteEmptyPageAtEnd = true;
         }
     }
     else
     {
-        GUInt32 nCountBlocksBefore = 0;
-        const int iBlock = (nObjectID - 1) / 1024;
+        const int iBlock = (nObjectID - 1) / TABLX_FEATURES_PER_PAGE;
 
         if( nObjectID <= m_nTotalRecordCount )
         {
             CPLAssert( iBlock / 8 < static_cast<int>(m_abyTablXBlockMap.size()) );
             if( TEST_BIT(m_abyTablXBlockMap.data(), iBlock) == 0 )
             {
-                // This would require rewriting the gdbtablx file to insert
+                // This requires rewriting the gdbtablx file to insert
                 // a new page
-                CPLError(CE_Failure, CPLE_NotSupported,
-                         "Attempting to write a feature in a non-allocated page "
-                         "in the middle of the bitmap is not yet supported");
-                return false;
+                GUInt32 nCountBlocksBefore = 0;
+                for(int i=0;i<iBlock;i++)
+                    nCountBlocksBefore += TEST_BIT(m_abyTablXBlockMap.data(), i) != 0;
+
+                std::vector<GByte> abyTmp(TABLX_FEATURES_PER_PAGE * m_nTablxOffsetSize);
+                uint64_t nOffset = TABLX_HEADER_SIZE +
+                    static_cast<uint64_t>(m_n1024BlocksPresent - 1) * TABLX_FEATURES_PER_PAGE * m_nTablxOffsetSize;
+                for( int i = m_n1024BlocksPresent - 1; i >= static_cast<int>(nCountBlocksBefore); --i )
+                {
+                    VSIFSeekL(m_fpTableX, nOffset, SEEK_SET);
+                    if( VSIFReadL(abyTmp.data(), m_nTablxOffsetSize * TABLX_FEATURES_PER_PAGE, 1, m_fpTableX) != 1 )
+                    {
+                        CPLError(CE_Failure, CPLE_FileIO,
+                                 "Cannot read .gdtablx page at offset %u",
+                                 static_cast<uint32_t>(nOffset));
+                        return false;
+                    }
+                    VSIFSeekL(m_fpTableX, VSIFTellL(m_fpTableX), SEEK_SET);
+                    if( VSIFWriteL(abyTmp.data(), m_nTablxOffsetSize * TABLX_FEATURES_PER_PAGE, 1, m_fpTableX) != 1 )
+                    {
+                        CPLError(CE_Failure, CPLE_FileIO,
+                                 "Cannot rewrite .gdtablx page of offset %u",
+                                 static_cast<uint32_t>(nOffset));
+                        return false;
+                    }
+                    nOffset -= TABLX_FEATURES_PER_PAGE * m_nTablxOffsetSize;
+                }
+                abyTmp.clear();
+                abyTmp.resize(TABLX_FEATURES_PER_PAGE * m_nTablxOffsetSize);
+                nOffset = TABLX_HEADER_SIZE +
+                    static_cast<uint64_t>(nCountBlocksBefore) * TABLX_FEATURES_PER_PAGE * m_nTablxOffsetSize;
+                VSIFSeekL(m_fpTableX, nOffset, SEEK_SET);
+                if( VSIFWriteL(abyTmp.data(), m_nTablxOffsetSize * TABLX_FEATURES_PER_PAGE, 1, m_fpTableX) != 1 )
+                {
+                    CPLError(CE_Failure, CPLE_FileIO,
+                                 "Cannot write empty .gdtablx page of offset %u",
+                                 static_cast<uint32_t>(nOffset));
+                    return false;
+                }
+                m_abyTablXBlockMap[iBlock / 8] |= (1 << (iBlock % 8));
+                m_n1024BlocksPresent ++;
+                m_bDirtyTableXTrailer = true;
+                m_nOffsetTableXTrailer = 0;
+                m_nCountBlocksBeforeIBlockIdx = iBlock;
+                m_nCountBlocksBeforeIBlockValue = nCountBlocksBefore;
             }
         }
-        else if( DIV_ROUND_UP(nObjectID, 1024) > DIV_ROUND_UP(m_nTotalRecordCount, 1024) )
+        else if( DIV_ROUND_UP(nObjectID, TABLX_FEATURES_PER_PAGE) > DIV_ROUND_UP(m_nTotalRecordCount, TABLX_FEATURES_PER_PAGE) )
         {
-            m_abyTablXBlockMap.resize( (DIV_ROUND_UP(nObjectID, 1024) + 7) / 8 );
+            m_abyTablXBlockMap.resize( (DIV_ROUND_UP(nObjectID, TABLX_FEATURES_PER_PAGE) + 7) / 8 );
             m_abyTablXBlockMap[iBlock / 8] |= (1 << (iBlock % 8));
             m_n1024BlocksPresent ++;
+            bWriteEmptyPageAtEnd = true;
         }
 
+        GUInt32 nCountBlocksBefore = 0;
         // In case of sequential access, optimization to avoid recomputing
         // the number of blocks since the beginning of the map
         if( iBlock >= m_nCountBlocksBeforeIBlockIdx )
@@ -1423,20 +1474,30 @@ bool FileGDBTable::SeekIntoTableXForNewFeature(int nObjectID)
             for(int i=0;i<iBlock;i++)
                 nCountBlocksBefore += TEST_BIT(m_abyTablXBlockMap.data(), i) != 0;
         }
+
         m_nCountBlocksBeforeIBlockIdx = iBlock;
         m_nCountBlocksBeforeIBlockValue = nCountBlocksBefore;
-        iCorrectedRow = nCountBlocksBefore * 1024 + ((nObjectID - 1) % 1024);
+        iCorrectedRow = nCountBlocksBefore * TABLX_FEATURES_PER_PAGE + ((nObjectID - 1) % TABLX_FEATURES_PER_PAGE);
     }
 
-    const uint64_t nOffset = 16 + static_cast<uint64_t>(iCorrectedRow) * m_nTablxOffsetSize;
-    if( m_nOffsetTableXTrailer > 0 && nOffset + m_nTablxOffsetSize > m_nOffsetTableXTrailer )
+    if( bWriteEmptyPageAtEnd )
     {
-        // If we are going to write over the trailer area, truncate the file
-        // before to avoid unrelated data to be interpreted as feature offsets
         m_bDirtyTableXTrailer = true;
-        VSIFTruncateL(m_fpTableX, m_nOffsetTableXTrailer);
         m_nOffsetTableXTrailer = 0;
+        std::vector<GByte> abyTmp(TABLX_FEATURES_PER_PAGE * m_nTablxOffsetSize);
+        uint64_t nOffset = TABLX_HEADER_SIZE +
+                static_cast<uint64_t>(m_n1024BlocksPresent - 1) * TABLX_FEATURES_PER_PAGE * m_nTablxOffsetSize;
+        VSIFSeekL(m_fpTableX, nOffset, SEEK_SET);
+        if( VSIFWriteL(abyTmp.data(), m_nTablxOffsetSize * TABLX_FEATURES_PER_PAGE, 1, m_fpTableX) != 1 )
+        {
+            CPLError(CE_Failure, CPLE_FileIO,
+                         "Cannot write empty .gdtablx page of offset %u",
+                         static_cast<uint32_t>(nOffset));
+            return false;
+        }
     }
+
+    const uint64_t nOffset = TABLX_HEADER_SIZE + static_cast<uint64_t>(iCorrectedRow) * m_nTablxOffsetSize;
     VSIFSeekL(m_fpTableX, nOffset, SEEK_SET);
 
     return true;
@@ -2110,18 +2171,20 @@ bool FileGDBTable::Repack()
         m_nOffsetFieldDesc + sizeof(uint32_t) + m_nFieldDescLength;
 
     std::vector<GByte> abyBufferOffsets;
-    abyBufferOffsets.resize(1024 * m_nTablxOffsetSize);
+    abyBufferOffsets.resize(TABLX_FEATURES_PER_PAGE * m_nTablxOffsetSize);
 
     // Scan all features
     for( uint32_t iPage = 0; !bRepackNeeded && iPage < m_n1024BlocksPresent; ++iPage )
     {
-        const vsi_l_offset nOffsetInTableX = 16 + m_nTablxOffsetSize * static_cast<vsi_l_offset>(iPage) * 1024;
+        const vsi_l_offset nOffsetInTableX =
+            TABLX_HEADER_SIZE + m_nTablxOffsetSize * static_cast<vsi_l_offset>(iPage) * TABLX_FEATURES_PER_PAGE;
         VSIFSeekL(m_fpTableX, nOffsetInTableX, SEEK_SET);
-        if( VSIFReadL(abyBufferOffsets.data(), m_nTablxOffsetSize * 1024, 1, m_fpTableX) != 1 )
+        if( VSIFReadL(abyBufferOffsets.data(),
+                      m_nTablxOffsetSize * TABLX_FEATURES_PER_PAGE, 1, m_fpTableX) != 1 )
             return false;
 
         GByte* pabyBufferOffsets = abyBufferOffsets.data();
-        for( int i = 0; i < 1024; i++, pabyBufferOffsets += m_nTablxOffsetSize )
+        for( int i = 0; i < TABLX_FEATURES_PER_PAGE; i++, pabyBufferOffsets += m_nTablxOffsetSize )
         {
             const uint64_t nOffset = ReadFeatureOffset(pabyBufferOffsets);
             if( nOffset != 0 )
@@ -2182,13 +2245,16 @@ bool FileGDBTable::Repack()
     // Rewrite all features
     for( uint32_t iPage = 0; iPage < m_n1024BlocksPresent; ++iPage )
     {
-        const vsi_l_offset nOffsetInTableX = 16 + m_nTablxOffsetSize * static_cast<vsi_l_offset>(iPage) * 1024;
+        const vsi_l_offset nOffsetInTableX = TABLX_HEADER_SIZE +
+            m_nTablxOffsetSize * static_cast<vsi_l_offset>(iPage) * TABLX_FEATURES_PER_PAGE;
         VSIFSeekL(oWholeFileRewriter.m_fpOldGdbtablx, nOffsetInTableX, SEEK_SET);
-        if( VSIFReadL(abyBufferOffsets.data(), m_nTablxOffsetSize * 1024, 1, oWholeFileRewriter.m_fpOldGdbtablx) != 1 )
+        if( VSIFReadL(abyBufferOffsets.data(),
+                      m_nTablxOffsetSize * TABLX_FEATURES_PER_PAGE, 1,
+                      oWholeFileRewriter.m_fpOldGdbtablx) != 1 )
             return false;
 
         GByte* pabyBufferOffsets = abyBufferOffsets.data();
-        for( int i = 0; i < 1024; i++, pabyBufferOffsets += m_nTablxOffsetSize )
+        for( int i = 0; i < TABLX_FEATURES_PER_PAGE; i++, pabyBufferOffsets += m_nTablxOffsetSize )
         {
             const uint64_t nOffset = ReadFeatureOffset(pabyBufferOffsets);
             if( nOffset != 0 )
@@ -2232,7 +2298,8 @@ bool FileGDBTable::Repack()
             }
         }
         VSIFSeekL(oWholeFileRewriter.m_fpTableX, nOffsetInTableX, SEEK_SET);
-        if( VSIFWriteL(abyBufferOffsets.data(), m_nTablxOffsetSize * 1024, 1,
+        if( VSIFWriteL(abyBufferOffsets.data(),
+                       m_nTablxOffsetSize * TABLX_FEATURES_PER_PAGE, 1,
                        oWholeFileRewriter.m_fpTableX) != 1 )
             return false;
     }
