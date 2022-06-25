@@ -946,7 +946,7 @@ OGRCreateCoordinateTransformation( const OGRSpatialReference *poSource,
 
 {
     char* pszSrcSRS = poSource ? GetTextRepresentation(poSource) : nullptr;
-    char* pszTargetSRS = poSource ? GetTextRepresentation(poTarget) : nullptr;
+    char* pszTargetSRS = poTarget ? GetTextRepresentation(poTarget) : nullptr;
     // Try to find if we have a match in the case
     OGRProjCT *poCT = OGRProjCT::FindFromCache(poSource, pszSrcSRS, poTarget, pszTargetSRS, options);
     if( poCT == nullptr )

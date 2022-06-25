@@ -382,11 +382,21 @@ def test_osr_ct_options_area_of_interest():
 # Test 4D transformations
 
 
-def test_osr_ct_4D():
+@pytest.mark.parametrize('source_crs',[None, 'EPSG:4326']) # random code (not used)
+@pytest.mark.parametrize('target_crs',[None, 'EPSG:4326']) # random code (not used)
+def test_osr_ct_4D(source_crs, target_crs):
 
     options = osr.CoordinateTransformationOptions()
     assert options.SetOperation('+proj=pipeline +step +proj=unitconvert +xy_in=deg +xy_out=rad +step +proj=cart +step +proj=helmert +convention=position_vector +x=0.0127 +dx=-0.0029 +rx=-0.00039 +drx=-0.00011 +y=0.0065 +dy=-0.0002 +ry=0.00080 +dry=-0.00019 +z=-0.0209 +dz=-0.0006 +rz=-0.00114 +drz=0.00007 +s=0.00195 +ds=0.00001 +t_epoch=1988.0 +step +proj=cart +inv +step +proj=unitconvert +xy_in=rad +xy_out=deg')
-    ct = osr.CoordinateTransformation(None, None, options)
+    if source_crs:
+        srs = osr.SpatialReference()
+        srs.SetFromUserInput(source_crs)
+        source_crs = srs
+    if target_crs:
+        srs = osr.SpatialReference()
+        srs.SetFromUserInput(target_crs)
+        target_crs = srs
+    ct = osr.CoordinateTransformation(source_crs, target_crs, options)
     assert ct
 
     x, y, z, t = ct.TransformPoint(2, 49, 0, 2000)
