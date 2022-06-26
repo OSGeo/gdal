@@ -423,10 +423,11 @@ inline double FileGDBOGRDateToDoubleDate(const OGRField* psField)
         const int TZOffset = std::abs(psField->Date.TZFlag - 100) * 15;
         const int TZHour = TZOffset / 60;
         const int TZMinute = TZOffset - TZHour * 60;
+        const int nOffset = TZHour * 3600 + TZMinute * 60;
         if( psField->Date.TZFlag >= 100 )
-            nUnixTime -= (TZHour * 3600 + TZMinute * 60);
+            nUnixTime -= nOffset;
         else
-            nUnixTime += (TZHour * 3600 + TZMinute * 60);
+            nUnixTime += nOffset;
     }
     // 25569: Number of days between 1899/12/30 00:00:00 and 1970/01/01 00:00:00
     return static_cast<double>(nUnixTime) / 3600.0 / 24.0 + 25569.0;

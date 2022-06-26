@@ -443,8 +443,15 @@ template<class ValueOIDPair> static bool WriteIndex(
             NUM_MAX_FEATURES_PER_PAGE * SIZEOF_FEATURE_ID;
 
     // Configurable only for debugging & autotest purposes
-    const int numMaxFeaturesPerPage = std::max(2, std::min(NUM_MAX_FEATURES_PER_PAGE,
-       atoi(CPLGetConfigOption("OPENFILEGDB_MAX_FEATURES_PER_SPX_PAGE", CPLSPrintf("%d", NUM_MAX_FEATURES_PER_PAGE)))));
+    const int numMaxFeaturesPerPage = [NUM_MAX_FEATURES_PER_PAGE]() {
+        const int nVal = atoi(CPLGetConfigOption(
+            "OPENFILEGDB_MAX_FEATURES_PER_SPX_PAGE", CPLSPrintf("%d", NUM_MAX_FEATURES_PER_PAGE)));
+        if( nVal < 2 )
+            return 2;
+        if( nVal > NUM_MAX_FEATURES_PER_PAGE )
+            return NUM_MAX_FEATURES_PER_PAGE;
+        return nVal;
+    } ();
 
     if( asValues.size() > static_cast<size_t>(INT_MAX) ||
         // Maximum number of values for depth == 4: this evaluates to ~ 13 billion values (~ features)

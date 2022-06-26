@@ -827,8 +827,7 @@ bool FileGDBTable::Open(const char* pszFilename,
 
         pabyIter ++;
         nRemaining --;
-        returnErrorIf(nRemaining < (GUInt32)(2 * nCarCount + 1) );
-        // coverity[tainted_data,tainted_data_argument]
+        returnErrorIf(nCarCount > nRemaining / 2);
         std::string osName(ReadUTF16String(pabyIter, nCarCount));
         pabyIter += 2 * nCarCount;
         nRemaining -= 2 * nCarCount;
@@ -837,8 +836,7 @@ bool FileGDBTable::Open(const char* pszFilename,
         nCarCount = pabyIter[0];
         pabyIter ++;
         nRemaining --;
-        returnErrorIf(nRemaining < (GUInt32)(2 * nCarCount + 1) );
-        // coverity[tainted_data,tainted_data_argument]
+        returnErrorIf(nCarCount > nRemaining / 2);
         std::string osAlias(ReadUTF16String(pabyIter, nCarCount));
         pabyIter += 2 * nCarCount;
         nRemaining -= 2 * nCarCount;
