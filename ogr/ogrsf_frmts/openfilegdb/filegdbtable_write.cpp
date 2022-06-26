@@ -1367,6 +1367,8 @@ bool FileGDBTable::SeekIntoTableXForNewFeature(int nObjectID)
 {
     int iCorrectedRow;
     bool bWriteEmptyPageAtEnd = false;
+    const uint32_t nPageSize = TABLX_FEATURES_PER_PAGE * m_nTablxOffsetSize;
+
     if( m_abyTablXBlockMap.empty() )
     {
         // Is the OID to write in the current allocated pages, or in the next
@@ -1408,13 +1410,13 @@ bool FileGDBTable::SeekIntoTableXForNewFeature(int nObjectID)
                 for(int i=0;i<iBlock;i++)
                     nCountBlocksBefore += TEST_BIT(m_abyTablXBlockMap.data(), i) != 0;
 
-                std::vector<GByte> abyTmp(TABLX_FEATURES_PER_PAGE * m_nTablxOffsetSize);
+                std::vector<GByte> abyTmp(nPageSize);
                 uint64_t nOffset = TABLX_HEADER_SIZE +
-                    static_cast<uint64_t>(m_n1024BlocksPresent - 1) * TABLX_FEATURES_PER_PAGE * m_nTablxOffsetSize;
+                    static_cast<uint64_t>(m_n1024BlocksPresent - 1) * nPageSize;
                 for( int i = m_n1024BlocksPresent - 1; i >= static_cast<int>(nCountBlocksBefore); --i )
                 {
                     VSIFSeekL(m_fpTableX, nOffset, SEEK_SET);
-                    if( VSIFReadL(abyTmp.data(), m_nTablxOffsetSize * TABLX_FEATURES_PER_PAGE, 1, m_fpTableX) != 1 )
+                    if( VSIFReadL(abyTmp.data(), nPageSize, 1, m_fpTableX) != 1 )
                     {
                         CPLError(CE_Failure, CPLE_FileIO,
                                  "Cannot read .gdtablx page at offset %u",
@@ -1422,21 +1424,21 @@ bool FileGDBTable::SeekIntoTableXForNewFeature(int nObjectID)
                         return false;
                     }
                     VSIFSeekL(m_fpTableX, VSIFTellL(m_fpTableX), SEEK_SET);
-                    if( VSIFWriteL(abyTmp.data(), m_nTablxOffsetSize * TABLX_FEATURES_PER_PAGE, 1, m_fpTableX) != 1 )
+                    if( VSIFWriteL(abyTmp.data(), nPageSize, 1, m_fpTableX) != 1 )
                     {
                         CPLError(CE_Failure, CPLE_FileIO,
                                  "Cannot rewrite .gdtablx page of offset %u",
                                  static_cast<uint32_t>(nOffset));
                         return false;
                     }
-                    nOffset -= TABLX_FEATURES_PER_PAGE * m_nTablxOffsetSize;
+                    nOffset -= nPageSize;
                 }
                 abyTmp.clear();
-                abyTmp.resize(TABLX_FEATURES_PER_PAGE * m_nTablxOffsetSize);
+                abyTmp.resize(nPageSize);
                 nOffset = TABLX_HEADER_SIZE +
-                    static_cast<uint64_t>(nCountBlocksBefore) * TABLX_FEATURES_PER_PAGE * m_nTablxOffsetSize;
+                    static_cast<uint64_t>(nCountBlocksBefore) * nPageSize;
                 VSIFSeekL(m_fpTableX, nOffset, SEEK_SET);
-                if( VSIFWriteL(abyTmp.data(), m_nTablxOffsetSize * TABLX_FEATURES_PER_PAGE, 1, m_fpTableX) != 1 )
+                if( VSIFWriteL(abyTmp.data(), nPageSize, 1, m_fpTableX) != 1 )
                 {
                     CPLError(CE_Failure, CPLE_FileIO,
                                  "Cannot write empty .gdtablx page of offset %u",
@@ -1484,11 +1486,11 @@ bool FileGDBTable::SeekIntoTableXForNewFeature(int nObjectID)
     {
         m_bDirtyTableXTrailer = true;
         m_nOffsetTableXTrailer = 0;
-        std::vector<GByte> abyTmp(TABLX_FEATURES_PER_PAGE * m_nTablxOffsetSize);
+        std::vector<GByte> abyTmp(nPageSize);
         uint64_t nOffset = TABLX_HEADER_SIZE +
-                static_cast<uint64_t>(m_n1024BlocksPresent - 1) * TABLX_FEATURES_PER_PAGE * m_nTablxOffsetSize;
+                static_cast<uint64_t>(m_n1024BlocksPresent - 1) * nPageSize;
         VSIFSeekL(m_fpTableX, nOffset, SEEK_SET);
-        if( VSIFWriteL(abyTmp.data(), m_nTablxOffsetSize * TABLX_FEATURES_PER_PAGE, 1, m_fpTableX) != 1 )
+        if( VSIFWriteL(abyTmp.data(), nPageSize, 1, m_fpTableX) != 1 )
         {
             CPLError(CE_Failure, CPLE_FileIO,
                          "Cannot write empty .gdtablx page of offset %u",
