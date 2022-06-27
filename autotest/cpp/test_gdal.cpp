@@ -2169,4 +2169,193 @@ namespace tut
         ensure_equals(nCountWithOneOpenOptions, 2);
     }
 
+    // Test GDALDeinterleave 3 components Byte()
+    template<> template<> void object::test<27>()
+    {
+        GByte* pabySrc = static_cast<GByte*>(CPLMalloc(3 * 4 * 15));
+        for( int i = 0; i < 3 * 4 * 15; i++ )
+            pabySrc[i] = static_cast<GByte>(i);
+        GByte* pabyDest0 = static_cast<GByte*>(CPLMalloc(4 * 15));
+        GByte* pabyDest1 = static_cast<GByte*>(CPLMalloc(4 * 15));
+        GByte* pabyDest2 = static_cast<GByte*>(CPLMalloc(4 * 15));
+        void* ppabyDest[] = { pabyDest0, pabyDest1, pabyDest2 };
+        for( int nIters : { 1, 4 * 15 } )
+        {
+            GDALDeinterleave(pabySrc, GDT_Byte, 3, ppabyDest, GDT_Byte, nIters);
+            for( int i = 0; i < nIters; i++ )
+            {
+                ensure_equals(pabyDest0[i], 3 * i);
+                ensure_equals(pabyDest1[i], 3 * i + 1);
+                ensure_equals(pabyDest2[i], 3 * i + 2);
+            }
+        }
+        VSIFree(pabySrc);
+        VSIFree(pabyDest0);
+        VSIFree(pabyDest1);
+        VSIFree(pabyDest2);
+    }
+
+    // Test GDALDeinterleave 3 components Byte() without SSSE3
+    template<> template<> void object::test<28>()
+    {
+        GByte* pabySrc = static_cast<GByte*>(CPLMalloc(3 * 4 * 15));
+        for( int i = 0; i < 3 * 4 * 15; i++ )
+            pabySrc[i] = static_cast<GByte>(i);
+        GByte* pabyDest0 = static_cast<GByte*>(CPLMalloc(4 * 15));
+        GByte* pabyDest1 = static_cast<GByte*>(CPLMalloc(4 * 15));
+        GByte* pabyDest2 = static_cast<GByte*>(CPLMalloc(4 * 15));
+        void* ppabyDest[] = { pabyDest0, pabyDest1, pabyDest2 };
+        for( int nIters : { 1, 4 * 15 } )
+        {
+            CPLSetConfigOption("GDAL_USE_SSSE3", "NO");
+            GDALDeinterleave(pabySrc, GDT_Byte, 3, ppabyDest, GDT_Byte, nIters);
+            CPLSetConfigOption("GDAL_USE_SSSE3", nullptr);
+            for( int i = 0; i < nIters; i++ )
+            {
+                ensure_equals(pabyDest0[i], 3 * i);
+                ensure_equals(pabyDest1[i], 3 * i + 1);
+                ensure_equals(pabyDest2[i], 3 * i + 2);
+            }
+        }
+        VSIFree(pabySrc);
+        VSIFree(pabyDest0);
+        VSIFree(pabyDest1);
+        VSIFree(pabyDest2);
+    }
+
+    // Test GDALDeinterleave 4 components Byte()
+    template<> template<> void object::test<29>()
+    {
+        GByte* pabySrc = static_cast<GByte*>(CPLMalloc(3 * 4 * 15));
+        for( int i = 0; i < 3 * 4 * 15; i++ )
+            pabySrc[i] = static_cast<GByte>(i);
+        GByte* pabyDest0 = static_cast<GByte*>(CPLMalloc(3 * 15));
+        GByte* pabyDest1 = static_cast<GByte*>(CPLMalloc(3 * 15));
+        GByte* pabyDest2 = static_cast<GByte*>(CPLMalloc(3 * 15));
+        GByte* pabyDest3 = static_cast<GByte*>(CPLMalloc(3 * 15));
+        void* ppabyDest[] = { pabyDest0, pabyDest1, pabyDest2, pabyDest3 };
+        for( int nIters : { 1, 3 * 15 } )
+        {
+            GDALDeinterleave(pabySrc, GDT_Byte, 4, ppabyDest, GDT_Byte, nIters);
+            for( int i = 0; i < nIters; i++ )
+            {
+                ensure_equals(pabyDest0[i], 4 * i);
+                ensure_equals(pabyDest1[i], 4 * i + 1);
+                ensure_equals(pabyDest2[i], 4 * i + 2);
+                ensure_equals(pabyDest3[i], 4 * i + 3);
+            }
+        }
+        VSIFree(pabySrc);
+        VSIFree(pabyDest0);
+        VSIFree(pabyDest1);
+        VSIFree(pabyDest2);
+        VSIFree(pabyDest3);
+    }
+
+    // Test GDALDeinterleave 4 components Byte without SSSE3
+    template<> template<> void object::test<30>()
+    {
+        GByte* pabySrc = static_cast<GByte*>(CPLMalloc(3 * 4 * 15));
+        for( int i = 0; i < 3 * 4 * 15; i++ )
+            pabySrc[i] = static_cast<GByte>(i);
+        GByte* pabyDest0 = static_cast<GByte*>(CPLMalloc(3 * 15));
+        GByte* pabyDest1 = static_cast<GByte*>(CPLMalloc(3 * 15));
+        GByte* pabyDest2 = static_cast<GByte*>(CPLMalloc(3 * 15));
+        GByte* pabyDest3 = static_cast<GByte*>(CPLMalloc(3 * 15));
+        void* ppabyDest[] = { pabyDest0, pabyDest1, pabyDest2, pabyDest3 };
+        for( int nIters : { 1, 3 * 15 } )
+        {
+            CPLSetConfigOption("GDAL_USE_SSSE3", "NO");
+            GDALDeinterleave(pabySrc, GDT_Byte, 4, ppabyDest, GDT_Byte, nIters);
+            CPLSetConfigOption("GDAL_USE_SSSE3", nullptr);
+            for( int i = 0; i < nIters; i++ )
+            {
+                ensure_equals(pabyDest0[i], 4 * i);
+                ensure_equals(pabyDest1[i], 4 * i + 1);
+                ensure_equals(pabyDest2[i], 4 * i + 2);
+                ensure_equals(pabyDest3[i], 4 * i + 3);
+            }
+        }
+        VSIFree(pabySrc);
+        VSIFree(pabyDest0);
+        VSIFree(pabyDest1);
+        VSIFree(pabyDest2);
+        VSIFree(pabyDest3);
+    }
+
+    // Test GDALDeinterleave general case
+    template<> template<> void object::test<31>()
+    {
+        GByte* pabySrc = static_cast<GByte*>(CPLMalloc(3 * 2));
+        for( int i = 0; i < 3 * 2; i++ )
+            pabySrc[i] = static_cast<GByte>(i);
+        GUInt16* panDest0 = static_cast<GUInt16*>(CPLMalloc(3 * sizeof(uint16_t)));
+        GUInt16* panDest1 = static_cast<GUInt16*>(CPLMalloc(3 * sizeof(uint16_t)));
+        void* ppanDest[] = { panDest0, panDest1 };
+        GDALDeinterleave(pabySrc, GDT_Byte, 2, ppanDest, GDT_UInt16, 3);
+        for( int i = 0; i < 3; i++ )
+        {
+            ensure_equals(panDest0[i], 2 * i);
+            ensure_equals(panDest1[i], 2 * i + 1);
+        }
+        VSIFree(pabySrc);
+        VSIFree(panDest0);
+        VSIFree(panDest1);
+    }
+
+    // Test GDALDeinterleave 3 components UInt16()
+    template<> template<> void object::test<32>()
+    {
+        GUInt16* panSrc = static_cast<GUInt16*>(CPLMalloc(3 * 4 * 15 * sizeof(GUInt16)));
+        for( int i = 0; i < 3 * 4 * 15; i++ )
+            panSrc[i] = static_cast<GUInt16>(i + 32767);
+        GUInt16* panDest0 = static_cast<GUInt16*>(CPLMalloc(4 * 15 * sizeof(GUInt16)));
+        GUInt16* panDest1 = static_cast<GUInt16*>(CPLMalloc(4 * 15 * sizeof(GUInt16)));
+        GUInt16* panDest2 = static_cast<GUInt16*>(CPLMalloc(4 * 15 * sizeof(GUInt16)));
+        void* ppanDest[] = { panDest0, panDest1, panDest2 };
+        for( int nIters : { 1, 4 * 15 } )
+        {
+            GDALDeinterleave(panSrc, GDT_UInt16, 3, ppanDest, GDT_UInt16, nIters);
+            for( int i = 0; i < nIters; i++ )
+            {
+                ensure_equals(panDest0[i], 3 * i + 32767);
+                ensure_equals(panDest1[i], 3 * i + 1 + 32767);
+                ensure_equals(panDest2[i], 3 * i + 2 + 32767);
+            }
+        }
+        VSIFree(panSrc);
+        VSIFree(panDest0);
+        VSIFree(panDest1);
+        VSIFree(panDest2);
+    }
+
+    // Test GDALDeinterleave 4 components UInt16()
+    template<> template<> void object::test<33>()
+    {
+        GUInt16* panSrc = static_cast<GUInt16*>(CPLMalloc(3 * 4 * 15 * sizeof(GUInt16)));
+        for( int i = 0; i < 3 * 4 * 15; i++ )
+            panSrc[i] = static_cast<GUInt16>(i + 32767);
+        GUInt16* panDest0 = static_cast<GUInt16*>(CPLMalloc(4 * 15 * sizeof(GUInt16)));
+        GUInt16* panDest1 = static_cast<GUInt16*>(CPLMalloc(4 * 15 * sizeof(GUInt16)));
+        GUInt16* panDest2 = static_cast<GUInt16*>(CPLMalloc(4 * 15 * sizeof(GUInt16)));
+        GUInt16* panDest3 = static_cast<GUInt16*>(CPLMalloc(4 * 15 * sizeof(GUInt16)));
+        void* ppanDest[] = { panDest0, panDest1, panDest2, panDest3 };
+        for( int nIters : { 1, 3 * 15 } )
+        {
+            GDALDeinterleave(panSrc, GDT_UInt16, 4, ppanDest, GDT_UInt16, nIters);
+            for( int i = 0; i < nIters; i++ )
+            {
+                ensure_equals(panDest0[i], 4 * i + 32767);
+                ensure_equals(panDest1[i], 4 * i + 1 + 32767);
+                ensure_equals(panDest2[i], 4 * i + 2 + 32767);
+                ensure_equals(panDest3[i], 4 * i + 3 + 32767);
+            }
+        }
+        VSIFree(panSrc);
+        VSIFree(panDest0);
+        VSIFree(panDest1);
+        VSIFree(panDest2);
+        VSIFree(panDest3);
+    }
+
 } // namespace tut
