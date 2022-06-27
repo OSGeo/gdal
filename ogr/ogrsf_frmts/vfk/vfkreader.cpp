@@ -65,7 +65,7 @@ IVFKReader *CreateVFKReader( const GDALOpenInfo *poOpenInfo )
   \brief VFKReader constructor
 */
 VFKReader::VFKReader( const GDALOpenInfo* poOpenInfo ) :
-    m_bLatin2(true),  // Encoding ISO-8859-2 or UTF-8.
+    m_pszEncoding("ISO-8859-2"),  // Encoding, supported are ISO-8859-2, WINDOWS-1250 and UTF-8.
     m_poFD(nullptr),
     m_pszFilename(CPLStrdup(poOpenInfo->pszFilename)),
     m_poFStat((VSIStatBufL*) CPLCalloc(1, sizeof(VSIStatBufL))),
@@ -155,6 +155,65 @@ char *VFKReader::ReadLine()
 }
 
 /*!
+  \brief Load text encoding from header (&HENCODING)
+
+  Called from VFKReader::ReadDataBlocks()
+*/
+void VFKReader::ReadEncoding()
+{
+    VSIFSeekL(m_poFD, 0, SEEK_SET);
+    char *pszLine = nullptr;
+    while ((pszLine = ReadLine()) != nullptr) {
+        if (strlen(pszLine) < 2 || pszLine[0] != '&') {
+            CPLFree(pszLine);
+            continue;
+        }
+        if (pszLine[1] == 'B' ||
+            (pszLine[1] == 'K' && strlen(pszLine) == 2)) {
+            /* 'B' record closes the header section */
+            /* 'K' record is end of file */
+            CPLFree(pszLine);
+            break;
+        }
+        if (pszLine[1] != 'H') {
+            /* (not) 'H' header */
+            CPLFree(pszLine);
+            continue;
+        }
+
+        char *pszKey = pszLine + 2; /* &H */
+        char *pszValue = pszKey;
+        while (*pszValue != '\0' && *pszValue != ';')
+            pszValue++;
+        if (*pszValue != ';') {
+            /* no value, ignoring */
+            CPLFree(pszLine);
+            continue;
+        }
+
+        *pszValue = '\0';
+        pszValue++; /* skip ; */
+        if (*pszValue == '"') { /* trim "" */
+            pszValue++;
+            size_t nValueLen = strlen(pszValue);
+            if (nValueLen > 0)
+                pszValue[nValueLen-1] = '\0';
+        }
+
+        /* read encoding to m_pszEncoding */
+        if (EQUAL(pszKey, "CODEPAGE")) {
+            if (EQUAL(pszValue, CPL_ENC_UTF8))
+                m_pszEncoding = CPL_ENC_UTF8;
+            else if (!EQUAL(pszValue, "WE8ISO8859P2"))
+                m_pszEncoding = "WINDOWS-1250";
+        }
+
+        CPLFree(pszLine);
+    }
+}
+
+
+/*!
   \brief Load data block definitions (&B)
 
   Call VFKReader::OpenFile() before this function.
@@ -166,6 +225,9 @@ char *VFKReader::ReadLine()
 int VFKReader::ReadDataBlocks(bool bSuppressGeometry)
 {
     CPLAssert(nullptr != m_pszFilename);
+
+    /* load text encoding in extra pass through header */
+    ReadEncoding();
 
     VSIFSeekL(m_poFD, 0, SEEK_SET);
     bool bInHeader = true;
@@ -265,6 +327,12 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
     CPLString osBlockNameLast;
     char *pszLine = nullptr;
 
+    /* currency sign in current encoding */
+    const char *pszCurSign = "\244";
+    if (EQUAL(m_pszEncoding, CPL_ENC_UTF8))
+        pszCurSign = "\302\244";
+    size_t nCurSignLen = strlen(pszCurSign);
+
     while ((pszLine = ReadLine()) != nullptr) {
         iLine++;
         size_t nLength = strlen(pszLine);
@@ -292,20 +360,30 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
                    See http://en.wikipedia.org/wiki/ISO/IEC_8859
                    - \244 - general currency sign
                 */
-                if (pszLine[nLength - 1] == '\244') {
-                    /* remove \244 (currency sign) from string */
-                    pszLine[nLength - 1] = '\0';
+                if (EQUAL(pszLine + nLength - nCurSignLen, pszCurSign)) {
+                    /* trim the currency sign and trailing spaces from line */
+                    nLength -= nCurSignLen;
+                    while (nLength > 0 && pszLine[nLength - 1] == ' ')
+                        nLength--;
+                    pszLine[nLength] = '\0';
 
                     CPLString osMultiLine(pszLine);
                     CPLFree(pszLine);
 
                     while ((pszLine = ReadLine()) != nullptr &&
-                           pszLine[0] != '\0' &&
-                           pszLine[strlen(pszLine) - 1] == '\244') {
-                        /* append line */
-                        osMultiLine += pszLine;
-                        /* remove 0244 (currency sign) from string */
-                        osMultiLine.erase(osMultiLine.size() - 1);
+                           (nLength = strlen(pszLine)) >= nCurSignLen &&
+                           EQUAL(pszLine + nLength - nCurSignLen, pszCurSign)) {
+                        /* trim leading spaces from continued line */
+                        char *pszLineTrim = pszLine;
+                        while (*pszLineTrim == ' ') pszLineTrim++;
+                        /* trim the currency sign and trailing spaces from line */
+                        nLength = strlen(pszLineTrim) - nCurSignLen;
+                        while (nLength > 0 && pszLineTrim[nLength - 1] == ' ')
+                            nLength--;
+                        pszLineTrim[nLength] = '\0';
+                        /* append a space and the trimmed line */
+                        osMultiLine += " ";
+                        osMultiLine += pszLineTrim;
 
                         CPLFree(pszLine);
                         if( osMultiLine.size() > 100U * 1024U * 1024U )
@@ -314,8 +392,14 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
                             return -1;
                         }
                     }
-                    if( pszLine )
-                        osMultiLine += pszLine;
+                    if (pszLine) {
+                        /* trim leading spaces from continued line */
+                        char *pszLineTrim = pszLine;
+                        while (*pszLineTrim == ' ') pszLineTrim++;
+                        /* append a space and the trimmed line */
+                        osMultiLine += " ";
+                        osMultiLine += pszLineTrim;
+                    }
                     CPLFree(pszLine);
 
                     nLength = osMultiLine.size();
@@ -532,15 +616,10 @@ void VFKReader::AddInfo(const char *pszLine)
 
     pszValue[iValueLength] = '\0';
 
-    /* recode values, assuming Latin2 */
-    if (EQUAL(pszKey, "CODEPAGE")) {
-        if (!EQUAL(pszValue, "WE8ISO8859P2"))
-            m_bLatin2 = false;
-    }
-
-    char *pszValueEnc = CPLRecode(pszValue,
-                            m_bLatin2 ? "ISO-8859-2" : "UTF-8",
+    /* recode values */
+    char *pszValueEnc = CPLRecode(pszValue, m_pszEncoding,
                             CPL_ENC_UTF8);
+
     if (poInfo.find(pszKey) == poInfo.end() ) {
         poInfo[pszKey] = pszValueEnc;
     }
