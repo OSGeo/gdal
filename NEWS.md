@@ -1,3 +1,206 @@
+# GDAL/OGR 3.5.1 Release Notes
+
+## Build
+
+* CMake: fix build without PNG and JPEG (#5741, #5742)
+* CMake: fix build of internal libtiff without JPEG support (#5785)
+* CMake: add missing source file cpl_vsil_plugin.cpp (#5780)
+* CMake: build iso8211 library conditionally to drivers requiring it, and no longer tag it as a driver (#5809)
+* CMake: Python bindings: make it possible to release patch versions (#5844)
+* CMake: Python bindings: add numpy to extras_require option of setup.py, so that 'pip install gdal[numpy]' works (#5844)
+* CMake: DefineFindPackage2.cmake: report packages in PACKAGES_FOUND/PACKAGES_NOT_FOUND
+* CMake: Add version suffix to DLL when compiling for MinGW target
+* CMake: Expose -DBUILD_WITHOUT_64BIT_OFFSET to allow building for 32bit Android with ABI < 24
+* CMake: Be less sensitive on warnings at configure time when detecting iconv
+* CMake: do not build Carto and DAAS drivers in builds without Curl
+* CMake: adjustments for builds with latest ICC compiler
+* CMake: cpl_config.h: Don't use __stdcall on MinGW
+
+## GDAL 3.5.1
+
+### Port
+
+* vsicurl: add NEGOTIATE to proxy auth methods
+* /vsis3/: GetSignedURL(): renew temporary credentials if they expire before the expiration of the signed URL
+* /vsis3/: take into account session token in GetSignedURL()
+* cpl_spawn.cpp: fix linking with FreeBSD (found with CheriBSD)
+* CPLJSONDocument::LoadUrl(): emit error when called in build without Curl
+* CPLDebug(): remove CPL_STDCALL declaration as variadic functions can't use __stdcall calling convention.
+
+### Algorithms
+
+* GeoLoc inverse: increase search radius to avoid holes in results (#5823)
+* GDALTransformLonLatToDestGenImgProjTransformer(): avoid unnecessary coordinate transformer creation when source CRS is geographic
+* GDALWarp(): avoid dummy progress function to be called in single-threaded usage
+
+### Core
+
+* Embedded python: list Python 3.11
+* Fix build related to rasterio_ssse3 on x32 architecture (#5917)
+
+### Utilities
+
+* gdalinfo: avoid outputting too many digits for nodata value (#5794)
+* gdal_calc: detect dataset creation failed (#5817)
+* Windows: command line applications: embed manifest to declare longPathAware=true property (#5836)
+
+### Raster drivers
+
+COSAR driver:
+ * fix reading the last sample of each line (#5622)
+ *  avoid unsigned integer overflow on big file offsets (ossfuzz #47873)
+
+DAAS driver:
+ * fix potential nullptr dereference
+
+DIMAP driver:
+ * Dimap v3 (PNEO): correctly reference RPCs for pixel/line origin
+
+ESAT driver:
+ * Fix a case of freeing memory in use.
+
+GPKG driver:
+ * writer: fix corruption when only a subset of all bands of a tile is flushed
+
+GTiff driver:
+ * fix memory leak on invalid value of DISCARD_LSB creation option (ossfuzz #4784)
+ * fix reading a CompoundCRS of a LocalCS/EngineeringCS, and avoid warnings on writing (#5890)
+ * Internal libtiff: tif_predict.c: make horAcc8() work with latest ICC
+ * Internal libtiff: WEBP: avoid unnecessary temporary buffer creation and copy
+
+JPEG driver:
+ * fix memory file leak when opening FLIR raw thermal image
+
+KEA driver:
+ * add 64bit image types
+
+MEM driver:
+ * IBuildOverviews(): fix potential crash
+
+MRF driver:
+ * Disable zstd, not deflate when zstd is missing
+
+MSGN driver:
+ * fix crash and do other changes to read HRV band (#1040)
+ * make sure _img_desc_record member variable is initialized (CID 1073912)
+
+netCDF driver:
+ * catch potential C++ exception (CID 1488840, 1488841)
+ * avoid crash in nc_create() on an invalid output directory with netCDF 4.9.0
+ * fix non-ASCII filename support on Windows with netCDF 4.9.0
+
+NITF driver:
+ * fix issues with PAM serialization (#5790)
+ * Use correct index for image segment (#5855)
+ * CreateCopy(): allow to specify ICORDS and IGEOLO to override computed values from the source SRS and geotransform.
+
+PCIDSK driver:
+ * fix build with CheriBSD
+
+PDF driver:
+ * trick to be able to use PDFium MSVC 2019 builds from https://github.com/rouault/pdfium_build_gdal_3_5 with newer Visual Studio versions
+
+RMF driver:
+ * Fix FlushCache with NoData block
+ * fix potential heap-buffer-overflow in RMFDataset::WriteHeader
+
+SAFE driver:
+ * for non-SLC products, do not report subdatasets that can't be opened
+
+VRT driver:
+ * take into account open options when sharing sources (#5989)
+
+WMTS driver:
+ * add Accept and ExtraQueryParameters in local XML file to please difficult servers (#5729)
+
+Zarr driver:
+ * hide X/Y subdatasets of a single 2D georeferenced array when opening with 2D raster API (#5681)
+
+## OGR 3.5.1
+
+### Core
+
+* OGRFeatureDefn::GetFieldDefnUnsafe(): fix -Wsign-conversion
+* OGREditableLayer/OGRLayerWithTransaction::AlterFieldDefn(): copy missing properties
+* OGR_SM_InitStyleString(): make it work with a @style_name argument (#5555)
+* OGRSQL: fix GetFeature() to return a feature such that GetFeature(fid).GetFID() == fid (#5967)
+* OGRGeometry::UnionCascaded(): avoid crash with GEOS < 3.11 on empty multipolygon input
+
+### OGRSpatialReference
+
+* SetFromUserInput(): support 'exotic' PROJJSON CRS types
+* PROJJSON import: be robust to a datum_ensemble with a member whose id is unknown (workarounds OSGeo/PROJ#3221)
+* OSRGetPROJSearchPaths(): make it return default paths, after calling OSRSetPROJSearchPaths() with empty array
+* exportToPCI(): be more robust in floating point comparison
+* OGR_CT: avoid lock contention on coordinate transformation creation/destruction
+* OGR_CT: cache axis orientation for faster execution
+* OGR_CT: avoid unnecessary temporary vector creation
+* OGR_CT: restore use of WebMercator to WGS84 lon/lat specialized implementation
+
+### Vector drivers
+
+Arrow driver:
+ * fix extension name key in field metadata (#5829)
+ * fix reading geometry columns whose type is registered as an Arrow extension (#5834)
+
+CSV driver:
+ * make AUTODETECT_SIZE_LIMIT=0 open option to scan the whole file, including beyond 2 GB (for non-streaming input) (#5885)
+ * fix use-after-free (ossfuzz #48270)
+
+FileGDB & OpenFileGDB drivers:
+ * Fix 'not enough points' error reported by the FileGDB/OpenFileGDB drivers on certain Bézier segments (#5802)
+
+FileGDB driver:
+ * support field/table names with non-ASCII characters (#4112, #5792)
+ * avoid crash when reading layer with AliasName with XML special characters
+ * add MSCALE, MORIGIN and MTOLERANCE layer creation option (#5858)
+
+FlatGeoBuf driver:
+ * fix crash when calling CreateFeature() on a dataset opened in read-only mode (#5739)
+
+GPKG driver:
+ * speed-up GetFeature() by keeping a prepared statement
+ * optimize feature reading, in particular DateTime fields
+
+HANA driver:
+ * fix compilation errors
+
+LVBAG driver:
+ * scan only .xml files when passed a directory
+
+ODS driver:
+ * fix reading multi-line strings (#5877)
+
+OpenFileGDB driver:
+ * SQL: do not use optimized code path to compute MIN()/MAX()/AVG(),SUM(),COUNT() when there's a WHERE condition
+ * correctly deduce CRS from feature dataset definition, in case of inconsistence (#5747)
+ * fix use of indexes on strings when the searched value is longer than the max indexed string, or ending with space
+ * take LIMIT and OFFSET into account in 'SELECT ... FROM ORDER BY ... LIMIT ... OFFSET ...' where the ORDER BY column has an index
+ * avoid crash on 'SELECT ... FROM ... ORDER BY ...' when the index is corrupted
+ * fix reading some spatial index .spx files whose value_count field is 0 (#5888)
+ * be more robust in floating point comparison on DateTime indexed fields
+
+OSM driver:
+ * no longer limit to 32768 keys (#5733)
+
+Parquet driver:
+ * update to GeoParquet 0.4.0 specification
+ * use statistics to speed-up evaluations of SQL requests with MIN/MAX/COUNT
+ * fix use of wrong variable in EstablishFeatureDefn()
+ * make sure 'geo' metadata is embedded in ARROW:schema
+ * do not write id in members of datum ensemble to workaround OSGeo/PROJ#3221
+
+SQLite driver:
+ * do not register ST_MakeValid() function when GEOS not available
+
+VFK driver:
+ * Add support for UTF-8
+ * Correctly merge multi line text (currency sign \244)
+ * Header extra pass to detect encoding
+
+WFS driver:
+ * make PagingAllowed and PageSize elements work in WFS XML configuration file
+
 # GDAL/OGR 3.5.0 Release Notes
 
 ## In a nutshell...
