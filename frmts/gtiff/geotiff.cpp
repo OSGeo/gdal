@@ -5046,14 +5046,62 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             return eErr;
         }
 
-        const int nWordBytes = m_poGDS->m_nBitsPerSample / 8;
-        GByte* pabyImage = m_poGDS->m_pabyBlockBuf + (nBand - 1) * nWordBytes;
+        bool bDoCopyWords = true;
+        if( nBand == 1 && !m_poGDS->m_bLoadingOtherBands &&
+            eAccess == GA_ReadOnly &&
+            (m_poGDS->nBands == 3 || m_poGDS->nBands == 4) &&
+            (eDataType == GDT_Byte || eDataType == GDT_UInt16) &&
+            static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize * GDALGetDataTypeSizeBytes(eDataType) <
+                GDALGetCacheMax64() / m_poGDS->nBands )
+        {
+            bDoCopyWords = false;
+            void* ppDestBuffers[4];
+            GDALRasterBlock* apoLockedBlocks[4] = { nullptr, nullptr, nullptr, nullptr };
+            for( int iBand = 1; iBand <= m_poGDS->nBands; ++iBand )
+            {
+                if( iBand == nBand )
+                {
+                    ppDestBuffers[iBand-1] = pImage;
+                }
+                else
+                {
+                    GDALRasterBlock *poBlock = m_poGDS->GetRasterBand(iBand)->
+                       GetLockedBlockRef(nBlockXOff, nBlockYOff, true);
+                    if( poBlock == nullptr )
+                    {
+                        bDoCopyWords = true;
+                        break;
+                    }
+                    ppDestBuffers[iBand-1] = poBlock->GetDataRef();
+                    apoLockedBlocks[iBand-1] = poBlock;
+                }
+            }
+            if( !bDoCopyWords )
+            {
+                GDALDeinterleave(m_poGDS->m_pabyBlockBuf, eDataType,
+                                 m_poGDS->nBands, ppDestBuffers, eDataType,
+                                 static_cast<size_t>(nBlockXSize) * nBlockYSize);
+            }
+            for( int iBand = 1; iBand <= m_poGDS->nBands; ++iBand )
+            {
+                if( apoLockedBlocks[iBand-1] )
+                {
+                    apoLockedBlocks[iBand-1]->DropLock();
+                }
+            }
+        }
 
-        GDALCopyWords64(pabyImage, eDataType, m_poGDS->nBands * nWordBytes,
-                    pImage, eDataType, nWordBytes,
-                    static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize);
+        if( bDoCopyWords )
+        {
+            const int nWordBytes = m_poGDS->m_nBitsPerSample / 8;
+            GByte* pabyImage = m_poGDS->m_pabyBlockBuf + (nBand - 1) * nWordBytes;
 
-        eErr = FillCacheForOtherBands(nBlockXOff, nBlockYOff);
+            GDALCopyWords64(pabyImage, eDataType, m_poGDS->nBands * nWordBytes,
+                        pImage, eDataType, nWordBytes,
+                        static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize);
+
+            eErr = FillCacheForOtherBands(nBlockXOff, nBlockYOff);
+        }
     }
 
 #ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
