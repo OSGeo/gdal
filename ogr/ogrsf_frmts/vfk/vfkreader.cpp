@@ -181,30 +181,30 @@ void VFKReader::ReadEncoding()
             continue;
         }
 
-        char *poKey = pszLine + 2; /* &H */
-        char *poValue = poKey;
-        while (*poValue != '\0' && *poValue != ';')
-            poValue++;
-        if (*poValue != ';') {
+        char *pszKey = pszLine + 2; /* &H */
+        char *pszValue = pszKey;
+        while (*pszValue != '\0' && *pszValue != ';')
+            pszValue++;
+        if (*pszValue != ';') {
             /* no value, ignoring */
             CPLFree(pszLine);
             continue;
         }
 
-        *poValue = '\0';
-        poValue++; /* skip ; */
-        if (*poValue == '"') { /* trim "" */
-            poValue++;
-            size_t nValueLen = strlen(poValue);
+        *pszValue = '\0';
+        pszValue++; /* skip ; */
+        if (*pszValue == '"') { /* trim "" */
+            pszValue++;
+            size_t nValueLen = strlen(pszValue);
             if (nValueLen > 0)
-                poValue[nValueLen-1] = '\0';
+                pszValue[nValueLen-1] = '\0';
         }
 
         /* read encoding to m_pszEncoding */
-        if (EQUAL(poKey, "CODEPAGE")) {
-            if (EQUAL(poValue, CPL_ENC_UTF8))
+        if (EQUAL(pszKey, "CODEPAGE")) {
+            if (EQUAL(pszValue, CPL_ENC_UTF8))
                 m_pszEncoding = CPL_ENC_UTF8;
-            else if (!EQUAL(poValue, "WE8ISO8859P2"))
+            else if (!EQUAL(pszValue, "WE8ISO8859P2"))
                 m_pszEncoding = "WINDOWS-1250";
         }
 
