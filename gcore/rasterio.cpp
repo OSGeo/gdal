@@ -5365,3 +5365,336 @@ bool GDALBufferHasOnlyNoData( const void* pBuffer,
     }
     return false;
 }
+
+#if defined(__x86_64) || defined(_M_X64)
+
+#include <emmintrin.h>
+
+#ifdef HAVE_SSSE3_AT_COMPILE_TIME
+#include "rasterio_ssse3.h"
+#endif
+
+/************************************************************************/
+/*                    GDALDeinterleave3Byte()                           */
+/************************************************************************/
+
+#if defined(__GNUC__) && !defined(__clang__)
+__attribute__((optimize("no-tree-vectorize")))
+#endif
+static void GDALDeinterleave3Byte(const GByte* CPL_RESTRICT pabySrc,
+                                  GByte* CPL_RESTRICT pabyDest0,
+                                  GByte* CPL_RESTRICT pabyDest1,
+                                  GByte* CPL_RESTRICT pabyDest2,
+                                  size_t nIters)
+{
+#ifdef HAVE_SSSE3_AT_COMPILE_TIME
+    if( CPLHaveRuntimeSSSE3() )
+    {
+        return GDALDeinterleave3Byte_SSSE3(pabySrc,
+                                           pabyDest0,
+                                           pabyDest1,
+                                           pabyDest2,
+                                           nIters);
+    }
+#endif
+
+    size_t i = 0;
+    if( ((reinterpret_cast<uintptr_t>(pabySrc) |
+          reinterpret_cast<uintptr_t>(pabyDest0) |
+          reinterpret_cast<uintptr_t>(pabyDest1) |
+          reinterpret_cast<uintptr_t>(pabyDest2)) % sizeof(unsigned int)) == 0 )
+    {
+        // Slightly better than GCC autovectorizer
+        for(size_t j = 0; i + 3 < nIters; i += 4, ++j )
+        {
+            unsigned int word0 = *reinterpret_cast<const unsigned int*>(pabySrc + 3 * i);
+            unsigned int word1 = *reinterpret_cast<const unsigned int*>(pabySrc + 3 * i + 4);
+            unsigned int word2 = *reinterpret_cast<const unsigned int*>(pabySrc + 3 * i + 8);
+            reinterpret_cast<unsigned int*>(pabyDest0)[j] =
+                (word0 & 0xff) | ((word0 >> 24) << 8) | (word1 & 0x00ff0000) | ((word2 >> 8) << 24);
+            reinterpret_cast<unsigned int*>(pabyDest1)[j] =
+                ((word0 >> 8) & 0xff) | ((word1 & 0xff) << 8) | (((word1 >> 24)) << 16) | ((word2 >> 16) << 24);
+            pabyDest2[j*4] = static_cast<GByte>(word0 >> 16);
+            pabyDest2[j*4+1] = static_cast<GByte>(word1 >> 8);
+            pabyDest2[j*4+2] = static_cast<GByte>(word2);
+            pabyDest2[j*4+3] = static_cast<GByte>(word2 >> 24);
+        }
+    }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
+    for(; i < nIters; ++i)
+    {
+        pabyDest0[i] = pabySrc[3 * i + 0];
+        pabyDest1[i] = pabySrc[3 * i + 1];
+        pabyDest2[i] = pabySrc[3 * i + 2];
+    }
+}
+
+/************************************************************************/
+/*                    GDALDeinterleave4Byte()                           */
+/************************************************************************/
+
+#if !defined(__GNUC__) || defined(__clang__)
+
+/************************************************************************/
+/*                         deinterleave()                               */
+/************************************************************************/
+
+template<bool SHIFT, bool MASK>
+inline __m128i deinterleave(__m128i& xmm0_ori,
+                             __m128i& xmm1_ori,
+                             __m128i& xmm2_ori,
+                             __m128i& xmm3_ori)
+{
+    // Set higher 24bit of each int32 packed word to 0
+    if( SHIFT )
+    {
+        xmm0_ori = _mm_srli_epi32(xmm0_ori, 8);
+        xmm1_ori = _mm_srli_epi32(xmm1_ori, 8);
+        xmm2_ori = _mm_srli_epi32(xmm2_ori, 8);
+        xmm3_ori = _mm_srli_epi32(xmm3_ori, 8);
+    }
+    __m128i xmm0;
+    __m128i xmm1;
+    __m128i xmm2;
+    __m128i xmm3;
+    if( MASK )
+    {
+        const __m128i xmm_mask = _mm_set1_epi32(0xff);
+        xmm0 = _mm_and_si128(xmm0_ori, xmm_mask);
+        xmm1 = _mm_and_si128(xmm1_ori, xmm_mask);
+        xmm2 = _mm_and_si128(xmm2_ori, xmm_mask);
+        xmm3 = _mm_and_si128(xmm3_ori, xmm_mask);
+    }
+    else
+    {
+        xmm0 = xmm0_ori;
+        xmm1 = xmm1_ori;
+        xmm2 = xmm2_ori;
+        xmm3 = xmm3_ori;
+    }
+    // Pack int32 to int16
+    xmm0 = _mm_packs_epi32(xmm0, xmm1);
+    xmm2 = _mm_packs_epi32(xmm2, xmm3);
+    // Pack int16 to uint8
+    xmm0 = _mm_packus_epi16(xmm0, xmm2);
+    return xmm0;
+}
+
+static void GDALDeinterleave4Byte(const GByte* CPL_RESTRICT pabySrc,
+                                  GByte* CPL_RESTRICT pabyDest0,
+                                  GByte* CPL_RESTRICT pabyDest1,
+                                  GByte* CPL_RESTRICT pabyDest2,
+                                  GByte* CPL_RESTRICT pabyDest3,
+                                  size_t nIters)
+{
+#ifdef HAVE_SSSE3_AT_COMPILE_TIME
+    if( CPLHaveRuntimeSSSE3() )
+    {
+        return GDALDeinterleave4Byte_SSSE3(pabySrc,
+                                           pabyDest0,
+                                           pabyDest1,
+                                           pabyDest2,
+                                           pabyDest3,
+                                           nIters);
+    }
+#endif
+
+    // Not the optimal SSE2-only code, as gcc auto-vectorizer manages to
+    // do something slightly better.
+    size_t i = 0;
+    for(; i + 15 < nIters; i += 16 )
+    {
+        __m128i xmm0_ori = _mm_loadu_si128( reinterpret_cast<__m128i const*>(pabySrc + 4 * i + 0) );
+        __m128i xmm1_ori = _mm_loadu_si128( reinterpret_cast<__m128i const*>(pabySrc + 4 * i + 16) );
+        __m128i xmm2_ori = _mm_loadu_si128( reinterpret_cast<__m128i const*>(pabySrc + 4 * i + 32) );
+        __m128i xmm3_ori = _mm_loadu_si128( reinterpret_cast<__m128i const*>(pabySrc + 4 * i + 48) );
+
+        _mm_storeu_si128( reinterpret_cast<__m128i*> (pabyDest0 + i),
+                          deinterleave<false, true>(xmm0_ori, xmm1_ori, xmm2_ori, xmm3_ori));
+        _mm_storeu_si128( reinterpret_cast<__m128i*> (pabyDest1 + i),
+                          deinterleave<true, true>(xmm0_ori, xmm1_ori, xmm2_ori, xmm3_ori));
+        _mm_storeu_si128( reinterpret_cast<__m128i*> (pabyDest2 + i),
+                          deinterleave<true, true>(xmm0_ori, xmm1_ori, xmm2_ori, xmm3_ori));
+        _mm_storeu_si128( reinterpret_cast<__m128i*> (pabyDest3 + i),
+                          deinterleave<true, false>(xmm0_ori, xmm1_ori, xmm2_ori, xmm3_ori));
+    }
+
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
+    for(; i < nIters; ++i)
+    {
+        pabyDest0[i] = pabySrc[4 * i + 0];
+        pabyDest1[i] = pabySrc[4 * i + 1];
+        pabyDest2[i] = pabySrc[4 * i + 2];
+        pabyDest3[i] = pabySrc[4 * i + 3];
+    }
+}
+#else
+// GCC autovectorizer does an excellent job
+__attribute__((optimize("tree-vectorize")))
+static void GDALDeinterleave4Byte(const GByte* CPL_RESTRICT pabySrc,
+                                  GByte* CPL_RESTRICT pabyDest0,
+                                  GByte* CPL_RESTRICT pabyDest1,
+                                  GByte* CPL_RESTRICT pabyDest2,
+                                  GByte* CPL_RESTRICT pabyDest3,
+                                  size_t nIters)
+{
+    for(size_t i = 0; i < nIters; ++i)
+    {
+        pabyDest0[i] = pabySrc[4 * i + 0];
+        pabyDest1[i] = pabySrc[4 * i + 1];
+        pabyDest2[i] = pabySrc[4 * i + 2];
+        pabyDest3[i] = pabySrc[4 * i + 3];
+    }
+}
+#endif
+
+#else
+
+/************************************************************************/
+/*                    GDALDeinterleave3Byte()                           */
+/************************************************************************/
+
+// TODO: Enabling below could help on non-Intel architectures where GCC knows
+// how to auto-vectorize
+//#if defined(__GNUC__)
+//__attribute__((optimize("tree-vectorize")))
+//#endif
+static void GDALDeinterleave3Byte(const GByte* CPL_RESTRICT pabySrc,
+                                  GByte* CPL_RESTRICT pabyDest0,
+                                  GByte* CPL_RESTRICT pabyDest1,
+                                  GByte* CPL_RESTRICT pabyDest2,
+                                  size_t nIters)
+{
+    for(size_t i = 0; i < nIters; ++i)
+    {
+        pabyDest0[i] = pabySrc[3 * i + 0];
+        pabyDest1[i] = pabySrc[3 * i + 1];
+        pabyDest2[i] = pabySrc[3 * i + 2];
+    }
+}
+
+/************************************************************************/
+/*                    GDALDeinterleave4Byte()                           */
+/************************************************************************/
+
+// TODO: Enabling below could help on non-Intel architectures where gcc knows
+// how to auto-vectorize
+//#if defined(__GNUC__)
+//__attribute__((optimize("tree-vectorize")))
+//#endif
+static void GDALDeinterleave4Byte(const GByte* CPL_RESTRICT pabySrc,
+                                  GByte* CPL_RESTRICT pabyDest0,
+                                  GByte* CPL_RESTRICT pabyDest1,
+                                  GByte* CPL_RESTRICT pabyDest2,
+                                  GByte* CPL_RESTRICT pabyDest3,
+                                  size_t nIters)
+{
+    for(size_t i = 0; i < nIters; ++i)
+    {
+        pabyDest0[i] = pabySrc[4 * i + 0];
+        pabyDest1[i] = pabySrc[4 * i + 1];
+        pabyDest2[i] = pabySrc[4 * i + 2];
+        pabyDest3[i] = pabySrc[4 * i + 3];
+    }
+}
+
+#endif
+
+/************************************************************************/
+/*                      GDALDeinterleave()                              */
+/************************************************************************/
+
+/*! Copy values from a pixel-interleave buffer to multiple per-component
+    buffers.
+
+    In pseudo-code
+    \verbatim
+    for(size_t i = 0; i < nIters; ++i)
+        for(int iComp = 0; iComp < nComponents; iComp++ )
+            ppDestBuffer[iComp][i] = pSourceBuffer[nComponents * i + iComp]
+    \endverbatim
+
+    The implementation is optimized for a few cases, like de-interleaving
+    of 3 or 4-components Byte buffers.
+
+    \since GDAL 3.6
+ */
+void GDALDeinterleave(const void* pSourceBuffer,
+                      GDALDataType eSourceDT,
+                      int nComponents,
+                      void** ppDestBuffer,
+                      GDALDataType eDestDT,
+                      size_t nIters)
+{
+    if( eSourceDT == eDestDT )
+    {
+        if( eSourceDT == GDT_Byte )
+        {
+            if( nComponents == 3 )
+            {
+                const GByte* CPL_RESTRICT pabySrc = static_cast<const GByte*>(pSourceBuffer);
+                GByte* CPL_RESTRICT pabyDest0 = static_cast<GByte*>(ppDestBuffer[0]);
+                GByte* CPL_RESTRICT pabyDest1 = static_cast<GByte*>(ppDestBuffer[1]);
+                GByte* CPL_RESTRICT pabyDest2 = static_cast<GByte*>(ppDestBuffer[2]);
+                GDALDeinterleave3Byte(pabySrc, pabyDest0, pabyDest1, pabyDest2, nIters);
+                return;
+            }
+            else if( nComponents == 4 )
+            {
+                const GByte* CPL_RESTRICT pabySrc = static_cast<const GByte*>(pSourceBuffer);
+                GByte* CPL_RESTRICT pabyDest0 = static_cast<GByte*>(ppDestBuffer[0]);
+                GByte* CPL_RESTRICT pabyDest1 = static_cast<GByte*>(ppDestBuffer[1]);
+                GByte* CPL_RESTRICT pabyDest2 = static_cast<GByte*>(ppDestBuffer[2]);
+                GByte* CPL_RESTRICT pabyDest3 = static_cast<GByte*>(ppDestBuffer[3]);
+                GDALDeinterleave4Byte(pabySrc, pabyDest0, pabyDest1, pabyDest2, pabyDest3, nIters);
+                return;
+            }
+        }
+#if ((defined(__GNUC__) && !defined(__clang__)) || defined(__INTEL_CLANG_COMPILER)) && \
+    (defined(__x86_64) || defined(_M_X64)) && defined(HAVE_SSSE3_AT_COMPILE_TIME)
+        else if( eSourceDT == GDT_UInt16 && CPLHaveRuntimeSSSE3() )
+        {
+            if( nComponents == 3 )
+            {
+                const GUInt16* CPL_RESTRICT panSrc = static_cast<const GUInt16*>(pSourceBuffer);
+                GUInt16* CPL_RESTRICT panDest0 = static_cast<GUInt16*>(ppDestBuffer[0]);
+                GUInt16* CPL_RESTRICT panDest1 = static_cast<GUInt16*>(ppDestBuffer[1]);
+                GUInt16* CPL_RESTRICT panDest2 = static_cast<GUInt16*>(ppDestBuffer[2]);
+                GDALDeinterleave3UInt16_SSSE3(panSrc, panDest0, panDest1, panDest2, nIters);
+                return;
+            }
+#if !defined(__INTEL_CLANG_COMPILER)
+            // ICC autovectorizer doesn't do a good job, at least with icx 2022.1.0.20220316
+            else if( nComponents == 4 )
+            {
+                const GUInt16* CPL_RESTRICT panSrc = static_cast<const GUInt16*>(pSourceBuffer);
+                GUInt16* CPL_RESTRICT panDest0 = static_cast<GUInt16*>(ppDestBuffer[0]);
+                GUInt16* CPL_RESTRICT panDest1 = static_cast<GUInt16*>(ppDestBuffer[1]);
+                GUInt16* CPL_RESTRICT panDest2 = static_cast<GUInt16*>(ppDestBuffer[2]);
+                GUInt16* CPL_RESTRICT panDest3 = static_cast<GUInt16*>(ppDestBuffer[3]);
+                GDALDeinterleave4UInt16_SSSE3(panSrc, panDest0, panDest1, panDest2, panDest3, nIters);
+                return;
+            }
+#endif
+        }
+#endif
+    }
+
+    const int nSourceDTSize = GDALGetDataTypeSizeBytes(eSourceDT);
+    const int nDestDTSize = GDALGetDataTypeSizeBytes(eDestDT);
+    for( int iComp = 0; iComp < nComponents; iComp ++ )
+    {
+        GDALCopyWords64(
+            static_cast<const GByte*>(pSourceBuffer) + iComp * nSourceDTSize,
+            eSourceDT,
+            nComponents * nSourceDTSize,
+            ppDestBuffer[iComp],
+            eDestDT,
+            nDestDTSize,
+            nIters);
+    }
+}
