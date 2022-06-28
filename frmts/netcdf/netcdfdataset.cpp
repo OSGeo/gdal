@@ -7663,15 +7663,7 @@ bool netCDFDatasetCreateTempFile( NetCDFFormatEnum eFormat,
                     continue;
                 }
 
-                bool bIsASCII = true;
-                for( int i = 0; pszDimName[i] != '\0'; i++ )
-                {
-                    if( reinterpret_cast<const unsigned char*>(pszDimName)[i] > 127 )
-                    {
-                        bIsASCII = false;
-                        break;
-                    }
-                }
+                const bool bIsASCII = CPLIsASCII(pszDimName, static_cast<size_t>(-1));
                 if( !bIsASCII )
                 {
                     // Workaround https://github.com/Unidata/netcdf-c/pull/450
