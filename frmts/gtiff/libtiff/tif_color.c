@@ -44,7 +44,20 @@ void
 TIFFCIELabToXYZ(TIFFCIELabToRGB *cielab, uint32_t l, int32_t a, int32_t b,
                 float *X, float *Y, float *Z)
 {
-	float L = (float)l * 100.0F / 255.0F;
+	TIFFCIELab16ToXYZ(cielab, l * 257, a * 256, b * 256, X, Y, Z);
+}
+
+/*
+ * For CIELab encoded in 16 bits, L is an unsigned integer range [0,65535].
+ * The a* and b* components are signed integers range [-32768,32767]. The 16
+ * bit chrominance values are encoded as 256 times the 1976 CIE a* and b*
+ * values
+ */
+void
+TIFFCIELab16ToXYZ(TIFFCIELabToRGB *cielab, uint32_t l, int32_t a, int32_t b,
+                  float *X, float *Y, float *Z)
+{
+	float L = (float)l * 100.0F / 65535.0F;
 	float cby, tmp;
 
 	if( L < 8.856F ) {
@@ -55,13 +68,13 @@ TIFFCIELabToXYZ(TIFFCIELabToRGB *cielab, uint32_t l, int32_t a, int32_t b,
 		*Y = cielab->Y0 * cby * cby * cby;
 	}
 
-	tmp = (float)a / 500.0F + cby;
+	tmp = (float)a / 256.0F / 500.0F + cby;
 	if( tmp < 0.2069F )
 		*X = cielab->X0 * (tmp - 0.13793F) / 7.787F;
 	else
 		*X = cielab->X0 * tmp * tmp * tmp;
 
-	tmp = cby - (float)b / 200.0F;
+	tmp = cby - (float)b / 256.0F / 200.0F;
 	if( tmp < 0.2069F )
 		*Z = cielab->Z0 * (tmp - 0.13793F) / 7.787F;
 	else
