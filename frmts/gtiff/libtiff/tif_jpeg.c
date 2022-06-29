@@ -1423,7 +1423,7 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
 
   TIFFErrorExt(tif->tif_clientdata, "TIFFReadScanline",
                "scanline oriented access is not supported for downsampled JPEG "
-               "compressed images, consider enabling TIFF_JPEGCOLORMODE as "
+               "compressed images, consider enabling TIFFTAG_JPEGCOLORMODE as "
                "JPEGCOLORMODE_RGB.");
   return 0;
 }
