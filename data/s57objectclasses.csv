@@ -183,7 +183,7 @@
 502,Cartographic symbol,$CSYMB,ORIENT;$SCALE;$SCODE;,INFORM;NINFOM;NTXTDS;PICREP;SCAMAX;SCAMIN;TXTDSC;,RECDAT;RECIND;SORDAT;SORIND;,$,
 503,Compass,$COMPS,$CSIZE;RYRMGV;VALACM;VALMAG;,INFORM;NINFOM;NTXTDS;PICREP;SCAMAX;SCAMIN;TXTDSC;,RECDAT;RECIND;SORDAT;SORIND;,$,
 504,Text,$TEXTS,$CHARS;COLOUR;$JUSTH;$JUSTV;$NTXST;$SPACE;$TXSTR;,INFORM;NINFOM;NTXTDS;PICREP;SCAMAX;SCAMIN;TXTDSC;,RECDAT;RECIND;SORDAT;SORIND;,$,
-0,"###Codes in the 17xxx range come from past s57objectclasses_iw.csv (Inland Waterways)",,,,,
+0,"###Codes in the 17xxx range come from past s57objectclasses_iw.csv (Inland Waterways)",,,,,,
 17000,Anchor berth,achbrt,catach;clsdng;comctn;DATEND;DATSTA;NOBJNM;OBJNAM;PEREND;PERSTA;RADIUS;restrn;STATUS;,INFORM;NINFOM;NTXTDS;PICREP;SCAMIN;TXTDSC;updmsg;,SORDAT;SORIND;,G,Point;Area;
 17001,Anchorage area,achare,catach;clsdng;comctn;DATEND;DATSTA;NOBJNM;OBJNAM;PEREND;PERSTA;restrn;STATUS;,INFORM;NINFOM;NTXTDS;PICREP;SCAMIN;TXTDSC;updmsg;,SORDAT;SORIND;,G,Point;Area;
 17002,Canal bank,canbnk,catbnk;CONRAD;DATEND;DATSTA;NATSUR;NOBJNM;OBJNAM;,INFORM;NINFOM;NTXTDS;PICREP;SCAMIN;TXTDSC;updmsg;,SORDAT;SORIND;,G,Line;
@@ -219,7 +219,7 @@
 17063,Route planning point,rtplpt,NOBJNM;OBJNAM;,INFORM;NINFOM;NTXTDS;PICREP;SCAMIN;TXTDSC;updmsg;,SORDAT;SORIND;,G,Point;
 17064,Terminal,termnl,cattml;comctn;NOBJNM;OBJNAM;STATUS;TIMEND;TIMSTA;trshgd;unlocd;,INFORM;NINFOM;NTXTDS;PICREP;SCAMIN;TXTDSC;updmsg;,SORDAT;SORIND;,G,Point;Area;
 17065,Turning basin,trnbsn,HORCLR;NOBJNM;STATUS;OBJNAM;,INFORM;NINFOM;NTXTDS;PICREP;SCAMIN;TXTDSC;updmsg;,SORDAT;SORIND;,G,Point;Area;
-0,"###Codes in the 20xxx and 21xxx range come from past s57objectclasses_aml.csv (Additional_Military_Layers)",,,,,
+0,"###Codes in the 20xxx and 21xxx range come from past s57objectclasses_aml.csv (Additional_Military_Layers)",,,,,,
 20484,"ATS Route Centreline","atsctl","authty;linech;NOBJNM;OBJNAM","AGENCY;CSCALE;elvacc;errell;HORACC;INFORM;NINFOM;NTXTDS;PICREP;POSACC;PRCTRY;PUBREF;RECDAT;QUAPOS;seccvt;secido;secown;secpmk;SORDAT;SORIND;TXTDSC;VERACC",,"G","L"
 20485,"Airspace Restriction","airres + catasr","authty;catasr;linech;maxalt;maxftl;minalt;minftl;NOBJNM;OBJNAM;HUNITS;VERDAT","AGENCY;CSCALE;elvacc;errell;HORACC;INFORM;NINFOM;NTXTDS;PICREP;POSACC;PRCTRY;PUBREF;RECDAT;QUAPOS;seccvt;secido;secown;secpmk;SORDAT;SORIND;TXTDSC;VERACC",,"G","A"
 20486,"Area of Imagery Coverage","imgare","bearng;catimg;ELEVAT;HUNITS;orgntr;SUREND;VERDAT","AGENCY;CSCALE;elvacc;errell;HORACC;INFORM;NINFOM;NTXTDS;PICREP;POSACC;PRCTRY;PUBREF;RECDAT;QUAPOS;seccvt;secido;secown;secpmk;SORDAT;SORIND;TXTDSC;VERACC",,"G","A"
@@ -280,7 +280,7 @@
 20543,"Ice Movement","icemov","icebsp;icebdr;NOBJNM;OBJNAM","AGENCY;CSCALE;elvacc;errell;HORACC;INFORM;NINFOM;NTXTDS;PICREP;POSACC;PRCTRY;PUBREF;RECDAT;QUAPOS;seccvt;secido;secown;secpmk;SORDAT;SORIND;TXTDSC;VERACC",,"G","P;A"
 20544,"Traffic route","tfcrte","linech;NOBJNM;OBJNAM;PEREND;PERSTA;traden;TRAFIC;typshp","AGENCY;CSCALE;elvacc;errell;HORACC;INFORM;NINFOM;NTXTDS;PICREP;POSACC;PRCTRY;PUBREF;RECDAT;QUAPOS;seccvt;secido;secown;secpmk;SORDAT;SORIND;TXTDSC;VERACC",,"G","L"
 20717,"User Defined","u_defd","txtdes","AGENCY;CSCALE;elvacc;errell;HORACC;INFORM;NINFOM;NTXTDS;PICREP;POSACC;PRCTRY;PUBREF;RECDAT;QUAPOS;seccvt;secido;secown;secpmk;SORDAT;SORIND;TXTDSC;VERACC",,"G","P;L;A"
-20718,"Small Bottom Object","smalbo","blndzn;brmchm;brpctg;COLOUR;comsys;datfir;datlst;depwat;DUNITS;gendep;HORLEN;HORWID;HUNITS;incltn;layptm;layrfn;laytim;madsig;magany;magint;minern;miscls;miscom;misdat;misnme;mnhsys;mnimnc;mnimnt;mnssys;mulcon;mwdcrn;NATCON;navsys;notfnd;nmprob;objtrn;objshp onsonr;orbobn;orgdat;orgntr;ORIENT;QUASOU;scrdim;senfir;senlst;snrflc;soudat;stacon;surdat;SUREND;tarstg;TECSOU;unwrfm;VERLEN","AGENCY;CSCALE;elvacc;errell;HORACC;INFORM;NINFOM;NTXTDS;PICREP;POSACC;PRCTRY;PUBREF;RECDAT;QUAPOS;seccvt;secido;secown;secpmk;SORDAT;SORIND;TXTDSC;VERACC",,"G","P"
+20718,"Small Bottom Object","smalbo","blndzn;brmchm;brpctg;COLOUR;comsys;datfir;datlst;depwat;DUNITS;gendep;HORLEN;HORWID;HUNITS;incltn;layptm;layrfn;laytim;madsig;magany;magint;minern;miscls;miscom;misdat;misnme;mnhsys;mnimnc;mnimnt;mnssys;mulcon;mwdcrn;NATCON;navsys;notfnd;nmprob;objtrn;objshp;onsonr;orbobn;orgdat;orgntr;ORIENT;QUASOU;scrdim;senfir;senlst;snrflc;soudat;stacon;surdat;SUREND;tarstg;TECSOU;unwrfm;VERLEN","AGENCY;CSCALE;elvacc;errell;HORACC;INFORM;NINFOM;NTXTDS;PICREP;POSACC;PRCTRY;PUBREF;RECDAT;QUAPOS;seccvt;secido;secown;secpmk;SORDAT;SORIND;TXTDSC;VERACC",,"G","P"
 21484,"Completeness for the product specification","m_conf + catcnf","catcnf","AGENCY;CSCALE;elvacc;errell;HORACC;INFORM;NINFOM;NTXTDS;PICREP;POSACC;PRCTRY;PUBREF;RECDAT;QUAPOS;seccvt;secido;secown;secpmk;SORDAT;SORIND;TXTDSC;VERACC",,"M","A"
 21485,"Security Classification Information","m_clas","","AGENCY;CSCALE;elvacc;errell;HORACC;INFORM;NINFOM;NTXTDS;PICREP;POSACC;PRCTRY;PUBREF;RECDAT;QUAPOS;seccvt;secido;secown;secpmk;SORDAT;SORIND;TXTDSC;VERACC",,"M","A"
 21486,"Vertical Datum Shift Area","m_vers","vershf","AGENCY;CSCALE;elvacc;errell;HORACC;INFORM;NINFOM;NTXTDS;PICREP;POSACC;PRCTRY;PUBREF;RECDAT;QUAPOS;seccvt;secido;secown;secpmk;SORDAT;SORIND;TXTDSC;VERACC",,"M","P;A"
