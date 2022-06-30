@@ -85,6 +85,7 @@ MSGN driver:
  * make sure _img_desc_record member variable is initialized (CID 1073912)
 
 netCDF driver:
+ * fix reading geotransform of a CF file with long/lat grid mapping (3.5.0 regression)
  * catch potential C++ exception (CID 1488840, 1488841)
  * avoid crash in nc_create() on an invalid output directory with netCDF 4.9.0
  * fix non-ASCII filename support on Windows with netCDF 4.9.0
@@ -136,6 +137,7 @@ Zarr driver:
 * OGR_CT: cache axis orientation for faster execution
 * OGR_CT: avoid unnecessary temporary vector creation
 * OGR_CT: restore use of WebMercator to WGS84 lon/lat specialized implementation
+* OSRGetProjTLSContext(): make it faster on Linux by saving getpid() system call
 
 ### Vector drivers
 
@@ -189,6 +191,9 @@ Parquet driver:
  * fix use of wrong variable in EstablishFeatureDefn()
  * make sure 'geo' metadata is embedded in ARROW:schema
  * do not write id in members of datum ensemble to workaround OSGeo/PROJ#3221
+
+S57 driver:
+ * fix wrong punctuation in .csv resource files
 
 SQLite driver:
  * do not register ST_MakeValid() function when GEOS not available
