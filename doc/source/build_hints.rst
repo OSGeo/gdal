@@ -224,6 +224,18 @@ Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
     Control whether to use Arrow. Defaults to ON when Arrow is found.
 
 
+basisu
+******
+
+The `Basis Universal <https://github.com/rouault/basis_universal/tree/cmake>` library
+is required for the :ref:`raster.basisu` and :ref:`raster.ktx2` drivers.
+Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable or ``basisu_ROOT`` variable.
+
+.. option:: GDAL_USE_BASISU=ON/OFF
+
+    Control whether to use basisu. Defaults to ON when basisu is found.
+
+
 Blosc
 *****
 

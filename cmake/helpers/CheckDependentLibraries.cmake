@@ -604,6 +604,7 @@ gdal_check_package(JXL_THREADS "JPEG-XL threading" CAN_DISABLE)
 
 # unused for now gdal_check_package(OpenMP "")
 gdal_check_package(Crnlib "enable gdal_DDS driver" CAN_DISABLE)
+gdal_check_package(basisu "Enable BASISU driver" CONFIG CAN_DISABLE)
 gdal_check_package(IDB "enable ogr_IDB driver" CAN_DISABLE)
 # TODO: implement FindRASDAMAN libs: -lrasodmg -lclientcomm -lcompression -lnetwork -lraslib
 gdal_check_package(RASDAMAN "enable rasdaman driver" CAN_DISABLE)

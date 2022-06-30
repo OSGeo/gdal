@@ -562,6 +562,11 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_JPEGXL();
 #endif
 
+#ifdef FRMT_basisu_ktx2
+    GDALRegister_BASISU();
+    GDALRegister_KTX2();
+#endif
+
     // NOTE: you need to generally insert your own driver before that line.
 
     // NOTE: frmts/drivers.ini in the same directory should be kept in same
