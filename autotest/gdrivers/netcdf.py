@@ -481,6 +481,21 @@ def test_netcdf_11():
     ds = None
 
 ###############################################################################
+# Check that we get a geotransform from a file with a long/lat grid mapping
+
+
+def test_netcdf_cf_geog_with_srs():
+
+    ds = gdal.Open('data/netcdf/cf_geog_with_srs.nc')
+
+    gt = ds.GetGeoTransform()
+    assert gt == pytest.approx([-0.1,0.2,0,-79.1,0,-0.2], rel=1e-5)
+
+    assert ds.GetSpatialRef() is not None
+
+    ds = None
+
+###############################################################################
 # check for scale/offset set/get.
 
 
