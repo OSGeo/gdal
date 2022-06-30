@@ -116,6 +116,13 @@ else ()
         "
     HAVE_5ARGS_MREMAP)
 
+  check_c_source_compiles(
+    "
+        #include <pthread.h>
+        int main() { pthread_atfork(0,0,0); 0; }
+        "
+    HAVE_PTHREAD_ATFORK)
+
   check_include_file("sys/stat.h" HAVE_SYS_STAT_H)
   if (${CMAKE_SYSTEM} MATCHES "Linux")
       check_include_file("linux/fs.h" HAVE_LINUX_FS_H)
