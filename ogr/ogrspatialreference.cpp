@@ -3671,17 +3671,34 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition,
         }
     }
 
-    if( STARTS_WITH_CI(pszDefinition, "EPSG:")
+    const bool bStartsWithEPSG = STARTS_WITH_CI(pszDefinition, "EPSG:");
+    if( bStartsWithEPSG
         || STARTS_WITH_CI(pszDefinition, "EPSGA:") )
     {
         OGRErr eStatus = OGRERR_NONE;
 
-        if( STARTS_WITH_CI(pszDefinition, "EPSG:") )
-            eStatus = importFromEPSG( atoi(pszDefinition+5) );
+#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 1
+        if( strchr(pszDefinition, '+') != nullptr )
+        {
+            // Use proj_create() as it allows things like EPSG:3157+4617
+            // that are not normally supported by the below code that
+            // builds manually a compound CRS
+            PJ* pj = proj_create(d->getPROJContext(), pszDefinition);
+            if( !pj )
+            {
+                return OGRERR_FAILURE;
+            }
+            Clear();
+            d->setPjCRS(pj);
+            return OGRERR_NONE;
+        }
+        else
+#endif
+        {
+            eStatus = importFromEPSG( atoi(pszDefinition+ (bStartsWithEPSG ? 5 : 6)) );
+        }
 
-        else // if( STARTS_WITH_CI(pszDefinition, "EPSGA:") )
-            eStatus = importFromEPSGA( atoi(pszDefinition+6) );
-
+#if !(PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 1)
         // Do we want to turn this into a compound definition
         // with a vertical datum?
         if( eStatus == OGRERR_NONE && strchr( pszDefinition, '+' ) != nullptr )
@@ -3711,6 +3728,7 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition,
                 SetCompoundCS(osName, &oHorizSRS, &oVertSRS);
             }
         }
+#endif
 
         return eStatus;
     }
