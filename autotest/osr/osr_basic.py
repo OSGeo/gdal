@@ -2009,3 +2009,16 @@ def test_osr_basic_get_linear_units_compound_engineering_crs():
 
     assert srs.GetLinearUnits() == pytest.approx(0.304800609601219)
     assert srs.GetLinearUnitsName() == "US survey foot"
+
+
+###############################################################################
+# Test EPSG:horizontal_code+geographic_code
+
+
+def test_osr_basic_epsg_horizontal_and_ellipsoidal_height():
+
+    if osr.GetPROJVersionMajor() < 9:
+        pytest.skip('requires PROJ 9 or later')
+    sr = osr.SpatialReference()
+    assert sr.SetFromUserInput('EPSG:3157+4617') == ogr.OGRERR_NONE
+    assert sr.GetAxesCount() == 3
