@@ -4614,7 +4614,7 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
     // Process geolocation arrays from CF "coordinates" attribute.
     if( ProcessCFGeolocation(nGroupId, nVarId) )
     {
-        if( !oSRS.IsProjected() && !bSwitchedXY )
+        if( !oSRS.IsGeographic() && !oSRS.IsProjected() && !bSwitchedXY )
         {
             bGotCfGT = false;
         }
