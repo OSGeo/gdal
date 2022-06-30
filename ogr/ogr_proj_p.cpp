@@ -208,7 +208,9 @@ static OSRPJContextHolder& GetProjTLSContextHolder()
     if( curpid != l_projContext.curpid )
 #endif
     {
-#if !defined(HAVE_PTHREAD_ATFORK)
+#if defined(HAVE_PTHREAD_ATFORK)
+        g_bForkOccured = false;
+#else
         l_projContext.curpid = curpid;
 #endif
 #if defined(SIMUL_OLD_PROJ6) || !(PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 2)
