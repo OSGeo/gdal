@@ -177,7 +177,10 @@ vector data. For writing several vector datasets into MBTiles file an
 intermediate format like GeoPackage must be used as a container so that
 all layers can be converted at the same time. Write-once support means also
 that existing vector layers can't be edited.
-   
+
+Part of the conversion is multi-threaded by default, using as many
+threads as there are cores. The number of threads used can be controlled
+with the :decl_configoption:`GDAL_NUM_THREADS` configuration option.
 
 Creation options
 ----------------
