@@ -573,6 +573,7 @@ add_subdirectory(man)
 
 # GDAL 4.0 ? Install headers in ${CMAKE_INSTALL_INCLUDEDIR}/gdal ?
 set(GDAL_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR})
+set(GDAL_INSTALL_FULL_INCLUDEDIR ${CMAKE_INSTALL_FULL_INCLUDEDIR})
 
 # So that GDAL can be used as a add_subdirectory() of another project
 target_include_directories(
