@@ -265,7 +265,7 @@ function(gdal_generate_config)
         set(CONFIG_PREFIX "${CMAKE_INSTALL_PREFIX}")
     endif()
     set(CONFIG_DATA "${CONFIG_PREFIX}/${GDAL_RESOURCE_PATH}")
-    set(CONFIG_CFLAGS "-I${GDAL_INSTALL_FULL_INCLUDEDIR}")
+    set(CONFIG_CFLAGS "-I${CMAKE_INSTALL_FULL_INCLUDEDIR}")
     gdal_join_and_quote(CONFIG_DATA)
     gdal_join_and_quote(CONFIG_CFLAGS)
 
