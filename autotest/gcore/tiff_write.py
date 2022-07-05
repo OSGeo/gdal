@@ -8439,6 +8439,27 @@ def test_tiff_write_setgeotransform_and_setmetadata(setmetadata_before):
     gdal.GetDriverByName('GTiff').Delete(filename)
 
 
+@pytest.mark.parametrize("getspatialref_before", [True, False])
+def test_tiff_write_setgeotransform_and_getspatialref(getspatialref_before):
+
+    filename = '/vsimem/out.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(filename, 1, 1)
+    ds.SetGeoTransform([1,2,3,4,5,-6])
+    ds = None
+    ds = gdal.Open(filename, gdal.GA_Update)
+    if getspatialref_before:
+        ds.GetSpatialRef()
+    ds.SetGeoTransform([10,20,30,40,50,-60])
+    if not getspatialref_before:
+        ds.GetSpatialRef()
+    ds = None
+    ds = gdal.Open(filename)
+    assert ds.GetGeoTransform() == (10,20,30,40,50,-60)
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete(filename)
+
+
 
 def test_tiff_write_cleanup():
     gdaltest.tiff_drv = None
