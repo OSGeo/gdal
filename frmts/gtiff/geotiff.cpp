@@ -13961,10 +13961,6 @@ void GTiffDataset::LookForProjection()
 
         GTIFFree( hGTIF );
     }
-
-    m_bGeoTIFFInfoChanged = false;
-    m_bForceUnsetGTOrGCPs = false;
-    m_bForceUnsetProjection = false;
 }
 
 /************************************************************************/
