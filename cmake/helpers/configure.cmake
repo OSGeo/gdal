@@ -241,6 +241,27 @@ else ()
     set(VSI_FTRUNCATE64 "ftruncate")
   endif ()
 
+  # For some reason, above tests detect xxxx64 symbols for iOS, which are not
+  # available at build time.
+  if (${CMAKE_SYSTEM_NAME} MATCHES "iOS")
+    set(VSI_FOPEN64 "fopen")
+    set(VSI_FTRUNCATE64 "ftruncate")
+    set(VSI_FTELL64 "ftell")
+    set(VSI_FSEEK64 "fseek")
+    set(VSI_STAT64 "stat")
+    set(VSI_STAT64_T "stat")
+    unset(HAVE_FOPEN64)
+    unset(HAVE_FOPEN64 CACHE)
+    unset(HAVE_FTRUNCATE64)
+    unset(HAVE_FTRUNCATE64 CACHE)
+    unset(HAVE_FTELL64)
+    unset(HAVE_FTELL64 CACHE)
+    unset(HAVE_FSEEK64)
+    unset(HAVE_FSEEK64 CACHE)
+    unset(HAVE_STATVFS64)
+    unset(HAVE_STATVFS64 CACHE)
+  endif()
+
   set(UNIX_STDIO_64 TRUE)
 
   set(INCLUDE_XLOCALE_H)
