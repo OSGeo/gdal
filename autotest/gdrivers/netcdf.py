@@ -5260,6 +5260,26 @@ def test_netcdf_read_geogcrs_component_names():
     assert srs.GetAttrValue('GEOGCS|PRIMEM') == 'Greenwich'
 
 
+###############################################################################
+
+
+def test_netcdf_stats():
+
+    src_ds = gdal.Open('data/byte.tif')
+    filename = 'tmp/test_netcdf_stats.nc'
+    gdal.GetDriverByName('netCDF').CreateCopy(filename, src_ds)
+    ds = gdal.Open(filename)
+    gdal.ErrorReset()
+    assert ds.GetRasterBand(1).ComputeStatistics(False) == pytest.approx([74.0, 255.0, 126.765, 22.928470838675658])
+    assert gdal.GetLastErrorMsg() == ''
+    ds = None
+    assert gdal.VSIStatL(filename + '.aux.xml') is not None
+    ds = gdal.Open(filename)
+    assert float(ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM')) == 74
+    ds = None
+    gdal.GetDriverByName('netCDF').Delete(filename)
+
+
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.
