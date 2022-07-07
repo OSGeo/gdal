@@ -76,7 +76,7 @@ NON_FUZZING_CXXFLAGS="$NON_FUZZING_CFLAGS -stdlib=libc++"
 
 # build sqlite
 cd sqlite
-CFLAGS="$NON_FUZZING_CFLAGS -DSQLITE_ENABLE_COLUMN_METADATA" ./configure --prefix=$SRC/install --disable-tcl
+CFLAGS="$NON_FUZZING_CFLAGS -DSQLITE_ENABLE_COLUMN_METADATA" ./configure --prefix=$SRC/install --enable-rtree --disable-tcl
 make clean -s
 make -j$(nproc) -s
 make install
