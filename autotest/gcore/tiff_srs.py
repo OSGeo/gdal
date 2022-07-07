@@ -1022,3 +1022,16 @@ def test_tiff_srs_compound_crs_with_local_cs():
     assert srs.GetAttrValue('COMPD_CS|VERT_CS|UNIT') in ('Meter', 'metre'), srs.ExportToWkt(['FORMAT=WKT2_2019'])
     ds = None
     gdal.Unlink(filename)
+
+
+def test_tiff_srs_read_esri_pcs_gcs_ellipsoid_names():
+
+    ds = gdal.Open('data/gtiff/esri_pcs_gcs_ellipsoid_names.tif')
+    srs = ds.GetSpatialRef()
+    # Check that the names of the SRS components are morphed from ESRI names
+    # to EPSG WKT2 names
+    wkt = srs.ExportToWkt(['FORMAT=WKT2'])
+    assert 'PROJCRS["RT90 5 gon O"' in wkt
+    assert 'BASEGEOGCRS["RT90"' in wkt
+    assert 'DATUM["Rikets koordinatsystem 1990"' in wkt
+    assert 'ELLIPSOID["Bessel 1841"' in wkt
