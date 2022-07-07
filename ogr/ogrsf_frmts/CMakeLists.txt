@@ -23,7 +23,6 @@ ogr_default_driver(vrt "VRT - Virtual Format")
 # Caution: if modifying AVC declaration here, also modify it in gdal.cmake
 ogr_optional_driver(avc AVC)
 
-ogr_optional_driver(sdts SDTS) # depends ISO8211
 ogr_optional_driver(gml GML) # when not found both EXPAT/XercesC, return error in driver, referenced by WCS
 
 # ######################################################################################################################
@@ -50,6 +49,9 @@ ogr_optional_driver(mapml MapML)
 
 # ######################################################################################################################
 #
+
+ogr_dependent_driver(sdts SDTS "GDAL_ENABLE_DRIVER_SDTS")
+
 # XML drivers
 ogr_dependent_driver(gpx "GPX - GPS Exchange Format" "GDAL_USE_EXPAT")
 ogr_dependent_driver(gmlas GMLAS "GDAL_USE_XERCESC;OGR_ENABLE_DRIVER_PGDUMP")
@@ -65,7 +67,7 @@ ogr_dependent_driver(wfs "OGC WFS service" "GDAL_USE_CURL")
 ogr_dependent_driver(ngw "NextGIS Web" "GDAL_USE_CURL")
 ogr_dependent_driver(elastic "ElasticSearch" "GDAL_USE_CURL")
 
-ogr_optional_driver(idrisi IDRISI)
+ogr_dependent_driver(idrisi IDRISI "GDAL_ENABLE_DRIVER_IDRISI")
 
 ogr_dependent_driver(pds "Planetary Data Systems TABLE" "GDAL_ENABLE_DRIVER_PDS")
 
