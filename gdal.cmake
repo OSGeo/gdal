@@ -1,5 +1,14 @@
 # CMake4GDAL project is distributed under MIT license. See accompanying file LICENSE.txt.
 
+# Increment the below number each time an ABI incompatible change is done,
+# e.g removing a public function/method, changing its prototype (including
+# adding a default value to a parameter of a C++ method), adding
+# a new member or virtual function in a public C++ class, etc.
+# This will typically happen for each GDAL feature release (change of X or Y in
+# a X.Y.Z numbering scheme), but should not happen for a bugfix release (change of Z)
+# Previous value: 31 for GDAL 3.5
+set(GDAL_SOVERSION 31)
+
 # Switches to control build targets(cached)
 option(ENABLE_GNM "Build GNM (Geography Network Model) component" ON)
 option(ENABLE_PAM "Set ON to enable Persistent Auxiliary Metadata (.aux.xml)" ON)

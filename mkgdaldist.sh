@@ -24,7 +24,7 @@ fi
 
 GITURL="https://github.com/OSGeo/gdal"
 
-if [ $# -lt 1 ] ; then
+if [ $# -lt 1 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ] ; then
   echo "Usage: mkgdaldist.sh <version> [-date date] [-branch branch|-tag tag] [-rc n] [-url url]"
   echo " <version> - version number used in name of generated archive."
   echo " -date     - date of package generation, current date used if not provided"
@@ -137,30 +137,17 @@ rm -rf ci
 CWD=${PWD}
 
 #
-# Generate ./configure
-#
-echo "* Generating ./configure..."
-./autogen.sh
-rm -rf autom4te.cache
-
-#
 # Generate man pages
 #
 echo "* Generating man pages..."
 
-if test -f "doc/Makefile"; then
-    (cd doc; make man)
-    mkdir -p man/man1
-    cp doc/build/man/*.1 man/man1
-    rm -rf doc/build
-    rm -f doc/.doxygen_up_to_date
-else
-    (cat Doxyfile ; echo "ENABLED_SECTIONS=man"; echo "INPUT=apps swig/python/gdal-utils/scripts"; echo "FILE_PATTERNS=*.cpp *.dox"; echo "GENERATE_HTML=NO"; echo "GENERATE_MAN=YES"; echo "QUIET=YES") | doxygen -
-    rm -f doxygen_sqlite3.db
-    rm -f man/man1/*_dist_wrk_gdal_gdal_apps_.1
-fi
+(cd doc; make man)
+mkdir -p man/man1
+cp doc/build/man/*.1 man/man1
+rm -rf doc/build
+rm -f doc/.doxygen_up_to_date
 
-if test ! -d "man"; then
+if test ! -f "man/man1/gdalinfo.1"; then
     echo " make man failed"
 fi
 
@@ -169,19 +156,6 @@ cd "$CWD"
 echo "* Cleaning doc/ and perftests/ under $CWD..."
 rm -rf doc
 rm -rf perftests
-
-# They currently require SWIG 1.3.X, which is not convenient as we need
-# newer SWIG for newer Python versions
-echo "SWIG C# interfaces *NOT* generated !"
-
-#
-# Generate SWIG interface for C#
-#
-#echo "* Generating SWIG C# interfaces..."
-#CWD=${PWD}
-#cd swig/csharp
-#./mkinterface.sh
-#cd ${CWD}
 
 #
 # Make distribution packages
