@@ -197,6 +197,14 @@ detected. The behavior can also be globally controlled with the following variab
      This option should be set before CMakeCache.txt is created.
 
 
+.. note::
+
+    Using together GDAL_USE_EXTERNAL_LIBS=OFF and GDAL_USE_INTERNAL_LIBS=OFF
+    will result in a CMake configuration failure, because the following libraries
+    (either as external dependencies or using the internal copy) are at least
+    required: ZLIB, TIFF, GEOTIFF and JSONC. Enabling them as external or internal
+    libraries is thus required.
+
 Armadillo
 *********
 
