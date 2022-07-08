@@ -39,7 +39,7 @@ sh $SCRIPT_DIR/install-python.sh
 export WINEPREFIX=$HOME/.wine64
 
 sudo apt-get install -y --no-install-recommends \
-    ccache automake \
+    ccache automake cmake \
     binutils-mingw-w64-x86-64 \
     gcc-mingw-w64-x86-64 \
     g++-mingw-w64-x86-64 \
@@ -68,22 +68,22 @@ $SCRIPT_DIR/../common_install.sh
 # build sqlite3
 wget https://sqlite.org/2018/sqlite-autoconf-3250100.tar.gz
 tar xzf sqlite-autoconf-3250100.tar.gz
-(cd sqlite-autoconf-3250100 && ./configure  --host=x86_64-w64-mingw32 --prefix=/tmp/install && make -j3 && make install)
+(cd sqlite-autoconf-3250100 && CFLAGS="-O2 -DSQLITE_ENABLE_COLUMN_METADATA" ./configure  --host=x86_64-w64-mingw32 --enable-rtree --prefix=/tmp/install && make -j3 && make install)
 
 # Build proj
 (cd proj; ./autogen.sh && CFLAGS='-DPROJ_RENAME_SYMBOLS' CXXFLAGS='-DPROJ_RENAME_SYMBOLS' SQLITE3_CFLAGS='-I/tmp/install/include' SQLITE3_LIBS='-L/tmp/install/lib -lsqlite3' ./configure --disable-static --host=x86_64-w64-mingw32 --prefix=/tmp/install && make -j3)
 (cd proj; sudo make -j3 install)
 
 # build GDAL
-./autogen.sh
-./configure --host=x86_64-w64-mingw32 --with-proj=/tmp/install
-make USER_DEFS="-Wextra -Werror" -j3
-cd apps
-make USER_DEFS="-Wextra -Werror" test_ogrsf.exe
-cd ..
-ln -sf $PWD/.libs/libgdal-*.dll $WINEPREFIX/drive_c/windows
+mkdir build
+cd build
+cmake .. -DPROJ_INCLUDE_DIR=/tmp/install/include -DPROJ_LIBRARY=/tmp/install/lib/libproj.dll.a -DSQLITE3_INCLUDE_DIR=/tmp/install/include -DSQLITE3_LIBRARY=/tmp/install/lib/libsqlite3.dll.a -DCMAKE_C_FLAGS="-DPROJ_RENAME_SYMBOLS -Werror" -DCMAKE_CXX_FLAGS="-DPROJ_RENAME_SYMBOLS -Werror" -DBUILD_PYTHON_BINDINGS=OFF -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_SYSTEM_VERSION=1 -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ -DCMAKE_RC_COMPILER=86_64-w64-mingw32-windres -DCMAKE_RANLIB=x86_64-w64-mingw32-ranlib -DCMAKE_FIND_ROOT_PATH=/usr/x86_64-w64-mingw32 -DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER -DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY
+
+make -j3
+ln -sf $PWD/libgdal-*.dll $WINEPREFIX/drive_c/windows
 ln -sf /tmp/install/bin/libproj-15.dll $WINEPREFIX/drive_c/windows
 ln -sf /tmp/install/bin/libsqlite3-0.dll $WINEPREFIX/drive_c/windows
+cd ..
 
 cd swig/python
 ln -s "$WINEPREFIX/drive_c/users/root/Local Settings/Application Data/Programs/Python/Python37" $WINEPREFIX/drive_c/Python37
@@ -99,7 +99,8 @@ rm -f "$WORK_DIR/ccache.tar.gz"
 (cd $HOME && tar czf "$WORK_DIR/ccache.tar.gz" .ccache)
 
 
-wine64 apps/gdalinfo.exe --version
+wine64 build/apps/gdalinfo.exe --version
+rm -f swig/python/gdal-utils/osgeo_utils/samples/validate_gpkg.py  # the sqlite3 lib of python lacks the rtree module
 cd autotest
 # Does not work under wine
 rm -f gcore/rfc30.py
@@ -117,5 +118,5 @@ export PYTEST="wine64 $PYTHON_DIR/python.exe -m pytest -vv -p no:sugar --color=n
 # Run all the Python autotests
 GDAL_DATA=$PWD/../data \
     PYTHONPATH=$PWD/../swig/python/build/lib.win-amd64-3.7 \
-    PATH=$PWD/../gdal:$PWD/../apps/.libs:$PWD:$PATH \
+    PATH=$PWD/../gdal/build:$PWD/../build/apps:$PWD:$PATH \
     $PYTEST
