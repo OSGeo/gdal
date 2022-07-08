@@ -407,8 +407,10 @@ gdal_internal_library(QHULL)
 set(GDAL_USE_LIBCSF_INTERNAL ON)
 
 # Compression used by GTiff and MRF
-gdal_check_package(LERC "Enable LERC (external)" CAN_DISABLE RECOMMENDED)
-gdal_internal_library(LERC)
+if( NOT WORDS_BIGENDIAN )
+  gdal_check_package(LERC "Enable LERC (external)" CAN_DISABLE RECOMMENDED)
+  gdal_internal_library(LERC)
+endif()
 
 gdal_check_package(BRUNSLI "Enable BRUNSLI for JPEG packing in MRF" CAN_DISABLE RECOMMENDED)
 
