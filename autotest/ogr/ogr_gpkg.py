@@ -79,16 +79,23 @@ def startup_and_cleanup():
 ###############################################################################
 # Validate a geopackage
 
-
-def _validate_check(filename):
+def has_validate():
     path = samples_path
     if path not in sys.path:
         sys.path.append(path)
     try:
         import validate_gpkg
+        validate_gpkg.check
     except ImportError:
         print('Cannot import validate_gpkg')
+        return False
+    return True
+
+
+def _validate_check(filename):
+    if not has_validate():
         return
+    import validate_gpkg
     validate_gpkg.check(filename, extra_checks=True, warning_as_error=True)
 
 
@@ -1292,8 +1299,9 @@ def test_ogr_gpkg_18():
     ds.ReleaseResultSet(sql_lyr)
     ds = None
 
-    ret = validate('/vsimem/ogr_gpkg_18.gpkg', quiet=True)
-    assert not ret, 'validation unexpectedly succeeded'
+    if has_validate():
+        ret = validate('/vsimem/ogr_gpkg_18.gpkg', quiet=True)
+        assert not ret, 'validation unexpectedly succeeded'
 
     # Test non-linear geometry in GeometryCollection
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_18.gpkg')
