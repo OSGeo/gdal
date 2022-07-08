@@ -29,14 +29,10 @@ Prerequisites:
 
 Process :
 
-1) a) Regenerate configure using autogen.sh and commit if changed.
-   b) Regenerate swig generated files for python bindings and commit if changed.
+1) a) Regenerate swig generated files for python bindings and commit if changed.
+      Currently SWIG 4.0.2 is used.
 
-   There is often a reference system on which this should be done (i.e. Frank's
-   dev workstation) to avoid unnecessary churn from different autoconf or swig
-   versions.
-
-   c) "cd scripts; make completion" to regenerate scripts/gdal-bash-completion.sh
+   b) "cd scripts; make completion" to regenerate scripts/gdal-bash-completion.sh
       if new command line switches have been added. scripts/completionFinder.py
       must also be edited before if new utilities/scripts are added/removed.
 
@@ -55,12 +51,8 @@ Process :
 
 3.2) For major releases update the VERSION macro in nmake.opt (for 1.6, 1.7etc)
 
-4) Update LIBGDAL_CURRENT/REVISION/AGE macros in GDALmake.opt.in.
-   - For a release with no interface changes just bump REVISION.
-   - Adding interfaces, bump CURRENT/AGE, set REVISION to 0.
-   - Deleting/changing interfaces in C or C++ API, or modification of
-     the C++ ABI (e.g. addition of virtual method, new argument with default value, etc.):
-     bump CURRENT, set others to zero.
+4) Update the GDAL_SOVERSION number at top of gdal.cmake according to the
+   directions given in the comment preceding it.
 
 5) Prepare release overview in the NEWS file. For example, to get all changes
    from v3.4.0 to current HEAD
@@ -217,22 +209,24 @@ the GDAL package by one of the current owners : HowardB/FrankW/EvenR)
 
 15.2) create gdal sdist and upload to pypi:
 
-    a) cd swig/python
+    a) Create a build directory if not already done. Go to it and run cmake
 
-    b) python setup.py sdist
+    b) cd $BUILD_DIR/swig/python
 
-    c) Check the output:
+    c) python setup.py sdist
+
+    d) Check the output:
         twine check dist/GDAL-*.gz
 
-    d) For trial :
+    e) For trial :
         twine upload dist/GDAL-*.gz -r pypitest
 
-    e) For real :
+    f) For real :
         twine upload dist/GDAL-*.gz
 
 15.3) create gdal-utils wheel and upload to pypi:
 
-    a) cd swig/python/gdal-utils
+    a) cd $BUILD_DIR/swig/python/gdal-utils
 
     b) python setup.py bdist_wheel
 
@@ -245,41 +239,14 @@ the GDAL package by one of the current owners : HowardB/FrankW/EvenR)
     d) For real :
         twine upload dist/gdal_utils-*.whl
 
-16) Build and bundle the java bindings.
-
-a) cd swig/java
-
-b) Make any updates to java.opt that might be required for the platform. For
-   example osx and windows users will have to change JAVA_INCLUDE to contain
-   include/darwin and include/win32 respectively.
-
-c) Build the bindings:
-
-     make
-
-17) Build maven artifacts. NOTE: This step only works on Linux and OSX since it
-    requires a shell script to build javadocs.
-
-    A quick one-liner for this step is:
-
-      ant maven_sign -Dgpg.key=... -Dgpg.pass=...
-
-    This will build and sign the artifacts with a single command. Read on for
-    more details.
-
-a)  Build the maven artifacts:
-
-     ant maven
-
-    Upon success maven artifacts should be located in the build/maven directory.
-
-b)  Sign maven artifacts with GPG. This step is required in order to deploy the
+16) Generate signed maven artifacts with GPG for Java bindings.
+    This step is required in order to deploy the
     maven artifacts to the central Maven repository. Before this step can
     proceed you must set up a signing key as described here:
 
       http://central.sonatype.org/pages/working-with-pgp-signatures.html
 
-    Each developer can use their own signing key although it is usually best to
+ a) Each developer can use their own signing key although it is usually best to
     avoid constantly using a different key for releases as users will need to
     import the public key in order to verify the artifacts.
 
@@ -291,20 +258,18 @@ b)  Sign maven artifacts with GPG. This step is required in order to deploy the
 
     See the above link for more details.
 
-    Once a key is set up run the "maven_sign" ant target. The target takes two
-    parameters specified as system properties:
+  b) Run CMake with the following variables:
 
-    1. gpg.key - The identifier for the signing key
-    2. gpg.pass - The passphrase for the signing key (optional)
+       1. GPG_KEY: the identifier for the signing keys
+       2. GPG_PASS: the passphrase for the signing key (optional)
 
-      ant maven_sign -Dgpg.key=... -Dgpg.pass=...
+  c) Build the bindings: make java_binding
 
-    Upon success you should see maven artifacts along with generated signatures
-    in the build/maven directory. You will also find a file named "bundle.jar"
+    Upon success you should see a file named "swig/java/build/maven/bundle.jar"
     that contains all the maven artifacts with signatures. This file is what
     will be uploaded to maven central. See the next step.
 
-18) Deploy maven artifacts to Maven central.
+17) Deploy maven artifacts to Maven central.
 
     NOTE: Before you can deploy to maven central you must set up an account
     in Sonatype JIRA. That can be done here:
@@ -349,19 +314,19 @@ e) Click the "Release" button and that is it! The release should be available in
    Maven Central shortly. You can verify this by going to search.maven.org and
    searching for "gdal".
 
-19) Create a release on GitHub
+18) Create a release on GitHub
     Go to https://github.com/OSGeo/gdal/releases/new
     And create a release for the vX.Y.Z tag
     Attach the gdal-X.Y.Z.tar.gz, gdal-X.Y.Z.tar.gz.md5, gdalXYZ.zip, gdalXYZ.zip.md5 and gdalautotest-X.Y.Z.zip files
 
-20) Regenerate Docker images
+19) Regenerate Docker images
 
     e.g
         ./docker/build-all.sh --with-multi-arch --release --tag 3.3.1 --gdal v3.3.1 --proj 8.1.0 --platform linux/arm64,linux/amd64 --push
 
     and update docker/README.md with the latest release
 
-21) Announce release to :
+20) Announce release to :
     - major release: gdal-dev@lists.osgeo.org, gdal-announce@lists.osgeo.org, news_item@osgeo.org.
     - bugfix release: gdal-dev@lists.osgeo.org, gdal-announce@lists.osgeo.org
 
@@ -373,7 +338,7 @@ Note: gdal-announce@ is moderated. Make sure that your email address is approved
 ('mod' tick disabled in https://lists.osgeo.org/mailman/admin/gdal-announce/members),
 or your message manually approved, with an administrator of the list.
 
-22) For a feature release: after it has been done, in the master branch, update
+21) For a feature release: after it has been done, in the master branch, update
     the VERSION to the next one and in gcore/gdal_version.h.in, update
     GDAL_VERSION_MAJOR/_MINOR, GDAL_RELEASE_NAME (with a dev suffix, like "3.5.0dev"),
     and set GDAL_RELEASE_DATE to a date like {YEAR}9999.
