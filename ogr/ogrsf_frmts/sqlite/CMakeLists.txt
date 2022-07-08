@@ -77,13 +77,16 @@ if (GDAL_USE_SPATIALITE)
 endif ()
 
 # Test sqlite3 extension
-add_library(my_test_sqlite3_ext MODULE my_test_sqlite3_ext.c)
-gdal_standard_includes(my_test_sqlite3_ext)
-get_target_property(PLUGIN_OUTPUT_DIR ${GDAL_LIB_TARGET_NAME} PLUGIN_OUTPUT_DIR)
-set_target_properties(my_test_sqlite3_ext
-                      PROPERTIES
-                      PREFIX ""
-                      LIBRARY_OUTPUT_DIRECTORY ${PLUGIN_OUTPUT_DIR}
-                      SKIP_BUILD_RPATH YES
-                      )
-target_link_libraries(my_test_sqlite3_ext PRIVATE SQLite::SQLite3)
+find_path(SQLITE3EXT_INCLUDE_DIR NAMES sqlite3ext.h)
+if (SQLITE3EXT_INCLUDE_DIR)
+    add_library(my_test_sqlite3_ext MODULE my_test_sqlite3_ext.c)
+    gdal_standard_includes(my_test_sqlite3_ext)
+    get_target_property(PLUGIN_OUTPUT_DIR ${GDAL_LIB_TARGET_NAME} PLUGIN_OUTPUT_DIR)
+    set_target_properties(my_test_sqlite3_ext
+                          PROPERTIES
+                          PREFIX ""
+                          LIBRARY_OUTPUT_DIRECTORY ${PLUGIN_OUTPUT_DIR}
+                          SKIP_BUILD_RPATH YES
+                          )
+    target_link_libraries(my_test_sqlite3_ext PRIVATE SQLite::SQLite3)
+endif()
