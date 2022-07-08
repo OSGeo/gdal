@@ -139,9 +139,19 @@ if(Poppler_FOUND)
   set(Poppler_LIBRARIES ${Poppler_LIBRARY})
   if(NOT TARGET Poppler::Poppler)
     add_library(Poppler::Poppler UNKNOWN IMPORTED)
+    set(POPPLER_EXTRA_TARGETS)
+    foreach(_lib IN LISTS POPPLER_EXTRA_LIBRARIES)
+        add_library(Poppler::Poppler_${INCR} UNKNOWN IMPORTED)
+        set_target_properties(Poppler::Poppler_${INCR} PROPERTIES
+                              IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+                              IMPORTED_LOCATION "${_lib}")
+        list(APPEND POPPLER_EXTRA_TARGETS Poppler::Poppler_${INCR})
+        math(EXPR INCR "${INCR}+1")
+    endforeach()
     set_target_properties(Poppler::Poppler PROPERTIES
                           INTERFACE_INCLUDE_DIRECTORIES ${Poppler_INCLUDE_DIR}
                           IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+                          INTERFACE_LINK_LIBRARIES "${POPPLER_EXTRA_TARGETS}"
                           IMPORTED_LOCATION "${Poppler_LIBRARY}")
     foreach(tgt IN LISTS Poppler_known_components)
       add_library(Poppler::${tgt} UNKNOWN IMPORTED)
