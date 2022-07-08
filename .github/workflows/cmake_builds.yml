@@ -161,6 +161,13 @@ jobs:
         cmake --build $GITHUB_WORKSPACE/superbuild/build -- -j$(nproc)
       env:
         GIT_LFS_SKIP_SMUDGE: 1 # for PublicDecompWT github repository clone
+    - name: Build fake ossfuzz fuzzers
+      run: |
+        cd $GITHUB_WORKSPACE/superbuild/build
+        g++ -c $GITHUB_WORKSPACE/fuzzers/fuzzingengine.cpp
+        ar r libFuzzingEngine.a fuzzingengine.o
+        CXX=g++ CXXFLAGS="${CXXFLAGS} -I$PWD/gdal/port -I$PWD/gdal/gcore -L$PWD" LIBGDAL="-L$PWD/gdal -lgdal" SRC=/tmp OUT=/tmp $GITHUB_WORKSPACE/fuzzers/build_google_oss_fuzzers.sh
+        OUT=/tmp $GITHUB_WORKSPACE/fuzzers/build_seed_corpus.sh
     - name: test (with command targets)
       run: |
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target quicktest -- -j$(nproc)

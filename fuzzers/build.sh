@@ -76,7 +76,7 @@ NON_FUZZING_CXXFLAGS="$NON_FUZZING_CFLAGS -stdlib=libc++"
 
 # build sqlite
 cd sqlite
-CFLAGS="$NON_FUZZING_CFLAGS -DSQLITE_ENABLE_COLUMN_METADATA" ./configure --prefix=$SRC/install --disable-tcl
+CFLAGS="$NON_FUZZING_CFLAGS -DSQLITE_ENABLE_COLUMN_METADATA" ./configure --prefix=$SRC/install --enable-rtree --disable-tcl
 make clean -s
 make -j$(nproc) -s
 make install
@@ -184,19 +184,23 @@ if [ "$SANITIZER" = "undefined" ]; then
   CXXFLAGS="$CXXFLAGS -fsanitize=unsigned-integer-overflow -fno-sanitize-recover=unsigned-integer-overflow"
 fi
 
-./autogen.sh
 export LDFLAGS="${CXXFLAGS}"
-NETCDF_SWITCH=""
-if [ "$ARCHITECTURE" = "x86_64" ]; then
-  NETCDF_SWITCH="--with-netcdf=$SRC/install"
-fi
-
-PKG_CONFIG_PATH=$SRC/install/lib/pkgconfig ./configure --without-libtool --with-liblzma --with-expat --with-sqlite3=$SRC/install --with-xerces=$SRC/install --with-webp ${NETCDF_SWITCH} --with-curl=$SRC/install/bin/curl-config --without-hdf5 --with-proj=$SRC/install -with-proj-extra-lib-for-test="-L$SRC/install/lib -lcurl -lssl -lcrypto -lz -ltiff -lzstd" --with-poppler --with-libtiff=internal --with-rename-internal-libtiff-symbols
-
-sed -i "s/POPPLER_MINOR_VERSION = 2/POPPLER_MINOR_VERSION = 3/" GDALmake.opt # temporary hack until poppler > 22.2 is released
-
-make clean -s
-make -j$(nproc) -s static-lib
+mkdir build
+cd build
+export PKG_CONFIG_PATH=$SRC/install/lib/pkgconfig
+cmake .. \
+    -DCMAKE_PREFIX_PATH=$SRC/install \
+    -DBUILD_SHARED_LIBS=OFF \
+    -DGDAL_USE_TIFF_INTERNAL=ON \
+    -DGDAL_USE_GEOTIFF_INTERNAL=ON \
+    -DGDAL_USE_HDF5=OFF \
+    -DBUILD_APPS:BOOL=OFF  \
+    -DBUILD_CSHARP_BINDINGS:BOOL=OFF  \
+    -DBUILD_JAVA_BINDINGS:BOOL=OFF  \
+    -DBUILD_PYTHON_BINDINGS:BOOL=OFF  \
+    -DBUILD_TESTING:BOOL=OFF
+make -j$(nproc)
+cd ..
 
 export EXTRA_LIBS="-Wl,-Bstatic "
 # curl related

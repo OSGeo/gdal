@@ -89,6 +89,3 @@ jobs:
       - name: Run pytest
         # --security-opt seccomp=unconfined, so that the userfaulfd syscall is available
         run: docker run -e CI -e TRAVIS=yes -e TRAVIS_BRANCH=ubuntu_2004 -e GITHUB_WORKFLOW -e OGR_HANA_CONNECTION_STRING=${HANA_CONNECTION_STR} --security-opt seccomp=unconfined --rm gdal sh -c "cd /build/autotest && pip3 install -U -r requirements.txt && pip3 install -U hdbcli && pytest"
-
-      - name: Build fake ossfuzz fuzzers
-        run: docker run --rm gdal sh -c "cd /build/fuzzers && make dummyfuzzers_dynamic"
