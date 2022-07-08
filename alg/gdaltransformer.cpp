@@ -1792,13 +1792,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     }
     else if( (pszMethod == nullptr || EQUAL(pszMethod, "GEOTRANSFORM"))
              && GDALGetGeoTransform( hSrcDS, psInfo->adfSrcGeoTransform )
-             == CE_None
-             && (psInfo->adfSrcGeoTransform[0] != 0.0
-                 || psInfo->adfSrcGeoTransform[1] != 1.0
-                 || psInfo->adfSrcGeoTransform[2] != 0.0
-                 || psInfo->adfSrcGeoTransform[3] != 0.0
-                 || psInfo->adfSrcGeoTransform[4] != 0.0
-                 || psInfo->adfSrcGeoTransform[5] != 1.0) )
+             == CE_None )
     {
         if( !GDALInvGeoTransform( psInfo->adfSrcGeoTransform,
                                   psInfo->adfSrcInvGeoTransform ) )
@@ -1942,12 +1936,11 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     else
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "The transformation is already \"north up\" or "
-                 "a transformation between pixel/line and georeferenced "
-                 "coordinates cannot be computed for %s. "
+                 "Unable to compute a transformation between pixel/line "
+                 "and georeferenced coordinates for %s. "
                  "There is no affine transformation and no GCPs. "
-                 "Specify transformation option SRC_METHOD=NO_GEOTRANSFORM to "
-                 "bypass this check.",
+                 "Specify transformation option SRC_METHOD=NO_GEOTRANSFORM "
+                 "to bypass this check.",
                  GDALGetDescription(hSrcDS));
 
         GDALDestroyGenImgProjTransformer( psInfo );
