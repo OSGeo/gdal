@@ -529,9 +529,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 %typemap(freearg) (int *nLen, char **pBuf )
 {
   /* %typemap(freearg) (int *nLen, char **pBuf ) */
-  if( *$1 ) {
-    VSIFree( *$2 );
-  }
+  VSIFree( *$2 );
 }
 
 %typemap(in,numinputs=0) (size_t *nLen, char **pBuf ) ( size_t nLen = 0, char *pBuf = 0 )
@@ -555,9 +553,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 %typemap(freearg) (size_t *nLen, char **pBuf )
 {
   /* %typemap(freearg) (size_t *nLen, char **pBuf ) */
-  if( *$1 ) {
-    VSIFree( *$2 );
-  }
+  VSIFree( *$2 );
 }
 
 
@@ -1701,9 +1697,7 @@ OBJECT_LIST_INPUT(GDALDatasetShadow);
 %typemap(freearg)  (int buckets, GUIntBig* panHistogram)
 {
   /* %typemap(freearg) (int buckets, GUIntBig* panHistogram)*/
-  if ( $2 ) {
-    VSIFree( $2 );
-  }
+  VSIFree( $2 );
 }
 
 %typemap(argout) (int buckets, GUIntBig* panHistogram)
