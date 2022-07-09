@@ -4268,7 +4268,7 @@ def test_ogr_gpkg_nolock():
 
     # Now turn on WAL
     ds = ogr.Open(filename, update = 1)
-    ds.ExecuteSQL('PRAGMA journal_mode = WAL')
+    ds.ReleaseResultSet(ds.ExecuteSQL('PRAGMA journal_mode = WAL'))
     ds = None
 
     # Lockless mode should NOT be honored by GDAL on a WAL enabled file
