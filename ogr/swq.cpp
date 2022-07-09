@@ -868,6 +868,7 @@ swq_expr_node* swq_create_and_or_or(swq_op op, swq_expr_node* left, swq_expr_nod
                    right->nSubExprCount * sizeof(swq_expr_node*));
 
             right->nSubExprCount = 0;
+            CPLFree(right->papoSubExpr);
             right->papoSubExpr = nullptr;
             delete right;
         }
