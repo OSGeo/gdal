@@ -3,7 +3,7 @@
 set -e
 
 dnf install -y --setopt=install_weak_deps=False proj-devel
-dnf install -y clang automake make diffutils ccache \
+dnf install -y clang make diffutils ccache cmake \
               libxml2-devel libxslt-devel expat-devel xerces-c-devel \
               zlib-devel xz-devel libzstd-devel blosc-devel \
               giflib-devel libjpeg-devel libpng-devel \
@@ -18,7 +18,8 @@ dnf install -y clang automake make diffutils ccache \
               armadillo-devel qhull-devel \
               hdf-devel hdf5-devel netcdf-devel \
               mongo-cxx-driver-devel libpq-devel \
-              python3-pip python3-devel python3-lxml
+              python3-pip python3-devel python3-lxml \
+              glibc-gconv-extra
 
 USER=root
 export USER
@@ -52,15 +53,15 @@ ccache -M 1G
 ccache -s
 
 # Configure GDAL
-./autogen.sh
-CC='ccache clang' CXX='ccache clang++ -std=c++20' LDFLAGS='-lstdc++' ./configure --prefix=/usr --without-libtool --with-python=/usr/bin/python3 --with-poppler --with-spatialite --with-liblzma --with-webp --with-hdf4 --with-hdf5 --with-armadillo
-
-make USER_DEFS=-Werror -j$(nproc)
-(cd apps && make USER_DEFS=-Werror -j$(nproc) test_ogrsf)
+mkdir build
+cd build
+CC=clang CXX=clang++ LDFLAGS='-lstdc++' cmake .. \
+  -DCMAKE_BUILD_TYPE=Release -DUSE_CCACHE=ON -DCMAKE_INSTALL_PREFIX=/usr \
+  -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS="-std=c++20 -Werror" -DWERROR_DEV_FLAG="-Werror=dev"
+make -j$(nproc)
 make install
 ldconfig
-
-(cd autotest/cpp && make -j3)
+cd ..
 
 ccache -s
 
@@ -74,7 +75,7 @@ projsync --system-directory --file us_noaa_conus.tif
 projsync --system-directory --file us_nga_egm96
 projsync --system-directory --file ca_nrc_ntv1_can.tif
 
-(cd autotest/cpp && make quick_test)
+(cd build && make quicktest)
 
 # install pip and use it to install test dependencies
 #pip3 install -U -r autotest/requirements.txt
