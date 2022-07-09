@@ -15574,9 +15574,7 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsBinary__SWIG_0(PyObject *SWIGUNUSED
   }
   {
     /* %typemap(freearg) (int *nLen, char **pBuf ) */
-    if( *arg3 ) {
-      VSIFree( *arg4 );
-    }
+    VSIFree( *arg4 );
   }
   {
     /* %typemap(ret) OGRErr */
@@ -15589,9 +15587,7 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsBinary__SWIG_0(PyObject *SWIGUNUSED
 fail:
   {
     /* %typemap(freearg) (int *nLen, char **pBuf ) */
-    if( *arg3 ) {
-      VSIFree( *arg4 );
-    }
+    VSIFree( *arg4 );
   }
   return NULL;
 }
@@ -15670,9 +15666,7 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsBinary__SWIG_1(PyObject *SWIGUNUSED
   }
   {
     /* %typemap(freearg) (int *nLen, char **pBuf ) */
-    if( *arg3 ) {
-      VSIFree( *arg4 );
-    }
+    VSIFree( *arg4 );
   }
   {
     /* %typemap(ret) OGRErr */
@@ -15689,9 +15683,7 @@ fail:
   }
   {
     /* %typemap(freearg) (int *nLen, char **pBuf ) */
-    if( *arg3 ) {
-      VSIFree( *arg4 );
-    }
+    VSIFree( *arg4 );
   }
   return NULL;
 }
@@ -22952,9 +22944,7 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToWkb(PyObject *SWIGUNUSEDPARM(self), 
   }
   {
     /* %typemap(freearg) (size_t *nLen, char **pBuf ) */
-    if( *arg2 ) {
-      VSIFree( *arg3 );
-    }
+    VSIFree( *arg3 );
   }
   {
     /* %typemap(ret) OGRErr */
@@ -22967,9 +22957,7 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToWkb(PyObject *SWIGUNUSEDPARM(self), 
 fail:
   {
     /* %typemap(freearg) (size_t *nLen, char **pBuf ) */
-    if( *arg2 ) {
-      VSIFree( *arg3 );
-    }
+    VSIFree( *arg3 );
   }
   return NULL;
 }
@@ -23054,9 +23042,7 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToIsoWkb(PyObject *SWIGUNUSEDPARM(self
   }
   {
     /* %typemap(freearg) (size_t *nLen, char **pBuf ) */
-    if( *arg2 ) {
-      VSIFree( *arg3 );
-    }
+    VSIFree( *arg3 );
   }
   {
     /* %typemap(ret) OGRErr */
@@ -23069,9 +23055,7 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToIsoWkb(PyObject *SWIGUNUSEDPARM(self
 fail:
   {
     /* %typemap(freearg) (size_t *nLen, char **pBuf ) */
-    if( *arg2 ) {
-      VSIFree( *arg3 );
-    }
+    VSIFree( *arg3 );
   }
   return NULL;
 }
