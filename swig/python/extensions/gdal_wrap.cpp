@@ -12343,6 +12343,7 @@ SWIGINTERN PyObject *_wrap_GetFileMetadata(PyObject *SWIGUNUSEDPARM(self), PyObj
         stringarray++;
       }
     }
+    CSLDestroy(result);
   }
   {
     /* %typemap(freearg) (const char *utf8_path) */
