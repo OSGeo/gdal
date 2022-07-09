@@ -950,6 +950,36 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 }
 
 /*
+ * Typemap char ** -> dict and CSLDestroy()
+ */
+%typemap(out) char **dictAndCSLDestroy
+{
+  /* %typemap(out) char **dict */
+  char **stringarray = $1;
+  $result = PyDict_New();
+  if ( stringarray != NULL ) {
+    while (*stringarray != NULL ) {
+      char const *valptr;
+      char *keyptr;
+      const char* pszSep = strchr( *stringarray, '=' );
+      if ( pszSep != NULL) {
+        keyptr = CPLStrdup(*stringarray);
+        keyptr[pszSep - *stringarray] = '\0';
+        valptr = pszSep + 1;
+        PyObject *nm = GDALPythonObjectFromCStr( keyptr );
+        PyObject *val = GDALPythonObjectFromCStr( valptr );
+        PyDict_SetItem($result, nm, val );
+        Py_DECREF(nm);
+        Py_DECREF(val);
+        CPLFree( keyptr );
+      }
+      stringarray++;
+    }
+  }
+  CSLDestroy($1);
+}
+
+/*
  * Typemap char **<- dict.  This typemap actually supports lists as well,
  * Then each entry in the list must be a string and have the form:
  * "name=value" so gdal can handle it.
