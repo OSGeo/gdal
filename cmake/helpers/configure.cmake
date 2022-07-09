@@ -180,7 +180,7 @@ else ()
     endif ()
   endif ()
 
-  if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  if (APPLE)
     if (NOT VSI_FTELL64 AND NOT VSI_FSEEK64)
       set(VSI_FTELL64 "ftello")
       set(VSI_FSEEK64 "fseeko")
