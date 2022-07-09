@@ -142,6 +142,14 @@ int main(int argc, char **argv) {
     Py_Finalize();
     return 0;
 }")
+
+    # To avoid -Werror to trigger on deprecated Py_SetProgramName() used above
+    # See https://github.com/python/cpython/pull/26083 as an example how to port
+    if (CMAKE_CXX_FLAGS)
+      string(REPLACE "-Werror " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ")
+      string(REPLACE "/WX " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ")
+    endif ()
+
     add_executable(pytest_runner ${CMAKE_CURRENT_BINARY_DIR}/pytest_runner.cpp)
     target_include_directories(pytest_runner PRIVATE ${Python_INCLUDE_DIRS})
     target_link_libraries(pytest_runner PRIVATE ${Python_LIBRARIES})
