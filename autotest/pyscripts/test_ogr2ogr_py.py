@@ -665,6 +665,8 @@ def test_ogr2ogr_py_21():
     if script_path is None:
         pytest.skip()
 
+    if ogr.GetDriverByName('GPX') is None:
+        pytest.skip()
 
     try:
         os.remove('tmp/testogr2ogr21.gpx')
