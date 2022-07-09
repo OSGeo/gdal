@@ -285,6 +285,30 @@ if (Iconv_FOUND)
   else ()
     set(ICONV_CPP_CONST "const")
   endif ()
+
+  if (NOT CMAKE_CROSSCOMPILING)
+      include(CheckCXXSourceRuns)
+      set(ICONV_HAS_EXTRA_CHARSETS_CODE
+"#include <stdlib.h>
+#include <iconv.h>
+int main(){
+    iconv_t conv = iconv_open(\"UTF-8\", \"CP1251\");
+    if( conv != (iconv_t)-1 )
+    {
+        iconv_close(conv);
+        return 0;
+    }
+    return 1;
+}")
+      check_cxx_source_runs("${ICONV_HAS_EXTRA_CHARSETS_CODE}" ICONV_HAS_EXTRA_CHARSETS)
+      if (NOT ICONV_HAS_EXTRA_CHARSETS)
+          message(WARNING "ICONV is available but some character sets used by "
+                          "some drivers are not available. "
+                          "You may need to install an extra package "
+                          "(e.g. 'glibc-gconv-extra' on Fedora)")
+      endif()
+  endif()
+
   unset(ICONV_CONST_TEST_CODE)
   unset(_ICONV_SECOND_ARGUMENT_IS_NOT_CONST)
   unset(CMAKE_REQUIRED_INCLUDES)
