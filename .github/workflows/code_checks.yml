@@ -29,13 +29,18 @@ jobs:
       - name: Install Requirements
         run: |
           sudo apt update
-          sudo apt install -y cppcheck libsqlite3-dev ccache sqlite3 libproj-dev
+          sudo apt install -y cppcheck libsqlite3-dev ccache sqlite3 libproj-dev cmake
 
-      - name: Run configure
-        run: (./autogen.sh && ./configure)
+      - name: Run cmake
+        run: |
+          mkdir build
+          cd build
+          cmake ..
 
       - name: Run cppcheck test
-        run: ./scripts/cppcheck.sh
+        run: |
+          cd build
+          ../scripts/cppcheck.sh
 
   code_quality_checks:
     runs-on: ubuntu-latest
