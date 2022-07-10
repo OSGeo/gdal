@@ -747,7 +747,7 @@ class XMMReg2Double
 
 #endif /*  defined(__x86_64) || defined(_M_X64) */
 
-#ifdef __AVX__
+#if defined(__AVX__) && !defined(USE_SSE2_EMULATION)
 
 #include <immintrin.h>
 
