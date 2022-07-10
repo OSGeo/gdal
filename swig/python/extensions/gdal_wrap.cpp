@@ -9109,9 +9109,7 @@ SWIGINTERN PyObject *_wrap_EscapeBinary(PyObject *SWIGUNUSEDPARM(self), PyObject
   }
   {
     /* %typemap(freearg) (size_t *nLen, char **pBuf ) */
-    if( *arg3 ) {
-      VSIFree( *arg4 );
-    }
+    VSIFree( *arg4 );
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -9127,9 +9125,7 @@ fail:
   }
   {
     /* %typemap(freearg) (size_t *nLen, char **pBuf ) */
-    if( *arg3 ) {
-      VSIFree( *arg4 );
-    }
+    VSIFree( *arg4 );
   }
   return NULL;
 }
@@ -12343,6 +12339,7 @@ SWIGINTERN PyObject *_wrap_GetFileMetadata(PyObject *SWIGUNUSEDPARM(self), PyObj
         stringarray++;
       }
     }
+    CSLDestroy(result);
   }
   {
     /* %typemap(freearg) (const char *utf8_path) */
@@ -32589,9 +32586,7 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
   }
   {
     /* %typemap(freearg) (int buckets, GUIntBig* panHistogram)*/
-    if ( arg5 ) {
-      VSIFree( arg5 );
-    }
+    VSIFree( arg5 );
   }
   {
     /* %typemap(freearg) ( void* callback_data=NULL)  */
@@ -32604,9 +32599,7 @@ SWIGINTERN PyObject *_wrap_Band_GetHistogram(PyObject *SWIGUNUSEDPARM(self), PyO
 fail:
   {
     /* %typemap(freearg) (int buckets, GUIntBig* panHistogram)*/
-    if ( arg5 ) {
-      VSIFree( arg5 );
-    }
+    VSIFree( arg5 );
   }
   {
     /* %typemap(freearg) ( void* callback_data=NULL)  */

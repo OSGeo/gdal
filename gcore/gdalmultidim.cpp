@@ -4275,6 +4275,16 @@ bool GDALMDArray::ReadForTransposedRequest(const GUInt64* arrayStartIdx,
                       count,
                       bufferStride);
 
+    if( eDT.NeedsFreeDynamicMemory() )
+    {
+        GByte* pabyPtr = static_cast<GByte*>(pTempBuffer);
+        for( size_t i = 0; i < nElts; ++i )
+        {
+            eDT.FreeDynamicMemory(pabyPtr);
+            pabyPtr += nDTSize;
+        }
+    }
+
     VSIFree(pTempBuffer);
     return true;
 }

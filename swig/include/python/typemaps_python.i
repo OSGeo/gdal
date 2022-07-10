@@ -539,9 +539,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 %typemap(freearg) (int *nLen, char **pBuf )
 {
   /* %typemap(freearg) (int *nLen, char **pBuf ) */
-  if( *$1 ) {
-    VSIFree( *$2 );
-  }
+  VSIFree( *$2 );
 }
 
 %typemap(in,numinputs=0) (size_t *nLen, char **pBuf ) ( size_t nLen = 0, char *pBuf = 0 )
@@ -565,9 +563,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 %typemap(freearg) (size_t *nLen, char **pBuf )
 {
   /* %typemap(freearg) (size_t *nLen, char **pBuf ) */
-  if( *$1 ) {
-    VSIFree( *$2 );
-  }
+  VSIFree( *$2 );
 }
 
 
@@ -957,6 +953,36 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
       stringarray++;
     }
   }
+}
+
+/*
+ * Typemap char ** -> dict and CSLDestroy()
+ */
+%typemap(out) char **dictAndCSLDestroy
+{
+  /* %typemap(out) char **dict */
+  char **stringarray = $1;
+  $result = PyDict_New();
+  if ( stringarray != NULL ) {
+    while (*stringarray != NULL ) {
+      char const *valptr;
+      char *keyptr;
+      const char* pszSep = strchr( *stringarray, '=' );
+      if ( pszSep != NULL) {
+        keyptr = CPLStrdup(*stringarray);
+        keyptr[pszSep - *stringarray] = '\0';
+        valptr = pszSep + 1;
+        PyObject *nm = GDALPythonObjectFromCStr( keyptr );
+        PyObject *val = GDALPythonObjectFromCStr( valptr );
+        PyDict_SetItem($result, nm, val );
+        Py_DECREF(nm);
+        Py_DECREF(val);
+        CPLFree( keyptr );
+      }
+      stringarray++;
+    }
+  }
+  CSLDestroy($1);
 }
 
 /*
@@ -1681,9 +1707,7 @@ OBJECT_LIST_INPUT(GDALDatasetShadow);
 %typemap(freearg)  (int buckets, GUIntBig* panHistogram)
 {
   /* %typemap(freearg) (int buckets, GUIntBig* panHistogram)*/
-  if ( $2 ) {
-    VSIFree( $2 );
-  }
+  VSIFree( $2 );
 }
 
 %typemap(argout) (int buckets, GUIntBig* panHistogram)
