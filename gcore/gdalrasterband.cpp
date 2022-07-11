@@ -3252,10 +3252,25 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
         return CE_Failure;
     }
 
+    // Written this way to deal with NaN
+    if( !(dfMax > dfMin) )
+    {
+        ReportError( CE_Failure, CPLE_IllegalArg,
+                     "dfMax should be strictly greater than dfMin" );
+        return CE_Failure;
+    }
+
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
 
-    const double dfScale = (dfMax > dfMin) ? nBuckets / (dfMax - dfMin) : 0.0;
+    const double dfScale = nBuckets / (dfMax - dfMin);
+    if( dfScale == 0 )
+    {
+        ReportError( CE_Failure, CPLE_IllegalArg,
+                     "dfMin and dfMax should be finite values such that "
+                     "nBuckets / (dfMax - dfMin) is non-zero" );
+        return CE_Failure;
+    }
     memset( panHistogram, 0, sizeof(GUIntBig) * nBuckets );
 
     int bGotNoDataValue = FALSE;
@@ -3408,22 +3423,23 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                     bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
                     continue;
 
-                const int nIndex =
-                    static_cast<int>(floor((dfValue - dfMin) * dfScale));
+                // Given that dfValue and dfMin are not NaN, and dfScale > 0,
+                // the result of the multiplication cannot be NaN
+                const double dfIndex = floor((dfValue - dfMin) * dfScale);
 
-                if( nIndex < 0 )
+                if( dfIndex < 0 )
                 {
                     if( bIncludeOutOfRange )
                         panHistogram[0]++;
                 }
-                else if( nIndex >= nBuckets )
+                else if( dfIndex >= nBuckets )
                 {
                     if( bIncludeOutOfRange )
                         ++panHistogram[nBuckets-1];
                 }
                 else
                 {
-                    ++panHistogram[nIndex];
+                    ++panHistogram[static_cast<int>(dfIndex)];
                 }
             }
         }
@@ -3593,22 +3609,23 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                         ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
                         continue;
 
-                    const int nIndex =
-                        static_cast<int>(floor((dfValue - dfMin) * dfScale));
+                    // Given that dfValue and dfMin are not NaN, and dfScale > 0,
+                    // the result of the multiplication cannot be NaN
+                    const double dfIndex = floor((dfValue - dfMin) * dfScale);
 
-                    if( nIndex < 0 )
+                    if( dfIndex < 0 )
                     {
                         if( bIncludeOutOfRange )
-                            ++panHistogram[0];
+                            panHistogram[0]++;
                     }
-                    else if( nIndex >= nBuckets )
+                    else if( dfIndex >= nBuckets )
                     {
                         if( bIncludeOutOfRange )
                             ++panHistogram[nBuckets-1];
                     }
                     else
                     {
-                        panHistogram[nIndex]++;
+                        ++panHistogram[static_cast<int>(dfIndex)];
                     }
                 }
             }

@@ -29,12 +29,17 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import math
 import os
 import shutil
+import struct
+import sys
 
 
 from osgeo import gdal
 
+import gdaltest
+import pytest
 
 ###############################################################################
 # Fetch simple histogram.
@@ -127,4 +132,66 @@ def test_histogram_6():
     os.unlink('tmp/albania.jpg')
 
 
+###############################################################################
+# Test GetHistogram() with infinity values
 
+
+def test_histogram_inf_values():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1, gdal.GDT_Float64)
+    ds.WriteRaster(0, 0, 1, 1, struct.pack('d', math.inf))
+    hist = ds.GetRasterBand(1).GetHistogram(buckets=2, min=-0.5, max=1.5,
+                                            include_out_of_range=1,
+                                            approx_ok=0)
+    assert hist == [0, 1]
+
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1, gdal.GDT_Float64)
+    ds.WriteRaster(0, 0, 1, 1, struct.pack('d', -math.inf))
+    hist = ds.GetRasterBand(1).GetHistogram(buckets=2, min=-0.5, max=1.5,
+                                            include_out_of_range=1,
+                                            approx_ok=0)
+    assert hist == [1, 0]
+
+
+###############################################################################
+# Test GetHistogram() error
+
+
+def test_histogram_errors():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    # Invalid bucket count
+    with pytest.raises(Exception):
+        ds.GetRasterBand(1).GetHistogram(buckets=0, min=-0.5, max=1.5,
+                                         include_out_of_range=1,
+                                         approx_ok=0)
+
+
+###############################################################################
+# Test GetHistogram() invalid min max bounds
+
+
+@pytest.mark.parametrize('min,max', [[math.nan, 1.5],
+                                     [-math.inf, 1.5],
+                                     [math.inf, 1.5],
+                                     [-0.5,math.nan],
+                                     [-0.5,-math.inf],
+                                     [-0.5,math.inf],
+                                     [-math.inf,math.inf],
+                                     [-sys.float_info.max,sys.float_info.max], # leads to dfScale == 0
+                                     [0,0]])
+def test_histogram_invalid_min_max(min, max):
+
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    with gdaltest.error_handler():
+        gdal.ErrorReset()
+        ret = ds.GetRasterBand(1).GetHistogram(buckets=2, min=min, max=max,
+                                         include_out_of_range=1,
+                                         approx_ok=0)
+        if (min, max) == (-sys.float_info.max, sys.float_info.max) and ret == [1, 0]:
+            # Happens on i386 since 2. / (sys.float_info.max - -sys.float_info.max) == 5.56268464626800346e-309
+            # when using i387 coprocessor (long double)
+            pass
+        else:
+            ret == [0, 0]
+            assert gdal.GetLastErrorMsg() != ''
