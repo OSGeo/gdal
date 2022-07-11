@@ -1716,6 +1716,7 @@ void SAR_CEOSDataset::ScanForGCPs()
     if( nGCPCount == 0 )
     {
         CPLFree(pasGCPList);
+        pasGCPList = nullptr;
         ScanForMapProjection();
         return;
     }
