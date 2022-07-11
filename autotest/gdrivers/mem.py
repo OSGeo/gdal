@@ -397,6 +397,24 @@ def test_mem_9():
         got_data = out_ds.GetRasterBand(1).ReadRaster(10, 11, 8, 10, 4, 5)
         assert ref_data == got_data, interleave
 
+    for interleave in ['BAND', 'PIXEL']:
+        out_ds = drv.CreateCopy('', src_ds, options=['INTERLEAVE=%s' % interleave])
+        for i in range(3):
+            out_ds.GetRasterBand(i+1).Fill(0)
+        ref_data = src_ds.ReadRaster(0, 10, out_ds.RasterXSize, 5, buf_pixel_space=3, buf_band_space=1)
+        out_ds.WriteRaster(0, 10, out_ds.RasterXSize, 5, ref_data, buf_pixel_space=3, buf_band_space=1)
+        got_data = out_ds.ReadRaster(0, 10, out_ds.RasterXSize, 5, buf_pixel_space=3, buf_band_space=1)
+        assert ref_data == got_data, interleave
+
+    for interleave in ['BAND', 'PIXEL']:
+        out_ds = drv.CreateCopy('', src_ds, options=['INTERLEAVE=%s' % interleave])
+        for i in range(3):
+            out_ds.GetRasterBand(i+1).Fill(0)
+        ref_data = src_ds.ReadRaster(4, 10, 15, 5, buf_pixel_space=3, buf_band_space=1)
+        out_ds.WriteRaster(4, 10, 15, 5, ref_data, buf_pixel_space=3, buf_band_space=1)
+        got_data = out_ds.ReadRaster(4, 10, 15, 5, buf_pixel_space=3, buf_band_space=1)
+        assert ref_data == got_data, interleave
+
 
 ###############################################################################
 # Test BuildOverviews()
