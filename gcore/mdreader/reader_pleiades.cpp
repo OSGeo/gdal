@@ -88,6 +88,16 @@ GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
         return;
     }
 
+    // Strip of suffix from PNEO products
+    char* pszLastUnderScore = strrchr(sBaseName, '_');
+    if( pszLastUnderScore &&
+        (EQUAL(pszLastUnderScore, "_P") ||
+         EQUAL(pszLastUnderScore, "_RGB") ||
+         EQUAL(pszLastUnderScore, "_NED")) )
+    {
+        *pszLastUnderScore = 0;
+    }
+
     if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
     {
         m_osIMDSourceFilename = osIMDSourceFilename;
