@@ -3343,10 +3343,10 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                     dfValue = static_cast<GInt32 *>(pData)[iOffset];
                     break;
                   case GDT_UInt64:
-                    dfValue = static_cast<GUInt64 *>(pData)[iOffset];
+                    dfValue = static_cast<double>(static_cast<GUInt64 *>(pData)[iOffset]);
                     break;
                   case GDT_Int64:
-                    dfValue = static_cast<GInt64 *>(pData)[iOffset];
+                    dfValue = static_cast<double>(static_cast<GInt64 *>(pData)[iOffset]);
                     break;
                   case GDT_Float32:
                   {
@@ -3537,10 +3537,10 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                         dfValue = static_cast<GInt32 *>(pData)[iOffset];
                         break;
                       case GDT_UInt64:
-                        dfValue = static_cast<GUInt64 *>(pData)[iOffset];
+                        dfValue = static_cast<double>(static_cast<GUInt64 *>(pData)[iOffset]);
                         break;
                       case GDT_Int64:
-                        dfValue = static_cast<GInt64 *>(pData)[iOffset];
+                        dfValue = static_cast<double>(static_cast<GInt64 *>(pData)[iOffset]);
                         break;
                       case GDT_Float32:
                       {
