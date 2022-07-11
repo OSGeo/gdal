@@ -34,6 +34,8 @@
 #include "cpl_port.h"
 #include "gdal_priv.h"
 
+#include <map>
+
 #define MD_DOMAIN_IMD "IMD"              /**< image metadata section */
 #define MD_DOMAIN_RPC "RPC"              /**< rpc metadata section */
 #define MD_DOMAIN_IMAGERY "IMAGERY"      /**< imagery metadata section */
@@ -107,6 +109,18 @@ typedef enum {
 class CPL_DLL GDALMDReaderBase{
 
     CPL_DISALLOW_COPY_ASSIGN(GDALMDReaderBase)
+
+    void ReadXMLToListFirstPass(const CPLXMLNode* psNode,
+                                std::map<std::string, int>& oMapCountKeysFull,
+                                const std::string& osPrefixFull);
+
+    char** ReadXMLToList(const CPLXMLNode* psNode,
+                         char** papszList,
+                         const std::map<std::string, int>& oMapCountKeysFullRef,
+                         std::map<std::string, int>& oMapCountKeysFull,
+                         std::map<std::string, int>& oMapCountKeys,
+                         const std::string& osPrefix,
+                         const std::string& osPrefixFull);
 
 public:
     GDALMDReaderBase(const char *pszPath, char **papszSiblingFiles);
