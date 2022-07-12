@@ -404,6 +404,9 @@ def test_geoloc_GEOLOC_ARRAY_transformer_option():
     # The 10e6 offset is the northing offset between EPSG:32631 and EPSG:32731
     assert pnt == pytest.approx((y0 - y * step + md['LINE_OFFSET'], 10e6 + x0 + x * step - md['PIXEL_OFFSET'], 0))
 
+    warped_ds = gdal.Warp('', ds, format='MEM', transformerOptions=['GEOLOC_ARRAY=/vsimem/lonlat.tif'])
+    assert warped_ds.GetSpatialRef().GetAuthorityCode(None) == '32631'
+
     ds = None
 
     gdal.Unlink('/vsimem/lonlat.tif')
