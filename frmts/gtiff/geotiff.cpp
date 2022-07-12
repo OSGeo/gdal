@@ -15156,6 +15156,13 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     {
         if( m_nBitsPerSample == 16 || m_nBitsPerSample == 24 )
             bTreatAsOdd = true;
+        else if( m_nBitsPerSample != 32 && m_nBitsPerSample != 64 )
+        {
+            ReportError( CE_Failure, CPLE_AppDefined,
+                      "Cannot open TIFF file with SampleFormat=IEEEFP "
+                      "and BitsPerSample=%d", m_nBitsPerSample );
+            return CE_Failure;
+        }
     }
     else if( !bTreatAsRGBA && !bTreatAsBitmap
              && m_nBitsPerSample != 8
