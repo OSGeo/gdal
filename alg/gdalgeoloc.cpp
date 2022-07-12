@@ -928,7 +928,7 @@ void GDALInverseBilinearInterpolation(const double x,
     const double C = (x1 - x) * (y1 - y3) - (y1 - y) * (x1 - x3);
     const double denom = A - 2 * B + C;
     double s;
-    if( fabs(denom) < 1e-12 )
+    if( fabs(denom) <= 1e-12 )
     {
         // Happens typically when the x_i,y_i points form a rectangle
         s = A / (A-C);
@@ -943,9 +943,21 @@ void GDALInverseBilinearInterpolation(const double x,
         else
             s = s1;
     }
-    const double t = ( (1-s)*(x0-x) + s*(x1-x) ) / ( (1-s)*(x0-x2) + s*(x1-x3) );
 
-    i += t;
+    const double t_denom_x = (1-s)*(x0-x2) + s*(x1-x3);
+    if( fabs(t_denom_x) > 1e-12 )
+    {
+        i += ( (1-s)*(x0-x) + s*(x1-x) ) / t_denom_x;
+    }
+    else
+    {
+        const double t_denom_y = (1-s)*(y0-y2) + s*(y1-y3);
+        if( fabs(t_denom_y) > 1e-12 )
+        {
+            i += ( (1-s)*(y0-y) + s*(y1-y) ) / t_denom_y;
+        }
+    }
+
     j += s;
 }
 
