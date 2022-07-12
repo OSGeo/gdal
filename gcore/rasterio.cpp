@@ -5656,7 +5656,7 @@ void GDALDeinterleave(const void* pSourceBuffer,
         }
 #if ((defined(__GNUC__) && !defined(__clang__)) || defined(__INTEL_CLANG_COMPILER)) && \
     (defined(__x86_64) || defined(_M_X64)) && defined(HAVE_SSSE3_AT_COMPILE_TIME)
-        else if( eSourceDT == GDT_UInt16 && CPLHaveRuntimeSSSE3() )
+        else if( (eSourceDT == GDT_Int16 || eSourceDT == GDT_UInt16) && CPLHaveRuntimeSSSE3() )
         {
             if( nComponents == 3 )
             {

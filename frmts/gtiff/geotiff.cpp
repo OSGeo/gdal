@@ -5050,7 +5050,9 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if( nBand == 1 && !m_poGDS->m_bLoadingOtherBands &&
             eAccess == GA_ReadOnly &&
             (m_poGDS->nBands == 3 || m_poGDS->nBands == 4) &&
-            (eDataType == GDT_Byte || eDataType == GDT_UInt16) &&
+            ((eDataType == GDT_Byte && m_poGDS->m_nBitsPerSample == 8) ||
+             (eDataType == GDT_Int16 && m_poGDS->m_nBitsPerSample == 16) ||
+             (eDataType == GDT_UInt16 && m_poGDS->m_nBitsPerSample == 16)) &&
             static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize * GDALGetDataTypeSizeBytes(eDataType) <
                 GDALGetCacheMax64() / m_poGDS->nBands )
         {
