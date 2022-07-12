@@ -139,6 +139,10 @@ def test_jp2metadata_2b():
     }
     _test_jp2metadata(file_path, rpc_values_to_check=rpc_values_to_check)
 
+    ds = gdal.Open(file_path)
+    md = ds.GetMetadata_Dict("IMD")
+    assert md['Geometric_Data.Use_Area.Located_Geometric_Values_1.Ground_Sample_Distance.GSD_ACROSS_TRACK'] == '0.7054510257833884'
+    assert md['Geometric_Data.Use_Area.Located_Geometric_Values_2.Ground_Sample_Distance.GSD_ACROSS_TRACK'] == '0.7059011471512184'
 
 ###############################################################################
 # Test reading GMLJP2 file with srsName only on the Envelope, and lots of other
