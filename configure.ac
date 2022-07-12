@@ -5586,12 +5586,12 @@ else
         fi
 
         AC_CHECK_LIB(jxl,JxlEncoderFrameSettingsCreate, [HAVE_JxlEncoderFrameSettingsCreate=yes], [HAVE_JxlEncoderFrameSettingsCreate=no])
-        if test "HAVE_JxlEncoderFrameSettingsCreate" = "yes"; then
+        if test "$HAVE_JxlEncoderFrameSettingsCreate" = "yes"; then
             JXL_CFLAGS="$JXL_CFLAGS -DHAVE_JxlEncoderFrameSettingsCreate"
         fi
 
         AC_CHECK_LIB(jxl,JxlEncoderSetFrameDistance, [HAVE_JxlEncoderSetFrameDistance=yes], [HAVE_JxlEncoderSetFrameDistance=no])
-        if test "HAVE_JxlEncoderSetFrameDistance" = "yes"; then
+        if test "$HAVE_JxlEncoderSetFrameDistance" = "yes"; then
             JXL_CFLAGS="$JXL_CFLAGS -DHAVE_JxlEncoderSetFrameDistance"
         fi
     fi
