@@ -1289,7 +1289,8 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
             oIter = oIterNext;
         }
     }
-    if( !anOverviewFactorsSet.empty() )
+    if( !anOverviewFactorsSet.empty() &&
+        CPLTestBool(CPLGetConfigOption("VRT_VIRTUAL_OVERVIEWS", "YES")) )
     {
         std::vector<int> anOverviewFactors;
         anOverviewFactors.insert(anOverviewFactors.end(),
