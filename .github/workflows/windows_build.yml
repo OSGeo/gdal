@@ -120,7 +120,7 @@ jobs:
             Install-Module Pscx -AllowClobber
             Install-Module VSSetup -Scope CurrentUser
             # Install SWIG by Choco
-            exec { cinst -y --no-progress --version 3.0.12 --force swig }
+            exec { cinst -y --no-progress swig }
             if($env:VS_VER -eq "2019")
             {
             }
