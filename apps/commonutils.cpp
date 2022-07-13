@@ -145,7 +145,8 @@ CPLString GetOutputDriverForRaster(const char* pszDestFilename)
     }
     else
     {
-        if( aoDrivers.size() > 1 )
+        if( aoDrivers.size() > 1 &&
+            !(aoDrivers[0] == "GTiff" && aoDrivers[1] == "COG") )
         {
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Several drivers matching %s extension. Using %s",
