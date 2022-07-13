@@ -819,6 +819,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAssumeRoleWithWebIdentity(bool bForc
         CPLPushErrorHandler(CPLQuietErrorHandler);
 
         CPLHTTPResult* psResult = CPLHTTPFetch( osSTS_asuume_role_with_web_identity_URL.c_str(), nullptr );
+        CPLPopErrorHandler();
         if( psResult )
         {
             if( psResult->nStatus == 0 && psResult->pabyData != nullptr )
