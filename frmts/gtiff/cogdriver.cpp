@@ -1369,6 +1369,7 @@ void GDALRegister_COG()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Cloud optimized GeoTIFF generator" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/cog.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "tif tiff" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte UInt16 Int16 UInt32 Int32 UInt64 Int64 Float32 "
