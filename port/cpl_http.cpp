@@ -1817,6 +1817,47 @@ static const char* CPLFindWin32CurlCaBundleCrt()
 #endif // WIN32
 
 /************************************************************************/
+/*                     CPLHTTPCurlDebugFunction()                       */
+/************************************************************************/
+
+static
+int CPLHTTPCurlDebugFunction(CURL *handle, curl_infotype type,
+                             char *data, size_t size,
+                             void *userp)
+{
+    (void)handle;
+    (void)userp;
+
+    const char* pszDebugKey = nullptr;
+    if( type == CURLINFO_TEXT )
+    {
+        pszDebugKey = "CURL_INFO_TEXT";
+    }
+    else if( type == CURLINFO_HEADER_OUT )
+    {
+        pszDebugKey = "CURL_INFO_HEADER_OUT";
+    }
+    else if( type == CURLINFO_HEADER_IN )
+    {
+        pszDebugKey = "CURL_INFO_HEADER_IN";
+    }
+    else if( type == CURLINFO_DATA_IN &&
+             CPLTestBool(CPLGetConfigOption("CPL_CURL_VERBOSE_DATA_IN", "NO")) )
+    {
+        pszDebugKey = "CURL_INFO_DATA_IN";
+    }
+
+    if( pszDebugKey )
+    {
+        std::string osMsg(data, size);
+        if( !osMsg.empty() && osMsg.back() == '\n' )
+            osMsg.resize(osMsg.size()-1);
+        CPLDebug(pszDebugKey, "%s", osMsg.c_str());
+    }
+    return 0;
+}
+
+/************************************************************************/
 /*                         CPLHTTPSetOptions()                          */
 /************************************************************************/
 
@@ -1836,7 +1877,15 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
     unchecked_curl_easy_setopt(http_handle, CURLOPT_URL, pszURL);
 
     if( CPLTestBool(CPLGetConfigOption("CPL_CURL_VERBOSE", "NO")) )
+    {
         unchecked_curl_easy_setopt(http_handle, CURLOPT_VERBOSE, 1);
+
+        if( CPLGetConfigOption("CPL_DEBUG", nullptr) != nullptr )
+        {
+            unchecked_curl_easy_setopt(http_handle, CURLOPT_DEBUGFUNCTION,
+                                       CPLHTTPCurlDebugFunction);
+        }
+    }
 
     const char *pszHttpVersion =
         CSLFetchNameValue( papszOptions, "HTTP_VERSION");
