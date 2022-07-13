@@ -32,6 +32,7 @@ Raster drivers
    airsar
    arg
    bag
+   basisu
    blx
    bmp
    bsb
@@ -107,6 +108,7 @@ Raster drivers
    kea
    kmlsuperoverlay
    kro
+   ktx2
    lan
    l1b
    lcp

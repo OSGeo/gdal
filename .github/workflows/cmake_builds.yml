@@ -129,6 +129,18 @@ jobs:
             && cd ../../.. \
             && rm -rf QB3
 
+    - name: Buid libbasisu
+      run: |
+        # Used by the BASISU and KTX2 drivers
+        git clone -b cmake https://github.com/rouault/basis_universal.git \
+            && mkdir basis_universal/build \
+            && cd basis_universal/build \
+            && /usr/bin/cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr .. \
+            && make -j$(nproc) \
+            && sudo make -j$(nproc) install \
+            && cd ../..\
+            && rm -rf basis_universal
+
     - name: Install pdfium
       run: |
         wget -q https://github.com/rouault/pdfium_build_gdal_3_5/releases/download/v1_pdfium_5106/install-ubuntu2004-rev5106.tar.gz \
