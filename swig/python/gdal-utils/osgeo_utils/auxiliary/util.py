@@ -87,7 +87,7 @@ def GetOutputDriverFor(filename: PathLikeOrStr, is_raster=True, default_raster_f
             return default_raster_format if is_raster else default_vector_format
         else:
             raise Exception("Cannot guess driver for %s" % filename)
-    elif len(drv_list) > 1:
+    elif len(drv_list) > 1 and not (drv_list[0] == 'GTiff' and drv_list[1] == 'COG'):
         print("Several drivers matching %s extension. Using %s" % (ext if ext else '', drv_list[0]))
     return drv_list[0]
 
