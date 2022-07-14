@@ -1105,7 +1105,7 @@ bool OGROpenFileGDBDataSource::Create( const char* pszName )
     if( VSIMkdir(pszName, 0755) != 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Cannot create director %s.", pszName );
+                  "Cannot create directory %s.", pszName );
         return false;
     }
 
