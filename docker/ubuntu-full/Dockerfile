@@ -171,7 +171,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
   && chown -R root:root FileGDB_API-RHEL7-64gcc83 \
   && mv FileGDB_API-RHEL7-64gcc83 /usr/local/FileGDB_API \
   && rm -rf /usr/local/FileGDB_API/lib/libstdc++* \
-  && cp /usr/local/FileGDB_API/lib/* /build_thirdparty/usr/lib \
+  && cp /usr/local/FileGDB_API/lib/* /build_thirdparty/usr/lib/x86_64-linux-gnu \
   && cp /usr/local/FileGDB_API/include/* /usr/include \
   && rm -rf FileGDB_API-RHEL7-64gcc83.tar.gz \
   ) ; fi
