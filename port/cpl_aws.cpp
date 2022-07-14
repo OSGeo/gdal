@@ -730,6 +730,133 @@ static bool IsMachinePotentiallyEC2Instance()
 #endif
 }
 
+
+/************************************************************************/
+/*                   ReadAWSWebIdentityTokenFile()                      */
+/************************************************************************/
+
+static bool ReadAWSWebIdentityTokenFile(const std::string& osWebIdentityTokenFile,
+                                        CPLString& webIdentityToken)
+{
+    GByte *pabyOut = nullptr;
+    if( !VSIIngestFile( nullptr, osWebIdentityTokenFile.c_str(), &pabyOut, nullptr, -1 ) )
+        return false;
+
+    webIdentityToken = reinterpret_cast<char *>(pabyOut);
+    VSIFree(pabyOut);
+    return !webIdentityToken.empty();
+}
+
+/************************************************************************/
+/*          GetConfigurationFromAssumeRoleWithWebIdentity()             */
+/************************************************************************/
+
+bool VSIS3HandleHelper::GetConfigurationFromAssumeRoleWithWebIdentity(bool bForceRefresh,
+                                                                      const std::string& osPathForOption,
+                                                                      CPLString& osSecretAccessKey,
+                                                                      CPLString& osAccessKeyId,
+                                                                      CPLString& osSessionToken)
+{
+    CPLMutexHolder oHolder( &ghMutex );
+    if( !bForceRefresh )
+    {
+        time_t nCurTime;
+        time(&nCurTime);
+        // Try to reuse credentials if they are still valid, but
+        // keep one minute of margin...
+        if( !gosGlobalAccessKeyId.empty() && nCurTime < gnGlobalExpiration - 60 )
+        {
+            osAccessKeyId = gosGlobalAccessKeyId;
+            osSecretAccessKey = gosGlobalSecretAccessKey;
+            osSessionToken = gosGlobalSessionToken;
+            return true;
+        }
+    }
+
+    const CPLString roleArn = VSIGetCredential(osPathForOption.c_str(), "AWS_ROLE_ARN", "");
+    if( roleArn.empty() )
+    {
+        CPLDebug("AWS", "AWS_ROLE_ARN configuration option not defined");
+        return false;
+    }
+
+    const CPLString webIdentityTokenFile =  VSIGetCredential(osPathForOption.c_str(),
+                                                             "AWS_WEB_IDENTITY_TOKEN_FILE", "");
+    if( webIdentityTokenFile.empty() )
+    {
+        CPLDebug("AWS", "AWS_WEB_IDENTITY_TOKEN_FILE configuration option not defined");
+        return false;
+    }
+
+    const CPLString stsRegionalEndpoints = VSIGetCredential(osPathForOption.c_str(),
+                                                            "AWS_STS_REGIONAL_ENDPOINTS", "regional");
+
+    std::string osStsDefaultUrl;
+    if (stsRegionalEndpoints == "regional") {
+        const CPLString osRegion = VSIGetCredential(osPathForOption.c_str(), "AWS_REGION", "us-east-1");
+        osStsDefaultUrl = "https://sts." + osRegion + ".amazonaws.com";
+    } else {
+        osStsDefaultUrl = "https://sts.amazonaws.com";
+    }
+    const CPLString osStsRootUrl(
+        VSIGetCredential(osPathForOption.c_str(), "CPL_AWS_STS_ROOT_URL", osStsDefaultUrl.c_str()));
+
+    // Get token from web identity token file
+    CPLString webIdentityToken;
+    if(!ReadAWSWebIdentityTokenFile(webIdentityTokenFile, webIdentityToken) )
+    {
+        CPLDebug("AWS", "%s is empty", webIdentityTokenFile.c_str());
+        return false;
+    }
+
+    // Get credentials from sts AssumeRoleWithWebIdentity
+    std::string osExpiration;
+    {
+        const CPLString osSTS_asuume_role_with_web_identity_URL =
+            osStsRootUrl + "/?Action=AssumeRoleWithWebIdentity&RoleSessionName=gdal"
+            "&Version=2011-06-15&RoleArn=" + roleArn + "&WebIdentityToken=" + webIdentityToken;
+
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+
+        CPLHTTPResult* psResult = CPLHTTPFetch( osSTS_asuume_role_with_web_identity_URL.c_str(), nullptr );
+        CPLPopErrorHandler();
+        if( psResult )
+        {
+            if( psResult->nStatus == 0 && psResult->pabyData != nullptr )
+            {
+                CPLXMLTreeCloser oTree(CPLParseXMLString(reinterpret_cast<char*>(psResult->pabyData)));
+                if( oTree )
+                {
+                    const auto psCredentials = CPLGetXMLNode(oTree.get(),
+                        "=AssumeRoleWithWebIdentityResponse.AssumeRoleWithWebIdentityResult.Credentials");
+                    if( psCredentials )
+                    {
+                        osAccessKeyId = CPLGetXMLValue(psCredentials, "AccessKeyId", "");
+                        osSecretAccessKey = CPLGetXMLValue(psCredentials, "SecretAccessKey", "");
+                        osSessionToken = CPLGetXMLValue(psCredentials, "SessionToken", "");
+                        osExpiration = CPLGetXMLValue(psCredentials, "Expiration", "");
+                    }
+                }
+            }
+            CPLHTTPDestroyResult(psResult);
+        }
+    }
+
+    GIntBig nExpirationUnix = 0;
+    if( !osAccessKeyId.empty() &&
+        !osSecretAccessKey.empty() &&
+        !osSessionToken.empty() &&
+        Iso8601ToUnixTime(osExpiration.c_str(), &nExpirationUnix) )
+    {
+        gosGlobalAccessKeyId = osAccessKeyId;
+        gosGlobalSecretAccessKey = osSecretAccessKey;
+        gosGlobalSessionToken = osSessionToken;
+        gnGlobalExpiration = nExpirationUnix;
+        CPLDebug("AWS", "Storing AIM credentials until %s", osExpiration.c_str());
+    }
+    return !osAccessKeyId.empty() && !osSecretAccessKey.empty() && !osSessionToken.empty();
+}
+
 /************************************************************************/
 /*                      GetConfigurationFromEC2()                       */
 /************************************************************************/
@@ -1436,6 +1563,19 @@ bool VSIS3HandleHelper::GetConfiguration(const std::string& osPathForOption,
         return true;
     }
 
+    if( CPLTestBool(CPLGetConfigOption("CPL_AWS_WEB_IDENTITY_ENABLE", "YES")) )
+    {
+        // WebIdentity method: use Web Identity Token
+        if( GetConfigurationFromAssumeRoleWithWebIdentity(/* bForceRefresh = */ false,
+                                                          osPathForOption,
+                                                          osSecretAccessKey, osAccessKeyId,
+                                                          osSessionToken) )
+        {
+            eCredentialsSource = AWSCredentialsSource::WEB_IDENTITY;
+            return true;
+        }
+    }
+
     // Last method: use IAM role security credentials on EC2 instances
     if( GetConfigurationFromEC2(/* bForceRefresh = */ false,
                                 osPathForOption,
@@ -1639,6 +1779,21 @@ void VSIS3HandleHelper::RefreshCredentials(const std::string& osPathForOption,
                                                     osAccessKeyId,
                                                     osSessionToken,
                                                     osRegion) )
+        {
+            m_osSecretAccessKey = osSecretAccessKey;
+            m_osAccessKeyId = osAccessKeyId;
+            m_osSessionToken = osSessionToken;
+        }
+    }
+    else if( m_eCredentialsSource == AWSCredentialsSource::WEB_IDENTITY )
+    {
+        CPLString osSecretAccessKey, osAccessKeyId, osSessionToken;
+        CPLString osRegion;
+        if( GetConfigurationFromAssumeRoleWithWebIdentity(bForceRefresh,
+                                                          osPathForOption.c_str(),
+                                                          osSecretAccessKey,
+                                                          osAccessKeyId,
+                                                          osSessionToken) )
         {
             m_osSecretAccessKey = osSecretAccessKey;
             m_osAccessKeyId = osAccessKeyId;

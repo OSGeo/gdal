@@ -32,6 +32,8 @@ import json
 import os.path
 import stat
 import sys
+import tempfile
+
 from osgeo import gdal
 
 
@@ -301,9 +303,15 @@ def get_s3_fake_bucket_resource_method(request):
         'x-amz-date,Signature='
         '9f623b7ffce76188a456c70fb4813eb31969e88d130d6b4d801b3accbf050d6c'
     )
+    expected_authorization_8082 = (
+        'AWS4-HMAC-SHA256 Credential=AWS_ACCESS_KEY_ID/20150101/us-east-1/'
+        's3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;'
+        'x-amz-security-token,Signature='
+        'a78e2d484679a19bec940a72d40c7fda37d1651a8ab82a6ed8fd7be46a53afb1'
+    )
     actual_authorization = request.headers['Authorization']
     if (actual_authorization not in
-            (expected_authorization_8080, expected_authorization_8081)):
+            (expected_authorization_8080, expected_authorization_8081, expected_authorization_8082)):
         sys.stderr.write(
             "Bad Authorization: '%s'\n" % str(actual_authorization)
         )
@@ -4633,6 +4641,80 @@ aws_secret_access_key = bar
 
 
 ###############################################################################
+# Read credentials from sts AssumeRoleWithWebIdentity
+@pytest.mark.skipif(
+    sys.platform not in ('linux', 'win32'),
+    reason='Incorrect platform'
+)
+def test_vsis3_read_credentials_sts_assume_role_with_web_identity(
+        aws_test_config,
+        webserver_port
+):
+    fp = tempfile.NamedTemporaryFile(delete=False)
+    fp.write(b'token')
+    fp.close()
+
+    aws_role_arn = 'arn:aws:iam:role/test'
+    options = {
+        'CPL_AWS_CREDENTIALS_FILE': '',
+        'AWS_CONFIG_FILE': '',
+        'AWS_SECRET_ACCESS_KEY': '',
+        'AWS_ACCESS_KEY_ID': '',
+        'AWS_ROLE_ARN': aws_role_arn,
+        'AWS_WEB_IDENTITY_TOKEN_FILE': fp.name
+    }
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        'GET',
+        f'/?Action=AssumeRoleWithWebIdentity&RoleSessionName=gdal&Version=2011-06-15&RoleArn={aws_role_arn}&WebIdentityToken=token',
+        200,
+        {},
+        """<AssumeRoleWithWebIdentityResponse xmlns="https://sts.amazonaws.com/doc/2011-06-15/">
+          <AssumeRoleWithWebIdentityResult>
+            <SubjectFromWebIdentityToken>amzn1.account.AF6RHO7KZU5XRVQJGXK6HB56KR2A</SubjectFromWebIdentityToken>
+            <Audience>client.5498841531868486423.1548@apps.example.com</Audience>
+            <AssumedRoleUser>
+              <Arn>arn:aws:sts::123456789012:assumed-role/FederatedWebIdentityRole/app1</Arn>
+              <AssumedRoleId>AROACLKWSDQRAOEXAMPLE:app1</AssumedRoleId>
+            </AssumedRoleUser>
+            <Credentials>
+              <SessionToken>AWS_SESSION_TOKEN</SessionToken>
+              <SecretAccessKey>AWS_SECRET_ACCESS_KEY</SecretAccessKey>
+              <Expiration>3000-01-01T00:00:00Z</Expiration>
+              <AccessKeyId>AWS_ACCESS_KEY_ID</AccessKeyId>
+            </Credentials>
+            <SourceIdentity>SourceIdentityValue</SourceIdentity>
+            <Provider>www.amazon.com</Provider>
+          </AssumeRoleWithWebIdentityResult>
+          <ResponseMetadata>
+            <RequestId>ad4156e9-bce1-11e2-82e6-6b6efEXAMPLE</RequestId>
+          </ResponseMetadata>
+        </AssumeRoleWithWebIdentityResponse>"""
+    )
+    handler.add(
+        'GET',
+        '/s3_fake_bucket/resource',
+        custom_method=get_s3_fake_bucket_resource_method
+    )
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(options):
+            with gdaltest.config_option(
+                    'CPL_AWS_STS_ROOT_URL',
+                    'http://localhost:%d' % webserver_port
+            ):
+                f = open_for_read('/vsis3/s3_fake_bucket/resource')
+        assert f is not None
+        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+
+    gdal.Unlink(fp.name)
+    assert data == 'foo'
+
+
+###############################################################################
 # Read credentials from simulated EC2 instance
 @pytest.mark.skipif(
     sys.platform not in ('linux', 'win32'),
@@ -4648,7 +4730,8 @@ def test_vsis3_read_credentials_ec2_imdsv2(
         'AWS_SECRET_ACCESS_KEY': '',
         'AWS_ACCESS_KEY_ID': '',
         # Disable hypervisor related check to test if we are really on EC2
-        'CPL_AWS_AUTODETECT_EC2': 'NO'
+        'CPL_AWS_AUTODETECT_EC2': 'NO',
+        'CPL_AWS_WEB_IDENTITY_ENABLE': 'NO'
     }
 
     gdal.VSICurlClearCache()
