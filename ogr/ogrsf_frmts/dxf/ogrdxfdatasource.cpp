@@ -1002,7 +1002,7 @@ size_t OGRDXFDataSource::GetEntryFromAcDsDataSection(
 
     // Keep track of our current position and line number in the file so we can
     // return here later
-    int iPrevOffset = oReader.iSrcBufferFileOffset + oReader.iSrcBufferOffset;
+    unsigned int iPrevOffset = oReader.iSrcBufferFileOffset + oReader.iSrcBufferOffset;
     int nPrevLineNumber = oReader.nLineNumber;
 
     char szLineBuf[4096];
