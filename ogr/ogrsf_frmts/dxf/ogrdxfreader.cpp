@@ -71,7 +71,7 @@ void OGRDXFReader::Initialize( VSILFILE *fpIn )
 /*                          ResetReadPointer()                          */
 /************************************************************************/
 
-void OGRDXFReader::ResetReadPointer( int iNewOffset,
+void OGRDXFReader::ResetReadPointer( unsigned int iNewOffset,
     int nNewLineNumber /* = 0 */ )
 
 {
@@ -94,8 +94,6 @@ void OGRDXFReader::ResetReadPointer( int iNewOffset,
 void OGRDXFReader::LoadDiskChunk()
 
 {
-    CPLAssert( iSrcBufferOffset >= 0 );
-
     if( nSrcBufferBytes - iSrcBufferOffset > 511 )
         return;
 
@@ -137,7 +135,7 @@ int OGRDXFReader::ReadValueRaw( char *pszValueBuf, int nValueBufSize )
 /* -------------------------------------------------------------------- */
 /*      Capture the value code, and skip past it.                       */
 /* -------------------------------------------------------------------- */
-    int iStartSrcBufferOffset = iSrcBufferOffset;
+    unsigned int iStartSrcBufferOffset = iSrcBufferOffset;
     int nValueCode = atoi(achSrcBuffer + iSrcBufferOffset);
 
     nLineNumber ++;
@@ -166,7 +164,7 @@ int OGRDXFReader::ReadValueRaw( char *pszValueBuf, int nValueBufSize )
 /* -------------------------------------------------------------------- */
 /*      Capture the value string.                                       */
 /* -------------------------------------------------------------------- */
-    int iEOL = iSrcBufferOffset;
+    unsigned int iEOL = iSrcBufferOffset;
     CPLString osValue;
 
     nLineNumber ++;
@@ -231,7 +229,7 @@ int OGRDXFReader::ReadValueRaw( char *pszValueBuf, int nValueBufSize )
     }
 
     // Copy the last (normally, the only) section of this line into the buffer
-    if( (iEOL - iSrcBufferOffset) >
+    if( static_cast<int>(iEOL - iSrcBufferOffset) >
         nValueBufSize - static_cast<int>(nValueBufLen) - 1 )
     {
         strncpy( pszValueBuf + nValueBufLen,
