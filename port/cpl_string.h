@@ -434,8 +434,8 @@ class CPL_DLL CPLStringList
     bool   bOwnList = false;
     bool   bIsSorted = false;
 
-    void   MakeOurOwnCopy();
-    void   EnsureAllocation( int nMaxLength );
+    bool   MakeOurOwnCopy();
+    bool   EnsureAllocation( int nMaxLength );
     int    FindSortedInsertionPoint( const char *pszLine );
 
   public:

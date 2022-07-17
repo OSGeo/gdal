@@ -36,6 +36,7 @@
 #include <cstring>
 
 #include <algorithm>
+#include <limits>
 #include <string>
 
 #include "cpl_conv.h"
@@ -96,13 +97,7 @@ CPLStringList::CPLStringList( const CPLStringList &oOther ):
     CPLStringList()
 
 {
-    Assign( oOther.papszList, FALSE );
-
-    // We don't want to just retain a reference to the others list
-    // as we don't want to make assumptions about its lifetime that
-    // might surprise the client developer.
-    MakeOurOwnCopy();
-    bIsSorted = oOther.bIsSorted;
+    operator=(oOther);
 }
 
 /************************************************************************/
@@ -117,9 +112,17 @@ CPLStringList &CPLStringList::operator=( const CPLStringList& oOther )
 
         // We don't want to just retain a reference to the others list
         // as we don't want to make assumptions about its lifetime that
-        // might surprise the client developer.
-        MakeOurOwnCopy();
-        bIsSorted = oOther.bIsSorted;
+        if( !MakeOurOwnCopy() )
+        {
+            papszList = nullptr;
+            bOwnList = FALSE;
+            nAllocation = 0;
+            nCount = 0;
+        }
+        else
+        {
+            bIsSorted = oOther.bIsSorted;
+        }
     }
 
     return *this;
@@ -266,19 +269,25 @@ int CPLStringList::Count() const
 /*      Necessary if we are going to modify the list.                   */
 /************************************************************************/
 
-void CPLStringList::MakeOurOwnCopy()
+bool CPLStringList::MakeOurOwnCopy()
 
 {
     if( bOwnList )
-        return;
+        return true;
 
     if( papszList == nullptr )
-        return;
+        return true;
 
     Count();
+    char** papszListNew = CSLDuplicate( papszList );
+    if( papszListNew == nullptr )
+    {
+        return false;
+    }
+    papszList = papszListNew;
     bOwnList = true;
-    papszList = CSLDuplicate( papszList );
     nAllocation = nCount+1;
+    return true;
 }
 
 /************************************************************************/
@@ -289,28 +298,48 @@ void CPLStringList::MakeOurOwnCopy()
 /*      one more than the target)                                       */
 /************************************************************************/
 
-void CPLStringList::EnsureAllocation( int nMaxList )
+bool CPLStringList::EnsureAllocation( int nMaxList )
 
 {
     if( !bOwnList )
-        MakeOurOwnCopy();
-
-    if( nAllocation <= nMaxList )
     {
-        nAllocation = std::max(nAllocation * 2 + 20, nMaxList + 1);
+        if( !MakeOurOwnCopy() )
+            return false;
+    }
+
+    if( papszList == nullptr || nAllocation <= nMaxList )
+    {
+        // we need to be able to store nMaxList+1 as an int,
+        // and allocate (nMaxList+1) * sizeof(char*) bytes
+        if( nMaxList < 0 ||
+            nMaxList > std::numeric_limits<int>::max() - 1 ||
+            static_cast<size_t>(nMaxList) > std::numeric_limits<size_t>::max() / sizeof(char*) - 1 )
+        {
+            return false;
+        }
+        int nNewAllocation = nMaxList + 1;
+        if( nNewAllocation <= (std::numeric_limits<int>::max() - 20) / 2 / static_cast<int>(sizeof(char*)) )
+            nNewAllocation = std::max(nNewAllocation * 2 + 20, nMaxList + 1);
         if( papszList == nullptr )
         {
             papszList = static_cast<char **>(
-                CPLCalloc(nAllocation, sizeof(char*)) );
+                VSI_CALLOC_VERBOSE(nNewAllocation, sizeof(char*)) );
             bOwnList = true;
             nCount = 0;
+            if( papszList == nullptr )
+                return false;
         }
         else
         {
-            papszList = static_cast<char **>(
-                CPLRealloc(papszList, nAllocation*sizeof(char*)) );
+            char** papszListNew = static_cast<char **>(
+                VSI_REALLOC_VERBOSE(papszList, nNewAllocation*sizeof(char*)) );
+            if( papszListNew == nullptr )
+                return false;
+            papszList = papszListNew;
         }
+        nAllocation = nNewAllocation;
     }
+    return true;
 }
 
 /************************************************************************/
@@ -332,7 +361,11 @@ CPLStringList &CPLStringList::AddStringDirectly( char *pszNewString )
     if( nCount == -1 )
         Count();
 
-    EnsureAllocation( nCount+1 );
+    if( !EnsureAllocation( nCount+1 ) )
+    {
+        VSIFree(pszNewString);
+        return *this;
+    }
 
     papszList[nCount++] = pszNewString;
     papszList[nCount] = nullptr;
@@ -384,13 +417,22 @@ CPLStringList &CPLStringList::AddNameValue( const char *pszKey,
     if( pszKey == nullptr || pszValue==nullptr )
         return *this;
 
-    MakeOurOwnCopy();
+    if( !MakeOurOwnCopy() )
+        return *this;
 
 /* -------------------------------------------------------------------- */
 /*      Format the line.                                                */
 /* -------------------------------------------------------------------- */
+    if ( strlen(pszKey) > std::numeric_limits<size_t>::max() - strlen(pszValue) ||
+         strlen(pszKey) + strlen(pszValue) > std::numeric_limits<size_t>::max() - 2 )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Too big strings in AddNameValue()");
+        return *this;
+    }
     const size_t nLen = strlen(pszKey)+strlen(pszValue)+2;
-    char *pszLine = static_cast<char *>( CPLMalloc(nLen) );
+    char *pszLine = static_cast<char *>( VSI_MALLOC_VERBOSE(nLen) );
+    if( pszLine == nullptr )
+        return *this;
     snprintf( pszLine, nLen, "%s=%s", pszKey, pszValue );
 
 /* -------------------------------------------------------------------- */
@@ -436,7 +478,8 @@ CPLStringList &CPLStringList::SetNameValue( const char *pszKey,
         return AddNameValue( pszKey, pszValue );
 
     Count();
-    MakeOurOwnCopy();
+    if( !MakeOurOwnCopy() )
+        return *this;
 
     CPLFree( papszList[iKey] );
     if( pszValue == nullptr ) // delete entry
@@ -453,8 +496,16 @@ CPLStringList &CPLStringList::SetNameValue( const char *pszKey,
     }
     else
     {
+        if ( strlen(pszKey) > std::numeric_limits<size_t>::max() - strlen(pszValue) ||
+             strlen(pszKey) + strlen(pszValue) > std::numeric_limits<size_t>::max() - 2 )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "Too big strings in AddNameValue()");
+            return *this;
+        }
         const size_t nLen = strlen(pszKey)+strlen(pszValue)+2;
-        char *pszLine = static_cast<char *>( CPLMalloc(nLen) );
+        char *pszLine = static_cast<char *>( VSI_MALLOC_VERBOSE(nLen) );
+        if( pszLine == nullptr )
+            return *this;
         snprintf( pszLine, nLen, "%s=%s", pszKey, pszValue );
 
         papszList[iKey] = pszLine;
@@ -802,7 +853,11 @@ CPLStringList &CPLStringList::InsertStringDirectly( int nInsertAtLineNo,
     if( nCount == -1 )
         Count();
 
-    EnsureAllocation( nCount+1 );
+    if( !EnsureAllocation( nCount+1 ) )
+    {
+        VSIFree(pszNewLine);
+        return *this;
+    }
 
     if( nInsertAtLineNo < 0 || nInsertAtLineNo > nCount )
     {
