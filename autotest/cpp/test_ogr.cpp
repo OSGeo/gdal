@@ -42,12 +42,11 @@ namespace tut
     struct test_ogr_data
     {
         // Expected number of drivers
-        GDALDriverManager* drv_reg_;
-        int drv_count_;
-        std::string drv_shape_;
-        bool has_geos_support_;
-        std::string data_;
-        std::string data_tmp_;
+        GDALDriverManager* drv_reg_ = nullptr;
+        int drv_count_ = 0;
+        std::string drv_shape_{};
+        std::string data_{};
+        std::string data_tmp_{};
 
         test_ogr_data()
             : drv_reg_(nullptr),
