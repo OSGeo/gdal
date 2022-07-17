@@ -51,6 +51,11 @@ wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
         export JDK_PATH="/usr/lib/jvm/java-${JAVA_VERSION}-openjdk-${TARGET_ARCH}"
         export GDAL_CMAKE_EXTRA_OPTS="${GDAL_CMAKE_EXTRA_OPTS} -DJAVA_AWT_INCLUDE_PATH:PATH=${JDK_PATH}/include -DJAVA_AWT_LIBRARY:FILEPATH=${JDK_PATH}/lib/libjawt.so -DJAVA_INCLUDE_PATH:PATH=${JDK_PATH}/include -DJAVA_INCLUDE_PATH2:PATH=${JDK_PATH}/include/linux -DJAVA_JVM_LIBRARY:FILEPATH=${JDK_PATH}/lib/server/libjvm.so"
     fi
+    if echo "$WITH_FILEGDB" | grep -Eiq "^(y(es)?|1|true)$" ; then
+      ln -s /usr/local/FileGDB_API/lib/libFileGDBAPI.so /usr/lib/x86_64-linux-gnu
+      export GDAL_CMAKE_EXTRA_OPTS="${GDAL_CMAKE_EXTRA_OPTS} -DFileGDB_ROOT:PATH=/usr/local/FileGDB_API -DFileGDB_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libFileGDBAPI.so"
+      export LD_LIBRARY_PATH=/usr/local/FileGDB_API/lib:${LD_LIBRARY_PATH:-}
+    fi
     cmake .. \
         -DCMAKE_INSTALL_PREFIX=/usr \
         -DPROJ_INCLUDE_DIR="/build${PROJ_INSTALL_PREFIX-/usr/local}/include" \
@@ -67,10 +72,10 @@ wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
         ccache -s
 
         echo "Uploading cache..."
-        rsync -ra --delete "$HOME/.ccache" "${RSYNC_REMOTE}/gdal/${GCC_ARCH}/"
+        rsync -ra --delete "$HOME/.cache" "${RSYNC_REMOTE}/gdal/${GCC_ARCH}/"
         echo "Finished"
 
-        rm -rf "$HOME/.ccache"
+        rm -rf "$HOME/.cache"
         unset CC
         unset CXX
     fi
