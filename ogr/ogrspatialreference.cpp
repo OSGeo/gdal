@@ -3544,7 +3544,10 @@ static void RemoveIDFromMemberOfEnsembles(CPLJSONObject& obj)
     {
         for( auto& subObj: obj.ToArray() )
         {
-            subObj.Delete("id");
+            if( subObj.GetType() == CPLJSONObject::Type::Object )
+            {
+                subObj.Delete("id");
+            }
         }
     }
 }
