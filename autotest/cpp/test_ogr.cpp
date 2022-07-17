@@ -1825,7 +1825,7 @@ namespace tut
         s1.MinX = 0;
         s1.MinY = 1;
         s1.MaxX = 2;
-        s1.MaxX = 3;
+        s1.MaxY = 3;
         ensure(s1.IsInit());
         {
             OGREnvelope s2(s1);
