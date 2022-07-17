@@ -2167,7 +2167,7 @@ namespace tut
         double minmax[2];
         GDALComputeRasterMinMax(GDALRasterBand::ToHandle(rb), TRUE, minmax);
 
-        ds.release();
+        ds.reset();
         GetGDALDriverManager()->DeregisterDriver(driver.get());
 
         ensure_equals(nCountZeroOpenOptions, 1);
