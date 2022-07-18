@@ -50,11 +50,16 @@ add_library(
   segment/systiledir.cpp
   segment/vecsegdataindex.cpp
   segment/vecsegheader.cpp)
-if (WIN32)
-  target_sources(pcidsk_sdk PRIVATE port/io_win32.cpp port/win32_mutex.cpp)
-else ()
-  target_sources(pcidsk_sdk PRIVATE port/io_stdio.cpp port/pthread_mutex.cpp)
-endif ()
+
+if(PCIDSK_INTERNAL)
+  target_compile_definitions(pcidsk_sdk PRIVATE -DPCIDSK_INTERNAL)
+else()
+#if (WIN32)
+#  target_sources(pcidsk_sdk PRIVATE port/io_win32.cpp port/win32_mutex.cpp)
+#else ()
+#  target_sources(pcidsk_sdk PRIVATE port/io_stdio.cpp port/pthread_mutex.cpp)
+#endif ()
+endif()
 
 is_plugin(RES gdal_PCIDSK)
 if (RES)
