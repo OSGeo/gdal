@@ -32,6 +32,7 @@
 #include "gdaljp2abstractdataset.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cstdlib>
 #include <limits>
 
@@ -844,6 +845,7 @@ const std::vector<GByte>& JPEGXLDataset::GetDecodedImage()
 
     const auto eDT = GetRasterBand(1)->GetRasterDataType();
     const auto nDataSize = GDALGetDataTypeSizeBytes(eDT);
+    assert(nDataSize > 0);
     const int nNonExtraBands = nBands - m_nNonAlphaExtraChannels;
     if( static_cast<size_t>(nRasterXSize) >
             std::numeric_limits<size_t>::max() / nRasterYSize / nDataSize / nNonExtraBands )
