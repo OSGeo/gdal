@@ -923,6 +923,8 @@ char **OGRCSVLayer::AutodetectFieldTypes(char **papszOpenOptions,
     vsi_l_offset nBytes = static_cast<vsi_l_offset>(
         CPLAtoGIntBig(CSLFetchNameValueDef(papszOpenOptions,
                "AUTODETECT_SIZE_LIMIT", CPLSPrintf("%d", STREAMING_LIMIT))));
+    if( nBytes == 0 )
+        nBytes = static_cast<vsi_l_offset>(-1); // unlimited size
     if( bStreaming && (nBytes == 0 || nBytes > STREAMING_LIMIT) )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
