@@ -1152,7 +1152,7 @@ CPLErr JPEGXLDataset::IRasterIO( GDALRWFlag eRWFlag,
         const auto nBufTypeSize = GDALGetDataTypeSizeBytes(eBufType);
         const bool bIsPixelInterleaveBuffer =
             ((nBandSpace == 0 && nBandCount == 1) || nBandSpace == nBufTypeSize) &&
-            nPixelSpace == nBufTypeSize * nBandCount &&
+            nPixelSpace == static_cast<GSpacing>(nBufTypeSize) * nBandCount &&
             nLineSpace == nPixelSpace * nRasterXSize;
 
         const auto eNativeDT = GetRasterBand(1)->GetRasterDataType();
