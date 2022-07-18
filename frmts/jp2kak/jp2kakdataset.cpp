@@ -63,6 +63,11 @@ CPL_CVSID("$Id$")
     using namespace kdu_supp;
 #endif
 
+#if KDU_MAJOR_VERSION > 7 || (KDU_MAJOR_VERSION == 7 && KDU_MINOR_VERSION >= 8)
+// Before Kakdu 7.8, kdu_roi_rect was missing from libkdu_aXY
+#define KDU_HAS_ROI_RECT
+#endif
+
 // #define KAKADU_JPX 1
 
 static bool kakadu_initialized = false;
@@ -2476,6 +2481,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     // Do we have a high res region of interest?
     kdu_roi_image *poROIImage = nullptr;
+#ifdef KDU_HAS_ROI_RECT
     const char* pszROI = CSLFetchNameValue(papszOptions, "ROI");
     if( pszROI )
     {
@@ -2498,6 +2504,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             poROIImage = new kdu_roi_rect(oCodeStream, region);
         }
     }
+#endif
 
     // Set some particular parameters.
     oCodeStream.access_siz()->parse_string(
@@ -2934,7 +2941,9 @@ void GDALRegister_JP2KAK()
 "'Definition file to describe how a GMLJP2 v2 box should be generated. "
 "If set to YES, a minimal instance will be created'/>"
 "   <Option name='LAYERS' type='integer'/>"
+#ifdef KDU_HAS_ROI_RECT
 "   <Option name='ROI' type='string'/>"
+#endif
 "   <Option name='COMSEG' type='boolean' />"
 "   <Option name='FLUSH' type='boolean' />"
 "   <Option name='NBITS' type='int' description="
