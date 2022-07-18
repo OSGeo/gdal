@@ -1910,7 +1910,7 @@ JPEGXLDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
         const auto Rescale = [eDT, nBits, poSrcDS](void* pBuffer, int nChannels)
         {
             // Rescale to 8-bits/16-bits
-            if( nBits < GDALGetDataTypeSize(eDT) )
+            if( (eDT == GDT_Byte && nBits < 8) || (eDT == GDT_UInt16 && nBits < 16) )
             {
                 const size_t nSamples = static_cast<size_t>(poSrcDS->GetRasterXSize()) *
                     poSrcDS->GetRasterYSize() * nChannels;
