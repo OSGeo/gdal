@@ -1248,7 +1248,7 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
         if( bGotFromEPSG )
         {
             double adfTOWGS84[7] = { 0.0 };
-            oSRS.GetTOWGS84( adfTOWGS84 );
+            CPL_IGNORE_RET_VAL(oSRS.GetTOWGS84( adfTOWGS84 ));
             bool bSame = true;
             for( int i = 0; i < 7; i++ )
             {
