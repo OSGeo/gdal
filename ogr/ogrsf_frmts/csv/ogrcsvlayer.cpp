@@ -304,6 +304,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
 
     nCSVFieldCount = nFieldCount;
 
+    // coverity[tainted_data]
     panGeomFieldIndex = static_cast<int *>(CPLCalloc(nFieldCount, sizeof(int)));
     for( int iField = 0; iField < nFieldCount; iField++ )
     {
