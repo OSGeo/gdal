@@ -414,10 +414,13 @@ class CPL_DLL OGRFeature
         FieldValue(OGRFeature* poFeature, int iFieldIndex);
         FieldValue(const OGRFeature* poFeature, int iFieldIndex);
         FieldValue(const FieldValue& oOther) = delete;
+        FieldValue& Assign(const FieldValue& oOther);
 
       public:
 //! @cond Doxygen_Suppress
         ~FieldValue();
+
+        FieldValue& operator=(FieldValue&& oOther);
 //! @endcond
 
         /** Set a field value from another one. */
