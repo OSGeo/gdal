@@ -565,7 +565,8 @@ CPLErr MRFRasterBand::ReadInterleavedBlock(int xblk, int yblk, void *buffer) {
         }
 
 // Just the right mix of templates and macros make deinterleaving tidy
-#define CpySI(T) cpy_stride_in<T> (ob, reinterpret_cast<T *>(poMRFDS->GetPBuffer()) + i,\
+        void* pbuffer = poMRFDS->GetPBuffer();
+#define CpySI(T) cpy_stride_in<T> (ob, reinterpret_cast<T *>(pbuffer) + i,\
     blockSizeBytes()/sizeof(T), img.pagesize.c)
 
         // Page is already in poMRFDS->pbuffer, not empty
