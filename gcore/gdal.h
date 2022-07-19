@@ -539,6 +539,11 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  */
 #define GDAL_DCAP_CURVE_GEOMETRIES "DCAP_CURVE_GEOMETRIES"
 
+/** Capability set by a driver that can support measured geometries.
+ * @since GDAL 3.6
+ */
+#define GDAL_DCAP_MEASURED_GEOMETRIES "DCAP_MEASURED_GEOMETRIES"
+
 /** Capability set by drivers which support feature styles.
  * @since GDAL 2.3
  */

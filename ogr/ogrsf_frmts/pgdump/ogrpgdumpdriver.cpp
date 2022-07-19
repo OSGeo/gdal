@@ -72,6 +72,7 @@ void RegisterOGRPGDump()
     poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_CURVE_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "PostgreSQL SQL dump" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/pgdump.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "sql" );

@@ -116,6 +116,7 @@ void RegisterOGRPG()
     poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_DELETE_FIELD, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_CURVE_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/pg.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "PG:" );
 
