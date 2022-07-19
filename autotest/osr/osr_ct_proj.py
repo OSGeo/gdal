@@ -35,7 +35,7 @@ import os
 
 import pytest
 
-from osgeo import osr
+from osgeo import gdal, osr
 
 bonne = 'PROJCS["bonne",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["bonne"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],PARAMETER["Standard_Parallel_1",60.0],UNIT["Meter",1.0]]'
 
@@ -503,3 +503,20 @@ def test_transform_bounds__south_pole__xy():
     ) == pytest.approx(
         (-1371213.76, -1405880.72, 5371213.76, 5405880.72)
     )
+
+
+def test_transform_bounds__internal_error_message():
+    # make sure error message cleared on success
+    src = osr.SpatialReference()
+    src.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
+    assert src.ImportFromEPSG(6931) == 0
+    dst = osr.SpatialReference()
+    dst.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
+    assert dst.ImportFromEPSG(4326) == 0
+    ctr = osr.CoordinateTransformation(src, dst)
+    assert ctr.TransformBounds(
+        458872.4197335826, -2998046.478919534, 584059.8115540259, -2883810.102037343, 21
+    ) == pytest.approx(
+        (62.36651782187522, 8.701995124479733, 63.605850064663514, 11.449280848814887)
+    )
+    assert gdal.GetLastErrorMsg() == ""
