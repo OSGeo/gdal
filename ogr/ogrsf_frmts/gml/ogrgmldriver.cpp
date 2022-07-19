@@ -138,6 +138,7 @@ void RegisterOGRGML()
 
     poDriver->SetDescription( "GML" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Geography Markup Language (GML)" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gml" );

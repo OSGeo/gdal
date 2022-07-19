@@ -3571,6 +3571,7 @@ void GDALRegister_FITS()
     poDriver->SetDescription( "FITS" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Flexible Image Transport System" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,

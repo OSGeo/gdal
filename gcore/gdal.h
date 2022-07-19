@@ -466,6 +466,11 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  */
 #define GDAL_DCAP_GNM         "DCAP_GNM"
 
+/** Capability set by a driver that can create layers.
+ * @since GDAL 3.6
+ */
+#define GDAL_DCAP_CREATE_LAYER "DCAP_CREATE_LAYER"
+
 /** Capability set by a driver that can create fields with NOT NULL constraint.
  * @since GDAL 2.0
  */
