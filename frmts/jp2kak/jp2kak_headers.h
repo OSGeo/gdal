@@ -48,6 +48,7 @@
 #include "kdu_params.h"
 #include "kdu_compressed.h"
 #include "kdu_sample_processing.h"
+#include "kdu_stripe_compressor.h"
 #include "kdu_stripe_decompressor.h"
 #include "kdu_arch.h"
 

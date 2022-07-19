@@ -1264,6 +1264,24 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 }
 
+namespace {
+    // std::vector<bool> is Unfortunately a specialized implementation such as &v[0] doesn't work
+    // https://codereview.stackexchange.com/questions/241629/stdvectorbool-workaround-in-c
+    class vector_safe_bool {
+        bool value;
+    public:
+        vector_safe_bool() = default;
+        // cppcheck-suppress noExplicitConstructor
+        vector_safe_bool(bool b) : value{b} {}
+
+        bool *operator&() noexcept { return &value; }
+        const bool *operator&() const noexcept { return &value; }
+
+        operator const bool &() const noexcept { return value; }
+        operator bool &() noexcept { return value; }
+    };
+}
+
 /************************************************************************/
 /*                           DirectRasterIO()                           */
 /************************************************************************/
@@ -1346,22 +1364,6 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
     std::vector<int> sample_gaps(nBandCount);
     std::vector<int> row_gaps(nBandCount);
     std::vector<int> precisions(nBandCount);
-
-    // std::vector<bool> is Unfortunately a specialized implementation such as &v[0] doesn't work
-    // https://codereview.stackexchange.com/questions/241629/stdvectorbool-workaround-in-c
-    class vector_safe_bool {
-        bool value;
-    public:
-        vector_safe_bool() = default;
-        // cppcheck-suppress noExplicitConstructor
-        vector_safe_bool(bool b) : value{b} {}
-
-        bool *operator&() noexcept { return &value; }
-        const bool *operator&() const noexcept { return &value; }
-
-        operator const bool &() const noexcept { return value; }
-        operator bool &() noexcept { return value; }
-    };
     std::vector<vector_safe_bool> is_signed(nBandCount);
 
     for( int i = 0; i < nBandCount; i++ )
@@ -2100,7 +2102,7 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
 
     if( poThreadEnv )
     {
-        poThreadEnv->join(env_queue,true); // Joins with descendants only
+        poThreadEnv->join(env_queue, true); // Joins with descendants only
     }
     engine.destroy(poThreadEnv);
 
@@ -2810,7 +2812,6 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( bIsJP2 )
         jp2_out.open_codestream();
 
-
     // Setup the thread environment.
 
     int nNumThreads = atoi(CPLGetConfigOption("JP2KAK_THREADS", "-1"));
@@ -2841,68 +2842,206 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         CPLDebug("JP2KAK", "Operating in singlethreaded mode.");
     }
 
-    // Create one big tile, and a compressing engine, and line
-    // buffer for each component.
-    double dfPixelsDone = 0.0;
-    const bool bFlushEnabled = CPLFetchBool(papszOptions, "FLUSH", true);
     bool bOK = true;
+    const bool bFlushEnabled = CPLFetchBool(papszOptions, "FLUSH", true);
 
-    for( int iTileYOff = 0; bOK && iTileYOff < nYSize; iTileYOff += nTileYSize )
+
+    const int num_components = poSrcDS->GetRasterCount();
+    const int nDataTypeSizeBytes = GDALGetDataTypeSizeBytes(eType);
+
+    // Determine if we can use the kdu_stripe_compressor logic
+    const auto nMaxBufferSize = std::strtoull(
+        CPLGetConfigOption("JP2KAK_MAX_BUFFER_SIZE",
+                           CPLSPrintf(CPL_FRMT_GUIB, GDALGetCacheMax64() / 4)),
+        nullptr, 10);
+    const auto nLineBufferSize = static_cast<unsigned long long>(nXSize) *
+        num_components * nDataTypeSizeBytes;
+    const auto nNeededBufferSize = nLineBufferSize * nTileYSize;
+    const char* pszUseStripeCompressor = CPLGetConfigOption("JP2KAK_USE_STRIPE_COMPRESSOR", nullptr);
+    if( poROIImage == nullptr &&
+        pszUseStripeCompressor == nullptr &&
+        (nTileXSize < nXSize || nTileYSize < nYSize ) )
     {
-        for( int iTileXOff = 0; bOK && iTileXOff < nXSize; iTileXOff += nTileXSize )
+        // We want to be able to push a stripe of the raster width and tile height
+        if( nNeededBufferSize > nMaxBufferSize )
         {
-            kdu_tile oTile = oCodeStream.open_tile(
-                kdu_coords(iTileXOff / nTileXSize, iTileYOff / nTileYSize), poThreadEnv);
+            CPLDebug("JP2KAK",
+                     "Using kdu_multi_analysis because "
+                     "nNeededBufferSize = " CPL_FRMT_GUIB
+                     " is > JP2KAK_MAX_BUFFER_SIZE = " CPL_FRMT_GUIB,
+                     static_cast<GUIntBig>(nNeededBufferSize),
+                     static_cast<GUIntBig>(nMaxBufferSize));
+            pszUseStripeCompressor = "NO";
+        }
+    }
+    if( pszUseStripeCompressor == nullptr )
+        pszUseStripeCompressor = poROIImage == nullptr ? "YES" : "NO";
 
-            // Is this a partial tile on the right or bottom?
-            const int nThisTileXSize =
-                iTileXOff + nTileXSize < nXSize
-                ? nTileXSize
-                : nXSize - iTileXOff;
+    if( CPLTestBool(pszUseStripeCompressor) )
+    {
+        CPLDebug("JP2KAK", "Using stripe compressor");
 
-            const int nThisTileYSize =
-                iTileYOff + nTileYSize < nYSize
-                ? nTileYSize
-                : nYSize - iTileYOff;
+        kdu_stripe_compressor compressor;
+        compressor.start(oCodeStream, layer_count, layer_bytes.data(),
+                         /*const kdu_uint16 *layer_slopes=*/ nullptr,
+                         /*kdu_uint16 min_slope_threshold=*/ 0,
+                         /*bool no_auto_complexity_control=*/ false,
+                         /*bool force_precise=*/ false,
+                         /*bool record_layer_info_in_comment=*/ bComseg,
+                         /*double size_tolerance=*/ 0.0,
+                         /*int num_components=*/ 0,
+                         /*bool want_fastest=*/ false,
+                         /*kdu_thread_env *env=*/ poThreadEnv,
+                         /*kdu_thread_queue *env_queue=*/ nullptr);
 
-            // Setup scaled progress monitor.
+        std::vector<int> recommended_stripe_heights(num_components);
+        compressor.get_recommended_stripe_heights(
+          1,
+          std::max(1, static_cast<int>(std::min(nMaxBufferSize, nNeededBufferSize) / nLineBufferSize)),
+          &recommended_stripe_heights[0],
+          nullptr);
+        const int stripe_height = recommended_stripe_heights[0];
+        CPLDebug("JP2KAK", "stripe_height = %d", stripe_height);
+        GByte* pBuffer = static_cast<GByte*>(VSI_MALLOC3_VERBOSE(
+            num_components * nDataTypeSizeBytes, nXSize, stripe_height));
+        if( pBuffer == nullptr )
+            bOK = false;
+        std::vector<kdu_byte*> stripe_bufs(num_components);
+        std::vector<int> stripe_heights = recommended_stripe_heights;
+        std::vector<vector_safe_bool> is_signed(num_components);
+        std::vector<int> precisions(num_components);
+        for( int i = 0; i < num_components; ++i )
+        {
+            stripe_bufs[i] = pBuffer + nXSize * nDataTypeSizeBytes * i;
+            is_signed[i] = CPL_TO_BOOL(GDALDataTypeIsSigned(eType));
+            precisions[i] = nBits;
+        }
+        const int flush_period = bFlushEnabled ? TILE_CHUNK_SIZE : 0;
+        int nHeight = stripe_height;
 
-            const double dfPixelsDoneAfter =
-                dfPixelsDone + static_cast<double>(nThisTileXSize) * nThisTileYSize;
-
-            void *pScaledProgressData = GDALCreateScaledProgress(
-                dfPixelsDone / dfPixelsTotal, dfPixelsDoneAfter / dfPixelsTotal,
-                pfnProgress, pProgressData);
-
-            if( !JP2KAKCreateCopy_WriteTile(poSrcDS, oTile, poThreadEnv, poROIImage,
-                                            iTileXOff, iTileYOff,
-                                            nThisTileXSize, nThisTileYSize,
-                                            nBits, eType,
-                                            oCodeStream, bFlushEnabled,
-                                            layer_bytes.data(), layer_count,
-                                            GDALScaledProgress,
-                                            pScaledProgressData, bComseg) )
+        for(int iY = 0; bOK && iY < nYSize; iY += stripe_height )
+        {
+            if( iY + nHeight > nYSize )
             {
-                bOK = false;
+                nHeight = nYSize - iY;
+                for( int i = 0; i < num_components; ++i )
+                {
+                    stripe_heights[i] = nHeight;
+                }
             }
-
-            GDALDestroyScaledProgress(pScaledProgressData);
-            dfPixelsDone = dfPixelsDoneAfter;
-
-            try
+            if( poSrcDS->RasterIO(GF_Read, 0, iY, nXSize, nHeight,
+                                  pBuffer, nXSize, nHeight,
+                                  eType,
+                                  poSrcDS->GetRasterCount(), nullptr,
+                                  0, 0, 0, nullptr) != CE_None )
             {
-                oTile.close(poThreadEnv);
-            }
-            catch( ... )
-            {
-                CPLDebug("JP2KAK", "CreateCopy() - caught exception in oTile.close()");
                 bOK = false;
                 break;
             }
-        }
-    }
 
-    delete poROIImage;
+            if( !pfnProgress((iY + nHeight) / static_cast<double>(nYSize),
+                             nullptr, pProgressData) )
+            {
+                bOK = false;
+                break;
+            }
+
+            if( eType == GDT_Byte )
+                compressor.push_stripe(stripe_bufs.data(),
+                                       stripe_heights.data(),
+                                       /*const int *sample_gaps=*/ nullptr,
+                                       /*const int *row_gaps=*/ nullptr,
+                                       precisions.data(),
+                                       flush_period);
+            else if( nDataTypeSizeBytes == 2 )
+                compressor.push_stripe(reinterpret_cast<kdu_int16**>(stripe_bufs.data()),
+                                       stripe_heights.data(),
+                                       /*const int *sample_gaps=*/ nullptr,
+                                       /*const int *row_gaps=*/ nullptr,
+                                       precisions.data(),
+                                       &is_signed[0],
+                                       flush_period);
+            else
+                compressor.push_stripe(reinterpret_cast<kdu_int32**>(stripe_bufs.data()),
+                                       stripe_heights.data(),
+                                       /*const int *sample_gaps=*/ nullptr,
+                                       /*const int *row_gaps=*/ nullptr,
+                                       precisions.data(),
+                                       &is_signed[0],
+                                       flush_period);
+        }
+
+        const bool bFinishOK = compressor.finish();
+        if( bOK && !bFinishOK )
+        {
+            // shouldn't happen unless we provided a wrong number of lines
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "compressor.finish() failed");
+        }
+        bOK &= bFinishOK;
+    }
+    else
+    {
+        // Iterate over tiles
+        double dfPixelsDone = 0.0;
+
+        for( int iTileYOff = 0; bOK && iTileYOff < nYSize; iTileYOff += nTileYSize )
+        {
+            for( int iTileXOff = 0; bOK && iTileXOff < nXSize; iTileXOff += nTileXSize )
+            {
+                kdu_tile oTile = oCodeStream.open_tile(
+                    kdu_coords(iTileXOff / nTileXSize, iTileYOff / nTileYSize), poThreadEnv);
+
+                // Is this a partial tile on the right or bottom?
+                const int nThisTileXSize =
+                    iTileXOff + nTileXSize < nXSize
+                    ? nTileXSize
+                    : nXSize - iTileXOff;
+
+                const int nThisTileYSize =
+                    iTileYOff + nTileYSize < nYSize
+                    ? nTileYSize
+                    : nYSize - iTileYOff;
+
+                // Setup scaled progress monitor.
+
+                const double dfPixelsDoneAfter =
+                    dfPixelsDone + static_cast<double>(nThisTileXSize) * nThisTileYSize;
+
+                void *pScaledProgressData = GDALCreateScaledProgress(
+                    dfPixelsDone / dfPixelsTotal, dfPixelsDoneAfter / dfPixelsTotal,
+                    pfnProgress, pProgressData);
+
+                if( !JP2KAKCreateCopy_WriteTile(poSrcDS, oTile, poThreadEnv, poROIImage,
+                                                iTileXOff, iTileYOff,
+                                                nThisTileXSize, nThisTileYSize,
+                                                nBits, eType,
+                                                oCodeStream, bFlushEnabled,
+                                                layer_bytes.data(), layer_count,
+                                                GDALScaledProgress,
+                                                pScaledProgressData, bComseg) )
+                {
+                    bOK = false;
+                }
+
+                GDALDestroyScaledProgress(pScaledProgressData);
+                dfPixelsDone = dfPixelsDoneAfter;
+
+                try
+                {
+                    oTile.close(poThreadEnv);
+                }
+                catch( ... )
+                {
+                    CPLDebug("JP2KAK", "CreateCopy() - caught exception in oTile.close()");
+                    bOK = false;
+                    break;
+                }
+            }
+        }
+
+        delete poROIImage;
+    }
 
     if( poThreadEnv )
     {
