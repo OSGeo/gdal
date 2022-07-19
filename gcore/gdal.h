@@ -534,6 +534,11 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  */
 #define GDAL_DCAP_NONSPATIAL     "DCAP_NONSPATIAL"
 
+/** Capability set by a driver that can support curved geometries.
+ * @since GDAL 3.6
+ */
+#define GDAL_DCAP_CURVE_GEOMETRIES "DCAP_CURVE_GEOMETRIES"
+
 /** Capability set by drivers which support feature styles.
  * @since GDAL 2.3
  */
