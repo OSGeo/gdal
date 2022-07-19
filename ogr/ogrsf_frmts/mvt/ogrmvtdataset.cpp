@@ -6397,6 +6397,7 @@ void RegisterOGRMVT()
     poDriver->pfnCreate = OGRMVTWriterDataset::Create;
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
                                "Integer Integer64 Real String" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATASUBTYPES,

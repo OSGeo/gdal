@@ -1999,6 +1999,7 @@ void RegisterOGRVDV()
     poDriver->SetDescription( "VDV" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "VDV-451/VDV-452/INTREST Data Format" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/vdv.html" );

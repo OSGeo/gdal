@@ -1347,6 +1347,7 @@ void RegisterOGRMapML()
     poDriver->SetDescription( "MapML" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "MapML" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/mapml.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
