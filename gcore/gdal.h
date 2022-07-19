@@ -486,6 +486,11 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  */
 #define GDAL_DCAP_DELETE_FIELD "DCAP_DELETE_FIELD"
 
+/** Capability set by a driver that can reorder fields.
+ * @since GDAL 3.6
+ */
+#define GDAL_DCAP_REORDER_FIELDS "DCAP_REORDER_FIELDS"
+
 /** Capability set by a driver that can create fields with NOT NULL constraint.
  * @since GDAL 2.0
  */
