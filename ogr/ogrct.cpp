@@ -3040,7 +3040,7 @@ int OGRProjCT::TransformBounds(
     bool north_pole_in_bounds = false;
     bool south_pole_in_bounds = false;
     if (degree_output) {
-        CPLPushErrorHandler(CPLQuietErrorHandler);
+        CPLErrorHandlerPusher oErrorHandlerPusher(CPLQuietErrorHandler);
         north_pole_in_bounds = ContainsNorthPole(
             xmin,
             ymin,
@@ -3061,7 +3061,6 @@ int OGRProjCT::TransformBounds(
         if (CPLGetLastErrorType() != CE_None) {
             return false;
         }
-        CPLPopErrorHandler();
     }
 
     if (degree_input && xmax < xmin) {
