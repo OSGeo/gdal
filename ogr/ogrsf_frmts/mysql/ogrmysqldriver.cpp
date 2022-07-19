@@ -146,6 +146,7 @@ void RegisterOGRMySQL()
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_DELETE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "MySQL" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/mysql.html" );
 

@@ -476,6 +476,11 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  */
 #define GDAL_DCAP_DELETE_LAYER "DCAP_DELETE_LAYER"
 
+/** Capability set by a driver that can create fields.
+ * @since GDAL 3.6
+ */
+#define GDAL_DCAP_CREATE_FIELD "DCAP_CREATE_FIELD"
+
 /** Capability set by a driver that can create fields with NOT NULL constraint.
  * @since GDAL 2.0
  */
