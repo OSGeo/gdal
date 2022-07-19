@@ -95,6 +95,31 @@ def test_gdal_viewshed_alternative_modes():
 ###############################################################################
 
 
+def test_gdal_viewshed_api():
+    make_viewshed_input()
+    src_ds = gdal.Open(viewshed_in)
+    ds = gdal.ViewshedGenerate( src_ds.GetRasterBand(1),
+                                "MEM",
+                                "unused_target_raster_name",
+                                ["INTERLEAVE=BAND"],
+                                ox[0], oy[0], oz[0],
+                                0, # targetHeight
+                                255, # visibleVal
+                                0, # invisibleVal
+                                0, # outOfRangeVal
+                                -1.0, # noDataVal,
+                                0.85714, # dfCurvCoeff
+                                gdal.GVM_Edge,
+                                0, # maxDistance
+                                heightMode = gdal.GVOT_MIN_TARGET_HEIGHT_FROM_GROUND,
+                                options = ["UNUSED=YES"])
+    gdal.Unlink(viewshed_in)
+    assert ds.GetRasterBand(1).Checksum() == 8364
+
+
+###############################################################################
+
+
 def test_gdal_viewshed_all_options():
     make_viewshed_input()
     _, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_viewshed_path() + ' -om NORMAL -f GTiff -oz {} -ox {} -oy {} -b 1 -a_nodata 0 -tz 5 -md 20000 -cc 0 -iv 127 -vv 254 -ov 0 {} {}'.format(oz[1], ox[0], oy[0], viewshed_in, viewshed_out))
