@@ -93,6 +93,7 @@ void RegisterOGRMEM()
         return;
 
     OGRSFDriver *poDriver = new OGRMemDriver;
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
 
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONFIELDDATATYPES,
