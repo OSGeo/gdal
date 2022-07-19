@@ -182,6 +182,7 @@ void RegisterOGRSelafin() {
     poDriver->SetDescription( "Selafin" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "Selafin" );
     poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DELETE_LAYER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Selafin" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/selafin.html" );
 

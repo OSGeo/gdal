@@ -96,6 +96,7 @@ void RegisterOGRElastic() {
     poDriver->SetDescription( "Elasticsearch" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DELETE_LAYER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Elastic Search" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/elasticsearch.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "ES:" );
