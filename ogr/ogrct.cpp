@@ -2891,7 +2891,7 @@ bool OGRProjCT::ContainsNorthPole(
     auto inverseCT = GetInverse();
     if (!inverseCT)
         return false;
-    inverseCT->TransformWithErrorCodes(
+    bool success = inverseCT->TransformWithErrorCodes(
         1,
         &pole_x,
         &pole_y,
@@ -2899,6 +2899,8 @@ bool OGRProjCT::ContainsNorthPole(
         nullptr,
         nullptr
     );
+    if (success && CPLGetLastErrorType() != CE_None)
+        CPLErrorReset();
     delete inverseCT;
     if (xmin < pole_x && pole_x < xmax && ymax > pole_y && pole_y > ymin)
         return true;
@@ -2926,7 +2928,7 @@ bool OGRProjCT::ContainsSouthPole(
     auto inverseCT = GetInverse();
     if (!inverseCT)
         return false;
-    inverseCT->TransformWithErrorCodes(
+    bool success = inverseCT->TransformWithErrorCodes(
         1,
         &pole_x,
         &pole_y,
@@ -2934,6 +2936,8 @@ bool OGRProjCT::ContainsSouthPole(
         nullptr,
         nullptr
     );
+    if (success && CPLGetLastErrorType() != CE_None)
+        CPLErrorReset();
     delete inverseCT;
     if (xmin < pole_x && pole_x < xmax && ymax > pole_y && pole_y > ymin)
         return true;
@@ -2952,6 +2956,7 @@ int OGRProjCT::TransformBounds(
     double* out_ymax,
     const int densify_pts
 ) {
+    CPLErrorReset();
 
     if ( bNoTransform ) {
         *out_xmin = xmin;
@@ -3035,6 +3040,7 @@ int OGRProjCT::TransformBounds(
     bool north_pole_in_bounds = false;
     bool south_pole_in_bounds = false;
     if (degree_output) {
+        CPLErrorHandlerPusher oErrorHandlerPusher(CPLQuietErrorHandler);
         north_pole_in_bounds = ContainsNorthPole(
             xmin,
             ymin,
@@ -3042,6 +3048,9 @@ int OGRProjCT::TransformBounds(
             ymax,
             output_lon_lat_order
         );
+        if (CPLGetLastErrorType() != CE_None) {
+            return false;
+        }
         south_pole_in_bounds = ContainsSouthPole(
             xmin,
             ymin,
@@ -3049,6 +3058,9 @@ int OGRProjCT::TransformBounds(
             ymax,
             output_lon_lat_order
         );
+        if (CPLGetLastErrorType() != CE_None) {
+            return false;
+        }
     }
 
     if (degree_input && xmax < xmin) {
@@ -3091,7 +3103,7 @@ int OGRProjCT::TransformBounds(
         x_boundary_array[iii + side_pts * 3] = xmax - iii * delta_x;
     }
 
-    TransformWithErrorCodes(
+    bool success = TransformWithErrorCodes(
         boundary_len,
         &x_boundary_array[0],
         &y_boundary_array[0],
@@ -3099,6 +3111,11 @@ int OGRProjCT::TransformBounds(
         nullptr,
         nullptr
     );
+    if (success && CPLGetLastErrorType() != CE_None) {
+        CPLErrorReset();
+    } else if (!success) {
+        return false;
+    }
 
     if (!degree_output) {
         *out_xmin = simple_min(&x_boundary_array[0], boundary_len);
