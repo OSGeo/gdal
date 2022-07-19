@@ -928,7 +928,7 @@ void GDALInverseBilinearInterpolation(const double x,
     const double C = (x1 - x) * (y1 - y3) - (y1 - y) * (x1 - x3);
     const double denom = A - 2 * B + C;
     double s;
-    if( fabs(denom) < 1e-12 )
+    if( fabs(denom) <= 1e-12 )
     {
         // Happens typically when the x_i,y_i points form a rectangle
         s = A / (A-C);
@@ -943,9 +943,21 @@ void GDALInverseBilinearInterpolation(const double x,
         else
             s = s1;
     }
-    const double t = ( (1-s)*(x0-x) + s*(x1-x) ) / ( (1-s)*(x0-x2) + s*(x1-x3) );
 
-    i += t;
+    const double t_denom_x = (1-s)*(x0-x2) + s*(x1-x3);
+    if( fabs(t_denom_x) > 1e-12 )
+    {
+        i += ( (1-s)*(x0-x) + s*(x1-x) ) / t_denom_x;
+    }
+    else
+    {
+        const double t_denom_y = (1-s)*(y0-y2) + s*(y1-y3);
+        if( fabs(t_denom_y) > 1e-12 )
+        {
+            i += ( (1-s)*(y0-y) + s*(y1-y) ) / t_denom_y;
+        }
+    }
+
     j += s;
 }
 
@@ -1447,11 +1459,130 @@ void* GDALCreateSimilarGeoLocTransformer( void *hTransformArg,
 }
 
 /************************************************************************/
+/*                  GDALCreateGeolocationMetadata()                     */
+/************************************************************************/
+
+/** Synthetize the content of a GEOLOCATION metadata domain from a
+ *  geolocation dataset.
+ *
+ *  This is used when doing gdalwarp -to GEOLOC_ARRAY=some.tif
+ */
+CPLStringList GDALCreateGeolocationMetadata( GDALDatasetH hBaseDS,
+                                             const char* pszGeolocationDataset,
+                                             bool bIsSource )
+{
+    CPLStringList aosMD;
+
+    // Open geolocation dataset
+    auto poGeolocDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
+        pszGeolocationDataset, GDAL_OF_RASTER));
+    if( poGeolocDS == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid dataset: %s", pszGeolocationDataset);
+        return CPLStringList();
+    }
+    const int nGeoLocXSize = poGeolocDS->GetRasterXSize();
+    const int nGeoLocYSize = poGeolocDS->GetRasterYSize();
+    if( nGeoLocXSize == 0 || nGeoLocYSize == 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid dataset dimension for %s: %dx%d",
+                 pszGeolocationDataset, nGeoLocXSize, nGeoLocYSize);
+        return CPLStringList();
+    }
+
+    // Import the GEOLOCATION metadata from the geolocation datset, if existing
+    auto papszGeolocMDFromGeolocDS = poGeolocDS->GetMetadata("GEOLOCATION");
+    if( papszGeolocMDFromGeolocDS )
+        aosMD = CSLDuplicate(papszGeolocMDFromGeolocDS);
+
+    aosMD.SetNameValue("X_DATASET", pszGeolocationDataset);
+    aosMD.SetNameValue("Y_DATASET", pszGeolocationDataset);
+
+    // Set X_BAND, Y_BAND to 1, 2 if they are not specified in the initial
+    // GEOLOC metadata domain.and the geolocation dataset has 2 bands.
+    if( aosMD.FetchNameValue("X_BAND") == nullptr &&
+        aosMD.FetchNameValue("Y_BAND") == nullptr )
+    {
+        if( poGeolocDS->GetRasterCount() != 2 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Expected 2 bands for %s. Got %d",
+                     pszGeolocationDataset, poGeolocDS->GetRasterCount());
+            return CPLStringList();
+        }
+        aosMD.SetNameValue("X_BAND", "1");
+        aosMD.SetNameValue("Y_BAND", "2");
+    }
+
+    // Set the geoloc SRS from the geolocation dataset SRS if there's no
+    // explicit one in the initial GEOLOC metadata domain.
+    if( aosMD.FetchNameValue("SRS") == nullptr )
+    {
+        auto poSRS = poGeolocDS->GetSpatialRef();
+        if( poSRS )
+        {
+            char* pszWKT = nullptr;
+            poSRS->exportToWkt(&pszWKT);
+            aosMD.SetNameValue("SRS", pszWKT);
+            CPLFree(pszWKT);
+        }
+    }
+    if( aosMD.FetchNameValue("SRS") == nullptr )
+    {
+        aosMD.SetNameValue("SRS", SRS_WKT_WGS84_LAT_LONG);
+    }
+
+    // Set default values for PIXEL/LINE_OFFSET/STEP if not present.
+    if( aosMD.FetchNameValue("PIXEL_OFFSET") == nullptr )
+        aosMD.SetNameValue("PIXEL_OFFSET", "0");
+
+    if( aosMD.FetchNameValue("LINE_OFFSET") == nullptr )
+        aosMD.SetNameValue("LINE_OFFSET", "0");
+
+    if( aosMD.FetchNameValue("PIXEL_STEP") == nullptr )
+    {
+        aosMD.SetNameValue("PIXEL_STEP",
+           CPLSPrintf("%.18g",
+            static_cast<double>(GDALGetRasterXSize(hBaseDS)) / nGeoLocXSize));
+    }
+
+    if( aosMD.FetchNameValue("LINE_STEP") == nullptr )
+    {
+        aosMD.SetNameValue("LINE_STEP",
+           CPLSPrintf("%.18g",
+            static_cast<double>(GDALGetRasterYSize(hBaseDS)) / nGeoLocYSize));
+    }
+
+    if( aosMD.FetchNameValue("GEOREFERENCING_CONVENTION") == nullptr )
+    {
+        const char* pszConvention = poGeolocDS->GetMetadataItem("GEOREFERENCING_CONVENTION");
+        if( pszConvention )
+            aosMD.SetNameValue("GEOREFERENCING_CONVENTION", pszConvention);
+    }
+
+    std::string osDebugMsg;
+    osDebugMsg = "Synthetized GEOLOCATION metadata for ";
+    osDebugMsg += bIsSource ? "source" : "target";
+    osDebugMsg += ":\n";
+    for( int i = 0; i < aosMD.size(); ++i )
+    {
+        osDebugMsg += "  ";
+        osDebugMsg += aosMD[i];
+        osDebugMsg += '\n';
+    }
+    CPLDebug("GEOLOC", "%s", osDebugMsg.c_str());
+
+    return aosMD;
+}
+
+/************************************************************************/
 /*                    GDALCreateGeoLocTransformer()                     */
 /************************************************************************/
 
 void *GDALCreateGeoLocTransformerEx( GDALDatasetH hBaseDS,
-                                     char **papszGeolocationInfo,
+                                     CSLConstList papszGeolocationInfo,
                                      int bReversed,
                                      const char* pszSourceDataset,
                                      CSLConstList papszTransformOptions )

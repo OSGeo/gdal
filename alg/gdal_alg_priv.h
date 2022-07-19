@@ -317,8 +317,12 @@ bool GDALComputeAreaOfInterest(OGRSpatialReference* poSRS,
                                double& dfEastLongitudeDeg,
                                double& dfNorthLatitudeDeg );
 
+CPLStringList GDALCreateGeolocationMetadata( GDALDatasetH hBaseDS,
+                                             const char* pszGeolocationDataset,
+                                             bool bIsSource );
+
 void *GDALCreateGeoLocTransformerEx( GDALDatasetH hBaseDS,
-                                     char **papszGeolocationInfo,
+                                     CSLConstList papszGeolocationInfo,
                                      int bReversed,
                                      const char* pszSourceDataset,
                                      CSLConstList papszTransformOptions );

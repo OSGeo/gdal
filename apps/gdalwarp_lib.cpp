@@ -303,7 +303,7 @@ static double GetAverageSegmentLength(OGRGeometryH hGeom)
 /* option to determine the source SRS.                                  */
 /************************************************************************/
 
-static CPLString GetSrcDSProjection( GDALDatasetH hDS, char** papszTO )
+static CPLString GetSrcDSProjection( GDALDatasetH hDS, CSLConstList papszTO )
 {
     const char *pszProjection = CSLFetchNameValue( papszTO, "SRC_SRS" );
     if( pszProjection != nullptr || hDS == nullptr )
@@ -314,7 +314,19 @@ static CPLString GetSrcDSProjection( GDALDatasetH hDS, char** papszTO )
     const char *pszMethod = CSLFetchNameValue( papszTO, "METHOD" );
     char** papszMD = nullptr;
     const OGRSpatialReferenceH hSRS = GDALGetSpatialRef( hDS );
-    if( hSRS
+    const char* pszGeolocationDataset = CSLFetchNameValueDef(papszTO,
+        "SRC_GEOLOC_ARRAY", CSLFetchNameValue(papszTO, "GEOLOC_ARRAY"));
+    if( pszGeolocationDataset != nullptr &&
+             (pszMethod == nullptr || EQUAL(pszMethod,"GEOLOC_ARRAY")) )
+    {
+        auto aosMD = GDALCreateGeolocationMetadata( hDS,
+                                                    pszGeolocationDataset,
+                                                    true );
+        pszProjection = aosMD.FetchNameValue("SRS");
+        if( pszProjection )
+            return pszProjection; // return in this scope so that aosMD is still valid
+    }
+    else if( hSRS
         && (pszMethod == nullptr || EQUAL(pszMethod,"GEOTRANSFORM")) )
     {
         char* pszWKT = nullptr;
@@ -4120,7 +4132,9 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, OGRGeometryH hCutline,
         OSRIsSame(hRasterSRS, hCutlineSRS) &&
         GDALGetGCPCount( hSrcDS ) == 0 &&
         GDALGetMetadata( hSrcDS, "RPC" ) == nullptr &&
-        GDALGetMetadata( hSrcDS, "GEOLOCATION" ) == nullptr )
+        GDALGetMetadata( hSrcDS, "GEOLOCATION" ) == nullptr &&
+        CSLFetchNameValue( papszTO_In, "GEOLOC_ARRAY") == nullptr &&
+        CSLFetchNameValue( papszTO_In, "SRC_GEOLOC_ARRAY") == nullptr )
     {
         char **papszTOTmp = CSLDuplicate( papszTO_In );
         papszTOTmp = CSLSetNameValue(papszTOTmp, "SRC_SRS", nullptr);
