@@ -121,6 +121,7 @@ void RegisterOGRMSSQLSpatial()
 
     OGRSFDriver* poDriver = new OGRMSSQLSpatialDriver;
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
 
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Microsoft SQL Server Spatial Database"

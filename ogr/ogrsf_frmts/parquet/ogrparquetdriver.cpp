@@ -767,6 +767,7 @@ void RegisterOGRParquet()
 
     poDriver->SetDescription( "Parquet" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "(Geo)Parquet" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "parquet" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/parquet.html" );

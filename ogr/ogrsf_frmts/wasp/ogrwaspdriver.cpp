@@ -111,6 +111,7 @@ void RegisterOGRWAsP()
     OGRSFDriver* poDriver = new OGRWAsPDriver;
 
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
 
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "WAsP .map format" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "map" );

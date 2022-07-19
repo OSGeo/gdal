@@ -101,6 +101,7 @@ void RegisterOGRHANA()
     driver->SetDescription("HANA");
     driver->SetMetadataItem(GDAL_DMD_LONGNAME, "SAP HANA");
     driver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    driver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
     driver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/hana.html");
     driver->SetMetadataItem(
         GDAL_DMD_CONNECTION_PREFIX, OGRHanaDataSource::GetPrefix());
