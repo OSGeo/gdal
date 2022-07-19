@@ -491,6 +491,22 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  */
 #define GDAL_DCAP_REORDER_FIELDS "DCAP_REORDER_FIELDS"
 
+/** List of (space separated) flags support by the OGRLayer::AlterFieldDefn() API.
+ *
+ * Supported values are "Name", "Type", "WidthPrecision", "Nullable", "Default", "Unique"
+ * and "Domain", corresponding respectively to the ALTER_NAME_FLAG,
+ * ALTER_TYPE_FLAG, ALTER_WIDTH_PRECISION_FLAG, ALTER_NULLABLE_FLAG,
+ * ALTER_DEFAULT_FLAG, ALTER_UNIQUE_FLAG, and ALTER_DOMAIN_FLAG flags.
+ *
+ * Note that advertizing one of these flags doesn't necessarily mean that
+ * all modifications of the corresponding property can be made. For example,
+ * altering the field type may be restricted by the current type of the field,
+ * etc.
+ *
+ * @since GDAL 3.6
+ */
+#define GDAL_DMD_ALTER_FIELD_DEFN_FLAGS "GDAL_DMD_ALTER_FIELD_DEFN_FLAGS"
+
 /** Capability set by a driver that can create fields with NOT NULL constraint.
  * @since GDAL 2.0
  */
@@ -565,7 +581,7 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  * corresponding respectively to the ALTER_GEOM_FIELD_DEFN_NAME_FLAG,
  * ALTER_GEOM_FIELD_DEFN_TYPE_FLAG, ALTER_GEOM_FIELD_DEFN_NULLABLE_FLAG,
  * ALTER_GEOM_FIELD_DEFN_SRS_FLAG, ALTER_GEOM_FIELD_DEFN_SRS_COORD_EPOCH_FLAG
- * flags. Note that advertizing one of this flag doesn't necessarily mean that
+ * flags. Note that advertizing one of these flags doesn't necessarily mean that
  * all modifications of the corresponding property can be made. For example,
  * altering the geometry type may be restricted by the type of the geometries in
  * the field, or changing the nullable state to non-nullable is not possible if

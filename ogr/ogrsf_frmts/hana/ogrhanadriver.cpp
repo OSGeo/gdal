@@ -118,6 +118,9 @@ void RegisterOGRHANA()
     driver->SetMetadataItem(
         GDAL_DMD_CREATIONFIELDDATATYPES,
         OGRHanaDataSource::GetSupportedDataTypes());
+
+    driver->SetMetadataItem(GDAL_DMD_ALTER_FIELD_DEFN_FLAGS, "Name Type WidthPrecision Nullable Default");
+
     driver->SetMetadataItem(GDAL_DCAP_NOTNULL_FIELDS, "YES");
     driver->SetMetadataItem(GDAL_DCAP_DEFAULT_FIELDS, "YES");
 
