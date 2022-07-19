@@ -334,6 +334,8 @@ void RegisterOGRShape()
     poDriver->SetMetadataItem( GDAL_DCAP_DELETE_LAYER, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_DELETE_FIELD, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_REORDER_FIELDS, "YES" );
+
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "ESRI Shapefile" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "shp" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "shp dbf shz shp.zip" );

@@ -430,6 +430,7 @@ void RegisterOGRGeoPackage()
     poDriver->SetMetadataItem( GDAL_DCAP_DELETE_LAYER, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_DELETE_FIELD, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_REORDER_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
 
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GeoPackage" );

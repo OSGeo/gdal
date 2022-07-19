@@ -204,6 +204,8 @@ void RegisterOGRTAB()
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_DELETE_FIELD, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_REORDER_FIELDS, "YES");
+
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "MapInfo File");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "tab mif mid");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/mitab.html");

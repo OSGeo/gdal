@@ -851,6 +851,7 @@ void RegisterOGRFileGDB()
     poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_DELETE_FIELD, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_REORDER_FIELDS, "YES" ); // although marked as "TBD" in FGdbLayer.cpp!
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gdb" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/filegdb.html" );
 
