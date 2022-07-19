@@ -32,6 +32,7 @@
 #include "gdaljp2abstractdataset.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cstdlib>
 #include <limits>
 
@@ -844,6 +845,7 @@ const std::vector<GByte>& JPEGXLDataset::GetDecodedImage()
 
     const auto eDT = GetRasterBand(1)->GetRasterDataType();
     const auto nDataSize = GDALGetDataTypeSizeBytes(eDT);
+    assert(nDataSize > 0);
     const int nNonExtraBands = nBands - m_nNonAlphaExtraChannels;
     if( static_cast<size_t>(nRasterXSize) >
             std::numeric_limits<size_t>::max() / nRasterYSize / nDataSize / nNonExtraBands )
@@ -1152,7 +1154,7 @@ CPLErr JPEGXLDataset::IRasterIO( GDALRWFlag eRWFlag,
         const auto nBufTypeSize = GDALGetDataTypeSizeBytes(eBufType);
         const bool bIsPixelInterleaveBuffer =
             ((nBandSpace == 0 && nBandCount == 1) || nBandSpace == nBufTypeSize) &&
-            nPixelSpace == nBufTypeSize * nBandCount &&
+            nPixelSpace == static_cast<GSpacing>(nBufTypeSize) * nBandCount &&
             nLineSpace == nPixelSpace * nRasterXSize;
 
         const auto eNativeDT = GetRasterBand(1)->GetRasterDataType();
@@ -1910,7 +1912,7 @@ JPEGXLDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
         const auto Rescale = [eDT, nBits, poSrcDS](void* pBuffer, int nChannels)
         {
             // Rescale to 8-bits/16-bits
-            if( nBits < GDALGetDataTypeSize(eDT) )
+            if( (eDT == GDT_Byte && nBits < 8) || (eDT == GDT_UInt16 && nBits < 16) )
             {
                 const size_t nSamples = static_cast<size_t>(poSrcDS->GetRasterXSize()) *
                     poSrcDS->GetRasterYSize() * nChannels;

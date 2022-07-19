@@ -738,7 +738,12 @@ namespace tut
                 &srcPtr, GDALExtendedDataType::CreateString(),
                 &dstPtr, GDALExtendedDataType::CreateString());
             ensure(dstPtr != nullptr);
+            // Coverity isn't smart enough to figure out that GetClass() of
+            // CreateString() is GEDTC_STRING and then takes the wrong path
+            // in CopyValue() and makes wrong assumptions.
+            // coverity[string_null]
             ensure(strcmp(dstPtr, srcPtr) == 0);
+            // coverity[incorrect_free]
             CPLFree(dstPtr);
         }
         // null string to string
@@ -2162,7 +2167,7 @@ namespace tut
         double minmax[2];
         GDALComputeRasterMinMax(GDALRasterBand::ToHandle(rb), TRUE, minmax);
 
-        ds.release();
+        ds.reset();
         GetGDALDriverManager()->DeregisterDriver(driver.get());
 
         ensure_equals(nCountZeroOpenOptions, 1);

@@ -30,7 +30,8 @@
 
 int main()
 {
-    const char szJUNK[] = "junk";
+    // Set to 9 bytes to please Coverity CID 1490711
+    const char szJUNK[9] = "junk";
     LLVMFuzzerTestOneInput(reinterpret_cast<const uint8_t*>(szJUNK),
                            strlen(szJUNK));
 

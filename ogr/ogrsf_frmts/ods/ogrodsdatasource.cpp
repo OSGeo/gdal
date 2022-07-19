@@ -722,6 +722,7 @@ static void ReserveAndLimitFieldCount(OGRLayer* poLayer,
                  "to allow more fields.",
                  static_cast<int>(aosValues.size()),
                  nMaxCols);
+        // coverity[tainted_data]
         aosValues.resize(nMaxCols);
     }
 

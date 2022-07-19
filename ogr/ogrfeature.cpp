@@ -7302,7 +7302,7 @@ OGRFeature::FieldValue::FieldValue(OGRFeature* poFeature,
 {
 }
 
-OGRFeature::FieldValue& OGRFeature::FieldValue::operator=
+OGRFeature::FieldValue& OGRFeature::FieldValue::Assign
                                                     (const FieldValue& oOther)
 {
     if( &oOther != this &&
@@ -7351,19 +7351,33 @@ OGRFeature::FieldValue& OGRFeature::FieldValue::operator=
         }
         else if( eOtherType == OFTIntegerList )
         {
-            return operator= (oOther.GetAsIntegerList());
+            operator= (oOther.GetAsIntegerList());
         }
         else if( eOtherType == OFTInteger64List )
         {
-            return operator= (oOther.GetAsInteger64List());
+            operator= (oOther.GetAsInteger64List());
         }
         else if( eOtherType == OFTRealList )
         {
-            return operator= (oOther.GetAsDoubleList());
+            operator= (oOther.GetAsDoubleList());
         }
     }
     return *this;
 }
+
+OGRFeature::FieldValue& OGRFeature::FieldValue::operator=
+                                                    (const FieldValue& oOther)
+{
+    return Assign(oOther);
+}
+
+//! @cond Doxygen_Suppress
+OGRFeature::FieldValue& OGRFeature::FieldValue::operator=
+                                                    (FieldValue&& oOther)
+{
+    return Assign(oOther);
+}
+//! @endcond
 
 OGRFeature::FieldValue& OGRFeature::FieldValue::operator= (int nVal)
 {

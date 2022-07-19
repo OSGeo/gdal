@@ -240,6 +240,13 @@ static void *DeflateBlock(buf_mgr &src, size_t extrasize, int flags) {
         CPLFree(dbuff); // Safe to call with NULL
         return nullptr;
     }
+    if( dst.size > src.size )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "DeflateBlock(): dst.size > src.size");
+        CPLFree(dbuff); // Safe to call with NULL
+        return nullptr;
+    }
 
     // source size is used to hold the output size
     src.size = dst.size;
@@ -565,7 +572,8 @@ CPLErr MRFRasterBand::ReadInterleavedBlock(int xblk, int yblk, void *buffer) {
         }
 
 // Just the right mix of templates and macros make deinterleaving tidy
-#define CpySI(T) cpy_stride_in<T> (ob, reinterpret_cast<T *>(poMRFDS->GetPBuffer()) + i,\
+        void* pbuffer = poMRFDS->GetPBuffer();
+#define CpySI(T) cpy_stride_in<T> (ob, reinterpret_cast<T *>(pbuffer) + i,\
     blockSizeBytes()/sizeof(T), img.pagesize.c)
 
         // Page is already in poMRFDS->pbuffer, not empty
