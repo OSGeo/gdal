@@ -101,6 +101,7 @@ void RegisterOGRAmigoCloud()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,  "AmigoCloud" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DELETE_LAYER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/amigocloud.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "AMIGOCLOUD:" );
 
