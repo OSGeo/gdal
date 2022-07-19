@@ -299,6 +299,7 @@ void RegisterOGRSQLite()
     poDriver->SetMetadataItem( GDAL_DCAP_DELETE_FIELD, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_REORDER_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_CURVE_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES, "YES" );
 
 #ifdef HAVE_RASTERLITE2
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );

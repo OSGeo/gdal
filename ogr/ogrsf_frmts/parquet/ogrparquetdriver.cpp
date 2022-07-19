@@ -772,6 +772,7 @@ void RegisterOGRParquet()
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "parquet" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/parquet.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES, "YES" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
                                "Integer Integer64 Real String Date Time DateTime "

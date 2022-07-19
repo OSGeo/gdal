@@ -459,6 +459,7 @@ void RegisterOGRArrow()
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "arrow feather arrows ipc" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/feather.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES, "YES" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
                                "Integer Integer64 Real String Date Time DateTime "
