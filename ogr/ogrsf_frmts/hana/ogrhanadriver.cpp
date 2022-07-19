@@ -104,6 +104,7 @@ void RegisterOGRHANA()
     driver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
     driver->SetMetadataItem(GDAL_DCAP_DELETE_LAYER, "YES");
     driver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
+    driver->SetMetadataItem(GDAL_DCAP_DELETE_FIELD, "YES");
     driver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/hana.html");
     driver->SetMetadataItem(
         GDAL_DMD_CONNECTION_PREFIX, OGRHanaDataSource::GetPrefix());
