@@ -104,6 +104,7 @@ void RegisterOGRMEM()
         GDAL_DMD_CREATIONFIELDDATATYPES,
         "Integer Integer64 Real String Date DateTime Time IntegerList "
         "Integer64List RealList StringList Binary");
+    poDriver->SetMetadataItem( GDAL_DMD_ALTER_FIELD_DEFN_FLAGS, "Name WidthPrecision" );
 
     poDriver->SetMetadataItem(
         GDAL_DS_LAYER_CREATIONOPTIONLIST,

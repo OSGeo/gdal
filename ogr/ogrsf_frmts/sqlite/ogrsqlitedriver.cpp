@@ -399,6 +399,7 @@ void RegisterOGRSQLite()
                                "Time Binary IntegerList Integer64List "
                                "RealList StringList" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATASUBTYPES, "Boolean Int16 Float32" );
+    poDriver->SetMetadataItem( GDAL_DMD_ALTER_FIELD_DEFN_FLAGS, "Name Type WidthPrecision Nullable Default Unique" );
 
 #ifdef HAVE_RASTERLITE2
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
