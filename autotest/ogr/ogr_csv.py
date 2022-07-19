@@ -1056,11 +1056,11 @@ def test_ogr_csv_32():
     col_values = ['', '1.5', '1', '1.5', '2', '', '2014-09-27 19:01:00', '2014-09-27', '2014-09-27 20:00:00',
                   '2014-09-27', '12:34:56', 'a', 'a', '1', '1', '1.5', '2014-09-27 19:01:00', '2014-09-27', '19:01:00', '2014-09-27T00:00:00Z']
     for i in range(lyr.GetLayerDefn().GetFieldCount()):
-        assert (lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTString and \
+        assert (lyr.GetLayerDefn().GetFieldDefn(i).GetType() == (ogr.OFTString if i != 1 else ogr.OFTReal) and \
            lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() == 0)
-        if f.GetField(i) != col_values[i]:
+        if str(f.GetField(i)) != col_values[i]:
             f.DumpReadable()
-            pytest.fail(i)
+            pytest.fail('Field %d' % i)
 
     # Without limit, everything will be detected as string
     def check_size_limit_0():
@@ -1069,11 +1069,11 @@ def test_ogr_csv_32():
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
         for i in range(lyr.GetLayerDefn().GetFieldCount()):
-            assert (lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTString and \
+            assert (lyr.GetLayerDefn().GetFieldDefn(i).GetType() == (ogr.OFTString if i != 1 else ogr.OFTReal) and \
                lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() == 0)
-            if f.GetField(i) != col_values[i]:
+            if str(f.GetField(i)) != col_values[i]:
                 f.DumpReadable()
-                pytest.fail(i)
+                pytest.fail('Field %d' % i)
 
     check_size_limit_0()
     with gdaltest.config_option('OGR_CSV_SIMULATE_VSISTDIN', 'YES'):
@@ -1096,7 +1096,7 @@ def test_ogr_csv_32():
                lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() == 0)
             if f.GetField(i) != col_values[i]:
                 f.DumpReadable()
-                pytest.fail(i)
+                pytest.fail('Field %d' % i)
 
     check_size_limit_300_quote_fields()
     with gdaltest.config_option('OGR_CSV_SIMULATE_VSISTDIN', 'YES'):
@@ -1123,7 +1123,7 @@ def test_ogr_csv_32():
            lyr.GetLayerDefn().GetFieldDefn(i).GetWidth() == 0)
         if f.GetField(i) != col_values[i]:
             f.DumpReadable()
-            pytest.fail(i)
+            pytest.fail('Field %d' % i)
 
     # Test AUTODETECT_WIDTH=YES
     ds = gdal.OpenEx('data/csv/testtypeautodetect.csv', gdal.OF_VECTOR,
@@ -1139,7 +1139,7 @@ def test_ogr_csv_32():
            lyr.GetLayerDefn().GetFieldDefn(i).GetPrecision() == col_precision[i]), lyr.GetLayerDefn().GetFieldDefn(i).GetName()
         if f.GetField(i) != col_values[i]:
             f.DumpReadable()
-            pytest.fail(i)
+            pytest.fail('Field %d' % i)
 
     # Test AUTODETECT_WIDTH=STRING_ONLY
     ds = gdal.OpenEx('data/csv/testtypeautodetect.csv', gdal.OF_VECTOR,
@@ -1155,7 +1155,7 @@ def test_ogr_csv_32():
            lyr.GetLayerDefn().GetFieldDefn(i).GetPrecision() == col_precision[i])
         if f.GetField(i) != col_values[i]:
             f.DumpReadable()
-            pytest.fail(i)
+            pytest.fail('Field %d' % i)
 
     # Test KEEP_SOURCE_COLUMNS=YES
     ds = gdal.OpenEx('data/csv/testtypeautodetect.csv', gdal.OF_VECTOR,
@@ -1172,7 +1172,7 @@ def test_ogr_csv_32():
            lyr.GetLayerDefn().GetFieldDefn(i + 1).GetNameRef() == lyr.GetLayerDefn().GetFieldDefn(i).GetNameRef() + '_original')
         if f.GetField(i) != col_values[i]:
             f.DumpReadable()
-            pytest.fail(i)
+            pytest.fail('Field %d' % i)
 
     # Test warnings
     for fid in [3,  # string in real field
@@ -1250,7 +1250,7 @@ def test_ogr_csv_33():
            (i >= 10 and lyr.GetLayerDefn().GetFieldDefn(i).GetSubType() == ogr.OFSTBoolean))
         if f.GetField(i) != col_values[i]:
             f.DumpReadable()
-            pytest.fail(i)
+            pytest.fail('Field %d' % i)
     ds = None
 
     ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/subtypes.csv')
@@ -1303,13 +1303,13 @@ def test_ogr_csv_34():
     for i in range(lyr.GetLayerDefn().GetFieldCount()):
         if f.GetField(i) != col_values[i]:
             f.DumpReadable()
-            pytest.fail(i)
+            pytest.fail('Field %d' % i)
     f = lyr.GetNextFeature()
     col_values = [10000000000, 1, 10000000000, 1.0]
     for i in range(lyr.GetLayerDefn().GetFieldCount()):
         if f.GetField(i) != col_values[i]:
             f.DumpReadable()
-            pytest.fail(i)
+            pytest.fail('Field %d' % i)
     ds = None
 
     ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/int64.csv')
