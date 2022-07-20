@@ -225,7 +225,7 @@ int OGRS57Layer::TestCapability( const char * pszCap )
     }
 
     if( EQUAL(pszCap, OLCZGeometries) )
-        return false;
+        return true;
 
     return false;
 }
