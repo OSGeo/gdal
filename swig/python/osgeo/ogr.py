@@ -355,6 +355,8 @@ OLCCurveGeometries = _ogr.OLCCurveGeometries
 
 OLCMeasuredGeometries = _ogr.OLCMeasuredGeometries
 
+OLC25DGeometries = _ogr.OLC25DGeometries
+
 OLCRename = _ogr.OLCRename
 
 OLCFastGetArrowStream = _ogr.OLCFastGetArrowStream
