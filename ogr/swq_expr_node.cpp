@@ -801,6 +801,7 @@ swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
             delete apoValues[i];
     }
 
+    // cppcheck-suppress returnDanglingLifetime
     return poRetNode;
 }
 
