@@ -67,7 +67,35 @@ namespace PCIDSK {
         void Load();
         void Write();
 
-        struct PCIDSKPolyInfo;
+        // Struct to store details of the RPC model
+        struct PCIDSKPolyInfo
+        {
+            // number of coefficients
+            unsigned int nNumCoeffs;
+
+            // pixels in the image
+            unsigned int nPixels;
+            // lines in the image
+            unsigned int nLines;
+
+            // Forward Coefficients (Geo2Img)
+            std::vector<double> vdfX1;
+            // Forward Coefficients (Geo2Img)
+            std::vector<double> vdfY1;
+            // Backward Coefficients Img2Geo
+            std::vector<double> vdfX2;
+            // Backward Coefficients Img2Geo
+            std::vector<double> vdfY2;
+
+            //map units of required projection
+            std::string oMapUnit;
+            //proj param info of required projection
+            std::vector<double> oProjectionInfo;
+
+            // The raw segment data
+            PCIDSKBuffer seg_data;
+        };
+
         PCIDSKPolyInfo *pimpl_;
         bool loaded_;
         bool mbModified;
