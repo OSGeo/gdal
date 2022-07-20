@@ -4820,6 +4820,10 @@ void GDALRegister_PDS4()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DELETE_FIELD, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_REORDER_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_ALTER_FIELD_DEFN_FLAGS, "Name Type WidthPrecision" );
+
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "NASA Planetary Data System 4" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
