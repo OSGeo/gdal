@@ -147,6 +147,7 @@ typedef struct
     int    fd;
 } VSIDIRPreload;
 
+thread_local std::set<std::string> oSetFilesToPreventRecursion;
 std::set<VSILFILE*> oSetFiles;
 std::map<int, VSILFILE*> oMapfdToVSI;
 std::map<VSILFILE*, int> oMapVSITofd;
@@ -429,8 +430,13 @@ FILE CPL_DLL *fopen( const char *path, const char *mode )
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(path);
     if( DEBUG_VSIPRELOAD_COND ) fprintf(stderr, "fopen(%s, %s)\n", path, mode);
     FILE* ret;
-    if( STARTS_WITH(path, "/vsi") )
+    if( STARTS_WITH(path, "/vsi") &&
+        oSetFilesToPreventRecursion.find(path) == oSetFilesToPreventRecursion.end() )
+    {
+        auto oIter = oSetFilesToPreventRecursion.insert(path);
         ret = (FILE*) VSIFfopenHelper(path, mode);
+        oSetFilesToPreventRecursion.erase(oIter.first);
+    }
     else
         ret = pfnfopen(path, mode);
     if( DEBUG_VSIPRELOAD_COND ) fprintf(stderr, "fopen() = %p\n", ret);
@@ -448,8 +454,13 @@ FILE CPL_DLL *fopen64( const char *path, const char *mode )
     if( DEBUG_VSIPRELOAD_COND )
         fprintf(stderr, "fopen64(%s, %s)\n", path, mode);
     FILE* ret;
-    if( STARTS_WITH(path, "/vsi") )
+    if( STARTS_WITH(path, "/vsi") &&
+        oSetFilesToPreventRecursion.find(path) == oSetFilesToPreventRecursion.end() )
+    {
+        auto oIter = oSetFilesToPreventRecursion.insert(path);
         ret = (FILE*) VSIFfopenHelper(path, mode);
+        oSetFilesToPreventRecursion.erase(oIter.first);
+    }
     else
         ret = pfnfopen64(path, mode);
     if( DEBUG_VSIPRELOAD_COND ) fprintf(stderr, "fopen64() = %p\n", ret);
@@ -638,7 +649,9 @@ int CPL_DLL __xstat64( int ver, const char *path, struct stat64 *buf )
     if( DEBUG_VSIPRELOAD && (!osCurDir.empty() && path[0] != '/') )
         DEBUG_VSIPRELOAD_COND = 1;
     if( DEBUG_VSIPRELOAD_COND ) fprintf(stderr, "__xstat64(%s)\n", path);
-    if( (!osCurDir.empty() && path[0] != '/') || STARTS_WITH(path, "/vsi") )
+    if( ((!osCurDir.empty() && path[0] != '/') ||
+        STARTS_WITH(path, "/vsi")) &&
+        oSetFilesToPreventRecursion.find(path) == oSetFilesToPreventRecursion.end() )
     {
         VSIStatBufL sStatBufL;
         std::string newpath;
@@ -647,7 +660,9 @@ int CPL_DLL __xstat64( int ver, const char *path, struct stat64 *buf )
             newpath = CPLFormFilename(osCurDir.c_str(), path, nullptr);
             path = newpath.c_str();
         }
+        auto oIter = oSetFilesToPreventRecursion.insert(path);
         const int ret = VSIStatL(path, &sStatBufL);
+        oSetFilesToPreventRecursion.erase(oIter.first);
         sStatBufL.st_ino = static_cast<int>(CPLHashSetHashStr(path));
         if( ret == 0 )
         {
@@ -947,7 +962,7 @@ FILE CPL_DLL *freopen( const char *path, const char *mode, FILE *stream )
 /*                              open()                                  */
 /************************************************************************/
 
-int CPL_DLL open( const char *path, int flags, ... )
+static int myopen( const char *path, int flags, ... )
 {
     myinit();
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(path);
@@ -986,7 +1001,7 @@ int CPL_DLL open( const char *path, int flags, ... )
         if( VSIStatL(newname, &sStatBufL) == 0 &&
             S_ISDIR(sStatBufL.st_mode) )
         {
-            fd = open("/dev/zero", O_RDONLY);
+            fd = myopen("/dev/zero", O_RDONLY);
             CPLLockHolderD(&hLock, LOCK_RECURSIVE_MUTEX)
             oMapDirFdToName[fd] = newname;
         }
@@ -999,6 +1014,16 @@ int CPL_DLL open( const char *path, int flags, ... )
         fd = pfnopen(path, flags, mode);
     va_end(args);
     if( DEBUG_VSIPRELOAD_COND ) fprintf(stderr, "open(%s) = %d\n", path, fd);
+    return fd;
+}
+
+int CPL_DLL open( const char *path, int flags, ... )
+{
+    va_list args;
+    va_start(args, flags);
+    mode_t mode = va_arg(args, mode_t);
+    int fd = myopen(path, flags, mode);
+    va_end(args);
     return fd;
 }
 

@@ -2,16 +2,6 @@
 
 set(GDAL_ROOT_TEST_DIR "${PROJECT_SOURCE_DIR}/autotest")
 
-if (NOT CMAKE_CROSSCOMPILING)
-  if (LINUX)
-    add_library(vsipreload MODULE ${PROJECT_SOURCE_DIR}/port/vsipreload.cpp)
-    target_link_libraries(vsipreload PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
-    if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
-      set_property(SOURCE ${PROJECT_SOURCE_DIR}/port/vsipreload.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
-    endif ()
-  endif ()
-endif ()
-
 add_executable(
   gdal_unit_test
   tut/tut_gdal.cpp
