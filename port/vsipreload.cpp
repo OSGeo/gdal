@@ -962,7 +962,7 @@ FILE CPL_DLL *freopen( const char *path, const char *mode, FILE *stream )
 /*                              open()                                  */
 /************************************************************************/
 
-int CPL_DLL open( const char *path, int flags, ... )
+static int myopen( const char *path, int flags, ... )
 {
     myinit();
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(path);
@@ -1001,7 +1001,7 @@ int CPL_DLL open( const char *path, int flags, ... )
         if( VSIStatL(newname, &sStatBufL) == 0 &&
             S_ISDIR(sStatBufL.st_mode) )
         {
-            fd = open("/dev/zero", O_RDONLY);
+            fd = myopen("/dev/zero", O_RDONLY);
             CPLLockHolderD(&hLock, LOCK_RECURSIVE_MUTEX)
             oMapDirFdToName[fd] = newname;
         }
@@ -1014,6 +1014,16 @@ int CPL_DLL open( const char *path, int flags, ... )
         fd = pfnopen(path, flags, mode);
     va_end(args);
     if( DEBUG_VSIPRELOAD_COND ) fprintf(stderr, "open(%s) = %d\n", path, fd);
+    return fd;
+}
+
+int CPL_DLL open( const char *path, int flags, ... )
+{
+    va_list args;
+    va_start(args, flags);
+    mode_t mode = va_arg(args, mode_t);
+    int fd = myopen(path, flags, mode);
+    va_end(args);
     return fd;
 }
 
