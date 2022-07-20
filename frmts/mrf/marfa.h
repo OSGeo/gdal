@@ -140,7 +140,7 @@ typedef struct {
 struct ILSize {
     GInt32 x, y, z, c;
     GIntBig l; // Dual use, sometimes it holds the number of pages
-    ILSize(const int x_ = -1, const int y_ = -1, const int z_ = -1,
+    explicit ILSize(const int x_ = -1, const int y_ = -1, const int z_ = -1,
         const int c_ = -1, const int l_ = -1):
         x(x_), y(y_), z(z_), c(c_), l(l_)
     {}
