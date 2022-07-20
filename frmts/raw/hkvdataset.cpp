@@ -1757,7 +1757,6 @@ HKVDataset::CreateCopy( const char * pszFilename,
         void *pData = CPLMalloc(
             nBlockXSize * nBlockYSize * GDALGetDataTypeSize(eType) / 8);
 
-        CPLErr eErr = CE_None;
         for( int iYOffset = 0; iYOffset < nYSize; iYOffset += nBlockYSize )
         {
             for( int iXOffset = 0; iXOffset < nXSize; iXOffset += nBlockXSize )
@@ -1781,7 +1780,7 @@ HKVDataset::CreateCopy( const char * pszFilename,
                 const int nTBXSize = std::min(nBlockXSize, nXSize - iXOffset);
                 const int nTBYSize = std::min(nBlockYSize, nYSize - iYOffset);
 
-                eErr = poSrcBand->RasterIO( GF_Read,
+                CPLErr eErr = poSrcBand->RasterIO( GF_Read,
                                             iXOffset, iYOffset,
                                             nTBXSize, nTBYSize,
                                             pData, nTBXSize, nTBYSize,
