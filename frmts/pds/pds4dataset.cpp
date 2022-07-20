@@ -4136,6 +4136,8 @@ int PDS4Dataset::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
         return eAccess == GA_Update;
+    else if( EQUAL(pszCap,ODsCZGeometries) )
+        return TRUE;
     else
         return FALSE;
 }

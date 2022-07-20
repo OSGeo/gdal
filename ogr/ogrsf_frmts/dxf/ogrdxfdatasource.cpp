@@ -81,9 +81,12 @@ OGRDXFDataSource::~OGRDXFDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRDXFDataSource::TestCapability( CPL_UNUSED const char * pszCap )
+int OGRDXFDataSource::TestCapability( const char * pszCap )
 {
-    return FALSE;
+    if( EQUAL(pszCap, ODsCZGeometries) )
+        return true;
+
+    return false;
 }
 
 /************************************************************************/

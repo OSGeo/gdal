@@ -313,6 +313,8 @@ int GDALCADDataset::TestCapability( const char * pszCap )
         return TRUE;
     else if( EQUAL(pszCap,ODsCMeasuredGeometries) )
         return TRUE;
+    else if( EQUAL(pszCap,ODsCZGeometries) )
+        return TRUE;
     return FALSE;
 }
 

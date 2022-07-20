@@ -1934,7 +1934,10 @@ int OGRVDVDataSource::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
         return m_bUpdate;
-    return FALSE;
+    else if( EQUAL(pszCap,ODsCZGeometries) )
+        return true;
+
+    return false;
 }
 
 /************************************************************************/

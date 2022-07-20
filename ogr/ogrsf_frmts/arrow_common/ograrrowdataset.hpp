@@ -101,3 +101,5 @@ inline OGRLayer* OGRArrowDataset::GetLayer(int idx)
 {
     return idx == 0 ? m_poLayer.get() : nullptr;
 }
+
+

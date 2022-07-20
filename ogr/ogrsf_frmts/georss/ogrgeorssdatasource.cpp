@@ -111,6 +111,8 @@ int OGRGeoRSSDataSource::TestCapability( const char * pszCap )
         return TRUE;
     // else if( EQUAL(pszCap,ODsCDeleteLayer) )
     //    return FALSE;
+    else if( EQUAL(pszCap, ODsCZGeometries) )
+        return TRUE;
 
     return FALSE;
 }
