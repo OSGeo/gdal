@@ -54,11 +54,15 @@ typedef struct _IntOrMap IntOrMap;
 
 struct _IntOrMap
 {
+    // cppcheck-suppress unusedStructMember
     int bIsMap;
     union
     {
+        // cppcheck-suppress unusedStructMember
         int nField;
+        // cppcheck-suppress unusedStructMember
         std::map< CPLString, IntOrMap*>* poMap;
+    // cppcheck-suppress unusedStructMember
     } u;
 };
 } // namespace
