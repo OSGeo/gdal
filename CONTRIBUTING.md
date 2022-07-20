@@ -29,35 +29,7 @@ make install
 export PATH=$SWIG_PREFIX/bin:$PATH
 ```
 
-## Build GDAL: Autotools
-
-Install all required development packages: GNU make, g++, ...
-
-Build:
-
-```bash
-./autogen.sh
-./configure --with-python [other options]
-make -j8 -s
-cd apps; make -s test_ogrsf; cd ..
-```
-
-Run command line utilities (without installing):
-```bash
-. scripts/setdevenv.sh
-gdalinfo --version
-```
-
-Run autotest suite:
-```bash
-cd autotest
-pip install -r requirements.txt
-pytest
-```
-
-## Build GDAL: CMake (EXPERIMENTAL)
-
-Note: CMake builds are EXPERIMENTAL for now.
+## Build GDAL: CMake
 
 Install all required development packages: GNU make, g++, ...
 
@@ -83,7 +55,7 @@ Configure and build:
 ```bash
 mkdir build
 cd build
-cmake .. [options]
+cmake .. -DSWIG_EXECUTABLE=$SWIG_PREFIX/bin/swig -DSWIG_REGENERATE_PYTHON=ON [options]
 cmake --build . -j$(nproc)
 ```
 
@@ -97,6 +69,35 @@ Run autotest suite:
 ```bash
 python -m pip install -r ../autotest/requirements.txt
 pytest autotest
+```
+
+## Build GDAL: Autotools
+
+> **Note**
+> Only applies to GDAL 3.4 or earlier
+
+Install all required development packages: GNU make, g++, ...
+
+Build:
+
+```bash
+./autogen.sh
+./configure --with-python [other options]
+make -j8 -s
+cd apps; make -s test_ogrsf; cd ..
+```
+
+Run command line utilities (without installing):
+```bash
+. scripts/setdevenv.sh
+gdalinfo --version
+```
+
+Run autotest suite:
+```bash
+cd autotest
+pip install -r requirements.txt
+pytest
 ```
 
 # Git workflows with GDAL
@@ -153,7 +154,7 @@ git rebase origin/master
 
 # At end of your work, make sure history is reasonable by folding non
 # significant commits into a consistent set
-git rebase -i master 
+git rebase -i master
 # use 'fixup' for example to merge several commits together,
 # and 'reword' to modify commit messages
 
