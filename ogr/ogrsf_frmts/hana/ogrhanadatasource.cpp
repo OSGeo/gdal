@@ -883,9 +883,10 @@ void OGRHanaDataSource::ExecuteSQL(const char* sql)
 /************************************************************************/
 /*                            GetSrsById()                              */
 /*                                                                      */
-/*      Return a SRS corresponding to a particular id.  Note that       */
-/*      reference counting should be honoured on the returned           */
-/*      OGRSpatialReference, as handles may be cached.                  */
+/*      Return a SRS corresponding to a particular id.  The returned    */
+/*      object has its reference counter incremented. Consequently      */
+/*      the caller should call Release() on it (if not null) once done  */
+/*      with it.                                                        */
 /************************************************************************/
 
 OGRSpatialReference* OGRHanaDataSource::GetSrsById(int srid)
@@ -895,22 +896,30 @@ OGRSpatialReference* OGRHanaDataSource::GetSrsById(int srid)
 
     auto it = srsCache_.find(srid);
     if (it != srsCache_.end())
+    {
+        it->second->Reference();
         return it->second;
+    }
 
-    std::unique_ptr<OGRSpatialReference> srs;
+    OGRSpatialReference* srs = nullptr;
 
     CPLString wkt = GetSrsWktById(*conn_, srid);
     if (!wkt.empty())
     {
-        srs = cpl::make_unique<OGRSpatialReference>();
+        srs = new OGRSpatialReference();
         OGRErr err = srs->importFromWkt(wkt.c_str());
         if (OGRERR_NONE != err)
-            srs.reset(nullptr);
+        {
+            delete srs;
+            srs = nullptr;
+        }
     }
 
-    srsCache_.insert({srid, srs.get()});
+    srsCache_.insert({srid, srs});
 
-    return srs.release();
+    if( srs )
+        srs->Reference();
+    return srs;
 }
 
 /************************************************************************/
