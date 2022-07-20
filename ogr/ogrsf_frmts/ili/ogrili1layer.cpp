@@ -421,6 +421,8 @@ OGRErr OGRILI1Layer::ICreateFeature( OGRFeature *poFeature ) {
 int OGRILI1Layer::TestCapability( CPL_UNUSED const char * pszCap ) {
     if( EQUAL(pszCap,OLCCurveGeometries) )
         return TRUE;
+    if( EQUAL(pszCap,OLC25DGeometries) )
+        return TRUE;
 
     if( EQUAL(pszCap, OLCCreateField) || EQUAL(pszCap, OLCSequentialWrite) )
         return poDS->GetTransferFile() != nullptr;

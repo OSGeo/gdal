@@ -112,6 +112,7 @@ void RegisterOGRGMT()
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gmt" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/gmt.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_25D_GEOMETRIES, "YES" );
 
     poDriver->pfnOpen = OGRGMTDriverOpen;
     poDriver->pfnIdentify = OGRGMTDriverIdentify;

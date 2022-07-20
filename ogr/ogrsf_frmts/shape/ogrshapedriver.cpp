@@ -336,6 +336,7 @@ void RegisterOGRShape()
     poDriver->SetMetadataItem( GDAL_DCAP_DELETE_FIELD, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_REORDER_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_25D_GEOMETRIES, "YES" );
 
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "ESRI Shapefile" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "shp" );

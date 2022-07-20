@@ -618,6 +618,8 @@ int OGRKMLLayer::TestCapability( const char * pszCap )
 
     else if (EQUAL(pszCap, OLCStringsAsUTF8))
         return TRUE;
+    else if (EQUAL(pszCap, OLC25DGeometries))
+        return TRUE;
 
     return FALSE;
 }

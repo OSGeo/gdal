@@ -1091,9 +1091,13 @@ int OGRVDVLayer::TestCapability(const char* pszCap)
     {
         return TRUE;
     }
-    if( EQUAL(pszCap, OLCStringsAsUTF8) )
+    else if( EQUAL(pszCap, OLCStringsAsUTF8) )
     {
         return m_bRecodeFromLatin1;
+    }
+    else if( EQUAL(pszCap, OLC25DGeometries) )
+    {
+        return TRUE;
     }
     return FALSE;
 }
@@ -2002,6 +2006,7 @@ void RegisterOGRVDV()
     poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_DELETE_FIELD, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_REORDER_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_25D_GEOMETRIES, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_ALTER_FIELD_DEFN_FLAGS, "Name Type WidthPrecision" );
 
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,

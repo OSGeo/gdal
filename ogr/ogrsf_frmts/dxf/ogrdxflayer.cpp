@@ -3517,5 +3517,9 @@ OGRFeature *OGRDXFLayer::GetNextFeature()
 int OGRDXFLayer::TestCapability( const char * pszCap )
 
 {
-    return EQUAL(pszCap, OLCStringsAsUTF8);
+    if ( EQUAL(pszCap, OLCStringsAsUTF8) )
+        return true;
+    else if( EQUAL(pszCap, OLC25DGeometries) )
+        return true;
+    return false;
 }

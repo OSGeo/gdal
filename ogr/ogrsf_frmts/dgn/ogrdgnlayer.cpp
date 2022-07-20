@@ -850,6 +850,9 @@ int OGRDGNLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCFastGetExtent) )
         return TRUE;
 
+    else if( EQUAL(pszCap, OLC25DGeometries) )
+        return TRUE;
+
     return FALSE;
 }
 
