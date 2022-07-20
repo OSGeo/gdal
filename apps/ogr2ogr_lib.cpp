@@ -4975,6 +4975,8 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
                         continue;
                 }
 
+                // poFeature hasn't been moved if iSrcZField != -1
+                // cppcheck-suppress accessMoved
                 if (iSrcZField != -1 && poFeature != nullptr)
                 {
                     SetZ(poDstGeometry, poFeature->GetFieldAsDouble(iSrcZField));
