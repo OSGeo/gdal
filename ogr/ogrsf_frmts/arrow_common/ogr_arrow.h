@@ -160,8 +160,8 @@ protected:
         void               SetBatch(const std::shared_ptr<arrow::RecordBatch>& poBatch) { m_poBatch = poBatch; m_poBatchColumns = m_poBatch->columns(); }
 
         virtual bool       GetFastExtent(int iGeomField, OGREnvelope *psExtent) const;
-        OGRErr             GetExtentFromMetadata(const CPLJSONObject& oJSONDef,
-                                                 OGREnvelope *psExtent) const;
+        static OGRErr      GetExtentFromMetadata(const CPLJSONObject& oJSONDef,
+                                                 OGREnvelope *psExtent);
 
         int GetArrowSchema(struct ArrowArrayStream*, struct ArrowSchema* out) override;
         int GetNextArrowArray(struct ArrowArrayStream*, struct ArrowArray* out) override;
