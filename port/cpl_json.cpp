@@ -1084,6 +1084,7 @@ std::vector<CPLJSONObject> CPLJSONObject::GetChildren() const
     it.key = nullptr;
     it.val = nullptr;
     it.entry = nullptr;
+    // cppcheck-suppress cstyleCast
     json_object_object_foreachC( TO_JSONOBJ(m_poJsonObject), it ) {
         aoChildren.push_back(CPLJSONObject(it.key, it.val));
     }
