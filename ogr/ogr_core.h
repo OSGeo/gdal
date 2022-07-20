@@ -887,6 +887,7 @@ int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
 #define OLCCreateGeomField     "CreateGeomField"    /**< Layer capability for geometry field creation */
 #define OLCCurveGeometries     "CurveGeometries"    /**< Layer capability for curve geometries support */
 #define OLCMeasuredGeometries  "MeasuredGeometries" /**< Layer capability for measured geometries support */
+#define OLC25DGeometries       "25DGeometries"      /**< Layer capability for 25D geometry support. Since GDAL 3.6. */
 #define OLCRename              "Rename"             /**< Layer capability for a layer that supports Rename() */
 #define OLCFastGetArrowStream  "FastGetArrowStream" /**< Layer capability for fast GetArrowStream() implementation */
 

@@ -1195,6 +1195,11 @@ static int TestBasic( GDALDataset* poDS, OGRLayer *poLayer )
             bRet = FALSE;
             printf("FAILURE: Layer advertizes OLCCurveGeometries capability but driver metadata does not advertize GDAL_DCAP_CURVE_GEOMETRIES!\n" );
         }
+        if ( poLayer->TestCapability(OLC25DGeometries) && !poDriver->GetMetadataItem( GDAL_DCAP_25D_GEOMETRIES ) )
+        {
+            bRet = FALSE;
+            printf("FAILURE: Layer advertizes OLC25DGeometries capability but driver metadata does not advertize GDAL_DCAP_25D_GEOMETRIES!\n" );
+        }
 
         if ( poLayer->TestCapability(OLCCreateField) && !poDriver->GetMetadataItem( GDAL_DCAP_CREATE_FIELD ) )
         {
