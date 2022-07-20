@@ -103,10 +103,9 @@ bool FileGDBTable::Create(const char* pszFilename,
         return false;
     }
 
-    const std::string osTableXName = CPLFormFilename(CPLGetPath(pszFilename),
-                                        CPLGetBasename(pszFilename), "gdbtablx");
+    const std::string osTableXName = CPLResetExtension(pszFilename, "gdbtablx");
     m_fpTableX = VSIFOpenL( osTableXName.c_str(), "wb+" );
-    if( m_fpTable == nullptr )
+    if( m_fpTableX == nullptr )
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "Cannot create %s: %s", osTableXName.c_str(),
