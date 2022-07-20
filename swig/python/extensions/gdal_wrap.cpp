@@ -6991,7 +6991,7 @@ GDALDatasetShadow *ViewshedGenerate( GDALRasterBandShadow *srcBand,
                         GDALViewshedMode mode, double maxDistance,
                         GDALProgressFunc callback = NULL, void* callback_data = NULL,
                         GDALViewshedOutputType heightMode = GVOT_NORMAL,
-                        char** papszOptions = NULL)
+                        char** options = NULL)
 {
     GDALDatasetShadow* ds = GDALViewshedGenerate( srcBand,
                                  driverName,
@@ -7011,7 +7011,7 @@ GDALDatasetShadow *ViewshedGenerate( GDALRasterBandShadow *srcBand,
                                  callback,
                                  callback_data,
                                  heightMode,
-                                 papszOptions);
+                                 options);
   if (ds == 0) {
     /*throw CPLGetLastErrorMsg(); causes a SWIG_exception later*/
   }
@@ -38211,8 +38211,6 @@ SWIGINTERN PyObject *_wrap_ViewshedGenerate(PyObject *SWIGUNUSEDPARM(self), PyOb
   int res3 ;
   char *buf3 = 0 ;
   int alloc3 = 0 ;
-  void *argp4 = 0 ;
-  int res4 = 0 ;
   double val5 ;
   int ecode5 = 0 ;
   double val6 ;
@@ -38237,8 +38235,6 @@ SWIGINTERN PyObject *_wrap_ViewshedGenerate(PyObject *SWIGUNUSEDPARM(self), PyOb
   int ecode15 = 0 ;
   int val18 ;
   int ecode18 = 0 ;
-  void *argp19 = 0 ;
-  int res19 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
@@ -38259,7 +38255,7 @@ SWIGINTERN PyObject *_wrap_ViewshedGenerate(PyObject *SWIGUNUSEDPARM(self), PyOb
   PyObject * obj17 = 0 ;
   PyObject * obj18 = 0 ;
   char * kwnames[] = {
-    (char *)"srcBand",  (char *)"driverName",  (char *)"targetRasterName",  (char *)"creationOptions",  (char *)"observerX",  (char *)"observerY",  (char *)"observerHeight",  (char *)"targetHeight",  (char *)"visibleVal",  (char *)"invisibleVal",  (char *)"outOfRangeVal",  (char *)"noDataVal",  (char *)"dfCurvCoeff",  (char *)"mode",  (char *)"maxDistance",  (char *)"callback",  (char *)"callback_data",  (char *)"heightMode",  (char *)"papszOptions",  NULL 
+    (char *)"srcBand",  (char *)"driverName",  (char *)"targetRasterName",  (char *)"creationOptions",  (char *)"observerX",  (char *)"observerY",  (char *)"observerHeight",  (char *)"targetHeight",  (char *)"visibleVal",  (char *)"invisibleVal",  (char *)"outOfRangeVal",  (char *)"noDataVal",  (char *)"dfCurvCoeff",  (char *)"mode",  (char *)"maxDistance",  (char *)"callback",  (char *)"callback_data",  (char *)"heightMode",  (char *)"options",  NULL 
   };
   GDALDatasetShadow *result = 0 ;
   
@@ -38286,11 +38282,15 @@ SWIGINTERN PyObject *_wrap_ViewshedGenerate(PyObject *SWIGUNUSEDPARM(self), PyOb
     SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "ViewshedGenerate" "', argument " "3"" of type '" "char const *""'");
   }
   arg3 = reinterpret_cast< char * >(buf3);
-  res4 = SWIG_ConvertPtr(obj3, &argp4,SWIGTYPE_p_p_char, 0 |  0 );
-  if (!SWIG_IsOK(res4)) {
-    SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "ViewshedGenerate" "', argument " "4"" of type '" "char **""'"); 
+  {
+    /* %typemap(in) char **options */
+    int bErr = FALSE;
+    arg4 = CSLFromPySequence(obj3, &bErr);
+    if( bErr )
+    {
+      SWIG_fail;
+    }
   }
-  arg4 = reinterpret_cast< char ** >(argp4);
   ecode5 = SWIG_AsVal_double(obj4, &val5);
   if (!SWIG_IsOK(ecode5)) {
     SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "ViewshedGenerate" "', argument " "5"" of type '" "double""'");
@@ -38398,11 +38398,15 @@ SWIGINTERN PyObject *_wrap_ViewshedGenerate(PyObject *SWIGUNUSEDPARM(self), PyOb
     arg18 = static_cast< GDALViewshedOutputType >(val18);
   }
   if (obj18) {
-    res19 = SWIG_ConvertPtr(obj18, &argp19,SWIGTYPE_p_p_char, 0 |  0 );
-    if (!SWIG_IsOK(res19)) {
-      SWIG_exception_fail(SWIG_ArgError(res19), "in method '" "ViewshedGenerate" "', argument " "19"" of type '" "char **""'"); 
+    {
+      /* %typemap(in) char **options */
+      int bErr = FALSE;
+      arg19 = CSLFromPySequence(obj18, &bErr);
+      if( bErr )
+      {
+        SWIG_fail;
+      }
     }
-    arg19 = reinterpret_cast< char ** >(argp19);
   }
   {
     if (!arg1) {
@@ -38431,10 +38435,18 @@ SWIGINTERN PyObject *_wrap_ViewshedGenerate(PyObject *SWIGUNUSEDPARM(self), PyOb
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
   {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg4 );
+  }
+  {
     /* %typemap(freearg) ( void* callback_data=NULL)  */
     
     CPLFree(psProgressInfo);
     
+  }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg19 );
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -38442,10 +38454,18 @@ fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
   {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg4 );
+  }
+  {
     /* %typemap(freearg) ( void* callback_data=NULL)  */
     
     CPLFree(psProgressInfo);
     
+  }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg19 );
   }
   return NULL;
 }
@@ -44962,7 +44982,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "RegenerateOverview", (PyCFunction)(void(*)(void))_wrap_RegenerateOverview, METH_VARARGS|METH_KEYWORDS, "RegenerateOverview(Band srcBand, Band overviewBand, char const * resampling=\"average\", GDALProgressFunc callback=0, void * callback_data=None) -> int"},
 	 { "ContourGenerate", (PyCFunction)(void(*)(void))_wrap_ContourGenerate, METH_VARARGS|METH_KEYWORDS, "ContourGenerate(Band srcBand, double contourInterval, double contourBase, int fixedLevelCount, int useNoData, double noDataValue, Layer dstLayer, int idField, int elevField, GDALProgressFunc callback=0, void * callback_data=None) -> int"},
 	 { "ContourGenerateEx", (PyCFunction)(void(*)(void))_wrap_ContourGenerateEx, METH_VARARGS|METH_KEYWORDS, "ContourGenerateEx(Band srcBand, Layer dstLayer, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> int"},
-	 { "ViewshedGenerate", (PyCFunction)(void(*)(void))_wrap_ViewshedGenerate, METH_VARARGS|METH_KEYWORDS, "ViewshedGenerate(Band srcBand, char const * driverName, char const * targetRasterName, char ** creationOptions, double observerX, double observerY, double observerHeight, double targetHeight, double visibleVal, double invisibleVal, double outOfRangeVal, double noDataVal, double dfCurvCoeff, GDALViewshedMode mode, double maxDistance, GDALProgressFunc callback=0, void * callback_data=None, GDALViewshedOutputType heightMode=GVOT_NORMAL, char ** papszOptions=None) -> Dataset"},
+	 { "ViewshedGenerate", (PyCFunction)(void(*)(void))_wrap_ViewshedGenerate, METH_VARARGS|METH_KEYWORDS, "ViewshedGenerate(Band srcBand, char const * driverName, char const * targetRasterName, char ** creationOptions, double observerX, double observerY, double observerHeight, double targetHeight, double visibleVal, double invisibleVal, double outOfRangeVal, double noDataVal, double dfCurvCoeff, GDALViewshedMode mode, double maxDistance, GDALProgressFunc callback=0, void * callback_data=None, GDALViewshedOutputType heightMode=GVOT_NORMAL, char ** options=None) -> Dataset"},
 	 { "AutoCreateWarpedVRT", _wrap_AutoCreateWarpedVRT, METH_VARARGS, "AutoCreateWarpedVRT(Dataset src_ds, char const * src_wkt=None, char const * dst_wkt=None, GDALResampleAlg eResampleAlg=GRA_NearestNeighbour, double maxerror=0.0) -> Dataset"},
 	 { "CreatePansharpenedVRT", _wrap_CreatePansharpenedVRT, METH_VARARGS, "CreatePansharpenedVRT(char const * pszXML, Band panchroBand, int nInputSpectralBands) -> Dataset"},
 	 { "delete_GDALTransformerInfoShadow", _wrap_delete_GDALTransformerInfoShadow, METH_O, "delete_GDALTransformerInfoShadow(GDALTransformerInfoShadow self)"},
