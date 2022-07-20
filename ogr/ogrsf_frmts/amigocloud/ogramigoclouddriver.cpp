@@ -124,7 +124,7 @@ void RegisterOGRAmigoCloud()
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_25D_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
 
     poDriver->pfnOpen = OGRAmigoCloudDriverOpen;
     poDriver->pfnIdentify = OGRAmigoCloudDriverIdentify;

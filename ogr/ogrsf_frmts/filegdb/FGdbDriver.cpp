@@ -902,7 +902,7 @@ void RegisterOGRFileGDB()
     poDriver->SetMetadataItem( GDAL_DCAP_FIELD_DOMAINS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_RENAME_LAYERS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_25D_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATION_FIELD_DOMAIN_TYPES, "Coded Range" );
 
     poDriver->pfnOpen = OGRFileGDBDriverOpen;

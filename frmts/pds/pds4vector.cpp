@@ -518,7 +518,7 @@ int PDS4FixedWidthTable::TestCapability(const char* pszCap)
 {
     if( EQUAL(pszCap, OLCRandomRead) ||
         EQUAL(pszCap, OLCStringsAsUTF8) ||
-        EQUAL(pszCap, OLC25DGeometries) )
+        EQUAL(pszCap, OLCZGeometries) )
     {
         return true;
     }
@@ -1972,7 +1972,7 @@ int PDS4DelimitedTable::TestCapability(const char* pszCap)
 {
     if( EQUAL(pszCap, OLCRandomRead) ||
         EQUAL(pszCap, OLCStringsAsUTF8) ||
-        EQUAL(pszCap, OLC25DGeometries) )
+        EQUAL(pszCap, OLCZGeometries) )
     {
         return true;
     }

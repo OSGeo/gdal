@@ -873,7 +873,7 @@ int OGROCILayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCTransactions) )
         return TRUE;
 
-    else if( EQUAL(pszCap,OLC25DGeometries) )
+    else if( EQUAL(pszCap,OLCZGeometries) )
         return TRUE;
 
     else

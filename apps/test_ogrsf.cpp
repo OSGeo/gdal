@@ -1195,10 +1195,10 @@ static int TestBasic( GDALDataset* poDS, OGRLayer *poLayer )
             bRet = FALSE;
             printf("FAILURE: Layer advertizes OLCCurveGeometries capability but driver metadata does not advertize GDAL_DCAP_CURVE_GEOMETRIES!\n" );
         }
-        if ( poLayer->TestCapability(OLC25DGeometries) && !poDriver->GetMetadataItem( GDAL_DCAP_25D_GEOMETRIES ) )
+        if ( poLayer->TestCapability(OLCZGeometries) && !poDriver->GetMetadataItem( GDAL_DCAP_Z_GEOMETRIES ) )
         {
             bRet = FALSE;
-            printf("FAILURE: Layer advertizes OLC25DGeometries capability but driver metadata does not advertize GDAL_DCAP_25D_GEOMETRIES!\n" );
+            printf("FAILURE: Layer advertizes OLCZGeometries capability but driver metadata does not advertize GDAL_DCAP_Z_GEOMETRIES!\n" );
         }
 
         if ( poLayer->TestCapability(OLCCreateField) && !poDriver->GetMetadataItem( GDAL_DCAP_CREATE_FIELD ) )
@@ -1422,7 +1422,7 @@ static int TestOGRLayerFeatureCount( GDALDataset* poDS, OGRLayer *poLayer,
 
     const bool bLayerHasMeasuredGeometriesCapability = poLayer->TestCapability( ODsCMeasuredGeometries );
     const bool bLayerHasCurveGeometriesCapability = poLayer->TestCapability( OLCCurveGeometries );
-    const bool bLayerHas25DGeometriesCapability = poLayer->TestCapability( OLC25DGeometries );
+    const bool bLayerHasZGeometriesCapability = poLayer->TestCapability( OLCZGeometries );
 
     CPLErrorReset();
 
@@ -1453,10 +1453,10 @@ static int TestOGRLayerFeatureCount( GDALDataset* poDS, OGRLayer *poLayer,
                 bRet = FALSE;
                 printf("FAILURE: Layer has a feature with curved geometries but no OLCCurveGeometries capability!\n" );
             }
-            if ( poGeom && poGeom->Is3D() && !bLayerHas25DGeometriesCapability )
+            if ( poGeom && poGeom->Is3D() && !bLayerHasZGeometriesCapability )
             {
                 bRet = FALSE;
-                printf("FAILURE: Layer has a feature with 3D geometries but no OLC25DGeometries capability!\n" );
+                printf("FAILURE: Layer has a feature with 3D geometries but no OLCZGeometries capability!\n" );
             }
 
             OGRSpatialReference * poGFldSRS =
