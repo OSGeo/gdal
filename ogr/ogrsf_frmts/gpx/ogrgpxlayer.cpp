@@ -1883,6 +1883,8 @@ int OGRGPXLayer::TestCapability( const char * pszCap )
         return bWriteMode;
     else if( EQUAL(pszCap,OLCStringsAsUTF8) )
         return TRUE;
+    else if( EQUAL(pszCap,OLC25DGeometries) )
+        return TRUE;
 
     else
         return FALSE;

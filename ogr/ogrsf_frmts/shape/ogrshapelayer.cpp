@@ -1703,6 +1703,9 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,OLCMeasuredGeometries) )
         return TRUE;
 
+    if( EQUAL(pszCap,OLC25DGeometries) )
+        return TRUE;
+
     return FALSE;
 }
 

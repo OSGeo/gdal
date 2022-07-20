@@ -1025,6 +1025,9 @@ int OGRGmtLayer::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,OLCCreateField) )
         return TRUE;
 
+    if( EQUAL(pszCap,OLC25DGeometries) )
+        return TRUE;
+
     return FALSE;
 }
 

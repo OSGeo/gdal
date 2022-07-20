@@ -1897,6 +1897,8 @@ int OGRFlatGeobufLayer::TestCapability(const char *pszCap)
         return true;
     else if (EQUAL(pszCap, OLCCurveGeometries))
         return true;
+    else if (EQUAL(pszCap, OLC25DGeometries))
+        return true;
     else if (EQUAL(pszCap, OLCFastFeatureCount))
         return m_poFilterGeom == nullptr && m_poAttrQuery == nullptr && m_featuresCount > 0;
     else if (EQUAL(pszCap, OLCFastGetExtent))

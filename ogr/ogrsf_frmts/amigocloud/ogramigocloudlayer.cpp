@@ -275,6 +275,8 @@ int OGRAmigoCloudLayer::TestCapability( const char * pszCap )
 {
     if ( EQUAL(pszCap, OLCStringsAsUTF8) )
         return TRUE;
+    else if ( EQUAL(pszCap, OLC25DGeometries) )
+        return TRUE;
     return FALSE;
 }
 

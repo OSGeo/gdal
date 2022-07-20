@@ -139,6 +139,7 @@ void RegisterOGRCAD()
         poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
         poDriver->SetMetadataItem( GDAL_DCAP_CURVE_GEOMETRIES, "YES" );
         poDriver->SetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES, "YES" );
+        poDriver->SetMetadataItem( GDAL_DCAP_25D_GEOMETRIES, "YES" );
 
         poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList>"
 "  <Option name='MODE' type='string' description='Open mode. READ_ALL - read all data (slow), READ_FAST - read main data (fast), READ_FASTEST - read less data' default='READ_FAST'/>"

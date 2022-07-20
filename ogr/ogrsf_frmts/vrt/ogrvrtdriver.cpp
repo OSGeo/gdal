@@ -227,6 +227,7 @@ void RegisterOGRVRT()
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_CURVE_GEOMETRIES, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_25D_GEOMETRIES, "YES" );
 
     poDriver->pfnOpen = OGRVRTDriverOpen;
     poDriver->pfnIdentify = OGRVRTDriverIdentify;
