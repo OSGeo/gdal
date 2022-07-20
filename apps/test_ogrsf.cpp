@@ -1200,21 +1200,57 @@ static int TestBasic( GDALDataset* poDS, OGRLayer *poLayer )
 
         const bool bLayerShouldHaveEditCapabilities = !bReadOnly && !pszSQLStatement;
 
+        // metadata measure tests
         if ( poLayer->TestCapability(OLCMeasuredGeometries) && !poDriver->GetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES ) )
         {
             bRet = FALSE;
             printf("FAILURE: Layer advertizes OLCMeasuredGeometries capability but driver metadata does not advertize GDAL_DCAP_MEASURED_GEOMETRIES!\n" );
         }
+        if ( poDS->TestCapability( ODsCMeasuredGeometries ) && !poDriver->GetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES ) )
+        {
+            bRet = FALSE;
+            printf("FAILURE: Datasource advertizes ODsCMeasuredGeometries capability but driver metadata does not advertize GDAL_DCAP_MEASURED_GEOMETRIES!\n" );
+        }
+        if ( poLayer->TestCapability(OLCMeasuredGeometries) && !poDS->TestCapability( ODsCMeasuredGeometries ) )
+        {
+            bRet = FALSE;
+            printf("FAILURE: Layer advertizes OLCMeasuredGeometries capability but datasource does not advertize ODsCMeasuredGeometries!\n" );
+        }
+
+        // metadata curve tests
         if ( poLayer->TestCapability(OLCCurveGeometries) && !poDriver->GetMetadataItem( GDAL_DCAP_CURVE_GEOMETRIES ) )
         {
             bRet = FALSE;
             printf("FAILURE: Layer advertizes OLCCurveGeometries capability but driver metadata does not advertize GDAL_DCAP_CURVE_GEOMETRIES!\n" );
         }
+        if ( poDS->TestCapability( ODsCCurveGeometries ) && !poDriver->GetMetadataItem( GDAL_DCAP_CURVE_GEOMETRIES ) )
+        {
+            bRet = FALSE;
+            printf("FAILURE: Datasource advertizes ODsCCurveGeometries capability but driver metadata does not advertize GDAL_DCAP_CURVE_GEOMETRIES!\n" );
+        }
+        if ( poLayer->TestCapability(OLCCurveGeometries) && !poDS->TestCapability( ODsCCurveGeometries ) )
+        {
+            bRet = FALSE;
+            printf("FAILURE: Layer advertizes OLCCurveGeometries capability but datasource does not advertize ODsCCurveGeometries!\n" );
+        }
+
+        // metadata z dimension tests
         if ( poLayer->TestCapability(OLCZGeometries) && !poDriver->GetMetadataItem( GDAL_DCAP_Z_GEOMETRIES ) )
         {
             bRet = FALSE;
             printf("FAILURE: Layer advertizes OLCZGeometries capability but driver metadata does not advertize GDAL_DCAP_Z_GEOMETRIES!\n" );
         }
+        if ( poDS->TestCapability( ODsCZGeometries ) && !poDriver->GetMetadataItem( GDAL_DCAP_Z_GEOMETRIES ) )
+        {
+            bRet = FALSE;
+            printf("FAILURE: Datasource advertizes ODsCZGeometries capability but driver metadata does not advertize GDAL_DCAP_Z_GEOMETRIES!\n" );
+        }
+        if ( poLayer->TestCapability(OLCZGeometries) && !poDS->TestCapability( ODsCZGeometries ) )
+        {
+            bRet = FALSE;
+            printf("FAILURE: Layer advertizes OLCZGeometries capability but datasource does not advertize ODsCZGeometries!\n" );
+        }
+
 
         // note -- it's not safe to test the reverse case for these next two situations as some drivers only support
         // CreateField() on newly created layers before the first feature is written
