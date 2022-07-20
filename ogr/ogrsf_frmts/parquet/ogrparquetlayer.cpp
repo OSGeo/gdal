@@ -872,6 +872,7 @@ bool OGRParquetLayer::ReadNextBatch()
         {
             iCol = m_anMapFieldIndexToArrowColumn[i][0];
         }
+        CPL_IGNORE_RET_VAL(iCol); // to make cppcheck happy
 
         CPLAssert(iCol < static_cast<int>(poColumns.size()));
         CPLAssert(m_poSchema->fields()[m_anMapFieldIndexToArrowColumn[i][0]]->type()->id() ==
@@ -891,6 +892,7 @@ bool OGRParquetLayer::ReadNextBatch()
         {
             iCol = m_anMapGeomFieldIndexToArrowColumn[i];
         }
+        CPL_IGNORE_RET_VAL(iCol); // to make cppcheck happy
 
         CPLAssert(iCol < static_cast<int>(poColumns.size()));
         CPLAssert(m_poSchema->fields()[m_anMapGeomFieldIndexToArrowColumn[i]]->type()->id() ==
