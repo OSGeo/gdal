@@ -155,7 +155,7 @@ class CPL_DLL OGRStyleMgr
 //! @cond Doxygen_Suppress
     OGRStyleTable *GetDataSetStyleTable(){return m_poDataSetStyleTable;}
 
-    OGRStyleTool *CreateStyleToolFromStyleString(const char *pszStyleString);
+    static OGRStyleTool *CreateStyleToolFromStyleString(const char *pszStyleString);
 //! @endcond
 };
 
