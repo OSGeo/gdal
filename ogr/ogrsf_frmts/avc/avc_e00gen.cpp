@@ -1063,8 +1063,8 @@ const char *AVCE00GenTx6(AVCE00GenInfo *psInfo, AVCTxt *psTxt, GBool bCont)
 
         psInfo->iCurItem++;
     }
-    else if (psInfo->iCurItem < psInfo->numItems &&
-             psInfo->iCurItem >= psInfo->numItems-((psTxt->numChars-1)/80 + 1))
+    else if (psInfo->iCurItem < psInfo->numItems /* &&
+             psInfo->iCurItem >= psInfo->numItems-((psTxt->numChars-1)/80 + 1) */ )
     {
         /*-------------------------------------------------------------
          * Last line, contains the text string
