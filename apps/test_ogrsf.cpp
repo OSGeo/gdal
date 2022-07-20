@@ -1358,6 +1358,9 @@ static int TestOGRLayerFeatureCount( GDALDataset* poDS, OGRLayer *poLayer,
     bool bWarnAboutSRS = false;
     OGRFeatureDefn* poLayerDefn = LOG_ACTION(poLayer->GetLayerDefn());
     int nGeomFieldCount = LOG_ACTION(poLayerDefn->GetGeomFieldCount());
+    GDALDriver* poDriver = poDS->GetDriver();
+    const bool bDriverHasMeasuredGeometriesMetadata = poDriver->GetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES );
+    const bool bDriverHasCurveGeometriesMetadata = poDriver->GetMetadataItem( GDAL_DCAP_CURVE_GEOMETRIES );
 
     CPLErrorReset();
 
@@ -1377,6 +1380,18 @@ static int TestOGRLayerFeatureCount( GDALDataset* poDS, OGRLayer *poLayer,
         for( int iGeom = 0; iGeom < nGeomFieldCount; iGeom ++ )
         {
             OGRGeometry* poGeom = poFeature->GetGeomFieldRef(iGeom);
+
+            if ( poGeom && poGeom->IsMeasured() && !bDriverHasMeasuredGeometriesMetadata )
+            {
+                bRet = FALSE;
+                printf("FAILURE: Layer has a feature with measured geometries but driver metadata does not include GDAL_DCAP_MEASURED_GEOMETRIES!\n" );
+            }
+            if ( poGeom && poGeom->hasCurveGeometry() && !bDriverHasCurveGeometriesMetadata )
+            {
+                bRet = FALSE;
+                printf("FAILURE: Layer has a feature with curved geometries but driver metadata does not include GDAL_DCAP_CURVE_GEOMETRIES!\n" );
+            }
+
             OGRSpatialReference * poGFldSRS =
                 poLayerDefn->GetGeomFieldDefn(iGeom)->GetSpatialRef();
 
