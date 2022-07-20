@@ -1985,6 +1985,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
         {
             GUIntBig nNewFeaturesAlloc = static_cast<GUIntBig>(nFeaturesAlloc)
                                                         + nFeaturesAlloc / 3;
+#if SIZEOF_SIZE_T == 4
             if( static_cast<size_t>(nNewFeaturesAlloc) != nNewFeaturesAlloc ||
                 static_cast<size_t>(sizeof(OGRField) * nOrderItems *
                                     nNewFeaturesAlloc) !=
@@ -1999,6 +2000,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
                 delete poSrcFeat;
                 return;
             }
+#endif
             OGRField* pasNewIndexFields = static_cast<OGRField *>(
                 VSI_REALLOC_VERBOSE(pasIndexFields,
                            sizeof(OGRField) * nOrderItems *
