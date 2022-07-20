@@ -73,6 +73,7 @@ static const char* GMLGetCoordTokenPos( const char* pszStr,
     char ch;
     while( true )
     {
+        // cppcheck-suppress nullPointerRedundantCheck
         ch = *pszStr;
         if( ch == '\0' )
         {
@@ -345,7 +346,6 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode,
             const char* pszStr = pszCoordString;
             double dfX = 0;
             double dfY = 0;
-            double dfZ = 0;
             iCoord = 0;
             while( *pszStr != '\0' )
             {
@@ -399,7 +399,7 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode,
                     && !isspace(static_cast<unsigned char>(*pszStr)) )
                     pszStr++;
 
-                dfZ = 0.0;
+                double dfZ = 0.0;
                 if( *pszStr == chCS )
                 {
                     pszStr++;
