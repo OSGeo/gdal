@@ -401,6 +401,27 @@ static int TestDataset( GDALDriver** ppoDriver )
     poDS->GetMetadata( nullptr );
     poDS->GetMetadataItem( "", nullptr );
 
+    if ( !poDriver->GetMetadataItem( GDAL_DCAP_VECTOR ))
+    {
+        printf("FAILURE: Driver does not advertize GDAL_DCAP_VECTOR!\n" );
+        GDALClose(poDS);
+        return FALSE;
+    }
+
+    // Test consistency of datasource capabilities and driver metadata
+    if ( poDS->TestCapability(ODsCCreateLayer) && !poDriver->GetMetadataItem( GDAL_DCAP_CREATE_LAYER ) )
+    {
+        printf("FAILURE: Datasource advertizes ODsCCreateLayer capability but driver metadata does not advertize GDAL_DCAP_CREATE_LAYER!\n" );
+        GDALClose(poDS);
+        return FALSE;
+    }
+    if ( poDS->TestCapability(ODsCDeleteLayer) && !poDriver->GetMetadataItem( GDAL_DCAP_DELETE_LAYER ) )
+    {
+        printf("FAILURE: Datasource advertizes ODsCDeleteLayer capability but driver metadata does not advertize GDAL_DCAP_DELETE_LAYER!\n" );
+        GDALClose(poDS);
+        return FALSE;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Process optional SQL request.                                   */
 /* -------------------------------------------------------------------- */
@@ -1142,6 +1163,29 @@ static int TestBasic( OGRLayer *poLayer )
                    poLayer->GetSpatialRef(),
                    poFDefn->GetGeomFieldDefn(0)->GetSpatialRef());
         }
+    }
+
+    // Test consistency of layer capabilities and driver metadata
+    GDALDriver *poDriver = poLayer->GetDataset()->GetDriver();
+    if ( poLayer->TestCapability(OLCCreateField) && !poDriver->GetMetadataItem( GDAL_DCAP_CREATE_FIELD ) )
+    {
+        bRet = FALSE;
+        printf("FAILURE: Layer advertizes OLCCreateField capability but driver metadata does not advertize GDAL_DCAP_CREATE_LAYER!\n" );
+    }
+    if ( poLayer->TestCapability(OLCDeleteField) && !poDriver->GetMetadataItem( GDAL_DCAP_DELETE_FIELD ) )
+    {
+        bRet = FALSE;
+        printf("FAILURE: Layer advertizes OLCDeleteField capability but driver metadata does not advertize GDAL_DCAP_DELETE_FIELD!\n" );
+    }
+    if ( poLayer->TestCapability(OLCReorderFields) && !poDriver->GetMetadataItem( GDAL_DCAP_REORDER_FIELDS ) )
+    {
+        bRet = FALSE;
+        printf("FAILURE: Layer advertizes OLCReorderFields capability but driver metadata does not advertize GDAL_DCAP_REORDER_FIELDS!\n" );
+    }
+    if ( poLayer->TestCapability(OLCAlterFieldDefn) && !poDriver->GetMetadataItem( GDAL_DMD_ALTER_FIELD_DEFN_FLAGS ) )
+    {
+        bRet = FALSE;
+        printf("FAILURE: Layer advertizes OLCAlterFieldDefn capability but driver metadata does not include GDAL_DMD_ALTER_FIELD_DEFN_FLAGS!\n" );
     }
 
     return bRet;
