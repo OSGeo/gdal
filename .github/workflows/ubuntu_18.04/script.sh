@@ -4,9 +4,7 @@ set -e
 
 export PYTEST="python3 -m pytest -vv -p no:sugar --color=no"
 
-(cd autotest/cpp && make quick_test)
-# Compile and test vsipreload
-(cd autotest/cpp && make vsipreload.so)
+(cd build && make quicktest)
 
 # install pip and use it to install test dependencies
 pip3 install -U -r autotest/requirements.txt
