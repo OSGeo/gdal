@@ -652,8 +652,7 @@ boolean GeoRasterDataset::JP2_CopyDirect( const char* pszJP2Filename,
         if( EQUAL( oBox.GetType(), "jp2c" ) )
         {
             size_t nCount = 0;
-            size_t nSize = 0;
-            size_t nDataLength = oBox.GetDataLength();
+            const size_t nDataLength = oBox.GetDataLength();
 
             nLBox = CPL_MSBWORD32( (int) nDataLength + 8 );
 
@@ -664,9 +663,9 @@ boolean GeoRasterDataset::JP2_CopyDirect( const char* pszJP2Filename,
 
             while( nCount < nDataLength )
             {
-                size_t nChunk = (size_t) MIN( nCache, nDataLength - nCount );
+                const size_t nChunk = (size_t) MIN( nCache, nDataLength - nCount );
 
-                nSize = VSIFReadL( pBuffer, 1, nChunk, fpInput );
+                const size_t nSize = VSIFReadL( pBuffer, 1, nChunk, fpInput );
 
                 if ( nSize != nChunk )
                 {
