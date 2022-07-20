@@ -1305,6 +1305,7 @@ void OGROAPIFLayer::EstablishFeatureDefn()
     for( const auto& osItemAsset: m_aosItemAssetNames )
     {
         OGRFieldDefn oFieldDefn( ("asset_" + osItemAsset + "_href").c_str(), OFTString );
+        // cppcheck-suppress danglingTemporaryLifetime
         m_poFeatureDefn->AddFieldDefn( &oFieldDefn );
     }
 
