@@ -75,6 +75,8 @@ struct EXIFTagDesc
     GDALEXIFTIFFDataType datatype;
     GUInt32              length;
     const char*          name;
+    // comprCond is only used when DUMP_EXIF_ITEMS is defined
+    // cppcheck-suppress unusedStructMember
     char                 comprCond;
 };
 
