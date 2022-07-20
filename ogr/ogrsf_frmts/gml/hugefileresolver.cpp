@@ -465,7 +465,7 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
             }
             if( sqlite3_column_type(hQueryStmt, 6) != SQLITE_NULL )
             {
-                pszNodeFromId = (const char *)sqlite3_column_text(hQueryStmt, 6);
+                pszNodeFromId = reinterpret_cast<const char *>( sqlite3_column_text(hQueryStmt, 6) );
             }
             if( sqlite3_column_type(hQueryStmt, 7) != SQLITE_NULL )
             {
@@ -498,7 +498,7 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
             }
             if( sqlite3_column_type(hQueryStmt, 14) != SQLITE_NULL )
             {
-                pszNodeToId = (const char *)sqlite3_column_text(hQueryStmt, 14);
+                pszNodeToId = reinterpret_cast<const char *>( sqlite3_column_text(hQueryStmt, 14) );
             }
             if( sqlite3_column_type(hQueryStmt, 15) != SQLITE_NULL )
             {
