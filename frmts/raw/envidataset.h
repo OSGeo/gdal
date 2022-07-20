@@ -100,7 +100,7 @@ class ENVIDataset final: public RawDataset
 
     void        SetFillFile() { bFillFile = true; }
 
-    char        **SplitList( const char * );
+    static char **SplitList( const char * );
 
     enum Interleave { BSQ, BIL, BIP } interleave;
     static int GetEnviType(GDALDataType eType);

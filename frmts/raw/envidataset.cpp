@@ -1257,8 +1257,6 @@ CPLErr ENVIDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
 /*      white space.                                                    */
 /************************************************************************/
 
-// TODO: Why is this not a part of port/cpl_list.cpp?
-
 char **ENVIDataset::SplitList( const char *pszCleanInput )
 
 {
