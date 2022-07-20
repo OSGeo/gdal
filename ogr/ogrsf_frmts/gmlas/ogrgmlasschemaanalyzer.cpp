@@ -2789,7 +2789,8 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                 GetConstraintChildrenElements(osElementXPath);
 
             // Special case for a GML geometry property
-            OGRwkbGeometryType eGeomType = wkbNone;
+            OGRwkbGeometryType eGeomType = wkbNone; // to make Visual Studio happy
+            CPL_IGNORE_RET_VAL(eGeomType); // to make cppcheck happy
 
             if( !apoChildrenElements.empty() )
             {
