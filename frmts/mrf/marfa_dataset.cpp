@@ -250,7 +250,8 @@ CPLErr MRFDataset::IBuildOverviews(
             return GDALDataset::IBuildOverviews(pszResampling,
                 nOverviews, panOverviewList,
                 nBands, panBandList, pfnProgress, pProgressData);
-        return CleanOverviews();
+        // We should clean overviews, but this is not possible in an MRF
+        return CE_None;
     }
 
     // Array of source bands

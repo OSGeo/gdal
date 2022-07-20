@@ -393,9 +393,6 @@ protected:
     // Options should be papszOpenOptions, but the dataset already has a member with that name
     CPLErr Initialize(CPLXMLNode *);
 
-    // Do nothing, this is not possible in an MRF
-    CPLErr CleanOverviews() { return CE_None; }
-
     bool IsSingleTile();
 
     // Add uniform scale overlays, returns the new size of the index file
@@ -608,7 +605,7 @@ protected:
     // Read the index record itself, can be overwritten
     //    virtual CPLErr ReadTileIdx(const ILSize &, ILIdx &, GIntBig bias = 0);
 
-    GIntBig bandbit(int b) { return ((GIntBig)1) << b; }
+    static GIntBig bandbit(int b) { return ((GIntBig)1) << b; }
     GIntBig bandbit() { return bandbit(nBand - 1); }
     GIntBig AllBandMask() { return bandbit(poMRFDS->nBands) - 1; }
 
