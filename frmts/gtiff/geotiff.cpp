@@ -4402,6 +4402,7 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
             CPLAssert( nOffset + nSize <= anOffsets[i] + anSizes[i] );
             GUInt32 nSizeFromLeader;
             memcpy(&nSizeFromLeader,
+                    // cppcheck-suppress containerOutOfBounds
                     static_cast<GByte*>(apData[i]) + nOffset - anOffsets[i],
                     sizeof(nSizeFromLeader));
             CPL_LSBPTR32(&nSizeFromLeader);
