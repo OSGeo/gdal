@@ -561,6 +561,9 @@ int OGRMemLayer::TestCapability( const char *pszCap )
     else if( EQUAL(pszCap, OLCMeasuredGeometries) )
         return TRUE;
 
+    else if( EQUAL(pszCap, OLCZGeometries) )
+        return TRUE;
+
     return FALSE;
 }
 
