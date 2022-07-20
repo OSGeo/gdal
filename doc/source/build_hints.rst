@@ -1665,7 +1665,13 @@ It is used for the Python, Java and CSharp bindings.
 
 .. option:: SWIG_EXECUTABLE
 
-    Path to the SWIG executable
+    Path to the SWIG executable.
+
+    Note that setting it explictly might be needed, and that putting the
+    directory of the installed binary into the PATH might not be sufficient.
+    The reason is that when buildingfrom source, a "swig" binary will be
+    generated, but FindSWIG will prefer a "swig-4.0" binary if found elsewhere
+    in the PATH.
 
 
 TEIGHA
@@ -2013,6 +2019,11 @@ Python bindings options
 
     Whether Python bindings should be built. It is ON by default, but only
     effective if a Python installation is found.
+
+.. option:: SWIG_REGENERATE_PYTHON:BOOL=ON/OFF
+
+    Whether to refresh the generated SWIG Python bindings. It is OFF by default.
+    Setting it to ON is needed if modifying the SWIG interface files.
 
 A nominal Python installation should comprise the Python runtime (>= 3.6) and
 the setuptools module.
