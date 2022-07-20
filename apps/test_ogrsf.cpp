@@ -1403,6 +1403,7 @@ static int TestOGRLayerFeatureCount( GDALDataset* poDS, OGRLayer *poLayer,
     GDALDriver* poDriver = poDS->GetDriver();
     const bool bDriverHasMeasuredGeometriesMetadata = poDriver->GetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES );
     const bool bDriverHasCurveGeometriesMetadata = poDriver->GetMetadataItem( GDAL_DCAP_CURVE_GEOMETRIES );
+    const bool bDriverHas25DGeometriesMetadata = poDriver->GetMetadataItem( GDAL_DCAP_25D_GEOMETRIES );
 
     CPLErrorReset();
 
@@ -1432,6 +1433,11 @@ static int TestOGRLayerFeatureCount( GDALDataset* poDS, OGRLayer *poLayer,
             {
                 bRet = FALSE;
                 printf("FAILURE: Layer has a feature with curved geometries but driver metadata does not include GDAL_DCAP_CURVE_GEOMETRIES!\n" );
+            }
+            if ( poGeom && poGeom->Is3D() && !bDriverHas25DGeometriesMetadata )
+            {
+                bRet = FALSE;
+                printf("FAILURE: Layer has a feature with 3D geometries but driver metadata does not include GDAL_DCAP_25D_GEOMETRIES!\n" );
             }
 
             OGRSpatialReference * poGFldSRS =
