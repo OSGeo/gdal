@@ -2930,7 +2930,7 @@ OGRErr OGRArrowLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 
 inline
 OGRErr OGRArrowLayer::GetExtentFromMetadata(const CPLJSONObject& oJSONDef,
-                                            OGREnvelope *psExtent) const
+                                            OGREnvelope *psExtent)
 {
     const auto oBBox = oJSONDef.GetArray("bbox");
     if( oBBox.IsValid() && oBBox.Size() == 4 )
