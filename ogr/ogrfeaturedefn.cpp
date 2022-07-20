@@ -952,7 +952,7 @@ OGRwkbGeometryType OGRFeatureDefn::GetGeomType() const
     if( poGFldDefn == nullptr )
         return wkbNone;
     OGRwkbGeometryType eType = poGFldDefn->GetType();
-    if( eType == (wkbUnknown | wkb25DBitInternalUse) &&
+    if( eType == (/*wkbUnknown |*/ wkb25DBitInternalUse) &&
         CPLTestBool(CPLGetConfigOption("QGIS_HACK", "NO")) )
         eType = wkbUnknown;
     return eType;
