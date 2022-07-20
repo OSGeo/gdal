@@ -76,7 +76,7 @@ static const char* GMLGetCoordTokenPos( const char* pszStr,
         ch = *pszStr;
         if( ch == '\0' )
         {
-            *ppszNextToken = nullptr;
+            *ppszNextToken = pszStr;
             return nullptr;
         }
         else if( !(ch == '\n' || ch == '\r' || ch == '\t' || ch == ' ' ||
@@ -95,7 +95,7 @@ static const char* GMLGetCoordTokenPos( const char* pszStr,
         }
         pszStr++;
     }
-    *ppszNextToken = nullptr;
+    *ppszNextToken = pszStr;
     return pszToken;
 }
 
@@ -522,9 +522,9 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode,
 
         const char* pszCur = pszPos;
         const char* pszX = GMLGetCoordTokenPos(pszCur, &pszCur);
-        const char* pszY = (pszCur != nullptr) ?
+        const char* pszY = (pszCur[0] != '\0') ?
                             GMLGetCoordTokenPos(pszCur, &pszCur) : nullptr;
-        const char* pszZ = (pszCur != nullptr) ?
+        const char* pszZ = (pszCur[0] != '\0') ?
                             GMLGetCoordTokenPos(pszCur, &pszCur) : nullptr;
 
         if( pszY == nullptr )
@@ -597,9 +597,9 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode,
             const char* pszX = GMLGetCoordTokenPos(pszCur, &pszCur);
             if( pszX == nullptr && bSuccess )
                 break;
-            const char* pszY = (pszCur != nullptr) ?
+            const char* pszY = (pszCur[0] != '\0') ?
                     GMLGetCoordTokenPos(pszCur, &pszCur) : nullptr;
-            const char* pszZ = (nDimension == 3 && pszCur != nullptr) ?
+            const char* pszZ = (nDimension == 3 && pszCur[0] != '\0') ?
                     GMLGetCoordTokenPos(pszCur, &pszCur) : nullptr;
 
             if( pszY == nullptr || (nDimension == 3 && pszZ == nullptr) )
