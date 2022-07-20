@@ -828,7 +828,7 @@ int OGRMSSQLSpatialTableLayer::TestCapability( const char * pszCap )
         return TRUE;
     else if (EQUAL(pszCap, OLCMeasuredGeometries))
         return TRUE;
-    else if (EQUAL(pszCap, OLC25DGeometries))
+    else if (EQUAL(pszCap, OLCZGeometries))
         return TRUE;
     else
         return OGRMSSQLSpatialLayer::TestCapability( pszCap );

@@ -115,7 +115,7 @@ void RegisterOGRDWG()
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/dwg.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_CURVE_GEOMETRIES, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_25D_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES");
     poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );

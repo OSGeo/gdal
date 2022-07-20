@@ -950,7 +950,7 @@ int OGRNGWLayer::TestCapability( const char *pszCap )
         return poDS->HasFeaturePaging();
     else if( EQUAL(pszCap, OLCRename) )
         return poDS->IsUpdateMode();
-    else if( EQUAL(pszCap, OLC25DGeometries) )
+    else if( EQUAL(pszCap, OLCZGeometries) )
         return TRUE;
     return FALSE;
 }

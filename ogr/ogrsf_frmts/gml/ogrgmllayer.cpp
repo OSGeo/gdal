@@ -1142,7 +1142,7 @@ int OGRGMLLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap, OLCCurveGeometries) )
         return poDS->IsGML3Output();
 
-    else if( EQUAL(pszCap, OLC25DGeometries) )
+    else if( EQUAL(pszCap, OLCZGeometries) )
         return TRUE;
 
     else

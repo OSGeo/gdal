@@ -37422,7 +37422,7 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "OLCCreateGeomField",SWIG_FromCharPtr("CreateGeomField"));
   SWIG_Python_SetConstant(d, "OLCCurveGeometries",SWIG_FromCharPtr("CurveGeometries"));
   SWIG_Python_SetConstant(d, "OLCMeasuredGeometries",SWIG_FromCharPtr("MeasuredGeometries"));
-  SWIG_Python_SetConstant(d, "OLC25DGeometries",SWIG_FromCharPtr("25DGeometries"));
+  SWIG_Python_SetConstant(d, "OLCZGeometries",SWIG_FromCharPtr("ZGeometries"));
   SWIG_Python_SetConstant(d, "OLCRename",SWIG_FromCharPtr("Rename"));
   SWIG_Python_SetConstant(d, "OLCFastGetArrowStream",SWIG_FromCharPtr("FastGetArrowStream"));
   SWIG_Python_SetConstant(d, "ODsCCreateLayer",SWIG_FromCharPtr("CreateLayer"));

@@ -254,7 +254,8 @@ int OGRPGResultLayer::TestCapability( const char * pszCap )
     }
     else if( EQUAL(pszCap,OLCStringsAsUTF8) )
         return TRUE;
-
+    else if( EQUAL(pszCap,OLCZGeometries) )
+        return TRUE;
     else
         return FALSE;
 }

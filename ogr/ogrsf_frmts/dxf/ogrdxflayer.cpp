@@ -3519,7 +3519,7 @@ int OGRDXFLayer::TestCapability( const char * pszCap )
 {
     if ( EQUAL(pszCap, OLCStringsAsUTF8) )
         return true;
-    else if( EQUAL(pszCap, OLC25DGeometries) )
+    else if( EQUAL(pszCap, OLCZGeometries) )
         return true;
     return false;
 }

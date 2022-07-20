@@ -545,15 +545,11 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  */
 #define GDAL_DCAP_MEASURED_GEOMETRIES "DCAP_MEASURED_GEOMETRIES"
 
-/** Capability set by a driver that can support 2.5 dimension geometries (i.e. support for Z dimensions).
- *
- * Note: This capability is only partially supported by drivers. If present then
- * Z dimensions are definitely supported by a driver, but the absence of this
- * capability does not guarantee that Z dimensions are NOT supported by the driver.
+/** Capability set by a driver that can support the Z dimension for geometries.
  *
  * @since GDAL 3.6
  */
-#define GDAL_DCAP_25D_GEOMETRIES "DCAP_25D_GEOMETRIES"
+#define GDAL_DCAP_Z_GEOMETRIES "DCAP_Z_GEOMETRIES"
 
 /** Capability set by drivers which support feature styles.
  * @since GDAL 2.3

@@ -484,7 +484,7 @@ typedef void retGetPoints;
 %constant char *OLCCreateGeomField     = "CreateGeomField";
 %constant char *OLCCurveGeometries     = "CurveGeometries";
 %constant char *OLCMeasuredGeometries  = "MeasuredGeometries";
-%constant char *OLC25DGeometries       = "25DGeometries";
+%constant char *OLCZGeometries         = "ZGeometries";
 %constant char *OLCRename              = "Rename";
 %constant char *OLCFastGetArrowStream  = "FastGetArrowStream";
 
@@ -534,7 +534,7 @@ typedef int OGRErr;
 #define OLCCreateGeomField     "CreateGeomField"
 #define OLCCurveGeometries     "CurveGeometries"
 #define OLCMeasuredGeometries  "MeasuredGeometries"
-#define OLC25DGeometries       "25DGeometries"
+#define OLCZGeometries         "ZGeometries"
 #define OLCRename              "Rename"
 #define OLCFastGetArrowStream  "FastGetArrowStream";
 

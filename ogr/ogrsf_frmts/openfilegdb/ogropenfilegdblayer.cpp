@@ -2142,7 +2142,7 @@ int OGROpenFileGDBLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCCurveGeometries) )
         return TRUE;
 
-    else if( EQUAL(pszCap,OLC25DGeometries) )
+    else if( EQUAL(pszCap,OLCZGeometries) )
         return TRUE;
 
     else if( EQUAL(pszCap, OLCFastSpatialFilter) )

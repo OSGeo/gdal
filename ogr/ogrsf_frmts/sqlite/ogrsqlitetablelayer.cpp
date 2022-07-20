@@ -1151,7 +1151,7 @@ int OGRSQLiteTableLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCMeasuredGeometries) )
         return m_poDS->TestCapability(ODsCMeasuredGeometries);
 
-    else if( EQUAL(pszCap,OLC25DGeometries) )
+    else if( EQUAL(pszCap,OLCZGeometries) )
         return true;
 
     else

@@ -172,7 +172,7 @@ int OGRCADLayer::TestCapability(const char *pszCap)
 {
     if( EQUAL(pszCap, OLCMeasuredGeometries) )
         return true;
-    if( EQUAL(pszCap, OLC25DGeometries) )
+    if( EQUAL(pszCap, OLCZGeometries) )
         return true;
     if( EQUAL(pszCap, OLCCurveGeometries) )
         return true;

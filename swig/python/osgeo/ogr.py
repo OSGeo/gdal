@@ -355,7 +355,7 @@ OLCCurveGeometries = _ogr.OLCCurveGeometries
 
 OLCMeasuredGeometries = _ogr.OLCMeasuredGeometries
 
-OLC25DGeometries = _ogr.OLC25DGeometries
+OLCZGeometries = _ogr.OLCZGeometries
 
 OLCRename = _ogr.OLCRename
 
