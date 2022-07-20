@@ -4366,7 +4366,7 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
     auto FillCacheStrileToOffsetByteCount = [&](
         const std::vector<vsi_l_offset>& anOffsets,
         const std::vector<size_t>& anSizes,
-        const std::vector<void*> apData)
+        const std::vector<void*>& apData)
     {
         CPLAssert( m_poGDS->m_bLeaderSizeAsUInt4 );
         size_t i = 0;
