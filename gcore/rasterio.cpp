@@ -433,9 +433,6 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
              iBufYOff < nBufYSize;
              iBufYOff += nYInc, iSrcY += nYInc )
         {
-            GPtrDiff_t iSrcOffset = 0;
-            int nXSpan = 0;
-
             GPtrDiff_t iBufOffset =
                 static_cast<GPtrDiff_t>(iBufYOff) *
                 static_cast<GPtrDiff_t>(nLineSpace);
@@ -444,7 +441,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             int iSrcX = nXOff;
             while( iSrcX < nXSpanEnd )
             {
-                nXSpan = nLBlockX * nBlockXSize;
+                int nXSpan = nLBlockX * nBlockXSize;
                 if( nXSpan < INT_MAX - nBlockXSize )
                     nXSpan += nBlockXSize;
                 else
@@ -511,7 +508,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Copy over this chunk of data.                                   */
 /* -------------------------------------------------------------------- */
-                iSrcOffset =
+                GPtrDiff_t iSrcOffset =
                     (static_cast<GPtrDiff_t>(iSrcX)
                      - static_cast<GPtrDiff_t>(nLBlockX * nBlockXSize)
                      + (static_cast<GPtrDiff_t>(iSrcY)
@@ -619,14 +616,12 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
         for( int iDstY = nYOff; iDstY < nYOff + nYSize; iDstY ++)
         {
-            GPtrDiff_t iBufOffset = 0;
-            GPtrDiff_t iDstOffset = 0;
             const int iBufYOff = static_cast<int>((iDstY - nYOff) / dfSrcYInc);
 
             for( int iDstX = nXOff; iDstX < nXOff + nXSize; iDstX ++)
             {
                 const int iBufXOff = static_cast<int>((iDstX - nXOff) / dfSrcXInc);
-                iBufOffset =
+                GPtrDiff_t iBufOffset =
                     static_cast<GPtrDiff_t>(iBufYOff)
                     * static_cast<GPtrDiff_t>(nLineSpace)
                     + iBufXOff * static_cast<GPtrDiff_t>(nPixelSpace);
@@ -698,7 +693,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     /* -------------------------------------------------------------------- */
     /*      Copy over this pixel of data.                                   */
     /* -------------------------------------------------------------------- */
-                iDstOffset =
+                GPtrDiff_t iDstOffset =
                     (static_cast<GPtrDiff_t>(iDstX)
                      - static_cast<GPtrDiff_t>(nLBlockX) * nBlockXSize
                      + (static_cast<GPtrDiff_t>(iDstY)
@@ -4800,6 +4795,7 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
     {
         GDALRasterIOExtraArg sExtraArg;
         INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+        CPL_IGNORE_RET_VAL(sExtraArg.pfnProgress); // to make cppcheck happy
 
         const GIntBig nTotalBlocks =
             static_cast<GIntBig>(nBandCount) *
@@ -4886,6 +4882,7 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
     {
         GDALRasterIOExtraArg sExtraArg;
         INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+        CPL_IGNORE_RET_VAL(sExtraArg.pfnProgress); // to make cppcheck happy
 
         const GIntBig nTotalBlocks =
             static_cast<GIntBig>(DIV_ROUND_UP(nYSize, nSwathLines)) *
