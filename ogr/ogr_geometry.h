@@ -2354,7 +2354,7 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     OGRGeometry **papoGeoms = nullptr;
 
     std::string exportToWktInternal(const OGRWktOptions& opts, OGRErr *err,
-        std::string exclude = std::string()) const;
+                                    const std::string& exclude = std::string()) const;
     static OGRGeometryCollection* TransferMembersAndDestroy(
         OGRGeometryCollection* poSrc,
         OGRGeometryCollection* poDst );
