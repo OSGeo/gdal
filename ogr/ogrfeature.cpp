@@ -5668,8 +5668,7 @@ OGRBoolean OGRFeature::Equal( const OGRFeature * poFeature ) const
                 }
                 else if( std::isnan(dfVal2) )
                 {
-                    if( !std::isnan(dfVal1) )
-                        return FALSE;
+                    return FALSE;
                 }
                 else if ( dfVal1 != dfVal2 )
                 {
@@ -5738,8 +5737,7 @@ OGRBoolean OGRFeature::Equal( const OGRFeature * poFeature ) const
                     }
                     else if( std::isnan(dfVal2) )
                     {
-                        if( !std::isnan(dfVal1) )
-                            return FALSE;
+                        return FALSE;
                     }
                     else if ( dfVal1 != dfVal2 )
                     {
