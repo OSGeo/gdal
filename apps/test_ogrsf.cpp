@@ -404,36 +404,51 @@ static int TestDataset( GDALDriver** ppoDriver )
     if ( !poDriver->GetMetadataItem( GDAL_DCAP_VECTOR ))
     {
         printf("FAILURE: Driver does not advertize GDAL_DCAP_VECTOR!\n" );
-        GDALClose(poDS);
-        return FALSE;
+        bRet = false;
     }
 
     // Test consistency of datasource capabilities and driver metadata
     if ( poDS->TestCapability(ODsCCreateLayer) && !poDriver->GetMetadataItem( GDAL_DCAP_CREATE_LAYER ) )
     {
         printf("FAILURE: Dataset advertizes ODsCCreateLayer capability but driver metadata does not advertize GDAL_DCAP_CREATE_LAYER!\n" );
-        GDALClose(poDS);
-        return FALSE;
+        bRet = false;
     }
-    if ( !bReadOnly && poDriver->GetMetadataItem( GDAL_DCAP_CREATE_LAYER ) && !poDS->TestCapability(ODsCCreateLayer) )
+    if ( !bReadOnly
+         && poDriver->GetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS )
+         && poDriver->GetMetadataItem( GDAL_DCAP_CREATE_LAYER )
+         && !poDS->TestCapability(ODsCCreateLayer) )
     {
-        printf("FAILURE: Driver advertizes GDAL_DCAP_CREATE_LAYER capability but dataset does not advertize ODsCCreateLayer!\n" );
-        GDALClose(poDS);
-        return FALSE;
+        printf("FAILURE: Driver advertizes GDAL_DCAP_CREATE_LAYER and GDAL_DCAP_MULTIPLE_VECTOR_LAYERS capability but dataset does not advertize ODsCCreateLayer!\n" );
+        bRet = false;
     }
 
     if ( poDS->TestCapability(ODsCDeleteLayer) && !poDriver->GetMetadataItem( GDAL_DCAP_DELETE_LAYER ) )
     {
         printf("FAILURE: Dataset advertizes ODsCDeleteLayer capability but driver metadata does not advertize GDAL_DCAP_DELETE_LAYER!\n" );
-        GDALClose(poDS);
-        return FALSE;
+        bRet = false;
     }
     if ( !bReadOnly && poDriver->GetMetadataItem( GDAL_DCAP_DELETE_LAYER ) && !poDS->TestCapability(ODsCDeleteLayer) )
     {
         printf("FAILURE: Driver advertizes GDAL_DCAP_DELETE_LAYER capability but dataset does not advertize ODsCDeleteLayer!\n" );
-        GDALClose(poDS);
-        return FALSE;
+        bRet = false;
     }
+
+    if ( poDriver->GetMetadataItem( GDAL_DCAP_CREATE_FIELD ) && !poDriver->GetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES ) )
+    {
+        bRet = FALSE;
+        printf("FAILURE: Driver metadata advertizes GDAL_DCAP_CREATE_FIELD but does not include GDAL_DMD_CREATIONFIELDDATATYPES!\n" );
+    }
+    if ( poDriver->GetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES ) && !poDriver->GetMetadataItem( GDAL_DCAP_CREATE_FIELD ) )
+    {
+        bRet = FALSE;
+        printf("FAILURE: Driver metadata includes GDAL_DMD_CREATIONFIELDDATATYPES but does not advertize GDAL_DCAP_CREATE_FIELD!\n" );
+    }
+    if ( poDriver->GetMetadataItem( GDAL_DMD_CREATIONFIELDDATASUBTYPES ) && !poDriver->GetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES ) )
+    {
+        bRet = FALSE;
+        printf("FAILURE: Driver metadata includes GDAL_DMD_CREATIONFIELDDATASUBTYPES but does not include GDAL_DMD_CREATIONFIELDDATATYPES!\n" );
+    }
+
 
 /* -------------------------------------------------------------------- */
 /*      Process optional SQL request.                                   */
@@ -1201,26 +1216,17 @@ static int TestBasic( GDALDataset* poDS, OGRLayer *poLayer )
             printf("FAILURE: Layer advertizes OLCZGeometries capability but driver metadata does not advertize GDAL_DCAP_Z_GEOMETRIES!\n" );
         }
 
+        // note -- it's not safe to test the reverse case for these next two situations as some drivers only support
+        // CreateField() on newly created layers before the first feature is written
         if ( poLayer->TestCapability(OLCCreateField) && !poDriver->GetMetadataItem( GDAL_DCAP_CREATE_FIELD ) )
         {
             bRet = FALSE;
             printf("FAILURE: Layer advertizes OLCCreateField capability but driver metadata does not advertize GDAL_DCAP_CREATE_FIELD!\n" );
         }
-        if ( bLayerShouldHaveEditCapabilities && poDriver->GetMetadataItem( GDAL_DCAP_CREATE_FIELD ) && !poLayer->TestCapability(OLCCreateField) )
-        {
-            bRet = FALSE;
-            printf("FAILURE: Driver metadata advertizes GDAL_DCAP_CREATE_FIELD but layer capability does not advertize OLCCreateField!\n" );
-        }
-
         if ( poLayer->TestCapability(OLCCreateField) && !poDriver->GetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES ) )
         {
             bRet = FALSE;
             printf("FAILURE: Layer advertizes OLCCreateField capability but driver metadata does not include GDAL_DMD_CREATIONFIELDDATATYPES!\n" );
-        }
-        if ( bLayerShouldHaveEditCapabilities && poDriver->GetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES ) && !poLayer->TestCapability(OLCCreateField) )
-        {
-            bRet = FALSE;
-            printf("FAILURE: Driver metadata advertizes GDAL_DMD_CREATIONFIELDDATATYPES but layer capability does not advertize OLCCreateField!\n" );
         }
 
         if ( poLayer->TestCapability(OLCDeleteField) && !poDriver->GetMetadataItem( GDAL_DCAP_DELETE_FIELD ) )
