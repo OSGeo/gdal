@@ -334,6 +334,7 @@ FITSLayer::FITSLayer(FITSDataset* poDS, int hduNum, const char* pszExtName):
                 OGRFieldDefn oFieldDefn(
                     (aosNames[i] + CPLSPrintf("_bit%d", j)).c_str(),
                     OFTInteger);
+                // cppcheck-suppress danglingTemporaryLifetime
                 m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
 
                 ColDesc oColBit;
