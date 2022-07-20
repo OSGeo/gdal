@@ -91,7 +91,7 @@ struct huge_href
     CPLString           *gmlText;
     const CPLXMLNode    *psParent;
     const CPLXMLNode    *psNode;
-    bool                bIsDirectedEdge;
+    // bool                bIsDirectedEdge;
     char                cOrientation;
     struct huge_href    *pNext;
 };
@@ -109,6 +109,7 @@ struct huge_parent
 {
     CPLXMLNode          *psParent;
     struct huge_child   *pFirst;
+    // cppcheck-suppress unusedStructMember
     struct huge_child   *pLast;
     struct huge_parent  *pNext;
 };
@@ -1079,7 +1080,7 @@ static void gmlHugeAddPendingToHelper( huge_helper *helper,
                                        CPLString *gmlId,
                                        const CPLXMLNode *psParent,
                                        const CPLXMLNode *psNode,
-                                       bool bIsDirectedEdge,
+                                       // bool bIsDirectedEdge,
                                        char cOrientation )
 {
     // Inserting an item into the linked list.
@@ -1091,8 +1092,8 @@ static void gmlHugeAddPendingToHelper( huge_helper *helper,
         if( EQUAL(pItem->gmlId->c_str(), gmlId->c_str()) &&
             pItem->psParent == psParent  &&
             pItem->psNode == psNode &&
-            pItem->cOrientation == cOrientation &&
-            pItem->bIsDirectedEdge == bIsDirectedEdge )
+            pItem->cOrientation == cOrientation /* &&
+            pItem->bIsDirectedEdge == bIsDirectedEdge */ )
         {
             delete gmlId;
             return;
@@ -1105,7 +1106,7 @@ static void gmlHugeAddPendingToHelper( huge_helper *helper,
     pItem->gmlText = nullptr;
     pItem->psParent = psParent;
     pItem->psNode = psNode;
-    pItem->bIsDirectedEdge = bIsDirectedEdge;
+    // pItem->bIsDirectedEdge = bIsDirectedEdge;
     pItem->cOrientation = cOrientation;
     pItem->pNext = nullptr;
 
@@ -1437,7 +1438,8 @@ static void gmlHugeFileCheckPendingHrefs( huge_helper *helper,
                             CPLString *gmlId =
                                 new CPLString(pszHref->pszValue + 1);
                             gmlHugeAddPendingToHelper(helper, gmlId, psParent,
-                                                      psNode, true,
+                                                      psNode,
+                                                      // /*bDirectedEdge=*/ true,
                                                       cOrientation);
                         }
                     }
