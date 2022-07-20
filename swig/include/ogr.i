@@ -495,6 +495,7 @@ typedef void retGetPoints;
 %constant char *ODsCTransactions       = "Transactions";
 %constant char *ODsCEmulatedTransactions = "EmulatedTransactions";
 %constant char *ODsCMeasuredGeometries = "MeasuredGeometries";
+%constant char *ODsCZGeometries        = "ZGeometries";
 %constant char *ODsCRandomLayerRead    = "RandomLayerRead";
 /* Note the unfortunate trailing space at the end of the string */
 %constant char *ODsCRandomLayerWrite   = "RandomLayerWrite ";
@@ -545,6 +546,7 @@ typedef int OGRErr;
 #define ODsCTransactions       "Transactions"
 #define ODsCEmulatedTransactions "EmulatedTransactions"
 #define ODsCMeasuredGeometries  "MeasuredGeometries";
+#define ODsCZGeometries        "ZGeometries";
 #define ODsCRandomLayerRead    "RandomLayerRead";
 /* Note the unfortunate trailing space at the end of the string */
 #define ODsCRandomLayerWrite   "RandomLayerWrite ";

@@ -128,6 +128,8 @@ class OGRFeatherDataset final: public OGRArrowDataset
 {
 public:
     explicit OGRFeatherDataset(const std::shared_ptr<arrow::MemoryPool>& poMemoryPool);
+
+    int TestCapability( const char * ) override;
 };
 
 /************************************************************************/

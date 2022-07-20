@@ -324,6 +324,8 @@ int OGRFlatGeobufDataset::TestCapability(const char *pszCap)
         return true;
     else if (EQUAL(pszCap, ODsCMeasuredGeometries))
         return true;
+    else if (EQUAL(pszCap, ODsCZGeometries))
+        return true;
     else if( EQUAL(pszCap, ODsCRandomLayerWrite) )
         return m_bUpdate;
     else

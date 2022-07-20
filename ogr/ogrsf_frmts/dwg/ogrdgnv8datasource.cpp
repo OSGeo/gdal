@@ -176,6 +176,8 @@ int OGRDGNV8DataSource::TestCapability( const char * pszCap )
         return m_bUpdate;
     else if( EQUAL(pszCap,ODsCCurveGeometries) )
         return TRUE;
+    else if( EQUAL(pszCap,ODsCZGeometries) )
+        return TRUE;
 
     return FALSE;
 }

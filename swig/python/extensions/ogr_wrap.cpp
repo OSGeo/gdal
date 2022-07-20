@@ -37432,6 +37432,7 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "ODsCTransactions",SWIG_FromCharPtr("Transactions"));
   SWIG_Python_SetConstant(d, "ODsCEmulatedTransactions",SWIG_FromCharPtr("EmulatedTransactions"));
   SWIG_Python_SetConstant(d, "ODsCMeasuredGeometries",SWIG_FromCharPtr("MeasuredGeometries"));
+  SWIG_Python_SetConstant(d, "ODsCZGeometries",SWIG_FromCharPtr("ZGeometries"));
   SWIG_Python_SetConstant(d, "ODsCRandomLayerRead",SWIG_FromCharPtr("RandomLayerRead"));
   SWIG_Python_SetConstant(d, "ODsCRandomLayerWrite",SWIG_FromCharPtr("RandomLayerWrite "));
   SWIG_Python_SetConstant(d, "ODsCAddFieldDomain",SWIG_FromCharPtr("AddFieldDomain"));

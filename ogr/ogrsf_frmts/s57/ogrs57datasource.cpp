@@ -144,10 +144,13 @@ const char *OGRS57DataSource::GetOption( const char * pszOption )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRS57DataSource::TestCapability( const char * )
+int OGRS57DataSource::TestCapability( const char * pszCap )
 
 {
-    return FALSE;
+    if( EQUAL(pszCap,ODsCZGeometries) )
+        return true;
+
+    return false;
 }
 
 /************************************************************************/

@@ -143,6 +143,10 @@ int OGRNGWDataset::TestCapability( const char *pszCap )
     {
         return stPermissions.bDataCanRead;
     }
+    else if( EQUAL(pszCap, ODsCZGeometries) )
+    {
+        return TRUE;
+    }
     else
     {
         return FALSE;

@@ -526,6 +526,8 @@ int OGRGeoconceptDataSource::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
         return TRUE;
+    else if (EQUAL(pszCap, ODsCZGeometries))
+        return TRUE;
 
     return FALSE;
 }

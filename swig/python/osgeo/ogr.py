@@ -375,6 +375,8 @@ ODsCEmulatedTransactions = _ogr.ODsCEmulatedTransactions
 
 ODsCMeasuredGeometries = _ogr.ODsCMeasuredGeometries
 
+ODsCZGeometries = _ogr.ODsCZGeometries
+
 ODsCRandomLayerRead = _ogr.ODsCRandomLayerRead
 
 ODsCRandomLayerWrite = _ogr.ODsCRandomLayerWrite

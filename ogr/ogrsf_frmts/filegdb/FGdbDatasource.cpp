@@ -573,6 +573,10 @@ int FGdbDataSource::TestCapability( const char * pszCap )
              EQUAL(pszCap, ODsCDeleteFieldDomain) ||
              EQUAL(pszCap, ODsCUpdateFieldDomain) )
         return m_bUpdate;
+    else if( EQUAL(pszCap,ODsCMeasuredGeometries) )
+        return TRUE;
+    else if( EQUAL(pszCap,ODsCZGeometries) )
+        return TRUE;
 
     return FALSE;
 }
