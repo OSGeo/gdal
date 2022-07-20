@@ -59,7 +59,7 @@ public:
 PThreadMutex::PThreadMutex()
 
 {
-    hMutex = (pthread_mutex_t *) malloc(sizeof(pthread_mutex_t));
+    hMutex = static_cast<pthread_mutex_t *>(malloc(sizeof(pthread_mutex_t)));
 
 #if defined(PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP)
     pthread_mutex_t tmp_mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
