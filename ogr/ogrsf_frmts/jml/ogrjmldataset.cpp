@@ -67,8 +67,10 @@ int OGRJMLDataset::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
         return bWriteMode && poLayer == nullptr;
+    if( EQUAL(pszCap,ODsCZGeometries) )
+        return true;
 
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/

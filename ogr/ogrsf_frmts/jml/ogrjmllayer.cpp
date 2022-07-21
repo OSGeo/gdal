@@ -845,7 +845,7 @@ int OGRJMLLayer::TestCapability( const char * pszCap )
 {
     if ( EQUAL(pszCap, OLCStringsAsUTF8) )
         return true;
-    else if ( EQUAL(pszCap, OLCStringsAsUTF8) )
+    else if ( EQUAL(pszCap, OLCZGeometries) )
         return true;
 
     return false;
