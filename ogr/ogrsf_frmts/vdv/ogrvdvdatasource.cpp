@@ -595,6 +595,22 @@ OGRLayer* OGRIDFDataSource::GetLayer( int iLayer )
 }
 
 /************************************************************************/
+/*                              TestCapability()                        */
+/************************************************************************/
+
+int OGRIDFDataSource::TestCapability( const char* pszCap )
+{
+    if( EQUAL(pszCap,ODsCMeasuredGeometries) )
+        return true;
+    else if( EQUAL(pszCap,ODsCCurveGeometries) )
+        return true;
+    else if( EQUAL(pszCap,ODsCZGeometries) )
+        return true;
+
+    return false;
+}
+
+/************************************************************************/
 /*                           OGRVDVDataSource()                         */
 /************************************************************************/
 
@@ -2009,6 +2025,8 @@ void RegisterOGRVDV()
     poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_DELETE_FIELD, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_REORDER_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CURVE_GEOMETRIES, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_ALTER_FIELD_DEFN_FLAGS, "Name Type WidthPrecision" );
 
