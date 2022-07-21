@@ -785,7 +785,7 @@ def test_transformer_dem_overrride_srs():
     tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_HEIGHT_SCALE=2', 'RPC_DEM=/vsimem/dem.tif', 'RPC_DEM_SRS=EPSG:32652+5773'])
 
     (success, pnt) = tr.TransformPoint(0, 0.5, 0.5, 0)
-    assert success and pnt[0] == pytest.approx(125.64813723085801, abs=0.000001) and pnt[1] == pytest.approx(39.869345977927146, abs=0.000001), \
+    assert success and pnt[0] == pytest.approx(125.64813723085801, abs=1e-4) and pnt[1] == pytest.approx(39.869345977927146, abs=1e-4), \
         'got wrong forward transform result.'
 
     (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
