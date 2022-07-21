@@ -1903,9 +1903,9 @@ PDS4Dataset* PDS4Dataset::OpenInternal(GDALOpenInfo* poOpenInfo)
             int nPixelOffset = 0;
             int nLineOffset = 0;
             vsi_l_offset nBandOffset = 0;
+            int nCountPreviousDim = 1;
             for( int i = nDIM - 1; i >= 0; i-- )
             {
-                int nCountPreviousDim = i+1 < nDIM ? anElements[i+1] : 1;
                 if( szOrder[i] == 'S' )
                 {
                     if( nSpacing > static_cast<vsi_l_offset>(
@@ -1939,6 +1939,7 @@ PDS4Dataset* PDS4Dataset::OpenInternal(GDALOpenInfo* poOpenInfo)
                     nBandOffset = nSpacing * nCountPreviousDim;
                     nSpacing = nBandOffset;
                 }
+                nCountPreviousDim = anElements[i];
             }
 
             // Retrieve no data value

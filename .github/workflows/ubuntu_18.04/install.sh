@@ -42,20 +42,15 @@ sudo sh -c "apt-get remove -y libproj-dev"
 export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
 # Configure GDAL
-./autogen.sh
-CC='ccache gcc' CXX='ccache g++' LDFLAGS='-lstdc++' ./configure --prefix=/usr --without-libtool --with-jpeg12 --with-python=/usr/bin/python3 --with-poppler --with-spatialite --with-mysql --with-liblzma --with-webp --with-epsilon --with-proj=/usr/local --with-poppler --with-hdf5 --with-sosi --with-mysql --with-rasterlite2 --with-fgdb=/usr
-# --enable-debug --with-podofo
-
-make doxygen >docs_log.txt 2>&1
-if grep -i warning docs_log.txt | grep -v -e russian -e brazilian -e setlocale -e 'has become obsolete' -e 'To avoid this warning'; then echo 'Doxygen warnings found' && cat docs_log.txt && /bin/false; else echo 'No Doxygen warnings found'; fi
-make USER_DEFS=-Werror -j3
-(cd apps && make USER_DEFS=-Werror -j3 test_ogrsf)
+mkdir build
+cd build
+CFLAGS="-Werror -DPROJ_RENAME_SYMBOLS" CXXFLAGS="-Werror -DPROJ_RENAME_SYMBOLS" LDFLAGS='-lstdc++' cmake .. -DUSE_CCACHE=ON -DPROJ_ROOT=/usr/local -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DGDAL_USE_GEOTIFF_INTERNAL:BOOL=ON -DGDAL_USE_TIFF_INTERNAL:BOOL=ON
+make -j3
 sudo rm -f /usr/lib/libgdal.so*
 sudo make install
 sudo ldconfig
 sudo ln -s libgdal.so /usr/lib/libgdal.so.20
-
-(cd autotest/cpp && make -j3)
+cd ..
 
 ccache -s
 

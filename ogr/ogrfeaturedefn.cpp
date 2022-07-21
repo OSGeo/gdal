@@ -1543,7 +1543,7 @@ std::vector<int> OGRFeatureDefn::ComputeMapForSetFrom( const OGRFeatureDefn* poS
     const int nFieldCount = GetFieldCount();
     for( int i = 0; i < nFieldCount; i++ )
     {
-#ifdef __MINGW64__
+#if defined(__MINGW64__) || (defined(__GNUC__) && __GNUC__ < 8)
         const OGRFieldDefn* poFldDefn = GetFieldDefn(i);
         if( poFldDefn == nullptr ) continue;
 #else
@@ -1564,7 +1564,7 @@ std::vector<int> OGRFeatureDefn::ComputeMapForSetFrom( const OGRFeatureDefn* poS
     aoMapSrcToTargetIdx.resize(nSrcFieldCount);
     for( int i = 0; i < nSrcFieldCount; i++ )
     {
-#ifdef __MINGW64__
+#if defined(__MINGW64__) || (defined(__GNUC__) && __GNUC__ < 8)
         const OGRFieldDefn* poSrcFldDefn = poSrcFDefn->GetFieldDefn(i);
         if( poSrcFldDefn == nullptr ) continue;
 #else
@@ -1580,7 +1580,7 @@ std::vector<int> OGRFeatureDefn::ComputeMapForSetFrom( const OGRFeatureDefn* poS
             {
                 for( int j = 0; j < nFieldCount; j++ )
                 {
-#ifdef __MINGW64__
+#if defined(__MINGW64__) || (defined(__GNUC__) && __GNUC__ < 8)
                     const OGRFieldDefn* poFldDefn = GetFieldDefn(j);
                     if( poFldDefn == nullptr ) continue;
 #else
