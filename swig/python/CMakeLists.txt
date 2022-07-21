@@ -35,7 +35,8 @@ if (SWIG_REGENERATE_PYTHON)
     ${CMAKE_CURRENT_BINARY_DIR}/osgeo
     OUTPUT
     ${GDAL_PYTHON_PYSOURCES}
-    ${GDAL_PYTHON_CSOURCES})
+    ${GDAL_PYTHON_CSOURCES}
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/modify_cpp_files.cmake)
 
   # gdal_array_wrap.cpp when NumPy exist
   if (Python_NumPy_FOUND)
@@ -48,7 +49,9 @@ if (SWIG_REGENERATE_PYTHON)
         -I${PROJECT_SOURCE_DIR}/swig/include/python/docs ${PY3ARG} -threads -relativeimport -outdir
         ${CMAKE_CURRENT_BINARY_DIR}/osgeo ${SWIG_DEFINES} -I${PROJECT_SOURCE_DIR}/gdal -c++ -python -o ${ARRAY_OUTPUT}
         ${ARRAY_INPUT}
-      DEPENDS ${ARRAY_INPUT} ${PROJECT_SOURCE_DIR}/swig/include/python/typemaps_python.i
+      DEPENDS ${ARRAY_INPUT}
+              ${PROJECT_SOURCE_DIR}/swig/include/python/typemaps_python.i
+              ${CMAKE_CURRENT_SOURCE_DIR}/modify_cpp_files.cmake
       COMMENT "Generate _gdal_array_wrap.so and gdal_array.py by SWiG command")
     list(APPEND GDAL_PYTHON_CSOURCES "${GDAL_PYTHON_CSOURCE_DIR}/gdal_array_wrap.cpp")
     list(APPEND GDAL_PYTHON_PYSOURCES "${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal_array.py")
@@ -66,6 +69,57 @@ if (SWIG_REGENERATE_PYTHON)
     COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/osgeo/__init__.py" "${CMAKE_CURRENT_BINARY_DIR}/osgeo"
     DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/osgeo/__init__.py")
   list(APPEND GDAL_PYTHON_PYSOURCES "${CMAKE_CURRENT_BINARY_DIR}/osgeo/__init__.py")
+
+  add_custom_command(
+    OUTPUT ${GDAL_PYTHON_CSOURCES}
+    APPEND
+    COMMAND ${CMAKE_COMMAND} ${WERROR_DEV_FLAG} -P ${CMAKE_CURRENT_SOURCE_DIR}/modify_cpp_files.cmake)
+
+  if (Python_VERSION_MAJOR EQUAL 3 AND Python_EXECUTABLE)
+    file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/osgeo/" OSGEO_DIR)
+    add_custom_command(
+      OUTPUT ${GDAL_PYTHON_PYSOURCES}
+      APPEND
+      COMMAND
+        ${Python_EXECUTABLE} -m lib2to3 --fix=import --fix=next --fix=renames --fix=unicode --fix=ws_comma --fix=xrange
+        --write --write-unchanged-files --nobackups  ${OSGEO_DIR}__init__.py
+        ${OSGEO_DIR}gdal.py ${OSGEO_DIR}gdalconst.py ${OSGEO_DIR}gdalnumeric.py
+        ${OSGEO_DIR}ogr.py ${OSGEO_DIR}osr.py ${OSGEO_DIR}gnm.py ${OSGEO_DIR}gdal_array.py)
+  endif()
+
+  option(SWIG_COPY_REGENERATED_PYTHON_IN_SOURCE_DIR "Copy SWIG regenerated Python bindings into source directory." ON)
+  if(SWIG_COPY_REGENERATED_PYTHON_IN_SOURCE_DIR)
+      file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/extensions" GDAL_PYTHON_CSOURCE_SRC_DIR_NATIVE_PATH)
+      file(TO_NATIVE_PATH "${GDAL_PYTHON_CSOURCE_DIR}/" GDAL_PYTHON_CSOURCE_DIR_NATIVE_PATH)
+      add_custom_command(
+        OUTPUT ${GDAL_PYTHON_CSOURCES}
+        APPEND
+        COMMAND
+          ${CMAKE_COMMAND} -E copy_if_different
+          ${GDAL_PYTHON_CSOURCE_DIR_NATIVE_PATH}/gdal_wrap.cpp
+          ${GDAL_PYTHON_CSOURCE_DIR_NATIVE_PATH}/gdalconst_wrap.c
+          ${GDAL_PYTHON_CSOURCE_DIR_NATIVE_PATH}/gnm_wrap.cpp
+          ${GDAL_PYTHON_CSOURCE_DIR_NATIVE_PATH}/ogr_wrap.cpp
+          ${GDAL_PYTHON_CSOURCE_DIR_NATIVE_PATH}/osr_wrap.cpp
+          ${GDAL_PYTHON_CSOURCE_DIR_NATIVE_PATH}/gdal_array_wrap.cpp
+          ${GDAL_PYTHON_CSOURCE_SRC_DIR_NATIVE_PATH})
+
+      file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/osgeo" GDAL_PYTHON_PYSOURCE_SRC_DIR_NATIVE_PATH)
+      file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/osgeo" GDAL_PYTHON_PYSOURCE_DIR_NATIVE_PATH)
+      add_custom_command(
+        OUTPUT ${GDAL_PYTHON_PYSOURCES}
+        APPEND
+        COMMAND
+          ${CMAKE_COMMAND} -E copy_if_different
+          ${GDAL_PYTHON_PYSOURCE_DIR_NATIVE_PATH}/gdal.py
+          ${GDAL_PYTHON_PYSOURCE_DIR_NATIVE_PATH}/gdalconst.py
+          ${GDAL_PYTHON_PYSOURCE_DIR_NATIVE_PATH}/gnm.py
+          ${GDAL_PYTHON_PYSOURCE_DIR_NATIVE_PATH}/ogr.py
+          ${GDAL_PYTHON_PYSOURCE_DIR_NATIVE_PATH}/osr.py
+          ${GDAL_PYTHON_PYSOURCE_DIR_NATIVE_PATH}/gdal_array.py
+          ${GDAL_PYTHON_PYSOURCE_DIR_NATIVE_PATH}/gdalnumeric.py
+          ${GDAL_PYTHON_PYSOURCE_SRC_DIR_NATIVE_PATH})
+  endif()
 
 else ()
   set(GDAL_PYTHON_CSOURCES_SRC
