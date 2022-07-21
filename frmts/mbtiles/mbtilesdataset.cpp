@@ -3653,6 +3653,7 @@ MVT_MBTILES_COMMON_DSCO
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
 #ifdef HAVE_MVT_WRITE_SUPPORT
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
                                "Integer Integer64 Real String" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATASUBTYPES,
