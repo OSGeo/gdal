@@ -4886,8 +4886,20 @@ bool GTiffDataset::ReadStrile(int nBlockId,
                               GPtrDiff_t nBlockReqSize)
 {
 #ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
+    // Optimization by which we can save some libtiff buffer copy
     std::pair<vsi_l_offset, vsi_l_offset> oPair;
-    if( m_oCacheStrileToOffsetByteCount.tryGet(nBlockId, oPair) )
+    if(
+#if TIFFLIB_VERSION <= 20220520 && !defined(INTERNAL_LIBTIFF)
+        // There's a bug, up to libtiff 4.4.0, in TIFFReadFromUserBuffer()
+        // which clears the TIFF_CODERSETUP flag of tif->tif_flags, which
+        // causes the codec SetupDecode method to be called for each strile,
+        // whereas it should normally be called only for the first decoded one.
+        // For JPEG, that causes TIFFjpeg_read_header() to be called. Most
+        // of the time, that works. But for some files, at some point, the
+        // libjpeg machinery is not in the appropriate state for that.
+        m_nCompression != COMPRESSION_JPEG &&
+#endif
+        m_oCacheStrileToOffsetByteCount.tryGet(nBlockId, oPair) )
     {
         // For the mask, use the parent TIFF handle to get cached ranges
         auto th = TIFFClientdata(
@@ -4911,6 +4923,19 @@ bool GTiffDataset::ReadStrile(int nBlockId,
     else
         m_bHasUsedReadEncodedAPI = true;
 
+#if 0
+    // Can be useful to test TIFFReadFromUserBuffer() for local files
+    VSILFILE* fpTIF = VSI_TIFFGetVSILFile(TIFFClientdata( m_hTIFF ));
+    std::vector<GByte> tmp(TIFFGetStrileByteCount(m_hTIFF, nBlockId));
+    VSIFSeekL(fpTIF, TIFFGetStrileOffset(m_hTIFF, nBlockId), SEEK_SET);
+    VSIFReadL(&tmp[0], 1, TIFFGetStrileByteCount(m_hTIFF, nBlockId), fpTIF);
+    if( !TIFFReadFromUserBuffer( m_hTIFF, nBlockId,
+                                &tmp[0], tmp.size(),
+                                pOutputBuffer, nBlockReqSize ) )
+    {
+        return false;
+    }
+#else
     // Set to 1 to allow GTiffErrorHandler to implement limitation on error messages
     gnThreadLocalLibtiffError = 1;
     if( TIFFIsTiled( m_hTIFF ) )
@@ -4938,6 +4963,7 @@ bool GTiffDataset::ReadStrile(int nBlockId,
         }
     }
     gnThreadLocalLibtiffError = 0;
+#endif
     return true;
 }
 
