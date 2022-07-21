@@ -346,7 +346,7 @@ std::string OGROpenFileGDBLayer::GetLaunderedLayerName(const std::string& osName
 bool OGROpenFileGDBLayer::Create(const OGRSpatialReference* poSRS)
 {
     FileGDBTableGeometryType eTableGeomType = FGTGT_NONE;
-    const auto eFlattenType = wkbFlatten(m_eGeomType);
+    const auto eFlattenType = wkbFlatten(OGR_GT_GetLinear(m_eGeomType));
     if( eFlattenType == wkbNone )
         eTableGeomType = FGTGT_NONE;
     else if( eFlattenType == wkbPoint )
