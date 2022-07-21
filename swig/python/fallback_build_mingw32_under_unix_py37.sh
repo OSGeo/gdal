@@ -22,7 +22,7 @@ LINKFLAGS="-L../../build -lgdal -L${PYTHONHOME}/libs -l${PYTHONLIB}"
 CFLAGS="-O2 -D__MSVCRT_VERSION__=0x0601"
 
 # Run native python
-wine "$PYTHONHOME/python" setup.py build
+wine "$PYTHONHOME/python" setup_fallback_mingw.py build
 
 # Determine OUTDIR
 if test -d build/lib.win32-3.7; then
