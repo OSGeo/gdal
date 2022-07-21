@@ -70,10 +70,12 @@ if (SWIG_REGENERATE_PYTHON)
     DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/osgeo/__init__.py")
   list(APPEND GDAL_PYTHON_PYSOURCES "${CMAKE_CURRENT_BINARY_DIR}/osgeo/__init__.py")
 
-  add_custom_command(
-    OUTPUT ${GDAL_PYTHON_CSOURCES}
-    APPEND
-    COMMAND ${CMAKE_COMMAND} ${WERROR_DEV_FLAG} -P ${CMAKE_CURRENT_SOURCE_DIR}/modify_cpp_files.cmake)
+  foreach(_file IN ITEMS ${GDAL_PYTHON_CSOURCES})
+      add_custom_command(
+        OUTPUT ${_file}
+        APPEND
+        COMMAND ${CMAKE_COMMAND} ${WERROR_DEV_FLAG} "-DFILE=${_file}" -P ${CMAKE_CURRENT_SOURCE_DIR}/modify_cpp_files.cmake)
+  endforeach()
 
   if (Python_VERSION_MAJOR EQUAL 3 AND Python_EXECUTABLE)
     file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/osgeo/" OSGEO_DIR)
