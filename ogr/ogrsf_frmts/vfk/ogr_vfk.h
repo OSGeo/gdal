@@ -60,7 +60,7 @@ private:
     int                  m_iNextFeature;
 
     /* private methods */
-    OGRGeometry         *CreateGeometry(IVFKFeature *);
+    static OGRGeometry  *CreateGeometry(IVFKFeature *);
     OGRFeature          *GetFeature(IVFKFeature *);
 
 public:

@@ -651,7 +651,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
         return GetSpatialRefFromOldGetProjectionRef();
     }
 
-    char               *LaunderName( const char * );
+    static char        *LaunderName( const char * );
     int                 FetchSRSId( const OGRSpatialReference * poSRS );
     OGRSpatialReference*FetchSRS( int nSRID );
 

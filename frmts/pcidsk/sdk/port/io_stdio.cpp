@@ -107,7 +107,7 @@ uint64
 StdioIOInterface::Seek( void *io_handle, uint64 offset, int whence ) const
 
 {
-    FileInfo *fi = (FileInfo *) io_handle;
+    FileInfo *fi = static_cast<FileInfo *>(io_handle);
 
     // seeks that do nothing are still surprisingly expensive with MSVCRT.
     // try and short circuit if possible.
@@ -116,7 +116,7 @@ StdioIOInterface::Seek( void *io_handle, uint64 offset, int whence ) const
 
     uint64 result = fseek( fi->fp, offset, whence );
 
-    if( result == (uint64) -1 )
+    if( result == static_cast<uint64>(-1) )
         ThrowPCIDSKException( "Seek(" PCIDSK_FRMT_UINT64 ",%d): %s",
                               offset, whence,
                               LastError() );
@@ -140,7 +140,7 @@ StdioIOInterface::Seek( void *io_handle, uint64 offset, int whence ) const
 uint64 StdioIOInterface::Tell( void *io_handle ) const
 
 {
-    FileInfo *fi = (FileInfo *) io_handle;
+    FileInfo *fi = static_cast<FileInfo *>(io_handle);
 
     return ftell( fi->fp );
 }
@@ -153,7 +153,7 @@ uint64 StdioIOInterface::Read( void *buffer, uint64 size, uint64 nmemb,
                                void *io_handle ) const
 
 {
-    FileInfo *fi = (FileInfo *) io_handle;
+    FileInfo *fi = static_cast<FileInfo *>(io_handle);
 
     errno = 0;
 
@@ -191,7 +191,7 @@ uint64 StdioIOInterface::Write( const void *buffer, uint64 size, uint64 nmemb,
                                 void *io_handle ) const
 
 {
-    FileInfo *fi = (FileInfo *) io_handle;
+    FileInfo *fi = static_cast<FileInfo *>(io_handle);
 
     errno = 0;
 
@@ -215,7 +215,7 @@ uint64 StdioIOInterface::Write( const void *buffer, uint64 size, uint64 nmemb,
 int StdioIOInterface::Eof( void *io_handle ) const
 
 {
-    FileInfo *fi = (FileInfo *) io_handle;
+    FileInfo *fi = static_cast<FileInfo *>(io_handle);
     return feof( fi->fp );
 }
 
@@ -226,7 +226,7 @@ int StdioIOInterface::Eof( void *io_handle ) const
 int StdioIOInterface::Flush( void *io_handle ) const
 
 {
-    FileInfo *fi = (FileInfo *) io_handle;
+    FileInfo *fi = static_cast<FileInfo *>(io_handle);
     return fflush( fi->fp );
 }
 
@@ -237,7 +237,7 @@ int StdioIOInterface::Flush( void *io_handle ) const
 int StdioIOInterface::Close( void *io_handle ) const
 
 {
-    FileInfo *fi = (FileInfo *) io_handle;
+    FileInfo *fi = static_cast<FileInfo *>(io_handle);
     int result = fclose( fi->fp );
 
     delete fi;

@@ -2645,7 +2645,7 @@ public:
     {
         GUInt64 m_nStartIdx;
         GInt64  m_nIncr;
-        Range(GUInt64 nStartIdx = 0, GInt64 nIncr = 0):
+        explicit Range(GUInt64 nStartIdx = 0, GInt64 nIncr = 0):
             m_nStartIdx(nStartIdx), m_nIncr(nIncr) {}
     };
 

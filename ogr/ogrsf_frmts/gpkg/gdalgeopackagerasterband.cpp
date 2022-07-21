@@ -3165,8 +3165,6 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff
                 int nDstXSize = nBlockXSize;
                 int nDstYOffset = 0;
                 int nDstYSize = nBlockYSize;
-                int nSrcXOffset = 0;
-                int nSrcYOffset = 0;
                 // Composite block data into tile data
                 if( m_poTPD->m_nShiftXPixelsMod == 0 && m_poTPD->m_nShiftYPixelsMod == 0 )
                 {
@@ -3243,12 +3241,12 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff
                                         nRasterYSize - nBlockYSize) ?
                         (nRasterYSize - nBlockYOff * nBlockYSize): nBlockYSize;
 
+                    int nSrcXOffset = 0;
                     if( nCol == nColMin )
                     {
                         nDstXOffset = m_poTPD->m_nShiftXPixelsMod;
                         nDstXSize = std::min( nXValid,
                                     nBlockXSize - m_poTPD->m_nShiftXPixelsMod );
-                        nSrcXOffset = 0;
                     }
                     else
                     {
@@ -3262,12 +3260,13 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff
                             nDstXSize = 0;
                         nSrcXOffset = nBlockXSize - m_poTPD->m_nShiftXPixelsMod;
                     }
+
+                    int nSrcYOffset = 0;
                     if( nRow == nRowMin )
                     {
                         nDstYOffset = m_poTPD->m_nShiftYPixelsMod;
                         nDstYSize = std::min( nYValid,
                                     nBlockYSize - m_poTPD->m_nShiftYPixelsMod );
-                        nSrcYOffset = 0;
                     }
                     else
                     {

@@ -2476,7 +2476,7 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
     }
 
     const int nBufferDTSize = GDALGetDataTypeSizeBytes(eBufferDataType);
-    GDALDataset* poTileDS;
+    std::shared_ptr<GDALDataset> poTileDS;
     if( eRequestFormat == GDALDAASDataset::Format::RAW )
     {
         int nExpectedBytes = nGotHeight * nGotWidth * nBufferDTSize *
@@ -2500,7 +2500,7 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
 
         auto poMEMDS = MEMDataset::Create(
             "", nRequestWidth, nRequestHeight, 0, eBufferDataType, nullptr);
-        poTileDS = poMEMDS;
+        poTileDS.reset(poMEMDS);
         for( int i = 0; i < static_cast<int>(anRequestedBands.size()); i++ )
         {
             auto hBand = MEMCreateRasterBandEx(
@@ -2517,8 +2517,7 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
                                 psResult->pasMimePart[iDataPart].pabyData,
                                 psResult->pasMimePart[iDataPart].nDataLen,
                                 false ) );
-        poTileDS = reinterpret_cast<GDALDataset*>(
-                    GDALOpenEx(osTmpMemFile, GDAL_OF_RASTER | GDAL_OF_INTERNAL,
+        poTileDS.reset(GDALDataset::Open(osTmpMemFile, GDAL_OF_RASTER | GDAL_OF_INTERNAL,
                            nullptr, nullptr, nullptr));
         if( !poTileDS )
         {
@@ -2531,8 +2530,6 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
     }
 
     CPLErr eErr = CE_None;
-    std::shared_ptr<GDALDataset> ds =
-                std::shared_ptr<GDALDataset>(poTileDS);
     poTileDS->MarkSuppressOnClose();
 
     bool bExpectedImageCharacteristics =

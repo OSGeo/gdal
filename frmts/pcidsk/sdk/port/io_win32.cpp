@@ -146,7 +146,7 @@ Win32IOInterface::Seek( void *io_handle, uint64 offset, int whence ) const
     HTimer oTimer;
 #endif
 
-    FileInfo *fi = (FileInfo *) io_handle;
+    FileInfo *fi = static_cast<FileInfo *>(io_handle);
     uint32       dwMoveMethod, dwMoveHigh;
     uint32       nMoveLow;
     LARGE_INTEGER li;
@@ -217,7 +217,7 @@ Win32IOInterface::Seek( void *io_handle, uint64 offset, int whence ) const
 uint64 Win32IOInterface::Tell( void *io_handle ) const
 
 {
-    FileInfo *fi = (FileInfo *) io_handle;
+    FileInfo *fi = static_cast<FileInfo *>(io_handle);
 
     return fi->offset;
 }
@@ -234,7 +234,7 @@ uint64 Win32IOInterface::Read( void *buffer, uint64 size, uint64 nmemb,
     HTimer oTimer;
 #endif
 
-    FileInfo *fi = (FileInfo *) io_handle;
+    FileInfo *fi = static_cast<FileInfo *>(io_handle);
 
     errno = 0;
 
@@ -276,7 +276,7 @@ uint64 Win32IOInterface::Write( const void *buffer, uint64 size, uint64 nmemb,
     HTimer oTimer;
 #endif
 
-    FileInfo *fi = (FileInfo *) io_handle;
+    FileInfo *fi = static_cast<FileInfo *>(io_handle);
 
     errno = 0;
 
@@ -330,7 +330,7 @@ int Win32IOInterface::Eof( void *io_handle ) const
 int Win32IOInterface::Flush( void *io_handle ) const
 
 {
-    FileInfo *fi = (FileInfo *) io_handle;
+    FileInfo *fi = static_cast<FileInfo *>(io_handle);
 
     FlushFileBuffers( fi->hFile );
 
@@ -348,7 +348,7 @@ int Win32IOInterface::Close( void *io_handle ) const
     HTimer oTimer;
 #endif
 
-    FileInfo *fi = (FileInfo *) io_handle;
+    FileInfo *fi = static_cast<FileInfo *>(io_handle);
 
     int result = CloseHandle( fi->hFile ) ? 0 : -1;
     delete fi;

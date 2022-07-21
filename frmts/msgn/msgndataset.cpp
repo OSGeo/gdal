@@ -492,7 +492,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
     unsigned int band_count = 1;
     unsigned int missing_band_count = 0;
     const unsigned char* bands = poDS->msg_reader_core->get_band_map();
-    unsigned char band_map[MSG_NUM_CHANNELS+1];   // map GDAL band numbers to MSG channels
+    unsigned char band_map[MSG_NUM_CHANNELS+1] = {0};   // map GDAL band numbers to MSG channels
     for (i=0; i < MSG_NUM_CHANNELS; i++) {
         if (bands[i]) {
             bool ok_to_add = false;

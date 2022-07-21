@@ -39,6 +39,7 @@
 #include <cstring>
 #include <ctime>
 #include <algorithm>
+#include <limits>
 #include <map>
 #include <memory>
 #include <set>
@@ -2870,7 +2871,7 @@ int OGROSMDataSource::Open( const char * pszFilename,
         "MAX_TMPFILE_SIZE", CPLGetConfigOption("OSM_MAX_TMPFILE_SIZE", "100")));
     GIntBig nSize =
         static_cast<GIntBig>(m_nMaxSizeForInMemoryDBInMB) * 1024 * 1024;
-    if( nSize < 0 || (GIntBig)(size_t)nSize != nSize )
+    if( nSize < 0 || static_cast<GUIntBig>(nSize) > std::numeric_limits<size_t>::max() / 2 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Invalid value for OSM_MAX_TMPFILE_SIZE. Using 100 instead." );

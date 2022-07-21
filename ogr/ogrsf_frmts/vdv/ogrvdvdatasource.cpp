@@ -241,7 +241,7 @@ void OGRIDFDataSource::Parse()
         double x;
         double y;
         double z;
-        Point(double xIn = 0, double yIn = 0, double zIn = 0):
+        explicit Point(double xIn = 0, double yIn = 0, double zIn = 0):
             x(xIn), y(yIn), z(zIn) {}
     };
     std::map<GIntBig, Point > oMapNode; // map from NODE_ID to Point

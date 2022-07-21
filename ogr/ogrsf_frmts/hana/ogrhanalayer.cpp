@@ -706,6 +706,7 @@ OGRErr OGRHanaLayer::InitFeatureDefinition(
                 OGRSpatialReference* srs =
                     dataSource_->GetSrsById(geometryColumnDesc.srid);
                 geomFieldDefn->SetSpatialRef(srs);
+                srs->Release();
             }
             geomColumns_.push_back(geometryColumnDesc);
             featureDefn_->AddGeomFieldDefn(std::move(geomFieldDefn));

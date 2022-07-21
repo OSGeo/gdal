@@ -37,6 +37,7 @@
 #include <cstring>
 
 #include <algorithm>
+#include <limits>
 #include <map>
 #include <set>
 #include <string>
@@ -1578,8 +1579,7 @@ CPLErr VRTPansharpenedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             = static_cast<GUIntBig>( nXSize ) * nYSizeToCache * nDataTypeSize
             * psOptions->nOutPansharpenedBands;
         // Check the we don't overflow (for 32 bit platforms)
-        if( static_cast<GUIntBig>( static_cast<size_t>( nBufferSize ) )
-            != nBufferSize )
+        if( nBufferSize > std::numeric_limits<size_t>::max() / 2 )
         {
             CPLError(CE_Failure, CPLE_OutOfMemory,
                  "Out of memory error while allocating working buffers");

@@ -954,7 +954,7 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
         if( poDS != nullptr )
         {
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            poLayer = LOG_ACTION(poDS->CreateLayer(CPLGetFilename(osFilename), nullptr, eGeomType));
+            LOG_ACTION(poDS->CreateLayer(CPLGetFilename(osFilename), nullptr, eGeomType));
             CPLPopErrorHandler();
             LOG_ACTION(GDALClose(poDS));
 

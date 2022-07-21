@@ -39,6 +39,7 @@
 #include "gmlreaderp.h"
 
 #include <algorithm>
+#include <limits>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -91,7 +92,7 @@ struct huge_href
     CPLString           *gmlText;
     const CPLXMLNode    *psParent;
     const CPLXMLNode    *psNode;
-    bool                bIsDirectedEdge;
+    // bool                bIsDirectedEdge;
     char                cOrientation;
     struct huge_href    *pNext;
 };
@@ -109,6 +110,7 @@ struct huge_parent
 {
     CPLXMLNode          *psParent;
     struct huge_child   *pFirst;
+    // cppcheck-suppress unusedStructMember
     struct huge_child   *pLast;
     struct huge_parent  *pNext;
 };
@@ -413,39 +415,22 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
     {
         const char *pszGmlId = nullptr;
         const char *pszGmlString = nullptr;
-        bool bIsGmlStringNull = false;
         const char *pszFromId = nullptr;
-        bool bIsFromIdNull = false;
-        double xFrom = 0.0;
-        bool bIsXFromNull = false;
-        double yFrom = 0.0;
-        bool bIsYFromNull = false;
-        double zFrom = 0.0;
-        bool bIsZFromNull = false;
-        // const char *pszNodeFromId = NULL;
-        bool bIsNodeFromIdNull = false;
-        double xNodeFrom = 0.0;
-        bool bIsXNodeFromNull = false;
-        double yNodeFrom = 0.0;
-        bool bIsYNodeFromNull = false;
-        double zNodeFrom = 0.0;
-        bool bIsZNodeFromNull = false;
+        double xFrom = std::numeric_limits<double>::quiet_NaN();
+        double yFrom = std::numeric_limits<double>::quiet_NaN();
+        double zFrom = std::numeric_limits<double>::quiet_NaN();
+        const char *pszNodeFromId = nullptr;
+        double xNodeFrom = std::numeric_limits<double>::quiet_NaN();
+        double yNodeFrom = std::numeric_limits<double>::quiet_NaN();
+        double zNodeFrom = std::numeric_limits<double>::quiet_NaN();
         const char *pszToId = nullptr;
-        bool bIsToIdNull = false;
-        double xTo = 0.0;
-        bool bIsXToNull = false;
-        double yTo = 0.0;
-        bool bIsYToNull = false;
-        double zTo = 0.0;
-        bool bIsZToNull = false;
-        // const char *pszNodeToId = NULL;
-        bool bIsNodeToIdNull = false;
-        double xNodeTo = 0.0;
-        bool bIsXNodeToNull = false;
-        double yNodeTo = 0.0;
-        bool bIsYNodeToNull = false;
-        double zNodeTo = 0.0;
-        bool bIsZNodeToNull = false;
+        double xTo = std::numeric_limits<double>::quiet_NaN();
+        double yTo = std::numeric_limits<double>::quiet_NaN();
+        double zTo = std::numeric_limits<double>::quiet_NaN();
+        const char *pszNodeToId = nullptr;
+        double xNodeTo = std::numeric_limits<double>::quiet_NaN();
+        double yNodeTo = std::numeric_limits<double>::quiet_NaN();
+        double zNodeTo = std::numeric_limits<double>::quiet_NaN();
 
         const int rc2 = sqlite3_step(hQueryStmt);
         if( rc2 == SQLITE_DONE )
@@ -456,169 +441,80 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
             bError = false;
             pszGmlId = reinterpret_cast<const char *>(
                 sqlite3_column_text(hQueryStmt, 0));
-            if( sqlite3_column_type(hQueryStmt, 1) == SQLITE_NULL )
-            {
-                bIsGmlStringNull = true;
-            }
-            else
+            if( sqlite3_column_type(hQueryStmt, 1) != SQLITE_NULL )
             {
                 pszGmlString = static_cast<const char *>(
                     sqlite3_column_blob(hQueryStmt, 1));
-                bIsGmlStringNull = false;
             }
-            if( sqlite3_column_type(hQueryStmt, 2) == SQLITE_NULL )
-            {
-                bIsFromIdNull = true;
-            }
-            else
+            if( sqlite3_column_type(hQueryStmt, 2) != SQLITE_NULL )
             {
                 pszFromId = reinterpret_cast<const char *>(
                     sqlite3_column_text(hQueryStmt, 2));
-                bIsFromIdNull = false;
             }
-            if( sqlite3_column_type(hQueryStmt, 3) == SQLITE_NULL )
-            {
-                bIsXFromNull = true;
-            }
-            else
+            if( sqlite3_column_type(hQueryStmt, 3) != SQLITE_NULL )
             {
                 xFrom = sqlite3_column_double(hQueryStmt, 3);
-                bIsXFromNull = false;
             }
-            if( sqlite3_column_type(hQueryStmt, 4) == SQLITE_NULL )
-            {
-                bIsYFromNull = true;
-            }
-            else
+            if( sqlite3_column_type(hQueryStmt, 4) != SQLITE_NULL )
             {
                 yFrom = sqlite3_column_double(hQueryStmt, 4);
-                bIsYFromNull = false;
             }
-            if( sqlite3_column_type(hQueryStmt, 5) == SQLITE_NULL )
-            {
-                bIsZFromNull = true;
-            }
-            else
+            if( sqlite3_column_type(hQueryStmt, 5) != SQLITE_NULL )
             {
                 zFrom = sqlite3_column_double(hQueryStmt, 5);
-                bIsZFromNull = false;
             }
-            if( sqlite3_column_type(hQueryStmt, 6) == SQLITE_NULL )
+            if( sqlite3_column_type(hQueryStmt, 6) != SQLITE_NULL )
             {
-                bIsNodeFromIdNull = true;
+                pszNodeFromId = reinterpret_cast<const char *>( sqlite3_column_text(hQueryStmt, 6) );
             }
-            else
-            {
-                // TODO: Can sqlite3_column_text be removed?
-                // pszNodeFromId = (const char *)
-                sqlite3_column_text(hQueryStmt, 6);
-                bIsNodeFromIdNull = false;
-            }
-            if( sqlite3_column_type(hQueryStmt, 7) == SQLITE_NULL )
-            {
-                bIsXNodeFromNull = true;
-            }
-            else
+            if( sqlite3_column_type(hQueryStmt, 7) != SQLITE_NULL )
             {
                 xNodeFrom = sqlite3_column_double(hQueryStmt, 7);
-                bIsXNodeFromNull = false;
             }
-            if( sqlite3_column_type(hQueryStmt, 8) == SQLITE_NULL )
-            {
-                bIsYNodeFromNull = true;
-            }
-            else
+            if( sqlite3_column_type(hQueryStmt, 8) != SQLITE_NULL )
             {
                 yNodeFrom = sqlite3_column_double(hQueryStmt, 8);
-                bIsYNodeFromNull = false;
             }
-            if( sqlite3_column_type(hQueryStmt, 9) == SQLITE_NULL )
-            {
-                bIsZNodeFromNull = true;
-            }
-            else
+            if( sqlite3_column_type(hQueryStmt, 9) != SQLITE_NULL )
             {
                 zNodeFrom = sqlite3_column_double(hQueryStmt, 9);
-                bIsZNodeFromNull = false;
             }
-            if( sqlite3_column_type(hQueryStmt, 10) == SQLITE_NULL )
-            {
-                bIsToIdNull = true;
-            }
-            else
+            if( sqlite3_column_type(hQueryStmt, 10) != SQLITE_NULL )
             {
                 pszToId = reinterpret_cast<const char *>(
                     sqlite3_column_text(hQueryStmt, 10));
-                bIsToIdNull = false;
             }
-            if( sqlite3_column_type(hQueryStmt, 11) == SQLITE_NULL )
-            {
-                bIsXToNull = true;
-            }
-            else
+            if( sqlite3_column_type(hQueryStmt, 11) != SQLITE_NULL )
             {
                 xTo = sqlite3_column_double(hQueryStmt, 11);
-                bIsXToNull = false;
             }
-            if( sqlite3_column_type(hQueryStmt, 12) == SQLITE_NULL )
-            {
-                bIsYToNull = true;
-            }
-            else
+            if( sqlite3_column_type(hQueryStmt, 12) != SQLITE_NULL )
             {
                 yTo = sqlite3_column_double(hQueryStmt, 12);
-                bIsYToNull = false;
             }
-            if( sqlite3_column_type(hQueryStmt, 13) == SQLITE_NULL )
-            {
-                bIsZToNull = true;
-            }
-            else
+            if( sqlite3_column_type(hQueryStmt, 13) != SQLITE_NULL )
             {
                 zTo = sqlite3_column_double(hQueryStmt, 13);
-                bIsZToNull = false;
             }
-            if( sqlite3_column_type(hQueryStmt, 14) == SQLITE_NULL )
+            if( sqlite3_column_type(hQueryStmt, 14) != SQLITE_NULL )
             {
-                bIsNodeToIdNull = true;
+                pszNodeToId = reinterpret_cast<const char *>( sqlite3_column_text(hQueryStmt, 14) );
             }
-            else
-            {
-                // TODO: Can sqlite3_column_text be removed?
-                // pszNodeToId = (const char *)
-                sqlite3_column_text(hQueryStmt, 14);
-                bIsNodeToIdNull = false;
-            }
-            if( sqlite3_column_type(hQueryStmt, 15) == SQLITE_NULL )
-            {
-                bIsXNodeToNull = true;
-            }
-            else
+            if( sqlite3_column_type(hQueryStmt, 15) != SQLITE_NULL )
             {
                 xNodeTo = sqlite3_column_double(hQueryStmt, 15);
-                bIsXNodeToNull = false;
             }
-            if( sqlite3_column_type(hQueryStmt, 16) == SQLITE_NULL )
-            {
-                bIsYNodeToNull = true;
-            }
-            else
+            if( sqlite3_column_type(hQueryStmt, 16) != SQLITE_NULL )
             {
                 yNodeTo = sqlite3_column_double(hQueryStmt, 16);
-                bIsYNodeToNull = false;
             }
-            if( sqlite3_column_type(hQueryStmt, 17) == SQLITE_NULL )
-            {
-                bIsZNodeToNull = true;
-            }
-            else
+            if( sqlite3_column_type(hQueryStmt, 17) != SQLITE_NULL )
             {
                 zNodeTo = sqlite3_column_double(hQueryStmt, 17);
-                bIsZNodeToNull = false;
             }
 
             // Checking for consistency.
-            if( bIsFromIdNull || bIsXFromNull || bIsYFromNull )
+            if( pszFromId == nullptr || std::isnan(xFrom) || std::isnan(yFrom) )
             {
                 bError = true;
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -627,7 +523,7 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
             }
             else
             {
-                if( bIsNodeFromIdNull )
+                if( pszNodeFromId == nullptr )
                 {
                     bError = true;
                     CPLError(
@@ -635,7 +531,7 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
                         "Edge gml:id=\"%s\": undeclared Node gml:id=\"%s\"",
                         pszGmlId, pszFromId);
                 }
-                else if( bIsXNodeFromNull || bIsYNodeFromNull )
+                else if( std::isnan(xNodeFrom) || std::isnan(yNodeFrom) )
                 {
                     bError = true;
                     CPLError(
@@ -654,11 +550,11 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
                 }
                 else
                 {
-                    if( bIsZFromNull && bIsZNodeFromNull )
+                    if( std::isnan(zFrom) && std::isnan(zNodeFrom) )
                     {
                         ;
                     }
-                    else if( bIsZFromNull || bIsZNodeFromNull )
+                    else if( std::isnan(zFrom) || std::isnan(zNodeFrom) )
                     {
                         bError = true;
                         CPLError(CE_Failure, CPLE_AppDefined,
@@ -676,7 +572,7 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
                     }
                 }
             }
-            if( bIsToIdNull || bIsXToNull || bIsYToNull )
+            if( pszToId == nullptr || std::isnan(xTo) || std::isnan(yTo) )
             {
                 bError = true;
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -685,7 +581,7 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
             }
             else
             {
-                if( bIsNodeToIdNull )
+                if( pszNodeToId == nullptr )
                 {
                     bError = true;
                     CPLError(
@@ -693,7 +589,7 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
                         "Edge gml:id=\"%s\": undeclared Node gml:id=\"%s\"",
                         pszGmlId, pszToId);
                 }
-                else if( bIsXNodeToNull  || bIsYNodeToNull )
+                else if( std::isnan(xNodeTo)  || std::isnan(yNodeTo) )
                 {
                     bError = true;
                     CPLError(CE_Failure, CPLE_AppDefined,
@@ -711,11 +607,11 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
                 }
                 else
                 {
-                    if( bIsZToNull && bIsZNodeToNull )
+                    if( std::isnan(zTo) && std::isnan(zNodeTo) )
                     {
                         ;
                     }
-                    else if( bIsZToNull || bIsZNodeToNull )
+                    else if( std::isnan(zTo) || std::isnan(zNodeTo) )
                     {
                         bError = true;
                         CPLError(CE_Failure, CPLE_AppDefined,
@@ -735,8 +631,8 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
             }
 
             // Updating the resolved Node.
-            if( bError == false && bIsGmlStringNull == false &&
-                bIsFromIdNull == false && bIsToIdNull == false )
+            if( bError == false && pszGmlString != nullptr &&
+                pszFromId != nullptr && pszToId != nullptr )
             {
                 CPLXMLNode *psNode = CPLParseXMLString(pszGmlString);
                 if( psNode != nullptr )
@@ -1079,7 +975,7 @@ static void gmlHugeAddPendingToHelper( huge_helper *helper,
                                        CPLString *gmlId,
                                        const CPLXMLNode *psParent,
                                        const CPLXMLNode *psNode,
-                                       bool bIsDirectedEdge,
+                                       // bool bIsDirectedEdge,
                                        char cOrientation )
 {
     // Inserting an item into the linked list.
@@ -1091,8 +987,8 @@ static void gmlHugeAddPendingToHelper( huge_helper *helper,
         if( EQUAL(pItem->gmlId->c_str(), gmlId->c_str()) &&
             pItem->psParent == psParent  &&
             pItem->psNode == psNode &&
-            pItem->cOrientation == cOrientation &&
-            pItem->bIsDirectedEdge == bIsDirectedEdge )
+            pItem->cOrientation == cOrientation /* &&
+            pItem->bIsDirectedEdge == bIsDirectedEdge */ )
         {
             delete gmlId;
             return;
@@ -1105,7 +1001,7 @@ static void gmlHugeAddPendingToHelper( huge_helper *helper,
     pItem->gmlText = nullptr;
     pItem->psParent = psParent;
     pItem->psNode = psNode;
-    pItem->bIsDirectedEdge = bIsDirectedEdge;
+    // pItem->bIsDirectedEdge = bIsDirectedEdge;
     pItem->cOrientation = cOrientation;
     pItem->pNext = nullptr;
 
@@ -1437,7 +1333,8 @@ static void gmlHugeFileCheckPendingHrefs( huge_helper *helper,
                             CPLString *gmlId =
                                 new CPLString(pszHref->pszValue + 1);
                             gmlHugeAddPendingToHelper(helper, gmlId, psParent,
-                                                      psNode, true,
+                                                      psNode,
+                                                      // /*bDirectedEdge=*/ true,
                                                       cOrientation);
                         }
                     }

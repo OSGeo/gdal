@@ -152,7 +152,7 @@ protected:
   TigerVersion        nVersion;
 
 public:
-                      TigerFileBase( const TigerRecordInfo *psRTInfoIn = nullptr,
+  explicit            TigerFileBase( const TigerRecordInfo *psRTInfoIn = nullptr,
                                      const char            *m_pszFileCodeIn = nullptr );
   virtual            ~TigerFileBase();
 

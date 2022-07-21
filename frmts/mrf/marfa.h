@@ -140,7 +140,7 @@ typedef struct {
 struct ILSize {
     GInt32 x, y, z, c;
     GIntBig l; // Dual use, sometimes it holds the number of pages
-    ILSize(const int x_ = -1, const int y_ = -1, const int z_ = -1,
+    explicit ILSize(const int x_ = -1, const int y_ = -1, const int z_ = -1,
         const int c_ = -1, const int l_ = -1):
         x(x_), y(y_), z(z_), c(c_), l(l_)
     {}
@@ -393,9 +393,6 @@ protected:
     // Options should be papszOpenOptions, but the dataset already has a member with that name
     CPLErr Initialize(CPLXMLNode *);
 
-    // Do nothing, this is not possible in an MRF
-    CPLErr CleanOverviews() { return CE_None; }
-
     bool IsSingleTile();
 
     // Add uniform scale overlays, returns the new size of the index file
@@ -608,7 +605,7 @@ protected:
     // Read the index record itself, can be overwritten
     //    virtual CPLErr ReadTileIdx(const ILSize &, ILIdx &, GIntBig bias = 0);
 
-    GIntBig bandbit(int b) { return ((GIntBig)1) << b; }
+    static GIntBig bandbit(int b) { return ((GIntBig)1) << b; }
     GIntBig bandbit() { return bandbit(nBand - 1); }
     GIntBig AllBandMask() { return bandbit(poMRFDS->nBands) - 1; }
 

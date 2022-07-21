@@ -2522,7 +2522,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                     CPLXMLNode* psNewMetadata = CPLCreateXMLNode(nullptr, CXT_Element, "gmljp2:eopMetadata");
                     CPLAddXMLChild(psNewMetadata, CPLCloneXMLTree(psMetadataRoot));
                     psMetadataRoot = psNewMetadata;
-                    psMetadata = CPLXMLTreeCloser(psNewMetadata);
+                    psMetadata.reset(psNewMetadata);
                 }
                 if( strcmp(psMetadataRoot->pszValue, "gmljp2:isoMetadata") != 0 &&
                     strcmp(psMetadataRoot->pszValue, "gmljp2:eopMetadata") != 0 &&
