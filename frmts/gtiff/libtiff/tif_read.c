@@ -1493,7 +1493,8 @@ int      TIFFReadFromUserBuffer(TIFF* tif, uint32_t strile,
         TIFFReverseBits(inbuf, insize);
     }
 
-    tif->tif_flags = old_tif_flags;
+    tif->tif_flags = (old_tif_flags & (TIFF_MYBUFFER | TIFF_BUFFERMMAP)) |
+                     (tif->tif_flags & ~(TIFF_MYBUFFER | TIFF_BUFFERMMAP));
     tif->tif_rawdatasize = old_rawdatasize;
     tif->tif_rawdata = old_rawdata;
     tif->tif_rawdataoff = 0;
