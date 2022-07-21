@@ -427,11 +427,6 @@ static int TestDataset( GDALDriver** ppoDriver )
         printf("FAILURE: Dataset advertizes ODsCDeleteLayer capability but driver metadata does not advertize GDAL_DCAP_DELETE_LAYER!\n" );
         bRet = false;
     }
-    if ( !bReadOnly && poDriver->GetMetadataItem( GDAL_DCAP_DELETE_LAYER ) && !poDS->TestCapability(ODsCDeleteLayer) )
-    {
-        printf("FAILURE: Driver advertizes GDAL_DCAP_DELETE_LAYER capability but dataset does not advertize ODsCDeleteLayer!\n" );
-        bRet = false;
-    }
 
     if ( poDriver->GetMetadataItem( GDAL_DCAP_CREATE_FIELD ) && !poDriver->GetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES ) )
     {
