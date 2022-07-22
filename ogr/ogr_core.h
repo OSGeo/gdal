@@ -887,6 +887,7 @@ int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
 #define OLCCreateGeomField     "CreateGeomField"    /**< Layer capability for geometry field creation */
 #define OLCCurveGeometries     "CurveGeometries"    /**< Layer capability for curve geometries support */
 #define OLCMeasuredGeometries  "MeasuredGeometries" /**< Layer capability for measured geometries support */
+#define OLCZGeometries         "ZGeometries"        /**< Layer capability for geometry with Z dimension support. Since GDAL 3.6. */
 #define OLCRename              "Rename"             /**< Layer capability for a layer that supports Rename() */
 #define OLCFastGetArrowStream  "FastGetArrowStream" /**< Layer capability for fast GetArrowStream() implementation */
 
@@ -898,9 +899,10 @@ int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
 #define ODsCTransactions       "Transactions"       /**< Dataset capability for dataset transcations */
 #define ODsCEmulatedTransactions "EmulatedTransactions" /**< Dataset capability for emulated dataset transactions */
 #define ODsCMeasuredGeometries "MeasuredGeometries"     /**< Dataset capability for measured geometries support */
-#define ODsCRandomLayerRead     "RandomLayerRead"   /**< Dataset capability for GetNextFeature() returning features from random layers */
+#define ODsCZGeometries        "ZGeometries"       /**< Dataset capability for geometry with Z dimension support. Since GDAL 3.6. */
+#define ODsCRandomLayerRead    "RandomLayerRead"   /**< Dataset capability for GetNextFeature() returning features from random layers */
 /* Note the unfortunate trailing space at the end of the string */
-#define ODsCRandomLayerWrite    "RandomLayerWrite " /**< Dataset capability for supporting CreateFeature on layer in random order */
+#define ODsCRandomLayerWrite   "RandomLayerWrite " /**< Dataset capability for supporting CreateFeature on layer in random order */
 #define ODsCAddFieldDomain     "AddFieldDomain"     /**< Dataset capability for supporting AddFieldDomain() (at least partially) */
 #define ODsCDeleteFieldDomain  "DeleteFieldDomain"  /**< Dataset capability for supporting DeleteFieldDomain()*/
 #define ODsCUpdateFieldDomain  "UpdateFieldDomain"  /**< Dataset capability for supporting UpdateFieldDomain()*/

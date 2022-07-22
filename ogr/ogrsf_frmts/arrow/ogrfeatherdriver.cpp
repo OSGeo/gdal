@@ -453,10 +453,14 @@ void RegisterOGRArrow()
 
     poDriver->SetDescription( "Arrow" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "(Geo)Arrow IPC File Format / Stream" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "arrow feather arrows ipc" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/feather.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
                                "Integer Integer64 Real String Date Time DateTime "

@@ -111,6 +111,13 @@ void RegisterOGRPG()
     poDriver->SetDescription( "PostgreSQL" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "PostgreSQL/PostGIS" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DELETE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DELETE_FIELD, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CURVE_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/pg.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "PG:" );
 
@@ -168,6 +175,7 @@ void RegisterOGRPG()
                                "Time IntegerList Integer64List RealList "
                                "StringList Binary" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATASUBTYPES, "Boolean Int16 Float32" );
+    poDriver->SetMetadataItem( GDAL_DMD_ALTER_FIELD_DEFN_FLAGS, "Name Type WidthPrecision Nullable Default Unique" );
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_UNIQUE_FIELDS, "YES" );

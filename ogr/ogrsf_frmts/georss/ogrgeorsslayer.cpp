@@ -2322,6 +2322,8 @@ int OGRGeoRSSLayer::TestCapability( const char *pszCap )
         return bWriteMode;
     else if( EQUAL(pszCap,OLCCreateField) )
         return bWriteMode;
+    else if( EQUAL(pszCap,OLCZGeometries) )
+        return TRUE;
     else
         return FALSE;
 }

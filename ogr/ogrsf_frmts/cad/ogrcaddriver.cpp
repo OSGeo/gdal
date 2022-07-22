@@ -130,11 +130,16 @@ void RegisterOGRCAD()
         poDriver->SetDescription( "CAD" );
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+        poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
+        poDriver->SetMetadataItem( GDAL_DCAP_DELETE_LAYER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "AutoCAD Driver" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "dwg" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/cad.html" );
         poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
+        poDriver->SetMetadataItem( GDAL_DCAP_CURVE_GEOMETRIES, "YES" );
+        poDriver->SetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES, "YES" );
+        poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
 
         poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList>"
 "  <Option name='MODE' type='string' description='Open mode. READ_ALL - read all data (slow), READ_FAST - read main data (fast), READ_FASTEST - read less data' default='READ_FAST'/>"

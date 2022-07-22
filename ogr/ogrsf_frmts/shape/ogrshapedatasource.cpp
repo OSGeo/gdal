@@ -973,14 +973,16 @@ int OGRShapeDataSource::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
         return bDSUpdate && !(m_bIsZip && m_bSingleLayerZip && nLayers == 1);
-    if( EQUAL(pszCap,ODsCDeleteLayer) )
+    else if( EQUAL(pszCap,ODsCDeleteLayer) )
         return bDSUpdate && !(m_bIsZip && m_bSingleLayerZip);
-    if( EQUAL(pszCap,ODsCMeasuredGeometries) )
-        return TRUE;
-    if( EQUAL(pszCap,ODsCRandomLayerWrite) )
+    else if( EQUAL(pszCap,ODsCMeasuredGeometries) )
+        return true;
+    else if( EQUAL(pszCap,ODsCZGeometries) )
+        return true;
+    else if( EQUAL(pszCap,ODsCRandomLayerWrite) )
         return bDSUpdate;
 
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/

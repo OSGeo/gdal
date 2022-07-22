@@ -847,6 +847,10 @@ void RegisterOGRFileGDB()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                 "ESRI FileGDB" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem( GDAL_DCAP_DELETE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DELETE_FIELD, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gdb" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/filegdb.html" );
 
@@ -897,7 +901,9 @@ void RegisterOGRFileGDB()
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_FIELD_DOMAINS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_RENAME_LAYERS, "YES" );
-
+    poDriver->SetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_GEOMETRY_FLAGS, "EquatesMultiAndSingleLineStringDuringWrite EquatesMultiAndSinglePolygonDuringWrite" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATION_FIELD_DOMAIN_TYPES, "Coded Range" );
 
     poDriver->pfnOpen = OGRFileGDBDriverOpen;

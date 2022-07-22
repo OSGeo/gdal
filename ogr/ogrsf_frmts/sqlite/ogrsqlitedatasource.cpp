@@ -2373,7 +2373,9 @@ int OGRSQLiteDataSource::TestCapability( const char * pszCap )
 int OGRSQLiteBaseDataSource::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,ODsCTransactions) )
-        return TRUE;
+        return true;
+    else if( EQUAL(pszCap,ODsCZGeometries) )
+        return true;
     else
         return GDALPamDataset::TestCapability(pszCap);
 }

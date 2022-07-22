@@ -2142,6 +2142,9 @@ int OGROpenFileGDBLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCCurveGeometries) )
         return TRUE;
 
+    else if( EQUAL(pszCap,OLCZGeometries) )
+        return TRUE;
+
     else if( EQUAL(pszCap, OLCFastSpatialFilter) )
     {
         return m_eSpatialIndexState == SPI_COMPLETED || m_poLyrTable->HasSpatialIndex();

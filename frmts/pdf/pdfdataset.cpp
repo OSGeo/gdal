@@ -7235,6 +7235,7 @@ void GDALRegister_PDF()
     poDriver->SetDescription( "PDF" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Geospatial PDF" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/pdf.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "pdf" );

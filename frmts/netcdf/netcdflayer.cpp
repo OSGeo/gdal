@@ -2721,5 +2721,7 @@ int netCDFLayer::TestCapability(const char *pszCap)
         return m_poDS->GetAccess() == GA_Update;
     if( EQUAL(pszCap, OLCFastFeatureCount) )
         return m_poFilterGeom == nullptr && m_poAttrQuery == nullptr;
-    return FALSE;
+    if( EQUAL(pszCap, OLCZGeometries) )
+        return true;
+    return false;
 }

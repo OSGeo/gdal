@@ -393,6 +393,8 @@ void GDALRegister_NULL()
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "NULL: ");
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "NULL" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,

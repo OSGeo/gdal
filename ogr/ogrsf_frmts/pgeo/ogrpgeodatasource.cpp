@@ -305,6 +305,13 @@ int OGRPGeoDataSource::Open( GDALOpenInfo *poOpenInfo )
 
 int OGRPGeoDataSource::TestCapability( CPL_UNUSED const char * pszCap )
 {
+    if( EQUAL(pszCap,ODsCMeasuredGeometries) )
+        return TRUE;
+    else if( EQUAL(pszCap,ODsCCurveGeometries) )
+        return TRUE;
+    else if( EQUAL(pszCap,ODsCZGeometries) )
+        return TRUE;
+
     return FALSE;
 }
 

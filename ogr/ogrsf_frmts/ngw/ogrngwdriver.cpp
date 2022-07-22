@@ -448,11 +448,16 @@ void RegisterOGRNGW()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "NextGIS Web" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DELETE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/ngw.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "NGW:" );
+    poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
+    poDriver->SetMetadataItem( GDAL_DMD_ALTER_FIELD_DEFN_FLAGS, "Name" );
     poDriver->SetMetadataItem( GDAL_DCAP_CREATECOPY, "YES" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,

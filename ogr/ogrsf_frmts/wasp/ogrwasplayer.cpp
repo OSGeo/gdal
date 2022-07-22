@@ -805,7 +805,8 @@ int OGRWAsPLayer::TestCapability( const char * pszCap )
     return ( WRITE_ONLY == eMode &&
        (EQUAL(pszCap,OLCSequentialWrite) ||
         EQUAL(pszCap,OLCCreateField) ||
-        EQUAL(pszCap,OLCCreateGeomField) ) );
+        EQUAL(pszCap,OLCCreateGeomField) ||
+        EQUAL(pszCap,OLCZGeometries) ) );
 }
 
 /************************************************************************/

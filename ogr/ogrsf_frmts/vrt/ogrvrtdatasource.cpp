@@ -918,8 +918,13 @@ bool OGRVRTDataSource::Initialize( CPLXMLNode *psTreeIn, const char *pszNewName,
 int OGRVRTDataSource::TestCapability( const char *pszCap )
 {
     if( EQUAL(pszCap, ODsCCurveGeometries) )
-        return TRUE;
-    return FALSE;
+        return true;
+    else if( EQUAL(pszCap, ODsCZGeometries) )
+        return true;
+    else if( EQUAL(pszCap, ODsCMeasuredGeometries) )
+        return true;
+
+    return false;
 }
 
 /************************************************************************/

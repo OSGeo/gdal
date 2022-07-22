@@ -484,6 +484,7 @@ typedef void retGetPoints;
 %constant char *OLCCreateGeomField     = "CreateGeomField";
 %constant char *OLCCurveGeometries     = "CurveGeometries";
 %constant char *OLCMeasuredGeometries  = "MeasuredGeometries";
+%constant char *OLCZGeometries         = "ZGeometries";
 %constant char *OLCRename              = "Rename";
 %constant char *OLCFastGetArrowStream  = "FastGetArrowStream";
 
@@ -494,6 +495,7 @@ typedef void retGetPoints;
 %constant char *ODsCTransactions       = "Transactions";
 %constant char *ODsCEmulatedTransactions = "EmulatedTransactions";
 %constant char *ODsCMeasuredGeometries = "MeasuredGeometries";
+%constant char *ODsCZGeometries        = "ZGeometries";
 %constant char *ODsCRandomLayerRead    = "RandomLayerRead";
 /* Note the unfortunate trailing space at the end of the string */
 %constant char *ODsCRandomLayerWrite   = "RandomLayerWrite ";
@@ -533,6 +535,7 @@ typedef int OGRErr;
 #define OLCCreateGeomField     "CreateGeomField"
 #define OLCCurveGeometries     "CurveGeometries"
 #define OLCMeasuredGeometries  "MeasuredGeometries"
+#define OLCZGeometries         "ZGeometries"
 #define OLCRename              "Rename"
 #define OLCFastGetArrowStream  "FastGetArrowStream";
 
@@ -543,6 +546,7 @@ typedef int OGRErr;
 #define ODsCTransactions       "Transactions"
 #define ODsCEmulatedTransactions "EmulatedTransactions"
 #define ODsCMeasuredGeometries  "MeasuredGeometries";
+#define ODsCZGeometries        "ZGeometries";
 #define ODsCRandomLayerRead    "RandomLayerRead";
 /* Note the unfortunate trailing space at the end of the string */
 #define ODsCRandomLayerWrite   "RandomLayerWrite ";

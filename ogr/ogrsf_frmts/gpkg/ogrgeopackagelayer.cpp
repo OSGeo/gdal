@@ -821,6 +821,8 @@ int OGRGeoPackageLayer::TestCapability ( const char * pszCap )
         return TRUE;
     else if ( EQUAL(pszCap, OLCFastGetArrowStream) )
         return TRUE;
+    else if ( EQUAL(pszCap, OLCZGeometries) )
+        return TRUE;
     else
         return FALSE;
 }

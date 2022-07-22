@@ -89,6 +89,7 @@ void RegisterOGRESRIJSON()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "ESRIJSON" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "json" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/esrijson.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"

@@ -355,6 +355,8 @@ OLCCurveGeometries = _ogr.OLCCurveGeometries
 
 OLCMeasuredGeometries = _ogr.OLCMeasuredGeometries
 
+OLCZGeometries = _ogr.OLCZGeometries
+
 OLCRename = _ogr.OLCRename
 
 OLCFastGetArrowStream = _ogr.OLCFastGetArrowStream
@@ -372,6 +374,8 @@ ODsCTransactions = _ogr.ODsCTransactions
 ODsCEmulatedTransactions = _ogr.ODsCEmulatedTransactions
 
 ODsCMeasuredGeometries = _ogr.ODsCMeasuredGeometries
+
+ODsCZGeometries = _ogr.ODsCZGeometries
 
 ODsCRandomLayerRead = _ogr.ODsCRandomLayerRead
 

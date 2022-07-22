@@ -2891,6 +2891,8 @@ int OGRGeoPackageTableLayer::TestCapability ( const char * pszCap )
         return TRUE;
     else if( EQUAL(pszCap,OLCMeasuredGeometries) )
         return TRUE;
+    else if( EQUAL(pszCap,OLCZGeometries) )
+        return TRUE;
     else
     {
         return OGRGeoPackageLayer::TestCapability(pszCap);

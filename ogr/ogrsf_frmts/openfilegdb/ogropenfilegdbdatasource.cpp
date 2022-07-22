@@ -842,7 +842,11 @@ int OGROpenFileGDBDataSource::TestCapability( const char * pszCap )
         return eAccess == GA_Update;
     }
 
-    if( EQUAL(pszCap,ODsCMeasuredGeometries) )
+    else if( EQUAL(pszCap,ODsCMeasuredGeometries) )
+        return TRUE;
+    else if( EQUAL(pszCap,ODsCZGeometries) )
+        return TRUE;
+    else if( EQUAL(pszCap,ODsCCurveGeometries) )
         return TRUE;
 
     return FALSE;

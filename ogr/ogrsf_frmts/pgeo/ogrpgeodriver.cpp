@@ -96,6 +96,10 @@ void RegisterOGRPGeo()
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/pgeo.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_FIELD_DOMAINS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CURVE_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_GEOMETRY_FLAGS, "EquatesMultiAndSingleLineStringDuringWrite EquatesMultiAndSinglePolygonDuringWrite" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList>"
 "  <Option name='LIST_ALL_TABLES' type='string-select' scope='vector' description='Whether all tables, including system and internal tables (such as GDB_* tables) should be listed' default='NO'>"

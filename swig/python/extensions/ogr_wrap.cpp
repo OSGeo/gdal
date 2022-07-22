@@ -37422,6 +37422,7 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "OLCCreateGeomField",SWIG_FromCharPtr("CreateGeomField"));
   SWIG_Python_SetConstant(d, "OLCCurveGeometries",SWIG_FromCharPtr("CurveGeometries"));
   SWIG_Python_SetConstant(d, "OLCMeasuredGeometries",SWIG_FromCharPtr("MeasuredGeometries"));
+  SWIG_Python_SetConstant(d, "OLCZGeometries",SWIG_FromCharPtr("ZGeometries"));
   SWIG_Python_SetConstant(d, "OLCRename",SWIG_FromCharPtr("Rename"));
   SWIG_Python_SetConstant(d, "OLCFastGetArrowStream",SWIG_FromCharPtr("FastGetArrowStream"));
   SWIG_Python_SetConstant(d, "ODsCCreateLayer",SWIG_FromCharPtr("CreateLayer"));
@@ -37431,6 +37432,7 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "ODsCTransactions",SWIG_FromCharPtr("Transactions"));
   SWIG_Python_SetConstant(d, "ODsCEmulatedTransactions",SWIG_FromCharPtr("EmulatedTransactions"));
   SWIG_Python_SetConstant(d, "ODsCMeasuredGeometries",SWIG_FromCharPtr("MeasuredGeometries"));
+  SWIG_Python_SetConstant(d, "ODsCZGeometries",SWIG_FromCharPtr("ZGeometries"));
   SWIG_Python_SetConstant(d, "ODsCRandomLayerRead",SWIG_FromCharPtr("RandomLayerRead"));
   SWIG_Python_SetConstant(d, "ODsCRandomLayerWrite",SWIG_FromCharPtr("RandomLayerWrite "));
   SWIG_Python_SetConstant(d, "ODsCAddFieldDomain",SWIG_FromCharPtr("AddFieldDomain"));

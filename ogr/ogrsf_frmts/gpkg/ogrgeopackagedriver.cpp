@@ -426,6 +426,14 @@ void RegisterOGRGeoPackage()
     poDriver->SetDescription( "GPKG" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DELETE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DELETE_FIELD, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_REORDER_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CURVE_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
 
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GeoPackage" );
@@ -474,6 +482,8 @@ COMPRESSION_OPTIONS
                                "Integer Integer64 Real String Date DateTime "
                                "Binary" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATASUBTYPES, "Boolean Int16 Float32" );
+    poDriver->SetMetadataItem( GDAL_DMD_ALTER_FIELD_DEFN_FLAGS, "Name Type WidthPrecision Nullable Default Unique Domain" );
+
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_UNIQUE_FIELDS, "YES" );

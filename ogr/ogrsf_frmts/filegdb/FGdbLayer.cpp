@@ -3985,9 +3985,6 @@ int FGdbLayer::TestCapability( const char* pszCap )
     else if (EQUAL(pszCap,OLCStringsAsUTF8)) /* Native UTF16, converted to UTF8 */
         return TRUE;
 
-    else if (EQUAL(pszCap,OLCReorderFields)) /* TBD ReorderFields() */
-        return m_pDS->GetUpdate();
-
     else if (EQUAL(pszCap,OLCDeleteFeature)) /* DeleteFeature() */
         return m_pDS->GetUpdate();
 
@@ -4015,6 +4012,9 @@ int FGdbLayer::TestCapability( const char* pszCap )
         return TRUE;
 
     else if( EQUAL(pszCap,OLCMeasuredGeometries) )
+        return TRUE;
+
+    else if( EQUAL(pszCap,OLCZGeometries) )
         return TRUE;
 
     else
