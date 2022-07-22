@@ -551,6 +551,18 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  */
 #define GDAL_DCAP_Z_GEOMETRIES "DCAP_Z_GEOMETRIES"
 
+/** List of (space separated) flags which reflect the geometry handling behavior of a driver.
+ *
+ * Supported values are currently:
+ *
+ * - "EquatesMultiAndSingleLineStringDuringWrite" and "EquatesMultiAndSinglePolygonDuringWrite". These
+ *   flags indicate that the driver does not differentiate between single-part
+ *   and multi-part linestring and polygon geometries when writing features respectively.
+ *
+ * @since GDAL 3.6
+ */
+#define GDAL_DMD_GEOMETRY_FLAGS "GDAL_DMD_GEOMETRY_FLAGS"
+
 /** Capability set by drivers which support feature styles.
  * @since GDAL 2.3
  */
