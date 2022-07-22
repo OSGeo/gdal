@@ -1,5 +1,10 @@
 # CMake4GDAL project is distributed under MIT license. See accompanying file LICENSE.txt.
 
+if (CMAKE_CXX_FLAGS)
+  string(REPLACE "-Werror " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ")
+  string(REPLACE "/WX " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ")
+endif ()
+
 # SWIG generates wrapper sources
 option(SWIG_REGENERATE_PYTHON "Generate python source with SWIG." OFF)
 
