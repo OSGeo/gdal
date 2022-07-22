@@ -50,10 +50,13 @@ class SQLResult
 
         const char* GetValue(int iColumnNum, int iRowNum) const;
         int         GetValueAsInteger(int iColNum, int iRowNum) const;
+
     private:
         char** papszResult = nullptr;
         int nRowCount = 0;
         int nColCount = 0;
+
+        CPL_DISALLOW_COPY_ASSIGN(SQLResult)
 };
 
 

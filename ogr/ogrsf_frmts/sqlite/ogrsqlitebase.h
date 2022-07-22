@@ -37,6 +37,10 @@
 
 #include <sqlite3.h>
 
+// to avoid -Wold-style-cast with some compilers
+#undef SQLITE_TRANSIENT
+#define SQLITE_TRANSIENT   reinterpret_cast<sqlite3_destructor_type>(-1)
+
 #include <map>
 #include <utility>
 #include <vector>
@@ -93,7 +97,7 @@ class OGRSQLiteFeatureDefn final : public OGRFeatureDefn
 
         OGRSQLiteGeomFieldDefn* myGetGeomFieldDefn(int i)
         {
-            return (OGRSQLiteGeomFieldDefn*) GetGeomFieldDefn(i);
+            return cpl::down_cast<OGRSQLiteGeomFieldDefn*>(GetGeomFieldDefn(i));
         }
 };
 
@@ -149,6 +153,8 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL: public GDALPamDataset
     int                 nSoftTransactionLevel = 0;
 
     OGRErr              DoTransactionCommand(const char* pszCommand);
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRSQLiteBaseDataSource)
 
   public:
                         OGRSQLiteBaseDataSource();
@@ -227,6 +233,8 @@ class OGRSQLiteSelectLayerCommonBehaviour
     std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*> GetBaseLayer(size_t& i);
     int                 BuildSQL();
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRSQLiteSelectLayerCommonBehaviour)
+
   public:
 
     CPLString           m_osSQLCurrent{};
@@ -256,6 +264,8 @@ class OGRSQLiteSingleFeatureLayer final : public OGRLayer
     char               *pszVal;
     OGRFeatureDefn     *poFeatureDefn;
     int                 iNextShapeId;
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRSQLiteSingleFeatureLayer)
 
   public:
                         OGRSQLiteSingleFeatureLayer( const char* pszLayerName,
