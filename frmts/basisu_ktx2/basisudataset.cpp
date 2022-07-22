@@ -56,6 +56,8 @@ class BASISUDataset final: public GDALPamDataset
 
     void*                   GetDecodedData(uint32_t& nLineStride);
 
+    CPL_DISALLOW_COPY_ASSIGN(BASISUDataset)
+
 public:
                             ~BASISUDataset() override;
                             BASISUDataset(uint32_t iImageIdx,
