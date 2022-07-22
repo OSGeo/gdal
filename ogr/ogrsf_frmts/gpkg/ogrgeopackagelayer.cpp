@@ -353,7 +353,7 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
             OGRSpatialReference* poSrs = poGeomFieldDefn->GetSpatialRef();
             int iGpkgSize = sqlite3_column_bytes(hStmt, iGeomCol);
             // coverity[tainted_data_return]
-            GByte *pabyGpkg = (GByte *)sqlite3_column_blob(hStmt, iGeomCol);
+            const GByte *pabyGpkg = static_cast<const GByte *>(sqlite3_column_blob(hStmt, iGeomCol));
             OGRGeometry *poGeom = GPkgGeometryToOGR(pabyGpkg, iGpkgSize, nullptr);
             if ( poGeom == nullptr )
             {
@@ -845,7 +845,7 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
 
     const int    nRawColumns = sqlite3_column_count( hStmt );
 
-    panFieldOrdinals = (int *) CPLMalloc( sizeof(int) * nRawColumns );
+    panFieldOrdinals = static_cast<int *>(CPLMalloc( sizeof(int) * nRawColumns ));
 
     const bool bPromoteToInteger64 =
         CPLTestBool(CPLGetConfigOption("OGR_PROMOTE_TO_INTEGER64", "FALSE"));
@@ -967,7 +967,7 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
             {
                 // coverity[tainted_data_return]
                 const GByte* pabyGpkg =
-                        (const GByte*)sqlite3_column_blob( hStmt, iCol  );
+                        reinterpret_cast<const GByte*>(sqlite3_column_blob( hStmt, iCol  ));
                 GPkgHeader oHeader;
                 OGRGeometry* poGeom = nullptr;
                 int nSRID = 0;
@@ -1060,7 +1060,7 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
             int nMaxWidth = 0;
             const OGRFieldType eFieldType =
                 GPkgFieldToOGR(pszDeclType, eSubType, nMaxWidth);
-            if( (int)eFieldType <= OFTMaxType )
+            if( static_cast<int>(eFieldType) <= OFTMaxType )
             {
                 oField.SetType(eFieldType);
                 oField.SetSubType(eSubType);

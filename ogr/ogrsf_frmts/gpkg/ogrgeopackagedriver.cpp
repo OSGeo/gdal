@@ -45,7 +45,7 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo, bool bEmitWarn
 
 #ifdef ENABLE_SQL_GPKG_FORMAT
     if( poOpenInfo->pabyHeader &&
-        STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL GPKG") )
+        STARTS_WITH(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "-- SQL GPKG") )
     {
         return TRUE;
     }
@@ -53,7 +53,7 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo, bool bEmitWarn
 
     if ( poOpenInfo->nHeaderBytes < 100 ||
          poOpenInfo->pabyHeader == nullptr ||
-         !STARTS_WITH((const char*)poOpenInfo->pabyHeader, "SQLite format 3") )
+         !STARTS_WITH(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "SQLite format 3") )
     {
         return FALSE;
     }

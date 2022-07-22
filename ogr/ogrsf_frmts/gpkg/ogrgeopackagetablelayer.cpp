@@ -139,7 +139,7 @@ OGRErr OGRGeoPackageTableLayer::UpdateExtent( const OGREnvelope *poExtent )
 OGRErr OGRGeoPackageTableLayer::BuildColumns()
 {
     CPLFree(panFieldOrdinals);
-    panFieldOrdinals = (int *) CPLMalloc( sizeof(int) * m_poFeatureDefn->GetFieldCount() );
+    panFieldOrdinals = static_cast<int *>(CPLMalloc( sizeof(int) * m_poFeatureDefn->GetFieldCount() ));
     int iCurCol = 0;
 
     /* Always start with a primary key */
@@ -863,7 +863,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
         int nPKIDIndex = oResultTable->GetValueAsInteger(5, iRecord);
         OGRFieldSubType eSubType = OFSTNone;
         int nMaxWidth = 0;
-        OGRFieldType oType = (OGRFieldType)(OFTMaxType + 1);
+        OGRFieldType oType = static_cast<OGRFieldType>(OFTMaxType + 1);
 
         if ( !EQUAL(pszType, "") || m_bIsTable )
         {
@@ -986,7 +986,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                     {
                         if( strchr(pszDefault, '.') == nullptr )
                             oField.SetDefault(CPLSPrintf("'%04d/%02d/%02d %02d:%02d:%02d'",
-                                                      nYear, nMonth, nDay, nHour, nMinute, (int)(fSecond+0.5)));
+                                                      nYear, nMonth, nDay, nHour, nMinute, static_cast<int>(fSecond+0.5)));
                         else
                             oField.SetDefault(CPLSPrintf("'%04d/%02d/%02d %02d:%02d:%06.3f'",
                                                             nYear, nMonth, nDay, nHour, nMinute, fSecond));
@@ -1088,36 +1088,7 @@ OGRGeoPackageTableLayer::OGRGeoPackageTableLayer(
                     GDALGeoPackageDataset *poDS,
                     const char * pszTableName) :
     OGRGeoPackageLayer(poDS),
-    m_pszTableName(CPLStrdup(pszTableName)),
-    m_bIsTable(true), // sensible init for creation mode
-    m_bIsSpatial(false),
-    m_bIsInGpkgContents(false),
-    m_bFeatureDefnCompleted(false),
-    m_iSrs(0),
-    m_poExtent(nullptr),
-#ifdef ENABLE_GPKG_OGR_CONTENTS
-    m_nTotalFeatureCount(-1),
-    m_bOGRFeatureCountTriggersEnabled(false),
-    m_bAddOGRFeatureCountTriggers(false),
-    m_bFeatureCountTriggersDeletedInTransaction(false),
-#endif
-    m_soColumns(""),
-    m_soFilter(""),
-    m_bExtentChanged(false),
-    m_bContentChanged(false),
-    m_poUpdateStatement(nullptr),
-    m_bInsertStatementWithFID(false),
-    m_poInsertStatement(nullptr),
-    m_bDeferredSpatialIndexCreation(false),
-    m_bHasSpatialIndex(-1),
-    m_bDropRTreeTable(false),
-    m_bPreservePrecision(true),
-    m_bTruncateFields(false),
-    m_bDeferredCreation(false),
-    m_iFIDAsRegularColumnIndex(-1),
-    m_bHasReadMetadataFromStorage(false),
-    m_bHasTriedDetectingFID64(false),
-    m_eASpatialVariant(GPKG_ATTRIBUTES)
+    m_pszTableName(CPLStrdup(pszTableName))
 {
     memset(m_abHasGeometryExtension, 0, sizeof(m_abHasGeometryExtension));
 
@@ -1358,7 +1329,7 @@ OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField,
             {
                 if( strchr(poField->GetDefault(), '.') == nullptr )
                     osCommand += CPLSPrintf("'%04d-%02d-%02dT%02d:%02d:%02dZ'",
-                                        nYear, nMonth, nDay, nHour, nMinute, (int)(fSecond+0.5));
+                                        nYear, nMonth, nDay, nHour, nMinute, static_cast<int>(fSecond+0.5));
                 else
                     osCommand += CPLSPrintf("'%04d-%02d-%02dT%02d:%02d:%06.3fZ'",
                                             nYear, nMonth, nDay, nHour, nMinute, fSecond);
