@@ -78,49 +78,42 @@ if (SWIG_REGENERATE_PYTHON)
   endforeach()
 
   if (Python_VERSION_MAJOR EQUAL 3 AND Python_EXECUTABLE)
-    file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/osgeo/" OSGEO_DIR)
-    add_custom_command(
-      OUTPUT ${GDAL_PYTHON_PYSOURCES}
-      APPEND
-      COMMAND
-        ${Python_EXECUTABLE} -m lib2to3 --fix=import --fix=next --fix=renames --fix=unicode --fix=ws_comma --fix=xrange
-        --write --write-unchanged-files --nobackups  ${OSGEO_DIR}__init__.py
-        ${OSGEO_DIR}gdal.py ${OSGEO_DIR}gdalconst.py ${OSGEO_DIR}gdalnumeric.py
-        ${OSGEO_DIR}ogr.py ${OSGEO_DIR}osr.py ${OSGEO_DIR}gnm.py ${OSGEO_DIR}gdal_array.py)
+    foreach(_file IN ITEMS ${GDAL_PYTHON_PYSOURCES})
+        file(TO_NATIVE_PATH "${_file}" _native_file)
+        add_custom_command(
+          OUTPUT ${_file}
+          APPEND
+          COMMAND
+            ${Python_EXECUTABLE} -m lib2to3 --fix=import --fix=next --fix=renames --fix=unicode --fix=ws_comma --fix=xrange
+            --write --write-unchanged-files --nobackups  ${_native_file})
+    endforeach()
   endif()
 
   option(SWIG_COPY_REGENERATED_PYTHON_IN_SOURCE_DIR "Copy SWIG regenerated Python bindings into source directory." ON)
   if(SWIG_COPY_REGENERATED_PYTHON_IN_SOURCE_DIR)
       file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/extensions" GDAL_PYTHON_CSOURCE_SRC_DIR_NATIVE_PATH)
-      file(TO_NATIVE_PATH "${GDAL_PYTHON_CSOURCE_DIR}/" GDAL_PYTHON_CSOURCE_DIR_NATIVE_PATH)
-      add_custom_command(
-        OUTPUT ${GDAL_PYTHON_CSOURCES}
-        APPEND
-        COMMAND
-          ${CMAKE_COMMAND} -E copy_if_different
-          ${GDAL_PYTHON_CSOURCE_DIR_NATIVE_PATH}/gdal_wrap.cpp
-          ${GDAL_PYTHON_CSOURCE_DIR_NATIVE_PATH}/gdalconst_wrap.c
-          ${GDAL_PYTHON_CSOURCE_DIR_NATIVE_PATH}/gnm_wrap.cpp
-          ${GDAL_PYTHON_CSOURCE_DIR_NATIVE_PATH}/ogr_wrap.cpp
-          ${GDAL_PYTHON_CSOURCE_DIR_NATIVE_PATH}/osr_wrap.cpp
-          ${GDAL_PYTHON_CSOURCE_DIR_NATIVE_PATH}/gdal_array_wrap.cpp
-          ${GDAL_PYTHON_CSOURCE_SRC_DIR_NATIVE_PATH})
+      foreach(_file IN ITEMS ${GDAL_PYTHON_CSOURCES})
+          file(TO_NATIVE_PATH "${_file}" _native_file)
+          add_custom_command(
+            OUTPUT ${_file}
+            APPEND
+            COMMAND
+              ${CMAKE_COMMAND} -E copy_if_different
+              ${_native_file}
+              ${GDAL_PYTHON_CSOURCE_SRC_DIR_NATIVE_PATH})
+      endforeach()
 
       file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/osgeo" GDAL_PYTHON_PYSOURCE_SRC_DIR_NATIVE_PATH)
-      file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/osgeo" GDAL_PYTHON_PYSOURCE_DIR_NATIVE_PATH)
-      add_custom_command(
-        OUTPUT ${GDAL_PYTHON_PYSOURCES}
-        APPEND
-        COMMAND
-          ${CMAKE_COMMAND} -E copy_if_different
-          ${GDAL_PYTHON_PYSOURCE_DIR_NATIVE_PATH}/gdal.py
-          ${GDAL_PYTHON_PYSOURCE_DIR_NATIVE_PATH}/gdalconst.py
-          ${GDAL_PYTHON_PYSOURCE_DIR_NATIVE_PATH}/gnm.py
-          ${GDAL_PYTHON_PYSOURCE_DIR_NATIVE_PATH}/ogr.py
-          ${GDAL_PYTHON_PYSOURCE_DIR_NATIVE_PATH}/osr.py
-          ${GDAL_PYTHON_PYSOURCE_DIR_NATIVE_PATH}/gdal_array.py
-          ${GDAL_PYTHON_PYSOURCE_DIR_NATIVE_PATH}/gdalnumeric.py
-          ${GDAL_PYTHON_PYSOURCE_SRC_DIR_NATIVE_PATH})
+      foreach(_file IN ITEMS ${GDAL_PYTHON_PYSOURCES})
+          file(TO_NATIVE_PATH "${_file}" _native_file)
+          add_custom_command(
+            OUTPUT ${_file}
+            APPEND
+            COMMAND
+              ${CMAKE_COMMAND} -E copy_if_different
+              ${_native_file}
+              ${GDAL_PYTHON_PYSOURCE_SRC_DIR_NATIVE_PATH})
+      endforeach()
   endif()
 
 else ()
