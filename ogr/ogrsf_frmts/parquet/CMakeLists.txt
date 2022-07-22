@@ -5,7 +5,7 @@ add_gdal_driver(TARGET ogr_Parquet
                         ogrparquetwriterdataset.cpp
                         ogrparquetwriterlayer.cpp
                 PLUGIN_CAPABLE
-                CXX_WFLAGS_EFFCXX)
+                STRONG_CXX_WFLAGS)
 gdal_standard_includes(ogr_Parquet)
 target_include_directories(ogr_Parquet PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>
                                                $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
