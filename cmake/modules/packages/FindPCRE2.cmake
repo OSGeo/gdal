@@ -11,11 +11,10 @@
 find_path(PCRE2_INCLUDE_DIR NAMES pcre2.h)
 find_library(PCRE2-8_LIBRARY NAMES pcre2-8 pcre2-8d pcre2-8-static pcre2-8-staticd NAMES_PER_DIR)
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(PCRE2-8
-                                  FOUND_VAR PCRE2-8_FOUND
+find_package_handle_standard_args(PCRE2
                                   REQUIRED_VARS PCRE2-8_LIBRARY PCRE2_INCLUDE_DIR)
 mark_as_advanced(PCRE2_INCLUDE_DIR PCRE2-8_LIBRARY)
-if(PCRE2-8_FOUND)
+if(PCRE2_FOUND)
     list(APPEND PCRE2_LIBRARIES ${PCRE2-8_LIBRARY})
     set(PCRE2_INCLUDE_DIRS ${PCRE2_INCLUDE_DIR})
     if(NOT TARGET PCRE2::PCRE2-8)
