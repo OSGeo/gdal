@@ -57,6 +57,7 @@ class OGRIDFDataSource final: public GDALDataset
 
     virtual int                 GetLayerCount() override;
     virtual OGRLayer*           GetLayer( int ) override;
+    virtual int                 TestCapability( const char * pszCap ) override;
 };
 
 /************************************************************************/
