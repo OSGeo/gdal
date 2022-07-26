@@ -168,6 +168,16 @@ GIntBig OGRCADLayer::GetFeatureCount( int bForce )
     return poCADLayer.getGeometryCount();
 }
 
+int OGRCADLayer::TestCapability(const char *pszCap)
+{
+    if( EQUAL(pszCap, OLCMeasuredGeometries) )
+        return true;
+    if( EQUAL(pszCap, OLCCurveGeometries) )
+        return true;
+
+    return FALSE;
+}
+
 OGRCADLayer::~OGRCADLayer()
 {
     if( poSpatialRef )

@@ -59,7 +59,7 @@ public:
     OGRSpatialReference *GetSpatialRef() override { return poSpatialRef; }
     OGRFeatureDefn  *GetLayerDefn() override { return poFeatureDefn; }
     std::set< CPLString > asFeaturesAttributes;
-    int             TestCapability( const char * ) override { return( FALSE ); }
+    int             TestCapability( const char * ) override;
 };
 
 class GDALCADDataset final: public GDALDataset
