@@ -71,6 +71,29 @@ python -m pip install -r ../autotest/requirements.txt
 pytest autotest
 ```
 
+## Build GDAL: use Vagrant
+
+Make sure the Vagrant binary is installed on your system.
+
+Perform inital setup of the Vagrant GDAL virtual machine:
+```bash
+# VAGRANT_VM_CPU=number_of_cpus
+vagrant up
+```
+
+And then to incrementally develop into it:
+```bash
+vagrant ssh
+ninja
+```
+
+Note that the following directories on the host will be created (and can be
+removed if no longer needed the Vagrant environment):
+- ../apt-cache/ubuntu/jammy64: contains a cache of Ubuntu packages of the VM,
+  to allow faster VM reconstruction
+- build_vagrant: CMake build directory
+- ccache_vagrant: CCache directory
+
 ## Build GDAL: Autotools
 
 > **Note**

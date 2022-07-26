@@ -145,8 +145,15 @@ namespace tut
         "   <Argument type='builtin' value='scale'>"
         "   </Argument>"
         "</PixelFunctionArgumentsList>";
-    const char src[] = "data/pixelfn.vrt";
-    struct test_pixelfn_data {};
+
+    struct test_pixelfn_data {
+        std::string src_;
+        test_pixelfn_data() {
+            src_ = tut::common::data_basedir;
+            src_ += SEP;
+            src_ += "pixelfn.vrt";
+        }
+    };
 
     // Register test group
     typedef test_group<test_pixelfn_data> group;
@@ -159,7 +166,7 @@ namespace tut
     void object::test<1>()
     {
         GDALAddDerivedBandPixelFuncWithArgs("custom", CustomPixelFuncWithMetadata, pszFuncMetadata);
-        GDALDatasetH ds = GDALOpen(src, GA_ReadOnly);
+        GDALDatasetH ds = GDALOpen(src_.c_str(), GA_ReadOnly);
         ensure("Can't open dataset", nullptr != ds);
 
         GDALRasterBandH band = GDALGetRasterBand(ds, 1);
@@ -180,7 +187,7 @@ namespace tut
     object::test<2>()
     {
         GDALAddDerivedBandPixelFuncWithArgs("custom2", CustomPixelFunc, nullptr);
-        GDALDatasetH ds = GDALOpen(src, GA_ReadOnly);
+        GDALDatasetH ds = GDALOpen(src_.c_str(), GA_ReadOnly);
         ensure("Can't open dataset", nullptr != ds);
 
         GDALRasterBandH band = GDALGetRasterBand(ds, 1);
@@ -205,7 +212,7 @@ namespace tut
     object::test<3>()
     {
         GDALAddDerivedBandPixelFunc("custom3", CustomPixelFuncNoArgs);
-        GDALDatasetH ds = GDALOpen(src, GA_ReadOnly);
+        GDALDatasetH ds = GDALOpen(src_.c_str(), GA_ReadOnly);
         ensure("Can't open dataset", nullptr != ds);
 
         GDALRasterBandH band = GDALGetRasterBand(ds, 1);

@@ -100,7 +100,8 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(
         m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         const auto org = crs->org();
         const auto code = crs->code();
-        CPLString wkt = crs->wkt() ? crs->wkt()->c_str() : "";
+        const auto crs_wkt = crs->wkt();
+        CPLString wkt = crs_wkt ? crs_wkt->c_str() : "";
         double dfCoordEpoch = 0;
         if( STARTS_WITH_CI( wkt.c_str(), "COORDINATEMETADATA[") )
         {
