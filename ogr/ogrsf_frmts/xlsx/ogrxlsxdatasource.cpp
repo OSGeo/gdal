@@ -249,6 +249,10 @@ int OGRXLSXDataSource::TestCapability( const char * pszCap )
         return bUpdatable;
     else if( EQUAL(pszCap,ODsCRandomLayerWrite) )
         return bUpdatable;
+    else if( EQUAL(pszCap,ODsCMeasuredGeometries) )
+        return TRUE;
+    else if( EQUAL(pszCap,ODsCCurveGeometries) )
+        return TRUE;
     else
         return FALSE;
 }
