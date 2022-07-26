@@ -447,3 +447,15 @@ void OGRParquetDataset::ReleaseResultSet( OGRLayer * poResultsSet )
 {
     delete poResultsSet;
 }
+
+/************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
+
+int OGRParquetDataset::TestCapability( const char * pszCap )
+{
+    if( EQUAL(pszCap,ODsCMeasuredGeometries) )
+        return true;
+
+    return false;
+}
