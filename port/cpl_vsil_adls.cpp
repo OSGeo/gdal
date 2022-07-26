@@ -993,8 +993,8 @@ bool VSIADLSFSHandler::SetFileMetadata( const char * pszFilename,
                         EQUAL(pszKey, "x-ms-client-request-id") ||
                         STARTS_WITH_CI(pszKey, "If-"))) )
                 {
-                    char* pszHeader = CPLStrdup(CPLSPrintf("%s: %s", pszKey, pszValue));
-                    aosList.AddStringDirectly(pszHeader);
+                    const char* pszHeader = CPLSPrintf("%s: %s", pszKey, pszValue);
+                    aosList.AddString(pszHeader);
                     headers = curl_slist_append(headers, pszHeader);
                 }
                 else

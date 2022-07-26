@@ -634,6 +634,7 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
             if( bError == false && pszGmlString != nullptr &&
                 pszFromId != nullptr && pszToId != nullptr )
             {
+                // coverity[tainted_data]
                 CPLXMLNode *psNode = CPLParseXMLString(pszGmlString);
                 if( psNode != nullptr )
                 {

@@ -642,7 +642,8 @@ CPLStringList &CPLStringList::Sort()
 
 {
     Count();
-    MakeOurOwnCopy();
+    if( !MakeOurOwnCopy() )
+        return *this;
 
     if( nCount )
         qsort( papszList, nCount, sizeof(char*), llCompareStr );
