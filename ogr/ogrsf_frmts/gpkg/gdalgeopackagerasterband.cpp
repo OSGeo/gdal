@@ -46,40 +46,8 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 GDALGPKGMBTilesLikePseudoDataset::GDALGPKGMBTilesLikePseudoDataset() :
-    m_bNew(false),
-    m_bHasModifiedTiles(false),
-    m_eDT(GDT_Byte),
-    m_nDTSize(1),
-    m_dfOffset(0.0),
-    m_dfScale(1.0),
-    m_dfPrecision(1.0),
-    m_usGPKGNull(0),
-    m_nZoomLevel(-1),
-    m_pabyCachedTiles(nullptr),
-    m_nShiftXTiles(0),
-    m_nShiftXPixelsMod(0),
-    m_nShiftYTiles(0),
-    m_nShiftYPixelsMod(0),
-    m_nTileMatrixWidth(0),
-    m_nTileMatrixHeight(0),
-    m_eTF(GPKG_TF_PNG_JPEG),
-    m_bPNGSupports2Bands(true),
-    m_bPNGSupportsCT(true),
-    m_nZLevel(6),
-    m_nQuality(75),
-    m_bDither(false),
-    m_poCT(nullptr),
-    m_bTriedEstablishingCT(false),
-    m_pabyHugeColorArray(nullptr),
-    m_pMyVFS(nullptr),
-    m_hTempDB(nullptr),
-    m_nLastSpaceCheckTimestamp(0),
     m_bForceTempDBCompaction(
-        CPLTestBool(CPLGetConfigOption("GPKG_FORCE_TEMPDB_COMPACTION", "NO"))),
-    m_nAge(0),
-    m_nTileInsertionCount(0),
-    m_poParentDS(nullptr),
-    m_bInWriteTile(false)
+        CPLTestBool(CPLGetConfigOption("GPKG_FORCE_TEMPDB_COMPACTION", "NO")))
 {
     for( int i = 0; i < 4; i++ )
     {
@@ -152,9 +120,7 @@ void GDALGPKGMBTilesLikePseudoDataset::SetGlobalOffsetScale(double dfOffset,
 
 GDALGPKGMBTilesLikeRasterBand::GDALGPKGMBTilesLikeRasterBand(
     GDALGPKGMBTilesLikePseudoDataset* poTPD, int nTileWidth, int nTileHeight) :
-    m_poTPD(poTPD),
-    m_bHasNoData(false),
-    m_dfNoDataValue(0.0)
+    m_poTPD(poTPD)
 {
     eDataType = m_poTPD->m_eDT;
     m_nDTSize = m_poTPD->m_nDTSize;
@@ -356,7 +322,7 @@ GDALColorInterp GDALGPKGMBTilesLikeRasterBand::GetColorInterpretation()
     else if( poDS->GetRasterCount() == 2 )
         return (nBand == 1) ? GCI_GrayIndex : GCI_AlphaBand;
     else
-        return (GDALColorInterp) (GCI_RedBand + (nBand - 1));
+        return static_cast<GDALColorInterp>(GCI_RedBand + (nBand - 1));
 }
 
 /************************************************************************/
@@ -624,11 +590,11 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
         for(int i=0;i<nEntries;i++)
         {
             const GDALColorEntry* psEntry = m_poCT->GetColorEntry(i);
-            GByte c1 = (GByte)psEntry->c1;
-            GByte c2 = (GByte)psEntry->c2;
-            GByte c3 = (GByte)psEntry->c3;
+            GByte c1 = static_cast<GByte>(psEntry->c1);
+            GByte c2 = static_cast<GByte>(psEntry->c2);
+            GByte c3 = static_cast<GByte>(psEntry->c3);
             GUInt32 nVal = c1 + (c2 << 8) + (c3 << 16);
-            if( nTileBandCount == 4 ) nVal += ((GByte)psEntry->c4 << 24);
+            if( nTileBandCount == 4 ) nVal += (static_cast<GUInt32>(psEntry->c4) << 24);
             oMapEntryToIndex[nVal] = i;
         }
         int iBestEntryFor0 = GPKGFindBestEntry(m_poCT, 0, 0, 0, 0, nTileBandCount);
@@ -715,10 +681,10 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
             for( int i = 0; i < nEntries; i++ )
             {
                 const GDALColorEntry* psEntry = poCT->GetColorEntry(i);
-                abyCT[4*i] = (GByte)psEntry->c1;
-                abyCT[4*i+1] = (GByte)psEntry->c2;
-                abyCT[4*i+2] = (GByte)psEntry->c3;
-                abyCT[4*i+3] = (GByte)psEntry->c4;
+                abyCT[4*i] = static_cast<GByte>(psEntry->c1);
+                abyCT[4*i+1] = static_cast<GByte>(psEntry->c2);
+                abyCT[4*i+2] = static_cast<GByte>(psEntry->c3);
+                abyCT[4*i+3] = static_cast<GByte>(psEntry->c4);
             }
             for( int i = nEntries; i < 256; i++ )
             {
@@ -1112,7 +1078,7 @@ retry:
                 GByte* pabyDest = nullptr;
                 if( iBand == nBand )
                 {
-                    pabyDest = (GByte*)pData;
+                    pabyDest = static_cast<GByte*>(pData);
                 }
                 else
                 {
@@ -1139,7 +1105,7 @@ retry:
                         poBlock->DropLock();
                         goto retry;
                     }
-                    pabyDest = (GByte*) poBlock->GetDataRef();
+                    pabyDest = static_cast<GByte*>(poBlock->GetDataRef());
                 }
 
                 // Composite tile data into block data
@@ -1247,7 +1213,7 @@ static bool WEBPSupports4Bands()
     static int bRes = -1;
     if( bRes < 0 )
     {
-        GDALDriver* poDrv = (GDALDriver*) GDALGetDriverByName("WEBP");
+        GDALDriver* poDrv = GDALDriver::FromHandle(GDALGetDriverByName("WEBP"));
         if( poDrv == nullptr || CPLTestBool(CPLGetConfigOption("GPKG_SIMUL_WEBP_3BAND", "FALSE")) )
             bRes = false;
         else
@@ -1744,7 +1710,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
         CPLAssert(false);
     }
 
-    GDALDriver* l_poDriver = (GDALDriver*) GDALGetDriverByName(pszDriverName);
+    GDALDriver* l_poDriver = GDALDriver::FromHandle(GDALGetDriverByName(pszDriverName));
     if( l_poDriver != nullptr)
     {
         auto poMEMDS = MEMDataset::Create("", nBlockXSize, nBlockYSize,
@@ -2075,9 +2041,9 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             if( m_pabyHugeColorArray == nullptr )
             {
                 if( nBlockXSize <= 65536 / nBlockYSize )
-                    m_pabyHugeColorArray = (GByte*) VSIMalloc(MEDIAN_CUT_AND_DITHER_BUFFER_SIZE_65536);
+                    m_pabyHugeColorArray = VSIMalloc(MEDIAN_CUT_AND_DITHER_BUFFER_SIZE_65536);
                 else
-                    m_pabyHugeColorArray = (GByte*) VSIMalloc2(256 * 256 * 256, sizeof(GUInt32));
+                    m_pabyHugeColorArray = VSIMalloc2(256 * 256 * 256, sizeof(GUInt32));
             }
 
             GDALColorTable* poCT = new GDALColorTable();
@@ -2091,7 +2057,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                                        nullptr,
                                        256, /* max colors */
                                        8, /* bit depth */
-                                       (GUInt32*)m_pabyHugeColorArray, /* preallocated histogram */
+                                       static_cast<GUInt32*>(m_pabyHugeColorArray), /* preallocated histogram */
                                        poCT,
                                        nullptr, nullptr );
 
@@ -2101,7 +2067,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                                poMEMDS->GetRasterBand(1),
                                poCT,
                                8, /* bit depth */
-                               (GInt16*)m_pabyHugeColorArray, /* pasDynamicColorMap */
+                               static_cast<GInt16*>(m_pabyHugeColorArray), /* pasDynamicColorMap */
                                m_bDither,
                                nullptr, nullptr );
             poMEMDS->GetRasterBand(1)->SetColorTable(poCT);
@@ -2115,10 +2081,10 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             for( int i = 0; i < nEntries; i++ )
             {
                 const GDALColorEntry* psEntry = m_poCT->GetColorEntry(i);
-                abyCT[4*i] = (GByte)psEntry->c1;
-                abyCT[4*i+1] = (GByte)psEntry->c2;
-                abyCT[4*i+2] = (GByte)psEntry->c3;
-                abyCT[4*i+3] = (GByte)psEntry->c4;
+                abyCT[4*i] = static_cast<GByte>(psEntry->c1);
+                abyCT[4*i+1] = static_cast<GByte>(psEntry->c2);
+                abyCT[4*i+2] = static_cast<GByte>(psEntry->c3);
+                abyCT[4*i+3] = static_cast<GByte>(psEntry->c4);
             }
             for( int i = nEntries; i<256 ;i++ )
             {
@@ -2257,7 +2223,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             }
             else
             {
-                sqlite3_bind_blob( hStmt, 1, pabyBlob, (int)nBlobSize, CPLFree);
+                sqlite3_bind_blob( hStmt, 1, pabyBlob, static_cast<int>(nBlobSize), CPLFree);
                 rc = sqlite3_step( hStmt );
                 if( rc == SQLITE_DONE )
                     eErr = CE_None;
@@ -2440,7 +2406,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::FlushRemainingShiftedTiles(bool bPartia
                         for( int iBand = 1; !bFoundDirtyBlock && iBand <= nBands; iBand ++ )
                         {
                             GDALRasterBlock* poBlock =
-                                        ((GDALGPKGMBTilesLikeRasterBand*)IGetRasterBand(iBand))->
+                                        cpl::down_cast<GDALGPKGMBTilesLikeRasterBand*>(IGetRasterBand(iBand))->
                                                     AccessibleTryGetLockedBlockRef(nBlockXOff + iX, nBlockYOff + iY);
                             if( poBlock )
                             {
@@ -2511,7 +2477,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::FlushRemainingShiftedTiles(bool bPartia
                     {
                         const int nBytes = sqlite3_column_bytes( hNewStmt, 0 );
                         GIntBig nTileId = (m_eDT == GDT_Byte ) ? 0 : sqlite3_column_int64( hNewStmt, 1 );
-                        GByte* pabyRawData = (GByte*)sqlite3_column_blob( hNewStmt, 0 );
+                        GByte* pabyRawData = const_cast<GByte*>(static_cast<const GByte*>(sqlite3_column_blob( hNewStmt, 0 )));
                         CPLString osMemFileName;
                         osMemFileName.Printf("/vsimem/gpkg_read_tile_%p", this);
                         VSILFILE * fp = VSIFileFromMemBuffer( osMemFileName.c_str(), pabyRawData,
@@ -3128,7 +3094,7 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff
                 GByte* pabySrc = nullptr;
                 if( iBand == nBand )
                 {
-                    pabySrc = (GByte*)pData;
+                    pabySrc = static_cast<GByte*>(pData);
                 }
                 else
                 {
@@ -3141,11 +3107,11 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff
                     else
                     {
                         poBlock =
-                            ((GDALGPKGMBTilesLikeRasterBand*)poDS->GetRasterBand(iBand))->
+                            cpl::down_cast<GDALGPKGMBTilesLikeRasterBand*>(poDS->GetRasterBand(iBand))->
                                         TryGetLockedBlockRef(nBlockXOff, nBlockYOff);
                         if( poBlock && poBlock->GetDirty() )
                         {
-                            pabySrc = (GByte*)poBlock->GetDataRef();
+                            pabySrc = static_cast<GByte*>(poBlock->GetDataRef());
                             poBlock->MarkClean();
                         }
                         else
@@ -3371,8 +3337,7 @@ void GDALGPKGMBTilesLikeRasterBand::SetNoDataValueInternal( double dfNoDataValue
 
 GDALGeoPackageRasterBand::GDALGeoPackageRasterBand(
     GDALGeoPackageDataset* poDSIn, int nTileWidth, int nTileHeight) :
-            GDALGPKGMBTilesLikeRasterBand(poDSIn, nTileWidth, nTileHeight),
-            m_bStatsComputed(false)
+    GDALGPKGMBTilesLikeRasterBand(poDSIn, nTileWidth, nTileHeight)
 {
     poDS = poDSIn;
 }
@@ -3384,7 +3349,7 @@ GDALGeoPackageRasterBand::GDALGeoPackageRasterBand(
 int GDALGeoPackageRasterBand::GetOverviewCount()
 {
     GDALGeoPackageDataset *poGDS
-        = reinterpret_cast<GDALGeoPackageDataset *>( poDS );
+        = cpl::down_cast<GDALGeoPackageDataset *>( poDS );
     return poGDS->m_nOverviewCount;
 }
 

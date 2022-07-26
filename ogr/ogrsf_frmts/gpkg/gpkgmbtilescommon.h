@@ -59,53 +59,56 @@ class GDALGPKGMBTilesLikePseudoDataset
 {
     friend class GDALGPKGMBTilesLikeRasterBand;
 
+    GDALGPKGMBTilesLikePseudoDataset(const GDALGPKGMBTilesLikePseudoDataset&) = delete;
+    GDALGPKGMBTilesLikePseudoDataset& operator=(const GDALGPKGMBTilesLikePseudoDataset&) = delete;
+
   protected:
-    bool                m_bNew;
-    bool                m_bHasModifiedTiles;
+    bool                m_bNew = false;
+    bool                m_bHasModifiedTiles = false;
 
-    CPLString           m_osRasterTable;
-    GDALDataType        m_eDT;
-    int                 m_nDTSize;
-    double              m_dfOffset;
-    double              m_dfScale;
-    double              m_dfPrecision;
-    GUInt16             m_usGPKGNull;
-    int                 m_nZoomLevel;
-    GByte              *m_pabyCachedTiles;
+    CPLString           m_osRasterTable{};
+    GDALDataType        m_eDT = GDT_Byte;
+    int                 m_nDTSize = 1;
+    double              m_dfOffset = 0.0;
+    double              m_dfScale = 1.0;
+    double              m_dfPrecision = 1.0;
+    GUInt16             m_usGPKGNull = 0;
+    int                 m_nZoomLevel = -1;
+    GByte              *m_pabyCachedTiles = nullptr;
     CachedTileDesc      m_asCachedTilesDesc[4];
-    int                 m_nShiftXTiles;
-    int                 m_nShiftXPixelsMod;
-    int                 m_nShiftYTiles;
-    int                 m_nShiftYPixelsMod;
-    int                 m_nTileMatrixWidth;
-    int                 m_nTileMatrixHeight;
+    int                 m_nShiftXTiles = 0;
+    int                 m_nShiftXPixelsMod = 0;
+    int                 m_nShiftYTiles = 0;
+    int                 m_nShiftYPixelsMod = 0;
+    int                 m_nTileMatrixWidth = 0;
+    int                 m_nTileMatrixHeight = 0;
 
-    GPKGTileFormat      m_eTF;
-    bool                m_bPNGSupports2Bands; // for test/debug purposes only. true is the nominal value
-    bool                m_bPNGSupportsCT; // for test/debug purposes only. true is the nominal value
-    int                 m_nZLevel;
-    int                 m_nQuality;
-    bool                m_bDither;
+    GPKGTileFormat      m_eTF = GPKG_TF_PNG_JPEG;
+    bool                m_bPNGSupports2Bands = true; // for test/debug purposes only. true is the nominal value
+    bool                m_bPNGSupportsCT = true; // for test/debug purposes only. true is the nominal value
+    int                 m_nZLevel = 6;
+    int                 m_nQuality = 75;
+    bool                m_bDither = false;
 
-    GDALColorTable*     m_poCT;
-    bool                m_bTriedEstablishingCT;
-    GByte*              m_pabyHugeColorArray;
+    GDALColorTable*     m_poCT = nullptr;
+    bool                m_bTriedEstablishingCT = false;
+    void*               m_pabyHugeColorArray = nullptr;
 
-    CPLString           m_osWHERE;
+    CPLString           m_osWHERE{};
 
-    sqlite3_vfs*        m_pMyVFS;
-    sqlite3            *m_hTempDB;
-    CPLString           m_osTempDBFilename;
-    time_t              m_nLastSpaceCheckTimestamp;
-    bool                m_bForceTempDBCompaction;
-    GIntBig             m_nAge;
+    sqlite3_vfs*        m_pMyVFS = nullptr;
+    sqlite3            *m_hTempDB = nullptr;
+    CPLString           m_osTempDBFilename{};
+    time_t              m_nLastSpaceCheckTimestamp = 0;
+    bool                m_bForceTempDBCompaction = false;
+    GIntBig             m_nAge = 0;
 
-    int                 m_nTileInsertionCount;
+    int                 m_nTileInsertionCount = 0;
 
-    GDALGPKGMBTilesLikePseudoDataset* m_poParentDS;
+    GDALGPKGMBTilesLikePseudoDataset* m_poParentDS = nullptr;
 
   private:
-        bool                    m_bInWriteTile;
+        bool                    m_bInWriteTile = false;
         CPLErr                  WriteTileInternal(); /* should only be called by WriteTile() */
         GIntBig                 GetTileId(int nRow, int nCol);
         bool                    DeleteTile(int nRow, int nCol);
@@ -157,12 +160,15 @@ class GDALGPKGMBTilesLikePseudoDataset
 
 class GDALGPKGMBTilesLikeRasterBand: public GDALPamRasterBand
 {
+        GDALGPKGMBTilesLikeRasterBand(const GDALGPKGMBTilesLikeRasterBand&) = delete;
+        GDALGPKGMBTilesLikeRasterBand& operator=(const GDALGPKGMBTilesLikeRasterBand&) = delete;
+
     protected:
-        GDALGPKGMBTilesLikePseudoDataset* m_poTPD;
-        int                               m_nDTSize;
-        bool                              m_bHasNoData;
-        double                            m_dfNoDataValue;
-        CPLString                         m_osUom;
+        GDALGPKGMBTilesLikePseudoDataset* m_poTPD = nullptr;
+        int                               m_nDTSize = 0;
+        bool                              m_bHasNoData = false;
+        double                            m_dfNoDataValue = 0;
+        CPLString                         m_osUom{};
 
     public:
                                 GDALGPKGMBTilesLikeRasterBand(GDALGPKGMBTilesLikePseudoDataset* poTPD,

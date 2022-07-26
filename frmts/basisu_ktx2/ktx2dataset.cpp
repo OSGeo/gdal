@@ -56,6 +56,8 @@ class KTX2Dataset final: public GDALPamDataset
 
     void*                   GetDecodedData(uint32_t& nLineStride);
 
+    CPL_DISALLOW_COPY_ASSIGN(KTX2Dataset)
+
 public:
                             ~KTX2Dataset() override;
                             KTX2Dataset(uint32_t iLayer, uint32_t iFace,

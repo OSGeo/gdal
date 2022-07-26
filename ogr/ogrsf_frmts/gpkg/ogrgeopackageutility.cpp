@@ -156,7 +156,7 @@ OGRFieldType GPkgFieldToOGR(const char *pszGpkgType, OGRFieldSubType& eSubType,
             CPLError(CE_Warning, CPLE_AppDefined,
                     "Field format '%s' not supported", pszGpkgType);
         }
-        return (OGRFieldType)(OFTMaxType + 1);
+        return static_cast<OGRFieldType>(OFTMaxType + 1);
     }
 }
 
@@ -242,7 +242,7 @@ GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId,
 
     GByte byFlags = 0;
     GByte byEnv = 1;
-    OGRwkbByteOrder eByteOrder = (OGRwkbByteOrder)CPL_IS_LSB;
+    OGRwkbByteOrder eByteOrder = static_cast<OGRwkbByteOrder>(CPL_IS_LSB);
     OGRErr err;
     OGRBoolean bPoint = (wkbFlatten(poGeometry->getGeometryType()) == wkbPoint);
     OGRBoolean bEmpty = poGeometry->IsEmpty();
@@ -259,7 +259,7 @@ GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId,
 
     /* Total BLOB size is header + WKB size */
     size_t nWkbLen = nHeaderLen + poGeometry->WkbSize();
-    GByte *pabyWkb = (GByte *)CPLMalloc(nWkbLen);
+    GByte *pabyWkb = static_cast<GByte *>(CPLMalloc(nWkbLen));
     if (pnWkbLen)
         *pnWkbLen = nWkbLen;
 
@@ -309,7 +309,7 @@ GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId,
     /* Write envelope */
     if ( ! bEmpty && ! bPoint )
     {
-        double *padPtr = (double*)(pabyWkb+8);
+        double *padPtr = reinterpret_cast<double*>(pabyWkb+8);
         if ( iDims == 3 )
         {
             OGREnvelope3D oEnv3d;
@@ -363,7 +363,7 @@ OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t nGpkgLen, GPkgHeader *poH
     GByte byFlags = pabyGpkg[3];
     poHeader->bEmpty = (byFlags & (0x01 << 4)) >> 4;
     poHeader->bExtended = (byFlags & (0x01 << 5)) >> 5;
-    poHeader->eByteOrder = (OGRwkbByteOrder)(byFlags & 0x01);
+    poHeader->eByteOrder = static_cast<OGRwkbByteOrder>(byFlags & 0x01);
     poHeader->bExtentHasXY = false;
     poHeader->bExtentHasZ = false;
 #ifdef notdef
@@ -423,7 +423,7 @@ OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t nGpkgLen, GPkgHeader *poH
     }
 
     /* Envelope */
-    double *padPtr = (double*)(pabyGpkg+8);
+    const double *padPtr = reinterpret_cast<const double*>(pabyGpkg+8);
     if ( poHeader->bExtentHasXY )
     {
         poHeader->MinX = padPtr[0];
