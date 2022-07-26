@@ -117,6 +117,8 @@ public:
                                      OGRGeometry *poSpatialFilter,
                                      const char *pszDialect ) override;
     void                 ReleaseResultSet( OGRLayer * poResultsSet ) override;
+
+    int TestCapability( const char * ) override;
 };
 
 /************************************************************************/

@@ -919,6 +919,9 @@ int OGRVRTDataSource::TestCapability( const char *pszCap )
 {
     if( EQUAL(pszCap, ODsCCurveGeometries) )
         return TRUE;
+    else if( EQUAL(pszCap, ODsCMeasuredGeometries) )
+        return true;
+
     return FALSE;
 }
 

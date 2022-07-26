@@ -595,6 +595,20 @@ OGRLayer* OGRIDFDataSource::GetLayer( int iLayer )
 }
 
 /************************************************************************/
+/*                              TestCapability()                        */
+/************************************************************************/
+
+int OGRIDFDataSource::TestCapability( const char* pszCap )
+{
+    if( EQUAL(pszCap,ODsCMeasuredGeometries) )
+        return true;
+    else if( EQUAL(pszCap,ODsCCurveGeometries) )
+        return true;
+
+    return false;
+}
+
+/************************************************************************/
 /*                           OGRVDVDataSource()                         */
 /************************************************************************/
 

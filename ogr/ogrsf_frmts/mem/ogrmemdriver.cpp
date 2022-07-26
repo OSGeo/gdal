@@ -94,6 +94,8 @@ void RegisterOGRMEM()
 
     OGRSFDriver *poDriver = new OGRMemDriver;
 
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONFIELDDATATYPES,
         "Integer Integer64 Real String Date DateTime Time IntegerList "

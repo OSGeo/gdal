@@ -38,3 +38,16 @@ OGRFeatherDataset::OGRFeatherDataset(std::unique_ptr<arrow::MemoryPool>&& poMemo
     OGRArrowDataset(std::move(poMemoryPool))
 {
 }
+
+/************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
+
+int OGRFeatherDataset::TestCapability( const char * pszCap )
+
+{
+    if( EQUAL(pszCap,ODsCMeasuredGeometries) )
+        return true;
+
+    return false;
+}

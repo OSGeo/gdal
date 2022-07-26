@@ -763,8 +763,12 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
 /*                         TestCapability()                            */
 /***********************************************************************/
 
-int OGROpenFileGDBDataSource::TestCapability( const char * /* pszCap */ )
+int OGROpenFileGDBDataSource::TestCapability( const char * pszCap )
 {
+    if( EQUAL(pszCap,ODsCMeasuredGeometries) )
+        return TRUE;
+    else if( EQUAL(pszCap,ODsCCurveGeometries) )
+        return TRUE;
     return FALSE;
 }
 
