@@ -37,7 +37,7 @@ endif()
 
 if (GDAL_USE_PCRE2)
   target_compile_definitions(ogr_SQLite PRIVATE -DHAVE_PCRE2)
-  gdal_target_link_libraries(ogr_SQLite PRIVATE PCRE2::PCRE2)
+  gdal_target_link_libraries(ogr_SQLite PRIVATE PCRE2::PCRE2-8)
 elseif (GDAL_USE_PCRE)
   target_compile_definitions(ogr_SQLite PRIVATE -DHAVE_PCRE)
   gdal_target_link_libraries(ogr_SQLite PRIVATE PCRE::PCRE)
