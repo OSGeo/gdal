@@ -52,6 +52,7 @@
 #include "ogr_swq.h"
 
 #include "filegdb_fielddomain.h"
+#include "filegdb_relationship.h"
 
 CPL_CVSID("$Id$")
 
@@ -526,13 +527,15 @@ int OGROpenFileGDBDataSource::OpenFileGDBv10(int iGDBItems,
     if( !oTable.Open(osFilename, false) )
         return FALSE;
 
-    int iUUID = oTable.GetFieldIdx("UUID");
-    int iName = oTable.GetFieldIdx("Name");
-    int iPath = oTable.GetFieldIdx("Path");
-    int iDefinition = oTable.GetFieldIdx("Definition");
-    int iDocumentation = oTable.GetFieldIdx("Documentation");
-    if( iUUID < 0 || iName < 0 || iPath < 0 || iDefinition < 0 || iDocumentation < 0 ||
+    const int iUUID = oTable.GetFieldIdx("UUID");
+    const int iType = oTable.GetFieldIdx("Type");
+    const int iName = oTable.GetFieldIdx("Name");
+    const int iPath = oTable.GetFieldIdx("Path");
+    const int iDefinition = oTable.GetFieldIdx("Definition");
+    const int iDocumentation = oTable.GetFieldIdx("Documentation");
+    if( iUUID < 0 || iType < 0 || iName < 0 || iPath < 0 || iDefinition < 0 || iDocumentation < 0 ||
         oTable.GetField(iUUID)->GetType() != FGFT_GLOBALID ||
+        oTable.GetField(iType)->GetType() != FGFT_GUID ||
         oTable.GetField(iName)->GetType() != FGFT_STRING ||
         oTable.GetField(iPath)->GetType() != FGFT_STRING ||
         oTable.GetField(iDefinition)->GetType() != FGFT_XML ||
@@ -555,6 +558,15 @@ int OGROpenFileGDBDataSource::OpenFileGDBv10(int iGDBItems,
             if( oTable.HasGotError() )
                 break;
             continue;
+        }
+
+        CPLString osType;
+        const OGRField* psTypeField = oTable.GetFieldValue(iType);
+        if( psTypeField != nullptr )
+        {
+            const char* pszType = psTypeField->String;
+            if( pszType )
+                osType = pszType;
         }
 
         std::string osPath;
@@ -599,6 +611,16 @@ int OGROpenFileGDBDataSource::OpenFileGDBv10(int iGDBItems,
                 poSubGroup->SetDefinition(osDefinition);
                 oMapPathToFeatureDataset[osPath] = poSubGroup;
                 poRootGroup->m_apoSubGroups.emplace_back(poSubGroup);
+            }
+        }
+        else if (psField != nullptr && osType.tolower().compare(pszRelationshipTypeUUID) == 0)
+        {
+            // relationship item
+            auto poRelationship= ParseXMLRelationshipDef(psField->String);
+            if( poRelationship )
+            {
+                const auto relationshipName = poRelationship->GetName();
+                m_osMapRelationships[relationshipName] = std::move(poRelationship);
             }
         }
     }

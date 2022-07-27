@@ -1817,6 +1817,126 @@ def test_ogr_openfilegdb_shape_length_shape_area_as_default_in_field_defn():
 
 
 ###############################################################################
+# Test reading relationships
+
+
+def test_ogr_openfilegdb_read_relationships():
+    # no relationships
+    ds = gdal.OpenEx('data/filegdb/Domains.gdb', gdal.OF_VECTOR)
+    assert ds.GetRelationshipNames() is None
+
+    # has relationships
+    ds = gdal.OpenEx('data/filegdb/relationships.gdb', gdal.OF_VECTOR)
+    assert set(ds.GetRelationshipNames()) == {'composite_many_to_many',
+                                              'composite_one_to_many',
+                                              'composite_one_to_one',
+                                              'simple_attributed',
+                                              'simple_backward_message_direction',
+                                              'simple_both_message_direction',
+                                              'simple_forward_message_direction',
+                                              'simple_many_to_many',
+                                              'simple_one_to_many',
+                                              'simple_relationship_one_to_one',
+                                              'points__ATTACHREL'}
+
+    assert ds.GetRelationship('xxxx') is None
+
+    rel = ds.GetRelationship('simple_relationship_one_to_one')
+    assert rel is not None
+    assert rel.GetName() == 'simple_relationship_one_to_one'
+    assert rel.GetLeftTableName() == 'table1'
+    assert rel.GetRightTableName() == 'table2'
+    assert rel.GetMappingTableName() == ''
+    assert rel.GetCardinality() == gdal.GRC_ONE_TO_ONE
+    assert rel.GetType() == gdal.GRT_ASSOCIATION
+    assert rel.GetLeftTableFields() == ['pk']
+    assert rel.GetRightTableFields() == ['parent_pk']
+    assert rel.GetLeftMappingTableFields() is None
+    assert rel.GetRightMappingTableFields() is None
+    assert rel.GetForwardPathLabel() == 'my forward path label'
+    assert rel.GetBackwardPathLabel() == 'my backward path label'
+    assert rel.GetRelatedTableType() == 'feature'
+
+    rel = ds.GetRelationship('simple_one_to_many')
+    assert rel is not None
+    assert rel.GetName() == 'simple_one_to_many'
+    assert rel.GetLeftTableName() == 'table1'
+    assert rel.GetRightTableName() == 'table2'
+    assert rel.GetMappingTableName() == ''
+    assert rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
+    assert rel.GetType() == gdal.GRT_ASSOCIATION
+    assert rel.GetLeftTableFields() == ['pk']
+    assert rel.GetRightTableFields() == ['parent_pk']
+    assert rel.GetRelatedTableType() == 'feature'
+
+    rel = ds.GetRelationship('simple_many_to_many')
+    assert rel is not None
+    assert rel.GetName() == 'simple_many_to_many'
+    assert rel.GetLeftTableName() == 'table1'
+    assert rel.GetRightTableName() == 'table2'
+    assert rel.GetMappingTableName() == 'simple_many_to_many'
+    assert rel.GetCardinality() == gdal.GRC_MANY_TO_MANY
+    assert rel.GetType() == gdal.GRT_ASSOCIATION
+    assert rel.GetLeftTableFields() == ['pk']
+    assert rel.GetLeftMappingTableFields() == ['origin_foreign_key']
+    assert rel.GetRightTableFields() == ['parent_pk']
+    assert rel.GetRightMappingTableFields() == ['destination_foreign_key']
+    assert rel.GetRelatedTableType() == 'feature'
+
+    rel = ds.GetRelationship('composite_one_to_one')
+    assert rel is not None
+    assert rel.GetName() == 'composite_one_to_one'
+    assert rel.GetLeftTableName() == 'table1'
+    assert rel.GetRightTableName() == 'table3'
+    assert rel.GetMappingTableName() == ''
+    assert rel.GetCardinality() == gdal.GRC_ONE_TO_ONE
+    assert rel.GetType() == gdal.GRT_COMPOSITE
+    assert rel.GetLeftTableFields() == ['pk']
+    assert rel.GetRightTableFields() == ['parent_pk']
+    assert rel.GetRelatedTableType() == 'feature'
+
+    rel = ds.GetRelationship('composite_one_to_many')
+    assert rel is not None
+    assert rel.GetName() == 'composite_one_to_many'
+    assert rel.GetLeftTableName() == 'table5'
+    assert rel.GetRightTableName() == 'table4'
+    assert rel.GetMappingTableName() == ''
+    assert rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
+    assert rel.GetType() == gdal.GRT_COMPOSITE
+    assert rel.GetLeftTableFields() == ['pk']
+    assert rel.GetRightTableFields() == ['parent_pk']
+    assert rel.GetRelatedTableType() == 'feature'
+
+    rel = ds.GetRelationship('composite_many_to_many')
+    assert rel is not None
+    assert rel.GetName() == 'composite_many_to_many'
+    assert rel.GetLeftTableName() == 'table6'
+    assert rel.GetRightTableName() == 'table7'
+    assert rel.GetMappingTableName() == 'composite_many_to_many'
+    assert rel.GetCardinality() == gdal.GRC_MANY_TO_MANY
+    assert rel.GetType() == gdal.GRT_COMPOSITE
+    assert rel.GetLeftTableFields() == ['pk']
+    assert rel.GetLeftMappingTableFields() == ['origin_foreign_key']
+    assert rel.GetRightTableFields() == ['parent_pk']
+    assert rel.GetRightMappingTableFields() == ['dest_foreign_key']
+    assert rel.GetRelatedTableType() == 'feature'
+
+    rel = ds.GetRelationship('points__ATTACHREL')
+    assert rel is not None
+    assert rel.GetName() == 'points__ATTACHREL'
+    assert rel.GetLeftTableName() == 'points'
+    assert rel.GetRightTableName() == 'points__ATTACH'
+    assert rel.GetMappingTableName() == ''
+    assert rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
+    assert rel.GetType() == gdal.GRT_COMPOSITE
+    assert rel.GetLeftTableFields() == ['OBJECTID']
+    assert rel.GetRightTableFields() == ['REL_OBJECTID']
+    assert rel.GetForwardPathLabel() == 'attachment'
+    assert rel.GetBackwardPathLabel() == 'object'
+    assert rel.GetRelatedTableType() == 'media'
+
+
+###############################################################################
 # Cleanup
 
 

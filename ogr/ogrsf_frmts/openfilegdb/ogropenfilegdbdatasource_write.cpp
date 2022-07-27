@@ -1637,6 +1637,38 @@ bool OGROpenFileGDBDataSource::UpdateFieldDomain(std::unique_ptr<OGRFieldDomain>
     return true;
 }
 
+
+/************************************************************************/
+/*                        GetRelationshipNames()                        */
+/************************************************************************/
+
+std::vector<std::string> OGROpenFileGDBDataSource::GetRelationshipNames( CPL_UNUSED CSLConstList papszOptions ) const
+
+{
+    std::vector<std::string> oasNames;
+    oasNames.reserve(m_osMapRelationships.size());
+    for ( auto it = m_osMapRelationships.begin(); it != m_osMapRelationships.end(); ++it )
+    {
+        oasNames.emplace_back(it->first);
+    }
+    return oasNames;
+}
+
+
+/************************************************************************/
+/*                        GetRelationship()                             */
+/************************************************************************/
+
+const GDALRelationship* OGROpenFileGDBDataSource::GetRelationship(const std::string& name) const
+
+{
+    auto it = m_osMapRelationships.find(name);
+    if (it==m_osMapRelationships.end())
+        return nullptr;
+
+    return it->second.get();
+}
+
 /************************************************************************/
 /*                        StartTransaction()                            */
 /************************************************************************/
