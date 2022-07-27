@@ -226,7 +226,7 @@ The following creation options are available:
 
    -  **MINZOOM**\ =integer: Minimum zoom level at which tiles are
       generated. Defaults to 0.
-   -  **MAXZOOM**\ =integer: Minimum zoom level at which tiles are
+   -  **MAXZOOM**\ =integer: Maximum zoom level at which tiles are
       generated. Defaults to 5. Maximum supported value is 22
    -  **CONF**\ =string: Layer configuration as a JSon serialized
       string.
@@ -301,7 +301,7 @@ Layer creation options (vector)
 
 -  **MINZOOM**\ =integer: Minimum zoom level at which tiles are
    generated. Defaults to the dataset creation option MINZOOM value.
--  **MAXZOOM**\ =integer: Minimum zoom level at which tiles are
+-  **MAXZOOM**\ =integer: Maximum zoom level at which tiles are
    generated. Defaults to the dataset creation option MAXZOOM value.
    Maximum supported value is 22
 -  **NAME**\ =string: Target layer name. Defaults to the layer name, but
@@ -333,7 +333,7 @@ The driver requires the 'metadata' table to contain a name='json' entry,
 that has a 'vector_layers' array describing layers and their schema. See
 :ref:`metadata.json <mvt_metadata_json>`
 
-Note: The driver will make no effort of stiching together geometries for
+Note: The driver will make no effort of stitching together geometries for
 features that overlap several tiles.
 
 Examples:
