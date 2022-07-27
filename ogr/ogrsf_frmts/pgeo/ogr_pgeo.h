@@ -43,6 +43,8 @@
 
 class OGRPGeoDataSource;
 
+constexpr const char* pszRelationshipTypeUUID = "{B606A7E1-FA5B-439C-849C6E9C2481537B}";
+
 class OGRPGeoLayer CPL_NON_FINAL: public OGRLayer
 {
   protected:
@@ -183,6 +185,8 @@ class OGRPGeoDataSource final: public OGRDataSource
 
     std::vector<std::unique_ptr<OGRLayer>> m_apoInvisibleLayers;
 
+    std::map<std::string,std::unique_ptr<GDALRelationship>> m_osMapRelationships{};
+
 #ifndef _WIN32
     mutable bool        m_COUNT_STAR_state_known = false;
     mutable bool        m_COUNT_STAR_working = false;
@@ -212,6 +216,10 @@ class OGRPGeoDataSource final: public OGRDataSource
                                     OGRGeometry *poSpatialFilter,
                                     const char *pszDialect ) override;
     virtual void        ReleaseResultSet( OGRLayer * poLayer ) override;
+
+    std::vector<std::string> GetRelationshipNames(CSLConstList papszOptions = nullptr) const override;
+
+    const GDALRelationship* GetRelationship(const std::string& name) const override;
 
     // Internal use
     CPLODBCSession     *GetSession() { return &oSession; }
