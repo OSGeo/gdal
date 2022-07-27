@@ -5457,7 +5457,7 @@ def test_ogr_gpkg_CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE():
     gdal.Unlink(filename)
 
 ###############################################################################
-# Test (currently minimum) support for related tables extension
+# Test support for related tables extension
 
 
 def test_ogr_gpkg_relations():
@@ -5468,6 +5468,11 @@ def test_ogr_gpkg_relations():
     lyr.CreateField(ogr.FieldDefn('some_id', ogr.OFTInteger))
     lyr = ds.CreateLayer('b')
     lyr.CreateField(ogr.FieldDefn('other_id', ogr.OFTInteger))
+    ds = None
+
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    assert ds.GetRelationshipNames() is None
+
     ds.ExecuteSQL("""CREATE TABLE 'gpkgext_relations' (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           base_table_name TEXT NOT NULL,
@@ -5477,15 +5482,39 @@ def test_ogr_gpkg_relations():
           relation_name TEXT NOT NULL,
           mapping_table_name TEXT NOT NULL UNIQUE
          );""")
-    ds.ExecuteSQL("""CREATE TABLE my_mapping_table(base_id INTEGER NOT NULL, related_id INTEGER NOT NULL);""")
+
+    # not yet valid...
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    assert ds.GetRelationshipNames() is None
+
     ds.ExecuteSQL("INSERT INTO gpkgext_relations VALUES(1, 'a', 'some_id', 'b', 'other_id', 'attributes', 'my_mapping_table')")
     ds.ExecuteSQL("INSERT INTO gpkg_extensions VALUES('gpkgext_relations',NULL,'gpkg_related_tables','http://www.geopackage.org/18-000.html','read-write');")
     ds.ExecuteSQL("INSERT INTO gpkg_extensions VALUES('my_mapping_table',NULL,'gpkg_related_tables','http://www.geopackage.org/18-000.html','read-write');")
     ds = None
 
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    assert ds.GetRelationshipNames() is None
+    ds.ExecuteSQL("""CREATE TABLE my_mapping_table(base_id INTEGER NOT NULL, related_id INTEGER NOT NULL);""")
+
     assert validate(filename), 'validation failed'
 
-    ds = ogr.Open(filename, update=1)
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    assert ds.GetRelationshipNames() == ['a_b_attributes']
+    assert ds.GetRelationship('xxx') is None
+    rel = ds.GetRelationship('a_b_attributes')
+    assert rel is not None
+    assert rel.GetName() == 'a_b_attributes'
+    assert rel.GetLeftTableName() == 'a'
+    assert rel.GetRightTableName() == 'b'
+    assert rel.GetMappingTableName() == 'my_mapping_table'
+    assert rel.GetCardinality() == gdal.GRC_MANY_TO_MANY
+    assert rel.GetType() == gdal.GRT_ASSOCIATION
+    assert rel.GetLeftTableFields() == ['some_id']
+    assert rel.GetRightTableFields() == ['other_id']
+    assert rel.GetLeftMappingTableFields() == ['base_id']
+    assert rel.GetRightMappingTableFields() == ['related_id']
+    assert rel.GetRelatedTableType() == 'attributes'
+
     lyr = ds.GetLayer('a')
     lyr.Rename('a_renamed')
     lyr.AlterFieldDefn(lyr.GetLayerDefn().GetFieldIndex('some_id'),
@@ -5496,19 +5525,63 @@ def test_ogr_gpkg_relations():
     lyr.AlterFieldDefn(lyr.GetLayerDefn().GetFieldIndex('other_id'),
                        ogr.FieldDefn('other_id_renamed', ogr.OFTInteger),
                        ogr.ALTER_ALL_FLAG)
-    ds = None
 
+    assert ds.GetRelationshipNames() == ['a_renamed_b_renamed_attributes']
+    assert ds.GetRelationship('xxx') is None
+    rel = ds.GetRelationship('a_renamed_b_renamed_attributes')
+    assert rel is not None
+    assert rel.GetName() == 'a_renamed_b_renamed_attributes'
+    assert rel.GetLeftTableName() == 'a_renamed'
+    assert rel.GetRightTableName() == 'b_renamed'
+    assert rel.GetMappingTableName() == 'my_mapping_table'
+    assert rel.GetCardinality() == gdal.GRC_MANY_TO_MANY
+    assert rel.GetType() == gdal.GRT_ASSOCIATION
+    assert rel.GetLeftTableFields() == ['some_id_renamed']
+    assert rel.GetRightTableFields() == ['other_id_renamed']
+    assert rel.GetLeftMappingTableFields() == ['base_id']
+    assert rel.GetRightMappingTableFields() == ['related_id']
+    assert rel.GetRelatedTableType() == 'attributes'
+
+    ds = None
     assert validate(filename), 'validation failed'
 
-    ds = ogr.Open(filename, update=1)
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
     ds.ExecuteSQL('DELLAYER:a_renamed')
     sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_extensions WHERE extension_name IN ('related_tables', 'gpkg_related_tables')")
     f = sql_lyr.GetNextFeature()
     assert f is None
     ds.ReleaseResultSet(sql_lyr)
+    assert ds.GetRelationshipNames() is None
     ds = None
 
     assert validate(filename), 'validation failed'
+
+    # user defined relation
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.CreateLayer('a')
+    lyr.CreateField(ogr.FieldDefn('some_id', ogr.OFTInteger))
+    ds.ExecuteSQL("INSERT INTO gpkgext_relations VALUES(1, 'a', 'some_id', 'b', 'other_id', 'custom_type', 'my_mapping_table')")
+    ds.ExecuteSQL("INSERT INTO gpkg_extensions VALUES('gpkgext_relations',NULL,'gpkg_related_tables','http://www.geopackage.org/18-000.html','read-write');")
+    ds.ExecuteSQL("INSERT INTO gpkg_extensions VALUES('my_mapping_table',NULL,'gpkg_related_tables','http://www.geopackage.org/18-000.html','read-write');")
+
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR)
+    assert ds.GetRelationshipNames() == ['custom_type']
+    assert ds.GetRelationship('xxx') is None
+    rel = ds.GetRelationship('custom_type')
+    assert rel is not None
+    assert rel.GetName() == 'custom_type'
+    assert rel.GetLeftTableName() == 'a'
+    assert rel.GetRightTableName() == 'b'
+    assert rel.GetMappingTableName() == 'my_mapping_table'
+    assert rel.GetCardinality() == gdal.GRC_MANY_TO_MANY
+    assert rel.GetType() == gdal.GRT_ASSOCIATION
+    assert rel.GetLeftTableFields() == ['some_id']
+    assert rel.GetRightTableFields() == ['other_id']
+    assert rel.GetLeftMappingTableFields() == ['base_id']
+    assert rel.GetRightMappingTableFields() == ['related_id']
+    assert rel.GetRelatedTableType() == 'features'
+
+    ds = None
 
     gdal.Unlink(filename)
 
