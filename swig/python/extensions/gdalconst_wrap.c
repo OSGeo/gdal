@@ -3665,6 +3665,7 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "DCAP_COORDINATE_EPOCH",SWIG_FromCharPtr(GDAL_DCAP_COORDINATE_EPOCH));
   SWIG_Python_SetConstant(d, "DCAP_MULTIPLE_VECTOR_LAYERS",SWIG_FromCharPtr(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS));
   SWIG_Python_SetConstant(d, "DCAP_FIELD_DOMAINS",SWIG_FromCharPtr(GDAL_DCAP_FIELD_DOMAINS));
+  SWIG_Python_SetConstant(d, "DCAP_RELATIONSHIPS",SWIG_FromCharPtr(GDAL_DCAP_RELATIONSHIPS));
   SWIG_Python_SetConstant(d, "DCAP_RENAME_LAYERS",SWIG_FromCharPtr(GDAL_DCAP_RENAME_LAYERS));
   SWIG_Python_SetConstant(d, "DIM_TYPE_HORIZONTAL_X",SWIG_FromCharPtr(GDAL_DIM_TYPE_HORIZONTAL_X));
   SWIG_Python_SetConstant(d, "DIM_TYPE_HORIZONTAL_Y",SWIG_FromCharPtr(GDAL_DIM_TYPE_HORIZONTAL_Y));
@@ -3716,6 +3717,13 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "GTO_TIP",SWIG_From_int((int)(GTO_TIP)));
   SWIG_Python_SetConstant(d, "GTO_BIT",SWIG_From_int((int)(GTO_BIT)));
   SWIG_Python_SetConstant(d, "GTO_BSQ",SWIG_From_int((int)(GTO_BSQ)));
+  SWIG_Python_SetConstant(d, "GRC_ONE_TO_ONE",SWIG_From_int((int)(GRC_ONE_TO_ONE)));
+  SWIG_Python_SetConstant(d, "GRC_ONE_TO_MANY",SWIG_From_int((int)(GRC_ONE_TO_MANY)));
+  SWIG_Python_SetConstant(d, "GRC_MANY_TO_ONE",SWIG_From_int((int)(GRC_MANY_TO_ONE)));
+  SWIG_Python_SetConstant(d, "GRC_MANY_TO_MANY",SWIG_From_int((int)(GRC_MANY_TO_MANY)));
+  SWIG_Python_SetConstant(d, "GRT_COMPOSITE",SWIG_From_int((int)(GRT_COMPOSITE)));
+  SWIG_Python_SetConstant(d, "GRT_ASSOCIATION",SWIG_From_int((int)(GRT_ASSOCIATION)));
+  SWIG_Python_SetConstant(d, "GRT_AGGREGATION",SWIG_From_int((int)(GRT_AGGREGATION)));
   
   /* Initialize threading */
   SWIG_PYTHON_INITIALIZE_THREADS;

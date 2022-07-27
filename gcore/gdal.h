@@ -283,6 +283,11 @@ typedef void *GDALRasterAttributeTableH;
 /** Opaque type used for the C bindings of the C++ GDALAsyncReader class */
 typedef void *GDALAsyncReaderH;
 
+/** Opaque type used for the C bindings of the C++ GDALRelationship class
+ *  @since GDAL 3.6
+ */
+typedef void *GDALRelationshipH;
+
 /** Type to express pixel, line or band spacing. Signed 64 bit integer. */
 typedef GIntBig GSpacing;
 
@@ -588,6 +593,12 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  * @since GDAL 3.5
  */
 #define GDAL_DCAP_FIELD_DOMAINS "DCAP_FIELD_DOMAINS"
+
+/** Capability set by drivers for formats which support reading table relationships.
+ *
+ * @since GDAL 3.6
+ */
+#define GDAL_DCAP_RELATIONSHIPS "DCAP_RELATIONSHIPS"
 
 /** Capability set by drivers for formats which support renaming vector layers.
  *
@@ -1007,6 +1018,10 @@ bool CPL_DLL GDALDatasetDeleteFieldDomain(GDALDatasetH hDS,
 bool CPL_DLL GDALDatasetUpdateFieldDomain(GDALDatasetH hDS,
                                           OGRFieldDomainH hFieldDomain,
                                           char** ppszFailureReason);
+
+char CPL_DLL ** GDALDatasetGetRelationshipNames(GDALDatasetH, CSLConstList) CPL_WARN_UNUSED_RESULT;
+GDALRelationshipH CPL_DLL GDALDatasetGetRelationship(GDALDatasetH hDS,
+                                                     const char* pszName);
 
 /* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */
@@ -1550,6 +1565,69 @@ void CPL_DLL* CPL_STDCALL
 
 int CPL_DLL CPL_STDCALL GDALRATGetRowOfValue( GDALRasterAttributeTableH, double );
 void CPL_DLL CPL_STDCALL GDALRATRemoveStatistics( GDALRasterAttributeTableH );
+
+/* -------------------------------------------------------------------- */
+/*                          Relationships                               */
+/* -------------------------------------------------------------------- */
+
+/** Cardinality of relationship.
+ *
+ * @since GDAL 3.6
+ */
+typedef enum
+{
+    /** One-to-one */
+    GRC_ONE_TO_ONE,
+    /** One-to-many */
+    GRC_ONE_TO_MANY,
+    /** Many-to-one */
+    GRC_MANY_TO_ONE,
+    /** Many-to-many */
+    GRC_MANY_TO_MANY,
+} GDALRelationshipCardinality;
+
+/** Type of relationship.
+ *
+ * @since GDAL 3.6
+ */
+typedef enum
+{
+    /** Composite relationship */
+    GRT_COMPOSITE,
+    /** Association relationship */
+    GRT_ASSOCIATION,
+    /** Aggregation relationship */
+    GRT_AGGREGATION,
+} GDALRelationshipType;
+
+GDALRelationshipH CPL_DLL GDALRelationshipCreate(const char*,
+                                                 const char*,
+                                                 const char*,
+                                                 GDALRelationshipCardinality );
+void CPL_DLL CPL_STDCALL GDALDestroyRelationship(GDALRelationshipH);
+const char CPL_DLL* GDALRelationshipGetName(GDALRelationshipH);
+GDALRelationshipCardinality CPL_DLL GDALRelationshipGetCardinality(GDALRelationshipH);
+const char CPL_DLL* GDALRelationshipGetLeftTableName(GDALRelationshipH);
+const char CPL_DLL* GDALRelationshipGetRightTableName(GDALRelationshipH);
+const char CPL_DLL* GDALRelationshipGetMappingTableName(GDALRelationshipH);
+void CPL_DLL GDALRelationshipSetMappingTableName(GDALRelationshipH, const char*);
+char CPL_DLL** GDALRelationshipGetLeftTableFields(GDALRelationshipH);
+char CPL_DLL** GDALRelationshipGetRightTableFields(GDALRelationshipH);
+void CPL_DLL GDALRelationshipSetLeftTableFields(GDALRelationshipH, CSLConstList);
+void CPL_DLL GDALRelationshipSetRightTableFields(GDALRelationshipH, CSLConstList);
+char CPL_DLL** GDALRelationshipGetLeftMappingTableFields(GDALRelationshipH);
+char CPL_DLL** GDALRelationshipGetRightMappingTableFields(GDALRelationshipH);
+void CPL_DLL GDALRelationshipSetLeftMappingTableFields(GDALRelationshipH, CSLConstList);
+void CPL_DLL GDALRelationshipSetRightMappingTableFields(GDALRelationshipH, CSLConstList);
+GDALRelationshipType CPL_DLL GDALRelationshipGetType(GDALRelationshipH);
+void CPL_DLL GDALRelationshipSetType(GDALRelationshipH, GDALRelationshipType);
+const char CPL_DLL* GDALRelationshipGetForwardPathLabel(GDALRelationshipH);
+void CPL_DLL GDALRelationshipSetForwardPathLabel(GDALRelationshipH, const char*);
+const char CPL_DLL* GDALRelationshipGetBackwardPathLabel(GDALRelationshipH);
+void CPL_DLL GDALRelationshipSetBackwardPathLabel(GDALRelationshipH, const char*);
+const char CPL_DLL* GDALRelationshipGetRelatedTableType(GDALRelationshipH);
+void CPL_DLL GDALRelationshipSetRelatedTableType(GDALRelationshipH, const char*);
+
 
 /* ==================================================================== */
 /*      GDAL Cache Management                                           */
