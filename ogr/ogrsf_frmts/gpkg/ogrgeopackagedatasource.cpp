@@ -42,6 +42,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <sstream>
 
 CPL_CVSID("$Id$")
 
@@ -1728,6 +1729,11 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         }
     }
 
+    if( HasGpkgextRelationsTable() )
+    {
+        LoadRelations();
+    }
+
     if( !bRet && (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) )
     {
         if ( (poOpenInfo->nOpenFlags & GDAL_OF_UPDATE) )
@@ -1871,6 +1877,118 @@ void GDALGeoPackageDataset::FixupWrongMedataReferenceColumnNameUpdate()
         SQLCommand(hDB,
             "DROP TRIGGER gpkg_metadata_reference_column_name_update");
         SQLCommand(hDB, osNewSQL.c_str());
+    }
+}
+
+
+/************************************************************************/
+/*             LoadRelations()                                          */
+/************************************************************************/
+
+void GDALGeoPackageDataset::LoadRelations()
+{
+    m_osMapRelationships.clear();
+
+    auto oResultTable = SQLQuery(hDB, "SELECT base_table_name, base_primary_column, "
+                                 "related_table_name, related_primary_column, relation_name, "
+                                 "mapping_table_name FROM gpkgext_relations" );
+    if ( oResultTable && oResultTable->RowCount() > 0 )
+    {
+        for(int i=0; i<oResultTable->RowCount();i++)
+        {
+            const char *pszBaseTableName = oResultTable->GetValue( 0, i );
+            if ( !pszBaseTableName )
+            {
+                CPLError( CE_Warning, CPLE_AppDefined,
+                        "Could not retrieve base_table_name from gpkgext_relations" );
+                continue;
+            }
+            const char *pszBasePrimaryColumn = oResultTable->GetValue( 1, i );
+            if ( !pszBasePrimaryColumn )
+            {
+                CPLError( CE_Warning, CPLE_AppDefined,
+                        "Could not retrieve base_primary_column from gpkgext_relations" );
+                continue;
+            }
+            const char *pszRelatedTableName = oResultTable->GetValue( 2, i );
+            if ( !pszRelatedTableName )
+            {
+                CPLError( CE_Warning, CPLE_AppDefined,
+                        "Could not retrieve related_table_name from gpkgext_relations" );
+                continue;
+            }
+            const char *pszRelatedPrimaryColumn = oResultTable->GetValue( 3, i );
+            if ( !pszRelatedPrimaryColumn )
+            {
+                CPLError( CE_Warning, CPLE_AppDefined,
+                        "Could not retrieve related_primary_column from gpkgext_relations" );
+                continue;
+            }
+            const char *pszRelationName = oResultTable->GetValue( 4, i );
+            if ( !pszRelationName )
+            {
+                CPLError( CE_Warning, CPLE_AppDefined,
+                          "Could not retrieve relation_name from gpkgext_relations" );
+                continue;
+            }
+            const char *pszMappingTableName = oResultTable->GetValue( 5, i );
+            if ( !pszMappingTableName )
+            {
+                CPLError( CE_Warning, CPLE_AppDefined,
+                          "Could not retrieve mapping_table_name from gpkgext_relations" );
+                continue;
+            }
+
+            // confirm that mapping table exists
+            char* pszSQL = sqlite3_mprintf("SELECT 1 FROM sqlite_master WHERE "
+                                "name='%q' AND type IN ('table', 'view')",
+                                pszMappingTableName);
+            const int nMappingTableCount = SQLGetInteger(hDB, pszSQL, nullptr);
+            sqlite3_free(pszSQL);
+
+            if (nMappingTableCount < 1)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Relationship mapping table %s does not exist", pszMappingTableName);
+                continue;
+            }
+
+            std::string osType{};
+            std::string osRelationName = pszRelationName;
+            // defined requirement classes -- for these types the relation name will be specific string
+            // value from the related tables extension. In this case we need to construct a unique
+            // relationship name based on the related tables
+            if ( EQUAL(pszRelationName, "media" )
+                 || EQUAL(pszRelationName, "simple_attributes" )
+                 || EQUAL(pszRelationName, "features" )
+                 || EQUAL(pszRelationName, "attributes" )
+                 || EQUAL(pszRelationName, "tiles" ))
+            {
+                 osType = pszRelationName;
+                 std::ostringstream stream;
+                 stream << pszBaseTableName << '_' << pszRelatedTableName << '_' << pszRelationName;
+                 osRelationName = stream.str();
+            }
+            else
+            {
+                // user defined types default to features
+                osType = "features";
+            }
+
+            std::unique_ptr< GDALRelationship > poRelationship( new GDALRelationship( osRelationName,
+                                                                                      pszBaseTableName,
+                                                                                      pszRelatedTableName,
+                                                                                      GRC_MANY_TO_MANY ) );
+
+            poRelationship->SetLeftTableFields({pszBasePrimaryColumn});
+            poRelationship->SetRightTableFields({pszRelatedPrimaryColumn});
+            poRelationship->SetLeftMappingTableFields({"base_id"});
+            poRelationship->SetRightMappingTableFields({"related_id"});
+            poRelationship->SetMappingTableName(pszMappingTableName);
+            poRelationship->SetRelatedTableType(osType);
+
+            m_osMapRelationships[osRelationName] = std::move(poRelationship);
+        }
     }
 }
 
@@ -5731,6 +5849,8 @@ OGRErr GDALGeoPackageDataset::DeleteLayerCommon(const char* pszLayerName)
                                   "extension_name IN ('related_tables', "
                                   "'gpkg_related_tables')");
             }
+
+            LoadRelations();
         }
     }
 
@@ -7933,4 +8053,35 @@ bool GDALGeoPackageDataset::AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& dom
 
     m_oMapFieldDomains[domainName] = std::move(domain);
     return true;
+}
+
+/************************************************************************/
+/*                        GetRelationshipNames()                        */
+/************************************************************************/
+
+std::vector<std::string> GDALGeoPackageDataset::GetRelationshipNames( CPL_UNUSED CSLConstList papszOptions ) const
+
+{
+    std::vector<std::string> oasNames;
+    oasNames.reserve( m_osMapRelationships.size() );
+    for ( auto it = m_osMapRelationships.begin(); it != m_osMapRelationships.end(); ++it )
+    {
+        oasNames.emplace_back( it->first );
+    }
+    return oasNames;
+}
+
+
+/************************************************************************/
+/*                        GetRelationship()                             */
+/************************************************************************/
+
+const GDALRelationship *GDALGeoPackageDataset::GetRelationship( const std::string &name ) const
+
+{
+    auto it = m_osMapRelationships.find( name );
+    if ( it == m_osMapRelationships.end() )
+        return nullptr;
+
+    return it->second.get();
 }
