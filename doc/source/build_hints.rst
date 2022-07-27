@@ -1667,9 +1667,9 @@ It is used for the Python, Java and CSharp bindings.
 
     Path to the SWIG executable.
 
-    Note that setting it explictly might be needed, and that putting the
+    Note that setting it explicitly might be needed, and that putting the
     directory of the installed binary into the PATH might not be sufficient.
-    The reason is that when buildingfrom source, a "swig" binary will be
+    The reason is that when building from source, a "swig" binary will be
     generated, but FindSWIG will prefer a "swig-4.0" binary if found elsewhere
     in the PATH.
 
