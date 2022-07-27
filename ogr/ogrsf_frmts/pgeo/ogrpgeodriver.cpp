@@ -96,6 +96,7 @@ void RegisterOGRPGeo()
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/pgeo.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_FIELD_DOMAINS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RELATIONSHIPS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_CURVE_GEOMETRIES, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
