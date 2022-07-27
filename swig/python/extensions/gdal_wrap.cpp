@@ -2724,50 +2724,51 @@ SWIGINTERN PyObject *SWIG_PyStaticMethod_New(PyObject *SWIGUNUSEDPARM(self), PyO
 #define SWIGTYPE_p_GDALRasterAttributeTableShadow swig_types[27]
 #define SWIGTYPE_p_GDALRasterBandShadow swig_types[28]
 #define SWIGTYPE_p_GDALRasterizeOptions swig_types[29]
-#define SWIGTYPE_p_GDALTransformerInfoShadow swig_types[30]
-#define SWIGTYPE_p_GDALTranslateOptions swig_types[31]
-#define SWIGTYPE_p_GDALVectorTranslateOptions swig_types[32]
-#define SWIGTYPE_p_GDALViewshedMode swig_types[33]
-#define SWIGTYPE_p_GDALViewshedOutputType swig_types[34]
-#define SWIGTYPE_p_GDALWarpAppOptions swig_types[35]
-#define SWIGTYPE_p_GDAL_GCP swig_types[36]
-#define SWIGTYPE_p_GIntBig swig_types[37]
-#define SWIGTYPE_p_GUIntBig swig_types[38]
-#define SWIGTYPE_p_OGRFeatureShadow swig_types[39]
-#define SWIGTYPE_p_OGRFieldDomainShadow swig_types[40]
-#define SWIGTYPE_p_OGRGeometryShadow swig_types[41]
-#define SWIGTYPE_p_OGRLayerShadow swig_types[42]
-#define SWIGTYPE_p_OGRStyleTableShadow swig_types[43]
-#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[44]
-#define SWIGTYPE_p_StatBuf swig_types[45]
-#define SWIGTYPE_p_Statistics swig_types[46]
-#define SWIGTYPE_p_VSIDIR swig_types[47]
-#define SWIGTYPE_p_VSILFILE swig_types[48]
-#define SWIGTYPE_p_char swig_types[49]
-#define SWIGTYPE_p_double swig_types[50]
-#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[51]
-#define SWIGTYPE_p_int swig_types[52]
-#define SWIGTYPE_p_p_GByte swig_types[53]
-#define SWIGTYPE_p_p_GDALDatasetShadow swig_types[54]
-#define SWIGTYPE_p_p_GDALDimensionHS swig_types[55]
-#define SWIGTYPE_p_p_GDALEDTComponentHS swig_types[56]
-#define SWIGTYPE_p_p_GDALRasterBandShadow swig_types[57]
-#define SWIGTYPE_p_p_GDAL_GCP swig_types[58]
-#define SWIGTYPE_p_p_GUIntBig swig_types[59]
-#define SWIGTYPE_p_p_OGRLayerShadow swig_types[60]
-#define SWIGTYPE_p_p_OSRSpatialReferenceShadow swig_types[61]
-#define SWIGTYPE_p_p_char swig_types[62]
-#define SWIGTYPE_p_p_double swig_types[63]
-#define SWIGTYPE_p_p_int swig_types[64]
-#define SWIGTYPE_p_p_p_GDALAttributeHS swig_types[65]
-#define SWIGTYPE_p_p_p_GDALDimensionHS swig_types[66]
-#define SWIGTYPE_p_p_p_GDALEDTComponentHS swig_types[67]
-#define SWIGTYPE_p_p_p_GDALMDArrayHS swig_types[68]
-#define SWIGTYPE_p_p_void swig_types[69]
-#define SWIGTYPE_p_size_t swig_types[70]
-#define SWIGTYPE_p_vsi_l_offset swig_types[71]
-static swig_type_info *swig_types[73];
-static swig_module_info swig_module = {swig_types, 72, 0, 0, 0, 0};
+#define SWIGTYPE_p_GDALRelationshipShadow swig_types[30]
+#define SWIGTYPE_p_GDALTransformerInfoShadow swig_types[31]
+#define SWIGTYPE_p_GDALTranslateOptions swig_types[32]
+#define SWIGTYPE_p_GDALVectorTranslateOptions swig_types[33]
+#define SWIGTYPE_p_GDALViewshedMode swig_types[34]
+#define SWIGTYPE_p_GDALViewshedOutputType swig_types[35]
+#define SWIGTYPE_p_GDALWarpAppOptions swig_types[36]
+#define SWIGTYPE_p_GDAL_GCP swig_types[37]
+#define SWIGTYPE_p_GIntBig swig_types[38]
+#define SWIGTYPE_p_GUIntBig swig_types[39]
+#define SWIGTYPE_p_OGRFeatureShadow swig_types[40]
+#define SWIGTYPE_p_OGRFieldDomainShadow swig_types[41]
+#define SWIGTYPE_p_OGRGeometryShadow swig_types[42]
+#define SWIGTYPE_p_OGRLayerShadow swig_types[43]
+#define SWIGTYPE_p_OGRStyleTableShadow swig_types[44]
+#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[45]
+#define SWIGTYPE_p_StatBuf swig_types[46]
+#define SWIGTYPE_p_Statistics swig_types[47]
+#define SWIGTYPE_p_VSIDIR swig_types[48]
+#define SWIGTYPE_p_VSILFILE swig_types[49]
+#define SWIGTYPE_p_char swig_types[50]
+#define SWIGTYPE_p_double swig_types[51]
+#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[52]
+#define SWIGTYPE_p_int swig_types[53]
+#define SWIGTYPE_p_p_GByte swig_types[54]
+#define SWIGTYPE_p_p_GDALDatasetShadow swig_types[55]
+#define SWIGTYPE_p_p_GDALDimensionHS swig_types[56]
+#define SWIGTYPE_p_p_GDALEDTComponentHS swig_types[57]
+#define SWIGTYPE_p_p_GDALRasterBandShadow swig_types[58]
+#define SWIGTYPE_p_p_GDAL_GCP swig_types[59]
+#define SWIGTYPE_p_p_GUIntBig swig_types[60]
+#define SWIGTYPE_p_p_OGRLayerShadow swig_types[61]
+#define SWIGTYPE_p_p_OSRSpatialReferenceShadow swig_types[62]
+#define SWIGTYPE_p_p_char swig_types[63]
+#define SWIGTYPE_p_p_double swig_types[64]
+#define SWIGTYPE_p_p_int swig_types[65]
+#define SWIGTYPE_p_p_p_GDALAttributeHS swig_types[66]
+#define SWIGTYPE_p_p_p_GDALDimensionHS swig_types[67]
+#define SWIGTYPE_p_p_p_GDALEDTComponentHS swig_types[68]
+#define SWIGTYPE_p_p_p_GDALMDArrayHS swig_types[69]
+#define SWIGTYPE_p_p_void swig_types[70]
+#define SWIGTYPE_p_size_t swig_types[71]
+#define SWIGTYPE_p_vsi_l_offset swig_types[72]
+static swig_type_info *swig_types[74];
+static swig_module_info swig_module = {swig_types, 73, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -2899,6 +2900,7 @@ typedef void GDALColorTableShadow;
 typedef void GDALRasterAttributeTableShadow;
 typedef void GDALTransformerInfoShadow;
 typedef void GDALAsyncReaderShadow;
+typedef void GDALRelationshipShadow;
 
 typedef GDALExtendedDataTypeHS GDALExtendedDataTypeHS;
 typedef GDALEDTComponentHS GDALEDTComponentHS;
@@ -5090,6 +5092,12 @@ SWIGINTERN bool GDALDatasetShadow_DeleteFieldDomain(GDALDatasetShadow *self,char
 SWIGINTERN bool GDALDatasetShadow_UpdateFieldDomain(GDALDatasetShadow *self,OGRFieldDomainShadow *fieldDomain){
       return GDALDatasetUpdateFieldDomain(self, (OGRFieldDomainH)fieldDomain, NULL);
   }
+SWIGINTERN char **GDALDatasetShadow_GetRelationshipNames(GDALDatasetShadow *self,char **options=0){
+    return GDALDatasetGetRelationshipNames(self, options);
+  }
+SWIGINTERN GDALRelationshipShadow *GDALDatasetShadow_GetRelationship(GDALDatasetShadow *self,char const *name){
+    return (GDALRelationshipShadow*) GDALDatasetGetRelationship(self, name);
+  }
 SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,double xoff,double yoff,double xsize,double ysize,void **buf,int *buf_xsize=0,int *buf_ysize=0,GDALDataType *buf_type=0,int band_list=0,int *pband_list=0,GIntBig *buf_pixel_space=0,GIntBig *buf_line_space=0,GIntBig *buf_band_space=0,GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour,GDALProgressFunc callback=NULL,void *callback_data=NULL,void *inputOutputBuf=NULL){
     *buf = NULL;
 
@@ -6682,6 +6690,82 @@ SWIGINTERN void GDALRasterAttributeTableShadow_SetTableType(GDALRasterAttributeT
     }
 SWIGINTERN GDALRATTableType GDALRasterAttributeTableShadow_GetTableType(GDALRasterAttributeTableShadow *self){
         return GDALRATGetTableType( self );
+    }
+SWIGINTERN GDALRelationshipShadow *new_GDALRelationshipShadow(char const *name,char const *leftTableName,char const *rightTableName,GDALRelationshipCardinality cardinality){
+        return (GDALRelationshipShadow*)
+        GDALRelationshipCreate(name,
+                               leftTableName,
+                               rightTableName,
+                               cardinality);
+    }
+SWIGINTERN void delete_GDALRelationshipShadow(GDALRelationshipShadow *self){
+        GDALDestroyRelationship(self);
+    }
+SWIGINTERN char const *GDALRelationshipShadow_GetName(GDALRelationshipShadow *self){
+        return GDALRelationshipGetName( self );
+    }
+SWIGINTERN GDALRelationshipCardinality GDALRelationshipShadow_GetCardinality(GDALRelationshipShadow *self){
+        return GDALRelationshipGetCardinality( self );
+    }
+SWIGINTERN char const *GDALRelationshipShadow_GetLeftTableName(GDALRelationshipShadow *self){
+        return GDALRelationshipGetLeftTableName( self );
+    }
+SWIGINTERN char const *GDALRelationshipShadow_GetRightTableName(GDALRelationshipShadow *self){
+        return GDALRelationshipGetRightTableName( self );
+    }
+SWIGINTERN char const *GDALRelationshipShadow_GetMappingTableName(GDALRelationshipShadow *self){
+        return GDALRelationshipGetMappingTableName( self );
+    }
+SWIGINTERN void GDALRelationshipShadow_SetMappingTableName(GDALRelationshipShadow *self,char const *pszName){
+        GDALRelationshipSetMappingTableName( self, pszName );
+    }
+SWIGINTERN char **GDALRelationshipShadow_GetLeftTableFields(GDALRelationshipShadow *self){
+           return GDALRelationshipGetLeftTableFields(self);
+        }
+SWIGINTERN char **GDALRelationshipShadow_GetRightTableFields(GDALRelationshipShadow *self){
+            return GDALRelationshipGetRightTableFields(self);
+        }
+SWIGINTERN void GDALRelationshipShadow_SetLeftTableFields(GDALRelationshipShadow *self,char **pFields){
+            GDALRelationshipSetLeftTableFields(self, pFields);
+        }
+SWIGINTERN void GDALRelationshipShadow_SetRightTableFields(GDALRelationshipShadow *self,char **pFields){
+            GDALRelationshipSetRightTableFields(self, pFields);
+        }
+SWIGINTERN char **GDALRelationshipShadow_GetLeftMappingTableFields(GDALRelationshipShadow *self){
+            return GDALRelationshipGetLeftMappingTableFields(self);
+        }
+SWIGINTERN char **GDALRelationshipShadow_GetRightMappingTableFields(GDALRelationshipShadow *self){
+            return GDALRelationshipGetRightMappingTableFields(self);
+        }
+SWIGINTERN void GDALRelationshipShadow_SetLeftMappingTableFields(GDALRelationshipShadow *self,char **pFields){
+          GDALRelationshipSetLeftMappingTableFields(self, pFields);
+      }
+SWIGINTERN void GDALRelationshipShadow_SetRightMappingTableFields(GDALRelationshipShadow *self,char **pFields){
+          GDALRelationshipSetRightMappingTableFields(self, pFields);
+      }
+SWIGINTERN GDALRelationshipType GDALRelationshipShadow_GetType(GDALRelationshipShadow *self){
+        return GDALRelationshipGetType( self );
+    }
+SWIGINTERN void GDALRelationshipShadow_SetType(GDALRelationshipShadow *self,GDALRelationshipType type){
+      return GDALRelationshipSetType( self, type );
+    }
+SWIGINTERN char const *GDALRelationshipShadow_GetForwardPathLabel(GDALRelationshipShadow *self){
+        return GDALRelationshipGetForwardPathLabel( self );
+    }
+SWIGINTERN void GDALRelationshipShadow_SetForwardPathLabel(GDALRelationshipShadow *self,char const *pszLabel){
+        GDALRelationshipSetForwardPathLabel( self, pszLabel );
+    }
+SWIGINTERN char const *GDALRelationshipShadow_GetBackwardPathLabel(GDALRelationshipShadow *self){
+        return GDALRelationshipGetBackwardPathLabel( self );
+    }
+SWIGINTERN void GDALRelationshipShadow_SetBackwardPathLabel(GDALRelationshipShadow *self,char const *pszLabel){
+        GDALRelationshipSetBackwardPathLabel( self, pszLabel );
+    }
+SWIGINTERN char const *GDALRelationshipShadow_GetRelatedTableType(GDALRelationshipShadow *self){
+        return GDALRelationshipGetRelatedTableType( self );
+    }
+SWIGINTERN void GDALRelationshipShadow_SetRelatedTableType(GDALRelationshipShadow *self,char const *pszType){
+        GDALRelationshipSetRelatedTableType( self, pszType );
     }
 
 #include "gdalgrid.h"
@@ -21530,6 +21614,138 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Dataset_GetRelationshipNames(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
+  char **arg2 = (char **) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[2] ;
+  char **result = 0 ;
+  
+  if (!SWIG_Python_UnpackTuple(args, "Dataset_GetRelationshipNames", 1, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_GetRelationshipNames" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
+  if (swig_obj[1]) {
+    {
+      /* %typemap(in) char **options */
+      int bErr = FALSE;
+      arg2 = CSLFromPySequence(swig_obj[1], &bErr);
+      if( bErr )
+      {
+        SWIG_fail;
+      }
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char **)GDALDatasetShadow_GetRelationshipNames(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    /* %typemap(out) char **CSL -> ( string ) */
+    char **stringarray = result;
+    if ( stringarray == NULL ) {
+      resultobj = Py_None;
+      Py_INCREF( resultobj );
+    }
+    else {
+      int len = CSLCount( stringarray );
+      resultobj = PyList_New( len );
+      for ( int i = 0; i < len; ++i ) {
+        PyObject *o = GDALPythonObjectFromCStr( stringarray[i] );
+        PyList_SetItem(resultobj, i, o );
+      }
+    }
+    CSLDestroy(result);
+  }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Dataset_GetRelationship(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
+  char *arg2 = (char *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  PyObject *swig_obj[2] ;
+  GDALRelationshipShadow *result = 0 ;
+  
+  if (!SWIG_Python_UnpackTuple(args, "Dataset_GetRelationship", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_GetRelationship" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
+  res2 = SWIG_AsCharPtrAndSize(swig_obj[1], &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Dataset_GetRelationship" "', argument " "2"" of type '" "char const *""'");
+  }
+  arg2 = reinterpret_cast< char * >(buf2);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (GDALRelationshipShadow *)GDALDatasetShadow_GetRelationship(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALRelationshipShadow, 0 |  0 );
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Dataset_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
@@ -35830,6 +36046,1279 @@ SWIGINTERN PyObject *RasterAttributeTable_swiginit(PyObject *SWIGUNUSEDPARM(self
   return SWIG_Python_InitShadowInstance(args);
 }
 
+SWIGINTERN PyObject *_wrap_new_Relationship(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  char *arg1 = (char *) 0 ;
+  char *arg2 = (char *) 0 ;
+  char *arg3 = (char *) 0 ;
+  GDALRelationshipCardinality arg4 ;
+  int res1 ;
+  char *buf1 = 0 ;
+  int alloc1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  int res3 ;
+  char *buf3 = 0 ;
+  int alloc3 = 0 ;
+  int val4 ;
+  int ecode4 = 0 ;
+  PyObject *swig_obj[4] ;
+  GDALRelationshipShadow *result = 0 ;
+  
+  if (!SWIG_Python_UnpackTuple(args, "new_Relationship", 4, 4, swig_obj)) SWIG_fail;
+  res1 = SWIG_AsCharPtrAndSize(swig_obj[0], &buf1, NULL, &alloc1);
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "new_Relationship" "', argument " "1"" of type '" "char const *""'");
+  }
+  arg1 = reinterpret_cast< char * >(buf1);
+  res2 = SWIG_AsCharPtrAndSize(swig_obj[1], &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "new_Relationship" "', argument " "2"" of type '" "char const *""'");
+  }
+  arg2 = reinterpret_cast< char * >(buf2);
+  res3 = SWIG_AsCharPtrAndSize(swig_obj[2], &buf3, NULL, &alloc3);
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "new_Relationship" "', argument " "3"" of type '" "char const *""'");
+  }
+  arg3 = reinterpret_cast< char * >(buf3);
+  ecode4 = SWIG_AsVal_int(swig_obj[3], &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "new_Relationship" "', argument " "4"" of type '" "GDALRelationshipCardinality""'");
+  } 
+  arg4 = static_cast< GDALRelationshipCardinality >(val4);
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (GDALRelationshipShadow *)new_GDALRelationshipShadow((char const *)arg1,(char const *)arg2,(char const *)arg3,arg4);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALRelationshipShadow, SWIG_POINTER_NEW |  0 );
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_delete_Relationship(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALRelationshipShadow *arg1 = (GDALRelationshipShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALRelationshipShadow, SWIG_POINTER_DISOWN |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_Relationship" "', argument " "1"" of type '" "GDALRelationshipShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRelationshipShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      delete_GDALRelationshipShadow(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Relationship_GetName(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALRelationshipShadow *arg1 = (GDALRelationshipShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  char *result = 0 ;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALRelationshipShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Relationship_GetName" "', argument " "1"" of type '" "GDALRelationshipShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRelationshipShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)GDALRelationshipShadow_GetName(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Relationship_GetCardinality(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALRelationshipShadow *arg1 = (GDALRelationshipShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  GDALRelationshipCardinality result;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALRelationshipShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Relationship_GetCardinality" "', argument " "1"" of type '" "GDALRelationshipShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRelationshipShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (GDALRelationshipCardinality)GDALRelationshipShadow_GetCardinality(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Relationship_GetLeftTableName(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALRelationshipShadow *arg1 = (GDALRelationshipShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  char *result = 0 ;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALRelationshipShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Relationship_GetLeftTableName" "', argument " "1"" of type '" "GDALRelationshipShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRelationshipShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)GDALRelationshipShadow_GetLeftTableName(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Relationship_GetRightTableName(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALRelationshipShadow *arg1 = (GDALRelationshipShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  char *result = 0 ;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALRelationshipShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Relationship_GetRightTableName" "', argument " "1"" of type '" "GDALRelationshipShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRelationshipShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)GDALRelationshipShadow_GetRightTableName(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Relationship_GetMappingTableName(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALRelationshipShadow *arg1 = (GDALRelationshipShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  char *result = 0 ;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALRelationshipShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Relationship_GetMappingTableName" "', argument " "1"" of type '" "GDALRelationshipShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRelationshipShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)GDALRelationshipShadow_GetMappingTableName(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Relationship_SetMappingTableName(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALRelationshipShadow *arg1 = (GDALRelationshipShadow *) 0 ;
+  char *arg2 = (char *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *str2 = 0 ;
+  int bToFree2 = 0 ;
+  PyObject *swig_obj[2] ;
+  
+  if (!SWIG_Python_UnpackTuple(args, "Relationship_SetMappingTableName", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALRelationshipShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Relationship_SetMappingTableName" "', argument " "1"" of type '" "GDALRelationshipShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRelationshipShadow * >(argp1);
+  {
+    /* %typemap(in) (tostring argin) */
+    str2 = PyObject_Str( swig_obj[1] );
+    if ( str2 == 0 ) {
+      PyErr_SetString( PyExc_RuntimeError, "Unable to format argument as string");
+      SWIG_fail;
+    }
+    
+    arg2 = GDALPythonObjectToCStr(str2, &bToFree2);
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      GDALRelationshipShadow_SetMappingTableName(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  {
+    /* %typemap(freearg) (tostring argin) */
+    if ( str2 != NULL)
+    {
+      Py_DECREF(str2);
+    }
+    GDALPythonFreeCStr(arg2, bToFree2);
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) (tostring argin) */
+    if ( str2 != NULL)
+    {
+      Py_DECREF(str2);
+    }
+    GDALPythonFreeCStr(arg2, bToFree2);
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Relationship_GetLeftTableFields(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALRelationshipShadow *arg1 = (GDALRelationshipShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  char **result = 0 ;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALRelationshipShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Relationship_GetLeftTableFields" "', argument " "1"" of type '" "GDALRelationshipShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRelationshipShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char **)GDALRelationshipShadow_GetLeftTableFields(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    /* %typemap(out) char **CSL -> ( string ) */
+    char **stringarray = result;
+    if ( stringarray == NULL ) {
+      resultobj = Py_None;
+      Py_INCREF( resultobj );
+    }
+    else {
+      int len = CSLCount( stringarray );
+      resultobj = PyList_New( len );
+      for ( int i = 0; i < len; ++i ) {
+        PyObject *o = GDALPythonObjectFromCStr( stringarray[i] );
+        PyList_SetItem(resultobj, i, o );
+      }
+    }
+    CSLDestroy(result);
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Relationship_GetRightTableFields(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALRelationshipShadow *arg1 = (GDALRelationshipShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  char **result = 0 ;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALRelationshipShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Relationship_GetRightTableFields" "', argument " "1"" of type '" "GDALRelationshipShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRelationshipShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char **)GDALRelationshipShadow_GetRightTableFields(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    /* %typemap(out) char **CSL -> ( string ) */
+    char **stringarray = result;
+    if ( stringarray == NULL ) {
+      resultobj = Py_None;
+      Py_INCREF( resultobj );
+    }
+    else {
+      int len = CSLCount( stringarray );
+      resultobj = PyList_New( len );
+      for ( int i = 0; i < len; ++i ) {
+        PyObject *o = GDALPythonObjectFromCStr( stringarray[i] );
+        PyList_SetItem(resultobj, i, o );
+      }
+    }
+    CSLDestroy(result);
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Relationship_SetLeftTableFields(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALRelationshipShadow *arg1 = (GDALRelationshipShadow *) 0 ;
+  char **arg2 = (char **) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[2] ;
+  
+  if (!SWIG_Python_UnpackTuple(args, "Relationship_SetLeftTableFields", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALRelationshipShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Relationship_SetLeftTableFields" "', argument " "1"" of type '" "GDALRelationshipShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRelationshipShadow * >(argp1);
+  {
+    /* %typemap(in) char **options */
+    int bErr = FALSE;
+    arg2 = CSLFromPySequence(swig_obj[1], &bErr);
+    if( bErr )
+    {
+      SWIG_fail;
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      GDALRelationshipShadow_SetLeftTableFields(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Relationship_SetRightTableFields(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALRelationshipShadow *arg1 = (GDALRelationshipShadow *) 0 ;
+  char **arg2 = (char **) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[2] ;
+  
+  if (!SWIG_Python_UnpackTuple(args, "Relationship_SetRightTableFields", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALRelationshipShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Relationship_SetRightTableFields" "', argument " "1"" of type '" "GDALRelationshipShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRelationshipShadow * >(argp1);
+  {
+    /* %typemap(in) char **options */
+    int bErr = FALSE;
+    arg2 = CSLFromPySequence(swig_obj[1], &bErr);
+    if( bErr )
+    {
+      SWIG_fail;
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      GDALRelationshipShadow_SetRightTableFields(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Relationship_GetLeftMappingTableFields(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALRelationshipShadow *arg1 = (GDALRelationshipShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  char **result = 0 ;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALRelationshipShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Relationship_GetLeftMappingTableFields" "', argument " "1"" of type '" "GDALRelationshipShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRelationshipShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char **)GDALRelationshipShadow_GetLeftMappingTableFields(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    /* %typemap(out) char **CSL -> ( string ) */
+    char **stringarray = result;
+    if ( stringarray == NULL ) {
+      resultobj = Py_None;
+      Py_INCREF( resultobj );
+    }
+    else {
+      int len = CSLCount( stringarray );
+      resultobj = PyList_New( len );
+      for ( int i = 0; i < len; ++i ) {
+        PyObject *o = GDALPythonObjectFromCStr( stringarray[i] );
+        PyList_SetItem(resultobj, i, o );
+      }
+    }
+    CSLDestroy(result);
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Relationship_GetRightMappingTableFields(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALRelationshipShadow *arg1 = (GDALRelationshipShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  char **result = 0 ;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALRelationshipShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Relationship_GetRightMappingTableFields" "', argument " "1"" of type '" "GDALRelationshipShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRelationshipShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char **)GDALRelationshipShadow_GetRightMappingTableFields(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    /* %typemap(out) char **CSL -> ( string ) */
+    char **stringarray = result;
+    if ( stringarray == NULL ) {
+      resultobj = Py_None;
+      Py_INCREF( resultobj );
+    }
+    else {
+      int len = CSLCount( stringarray );
+      resultobj = PyList_New( len );
+      for ( int i = 0; i < len; ++i ) {
+        PyObject *o = GDALPythonObjectFromCStr( stringarray[i] );
+        PyList_SetItem(resultobj, i, o );
+      }
+    }
+    CSLDestroy(result);
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Relationship_SetLeftMappingTableFields(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALRelationshipShadow *arg1 = (GDALRelationshipShadow *) 0 ;
+  char **arg2 = (char **) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[2] ;
+  
+  if (!SWIG_Python_UnpackTuple(args, "Relationship_SetLeftMappingTableFields", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALRelationshipShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Relationship_SetLeftMappingTableFields" "', argument " "1"" of type '" "GDALRelationshipShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRelationshipShadow * >(argp1);
+  {
+    /* %typemap(in) char **options */
+    int bErr = FALSE;
+    arg2 = CSLFromPySequence(swig_obj[1], &bErr);
+    if( bErr )
+    {
+      SWIG_fail;
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      GDALRelationshipShadow_SetLeftMappingTableFields(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Relationship_SetRightMappingTableFields(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALRelationshipShadow *arg1 = (GDALRelationshipShadow *) 0 ;
+  char **arg2 = (char **) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[2] ;
+  
+  if (!SWIG_Python_UnpackTuple(args, "Relationship_SetRightMappingTableFields", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALRelationshipShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Relationship_SetRightMappingTableFields" "', argument " "1"" of type '" "GDALRelationshipShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRelationshipShadow * >(argp1);
+  {
+    /* %typemap(in) char **options */
+    int bErr = FALSE;
+    arg2 = CSLFromPySequence(swig_obj[1], &bErr);
+    if( bErr )
+    {
+      SWIG_fail;
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      GDALRelationshipShadow_SetRightMappingTableFields(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Relationship_GetType(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALRelationshipShadow *arg1 = (GDALRelationshipShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  GDALRelationshipType result;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALRelationshipShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Relationship_GetType" "', argument " "1"" of type '" "GDALRelationshipShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRelationshipShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (GDALRelationshipType)GDALRelationshipShadow_GetType(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Relationship_SetType(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALRelationshipShadow *arg1 = (GDALRelationshipShadow *) 0 ;
+  GDALRelationshipType arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject *swig_obj[2] ;
+  
+  if (!SWIG_Python_UnpackTuple(args, "Relationship_SetType", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALRelationshipShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Relationship_SetType" "', argument " "1"" of type '" "GDALRelationshipShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRelationshipShadow * >(argp1);
+  ecode2 = SWIG_AsVal_int(swig_obj[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Relationship_SetType" "', argument " "2"" of type '" "GDALRelationshipType""'");
+  } 
+  arg2 = static_cast< GDALRelationshipType >(val2);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      GDALRelationshipShadow_SetType(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Relationship_GetForwardPathLabel(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALRelationshipShadow *arg1 = (GDALRelationshipShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  char *result = 0 ;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALRelationshipShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Relationship_GetForwardPathLabel" "', argument " "1"" of type '" "GDALRelationshipShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRelationshipShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)GDALRelationshipShadow_GetForwardPathLabel(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Relationship_SetForwardPathLabel(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALRelationshipShadow *arg1 = (GDALRelationshipShadow *) 0 ;
+  char *arg2 = (char *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *str2 = 0 ;
+  int bToFree2 = 0 ;
+  PyObject *swig_obj[2] ;
+  
+  if (!SWIG_Python_UnpackTuple(args, "Relationship_SetForwardPathLabel", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALRelationshipShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Relationship_SetForwardPathLabel" "', argument " "1"" of type '" "GDALRelationshipShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRelationshipShadow * >(argp1);
+  {
+    /* %typemap(in) (tostring argin) */
+    str2 = PyObject_Str( swig_obj[1] );
+    if ( str2 == 0 ) {
+      PyErr_SetString( PyExc_RuntimeError, "Unable to format argument as string");
+      SWIG_fail;
+    }
+    
+    arg2 = GDALPythonObjectToCStr(str2, &bToFree2);
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      GDALRelationshipShadow_SetForwardPathLabel(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  {
+    /* %typemap(freearg) (tostring argin) */
+    if ( str2 != NULL)
+    {
+      Py_DECREF(str2);
+    }
+    GDALPythonFreeCStr(arg2, bToFree2);
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) (tostring argin) */
+    if ( str2 != NULL)
+    {
+      Py_DECREF(str2);
+    }
+    GDALPythonFreeCStr(arg2, bToFree2);
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Relationship_GetBackwardPathLabel(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALRelationshipShadow *arg1 = (GDALRelationshipShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  char *result = 0 ;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALRelationshipShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Relationship_GetBackwardPathLabel" "', argument " "1"" of type '" "GDALRelationshipShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRelationshipShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)GDALRelationshipShadow_GetBackwardPathLabel(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Relationship_SetBackwardPathLabel(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALRelationshipShadow *arg1 = (GDALRelationshipShadow *) 0 ;
+  char *arg2 = (char *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *str2 = 0 ;
+  int bToFree2 = 0 ;
+  PyObject *swig_obj[2] ;
+  
+  if (!SWIG_Python_UnpackTuple(args, "Relationship_SetBackwardPathLabel", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALRelationshipShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Relationship_SetBackwardPathLabel" "', argument " "1"" of type '" "GDALRelationshipShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRelationshipShadow * >(argp1);
+  {
+    /* %typemap(in) (tostring argin) */
+    str2 = PyObject_Str( swig_obj[1] );
+    if ( str2 == 0 ) {
+      PyErr_SetString( PyExc_RuntimeError, "Unable to format argument as string");
+      SWIG_fail;
+    }
+    
+    arg2 = GDALPythonObjectToCStr(str2, &bToFree2);
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      GDALRelationshipShadow_SetBackwardPathLabel(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  {
+    /* %typemap(freearg) (tostring argin) */
+    if ( str2 != NULL)
+    {
+      Py_DECREF(str2);
+    }
+    GDALPythonFreeCStr(arg2, bToFree2);
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) (tostring argin) */
+    if ( str2 != NULL)
+    {
+      Py_DECREF(str2);
+    }
+    GDALPythonFreeCStr(arg2, bToFree2);
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Relationship_GetRelatedTableType(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALRelationshipShadow *arg1 = (GDALRelationshipShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  char *result = 0 ;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALRelationshipShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Relationship_GetRelatedTableType" "', argument " "1"" of type '" "GDALRelationshipShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRelationshipShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)GDALRelationshipShadow_GetRelatedTableType(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Relationship_SetRelatedTableType(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALRelationshipShadow *arg1 = (GDALRelationshipShadow *) 0 ;
+  char *arg2 = (char *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *str2 = 0 ;
+  int bToFree2 = 0 ;
+  PyObject *swig_obj[2] ;
+  
+  if (!SWIG_Python_UnpackTuple(args, "Relationship_SetRelatedTableType", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALRelationshipShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Relationship_SetRelatedTableType" "', argument " "1"" of type '" "GDALRelationshipShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRelationshipShadow * >(argp1);
+  {
+    /* %typemap(in) (tostring argin) */
+    str2 = PyObject_Str( swig_obj[1] );
+    if ( str2 == 0 ) {
+      PyErr_SetString( PyExc_RuntimeError, "Unable to format argument as string");
+      SWIG_fail;
+    }
+    
+    arg2 = GDALPythonObjectToCStr(str2, &bToFree2);
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      GDALRelationshipShadow_SetRelatedTableType(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  {
+    /* %typemap(freearg) (tostring argin) */
+    if ( str2 != NULL)
+    {
+      Py_DECREF(str2);
+    }
+    GDALPythonFreeCStr(arg2, bToFree2);
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) (tostring argin) */
+    if ( str2 != NULL)
+    {
+      Py_DECREF(str2);
+    }
+    GDALPythonFreeCStr(arg2, bToFree2);
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *Relationship_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *obj;
+  if (!SWIG_Python_UnpackTuple(args, "swigregister", 1, 1, &obj)) return NULL;
+  SWIG_TypeNewClientData(SWIGTYPE_p_GDALRelationshipShadow, SWIG_NewClientData(obj));
+  return SWIG_Py_Void();
+}
+
+SWIGINTERN PyObject *Relationship_swiginit(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  return SWIG_Python_InitShadowInstance(args);
+}
+
 SWIGINTERN PyObject *_wrap_TermProgress_nocb(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   double arg1 ;
@@ -44736,6 +46225,8 @@ static PyMethodDef SwigMethods[] = {
 	 { "Dataset_AddFieldDomain", _wrap_Dataset_AddFieldDomain, METH_VARARGS, "Dataset_AddFieldDomain(Dataset self, FieldDomain fieldDomain) -> bool"},
 	 { "Dataset_DeleteFieldDomain", _wrap_Dataset_DeleteFieldDomain, METH_VARARGS, "Dataset_DeleteFieldDomain(Dataset self, char const * name) -> bool"},
 	 { "Dataset_UpdateFieldDomain", _wrap_Dataset_UpdateFieldDomain, METH_VARARGS, "Dataset_UpdateFieldDomain(Dataset self, FieldDomain fieldDomain) -> bool"},
+	 { "Dataset_GetRelationshipNames", _wrap_Dataset_GetRelationshipNames, METH_VARARGS, "Dataset_GetRelationshipNames(Dataset self, char ** options=None) -> char **"},
+	 { "Dataset_GetRelationship", _wrap_Dataset_GetRelationship, METH_VARARGS, "Dataset_GetRelationship(Dataset self, char const * name) -> Relationship"},
 	 { "Dataset_ReadRaster1", (PyCFunction)(void(*)(void))_wrap_Dataset_ReadRaster1, METH_VARARGS|METH_KEYWORDS, "Dataset_ReadRaster1(Dataset self, double xoff, double yoff, double xsize, double ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, int band_list=0, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, GIntBig * buf_band_space=None, GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour, GDALProgressFunc callback=0, void * callback_data=None, void * inputOutputBuf=None) -> CPLErr"},
 	 { "Dataset_swigregister", Dataset_swigregister, METH_O, NULL},
 	 { "delete_Group", _wrap_delete_Group, METH_O, "delete_Group(Group self)"},
@@ -44968,6 +46459,32 @@ static PyMethodDef SwigMethods[] = {
 	 { "RasterAttributeTable_GetTableType", _wrap_RasterAttributeTable_GetTableType, METH_O, "RasterAttributeTable_GetTableType(RasterAttributeTable self) -> GDALRATTableType"},
 	 { "RasterAttributeTable_swigregister", RasterAttributeTable_swigregister, METH_O, NULL},
 	 { "RasterAttributeTable_swiginit", RasterAttributeTable_swiginit, METH_VARARGS, NULL},
+	 { "new_Relationship", _wrap_new_Relationship, METH_VARARGS, "new_Relationship(char const * name, char const * leftTableName, char const * rightTableName, GDALRelationshipCardinality cardinality) -> Relationship"},
+	 { "delete_Relationship", _wrap_delete_Relationship, METH_O, "delete_Relationship(Relationship self)"},
+	 { "Relationship_GetName", _wrap_Relationship_GetName, METH_O, "Relationship_GetName(Relationship self) -> char const *"},
+	 { "Relationship_GetCardinality", _wrap_Relationship_GetCardinality, METH_O, "Relationship_GetCardinality(Relationship self) -> GDALRelationshipCardinality"},
+	 { "Relationship_GetLeftTableName", _wrap_Relationship_GetLeftTableName, METH_O, "Relationship_GetLeftTableName(Relationship self) -> char const *"},
+	 { "Relationship_GetRightTableName", _wrap_Relationship_GetRightTableName, METH_O, "Relationship_GetRightTableName(Relationship self) -> char const *"},
+	 { "Relationship_GetMappingTableName", _wrap_Relationship_GetMappingTableName, METH_O, "Relationship_GetMappingTableName(Relationship self) -> char const *"},
+	 { "Relationship_SetMappingTableName", _wrap_Relationship_SetMappingTableName, METH_VARARGS, "Relationship_SetMappingTableName(Relationship self, char const * pszName)"},
+	 { "Relationship_GetLeftTableFields", _wrap_Relationship_GetLeftTableFields, METH_O, "Relationship_GetLeftTableFields(Relationship self) -> char **"},
+	 { "Relationship_GetRightTableFields", _wrap_Relationship_GetRightTableFields, METH_O, "Relationship_GetRightTableFields(Relationship self) -> char **"},
+	 { "Relationship_SetLeftTableFields", _wrap_Relationship_SetLeftTableFields, METH_VARARGS, "Relationship_SetLeftTableFields(Relationship self, char ** pFields)"},
+	 { "Relationship_SetRightTableFields", _wrap_Relationship_SetRightTableFields, METH_VARARGS, "Relationship_SetRightTableFields(Relationship self, char ** pFields)"},
+	 { "Relationship_GetLeftMappingTableFields", _wrap_Relationship_GetLeftMappingTableFields, METH_O, "Relationship_GetLeftMappingTableFields(Relationship self) -> char **"},
+	 { "Relationship_GetRightMappingTableFields", _wrap_Relationship_GetRightMappingTableFields, METH_O, "Relationship_GetRightMappingTableFields(Relationship self) -> char **"},
+	 { "Relationship_SetLeftMappingTableFields", _wrap_Relationship_SetLeftMappingTableFields, METH_VARARGS, "Relationship_SetLeftMappingTableFields(Relationship self, char ** pFields)"},
+	 { "Relationship_SetRightMappingTableFields", _wrap_Relationship_SetRightMappingTableFields, METH_VARARGS, "Relationship_SetRightMappingTableFields(Relationship self, char ** pFields)"},
+	 { "Relationship_GetType", _wrap_Relationship_GetType, METH_O, "Relationship_GetType(Relationship self) -> GDALRelationshipType"},
+	 { "Relationship_SetType", _wrap_Relationship_SetType, METH_VARARGS, "Relationship_SetType(Relationship self, GDALRelationshipType type)"},
+	 { "Relationship_GetForwardPathLabel", _wrap_Relationship_GetForwardPathLabel, METH_O, "Relationship_GetForwardPathLabel(Relationship self) -> char const *"},
+	 { "Relationship_SetForwardPathLabel", _wrap_Relationship_SetForwardPathLabel, METH_VARARGS, "Relationship_SetForwardPathLabel(Relationship self, char const * pszLabel)"},
+	 { "Relationship_GetBackwardPathLabel", _wrap_Relationship_GetBackwardPathLabel, METH_O, "Relationship_GetBackwardPathLabel(Relationship self) -> char const *"},
+	 { "Relationship_SetBackwardPathLabel", _wrap_Relationship_SetBackwardPathLabel, METH_VARARGS, "Relationship_SetBackwardPathLabel(Relationship self, char const * pszLabel)"},
+	 { "Relationship_GetRelatedTableType", _wrap_Relationship_GetRelatedTableType, METH_O, "Relationship_GetRelatedTableType(Relationship self) -> char const *"},
+	 { "Relationship_SetRelatedTableType", _wrap_Relationship_SetRelatedTableType, METH_VARARGS, "Relationship_SetRelatedTableType(Relationship self, char const * pszType)"},
+	 { "Relationship_swigregister", Relationship_swigregister, METH_O, NULL},
+	 { "Relationship_swiginit", Relationship_swiginit, METH_VARARGS, NULL},
 	 { "TermProgress_nocb", (PyCFunction)(void(*)(void))_wrap_TermProgress_nocb, METH_VARARGS|METH_KEYWORDS, "TermProgress_nocb(double dfProgress, char const * pszMessage=None, void * pData=None) -> int"},
 	 { "ComputeMedianCutPCT", (PyCFunction)(void(*)(void))_wrap_ComputeMedianCutPCT, METH_VARARGS|METH_KEYWORDS, "ComputeMedianCutPCT(Band red, Band green, Band blue, int num_colors, ColorTable colors, GDALProgressFunc callback=0, void * callback_data=None) -> int"},
 	 { "DitherRGB2PCT", (PyCFunction)(void(*)(void))_wrap_DitherRGB2PCT, METH_VARARGS|METH_KEYWORDS, "DitherRGB2PCT(Band red, Band green, Band blue, Band target, ColorTable colors, GDALProgressFunc callback=0, void * callback_data=None) -> int"},
@@ -45138,6 +46655,7 @@ static swig_type_info _swigt__p_GDALProgressFunc = {"_p_GDALProgressFunc", "GDAL
 static swig_type_info _swigt__p_GDALRasterAttributeTableShadow = {"_p_GDALRasterAttributeTableShadow", "GDALRasterAttributeTableShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALRasterBandShadow = {"_p_GDALRasterBandShadow", "GDALRasterBandShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALRasterizeOptions = {"_p_GDALRasterizeOptions", "GDALRasterizeOptions *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_GDALRelationshipShadow = {"_p_GDALRelationshipShadow", "GDALRelationshipShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALTransformerInfoShadow = {"_p_GDALTransformerInfoShadow", "GDALTransformerInfoShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALTranslateOptions = {"_p_GDALTranslateOptions", "GDALTranslateOptions *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALVectorTranslateOptions = {"_p_GDALVectorTranslateOptions", "GDALVectorTranslateOptions *", 0, 0, (void*)0, 0};
@@ -45160,7 +46678,7 @@ static swig_type_info _swigt__p_VSILFILE = {"_p_VSILFILE", "VSILFILE *", 0, 0, (
 static swig_type_info _swigt__p_char = {"_p_char", "char *|retStringAndCPLFree *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_double = {"_p_double", "double *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_f_double_p_q_const__char_p_void__int = {"_p_f_double_p_q_const__char_p_void__int", "int (*)(double,char const *,void *)", 0, 0, (void*)0, 0};
-static swig_type_info _swigt__p_int = {"_p_int", "OGRFieldSubType *|OGRFieldDomainType *|GDALRATFieldType *|OGRFieldType *|RETURN_NONE *|int *|GDALAccess *|OSRAxisMappingStrategy *|OGRwkbByteOrder *|CPLErr *|GDALRWFlag *|OGRJustification *|GDALRATFieldUsage *|GDALTileOrganization *|OGRAxisOrientation *|GDALPaletteInterp *|GDALColorInterp *|GDALRIOResampleAlg *|GDALResampleAlg *|OGRErr *|OGRwkbGeometryType *|GDALDataType *|GDALAsyncStatusType *|GDALRATTableType *|OGRFieldDomainMergePolicy *|OGRFieldDomainSplitPolicy *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_int = {"_p_int", "OGRFieldSubType *|OGRFieldDomainType *|GDALRATFieldType *|OGRFieldType *|RETURN_NONE *|GDALRelationshipType *|int *|GDALAccess *|OSRAxisMappingStrategy *|OGRwkbByteOrder *|CPLErr *|GDALRWFlag *|OGRJustification *|GDALRATFieldUsage *|GDALTileOrganization *|OGRAxisOrientation *|GDALPaletteInterp *|GDALColorInterp *|GDALRIOResampleAlg *|GDALResampleAlg *|OGRErr *|OGRwkbGeometryType *|GDALDataType *|GDALAsyncStatusType *|GDALRATTableType *|GDALRelationshipCardinality *|OGRFieldDomainMergePolicy *|OGRFieldDomainSplitPolicy *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_GByte = {"_p_p_GByte", "GByte **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_GDALDatasetShadow = {"_p_p_GDALDatasetShadow", "GDALDatasetShadow **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_GDALDimensionHS = {"_p_p_GDALDimensionHS", "GDALDimensionHS **", 0, 0, (void*)0, 0};
@@ -45212,6 +46730,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_GDALRasterAttributeTableShadow,
   &_swigt__p_GDALRasterBandShadow,
   &_swigt__p_GDALRasterizeOptions,
+  &_swigt__p_GDALRelationshipShadow,
   &_swigt__p_GDALTransformerInfoShadow,
   &_swigt__p_GDALTranslateOptions,
   &_swigt__p_GDALVectorTranslateOptions,
@@ -45286,6 +46805,7 @@ static swig_cast_info _swigc__p_GDALProgressFunc[] = {  {&_swigt__p_GDALProgress
 static swig_cast_info _swigc__p_GDALRasterAttributeTableShadow[] = {  {&_swigt__p_GDALRasterAttributeTableShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALRasterBandShadow[] = {  {&_swigt__p_GDALRasterBandShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALRasterizeOptions[] = {  {&_swigt__p_GDALRasterizeOptions, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_GDALRelationshipShadow[] = {  {&_swigt__p_GDALRelationshipShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALTransformerInfoShadow[] = {  {&_swigt__p_GDALTransformerInfoShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALTranslateOptions[] = {  {&_swigt__p_GDALTranslateOptions, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALVectorTranslateOptions[] = {  {&_swigt__p_GDALVectorTranslateOptions, 0, 0, 0},{0, 0, 0, 0}};
@@ -45360,6 +46880,7 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_GDALRasterAttributeTableShadow,
   _swigc__p_GDALRasterBandShadow,
   _swigc__p_GDALRasterizeOptions,
+  _swigc__p_GDALRelationshipShadow,
   _swigc__p_GDALTransformerInfoShadow,
   _swigc__p_GDALTranslateOptions,
   _swigc__p_GDALVectorTranslateOptions,

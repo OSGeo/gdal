@@ -144,6 +144,10 @@ class OGRDataSourceWithTransaction final: public OGRDataSource
     virtual bool        UpdateFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
                                           std::string& failureReason) override;
 
+    std::vector<std::string> GetRelationshipNames(CSLConstList papszOptions = nullptr) const override;
+
+    const GDALRelationship* GetRelationship(const std::string& name) const override;
+
     virtual std::shared_ptr<GDALGroup> GetRootGroup() const override;
 
     virtual char      **GetMetadata( const char * pszDomain = "" ) override;
@@ -474,6 +478,18 @@ bool OGRDataSourceWithTransaction::UpdateFieldDomain(std::unique_ptr<OGRFieldDom
 {
     if( !m_poBaseDataSource ) return false;
     return m_poBaseDataSource->UpdateFieldDomain(std::move(domain), failureReason);
+}
+
+std::vector<std::string> OGRDataSourceWithTransaction::GetRelationshipNames(CSLConstList papszOptions ) const
+{
+    if( !m_poBaseDataSource ) return {};
+    return m_poBaseDataSource->GetRelationshipNames(papszOptions);
+}
+
+const GDALRelationship* OGRDataSourceWithTransaction::GetRelationship(const std::string& name) const
+{
+    if( !m_poBaseDataSource ) return nullptr;
+    return m_poBaseDataSource->GetRelationship(name);
 }
 
 std::shared_ptr<GDALGroup> OGRDataSourceWithTransaction::GetRootGroup() const
