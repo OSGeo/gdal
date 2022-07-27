@@ -1305,3 +1305,13 @@ def test_ogr_parquet_arrow_stream_numpy():
     batches = [ batch for batch in stream ]
     batch = batches[0]
     assert batch.keys() == { 'string' }
+
+    # Test ignoring only one subfield of a struct field
+    ignored_fields = [ 'struct_field.a', 'struct_field.b' ]
+    lyr.SetIgnoredFields(ignored_fields)
+    stream = lyr.GetArrowStreamAsNumPy()
+    batches = [ batch for batch in stream ]
+    batch = batches[0]
+    # + 1: FID
+    # + 1: geometry
+    assert len(batch.keys()) == lyr.GetLayerDefn().GetFieldCount() - len(ignored_fields) + 1 + 1
