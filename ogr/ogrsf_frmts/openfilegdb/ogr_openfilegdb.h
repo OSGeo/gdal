@@ -52,6 +52,7 @@ constexpr const char* pszFeatureClassTypeUUID = "{70737809-852c-4a03-9e22-2cecea
 constexpr const char* pszTableTypeUUID = "{cd06bc3b-789d-4c51-aafa-a467912b8965}";
 constexpr const char* pszRangeDomainTypeUUID = "{c29da988-8c3e-45f7-8b5c-18e51ee7beb4}";
 constexpr const char* pszCodedDomainTypeUUID = "{8c368b12-a12e-4c7e-9638-c9c64e69e98f}";
+constexpr const char* pszRelationshipTypeUUID = "{b606a7e1-fa5b-439c-849c-6e9c2481537b}";
 
 // UUID of relationship type
 constexpr const char* pszDatasetInFeatureDatasetUUID = "{a1633a59-46ba-4448-8706-d8abe2b2b02e}";
@@ -373,6 +374,7 @@ class OGROpenFileGDBDataSource final: public OGRDataSource
   std::string                    m_osGDBSpatialRefsFilename{};
   std::string                    m_osGDBItemsFilename{};
   std::string                    m_osGDBItemRelationshipsFilename{};
+  std::map<std::string,std::unique_ptr<GDALRelationship>> m_osMapRelationships{};
 
   // Related to transactions
   bool                           m_bInTransaction = false;
@@ -455,6 +457,10 @@ public:
 
   bool        UpdateFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
                                 std::string& failureReason) override;
+
+  std::vector<std::string> GetRelationshipNames(CSLConstList papszOptions = nullptr) const override;
+
+  const GDALRelationship* GetRelationship(const std::string& name) const override;
 
   bool                GetExistingSpatialRef( const std::string& osWKT,
                                              double dfXOrigin,
