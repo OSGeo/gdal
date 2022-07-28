@@ -3243,6 +3243,31 @@ bool OGRArrowLayer::UseRecordBatchBaseImplementation() const
         }
     }
 
+    if( m_bIgnoredFields )
+    {
+        std::vector<int> ignoredState(m_anMapFieldIndexToArrowColumn.size(), -1);
+        for( size_t i = 0; i < m_anMapFieldIndexToArrowColumn.size(); i++ )
+        {
+            const int nArrowCol = m_anMapFieldIndexToArrowColumn[i][0];
+            if( nArrowCol >= static_cast<int>(ignoredState.size()) )
+                ignoredState.resize(nArrowCol + 1, -1);
+            const auto bIsIgnored = m_poFeatureDefn->GetFieldDefn(
+                static_cast<int>(i))->IsIgnored();
+            if( ignoredState[nArrowCol] < 0 )
+            {
+                ignoredState[nArrowCol] = static_cast<int>(bIsIgnored);
+            }
+            else
+            {
+                // struct fields will point to the same arrow column
+                if( ignoredState[nArrowCol] != static_cast<int>(bIsIgnored) )
+                {
+                    return true;
+                }
+            }
+        }
+    }
+
     return false;
 }
 
@@ -3282,9 +3307,11 @@ int OGRArrowLayer::GetArrowSchema(struct ArrowArrayStream* stream,
         for( size_t i = 0; i < m_anMapFieldIndexToArrowColumn.size(); i++ )
         {
             const int nArrowCol = m_anMapFieldIndexToArrowColumn[i][0];
-            CPLAssert( fieldDesc[nArrowCol].nIdx < 0 );
-            fieldDesc[nArrowCol].bIsRegularField = true;
-            fieldDesc[nArrowCol].nIdx = static_cast<int>(i);
+            if( fieldDesc[nArrowCol].nIdx < 0 )
+            {
+                fieldDesc[nArrowCol].bIsRegularField = true;
+                fieldDesc[nArrowCol].nIdx = static_cast<int>(i);
+            }
         }
         for( size_t i = 0; i < m_anMapGeomFieldIndexToArrowColumn.size(); i++ )
         {
