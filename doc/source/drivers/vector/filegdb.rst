@@ -70,6 +70,13 @@ Field domains
 Retrieving coded and range field domains are supported.
 Writing support has been added in GDAL 3.5.
 
+Relationships
+-------------
+
+.. versionadded:: 3.6
+
+Relationship retrieval is supported.
+
 Hiearchical organization
 ------------------------
 

@@ -2346,6 +2346,14 @@ class Dataset(MajorObject):
         r"""UpdateFieldDomain(Dataset self, FieldDomain fieldDomain) -> bool"""
         return _gdal.Dataset_UpdateFieldDomain(self, *args)
 
+    def GetRelationshipNames(self, *args) -> "char **":
+        r"""GetRelationshipNames(Dataset self, char ** options=None) -> char **"""
+        return _gdal.Dataset_GetRelationshipNames(self, *args)
+
+    def GetRelationship(self, *args) -> "GDALRelationshipShadow *":
+        r"""GetRelationship(Dataset self, char const * name) -> Relationship"""
+        return _gdal.Dataset_GetRelationship(self, *args)
+
     def ReadRaster1(self, *args, **kwargs) -> "CPLErr":
         r"""ReadRaster1(Dataset self, double xoff, double yoff, double xsize, double ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, int band_list=0, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, GIntBig * buf_band_space=None, GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour, GDALProgressFunc callback=0, void * callback_data=None, void * inputOutputBuf=None) -> CPLErr"""
         return _gdal.Dataset_ReadRaster1(self, *args, **kwargs)
@@ -4005,6 +4013,108 @@ class RasterAttributeTable(object):
 
 # Register RasterAttributeTable in _gdal:
 _gdal.RasterAttributeTable_swigregister(RasterAttributeTable)
+
+class Relationship(object):
+    r"""Proxy of C++ GDALRelationshipShadow class."""
+
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    __repr__ = _swig_repr
+
+    def __init__(self, *args):
+        r"""__init__(Relationship self, char const * name, char const * leftTableName, char const * rightTableName, GDALRelationshipCardinality cardinality) -> Relationship"""
+        _gdal.Relationship_swiginit(self, _gdal.new_Relationship(*args))
+    __swig_destroy__ = _gdal.delete_Relationship
+
+    def GetName(self, *args) -> "char const *":
+        r"""GetName(Relationship self) -> char const *"""
+        return _gdal.Relationship_GetName(self, *args)
+
+    def GetCardinality(self, *args) -> "GDALRelationshipCardinality":
+        r"""GetCardinality(Relationship self) -> GDALRelationshipCardinality"""
+        return _gdal.Relationship_GetCardinality(self, *args)
+
+    def GetLeftTableName(self, *args) -> "char const *":
+        r"""GetLeftTableName(Relationship self) -> char const *"""
+        return _gdal.Relationship_GetLeftTableName(self, *args)
+
+    def GetRightTableName(self, *args) -> "char const *":
+        r"""GetRightTableName(Relationship self) -> char const *"""
+        return _gdal.Relationship_GetRightTableName(self, *args)
+
+    def GetMappingTableName(self, *args) -> "char const *":
+        r"""GetMappingTableName(Relationship self) -> char const *"""
+        return _gdal.Relationship_GetMappingTableName(self, *args)
+
+    def SetMappingTableName(self, *args) -> "void":
+        r"""SetMappingTableName(Relationship self, char const * pszName)"""
+        return _gdal.Relationship_SetMappingTableName(self, *args)
+
+    def GetLeftTableFields(self, *args) -> "char **":
+        r"""GetLeftTableFields(Relationship self) -> char **"""
+        return _gdal.Relationship_GetLeftTableFields(self, *args)
+
+    def GetRightTableFields(self, *args) -> "char **":
+        r"""GetRightTableFields(Relationship self) -> char **"""
+        return _gdal.Relationship_GetRightTableFields(self, *args)
+
+    def SetLeftTableFields(self, *args) -> "void":
+        r"""SetLeftTableFields(Relationship self, char ** pFields)"""
+        return _gdal.Relationship_SetLeftTableFields(self, *args)
+
+    def SetRightTableFields(self, *args) -> "void":
+        r"""SetRightTableFields(Relationship self, char ** pFields)"""
+        return _gdal.Relationship_SetRightTableFields(self, *args)
+
+    def GetLeftMappingTableFields(self, *args) -> "char **":
+        r"""GetLeftMappingTableFields(Relationship self) -> char **"""
+        return _gdal.Relationship_GetLeftMappingTableFields(self, *args)
+
+    def GetRightMappingTableFields(self, *args) -> "char **":
+        r"""GetRightMappingTableFields(Relationship self) -> char **"""
+        return _gdal.Relationship_GetRightMappingTableFields(self, *args)
+
+    def SetLeftMappingTableFields(self, *args) -> "void":
+        r"""SetLeftMappingTableFields(Relationship self, char ** pFields)"""
+        return _gdal.Relationship_SetLeftMappingTableFields(self, *args)
+
+    def SetRightMappingTableFields(self, *args) -> "void":
+        r"""SetRightMappingTableFields(Relationship self, char ** pFields)"""
+        return _gdal.Relationship_SetRightMappingTableFields(self, *args)
+
+    def GetType(self, *args) -> "GDALRelationshipType":
+        r"""GetType(Relationship self) -> GDALRelationshipType"""
+        return _gdal.Relationship_GetType(self, *args)
+
+    def SetType(self, *args) -> "void":
+        r"""SetType(Relationship self, GDALRelationshipType type)"""
+        return _gdal.Relationship_SetType(self, *args)
+
+    def GetForwardPathLabel(self, *args) -> "char const *":
+        r"""GetForwardPathLabel(Relationship self) -> char const *"""
+        return _gdal.Relationship_GetForwardPathLabel(self, *args)
+
+    def SetForwardPathLabel(self, *args) -> "void":
+        r"""SetForwardPathLabel(Relationship self, char const * pszLabel)"""
+        return _gdal.Relationship_SetForwardPathLabel(self, *args)
+
+    def GetBackwardPathLabel(self, *args) -> "char const *":
+        r"""GetBackwardPathLabel(Relationship self) -> char const *"""
+        return _gdal.Relationship_GetBackwardPathLabel(self, *args)
+
+    def SetBackwardPathLabel(self, *args) -> "void":
+        r"""SetBackwardPathLabel(Relationship self, char const * pszLabel)"""
+        return _gdal.Relationship_SetBackwardPathLabel(self, *args)
+
+    def GetRelatedTableType(self, *args) -> "char const *":
+        r"""GetRelatedTableType(Relationship self) -> char const *"""
+        return _gdal.Relationship_GetRelatedTableType(self, *args)
+
+    def SetRelatedTableType(self, *args) -> "void":
+        r"""SetRelatedTableType(Relationship self, char const * pszType)"""
+        return _gdal.Relationship_SetRelatedTableType(self, *args)
+
+# Register Relationship in _gdal:
+_gdal.Relationship_swigregister(Relationship)
 
 
 def TermProgress_nocb(*args, **kwargs) -> "int":

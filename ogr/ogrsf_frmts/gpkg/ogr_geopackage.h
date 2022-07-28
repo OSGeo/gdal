@@ -215,6 +215,8 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
 
         std::map<int, OGRSpatialReference*> m_oMapSrsIdToSrs{};
 
+        std::map<std::string,std::unique_ptr<GDALRelationship>> m_osMapRelationships{};
+
         OGRErr              DeleteLayerCommon( const char* pszLayerName );
         OGRErr              DeleteRasterLayer( const char* pszLayerName );
         bool                DeleteVectorOrRasterLayer(
@@ -227,6 +229,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
 
         void                FixupWrongRTreeTrigger();
         void                FixupWrongMedataReferenceColumnNameUpdate();
+        void                LoadRelations();
 
         CPL_DISALLOW_COPY_ASSIGN(GDALGeoPackageDataset)
 
@@ -274,6 +277,10 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
         const OGRFieldDomain* GetFieldDomain(const std::string& name) const override;
         bool                AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
                                            std::string& failureReason) override;
+
+        std::vector<std::string> GetRelationshipNames(CSLConstList papszOptions = nullptr) const override;
+
+        const GDALRelationship* GetRelationship(const std::string& name) const override;
 
         virtual std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*> GetLayerWithGetSpatialWhereByName( const char* pszName ) override;
 

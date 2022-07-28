@@ -165,6 +165,13 @@ Field domains
 
 Coded and range field domains are supported.
 
+Relationships
+-------------
+
+.. versionadded:: 3.6
+
+Relationship retrieval is supported.
+
 Hiearchical organization
 ------------------------
 

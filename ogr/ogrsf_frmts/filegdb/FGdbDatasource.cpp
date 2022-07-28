@@ -37,6 +37,7 @@
 #include "cpl_multiproc.h"
 
 #include "filegdb_fielddomain.h"
+#include "filegdb_relationship.h"
 
 CPL_CVSID("$Id$")
 
@@ -482,6 +483,7 @@ bool FGdbDataSource::LoadLayers(const std::wstring &root)
     // We do this by browsing the catalog table (using the OpenFileGDB driver) and looking for items we haven't yet found.
     // If we find any, we have no choice but to load these using the OpenFileGDB driver, as the ESRI SDK refuses to acknowledge that they
     // exist (despite ArcGIS itself showing them!)
+    int iGDBItems = -1;
     const char* const apszDrivers[2] = { "OpenFileGDB", nullptr };
     const char* pszSystemCatalog = CPLFormFilename(m_osFSName, "a00000001", "gdbtable");
     m_poOpenFileGDBDS.reset(
@@ -490,9 +492,16 @@ bool FGdbDataSource::LoadLayers(const std::wstring &root)
     {
         OGRLayer* poCatalogLayer = m_poOpenFileGDBDS->GetLayer(0);
         const int iNameIndex = poCatalogLayer->GetLayerDefn()->GetFieldIndex( "Name" );
+        int i = -1;
         for( auto& poFeat: poCatalogLayer )
         {
+            i++;
             const std::string osTableName = poFeat->GetFieldAsString( iNameIndex );
+
+            if ( osTableName.compare( "GDB_Items" ) == 0 )
+            {
+                iGDBItems = i;
+            }
 
             // test if layer is already added
             if ( GDALDataset::GetLayerByName( osTableName.c_str() ) )
@@ -502,9 +511,49 @@ bool FGdbDataSource::LoadLayers(const std::wstring &root)
             const bool bIsPrivateLayer = osLCTableName.size() >= 4 && osLCTableName.substr(0, 4) == "gdb_";
             if ( !bIsPrivateLayer )
             {
-                OGRLayer* poLayer = m_poOpenFileGDBDS->GetLayerByName( osTableName.c_str() );
-                m_layers.push_back(poLayer);
-                poRootGroup->m_apoLayers.emplace_back(poLayer);
+                if ( OGRLayer* poLayer = m_poOpenFileGDBDS->GetLayerByName( osTableName.c_str() ) )
+                {
+                    m_layers.push_back(poLayer);
+                    poRootGroup->m_apoLayers.emplace_back(poLayer);
+                }
+            }
+        }
+    }
+
+    // Read relationships. Note that we don't use the SDK method for this, as it's too slow!
+    if ( iGDBItems >= 0 )
+    {
+        const char *pszGDBItems = CPLFormFilename( m_osFSName, CPLSPrintf( "a%08x", iGDBItems + 1 ), "gdbtable" );
+        std::unique_ptr<GDALDataset> poGDBItems( GDALDataset::Open( pszGDBItems, GDAL_OF_VECTOR, apszDrivers, nullptr, nullptr ) );
+        if ( poGDBItems != nullptr && poGDBItems->GetLayer( 0 ) != nullptr )
+        {
+            if ( OGRLayer *poItemsLayer = poGDBItems->GetLayer( 0 ) )
+            {
+                const int iType = poItemsLayer->FindFieldIndex( "Type", true );
+                const int iDefinition = poItemsLayer->FindFieldIndex( "Definition", true );
+                if ( iType < 0 || iDefinition < 0 )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                    "Wrong structure for GDB_Items table" );
+                    return FALSE;
+                }
+
+                // Hunt for relationships in GDB_Items table
+                for ( const auto &poFeature : poItemsLayer )
+                {
+                    CPLString osType;
+                    const char *pszType = poFeature->GetFieldAsString( iType );
+                    if ( pszType != nullptr && EQUAL( pszType, pszRelationshipTypeUUID ) )
+                    {
+                        // relationship item
+                        auto poRelationship = ParseXMLRelationshipDef( poFeature->GetFieldAsString( iDefinition ) );
+                        if ( poRelationship )
+                        {
+                            const auto relationshipName = poRelationship->GetName();
+                            m_osMapRelationships[relationshipName] = std::move( poRelationship );
+                        }
+                    }
+                }
             }
         }
     }
@@ -1024,4 +1073,36 @@ bool FGdbDataSource::UpdateFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
     m_oMapFieldDomains[domainName] = std::move(domain);
 
     return true;
+}
+
+
+/************************************************************************/
+/*                        GetRelationshipNames()                        */
+/************************************************************************/
+
+std::vector<std::string> FGdbDataSource::GetRelationshipNames( CPL_UNUSED CSLConstList papszOptions ) const
+
+{
+    std::vector<std::string> oasNames;
+    oasNames.reserve( m_osMapRelationships.size() );
+    for ( auto it = m_osMapRelationships.begin(); it != m_osMapRelationships.end(); ++it )
+    {
+        oasNames.emplace_back( it->first );
+    }
+    return oasNames;
+}
+
+
+/************************************************************************/
+/*                        GetRelationship()                             */
+/************************************************************************/
+
+const GDALRelationship *FGdbDataSource::GetRelationship( const std::string &name ) const
+
+{
+    auto it = m_osMapRelationships.find( name );
+    if ( it == m_osMapRelationships.end() )
+        return nullptr;
+
+    return it->second.get();
 }

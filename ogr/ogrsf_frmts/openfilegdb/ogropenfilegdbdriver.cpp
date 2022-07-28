@@ -281,6 +281,7 @@ void RegisterOGROpenFileGDB()
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_FIELD_DOMAINS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_RENAME_LAYERS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RELATIONSHIPS, "YES" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATION_FIELD_DOMAIN_TYPES, "Coded Range" );
 
