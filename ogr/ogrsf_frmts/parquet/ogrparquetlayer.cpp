@@ -398,6 +398,23 @@ void OGRParquetLayer::EstablishFeatureDefn()
     CPLAssert( static_cast<int>(m_anMapFieldIndexToParquetColumn.size()) == m_poFeatureDefn->GetFieldCount() );
     CPLAssert( static_cast<int>(m_anMapGeomFieldIndexToArrowColumn.size()) == m_poFeatureDefn->GetGeomFieldCount() );
     CPLAssert( static_cast<int>(m_anMapGeomFieldIndexToParquetColumn.size()) == m_poFeatureDefn->GetGeomFieldCount() );
+
+    if( !fields.empty() )
+    {
+        try
+        {
+            auto poRowGroup = m_poArrowReader->parquet_reader()->RowGroup(0);
+            if( poRowGroup )
+            {
+                auto poColumn = poRowGroup->metadata()->ColumnChunk(0);
+                CPLDebug("PARQUET", "Compression (of first column): %s",
+                         arrow::util::Codec::GetCodecAsString(poColumn->compression()).c_str());
+            }
+        }
+        catch( const std::exception& )
+        {
+        }
+    }
 }
 
 /************************************************************************/
