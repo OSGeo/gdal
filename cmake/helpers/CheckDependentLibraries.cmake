@@ -393,6 +393,15 @@ if (GDAL_USE_JPEG AND (JPEG_LIBRARY MATCHES ".*turbojpeg\.(so|lib)"))
       "JPEG_LIBRARY should point to a library with libjpeg ABI, not TurboJPEG. See https://libjpeg-turbo.org/About/TurboJPEG for the difference"
     )
 endif ()
+if (TARGET JPEG::JPEG)
+  set(EXPECTED_JPEG_LIB_VERSION "" CACHE STRING "Expected libjpeg version number")
+  mark_as_advanced(GDAL_CHECK_PACKAGE_${name}_NAMES)
+  if (EXPECTED_JPEG_LIB_VERSION)
+    get_property(_jpeg_old_icd TARGET JPEG::JPEG PROPERTY INTERFACE_COMPILE_DEFINITIONS)
+    set_property(TARGET JPEG::JPEG PROPERTY
+                 INTERFACE_COMPILE_DEFINITIONS "${_jpeg_old_icd};EXPECTED_JPEG_LIB_VERSION=${EXPECTED_JPEG_LIB_VERSION}")
+  endif()
+endif()
 gdal_internal_library(JPEG)
 
 gdal_check_package(GIF "GIF compression library (external)" CAN_DISABLE)
