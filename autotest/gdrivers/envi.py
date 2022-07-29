@@ -32,7 +32,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import gdal
+from osgeo import gdal, osr
 import struct
 
 import gdaltest
@@ -544,3 +544,36 @@ def test_envi_add_hdr():
 
     drv.Delete("/vsimem/test.int")
     drv.Delete("/vsimem/test.int.mph")
+
+###############################################################################
+# Test .hdr as an additional extension, not a replacement one
+
+
+def test_envi_edit_coordinate_system_string():
+
+    filename = '/vsimem/test.bin'
+    drv = gdal.GetDriverByName("ENVI")
+    ds = drv.Create(filename, 1, 1)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    ds.SetSpatialRef(srs)
+    ds = None
+
+    ds = gdal.Open(filename, gdal.GA_Update)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(3261)
+    ds.SetSpatialRef(srs)
+    ds = None
+
+    fp = gdal.VSIFOpenL(filename[0:-4] + '.hdr', 'rb')
+    assert fp
+    content = gdal.VSIFReadL(1, 1000, fp).decode('utf-8')
+    gdal.VSIFCloseL(fp)
+
+    assert content.count('coordinate system string') == 1
+
+    ds = gdal.Open(filename)
+    assert ds.GetSpatialRef().IsProjected()
+    ds = None
+
+    drv.Delete(filename)

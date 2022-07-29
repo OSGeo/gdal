@@ -507,7 +507,8 @@ void ENVIDataset::FlushCache(bool bAtClosing)
              poKey == "band names" ||
              poKey == "map info" ||
              poKey == "projection info" ||
-             poKey == "data ignore value" )
+             poKey == "data ignore value" ||
+             poKey == "coordinate system string" )
         {
             CSLDestroy(papszTokens);
             continue;
