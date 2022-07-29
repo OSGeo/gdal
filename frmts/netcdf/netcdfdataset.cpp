@@ -4600,9 +4600,20 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
         return;
 
     // Process geolocation arrays from CF "coordinates" attribute.
-    if( ProcessCFGeolocation(nGroupId, nVarId) )
+    std::string osGeolocXName, osGeolocYName;
+    if( ProcessCFGeolocation(nGroupId, nVarId, osGeolocXName, osGeolocYName) )
     {
-        if( !oSRS.IsGeographic() && !oSRS.IsProjected() && !bSwitchedXY )
+        bool bCanCancelGT = true;
+        if( (nVarDimXID != -1) && (nVarDimYID != -1) )
+        {
+            char szVarNameX[NC_MAX_NAME + 1];
+            CPL_IGNORE_RET_VAL(nc_inq_varname(nGroupId, nVarDimXID, szVarNameX));
+            char szVarNameY[NC_MAX_NAME + 1];
+            CPL_IGNORE_RET_VAL(nc_inq_varname(nGroupId, nVarDimYID, szVarNameY));
+            bCanCancelGT = !(osGeolocXName == szVarNameX &&
+                             osGeolocYName == szVarNameY);
+        }
+        if( bCanCancelGT && !oSRS.IsGeographic() && !oSRS.IsProjected() && !bSwitchedXY )
         {
             bGotCfGT = false;
         }
@@ -4684,7 +4695,8 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
     SetProjectionFromVar(nGroupId, nVarId, bReadSRSOnly, nullptr, nullptr, nullptr);
 }
 
-int netCDFDataset::ProcessCFGeolocation( int nGroupId, int nVarId )
+int netCDFDataset::ProcessCFGeolocation( int nGroupId, int nVarId,
+                                         std::string& osGeolocXNameOut, std::string& osGeolocYNameOut )
 {
     bool bAddGeoloc = false;
     char *pszTemp = nullptr;
@@ -4733,6 +4745,9 @@ int netCDFDataset::ProcessCFGeolocation( int nGroupId, int nVarId )
             // Add GEOLOCATION metadata.
             if( !EQUAL(szGeolocXName, "") && !EQUAL(szGeolocYName, "") )
             {
+                osGeolocXNameOut = szGeolocXName;
+                osGeolocYNameOut = szGeolocYName;
+
                 char *pszGeolocXFullName = nullptr;
                 char *pszGeolocYFullName = nullptr;
                 if( NCDFResolveVarFullName(nGroupId, szGeolocXName,
