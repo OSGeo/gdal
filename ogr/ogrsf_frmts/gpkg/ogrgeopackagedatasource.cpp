@@ -7394,18 +7394,16 @@ void GDALGeoPackageDataset::InstallSQLFunctions()
                             SQLITE_UTF8, this,
                             OGRGeoPackageImportFromEPSG, nullptr, nullptr);
 
-    // ST_MakeValid() only available (at time of writing) in
-    // Spatialite builds against (GPL) liblwgeom
-    // In the future, if they use GEOS 3.8 MakeValid, we could
-    // get rid of this.
-    int rc = sqlite3_exec(hDB,
-        "SELECT ST_MakeValid(ST_GeomFromText('POINT (0 0)'))",
-        nullptr, nullptr, nullptr);
-
-    /* Reset error flag */
-    sqlite3_exec(hDB, "SELECT 1", nullptr, nullptr, nullptr);
-
-    if (rc != SQLITE_OK)
+    // Check that OGRGeometry::MakeValid() is functional before registering
+    // ST_MakeValid()
+    static bool gbRegisterMakeValid = []() {
+        OGRPoint p(0, 0);
+        CPLErrorStateBackuper oBackuper;
+        CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
+        auto validGeom = std::unique_ptr<OGRGeometry>(p.MakeValid());
+        return validGeom != nullptr;
+    }();
+    if (gbRegisterMakeValid)
     {
         sqlite3_create_function(hDB, "ST_MakeValid", 1,
                                 SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
