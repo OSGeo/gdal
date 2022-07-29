@@ -13,15 +13,23 @@ endif ()
 
 if (GDAL_USE_JPEG_INTERNAL)
   gdal_add_vendored_lib(gdal_JPEG libjpeg)
-else ()
-  gdal_target_link_libraries(gdal_JPEG PRIVATE JPEG::JPEG)
-endif ()
+endif()
 
 if (GDAL_USE_ZLIB_INTERNAL)
   gdal_add_vendored_lib(gdal_JPEG libz)
-else ()
+endif()
+
+# Include libjpeg first so that if we want to use jpeg-turbo on homebrew
+# /usr/local/opt/jpeg-turbo gets included first, before /usr/local/opt
+# that contains libjpeg 9e
+if (NOT GDAL_USE_JPEG_INTERNAL)
+  gdal_target_link_libraries(gdal_JPEG PRIVATE JPEG::JPEG)
+endif ()
+
+if (NOT GDAL_USE_ZLIB_INTERNAL)
   gdal_target_link_libraries(gdal_JPEG PRIVATE ZLIB::ZLIB)
 endif ()
+
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
   # These files has CPL_CVSID("$id$") which break ODR and UNITY_BUILD
   set_property(SOURCE jpgdataset.cpp vsidataio.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
