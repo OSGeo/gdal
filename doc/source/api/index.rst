@@ -83,8 +83,8 @@ API
    .. toctree::
        :maxdepth: 1
 
-       python
-       python_api_ref
+       python_bindings
+       python/osgeo
        python_gotchas
        python_samples
 

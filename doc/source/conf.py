@@ -31,7 +31,9 @@ extensions = [
     'breathe',
     'configoptions',
     'redirects',
-    'driverproperties'
+    'driverproperties',
+    'sphinx.ext.napoleon',
+    'sphinxcontrib.apidoc',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -40,7 +42,14 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = [ 'programs/options/*.rst' ]
+exclude_patterns = [ 'programs/options/*.rst', 'api/python/modules.rst' ]
+
+# -- options for apidoc --------------------------
+
+apidoc_module_dir = "../../swig/python"
+apidoc_output_dir = 'api/python'
+apidoc_excluded_paths = ['osgeo/utils.py', 'trimmedsysconfig.py', 'setup.py']
+apidoc_separate_modules = True
 
 # -- Options for HTML output -------------------------------------------------
 
