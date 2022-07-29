@@ -673,6 +673,10 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
     int                 GetUndefinedSRID() const { return m_nUndefinedSRID; }
     bool                HasGeometryColumns() const { return m_bHaveGeometryColumns; }
 
+    std::vector<std::string> GetRelationshipNames(CSLConstList papszOptions = nullptr) const override;
+
+    const GDALRelationship* GetRelationship(const std::string& name) const override;
+
     void                ReloadLayers();
 
 #ifdef HAVE_RASTERLITE2
