@@ -3284,6 +3284,105 @@ def test_ogr_sqlite_CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE():
     assert gdal.VSIStatL(filename) is not None
     assert gdal.ReadDir('/vsimem/temporary_location') is None
 
+
+###############################################################################
+# Test support for relationships
+
+
+def test_ogr_sqlite_relationships():
+
+    tmpfilename = '/vsimem/relationships.db'
+    try:
+        ds = ogr.GetDriverByName('SQLite').CreateDataSource(tmpfilename)
+        ds = None
+
+        # test with no relationships
+        ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+        assert ds.GetRelationshipNames() is None
+
+        ds.ExecuteSQL('CREATE TABLE test_relation_a(artistid INTEGER PRIMARY KEY, artistname  TEXT)')
+        ds.ExecuteSQL('CREATE TABLE test_relation_b(trackid INTEGER, trackname TEXT, trackartist INTEGER, FOREIGN KEY(trackartist) REFERENCES test_relation_a(artistid))')
+        ds = None
+
+        ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+        assert ds.GetRelationshipNames() == ['test_relation_b_test_relation_a']
+        assert ds.GetRelationship('xxx') is None
+        rel = ds.GetRelationship('test_relation_b_test_relation_a')
+        assert rel is not None
+        assert rel.GetName() == 'test_relation_b_test_relation_a'
+        assert rel.GetLeftTableName() == 'test_relation_b'
+        assert rel.GetRightTableName() == 'test_relation_a'
+        assert rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
+        assert rel.GetType() == gdal.GRT_ASSOCIATION
+        assert rel.GetLeftTableFields() == ['trackartist']
+        assert rel.GetRightTableFields() == ['artistid']
+        assert rel.GetRelatedTableType() == 'feature'
+
+        # test a multi-column join
+        ds.ExecuteSQL('CREATE TABLE test_relation_c(trackid INTEGER, trackname TEXT, trackartist INTEGER, trackartistname TEXT, FOREIGN KEY(trackartist, trackartistname) REFERENCES test_relation_a(artistid, artistname))')
+
+        ds = None
+
+        ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+        assert ds.GetRelationshipNames() == ['test_relation_b_test_relation_a', 'test_relation_c_test_relation_a']
+        rel = ds.GetRelationship('test_relation_c_test_relation_a')
+        assert rel is not None
+        assert rel.GetName() == 'test_relation_c_test_relation_a'
+        assert rel.GetLeftTableName() == 'test_relation_c'
+        assert rel.GetRightTableName() == 'test_relation_a'
+        assert rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
+        assert rel.GetType() == gdal.GRT_ASSOCIATION
+        assert rel.GetLeftTableFields() == ['trackartist', 'trackartistname']
+        assert rel.GetRightTableFields() == ['artistid', 'artistname']
+        assert rel.GetRelatedTableType() == 'feature'
+
+        # a table with two joins
+        ds.ExecuteSQL('CREATE TABLE test_relation_d(trackid INTEGER, trackname TEXT, trackartist INTEGER, trackartistname TEXT, FOREIGN KEY(trackname) REFERENCES test_relation_b (trackname), FOREIGN KEY(trackartist, trackartistname) REFERENCES test_relation_a(artistid, artistname))')
+        ds = None
+
+        ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+        assert ds.GetRelationshipNames() == ['test_relation_b_test_relation_a', 'test_relation_c_test_relation_a', 'test_relation_d_test_relation_a', 'test_relation_d_test_relation_b_2']
+        rel = ds.GetRelationship('test_relation_d_test_relation_a')
+        assert rel is not None
+        assert rel.GetName() == 'test_relation_d_test_relation_a'
+        assert rel.GetLeftTableName() == 'test_relation_d'
+        assert rel.GetRightTableName() == 'test_relation_a'
+        assert rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
+        assert rel.GetType() == gdal.GRT_ASSOCIATION
+        assert rel.GetLeftTableFields() == ['trackartist', 'trackartistname']
+        assert rel.GetRightTableFields() == ['artistid', 'artistname']
+        assert rel.GetRelatedTableType() == 'feature'
+
+        rel = ds.GetRelationship('test_relation_d_test_relation_b_2')
+        assert rel is not None
+        assert rel.GetName() == 'test_relation_d_test_relation_b_2'
+        assert rel.GetLeftTableName() == 'test_relation_d'
+        assert rel.GetRightTableName() == 'test_relation_b'
+        assert rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
+        assert rel.GetType() == gdal.GRT_ASSOCIATION
+        assert rel.GetLeftTableFields() == ['trackname']
+        assert rel.GetRightTableFields() == ['trackname']
+        assert rel.GetRelatedTableType() == 'feature'
+
+        # with on delete cascade
+        ds.ExecuteSQL('CREATE TABLE test_relation_e(trackid INTEGER, trackname TEXT, trackartist INTEGER, FOREIGN KEY(trackartist) REFERENCES test_relation_a(artistid) ON DELETE CASCADE)')
+        ds = None
+        ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+        assert ds.GetRelationshipNames() == ['test_relation_b_test_relation_a', 'test_relation_c_test_relation_a', 'test_relation_d_test_relation_a', 'test_relation_d_test_relation_b_2', 'test_relation_e_test_relation_a']
+        rel = ds.GetRelationship('test_relation_e_test_relation_a')
+        assert rel is not None
+        assert rel.GetName() == 'test_relation_e_test_relation_a'
+        assert rel.GetLeftTableName() == 'test_relation_e'
+        assert rel.GetRightTableName() == 'test_relation_a'
+        assert rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
+        assert rel.GetType() == gdal.GRT_COMPOSITE
+        assert rel.GetLeftTableFields() == ['trackartist']
+        assert rel.GetRightTableFields() == ['artistid']
+        assert rel.GetRelatedTableType() == 'feature'
+
+    finally:
+        gdal.Unlink(tmpfilename)
+
 ###############################################################################
 #
 
