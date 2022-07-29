@@ -809,6 +809,12 @@ on how the library is detected.
     Control whether to use internal libjpeg copy. Defaults depends on GDAL_USE_INTERNAL_LIBS. When set
     to ON, has precedence over GDAL_USE_JPEG=ON
 
+.. option:: EXPECTED_JPEG_LIB_VERSION=number
+
+    Used with external libjpeg. number is for example 80, for libjpeg 8 ABI.
+    This can be used to check a build time that the expected JPEG library is
+    the one that is included by GDAL.
+
 
 JPEG12
 ******

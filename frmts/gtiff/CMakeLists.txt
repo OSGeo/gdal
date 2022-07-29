@@ -52,15 +52,18 @@ endif ()
 
 # Now deal with external dependencies
 
+# Include libjpeg first so that if we want to use jpeg-turbo on homebrew
+# /usr/local/opt/jpeg-turbo gets included first, before /usr/local/opt
+# triggered by libtiff, that contains libjpeg 9e
+if (NOT GDAL_USE_JPEG_INTERNAL AND GDAL_USE_JPEG)
+  gdal_target_link_libraries(gdal_GTIFF PRIVATE JPEG::JPEG)
+endif ()
+
 gdal_target_link_libraries(gdal_GTIFF PRIVATE PROJ::proj)
 
 if (NOT GDAL_USE_TIFF_INTERNAL)
   target_compile_definitions(gdal_GTIFF PRIVATE -DPIXARLOG_SUPPORT)
   gdal_target_link_libraries(gdal_GTIFF PRIVATE TIFF::TIFF)
-endif ()
-
-if (NOT GDAL_USE_JPEG_INTERNAL AND GDAL_USE_JPEG)
-  gdal_target_link_libraries(gdal_GTIFF PRIVATE JPEG::JPEG)
 endif ()
 
 if (NOT GDAL_USE_GEOTIFF_INTERNAL)
