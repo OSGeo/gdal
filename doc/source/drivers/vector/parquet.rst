@@ -38,9 +38,9 @@ The driver supports creating only a single layer in a dataset.
 Layer creation options
 ----------------------
 
-- **COMPRESSION=string**: Compression method. Can be one of ``NONE``, ``SNAPPY``,
-  ``GZIP``, ``BROTLI``, ``ZSTD``, ``LZ4``, ``BZ2``, ``LZ4_HADOOP``. Available
-  values depend on how the Parquet library was compiled.
+- **COMPRESSION=string**: Compression method. Can be one of ``NONE`` (or
+  ``UNCOMPRESSED``), ``SNAPPY``, ``GZIP``, ``BROTLI``, ``ZSTD``, ``LZ4_RAW``,
+  ``LZ4_HADOOP``. Available values depend on how the Parquet library was compiled.
   Defaults to SNAPPY when available, otherwise NONE.
 
 - **GEOMETRY_ENCODING=WKB/WKT/GEOARROW**: Geometry encoding. Defaults to WKB.
