@@ -213,10 +213,8 @@ void OGRParquetDriver::InitMetadata()
                                   "GZIP",
                                   "BROTLI",
                                   "ZSTD",
-                                  "LZ4",
-                                  "LZ4_FRAME",
+                                  "LZ4_RAW",
                                   "LZO",
-                                  "BZ2",
                                   "LZ4_HADOOP" } )
     {
         auto oResult = arrow::util::Codec::GetCompressionType(
