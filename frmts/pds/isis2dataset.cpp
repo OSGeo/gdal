@@ -231,7 +231,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     // ^QUBE = "ui31s015.img" - which implies no label or skip value
 
     const char *pszQube = poDS->GetKeyword( "^QUBE" );
-    GUIntBig nQube = 0;
+    int nQube = 0;
     int bByteLocation = FALSE;
     CPLString osTargetFile = poOpenInfo->pszFilename;
 
