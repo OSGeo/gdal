@@ -48,7 +48,13 @@ exclude_patterns = [ 'programs/options/*.rst', 'api/python/modules.rst' ]
 
 apidoc_module_dir = "../../swig/python"
 apidoc_output_dir = 'api/python'
-apidoc_excluded_paths = ['osgeo/utils.py', 'trimmedsysconfig.py', 'setup.py']
+apidoc_excluded_paths = [
+    'osgeo/utils.py',
+    'trimmedsysconfig.py',
+    'setup.py',
+    'get_python_lib.py',
+    'get_suffix.py',
+]
 apidoc_separate_modules = True
 
 # -- Options for HTML output -------------------------------------------------
