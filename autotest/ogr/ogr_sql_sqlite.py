@@ -591,7 +591,7 @@ def test_ogr_sql_sqlite_9():
     ds.ReleaseResultSet(sql_lyr)
 
     if cnt != 7:
-        return' fail'
+        return ' fail'
 
 
 ###############################################################################
@@ -611,7 +611,7 @@ def test_ogr_sql_sqlite_10():
     ds.ReleaseResultSet(sql_lyr)
 
     if cnt != 10:
-        return' fail'
+        return ' fail'
 
 
 ###############################################################################
@@ -637,7 +637,7 @@ def test_ogr_sql_sqlite_11():
     ds = None
 
     if cnt != 1:
-        return' fail'
+        return ' fail'
 
 
 ###############################################################################

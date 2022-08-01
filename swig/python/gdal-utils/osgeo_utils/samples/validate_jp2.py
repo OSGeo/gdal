@@ -773,7 +773,7 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location,
                         break
                     asoc = int(asoc)
                     if inspire_tg and asoc == 0:
-                        if not(typ == 1 or typ == 2):
+                        if not (typ == 1 or typ == 2):
                             error_report.EmitError('GENERAL', 'cdef.asoc[%d] = %d whereas cdef.typ[%d] = %d' % (i, asoc, i, typ))
                         if asoc_whole_used:
                             error_report.EmitError('GENERAL', 'cdef.asoc[%d] = %d is invalid since another band has already been associated to whole image' % (i, asoc))
