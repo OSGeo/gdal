@@ -3721,10 +3721,7 @@ OGRErr OGRGeoPackageTableLayer::Rename(const char* pszDstTableName)
 
     if( eErr == OGRERR_NONE)
     {
-        if( m_poDS->HasGpkgextRelationsTable() )
-        {
-            m_poDS->LoadRelations();
-        }
+        m_poDS->ClearCachedRelationships();
 
         SetDescription(pszDstTableName);
         m_poFeatureDefn->SetName(pszDstTableName);
@@ -5045,7 +5042,7 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
             eErr = SQLCommand( hDB, pszSQL );
             sqlite3_free(pszSQL);
         }
-        m_poDS->LoadRelations();
+        m_poDS->ClearCachedRelationships();
     }
 
 /* -------------------------------------------------------------------- */

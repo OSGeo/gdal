@@ -5586,6 +5586,46 @@ def test_ogr_gpkg_relations():
     gdal.Unlink(filename)
 
 ###############################################################################
+# Test support for relations taken from sqlite foreign keys when related tables
+# extension is not used
+
+def test_ogr_gpkg_relations_sqlite_foreign_keys():
+    try:
+        tmpfilename = '/vsimem/test_ogr_gpkg_relations_sqlite.gpkg'
+        ds = gdaltest.gpkg_dr.CreateDataSource(tmpfilename)
+        lyr = ds.CreateLayer('a')
+        lyr.CreateField(ogr.FieldDefn('some_id', ogr.OFTInteger))
+        lyr = ds.CreateLayer('b')
+        lyr.CreateField(ogr.FieldDefn('other_id', ogr.OFTInteger))
+        ds = None
+
+        ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+        assert ds.GetRelationshipNames() is None
+
+        ds.ExecuteSQL('CREATE TABLE test_relation_a(artistid INTEGER PRIMARY KEY, artistname  TEXT)')
+        ds.ExecuteSQL(
+            'CREATE TABLE test_relation_b(trackid INTEGER, trackname TEXT, trackartist INTEGER, FOREIGN KEY(trackartist) REFERENCES test_relation_a(artistid))')
+        ds = None
+
+        ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+        assert ds.GetRelationshipNames() == ['test_relation_b_test_relation_a']
+        assert ds.GetRelationship('xxx') is None
+        rel = ds.GetRelationship('test_relation_b_test_relation_a')
+        assert rel is not None
+        assert rel.GetName() == 'test_relation_b_test_relation_a'
+        assert rel.GetLeftTableName() == 'test_relation_b'
+        assert rel.GetRightTableName() == 'test_relation_a'
+        assert rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
+        assert rel.GetType() == gdal.GRT_ASSOCIATION
+        assert rel.GetLeftTableFields() == ['trackartist']
+        assert rel.GetRightTableFields() == ['artistid']
+        assert rel.GetRelatedTableType() == 'feature'
+
+    finally:
+        gdal.Unlink(tmpfilename)
+
+
+###############################################################################
 # Test AlterGeomFieldDefn()
 
 

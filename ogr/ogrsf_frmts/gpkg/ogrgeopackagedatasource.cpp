@@ -1729,11 +1729,6 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         }
     }
 
-    if( HasGpkgextRelationsTable() )
-    {
-        LoadRelations();
-    }
-
     if( !bRet && (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) )
     {
         if ( (poOpenInfo->nOpenFlags & GDAL_OF_UPDATE) )
@@ -1882,10 +1877,37 @@ void GDALGeoPackageDataset::FixupWrongMedataReferenceColumnNameUpdate()
 
 
 /************************************************************************/
-/*             LoadRelations()                                          */
+/*                  ClearCachedRelationships()                          */
 /************************************************************************/
 
-void GDALGeoPackageDataset::LoadRelations()
+void GDALGeoPackageDataset::ClearCachedRelationships()
+{
+    m_bHasPopulatedRelationships = false;
+    m_osMapRelationships.clear();
+}
+
+/************************************************************************/
+/*                           LoadRelationships()                        */
+/************************************************************************/
+
+void GDALGeoPackageDataset::LoadRelationships() const
+{
+    if ( HasGpkgextRelationsTable() )
+    {
+        LoadRelationshipsUsingRelatedTablesExtension();
+    }
+    else
+    {
+        LoadRelationshipsFromForeignKeys();
+    }
+    m_bHasPopulatedRelationships = true;
+}
+
+/************************************************************************/
+/*         LoadRelationshipsUsingRelatedTablesExtension()               */
+/************************************************************************/
+
+void GDALGeoPackageDataset::LoadRelationshipsUsingRelatedTablesExtension() const
 {
     m_osMapRelationships.clear();
 
@@ -5850,7 +5872,7 @@ OGRErr GDALGeoPackageDataset::DeleteLayerCommon(const char* pszLayerName)
                                   "'gpkg_related_tables')");
             }
 
-            LoadRelations();
+            ClearCachedRelationships();
         }
     }
 
@@ -8060,6 +8082,9 @@ bool GDALGeoPackageDataset::AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& dom
 std::vector<std::string> GDALGeoPackageDataset::GetRelationshipNames( CPL_UNUSED CSLConstList papszOptions ) const
 
 {
+    if ( !m_bHasPopulatedRelationships )
+        LoadRelationships();
+
     std::vector<std::string> oasNames;
     oasNames.reserve( m_osMapRelationships.size() );
     for ( auto it = m_osMapRelationships.begin(); it != m_osMapRelationships.end(); ++it )
@@ -8077,6 +8102,9 @@ std::vector<std::string> GDALGeoPackageDataset::GetRelationshipNames( CPL_UNUSED
 const GDALRelationship *GDALGeoPackageDataset::GetRelationship( const std::string &name ) const
 
 {
+    if ( !m_bHasPopulatedRelationships )
+        LoadRelationships();
+
     auto it = m_osMapRelationships.find( name );
     if ( it == m_osMapRelationships.end() )
         return nullptr;
