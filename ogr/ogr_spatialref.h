@@ -212,6 +212,10 @@ class CPL_DLL OGRSpatialReference
         ;
 
     OGRErr      importFromWkt( const char ** );
+/*! @cond Doxygen_Suppress */
+    OGRErr      importFromWkt( const char * pszInput, CSLConstList papszOptions);
+    OGRErr      importFromWkt( const char ** ppszInput, CSLConstList papszOptions);
+/*! @endcond */
     OGRErr      importFromWkt( const char* );
     OGRErr      importFromProj4( const char * );
     OGRErr      importFromEPSG( int );
