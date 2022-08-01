@@ -2256,7 +2256,7 @@ def test_jp2openjpeg_45():
        feature_pos >= 0 and myshape_gml_pos >= 0 and myshape2_gml_pos >= 0 and \
        feature2_pos >= 0 and myshape_kml_pos >= 0 and empty_kml_pos >= 0 and \
        style1_pos >= 0 and style2_pos >= 0 and style3_pos >= 0 and style4_pos >= 0 and \
-       extension1_pos >= 0 and extension2_pos >= 0 and extension3_pos >= 0 and extension4_pos >= 0 and(first_metadata_pos < second_metadata_pos and
+       extension1_pos >= 0 and extension2_pos >= 0 and extension3_pos >= 0 and extension4_pos >= 0 and (first_metadata_pos < second_metadata_pos and
             second_metadata_pos < third_metadata_pos and
             third_metadata_pos < GMLJP2RectifiedGridCoverage_pos and
             GMLJP2RectifiedGridCoverage_pos < fourth_metadata_pos and

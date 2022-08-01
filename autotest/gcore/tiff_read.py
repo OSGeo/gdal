@@ -1315,7 +1315,7 @@ def test_tiff_direct_and_virtual_mem_io():
                         if nblockxsize < nxsize:
                             if (nysize % nblockysize) != 0:
                                 padding = ((nxsize + nblockxsize - 1) / nblockxsize * nblockxsize) * (nblockysize - (nysize % nblockysize))
-                            if(nxsize % nblockxsize) != 0:
+                            if (nxsize % nblockxsize) != 0:
                                 padding += nblockxsize - (nxsize % nblockxsize)
                             padding *= dt_size
                             if not band_interleaved:
@@ -3275,7 +3275,7 @@ def test_tiff_read_cog_vsicurl():
         handler.add('GET', '/cog.tif', custom_method=method)
         with webserver.install_http_handler(handler):
             ds = gdal.Open('/vsicurl/http://localhost:%d/cog.tif' % webserver_port)
-        assert(ds)
+        assert ds
 
         handler = webserver.SequentialHandler()
         def method(request):
@@ -3378,7 +3378,7 @@ def test_tiff_read_cog_with_mask_vsicurl():
         handler.add('GET', '/cog.tif', custom_method=method)
         with webserver.install_http_handler(handler):
             ds = gdal.Open('/vsicurl/http://localhost:%d/cog.tif' % webserver_port)
-        assert(ds)
+        assert ds
 
         handler = webserver.SequentialHandler()
         def method(request):
