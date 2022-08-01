@@ -698,7 +698,7 @@ def test_zarr_read_crs(crs_member):
         assert rg
         ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
         srs = ar.GetSpatialRef()
-        if not(osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 2) and crs_member == 'projjson':
+        if not (osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 2) and crs_member == 'projjson':
             assert srs is None
         else:
             assert srs is not None

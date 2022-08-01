@@ -554,7 +554,7 @@ def test_wms_14():
   </Service>
 </GDAL_WMS>""")
     if ds is None:
-        return' fail'
+        return ' fail'
 
     assert ds.RasterXSize == 536870912 and ds.RasterYSize == 536870912 and ds.RasterCount == 3, \
         'wrong size or bands'
