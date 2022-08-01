@@ -54,11 +54,11 @@ for (out_filename, options) in [
 ]:
 
     dataset_options = ['VERSION=1.2']
-    if not('gpkg_ogr_contents' in options and options['gpkg_ogr_contents']):
+    if not ('gpkg_ogr_contents' in options and options['gpkg_ogr_contents']):
         dataset_options += ['ADD_GPKG_OGR_CONTENTS=NO']
 
     layer_options = []
-    if not('spi' in options and options['spi']):
+    if not ('spi' in options and options['spi']):
         layer_options += ['SPATIAL_INDEX=NO']
 
     ds = ogr.GetDriverByName('GPKG').CreateDataSource(out_filename, options=dataset_options)

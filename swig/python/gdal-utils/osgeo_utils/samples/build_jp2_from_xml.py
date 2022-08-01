@@ -105,7 +105,7 @@ def write_hexstring_as_binary(hex_binary_content, out_f):
 
 def parse_field(xml_tree, out_f, src_jp2file):
     # pylint: disable=unused-argument
-    if not(xml_tree[XML_TYPE_IDX] == gdal.CXT_Element and xml_tree[XML_VALUE_IDX] == 'Field'):
+    if not (xml_tree[XML_TYPE_IDX] == gdal.CXT_Element and xml_tree[XML_VALUE_IDX] == 'Field'):
         print('Not a Field element')
         return False
     field_name = get_attribute_val(xml_tree, 'name')
@@ -164,7 +164,7 @@ marker_map = {
 
 
 def parse_jpc_marker(xml_tree, out_f, src_jp2file):
-    if not(xml_tree[XML_TYPE_IDX] == gdal.CXT_Element and xml_tree[XML_VALUE_IDX] == 'Marker'):
+    if not (xml_tree[XML_TYPE_IDX] == gdal.CXT_Element and xml_tree[XML_VALUE_IDX] == 'Marker'):
         print('Not a Marker element')
         return False
     marker_name = get_attribute_val(xml_tree, 'name')
@@ -239,7 +239,7 @@ def parse_jp2codestream(inpath, xml_tree, out_f, src_jp2file=None):
 
 
 def parse_jp2_box(xml_tree, out_f, src_jp2file):
-    if not(xml_tree[XML_TYPE_IDX] == gdal.CXT_Element and xml_tree[XML_VALUE_IDX] == 'JP2Box'):
+    if not (xml_tree[XML_TYPE_IDX] == gdal.CXT_Element and xml_tree[XML_VALUE_IDX] == 'JP2Box'):
         print('Not a JP2Box element')
         return False
     jp2box_name = get_attribute_val(xml_tree, 'name')
