@@ -1543,12 +1543,8 @@ std::vector<int> OGRFeatureDefn::ComputeMapForSetFrom( const OGRFeatureDefn* poS
     const int nFieldCount = GetFieldCount();
     for( int i = 0; i < nFieldCount; i++ )
     {
-#if defined(__MINGW64__) || (defined(__GNUC__) && __GNUC__ < 8)
         const OGRFieldDefn* poFldDefn = GetFieldDefn(i);
         if( poFldDefn == nullptr ) continue;
-#else
-        const OGRFieldDefn* poFldDefn = CPLAssertNotNull(GetFieldDefn(i)); /* Make GCC-8 -Wnull-dereference happy */
-#endif
         const char* pszName = poFldDefn->GetNameRef();
 
         // In the insane case where there are several matches, arbitrarily
@@ -1564,12 +1560,8 @@ std::vector<int> OGRFeatureDefn::ComputeMapForSetFrom( const OGRFeatureDefn* poS
     aoMapSrcToTargetIdx.resize(nSrcFieldCount);
     for( int i = 0; i < nSrcFieldCount; i++ )
     {
-#if defined(__MINGW64__) || (defined(__GNUC__) && __GNUC__ < 8)
         const OGRFieldDefn* poSrcFldDefn = poSrcFDefn->GetFieldDefn(i);
         if( poSrcFldDefn == nullptr ) continue;
-#else
-        const OGRFieldDefn* poSrcFldDefn = CPLAssertNotNull(poSrcFDefn->GetFieldDefn(i)); /* Make GCC-8 -Wnull-dereference happy */
-#endif
         const char* pszSrcName = poSrcFldDefn->GetNameRef();
 
         auto oIter = oMapNameToTargetFieldIndex.find(pszSrcName);
@@ -1580,12 +1572,8 @@ std::vector<int> OGRFeatureDefn::ComputeMapForSetFrom( const OGRFeatureDefn* poS
             {
                 for( int j = 0; j < nFieldCount; j++ )
                 {
-#if defined(__MINGW64__) || (defined(__GNUC__) && __GNUC__ < 8)
                     const OGRFieldDefn* poFldDefn = GetFieldDefn(j);
                     if( poFldDefn == nullptr ) continue;
-#else
-                    const OGRFieldDefn* poFldDefn = CPLAssertNotNull(GetFieldDefn(j)); /* Make GCC-8 -Wnull-dereference happy */
-#endif
                     oMapNameToTargetFieldIndexUC[
                         CPLString(poFldDefn->GetNameRef()).toupper()] = j;
                 }

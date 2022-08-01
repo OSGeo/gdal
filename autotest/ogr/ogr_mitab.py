@@ -648,7 +648,7 @@ Destination=CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49.00000000002, 7
         f.close()
 
         if i == 1 and sys.platform.startswith('linux'):
-            os.system('touch -d "1 minute ago" tmp/mitab_bounds.txt')
+            os.system('touch -d "1970-01-01 00:00:01" tmp/mitab_bounds.txt')
 
         ds = ogr.GetDriverByName('MapInfo File').CreateDataSource('/vsimem/ogr_mitab_20.tab')
         sr = osr.SpatialReference()

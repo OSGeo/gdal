@@ -24,7 +24,7 @@ RUN \
 # For PROJ and GDAL
 ARG POPPLER_DEV=poppler-dev
 RUN apk add --no-cache \
-    linux-headers \
+    linux-headers gnu-libiconv-dev \
     curl-dev tiff-dev \
     zlib-dev zstd-dev xz-dev snappy-dev \
     libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev expat-dev \
@@ -265,6 +265,8 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
         -DCMAKE_BUILD_TYPE=Release \
         -DGDAL_USE_TIFF_INTERNAL=ON \
         -DGDAL_USE_GEOTIFF_INTERNAL=ON \
+        -DIconv_INCLUDE_DIR=/usr/include/gnu-libiconv \
+        -DIconv_LIBRARY=/usr/lib/libiconv.so \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
     && (make -j$(nproc) multireadtest && cp apps/multireadtest /build/usr/bin) \
@@ -309,6 +311,7 @@ RUN date
 ARG POPPLER=poppler
 RUN apk add --no-cache \
         libstdc++ \
+        gnu-libiconv \
         sqlite-libs \
         libcurl tiff \
         zlib zstd-libs xz-libs snappy \

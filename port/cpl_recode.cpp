@@ -380,9 +380,11 @@ int CPLEncodingCharSize( const char *pszEncoding )
 {
     if( EQUAL(pszEncoding, CPL_ENC_UTF8) )
         return 1;
-    else if( EQUAL(pszEncoding, CPL_ENC_UTF16) )
+    else if( EQUAL(pszEncoding, CPL_ENC_UTF16) ||
+             EQUAL(pszEncoding, "UTF-16LE") )
         return 2;
-    else if( EQUAL(pszEncoding, CPL_ENC_UCS2) )
+    else if( EQUAL(pszEncoding, CPL_ENC_UCS2) ||
+             EQUAL(pszEncoding, "UCS-2LE") )
         return 2;
     else if( EQUAL(pszEncoding, CPL_ENC_UCS4) )
         return 4;
