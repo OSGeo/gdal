@@ -545,6 +545,10 @@ void OGRSQLiteBaseDataSource::LoadRelationshipsFromForeignKeys() const
             if ( !pszBaseTableName )
                 continue;
 
+            // skip over foreign keys which relate to private GPKG tables
+            if ( STARTS_WITH(pszBaseTableName, "gpkg_") )
+                continue;
+
             const char* pszRelatedTableName = oResult->GetValue(3, iRecord);
             if ( !pszRelatedTableName )
                 continue;
