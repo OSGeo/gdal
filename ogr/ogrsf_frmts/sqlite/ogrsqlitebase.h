@@ -145,6 +145,9 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL: public GDALPamDataset
 
     std::map<CPLString, OGREnvelope> oMapSQLEnvelope{};
 
+    mutable bool        m_bHasPopulatedRelationships = false;
+    mutable std::map<std::string,std::unique_ptr<GDALRelationship>> m_osMapRelationships{};
+
     void               *hSpatialiteCtxt = nullptr;
     bool                InitNewSpatialite();
     void                FinishNewSpatialite();
@@ -187,6 +190,8 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL: public GDALPamDataset
     OGRErr              SoftRollbackTransaction();
 
     OGRErr              PragmaCheck(const char * pszPragma, const char * pszExpected, int nRowsExpected);
+
+    void                LoadRelationshipsFromForeignKeys() const;
 };
 
 /************************************************************************/

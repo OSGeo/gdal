@@ -149,6 +149,8 @@ Relationships
 .. versionadded:: 3.6
 
 Relationship retrieval is supported, respecting the OGC GeoPackage Related Tables Extension.
+If the Related Tables Extension is not in use then relationships will be reported for tables
+which utilise FOREIGN KEY constraints.
 
 Dataset open options
 --------------------
