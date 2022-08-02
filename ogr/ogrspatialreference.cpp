@@ -299,7 +299,11 @@ void OGRSpatialReference::Private::refreshProjObj()
         m_coordinateEpoch = dfCoordinateEpochBackup;
         m_bHasCenterLong = strstr(pszWKT, "CENTER_LONG") != nullptr;
 
-        const char* const options[] = { "STRICT=NO", nullptr };
+        const char* const options[] = { "STRICT=NO",
+#if PROJ_AT_LEAST_VERSION(9,1,0)
+                                        "UNSET_IDENTIFIERS_IF_INCOMPATIBLE_DEF=NO",
+#endif
+                                        nullptr };
         PROJ_STRING_LIST warnings = nullptr;
         PROJ_STRING_LIST errors = nullptr;
         setPjCRS(proj_create_from_wkt(
@@ -1841,6 +1845,26 @@ OGRErr OSRExportToPROJJSON( OGRSpatialReferenceH hSRS,
 OGRErr OGRSpatialReference::importFromWkt( const char ** ppszInput )
 
 {
+    return importFromWkt(ppszInput, nullptr);
+}
+
+/************************************************************************/
+/*                           importFromWkt()                            */
+/************************************************************************/
+
+/*! @cond Doxygen_Suppress */
+
+OGRErr OGRSpatialReference::importFromWkt( const char * pszInput,
+                                           CSLConstList papszOptions )
+
+{
+    return importFromWkt(&pszInput, papszOptions);
+}
+
+OGRErr OGRSpatialReference::importFromWkt( const char ** ppszInput,
+                                           CSLConstList papszOptions )
+
+{
     if( !ppszInput || !*ppszInput )
         return OGRERR_FAILURE;
     if( strlen(*ppszInput) > 100 * 1000 &&
@@ -1868,11 +1892,13 @@ OGRErr OGRSpatialReference::importFromWkt( const char ** ppszInput )
         }
         else
         {
-            const char* const options[] = { "STRICT=NO", nullptr };
+            CPLStringList aosOptions(papszOptions);
+            if( aosOptions.FetchNameValue("STRICT") == nullptr )
+                aosOptions.SetNameValue("STRICT", "NO");
             PROJ_STRING_LIST warnings = nullptr;
             PROJ_STRING_LIST errors = nullptr;
             d->setPjCRS(proj_create_from_wkt(
-                d->getPROJContext(), *ppszInput, options, &warnings, &errors));
+                d->getPROJContext(), *ppszInput, aosOptions.List(), &warnings, &errors));
             for( auto iter = warnings; iter && *iter; ++iter ) {
                 d->m_wktImportWarnings.push_back(*iter);
             }
@@ -1948,6 +1974,7 @@ OGRErr OGRSpatialReference::importFromWkt( const char ** ppszInput )
     }
 #endif
 }
+/*! @endcond */
 
 /**
  * \brief Import from WKT string.
