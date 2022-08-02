@@ -2948,7 +2948,7 @@ def test_tiff_write_87():
 
     assert nodata_ovr_0 == 0 and nodata_ovr_1 == 0, 'did not get expected nodata values'
 
-    assert ifd_main == 8 or(ifd_main < ifd_ovr_0 and ifd_ovr_0 < ifd_ovr_1 and ifd_ovr_1 < data_ovr_1 and data_ovr_1 < data_ovr_0 and data_ovr_0 < data_main)
+    assert ifd_main == 8 or (ifd_main < ifd_ovr_0 and ifd_ovr_0 < ifd_ovr_1 and ifd_ovr_1 < data_ovr_1 and data_ovr_1 < data_ovr_0 and data_ovr_0 < data_main)
 
 ###############################################################################
 # Test that COPY_SRC_OVERVIEWS creation option has an influence

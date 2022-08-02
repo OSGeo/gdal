@@ -1587,7 +1587,7 @@ def test_SetPROJSearchPath():
 
     # OSRSetPROJSearchPaths() is only taken into priority over other methods
     # starting with PROJ >= 6.1
-    if not(osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 1):
+    if not (osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 1):
         pytest.skip()
 
     # Do the test in a new thread, so that SetPROJSearchPath() is taken
@@ -1638,7 +1638,7 @@ def test_osr_export_projjson():
     sr = osr.SpatialReference()
     sr.SetFromUserInput('WGS84')
 
-    if not(osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 2):
+    if not (osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 2):
         with gdaltest.error_handler():
             sr.ExportToPROJJSON()
         pytest.skip()
@@ -1651,7 +1651,7 @@ def test_osr_promote_to_3D():
     sr = osr.SpatialReference()
     sr.SetFromUserInput('WGS84')
 
-    if not(osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 3):
+    if not (osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 3):
         with gdaltest.error_handler():
             sr.PromoteTo3D()
         pytest.skip()
