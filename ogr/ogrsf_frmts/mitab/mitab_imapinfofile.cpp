@@ -257,30 +257,52 @@ TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
        * POINT
        *------------------------------------------------------------*/
       case wkbPoint:
-        if(poFeature->GetStyleString())
+      {
+        const char* pszStyleString = poFeature->GetStyleString();
+        if(pszStyleString)
         {
-            TABFeatureClass featureClass = ITABFeatureSymbol::GetSymbolFeatureClass(poFeature->GetStyleString());
-            if (featureClass == TABFCFontPoint)
+            if( strstr(pszStyleString, "LABEL(") )
             {
-                poTABFeature = new TABFontPoint(poFeature->GetDefnRef());
-            }
-            else if (featureClass == TABFCCustomPoint)
-            {
-                poTABFeature = new TABCustomPoint(poFeature->GetDefnRef());
+                auto poText = new TABText(poFeature->GetDefnRef());
+                poText->SetLabelFromStyleString(pszStyleString);
+                poTABFeature = poText;
+
+                if( strstr(pszStyleString, "SYMBOL(") )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "OGR style string contains both "
+                             "Label and Symbol parts. "
+                             "Only Label taken into account due to "
+                             "MapInfo TAB/MIF format limitations.");
+                }
             }
             else
             {
-                poTABFeature = new TABPoint(poFeature->GetDefnRef());
+                TABFeatureClass featureClass = ITABFeatureSymbol::GetSymbolFeatureClass(pszStyleString);
+                if (featureClass == TABFCFontPoint)
+                {
+                    poTABFeature = new TABFontPoint(poFeature->GetDefnRef());
+                }
+                else if (featureClass == TABFCCustomPoint)
+                {
+                    poTABFeature = new TABCustomPoint(poFeature->GetDefnRef());
+                }
+                else
+                {
+                    poTABFeature = new TABPoint(poFeature->GetDefnRef());
+                }
+                poTABPointFeature = cpl::down_cast<TABPoint*>(poTABFeature);
+                poTABPointFeature->SetSymbolFromStyleString(
+                    poFeature->GetStyleString());
             }
-            poTABPointFeature = cpl::down_cast<TABPoint*>(poTABFeature);
-            poTABPointFeature->SetSymbolFromStyleString(
-                poFeature->GetStyleString());
         }
         else
         {
             poTABFeature = new TABPoint(poFeature->GetDefnRef());
         }
         break;
+      }
+
       /*-------------------------------------------------------------
        * REGION
        *------------------------------------------------------------*/
