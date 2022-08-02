@@ -1588,7 +1588,7 @@ def test_ogr_gpkg_srs_non_consistent_with_official_definition():
 
     ds = ogr.Open('/vsimem/ogr_gpkg_20.gpkg', update = 1)
     lyr = ds.GetLayer('test_fake_4267')
-    assert lyr.GetSpatialRef().ExportToWkt() == 'GEOGCS["my geogcs 4267",DATUM["WGS_1984",SPHEROID["my spheroid",1000,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4267"]]'
+    assert lyr.GetSpatialRef().ExportToWkt().replace(',AUTHORITY["EPSG","9122"]', '') == 'GEOGCS["my geogcs 4267",DATUM["WGS_1984",SPHEROID["my spheroid",1000,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4267"]]'
 
     sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_spatial_ref_sys WHERE srs_name='my geogcs 4267'")
     assert sql_lyr.GetFeatureCount() == 1
@@ -1599,7 +1599,7 @@ def test_ogr_gpkg_srs_non_consistent_with_official_definition():
     ds.ReleaseResultSet(sql_lyr)
 
     lyr = ds.GetLayer('test_fake_4326')
-    assert lyr.GetSpatialRef().ExportToWkt() == 'GEOGCS["my geogcs 4326",DATUM["WGS_1984",SPHEROID["my spheroid",1000,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'
+    assert lyr.GetSpatialRef().ExportToWkt().replace(',AUTHORITY["EPSG","9122"]', '') == 'GEOGCS["my geogcs 4326",DATUM["WGS_1984",SPHEROID["my spheroid",1000,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'
 
     sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_spatial_ref_sys WHERE srs_name='my geogcs 4326'")
     assert sql_lyr.GetFeatureCount() == 1
