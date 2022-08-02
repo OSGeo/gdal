@@ -281,6 +281,10 @@ char* OGRHStoreGetValue(const char* pszHStore, const char* pszSearchedKey)
 /*                         OGRFormatDate()                              */
 /************************************************************************/
 
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
 static const char * OGRFormatDate(const OGRField *psField)
 {
     return CPLSPrintf("%04d/%02d/%02d %02d:%02d:%06.3f",
@@ -291,6 +295,11 @@ static const char * OGRFormatDate(const OGRField *psField)
                     psField->Date.Minute,
                     psField->Date.Second );
 }
+
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
+
 #endif
 
 /************************************************************************/
