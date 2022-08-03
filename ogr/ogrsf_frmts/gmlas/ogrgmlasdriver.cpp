@@ -90,6 +90,7 @@ void RegisterOGRGMLAS()
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/gmlas.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, szGMLAS_PREFIX );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"

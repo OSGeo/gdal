@@ -113,6 +113,7 @@ void RegisterOGRWFS()
 "</OpenOptionList>" );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->pfnIdentify = OGRWFSDriverIdentify;
     poDriver->pfnOpen = OGRWFSDriverOpen;

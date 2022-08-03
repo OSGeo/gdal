@@ -287,6 +287,8 @@ void RegisterOGROpenFileGDB()
     poDriver->SetMetadataItem( GDAL_DCAP_UPDATE_RELATIONSHIP, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_RELATIONSHIP_FLAGS, "OneToOne OneToMany ManyToMany Composite Association ForwardPathLabel BackwardPathLabel" );
 
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
+
     poDriver->SetMetadataItem( GDAL_DMD_CREATION_FIELD_DOMAIN_TYPES, "Coded Range" );
 
     poDriver->SetMetadataItem( GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS, "Name SRS" );

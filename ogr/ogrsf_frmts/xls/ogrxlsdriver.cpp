@@ -101,6 +101,7 @@ void RegisterOGRXLS()
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/xls.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_NONSPATIAL, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }

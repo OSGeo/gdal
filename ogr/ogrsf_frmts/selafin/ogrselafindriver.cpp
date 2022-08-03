@@ -185,6 +185,7 @@ void RegisterOGRSelafin() {
     poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_DELETE_FIELD, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_REORDER_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Selafin" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/selafin.html" );

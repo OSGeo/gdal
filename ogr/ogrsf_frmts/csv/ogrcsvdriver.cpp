@@ -315,6 +315,7 @@ void RegisterOGRCSV()
                               "Comma Separated Value (.csv)");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "csv");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/csv.html");
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"

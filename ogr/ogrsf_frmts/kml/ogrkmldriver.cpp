@@ -141,6 +141,7 @@ void RegisterOGRKML()
                                "Keyhole Markup Language (KML)" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "kml" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/kml.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"

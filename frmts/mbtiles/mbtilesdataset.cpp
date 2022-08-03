@@ -3663,6 +3663,7 @@ MVT_MBTILES_COMMON_DSCO
 #ifdef ENABLE_SQL_SQLITE_FORMAT
     poDriver->SetMetadataItem("ENABLE_SQL_SQLITE_FORMAT", "YES");
 #endif
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "SQLITE OGRSQL" );
 
     poDriver->pfnOpen = MBTilesDataset::Open;
     poDriver->pfnIdentify = MBTilesDataset::Identify;
