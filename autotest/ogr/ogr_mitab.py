@@ -1845,7 +1845,7 @@ def test_ogr_mitab_43():
     src_ds = None
 
     size = gdal.VSIStatL('/vsimem/all_geoms_block_512.map').size
-    assert size == 6656
+    assert size == 7168
 
     size = gdal.VSIStatL('/vsimem/all_geoms_block_32256.map').size
     assert size == 161280
@@ -2594,3 +2594,28 @@ def test_ogr_mitab_write_etrs89_from_custom_wkt_no_geogcs_code():
         AXIS["Easting",EAST],
         AXIS["Northing",NORTH]]""")
     _test_ogr_mitab_write_etrs89_from_crs_epsg_code(srs)
+
+###############################################################################
+# Test writing point with LABEL style string
+
+
+def test_ogr_mitab_point_label():
+
+    ds = gdaltest.mapinfo_drv.CreateDataSource('/vsimem/test_ogr_mitab_point_label.tab')
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn('ID', ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(1 2)'))
+    f.SetStyleString('LABEL(t:"my text",a:2,s:1.5g,c:#123456,b:#234567,o:#234567,bo:1,it:1,un:1,p:2,f:"My Font")')
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open('/vsimem/test_ogr_mitab_point_label.tab')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.GetStyleString() == 'LABEL(t:"my text",a:2.000000,s:1.490400g,c:#123456,b:#234567,o:#234567,bo:1,it:1,un:1,p:2,f:"My Font")'
+    assert f.GetGeometryRef().GetX(0) == pytest.approx(1, 1e-2)
+    assert f.GetGeometryRef().GetY(0) == pytest.approx(2, 1e-2)
+    ds = None
+
+    gdaltest.mapinfo_drv.DeleteDataSource('/vsimem/test_ogr_mitab_point_label.tab')

@@ -1986,11 +1986,11 @@ int TABText::WriteGeometryToMIFFile(MIDDATAFile *fp)
     if (pszTmpString != m_pszString)
         CPLFree(pszTmpString);
 
-    //    UpdateTextMBR();
     double dXMin = 0.0;
     double dYMin = 0.0;
     double dXMax = 0.0;
     double dYMax = 0.0;
+    UpdateMBR();
     GetMBR(dXMin, dYMin, dXMax, dYMax);
     fp->WriteLine("    %.15g %.15g %.15g %.15g\n", dXMin, dYMin, dXMax, dYMax);
 
