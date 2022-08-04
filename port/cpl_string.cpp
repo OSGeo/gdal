@@ -237,13 +237,18 @@ char **CSLDuplicate( CSLConstList papszStrList )
     CSLConstList papszSrc = papszStrList;
 
     char **papszNewList = static_cast<char **>(
-        CPLMalloc( (nLines + 1) * sizeof(char*) ) );
+        VSI_MALLOC2_VERBOSE( nLines + 1, sizeof(char*) ));
 
     char **papszDst = papszNewList;
 
     for( ; *papszSrc != nullptr; ++papszSrc, ++papszDst)
     {
-        *papszDst = CPLStrdup(*papszSrc);
+        *papszDst = VSI_STRDUP_VERBOSE(*papszSrc);
+        if( *papszDst == nullptr )
+        {
+            CSLDestroy(papszNewList);
+            return nullptr;
+        }
     }
     *papszDst = nullptr;
 

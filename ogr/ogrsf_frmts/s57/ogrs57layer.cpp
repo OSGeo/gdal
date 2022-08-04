@@ -224,6 +224,9 @@ int OGRS57Layer::TestCapability( const char * pszCap )
                     & S57M_RECODE_BY_DSSI);
     }
 
+    if( EQUAL(pszCap, OLCZGeometries) )
+        return true;
+
     return false;
 }
 

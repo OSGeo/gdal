@@ -467,6 +467,9 @@ int OGRGeoconceptLayer::TestCapability( const char* pszCap )
     else if( EQUAL(pszCap,OLCCreateField) )
         return TRUE;
 
+    else if( EQUAL(pszCap,OLCZGeometries) )
+        return TRUE;
+
     return FALSE;
 }
 

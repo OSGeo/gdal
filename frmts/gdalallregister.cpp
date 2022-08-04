@@ -448,14 +448,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_GXF();
 #endif
 
-#ifdef FRMT_grass
-    GDALRegister_GRASS();
-#endif
-
-#ifdef FRMT_dods
-    GDALRegister_DODS();
-#endif
-
 /* Register KEA before HDF5 */
 #ifdef FRMT_kea
     GDALRegister_KEA();
@@ -564,6 +556,15 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_stacit
     GDALRegister_STACIT();
+#endif
+
+#ifdef FRMT_jpegxl
+    GDALRegister_JPEGXL();
+#endif
+
+#ifdef FRMT_basisu_ktx2
+    GDALRegister_BASISU();
+    GDALRegister_KTX2();
 #endif
 
     // NOTE: you need to generally insert your own driver before that line.

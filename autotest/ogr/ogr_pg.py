@@ -4854,6 +4854,98 @@ def test_ogr_pg_vector_translate_geography(with_and_without_postgis):
 
 
 ###############################################################################
+# Test AlterGeomFieldDefn()
+
+
+def test_ogr_pg_alter_geom_field_defn():
+
+    if gdaltest.pg_ds is None:
+        pytest.skip()
+
+    if not gdaltest.pg_has_postgis:
+        pytest.skip()
+
+    srs_4326 = osr.SpatialReference()
+    srs_4326.ImportFromEPSG(4326)
+    lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_alter_geom_field_defn', geom_type=ogr.wkbUnknown, srs = srs_4326)
+    assert lyr.TestCapability(ogr.OLCAlterGeomFieldDefn)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (1 2)'))
+    lyr.CreateFeature(f)
+
+    new_geom_field_defn = ogr.GeomFieldDefn('new_geomfield_name', ogr.wkbPoint)
+    srs_4269 = osr.SpatialReference()
+    srs_4269.ImportFromEPSG(4269)
+    new_geom_field_defn.SetSpatialRef(srs_4269)
+    new_geom_field_defn.SetNullable(False)
+    assert lyr.AlterGeomFieldDefn(0, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_ALL_FLAG) == ogr.OGRERR_NONE
+    assert lyr.GetGeometryColumn() == 'new_geomfield_name'
+    assert lyr.GetGeomType() == ogr.wkbPoint
+    assert lyr.GetSpatialRef().GetAuthorityCode(None) == '4269'
+    assert not lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable()
+
+    test_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=0)
+    test_lyr = test_ds.GetLayer('ogr_pg_alter_geom_field_defn')
+    assert test_lyr.GetGeometryColumn() == 'new_geomfield_name'
+    assert test_lyr.GetGeomType() == ogr.wkbPoint
+    assert test_lyr.GetSpatialRef().GetAuthorityCode(None) == '4269'
+    assert not test_lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable()
+    test_ds = None
+
+    new_geom_field_defn.SetSpatialRef(None)
+    new_geom_field_defn.SetNullable(True)
+    assert lyr.AlterGeomFieldDefn(0, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_ALL_FLAG) == ogr.OGRERR_NONE
+    assert lyr.GetSpatialRef() is None
+    assert lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable()
+
+    test_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=0)
+    test_lyr = test_ds.GetLayer('ogr_pg_alter_geom_field_defn')
+    assert test_lyr.GetGeometryColumn() == 'new_geomfield_name'
+    assert test_lyr.GetGeomType() == ogr.wkbPoint
+    assert test_lyr.GetSpatialRef() is None
+    assert test_lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable()
+    test_ds = None
+
+    new_geom_field_defn.SetSpatialRef(srs_4269)
+    assert lyr.AlterGeomFieldDefn(0, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_ALL_FLAG) == ogr.OGRERR_NONE
+    assert lyr.GetSpatialRef().GetAuthorityCode(None) == '4269'
+
+    test_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=0)
+    test_lyr = test_ds.GetLayer('ogr_pg_alter_geom_field_defn')
+    assert test_lyr.GetGeometryColumn() == 'new_geomfield_name'
+    assert test_lyr.GetGeomType() == ogr.wkbPoint
+    assert test_lyr.GetSpatialRef().GetAuthorityCode(None) == '4269'
+    assert test_lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable()
+    test_ds = None
+
+    # Error cases
+    with gdaltest.error_handler():
+        # Invalid index
+        assert lyr.AlterGeomFieldDefn(-1, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_ALL_FLAG) != ogr.OGRERR_NONE
+
+        # cannot change geometry type if data has incompatible geometries
+        new_geom_field_defn = ogr.GeomFieldDefn('another_new_geomfield_name', ogr.wkbLineString)
+        assert lyr.AlterGeomFieldDefn(0, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_ALL_FLAG) != ogr.OGRERR_NONE
+
+        new_geom_field_defn = ogr.GeomFieldDefn('new_geomfield_name', ogr.wkbPoint)
+        srs_with_coord_epoch = osr.SpatialReference()
+        srs_with_coord_epoch.ImportFromEPSG(4269)
+        srs_with_coord_epoch.SetCoordinateEpoch(2022)
+        new_geom_field_defn.SetSpatialRef(srs_with_coord_epoch)
+        assert lyr.AlterGeomFieldDefn(0, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_ALL_FLAG) != ogr.OGRERR_NONE
+
+
+    test_ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update=0)
+    test_lyr = test_ds.GetLayer('ogr_pg_alter_geom_field_defn')
+    assert test_lyr.GetGeometryColumn() == 'new_geomfield_name'
+    assert test_lyr.GetGeomType() == ogr.wkbPoint
+    assert test_lyr.GetSpatialRef().GetAuthorityCode(None) == '4269'
+    assert test_lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable()
+    test_ds = None
+
+    gdaltest.pg_ds.ExecuteSQL('DELLAYER:ogr_pg_alter_geom_field_defn')
+
+###############################################################################
 #
 
 

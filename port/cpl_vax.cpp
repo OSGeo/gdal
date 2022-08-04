@@ -33,7 +33,9 @@ CPL_CVSID("$Id$")
 
 namespace {
 typedef struct dbl {
+    // cppcheck-suppress unusedStructMember
     GUInt32 hi;
+    // cppcheck-suppress unusedStructMember
     GUInt32 lo;
 } double64_t;
 }

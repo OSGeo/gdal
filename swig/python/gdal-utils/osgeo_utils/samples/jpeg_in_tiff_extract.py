@@ -41,7 +41,7 @@ def Usage():
     print('If tile_x tile_y are not specified, then all tiles/strips are extracted')
     print('in filenames out_[bandnbr_]tx_ty.jpg')
     print('')
-    return 1
+    return 2
 
 ###############################################################
 

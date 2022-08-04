@@ -266,6 +266,8 @@ def test_osr_compd_6():
 
     exp_proj4 = '+proj=utm +zone=11 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +geoidgrids=g2003conus.gtx,g2003alaska.gtx,g2003h01.gtx,g2003p01.gtx +vunits=us-ft +no_defs'
     proj4 = srs.ExportToProj4()
+    # PROJ >= 9.1 adds a ' +geoid_crs=WGS84'
+    proj4 = proj4.replace(' +geoid_crs=WGS84', '')
     assert proj4 == exp_proj4, ('Did not get expected proj.4 string, got:' + proj4)
 
 ###############################################################################

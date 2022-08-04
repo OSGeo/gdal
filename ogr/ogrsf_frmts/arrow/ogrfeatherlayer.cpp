@@ -80,6 +80,15 @@ OGRFeatherLayer::OGRFeatherLayer(OGRFeatherDataset* poDS,
 }
 
 /************************************************************************/
+/*                           GetDataset()                               */
+/************************************************************************/
+
+GDALDataset* OGRFeatherLayer::GetDataset()
+{
+    return m_poDS;
+}
+
+/************************************************************************/
 /*                          LoadGeoMetadata()                           */
 /************************************************************************/
 
@@ -105,7 +114,7 @@ void OGRFeatherLayer::LoadGeoMetadata(const arrow::KeyValueMetadata* kv_metadata
                 auto oColumns = oRoot.GetObj("columns");
                 if( oColumns.IsValid() )
                 {
-                    for( const auto oColumn: oColumns.GetChildren() )
+                    for( const auto& oColumn: oColumns.GetChildren() )
                     {
                         m_oMapGeometryColumns[oColumn.GetName()] = oColumn;
                     }
@@ -277,14 +286,14 @@ void OGRFeatherLayer::EstablishFeatureDefn()
 bool OGRFeatherLayer::ResetRecordBatchReader()
 {
     const auto nPos = *(m_poFile->Tell());
-    m_poFile->Seek(0);
+    CPL_IGNORE_RET_VAL(m_poFile->Seek(0));
     auto result = arrow::ipc::RecordBatchStreamReader::Open(m_poFile, m_oOptions);
     if( !result.ok() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "RecordBatchStreamReader::Open() failed with %s",
                  result.status().message().c_str());
-        m_poFile->Seek(nPos);
+        CPL_IGNORE_RET_VAL(m_poFile->Seek(nPos));
         return false;
     }
     else
@@ -349,59 +358,6 @@ OGRwkbGeometryType OGRFeatherLayer::ComputeGeometryColumnType(int iGeomCol,
     }
 
     return eGeomType == wkbNone ? wkbUnknown : eGeomType;
-}
-
-/************************************************************************/
-/*                         CreateFieldFromSchema()                      */
-/************************************************************************/
-
-void OGRFeatherLayer::CreateFieldFromSchema(
-    const std::shared_ptr<arrow::Field>& field,
-    const std::vector<int>& path,
-    const std::map<std::string, std::unique_ptr<OGRFieldDefn>>& oMapFieldNameToGDALSchemaFieldDefn)
-{
-    OGRFieldDefn oField(field->name().c_str(), OFTString);
-    OGRFieldType eType = OFTString;
-    OGRFieldSubType eSubType = OFSTNone;
-    bool bTypeOK = true;
-
-    auto type = field->type();
-    if( type->id() == arrow::Type::DICTIONARY && path.size() == 1 )
-    {
-        const auto dictionaryType = std::static_pointer_cast<arrow::DictionaryType>(field->type());
-        const auto indexType = dictionaryType->index_type();
-        if( dictionaryType->value_type()->id() == arrow::Type::STRING &&
-            IsIntegerArrowType(indexType->id()) )
-        {
-            std::string osDomainName(field->name() + "Domain");
-            m_poDS->RegisterDomainName(osDomainName, m_poFeatureDefn->GetFieldCount());
-            oField.SetDomainName(osDomainName);
-            type = indexType;
-        }
-        else
-        {
-            bTypeOK = false;
-        }
-    }
-
-    if( type->id() == arrow::Type::STRUCT )
-    {
-        const auto subfields = field->Flatten();
-        auto newpath = path;
-        newpath.push_back(0);
-        for( int j = 0; j < static_cast<int>(subfields.size()); j++ )
-        {
-            const auto& subfield = subfields[j];
-            newpath.back() = j;
-            CreateFieldFromSchema(subfield,
-                                  newpath, oMapFieldNameToGDALSchemaFieldDefn);
-        }
-    }
-    else if( bTypeOK )
-    {
-        MapArrowTypeToOGR(type, field, oField, eType, eSubType,
-                          path, oMapFieldNameToGDALSchemaFieldDefn);
-    }
 }
 
 /************************************************************************/
@@ -705,7 +661,7 @@ int OGRFeatherLayer::TestCapability(const char* pszCap)
             }
             const auto& oJSONDef = oIter->second;
             const auto oBBox = oJSONDef.GetArray("bbox");
-            if( !(oBBox.IsValid() && oBBox.Size() == 4) )
+            if( !(oBBox.IsValid() && (oBBox.Size() == 4 || oBBox.Size() == 6)) )
             {
                 return false;
             }
@@ -713,13 +669,12 @@ int OGRFeatherLayer::TestCapability(const char* pszCap)
         return true;
     }
 
-    if( EQUAL(pszCap, OLCStringsAsUTF8) )
-        return true;
-
     if( EQUAL(pszCap, OLCMeasuredGeometries) )
         return true;
+    if( EQUAL(pszCap, OLCZGeometries) )
+        return true;
 
-    return false;
+    return OGRArrowLayer::TestCapability(pszCap);
 }
 
 /************************************************************************/

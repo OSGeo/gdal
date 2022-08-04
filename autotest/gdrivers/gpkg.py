@@ -3389,6 +3389,45 @@ def test_gpkg_coordinate_epoch():
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
+
+###############################################################################
+# Test flushing only a subset of bands
+
+
+@pytest.mark.parametrize('tile_format', ['PNG_JPEG', 'PNG', 'PNG8', 'JPEG', 'WEBP'])
+def test_gpkg_flushing_not_all_bands(tile_format):
+
+    drv_req_dict = {
+        'PNG_JPEG': ['PNG', 'JPEG'],
+        'PNG': 'PNG',
+        'PNG8': 'PNG',
+        'JPEG': 'JPEG',
+        'WEBP': 'WEBP'
+    }
+    drv_req = drv_req_dict[tile_format]
+    if not isinstance(drv_req, list):
+        drv_req = [drv_req]
+    for drv in drv_req:
+        if gdal.GetDriverByName(drv) is None:
+            pytest.skip()
+
+    out_filename = '/vsimem/test.gpkg'
+    ds = gdal.GetDriverByName('GPKG').Create(out_filename, 256, 256, 4,
+                                             options = ['TILE_FORMAT=' + tile_format])
+    ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    ds.GetRasterBand(1).Fill(255)
+    ds.GetRasterBand(2).Fill(255)
+    ds.GetRasterBand(3).Fill(255)
+    ds.FlushCache()
+    ds.GetRasterBand(4).Fill(255)
+    ds = None
+
+    ds = gdal.Open(out_filename)
+    assert ([ds.GetRasterBand(i+1).ComputeRasterMinMax() for i in range(ds.RasterCount)]) == [(255.0, 255.0)] * 4
+    ds = None
+
+    gdal.Unlink('/vsimem/tmp.gpkg')
+
 ###############################################################################
 #
 

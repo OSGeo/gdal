@@ -52,7 +52,8 @@ class CPL_DLL GDALJP2AbstractDataset: public GDALGeorefPamDataset
     ~GDALJP2AbstractDataset() override;
 
     void LoadJP2Metadata( GDALOpenInfo* poOpenInfo,
-                          const char* pszOverrideFilename = nullptr );
+                          const char* pszOverrideFilename = nullptr,
+                          VSILFILE* fpBox = nullptr);
     void LoadVectorLayers( int bOpenRemoteResources = FALSE );
 
     char **GetFileList( void ) override;

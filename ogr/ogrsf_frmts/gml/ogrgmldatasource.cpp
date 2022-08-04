@@ -2013,6 +2013,8 @@ int OGRGMLDataSource::TestCapability( const char * pszCap )
         return TRUE;
     else if( EQUAL(pszCap, ODsCCurveGeometries) )
         return bIsOutputGML3;
+    else if( EQUAL(pszCap, ODsCZGeometries) )
+        return TRUE;
     else if( EQUAL(pszCap, ODsCRandomLayerWrite) )
         return TRUE;
     else

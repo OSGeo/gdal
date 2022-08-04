@@ -88,10 +88,6 @@ class OGRFeatherLayer final: public OGRArrowLayer
                                            const std::string& key);
         OGRwkbGeometryType ComputeGeometryColumnType(int iGeomCol, int iCol) const;
         bool               ReadNextBatch() override;
-        void               CreateFieldFromSchema(
-                               const std::shared_ptr<arrow::Field>& field,
-                               const std::vector<int>& path,
-                               const std::map<std::string, std::unique_ptr<OGRFieldDefn>>& oMapFieldNameToGDALSchemaFieldDefn);
         OGRFeature*        GetNextRawFeature();
 
         virtual bool       CanRunNonForcedGetExtent() override;
@@ -118,6 +114,8 @@ public:
                                          const char* pszDomain = "" ) override;
         char**          GetMetadata( const char* pszDomain = "" ) override;
 
+        GDALDataset*    GetDataset() override;
+
         std::unique_ptr<OGRFieldDomain> BuildDomain(const std::string& osDomainName,
                                                     int iFieldIndex) const override;
 };
@@ -129,7 +127,9 @@ public:
 class OGRFeatherDataset final: public OGRArrowDataset
 {
 public:
-    explicit OGRFeatherDataset(std::unique_ptr<arrow::MemoryPool>&& poMemoryPool);
+    explicit OGRFeatherDataset(const std::shared_ptr<arrow::MemoryPool>& poMemoryPool);
+
+    int TestCapability( const char * ) override;
 };
 
 /************************************************************************/
@@ -158,6 +158,7 @@ class OGRFeatherWriterLayer final: public OGRArrowWriterLayer
         virtual std::string GetDriverUCName() const override { return ARROW_DRIVER_NAME_UC; }
 
         virtual bool            IsSupportedGeometryType(OGRwkbGeometryType eGType) const override;
+        virtual bool            IsSRSRequired() const override { return true; }
 
 public:
         OGRFeatherWriterLayer( arrow::MemoryPool* poMemoryPool,

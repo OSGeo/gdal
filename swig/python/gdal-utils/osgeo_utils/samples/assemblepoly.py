@@ -33,6 +33,12 @@
 from osgeo import ogr
 import sys
 
+def Usage():
+    print('Usage: assemblepoly.py [datasource]')
+    print('')
+    print('  assemblepoly.py  /u/data/ntf/bl2000/HALTON.NTF')
+    print('  assemblepoly.py  PG:dbname=test')
+    return 2
 
 def doit(name):
     # Open the datasource to operate on.
@@ -116,10 +122,11 @@ def doit(name):
         feat = poly_layer.GetNextFeature()
 
 
-def main(argv=sys.argv):
-    name = 'PG:dbname=test'
+def main(argv=sys.argv, name=None):
     if len(argv) > 1:
         name = argv[1]
+    if not name:
+        return Usage()
     return doit(name)
 
 

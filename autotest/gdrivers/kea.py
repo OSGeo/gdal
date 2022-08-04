@@ -65,6 +65,8 @@ def test_kea_2():
                  '../../gcore/data/uint16.tif',
                  '../../gcore/data/int32.tif',
                  '../../gcore/data/uint32.tif',
+                 '../../gcore/data/int64.tif',
+                 '../../gcore/data/uint64.tif',
                  '../../gcore/data/float32.tif',
                  '../../gcore/data/float64.tif']
 
@@ -86,6 +88,8 @@ def test_kea_3():
                  '../../gcore/data/uint16.tif',
                  '../../gcore/data/int32.tif',
                  '../../gcore/data/uint32.tif',
+                 '../../gcore/data/int64.tif',
+                 '../../gcore/data/uint64.tif',
                  '../../gcore/data/float32.tif',
                  '../../gcore/data/float64.tif']
 
@@ -397,6 +401,11 @@ def test_kea_10():
                                   (gdal.GDT_Int32, 2147483647, 2147483647),
                                   (gdal.GDT_Int32, -2147483649, None),
                                   (gdal.GDT_Int32, 2147483648, None),
+                                  (gdal.GDT_Int64, 0, 0),
+                                  (gdal.GDT_Int64, 0xFFFFFFFF + 1, 0xFFFFFFFF + 1),
+                                  (gdal.GDT_Int64, -0xFFFFFFFF - 1, -0xFFFFFFFF - 1),
+                                  (gdal.GDT_UInt64, 0, 0),
+                                  (gdal.GDT_UInt64, 0xFFFFFFFF + 1, 0xFFFFFFFF + 1),
                                   (gdal.GDT_Float32, 0.5, 0.5),
                                   ]:
         ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1, 1, dt)

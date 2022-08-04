@@ -35,6 +35,8 @@
 #include "ogr_featurestyle.h"
 #include "ogr_geometry.h"
 
+#include <cstddef>
+
 #include <exception>
 #include <memory>
 #include <string>
@@ -302,6 +304,15 @@ class CPL_DLL OGRFeatureDefn
     virtual int         GetFieldIndex( const char * ) const;
     int                 GetFieldIndexCaseSensitive( const char * ) const;
 
+//! @cond Doxygen_Suppress
+    // That method should only be called if there's a guarantee that GetFieldCount() has been called before
+    int                 GetFieldCountUnsafe() const { return static_cast<int>(apoFieldDefn.size()); }
+
+    // Those methods don't check i is n range.
+    OGRFieldDefn       *GetFieldDefnUnsafe( int i ) { if( apoFieldDefn.empty() ) GetFieldDefn(i); return apoFieldDefn[static_cast<std::size_t>(i)].get(); }
+    const OGRFieldDefn *GetFieldDefnUnsafe( int i ) const { if( apoFieldDefn.empty() ) GetFieldDefn(i); return apoFieldDefn[static_cast<std::size_t>(i)].get(); }
+//! @endcond
+
     virtual void        AddFieldDefn( const OGRFieldDefn * );
     virtual OGRErr      DeleteFieldDefn( int iField );
     virtual OGRErr      ReorderFieldDefns( const int* panMap );
@@ -403,10 +414,13 @@ class CPL_DLL OGRFeature
         FieldValue(OGRFeature* poFeature, int iFieldIndex);
         FieldValue(const OGRFeature* poFeature, int iFieldIndex);
         FieldValue(const FieldValue& oOther) = delete;
+        FieldValue& Assign(const FieldValue& oOther);
 
       public:
 //! @cond Doxygen_Suppress
         ~FieldValue();
+
+        FieldValue& operator=(FieldValue&& oOther);
 //! @endcond
 
         /** Set a field value from another one. */
@@ -587,6 +601,10 @@ class CPL_DLL OGRFeature
     OGRFeatureDefn     *GetDefnRef() { return poDefn; }
     const OGRFeatureDefn     *GetDefnRef() const { return poDefn; }
 
+//! @cond Doxygen_Suppress
+    void                SetFDefnUnsafe( OGRFeatureDefn* poNewFDefn );
+//! @endcond
+
     OGRErr              SetGeometryDirectly( OGRGeometry * );
     OGRErr              SetGeometry( const OGRGeometry * );
     OGRGeometry        *GetGeometryRef();
@@ -609,6 +627,8 @@ class CPL_DLL OGRFeature
     const OGRGeometry*  GetGeomFieldRef( const char* pszFName ) const;
     OGRErr              SetGeomFieldDirectly( int iField, OGRGeometry * );
     OGRErr              SetGeomField( int iField, const OGRGeometry * );
+
+    void                Reset();
 
     OGRFeature         *Clone() const CPL_WARN_UNUSED_RESULT;
     virtual OGRBoolean  Equal( const OGRFeature * poFeature ) const;
@@ -658,6 +678,22 @@ class CPL_DLL OGRFeature
                                             int *pnTZFlag ) const;
     char               *GetFieldAsSerializedJSon( int i ) const;
 
+//! @cond Doxygen_Suppress
+    bool                IsFieldSetUnsafe( int i ) const { return !(pauFields[i].Set.nMarker1 == OGRUnsetMarker &&
+                                                                   pauFields[i].Set.nMarker2 == OGRUnsetMarker &&
+                                                                   pauFields[i].Set.nMarker3 == OGRUnsetMarker); }
+    bool                IsFieldNullUnsafe( int i ) const { return (pauFields[i].Set.nMarker1 == OGRNullMarker &&
+                                                                   pauFields[i].Set.nMarker2 == OGRNullMarker &&
+                                                                   pauFields[i].Set.nMarker3 == OGRNullMarker); }
+    bool                IsFieldSetAndNotNullUnsafe( int i ) const { return IsFieldSetUnsafe(i) && !IsFieldNullUnsafe(i); }
+    // Those methods should only be called on a field that is of the type
+    // consistent with the value, and that is set.
+    int                 GetFieldAsIntegerUnsafe( int i ) const { return pauFields[i].Integer; }
+    GIntBig             GetFieldAsInteger64Unsafe( int i ) const { return pauFields[i].Integer64; }
+    double              GetFieldAsDoubleUnsafe( int i ) const { return pauFields[i].Real; }
+    const char*         GetFieldAsStringUnsafe( int i) const { return pauFields[i].String; }
+//! @endcond
+
     int                 GetFieldAsInteger( const char *pszFName )  const
                       { return GetFieldAsInteger( GetFieldIndex(pszFName) ); }
     GIntBig             GetFieldAsInteger64( const char *pszFName )  const
@@ -695,6 +731,16 @@ class CPL_DLL OGRFeature
     void                SetField( int i, int nYear, int nMonth, int nDay,
                                   int nHour=0, int nMinute=0, float fSecond=0.f,
                                   int nTZFlag = 0 );
+
+//! @cond Doxygen_Suppress
+    // Those methods should only be called on a field that is of the type
+    // consistent with the value, and in a unset state.
+    void                SetFieldSameTypeUnsafe( int i, int nValue ) {
+                            pauFields[i].Integer = nValue; pauFields[i].Set.nMarker2 = 0; pauFields[i].Set.nMarker3 = 0; }
+    void                SetFieldSameTypeUnsafe( int i, GIntBig nValue ) { pauFields[i].Integer64 = nValue; }
+    void                SetFieldSameTypeUnsafe( int i, double dfValue ) { pauFields[i].Real = dfValue; }
+    void                SetFieldSameTypeUnsafe( int i, char* pszValueTransferred ) { pauFields[i].String = pszValueTransferred; }
+//! @endcond
 
     void                SetField( const char *pszFName, int nValue )
                            { SetField( GetFieldIndex(pszFName), nValue ); }
@@ -1023,10 +1069,13 @@ public:
                         bool        bMaxIsInclusive);
 
     OGRRangeFieldDomain* Clone() const override {
-        return new OGRRangeFieldDomain(m_osName, m_osDescription,
+        auto poDomain = new OGRRangeFieldDomain(m_osName, m_osDescription,
                                        m_eFieldType, m_eFieldSubType,
                                        m_sMin, m_bMinIsInclusive,
                                        m_sMax, m_bMaxIsInclusive);
+        poDomain->SetMergePolicy(m_eMergePolicy);
+        poDomain->SetSplitPolicy(m_eSplitPolicy);
+        return poDomain;
     }
 
     /** Get the minimum value.
@@ -1092,9 +1141,12 @@ public:
                        const std::string& osBlob);
 
     OGRGlobFieldDomain* Clone() const override {
-        return new OGRGlobFieldDomain(m_osName, m_osDescription,
+        auto poDomain = new OGRGlobFieldDomain(m_osName, m_osDescription,
                                       m_eFieldType, m_eFieldSubType,
                                       m_osGlob);
+        poDomain->SetMergePolicy(m_eMergePolicy);
+        poDomain->SetSplitPolicy(m_eSplitPolicy);
+        return poDomain;
     }
 
     /** Get the glob expression.

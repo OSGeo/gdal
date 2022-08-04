@@ -93,6 +93,19 @@ OGRFeature *OGRMutexedLayer::GetNextFeature()
     return OGRLayerDecorator::GetNextFeature();
 }
 
+GDALDataset *OGRMutexedLayer::GetDataset()
+{
+    CPLMutexHolderOptionalLockD(m_hMutex);
+    return OGRLayerDecorator::GetDataset();
+}
+
+bool OGRMutexedLayer::GetArrowStream(struct ArrowArrayStream* out_stream,
+                                     CSLConstList papszOptions)
+{
+    CPLMutexHolderOptionalLockD(m_hMutex);
+    return OGRLayerDecorator::GetArrowStream(out_stream, papszOptions);
+}
+
 OGRErr      OGRMutexedLayer::SetNextByIndex( GIntBig nIndex )
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
@@ -194,6 +207,12 @@ OGRErr      OGRMutexedLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFiel
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::AlterFieldDefn(iField, poNewFieldDefn, nFlagsIn);
+}
+
+OGRErr      OGRMutexedLayer::AlterGeomFieldDefn( int iGeomField, const OGRGeomFieldDefn* poNewGeomFieldDefn, int nFlagsIn )
+{
+    CPLMutexHolderOptionalLockD(m_hMutex);
+    return OGRLayerDecorator::AlterGeomFieldDefn(iGeomField, poNewGeomFieldDefn, nFlagsIn);
 }
 
 OGRErr      OGRMutexedLayer::SyncToDisk()

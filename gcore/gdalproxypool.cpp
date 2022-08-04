@@ -66,7 +66,7 @@ void GDALNullifyProxyPoolSingleton() { singleton = nullptr; }
 struct _GDALProxyPoolCacheEntry
 {
     GIntBig       responsiblePID;
-    char         *pszFileName;
+    char         *pszFileNameAndOpenOptions;
     char         *pszOwner;
     GDALDataset  *poDS;
 
@@ -107,12 +107,14 @@ class GDALDatasetPool
         ~GDALDatasetPool();
         GDALProxyPoolCacheEntry* _RefDataset(const char* pszFileName,
                                              GDALAccess eAccess,
-                                             char** papszOpenOptions,
+                                             CSLConstList papszOpenOptions,
                                              int bShared,
                                              bool bForceOpen,
                                              const char* pszOwner);
         void _CloseDatasetIfZeroRefCount(
-                           const char* pszFileName, GDALAccess eAccess,
+                           const char* pszFileName,
+                           CSLConstList papszOpenOptions,
+                           GDALAccess eAccess,
                            const char* pszOwner);
 
 #ifdef DEBUG_PROXY_POOL
@@ -134,7 +136,9 @@ class GDALDatasetPool
                                                    const char* pszOwner);
         static void UnrefDataset(GDALProxyPoolCacheEntry* cacheEntry);
         static void CloseDatasetIfZeroRefCount(
-                                 const char* pszFileName, GDALAccess eAccess,
+                                 const char* pszFileName,
+                                 CSLConstList papszOpenOptions,
+                                 GDALAccess eAccess,
                                  const char* pszOwner);
 
         static void PreventDestroy();
@@ -161,7 +165,7 @@ GDALDatasetPool::~GDALDatasetPool()
     while(cur)
     {
         GDALProxyPoolCacheEntry* next = cur->next;
-        CPLFree(cur->pszFileName);
+        CPLFree(cur->pszFileNameAndOpenOptions);
         CPLFree(cur->pszOwner);
         CPLAssert(cur->refCount == 0);
         if (cur->poDS)
@@ -187,7 +191,7 @@ void GDALDatasetPool::ShowContent()
     while(cur)
     {
         printf("[%d] pszFileName=%s, owner=%s, refCount=%d, responsiblePID=%d\n",/*ok*/
-               i, cur->pszFileName,
+               i, cur->pszFileNameAndOpenOptions,
                cur->pszOwner ? cur->pszOwner : "(null)",
                cur->refCount, (int)cur->responsiblePID);
         i++;
@@ -217,12 +221,28 @@ void GDALDatasetPool::CheckLinks()
 #endif
 
 /************************************************************************/
+/*                       GetFilenameAndOpenOptions()                    */
+/************************************************************************/
+
+static std::string GetFilenameAndOpenOptions(const char* pszFileName,
+                                             CSLConstList papszOpenOptions)
+{
+    std::string osFilenameAndOO(pszFileName);
+    for( int i = 0; papszOpenOptions && papszOpenOptions[i]; ++i )
+    {
+        osFilenameAndOO += "||";
+        osFilenameAndOO += papszOpenOptions[i];
+    }
+    return osFilenameAndOO;
+}
+
+/************************************************************************/
 /*                            _RefDataset()                             */
 /************************************************************************/
 
 GDALProxyPoolCacheEntry* GDALDatasetPool::_RefDataset(const char* pszFileName,
                                                       GDALAccess eAccess,
-                                                      char** papszOpenOptions,
+                                                      CSLConstList papszOpenOptions,
                                                       int bShared,
                                                       bool bForceOpen,
                                                       const char* pszOwner)
@@ -234,11 +254,14 @@ GDALProxyPoolCacheEntry* GDALDatasetPool::_RefDataset(const char* pszFileName,
     GIntBig responsiblePID = GDALGetResponsiblePIDForCurrentThread();
     GDALProxyPoolCacheEntry* lastEntryWithZeroRefCount = nullptr;
 
+    const std::string osFilenameAndOO =
+        GetFilenameAndOpenOptions(pszFileName, papszOpenOptions);
+
     while(cur)
     {
         GDALProxyPoolCacheEntry* next = cur->next;
 
-        if (strcmp(cur->pszFileName, pszFileName) == 0 &&
+        if (osFilenameAndOO == cur->pszFileNameAndOpenOptions &&
             ((bShared && cur->responsiblePID == responsiblePID &&
               ((cur->pszOwner == nullptr && pszOwner == nullptr) ||
                 (cur->pszOwner != nullptr && pszOwner != nullptr &&
@@ -287,7 +310,7 @@ GDALProxyPoolCacheEntry* GDALDatasetPool::_RefDataset(const char* pszFileName,
             return nullptr;
         }
 
-        lastEntryWithZeroRefCount->pszFileName[0] = '\0';
+        lastEntryWithZeroRefCount->pszFileNameAndOpenOptions[0] = '\0';
         if (lastEntryWithZeroRefCount->poDS)
         {
             /* Close by pretending we are the thread that GDALOpen'ed this */
@@ -301,7 +324,7 @@ GDALProxyPoolCacheEntry* GDALDatasetPool::_RefDataset(const char* pszFileName,
             lastEntryWithZeroRefCount->poDS = nullptr;
             GDALSetResponsiblePIDForCurrentThread(responsiblePID);
         }
-        CPLFree(lastEntryWithZeroRefCount->pszFileName);
+        CPLFree(lastEntryWithZeroRefCount->pszFileNameAndOpenOptions);
         CPLFree(lastEntryWithZeroRefCount->pszOwner);
 
         /* Recycle this entry for the to-be-opened dataset and */
@@ -344,7 +367,7 @@ GDALProxyPoolCacheEntry* GDALDatasetPool::_RefDataset(const char* pszFileName,
 #endif
     }
 
-    cur->pszFileName = CPLStrdup(pszFileName);
+    cur->pszFileNameAndOpenOptions = CPLStrdup(osFilenameAndOO.c_str());
     cur->pszOwner = (pszOwner) ? CPLStrdup(pszOwner) : nullptr;
     cur->responsiblePID = responsiblePID;
     cur->refCount = 1;
@@ -364,6 +387,7 @@ GDALProxyPoolCacheEntry* GDALDatasetPool::_RefDataset(const char* pszFileName,
 /************************************************************************/
 
 void GDALDatasetPool::_CloseDatasetIfZeroRefCount( const char* pszFileName,
+                                     CSLConstList papszOpenOptions,
                                      GDALAccess /* eAccess */,
                                      const char* pszOwner )
 {
@@ -374,13 +398,16 @@ void GDALDatasetPool::_CloseDatasetIfZeroRefCount( const char* pszFileName,
     GDALProxyPoolCacheEntry* cur = firstEntry;
     GIntBig responsiblePID = GDALGetResponsiblePIDForCurrentThread();
 
+    const std::string osFilenameAndOO =
+        GetFilenameAndOpenOptions(pszFileName, papszOpenOptions);
+
     while(cur)
     {
         GDALProxyPoolCacheEntry* next = cur->next;
 
-        CPLAssert(cur->pszFileName);
+        CPLAssert(cur->pszFileNameAndOpenOptions);
         if (cur->refCount == 0 &&
-            strcmp(cur->pszFileName, pszFileName) == 0 &&
+            osFilenameAndOO == cur->pszFileNameAndOpenOptions &&
             ((pszOwner == nullptr && cur->pszOwner == nullptr) ||
              (pszOwner != nullptr && cur->pszOwner != nullptr &&
               strcmp(cur->pszOwner, pszOwner) == 0)) &&
@@ -393,7 +420,7 @@ void GDALDatasetPool::_CloseDatasetIfZeroRefCount( const char* pszFileName,
             GDALDataset* poDS = cur->poDS;
 
             cur->poDS = nullptr;
-            cur->pszFileName[0] = '\0';
+            cur->pszFileNameAndOpenOptions[0] = '\0';
             CPLFree(cur->pszOwner);
             cur->pszOwner = nullptr;
 
@@ -519,11 +546,13 @@ void GDALDatasetPool::UnrefDataset(GDALProxyPoolCacheEntry* cacheEntry)
 /************************************************************************/
 
 void GDALDatasetPool::CloseDatasetIfZeroRefCount(
-                                   const char* pszFileName, GDALAccess eAccess,
+                                   const char* pszFileName,
+                                   CSLConstList papszOpenOptions,
+                                   GDALAccess eAccess,
                                    const char* pszOwner)
 {
     CPLMutexHolderD( GDALGetphDLMutex() );
-    singleton->_CloseDatasetIfZeroRefCount(pszFileName, eAccess, pszOwner);
+    singleton->_CloseDatasetIfZeroRefCount(pszFileName, papszOpenOptions, eAccess, pszOwner);
 }
 
 struct GetMetadataElt
@@ -732,7 +761,7 @@ GDALProxyPoolDataset* GDALProxyPoolDataset::Create( const char* pszSourceDataset
 
 GDALProxyPoolDataset::~GDALProxyPoolDataset()
 {
-    GDALDatasetPool::CloseDatasetIfZeroRefCount(GetDescription(), eAccess, m_pszOwner);
+    GDALDatasetPool::CloseDatasetIfZeroRefCount(GetDescription(), papszOpenOptions, eAccess, m_pszOwner);
 
     /* See comment in constructor */
     /* It is not really a genuine shared dataset, so we don't */

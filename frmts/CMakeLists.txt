@@ -9,7 +9,6 @@ gdal_dependent_format(jpeg "JPEG image format" "GDAL_USE_JPEG OR GDAL_USE_JPEG_I
 
 # base driver provide frmt core functions
 gdal_optional_format(raw "Raw formats:EOSAT FAST Format, FARSITE LCP and Vexcel MFF2 Image")
-gdal_format(iso8211 "iso8211 library")
 # JPEG must be defined before GTiff
 gdal_format(gtiff "GeoTIFF image format")
 set_package_properties(TIFF PROPERTIES PURPOSE "gdal_GTIFF: GeoTIFF image format")
@@ -81,7 +80,6 @@ gdal_optional_format(mrf "Meta raster format")
 gdal_optional_format(wmts "OGC Web Map Tile Service")
 gdal_optional_format(grib "WMO General Regularly-distributed Information in Binary form")
 gdal_optional_format(bmp "Microsoft Windows Device Independent Bitmap")
-gdal_optional_format(daas "Airbus DS Intelligence Data As A Service(DAAS)")
 gdal_optional_format(tga "TGA")
 gdal_optional_format(stacta "STACTA")
 gdal_optional_format(ogcapi "OGCAPI")
@@ -111,6 +109,7 @@ add_subdirectory(wcs)
 
 gdal_dependent_format(netcdf "NetCDF network Common Data Form" "GDAL_USE_NETCDF")
 gdal_optional_format(zarr "ZARR")
+gdal_dependent_format(daas "Airbus DS Intelligence Data As A Service(DAAS)" "GDAL_USE_CURL")
 gdal_dependent_format(eeda "Earth Engine Data API" "GDAL_USE_CURL")
 gdal_dependent_format(fits "FITS Driver" "GDAL_USE_CFITSIO")
 gdal_dependent_format(rasdaman "Rasdaman GDAL driver" "GDAL_USE_RASDAMAN")
@@ -123,7 +122,6 @@ gdal_dependent_format(hdf4 "Hierarchical Data Format Release 4 (HDF4)" "GDAL_USE
 gdal_dependent_format(rasterlite "Rasterlite - Rasters in SQLite DB" "GDAL_USE_SQLITE3;OGR_ENABLE_DRIVER_SQLITE")
 gdal_dependent_format(mbtiles "MBTile" "GDAL_USE_SQLITE3;OGR_ENABLE_DRIVER_GPKG")
 gdal_dependent_format(postgisraster "PostGIS Raster driver" "GDAL_USE_POSTGRESQL")
-gdal_dependent_format(dods "OPeNDAP Grid Client" "GDAL_USE_DAP")
 gdal_dependent_format(dds "DirectDraw Surface" "GDAL_USE_CRNLIB")
 gdal_dependent_format(kea "Kea" "GDAL_USE_KEA;GDAL_USE_HDF5")
 gdal_dependent_format(openjpeg "JPEG2000 driver based on OpenJPEG library" "GDAL_USE_OPENJPEG" DRIVER_NAME_OPTION
@@ -132,17 +130,8 @@ gdal_dependent_format(tiledb "TileDB tiledb.io" "GDAL_USE_TILEDB")
 gdal_dependent_format(exr "EXR support via OpenEXR library" "GDAL_USE_OPENEXR")
 gdal_dependent_format(pcraster "PCRaster CSF 2.0 raster file driver" "GDAL_USE_LIBCSF OR GDAL_USE_LIBCSF_INTERNAL")
 gdal_dependent_format(rdb "RIEGL RDB Map Pixel (.mpx) driver" "rdb_FOUND")
-
-# for circulate dependency, grass is NOT always compiled in.
-gdal_dependent_format(grass "GRASS" "HAVE_GRASS")
-add_feature_info(gdal_GRASS GDAL_ENABLE_DRIVER_GRASS "GRASS raster format")
-if (GDAL_ENABLE_DRIVER_GRASS)
-  if (HAVE_GRASS AND HAVE_POSTGRESQL)
-
-  else ()
-    message(FATAL_ERROR "Dependency error on GRASS driver")
-  endif ()
-endif ()
+gdal_dependent_format(jpegxl "JPEG-XL" "GDAL_USE_JXL")
+gdal_dependent_format(basisu_ktx2 "Basis Universal and KTX2 texture formats" "GDAL_USE_BASISU")
 
 # ######################################################################################################################
 # driver with proprietary libraries Kakadu software SDK
@@ -168,7 +157,7 @@ target_include_directories(
   gdal_frmts PRIVATE $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR> $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>
                      $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:gdal_frmts>)
-set_property(TARGET gdal_frmts PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
+set_property(TARGET gdal_frmts PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 
 # Special case for HTTP driver since it is included in the frmts/wcs/ directory We should ultimately make it a separate
 # frmts/http/ to clean up things.

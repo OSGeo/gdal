@@ -16,6 +16,8 @@ GDAL_ROOT	=	..\..
 OBJ	=	Packer_RLE.obj Tif_band.obj PNG_band.obj JPEG_band.obj JPNG_band.obj\
     mrf_band.obj mrf_overview.obj mrf_util.obj marfa_dataset.obj
 
+EXTRAFLAGS = -DHAVE_PNG -DHAVE_JPEG
+
 
 # Internal libraries
 
@@ -70,6 +72,10 @@ EXTRAFLAGS = $(EXTRAFLAGS) -DZSTD_SUPPORT $(ZSTD_CFLAGS)
 EXTRAFLAGS = $(EXTRAFLAGS) -DBRUNSLI -I$(BRUNSLI_INC)
 !ENDIF
 
+!IFDEF QB3_DIR
+OBJ = QB3_Band.obj $(OBJ)
+EXTRAFLAGS = $(EXTRAFLAGS) -DQB3_SUPPORT -I$(QB3_INC)
+!ENDIF
 
 default:	$(OBJ)
 	xcopy /D  /Y *.obj ..\o

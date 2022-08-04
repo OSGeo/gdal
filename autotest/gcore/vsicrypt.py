@@ -30,6 +30,7 @@
 ###############################################################################
 
 import ctypes
+import os
 import struct
 
 from osgeo import gdal
@@ -255,7 +256,10 @@ def test_vsicrypt_2():
 ###############################################################################
 # Test various options
 
-
+@pytest.mark.skipif(
+    os.environ.get('BUILD_NAME', '') == 's390x',
+    reason='Fails randomly on that platform'
+)
 def test_vsicrypt_3():
 
     if not gdaltest.has_vsicrypt:

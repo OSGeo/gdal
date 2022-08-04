@@ -44,32 +44,31 @@
 #include "../arrow_common/ograrrowdataset.hpp"
 
 /************************************************************************/
-/*                        OGRParquetLayer()                             */
+/*                    OGRParquetLayerBase()                             */
 /************************************************************************/
 
-OGRParquetLayer::OGRParquetLayer(OGRParquetDataset* poDS,
-                                 const char* pszLayerName,
-                                 std::unique_ptr<parquet::arrow::FileReader>&& arrow_reader):
+OGRParquetLayerBase::OGRParquetLayerBase(OGRParquetDataset* poDS,
+                                         const char* pszLayerName):
     OGRArrowLayer(poDS, pszLayerName),
-    m_poDS(poDS),
-    m_poArrowReader(std::move(arrow_reader))
+    m_poDS(poDS)
 {
-    const char* pszParquetBatchSize = CPLGetConfigOption("OGR_PARQUET_BATCH_SIZE", nullptr);
-    if( pszParquetBatchSize )
-        m_poArrowReader->set_batch_size(CPLAtoGIntBig(pszParquetBatchSize));
+}
 
-    EstablishFeatureDefn();
-    CPLAssert( static_cast<int>(m_aeGeomEncoding.size()) == m_poFeatureDefn->GetGeomFieldCount() );
+/************************************************************************/
+/*                           GetDataset()                               */
+/************************************************************************/
+
+GDALDataset* OGRParquetLayer::GetDataset()
+{
+    return m_poDS;
 }
 
 /************************************************************************/
 /*                          LoadGeoMetadata()                           */
 /************************************************************************/
 
-void OGRParquetLayer::LoadGeoMetadata()
+void OGRParquetLayerBase::LoadGeoMetadata(const std::shared_ptr<const arrow::KeyValueMetadata>& kv_metadata)
 {
-    const auto metadata = m_poArrowReader->parquet_reader()->metadata();
-    const auto& kv_metadata = metadata->key_value_metadata();
     if( kv_metadata && kv_metadata->Contains("geo") )
     {
         auto geo = kv_metadata->Get("geo");
@@ -81,7 +80,10 @@ void OGRParquetLayer::LoadGeoMetadata()
             {
                 auto oRoot = oDoc.GetRoot();
                 const auto osVersion = oRoot.GetString("version");
-                if( osVersion != "0.1.0" )
+                if( osVersion != "0.1.0" &&
+                    osVersion != "0.2.0" &&
+                    osVersion != "0.3.0" &&
+                    osVersion != "0.4.0" )
                 {
                     CPLDebug("PARQUET",
                              "version = %s not explicitly handled by the driver",
@@ -91,7 +93,7 @@ void OGRParquetLayer::LoadGeoMetadata()
                 auto oColumns = oRoot.GetObj("columns");
                 if( oColumns.IsValid() )
                 {
-                    for( const auto oColumn: oColumns.GetChildren() )
+                    for( const auto& oColumn: oColumns.GetChildren() )
                     {
                         m_oMapGeometryColumns[oColumn.GetName()] = oColumn;
                     }
@@ -107,66 +109,36 @@ void OGRParquetLayer::LoadGeoMetadata()
 }
 
 /************************************************************************/
-/*                        EstablishFeatureDefn()                        */
+/*                      DealWithGeometryColumn()                        */
 /************************************************************************/
 
-void OGRParquetLayer::EstablishFeatureDefn()
+bool OGRParquetLayerBase::DealWithGeometryColumn(int iFieldIdx,
+                                                 const std::shared_ptr<arrow::Field>& field,
+                                                 std::function<OGRwkbGeometryType(void)> computeGeometryTypeFun)
 {
-    LoadGeoMetadata();
-
-    const auto metadata = m_poArrowReader->parquet_reader()->metadata();
-    const auto& kv_metadata = metadata->key_value_metadata();
-    const auto oMapFieldNameToGDALSchemaFieldDefn = LoadGDALMetadata(kv_metadata.get());
-
-    if( !m_poArrowReader->GetSchema(&m_poSchema).ok() )
+    const auto& field_kv_metadata = field->metadata();
+    std::string osExtensionName;
+    if( field_kv_metadata )
     {
-        return;
+        auto extension_name = field_kv_metadata->Get("ARROW:extension:name");
+        if( extension_name.ok() )
+        {
+            osExtensionName = *extension_name;
+        }
+#ifdef DEBUG
+        CPLDebug("PARQUET", "Metadata field %s:", field->name().c_str());
+        for(const auto& keyValue: field_kv_metadata->sorted_pairs() )
+        {
+            CPLDebug("PARQUET", "  %s = %s",
+                     keyValue.first.c_str(),
+                     keyValue.second.c_str());
+        }
+#endif
     }
 
-    const auto fields = m_poSchema->fields();
-    const auto poParquetSchema = metadata->schema();
-    int iParquetCol = 0;
-    for( int i = 0; i < m_poSchema->num_fields(); ++i )
+    bool bRegularField = true;
+    // odd indetation to make backports to release/3.5 easier
     {
-        const auto& field = fields[i];
-
-        const auto& field_kv_metadata = field->metadata();
-        std::string osExtensionName;
-        if( field_kv_metadata )
-        {
-            auto extension_name = kv_metadata->Get("ARROW:extension:name");
-            if( extension_name.ok() )
-            {
-                osExtensionName = *extension_name;
-            }
-#ifdef DEBUG
-            CPLDebug("PARQUET", "Metadata field %s:", field->name().c_str());
-            for(const auto& keyValue: field_kv_metadata->sorted_pairs() )
-            {
-                CPLDebug("PARQUET", "  %s = %s",
-                         keyValue.first.c_str(),
-                         keyValue.second.c_str());
-            }
-#endif
-        }
-
-        bool bParquetColValid = CheckMatchArrowParquetColumnNames(iParquetCol, field);
-        if( !bParquetColValid )
-            m_bHasMissingMappingToParquet = true;
-
-        if( !m_osFIDColumn.empty() &&
-            field->name() == m_osFIDColumn )
-        {
-            m_iFIDArrowColumn = i;
-            if( bParquetColValid )
-            {
-                m_iFIDParquetColumn = iParquetCol;
-                iParquetCol ++;
-            }
-            continue;
-        }
-
-        bool bRegularField = true;
         auto oIter = m_oMapGeometryColumns.find(field->name());
         if( oIter != m_oMapGeometryColumns.end() ||
             STARTS_WITH(osExtensionName.c_str(), "geoarrow.") )
@@ -185,17 +157,18 @@ void OGRParquetLayer::EstablishFeatureDefn()
                 bRegularField = false;
                 OGRGeomFieldDefn oField(field->name().c_str(), wkbUnknown);
 
-                const auto osWKT = oJSONDef.GetString("crs");
+                auto oCRS = oJSONDef["crs"];
                 OGRSpatialReference* poSRS = nullptr;
-                if( !oJSONDef.GetObj("crs").IsValid() )
+                if( !oCRS.IsValid() )
                 {
                     // WGS 84 is implied if no crs member is found.
                     poSRS = new OGRSpatialReference();
                     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                     poSRS->importFromEPSG(4326);
                 }
-                else if( !osWKT.empty() )
+                else if( oCRS.GetType() == CPLJSONObject::Type::String )
                 {
+                    const auto osWKT = oCRS.ToString();
                     poSRS = new OGRSpatialReference();
                     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
@@ -203,6 +176,26 @@ void OGRParquetLayer::EstablishFeatureDefn()
                     {
                         poSRS->Release();
                         poSRS = nullptr;
+                    }
+                }
+                else if( oCRS.GetType() == CPLJSONObject::Type::Object )
+                {
+                    // CRS encoded as PROJJSON (extension)
+                    const auto oType = oCRS["type"];
+                    if( oType.IsValid() && oType.GetType() == CPLJSONObject::Type::String )
+                    {
+                        const auto osType = oType.ToString();
+                        if( osType.find("CRS") != std::string::npos )
+                        {
+                            poSRS = new OGRSpatialReference();
+                            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
+                            if( poSRS->SetFromUserInput(oCRS.ToString().c_str()) != OGRERR_NONE )
+                            {
+                                poSRS->Release();
+                                poSRS = nullptr;
+                            }
+                        }
                     }
                 }
 
@@ -215,6 +208,11 @@ void OGRParquetLayer::EstablishFeatureDefn()
                     oField.SetSpatialRef(poSRS);
 
                     poSRS->Release();
+                }
+
+                if( oJSONDef.GetString("edges") == "spherical" )
+                {
+                    SetMetadataItem("EDGES", "SPHERICAL");
                 }
 
                 // m_aeGeomEncoding be filled before calling ComputeGeometryColumnType()
@@ -262,27 +260,134 @@ void OGRParquetLayer::EstablishFeatureDefn()
                     else if( CPLTestBool(CPLGetConfigOption(
                                     "OGR_PARQUET_COMPUTE_GEOMETRY_TYPE", "YES")) )
                     {
-                        // only with GeoParquet < 0.2.0
-                        if( bParquetColValid &&
-                            poParquetSchema->Column(iParquetCol)->physical_type() == parquet::Type::BYTE_ARRAY )
-                        {
-                            eGeomType = ComputeGeometryColumnType(
-                                m_poFeatureDefn->GetGeomFieldCount(), iParquetCol);
-                        }
+                        eGeomType = computeGeometryTypeFun();
                     }
                 }
 
                 oField.SetType(eGeomType);
                 oField.SetNullable(field->nullable());
                 m_poFeatureDefn->AddGeomFieldDefn(&oField);
-                m_anMapGeomFieldIndexToArrowColumn.push_back(i);
-                m_anMapGeomFieldIndexToParquetColumn.push_back( bParquetColValid ? iParquetCol : -1 );
-                if( bParquetColValid )
-                    iParquetCol ++;
+                m_anMapGeomFieldIndexToArrowColumn.push_back(iFieldIdx);
             }
         }
+    }
+    return !bRegularField;
+}
 
-        if( bRegularField )
+/************************************************************************/
+/*                         TestCapability()                             */
+/************************************************************************/
+
+int OGRParquetLayerBase::TestCapability(const char* pszCap)
+{
+    if( EQUAL(pszCap, OLCFastFeatureCount) )
+        return m_poAttrQuery == nullptr && m_poFilterGeom == nullptr;
+
+    if( EQUAL(pszCap, OLCFastGetExtent) )
+    {
+        for(int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); i++ )
+        {
+            auto oIter = m_oMapGeometryColumns.find(
+            m_poFeatureDefn->GetGeomFieldDefn(i)->GetNameRef() );
+            if( oIter == m_oMapGeometryColumns.end() )
+            {
+                return false;
+            }
+            const auto& oJSONDef = oIter->second;
+            const auto oBBox = oJSONDef.GetArray("bbox");
+            if( !(oBBox.IsValid() && (oBBox.Size() == 4 || oBBox.Size() == 6)) )
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    if( EQUAL(pszCap, OLCMeasuredGeometries) )
+        return true;
+
+    return OGRArrowLayer::TestCapability(pszCap);
+}
+
+/************************************************************************/
+/*                        OGRParquetLayer()                             */
+/************************************************************************/
+
+OGRParquetLayer::OGRParquetLayer(OGRParquetDataset* poDS,
+                                 const char* pszLayerName,
+                                 std::unique_ptr<parquet::arrow::FileReader>&& arrow_reader):
+    OGRParquetLayerBase(poDS, pszLayerName),
+    m_poArrowReader(std::move(arrow_reader))
+{
+    const char* pszParquetBatchSize = CPLGetConfigOption("OGR_PARQUET_BATCH_SIZE", nullptr);
+    if( pszParquetBatchSize )
+        m_poArrowReader->set_batch_size(CPLAtoGIntBig(pszParquetBatchSize));
+
+    EstablishFeatureDefn();
+    CPLAssert( static_cast<int>(m_aeGeomEncoding.size()) == m_poFeatureDefn->GetGeomFieldCount() );
+}
+
+/************************************************************************/
+/*                        EstablishFeatureDefn()                        */
+/************************************************************************/
+
+void OGRParquetLayer::EstablishFeatureDefn()
+{
+    const auto metadata = m_poArrowReader->parquet_reader()->metadata();
+    const auto& kv_metadata = metadata->key_value_metadata();
+
+    LoadGeoMetadata(kv_metadata);
+    const auto oMapFieldNameToGDALSchemaFieldDefn = LoadGDALMetadata(kv_metadata.get());
+
+    if( !m_poArrowReader->GetSchema(&m_poSchema).ok() )
+    {
+        return;
+    }
+
+    const auto fields = m_poSchema->fields();
+    const auto poParquetSchema = metadata->schema();
+    int iParquetCol = 0;
+    for( int i = 0; i < m_poSchema->num_fields(); ++i )
+    {
+        const auto& field = fields[i];
+
+        bool bParquetColValid = CheckMatchArrowParquetColumnNames(iParquetCol, field);
+        if( !bParquetColValid )
+            m_bHasMissingMappingToParquet = true;
+
+        if( !m_osFIDColumn.empty() &&
+            field->name() == m_osFIDColumn )
+        {
+            m_iFIDArrowColumn = i;
+            if( bParquetColValid )
+            {
+                m_iFIDParquetColumn = iParquetCol;
+                iParquetCol ++;
+            }
+            continue;
+        }
+
+        const auto ComputeGeometryColumnTypeLambda = [this, bParquetColValid, iParquetCol, &poParquetSchema]()
+        {
+            // only with GeoParquet < 0.2.0
+            if( bParquetColValid &&
+                poParquetSchema->Column(iParquetCol)->physical_type() == parquet::Type::BYTE_ARRAY )
+            {
+                return ComputeGeometryColumnType(
+                    m_poFeatureDefn->GetGeomFieldCount(), iParquetCol);
+            }
+            return wkbUnknown;
+        };
+
+        const bool bGeometryField = DealWithGeometryColumn(
+                                i, field, ComputeGeometryColumnTypeLambda);
+        if( bGeometryField )
+        {
+            m_anMapGeomFieldIndexToParquetColumn.push_back( bParquetColValid ? iParquetCol : -1 );
+            if( bParquetColValid )
+                iParquetCol ++;
+        }
+        else
         {
             CreateFieldFromSchema(field, bParquetColValid, iParquetCol, {i},
                                   oMapFieldNameToGDALSchemaFieldDefn);
@@ -293,6 +398,23 @@ void OGRParquetLayer::EstablishFeatureDefn()
     CPLAssert( static_cast<int>(m_anMapFieldIndexToParquetColumn.size()) == m_poFeatureDefn->GetFieldCount() );
     CPLAssert( static_cast<int>(m_anMapGeomFieldIndexToArrowColumn.size()) == m_poFeatureDefn->GetGeomFieldCount() );
     CPLAssert( static_cast<int>(m_anMapGeomFieldIndexToParquetColumn.size()) == m_poFeatureDefn->GetGeomFieldCount() );
+
+    if( !fields.empty() )
+    {
+        try
+        {
+            auto poRowGroup = m_poArrowReader->parquet_reader()->RowGroup(0);
+            if( poRowGroup )
+            {
+                auto poColumn = poRowGroup->metadata()->ColumnChunk(0);
+                CPLDebug("PARQUET", "Compression (of first column): %s",
+                         arrow::util::Codec::GetCodecAsString(poColumn->compression()).c_str());
+            }
+        }
+        catch( const std::exception& )
+        {
+        }
+    }
 }
 
 /************************************************************************/
@@ -409,13 +531,14 @@ void OGRParquetLayer::CreateFieldFromSchema(
                                     path, oMapFieldNameToGDALSchemaFieldDefn);
         if( bTypeOK )
         {
+            m_apoArrowDataTypes.push_back(type);
             m_anMapFieldIndexToParquetColumn.push_back(bParquetColValid ? iParquetCol : -1);
         }
     }
 
     if( bParquetColValid )
         iParquetCol += nParquetColIncrement;
-};
+}
 
 /************************************************************************/
 /*                          BuildDomain()                               */
@@ -434,8 +557,8 @@ std::unique_ptr<OGRFieldDomain> OGRParquetLayer::BuildDomain(const std::string& 
     std::shared_ptr<arrow::RecordBatchReader> poRecordBatchReader;
     const auto oldBatchSize = m_poArrowReader->properties().batch_size();
     m_poArrowReader->set_batch_size(1);
-    m_poArrowReader->GetRecordBatchReader({0}, {iParquetCol},
-                                          &poRecordBatchReader);
+    CPL_IGNORE_RET_VAL(m_poArrowReader->GetRecordBatchReader({0}, {iParquetCol},
+                                          &poRecordBatchReader));
     if( poRecordBatchReader != nullptr )
     {
         std::shared_ptr<arrow::RecordBatch> poBatch;
@@ -474,8 +597,9 @@ OGRwkbGeometryType OGRParquetLayer::ComputeGeometryColumnType(int iGeomCol,
     anRowGroups.reserve(nNumGroups);
     for( int i = 0; i < nNumGroups; ++i )
         anRowGroups.push_back(i);
-    m_poArrowReader->GetRecordBatchReader(anRowGroups, {iParquetCol},
-                                          &poRecordBatchReader);
+    CPL_IGNORE_RET_VAL(
+        m_poArrowReader->GetRecordBatchReader(anRowGroups, {iParquetCol},
+                                              &poRecordBatchReader));
     if( poRecordBatchReader != nullptr )
     {
         std::shared_ptr<arrow::RecordBatch> poBatch;
@@ -517,14 +641,16 @@ OGRFeature* OGRParquetLayer::GetFeatureExplicitFID(GIntBig nFID)
         anRowGroups.push_back(i);
     if( m_bIgnoredFields )
     {
-        m_poArrowReader->GetRecordBatchReader(anRowGroups,
+        CPL_IGNORE_RET_VAL(
+            m_poArrowReader->GetRecordBatchReader(anRowGroups,
                                               m_anRequestedParquetColumns,
-                                              &poRecordBatchReader);
+                                              &poRecordBatchReader));
     }
     else
     {
-        m_poArrowReader->GetRecordBatchReader(anRowGroups,
-                                              &poRecordBatchReader);
+        CPL_IGNORE_RET_VAL(
+            m_poArrowReader->GetRecordBatchReader(anRowGroups,
+                                              &poRecordBatchReader));
     }
     if( poRecordBatchReader != nullptr )
     {
@@ -592,21 +718,23 @@ OGRFeature* OGRParquetLayer::GetFeatureByIndex(GIntBig nFID)
         if( nFID < nNextAccRows )
         {
             std::shared_ptr<arrow::RecordBatchReader> poRecordBatchReader;
+            arrow::Status status;
             if( m_bIgnoredFields )
             {
-                m_poArrowReader->GetRecordBatchReader({iGroup},
+                status = m_poArrowReader->GetRecordBatchReader({iGroup},
                                                       m_anRequestedParquetColumns,
                                                       &poRecordBatchReader);
             }
             else
             {
-                m_poArrowReader->GetRecordBatchReader({iGroup},
+                status = m_poArrowReader->GetRecordBatchReader({iGroup},
                                                       &poRecordBatchReader);
             }
             if( poRecordBatchReader == nullptr )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "GetRecordBatchReader() failed");
+                         "GetRecordBatchReader() failed: %s",
+                         status.message().c_str());
                 return nullptr;
             }
 
@@ -615,7 +743,7 @@ OGRFeature* OGRParquetLayer::GetFeatureByIndex(GIntBig nFID)
             while( true )
             {
                 std::shared_ptr<arrow::RecordBatch> poBatch;
-                auto status = poRecordBatchReader->ReadNext(&poBatch);
+                status = poRecordBatchReader->ReadNext(&poBatch);
                 if( !status.ok() )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
@@ -668,7 +796,7 @@ void OGRParquetLayer::ResetReading()
     {
         m_poRecordBatchReader.reset();
     }
-    OGRArrowLayer::ResetReading();
+    OGRParquetLayerBase::ResetReading();
 }
 
 /************************************************************************/
@@ -696,21 +824,23 @@ bool OGRParquetLayer::ReadNextBatch()
         anRowGroups.reserve(nNumGroups);
         for( int i = 0; i < nNumGroups; ++i )
             anRowGroups.push_back(i);
+        arrow::Status status;
         if( m_bIgnoredFields )
         {
-            m_poArrowReader->GetRecordBatchReader(anRowGroups,
+            status = m_poArrowReader->GetRecordBatchReader(anRowGroups,
                                                   m_anRequestedParquetColumns,
                                                   &m_poRecordBatchReader);
         }
         else
         {
-            m_poArrowReader->GetRecordBatchReader(anRowGroups,
+            status = m_poArrowReader->GetRecordBatchReader(anRowGroups,
                                                   &m_poRecordBatchReader);
         }
         if( m_poRecordBatchReader == nullptr )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "GetRecordBatchReader() failed");
+                     "GetRecordBatchReader() failed: %s",
+                     status.message().c_str());
             return false;
         }
     }
@@ -759,6 +889,7 @@ bool OGRParquetLayer::ReadNextBatch()
         {
             iCol = m_anMapFieldIndexToArrowColumn[i][0];
         }
+        CPL_IGNORE_RET_VAL(iCol); // to make cppcheck happy
 
         CPLAssert(iCol < static_cast<int>(poColumns.size()));
         CPLAssert(m_poSchema->fields()[m_anMapFieldIndexToArrowColumn[i][0]]->type()->id() ==
@@ -778,6 +909,7 @@ bool OGRParquetLayer::ReadNextBatch()
         {
             iCol = m_anMapGeomFieldIndexToArrowColumn[i];
         }
+        CPL_IGNORE_RET_VAL(iCol); // to make cppcheck happy
 
         CPLAssert(iCol < static_cast<int>(poColumns.size()));
         CPLAssert(m_poSchema->fields()[m_anMapGeomFieldIndexToArrowColumn[i]]->type()->id() ==
@@ -942,39 +1074,10 @@ GIntBig OGRParquetLayer::GetFeatureCount(int bForce)
 
 int OGRParquetLayer::TestCapability(const char* pszCap)
 {
-    if( EQUAL(pszCap, OLCFastFeatureCount) )
-        return m_poAttrQuery == nullptr && m_poFilterGeom == nullptr;
-
-    if( EQUAL(pszCap, OLCFastGetExtent) )
-    {
-        for(int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); i++ )
-        {
-            auto oIter = m_oMapGeometryColumns.find(
-            m_poFeatureDefn->GetGeomFieldDefn(i)->GetNameRef() );
-            if( oIter == m_oMapGeometryColumns.end() )
-            {
-                return false;
-            }
-            const auto& oJSONDef = oIter->second;
-            const auto oBBox = oJSONDef.GetArray("bbox");
-            if( !(oBBox.IsValid() && oBBox.Size() == 4) )
-            {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    if( EQUAL(pszCap, OLCStringsAsUTF8) )
-        return true;
-
-    if( EQUAL(pszCap, OLCMeasuredGeometries) )
-        return true;
-
     if( EQUAL(pszCap, OLCIgnoreFields) )
         return !m_bHasMissingMappingToParquet;
 
-    return false;
+    return OGRParquetLayerBase::TestCapability(pszCap);
 }
 
 /************************************************************************/
@@ -992,6 +1095,10 @@ const char* OGRParquetLayer::GetMetadataItem( const char* pszName,
         if( EQUAL(pszName, "NUM_ROW_GROUPS") )
         {
             return CPLSPrintf("%d", m_poArrowReader->num_row_groups());
+        }
+        if( EQUAL(pszName, "CREATOR") )
+        {
+            return CPLSPrintf("%s", m_poArrowReader->parquet_reader()->metadata()->created_by().c_str());
         }
         else if( sscanf(pszName, "ROW_GROUPS[%d]", &nRowGroupIdx) == 1 &&
                  strstr(pszName, ".NUM_ROWS") )
@@ -1064,4 +1171,25 @@ char** OGRParquetLayer::GetMetadata( const char* pszDomain )
         return m_aosFeatherMetadata.List();
     }
     return OGRLayer::GetMetadata(pszDomain);
+}
+
+/************************************************************************/
+/*                          GetArrowStream()                            */
+/************************************************************************/
+
+bool OGRParquetLayer::GetArrowStream(struct ArrowArrayStream* out_stream,
+                                     CSLConstList papszOptions)
+{
+    const char* pszMaxFeaturesInBatch = CSLFetchNameValue(
+        papszOptions, "MAX_FEATURES_IN_BATCH");
+    if( pszMaxFeaturesInBatch )
+    {
+        int nMaxBatchSize = atoi(pszMaxFeaturesInBatch);
+        if( nMaxBatchSize <= 0 )
+            nMaxBatchSize = 1;
+        if( nMaxBatchSize > INT_MAX - 1 )
+            nMaxBatchSize = INT_MAX - 1;
+        m_poArrowReader->set_batch_size(nMaxBatchSize);
+    }
+    return OGRArrowLayer::GetArrowStream(out_stream, papszOptions);
 }

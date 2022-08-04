@@ -258,8 +258,7 @@ OGRMultiPolygon *GeometryReader::readMultiPolygon()
         return CPLErrorInvalidPointer("parts data");
     auto mp = cpl::make_unique<OGRMultiPolygon>();
     for (uoffset_t i = 0; i < parts->size(); i++) {
-        GeometryReader reader { parts->Get(i), GeometryType::Polygon, m_hasZ, m_hasM };
-        auto g = std::unique_ptr<OGRGeometry>(reader.read());
+        auto g = std::unique_ptr<OGRGeometry>(readPart(parts->Get(i), GeometryType::Polygon));
         if (g == nullptr)
             return nullptr;
         mp->addGeometryDirectly(g.release()->toPolygon());
@@ -274,8 +273,7 @@ OGRGeometryCollection *GeometryReader::readGeometryCollection()
         return CPLErrorInvalidPointer("parts data");
     auto gc = cpl::make_unique<OGRGeometryCollection>();
     for (uoffset_t i = 0; i < parts->size(); i++) {
-        GeometryReader reader { parts->Get(i), m_hasZ, m_hasM };
-        auto g = std::unique_ptr<OGRGeometry>(reader.read());
+        auto g = std::unique_ptr<OGRGeometry>(readPart(parts->Get(i)));
         if (g == nullptr)
             return nullptr;
         gc->addGeometryDirectly(g.release());
@@ -290,8 +288,7 @@ OGRCompoundCurve *GeometryReader::readCompoundCurve()
         return CPLErrorInvalidPointer("parts data");
     auto cc = cpl::make_unique<OGRCompoundCurve>();
     for (uoffset_t i = 0; i < parts->size(); i++) {
-        GeometryReader reader { parts->Get(i), m_hasZ, m_hasM };
-        auto g = std::unique_ptr<OGRGeometry>(reader.read());
+        auto g = std::unique_ptr<OGRGeometry>(readPart(parts->Get(i)));
         if (dynamic_cast<OGRCurve *>(g.get()) == nullptr)
             return nullptr;
         auto poCurve = g.release()->toCurve();
@@ -311,8 +308,7 @@ OGRCurvePolygon *GeometryReader::readCurvePolygon()
         return CPLErrorInvalidPointer("parts data");
     auto cp = cpl::make_unique<OGRCurvePolygon>();
     for (uoffset_t i = 0; i < parts->size(); i++) {
-        GeometryReader reader { parts->Get(i), m_hasZ, m_hasM };
-        auto g = std::unique_ptr<OGRGeometry>(reader.read());
+        auto g = std::unique_ptr<OGRGeometry>(readPart(parts->Get(i)));
         if (dynamic_cast<OGRCurve *>(g.get()) == nullptr)
             return nullptr;
         auto poCurve = g.release()->toCurve();
@@ -332,8 +328,7 @@ OGRMultiCurve *GeometryReader::readMultiCurve()
         return CPLErrorInvalidPointer("parts data");
     auto mc = cpl::make_unique<OGRMultiCurve>();
     for (uoffset_t i = 0; i < parts->size(); i++) {
-        GeometryReader reader { parts->Get(i), m_hasZ, m_hasM };
-        auto g = std::unique_ptr<OGRGeometry>(reader.read());
+        auto g = std::unique_ptr<OGRGeometry>(readPart(parts->Get(i)));
         if (dynamic_cast<OGRCurve *>(g.get()) == nullptr)
             return nullptr;
         mc->addGeometryDirectly(g.release());
@@ -348,8 +343,7 @@ OGRMultiSurface *GeometryReader::readMultiSurface()
         return CPLErrorInvalidPointer("parts data");
     auto ms = cpl::make_unique<OGRMultiSurface>();
     for (uoffset_t i = 0; i < parts->size(); i++) {
-        GeometryReader reader { parts->Get(i), m_hasZ, m_hasM };
-        auto g = std::unique_ptr<OGRGeometry>(reader.read());
+        auto g = std::unique_ptr<OGRGeometry>(readPart(parts->Get(i)));
         if (dynamic_cast<OGRSurface *>(g.get()) == nullptr)
             return nullptr;
         auto poSubGeom = g.release();
@@ -369,8 +363,7 @@ OGRPolyhedralSurface *GeometryReader::readPolyhedralSurface()
         return CPLErrorInvalidPointer("parts data");
     auto ps = cpl::make_unique<OGRPolyhedralSurface>();
     for (uoffset_t i = 0; i < parts->size(); i++) {
-        GeometryReader reader { parts->Get(i), m_hasZ, m_hasM };
-        auto g = std::unique_ptr<OGRGeometry>(reader.read());
+        auto g = std::unique_ptr<OGRGeometry>(readPart(parts->Get(i)));
         if (g == nullptr )
             return nullptr;
         auto poSubGeom = g.release();

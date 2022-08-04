@@ -206,6 +206,8 @@ void RegisterOGRODS()
 
     poDriver->SetDescription( "ODS" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DELETE_LAYER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                 "Open Document/ LibreOffice / "
                                "OpenOffice Spreadsheet " );
@@ -218,6 +220,10 @@ void RegisterOGRODS()
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATASUBTYPES, "Boolean" );
     poDriver->SetMetadataItem( GDAL_DCAP_NONSPATIAL, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CURVE_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
 
     poDriver->pfnIdentify = OGRODSDriverIdentify;
     poDriver->pfnOpen = OGRODSDriverOpen;

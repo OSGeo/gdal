@@ -35,6 +35,8 @@
 
 #include "cpl_port.h"
 
+#include <stdbool.h>
+
 /**
  * \file cpl_quad_tree.h
  *
@@ -63,6 +65,8 @@ typedef struct _CPLQuadTree CPLQuadTree;
 
 /** CPLQuadTreeGetBoundsFunc */
 typedef void         (*CPLQuadTreeGetBoundsFunc)(const void* hFeature, CPLRectObj* pBounds);
+/** CPLQuadTreeGetBoundsExFunc */
+typedef void         (*CPLQuadTreeGetBoundsExFunc)(const void* hFeature, void* pUserData, CPLRectObj* pBounds);
 /** CPLQuadTreeForeachFunc */
 typedef int          (*CPLQuadTreeForeachFunc)(void* pElt, void* pUserData);
 /** CPLQuadTreeDumpFeatureFunc */
@@ -72,10 +76,14 @@ typedef void         (*CPLQuadTreeDumpFeatureFunc)(const void* hFeature, int nIn
 
 CPLQuadTree CPL_DLL  *CPLQuadTreeCreate(const CPLRectObj* pGlobalBounds,
                                         CPLQuadTreeGetBoundsFunc pfnGetBounds);
+CPLQuadTree CPL_DLL  *CPLQuadTreeCreateEx(const CPLRectObj* pGlobalBounds,
+                                          CPLQuadTreeGetBoundsExFunc pfnGetBounds,
+                                          void* pUserData);
 void        CPL_DLL   CPLQuadTreeDestroy(CPLQuadTree *hQuadtree);
 
 void        CPL_DLL   CPLQuadTreeSetBucketCapacity(CPLQuadTree *hQuadtree,
                                                    int nBucketCapacity);
+void        CPL_DLL   CPLQuadTreeForceUseOfSubNodes(CPLQuadTree *hQuadTree);
 int         CPL_DLL   CPLQuadTreeGetAdvisedMaxDepth(int nExpectedFeatures);
 void        CPL_DLL   CPLQuadTreeSetMaxDepth(CPLQuadTree *hQuadtree,
                                              int nMaxDepth);

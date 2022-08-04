@@ -59,10 +59,38 @@ class OGRArrowDataset;
 class OGRArrowLayer CPL_NON_FINAL: public OGRLayer,
                              public OGRGetNextFeatureThroughRaw<OGRArrowLayer>
 {
+public:
+        struct Constraint
+        {
+            enum class Type
+            {
+                Integer,
+                Integer64,
+                Real,
+                String,
+            };
+            int          iField{};
+            int          iArrayIdx{};
+            int          nOperation{};
+            Type         eType{};
+            OGRField     sValue{};
+            std::string  osValue{};
+        };
+
+private:
         OGRArrowLayer(const OGRArrowLayer&) = delete;
         OGRArrowLayer& operator= (const OGRArrowLayer&) = delete;
 
+        std::vector<Constraint>  m_asAttributeFilterConstraints{};
+        int                      m_nUseOptimizedAttributeFilter = -1;
+        bool                     m_bSpatialFilterIntersectsLayerExtent = true;
+
+        bool                     SkipToNextFeatureDueToAttributeFilter() const;
+        void                     ExploreExprNode(const swq_expr_node* poNode);
+        bool                     UseRecordBatchBaseImplementation() const;
+
 protected:
+        OGRArrowDataset*                            m_poArrowDS = nullptr;
         arrow::MemoryPool*                          m_poMemoryPool = nullptr;
         OGRFeatureDefn*                             m_poFeatureDefn = nullptr;
         std::shared_ptr<arrow::Schema>              m_poSchema{};
@@ -81,6 +109,7 @@ protected:
         int64_t                                     m_nFeatureIdx = 0;
         int64_t                                     m_nIdxInBatch = 0;
         std::map<std::string, CPLJSONObject>        m_oMapGeometryColumns{};
+        std::map<int, OGREnvelope>                  m_oMapExtents{};
         int                                         m_iRecordBatch = -1;
         std::shared_ptr<arrow::RecordBatch>         m_poBatch{};
         // m_poBatch->columns() is a relatively costly operation, so cache its result
@@ -105,6 +134,10 @@ protected:
                                       OGRFieldSubType& eSubType,
                                       const std::vector<int>& path,
                                       const std::map<std::string, std::unique_ptr<OGRFieldDefn>>& oMapFieldNameToGDALSchemaFieldDefn);
+        void               CreateFieldFromSchema(
+                               const std::shared_ptr<arrow::Field>& field,
+                               const std::vector<int>& path,
+                               const std::map<std::string, std::unique_ptr<OGRFieldDefn>>& oMapFieldNameToGDALSchemaFieldDefn);
         std::unique_ptr<OGRFieldDomain> BuildDomainFromBatch(
                                     const std::string& osDomainName,
                                     const std::shared_ptr<arrow::RecordBatch>& poBatch,
@@ -126,6 +159,13 @@ protected:
 
         void               SetBatch(const std::shared_ptr<arrow::RecordBatch>& poBatch) { m_poBatch = poBatch; m_poBatchColumns = m_poBatch->columns(); }
 
+        virtual bool       GetFastExtent(int iGeomField, OGREnvelope *psExtent) const;
+        static OGRErr      GetExtentFromMetadata(const CPLJSONObject& oJSONDef,
+                                                 OGREnvelope *psExtent);
+
+        int GetArrowSchema(struct ArrowArrayStream*, struct ArrowSchema* out) override;
+        int GetNextArrowArray(struct ArrowArrayStream*, struct ArrowArray* out) override;
+
 public:
         virtual ~OGRArrowLayer() override;
 
@@ -136,9 +176,20 @@ public:
         OGRErr          GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
         OGRErr          GetExtent(int iGeomField, OGREnvelope *psExtent,
                                   int bForce = TRUE) override;
+        OGRErr          SetAttributeFilter( const char* pszFilter ) override;
+
+        void            SetSpatialFilter( OGRGeometry * poGeom ) override
+                            { SetSpatialFilter(0, poGeom); }
+        void            SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override;
+
+        int             TestCapability(const char* pszCap) override;
 
         virtual std::unique_ptr<OGRFieldDomain> BuildDomain(const std::string& osDomainName,
                                                              int iFieldIndex) const = 0;
+
+        static void TimestampToOGR(int64_t timestamp,
+                                   const arrow::TimestampType* timestampType,
+                                   OGRField* psField);
 };
 
 /************************************************************************/
@@ -147,15 +198,16 @@ public:
 
 class OGRArrowDataset CPL_NON_FINAL: public GDALPamDataset
 {
-    std::unique_ptr<arrow::MemoryPool> m_poMemoryPool{};
+    std::shared_ptr<arrow::MemoryPool> m_poMemoryPool{};
     std::unique_ptr<OGRArrowLayer>     m_poLayer{};
     std::vector<std::string>           m_aosDomainNames{};
     std::map<std::string, int>         m_oMapDomainNameToCol{};
 
 public:
-    explicit OGRArrowDataset(std::unique_ptr<arrow::MemoryPool>&& poMemoryPool);
+    explicit OGRArrowDataset(const std::shared_ptr<arrow::MemoryPool>& poMemoryPool);
 
     inline arrow::MemoryPool* GetMemoryPool() const { return m_poMemoryPool.get(); }
+    inline const std::shared_ptr<arrow::MemoryPool>& GetSharedMemoryPool() const { return m_poMemoryPool; }
     void SetLayer(std::unique_ptr<OGRArrowLayer>&& poLayer);
 
     void RegisterDomainName(const std::string& osDomainName, int iFieldIndex);
@@ -229,6 +281,7 @@ protected:
                                                                const std::shared_ptr<arrow::Array>&)> postProcessArray);
 
         virtual void            FixupGeometryBeforeWriting(OGRGeometry* /* poGeom */ ) {}
+        virtual bool            IsSRSRequired() const = 0;
 
 public:
         OGRArrowWriterLayer( arrow::MemoryPool* poMemoryPool,

@@ -375,17 +375,6 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
 
     // Get layer base name
     CPLString osBaseLayerName = CPLGetBasename(pszFilename);
-    CPLString osExt = CPLGetExtension(pszFilename);
-    if( STARTS_WITH(pszFilename, "/vsigzip/") && EQUAL(osExt, "gz") ) {
-        size_t nPos=std::string::npos;
-        if (strlen(pszFilename)>3) nPos=osExt.find_last_of('.',strlen(pszFilename)-4);
-        if (nPos!=std::string::npos) {
-            osExt=osExt.substr(nPos+1,strlen(pszFilename)-4-nPos);
-            osBaseLayerName=osBaseLayerName.substr(0,nPos);
-        } else {
-            osExt="";
-        }
-    }
 
     // Read header of file to get common information for all layers
     // poHeader now owns fp

@@ -591,7 +591,7 @@ def test_ogr_sql_sqlite_9():
     ds.ReleaseResultSet(sql_lyr)
 
     if cnt != 7:
-        return' fail'
+        return 'fail'
 
 
 ###############################################################################
@@ -611,7 +611,7 @@ def test_ogr_sql_sqlite_10():
     ds.ReleaseResultSet(sql_lyr)
 
     if cnt != 10:
-        return' fail'
+        return 'fail'
 
 
 ###############################################################################
@@ -637,7 +637,7 @@ def test_ogr_sql_sqlite_11():
     ds = None
 
     if cnt != 1:
-        return' fail'
+        return 'fail'
 
 
 ###############################################################################
@@ -1877,7 +1877,11 @@ def test_ogr_sql_sqlite_st_makevalid():
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     sql = "SELECT ST_MakeValid(ST_GeomFromText('POLYGON ((0 0,1 1,1 0,0 1,0 0))'))"
-    sql_lyr = ds.ExecuteSQL(sql, dialect='SQLite')
+    with gdaltest.error_handler():
+        sql_lyr = ds.ExecuteSQL(sql, dialect='SQLite')
+    if sql_lyr is None:
+        assert not make_valid_available
+        pytest.skip()
     f = sql_lyr.GetNextFeature()
     g = f.GetGeometryRef()
     wkt = g.ExportToWkt() if g is not None else None

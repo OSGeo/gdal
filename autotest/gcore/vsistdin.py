@@ -32,6 +32,7 @@ import os
 
 
 from osgeo import gdal
+import gdaltest
 import test_cli_utilities
 import pytest
 
@@ -128,5 +129,76 @@ def test_vsistdin_4():
     gdal.Unlink("tmp/vsistdin_4_out.tif")
 
 
+###############################################################################
 
 
+def test_vsistdin_5():
+
+    f = open('tmp/test_vsistdin_5.bin', 'wb')
+    f.write(b'0123456789' * (1024 * 1024))
+    f.close()
+
+    with gdaltest.config_options({'CPL_VSISTDIN_FILE': 'tmp/test_vsistdin_5.bin',
+                                  'CPL_VSISTDIN_RESET_POSITION': 'YES',
+                                  'CPL_VSISTDIN_FILE_CLOSE': 'YES'}):
+        f = gdal.VSIFOpenL('/vsistdin?buffer_limit=10MB', 'rb')
+        assert f is not None
+        assert gdal.VSIFEofL(f) == 0
+        assert gdal.VSIFReadL(10, 1, f) == b'0123456789'
+        assert gdal.VSIFTellL(f) == 10
+        assert gdal.VSIFSeekL(f, 5, 0) == 0
+        assert gdal.VSIFTellL(f) == 5
+        assert gdal.VSIFReadL(3, 1, f) == b'567'
+        assert gdal.VSIFTellL(f) == 8
+        assert gdal.VSIFReadL(4, 1, f) == b'8901'
+        assert gdal.VSIFTellL(f) == 12
+        assert gdal.VSIFSeekL(f, 0, 2) == 0
+        assert gdal.VSIFTellL(f) == 10*1024 * 1024
+        assert gdal.VSIFReadL(1, 1, f) == b''
+        assert gdal.VSIFEofL(f) == 1
+        assert gdal.VSIFTellL(f) == 10*1024 * 1024
+        assert gdal.VSIFSeekL(f, 5, 0) == 0
+        assert gdal.VSIFTellL(f) == 5
+        assert gdal.VSIFReadL(3, 1, f) == b'567'
+        assert gdal.VSIFTellL(f) == 8
+        assert gdal.VSIFSeekL(f, 10*1024 * 1024 - 10 + 1, 0) == 0
+        assert gdal.VSIFReadL(3, 1, f) == b'123'
+        gdal.VSIFCloseL(f)
+
+    with gdaltest.config_options({'CPL_VSISTDIN_FILE': 'tmp/test_vsistdin_5.bin',
+                                  'CPL_VSISTDIN_RESET_POSITION': 'YES',
+                                  'CPL_VSISTDIN_FILE_CLOSE': 'YES'}):
+        f = gdal.VSIFOpenL('/vsistdin?buffer_limit=-1', 'rb')
+        assert f is not None
+        assert gdal.VSIFSeekL(f, 0, 2) == 0
+        assert gdal.VSIFTellL(f) == 10*1024 * 1024
+        gdal.VSIFCloseL(f)
+
+        assert gdal.VSIStatL('/vsistdin?buffer_limit=-1').size == 10*1024 * 1024
+
+    with gdaltest.config_options({'CPL_VSISTDIN_FILE': 'tmp/test_vsistdin_5.bin',
+                                  'CPL_VSISTDIN_RESET_POSITION': 'YES',
+                                  'CPL_VSISTDIN_FILE_CLOSE': 'YES'}):
+        f = gdal.VSIFOpenL('/vsistdin?buffer_limit=1GB', 'rb')
+        assert f is not None
+        assert gdal.VSIFSeekL(f, 0, 2) == 0
+        assert gdal.VSIFTellL(f) == 10*1024 * 1024
+        gdal.VSIFCloseL(f)
+
+        assert gdal.VSIStatL('/vsistdin?buffer_limit=-1').size == 10*1024 * 1024
+
+    with gdaltest.config_options({'CPL_VSISTDIN_FILE': 'tmp/test_vsistdin_5.bin',
+                                  'CPL_VSISTDIN_RESET_POSITION': 'YES',
+                                  'CPL_VSISTDIN_FILE_CLOSE': 'YES'}):
+        f = gdal.VSIFOpenL('/vsistdin?buffer_limit=10', 'rb')
+        assert f is not None
+        assert gdal.VSIFSeekL(f, 0, 2) == 0
+        assert gdal.VSIFTellL(f) == 10*1024 * 1024
+        assert gdal.VSIFSeekL(f, 0, 0) == 0
+        assert gdal.VSIFReadL(5, 1, f) == b'01234'
+        assert gdal.VSIFReadL(3, 1, f) == b'567'
+        with gdaltest.error_handler():
+            assert gdal.VSIFReadL(3, 1, f) == b''
+        gdal.VSIFCloseL(f)
+
+    os.unlink('tmp/test_vsistdin_5.bin')

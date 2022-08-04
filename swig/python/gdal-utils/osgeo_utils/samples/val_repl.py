@@ -48,7 +48,7 @@ def Usage():
     print('Usage: val_repl.py -innd in_nodata_value -outnd out_nodata_value')
     print('                   [-of out_format] [-ot out_type] infile outfile')
     print('')
-    return 1
+    return 2
 
 
 def ParseType(typ):

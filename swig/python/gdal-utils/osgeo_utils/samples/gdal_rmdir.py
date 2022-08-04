@@ -35,7 +35,7 @@ from osgeo import gdal
 
 def Usage():
     print('Usage: gdal_rmdir filename')
-    return -1
+    return 2
 
 
 def gdal_rm(argv, progress=None):

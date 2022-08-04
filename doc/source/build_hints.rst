@@ -67,6 +67,7 @@ for the shared lib, *e.g.* ``set (GDAL_LIB_OUTPUT_NAME gdal_x64 CACHE STRING "" 
     conflict with new settings. If strange errors appear during cmake run,
     you may try removing CMakeCache.txt to start from a clean state.
 
+Refer to :ref:`using_gdal_in_cmake` for how to use GDAL in a CMake project.
 
 CMake general configure options
 +++++++++++++++++++++++++++++++
@@ -197,6 +198,14 @@ detected. The behavior can also be globally controlled with the following variab
      This option should be set before CMakeCache.txt is created.
 
 
+.. note::
+
+    Using together GDAL_USE_EXTERNAL_LIBS=OFF and GDAL_USE_INTERNAL_LIBS=OFF
+    will result in a CMake configuration failure, because the following libraries
+    (either as external dependencies or using the internal copy) are at least
+    required: ZLIB, TIFF, GEOTIFF and JSONC. Enabling them as external or internal
+    libraries is thus required.
+
 Armadillo
 *********
 
@@ -223,6 +232,18 @@ Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
     Control whether to use Arrow. Defaults to ON when Arrow is found.
 
 
+basisu
+******
+
+The `Basis Universal <https://github.com/rouault/basis_universal/tree/cmake>` library
+is required for the :ref:`raster.basisu` and :ref:`raster.ktx2` drivers.
+Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable or ``basisu_ROOT`` variable.
+
+.. option:: GDAL_USE_BASISU=ON/OFF
+
+    Control whether to use basisu. Defaults to ON when basisu is found.
+
+
 Blosc
 *****
 
@@ -242,10 +263,11 @@ It is used by the :ref:`raster.zarr` driver.
 
     Control whether to use Blosc. Defaults to ON when Blosc is found.
 
+
 BRUNSLI
 *******
 
-The `Brunsli <https://github.com/google/brunsli>` JPEG repacking library, used 
+The `Brunsli <https://github.com/google/brunsli>`_ JPEG repacking library, used
 by the :ref:`raster.marfa` driver.
 
 .. option:: BRUNSLI_INCLUDE_DIR
@@ -786,6 +808,12 @@ on how the library is detected.
 
     Control whether to use internal libjpeg copy. Defaults depends on GDAL_USE_INTERNAL_LIBS. When set
     to ON, has precedence over GDAL_USE_JPEG=ON
+
+.. option:: EXPECTED_JPEG_LIB_VERSION=number
+
+    Used with external libjpeg. number is for example 80, for libjpeg 8 ABI.
+    This can be used to check a build time that the expected JPEG library is
+    the one that is included by GDAL.
 
 
 JPEG12
@@ -1500,6 +1528,17 @@ PROJ
     building Debug releases.
 
 
+QB3
+*******
+
+The `QB3 <https://github.com/lucianpls/QB3>`_ compression, used
+by the :ref:`raster.marfa` driver.
+
+.. option:: GDAL_USE_QB3=ON/OFF
+
+    Control whether to use QB3. Defaults to ON when QB3 is found.
+
+
 QHULL
 *****
 
@@ -1632,7 +1671,13 @@ It is used for the Python, Java and CSharp bindings.
 
 .. option:: SWIG_EXECUTABLE
 
-    Path to the SWIG executable
+    Path to the SWIG executable.
+
+    Note that setting it explicitly might be needed, and that putting the
+    directory of the installed binary into the PATH might not be sufficient.
+    The reason is that when building from source, a "swig" binary will be
+    generated, but FindSWIG will prefer a "swig-4.0" binary if found elsewhere
+    in the PATH.
 
 
 TEIGHA
@@ -1803,11 +1848,86 @@ The following options are available to select a subset of drivers:
     Independently of options that control global behavior, drivers can be individually
     enabled or disabled with those options.
 
+    .. note::
+
+        <driver_name> above and below is *generally*, but not systematically the short driver name.
+
+        Some drivers may also be grouped together for build purposes.
+
+        - A number of "raw" raster drivers (ACE2, BT, BYN, CPG, CTable2, DIPEx, DOQ1,
+          DOQ2, EHDR, EIR, ENVI, FAST, GenBIN, GSC, GTX, MFF2, ISCE, KRO, MFF, LAN,
+          LCP, LOSLAS, NDF, NTv2, PAUX, PNM, ROIPAC, RRASTER, SNODAS) are controlled
+          by the GDAL_ENABLE_DRIVER_RAW option.
+
+        - Planetary raster formats (PDS, PDS4, ISIS2, ISIS3, VICAR) are controlled by
+          the GDAL_ENABLE_DRIVER_PDS option.
+
+        - The AAIGRID, GRASSASCIIGRID and ISG raster drivers are controlled by the GDAL_ENABLE_DRIVER_AAIGRID option.
+
+        - The ECW and JP2ECW raster drivers are controlled by the GDAL_ENABLE_DRIVER_ECW option.
+
+        - The vector EEDA and raster EEDAI drivers are controlled by the GDAL_ENABLE_DRIVER_EEDA option.
+
+        - The GSAG, GSBG and GS7BG raster drivers are controlled by the GDAL_ENABLE_DRIVER_GSG option.
+
+        - The HDF5 and BAG raster drivers are controlled by the GDAL_ENABLE_DRIVER_HDF5 option.
+
+        - The MrSID and JP2MrSID raster drivers are controlled by the GDAL_ENABLE_DRIVER_MRSID option.
+
+        - The NITF, RPFTOC and ECRGTOC raster drivers are controlled by the GDAL_ENABLE_DRIVER_NITF option.
+
+        - The NWT_GRD and NWT_GRC raster drivers are controlled by the GDAL_ENABLE_DRIVER_NORTHWOOD option.
+
+        - The SRP and ADRG raster drivers are controlled by the GDAL_ENABLE_DRIVER_ADRG option.
+
+        - The Interlis 1 and Interlis 2 vector drivers are controlled by the GDAL_ENABLE_DRIVER_ILI option.
+
+        - The WFS and OAPIF vector drivers are controlled by the GDAL_ENABLE_DRIVER_WFS option.
+
+        - The AVCBIN and AVCE00 vector drivers are controlled by the GDAL_ENABLE_DRIVER_AVC option.
+
+        - The DWG and DGNv8 vector drivers are controlled by the GDAL_ENABLE_DRIVER_DWG option.
+
+        There might be variations in naming, e.g. :
+
+        - the "AIG" raster driver is controlled by GDAL_ENABLE_DRIVER_AIGRID.
+
+        - the "ESAT" raster driver is controlled by GDAL_ENABLE_DRIVER_ENVISAT.
+
+        - the "GeoRaster" raster driver is controlled by GDAL_ENABLE_DRIVER_GEOR.
+
+        - the "RST" raster driver is controlled by GDAL_ENABLE_DRIVER_IDRISI.
+
+        - the "ElasticSearch" vector driver is controlled by OGR_ENABLE_DRIVER_ELASTIC.
+
+        - the "PostgreSQL" vector driver is controlled by OGR_ENABLE_DRIVER_PG.
+
+        - the "UK .NTF" vector driver is controlled by OGR_ENABLE_DRIVER_NTF.
+
+    .. note::
+
+        Drivers that have both a raster and vector side (and are internally implemented by a
+        single GDALDriver instance) are controlled by either a GDAL_ENABLE_DRIVER_<driver_name>
+        option or a OGR_ENABLE_DRIVER_<driver_name> one, but not both:
+
+        - The CAD drivers are controlled by the OGR_ENABLE_DRIVER_CAD option.
+        - The netCDF drivers are controlled by the GDAL_ENABLE_DRIVER_NETCDF option.
+        - The PDF drivers are controlled by the GDAL_ENABLE_DRIVER_PDF option.
+        - The GPKG drivers are controlled by the OGR_ENABLE_DRIVER_GPKG option.
+        - The NGW drivers are controlled by the OGR_ENABLE_DRIVER_NGW option.
+        - The SQLite drivers are controlled by the OGR_ENABLE_DRIVER_SQLITE option.
+
+    .. note::
+
+        The GDAL_ENABLE_DRIVER_<driver_name> and OGR_ENABLE_DRIVER_<driver_name> options are
+        only created when their required dependencies are found.
+
+
 .. option:: GDAL_BUILD_OPTIONAL_DRIVERS:BOOL=ON/OFF
 
 .. option:: OGR_BUILD_OPTIONAL_DRIVERS:BOOL=ON/OFF
 
-    Globally enable/disable all GDAL/raster or OGR/vector drivers.
+    Globally enable/disable all optional GDAL/raster, resp. all optional OGR/vector drivers.
     More exactly, setting those variables to ON affect the default value of the
     ``GDAL_ENABLE_DRIVER_<driver_name>`` or ``OGR_ENABLE_DRIVER_<driver_name>`` variables
     (when they are not yet set).
@@ -1819,6 +1939,10 @@ The following options are available to select a subset of drivers:
     activation of individual drivers. It might be needed to pass
     ``-UGDAL_ENABLE_DRIVER_* -UOGR_ENABLE_DRIVER_*`` to reset their state.
 
+    .. note::
+
+        The following GDAL drivers cannot be disabled: VRT, DERIVED, GTiff, COG, HFA, MEM.
+        The following OGR drivers cannot be disabled: "ESRI Shapefile", "MapInfo File", OGR_VRT, Memory, KML, GeoJSON, GeoJSONSeq, ESRIJSON, TopoJSON.
 
 Example of minimal build with the JP2OpenJPEG and SVG drivers enabled::
 
@@ -1902,6 +2026,11 @@ Python bindings options
     Whether Python bindings should be built. It is ON by default, but only
     effective if a Python installation is found.
 
+.. option:: SWIG_REGENERATE_PYTHON:BOOL=ON/OFF
+
+    Whether to refresh the generated SWIG Python bindings. It is OFF by default.
+    Setting it to ON is needed if modifying the SWIG interface files.
+
 A nominal Python installation should comprise the Python runtime (>= 3.6) and
 the setuptools module.
 numpy and its header and development library are also strongly recommended.
@@ -1984,6 +2113,34 @@ Option only to be used by maintainers:
 
     GPG pass phrase to sign build artifacts.
 
+C# bindings options
++++++++++++++++++++
+
+For more details on how to build and use the C# bindings read the dedicated section :ref:`csharp_compile_cmake`.
+
+.. option:: BUILD_CSHARP_BINDINGS:BOOL=ON/OFF
+
+    Whether C# bindings should be built. It is ON by default, but only
+    effective if C# runtime and development packages are found. Either .NET
+    SDK can be used or Mono. The relevant options that can be set are described
+    in ``cmake/modules/thirdparty/FindDotNetFrameworkSdk.cmake`` and
+    ``cmake/modules/thirdparty/FindMono.cmake``.
+
+.. option:: CSHARP_MONO=ON/OFF
+
+    Forces the use of Mono as opposed to .NET to compile the C# bindings.
+
+.. option:: CSHARP_LIBRARY_VERSION
+
+    Sets the .NET (or Mono) target SDK to be used when compiling the C# binding libraries. `List of acceptable contents for .NET <https://docs.microsoft.com/en-us/dotnet/standard/frameworks#supported-target-frameworks>`_
+
+.. option:: CSHARP_APPLICATION_VERSION
+
+    Sets the .NET (or Mono) target SDK to be used when compiling the C# sample applications. `List of acceptable contents for .NET <https://docs.microsoft.com/en-us/dotnet/standard/frameworks#supported-target-frameworks>`_
+
+.. option:: GDAL_CSHARP_ONLY=OFF/ON
+
+    Build the C# bindings without building GDAL. This should be used when building the bindings on top of an existing GDAL installation - for instance on top of the CONDA package.
 
 Driver specific options
 +++++++++++++++++++++++

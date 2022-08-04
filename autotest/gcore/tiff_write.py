@@ -2948,7 +2948,7 @@ def test_tiff_write_87():
 
     assert nodata_ovr_0 == 0 and nodata_ovr_1 == 0, 'did not get expected nodata values'
 
-    assert ifd_main == 8 or(ifd_main < ifd_ovr_0 and ifd_ovr_0 < ifd_ovr_1 and ifd_ovr_1 < data_ovr_1 and data_ovr_1 < data_ovr_0 and data_ovr_0 < data_main)
+    assert ifd_main == 8 or (ifd_main < ifd_ovr_0 and ifd_ovr_0 < ifd_ovr_1 and ifd_ovr_1 < data_ovr_1 and data_ovr_1 < data_ovr_0 and data_ovr_0 < data_main)
 
 ###############################################################################
 # Test that COPY_SRC_OVERVIEWS creation option has an influence
@@ -8317,7 +8317,7 @@ def test_tiff_write_predictor_2_float64():
 
 def test_tiff_write_uint64():
 
-    ut = gdaltest.GDALTest('GTiff', 'gtiff/uint64.tif', 1, 1)
+    ut = gdaltest.GDALTest('GTiff', 'gtiff/uint64_full_range.tif', 1, 1)
     return ut.testCreateCopy()
 
 
@@ -8351,7 +8351,7 @@ def test_tiff_write_uint64_nodata():
 
 def test_tiff_write_int64():
 
-    ut = gdaltest.GDALTest('GTiff', 'gtiff/int64.tif', 1, 65535)
+    ut = gdaltest.GDALTest('GTiff', 'gtiff/int64_full_range.tif', 1, 65535)
     return ut.testCreateCopy()
 
 
@@ -8408,6 +8408,53 @@ def test_tiff_write_overview_building_and_approx_stats():
     ds = gdal.Open(filename)
     ds.BuildOverviews("NEAREST", [2, 4, 8])
     ds.GetRasterBand(1).ComputeStatistics(1)
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete(filename)
+
+
+
+###############################################################################
+# Test scenario of https://github.com/OSGeo/gdal/issues/6015
+
+
+@pytest.mark.parametrize("setmetadata_before", [True, False])
+def test_tiff_write_setgeotransform_and_setmetadata(setmetadata_before):
+
+    filename = '/vsimem/out.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(filename, 1, 1)
+    ds.SetGeoTransform([1,2,3,4,5,-6])
+    ds = None
+    ds = gdal.Open(filename, gdal.GA_Update)
+    if setmetadata_before:
+        ds.SetMetadata([])
+    ds.SetGeoTransform([10,20,30,40,50,-60])
+    if not setmetadata_before:
+        ds.SetMetadata([])
+    ds = None
+    ds = gdal.Open(filename)
+    assert ds.GetGeoTransform() == (10,20,30,40,50,-60)
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete(filename)
+
+
+@pytest.mark.parametrize("getspatialref_before", [True, False])
+def test_tiff_write_setgeotransform_and_getspatialref(getspatialref_before):
+
+    filename = '/vsimem/out.tif'
+    ds = gdal.GetDriverByName('GTiff').Create(filename, 1, 1)
+    ds.SetGeoTransform([1,2,3,4,5,-6])
+    ds = None
+    ds = gdal.Open(filename, gdal.GA_Update)
+    if getspatialref_before:
+        ds.GetSpatialRef()
+    ds.SetGeoTransform([10,20,30,40,50,-60])
+    if not getspatialref_before:
+        ds.GetSpatialRef()
+    ds = None
+    ds = gdal.Open(filename)
+    assert ds.GetGeoTransform() == (10,20,30,40,50,-60)
     ds = None
 
     gdal.GetDriverByName('GTiff').Delete(filename)

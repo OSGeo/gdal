@@ -100,9 +100,12 @@ void  OGRSXFDataSource::CloseFile()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSXFDataSource::TestCapability( CPL_UNUSED const char * pszCap )
+int OGRSXFDataSource::TestCapability( const char * pszCap )
 {
-    return FALSE;
+    if( EQUAL(pszCap,ODsCZGeometries) )
+        return true;
+
+    return false;
 }
 
 /************************************************************************/

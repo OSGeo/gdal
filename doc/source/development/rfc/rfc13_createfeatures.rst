@@ -15,9 +15,9 @@ RFC 13: Improved Feature Insertion/Update/Delete Performance in Batch Mode
 *Withdrawn*
 
 I have withdrawn this RFC based on some comments from
-`Frank <http://lists.maptools.org/pipermail/gdal-dev/2007-May/013132.html>`__
+`Frank <http://lists.osgeo.org/pipermail/gdal-dev/2007-May/013132.html>`__
 and
-`Tamas <http://lists.maptools.org/pipermail/gdal-dev/2007-May/013130.html>`__
+`Tamas <http://lists.osgeo.org/pipermail/gdal-dev/2007-May/013130.html>`__
 on GDAL-dev.
 
 *Summary*
@@ -127,7 +127,7 @@ The following C functions are added:
 However, there are some issues with adding plain C arrays to the public
 OGR interface due to the SWIG based wrapping, see for example `GDAL-Dev
 Mail from
-Tamas <http://lists.maptools.org/pipermail/gdal-dev/2007-May/013092.html>`__...
+Tamas <http://lists.gdal.org/pipermail/gdal-dev/2007-May/013092.html>`__...
 
 *Additional Notes*
 

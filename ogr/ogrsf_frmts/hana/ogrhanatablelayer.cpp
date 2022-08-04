@@ -35,6 +35,7 @@
 #include <cstdio>
 #include <cstring>
 #include <regex>
+#include <sstream>
 
 #include "odbc/Exception.h"
 #include "odbc/ResultSet.h"
@@ -1386,7 +1387,7 @@ OGRErr OGRHanaTableLayer::CreateField(OGRFieldDefn* srsField, int approxOK)
         return OGRERR_FAILURE;
     }
 
-    // columnTypeInfo might contain a different defintion due to custom column types
+    // columnTypeInfo might contain a different definition due to custom column types
     SetFieldDefn(dstField, columnTypeInfo);
 
     AttributeColumnDescription clmDesc;

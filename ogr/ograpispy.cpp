@@ -540,8 +540,8 @@ int OGRAPISpyOpenTakeSnapshot( const char* pszName, int bUpdate )
                         osSrcDir, CPLGetFilename(*papszIter), nullptr);
                 CPLString osSnapshotWorkingFile = CPLFormFilename(
                         osWorkingDir, CPLGetFilename(*papszIter), nullptr);
-                CPLCopyFile( osSnapshotSrcFile, *papszIter );
-                CPLCopyFile( osSnapshotWorkingFile, *papszIter );
+                CPL_IGNORE_RET_VAL(CPLCopyFile( osSnapshotSrcFile, *papszIter ));
+                CPL_IGNORE_RET_VAL(CPLCopyFile( osSnapshotWorkingFile, *papszIter ));
                 fprintf(fpSpyFile, "shutil.copy('%s', '%s')\n",
                         osSnapshotSrcFile.c_str(),
                         osSnapshotWorkingFile.c_str());

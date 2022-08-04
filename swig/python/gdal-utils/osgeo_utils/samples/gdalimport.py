@@ -46,7 +46,7 @@ def main(argv=sys.argv):
 
     if len(argv) < 2:
         print("Usage: gdalimport.py [--help-general] source_file [newfile]")
-        return 1
+        return 2
 
     filename = argv[1]
     dataset = gdal.Open(filename)

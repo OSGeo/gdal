@@ -86,6 +86,8 @@ if(NETCDF_INCLUDE_DIR AND NETCDF_LIBRARY)
              NAMES "netcdf_mem.h"
              HINTS ${NETCDF_INCLUDE_DIR})
     mark_as_advanced(NETCDF_MEM_H)
+    # Ubuntu 16.04 netCDFConfig.cmake declares netCDF_HAS_DISKLESS but doesn't include netcdf_mem.h
+    unset(netCDF_HAS_DISKLESS)
     if(NETCDF_MEM_H)
         set(NETCDF_HAS_MEM ON)
     endif()

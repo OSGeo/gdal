@@ -7,7 +7,8 @@ OBJ	=	ogrsfdriverregistrar.o ogrlayer.o ogrdatasource.o \
 		ogr_attrind.o ogr_miattrind.o ogrlayerdecorator.o \
 		ogrwarpedlayer.o ogrunionlayer.o ogrlayerpool.o \
 		ogrmutexedlayer.o ogrmutexeddatasource.o \
-		ogremulatedtransaction.o ogreditablelayer.o
+		ogremulatedtransaction.o ogreditablelayer.o \
+		ograrrowarrayhelper.o
 
 CXXFLAGS :=     $(CXXFLAGS) $(SHADOW_WFLAGS) -DINST_DATA=\"$(INST_DATA)\"
 
@@ -47,16 +48,8 @@ ifeq ($(PCIDSK_SETTING),external)
 CXXFLAGS :=	$(CXXFLAGS) -DPCIDSK_ENABLED
 endif
 
-ifeq ($(HAVE_DODS),yes)
-CXXFLAGS :=	$(CXXFLAGS) -DDODS_ENABLED
-endif
-
 ifeq ($(HAVE_SQLITE),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DSQLITE_ENABLED
-endif
-
-ifeq ($(HAVE_GRASS),yes)
-CXXFLAGS :=	$(CXXFLAGS) -DGRASS_ENABLED
 endif
 
 ifeq ($(HAVE_LIBKML),yes)

@@ -205,7 +205,7 @@ private:
     int               m_nPrecision;
 
 public:
-    VFKPropertyDefn(const char*, const char *, bool);
+    VFKPropertyDefn(const char*, const char *, const char *);
     virtual ~VFKPropertyDefn();
 
     const char       *GetName() const  { return m_pszName; }
@@ -381,7 +381,7 @@ public:
 
     virtual const char    *GetFilename() const = 0;
 
-    virtual bool           IsLatin2() const = 0;
+    virtual const char    *GetEncoding() const = 0;
     virtual bool           IsSpatial() const = 0;
     virtual bool           IsPreProcessed() const = 0;
     virtual bool           IsValid() const = 0;

@@ -11,7 +11,7 @@ DIRLIST		=	generic geojson shape ntf sdts tiger s57 dgn mitab gml \
 			sxf openfilegdb wasp selafin jml vdv mvt flatgeobuf mapml \
 			$(OGDIDIR) $(OCIDIR) $(PG_DIR) $(DWGDIR) \
 			$(ODBCDIR) $(SQLITE_DIR) $(MYSQL_DIR) $(ILI_DIR) \
-			$(IDB_DIR) $(NAS_DIR) $(DODSDIR) \
+			$(IDB_DIR) $(NAS_DIR) \
 			$(LIBKMLDIR) $(WFSDIR) $(SOSIDIR) \
 			$(FGDB_DIR) $(XLSDIR) $(ODSDIR) $(XLSXDIR) $(LVBAGDIR) \
 			$(ELASTICDIR) $(GPKGDIR) $(OSMDIR) $(VFKDIR) $(CARTODIR) $(AMIGOCLOUD_DIR) \
@@ -107,11 +107,6 @@ GMLAS_OBJ = gmlas\*.obj
 !IFDEF INFORMIXDIR
 IDB_DIR = idb
 IDB_OBJ = idb\*.obj
-!ENDIF
-
-!IFDEF DODS_DIR
-DODSDIR = dods
-DODS_OBJ = dods\*.obj
 !ENDIF
 
 !IFDEF LIBKML_DIR
@@ -238,7 +233,7 @@ default:
 				$(OGDIOBJ) $(ODBCOBJ) $(SQLITE_OBJ) \
 				$(OCIOBJ) $(PG_OBJ) $(MYSQL_OBJ) \
 				$(ILI_OBJ) $(DWG_OBJ) $(FGDB_OBJ) $(IDB_OBJ) \
-				$(DODS_OBJ) $(NAS_OBJ) $(LIBKMLOBJ) $(WFS_OBJ) \
+				$(NAS_OBJ) $(LIBKMLOBJ) $(WFS_OBJ) \
 				$(SOSI_OBJ) $(XLS_OBJ) $(ODS_OBJ) $(XLSX_OBJ) $(LVBAG_OBJ)  \
 				$(ELASTIC_OBJ) $(GPKG_OBJ) $(OSM_OBJ) $(VFK_OBJ) $(CARTO_OBJ) $(AMIGOCLOUD_OBJ) $(PLSCENES_OBJ) \
 				$(CSW_OBJ) $(MONGODBV3OBJ) $(GMLAS_OBJ) $(CAD_OBJ) $(NGW_OBJ)

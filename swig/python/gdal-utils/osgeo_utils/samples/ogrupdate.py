@@ -43,7 +43,7 @@ APPEND_ONLY = 2
 
 
 def Usage():
-    print('ogrupdate.py -src name -dst name [-srclayer name] [-dstlayer name] [-matchfield name] [-update_only | -append_new_only]')
+    print('Usage: ogrupdate.py -src name -dst name [-srclayer name] [-dstlayer name] [-matchfield name] [-update_only | -append_new_only]')
     print('             [-compare_before_update] [-preserve_fid] [-select field_list] [-dry_run] [-progress] [-skip_failures] [-quiet]')
     print('')
     print('Update a target datasource with the features of a source datasource. Contrary to ogr2ogr,')
@@ -68,7 +68,7 @@ def Usage():
     print('   with -update_only.')
     print('')
 
-    return 1
+    return 2
 
 ###############################################################
 # ogrupdate_analyse_args()

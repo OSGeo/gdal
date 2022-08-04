@@ -154,7 +154,7 @@ def Usage():
     print(' -depth d : recurse until depth d')
     print(' -Rzip : list content of .zip archives')
     print(' -Rtgz : list content of .tar.gz/.tgz archives (potentially slow on /vsicurl/)')
-    return -1
+    return 2
 
 
 def gdal_ls(argv, fout=sys.stdout):

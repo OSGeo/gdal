@@ -36,7 +36,7 @@ from osgeo_utils.auxiliary.util import GetOutputDriverFor
 
 def Usage():
     print('Usage:  tile_extent_from_raster.py [-f format] [-ovr level] in.tif out.shp')
-    return 1
+    return 2
 
 
 def main(argv=sys.argv):

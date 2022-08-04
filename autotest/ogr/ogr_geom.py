@@ -627,6 +627,35 @@ def test_ogr_geom_transform():
         geom.ExportToWkt()
 
 ###############################################################################
+# Test Transform() from a geographic CRS to WGS 84 (https://github.com/OSGeo/gdal/issues/5660)
+
+
+def test_ogr_geom_transform_geogcrs_to_wgs84():
+
+    srs_4326 = osr.SpatialReference()
+    srs_4326.ImportFromEPSG(4326)
+    srs_4326.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
+    srs_7683 = osr.SpatialReference()
+    srs_7683.ImportFromEPSG(7683)
+    srs_7683.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
+    wkt = 'POLYGON ((44.0 43.1666666666667,44.0 43.3333333333333,44.25 43.3333333333333,44.25 43.1666666666667,44.0 43.1666666666667))'
+
+    options = osr.CoordinateTransformationOptions()
+    # Setting the pipeline is not compulsory, but this enables us to be independent
+    # of PROJ transformation database
+    assert options.SetOperation('+proj=pipeline +step +proj=axisswap +order=2,1 +step +proj=unitconvert +xy_in=deg +xy_out=rad +step +proj=push +v_3 +step +proj=cart +ellps=GSK2011 +step +inv +proj=cart +ellps=WGS84 +step +proj=pop +v_3 +step +proj=unitconvert +xy_in=rad +xy_out=deg +step +proj=axisswap +order=2,1')
+    ct = osr.CoordinateTransformation(srs_7683, srs_4326)
+    tr = ogr.GeomTransformer(ct)
+    polygon = ogr.CreateGeometryFromWkt(wkt)
+    polygon.AssignSpatialReference(srs_7683)
+    gdal.ErrorReset()
+    polygon = tr.Transform(polygon)
+    assert gdal.GetLastErrorMsg() == ''
+    assert ogrtest.check_feature_geometry(polygon, 'POLYGON ((44.0 43.1666661611411,44.0 43.3333328276326,44.25 43.3333328276326,44.25 43.1666661611411,44.0 43.1666661611411))') == 0
+
+###############################################################################
 # Test ogr.GeomTransformer()
 
 
@@ -711,13 +740,13 @@ def test_ogr_geom_segmentize():
     geom = ogr.CreateGeometryFromWkt('LINESTRING(0 0,0 10)')
     geom.Segmentize(1.00001)
 
-    assert geom.ExportToWkt() == 'LINESTRING (0 0,0 1,0 2,0 3,0 4,0 5,0 6,0 7,0 8,0 9,0 10)'
+    assert ogrtest.check_feature_geometry(geom, 'LINESTRING (0 0,0 1,0 2,0 3,0 4,0 5,0 6,0 7,0 8,0 9,0 10)') == 0
 
     # 2D + Z
     geom = ogr.CreateGeometryFromWkt('LINESTRING(0 0 1,0 10 1)')
     geom.Segmentize(1.00001)
 
-    assert geom.ExportToWkt() == 'LINESTRING (0 0 1,0 1 1,0 2 1,0 3 1,0 4 1,0 5 1,0 6 1,0 7 1,0 8 1,0 9 1,0 10 1)'
+    assert ogrtest.check_feature_geometry(geom, 'LINESTRING (0 0 1,0 1 1,0 2 1,0 3 1,0 4 1,0 5 1,0 6 1,0 7 1,0 8 1,0 9 1,0 10 1)') == 0
 
     # 2D + M
     geom = ogr.CreateGeometryFromWkt('LINESTRING M(0 0 1,0 10 2)')

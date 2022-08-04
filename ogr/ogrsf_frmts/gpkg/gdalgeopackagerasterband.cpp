@@ -46,40 +46,8 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 GDALGPKGMBTilesLikePseudoDataset::GDALGPKGMBTilesLikePseudoDataset() :
-    m_bNew(false),
-    m_bHasModifiedTiles(false),
-    m_eDT(GDT_Byte),
-    m_nDTSize(1),
-    m_dfOffset(0.0),
-    m_dfScale(1.0),
-    m_dfPrecision(1.0),
-    m_usGPKGNull(0),
-    m_nZoomLevel(-1),
-    m_pabyCachedTiles(nullptr),
-    m_nShiftXTiles(0),
-    m_nShiftXPixelsMod(0),
-    m_nShiftYTiles(0),
-    m_nShiftYPixelsMod(0),
-    m_nTileMatrixWidth(0),
-    m_nTileMatrixHeight(0),
-    m_eTF(GPKG_TF_PNG_JPEG),
-    m_bPNGSupports2Bands(true),
-    m_bPNGSupportsCT(true),
-    m_nZLevel(6),
-    m_nQuality(75),
-    m_bDither(false),
-    m_poCT(nullptr),
-    m_bTriedEstablishingCT(false),
-    m_pabyHugeColorArray(nullptr),
-    m_pMyVFS(nullptr),
-    m_hTempDB(nullptr),
-    m_nLastSpaceCheckTimestamp(0),
     m_bForceTempDBCompaction(
-        CPLTestBool(CPLGetConfigOption("GPKG_FORCE_TEMPDB_COMPACTION", "NO"))),
-    m_nAge(0),
-    m_nTileInsertionCount(0),
-    m_poParentDS(nullptr),
-    m_bInWriteTile(false)
+        CPLTestBool(CPLGetConfigOption("GPKG_FORCE_TEMPDB_COMPACTION", "NO")))
 {
     for( int i = 0; i < 4; i++ )
     {
@@ -152,9 +120,7 @@ void GDALGPKGMBTilesLikePseudoDataset::SetGlobalOffsetScale(double dfOffset,
 
 GDALGPKGMBTilesLikeRasterBand::GDALGPKGMBTilesLikeRasterBand(
     GDALGPKGMBTilesLikePseudoDataset* poTPD, int nTileWidth, int nTileHeight) :
-    m_poTPD(poTPD),
-    m_bHasNoData(false),
-    m_dfNoDataValue(0.0)
+    m_poTPD(poTPD)
 {
     eDataType = m_poTPD->m_eDT;
     m_nDTSize = m_poTPD->m_nDTSize;
@@ -356,7 +322,7 @@ GDALColorInterp GDALGPKGMBTilesLikeRasterBand::GetColorInterpretation()
     else if( poDS->GetRasterCount() == 2 )
         return (nBand == 1) ? GCI_GrayIndex : GCI_AlphaBand;
     else
-        return (GDALColorInterp) (GCI_RedBand + (nBand - 1));
+        return static_cast<GDALColorInterp>(GCI_RedBand + (nBand - 1));
 }
 
 /************************************************************************/
@@ -624,11 +590,11 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
         for(int i=0;i<nEntries;i++)
         {
             const GDALColorEntry* psEntry = m_poCT->GetColorEntry(i);
-            GByte c1 = (GByte)psEntry->c1;
-            GByte c2 = (GByte)psEntry->c2;
-            GByte c3 = (GByte)psEntry->c3;
+            GByte c1 = static_cast<GByte>(psEntry->c1);
+            GByte c2 = static_cast<GByte>(psEntry->c2);
+            GByte c3 = static_cast<GByte>(psEntry->c3);
             GUInt32 nVal = c1 + (c2 << 8) + (c3 << 16);
-            if( nTileBandCount == 4 ) nVal += ((GByte)psEntry->c4 << 24);
+            if( nTileBandCount == 4 ) nVal += (static_cast<GUInt32>(psEntry->c4) << 24);
             oMapEntryToIndex[nVal] = i;
         }
         int iBestEntryFor0 = GPKGFindBestEntry(m_poCT, 0, 0, 0, 0, nTileBandCount);
@@ -715,10 +681,10 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
             for( int i = 0; i < nEntries; i++ )
             {
                 const GDALColorEntry* psEntry = poCT->GetColorEntry(i);
-                abyCT[4*i] = (GByte)psEntry->c1;
-                abyCT[4*i+1] = (GByte)psEntry->c2;
-                abyCT[4*i+2] = (GByte)psEntry->c3;
-                abyCT[4*i+3] = (GByte)psEntry->c4;
+                abyCT[4*i] = static_cast<GByte>(psEntry->c1);
+                abyCT[4*i+1] = static_cast<GByte>(psEntry->c2);
+                abyCT[4*i+2] = static_cast<GByte>(psEntry->c3);
+                abyCT[4*i+3] = static_cast<GByte>(psEntry->c4);
             }
             for( int i = nEntries; i < 256; i++ )
             {
@@ -1112,7 +1078,7 @@ retry:
                 GByte* pabyDest = nullptr;
                 if( iBand == nBand )
                 {
-                    pabyDest = (GByte*)pData;
+                    pabyDest = static_cast<GByte*>(pData);
                 }
                 else
                 {
@@ -1139,7 +1105,7 @@ retry:
                         poBlock->DropLock();
                         goto retry;
                     }
-                    pabyDest = (GByte*) poBlock->GetDataRef();
+                    pabyDest = static_cast<GByte*>(poBlock->GetDataRef());
                 }
 
                 // Composite tile data into block data
@@ -1247,7 +1213,7 @@ static bool WEBPSupports4Bands()
     static int bRes = -1;
     if( bRes < 0 )
     {
-        GDALDriver* poDrv = (GDALDriver*) GDALGetDriverByName("WEBP");
+        GDALDriver* poDrv = GDALDriver::FromHandle(GDALGetDriverByName("WEBP"));
         if( poDrv == nullptr || CPLTestBool(CPLGetConfigOption("GPKG_SIMUL_WEBP_3BAND", "FALSE")) )
             bRes = false;
         else
@@ -1621,7 +1587,9 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
     const bool bHasNanNoData = bHasNoData && CPLIsNan(dfNoDataValue);
 
     bool bAllOpaque = true;
-    if( m_eDT == GDT_Byte && m_poCT == nullptr && nAlphaBand != 0 )
+    // Detect fully transparent tiles, but only if all bands are dirty (that is
+    // the user wrote content into them) !
+    if( bAllDirty && m_eDT == GDT_Byte && m_poCT == nullptr && nAlphaBand != 0 )
     {
         GByte byFirstAlphaVal =  m_pabyCachedTiles[(nAlphaBand-1) * nBlockXSize * nBlockYSize];
         GPtrDiff_t i = 1;
@@ -1644,7 +1612,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
         else
             bAllOpaque = false;
     }
-    else if( m_eDT == GDT_Float32 )
+    else if( bAllDirty && m_eDT == GDT_Float32 )
     {
         const float* pSrc = reinterpret_cast<float*>(m_pabyCachedTiles);
         GPtrDiff_t i;
@@ -1692,10 +1660,11 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
         IGetRasterBand(1)->GetColorTable();
 
     GDALDataType eTileDT = GDT_Byte;
-    if( m_eTF == GPKG_TF_PNG_JPEG )
+    // If not all bands are dirty, then (temporarily) use a lossless format
+    if( m_eTF == GPKG_TF_PNG_JPEG || (!bAllDirty && m_eTF == GPKG_TF_JPEG) )
     {
         bTileDriverSupports1Band = true;
-        if( bPartialTile || (nBands == 2 && !bAllOpaque) || (nBands == 4 && !bAllOpaque) || m_poCT != nullptr )
+        if( bPartialTile || !bAllDirty || (nBands == 2 && !bAllOpaque) || (nBands == 4 && !bAllOpaque) || m_poCT != nullptr )
         {
             pszDriverName = "PNG";
             bTileDriverSupports2Bands = m_bPNGSupports2Bands;
@@ -1741,17 +1710,18 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
         CPLAssert(false);
     }
 
-    GDALDriver* l_poDriver = (GDALDriver*) GDALGetDriverByName(pszDriverName);
+    GDALDriver* l_poDriver = GDALDriver::FromHandle(GDALGetDriverByName(pszDriverName));
     if( l_poDriver != nullptr)
     {
-        GDALDataset* poMEMDS = MEMDataset::Create("", nBlockXSize, nBlockYSize,
-                                                  0, eTileDT, nullptr);
+        auto poMEMDS = MEMDataset::Create("", nBlockXSize, nBlockYSize,
+                                          0, eTileDT, nullptr);
         int nTileBands = nBands;
         if( bPartialTile && nBands == 1 && m_poCT == nullptr && bTileDriverSupports2Bands )
             nTileBands = 2;
         else if( bPartialTile && bTileDriverSupports4Bands )
             nTileBands = 4;
-        else if( m_eTF == GPKG_TF_PNG8 && nBands >= 3 && bAllOpaque && !bPartialTile )
+        // only use (somewhat lossy) PNG8 if all bands are dirty
+        else if( bAllDirty && m_eTF == GPKG_TF_PNG8 && nBands >= 3 && bAllOpaque && !bPartialTile )
             nTileBands = 1;
         else if( nBands == 2 )
         {
@@ -1959,15 +1929,10 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                 }
             }
 
-            char** papszOptions = nullptr;
-            char szDataPointer[32];
-            int nRet = CPLPrintPointer(szDataPointer, pTempTileBuffer,
-                                       sizeof(szDataPointer));
-            szDataPointer[nRet] = '\0';
-            papszOptions = CSLSetNameValue(papszOptions,
-                                            "DATAPOINTER", szDataPointer);
-            poMEMDS->AddBand(GDT_UInt16, papszOptions);
-            CSLDestroy(papszOptions);
+            auto hBand = MEMCreateRasterBandEx( poMEMDS, 1,
+                                                reinterpret_cast<GByte*>(pTempTileBuffer),
+                                                GDT_UInt16, 0, 0, false );
+            poMEMDS->AddMEMBand(hBand);
         }
         else if( m_eTF == GPKG_TF_TIFF_32BIT_FLOAT )
         {
@@ -2009,24 +1974,15 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             if( nValidPixels )
                 dfTileStdDev = sqrt( dfM2 / nValidPixels );
 
-            char** papszOptions = nullptr;
-            char szDataPointer[32];
-            int nRet = CPLPrintPointer(szDataPointer,
-                        m_pabyCachedTiles,
-                        sizeof(szDataPointer));
-            szDataPointer[nRet] = '\0';
-            papszOptions = CSLSetNameValue(papszOptions,
-                                            "DATAPOINTER", szDataPointer);
-            poMEMDS->AddBand(GDT_Float32, papszOptions);
-            CSLDestroy(papszOptions);
+            auto hBand = MEMCreateRasterBandEx( poMEMDS, 1, m_pabyCachedTiles,
+                                                GDT_Float32, 0, 0, false );
+            poMEMDS->AddMEMBand(hBand);
         }
         else
         {
             CPLAssert( m_eDT == GDT_Byte );
             for( int i = 0; i < nTileBands; i++ )
             {
-                char** papszOptions = nullptr;
-                char szDataPointer[32];
                 int iSrc = i;
                 if( nBands == 1 && m_poCT == nullptr && nTileBands == 3 )
                     iSrc = 0;
@@ -2035,16 +1991,15 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                     iSrc = (i < 3) ? 0 : 3;
                 else if( nBands == 2 && nTileBands >= 3 )
                     iSrc = (i < 3) ? 0 : 1;
-                int nRet = CPLPrintPointer(szDataPointer,
-                        m_pabyCachedTiles + iSrc * nBlockXSize * nBlockYSize,
-                        sizeof(szDataPointer));
-                szDataPointer[nRet] = '\0';
-                papszOptions = CSLSetNameValue(papszOptions,
-                                               "DATAPOINTER", szDataPointer);
-                poMEMDS->AddBand(GDT_Byte, papszOptions);
+
+                auto hBand = MEMCreateRasterBandEx(
+                    poMEMDS, i + 1,
+                    m_pabyCachedTiles + iSrc * nBlockXSize * nBlockYSize,
+                    GDT_Byte, 0, 0, false );
+                poMEMDS->AddMEMBand(hBand);
+
                 if( i == 0 && nTileBands == 1 && m_poCT != nullptr )
                     poMEMDS->GetRasterBand(1)->SetColorTable(m_poCT);
-                CSLDestroy(papszOptions);
             }
         }
 
@@ -2069,27 +2024,26 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
 
         if( m_eTF == GPKG_TF_PNG8 && nTileBands == 1 && nBands >= 3 )
         {
-            GDALDataset* poMEM_RGB_DS = MEMDataset::Create("", nBlockXSize, nBlockYSize,
+            CPLAssert( bAllDirty );
+
+            auto poMEM_RGB_DS = MEMDataset::Create(
+                                                  "", nBlockXSize, nBlockYSize,
                                                   0, GDT_Byte, nullptr);
             for( int i = 0; i < 3; i++ )
             {
-                char** papszOptions = nullptr;
-                char szDataPointer[32];
-                int nRet = CPLPrintPointer(szDataPointer,
-                                        m_pabyCachedTiles + i * nBandBlockSize,
-                                        sizeof(szDataPointer));
-                szDataPointer[nRet] = '\0';
-                papszOptions = CSLSetNameValue(papszOptions, "DATAPOINTER", szDataPointer);
-                poMEM_RGB_DS->AddBand(GDT_Byte, papszOptions);
-                CSLDestroy(papszOptions);
+                auto hBand = MEMCreateRasterBandEx(
+                    poMEMDS, i + 1,
+                    m_pabyCachedTiles + i * nBandBlockSize,
+                    GDT_Byte, 0, 0, false );
+                poMEM_RGB_DS->AddMEMBand(hBand);
             }
 
             if( m_pabyHugeColorArray == nullptr )
             {
                 if( nBlockXSize <= 65536 / nBlockYSize )
-                    m_pabyHugeColorArray = (GByte*) VSIMalloc(MEDIAN_CUT_AND_DITHER_BUFFER_SIZE_65536);
+                    m_pabyHugeColorArray = VSIMalloc(MEDIAN_CUT_AND_DITHER_BUFFER_SIZE_65536);
                 else
-                    m_pabyHugeColorArray = (GByte*) VSIMalloc2(256 * 256 * 256, sizeof(GUInt32));
+                    m_pabyHugeColorArray = VSIMalloc2(256 * 256 * 256, sizeof(GUInt32));
             }
 
             GDALColorTable* poCT = new GDALColorTable();
@@ -2103,7 +2057,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                                        nullptr,
                                        256, /* max colors */
                                        8, /* bit depth */
-                                       (GUInt32*)m_pabyHugeColorArray, /* preallocated histogram */
+                                       static_cast<GUInt32*>(m_pabyHugeColorArray), /* preallocated histogram */
                                        poCT,
                                        nullptr, nullptr );
 
@@ -2113,7 +2067,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                                poMEMDS->GetRasterBand(1),
                                poCT,
                                8, /* bit depth */
-                               (GInt16*)m_pabyHugeColorArray, /* pasDynamicColorMap */
+                               static_cast<GInt16*>(m_pabyHugeColorArray), /* pasDynamicColorMap */
                                m_bDither,
                                nullptr, nullptr );
             poMEMDS->GetRasterBand(1)->SetColorTable(poCT);
@@ -2127,10 +2081,10 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             for( int i = 0; i < nEntries; i++ )
             {
                 const GDALColorEntry* psEntry = m_poCT->GetColorEntry(i);
-                abyCT[4*i] = (GByte)psEntry->c1;
-                abyCT[4*i+1] = (GByte)psEntry->c2;
-                abyCT[4*i+2] = (GByte)psEntry->c3;
-                abyCT[4*i+3] = (GByte)psEntry->c4;
+                abyCT[4*i] = static_cast<GByte>(psEntry->c1);
+                abyCT[4*i+1] = static_cast<GByte>(psEntry->c2);
+                abyCT[4*i+2] = static_cast<GByte>(psEntry->c3);
+                abyCT[4*i+3] = static_cast<GByte>(psEntry->c4);
             }
             for( int i = nEntries; i<256 ;i++ )
             {
@@ -2187,8 +2141,16 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
         char** papszDriverOptions = CSLSetNameValue(nullptr, "_INTERNAL_DATASET", "YES");
         if( EQUAL(pszDriverName, "JPEG") || EQUAL(pszDriverName, "WEBP") )
         {
-            papszDriverOptions = CSLSetNameValue(
-                papszDriverOptions, "QUALITY", CPLSPrintf("%d", m_nQuality));
+            // If not all bands are dirty, then use lossless WEBP
+            if( !bAllDirty && EQUAL(pszDriverName, "WEBP") )
+            {
+                papszDriverOptions = CSLSetNameValue(papszDriverOptions, "LOSSLESS", "YES");
+            }
+            else
+            {
+                papszDriverOptions = CSLSetNameValue(
+                    papszDriverOptions, "QUALITY", CPLSPrintf("%d", m_nQuality));
+            }
         }
         else if( EQUAL(pszDriverName, "PNG") )
         {
@@ -2261,7 +2223,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             }
             else
             {
-                sqlite3_bind_blob( hStmt, 1, pabyBlob, (int)nBlobSize, CPLFree);
+                sqlite3_bind_blob( hStmt, 1, pabyBlob, static_cast<int>(nBlobSize), CPLFree);
                 rc = sqlite3_step( hStmt );
                 if( rc == SQLITE_DONE )
                     eErr = CE_None;
@@ -2444,7 +2406,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::FlushRemainingShiftedTiles(bool bPartia
                         for( int iBand = 1; !bFoundDirtyBlock && iBand <= nBands; iBand ++ )
                         {
                             GDALRasterBlock* poBlock =
-                                        ((GDALGPKGMBTilesLikeRasterBand*)IGetRasterBand(iBand))->
+                                        cpl::down_cast<GDALGPKGMBTilesLikeRasterBand*>(IGetRasterBand(iBand))->
                                                     AccessibleTryGetLockedBlockRef(nBlockXOff + iX, nBlockYOff + iY);
                             if( poBlock )
                             {
@@ -2515,7 +2477,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::FlushRemainingShiftedTiles(bool bPartia
                     {
                         const int nBytes = sqlite3_column_bytes( hNewStmt, 0 );
                         GIntBig nTileId = (m_eDT == GDT_Byte ) ? 0 : sqlite3_column_int64( hNewStmt, 1 );
-                        GByte* pabyRawData = (GByte*)sqlite3_column_blob( hNewStmt, 0 );
+                        GByte* pabyRawData = const_cast<GByte*>(static_cast<const GByte*>(sqlite3_column_blob( hNewStmt, 0 )));
                         CPLString osMemFileName;
                         osMemFileName.Printf("/vsimem/gpkg_read_tile_%p", this);
                         VSILFILE * fp = VSIFileFromMemBuffer( osMemFileName.c_str(), pabyRawData,
@@ -3075,7 +3037,6 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff
     CPLDebug("GPKG", "IWriteBlock(nBand=%d,nBlockXOff=%d,nBlockYOff=%d,m_nZoomLevel=%d)",
              nBand,nBlockXOff,nBlockYOff,m_poTPD->m_nZoomLevel);
 #endif
-
     if( !m_poTPD->ICanIWriteBlock() )
     {
         return CE_Failure;
@@ -3133,7 +3094,7 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff
                 GByte* pabySrc = nullptr;
                 if( iBand == nBand )
                 {
-                    pabySrc = (GByte*)pData;
+                    pabySrc = static_cast<GByte*>(pData);
                 }
                 else
                 {
@@ -3146,11 +3107,11 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff
                     else
                     {
                         poBlock =
-                            ((GDALGPKGMBTilesLikeRasterBand*)poDS->GetRasterBand(iBand))->
+                            cpl::down_cast<GDALGPKGMBTilesLikeRasterBand*>(poDS->GetRasterBand(iBand))->
                                         TryGetLockedBlockRef(nBlockXOff, nBlockYOff);
                         if( poBlock && poBlock->GetDirty() )
                         {
-                            pabySrc = (GByte*)poBlock->GetDataRef();
+                            pabySrc = static_cast<GByte*>(poBlock->GetDataRef());
                             poBlock->MarkClean();
                         }
                         else
@@ -3170,8 +3131,6 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff
                 int nDstXSize = nBlockXSize;
                 int nDstYOffset = 0;
                 int nDstYSize = nBlockYSize;
-                int nSrcXOffset = 0;
-                int nSrcYOffset = 0;
                 // Composite block data into tile data
                 if( m_poTPD->m_nShiftXPixelsMod == 0 && m_poTPD->m_nShiftYPixelsMod == 0 )
                 {
@@ -3248,12 +3207,12 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff
                                         nRasterYSize - nBlockYSize) ?
                         (nRasterYSize - nBlockYOff * nBlockYSize): nBlockYSize;
 
+                    int nSrcXOffset = 0;
                     if( nCol == nColMin )
                     {
                         nDstXOffset = m_poTPD->m_nShiftXPixelsMod;
                         nDstXSize = std::min( nXValid,
                                     nBlockXSize - m_poTPD->m_nShiftXPixelsMod );
-                        nSrcXOffset = 0;
                     }
                     else
                     {
@@ -3267,12 +3226,13 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff
                             nDstXSize = 0;
                         nSrcXOffset = nBlockXSize - m_poTPD->m_nShiftXPixelsMod;
                     }
+
+                    int nSrcYOffset = 0;
                     if( nRow == nRowMin )
                     {
                         nDstYOffset = m_poTPD->m_nShiftYPixelsMod;
                         nDstYSize = std::min( nYValid,
                                     nBlockYSize - m_poTPD->m_nShiftYPixelsMod );
-                        nSrcYOffset = 0;
                     }
                     else
                     {
@@ -3377,8 +3337,7 @@ void GDALGPKGMBTilesLikeRasterBand::SetNoDataValueInternal( double dfNoDataValue
 
 GDALGeoPackageRasterBand::GDALGeoPackageRasterBand(
     GDALGeoPackageDataset* poDSIn, int nTileWidth, int nTileHeight) :
-            GDALGPKGMBTilesLikeRasterBand(poDSIn, nTileWidth, nTileHeight),
-            m_bStatsComputed(false)
+    GDALGPKGMBTilesLikeRasterBand(poDSIn, nTileWidth, nTileHeight)
 {
     poDS = poDSIn;
 }
@@ -3390,7 +3349,7 @@ GDALGeoPackageRasterBand::GDALGeoPackageRasterBand(
 int GDALGeoPackageRasterBand::GetOverviewCount()
 {
     GDALGeoPackageDataset *poGDS
-        = reinterpret_cast<GDALGeoPackageDataset *>( poDS );
+        = cpl::down_cast<GDALGeoPackageDataset *>( poDS );
     return poGDS->m_nOverviewCount;
 }
 

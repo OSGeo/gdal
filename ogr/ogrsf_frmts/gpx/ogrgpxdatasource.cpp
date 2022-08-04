@@ -139,8 +139,10 @@ int OGRGPXDataSource::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
         return TRUE;
-    if( EQUAL(pszCap,ODsCDeleteLayer) )
+    else if( EQUAL(pszCap,ODsCDeleteLayer) )
         return FALSE;
+    else if( EQUAL(pszCap, ODsCZGeometries) )
+        return TRUE;
 
     return FALSE;
 }

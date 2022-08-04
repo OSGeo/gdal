@@ -38,6 +38,9 @@
 #ifndef _WIN32
 #include <sys/types.h>
 #include <unistd.h>
+#if defined(HAVE_PTHREAD_ATFORK)
+#include <pthread.h>
+#endif
 #endif
 
 #include <mutex>
@@ -74,6 +77,14 @@ static int g_projNetworkEnabled = -1;
 static unsigned g_projNetworkEnabledGenerationCounter = 0;
 #endif
 
+#if !defined(_WIN32) && defined(HAVE_PTHREAD_ATFORK)
+static bool g_bForkOccured = false;
+static void ForkOccured(void)
+{
+    g_bForkOccured = true;
+}
+#endif
+
 struct OSRPJContextHolder
 {
     unsigned searchPathGenerationCounter = 0;
@@ -84,14 +95,25 @@ struct OSRPJContextHolder
     PJ_CONTEXT* context = nullptr;
     OSRProjTLSCache oCache{};
 #if !defined(_WIN32)
+#if !defined(HAVE_PTHREAD_ATFORK)
     pid_t curpid = 0;
+#endif
 #if defined(SIMUL_OLD_PROJ6) || !(PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 2)
     std::vector<PJ_CONTEXT*> oldcontexts{};
 #endif
 #endif
 
 #if !defined(_WIN32)
-    OSRPJContextHolder(): curpid(getpid()) { init(); }
+    OSRPJContextHolder()
+#if !defined(HAVE_PTHREAD_ATFORK)
+        : curpid(getpid())
+#endif
+    {
+#if HAVE_PTHREAD_ATFORK
+        pthread_atfork(nullptr, nullptr, ForkOccured);
+#endif
+        init();
+    }
 #else
     OSRPJContextHolder() { init(); }
 #endif
@@ -178,11 +200,19 @@ static OSRPJContextHolder& GetProjTLSContextHolder()
     // Detect if we are now running in a child process created by fork()
     // In that situation we must make sure *not* to use the same underlying
     // file open descriptor to the sqlite3 database, since seeks&reads in one
+#if defined(HAVE_PTHREAD_ATFORK)
+    if( g_bForkOccured )
+#else
     // of the parent or child will affect the other end.
     const pid_t curpid = getpid();
     if( curpid != l_projContext.curpid )
+#endif
     {
+#if defined(HAVE_PTHREAD_ATFORK)
+        g_bForkOccured = false;
+#else
         l_projContext.curpid = curpid;
+#endif
 #if defined(SIMUL_OLD_PROJ6) || !(PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 2)
         // PROJ < 6.2 ? Recreate new context
         l_projContext.oldcontexts.push_back(l_projContext.context);
@@ -341,7 +371,7 @@ void OSRSetPROJSearchPaths( const char* const * papszPaths )
 char** OSRGetPROJSearchPaths()
 {
     std::lock_guard<std::mutex> oLock(g_oSearchPathMutex);
-    if( g_searchPathGenerationCounter > 0 )
+    if( g_searchPathGenerationCounter > 0 && !g_aosSearchpaths.empty() )
     {
         return CSLDuplicate(g_aosSearchpaths.List());
     }

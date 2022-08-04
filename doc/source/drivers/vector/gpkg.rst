@@ -143,6 +143,15 @@ Transaction support
 
 The driver implements transactions at the database level, per :ref:`rfc-54`
 
+Relationships
+-------------
+
+.. versionadded:: 3.6
+
+Relationship retrieval is supported, respecting the OGC GeoPackage Related Tables Extension.
+If the Related Tables Extension is not in use then relationships will be reported for tables
+which utilise FOREIGN KEY constraints.
+
 Dataset open options
 --------------------
 
@@ -452,6 +461,15 @@ Examples
    ::
 
       ogr2ogr -f GPKG filename.gpkg abc.shp
+
+-  Update of an existing GeoPackage file – e.g. a GeoPackage template – 
+   by adding features to it from another GeoPackage file containing 
+   features according to the same or a backwards compatible database 
+   schema.
+
+   ::
+
+      ogr2ogr -append output.gpkg input.gpkg
 
 -  Translation of a directory of shapefiles into a GeoPackage. Each file
    will end up as a new table within the GPKG file. The file

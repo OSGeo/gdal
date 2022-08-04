@@ -40,7 +40,7 @@ def Usage():
     print('')
     print('(Try to) remove TOWGS84 clause from the dataset SRS definition, ')
     print('when it contains a EPSG code.')
-    return -1
+    return 2
 
 
 def main(argv=sys.argv):

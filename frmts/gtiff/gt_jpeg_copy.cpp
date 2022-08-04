@@ -262,6 +262,12 @@ CPLErr GTIFF_DirectCopyFromJPEG( GDALDataset* poDS, GDALDataset* poSrcDS,
 #define width_in_blocks width_in_data_units
 #endif
 
+#ifdef EXPECTED_JPEG_LIB_VERSION
+#if EXPECTED_JPEG_LIB_VERSION != JPEG_LIB_VERSION
+#error EXPECTED_JPEG_LIB_VERSION != JPEG_LIB_VERSION
+#endif
+#endif
+
 /************************************************************************/
 /*                      GTIFF_CanCopyFromJPEG()                         */
 /************************************************************************/

@@ -1,13 +1,22 @@
 name: Docs
 
-on: [push, pull_request]
+on:
+    push:
+        branches-ignore:
+            - 'backport**'
+    pull_request:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   docs:
+    permissions:
+      contents: write  # for Git to git push
     name: Docs
 
     runs-on: ubuntu-latest
@@ -16,7 +25,7 @@ jobs:
     container: osgeo/proj-docs
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Print versions
       shell: bash -l {0}
       run: |
@@ -52,15 +61,15 @@ jobs:
     #  run: |
     #    make spelling
     #  working-directory: ./doc
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: PDF
         path: doc/build/latex/gdal.pdf
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: HTML
         path: doc/build/html/*
-    #- uses: actions/upload-artifact@v2
+    #- uses: actions/upload-artifact@v3
     #  with:
     #    name: Misspelled
     #    path: doc/build/spelling/output.txt

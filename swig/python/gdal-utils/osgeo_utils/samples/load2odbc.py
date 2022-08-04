@@ -40,7 +40,7 @@ from osgeo import ogr
 def Usage():
     print('Usage: load2odbc.py [-where attr_filter] infile odbc_dsn layer')
     print('')
-    return 1
+    return 2
 
 
 def main(argv=sys.argv):

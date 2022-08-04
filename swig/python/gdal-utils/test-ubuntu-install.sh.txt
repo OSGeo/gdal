@@ -12,7 +12,7 @@ export C_INCLUDE_PATH=/usr/include/gdal
 # Install python GDAL bindings
 pip install gdal
 # note: this could be `sudo apt-get install python3-gdal` instead but
-# pip method is prefered, better tested
+# pip method is preferred, better tested
 
 # install gdal-utilities from source
 # (assumes git clone etc. are already done)

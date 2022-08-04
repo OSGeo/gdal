@@ -31,6 +31,7 @@
 from osgeo import gdal
 from osgeo import osr
 
+import array
 import gdaltest
 import os
 import pytest
@@ -38,6 +39,7 @@ import shutil
 import stat
 import struct
 import sys
+import time
 
 def has_nc4():
     netcdf_drv = gdal.GetDriverByName('NETCDF')
@@ -1914,3 +1916,228 @@ def test_netcdf_multidim_open_char_2d_zero_dim():
     assert ar
     ar.GetNoDataValueAsRaw()
     ar.GetBlockSize()
+
+
+###############################################################################
+# Test reading a transposed array with only 2 dims
+# (or 'dummy dimensions' for the non-last 2dims and the last 2 dims transposed)
+
+
+@pytest.mark.parametrize("datatype,request_datatype",
+                         [(gdal.GDT_Byte, gdal.GDT_Byte),
+                          (gdal.GDT_Byte, gdal.GDT_UInt16), # different data type
+                          (gdal.GDT_UInt16, gdal.GDT_UInt16),
+                          (gdal.GDT_UInt16, gdal.GDT_UInt32), # different data type
+                          (gdal.GDT_UInt32, gdal.GDT_UInt32),
+                          (gdal.GDT_Float64, gdal.GDT_Float64),
+                          (gdal.GDT_CFloat64, gdal.GDT_CFloat64), # no optimized CopyWord() implementation
+                          ])
+@pytest.mark.parametrize("has_one_sample_z_dim", [False, True])
+def test_netcdf_multidim_read_transposed_optimized_last_2dims(datatype, request_datatype, has_one_sample_z_dim):
+
+    map_gdal_datatype_to_array_letter = {
+        gdal.GDT_Byte: 'B',
+        gdal.GDT_UInt16: 'H',
+        gdal.GDT_UInt32: 'I',
+        gdal.GDT_Float64: 'd',
+        gdal.GDT_CFloat64: 'd',
+    }
+    array_letter = map_gdal_datatype_to_array_letter[datatype]
+    request_array_letter = map_gdal_datatype_to_array_letter[request_datatype]
+    values_per_item = 2 if gdal.DataTypeIsComplex(datatype) else 1
+
+    drv = gdal.GetDriverByName('netCDF')
+    def f():
+        ds = drv.CreateMultiDimensional('tmp/test_netcdf_multidim_read_transposed_optimized_last_2dims.nc')
+        assert ds
+        rg = ds.GetRootGroup()
+        assert rg
+
+        dim_z = rg.CreateDimension('z', None, None, 1) if has_one_sample_z_dim else None
+        # use dimensions > 32 to test transpose-by-subblock approach of the Transpose2D()
+        # method of gdalmultidim.cpp
+        dim_y = rg.CreateDimension('Y', None, None, 41)
+        dim_x = rg.CreateDimension('X', None, None, 37)
+        dims = []
+        if dim_z:
+            dims.append(dim_z)
+        dims.append(dim_y)
+        dims.append(dim_x)
+        y_size = dim_y.GetSize()
+        x_size = dim_x.GetSize()
+        var = rg.CreateMDArray('var', dims,
+                               gdal.ExtendedDataType.Create(datatype),
+                               ['COMPRESS=DEFLATE'])
+        if values_per_item == 2:
+            data = array.array(array_letter, [(v // 2) & 255 for v in range(2 * y_size * x_size)]).tobytes()
+        else:
+            data = array.array(array_letter, [v & 255 for v in range(y_size * x_size)]).tobytes()
+        assert var.Write(data) == gdal.CE_None
+        transposed_ar = var.Transpose([0, 2, 1] if dim_z else [1, 0])
+        got_data_raw = transposed_ar.Read(buffer_datatype = gdal.ExtendedDataType.Create(request_datatype))
+        got_data = list(struct.unpack(request_array_letter * (values_per_item * y_size * x_size), got_data_raw))
+        expected_data = []
+        for i in range(x_size):
+            for j in range(y_size):
+                expected_data.append((j * x_size + i) & 255)
+                if values_per_item == 2:
+                    expected_data.append((j * x_size + i) & 255)
+        assert got_data == expected_data
+
+    try:
+        f()
+    finally:
+        gdal.Unlink('tmp/test_netcdf_multidim_read_transposed_optimized_last_2dims.nc')
+
+
+###############################################################################
+# Test reading a transposed 4-dim array with the last 2 dims transposed
+
+
+@pytest.mark.parametrize("datatype,request_datatype",
+                         [(gdal.GDT_Byte, gdal.GDT_Byte),
+                          (gdal.GDT_UInt16, gdal.GDT_UInt16),
+                          (gdal.GDT_UInt32, gdal.GDT_UInt32),
+                          (gdal.GDT_Float64, gdal.GDT_Float64),])
+def test_netcdf_multidim_read_transposed_4d_optimized_case_for_last_2dims(datatype, request_datatype):
+
+    map_gdal_datatype_to_array_letter = {
+        gdal.GDT_Byte: 'B',
+        gdal.GDT_UInt16: 'H',
+        gdal.GDT_UInt32: 'I',
+        gdal.GDT_Float64: 'd',
+    }
+    array_letter = map_gdal_datatype_to_array_letter[datatype]
+    request_array_letter = map_gdal_datatype_to_array_letter[request_datatype]
+
+    drv = gdal.GetDriverByName('netCDF')
+    def f():
+        ds = drv.CreateMultiDimensional('tmp/test_netcdf_multidim_read_transposed_4d_optimized_case_for_last_2dims.nc')
+        assert ds
+        rg = ds.GetRootGroup()
+        assert rg
+
+        dim_t = rg.CreateDimension('T', None, None, 3)
+        dim_z = rg.CreateDimension('Z', None, None, 2)
+        dim_y = rg.CreateDimension('Y', None, None, 41)
+        dim_x = rg.CreateDimension('X', None, None, 37)
+        dims = [dim_t, dim_z, dim_y, dim_x]
+        t_size = dim_t.GetSize()
+        z_size = dim_z.GetSize()
+        y_size = dim_y.GetSize()
+        x_size = dim_x.GetSize()
+        var = rg.CreateMDArray('var', dims,
+                               gdal.ExtendedDataType.Create(datatype),
+                               ['COMPRESS=DEFLATE'])
+        data = array.array(array_letter, [v & 255 for v in range(t_size * z_size * y_size * x_size)]).tobytes()
+        assert var.Write(data) == gdal.CE_None
+        transposed_ar = var.Transpose([0, 1, 3, 2])
+        got_data_raw = transposed_ar.Read(buffer_datatype = gdal.ExtendedDataType.Create(request_datatype))
+        got_data = list(struct.unpack(request_array_letter * (t_size * z_size * y_size * x_size), got_data_raw))
+        expected_data = []
+        for l in range(t_size):
+            for k in range(z_size):
+                for i in range(x_size):
+                    for j in range(y_size):
+                        expected_data.append((((l * z_size + k) * y_size + j) * x_size + i) & 255)
+        assert got_data == expected_data
+
+    try:
+        f()
+    finally:
+        gdal.Unlink('tmp/test_netcdf_multidim_read_transposed_4d_optimized_case_for_last_2dims.nc')
+
+
+###############################################################################
+# Test reading a transposed 3-dim array with all dims shuffled in the transposition
+
+
+@pytest.mark.parametrize("datatype,request_datatype",
+                         [(gdal.GDT_Byte, gdal.GDT_Byte),
+                          (gdal.GDT_UInt16, gdal.GDT_UInt16),
+                          (gdal.GDT_UInt32, gdal.GDT_UInt32),
+                          (gdal.GDT_Float64, gdal.GDT_Float64),])
+def test_netcdf_multidim_read_transposed_3d_general_case(datatype, request_datatype):
+
+    map_gdal_datatype_to_array_letter = {
+        gdal.GDT_Byte: 'B',
+        gdal.GDT_UInt16: 'H',
+        gdal.GDT_UInt32: 'I',
+        gdal.GDT_Float64: 'd',
+    }
+    array_letter = map_gdal_datatype_to_array_letter[datatype]
+    request_array_letter = map_gdal_datatype_to_array_letter[request_datatype]
+
+    drv = gdal.GetDriverByName('netCDF')
+    def f():
+        ds = drv.CreateMultiDimensional('tmp/test_netcdf_multidim_read_transposed_3d_general_case.nc')
+        assert ds
+        rg = ds.GetRootGroup()
+        assert rg
+
+        dim_z = rg.CreateDimension('Z', None, None, 2)
+        dim_y = rg.CreateDimension('Y', None, None, 41)
+        dim_x = rg.CreateDimension('X', None, None, 37)
+        dims = [dim_z, dim_y, dim_x]
+        z_size = dim_z.GetSize()
+        y_size = dim_y.GetSize()
+        x_size = dim_x.GetSize()
+        var = rg.CreateMDArray('var', dims,
+                               gdal.ExtendedDataType.Create(datatype),
+                               ['COMPRESS=DEFLATE'])
+        data = array.array(array_letter, [v & 255 for v in range(z_size * y_size * x_size)]).tobytes()
+        assert var.Write(data) == gdal.CE_None
+        transposed_ar = var.Transpose([2, 1, 0]) # full transposition
+        got_data_raw = transposed_ar.Read(buffer_datatype = gdal.ExtendedDataType.Create(request_datatype))
+        got_data = list(struct.unpack(request_array_letter * (z_size * y_size * x_size), got_data_raw))
+        expected_data = []
+        for i in range(x_size):
+            for j in range(y_size):
+                for k in range(z_size):
+                    expected_data.append(((k * y_size + j) * x_size + i) & 255)
+        assert got_data == expected_data
+
+    try:
+        f()
+    finally:
+        gdal.Unlink('tmp/test_netcdf_multidim_read_transposed_3d_general_case.nc')
+
+
+###############################################################################
+# Test reading a transposed 2-dim array relatively "large", at least sufficiently
+# large than it would take forever to read with a non-optimized implementation
+
+
+def test_netcdf_multidim_read_transposed_bigger_file():
+
+    drv = gdal.GetDriverByName('netCDF')
+    def create():
+        ds = drv.CreateMultiDimensional('tmp/test_netcdf_multidim_read_transposed_bigger_file.nc')
+        assert ds
+        rg = ds.GetRootGroup()
+        assert rg
+
+        dim_y = rg.CreateDimension('Y', None, None, 1024)
+        dim_x = rg.CreateDimension('X', None, None, 1024)
+        dims = [dim_y, dim_x]
+        y_size = dim_y.GetSize()
+        x_size = dim_x.GetSize()
+        var = rg.CreateMDArray('var', dims,
+                               gdal.ExtendedDataType.Create(gdal.GDT_Byte),
+                               ['COMPRESS=DEFLATE', 'BLOCKSIZE=1024,1024'])
+        data = b'\0' * (y_size * x_size)
+        assert var.Write(data) == gdal.CE_None
+
+    create()
+
+    ds = gdal.OpenEx('tmp/test_netcdf_multidim_read_transposed_bigger_file.nc', gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    var = rg.OpenMDArray('var')
+    transposed_ar = var.Transpose([1, 0])
+    # Takes 4 seconds or so if not optimized, vs a few milliseconds otherwise
+    start = time.time()
+    assert transposed_ar.Read() is not None
+    delay = time.time() - start
+    assert delay < 1
+
+    gdal.Unlink('tmp/test_netcdf_multidim_read_transposed_bigger_file.nc')

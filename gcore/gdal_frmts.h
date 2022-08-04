@@ -64,7 +64,6 @@ void CPL_DLL GDALRegister_JPIPKAK(void);
 void CPL_DLL GDALRegister_MEM(void);
 void CPL_DLL GDALRegister_JDEM(void);
 void CPL_DLL GDALRegister_RASDAMAN(void);
-void CPL_DLL GDALRegister_GRASS(void);
 void CPL_DLL GDALRegister_PNM(void);
 void CPL_DLL GDALRegister_GIF(void);
 void CPL_DLL GDALRegister_BIGGIF(void);
@@ -93,7 +92,6 @@ void CPL_DLL GDALRegister_MrSID(void);
 void CPL_DLL GDALRegister_MG4Lidar(void);
 void CPL_DLL GDALRegister_PCIDSK(void);
 void CPL_DLL GDALRegister_BT(void);
-void CPL_DLL GDALRegister_DODS(void);
 void CPL_DLL GDALRegister_netCDF(void);
 void CPL_DLL GDALRegister_LAN(void);
 void CPL_DLL GDALRegister_CPG(void);
@@ -202,6 +200,10 @@ void CPL_DLL GDALRegister_OGCAPI(void);
 void CPL_DLL GDALRegister_STACTA(void);
 void CPL_DLL GDALRegister_Zarr(void);
 void CPL_DLL GDALRegister_STACIT(void);
+void CPL_DLL GDALRegister_JPEGXL(void);
+void CPL_DLL GDALRegister_BASISU(void);
+void CPL_DLL GDALRegister_KTX2(void);
+void CPL_DLL GDALRegister_BASISU_KTX2(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */

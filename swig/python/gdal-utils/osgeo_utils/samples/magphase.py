@@ -33,6 +33,9 @@ import numpy as np
 
 from osgeo import gdal_array
 
+def Usage():
+    print(f'Usage: {sys.argv[0]} -- This is a sample. Read source to know how to use. --')
+    return 2
 
 def doit(src_filename, dst_magnitude, dst_phase):
     src_ds = gdal.Open(src_filename)
@@ -51,9 +54,11 @@ def doit(src_filename, dst_magnitude, dst_phase):
 
 
 def main(argv=sys.argv):
-    src_filename = 'complex.tif'
-    dst_magnitude = 'magnitude.tif'
-    dst_phase = 'phase.tif'
+    if len(sys.argv) <= 4:
+        return Usage()
+    # src_filename = 'complex.tif'
+    # dst_magnitude = 'magnitude.tif'
+    # dst_phase = 'phase.tif'
     if len(argv) > 1:
         src_filename = argv[1]
     if len(argv) > 2:

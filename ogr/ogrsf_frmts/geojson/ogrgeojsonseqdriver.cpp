@@ -893,6 +893,9 @@ void RegisterOGRGeoJSONSeq()
 
     poDriver->SetDescription( "GeoJSONSeq" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GeoJSON Sequence" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "geojsonl geojsons" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/geojsonseq.html" );

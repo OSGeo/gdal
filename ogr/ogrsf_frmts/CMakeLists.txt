@@ -7,7 +7,7 @@ gdal_standard_includes(ogrsf_frmts)
 target_include_directories(ogrsf_frmts PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
                                                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/generic>)
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:ogrsf_frmts>)
-set_property(TARGET ogrsf_frmts PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
+set_property(TARGET ogrsf_frmts PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 add_dependencies(ogrsf_frmts generate_gdal_version_h)
 
 # Obligatory for building GDAL; always compile in.
@@ -23,7 +23,6 @@ ogr_default_driver(vrt "VRT - Virtual Format")
 # Caution: if modifying AVC declaration here, also modify it in gdal.cmake
 ogr_optional_driver(avc AVC)
 
-ogr_optional_driver(sdts SDTS) # depends ISO8211
 ogr_optional_driver(gml GML) # when not found both EXPAT/XercesC, return error in driver, referenced by WCS
 
 # ######################################################################################################################
@@ -50,12 +49,14 @@ ogr_optional_driver(mapml MapML)
 
 # ######################################################################################################################
 #
+
+ogr_dependent_driver(sdts SDTS "GDAL_ENABLE_DRIVER_SDTS")
+
 # XML drivers
 ogr_dependent_driver(gpx "GPX - GPS Exchange Format" "GDAL_USE_EXPAT")
 ogr_dependent_driver(gmlas GMLAS "GDAL_USE_XERCESC;OGR_ENABLE_DRIVER_PGDUMP")
 ogr_dependent_driver(svg "Scalable Vector Graphics" "GDAL_USE_EXPAT")
 ogr_dependent_driver(csw CSW "GDAL_USE_CURL")
-ogr_dependent_driver(dods DODS "GDAL_USE_DAP;GDAL_USE_LIBXML2")
 ogr_dependent_driver(dwg DWG "GDAL_USE_TEIGHA")
 ogr_dependent_driver(filegdb FileGDB "GDAL_USE_FILEGDB")
 ogr_dependent_driver(libkml LibKML "GDAL_USE_LIBKML")
@@ -66,7 +67,7 @@ ogr_dependent_driver(wfs "OGC WFS service" "GDAL_USE_CURL")
 ogr_dependent_driver(ngw "NextGIS Web" "GDAL_USE_CURL")
 ogr_dependent_driver(elastic "ElasticSearch" "GDAL_USE_CURL")
 
-ogr_optional_driver(idrisi IDRISI)
+ogr_dependent_driver(idrisi IDRISI "GDAL_ENABLE_DRIVER_IDRISI")
 
 ogr_dependent_driver(pds "Planetary Data Systems TABLE" "GDAL_ENABLE_DRIVER_PDS")
 
@@ -80,23 +81,13 @@ ogr_dependent_driver(mvt "MVT" "GDAL_USE_SQLITE3;OGR_ENABLE_DRIVER_OSM")
 
 # ODBC/POSTGRES/MYSQL
 ogr_dependent_driver(amigocloud AMIGOCLOUD "GDAL_USE_CURL;OGR_ENABLE_DRIVER_PGDUMP")
-ogr_dependent_driver(carto CARTO "OGR_ENABLE_DRIVER_PGDUMP")
+ogr_dependent_driver(carto CARTO "GDAL_USE_CURL;OGR_ENABLE_DRIVER_PGDUMP")
 ogr_dependent_driver(ili ILI "GDAL_USE_XERCESC")
 ogr_dependent_driver(mysql MySQL "GDAL_USE_MYSQL")
 ogr_dependent_driver(pg PostGIS "GDAL_USE_POSTGRESQL;OGR_ENABLE_DRIVER_PGDUMP")
 ogr_dependent_driver(mssqlspatial MSSQLSPATIAL "GDAL_USE_ODBC")
 ogr_dependent_driver(odbc ODBC "GDAL_USE_ODBC")
 ogr_dependent_driver(pgeo "PGEO" "GDAL_USE_ODBC")
-
-# for dependency problem, grass is not always compiled in.
-ogr_dependent_driver(grass "GRASS Vector format" "HAVE_GRASS")
-if (OGR_ENABLE_DRIVER_GRASS)
-  if (HAVE_GRASS AND HAVE_POSTGRESQL)
-
-  else ()
-    message(FATAL_ERROR "Dependency error on GRASS driver")
-  endif ()
-endif ()
 
 ogr_dependent_driver(xlsx "Microsoft Office Excel(xlsx)" "GDAL_USE_EXPAT")
 ogr_dependent_driver(xls "Microsoft Office Excel(xls)" "GDAL_USE_FREEXL")

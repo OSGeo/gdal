@@ -912,10 +912,10 @@ int CPLHTTPPopFetchCallback(void)
  *                  For example "Accept: application/x-ogcwkt"</li>
  * <li>HEADER_FILE=filename: filename of a text file with "key: value" headers.
  *     (GDAL >= 2.2)</li>
- * <li>HTTPAUTH=[BASIC/NTLM/GSSNEGOTIATE/ANY] to specify an authentication scheme to use.</li>
+ * <li>HTTPAUTH=[BASIC/NTLM/NEGOTIATE/ANY] to specify an authentication scheme to use.</li>
  * <li>USERPWD=userid:password to specify a user and password for authentication</li>
  * <li>GSSAPI_DELEGATION=[NONE/POLICY/ALWAYS] set allowed GSS-API delegation.
- *     Relevant only with HTTPAUTH=GSSNEGOTIATE (GDAL >= 3.3).</li>
+ *     Relevant only with HTTPAUTH=NEGOTIATE (GDAL >= 3.3).</li>
  * <li>POSTFIELDS=val, where val is a nul-terminated string to be passed to the server
  *                     with a POST request.</li>
  * <li>PROXY=val, to make requests go through a proxy server, where val is of the
@@ -924,7 +924,7 @@ int CPLHTTPPopFetchCallback(void)
  * <li>HTTPS_PROXY=val (GDAL >= 2.4), the same meaning as PROXY, but this option is taken into account only
  *                 for HTTPS URLs.</li>
  * <li>PROXYUSERPWD=val, where val is of the form username:password</li>
- * <li>PROXYAUTH=[BASIC/NTLM/DIGEST/ANY] to specify an proxy authentication scheme to use.</li>
+ * <li>PROXYAUTH=[BASIC/NTLM/DIGEST/NEGOTIATE/ANY] to specify an proxy authentication scheme to use.</li>
  * <li>NETRC=[YES/NO] to enable or disable use of $HOME/.netrc, default YES.</li>
  * <li>CUSTOMREQUEST=val, where val is GET, PUT, POST, DELETE, etc.. (GDAL >= 1.9.0)</li>
  * <li>FORM_FILE_NAME=val, where val is upload file name. If this option and
@@ -1817,6 +1817,47 @@ static const char* CPLFindWin32CurlCaBundleCrt()
 #endif // WIN32
 
 /************************************************************************/
+/*                     CPLHTTPCurlDebugFunction()                       */
+/************************************************************************/
+
+static
+int CPLHTTPCurlDebugFunction(CURL *handle, curl_infotype type,
+                             char *data, size_t size,
+                             void *userp)
+{
+    (void)handle;
+    (void)userp;
+
+    const char* pszDebugKey = nullptr;
+    if( type == CURLINFO_TEXT )
+    {
+        pszDebugKey = "CURL_INFO_TEXT";
+    }
+    else if( type == CURLINFO_HEADER_OUT )
+    {
+        pszDebugKey = "CURL_INFO_HEADER_OUT";
+    }
+    else if( type == CURLINFO_HEADER_IN )
+    {
+        pszDebugKey = "CURL_INFO_HEADER_IN";
+    }
+    else if( type == CURLINFO_DATA_IN &&
+             CPLTestBool(CPLGetConfigOption("CPL_CURL_VERBOSE_DATA_IN", "NO")) )
+    {
+        pszDebugKey = "CURL_INFO_DATA_IN";
+    }
+
+    if( pszDebugKey )
+    {
+        std::string osMsg(data, size);
+        if( !osMsg.empty() && osMsg.back() == '\n' )
+            osMsg.resize(osMsg.size()-1);
+        CPLDebug(pszDebugKey, "%s", osMsg.c_str());
+    }
+    return 0;
+}
+
+/************************************************************************/
 /*                         CPLHTTPSetOptions()                          */
 /************************************************************************/
 
@@ -1836,7 +1877,15 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
     unchecked_curl_easy_setopt(http_handle, CURLOPT_URL, pszURL);
 
     if( CPLTestBool(CPLGetConfigOption("CPL_CURL_VERBOSE", "NO")) )
+    {
         unchecked_curl_easy_setopt(http_handle, CURLOPT_VERBOSE, 1);
+
+        if( CPLGetConfigOption("CPL_DEBUG", nullptr) != nullptr )
+        {
+            unchecked_curl_easy_setopt(http_handle, CURLOPT_DEBUGFUNCTION,
+                                       CPLHTTPCurlDebugFunction);
+        }
+    }
 
     const char *pszHttpVersion =
         CSLFetchNameValue( papszOptions, "HTTP_VERSION");
@@ -1951,10 +2000,10 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
         unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_NTLM );
     else if( EQUAL(pszHttpAuth, "ANY") )
         unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_ANY );
-#ifdef CURLAUTH_GSSNEGOTIATE
+#ifdef CURLAUTH_NEGOTIATE
     else if( EQUAL(pszHttpAuth, "NEGOTIATE") )
-        unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_GSSNEGOTIATE );
-#endif //CURLAUTH_GSSNEGOTIATE
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_NEGOTIATE );
+#endif //CURLAUTH_NEGOTIATE
     else
     {
         CPLError( CE_Warning, CPLE_AppDefined,
@@ -2042,6 +2091,10 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
         unchecked_curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH, CURLAUTH_DIGEST );
     else if( EQUAL(pszProxyAuth, "ANY") )
         unchecked_curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH, CURLAUTH_ANY );
+#ifdef CURLAUTH_NEGOTIATE
+    else if( EQUAL(pszProxyAuth, "NEGOTIATE") )
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH, CURLAUTH_NEGOTIATE );
+#endif //CURLAUTH_NEGOTIATE
     else
     {
         CPLError( CE_Warning, CPLE_AppDefined,

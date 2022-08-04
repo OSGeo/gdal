@@ -72,6 +72,12 @@ CPL_C_END
 
 CPL_CVSID("$Id$")
 
+#if defined(EXPECTED_JPEG_LIB_VERSION) && !defined(LIBJPEG_12_PATH)
+#if EXPECTED_JPEG_LIB_VERSION != JPEG_LIB_VERSION
+#error EXPECTED_JPEG_LIB_VERSION != JPEG_LIB_VERSION
+#endif
+#endif
+
 constexpr int TIFF_VERSION = 42;
 
 constexpr int TIFF_BIGENDIAN = 0x4d4d;
@@ -2707,6 +2713,7 @@ GDALDataset* JPGDatasetCommon::OpenFLIRRawThermalImage()
 
         auto poRawDS = new JPEGRawDataset(m_nRawThermalImageWidth,
                                             m_nRawThermalImageHeight);
+        poRawDS->SetDescription(osTmpFilename.c_str());
         poRawDS->SetBand(1, poBand);
         poRawDS->MarkSuppressOnClose();
         return poRawDS;

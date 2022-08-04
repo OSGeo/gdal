@@ -334,8 +334,8 @@ def test_ogrmerge_12():
     if script_path is None:
         pytest.skip()
 
-    with open('tmp/tmp.json', 'wt') as f:
-        f.write("""{ "type": "FeatureCollection", "name": "\xc3\xa9ven", "features": [ { "type": "Feature", "properties": {}, "geometry": null} ]}""")
+    with open('tmp/tmp.json', 'wb') as f:
+        f.write(b"""{ "type": "FeatureCollection", "name": "\xc3\xa9ven", "features": [ { "type": "Feature", "properties": {}, "geometry": null} ]}""")
 
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
                                   '-f VRT -o tmp/out.vrt tmp/tmp.json')

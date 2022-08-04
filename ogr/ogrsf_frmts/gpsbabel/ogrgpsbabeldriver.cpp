@@ -191,6 +191,7 @@ void RegisterOGRGPSBabel()
 
     poDriver->SetDescription( "GPSBabel" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GPSBabel" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/gpsbabel.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "mps gdb osm tcx igc" );

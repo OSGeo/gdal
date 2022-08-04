@@ -39,6 +39,7 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 /* Select the plausible largest natural integer type for the architecture */
 #define SIZEOF_WORDTYPE SIZEOF_SIZE_T

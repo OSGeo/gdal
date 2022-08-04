@@ -660,6 +660,7 @@ CPLString GetKeywords(CPLXMLNode *root,
             std::sort(epsg_codes.begin(), epsg_codes.end());
             unsigned int pajazzo = 0, i = 0, a = 0, b = 0;
             while (1) {
+                // cppcheck-suppress containerOutOfBounds
                 unsigned int c = i < epsg_codes.size() ? epsg_codes[i] : 0;
                 if (pajazzo == 1) {
                     if (c > a + 1) {

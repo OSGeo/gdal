@@ -62,6 +62,26 @@ void CPLClearRecodeIconvWarningFlags()
 }
 
 /************************************************************************/
+/*                      CPLFixInputEncoding()                           */
+/************************************************************************/
+
+static const char* CPLFixInputEncoding(const char *pszSrcEncoding,
+                                       int nFirstByteVal)
+{
+    // iconv on Alpine Linux seems to assume BE order, when it is not explicit
+    if( EQUAL(pszSrcEncoding, CPL_ENC_UCS2) )
+        pszSrcEncoding = "UCS-2LE";
+    else if( EQUAL(pszSrcEncoding, CPL_ENC_UTF16) &&
+             nFirstByteVal != 0xFF &&
+             nFirstByteVal != 0xFE )
+    {
+        // Only force UTF-16LE if there's no starting endianness marker
+        pszSrcEncoding = "UTF-16LE";
+    }
+    return pszSrcEncoding;
+}
+
+/************************************************************************/
 /*                          CPLRecodeIconv()                            */
 /************************************************************************/
 
@@ -83,11 +103,22 @@ char *CPLRecodeIconv( const char *pszSource,
                       const char *pszDstEncoding )
 
 {
+    pszSrcEncoding = CPLFixInputEncoding(pszSrcEncoding,
+                                         static_cast<unsigned char>(pszSource[0]));
+
     iconv_t sConv;
 
     sConv = iconv_open( pszDstEncoding, pszSrcEncoding );
 
-    if( sConv == reinterpret_cast<iconv_t>(-1) )
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#endif
+    // iconv_t might be a integer or a pointer, so we have to fallback to C-style cast
+    if( sConv == (iconv_t)(-1) )
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
     {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Recode from %s to %s failed with the error: \"%s\".",
@@ -189,6 +220,8 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
                                const char *pszDstEncoding )
 
 {
+    pszSrcEncoding = CPLFixInputEncoding(pszSrcEncoding, pwszSource[0]);
+
 /* -------------------------------------------------------------------- */
 /*      What is the source length.                                      */
 /* -------------------------------------------------------------------- */
@@ -236,7 +269,15 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
 
     sConv = iconv_open( pszDstEncoding, pszSrcEncoding );
 
-    if( sConv == reinterpret_cast<iconv_t>(-1) )
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#endif
+    // iconv_t might be a integer or a pointer, so we have to fallback to C-style cast
+    if( sConv == (iconv_t)(-1) )
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
     {
         CPLFree( pszIconvSrcBuf );
         CPLError( CE_Warning, CPLE_AppDefined,

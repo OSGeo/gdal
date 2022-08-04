@@ -36,7 +36,7 @@ from osgeo import osr
 
 
 def Usage():
-    print('ogr_dispatch.py [-f format] -src name -dst name [-field field]+')
+    print('Usage: ogr_dispatch.py [-f format] -src name -dst name [-field field]+')
     print('                [-25D_as_2D] [-multi_as_single]')
     print('                [-remove_dispatch_fields] [-prefix_with_layer_name]')
     print('                [-dsco KEY=VALUE]* [-lco KEY=VALUE]* [-a_srs srs_def]')
@@ -68,7 +68,7 @@ def Usage():
     print('  ogr_dispatch.py -src in.dxf -dst out -field Layer -field OGR_GEOMETRY')
     print('')
 
-    return 1
+    return 2
 
 ###############################################################################
 

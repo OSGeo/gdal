@@ -573,12 +573,11 @@ GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
             }
 
             // Clip segment in Y.
-            double dfDiffX = 0.0;
             if( dfYEnd > dfY )
             {
                 if( dfY < 0.0 )
                 {
-                    dfDiffX = (0.0 - dfY) / dfSlope;
+                    const double dfDiffX = (0.0 - dfY) / dfSlope;
                     dfX += dfDiffX;
                     dfVariant += dfDeltaVariant * dfDiffX;
                     dfY = 0.0;
@@ -595,7 +594,7 @@ GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
             {
                 if( dfY >= nRasterYSize )
                 {
-                  dfDiffX = (nRasterYSize - dfY) / dfSlope;
+                    const double dfDiffX = (nRasterYSize - dfY) / dfSlope;
                     dfX += dfDiffX;
                     dfVariant += dfDeltaVariant * dfDiffX;
                     dfY = nRasterYSize;

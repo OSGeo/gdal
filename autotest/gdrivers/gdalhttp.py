@@ -50,17 +50,6 @@ except ImportError:
 pytestmark = pytest.mark.require_driver('HTTP')
 
 
-@pytest.fixture(autouse=True, scope="module")
-def disable_dods_driver():
-    dods_drv = gdal.GetDriverByName('DODS')
-    if dods_drv is not None:
-        dods_drv.Deregister()
-    yield
-    if dods_drv is not None:
-        dods_drv.Register()
-    dods_drv = None
-
-
 @pytest.fixture(autouse=True)
 def set_http_timeout():
     with gdaltest.config_option('GDAL_HTTP_TIMEOUT', '5'):

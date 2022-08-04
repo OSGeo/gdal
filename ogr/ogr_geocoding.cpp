@@ -690,18 +690,20 @@ static OGRLayerH OGRGeocodeBuildLayerNominatim(
 
             // Iteration to fill the feature.
             OGRFeature* poFeature = new OGRFeature(poFDefn);
-            CPLXMLNode* psChild = psPlace->psChild;
-            while( psChild != nullptr )
+
+            for( CPLXMLNode* psChild = psPlace->psChild;
+                psChild != nullptr; psChild = psChild->psNext )
             {
-                int nIdx = 0;
                 const char* pszName = psChild->pszValue;
                 const char* pszVal = CPLGetXMLValue(psChild, nullptr, nullptr);
                 if( !(psChild->eType == CXT_Element ||
                       psChild->eType == CXT_Attribute) )
                 {
                     // Do nothing.
+                    continue;
                 }
-                else if( (nIdx = poFDefn->GetFieldIndex(pszName)) >= 0 )
+                const int nIdx = poFDefn->GetFieldIndex(pszName);
+                if( nIdx >= 0 )
                 {
                     if( pszVal != nullptr )
                     {
@@ -730,7 +732,7 @@ static OGRLayerH OGRGeocodeBuildLayerNominatim(
                             poFeature->SetGeometryDirectly(poGeometry);
                     }
                 }
-                psChild = psChild->psNext;
+
             }
 
             if( bAddRawFeature )
@@ -959,18 +961,19 @@ static OGRLayerH OGRGeocodeBuildLayerYahoo( CPLXMLNode* psResultSet,
 
             // Second iteration to fill the feature.
             OGRFeature* poFeature = new OGRFeature(poFDefn);
-            CPLXMLNode* psChild = psPlace->psChild;
-            while( psChild != nullptr )
+            for( CPLXMLNode* psChild = psPlace->psChild;
+                psChild != nullptr; psChild = psChild->psNext )
             {
-                int nIdx = 0;
                 const char* pszName = psChild->pszValue;
                 const char* pszVal = CPLGetXMLValue(psChild, nullptr, nullptr);
                 if( !(psChild->eType == CXT_Element ||
                       psChild->eType == CXT_Attribute) )
                 {
                     // Do nothing.
+                    continue;
                 }
-                else if( (nIdx = poFDefn->GetFieldIndex(pszName)) >= 0 )
+                const int nIdx = poFDefn->GetFieldIndex(pszName);
+                if( nIdx >= 0 )
                 {
                     if( pszVal != nullptr )
                     {
@@ -987,7 +990,6 @@ static OGRLayerH OGRGeocodeBuildLayerYahoo( CPLXMLNode* psResultSet,
                         }
                     }
                 }
-                psChild = psChild->psNext;
             }
 
             CPLString osDisplayName;
@@ -1118,18 +1120,19 @@ static OGRLayerH OGRGeocodeBuildLayerBing( CPLXMLNode* psResponse,
             double dfLon = 0.0;
 
             OGRFeature* poFeature = new OGRFeature(poFDefn);
-            CPLXMLNode* psChild = psPlace->psChild;
-            while( psChild != nullptr )
+            for( CPLXMLNode* psChild = psPlace->psChild;
+                psChild != nullptr; psChild = psChild->psNext )
             {
-                int nIdx = 0;
                 const char* pszName = psChild->pszValue;
                 const char* pszVal = CPLGetXMLValue(psChild, nullptr, nullptr);
                 if( !(psChild->eType == CXT_Element ||
                       psChild->eType == CXT_Attribute) )
                 {
                     // Do nothing.
+                    continue;
                 }
-                else if( (nIdx = poFDefn->GetFieldIndex(pszName)) >= 0 )
+                const int nIdx = poFDefn->GetFieldIndex(pszName);
+                if( nIdx >= 0 )
                 {
                     if( pszVal != nullptr )
                         poFeature->SetField(nIdx, pszVal);
@@ -1139,34 +1142,35 @@ static OGRLayerH OGRGeocodeBuildLayerBing( CPLXMLNode* psResponse,
                          psChild->psChild != nullptr &&
                          psChild->psChild->eType == CXT_Element )
                 {
-                    CPLXMLNode* psSubChild = psChild->psChild;
-                    while( psSubChild != nullptr )
+                    for( CPLXMLNode* psSubChild = psChild->psChild;
+                        psSubChild != nullptr; psSubChild = psSubChild->psNext )
                     {
                         pszName = psSubChild->pszValue;
                         pszVal = CPLGetXMLValue(psSubChild, nullptr, nullptr);
                         if( (psSubChild->eType == CXT_Element ||
-                             psSubChild->eType == CXT_Attribute) &&
-                            (nIdx = poFDefn->GetFieldIndex(pszName)) >= 0 )
+                             psSubChild->eType == CXT_Attribute) )
                         {
-                            if( pszVal != nullptr )
+                            const int nIdx2 = poFDefn->GetFieldIndex(pszName);
+                            if( nIdx2 >= 0 )
                             {
-                                poFeature->SetField(nIdx, pszVal);
-                                if( strcmp(pszName, "Latitude") == 0 )
+                                if( pszVal != nullptr )
                                 {
-                                    bFoundLat = true;
-                                    dfLat = CPLAtofM(pszVal);
-                                }
-                                else if( strcmp(pszName, "Longitude") == 0 )
-                                {
-                                    bFoundLon = true;
-                                    dfLon = CPLAtofM(pszVal);
+                                    poFeature->SetField(nIdx2, pszVal);
+                                    if( strcmp(pszName, "Latitude") == 0 )
+                                    {
+                                        bFoundLat = true;
+                                        dfLat = CPLAtofM(pszVal);
+                                    }
+                                    else if( strcmp(pszName, "Longitude") == 0 )
+                                    {
+                                        bFoundLon = true;
+                                        dfLon = CPLAtofM(pszVal);
+                                    }
                                 }
                             }
                         }
-                        psSubChild = psSubChild->psNext;
                     }
                 }
-                psChild = psChild->psNext;
             }
 
             if( bAddRawFeature )

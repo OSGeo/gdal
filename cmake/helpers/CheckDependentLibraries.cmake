@@ -266,11 +266,6 @@ gdal_check_package(Iconv "Character set recoding (used in GDAL portability libra
 if (Iconv_FOUND)
   set(CMAKE_REQUIRED_INCLUDES ${Iconv_INCLUDE_DIR})
   set(CMAKE_REQUIRED_LIBRARIES ${Iconv_LIBRARY})
-  if (MSVC)
-    set(CMAKE_REQUIRED_FLAGS "/WX")
-  else ()
-    set(CMAKE_REQUIRED_FLAGS "-Werror")
-  endif ()
 
   set(ICONV_CONST_TEST_CODE
       "#include <stdlib.h>
@@ -290,6 +285,30 @@ if (Iconv_FOUND)
   else ()
     set(ICONV_CPP_CONST "const")
   endif ()
+
+  if (NOT CMAKE_CROSSCOMPILING)
+      include(CheckCXXSourceRuns)
+      set(ICONV_HAS_EXTRA_CHARSETS_CODE
+"#include <stdlib.h>
+#include <iconv.h>
+int main(){
+    iconv_t conv = iconv_open(\"UTF-8\", \"CP1251\");
+    if( conv != (iconv_t)-1 )
+    {
+        iconv_close(conv);
+        return 0;
+    }
+    return 1;
+}")
+      check_cxx_source_runs("${ICONV_HAS_EXTRA_CHARSETS_CODE}" ICONV_HAS_EXTRA_CHARSETS)
+      if (NOT ICONV_HAS_EXTRA_CHARSETS)
+          message(WARNING "ICONV is available but some character sets used by "
+                          "some drivers are not available. "
+                          "You may need to install an extra package "
+                          "(e.g. 'glibc-gconv-extra' on Fedora)")
+      endif()
+  endif()
+
   unset(ICONV_CONST_TEST_CODE)
   unset(_ICONV_SECOND_ARGUMENT_IS_NOT_CONST)
   unset(CMAKE_REQUIRED_INCLUDES)
@@ -374,6 +393,15 @@ if (GDAL_USE_JPEG AND (JPEG_LIBRARY MATCHES ".*turbojpeg\.(so|lib)"))
       "JPEG_LIBRARY should point to a library with libjpeg ABI, not TurboJPEG. See https://libjpeg-turbo.org/About/TurboJPEG for the difference"
     )
 endif ()
+if (TARGET JPEG::JPEG)
+  set(EXPECTED_JPEG_LIB_VERSION "" CACHE STRING "Expected libjpeg version number")
+  mark_as_advanced(GDAL_CHECK_PACKAGE_${name}_NAMES)
+  if (EXPECTED_JPEG_LIB_VERSION)
+    get_property(_jpeg_old_icd TARGET JPEG::JPEG PROPERTY INTERFACE_COMPILE_DEFINITIONS)
+    set_property(TARGET JPEG::JPEG PROPERTY
+                 INTERFACE_COMPILE_DEFINITIONS "${_jpeg_old_icd};EXPECTED_JPEG_LIB_VERSION=${EXPECTED_JPEG_LIB_VERSION}")
+  endif()
+endif()
 gdal_internal_library(JPEG)
 
 gdal_check_package(GIF "GIF compression library (external)" CAN_DISABLE)
@@ -412,10 +440,14 @@ gdal_internal_library(QHULL)
 set(GDAL_USE_LIBCSF_INTERNAL ON)
 
 # Compression used by GTiff and MRF
-gdal_check_package(LERC "Enable LERC (external)" CAN_DISABLE RECOMMENDED)
-gdal_internal_library(LERC)
+if( NOT WORDS_BIGENDIAN )
+  gdal_check_package(LERC "Enable LERC (external)" CAN_DISABLE RECOMMENDED)
+  gdal_internal_library(LERC)
+endif()
 
 gdal_check_package(BRUNSLI "Enable BRUNSLI for JPEG packing in MRF" CAN_DISABLE RECOMMENDED)
+
+gdal_check_package(libQB3 "Enable QB3 compression in MRF" CONFIG CAN_DISABLE RECOMMENDED)
 
 # Disable by default the use of external shapelib, as currently the SAOffset member that holds file offsets in it is a
 # 'unsigned long', hence 32 bit on 32 bit platforms, whereas we can handle DBFs file > 4 GB. Internal shapelib has not
@@ -508,7 +540,6 @@ define_find_package2(GTA gta/gta.h gta PKGCONFIG_NAME gta)
 gdal_check_package(GTA "Enable GTA driver" CAN_DISABLE)
 
 gdal_check_package(MRSID "MrSID raster SDK" CAN_DISABLE)
-gdal_check_package(DAP "Data Access Protocol library for server and client." CAN_DISABLE)
 gdal_check_package(Armadillo "C++ library for linear algebra (used for TPS transformation)" CAN_DISABLE)
 if (ARMADILLO_FOUND)
   # On Conda, the armadillo package has no dependency on lapack, but the later is required for successful linking. So
@@ -577,12 +608,12 @@ gdal_check_package(GEOS "Geometry Engine - Open Source (GDAL core dependency)" R
 )
 gdal_check_package(HDF4 "Enable HDF4 driver" CAN_DISABLE)
 
-define_find_package2(KEA libkea/KEACommon.h kea)
+define_find_package2(KEA libkea/KEACommon.h kea;libkea)
 gdal_check_package(KEA "Enable KEA driver" CAN_DISABLE)
 
 gdal_check_package(ECW "Enable ECW driver" CAN_DISABLE)
 gdal_check_package(NetCDF "Enable netCDF driver" CAN_DISABLE
-  # NAMES netCDF # Cf. https://github.com/OSGeo/gdal/pull/5453
+  NAMES netCDF
   TARGETS netCDF::netcdf NETCDF::netCDF)
 gdal_check_package(OGDI "Enable ogr_OGDI driver" CAN_DISABLE)
 # OpenCL warping gives different results than the ones expected by autotest, so disable it by default even if found.
@@ -601,10 +632,14 @@ gdal_check_package(LZ4 "LZ4 compression" CAN_DISABLE)
 gdal_check_package(Blosc "Blosc compression" CAN_DISABLE)
 
 define_find_package2(JXL jxl/decode.h jxl PKGCONFIG_NAME libjxl)
-gdal_check_package(JXL "JPEG-XL compression (when used with internal libtiff)" CAN_DISABLE)
+gdal_check_package(JXL "JPEG-XL compression" CAN_DISABLE)
+
+define_find_package2(JXL_THREADS jxl/resizable_parallel_runner.h jxl_threads PKGCONFIG_NAME libjxl_threads)
+gdal_check_package(JXL_THREADS "JPEG-XL threading" CAN_DISABLE)
 
 # unused for now gdal_check_package(OpenMP "")
 gdal_check_package(Crnlib "enable gdal_DDS driver" CAN_DISABLE)
+gdal_check_package(basisu "Enable BASISU driver" CONFIG CAN_DISABLE)
 gdal_check_package(IDB "enable ogr_IDB driver" CAN_DISABLE)
 # TODO: implement FindRASDAMAN libs: -lrasodmg -lclientcomm -lcompression -lnetwork -lraslib
 gdal_check_package(RASDAMAN "enable rasdaman driver" CAN_DISABLE)
@@ -628,57 +663,16 @@ if (GDAL_USE_OPENJPEG)
   string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(OpenJPEG MODULE)\n")
 endif ()
 
-# FIXME: we should probably ultimately move the GRASS driver to an
-# external repository, due to GRASS depending on GDAL, hence the GRASS driver
-# can only be built as a plugin. Or at the very least we should only allow building
-# it as a plugin, and have a GDAL_USE_GRASS variable to control if libgrass should
-# be used (and change frmts/CMakeLists.txt and ogr/ogrsf_frmts/CMakeLists.txt
-# to use it instead of HAVE_GRASS)
-if( ALLOW_GRASS_DRIVER )
-# Only GRASS 7 is currently supported but we keep dual version support in cmake for possible future switch to GRASS 8.
-set(TMP_GRASS OFF)
-foreach (GRASS_SEARCH_VERSION 7)
-  # Cached variables: GRASS7_FOUND, GRASS_PREFIX7, GRASS_INCLUDE_DIR7 HAVE_GRASS: TRUE if at least one version of GRASS
-  # was found
-  set(GRASS_CACHE_VERSION ${GRASS_SEARCH_VERSION})
-  if (WITH_GRASS${GRASS_CACHE_VERSION})
-    find_package(GRASS ${GRASS_SEARCH_VERSION} MODULE)
-    if (${GRASS${GRASS_CACHE_VERSION}_FOUND})
-      set(GRASS_PREFIX${GRASS_CACHE_VERSION}
-          ${GRASS_PREFIX${GRASS_SEARCH_VERSION}}
-          CACHE PATH "Path to GRASS ${GRASS_SEARCH_VERSION} base directory")
-      set(TMP_GRASS ON)
-    endif ()
-  endif ()
-endforeach ()
-if (TMP_GRASS)
-  set(HAVE_GRASS
-      ON
-      CACHE INTERNAL "HAVE_GRASS")
-else ()
-  set(HAVE_GRASS
-      OFF
-      CACHE INTERNAL "HAVE_GRASS")
-endif ()
-unset(TMP_GRASS)
-endif ()
-
 gdal_check_package(HDFS "Enable Hadoop File System through native library" CAN_DISABLE)
 
-# PDF library: one of them enables PDF driver
+# PDF library: one of them enables the read side of the PDF driver
 gdal_check_package(Poppler "Enable PDF driver with Poppler (read side)" CAN_DISABLE)
 
 define_find_package2(PDFIUM public/fpdfview.h pdfium FIND_PATH_SUFFIX pdfium)
 gdal_check_package(PDFIUM "Enable PDF driver with Pdfium (read side)" CAN_DISABLE)
 
 gdal_check_package(Podofo "Enable PDF driver with Podofo (read side)" CAN_DISABLE)
-if (GDAL_USE_POPPLER
-    OR GDAL_USE_PDFIUM
-    OR GDAL_USE_PODOFO)
-  set(HAVE_PDFLIB ON)
-else ()
-  set(HAVE_PDFLIB OFF)
-endif ()
+
 
 set(Oracle_CAN_USE_CLNTSH_AS_MAIN_LIBRARY ON)
 gdal_check_package(Oracle "Enable Oracle OCI driver" CAN_DISABLE)
@@ -695,6 +689,10 @@ gdal_check_package(LURATECH "Enable JP2Lura driver" CAN_DISABLE)
 gdal_check_package(Arrow "Apache Arrow C++ library" CONFIG CAN_DISABLE)
 if (Arrow_FOUND)
     gdal_check_package(Parquet "Apache Parquet C++ library" CONFIG PATHS ${Arrow_DIR} CAN_DISABLE)
+    gdal_check_package(ArrowDataset "Apache ArrowDataset C++ library" CONFIG PATHS ${Arrow_DIR} CAN_DISABLE)
+    if (Parquet_FOUND AND NOT ArrowDataset_FOUND)
+        message(WARNING "Parquet library found, but not ArrowDataset: partitioned datasets will not be supported")
+    endif()
 endif()
 
 # bindings

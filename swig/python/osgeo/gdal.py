@@ -150,23 +150,23 @@ def listdir(path, recursionLevel = -1, options = []):
       CloseDir(dir)
 
 
-def GetUseExceptions(*args):
+def GetUseExceptions(*args) -> "int":
     r"""GetUseExceptions() -> int"""
     return _gdal.GetUseExceptions(*args)
 
-def UseExceptions(*args):
+def UseExceptions(*args) -> "void":
     r"""UseExceptions()"""
     return _gdal.UseExceptions(*args)
 
-def DontUseExceptions(*args):
+def DontUseExceptions(*args) -> "void":
     r"""DontUseExceptions()"""
     return _gdal.DontUseExceptions(*args)
 
-def VSIFReadL(*args):
+def VSIFReadL(*args) -> "void **":
     r"""VSIFReadL(unsigned int nMembSize, unsigned int nMembCount, VSILFILE fp) -> unsigned int"""
     return _gdal.VSIFReadL(*args)
 
-def VSIGetMemFileBuffer_unsafe(*args):
+def VSIGetMemFileBuffer_unsafe(*args) -> "vsi_l_offset *":
     r"""VSIGetMemFileBuffer_unsafe(char const * utf8_path)"""
     return _gdal.VSIGetMemFileBuffer_unsafe(*args)
 
@@ -1499,107 +1499,107 @@ def ApplyVerticalShiftGrid(*args, **kwargs):
 
 
 
-def Debug(*args):
+def Debug(*args) -> "void":
     r"""Debug(char const * msg_class, char const * message)"""
     return _gdal.Debug(*args)
 
-def SetErrorHandler(*args):
+def SetErrorHandler(*args) -> "CPLErr":
     r"""SetErrorHandler(CPLErrorHandler pfnErrorHandler=0) -> CPLErr"""
     return _gdal.SetErrorHandler(*args)
 
-def SetCurrentErrorHandlerCatchDebug(*args):
+def SetCurrentErrorHandlerCatchDebug(*args) -> "void":
     r"""SetCurrentErrorHandlerCatchDebug(int bCatchDebug)"""
     return _gdal.SetCurrentErrorHandlerCatchDebug(*args)
 
-def PushErrorHandler(*args):
+def PushErrorHandler(*args) -> "CPLErr":
     r"""PushErrorHandler(CPLErrorHandler pfnErrorHandler=0) -> CPLErr"""
     return _gdal.PushErrorHandler(*args)
 
-def PopErrorHandler(*args):
+def PopErrorHandler(*args) -> "void":
     r"""PopErrorHandler()"""
     return _gdal.PopErrorHandler(*args)
 
-def Error(*args):
+def Error(*args) -> "void":
     r"""Error(CPLErr msg_class=CE_Failure, int err_code=0, char const * msg="error")"""
     return _gdal.Error(*args)
 
-def GOA2GetAuthorizationURL(*args):
+def GOA2GetAuthorizationURL(*args) -> "retStringAndCPLFree *":
     r"""GOA2GetAuthorizationURL(char const * pszScope) -> retStringAndCPLFree *"""
     return _gdal.GOA2GetAuthorizationURL(*args)
 
-def GOA2GetRefreshToken(*args):
+def GOA2GetRefreshToken(*args) -> "retStringAndCPLFree *":
     r"""GOA2GetRefreshToken(char const * pszAuthToken, char const * pszScope) -> retStringAndCPLFree *"""
     return _gdal.GOA2GetRefreshToken(*args)
 
-def GOA2GetAccessToken(*args):
+def GOA2GetAccessToken(*args) -> "retStringAndCPLFree *":
     r"""GOA2GetAccessToken(char const * pszRefreshToken, char const * pszScope) -> retStringAndCPLFree *"""
     return _gdal.GOA2GetAccessToken(*args)
 
-def ErrorReset(*args):
+def ErrorReset(*args) -> "void":
     r"""ErrorReset()"""
     return _gdal.ErrorReset(*args)
 
-def wrapper_EscapeString(*args, **kwargs):
+def wrapper_EscapeString(*args, **kwargs) -> "retStringAndCPLFree *":
     r"""wrapper_EscapeString(int len, int scheme=CPLES_SQL) -> retStringAndCPLFree *"""
     return _gdal.wrapper_EscapeString(*args, **kwargs)
 
-def EscapeBinary(*args, **kwargs):
+def EscapeBinary(*args, **kwargs) -> "char **":
     r"""EscapeBinary(int len, int scheme=CPLES_SQL)"""
     return _gdal.EscapeBinary(*args, **kwargs)
 
-def GetLastErrorNo(*args):
+def GetLastErrorNo(*args) -> "int":
     r"""GetLastErrorNo() -> int"""
     return _gdal.GetLastErrorNo(*args)
 
-def GetLastErrorType(*args):
+def GetLastErrorType(*args) -> "int":
     r"""GetLastErrorType() -> int"""
     return _gdal.GetLastErrorType(*args)
 
-def GetLastErrorMsg(*args):
+def GetLastErrorMsg(*args) -> "char const *":
     r"""GetLastErrorMsg() -> char const *"""
     return _gdal.GetLastErrorMsg(*args)
 
-def GetErrorCounter(*args):
+def GetErrorCounter(*args) -> "unsigned int":
     r"""GetErrorCounter() -> unsigned int"""
     return _gdal.GetErrorCounter(*args)
 
-def VSIGetLastErrorNo(*args):
+def VSIGetLastErrorNo(*args) -> "int":
     r"""VSIGetLastErrorNo() -> int"""
     return _gdal.VSIGetLastErrorNo(*args)
 
-def VSIGetLastErrorMsg(*args):
+def VSIGetLastErrorMsg(*args) -> "char const *":
     r"""VSIGetLastErrorMsg() -> char const *"""
     return _gdal.VSIGetLastErrorMsg(*args)
 
-def VSIErrorReset(*args):
+def VSIErrorReset(*args) -> "void":
     r"""VSIErrorReset()"""
     return _gdal.VSIErrorReset(*args)
 
-def PushFinderLocation(*args):
+def PushFinderLocation(*args) -> "void":
     r"""PushFinderLocation(char const * utf8_path)"""
     return _gdal.PushFinderLocation(*args)
 
-def PopFinderLocation(*args):
+def PopFinderLocation(*args) -> "void":
     r"""PopFinderLocation()"""
     return _gdal.PopFinderLocation(*args)
 
-def FinderClean(*args):
+def FinderClean(*args) -> "void":
     r"""FinderClean()"""
     return _gdal.FinderClean(*args)
 
-def FindFile(*args):
+def FindFile(*args) -> "char const *":
     r"""FindFile(char const * pszClass, char const * utf8_path) -> char const *"""
     return _gdal.FindFile(*args)
 
-def ReadDir(*args):
+def ReadDir(*args) -> "char **":
     r"""ReadDir(char const * utf8_path, int nMaxFiles=0) -> char **"""
     return _gdal.ReadDir(*args)
 
-def ReadDirRecursive(*args):
+def ReadDirRecursive(*args) -> "char **":
     r"""ReadDirRecursive(char const * utf8_path) -> char **"""
     return _gdal.ReadDirRecursive(*args)
 
-def OpenDir(*args):
+def OpenDir(*args) -> "VSIDIR *":
     r"""OpenDir(char const * utf8_path, int nRecurseDepth=-1, char ** options=None) -> VSIDIR *"""
     return _gdal.OpenDir(*args)
 class DirEntry(object):
@@ -1621,7 +1621,7 @@ class DirEntry(object):
         _gdal.DirEntry_swiginit(self, _gdal.new_DirEntry(*args))
     __swig_destroy__ = _gdal.delete_DirEntry
 
-    def IsDirectory(self, *args):
+    def IsDirectory(self, *args) -> "bool":
         r"""IsDirectory(DirEntry self) -> bool"""
         return _gdal.DirEntry_IsDirectory(self, *args)
 
@@ -1629,107 +1629,107 @@ class DirEntry(object):
 _gdal.DirEntry_swigregister(DirEntry)
 
 
-def GetNextDirEntry(*args):
+def GetNextDirEntry(*args) -> "DirEntry *":
     r"""GetNextDirEntry(VSIDIR * dir) -> DirEntry"""
     return _gdal.GetNextDirEntry(*args)
 
-def CloseDir(*args):
+def CloseDir(*args) -> "void":
     r"""CloseDir(VSIDIR * dir)"""
     return _gdal.CloseDir(*args)
 
-def SetConfigOption(*args):
+def SetConfigOption(*args) -> "void":
     r"""SetConfigOption(char const * pszKey, char const * pszValue)"""
     return _gdal.SetConfigOption(*args)
 
-def SetThreadLocalConfigOption(*args):
+def SetThreadLocalConfigOption(*args) -> "void":
     r"""SetThreadLocalConfigOption(char const * pszKey, char const * pszValue)"""
     return _gdal.SetThreadLocalConfigOption(*args)
 
-def GetConfigOption(*args):
+def GetConfigOption(*args) -> "char const *":
     r"""GetConfigOption(char const * pszKey, char const * pszDefault=None) -> char const *"""
     return _gdal.GetConfigOption(*args)
 
-def GetThreadLocalConfigOption(*args):
+def GetThreadLocalConfigOption(*args) -> "char const *":
     r"""GetThreadLocalConfigOption(char const * pszKey, char const * pszDefault=None) -> char const *"""
     return _gdal.GetThreadLocalConfigOption(*args)
 
-def SetCredential(*args):
+def SetCredential(*args) -> "void":
     r"""SetCredential(char const * pszPathPrefix, char const * pszKey, char const * pszValue)"""
     return _gdal.SetCredential(*args)
 
-def GetCredential(*args):
+def GetCredential(*args) -> "char const *":
     r"""GetCredential(char const * pszPathPrefix, char const * pszKey, char const * pszDefault=None) -> char const *"""
     return _gdal.GetCredential(*args)
 
-def ClearCredentials(*args):
+def ClearCredentials(*args) -> "void":
     r"""ClearCredentials(char const * pszPathPrefix=None)"""
     return _gdal.ClearCredentials(*args)
 
-def CPLBinaryToHex(*args):
+def CPLBinaryToHex(*args) -> "retStringAndCPLFree *":
     r"""CPLBinaryToHex(int nBytes) -> retStringAndCPLFree *"""
     return _gdal.CPLBinaryToHex(*args)
 
-def CPLHexToBinary(*args):
+def CPLHexToBinary(*args) -> "GByte *":
     r"""CPLHexToBinary(char const * pszHex, int * pnBytes) -> GByte *"""
     return _gdal.CPLHexToBinary(*args)
 
-def FileFromMemBuffer(*args):
+def FileFromMemBuffer(*args) -> "void":
     r"""FileFromMemBuffer(char const * utf8_path, GIntBig nBytes)"""
     return _gdal.FileFromMemBuffer(*args)
 
-def Unlink(*args):
+def Unlink(*args) -> "VSI_RETVAL":
     r"""Unlink(char const * utf8_path) -> VSI_RETVAL"""
     return _gdal.Unlink(*args)
 
-def UnlinkBatch(*args):
+def UnlinkBatch(*args) -> "bool":
     r"""UnlinkBatch(char ** files) -> bool"""
     return _gdal.UnlinkBatch(*args)
 
-def HasThreadSupport(*args):
+def HasThreadSupport(*args) -> "int":
     r"""HasThreadSupport() -> int"""
     return _gdal.HasThreadSupport(*args)
 
-def Mkdir(*args):
+def Mkdir(*args) -> "VSI_RETVAL":
     r"""Mkdir(char const * utf8_path, int mode) -> VSI_RETVAL"""
     return _gdal.Mkdir(*args)
 
-def Rmdir(*args):
+def Rmdir(*args) -> "VSI_RETVAL":
     r"""Rmdir(char const * utf8_path) -> VSI_RETVAL"""
     return _gdal.Rmdir(*args)
 
-def MkdirRecursive(*args):
+def MkdirRecursive(*args) -> "VSI_RETVAL":
     r"""MkdirRecursive(char const * utf8_path, int mode) -> VSI_RETVAL"""
     return _gdal.MkdirRecursive(*args)
 
-def RmdirRecursive(*args):
+def RmdirRecursive(*args) -> "VSI_RETVAL":
     r"""RmdirRecursive(char const * utf8_path) -> VSI_RETVAL"""
     return _gdal.RmdirRecursive(*args)
 
-def Rename(*args):
+def Rename(*args) -> "VSI_RETVAL":
     r"""Rename(char const * pszOld, char const * pszNew) -> VSI_RETVAL"""
     return _gdal.Rename(*args)
 
-def Sync(*args, **kwargs):
+def Sync(*args, **kwargs) -> "bool":
     r"""Sync(char const * pszSource, char const * pszTarget, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> bool"""
     return _gdal.Sync(*args, **kwargs)
 
-def AbortPendingUploads(*args):
+def AbortPendingUploads(*args) -> "bool":
     r"""AbortPendingUploads(char const * utf8_path) -> bool"""
     return _gdal.AbortPendingUploads(*args)
 
-def GetActualURL(*args):
+def GetActualURL(*args) -> "char const *":
     r"""GetActualURL(char const * utf8_path) -> char const *"""
     return _gdal.GetActualURL(*args)
 
-def GetSignedURL(*args):
+def GetSignedURL(*args) -> "retStringAndCPLFree *":
     r"""GetSignedURL(char const * utf8_path, char ** options=None) -> retStringAndCPLFree *"""
     return _gdal.GetSignedURL(*args)
 
-def GetFileSystemsPrefixes(*args):
+def GetFileSystemsPrefixes(*args) -> "char **":
     r"""GetFileSystemsPrefixes() -> char **"""
     return _gdal.GetFileSystemsPrefixes(*args)
 
-def GetFileSystemOptions(*args):
+def GetFileSystemOptions(*args) -> "char const *":
     r"""GetFileSystemOptions(char const * utf8_path) -> char const *"""
     return _gdal.GetFileSystemOptions(*args)
 class VSILFILE(object):
@@ -1768,7 +1768,7 @@ class StatBuf(object):
         _gdal.StatBuf_swiginit(self, _gdal.new_StatBuf(*args))
     __swig_destroy__ = _gdal.delete_StatBuf
 
-    def IsDirectory(self, *args):
+    def IsDirectory(self, *args) -> "int":
         r"""IsDirectory(StatBuf self) -> int"""
         return _gdal.StatBuf_IsDirectory(self, *args)
 
@@ -1776,51 +1776,51 @@ class StatBuf(object):
 _gdal.StatBuf_swigregister(StatBuf)
 
 
-def VSIStatL(*args):
+def VSIStatL(*args) -> "StatBuf *":
     r"""VSIStatL(char const * utf8_path, int nFlags=0) -> int"""
     return _gdal.VSIStatL(*args)
 
-def GetFileMetadata(*args):
+def GetFileMetadata(*args) -> "char **":
     r"""GetFileMetadata(char const * utf8_path, char const * domain, char ** options=None) -> char **"""
     return _gdal.GetFileMetadata(*args)
 
-def SetFileMetadata(*args):
+def SetFileMetadata(*args) -> "bool":
     r"""SetFileMetadata(char const * utf8_path, char ** metadata, char const * domain, char ** options=None) -> bool"""
     return _gdal.SetFileMetadata(*args)
 
-def VSIFOpenL(*args):
+def VSIFOpenL(*args) -> "VSILFILE *":
     r"""VSIFOpenL(char const * utf8_path, char const * pszMode) -> VSILFILE"""
     return _gdal.VSIFOpenL(*args)
 
-def VSIFOpenExL(*args):
+def VSIFOpenExL(*args) -> "VSILFILE *":
     r"""VSIFOpenExL(char const * utf8_path, char const * pszMode, int bSetError=FALSE, char ** options=None) -> VSILFILE"""
     return _gdal.VSIFOpenExL(*args)
 
-def VSIFEofL(*args):
+def VSIFEofL(*args) -> "int":
     r"""VSIFEofL(VSILFILE fp) -> int"""
     return _gdal.VSIFEofL(*args)
 
-def VSIFFlushL(*args):
+def VSIFFlushL(*args) -> "int":
     r"""VSIFFlushL(VSILFILE fp) -> int"""
     return _gdal.VSIFFlushL(*args)
 
-def VSIFCloseL(*args):
+def VSIFCloseL(*args) -> "VSI_RETVAL":
     r"""VSIFCloseL(VSILFILE fp) -> VSI_RETVAL"""
     return _gdal.VSIFCloseL(*args)
 
-def VSIFSeekL(*args):
+def VSIFSeekL(*args) -> "int":
     r"""VSIFSeekL(VSILFILE fp, GIntBig offset, int whence) -> int"""
     return _gdal.VSIFSeekL(*args)
 
-def VSIFTellL(*args):
+def VSIFTellL(*args) -> "GIntBig":
     r"""VSIFTellL(VSILFILE fp) -> GIntBig"""
     return _gdal.VSIFTellL(*args)
 
-def VSIFTruncateL(*args):
+def VSIFTruncateL(*args) -> "int":
     r"""VSIFTruncateL(VSILFILE fp, GIntBig length) -> int"""
     return _gdal.VSIFTruncateL(*args)
 
-def VSISupportsSparseFiles(*args):
+def VSISupportsSparseFiles(*args) -> "int":
     r"""VSISupportsSparseFiles(char const * utf8_path) -> int"""
     return _gdal.VSISupportsSparseFiles(*args)
 VSI_RANGE_STATUS_UNKNOWN = _gdal.VSI_RANGE_STATUS_UNKNOWN
@@ -1830,31 +1830,31 @@ VSI_RANGE_STATUS_DATA = _gdal.VSI_RANGE_STATUS_DATA
 VSI_RANGE_STATUS_HOLE = _gdal.VSI_RANGE_STATUS_HOLE
 
 
-def VSIFGetRangeStatusL(*args):
+def VSIFGetRangeStatusL(*args) -> "int":
     r"""VSIFGetRangeStatusL(VSILFILE fp, GIntBig offset, GIntBig length) -> int"""
     return _gdal.VSIFGetRangeStatusL(*args)
 
-def VSIFWriteL(*args):
+def VSIFWriteL(*args) -> "int":
     r"""VSIFWriteL(int nLen, int size, int memb, VSILFILE fp) -> int"""
     return _gdal.VSIFWriteL(*args)
 
-def VSICurlClearCache(*args):
+def VSICurlClearCache(*args) -> "void":
     r"""VSICurlClearCache()"""
     return _gdal.VSICurlClearCache(*args)
 
-def VSICurlPartialClearCache(*args):
+def VSICurlPartialClearCache(*args) -> "void":
     r"""VSICurlPartialClearCache(char const * utf8_path)"""
     return _gdal.VSICurlPartialClearCache(*args)
 
-def NetworkStatsReset(*args):
+def NetworkStatsReset(*args) -> "void":
     r"""NetworkStatsReset()"""
     return _gdal.NetworkStatsReset(*args)
 
-def NetworkStatsGetAsSerializedJSON(*args):
+def NetworkStatsGetAsSerializedJSON(*args) -> "retStringAndCPLFree *":
     r"""NetworkStatsGetAsSerializedJSON(char ** options=None) -> retStringAndCPLFree *"""
     return _gdal.NetworkStatsGetAsSerializedJSON(*args)
 
-def ParseCommandLine(*args):
+def ParseCommandLine(*args) -> "char **":
     r"""ParseCommandLine(char const * utf8_path) -> char **"""
     return _gdal.ParseCommandLine(*args)
 class MajorObject(object):
@@ -1866,38 +1866,38 @@ class MajorObject(object):
         raise AttributeError("No constructor defined")
     __repr__ = _swig_repr
 
-    def GetDescription(self, *args):
+    def GetDescription(self, *args) -> "char const *":
         r"""GetDescription(MajorObject self) -> char const *"""
         return _gdal.MajorObject_GetDescription(self, *args)
 
-    def SetDescription(self, *args):
+    def SetDescription(self, *args) -> "void":
         r"""SetDescription(MajorObject self, char const * pszNewDesc)"""
         return _gdal.MajorObject_SetDescription(self, *args)
 
-    def GetMetadataDomainList(self, *args):
+    def GetMetadataDomainList(self, *args) -> "char **":
         r"""GetMetadataDomainList(MajorObject self) -> char **"""
         return _gdal.MajorObject_GetMetadataDomainList(self, *args)
 
-    def GetMetadata_Dict(self, *args):
+    def GetMetadata_Dict(self, *args) -> "char **":
         r"""GetMetadata_Dict(MajorObject self, char const * pszDomain="") -> char **"""
         return _gdal.MajorObject_GetMetadata_Dict(self, *args)
 
-    def GetMetadata_List(self, *args):
+    def GetMetadata_List(self, *args) -> "char **":
         r"""GetMetadata_List(MajorObject self, char const * pszDomain="") -> char **"""
         return _gdal.MajorObject_GetMetadata_List(self, *args)
 
-    def SetMetadata(self, *args):
+    def SetMetadata(self, *args) -> "CPLErr":
         r"""
         SetMetadata(MajorObject self, char ** papszMetadata, char const * pszDomain="") -> CPLErr
         SetMetadata(MajorObject self, char * pszMetadataString, char const * pszDomain="") -> CPLErr
         """
         return _gdal.MajorObject_SetMetadata(self, *args)
 
-    def GetMetadataItem(self, *args):
+    def GetMetadataItem(self, *args) -> "char const *":
         r"""GetMetadataItem(MajorObject self, char const * pszName, char const * pszDomain="") -> char const *"""
         return _gdal.MajorObject_GetMetadataItem(self, *args)
 
-    def SetMetadataItem(self, *args):
+    def SetMetadataItem(self, *args) -> "CPLErr":
         r"""SetMetadataItem(MajorObject self, char const * pszName, char const * pszValue, char const * pszDomain="") -> CPLErr"""
         return _gdal.MajorObject_SetMetadataItem(self, *args)
 
@@ -1922,35 +1922,35 @@ class Driver(MajorObject):
     LongName = property(_gdal.Driver_LongName_get, doc=r"""LongName : p.q(const).char""")
     HelpTopic = property(_gdal.Driver_HelpTopic_get, doc=r"""HelpTopic : p.q(const).char""")
 
-    def Create(self, *args, **kwargs):
+    def Create(self, *args, **kwargs) -> "GDALDatasetShadow *":
         r"""Create(Driver self, char const * utf8_path, int xsize, int ysize, int bands=1, GDALDataType eType=GDT_Byte, char ** options=None) -> Dataset"""
         return _gdal.Driver_Create(self, *args, **kwargs)
 
-    def CreateMultiDimensional(self, *args, **kwargs):
+    def CreateMultiDimensional(self, *args, **kwargs) -> "GDALDatasetShadow *":
         r"""CreateMultiDimensional(Driver self, char const * utf8_path, char ** root_group_options=None, char ** options=None) -> Dataset"""
         return _gdal.Driver_CreateMultiDimensional(self, *args, **kwargs)
 
-    def CreateCopy(self, *args, **kwargs):
+    def CreateCopy(self, *args, **kwargs) -> "GDALDatasetShadow *":
         r"""CreateCopy(Driver self, char const * utf8_path, Dataset src, int strict=1, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> Dataset"""
         return _gdal.Driver_CreateCopy(self, *args, **kwargs)
 
-    def Delete(self, *args):
+    def Delete(self, *args) -> "CPLErr":
         r"""Delete(Driver self, char const * utf8_path) -> CPLErr"""
         return _gdal.Driver_Delete(self, *args)
 
-    def Rename(self, *args):
+    def Rename(self, *args) -> "CPLErr":
         r"""Rename(Driver self, char const * newName, char const * oldName) -> CPLErr"""
         return _gdal.Driver_Rename(self, *args)
 
-    def CopyFiles(self, *args):
+    def CopyFiles(self, *args) -> "CPLErr":
         r"""CopyFiles(Driver self, char const * newName, char const * oldName) -> CPLErr"""
         return _gdal.Driver_CopyFiles(self, *args)
 
-    def Register(self, *args):
+    def Register(self, *args) -> "int":
         r"""Register(Driver self) -> int"""
         return _gdal.Driver_Register(self, *args)
 
-    def Deregister(self, *args):
+    def Deregister(self, *args) -> "void":
         r"""Deregister(Driver self)"""
         return _gdal.Driver_Deregister(self, *args)
 
@@ -2000,19 +2000,19 @@ class GCP(object):
       return str
 
     def serialize(self, with_Z=0):
-      base = [gdalconst.CXT_Element,'GCP']
-      base.append([gdalconst.CXT_Attribute,'Id',[gdalconst.CXT_Text,self.Id]])
+      base = [gdalconst.CXT_Element, 'GCP']
+      base.append([gdalconst.CXT_Attribute, 'Id', [gdalconst.CXT_Text, self.Id]])
       pixval = '%0.15E' % self.GCPPixel
       lineval = '%0.15E' % self.GCPLine
       xval = '%0.15E' % self.GCPX
       yval = '%0.15E' % self.GCPY
       zval = '%0.15E' % self.GCPZ
-      base.append([gdalconst.CXT_Attribute,'Pixel',[gdalconst.CXT_Text,pixval]])
-      base.append([gdalconst.CXT_Attribute,'Line',[gdalconst.CXT_Text,lineval]])
-      base.append([gdalconst.CXT_Attribute,'X',[gdalconst.CXT_Text,xval]])
-      base.append([gdalconst.CXT_Attribute,'Y',[gdalconst.CXT_Text,yval]])
+      base.append([gdalconst.CXT_Attribute, 'Pixel', [gdalconst.CXT_Text, pixval]])
+      base.append([gdalconst.CXT_Attribute, 'Line', [gdalconst.CXT_Text, lineval]])
+      base.append([gdalconst.CXT_Attribute, 'X', [gdalconst.CXT_Text, xval]])
+      base.append([gdalconst.CXT_Attribute, 'Y', [gdalconst.CXT_Text, yval]])
       if with_Z:
-          base.append([gdalconst.CXT_Attribute,'Z',[gdalconst.CXT_Text,zval]])
+          base.append([gdalconst.CXT_Attribute, 'Z', [gdalconst.CXT_Text, zval]])
       return base
 
 
@@ -2020,63 +2020,63 @@ class GCP(object):
 _gdal.GCP_swigregister(GCP)
 
 
-def GDAL_GCP_GCPX_get(*args):
+def GDAL_GCP_GCPX_get(*args) -> "double":
     r"""GDAL_GCP_GCPX_get(GCP gcp) -> double"""
     return _gdal.GDAL_GCP_GCPX_get(*args)
 
-def GDAL_GCP_GCPX_set(*args):
+def GDAL_GCP_GCPX_set(*args) -> "void":
     r"""GDAL_GCP_GCPX_set(GCP gcp, double dfGCPX)"""
     return _gdal.GDAL_GCP_GCPX_set(*args)
 
-def GDAL_GCP_GCPY_get(*args):
+def GDAL_GCP_GCPY_get(*args) -> "double":
     r"""GDAL_GCP_GCPY_get(GCP gcp) -> double"""
     return _gdal.GDAL_GCP_GCPY_get(*args)
 
-def GDAL_GCP_GCPY_set(*args):
+def GDAL_GCP_GCPY_set(*args) -> "void":
     r"""GDAL_GCP_GCPY_set(GCP gcp, double dfGCPY)"""
     return _gdal.GDAL_GCP_GCPY_set(*args)
 
-def GDAL_GCP_GCPZ_get(*args):
+def GDAL_GCP_GCPZ_get(*args) -> "double":
     r"""GDAL_GCP_GCPZ_get(GCP gcp) -> double"""
     return _gdal.GDAL_GCP_GCPZ_get(*args)
 
-def GDAL_GCP_GCPZ_set(*args):
+def GDAL_GCP_GCPZ_set(*args) -> "void":
     r"""GDAL_GCP_GCPZ_set(GCP gcp, double dfGCPZ)"""
     return _gdal.GDAL_GCP_GCPZ_set(*args)
 
-def GDAL_GCP_GCPPixel_get(*args):
+def GDAL_GCP_GCPPixel_get(*args) -> "double":
     r"""GDAL_GCP_GCPPixel_get(GCP gcp) -> double"""
     return _gdal.GDAL_GCP_GCPPixel_get(*args)
 
-def GDAL_GCP_GCPPixel_set(*args):
+def GDAL_GCP_GCPPixel_set(*args) -> "void":
     r"""GDAL_GCP_GCPPixel_set(GCP gcp, double dfGCPPixel)"""
     return _gdal.GDAL_GCP_GCPPixel_set(*args)
 
-def GDAL_GCP_GCPLine_get(*args):
+def GDAL_GCP_GCPLine_get(*args) -> "double":
     r"""GDAL_GCP_GCPLine_get(GCP gcp) -> double"""
     return _gdal.GDAL_GCP_GCPLine_get(*args)
 
-def GDAL_GCP_GCPLine_set(*args):
+def GDAL_GCP_GCPLine_set(*args) -> "void":
     r"""GDAL_GCP_GCPLine_set(GCP gcp, double dfGCPLine)"""
     return _gdal.GDAL_GCP_GCPLine_set(*args)
 
-def GDAL_GCP_Info_get(*args):
+def GDAL_GCP_Info_get(*args) -> "char const *":
     r"""GDAL_GCP_Info_get(GCP gcp) -> char const *"""
     return _gdal.GDAL_GCP_Info_get(*args)
 
-def GDAL_GCP_Info_set(*args):
+def GDAL_GCP_Info_set(*args) -> "void":
     r"""GDAL_GCP_Info_set(GCP gcp, char const * pszInfo)"""
     return _gdal.GDAL_GCP_Info_set(*args)
 
-def GDAL_GCP_Id_get(*args):
+def GDAL_GCP_Id_get(*args) -> "char const *":
     r"""GDAL_GCP_Id_get(GCP gcp) -> char const *"""
     return _gdal.GDAL_GCP_Id_get(*args)
 
-def GDAL_GCP_Id_set(*args):
+def GDAL_GCP_Id_set(*args) -> "void":
     r"""GDAL_GCP_Id_set(GCP gcp, char const * pszId)"""
     return _gdal.GDAL_GCP_Id_set(*args)
 
-def GCPsToGeoTransform(*args):
+def GCPsToGeoTransform(*args) -> "double [ANY]":
     r"""GCPsToGeoTransform(int nGCPs, int bApproxOK=1) -> RETURN_NONE"""
     return _gdal.GCPsToGeoTransform(*args)
 class VirtualMem(object):
@@ -2089,11 +2089,11 @@ class VirtualMem(object):
     __repr__ = _swig_repr
     __swig_destroy__ = _gdal.delete_VirtualMem
 
-    def GetAddr(self, *args):
+    def GetAddr(self, *args) -> "void":
         r"""GetAddr(VirtualMem self)"""
         return _gdal.VirtualMem_GetAddr(self, *args)
 
-    def Pin(self, *args):
+    def Pin(self, *args) -> "void":
         r"""Pin(VirtualMem self, size_t start_offset=0, size_t nsize=0, int bWriteOp=0)"""
         return _gdal.VirtualMem_Pin(self, *args)
 
@@ -2110,19 +2110,19 @@ class AsyncReader(object):
     __repr__ = _swig_repr
     __swig_destroy__ = _gdal.delete_AsyncReader
 
-    def GetNextUpdatedRegion(self, *args):
+    def GetNextUpdatedRegion(self, *args) -> "GDALAsyncStatusType":
         r"""GetNextUpdatedRegion(AsyncReader self, double timeout) -> GDALAsyncStatusType"""
         return _gdal.AsyncReader_GetNextUpdatedRegion(self, *args)
 
-    def GetBuffer(self, *args):
+    def GetBuffer(self, *args) -> "void":
         r"""GetBuffer(AsyncReader self)"""
         return _gdal.AsyncReader_GetBuffer(self, *args)
 
-    def LockBuffer(self, *args):
+    def LockBuffer(self, *args) -> "int":
         r"""LockBuffer(AsyncReader self, double timeout) -> int"""
         return _gdal.AsyncReader_LockBuffer(self, *args)
 
-    def UnlockBuffer(self, *args):
+    def UnlockBuffer(self, *args) -> "void":
         r"""UnlockBuffer(AsyncReader self)"""
         return _gdal.AsyncReader_UnlockBuffer(self, *args)
 
@@ -2142,211 +2142,219 @@ class Dataset(MajorObject):
     RasterCount = property(_gdal.Dataset_RasterCount_get, doc=r"""RasterCount : int""")
     __swig_destroy__ = _gdal.delete_Dataset
 
-    def GetDriver(self, *args):
+    def GetDriver(self, *args) -> "GDALDriverShadow *":
         r"""GetDriver(Dataset self) -> Driver"""
         return _gdal.Dataset_GetDriver(self, *args)
 
-    def GetRasterBand(self, *args):
+    def GetRasterBand(self, *args) -> "GDALRasterBandShadow *":
         r"""GetRasterBand(Dataset self, int nBand) -> Band"""
         return _gdal.Dataset_GetRasterBand(self, *args)
 
-    def GetRootGroup(self, *args):
+    def GetRootGroup(self, *args) -> "GDALGroupHS *":
         r"""GetRootGroup(Dataset self) -> Group"""
         return _gdal.Dataset_GetRootGroup(self, *args)
 
-    def GetProjection(self, *args):
+    def GetProjection(self, *args) -> "char const *":
         r"""GetProjection(Dataset self) -> char const *"""
         return _gdal.Dataset_GetProjection(self, *args)
 
-    def GetProjectionRef(self, *args):
+    def GetProjectionRef(self, *args) -> "char const *":
         r"""GetProjectionRef(Dataset self) -> char const *"""
         return _gdal.Dataset_GetProjectionRef(self, *args)
 
-    def GetSpatialRef(self, *args):
+    def GetSpatialRef(self, *args) -> "OSRSpatialReferenceShadow *":
         r"""GetSpatialRef(Dataset self) -> SpatialReference"""
         return _gdal.Dataset_GetSpatialRef(self, *args)
 
-    def SetProjection(self, *args):
+    def SetProjection(self, *args) -> "CPLErr":
         r"""SetProjection(Dataset self, char const * prj) -> CPLErr"""
         return _gdal.Dataset_SetProjection(self, *args)
 
-    def SetSpatialRef(self, *args):
+    def SetSpatialRef(self, *args) -> "CPLErr":
         r"""SetSpatialRef(Dataset self, SpatialReference srs) -> CPLErr"""
         return _gdal.Dataset_SetSpatialRef(self, *args)
 
-    def GetGeoTransform(self, *args, **kwargs):
+    def GetGeoTransform(self, *args, **kwargs) -> "void":
         r"""GetGeoTransform(Dataset self, int * can_return_null=None)"""
         return _gdal.Dataset_GetGeoTransform(self, *args, **kwargs)
 
-    def SetGeoTransform(self, *args):
+    def SetGeoTransform(self, *args) -> "CPLErr":
         r"""SetGeoTransform(Dataset self, double [6] argin) -> CPLErr"""
         return _gdal.Dataset_SetGeoTransform(self, *args)
 
-    def BuildOverviews(self, *args, **kwargs):
+    def BuildOverviews(self, *args, **kwargs) -> "int":
         r"""BuildOverviews(Dataset self, char const * resampling="NEAREST", int overviewlist=0, GDALProgressFunc callback=0, void * callback_data=None) -> int"""
         return _gdal.Dataset_BuildOverviews(self, *args, **kwargs)
 
-    def GetGCPCount(self, *args):
+    def GetGCPCount(self, *args) -> "int":
         r"""GetGCPCount(Dataset self) -> int"""
         return _gdal.Dataset_GetGCPCount(self, *args)
 
-    def GetGCPProjection(self, *args):
+    def GetGCPProjection(self, *args) -> "char const *":
         r"""GetGCPProjection(Dataset self) -> char const *"""
         return _gdal.Dataset_GetGCPProjection(self, *args)
 
-    def GetGCPSpatialRef(self, *args):
+    def GetGCPSpatialRef(self, *args) -> "OSRSpatialReferenceShadow *":
         r"""GetGCPSpatialRef(Dataset self) -> SpatialReference"""
         return _gdal.Dataset_GetGCPSpatialRef(self, *args)
 
-    def GetGCPs(self, *args):
+    def GetGCPs(self, *args) -> "void":
         r"""GetGCPs(Dataset self)"""
         return _gdal.Dataset_GetGCPs(self, *args)
 
-    def _SetGCPs(self, *args):
+    def _SetGCPs(self, *args) -> "CPLErr":
         r"""_SetGCPs(Dataset self, int nGCPs, char const * pszGCPProjection) -> CPLErr"""
         return _gdal.Dataset__SetGCPs(self, *args)
 
-    def _SetGCPs2(self, *args):
+    def _SetGCPs2(self, *args) -> "CPLErr":
         r"""_SetGCPs2(Dataset self, int nGCPs, SpatialReference hSRS) -> CPLErr"""
         return _gdal.Dataset__SetGCPs2(self, *args)
 
-    def FlushCache(self, *args):
+    def FlushCache(self, *args) -> "void":
         r"""FlushCache(Dataset self)"""
         return _gdal.Dataset_FlushCache(self, *args)
 
-    def AddBand(self, *args, **kwargs):
+    def AddBand(self, *args, **kwargs) -> "CPLErr":
         r"""AddBand(Dataset self, GDALDataType datatype=GDT_Byte, char ** options=None) -> CPLErr"""
         return _gdal.Dataset_AddBand(self, *args, **kwargs)
 
-    def CreateMaskBand(self, *args):
+    def CreateMaskBand(self, *args) -> "CPLErr":
         r"""CreateMaskBand(Dataset self, int nFlags) -> CPLErr"""
         return _gdal.Dataset_CreateMaskBand(self, *args)
 
-    def GetFileList(self, *args):
+    def GetFileList(self, *args) -> "char **":
         r"""GetFileList(Dataset self) -> char **"""
         return _gdal.Dataset_GetFileList(self, *args)
 
-    def WriteRaster(self, *args, **kwargs):
+    def WriteRaster(self, *args, **kwargs) -> "CPLErr":
         r"""WriteRaster(Dataset self, int xoff, int yoff, int xsize, int ysize, GIntBig buf_len, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, int band_list=0, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, GIntBig * buf_band_space=None) -> CPLErr"""
         return _gdal.Dataset_WriteRaster(self, *args, **kwargs)
 
-    def AdviseRead(self, *args):
+    def AdviseRead(self, *args) -> "CPLErr":
         r"""AdviseRead(Dataset self, int xoff, int yoff, int xsize, int ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, int band_list=0, char ** options=None) -> CPLErr"""
         return _gdal.Dataset_AdviseRead(self, *args)
 
-    def BeginAsyncReader(self, *args, **kwargs):
+    def BeginAsyncReader(self, *args, **kwargs) -> "GDALAsyncReaderShadow *":
         r"""BeginAsyncReader(Dataset self, int xOff, int yOff, int xSize, int ySize, int buf_len, int buf_xsize, int buf_ysize, GDALDataType bufType=(GDALDataType) 0, int band_list=0, int nPixelSpace=0, int nLineSpace=0, int nBandSpace=0, char ** options=None) -> AsyncReader"""
         return _gdal.Dataset_BeginAsyncReader(self, *args, **kwargs)
 
-    def EndAsyncReader(self, *args):
+    def EndAsyncReader(self, *args) -> "void":
         r"""EndAsyncReader(Dataset self, AsyncReader ario)"""
         return _gdal.Dataset_EndAsyncReader(self, *args)
 
-    def GetVirtualMem(self, *args, **kwargs):
+    def GetVirtualMem(self, *args, **kwargs) -> "CPLVirtualMemShadow *":
         r"""GetVirtualMem(Dataset self, GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize, int nBufXSize, int nBufYSize, GDALDataType eBufType, int band_list, int bIsBandSequential, size_t nCacheSize, size_t nPageSizeHint, char ** options=None) -> VirtualMem"""
         return _gdal.Dataset_GetVirtualMem(self, *args, **kwargs)
 
-    def GetTiledVirtualMem(self, *args, **kwargs):
+    def GetTiledVirtualMem(self, *args, **kwargs) -> "CPLVirtualMemShadow *":
         r"""GetTiledVirtualMem(Dataset self, GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize, int nTileXSize, int nTileYSize, GDALDataType eBufType, int band_list, GDALTileOrganization eTileOrganization, size_t nCacheSize, char ** options=None) -> VirtualMem"""
         return _gdal.Dataset_GetTiledVirtualMem(self, *args, **kwargs)
 
-    def CreateLayer(self, *args, **kwargs):
+    def CreateLayer(self, *args, **kwargs) -> "OGRLayerShadow *":
         r"""CreateLayer(Dataset self, char const * name, SpatialReference srs=None, OGRwkbGeometryType geom_type=wkbUnknown, char ** options=None) -> Layer"""
         return _gdal.Dataset_CreateLayer(self, *args, **kwargs)
 
-    def CopyLayer(self, *args, **kwargs):
+    def CopyLayer(self, *args, **kwargs) -> "OGRLayerShadow *":
         r"""CopyLayer(Dataset self, Layer src_layer, char const * new_name, char ** options=None) -> Layer"""
         return _gdal.Dataset_CopyLayer(self, *args, **kwargs)
 
-    def DeleteLayer(self, *args):
+    def DeleteLayer(self, *args) -> "OGRErr":
         r"""DeleteLayer(Dataset self, int index) -> OGRErr"""
         return _gdal.Dataset_DeleteLayer(self, *args)
 
-    def GetLayerCount(self, *args):
+    def GetLayerCount(self, *args) -> "int":
         r"""GetLayerCount(Dataset self) -> int"""
         return _gdal.Dataset_GetLayerCount(self, *args)
 
-    def IsLayerPrivate(self, *args):
+    def IsLayerPrivate(self, *args) -> "bool":
         r"""IsLayerPrivate(Dataset self, int index) -> bool"""
         return _gdal.Dataset_IsLayerPrivate(self, *args)
 
-    def GetLayerByIndex(self, *args):
+    def GetLayerByIndex(self, *args) -> "OGRLayerShadow *":
         r"""GetLayerByIndex(Dataset self, int index=0) -> Layer"""
         return _gdal.Dataset_GetLayerByIndex(self, *args)
 
-    def GetLayerByName(self, *args):
+    def GetLayerByName(self, *args) -> "OGRLayerShadow *":
         r"""GetLayerByName(Dataset self, char const * layer_name) -> Layer"""
         return _gdal.Dataset_GetLayerByName(self, *args)
 
-    def ResetReading(self, *args):
+    def ResetReading(self, *args) -> "void":
         r"""ResetReading(Dataset self)"""
         return _gdal.Dataset_ResetReading(self, *args)
 
-    def GetNextFeature(self, *args, **kwargs):
+    def GetNextFeature(self, *args, **kwargs) -> "OGRFeatureShadow *":
         r"""GetNextFeature(Dataset self, bool include_layer=True, bool include_pct=False, GDALProgressFunc callback=0, void * callback_data=None) -> Feature"""
         return _gdal.Dataset_GetNextFeature(self, *args, **kwargs)
 
-    def TestCapability(self, *args):
+    def TestCapability(self, *args) -> "bool":
         r"""TestCapability(Dataset self, char const * cap) -> bool"""
         return _gdal.Dataset_TestCapability(self, *args)
 
-    def ExecuteSQL(self, *args, **kwargs):
+    def ExecuteSQL(self, *args, **kwargs) -> "OGRLayerShadow *":
         r"""ExecuteSQL(Dataset self, char const * statement, Geometry spatialFilter=None, char const * dialect="") -> Layer"""
         return _gdal.Dataset_ExecuteSQL(self, *args, **kwargs)
 
-    def ReleaseResultSet(self, *args):
+    def ReleaseResultSet(self, *args) -> "void":
         r"""ReleaseResultSet(Dataset self, Layer layer)"""
         return _gdal.Dataset_ReleaseResultSet(self, *args)
 
-    def GetStyleTable(self, *args):
+    def GetStyleTable(self, *args) -> "OGRStyleTableShadow *":
         r"""GetStyleTable(Dataset self) -> StyleTable"""
         return _gdal.Dataset_GetStyleTable(self, *args)
 
-    def SetStyleTable(self, *args):
+    def SetStyleTable(self, *args) -> "void":
         r"""SetStyleTable(Dataset self, StyleTable table)"""
         return _gdal.Dataset_SetStyleTable(self, *args)
 
-    def AbortSQL(self, *args):
+    def AbortSQL(self, *args) -> "OGRErr":
         r"""AbortSQL(Dataset self) -> OGRErr"""
         return _gdal.Dataset_AbortSQL(self, *args)
 
-    def StartTransaction(self, *args, **kwargs):
+    def StartTransaction(self, *args, **kwargs) -> "OGRErr":
         r"""StartTransaction(Dataset self, int force=FALSE) -> OGRErr"""
         return _gdal.Dataset_StartTransaction(self, *args, **kwargs)
 
-    def CommitTransaction(self, *args):
+    def CommitTransaction(self, *args) -> "OGRErr":
         r"""CommitTransaction(Dataset self) -> OGRErr"""
         return _gdal.Dataset_CommitTransaction(self, *args)
 
-    def RollbackTransaction(self, *args):
+    def RollbackTransaction(self, *args) -> "OGRErr":
         r"""RollbackTransaction(Dataset self) -> OGRErr"""
         return _gdal.Dataset_RollbackTransaction(self, *args)
 
-    def ClearStatistics(self, *args):
+    def ClearStatistics(self, *args) -> "void":
         r"""ClearStatistics(Dataset self)"""
         return _gdal.Dataset_ClearStatistics(self, *args)
 
-    def GetFieldDomainNames(self, *args):
+    def GetFieldDomainNames(self, *args) -> "char **":
         r"""GetFieldDomainNames(Dataset self, char ** options=None) -> char **"""
         return _gdal.Dataset_GetFieldDomainNames(self, *args)
 
-    def GetFieldDomain(self, *args):
+    def GetFieldDomain(self, *args) -> "OGRFieldDomainShadow *":
         r"""GetFieldDomain(Dataset self, char const * name) -> FieldDomain"""
         return _gdal.Dataset_GetFieldDomain(self, *args)
 
-    def AddFieldDomain(self, *args):
+    def AddFieldDomain(self, *args) -> "bool":
         r"""AddFieldDomain(Dataset self, FieldDomain fieldDomain) -> bool"""
         return _gdal.Dataset_AddFieldDomain(self, *args)
 
-    def DeleteFieldDomain(self, *args):
+    def DeleteFieldDomain(self, *args) -> "bool":
         r"""DeleteFieldDomain(Dataset self, char const * name) -> bool"""
         return _gdal.Dataset_DeleteFieldDomain(self, *args)
 
-    def UpdateFieldDomain(self, *args):
+    def UpdateFieldDomain(self, *args) -> "bool":
         r"""UpdateFieldDomain(Dataset self, FieldDomain fieldDomain) -> bool"""
         return _gdal.Dataset_UpdateFieldDomain(self, *args)
 
-    def ReadRaster1(self, *args, **kwargs):
+    def GetRelationshipNames(self, *args) -> "char **":
+        r"""GetRelationshipNames(Dataset self, char ** options=None) -> char **"""
+        return _gdal.Dataset_GetRelationshipNames(self, *args)
+
+    def GetRelationship(self, *args) -> "GDALRelationshipShadow *":
+        r"""GetRelationship(Dataset self, char const * name) -> Relationship"""
+        return _gdal.Dataset_GetRelationship(self, *args)
+
+    def ReadRaster1(self, *args, **kwargs) -> "CPLErr":
         r"""ReadRaster1(Dataset self, double xoff, double yoff, double xsize, double ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, int band_list=0, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, GIntBig * buf_band_space=None, GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour, GDALProgressFunc callback=0, void * callback_data=None, void * inputOutputBuf=None) -> CPLErr"""
         return _gdal.Dataset_ReadRaster1(self, *args, **kwargs)
 
@@ -2500,9 +2508,9 @@ class Dataset(MajorObject):
         if band_list is None:
             band_list = list(range(1, self.RasterCount + 1))
         if options is None:
-            virtualmem = self.GetTiledVirtualMem(eAccess,xoff,yoff,xsize,ysize,tilexsize,tileysize,datatype,band_list,tile_organization,cache_size)
+            virtualmem = self.GetTiledVirtualMem(eAccess, xoff, yoff, xsize, ysize, tilexsize, tileysize, datatype, band_list, tile_organization, cache_size)
         else:
-            virtualmem = self.GetTiledVirtualMem(eAccess,xoff,yoff,xsize,ysize,tilexsize,tileysize,datatype,band_list,tile_organization,cache_size, options)
+            virtualmem = self.GetTiledVirtualMem(eAccess, xoff, yoff, xsize, ysize, tilexsize, tileysize, datatype, band_list, tile_organization, cache_size, options)
         return gdal_array.VirtualMemGetArray( virtualmem )
 
     def GetSubDatasets(self):
@@ -2592,79 +2600,79 @@ class Group(object):
     __repr__ = _swig_repr
     __swig_destroy__ = _gdal.delete_Group
 
-    def GetName(self, *args):
+    def GetName(self, *args) -> "char const *":
         r"""GetName(Group self) -> char const *"""
         return _gdal.Group_GetName(self, *args)
 
-    def GetFullName(self, *args):
+    def GetFullName(self, *args) -> "char const *":
         r"""GetFullName(Group self) -> char const *"""
         return _gdal.Group_GetFullName(self, *args)
 
-    def GetMDArrayNames(self, *args):
+    def GetMDArrayNames(self, *args) -> "char **":
         r"""GetMDArrayNames(Group self, char ** options=None) -> char **"""
         return _gdal.Group_GetMDArrayNames(self, *args)
 
-    def OpenMDArray(self, *args):
+    def OpenMDArray(self, *args) -> "GDALMDArrayHS *":
         r"""OpenMDArray(Group self, char const * name, char ** options=None) -> MDArray"""
         return _gdal.Group_OpenMDArray(self, *args)
 
-    def OpenMDArrayFromFullname(self, *args):
+    def OpenMDArrayFromFullname(self, *args) -> "GDALMDArrayHS *":
         r"""OpenMDArrayFromFullname(Group self, char const * name, char ** options=None) -> MDArray"""
         return _gdal.Group_OpenMDArrayFromFullname(self, *args)
 
-    def ResolveMDArray(self, *args):
+    def ResolveMDArray(self, *args) -> "GDALMDArrayHS *":
         r"""ResolveMDArray(Group self, char const * name, char const * starting_point, char ** options=None) -> MDArray"""
         return _gdal.Group_ResolveMDArray(self, *args)
 
-    def GetGroupNames(self, *args):
+    def GetGroupNames(self, *args) -> "char **":
         r"""GetGroupNames(Group self, char ** options=None) -> char **"""
         return _gdal.Group_GetGroupNames(self, *args)
 
-    def OpenGroup(self, *args):
+    def OpenGroup(self, *args) -> "GDALGroupHS *":
         r"""OpenGroup(Group self, char const * name, char ** options=None) -> Group"""
         return _gdal.Group_OpenGroup(self, *args)
 
-    def OpenGroupFromFullname(self, *args):
+    def OpenGroupFromFullname(self, *args) -> "GDALGroupHS *":
         r"""OpenGroupFromFullname(Group self, char const * name, char ** options=None) -> Group"""
         return _gdal.Group_OpenGroupFromFullname(self, *args)
 
-    def GetVectorLayerNames(self, *args):
+    def GetVectorLayerNames(self, *args) -> "char **":
         r"""GetVectorLayerNames(Group self, char ** options=None) -> char **"""
         return _gdal.Group_GetVectorLayerNames(self, *args)
 
-    def OpenVectorLayer(self, *args):
+    def OpenVectorLayer(self, *args) -> "OGRLayerShadow *":
         r"""OpenVectorLayer(Group self, char const * name, char ** options=None) -> Layer"""
         return _gdal.Group_OpenVectorLayer(self, *args)
 
-    def GetDimensions(self, *args):
+    def GetDimensions(self, *args) -> "void":
         r"""GetDimensions(Group self, char ** options=None)"""
         return _gdal.Group_GetDimensions(self, *args)
 
-    def GetAttribute(self, *args):
+    def GetAttribute(self, *args) -> "GDALAttributeHS *":
         r"""GetAttribute(Group self, char const * name) -> Attribute"""
         return _gdal.Group_GetAttribute(self, *args)
 
-    def GetAttributes(self, *args):
+    def GetAttributes(self, *args) -> "void":
         r"""GetAttributes(Group self, char ** options=None)"""
         return _gdal.Group_GetAttributes(self, *args)
 
-    def GetStructuralInfo(self, *args):
+    def GetStructuralInfo(self, *args) -> "char **":
         r"""GetStructuralInfo(Group self) -> char **"""
         return _gdal.Group_GetStructuralInfo(self, *args)
 
-    def CreateGroup(self, *args):
+    def CreateGroup(self, *args) -> "GDALGroupHS *":
         r"""CreateGroup(Group self, char const * name, char ** options=None) -> Group"""
         return _gdal.Group_CreateGroup(self, *args)
 
-    def CreateDimension(self, *args):
+    def CreateDimension(self, *args) -> "GDALDimensionHS *":
         r"""CreateDimension(Group self, char const * name, char const * type, char const * direction, unsigned long long size, char ** options=None) -> Dimension"""
         return _gdal.Group_CreateDimension(self, *args)
 
-    def CreateMDArray(self, *args):
+    def CreateMDArray(self, *args) -> "GDALMDArrayHS *":
         r"""CreateMDArray(Group self, char const * name, int nDimensions, ExtendedDataType data_type, char ** options=None) -> MDArray"""
         return _gdal.Group_CreateMDArray(self, *args)
 
-    def CreateAttribute(self, *args):
+    def CreateAttribute(self, *args) -> "GDALAttributeHS *":
         r"""CreateAttribute(Group self, char const * name, int nDimensions, ExtendedDataType data_type, char ** options=None) -> Attribute"""
         return _gdal.Group_CreateAttribute(self, *args)
 
@@ -2700,191 +2708,191 @@ class MDArray(object):
     __repr__ = _swig_repr
     __swig_destroy__ = _gdal.delete_MDArray
 
-    def GetName(self, *args):
+    def GetName(self, *args) -> "char const *":
         r"""GetName(MDArray self) -> char const *"""
         return _gdal.MDArray_GetName(self, *args)
 
-    def GetFullName(self, *args):
+    def GetFullName(self, *args) -> "char const *":
         r"""GetFullName(MDArray self) -> char const *"""
         return _gdal.MDArray_GetFullName(self, *args)
 
-    def GetTotalElementsCount(self, *args):
+    def GetTotalElementsCount(self, *args) -> "unsigned long long":
         r"""GetTotalElementsCount(MDArray self) -> unsigned long long"""
         return _gdal.MDArray_GetTotalElementsCount(self, *args)
 
-    def GetDimensionCount(self, *args):
+    def GetDimensionCount(self, *args) -> "size_t":
         r"""GetDimensionCount(MDArray self) -> size_t"""
         return _gdal.MDArray_GetDimensionCount(self, *args)
 
-    def GetDimensions(self, *args):
+    def GetDimensions(self, *args) -> "void":
         r"""GetDimensions(MDArray self)"""
         return _gdal.MDArray_GetDimensions(self, *args)
 
-    def GetCoordinateVariables(self, *args):
+    def GetCoordinateVariables(self, *args) -> "void":
         r"""GetCoordinateVariables(MDArray self)"""
         return _gdal.MDArray_GetCoordinateVariables(self, *args)
 
-    def GetBlockSize(self, *args):
+    def GetBlockSize(self, *args) -> "void":
         r"""GetBlockSize(MDArray self)"""
         return _gdal.MDArray_GetBlockSize(self, *args)
 
-    def GetProcessingChunkSize(self, *args):
+    def GetProcessingChunkSize(self, *args) -> "void":
         r"""GetProcessingChunkSize(MDArray self, size_t nMaxChunkMemory)"""
         return _gdal.MDArray_GetProcessingChunkSize(self, *args)
 
-    def GetDataType(self, *args):
+    def GetDataType(self, *args) -> "GDALExtendedDataTypeHS *":
         r"""GetDataType(MDArray self) -> ExtendedDataType"""
         return _gdal.MDArray_GetDataType(self, *args)
 
-    def GetStructuralInfo(self, *args):
+    def GetStructuralInfo(self, *args) -> "char **":
         r"""GetStructuralInfo(MDArray self) -> char **"""
         return _gdal.MDArray_GetStructuralInfo(self, *args)
 
-    def Read(self, *args):
+    def Read(self, *args) -> "CPLErr":
         r"""Read(MDArray self, int nDims1, int nDims2, int nDims3, int nDims4, ExtendedDataType buffer_datatype) -> CPLErr"""
         return _gdal.MDArray_Read(self, *args)
 
-    def WriteStringArray(self, *args):
+    def WriteStringArray(self, *args) -> "CPLErr":
         r"""WriteStringArray(MDArray self, int nDims1, int nDims2, int nDims3, ExtendedDataType buffer_datatype, char ** options) -> CPLErr"""
         return _gdal.MDArray_WriteStringArray(self, *args)
 
-    def Write(self, *args):
+    def Write(self, *args) -> "CPLErr":
         r"""Write(MDArray self, int nDims1, int nDims2, int nDims3, int nDims4, ExtendedDataType buffer_datatype, GIntBig buf_len) -> CPLErr"""
         return _gdal.MDArray_Write(self, *args)
 
-    def AdviseRead(self, *args):
+    def AdviseRead(self, *args) -> "CPLErr":
         r"""AdviseRead(MDArray self, int nDims1, int nDims2, char ** options=None) -> CPLErr"""
         return _gdal.MDArray_AdviseRead(self, *args)
 
-    def GetAttribute(self, *args):
+    def GetAttribute(self, *args) -> "GDALAttributeHS *":
         r"""GetAttribute(MDArray self, char const * name) -> Attribute"""
         return _gdal.MDArray_GetAttribute(self, *args)
 
-    def GetAttributes(self, *args):
+    def GetAttributes(self, *args) -> "void":
         r"""GetAttributes(MDArray self, char ** options=None)"""
         return _gdal.MDArray_GetAttributes(self, *args)
 
-    def CreateAttribute(self, *args):
+    def CreateAttribute(self, *args) -> "GDALAttributeHS *":
         r"""CreateAttribute(MDArray self, char const * name, int nDimensions, ExtendedDataType data_type, char ** options=None) -> Attribute"""
         return _gdal.MDArray_CreateAttribute(self, *args)
 
-    def GetNoDataValueAsRaw(self, *args):
+    def GetNoDataValueAsRaw(self, *args) -> "CPLErr":
         r"""GetNoDataValueAsRaw(MDArray self) -> CPLErr"""
         return _gdal.MDArray_GetNoDataValueAsRaw(self, *args)
 
-    def GetNoDataValueAsDouble(self, *args):
+    def GetNoDataValueAsDouble(self, *args) -> "void":
         r"""GetNoDataValueAsDouble(MDArray self)"""
         return _gdal.MDArray_GetNoDataValueAsDouble(self, *args)
 
-    def GetNoDataValueAsInt64(self, *args):
+    def GetNoDataValueAsInt64(self, *args) -> "void":
         r"""GetNoDataValueAsInt64(MDArray self)"""
         return _gdal.MDArray_GetNoDataValueAsInt64(self, *args)
 
-    def GetNoDataValueAsUInt64(self, *args):
+    def GetNoDataValueAsUInt64(self, *args) -> "void":
         r"""GetNoDataValueAsUInt64(MDArray self)"""
         return _gdal.MDArray_GetNoDataValueAsUInt64(self, *args)
 
-    def GetNoDataValueAsString(self, *args):
+    def GetNoDataValueAsString(self, *args) -> "retStringAndCPLFree *":
         r"""GetNoDataValueAsString(MDArray self) -> retStringAndCPLFree *"""
         return _gdal.MDArray_GetNoDataValueAsString(self, *args)
 
-    def SetNoDataValueDouble(self, *args):
+    def SetNoDataValueDouble(self, *args) -> "CPLErr":
         r"""SetNoDataValueDouble(MDArray self, double d) -> CPLErr"""
         return _gdal.MDArray_SetNoDataValueDouble(self, *args)
 
-    def SetNoDataValueInt64(self, *args):
+    def SetNoDataValueInt64(self, *args) -> "CPLErr":
         r"""SetNoDataValueInt64(MDArray self, GIntBig v) -> CPLErr"""
         return _gdal.MDArray_SetNoDataValueInt64(self, *args)
 
-    def SetNoDataValueUInt64(self, *args):
+    def SetNoDataValueUInt64(self, *args) -> "CPLErr":
         r"""SetNoDataValueUInt64(MDArray self, GUIntBig v) -> CPLErr"""
         return _gdal.MDArray_SetNoDataValueUInt64(self, *args)
 
-    def SetNoDataValueString(self, *args):
+    def SetNoDataValueString(self, *args) -> "CPLErr":
         r"""SetNoDataValueString(MDArray self, char const * nodata) -> CPLErr"""
         return _gdal.MDArray_SetNoDataValueString(self, *args)
 
-    def SetNoDataValueRaw(self, *args):
+    def SetNoDataValueRaw(self, *args) -> "CPLErr":
         r"""SetNoDataValueRaw(MDArray self, GIntBig nLen) -> CPLErr"""
         return _gdal.MDArray_SetNoDataValueRaw(self, *args)
 
-    def DeleteNoDataValue(self, *args):
+    def DeleteNoDataValue(self, *args) -> "CPLErr":
         r"""DeleteNoDataValue(MDArray self) -> CPLErr"""
         return _gdal.MDArray_DeleteNoDataValue(self, *args)
 
-    def GetOffset(self, *args):
+    def GetOffset(self, *args) -> "void":
         r"""GetOffset(MDArray self)"""
         return _gdal.MDArray_GetOffset(self, *args)
 
-    def GetOffsetStorageType(self, *args):
+    def GetOffsetStorageType(self, *args) -> "GDALDataType":
         r"""GetOffsetStorageType(MDArray self) -> GDALDataType"""
         return _gdal.MDArray_GetOffsetStorageType(self, *args)
 
-    def GetScale(self, *args):
+    def GetScale(self, *args) -> "void":
         r"""GetScale(MDArray self)"""
         return _gdal.MDArray_GetScale(self, *args)
 
-    def GetScaleStorageType(self, *args):
+    def GetScaleStorageType(self, *args) -> "GDALDataType":
         r"""GetScaleStorageType(MDArray self) -> GDALDataType"""
         return _gdal.MDArray_GetScaleStorageType(self, *args)
 
-    def SetOffset(self, *args, **kwargs):
+    def SetOffset(self, *args, **kwargs) -> "CPLErr":
         r"""SetOffset(MDArray self, double val, GDALDataType storageType=GDT_Unknown) -> CPLErr"""
         return _gdal.MDArray_SetOffset(self, *args, **kwargs)
 
-    def SetScale(self, *args, **kwargs):
+    def SetScale(self, *args, **kwargs) -> "CPLErr":
         r"""SetScale(MDArray self, double val, GDALDataType storageType=GDT_Unknown) -> CPLErr"""
         return _gdal.MDArray_SetScale(self, *args, **kwargs)
 
-    def SetUnit(self, *args):
+    def SetUnit(self, *args) -> "CPLErr":
         r"""SetUnit(MDArray self, char const * unit) -> CPLErr"""
         return _gdal.MDArray_SetUnit(self, *args)
 
-    def GetUnit(self, *args):
+    def GetUnit(self, *args) -> "char const *":
         r"""GetUnit(MDArray self) -> char const *"""
         return _gdal.MDArray_GetUnit(self, *args)
 
-    def SetSpatialRef(self, *args):
+    def SetSpatialRef(self, *args) -> "OGRErr":
         r"""SetSpatialRef(MDArray self, SpatialReference srs) -> OGRErr"""
         return _gdal.MDArray_SetSpatialRef(self, *args)
 
-    def GetSpatialRef(self, *args):
+    def GetSpatialRef(self, *args) -> "OSRSpatialReferenceShadow *":
         r"""GetSpatialRef(MDArray self) -> SpatialReference"""
         return _gdal.MDArray_GetSpatialRef(self, *args)
 
-    def GetView(self, *args):
+    def GetView(self, *args) -> "GDALMDArrayHS *":
         r"""GetView(MDArray self, char const * viewExpr) -> MDArray"""
         return _gdal.MDArray_GetView(self, *args)
 
-    def Transpose(self, *args):
+    def Transpose(self, *args) -> "GDALMDArrayHS *":
         r"""Transpose(MDArray self, int nList) -> MDArray"""
         return _gdal.MDArray_Transpose(self, *args)
 
-    def GetUnscaled(self, *args):
+    def GetUnscaled(self, *args) -> "GDALMDArrayHS *":
         r"""GetUnscaled(MDArray self) -> MDArray"""
         return _gdal.MDArray_GetUnscaled(self, *args)
 
-    def GetMask(self, *args):
+    def GetMask(self, *args) -> "GDALMDArrayHS *":
         r"""GetMask(MDArray self, char ** options=None) -> MDArray"""
         return _gdal.MDArray_GetMask(self, *args)
 
-    def AsClassicDataset(self, *args):
+    def AsClassicDataset(self, *args) -> "GDALDatasetShadow *":
         r"""AsClassicDataset(MDArray self, size_t iXDim, size_t iYDim) -> Dataset"""
         return _gdal.MDArray_AsClassicDataset(self, *args)
 
-    def GetStatistics(self, *args, **kwargs):
+    def GetStatistics(self, *args, **kwargs) -> "Statistics *":
         r"""GetStatistics(MDArray self, bool approx_ok=FALSE, bool force=TRUE, GDALProgressFunc callback=0, void * callback_data=None) -> Statistics"""
         return _gdal.MDArray_GetStatistics(self, *args, **kwargs)
 
-    def ComputeStatistics(self, *args, **kwargs):
+    def ComputeStatistics(self, *args, **kwargs) -> "Statistics *":
         r"""ComputeStatistics(MDArray self, bool approx_ok=FALSE, GDALProgressFunc callback=0, void * callback_data=None) -> Statistics"""
         return _gdal.MDArray_ComputeStatistics(self, *args, **kwargs)
 
-    def GetResampled(self, *args):
+    def GetResampled(self, *args) -> "GDALMDArrayHS *":
         r"""GetResampled(MDArray self, int nDimensions, GDALRIOResampleAlg resample_alg, OSRSpatialReferenceShadow ** srs, char ** options=None) -> MDArray"""
         return _gdal.MDArray_GetResampled(self, *args)
 
-    def Cache(self, *args):
+    def Cache(self, *args) -> "bool":
         r"""Cache(MDArray self, char ** options=None) -> bool"""
         return _gdal.MDArray_Cache(self, *args)
 
@@ -2979,12 +2987,12 @@ class MDArray(object):
         if dimCount == 1 and type(buffer).__name__ == 'array' and \
            count is None and buffer_stride is None and buffer_datatype is None:
             map_typecode_itemsize_to_gdal = {
-               ('B',1): GDT_Byte,
-               ('h',2): GDT_Int16,
-               ('H',2): GDT_UInt16,
-               ('i',4): GDT_Int32,
-               ('I',4): GDT_UInt32,
-               ('l',4): GDT_Int32,
+               ('B', 1): GDT_Byte,
+               ('h', 2): GDT_Int16,
+               ('H', 2): GDT_UInt16,
+               ('i', 4): GDT_Int32,
+               ('I', 4): GDT_UInt32,
+               ('l', 4): GDT_Int32,
     # ('l',8): GDT_Int64,
     # ('q',8): GDT_Int64,
     # ('Q',8): GDT_UInt64,
@@ -3118,79 +3126,79 @@ class Attribute(object):
     __repr__ = _swig_repr
     __swig_destroy__ = _gdal.delete_Attribute
 
-    def GetName(self, *args):
+    def GetName(self, *args) -> "char const *":
         r"""GetName(Attribute self) -> char const *"""
         return _gdal.Attribute_GetName(self, *args)
 
-    def GetFullName(self, *args):
+    def GetFullName(self, *args) -> "char const *":
         r"""GetFullName(Attribute self) -> char const *"""
         return _gdal.Attribute_GetFullName(self, *args)
 
-    def GetTotalElementsCount(self, *args):
+    def GetTotalElementsCount(self, *args) -> "unsigned long long":
         r"""GetTotalElementsCount(Attribute self) -> unsigned long long"""
         return _gdal.Attribute_GetTotalElementsCount(self, *args)
 
-    def GetDimensionCount(self, *args):
+    def GetDimensionCount(self, *args) -> "size_t":
         r"""GetDimensionCount(Attribute self) -> size_t"""
         return _gdal.Attribute_GetDimensionCount(self, *args)
 
-    def GetDimensionsSize(self, *args):
+    def GetDimensionsSize(self, *args) -> "void":
         r"""GetDimensionsSize(Attribute self)"""
         return _gdal.Attribute_GetDimensionsSize(self, *args)
 
-    def GetDataType(self, *args):
+    def GetDataType(self, *args) -> "GDALExtendedDataTypeHS *":
         r"""GetDataType(Attribute self) -> ExtendedDataType"""
         return _gdal.Attribute_GetDataType(self, *args)
 
-    def ReadAsRaw(self, *args):
+    def ReadAsRaw(self, *args) -> "CPLErr":
         r"""ReadAsRaw(Attribute self) -> CPLErr"""
         return _gdal.Attribute_ReadAsRaw(self, *args)
 
-    def ReadAsString(self, *args):
+    def ReadAsString(self, *args) -> "char const *":
         r"""ReadAsString(Attribute self) -> char const *"""
         return _gdal.Attribute_ReadAsString(self, *args)
 
-    def ReadAsInt(self, *args):
+    def ReadAsInt(self, *args) -> "int":
         r"""ReadAsInt(Attribute self) -> int"""
         return _gdal.Attribute_ReadAsInt(self, *args)
 
-    def ReadAsDouble(self, *args):
+    def ReadAsDouble(self, *args) -> "double":
         r"""ReadAsDouble(Attribute self) -> double"""
         return _gdal.Attribute_ReadAsDouble(self, *args)
 
-    def ReadAsStringArray(self, *args):
+    def ReadAsStringArray(self, *args) -> "char **":
         r"""ReadAsStringArray(Attribute self) -> char **"""
         return _gdal.Attribute_ReadAsStringArray(self, *args)
 
-    def ReadAsIntArray(self, *args):
+    def ReadAsIntArray(self, *args) -> "void":
         r"""ReadAsIntArray(Attribute self)"""
         return _gdal.Attribute_ReadAsIntArray(self, *args)
 
-    def ReadAsDoubleArray(self, *args):
+    def ReadAsDoubleArray(self, *args) -> "void":
         r"""ReadAsDoubleArray(Attribute self)"""
         return _gdal.Attribute_ReadAsDoubleArray(self, *args)
 
-    def WriteRaw(self, *args):
+    def WriteRaw(self, *args) -> "CPLErr":
         r"""WriteRaw(Attribute self, GIntBig nLen) -> CPLErr"""
         return _gdal.Attribute_WriteRaw(self, *args)
 
-    def WriteString(self, *args):
+    def WriteString(self, *args) -> "CPLErr":
         r"""WriteString(Attribute self, char const * val) -> CPLErr"""
         return _gdal.Attribute_WriteString(self, *args)
 
-    def WriteStringArray(self, *args):
+    def WriteStringArray(self, *args) -> "CPLErr":
         r"""WriteStringArray(Attribute self, char ** vals) -> CPLErr"""
         return _gdal.Attribute_WriteStringArray(self, *args)
 
-    def WriteInt(self, *args):
+    def WriteInt(self, *args) -> "CPLErr":
         r"""WriteInt(Attribute self, int val) -> CPLErr"""
         return _gdal.Attribute_WriteInt(self, *args)
 
-    def WriteDouble(self, *args):
+    def WriteDouble(self, *args) -> "CPLErr":
         r"""WriteDouble(Attribute self, double val) -> CPLErr"""
         return _gdal.Attribute_WriteDouble(self, *args)
 
-    def WriteDoubleArray(self, *args):
+    def WriteDoubleArray(self, *args) -> "CPLErr":
         r"""WriteDoubleArray(Attribute self, int nList) -> CPLErr"""
         return _gdal.Attribute_WriteDoubleArray(self, *args)
 
@@ -3263,31 +3271,31 @@ class Dimension(object):
     __repr__ = _swig_repr
     __swig_destroy__ = _gdal.delete_Dimension
 
-    def GetName(self, *args):
+    def GetName(self, *args) -> "char const *":
         r"""GetName(Dimension self) -> char const *"""
         return _gdal.Dimension_GetName(self, *args)
 
-    def GetFullName(self, *args):
+    def GetFullName(self, *args) -> "char const *":
         r"""GetFullName(Dimension self) -> char const *"""
         return _gdal.Dimension_GetFullName(self, *args)
 
-    def GetType(self, *args):
+    def GetType(self, *args) -> "char const *":
         r"""GetType(Dimension self) -> char const *"""
         return _gdal.Dimension_GetType(self, *args)
 
-    def GetDirection(self, *args):
+    def GetDirection(self, *args) -> "char const *":
         r"""GetDirection(Dimension self) -> char const *"""
         return _gdal.Dimension_GetDirection(self, *args)
 
-    def GetSize(self, *args):
+    def GetSize(self, *args) -> "unsigned long long":
         r"""GetSize(Dimension self) -> unsigned long long"""
         return _gdal.Dimension_GetSize(self, *args)
 
-    def GetIndexingVariable(self, *args):
+    def GetIndexingVariable(self, *args) -> "GDALMDArrayHS *":
         r"""GetIndexingVariable(Dimension self) -> MDArray"""
         return _gdal.Dimension_GetIndexingVariable(self, *args)
 
-    def SetIndexingVariable(self, *args):
+    def SetIndexingVariable(self, *args) -> "bool":
         r"""SetIndexingVariable(Dimension self, MDArray array) -> bool"""
         return _gdal.Dimension_SetIndexingVariable(self, *args)
 
@@ -3311,53 +3319,53 @@ class ExtendedDataType(object):
     __swig_destroy__ = _gdal.delete_ExtendedDataType
 
     @staticmethod
-    def Create(*args):
+    def Create(*args) -> "GDALExtendedDataTypeHS *":
         r"""Create(GDALDataType dt) -> ExtendedDataType"""
         return _gdal.ExtendedDataType_Create(*args)
 
     @staticmethod
-    def CreateString(*args):
+    def CreateString(*args) -> "GDALExtendedDataTypeHS *":
         r"""CreateString(size_t nMaxStringLength=0, GDALExtendedDataTypeSubType eSubType=GEDTST_NONE) -> ExtendedDataType"""
         return _gdal.ExtendedDataType_CreateString(*args)
 
     @staticmethod
-    def CreateCompound(*args):
+    def CreateCompound(*args) -> "GDALExtendedDataTypeHS *":
         r"""CreateCompound(char const * name, size_t nTotalSize, int nComps) -> ExtendedDataType"""
         return _gdal.ExtendedDataType_CreateCompound(*args)
 
-    def GetName(self, *args):
+    def GetName(self, *args) -> "char const *":
         r"""GetName(ExtendedDataType self) -> char const *"""
         return _gdal.ExtendedDataType_GetName(self, *args)
 
-    def GetClass(self, *args):
+    def GetClass(self, *args) -> "GDALExtendedDataTypeClass":
         r"""GetClass(ExtendedDataType self) -> GDALExtendedDataTypeClass"""
         return _gdal.ExtendedDataType_GetClass(self, *args)
 
-    def GetNumericDataType(self, *args):
+    def GetNumericDataType(self, *args) -> "GDALDataType":
         r"""GetNumericDataType(ExtendedDataType self) -> GDALDataType"""
         return _gdal.ExtendedDataType_GetNumericDataType(self, *args)
 
-    def GetSize(self, *args):
+    def GetSize(self, *args) -> "size_t":
         r"""GetSize(ExtendedDataType self) -> size_t"""
         return _gdal.ExtendedDataType_GetSize(self, *args)
 
-    def GetMaxStringLength(self, *args):
+    def GetMaxStringLength(self, *args) -> "size_t":
         r"""GetMaxStringLength(ExtendedDataType self) -> size_t"""
         return _gdal.ExtendedDataType_GetMaxStringLength(self, *args)
 
-    def GetSubType(self, *args):
+    def GetSubType(self, *args) -> "GDALExtendedDataTypeSubType":
         r"""GetSubType(ExtendedDataType self) -> GDALExtendedDataTypeSubType"""
         return _gdal.ExtendedDataType_GetSubType(self, *args)
 
-    def GetComponents(self, *args):
+    def GetComponents(self, *args) -> "void":
         r"""GetComponents(ExtendedDataType self)"""
         return _gdal.ExtendedDataType_GetComponents(self, *args)
 
-    def CanConvertTo(self, *args):
+    def CanConvertTo(self, *args) -> "bool":
         r"""CanConvertTo(ExtendedDataType self, ExtendedDataType other) -> bool"""
         return _gdal.ExtendedDataType_CanConvertTo(self, *args)
 
-    def Equals(self, *args):
+    def Equals(self, *args) -> "bool":
         r"""Equals(ExtendedDataType self, ExtendedDataType other) -> bool"""
         return _gdal.ExtendedDataType_Equals(self, *args)
 
@@ -3372,15 +3380,15 @@ class ExtendedDataType(object):
 # Register ExtendedDataType in _gdal:
 _gdal.ExtendedDataType_swigregister(ExtendedDataType)
 
-def ExtendedDataType_Create(*args):
+def ExtendedDataType_Create(*args) -> "GDALExtendedDataTypeHS *":
     r"""ExtendedDataType_Create(GDALDataType dt) -> ExtendedDataType"""
     return _gdal.ExtendedDataType_Create(*args)
 
-def ExtendedDataType_CreateString(*args):
+def ExtendedDataType_CreateString(*args) -> "GDALExtendedDataTypeHS *":
     r"""ExtendedDataType_CreateString(size_t nMaxStringLength=0, GDALExtendedDataTypeSubType eSubType=GEDTST_NONE) -> ExtendedDataType"""
     return _gdal.ExtendedDataType_CreateString(*args)
 
-def ExtendedDataType_CreateCompound(*args):
+def ExtendedDataType_CreateCompound(*args) -> "GDALExtendedDataTypeHS *":
     r"""ExtendedDataType_CreateCompound(char const * name, size_t nTotalSize, int nComps) -> ExtendedDataType"""
     return _gdal.ExtendedDataType_CreateCompound(*args)
 
@@ -3395,26 +3403,26 @@ class EDTComponent(object):
     __swig_destroy__ = _gdal.delete_EDTComponent
 
     @staticmethod
-    def Create(*args):
+    def Create(*args) -> "GDALEDTComponentHS *":
         r"""Create(char const * name, size_t offset, ExtendedDataType type) -> EDTComponent"""
         return _gdal.EDTComponent_Create(*args)
 
-    def GetName(self, *args):
+    def GetName(self, *args) -> "char const *":
         r"""GetName(EDTComponent self) -> char const *"""
         return _gdal.EDTComponent_GetName(self, *args)
 
-    def GetOffset(self, *args):
+    def GetOffset(self, *args) -> "size_t":
         r"""GetOffset(EDTComponent self) -> size_t"""
         return _gdal.EDTComponent_GetOffset(self, *args)
 
-    def GetType(self, *args):
+    def GetType(self, *args) -> "GDALExtendedDataTypeHS *":
         r"""GetType(EDTComponent self) -> ExtendedDataType"""
         return _gdal.EDTComponent_GetType(self, *args)
 
 # Register EDTComponent in _gdal:
 _gdal.EDTComponent_swigregister(EDTComponent)
 
-def EDTComponent_Create(*args):
+def EDTComponent_Create(*args) -> "GDALEDTComponentHS *":
     r"""EDTComponent_Create(char const * name, size_t offset, ExtendedDataType type) -> EDTComponent"""
     return _gdal.EDTComponent_Create(*args)
 
@@ -3430,243 +3438,243 @@ class Band(MajorObject):
     YSize = property(_gdal.Band_YSize_get, doc=r"""YSize : int""")
     DataType = property(_gdal.Band_DataType_get, doc=r"""DataType : GDALDataType""")
 
-    def GetDataset(self, *args):
+    def GetDataset(self, *args) -> "GDALDatasetShadow *":
         r"""GetDataset(Band self) -> Dataset"""
         return _gdal.Band_GetDataset(self, *args)
 
-    def GetBand(self, *args):
+    def GetBand(self, *args) -> "int":
         r"""GetBand(Band self) -> int"""
         return _gdal.Band_GetBand(self, *args)
 
-    def GetBlockSize(self, *args):
+    def GetBlockSize(self, *args) -> "void":
         r"""GetBlockSize(Band self)"""
         return _gdal.Band_GetBlockSize(self, *args)
 
-    def GetActualBlockSize(self, *args):
+    def GetActualBlockSize(self, *args) -> "void":
         r"""GetActualBlockSize(Band self, int nXBlockOff, int nYBlockOff)"""
         return _gdal.Band_GetActualBlockSize(self, *args)
 
-    def GetColorInterpretation(self, *args):
+    def GetColorInterpretation(self, *args) -> "GDALColorInterp":
         r"""GetColorInterpretation(Band self) -> GDALColorInterp"""
         return _gdal.Band_GetColorInterpretation(self, *args)
 
-    def GetRasterColorInterpretation(self, *args):
+    def GetRasterColorInterpretation(self, *args) -> "GDALColorInterp":
         r"""GetRasterColorInterpretation(Band self) -> GDALColorInterp"""
         return _gdal.Band_GetRasterColorInterpretation(self, *args)
 
-    def SetColorInterpretation(self, *args):
+    def SetColorInterpretation(self, *args) -> "CPLErr":
         r"""SetColorInterpretation(Band self, GDALColorInterp val) -> CPLErr"""
         return _gdal.Band_SetColorInterpretation(self, *args)
 
-    def SetRasterColorInterpretation(self, *args):
+    def SetRasterColorInterpretation(self, *args) -> "CPLErr":
         r"""SetRasterColorInterpretation(Band self, GDALColorInterp val) -> CPLErr"""
         return _gdal.Band_SetRasterColorInterpretation(self, *args)
 
-    def GetNoDataValue(self, *args):
+    def GetNoDataValue(self, *args) -> "void":
         r"""GetNoDataValue(Band self)"""
         return _gdal.Band_GetNoDataValue(self, *args)
 
-    def GetNoDataValueAsInt64(self, *args):
+    def GetNoDataValueAsInt64(self, *args) -> "void":
         r"""GetNoDataValueAsInt64(Band self)"""
         return _gdal.Band_GetNoDataValueAsInt64(self, *args)
 
-    def GetNoDataValueAsUInt64(self, *args):
+    def GetNoDataValueAsUInt64(self, *args) -> "void":
         r"""GetNoDataValueAsUInt64(Band self)"""
         return _gdal.Band_GetNoDataValueAsUInt64(self, *args)
 
-    def SetNoDataValue(self, *args):
+    def SetNoDataValue(self, *args) -> "CPLErr":
         r"""SetNoDataValue(Band self, double d) -> CPLErr"""
         return _gdal.Band_SetNoDataValue(self, *args)
 
-    def SetNoDataValueAsInt64(self, *args):
+    def SetNoDataValueAsInt64(self, *args) -> "CPLErr":
         r"""SetNoDataValueAsInt64(Band self, GIntBig v) -> CPLErr"""
         return _gdal.Band_SetNoDataValueAsInt64(self, *args)
 
-    def SetNoDataValueAsUInt64(self, *args):
+    def SetNoDataValueAsUInt64(self, *args) -> "CPLErr":
         r"""SetNoDataValueAsUInt64(Band self, GUIntBig v) -> CPLErr"""
         return _gdal.Band_SetNoDataValueAsUInt64(self, *args)
 
-    def DeleteNoDataValue(self, *args):
+    def DeleteNoDataValue(self, *args) -> "CPLErr":
         r"""DeleteNoDataValue(Band self) -> CPLErr"""
         return _gdal.Band_DeleteNoDataValue(self, *args)
 
-    def GetUnitType(self, *args):
+    def GetUnitType(self, *args) -> "char const *":
         r"""GetUnitType(Band self) -> char const *"""
         return _gdal.Band_GetUnitType(self, *args)
 
-    def SetUnitType(self, *args):
+    def SetUnitType(self, *args) -> "CPLErr":
         r"""SetUnitType(Band self, char const * val) -> CPLErr"""
         return _gdal.Band_SetUnitType(self, *args)
 
-    def GetRasterCategoryNames(self, *args):
+    def GetRasterCategoryNames(self, *args) -> "char **":
         r"""GetRasterCategoryNames(Band self) -> char **"""
         return _gdal.Band_GetRasterCategoryNames(self, *args)
 
-    def SetRasterCategoryNames(self, *args):
+    def SetRasterCategoryNames(self, *args) -> "CPLErr":
         r"""SetRasterCategoryNames(Band self, char ** names) -> CPLErr"""
         return _gdal.Band_SetRasterCategoryNames(self, *args)
 
-    def GetMinimum(self, *args):
+    def GetMinimum(self, *args) -> "void":
         r"""GetMinimum(Band self)"""
         return _gdal.Band_GetMinimum(self, *args)
 
-    def GetMaximum(self, *args):
+    def GetMaximum(self, *args) -> "void":
         r"""GetMaximum(Band self)"""
         return _gdal.Band_GetMaximum(self, *args)
 
-    def GetOffset(self, *args):
+    def GetOffset(self, *args) -> "void":
         r"""GetOffset(Band self)"""
         return _gdal.Band_GetOffset(self, *args)
 
-    def GetScale(self, *args):
+    def GetScale(self, *args) -> "void":
         r"""GetScale(Band self)"""
         return _gdal.Band_GetScale(self, *args)
 
-    def SetOffset(self, *args):
+    def SetOffset(self, *args) -> "CPLErr":
         r"""SetOffset(Band self, double val) -> CPLErr"""
         return _gdal.Band_SetOffset(self, *args)
 
-    def SetScale(self, *args):
+    def SetScale(self, *args) -> "CPLErr":
         r"""SetScale(Band self, double val) -> CPLErr"""
         return _gdal.Band_SetScale(self, *args)
 
-    def GetStatistics(self, *args):
+    def GetStatistics(self, *args) -> "CPLErr":
         r"""GetStatistics(Band self, int approx_ok, int force) -> CPLErr"""
         return _gdal.Band_GetStatistics(self, *args)
 
-    def ComputeStatistics(self, *args):
+    def ComputeStatistics(self, *args) -> "CPLErr":
         r"""ComputeStatistics(Band self, bool approx_ok, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"""
         return _gdal.Band_ComputeStatistics(self, *args)
 
-    def SetStatistics(self, *args):
+    def SetStatistics(self, *args) -> "CPLErr":
         r"""SetStatistics(Band self, double min, double max, double mean, double stddev) -> CPLErr"""
         return _gdal.Band_SetStatistics(self, *args)
 
-    def GetOverviewCount(self, *args):
+    def GetOverviewCount(self, *args) -> "int":
         r"""GetOverviewCount(Band self) -> int"""
         return _gdal.Band_GetOverviewCount(self, *args)
 
-    def GetOverview(self, *args):
+    def GetOverview(self, *args) -> "GDALRasterBandShadow *":
         r"""GetOverview(Band self, int i) -> Band"""
         return _gdal.Band_GetOverview(self, *args)
 
-    def Checksum(self, *args, **kwargs):
+    def Checksum(self, *args, **kwargs) -> "int":
         r"""Checksum(Band self, int xoff=0, int yoff=0, int * xsize=None, int * ysize=None) -> int"""
         return _gdal.Band_Checksum(self, *args, **kwargs)
 
-    def ComputeRasterMinMax(self, *args):
+    def ComputeRasterMinMax(self, *args) -> "void":
         r"""ComputeRasterMinMax(Band self, int approx_ok=0)"""
         return _gdal.Band_ComputeRasterMinMax(self, *args)
 
-    def ComputeBandStats(self, *args):
+    def ComputeBandStats(self, *args) -> "void":
         r"""ComputeBandStats(Band self, int samplestep=1)"""
         return _gdal.Band_ComputeBandStats(self, *args)
 
-    def Fill(self, *args):
+    def Fill(self, *args) -> "CPLErr":
         r"""Fill(Band self, double real_fill, double imag_fill=0.0) -> CPLErr"""
         return _gdal.Band_Fill(self, *args)
 
-    def WriteRaster(self, *args, **kwargs):
+    def WriteRaster(self, *args, **kwargs) -> "CPLErr":
         r"""WriteRaster(Band self, int xoff, int yoff, int xsize, int ysize, GIntBig buf_len, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None) -> CPLErr"""
         return _gdal.Band_WriteRaster(self, *args, **kwargs)
 
-    def FlushCache(self, *args):
+    def FlushCache(self, *args) -> "void":
         r"""FlushCache(Band self)"""
         return _gdal.Band_FlushCache(self, *args)
 
-    def GetRasterColorTable(self, *args):
+    def GetRasterColorTable(self, *args) -> "GDALColorTableShadow *":
         r"""GetRasterColorTable(Band self) -> ColorTable"""
         return _gdal.Band_GetRasterColorTable(self, *args)
 
-    def GetColorTable(self, *args):
+    def GetColorTable(self, *args) -> "GDALColorTableShadow *":
         r"""GetColorTable(Band self) -> ColorTable"""
         return _gdal.Band_GetColorTable(self, *args)
 
-    def SetRasterColorTable(self, *args):
+    def SetRasterColorTable(self, *args) -> "int":
         r"""SetRasterColorTable(Band self, ColorTable arg) -> int"""
         return _gdal.Band_SetRasterColorTable(self, *args)
 
-    def SetColorTable(self, *args):
+    def SetColorTable(self, *args) -> "int":
         r"""SetColorTable(Band self, ColorTable arg) -> int"""
         return _gdal.Band_SetColorTable(self, *args)
 
-    def GetDefaultRAT(self, *args):
+    def GetDefaultRAT(self, *args) -> "GDALRasterAttributeTableShadow *":
         r"""GetDefaultRAT(Band self) -> RasterAttributeTable"""
         return _gdal.Band_GetDefaultRAT(self, *args)
 
-    def SetDefaultRAT(self, *args):
+    def SetDefaultRAT(self, *args) -> "int":
         r"""SetDefaultRAT(Band self, RasterAttributeTable table) -> int"""
         return _gdal.Band_SetDefaultRAT(self, *args)
 
-    def GetMaskBand(self, *args):
+    def GetMaskBand(self, *args) -> "GDALRasterBandShadow *":
         r"""GetMaskBand(Band self) -> Band"""
         return _gdal.Band_GetMaskBand(self, *args)
 
-    def GetMaskFlags(self, *args):
+    def GetMaskFlags(self, *args) -> "int":
         r"""GetMaskFlags(Band self) -> int"""
         return _gdal.Band_GetMaskFlags(self, *args)
 
-    def CreateMaskBand(self, *args):
+    def CreateMaskBand(self, *args) -> "CPLErr":
         r"""CreateMaskBand(Band self, int nFlags) -> CPLErr"""
         return _gdal.Band_CreateMaskBand(self, *args)
 
-    def IsMaskBand(self, *args):
+    def IsMaskBand(self, *args) -> "bool":
         r"""IsMaskBand(Band self) -> bool"""
         return _gdal.Band_IsMaskBand(self, *args)
 
-    def GetHistogram(self, *args, **kwargs):
+    def GetHistogram(self, *args, **kwargs) -> "CPLErr":
         r"""GetHistogram(Band self, double min=-0.5, double max=255.5, int buckets=256, int include_out_of_range=0, int approx_ok=1, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"""
         return _gdal.Band_GetHistogram(self, *args, **kwargs)
 
-    def GetDefaultHistogram(self, *args, **kwargs):
+    def GetDefaultHistogram(self, *args, **kwargs) -> "CPLErr":
         r"""GetDefaultHistogram(Band self, double * min_ret=None, double * max_ret=None, int * buckets_ret=None, GUIntBig ** ppanHistogram=None, int force=1, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"""
         return _gdal.Band_GetDefaultHistogram(self, *args, **kwargs)
 
-    def SetDefaultHistogram(self, *args):
+    def SetDefaultHistogram(self, *args) -> "CPLErr":
         r"""SetDefaultHistogram(Band self, double min, double max, int buckets_in) -> CPLErr"""
         return _gdal.Band_SetDefaultHistogram(self, *args)
 
-    def HasArbitraryOverviews(self, *args):
+    def HasArbitraryOverviews(self, *args) -> "bool":
         r"""HasArbitraryOverviews(Band self) -> bool"""
         return _gdal.Band_HasArbitraryOverviews(self, *args)
 
-    def GetCategoryNames(self, *args):
+    def GetCategoryNames(self, *args) -> "char **":
         r"""GetCategoryNames(Band self) -> char **"""
         return _gdal.Band_GetCategoryNames(self, *args)
 
-    def SetCategoryNames(self, *args):
+    def SetCategoryNames(self, *args) -> "CPLErr":
         r"""SetCategoryNames(Band self, char ** papszCategoryNames) -> CPLErr"""
         return _gdal.Band_SetCategoryNames(self, *args)
 
-    def GetVirtualMem(self, *args, **kwargs):
+    def GetVirtualMem(self, *args, **kwargs) -> "CPLVirtualMemShadow *":
         r"""GetVirtualMem(Band self, GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize, int nBufXSize, int nBufYSize, GDALDataType eBufType, size_t nCacheSize, size_t nPageSizeHint, char ** options=None) -> VirtualMem"""
         return _gdal.Band_GetVirtualMem(self, *args, **kwargs)
 
-    def GetVirtualMemAuto(self, *args, **kwargs):
+    def GetVirtualMemAuto(self, *args, **kwargs) -> "CPLVirtualMemShadow *":
         r"""GetVirtualMemAuto(Band self, GDALRWFlag eRWFlag, char ** options=None) -> VirtualMem"""
         return _gdal.Band_GetVirtualMemAuto(self, *args, **kwargs)
 
-    def GetTiledVirtualMem(self, *args, **kwargs):
+    def GetTiledVirtualMem(self, *args, **kwargs) -> "CPLVirtualMemShadow *":
         r"""GetTiledVirtualMem(Band self, GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize, int nTileXSize, int nTileYSize, GDALDataType eBufType, size_t nCacheSize, char ** options=None) -> VirtualMem"""
         return _gdal.Band_GetTiledVirtualMem(self, *args, **kwargs)
 
-    def GetDataCoverageStatus(self, *args):
+    def GetDataCoverageStatus(self, *args) -> "int":
         r"""GetDataCoverageStatus(Band self, int nXOff, int nYOff, int nXSize, int nYSize, int nMaskFlagStop=0) -> int"""
         return _gdal.Band_GetDataCoverageStatus(self, *args)
 
-    def AdviseRead(self, *args):
+    def AdviseRead(self, *args) -> "CPLErr":
         r"""AdviseRead(Band self, int xoff, int yoff, int xsize, int ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, char ** options=None) -> CPLErr"""
         return _gdal.Band_AdviseRead(self, *args)
 
-    def AsMDArray(self, *args):
+    def AsMDArray(self, *args) -> "GDALMDArrayHS *":
         r"""AsMDArray(Band self) -> MDArray"""
         return _gdal.Band_AsMDArray(self, *args)
 
-    def ReadRaster1(self, *args, **kwargs):
+    def ReadRaster1(self, *args, **kwargs) -> "CPLErr":
         r"""ReadRaster1(Band self, double xoff, double yoff, double xsize, double ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour, GDALProgressFunc callback=0, void * callback_data=None, void * inputOutputBuf=None) -> CPLErr"""
         return _gdal.Band_ReadRaster1(self, *args, **kwargs)
 
-    def ReadBlock(self, *args, **kwargs):
+    def ReadBlock(self, *args, **kwargs) -> "CPLErr":
         r"""ReadBlock(Band self, int xoff, int yoff, void * buf_obj=None) -> CPLErr"""
         return _gdal.Band_ReadBlock(self, *args, **kwargs)
 
@@ -3797,7 +3805,7 @@ class Band(MajorObject):
           if options is None:
               virtualmem = self.GetVirtualMemAuto(eAccess)
           else:
-              virtualmem = self.GetVirtualMemAuto(eAccess,options)
+              virtualmem = self.GetVirtualMemAuto(eAccess, options)
           return gdal_array.VirtualMemGetArray( virtualmem )
 
     def GetTiledVirtualMemArray(self, eAccess=gdalconst.GF_Read, xoff=0, yoff=0,
@@ -3818,9 +3826,9 @@ class Band(MajorObject):
           if datatype is None:
               datatype = self.DataType
           if options is None:
-              virtualmem = self.GetTiledVirtualMem(eAccess,xoff,yoff,xsize,ysize,tilexsize,tileysize,datatype,cache_size)
+              virtualmem = self.GetTiledVirtualMem(eAccess, xoff, yoff, xsize, ysize, tilexsize, tileysize, datatype, cache_size)
           else:
-              virtualmem = self.GetTiledVirtualMem(eAccess,xoff,yoff,xsize,ysize,tilexsize,tileysize,datatype,cache_size,options)
+              virtualmem = self.GetTiledVirtualMem(eAccess, xoff, yoff, xsize, ysize, tilexsize, tileysize, datatype, cache_size, options)
           return gdal_array.VirtualMemGetArray( virtualmem )
 
     def GetNoDataValue(self):
@@ -3862,31 +3870,31 @@ class ColorTable(object):
         _gdal.ColorTable_swiginit(self, _gdal.new_ColorTable(*args, **kwargs))
     __swig_destroy__ = _gdal.delete_ColorTable
 
-    def Clone(self, *args):
+    def Clone(self, *args) -> "GDALColorTableShadow *":
         r"""Clone(ColorTable self) -> ColorTable"""
         return _gdal.ColorTable_Clone(self, *args)
 
-    def GetPaletteInterpretation(self, *args):
+    def GetPaletteInterpretation(self, *args) -> "GDALPaletteInterp":
         r"""GetPaletteInterpretation(ColorTable self) -> GDALPaletteInterp"""
         return _gdal.ColorTable_GetPaletteInterpretation(self, *args)
 
-    def GetCount(self, *args):
+    def GetCount(self, *args) -> "int":
         r"""GetCount(ColorTable self) -> int"""
         return _gdal.ColorTable_GetCount(self, *args)
 
-    def GetColorEntry(self, *args):
+    def GetColorEntry(self, *args) -> "GDALColorEntry *":
         r"""GetColorEntry(ColorTable self, int entry) -> ColorEntry"""
         return _gdal.ColorTable_GetColorEntry(self, *args)
 
-    def GetColorEntryAsRGB(self, *args):
+    def GetColorEntryAsRGB(self, *args) -> "int":
         r"""GetColorEntryAsRGB(ColorTable self, int entry, ColorEntry centry) -> int"""
         return _gdal.ColorTable_GetColorEntryAsRGB(self, *args)
 
-    def SetColorEntry(self, *args):
+    def SetColorEntry(self, *args) -> "void":
         r"""SetColorEntry(ColorTable self, int entry, ColorEntry centry)"""
         return _gdal.ColorTable_SetColorEntry(self, *args)
 
-    def CreateColorRamp(self, *args):
+    def CreateColorRamp(self, *args) -> "void":
         r"""CreateColorRamp(ColorTable self, int nStartIndex, ColorEntry startcolor, int nEndIndex, ColorEntry endcolor)"""
         return _gdal.ColorTable_CreateColorRamp(self, *args)
 
@@ -3904,91 +3912,91 @@ class RasterAttributeTable(object):
         _gdal.RasterAttributeTable_swiginit(self, _gdal.new_RasterAttributeTable(*args))
     __swig_destroy__ = _gdal.delete_RasterAttributeTable
 
-    def Clone(self, *args):
+    def Clone(self, *args) -> "GDALRasterAttributeTableShadow *":
         r"""Clone(RasterAttributeTable self) -> RasterAttributeTable"""
         return _gdal.RasterAttributeTable_Clone(self, *args)
 
-    def GetColumnCount(self, *args):
+    def GetColumnCount(self, *args) -> "int":
         r"""GetColumnCount(RasterAttributeTable self) -> int"""
         return _gdal.RasterAttributeTable_GetColumnCount(self, *args)
 
-    def GetNameOfCol(self, *args):
+    def GetNameOfCol(self, *args) -> "char const *":
         r"""GetNameOfCol(RasterAttributeTable self, int iCol) -> char const *"""
         return _gdal.RasterAttributeTable_GetNameOfCol(self, *args)
 
-    def GetUsageOfCol(self, *args):
+    def GetUsageOfCol(self, *args) -> "GDALRATFieldUsage":
         r"""GetUsageOfCol(RasterAttributeTable self, int iCol) -> GDALRATFieldUsage"""
         return _gdal.RasterAttributeTable_GetUsageOfCol(self, *args)
 
-    def GetTypeOfCol(self, *args):
+    def GetTypeOfCol(self, *args) -> "GDALRATFieldType":
         r"""GetTypeOfCol(RasterAttributeTable self, int iCol) -> GDALRATFieldType"""
         return _gdal.RasterAttributeTable_GetTypeOfCol(self, *args)
 
-    def GetColOfUsage(self, *args):
+    def GetColOfUsage(self, *args) -> "int":
         r"""GetColOfUsage(RasterAttributeTable self, GDALRATFieldUsage eUsage) -> int"""
         return _gdal.RasterAttributeTable_GetColOfUsage(self, *args)
 
-    def GetRowCount(self, *args):
+    def GetRowCount(self, *args) -> "int":
         r"""GetRowCount(RasterAttributeTable self) -> int"""
         return _gdal.RasterAttributeTable_GetRowCount(self, *args)
 
-    def GetValueAsString(self, *args):
+    def GetValueAsString(self, *args) -> "char const *":
         r"""GetValueAsString(RasterAttributeTable self, int iRow, int iCol) -> char const *"""
         return _gdal.RasterAttributeTable_GetValueAsString(self, *args)
 
-    def GetValueAsInt(self, *args):
+    def GetValueAsInt(self, *args) -> "int":
         r"""GetValueAsInt(RasterAttributeTable self, int iRow, int iCol) -> int"""
         return _gdal.RasterAttributeTable_GetValueAsInt(self, *args)
 
-    def GetValueAsDouble(self, *args):
+    def GetValueAsDouble(self, *args) -> "double":
         r"""GetValueAsDouble(RasterAttributeTable self, int iRow, int iCol) -> double"""
         return _gdal.RasterAttributeTable_GetValueAsDouble(self, *args)
 
-    def SetValueAsString(self, *args):
+    def SetValueAsString(self, *args) -> "void":
         r"""SetValueAsString(RasterAttributeTable self, int iRow, int iCol, char const * pszValue)"""
         return _gdal.RasterAttributeTable_SetValueAsString(self, *args)
 
-    def SetValueAsInt(self, *args):
+    def SetValueAsInt(self, *args) -> "void":
         r"""SetValueAsInt(RasterAttributeTable self, int iRow, int iCol, int nValue)"""
         return _gdal.RasterAttributeTable_SetValueAsInt(self, *args)
 
-    def SetValueAsDouble(self, *args):
+    def SetValueAsDouble(self, *args) -> "void":
         r"""SetValueAsDouble(RasterAttributeTable self, int iRow, int iCol, double dfValue)"""
         return _gdal.RasterAttributeTable_SetValueAsDouble(self, *args)
 
-    def SetRowCount(self, *args):
+    def SetRowCount(self, *args) -> "void":
         r"""SetRowCount(RasterAttributeTable self, int nCount)"""
         return _gdal.RasterAttributeTable_SetRowCount(self, *args)
 
-    def CreateColumn(self, *args):
+    def CreateColumn(self, *args) -> "int":
         r"""CreateColumn(RasterAttributeTable self, char const * pszName, GDALRATFieldType eType, GDALRATFieldUsage eUsage) -> int"""
         return _gdal.RasterAttributeTable_CreateColumn(self, *args)
 
-    def GetLinearBinning(self, *args):
+    def GetLinearBinning(self, *args) -> "bool":
         r"""GetLinearBinning(RasterAttributeTable self) -> bool"""
         return _gdal.RasterAttributeTable_GetLinearBinning(self, *args)
 
-    def SetLinearBinning(self, *args):
+    def SetLinearBinning(self, *args) -> "int":
         r"""SetLinearBinning(RasterAttributeTable self, double dfRow0Min, double dfBinSize) -> int"""
         return _gdal.RasterAttributeTable_SetLinearBinning(self, *args)
 
-    def GetRowOfValue(self, *args):
+    def GetRowOfValue(self, *args) -> "int":
         r"""GetRowOfValue(RasterAttributeTable self, double dfValue) -> int"""
         return _gdal.RasterAttributeTable_GetRowOfValue(self, *args)
 
-    def ChangesAreWrittenToFile(self, *args):
+    def ChangesAreWrittenToFile(self, *args) -> "int":
         r"""ChangesAreWrittenToFile(RasterAttributeTable self) -> int"""
         return _gdal.RasterAttributeTable_ChangesAreWrittenToFile(self, *args)
 
-    def DumpReadable(self, *args):
+    def DumpReadable(self, *args) -> "void":
         r"""DumpReadable(RasterAttributeTable self)"""
         return _gdal.RasterAttributeTable_DumpReadable(self, *args)
 
-    def SetTableType(self, *args):
+    def SetTableType(self, *args) -> "void":
         r"""SetTableType(RasterAttributeTable self, GDALRATTableType eTableType)"""
         return _gdal.RasterAttributeTable_SetTableType(self, *args)
 
-    def GetTableType(self, *args):
+    def GetTableType(self, *args) -> "GDALRATTableType":
         r"""GetTableType(RasterAttributeTable self) -> GDALRATTableType"""
         return _gdal.RasterAttributeTable_GetTableType(self, *args)
 
@@ -4006,62 +4014,164 @@ class RasterAttributeTable(object):
 # Register RasterAttributeTable in _gdal:
 _gdal.RasterAttributeTable_swigregister(RasterAttributeTable)
 
+class Relationship(object):
+    r"""Proxy of C++ GDALRelationshipShadow class."""
 
-def TermProgress_nocb(*args, **kwargs):
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    __repr__ = _swig_repr
+
+    def __init__(self, *args):
+        r"""__init__(Relationship self, char const * name, char const * leftTableName, char const * rightTableName, GDALRelationshipCardinality cardinality) -> Relationship"""
+        _gdal.Relationship_swiginit(self, _gdal.new_Relationship(*args))
+    __swig_destroy__ = _gdal.delete_Relationship
+
+    def GetName(self, *args) -> "char const *":
+        r"""GetName(Relationship self) -> char const *"""
+        return _gdal.Relationship_GetName(self, *args)
+
+    def GetCardinality(self, *args) -> "GDALRelationshipCardinality":
+        r"""GetCardinality(Relationship self) -> GDALRelationshipCardinality"""
+        return _gdal.Relationship_GetCardinality(self, *args)
+
+    def GetLeftTableName(self, *args) -> "char const *":
+        r"""GetLeftTableName(Relationship self) -> char const *"""
+        return _gdal.Relationship_GetLeftTableName(self, *args)
+
+    def GetRightTableName(self, *args) -> "char const *":
+        r"""GetRightTableName(Relationship self) -> char const *"""
+        return _gdal.Relationship_GetRightTableName(self, *args)
+
+    def GetMappingTableName(self, *args) -> "char const *":
+        r"""GetMappingTableName(Relationship self) -> char const *"""
+        return _gdal.Relationship_GetMappingTableName(self, *args)
+
+    def SetMappingTableName(self, *args) -> "void":
+        r"""SetMappingTableName(Relationship self, char const * pszName)"""
+        return _gdal.Relationship_SetMappingTableName(self, *args)
+
+    def GetLeftTableFields(self, *args) -> "char **":
+        r"""GetLeftTableFields(Relationship self) -> char **"""
+        return _gdal.Relationship_GetLeftTableFields(self, *args)
+
+    def GetRightTableFields(self, *args) -> "char **":
+        r"""GetRightTableFields(Relationship self) -> char **"""
+        return _gdal.Relationship_GetRightTableFields(self, *args)
+
+    def SetLeftTableFields(self, *args) -> "void":
+        r"""SetLeftTableFields(Relationship self, char ** pFields)"""
+        return _gdal.Relationship_SetLeftTableFields(self, *args)
+
+    def SetRightTableFields(self, *args) -> "void":
+        r"""SetRightTableFields(Relationship self, char ** pFields)"""
+        return _gdal.Relationship_SetRightTableFields(self, *args)
+
+    def GetLeftMappingTableFields(self, *args) -> "char **":
+        r"""GetLeftMappingTableFields(Relationship self) -> char **"""
+        return _gdal.Relationship_GetLeftMappingTableFields(self, *args)
+
+    def GetRightMappingTableFields(self, *args) -> "char **":
+        r"""GetRightMappingTableFields(Relationship self) -> char **"""
+        return _gdal.Relationship_GetRightMappingTableFields(self, *args)
+
+    def SetLeftMappingTableFields(self, *args) -> "void":
+        r"""SetLeftMappingTableFields(Relationship self, char ** pFields)"""
+        return _gdal.Relationship_SetLeftMappingTableFields(self, *args)
+
+    def SetRightMappingTableFields(self, *args) -> "void":
+        r"""SetRightMappingTableFields(Relationship self, char ** pFields)"""
+        return _gdal.Relationship_SetRightMappingTableFields(self, *args)
+
+    def GetType(self, *args) -> "GDALRelationshipType":
+        r"""GetType(Relationship self) -> GDALRelationshipType"""
+        return _gdal.Relationship_GetType(self, *args)
+
+    def SetType(self, *args) -> "void":
+        r"""SetType(Relationship self, GDALRelationshipType type)"""
+        return _gdal.Relationship_SetType(self, *args)
+
+    def GetForwardPathLabel(self, *args) -> "char const *":
+        r"""GetForwardPathLabel(Relationship self) -> char const *"""
+        return _gdal.Relationship_GetForwardPathLabel(self, *args)
+
+    def SetForwardPathLabel(self, *args) -> "void":
+        r"""SetForwardPathLabel(Relationship self, char const * pszLabel)"""
+        return _gdal.Relationship_SetForwardPathLabel(self, *args)
+
+    def GetBackwardPathLabel(self, *args) -> "char const *":
+        r"""GetBackwardPathLabel(Relationship self) -> char const *"""
+        return _gdal.Relationship_GetBackwardPathLabel(self, *args)
+
+    def SetBackwardPathLabel(self, *args) -> "void":
+        r"""SetBackwardPathLabel(Relationship self, char const * pszLabel)"""
+        return _gdal.Relationship_SetBackwardPathLabel(self, *args)
+
+    def GetRelatedTableType(self, *args) -> "char const *":
+        r"""GetRelatedTableType(Relationship self) -> char const *"""
+        return _gdal.Relationship_GetRelatedTableType(self, *args)
+
+    def SetRelatedTableType(self, *args) -> "void":
+        r"""SetRelatedTableType(Relationship self, char const * pszType)"""
+        return _gdal.Relationship_SetRelatedTableType(self, *args)
+
+# Register Relationship in _gdal:
+_gdal.Relationship_swigregister(Relationship)
+
+
+def TermProgress_nocb(*args, **kwargs) -> "int":
     r"""TermProgress_nocb(double dfProgress, char const * pszMessage=None, void * pData=None) -> int"""
     return _gdal.TermProgress_nocb(*args, **kwargs)
 TermProgress = _gdal.TermProgress
 
 
-def ComputeMedianCutPCT(*args, **kwargs):
+def ComputeMedianCutPCT(*args, **kwargs) -> "int":
     r"""ComputeMedianCutPCT(Band red, Band green, Band blue, int num_colors, ColorTable colors, GDALProgressFunc callback=0, void * callback_data=None) -> int"""
     return _gdal.ComputeMedianCutPCT(*args, **kwargs)
 
-def DitherRGB2PCT(*args, **kwargs):
+def DitherRGB2PCT(*args, **kwargs) -> "int":
     r"""DitherRGB2PCT(Band red, Band green, Band blue, Band target, ColorTable colors, GDALProgressFunc callback=0, void * callback_data=None) -> int"""
     return _gdal.DitherRGB2PCT(*args, **kwargs)
 
-def ReprojectImage(*args, **kwargs):
+def ReprojectImage(*args, **kwargs) -> "CPLErr":
     r"""ReprojectImage(Dataset src_ds, Dataset dst_ds, char const * src_wkt=None, char const * dst_wkt=None, GDALResampleAlg eResampleAlg=GRA_NearestNeighbour, double WarpMemoryLimit=0.0, double maxerror=0.0, GDALProgressFunc callback=0, void * callback_data=None, char ** options=None) -> CPLErr"""
     return _gdal.ReprojectImage(*args, **kwargs)
 
-def ComputeProximity(*args, **kwargs):
+def ComputeProximity(*args, **kwargs) -> "int":
     r"""ComputeProximity(Band srcBand, Band proximityBand, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> int"""
     return _gdal.ComputeProximity(*args, **kwargs)
 
-def RasterizeLayer(*args, **kwargs):
+def RasterizeLayer(*args, **kwargs) -> "int":
     r"""RasterizeLayer(Dataset dataset, int bands, Layer layer, void * pfnTransformer=None, void * pTransformArg=None, int burn_values=0, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> int"""
     return _gdal.RasterizeLayer(*args, **kwargs)
 
-def Polygonize(*args, **kwargs):
+def Polygonize(*args, **kwargs) -> "int":
     r"""Polygonize(Band srcBand, Band maskBand, Layer outLayer, int iPixValField, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> int"""
     return _gdal.Polygonize(*args, **kwargs)
 
-def FPolygonize(*args, **kwargs):
+def FPolygonize(*args, **kwargs) -> "int":
     r"""FPolygonize(Band srcBand, Band maskBand, Layer outLayer, int iPixValField, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> int"""
     return _gdal.FPolygonize(*args, **kwargs)
 
-def FillNodata(*args, **kwargs):
+def FillNodata(*args, **kwargs) -> "int":
     r"""FillNodata(Band targetBand, Band maskBand, double maxSearchDist, int smoothingIterations, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> int"""
     return _gdal.FillNodata(*args, **kwargs)
 
-def SieveFilter(*args, **kwargs):
+def SieveFilter(*args, **kwargs) -> "int":
     r"""SieveFilter(Band srcBand, Band maskBand, Band dstBand, int threshold, int connectedness=4, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> int"""
     return _gdal.SieveFilter(*args, **kwargs)
 
-def RegenerateOverviews(*args, **kwargs):
+def RegenerateOverviews(*args, **kwargs) -> "int":
     r"""RegenerateOverviews(Band srcBand, int overviewBandCount, char const * resampling="average", GDALProgressFunc callback=0, void * callback_data=None) -> int"""
     return _gdal.RegenerateOverviews(*args, **kwargs)
 
-def RegenerateOverview(*args, **kwargs):
+def RegenerateOverview(*args, **kwargs) -> "int":
     r"""RegenerateOverview(Band srcBand, Band overviewBand, char const * resampling="average", GDALProgressFunc callback=0, void * callback_data=None) -> int"""
     return _gdal.RegenerateOverview(*args, **kwargs)
 
-def ContourGenerate(*args, **kwargs):
+def ContourGenerate(*args, **kwargs) -> "int":
     r"""ContourGenerate(Band srcBand, double contourInterval, double contourBase, int fixedLevelCount, int useNoData, double noDataValue, Layer dstLayer, int idField, int elevField, GDALProgressFunc callback=0, void * callback_data=None) -> int"""
     return _gdal.ContourGenerate(*args, **kwargs)
 
-def ContourGenerateEx(*args, **kwargs):
+def ContourGenerateEx(*args, **kwargs) -> "int":
     r"""ContourGenerateEx(Band srcBand, Layer dstLayer, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> int"""
     return _gdal.ContourGenerateEx(*args, **kwargs)
 GVM_Diagonal = _gdal.GVM_Diagonal
@@ -4079,15 +4189,15 @@ GVOT_MIN_TARGET_HEIGHT_FROM_DEM = _gdal.GVOT_MIN_TARGET_HEIGHT_FROM_DEM
 GVOT_MIN_TARGET_HEIGHT_FROM_GROUND = _gdal.GVOT_MIN_TARGET_HEIGHT_FROM_GROUND
 
 
-def ViewshedGenerate(*args, **kwargs):
-    r"""ViewshedGenerate(Band srcBand, char const * driverName, char const * targetRasterName, char ** creationOptions, double observerX, double observerY, double observerHeight, double targetHeight, double visibleVal, double invisibleVal, double outOfRangeVal, double noDataVal, double dfCurvCoeff, GDALViewshedMode mode, double maxDistance, GDALProgressFunc callback=0, void * callback_data=None, GDALViewshedOutputType heightMode=GVOT_NORMAL, char ** papszOptions=None) -> Dataset"""
+def ViewshedGenerate(*args, **kwargs) -> "GDALDatasetShadow *":
+    r"""ViewshedGenerate(Band srcBand, char const * driverName, char const * targetRasterName, char ** creationOptions, double observerX, double observerY, double observerHeight, double targetHeight, double visibleVal, double invisibleVal, double outOfRangeVal, double noDataVal, double dfCurvCoeff, GDALViewshedMode mode, double maxDistance, GDALProgressFunc callback=0, void * callback_data=None, GDALViewshedOutputType heightMode=GVOT_NORMAL, char ** options=None) -> Dataset"""
     return _gdal.ViewshedGenerate(*args, **kwargs)
 
-def AutoCreateWarpedVRT(*args):
+def AutoCreateWarpedVRT(*args) -> "GDALDatasetShadow *":
     r"""AutoCreateWarpedVRT(Dataset src_ds, char const * src_wkt=None, char const * dst_wkt=None, GDALResampleAlg eResampleAlg=GRA_NearestNeighbour, double maxerror=0.0) -> Dataset"""
     return _gdal.AutoCreateWarpedVRT(*args)
 
-def CreatePansharpenedVRT(*args):
+def CreatePansharpenedVRT(*args) -> "GDALDatasetShadow *":
     r"""CreatePansharpenedVRT(char const * pszXML, Band panchroBand, int nInputSpectralBands) -> Dataset"""
     return _gdal.CreatePansharpenedVRT(*args)
 class GDALTransformerInfoShadow(object):
@@ -4100,18 +4210,18 @@ class GDALTransformerInfoShadow(object):
     __repr__ = _swig_repr
     __swig_destroy__ = _gdal.delete_GDALTransformerInfoShadow
 
-    def TransformPoint(self, *args):
+    def TransformPoint(self, *args) -> "int":
         r"""
         TransformPoint(GDALTransformerInfoShadow self, int bDstToSrc, double [3] inout) -> int
         TransformPoint(GDALTransformerInfoShadow self, int bDstToSrc, double x, double y, double z=0.0) -> int
         """
         return _gdal.GDALTransformerInfoShadow_TransformPoint(self, *args)
 
-    def TransformPoints(self, *args):
+    def TransformPoints(self, *args) -> "int":
         r"""TransformPoints(GDALTransformerInfoShadow self, int bDstToSrc, int nCount) -> int"""
         return _gdal.GDALTransformerInfoShadow_TransformPoints(self, *args)
 
-    def TransformGeolocations(self, *args, **kwargs):
+    def TransformGeolocations(self, *args, **kwargs) -> "int":
         r"""TransformGeolocations(GDALTransformerInfoShadow self, Band xBand, Band yBand, Band zBand, GDALProgressFunc callback=0, void * callback_data=None, char ** options=None) -> int"""
         return _gdal.GDALTransformerInfoShadow_TransformGeolocations(self, *args, **kwargs)
 
@@ -4119,135 +4229,135 @@ class GDALTransformerInfoShadow(object):
 _gdal.GDALTransformerInfoShadow_swigregister(GDALTransformerInfoShadow)
 
 
-def Transformer(*args):
+def Transformer(*args) -> "GDALTransformerInfoShadow *":
     r"""Transformer(Dataset src, Dataset dst, char ** options) -> GDALTransformerInfoShadow"""
     return _gdal.Transformer(*args)
 
-def _ApplyVerticalShiftGrid(*args, **kwargs):
+def _ApplyVerticalShiftGrid(*args, **kwargs) -> "GDALDatasetShadow *":
     r"""_ApplyVerticalShiftGrid(Dataset src_ds, Dataset grid_ds, bool inverse=False, double srcUnitToMeter=1.0, double dstUnitToMeter=1.0, char ** options=None) -> Dataset"""
     return _gdal._ApplyVerticalShiftGrid(*args, **kwargs)
 
-def ApplyGeoTransform(*args):
+def ApplyGeoTransform(*args) -> "double *, double *":
     r"""ApplyGeoTransform(double [6] padfGeoTransform, double dfPixel, double dfLine)"""
     return _gdal.ApplyGeoTransform(*args)
 
-def InvGeoTransform(*args):
+def InvGeoTransform(*args) -> "double [6]":
     r"""InvGeoTransform(double [6] gt_in) -> RETURN_NONE"""
     return _gdal.InvGeoTransform(*args)
 
-def VersionInfo(*args):
+def VersionInfo(*args) -> "char const *":
     r"""VersionInfo(char const * request="VERSION_NUM") -> char const *"""
     return _gdal.VersionInfo(*args)
 
-def AllRegister(*args):
+def AllRegister(*args) -> "void":
     r"""AllRegister()"""
     return _gdal.AllRegister(*args)
 
-def GDALDestroyDriverManager(*args):
+def GDALDestroyDriverManager(*args) -> "void":
     r"""GDALDestroyDriverManager()"""
     return _gdal.GDALDestroyDriverManager(*args)
 
-def GetCacheMax(*args):
+def GetCacheMax(*args) -> "GIntBig":
     r"""GetCacheMax() -> GIntBig"""
     return _gdal.GetCacheMax(*args)
 
-def GetCacheUsed(*args):
+def GetCacheUsed(*args) -> "GIntBig":
     r"""GetCacheUsed() -> GIntBig"""
     return _gdal.GetCacheUsed(*args)
 
-def SetCacheMax(*args):
+def SetCacheMax(*args) -> "void":
     r"""SetCacheMax(GIntBig nBytes)"""
     return _gdal.SetCacheMax(*args)
 
-def GetDataTypeSize(*args):
+def GetDataTypeSize(*args) -> "int":
     r"""GetDataTypeSize(GDALDataType eDataType) -> int"""
     return _gdal.GetDataTypeSize(*args)
 
-def DataTypeIsComplex(*args):
+def DataTypeIsComplex(*args) -> "int":
     r"""DataTypeIsComplex(GDALDataType eDataType) -> int"""
     return _gdal.DataTypeIsComplex(*args)
 
-def GetDataTypeName(*args):
+def GetDataTypeName(*args) -> "char const *":
     r"""GetDataTypeName(GDALDataType eDataType) -> char const *"""
     return _gdal.GetDataTypeName(*args)
 
-def GetDataTypeByName(*args):
+def GetDataTypeByName(*args) -> "GDALDataType":
     r"""GetDataTypeByName(char const * pszDataTypeName) -> GDALDataType"""
     return _gdal.GetDataTypeByName(*args)
 
-def DataTypeUnion(*args):
+def DataTypeUnion(*args) -> "GDALDataType":
     r"""DataTypeUnion(GDALDataType a, GDALDataType b) -> GDALDataType"""
     return _gdal.DataTypeUnion(*args)
 
-def GetColorInterpretationName(*args):
+def GetColorInterpretationName(*args) -> "char const *":
     r"""GetColorInterpretationName(GDALColorInterp eColorInterp) -> char const *"""
     return _gdal.GetColorInterpretationName(*args)
 
-def GetPaletteInterpretationName(*args):
+def GetPaletteInterpretationName(*args) -> "char const *":
     r"""GetPaletteInterpretationName(GDALPaletteInterp ePaletteInterp) -> char const *"""
     return _gdal.GetPaletteInterpretationName(*args)
 
-def DecToDMS(*args):
+def DecToDMS(*args) -> "char const *":
     r"""DecToDMS(double arg1, char const * arg2, int arg3=2) -> char const *"""
     return _gdal.DecToDMS(*args)
 
-def PackedDMSToDec(*args):
+def PackedDMSToDec(*args) -> "double":
     r"""PackedDMSToDec(double dfPacked) -> double"""
     return _gdal.PackedDMSToDec(*args)
 
-def DecToPackedDMS(*args):
+def DecToPackedDMS(*args) -> "double":
     r"""DecToPackedDMS(double dfDec) -> double"""
     return _gdal.DecToPackedDMS(*args)
 
-def ParseXMLString(*args):
+def ParseXMLString(*args) -> "CPLXMLNode *":
     r"""ParseXMLString(char * pszXMLString) -> CPLXMLNode *"""
     return _gdal.ParseXMLString(*args)
 
-def SerializeXMLTree(*args):
+def SerializeXMLTree(*args) -> "retStringAndCPLFree *":
     r"""SerializeXMLTree(CPLXMLNode * xmlnode) -> retStringAndCPLFree *"""
     return _gdal.SerializeXMLTree(*args)
 
-def GetJPEG2000Structure(*args):
+def GetJPEG2000Structure(*args) -> "CPLXMLNode *":
     r"""GetJPEG2000Structure(char const * pszFilename, char ** options=None) -> CPLXMLNode *"""
     return _gdal.GetJPEG2000Structure(*args)
 
-def GetJPEG2000StructureAsString(*args):
+def GetJPEG2000StructureAsString(*args) -> "retStringAndCPLFree *":
     r"""GetJPEG2000StructureAsString(char const * pszFilename, char ** options=None) -> retStringAndCPLFree *"""
     return _gdal.GetJPEG2000StructureAsString(*args)
 
-def GetDriverCount(*args):
+def GetDriverCount(*args) -> "int":
     r"""GetDriverCount() -> int"""
     return _gdal.GetDriverCount(*args)
 
-def GetDriverByName(*args):
+def GetDriverByName(*args) -> "GDALDriverShadow *":
     r"""GetDriverByName(char const * name) -> Driver"""
     return _gdal.GetDriverByName(*args)
 
-def GetDriver(*args):
+def GetDriver(*args) -> "GDALDriverShadow *":
     r"""GetDriver(int i) -> Driver"""
     return _gdal.GetDriver(*args)
 
-def Open(*args):
+def Open(*args) -> "GDALDatasetShadow *":
     r"""Open(char const * utf8_path, GDALAccess eAccess=GA_ReadOnly) -> Dataset"""
     return _gdal.Open(*args)
 
-def OpenEx(*args, **kwargs):
+def OpenEx(*args, **kwargs) -> "GDALDatasetShadow *":
     r"""OpenEx(char const * utf8_path, unsigned int nOpenFlags=0, char ** allowed_drivers=None, char ** open_options=None, char ** sibling_files=None) -> Dataset"""
     return _gdal.OpenEx(*args, **kwargs)
 
-def OpenShared(*args):
+def OpenShared(*args) -> "GDALDatasetShadow *":
     r"""OpenShared(char const * utf8_path, GDALAccess eAccess=GA_ReadOnly) -> Dataset"""
     return _gdal.OpenShared(*args)
 
-def IdentifyDriver(*args):
+def IdentifyDriver(*args) -> "GDALDriverShadow *":
     r"""IdentifyDriver(char const * utf8_path, char ** papszSiblings=None) -> Driver"""
     return _gdal.IdentifyDriver(*args)
 
-def IdentifyDriverEx(*args, **kwargs):
+def IdentifyDriverEx(*args, **kwargs) -> "GDALDriverShadow *":
     r"""IdentifyDriverEx(char const * utf8_path, unsigned int nIdentifyFlags=0, char ** allowed_drivers=None, char ** sibling_files=None) -> Driver"""
     return _gdal.IdentifyDriverEx(*args, **kwargs)
 
-def GeneralCmdLineProcessor(*args):
+def GeneralCmdLineProcessor(*args) -> "char **":
     r"""GeneralCmdLineProcessor(char ** papszArgv, int nOptions=0) -> char **"""
     return _gdal.GeneralCmdLineProcessor(*args)
 
@@ -4268,7 +4378,7 @@ class GDALInfoOptions(object):
 _gdal.GDALInfoOptions_swigregister(GDALInfoOptions)
 
 
-def InfoInternal(*args):
+def InfoInternal(*args) -> "retStringAndCPLFree *":
     r"""InfoInternal(Dataset hDataset, GDALInfoOptions infoOptions) -> retStringAndCPLFree *"""
     return _gdal.InfoInternal(*args)
 class GDALMultiDimInfoOptions(object):
@@ -4286,7 +4396,7 @@ class GDALMultiDimInfoOptions(object):
 _gdal.GDALMultiDimInfoOptions_swigregister(GDALMultiDimInfoOptions)
 
 
-def MultiDimInfoInternal(*args):
+def MultiDimInfoInternal(*args) -> "retStringAndCPLFree *":
     r"""MultiDimInfoInternal(Dataset hDataset, GDALMultiDimInfoOptions infoOptions) -> retStringAndCPLFree *"""
     return _gdal.MultiDimInfoInternal(*args)
 class GDALTranslateOptions(object):
@@ -4304,7 +4414,7 @@ class GDALTranslateOptions(object):
 _gdal.GDALTranslateOptions_swigregister(GDALTranslateOptions)
 
 
-def TranslateInternal(*args):
+def TranslateInternal(*args) -> "GDALDatasetShadow *":
     r"""TranslateInternal(char const * dest, Dataset dataset, GDALTranslateOptions translateOptions, GDALProgressFunc callback=0, void * callback_data=None) -> Dataset"""
     return _gdal.TranslateInternal(*args)
 class GDALWarpAppOptions(object):
@@ -4322,11 +4432,11 @@ class GDALWarpAppOptions(object):
 _gdal.GDALWarpAppOptions_swigregister(GDALWarpAppOptions)
 
 
-def wrapper_GDALWarpDestDS(*args):
+def wrapper_GDALWarpDestDS(*args) -> "int":
     r"""wrapper_GDALWarpDestDS(Dataset dstDS, int object_list_count, GDALWarpAppOptions warpAppOptions, GDALProgressFunc callback=0, void * callback_data=None) -> int"""
     return _gdal.wrapper_GDALWarpDestDS(*args)
 
-def wrapper_GDALWarpDestName(*args):
+def wrapper_GDALWarpDestName(*args) -> "GDALDatasetShadow *":
     r"""wrapper_GDALWarpDestName(char const * dest, int object_list_count, GDALWarpAppOptions warpAppOptions, GDALProgressFunc callback=0, void * callback_data=None) -> Dataset"""
     return _gdal.wrapper_GDALWarpDestName(*args)
 class GDALVectorTranslateOptions(object):
@@ -4344,11 +4454,11 @@ class GDALVectorTranslateOptions(object):
 _gdal.GDALVectorTranslateOptions_swigregister(GDALVectorTranslateOptions)
 
 
-def wrapper_GDALVectorTranslateDestDS(*args):
+def wrapper_GDALVectorTranslateDestDS(*args) -> "int":
     r"""wrapper_GDALVectorTranslateDestDS(Dataset dstDS, Dataset srcDS, GDALVectorTranslateOptions options, GDALProgressFunc callback=0, void * callback_data=None) -> int"""
     return _gdal.wrapper_GDALVectorTranslateDestDS(*args)
 
-def wrapper_GDALVectorTranslateDestName(*args):
+def wrapper_GDALVectorTranslateDestName(*args) -> "GDALDatasetShadow *":
     r"""wrapper_GDALVectorTranslateDestName(char const * dest, Dataset srcDS, GDALVectorTranslateOptions options, GDALProgressFunc callback=0, void * callback_data=None) -> Dataset"""
     return _gdal.wrapper_GDALVectorTranslateDestName(*args)
 class GDALDEMProcessingOptions(object):
@@ -4366,7 +4476,7 @@ class GDALDEMProcessingOptions(object):
 _gdal.GDALDEMProcessingOptions_swigregister(GDALDEMProcessingOptions)
 
 
-def DEMProcessingInternal(*args):
+def DEMProcessingInternal(*args) -> "GDALDatasetShadow *":
     r"""DEMProcessingInternal(char const * dest, Dataset dataset, char const * pszProcessing, char const * pszColorFilename, GDALDEMProcessingOptions options, GDALProgressFunc callback=0, void * callback_data=None) -> Dataset"""
     return _gdal.DEMProcessingInternal(*args)
 class GDALNearblackOptions(object):
@@ -4384,11 +4494,11 @@ class GDALNearblackOptions(object):
 _gdal.GDALNearblackOptions_swigregister(GDALNearblackOptions)
 
 
-def wrapper_GDALNearblackDestDS(*args):
+def wrapper_GDALNearblackDestDS(*args) -> "int":
     r"""wrapper_GDALNearblackDestDS(Dataset dstDS, Dataset srcDS, GDALNearblackOptions options, GDALProgressFunc callback=0, void * callback_data=None) -> int"""
     return _gdal.wrapper_GDALNearblackDestDS(*args)
 
-def wrapper_GDALNearblackDestName(*args):
+def wrapper_GDALNearblackDestName(*args) -> "GDALDatasetShadow *":
     r"""wrapper_GDALNearblackDestName(char const * dest, Dataset srcDS, GDALNearblackOptions options, GDALProgressFunc callback=0, void * callback_data=None) -> Dataset"""
     return _gdal.wrapper_GDALNearblackDestName(*args)
 class GDALGridOptions(object):
@@ -4406,7 +4516,7 @@ class GDALGridOptions(object):
 _gdal.GDALGridOptions_swigregister(GDALGridOptions)
 
 
-def GridInternal(*args):
+def GridInternal(*args) -> "GDALDatasetShadow *":
     r"""GridInternal(char const * dest, Dataset dataset, GDALGridOptions options, GDALProgressFunc callback=0, void * callback_data=None) -> Dataset"""
     return _gdal.GridInternal(*args)
 class GDALRasterizeOptions(object):
@@ -4424,11 +4534,11 @@ class GDALRasterizeOptions(object):
 _gdal.GDALRasterizeOptions_swigregister(GDALRasterizeOptions)
 
 
-def wrapper_GDALRasterizeDestDS(*args):
+def wrapper_GDALRasterizeDestDS(*args) -> "int":
     r"""wrapper_GDALRasterizeDestDS(Dataset dstDS, Dataset srcDS, GDALRasterizeOptions options, GDALProgressFunc callback=0, void * callback_data=None) -> int"""
     return _gdal.wrapper_GDALRasterizeDestDS(*args)
 
-def wrapper_GDALRasterizeDestName(*args):
+def wrapper_GDALRasterizeDestName(*args) -> "GDALDatasetShadow *":
     r"""wrapper_GDALRasterizeDestName(char const * dest, Dataset srcDS, GDALRasterizeOptions options, GDALProgressFunc callback=0, void * callback_data=None) -> Dataset"""
     return _gdal.wrapper_GDALRasterizeDestName(*args)
 class GDALBuildVRTOptions(object):
@@ -4446,11 +4556,11 @@ class GDALBuildVRTOptions(object):
 _gdal.GDALBuildVRTOptions_swigregister(GDALBuildVRTOptions)
 
 
-def BuildVRTInternalObjects(*args):
+def BuildVRTInternalObjects(*args) -> "GDALDatasetShadow *":
     r"""BuildVRTInternalObjects(char const * dest, int object_list_count, GDALBuildVRTOptions options, GDALProgressFunc callback=0, void * callback_data=None) -> Dataset"""
     return _gdal.BuildVRTInternalObjects(*args)
 
-def BuildVRTInternalNames(*args):
+def BuildVRTInternalNames(*args) -> "GDALDatasetShadow *":
     r"""BuildVRTInternalNames(char const * dest, char ** source_filenames, GDALBuildVRTOptions options, GDALProgressFunc callback=0, void * callback_data=None) -> Dataset"""
     return _gdal.BuildVRTInternalNames(*args)
 class GDALMultiDimTranslateOptions(object):
@@ -4468,7 +4578,7 @@ class GDALMultiDimTranslateOptions(object):
 _gdal.GDALMultiDimTranslateOptions_swigregister(GDALMultiDimTranslateOptions)
 
 
-def wrapper_GDALMultiDimTranslateDestName(*args):
+def wrapper_GDALMultiDimTranslateDestName(*args) -> "GDALDatasetShadow *":
     r"""wrapper_GDALMultiDimTranslateDestName(char const * dest, int object_list_count, GDALMultiDimTranslateOptions multiDimTranslateOptions, GDALProgressFunc callback=0, void * callback_data=None) -> Dataset"""
     return _gdal.wrapper_GDALMultiDimTranslateDestName(*args)
 

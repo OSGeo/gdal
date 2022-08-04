@@ -38,7 +38,7 @@ from osgeo import osr
 
 def Usage():
     print('Usage: gcps2vec.py [-of <ogr_drivername>] [-p] <raster_file> <vector_file>')
-    return 1
+    return 2
 
 
 def main(argv=sys.argv):

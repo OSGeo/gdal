@@ -821,8 +821,8 @@ class TABRawBinBlock
     int         m_bModified;     /* Used only to detect changes        */
 
   public:
-    TABRawBinBlock(TABAccess eAccessMode = TABRead,
-                   GBool bHardBlockSize = TRUE);
+    explicit TABRawBinBlock(TABAccess eAccessMode = TABRead,
+                            GBool bHardBlockSize = TRUE);
     virtual ~TABRawBinBlock();
 
     virtual int ReadFromFile(VSILFILE *fpSrc, int nOffset, int nSize);

@@ -941,6 +941,20 @@ OGRErr AbortSQL() {
   }
   %clear OGRFieldDomainShadow* fieldDomain;
 
+%apply (char **CSL) {char **};
+  char **GetRelationshipNames(char** options = 0)
+  {
+    return GDALDatasetGetRelationshipNames(self, options);
+  }
+%clear char **;
+
+  %apply Pointer NONNULL {const char* name};
+  GDALRelationshipShadow* GetRelationship(const char* name)
+  {
+    return (GDALRelationshipShadow*) GDALDatasetGetRelationship(self, name);
+  }
+  %clear const char* name;
+
 } /* extend */
 }; /* GDALDatasetShadow */
 

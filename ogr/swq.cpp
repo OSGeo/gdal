@@ -292,8 +292,7 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
             nReturn = SWQT_OFFSET;
 
         // Unhandled by OGR SQL.
-        else if( EQUAL(osToken, "LIMIT") ||
-                 EQUAL(osToken, "OUTER") ||
+        else if( EQUAL(osToken, "OUTER") ||
                  EQUAL(osToken, "INNER") )
             nReturn = SWQT_RESERVED_KEYWORD;
 
@@ -868,6 +867,7 @@ swq_expr_node* swq_create_and_or_or(swq_op op, swq_expr_node* left, swq_expr_nod
                    right->nSubExprCount * sizeof(swq_expr_node*));
 
             right->nSubExprCount = 0;
+            CPLFree(right->papoSubExpr);
             right->papoSubExpr = nullptr;
             delete right;
         }

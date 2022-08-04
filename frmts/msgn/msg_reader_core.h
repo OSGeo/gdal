@@ -103,6 +103,7 @@ public:
     const unsigned char* get_band_map() const { return _bands; }
 
     const CALIBRATION*  get_calibration_parameters() const { return _calibration; }
+    const IMAGE_DESCRIPTION_RECORD& get_image_description_record() const { return _img_desc_record; }
 
 private:
     void read_metadata_block(VSILFILE* fp);
@@ -123,6 +124,7 @@ protected:
     MAIN_PROD_HEADER        _main_header;
     SECONDARY_PROD_HEADER   _sec_header;
     CALIBRATION             _calibration[MSG_NUM_CHANNELS];
+    IMAGE_DESCRIPTION_RECORD _img_desc_record;
 
     unsigned int _f_data_offset;
     unsigned int _f_data_size;

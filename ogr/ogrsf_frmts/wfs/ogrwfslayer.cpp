@@ -138,7 +138,7 @@ OGRWFSLayer* OGRWFSLayer::Clone()
     /* Copy existing schema file if already found */
     CPLString osSrcFileName = CPLSPrintf("/vsimem/tempwfs_%p/file.xsd", this);
     CPLString osTargetFileName = CPLSPrintf("/vsimem/tempwfs_%p/file.xsd", poDupLayer);
-    CPLCopyFile(osTargetFileName, osSrcFileName);
+    CPL_IGNORE_RET_VAL(CPLCopyFile(osTargetFileName, osSrcFileName));
 
     return poDupLayer;
 }
@@ -246,7 +246,7 @@ OGRFeatureDefn* OGRWFSLayer::DescribeFeatureType()
     }
     CPLHTTPDestroyResult(psResult);
 
-    CPLXMLNode* psSchema = WFSFindNode(psXML, "schema");
+    const CPLXMLNode* psSchema = WFSFindNode(psXML, "schema");
     if (psSchema == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find <Schema>");
@@ -267,7 +267,7 @@ OGRFeatureDefn* OGRWFSLayer::DescribeFeatureType()
 /*                            ParseSchema()                             */
 /************************************************************************/
 
-OGRFeatureDefn* OGRWFSLayer::ParseSchema(CPLXMLNode* psSchema)
+OGRFeatureDefn* OGRWFSLayer::ParseSchema(const CPLXMLNode* psSchema)
 {
     osTargetNamespace = CPLGetXMLValue(psSchema, "targetNamespace", "");
 

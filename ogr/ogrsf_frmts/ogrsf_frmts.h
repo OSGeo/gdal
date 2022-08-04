@@ -55,6 +55,8 @@
 class OGRLayerAttrIndex;
 class OGRSFDriver;
 
+struct ArrowArrayStream;
+
 /************************************************************************/
 /*                               OGRLayer                               */
 /************************************************************************/
@@ -112,6 +114,30 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     virtual OGRErr      ISetFeature( OGRFeature *poFeature ) CPL_WARN_UNUSED_RESULT;
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature )  CPL_WARN_UNUSED_RESULT;
 
+//! @cond Doxygen_Suppress
+    CPLStringList  m_aosArrowArrayStreamOptions{};
+    struct ArrowArrayStreamPrivateData
+    {
+        bool           m_bArrowArrayStreamInProgress = false;
+        OGRLayer      *m_poLayer = nullptr;
+    };
+    std::shared_ptr<ArrowArrayStreamPrivateData> m_poSharedArrowArrayStreamPrivateData{};
+    struct ArrowArrayStreamPrivateDataSharedDataWrapper
+    {
+        std::shared_ptr<ArrowArrayStreamPrivateData> poShared{};
+    };
+//! @endcond
+
+    friend class OGRArrowArrayHelper;
+    static void ReleaseArray(struct ArrowArray* array);
+    static void ReleaseSchema(struct ArrowSchema* schema);
+    static void ReleaseStream(struct ArrowArrayStream* stream);
+    virtual int GetArrowSchema(struct ArrowArrayStream*, struct ArrowSchema* out_schema);
+    virtual int GetNextArrowArray(struct ArrowArrayStream*, struct ArrowArray* out_array);
+    static int  StaticGetArrowSchema(struct ArrowArrayStream*, struct ArrowSchema* out_schema);
+    static int  StaticGetNextArrowArray(struct ArrowArrayStream*, struct ArrowArray* out_array);
+    static const char* GetLastErrorArrowArrayStream(struct ArrowArrayStream*);
+
   public:
     OGRLayer();
     virtual     ~OGRLayer();
@@ -148,6 +174,10 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     virtual OGRErr      SetNextByIndex( GIntBig nIndex );
     virtual OGRFeature *GetFeature( GIntBig nFID )  CPL_WARN_UNUSED_RESULT;
 
+    virtual GDALDataset* GetDataset();
+    virtual bool         GetArrowStream(struct ArrowArrayStream* out_stream,
+                                        CSLConstList papszOptions = nullptr);
+
     OGRErr      SetFeature( OGRFeature *poFeature )  CPL_WARN_UNUSED_RESULT;
     OGRErr      CreateFeature( OGRFeature *poFeature ) CPL_WARN_UNUSED_RESULT;
 
@@ -174,6 +204,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     virtual OGRErr      DeleteField( int iField );
     virtual OGRErr      ReorderFields( int* panMap );
     virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlagsIn );
+    virtual OGRErr      AlterGeomFieldDefn( int iGeomField, const OGRGeomFieldDefn* poNewGeomFieldDefn, int nFlagsIn );
 
     virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poField,
                                      int bApproxOK = TRUE );
@@ -507,12 +538,10 @@ void CPL_DLL RegisterOGRAVCBin();
 void CPL_DLL RegisterOGRAVCE00();
 void CPL_DLL RegisterOGRMEM();
 void CPL_DLL RegisterOGRVRT();
-void CPL_DLL RegisterOGRDODS();
 void CPL_DLL RegisterOGRSQLite();
 void CPL_DLL RegisterOGRCSV();
 void CPL_DLL RegisterOGRILI1();
 void CPL_DLL RegisterOGRILI2();
-void CPL_DLL RegisterOGRGRASS();
 void CPL_DLL RegisterOGRPGeo();
 void CPL_DLL RegisterOGRDXF();
 void CPL_DLL RegisterOGRCAD();

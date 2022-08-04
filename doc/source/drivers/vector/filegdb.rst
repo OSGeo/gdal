@@ -12,9 +12,8 @@ File Geodatabases (.gdb directories) created by ArcGIS 10 and above. The
 dataset name must be the directory/folder name, and it must end with the
 .gdb extension.
 
-Note : the :ref:`OpenFileGDB
-driver <vector.openfilegdb>` driver exists as an alternative
-built-in i.e. not depending on a third-party library) read-only driver.
+Note : the :ref:`OpenFileGDB driver <vector.openfilegdb>` driver exists as an
+alternative built-in (i.e. not depending on a third-party library) driver.
 
 Driver capabilities
 -------------------
@@ -70,6 +69,13 @@ Field domains
 
 Retrieving coded and range field domains are supported.
 Writing support has been added in GDAL 3.5.
+
+Relationships
+-------------
+
+.. versionadded:: 3.6
+
+Relationship retrieval is supported.
 
 Hiearchical organization
 ------------------------
@@ -127,7 +133,7 @@ Layer Creation Options
    required. Default to "YES"
 -  **FID**: Name of the OID column to create. Defaults to "OBJECTID".
    Note: option was called OID_NAME in releases before GDAL 2
--  **XYTOLERANCE, ZTOLERANCE**: These parameters control the snapping
+-  **XYTOLERANCE, ZTOLERANCE, MTOLERANCE**: These parameters control the snapping
    tolerance used for advanced ArcGIS features like network and topology
    rules. They won't effect any OGR operations, but they will by used by
    ArcGIS. The units of the parameters are the units of the coordinate
@@ -136,8 +142,11 @@ Layer Creation Options
    ArcMap 10.0 and OGR defaults for XYTOLERANCE are 0.001m (or
    equivalent) for projected coordinate systems, and 0.000000008983153°
    for geographic coordinate systems.
+   ArcMap 10.0 and OGR defaults for ZTOLERANCE and MTOLERANCE are 0.0001.
 
--  **XORIGIN, YORIGIN, ZORIGIN, XYSCALE, ZSCALE**: These parameters
+   ..  note:: MTOLERANCE added in GDAL 3.5.1
+
+-  **XORIGIN, YORIGIN, ZORIGIN, MORIGIN, XYSCALE, ZSCALE, MSCALE**: These parameters
    control the `coordinate precision
    grid <http://help.arcgis.com/en/sdk/10.0/java_ao_adf/conceptualhelp/engine/index.html#//00010000037m000000>`__
    inside the file geodatabase. The dimensions of the grid are
@@ -162,6 +171,10 @@ Layer Creation Options
       XYTOLERANCE of 0.001m. XORIGIN and YORIGIN change based on the
       coordinate system, but the OGR default of -2147483647 is suitable
       with the default XYSCALE for all coordinate systems.
+   -  ZORIGIN and MORIGIN: -100000
+   -  ZSCALE and MSCALE: 10000
+
+   ..  note:: MORIGIN and MSCALE added in GDAL 3.5.1
 
 -  **XML_DEFINITION** : When this option is set, its
    value will be used as the XML definition to create the new table. The
@@ -173,6 +186,16 @@ Layer Creation Options
 -  **CONFIGURATION_KEYWORD**\ =DEFAULTS/TEXT_UTF16/MAX_FILE_SIZE_4GB/MAX_FILE_SIZE_256TB/GEOMETRY_OUTOFLINE/BLOB_OUTOFLINE/GEOMETRY_AND_BLOB_OUTOFLINE
    : Customize how data is stored. By default text in
    UTF-8 and data up to 1TB
+-  **CREATE_SHAPE_AREA_AND_LENGTH_FIELDS**\ =YES/NO. (GDAL >= 3.6.0)
+   Defaults to NO (through CreateLayer() API). When this option is set,
+   a Shape_Area and Shape_Length special fields will be created for polygonal
+   layers (Shape_Length only for linear layers). These fields will automatically
+   be populated with the feature's area or length whenever a new feature is
+   added to the dataset or an existing feature is amended.
+   When using ogr2ogr with a source layer that has Shape_Area/Shape_Length
+   special fields, and this option is not explicitly specified, it will be
+   automatically set, so that the resulting FileGeodatabase has those fields
+   properly tagged.
 
 Configuration options
 ---------------------

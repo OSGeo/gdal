@@ -1580,7 +1580,7 @@ json_object* json_object_new_double_with_precision(double dfVal,
 {
     json_object* jso = json_object_new_double(dfVal);
     json_object_set_serializer(jso, OGR_json_double_with_precision_to_string,
-                               (void*)(size_t)nCoordPrecision, nullptr );
+                               (void*)(uintptr_t)nCoordPrecision, nullptr );
     return jso;
 }
 
@@ -1682,7 +1682,7 @@ json_object_new_double_with_significant_figures( double dfVal,
     json_object* jso = json_object_new_double(dfVal);
     json_object_set_serializer(
         jso, OGR_json_double_with_significant_figures_to_string,
-        reinterpret_cast<void*>(static_cast<size_t>(nSignificantFigures)),
+        reinterpret_cast<void*>(static_cast<uintptr_t>(nSignificantFigures)),
         nullptr );
     return jso;
 }
@@ -1740,7 +1740,7 @@ json_object_new_float_with_significant_figures( float fVal,
     json_object* jso = json_object_new_double(fVal);
     json_object_set_serializer(
         jso, OGR_json_float_with_significant_figures_to_string,
-        reinterpret_cast<void*>(static_cast<size_t>(nSignificantFigures)),
+        reinterpret_cast<void*>(static_cast<uintptr_t>(nSignificantFigures)),
         nullptr );
     return jso;
 }

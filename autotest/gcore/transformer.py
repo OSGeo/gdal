@@ -105,12 +105,12 @@ def test_transformer_4():
 
     (success, pnt) = tr.TransformPoint(0, 20, 10)
 
-    assert success and abs(pnt[0] + 81.961341857910156) <= 0.000001 and pnt[1] == pytest.approx(29.612689971923828, abs=0.000001) and pnt[2] == 0, \
+    assert success and pnt[0] == pytest.approx(-81.961341857910156, abs=0.000001) and pnt[1] == pytest.approx(29.612689971923828, abs=0.000001) and pnt[2] == 0, \
         'got wrong forward transform result.'
 
     (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])
 
-    assert success and pnt[0] == pytest.approx(20.436627518907024, abs=0.001) and pnt[1] == pytest.approx(10.484599774610549, abs=0.001) and pnt[2] == 0, \
+    assert success and pnt[0] == pytest.approx(20, abs=0.000001) and pnt[1] == pytest.approx(10, abs=0.000001) and pnt[2] == 0, \
         'got wrong reverse transform result.'
 
 ###############################################################################
@@ -785,7 +785,7 @@ def test_transformer_dem_overrride_srs():
     tr = gdal.Transformer(ds, None, ['METHOD=RPC', 'RPC_HEIGHT_SCALE=2', 'RPC_DEM=/vsimem/dem.tif', 'RPC_DEM_SRS=EPSG:32652+5773'])
 
     (success, pnt) = tr.TransformPoint(0, 0.5, 0.5, 0)
-    assert success and pnt[0] == pytest.approx(125.64813723085801, abs=0.000001) and pnt[1] == pytest.approx(39.869345977927146, abs=0.000001), \
+    assert success and pnt[0] == pytest.approx(125.64813723085801, abs=1e-4) and pnt[1] == pytest.approx(39.869345977927146, abs=1e-4), \
         'got wrong forward transform result.'
 
     (success, pnt) = tr.TransformPoint(1, pnt[0], pnt[1], pnt[2])

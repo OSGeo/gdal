@@ -7,7 +7,7 @@
     <METADATA_SUBPROFILE>PRODUCT</METADATA_SUBPROFILE>
     <METADATA_LANGUAGE>en</METADATA_LANGUAGE>
   </Metadata_Identification>
-  <Dataset_Content>  
+  <Dataset_Content>
    <Dataset_Extent>
       <EXTENT_TYPE>Bounding_Polygon</EXTENT_TYPE>
       <Vertex>
@@ -41,7 +41,7 @@
         <ROW>3066</ROW>
       </Center>
     </Dataset_Extent>
-  </Dataset_Content>  
+  </Dataset_Content>
   <Coordinate_Reference_System>
     <Geodetic_CRS>
       <CRS_TABLES version="0.0">EPSG</CRS_TABLES>
@@ -58,6 +58,7 @@
           <GSD_ALONG_TRACK unit="m">0.7145258524056943</GSD_ALONG_TRACK>
         </Ground_Sample_Distance>
       </Located_Geometric_Values>
+      <XXXXXXXXXXXX_added_just_to_test_issue_6047_XXXXXXXXXXXXXX/>
       <Located_Geometric_Values>
         <Ground_Sample_Distance>
           <GSD_ACROSS_TRACK unit="m">0.7059011471512184</GSD_ACROSS_TRACK>

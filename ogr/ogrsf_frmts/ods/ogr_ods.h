@@ -168,6 +168,7 @@ class OGRODSDataSource final: public GDALDataset
 
     CPLString           osValueType;
     CPLString           osValue;
+    bool                m_bValueFromTableCellAttribute = false;
     std::string         osFormula;
 
     std::vector<std::string>  apoFirstLineValues;

@@ -32,6 +32,7 @@ Raster drivers
    airsar
    arg
    bag
+   basisu
    blx
    bmp
    bsb
@@ -51,7 +52,6 @@ Raster drivers
    derived
    dimap
    dipex
-   dods
    doq1
    doq2
    dted
@@ -103,10 +103,12 @@ Raster drivers
    jp2mrsid
    jp2openjpeg
    jpeg
+   jpegxl
    jpipkak
    kea
    kmlsuperoverlay
    kro
+   ktx2
    lan
    l1b
    lcp

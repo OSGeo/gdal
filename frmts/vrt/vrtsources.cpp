@@ -755,9 +755,17 @@ void VRTSimpleSource::OpenSource() const
     /*      Create a proxy dataset                                       */
     /* ----------------------------------------------------------------- */
     GDALProxyPoolDataset * proxyDS = nullptr;
+    std::string osKeyMapSharedSources;
     if( m_poMapSharedSources )
     {
-        auto oIter = m_poMapSharedSources->find(m_osSrcDSName);
+        osKeyMapSharedSources = m_osSrcDSName;
+        for( int i = 0; i < m_aosOpenOptions.size(); ++i )
+        {
+            osKeyMapSharedSources += "||";
+            osKeyMapSharedSources += m_aosOpenOptions[i];
+        }
+
+        auto oIter = m_poMapSharedSources->find(osKeyMapSharedSources);
         if( oIter != m_poMapSharedSources->end() )
             proxyDS = cpl::down_cast<GDALProxyPoolDataset*>(oIter->second);
     }
@@ -813,7 +821,7 @@ void VRTSimpleSource::OpenSource() const
 
     if( m_poMapSharedSources )
     {
-        (*m_poMapSharedSources)[m_osSrcDSName] = proxyDS;
+        (*m_poMapSharedSources)[osKeyMapSharedSources] = proxyDS;
     }
 }
 

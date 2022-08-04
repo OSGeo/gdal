@@ -228,7 +228,7 @@ class VSIUnixStdioHandle final : public VSIVirtualHandle
     int Close() override;
     int Truncate( vsi_l_offset nNewSize ) override;
     void *GetNativeFileDescriptor() override {
-        return reinterpret_cast<void *>(static_cast<size_t>(fileno(fp))); }
+        return reinterpret_cast<void *>(static_cast<uintptr_t>(fileno(fp))); }
     VSIRangeStatus GetRangeStatus( vsi_l_offset nOffset,
                                    vsi_l_offset nLength ) override;
 };
@@ -1023,7 +1023,7 @@ begin:
                 osCurFile += '/';
             osCurFile += entry.pszName;
 
-#if !defined(__sun)
+#if !defined(__sun) && !defined(__HAIKU__)
             if( psEntry->d_type == DT_REG )
                 entry.nMode = S_IFREG;
             else if( psEntry->d_type == DT_DIR )
@@ -1052,7 +1052,7 @@ begin:
                 if( STARTS_WITH(m_osFilterPrefix.c_str(), osName.c_str()) &&
                     m_osFilterPrefix[osName.size()] == '/' )
                 {
-#if !defined(__sun)
+#if !defined(__sun) && !defined(__HAIKU__)
                     if( psEntry->d_type == DT_UNKNOWN )
 #endif
                     {
@@ -1072,7 +1072,7 @@ begin:
             }
 
             if( !m_bNameAndTypeOnly
-#if !defined(__sun)
+#if !defined(__sun) && !defined(__HAIKU__)
                 || psEntry->d_type == DT_UNKNOWN
 #endif
                 )

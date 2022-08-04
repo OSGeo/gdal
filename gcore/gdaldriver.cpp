@@ -35,6 +35,7 @@
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
+#include <set>
 #include <sys/stat.h>
 
 #include "cpl_conv.h"
@@ -1036,6 +1037,8 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
     const bool bAppendSubdataset =
         CPLFetchBool(papszOptions,
                      "APPEND_SUBDATASET", false);
+    // Note: QUIET_DELETE_ON_CREATE_COPY is set to NO by the KMLSuperOverlay driver
+    // when writing a .kmz file
     if( !bAppendSubdataset &&
         CPLFetchBool(papszOptions,
                      "QUIET_DELETE_ON_CREATE_COPY", true) )
@@ -1048,6 +1051,74 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
         if( !EQUAL(GetDescription(), "MEM") &&
             !EQUAL(GetDescription(), "Memory") )
         {
+/* -------------------------------------------------------------------- */
+/*      Establish list of files of output dataset if it already exists. */
+/* -------------------------------------------------------------------- */
+            std::set<std::string> oSetExistingDestFiles;
+            {
+                CPLPushErrorHandler(CPLQuietErrorHandler);
+                const char* const apszAllowedDrivers[] = { GetDescription(), nullptr };
+                auto poExistingOutputDS = std::unique_ptr<GDALDataset>(
+                    GDALDataset::Open(pszFilename, GDAL_OF_RASTER, apszAllowedDrivers));
+                if( poExistingOutputDS )
+                {
+                    char** papszFileList = poExistingOutputDS->GetFileList();
+                    for( char** papszIter = papszFileList; papszIter && *papszIter; ++papszIter )
+                    {
+                        oSetExistingDestFiles.insert(CPLString(*papszIter).replaceAll('\\', '/'));
+                    }
+                    CSLDestroy(papszFileList);
+                }
+                CPLPopErrorHandler();
+            }
+
+/* -------------------------------------------------------------------- */
+/*      Check if the source dataset shares some files with the dest one.*/
+/* -------------------------------------------------------------------- */
+            std::set<std::string> oSetExistingDestFilesFoundInSource;
+            if( !oSetExistingDestFiles.empty() )
+            {
+                CPLPushErrorHandler(CPLQuietErrorHandler);
+                // We need to reopen in a temporary dataset for the particular
+                // case of overwritten a .tif.ovr file from a .tif
+                // If we probe the file list of the .tif, it will then open the
+                // .tif.ovr !
+                const char* const apszAllowedDrivers[] = {
+                    poSrcDS->GetDriver() ? poSrcDS->GetDriver()->GetDescription() : nullptr, nullptr };
+                auto poSrcDSTmp = std::unique_ptr<GDALDataset>(
+                    GDALDataset::Open(poSrcDS->GetDescription(), GDAL_OF_RASTER, apszAllowedDrivers));
+                if( poSrcDSTmp )
+                {
+                    char** papszFileList = poSrcDSTmp->GetFileList();
+                    for( char** papszIter = papszFileList; papszIter && *papszIter; ++papszIter )
+                    {
+                        CPLString osFilename(*papszIter);
+                        osFilename.replaceAll('\\', '/');
+                        if( oSetExistingDestFiles.find(osFilename) != oSetExistingDestFiles.end() )
+                        {
+                            oSetExistingDestFilesFoundInSource.insert(osFilename);
+                        }
+                    }
+                    CSLDestroy(papszFileList);
+                }
+                CPLPopErrorHandler();
+            }
+
+
+            // If the source file(s) and the dest one share some files in common,
+            // only remove the files that are *not* in common
+            if( !oSetExistingDestFilesFoundInSource.empty() )
+            {
+                for( const std::string& osFilename: oSetExistingDestFiles )
+                {
+                    if( oSetExistingDestFilesFoundInSource.find(osFilename) ==
+                                            oSetExistingDestFilesFoundInSource.end() )
+                    {
+                        VSIUnlink(osFilename.c_str());
+                    }
+                }
+            }
+
             QuietDelete( pszFilename );
         }
     }

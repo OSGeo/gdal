@@ -98,10 +98,10 @@ Links
 -----
 
 -  `VDV-451 file
-   format <https://www.vdv.de/vdv-schrift-451.pdfx?forced=true>`__
+   format <https://www.vdv.de/vdv-schrift-451.pdfx?forced=false>`__
    (German)
 -  `VDV-452 data
-   model <https://www.vdv.de/452--sdsv15.pdfx?forced=true>`__ (German)
+   model <https://www.vdv.de/service/downloads_onp.aspx?id=4328&forced=false>`__ (German)
 -  `Austrian INTREST data
    format <https://gip.gv.at/assets/downloads/1908_dokumentation_gipat_ogd.pdf>`__
    (German)

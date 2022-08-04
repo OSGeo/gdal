@@ -1,5 +1,14 @@
 # CMake4GDAL project is distributed under MIT license. See accompanying file LICENSE.txt.
 
+# Increment the below number each time an ABI incompatible change is done,
+# e.g removing a public function/method, changing its prototype (including
+# adding a default value to a parameter of a C++ method), adding
+# a new member or virtual function in a public C++ class, etc.
+# This will typically happen for each GDAL feature release (change of X or Y in
+# a X.Y.Z numbering scheme), but should not happen for a bugfix release (change of Z)
+# Previous value: 31 for GDAL 3.5
+set(GDAL_SOVERSION 31)
+
 # Switches to control build targets(cached)
 option(ENABLE_GNM "Build GNM (Geography Network Model) component" ON)
 option(ENABLE_PAM "Set ON to enable Persistent Auxiliary Metadata (.aux.xml)" ON)
@@ -29,6 +38,9 @@ option(OGR_BUILD_OPTIONAL_DRIVERS "Whether to build OGR optional drivers by defa
 
 # libgdal shared/satic library generation
 option(BUILD_SHARED_LIBS "Set ON to build shared library" ON)
+
+# produce position independent code, default is on when building a shared library
+option(GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE "Set ON to produce -fPIC code" ${BUILD_SHARED_LIBS})
 
 # Option to set preferred C# compiler
 option(CSHARP_MONO "Whether to force the C# compiler to be Mono" OFF)
@@ -189,12 +201,44 @@ endif ()
 
 # message(STATUS "GDAL_C_WARNING_FLAGS: ${GDAL_C_WARNING_FLAGS}") message(STATUS "GDAL_CXX_WARNING_FLAGS: ${GDAL_CXX_WARNING_FLAGS}")
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
+if (CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   check_cxx_compiler_flag(-fno-finite-math-only HAVE_FLAG_NO_FINITE_MATH_ONLY)
   if (HAVE_FLAG_NO_FINITE_MATH_ONLY)
     # Intel CXX compiler based on clang defaults to -ffinite-math-only, which breaks std::isinf(), std::isnan(), etc.
-    set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -fno-finite-math-only)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-finite-math-only")
   endif ()
+
+  set(TEST_LINK_STDCPP_SOURCE_CODE
+      "#include <string>
+    int main(){
+      std::string s;
+      s += \"x\";
+      return 0;
+    }")
+  check_cxx_source_compiles("${TEST_LINK_STDCPP_SOURCE_CODE}" _TEST_LINK_STDCPP)
+  if( NOT _TEST_LINK_STDCPP )
+      message(WARNING "Cannot link code using standard C++ library. Automatically adding -lstdc++ to CMAKE_EXE_LINKER_FLAGS AND CMAKE_MODULE_LINKER_FLAGS")
+      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lstdc++")
+      set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -lstdc++")
+
+      check_cxx_source_compiles("${TEST_LINK_STDCPP_SOURCE_CODE}" _TEST_LINK_STDCPP_AGAIN)
+      if( NOT _TEST_LINK_STDCPP_AGAIN )
+          message(FATAL_ERROR "Cannot link C++ program")
+      endif()
+  endif()
+
+  check_c_compiler_flag(-wd188 HAVE_WD188) # enumerated type mixed with another type
+  if( HAVE_WD188 )
+    set(GDAL_C_WARNING_FLAGS ${GDAL_C_WARNING_FLAGS} -wd188)
+  endif()
+  check_c_compiler_flag(-wd2259 HAVE_WD2259) # non-pointer conversion from ... may lose significant bits
+  if( HAVE_WD2259 )
+    set(GDAL_C_WARNING_FLAGS ${GDAL_C_WARNING_FLAGS} -wd2259)
+  endif()
+  check_c_compiler_flag(-wd2312 HAVE_WD2312) # pointer cast involving 64-bit pointed-to type
+  if( HAVE_WD2259 )
+    set(GDAL_C_WARNING_FLAGS ${GDAL_C_WARNING_FLAGS} -wd2312)
+  endif()
 endif ()
 
 # ######################################################################################################################
@@ -235,11 +279,54 @@ endif ()
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   include(CheckLinkerFlag)
   check_linker_flag(C "-Wl,--no-undefined" HAS_NO_UNDEFINED)
-  if (HAS_NO_UNDEFINED AND NOT CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
+  if (HAS_NO_UNDEFINED AND (NOT "${CMAKE_CXX_FLAGS}" MATCHES "-fsanitize") AND NOT CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
     string(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,--no-undefined")
     string(APPEND CMAKE_MODULE_LINKER_FLAGS " -Wl,--no-undefined")
   endif ()
 endif ()
+
+macro(set_alternate_linker linker)
+  if( NOT "${USE_ALTERNATE_LINKER}" STREQUAL "${USE_ALTERNATE_LINKER_OLD_CACHED}" )
+    unset(LINKER_EXECUTABLE CACHE)
+  endif()
+  find_program(LINKER_EXECUTABLE ld.${USE_ALTERNATE_LINKER} ${USE_ALTERNATE_LINKER})
+  if(LINKER_EXECUTABLE)
+    if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+      if( "${CMAKE_CXX_COMPILER_VERSION}" VERSION_GREATER_EQUAL 12.0.0)
+        add_link_options("--ld-path=${LINKER_EXECUTABLE}")
+      else()
+        add_link_options("-fuse-ld=${LINKER_EXECUTABLE}")
+      endif()
+    elseif( "${linker}" STREQUAL "mold" AND
+            "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND
+            "${CMAKE_CXX_COMPILER_VERSION}" VERSION_LESS 12.1.0)
+      # GCC before 12.1.0: -fuse-ld does not accept mold as a valid argument,
+      # so you need to use -B option instead.
+      get_filename_component(_dir ${LINKER_EXECUTABLE} DIRECTORY)
+      get_filename_component(_dir ${_dir} DIRECTORY)
+      if( EXISTS "${_dir}/libexec/mold/ld" )
+          add_link_options(-B "${_dir}/libexec/mold")
+      else()
+          message(FATAL_ERROR "Cannot find ${_dir}/libexec/mold/ld")
+      endif()
+    else()
+      add_link_options("-fuse-ld=${USE_ALTERNATE_LINKER}")
+    endif()
+    message(STATUS "Using alternative linker: ${LINKER_EXECUTABLE}")
+  else()
+    message(FATAL_ERROR "Cannot find alternative linker ${USE_ALTERNATE_LINKER}")
+  endif()
+endmacro()
+
+if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" )
+  set(USE_ALTERNATE_LINKER "" CACHE STRING "Use alternate linker. Leave empty for system default; potential alternatives are 'gold', 'lld', 'bfd', 'mold'")
+  if(NOT "${USE_ALTERNATE_LINKER}" STREQUAL "")
+    set_alternate_linker(${USE_ALTERNATE_LINKER})
+  endif()
+  set(USE_ALTERNATE_LINKER_OLD_CACHED
+      ${USE_ALTERNATE_LINKER}
+      CACHE INTERNAL "Previous value of USE_ALTERNATE_LINKER")
+endif()
 
 # Default definitions during build
 add_definitions(-DGDAL_COMPILATION -DGDAL_CMAKE_BUILD)
@@ -298,6 +385,10 @@ if (MSVC)
       CACHE STRING "Postfix to add to the GDAL dll name for debug builds")
   set_target_properties(${GDAL_LIB_TARGET_NAME} PROPERTIES DEBUG_POSTFIX "${GDAL_DEBUG_POSTFIX}")
 endif ()
+if (MINGW AND BUILD_SHARED_LIBS)
+    set_target_properties(${GDAL_LIB_TARGET_NAME} PROPERTIES SUFFIX "-${GDAL_SOVERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}")
+endif ()
+
 
 if (MSVC AND NOT BUILD_SHARED_LIBS)
   target_compile_definitions(${GDAL_LIB_TARGET_NAME} PUBLIC CPL_DISABLE_DLL=)
@@ -452,6 +543,16 @@ cmake_dependent_option(OGR_ENABLE_DRIVER_SQLITE "Set ON to build OGR SQLite driv
 cmake_dependent_option(OGR_ENABLE_DRIVER_GPKG "Set ON to build OGR GPKG driver" ${OGR_BUILD_OPTIONAL_DRIVERS}
                        "GDAL_USE_SQLITE3;OGR_ENABLE_DRIVER_SQLITE" OFF)
 
+# Build frmts/iso8211 conditionally to drivers requiring it
+if ((GDAL_BUILD_OPTIONAL_DRIVERS AND NOT DEFINED GDAL_ENABLE_DRIVER_ADRG AND NOT DEFINED GDAL_ENABLE_DRIVER_SDTS) OR
+    GDAL_ENABLE_DRIVER_ADRG OR
+    GDAL_ENABLE_DRIVER_SDTS OR
+    (OGR_BUILD_OPTIONAL_DRIVERS AND NOT DEFINED OGR_ENABLE_DRIVER_S57 AND NOT DEFINED OGR_ENABLE_DRIVER_SDTS) OR
+    OGR_ENABLE_DRIVER_S57 OR
+    OGR_ENABLE_DRIVER_SDTS)
+  add_subdirectory(frmts/iso8211)
+endif()
+
 add_subdirectory(frmts)
 add_subdirectory(ogr/ogrsf_frmts)
 
@@ -470,16 +571,15 @@ add_subdirectory(scripts)
 
 # Add all library dependencies of target gdal
 get_property(GDAL_PRIVATE_LINK_LIBRARIES GLOBAL PROPERTY gdal_private_link_libraries)
-target_link_libraries(${GDAL_LIB_TARGET_NAME} PRIVATE ${GDAL_PRIVATE_LINK_LIBRARIES})
+# GDAL_EXTRA_LINK_LIBRARIES may be set by the user if the various FindXXXX modules
+# didn't capture all required dependencies (used for example by OSGeo4W)
+target_link_libraries(${GDAL_LIB_TARGET_NAME} PRIVATE ${GDAL_PRIVATE_LINK_LIBRARIES} ${GDAL_EXTRA_LINK_LIBRARIES})
 
 # Document/Manuals
 if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/doc" AND BUILD_DOCS)
   add_subdirectory(doc)
 endif ()
 add_subdirectory(man)
-
-# GDAL 4.0 ? Install headers in ${CMAKE_INSTALL_INCLUDEDIR}/gdal ?
-set(GDAL_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR})
 
 # So that GDAL can be used as a add_subdirectory() of another project
 target_include_directories(
@@ -492,7 +592,7 @@ target_include_directories(
          $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/port>
          $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/ogr>
          $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/ogr/ogrsf_frmts>
-         $<INSTALL_INTERFACE:${GDAL_INSTALL_INCLUDEDIR}>)
+         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 # MSVC specific resource preparation
 if (MSVC)
@@ -703,7 +803,7 @@ install(
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   RESOURCE DESTINATION ${GDAL_RESOURCE_PATH}
-  PUBLIC_HEADER DESTINATION ${GDAL_INSTALL_INCLUDEDIR}
+  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
   FRAMEWORK DESTINATION "${FRAMEWORK_DESTINATION}")
 
 if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
@@ -729,10 +829,10 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
   endif ()
 
   include(CMakePackageConfigHelpers)
-  if(CMAKE_VERSION VERSION_LESS 3.10.1)
+  if(CMAKE_VERSION VERSION_LESS 3.11)
       set(comptatibility_check ExactVersion)
   else()
-      # SameMinorVersion compatibility are supported CMake > 3.10.1
+      # SameMinorVersion compatibility are supported CMake >= 3.11
       # Our C++ ABI remains stable only among major.minor.XXX patch releases
       set(comptatibility_check SameMinorVersion)
   endif()

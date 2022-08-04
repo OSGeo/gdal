@@ -107,6 +107,7 @@ if(SQLite3_INCLUDE_DIR AND SQLite3_LIBRARY)
     endif()
     check_symbol_exists(sqlite3_column_table_name sqlite3.h SQLite3_HAS_COLUMN_METADATA)
     check_symbol_exists(sqlite3_rtree_query_callback sqlite3.h SQLite3_HAS_RTREE)
+    check_symbol_exists(sqlite3_load_extension sqlite3.h SQLite3_HAS_LOAD_EXTENSION)
 
     if (MSVC)
         set(CMAKE_REQUIRED_FLAGS "/WX")
@@ -127,7 +128,7 @@ if(SQLite3_INCLUDE_DIR AND SQLite3_LIBRARY)
     endif()
     cmake_pop_check_state()
 endif()
-mark_as_advanced(SQLite3_LIBRARY SQLite3_INCLUDE_DIR SQLite3_HAS_COLUMN_METADATA SQLite3_HAS_RTREE)
+mark_as_advanced(SQLite3_LIBRARY SQLite3_INCLUDE_DIR SQLite3_HAS_COLUMN_METADATA SQLite3_HAS_RTREE SQLite3_HAS_LOAD_EXTENSION)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(SQLite3

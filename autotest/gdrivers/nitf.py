@@ -352,6 +352,102 @@ def test_nitf_14():
 
     ds = None
 
+
+###############################################################################
+# Test automatic setting of ICORDS=N/S for UTM WGS 84 projections
+
+
+@pytest.mark.parametrize("epsg_code,icords", [(32631, 'N'), (32731, 'S')])
+def test_nitf_create_copy_automatic_UTM_ICORDS(epsg_code,icords):
+    src_ds = gdal.GetDriverByName('MEM').Create('', 10, 20)
+    src_ds.SetGeoTransform([-1000, 1000, 0, 2000, 0, -500])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(epsg_code)
+    src_ds.SetSpatialRef(srs)
+
+    outfilename = '/vsimem/test_nitf_create_copy_automatic_UTM_ICORDS.ntf'
+    gdal.ErrorReset()
+    assert gdal.GetDriverByName('NITF').CreateCopy(outfilename, src_ds)
+    assert gdal.VSIStatL(outfilename + '.aux.xml') is None
+    ds = gdal.Open(outfilename)
+    assert ds.GetMetadataItem('NITF_ICORDS') == icords
+    assert ds.GetGeoTransform() == src_ds.GetGeoTransform()
+    assert ds.GetSpatialRef().IsSame(src_ds.GetSpatialRef())
+    ds = None
+    gdal.GetDriverByName('NITF').Delete(outfilename)
+
+
+###############################################################################
+# Test creation of an NITF file with IGEOLO provided by the user, but not ICORDS
+# -> error
+
+
+def test_nitf_create_copy_user_provided_IGEOLO_without_ICORDS():
+    src_ds = gdal.GetDriverByName('MEM').Create('', 10, 20)
+    src_ds.SetGeoTransform([-1000, 1000, 0, 2000, 0, -500])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    src_ds.SetSpatialRef(srs)
+
+    outfilename = '/vsimem/test_nitf_create_copy_user_provided_IGEOLO_without_ICORDS.ntf'
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        assert gdal.GetDriverByName('NITF').CreateCopy(outfilename, src_ds,
+                                                options = ['IGEOLO=' + ('0' * 60)]) is None
+    assert gdal.GetLastErrorMsg() != ''
+    gdal.GetDriverByName('NITF').Delete(outfilename)
+
+
+###############################################################################
+# Test creation of an NITF file with ICORDS and IGEOLO provided by the user
+
+
+def test_nitf_create_copy_user_provided_ICORDS_IGEOLO():
+    src_ds = gdal.GetDriverByName('MEM').Create('', 10, 20)
+    src_ds.SetGeoTransform([-1000, 1000, 0, 2000, 0, -500])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    src_ds.SetSpatialRef(srs)
+
+    outfilename = '/vsimem/test_nitf_create_copy_user_provided_ICORDS_IGEOLO.ntf'
+    gdal.ErrorReset()
+    gdal.GetDriverByName('NITF').CreateCopy(outfilename, src_ds,
+                                            options = ['ICORDS=G', 'IGEOLO=' + ('0' * 60)])
+    assert gdal.GetLastErrorMsg() == ''
+    assert gdal.VSIStatL(outfilename + '.aux.xml') is None
+    ds = gdal.Open(outfilename)
+    assert ds.GetMetadataItem('NITF_ICORDS') == 'G'
+    assert ds.GetMetadataItem('NITF_IGEOLO') == '0' * 60
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete(outfilename)
+
+
+###############################################################################
+# Test automatic reprojection of corner coordinates to long/lat if the
+# source CRS is UTM WGS84 and the user provided ICORDS=G
+
+
+def test_nitf_create_copy_UTM_corner_reprojection_to_long_lat():
+    src_ds = gdal.GetDriverByName('MEM').Create('', 10, 20)
+    src_ds.SetGeoTransform([-1000, 1000, 0, 2000, 0, -500])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    src_ds.SetSpatialRef(srs)
+
+    outfilename = '/vsimem/test_nitf_create_copy_UTM_corner_reprojection_to_long_lat.ntf'
+    gdal.ErrorReset()
+    gdal.GetDriverByName('NITF').CreateCopy(outfilename, src_ds,
+                                            options = ['ICORDS=G'])
+    assert gdal.GetLastErrorMsg() == ''
+    assert gdal.VSIStatL(outfilename + '.aux.xml') is None
+    ds = gdal.Open(outfilename)
+    assert ds.GetMetadataItem('NITF_ICORDS') == 'G'
+    assert ds.GetMetadataItem('NITF_IGEOLO') == '000057N0012936W000057N0012445W000412S0012445W000412S0012936W'
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete(outfilename)
+
 ###############################################################################
 # Test creating an in memory copy.
 
@@ -1850,7 +1946,7 @@ def test_nitf_60():
     gt = ds.GetGeoTransform()
     ds = None
 
-    assert wkt == """PROJCS["unknown",GEOGCS["unknown",DATUM["unknown",SPHEROID["unknown",6378137,0]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Azimuthal_Equidistant"],PARAMETER["latitude_of_center",90],PARAMETER["longitude_of_center",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]""", \
+    assert wkt == """PROJCS["ARC_System_Zone_09",GEOGCS["Unknown datum based upon the Authalic Sphere",DATUM["Not_specified_based_on_Authalic_Sphere",SPHEROID["Sphere",6378137,0],AUTHORITY["EPSG","6035"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Azimuthal_Equidistant"],PARAMETER["latitude_of_center",90],PARAMETER["longitude_of_center",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1],AXIS["Easting",EAST],AXIS["Northing",NORTH]]""", \
         'did not get expected SRS'
 
     ref_gt = [1036422.8453166834, 149.94543479697344, 0.0, 345474.28177222813, 0.0, -149.94543479697404]
@@ -4201,6 +4297,87 @@ def test_nitf_create_three_images_final_uncompressed():
     ds = None
 
     gdal.GetDriverByName('NITF').Delete('/vsimem/out.ntf')
+
+###############################################################################
+# Test writing/reading PAM metadata
+
+
+def test_nitf_pam_metadata_single_image():
+
+    src_ds = gdal.Open('data/rgbsmall.tif')
+    out_filename = 'tmp/test_nitf_pam_metadata_single_image.ntf'
+    gdal.ErrorReset()
+    gdal.GetDriverByName('NITF').CreateCopy(out_filename, src_ds)
+    assert gdal.GetLastErrorType() == 0
+    ds = None
+
+    assert os.path.exists(out_filename + '.aux.xml')
+    pam = open(out_filename + '.aux.xml', 'rb').read()
+    assert b'<Subdataset' not in pam
+
+    ds = gdal.Open(out_filename)
+    assert ds.GetMetadataItem('AREA_OR_POINT') == 'Area'
+    ds = None
+
+    ds = gdal.Open('NITF_IM:0:' + out_filename)
+    assert ds.GetMetadataItem('AREA_OR_POINT') == 'Area'
+    ds = None
+
+    # Try to read the variant of PAM serialization that was used from
+    # GDAL 3.4.0 to 3.5.0
+    open(out_filename + '.aux.xml', 'wb').write(
+b"""<PAMDataset>
+  <Subdataset name="0">
+    <PAMDataset>
+      <Metadata>
+        <MDI key="FOO">BAR</MDI>
+      </Metadata>
+    </PAMDataset>
+  </Subdataset>
+</PAMDataset>""")
+
+    ds = gdal.Open(out_filename)
+    assert ds.GetMetadataItem('FOO') == 'BAR'
+    ds = None
+
+    ds = gdal.Open('NITF_IM:0:' + out_filename)
+    assert ds.GetMetadataItem('FOO') == 'BAR'
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete(out_filename)
+
+###############################################################################
+# Test writing/reading PAM metadata
+
+
+def test_nitf_pam_metadata_several_images():
+
+    src_ds = gdal.Open('data/rgbsmall.tif')
+    out_filename = 'tmp/test_nitf_pam_metadata_several_images.ntf'
+    gdal.GetDriverByName('NITF').CreateCopy(out_filename, src_ds, options = ['NUMI=2'])
+    src_ds2 = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    src_ds2.SetGeoTransform(src_ds.GetGeoTransform())
+    src_ds2.SetSpatialRef(src_ds.GetSpatialRef())
+    gdal.GetDriverByName('NITF').CreateCopy(out_filename, src_ds2, options = ['APPEND_SUBDATASET=YES'])
+    ds = None
+
+    assert os.path.exists(out_filename + '.aux.xml')
+    pam = open(out_filename + '.aux.xml', 'rb').read()
+    assert b'<Subdataset' in pam
+
+    ds = gdal.Open(out_filename)
+    assert ds.GetMetadataItem('AREA_OR_POINT') == 'Area'
+    ds = None
+
+    ds = gdal.Open('NITF_IM:0:' + out_filename)
+    assert ds.GetMetadataItem('AREA_OR_POINT') == 'Area'
+    ds = None
+
+    ds = gdal.Open('NITF_IM:1:' + out_filename)
+    assert ds.GetMetadataItem('AREA_OR_POINT') is None
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete(out_filename)
 
 ###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714

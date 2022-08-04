@@ -290,6 +290,11 @@ def _check_test_parquet(filename,
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     assert f.GetFID() == 4
+
+    lyr.SetSpatialFilterRect(-100,-100,-100,-100)
+    lyr.ResetReading()
+    assert lyr.GetNextFeature() is None
+
     lyr.SetSpatialFilter(None)
 
     if expect_ignore_fields:
@@ -466,6 +471,8 @@ def test_ogr_parquet_write_from_another_dataset(use_vsi, row_group_size, fid):
         assert geo is not None
         j = json.loads(geo)
         assert j is not None
+        assert 'version' in j
+        assert j['version'] == '0.4.0'
         assert 'primary_column' in j
         assert j['primary_column'] == 'geometry'
         assert 'columns' in j
@@ -599,13 +606,15 @@ def test_ogr_parquet_write_compression(compression):
 ###############################################################################
 # Test coordinate epoch support
 
-
-def test_ogr_parquet_coordinate_epoch():
+@pytest.mark.parametrize("epsg_code", [4326,
+                                       9057  # "WGS 84 (G1762)"
+                                       ])
+def test_ogr_parquet_coordinate_epoch(epsg_code):
 
     outfilename = '/vsimem/out.parquet'
     ds = gdal.GetDriverByName('Parquet').Create(outfilename, 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
-    srs.ImportFromEPSG(4326)
+    srs.ImportFromEPSG(epsg_code)
     srs.SetCoordinateEpoch(2022.3)
     ds.CreateLayer('out', geom_type=ogr.wkbPoint, srs=srs)
     ds = None
@@ -614,10 +623,135 @@ def test_ogr_parquet_coordinate_epoch():
     assert ds is not None
     lyr = ds.GetLayer(0)
     assert lyr is not None
+
+    geo = lyr.GetMetadataItem("geo", "_PARQUET_METADATA_")
+    assert geo is not None
+    j = json.loads(geo)
+    assert j is not None
+    assert 'columns' in j
+    assert 'geometry' in j['columns']
+    if epsg_code == 4326:
+        assert 'crs' not in j['columns']['geometry']
+    else:
+        assert 'crs' in j['columns']['geometry']
+        assert j['columns']['geometry']['crs']['type'] == 'GeographicCRS'
+    assert 'epoch' in j['columns']['geometry']
+
     srs = lyr.GetSpatialRef()
     assert srs is not None
+    assert int(srs.GetAuthorityCode(None)) == epsg_code
     assert srs.GetCoordinateEpoch() == 2022.3
     lyr = None
+    ds = None
+
+    gdal.Unlink(outfilename)
+
+
+###############################################################################
+# Test missing CRS member (on reading, implicitly fallback to EPSG:4326)
+
+
+def test_ogr_parquet_missing_crs_member():
+
+    outfilename = '/vsimem/out.parquet'
+    ds = gdal.GetDriverByName('Parquet').Create(outfilename, 0, 0, 0, gdal.GDT_Unknown)
+    with gdaltest.config_option('OGR_PARQUET_WRITE_CRS', 'NO'):
+        ds.CreateLayer('out', geom_type=ogr.wkbPoint)
+        ds = None
+
+    ds = ogr.Open(outfilename)
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    assert lyr is not None
+
+    geo = lyr.GetMetadataItem("geo", "_PARQUET_METADATA_")
+    assert geo is not None
+    j = json.loads(geo)
+    assert j is not None
+    assert 'columns' in j
+    assert 'geometry' in j['columns']
+    assert 'crs' not in j['columns']['geometry']
+
+    srs = lyr.GetSpatialRef()
+    assert srs is not None
+    assert srs.GetAuthorityCode(None) == '4326'
+    lyr = None
+    ds = None
+
+    gdal.Unlink(outfilename)
+
+
+###############################################################################
+# Test writing a CRS and automatically identifying it
+
+crs_84_wkt1 = """GEOGCS["WGS 84 (CRS84)",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["OGC","CRS84"]]"""
+
+@pytest.mark.parametrize("input_definition,expected_crs",
+                         [("+proj=longlat +datum=WGS84", '4326'),
+                          (crs_84_wkt1, '4326'),
+                          ("OGC:CRS84", '4326'),
+                          ("EPSG:4326", '4326'),
+                          ("EPSG:4269", '4269'),
+                          ("+proj=longlat +datum=NAD83", '4269'),
+                          ("EPSG:32631", '32631'),
+                          ("+proj=utm +zone=31 +datum=WGS84", '32631'),
+                          ("+proj=longlat +ellps=GRS80", None)])
+def test_ogr_parquet_crs_identification_on_write(input_definition, expected_crs):
+
+    outfilename = '/vsimem/out.parquet'
+    ds = gdal.GetDriverByName('Parquet').Create(outfilename, 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput(input_definition)
+    ds.CreateLayer('out', geom_type=ogr.wkbPoint, srs=srs)
+    ds = None
+
+    ds = ogr.Open(outfilename)
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    assert lyr is not None
+
+    geo = lyr.GetMetadataItem("geo", "_PARQUET_METADATA_")
+    assert geo is not None
+    j = json.loads(geo)
+    assert j is not None
+    assert 'columns' in j
+    assert 'geometry' in j['columns']
+    if expected_crs == '4326':
+        assert 'crs' not in j['columns']['geometry']
+    else:
+        assert 'crs' in j['columns']['geometry']
+
+    srs = lyr.GetSpatialRef()
+    assert srs is not None
+    assert srs.GetAuthorityCode(None) == expected_crs
+    lyr = None
+    ds = None
+
+    gdal.Unlink(outfilename)
+
+###############################################################################
+# Test EDGES option
+
+
+@pytest.mark.parametrize("edges", [None, 'PLANAR', 'SPHERICAL'])
+def test_ogr_parquet_edges(edges):
+
+    outfilename = '/vsimem/out.parquet'
+    ds = gdal.GetDriverByName('Parquet').Create(outfilename, 0, 0, 0, gdal.GDT_Unknown)
+    options=[]
+    if edges is not None:
+        options = ['EDGES='+edges]
+    ds.CreateLayer('out', geom_type=ogr.wkbPoint, options=options)
+    ds = None
+
+    ds = ogr.Open(outfilename)
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    assert lyr is not None
+    if edges == 'SPHERICAL':
+        assert lyr.GetMetadataItem('EDGES') == 'SPHERICAL'
+    else:
+        assert lyr.GetMetadataItem('EDGES') is None
     ds = None
 
     gdal.Unlink(outfilename)
@@ -670,7 +804,7 @@ def test_ogr_parquet_geometry_type(written_geom_type,written_wkt,expected_geom_t
     assert ds is not None
     lyr = ds.GetLayer(0)
     assert lyr.GetGeomType() == expected_geom_type
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == '4326'
+    assert lyr.GetSpatialRef() is None
     if expected_wkts is None:
         expected_wkts = written_wkt
     for wkt in expected_wkts:
@@ -678,3 +812,506 @@ def test_ogr_parquet_geometry_type(written_geom_type,written_wkt,expected_geom_t
         assert f.GetGeometryRef().ExportToIsoWkt() == wkt
 
     gdal.Unlink(outfilename)
+
+
+###############################################################################
+# Test POLYGON_ORIENTATION option
+
+
+@pytest.mark.parametrize("option_value,written_wkt,expected_wkt", [
+    (None,
+     "POLYGON ((0 0,0 1,1 1,1 0,0 0),(0.2 0.2,0.8 0.8,0.2 0.8,0.2 0.2))",
+     "POLYGON ((0 0,1 0,1 1,0 1,0 0),(0.2 0.2,0.2 0.8,0.8 0.8,0.2 0.2))"),
+    ("COUNTERCLOCKWISE",
+     "POLYGON ((0 0,0 1,1 1,1 0,0 0),(0.2 0.2,0.8 0.8,0.2 0.8,0.2 0.2))",
+     "POLYGON ((0 0,1 0,1 1,0 1,0 0),(0.2 0.2,0.2 0.8,0.8 0.8,0.2 0.2))"),
+    ("UNMODIFIED",
+     "POLYGON ((0 0,0 1,1 1,1 0,0 0),(0.2 0.2,0.8 0.8,0.2 0.8,0.2 0.2))",
+     "POLYGON ((0 0,0 1,1 1,1 0,0 0),(0.2 0.2,0.8 0.8,0.2 0.8,0.2 0.2))"),
+])
+def test_ogr_parquet_polygon_orientation(option_value,written_wkt,expected_wkt):
+
+    outfilename = '/vsimem/out.parquet'
+    ds = gdal.GetDriverByName('Parquet').Create(outfilename, 0, 0, 0, gdal.GDT_Unknown)
+    if option_value:
+        options = ['POLYGON_ORIENTATION=' + option_value]
+    else:
+        options = []
+    lyr = ds.CreateLayer('out', geom_type=ogr.wkbPolygon, options = options)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(written_wkt))
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    ds = None
+
+    ds = ogr.Open(outfilename)
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToIsoWkt() == expected_wkt
+
+    geo = lyr.GetMetadataItem("geo", "_PARQUET_METADATA_")
+    assert geo is not None
+    j = json.loads(geo)
+    assert j is not None
+    assert 'columns' in j
+    assert 'geometry' in j['columns']
+    if option_value != 'UNMODIFIED':
+        assert 'orientation' in j['columns']['geometry']
+        assert j['columns']['geometry']['orientation'] == 'counterclockwise'
+    else:
+        assert 'orientation' not in j['columns']['geometry']
+
+    gdal.Unlink(outfilename)
+
+
+
+###############################################################################
+# Test using statistics for SQL MIN, MAX, COUNT functions
+
+def test_ogr_parquet_statistics():
+
+    filename = 'data/parquet/test.parquet'
+    ds = ogr.Open(filename)
+    expected_fields = [
+        ('boolean', 'Integer', 'Boolean', 0, 1),
+        ('uint8', 'Integer', 'None', 1, 5),
+        ('int8', 'Integer', 'None', -2, 2),
+        ('uint16', 'Integer', 'None', 1, 40001),
+        ('int16', 'Integer', 'Int16', -20000, 20000),
+        ('uint32', 'Integer64', 'None', 1, 4000000001),
+        ('int32', 'Integer', 'None', -2000000000, 2000000000),
+        ('uint64', 'Integer64', 'None', 1, 400000000001),
+        ('int64', 'Integer64', 'None', -200000000000, 200000000000),
+        ('float32', 'Real', 'Float32', 1.5, 5.5),
+        ('float64', 'Real', 'None', 1.5, 5.5),
+        ('string', 'String', 'None', '', 'd'),
+        ('timestamp_ms_gmt', 'DateTime', 'None', '2019/01/01 14:00:00+00', '2019/01/01 14:00:00+00'),
+    ]
+
+    sql = ''
+    for field in expected_fields:
+        name = field[0]
+        if sql:
+            sql += ', '
+        else:
+            sql = 'SELECT '
+        sql += 'MIN(' + name + '), MAX(' + name + ')'
+    sql += ', COUNT(int32)'
+    sql += ' FROM test'
+    sql_lyr = ds.ExecuteSQL(sql)
+    try:
+        f = sql_lyr.GetNextFeature()
+        i = 0
+        for name, type, subtype, minval, maxval in expected_fields:
+            fld_defn = sql_lyr.GetLayerDefn().GetFieldDefn(i)
+            assert fld_defn.GetName() == 'MIN_' + name
+            assert ogr.GetFieldTypeName(fld_defn.GetType()) == type, name
+            assert ogr.GetFieldSubTypeName(fld_defn.GetSubType()) == subtype, name
+            assert f[fld_defn.GetName()] == minval, name
+            i += 1
+
+            fld_defn = sql_lyr.GetLayerDefn().GetFieldDefn(i)
+            assert fld_defn.GetName() == 'MAX_' + name
+            assert ogr.GetFieldTypeName(fld_defn.GetType()) == type, name
+            assert ogr.GetFieldSubTypeName(fld_defn.GetSubType()) == subtype, name
+            assert f[fld_defn.GetName()] == maxval, name
+            i += 1
+
+        fld_defn = sql_lyr.GetLayerDefn().GetFieldDefn(i)
+        assert fld_defn.GetName() == 'COUNT_int32'
+        assert f[fld_defn.GetName()] == 4
+    finally:
+        ds.ReleaseResultSet(sql_lyr)
+
+    # Non-optimized due to WHERE condition
+    sql_lyr = ds.ExecuteSQL('SELECT MIN(uint32) FROM test WHERE 1 = 0')
+    try:
+        f = sql_lyr.GetNextFeature()
+        assert f.GetField(0) is None
+    finally:
+        ds.ReleaseResultSet(sql_lyr)
+
+    # Non-optimized
+    sql_lyr = ds.ExecuteSQL('SELECT AVG(uint8) FROM test')
+    try:
+        f = sql_lyr.GetNextFeature()
+        assert f.GetField(0) == 3.0
+    finally:
+        ds.ReleaseResultSet(sql_lyr)
+
+    # Should be optimized, but this Parquet file has a wrong value for
+    # distinct_count
+    sql_lyr = ds.ExecuteSQL('SELECT COUNT(DISTINCT int32) FROM test')
+    try:
+        f = sql_lyr.GetNextFeature()
+        assert f.GetField(0) == 4
+    finally:
+        ds.ReleaseResultSet(sql_lyr)
+
+    # Errors
+    with gdaltest.error_handler():
+        assert ds.ExecuteSQL('SELECT MIN(int32) FROM i_dont_exist') is None
+        assert ds.ExecuteSQL('SELECT MIN(i_dont_exist) FROM test') is None
+
+    # File without statistics
+    outfilename = '/vsimem/out.parquet'
+    try:
+        with gdaltest.error_handler():
+            gdal.VectorTranslate(outfilename, 'data/parquet/test.parquet',
+                                 options='-lco STATISTICS=NO')
+        ds = ogr.Open(outfilename)
+        with gdaltest.error_handler():
+            gdal.ErrorReset()
+            # Generic OGR SQL doesn't support MIN() on string field
+            sql_lyr = ds.ExecuteSQL('SELECT MIN(string) FROM out')
+            assert sql_lyr is None
+            assert gdal.GetLastErrorMsg() == 'Use of field function MIN() on string field string illegal.'
+        ds = None
+
+    finally:
+        gdal.Unlink(outfilename)
+
+
+###############################################################################
+# Test setting/getting creator
+
+def test_ogr_parquet_creator():
+
+    outfilename = '/vsimem/out.parquet'
+    try:
+        ds = ogr.GetDriverByName('Parquet').CreateDataSource(outfilename)
+        ds.CreateLayer('test')
+        ds = None
+
+        ds = gdal.OpenEx(outfilename)
+        lyr = ds.GetLayer(0)
+        assert lyr.GetMetadataItem("CREATOR", "_PARQUET_").startswith('GDAL ')
+        ds = None
+
+        ds = ogr.GetDriverByName('Parquet').CreateDataSource(outfilename)
+        ds.CreateLayer('test', options = ['CREATOR=my_creator'])
+        ds = None
+
+        ds = gdal.OpenEx(outfilename)
+        lyr = ds.GetLayer(0)
+        assert lyr.GetMetadataItem("CREATOR", "_PARQUET_") == 'my_creator'
+        ds = None
+
+    finally:
+        gdal.Unlink(outfilename)
+
+
+
+###############################################################################
+# Test creating multiple geometry columns
+
+def test_ogr_parquet_multiple_geom_columns():
+
+    outfilename = '/vsimem/out.parquet'
+    try:
+        ds = ogr.GetDriverByName('Parquet').CreateDataSource(outfilename)
+        lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone)
+        lyr.CreateGeomField(ogr.GeomFieldDefn('geom_point', ogr.wkbPoint)) == ogr.OGRERR_NONE
+        lyr.CreateGeomField(ogr.GeomFieldDefn('geom_line', ogr.wkbLineString)) == ogr.OGRERR_NONE
+        ds = None
+
+        ds = gdal.OpenEx(outfilename)
+        lyr = ds.GetLayer(0)
+        lyr_defn = lyr.GetLayerDefn()
+        assert lyr_defn.GetGeomFieldCount() == 2
+        assert lyr_defn.GetGeomFieldDefn(0).GetName() == 'geom_point'
+        assert lyr_defn.GetGeomFieldDefn(1).GetName() == 'geom_line'
+        ds = None
+
+    finally:
+        gdal.Unlink(outfilename)
+
+
+###############################################################################
+# Test SetAttributeFilter()
+
+@pytest.mark.parametrize("filter", [
+    "boolean = 0",
+    "boolean = 1",
+    "boolean = 1.5",
+    #"boolean = '0'",
+    "uint8 = 2",
+    "uint8 = -1",
+    "int8 = -1",
+    "int8 = 0",
+    "int8 != 0",
+    "int8 < 0",
+    "int8 > 0",
+    "int8 <= 0",
+    "int8 >= 0",
+    "0 = int8",
+    "0 != int8",
+    "0 < int8",
+    "0 > int8",
+    "0 <= int8",
+    "0 >= int8",
+    "int8 IS NULL",
+    "int8 IS NOT NULL",
+    "uint16 = 10001",
+    "uint32 = 1000000001",
+    "uint32 != 1000000001",
+    "uint32 < 1000000001",
+    "uint32 > 1000000001",
+    "uint32 <= 1000000001",
+    "uint32 >= 1000000001",
+    "int32 = -1000000000",
+    "uint64 = 100000000001",
+    "int64 = -100000000000",
+    "float32 = 2.5",
+    "float64 = 2.5",
+    "float64 != 2.5",
+    "float64 < 2.5",
+    "float64 > 2.5",
+    "float64 <= 2.5",
+    "float64 >= 2.5",
+    "string = ''",
+    "string != ''",
+    "string < 'l'",
+    "string > 'l'",
+    "string <= 'l'",
+    "string >= 'l'",
+    "decimal128 = -1234.567",
+    "decimal256 = -1234.567",
+
+     # not optimized
+    "boolean = 0 OR boolean = 1",
+    "1 = 1",
+    "boolean = boolean",
+])
+def test_ogr_parquet_attribute_filter(filter):
+
+    with gdaltest.config_option('OGR_PARQUET_OPTIMIZED_ATTRIBUTE_FILTER', 'NO'):
+        ds = ogr.Open('data/parquet/test.parquet')
+        lyr = ds.GetLayer(0)
+        assert lyr.SetAttributeFilter(filter) == ogr.OGRERR_NONE
+        ref_fc = lyr.GetFeatureCount()
+        ds = None
+
+    ds = ogr.Open('data/parquet/test.parquet')
+    lyr = ds.GetLayer(0)
+    assert lyr.SetAttributeFilter(filter) == ogr.OGRERR_NONE
+    assert lyr.GetFeatureCount() == ref_fc
+
+
+def test_ogr_parquet_attribute_filter_and_spatial_filter():
+
+    filter = 'int8 != 0'
+
+    with gdaltest.config_option('OGR_PARQUET_OPTIMIZED_ATTRIBUTE_FILTER', 'NO'):
+        ds = ogr.Open('data/parquet/test.parquet')
+        lyr = ds.GetLayer(0)
+        lyr.SetSpatialFilterRect(4, 2, 4, 2)
+        assert lyr.SetAttributeFilter(filter) == ogr.OGRERR_NONE
+        ref_fc = lyr.GetFeatureCount()
+        assert ref_fc > 0
+        ds = None
+
+    ds = ogr.Open('data/parquet/test.parquet')
+    lyr = ds.GetLayer(0)
+    lyr.SetSpatialFilterRect(4, 2, 4, 2)
+    assert lyr.SetAttributeFilter(filter) == ogr.OGRERR_NONE
+    assert lyr.GetFeatureCount() == ref_fc
+
+###############################################################################
+
+
+def _has_arrow_dataset():
+    drv = gdal.GetDriverByName('Parquet')
+    return drv is not None and drv.GetMetadataItem('ARROW_DATASET') is not None
+
+###############################################################################
+# Test reading a flat partitioned dataset
+
+
+@pytest.mark.skipif(not _has_arrow_dataset(),
+                    reason="GDAL not built with ArrowDataset")
+@pytest.mark.parametrize("use_vsi", [False, True])
+@pytest.mark.parametrize("use_metadata_file", [False, True])
+@pytest.mark.parametrize("prefix", ['', 'PARQUET:'])
+def test_ogr_parquet_read_partitioned_flat(use_vsi, use_metadata_file, prefix):
+
+    opts = {
+        'OGR_PARQUET_USE_VSI': 'YES' if use_vsi else 'NO',
+        'OGR_PARQUET_USE_METADATA_FILE=NO': 'YES' if use_metadata_file else 'NO'
+    }
+    with gdaltest.config_options(opts):
+        ds = ogr.Open(prefix + 'data/parquet/partitioned_flat')
+        assert ds is not None
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 6
+        assert lyr.GetLayerDefn().GetFieldCount() == 2
+        for _ in range(2):
+            for i in range(6):
+                f = lyr.GetNextFeature()
+                assert f['one'] == i + 1
+                assert f['two'] == -(i + 1)
+            assert lyr.GetNextFeature() is None
+            lyr.ResetReading()
+
+
+###############################################################################
+# Test reading a HIVE partitioned dataset
+
+
+@pytest.mark.skipif(not _has_arrow_dataset(),
+                    reason="GDAL not built with ArrowDataset")
+@pytest.mark.parametrize("use_vsi", [False, True])
+@pytest.mark.parametrize("use_metadata_file", [False, True])
+@pytest.mark.parametrize("prefix", ['', 'PARQUET:'])
+def test_ogr_parquet_read_partitioned_hive(use_vsi, use_metadata_file, prefix):
+
+    opts = {
+        'OGR_PARQUET_USE_VSI': 'YES' if use_vsi else 'NO',
+        'OGR_PARQUET_USE_METADATA_FILE=NO': 'YES' if use_metadata_file else 'NO'
+    }
+    with gdaltest.config_options(opts):
+        ds = ogr.Open(prefix + 'data/parquet/partitioned_hive')
+        assert ds is not None
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 6
+        assert lyr.GetLayerDefn().GetFieldCount() == 3
+        for _ in range(2):
+            for i in range(6):
+                f = lyr.GetNextFeature()
+                assert f['one'] == i + 1
+                assert f['two'] == -(i + 1)
+                assert f['foo'] == ('bar' if i < 3 else 'baz')
+            assert lyr.GetNextFeature() is None
+            lyr.ResetReading()
+
+
+###############################################################################
+# Test reading a partitioned dataset with geo
+
+
+@pytest.mark.skipif(not _has_arrow_dataset(),
+                    reason="GDAL not built with ArrowDataset")
+def test_ogr_parquet_read_partitioned_geo():
+
+    gdal.Mkdir('/vsimem/somedir', 0o755)
+    for name, wkt in [('part.0.parquet', 'POINT(1 2)'),
+                      ('part.1.parquet', 'POINT(3 4)')]:
+        ds = ogr.GetDriverByName('Parquet').CreateDataSource('/vsimem/somedir/' + name)
+        lyr = ds.CreateLayer('test', geom_type = ogr.wkbPoint)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt))
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+        ds = None
+
+    ds = ogr.Open('/vsimem/somedir')
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeometryColumn() == 'geometry'
+    assert lyr.GetExtent() == (1,3,2,4)
+    assert lyr.GetExtent() == (1,3,2,4)
+
+    lyr.SetSpatialFilterRect(0,0,10,10)
+    lyr.ResetReading()
+    assert lyr.GetFeatureCount() == 2
+
+    lyr.SetSpatialFilterRect(-100,-100,-100,-100)
+    lyr.ResetReading()
+    assert lyr.GetNextFeature() is None
+
+    gdal.RmdirRecursive('/vsimem/somedir')
+
+
+###############################################################################
+# Test that we don't write an id in members of datum ensemble
+# Cf https://github.com/opengeospatial/geoparquet/discussions/110
+
+def test_ogr_parquet_write_crs_without_id_in_datum_ensemble_members():
+
+    outfilename = '/vsimem/out.parquet'
+    ds = gdal.GetDriverByName('Parquet').Create(outfilename, 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    ds.CreateLayer('out', geom_type=ogr.wkbPoint, srs=srs)
+    ds = None
+
+    ds = ogr.Open(outfilename)
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    assert lyr is not None
+
+    geo = lyr.GetMetadataItem("geo", "_PARQUET_METADATA_")
+    assert geo is not None
+    j = json.loads(geo)
+    assert j is not None
+    crs = j['columns']['geometry']['crs']
+    assert 'id' not in crs['base_crs']['datum_ensemble']['members'][0]
+
+    srs = lyr.GetSpatialRef()
+    assert srs is not None
+    assert int(srs.GetAuthorityCode(None)) == 32631
+    lyr = None
+    ds = None
+
+    gdal.Unlink(outfilename)
+
+
+###############################################################################
+
+
+def test_ogr_parquet_arrow_stream_numpy():
+    pytest.importorskip('osgeo.gdal_array')
+    numpy = pytest.importorskip('numpy')
+
+    ds = ogr.Open('data/parquet/test.parquet')
+    lyr = ds.GetLayer(0)
+    assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
+
+    stream = lyr.GetArrowStreamAsNumPy(options = ['MAX_FEATURES_IN_BATCH=5', 'USE_MASKED_ARRAYS=NO'])
+    with gdaltest.error_handler():
+        batches = [ batch for batch in stream ]
+    assert len(batches) == 2
+    batch = batches[0]
+    assert batch.keys() == { 'boolean', 'uint8', 'int8', 'uint16', 'int16', 'uint32', 'int32', 'uint64', 'int64', 'float32', 'float64', 'string', 'timestamp_ms_gmt', 'timestamp_ms_gmt_plus_2', 'timestamp_ms_gmt_minus_0215', 'timestamp_s_no_tz', 'time32_s', 'time32_ms', 'time64_us', 'date32', 'date64', 'binary', 'fixed_size_binary', 'list_boolean', 'list_uint8', 'list_int8', 'list_uint16', 'list_int16', 'list_uint32', 'list_int32', 'list_uint64', 'list_int64', 'list_float32', 'list_float64', 'list_string', 'fixed_size_list_boolean', 'fixed_size_list_uint8', 'fixed_size_list_int8', 'fixed_size_list_uint16', 'fixed_size_list_int16', 'fixed_size_list_uint32', 'fixed_size_list_int32', 'fixed_size_list_uint64', 'fixed_size_list_int64', 'fixed_size_list_float32', 'fixed_size_list_float64', 'fixed_size_list_string', 'dict', 'geometry' }
+    assert batch["boolean"][0] == True
+    assert batch["boolean"][1] == False
+    assert batch["boolean"][2] == False
+    assert batches[1]["boolean"][0] == False
+    assert batches[1]["boolean"][1] == True
+    assert batch["uint8"][0] == 1
+    assert batch["int8"][0] == -2
+    assert numpy.array_equal(batch["list_boolean"][0], numpy.array([]))
+    assert numpy.array_equal(batch["list_boolean"][1], numpy.array([False]))
+    assert numpy.array_equal(batch["fixed_size_list_boolean"][0], numpy.array([True, False]))
+    assert numpy.array_equal(batches[1]["fixed_size_list_boolean"][0], numpy.array([True, False]))
+    assert numpy.array_equal(batches[1]["fixed_size_list_boolean"][1], numpy.array([False, True]))
+    assert numpy.array_equal(batch["fixed_size_list_uint8"][0], numpy.array([0, 1]))
+    assert numpy.array_equal(batch["list_uint64"][1], numpy.array([0])), batch["list_uint64"][1]
+    assert numpy.array_equal(batch["fixed_size_list_string"][0], numpy.array([b'a', b'b'], dtype='|S1'))
+    assert batch["geometry"][0] is not None
+    assert batch["geometry"][1] is None
+    assert batch["geometry"][0] is not None
+    assert batches[1]["geometry"][0] is not None
+    assert batches[1]["geometry"][1] is not None
+    assert numpy.array_equal(batches[1]["list_string"][0], numpy.array([b'A', b'BC', b'CDE']))
+    assert numpy.array_equal(batches[1]["list_string"][1], numpy.array([b'A', b'BC', b'CDE', b'DEFG']))
+
+    ignored_fields = [ 'geometry' ]
+    lyr_defn = lyr.GetLayerDefn()
+    for i in range(lyr_defn.GetFieldCount()):
+        if lyr_defn.GetFieldDefn(i).GetNameRef() != 'string':
+            ignored_fields.append(lyr_defn.GetFieldDefn(i).GetNameRef())
+    lyr.SetIgnoredFields(ignored_fields)
+    stream = lyr.GetArrowStreamAsNumPy()
+    batches = [ batch for batch in stream ]
+    batch = batches[0]
+    assert batch.keys() == { 'string' }
+
+    # Test ignoring only one subfield of a struct field
+    ignored_fields = [ 'struct_field.a', 'struct_field.b' ]
+    lyr.SetIgnoredFields(ignored_fields)
+    stream = lyr.GetArrowStreamAsNumPy()
+    batches = [ batch for batch in stream ]
+    batch = batches[0]
+    # + 1: FID
+    # + 1: geometry
+    assert len(batch.keys()) == lyr.GetLayerDefn().GetFieldCount() - len(ignored_fields) + 1 + 1

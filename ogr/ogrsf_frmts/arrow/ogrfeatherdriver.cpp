@@ -207,11 +207,12 @@ static GDALDataset *OGRFeatherDriverOpen( GDALOpenInfo* poOpenInfo )
         infile = *result;
     }
 
-    auto poMemoryPool = arrow::MemoryPool::CreateDefault();
+    auto poMemoryPool = std::shared_ptr<arrow::MemoryPool>(
+        arrow::MemoryPool::CreateDefault().release());
     auto options = arrow::ipc::IpcReadOptions::Defaults();
     options.memory_pool = poMemoryPool.get();
 
-    auto poDS = cpl::make_unique<OGRFeatherDataset>(std::move(poMemoryPool));
+    auto poDS = cpl::make_unique<OGRFeatherDataset>(poMemoryPool);
     if( bIsStreamingFormat )
     {
         auto result = arrow::ipc::RecordBatchStreamReader::Open(infile, options);
@@ -452,10 +453,14 @@ void RegisterOGRArrow()
 
     poDriver->SetDescription( "Arrow" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "(Geo)Arrow IPC File Format / Stream" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "arrow feather arrows ipc" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/feather.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
                                "Integer Integer64 Real String Date Time DateTime "

@@ -448,8 +448,7 @@ def test_stats_byte_partial_tiles():
     gdal.GetDriverByName('GTiff').Delete('/vsimem/stats_byte_tiled.tif')
 
     expected_stats = [1.0, 255.0, 50.311081057390084, 67.14541389488096]
-    expected_stats_32bit = [1.0, 255.0, 50.311081057390084, 67.145413894880946]
-    assert stats == expected_stats or stats == expected_stats_32bit, \
+    assert stats == pytest.approx(expected_stats, rel=1e-10), \
         'did not get expected stats'
 
     # Same but with nodata set but untiled and with non power of 16 block size
@@ -462,7 +461,7 @@ def test_stats_byte_partial_tiles():
     gdal.GetDriverByName('GTiff').Delete('/vsimem/stats_byte_untiled.tif')
 
     expected_stats = [1.0, 255.0, 50.378183963744554, 67.184793517649453]
-    assert stats == expected_stats, 'did not get expected stats'
+    assert stats == pytest.approx(expected_stats, rel=1e-10), 'did not get expected stats'
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/stats_byte_tiled.tif', 1000, 512,
                                               options=['TILED=YES', 'BLOCKXSIZE=512', 'BLOCKYSIZE=512'])
@@ -557,7 +556,7 @@ def test_stats_uint16():
     gdal.GetDriverByName('GTiff').Delete('/vsimem/stats_uint16_untiled.tif')
 
     expected_stats = [257.0, 65535.0, 50.378183963744554 * 65535 / 255, 67.184793517649453 * 65535 / 255]
-    assert stats == expected_stats, 'did not get expected stats'
+    assert stats == pytest.approx(expected_stats, rel=1e-10), 'did not get expected stats'
 
     for fill_val in [0, 1, 32767, 32768, 65535]:
         ds = gdal.GetDriverByName('GTiff').Create('/vsimem/stats_uint16_tiled.tif', 1000, 512, 1, gdal.GDT_UInt16,
@@ -717,3 +716,41 @@ def test_stats_clear():
     assert ds.GetRasterBand(1).GetStatistics(False, False) == [0,0,0,-1]
 
     gdal.GetDriverByName('GTiff').Delete(filename)
+
+
+@pytest.mark.parametrize('datatype,minval,maxval',
+                         [(gdal.GDT_Byte, 1, 254),
+                          (gdal.GDT_Byte, -127, 127),
+                          (gdal.GDT_UInt16, 1, 65535),
+                          (gdal.GDT_Int16, -32767, 32766),
+                          (gdal.GDT_UInt32, 1, (1 << 32) - 2),
+                          (gdal.GDT_Int32, -(1 << 31) + 1, (1 << 31) - 2),
+                          (gdal.GDT_UInt64, 1, (1 << 53) - 2),
+                          (gdal.GDT_Int64, -(1 << 53) + 2, (1 << 53) - 2),
+                          (gdal.GDT_Float32, -struct.unpack('f', struct.pack('f', 1e20))[0],
+                                             struct.unpack('f', struct.pack('f', 1e20))[0]),
+                          (gdal.GDT_Float64, -1e100, 1e100),
+                          (gdal.GDT_CInt16, -32767, 32766),
+                          (gdal.GDT_CInt32, -(1 << 31) + 1, (1 << 31) - 2),
+                          (gdal.GDT_CFloat32, -struct.unpack('f', struct.pack('f', 1e20))[0],
+                                             struct.unpack('f', struct.pack('f', 1e20))[0]),
+                          (gdal.GDT_CFloat64, -1e100, 1e100),])
+@pytest.mark.parametrize('nodata', [None, 0, 1])
+def test_stats_computeminmax(datatype, minval, maxval, nodata):
+    ds = gdal.GetDriverByName('MEM').Create('', 64, 1, 1, datatype)
+    minval_mod = minval
+    expected_minval = minval
+    if datatype == gdal.GDT_Byte and minval < 0:
+        ds.GetRasterBand(1).SetMetadataItem('PIXELTYPE', 'SIGNEDBYTE', 'IMAGE_STRUCTURE')
+        minval_mod = 256 + minval
+    if nodata:
+        ds.GetRasterBand(1).SetNoDataValue(nodata)
+        if nodata == 1 and minval == 1:
+            expected_minval = maxval
+    ds.GetRasterBand(1).WriteRaster(0, 0, 64, 1,
+                                    struct.pack('d' * 2, minval_mod, maxval),
+                                    buf_type = gdal.GDT_Float64,
+                                    buf_xsize = 2,
+                                    buf_ysize = 1)
+    assert ds.GetRasterBand(1).ComputeRasterMinMax(0) == (expected_minval, maxval)
+

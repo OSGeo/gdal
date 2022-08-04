@@ -1384,12 +1384,14 @@ static CPLVirtualMem* GDALGetTiledVirtualMem(
     int nTilesPerCol = (nYSize + nTileYSize - 1) / nTileYSize;
     GUIntBig nReqMem = static_cast<GUIntBig>(nTilesPerRow) * nTilesPerCol *
                         nTileXSize * nTileYSize * nBandCount * nDataTypeSize;
+#if SIZEOF_SIZE_T == 4
     if( nReqMem != static_cast<GUIntBig>(static_cast<size_t>(nReqMem)) )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory,
                   "Cannot reserve " CPL_FRMT_GUIB " bytes", nReqMem );
         return nullptr;
     }
+#endif
 
     size_t nPageSizeHint = nTileXSize * nTileYSize * nDataTypeSize;
     if( eTileOrganization != GTO_BSQ )

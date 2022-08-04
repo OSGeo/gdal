@@ -738,7 +738,12 @@ int wrapper_VSIStatL( const char * utf8_path, StatBuf *psStatBufOut, int nFlags 
 #endif
 
 %rename (GetFileMetadata) VSIGetFileMetadata;
-%apply (char **dict) { char ** };
+#if defined(SWIGPYTHON)
+%apply (char **dictAndCSLDestroy) { char ** };
+#else
+%apply (char **) { char ** };
+#endif
+%apply (char **options) { char ** options };
 char** VSIGetFileMetadata( const char *utf8_path, const char* domain,
                            char** options = NULL );
 %clear char **;

@@ -34,6 +34,7 @@
 #include "gdal_priv_templates.hpp"
 #include "gdal.h"
 #include "tilematrixset.hpp"
+#include "gdalcachedpixelaccessor.h"
 
 #include <limits>
 #include <string>
@@ -737,7 +738,12 @@ namespace tut
                 &srcPtr, GDALExtendedDataType::CreateString(),
                 &dstPtr, GDALExtendedDataType::CreateString());
             ensure(dstPtr != nullptr);
+            // Coverity isn't smart enough to figure out that GetClass() of
+            // CreateString() is GEDTC_STRING and then takes the wrong path
+            // in CopyValue() and makes wrong assumptions.
+            // coverity[string_null]
             ensure(strcmp(dstPtr, srcPtr) == 0);
+            // coverity[incorrect_free]
             CPLFree(dstPtr);
         }
         // null string to string
@@ -2019,6 +2025,342 @@ namespace tut
             VSIStatBufL sStat;
             ensure(VSIStatL(CPLSPrintf("%s.aux.xml", pszFilename), &sStat) != 0);
         }
+    }
+
+    template<class T> void TestCachedPixelAccessor()
+    {
+        constexpr auto eType = GDALCachedPixelAccessorGetDataType<T>::DataType;
+        auto poDS = std::unique_ptr<GDALDataset>(
+            GDALDriver::FromHandle(GDALGetDriverByName("MEM"))->Create(
+                "", 11, 23, 1, eType, nullptr));
+        auto poBand = poDS->GetRasterBand(1);
+        GDALCachedPixelAccessor<T, 4> accessor(poBand);
+        for( int iY = 0; iY < poBand->GetYSize(); iY++ )
+        {
+            for( int iX = 0; iX < poBand->GetXSize(); iX++ )
+            {
+                accessor.Set(iX, iY, static_cast<T>(iY * poBand->GetXSize() + iX));
+            }
+        }
+        for( int iY = 0; iY < poBand->GetYSize(); iY++ )
+        {
+            for( int iX = 0; iX < poBand->GetXSize(); iX++ )
+            {
+                ensure_equals(accessor.Get(iX, iY), static_cast<T>(iY * poBand->GetXSize() + iX));
+            }
+        }
+
+        std::vector<T> values(poBand->GetYSize() * poBand->GetXSize());
+        accessor.FlushCache();
+        ensure_equals(poBand->RasterIO(GF_Read, 0, 0, poBand->GetXSize(), poBand->GetYSize(),
+                                       values.data(), poBand->GetXSize(), poBand->GetYSize(),
+                                       eType, 0, 0, nullptr), CE_None);
+        for( int iY = 0; iY < poBand->GetYSize(); iY++ )
+        {
+            for( int iX = 0; iX < poBand->GetXSize(); iX++ )
+            {
+                ensure_equals(values[iY * poBand->GetXSize() + iX],
+                              static_cast<T>(iY * poBand->GetXSize() + iX));
+            }
+        }
+
+    }
+
+    // Test GDALCachedPixelAccessor
+    template<> template<> void object::test<25>()
+    {
+        TestCachedPixelAccessor<GByte>();
+        TestCachedPixelAccessor<GUInt16>();
+        TestCachedPixelAccessor<GInt16>();
+        TestCachedPixelAccessor<GUInt32>();
+        TestCachedPixelAccessor<GInt32>();
+        TestCachedPixelAccessor<GUInt64>();
+        TestCachedPixelAccessor<GInt64>();
+        TestCachedPixelAccessor<uint64_t>();
+        TestCachedPixelAccessor<int64_t>();
+        TestCachedPixelAccessor<float>();
+        TestCachedPixelAccessor<double>();
+    }
+
+    // Test VRT and caching of sources w.r.t open options (https://github.com/OSGeo/gdal/issues/5989)
+    template<> template<> void object::test<26>()
+    {
+        class TestRasterBand: public GDALRasterBand
+        {
+            protected:
+                CPLErr IReadBlock(int, int, void* pImage) override
+                {
+                    static_cast<GByte*>(pImage)[0] = 0;
+                    return CE_None;
+                }
+            public:
+                TestRasterBand()
+                {
+                    nBlockXSize = 1;
+                    nBlockYSize = 1;
+                    eDataType = GDT_Byte;
+                }
+        };
+
+        static int nCountZeroOpenOptions = 0;
+        static int nCountWithOneOpenOptions = 0;
+        class TestDataset : public GDALDataset
+        {
+            public:
+                TestDataset()
+                {
+                    nRasterXSize = 1;
+                    nRasterYSize = 1;
+                    SetBand(1, new TestRasterBand());
+                }
+
+                static GDALDataset* TestOpen(GDALOpenInfo* poOpenInfo)
+                {
+                    if( strcmp(poOpenInfo->pszFilename, ":::DUMMY:::") != 0 )
+                        return nullptr;
+                    if( poOpenInfo->papszOpenOptions == nullptr )
+                        nCountZeroOpenOptions ++;
+                    else
+                        nCountWithOneOpenOptions ++;
+                    return new TestDataset();
+                }
+        };
+
+        std::unique_ptr<GDALDriver> driver(new GDALDriver());
+        driver->SetDescription("TEST_VRT_SOURCE_OPEN_OPTION");
+        driver->pfnOpen = TestDataset::TestOpen;
+        GetGDALDriverManager()->RegisterDriver(driver.get());
+
+        const char* pszVRT = R"(
+<VRTDataset rasterXSize="1" rasterYSize="1">
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTSourcedRasterBand">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">:::DUMMY:::</SourceFilename>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">:::DUMMY:::</SourceFilename>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">:::DUMMY:::</SourceFilename>
+      <OpenOptions>
+          <OOI key="TESTARG">present</OOI>
+      </OpenOptions>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">:::DUMMY:::</SourceFilename>
+      <OpenOptions>
+          <OOI key="TESTARG">present</OOI>
+      </OpenOptions>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">:::DUMMY:::</SourceFilename>
+      <OpenOptions>
+          <OOI key="TESTARG">another_one</OOI>
+      </OpenOptions>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>)";
+        auto ds = std::unique_ptr<GDALDataset>(GDALDataset::Open(pszVRT));
+
+        // Trigger reading data, which triggers opening of source datasets
+        auto rb = ds->GetRasterBand(1);
+        double minmax[2];
+        GDALComputeRasterMinMax(GDALRasterBand::ToHandle(rb), TRUE, minmax);
+
+        ds.reset();
+        GetGDALDriverManager()->DeregisterDriver(driver.get());
+
+        ensure_equals(nCountZeroOpenOptions, 1);
+        ensure_equals(nCountWithOneOpenOptions, 2);
+    }
+
+    // Test GDALDeinterleave 3 components Byte()
+    template<> template<> void object::test<27>()
+    {
+        GByte* pabySrc = static_cast<GByte*>(CPLMalloc(3 * 4 * 15));
+        for( int i = 0; i < 3 * 4 * 15; i++ )
+            pabySrc[i] = static_cast<GByte>(i);
+        GByte* pabyDest0 = static_cast<GByte*>(CPLMalloc(4 * 15));
+        GByte* pabyDest1 = static_cast<GByte*>(CPLMalloc(4 * 15));
+        GByte* pabyDest2 = static_cast<GByte*>(CPLMalloc(4 * 15));
+        void* ppabyDest[] = { pabyDest0, pabyDest1, pabyDest2 };
+        for( int nIters : { 1, 4 * 15 } )
+        {
+            GDALDeinterleave(pabySrc, GDT_Byte, 3, ppabyDest, GDT_Byte, nIters);
+            for( int i = 0; i < nIters; i++ )
+            {
+                ensure_equals(pabyDest0[i], 3 * i);
+                ensure_equals(pabyDest1[i], 3 * i + 1);
+                ensure_equals(pabyDest2[i], 3 * i + 2);
+            }
+        }
+        VSIFree(pabySrc);
+        VSIFree(pabyDest0);
+        VSIFree(pabyDest1);
+        VSIFree(pabyDest2);
+    }
+
+    // Test GDALDeinterleave 3 components Byte() without SSSE3
+    template<> template<> void object::test<28>()
+    {
+        GByte* pabySrc = static_cast<GByte*>(CPLMalloc(3 * 4 * 15));
+        for( int i = 0; i < 3 * 4 * 15; i++ )
+            pabySrc[i] = static_cast<GByte>(i);
+        GByte* pabyDest0 = static_cast<GByte*>(CPLMalloc(4 * 15));
+        GByte* pabyDest1 = static_cast<GByte*>(CPLMalloc(4 * 15));
+        GByte* pabyDest2 = static_cast<GByte*>(CPLMalloc(4 * 15));
+        void* ppabyDest[] = { pabyDest0, pabyDest1, pabyDest2 };
+        for( int nIters : { 1, 4 * 15 } )
+        {
+            CPLSetConfigOption("GDAL_USE_SSSE3", "NO");
+            GDALDeinterleave(pabySrc, GDT_Byte, 3, ppabyDest, GDT_Byte, nIters);
+            CPLSetConfigOption("GDAL_USE_SSSE3", nullptr);
+            for( int i = 0; i < nIters; i++ )
+            {
+                ensure_equals(pabyDest0[i], 3 * i);
+                ensure_equals(pabyDest1[i], 3 * i + 1);
+                ensure_equals(pabyDest2[i], 3 * i + 2);
+            }
+        }
+        VSIFree(pabySrc);
+        VSIFree(pabyDest0);
+        VSIFree(pabyDest1);
+        VSIFree(pabyDest2);
+    }
+
+    // Test GDALDeinterleave 4 components Byte()
+    template<> template<> void object::test<29>()
+    {
+        GByte* pabySrc = static_cast<GByte*>(CPLMalloc(3 * 4 * 15));
+        for( int i = 0; i < 3 * 4 * 15; i++ )
+            pabySrc[i] = static_cast<GByte>(i);
+        GByte* pabyDest0 = static_cast<GByte*>(CPLMalloc(3 * 15));
+        GByte* pabyDest1 = static_cast<GByte*>(CPLMalloc(3 * 15));
+        GByte* pabyDest2 = static_cast<GByte*>(CPLMalloc(3 * 15));
+        GByte* pabyDest3 = static_cast<GByte*>(CPLMalloc(3 * 15));
+        void* ppabyDest[] = { pabyDest0, pabyDest1, pabyDest2, pabyDest3 };
+        for( int nIters : { 1, 3 * 15 } )
+        {
+            GDALDeinterleave(pabySrc, GDT_Byte, 4, ppabyDest, GDT_Byte, nIters);
+            for( int i = 0; i < nIters; i++ )
+            {
+                ensure_equals(pabyDest0[i], 4 * i);
+                ensure_equals(pabyDest1[i], 4 * i + 1);
+                ensure_equals(pabyDest2[i], 4 * i + 2);
+                ensure_equals(pabyDest3[i], 4 * i + 3);
+            }
+        }
+        VSIFree(pabySrc);
+        VSIFree(pabyDest0);
+        VSIFree(pabyDest1);
+        VSIFree(pabyDest2);
+        VSIFree(pabyDest3);
+    }
+
+    // Test GDALDeinterleave 4 components Byte without SSSE3
+    template<> template<> void object::test<30>()
+    {
+        GByte* pabySrc = static_cast<GByte*>(CPLMalloc(3 * 4 * 15));
+        for( int i = 0; i < 3 * 4 * 15; i++ )
+            pabySrc[i] = static_cast<GByte>(i);
+        GByte* pabyDest0 = static_cast<GByte*>(CPLMalloc(3 * 15));
+        GByte* pabyDest1 = static_cast<GByte*>(CPLMalloc(3 * 15));
+        GByte* pabyDest2 = static_cast<GByte*>(CPLMalloc(3 * 15));
+        GByte* pabyDest3 = static_cast<GByte*>(CPLMalloc(3 * 15));
+        void* ppabyDest[] = { pabyDest0, pabyDest1, pabyDest2, pabyDest3 };
+        for( int nIters : { 1, 3 * 15 } )
+        {
+            CPLSetConfigOption("GDAL_USE_SSSE3", "NO");
+            GDALDeinterleave(pabySrc, GDT_Byte, 4, ppabyDest, GDT_Byte, nIters);
+            CPLSetConfigOption("GDAL_USE_SSSE3", nullptr);
+            for( int i = 0; i < nIters; i++ )
+            {
+                ensure_equals(pabyDest0[i], 4 * i);
+                ensure_equals(pabyDest1[i], 4 * i + 1);
+                ensure_equals(pabyDest2[i], 4 * i + 2);
+                ensure_equals(pabyDest3[i], 4 * i + 3);
+            }
+        }
+        VSIFree(pabySrc);
+        VSIFree(pabyDest0);
+        VSIFree(pabyDest1);
+        VSIFree(pabyDest2);
+        VSIFree(pabyDest3);
+    }
+
+    // Test GDALDeinterleave general case
+    template<> template<> void object::test<31>()
+    {
+        GByte* pabySrc = static_cast<GByte*>(CPLMalloc(3 * 2));
+        for( int i = 0; i < 3 * 2; i++ )
+            pabySrc[i] = static_cast<GByte>(i);
+        GUInt16* panDest0 = static_cast<GUInt16*>(CPLMalloc(3 * sizeof(uint16_t)));
+        GUInt16* panDest1 = static_cast<GUInt16*>(CPLMalloc(3 * sizeof(uint16_t)));
+        void* ppanDest[] = { panDest0, panDest1 };
+        GDALDeinterleave(pabySrc, GDT_Byte, 2, ppanDest, GDT_UInt16, 3);
+        for( int i = 0; i < 3; i++ )
+        {
+            ensure_equals(panDest0[i], 2 * i);
+            ensure_equals(panDest1[i], 2 * i + 1);
+        }
+        VSIFree(pabySrc);
+        VSIFree(panDest0);
+        VSIFree(panDest1);
+    }
+
+    // Test GDALDeinterleave 3 components UInt16()
+    template<> template<> void object::test<32>()
+    {
+        GUInt16* panSrc = static_cast<GUInt16*>(CPLMalloc(3 * 4 * 15 * sizeof(GUInt16)));
+        for( int i = 0; i < 3 * 4 * 15; i++ )
+            panSrc[i] = static_cast<GUInt16>(i + 32767);
+        GUInt16* panDest0 = static_cast<GUInt16*>(CPLMalloc(4 * 15 * sizeof(GUInt16)));
+        GUInt16* panDest1 = static_cast<GUInt16*>(CPLMalloc(4 * 15 * sizeof(GUInt16)));
+        GUInt16* panDest2 = static_cast<GUInt16*>(CPLMalloc(4 * 15 * sizeof(GUInt16)));
+        void* ppanDest[] = { panDest0, panDest1, panDest2 };
+        for( int nIters : { 1, 4 * 15 } )
+        {
+            GDALDeinterleave(panSrc, GDT_UInt16, 3, ppanDest, GDT_UInt16, nIters);
+            for( int i = 0; i < nIters; i++ )
+            {
+                ensure_equals(panDest0[i], 3 * i + 32767);
+                ensure_equals(panDest1[i], 3 * i + 1 + 32767);
+                ensure_equals(panDest2[i], 3 * i + 2 + 32767);
+            }
+        }
+        VSIFree(panSrc);
+        VSIFree(panDest0);
+        VSIFree(panDest1);
+        VSIFree(panDest2);
+    }
+
+    // Test GDALDeinterleave 4 components UInt16()
+    template<> template<> void object::test<33>()
+    {
+        GUInt16* panSrc = static_cast<GUInt16*>(CPLMalloc(3 * 4 * 15 * sizeof(GUInt16)));
+        for( int i = 0; i < 3 * 4 * 15; i++ )
+            panSrc[i] = static_cast<GUInt16>(i + 32767);
+        GUInt16* panDest0 = static_cast<GUInt16*>(CPLMalloc(4 * 15 * sizeof(GUInt16)));
+        GUInt16* panDest1 = static_cast<GUInt16*>(CPLMalloc(4 * 15 * sizeof(GUInt16)));
+        GUInt16* panDest2 = static_cast<GUInt16*>(CPLMalloc(4 * 15 * sizeof(GUInt16)));
+        GUInt16* panDest3 = static_cast<GUInt16*>(CPLMalloc(4 * 15 * sizeof(GUInt16)));
+        void* ppanDest[] = { panDest0, panDest1, panDest2, panDest3 };
+        for( int nIters : { 1, 3 * 15 } )
+        {
+            GDALDeinterleave(panSrc, GDT_UInt16, 4, ppanDest, GDT_UInt16, nIters);
+            for( int i = 0; i < nIters; i++ )
+            {
+                ensure_equals(panDest0[i], 4 * i + 32767);
+                ensure_equals(panDest1[i], 4 * i + 1 + 32767);
+                ensure_equals(panDest2[i], 4 * i + 2 + 32767);
+                ensure_equals(panDest3[i], 4 * i + 3 + 32767);
+            }
+        }
+        VSIFree(panSrc);
+        VSIFree(panDest0);
+        VSIFree(panDest1);
+        VSIFree(panDest2);
+        VSIFree(panDest3);
     }
 
 } // namespace tut

@@ -118,7 +118,7 @@ where src_color is a RGB or RGBA dataset,
       dst_color will be a RGB or RGBA dataset using the greyscale as the
       intensity for the color dataset.
 """)
-    return 1
+    return 2
 
 
 def main(argv=sys.argv):
@@ -153,12 +153,12 @@ def main(argv=sys.argv):
         elif dst_color_filename is None:
             dst_color_filename = argv[i]
         else:
-            Usage()
+            return Usage()
 
         i = i + 1
 
     if dst_color_filename is None:
-        Usage()
+        return Usage()
 
     datatype = gdal.GDT_Byte
 

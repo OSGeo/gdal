@@ -32,6 +32,8 @@ import json
 import os.path
 import stat
 import sys
+import tempfile
+
 from osgeo import gdal
 
 
@@ -129,34 +131,21 @@ def test_vsis3_no_sign_request(aws_test_config_as_config_options_or_credentials)
         'AWS_VIRTUAL_HOSTING': 'TRUE'
     }
 
-    with gdaltest.config_options(options) if aws_test_config_as_config_options_or_credentials else gdaltest.credentials('/vsis3/landsat-pds', options):
-        actual_url = gdal.GetActualURL(
-            '/vsis3/landsat-pds/L8/001/002/'
-            'LC80010022016230LGN00/LC80010022016230LGN00_B1.TIF'
-        )
-        assert actual_url == (
-            'https://landsat-pds.s3.amazonaws.com/L8/001/002/'
-            'LC80010022016230LGN00/LC80010022016230LGN00_B1.TIF'
-        )
+    bucket = 'noaa-goes16'
+    obj = 'ABI-L1b-RadC/2022/001/00/OR_ABI-L1b-RadC-M6C01_G16_s20220010001173_e20220010003546_c20220010003587.nc'
+    vsis3_path = '/vsis3/' + bucket + '/' + obj
+    url = 'https://' + bucket + '.s3.amazonaws.com/' + obj
 
-        actual_url = gdal.GetActualURL(
-            '/vsis3_streaming/landsat-pds/L8/001/002/'
-            'LC80010022016230LGN00/LC80010022016230LGN00_B1.TIF'
-        )
-        assert actual_url == (
-            'https://landsat-pds.s3.amazonaws.com/L8/001/002/'
-            'LC80010022016230LGN00/LC80010022016230LGN00_B1.TIF'
-        )
+    with gdaltest.config_options(options) if aws_test_config_as_config_options_or_credentials else gdaltest.credentials('/vsis3/' + bucket, options):
+        actual_url = gdal.GetActualURL(vsis3_path)
+        assert actual_url == url
 
-        f = open_for_read(
-            '/vsis3/landsat-pds/L8/001/002/'
-            'LC80010022016230LGN00/LC80010022016230LGN00_B1.TIF'
-        )
+        actual_url = gdal.GetActualURL(vsis3_path.replace('/vsis3/', '/vsis3_streaming/'))
+        assert actual_url == url
+
+        f = open_for_read(vsis3_path)
         if f is None:
-            if gdaltest.gdalurlopen(
-                'https://landsat-pds.s3.amazonaws.com/L8/001/002/'
-                'LC80010022016230LGN00/LC80010022016230LGN00_B1.TIF'
-            ) is None:
+            if gdaltest.gdalurlopen(url) is None:
                 pytest.skip('cannot open URL')
             pytest.fail()
         gdal.VSIFCloseL(f)
@@ -314,9 +303,15 @@ def get_s3_fake_bucket_resource_method(request):
         'x-amz-date,Signature='
         '9f623b7ffce76188a456c70fb4813eb31969e88d130d6b4d801b3accbf050d6c'
     )
+    expected_authorization_8082 = (
+        'AWS4-HMAC-SHA256 Credential=AWS_ACCESS_KEY_ID/20150101/us-east-1/'
+        's3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;'
+        'x-amz-security-token,Signature='
+        'a78e2d484679a19bec940a72d40c7fda37d1651a8ab82a6ed8fd7be46a53afb1'
+    )
     actual_authorization = request.headers['Authorization']
     if (actual_authorization not in
-            (expected_authorization_8080, expected_authorization_8081)):
+            (expected_authorization_8080, expected_authorization_8081, expected_authorization_8082)):
         sys.stderr.write(
             "Bad Authorization: '%s'\n" % str(actual_authorization)
         )
@@ -4351,12 +4346,6 @@ def test_vsis3_random_write_gtiff_create_copy(
         404,
         {}
     )
-    handler.add(
-        'GET',
-        '/random_write/?delimiter=%2F',
-        404,
-        {}
-    )
 
     src_ds = gdal.Open('data/byte.tif')
 
@@ -4652,6 +4641,80 @@ aws_secret_access_key = bar
 
 
 ###############################################################################
+# Read credentials from sts AssumeRoleWithWebIdentity
+@pytest.mark.skipif(
+    sys.platform not in ('linux', 'win32'),
+    reason='Incorrect platform'
+)
+def test_vsis3_read_credentials_sts_assume_role_with_web_identity(
+        aws_test_config,
+        webserver_port
+):
+    fp = tempfile.NamedTemporaryFile(delete=False)
+    fp.write(b'token')
+    fp.close()
+
+    aws_role_arn = 'arn:aws:iam:role/test'
+    options = {
+        'CPL_AWS_CREDENTIALS_FILE': '',
+        'AWS_CONFIG_FILE': '',
+        'AWS_SECRET_ACCESS_KEY': '',
+        'AWS_ACCESS_KEY_ID': '',
+        'AWS_ROLE_ARN': aws_role_arn,
+        'AWS_WEB_IDENTITY_TOKEN_FILE': fp.name
+    }
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        'GET',
+        f'/?Action=AssumeRoleWithWebIdentity&RoleSessionName=gdal&Version=2011-06-15&RoleArn={aws_role_arn}&WebIdentityToken=token',
+        200,
+        {},
+        """<AssumeRoleWithWebIdentityResponse xmlns="https://sts.amazonaws.com/doc/2011-06-15/">
+          <AssumeRoleWithWebIdentityResult>
+            <SubjectFromWebIdentityToken>amzn1.account.AF6RHO7KZU5XRVQJGXK6HB56KR2A</SubjectFromWebIdentityToken>
+            <Audience>client.5498841531868486423.1548@apps.example.com</Audience>
+            <AssumedRoleUser>
+              <Arn>arn:aws:sts::123456789012:assumed-role/FederatedWebIdentityRole/app1</Arn>
+              <AssumedRoleId>AROACLKWSDQRAOEXAMPLE:app1</AssumedRoleId>
+            </AssumedRoleUser>
+            <Credentials>
+              <SessionToken>AWS_SESSION_TOKEN</SessionToken>
+              <SecretAccessKey>AWS_SECRET_ACCESS_KEY</SecretAccessKey>
+              <Expiration>3000-01-01T00:00:00Z</Expiration>
+              <AccessKeyId>AWS_ACCESS_KEY_ID</AccessKeyId>
+            </Credentials>
+            <SourceIdentity>SourceIdentityValue</SourceIdentity>
+            <Provider>www.amazon.com</Provider>
+          </AssumeRoleWithWebIdentityResult>
+          <ResponseMetadata>
+            <RequestId>ad4156e9-bce1-11e2-82e6-6b6efEXAMPLE</RequestId>
+          </ResponseMetadata>
+        </AssumeRoleWithWebIdentityResponse>"""
+    )
+    handler.add(
+        'GET',
+        '/s3_fake_bucket/resource',
+        custom_method=get_s3_fake_bucket_resource_method
+    )
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(options):
+            with gdaltest.config_option(
+                    'CPL_AWS_STS_ROOT_URL',
+                    'http://localhost:%d' % webserver_port
+            ):
+                f = open_for_read('/vsis3/s3_fake_bucket/resource')
+        assert f is not None
+        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+
+    gdal.Unlink(fp.name)
+    assert data == 'foo'
+
+
+###############################################################################
 # Read credentials from simulated EC2 instance
 @pytest.mark.skipif(
     sys.platform not in ('linux', 'win32'),
@@ -4667,7 +4730,8 @@ def test_vsis3_read_credentials_ec2_imdsv2(
         'AWS_SECRET_ACCESS_KEY': '',
         'AWS_ACCESS_KEY_ID': '',
         # Disable hypervisor related check to test if we are really on EC2
-        'CPL_AWS_AUTODETECT_EC2': 'NO'
+        'CPL_AWS_AUTODETECT_EC2': 'NO',
+        'CPL_AWS_WEB_IDENTITY_ENABLE': 'NO'
     }
 
     gdal.VSICurlClearCache()
@@ -4732,6 +4796,90 @@ def test_vsis3_read_credentials_ec2_imdsv2(
         gdal.VSIFCloseL(f)
 
     assert data == 'bar'
+
+    # We can reuse credentials here as their expiration is far away in the future
+    with gdaltest.config_options(
+        {**options,
+         'CPL_AWS_EC2_API_ROOT_URL': 'http://localhost:%d' % webserver_port}):
+            signed_url = gdal.GetSignedURL('/vsis3/s3_fake_bucket/resource')
+    expected_url_8080 = (
+        'http://127.0.0.1:8080/s3_fake_bucket/resource'
+        '?X-Amz-Algorithm=AWS4-HMAC-SHA256'
+        '&X-Amz-Credential='
+        'AWS_ACCESS_KEY_ID%2F20150101%2Fus-east-1%2Fs3%2Faws4_request'
+        '&X-Amz-Date=20150101T000000Z&X-Amz-Expires=3600'
+        '&X-Amz-Signature='
+        'dca239dd95f72ff8c37c15c840afc54cd19bdb07f7aaee2223108b5b0ad35da8'
+        '&X-Amz-SignedHeaders=host'
+    )
+    expected_url_8081 = (
+        'http://127.0.0.1:8081/s3_fake_bucket/resource'
+        '?X-Amz-Algorithm=AWS4-HMAC-SHA256'
+        '&X-Amz-Credential='
+        'AWS_ACCESS_KEY_ID%2F20150101%2Fus-east-1%2Fs3%2Faws4_request'
+        '&X-Amz-Date=20150101T000000Z&X-Amz-Expires=3600'
+        '&X-Amz-Signature='
+        'ef5216bc5971863414c69f6ca095276c0d62c0da97fa4f6ab80c30bd7fc146ac'
+        '&X-Amz-SignedHeaders=host'
+    )
+    assert signed_url in (expected_url_8080, expected_url_8081)
+
+    # Now test asking for an expiration in a super long delay, which will
+    # cause credentials to be queried again
+    handler = webserver.SequentialHandler()
+    handler.add(
+        'PUT',
+        '/latest/api/token',
+        200,
+        {},
+        'mytoken2',
+        expected_headers={'X-aws-ec2-metadata-token-ttl-seconds': '10'}
+    )
+    handler.add(
+        'GET',
+        '/latest/meta-data/iam/security-credentials/myprofile',
+        200,
+        {},
+        """{
+        "AccessKeyId": "AWS_ACCESS_KEY_ID",
+        "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
+        "Token": "AWS_SESSION_TOKEN",
+        "Expiration": "5000-01-01T00:00:00Z"
+        }""",
+        expected_headers={'X-aws-ec2-metadata-token': 'mytoken2'}
+    )
+
+    with gdaltest.config_options(
+        {**options,
+         'CPL_AWS_EC2_API_ROOT_URL': 'http://localhost:%d' % webserver_port}):
+        with webserver.install_http_handler(handler):
+            signed_url = gdal.GetSignedURL('/vsis3/s3_fake_bucket/resource',
+                                           ['EXPIRATION_DELAY=' + str(2000 * 365 * 86400)])
+    expected_url_8080 = (
+        'http://127.0.0.1:8080/s3_fake_bucket/resource'
+        '?X-Amz-Algorithm=AWS4-HMAC-SHA256&'
+        'X-Amz-Credential='
+        'AWS_ACCESS_KEY_ID%2F20150101%2Fus-east-1%2Fs3%2Faws4_request'
+        '&X-Amz-Date=20150101T000000Z'
+        '&X-Amz-Expires=63072000000'
+        '&X-Amz-Security-Token=AWS_SESSION_TOKEN'
+        '&X-Amz-Signature='
+        '42770a74a5ad96940a42d5660959d36bb027d3ec8433d66d1b003983ef9f47c9'
+        '&X-Amz-SignedHeaders=host'
+    )
+    expected_url_8081 = (
+        'http://127.0.0.1:8081/s3_fake_bucket/resource'
+        '?X-Amz-Algorithm=AWS4-HMAC-SHA256&'
+        'X-Amz-Credential='
+        'AWS_ACCESS_KEY_ID%2F20150101%2Fus-east-1%2Fs3%2Faws4_request'
+        '&X-Amz-Date=20150101T000000Z'
+        '&X-Amz-Expires=63072000000'
+        '&X-Amz-Security-Token=AWS_SESSION_TOKEN'
+        '&X-Amz-Signature='
+        '20e35d2707bd2e2896879dc009f5327d4dfd43500e16bb1c6e157dd5eda4403f'
+        '&X-Amz-SignedHeaders=host'
+    )
+    assert signed_url in (expected_url_8080, expected_url_8081), signed_url
 
 
 ###############################################################################

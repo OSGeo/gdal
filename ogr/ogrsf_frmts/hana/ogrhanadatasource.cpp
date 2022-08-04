@@ -641,7 +641,7 @@ int OGRHanaDataSource::Open(const char* newName, char** openOptions, int update)
 
     updateMode_ = update;
     detectGeometryType_ =
-        CPLFetchBool(openOptions, OpenOptionsConstants::DETECT_GEOMETRY_TYPE, "YES");
+        CPLFetchBool(openOptions, OpenOptionsConstants::DETECT_GEOMETRY_TYPE, true);
 
     std::size_t prefixLength = strlen(GetPrefix());
     char** connOptions = CSLTokenizeStringComplex(newName + prefixLength, ";", TRUE, FALSE);
@@ -883,9 +883,10 @@ void OGRHanaDataSource::ExecuteSQL(const char* sql)
 /************************************************************************/
 /*                            GetSrsById()                              */
 /*                                                                      */
-/*      Return a SRS corresponding to a particular id.  Note that       */
-/*      reference counting should be honoured on the returned           */
-/*      OGRSpatialReference, as handles may be cached.                  */
+/*      Return a SRS corresponding to a particular id.  The returned    */
+/*      object has its reference counter incremented. Consequently      */
+/*      the caller should call Release() on it (if not null) once done  */
+/*      with it.                                                        */
 /************************************************************************/
 
 OGRSpatialReference* OGRHanaDataSource::GetSrsById(int srid)
@@ -895,22 +896,30 @@ OGRSpatialReference* OGRHanaDataSource::GetSrsById(int srid)
 
     auto it = srsCache_.find(srid);
     if (it != srsCache_.end())
+    {
+        it->second->Reference();
         return it->second;
+    }
 
-    std::unique_ptr<OGRSpatialReference> srs;
+    OGRSpatialReference* srs = nullptr;
 
     CPLString wkt = GetSrsWktById(*conn_, srid);
     if (!wkt.empty())
     {
-        srs = cpl::make_unique<OGRSpatialReference>();
+        srs = new OGRSpatialReference();
         OGRErr err = srs->importFromWkt(wkt.c_str());
         if (OGRERR_NONE != err)
-            srs.reset(nullptr);
+        {
+            delete srs;
+            srs = nullptr;
+        }
     }
 
-    srsCache_.insert({srid, srs.get()});
+    srsCache_.insert({srid, srs});
 
-    return srs.release();
+    if( srs )
+        srs->Reference();
+    return srs;
 }
 
 /************************************************************************/
@@ -1066,9 +1075,9 @@ bool OGRHanaDataSource::HasSrsPlanarEquivalent(int srid)
 OGRErr OGRHanaDataSource::GetQueryColumns(
     const CPLString& schemaName,
     const CPLString& query,
-    std::vector<ColumnDescription>& columDescriptions)
+    std::vector<ColumnDescription>& columnDescriptions)
 {
-    columDescriptions.clear();
+    columnDescriptions.clear();
 
     odbc::PreparedStatementRef stmtQuery;
 
@@ -1089,7 +1098,7 @@ OGRErr OGRHanaDataSource::GetQueryColumns(
     if (numColumns == 0)
         return OGRERR_NONE;
 
-    columDescriptions.reserve(numColumns);
+    columnDescriptions.reserve(numColumns);
 
     CPLString tableName = rsmd->getTableName(1);
     odbc::DatabaseMetaDataRef dmd = conn_->getDatabaseMetaData();
@@ -1186,7 +1195,7 @@ OGRErr OGRHanaDataSource::GetQueryColumns(
                     *conn_, schemaName, tableName, columnName, detectGeometryType_);
             geometryColumnDesc.isNullable = rsmd->isNullable(clmIndex);
 
-            columDescriptions.push_back(
+            columnDescriptions.push_back(
                 {true, AttributeColumnDescription(), geometryColumnDesc});
         }
         else
@@ -1205,7 +1214,7 @@ OGRErr OGRHanaDataSource::GetQueryColumns(
             attributeColumnDesc.scale = rsmd->getScale(clmIndex);
             attributeColumnDesc.defaultValue = defaultValue;
 
-            columDescriptions.push_back(
+            columnDescriptions.push_back(
                 {false, attributeColumnDesc, GeometryColumnDescription()});
         }
     }

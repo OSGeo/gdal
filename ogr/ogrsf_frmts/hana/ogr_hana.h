@@ -314,7 +314,7 @@ protected:
     OGRErr GetQueryColumns(
         const CPLString& schemaName,
         const CPLString& query,
-        std::vector<OGRHANA::ColumnDescription>& columDescriptions);
+        std::vector<OGRHANA::ColumnDescription>& columnDescriptions);
     std::vector<CPLString> GetTablePrimaryKeys(
         const char* schemaName, const char* tableName);
 
@@ -346,7 +346,7 @@ public:
 
     int Open(const char* newName, char** options, int update);
 
-    uint GetMajorVersion() const { return majorVersion_; }
+    int GetMajorVersion() const { return majorVersion_; }
     OGRErr DeleteLayer(int index) override;
     int GetLayerCount() override { return static_cast<int>(layers_.size()); }
     OGRLayer* GetLayer(int index) override;
