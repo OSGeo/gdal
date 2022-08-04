@@ -2205,7 +2205,7 @@ OGRGeometry::IsValid() const
             {
                 char* pszReason = GEOSisValidReason_r( hGEOSCtxt, hThisGeosGeom );
                 CPLDebug("OGR", "%s", pszReason);
-                GEOSFree(pszReason);
+                GEOSFree_r(hGEOSCtxt, pszReason);
             }
 #endif
             GEOSGeom_destroy_r( hGEOSCtxt, hThisGeosGeom );
