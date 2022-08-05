@@ -141,7 +141,7 @@ CWD=${PWD}
 #
 echo "* Generating man pages..."
 
-(cd doc; make man)
+(cd doc; SPHINXOPTS='--keep-going -j auto' make man)
 mkdir -p man/man1
 cp doc/build/man/*.1 man/man1
 rm -rf doc/build
