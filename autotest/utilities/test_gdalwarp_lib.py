@@ -2201,6 +2201,23 @@ def test_gdalwarp_lib_not_delete_shared_auxiliary_files():
     os.unlink('tmp/IMG_foo_R1C1.tif')
     os.unlink('tmp/DIM_foo.XML')
 
+
+###############################################################################
+
+
+def test_gdalwarp_lib_issue_with_te_and_geographic_crs_world_coverage():
+
+    # Representative of georeferencing on gfs.t18z.pgrb2.0p25.f033
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1440, 721)
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('+proj=longlat +R=6371229')
+    src_ds.SetSpatialRef(srs)
+    src_ds.SetGeoTransform([-180.125,0.25,0,90.125,0,-0.25])
+    out_ds = gdal.Warp('', src_ds, format='MEM', dstSRS='EPSG:4326', outputBounds=[-180,-90,180,90])
+    # Check that the resolution is 0.25
+    assert out_ds.GetGeoTransform() == (-180,0.25,0,90,0,-0.25)
+
+
 ###############################################################################
 # Cleanup
 
