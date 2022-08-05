@@ -26,6 +26,28 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Setup environment
+      shell: bash -l {0}
+      run: |
+          apt update
+          apt install -y libproj-dev
+          python3 -m pip install -r doc/requirements.txt
+          python3 -m pip install numpy
+          pushd .
+          mkdir build
+          cd build
+          export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=/usr \
+            -DBUILD_APPS=OFF \
+            -DGDAL_BUILD_OPTIONAL_DRIVERS=OFF \
+            -DOGR_BUILD_OPTIONAL_DRIVERS=OFF
+          cmake --build . -j$(nproc)
+          cmake --install .
+          ldconfig
+          popd
+
     - name: Print versions
       shell: bash -l {0}
       run: |
@@ -95,9 +117,7 @@ jobs:
         cp gdal/data/gdalicon.png gdal-docs # For GDAL autotest...
         cd gdal-docs
         wget http://download.osgeo.org/gdal/for_doc/javadoc.zip -O /tmp/javadoc.zip
-        wget http://download.osgeo.org/gdal/for_doc/python-doc.tar.gz -O /tmp/python-doc.tar.gz
         unzip -q /tmp/javadoc.zip
-        tar xzf /tmp/python-doc.tar.gz
         git init
         git config user.email "proj4bot@proj4.bot"
         git config user.name "GDAL Bot"

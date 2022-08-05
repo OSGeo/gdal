@@ -6361,6 +6361,166 @@ const char *TABText::GetStyleString() const
     return m_pszStyleString;
 }
 
+
+void TABText::SetLabelFromStyleString(const char* pszStyleString)
+{
+    // Use the Style Manager to retrieve all the information we need.
+    auto poStyleMgr = cpl::make_unique<OGRStyleMgr>(nullptr);
+    std::unique_ptr<OGRStyleTool> poStylePart;
+
+    // Init the StyleMgr with the StyleString.
+    poStyleMgr->InitStyleString(pszStyleString);
+
+    // Retrieve the Symbol info.
+    const int numParts = poStyleMgr->GetPartCount();
+    for( int i = 0; i < numParts; i++ )
+    {
+        poStylePart.reset(poStyleMgr->GetPart(i));
+        if( poStylePart == nullptr )
+        {
+            continue;
+        }
+
+        if(poStylePart->GetType() == OGRSTCLabel)
+        {
+            break;
+        }
+        else
+        {
+            poStylePart.reset();
+        }
+    }
+
+    // If the no Symbol found, do nothing.
+    if(poStylePart == nullptr)
+    {
+        return;
+    }
+
+    auto poLabelStyle = cpl::down_cast<OGRStyleLabel*>(poStylePart.get());
+
+    GBool bIsNull = 0;
+    const char* pszText = poLabelStyle->TextString(bIsNull);
+    if( !bIsNull && pszText )
+    {
+        SetTextString(pszText);
+
+        poLabelStyle->SetUnit(OGRSTUMM);
+        double dfSize = poLabelStyle->Size(bIsNull);
+        if( !bIsNull )
+        {
+            dfSize /= 1000;
+
+            // Compute text box height, taking number of lines ("\\n", "\n") and line
+            // spacing into account.
+            int numLines = 1;
+            for (int i=0; pszText[i];
+                 numLines += ((pszText[i]=='\n' ||
+                               (pszText[i]=='\\' && pszText[i+1]=='n')) &&
+                              pszText[i+1] != '\0' ),++i);
+
+            // Cf GetLabelStyleString() for 0.69. We should likely also take
+            // into account line spacing if we knew how to compute it.
+            SetTextBoxHeight(dfSize / 0.69 * numLines);
+        }
+    }
+
+    if( poLabelStyle->Bold(bIsNull) )
+        ToggleFontStyle(TABFSBold, true);
+
+    if( poLabelStyle->Italic(bIsNull) )
+        ToggleFontStyle(TABFSItalic, true);
+
+    if( poLabelStyle->Underline(bIsNull) )
+        ToggleFontStyle(TABFSUnderline, true);
+
+    const char* pszFontName = poLabelStyle->FontName(bIsNull);
+    if( !bIsNull && pszFontName )
+        SetFontName(pszFontName);
+
+    // Set the ForeColor
+    const char* pszForeColor = poLabelStyle->ForeColor(bIsNull);
+    if(bIsNull) pszForeColor = nullptr;
+    if(pszForeColor)
+    {
+        if(pszForeColor[0] == '#')
+            pszForeColor++;
+        CPLString osForeColor(pszForeColor);
+        if( strlen(pszForeColor) > 6 )
+            osForeColor.resize(6);
+        const int nColor =
+            static_cast<int>(strtol(osForeColor, nullptr, 16));
+        SetFontFGColor(static_cast<GInt32>(nColor));
+    }
+
+    // Set the BackgroundColor
+    const char* pszBackColor = poLabelStyle->BackColor(bIsNull);
+    if(bIsNull) pszBackColor = nullptr;
+    if(pszBackColor)
+    {
+        if(pszBackColor[0] == '#')
+            pszBackColor++;
+        CPLString osBackColor(pszBackColor);
+        if( strlen(pszBackColor) > 6 )
+            osBackColor.resize(6);
+        const int nColor =
+            static_cast<int>(strtol(osBackColor, nullptr, 16));
+        ToggleFontStyle(TABFSBox, true);
+        SetFontBGColor(static_cast<GInt32>(nColor));
+    }
+
+    // Set the OutlineColor
+    const char* pszOutlineColor = poLabelStyle->OutlineColor(bIsNull);
+    if(bIsNull) pszOutlineColor = nullptr;
+    if(pszOutlineColor)
+    {
+        if(pszOutlineColor[0] == '#')
+            pszOutlineColor++;
+        CPLString osOutlineColor(pszOutlineColor);
+        if( strlen(pszOutlineColor) > 6 )
+            osOutlineColor.resize(6);
+        const int nColor =
+            static_cast<int>(strtol(osOutlineColor, nullptr, 16));
+        ToggleFontStyle(TABFSHalo, true);
+        SetFontOColor(static_cast<GInt32>(nColor));
+    }
+
+#if 0
+    // Commented out since it is harcoded to 0x808080.
+    // Set the ShadowColor
+    const char* pszShadowColor = poLabelStyle->ShadowColor(bIsNull);
+    if(bIsNull) pszShadowColor = nullptr;
+    if(pszShadowColor)
+    {
+        if(pszShadowColor[0] == '#')
+            pszShadowColor++;
+        CPLString osShadowColor(pszShadowColor);
+        if( strlen(pszShadowColor) > 6 )
+            osShadowColor.resize(6);
+        const int nColor =
+            static_cast<int>(strtol(osShadowColor, nullptr, 16));
+        ToggleFontStyle(TABFSShadow, true);
+        SetFontSColor(static_cast<GInt32>(nColor));
+    }
+#endif
+
+    const double dfAngle = poLabelStyle->Angle(bIsNull);
+    if( !bIsNull )
+        SetTextAngle(dfAngle);
+
+    const int nAnchor = poLabelStyle->Anchor(bIsNull);
+    if( !bIsNull )
+    {
+        switch( (nAnchor - 1) % 3 )
+        {
+            case 0: SetTextJustification(TABTJLeft); break;
+            case 1: SetTextJustification(TABTJCenter); break;
+            default /* 2 */: SetTextJustification(TABTJRight); break;
+        }
+    }
+}
+
+
 /**********************************************************************
  *                   TABText::DumpMIF()
  *
