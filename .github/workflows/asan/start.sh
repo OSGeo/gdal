@@ -39,7 +39,7 @@ sudo ln -s /usr/lib/ogdi/libvrf.so /usr/lib
 # Build odbc-cpp library for HANA
 (wget https://github.com/Kitware/CMake/releases/download/v3.12.4/cmake-3.12.4-Linux-x86_64.sh -O cmake.sh)
 (sudo sh cmake.sh --prefix=/usr/local/ --exclude-subdir)
-(git clone https://github.com/SAP/odbc-cpp-wrapper.git && mkdir odbc-cpp-wrapper/build && cd odbc-cpp-wrapper/build && cmake .. && make -j 2 && make install)
+(wget https://github.com/SAP/odbc-cpp-wrapper/archive/refs/tags/v1.1.tar.gz -O odbc-cpp-wrapper.tar.gz && mkdir odbc-cpp-wrapper && tar -xvf odbc-cpp-wrapper.tar.gz -C odbc-cpp-wrapper --strip-components=1 && mkdir odbc-cpp-wrapper/build && cd odbc-cpp-wrapper/build && cmake .. && make -j 2 && make install)
 
 wget https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5/FileGDB_API_1_5_64gcc51.tar.gz
 tar xzf FileGDB_API_1_5_64gcc51.tar.gz
