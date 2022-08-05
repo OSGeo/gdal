@@ -2163,7 +2163,10 @@ static void SetupSkipNoSource(int iSrc,
 /*                     AdjustOutputExtentForRPC()                       */
 /************************************************************************/
 
-static void AdjustOutputExtentForRPC( GDALDatasetH hSrcDS,
+/** Returns false if there's no intersection between source extent defined
+ * by RPC and target extent.
+ */
+static bool AdjustOutputExtentForRPC( GDALDatasetH hSrcDS,
                                       GDALDatasetH hDstDS,
                                       GDALTransformerFunc pfnTransformer,
                                       void *hTransformArg,
@@ -2205,6 +2208,13 @@ static void AdjustOutputExtentForRPC( GDALDatasetH hSrcDS,
                     static_cast<int>(std::ceil(dfMaxX)) + nPadding - nWarpDstXOff);
                 nWarpDstYSize = std::min(nWarpDstYSize - nWarpDstYOff,
                     static_cast<int>(std::ceil(dfMaxY)) + nPadding - nWarpDstYOff);
+                if( nWarpDstXSize <= 0 || nWarpDstYSize <= 0 )
+                {
+                    CPLDebug("WARP",
+                             "No intersection between source extent defined "
+                             "by RPC and target extent");
+                    return false;
+                }
                 if( nWarpDstXOff != 0 || nWarpDstYOff != 0 ||
                     nWarpDstXSize != GDALGetRasterXSize( hDstDS ) ||
                     nWarpDstYSize != GDALGetRasterYSize( hDstDS ) )
@@ -2216,6 +2226,7 @@ static void AdjustOutputExtentForRPC( GDALDatasetH hSrcDS,
             }
         }
     }
+    return true;
 }
 
 /************************************************************************/
@@ -2749,14 +2760,20 @@ GDALDatasetH GDALWarpDirect( const char *pszDest, GDALDatasetH hDstDS,
         int nWarpDstXSize = GDALGetRasterXSize( hDstDS );
         int nWarpDstYSize = GDALGetRasterYSize( hDstDS );
 
-        AdjustOutputExtentForRPC( hSrcDS,
+        if( !AdjustOutputExtentForRPC( hSrcDS,
                                   hDstDS,
                                   pfnTransformer,
                                   hTransformArg,
                                   psWO,
                                   psOptions,
                                   nWarpDstXOff, nWarpDstYOff,
-                                  nWarpDstXSize, nWarpDstYSize );
+                                  nWarpDstXSize, nWarpDstYSize ) )
+        {
+            GDALDestroyTransformer( hTransformArg );
+            GDALDestroyWarpOptions( psWO );
+            GDALReleaseDataset(hWrkSrcDS);
+            continue;
+        }
 
         /* We need to recreate the transform when operating on an overview */
         if( poSrcOvrDS != nullptr )

@@ -1757,6 +1757,24 @@ def test_gdalwarp_lib_restrict_output_dataset_warp_rpc_existing():
 
 
 ###############################################################################
+# Test warping from a RPC dataset to an existing dataset that doesn't intersect
+# source extent defined by RPC
+
+
+def test_gdalwarp_lib_restrict_output_dataset_warp_rpc_existing_no_intersection():
+
+    dstDS = gdal.Translate('', 'data/unstable_rpc_with_dem_blank_output.tif',
+                           format = 'MEM', outputBounds=[112693400.445, 2553269.051, 112700666.740, 2547311.740])
+    gdal.ErrorReset()
+    assert gdal.Warp(dstDS, 'data/unstable_rpc_with_dem_source.tif',
+                     options='-et 0 -to RPC_DEM=data/unstable_rpc_with_dem_elevation.tif ' +
+                             '-to RPC_MAX_ITERATIONS=40 -to RPC_DEM_MISSING_VALUE=0') == 1
+    assert gdal.GetLastErrorType() == gdal.CE_None
+    cs = dstDS.GetRasterBand(1).Checksum()
+    assert cs == 0
+
+
+###############################################################################
 # Test warping from a RPC dataset to an existing dataset, with using RPC_FOOTPRINT
 
 def test_gdalwarp_lib_restrict_output_dataset_warp_rpc_existing_RPC_FOOTPRINT():
