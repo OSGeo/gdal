@@ -42,11 +42,7 @@ Once you have Anaconda or Miniconda installed, you should be able to install GDA
 Unix
 ~~~~
 
-The GDAL Python bindings support both distutils and setuptools, with a
-preference for using setuptools.  If setuptools can be imported, setup will
-use that to build an egg by default.  If setuptools cannot be imported, a
-simple distutils root install of the GDAL package (and no dependency
-chaining for numpy) will be made.
+The GDAL Python bindings requires setuptools.
 
 pip
 ~~~
@@ -59,48 +55,22 @@ It will be necessary to have libgdal and its development headers installed
 if pip is expected to do a source build because no wheel is available
 for your specified platform and Python version.
 
-setup.py
-~~~~~~~~~
+To install the version of the Python bindings matching your native GDAL library:
 
-Most of setup.py's important variables are controlled with the setup.cfg
-file.  In setup.cfg, you can modify pointers to include files and libraries.
-The most important option that will likely need to be modified is the
-gdal_config parameter.  If you installed GDAL from a package, the location
-of this program is likely /usr/bin/gdal-config, but it may be in another place
-depending on how your packager arranged things.
-
-After modifying the location of gdal-config, you can build and install
-with the setup script::
-
-  $ python setup.py build
-  $ python setup.py install
-
-If you have setuptools installed, you can also generate an egg::
-
-  $ python setup.py bdist_egg
+  $ pip install GDAL=="$(gdal-config --version).*"
 
 Building as part of the GDAL library source tree
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can also have the GDAL Python bindings built as part of a source
-build by specifying --with-python as part of your configure line::
+build::
 
-  $ ./configure --with-python
+  $ cmake ..
 
-Use the typical make and make install commands to complete the installation::
+Use the typical cmake build and install commands to complete the installation::
 
-  $ make
-  $ make install
-
-A note about setuptools
-.......................
-
-./configure attempts to detect if you have setuptools installed in the tree
-of the Python binary it was given (or detected on the execution path), and it
-will use an egg build by default in that instance.  If you have a need to
-use a distutils-only install, you will have to edit setup.py to ensure that
-the HAVE_SETUPTOOLS variable is ultimately set to False and proceed with a
-typical 'python setup.py install' command.
+  $ cmake --build .
+  $ cmake --build . --target install
 
 Windows
 ~~~~~~~
@@ -135,21 +105,14 @@ may be required.
 SWIG
 ----
 
-The GDAL Python package is built using SWIG_. The earliest version of SWIG_
-that is supported to generate the wrapper code is 1.3.40.  It is possible
-that usable bindings will build with a version earlier than 1.3.40, but no
-development efforts are targeted at versions below it.  You should not have
-to run SWIG in your development tree to generate the binding code, as it
-is usually included with the source.  However, if you do need to regenerate,
-you can do so with the following make command from within the ./swig/python
-directory::
+The GDAL Python package is built using SWIG_. The currently supported version
+is SWIG 4.0.2.  You should not have run SWIG in your development tree to generate
+the binding code, as it is usually included with the source.
+However, if you do need to regenerate, you can do so with the following cmake
+command::
 
-  $ make generate
-
-To ensure that all of the bindings are regenerated, you can clean the
-bindings code out before the generate command by issuing::
-
-  $ make veryclean
+  $ cmake .. -DSWIG_REGENERATE_PYTHON=ON
+  $ cmake --build .
 
 Usage
 -----
