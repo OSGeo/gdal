@@ -1,12 +1,11 @@
 %extend OGRGeometryShadow {
 // File: ogrgeometry_8cpp.xml
 %feature("docstring")  DumpReadable "void
-OGR_G_DumpReadable(OGRGeometryH hGeom, FILE \\*fp, const char
-\\*pszPrefix)
+:cpp:func:`OGR_G_DumpReadable`
 
 Dump geometry in well known text format to indicated output file.
 
-This method is the same as the CPP method OGRGeometry::dumpReadable.
+This method is the same as the CPP method :cpp:func:`OGRGeometry::dumpReadable`.
 
 Parameters
 -----------
@@ -18,9 +17,8 @@ pszPrefix:
     the prefix to put on each line of output.
 ";
 
-%feature("docstring")  AssignSpatialReference "void
-OGR_G_AssignSpatialReference(OGRGeometryH hGeom, OGRSpatialReferenceH
-hSRS)
+%feature("docstring")  AssignSpatialReference "
+:cpp:func:`OGR_G_AssignSpatialReference`
 
 Assign spatial reference to this object.
 
@@ -38,7 +36,7 @@ their derived classes).
 This is similar to the SFCOM IGeometry::put_SpatialReference() method.
 
 This function is the same as the CPP method
-OGRGeometry::assignSpatialReference.
+:cpp:func:`OGRGeometry::assignSpatialReference`.
 
 Parameters
 -----------
@@ -48,8 +46,8 @@ hSRS:
     handle on the new spatial reference system to apply.
 ";
 
-%feature("docstring")  Intersects "int OGR_G_Intersects(OGRGeometryH
-hGeom, OGRGeometryH hOtherGeom)
+%feature("docstring")  Intersects "
+:cpp:func:`OGR_G_Intersects`
 
 Do these features intersect?
 
@@ -57,7 +55,7 @@ Determines whether two geometries intersect. If GEOS is enabled, then
 this is done in rigorous fashion otherwise TRUE is returned if the
 envelopes (bounding boxes) of the two geometries overlap.
 
-This function is the same as the CPP method OGRGeometry::Intersects.
+This function is the same as the CPP method :cpp:func:`OGRGeometry::Intersects`.
 
 Parameters
 -----------
@@ -72,8 +70,8 @@ int:
     TRUE if the geometries intersect, otherwise FALSE.
 ";
 
-%feature("docstring")  TransformTo "OGRErr
-OGR_G_TransformTo(OGRGeometryH hGeom, OGRSpatialReferenceH hSRS)
+%feature("docstring")  TransformTo "
+:cpp:func:`OGR_G_TransformTo`
 
 Transform geometry to new spatial reference system.
 
@@ -93,7 +91,7 @@ to create the OGRCoordinateTransformation in advance, and call
 transform() with that transformation. This function exists primarily
 for convenience when only transforming a single geometry.
 
-This function is the same as the CPP method OGRGeometry::transformTo.
+This function is the same as the CPP method :cpp:func:`OGRGeometry::transformTo`.
 
 Parameters
 -----------
@@ -108,8 +106,8 @@ OGRErr:
     OGRERR_NONE on success, or an error code.
 ";
 
-%feature("docstring")  Transform "OGRErr OGR_G_Transform(OGRGeometryH
-hGeom, OGRCoordinateTransformationH hTransform)
+%feature("docstring")  Transform "
+:cpp:func:`OGR_G_Transform`
 
 Apply arbitrary coordinate transformation to geometry.
 
@@ -126,7 +124,7 @@ will be ignored. On successful completion the output
 OGRSpatialReference of the OGRCoordinateTransformation will be
 assigned to the geometry.
 
-This function is the same as the CPP method OGRGeometry::transform.
+This function is the same as the CPP method :cpp:func:`OGRGeometry::transform`.
 
 Parameters
 -----------
@@ -141,8 +139,8 @@ OGRErr:
     OGRERR_NONE on success or an error code.
 ";
 
-%feature("docstring")  Segmentize "void OGR_G_Segmentize(OGRGeometryH
-hGeom, double dfMaxLength)
+%feature("docstring")  Segmentize "
+:cpp:func:`OGR_G_Segmentize`
 
 Modify the geometry such it has no segment longer then the given
 distance.
@@ -150,7 +148,7 @@ distance.
 Interpolated points will have Z and M values (if needed) set to 0.
 Distance computation is performed in 2d only.
 
-This function is the same as the CPP method OGRGeometry::segmentize().
+This function is the same as the CPP method :cpp:func:`OGRGeometry::segmentize`.
 
 Parameters
 -----------
@@ -160,18 +158,18 @@ dfMaxLength:
     the maximum distance between 2 points after segmentization
 ";
 
-%feature("docstring")  GetDimension "int
-OGR_G_GetDimension(OGRGeometryH hGeom)
+%feature("docstring")  GetDimension "
+:cpp:func:`OGR_G_GetDimension`
 
 Get the dimension of this geometry.
 
 This function corresponds to the SFCOM IGeometry::GetDimension()
 method. It indicates the dimension of the geometry, but does not
 indicate the dimension of the underlying space (as indicated by
-OGR_G_GetCoordinateDimension() function).
+:cpp:func:`OGR_G_GetCoordinateDimension` function).
 
 This function is the same as the CPP method
-OGRGeometry::getDimension().
+:cpp:func:`OGRGeometry::getDimension`.
 
 Parameters
 -----------
@@ -184,16 +182,16 @@ int:
     0 for points, 1 for lines and 2 for surfaces.
 ";
 
-%feature("docstring")  GetCoordinateDimension "int
-OGR_G_GetCoordinateDimension(OGRGeometryH hGeom)
+%feature("docstring")  GetCoordinateDimension "
+:cpp:func:`OGR_G_GetCoordinateDimension`
 
 Get the dimension of the coordinates in this geometry.
 
 This function is the same as the CPP method
-OGRGeometry::getCoordinateDimension().
+:cpp:func:`OGRGeometry::getCoordinateDimension`.
 
-Deprecated use OGR_G_CoordinateDimension(), OGR_G_Is3D(), or
-OGR_G_IsMeasured().
+Deprecated use :py:func:`CoordinateDimension`, :py:func:`Is3D`, or
+:py:func:`IsMeasured`.
 
 Parameters
 -----------
@@ -206,13 +204,13 @@ int:
     this will return 2 or 3.
 ";
 
-%feature("docstring")  CoordinateDimension "int
-OGR_G_CoordinateDimension(OGRGeometryH hGeom)
+%feature("docstring")  CoordinateDimension "
+:cpp:func:`OGR_G_CoordinateDimension`
 
 Get the dimension of the coordinates in this geometry.
 
 This function is the same as the CPP method
-OGRGeometry::CoordinateDimension().
+:cpp:func:`OGRGeometry::CoordinateDimension`.
 
 .. versionadded:: 2.1
 
@@ -227,11 +225,12 @@ int:
     this will return 2 for XY, 3 for XYZ and XYM, and 4 for XYZM data.
 ";
 
-%feature("docstring")  Is3D "int OGR_G_Is3D(OGRGeometryH hGeom)
+%feature("docstring")  Is3D "
+:cpp:func:`OGR_G_Is3D`
 
 See whether this geometry has Z coordinates.
 
-This function is the same as the CPP method OGRGeometry::Is3D().
+This function is the same as the CPP method :cpp:func:`OGRGeometry::Is3D`.
 
 .. versionadded:: 2.1
 
@@ -246,12 +245,12 @@ int:
     TRUE if the geometry has Z coordinates.
 ";
 
-%feature("docstring")  IsMeasured "int OGR_G_IsMeasured(OGRGeometryH
-hGeom)
+%feature("docstring")  IsMeasured "
+:cpp:func:`OGR_G_IsMeasured`
 
 See whether this geometry is measured.
 
-This function is the same as the CPP method OGRGeometry::IsMeasured().
+This function is the same as the CPP method :cpp:func:`OGRGeometry::IsMeasured`.
 
 .. versionadded:: 2.1
 
@@ -266,8 +265,8 @@ int:
     TRUE if the geometry has M coordinates.
 ";
 
-%feature("docstring")  SetCoordinateDimension "void
-OGR_G_SetCoordinateDimension(OGRGeometryH hGeom, int nNewDimension)
+%feature("docstring")  SetCoordinateDimension "
+:cpp:func:`OGR_G_SetCoordinateDimension`
 
 Set the coordinate dimension.
 
@@ -277,7 +276,7 @@ values. Setting the dimension of a geometry collection, a compound
 curve, a polygon, etc. will affect the children geometries. This will
 also remove the M dimension if present before this call.
 
-Deprecated use OGR_G_Set3D() or OGR_G_SetMeasured().
+Deprecated use :py:func:`Set3D` or :py:func:`SetMeasured`.
 
 Parameters
 -----------
@@ -287,8 +286,8 @@ nNewDimension:
     New coordinate dimension value, either 2 or 3.
 ";
 
-%feature("docstring")  Set3D "void OGR_G_Set3D(OGRGeometryH hGeom,
-int bIs3D)
+%feature("docstring")  Set3D "
+:cpp:func:`OGR_G_Set3D`
 
 Add or remove the Z coordinate dimension.
 
@@ -307,8 +306,8 @@ bIs3D:
     Should the geometry have a Z dimension, either TRUE or FALSE.
 ";
 
-%feature("docstring")  SetMeasured "void
-OGR_G_SetMeasured(OGRGeometryH hGeom, int bIsMeasured)
+%feature("docstring")  SetMeasured "
+:cpp:func:`OGR_G_SetMeasured`
 
 Add or remove the M coordinate dimension.
 
@@ -327,8 +326,8 @@ bIsMeasured:
     Should the geometry have a M dimension, either TRUE or FALSE.
 ";
 
-%feature("docstring")  Equals "int OGR_G_Equals(OGRGeometryH hGeom,
-OGRGeometryH hOther)
+%feature("docstring")  Equals "
+:cpp:func:`OGR_G_Equals`
 
 Returns TRUE if two geometries are equivalent.
 
@@ -341,8 +340,7 @@ considered equal by this method if their WKT/WKB representation is
 equal. Note: this must be distinguished for equality in a spatial way
 (which is the purpose of the ST_Equals() operation).
 
-This function is the same as the CPP method OGRGeometry::Equals()
-method.
+This function is the same as the CPP method :cpp:func:`OGRGeometry::Equals`.
 
 Parameters
 -----------
@@ -357,7 +355,8 @@ int:
     TRUE if equivalent or FALSE otherwise.
 ";
 
-%feature("docstring")  WkbSize "int OGR_G_WkbSize(OGRGeometryH hGeom)
+%feature("docstring")  WkbSize "
+:cpp:func:`OGR_G_WkbSize`
 
 Returns size of related binary representation.
 
@@ -367,9 +366,9 @@ computation may be slightly expensive for complex geometries.
 
 This function relates to the SFCOM IWks::WkbSize() method.
 
-This function is the same as the CPP method OGRGeometry::WkbSize().
+This function is the same as the CPP method :cpp:func:`OGRGeometry::WkbSize`.
 
-Use OGR_G_WkbSizeEx() if called on huge geometries (> 2 GB serialized)
+Use :py:func:`WkbSizeEx` if called on huge geometries (> 2 GB serialized)
 
 Parameters
 -----------
@@ -382,8 +381,8 @@ int:
     size of binary representation in bytes.
 ";
 
-%feature("docstring")  WkbSizeEx "size_t OGR_G_WkbSizeEx(OGRGeometryH
-hGeom)
+%feature("docstring")  WkbSizeEx "
+:cpp:func:`OGR_G_WkbSizeEx`
 
 Returns size of related binary representation.
 
@@ -393,7 +392,7 @@ computation may be slightly expensive for complex geometries.
 
 This function relates to the SFCOM IWks::WkbSize() method.
 
-This function is the same as the CPP method OGRGeometry::WkbSize().
+This function is the same as the CPP method :cpp:func:`OGRGeometry::WkbSize`.
 
 .. versionadded:: 3.3
 
@@ -408,14 +407,14 @@ int:
     size of binary representation in bytes.
 ";
 
-%feature("docstring")  GetEnvelope "void
-OGR_G_GetEnvelope(OGRGeometryH hGeom, OGREnvelope \\*psEnvelope)
+%feature("docstring")  GetEnvelope "
+:cpp:func:`OGR_G_GetEnvelope`
 
 Computes and returns the bounding envelope for this geometry in the
 passed psEnvelope structure.
 
 This function is the same as the CPP method
-OGRGeometry::getEnvelope().
+:cpp:func:`OGRGeometry::getEnvelope`.
 
 Parameters
 -----------
@@ -425,14 +424,14 @@ psEnvelope:
     the structure in which to place the results.
 ";
 
-%feature("docstring")  GetEnvelope3D "void
-OGR_G_GetEnvelope3D(OGRGeometryH hGeom, OGREnvelope3D \\*psEnvelope)
+%feature("docstring")  GetEnvelope3D "
+:cpp:func:`OGR_G_GetEnvelope3D`
 
 Computes and returns the bounding envelope (3D) for this geometry in
 the passed psEnvelope structure.
 
 This function is the same as the CPP method
-OGRGeometry::getEnvelope().
+:cpp:func:`OGRGeometry::getEnvelope`.
 
 .. versionadded:: 1.9.0
 
@@ -444,9 +443,8 @@ psEnvelope:
     the structure in which to place the results.
 ";
 
-%feature("docstring")  ImportFromWkb "OGRErr
-OGR_G_ImportFromWkb(OGRGeometryH hGeom, const void \\*pabyData, int
-nSize)
+%feature("docstring")  ImportFromWkb "
+:cpp:func:`OGR_G_ImportFromWkb`
 
 Assign geometry from well known binary data.
 
@@ -456,7 +454,7 @@ type of geometry object to match the binaries type.
 This function relates to the SFCOM IWks::ImportFromWKB() method.
 
 This function is the same as the CPP method
-OGRGeometry::importFromWkb().
+:cpp:func:`OGRGeometry::importFromWkb`.
 
 Parameters
 -----------
@@ -475,9 +473,8 @@ OGRErr:
     returned.
 ";
 
-%feature("docstring")  ExportToWkb "OGRErr
-OGR_G_ExportToWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder, unsigned
-char \\*pabyDstBuffer)
+%feature("docstring")  ExportToWkb "
+:cpp:func:`OGR_G_ExportToWkb`
 
 Convert a geometry well known binary format.
 
@@ -486,11 +483,10 @@ This function relates to the SFCOM IWks::ExportToWKB() method.
 For backward compatibility purposes, it exports the Old-style 99-402
 extended dimension (Z) WKB types for types Point, LineString, Polygon,
 MultiPoint, MultiLineString, MultiPolygon and GeometryCollection. For
-other geometry types, it is equivalent to OGR_G_ExportToIsoWkb().
+other geometry types, it is equivalent to :py:func:`ExportToIsoWkb`.
 
 This function is the same as the CPP method
-OGRGeometry::exportToWkb(OGRwkbByteOrder, unsigned char \\*,
-OGRwkbVariant) with eWkbVariant = wkbVariantOldOgc.
+:cpp:func:`OGRGeometry::exportToWkb` with eWkbVariant = wkbVariantOldOgc.
 
 Parameters
 -----------
@@ -500,7 +496,7 @@ eOrder:
     One of wkbXDR or wkbNDR indicating MSB or LSB byte order respectively.
 pabyDstBuffer:
     a buffer into which the binary representation is
-    written. This buffer must be at least OGR_G_WkbSize() byte in size.
+    written. This buffer must be at least :cpp:func:`OGR_G_WkbSize` byte in size.
 
 Returns
 --------
@@ -508,9 +504,8 @@ OGRErr:
     Currently OGRERR_NONE is always returned.
 ";
 
-%feature("docstring")  ExportToIsoWkb "OGRErr
-OGR_G_ExportToIsoWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder,
-unsigned char \\*pabyDstBuffer)
+%feature("docstring")  ExportToIsoWkb "
+:cpp:func:`OGR_G_ExportToIsoWkb`
 
 Convert a geometry into SFSQL 1.2 / ISO SQL/MM Part 3 well known
 binary format.
@@ -520,8 +515,7 @@ exports the SFSQL 1.2 and ISO SQL/MM Part 3 extended dimension (Z&M)
 WKB types.
 
 This function is the same as the CPP method
-OGRGeometry::exportToWkb(OGRwkbByteOrder, unsigned char \\*,
-OGRwkbVariant) with eWkbVariant = wkbVariantIso.
+:cpp:func:`OGRGeometry::exportToWkb` with eWkbVariant = wkbVariantIso.
 
 .. versionadded:: 2.0
 
@@ -533,7 +527,7 @@ eOrder:
     One of wkbXDR or wkbNDR indicating MSB or LSB byte order respectively.
 pabyDstBuffer:
     a buffer into which the binary representation is written.
-    This buffer must be at least OGR_G_WkbSize() byte in size.
+    This buffer must be at least :cpp:func:`OGR_G_WkbSize` byte in size.
 
 Returns
 --------
@@ -542,7 +536,7 @@ OGRErr:
 ";
 
 %feature("docstring")  ImportFromWkt "OGRErr
-OGR_G_ImportFromWkt(OGRGeometryH hGeom, char \\*\\*ppszSrcText)
+:cpp:func:`OGR_G_ImportFromWkt`
 
 Assign geometry from well known text data.
 
@@ -552,7 +546,7 @@ type of geometry object to match the text type.
 This function relates to the SFCOM IWks::ImportFromWKT() method.
 
 This function is the same as the CPP method
-OGRGeometry::importFromWkt().
+:cpp:func:`OGRGeometry::importFromWkt`.
 
 Parameters
 -----------
@@ -570,8 +564,8 @@ OGRErr:
     returned.
 ";
 
-%feature("docstring")  ExportToWkt "OGRErr
-OGR_G_ExportToWkt(OGRGeometryH hGeom, char \\*\\*ppszSrcText)
+%feature("docstring")  ExportToWkt "
+:cpp:func:`OGR_G_ExportToWkt`
 
 Convert a geometry into well known text format.
 
@@ -580,10 +574,10 @@ This function relates to the SFCOM IWks::ExportToWKT() method.
 For backward compatibility purposes, it exports the Old-style 99-402
 extended dimension (Z) WKB types for types Point, LineString, Polygon,
 MultiPoint, MultiLineString, MultiPolygon and GeometryCollection. For
-other geometry types, it is equivalent to OGR_G_ExportToIsoWkt().
+other geometry types, it is equivalent to :py:func:`ExportToIsoWkt`.
 
 This function is the same as the CPP method
-OGRGeometry::exportToWkt().
+:cpp:func:`OGRGeometry::exportToWkt`.
 
 Parameters
 -----------
@@ -592,7 +586,7 @@ hGeom:
 ppszSrcText:
     a text buffer is allocated by the program, and assigned
     to the passed pointer. After use, \\*ppszDstText should be freed with
-    CPLFree().
+    :cpp:func:`CPLFree`.
 
 Returns
 --------
@@ -600,8 +594,8 @@ OGRErr:
     Currently OGRERR_NONE is always returned.
 ";
 
-%feature("docstring")  ExportToIsoWkt "OGRErr
-OGR_G_ExportToIsoWkt(OGRGeometryH hGeom, char \\*\\*ppszSrcText)
+%feature("docstring")  ExportToIsoWkt "
+:cpp:func:`OGR_G_ExportToIsoWkt`
 
 Convert a geometry into SFSQL 1.2 / ISO SQL/MM Part 3 well known text
 format.
@@ -611,7 +605,7 @@ exports the SFSQL 1.2 and ISO SQL/MM Part 3 extended dimension (Z&M)
 WKB types.
 
 This function is the same as the CPP method
-OGRGeometry::exportToWkt(wkbVariantIso).
+:cpp:func:`OGRGeometry::exportToWkt`.
 
 .. versionadded:: 2.0
 
@@ -622,7 +616,7 @@ hGeom:
 ppszSrcText:
     a text buffer is allocated by the program, and assigned
     to the passed pointer. After use, \\*ppszDstText should be freed with
-    CPLFree().
+    :cpp:func:`CPLFree`.
 
 Returns
 --------
@@ -630,8 +624,8 @@ OGRErr:
     Currently OGRERR_NONE is always returned.
 ";
 
-%feature("docstring")  GetGeometryType "OGRwkbGeometryType
-OGR_G_GetGeometryType(OGRGeometryH hGeom)
+%feature("docstring")  GetGeometryType "
+:cpp:func:`OGR_G_GetGeometryType`
 
 Fetch geometry type.
 
@@ -640,7 +634,7 @@ flattened version of the geometry type apply the wkbFlatten() macro to
 the return result.
 
 This function is the same as the CPP method
-OGRGeometry::getGeometryType().
+:cpp:func:`OGRGeometry::getGeometryType`.
 
 Parameters
 -----------
@@ -653,15 +647,15 @@ OGRwkbGeometryType:
     the geometry type code.
 ";
 
-%feature("docstring")  GetGeometryName "const char\\*
-OGR_G_GetGeometryName(OGRGeometryH hGeom)
+%feature("docstring")  GetGeometryName "
+:cpp:func:`OGR_G_GetGeometryName`
 
 Fetch WKT name for geometry type.
 
 There is no SFCOM analog to this function.
 
 This function is the same as the CPP method
-OGRGeometry::getGeometryName().
+:cpp:func:`OGRGeometry::getGeometryName`.
 
 Parameters
 -----------
@@ -674,14 +668,14 @@ str:
     name used for this geometry type in well known text format.
 ";
 
-%feature("docstring")  Clone "OGRGeometryH OGR_G_Clone(OGRGeometryH
-hGeom)
+%feature("docstring")  Clone "
+:cpp:func:`OGR_G_Clone`
 
 Make a copy of this object.
 
 This function relates to the SFCOM IGeometry::clone() method.
 
-This function is the same as the CPP method OGRGeometry::clone().
+This function is the same as the CPP method :cpp:func:`OGRGeometry::clone`.
 
 Parameters
 -----------
@@ -695,8 +689,8 @@ OGRGeometryH:
     as the original.
 ";
 
-%feature("docstring")  GetSpatialReference "OGRSpatialReferenceH
-OGR_G_GetSpatialReference(OGRGeometryH hGeom)
+%feature("docstring")  GetSpatialReference "
+:cpp:func:`OGR_G_GetSpatialReference`
 
 Returns spatial reference system for geometry.
 
@@ -704,7 +698,7 @@ This function relates to the SFCOM IGeometry::get_SpatialReference()
 method.
 
 This function is the same as the CPP method
-OGRGeometry::getSpatialReference().
+:cpp:func:`OGRGeometry::getSpatialReference`.
 
 Parameters
 -----------
@@ -717,7 +711,8 @@ OGRSpatialReferenceH:
     a reference to the spatial reference geometry.
 ";
 
-%feature("docstring")  Empty "void OGR_G_Empty(OGRGeometryH hGeom)
+%feature("docstring")  Empty "
+:cpp:func:`OGR_G_Empty`
 
 Clear geometry information.
 
@@ -726,7 +721,7 @@ and before assignment of actual geometry.
 
 This function relates to the SFCOM IGeometry::Empty() method.
 
-This function is the same as the CPP method OGRGeometry::empty().
+This function is the same as the CPP method :cpp:func:`OGRGeometry::empty`.
 
 Parameters
 -----------
@@ -734,11 +729,12 @@ hGeom:
     handle on the geometry to empty.
 ";
 
-%feature("docstring")  IsEmpty "int OGR_G_IsEmpty(OGRGeometryH hGeom)
+%feature("docstring")  IsEmpty "
+:cpp:func:`OGR_G_IsEmpty`
 
 Test if the geometry is empty.
 
-This method is the same as the CPP method OGRGeometry::IsEmpty().
+This method is the same as the CPP method :cpp:func:`OGRGeometry::IsEmpty`.
 
 Parameters
 -----------
@@ -751,11 +747,12 @@ int:
     TRUE if the geometry has no points, otherwise FALSE.
 ";
 
-%feature("docstring")  IsValid "int OGR_G_IsValid(OGRGeometryH hGeom)
+%feature("docstring")  IsValid "
+:cpp:func:`OGR_G_IsValid`
 
 Test if the geometry is valid.
 
-This function is the same as the C++ method OGRGeometry::IsValid().
+This function is the same as the C++ method :cpp:func:`OGRGeometry::IsValid`.
 
 This function is built on the GEOS library, check it for the
 definition of the geometry operation. If OGR is built without the GEOS
@@ -772,8 +769,8 @@ int:
     TRUE if the geometry has no points, otherwise FALSE.
 ";
 
-%feature("docstring")  IsSimple "int OGR_G_IsSimple(OGRGeometryH
-hGeom)
+%feature("docstring")  IsSimple "
+:cpp:func:`OGR_G_IsSimple`
 
 Returns TRUE if the geometry is simple.
 
@@ -782,8 +779,7 @@ as self intersection or self tangency. The description of each
 instantiable geometric class will include the specific conditions that
 cause an instance of that class to be classified as not simple.
 
-This function is the same as the C++ method OGRGeometry::IsSimple()
-method.
+This function is the same as the C++ method :cpp:func:`OGRGeometry::IsSimple`.
 
 If OGR is built without the GEOS library, this function will always
 return FALSE.
@@ -799,11 +795,12 @@ int:
     TRUE if object is simple, otherwise FALSE.
 ";
 
-%feature("docstring")  IsRing "int OGR_G_IsRing(OGRGeometryH hGeom)
+%feature("docstring")  IsRing "
+:cpp:func:`OGR_G_IsRing`
 
 Test if the geometry is a ring.
 
-This function is the same as the C++ method OGRGeometry::IsRing().
+This function is the same as the C++ method :cpp:func:`OGRGeometry::IsRing`.
 
 This function is built on the GEOS library, check it for the
 definition of the geometry operation. If OGR is built without the GEOS
@@ -820,8 +817,8 @@ int:
     TRUE if the geometry has no points, otherwise FALSE.
 ";
 
-%feature("docstring")  OGRFromOGCGeomType "OGRwkbGeometryType
-OGRFromOGCGeomType(const char \\*pszGeomType)
+%feature("docstring")  OGRFromOGCGeomType "
+:cpp:func:`OGRFromOGCGeomType`
 
 Map OGCgeometry format type to corresponding OGR constants.
 
@@ -836,8 +833,8 @@ OGRwkbGeometryType:
     OGR constant.
 ";
 
-%feature("docstring")  OGRToOGCGeomType "const char\\*
-OGRToOGCGeomType(OGRwkbGeometryType eGeomType)
+%feature("docstring")  OGRToOGCGeomType "
+:cpp:func:`OGRToOGCGeomType`
 
 Map OGR geometry format constants to corresponding OGC geometry type.
 
@@ -852,8 +849,8 @@ str:
     string with OGC geometry type (without dimensionality)
 ";
 
-%feature("docstring")  OGRGeometryTypeToName "const char\\*
-OGRGeometryTypeToName(OGRwkbGeometryType eType)
+%feature("docstring")  OGRGeometryTypeToName "
+:cpp:func:`OGRGeometryTypeToName`
 
 Fetch a human readable name corresponding to an OGRwkbGeometryType
 value.
@@ -874,9 +871,8 @@ str:
     internal human readable string, or NULL on failure.
 ";
 
-%feature("docstring")  OGRMergeGeometryTypes "OGRwkbGeometryType
-OGRMergeGeometryTypes(OGRwkbGeometryType eMain, OGRwkbGeometryType
-eExtra)
+%feature("docstring")  OGRMergeGeometryTypes "
+:cpp:func:`OGRMergeGeometryTypes`
 
 Find common geometry type.
 
@@ -903,9 +899,8 @@ OGRwkbGeometryType:
     the merged geometry type.
 ";
 
-%feature("docstring")  OGRMergeGeometryTypesEx "OGRwkbGeometryType
-OGRMergeGeometryTypesEx(OGRwkbGeometryType eMain, OGRwkbGeometryType
-eExtra, int bAllowPromotingToCurves)
+%feature("docstring")  OGRMergeGeometryTypesEx "
+:cpp:func:`OGRMergeGeometryTypesEx`
 
 Find common geometry type.
 
@@ -942,15 +937,15 @@ OGRwkbGeometryType:
     the merged geometry type.
 ";
 
-%feature("docstring")  FlattenTo2D "void
-OGR_G_FlattenTo2D(OGRGeometryH hGeom)
+%feature("docstring")  FlattenTo2D "
+:cpp:func:`OGR_G_FlattenTo2D`
 
 Convert geometry to strictly 2D.
 
 In a sense this converts all Z coordinates to 0.0.
 
 This function is the same as the CPP method
-OGRGeometry::flattenTo2D().
+:cpp:func:`OGRGeometry::flattenTo2D`.
 
 Parameters
 -----------
@@ -958,8 +953,8 @@ hGeom:
     handle on the geometry to convert.
 ";
 
-%feature("docstring")  OGRSetGenerate_DB2_V72_BYTE_ORDER "OGRErr
-OGRSetGenerate_DB2_V72_BYTE_ORDER(int bGenerate_DB2_V72_BYTE_ORDER)
+%feature("docstring")  OGRSetGenerate_DB2_V72_BYTE_ORDER "
+:cpp:func:`OGRSetGenerate_DB2_V72_BYTE_ORDER`
 
 Special entry point to enable the hack for generating DB2 V7.2 style
 WKB.
@@ -968,18 +963,18 @@ DB2 seems to have placed (and require) an extra 0x30 or'ed with the
 byte order in WKB. This entry point is used to turn on or off the
 generation of such WKB. ";
 
-%feature("docstring")  OGRGetGenerate_DB2_V72_BYTE_ORDER "int
-OGRGetGenerate_DB2_V72_BYTE_ORDER() ";
+%feature("docstring")  OGRGetGenerate_DB2_V72_BYTE_ORDER "
+:cpp:func:`OGRGetGenerate_DB2_V72_BYTE_ORDER`";
 
-%feature("docstring")  Distance "double OGR_G_Distance(OGRGeometryH
-hFirst, OGRGeometryH hOther)
+%feature("docstring")  Distance "
+:cpp:func:`OGR_G_Distance`
 
 Compute distance between two geometries.
 
 Returns the shortest distance between the two geometries. The distance
 is expressed into the same unit as the coordinates of the geometries.
 
-This function is the same as the C++ method OGRGeometry::Distance().
+This function is the same as the C++ method :cpp:func:`OGRGeometry::Distance`.
 
 This function is built on the GEOS library, check it for the
 definition of the geometry operation. If OGR is built without the GEOS
@@ -999,8 +994,8 @@ float:
     the distance between the geometries or -1 if an error occurs.
 ";
 
-%feature("docstring")  Distance3D "double
-OGR_G_Distance3D(OGRGeometryH hFirst, OGRGeometryH hOther)
+%feature("docstring")  Distance3D "
+:cpp:func:`OGR_G_Distance3D`
 
 Returns the 3D distance between two geometries.
 
@@ -1011,7 +1006,7 @@ This method is built on the SFCGAL library, check it for the
 definition of the geometry operation. If OGR is built without the
 SFCGAL library, this method will always return -1.0
 
-This function is the same as the C++ method OGRGeometry::Distance3D().
+This function is the same as the C++ method :cpp:func:`OGRGeometry::Distance3D`.
 
 .. versionadded:: 2.2
 
@@ -1028,14 +1023,14 @@ float:
     the distance between the geometries or -1 if an error occurs.
 ";
 
-%feature("docstring")  MakeValid "OGRGeometryH
-OGR_G_MakeValid(OGRGeometryH hGeom)
+%feature("docstring")  MakeValid "
+:cpp:func:`OGR_G_MakeValid`
 
 Attempts to make an invalid geometry valid without losing vertices.
 
 Already-valid geometries are cloned without further intervention.
 
-This function is the same as the C++ method OGRGeometry::MakeValid().
+This function is the same as the C++ method :cpp:func:`OGRGeometry::MakeValid`.
 
 This function is built on the GEOS >= 3.8 library, check it for the
 definition of the geometry operation. If OGR is built without the GEOS
@@ -1056,14 +1051,14 @@ OGRGeometryH:
     failure.
 ";
 
-%feature("docstring")  MakeValidEx "OGRGeometryH
-OGR_G_MakeValidEx(OGRGeometryH hGeom, CSLConstList papszOptions)
+%feature("docstring")  MakeValidEx "
+:cpp:func:`OGR_G_MakeValidEx`
 
 Attempts to make an invalid geometry valid without losing vertices.
 
 Already-valid geometries are cloned without further intervention.
 
-This function is the same as the C++ method OGRGeometry::MakeValid().
+This function is the same as the C++ method :cpp:func:`OGRGeometry::MakeValid`.
 
 See documentation of that method for possible options.
 
@@ -1083,12 +1078,12 @@ OGRGeometryH:
     failure.
 ";
 
-%feature("docstring")  Normalize "OGRGeometryH
-OGR_G_Normalize(OGRGeometryH hGeom)
+%feature("docstring")  Normalize "
+:cpp:func:`OGR_G_Normalize`
 
 Attempts to bring geometry into normalized/canonical form.
 
-This function is the same as the C++ method OGRGeometry::Normalize().
+This function is the same as the C++ method :cpp:func:`OGRGeometry::Normalize`.
 
 This function is built on the GEOS library; check it for the
 definition of the geometry operation. If OGR is built without the GEOS
@@ -1109,15 +1104,15 @@ OGRGeometryH:
     failure.
 ";
 
-%feature("docstring")  ConvexHull "OGRGeometryH
-OGR_G_ConvexHull(OGRGeometryH hTarget)
+%feature("docstring")  ConvexHull "
+:cpp:func:`OGR_G_ConvexHull`
 
 Compute convex hull.
 
 A new geometry object is created and returned containing the convex
 hull of the geometry on which the method is invoked.
 
-This function is the same as the C++ method OGRGeometry::ConvexHull().
+This function is the same as the C++ method :cpp:func:`OGRGeometry::ConvexHull`.
 
 This function is built on the GEOS library, check it for the
 definition of the geometry operation. If OGR is built without the GEOS
@@ -1136,15 +1131,15 @@ OGRGeometryH:
     NULL on failure.
 ";
 
-%feature("docstring")  Boundary "OGRGeometryH
-OGR_G_Boundary(OGRGeometryH hTarget)
+%feature("docstring")  Boundary "
+:cpp:func:`OGR_G_Boundary`
 
 Compute boundary.
 
 A new geometry object is created and returned containing the boundary
 of the geometry on which the method is invoked.
 
-This function is the same as the C++ method OGR_G_Boundary().
+This function is the same as the C++ method :cpp:func:`OGR_G_Boundary`.
 
 This function is built on the GEOS library, check it for the
 definition of the geometry operation. If OGR is built without the GEOS
@@ -1165,18 +1160,18 @@ OGRGeometryH:
     NULL on failure.
 ";
 
-%feature("docstring")  GetBoundary "OGRGeometryH
-OGR_G_GetBoundary(OGRGeometryH hTarget)
+%feature("docstring")  GetBoundary "
+:cpp:func:`OGR_G_GetBoundary`
 
 Compute boundary (deprecated)
 
 Deprecated
 
-See: OGR_G_Boundary()
+See: :cpp:func:`OGR_G_Boundary`
 ";
 
-%feature("docstring")  Buffer "OGRGeometryH OGR_G_Buffer(OGRGeometryH
-hTarget, double dfDist, int nQuadSegs)
+%feature("docstring")  Buffer "
+:cpp:func:`OGR_G_Buffer`
 
 Compute buffer of geometry.
 
@@ -1191,7 +1186,7 @@ curve - a quadrant of a circle. A value of 30 is a reasonable default.
 Large values result in large numbers of vertices in the resulting
 buffer geometry while small numbers reduce the accuracy of the result.
 
-This function is the same as the C++ method OGRGeometry::Buffer().
+This function is the same as the C++ method :cpp:func:`OGRGeometry::Buffer`.
 
 This function is built on the GEOS library, check it for the
 definition of the geometry operation. If OGR is built without the GEOS
@@ -1215,21 +1210,21 @@ OGRGeometryH:
     the newly created geometry, or NULL if an error occurs.
 ";
 
-%feature("docstring")  Intersection "OGRGeometryH
-OGR_G_Intersection(OGRGeometryH hThis, OGRGeometryH hOther)
+%feature("docstring")  Intersection "
+:cpp:func:`OGR_G_Intersection`
 
 Compute intersection.
 
 Generates a new geometry which is the region of intersection of the
-two geometries operated on. The OGR_G_Intersects() function can be
+two geometries operated on. The :py:func:`Intersects` function can be
 used to test if two geometries intersect.
 
 Geometry validity is not checked. In case you are unsure of the
-validity of the input geometries, call IsValid() before, otherwise the
+validity of the input geometries, call :py:func:`IsValid` before, otherwise the
 result might be wrong.
 
 This function is the same as the C++ method
-OGRGeometry::Intersection().
+:cpp:func:`OGRGeometry::Intersection`.
 
 This function is built on the GEOS library, check it for the
 definition of the geometry operation. If OGR is built without the GEOS
@@ -1250,8 +1245,8 @@ OGRGeometryH:
     intersection or an error occurs.
 ";
 
-%feature("docstring")  Union "OGRGeometryH OGR_G_Union(OGRGeometryH
-hThis, OGRGeometryH hOther)
+%feature("docstring")  Union "
+:cpp:func:`OGR_G_Union`
 
 Compute union.
 
@@ -1259,10 +1254,10 @@ Generates a new geometry which is the region of union of the two
 geometries operated on.
 
 Geometry validity is not checked. In case you are unsure of the
-validity of the input geometries, call IsValid() before, otherwise the
+validity of the input geometries, call :py:func:`IsValid` before, otherwise the
 result might be wrong.
 
-This function is the same as the C++ method OGRGeometry::Union().
+This function is the same as the C++ method :cpp:func:`OGRGeometry::Union`.
 
 This function is built on the GEOS library, check it for the
 definition of the geometry operation. If OGR is built without the GEOS
@@ -1282,17 +1277,17 @@ OGRGeometryH:
     a new geometry representing the union or NULL if an error occurs.
 ";
 
-%feature("docstring")  UnionCascaded "OGRGeometryH
-OGR_G_UnionCascaded(OGRGeometryH hThis)
+%feature("docstring")  UnionCascaded "
+:cpp:func:`OGR_G_UnionCascaded`
 
 Compute union using cascading.
 
 Geometry validity is not checked. In case you are unsure of the
-validity of the input geometries, call IsValid() before, otherwise the
+validity of the input geometries, call :py:func:`IsValid` before, otherwise the
 result might be wrong.
 
 This function is the same as the C++ method
-OGRGeometry::UnionCascaded().
+:cpp:func:`OGRGeometry::UnionCascaded`.
 
 This function is built on the GEOS library, check it for the
 definition of the geometry operation. If OGR is built without the GEOS
@@ -1310,8 +1305,8 @@ OGRGeometryH:
     a new geometry representing the union or NULL if an error occurs.
 ";
 
-%feature("docstring")  Difference "OGRGeometryH
-OGR_G_Difference(OGRGeometryH hThis, OGRGeometryH hOther)
+%feature("docstring")  Difference "
+:cpp:func:`OGR_G_Difference`
 
 Compute difference.
 
@@ -1319,10 +1314,10 @@ Generates a new geometry which is the region of this geometry with the
 region of the other geometry removed.
 
 Geometry validity is not checked. In case you are unsure of the
-validity of the input geometries, call IsValid() before, otherwise the
+validity of the input geometries, call :py:func:`IsValid` before, otherwise the
 result might be wrong.
 
-This function is the same as the C++ method OGRGeometry::Difference().
+This function is the same as the C++ method :cpp:func:`OGRGeometry::Difference`.
 
 This function is built on the GEOS library, check it for the
 definition of the geometry operation. If OGR is built without the GEOS
@@ -1343,8 +1338,8 @@ OGRGeometryH:
     is empty or an error occurs.
 ";
 
-%feature("docstring")  SymDifference "OGRGeometryH
-OGR_G_SymDifference(OGRGeometryH hThis, OGRGeometryH hOther)
+%feature("docstring")  SymDifference "
+:cpp:func:`OGR_G_SymDifference`
 
 Compute symmetric difference.
 
@@ -1352,11 +1347,11 @@ Generates a new geometry which is the symmetric difference of this
 geometry and the other geometry.
 
 Geometry validity is not checked. In case you are unsure of the
-validity of the input geometries, call IsValid() before, otherwise the
+validity of the input geometries, call :py:func:`IsValid` before, otherwise the
 result might be wrong.
 
 This function is the same as the C++ method
-OGRGeometry::SymmetricDifference().
+:cpp:func:`OGRGeometry::SymmetricDifference`.
 
 This function is built on the GEOS library, check it for the
 definition of the geometry operation. If OGR is built without the GEOS
@@ -1379,28 +1374,28 @@ OGRGeometryH:
     difference is empty or an error occurs.
 ";
 
-%feature("docstring")  SymmetricDifference "OGRGeometryH
-OGR_G_SymmetricDifference(OGRGeometryH hThis, OGRGeometryH hOther)
+%feature("docstring")  SymmetricDifference "
+:cpp:func:`OGR_G_SymmetricDifference`
 
 Compute symmetric difference (deprecated)
 
 Deprecated
 
-See: OGR_G_SymmetricDifference()
+See: :cpp:func:`OGR_G_SymmetricDifference`
 ";
 
-%feature("docstring")  Disjoint "int OGR_G_Disjoint(OGRGeometryH
-hThis, OGRGeometryH hOther)
+%feature("docstring")  Disjoint "
+:cpp:func:`OGR_G_Disjoint`
 
 Test for disjointness.
 
 Tests if this geometry and the other geometry are disjoint.
 
 Geometry validity is not checked. In case you are unsure of the
-validity of the input geometries, call IsValid() before, otherwise the
+validity of the input geometries, call :py:func:`IsValid` before, otherwise the
 result might be wrong.
 
-This function is the same as the C++ method OGRGeometry::Disjoint().
+This function is the same as the C++ method :cpp:func:`OGRGeometry::Disjoint`.
 
 This function is built on the GEOS library, check it for the
 definition of the geometry operation. If OGR is built without the GEOS
@@ -1420,18 +1415,18 @@ int:
     TRUE if they are disjoint, otherwise FALSE.
 ";
 
-%feature("docstring")  Touches "int OGR_G_Touches(OGRGeometryH hThis,
-OGRGeometryH hOther)
+%feature("docstring")  Touches "
+:cpp:func:`OGR_G_Touches`
 
 Test for touching.
 
 Tests if this geometry and the other geometry are touching.
 
 Geometry validity is not checked. In case you are unsure of the
-validity of the input geometries, call IsValid() before, otherwise the
+validity of the input geometries, call :py:func:`IsValid` before, otherwise the
 result might be wrong.
 
-This function is the same as the C++ method OGRGeometry::Touches().
+This function is the same as the C++ method :cpp:func:`OGRGeometry::Touches`.
 
 This function is built on the GEOS library, check it for the
 definition of the geometry operation. If OGR is built without the GEOS
@@ -1451,18 +1446,18 @@ int:
     TRUE if they are touching, otherwise FALSE.
 ";
 
-%feature("docstring")  Crosses "int OGR_G_Crosses(OGRGeometryH hThis,
-OGRGeometryH hOther)
+%feature("docstring")  Crosses "
+:cpp:func:`OGR_G_Crosses`
 
 Test for crossing.
 
 Tests if this geometry and the other geometry are crossing.
 
 Geometry validity is not checked. In case you are unsure of the
-validity of the input geometries, call IsValid() before, otherwise the
+validity of the input geometries, call :py:func:`IsValid` before, otherwise the
 result might be wrong.
 
-This function is the same as the C++ method OGRGeometry::Crosses().
+This function is the same as the C++ method :cpp:func:`OGRGeometry::Crosses`.
 
 This function is built on the GEOS library, check it for the
 definition of the geometry operation. If OGR is built without the GEOS
@@ -1482,18 +1477,18 @@ int:
     TRUE if they are crossing, otherwise FALSE.
 ";
 
-%feature("docstring")  Within "int OGR_G_Within(OGRGeometryH hThis,
-OGRGeometryH hOther)
+%feature("docstring")  Within "
+:cpp:func:`OGR_G_Within`
 
 Test for containment.
 
 Tests if this geometry is within the other geometry.
 
 Geometry validity is not checked. In case you are unsure of the
-validity of the input geometries, call IsValid() before, otherwise the
+validity of the input geometries, call :py:func:`IsValid` before, otherwise the
 result might be wrong.
 
-This function is the same as the C++ method OGRGeometry::Within().
+This function is the same as the C++ method :cpp:func:`OGRGeometry::Within`.
 
 This function is built on the GEOS library, check it for the
 definition of the geometry operation. If OGR is built without the GEOS
@@ -1513,18 +1508,18 @@ int:
     TRUE if hThis is within hOther, otherwise FALSE.
 ";
 
-%feature("docstring")  Contains "int OGR_G_Contains(OGRGeometryH
-hThis, OGRGeometryH hOther)
+%feature("docstring")  Contains "
+:cpp:func:`OGR_G_Contains`
 
 Test for containment.
 
 Tests if this geometry contains the other geometry.
 
 Geometry validity is not checked. In case you are unsure of the
-validity of the input geometries, call IsValid() before, otherwise the
+validity of the input geometries, call :py:func:`IsValid` before, otherwise the
 result might be wrong.
 
-This function is the same as the C++ method OGRGeometry::Contains().
+This function is the same as the C++ method :cpp:func:`OGRGeometry::Contains`.
 
 This function is built on the GEOS library, check it for the
 definition of the geometry operation. If OGR is built without the GEOS
@@ -1544,8 +1539,8 @@ int:
     TRUE if hThis contains hOther geometry, otherwise FALSE.
 ";
 
-%feature("docstring")  Overlaps "int OGR_G_Overlaps(OGRGeometryH
-hThis, OGRGeometryH hOther)
+%feature("docstring")  Overlaps "
+:cpp:func:`OGR_G_Overlaps`
 
 Test for overlap.
 
@@ -1553,10 +1548,10 @@ Tests if this geometry and the other geometry overlap, that is their
 intersection has a non-zero area.
 
 Geometry validity is not checked. In case you are unsure of the
-validity of the input geometries, call IsValid() before, otherwise the
+validity of the input geometries, call :py:func:`IsValid` before, otherwise the
 result might be wrong.
 
-This function is the same as the C++ method OGRGeometry::Overlaps().
+This function is the same as the C++ method :cpp:func:`OGRGeometry::Overlaps`.
 
 This function is built on the GEOS library, check it for the
 definition of the geometry operation. If OGR is built without the GEOS
@@ -1576,8 +1571,8 @@ int:
     TRUE if they are overlapping, otherwise FALSE.
 ";
 
-%feature("docstring")  CloseRings "void OGR_G_CloseRings(OGRGeometryH
-hGeom)
+%feature("docstring")  CloseRings "
+:cpp:func:`OGR_G_CloseRings`
 
 Force rings to be closed.
 
@@ -1591,8 +1586,8 @@ hGeom:
     handle to the geometry.
 ";
 
-%feature("docstring")  Centroid "int OGR_G_Centroid(OGRGeometryH
-hGeom, OGRGeometryH hCentroidPoint)
+%feature("docstring")  Centroid "
+:cpp:func:`OGR_G_Centroid`
 
 Compute the geometry centroid.
 
@@ -1606,7 +1601,7 @@ as multipolygons. OGC SF SQL 1.1 defines the operation for surfaces
 (polygons). SQL/MM-Part 3 defines the operation for surfaces and
 multisurfaces (multipolygons).
 
-This function is the same as the C++ method OGRGeometry::Centroid().
+This function is the same as the C++ method :cpp:func:`OGRGeometry::Centroid`.
 
 This function is built on the GEOS library, check it for the
 definition of the geometry operation. If OGR is built without the GEOS
@@ -1619,8 +1614,8 @@ int:
     OGRERR_NONE on success or OGRERR_FAILURE on error.
 ";
 
-%feature("docstring")  PointOnSurface "OGRGeometryH
-OGR_G_PointOnSurface(OGRGeometryH hGeom)
+%feature("docstring")  PointOnSurface "
+:cpp:func:`OGR_G_PointOnSurface`
 
 Returns a point guaranteed to lie on the surface.
 
@@ -1646,12 +1641,12 @@ OGRGeometryH:
     a point guaranteed to lie on the surface or NULL if an error occurred.
 ";
 
-%feature("docstring")  Simplify "OGRGeometryH
-OGR_G_Simplify(OGRGeometryH hThis, double dTolerance)
+%feature("docstring")  Simplify "
+:cpp:func:`OGR_G_Simplify`
 
 Compute a simplified geometry.
 
-This function is the same as the C++ method OGRGeometry::Simplify().
+This function is the same as the C++ method :cpp:func:`OGRGeometry::Simplify`.
 
 This function is built on the GEOS library, check it for the
 definition of the geometry operation. If OGR is built without the GEOS
@@ -1673,13 +1668,13 @@ OGRGeometryH:
     the simplified geometry or NULL if an error occurs.
 ";
 
-%feature("docstring")  SimplifyPreserveTopology "OGRGeometryH
-OGR_G_SimplifyPreserveTopology(OGRGeometryH hThis, double dTolerance)
+%feature("docstring")  SimplifyPreserveTopology "
+:cpp:func:`OGR_G_SimplifyPreserveTopology`
 
 Simplify the geometry while preserving topology.
 
 This function is the same as the C++ method
-OGRGeometry::SimplifyPreserveTopology().
+:cpp:func:`OGRGeometry::SimplifyPreserveTopology`.
 
 This function is built on the GEOS library, check it for the
 definition of the geometry operation. If OGR is built without the GEOS
@@ -1701,14 +1696,13 @@ OGRGeometryH:
     the simplified geometry or NULL if an error occurs.
 ";
 
-%feature("docstring")  DelaunayTriangulation "OGRGeometryH
-OGR_G_DelaunayTriangulation(OGRGeometryH hThis, double dfTolerance,
-int bOnlyEdges)
+%feature("docstring")  DelaunayTriangulation "
+:cpp:func:`OGR_G_DelaunayTriangulation`
 
 Return a Delaunay triangulation of the vertices of the geometry.
 
 This function is the same as the C++ method
-OGRGeometry::DelaunayTriangulation().
+:cpp:func:`OGRGeometry::DelaunayTriangulation`.
 
 This function is built on the GEOS library, v3.4 or above. If OGR is
 built without the GEOS library, this function will always fail,
@@ -1733,8 +1727,8 @@ OGRGeometryH:
     error occurs.
 ";
 
-%feature("docstring")  Polygonize "OGRGeometryH
-OGR_G_Polygonize(OGRGeometryH hTarget)
+%feature("docstring")  Polygonize "
+:cpp:func:`OGR_G_Polygonize`
 
 Polygonizes a set of sparse edges.
 
@@ -1743,7 +1737,7 @@ of reassembled Polygons: NULL will be returned if the input collection
 doesn't corresponds to a MultiLinestring, or when reassembling Edges
 into Polygons is impossible due to topological inconsistencies.
 
-This function is the same as the C++ method OGRGeometry::Polygonize().
+This function is the same as the C++ method :cpp:func:`OGRGeometry::Polygonize`.
 
 This function is built on the GEOS library, check it for the
 definition of the geometry operation. If OGR is built without the GEOS
@@ -1764,7 +1758,8 @@ OGRGeometryH:
     NULL on failure.
 ";
 
-%feature("docstring")  SwapXY "void OGR_G_SwapXY(OGRGeometryH hGeom)
+%feature("docstring")  SwapXY "
+:cpp:func:`OGR_G_SwapXY`
 
 Swap x and y coordinates.
 
@@ -1776,8 +1771,8 @@ hGeom:
     geometry.
 ";
 
-%feature("docstring")  OGRHasPreparedGeometrySupport "int
-OGRHasPreparedGeometrySupport()
+%feature("docstring")  OGRHasPreparedGeometrySupport "
+:cpp:func:`OGRHasPreparedGeometrySupport`
 
 Returns if GEOS has prepared geometry support.
 
@@ -1787,11 +1782,12 @@ int:
     TRUE or FALSE
 ";
 
-%feature("docstring")  OGRCreatePreparedGeometry "OGRPreparedGeometryH OGRCreatePreparedGeometry(OGRGeometryH hGeom)
+%feature("docstring")  OGRCreatePreparedGeometry "
+:cpp:func:`OGRCreatePreparedGeometry`
 
 Creates a prepared geometry.
 
-To free with OGRDestroyPreparedGeometry()
+To free with :py:func:`DestroyPreparedGeometry`
 
 .. versionadded:: 3.3
 
@@ -1806,8 +1802,8 @@ OGRPreparedGeometryH:
     handle to a prepared geometry.
 ";
 
-%feature("docstring")  OGRDestroyPreparedGeometry "void
-OGRDestroyPreparedGeometry(OGRPreparedGeometryH hPreparedGeom)
+%feature("docstring")  OGRDestroyPreparedGeometry "
+:cpp:func:`OGRDestroyPreparedGeometry`
 
 Destroys a prepared geometry.
 
@@ -1819,9 +1815,8 @@ hPreparedGeom:
     preprated geometry.
 ";
 
-%feature("docstring")  OGRPreparedGeometryIntersects "int
-OGRPreparedGeometryIntersects(const OGRPreparedGeometryH
-hPreparedGeom, const OGRGeometryH hOtherGeom)
+%feature("docstring")  OGRPreparedGeometryIntersects "
+:cpp:func:`OGRPreparedGeometryIntersects`
 
 Returns whether a prepared geometry intersects with a geometry.
 
@@ -1840,9 +1835,8 @@ int:
     TRUE or FALSE.
 ";
 
-%feature("docstring")  OGRPreparedGeometryContains "int
-OGRPreparedGeometryContains(const OGRPreparedGeometryH hPreparedGeom,
-const OGRGeometryH hOtherGeom)
+%feature("docstring")  OGRPreparedGeometryContains "
+:cpp:func:`OGRPreparedGeometryContains`
 
 Returns whether a prepared geometry contains a geometry.
 
@@ -1859,20 +1853,20 @@ int:
     TRUE or FALSE.
 ";
 
-%feature("docstring")  OGRGeometryFromEWKB "OGRGeometry\\*
-OGRGeometryFromEWKB(GByte \\*pabyWKB, int nLength, int \\*pnSRID, int
-bIsPostGIS1_EWKB) ";
+%feature("docstring")  OGRGeometryFromEWKB "
+:cpp:func:`OGRGeometryFromEWKB
+";
 
-%feature("docstring")  OGRGeometryFromHexEWKB "OGRGeometry\\*
-OGRGeometryFromHexEWKB(const char \\*pszBytea, int \\*pnSRID, int
-bIsPostGIS1_EWKB) ";
+%feature("docstring")  OGRGeometryFromHexEWKB "
+:cpp:func:`GRGeometryFromHexEWKB`
+";
 
-%feature("docstring")  OGRGeometryToHexEWKB "char\\*
-OGRGeometryToHexEWKB(OGRGeometry \\*poGeometry, int nSRSId, int
-nPostGISMajor, int nPostGISMinor) ";
+%feature("docstring")  OGRGeometryToHexEWKB "
+:cpp:func:`OGRGeometryToHexEWKB
+";
 
-%feature("docstring")  OGR_GT_Flatten "OGRwkbGeometryType
-OGR_GT_Flatten(OGRwkbGeometryType eType)
+%feature("docstring")  OGR_GT_Flatten "
+:cpp:func:`OGR_GT_Flatten`
 
 Returns the 2D geometry type corresponding to the passed geometry
 type.
@@ -1894,8 +1888,8 @@ OGRwkbGeometryType:
     2D geometry type corresponding to the passed geometry type.
 ";
 
-%feature("docstring")  OGR_GT_HasZ "int
-OGR_GT_HasZ(OGRwkbGeometryType eType)
+%feature("docstring")  OGR_GT_HasZ "
+:cpp:func:`OGR_GT_HasZ`
 
 Return if the geometry type is a 3D geometry type.
 
@@ -1912,8 +1906,8 @@ int:
     TRUE if the geometry type is a 3D geometry type.
 ";
 
-%feature("docstring")  OGR_GT_HasM "int
-OGR_GT_HasM(OGRwkbGeometryType eType)
+%feature("docstring")  OGR_GT_HasM "
+:cpp:func:`OGR_GT_HasM`
 
 Return if the geometry type is a measured type.
 
@@ -1930,8 +1924,8 @@ int:
     TRUE if the geometry type is a measured type.
 ";
 
-%feature("docstring")  OGR_GT_SetZ "OGRwkbGeometryType
-OGR_GT_SetZ(OGRwkbGeometryType eType)
+%feature("docstring")  OGR_GT_SetZ "
+:cpp:func:`OGR_GT_SetZ`
 
 Returns the 3D geometry type corresponding to the passed geometry
 type.
@@ -1949,8 +1943,8 @@ OGRwkbGeometryType:
     3D geometry type corresponding to the passed geometry type.
 ";
 
-%feature("docstring")  OGR_GT_SetM "OGRwkbGeometryType
-OGR_GT_SetM(OGRwkbGeometryType eType)
+%feature("docstring")  OGR_GT_SetM "
+:cpp:func:`OGR_GT_SetM`
 
 Returns the measured geometry type corresponding to the passed
 geometry type.
@@ -1968,8 +1962,8 @@ OGRwkbGeometryType:
     measured geometry type corresponding to the passed geometry type.
 ";
 
-%feature("docstring")  OGR_GT_SetModifier "OGRwkbGeometryType
-OGR_GT_SetModifier(OGRwkbGeometryType eType, int bHasZ, int bHasM)
+%feature("docstring")  OGR_GT_SetModifier "
+:cpp:func:`OGR_GT_SetModifier`
 
 Returns a XY, XYZ, XYM or XYZM geometry type depending on parameter.
 
@@ -1990,9 +1984,8 @@ OGRwkbGeometryType:
     Output geometry type.
 ";
 
-%feature("docstring")  OGR_GT_IsSubClassOf "int
-OGR_GT_IsSubClassOf(OGRwkbGeometryType eType, OGRwkbGeometryType
-eSuperType)
+%feature("docstring")  OGR_GT_IsSubClassOf "
+:cpp:func:`OGR_GT_IsSubClassOf`
 
 Returns if a type is a subclass of another one.
 
@@ -2011,8 +2004,8 @@ int:
     TRUE if eType is a subclass of eSuperType.
 ";
 
-%feature("docstring")  OGR_GT_GetCollection "OGRwkbGeometryType
-OGR_GT_GetCollection(OGRwkbGeometryType eType)
+%feature("docstring")  OGR_GT_GetCollection "
+:cpp:func:`OGR_GT_GetCollection`
 
 Returns the collection type that can contain the passed geometry type.
 
@@ -2039,8 +2032,8 @@ OGRwkbGeometryType:
     wkbUnknown
 ";
 
-%feature("docstring")  OGR_GT_GetCurve "OGRwkbGeometryType
-OGR_GT_GetCurve(OGRwkbGeometryType eType)
+%feature("docstring")  OGR_GT_GetCurve "
+:cpp:func:`OGR_GT_GetCurve`
 
 Returns the curve geometry type that can contain the passed geometry
 type.
@@ -2065,8 +2058,8 @@ OGRwkbGeometryType:
     the curve type that can contain the passed geometry type
 ";
 
-%feature("docstring")  OGR_GT_GetLinear "OGRwkbGeometryType
-OGR_GT_GetLinear(OGRwkbGeometryType eType)
+%feature("docstring")  OGR_GT_GetLinear "
+:cpp:func:`OGR_GT_GetLinear`
 
 Returns the non-curve geometry type that can contain the passed
 geometry type.
@@ -2092,8 +2085,8 @@ OGRwkbGeometryType:
     the non-curve type that can contain the passed geometry type
 ";
 
-%feature("docstring")  OGR_GT_IsCurve "int
-OGR_GT_IsCurve(OGRwkbGeometryType eGeomType)
+%feature("docstring")  OGR_GT_IsCurve "
+:cpp:func:`OGR_GT_IsCurve`
 
 Return if a geometry type is an instance of Curve.
 
@@ -2113,8 +2106,8 @@ int:
     TRUE if the geometry type is an instance of Curve
 ";
 
-%feature("docstring")  OGR_GT_IsSurface "int
-OGR_GT_IsSurface(OGRwkbGeometryType eGeomType)
+%feature("docstring")  OGR_GT_IsSurface "
+:cpp:func:`OGR_GT_IsSurface`
 
 Return if a geometry type is an instance of Surface.
 
@@ -2134,8 +2127,8 @@ int:
     TRUE if the geometry type is an instance of Surface
 ";
 
-%feature("docstring")  OGR_GT_IsNonLinear "int
-OGR_GT_IsNonLinear(OGRwkbGeometryType eGeomType)
+%feature("docstring")  OGR_GT_IsNonLinear "
+:cpp:func:`OGR_GT_IsNonLinear`
 
 Return if a geometry type is a non-linear geometry type.
 
