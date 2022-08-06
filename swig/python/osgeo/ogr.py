@@ -6350,8 +6350,8 @@ class Geometry(object):
     def ExportToWkt(self, *args) -> "OGRErr":
         r"""
         ExportToWkt(Geometry self) -> OGRErr
-        OGRErr
-        OGR_G_ExportToWkt(OGRGeometryH hGeom, char \*\*ppszSrcText)
+
+        :cpp:func:`OGR_G_ExportToWkt`
 
         Convert a geometry into well known text format.
 
@@ -6360,10 +6360,10 @@ class Geometry(object):
         For backward compatibility purposes, it exports the Old-style 99-402
         extended dimension (Z) WKB types for types Point, LineString, Polygon,
         MultiPoint, MultiLineString, MultiPolygon and GeometryCollection. For
-        other geometry types, it is equivalent to OGR_G_ExportToIsoWkt().
+        other geometry types, it is equivalent to :py:func:`ExportToIsoWkt`.
 
         This function is the same as the CPP method
-        OGRGeometry::exportToWkt().
+        :cpp:func:`OGRGeometry::exportToWkt`.
 
         Parameters
         -----------
@@ -6372,7 +6372,7 @@ class Geometry(object):
         ppszSrcText:
             a text buffer is allocated by the program, and assigned
             to the passed pointer. After use, \*ppszDstText should be freed with
-            CPLFree().
+            :cpp:func:`CPLFree`.
 
         Returns
         --------
@@ -6385,8 +6385,8 @@ class Geometry(object):
     def ExportToIsoWkt(self, *args) -> "OGRErr":
         r"""
         ExportToIsoWkt(Geometry self) -> OGRErr
-        OGRErr
-        OGR_G_ExportToIsoWkt(OGRGeometryH hGeom, char \*\*ppszSrcText)
+
+        :cpp:func:`OGR_G_ExportToIsoWkt`
 
         Convert a geometry into SFSQL 1.2 / ISO SQL/MM Part 3 well known text
         format.
@@ -6396,7 +6396,7 @@ class Geometry(object):
         WKB types.
 
         This function is the same as the CPP method
-        OGRGeometry::exportToWkt(wkbVariantIso).
+        :cpp:func:`OGRGeometry::exportToWkt`.
 
         .. versionadded:: 2.0
 
@@ -6407,7 +6407,7 @@ class Geometry(object):
         ppszSrcText:
             a text buffer is allocated by the program, and assigned
             to the passed pointer. After use, \*ppszDstText should be freed with
-            CPLFree().
+            :cpp:func:`CPLFree`.
 
         Returns
         --------
@@ -6420,9 +6420,8 @@ class Geometry(object):
     def ExportToWkb(self, *args, **kwargs) -> "OGRErr":
         r"""
         ExportToWkb(Geometry self, OGRwkbByteOrder byte_order=wkbNDR) -> OGRErr
-        OGRErr
-        OGR_G_ExportToWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder, unsigned
-        char \*pabyDstBuffer)
+
+        :cpp:func:`OGR_G_ExportToWkb`
 
         Convert a geometry well known binary format.
 
@@ -6431,11 +6430,10 @@ class Geometry(object):
         For backward compatibility purposes, it exports the Old-style 99-402
         extended dimension (Z) WKB types for types Point, LineString, Polygon,
         MultiPoint, MultiLineString, MultiPolygon and GeometryCollection. For
-        other geometry types, it is equivalent to OGR_G_ExportToIsoWkb().
+        other geometry types, it is equivalent to :py:func:`ExportToIsoWkb`.
 
         This function is the same as the CPP method
-        OGRGeometry::exportToWkb(OGRwkbByteOrder, unsigned char \*,
-        OGRwkbVariant) with eWkbVariant = wkbVariantOldOgc.
+        :cpp:func:`OGRGeometry::exportToWkb` with eWkbVariant = wkbVariantOldOgc.
 
         Parameters
         -----------
@@ -6445,7 +6443,7 @@ class Geometry(object):
             One of wkbXDR or wkbNDR indicating MSB or LSB byte order respectively.
         pabyDstBuffer:
             a buffer into which the binary representation is
-            written. This buffer must be at least OGR_G_WkbSize() byte in size.
+            written. This buffer must be at least :cpp:func:`OGR_G_WkbSize` byte in size.
 
         Returns
         --------
@@ -6458,9 +6456,8 @@ class Geometry(object):
     def ExportToIsoWkb(self, *args, **kwargs) -> "OGRErr":
         r"""
         ExportToIsoWkb(Geometry self, OGRwkbByteOrder byte_order=wkbNDR) -> OGRErr
-        OGRErr
-        OGR_G_ExportToIsoWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder,
-        unsigned char \*pabyDstBuffer)
+
+        :cpp:func:`OGR_G_ExportToIsoWkb`
 
         Convert a geometry into SFSQL 1.2 / ISO SQL/MM Part 3 well known
         binary format.
@@ -6470,8 +6467,7 @@ class Geometry(object):
         WKB types.
 
         This function is the same as the CPP method
-        OGRGeometry::exportToWkb(OGRwkbByteOrder, unsigned char \*,
-        OGRwkbVariant) with eWkbVariant = wkbVariantIso.
+        :cpp:func:`OGRGeometry::exportToWkb` with eWkbVariant = wkbVariantIso.
 
         .. versionadded:: 2.0
 
@@ -6483,7 +6479,7 @@ class Geometry(object):
             One of wkbXDR or wkbNDR indicating MSB or LSB byte order respectively.
         pabyDstBuffer:
             a buffer into which the binary representation is written.
-            This buffer must be at least OGR_G_WkbSize() byte in size.
+            This buffer must be at least :cpp:func:`OGR_G_WkbSize` byte in size.
 
         Returns
         --------
@@ -6536,14 +6532,14 @@ class Geometry(object):
     def Clone(self, *args) -> "OGRGeometryShadow *":
         r"""
         Clone(Geometry self) -> Geometry
-        OGRGeometryH OGR_G_Clone(OGRGeometryH
-        hGeom)
+
+        :cpp:func:`OGR_G_Clone`
 
         Make a copy of this object.
 
         This function relates to the SFCOM IGeometry::clone() method.
 
-        This function is the same as the CPP method OGRGeometry::clone().
+        This function is the same as the CPP method :cpp:func:`OGRGeometry::clone`.
 
         Parameters
         -----------
@@ -6562,8 +6558,8 @@ class Geometry(object):
     def GetGeometryType(self, *args) -> "OGRwkbGeometryType":
         r"""
         GetGeometryType(Geometry self) -> OGRwkbGeometryType
-        OGRwkbGeometryType
-        OGR_G_GetGeometryType(OGRGeometryH hGeom)
+
+        :cpp:func:`OGR_G_GetGeometryType`
 
         Fetch geometry type.
 
@@ -6572,7 +6568,7 @@ class Geometry(object):
         the return result.
 
         This function is the same as the CPP method
-        OGRGeometry::getGeometryType().
+        :cpp:func:`OGRGeometry::getGeometryType`.
 
         Parameters
         -----------
@@ -6590,15 +6586,15 @@ class Geometry(object):
     def GetGeometryName(self, *args) -> "char const *":
         r"""
         GetGeometryName(Geometry self) -> char const *
-        const char\*
-        OGR_G_GetGeometryName(OGRGeometryH hGeom)
+
+        :cpp:func:`OGR_G_GetGeometryName`
 
         Fetch WKT name for geometry type.
 
         There is no SFCOM analog to this function.
 
         This function is the same as the CPP method
-        OGRGeometry::getGeometryName().
+        :cpp:func:`OGRGeometry::getGeometryName`.
 
         Parameters
         -----------
@@ -6684,7 +6680,8 @@ class Geometry(object):
     def SwapXY(self, *args) -> "void":
         r"""
         SwapXY(Geometry self)
-        void OGR_G_SwapXY(OGRGeometryH hGeom)
+
+        :cpp:func:`OGR_G_SwapXY`
 
         Swap x and y coordinates.
 
@@ -6705,12 +6702,12 @@ class Geometry(object):
     def Simplify(self, *args) -> "OGRGeometryShadow *":
         r"""
         Simplify(Geometry self, double tolerance) -> Geometry
-        OGRGeometryH
-        OGR_G_Simplify(OGRGeometryH hThis, double dTolerance)
+
+        :cpp:func:`OGR_G_Simplify`
 
         Compute a simplified geometry.
 
-        This function is the same as the C++ method OGRGeometry::Simplify().
+        This function is the same as the C++ method :cpp:func:`OGRGeometry::Simplify`.
 
         This function is built on the GEOS library, check it for the
         definition of the geometry operation. If OGR is built without the GEOS
@@ -6737,13 +6734,13 @@ class Geometry(object):
     def SimplifyPreserveTopology(self, *args) -> "OGRGeometryShadow *":
         r"""
         SimplifyPreserveTopology(Geometry self, double tolerance) -> Geometry
-        OGRGeometryH
-        OGR_G_SimplifyPreserveTopology(OGRGeometryH hThis, double dTolerance)
+
+        :cpp:func:`OGR_G_SimplifyPreserveTopology`
 
         Simplify the geometry while preserving topology.
 
         This function is the same as the C++ method
-        OGRGeometry::SimplifyPreserveTopology().
+        :cpp:func:`OGRGeometry::SimplifyPreserveTopology`.
 
         This function is built on the GEOS library, check it for the
         definition of the geometry operation. If OGR is built without the GEOS
@@ -6770,14 +6767,13 @@ class Geometry(object):
     def DelaunayTriangulation(self, *args, **kwargs) -> "OGRGeometryShadow *":
         r"""
         DelaunayTriangulation(Geometry self, double dfTolerance=0.0, int bOnlyEdges=FALSE) -> Geometry
-        OGRGeometryH
-        OGR_G_DelaunayTriangulation(OGRGeometryH hThis, double dfTolerance,
-        int bOnlyEdges)
+
+        :cpp:func:`OGR_G_DelaunayTriangulation`
 
         Return a Delaunay triangulation of the vertices of the geometry.
 
         This function is the same as the C++ method
-        OGRGeometry::DelaunayTriangulation().
+        :cpp:func:`OGRGeometry::DelaunayTriangulation`.
 
         This function is built on the GEOS library, v3.4 or above. If OGR is
         built without the GEOS library, this function will always fail,
@@ -6807,8 +6803,8 @@ class Geometry(object):
     def Polygonize(self, *args) -> "OGRGeometryShadow *":
         r"""
         Polygonize(Geometry self) -> Geometry
-        OGRGeometryH
-        OGR_G_Polygonize(OGRGeometryH hTarget)
+
+        :cpp:func:`OGR_G_Polygonize`
 
         Polygonizes a set of sparse edges.
 
@@ -6817,7 +6813,7 @@ class Geometry(object):
         doesn't corresponds to a MultiLinestring, or when reassembling Edges
         into Polygons is impossible due to topological inconsistencies.
 
-        This function is the same as the C++ method OGRGeometry::Polygonize().
+        This function is the same as the C++ method :cpp:func:`OGRGeometry::Polygonize`.
 
         This function is built on the GEOS library, check it for the
         definition of the geometry operation. If OGR is built without the GEOS
@@ -6843,15 +6839,15 @@ class Geometry(object):
     def Boundary(self, *args) -> "OGRGeometryShadow *":
         r"""
         Boundary(Geometry self) -> Geometry
-        OGRGeometryH
-        OGR_G_Boundary(OGRGeometryH hTarget)
+
+        :cpp:func:`OGR_G_Boundary`
 
         Compute boundary.
 
         A new geometry object is created and returned containing the boundary
         of the geometry on which the method is invoked.
 
-        This function is the same as the C++ method OGR_G_Boundary().
+        This function is the same as the C++ method :cpp:func:`OGR_G_Boundary`.
 
         This function is built on the GEOS library, check it for the
         definition of the geometry operation. If OGR is built without the GEOS
@@ -6877,14 +6873,14 @@ class Geometry(object):
     def GetBoundary(self, *args) -> "OGRGeometryShadow *":
         r"""
         GetBoundary(Geometry self) -> Geometry
-        OGRGeometryH
-        OGR_G_GetBoundary(OGRGeometryH hTarget)
+
+        :cpp:func:`OGR_G_GetBoundary`
 
         Compute boundary (deprecated)
 
         Deprecated
 
-        See: OGR_G_Boundary()
+        See: :cpp:func:`OGR_G_Boundary`
 
         """
         return _ogr.Geometry_GetBoundary(self, *args)
@@ -6892,15 +6888,15 @@ class Geometry(object):
     def ConvexHull(self, *args) -> "OGRGeometryShadow *":
         r"""
         ConvexHull(Geometry self) -> Geometry
-        OGRGeometryH
-        OGR_G_ConvexHull(OGRGeometryH hTarget)
+
+        :cpp:func:`OGR_G_ConvexHull`
 
         Compute convex hull.
 
         A new geometry object is created and returned containing the convex
         hull of the geometry on which the method is invoked.
 
-        This function is the same as the C++ method OGRGeometry::ConvexHull().
+        This function is the same as the C++ method :cpp:func:`OGRGeometry::ConvexHull`.
 
         This function is built on the GEOS library, check it for the
         definition of the geometry operation. If OGR is built without the GEOS
@@ -6928,14 +6924,14 @@ class Geometry(object):
     def MakeValid(self, *args) -> "OGRGeometryShadow *":
         r"""
         MakeValid(Geometry self, char ** options=None) -> Geometry
-        OGRGeometryH
-        OGR_G_MakeValid(OGRGeometryH hGeom)
+
+        :cpp:func:`OGR_G_MakeValid`
 
         Attempts to make an invalid geometry valid without losing vertices.
 
         Already-valid geometries are cloned without further intervention.
 
-        This function is the same as the C++ method OGRGeometry::MakeValid().
+        This function is the same as the C++ method :cpp:func:`OGRGeometry::MakeValid`.
 
         This function is built on the GEOS >= 3.8 library, check it for the
         definition of the geometry operation. If OGR is built without the GEOS
@@ -6961,12 +6957,12 @@ class Geometry(object):
     def Normalize(self, *args) -> "OGRGeometryShadow *":
         r"""
         Normalize(Geometry self) -> Geometry
-        OGRGeometryH
-        OGR_G_Normalize(OGRGeometryH hGeom)
+
+        :cpp:func:`OGR_G_Normalize`
 
         Attempts to bring geometry into normalized/canonical form.
 
-        This function is the same as the C++ method OGRGeometry::Normalize().
+        This function is the same as the C++ method :cpp:func:`OGRGeometry::Normalize`.
 
         This function is built on the GEOS library; check it for the
         definition of the geometry operation. If OGR is built without the GEOS
@@ -6996,8 +6992,8 @@ class Geometry(object):
     def Buffer(self, *args, **kwargs) -> "OGRGeometryShadow *":
         r"""
         Buffer(Geometry self, double distance, int quadsecs=30) -> Geometry
-        OGRGeometryH OGR_G_Buffer(OGRGeometryH
-        hTarget, double dfDist, int nQuadSegs)
+
+        :cpp:func:`OGR_G_Buffer`
 
         Compute buffer of geometry.
 
@@ -7012,7 +7008,7 @@ class Geometry(object):
         Large values result in large numbers of vertices in the resulting
         buffer geometry while small numbers reduce the accuracy of the result.
 
-        This function is the same as the C++ method OGRGeometry::Buffer().
+        This function is the same as the C++ method :cpp:func:`OGRGeometry::Buffer`.
 
         This function is built on the GEOS library, check it for the
         definition of the geometry operation. If OGR is built without the GEOS
@@ -7041,21 +7037,21 @@ class Geometry(object):
     def Intersection(self, *args) -> "OGRGeometryShadow *":
         r"""
         Intersection(Geometry self, Geometry other) -> Geometry
-        OGRGeometryH
-        OGR_G_Intersection(OGRGeometryH hThis, OGRGeometryH hOther)
+
+        :cpp:func:`OGR_G_Intersection`
 
         Compute intersection.
 
         Generates a new geometry which is the region of intersection of the
-        two geometries operated on. The OGR_G_Intersects() function can be
+        two geometries operated on. The :py:func:`Intersects` function can be
         used to test if two geometries intersect.
 
         Geometry validity is not checked. In case you are unsure of the
-        validity of the input geometries, call IsValid() before, otherwise the
+        validity of the input geometries, call :py:func:`IsValid` before, otherwise the
         result might be wrong.
 
         This function is the same as the C++ method
-        OGRGeometry::Intersection().
+        :cpp:func:`OGRGeometry::Intersection`.
 
         This function is built on the GEOS library, check it for the
         definition of the geometry operation. If OGR is built without the GEOS
@@ -7081,8 +7077,8 @@ class Geometry(object):
     def Union(self, *args) -> "OGRGeometryShadow *":
         r"""
         Union(Geometry self, Geometry other) -> Geometry
-        OGRGeometryH OGR_G_Union(OGRGeometryH
-        hThis, OGRGeometryH hOther)
+
+        :cpp:func:`OGR_G_Union`
 
         Compute union.
 
@@ -7090,10 +7086,10 @@ class Geometry(object):
         geometries operated on.
 
         Geometry validity is not checked. In case you are unsure of the
-        validity of the input geometries, call IsValid() before, otherwise the
+        validity of the input geometries, call :py:func:`IsValid` before, otherwise the
         result might be wrong.
 
-        This function is the same as the C++ method OGRGeometry::Union().
+        This function is the same as the C++ method :cpp:func:`OGRGeometry::Union`.
 
         This function is built on the GEOS library, check it for the
         definition of the geometry operation. If OGR is built without the GEOS
@@ -7118,17 +7114,17 @@ class Geometry(object):
     def UnionCascaded(self, *args) -> "OGRGeometryShadow *":
         r"""
         UnionCascaded(Geometry self) -> Geometry
-        OGRGeometryH
-        OGR_G_UnionCascaded(OGRGeometryH hThis)
+
+        :cpp:func:`OGR_G_UnionCascaded`
 
         Compute union using cascading.
 
         Geometry validity is not checked. In case you are unsure of the
-        validity of the input geometries, call IsValid() before, otherwise the
+        validity of the input geometries, call :py:func:`IsValid` before, otherwise the
         result might be wrong.
 
         This function is the same as the C++ method
-        OGRGeometry::UnionCascaded().
+        :cpp:func:`OGRGeometry::UnionCascaded`.
 
         This function is built on the GEOS library, check it for the
         definition of the geometry operation. If OGR is built without the GEOS
@@ -7151,8 +7147,8 @@ class Geometry(object):
     def Difference(self, *args) -> "OGRGeometryShadow *":
         r"""
         Difference(Geometry self, Geometry other) -> Geometry
-        OGRGeometryH
-        OGR_G_Difference(OGRGeometryH hThis, OGRGeometryH hOther)
+
+        :cpp:func:`OGR_G_Difference`
 
         Compute difference.
 
@@ -7160,10 +7156,10 @@ class Geometry(object):
         region of the other geometry removed.
 
         Geometry validity is not checked. In case you are unsure of the
-        validity of the input geometries, call IsValid() before, otherwise the
+        validity of the input geometries, call :py:func:`IsValid` before, otherwise the
         result might be wrong.
 
-        This function is the same as the C++ method OGRGeometry::Difference().
+        This function is the same as the C++ method :cpp:func:`OGRGeometry::Difference`.
 
         This function is built on the GEOS library, check it for the
         definition of the geometry operation. If OGR is built without the GEOS
@@ -7189,8 +7185,8 @@ class Geometry(object):
     def SymDifference(self, *args) -> "OGRGeometryShadow *":
         r"""
         SymDifference(Geometry self, Geometry other) -> Geometry
-        OGRGeometryH
-        OGR_G_SymDifference(OGRGeometryH hThis, OGRGeometryH hOther)
+
+        :cpp:func:`OGR_G_SymDifference`
 
         Compute symmetric difference.
 
@@ -7198,11 +7194,11 @@ class Geometry(object):
         geometry and the other geometry.
 
         Geometry validity is not checked. In case you are unsure of the
-        validity of the input geometries, call IsValid() before, otherwise the
+        validity of the input geometries, call :py:func:`IsValid` before, otherwise the
         result might be wrong.
 
         This function is the same as the C++ method
-        OGRGeometry::SymmetricDifference().
+        :cpp:func:`OGRGeometry::SymmetricDifference`.
 
         This function is built on the GEOS library, check it for the
         definition of the geometry operation. If OGR is built without the GEOS
@@ -7230,14 +7226,14 @@ class Geometry(object):
     def SymmetricDifference(self, *args) -> "OGRGeometryShadow *":
         r"""
         SymmetricDifference(Geometry self, Geometry other) -> Geometry
-        OGRGeometryH
-        OGR_G_SymmetricDifference(OGRGeometryH hThis, OGRGeometryH hOther)
+
+        :cpp:func:`OGR_G_SymmetricDifference`
 
         Compute symmetric difference (deprecated)
 
         Deprecated
 
-        See: OGR_G_SymmetricDifference()
+        See: :cpp:func:`OGR_G_SymmetricDifference`
 
         """
         return _ogr.Geometry_SymmetricDifference(self, *args)
@@ -7245,15 +7241,15 @@ class Geometry(object):
     def Distance(self, *args) -> "double":
         r"""
         Distance(Geometry self, Geometry other) -> double
-        double OGR_G_Distance(OGRGeometryH
-        hFirst, OGRGeometryH hOther)
+
+        :cpp:func:`OGR_G_Distance`
 
         Compute distance between two geometries.
 
         Returns the shortest distance between the two geometries. The distance
         is expressed into the same unit as the coordinates of the geometries.
 
-        This function is the same as the C++ method OGRGeometry::Distance().
+        This function is the same as the C++ method :cpp:func:`OGRGeometry::Distance`.
 
         This function is built on the GEOS library, check it for the
         definition of the geometry operation. If OGR is built without the GEOS
@@ -7278,8 +7274,8 @@ class Geometry(object):
     def Distance3D(self, *args) -> "double":
         r"""
         Distance3D(Geometry self, Geometry other) -> double
-        double
-        OGR_G_Distance3D(OGRGeometryH hFirst, OGRGeometryH hOther)
+
+        :cpp:func:`OGR_G_Distance3D`
 
         Returns the 3D distance between two geometries.
 
@@ -7290,7 +7286,7 @@ class Geometry(object):
         definition of the geometry operation. If OGR is built without the
         SFCGAL library, this method will always return -1.0
 
-        This function is the same as the C++ method OGRGeometry::Distance3D().
+        This function is the same as the C++ method :cpp:func:`OGRGeometry::Distance3D`.
 
         .. versionadded:: 2.2
 
@@ -7312,7 +7308,8 @@ class Geometry(object):
     def Empty(self, *args) -> "void":
         r"""
         Empty(Geometry self)
-        void OGR_G_Empty(OGRGeometryH hGeom)
+
+        :cpp:func:`OGR_G_Empty`
 
         Clear geometry information.
 
@@ -7321,7 +7318,7 @@ class Geometry(object):
 
         This function relates to the SFCOM IGeometry::Empty() method.
 
-        This function is the same as the CPP method OGRGeometry::empty().
+        This function is the same as the CPP method :cpp:func:`OGRGeometry::empty`.
 
         Parameters
         -----------
@@ -7334,11 +7331,12 @@ class Geometry(object):
     def IsEmpty(self, *args) -> "bool":
         r"""
         IsEmpty(Geometry self) -> bool
-        int OGR_G_IsEmpty(OGRGeometryH hGeom)
+
+        :cpp:func:`OGR_G_IsEmpty`
 
         Test if the geometry is empty.
 
-        This method is the same as the CPP method OGRGeometry::IsEmpty().
+        This method is the same as the CPP method :cpp:func:`OGRGeometry::IsEmpty`.
 
         Parameters
         -----------
@@ -7356,11 +7354,12 @@ class Geometry(object):
     def IsValid(self, *args) -> "bool":
         r"""
         IsValid(Geometry self) -> bool
-        int OGR_G_IsValid(OGRGeometryH hGeom)
+
+        :cpp:func:`OGR_G_IsValid`
 
         Test if the geometry is valid.
 
-        This function is the same as the C++ method OGRGeometry::IsValid().
+        This function is the same as the C++ method :cpp:func:`OGRGeometry::IsValid`.
 
         This function is built on the GEOS library, check it for the
         definition of the geometry operation. If OGR is built without the GEOS
@@ -7382,8 +7381,8 @@ class Geometry(object):
     def IsSimple(self, *args) -> "bool":
         r"""
         IsSimple(Geometry self) -> bool
-        int OGR_G_IsSimple(OGRGeometryH
-        hGeom)
+
+        :cpp:func:`OGR_G_IsSimple`
 
         Returns TRUE if the geometry is simple.
 
@@ -7392,8 +7391,7 @@ class Geometry(object):
         instantiable geometric class will include the specific conditions that
         cause an instance of that class to be classified as not simple.
 
-        This function is the same as the C++ method OGRGeometry::IsSimple()
-        method.
+        This function is the same as the C++ method :cpp:func:`OGRGeometry::IsSimple`.
 
         If OGR is built without the GEOS library, this function will always
         return FALSE.
@@ -7414,11 +7412,12 @@ class Geometry(object):
     def IsRing(self, *args) -> "bool":
         r"""
         IsRing(Geometry self) -> bool
-        int OGR_G_IsRing(OGRGeometryH hGeom)
+
+        :cpp:func:`OGR_G_IsRing`
 
         Test if the geometry is a ring.
 
-        This function is the same as the C++ method OGRGeometry::IsRing().
+        This function is the same as the C++ method :cpp:func:`OGRGeometry::IsRing`.
 
         This function is built on the GEOS library, check it for the
         definition of the geometry operation. If OGR is built without the GEOS
@@ -7440,8 +7439,8 @@ class Geometry(object):
     def Intersects(self, *args) -> "bool":
         r"""
         Intersects(Geometry self, Geometry other) -> bool
-        int OGR_G_Intersects(OGRGeometryH
-        hGeom, OGRGeometryH hOtherGeom)
+
+        :cpp:func:`OGR_G_Intersects`
 
         Do these features intersect?
 
@@ -7449,7 +7448,7 @@ class Geometry(object):
         this is done in rigorous fashion otherwise TRUE is returned if the
         envelopes (bounding boxes) of the two geometries overlap.
 
-        This function is the same as the CPP method OGRGeometry::Intersects.
+        This function is the same as the CPP method :cpp:func:`OGRGeometry::Intersects`.
 
         Parameters
         -----------
@@ -7473,8 +7472,8 @@ class Geometry(object):
     def Equals(self, *args) -> "bool":
         r"""
         Equals(Geometry self, Geometry other) -> bool
-        int OGR_G_Equals(OGRGeometryH hGeom,
-        OGRGeometryH hOther)
+
+        :cpp:func:`OGR_G_Equals`
 
         Returns TRUE if two geometries are equivalent.
 
@@ -7487,8 +7486,7 @@ class Geometry(object):
         equal. Note: this must be distinguished for equality in a spatial way
         (which is the purpose of the ST_Equals() operation).
 
-        This function is the same as the CPP method OGRGeometry::Equals()
-        method.
+        This function is the same as the CPP method :cpp:func:`OGRGeometry::Equals`.
 
         Parameters
         -----------
@@ -7512,18 +7510,18 @@ class Geometry(object):
     def Disjoint(self, *args) -> "bool":
         r"""
         Disjoint(Geometry self, Geometry other) -> bool
-        int OGR_G_Disjoint(OGRGeometryH
-        hThis, OGRGeometryH hOther)
+
+        :cpp:func:`OGR_G_Disjoint`
 
         Test for disjointness.
 
         Tests if this geometry and the other geometry are disjoint.
 
         Geometry validity is not checked. In case you are unsure of the
-        validity of the input geometries, call IsValid() before, otherwise the
+        validity of the input geometries, call :py:func:`IsValid` before, otherwise the
         result might be wrong.
 
-        This function is the same as the C++ method OGRGeometry::Disjoint().
+        This function is the same as the C++ method :cpp:func:`OGRGeometry::Disjoint`.
 
         This function is built on the GEOS library, check it for the
         definition of the geometry operation. If OGR is built without the GEOS
@@ -7548,18 +7546,18 @@ class Geometry(object):
     def Touches(self, *args) -> "bool":
         r"""
         Touches(Geometry self, Geometry other) -> bool
-        int OGR_G_Touches(OGRGeometryH hThis,
-        OGRGeometryH hOther)
+
+        :cpp:func:`OGR_G_Touches`
 
         Test for touching.
 
         Tests if this geometry and the other geometry are touching.
 
         Geometry validity is not checked. In case you are unsure of the
-        validity of the input geometries, call IsValid() before, otherwise the
+        validity of the input geometries, call :py:func:`IsValid` before, otherwise the
         result might be wrong.
 
-        This function is the same as the C++ method OGRGeometry::Touches().
+        This function is the same as the C++ method :cpp:func:`OGRGeometry::Touches`.
 
         This function is built on the GEOS library, check it for the
         definition of the geometry operation. If OGR is built without the GEOS
@@ -7584,18 +7582,18 @@ class Geometry(object):
     def Crosses(self, *args) -> "bool":
         r"""
         Crosses(Geometry self, Geometry other) -> bool
-        int OGR_G_Crosses(OGRGeometryH hThis,
-        OGRGeometryH hOther)
+
+        :cpp:func:`OGR_G_Crosses`
 
         Test for crossing.
 
         Tests if this geometry and the other geometry are crossing.
 
         Geometry validity is not checked. In case you are unsure of the
-        validity of the input geometries, call IsValid() before, otherwise the
+        validity of the input geometries, call :py:func:`IsValid` before, otherwise the
         result might be wrong.
 
-        This function is the same as the C++ method OGRGeometry::Crosses().
+        This function is the same as the C++ method :cpp:func:`OGRGeometry::Crosses`.
 
         This function is built on the GEOS library, check it for the
         definition of the geometry operation. If OGR is built without the GEOS
@@ -7620,18 +7618,18 @@ class Geometry(object):
     def Within(self, *args) -> "bool":
         r"""
         Within(Geometry self, Geometry other) -> bool
-        int OGR_G_Within(OGRGeometryH hThis,
-        OGRGeometryH hOther)
+
+        :cpp:func:`OGR_G_Within`
 
         Test for containment.
 
         Tests if this geometry is within the other geometry.
 
         Geometry validity is not checked. In case you are unsure of the
-        validity of the input geometries, call IsValid() before, otherwise the
+        validity of the input geometries, call :py:func:`IsValid` before, otherwise the
         result might be wrong.
 
-        This function is the same as the C++ method OGRGeometry::Within().
+        This function is the same as the C++ method :cpp:func:`OGRGeometry::Within`.
 
         This function is built on the GEOS library, check it for the
         definition of the geometry operation. If OGR is built without the GEOS
@@ -7656,18 +7654,18 @@ class Geometry(object):
     def Contains(self, *args) -> "bool":
         r"""
         Contains(Geometry self, Geometry other) -> bool
-        int OGR_G_Contains(OGRGeometryH
-        hThis, OGRGeometryH hOther)
+
+        :cpp:func:`OGR_G_Contains`
 
         Test for containment.
 
         Tests if this geometry contains the other geometry.
 
         Geometry validity is not checked. In case you are unsure of the
-        validity of the input geometries, call IsValid() before, otherwise the
+        validity of the input geometries, call :py:func:`IsValid` before, otherwise the
         result might be wrong.
 
-        This function is the same as the C++ method OGRGeometry::Contains().
+        This function is the same as the C++ method :cpp:func:`OGRGeometry::Contains`.
 
         This function is built on the GEOS library, check it for the
         definition of the geometry operation. If OGR is built without the GEOS
@@ -7692,8 +7690,8 @@ class Geometry(object):
     def Overlaps(self, *args) -> "bool":
         r"""
         Overlaps(Geometry self, Geometry other) -> bool
-        int OGR_G_Overlaps(OGRGeometryH
-        hThis, OGRGeometryH hOther)
+
+        :cpp:func:`OGR_G_Overlaps`
 
         Test for overlap.
 
@@ -7701,10 +7699,10 @@ class Geometry(object):
         intersection has a non-zero area.
 
         Geometry validity is not checked. In case you are unsure of the
-        validity of the input geometries, call IsValid() before, otherwise the
+        validity of the input geometries, call :py:func:`IsValid` before, otherwise the
         result might be wrong.
 
-        This function is the same as the C++ method OGRGeometry::Overlaps().
+        This function is the same as the C++ method :cpp:func:`OGRGeometry::Overlaps`.
 
         This function is built on the GEOS library, check it for the
         definition of the geometry operation. If OGR is built without the GEOS
@@ -7729,8 +7727,8 @@ class Geometry(object):
     def TransformTo(self, *args) -> "OGRErr":
         r"""
         TransformTo(Geometry self, SpatialReference reference) -> OGRErr
-        OGRErr
-        OGR_G_TransformTo(OGRGeometryH hGeom, OGRSpatialReferenceH hSRS)
+
+        :cpp:func:`OGR_G_TransformTo`
 
         Transform geometry to new spatial reference system.
 
@@ -7750,7 +7748,7 @@ class Geometry(object):
         transform() with that transformation. This function exists primarily
         for convenience when only transforming a single geometry.
 
-        This function is the same as the CPP method OGRGeometry::transformTo.
+        This function is the same as the CPP method :cpp:func:`OGRGeometry::transformTo`.
 
         Parameters
         -----------
@@ -7770,8 +7768,8 @@ class Geometry(object):
     def GetSpatialReference(self, *args) -> "OSRSpatialReferenceShadow *":
         r"""
         GetSpatialReference(Geometry self) -> SpatialReference
-        OGRSpatialReferenceH
-        OGR_G_GetSpatialReference(OGRGeometryH hGeom)
+
+        :cpp:func:`OGR_G_GetSpatialReference`
 
         Returns spatial reference system for geometry.
 
@@ -7779,7 +7777,7 @@ class Geometry(object):
         method.
 
         This function is the same as the CPP method
-        OGRGeometry::getSpatialReference().
+        :cpp:func:`OGRGeometry::getSpatialReference`.
 
         Parameters
         -----------
@@ -7797,9 +7795,8 @@ class Geometry(object):
     def AssignSpatialReference(self, *args) -> "void":
         r"""
         AssignSpatialReference(Geometry self, SpatialReference reference)
-        void
-        OGR_G_AssignSpatialReference(OGRGeometryH hGeom, OGRSpatialReferenceH
-        hSRS)
+
+        :cpp:func:`OGR_G_AssignSpatialReference`
 
         Assign spatial reference to this object.
 
@@ -7817,7 +7814,7 @@ class Geometry(object):
         This is similar to the SFCOM IGeometry::put_SpatialReference() method.
 
         This function is the same as the CPP method
-        OGRGeometry::assignSpatialReference.
+        :cpp:func:`OGRGeometry::assignSpatialReference`.
 
         Parameters
         -----------
@@ -7832,8 +7829,8 @@ class Geometry(object):
     def CloseRings(self, *args) -> "void":
         r"""
         CloseRings(Geometry self)
-        void OGR_G_CloseRings(OGRGeometryH
-        hGeom)
+
+        :cpp:func:`OGR_G_CloseRings`
 
         Force rings to be closed.
 
@@ -7852,15 +7849,15 @@ class Geometry(object):
     def FlattenTo2D(self, *args) -> "void":
         r"""
         FlattenTo2D(Geometry self)
-        void
-        OGR_G_FlattenTo2D(OGRGeometryH hGeom)
+
+        :cpp:func:`OGR_G_FlattenTo2D`
 
         Convert geometry to strictly 2D.
 
         In a sense this converts all Z coordinates to 0.0.
 
         This function is the same as the CPP method
-        OGRGeometry::flattenTo2D().
+        :cpp:func:`OGRGeometry::flattenTo2D`.
 
         Parameters
         -----------
@@ -7873,8 +7870,8 @@ class Geometry(object):
     def Segmentize(self, *args) -> "void":
         r"""
         Segmentize(Geometry self, double dfMaxLength)
-        void OGR_G_Segmentize(OGRGeometryH
-        hGeom, double dfMaxLength)
+
+        :cpp:func:`OGR_G_Segmentize`
 
         Modify the geometry such it has no segment longer then the given
         distance.
@@ -7882,7 +7879,7 @@ class Geometry(object):
         Interpolated points will have Z and M values (if needed) set to 0.
         Distance computation is performed in 2d only.
 
-        This function is the same as the CPP method OGRGeometry::segmentize().
+        This function is the same as the CPP method :cpp:func:`OGRGeometry::segmentize`.
 
         Parameters
         -----------
@@ -7897,14 +7894,14 @@ class Geometry(object):
     def GetEnvelope(self, *args) -> "void":
         r"""
         GetEnvelope(Geometry self)
-        void
-        OGR_G_GetEnvelope(OGRGeometryH hGeom, OGREnvelope \*psEnvelope)
+
+        :cpp:func:`OGR_G_GetEnvelope`
 
         Computes and returns the bounding envelope for this geometry in the
         passed psEnvelope structure.
 
         This function is the same as the CPP method
-        OGRGeometry::getEnvelope().
+        :cpp:func:`OGRGeometry::getEnvelope`.
 
         Parameters
         -----------
@@ -7919,14 +7916,14 @@ class Geometry(object):
     def GetEnvelope3D(self, *args) -> "void":
         r"""
         GetEnvelope3D(Geometry self)
-        void
-        OGR_G_GetEnvelope3D(OGRGeometryH hGeom, OGREnvelope3D \*psEnvelope)
+
+        :cpp:func:`OGR_G_GetEnvelope3D`
 
         Computes and returns the bounding envelope (3D) for this geometry in
         the passed psEnvelope structure.
 
         This function is the same as the CPP method
-        OGRGeometry::getEnvelope().
+        :cpp:func:`OGRGeometry::getEnvelope`.
 
         .. versionadded:: 1.9.0
 
@@ -7943,8 +7940,8 @@ class Geometry(object):
     def Centroid(self, *args) -> "OGRGeometryShadow *":
         r"""
         Centroid(Geometry self) -> Geometry
-        int OGR_G_Centroid(OGRGeometryH
-        hGeom, OGRGeometryH hCentroidPoint)
+
+        :cpp:func:`OGR_G_Centroid`
 
         Compute the geometry centroid.
 
@@ -7958,7 +7955,7 @@ class Geometry(object):
         (polygons). SQL/MM-Part 3 defines the operation for surfaces and
         multisurfaces (multipolygons).
 
-        This function is the same as the C++ method OGRGeometry::Centroid().
+        This function is the same as the C++ method :cpp:func:`OGRGeometry::Centroid`.
 
         This function is built on the GEOS library, check it for the
         definition of the geometry operation. If OGR is built without the GEOS
@@ -7976,8 +7973,8 @@ class Geometry(object):
     def PointOnSurface(self, *args) -> "OGRGeometryShadow *":
         r"""
         PointOnSurface(Geometry self) -> Geometry
-        OGRGeometryH
-        OGR_G_PointOnSurface(OGRGeometryH hGeom)
+
+        :cpp:func:`OGR_G_PointOnSurface`
 
         Returns a point guaranteed to lie on the surface.
 
@@ -8008,7 +8005,8 @@ class Geometry(object):
     def WkbSize(self, *args) -> "size_t":
         r"""
         WkbSize(Geometry self) -> size_t
-        int OGR_G_WkbSize(OGRGeometryH hGeom)
+
+        :cpp:func:`OGR_G_WkbSize`
 
         Returns size of related binary representation.
 
@@ -8018,9 +8016,9 @@ class Geometry(object):
 
         This function relates to the SFCOM IWks::WkbSize() method.
 
-        This function is the same as the CPP method OGRGeometry::WkbSize().
+        This function is the same as the CPP method :cpp:func:`OGRGeometry::WkbSize`.
 
-        Use OGR_G_WkbSizeEx() if called on huge geometries (> 2 GB serialized)
+        Use :py:func:`WkbSizeEx` if called on huge geometries (> 2 GB serialized)
 
         Parameters
         -----------
@@ -8038,16 +8036,16 @@ class Geometry(object):
     def GetCoordinateDimension(self, *args) -> "int":
         r"""
         GetCoordinateDimension(Geometry self) -> int
-        int
-        OGR_G_GetCoordinateDimension(OGRGeometryH hGeom)
+
+        :cpp:func:`OGR_G_GetCoordinateDimension`
 
         Get the dimension of the coordinates in this geometry.
 
         This function is the same as the CPP method
-        OGRGeometry::getCoordinateDimension().
+        :cpp:func:`OGRGeometry::getCoordinateDimension`.
 
-        Deprecated use OGR_G_CoordinateDimension(), OGR_G_Is3D(), or
-        OGR_G_IsMeasured().
+        Deprecated use :py:func:`CoordinateDimension`, :py:func:`Is3D`, or
+        :py:func:`IsMeasured`.
 
         Parameters
         -----------
@@ -8065,13 +8063,13 @@ class Geometry(object):
     def CoordinateDimension(self, *args) -> "int":
         r"""
         CoordinateDimension(Geometry self) -> int
-        int
-        OGR_G_CoordinateDimension(OGRGeometryH hGeom)
+
+        :cpp:func:`OGR_G_CoordinateDimension`
 
         Get the dimension of the coordinates in this geometry.
 
         This function is the same as the CPP method
-        OGRGeometry::CoordinateDimension().
+        :cpp:func:`OGRGeometry::CoordinateDimension`.
 
         .. versionadded:: 2.1
 
@@ -8091,11 +8089,12 @@ class Geometry(object):
     def Is3D(self, *args) -> "int":
         r"""
         Is3D(Geometry self) -> int
-        int OGR_G_Is3D(OGRGeometryH hGeom)
+
+        :cpp:func:`OGR_G_Is3D`
 
         See whether this geometry has Z coordinates.
 
-        This function is the same as the CPP method OGRGeometry::Is3D().
+        This function is the same as the CPP method :cpp:func:`OGRGeometry::Is3D`.
 
         .. versionadded:: 2.1
 
@@ -8115,12 +8114,12 @@ class Geometry(object):
     def IsMeasured(self, *args) -> "int":
         r"""
         IsMeasured(Geometry self) -> int
-        int OGR_G_IsMeasured(OGRGeometryH
-        hGeom)
+
+        :cpp:func:`OGR_G_IsMeasured`
 
         See whether this geometry is measured.
 
-        This function is the same as the CPP method OGRGeometry::IsMeasured().
+        This function is the same as the CPP method :cpp:func:`OGRGeometry::IsMeasured`.
 
         .. versionadded:: 2.1
 
@@ -8140,8 +8139,8 @@ class Geometry(object):
     def SetCoordinateDimension(self, *args) -> "void":
         r"""
         SetCoordinateDimension(Geometry self, int dimension)
-        void
-        OGR_G_SetCoordinateDimension(OGRGeometryH hGeom, int nNewDimension)
+
+        :cpp:func:`OGR_G_SetCoordinateDimension`
 
         Set the coordinate dimension.
 
@@ -8151,7 +8150,7 @@ class Geometry(object):
         curve, a polygon, etc. will affect the children geometries. This will
         also remove the M dimension if present before this call.
 
-        Deprecated use OGR_G_Set3D() or OGR_G_SetMeasured().
+        Deprecated use :py:func:`Set3D` or :py:func:`SetMeasured`.
 
         Parameters
         -----------
@@ -8166,8 +8165,8 @@ class Geometry(object):
     def Set3D(self, *args) -> "void":
         r"""
         Set3D(Geometry self, int b3D)
-        void OGR_G_Set3D(OGRGeometryH hGeom,
-        int bIs3D)
+
+        :cpp:func:`OGR_G_Set3D`
 
         Add or remove the Z coordinate dimension.
 
@@ -8191,8 +8190,8 @@ class Geometry(object):
     def SetMeasured(self, *args) -> "void":
         r"""
         SetMeasured(Geometry self, int bMeasured)
-        void
-        OGR_G_SetMeasured(OGRGeometryH hGeom, int bIsMeasured)
+
+        :cpp:func:`OGR_G_SetMeasured`
 
         Add or remove the M coordinate dimension.
 
@@ -8216,18 +8215,18 @@ class Geometry(object):
     def GetDimension(self, *args) -> "int":
         r"""
         GetDimension(Geometry self) -> int
-        int
-        OGR_G_GetDimension(OGRGeometryH hGeom)
+
+        :cpp:func:`OGR_G_GetDimension`
 
         Get the dimension of this geometry.
 
         This function corresponds to the SFCOM IGeometry::GetDimension()
         method. It indicates the dimension of the geometry, but does not
         indicate the dimension of the underlying space (as indicated by
-        OGR_G_GetCoordinateDimension() function).
+        :cpp:func:`OGR_G_GetCoordinateDimension` function).
 
         This function is the same as the CPP method
-        OGRGeometry::getDimension().
+        :cpp:func:`OGRGeometry::getDimension`.
 
         Parameters
         -----------
@@ -8262,8 +8261,8 @@ class Geometry(object):
         r"""
         Transform(Geometry self, CoordinateTransformation trans) -> OGRErr
         Transform(Geometry self, GeomTransformer transformer) -> Geometry
-        OGRErr OGR_G_Transform(OGRGeometryH
-        hGeom, OGRCoordinateTransformationH hTransform)
+
+        :cpp:func:`OGR_G_Transform`
 
         Apply arbitrary coordinate transformation to geometry.
 
@@ -8280,7 +8279,7 @@ class Geometry(object):
         OGRSpatialReference of the OGRCoordinateTransformation will be
         assigned to the geometry.
 
-        This function is the same as the CPP method OGRGeometry::transform.
+        This function is the same as the CPP method :cpp:func:`OGRGeometry::transform`.
 
         Parameters
         -----------
