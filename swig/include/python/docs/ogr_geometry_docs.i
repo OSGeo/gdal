@@ -10,12 +10,13 @@ This method is the same as the CPP method OGRGeometry::dumpReadable.
 
 Parameters
 -----------
-
-hGeom:  handle on the geometry to dump.
-
-fp:  the text file to write the geometry to.
-
-pszPrefix:  the prefix to put on each line of output. ";
+hGeom:
+    handle on the geometry to dump.
+fp:
+    the text file to write the geometry to.
+pszPrefix:
+    the prefix to put on each line of output.
+";
 
 %feature("docstring")  AssignSpatialReference "void
 OGR_G_AssignSpatialReference(OGRGeometryH hGeom, OGRSpatialReferenceH
@@ -41,11 +42,11 @@ OGRGeometry::assignSpatialReference.
 
 Parameters
 -----------
-
-hGeom:  handle on the geometry to apply the new spatial reference
-system.
-
-hSRS:  handle on the new spatial reference system to apply. ";
+hGeom:
+    handle on the geometry to apply the new spatial reference system.
+hSRS:
+    handle on the new spatial reference system to apply.
+";
 
 %feature("docstring")  Intersects "int OGR_G_Intersects(OGRGeometryH
 hGeom, OGRGeometryH hOtherGeom)
@@ -60,12 +61,16 @@ This function is the same as the CPP method OGRGeometry::Intersects.
 
 Parameters
 -----------
+hGeom:
+    handle on the first geometry.
+hOtherGeom:
+    handle on the other geometry to test against.
 
-hGeom:  handle on the first geometry.
-
-hOtherGeom:  handle on the other geometry to test against.
-
-TRUE if the geometries intersect, otherwise FALSE. ";
+Returns
+--------
+int:
+    TRUE if the geometries intersect, otherwise FALSE.
+";
 
 %feature("docstring")  TransformTo "OGRErr
 OGR_G_TransformTo(OGRGeometryH hGeom, OGRSpatialReferenceH hSRS)
@@ -92,12 +97,16 @@ This function is the same as the CPP method OGRGeometry::transformTo.
 
 Parameters
 -----------
+hGeom:
+    handle on the geometry to apply the transform to.
+hSRS:
+    handle on the spatial reference system to apply.
 
-hGeom:  handle on the geometry to apply the transform to.
-
-hSRS:  handle on the spatial reference system to apply.
-
-OGRERR_NONE on success, or an error code. ";
+Returns
+--------
+OGRErr:
+    OGRERR_NONE on success, or an error code.
+";
 
 %feature("docstring")  Transform "OGRErr OGR_G_Transform(OGRGeometryH
 hGeom, OGRCoordinateTransformationH hTransform)
@@ -121,12 +130,16 @@ This function is the same as the CPP method OGRGeometry::transform.
 
 Parameters
 -----------
+hGeom:
+    handle on the geometry to apply the transform to.
+hTransform:
+    handle on the transformation to apply.
 
-hGeom:  handle on the geometry to apply the transform to.
-
-hTransform:  handle on the transformation to apply.
-
-OGRERR_NONE on success or an error code. ";
+Returns
+--------
+OGRErr:
+    OGRERR_NONE on success or an error code.
+";
 
 %feature("docstring")  Segmentize "void OGR_G_Segmentize(OGRGeometryH
 hGeom, double dfMaxLength)
@@ -141,11 +154,11 @@ This function is the same as the CPP method OGRGeometry::segmentize().
 
 Parameters
 -----------
-
-hGeom:  handle on the geometry to segmentize
-
-dfMaxLength:  the maximum distance between 2 points after
-segmentization ";
+hGeom:
+    handle on the geometry to segmentize
+dfMaxLength:
+    the maximum distance between 2 points after segmentization
+";
 
 %feature("docstring")  GetDimension "int
 OGR_G_GetDimension(OGRGeometryH hGeom)
@@ -162,10 +175,14 @@ OGRGeometry::getDimension().
 
 Parameters
 -----------
+hGeom:
+    handle on the geometry to get the dimension from.
 
-hGeom:  handle on the geometry to get the dimension from.
-
-0 for points, 1 for lines and 2 for surfaces. ";
+Returns
+--------
+int:
+    0 for points, 1 for lines and 2 for surfaces.
+";
 
 %feature("docstring")  GetCoordinateDimension "int
 OGR_G_GetCoordinateDimension(OGRGeometryH hGeom)
@@ -175,16 +192,19 @@ Get the dimension of the coordinates in this geometry.
 This function is the same as the CPP method
 OGRGeometry::getCoordinateDimension().
 
-Parameters
------------
-
-hGeom:  handle on the geometry to get the dimension of the coordinates
-from.
-
 Deprecated use OGR_G_CoordinateDimension(), OGR_G_Is3D(), or
 OGR_G_IsMeasured().
 
-this will return 2 or 3. ";
+Parameters
+-----------
+hGeom:
+    handle on the geometry to get the dimension of the coordinates from.
+
+Returns
+--------
+int:
+    this will return 2 or 3.
+";
 
 %feature("docstring")  CoordinateDimension "int
 OGR_G_CoordinateDimension(OGRGeometryH hGeom)
@@ -194,15 +214,18 @@ Get the dimension of the coordinates in this geometry.
 This function is the same as the CPP method
 OGRGeometry::CoordinateDimension().
 
+.. versionadded:: 2.1
+
 Parameters
 -----------
+hGeom:
+    handle on the geometry to get the dimension of the coordinates from.
 
-hGeom:  handle on the geometry to get the dimension of the coordinates
-from.
-
-this will return 2 for XY, 3 for XYZ and XYM, and 4 for XYZM data.
-
-GDAL 2.1 ";
+Returns
+--------
+int:
+    this will return 2 for XY, 3 for XYZ and XYM, and 4 for XYZM data.
+";
 
 %feature("docstring")  Is3D "int OGR_G_Is3D(OGRGeometryH hGeom)
 
@@ -210,14 +233,18 @@ See whether this geometry has Z coordinates.
 
 This function is the same as the CPP method OGRGeometry::Is3D().
 
+.. versionadded:: 2.1
+
 Parameters
 -----------
+hGeom:
+    handle on the geometry to check whether it has Z coordinates.
 
-hGeom:  handle on the geometry to check whether it has Z coordinates.
-
-TRUE if the geometry has Z coordinates.
-
-GDAL 2.1 ";
+Returns
+--------
+int:
+    TRUE if the geometry has Z coordinates.
+";
 
 %feature("docstring")  IsMeasured "int OGR_G_IsMeasured(OGRGeometryH
 hGeom)
@@ -226,14 +253,18 @@ See whether this geometry is measured.
 
 This function is the same as the CPP method OGRGeometry::IsMeasured().
 
+.. versionadded:: 2.1
+
 Parameters
 -----------
+hGeom:
+    handle on the geometry to check whether it is measured.
 
-hGeom:  handle on the geometry to check whether it is measured.
-
-TRUE if the geometry has M coordinates.
-
-GDAL 2.1 ";
+Returns
+--------
+int:
+    TRUE if the geometry has M coordinates.
+";
 
 %feature("docstring")  SetCoordinateDimension "void
 OGR_G_SetCoordinateDimension(OGRGeometryH hGeom, int nNewDimension)
@@ -250,11 +281,11 @@ Deprecated use OGR_G_Set3D() or OGR_G_SetMeasured().
 
 Parameters
 -----------
-
-hGeom:  handle on the geometry to set the dimension of the
-coordinates.
-
-nNewDimension:  New coordinate dimension value, either 2 or 3. ";
+hGeom:
+    handle on the geometry to set the dimension of the coordinates.
+nNewDimension:
+    New coordinate dimension value, either 2 or 3.
+";
 
 %feature("docstring")  Set3D "void OGR_G_Set3D(OGRGeometryH hGeom,
 int bIs3D)
@@ -266,14 +297,15 @@ Removing the Z coordinate dimension of a geometry will remove any
 existing Z values. Adding the Z dimension to a geometry collection, a
 compound curve, a polygon, etc. will affect the children geometries.
 
+.. versionadded:: 2.1
+
 Parameters
 -----------
-
-hGeom:  handle on the geometry to set or unset the Z dimension.
-
-bIs3D:  Should the geometry have a Z dimension, either TRUE or FALSE.
-
-GDAL 2.1 ";
+hGeom:
+    handle on the geometry to set or unset the Z dimension.
+bIs3D:
+    Should the geometry have a Z dimension, either TRUE or FALSE.
+";
 
 %feature("docstring")  SetMeasured "void
 OGR_G_SetMeasured(OGRGeometryH hGeom, int bIsMeasured)
@@ -285,15 +317,15 @@ Removing the M coordinate dimension of a geometry will remove any
 existing M values. Adding the M dimension to a geometry collection, a
 compound curve, a polygon, etc. will affect the children geometries.
 
+.. versionadded:: 2.1
+
 Parameters
 -----------
-
-hGeom:  handle on the geometry to set or unset the M dimension.
-
-bIsMeasured:  Should the geometry have a M dimension, either TRUE or
-FALSE.
-
-GDAL 2.1 ";
+hGeom:
+    handle on the geometry to set or unset the M dimension.
+bIsMeasured:
+    Should the geometry have a M dimension, either TRUE or FALSE.
+";
 
 %feature("docstring")  Equals "int OGR_G_Equals(OGRGeometryH hGeom,
 OGRGeometryH hOther)
@@ -314,12 +346,16 @@ method.
 
 Parameters
 -----------
+hGeom:
+    handle on the first geometry.
+hOther:
+    handle on the other geometry to test against.
 
-hGeom:  handle on the first geometry.
-
-hOther:  handle on the other geometry to test against.
-
-TRUE if equivalent or FALSE otherwise. ";
+Returns
+--------
+int:
+    TRUE if equivalent or FALSE otherwise.
+";
 
 %feature("docstring")  WkbSize "int OGR_G_WkbSize(OGRGeometryH hGeom)
 
@@ -337,10 +373,14 @@ Use OGR_G_WkbSizeEx() if called on huge geometries (> 2 GB serialized)
 
 Parameters
 -----------
+hGeom:
+    handle on the geometry to get the binary size from.
 
-hGeom:  handle on the geometry to get the binary size from.
-
-size of binary representation in bytes. ";
+Returns
+--------
+int:
+    size of binary representation in bytes.
+";
 
 %feature("docstring")  WkbSizeEx "size_t OGR_G_WkbSizeEx(OGRGeometryH
 hGeom)
@@ -355,14 +395,18 @@ This function relates to the SFCOM IWks::WkbSize() method.
 
 This function is the same as the CPP method OGRGeometry::WkbSize().
 
+.. versionadded:: 3.3
+
 Parameters
 -----------
+hGeom:
+    handle on the geometry to get the binary size from.
 
-hGeom:  handle on the geometry to get the binary size from.
-
-size of binary representation in bytes.
-
-GDAL 3.3 ";
+Returns
+--------
+int:
+    size of binary representation in bytes.
+";
 
 %feature("docstring")  GetEnvelope "void
 OGR_G_GetEnvelope(OGRGeometryH hGeom, OGREnvelope \\*psEnvelope)
@@ -375,10 +419,11 @@ OGRGeometry::getEnvelope().
 
 Parameters
 -----------
-
-hGeom:  handle of the geometry to get envelope from.
-
-psEnvelope:  the structure in which to place the results. ";
+hGeom:
+    handle of the geometry to get envelope from.
+psEnvelope:
+    the structure in which to place the results.
+";
 
 %feature("docstring")  GetEnvelope3D "void
 OGR_G_GetEnvelope3D(OGRGeometryH hGeom, OGREnvelope3D \\*psEnvelope)
@@ -389,14 +434,15 @@ the passed psEnvelope structure.
 This function is the same as the CPP method
 OGRGeometry::getEnvelope().
 
+.. versionadded:: 1.9.0
+
 Parameters
 -----------
-
-hGeom:  handle of the geometry to get envelope from.
-
-psEnvelope:  the structure in which to place the results.
-
-OGR 1.9.0 ";
+hGeom:
+    handle of the geometry to get envelope from.
+psEnvelope:
+    the structure in which to place the results.
+";
 
 %feature("docstring")  ImportFromWkb "OGRErr
 OGR_G_ImportFromWkb(OGRGeometryH hGeom, const void \\*pabyData, int
@@ -414,16 +460,20 @@ OGRGeometry::importFromWkb().
 
 Parameters
 -----------
+hGeom:
+    handle on the geometry to assign the well know binary data to.
+pabyData:
+    the binary input data.
+nSize:
+    the size of pabyData in bytes, or -1 if not known.
 
-hGeom:  handle on the geometry to assign the well know binary data to.
-
-pabyData:  the binary input data.
-
-nSize:  the size of pabyData in bytes, or -1 if not known.
-
-OGRERR_NONE if all goes well, otherwise any of OGRERR_NOT_ENOUGH_DATA,
-OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or OGRERR_CORRUPT_DATA may be
-returned. ";
+Returns
+--------
+OGRErr:
+    OGRERR_NONE if all goes well, otherwise any of OGRERR_NOT_ENOUGH_DATA,
+    OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or OGRERR_CORRUPT_DATA may be
+    returned.
+";
 
 %feature("docstring")  ExportToWkb "OGRErr
 OGR_G_ExportToWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder, unsigned
@@ -444,17 +494,19 @@ OGRwkbVariant) with eWkbVariant = wkbVariantOldOgc.
 
 Parameters
 -----------
+hGeom:
+    handle on the geometry to convert to a well know binary data from.
+eOrder:
+    One of wkbXDR or wkbNDR indicating MSB or LSB byte order respectively.
+pabyDstBuffer:
+    a buffer into which the binary representation is
+    written. This buffer must be at least OGR_G_WkbSize() byte in size.
 
-hGeom:  handle on the geometry to convert to a well know binary data
-from.
-
-eOrder:  One of wkbXDR or wkbNDR indicating MSB or LSB byte order
-respectively.
-
-pabyDstBuffer:  a buffer into which the binary representation is
-written. This buffer must be at least OGR_G_WkbSize() byte in size.
-
-Currently OGRERR_NONE is always returned. ";
+Returns
+--------
+OGRErr:
+    Currently OGRERR_NONE is always returned.
+";
 
 %feature("docstring")  ExportToIsoWkb "OGRErr
 OGR_G_ExportToIsoWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder,
@@ -471,21 +523,23 @@ This function is the same as the CPP method
 OGRGeometry::exportToWkb(OGRwkbByteOrder, unsigned char \\*,
 OGRwkbVariant) with eWkbVariant = wkbVariantIso.
 
+.. versionadded:: 2.0
+
 Parameters
 -----------
+hGeom:
+    handle on the geometry to convert to a well know binary data from.
+eOrder:
+    One of wkbXDR or wkbNDR indicating MSB or LSB byte order respectively.
+pabyDstBuffer:
+    a buffer into which the binary representation is written.
+    This buffer must be at least OGR_G_WkbSize() byte in size.
 
-hGeom:  handle on the geometry to convert to a well know binary data
-from.
-
-eOrder:  One of wkbXDR or wkbNDR indicating MSB or LSB byte order
-respectively.
-
-pabyDstBuffer:  a buffer into which the binary representation is
-written. This buffer must be at least OGR_G_WkbSize() byte in size.
-
-Currently OGRERR_NONE is always returned.
-
-GDAL 2.0 ";
+Returns
+--------
+OGRErr:
+    Currently OGRERR_NONE is always returned.
+";
 
 %feature("docstring")  ImportFromWkt "OGRErr
 OGR_G_ImportFromWkt(OGRGeometryH hGeom, char \\*\\*ppszSrcText)
@@ -502,15 +556,19 @@ OGRGeometry::importFromWkt().
 
 Parameters
 -----------
+hGeom:
+    handle on the geometry to assign well know text data to.
+ppszSrcText:
+    pointer to a pointer to the source text. The pointer is
+    updated to pointer after the consumed text.
 
-hGeom:  handle on the geometry to assign well know text data to.
-
-ppszSrcText:  pointer to a pointer to the source text. The pointer is
-updated to pointer after the consumed text.
-
-OGRERR_NONE if all goes well, otherwise any of OGRERR_NOT_ENOUGH_DATA,
-OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or OGRERR_CORRUPT_DATA may be
-returned. ";
+Returns
+--------
+OGRErr:
+    OGRERR_NONE if all goes well, otherwise any of OGRERR_NOT_ENOUGH_DATA,
+    OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or OGRERR_CORRUPT_DATA may be
+    returned.
+";
 
 %feature("docstring")  ExportToWkt "OGRErr
 OGR_G_ExportToWkt(OGRGeometryH hGeom, char \\*\\*ppszSrcText)
@@ -529,14 +587,18 @@ OGRGeometry::exportToWkt().
 
 Parameters
 -----------
+hGeom:
+    handle on the geometry to convert to a text format from.
+ppszSrcText:
+    a text buffer is allocated by the program, and assigned
+    to the passed pointer. After use, \\*ppszDstText should be freed with
+    CPLFree().
 
-hGeom:  handle on the geometry to convert to a text format from.
-
-ppszSrcText:  a text buffer is allocated by the program, and assigned
-to the passed pointer. After use, \\*ppszDstText should be freed with
-CPLFree().
-
-Currently OGRERR_NONE is always returned. ";
+Returns
+--------
+OGRErr:
+    Currently OGRERR_NONE is always returned.
+";
 
 %feature("docstring")  ExportToIsoWkt "OGRErr
 OGR_G_ExportToIsoWkt(OGRGeometryH hGeom, char \\*\\*ppszSrcText)
@@ -551,18 +613,22 @@ WKB types.
 This function is the same as the CPP method
 OGRGeometry::exportToWkt(wkbVariantIso).
 
+.. versionadded:: 2.0
+
 Parameters
 -----------
+hGeom:
+    handle on the geometry to convert to a text format from.
+ppszSrcText:
+    a text buffer is allocated by the program, and assigned
+    to the passed pointer. After use, \\*ppszDstText should be freed with
+    CPLFree().
 
-hGeom:  handle on the geometry to convert to a text format from.
-
-ppszSrcText:  a text buffer is allocated by the program, and assigned
-to the passed pointer. After use, \\*ppszDstText should be freed with
-CPLFree().
-
-Currently OGRERR_NONE is always returned.
-
-GDAL 2.0 ";
+Returns
+--------
+OGRErr:
+    Currently OGRERR_NONE is always returned.
+";
 
 %feature("docstring")  GetGeometryType "OGRwkbGeometryType
 OGR_G_GetGeometryType(OGRGeometryH hGeom)
@@ -578,10 +644,14 @@ OGRGeometry::getGeometryType().
 
 Parameters
 -----------
+hGeom:
+    handle on the geometry to get type from.
 
-hGeom:  handle on the geometry to get type from.
-
-the geometry type code. ";
+Returns
+--------
+OGRwkbGeometryType:
+    the geometry type code.
+";
 
 %feature("docstring")  GetGeometryName "const char\\*
 OGR_G_GetGeometryName(OGRGeometryH hGeom)
@@ -595,10 +665,14 @@ OGRGeometry::getGeometryName().
 
 Parameters
 -----------
+hGeom:
+    handle on the geometry to get name from.
 
-hGeom:  handle on the geometry to get name from.
-
-name used for this geometry type in well known text format. ";
+Returns
+--------
+str:
+    name used for this geometry type in well known text format.
+";
 
 %feature("docstring")  Clone "OGRGeometryH OGR_G_Clone(OGRGeometryH
 hGeom)
@@ -611,11 +685,15 @@ This function is the same as the CPP method OGRGeometry::clone().
 
 Parameters
 -----------
+hGeom:
+    handle on the geometry to clone from.
 
-hGeom:  handle on the geometry to clone from.
-
-a handle on the copy of the geometry with the spatial reference system
-as the original. ";
+Returns
+--------
+OGRGeometryH:
+    a handle on the copy of the geometry with the spatial reference system
+    as the original.
+";
 
 %feature("docstring")  GetSpatialReference "OGRSpatialReferenceH
 OGR_G_GetSpatialReference(OGRGeometryH hGeom)
@@ -630,10 +708,14 @@ OGRGeometry::getSpatialReference().
 
 Parameters
 -----------
+hGeom:
+    handle on the geometry to get spatial reference from.
 
-hGeom:  handle on the geometry to get spatial reference from.
-
-a reference to the spatial reference geometry. ";
+Returns
+--------
+OGRSpatialReferenceH:
+    a reference to the spatial reference geometry.
+";
 
 %feature("docstring")  Empty "void OGR_G_Empty(OGRGeometryH hGeom)
 
@@ -648,8 +730,9 @@ This function is the same as the CPP method OGRGeometry::empty().
 
 Parameters
 -----------
-
-hGeom:  handle on the geometry to empty. ";
+hGeom:
+    handle on the geometry to empty.
+";
 
 %feature("docstring")  IsEmpty "int OGR_G_IsEmpty(OGRGeometryH hGeom)
 
@@ -659,10 +742,14 @@ This method is the same as the CPP method OGRGeometry::IsEmpty().
 
 Parameters
 -----------
+hGeom:
+    The Geometry to test.
 
-hGeom:  The Geometry to test.
-
-TRUE if the geometry has no points, otherwise FALSE. ";
+Returns
+--------
+int:
+    TRUE if the geometry has no points, otherwise FALSE.
+";
 
 %feature("docstring")  IsValid "int OGR_G_IsValid(OGRGeometryH hGeom)
 
@@ -676,10 +763,14 @@ library, this function will always return FALSE.
 
 Parameters
 -----------
+hGeom:
+    The Geometry to test.
 
-hGeom:  The Geometry to test.
-
-TRUE if the geometry has no points, otherwise FALSE. ";
+Returns
+--------
+int:
+    TRUE if the geometry has no points, otherwise FALSE.
+";
 
 %feature("docstring")  IsSimple "int OGR_G_IsSimple(OGRGeometryH
 hGeom)
@@ -699,10 +790,14 @@ return FALSE.
 
 Parameters
 -----------
+hGeom:
+    The Geometry to test.
 
-hGeom:  The Geometry to test.
-
-TRUE if object is simple, otherwise FALSE. ";
+Returns
+--------
+int:
+    TRUE if object is simple, otherwise FALSE.
+";
 
 %feature("docstring")  IsRing "int OGR_G_IsRing(OGRGeometryH hGeom)
 
@@ -716,10 +811,14 @@ library, this function will always return FALSE.
 
 Parameters
 -----------
+hGeom:
+    The Geometry to test.
 
-hGeom:  The Geometry to test.
-
-TRUE if the geometry has no points, otherwise FALSE. ";
+Returns
+--------
+int:
+    TRUE if the geometry has no points, otherwise FALSE.
+";
 
 %feature("docstring")  OGRFromOGCGeomType "OGRwkbGeometryType
 OGRFromOGCGeomType(const char \\*pszGeomType)
@@ -728,10 +827,14 @@ Map OGCgeometry format type to corresponding OGR constants.
 
 Parameters
 -----------
+pszGeomType:
+    POINT[ ][Z][M], LINESTRING[ ][Z][M], etc...
 
-pszGeomType:  POINT[ ][Z][M], LINESTRING[ ][Z][M], etc...
-
-OGR constant. ";
+Returns
+--------
+OGRwkbGeometryType:
+    OGR constant.
+";
 
 %feature("docstring")  OGRToOGCGeomType "const char\\*
 OGRToOGCGeomType(OGRwkbGeometryType eGeomType)
@@ -740,10 +843,14 @@ Map OGR geometry format constants to corresponding OGC geometry type.
 
 Parameters
 -----------
+eGeomType:
+    OGR geometry type
 
-eGeomType:  OGR geometry type
-
-string with OGC geometry type (without dimensionality) ";
+Returns
+--------
+str:
+    string with OGC geometry type (without dimensionality)
+";
 
 %feature("docstring")  OGRGeometryTypeToName "const char\\*
 OGRGeometryTypeToName(OGRwkbGeometryType eType)
@@ -758,10 +865,14 @@ This function is C callable.
 
 Parameters
 -----------
+eType:
+    the geometry type.
 
-eType:  the geometry type.
-
-internal human readable string, or NULL on failure. ";
+Returns
+--------
+str:
+    internal human readable string, or NULL on failure.
+";
 
 %feature("docstring")  OGRMergeGeometryTypes "OGRwkbGeometryType
 OGRMergeGeometryTypes(OGRwkbGeometryType eMain, OGRwkbGeometryType
@@ -781,12 +892,16 @@ establish the preliminary type.
 
 Parameters
 -----------
+eMain:
+    the first input geometry type.
+eExtra:
+    the second input geometry type.
 
-eMain:  the first input geometry type.
-
-eExtra:  the second input geometry type.
-
-the merged geometry type. ";
+Returns
+--------
+OGRwkbGeometryType:
+    the merged geometry type.
+";
 
 %feature("docstring")  OGRMergeGeometryTypesEx "OGRwkbGeometryType
 OGRMergeGeometryTypesEx(OGRwkbGeometryType eMain, OGRwkbGeometryType
@@ -810,19 +925,22 @@ CircularString, CompoundCurve will return CompoundCurve. Mixing
 MultiPolygon and MultiSurface will return MultiSurface. Mixing
 MultiCurve and MultiLineString will return MultiCurve.
 
+.. versionadded:: 2.0
+
 Parameters
 -----------
+eMain:
+    the first input geometry type.
+eExtra:
+    the second input geometry type.
+bAllowPromotingToCurves:
+    determine if promotion to curve type must be done.
 
-eMain:  the first input geometry type.
-
-eExtra:  the second input geometry type.
-
-bAllowPromotingToCurves:  determine if promotion to curve type must be
-done.
-
-the merged geometry type.
-
-GDAL 2.0 ";
+Returns
+--------
+OGRwkbGeometryType:
+    the merged geometry type.
+";
 
 %feature("docstring")  FlattenTo2D "void
 OGR_G_FlattenTo2D(OGRGeometryH hGeom)
@@ -836,8 +954,9 @@ OGRGeometry::flattenTo2D().
 
 Parameters
 -----------
-
-hGeom:  handle on the geometry to convert. ";
+hGeom:
+    handle on the geometry to convert.
+";
 
 %feature("docstring")  OGRSetGenerate_DB2_V72_BYTE_ORDER "OGRErr
 OGRSetGenerate_DB2_V72_BYTE_ORDER(int bGenerate_DB2_V72_BYTE_ORDER)
@@ -869,12 +988,16 @@ error.
 
 Parameters
 -----------
+hFirst:
+    the first geometry to compare against.
+hOther:
+    the other geometry to compare against.
 
-hFirst:  the first geometry to compare against.
-
-hOther:  the other geometry to compare against.
-
-the distance between the geometries or -1 if an error occurs. ";
+Returns
+--------
+float:
+    the distance between the geometries or -1 if an error occurs.
+";
 
 %feature("docstring")  Distance3D "double
 OGR_G_Distance3D(OGRGeometryH hFirst, OGRGeometryH hOther)
@@ -890,18 +1013,20 @@ SFCGAL library, this method will always return -1.0
 
 This function is the same as the C++ method OGRGeometry::Distance3D().
 
+.. versionadded:: 2.2
+
 Parameters
 -----------
+hFirst:
+    the first geometry to compare against.
+hOther:
+    the other geometry to compare against.
 
-hFirst:  the first geometry to compare against.
-
-hOther:  the other geometry to compare against.
-
-distance between the two geometries
-
-GDAL 2.2
-
-the distance between the geometries or -1 if an error occurs. ";
+Returns
+--------
+float:
+    the distance between the geometries or -1 if an error occurs.
+";
 
 %feature("docstring")  MakeValid "OGRGeometryH
 OGR_G_MakeValid(OGRGeometryH hGeom)
@@ -917,15 +1042,19 @@ definition of the geometry operation. If OGR is built without the GEOS
 >= 3.8 library, this function will return a clone of the input
 geometry if it is valid, or NULL if it is invalid
 
+.. versionadded:: 3.0
+
 Parameters
 -----------
+hGeom:
+    The Geometry to make valid.
 
-hGeom:  The Geometry to make valid.
-
-a newly allocated geometry now owned by the caller, or NULL on
-failure.
-
-GDAL 3.0 ";
+Returns
+--------
+OGRGeometryH:
+    a newly allocated geometry now owned by the caller, or NULL on
+    failure.
+";
 
 %feature("docstring")  MakeValidEx "OGRGeometryH
 OGR_G_MakeValidEx(OGRGeometryH hGeom, CSLConstList papszOptions)
@@ -938,17 +1067,21 @@ This function is the same as the C++ method OGRGeometry::MakeValid().
 
 See documentation of that method for possible options.
 
+.. versionadded:: 3.4
+
 Parameters
 -----------
+hGeom:
+    The Geometry to make valid.
+papszOptions:
+    Options.
 
-hGeom:  The Geometry to make valid.
-
-papszOptions:  Options.
-
-a newly allocated geometry now owned by the caller, or NULL on
-failure.
-
-GDAL 3.4 ";
+Returns
+--------
+OGRGeometryH:
+    a newly allocated geometry now owned by the caller, or NULL on
+    failure.
+";
 
 %feature("docstring")  Normalize "OGRGeometryH
 OGR_G_Normalize(OGRGeometryH hGeom)
@@ -962,15 +1095,19 @@ definition of the geometry operation. If OGR is built without the GEOS
 library, this function will always fail, issuing a CPLE_NotSupported
 error.
 
+.. versionadded:: 3.3
+
 Parameters
 -----------
+hGeom:
+    The Geometry to normalize.
 
-hGeom:  The Geometry to normalize.
-
-a newly allocated geometry now owned by the caller, or NULL on
-failure.
-
-GDAL 3.3 ";
+Returns
+--------
+OGRGeometryH:
+    a newly allocated geometry now owned by the caller, or NULL on
+    failure.
+";
 
 %feature("docstring")  ConvexHull "OGRGeometryH
 OGR_G_ConvexHull(OGRGeometryH hTarget)
@@ -989,11 +1126,15 @@ error.
 
 Parameters
 -----------
+hTarget:
+    The Geometry to calculate the convex hull of.
 
-hTarget:  The Geometry to calculate the convex hull of.
-
-a handle to a newly allocated geometry now owned by the caller, or
-NULL on failure. ";
+Returns
+--------
+OGRGeometryH:
+    a handle to a newly allocated geometry now owned by the caller, or
+    NULL on failure.
+";
 
 %feature("docstring")  Boundary "OGRGeometryH
 OGR_G_Boundary(OGRGeometryH hTarget)
@@ -1010,15 +1151,19 @@ definition of the geometry operation. If OGR is built without the GEOS
 library, this function will always fail, issuing a CPLE_NotSupported
 error.
 
+.. versionadded:: 1.8.0
+
 Parameters
 -----------
+hTarget:
+    The Geometry to calculate the boundary of.
 
-hTarget:  The Geometry to calculate the boundary of.
-
-a handle to a newly allocated geometry now owned by the caller, or
-NULL on failure.
-
-OGR 1.8.0 ";
+Returns
+--------
+OGRGeometryH:
+    a handle to a newly allocated geometry now owned by the caller, or
+    NULL on failure.
+";
 
 %feature("docstring")  GetBoundary "OGRGeometryH
 OGR_G_GetBoundary(OGRGeometryH hTarget)
@@ -1027,7 +1172,8 @@ Compute boundary (deprecated)
 
 Deprecated
 
-See:   OGR_G_Boundary() ";
+See: OGR_G_Boundary()
+";
 
 %feature("docstring")  Buffer "OGRGeometryH OGR_G_Buffer(OGRGeometryH
 hTarget, double dfDist, int nQuadSegs)
@@ -1054,16 +1200,20 @@ error.
 
 Parameters
 -----------
+hTarget:
+    the geometry.
+dfDist:
+    the buffer distance to be applied. Should be expressed into
+    the same unit as the coordinates of the geometry.
+nQuadSegs:
+    the number of segments used to approximate a 90 degree
+    (quadrant) of curvature.
 
-hTarget:  the geometry.
-
-dfDist:  the buffer distance to be applied. Should be expressed into
-the same unit as the coordinates of the geometry.
-
-nQuadSegs:  the number of segments used to approximate a 90 degree
-(quadrant) of curvature.
-
-the newly created geometry, or NULL if an error occurs. ";
+Returns
+--------
+OGRGeometryH:
+    the newly created geometry, or NULL if an error occurs.
+";
 
 %feature("docstring")  Intersection "OGRGeometryH
 OGR_G_Intersection(OGRGeometryH hThis, OGRGeometryH hOther)
@@ -1088,13 +1238,17 @@ error.
 
 Parameters
 -----------
+hThis:
+    the geometry.
+hOther:
+    the other geometry.
 
-hThis:  the geometry.
-
-hOther:  the other geometry.
-
-a new geometry representing the intersection or NULL if there is no
-intersection or an error occurs. ";
+Returns
+--------
+OGRGeometryH:
+    a new geometry representing the intersection or NULL if there is no
+    intersection or an error occurs.
+";
 
 %feature("docstring")  Union "OGRGeometryH OGR_G_Union(OGRGeometryH
 hThis, OGRGeometryH hOther)
@@ -1117,12 +1271,16 @@ error.
 
 Parameters
 -----------
+hThis:
+    the geometry.
+hOther:
+    the other geometry.
 
-hThis:  the geometry.
-
-hOther:  the other geometry.
-
-a new geometry representing the union or NULL if an error occurs. ";
+Returns
+--------
+OGRGeometryH:
+    a new geometry representing the union or NULL if an error occurs.
+";
 
 %feature("docstring")  UnionCascaded "OGRGeometryH
 OGR_G_UnionCascaded(OGRGeometryH hThis)
@@ -1143,10 +1301,14 @@ error.
 
 Parameters
 -----------
+hThis:
+    the geometry.
 
-hThis:  the geometry.
-
-a new geometry representing the union or NULL if an error occurs. ";
+Returns
+--------
+OGRGeometryH:
+    a new geometry representing the union or NULL if an error occurs.
+";
 
 %feature("docstring")  Difference "OGRGeometryH
 OGR_G_Difference(OGRGeometryH hThis, OGRGeometryH hOther)
@@ -1169,13 +1331,17 @@ error.
 
 Parameters
 -----------
+hThis:
+    the geometry.
+hOther:
+    the other geometry.
 
-hThis:  the geometry.
-
-hOther:  the other geometry.
-
-a new geometry representing the difference or NULL if the difference
-is empty or an error occurs. ";
+Returns
+--------
+OGRGeometryH:
+    a new geometry representing the difference or NULL if the difference
+    is empty or an error occurs.
+";
 
 %feature("docstring")  SymDifference "OGRGeometryH
 OGR_G_SymDifference(OGRGeometryH hThis, OGRGeometryH hOther)
@@ -1197,17 +1363,21 @@ definition of the geometry operation. If OGR is built without the GEOS
 library, this function will always fail, issuing a CPLE_NotSupported
 error.
 
+.. versionadded:: 1.8.0
+
 Parameters
 -----------
+hThis:
+    the geometry.
+hOther:
+    the other geometry.
 
-hThis:  the geometry.
-
-hOther:  the other geometry.
-
-a new geometry representing the symmetric difference or NULL if the
-difference is empty or an error occurs.
-
-OGR 1.8.0 ";
+Returns
+--------
+OGRGeometryH:
+    a new geometry representing the symmetric difference or NULL if the
+    difference is empty or an error occurs.
+";
 
 %feature("docstring")  SymmetricDifference "OGRGeometryH
 OGR_G_SymmetricDifference(OGRGeometryH hThis, OGRGeometryH hOther)
@@ -1216,7 +1386,8 @@ Compute symmetric difference (deprecated)
 
 Deprecated
 
-See:  OGR_G_SymmetricDifference() ";
+See: OGR_G_SymmetricDifference()
+";
 
 %feature("docstring")  Disjoint "int OGR_G_Disjoint(OGRGeometryH
 hThis, OGRGeometryH hOther)
@@ -1238,12 +1409,16 @@ error.
 
 Parameters
 -----------
+hThis:
+    the geometry to compare.
+hOther:
+    the other geometry to compare.
 
-hThis:  the geometry to compare.
-
-hOther:  the other geometry to compare.
-
-TRUE if they are disjoint, otherwise FALSE. ";
+Returns
+--------
+int:
+    TRUE if they are disjoint, otherwise FALSE.
+";
 
 %feature("docstring")  Touches "int OGR_G_Touches(OGRGeometryH hThis,
 OGRGeometryH hOther)
@@ -1265,12 +1440,16 @@ error.
 
 Parameters
 -----------
+hThis:
+    the geometry to compare.
+hOther:
+    the other geometry to compare.
 
-hThis:  the geometry to compare.
-
-hOther:  the other geometry to compare.
-
-TRUE if they are touching, otherwise FALSE. ";
+Returns
+--------
+int:
+    TRUE if they are touching, otherwise FALSE.
+";
 
 %feature("docstring")  Crosses "int OGR_G_Crosses(OGRGeometryH hThis,
 OGRGeometryH hOther)
@@ -1292,12 +1471,16 @@ error.
 
 Parameters
 -----------
+hThis:
+    the geometry to compare.
+hOther:
+    the other geometry to compare.
 
-hThis:  the geometry to compare.
-
-hOther:  the other geometry to compare.
-
-TRUE if they are crossing, otherwise FALSE. ";
+Returns
+--------
+int:
+    TRUE if they are crossing, otherwise FALSE.
+";
 
 %feature("docstring")  Within "int OGR_G_Within(OGRGeometryH hThis,
 OGRGeometryH hOther)
@@ -1319,12 +1502,16 @@ error.
 
 Parameters
 -----------
+hThis:
+    the geometry to compare.
+hOther:
+    the other geometry to compare.
 
-hThis:  the geometry to compare.
-
-hOther:  the other geometry to compare.
-
-TRUE if hThis is within hOther, otherwise FALSE. ";
+Returns
+--------
+int:
+    TRUE if hThis is within hOther, otherwise FALSE.
+";
 
 %feature("docstring")  Contains "int OGR_G_Contains(OGRGeometryH
 hThis, OGRGeometryH hOther)
@@ -1346,12 +1533,16 @@ error.
 
 Parameters
 -----------
+hThis:
+    the geometry to compare.
+hOther:
+    the other geometry to compare.
 
-hThis:  the geometry to compare.
-
-hOther:  the other geometry to compare.
-
-TRUE if hThis contains hOther geometry, otherwise FALSE. ";
+Returns
+--------
+int:
+    TRUE if hThis contains hOther geometry, otherwise FALSE.
+";
 
 %feature("docstring")  Overlaps "int OGR_G_Overlaps(OGRGeometryH
 hThis, OGRGeometryH hOther)
@@ -1374,12 +1565,16 @@ error.
 
 Parameters
 -----------
+hThis:
+    the geometry to compare.
+hOther:
+    the other geometry to compare.
 
-hThis:  the geometry to compare.
-
-hOther:  the other geometry to compare.
-
-TRUE if they are overlapping, otherwise FALSE. ";
+Returns
+--------
+int:
+    TRUE if they are overlapping, otherwise FALSE.
+";
 
 %feature("docstring")  CloseRings "void OGR_G_CloseRings(OGRGeometryH
 hGeom)
@@ -1392,8 +1587,9 @@ the end.
 
 Parameters
 -----------
-
-hGeom:  handle to the geometry. ";
+hGeom:
+    handle to the geometry.
+";
 
 %feature("docstring")  Centroid "int OGR_G_Centroid(OGRGeometryH
 hGeom, OGRGeometryH hCentroidPoint)
@@ -1417,7 +1613,11 @@ definition of the geometry operation. If OGR is built without the GEOS
 library, this function will always fail, issuing a CPLE_NotSupported
 error.
 
-OGRERR_NONE on success or OGRERR_FAILURE on error. ";
+Returns
+--------
+int:
+    OGRERR_NONE on success or OGRERR_FAILURE on error.
+";
 
 %feature("docstring")  PointOnSurface "OGRGeometryH
 OGR_G_PointOnSurface(OGRGeometryH hGeom)
@@ -1433,14 +1633,18 @@ This method is built on the GEOS library, check it for the definition
 of the geometry operation. If OGR is built without the GEOS library,
 this method will always fail, issuing a CPLE_NotSupported error.
 
+.. versionadded:: 1.10
+
 Parameters
 -----------
+hGeom:
+    the geometry to operate on.
 
-hGeom:  the geometry to operate on.
-
-a point guaranteed to lie on the surface or NULL if an error occurred.
-
-OGR 1.10 ";
+Returns
+--------
+OGRGeometryH:
+    a point guaranteed to lie on the surface or NULL if an error occurred.
+";
 
 %feature("docstring")  Simplify "OGRGeometryH
 OGR_G_Simplify(OGRGeometryH hThis, double dTolerance)
@@ -1454,16 +1658,20 @@ definition of the geometry operation. If OGR is built without the GEOS
 library, this function will always fail, issuing a CPLE_NotSupported
 error.
 
+.. versionadded:: 1.8.0
+
 Parameters
 -----------
+hThis:
+    the geometry.
+dTolerance:
+    the distance tolerance for the simplification.
 
-hThis:  the geometry.
-
-dTolerance:  the distance tolerance for the simplification.
-
-the simplified geometry or NULL if an error occurs.
-
-OGR 1.8.0 ";
+Returns
+--------
+OGRGeometryH:
+    the simplified geometry or NULL if an error occurs.
+";
 
 %feature("docstring")  SimplifyPreserveTopology "OGRGeometryH
 OGR_G_SimplifyPreserveTopology(OGRGeometryH hThis, double dTolerance)
@@ -1478,16 +1686,20 @@ definition of the geometry operation. If OGR is built without the GEOS
 library, this function will always fail, issuing a CPLE_NotSupported
 error.
 
+.. versionadded:: 1.9.0
+
 Parameters
 -----------
+hThis:
+    the geometry.
+dTolerance:
+    the distance tolerance for the simplification.
 
-hThis:  the geometry.
-
-dTolerance:  the distance tolerance for the simplification.
-
-the simplified geometry or NULL if an error occurs.
-
-OGR 1.9.0 ";
+Returns
+--------
+OGRGeometryH:
+    the simplified geometry or NULL if an error occurs.
+";
 
 %feature("docstring")  DelaunayTriangulation "OGRGeometryH
 OGR_G_DelaunayTriangulation(OGRGeometryH hThis, double dfTolerance,
@@ -1502,21 +1714,24 @@ This function is built on the GEOS library, v3.4 or above. If OGR is
 built without the GEOS library, this function will always fail,
 issuing a CPLE_NotSupported error.
 
+.. versionadded:: 2.1
+
 Parameters
 -----------
+hThis:
+    the geometry.
+dfTolerance:
+    optional snapping tolerance to use for improved robustness
+bOnlyEdges:
+    if TRUE, will return a MULTILINESTRING, otherwise it will
+    return a GEOMETRYCOLLECTION containing triangular POLYGONs.
 
-hThis:  the geometry.
-
-dfTolerance:  optional snapping tolerance to use for improved
-robustness
-
-bOnlyEdges:  if TRUE, will return a MULTILINESTRING, otherwise it will
-return a GEOMETRYCOLLECTION containing triangular POLYGONs.
-
-the geometry resulting from the Delaunay triangulation or NULL if an
-error occurs.
-
-OGR 2.1 ";
+Returns
+--------
+OGRGeometryH:
+    the geometry resulting from the Delaunay triangulation or NULL if an
+    error occurs.
+";
 
 %feature("docstring")  Polygonize "OGRGeometryH
 OGR_G_Polygonize(OGRGeometryH hTarget)
@@ -1535,33 +1750,42 @@ definition of the geometry operation. If OGR is built without the GEOS
 library, this function will always fail, issuing a CPLE_NotSupported
 error.
 
+.. versionadded:: 1.9.0
+
 Parameters
 -----------
+hTarget:
+    The Geometry to be polygonized.
 
-hTarget:  The Geometry to be polygonized.
-
-a handle to a newly allocated geometry now owned by the caller, or
-NULL on failure.
-
-OGR 1.9.0 ";
+Returns
+--------
+OGRGeometryH:
+    a handle to a newly allocated geometry now owned by the caller, or
+    NULL on failure.
+";
 
 %feature("docstring")  SwapXY "void OGR_G_SwapXY(OGRGeometryH hGeom)
 
 Swap x and y coordinates.
 
+.. versionadded:: 2.3.0
+
 Parameters
 -----------
-
-hGeom:  geometry.
-
-OGR 2.3.0 ";
+hGeom:
+    geometry.
+";
 
 %feature("docstring")  OGRHasPreparedGeometrySupport "int
 OGRHasPreparedGeometrySupport()
 
 Returns if GEOS has prepared geometry support.
 
-TRUE or FALSE ";
+Returns
+--------
+int:
+    TRUE or FALSE
+";
 
 %feature("docstring")  OGRCreatePreparedGeometry "OGRPreparedGeometryH OGRCreatePreparedGeometry(OGRGeometryH hGeom)
 
@@ -1569,26 +1793,31 @@ Creates a prepared geometry.
 
 To free with OGRDestroyPreparedGeometry()
 
+.. versionadded:: 3.3
+
 Parameters
 -----------
+hGeom:
+    input geometry to prepare.
 
-hGeom:  input geometry to prepare.
-
-handle to a prepared geometry.
-
-GDAL 3.3 ";
+Returns
+--------
+OGRPreparedGeometryH:
+    handle to a prepared geometry.
+";
 
 %feature("docstring")  OGRDestroyPreparedGeometry "void
 OGRDestroyPreparedGeometry(OGRPreparedGeometryH hPreparedGeom)
 
 Destroys a prepared geometry.
 
+.. versionadded:: 3.3
+
 Parameters
 -----------
-
-hPreparedGeom:  preprated geometry.
-
-GDAL 3.3 ";
+hPreparedGeom:
+    preprated geometry.
+";
 
 %feature("docstring")  OGRPreparedGeometryIntersects "int
 OGRPreparedGeometryIntersects(const OGRPreparedGeometryH
@@ -1596,16 +1825,20 @@ hPreparedGeom, const OGRGeometryH hOtherGeom)
 
 Returns whether a prepared geometry intersects with a geometry.
 
+.. versionadded:: 3.3
+
 Parameters
 -----------
+hPreparedGeom:
+    prepared geometry.
+hOtherGeom:
+    other geometry.
 
-hPreparedGeom:  prepared geometry.
-
-hOtherGeom:  other geometry.
-
-TRUE or FALSE.
-
-GDAL 3.3 ";
+Returns
+--------
+int:
+    TRUE or FALSE.
+";
 
 %feature("docstring")  OGRPreparedGeometryContains "int
 OGRPreparedGeometryContains(const OGRPreparedGeometryH hPreparedGeom,
@@ -1615,12 +1848,16 @@ Returns whether a prepared geometry contains a geometry.
 
 Parameters
 -----------
+hPreparedGeom:
+    prepared geometry.
+hOtherGeom:
+    other geometry.
 
-hPreparedGeom:  prepared geometry.
-
-hOtherGeom:  other geometry.
-
-TRUE or FALSE. ";
+Returns
+--------
+int:
+    TRUE or FALSE.
+";
 
 %feature("docstring")  OGRGeometryFromEWKB "OGRGeometry\\*
 OGRGeometryFromEWKB(GByte \\*pabyWKB, int nLength, int \\*pnSRID, int
@@ -1644,42 +1881,54 @@ This function is intended to work with geometry types as old-style
 99-402 extended dimension (Z) WKB types, as well as with newer SFSQL
 1.2 and ISO SQL/MM Part 3 extended dimension (Z&M) WKB types.
 
+.. versionadded:: 2.0
+
 Parameters
 -----------
+eType:
+    Input geometry type
 
-eType:  Input geometry type
-
-2D geometry type corresponding to the passed geometry type.
-
-GDAL 2.0 ";
+Returns
+--------
+OGRwkbGeometryType:
+    2D geometry type corresponding to the passed geometry type.
+";
 
 %feature("docstring")  OGR_GT_HasZ "int
 OGR_GT_HasZ(OGRwkbGeometryType eType)
 
 Return if the geometry type is a 3D geometry type.
 
+.. versionadded:: 2.0
+
 Parameters
 -----------
+eType:
+    Input geometry type
 
-eType:  Input geometry type
-
-TRUE if the geometry type is a 3D geometry type.
-
-GDAL 2.0 ";
+Returns
+--------
+int:
+    TRUE if the geometry type is a 3D geometry type.
+";
 
 %feature("docstring")  OGR_GT_HasM "int
 OGR_GT_HasM(OGRwkbGeometryType eType)
 
 Return if the geometry type is a measured type.
 
+.. versionadded:: 2.1
+
 Parameters
 -----------
+eType:
+    Input geometry type
 
-eType:  Input geometry type
-
-TRUE if the geometry type is a measured type.
-
-GDAL 2.1 ";
+Returns
+--------
+int:
+    TRUE if the geometry type is a measured type.
+";
 
 %feature("docstring")  OGR_GT_SetZ "OGRwkbGeometryType
 OGR_GT_SetZ(OGRwkbGeometryType eType)
@@ -1687,14 +1936,18 @@ OGR_GT_SetZ(OGRwkbGeometryType eType)
 Returns the 3D geometry type corresponding to the passed geometry
 type.
 
+.. versionadded:: 2.0
+
 Parameters
 -----------
+eType:
+    Input geometry type
 
-eType:  Input geometry type
-
-3D geometry type corresponding to the passed geometry type.
-
-GDAL 2.0 ";
+Returns
+--------
+OGRwkbGeometryType:
+    3D geometry type corresponding to the passed geometry type.
+";
 
 %feature("docstring")  OGR_GT_SetM "OGRwkbGeometryType
 OGR_GT_SetM(OGRwkbGeometryType eType)
@@ -1702,32 +1955,40 @@ OGR_GT_SetM(OGRwkbGeometryType eType)
 Returns the measured geometry type corresponding to the passed
 geometry type.
 
+.. versionadded:: 2.1
+
 Parameters
 -----------
+eType:
+    Input geometry type
 
-eType:  Input geometry type
-
-measured geometry type corresponding to the passed geometry type.
-
-GDAL 2.1 ";
+Returns
+--------
+OGRwkbGeometryType:
+    measured geometry type corresponding to the passed geometry type.
+";
 
 %feature("docstring")  OGR_GT_SetModifier "OGRwkbGeometryType
 OGR_GT_SetModifier(OGRwkbGeometryType eType, int bHasZ, int bHasM)
 
 Returns a XY, XYZ, XYM or XYZM geometry type depending on parameter.
 
+.. versionadded:: 2.0
+
 Parameters
 -----------
+eType:
+    Input geometry type
+bHasZ:
+    TRUE if the output geometry type must be 3D.
+bHasM:
+    TRUE if the output geometry type must be measured.
 
-eType:  Input geometry type
-
-bHasZ:  TRUE if the output geometry type must be 3D.
-
-bHasM:  TRUE if the output geometry type must be measured.
-
-Output geometry type.
-
-GDAL 2.0 ";
+Returns
+--------
+OGRwkbGeometryType:
+    Output geometry type.
+";
 
 %feature("docstring")  OGR_GT_IsSubClassOf "int
 OGR_GT_IsSubClassOf(OGRwkbGeometryType eType, OGRwkbGeometryType
@@ -1735,16 +1996,20 @@ eSuperType)
 
 Returns if a type is a subclass of another one.
 
+.. versionadded:: 2.0
+
 Parameters
 -----------
+eType:
+    Type.
+eSuperType:
+    Super type
 
-eType:  Type.
-
-eSuperType:  Super type
-
-TRUE if eType is a subclass of eSuperType.
-
-GDAL 2.0 ";
+Returns
+--------
+int:
+    TRUE if eType is a subclass of eSuperType.
+";
 
 %feature("docstring")  OGR_GT_GetCollection "OGRwkbGeometryType
 OGR_GT_GetCollection(OGRwkbGeometryType eType)
@@ -1760,15 +2025,19 @@ returned
 
 Passed Z, M, ZM flag is preserved.
 
+.. versionadded:: 2.0
+
 Parameters
 -----------
+eType:
+    Input geometry type
 
-eType:  Input geometry type
-
-the collection type that can contain the passed geometry type or
-wkbUnknown
-
-GDAL 2.0 ";
+Returns
+--------
+OGRwkbGeometryType:
+    the collection type that can contain the passed geometry type or
+    wkbUnknown
+";
 
 %feature("docstring")  OGR_GT_GetCurve "OGRwkbGeometryType
 OGR_GT_GetCurve(OGRwkbGeometryType eType)
@@ -1783,14 +2052,18 @@ is returned.
 
 Passed Z, M, ZM flag is preserved.
 
+.. versionadded:: 2.0
+
 Parameters
 -----------
+eType:
+    Input geometry type
 
-eType:  Input geometry type
-
-the curve type that can contain the passed geometry type
-
-GDAL 2.0 ";
+Returns
+--------
+OGRwkbGeometryType:
+    the curve type that can contain the passed geometry type
+";
 
 %feature("docstring")  OGR_GT_GetLinear "OGRwkbGeometryType
 OGR_GT_GetLinear(OGRwkbGeometryType eType)
@@ -1806,14 +2079,18 @@ is returned.
 
 Passed Z, M, ZM flag is preserved.
 
+.. versionadded:: 2.0
+
 Parameters
 -----------
+eType:
+    Input geometry type
 
-eType:  Input geometry type
-
-the non-curve type that can contain the passed geometry type
-
-GDAL 2.0 ";
+Returns
+--------
+OGRwkbGeometryType:
+    the non-curve type that can contain the passed geometry type
+";
 
 %feature("docstring")  OGR_GT_IsCurve "int
 OGR_GT_IsCurve(OGRwkbGeometryType eGeomType)
@@ -1823,14 +2100,18 @@ Return if a geometry type is an instance of Curve.
 Such geometry type are wkbLineString, wkbCircularString,
 wkbCompoundCurve and their Z/M/ZM variant.
 
+.. versionadded:: 2.0
+
 Parameters
 -----------
+eGeomType:
+    the geometry type
 
-eGeomType:  the geometry type
-
-TRUE if the geometry type is an instance of Curve
-
-GDAL 2.0 ";
+Returns
+--------
+int:
+    TRUE if the geometry type is an instance of Curve
+";
 
 %feature("docstring")  OGR_GT_IsSurface "int
 OGR_GT_IsSurface(OGRwkbGeometryType eGeomType)
@@ -1840,14 +2121,18 @@ Return if a geometry type is an instance of Surface.
 Such geometry type are wkbCurvePolygon and wkbPolygon and their Z/M/ZM
 variant.
 
+.. versionadded:: 2.0
+
 Parameters
 -----------
+eGeomType:
+    the geometry type
 
-eGeomType:  the geometry type
-
-TRUE if the geometry type is an instance of Surface
-
-GDAL 2.0 ";
+Returns
+--------
+int:
+    TRUE if the geometry type is an instance of Surface
+";
 
 %feature("docstring")  OGR_GT_IsNonLinear "int
 OGR_GT_IsNonLinear(OGRwkbGeometryType eGeomType)
@@ -1858,13 +2143,17 @@ Such geometry type are wkbCurve, wkbCircularString, wkbCompoundCurve,
 wkbSurface, wkbCurvePolygon, wkbMultiCurve, wkbMultiSurface and their
 Z/M variants.
 
+.. versionadded:: 2.0
+
 Parameters
 -----------
+eGeomType:
+    the geometry type
 
-eGeomType:  the geometry type
-
-TRUE if the geometry type is a non-linear geometry type.
-
-GDAL 2.0 ";
+Returns
+--------
+int:
+    TRUE if the geometry type is a non-linear geometry type.
+";
 
 }

@@ -1167,14 +1167,13 @@ class Layer(MajorObject):
 
         Parameters
         -----------
-
         hLayer:
             handle to the layer on which to set the spatial filter.
-
         hGeom:
             handle to the geometry to use as a filtering region. NULL may
-        be passed indicating that the current spatial filter should be
-        cleared, but no new one instituted. 
+            be passed indicating that the current spatial filter should be
+            cleared, but no new one instituted.
+
         """
         return _ogr.Layer_SetSpatialFilter(self, *args)
 
@@ -1206,21 +1205,17 @@ class Layer(MajorObject):
 
         Parameters
         -----------
-
         hLayer:
             handle to the layer on which to set the spatial filter.
-
         dfMinX:
             the minimum X coordinate for the rectangular region.
-
         dfMinY:
             the minimum Y coordinate for the rectangular region.
-
         dfMaxX:
             the maximum X coordinate for the rectangular region.
-
         dfMaxY:
-            the maximum Y coordinate for the rectangular region. 
+            the maximum Y coordinate for the rectangular region.
+
         """
         return _ogr.Layer_SetSpatialFilterRect(self, *args)
 
@@ -1240,11 +1235,14 @@ class Layer(MajorObject):
 
         Parameters
         -----------
-
         hLayer:
             handle to the layer to get the spatial filter from.
 
-        a handle to the spatial filter geometry. 
+        Returns
+        --------
+        OGRGeometryH:
+            a handle to the spatial filter geometry.
+
         """
         return _ogr.Layer_GetSpatialFilter(self, *args)
 
@@ -1276,17 +1274,18 @@ class Layer(MajorObject):
 
         Parameters
         -----------
-
         hLayer:
-            handle to the layer on which attribute query will be
-        executed.
-
+            handle to the layer on which attribute query will be executed.
         pszQuery:
             query in restricted SQL WHERE format, or NULL to clear the
-        current query.
+            current query.
 
-        OGRERR_NONE if successfully installed, or an error code if the query
-        expression is in error, or some other failure occurs. 
+        Returns
+        --------
+        OGRErr:
+            OGRERR_NONE if successfully installed, or an error code if the query
+            expression is in error, or some other failure occurs.
+
         """
         return _ogr.Layer_SetAttributeFilter(self, *args)
 
@@ -1304,9 +1303,9 @@ class Layer(MajorObject):
 
         Parameters
         -----------
-
         hLayer:
-            handle to the layer on which features are read. 
+            handle to the layer on which features are read.
+
         """
         return _ogr.Layer_ResetReading(self, *args)
 
@@ -1325,15 +1324,18 @@ class Layer(MajorObject):
 
         This function is the same as the C++ method OGRLayer::GetName().
 
+        .. versionadded:: 1.8.0
+
         Parameters
         -----------
-
         hLayer:
             handle to the layer.
 
-        the layer name (must not been freed)
+        Returns
+        --------
+        str:
+            the layer name (must not been freed)
 
-        OGR 1.8.0 
         """
         return _ogr.Layer_GetName(self, *args)
 
@@ -1358,15 +1360,18 @@ class Layer(MajorObject):
 
         This function is the same as the C++ method OGRLayer::GetGeomType().
 
+        .. versionadded:: 1.8.0
+
         Parameters
         -----------
-
         hLayer:
             handle to the layer.
 
-        the geometry type
+        Returns
+        --------
+        OGRwkbGeometryType:
+            the geometry type
 
-        OGR 1.8.0 
         """
         return _ogr.Layer_GetGeomType(self, *args)
 
@@ -1389,11 +1394,14 @@ class Layer(MajorObject):
 
         Parameters
         -----------
-
         hLayer:
             handle to the layer
 
-        geometry column name. 
+        Returns
+        --------
+        str:
+            geometry column name.
+
         """
         return _ogr.Layer_GetGeometryColumn(self, *args)
 
@@ -1410,11 +1418,14 @@ class Layer(MajorObject):
 
         Parameters
         -----------
-
         hLayer:
             handle to the layer
 
-        fid column name. 
+        Returns
+        --------
+        str:
+            fid column name.
+
         """
         return _ogr.Layer_GetFIDColumn(self, *args)
 
@@ -1450,14 +1461,16 @@ class Layer(MajorObject):
 
         Parameters
         -----------
-
         hLayer:
             handle to the layer that owned the feature.
-
         nFeatureId:
             the feature id of the feature to read.
 
-        a handle to a feature now owned by the caller, or NULL on failure. 
+        Returns
+        --------
+        OGRFeatureH:
+            a handle to a feature now owned by the caller, or NULL on failure.
+
         """
         return _ogr.Layer_GetFeature(self, *args)
 
@@ -1496,11 +1509,14 @@ class Layer(MajorObject):
 
         Parameters
         -----------
-
         hLayer:
             handle to the layer from which feature are read.
 
-        a handle to a feature, or NULL if no more features are available. 
+        Returns
+        --------
+        OGRFeatureH:
+            a handle to a feature, or NULL if no more features are available.
+
         """
         return _ogr.Layer_GetNextFeature(self, *args)
 
@@ -1530,15 +1546,16 @@ class Layer(MajorObject):
 
         Parameters
         -----------
-
         hLayer:
             handle to the layer
-
         nIndex:
-            the index indicating how many steps into the result set to
-        seek.
+            the index indicating how many steps into the result set to seek.
 
-        OGRERR_NONE on success or an error code. 
+        Returns
+        --------
+        OGRErr:
+            OGRERR_NONE on success or an error code.
+
         """
         return _ogr.Layer_SetNextByIndex(self, *args)
 
@@ -1560,15 +1577,16 @@ class Layer(MajorObject):
 
         Parameters
         -----------
-
         hLayer:
             handle to the layer to write the feature.
-
         hFeat:
             the feature to write.
 
-        OGRERR_NONE if the operation works, otherwise an appropriate error
-        code (e.g OGRERR_NON_EXISTING_FEATURE if the feature does not exist).
+        Returns
+        --------
+        OGRErr:
+            OGRERR_NONE if the operation works, otherwise an appropriate error
+            code (e.g OGRERR_NON_EXISTING_FEATURE if the feature does not exist).
 
         """
         return _ogr.Layer_SetFeature(self, *args)
@@ -1592,14 +1610,16 @@ class Layer(MajorObject):
 
         Parameters
         -----------
-
         hLayer:
             handle to the layer to write the feature to.
-
         hFeat:
             the handle of the feature to write to disk.
 
-        OGRERR_NONE on success. 
+        Returns
+        --------
+        OGRErr:
+            OGRERR_NONE on success.
+
         """
         return _ogr.Layer_CreateFeature(self, *args)
 
@@ -1621,15 +1641,16 @@ class Layer(MajorObject):
 
         Parameters
         -----------
-
         hLayer:
             handle to the layer
-
         nFID:
             the feature id to be deleted from the layer
 
-        OGRERR_NONE if the operation works, otherwise an appropriate error
-        code (e.g OGRERR_NON_EXISTING_FEATURE if the feature does not exist).
+        Returns
+        --------
+        OGRErr:
+            OGRERR_NONE if the operation works, otherwise an appropriate error
+            code (e.g OGRERR_NON_EXISTING_FEATURE if the feature does not exist).
 
         """
         return _ogr.Layer_DeleteFeature(self, *args)
@@ -1658,12 +1679,15 @@ class Layer(MajorObject):
 
         Parameters
         -----------
-
         hLayer:
             handle to the layer
 
-        OGRERR_NONE if no error occurs (even if nothing is done) or an error
-        code. 
+        Returns
+        --------
+        OGRErr:
+            OGRERR_NONE if no error occurs (even if nothing is done) or an error
+            code.
+
         """
         return _ogr.Layer_SyncToDisk(self, *args)
 
@@ -1683,11 +1707,14 @@ class Layer(MajorObject):
 
         Parameters
         -----------
-
         hLayer:
             handle to the layer to get the schema information.
 
-        a handle to the feature definition. 
+        Returns
+        --------
+        OGRFeatureDefnH:
+            a handle to the feature definition.
+
         """
         return _ogr.Layer_GetLayerDefn(self, *args)
 
@@ -1717,15 +1744,17 @@ class Layer(MajorObject):
 
         Parameters
         -----------
-
         hLayer:
             handle to the layer that owned the features.
-
         bForce:
             Flag indicating whether the count should be computed even if
-        it is expensive.
+            it is expensive.
 
-        feature count, -1 if count not known. 
+        Returns
+        --------
+        int:
+            feature count, -1 if count not known.
+
         """
         return _ogr.Layer_GetFeatureCount(self, *args, **kwargs)
 
@@ -1757,18 +1786,19 @@ class Layer(MajorObject):
 
         Parameters
         -----------
-
         hLayer:
             handle to the layer from which to get extent.
-
         psExtent:
             the structure in which the extent value will be returned.
-
         bForce:
             Flag indicating whether the extent should be computed even if
-        it is expensive.
+            it is expensive.
 
-        OGRERR_NONE on success, OGRERR_FAILURE if extent not known. 
+        Returns
+        --------
+        OGRErr:
+            OGRERR_NONE on success, OGRERR_FAILURE if extent not known.
+
         """
         return _ogr.Layer_GetExtent(self, *args, **kwargs)
 
@@ -1858,15 +1888,17 @@ class Layer(MajorObject):
 
         Parameters
         -----------
-
         hLayer:
             handle to the layer to get the capability from.
-
         pszCap:
             the name of the capability to test.
 
-        TRUE if the layer has the requested capability, or FALSE otherwise.
-        OGRLayers will return FALSE for any unrecognized capabilities. 
+        Returns
+        --------
+        int:
+            TRUE if the layer has the requested capability, or FALSE otherwise.
+            OGRLayers will return FALSE for any unrecognized capabilities.
+
         """
         return _ogr.Layer_TestCapability(self, *args)
 
@@ -1902,18 +1934,19 @@ class Layer(MajorObject):
 
         Parameters
         -----------
-
         hLayer:
             handle to the layer to write the field definition.
-
         hField:
             handle of the field definition to write to disk.
-
         bApproxOK:
             If TRUE, the field may be created in a slightly different
-        form depending on the limitations of the format driver.
+            form depending on the limitations of the format driver.
 
-        OGRERR_NONE on success. 
+        Returns
+        --------
+        OGRErr:
+            OGRERR_NONE on success.
+
         """
         return _ogr.Layer_CreateField(self, *args, **kwargs)
 
@@ -1942,18 +1975,20 @@ class Layer(MajorObject):
 
         This function is the same as the C++ method OGRLayer::DeleteField().
 
+        .. versionadded:: 1.9.0
+
         Parameters
         -----------
-
         hLayer:
             handle to the layer.
-
         iField:
             index of the field to delete.
 
-        OGRERR_NONE on success.
+        Returns
+        --------
+        OGRErr:
+            OGRERR_NONE on success.
 
-        OGR 1.9.0 
         """
         return _ogr.Layer_DeleteField(self, *args)
 
@@ -1994,23 +2029,24 @@ class Layer(MajorObject):
 
         This function is the same as the C++ method OGRLayer::ReorderField().
 
+        .. versionadded:: 1.9.0
+
         Parameters
         -----------
-
         hLayer:
             handle to the layer.
-
         iOldFieldPos:
             previous position of the field to move. Must be in the
-        range [0,GetFieldCount()-1].
-
+            range [0,GetFieldCount()-1].
         iNewFieldPos:
             new position of the field to move. Must be in the range
-        [0,GetFieldCount()-1].
+            [0,GetFieldCount()-1].
 
-        OGRERR_NONE on success.
+        Returns
+        --------
+        OGRErr:
+            OGRERR_NONE on success.
 
-        OGR 1.9.0 
         """
         return _ogr.Layer_ReorderField(self, *args)
 
@@ -2046,20 +2082,22 @@ class Layer(MajorObject):
 
         This function is the same as the C++ method OGRLayer::ReorderFields().
 
+        .. versionadded:: 1.9.0
+
         Parameters
         -----------
-
         hLayer:
             handle to the layer.
-
         panMap:
             an array of GetLayerDefn()-> OGRFeatureDefn::GetFieldCount()
-        elements which is a permutation of [0, GetLayerDefn()->
-        OGRFeatureDefn::GetFieldCount()-1].
+            elements which is a permutation of [0, GetLayerDefn()->
+            OGRFeatureDefn::GetFieldCount()-1].
 
-        OGRERR_NONE on success.
+        Returns
+        --------
+        OGRErr:
+            OGRERR_NONE on success.
 
-        OGR 1.9.0 
         """
         return _ogr.Layer_ReorderFields(self, *args)
 
@@ -2091,28 +2129,28 @@ class Layer(MajorObject):
         This function is the same as the C++ method
         OGRLayer::AlterFieldDefn().
 
+        .. versionadded:: 1.9.0
+
         Parameters
         -----------
-
         hLayer:
             handle to the layer.
-
         iField:
             index of the field whose definition must be altered.
-
         hNewFieldDefn:
             new field definition
-
         nFlags:
             combination of ALTER_NAME_FLAG, ALTER_TYPE_FLAG,
-        ALTER_WIDTH_PRECISION_FLAG, ALTER_NULLABLE_FLAG and ALTER_DEFAULT_FLAG
-        to indicate which of the name and/or type and/or width and precision
-        fields and/or nullability from the new field definition must be taken
-        into account.
+            ALTER_WIDTH_PRECISION_FLAG, ALTER_NULLABLE_FLAG and ALTER_DEFAULT_FLAG
+            to indicate which of the name and/or type and/or width and precision
+            fields and/or nullability from the new field definition must be taken
+            into account.
 
-        OGRERR_NONE on success.
+        Returns
+        --------
+        OGRErr:
+            OGRERR_NONE on success.
 
-        OGR 1.9.0 
         """
         return _ogr.Layer_AlterFieldDefn(self, *args)
 
@@ -2150,22 +2188,23 @@ class Layer(MajorObject):
 
         This function is the same as the C++ method OGRLayer::CreateField().
 
+        .. versionadded:: 1.11
+
         Parameters
         -----------
-
         hLayer:
             handle to the layer to write the field definition.
-
         hField:
             handle of the geometry field definition to write to disk.
-
         bApproxOK:
             If TRUE, the field may be created in a slightly different
-        form depending on the limitations of the format driver.
+            form depending on the limitations of the format driver.
 
-        OGRERR_NONE on success.
+        Returns
+        --------
+        OGRErr:
+            OGRERR_NONE on success.
 
-        OGR 1.11 
         """
         return _ogr.Layer_CreateGeomField(self, *args, **kwargs)
 
@@ -2193,11 +2232,14 @@ class Layer(MajorObject):
 
         Parameters
         -----------
-
         hLayer:
             handle to the layer
 
-        OGRERR_NONE on success. 
+        Returns
+        --------
+        OGRErr:
+            OGRERR_NONE on success.
+
         """
         return _ogr.Layer_StartTransaction(self, *args)
 
@@ -2219,11 +2261,14 @@ class Layer(MajorObject):
 
         Parameters
         -----------
-
         hLayer:
             handle to the layer
 
-        OGRERR_NONE on success. 
+        Returns
+        --------
+        OGRErr:
+            OGRERR_NONE on success.
+
         """
         return _ogr.Layer_CommitTransaction(self, *args)
 
@@ -2246,11 +2291,14 @@ class Layer(MajorObject):
 
         Parameters
         -----------
-
         hLayer:
             handle to the layer
 
-        OGRERR_NONE on success. 
+        Returns
+        --------
+        OGRErr:
+            OGRERR_NONE on success.
+
         """
         return _ogr.Layer_RollbackTransaction(self, *args)
 
@@ -2273,7 +2321,11 @@ class Layer(MajorObject):
 
         This method is the same as the C++ method OGRLayer::FindFieldIndex().
 
-        field index, or -1 if the field doesn't exist 
+        Returns
+        --------
+        int:
+            field index, or -1 if the field doesn't exist
+
         """
         return _ogr.Layer_FindFieldIndex(self, *args)
 
@@ -2292,11 +2344,14 @@ class Layer(MajorObject):
 
         Parameters
         -----------
-
         hLayer:
             handle to the layer to get the spatial reference from.
 
-        spatial reference, or NULL if there isn't one. 
+        Returns
+        --------
+        OGRSpatialReferenceH:
+            spatial reference, or NULL if there isn't one.
+
         """
         return _ogr.Layer_GetSpatialRef(self, *args)
 
@@ -2337,7 +2392,6 @@ class Layer(MajorObject):
         papszFields:
             an array of field names terminated by NULL item.
             If NULL is passed, the ignored list is cleared.
-
 
         Returns
         -------
@@ -2405,7 +2459,7 @@ class Layer(MajorObject):
 
         The first geometry field is always used.
 
-        OGR 1.10
+        .. versionadded:: 1.10
 
         Parameters
         -----------
@@ -2488,7 +2542,7 @@ class Layer(MajorObject):
 
         The first geometry field is always used.
 
-        OGR 1.10
+        .. versionadded:: 1.10
 
         Parameters
         -----------
@@ -2562,7 +2616,7 @@ class Layer(MajorObject):
 
         The first geometry field is always used.
 
-        OGR 1.10
+        .. versionadded:: 1.10
 
         Parameters
         -----------
@@ -2587,7 +2641,6 @@ class Layer(MajorObject):
         OGRErr:
             an error code if there was an error or the execution was interrupted,
             OGRERR_NONE otherwise.
-
 
         """
         return _ogr.Layer_SymDifference(self, *args, **kwargs)
@@ -2641,6 +2694,10 @@ class Layer(MajorObject):
 
         This function is the same as the C++ method OGRLayer::Identity().
 
+        The first geometry field is always used.
+
+        .. versionadded:: 1.10
+
         Parameters
         -----------
         pLayerInput:
@@ -2649,16 +2706,13 @@ class Layer(MajorObject):
             the method layer. Should not be NULL.
         pLayerResult:
             the layer where the features resulting from the
-        operation are inserted. Should not be NULL. See above the note about
-        the schema.
-
+            operation are inserted. Should not be NULL. See above the note about
+            the schema.
         papszOptions:
             NULL terminated list of options (may be NULL).
-
         pfnProgress:
             a GDALProgressFunc() compatible callback function for
-        reporting progress or NULL.
-
+            reporting progress or NULL.
         pProgressArg:
             argument to be passed to pfnProgress. May be NULL.
 
@@ -2668,9 +2722,6 @@ class Layer(MajorObject):
             an error code if there was an error or the execution was interrupted,
             OGRERR_NONE otherwise.
 
-        The first geometry field is always used.
-
-        OGR 1.10 
         """
         return _ogr.Layer_Identity(self, *args, **kwargs)
 
@@ -2714,29 +2765,27 @@ class Layer(MajorObject):
         METHOD_PREFIX=string. Set a prefix for the field names that will be
         created from the fields of the method layer.
 
+        The first geometry field is always used.
+
         This function is the same as the C++ method OGRLayer::Update().
+
+        .. versionadded:: 1.10
 
         Parameters
         -----------
-
         pLayerInput:
             the input layer. Should not be NULL.
-
         pLayerMethod:
             the method layer. Should not be NULL.
-
         pLayerResult:
             the layer where the features resulting from the
-        operation are inserted. Should not be NULL. See above the note about
-        the schema.
-
+            operation are inserted. Should not be NULL. See above the note about
+            the schema.
         papszOptions:
             NULL terminated list of options (may be NULL).
-
         pfnProgress:
             a GDALProgressFunc() compatible callback function for
-        reporting progress or NULL.
-
+            reporting progress or NULL.
         pProgressArg:
             argument to be passed to pfnProgress. May be NULL.
 
@@ -2746,9 +2795,6 @@ class Layer(MajorObject):
             an error code if there was an error or the execution was interrupted,
             OGRERR_NONE otherwise.
 
-        The first geometry field is always used.
-
-        OGR 1.10 
         """
         return _ogr.Layer_Update(self, *args, **kwargs)
 
@@ -2787,27 +2833,25 @@ class Layer(MajorObject):
 
         This function is the same as the C++ method OGRLayer::Clip().
 
+        The first geometry field is always used.
+
+        .. versionadded:: 1.10
+
         Parameters
         -----------
-
         pLayerInput:
             the input layer. Should not be NULL.
-
         pLayerMethod:
             the method layer. Should not be NULL.
-
         pLayerResult:
             the layer where the features resulting from the
-        operation are inserted. Should not be NULL. See above the note about
-        the schema.
-
+            operation are inserted. Should not be NULL. See above the note about
+            the schema.
         papszOptions:
             NULL terminated list of options (may be NULL).
-
         pfnProgress:
             a GDALProgressFunc() compatible callback function for
-        reporting progress or NULL.
-
+            reporting progress or NULL.
         pProgressArg:
             argument to be passed to pfnProgress. May be NULL.
 
@@ -2817,9 +2861,6 @@ class Layer(MajorObject):
             an error code if there was an error or the execution was interrupted,
             OGRERR_NONE otherwise.
 
-        The first geometry field is always used.
-
-        OGR 1.10 
         """
         return _ogr.Layer_Clip(self, *args, **kwargs)
 
@@ -2857,27 +2898,25 @@ class Layer(MajorObject):
 
         This function is the same as the C++ method OGRLayer::Erase().
 
+        The first geometry field is always used.
+
+        .. versionadded:: 1.10
+
         Parameters
         -----------
-
         pLayerInput:
             the input layer. Should not be NULL.
-
         pLayerMethod:
             the method layer. Should not be NULL.
-
         pLayerResult:
             the layer where the features resulting from the
-        operation are inserted. Should not be NULL. See above the note about
-        the schema.
-
+            operation are inserted. Should not be NULL. See above the note about
+            the schema.
         papszOptions:
             NULL terminated list of options (may be NULL).
-
         pfnProgress:
             a GDALProgressFunc() compatible callback function for
-        reporting progress or NULL.
-
+            reporting progress or NULL.
         pProgressArg:
             argument to be passed to pfnProgress. May be NULL.
 
@@ -2887,9 +2926,6 @@ class Layer(MajorObject):
             an error code if there was an error or the execution was interrupted,
             OGRERR_NONE otherwise.
 
-        The first geometry field is always used.
-
-        OGR 1.10 
         """
         return _ogr.Layer_Erase(self, *args, **kwargs)
 
@@ -6331,14 +6367,18 @@ class Geometry(object):
 
         Parameters
         -----------
+        hGeom:
+            handle on the geometry to convert to a text format from.
+        ppszSrcText:
+            a text buffer is allocated by the program, and assigned
+            to the passed pointer. After use, \*ppszDstText should be freed with
+            CPLFree().
 
-        hGeom:  handle on the geometry to convert to a text format from.
+        Returns
+        --------
+        OGRErr:
+            Currently OGRERR_NONE is always returned.
 
-        ppszSrcText:  a text buffer is allocated by the program, and assigned
-        to the passed pointer. After use, \*ppszDstText should be freed with
-        CPLFree().
-
-        Currently OGRERR_NONE is always returned. 
         """
         return _ogr.Geometry_ExportToWkt(self, *args)
 
@@ -6358,18 +6398,22 @@ class Geometry(object):
         This function is the same as the CPP method
         OGRGeometry::exportToWkt(wkbVariantIso).
 
+        .. versionadded:: 2.0
+
         Parameters
         -----------
+        hGeom:
+            handle on the geometry to convert to a text format from.
+        ppszSrcText:
+            a text buffer is allocated by the program, and assigned
+            to the passed pointer. After use, \*ppszDstText should be freed with
+            CPLFree().
 
-        hGeom:  handle on the geometry to convert to a text format from.
+        Returns
+        --------
+        OGRErr:
+            Currently OGRERR_NONE is always returned.
 
-        ppszSrcText:  a text buffer is allocated by the program, and assigned
-        to the passed pointer. After use, \*ppszDstText should be freed with
-        CPLFree().
-
-        Currently OGRERR_NONE is always returned.
-
-        GDAL 2.0 
         """
         return _ogr.Geometry_ExportToIsoWkt(self, *args)
 
@@ -6395,17 +6439,19 @@ class Geometry(object):
 
         Parameters
         -----------
+        hGeom:
+            handle on the geometry to convert to a well know binary data from.
+        eOrder:
+            One of wkbXDR or wkbNDR indicating MSB or LSB byte order respectively.
+        pabyDstBuffer:
+            a buffer into which the binary representation is
+            written. This buffer must be at least OGR_G_WkbSize() byte in size.
 
-        hGeom:  handle on the geometry to convert to a well know binary data
-        from.
+        Returns
+        --------
+        OGRErr:
+            Currently OGRERR_NONE is always returned.
 
-        eOrder:  One of wkbXDR or wkbNDR indicating MSB or LSB byte order
-        respectively.
-
-        pabyDstBuffer:  a buffer into which the binary representation is
-        written. This buffer must be at least OGR_G_WkbSize() byte in size.
-
-        Currently OGRERR_NONE is always returned. 
         """
         return _ogr.Geometry_ExportToWkb(self, *args, **kwargs)
 
@@ -6427,21 +6473,23 @@ class Geometry(object):
         OGRGeometry::exportToWkb(OGRwkbByteOrder, unsigned char \*,
         OGRwkbVariant) with eWkbVariant = wkbVariantIso.
 
+        .. versionadded:: 2.0
+
         Parameters
         -----------
+        hGeom:
+            handle on the geometry to convert to a well know binary data from.
+        eOrder:
+            One of wkbXDR or wkbNDR indicating MSB or LSB byte order respectively.
+        pabyDstBuffer:
+            a buffer into which the binary representation is written.
+            This buffer must be at least OGR_G_WkbSize() byte in size.
 
-        hGeom:  handle on the geometry to convert to a well know binary data
-        from.
+        Returns
+        --------
+        OGRErr:
+            Currently OGRERR_NONE is always returned.
 
-        eOrder:  One of wkbXDR or wkbNDR indicating MSB or LSB byte order
-        respectively.
-
-        pabyDstBuffer:  a buffer into which the binary representation is
-        written. This buffer must be at least OGR_G_WkbSize() byte in size.
-
-        Currently OGRERR_NONE is always returned.
-
-        GDAL 2.0 
         """
         return _ogr.Geometry_ExportToIsoWkb(self, *args, **kwargs)
 
@@ -6499,11 +6547,15 @@ class Geometry(object):
 
         Parameters
         -----------
+        hGeom:
+            handle on the geometry to clone from.
 
-        hGeom:  handle on the geometry to clone from.
+        Returns
+        --------
+        OGRGeometryH:
+            a handle on the copy of the geometry with the spatial reference system
+            as the original.
 
-        a handle on the copy of the geometry with the spatial reference system
-        as the original. 
         """
         return _ogr.Geometry_Clone(self, *args)
 
@@ -6524,10 +6576,14 @@ class Geometry(object):
 
         Parameters
         -----------
+        hGeom:
+            handle on the geometry to get type from.
 
-        hGeom:  handle on the geometry to get type from.
+        Returns
+        --------
+        OGRwkbGeometryType:
+            the geometry type code.
 
-        the geometry type code. 
         """
         return _ogr.Geometry_GetGeometryType(self, *args)
 
@@ -6546,10 +6602,14 @@ class Geometry(object):
 
         Parameters
         -----------
+        hGeom:
+            handle on the geometry to get name from.
 
-        hGeom:  handle on the geometry to get name from.
+        Returns
+        --------
+        str:
+            name used for this geometry type in well known text format.
 
-        name used for this geometry type in well known text format. 
         """
         return _ogr.Geometry_GetGeometryName(self, *args)
 
@@ -6628,12 +6688,13 @@ class Geometry(object):
 
         Swap x and y coordinates.
 
+        .. versionadded:: 2.3.0
+
         Parameters
         -----------
+        hGeom:
+            geometry.
 
-        hGeom:  geometry.
-
-        OGR 2.3.0 
         """
         return _ogr.Geometry_SwapXY(self, *args)
 
@@ -6656,16 +6717,20 @@ class Geometry(object):
         library, this function will always fail, issuing a CPLE_NotSupported
         error.
 
+        .. versionadded:: 1.8.0
+
         Parameters
         -----------
+        hThis:
+            the geometry.
+        dTolerance:
+            the distance tolerance for the simplification.
 
-        hThis:  the geometry.
+        Returns
+        --------
+        OGRGeometryH:
+            the simplified geometry or NULL if an error occurs.
 
-        dTolerance:  the distance tolerance for the simplification.
-
-        the simplified geometry or NULL if an error occurs.
-
-        OGR 1.8.0 
         """
         return _ogr.Geometry_Simplify(self, *args)
 
@@ -6685,16 +6750,20 @@ class Geometry(object):
         library, this function will always fail, issuing a CPLE_NotSupported
         error.
 
+        .. versionadded:: 1.9.0
+
         Parameters
         -----------
+        hThis:
+            the geometry.
+        dTolerance:
+            the distance tolerance for the simplification.
 
-        hThis:  the geometry.
+        Returns
+        --------
+        OGRGeometryH:
+            the simplified geometry or NULL if an error occurs.
 
-        dTolerance:  the distance tolerance for the simplification.
-
-        the simplified geometry or NULL if an error occurs.
-
-        OGR 1.9.0 
         """
         return _ogr.Geometry_SimplifyPreserveTopology(self, *args)
 
@@ -6714,21 +6783,24 @@ class Geometry(object):
         built without the GEOS library, this function will always fail,
         issuing a CPLE_NotSupported error.
 
+        .. versionadded:: 2.1
+
         Parameters
         -----------
+        hThis:
+            the geometry.
+        dfTolerance:
+            optional snapping tolerance to use for improved robustness
+        bOnlyEdges:
+            if TRUE, will return a MULTILINESTRING, otherwise it will
+            return a GEOMETRYCOLLECTION containing triangular POLYGONs.
 
-        hThis:  the geometry.
+        Returns
+        --------
+        OGRGeometryH:
+            the geometry resulting from the Delaunay triangulation or NULL if an
+            error occurs.
 
-        dfTolerance:  optional snapping tolerance to use for improved
-        robustness
-
-        bOnlyEdges:  if TRUE, will return a MULTILINESTRING, otherwise it will
-        return a GEOMETRYCOLLECTION containing triangular POLYGONs.
-
-        the geometry resulting from the Delaunay triangulation or NULL if an
-        error occurs.
-
-        OGR 2.1 
         """
         return _ogr.Geometry_DelaunayTriangulation(self, *args, **kwargs)
 
@@ -6752,15 +6824,19 @@ class Geometry(object):
         library, this function will always fail, issuing a CPLE_NotSupported
         error.
 
+        .. versionadded:: 1.9.0
+
         Parameters
         -----------
+        hTarget:
+            The Geometry to be polygonized.
 
-        hTarget:  The Geometry to be polygonized.
+        Returns
+        --------
+        OGRGeometryH:
+            a handle to a newly allocated geometry now owned by the caller, or
+            NULL on failure.
 
-        a handle to a newly allocated geometry now owned by the caller, or
-        NULL on failure.
-
-        OGR 1.9.0 
         """
         return _ogr.Geometry_Polygonize(self, *args)
 
@@ -6782,15 +6858,19 @@ class Geometry(object):
         library, this function will always fail, issuing a CPLE_NotSupported
         error.
 
+        .. versionadded:: 1.8.0
+
         Parameters
         -----------
+        hTarget:
+            The Geometry to calculate the boundary of.
 
-        hTarget:  The Geometry to calculate the boundary of.
+        Returns
+        --------
+        OGRGeometryH:
+            a handle to a newly allocated geometry now owned by the caller, or
+            NULL on failure.
 
-        a handle to a newly allocated geometry now owned by the caller, or
-        NULL on failure.
-
-        OGR 1.8.0 
         """
         return _ogr.Geometry_Boundary(self, *args)
 
@@ -6804,7 +6884,8 @@ class Geometry(object):
 
         Deprecated
 
-        See:   OGR_G_Boundary() 
+        See: OGR_G_Boundary()
+
         """
         return _ogr.Geometry_GetBoundary(self, *args)
 
@@ -6828,11 +6909,15 @@ class Geometry(object):
 
         Parameters
         -----------
+        hTarget:
+            The Geometry to calculate the convex hull of.
 
-        hTarget:  The Geometry to calculate the convex hull of.
+        Returns
+        --------
+        OGRGeometryH:
+            a handle to a newly allocated geometry now owned by the caller, or
+            NULL on failure.
 
-        a handle to a newly allocated geometry now owned by the caller, or
-        NULL on failure. 
         """
         return _ogr.Geometry_ConvexHull(self, *args)
 
@@ -6857,15 +6942,19 @@ class Geometry(object):
         >= 3.8 library, this function will return a clone of the input
         geometry if it is valid, or NULL if it is invalid
 
+        .. versionadded:: 3.0
+
         Parameters
         -----------
+        hGeom:
+            The Geometry to make valid.
 
-        hGeom:  The Geometry to make valid.
+        Returns
+        --------
+        OGRGeometryH:
+            a newly allocated geometry now owned by the caller, or NULL on
+            failure.
 
-        a newly allocated geometry now owned by the caller, or NULL on
-        failure.
-
-        GDAL 3.0 
         """
         return _ogr.Geometry_MakeValid(self, *args)
 
@@ -6884,15 +6973,19 @@ class Geometry(object):
         library, this function will always fail, issuing a CPLE_NotSupported
         error.
 
+        .. versionadded:: 3.3
+
         Parameters
         -----------
+        hGeom:
+            The Geometry to normalize.
 
-        hGeom:  The Geometry to normalize.
+        Returns
+        --------
+        OGRGeometryH:
+            a newly allocated geometry now owned by the caller, or NULL on
+            failure.
 
-        a newly allocated geometry now owned by the caller, or NULL on
-        failure.
-
-        GDAL 3.3 
         """
         return _ogr.Geometry_Normalize(self, *args)
 
@@ -6928,16 +7021,20 @@ class Geometry(object):
 
         Parameters
         -----------
+        hTarget:
+            the geometry.
+        dfDist:
+            the buffer distance to be applied. Should be expressed into
+            the same unit as the coordinates of the geometry.
+        nQuadSegs:
+            the number of segments used to approximate a 90 degree
+            (quadrant) of curvature.
 
-        hTarget:  the geometry.
+        Returns
+        --------
+        OGRGeometryH:
+            the newly created geometry, or NULL if an error occurs.
 
-        dfDist:  the buffer distance to be applied. Should be expressed into
-        the same unit as the coordinates of the geometry.
-
-        nQuadSegs:  the number of segments used to approximate a 90 degree
-        (quadrant) of curvature.
-
-        the newly created geometry, or NULL if an error occurs. 
         """
         return _ogr.Geometry_Buffer(self, *args, **kwargs)
 
@@ -6967,13 +7064,17 @@ class Geometry(object):
 
         Parameters
         -----------
+        hThis:
+            the geometry.
+        hOther:
+            the other geometry.
 
-        hThis:  the geometry.
+        Returns
+        --------
+        OGRGeometryH:
+            a new geometry representing the intersection or NULL if there is no
+            intersection or an error occurs.
 
-        hOther:  the other geometry.
-
-        a new geometry representing the intersection or NULL if there is no
-        intersection or an error occurs. 
         """
         return _ogr.Geometry_Intersection(self, *args)
 
@@ -7001,12 +7102,16 @@ class Geometry(object):
 
         Parameters
         -----------
+        hThis:
+            the geometry.
+        hOther:
+            the other geometry.
 
-        hThis:  the geometry.
+        Returns
+        --------
+        OGRGeometryH:
+            a new geometry representing the union or NULL if an error occurs.
 
-        hOther:  the other geometry.
-
-        a new geometry representing the union or NULL if an error occurs. 
         """
         return _ogr.Geometry_Union(self, *args)
 
@@ -7032,10 +7137,14 @@ class Geometry(object):
 
         Parameters
         -----------
+        hThis:
+            the geometry.
 
-        hThis:  the geometry.
+        Returns
+        --------
+        OGRGeometryH:
+            a new geometry representing the union or NULL if an error occurs.
 
-        a new geometry representing the union or NULL if an error occurs. 
         """
         return _ogr.Geometry_UnionCascaded(self, *args)
 
@@ -7063,13 +7172,17 @@ class Geometry(object):
 
         Parameters
         -----------
+        hThis:
+            the geometry.
+        hOther:
+            the other geometry.
 
-        hThis:  the geometry.
+        Returns
+        --------
+        OGRGeometryH:
+            a new geometry representing the difference or NULL if the difference
+            is empty or an error occurs.
 
-        hOther:  the other geometry.
-
-        a new geometry representing the difference or NULL if the difference
-        is empty or an error occurs. 
         """
         return _ogr.Geometry_Difference(self, *args)
 
@@ -7096,17 +7209,21 @@ class Geometry(object):
         library, this function will always fail, issuing a CPLE_NotSupported
         error.
 
+        .. versionadded:: 1.8.0
+
         Parameters
         -----------
+        hThis:
+            the geometry.
+        hOther:
+            the other geometry.
 
-        hThis:  the geometry.
+        Returns
+        --------
+        OGRGeometryH:
+            a new geometry representing the symmetric difference or NULL if the
+            difference is empty or an error occurs.
 
-        hOther:  the other geometry.
-
-        a new geometry representing the symmetric difference or NULL if the
-        difference is empty or an error occurs.
-
-        OGR 1.8.0 
         """
         return _ogr.Geometry_SymDifference(self, *args)
 
@@ -7120,7 +7237,8 @@ class Geometry(object):
 
         Deprecated
 
-        See:  OGR_G_SymmetricDifference() 
+        See: OGR_G_SymmetricDifference()
+
         """
         return _ogr.Geometry_SymmetricDifference(self, *args)
 
@@ -7144,12 +7262,16 @@ class Geometry(object):
 
         Parameters
         -----------
+        hFirst:
+            the first geometry to compare against.
+        hOther:
+            the other geometry to compare against.
 
-        hFirst:  the first geometry to compare against.
+        Returns
+        --------
+        float:
+            the distance between the geometries or -1 if an error occurs.
 
-        hOther:  the other geometry to compare against.
-
-        the distance between the geometries or -1 if an error occurs. 
         """
         return _ogr.Geometry_Distance(self, *args)
 
@@ -7170,18 +7292,20 @@ class Geometry(object):
 
         This function is the same as the C++ method OGRGeometry::Distance3D().
 
+        .. versionadded:: 2.2
+
         Parameters
         -----------
+        hFirst:
+            the first geometry to compare against.
+        hOther:
+            the other geometry to compare against.
 
-        hFirst:  the first geometry to compare against.
+        Returns
+        --------
+        float:
+            the distance between the geometries or -1 if an error occurs.
 
-        hOther:  the other geometry to compare against.
-
-        distance between the two geometries
-
-        GDAL 2.2
-
-        the distance between the geometries or -1 if an error occurs. 
         """
         return _ogr.Geometry_Distance3D(self, *args)
 
@@ -7201,8 +7325,9 @@ class Geometry(object):
 
         Parameters
         -----------
+        hGeom:
+            handle on the geometry to empty.
 
-        hGeom:  handle on the geometry to empty. 
         """
         return _ogr.Geometry_Empty(self, *args)
 
@@ -7217,10 +7342,14 @@ class Geometry(object):
 
         Parameters
         -----------
+        hGeom:
+            The Geometry to test.
 
-        hGeom:  The Geometry to test.
+        Returns
+        --------
+        int:
+            TRUE if the geometry has no points, otherwise FALSE.
 
-        TRUE if the geometry has no points, otherwise FALSE. 
         """
         return _ogr.Geometry_IsEmpty(self, *args)
 
@@ -7239,10 +7368,14 @@ class Geometry(object):
 
         Parameters
         -----------
+        hGeom:
+            The Geometry to test.
 
-        hGeom:  The Geometry to test.
+        Returns
+        --------
+        int:
+            TRUE if the geometry has no points, otherwise FALSE.
 
-        TRUE if the geometry has no points, otherwise FALSE. 
         """
         return _ogr.Geometry_IsValid(self, *args)
 
@@ -7267,10 +7400,14 @@ class Geometry(object):
 
         Parameters
         -----------
+        hGeom:
+            The Geometry to test.
 
-        hGeom:  The Geometry to test.
+        Returns
+        --------
+        int:
+            TRUE if object is simple, otherwise FALSE.
 
-        TRUE if object is simple, otherwise FALSE. 
         """
         return _ogr.Geometry_IsSimple(self, *args)
 
@@ -7289,10 +7426,14 @@ class Geometry(object):
 
         Parameters
         -----------
+        hGeom:
+            The Geometry to test.
 
-        hGeom:  The Geometry to test.
+        Returns
+        --------
+        int:
+            TRUE if the geometry has no points, otherwise FALSE.
 
-        TRUE if the geometry has no points, otherwise FALSE. 
         """
         return _ogr.Geometry_IsRing(self, *args)
 
@@ -7312,12 +7453,16 @@ class Geometry(object):
 
         Parameters
         -----------
+        hGeom:
+            handle on the first geometry.
+        hOtherGeom:
+            handle on the other geometry to test against.
 
-        hGeom:  handle on the first geometry.
+        Returns
+        --------
+        int:
+            TRUE if the geometries intersect, otherwise FALSE.
 
-        hOtherGeom:  handle on the other geometry to test against.
-
-        TRUE if the geometries intersect, otherwise FALSE. 
         """
         return _ogr.Geometry_Intersects(self, *args)
 
@@ -7347,12 +7492,16 @@ class Geometry(object):
 
         Parameters
         -----------
+        hGeom:
+            handle on the first geometry.
+        hOther:
+            handle on the other geometry to test against.
 
-        hGeom:  handle on the first geometry.
+        Returns
+        --------
+        int:
+            TRUE if equivalent or FALSE otherwise.
 
-        hOther:  handle on the other geometry to test against.
-
-        TRUE if equivalent or FALSE otherwise. 
         """
         return _ogr.Geometry_Equals(self, *args)
 
@@ -7383,12 +7532,16 @@ class Geometry(object):
 
         Parameters
         -----------
+        hThis:
+            the geometry to compare.
+        hOther:
+            the other geometry to compare.
 
-        hThis:  the geometry to compare.
+        Returns
+        --------
+        int:
+            TRUE if they are disjoint, otherwise FALSE.
 
-        hOther:  the other geometry to compare.
-
-        TRUE if they are disjoint, otherwise FALSE. 
         """
         return _ogr.Geometry_Disjoint(self, *args)
 
@@ -7415,12 +7568,16 @@ class Geometry(object):
 
         Parameters
         -----------
+        hThis:
+            the geometry to compare.
+        hOther:
+            the other geometry to compare.
 
-        hThis:  the geometry to compare.
+        Returns
+        --------
+        int:
+            TRUE if they are touching, otherwise FALSE.
 
-        hOther:  the other geometry to compare.
-
-        TRUE if they are touching, otherwise FALSE. 
         """
         return _ogr.Geometry_Touches(self, *args)
 
@@ -7447,12 +7604,16 @@ class Geometry(object):
 
         Parameters
         -----------
+        hThis:
+            the geometry to compare.
+        hOther:
+            the other geometry to compare.
 
-        hThis:  the geometry to compare.
+        Returns
+        --------
+        int:
+            TRUE if they are crossing, otherwise FALSE.
 
-        hOther:  the other geometry to compare.
-
-        TRUE if they are crossing, otherwise FALSE. 
         """
         return _ogr.Geometry_Crosses(self, *args)
 
@@ -7479,12 +7640,16 @@ class Geometry(object):
 
         Parameters
         -----------
+        hThis:
+            the geometry to compare.
+        hOther:
+            the other geometry to compare.
 
-        hThis:  the geometry to compare.
+        Returns
+        --------
+        int:
+            TRUE if hThis is within hOther, otherwise FALSE.
 
-        hOther:  the other geometry to compare.
-
-        TRUE if hThis is within hOther, otherwise FALSE. 
         """
         return _ogr.Geometry_Within(self, *args)
 
@@ -7511,12 +7676,16 @@ class Geometry(object):
 
         Parameters
         -----------
+        hThis:
+            the geometry to compare.
+        hOther:
+            the other geometry to compare.
 
-        hThis:  the geometry to compare.
+        Returns
+        --------
+        int:
+            TRUE if hThis contains hOther geometry, otherwise FALSE.
 
-        hOther:  the other geometry to compare.
-
-        TRUE if hThis contains hOther geometry, otherwise FALSE. 
         """
         return _ogr.Geometry_Contains(self, *args)
 
@@ -7544,12 +7713,16 @@ class Geometry(object):
 
         Parameters
         -----------
+        hThis:
+            the geometry to compare.
+        hOther:
+            the other geometry to compare.
 
-        hThis:  the geometry to compare.
+        Returns
+        --------
+        int:
+            TRUE if they are overlapping, otherwise FALSE.
 
-        hOther:  the other geometry to compare.
-
-        TRUE if they are overlapping, otherwise FALSE. 
         """
         return _ogr.Geometry_Overlaps(self, *args)
 
@@ -7581,12 +7754,16 @@ class Geometry(object):
 
         Parameters
         -----------
+        hGeom:
+            handle on the geometry to apply the transform to.
+        hSRS:
+            handle on the spatial reference system to apply.
 
-        hGeom:  handle on the geometry to apply the transform to.
+        Returns
+        --------
+        OGRErr:
+            OGRERR_NONE on success, or an error code.
 
-        hSRS:  handle on the spatial reference system to apply.
-
-        OGRERR_NONE on success, or an error code. 
         """
         return _ogr.Geometry_TransformTo(self, *args)
 
@@ -7606,10 +7783,14 @@ class Geometry(object):
 
         Parameters
         -----------
+        hGeom:
+            handle on the geometry to get spatial reference from.
 
-        hGeom:  handle on the geometry to get spatial reference from.
+        Returns
+        --------
+        OGRSpatialReferenceH:
+            a reference to the spatial reference geometry.
 
-        a reference to the spatial reference geometry. 
         """
         return _ogr.Geometry_GetSpatialReference(self, *args)
 
@@ -7640,11 +7821,11 @@ class Geometry(object):
 
         Parameters
         -----------
+        hGeom:
+            handle on the geometry to apply the new spatial reference system.
+        hSRS:
+            handle on the new spatial reference system to apply.
 
-        hGeom:  handle on the geometry to apply the new spatial reference
-        system.
-
-        hSRS:  handle on the new spatial reference system to apply. 
         """
         return _ogr.Geometry_AssignSpatialReference(self, *args)
 
@@ -7662,8 +7843,9 @@ class Geometry(object):
 
         Parameters
         -----------
+        hGeom:
+            handle to the geometry.
 
-        hGeom:  handle to the geometry. 
         """
         return _ogr.Geometry_CloseRings(self, *args)
 
@@ -7682,8 +7864,9 @@ class Geometry(object):
 
         Parameters
         -----------
+        hGeom:
+            handle on the geometry to convert.
 
-        hGeom:  handle on the geometry to convert. 
         """
         return _ogr.Geometry_FlattenTo2D(self, *args)
 
@@ -7703,11 +7886,11 @@ class Geometry(object):
 
         Parameters
         -----------
+        hGeom:
+            handle on the geometry to segmentize
+        dfMaxLength:
+            the maximum distance between 2 points after segmentization
 
-        hGeom:  handle on the geometry to segmentize
-
-        dfMaxLength:  the maximum distance between 2 points after
-        segmentization 
         """
         return _ogr.Geometry_Segmentize(self, *args)
 
@@ -7725,10 +7908,11 @@ class Geometry(object):
 
         Parameters
         -----------
+        hGeom:
+            handle of the geometry to get envelope from.
+        psEnvelope:
+            the structure in which to place the results.
 
-        hGeom:  handle of the geometry to get envelope from.
-
-        psEnvelope:  the structure in which to place the results. 
         """
         return _ogr.Geometry_GetEnvelope(self, *args)
 
@@ -7744,14 +7928,15 @@ class Geometry(object):
         This function is the same as the CPP method
         OGRGeometry::getEnvelope().
 
+        .. versionadded:: 1.9.0
+
         Parameters
         -----------
+        hGeom:
+            handle of the geometry to get envelope from.
+        psEnvelope:
+            the structure in which to place the results.
 
-        hGeom:  handle of the geometry to get envelope from.
-
-        psEnvelope:  the structure in which to place the results.
-
-        OGR 1.9.0 
         """
         return _ogr.Geometry_GetEnvelope3D(self, *args)
 
@@ -7780,7 +7965,11 @@ class Geometry(object):
         library, this function will always fail, issuing a CPLE_NotSupported
         error.
 
-        OGRERR_NONE on success or OGRERR_FAILURE on error. 
+        Returns
+        --------
+        int:
+            OGRERR_NONE on success or OGRERR_FAILURE on error.
+
         """
         return _ogr.Geometry_Centroid(self, *args)
 
@@ -7801,14 +7990,18 @@ class Geometry(object):
         of the geometry operation. If OGR is built without the GEOS library,
         this method will always fail, issuing a CPLE_NotSupported error.
 
+        .. versionadded:: 1.10
+
         Parameters
         -----------
+        hGeom:
+            the geometry to operate on.
 
-        hGeom:  the geometry to operate on.
+        Returns
+        --------
+        OGRGeometryH:
+            a point guaranteed to lie on the surface or NULL if an error occurred.
 
-        a point guaranteed to lie on the surface or NULL if an error occurred.
-
-        OGR 1.10 
         """
         return _ogr.Geometry_PointOnSurface(self, *args)
 
@@ -7831,10 +8024,14 @@ class Geometry(object):
 
         Parameters
         -----------
+        hGeom:
+            handle on the geometry to get the binary size from.
 
-        hGeom:  handle on the geometry to get the binary size from.
+        Returns
+        --------
+        int:
+            size of binary representation in bytes.
 
-        size of binary representation in bytes. 
         """
         return _ogr.Geometry_WkbSize(self, *args)
 
@@ -7849,16 +8046,19 @@ class Geometry(object):
         This function is the same as the CPP method
         OGRGeometry::getCoordinateDimension().
 
-        Parameters
-        -----------
-
-        hGeom:  handle on the geometry to get the dimension of the coordinates
-        from.
-
         Deprecated use OGR_G_CoordinateDimension(), OGR_G_Is3D(), or
         OGR_G_IsMeasured().
 
-        this will return 2 or 3. 
+        Parameters
+        -----------
+        hGeom:
+            handle on the geometry to get the dimension of the coordinates from.
+
+        Returns
+        --------
+        int:
+            this will return 2 or 3.
+
         """
         return _ogr.Geometry_GetCoordinateDimension(self, *args)
 
@@ -7873,15 +8073,18 @@ class Geometry(object):
         This function is the same as the CPP method
         OGRGeometry::CoordinateDimension().
 
+        .. versionadded:: 2.1
+
         Parameters
         -----------
+        hGeom:
+            handle on the geometry to get the dimension of the coordinates from.
 
-        hGeom:  handle on the geometry to get the dimension of the coordinates
-        from.
+        Returns
+        --------
+        int:
+            this will return 2 for XY, 3 for XYZ and XYM, and 4 for XYZM data.
 
-        this will return 2 for XY, 3 for XYZ and XYM, and 4 for XYZM data.
-
-        GDAL 2.1 
         """
         return _ogr.Geometry_CoordinateDimension(self, *args)
 
@@ -7894,14 +8097,18 @@ class Geometry(object):
 
         This function is the same as the CPP method OGRGeometry::Is3D().
 
+        .. versionadded:: 2.1
+
         Parameters
         -----------
+        hGeom:
+            handle on the geometry to check whether it has Z coordinates.
 
-        hGeom:  handle on the geometry to check whether it has Z coordinates.
+        Returns
+        --------
+        int:
+            TRUE if the geometry has Z coordinates.
 
-        TRUE if the geometry has Z coordinates.
-
-        GDAL 2.1 
         """
         return _ogr.Geometry_Is3D(self, *args)
 
@@ -7915,14 +8122,18 @@ class Geometry(object):
 
         This function is the same as the CPP method OGRGeometry::IsMeasured().
 
+        .. versionadded:: 2.1
+
         Parameters
         -----------
+        hGeom:
+            handle on the geometry to check whether it is measured.
 
-        hGeom:  handle on the geometry to check whether it is measured.
+        Returns
+        --------
+        int:
+            TRUE if the geometry has M coordinates.
 
-        TRUE if the geometry has M coordinates.
-
-        GDAL 2.1 
         """
         return _ogr.Geometry_IsMeasured(self, *args)
 
@@ -7944,11 +8155,11 @@ class Geometry(object):
 
         Parameters
         -----------
+        hGeom:
+            handle on the geometry to set the dimension of the coordinates.
+        nNewDimension:
+            New coordinate dimension value, either 2 or 3.
 
-        hGeom:  handle on the geometry to set the dimension of the
-        coordinates.
-
-        nNewDimension:  New coordinate dimension value, either 2 or 3. 
         """
         return _ogr.Geometry_SetCoordinateDimension(self, *args)
 
@@ -7965,14 +8176,15 @@ class Geometry(object):
         existing Z values. Adding the Z dimension to a geometry collection, a
         compound curve, a polygon, etc. will affect the children geometries.
 
+        .. versionadded:: 2.1
+
         Parameters
         -----------
+        hGeom:
+            handle on the geometry to set or unset the Z dimension.
+        bIs3D:
+            Should the geometry have a Z dimension, either TRUE or FALSE.
 
-        hGeom:  handle on the geometry to set or unset the Z dimension.
-
-        bIs3D:  Should the geometry have a Z dimension, either TRUE or FALSE.
-
-        GDAL 2.1 
         """
         return _ogr.Geometry_Set3D(self, *args)
 
@@ -7989,15 +8201,15 @@ class Geometry(object):
         existing M values. Adding the M dimension to a geometry collection, a
         compound curve, a polygon, etc. will affect the children geometries.
 
+        .. versionadded:: 2.1
+
         Parameters
         -----------
+        hGeom:
+            handle on the geometry to set or unset the M dimension.
+        bIsMeasured:
+            Should the geometry have a M dimension, either TRUE or FALSE.
 
-        hGeom:  handle on the geometry to set or unset the M dimension.
-
-        bIsMeasured:  Should the geometry have a M dimension, either TRUE or
-        FALSE.
-
-        GDAL 2.1 
         """
         return _ogr.Geometry_SetMeasured(self, *args)
 
@@ -8019,10 +8231,14 @@ class Geometry(object):
 
         Parameters
         -----------
+        hGeom:
+            handle on the geometry to get the dimension from.
 
-        hGeom:  handle on the geometry to get the dimension from.
+        Returns
+        --------
+        int:
+            0 for points, 1 for lines and 2 for surfaces.
 
-        0 for points, 1 for lines and 2 for surfaces. 
         """
         return _ogr.Geometry_GetDimension(self, *args)
 
@@ -8068,12 +8284,16 @@ class Geometry(object):
 
         Parameters
         -----------
+        hGeom:
+            handle on the geometry to apply the transform to.
+        hTransform:
+            handle on the transformation to apply.
 
-        hGeom:  handle on the geometry to apply the transform to.
+        Returns
+        --------
+        OGRErr:
+            OGRERR_NONE on success or an error code.
 
-        hTransform:  handle on the transformation to apply.
-
-        OGRERR_NONE on success or an error code. 
         """
         return _ogr.Geometry_Transform(self, *args)
 
