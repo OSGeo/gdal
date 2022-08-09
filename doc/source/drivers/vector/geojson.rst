@@ -111,9 +111,9 @@ Schema detection will recognized fields of type String, Integer, Real,
 StringList, IntegerList and RealList, Integer(Boolean), Date, Time and DateTime.
 
 It is possible to tell the driver to not to process attributes by
-setting configuration option :decl_configoption:`ATTRIBUTES_SKIP` =YES. 
-Default behavior is to preserve all attributes (as an union, see 
-previous paragraph), what is equal to setting 
+setting configuration option :decl_configoption:`ATTRIBUTES_SKIP` =YES.
+Default behavior is to preserve all attributes (as an union, see
+previous paragraph), what is equal to setting
 :decl_configoption:`ATTRIBUTES_SKIP` =NO.
 
 If the NATIVE_DATA open option is set to YES, the Feature JSon object
@@ -147,7 +147,7 @@ the :decl_configoption:`GEOMETRY_AS_COLLECTION` configuration option to YES
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are 
+The following :ref:`configuration options <configoptions>` are
 available:
 
 -  :decl_configoption:`GEOMETRY_AS_COLLECTION`: used to control translation of
@@ -155,7 +155,8 @@ available:
 -  :decl_configoption:`ATTRIBUTES_SKIP` - controls translation of attributes:
    YES - skip all attributes
 -  :decl_configoption:`OGR_GEOJSON_MAX_OBJ_SIZE` (GDAL >= 3.0.2): size in
-   MBytes of the maximum accepted single feature, default value is 200MB
+   MBytes of the maximum accepted single feature, default value is 200MB.
+   Or 0 to allow for a unlimited size (GDAL >= 3.5.2).
 
 Open options
 ------------
