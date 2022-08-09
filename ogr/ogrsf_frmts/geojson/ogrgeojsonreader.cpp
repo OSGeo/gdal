@@ -328,8 +328,8 @@ OGRGeoJSONReaderStreamingParser::OGRGeoJSONReaderStreamingParser(
                 m_bStoreNativeData(bStoreNativeData),
                 m_nCurFeatureIdx(0)
 {
-    m_nMaxObjectSize = atoi(CPLGetConfigOption("OGR_GEOJSON_MAX_OBJ_SIZE", "200"))
-                * 1024 * 1024;
+    const double dfTmp = CPLAtof(CPLGetConfigOption("OGR_GEOJSON_MAX_OBJ_SIZE", "200"));
+    m_nMaxObjectSize = dfTmp > 0 ? static_cast<size_t>(dfTmp * 1024 * 1024) : 0;
 }
 
 /************************************************************************/
@@ -420,7 +420,7 @@ void OGRGeoJSONReaderStreamingParser::AnalyzeFeature()
 
 void OGRGeoJSONReaderStreamingParser::StartObject()
 {
-    if( m_nCurObjMemEstimate > m_nMaxObjectSize )
+    if( m_nMaxObjectSize > 0 && m_nCurObjMemEstimate > m_nMaxObjectSize )
     {
         TooComplex();
         return;
@@ -467,7 +467,7 @@ void OGRGeoJSONReaderStreamingParser::StartObject()
 
 void OGRGeoJSONReaderStreamingParser::EndObject()
 {
-    if( m_nCurObjMemEstimate > m_nMaxObjectSize )
+    if( m_nMaxObjectSize > 0 && m_nCurObjMemEstimate > m_nMaxObjectSize )
     {
         TooComplex();
         return;
@@ -560,7 +560,7 @@ void OGRGeoJSONReaderStreamingParser::FinalizeLayerDefn()
 void OGRGeoJSONReaderStreamingParser::StartObjectMember(const char* pszKey,
                                                         size_t nKeyLen)
 {
-    if( m_nCurObjMemEstimate > m_nMaxObjectSize )
+    if( m_nMaxObjectSize > 0 && m_nCurObjMemEstimate > m_nMaxObjectSize )
     {
         TooComplex();
         return;
@@ -613,7 +613,7 @@ void OGRGeoJSONReaderStreamingParser::StartObjectMember(const char* pszKey,
 
 void OGRGeoJSONReaderStreamingParser::StartArray()
 {
-    if( m_nCurObjMemEstimate > m_nMaxObjectSize )
+    if( m_nMaxObjectSize > 0 && m_nCurObjMemEstimate > m_nMaxObjectSize )
     {
         TooComplex();
         return;
@@ -665,7 +665,7 @@ void OGRGeoJSONReaderStreamingParser::StartArrayMember()
 
 void OGRGeoJSONReaderStreamingParser::EndArray()
 {
-    if( m_nCurObjMemEstimate > m_nMaxObjectSize )
+    if( m_nMaxObjectSize > 0 && m_nCurObjMemEstimate > m_nMaxObjectSize )
     {
         TooComplex();
         return;
@@ -694,7 +694,7 @@ void OGRGeoJSONReaderStreamingParser::EndArray()
 
 void OGRGeoJSONReaderStreamingParser::String(const char* pszValue, size_t nLen)
 {
-    if( m_nCurObjMemEstimate > m_nMaxObjectSize )
+    if( m_nMaxObjectSize > 0 && m_nCurObjMemEstimate > m_nMaxObjectSize )
     {
         TooComplex();
         return;
@@ -729,7 +729,7 @@ void OGRGeoJSONReaderStreamingParser::String(const char* pszValue, size_t nLen)
 
 void OGRGeoJSONReaderStreamingParser::Number(const char* pszValue, size_t nLen)
 {
-    if( m_nCurObjMemEstimate > m_nMaxObjectSize )
+    if( m_nMaxObjectSize > 0 && m_nCurObjMemEstimate > m_nMaxObjectSize )
     {
         TooComplex();
         return;
@@ -786,7 +786,7 @@ void OGRGeoJSONReaderStreamingParser::Number(const char* pszValue, size_t nLen)
 
 void OGRGeoJSONReaderStreamingParser::Boolean(bool bVal)
 {
-    if( m_nCurObjMemEstimate > m_nMaxObjectSize )
+    if( m_nMaxObjectSize > 0 && m_nCurObjMemEstimate > m_nMaxObjectSize )
     {
         TooComplex();
         return;
@@ -816,7 +816,7 @@ void OGRGeoJSONReaderStreamingParser::Boolean(bool bVal)
 
 void OGRGeoJSONReaderStreamingParser::Null()
 {
-    if( m_nCurObjMemEstimate > m_nMaxObjectSize )
+    if( m_nMaxObjectSize > 0 && m_nCurObjMemEstimate > m_nMaxObjectSize )
     {
         TooComplex();
         return;
@@ -841,7 +841,10 @@ void OGRGeoJSONReaderStreamingParser::Null()
 void OGRGeoJSONReaderStreamingParser::TooComplex()
 {
     if( !ExceptionOccurred() )
-        Exception("GeoJSON object too complex, please see the OGR_GEOJSON_MAX_OBJ_SIZE environment option");
+        EmitException("GeoJSON object too complex/large. You may define the "
+                      "OGR_GEOJSON_MAX_OBJ_SIZE configuration option to "
+                      "a value in megabytes to allow "
+                      "for larger features, or 0 to remove any size limit.");
 }
 
 /************************************************************************/
