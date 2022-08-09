@@ -6168,13 +6168,38 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp, int recover)
 		case TIFF_SETGET_C32_UINT8:
 			{
 				uint8_t* data;
+				uint32_t count = 0;
 				assert(fip->field_readcount==TIFF_VARIABLE2);
 				assert(fip->field_passcount==1);
-				err=TIFFReadDirEntryByteArray(tif,dp,&data);
+				if( fip->field_tag == TIFFTAG_RICHTIFFIPTC &&
+				    dp->tdir_type == TIFF_LONG )
+				{
+				    /* Adobe's software (wrongly) writes RichTIFFIPTC tag with
+				     * data type LONG instead of UNDEFINED. Work around this
+				     * frequently found issue */
+				    void* origdata;
+				    err=TIFFReadDirEntryArray(tif,dp,&count,4,&origdata);
+				    if ((err!=TIFFReadDirEntryErrOk)||(origdata==0))
+				    {
+				        data = NULL;
+				    }
+				    else
+				    {
+				        if (tif->tif_flags&TIFF_SWAB)
+				            TIFFSwabArrayOfLong((uint32_t*)origdata,count);
+				        data = (uint8_t*)origdata;
+				        count = (uint32_t)(count * 4);
+				    }
+				}
+				else
+				{
+				    err=TIFFReadDirEntryByteArray(tif,dp,&data);
+				    count = (uint32_t)(dp->tdir_count);
+				}
 				if (err==TIFFReadDirEntryErrOk)
 				{
 					int m;
-					m=TIFFSetField(tif, dp->tdir_tag, (uint32_t)(dp->tdir_count), data);
+					m=TIFFSetField(tif, dp->tdir_tag, count, data);
 					if (data!=0)
 						_TIFFfree(data);
 					if (!m)
