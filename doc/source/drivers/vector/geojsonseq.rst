@@ -43,6 +43,16 @@ The driver accepts three types of sources of data:
 The URL/filename/text might be prefixed with GeoJSONSeq: to avoid any
 ambiguity with other drivers.
 
+Configuration options
+---------------------
+
+The following :ref:`configuration option <configoptions>` is
+available:
+
+-  :decl_configoption:`OGR_GEOJSON_MAX_OBJ_SIZE` (GDAL >= 3.5.2): size in
+   MBytes of the maximum accepted single feature, default value is 200MB.
+   Or 0 to allow for a unlimited size.
+
 Layer creation options
 ----------------------
 
