@@ -24,7 +24,7 @@ jobs:
   build-linux-ubuntu-focal:
     runs-on: ubuntu-20.04
     env:
-      CMAKE_OPTIONS: -DPython_LOOKUP_VERSION=3.8 -DUSE_CCACHE=ON
+      CMAKE_OPTIONS: -DPython_LOOKUP_VERSION=3.8 -DUSE_CCACHE=ON -DSWIG_REGENERATE_PYTHON=ON
       cache-name: cmake-ubuntu-focal
     steps:
     - name: Checkout GDAL
