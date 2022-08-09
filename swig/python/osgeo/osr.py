@@ -904,7 +904,7 @@ class CoordinateTransformationOptions(object):
         return _osr.CoordinateTransformationOptions_SetAreaOfInterest(self, *args)
 
     def SetOperation(self, *args) -> "bool":
-        r"""SetOperation(CoordinateTransformationOptions self, char const * operation) -> bool"""
+        r"""SetOperation(CoordinateTransformationOptions self, char const * operation, bool inverseCT=False) -> bool"""
         return _osr.CoordinateTransformationOptions_SetOperation(self, *args)
 
     def SetDesiredAccuracy(self, *args) -> "bool":
@@ -931,6 +931,10 @@ class CoordinateTransformation(object):
         """
         _osr.CoordinateTransformation_swiginit(self, _osr.new_CoordinateTransformation(*args))
     __swig_destroy__ = _osr.delete_CoordinateTransformation
+
+    def GetInverse(self, *args) -> "OSRCoordinateTransformationShadow *":
+        r"""GetInverse(CoordinateTransformation self) -> CoordinateTransformation"""
+        return _osr.CoordinateTransformation_GetInverse(self, *args)
 
     def TransformPoint(self, *args) -> "void":
         r"""

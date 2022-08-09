@@ -337,11 +337,27 @@ def test_osr_ct_towgs84_both_side():
 def test_osr_ct_options_operation():
 
     options = osr.CoordinateTransformationOptions()
-    assert options.SetOperation('+proj=affine +s11=-1')
+    assert options.SetOperation('+proj=affine +xoff=1')
     ct = osr.CoordinateTransformation(None, None, options)
     assert ct
     x, y, z = ct.TransformPoint(1, 2, 3)
-    assert x == -1
+    assert x == 2
+    assert y == 2
+    assert z == 3
+
+    ct_inverse = ct.GetInverse()
+    x, y, z = ct_inverse.TransformPoint(1, 2, 3)
+    assert x == 0
+    assert y == 2
+    assert z == 3
+
+    options = osr.CoordinateTransformationOptions()
+    # inverse coordinate operation
+    assert options.SetOperation('+proj=affine +xoff=1', True)
+    ct = osr.CoordinateTransformation(None, None, options)
+    assert ct
+    x, y, z = ct.TransformPoint(1, 2, 3)
+    assert x == 0
     assert y == 2
     assert z == 3
 
