@@ -521,3 +521,18 @@ def test_gdalbuildvrt_lib_strict_mode():
     with gdaltest.enable_exceptions():
         with pytest.raises(Exception):
             gdal.BuildVRT('', ['../gcore/data/byte.tif', 'i_dont_exist.tif'], strict = True)
+
+
+###############################################################################
+def test_gdalbuildvrt_lib_te_touching_on_edge():
+
+    tmp_filename = '/vsimem/test_gdalbuildvrt_lib_te_touching_on_edge.vrt'
+    ds = gdal.BuildVRT(tmp_filename, '../gcore/data/byte.tif', outputBounds=[440600, 3750000, 440720, 3750120], xRes=60, yRes=60)
+    assert ds is not None
+    ds = None
+
+    ds = gdal.Open(tmp_filename)
+    assert ds.GetRasterBand(1).Checksum() == 0
+    ds = None
+
+    gdal.Unlink(tmp_filename)
