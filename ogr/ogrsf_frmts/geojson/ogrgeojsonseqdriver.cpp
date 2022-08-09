@@ -82,6 +82,7 @@ class OGRGeoJSONSeqLayer final: public OGRLayer
         OGRGeoJSONBaseReader m_oReader;
         CPLString m_osFIDColumn;
 
+        size_t m_nMaxObjectSize = 0;
         std::string m_osBuffer;
         std::string m_osFeatureBuffer;
         size_t m_nPosInBuffer = 0;
@@ -264,6 +265,9 @@ OGRGeoJSONSeqLayer::OGRGeoJSONSeqLayer(OGRGeoJSONSeqDataSource* poDS,
     poSRSWGS84->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRSWGS84);
     poSRSWGS84->Release();
+
+    const double dfTmp = CPLAtof(CPLGetConfigOption("OGR_GEOJSON_MAX_OBJ_SIZE", "200"));
+    m_nMaxObjectSize = dfTmp > 0 ? static_cast<size_t>(dfTmp * 1024 * 1024) : 0;
 }
 
 /************************************************************************/
@@ -404,10 +408,14 @@ json_object* OGRGeoJSONSeqLayer::GetNextObject(bool bLooseIdentification)
             // No separator ? then accummulate
             m_osFeatureBuffer.append(m_osBuffer.data() + m_nPosInBuffer,
                                      m_nBufferValidSize - m_nPosInBuffer);
-            if( m_osFeatureBuffer.size() > 100 * 1024 * 1024 )
+            if( m_nMaxObjectSize > 0 && m_osFeatureBuffer.size() > m_nMaxObjectSize )
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
-                            "Too large feature");
+                         "Too large feature. You may define the "
+                         "OGR_GEOJSON_MAX_OBJ_SIZE configuration option to "
+                         "a value in megabytes (larger than %u) to allow "
+                         "for larger features, or 0 to remove any size limit.",
+                         static_cast<unsigned>(m_osFeatureBuffer.size() / 1024 / 1024));
                 return nullptr;
             }
             m_nPosInBuffer = m_nBufferValidSize;
