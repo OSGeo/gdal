@@ -18,6 +18,23 @@ set(GDAL_PYTHON_CSOURCES
 
 if (SWIG_REGENERATE_PYTHON)
 
+  list(APPEND GDAL_SWIG_COMMON_INTERFACE_FILES
+       ${PROJECT_SOURCE_DIR}/swig/include/python/callback.i
+       ${PROJECT_SOURCE_DIR}/swig/include/python/gdal_python.i
+       ${PROJECT_SOURCE_DIR}/swig/include/python/gnm_python.i
+       ${PROJECT_SOURCE_DIR}/swig/include/python/ogr_python.i
+       ${PROJECT_SOURCE_DIR}/swig/include/python/osr_python.i
+       ${PROJECT_SOURCE_DIR}/swig/include/python/python_exceptions.i
+       ${PROJECT_SOURCE_DIR}/swig/include/python/python_strings.i
+       ${PROJECT_SOURCE_DIR}/swig/include/python/typemaps_python.i
+       ${PROJECT_SOURCE_DIR}/swig/include/python/docs/ogr_datasource_docs.i
+       ${PROJECT_SOURCE_DIR}/swig/include/python/docs/ogr_driver_docs.i
+       ${PROJECT_SOURCE_DIR}/swig/include/python/docs/ogr_featuredef_docs.i
+       ${PROJECT_SOURCE_DIR}/swig/include/python/docs/ogr_feature_docs.i
+       ${PROJECT_SOURCE_DIR}/swig/include/python/docs/ogr_fielddef_docs.i
+       ${PROJECT_SOURCE_DIR}/swig/include/python/docs/ogr_geometry_docs.i
+       ${PROJECT_SOURCE_DIR}/swig/include/python/docs/ogr_layer_docs.i)
+
   set(GDAL_PYTHON_PYSOURCES
       ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal.py ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdalconst.py
       ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdalnumeric.py ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gnm.py
