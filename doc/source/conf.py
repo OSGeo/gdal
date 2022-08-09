@@ -54,6 +54,7 @@ apidoc_excluded_paths = [
     'setup.py',
     'get_python_lib.py',
     'get_suffix.py',
+    'setup_fallback_mingw.py',
 ]
 apidoc_separate_modules = True
 
