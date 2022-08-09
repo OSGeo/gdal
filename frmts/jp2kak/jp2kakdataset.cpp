@@ -47,6 +47,7 @@
 #include <cstring>
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <vector>
 
 CPL_CVSID("$Id$")
@@ -61,6 +62,11 @@ CPL_CVSID("$Id$")
 #if KDU_MAJOR_VERSION > 7 || (KDU_MAJOR_VERSION == 7 && KDU_MINOR_VERSION >= 5)
     using namespace kdu_core;
     using namespace kdu_supp;
+#endif
+
+#if KDU_MAJOR_VERSION > 7 || (KDU_MAJOR_VERSION == 7 && KDU_MINOR_VERSION >= 8)
+// Before Kakdu 7.8, kdu_roi_rect was missing from libkdu_aXY
+#define KDU_HAS_ROI_RECT
 #endif
 
 // #define KAKADU_JPX 1
@@ -1258,6 +1264,24 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 }
 
+namespace {
+    // std::vector<bool> is Unfortunately a specialized implementation such as &v[0] doesn't work
+    // https://codereview.stackexchange.com/questions/241629/stdvectorbool-workaround-in-c
+    class vector_safe_bool {
+        bool value;
+    public:
+        vector_safe_bool() = default;
+        // cppcheck-suppress noExplicitConstructor
+        vector_safe_bool(bool b) : value{b} {}
+
+        bool *operator&() noexcept { return &value; }
+        const bool *operator&() const noexcept { return &value; }
+
+        operator const bool &() const noexcept { return value; }
+        operator bool &() noexcept { return value; }
+    };
+}
+
 /************************************************************************/
 /*                           DirectRasterIO()                           */
 /************************************************************************/
@@ -1340,22 +1364,6 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
     std::vector<int> sample_gaps(nBandCount);
     std::vector<int> row_gaps(nBandCount);
     std::vector<int> precisions(nBandCount);
-
-    // std::vector<bool> is Unfortunately a specialized implementation such as &v[0] doesn't work
-    // https://codereview.stackexchange.com/questions/241629/stdvectorbool-workaround-in-c
-    class vector_safe_bool {
-        bool value;
-    public:
-        vector_safe_bool() = default;
-        // cppcheck-suppress noExplicitConstructor
-        vector_safe_bool(bool b) : value{b} {}
-
-        bool *operator&() noexcept { return &value; }
-        const bool *operator&() const noexcept { return &value; }
-
-        operator const bool &() const noexcept { return value; }
-        operator bool &() noexcept { return value; }
-    };
     std::vector<vector_safe_bool> is_signed(nBandCount);
 
     for( int i = 0; i < nBandCount; i++ )
@@ -1755,104 +1763,86 @@ static void JP2KAKWriteBox( jp2_family_tgt *jp2_family, GDALJP2Box *poBox )
 
 static bool
 JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
+                            kdu_thread_env* poThreadEnv,
                             kdu_roi_image *poROIImage,
                             int nXOff, int nYOff, int nXSize, int nYSize,
-                            bool bReversible, int nBits, GDALDataType eType,
-                            kdu_codestream &oCodeStream, int bFlushEnabled,
+                            int nBits, GDALDataType eType,
+                            kdu_codestream &oCodeStream, bool bFlushEnabled,
                             kdu_long *layer_bytes, int layer_count,
                             GDALProgressFunc pfnProgress, void * pProgressData,
                             bool bComseg )
 
 {
-    // Create one big tile, a compressing engine, and a line buffer for each
-    // component.
+    kdu_multi_analysis engine;
     const int num_components = oTile.get_num_components();
-    kdu_push_ifc *engines = new kdu_push_ifc[num_components];
-    kdu_line_buf *lines = new kdu_line_buf[num_components];
-    kdu_sample_allocator allocator;
+    oTile.set_components_of_interest(num_components);
+    int flags = KDU_MULTI_XFORM_DEFAULT_FLAGS;
+    if( CPLTestBool(CPLGetConfigOption("JP2KAK_PRECISE", "NO")) )
+        flags |= KDU_MULTI_XFORM_PRECISE;
+    //if (want_fastest) flags |= KDU_MULTI_XFORM_FAST;
+    //if (double_buffering) flags |= KDU_MULTI_XFORM_MT_DWT;
 
-    // Ticket #4050 patch: Use a 32 bits kdu_line_buf for GDT_UInt16 reversible
-    // compression.
-    const bool bUseShorts = bReversible && (eType == GDT_Byte || eType == GDT_Int16 );
+    kdu_thread_queue *env_queue = nullptr;
+    if( poThreadEnv )
+        env_queue = poThreadEnv->add_queue(nullptr, nullptr, "tile compression");
 
+    engine.create(oCodeStream,oTile,poThreadEnv,env_queue,flags,
+                  poROIImage);
+
+    std::vector<kdu_line_buf*> apoLines(num_components);
+    std::vector<int> anCurLine(num_components);
+    std::vector<GDALRasterBand*> apoSrcBand(num_components);
     for( int c = 0; c < num_components; c++ )
     {
-        kdu_resolution res = oTile.access_component(c).access_resolution();
-        kdu_roi_node *roi_node = nullptr;
-
-        if( poROIImage != nullptr )
-        {
-            kdu_dims dims;
-
-            res.get_dims(dims);
-            roi_node = poROIImage->acquire_node(c, dims);
-        }
-#if KDU_MAJOR_VERSION >= 7
-        lines[c].pre_create(&allocator, nXSize, bReversible, bUseShorts, 0, 0);
-#else
-        lines[c].pre_create(&allocator, nXSize, bReversible, bUseShorts);
-#endif
-        engines[c] = kdu_analysis(res, &allocator, bUseShorts, 1.0F, roi_node);
+        apoSrcBand[c] = poSrcDS->GetRasterBand(c + 1);
     }
 
-    try
-    {
-#if KDU_MAJOR_VERSION > 7 || (KDU_MAJOR_VERSION == 7 && (KDU_MINOR_VERSION > 3 || KDU_MINOR_VERSION == 3 && KDU_PATCH_VERSION >= 1))
-        allocator.finalize(oCodeStream);
-#else
-        allocator.finalize();
-#endif
-
-        for( int c = 0; c < num_components; c++ )
-            lines[c].create();
-    }
-    catch( ... )
-    {
-        // TODO(schwehr): Should this block do any cleanup?
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "allocate.finalize() failed, likely out of memory for "
-                 "compression information.");
-        return false;
-    }
-
-    // Write whole image.  Write 1024 lines of each component, then
-    // go back to the first, and do again.  This gives the rate
-    // computing machine all components to make good estimates.
+    // Write whole image by batch of 1024 lines when flushing.
+    // This gives the rate computing machine all components to make good estimates.
     int iLinesWritten = 0;
 
-    // TODO(schwehr): Making pabyBuffer void* should simplify the casting below.
-    GByte *pabyBuffer = static_cast<GByte *>(
-        CPLMalloc(nXSize * GDALGetDataTypeSizeBytes(eType)));
+    void *pabyBuffer =
+        CPLMalloc(nXSize * GDALGetDataTypeSizeBytes(eType));
 
     CPLAssert(!oTile.get_ycc());
 
     bool bRet = true;
-    for( int iLine = 0; iLine < nYSize && bRet; iLine += TILE_CHUNK_SIZE )
+    while( true )
     {
-        for( int c = 0; c < num_components && bRet; c++ )
+        bool bHasDoneSomething = false;
+        for( int c = 0; c < num_components; c++ )
         {
-            GDALRasterBand *poBand = poSrcDS->GetRasterBand(c + 1);
-
-            for( int iSubline = iLine;
-                 iSubline < iLine + TILE_CHUNK_SIZE && iSubline < nYSize;
-                 iSubline++ )
+            if( anCurLine[c] == nYSize )
+                continue;
+            if( apoLines[c] == nullptr )
             {
-                if( poBand->RasterIO( GF_Read,
-                                      nXOff, nYOff+iSubline, nXSize, 1,
-                                      pabyBuffer, nXSize, 1, eType,
-                                      0, 0, nullptr ) == CE_Failure )
+                apoLines[c] = engine.exchange_line(c,nullptr,poThreadEnv);
+                if( apoLines[c] == nullptr )
                 {
-                    bRet = false;
-                    break;
+                    continue; // This component is not yet ready for writing
                 }
+            }
 
-                if( bReversible && eType == GDT_Byte )
+            bHasDoneSomething = true;
+            if( apoSrcBand[c]->RasterIO( GF_Read,
+                                  nXOff, nYOff+anCurLine[c], nXSize, 1,
+                                  pabyBuffer, nXSize, 1, eType,
+                                  0, 0, nullptr ) == CE_Failure )
+            {
+                bRet = false;
+                break;
+            }
+
+            anCurLine[c] ++;
+
+            const bool bIsAbsolute = apoLines[c]->is_absolute();
+            if( eType == GDT_Byte )
+            {
+                const kdu_byte *sp = static_cast<const kdu_byte*>(pabyBuffer);
+                const kdu_int16 nOffset = 1 << (nBits - 1);
+                if( kdu_sample16 *dest16 = apoLines[c]->get_buf16() )
                 {
-                    kdu_sample16 *dest = lines[c].get_buf16();
-                    kdu_byte *sp = pabyBuffer;
-                    const kdu_int16 nOffset = 1 << (nBits - 1);
-
-                    for( int n = nXSize; n > 0; n--, dest++, sp++ )
+                    for( int n = nXSize; n > 0; n--, dest16++, sp++ )
                     {
                         if( *sp > (1 << nBits) - 1 )
                         {
@@ -1861,35 +1851,18 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
                             bRet = false;
                             break;
                         }
-                        dest->ival = ((kdu_int16)(*sp)) - nOffset;
+                        if( !bIsAbsolute )
+                            dest16->ival = (static_cast<kdu_int16>(*sp) - nOffset) << (KDU_FIX_POINT-nBits);
+                        else
+                            dest16->ival = static_cast<kdu_int16>(*sp) - nOffset;
                     }
                 }
-                else if( bReversible && eType == GDT_Int16 )
+                else if( kdu_sample32 *dest32 = apoLines[c]->get_buf32() )
                 {
-                    kdu_sample16 *dest = lines[c].get_buf16();
-                    GInt16 *sp = reinterpret_cast<GInt16 *>(pabyBuffer);
+                    // We go here in precise mode
+                    const float fScale = 1.0f / (1 << nBits);
 
-                    for( int n = nXSize; n > 0; n--, dest++, sp++ )
-                    {
-                        if( *sp < -(1 << (nBits-1)) || *sp > (1 << (nBits-1)) - 1 )
-                        {
-                            CPLError(CE_Failure, CPLE_AppDefined,
-                                     "Value outside of domain allowed by NBITS value");
-                            bRet = false;
-                            break;
-                        }
-                        dest->ival = *sp;
-                    }
-                }
-                else if( bReversible && eType == GDT_UInt16 )
-                {
-                    // Ticket #4050 patch : use a 32 bits kdu_line_buf for
-                    // GDT_UInt16 reversible compression.
-                    kdu_sample32 *dest = lines[c].get_buf32();
-                    GUInt16 *sp = reinterpret_cast<GUInt16 *>(pabyBuffer);
-                    const kdu_int32 nOffset = 1 << (nBits - 1);
-
-                    for( int n=nXSize; n > 0; n--, dest++, sp++ )
+                    for (int n = nXSize; n > 0; n--, dest32++, sp++)
                     {
                         if( *sp > (1 << nBits) - 1 )
                         {
@@ -1898,15 +1871,24 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
                             bRet = false;
                             break;
                         }
-                        dest->ival = static_cast<kdu_int32>(*sp) - nOffset;
+                        if( !bIsAbsolute )
+                            dest32->fval = (static_cast<kdu_int16>(*sp) - nOffset) * fScale;
+                        else
+                            dest32->ival = static_cast<kdu_int16>(*sp) - nOffset;
                     }
                 }
-                else if( bReversible && eType == GDT_Int32 )
+                else
                 {
-                    kdu_sample32 *dest = lines[c].get_buf32();
-                    GInt32 *sp = reinterpret_cast<GInt32 *>(pabyBuffer);
+                    CPLAssert(false);
+                }
+            }
 
-                    for( int n = nXSize; n > 0; n--, dest++, sp++ )
+            else if( eType == GDT_Int16 )
+            {
+                const GInt16 *sp = static_cast<const GInt16 *>(pabyBuffer);
+                if( kdu_sample16 *dest16 = apoLines[c]->get_buf16() )
+                {
+                    for( int n = nXSize; n > 0; n--, dest16++, sp++ )
                     {
                         if( *sp < -(1 << (nBits-1)) || *sp > (1 << (nBits-1)) - 1 )
                         {
@@ -1915,35 +1897,44 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
                             bRet = false;
                             break;
                         }
-                        dest->ival = *sp;
+                        if( !bIsAbsolute ) // we go here for NBITS <= 10 and !bReversible
+                            dest16->ival = (*sp) << (KDU_FIX_POINT - nBits);
+                        else
+                            dest16->ival = *sp;
                     }
                 }
-                else if( bReversible && eType == GDT_UInt32 )
+                else if( kdu_sample32 *dest32 = apoLines[c]->get_buf32() )
                 {
-                    kdu_sample32 *dest = lines[c].get_buf32();
-                    GUInt32 *sp = reinterpret_cast<GUInt32 *>(pabyBuffer);
-                    const kdu_int32 nOffset = 1 << (nBits - 1);
-
-                    for( int n=nXSize; n > 0; n--, dest++, sp++ )
+                    const float fScale = 1.0f / (1 << nBits);
+                    for( int n = nXSize; n > 0; n--, dest32++, sp++ )
                     {
-                        if( *sp > static_cast<GUInt32>((1 << nBits) - 1) )
+                        if( *sp < -(1 << (nBits-1)) || *sp > (1 << (nBits-1)) - 1 )
                         {
                             CPLError(CE_Failure, CPLE_AppDefined,
                                      "Value outside of domain allowed by NBITS value");
                             bRet = false;
                             break;
                         }
-                        dest->ival = static_cast<kdu_int32>(*sp) - nOffset;
+                        if( !bIsAbsolute )
+                            dest32->fval = (*sp) * fScale;
+                        else
+                            dest32->ival = *sp;
                     }
                 }
-                else if( eType == GDT_Byte )
+                else
                 {
-                    kdu_sample32 *dest = lines[c].get_buf32();
-                    kdu_byte *sp = pabyBuffer;
-                    const int nOffset = 1 << (nBits - 1);
-                    const float fScale = 1.0f / (1 << nBits);
+                    CPLAssert(false);
+                }
+            }
 
-                    for (int n = nXSize; n > 0; n--, dest++, sp++)
+            else if( eType == GDT_UInt16 )
+            {
+                const GUInt16 *sp = static_cast<const GUInt16 *>(pabyBuffer);
+                const kdu_int32 nOffset = 1 << (nBits - 1);
+                if( kdu_sample16 *dest16 = apoLines[c]->get_buf16() )
+                {
+                    // We go here for NBITS < 16
+                    for( int n = nXSize; n > 0; n--, dest16++, sp++ )
                     {
                         if( *sp > (1 << nBits) - 1 )
                         {
@@ -1952,36 +1943,16 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
                             bRet = false;
                             break;
                         }
-                        dest->fval =
-                            (static_cast<kdu_int16>(*sp) - nOffset) * fScale;
+                        if( !bIsAbsolute ) // we go here for NBITS <= 10 and !bReversible
+                            dest16->ival = static_cast<kdu_int16>((*sp) - nOffset) << (KDU_FIX_POINT - nBits);
+                        else
+                            dest16->ival = static_cast<kdu_int16>((*sp) - nOffset);
                     }
                 }
-                else if( eType == GDT_Int16 )
+                else if( kdu_sample32 *dest32 = apoLines[c]->get_buf32() )
                 {
-                    kdu_sample32 *dest = lines[c].get_buf32();
-                    GInt16 *sp = reinterpret_cast<GInt16 *>(pabyBuffer);
                     const float fScale = 1.0f / (1 << nBits);
-
-                    for( int n = nXSize; n > 0; n--, dest++, sp++ )
-                    {
-                        if( *sp < -(1 << (nBits-1)) || *sp > (1 << (nBits-1)) - 1 )
-                        {
-                            CPLError(CE_Failure, CPLE_AppDefined,
-                                     "Value outside of domain allowed by NBITS value");
-                            bRet = false;
-                            break;
-                        }
-                        dest->fval = static_cast<kdu_int16>(*sp) * fScale;
-                    }
-                }
-                else if( eType == GDT_UInt16 )
-                {
-                    kdu_sample32 *dest = lines[c].get_buf32();
-                    GUInt16 *sp = reinterpret_cast<GUInt16 *>(pabyBuffer);
-                    const int nOffset = 1 << (nBits - 1);
-                    const float fScale = 1.0f / (1 << nBits);
-
-                    for( int n = nXSize; n > 0; n--, dest++, sp++ )
+                    for( int n = nXSize; n > 0; n--, dest32++, sp++ )
                     {
                         if( *sp > (1 << nBits) - 1 )
                         {
@@ -1990,120 +1961,154 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
                             bRet = false;
                             break;
                         }
-                        dest->fval = (static_cast<int>(*sp) - nOffset) * fScale;
+                        if( !bIsAbsolute )
+                            dest32->fval = ((*sp) - nOffset) * fScale;
+                        else
+                            dest32->ival = (*sp) - nOffset;
                     }
                 }
-                else if( eType == GDT_Int32 )
+                else
                 {
-                    kdu_sample32 *dest = lines[c].get_buf32();
-                    GInt32 *sp = reinterpret_cast<GInt32 *>(pabyBuffer);
-                    const float fScale = 1.0f / (1 << nBits);
+                    CPLAssert(false);
+                }
+            }
 
-                    for( int n = nXSize; n > 0; n--, dest++, sp++ )
+            else if( eType == GDT_Int32 )
+            {
+                const GInt32 *sp = static_cast<
+                const GInt32 *>(pabyBuffer);
+                if( kdu_sample32 *dest32 = apoLines[c]->get_buf32() )
+                {
+                    const float fScale = static_cast<float>(pow(2.0, -static_cast<double>(nBits)));
+                    const int32_t nMin = (nBits == 32) ?
+                        std::numeric_limits<int32_t>::min() : -(1 << (nBits-1));
+                    const int32_t nMax = (nBits == 32) ?
+                        std::numeric_limits<int32_t>::max() : (1 << (nBits-1)) - 1;
+                    for( int n = nXSize; n > 0; n--, dest32++, sp++ )
                     {
-                        if( *sp < -(1 << (nBits-1)) || *sp > (1 << (nBits-1)) - 1 )
+                        if( *sp < nMin || *sp > nMax )
                         {
                             CPLError(CE_Failure, CPLE_AppDefined,
                                      "Value outside of domain allowed by NBITS value");
                             bRet = false;
                             break;
                         }
-                        dest->fval = static_cast<kdu_int32>(*sp) * fScale;
+                        if( !bIsAbsolute )
+                            dest32->fval = (*sp) * fScale;
+                        else
+                            dest32->ival = *sp;
                     }
                 }
-                else if( eType == GDT_UInt32 )
+                else
                 {
-                    kdu_sample32 *dest = lines[c].get_buf32();
-                    GUInt32 *sp = reinterpret_cast<GUInt32 *>(pabyBuffer);
-                    const int nOffset = 1 << (nBits - 1);
-                    const float fScale = 1.0f / (1 << nBits);
+                    CPLAssert(false);
+                }
+            }
 
-                    for( int n = nXSize; n > 0; n--, dest++, sp++ )
+            else if( eType == GDT_UInt32 )
+            {
+                const GUInt32 *sp = static_cast<const GUInt32 *>(pabyBuffer);
+                if( kdu_sample32 *dest32 = apoLines[c]->get_buf32() )
+                {
+                    const float fScale = static_cast<float>(
+                        pow(2.0, -static_cast<double>(nBits)));
+                    const uint32_t nMax = (nBits == 32) ?
+                        std::numeric_limits<uint32_t>::max() :
+                        static_cast<uint32_t>((1U << nBits) - 1);
+                    const kdu_int32 nOffset = static_cast<kdu_int32>(1U << (nBits - 1));
+                    for( int n = nXSize; n > 0; n--, dest32++, sp++ )
                     {
-                        if( *sp > static_cast<GUInt32>((1 << nBits) - 1) )
+                        if( *sp > nMax )
                         {
                             CPLError(CE_Failure, CPLE_AppDefined,
                                      "Value outside of domain allowed by NBITS value");
                             bRet = false;
                             break;
                         }
-                        dest->fval = (static_cast<int>(*sp) - nOffset) * fScale;
+                        if( !bIsAbsolute )
+                            dest32->fval = static_cast<kdu_int32>(*sp - nOffset) * fScale;
+                        else
+                            dest32->ival = static_cast<kdu_int32>(*sp - nOffset);
                     }
                 }
-                else if( eType == GDT_Float32 )
+                else
                 {
-                    kdu_sample32 *dest = lines[c].get_buf32();
-                    float *sp = reinterpret_cast<float *>(pabyBuffer);
-
-                    for( int n = nXSize; n > 0; n--, dest++, sp++ )
-                        dest->fval = *sp;  // Scale it?
+                    CPLAssert(false);
                 }
+            }
 
-                if( bRet == false )
-                    break;
+            else if( eType == GDT_Float32 )
+            {
+                const float *sp = static_cast<const float *>(pabyBuffer);
+                if( kdu_sample32 *dest32 = apoLines[c]->get_buf32() )
+                {
+                    for( int n = nXSize; n > 0; n--, dest32++, sp++ )
+                        dest32->fval = *sp;  // Scale it?
+                }
+                else
+                {
+                    CPLAssert(false);
+                }
+            }
+
+            if( bRet == false )
+                break;
+
+            apoLines[c] = engine.exchange_line(c,apoLines[c],poThreadEnv);
+
+            iLinesWritten++;
+
+            if( !pfnProgress(iLinesWritten / static_cast<double>(
+                                                 num_components * nYSize),
+                             nullptr, pProgressData) )
+            {
+                bRet = false;
+                break;
+            }
+        }
+
+        if( bFlushEnabled &&
+            (!bHasDoneSomething || (anCurLine[0] % TILE_CHUNK_SIZE) == 0) )
+        {
+            if (oCodeStream.ready_for_flush(poThreadEnv) )
+            {
+                CPLDebug("JP2KAK", "Calling oCodeStream.flush() at line %d",
+                          anCurLine[0]);
 
                 try
                 {
-#if KDU_MAJOR_VERSION >= 7
-                    engines[c].push(lines[c]);
-#else
-                    engines[c].push(lines[c], true);
-#endif
+                    oCodeStream.flush(layer_bytes, layer_count, nullptr,
+                                      true, bComseg, 0.0, poThreadEnv);
                 }
-                catch(...)
+                catch( ... )
                 {
-                    bRet = false;
-                    break;
-                }
-
-                iLinesWritten++;
-
-                if( !pfnProgress(iLinesWritten / static_cast<double>(
-                                                     num_components * nYSize),
-                                 nullptr, pProgressData) )
-                {
+                    CPLDebug("JP2KAK",
+                             "JP2KAKCreateCopy_WriteTile() - caught exception in oCodeStream.flush()");
                     bRet = false;
                     break;
                 }
             }
+            else
+            {
+                 CPLDebug("JP2KAK", "read_for_flush() is false at line %d.",
+                          anCurLine[0]);
+
+            }
         }
-        if( !bRet )
+
+        if( !bHasDoneSomething )
             break;
-
-        if( oCodeStream.ready_for_flush() && bFlushEnabled )
-        {
-            CPLDebug("JP2KAK", "Calling oCodeStream.flush() at line %d",
-                     std::min(nYSize, iLine + TILE_CHUNK_SIZE));
-            try
-            {
-                oCodeStream.flush(layer_bytes, layer_count, nullptr,
-                                  true, bComseg);
-            }
-            catch(...)
-            {
-                bRet = false;
-            }
-        }
-        else if( bFlushEnabled )
-        {
-            CPLDebug("JP2KAK", "read_for_flush() is false at line %d.", iLine);
-        }
     }
 
-    for( int c = 0; c < num_components; c++ )
-        engines[c].destroy();
-
-    delete[] engines;
-    delete[] lines;
+    if( poThreadEnv )
+    {
+        poThreadEnv->join(env_queue, true); // Joins with descendants only
+    }
+    engine.destroy(poThreadEnv);
 
     CPLFree(pabyBuffer);
 
-    if( poROIImage != nullptr )
-        delete poROIImage;
-
     return bRet;
-    // For some reason cppcheck thinks that engines and lines are leaking.
-    // cppcheck-suppress memleak
 }
 
 /************************************************************************/
@@ -2377,12 +2382,23 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     // Work out the precision.
     int nBits = 0;
 
-    if( CSLFetchNameValue( papszOptions, "NBITS" ) != nullptr )
-        nBits = atoi(CSLFetchNameValue(papszOptions, "NBITS"));
-    else if( poPrototypeBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE")
-             != nullptr )
-        nBits =
-            atoi(poPrototypeBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE"));
+    const char* pszNBITS = CSLFetchNameValue( papszOptions, "NBITS");
+    if( pszNBITS == nullptr )
+        pszNBITS = poPrototypeBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+    if( pszNBITS != nullptr )
+    {
+        nBits = atoi(pszNBITS);
+
+        const auto nDataTypeSizeBytes = GDALGetDataTypeSizeBytes(eType);
+        if( (nDataTypeSizeBytes == 1 && !(nBits <= 8)) ||
+            (nDataTypeSizeBytes == 2 && !(nBits >= 9 && nBits <= 16)) ||
+            (nDataTypeSizeBytes == 4 && !(nBits >= 17 && nBits <= 32)) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Wrong value for NBITS compared to data type");
+            return nullptr;
+        }
+    }
     else
     {
         nBits = GDALGetDataTypeSize(eType);
@@ -2478,6 +2494,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     // Do we have a high res region of interest?
     kdu_roi_image *poROIImage = nullptr;
+#ifdef KDU_HAS_ROI_RECT
     const char* pszROI = CSLFetchNameValue(papszOptions, "ROI");
     if( pszROI )
     {
@@ -2500,6 +2517,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             poROIImage = new kdu_roi_rect(oCodeStream, region);
         }
     }
+#endif
 
     // Set some particular parameters.
     oCodeStream.access_siz()->parse_string(
@@ -2794,64 +2812,256 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( bIsJP2 )
         jp2_out.open_codestream();
 
-    // Create one big tile, and a compressing engine, and line
-    // buffer for each component.
-    double dfPixelsDone = 0.0;
+    // Setup the thread environment.
+
+    int nNumThreads = atoi(CPLGetConfigOption("JP2KAK_THREADS", "-1"));
+    if( nNumThreads == -1 )
+        nNumThreads = kdu_get_num_processors() - 1;
+    if( nNumThreads > 1024 )
+        nNumThreads = 1024;
+
+    kdu_thread_env* poThreadEnv = nullptr;
+    if( nNumThreads > 0 )
+    {
+        poThreadEnv = new kdu_thread_env;
+        poThreadEnv->create();
+
+        for( int iThread=0; iThread < nNumThreads; iThread++ )
+        {
+            if( !poThreadEnv->add_thread() )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "JP2KAK_THREADS: Unable to create thread.");
+                break;
+            }
+        }
+        CPLDebug("JP2KAK", "Using %d threads.", nNumThreads);
+    }
+    else
+    {
+        CPLDebug("JP2KAK", "Operating in singlethreaded mode.");
+    }
+
+    bool bOK = true;
     const bool bFlushEnabled = CPLFetchBool(papszOptions, "FLUSH", true);
 
-    for( int iTileYOff = 0; iTileYOff < nYSize; iTileYOff += nTileYSize )
+
+    const int num_components = poSrcDS->GetRasterCount();
+    const int nDataTypeSizeBytes = GDALGetDataTypeSizeBytes(eType);
+
+    // Determine if we can use the kdu_stripe_compressor logic
+    const auto nMaxBufferSize = std::strtoull(
+        CPLGetConfigOption("JP2KAK_MAX_BUFFER_SIZE",
+                           CPLSPrintf(CPL_FRMT_GUIB, GDALGetCacheMax64() / 4)),
+        nullptr, 10);
+    const auto nLineBufferSize = static_cast<unsigned long long>(nXSize) *
+        num_components * nDataTypeSizeBytes;
+    const auto nNeededBufferSize = nLineBufferSize * nTileYSize;
+    const char* pszUseStripeCompressor = CPLGetConfigOption("JP2KAK_USE_STRIPE_COMPRESSOR", nullptr);
+    if( poROIImage == nullptr &&
+        pszUseStripeCompressor == nullptr &&
+        (nTileXSize < nXSize || nTileYSize < nYSize ) )
     {
-        for( int iTileXOff = 0; iTileXOff < nXSize; iTileXOff += nTileXSize )
+        // We want to be able to push a stripe of the raster width and tile height
+        if( nNeededBufferSize > nMaxBufferSize )
         {
-            kdu_tile oTile = oCodeStream.open_tile(
-                kdu_coords(iTileXOff / nTileXSize, iTileYOff / nTileYSize));
+            CPLDebug("JP2KAK",
+                     "Using kdu_multi_analysis because "
+                     "nNeededBufferSize = " CPL_FRMT_GUIB
+                     " is > JP2KAK_MAX_BUFFER_SIZE = " CPL_FRMT_GUIB,
+                     static_cast<GUIntBig>(nNeededBufferSize),
+                     static_cast<GUIntBig>(nMaxBufferSize));
+            pszUseStripeCompressor = "NO";
+        }
+    }
+    if( pszUseStripeCompressor == nullptr )
+        pszUseStripeCompressor = poROIImage == nullptr ? "YES" : "NO";
 
-            // Is this a partial tile on the right or bottom?
-            const int nThisTileXSize =
-                iTileXOff + nTileXSize < nXSize
-                ? nTileXSize
-                : nXSize - iTileXOff;
+    if( CPLTestBool(pszUseStripeCompressor) )
+    {
+        CPLDebug("JP2KAK", "Using stripe compressor");
 
-            const int nThisTileYSize =
-                iTileYOff + nTileYSize < nYSize
-                ? nTileYSize
-                : nYSize - iTileYOff;
+        kdu_stripe_compressor compressor;
+        compressor.start(oCodeStream, layer_count, layer_bytes.data(),
+                         /*const kdu_uint16 *layer_slopes=*/ nullptr,
+                         /*kdu_uint16 min_slope_threshold=*/ 0,
+                         /*bool no_auto_complexity_control=*/ false,
+                         /*bool force_precise=*/ false,
+                         /*bool record_layer_info_in_comment=*/ bComseg,
+                         /*double size_tolerance=*/ 0.0,
+                         /*int num_components=*/ 0,
+                         /*bool want_fastest=*/ false,
+                         /*kdu_thread_env *env=*/ poThreadEnv,
+                         /*kdu_thread_queue *env_queue=*/ nullptr);
 
-            // Setup scaled progress monitor.
+        std::vector<int> recommended_stripe_heights(num_components);
+        compressor.get_recommended_stripe_heights(
+          1,
+          std::max(1, static_cast<int>(std::min(nMaxBufferSize, nNeededBufferSize) / nLineBufferSize)),
+          &recommended_stripe_heights[0],
+          nullptr);
+        const int stripe_height = recommended_stripe_heights[0];
+        CPLDebug("JP2KAK", "stripe_height = %d", stripe_height);
+        GByte* pBuffer = static_cast<GByte*>(VSI_MALLOC3_VERBOSE(
+            num_components * nDataTypeSizeBytes, nXSize, stripe_height));
+        if( pBuffer == nullptr )
+            bOK = false;
+        std::vector<kdu_byte*> stripe_bufs(num_components);
+        std::vector<int> stripe_heights = recommended_stripe_heights;
+        std::vector<vector_safe_bool> is_signed(num_components);
+        std::vector<int> precisions(num_components);
+        for( int i = 0; i < num_components; ++i )
+        {
+            stripe_bufs[i] = pBuffer + nXSize * nDataTypeSizeBytes * i;
+            is_signed[i] = CPL_TO_BOOL(GDALDataTypeIsSigned(eType));
+            precisions[i] = nBits;
+        }
+        const int flush_period = bFlushEnabled ? TILE_CHUNK_SIZE : 0;
+        int nHeight = stripe_height;
 
-            const double dfPixelsDoneAfter =
-                dfPixelsDone + static_cast<double>(nThisTileXSize) * nThisTileYSize;
-
-            void *pScaledProgressData = GDALCreateScaledProgress(
-                dfPixelsDone / dfPixelsTotal, dfPixelsDoneAfter / dfPixelsTotal,
-                pfnProgress, pProgressData);
-
-            if( !JP2KAKCreateCopy_WriteTile(poSrcDS, oTile, poROIImage,
-                                            iTileXOff, iTileYOff,
-                                            nThisTileXSize, nThisTileYSize,
-                                            bReversible, nBits, eType,
-                                            oCodeStream, bFlushEnabled,
-                                            layer_bytes.data(), layer_count,
-                                            GDALScaledProgress,
-                                            pScaledProgressData, bComseg) )
+        for(int iY = 0; bOK && iY < nYSize; iY += stripe_height )
+        {
+            if( iY + nHeight > nYSize )
             {
-                GDALDestroyScaledProgress(pScaledProgressData);
-
-                oCodeStream.destroy();
-                poOutputFile->close();
-                VSIUnlink(pszFilename);
-                return nullptr;
+                nHeight = nYSize - iY;
+                for( int i = 0; i < num_components; ++i )
+                {
+                    stripe_heights[i] = nHeight;
+                }
+            }
+            if( poSrcDS->RasterIO(GF_Read, 0, iY, nXSize, nHeight,
+                                  pBuffer, nXSize, nHeight,
+                                  eType,
+                                  poSrcDS->GetRasterCount(), nullptr,
+                                  0, 0, 0, nullptr) != CE_None )
+            {
+                bOK = false;
+                break;
             }
 
-            GDALDestroyScaledProgress(pScaledProgressData);
-            dfPixelsDone = dfPixelsDoneAfter;
+            if( !pfnProgress((iY + nHeight) / static_cast<double>(nYSize),
+                             nullptr, pProgressData) )
+            {
+                bOK = false;
+                break;
+            }
 
-            oTile.close();
+            if( eType == GDT_Byte )
+                compressor.push_stripe(stripe_bufs.data(),
+                                       stripe_heights.data(),
+                                       /*const int *sample_gaps=*/ nullptr,
+                                       /*const int *row_gaps=*/ nullptr,
+                                       precisions.data(),
+                                       flush_period);
+            else if( nDataTypeSizeBytes == 2 )
+                compressor.push_stripe(reinterpret_cast<kdu_int16**>(stripe_bufs.data()),
+                                       stripe_heights.data(),
+                                       /*const int *sample_gaps=*/ nullptr,
+                                       /*const int *row_gaps=*/ nullptr,
+                                       precisions.data(),
+                                       &is_signed[0],
+                                       flush_period);
+            else
+                compressor.push_stripe(reinterpret_cast<kdu_int32**>(stripe_bufs.data()),
+                                       stripe_heights.data(),
+                                       /*const int *sample_gaps=*/ nullptr,
+                                       /*const int *row_gaps=*/ nullptr,
+                                       precisions.data(),
+                                       &is_signed[0],
+                                       flush_period);
         }
+
+        const bool bFinishOK = compressor.finish();
+        if( bOK && !bFinishOK )
+        {
+            // shouldn't happen unless we provided a wrong number of lines
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "compressor.finish() failed");
+        }
+        bOK &= bFinishOK;
+    }
+    else
+    {
+        // Iterate over tiles
+        double dfPixelsDone = 0.0;
+
+        for( int iTileYOff = 0; bOK && iTileYOff < nYSize; iTileYOff += nTileYSize )
+        {
+            for( int iTileXOff = 0; bOK && iTileXOff < nXSize; iTileXOff += nTileXSize )
+            {
+                kdu_tile oTile = oCodeStream.open_tile(
+                    kdu_coords(iTileXOff / nTileXSize, iTileYOff / nTileYSize), poThreadEnv);
+
+                // Is this a partial tile on the right or bottom?
+                const int nThisTileXSize =
+                    iTileXOff + nTileXSize < nXSize
+                    ? nTileXSize
+                    : nXSize - iTileXOff;
+
+                const int nThisTileYSize =
+                    iTileYOff + nTileYSize < nYSize
+                    ? nTileYSize
+                    : nYSize - iTileYOff;
+
+                // Setup scaled progress monitor.
+
+                const double dfPixelsDoneAfter =
+                    dfPixelsDone + static_cast<double>(nThisTileXSize) * nThisTileYSize;
+
+                void *pScaledProgressData = GDALCreateScaledProgress(
+                    dfPixelsDone / dfPixelsTotal, dfPixelsDoneAfter / dfPixelsTotal,
+                    pfnProgress, pProgressData);
+
+                if( !JP2KAKCreateCopy_WriteTile(poSrcDS, oTile, poThreadEnv, poROIImage,
+                                                iTileXOff, iTileYOff,
+                                                nThisTileXSize, nThisTileYSize,
+                                                nBits, eType,
+                                                oCodeStream, bFlushEnabled,
+                                                layer_bytes.data(), layer_count,
+                                                GDALScaledProgress,
+                                                pScaledProgressData, bComseg) )
+                {
+                    bOK = false;
+                }
+
+                GDALDestroyScaledProgress(pScaledProgressData);
+                dfPixelsDone = dfPixelsDoneAfter;
+
+                try
+                {
+                    oTile.close(poThreadEnv);
+                }
+                catch( ... )
+                {
+                    CPLDebug("JP2KAK", "CreateCopy() - caught exception in oTile.close()");
+                    bOK = false;
+                    break;
+                }
+            }
+        }
+
+        delete poROIImage;
+    }
+
+    if( poThreadEnv )
+    {
+        poThreadEnv->cs_terminate(oCodeStream);
+        poThreadEnv->destroy();
+        delete poThreadEnv;
     }
 
     // Finish flushing out results.
-    oCodeStream.flush(layer_bytes.data(), layer_count, nullptr, true, bComseg);
+    try
+    {
+        oCodeStream.flush(layer_bytes.data(), layer_count, nullptr, true,
+                          bComseg);
+    }
+    catch( ... )
+    {
+        CPLDebug("JP2KAK", "CreateCopy() - caught exception in oCodeStream.flush()");
+        bOK = false;
+    }
+
     oCodeStream.destroy();
 
     if( bIsJP2 )
@@ -2865,6 +3075,11 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
     oVSILTarget.close();
+    if( !bOK )
+    {
+        VSIUnlink(pszFilename);
+        return nullptr;
+    }
 
     if( !pfnProgress(1.0, nullptr, pProgressData) )
         return nullptr;
@@ -2936,7 +3151,9 @@ void GDALRegister_JP2KAK()
 "'Definition file to describe how a GMLJP2 v2 box should be generated. "
 "If set to YES, a minimal instance will be created'/>"
 "   <Option name='LAYERS' type='integer'/>"
+#ifdef KDU_HAS_ROI_RECT
 "   <Option name='ROI' type='string'/>"
+#endif
 "   <Option name='COMSEG' type='boolean' />"
 "   <Option name='FLUSH' type='boolean' />"
 "   <Option name='NBITS' type='int' description="

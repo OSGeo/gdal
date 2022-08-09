@@ -91,6 +91,7 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
         -DINT_MIN=-2147483648 \
         -DINT_MAX=2147483647 \
         -DUINT_MAX=4294967295U \
+        -DKDU_HAS_ROI_RECT \
         --include="${CPL_CONFIG_H}" \
         --include=port/cpl_port.h \
         -I "${CPL_CONFIG_H_DIR}" \
