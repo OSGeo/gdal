@@ -5,6 +5,17 @@ if (CMAKE_CXX_FLAGS)
   string(REPLACE "/WX " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ")
 endif ()
 
+list(APPEND GDAL_SWIG_COMMON_INTERFACE_FILES
+   ${PROJECT_SOURCE_DIR}/swig/include/java/callback.i
+   ${PROJECT_SOURCE_DIR}/swig/include/java/gdalconst_java.i
+   ${PROJECT_SOURCE_DIR}/swig/include/java/gdal_java.i
+   ${PROJECT_SOURCE_DIR}/swig/include/java/gnm_java.i
+   ${PROJECT_SOURCE_DIR}/swig/include/java/java_exceptions.i
+   ${PROJECT_SOURCE_DIR}/swig/include/java/ogr_java_extend.i
+   ${PROJECT_SOURCE_DIR}/swig/include/java/ogr_java.i
+   ${PROJECT_SOURCE_DIR}/swig/include/java/osr_java.i
+   ${PROJECT_SOURCE_DIR}/swig/include/java/typemaps_java.i)
+
 function (GDAL_JAVA_WRAP)
   set(_options CXX)
   set(_oneValueArgs TARGET)
