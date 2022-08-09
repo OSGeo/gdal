@@ -208,8 +208,8 @@ static int  GetSrcDstWin(DatasetProperty* psDP,
         *pdfSrcYSize = *pdfDstYSize / dfSrcToDstYSize;
     }
 
-    return *pdfSrcXSize >= 0 && *pdfDstXSize >= 0 &&
-           *pdfSrcYSize >= 0 && *pdfDstYSize >= 0;
+    return *pdfSrcXSize > 0 && *pdfDstXSize > 0 &&
+           *pdfSrcYSize > 0 && *pdfDstYSize > 0;
 }
 
 /************************************************************************/
