@@ -29,6 +29,8 @@
 #include "sigdemdataset.h"
 #include "rawdataset.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$")
 
 #ifdef CPL_IS_LSB
