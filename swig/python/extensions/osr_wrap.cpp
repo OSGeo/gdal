@@ -4077,12 +4077,6 @@ SWIGINTERN bool OGRCoordinateTransformationOptions_SetAreaOfInterest(OGRCoordina
         westLongitudeDeg, southLatitudeDeg,
         eastLongitudeDeg, northLatitudeDeg);
   }
-SWIGINTERN bool OGRCoordinateTransformationOptions_SetOperation(OGRCoordinateTransformationOptions *self,char const *operation){
-    return OCTCoordinateTransformationOptionsSetOperation(self, operation, false);
-  }
-SWIGINTERN bool OGRCoordinateTransformationOptions_SetDesiredAccuracy(OGRCoordinateTransformationOptions *self,double accuracy){
-    return OCTCoordinateTransformationOptionsSetDesiredAccuracy(self, accuracy);
-  }
 
 SWIGINTERN int
 SWIG_AsVal_bool (PyObject *obj, bool *val)
@@ -4097,6 +4091,12 @@ SWIG_AsVal_bool (PyObject *obj, bool *val)
   return SWIG_OK;
 }
 
+SWIGINTERN bool OGRCoordinateTransformationOptions_SetOperation(OGRCoordinateTransformationOptions *self,char const *operation,bool inverseCT=false){
+    return OCTCoordinateTransformationOptionsSetOperation(self, operation, inverseCT);
+  }
+SWIGINTERN bool OGRCoordinateTransformationOptions_SetDesiredAccuracy(OGRCoordinateTransformationOptions *self,double accuracy){
+    return OCTCoordinateTransformationOptionsSetDesiredAccuracy(self, accuracy);
+  }
 SWIGINTERN bool OGRCoordinateTransformationOptions_SetBallparkAllowed(OGRCoordinateTransformationOptions *self,bool allowBallpark){
     return OCTCoordinateTransformationOptionsSetBallparkAllowed(self, allowBallpark);
   }
@@ -4109,6 +4109,9 @@ SWIGINTERN OSRCoordinateTransformationShadow *new_OSRCoordinateTransformationSha
   }
 SWIGINTERN void delete_OSRCoordinateTransformationShadow(OSRCoordinateTransformationShadow *self){
     OCTDestroyCoordinateTransformation( self );
+  }
+SWIGINTERN OSRCoordinateTransformationShadow *OSRCoordinateTransformationShadow_GetInverse(OSRCoordinateTransformationShadow *self){
+    return OCTGetInverse(self);
   }
 SWIGINTERN void OSRCoordinateTransformationShadow_TransformPoint__SWIG_0(OSRCoordinateTransformationShadow *self,double inout[3]){
     if (self == NULL)
@@ -15254,15 +15257,18 @@ SWIGINTERN PyObject *_wrap_CoordinateTransformationOptions_SetOperation(PyObject
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   OGRCoordinateTransformationOptions *arg1 = (OGRCoordinateTransformationOptions *) 0 ;
   char *arg2 = (char *) 0 ;
+  bool arg3 = (bool) false ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   int res2 ;
   char *buf2 = 0 ;
   int alloc2 = 0 ;
-  PyObject *swig_obj[2] ;
+  bool val3 ;
+  int ecode3 = 0 ;
+  PyObject *swig_obj[3] ;
   bool result;
   
-  if (!SWIG_Python_UnpackTuple(args, "CoordinateTransformationOptions_SetOperation", 2, 2, swig_obj)) SWIG_fail;
+  if (!SWIG_Python_UnpackTuple(args, "CoordinateTransformationOptions_SetOperation", 2, 3, swig_obj)) SWIG_fail;
   res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_OGRCoordinateTransformationOptions, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CoordinateTransformationOptions_SetOperation" "', argument " "1"" of type '" "OGRCoordinateTransformationOptions *""'"); 
@@ -15273,11 +15279,18 @@ SWIGINTERN PyObject *_wrap_CoordinateTransformationOptions_SetOperation(PyObject
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "CoordinateTransformationOptions_SetOperation" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = reinterpret_cast< char * >(buf2);
+  if (swig_obj[2]) {
+    ecode3 = SWIG_AsVal_bool(swig_obj[2], &val3);
+    if (!SWIG_IsOK(ecode3)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "CoordinateTransformationOptions_SetOperation" "', argument " "3"" of type '" "bool""'");
+    } 
+    arg3 = static_cast< bool >(val3);
+  }
   {
     if ( bUseExceptions ) {
       ClearErrorState();
     }
-    result = (bool)OGRCoordinateTransformationOptions_SetOperation(arg1,(char const *)arg2);
+    result = (bool)OGRCoordinateTransformationOptions_SetOperation(arg1,(char const *)arg2,arg3);
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -15570,6 +15583,43 @@ SWIGINTERN PyObject *_wrap_delete_CoordinateTransformation(PyObject *SWIGUNUSEDP
 #endif
   }
   resultobj = SWIG_Py_Void();
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_CoordinateTransformation_GetInverse(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCoordinateTransformationShadow *arg1 = (OSRCoordinateTransformationShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  OSRCoordinateTransformationShadow *result = 0 ;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_OSRCoordinateTransformationShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CoordinateTransformation_GetInverse" "', argument " "1"" of type '" "OSRCoordinateTransformationShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCoordinateTransformationShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (OSRCoordinateTransformationShadow *)OSRCoordinateTransformationShadow_GetInverse(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OSRCoordinateTransformationShadow, SWIG_POINTER_OWN |  0 );
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
 fail:
@@ -18102,7 +18152,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "new_CoordinateTransformationOptions", _wrap_new_CoordinateTransformationOptions, METH_NOARGS, "new_CoordinateTransformationOptions() -> CoordinateTransformationOptions"},
 	 { "delete_CoordinateTransformationOptions", _wrap_delete_CoordinateTransformationOptions, METH_O, "delete_CoordinateTransformationOptions(CoordinateTransformationOptions self)"},
 	 { "CoordinateTransformationOptions_SetAreaOfInterest", _wrap_CoordinateTransformationOptions_SetAreaOfInterest, METH_VARARGS, "CoordinateTransformationOptions_SetAreaOfInterest(CoordinateTransformationOptions self, double westLongitudeDeg, double southLatitudeDeg, double eastLongitudeDeg, double northLatitudeDeg) -> bool"},
-	 { "CoordinateTransformationOptions_SetOperation", _wrap_CoordinateTransformationOptions_SetOperation, METH_VARARGS, "CoordinateTransformationOptions_SetOperation(CoordinateTransformationOptions self, char const * operation) -> bool"},
+	 { "CoordinateTransformationOptions_SetOperation", _wrap_CoordinateTransformationOptions_SetOperation, METH_VARARGS, "CoordinateTransformationOptions_SetOperation(CoordinateTransformationOptions self, char const * operation, bool inverseCT=False) -> bool"},
 	 { "CoordinateTransformationOptions_SetDesiredAccuracy", _wrap_CoordinateTransformationOptions_SetDesiredAccuracy, METH_VARARGS, "CoordinateTransformationOptions_SetDesiredAccuracy(CoordinateTransformationOptions self, double accuracy) -> bool"},
 	 { "CoordinateTransformationOptions_SetBallparkAllowed", _wrap_CoordinateTransformationOptions_SetBallparkAllowed, METH_VARARGS, "CoordinateTransformationOptions_SetBallparkAllowed(CoordinateTransformationOptions self, bool allowBallpark) -> bool"},
 	 { "CoordinateTransformationOptions_swigregister", CoordinateTransformationOptions_swigregister, METH_O, NULL},
@@ -18112,6 +18162,7 @@ static PyMethodDef SwigMethods[] = {
 		"new_CoordinateTransformation(SpatialReference src, SpatialReference dst, CoordinateTransformationOptions options) -> CoordinateTransformation\n"
 		""},
 	 { "delete_CoordinateTransformation", _wrap_delete_CoordinateTransformation, METH_O, "delete_CoordinateTransformation(CoordinateTransformation self)"},
+	 { "CoordinateTransformation_GetInverse", _wrap_CoordinateTransformation_GetInverse, METH_O, "CoordinateTransformation_GetInverse(CoordinateTransformation self) -> CoordinateTransformation"},
 	 { "CoordinateTransformation_TransformPoint", _wrap_CoordinateTransformation_TransformPoint, METH_VARARGS, "\n"
 		"CoordinateTransformation_TransformPoint(CoordinateTransformation self, double [3] inout)\n"
 		"CoordinateTransformation_TransformPoint(CoordinateTransformation self, double [4] inout)\n"
