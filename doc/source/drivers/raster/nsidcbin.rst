@@ -8,6 +8,8 @@ NSIDCbin -- National Snow and Ice Data Centre Sea Ice Concentrations
 
 .. built_in_by_default::
 
+.. versionadded:: 3.6
+
 
 Supported by GDAL for read access. This format is a raw binary format for the
 Nimbus-7 SMMR and DMSP SSM/I-SSMIS Passive Microwave Data sea ice
