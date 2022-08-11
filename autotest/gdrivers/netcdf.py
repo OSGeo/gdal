@@ -507,6 +507,19 @@ def test_netcdf_cf_lon_lat_with_coordinates_no_crs():
     gt = ds.GetGeoTransform()
     assert gt == pytest.approx([-0.5, 1.0, 0.0, 42.5, 0.0, -1.0], rel=1e-5)
 
+
+###############################################################################
+# Check that we get a geotransform from a file with variable indexed by
+# variables called latitude, longitude but without CF conventions
+
+
+def test_netcdf_longitude_latitude():
+
+    ds = gdal.Open('data/netcdf/longitude_latitude.nc')
+
+    gt = ds.GetGeoTransform()
+    assert gt == pytest.approx([-180.04166666666666, 0.08333333333333333, 0.0, -79.79167938232422, 0.0, -0.0833282470703125], rel=1e-5)
+
 ###############################################################################
 # check for scale/offset set/get.
 
