@@ -1,20 +1,3 @@
-// -----------------------------------------------------------------------------
-// DONE
-//
-// - implement Identify()
-// - implement GetScale() see the tute https://gdal.org/tutorials/raster_driver_tut.html#rawdataset-rawrasterband-helper-classes
-// - save all header metadata and file name info
-// - apply Scaling and control
-// - implement daily, monthly, south, north
-// - documentation
-// - tests
-// TODO
-// - scan driver impl tutorial for more
-// - implement other related binary formats (AMSR etc)
-// - worry about old NSDIC grid vs new (the different EPSG, Hughes etc.)
-// - allow zero or missing for ice
-// -----------------------------------------------------------------------------
-
 /******************************************************************************
  *
  * Project:  GDAL
