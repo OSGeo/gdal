@@ -41,9 +41,13 @@ Driver capabilities
 Example
 --------
 
-For example, we want to read monthly data from September 2019:
+For example, we want to read monthly data from September 2019, with data from this source (requires authentication).
+
+<https://n5eil01u.ecs.nsidc.org/PM/NSIDC-0051.001/2018.09.01/nt_201809_f17_v1.1_s.bin>
+
 
 ::
+
 
    $ gdalinfo nt_201809_f17_v1.1_s.bin
 Driver: NSIDCbin/NSIDCbin
