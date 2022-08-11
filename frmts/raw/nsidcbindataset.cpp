@@ -186,9 +186,8 @@ double NSIDCbinRasterBand::GetNoDataValue( int *pbSuccess )
 
 {
 
-  if (!pbSuccess) {
-    //nothing
-  }
+  if( pbSuccess != nullptr )
+    *pbSuccess = TRUE;
   // NSIDCbinDataset *poPDS = reinterpret_cast<NSIDCbinDataset *>( poDS );
   // const char  *pszLine = poPDS->sHeader.missing_int;
   //
