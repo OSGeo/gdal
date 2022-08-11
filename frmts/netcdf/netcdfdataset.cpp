@@ -4003,12 +4003,19 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                     !NCDFIsVarLatitude(nGroupId, nVarDimXID, nullptr) &&
                     !NCDFIsVarProjectionY(nGroupId, nVarDimXID, nullptr) )
                 {
-                    CPLDebug("netCDF",
-                             "Georeferencing ignored due to non-specific "
-                             "enough X axis name. "
-                             "Set GDAL_NETCDF_IGNORE_XY_AXIS_NAME_CHECKS=YES "
-                             "as configuration option to bypass this check");
-                    nVarDimXID = -1;
+                    char szVarNameX[NC_MAX_NAME + 1];
+                    CPL_IGNORE_RET_VAL(nc_inq_varname(nGroupId, nVarDimXID, szVarNameX));
+                    if( !(ndims == 1 &&
+                          (EQUAL(szVarNameX, CF_LONGITUDE_STD_NAME) ||
+                           EQUAL(szVarNameX, CF_LONGITUDE_VAR_NAME))) )
+                    {
+                        CPLDebug("netCDF",
+                                 "Georeferencing ignored due to non-specific "
+                                 "enough X axis name. "
+                                 "Set GDAL_NETCDF_IGNORE_XY_AXIS_NAME_CHECKS=YES "
+                                 "as configuration option to bypass this check");
+                        nVarDimXID = -1;
+                    }
                 }
             }
         }
@@ -4027,12 +4034,19 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                     !NCDFIsVarLongitude(nGroupId, nVarDimYID, nullptr) &&
                     !NCDFIsVarProjectionX(nGroupId, nVarDimYID, nullptr) )
                 {
-                    CPLDebug("netCDF",
-                             "Georeferencing ignored due to non-specific "
-                             "enough Y axis name. "
-                             "Set GDAL_NETCDF_IGNORE_XY_AXIS_NAME_CHECKS=YES "
-                             "as configuration option to bypass this check");
-                    nVarDimYID = -1;
+                    char szVarNameY[NC_MAX_NAME + 1];
+                    CPL_IGNORE_RET_VAL(nc_inq_varname(nGroupId, nVarDimYID, szVarNameY));
+                    if( !(ndims == 1 &&
+                          (EQUAL(szVarNameY, CF_LATITUDE_STD_NAME) ||
+                           EQUAL(szVarNameY, CF_LATITUDE_VAR_NAME))) )
+                    {
+                        CPLDebug("netCDF",
+                                 "Georeferencing ignored due to non-specific "
+                                 "enough Y axis name. "
+                                 "Set GDAL_NETCDF_IGNORE_XY_AXIS_NAME_CHECKS=YES "
+                                 "as configuration option to bypass this check");
+                        nVarDimYID = -1;
+                    }
                 }
             }
         }
