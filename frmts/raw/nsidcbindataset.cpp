@@ -95,7 +95,7 @@ class NSIDCbinDataset final: public GDALPamDataset
 
     };
 
-    VSILFILE    *fp;
+    VSILFILE    *fp = nullptr;
     CPLString    osSRS{};
     NSIDCbinHeader  sHeader{};
     GDALDataType eRasterDataType;
