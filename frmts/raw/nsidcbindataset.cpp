@@ -290,7 +290,6 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLError( CE_Failure, CPLE_FileIO,
               "Attempt to read 300 byte header filed on file %s\n",
               poOpenInfo->pszFilename );
-    delete poDS;
     return nullptr;
   }
 
