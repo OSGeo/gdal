@@ -276,7 +276,7 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
   /* -------------------------------------------------------------------- */
   /*      Create a corresponding GDALDataset.                             */
   /* -------------------------------------------------------------------- */
-  NSIDCbinDataset *poDS = new NSIDCbinDataset();
+  auto poDS = cpl::make_unique<NSIDCbinDataset>();
 
   poDS->eAccess = poOpenInfo->eAccess;
   poDS->fp = poOpenInfo->fpL;
