@@ -273,7 +273,7 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
 
   // Confirm that the header is compatible with a NSIDC dataset.
   if( !Identify(poOpenInfo) )
-    return NULL;
+    return nullptr;
 
   // Confirm the requested access is supported.
   if( poOpenInfo->eAccess == GA_Update )
@@ -281,13 +281,13 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLError(CE_Failure, CPLE_NotSupported,
              "The NSIDCbin driver does not support update access to existing "
              "datasets.");
-    return NULL;
+    return nullptr;
   }
 
   // Check that the file pointer from GDALOpenInfo* is available
-  if( poOpenInfo->fpL == NULL )
+  if( poOpenInfo->fpL == nullptr )
   {
-    return NULL;
+    return nullptr;
   }
 
   /* -------------------------------------------------------------------- */
