@@ -1844,10 +1844,13 @@ OGRFieldDomainH OGR_CodedFldDomain_Create(const char* pszName,
 
 OGRCodedFieldDomain* OGRCodedFieldDomain::Clone() const
 {
-    return cpl::down_cast<OGRCodedFieldDomain*>(
+    auto poDomain = cpl::down_cast<OGRCodedFieldDomain*>(
             OGRFieldDomain::FromHandle(OGR_CodedFldDomain_Create(
                 m_osName.c_str(), m_osDescription.c_str(),
                 m_eFieldType, m_eFieldSubType, m_asValues.data())));
+    poDomain->SetMergePolicy(m_eMergePolicy);
+    poDomain->SetSplitPolicy(m_eSplitPolicy);
+    return poDomain;
 }
 
 /************************************************************************/

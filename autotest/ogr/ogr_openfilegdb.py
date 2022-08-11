@@ -62,7 +62,7 @@ ogrtest.openfilegdb_datalist = [["none", ogr.wkbNone, None],
 
 
 ogrtest.openfilegdb_datalist_m = [["pointm", ogr.wkbPointM, "POINT M (1 2 3)"],
-                                  ["pointzm", ogr.wkbPointM, "POINT ZM (1 2 3 4)"],
+                                  ["pointzm", ogr.wkbPointZM, "POINT ZM (1 2 3 4)"],
                                   ["multipointm", ogr.wkbMultiPointM, "MULTIPOINT M ((1 2 3),(4 5 6))"],
                                   ["multipointzm", ogr.wkbMultiPointZM, "MULTIPOINT ZM ((1 2 3 4),(5 6 7 8))"],
                                   ["linestringm", ogr.wkbLineStringM, "LINESTRING M (1 2 3,4 5 6)", "MULTILINESTRING M ((1 2 3,4 5 6))"],
@@ -118,7 +118,7 @@ def ogr_openfilegdb_make_test_data():
         shutil.rmtree("data/filegdb/testopenfilegdb.gdb")
     except OSError:
         pass
-    ds = ogrtest.fgdb_drv.CreateDataSource('data/filegdb/testopenfilegdb.gdb')
+    ds = ogr.GetDriverByName('FileGDB').CreateDataSource('data/filegdb/testopenfilegdb.gdb')
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput("WGS84")
@@ -151,7 +151,7 @@ def ogr_openfilegdb_make_test_data():
             if data[1] != ogr.wkbNone and data[2] is not None:
                 feat.SetGeometry(ogr.CreateGeometryFromWkt(data[2]))
             feat.SetField("id", i + 1)
-            feat.SetField("str", "foo_\xc3\xa9")
+            feat.SetField("str", "foo_é")
             feat.SetField("smallint", -13)
             feat.SetField("int", 123)
             feat.SetField("float", 1.5)
@@ -465,13 +465,13 @@ def test_ogr_openfilegdb_4():
              ('id IS NULL', []),
              ('nullint IS NOT NULL', []),
              ('nullint IS NULL', [1, 2, 3, 4, 5]),
-             ("str = 'foo_e'", []),
-             ("str = 'foo_é'", [1, 2, 3, 4, 5]),
-             ("str <= 'foo_é'", [1, 2, 3, 4, 5]),
-             ("str >= 'foo_é'", [1, 2, 3, 4, 5]),
-             ("str <> 'foo_é'", []),
-             ("str < 'foo_é'", []),
-             ("str > 'foo_é'", []),
+             ("str = 'foo_e'", [], 1),
+             ("str = 'foo_é'", [1, 2, 3, 4, 5], 1),
+             ("str <= 'foo_é'", [1, 2, 3, 4, 5], 0),
+             ("str >= 'foo_é'", [1, 2, 3, 4, 5], 1),
+             ("str <> 'foo_é'", [], 0),
+             ("str < 'foo_é'", [], 0),
+             ("str > 'foo_é'", [], 0),
              ('smallint = -13', [1, 2, 3, 4, 5]),
              ('smallint <= -13', [1, 2, 3, 4, 5]),
              ('smallint >= -13', [1, 2, 3, 4, 5]),
@@ -522,7 +522,7 @@ def test_ogr_openfilegdb_4():
              ('float <= 1.5 OR float >= 1.5', [1, 2, 3, 4, 5]),
              ('float < 1.5 OR float > 2', []),
              ('float < 1 OR float > 2.5', []),
-             ("str < 'foo_é' OR str > 'z'", []),
+             ("str < 'foo_é' OR str > 'z'", [], 0),
              ("adate < '2013/12/26 12:34:56' OR adate > '2014/01/01'", []),
              ("id = 1 AND id = -1", []),
              ("id = -1 AND id = 1", []),
@@ -622,6 +622,53 @@ def test_ogr_openfilegdb_4():
     ds = None
 
 ###############################################################################
+# Test use of attribute indexes on truncated strings
+
+
+def test_ogr_openfilegdb_str_indexed_truncated():
+
+    ds = ogr.Open('data/filegdb/test_str_indexed_truncated.gdb')
+
+    lyr = ds.GetLayerByName('test')
+
+    IDX_NOT_USED = 0
+    IDX_USED = 1
+
+    tests = [("str = 'a'", [1], IDX_USED),
+             ("str = 'aa'", [2], IDX_USED),
+             ("str != 'aa'", [1, 3], IDX_NOT_USED),
+             ("str = 'aaa'", [3], IDX_USED),
+             ("str >= 'aaa'", [3], IDX_USED),
+             ("str > 'aaa'", [], IDX_NOT_USED),
+             ("str > 'aa_'", [3], IDX_NOT_USED),
+             ("str <= 'aab'", [1, 2, 3], IDX_NOT_USED),
+             ("str = 'aaa '", [], IDX_USED),
+             ("str != 'aaa '", [1, 2, 3], IDX_NOT_USED),
+             ("str <= 'aaa '", [1, 2, 3], IDX_NOT_USED),
+             ("str <= 'aaaX'", [1, 2, 3], IDX_NOT_USED),
+             ("str >= 'aaa '", [], IDX_USED),
+             ("str = 'aaaX'", [], IDX_USED),
+             ("str = 'aaaXX'", [], IDX_USED),
+             ("str = 'aaa  '", [], IDX_USED),
+             ("str IN ('a', 'b')", [1], IDX_USED),
+             ("str IN ('aaa')", [3], IDX_USED),
+             ("str IN ('aaa', 'aaa ')", [3], IDX_USED),
+             ("str IN ('aaa ')", [], IDX_USED),
+             ("str IN ('aaaX')", [], IDX_USED),
+             ("str IN ('aaaXX')", [], IDX_USED),
+            ]
+    for where_clause, fids, expected_attr_index_use in tests:
+
+        lyr.SetAttributeFilter(where_clause)
+        sql_lyr = ds.ExecuteSQL('GetLayerAttrIndexUse %s' % lyr.GetName())
+        attr_index_use = int(sql_lyr.GetNextFeature().GetField(0))
+        ds.ReleaseResultSet(sql_lyr)
+        assert attr_index_use == expected_attr_index_use, \
+            (where_clause, fids, expected_attr_index_use)
+        assert [f.GetFID() for f in lyr] == fids, (where_clause, fids)
+
+
+###############################################################################
 # Test opening an unzipped dataset
 
 
@@ -701,6 +748,14 @@ def test_ogr_openfilegdb_7():
         ("select id, str from point order by id desc", 5, 5, 1),
         ("select * from point where id = 1 order by id", 1, 1, 1),
         ("select * from big_layer order by real", 86 + 3 * 85, 1, 1),
+        ("select * from big_layer order by real limit 0", 0, None, 1),
+        ("select * from big_layer order by real offset 10000", 0, None, 1),
+        ("select * from big_layer order by real limit 1", 1, 1, 1),
+        ("select * from big_layer order by real limit 1 offset 0", 1, 1, 1),
+        ("select * from big_layer order by real limit 1 offset 1", 1, 5, 1),
+        ("select * from big_layer order by real limit 2", 2, 1, 1),
+        ("select * from big_layer order by real limit 100000", 86 + 3 * 85, 1, 1),
+        ("select * from big_layer order by real limit 100000 offset 1", 86 + 3 * 85 - 1, 5, 1),
         ("select * from big_layer order by real desc", 86 + 3 * 85, 4 * 85, 1),
         # Invalid :
         ("select foo from", None, None, None),
@@ -736,10 +791,14 @@ def test_ogr_openfilegdb_7():
                 ds.ReleaseResultSet(sql_lyr)
                 pytest.fail(sql, feat_count, first_fid)
             feat = sql_lyr.GetNextFeature()
-            if feat.GetFID() != first_fid:
-                ds.ReleaseResultSet(sql_lyr)
-                feat.DumpReadable()
-                pytest.fail(sql, feat_count, first_fid)
+            if feat_count > 0:
+                if feat.GetFID() != first_fid:
+                    ds.ReleaseResultSet(sql_lyr)
+                    feat.DumpReadable()
+                    pytest.fail(sql, feat_count, first_fid)
+            else:
+                assert first_fid is None
+                assert feat is None
         ds.ReleaseResultSet(sql_lyr)
 
         sql_lyr = ds.ExecuteSQL('GetLastSQLUsedOptimizedImplementation')
@@ -1458,16 +1517,12 @@ def test_ogr_fgdb_alias():
 ###############################################################################
 # Test reading field domains
 
-
-def test_ogr_openfilegdb_read_domains():
-
-    ds = gdal.OpenEx('data/filegdb/Domains.gdb', gdal.OF_VECTOR)
+def _check_domains(ds):
 
     assert set(ds.GetFieldDomainNames()) == {'MedianType', 'RoadSurfaceType', 'SpeedLimit'}
 
     with gdaltest.error_handler():
         assert ds.GetFieldDomain('i_dont_exist') is None
-
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
@@ -1495,6 +1550,62 @@ def test_ogr_openfilegdb_read_domains():
     assert domain.GetFieldType() == fld_defn.GetType()
     assert domain.GetFieldSubType() == fld_defn.GetSubType()
     assert domain.GetEnumeration() == {'0': 'None', '1': 'Cement'}
+
+
+###############################################################################
+# Test reading field domains
+
+
+def test_ogr_openfilegdb_read_domains():
+
+    ds = gdal.OpenEx('data/filegdb/Domains.gdb', gdal.OF_VECTOR)
+    _check_domains(ds)
+
+
+###############################################################################
+# Test writing field domains
+
+
+def test_ogr_openfilegdb_write_domains_from_other_gdb():
+
+    out_dir = "tmp/test_ogr_fgdb_write_domains.gdb"
+    try:
+        shutil.rmtree(out_dir)
+    except OSError:
+        pass
+
+    ds = gdal.VectorTranslate(out_dir, 'data/filegdb/Domains.gdb',
+                              options = '-f OpenFileGDB')
+    _check_domains(ds)
+
+    assert ds.TestCapability(ogr.ODsCAddFieldDomain) == 1
+    assert ds.TestCapability(ogr.ODsCDeleteFieldDomain) == 1
+    assert ds.TestCapability(ogr.ODsCUpdateFieldDomain) == 1
+
+    with gdaltest.error_handler():
+        assert not ds.DeleteFieldDomain('not_existing')
+
+    domain = ogr.CreateCodedFieldDomain('unused_domain', 'desc', ogr.OFTInteger, ogr.OFSTNone, {1: "one", "2": None})
+    assert ds.AddFieldDomain(domain)
+    assert ds.DeleteFieldDomain('unused_domain')
+    domain = ds.GetFieldDomain('unused_domain')
+    assert domain is None
+
+    domain = ogr.CreateRangeFieldDomain('SpeedLimit', 'desc', ogr.OFTInteger, ogr.OFSTNone, 1, True, 2, True)
+    assert ds.UpdateFieldDomain(domain)
+
+    ds = None
+
+    ds = gdal.OpenEx(out_dir, allowed_drivers = ['OpenFileGDB'])
+    assert ds.GetFieldDomain('unused_domain') is None
+    domain = ds.GetFieldDomain('SpeedLimit')
+    assert domain.GetDescription() == 'desc'
+    ds = None
+
+    try:
+        shutil.rmtree(out_dir)
+    except OSError:
+        pass
 
 
 ###############################################################################
@@ -1678,6 +1789,151 @@ def test_ogr_openfilegdb_inconsistent_crs_feature_dataset_and_feature_table():
     srs = lyr.GetSpatialRef()
     assert srs is not None
     assert srs.GetAuthorityCode(None) == '4326'
+
+
+###############################################################################
+# Test reading a .spx file with the value_count field at 0
+# (https://github.com/OSGeo/gdal/issues/5888)
+
+
+def test_ogr_openfilegdb_spx_zero_in_value_count_trailer():
+    ds = ogr.Open('data/filegdb/spx_zero_in_value_count_trailer.gdb')
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    lyr.SetSpatialFilterRect(1,1,2,2)
+    assert lyr.GetFeatureCount() == 1
+
+
+###############################################################################
+# Test reading .gdb with LengthFieldName / AreaFieldName
+
+
+def test_ogr_openfilegdb_shape_length_shape_area_as_default_in_field_defn():
+    ds = ogr.Open('data/filegdb/filegdb_polygonzm_m_not_closing_with_curves.gdb')
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    assert lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('Shape_Area')).GetDefault() == 'FILEGEODATABASE_SHAPE_AREA'
+    assert lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('Shape_Length')).GetDefault() == 'FILEGEODATABASE_SHAPE_LENGTH'
+
+
+###############################################################################
+# Test reading relationships
+
+
+def test_ogr_openfilegdb_read_relationships():
+    # no relationships
+    ds = gdal.OpenEx('data/filegdb/Domains.gdb', gdal.OF_VECTOR)
+    assert ds.GetRelationshipNames() is None
+
+    # has relationships
+    ds = gdal.OpenEx('data/filegdb/relationships.gdb', gdal.OF_VECTOR)
+    assert set(ds.GetRelationshipNames()) == {'composite_many_to_many',
+                                              'composite_one_to_many',
+                                              'composite_one_to_one',
+                                              'simple_attributed',
+                                              'simple_backward_message_direction',
+                                              'simple_both_message_direction',
+                                              'simple_forward_message_direction',
+                                              'simple_many_to_many',
+                                              'simple_one_to_many',
+                                              'simple_relationship_one_to_one',
+                                              'points__ATTACHREL'}
+
+    assert ds.GetRelationship('xxxx') is None
+
+    rel = ds.GetRelationship('simple_relationship_one_to_one')
+    assert rel is not None
+    assert rel.GetName() == 'simple_relationship_one_to_one'
+    assert rel.GetLeftTableName() == 'table1'
+    assert rel.GetRightTableName() == 'table2'
+    assert rel.GetMappingTableName() == ''
+    assert rel.GetCardinality() == gdal.GRC_ONE_TO_ONE
+    assert rel.GetType() == gdal.GRT_ASSOCIATION
+    assert rel.GetLeftTableFields() == ['pk']
+    assert rel.GetRightTableFields() == ['parent_pk']
+    assert rel.GetLeftMappingTableFields() is None
+    assert rel.GetRightMappingTableFields() is None
+    assert rel.GetForwardPathLabel() == 'my forward path label'
+    assert rel.GetBackwardPathLabel() == 'my backward path label'
+    assert rel.GetRelatedTableType() == 'feature'
+
+    rel = ds.GetRelationship('simple_one_to_many')
+    assert rel is not None
+    assert rel.GetName() == 'simple_one_to_many'
+    assert rel.GetLeftTableName() == 'table1'
+    assert rel.GetRightTableName() == 'table2'
+    assert rel.GetMappingTableName() == ''
+    assert rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
+    assert rel.GetType() == gdal.GRT_ASSOCIATION
+    assert rel.GetLeftTableFields() == ['pk']
+    assert rel.GetRightTableFields() == ['parent_pk']
+    assert rel.GetRelatedTableType() == 'feature'
+
+    rel = ds.GetRelationship('simple_many_to_many')
+    assert rel is not None
+    assert rel.GetName() == 'simple_many_to_many'
+    assert rel.GetLeftTableName() == 'table1'
+    assert rel.GetRightTableName() == 'table2'
+    assert rel.GetMappingTableName() == 'simple_many_to_many'
+    assert rel.GetCardinality() == gdal.GRC_MANY_TO_MANY
+    assert rel.GetType() == gdal.GRT_ASSOCIATION
+    assert rel.GetLeftTableFields() == ['pk']
+    assert rel.GetLeftMappingTableFields() == ['origin_foreign_key']
+    assert rel.GetRightTableFields() == ['parent_pk']
+    assert rel.GetRightMappingTableFields() == ['destination_foreign_key']
+    assert rel.GetRelatedTableType() == 'feature'
+
+    rel = ds.GetRelationship('composite_one_to_one')
+    assert rel is not None
+    assert rel.GetName() == 'composite_one_to_one'
+    assert rel.GetLeftTableName() == 'table1'
+    assert rel.GetRightTableName() == 'table3'
+    assert rel.GetMappingTableName() == ''
+    assert rel.GetCardinality() == gdal.GRC_ONE_TO_ONE
+    assert rel.GetType() == gdal.GRT_COMPOSITE
+    assert rel.GetLeftTableFields() == ['pk']
+    assert rel.GetRightTableFields() == ['parent_pk']
+    assert rel.GetRelatedTableType() == 'feature'
+
+    rel = ds.GetRelationship('composite_one_to_many')
+    assert rel is not None
+    assert rel.GetName() == 'composite_one_to_many'
+    assert rel.GetLeftTableName() == 'table5'
+    assert rel.GetRightTableName() == 'table4'
+    assert rel.GetMappingTableName() == ''
+    assert rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
+    assert rel.GetType() == gdal.GRT_COMPOSITE
+    assert rel.GetLeftTableFields() == ['pk']
+    assert rel.GetRightTableFields() == ['parent_pk']
+    assert rel.GetRelatedTableType() == 'feature'
+
+    rel = ds.GetRelationship('composite_many_to_many')
+    assert rel is not None
+    assert rel.GetName() == 'composite_many_to_many'
+    assert rel.GetLeftTableName() == 'table6'
+    assert rel.GetRightTableName() == 'table7'
+    assert rel.GetMappingTableName() == 'composite_many_to_many'
+    assert rel.GetCardinality() == gdal.GRC_MANY_TO_MANY
+    assert rel.GetType() == gdal.GRT_COMPOSITE
+    assert rel.GetLeftTableFields() == ['pk']
+    assert rel.GetLeftMappingTableFields() == ['origin_foreign_key']
+    assert rel.GetRightTableFields() == ['parent_pk']
+    assert rel.GetRightMappingTableFields() == ['dest_foreign_key']
+    assert rel.GetRelatedTableType() == 'feature'
+
+    rel = ds.GetRelationship('points__ATTACHREL')
+    assert rel is not None
+    assert rel.GetName() == 'points__ATTACHREL'
+    assert rel.GetLeftTableName() == 'points'
+    assert rel.GetRightTableName() == 'points__ATTACH'
+    assert rel.GetMappingTableName() == ''
+    assert rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
+    assert rel.GetType() == gdal.GRT_COMPOSITE
+    assert rel.GetLeftTableFields() == ['OBJECTID']
+    assert rel.GetRightTableFields() == ['REL_OBJECTID']
+    assert rel.GetForwardPathLabel() == 'attachment'
+    assert rel.GetBackwardPathLabel() == 'object'
+    assert rel.GetRelatedTableType() == 'media'
 
 
 ###############################################################################

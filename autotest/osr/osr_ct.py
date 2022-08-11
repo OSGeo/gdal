@@ -32,7 +32,6 @@
 ###############################################################################
 
 import math
-import sys
 
 from osgeo import gdal
 from osgeo import osr
@@ -338,11 +337,27 @@ def test_osr_ct_towgs84_both_side():
 def test_osr_ct_options_operation():
 
     options = osr.CoordinateTransformationOptions()
-    assert options.SetOperation('+proj=affine +s11=-1')
+    assert options.SetOperation('+proj=affine +xoff=1')
     ct = osr.CoordinateTransformation(None, None, options)
     assert ct
     x, y, z = ct.TransformPoint(1, 2, 3)
-    assert x == -1
+    assert x == 2
+    assert y == 2
+    assert z == 3
+
+    ct_inverse = ct.GetInverse()
+    x, y, z = ct_inverse.TransformPoint(1, 2, 3)
+    assert x == 0
+    assert y == 2
+    assert z == 3
+
+    options = osr.CoordinateTransformationOptions()
+    # inverse coordinate operation
+    assert options.SetOperation('+proj=affine +xoff=1', True)
+    ct = osr.CoordinateTransformation(None, None, options)
+    assert ct
+    x, y, z = ct.TransformPoint(1, 2, 3)
+    assert x == 0
     assert y == 2
     assert z == 3
 
@@ -372,21 +387,25 @@ def test_osr_ct_options_area_of_interest():
     assert x == pytest.approx(40.5, abs=1e-3)
 
 
-    x, y, z = ct.TransformPoint(0,0,0)
-    if sys.platform == 'darwin':
-        print("ct.TransformPoint(0,0,0) doesn't return expected result on MacOSX. Not sure why.")
-    else:
-        assert x == float('inf')
-
 ###############################################################################
 # Test 4D transformations
 
 
-def test_osr_ct_4D():
+@pytest.mark.parametrize('source_crs',[None, 'EPSG:4326']) # random code (not used)
+@pytest.mark.parametrize('target_crs',[None, 'EPSG:4326']) # random code (not used)
+def test_osr_ct_4D(source_crs, target_crs):
 
     options = osr.CoordinateTransformationOptions()
     assert options.SetOperation('+proj=pipeline +step +proj=unitconvert +xy_in=deg +xy_out=rad +step +proj=cart +step +proj=helmert +convention=position_vector +x=0.0127 +dx=-0.0029 +rx=-0.00039 +drx=-0.00011 +y=0.0065 +dy=-0.0002 +ry=0.00080 +dry=-0.00019 +z=-0.0209 +dz=-0.0006 +rz=-0.00114 +drz=0.00007 +s=0.00195 +ds=0.00001 +t_epoch=1988.0 +step +proj=cart +inv +step +proj=unitconvert +xy_in=rad +xy_out=deg')
-    ct = osr.CoordinateTransformation(None, None, options)
+    if source_crs:
+        srs = osr.SpatialReference()
+        srs.SetFromUserInput(source_crs)
+        source_crs = srs
+    if target_crs:
+        srs = osr.SpatialReference()
+        srs.SetFromUserInput(target_crs)
+        target_crs = srs
+    ct = osr.CoordinateTransformation(source_crs, target_crs, options)
     assert ct
 
     x, y, z, t = ct.TransformPoint(2, 49, 0, 2000)

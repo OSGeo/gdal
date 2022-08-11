@@ -72,11 +72,11 @@ class VirtualMem(object):
     __repr__ = _swig_repr
     __swig_destroy__ = _gdal_array.delete_VirtualMem
 
-    def GetAddr(self):
+    def GetAddr(self) -> "void":
         r"""GetAddr(VirtualMem self)"""
         return _gdal_array.VirtualMem_GetAddr(self)
 
-    def Pin(self, start_offset=0, nsize=0, bWriteOp=0):
+    def Pin(self, start_offset: "size_t"=0, nsize: "size_t"=0, bWriteOp: "int"=0) -> "void":
         r"""Pin(VirtualMem self, size_t start_offset=0, size_t nsize=0, int bWriteOp=0)"""
         return _gdal_array.VirtualMem_Pin(self, start_offset, nsize, bWriteOp)
 
@@ -84,49 +84,53 @@ class VirtualMem(object):
 _gdal_array.VirtualMem_swigregister(VirtualMem)
 
 
-def _StoreLastException():
+def _StoreLastException() -> "void":
     r"""_StoreLastException()"""
     return _gdal_array._StoreLastException()
 
-def TermProgress_nocb(dfProgress, pszMessage=None, pData=None):
+def TermProgress_nocb(dfProgress: "double", pszMessage: "char const *"=None, pData: "void *"=None) -> "int":
     r"""TermProgress_nocb(double dfProgress, char const * pszMessage=None, void * pData=None) -> int"""
     return _gdal_array.TermProgress_nocb(dfProgress, pszMessage, pData)
 TermProgress = _gdal_array.TermProgress
 
 
-def OpenNumPyArray(psArray, binterleave):
+def OpenNumPyArray(psArray: "PyArrayObject *", binterleave: "bool") -> "GDALDatasetShadow *":
     r"""OpenNumPyArray(PyArrayObject * psArray, bool binterleave) -> Dataset"""
     return _gdal_array.OpenNumPyArray(psArray, binterleave)
 
-def OpenMultiDimensionalNumPyArray(psArray):
+def OpenMultiDimensionalNumPyArray(psArray: "PyArrayObject *") -> "GDALDatasetShadow *":
     r"""OpenMultiDimensionalNumPyArray(PyArrayObject * psArray) -> Dataset"""
     return _gdal_array.OpenMultiDimensionalNumPyArray(psArray)
 
-def GetArrayFilename(psArray):
+def GetArrayFilename(psArray: "PyArrayObject *") -> "retStringAndCPLFree *":
     r"""GetArrayFilename(PyArrayObject * psArray) -> retStringAndCPLFree *"""
     return _gdal_array.GetArrayFilename(psArray)
 
-def BandRasterIONumPy(band, bWrite, xoff, yoff, xsize, ysize, psArray, buf_type, resample_alg, callback=0, callback_data=None):
+def BandRasterIONumPy(band: "Band", bWrite: "int", xoff: "double", yoff: "double", xsize: "double", ysize: "double", psArray: "PyArrayObject *", buf_type: "GDALDataType", resample_alg: "GDALRIOResampleAlg", callback: "GDALProgressFunc"=0, callback_data: "void *"=None) -> "CPLErr":
     r"""BandRasterIONumPy(Band band, int bWrite, double xoff, double yoff, double xsize, double ysize, PyArrayObject * psArray, GDALDataType buf_type, GDALRIOResampleAlg resample_alg, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"""
     return _gdal_array.BandRasterIONumPy(band, bWrite, xoff, yoff, xsize, ysize, psArray, buf_type, resample_alg, callback, callback_data)
 
-def DatasetIONumPy(ds, bWrite, xoff, yoff, xsize, ysize, psArray, buf_type, resample_alg, callback=0, callback_data=None, binterleave=True, band_list=0):
+def DatasetIONumPy(ds: "Dataset", bWrite: "int", xoff: "double", yoff: "double", xsize: "double", ysize: "double", psArray: "PyArrayObject *", buf_type: "GDALDataType", resample_alg: "GDALRIOResampleAlg", callback: "GDALProgressFunc"=0, callback_data: "void *"=None, binterleave: "bool"=True, band_list: "int"=0) -> "CPLErr":
     r"""DatasetIONumPy(Dataset ds, int bWrite, double xoff, double yoff, double xsize, double ysize, PyArrayObject * psArray, GDALDataType buf_type, GDALRIOResampleAlg resample_alg, GDALProgressFunc callback=0, void * callback_data=None, bool binterleave=True, int band_list=0) -> CPLErr"""
     return _gdal_array.DatasetIONumPy(ds, bWrite, xoff, yoff, xsize, ysize, psArray, buf_type, resample_alg, callback, callback_data, binterleave, band_list)
 
-def MDArrayIONumPy(bWrite, mdarray, psArray, nDims1, nDims3, buffer_datatype):
+def MDArrayIONumPy(bWrite: "bool", mdarray: "GDALMDArrayHS *", psArray: "PyArrayObject *", nDims1: "int", nDims3: "int", buffer_datatype: "GDALExtendedDataTypeHS *") -> "CPLErr":
     r"""MDArrayIONumPy(bool bWrite, GDALMDArrayHS * mdarray, PyArrayObject * psArray, int nDims1, int nDims3, GDALExtendedDataTypeHS * buffer_datatype) -> CPLErr"""
     return _gdal_array.MDArrayIONumPy(bWrite, mdarray, psArray, nDims1, nDims3, buffer_datatype)
 
-def VirtualMemGetArray(virtualmem):
+def _RecordBatchAsNumpy(recordBatchPtr: "VoidPtrAsLong", schemaPtr: "VoidPtrAsLong", pointerArrayKeeper: "PyObject *") -> "PyObject *":
+    r"""_RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr, VoidPtrAsLong schemaPtr, PyObject * pointerArrayKeeper) -> PyObject *"""
+    return _gdal_array._RecordBatchAsNumpy(recordBatchPtr, schemaPtr, pointerArrayKeeper)
+
+def VirtualMemGetArray(virtualmem: "VirtualMem") -> "int":
     r"""VirtualMemGetArray(VirtualMem virtualmem)"""
     return _gdal_array.VirtualMemGetArray(virtualmem)
 
-def RATValuesIONumPyWrite(poRAT, nField, nStart, psArray):
+def RATValuesIONumPyWrite(poRAT: "RasterAttributeTable", nField: "int", nStart: "int", psArray: "PyArrayObject *") -> "CPLErr":
     r"""RATValuesIONumPyWrite(RasterAttributeTable poRAT, int nField, int nStart, PyArrayObject * psArray) -> CPLErr"""
     return _gdal_array.RATValuesIONumPyWrite(poRAT, nField, nStart, psArray)
 
-def RATValuesIONumPyRead(poRAT, nField, nStart, nLength):
+def RATValuesIONumPyRead(poRAT: "RasterAttributeTable", nField: "int", nStart: "int", nLength: "int") -> "PyObject *":
     r"""RATValuesIONumPyRead(RasterAttributeTable poRAT, int nField, int nStart, int nLength) -> PyObject *"""
     return _gdal_array.RATValuesIONumPyRead(poRAT, nField, nStart, nLength)
 

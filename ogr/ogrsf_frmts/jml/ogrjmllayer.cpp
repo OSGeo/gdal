@@ -843,7 +843,12 @@ void OGRJMLLayer::endElementLoadSchemaCbk( const char * /* pszName */ )
 int OGRJMLLayer::TestCapability( const char * pszCap )
 
 {
-    return EQUAL(pszCap,OLCStringsAsUTF8);
+    if ( EQUAL(pszCap, OLCStringsAsUTF8) )
+        return true;
+    else if ( EQUAL(pszCap, OLCZGeometries) )
+        return true;
+
+    return false;
 }
 
 #endif /* HAVE_EXPAT */

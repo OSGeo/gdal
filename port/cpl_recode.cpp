@@ -288,6 +288,32 @@ int CPLIsUTF8( const char* pabyData, int nLen )
 }
 
 /************************************************************************/
+/*                               CPLIsASCII()                           */
+/************************************************************************/
+
+/**
+ * Test if a string is encoded as ASCII.
+ *
+ * @param pabyData input string to test
+ * @param nLen length of the input string, or -1 if the function must compute
+ *             the string length. In which case it must be null terminated.
+ * @return true if the string is encoded as ASCII. false otherwise
+ *
+ * @since GDAL 3.6.0
+ */
+bool CPLIsASCII( const char* pabyData, size_t nLen )
+{
+    if( nLen == static_cast<size_t>(-1) )
+        nLen = strlen(pabyData);
+    for( size_t i = 0; i < nLen; ++i )
+    {
+        if( static_cast<unsigned char>(pabyData[i]) > 127 )
+            return false;
+    }
+    return true;
+}
+
+/************************************************************************/
 /*                          CPLForceToASCII()                           */
 /************************************************************************/
 
@@ -354,9 +380,11 @@ int CPLEncodingCharSize( const char *pszEncoding )
 {
     if( EQUAL(pszEncoding, CPL_ENC_UTF8) )
         return 1;
-    else if( EQUAL(pszEncoding, CPL_ENC_UTF16) )
+    else if( EQUAL(pszEncoding, CPL_ENC_UTF16) ||
+             EQUAL(pszEncoding, "UTF-16LE") )
         return 2;
-    else if( EQUAL(pszEncoding, CPL_ENC_UCS2) )
+    else if( EQUAL(pszEncoding, CPL_ENC_UCS2) ||
+             EQUAL(pszEncoding, "UCS-2LE") )
         return 2;
     else if( EQUAL(pszEncoding, CPL_ENC_UCS4) )
         return 4;

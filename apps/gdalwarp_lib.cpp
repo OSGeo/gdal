@@ -43,6 +43,7 @@
 #include <array>
 #include <limits>
 #include <set>
+#include <utility>
 #include <vector>
 
 // Suppress deprecation warning for GDALOpenVerticalShiftGrid and GDALApplyVerticalShiftGrid
@@ -303,7 +304,7 @@ static double GetAverageSegmentLength(OGRGeometryH hGeom)
 /* option to determine the source SRS.                                  */
 /************************************************************************/
 
-static CPLString GetSrcDSProjection( GDALDatasetH hDS, char** papszTO )
+static CPLString GetSrcDSProjection( GDALDatasetH hDS, CSLConstList papszTO )
 {
     const char *pszProjection = CSLFetchNameValue( papszTO, "SRC_SRS" );
     if( pszProjection != nullptr || hDS == nullptr )
@@ -314,7 +315,19 @@ static CPLString GetSrcDSProjection( GDALDatasetH hDS, char** papszTO )
     const char *pszMethod = CSLFetchNameValue( papszTO, "METHOD" );
     char** papszMD = nullptr;
     const OGRSpatialReferenceH hSRS = GDALGetSpatialRef( hDS );
-    if( hSRS
+    const char* pszGeolocationDataset = CSLFetchNameValueDef(papszTO,
+        "SRC_GEOLOC_ARRAY", CSLFetchNameValue(papszTO, "GEOLOC_ARRAY"));
+    if( pszGeolocationDataset != nullptr &&
+             (pszMethod == nullptr || EQUAL(pszMethod,"GEOLOC_ARRAY")) )
+    {
+        auto aosMD = GDALCreateGeolocationMetadata( hDS,
+                                                    pszGeolocationDataset,
+                                                    true );
+        pszProjection = aosMD.FetchNameValue("SRS");
+        if( pszProjection )
+            return pszProjection; // return in this scope so that aosMD is still valid
+    }
+    else if( hSRS
         && (pszMethod == nullptr || EQUAL(pszMethod,"GEOTRANSFORM")) )
     {
         char* pszWKT = nullptr;
@@ -2151,7 +2164,10 @@ static void SetupSkipNoSource(int iSrc,
 /*                     AdjustOutputExtentForRPC()                       */
 /************************************************************************/
 
-static void AdjustOutputExtentForRPC( GDALDatasetH hSrcDS,
+/** Returns false if there's no intersection between source extent defined
+ * by RPC and target extent.
+ */
+static bool AdjustOutputExtentForRPC( GDALDatasetH hSrcDS,
                                       GDALDatasetH hDstDS,
                                       GDALTransformerFunc pfnTransformer,
                                       void *hTransformArg,
@@ -2193,6 +2209,13 @@ static void AdjustOutputExtentForRPC( GDALDatasetH hSrcDS,
                     static_cast<int>(std::ceil(dfMaxX)) + nPadding - nWarpDstXOff);
                 nWarpDstYSize = std::min(nWarpDstYSize - nWarpDstYOff,
                     static_cast<int>(std::ceil(dfMaxY)) + nPadding - nWarpDstYOff);
+                if( nWarpDstXSize <= 0 || nWarpDstYSize <= 0 )
+                {
+                    CPLDebug("WARP",
+                             "No intersection between source extent defined "
+                             "by RPC and target extent");
+                    return false;
+                }
                 if( nWarpDstXOff != 0 || nWarpDstYOff != 0 ||
                     nWarpDstXSize != GDALGetRasterXSize( hDstDS ) ||
                     nWarpDstYSize != GDALGetRasterYSize( hDstDS ) )
@@ -2204,6 +2227,7 @@ static void AdjustOutputExtentForRPC( GDALDatasetH hSrcDS,
             }
         }
     }
+    return true;
 }
 
 /************************************************************************/
@@ -2250,7 +2274,7 @@ GDALDatasetH GDALWarpDirect( const char *pszDest, GDALDatasetH hDstDS,
         bool bDstHasVertAxis = false;
         OGRSpatialReference oSRSSrc;
         OGRSpatialReference oSRSDst;
-        
+
         if( MustApplyVerticalShift( pahSrcDS[0], psOptions,
                                     oSRSSrc, oSRSDst,
                                     bSrcHasVertAxis,
@@ -2654,8 +2678,16 @@ GDALDatasetH GDALWarpDirect( const char *pszDest, GDALDatasetH hDstDS,
 
         if( !bVRT )
         {
-            psWO->pfnProgress = Progress::ProgressFunc;
-            psWO->pProgressArg = &oProgress;
+            if( psOptions->pfnProgress == GDALDummyProgress )
+            {
+                psWO->pfnProgress = GDALDummyProgress;
+                psWO->pProgressArg = nullptr;
+            }
+            else
+            {
+                psWO->pfnProgress = Progress::ProgressFunc;
+                psWO->pProgressArg = &oProgress;
+            }
         }
 
         if( psOptions->dfWarpMemoryLimit != 0.0 )
@@ -2729,14 +2761,20 @@ GDALDatasetH GDALWarpDirect( const char *pszDest, GDALDatasetH hDstDS,
         int nWarpDstXSize = GDALGetRasterXSize( hDstDS );
         int nWarpDstYSize = GDALGetRasterYSize( hDstDS );
 
-        AdjustOutputExtentForRPC( hSrcDS,
+        if( !AdjustOutputExtentForRPC( hSrcDS,
                                   hDstDS,
                                   pfnTransformer,
                                   hTransformArg,
                                   psWO,
                                   psOptions,
                                   nWarpDstXOff, nWarpDstYOff,
-                                  nWarpDstXSize, nWarpDstYSize );
+                                  nWarpDstXSize, nWarpDstYSize ) )
+        {
+            GDALDestroyTransformer( hTransformArg );
+            GDALDestroyWarpOptions( psWO );
+            GDALReleaseDataset(hWrkSrcDS);
+            continue;
+        }
 
         /* We need to recreate the transform when operating on an overview */
         if( poSrcOvrDS != nullptr )
@@ -3383,7 +3421,7 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
                                  &pabSuccess[0]);
 
             // Compute the resolution at sampling points
-            std::vector<double> adfRes;
+            std::vector<std::pair<double,double>> aoResPairs;
             const int nSrcXSize = GDALGetRasterXSize(hSrcDS);
             const int nSrcYSize = GDALGetRasterYSize(hSrcDS);
 
@@ -3404,24 +3442,59 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
                         Distance(padfX[i+2] - padfX[i], padfY[i+2] - padfY[i]);
                     if( std::isfinite(dfRes1) && std::isfinite(dfRes2) )
                     {
-                        adfRes.push_back((dfRes1 + dfRes2) / 2);
+                        aoResPairs.push_back(std::pair<double, double>(dfRes1, dfRes2));
                     }
                 }
             }
 
             // Find the minimum resolution that is at least 10 times greater
-            // than te median, to remove outliers.
-            std::sort(adfRes.begin(), adfRes.end());
-            if( !adfRes.empty() )
+            // than the median, to remove outliers.
+            // Start first by doing that on dfRes1, then dfRes2 and then their
+            // average.
+            std::sort(aoResPairs.begin(), aoResPairs.end(),
+                      [](const std::pair<double,double>& oPair1, const std::pair<double,double>& oPair2) {
+                          return oPair1.first < oPair2.first; });
+            if( !aoResPairs.empty() )
             {
-                const double dfMedian = adfRes[ adfRes.size() / 2 ];
-                for( const double dfRes: adfRes )
+                std::vector<std::pair<double,double>> aoResPairsNew;
+                const double dfMedian1 = aoResPairs[ aoResPairs.size() / 2 ].first;
+                for( const auto& oPair: aoResPairs )
                 {
-                    if( dfRes > dfMedian / 10 )
+                    if( oPair.first > dfMedian1 / 10 )
                     {
-                        dfResFromSourceAndTargetExtent = std::min(
-                            dfResFromSourceAndTargetExtent, dfRes);
-                        break;
+                        aoResPairsNew.push_back(oPair);
+                    }
+                }
+
+                aoResPairs = std::move(aoResPairsNew);
+                std::sort(aoResPairs.begin(), aoResPairs.end(),
+                      [](const std::pair<double,double>& oPair1, const std::pair<double,double>& oPair2) {
+                          return oPair1.second < oPair2.second; });
+                if( !aoResPairs.empty() )
+                {
+                    std::vector<double> adfRes;
+                    const double dfMedian2 = aoResPairs[ aoResPairs.size() / 2 ].second;
+                    for( const auto& oPair: aoResPairs )
+                    {
+                        if( oPair.second > dfMedian2 / 10 )
+                        {
+                            adfRes.push_back((oPair.first + oPair.second) / 2);
+                        }
+                    }
+
+                    std::sort(adfRes.begin(), adfRes.end());
+                    if( !adfRes.empty() )
+                    {
+                        const double dfMedian = adfRes[ adfRes.size() / 2 ];
+                        for( const double dfRes: adfRes )
+                        {
+                            if( dfRes > dfMedian / 10 )
+                            {
+                                dfResFromSourceAndTargetExtent = std::min(
+                                    dfResFromSourceAndTargetExtent, dfRes);
+                                break;
+                            }
+                        }
                     }
                 }
             }
@@ -4112,7 +4185,9 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, OGRGeometryH hCutline,
         OSRIsSame(hRasterSRS, hCutlineSRS) &&
         GDALGetGCPCount( hSrcDS ) == 0 &&
         GDALGetMetadata( hSrcDS, "RPC" ) == nullptr &&
-        GDALGetMetadata( hSrcDS, "GEOLOCATION" ) == nullptr )
+        GDALGetMetadata( hSrcDS, "GEOLOCATION" ) == nullptr &&
+        CSLFetchNameValue( papszTO_In, "GEOLOC_ARRAY") == nullptr &&
+        CSLFetchNameValue( papszTO_In, "SRC_GEOLOC_ARRAY") == nullptr )
     {
         char **papszTOTmp = CSLDuplicate( papszTO_In );
         papszTOTmp = CSLSetNameValue(papszTOTmp, "SRC_SRS", nullptr);

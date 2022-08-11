@@ -4005,13 +4005,14 @@ void OGRFeature::SetField( int iField, const char * pszValue )
         // As allowed by C standard, some systems like MSVC do not reset errno.
         errno = 0;
 
-        long nVal = strtol(pszValue, &pszLast, 10);
-        nVal = OGRFeatureGetIntegerValue(poFDefn, static_cast<int>(nVal));
-        pauFields[iField].Integer =
-            nVal > INT_MAX ? INT_MAX :
-            nVal < INT_MIN ? INT_MIN : static_cast<int>(nVal);
-        if( bWarn && (errno == ERANGE ||
-                      nVal != static_cast<long>(pauFields[iField].Integer) ||
+        long long nVal64 = std::strtoll(pszValue, &pszLast, 10);
+        int nVal32 =
+             nVal64 > INT_MAX ? INT_MAX :
+             nVal64 < INT_MIN ? INT_MIN : static_cast<int>(nVal64);
+        pauFields[iField].Integer = OGRFeatureGetIntegerValue(poFDefn, nVal32);
+        if( bWarn && pauFields[iField].Integer == nVal32 &&
+                     (errno == ERANGE ||
+                      nVal32 != nVal64 ||
                       !pszLast || *pszLast ) )
             CPLError(
                 CE_Warning, CPLE_AppDefined,
@@ -4315,7 +4316,8 @@ void OGRFeature::SetField( int iField, int nCount, const int *panValues )
                             VSI_MALLOC_VERBOSE(nCount * sizeof(int)) );
                         if( panValuesMod == nullptr )
                             return;
-                        memcpy(panValuesMod, panValues, nCount * sizeof(int));
+                        if( nCount > 0 )
+                            memcpy(panValuesMod, panValues, nCount * sizeof(int));
                     }
                     panValuesMod[i] = nVal;
                 }
@@ -4879,7 +4881,8 @@ void OGRFeature::SetField( int iField, int nBytes, const void *pabyData )
         char* pszStr = static_cast<char *>( VSI_MALLOC_VERBOSE(nBytes + 1) );
         if( pszStr == nullptr )
             return;
-        memcpy(pszStr, pabyData, nBytes);
+        if( nBytes > 0 )
+            memcpy(pszStr, pabyData, nBytes);
         pszStr[nBytes] = 0;
         SetField( iField, pszStr );
         CPLFree( pszStr);
@@ -5211,9 +5214,12 @@ bool OGRFeature::SetFieldInternal( int iField, const OGRField * puValue )
                 OGR_RawField_SetUnset(&pauFields[iField]);
                 return false;
             }
-            memcpy( pauFields[iField].IntegerList.paList,
-                    puValue->IntegerList.paList,
-                    sizeof(int) * nCount );
+            if( nCount > 0 )
+            {
+                memcpy( pauFields[iField].IntegerList.paList,
+                        puValue->IntegerList.paList,
+                        sizeof(int) * nCount );
+            }
             pauFields[iField].IntegerList.nCount = nCount;
         }
     }
@@ -5238,9 +5244,12 @@ bool OGRFeature::SetFieldInternal( int iField, const OGRField * puValue )
                 OGR_RawField_SetUnset(&pauFields[iField]);
                 return false;
             }
-            memcpy( pauFields[iField].Integer64List.paList,
-                    puValue->Integer64List.paList,
-                    sizeof(GIntBig) * nCount );
+            if( nCount > 0 )
+            {
+                memcpy( pauFields[iField].Integer64List.paList,
+                        puValue->Integer64List.paList,
+                        sizeof(GIntBig) * nCount );
+            }
             pauFields[iField].Integer64List.nCount = nCount;
         }
     }
@@ -5265,9 +5274,12 @@ bool OGRFeature::SetFieldInternal( int iField, const OGRField * puValue )
                 OGR_RawField_SetUnset(&pauFields[iField]);
                 return false;
             }
-            memcpy( pauFields[iField].RealList.paList,
-                    puValue->RealList.paList,
-                    sizeof(double) * nCount );
+            if( nCount > 0 )
+            {
+                memcpy( pauFields[iField].RealList.paList,
+                        puValue->RealList.paList,
+                        sizeof(double) * nCount );
+            }
             pauFields[iField].RealList.nCount = nCount;
         }
     }
@@ -5323,9 +5335,12 @@ bool OGRFeature::SetFieldInternal( int iField, const OGRField * puValue )
                 OGR_RawField_SetUnset(&pauFields[iField]);
                 return false;
             }
-            memcpy( pauFields[iField].Binary.paData,
-                    puValue->Binary.paData,
-                    puValue->Binary.nCount );
+            if( puValue->Binary.nCount > 0 )
+            {
+                memcpy( pauFields[iField].Binary.paData,
+                        puValue->Binary.paData,
+                        puValue->Binary.nCount );
+            }
             pauFields[iField].Binary.nCount = puValue->Binary.nCount;
         }
     }
@@ -5653,8 +5668,7 @@ OGRBoolean OGRFeature::Equal( const OGRFeature * poFeature ) const
                 }
                 else if( std::isnan(dfVal2) )
                 {
-                    if( !std::isnan(dfVal1) )
-                        return FALSE;
+                    return FALSE;
                 }
                 else if ( dfVal1 != dfVal2 )
                 {
@@ -5723,8 +5737,7 @@ OGRBoolean OGRFeature::Equal( const OGRFeature * poFeature ) const
                     }
                     else if( std::isnan(dfVal2) )
                     {
-                        if( !std::isnan(dfVal1) )
-                            return FALSE;
+                        return FALSE;
                     }
                     else if ( dfVal1 != dfVal2 )
                     {
@@ -6626,10 +6639,11 @@ void OGRFeature::FillUnsetWithDefault( int bNotNullableOnly,
     {
         if( IsFieldSet(i) )
             continue;
-        if( bNotNullableOnly && poDefn->GetFieldDefn(i)->IsNullable() )
+        const auto poFieldDefn = poDefn->GetFieldDefn(i);
+        if( bNotNullableOnly && poFieldDefn->IsNullable() )
             continue;
-        const char* pszDefault = poDefn->GetFieldDefn(i)->GetDefault();
-        OGRFieldType eType = poDefn->GetFieldDefn(i)->GetType();
+        const char* pszDefault = poFieldDefn->GetDefault();
+        OGRFieldType eType = poFieldDefn->GetType();
         if( pszDefault != nullptr )
         {
             if( eType == OFTDate || eType == OFTTime || eType == OFTDateTime )
@@ -6674,7 +6688,7 @@ void OGRFeature::FillUnsetWithDefault( int bNotNullableOnly,
                 SetField(i, pszTmp);
                 CPLFree(pszTmp);
             }
-            else
+            else if ( !poFieldDefn->IsDefaultDriverSpecific() )
                 SetField(i, pszDefault);
         }
     }
@@ -7287,7 +7301,7 @@ OGRFeature::FieldValue::FieldValue(OGRFeature* poFeature,
 {
 }
 
-OGRFeature::FieldValue& OGRFeature::FieldValue::operator=
+OGRFeature::FieldValue& OGRFeature::FieldValue::Assign
                                                     (const FieldValue& oOther)
 {
     if( &oOther != this &&
@@ -7336,19 +7350,33 @@ OGRFeature::FieldValue& OGRFeature::FieldValue::operator=
         }
         else if( eOtherType == OFTIntegerList )
         {
-            return operator= (oOther.GetAsIntegerList());
+            operator= (oOther.GetAsIntegerList());
         }
         else if( eOtherType == OFTInteger64List )
         {
-            return operator= (oOther.GetAsInteger64List());
+            operator= (oOther.GetAsInteger64List());
         }
         else if( eOtherType == OFTRealList )
         {
-            return operator= (oOther.GetAsDoubleList());
+            operator= (oOther.GetAsDoubleList());
         }
     }
     return *this;
 }
+
+OGRFeature::FieldValue& OGRFeature::FieldValue::operator=
+                                                    (const FieldValue& oOther)
+{
+    return Assign(oOther);
+}
+
+//! @cond Doxygen_Suppress
+OGRFeature::FieldValue& OGRFeature::FieldValue::operator=
+                                                    (FieldValue&& oOther)
+{
+    return Assign(oOther);
+}
+//! @endcond
 
 OGRFeature::FieldValue& OGRFeature::FieldValue::operator= (int nVal)
 {

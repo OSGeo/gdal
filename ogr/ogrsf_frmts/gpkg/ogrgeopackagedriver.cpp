@@ -45,7 +45,7 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo, bool bEmitWarn
 
 #ifdef ENABLE_SQL_GPKG_FORMAT
     if( poOpenInfo->pabyHeader &&
-        STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL GPKG") )
+        STARTS_WITH(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "-- SQL GPKG") )
     {
         return TRUE;
     }
@@ -53,7 +53,7 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo, bool bEmitWarn
 
     if ( poOpenInfo->nHeaderBytes < 100 ||
          poOpenInfo->pabyHeader == nullptr ||
-         !STARTS_WITH((const char*)poOpenInfo->pabyHeader, "SQLite format 3") )
+         !STARTS_WITH(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "SQLite format 3") )
     {
         return FALSE;
     }
@@ -426,6 +426,14 @@ void RegisterOGRGeoPackage()
     poDriver->SetDescription( "GPKG" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DELETE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DELETE_FIELD, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_REORDER_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CURVE_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
 
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GeoPackage" );
@@ -474,14 +482,19 @@ COMPRESSION_OPTIONS
                                "Integer Integer64 Real String Date DateTime "
                                "Binary" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATASUBTYPES, "Boolean Int16 Float32" );
+    poDriver->SetMetadataItem( GDAL_DMD_ALTER_FIELD_DEFN_FLAGS, "Name Type WidthPrecision Nullable Default Unique Domain" );
+
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_UNIQUE_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_FIELD_DOMAINS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RELATIONSHIPS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_RENAME_LAYERS, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATION_FIELD_DOMAIN_TYPES, "Coded Range Glob" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS, "Name SRS CoordinateEpoch" );
 
 #ifdef ENABLE_SQL_GPKG_FORMAT
     poDriver->SetMetadataItem("ENABLE_SQL_GPKG_FORMAT", "YES");

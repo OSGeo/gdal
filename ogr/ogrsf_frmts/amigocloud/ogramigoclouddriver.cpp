@@ -100,6 +100,8 @@ void RegisterOGRAmigoCloud()
     poDriver->SetDescription( "AmigoCloud" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,  "AmigoCloud" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DELETE_LAYER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/amigocloud.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "AMIGOCLOUD:" );
 
@@ -122,6 +124,7 @@ void RegisterOGRAmigoCloud()
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
 
     poDriver->pfnOpen = OGRAmigoCloudDriverOpen;
     poDriver->pfnIdentify = OGRAmigoCloudDriverIdentify;

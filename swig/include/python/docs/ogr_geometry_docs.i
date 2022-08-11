@@ -1,14 +1,14 @@
 %extend OGRGeometryShadow {
 // File: ogrgeometry_8cpp.xml
 %feature("docstring")  DumpReadable "void
-OGR_G_DumpReadable(OGRGeometryH hGeom, FILE *fp, const char
-*pszPrefix)
+OGR_G_DumpReadable(OGRGeometryH hGeom, FILE \\*fp, const char
+\\*pszPrefix)
 
 Dump geometry in well known text format to indicated output file.
 
 This method is the same as the CPP method OGRGeometry::dumpReadable.
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the geometry to dump.
@@ -39,7 +39,7 @@ This is similar to the SFCOM IGeometry::put_SpatialReference() method.
 This function is the same as the CPP method
 OGRGeometry::assignSpatialReference.
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the geometry to apply the new spatial reference
@@ -58,7 +58,7 @@ envelopes (bounding boxes) of the two geometries overlap.
 
 This function is the same as the CPP method OGRGeometry::Intersects.
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the first geometry.
@@ -90,7 +90,7 @@ for convenience when only transforming a single geometry.
 
 This function is the same as the CPP method OGRGeometry::transformTo.
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the geometry to apply the transform to.
@@ -119,7 +119,7 @@ assigned to the geometry.
 
 This function is the same as the CPP method OGRGeometry::transform.
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the geometry to apply the transform to.
@@ -139,7 +139,7 @@ Distance computation is performed in 2d only.
 
 This function is the same as the CPP method OGRGeometry::segmentize().
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the geometry to segmentize
@@ -160,7 +160,7 @@ OGR_G_GetCoordinateDimension() function).
 This function is the same as the CPP method
 OGRGeometry::getDimension().
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the geometry to get the dimension from.
@@ -175,7 +175,7 @@ Get the dimension of the coordinates in this geometry.
 This function is the same as the CPP method
 OGRGeometry::getCoordinateDimension().
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the geometry to get the dimension of the coordinates
@@ -194,7 +194,7 @@ Get the dimension of the coordinates in this geometry.
 This function is the same as the CPP method
 OGRGeometry::CoordinateDimension().
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the geometry to get the dimension of the coordinates
@@ -210,7 +210,7 @@ See whether this geometry has Z coordinates.
 
 This function is the same as the CPP method OGRGeometry::Is3D().
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the geometry to check whether it has Z coordinates.
@@ -226,7 +226,7 @@ See whether this geometry is measured.
 
 This function is the same as the CPP method OGRGeometry::IsMeasured().
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the geometry to check whether it is measured.
@@ -248,7 +248,7 @@ also remove the M dimension if present before this call.
 
 Deprecated use OGR_G_Set3D() or OGR_G_SetMeasured().
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the geometry to set the dimension of the
@@ -266,7 +266,7 @@ Removing the Z coordinate dimension of a geometry will remove any
 existing Z values. Adding the Z dimension to a geometry collection, a
 compound curve, a polygon, etc. will affect the children geometries.
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the geometry to set or unset the Z dimension.
@@ -285,7 +285,7 @@ Removing the M coordinate dimension of a geometry will remove any
 existing M values. Adding the M dimension to a geometry collection, a
 compound curve, a polygon, etc. will affect the children geometries.
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the geometry to set or unset the M dimension.
@@ -312,7 +312,7 @@ equal. Note: this must be distinguished for equality in a spatial way
 This function is the same as the CPP method OGRGeometry::Equals()
 method.
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the first geometry.
@@ -335,7 +335,7 @@ This function is the same as the CPP method OGRGeometry::WkbSize().
 
 Use OGR_G_WkbSizeEx() if called on huge geometries (> 2 GB serialized)
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the geometry to get the binary size from.
@@ -355,7 +355,7 @@ This function relates to the SFCOM IWks::WkbSize() method.
 
 This function is the same as the CPP method OGRGeometry::WkbSize().
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the geometry to get the binary size from.
@@ -365,7 +365,7 @@ size of binary representation in bytes.
 GDAL 3.3 ";
 
 %feature("docstring")  GetEnvelope "void
-OGR_G_GetEnvelope(OGRGeometryH hGeom, OGREnvelope *psEnvelope)
+OGR_G_GetEnvelope(OGRGeometryH hGeom, OGREnvelope \\*psEnvelope)
 
 Computes and returns the bounding envelope for this geometry in the
 passed psEnvelope structure.
@@ -373,7 +373,7 @@ passed psEnvelope structure.
 This function is the same as the CPP method
 OGRGeometry::getEnvelope().
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle of the geometry to get envelope from.
@@ -381,7 +381,7 @@ hGeom:  handle of the geometry to get envelope from.
 psEnvelope:  the structure in which to place the results. ";
 
 %feature("docstring")  GetEnvelope3D "void
-OGR_G_GetEnvelope3D(OGRGeometryH hGeom, OGREnvelope3D *psEnvelope)
+OGR_G_GetEnvelope3D(OGRGeometryH hGeom, OGREnvelope3D \\*psEnvelope)
 
 Computes and returns the bounding envelope (3D) for this geometry in
 the passed psEnvelope structure.
@@ -389,7 +389,7 @@ the passed psEnvelope structure.
 This function is the same as the CPP method
 OGRGeometry::getEnvelope().
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle of the geometry to get envelope from.
@@ -399,7 +399,7 @@ psEnvelope:  the structure in which to place the results.
 OGR 1.9.0 ";
 
 %feature("docstring")  ImportFromWkb "OGRErr
-OGR_G_ImportFromWkb(OGRGeometryH hGeom, const void *pabyData, int
+OGR_G_ImportFromWkb(OGRGeometryH hGeom, const void \\*pabyData, int
 nSize)
 
 Assign geometry from well known binary data.
@@ -412,7 +412,7 @@ This function relates to the SFCOM IWks::ImportFromWKB() method.
 This function is the same as the CPP method
 OGRGeometry::importFromWkb().
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the geometry to assign the well know binary data to.
@@ -427,7 +427,7 @@ returned. ";
 
 %feature("docstring")  ExportToWkb "OGRErr
 OGR_G_ExportToWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder, unsigned
-char *pabyDstBuffer)
+char \\*pabyDstBuffer)
 
 Convert a geometry well known binary format.
 
@@ -439,10 +439,10 @@ MultiPoint, MultiLineString, MultiPolygon and GeometryCollection. For
 other geometry types, it is equivalent to OGR_G_ExportToIsoWkb().
 
 This function is the same as the CPP method
-OGRGeometry::exportToWkb(OGRwkbByteOrder, unsigned char *,
+OGRGeometry::exportToWkb(OGRwkbByteOrder, unsigned char \\*,
 OGRwkbVariant) with eWkbVariant = wkbVariantOldOgc.
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the geometry to convert to a well know binary data
@@ -458,7 +458,7 @@ Currently OGRERR_NONE is always returned. ";
 
 %feature("docstring")  ExportToIsoWkb "OGRErr
 OGR_G_ExportToIsoWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder,
-unsigned char *pabyDstBuffer)
+unsigned char \\*pabyDstBuffer)
 
 Convert a geometry into SFSQL 1.2 / ISO SQL/MM Part 3 well known
 binary format.
@@ -468,10 +468,10 @@ exports the SFSQL 1.2 and ISO SQL/MM Part 3 extended dimension (Z&M)
 WKB types.
 
 This function is the same as the CPP method
-OGRGeometry::exportToWkb(OGRwkbByteOrder, unsigned char *,
+OGRGeometry::exportToWkb(OGRwkbByteOrder, unsigned char \\*,
 OGRwkbVariant) with eWkbVariant = wkbVariantIso.
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the geometry to convert to a well know binary data
@@ -488,7 +488,7 @@ Currently OGRERR_NONE is always returned.
 GDAL 2.0 ";
 
 %feature("docstring")  ImportFromWkt "OGRErr
-OGR_G_ImportFromWkt(OGRGeometryH hGeom, char **ppszSrcText)
+OGR_G_ImportFromWkt(OGRGeometryH hGeom, char \\*\\*ppszSrcText)
 
 Assign geometry from well known text data.
 
@@ -500,7 +500,7 @@ This function relates to the SFCOM IWks::ImportFromWKT() method.
 This function is the same as the CPP method
 OGRGeometry::importFromWkt().
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the geometry to assign well know text data to.
@@ -513,7 +513,7 @@ OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or OGRERR_CORRUPT_DATA may be
 returned. ";
 
 %feature("docstring")  ExportToWkt "OGRErr
-OGR_G_ExportToWkt(OGRGeometryH hGeom, char **ppszSrcText)
+OGR_G_ExportToWkt(OGRGeometryH hGeom, char \\*\\*ppszSrcText)
 
 Convert a geometry into well known text format.
 
@@ -527,19 +527,19 @@ other geometry types, it is equivalent to OGR_G_ExportToIsoWkt().
 This function is the same as the CPP method
 OGRGeometry::exportToWkt().
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the geometry to convert to a text format from.
 
 ppszSrcText:  a text buffer is allocated by the program, and assigned
-to the passed pointer. After use, *ppszDstText should be freed with
+to the passed pointer. After use, \\*ppszDstText should be freed with
 CPLFree().
 
 Currently OGRERR_NONE is always returned. ";
 
 %feature("docstring")  ExportToIsoWkt "OGRErr
-OGR_G_ExportToIsoWkt(OGRGeometryH hGeom, char **ppszSrcText)
+OGR_G_ExportToIsoWkt(OGRGeometryH hGeom, char \\*\\*ppszSrcText)
 
 Convert a geometry into SFSQL 1.2 / ISO SQL/MM Part 3 well known text
 format.
@@ -551,13 +551,13 @@ WKB types.
 This function is the same as the CPP method
 OGRGeometry::exportToWkt(wkbVariantIso).
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the geometry to convert to a text format from.
 
 ppszSrcText:  a text buffer is allocated by the program, and assigned
-to the passed pointer. After use, *ppszDstText should be freed with
+to the passed pointer. After use, \\*ppszDstText should be freed with
 CPLFree().
 
 Currently OGRERR_NONE is always returned.
@@ -576,14 +576,14 @@ the return result.
 This function is the same as the CPP method
 OGRGeometry::getGeometryType().
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the geometry to get type from.
 
 the geometry type code. ";
 
-%feature("docstring")  GetGeometryName "const char*
+%feature("docstring")  GetGeometryName "const char\\*
 OGR_G_GetGeometryName(OGRGeometryH hGeom)
 
 Fetch WKT name for geometry type.
@@ -593,7 +593,7 @@ There is no SFCOM analog to this function.
 This function is the same as the CPP method
 OGRGeometry::getGeometryName().
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the geometry to get name from.
@@ -609,7 +609,7 @@ This function relates to the SFCOM IGeometry::clone() method.
 
 This function is the same as the CPP method OGRGeometry::clone().
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the geometry to clone from.
@@ -628,7 +628,7 @@ method.
 This function is the same as the CPP method
 OGRGeometry::getSpatialReference().
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the geometry to get spatial reference from.
@@ -646,7 +646,7 @@ This function relates to the SFCOM IGeometry::Empty() method.
 
 This function is the same as the CPP method OGRGeometry::empty().
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the geometry to empty. ";
@@ -657,7 +657,7 @@ Test if the geometry is empty.
 
 This method is the same as the CPP method OGRGeometry::IsEmpty().
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  The Geometry to test.
@@ -674,7 +674,7 @@ This function is built on the GEOS library, check it for the
 definition of the geometry operation. If OGR is built without the GEOS
 library, this function will always return FALSE.
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  The Geometry to test.
@@ -697,7 +697,7 @@ method.
 If OGR is built without the GEOS library, this function will always
 return FALSE.
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  The Geometry to test.
@@ -714,7 +714,7 @@ This function is built on the GEOS library, check it for the
 definition of the geometry operation. If OGR is built without the GEOS
 library, this function will always return FALSE.
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  The Geometry to test.
@@ -722,30 +722,30 @@ hGeom:  The Geometry to test.
 TRUE if the geometry has no points, otherwise FALSE. ";
 
 %feature("docstring")  OGRFromOGCGeomType "OGRwkbGeometryType
-OGRFromOGCGeomType(const char *pszGeomType)
+OGRFromOGCGeomType(const char \\*pszGeomType)
 
 Map OGCgeometry format type to corresponding OGR constants.
 
-Parameters:
+Parameters
 -----------
 
 pszGeomType:  POINT[ ][Z][M], LINESTRING[ ][Z][M], etc...
 
 OGR constant. ";
 
-%feature("docstring")  OGRToOGCGeomType "const char*
+%feature("docstring")  OGRToOGCGeomType "const char\\*
 OGRToOGCGeomType(OGRwkbGeometryType eGeomType)
 
 Map OGR geometry format constants to corresponding OGC geometry type.
 
-Parameters:
+Parameters
 -----------
 
 eGeomType:  OGR geometry type
 
 string with OGC geometry type (without dimensionality) ";
 
-%feature("docstring")  OGRGeometryTypeToName "const char*
+%feature("docstring")  OGRGeometryTypeToName "const char\\*
 OGRGeometryTypeToName(OGRwkbGeometryType eType)
 
 Fetch a human readable name corresponding to an OGRwkbGeometryType
@@ -756,7 +756,7 @@ application.
 
 This function is C callable.
 
-Parameters:
+Parameters
 -----------
 
 eType:  the geometry type.
@@ -773,13 +773,13 @@ Given two geometry types, find the most specific common type. Normally
 used repeatedly with the geometries in a layer to try and establish
 the most specific geometry type that can be reported for the layer.
 
-NOTE: wkbUnknown is the \"worst case\" indicating a mixture of
+NOTE: wkbUnknown is the \'worst case\' indicating a mixture of
 geometry types with nothing in common but the base geometry type.
 wkbNone should be used to indicate that no geometries have been
 encountered yet, and means the first geometry encountered will
 establish the preliminary type.
 
-Parameters:
+Parameters
 -----------
 
 eMain:  the first input geometry type.
@@ -798,7 +798,7 @@ Given two geometry types, find the most specific common type. Normally
 used repeatedly with the geometries in a layer to try and establish
 the most specific geometry type that can be reported for the layer.
 
-NOTE: wkbUnknown is the \"worst case\" indicating a mixture of
+NOTE: wkbUnknown is the \'worst case\' indicating a mixture of
 geometry types with nothing in common but the base geometry type.
 wkbNone should be used to indicate that no geometries have been
 encountered yet, and means the first geometry encountered will
@@ -810,7 +810,7 @@ CircularString, CompoundCurve will return CompoundCurve. Mixing
 MultiPolygon and MultiSurface will return MultiSurface. Mixing
 MultiCurve and MultiLineString will return MultiCurve.
 
-Parameters:
+Parameters
 -----------
 
 eMain:  the first input geometry type.
@@ -834,7 +834,7 @@ In a sense this converts all Z coordinates to 0.0.
 This function is the same as the CPP method
 OGRGeometry::flattenTo2D().
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle on the geometry to convert. ";
@@ -867,7 +867,7 @@ definition of the geometry operation. If OGR is built without the GEOS
 library, this function will always fail, issuing a CPLE_NotSupported
 error.
 
-Parameters:
+Parameters
 -----------
 
 hFirst:  the first geometry to compare against.
@@ -890,7 +890,7 @@ SFCGAL library, this method will always return -1.0
 
 This function is the same as the C++ method OGRGeometry::Distance3D().
 
-Parameters:
+Parameters
 -----------
 
 hFirst:  the first geometry to compare against.
@@ -917,7 +917,7 @@ definition of the geometry operation. If OGR is built without the GEOS
 >= 3.8 library, this function will return a clone of the input
 geometry if it is valid, or NULL if it is invalid
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  The Geometry to make valid.
@@ -938,7 +938,7 @@ This function is the same as the C++ method OGRGeometry::MakeValid().
 
 See documentation of that method for possible options.
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  The Geometry to make valid.
@@ -962,7 +962,7 @@ definition of the geometry operation. If OGR is built without the GEOS
 library, this function will always fail, issuing a CPLE_NotSupported
 error.
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  The Geometry to normalize.
@@ -987,7 +987,7 @@ definition of the geometry operation. If OGR is built without the GEOS
 library, this function will always fail, issuing a CPLE_NotSupported
 error.
 
-Parameters:
+Parameters
 -----------
 
 hTarget:  The Geometry to calculate the convex hull of.
@@ -1010,7 +1010,7 @@ definition of the geometry operation. If OGR is built without the GEOS
 library, this function will always fail, issuing a CPLE_NotSupported
 error.
 
-Parameters:
+Parameters
 -----------
 
 hTarget:  The Geometry to calculate the boundary of.
@@ -1052,7 +1052,7 @@ definition of the geometry operation. If OGR is built without the GEOS
 library, this function will always fail, issuing a CPLE_NotSupported
 error.
 
-Parameters:
+Parameters
 -----------
 
 hTarget:  the geometry.
@@ -1086,7 +1086,7 @@ definition of the geometry operation. If OGR is built without the GEOS
 library, this function will always fail, issuing a CPLE_NotSupported
 error.
 
-Parameters:
+Parameters
 -----------
 
 hThis:  the geometry.
@@ -1115,7 +1115,7 @@ definition of the geometry operation. If OGR is built without the GEOS
 library, this function will always fail, issuing a CPLE_NotSupported
 error.
 
-Parameters:
+Parameters
 -----------
 
 hThis:  the geometry.
@@ -1141,7 +1141,7 @@ definition of the geometry operation. If OGR is built without the GEOS
 library, this function will always fail, issuing a CPLE_NotSupported
 error.
 
-Parameters:
+Parameters
 -----------
 
 hThis:  the geometry.
@@ -1167,7 +1167,7 @@ definition of the geometry operation. If OGR is built without the GEOS
 library, this function will always fail, issuing a CPLE_NotSupported
 error.
 
-Parameters:
+Parameters
 -----------
 
 hThis:  the geometry.
@@ -1197,7 +1197,7 @@ definition of the geometry operation. If OGR is built without the GEOS
 library, this function will always fail, issuing a CPLE_NotSupported
 error.
 
-Parameters:
+Parameters
 -----------
 
 hThis:  the geometry.
@@ -1236,7 +1236,7 @@ definition of the geometry operation. If OGR is built without the GEOS
 library, this function will always fail, issuing a CPLE_NotSupported
 error.
 
-Parameters:
+Parameters
 -----------
 
 hThis:  the geometry to compare.
@@ -1263,7 +1263,7 @@ definition of the geometry operation. If OGR is built without the GEOS
 library, this function will always fail, issuing a CPLE_NotSupported
 error.
 
-Parameters:
+Parameters
 -----------
 
 hThis:  the geometry to compare.
@@ -1290,7 +1290,7 @@ definition of the geometry operation. If OGR is built without the GEOS
 library, this function will always fail, issuing a CPLE_NotSupported
 error.
 
-Parameters:
+Parameters
 -----------
 
 hThis:  the geometry to compare.
@@ -1317,7 +1317,7 @@ definition of the geometry operation. If OGR is built without the GEOS
 library, this function will always fail, issuing a CPLE_NotSupported
 error.
 
-Parameters:
+Parameters
 -----------
 
 hThis:  the geometry to compare.
@@ -1344,7 +1344,7 @@ definition of the geometry operation. If OGR is built without the GEOS
 library, this function will always fail, issuing a CPLE_NotSupported
 error.
 
-Parameters:
+Parameters
 -----------
 
 hThis:  the geometry to compare.
@@ -1372,7 +1372,7 @@ definition of the geometry operation. If OGR is built without the GEOS
 library, this function will always fail, issuing a CPLE_NotSupported
 error.
 
-Parameters:
+Parameters
 -----------
 
 hThis:  the geometry to compare.
@@ -1390,7 +1390,7 @@ If this geometry, or any contained geometries has polygon rings that
 are not closed, they will be closed by adding the starting point at
 the end.
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  handle to the geometry. ";
@@ -1433,7 +1433,7 @@ This method is built on the GEOS library, check it for the definition
 of the geometry operation. If OGR is built without the GEOS library,
 this method will always fail, issuing a CPLE_NotSupported error.
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  the geometry to operate on.
@@ -1454,7 +1454,7 @@ definition of the geometry operation. If OGR is built without the GEOS
 library, this function will always fail, issuing a CPLE_NotSupported
 error.
 
-Parameters:
+Parameters
 -----------
 
 hThis:  the geometry.
@@ -1478,7 +1478,7 @@ definition of the geometry operation. If OGR is built without the GEOS
 library, this function will always fail, issuing a CPLE_NotSupported
 error.
 
-Parameters:
+Parameters
 -----------
 
 hThis:  the geometry.
@@ -1502,7 +1502,7 @@ This function is built on the GEOS library, v3.4 or above. If OGR is
 built without the GEOS library, this function will always fail,
 issuing a CPLE_NotSupported error.
 
-Parameters:
+Parameters
 -----------
 
 hThis:  the geometry.
@@ -1535,7 +1535,7 @@ definition of the geometry operation. If OGR is built without the GEOS
 library, this function will always fail, issuing a CPLE_NotSupported
 error.
 
-Parameters:
+Parameters
 -----------
 
 hTarget:  The Geometry to be polygonized.
@@ -1549,7 +1549,7 @@ OGR 1.9.0 ";
 
 Swap x and y coordinates.
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  geometry.
@@ -1569,7 +1569,7 @@ Creates a prepared geometry.
 
 To free with OGRDestroyPreparedGeometry()
 
-Parameters:
+Parameters
 -----------
 
 hGeom:  input geometry to prepare.
@@ -1583,7 +1583,7 @@ OGRDestroyPreparedGeometry(OGRPreparedGeometryH hPreparedGeom)
 
 Destroys a prepared geometry.
 
-Parameters:
+Parameters
 -----------
 
 hPreparedGeom:  preprated geometry.
@@ -1596,7 +1596,7 @@ hPreparedGeom, const OGRGeometryH hOtherGeom)
 
 Returns whether a prepared geometry intersects with a geometry.
 
-Parameters:
+Parameters
 -----------
 
 hPreparedGeom:  prepared geometry.
@@ -1613,7 +1613,7 @@ const OGRGeometryH hOtherGeom)
 
 Returns whether a prepared geometry contains a geometry.
 
-Parameters:
+Parameters
 -----------
 
 hPreparedGeom:  prepared geometry.
@@ -1622,16 +1622,16 @@ hOtherGeom:  other geometry.
 
 TRUE or FALSE. ";
 
-%feature("docstring")  OGRGeometryFromEWKB "OGRGeometry*
-OGRGeometryFromEWKB(GByte *pabyWKB, int nLength, int *pnSRID, int
+%feature("docstring")  OGRGeometryFromEWKB "OGRGeometry\\*
+OGRGeometryFromEWKB(GByte \\*pabyWKB, int nLength, int \\*pnSRID, int
 bIsPostGIS1_EWKB) ";
 
-%feature("docstring")  OGRGeometryFromHexEWKB "OGRGeometry*
-OGRGeometryFromHexEWKB(const char *pszBytea, int *pnSRID, int
+%feature("docstring")  OGRGeometryFromHexEWKB "OGRGeometry\\*
+OGRGeometryFromHexEWKB(const char \\*pszBytea, int \\*pnSRID, int
 bIsPostGIS1_EWKB) ";
 
-%feature("docstring")  OGRGeometryToHexEWKB "char*
-OGRGeometryToHexEWKB(OGRGeometry *poGeometry, int nSRSId, int
+%feature("docstring")  OGRGeometryToHexEWKB "char\\*
+OGRGeometryToHexEWKB(OGRGeometry \\*poGeometry, int nSRSId, int
 nPostGISMajor, int nPostGISMinor) ";
 
 %feature("docstring")  OGR_GT_Flatten "OGRwkbGeometryType
@@ -1644,7 +1644,7 @@ This function is intended to work with geometry types as old-style
 99-402 extended dimension (Z) WKB types, as well as with newer SFSQL
 1.2 and ISO SQL/MM Part 3 extended dimension (Z&M) WKB types.
 
-Parameters:
+Parameters
 -----------
 
 eType:  Input geometry type
@@ -1658,7 +1658,7 @@ OGR_GT_HasZ(OGRwkbGeometryType eType)
 
 Return if the geometry type is a 3D geometry type.
 
-Parameters:
+Parameters
 -----------
 
 eType:  Input geometry type
@@ -1672,7 +1672,7 @@ OGR_GT_HasM(OGRwkbGeometryType eType)
 
 Return if the geometry type is a measured type.
 
-Parameters:
+Parameters
 -----------
 
 eType:  Input geometry type
@@ -1687,7 +1687,7 @@ OGR_GT_SetZ(OGRwkbGeometryType eType)
 Returns the 3D geometry type corresponding to the passed geometry
 type.
 
-Parameters:
+Parameters
 -----------
 
 eType:  Input geometry type
@@ -1702,7 +1702,7 @@ OGR_GT_SetM(OGRwkbGeometryType eType)
 Returns the measured geometry type corresponding to the passed
 geometry type.
 
-Parameters:
+Parameters
 -----------
 
 eType:  Input geometry type
@@ -1716,7 +1716,7 @@ OGR_GT_SetModifier(OGRwkbGeometryType eType, int bHasZ, int bHasM)
 
 Returns a XY, XYZ, XYM or XYZM geometry type depending on parameter.
 
-Parameters:
+Parameters
 -----------
 
 eType:  Input geometry type
@@ -1735,7 +1735,7 @@ eSuperType)
 
 Returns if a type is a subclass of another one.
 
-Parameters:
+Parameters
 -----------
 
 eType:  Type.
@@ -1760,7 +1760,7 @@ returned
 
 Passed Z, M, ZM flag is preserved.
 
-Parameters:
+Parameters
 -----------
 
 eType:  Input geometry type
@@ -1783,7 +1783,7 @@ is returned.
 
 Passed Z, M, ZM flag is preserved.
 
-Parameters:
+Parameters
 -----------
 
 eType:  Input geometry type
@@ -1806,7 +1806,7 @@ is returned.
 
 Passed Z, M, ZM flag is preserved.
 
-Parameters:
+Parameters
 -----------
 
 eType:  Input geometry type
@@ -1823,7 +1823,7 @@ Return if a geometry type is an instance of Curve.
 Such geometry type are wkbLineString, wkbCircularString,
 wkbCompoundCurve and their Z/M/ZM variant.
 
-Parameters:
+Parameters
 -----------
 
 eGeomType:  the geometry type
@@ -1840,7 +1840,7 @@ Return if a geometry type is an instance of Surface.
 Such geometry type are wkbCurvePolygon and wkbPolygon and their Z/M/ZM
 variant.
 
-Parameters:
+Parameters
 -----------
 
 eGeomType:  the geometry type
@@ -1858,7 +1858,7 @@ Such geometry type are wkbCurve, wkbCircularString, wkbCompoundCurve,
 wkbSurface, wkbCurvePolygon, wkbMultiCurve, wkbMultiSurface and their
 Z/M variants.
 
-Parameters:
+Parameters
 -----------
 
 eGeomType:  the geometry type

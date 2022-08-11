@@ -37,6 +37,10 @@
 
 #include <sqlite3.h>
 
+// to avoid -Wold-style-cast with some compilers
+#undef SQLITE_TRANSIENT
+#define SQLITE_TRANSIENT   reinterpret_cast<sqlite3_destructor_type>(-1)
+
 #include <map>
 #include <utility>
 #include <vector>
@@ -93,7 +97,7 @@ class OGRSQLiteFeatureDefn final : public OGRFeatureDefn
 
         OGRSQLiteGeomFieldDefn* myGetGeomFieldDefn(int i)
         {
-            return (OGRSQLiteGeomFieldDefn*) GetGeomFieldDefn(i);
+            return cpl::down_cast<OGRSQLiteGeomFieldDefn*>(GetGeomFieldDefn(i));
         }
 };
 
@@ -141,6 +145,9 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL: public GDALPamDataset
 
     std::map<CPLString, OGREnvelope> oMapSQLEnvelope{};
 
+    mutable bool        m_bHasPopulatedRelationships = false;
+    mutable std::map<std::string,std::unique_ptr<GDALRelationship>> m_osMapRelationships{};
+
     void               *hSpatialiteCtxt = nullptr;
     bool                InitNewSpatialite();
     void                FinishNewSpatialite();
@@ -150,12 +157,15 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL: public GDALPamDataset
 
     OGRErr              DoTransactionCommand(const char* pszCommand);
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRSQLiteBaseDataSource)
+
   public:
                         OGRSQLiteBaseDataSource();
                         virtual ~OGRSQLiteBaseDataSource();
 
     sqlite3            *GetDB() { return hDB; }
     inline bool         GetUpdate() const { return eAccess == GA_Update; }
+    VSILFILE*           GetVSILFILE() const { return fpMainFile; }
 
     void                NotifyFileOpened (const char* pszFilename,
                                           VSILFILE* fp);
@@ -180,6 +190,8 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL: public GDALPamDataset
     OGRErr              SoftRollbackTransaction();
 
     OGRErr              PragmaCheck(const char * pszPragma, const char * pszExpected, int nRowsExpected);
+
+    void                LoadRelationshipsFromForeignKeys() const;
 };
 
 /************************************************************************/
@@ -226,6 +238,8 @@ class OGRSQLiteSelectLayerCommonBehaviour
     std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*> GetBaseLayer(size_t& i);
     int                 BuildSQL();
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRSQLiteSelectLayerCommonBehaviour)
+
   public:
 
     CPLString           m_osSQLCurrent{};
@@ -255,6 +269,8 @@ class OGRSQLiteSingleFeatureLayer final : public OGRLayer
     char               *pszVal;
     OGRFeatureDefn     *poFeatureDefn;
     int                 iNextShapeId;
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRSQLiteSingleFeatureLayer)
 
   public:
                         OGRSQLiteSingleFeatureLayer( const char* pszLayerName,

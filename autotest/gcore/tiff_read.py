@@ -68,8 +68,8 @@ init_list = [
     ('contig_tiled.tif', 2, 15234),
     ('contig_strip.tif', 2, 15234),
     ('empty1bit.tif', 1, 0),
-    ('gtiff/int64.tif', 1, 65535),
-    ('gtiff/uint64.tif', 1, 1),
+    ('gtiff/int64_full_range.tif', 1, 65535),
+    ('gtiff/uint64_full_range.tif', 1, 1),
 ]
 
 
@@ -1315,7 +1315,7 @@ def test_tiff_direct_and_virtual_mem_io():
                         if nblockxsize < nxsize:
                             if (nysize % nblockysize) != 0:
                                 padding = ((nxsize + nblockxsize - 1) / nblockxsize * nblockxsize) * (nblockysize - (nysize % nblockysize))
-                            if(nxsize % nblockxsize) != 0:
+                            if (nxsize % nblockxsize) != 0:
                                 padding += nblockxsize - (nxsize % nblockxsize)
                             padding *= dt_size
                             if not band_interleaved:
@@ -3275,7 +3275,7 @@ def test_tiff_read_cog_vsicurl():
         handler.add('GET', '/cog.tif', custom_method=method)
         with webserver.install_http_handler(handler):
             ds = gdal.Open('/vsicurl/http://localhost:%d/cog.tif' % webserver_port)
-        assert(ds)
+        assert ds
 
         handler = webserver.SequentialHandler()
         def method(request):
@@ -3378,7 +3378,7 @@ def test_tiff_read_cog_with_mask_vsicurl():
         handler.add('GET', '/cog.tif', custom_method=method)
         with webserver.install_http_handler(handler):
             ds = gdal.Open('/vsicurl/http://localhost:%d/cog.tif' % webserver_port)
-        assert(ds)
+        assert ds
 
         handler = webserver.SequentialHandler()
         def method(request):
@@ -3522,3 +3522,27 @@ def test_tiff_read_overprecision_nodata_float32():
     assert struct.unpack('f', ds.GetRasterBand(1).ReadRaster())[0] == ds.GetRasterBand(1).GetNoDataValue()
     ds = None
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test reading a file with a unhandled codec of a known name
+
+
+def test_tiff_read_unhandled_codec_known_name():
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        assert gdal.Open('data/gtiff/unsupported_codec_jp2000.tif') is None
+    assert 'missing codec JP2000' in gdal.GetLastErrorMsg()
+
+
+###############################################################################
+# Test reading a file with a unhandled codec of a unknown name
+
+
+def test_tiff_read_unhandled_codec_unknown_name():
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        assert gdal.Open('data/gtiff/unsupported_codec_unknown.tif') is None
+    assert 'missing codec of code 44510' in gdal.GetLastErrorMsg()

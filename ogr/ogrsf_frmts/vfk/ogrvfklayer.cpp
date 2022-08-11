@@ -91,6 +91,9 @@ int OGRVFKLayer::TestCapability(const char * pszCap)
     if (EQUAL(pszCap, OLCRandomRead)) {
         return TRUE; /* ? */
     }
+    if (EQUAL(pszCap, OLCStringsAsUTF8)) {
+        return TRUE;
+    }
 
     return FALSE;
 }

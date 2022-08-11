@@ -618,7 +618,7 @@ def test_ogr_feature_overflow_64bit_integer():
     if f.GetField(0) != -9223372036854775808:
         f.DumpReadable()
         pytest.fail()
-    
+
 ###############################################################################
 # Test SetNullable(), IsNullable() and Validate()
 
@@ -786,7 +786,7 @@ def test_ogr_feature_default():
         f.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test GetNativeData(), SetNativeData(), GetNativeMediaType(), SetNativeMediaType():
 
@@ -840,7 +840,7 @@ def test_ogr_feature_native_data():
         assert f.GetNativeMediaType() == 'native_media_type', dialect
         ds.ReleaseResultSet(sql_lyr)
 
-    
+
 ###############################################################################
 # Test assigning our geometry to ourselves
 
@@ -918,3 +918,27 @@ def test_ogr_feature_null_field():
     assert f.Equal(f_clone)
 
     f = None
+
+###############################################################################
+# Test setting a 64 bit integer to a 32 bit field through the SetField() string
+# interface
+
+
+def test_ogr_feature_int32_overflow():
+
+    feat_def = ogr.FeatureDefn('test')
+    field_def = ogr.FieldDefn('field', ogr.OFTInteger)
+    feat_def.AddFieldDefn(field_def)
+    f = ogr.Feature(feat_def)
+
+    with gdaltest.error_handler():
+        gdal.ErrorReset()
+        f.SetField('field', '123456789012345')
+        assert gdal.GetLastErrorMsg() != ''
+        assert f.GetField('field') == 2147483647
+
+    with gdaltest.error_handler():
+        gdal.ErrorReset()
+        f.SetField('field', '-123456789012345')
+        assert gdal.GetLastErrorMsg() != ''
+        assert f.GetField('field') == -2147483648

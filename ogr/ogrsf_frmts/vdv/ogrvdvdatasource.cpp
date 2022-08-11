@@ -241,7 +241,7 @@ void OGRIDFDataSource::Parse()
         double x;
         double y;
         double z;
-        Point(double xIn = 0, double yIn = 0, double zIn = 0):
+        explicit Point(double xIn = 0, double yIn = 0, double zIn = 0):
             x(xIn), y(yIn), z(zIn) {}
     };
     std::map<GIntBig, Point > oMapNode; // map from NODE_ID to Point
@@ -592,6 +592,22 @@ OGRLayer* OGRIDFDataSource::GetLayer( int iLayer )
     if( m_poTmpDS == nullptr )
         return nullptr;
     return m_poTmpDS->GetLayer(iLayer);
+}
+
+/************************************************************************/
+/*                              TestCapability()                        */
+/************************************************************************/
+
+int OGRIDFDataSource::TestCapability( const char* pszCap )
+{
+    if( EQUAL(pszCap,ODsCMeasuredGeometries) )
+        return true;
+    else if( EQUAL(pszCap,ODsCCurveGeometries) )
+        return true;
+    else if( EQUAL(pszCap,ODsCZGeometries) )
+        return true;
+
+    return false;
 }
 
 /************************************************************************/
@@ -1091,9 +1107,13 @@ int OGRVDVLayer::TestCapability(const char* pszCap)
     {
         return TRUE;
     }
-    if( EQUAL(pszCap, OLCStringsAsUTF8) )
+    else if( EQUAL(pszCap, OLCStringsAsUTF8) )
     {
         return m_bRecodeFromLatin1;
+    }
+    else if( EQUAL(pszCap, OLCZGeometries) )
+    {
+        return TRUE;
     }
     return FALSE;
 }
@@ -1930,7 +1950,10 @@ int OGRVDVDataSource::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
         return m_bUpdate;
-    return FALSE;
+    else if( EQUAL(pszCap,ODsCZGeometries) )
+        return true;
+
+    return false;
 }
 
 /************************************************************************/
@@ -1998,6 +2021,15 @@ void RegisterOGRVDV()
 
     poDriver->SetDescription( "VDV" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DELETE_FIELD, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_REORDER_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CURVE_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_ALTER_FIELD_DEFN_FLAGS, "Name Type WidthPrecision" );
+
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "VDV-451/VDV-452/INTREST Data Format" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/vdv.html" );

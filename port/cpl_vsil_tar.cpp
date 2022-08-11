@@ -52,6 +52,9 @@ CPL_CVSID("$Id$")
 /* but supports random insertions or deletions, since it doesn't record */
 /* explicit file size or rely on files starting on a particular boundary */
 #define HAVE_FUZZER_FRIENDLY_ARCHIVE 1
+#endif
+
+#ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
 constexpr int HALF_BUFFER_SIZE = 1024;
 constexpr int BUFFER_SIZE = 2 * HALF_BUFFER_SIZE;
 #endif

@@ -59,7 +59,7 @@ class GDALPDFComposerWriter final: public GDALPDFBaseWriter
         {
             double x = 0;
             double y = 0;
-            xyPair(double xin = 0.0, double yin = 0.0): x(xin), y(yin) {}
+            explicit xyPair(double xin = 0.0, double yin = 0.0): x(xin), y(yin) {}
         };
 
         struct Georeferencing

@@ -847,6 +847,10 @@ void RegisterOGRFileGDB()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                 "ESRI FileGDB" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem( GDAL_DCAP_DELETE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DELETE_FIELD, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gdb" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/filegdb.html" );
 
@@ -862,11 +866,14 @@ void RegisterOGRFileGDB()
 "  <Option name='FID' type='string' description='Name of OID column' default='OBJECTID' deprecated_alias='OID_NAME'/>"
 "  <Option name='XYTOLERANCE' type='float' description='Snapping tolerance, used for advanced ArcGIS features like network and topology rules, on 2D coordinates, in the units of the CRS'/>"
 "  <Option name='ZTOLERANCE' type='float' description='Snapping tolerance, used for advanced ArcGIS features like network and topology rules, on Z coordinates, in the units of the CRS'/>"
+"  <Option name='MTOLERANCE' type='float' description='Snapping tolerance, used for advanced ArcGIS features like network and topology rules, on M coordinates'/>"
 "  <Option name='XORIGIN' type='float' description='X origin of the coordinate precision grid'/>"
 "  <Option name='YORIGIN' type='float' description='Y origin of the coordinate precision grid'/>"
 "  <Option name='ZORIGIN' type='float' description='Z origin of the coordinate precision grid'/>"
+"  <Option name='MORIGIN' type='float' description='M origin of the coordinate precision grid'/>"
 "  <Option name='XYSCALE' type='float' description='X,Y scale of the coordinate precision grid'/>"
 "  <Option name='ZSCALE' type='float' description='Z scale of the coordinate precision grid'/>"
+"  <Option name='MSCALE' type='float' description='M scale of the coordinate precision grid'/>"
 "  <Option name='XML_DEFINITION' type='string' description='XML definition to create the new table. The root node of such a XML definition must be a &lt;esri:DataElement&gt; element conformant to FileGDBAPI.xsd'/>"
 "  <Option name='CREATE_MULTIPATCH' type='boolean' description='Whether to write geometries of layers of type MultiPolygon as MultiPatch' default='NO'/>"
 "  <Option name='COLUMN_TYPES' type='string' description='A list of strings of format field_name=fgdb_filed_type (separated by comma) to force the FileGDB column type of fields to be created'/>"
@@ -879,6 +886,10 @@ void RegisterOGRFileGDB()
 "    <Value>BLOB_OUTOFLINE</Value>"
 "    <Value>GEOMETRY_AND_BLOB_OUTOFLINE</Value>"
 "  </Option>"
+"  <Option name='CREATE_SHAPE_AREA_AND_LENGTH_FIELDS' type='boolean' description='Whether to create special Shape_Length and Shape_Area fields' default='NO'/>"
+// Setting to another value than the default one doesn't really work with the SDK
+//"  <Option name='AREA_FIELD_NAME' type='string' description='Name of the column that contains the geometry area' default='Shape_Area'/>"
+//"  <Option name='length_field_name' type='string' description='Name of the column that contains the geometry length' default='Shape_Length'/>"
 "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
@@ -889,8 +900,11 @@ void RegisterOGRFileGDB()
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_FIELD_DOMAINS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RELATIONSHIPS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_RENAME_LAYERS, "YES" );
-
+    poDriver->SetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_GEOMETRY_FLAGS, "EquatesMultiAndSingleLineStringDuringWrite EquatesMultiAndSinglePolygonDuringWrite" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATION_FIELD_DOMAIN_TYPES, "Coded Range" );
 
     poDriver->pfnOpen = OGRFileGDBDriverOpen;

@@ -1607,6 +1607,9 @@ OGRErr OGRWriteMultiPatchToShapeBin( const OGRGeometry *poGeom,
     if( eErr != OGRERR_NONE )
         return eErr;
 
+    const bool bOmitZ = !poGeom->Is3D() &&
+        CPLTestBool(CPLGetConfigOption("OGR_MULTIPATCH_OMIT_Z", "NO"));
+
     int nShpSize = 4;  // All types start with integer type number.
     nShpSize += 16 * 2;  // xy bbox.
     nShpSize += 4;  // nparts.
@@ -1614,8 +1617,11 @@ OGRErr OGRWriteMultiPatchToShapeBin( const OGRGeometry *poGeom,
     nShpSize += 4 * nParts;  // panPartStart[nparts].
     nShpSize += 4 * nParts;  // panPartType[nparts].
     nShpSize += 8 * 2 * nPoints;  // xy points.
-    nShpSize += 16;  // z bbox.
-    nShpSize += 8 * nPoints;  // z points.
+    if( !bOmitZ )
+    {
+        nShpSize += 16;  // z bbox.
+        nShpSize += 8 * nPoints;  // z points.
+    }
 
     *pnBytes = nShpSize;
     *ppabyShape = static_cast<GByte *>(CPLMalloc(nShpSize));
@@ -1623,7 +1629,7 @@ OGRErr OGRWriteMultiPatchToShapeBin( const OGRGeometry *poGeom,
     GByte* pabyPtr = *ppabyShape;
 
     // Write in the type number and advance the pointer.
-    GUInt32 nGType = CPL_LSBWORD32( SHPT_MULTIPATCH );
+    GUInt32 nGType = bOmitZ ? CPL_LSBWORD32( SHPT_GENERALMULTIPATCH ) : CPL_LSBWORD32( SHPT_MULTIPATCH );
     memcpy( pabyPtr, &nGType, 4 );
     pabyPtr += 4;
 
@@ -1676,24 +1682,27 @@ OGRErr OGRWriteMultiPatchToShapeBin( const OGRGeometry *poGeom,
     }
     pabyPtr += 2 * 8 * nPoints;
 
-    memcpy( pabyPtr, &(envelope.MinZ), 8 );
-    memcpy( pabyPtr+8, &(envelope.MaxZ), 8 );
-    if( OGR_SWAP( wkbNDR ) )
+    if( !bOmitZ )
     {
-        for( int i = 0; i < 2; i++ )
-            CPL_SWAPDOUBLE( pabyPtr + 8*i );
-    }
-    pabyPtr += 16;
+        memcpy( pabyPtr, &(envelope.MinZ), 8 );
+        memcpy( pabyPtr+8, &(envelope.MaxZ), 8 );
+        if( OGR_SWAP( wkbNDR ) )
+        {
+            for( int i = 0; i < 2; i++ )
+                CPL_SWAPDOUBLE( pabyPtr + 8*i );
+        }
+        pabyPtr += 16;
 
-    if( padfZ != nullptr )
-        memcpy(pabyPtr, padfZ, 8 * nPoints);
-    // Swap box if needed. Shape doubles are always LSB.
-    if( OGR_SWAP( wkbNDR ) )
-    {
-        for( int i = 0; i < nPoints; i++ )
-            CPL_SWAPDOUBLE( pabyPtr + 8*i );
+        if( padfZ != nullptr )
+            memcpy(pabyPtr, padfZ, 8 * nPoints);
+        // Swap box if needed. Shape doubles are always LSB.
+        if( OGR_SWAP( wkbNDR ) )
+        {
+            for( int i = 0; i < nPoints; i++ )
+                CPL_SWAPDOUBLE( pabyPtr + 8*i );
+        }
+        // pabyPtr += 8 * nPoints;
     }
-    // pabyPtr += 8 * nPoints;
 
     CPLFree(panPartStart);
     CPLFree(panPartType);

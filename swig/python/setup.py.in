@@ -304,10 +304,8 @@ GNM_ENABLED = @GNM_ENABLED@
 if GNM_ENABLED:
     ext_modules.append(gnm_module)
 
-extras_require=None
 if HAVE_NUMPY:
     ext_modules.append(array_module)
-    extras_require={'numpy': ['numpy > 1.0.0']}
 
 utils_package_root = 'gdal-utils'   # path for gdal-utils sources
 packages = find_packages(utils_package_root)
@@ -317,7 +315,7 @@ package_dir = {'osgeo': 'osgeo', '': utils_package_root}
 readme = open('README.rst', encoding="utf-8").read()
 
 name = 'GDAL'
-version = '@GDAL_VERSION_NO_DEV_SUFFIX@'
+version = '@GDAL_PYTHON_VERSION@'
 author = "Frank Warmerdam"
 author_email = "warmerdam@pobox.com"
 maintainer = "Howard Butler"
@@ -360,7 +358,8 @@ setup(
     python_requires='>=3.6.0',
     ext_modules=ext_modules,
     scripts=glob(utils_package_root + '/scripts/*.py'),
-    extras_require=extras_require,
+    # This must *not* be conditionalized by HAVE_NUMPY, since this is for a "pip install gdal[numpy]" type of installation
+    extras_require={'numpy': ['numpy > 1.0.0']},
     zip_safe=False,
     cmdclass=dict(build_ext=gdal_ext),
     exclude_package_data = exclude_package_data,

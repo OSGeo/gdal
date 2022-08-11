@@ -67,6 +67,7 @@ for the shared lib, *e.g.* ``set (GDAL_LIB_OUTPUT_NAME gdal_x64 CACHE STRING "" 
     conflict with new settings. If strange errors appear during cmake run,
     you may try removing CMakeCache.txt to start from a clean state.
 
+Refer to :ref:`using_gdal_in_cmake` for how to use GDAL in a CMake project.
 
 CMake general configure options
 +++++++++++++++++++++++++++++++
@@ -197,6 +198,14 @@ detected. The behavior can also be globally controlled with the following variab
      This option should be set before CMakeCache.txt is created.
 
 
+.. note::
+
+    Using together GDAL_USE_EXTERNAL_LIBS=OFF and GDAL_USE_INTERNAL_LIBS=OFF
+    will result in a CMake configuration failure, because the following libraries
+    (either as external dependencies or using the internal copy) are at least
+    required: ZLIB, TIFF, GEOTIFF and JSONC. Enabling them as external or internal
+    libraries is thus required.
+
 Armadillo
 *********
 
@@ -223,6 +232,18 @@ Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
     Control whether to use Arrow. Defaults to ON when Arrow is found.
 
 
+basisu
+******
+
+The `Basis Universal <https://github.com/rouault/basis_universal/tree/cmake>` library
+is required for the :ref:`raster.basisu` and :ref:`raster.ktx2` drivers.
+Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable or ``basisu_ROOT`` variable.
+
+.. option:: GDAL_USE_BASISU=ON/OFF
+
+    Control whether to use basisu. Defaults to ON when basisu is found.
+
+
 Blosc
 *****
 
@@ -241,6 +262,7 @@ It is used by the :ref:`raster.zarr` driver.
 .. option:: GDAL_USE_BLOSC=ON/OFF
 
     Control whether to use Blosc. Defaults to ON when Blosc is found.
+
 
 BRUNSLI
 *******
@@ -786,6 +808,12 @@ on how the library is detected.
 
     Control whether to use internal libjpeg copy. Defaults depends on GDAL_USE_INTERNAL_LIBS. When set
     to ON, has precedence over GDAL_USE_JPEG=ON
+
+.. option:: EXPECTED_JPEG_LIB_VERSION=number
+
+    Used with external libjpeg. number is for example 80, for libjpeg 8 ABI.
+    This can be used to check a build time that the expected JPEG library is
+    the one that is included by GDAL.
 
 
 JPEG12
@@ -1500,6 +1528,17 @@ PROJ
     building Debug releases.
 
 
+QB3
+*******
+
+The `QB3 <https://github.com/lucianpls/QB3>`_ compression, used
+by the :ref:`raster.marfa` driver.
+
+.. option:: GDAL_USE_QB3=ON/OFF
+
+    Control whether to use QB3. Defaults to ON when QB3 is found.
+
+
 QHULL
 *****
 
@@ -1632,7 +1671,13 @@ It is used for the Python, Java and CSharp bindings.
 
 .. option:: SWIG_EXECUTABLE
 
-    Path to the SWIG executable
+    Path to the SWIG executable.
+
+    Note that setting it explicitly might be needed, and that putting the
+    directory of the installed binary into the PATH might not be sufficient.
+    The reason is that when building from source, a "swig" binary will be
+    generated, but FindSWIG will prefer a "swig-4.0" binary if found elsewhere
+    in the PATH.
 
 
 TEIGHA
@@ -1981,6 +2026,11 @@ Python bindings options
     Whether Python bindings should be built. It is ON by default, but only
     effective if a Python installation is found.
 
+.. option:: SWIG_REGENERATE_PYTHON:BOOL=ON/OFF
+
+    Whether to refresh the generated SWIG Python bindings. It is OFF by default.
+    Setting it to ON is needed if modifying the SWIG interface files.
+
 A nominal Python installation should comprise the Python runtime (>= 3.6) and
 the setuptools module.
 numpy and its header and development library are also strongly recommended.
@@ -2066,6 +2116,8 @@ Option only to be used by maintainers:
 C# bindings options
 +++++++++++++++++++
 
+For more details on how to build and use the C# bindings read the dedicated section :ref:`csharp_compile_cmake`.
+
 .. option:: BUILD_CSHARP_BINDINGS:BOOL=ON/OFF
 
     Whether C# bindings should be built. It is ON by default, but only
@@ -2073,6 +2125,22 @@ C# bindings options
     SDK can be used or Mono. The relevant options that can be set are described
     in ``cmake/modules/thirdparty/FindDotNetFrameworkSdk.cmake`` and
     ``cmake/modules/thirdparty/FindMono.cmake``.
+
+.. option:: CSHARP_MONO=ON/OFF
+
+    Forces the use of Mono as opposed to .NET to compile the C# bindings.
+
+.. option:: CSHARP_LIBRARY_VERSION
+
+    Sets the .NET (or Mono) target SDK to be used when compiling the C# binding libraries. `List of acceptable contents for .NET <https://docs.microsoft.com/en-us/dotnet/standard/frameworks#supported-target-frameworks>`_
+
+.. option:: CSHARP_APPLICATION_VERSION
+
+    Sets the .NET (or Mono) target SDK to be used when compiling the C# sample applications. `List of acceptable contents for .NET <https://docs.microsoft.com/en-us/dotnet/standard/frameworks#supported-target-frameworks>`_
+
+.. option:: GDAL_CSHARP_ONLY=OFF/ON
+
+    Build the C# bindings without building GDAL. This should be used when building the bindings on top of an existing GDAL installation - for instance on top of the CONDA package.
 
 Driver specific options
 +++++++++++++++++++++++

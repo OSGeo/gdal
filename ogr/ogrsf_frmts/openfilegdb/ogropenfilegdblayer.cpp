@@ -34,6 +34,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <cwchar>
 #include <algorithm>
 #include <string>
 
@@ -55,138 +56,29 @@
 CPL_CVSID("$Id$")
 
 /************************************************************************/
-/*                      OGROpenFileGDBGeomFieldDefn                     */
-/************************************************************************/
-class OGROpenFileGDBGeomFieldDefn: public OGRGeomFieldDefn
-{
-        OGROpenFileGDBLayer* m_poLayer;
-
-    public:
-        OGROpenFileGDBGeomFieldDefn(OGROpenFileGDBLayer* poLayer,
-                                    const char *pszNameIn,
-                                    OGRwkbGeometryType eGeomTypeIn) :
-            OGRGeomFieldDefn(pszNameIn, eGeomTypeIn),
-            m_poLayer(poLayer)
-        {}
-
-        ~OGROpenFileGDBGeomFieldDefn() {}
-
-        void UnsetLayer() { m_poLayer = nullptr; }
-
-        virtual OGRSpatialReference* GetSpatialRef() const override
-        {
-            if( poSRS )
-                return poSRS;
-            if( m_poLayer != nullptr )
-                (void) m_poLayer->BuildLayerDefinition();
-            return poSRS;
-        }
-};
-
-/************************************************************************/
-/*                      OGROpenFileGDBFeatureDefn                       */
-/************************************************************************/
-class OGROpenFileGDBFeatureDefn: public OGRFeatureDefn
-{
-        OGROpenFileGDBLayer* m_poLayer;
-        mutable int m_bHasBuildFieldDefn;
-
-        void LazyGeomInit() const
-        {
-            /* FileGDB v9 case */
-            if( !m_bHasBuildFieldDefn &&
-                m_poLayer != nullptr && m_poLayer->m_eGeomType != wkbNone &&
-                m_poLayer->m_osDefinition.empty() )
-            {
-                m_bHasBuildFieldDefn = TRUE;
-                (void) m_poLayer->BuildLayerDefinition();
-            }
-        }
-
-    public:
-        OGROpenFileGDBFeatureDefn( OGROpenFileGDBLayer* poLayer,
-                                   const char * pszName ) :
-                        OGRFeatureDefn(pszName), m_poLayer(poLayer)
-        {
-            m_bHasBuildFieldDefn = FALSE;
-        }
-
-        ~OGROpenFileGDBFeatureDefn() {}
-
-        void UnsetLayer()
-        {
-            if( !apoGeomFieldDefn.empty() )
-                cpl::down_cast<OGROpenFileGDBGeomFieldDefn *>(
-                    apoGeomFieldDefn[0].get())->UnsetLayer();
-            m_poLayer = nullptr;
-        }
-
-        virtual int GetFieldCount() const override
-        {
-            if( !m_bHasBuildFieldDefn && m_poLayer != nullptr )
-            {
-                m_bHasBuildFieldDefn = TRUE;
-                (void) m_poLayer->BuildLayerDefinition();
-            }
-            return OGRFeatureDefn::GetFieldCount();
-        }
-
-        virtual int GetGeomFieldCount() const override
-        {
-            LazyGeomInit();
-            return OGRFeatureDefn::GetGeomFieldCount();
-        }
-
-        virtual OGRGeomFieldDefn* GetGeomFieldDefn( int i ) override
-        {
-            LazyGeomInit();
-            return OGRFeatureDefn::GetGeomFieldDefn(i);
-        }
-
-        virtual const OGRGeomFieldDefn* GetGeomFieldDefn( int i ) const override
-        {
-            LazyGeomInit();
-            return OGRFeatureDefn::GetGeomFieldDefn(i);
-        }
-};
-
-/************************************************************************/
 /*                      OGROpenFileGDBLayer()                           */
 /************************************************************************/
 
-OGROpenFileGDBLayer::OGROpenFileGDBLayer( const char* pszGDBFilename,
+OGROpenFileGDBLayer::OGROpenFileGDBLayer( OGROpenFileGDBDataSource* poDS,
+                                          const char* pszGDBFilename,
                                           const char* pszName,
                                           const std::string& osDefinition,
                                           const std::string& osDocumentation,
-                                          const char* /* pszGeomName */,
+                                          bool bEditable,
                                           OGRwkbGeometryType eGeomType,
                                           const std::string& osParentDefinition ) :
+    m_poDS(poDS),
     m_osGDBFilename(pszGDBFilename),
     m_osName(pszName),
-    m_poLyrTable(nullptr),
-    m_poFeatureDefn(nullptr),
-    m_iGeomFieldIdx(-1),
-    m_iCurFeat(0),
+    m_bEditable(bEditable),
     m_osDefinition(osDefinition),
-    m_osDocumentation(osDocumentation),
-    m_eGeomType(wkbNone),
-    m_bValidLayerDefn(-1),
-    m_bEOF(FALSE),
-    m_poGeomConverter(nullptr),
-    m_iFieldToReadAsBinary(-1),
-    m_poAttributeIterator(nullptr),
-    m_bIteratorSufficientToEvaluateFilter(FALSE),
-    m_poIterMinMax(nullptr),
-    m_eSpatialIndexState(SPI_IN_BUILDING),
-    m_pQuadTree(nullptr),
-    m_pahFilteredFeatures(nullptr),
-    m_nFilteredFeatureCount(-1)
+    m_osDocumentation(osDocumentation)
 {
     // TODO(rouault): What error on compiler versions?  r33032 does not say.
 
     // We cannot initialize m_poFeatureDefn in above list. MSVC doesn't like
     // this to be used in initialization list.
-    m_poFeatureDefn = new OGROpenFileGDBFeatureDefn(this, pszName);
+    m_poFeatureDefn = new OGROpenFileGDBFeatureDefn(this, pszName, false);
     SetDescription( m_poFeatureDefn->GetName() );
     m_poFeatureDefn->SetGeomType(wkbNone);
     m_poFeatureDefn->Reference();
@@ -199,26 +91,57 @@ OGROpenFileGDBLayer::OGROpenFileGDBLayer( const char* pszGDBFilename,
     }
 }
 
+/************************************************************************/
+/*                      OGROpenFileGDBLayer()                           */
+/************************************************************************/
+
+OGROpenFileGDBLayer::OGROpenFileGDBLayer(OGROpenFileGDBDataSource* poDS,
+                                         const char* pszGDBFilename,
+                                         const char* pszName,
+                                         OGRwkbGeometryType eType,
+                                         CSLConstList papszOptions):
+    m_poDS(poDS),
+    m_osGDBFilename(pszGDBFilename),
+    m_osName(pszName),
+    m_aosCreationOptions(papszOptions),
+    m_eGeomType(eType)
+{
+}
+
 /***********************************************************************/
 /*                      ~OGROpenFileGDBLayer()                         */
 /***********************************************************************/
 
 OGROpenFileGDBLayer::~OGROpenFileGDBLayer()
 {
-    delete m_poLyrTable;
+    OGROpenFileGDBLayer::SyncToDisk();
+
     if( m_poFeatureDefn )
     {
         m_poFeatureDefn->UnsetLayer();
         m_poFeatureDefn->Release();
     }
+
+    delete m_poLyrTable;
+
     delete m_poAttributeIterator;
     delete m_poIterMinMax;
-    delete m_poGeomConverter;
     delete m_poSpatialIndexIterator;
     delete m_poCombinedIterator;
     if( m_pQuadTree != nullptr )
         CPLQuadTreeDestroy(m_pQuadTree);
     CPLFree(m_pahFilteredFeatures);
+}
+
+/************************************************************************/
+/*                                 Close()                              */
+/************************************************************************/
+
+void OGROpenFileGDBLayer::Close()
+{
+    delete m_poLyrTable;
+    m_poLyrTable = nullptr;
+    m_bValidLayerDefn = FALSE;
 }
 
 /************************************************************************/
@@ -263,7 +186,7 @@ static OGRSpatialReference* BuildSRS(const char* pszWKT)
     return poSRS;
 }
 
-static OGRSpatialReference* BuildSRS(const CPLXMLNode* psInfo)
+OGRSpatialReference* OGROpenFileGDBLayer::BuildSRS(const CPLXMLNode* psInfo)
 {
     const char* pszWKT =
         CPLGetXMLValue( psInfo, "SpatialReference.WKT", nullptr );
@@ -316,7 +239,7 @@ static OGRSpatialReference* BuildSRS(const CPLXMLNode* psInfo)
     }
     if( poSRS == nullptr && pszWKT != nullptr && pszWKT[0] != '{' )
     {
-        poSRS = BuildSRS(pszWKT);
+        poSRS = ::BuildSRS(pszWKT);
     }
     return poSRS;
 }
@@ -366,11 +289,9 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10(const std::string& osParentDe
             if( m_poLyrTable == nullptr )
             {
                 m_poLyrTable = new FileGDBTable();
-                if( !(m_poLyrTable->Open(m_osGDBFilename, GetDescription())) )
+                if( !(m_poLyrTable->Open(m_osGDBFilename, m_bEditable, GetDescription())) )
                 {
-                    delete m_poLyrTable;
-                    m_poLyrTable = nullptr;
-                    m_bValidLayerDefn = FALSE;
+                    Close();
                 }
             }
             if( m_poLyrTable != nullptr )
@@ -381,11 +302,8 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10(const std::string& osParentDe
                     FileGDBGeomField* poGDBGeomField =
                         reinterpret_cast<FileGDBGeomField *>(
                             m_poLyrTable->GetField(m_iGeomFieldIdx));
-                    if( m_poGeomConverter == nullptr )
-                    {
-                        m_poGeomConverter =
-                            FileGDBOGRGeometryConverter::BuildConverter(poGDBGeomField);
-                    }
+                    m_poGeomConverter.reset(
+                        FileGDBOGRGeometryConverter::BuildConverter(poGDBGeomField));
                     TryToDetectMultiPatchKind();
                 }
             }
@@ -550,11 +468,9 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
     if( m_poLyrTable == nullptr )
     {
         m_poLyrTable = new FileGDBTable();
-        if( !(m_poLyrTable->Open(m_osGDBFilename, GetDescription())) )
+        if( !(m_poLyrTable->Open(m_osGDBFilename, m_bEditable, GetDescription())) )
         {
-            delete m_poLyrTable;
-            m_poLyrTable = nullptr;
-            m_bValidLayerDefn = FALSE;
+            Close();
             return FALSE;
         }
     }
@@ -567,11 +483,8 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
         FileGDBGeomField* poGDBGeomField =
             cpl::down_cast<FileGDBGeomField *>(
                 m_poLyrTable->GetField(m_iGeomFieldIdx));
-        if( m_poGeomConverter == nullptr )
-        {
-            m_poGeomConverter =
-            FileGDBOGRGeometryConverter::BuildConverter(poGDBGeomField);
-        }
+        m_poGeomConverter.reset(
+            FileGDBOGRGeometryConverter::BuildConverter(poGDBGeomField));
 
 #ifdef DEBUG
         const auto poSRS = GetSpatialRef();
@@ -579,7 +492,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
             !poGDBGeomField->GetWKT().empty() &&
             poGDBGeomField->GetWKT()[0] != '{' )
         {
-            auto poSRSFromGDBTable = BuildSRS( poGDBGeomField->GetWKT().c_str() );
+            auto poSRSFromGDBTable = ::BuildSRS( poGDBGeomField->GetWKT().c_str() );
             if( poSRSFromGDBTable )
             {
                 if( !poSRS->IsSame(poSRSFromGDBTable) )
@@ -675,7 +588,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
         if( !poGDBGeomField->GetWKT().empty() &&
             poGDBGeomField->GetWKT()[0] != '{' )
         {
-            poSRS = BuildSRS( poGDBGeomField->GetWKT().c_str() );
+            poSRS = ::BuildSRS( poGDBGeomField->GetWKT().c_str() );
         }
         if( poSRS != nullptr )
         {
@@ -691,6 +604,8 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
     CPLXMLTreeCloser oTree(nullptr);
     const CPLXMLNode* psGPFieldInfoExs = nullptr;
 
+    std::string osAreaFieldName;
+    std::string osLengthFieldName;
     if( !m_osDefinition.empty() )
     {
         oTree.reset(CPLParseXMLString(m_osDefinition.c_str()));
@@ -702,14 +617,21 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
             if( psInfo == nullptr )
                 psInfo = CPLSearchXMLNode( oTree.get(), "=DETableInfo" );
             if( psInfo != nullptr )
+            {
                 psGPFieldInfoExs =
                     CPLGetXMLNode(psInfo, "GPFieldInfoExs");
+                osAreaFieldName = CPLGetXMLValue(psInfo, "AreaFieldName", "");
+                osLengthFieldName = CPLGetXMLValue(psInfo, "LengthFieldName", "");
+                m_osPath = CPLGetXMLValue(psInfo, "CatalogPath", "");
+            }
         }
     }
 
     for(int i=0;i<m_poLyrTable->GetFieldCount();i++)
     {
         if( i == m_iGeomFieldIdx )
+            continue;
+        if( i == m_poLyrTable->GetObjectIdFieldIdx() )
             continue;
 
         const FileGDBField* poGDBField = m_poLyrTable->GetField(i);
@@ -736,8 +658,8 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
                 /* nWidth = poGDBField->GetMaxWidth(); */
                 eType = OFTString;
                 break;
-            case FGFT_UUID_1:
-            case FGFT_UUID_2:
+            case FGFT_GUID:
+            case FGFT_GLOBALID:
             case FGFT_XML:
                 eType = OFTString;
                 break;
@@ -768,9 +690,9 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
             case FGFT_RASTER:
             {
                 const FileGDBRasterField* rasterField = cpl::down_cast<const FileGDBRasterField*>(poGDBField);
-                if( rasterField->GetType() == FileGDBRasterField::Type::MANAGED )
+                if( rasterField->GetRasterType() == FileGDBRasterField::Type::MANAGED )
                     eType = OFTInteger;
-                else if( rasterField->GetType() == FileGDBRasterField::Type::EXTERNAL )
+                else if( rasterField->GetRasterType() == FileGDBRasterField::Type::EXTERNAL )
                     eType = OFTString;
                 else
                     eType = OFTBinary;
@@ -781,10 +703,13 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
         oFieldDefn.SetAlternativeName(poGDBField->GetAlias().c_str());
         oFieldDefn.SetSubType(eSubType);
         // On creation in the FileGDB driver (GDBFieldTypeToWidthPrecision) if
-        // string width is 0, we pick up 65535 by default to mean unlimited
+        // string width is 0, we pick up 65536 by default to mean unlimited
         // string length, but we do not want to advertise such a big number.
-        if( eType == OFTString && nWidth < 65535 )
+        if( eType == OFTString && (nWidth < 65536 ||
+            CPLTestBool(CPLGetConfigOption("OPENFILEGDB_REPORT_GENUINE_FIELD_WIDTH", "NO"))) )
+        {
             oFieldDefn.SetWidth(nWidth);
+        }
         oFieldDefn.SetNullable(poGDBField->IsNullable());
 
         const CPLXMLNode* psFieldDef = nullptr;
@@ -896,6 +821,19 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
                 oFieldDefn.SetDomainName(pszDomainName);
         }
 
+        if( osAreaFieldName == poGDBField->GetName() &&
+            oFieldDefn.GetType() == OFTReal )
+        {
+            m_iAreaField = m_poFeatureDefn->GetFieldCount();
+            oFieldDefn.SetDefault("FILEGEODATABASE_SHAPE_AREA");
+        }
+        else if( osLengthFieldName == poGDBField->GetName() &&
+                 oFieldDefn.GetType() == OFTReal )
+        {
+            m_iLengthField = m_poFeatureDefn->GetFieldCount();
+            oFieldDefn.SetDefault("FILEGEODATABASE_SHAPE_LENGTH");
+        }
+
         m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
     }
 
@@ -938,9 +876,12 @@ OGRFeatureDefn* OGROpenFileGDBLayer::GetLayerDefn()
 
 const char* OGROpenFileGDBLayer::GetFIDColumn()
 {
-    if( !BuildLayerDefinition() )
+    if( !BuildLayerDefinition())
         return "";
-    return m_poLyrTable->GetObjectIdColName().c_str();
+    int iIdx = m_poLyrTable->GetObjectIdFieldIdx();
+    if (iIdx < 0 )
+        return "";
+    return m_poLyrTable->GetField(iIdx)->GetName().c_str();
 }
 
 /***********************************************************************/
@@ -1415,11 +1356,50 @@ FileGDBIterator* OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node* p
                         }
                     }
 
+                    bool bIteratorSufficient = true;
+                    auto poField = m_poLyrTable->GetField(nTableColIdx);
+                    std::string osTruncatedStr; // keep it in this scope !
+                    if( poField->GetType() == FGFT_STRING &&
+                        poFieldDefn->GetType() == OFTString )
+                    {
+                        // As the index use ' ' as padding value, we cannot
+                        // fully trust the index.
+                        if( (eOp == FGSO_EQ && poNode->nOperation != SWQ_NE) || eOp == FGSO_GE )
+                            bIteratorSufficient = false;
+                        else
+                            return nullptr;
+
+                        const int nMaxWidthIndexedStr =
+                            poField->GetIndex()->GetMaxWidthInBytes(m_poLyrTable);
+                        if( nMaxWidthIndexedStr > 0 )
+                        {
+                            wchar_t *pWide = CPLRecodeToWChar( sValue.String,
+                                                               CPL_ENC_UTF8,
+                                                               CPL_ENC_UCS2 );
+                            if( pWide )
+                            {
+                                const size_t nUCS2Len = wcslen(pWide);
+                                if( nUCS2Len * sizeof(uint16_t) > static_cast<size_t>(nMaxWidthIndexedStr) )
+                                {
+                                    pWide[nMaxWidthIndexedStr / sizeof(uint16_t)] = 0;
+                                    char* pszTruncated = CPLRecodeFromWChar( pWide, CPL_ENC_UCS2, CPL_ENC_UTF8 );
+                                    if( pszTruncated )
+                                    {
+                                        osTruncatedStr = pszTruncated;
+                                        sValue.String = &osTruncatedStr[0];
+                                        CPLFree(pszTruncated);
+                                    }
+                                }
+                                CPLFree(pWide);
+                            }
+                        }
+                    }
+
                     FileGDBIterator* poIter = FileGDBIterator::Build(
                         m_poLyrTable, nTableColIdx, TRUE,
                         eOp, poFieldDefn->GetType(), &sValue);
                     if( poIter != nullptr )
-                        m_bIteratorSufficientToEvaluateFilter = TRUE;
+                        m_bIteratorSufficientToEvaluateFilter = bIteratorSufficient;
                     if( poIter && poNode->nOperation == SWQ_NE )
                         return FileGDBIterator::BuildNot(poIter);
                     else
@@ -1498,6 +1478,10 @@ FileGDBIterator* OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node* p
                 m_poLyrTable->GetField(nTableColIdx)->HasIndex() )
             {
                 FileGDBIterator* poRet = nullptr;
+
+                bool bIteratorSufficient = true;
+                auto poField = m_poLyrTable->GetField(nTableColIdx);
+
                 for( int i=1; i<poNode->nSubExprCount; i++ )
                 {
                     OGRField sValue;
@@ -1508,6 +1492,41 @@ FileGDBIterator* OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node* p
                         poRet = nullptr;
                         break;
                     }
+
+                    std::string osTruncatedStr; // keep it in this scope !
+                    if( poField->GetType() == FGFT_STRING &&
+                        poFieldDefn->GetType() == OFTString )
+                    {
+                        const int nMaxWidthIndexedStr =
+                            poField->GetIndex()->GetMaxWidthInBytes(m_poLyrTable);
+                        if( nMaxWidthIndexedStr > 0 )
+                        {
+                            wchar_t *pWide = CPLRecodeToWChar( sValue.String,
+                                                               CPL_ENC_UTF8,
+                                                               CPL_ENC_UCS2 );
+                            if( pWide )
+                            {
+                                const size_t nUCS2Len = wcslen(pWide);
+                                if( nUCS2Len * sizeof(uint16_t) > static_cast<size_t>(nMaxWidthIndexedStr) )
+                                {
+                                    pWide[nMaxWidthIndexedStr / sizeof(uint16_t)] = 0;
+                                    char* pszTruncated = CPLRecodeFromWChar( pWide, CPL_ENC_UCS2, CPL_ENC_UTF8 );
+                                    if( pszTruncated )
+                                    {
+                                        osTruncatedStr = pszTruncated;
+                                        sValue.String = &osTruncatedStr[0];
+                                        CPLFree(pszTruncated);
+                                    }
+                                }
+                                CPLFree(pWide);
+                            }
+                        }
+
+                        // As the index use ' ' as padding value, we cannot
+                        // fully trust the index.
+                        bIteratorSufficient = false;
+                    }
+
                     FileGDBIterator* poIter = FileGDBIterator::Build(
                                         m_poLyrTable, nTableColIdx, TRUE, FGSO_EQ,
                                         poFieldDefn->GetType(), &sValue);
@@ -1524,7 +1543,7 @@ FileGDBIterator* OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node* p
                 }
                 if( poRet != nullptr )
                 {
-                    m_bIteratorSufficientToEvaluateFilter = TRUE;
+                    m_bIteratorSufficientToEvaluateFilter = bIteratorSufficient;
                     return poRet;
                 }
             }
@@ -1645,7 +1664,7 @@ OGRFeature* OGROpenFileGDBLayer::GetCurrentFeature()
                         sBounds.maxx = sFeatureEnvelope.MaxX;
                         sBounds.maxy = sFeatureEnvelope.MaxY;
                         CPLQuadTreeInsertWithBounds(m_pQuadTree,
-                                                    (void*)(size_t)iRow,
+                                                    reinterpret_cast<void*>(static_cast<uintptr_t>(iRow)),
                                                     &sBounds);
                     }
                 }
@@ -1688,12 +1707,12 @@ OGRFeature* OGROpenFileGDBLayer::GetCurrentFeature()
                 }
             }
         }
-        else
+        else if( iGDBIdx != m_poLyrTable->GetObjectIdFieldIdx() )
         {
             const OGRFieldDefn* poFieldDefn = m_poFeatureDefn->GetFieldDefn(iOGRIdx);
             if( !poFieldDefn->IsIgnored() )
             {
-                OGRField* psField = m_poLyrTable->GetFieldValue(iGDBIdx);
+                const OGRField* psField = m_poLyrTable->GetFieldValue(iGDBIdx);
                 if( poFeature == nullptr )
                     poFeature = new OGRFeature(m_poFeatureDefn);
                 if( psField == nullptr )
@@ -1707,8 +1726,9 @@ OGRFeature* OGROpenFileGDBLayer::GetCurrentFeature()
                         poFeature->SetField(iOGRIdx, reinterpret_cast<const char*>(psField->Binary.paData));
                     else if( poFieldDefn->GetType() == OFTDateTime )
                     {
-                        psField->Date.TZFlag = m_bTimeInUTC ? 100 : 0;
-                        poFeature->SetField(iOGRIdx, psField);
+                        OGRField sField = *psField;
+                        sField.Date.TZFlag = m_bTimeInUTC ? 100 : 0;
+                        poFeature->SetField(iOGRIdx, &sField);
                     }
                     else
                         poFeature->SetField(iOGRIdx, psField);
@@ -2018,7 +2038,7 @@ GIntBig OGROpenFileGDBLayer::GetFeatureCount( int bForce )
                         sBounds.maxx = sFeatureEnvelope.MaxX;
                         sBounds.maxy = sFeatureEnvelope.MaxY;
                         CPLQuadTreeInsertWithBounds(m_pQuadTree,
-                                                    (void*)(size_t)i,
+                                                    reinterpret_cast<void*>(static_cast<uintptr_t>(i)),
                                                     &sBounds);
                     }
                 }
@@ -2040,7 +2060,7 @@ GIntBig OGROpenFileGDBLayer::GetFeatureCount( int bForce )
                                         sizeof(void*) *
                                         nFilteredFeatureCountAlloc));
                             }
-                            m_pahFilteredFeatures[nCount] = (void*)(size_t)i;
+                            m_pahFilteredFeatures[nCount] = reinterpret_cast<void*>(static_cast<uintptr_t>(i));
                         }
                         nCount ++;
                     }
@@ -2075,6 +2095,18 @@ int OGROpenFileGDBLayer::TestCapability( const char * pszCap )
     if( !BuildLayerDefinition() )
         return FALSE;
 
+    if( EQUAL(pszCap, OLCCreateField) ||
+        EQUAL(pszCap, OLCDeleteField) ||
+        EQUAL(pszCap, OLCAlterFieldDefn) ||
+        EQUAL(pszCap, OLCAlterGeomFieldDefn) ||
+        EQUAL(pszCap, OLCSequentialWrite) ||
+        EQUAL(pszCap, OLCRandomWrite) ||
+        EQUAL(pszCap, OLCDeleteFeature) ||
+        EQUAL(pszCap, OLCRename) )
+    {
+        return m_bEditable;
+    }
+
     if( EQUAL(pszCap,OLCFastFeatureCount) )
     {
         return( (m_poFilterGeom == nullptr || m_iGeomFieldIdx < 0 ) &&
@@ -2103,6 +2135,16 @@ int OGROpenFileGDBLayer::TestCapability( const char * pszCap )
     {
         return TRUE; /* ? */
     }
+
+    else if( EQUAL(pszCap,OLCMeasuredGeometries) )
+        return TRUE;
+
+    else if( EQUAL(pszCap,OLCCurveGeometries) )
+        return TRUE;
+
+    else if( EQUAL(pszCap,OLCZGeometries) )
+        return TRUE;
+
     else if( EQUAL(pszCap, OLCFastSpatialFilter) )
     {
         return m_eSpatialIndexState == SPI_COMPLETED || m_poLyrTable->HasSpatialIndex();

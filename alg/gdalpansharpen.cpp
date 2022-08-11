@@ -1224,36 +1224,19 @@ CPLErr GDALPansharpenOperation::ProcessRegion( int nXOff, int nYOff,
         }
 
         // Create a MEM dataset that wraps the input buffer.
-        GDALDataset* poMEMDS = MEMDataset::Create("", nXSizeExtract, nYSizeExtract, 0,
-                                                  eWorkDataType, nullptr);
-
-        char szBuffer0[64] = {};
-        char szBuffer1[64] = {};
-        char szBuffer2[64] = {};
-        snprintf(szBuffer1, sizeof(szBuffer1), "PIXELOFFSET=" CPL_FRMT_GIB,
-                 static_cast<GIntBig>(nDataTypeSize));
-        snprintf(szBuffer2, sizeof(szBuffer2), "LINEOFFSET=" CPL_FRMT_GIB,
-                 static_cast<GIntBig>(nDataTypeSize) * nXSizeExtract);
-        char* apszOptions[4] = {};
-        apszOptions[0] = szBuffer0;
-        apszOptions[1] = szBuffer1;
-        apszOptions[2] = szBuffer2;
-        apszOptions[3] = nullptr;
+        auto poMEMDS = MEMDataset::Create("", nXSizeExtract, nYSizeExtract, 0,
+                                          eWorkDataType, nullptr);
 
         for( int i = 0; i < psOptions->nInputSpectralBands; i++ )
         {
-            char szBuffer[32] = {};
-            int nRet = CPLPrintPointer(
-                szBuffer,
-                pSpectralBuffer +
-                static_cast<size_t>(i) * nDataTypeSize * nXSizeExtract *
-                nYSizeExtract,
-                sizeof(szBuffer));
-            szBuffer[nRet] = 0;
-
-            snprintf(szBuffer0, sizeof(szBuffer0), "DATAPOINTER=%s", szBuffer);
-
-            poMEMDS->AddBand(eWorkDataType, apszOptions);
+            GByte* pabyBuffer = pSpectralBuffer +
+                static_cast<size_t>(i) * nDataTypeSize * nXSizeExtract * nYSizeExtract;
+            GDALRasterBandH hMEMBand = MEMCreateRasterBandEx( poMEMDS,
+                                                      i + 1, pabyBuffer,
+                                                      eWorkDataType,
+                                                      0, 0,
+                                                      false );
+            poMEMDS->AddMEMBand(hMEMBand);
 
             const char* pszNBITS =
                 aMSBands[i]->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");

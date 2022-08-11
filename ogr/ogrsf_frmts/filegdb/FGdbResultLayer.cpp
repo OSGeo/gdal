@@ -125,6 +125,7 @@ FGdbResultLayer::FGdbResultLayer(FGdbDataSource* pParentDataSource,
         if (!bSkip)
         {
             OGRFieldDefn oFieldDefn(WStringToString(fieldName).c_str(), eType);
+            // cppcheck-suppress danglingTemporaryLifetime
             m_pFeatureDefn->AddFieldDefn(&oFieldDefn);
 
             m_vOGRFieldToESRIField.push_back(fieldName);

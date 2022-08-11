@@ -358,7 +358,7 @@ def test_ogr_fgdb_3():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/poly.gdb')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/poly.gdb --config DRIVER_WISHED FileGDB')
     # print ret
 
     assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
@@ -1017,7 +1017,7 @@ def ogr_fgdb_19_open_update(openfilegdb_drv, fgdb_drv, filename):
             if val == 'TRUE' or val == 'YES' or val == 'ON':
                 bPerLayerCopyingForTransaction = True
 
-    ds = ogr.Open(filename, update=1)
+    ds = fgdb_drv.Open(filename, update=1)
 
     if openfilegdb_drv is not None:
         openfilegdb_drv.Deregister()
@@ -1048,7 +1048,7 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
         pass
 
     # Error case: try in read-only
-    ds = ogr.Open('tmp/test.gdb')
+    ds = fgdb_drv.Open('tmp/test.gdb')
     gdal.PushErrorHandler()
     ret = ds.StartTransaction(force=True)
     gdal.PopErrorHandler()
@@ -1086,7 +1086,7 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
     assert ret != 0
 
     # Error case: try StartTransaction() with another active connection
-    ds2 = ogr.Open('tmp/test.gdb', update=1)
+    ds2 = fgdb_drv.Open('tmp/test.gdb', update=1)
     gdal.PushErrorHandler()
     ret = ds2.StartTransaction(force=True)
     gdal.PopErrorHandler()
@@ -1568,7 +1568,7 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv):
 
     # We need the OpenFileGDB driver for CreateFeature() with user defined FID
     openfilegdb_drv.Register()
-    ds = ogr.Open('tmp/test.gdb', update=1)
+    ds = fgdb_drv.Open('tmp/test.gdb', update=1)
     openfilegdb_drv.Deregister()
     fgdb_drv.Deregister()
     # Force OpenFileGDB first
@@ -1592,7 +1592,7 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv):
     assert f.GetFID() == 2147483647
     ds = None
 
-    ds = ogr.Open('tmp/test.gdb', update=1)
+    ds = fgdb_drv.Open('tmp/test.gdb', update=1)
     lyr = ds.GetLayerByName('test_2147483647')
     # GetNextFeature() is excruciatingly slow on such huge FID with the SDK driver
     f = lyr.GetFeature(2147483647)
@@ -1637,7 +1637,7 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv):
     f.SetField('id', 4)
 
     # Cannot call CreateFeature() with a set FID when a dataset is opened more than once
-    ds2 = ogr.Open('tmp/test.gdb', update=1)
+    ds2 = fgdb_drv.Open('tmp/test.gdb', update=1)
     gdal.PushErrorHandler()
     ret = lyr.CreateFeature(f)
     gdal.PopErrorHandler()
@@ -1651,7 +1651,7 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv):
 
     #  Cannot open geodatabase at the moment since it is in 'FID hack mode'
     gdal.PushErrorHandler()
-    ds2 = ogr.Open('tmp/test.gdb', update=1)
+    ds2 = fgdb_drv.Open('tmp/test.gdb', update=1)
     gdal.PopErrorHandler()
     assert ds2 is None
     ds2 = None
@@ -1831,7 +1831,7 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv):
     # Check consistency after re-opening
     gdal.ErrorReset()
     for update in [0, 1]:
-        ds = ogr.Open('tmp/test.gdb', update=update)
+        ds = fgdb_drv.Open('tmp/test.gdb', update=update)
         lyr = ds.GetLayerByName('ogr_fgdb_20')
         assert lyr.GetFeatureCount() == 10
         lyr.ResetReading()
@@ -1878,7 +1878,7 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv):
                 assert f.GetFID() == fid
 
     # Insert new features
-    ds = ogr.Open('tmp/test.gdb', update=1)
+    ds = fgdb_drv.Open('tmp/test.gdb', update=1)
     lyr = ds.GetLayerByName('ogr_fgdb_20')
     for (fid, fgdb_fid) in [(10000000, 2050), (10000001, 2051), (8191, 2052), (16384, 2053)]:
         f = ogr.Feature(lyr.GetLayerDefn())
@@ -1894,7 +1894,7 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv):
     # Insert a new intermediate FIDs
     for (fid, fgdb_fid) in [(1000000, 10000002), (1000001, 10000002)]:
 
-        ds = ogr.Open('tmp/test.gdb', update=1)
+        ds = fgdb_drv.Open('tmp/test.gdb', update=1)
         lyr = ds.GetLayerByName('ogr_fgdb_20')
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetFID(fid)
@@ -1908,7 +1908,7 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv):
     # Check consistency after re-opening
     gdal.ErrorReset()
     for update in [0, 1]:
-        ds = ogr.Open('tmp/test.gdb', update=update)
+        ds = fgdb_drv.Open('tmp/test.gdb', update=update)
         lyr = ds.GetLayerByName('ogr_fgdb_20')
         assert lyr.GetFeatureCount() == 16
         lyr.ResetReading()
@@ -2208,6 +2208,42 @@ def test_ogr_fgdb_alias(fgdb_drv):
     except OSError:
         pass
 
+###############################################################################
+# Test field alias with ampersand character. Requires OpenFileGDB to be read back
+
+
+def test_ogr_fgdb_alias_with_ampersand(fgdb_drv, openfilegdb_drv):
+
+    try:
+        shutil.rmtree("tmp/alias.gdb")
+    except OSError:
+        pass
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("WGS84")
+
+    ds = fgdb_drv.CreateDataSource('tmp/alias.gdb')
+    lyr = ds.CreateLayer('test', srs=srs, geom_type=ogr.wkbPoint)
+    fld_defn = ogr.FieldDefn('short_name', ogr.OFTInteger)
+    fld_defn.SetAlternativeName('longer & name')
+    lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn('regular_name', ogr.OFTInteger)
+    lyr.CreateField(fld_defn)
+    ds = None
+
+    openfilegdb_drv.Register()
+    ds = fgdb_drv.Open('tmp/alias.gdb')
+    openfilegdb_drv.Deregister()
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    assert lyr_defn.GetFieldDefn(0).GetAlternativeName() == 'longer & name'
+    assert lyr_defn.GetFieldDefn(1).GetAlternativeName() == ''
+
+    try:
+        shutil.rmtree("tmp/alias.gdb")
+    except OSError:
+        pass
+
 
 ###############################################################################
 # Test reading field domains
@@ -2444,3 +2480,214 @@ def test_ogr_filegdb_inconsistent_crs_feature_dataset_and_feature_table():
     srs = lyr.GetSpatialRef()
     assert srs is not None
     assert srs.GetAuthorityCode(None) == '4326'
+
+
+###############################################################################
+# Test reading .gdb with LengthFieldName / AreaFieldName
+
+
+def test_ogr_filegdb_shape_length_shape_area_as_default_in_field_defn(fgdb_drv):
+    ds = ogr.Open('data/filegdb/filegdb_polygonzm_m_not_closing_with_curves.gdb')
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    assert lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('Shape_Area')).GetDefault() == 'FILEGEODATABASE_SHAPE_AREA'
+    assert lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('Shape_Length')).GetDefault() == 'FILEGEODATABASE_SHAPE_LENGTH'
+
+
+###############################################################################
+# Test explicit CREATE_SHAPE_AREA_AND_LENGTH_FIELDS=YES option
+
+
+def test_ogr_filegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_explicit(fgdb_drv):
+
+    dirname = 'tmp/test_ogr_filegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_explicit.gdb'
+    ds = fgdb_drv.CreateDataSource(dirname)
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+
+    lyr = ds.CreateLayer('line', srs=srs, geom_type=ogr.wkbLineString, options=['CREATE_SHAPE_AREA_AND_LENGTH_FIELDS=YES'])
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING(0 0,2 0)'))
+    lyr.CreateFeature(f)
+
+    lyr = ds.CreateLayer('area', srs=srs, geom_type=ogr.wkbPolygon, options=['CREATE_SHAPE_AREA_AND_LENGTH_FIELDS=YES'])
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,1 0,0 0),(0.2 0.2,0.2 0.8,0.8 0.8,0.8 0.2,0.2 0.2))'))
+    lyr.CreateFeature(f)
+
+    ds = None
+
+    ds = ogr.Open(dirname)
+
+    lyr = ds.GetLayerByName('line')
+    f = lyr.GetNextFeature()
+    lyr_defn = lyr.GetLayerDefn()
+    assert lyr_defn.GetFieldIndex('Shape_Length') >= 0
+    assert lyr_defn.GetFieldIndex('Shape_Area') < 0
+    assert lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('Shape_Length')).GetDefault() == 'FILEGEODATABASE_SHAPE_LENGTH'
+    assert f['Shape_Length'] == 2
+
+    lyr = ds.GetLayerByName('area')
+    f = lyr.GetNextFeature()
+    lyr_defn = lyr.GetLayerDefn()
+    assert lyr_defn.GetFieldIndex('Shape_Length') >= 0
+    assert lyr_defn.GetFieldIndex('Shape_Area') >= 0
+    assert lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('Shape_Area')).GetDefault() == 'FILEGEODATABASE_SHAPE_AREA'
+    assert lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('Shape_Length')).GetDefault() == 'FILEGEODATABASE_SHAPE_LENGTH'
+    assert f['Shape_Length'] == pytest.approx(6.4)
+    assert f['Shape_Area'] == pytest.approx(0.64)
+
+    ds = None
+
+    try:
+        shutil.rmtree(dirname)
+    except OSError:
+        pass
+
+
+###############################################################################
+# Test explicit CREATE_SHAPE_AREA_AND_LENGTH_FIELDS=YES option
+
+
+def test_ogr_filegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_implicit(fgdb_drv):
+
+    dirname = 'tmp/test_ogr_filegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_implicit.gdb'
+    gdal.VectorTranslate(dirname, 'data/filegdb/filegdb_polygonzm_m_not_closing_with_curves.gdb', options = '-f FileGDB -unsetfid -fid 1')
+
+    ds = ogr.Open(dirname)
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    assert lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('Shape_Area')).GetDefault() == 'FILEGEODATABASE_SHAPE_AREA'
+    assert lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('Shape_Length')).GetDefault() == 'FILEGEODATABASE_SHAPE_LENGTH'
+
+    ds = None
+
+    try:
+        shutil.rmtree(dirname)
+    except OSError:
+        pass
+
+
+def test_ogr_filegdb_read_relationships(openfilegdb_drv, fgdb_drv):
+    openfilegdb_drv.Deregister()
+    fgdb_drv.Deregister()
+
+    # Force FileGDB first
+    fgdb_drv.Register()
+    openfilegdb_drv.Register()
+
+    # no relationships
+    ds = gdal.OpenEx('data/filegdb/Domains.gdb', gdal.OF_VECTOR)
+    assert ds.GetRelationshipNames() is None
+
+    # has relationships
+    ds = gdal.OpenEx('data/filegdb/relationships.gdb', gdal.OF_VECTOR)
+    assert ds.GetDriver().GetDescription() == 'FileGDB'
+    assert set(ds.GetRelationshipNames()) == {'composite_many_to_many',
+                                              'composite_one_to_many',
+                                              'composite_one_to_one',
+                                              'simple_attributed',
+                                              'simple_backward_message_direction',
+                                              'simple_both_message_direction',
+                                              'simple_forward_message_direction',
+                                              'simple_many_to_many',
+                                              'simple_one_to_many',
+                                              'simple_relationship_one_to_one',
+                                              'points__ATTACHREL'}
+
+    assert ds.GetRelationship('xxxx') is None
+
+    rel = ds.GetRelationship('simple_relationship_one_to_one')
+    assert rel is not None
+    assert rel.GetName() == 'simple_relationship_one_to_one'
+    assert rel.GetLeftTableName() == 'table1'
+    assert rel.GetRightTableName() == 'table2'
+    assert rel.GetMappingTableName() == ''
+    assert rel.GetCardinality() == gdal.GRC_ONE_TO_ONE
+    assert rel.GetType() == gdal.GRT_ASSOCIATION
+    assert rel.GetLeftTableFields() == ['pk']
+    assert rel.GetRightTableFields() == ['parent_pk']
+    assert rel.GetLeftMappingTableFields() is None
+    assert rel.GetRightMappingTableFields() is None
+    assert rel.GetForwardPathLabel() == 'my forward path label'
+    assert rel.GetBackwardPathLabel() == 'my backward path label'
+    assert rel.GetRelatedTableType() == 'feature'
+
+    rel = ds.GetRelationship('simple_one_to_many')
+    assert rel is not None
+    assert rel.GetName() == 'simple_one_to_many'
+    assert rel.GetLeftTableName() == 'table1'
+    assert rel.GetRightTableName() == 'table2'
+    assert rel.GetMappingTableName() == ''
+    assert rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
+    assert rel.GetType() == gdal.GRT_ASSOCIATION
+    assert rel.GetLeftTableFields() == ['pk']
+    assert rel.GetRightTableFields() == ['parent_pk']
+    assert rel.GetRelatedTableType() == 'feature'
+
+    rel = ds.GetRelationship('simple_many_to_many')
+    assert rel is not None
+    assert rel.GetName() == 'simple_many_to_many'
+    assert rel.GetLeftTableName() == 'table1'
+    assert rel.GetRightTableName() == 'table2'
+    assert rel.GetMappingTableName() == 'simple_many_to_many'
+    assert rel.GetCardinality() == gdal.GRC_MANY_TO_MANY
+    assert rel.GetType() == gdal.GRT_ASSOCIATION
+    assert rel.GetLeftTableFields() == ['pk']
+    assert rel.GetLeftMappingTableFields() == ['origin_foreign_key']
+    assert rel.GetRightTableFields() == ['parent_pk']
+    assert rel.GetRightMappingTableFields() == ['destination_foreign_key']
+    assert rel.GetRelatedTableType() == 'feature'
+
+    rel = ds.GetRelationship('composite_one_to_one')
+    assert rel is not None
+    assert rel.GetName() == 'composite_one_to_one'
+    assert rel.GetLeftTableName() == 'table1'
+    assert rel.GetRightTableName() == 'table3'
+    assert rel.GetMappingTableName() == ''
+    assert rel.GetCardinality() == gdal.GRC_ONE_TO_ONE
+    assert rel.GetType() == gdal.GRT_COMPOSITE
+    assert rel.GetLeftTableFields() == ['pk']
+    assert rel.GetRightTableFields() == ['parent_pk']
+    assert rel.GetRelatedTableType() == 'feature'
+
+    rel = ds.GetRelationship('composite_one_to_many')
+    assert rel is not None
+    assert rel.GetName() == 'composite_one_to_many'
+    assert rel.GetLeftTableName() == 'table5'
+    assert rel.GetRightTableName() == 'table4'
+    assert rel.GetMappingTableName() == ''
+    assert rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
+    assert rel.GetType() == gdal.GRT_COMPOSITE
+    assert rel.GetLeftTableFields() == ['pk']
+    assert rel.GetRightTableFields() == ['parent_pk']
+    assert rel.GetRelatedTableType() == 'feature'
+
+    rel = ds.GetRelationship('composite_many_to_many')
+    assert rel is not None
+    assert rel.GetName() == 'composite_many_to_many'
+    assert rel.GetLeftTableName() == 'table6'
+    assert rel.GetRightTableName() == 'table7'
+    assert rel.GetMappingTableName() == 'composite_many_to_many'
+    assert rel.GetCardinality() == gdal.GRC_MANY_TO_MANY
+    assert rel.GetType() == gdal.GRT_COMPOSITE
+    assert rel.GetLeftTableFields() == ['pk']
+    assert rel.GetLeftMappingTableFields() == ['origin_foreign_key']
+    assert rel.GetRightTableFields() == ['parent_pk']
+    assert rel.GetRightMappingTableFields() == ['dest_foreign_key']
+    assert rel.GetRelatedTableType() == 'feature'
+
+    rel = ds.GetRelationship('points__ATTACHREL')
+    assert rel is not None
+    assert rel.GetName() == 'points__ATTACHREL'
+    assert rel.GetLeftTableName() == 'points'
+    assert rel.GetRightTableName() == 'points__ATTACH'
+    assert rel.GetMappingTableName() == ''
+    assert rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
+    assert rel.GetType() == gdal.GRT_COMPOSITE
+    assert rel.GetLeftTableFields() == ['OBJECTID']
+    assert rel.GetRightTableFields() == ['REL_OBJECTID']
+    assert rel.GetForwardPathLabel() == 'attachment'
+    assert rel.GetBackwardPathLabel() == 'object'
+    assert rel.GetRelatedTableType() == 'media'

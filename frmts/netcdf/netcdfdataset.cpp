@@ -75,8 +75,12 @@
 
 #define ROTATED_POLE_VAR_NAME "rotated_pole"
 
-// Detect netCDF 4.8
-#ifdef NC_ENCZARR
+// netCDF 4.8 switched to expecting filenames in UTF-8 on Windows
+// But with netCDF 4.9 and https://github.com/Unidata/netcdf-c/pull/2277/,
+// this is apparently back to expecting filenames in current codepage...
+// Detect netCDF 4.8 with NC_ENCZARR
+// Detect netCDF 4.9 with NC_NOATTCREORD
+#if defined(NC_ENCZARR) && !defined(NC_NOATTCREORD)
 #define NETCDF_USES_UTF8
 #endif
 
@@ -1081,15 +1085,8 @@ CPLErr netCDFRasterBand::SetMetadataItem( const char* pszName,
                                           const char* pszValue,
                                           const char* pszDomain )
 {
-    if( GetAccess() != GA_Update )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                  "netCDFRasterBand::SetMetadataItem() can only be "
-                  "called in update mode");
-        return CE_Failure;
-    }
-
-    if( (pszDomain == nullptr || pszDomain[0] == '\0') && pszValue != nullptr )
+    if( GetAccess() == GA_Update &&
+        (pszDomain == nullptr || pszDomain[0] == '\0') && pszValue != nullptr )
     {
         // Same logic as in CopyMetadata()
 
@@ -1126,7 +1123,8 @@ CPLErr netCDFRasterBand::SetMetadataItem( const char* pszName,
 
 CPLErr netCDFRasterBand::SetMetadata( char** papszMD, const char* pszDomain )
 {
-    if( pszDomain == nullptr || pszDomain[0] == '\0' )
+    if( GetAccess() == GA_Update &&
+        (pszDomain == nullptr || pszDomain[0] == '\0') )
     {
         // We don't handle metadata item removal for now
         for( const char* const*  papszIter = papszMD; papszIter && *papszIter; ++papszIter )
@@ -2916,15 +2914,8 @@ CPLErr netCDFDataset::SetMetadataItem( const char* pszName,
                                           const char* pszValue,
                                           const char* pszDomain )
 {
-    if( GetAccess() != GA_Update )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                  "netCDFDataset::SetMetadataItem() can only be "
-                  "called in update mode");
-        return CE_Failure;
-    }
-
-    if( (pszDomain == nullptr || pszDomain[0] == '\0') && pszValue != nullptr )
+    if( GetAccess() == GA_Update &&
+        (pszDomain == nullptr || pszDomain[0] == '\0') && pszValue != nullptr )
     {
         std::string osName(pszName);
 
@@ -2957,7 +2948,8 @@ CPLErr netCDFDataset::SetMetadataItem( const char* pszName,
 
 CPLErr netCDFDataset::SetMetadata( char** papszMD, const char* pszDomain )
 {
-    if( pszDomain == nullptr || pszDomain[0] == '\0' )
+    if( GetAccess() == GA_Update &&
+        (pszDomain == nullptr || pszDomain[0] == '\0') )
     {
         // We don't handle metadata item removal for now
         for( const char* const*  papszIter = papszMD; papszIter && *papszIter; ++papszIter )
@@ -4608,9 +4600,20 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
         return;
 
     // Process geolocation arrays from CF "coordinates" attribute.
-    if( ProcessCFGeolocation(nGroupId, nVarId) )
+    std::string osGeolocXName, osGeolocYName;
+    if( ProcessCFGeolocation(nGroupId, nVarId, osGeolocXName, osGeolocYName) )
     {
-        if( !oSRS.IsProjected() && !bSwitchedXY )
+        bool bCanCancelGT = true;
+        if( (nVarDimXID != -1) && (nVarDimYID != -1) )
+        {
+            char szVarNameX[NC_MAX_NAME + 1];
+            CPL_IGNORE_RET_VAL(nc_inq_varname(nGroupId, nVarDimXID, szVarNameX));
+            char szVarNameY[NC_MAX_NAME + 1];
+            CPL_IGNORE_RET_VAL(nc_inq_varname(nGroupId, nVarDimYID, szVarNameY));
+            bCanCancelGT = !(osGeolocXName == szVarNameX &&
+                             osGeolocYName == szVarNameY);
+        }
+        if( bCanCancelGT && !oSRS.IsGeographic() && !oSRS.IsProjected() && !bSwitchedXY )
         {
             bGotCfGT = false;
         }
@@ -4692,7 +4695,8 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
     SetProjectionFromVar(nGroupId, nVarId, bReadSRSOnly, nullptr, nullptr, nullptr);
 }
 
-int netCDFDataset::ProcessCFGeolocation( int nGroupId, int nVarId )
+int netCDFDataset::ProcessCFGeolocation( int nGroupId, int nVarId,
+                                         std::string& osGeolocXNameOut, std::string& osGeolocYNameOut )
 {
     bool bAddGeoloc = false;
     char *pszTemp = nullptr;
@@ -4741,6 +4745,9 @@ int netCDFDataset::ProcessCFGeolocation( int nGroupId, int nVarId )
             // Add GEOLOCATION metadata.
             if( !EQUAL(szGeolocXName, "") && !EQUAL(szGeolocYName, "") )
             {
+                osGeolocXNameOut = szGeolocXName;
+                osGeolocYNameOut = szGeolocYName;
+
                 char *pszGeolocXFullName = nullptr;
                 char *pszGeolocYFullName = nullptr;
                 if( NCDFResolveVarFullName(nGroupId, szGeolocXName,
@@ -6853,7 +6860,10 @@ int netCDFDataset::TestCapability(const char *pszCap)
         return eAccess == GA_Update && nBands == 0 &&
                (eMultipleLayerBehavior != SINGLE_LAYER || this->GetLayerCount() == 0 || bSGSupport);
     }
-    return FALSE;
+    else if( EQUAL(pszCap, ODsCZGeometries) )
+        return true;
+
+    return false;
 }
 
 /************************************************************************/
@@ -7671,15 +7681,7 @@ bool netCDFDatasetCreateTempFile( NetCDFFormatEnum eFormat,
                     continue;
                 }
 
-                bool bIsASCII = true;
-                for( int i = 0; pszDimName[i] != '\0'; i++ )
-                {
-                    if( reinterpret_cast<const unsigned char*>(pszDimName)[i] > 127 )
-                    {
-                        bIsASCII = false;
-                        break;
-                    }
-                }
+                const bool bIsASCII = CPLIsASCII(pszDimName, static_cast<size_t>(-1));
                 if( !bIsASCII )
                 {
                     // Workaround https://github.com/Unidata/netcdf-c/pull/450
@@ -9412,6 +9414,25 @@ netCDFDataset::CreateLL( const char *pszFilename,
     }
 #endif
 
+#if defined(WIN32)
+    {
+        // Works around bug of msys2 netCDF 4.9.0 package where nc_create() crashes
+        VSIStatBuf sStat;
+        const char* pszDir = CPLGetDirname(osFilenameForNCCreate.c_str());
+        if( VSIStat(pszDir, &sStat) != 0 )
+        {
+            CPLError(CE_Failure, CPLE_OpenFailed,
+                     "Unable to create netCDF file %s: non existing output directory",
+                     pszFilename);
+            CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
+                                        // with GDALDataset own mutex.
+            delete poDS;
+            CPLAcquireMutex(hNCMutex, 1000.0);
+            return nullptr;
+        }
+    }
+#endif
+
     int status = nc_create(osFilenameForNCCreate, poDS->nCreateMode, &(poDS->cdfid));
 
     // Put into define mode.
@@ -10313,6 +10334,9 @@ void GDALRegister_netCDF()
     poDriver->SetDescription("netCDF");
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Network Common Data Format");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/netcdf.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "nc");

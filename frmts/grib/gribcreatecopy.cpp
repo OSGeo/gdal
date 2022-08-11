@@ -34,6 +34,7 @@
 #include "cpl_port.h"
 #include "gribdataset.h"
 #include "gdal_priv_templates.hpp"
+#include "memdataset.h"
 
 #include <limits>
 
@@ -1370,29 +1371,16 @@ static GDALDataset* WrapArrayAsMemDataset(int nXSize, int nYSize,
                                           void* pData)
 {
     CPLAssert( eReducedDT == GDT_Byte || eReducedDT == GDT_UInt16 );
-    GDALDriver* poMEMDrv = reinterpret_cast<GDALDriver*>(
-                                    GDALGetDriverByName("MEM"));
-    GDALDataset* poMEMDS = poMEMDrv->Create("",
+    auto poMEMDS = MEMDataset::Create("",
         nXSize, nYSize, 0, eReducedDT , nullptr);
-    char** papszMEMOptions = nullptr;
-    char szDataPointer[32];
-    {
-         GByte* pabyData = reinterpret_cast<GByte*>(pData);
-        int nRet = CPLPrintPointer(szDataPointer,
-#ifdef CPL_LSB
-            pabyData,
-#else
-            (eReducedDT == GDT_Byte) ? pabyData + 1 : pabyData,
+    GByte* pabyData = static_cast<GByte*>(pData);
+#ifdef CPL_MSB
+     if (eReducedDT == GDT_Byte)
+         pabyData ++;
 #endif
-            sizeof(szDataPointer));
-        szDataPointer[nRet] = 0;
-    }
-    papszMEMOptions = CSLSetNameValue(papszMEMOptions,
-                                        "DATAPOINTER", szDataPointer);
-    papszMEMOptions = CSLSetNameValue(papszMEMOptions,
-                                        "PIXELOFFSET", "2");
-    poMEMDS->AddBand( eReducedDT, papszMEMOptions );
-    CSLDestroy(papszMEMOptions);
+    auto hBand = MEMCreateRasterBandEx( poMEMDS, 1,
+                                        pabyData, eReducedDT, 2, 0, false );
+    poMEMDS->AddMEMBand( hBand );
     return poMEMDS;
 }
 

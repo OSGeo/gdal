@@ -55,7 +55,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
        libpng-dev${APT_ARCH_SUFFIX} libjpeg-dev${APT_ARCH_SUFFIX} libgif-dev${APT_ARCH_SUFFIX} liblzma-dev${APT_ARCH_SUFFIX} libgeos-dev${APT_ARCH_SUFFIX} \
        curl libxml2-dev${APT_ARCH_SUFFIX} libexpat-dev${APT_ARCH_SUFFIX} libxerces-c-dev${APT_ARCH_SUFFIX} \
        libnetcdf-dev${APT_ARCH_SUFFIX} libpoppler-dev${APT_ARCH_SUFFIX} libpoppler-private-dev${APT_ARCH_SUFFIX} \
-       libspatialite-dev${APT_ARCH_SUFFIX} swig ant libhdf4-alt-dev${APT_ARCH_SUFFIX} libhdf5-serial-dev${APT_ARCH_SUFFIX} \
+       libspatialite-dev${APT_ARCH_SUFFIX} librasterlite2-dev${APT_ARCH_SUFFIX} swig ant libhdf4-alt-dev${APT_ARCH_SUFFIX} libhdf5-serial-dev${APT_ARCH_SUFFIX} \
        libfreexl-dev${APT_ARCH_SUFFIX} unixodbc-dev${APT_ARCH_SUFFIX}  mdbtools-dev${APT_ARCH_SUFFIX} libwebp-dev${APT_ARCH_SUFFIX} \
        liblcms2-2 libpcre3-dev${APT_ARCH_SUFFIX} libcrypto++-dev${APT_ARCH_SUFFIX} libfyba-dev${APT_ARCH_SUFFIX} \
        libkml-dev${APT_ARCH_SUFFIX} libmysqlclient-dev${APT_ARCH_SUFFIX} libogdi-dev${APT_ARCH_SUFFIX} \
@@ -123,7 +123,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build tiledb
-ARG TILEDB_VERSION=2.8.2
+ARG TILEDB_VERSION=2.9.4
 RUN . /buildscripts/bh-set-envvars.sh \
     && mkdir tiledb \
     && wget -q https://github.com/TileDB-Inc/TileDB/archive/${TILEDB_VERSION}.tar.gz -O - \
@@ -171,20 +171,32 @@ RUN . /buildscripts/bh-set-envvars.sh \
   && chown -R root:root FileGDB_API-RHEL7-64gcc83 \
   && mv FileGDB_API-RHEL7-64gcc83 /usr/local/FileGDB_API \
   && rm -rf /usr/local/FileGDB_API/lib/libstdc++* \
-  && cp /usr/local/FileGDB_API/lib/* /build_thirdparty/usr/lib \
+  && cp /usr/local/FileGDB_API/lib/* /build_thirdparty/usr/lib/x86_64-linux-gnu \
   && cp /usr/local/FileGDB_API/include/* /usr/include \
   && rm -rf FileGDB_API-RHEL7-64gcc83.tar.gz \
   ) ; fi
 
+# Build libqb3
+RUN . /buildscripts/bh-set-envvars.sh \
+    && git clone https://github.com/lucianpls/QB3.git \
+    && cd QB3/QB3lib \
+    && mkdir build \
+    && cd build \
+    && cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release .. \
+    && make -j$(nproc) \
+    && make -j$(nproc) install \
+    && make install DESTDIR="/build_thirdparty" \
+    && cd ../../.. \
+    && rm -rf QB3
 
 ARG WITH_PDFIUM=yes
 RUN if echo "$WITH_PDFIUM" | grep -Eiq "^(y(es)?|1|true)$"  ; then ( \
-  wget -q https://github.com/rouault/pdfium_build_gdal_3_5/releases/download/v1_pdfium_4933/install-ubuntu2004-rev4933.tar.gz \
-  && tar -xzf install-ubuntu2004-rev4933.tar.gz \
+  wget -q https://github.com/rouault/pdfium_build_gdal_3_5/releases/download/v1_pdfium_5106/install-ubuntu2004-rev5106.tar.gz \
+  && tar -xzf install-ubuntu2004-rev5106.tar.gz \
   && chown -R root:root install \
   && mv install/lib/* /usr/lib/ \
   && mv install/include/* /usr/include/ \
-  && rm -rf install-ubuntu2004-rev4933.tar.gz install \
+  && rm -rf install-ubuntu2004-rev5106.tar.gz install \
   && apt-get update -y \
   && apt-get install -y --fix-missing --no-install-recommends liblcms2-dev${APT_ARCH_SUFFIX} \
   && rm -rf /var/lib/apt/lists/* \
@@ -198,10 +210,12 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && cd libjxl \
     && mkdir build \
     && cd build \
-    && cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
+    && cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DJPEGXL_ENABLE_TOOLS=OFF -DJPEGXL_ENABLE_BENCHMARK=OFF .. \
     && make -j$(nproc) \
     && make -j$(nproc) install \
     && make install DESTDIR="/build_thirdparty" \
+    && rm -f /lib/${GCC_ARCH}-linux-gnu/libjxl*.a \
+    && rm -f /build_thirdparty/lib/${GCC_ARCH}-linux-gnu/libjxl*.a \
     && cd ../.. \
     && rm -rf libjxl \
     && rm -rf /var/lib/apt/lists/*
@@ -268,7 +282,7 @@ RUN apt-get update \
         libopenjp2-7 libcairo2 python3-numpy \
         libpng16-16 libjpeg-turbo8 libgif7 liblzma5 libgeos3.10.2 libgeos-c1v5 \
         libxml2 libexpat1 \
-        libxerces-c3.2 libnetcdf-c++4 netcdf-bin libpoppler118 libspatialite7 gpsbabel \
+        libxerces-c3.2 libnetcdf-c++4 netcdf-bin libpoppler118 libspatialite7 librasterlite2-1 gpsbabel \
         libhdf4-0-alt libhdf5-103 libhdf5-cpp-103 poppler-utils libfreexl1 unixodbc mdbtools libwebp7 \
         liblcms2-2 libpcre3 libcrypto++8 libfyba0 \
         libkmlbase1 libkmlconvenience1 libkmldom1 libkmlengine1 libkmlregionator1 libkmlxsd1 \
@@ -300,7 +314,7 @@ COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/include/ ${PROJ_INSTALL_PREFIX
 COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/bin/ ${PROJ_INSTALL_PREFIX}/bin/
 COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/lib/ ${PROJ_INSTALL_PREFIX}/lib/
 
-#COPY --from=builder  /build/usr/share/java /usr/share/java
+COPY --from=builder  /build/usr/share/java /usr/share/java
 COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
 COPY --from=builder  /build/usr/include/ /usr/include/
 COPY --from=builder  /build_gdal_python/usr/ /usr/

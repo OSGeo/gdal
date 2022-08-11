@@ -1436,7 +1436,9 @@ class GPKGChecker(object):
                             'gpkg_crs_wkt',
                             'gpkg_crs_wkt_1_1',
                             'gpkg_elevation_tiles',  # deprecated one
-                            'gpkg_2d_gridded_coverage'
+                            'gpkg_2d_gridded_coverage',
+                            'gpkg_related_tables',
+                            'related_tables',
                             ]
         for geom_name in GPKGChecker.EXT_GEOM_TYPES:
             KNOWN_EXTENSIONS += ['gpkg_geom_' + geom_name]
@@ -1860,6 +1862,103 @@ class GPKGChecker(object):
                          "gpkg_data_column_constraints contains constraint " +
                          "of type enum whose value column is NULL")
 
+    def _check_relations(self, c):
+
+        self._log('Checking relations')
+
+        must_have_gpkgext_relations = False
+        c.execute("SELECT 1 FROM sqlite_master WHERE name = 'gpkg_extensions'")
+        if c.fetchone() is not None:
+            c.execute("SELECT table_name, scope FROM gpkg_extensions WHERE "
+                      "extension_name IN ('related_tables', "
+                      "'gpkg_related_tables')")
+            rows = c.fetchall()
+            gpkgext_relations_found = False
+            if rows:
+                must_have_gpkgext_relations = True
+                for table_name, scope in rows:
+                    if table_name == 'gpkgext_relations':
+                        gpkgext_relations_found = True
+                    self._assert(scope == 'read-write', None,
+                                 "Wrong scope for gpkgext_relations in "
+                                 "gpkg_extensions for table " + table_name)
+                self._assert(gpkgext_relations_found, None,
+                             "gpkg_extensions should have an entry for "
+                             "extension_name = related_tables and "
+                             "table_name = gpkgext_relations")
+                self._assert(len(rows) > 1, None,
+                             "gpkg_extensions should have at least one entry for "
+                             "extension_name = related_tables and "
+                             "table_name != gpkgext_relations")
+
+        c.execute("SELECT 1 FROM sqlite_master WHERE name = 'gpkgext_relations'")
+        if c.fetchone() is None:
+            if must_have_gpkgext_relations:
+                self._assert(False, None, "gpkgext_relations table missing")
+            else:
+                self._log('... No relations')
+            return
+
+        c.execute("PRAGMA table_info(gpkgext_relations)")
+        columns = c.fetchall()
+        expected_columns = [
+            (0, 'id', 'INTEGER', 0, None, 1),
+            (1, 'base_table_name', 'TEXT', 1, None, 0),
+            (2, 'base_primary_column', 'TEXT', 1, "'id'", 0),
+            (3, 'related_table_name', 'TEXT', 1, None, 0),
+            (4, 'related_primary_column', 'TEXT', 1, "'id'", 0),
+            (5, 'relation_name', 'TEXT', 1, None, 0),
+            (6, 'mapping_table_name', 'TEXT', 1, None, 0)
+        ]
+        self._check_structure(columns, expected_columns, None,
+                              'gpkgext_relations')
+
+        c.execute("SELECT base_table_name, base_primary_column, "
+                  "related_table_name, related_primary_column, "
+                  "mapping_table_name FROM gpkgext_relations")
+        for btn, btc, rtn, rpc, mtn in c.fetchall():
+
+            c.execute("SELECT 1 FROM sqlite_master WHERE name = ?", (btn,))
+            ok = c.fetchone() is not None
+            self._assert(ok, None,
+                         "gpkgext_relations refers to a non-existing "
+                         "base_table_name = " + btn)
+            if ok:
+                self._assert(self._check_column_exists(c, btn, btc), None,
+                             "gpkgext_relations refers to a non-existing "
+                             "base_primary_column = " + btc)
+
+            c.execute("SELECT 1 FROM sqlite_master WHERE name = ?", (rtn,))
+            ok = c.fetchone() is not None
+            self._assert(ok, None,
+                         "gpkgext_relations refers to a non-existing "
+                         "related_table_name = " + rtn)
+            if ok:
+                self._assert(self._check_column_exists(c, rtn, rpc), None,
+                             "gpkgext_relations refers to a non-existing "
+                             "related_primary_column = " + rpc)
+
+            c.execute("SELECT 1 FROM sqlite_master WHERE name = ?", (mtn,))
+            ok = c.fetchone() is not None
+            self._assert(ok, None,
+                         "gpkgext_relations refers to a non-existing "
+                         "mapping_table_name = " + mtn)
+
+            c.execute("SELECT 1 FROM gpkg_extensions WHERE table_name = ? " +
+                      "AND extension_name IN " +
+                      "('related_tables', 'gpkg_related_tables')",
+                      (mtn,))
+            ok = c.fetchone() is not None
+            self._assert(ok, None,
+                         "Missing entry in gpkg_extensions for "
+                         "mapping_table_name = " + mtn + " and "
+                         "extension_name = 'related_tables'")
+
+            self._assert(self._check_column_exists(c, mtn, 'base_id'), None,
+                         "Table %s should have a %s column" % (mtn, 'base_id'))
+            self._assert(self._check_column_exists(c, mtn, 'related_id'), None,
+                         "Table %s should have a %s column" % (mtn, 'related_id'))
+
     def check(self):
         self._assert(os.path.exists(self.filename), None,
                      "%s does not exist" % self.filename)
@@ -1932,6 +2031,8 @@ class GPKGChecker(object):
             self._check_metadata(c)
 
             self._check_schema(c)
+
+            self._check_relations(c)
 
         finally:
             c.close()

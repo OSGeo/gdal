@@ -59,6 +59,9 @@ endif ()
 
 # Now external libs
 
+# Include libjpeg first so that if we want to use jpeg-turbo on homebrew
+# /usr/local/opt/jpeg-turbo gets included first, before /usr/local/opt
+# triggered by libtiff, that contains libjpeg 9e
 if (GDAL_USE_JPEG AND NOT GDAL_USE_JPEG_INTERNAL)
   gdal_target_link_libraries(gdal_MRF PRIVATE JPEG::JPEG)
 endif ()
@@ -84,3 +87,10 @@ if (GDAL_USE_BRUNSLI)
   target_compile_definitions(gdal_MRF PRIVATE -DBRUNSLI)
   gdal_target_link_libraries(gdal_MRF PRIVATE BRUNSLI::ENCODE BRUNSLI::DECODE)
 endif ()
+
+if (GDAL_USE_LIBQB3)
+  target_sources(gdal_MRF PRIVATE QB3_band.cpp)
+  target_compile_definitions(gdal_MRF PRIVATE -DQB3_SUPPORT)
+  gdal_target_link_libraries(gdal_MRF PRIVATE QB3::libQB3)
+endif()
+

@@ -57,6 +57,7 @@
 #define FGDB_FEATURE_DATASET "";
 #define FGDB_GEOMETRY_NAME "SHAPE"
 #define FGDB_OID_NAME "OBJECTID"
+constexpr const char* pszRelationshipTypeUUID = "{B606A7E1-FA5B-439C-849C-6E9C2481537B}";
 
 /* The ESRI FGDB API namespace */
 using namespace FileGDBAPI;
@@ -284,6 +285,7 @@ class FGdbDataSource final: public OGRDataSource
   CPLString             m_osPublicName;
   std::set<OGRLayer*>   m_oSetSelectLayers;
   std::shared_ptr<GDALGroup>     m_poRootGroup{};
+  std::map<std::string,std::unique_ptr<GDALRelationship>> m_osMapRelationships{};
 
   int        FixIndexes();
   int        bPerLayerCopyingForTransaction;
@@ -324,6 +326,10 @@ public:
 
   bool        UpdateFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
                                 std::string& failureReason) override;
+
+  std::vector<std::string> GetRelationshipNames(CSLConstList papszOptions = nullptr) const override;
+
+  const GDALRelationship* GetRelationship(const std::string& name) const override;
 
   std::shared_ptr<GDALGroup> GetRootGroup() const override { return m_poRootGroup; }
 

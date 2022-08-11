@@ -3235,3 +3235,21 @@ def test_ogr_geojson_write_rfc7946_from_3D_crs():
 
     # Check that we get back the ellipsoidal height
     assert '"coordinates": [ 2.0, 49.0, 100.0' in data
+
+
+###############################################################################
+# Test effect of OGR_GEOJSON_MAX_OBJ_SIZE
+
+def test_ogr_geojson_feature_large():
+
+    filename = '/vsimem/test_ogr_geojson_feature_large.json'
+    gdal.FileFromMemBuffer(filename,
+                           '{"type":"FeatureCollection","features":[{"type":"Feature","properties":{},"geometry":{"type":"LineString","coordinates":[%s]}}]}' % ','.join(["[0,0]" for _ in range(10 * 1024)]))
+    assert ogr.Open(filename) is not None
+    with gdaltest.config_option('OGR_GEOJSON_MAX_OBJ_SIZE', '0'):
+        assert ogr.Open(filename) is not None
+    with gdaltest.config_option('OGR_GEOJSON_MAX_OBJ_SIZE', '0.1'):
+        with gdaltest.error_handler():
+            assert ogr.Open(filename) is None
+    gdal.Unlink(filename)
+

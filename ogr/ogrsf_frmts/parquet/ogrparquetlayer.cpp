@@ -55,6 +55,15 @@ OGRParquetLayerBase::OGRParquetLayerBase(OGRParquetDataset* poDS,
 }
 
 /************************************************************************/
+/*                           GetDataset()                               */
+/************************************************************************/
+
+GDALDataset* OGRParquetLayer::GetDataset()
+{
+    return m_poDS;
+}
+
+/************************************************************************/
 /*                          LoadGeoMetadata()                           */
 /************************************************************************/
 
@@ -294,13 +303,10 @@ int OGRParquetLayerBase::TestCapability(const char* pszCap)
         return true;
     }
 
-    if( EQUAL(pszCap, OLCStringsAsUTF8) )
-        return true;
-
     if( EQUAL(pszCap, OLCMeasuredGeometries) )
         return true;
 
-    return false;
+    return OGRArrowLayer::TestCapability(pszCap);
 }
 
 /************************************************************************/
@@ -392,6 +398,23 @@ void OGRParquetLayer::EstablishFeatureDefn()
     CPLAssert( static_cast<int>(m_anMapFieldIndexToParquetColumn.size()) == m_poFeatureDefn->GetFieldCount() );
     CPLAssert( static_cast<int>(m_anMapGeomFieldIndexToArrowColumn.size()) == m_poFeatureDefn->GetGeomFieldCount() );
     CPLAssert( static_cast<int>(m_anMapGeomFieldIndexToParquetColumn.size()) == m_poFeatureDefn->GetGeomFieldCount() );
+
+    if( !fields.empty() )
+    {
+        try
+        {
+            auto poRowGroup = m_poArrowReader->parquet_reader()->RowGroup(0);
+            if( poRowGroup )
+            {
+                auto poColumn = poRowGroup->metadata()->ColumnChunk(0);
+                CPLDebug("PARQUET", "Compression (of first column): %s",
+                         arrow::util::Codec::GetCodecAsString(poColumn->compression()).c_str());
+            }
+        }
+        catch( const std::exception& )
+        {
+        }
+    }
 }
 
 /************************************************************************/
@@ -866,6 +889,7 @@ bool OGRParquetLayer::ReadNextBatch()
         {
             iCol = m_anMapFieldIndexToArrowColumn[i][0];
         }
+        CPL_IGNORE_RET_VAL(iCol); // to make cppcheck happy
 
         CPLAssert(iCol < static_cast<int>(poColumns.size()));
         CPLAssert(m_poSchema->fields()[m_anMapFieldIndexToArrowColumn[i][0]]->type()->id() ==
@@ -885,6 +909,7 @@ bool OGRParquetLayer::ReadNextBatch()
         {
             iCol = m_anMapGeomFieldIndexToArrowColumn[i];
         }
+        CPL_IGNORE_RET_VAL(iCol); // to make cppcheck happy
 
         CPLAssert(iCol < static_cast<int>(poColumns.size()));
         CPLAssert(m_poSchema->fields()[m_anMapGeomFieldIndexToArrowColumn[i]]->type()->id() ==
@@ -1146,4 +1171,25 @@ char** OGRParquetLayer::GetMetadata( const char* pszDomain )
         return m_aosFeatherMetadata.List();
     }
     return OGRLayer::GetMetadata(pszDomain);
+}
+
+/************************************************************************/
+/*                          GetArrowStream()                            */
+/************************************************************************/
+
+bool OGRParquetLayer::GetArrowStream(struct ArrowArrayStream* out_stream,
+                                     CSLConstList papszOptions)
+{
+    const char* pszMaxFeaturesInBatch = CSLFetchNameValue(
+        papszOptions, "MAX_FEATURES_IN_BATCH");
+    if( pszMaxFeaturesInBatch )
+    {
+        int nMaxBatchSize = atoi(pszMaxFeaturesInBatch);
+        if( nMaxBatchSize <= 0 )
+            nMaxBatchSize = 1;
+        if( nMaxBatchSize > INT_MAX - 1 )
+            nMaxBatchSize = INT_MAX - 1;
+        m_poArrowReader->set_batch_size(nMaxBatchSize);
+    }
+    return OGRArrowLayer::GetArrowStream(out_stream, papszOptions);
 }

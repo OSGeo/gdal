@@ -11982,12 +11982,12 @@ public interface osrConstants:public final static int PROJ_ERR_INVALID_OP_FILE_N
 public interface osrConstants:public final static int PROJ_ERR_COORD_TRANSFM
 
 /**
- * Invalid input coordinate. e.g a latitude > 90°.
+ * Invalid input coordinate. e.g a latitude > 90 deg.
  */
 public interface osrConstants:public final static int PROJ_ERR_COORD_TRANSFM_INVALID_COORD
 
 /**
- * Coordinate is outside of the projection domain. e.g approximate mercator with \|longitude - lon_0\| > 90°,
+ * Coordinate is outside of the projection domain. e.g approximate mercator with \|longitude - lon_0\| > 90 deg,
  * or iterative convergence method failed.
  */
 public interface osrConstants:public final static int PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN

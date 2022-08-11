@@ -127,6 +127,13 @@ void RegisterOGRFlatGeobuf()
     GDALDriver *poDriver = new GDALDriver();
     poDriver->SetDescription("FlatGeobuf");
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_DELETE_FIELD, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_REORDER_FIELDS, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CURVE_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_MEASURED_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "FlatGeobuf");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "fgb");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/flatgeobuf.html");
@@ -316,6 +323,8 @@ int OGRFlatGeobufDataset::TestCapability(const char *pszCap)
     else if (EQUAL(pszCap, ODsCCurveGeometries))
         return true;
     else if (EQUAL(pszCap, ODsCMeasuredGeometries))
+        return true;
+    else if (EQUAL(pszCap, ODsCZGeometries))
         return true;
     else if( EQUAL(pszCap, ODsCRandomLayerWrite) )
         return m_bUpdate;

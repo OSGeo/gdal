@@ -1553,15 +1553,59 @@ TIFFWriteDirectoryTagLong8(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_
 }
 #endif
 
+/************************************************************************/
+/*                 TIFFWriteDirectoryTagLong8Array()                    */
+/*                                                                      */
+/*      Write either Long8 or Long array depending on file type.        */
+/************************************************************************/
 static int
 TIFFWriteDirectoryTagLong8Array(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, uint32_t count, uint64_t* value)
 {
+	static const char module[] = "TIFFWriteDirectoryTagLong8Array";
+	uint64_t *ma;
+	uint32_t mb;
+	uint32_t *p;
+	uint32_t *q;
+	int o;
+
+	/* is this just a counting pass? */
 	if (dir==NULL)
 	{
 		(*ndir)++;
 		return(1);
 	}
-	return(TIFFWriteDirectoryTagCheckedLong8Array(tif,ndir,dir,tag,count,value));
+
+	/* We always write Long8 for BigTIFF, no checking needed. */
+	if (tif->tif_flags & TIFF_BIGTIFF)
+		return(TIFFWriteDirectoryTagCheckedLong8Array(tif, ndir, dir, tag, count, value));
+
+	/*
+	** For classic tiff we want to verify everything is in range for long
+	** and convert to long format.
+	*/
+	p = _TIFFmalloc(count * sizeof(uint32_t));
+	if (p == NULL)
+	{
+		TIFFErrorExt(tif->tif_clientdata, module, "Out of memory");
+		return(0);
+	}
+
+	for (q = p, ma = value, mb = 0; mb < count; ma++, mb++, q++)
+	{
+		if (*ma > 0xFFFFFFFF)
+		{
+			TIFFErrorExt(tif->tif_clientdata, module,
+				"Attempt to write unsigned long value %"PRIu64" larger than 0xFFFFFFFF for tag %d in Classic TIFF file. TIFF file writing aborted", *ma, tag);
+			_TIFFfree(p);
+			return(0);
+		}
+		*q = (uint32_t)(*ma);
+	}
+
+	o = TIFFWriteDirectoryTagCheckedLongArray(tif, ndir, dir, tag, count, p);
+	_TIFFfree(p);
+
+	return(o);
 }
 
 #ifdef notdef
@@ -1577,15 +1621,64 @@ TIFFWriteDirectoryTagSlong8(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16
 }
 #endif
 
+/************************************************************************/
+/*                 TIFFWriteDirectoryTagSlong8Array()                   */
+/*                                                                      */
+/*      Write either SLong8 or SLong array depending on file type.      */
+/************************************************************************/
 static int
 TIFFWriteDirectoryTagSlong8Array(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, uint32_t count, int64_t* value)
 {
+	static const char module[] = "TIFFWriteDirectoryTagSlong8Array";
+	int64_t *ma;
+	uint32_t mb;
+	int32_t *p;
+	int32_t *q;
+	int o;
+
+	/* is this just a counting pass? */
 	if (dir==NULL)
 	{
 		(*ndir)++;
 		return(1);
 	}
-	return(TIFFWriteDirectoryTagCheckedSlong8Array(tif,ndir,dir,tag,count,value));
+	/* We always write SLong8 for BigTIFF, no checking needed. */
+	if (tif->tif_flags & TIFF_BIGTIFF)
+		return(TIFFWriteDirectoryTagCheckedSlong8Array(tif, ndir, dir, tag, count, value));
+
+	/*
+	** For classic tiff we want to verify everything is in range for signed-long
+	** and convert to signed-long format.
+	*/
+	p = _TIFFmalloc(count * sizeof(uint32_t));
+	if (p == NULL)
+	{
+		TIFFErrorExt(tif->tif_clientdata, module, "Out of memory");
+		return(0);
+	}
+
+	for (q = p, ma = value, mb = 0; mb < count; ma++, mb++, q++)
+	{
+		if (*ma > (2147483647))
+		{
+			TIFFErrorExt(tif->tif_clientdata, module,
+				"Attempt to write signed long value %"PRIi64" larger than 0x7FFFFFFF (2147483647) for tag %d in Classic TIFF file. TIFF writing to file aborted", *ma, tag);
+			_TIFFfree(p);
+			return(0);
+		} else if (*ma < (-2147483647 - 1))
+		{
+			TIFFErrorExt(tif->tif_clientdata, module,
+				"Attempt to write signed long value %"PRIi64" smaller than 0x80000000 (-2147483648) for tag %d in Classic TIFF file. TIFF writing to file aborted", *ma, tag);
+			_TIFFfree(p);
+			return(0);
+		}
+		*q = (int32_t)(*ma);
+	}
+
+	o = TIFFWriteDirectoryTagCheckedSlongArray(tif, ndir, dir, tag, count, p);
+	_TIFFfree(p);
+
+	return(o);
 }
 
 static int

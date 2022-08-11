@@ -212,12 +212,11 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     VSILFILE *fpQube = poOpenInfo->fpL;
     poOpenInfo->fpL = nullptr;
 
-    ISIS2Dataset *poDS = new ISIS2Dataset();
+    auto poDS = cpl::make_unique<ISIS2Dataset>();
 
     if( ! poDS->oKeywords.Ingest( fpQube, 0 ) )
     {
         VSIFCloseL( fpQube );
-        delete poDS;
         return nullptr;
     }
 
@@ -232,7 +231,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     // ^QUBE = "ui31s015.img" - which implies no label or skip value
 
     const char *pszQube = poDS->GetKeyword( "^QUBE" );
-    GUIntBig nQube = 0;
+    int nQube = 0;
     int bByteLocation = FALSE;
     CPLString osTargetFile = poOpenInfo->pszFilename;
 
@@ -282,7 +281,6 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                   "*** ISIS 2 cube file has invalid SUFFIX_ITEMS parameters:\n"
                   "*** gdal isis2 driver requires (0, 0, 0), thus no sideplanes or backplanes\n"
                   "found: (%i, %i, %i)\n\n", s_ix, s_iy, s_iz );
-        delete poDS;
         return nullptr;
     }
 
@@ -303,7 +301,6 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     else {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "%s layout not supported. Abort\n\n", value);
-        delete poDS;
         return nullptr;
     }
 
@@ -316,7 +313,6 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     const int record_bytes = atoi(poDS->GetKeyword("RECORD_BYTES"));
     if( record_bytes < 0 )
     {
-        delete poDS;
         return nullptr;
     }
 
@@ -376,7 +372,6 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Itype of %d is not supported in ISIS 2.",
                   itype);
-        delete poDS;
         return nullptr;
     }
 
@@ -589,7 +584,6 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     if( !GDALCheckDatasetDimensions(nCols, nRows) ||
         !GDALCheckBandCount(nBands, false) )
     {
-        delete poDS;
         return nullptr;
     }
 
@@ -613,7 +607,6 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to open %s with write permission.\n%s",
                   osTargetFile.c_str(), VSIStrerror( errno ) );
-        delete poDS;
         return nullptr;
     }
 
@@ -631,7 +624,6 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         nPixelOffset = nItemSize * nBands;
         if( nPixelOffset > INT_MAX / nBands )
         {
-            delete poDS;
             return nullptr;
         }
         nLineOffset = nPixelOffset * nCols;
@@ -642,7 +634,6 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         nPixelOffset = nItemSize;
         if( nPixelOffset > INT_MAX / nCols )
         {
-            delete poDS;
             return nullptr;
         }
         nLineOffset = nPixelOffset * nCols;
@@ -654,7 +645,6 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         if( nPixelOffset > INT_MAX / nBands ||
             nPixelOffset * nBands > INT_MAX / nCols )
         {
-            delete poDS;
             return nullptr;
         }
         nLineOffset = nItemSize * nBands * nCols;
@@ -668,7 +658,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     for( int i = 0; i < poDS->nBands; i++ )
     {
         RawRasterBand *poBand =
-            new RawRasterBand( poDS, i+1, poDS->fpImage,
+            new RawRasterBand( poDS.get(), i+1, poDS->fpImage,
                                nSkipBytes + nBandOffset * i,
                                nPixelOffset, nLineOffset, eDataType,
 #ifdef CPL_LSB
@@ -746,9 +736,9 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+    poDS->oOvManager.Initialize( poDS.get(), poOpenInfo->pszFilename );
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/

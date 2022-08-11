@@ -2938,4 +2938,123 @@ double OGRLineString::get_AreaOfCurveSegments() const
 {
     return 0;
 }
+
+/************************************************************************/
+/*                            epsilonEqual()                            */
+/************************************************************************/
+
+constexpr double EPSILON = 1.0E-5;
+
+static inline bool epsilonEqual(double a, double b, double eps)
+{
+    return ::fabs(a - b) < eps;
+}
+
+/************************************************************************/
+/*                            isClockwise()                             */
+/************************************************************************/
+
+/**
+ * \brief Returns TRUE if the ring has clockwise winding (or less than 2 points)
+ *
+ * Assumes that the line is closed.
+ *
+ * @return TRUE if clockwise otherwise FALSE.
+ */
+
+int OGRLineString::isClockwise() const
+
+{
+    if( nPointCount < 2 )
+        return TRUE;
+
+    bool bUseFallback = false;
+
+    // Find the lowest rightmost vertex.
+    int v = 0;  // Used after for.
+    for( int i = 1; i < nPointCount - 1; i++ )
+    {
+        // => v < end.
+        if( paoPoints[i].y< paoPoints[v].y ||
+            ( paoPoints[i].y== paoPoints[v].y &&
+              paoPoints[i].x > paoPoints[v].x ) )
+        {
+            v = i;
+            bUseFallback = false;
+        }
+        else if( paoPoints[i].y == paoPoints[v].y &&
+                 paoPoints[i].x == paoPoints[v].x )
+        {
+            // Two vertex with same coordinates are the lowest rightmost
+            // vertex.  Cannot use that point as the pivot (#5342).
+            bUseFallback = true;
+        }
+    }
+
+    // Previous.
+    int next = v - 1;
+    if( next < 0 )
+    {
+        next = nPointCount - 1 - 1;
+    }
+
+    if( epsilonEqual(paoPoints[next].x, paoPoints[v].x, EPSILON) &&
+        epsilonEqual(paoPoints[next].y, paoPoints[v].y, EPSILON) )
+    {
+        // Don't try to be too clever by retrying with a next point.
+        // This can lead to false results as in the case of #3356.
+        bUseFallback = true;
+    }
+
+    const double dx0 = paoPoints[next].x - paoPoints[v].x;
+    const double dy0 = paoPoints[next].y - paoPoints[v].y;
+
+    // Following.
+    next = v + 1;
+    if( next >= nPointCount - 1 )
+    {
+        next = 0;
+    }
+
+    if( epsilonEqual(paoPoints[next].x, paoPoints[v].x, EPSILON) &&
+        epsilonEqual(paoPoints[next].y, paoPoints[v].y, EPSILON) )
+    {
+        // Don't try to be too clever by retrying with a next point.
+        // This can lead to false results as in the case of #3356.
+        bUseFallback = true;
+    }
+
+    const double dx1 = paoPoints[next].x - paoPoints[v].x;
+    const double dy1 = paoPoints[next].y - paoPoints[v].y;
+
+    const double crossproduct = dx1 * dy0 - dx0 * dy1;
+
+    if( !bUseFallback )
+    {
+        if( crossproduct > 0 )       // CCW
+            return FALSE;
+        else if( crossproduct < 0 )  // CW
+            return TRUE;
+    }
+
+    // This is a degenerate case: the extent of the polygon is less than EPSILON
+    // or 2 nearly identical points were found.
+    // Try with Green Formula as a fallback, but this is not a guarantee
+    // as we'll probably be affected by numerical instabilities.
+
+    double dfSum =
+        paoPoints[0].x * (paoPoints[1].y - paoPoints[nPointCount-1].y);
+
+    for( int i = 1; i < nPointCount-1; i++ )
+    {
+        dfSum += paoPoints[i].x * (paoPoints[i+1].y - paoPoints[i-1].y);
+    }
+
+    dfSum +=
+        paoPoints[nPointCount-1].x *
+        (paoPoints[0].y - paoPoints[nPointCount-2].y);
+
+    return dfSum < 0;
+}
+
 //! @endcond

@@ -1587,7 +1587,7 @@ def test_SetPROJSearchPath():
 
     # OSRSetPROJSearchPaths() is only taken into priority over other methods
     # starting with PROJ >= 6.1
-    if not(osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 1):
+    if not (osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 1):
         pytest.skip()
 
     # Do the test in a new thread, so that SetPROJSearchPath() is taken
@@ -1638,7 +1638,7 @@ def test_osr_export_projjson():
     sr = osr.SpatialReference()
     sr.SetFromUserInput('WGS84')
 
-    if not(osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 2):
+    if not (osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 2):
         with gdaltest.error_handler():
             sr.ExportToPROJJSON()
         pytest.skip()
@@ -1651,7 +1651,7 @@ def test_osr_promote_to_3D():
     sr = osr.SpatialReference()
     sr.SetFromUserInput('WGS84')
 
-    if not(osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 3):
+    if not (osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 3):
         with gdaltest.error_handler():
             sr.PromoteTo3D()
         pytest.skip()
@@ -1661,6 +1661,17 @@ def test_osr_promote_to_3D():
 
     assert sr.DemoteTo2D() == 0
     assert sr.GetAuthorityCode(None) == '4326'
+
+
+def test_osr_strip_vertical():
+
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(3901)  # "KKJ / Finland Uniform Coordinate System + N60 height"
+    assert sr.IsCompound()
+
+    assert sr.StripVertical() == 0
+    assert not sr.IsCompound()
+    assert sr.GetAuthorityCode(None) == '2393'  # KKJ / Finland Uniform Coordinate System
 
 
 def test_osr_SetVerticalPerspective():
@@ -1969,3 +1980,45 @@ def test_osr_basic_proj_network():
     finally:
         osr.SetPROJEnableNetwork(initial_value)
 
+
+
+###############################################################################
+
+
+def test_osr_basic_get_linear_units_compound_engineering_crs():
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("""COMPOUNDCRS["None",
+    ENGCRS["None",
+        EDATUM[""],
+        CS[Cartesian,2],
+            AXIS["easting",east,
+                ORDER[1],
+                LENGTHUNIT["US survey foot",0.304800609601219,
+                    ID["EPSG",9003]]],
+            AXIS["northing",north,
+                ORDER[2],
+                LENGTHUNIT["US survey foot",0.304800609601219,
+                    ID["EPSG",9003]]]],
+    VERTCRS["Local Meter",
+        VDATUM["unknown"],
+        CS[vertical,1],
+            AXIS["up",up,
+                LENGTHUNIT["metre",1,
+                    ID["EPSG",9001]]]]]""")
+
+    assert srs.GetLinearUnits() == pytest.approx(0.304800609601219)
+    assert srs.GetLinearUnitsName() == "US survey foot"
+
+
+###############################################################################
+# Test EPSG:horizontal_code+geographic_code
+
+
+def test_osr_basic_epsg_horizontal_and_ellipsoidal_height():
+
+    if osr.GetPROJVersionMajor() < 9:
+        pytest.skip('requires PROJ 9 or later')
+    sr = osr.SpatialReference()
+    assert sr.SetFromUserInput('EPSG:3157+4617') == ogr.OGRERR_NONE
+    assert sr.GetAxesCount() == 3

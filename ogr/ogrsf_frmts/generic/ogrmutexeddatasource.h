@@ -124,6 +124,9 @@ class CPL_DLL OGRMutexedDataSource : public OGRDataSource
     virtual bool        UpdateFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
                                           std::string& failureReason) override;
 
+    std::vector<std::string> GetRelationshipNames(CSLConstList papszOptions = nullptr) const override;
+
+    const GDALRelationship* GetRelationship(const std::string& name) const override;
 
     virtual std::shared_ptr<GDALGroup> GetRootGroup() const override;
 

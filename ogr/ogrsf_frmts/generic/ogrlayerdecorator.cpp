@@ -29,6 +29,7 @@
 #ifndef DOXYGEN_SKIP
 
 #include "ogrlayerdecorator.h"
+#include "ogr_recordbatch.h"
 
 CPL_CVSID("$Id$")
 
@@ -95,6 +96,23 @@ OGRFeature *OGRLayerDecorator::GetNextFeature()
 {
     if( !m_poDecoratedLayer ) return nullptr;
     return m_poDecoratedLayer->GetNextFeature();
+}
+
+GDALDataset *OGRLayerDecorator::GetDataset()
+{
+    if( !m_poDecoratedLayer ) return nullptr;
+    return m_poDecoratedLayer->GetDataset();
+}
+
+bool OGRLayerDecorator::GetArrowStream(struct ArrowArrayStream* out_stream,
+                                     CSLConstList papszOptions)
+{
+    if( !m_poDecoratedLayer )
+    {
+        memset(out_stream, 0, sizeof(*out_stream));
+        return false;
+    }
+    return m_poDecoratedLayer->GetArrowStream(out_stream, papszOptions);
 }
 
 OGRErr      OGRLayerDecorator::SetNextByIndex( GIntBig nIndex )
@@ -198,6 +216,12 @@ OGRErr      OGRLayerDecorator::AlterFieldDefn( int iField, OGRFieldDefn* poNewFi
 {
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
     return m_poDecoratedLayer->AlterFieldDefn(iField, poNewFieldDefn, nFlagsIn);
+}
+
+OGRErr      OGRLayerDecorator::AlterGeomFieldDefn( int iGeomField, const OGRGeomFieldDefn* poNewGeomFieldDefn, int nFlagsIn )
+{
+    if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
+    return m_poDecoratedLayer->AlterGeomFieldDefn(iGeomField, poNewGeomFieldDefn, nFlagsIn);
 }
 
 OGRErr      OGRLayerDecorator::CreateGeomField( OGRGeomFieldDefn *poField,

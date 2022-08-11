@@ -37,6 +37,8 @@ from osgeo import gdal
 from osgeo import ogr
 import pytest
 
+pytestmark = pytest.mark.require_driver('ODS')
+
 ###############################################################################
 # Check
 
@@ -94,7 +96,7 @@ def ogr_ods_check(ds):
         feat.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Basic tests
 
@@ -102,9 +104,6 @@ def ogr_ods_check(ds):
 def test_ogr_ods_1():
 
     drv = ogr.GetDriverByName('ODS')
-    if drv is None:
-        pytest.skip()
-
     assert drv.TestCapability("foo") == 0
 
     ds = ogr.Open('data/ods/test.ods')
@@ -119,9 +118,6 @@ def test_ogr_ods_1():
 def test_ogr_ods_kspread_1():
 
     drv = ogr.GetDriverByName('ODS')
-    if drv is None:
-        pytest.skip()
-
     assert drv.TestCapability("foo") == 0
 
     ds = ogr.Open('data/ods/test_kspread.ods')
@@ -179,16 +175,12 @@ def test_ogr_ods_kspread_1():
         feat.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test OGR_ODS_HEADERS = DISABLE
 
 
 def test_ogr_ods_2():
-
-    drv = ogr.GetDriverByName('ODS')
-    if drv is None:
-        pytest.skip()
 
     gdal.SetConfigOption('OGR_ODS_HEADERS', 'DISABLE')
     ds = ogr.Open('data/ods/test.ods')
@@ -205,10 +197,6 @@ def test_ogr_ods_2():
 
 def test_ogr_ods_3():
 
-    drv = ogr.GetDriverByName('ODS')
-    if drv is None:
-        pytest.skip()
-
     gdal.SetConfigOption('OGR_ODS_FIELD_TYPES', 'STRING')
     ds = ogr.Open('data/ods/test.ods')
 
@@ -224,10 +212,6 @@ def test_ogr_ods_3():
 
 def test_ogr_ods_4():
 
-    drv = ogr.GetDriverByName('ODS')
-    if drv is None:
-        pytest.skip()
-
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
@@ -241,10 +225,6 @@ def test_ogr_ods_4():
 
 
 def test_ogr_ods_5():
-
-    drv = ogr.GetDriverByName('ODS')
-    if drv is None:
-        pytest.skip()
 
     import test_cli_utilities
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -265,10 +245,6 @@ def test_ogr_ods_5():
 
 
 def test_ogr_ods_6():
-
-    drv = ogr.GetDriverByName('ODS')
-    if drv is None:
-        pytest.skip()
 
     src_ds = ogr.Open('ODS:data/ods/content_formulas.xml')
     filepath = '/vsimem/content_formulas.csv'
@@ -307,10 +283,6 @@ AB,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 
 def test_ogr_ods_7():
 
-    drv = ogr.GetDriverByName('ODS')
-    if drv is None:
-        pytest.skip()
-
     filepath = 'tmp/ogr_ods_7.ods'
     if os.path.exists(filepath):
         os.unlink(filepath)
@@ -348,9 +320,6 @@ def test_ogr_ods_7():
 def test_ogr_ods_8():
 
     drv = ogr.GetDriverByName('ODS')
-    if drv is None:
-        pytest.skip()
-
     ds = drv.CreateDataSource('/vsimem/ogr_ods_8.ods')
     lyr = ds.CreateLayer('foo')
     lyr.CreateField(ogr.FieldDefn('Field1', ogr.OFTInteger64))
@@ -383,9 +352,6 @@ def test_ogr_ods_8():
 def test_ogr_ods_9():
 
     drv = ogr.GetDriverByName('ODS')
-    if drv is None:
-        pytest.skip()
-
     ds = drv.CreateDataSource('/vsimem/ogr_ods_9.ods')
     lyr = ds.CreateLayer('foo')
     lyr.CreateField(ogr.FieldDefn('Field1', ogr.OFTDateTime))
@@ -424,9 +390,6 @@ def test_ogr_ods_9():
 def test_ogr_ods_boolean():
 
     drv = ogr.GetDriverByName('ODS')
-    if drv is None:
-        pytest.skip()
-
     out_filename = '/vsimem/ogr_ods_boolean.ods'
     ds = drv.CreateDataSource(out_filename)
     lyr = ds.CreateLayer('foo')
@@ -459,13 +422,20 @@ def test_ogr_ods_boolean():
 
 def test_ogr_ods_number_columns_repeated_at_end_of_row():
 
-    drv = ogr.GetDriverByName('ODS')
-    if drv is None:
-        pytest.skip()
-
     ds = ogr.Open('data/ods/testrepeatedcolatendofrow.ods')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     f = lyr.GetNextFeature()
     assert f['vbz'] == 1002
     assert f['b'] == 0
+
+###############################################################################
+# Test multiple <text:p> elements in the same cell
+
+def test_ogr_ods_multiple_text_p_elements():
+
+    ds = ogr.Open('data/ods/multiple_text_p_elements.ods')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    f = lyr.GetNextFeature()
+    assert f['value'] == 'First line\nSecond line'

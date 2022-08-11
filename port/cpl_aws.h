@@ -133,6 +133,8 @@ enum class AWSCredentialsSource
 {
     REGULAR,         // credentials from env variables or ~/.aws/crediential
     EC2,             // credentials from EC2 private networking
+    WEB_IDENTITY,    // credentials from Web Identity Token
+                     // See https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html
     ASSUMED_ROLE     // credentials from an STS assumed role
                      // See https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-cli.html
                      // and https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_request.html
@@ -156,6 +158,12 @@ class VSIS3HandleHelper final: public IVSIS3LikeHandleHelper
         AWSCredentialsSource m_eCredentialsSource = AWSCredentialsSource::REGULAR;
 
         void RebuildURL() override;
+
+        static bool GetConfigurationFromAssumeRoleWithWebIdentity(bool bForceRefresh,
+                                                                  const std::string& osPathForOption,
+                                                                  CPLString& osSecretAccessKey,
+                                                                  CPLString& osAccessKeyId,
+                                                                  CPLString& osSessionToken);
 
         static bool GetConfigurationFromEC2(bool bForceRefresh,
                                             const std::string& osPathForOption,

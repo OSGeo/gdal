@@ -3922,6 +3922,7 @@ bool IVSIS3LikeFSHandler::Sync( const char* pszSource, const char* pszTarget,
         CPLString osUploadID{};
         int nCountValidETags = 0;
         int nExpectedCount = 0;
+        //cppcheck-suppress unusedStructMember
         std::vector<CPLString> aosEtags{};
         vsi_l_offset nTotalSize = 0;
     };

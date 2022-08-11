@@ -4,6 +4,8 @@ on:
     push:
         paths-ignore:
             - 'doc/**'
+        branches-ignore:
+            - 'backport**'
     pull_request:
         paths-ignore:
             - 'doc/**'
@@ -19,7 +21,7 @@ jobs:
     if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
     steps:
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - uses: conda-incubator/setup-miniconda@v2
         with:

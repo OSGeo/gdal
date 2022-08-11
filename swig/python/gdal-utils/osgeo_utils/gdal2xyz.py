@@ -274,6 +274,42 @@ class GDAL2XYZ(GDALScript):
 
         return parser
 
+    def parse(self, argv) -> dict:
+
+        def checkInt(s):
+            try:
+                int(s)
+                return True
+            except ValueError:
+                return False
+
+        # We allowed "-b band_number_1 [... band_number_X] srcfile dstfile" syntax
+        # before switching to ArgParse. But ArgParse doesn't like that.
+        # So manually parse -b argument and strip it before ArgParse.
+        count = len(argv)
+        new_argv = []
+        i = 0
+        band_nums = []
+        while i < count:
+            arg = argv[i]
+            if arg in ('-b', '-band', '--band'):
+                if i == count - 1:
+                    raise Exception(f'Missing argument following {arg}: ')
+                i += 1
+                if not checkInt(argv[i]):
+                    raise Exception(f'Argument following {arg} should be a integer')
+                while i < count and checkInt(argv[i]):
+                    band_nums.append(int(argv[i]))
+                    i += 1
+            else:
+                i += 1
+                new_argv.append(arg)
+
+        kwargs = super(GDAL2XYZ, self).parse(new_argv)
+        if band_nums:
+            kwargs['band_nums'] = band_nums
+        return kwargs
+
     def augment_kwargs(self, kwargs) -> dict:
         if kwargs.get('allbands'):
             kwargs['band_nums'] = None

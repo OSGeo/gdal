@@ -1191,6 +1191,9 @@ _TIFFCheckFieldIsValidForCodec(TIFF *tif, ttag_t tag)
 	    default:
 		return 1;
 	}
+	if( !TIFFIsCODECConfigured(tif->tif_dir.td_compression) ) {
+		return 0;
+	}
 	/* Check if codec specific tags are allowed for the current
 	 * compression scheme (codec) */
 	switch (tif->tif_dir.td_compression) {

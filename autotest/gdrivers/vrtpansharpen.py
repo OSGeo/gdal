@@ -1497,7 +1497,8 @@ def test_vrtpansharpen_9():
     assert vrt_ds is not None
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
     expected_cs_list = ([7056, 11779, 9026],
-                        [7052, 11770, 9018] # s390x
+                        [7052, 11770, 9018], # s390x
+                        [7067, 11745, 8992], # Intel(R) oneAPI DPC++/C++ Compiler 2022.1.0
                         )
     assert cs in expected_cs_list
 
@@ -1686,7 +1687,7 @@ def test_vrtpansharpen_11():
     </VRTDataset>""", pan_ds.GetRasterBand(1), [ms_ds.GetRasterBand(i + 1) for i in range(3)])
     assert vrt_ds is not None
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
-    assert cs in([4735, 10000, 9742], [4731, 9991, 9734])
+    assert cs in ([4735, 10000, 9742], [4731, 9991, 9734])
 
     # Also test with completely anonymous datasets
     pan_mem_ds = gdal.GetDriverByName('MEM').CreateCopy('', pan_ds)
@@ -1706,7 +1707,7 @@ def test_vrtpansharpen_11():
     </VRTDataset>""", pan_mem_ds.GetRasterBand(1), [ms_mem_ds.GetRasterBand(i + 1) for i in range(3)])
     assert vrt_ds is not None
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
-    assert cs in([4735, 10000, 9742], [4731, 9991, 9734])
+    assert cs in ([4735, 10000, 9742], [4731, 9991, 9734])
     vrt_ds = None
 
     # Check that wrapping with VRT works (when gt are not compatible)

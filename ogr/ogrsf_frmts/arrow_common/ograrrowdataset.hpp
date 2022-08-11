@@ -32,8 +32,8 @@
 /*                         OGRArrowDataset()                            */
 /************************************************************************/
 
-inline OGRArrowDataset::OGRArrowDataset(std::unique_ptr<arrow::MemoryPool>&& poMemoryPool):
-    m_poMemoryPool(std::move(poMemoryPool))
+inline OGRArrowDataset::OGRArrowDataset(const std::shared_ptr<arrow::MemoryPool>& poMemoryPool):
+    m_poMemoryPool(poMemoryPool)
 {
 }
 
@@ -101,3 +101,5 @@ inline OGRLayer* OGRArrowDataset::GetLayer(int idx)
 {
     return idx == 0 ? m_poLayer.get() : nullptr;
 }
+
+

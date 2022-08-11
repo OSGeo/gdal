@@ -688,6 +688,13 @@ size_t VSICurlHandleWriteFunc( void *buffer, size_t count,
                 }
                 else
 #endif //!CURL_AT_LEAST_VERSION(7,54,0)
+                if( psStruct->bInterruptIfNonErrorPayload &&
+                    psStruct->nHTTPCode >= 400 )
+                {
+                    psStruct->bInterrupted = true;
+                    return 0;
+                }
+                else
                 {
                     // Detect servers that don't support range downloading.
                     if( psStruct->nHTTPCode == 200 &&
@@ -926,7 +933,7 @@ retry:
              VSICurlIsS3LikeSignedURL(osURL) ||
              !m_bUseHead )
     {
-        sWriteFuncData.bInterrupted = true;
+        sWriteFuncData.bInterruptIfNonErrorPayload = true;
         osVerb = "GET";
     }
     else
@@ -1002,14 +1009,32 @@ retry:
         long response_code = 0;
         curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
 
-        if( ENABLE_DEBUG && szCurlErrBuf[0] != '\0' )
+        bool bAlreadyLogged = false;
+        if( response_code >= 400 && szCurlErrBuf[0] == '\0' )
         {
+            const bool bLogResponse = CPLTestBool(
+                CPLGetConfigOption("CPL_CURL_VERBOSE", "NO"));
+            if( bLogResponse && sWriteFuncData.pBuffer )
+            {
+                const char* pszErrorMsg = static_cast<const char*>(sWriteFuncData.pBuffer);
+                bAlreadyLogged = true;
+                CPLDebug(poFS->GetDebugKey(),
+                         "GetFileSize(%s): response_code=%d, server error msg=%s",
+                         osURL.c_str(),
+                         static_cast<int>(response_code),
+                         pszErrorMsg[0] ? pszErrorMsg : "(no message provided)");
+            }
+        }
+        else if( szCurlErrBuf[0] != '\0' )
+        {
+            bAlreadyLogged = true;
             CPLDebug(poFS->GetDebugKey(),
-                     "GetFileSize(%s): response_code=%d, msg=%s",
+                     "GetFileSize(%s): response_code=%d, curl error msg=%s",
                      osURL.c_str(),
                      static_cast<int>(response_code),
                      szCurlErrBuf);
         }
+
 
         CPLString osEffectiveURL;
         {
@@ -1314,7 +1339,7 @@ retry:
             oFileProp.bIsDirectory = true;
         }
 
-        if( ENABLE_DEBUG && szCurlErrBuf[0] == '\0' )
+        if( !bAlreadyLogged )
         {
             CPLDebug(poFS->GetDebugKey(),
                      "GetFileSize(%s)=" CPL_FRMT_GUIB

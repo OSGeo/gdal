@@ -48,7 +48,7 @@ class VFKReader;
 class VFKReader : public IVFKReader
 {
 private:
-    bool           m_bLatin2;
+    const char    *m_pszEncoding;
 
     VSILFILE      *m_poFD;
     char          *ReadLine();
@@ -68,6 +68,7 @@ protected:
     IVFKDataBlock  *CreateDataBlock(const char *) override;
     void            AddDataBlock(IVFKDataBlock *, const char *) override;
     virtual OGRErr  AddFeature(IVFKDataBlock *, VFKFeature *) override;
+    void            ReadEncoding();
 
     // Metadata.
     std::map<CPLString, CPLString> poInfo;
@@ -78,7 +79,7 @@ public:
 
     const char    *GetFilename() const override { return m_pszFilename; }
 
-    bool           IsLatin2() const override { return m_bLatin2; }
+    const char    *GetEncoding() const override { return m_pszEncoding; }
     bool           IsSpatial() const override { return false; }
     bool           IsPreProcessed() const override { return false; }
     bool           IsValid() const override { return true; }

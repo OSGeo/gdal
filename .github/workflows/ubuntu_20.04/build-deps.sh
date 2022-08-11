@@ -42,7 +42,7 @@ wget -q https://github.com/ubarsc/kealib/archive/kealib-${KEA_VERSION}.zip \
     && rm -rf kealib-kealib-${KEA_VERSION}
 
 # Build tiledb
-TILEDB_VERSION=2.0.2
+TILEDB_VERSION=2.9.4
 mkdir tiledb \
     && wget -q https://github.com/TileDB-Inc/TileDB/archive/${TILEDB_VERSION}.tar.gz -O - \
         | tar xz -C tiledb --strip-components=1 \
@@ -100,8 +100,8 @@ wget -q https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5.
   && rm -rf FileGDB_API_1_5_1-64gcc51.tar.gz \
   && echo "/usr/local/FileGDB_API/lib" > /etc/ld.so.conf.d/filegdbapi.conf
 
-# Build and install GEOS (3.10dev)
-GEOS_SHA1=cab7d3cc63dc6ffaa48630b517c9ab69be6505e0
+# Build and install GEOS (3.11dev)
+GEOS_SHA1=c8bba596e9cdcf8ad55d804bfa9ba6e4394722a1
 mkdir geos \
     && wget -q https://github.com/libgeos/geos/archive/${GEOS_SHA1}.tar.gz -O - \
         | tar xz -C geos --strip-components=1 \
@@ -115,12 +115,12 @@ mkdir geos \
     && rm -rf geos
 
 # Install pdfium
-wget -q https://github.com/rouault/pdfium_build_gdal_3_5/releases/download/v1_pdfium_4933/install-ubuntu2004-rev4933.tar.gz \
-  && tar -xzf install-ubuntu2004-rev4933.tar.gz \
+wget -q https://github.com/rouault/pdfium_build_gdal_3_5/releases/download/v1_pdfium_5106/install-ubuntu2004-rev5106.tar.gz \
+  && tar -xzf install-ubuntu2004-rev5106.tar.gz \
   && chown -R root:root install \
   && mv install/lib/* /usr/lib/ \
   && mv install/include/* /usr/include/ \
-  && rm -rf install-ubuntu2004-rev4933.tar.gz install \
+  && rm -rf install-ubuntu2004-rev5106.tar.gz install \
   && apt-get update -y \
   && apt-get install -y --fix-missing --no-install-recommends liblcms2-dev \
   && rm -rf /var/lib/apt/lists/*

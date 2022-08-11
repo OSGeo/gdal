@@ -35,7 +35,7 @@ import os
 
 import pytest
 
-from osgeo import osr
+from osgeo import gdal, osr
 
 bonne = 'PROJCS["bonne",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["bonne"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],PARAMETER["Standard_Parallel_1",60.0],UNIT["Meter",1.0]]'
 
@@ -102,7 +102,7 @@ transform_list = [
      'Geocentric', None, None, None),
 
     # Test Vertical Datum Shift with a change of horizontal units.
-    ('+proj=utm +zone=11 +datum=WGS84', (100000.0, 3500000.0, 0.0), 0.1,
+    ('EPSG:4979', (31.5656461890308, -121.213327277021, 0.0), 0.1,
      '+proj=utm +zone=11 +datum=WGS84 +geoidgrids=egm96_15.gtx +units=us-ft', (328083.333225467, 11482916.6665952, 41.4697855726348), 0.01,
      'EGM 96 Conversion', None, "egm96_15.gtx", '6.2.1'),
 
@@ -148,7 +148,7 @@ transform_list = [
      'EPSG:4326', (49.9988572643058,9.99881392529464,0), 1e-8,
      'DHDN -> WGS84 using explicit TOWGS84', None, None, None),
 
-    ('EPSG:27562', (136555.58288992, 463344.51894296, 0.0), 1e-8,
+    ('EPSG:27562', (136555.58288992, 463344.51894296, 0.0), 1e-5,
      'EPSG:4258', (49, -4, 0), 1e-8,
      'EPSG:27562 -> EPSG:4258 using OGR_CT_OP_SELECTION=BEST_ACCURACY',
      'OGR_CT_OP_SELECTION=BEST_ACCURACY',
@@ -503,3 +503,20 @@ def test_transform_bounds__south_pole__xy():
     ) == pytest.approx(
         (-1371213.76, -1405880.72, 5371213.76, 5405880.72)
     )
+
+
+def test_transform_bounds__internal_error_message():
+    # make sure error message cleared on success
+    src = osr.SpatialReference()
+    src.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
+    assert src.ImportFromEPSG(6931) == 0
+    dst = osr.SpatialReference()
+    dst.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
+    assert dst.ImportFromEPSG(4326) == 0
+    ctr = osr.CoordinateTransformation(src, dst)
+    assert ctr.TransformBounds(
+        458872.4197335826, -2998046.478919534, 584059.8115540259, -2883810.102037343, 21
+    ) == pytest.approx(
+        (62.36651782187522, 8.701995124479733, 63.605850064663514, 11.449280848814887)
+    )
+    assert gdal.GetLastErrorMsg() == ""

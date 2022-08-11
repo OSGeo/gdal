@@ -38,18 +38,6 @@
 
 using namespace PCIDSK;
 
-struct CPCIDSKGCP2Segment::PCIDSKGCP2SegInfo
-{
-    std::vector<PCIDSK::GCP> gcps;
-    unsigned int num_gcps;
-    PCIDSKBuffer seg_data;
-
-    std::string map_units;   ///< PCI mapunits string
-    std::string proj_parms;  ///< Additional projection parameters
-    unsigned int num_proj;
-    bool changed;
-};
-
 CPCIDSKGCP2Segment::CPCIDSKGCP2Segment(PCIDSKFile *fileIn, int segmentIn, const char *segment_pointer)
     : CPCIDSKSegment(fileIn, segmentIn, segment_pointer), loaded_(false)
 {

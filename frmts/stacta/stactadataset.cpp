@@ -352,28 +352,16 @@ CPLErr STACTARawDataset::IRasterIO( GDALRWFlag eRWFlag,
             }
 
 
-            auto poMEMDS = std::unique_ptr<GDALDataset>(
+            auto poMEMDS = std::unique_ptr<MEMDataset>(
                 MEMDataset::Create( "", nXSizeMod, nYSizeMod, 0,
                                     eBandDT, nullptr ));
             for( int i = 0; i < nBandCount; i++ )
             {
-                char szBuffer[32] = { '\0' };
-                int nRet = CPLPrintPointer(
-                        szBuffer,
-                        &abyBuf[0] + i * nDTSize * nXSizeMod * nYSizeMod,
-                        sizeof(szBuffer));
-                szBuffer[nRet] = '\0';
-
-                char szBuffer0[64] = { '\0' };
-                snprintf(szBuffer0, sizeof(szBuffer0), "DATAPOINTER=%s", szBuffer);
-                char szBuffer1[64] = { '\0' };
-                snprintf( szBuffer1, sizeof(szBuffer1),
-                          "PIXELOFFSET=%d", nDTSize );
-                char szBuffer2[64] = { '\0' };
-                snprintf( szBuffer2, sizeof(szBuffer2),
-                          "LINEOFFSET=%d", nDTSize * nXSizeMod );
-                char* apszOptions[4] = { szBuffer0, szBuffer1, szBuffer2, nullptr };
-                poMEMDS->AddBand(eBandDT, apszOptions);
+                auto hBand = MEMCreateRasterBandEx(
+                    poMEMDS.get(), i + 1,
+                    &abyBuf[0] + i * nDTSize * nXSizeMod * nYSizeMod,
+                    eBandDT, 0, 0, false );
+                poMEMDS->AddMEMBand(hBand);
             }
 
             sExtraArgs.eResampleAlg = psExtraArg->eResampleAlg;

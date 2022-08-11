@@ -314,6 +314,33 @@ static OGRSpatialReference IdentifyCRS(const OGRSpatialReference* poSRS)
 }
 
 /************************************************************************/
+/*                      RemoveIDFromMemberOfEnsembles()                 */
+/************************************************************************/
+
+static void RemoveIDFromMemberOfEnsembles(CPLJSONObject& obj)
+{
+    // Remove "id" from members of datum ensembles for compatibility with
+    // older PROJ versions
+    // Cf https://github.com/opengeospatial/geoparquet/discussions/110
+    // and https://github.com/OSGeo/PROJ/pull/3221
+    if( obj.GetType() == CPLJSONObject::Type::Object )
+    {
+        for( auto& subObj: obj.GetChildren() )
+        {
+            RemoveIDFromMemberOfEnsembles(subObj);
+        }
+    }
+    else if( obj.GetType() == CPLJSONObject::Type::Array &&
+             obj.GetName() == "members" )
+    {
+        for( auto& subObj: obj.ToArray() )
+        {
+            subObj.Delete("id");
+        }
+    }
+}
+
+/************************************************************************/
 /*                            GetGeoMetadata()                          */
 /************************************************************************/
 
@@ -370,10 +397,12 @@ std::string OGRParquetWriterLayer::GetGeoMetadata() const
                         // CRS encoded as PROJJSON for GeoParquet >= 0.4.0
                         char* pszPROJJSON = nullptr;
                         oSRSIdentified.exportToPROJJSON(&pszPROJJSON, nullptr);
-                        CPLJSONDocument oDoc;
-                        oDoc.LoadMemory(pszPROJJSON);
+                        CPLJSONDocument oCRSDoc;
+                        oCRSDoc.LoadMemory(pszPROJJSON);
                         CPLFree(pszPROJJSON);
-                        oColumn.Add("crs", oDoc.GetRoot());
+                        CPLJSONObject oCRSRoot = oCRSDoc.GetRoot();
+                        RemoveIDFromMemberOfEnsembles(oCRSRoot);
+                        oColumn.Add("crs", oCRSRoot);
                     }
                     else
                     {

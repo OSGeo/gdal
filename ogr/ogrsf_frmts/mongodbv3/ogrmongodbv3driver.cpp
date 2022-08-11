@@ -54,11 +54,15 @@ typedef struct _IntOrMap IntOrMap;
 
 struct _IntOrMap
 {
+    // cppcheck-suppress unusedStructMember
     int bIsMap;
     union
     {
+        // cppcheck-suppress unusedStructMember
         int nField;
+        // cppcheck-suppress unusedStructMember
         std::map< CPLString, IntOrMap*>* poMap;
+    // cppcheck-suppress unusedStructMember
     } u;
 };
 } // namespace
@@ -650,7 +654,11 @@ bool OGRMongoDBv3Layer::ReadOGRMetadata(std::map< CPLString, CPLString>& oMapInd
                             OGRFieldDefn oFieldDefn(std::string(name.get_utf8().value).c_str(), eType);
                             if( subtype && subtype.type() == bsoncxx::type::k_utf8 &&
                                 std::string(subtype.get_utf8().value) == "Boolean" )
+                            {
+                                // cppcheck-suppress danglingTemporaryLifetime
                                 oFieldDefn.SetSubType(OFSTBoolean);
+                            }
+                            // cppcheck-suppress danglingTemporaryLifetime
                             m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
 
                             m_aaosFieldPaths.push_back(aosPaths);
@@ -697,8 +705,10 @@ bool OGRMongoDBv3Layer::ReadOGRMetadata(std::map< CPLString, CPLString>& oMapInd
                             OGRSpatialReference* poSRS = new OGRSpatialReference();
                             poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                             poSRS->SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
+                            // cppcheck-suppress danglingTemporaryLifetime
                             oFieldDefn.SetSpatialRef(poSRS);
                             poSRS->Release();
+                            // cppcheck-suppress danglingTemporaryLifetime
                             m_poFeatureDefn->AddGeomFieldDefn(&oFieldDefn);
 
                             m_aaosGeomFieldPaths.push_back(aosPaths);
@@ -2641,6 +2651,9 @@ void RegisterOGRMongoDBv3()
 
     poDriver->SetDescription( "MongoDBv3" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DELETE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "MongoDB (using libmongocxx v3 client)" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/mongodbv3.html" );
 

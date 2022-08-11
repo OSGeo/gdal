@@ -105,7 +105,7 @@ public:
         COASPMetadataGeorefGridItem( int nId, int nPixels, int nLines,
                                      double ndLat, double ndLong );
         static const char *GetItemName() { return "georef_grid"; }
-        GDAL_GCP *GetItemValue();
+        static GDAL_GCP *GetItemValue();
         static int GetType() { return TYPE_GEOREF; }
 };
 

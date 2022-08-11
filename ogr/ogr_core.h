@@ -614,6 +614,47 @@ typedef enum
  */
 #define ALTER_ALL_FLAG             (ALTER_NAME_FLAG | ALTER_TYPE_FLAG | ALTER_WIDTH_PRECISION_FLAG | ALTER_NULLABLE_FLAG | ALTER_DEFAULT_FLAG | ALTER_UNIQUE_FLAG | ALTER_DOMAIN_FLAG)
 
+
+
+/** Alter geometry field name.
+ * Used by OGR_L_AlterGeomFieldDefn().
+ * @since GDAL 3.6
+ */
+#define ALTER_GEOM_FIELD_DEFN_NAME_FLAG            0x1000
+
+/** Alter geometry field type.
+ * Used by OGR_L_AlterGeomFieldDefn().
+ * @since GDAL 3.6
+ */
+#define ALTER_GEOM_FIELD_DEFN_TYPE_FLAG            0x2000
+
+/** Alter geometry field nullable state.
+ * Used by OGR_L_AlterGeomFieldDefn().
+ * @since GDAL 3.6
+ */
+#define ALTER_GEOM_FIELD_DEFN_NULLABLE_FLAG        0x4000
+
+/** Alter geometry field spatial reference system (except its coordinate epoch)
+ * Used by OGR_L_AlterGeomFieldDefn().
+ * @since GDAL 3.6
+ */
+#define ALTER_GEOM_FIELD_DEFN_SRS_FLAG            0x8000
+
+/** Alter geometry field coordinate epoch
+ * Used by OGR_L_AlterGeomFieldDefn().
+ * @since GDAL 3.6
+ */
+#define ALTER_GEOM_FIELD_DEFN_SRS_COORD_EPOCH_FLAG  0x10000
+
+
+/** Alter all parameters of field definition.
+ * Used by OGR_L_AlterGeomFieldDefn().
+ * @since GDAL 3.6
+ */
+#define ALTER_GEOM_FIELD_DEFN_ALL_FLAG             (ALTER_GEOM_FIELD_DEFN_NAME_FLAG | ALTER_GEOM_FIELD_DEFN_TYPE_FLAG | ALTER_GEOM_FIELD_DEFN_NULLABLE_FLAG | ALTER_GEOM_FIELD_DEFN_SRS_FLAG | ALTER_GEOM_FIELD_DEFN_SRS_COORD_EPOCH_FLAG)
+
+
+
 /** Validate that fields respect not-null constraints.
  * Used by OGR_F_Validate().
  * @since GDAL 2.0
@@ -837,6 +878,7 @@ int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
 #define OLCDeleteField         "DeleteField"        /**< Layer capability for field deletion */
 #define OLCReorderFields       "ReorderFields"      /**< Layer capability for field reordering */
 #define OLCAlterFieldDefn      "AlterFieldDefn"     /**< Layer capability for field alteration */
+#define OLCAlterGeomFieldDefn  "AlterGeomFieldDefn" /**< Layer capability for geometry field alteration */
 #define OLCTransactions        "Transactions"       /**< Layer capability for transactions */
 #define OLCDeleteFeature       "DeleteFeature"      /**< Layer capability for feature deletion */
 #define OLCFastSetNextByIndex  "FastSetNextByIndex" /**< Layer capability for setting next feature index */
@@ -845,7 +887,9 @@ int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
 #define OLCCreateGeomField     "CreateGeomField"    /**< Layer capability for geometry field creation */
 #define OLCCurveGeometries     "CurveGeometries"    /**< Layer capability for curve geometries support */
 #define OLCMeasuredGeometries  "MeasuredGeometries" /**< Layer capability for measured geometries support */
+#define OLCZGeometries         "ZGeometries"        /**< Layer capability for geometry with Z dimension support. Since GDAL 3.6. */
 #define OLCRename              "Rename"             /**< Layer capability for a layer that supports Rename() */
+#define OLCFastGetArrowStream  "FastGetArrowStream" /**< Layer capability for fast GetArrowStream() implementation */
 
 #define ODsCCreateLayer        "CreateLayer"        /**< Dataset capability for layer creation */
 #define ODsCDeleteLayer        "DeleteLayer"        /**< Dataset capability for layer deletion */
@@ -855,9 +899,10 @@ int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
 #define ODsCTransactions       "Transactions"       /**< Dataset capability for dataset transcations */
 #define ODsCEmulatedTransactions "EmulatedTransactions" /**< Dataset capability for emulated dataset transactions */
 #define ODsCMeasuredGeometries "MeasuredGeometries"     /**< Dataset capability for measured geometries support */
-#define ODsCRandomLayerRead     "RandomLayerRead"   /**< Dataset capability for GetNextFeature() returning features from random layers */
+#define ODsCZGeometries        "ZGeometries"       /**< Dataset capability for geometry with Z dimension support. Since GDAL 3.6. */
+#define ODsCRandomLayerRead    "RandomLayerRead"   /**< Dataset capability for GetNextFeature() returning features from random layers */
 /* Note the unfortunate trailing space at the end of the string */
-#define ODsCRandomLayerWrite    "RandomLayerWrite " /**< Dataset capability for supporting CreateFeature on layer in random order */
+#define ODsCRandomLayerWrite   "RandomLayerWrite " /**< Dataset capability for supporting CreateFeature on layer in random order */
 #define ODsCAddFieldDomain     "AddFieldDomain"     /**< Dataset capability for supporting AddFieldDomain() (at least partially) */
 #define ODsCDeleteFieldDomain  "DeleteFieldDomain"  /**< Dataset capability for supporting DeleteFieldDomain()*/
 #define ODsCUpdateFieldDomain  "UpdateFieldDomain"  /**< Dataset capability for supporting UpdateFieldDomain()*/

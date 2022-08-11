@@ -494,7 +494,9 @@
    static_cast<type>(static_cast<const void*>(value))
 #else
 #  define png_voidcast(type, value) (value)
-#  ifdef _WIN64
+#  ifdef __UINTPTR_TYPE__
+      typedef __UINTPTR_TYPE__ png_ptruint;
+#  elif defined(_WIN64)
 #     ifdef __GNUC__
          typedef unsigned long long png_ptruint;
 #     else

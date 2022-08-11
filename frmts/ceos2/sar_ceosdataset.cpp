@@ -1715,6 +1715,8 @@ void SAR_CEOSDataset::ScanForGCPs()
     /* If general GCP's were not found, look for Map Projection (e.g. JERS) */
     if( nGCPCount == 0 )
     {
+        CPLFree(pasGCPList);
+        pasGCPList = nullptr;
         ScanForMapProjection();
         return;
     }

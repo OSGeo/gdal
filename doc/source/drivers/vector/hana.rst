@@ -26,7 +26,7 @@ Connecting to a database
 
    ::
 
-      HANA:"DRIVER={HDBODBC};DATABASE=HAN;HOST=localhost;PORT=30015;USER=mylogin;PASSWORD=mypassword;SCHEMA=MYSCHEMA"
+      HANA:"DRIVER=HDBODBC;DATABASE=HAN;HOST=localhost;PORT=30015;USER=mylogin;PASSWORD=mypassword;SCHEMA=MYSCHEMA"
      
    In this syntax each parameter setting is in the form keyword = value. 
    Spaces around the equal sign are optional. To write an empty value, or a 
@@ -62,7 +62,7 @@ Dataset Open options
 
 -  **DSN**\ =string: Data source name.
 -  **DRIVER**\ =string:  Name or a path to a driver. For example,
-   DRIVER={HDBODBC} (Windows) or DRIVER=/usr/sap/hdbclient/libodbcHDB.so
+   DRIVER=HDBODBC (Windows) or DRIVER=/usr/sap/hdbclient/libodbcHDB.so
    (Linux/MacOS).
 -  **HOST**\ =string: Server host name. 
 -  **PORT**\ =integer: Port number.
@@ -156,7 +156,7 @@ Examples
 
    ::
 
-      ogrinfo -ro HANA:"DRIVER={HDBODBC};DATABASE=HAN;HOST=localhost;PORT=30015;USER=mylogin;PASSWORD=mypassword;SCHEMA=MYSCHEMA"
+      ogrinfo -ro HANA:"DRIVER=HDBODBC;DATABASE=HAN;HOST=localhost;PORT=30015;USER=mylogin;PASSWORD=mypassword;SCHEMA=MYSCHEMA"
 
    or
 
@@ -169,7 +169,7 @@ Examples
 
    ::
 
-      ogrinfo -ro HANA:"DRIVER={HDBODBC};DATABASE=HAN;HOST=localhost;PORT=30015;USER=mylogin;PASSWORD=mypassword;SCHEMA=MYSCHEMA" -so "planet_osm_line"
+      ogrinfo -ro HANA:"DRIVER=HDBODBC;DATABASE=HAN;HOST=localhost;PORT=30015;USER=mylogin;PASSWORD=mypassword;SCHEMA=MYSCHEMA" -so "planet_osm_line"
 
       Layer name: planet_osm_line
       Geometry: Line String
@@ -207,13 +207,13 @@ Examples
 
    ::
 
-      ogr2ogr -f "ESRI Shapefile" "D:\\points_output.shp" HANA:"DRIVER={HDBODBC};DATABASE=HAN;HOST=localhost;PORT=30015;USER=mylogin;PASSWORD=mypassword;SCHEMA=GIS;TABLES=points"
+      ogr2ogr -f "ESRI Shapefile" "D:\\points_output.shp" HANA:"DRIVER=HDBODBC;DATABASE=HAN;HOST=localhost;PORT=30015;USER=mylogin;PASSWORD=mypassword;SCHEMA=GIS;TABLES=points"
 
 -  This example shows how to create and populate a table with data taken from a shapefile.
 
    ::
 
-      ogr2ogr -f HANA HANA:"DRIVER={HDBODBC};DATABASE=HAN;HOST=localhost;PORT=30015;USER=mylogin;PASSWORD=mypassword;SCHEMA=MYSCHEMA" myshapefile.shp
+      ogr2ogr -f HANA HANA:"DRIVER=HDBODBC;DATABASE=HAN;HOST=localhost;PORT=30015;USER=mylogin;PASSWORD=mypassword;SCHEMA=MYSCHEMA" myshapefile.shp
 
 
 For developers

@@ -58,10 +58,10 @@ public:
 
 class COSARRasterBand final: public GDALRasterBand
 {
-    unsigned long nRTNB;
+    uint32_t nRTNB;
 
   public:
-    COSARRasterBand( COSARDataset *, unsigned long nRTNB );
+    COSARRasterBand( COSARDataset *, uint32_t nRTNB );
     CPLErr IReadBlock( int, int, void * ) override;
 };
 
@@ -69,7 +69,7 @@ class COSARRasterBand final: public GDALRasterBand
  * COSARRasterBand Implementation
  *****************************************************************************/
 
-COSARRasterBand::COSARRasterBand( COSARDataset *pDS, unsigned long nRTNBIn ) :
+COSARRasterBand::COSARRasterBand( COSARDataset *pDS, uint32_t nRTNBIn ) :
     nRTNB(nRTNBIn)
 {
         nBlockXSize = pDS->GetRasterXSize();
@@ -90,22 +90,21 @@ CPLErr COSARRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
      *    of file
      */
 
-    VSIFSeekL(pCDS->fp,(this->nRTNB * (nBlockYOff + 4)), SEEK_SET);
+    VSIFSeekL(pCDS->fp, static_cast<vsi_l_offset>(nRTNB) * (nBlockYOff + 4), SEEK_SET);
 
     /* Read RSFV and RSLV (TX-GS-DD-3307) */
-    unsigned long nRSFV = 0;
-    unsigned long nRSLV = 0;
-    VSIFReadL(&nRSFV,1,4,pCDS->fp);
-    VSIFReadL(&nRSLV,1,4,pCDS->fp);
+    uint32_t nRSFV = 0; // Range Sample First Valid (starting at 1)
+    uint32_t nRSLV = 0; // Range Sample Last Valid (starting at 1)
+    VSIFReadL(&nRSFV,1,sizeof(nRSFV),pCDS->fp);
+    VSIFReadL(&nRSLV,1,sizeof(nRSLV),pCDS->fp);
 
-#ifdef CPL_LSB
-    nRSFV = CPL_SWAP32(nRSFV);
-    nRSLV = CPL_SWAP32(nRSLV);
-#endif
+    nRSFV = CPL_MSBWORD32(nRSFV);
+    nRSLV = CPL_MSBWORD32(nRSLV);
+
 
     if (nRSLV < nRSFV || nRSFV == 0 || nRSLV == 0
-        || nRSFV - 1 >= ((unsigned long) nBlockXSize)
-        || nRSLV - 1 >= ((unsigned long) nBlockXSize)
+        || nRSFV - 1 >= static_cast<uint32_t>(nBlockXSize)
+        || nRSLV - 1 >= static_cast<uint32_t>(nBlockXSize)
         || nRSFV >= this->nRTNB || nRSLV > this->nRTNB)
     {
         /* throw an error */
@@ -123,14 +122,13 @@ CPLErr COSARRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
     /* properly account for validity mask */
     if (nRSFV > 1)
     {
-        VSIFSeekL(pCDS->fp,(this->nRTNB*(nBlockYOff+4)+(nRSFV+1)*4), SEEK_SET);
+        VSIFSeekL(pCDS->fp, static_cast<vsi_l_offset>(nRTNB)*(nBlockYOff+4)+(nRSFV+1)*4, SEEK_SET);
     }
 
     /* Read the valid samples: */
-    VSIFReadL(((char *)pImage)+((nRSFV - 1)*4),1,((nRSLV-1)*4)-((nRSFV-1)*4),pCDS->fp);
+    VSIFReadL(((char *)pImage)+(static_cast<size_t>(nRSFV - 1)*4),1,static_cast<size_t>(nRSLV - nRSFV + 1)*4,pCDS->fp);
 
 #ifdef CPL_LSB
-    // GDALSwapWords( pImage, 4, nBlockXSize * nBlockYSize, 4 );
     GDALSwapWords( pImage, 2, nBlockXSize * nBlockYSize * 2, 2 );
 #endif
 
@@ -150,7 +148,7 @@ COSARDataset::~COSARDataset()
 }
 
 GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
-    long nRTNB;
+
     /* Check if we're actually a COSAR data set. */
     if( pOpenInfo->nHeaderBytes < 4 || pOpenInfo->fpL == nullptr)
         return nullptr;
@@ -177,15 +175,13 @@ GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
     pOpenInfo->fpL = nullptr;
 
     VSIFSeekL(pDS->fp, RS_OFFSET, SEEK_SET);
-    VSIFReadL(&pDS->nRasterXSize, 1, 4, pDS->fp);
-#ifdef CPL_LSB
-    pDS->nRasterXSize = CPL_SWAP32(pDS->nRasterXSize);
-#endif
+    int32_t nXSize;
+    VSIFReadL(&nXSize, 1, sizeof(nXSize), pDS->fp);
+    pDS->nRasterXSize = CPL_MSBWORD32(nXSize);
 
-    VSIFReadL(&pDS->nRasterYSize, 1, 4, pDS->fp);
-#ifdef CPL_LSB
-    pDS->nRasterYSize = CPL_SWAP32(pDS->nRasterYSize);
-#endif
+    int32_t nYSize;
+    VSIFReadL(&nYSize, 1, sizeof(nYSize), pDS->fp);
+    pDS->nRasterYSize = CPL_MSBWORD32(nYSize);
 
     if( !GDALCheckDatasetDimensions(pDS->nRasterXSize, pDS->nRasterYSize) )
     {
@@ -194,10 +190,9 @@ GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
     }
 
     VSIFSeekL(pDS->fp, RTNB_OFFSET, SEEK_SET);
-    VSIFReadL(&nRTNB, 1, 4, pDS->fp);
-#ifdef CPL_LSB
-    nRTNB = CPL_SWAP32(nRTNB);
-#endif
+    uint32_t nRTNB;
+    VSIFReadL(&nRTNB, 1, sizeof(nRTNB), pDS->fp);
+    nRTNB = CPL_MSBWORD32(nRTNB);
 
     /* Add raster band */
     pDS->SetBand(1, new COSARRasterBand(pDS, nRTNB));

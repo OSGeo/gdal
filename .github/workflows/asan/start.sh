@@ -31,14 +31,12 @@ fi
 
 
 sudo apt-get update
-sudo apt-get install -y --allow-unauthenticated libpng-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat1-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libpoppler-private-dev libsqlite3-dev gpsbabel swig libhdf4-alt-dev libhdf5-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev libepsilon-dev liblcms2-2 libpcre3-dev libcrypto++-dev libfyba-dev libmysqlclient-dev libogdi-dev libcfitsio-dev openjdk-8-jdk libzstd-dev ccache curl autoconf automake sqlite3 libspatialite-dev make g++ libssl-dev libsfcgal-dev libgeotiff-dev libopenjp2-7-dev libcairo2-dev python3-dev python3-setuptools python3-numpy python3-pip clang git
+sudo apt-get install -y --allow-unauthenticated libpng-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat1-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libpoppler-private-dev libsqlite3-dev gpsbabel swig libhdf4-alt-dev libhdf5-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev libepsilon-dev liblcms2-2 libpcre3-dev libcrypto++-dev libfyba-dev libmysqlclient-dev libogdi-dev libcfitsio-dev openjdk-8-jdk libzstd-dev ccache curl autoconf automake sqlite3 libspatialite-dev make g++ libssl-dev libsfcgal-dev libgeotiff-dev libopenjp2-7-dev libcairo2-dev python3-dev python3-setuptools python3-numpy python3-pip clang git cmake
 
 # Workaround bug in ogdi packaging
 sudo ln -s /usr/lib/ogdi/libvrf.so /usr/lib
 
 # Build odbc-cpp library for HANA
-(wget https://github.com/Kitware/CMake/releases/download/v3.12.4/cmake-3.12.4-Linux-x86_64.sh -O cmake.sh)
-(sudo sh cmake.sh --prefix=/usr/local/ --exclude-subdir)
 (git clone https://github.com/SAP/odbc-cpp-wrapper.git && mkdir odbc-cpp-wrapper/build && cd odbc-cpp-wrapper/build && cmake .. && make -j 2 && make install)
 
 wget https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5/FileGDB_API_1_5_64gcc51.tar.gz
@@ -69,24 +67,28 @@ fi
 ccache -M 1G
 ccache -s
 
-./autogen.sh
-SANITIZE_FLAGS="-DMAKE_SANITIZE_HAPPY -fsanitize=undefined -fsanitize=address -fsanitize=unsigned-integer-overflow"
-CFLAGS=$SANITIZE_FLAGS CXXFLAGS=$SANITIZE_FLAGS LDFLAGS="-fsanitize=undefined -fsanitize=address -lstdc++" ./configure --prefix=/usr --without-libtool --enable-debug --with-jpeg12 --with-poppler --without-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-epsilon --with-libtiff=internal --with-rename-internal-libtiff-symbols --with-hide-internal-symbols --with-gnm --with-fgdb=$PWD/FileGDB_API-64gcc51 --with-hana
-sed -i "s/-fsanitize=address/-fsanitize=address -shared-libasan/g" GDALmake.opt
-sed -i "s/-fsanitize=unsigned-integer-overflow/-fsanitize=unsigned-integer-overflow -fno-sanitize-recover=unsigned-integer-overflow/g" GDALmake.opt
-make USER_DEFS="-Werror" -j$NPROC
-(cd apps && make USER_DEFS="-Werror" test_ogrsf)
-(cd swig/python && \
-    echo "#!/bin/sh" > mycc.sh && \
-    echo "$CC -fsanitize=undefined -fsanitize=address -shared-libasan \$*" >> mycc.sh && \
-    cat mycc.sh && \
-    chmod +x mycc.sh && \
-    PATH=$PWD:$PATH CC=mycc.sh python3 setup.py build
-)
+echo "#!/bin/sh" > mycc.sh
+chmod +x mycc.sh
+echo "$CC -fsanitize=undefined -fsanitize=address -shared-libasan \$*" >> mycc.sh
+
+echo "#!/bin/sh" > mycxx.sh
+chmod +x mycxx.sh
+echo "$CXX -fsanitize=undefined -fsanitize=address -shared-libasan \$*" >> mycxx.sh
+
+export CC=$PWD/mycc.sh
+export CXX=$PWD/mycxx.sh
+
+SANITIZE_FLAGS="-DMAKE_SANITIZE_HAPPY -fsanitize=unsigned-integer-overflow -fno-sanitize-recover=unsigned-integer-overflow"
+
+mkdir build
+cd build
+export LDFLAGS="-fsanitize=undefined -fsanitize=address -shared-libasan -lstdc++"
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_FLAGS="${SANITIZE_FLAGS} -Werror" -DCMAKE_CXX_FLAGS="${SANITIZE_FLAGS} -Werror" -DCMAKE_INSTALL_PREFIX=/usr -DGDAL_USE_GEOTIFF_INTERNAL=ON -DGDAL_USE_TIFF_INTERNAL=ON -DFileGDB_ROOT:PATH=$PWD/../FileGDB_API-64gcc51 -DFileGDB_LIBRARY=/usr/lib/libFileGDBAPI.so
+make -j$NPROC
 
 sudo rm -f /usr/lib/libgdal.so*
 sudo make install
-(cd swig/python && sudo python3 setup.py install)
+cd ..
 
 sudo ldconfig
 

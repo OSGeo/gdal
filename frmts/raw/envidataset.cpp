@@ -507,7 +507,8 @@ void ENVIDataset::FlushCache(bool bAtClosing)
              poKey == "band names" ||
              poKey == "map info" ||
              poKey == "projection info" ||
-             poKey == "data ignore value" )
+             poKey == "data ignore value" ||
+             poKey == "coordinate system string" )
         {
             CSLDestroy(papszTokens);
             continue;
@@ -1256,8 +1257,6 @@ CPLErr ENVIDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
 /*      Split an ENVI value list into component fields, and strip       */
 /*      white space.                                                    */
 /************************************************************************/
-
-// TODO: Why is this not a part of port/cpl_list.cpp?
 
 char **ENVIDataset::SplitList( const char *pszCleanInput )
 

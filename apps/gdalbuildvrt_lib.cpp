@@ -148,15 +148,15 @@ static int  GetSrcDstWin(DatasetProperty* psDP,
     /* Check that the destination bounding box intersects the source bounding box */
     if ( psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X] +
          psDP->nRasterXSize *
-         psDP->adfGeoTransform[GEOTRSFRM_WE_RES] < minX )
+         psDP->adfGeoTransform[GEOTRSFRM_WE_RES] <= minX )
          return FALSE;
-    if ( psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X] > maxX )
+    if ( psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X] >= maxX )
          return FALSE;
     if ( psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] +
          psDP->nRasterYSize *
-         psDP->adfGeoTransform[GEOTRSFRM_NS_RES] > maxY )
+         psDP->adfGeoTransform[GEOTRSFRM_NS_RES] >= maxY )
          return FALSE;
-    if ( psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] < minY )
+    if ( psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] <= minY )
          return FALSE;
 
     if ( psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X] < minX )
@@ -208,7 +208,8 @@ static int  GetSrcDstWin(DatasetProperty* psDP,
         *pdfSrcYSize = *pdfDstYSize / dfSrcToDstYSize;
     }
 
-    return TRUE;
+    return *pdfSrcXSize > 0 && *pdfDstXSize > 0 &&
+           *pdfSrcYSize > 0 && *pdfDstYSize > 0;
 }
 
 /************************************************************************/
@@ -928,6 +929,8 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
         if (psDatasetProperties->isFileOK == FALSE)
             continue;
 
+        const char* dsFileName = ppszInputFilenames[i];
+
         double dfSrcXOff, dfSrcYOff, dfSrcXSize, dfSrcYSize,
                dfDstXOff, dfDstYOff, dfDstXSize, dfDstYSize;
         if (bHasGeoTransform)
@@ -937,7 +940,12 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
                         nRasterXSize, nRasterYSize,
                         &dfSrcXOff, &dfSrcYOff, &dfSrcXSize, &dfSrcYSize,
                         &dfDstXOff, &dfDstYOff, &dfDstXSize, &dfDstYSize) )
+            {
+                CPLDebug("BuildVRT",
+                         "Skipping %s as not intersecting area of interest",
+                         dsFileName);
                 continue;
+            }
         }
         else
         {
@@ -945,8 +953,6 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
             dfSrcXSize = dfDstXSize = nRasterXSize;
             dfSrcYSize = dfDstYSize = nRasterYSize;
         }
-
-        const char* dsFileName = ppszInputFilenames[i];
 
         GDALAddBand(hVRTDS, psDatasetProperties->firstBandType, nullptr);
 
@@ -1106,6 +1112,8 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
         if (psDatasetProperties->isFileOK == FALSE)
             continue;
 
+        const char* dsFileName = ppszInputFilenames[i];
+
         double dfSrcXOff;
         double dfSrcYOff;
         double dfSrcXSize;
@@ -1119,7 +1127,12 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
                         nRasterXSize, nRasterYSize,
                         &dfSrcXOff, &dfSrcYOff, &dfSrcXSize, &dfSrcYSize,
                         &dfDstXOff, &dfDstYOff, &dfDstXSize, &dfDstYSize) )
+        {
+            CPLDebug("BuildVRT",
+                     "Skipping %s as not intersecting area of interest",
+                     dsFileName);
             continue;
+        }
 
         anIdxValidDatasets.push_back(i);
 
@@ -1137,8 +1150,6 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
             for( int nOvFactor: psDatasetProperties->anOverviewFactors )
                 anOverviewFactorsSet.insert(nOvFactor);
         }
-
-        const char* dsFileName = ppszInputFilenames[i];
 
         GDALDatasetH hSourceDS;
         bool bDropRef = false;
@@ -1289,7 +1300,8 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
             oIter = oIterNext;
         }
     }
-    if( !anOverviewFactorsSet.empty() )
+    if( !anOverviewFactorsSet.empty() &&
+        CPLTestBool(CPLGetConfigOption("VRT_VIRTUAL_OVERVIEWS", "YES")) )
     {
         std::vector<int> anOverviewFactors;
         anOverviewFactors.insert(anOverviewFactors.end(),

@@ -1676,16 +1676,11 @@ bool HDF5Array::IRead(const GUInt64* arrayStartIdx,
         anStep[i] = static_cast<hsize_t>(count[i] == 1 ? 1 : arrayStep[i]);
         nEltCount *= count[i];
     }
-    size_t nCurStride = 1;
-    for( size_t i = nDims; i > 0; )
+
+    if( IsTransposedRequest(count, bufferStride) )
     {
-        --i;
-        if( count[i] != 1 && static_cast<size_t>(bufferStride[i]) != nCurStride )
-        {
-            return ReadSlow(arrayStartIdx, count, arrayStep, bufferStride,
-                            bufferDataType, pDstBuffer);
-        }
-        nCurStride *= count[i];
+        return ReadForTransposedRequest(arrayStartIdx, count, arrayStep,
+                                        bufferStride, bufferDataType, pDstBuffer);
     }
 
     hid_t hBufferType = H5I_INVALID_HID;

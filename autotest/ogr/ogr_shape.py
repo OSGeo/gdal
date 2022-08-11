@@ -1808,7 +1808,7 @@ def test_ogr_shape_50():
 
     reconv_possible = lyr.TestCapability(ogr.OLCStringsAsUTF8) == 1
 
-    if gdal.GetLastErrorMsg().find('Recode from CP936 to UTF-8 not supported, treated as ISO-8859-1 to UTF-8.') != -1:
+    if 'Recode from CP936 to UTF-8' in gdal.GetLastErrorMsg():
         assert not reconv_possible, \
             'Recode failed, but TestCapability(OLCStringsAsUTF8) returns TRUE'
 
@@ -5037,6 +5037,82 @@ def test_ogr_shape_rename_layer_zip():
     assert lyr.GetLayerDefn().GetName() == 'test_rename_bar'
 
     assert sum(1 for f in lyr) == 10
+
+    ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(outfilename)
+
+###############################################################################
+# Test AlterGeomFieldDefn()
+
+
+def test_ogr_shape_alter_geom_field_defn():
+
+    outfilename = '/vsimem/test_ogr_shape_alter_geom_field_defn.shp'
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource(outfilename)
+    srs_4326 = osr.SpatialReference()
+    srs_4326.ImportFromEPSG(4326)
+    lyr = ds.CreateLayer('test_ogr_shape_alter_geom_field_defn', geom_type = ogr.wkbPoint, srs = srs_4326)
+    ds = None
+
+    ds = ogr.Open(outfilename, update=1)
+    lyr = ds.GetLayer(0)
+    assert lyr.TestCapability(ogr.OLCAlterGeomFieldDefn)
+
+    new_geom_field_defn = ogr.GeomFieldDefn('', ogr.wkbPoint)
+    other_srs = osr.SpatialReference()
+    other_srs.ImportFromEPSG(4269)
+    new_geom_field_defn.SetSpatialRef(other_srs)
+    assert lyr.AlterGeomFieldDefn(0, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_ALL_FLAG) == ogr.OGRERR_NONE
+    assert lyr.GetSpatialRef().IsSame(other_srs)
+
+    ds = None
+
+    ds = ogr.Open(outfilename, update=1)
+    lyr = ds.GetLayer(0)
+    srs = lyr.GetSpatialRef()
+    assert srs is not None
+    assert srs.GetAuthorityCode(None) == '4269'
+
+    new_geom_field_defn = ogr.GeomFieldDefn('', ogr.wkbPoint)
+    assert lyr.AlterGeomFieldDefn(0, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_ALL_FLAG) == ogr.OGRERR_NONE
+    assert lyr.GetSpatialRef() is None
+    ds = None
+
+    ds = ogr.Open(outfilename, update=1)
+    lyr = ds.GetLayer(0)
+    srs = lyr.GetSpatialRef()
+    assert srs is None
+
+    new_geom_field_defn = ogr.GeomFieldDefn('', ogr.wkbPoint)
+    new_geom_field_defn.SetSpatialRef(srs_4326)
+    assert lyr.AlterGeomFieldDefn(0, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_ALL_FLAG) == ogr.OGRERR_NONE
+    ds = None
+
+    ds = ogr.Open(outfilename, update=1)
+    lyr = ds.GetLayer(0)
+    srs = lyr.GetSpatialRef()
+    assert srs is not None
+    assert srs.GetAuthorityCode(None) == '4326'
+
+    # Wrong index
+    new_geom_field_defn = ogr.GeomFieldDefn('', ogr.wkbPoint)
+    with gdaltest.error_handler():
+        assert lyr.AlterGeomFieldDefn(-1, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_ALL_FLAG) != ogr.OGRERR_NONE
+
+    # Changing geometry type ==> unsupported
+    new_geom_field_defn = ogr.GeomFieldDefn('', ogr.wkbLineString)
+    with gdaltest.error_handler():
+        assert lyr.AlterGeomFieldDefn(0, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_ALL_FLAG) != ogr.OGRERR_NONE
+
+    # Setting coordinate epoch ==> unsupported
+    new_geom_field_defn = ogr.GeomFieldDefn('', ogr.wkbPoint)
+    srs_with_epoch = osr.SpatialReference()
+    srs_with_epoch.ImportFromEPSG(4326)
+    srs_with_epoch.SetCoordinateEpoch(2022)
+    new_geom_field_defn.SetSpatialRef(srs_with_epoch)
+    with gdaltest.error_handler():
+        assert lyr.AlterGeomFieldDefn(0, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_ALL_FLAG) != ogr.OGRERR_NONE
 
     ds = None
 

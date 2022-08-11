@@ -63,7 +63,12 @@ OGRWAsPDataSource::~OGRWAsPDataSource()
 int OGRWAsPDataSource::TestCapability( const char * pszCap )
 
 {
-    return EQUAL(pszCap,ODsCCreateLayer) && oLayer.get() == nullptr;
+    if( EQUAL(pszCap,ODsCCreateLayer) && oLayer.get() == nullptr )
+        return true;
+    else if( EQUAL(pszCap, ODsCZGeometries) )
+        return true;
+
+    return false;
 }
 
 /************************************************************************/

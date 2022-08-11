@@ -29,6 +29,9 @@
 
 #ifdef SWIGPYTHON
 %nothread;
+%inline %{
+typedef void* VoidPtrAsLong;
+%}
 #endif
 
 #ifndef FROM_GDAL_I
@@ -265,6 +268,7 @@ using namespace std;
 #include "cpl_port.h"
 #include "cpl_string.h"
 #include "ogr_srs_api.h"
+#include "ogr_recordbatch.h"
 
 #define FIELD_INDEX_ERROR_TMPL "Invalid field index: '%i'"
 #define FIELD_NAME_ERROR_TMPL "Invalid field name: '%s'"
@@ -448,6 +452,13 @@ typedef void retGetPoints;
 %constant ALTER_DOMAIN_FLAG = 64;
 %constant ALTER_ALL_FLAG = 1 + 2 + 4 + 8 + 16 + 32 + 64;
 
+%constant ALTER_GEOM_FIELD_DEFN_NAME_FLAG = 4096;
+%constant ALTER_GEOM_FIELD_DEFN_TYPE_FLAG = 8192;
+%constant ALTER_GEOM_FIELD_DEFN_NULLABLE_FLAG = 16384;
+%constant ALTER_GEOM_FIELD_DEFN_SRS_FLAG = 32768;
+%constant ALTER_GEOM_FIELD_DEFN_SRS_COORD_EPOCH_FLAG = 65536;
+%constant ALTER_GEOM_FIELD_DEFN_ALL_FLAG = 4096 + 8192 + 16384 + 32768 + 65536;
+
 %constant F_VAL_NULL= 0x00000001; /**< Validate that fields respect not-null constraints */
 %constant F_VAL_GEOM_TYPE = 0x00000002; /**< Validate that geometries respect geometry column type */
 %constant F_VAL_WIDTH = 0x00000004; /**< Validate that (string) fields respect field width */
@@ -464,6 +475,7 @@ typedef void retGetPoints;
 %constant char *OLCDeleteField         = "DeleteField";
 %constant char *OLCReorderFields       = "ReorderFields";
 %constant char *OLCAlterFieldDefn      = "AlterFieldDefn";
+%constant char *OLCAlterGeomFieldDefn  = "AlterGeomFieldDefn";
 %constant char *OLCTransactions        = "Transactions";
 %constant char *OLCDeleteFeature       = "DeleteFeature";
 %constant char *OLCFastSetNextByIndex  = "FastSetNextByIndex";
@@ -472,7 +484,9 @@ typedef void retGetPoints;
 %constant char *OLCCreateGeomField     = "CreateGeomField";
 %constant char *OLCCurveGeometries     = "CurveGeometries";
 %constant char *OLCMeasuredGeometries  = "MeasuredGeometries";
+%constant char *OLCZGeometries         = "ZGeometries";
 %constant char *OLCRename              = "Rename";
+%constant char *OLCFastGetArrowStream  = "FastGetArrowStream";
 
 %constant char *ODsCCreateLayer        = "CreateLayer";
 %constant char *ODsCDeleteLayer        = "DeleteLayer";
@@ -481,6 +495,7 @@ typedef void retGetPoints;
 %constant char *ODsCTransactions       = "Transactions";
 %constant char *ODsCEmulatedTransactions = "EmulatedTransactions";
 %constant char *ODsCMeasuredGeometries = "MeasuredGeometries";
+%constant char *ODsCZGeometries        = "ZGeometries";
 %constant char *ODsCRandomLayerRead    = "RandomLayerRead";
 /* Note the unfortunate trailing space at the end of the string */
 %constant char *ODsCRandomLayerWrite   = "RandomLayerWrite ";
@@ -512,6 +527,7 @@ typedef int OGRErr;
 #define OLCDeleteField         "DeleteField"
 #define OLCReorderFields       "ReorderFields"
 #define OLCAlterFieldDefn      "AlterFieldDefn"
+#define OLCAlterGeomFieldDefn  "AlterGeomFieldDefn"
 #define OLCTransactions        "Transactions"
 #define OLCDeleteFeature       "DeleteFeature"
 #define OLCFastSetNextByIndex  "FastSetNextByIndex"
@@ -519,7 +535,9 @@ typedef int OGRErr;
 #define OLCCreateGeomField     "CreateGeomField"
 #define OLCCurveGeometries     "CurveGeometries"
 #define OLCMeasuredGeometries  "MeasuredGeometries"
+#define OLCZGeometries         "ZGeometries"
 #define OLCRename              "Rename"
+#define OLCFastGetArrowStream  "FastGetArrowStream";
 
 #define ODsCCreateLayer        "CreateLayer"
 #define ODsCDeleteLayer        "DeleteLayer"
@@ -528,6 +546,7 @@ typedef int OGRErr;
 #define ODsCTransactions       "Transactions"
 #define ODsCEmulatedTransactions "EmulatedTransactions"
 #define ODsCMeasuredGeometries  "MeasuredGeometries";
+#define ODsCZGeometries        "ZGeometries";
 #define ODsCRandomLayerRead    "RandomLayerRead";
 /* Note the unfortunate trailing space at the end of the string */
 #define ODsCRandomLayerWrite   "RandomLayerWrite ";
@@ -974,6 +993,68 @@ public:
 
 #endif /* FROM_GDAL_I */
 
+#ifdef SWIGPYTHON
+class ArrowArrayStream {
+  ArrowArrayStream();
+public:
+%extend {
+
+  ~ArrowArrayStream() {
+    if( self->release )
+      self->release(self);
+    free(self);
+  }
+
+  VoidPtrAsLong _GetSchemaPtr()
+  {
+      struct ArrowSchema* schema = (struct ArrowSchema* )malloc(sizeof(struct ArrowSchema));
+      if( self->get_schema(self, schema) == 0 )
+      {
+          return schema;
+      }
+      else
+      {
+          free(schema);
+          return 0;
+      }
+  }
+
+  static void _FreeSchemaPtr(VoidPtrAsLong ptr)
+  {
+      struct ArrowSchema* schema = (struct ArrowSchema* )ptr;
+      if( schema && schema->release )
+          schema->release(schema);
+      free(schema);
+  }
+
+  VoidPtrAsLong _GetNextRecordBatchPtr(char** options = NULL)
+  {
+      struct ArrowArray* array = (struct ArrowArray* )malloc(sizeof(struct ArrowArray));
+      if( self->get_next(self, array) == 0 && array->release != NULL )
+      {
+          return array;
+      }
+      else
+      {
+          free(array);
+          return 0;
+      }
+  }
+
+  static void _FreeRecordBatchPtr(VoidPtrAsLong ptr)
+  {
+      struct ArrowArray* array = (struct ArrowArray* )ptr;
+      if( array && array->release )
+          array->release(array);
+      free(array);
+  }
+
+} /* %extend */
+
+
+}; /* class ArrowArrayStream */
+#endif
+
 /************************************************************************/
 /*                               OGRLayer                               */
 /************************************************************************/
@@ -1164,6 +1245,13 @@ public:
   }
 %clear OGRFieldDefnShadow *field_def;
 
+%apply Pointer NONNULL {OGRGeomFieldDefnShadow *field_def};
+  OGRErr AlterGeomFieldDefn(int iGeomField, const OGRGeomFieldDefnShadow* field_def, int nFlags)
+  {
+    return OGR_L_AlterGeomFieldDefn(self, iGeomField, const_cast<OGRGeomFieldDefnShadow*>(field_def), nFlags);
+  }
+%clear OGRGeomFieldDefnShadow *field_def;
+
 #ifndef SWIGJAVA
   %feature( "kwargs" ) CreateGeomField;
 #endif
@@ -1293,6 +1381,21 @@ public:
     if( table != NULL )
         OGR_L_SetStyleTable(self, (OGRStyleTableH) table);
   }
+
+#ifdef SWIGPYTHON
+
+%newobject GetArrowStream;
+  ArrowArrayStream* GetArrowStream(char** options = NULL) {
+      struct ArrowArrayStream* stream = (struct ArrowArrayStream* )malloc(sizeof(struct ArrowArrayStream));
+      if( OGR_L_GetArrowStream(self, stream, options) )
+          return stream;
+      else
+      {
+          free(stream);
+          return NULL;
+      }
+  }
+#endif
 
 } /* %extend */
 
@@ -3083,6 +3186,11 @@ public:
   %newobject ConvexHull;
   OGRGeometryShadow* ConvexHull() {
     return (OGRGeometryShadow*) OGR_G_ConvexHull(self);
+  }
+
+  %newobject ConcaveHull;
+  OGRGeometryShadow* ConcaveHull(double ratio, bool allowHoles) {
+    return (OGRGeometryShadow*) OGR_G_ConcaveHull(self, ratio, allowHoles);
   }
 
   %newobject MakeValid;

@@ -1,7 +1,7 @@
 %extend OGRFieldDefnShadow {
 // File: ogrfielddefn_8cpp.xml
 %feature("docstring")  Create "OGRFieldDefnH OGR_Fld_Create(const
-char *pszName, OGRFieldType eType)
+char \\*pszName, OGRFieldType eType)
 
 Create a new field definition.
 
@@ -11,40 +11,46 @@ ignored.
 This function is the same as the CPP method
 OGRFieldDefn::OGRFieldDefn().
 
-Parameters:
+Parameters
 -----------
+pszName:
+    the name of the new field definition.
+eType:
+    the type of the new field definition.
 
-pszName:  the name of the new field definition.
-
-eType:  the type of the new field definition.
-
-handle to the new field definition. ";
+Returns
+-------
+OGRFieldDefnH:
+    handle to the new field definition.
+";
 
 %feature("docstring")  Destroy "void OGR_Fld_Destroy(OGRFieldDefnH
 hDefn)
 
 Destroy a field definition.
 
-Parameters:
+Parameters
 -----------
-
-hDefn:  handle to the field definition to destroy. ";
+hDefn:
+     handle to the field definition to destroy.
+";
 
 %feature("docstring")  SetName "void OGR_Fld_SetName(OGRFieldDefnH
-hDefn, const char *pszName)
+hDefn, const char \\*pszName)
 
 Reset the name of this field.
 
 This function is the same as the CPP method OGRFieldDefn::SetName().
 
-Parameters:
+Parameters
 -----------
+hDefn:
+    handle to the field definition to apply the new name to.
+pszName:
+    the new name to apply.
+";
 
-hDefn:  handle to the field definition to apply the new name to.
-
-pszName:  the new name to apply. ";
-
-%feature("docstring")  GetNameRef "const char*
+%feature("docstring")  GetNameRef "const char\\*
 OGR_Fld_GetNameRef(OGRFieldDefnH hDefn)
 
 Fetch name of this field.
@@ -52,16 +58,20 @@ Fetch name of this field.
 This function is the same as the CPP method
 OGRFieldDefn::GetNameRef().
 
-Parameters:
+Parameters
 -----------
+hDefn:
+    handle to the field definition.
 
-hDefn:  handle to the field definition.
-
-the name of the field definition. ";
+Returns
+--------
+str:
+    the name of the field definition.
+";
 
 %feature("docstring")  SetAlternativeName "void
 OGR_Fld_SetAlternativeName(OGRFieldDefnH hDefn, const char
-*pszAlternativeName)
+\\*pszAlternativeName)
 
 Reset the alternative name (or \"alias\") for this field.
 
@@ -76,17 +86,17 @@ field name dependent API calls.
 This function is the same as the CPP method
 OGRFieldDefn::SetAlternativeName().
 
-Parameters:
+.. versionadded:: 3.2
+
+Parameters
 -----------
+hDefn:
+    handle to the field definition to apply the new alternative name to.
+pszAlternativeName:
+    the new alternative name to apply.
+";
 
-hDefn:  handle to the field definition to apply the new alternative
-name to.
-
-pszAlternativeName:  the new alternative name to apply.
-
-GDAL 3.2 ";
-
-%feature("docstring")  GetAlternativeNameRef "const char*
+%feature("docstring")  GetAlternativeNameRef "const char\\*
 OGR_Fld_GetAlternativeNameRef(OGRFieldDefnH hDefn)
 
 Fetch the alternative name (or \"alias\") for this field.
@@ -102,14 +112,18 @@ field name dependent API calls.
 This function is the same as the CPP method
 OGRFieldDefn::GetAlternativeNameRef().
 
-Parameters:
+.. versionadded:: 3.2
+
+Parameters
 -----------
+hDefn:
+    handle to the field definition.
 
-hDefn:  handle to the field definition.
-
-the alternative name of the field definition.
-
-GDAL 3.2 ";
+Returns
+--------
+str:
+    the alternative name of the field definition.
+";
 
 %feature("docstring")  GetType "OGRFieldType
 OGR_Fld_GetType(OGRFieldDefnH hDefn)
@@ -118,12 +132,16 @@ Fetch type of this field.
 
 This function is the same as the CPP method OGRFieldDefn::GetType().
 
-Parameters:
+Parameters
 -----------
+hDefn:
+    handle to the field definition to get type from.
 
-hDefn:  handle to the field definition to get type from.
-
-field type. ";
+Returns
+--------
+OGRFieldType:
+    field type.
+";
 
 %feature("docstring")  SetType "void OGR_Fld_SetType(OGRFieldDefnH
 hDefn, OGRFieldType eType)
@@ -135,12 +153,13 @@ an OGRFeatureDefn.
 
 This function is the same as the CPP method OGRFieldDefn::SetType().
 
-Parameters:
+Parameters
 -----------
-
-hDefn:  handle to the field definition to set type to.
-
-eType:  the new field type. ";
+hDefn:
+    handle to the field definition to set type to.
+eType:
+    the new field type.
+";
 
 %feature("docstring")  GetSubType "OGRFieldSubType
 OGR_Fld_GetSubType(OGRFieldDefnH hDefn)
@@ -150,14 +169,18 @@ Fetch subtype of this field.
 This function is the same as the CPP method
 OGRFieldDefn::GetSubType().
 
-Parameters:
+.. versionadded:: 2.0
+
+Parameters
 -----------
+hDefn:
+    handle to the field definition to get subtype from.
 
-hDefn:  handle to the field definition to get subtype from.
-
-field subtype.
-
-GDAL 2.0 ";
+Returns
+--------
+OGRFieldSubType:
+    field subtype.
+";
 
 %feature("docstring")  SetSubType "void
 OGR_Fld_SetSubType(OGRFieldDefnH hDefn, OGRFieldSubType eSubType)
@@ -170,17 +193,18 @@ an OGRFeatureDefn.
 This function is the same as the CPP method
 OGRFieldDefn::SetSubType().
 
-Parameters:
+.. versionadded:: 2.0
+
+Parameters
 -----------
-
-hDefn:  handle to the field definition to set type to.
-
-eSubType:  the new field subtype.
-
-GDAL 2.0 ";
+hDefn:
+    handle to the field definition to set type to.
+eSubType:
+    the new field subtype.
+";
 
 %feature("docstring")  SetDefault "void
-OGR_Fld_SetDefault(OGRFieldDefnH hDefn, const char *pszDefault)
+OGR_Fld_SetDefault(OGRFieldDefnH hDefn, const char \\*pszDefault)
 
 Set default field value.
 
@@ -205,16 +229,17 @@ GDAL_DCAP_DEFAULT_FIELDS driver metadata item.
 This function is the same as the C++ method
 OGRFieldDefn::SetDefault().
 
-Parameters:
+.. versionadded:: 2.0
+
+Parameters
 -----------
+hDefn:
+    handle to the field definition.
+pszDefault:
+    new default field value or NULL pointer.
+";
 
-hDefn:  handle to the field definition.
-
-pszDefault:  new default field value or NULL pointer.
-
-GDAL 2.0 ";
-
-%feature("docstring")  GetDefault "const char*
+%feature("docstring")  GetDefault "const char\\*
 OGR_Fld_GetDefault(OGRFieldDefnH hDefn)
 
 Get default field value.
@@ -222,14 +247,18 @@ Get default field value.
 This function is the same as the C++ method
 OGRFieldDefn::GetDefault().
 
-Parameters:
+.. versionadded:: 2.0
+
+Parameters
 -----------
+hDefn:
+    handle to the field definition.
 
-hDefn:  handle to the field definition.
-
-default field value or NULL.
-
-GDAL 2.0 ";
+Returns
+--------
+str:
+    default field value or NULL.
+";
 
 %feature("docstring")  IsDefaultDriverSpecific "int
 OGR_Fld_IsDefaultDriverSpecific(OGRFieldDefnH hDefn)
@@ -244,16 +273,21 @@ value.
 This function is the same as the C++ method
 OGRFieldDefn::IsDefaultDriverSpecific().
 
-Parameters:
+.. versionadded:: 2.0
+
+Parameters
 -----------
+hDefn:
+    handle to the field definition
 
-hDefn:  handle to the field definition
 
-TRUE if the default value is driver specific.
+Returns
+--------
+int:
+    TRUE if the default value is driver specific.
+";
 
-GDAL 2.0 ";
-
-%feature("docstring")  OGR_GetFieldTypeName "const char*
+%feature("docstring")  OGR_GetFieldTypeName "const char\\*
 OGR_GetFieldTypeName(OGRFieldType eType)
 
 Fetch human readable name for a field type.
@@ -261,14 +295,19 @@ Fetch human readable name for a field type.
 This function is the same as the CPP method
 OGRFieldDefn::GetFieldTypeName().
 
-Parameters:
+Parameters
 -----------
+eType:
+    the field type to get name for.
 
-eType:  the field type to get name for.
 
-the name. ";
+Returns
+--------
+str:
+    the name.
+";
 
-%feature("docstring")  OGR_GetFieldSubTypeName "const char*
+%feature("docstring")  OGR_GetFieldSubTypeName "const char\\*
 OGR_GetFieldSubTypeName(OGRFieldSubType eSubType)
 
 Fetch human readable name for a field subtype.
@@ -276,14 +315,19 @@ Fetch human readable name for a field subtype.
 This function is the same as the CPP method
 OGRFieldDefn::GetFieldSubTypeName().
 
-Parameters:
+.. versionadded:: 2.0
+
+Parameters
 -----------
+eSubType:
+    the field subtype to get name for.
 
-eSubType:  the field subtype to get name for.
 
-the name.
-
-GDAL 2.0 ";
+Returns
+--------
+str:
+    the name.
+";
 
 %feature("docstring")  OGR_AreTypeSubTypeCompatible "int
 OGR_AreTypeSubTypeCompatible(OGRFieldType eType, OGRFieldSubType
@@ -291,16 +335,21 @@ eSubType)
 
 Return if type and subtype are compatible.
 
-Parameters:
+.. versionadded:: 2.0
+
+Parameters
 -----------
+eType:
+    the field type.
+eSubType:
+    the field subtype.
 
-eType:  the field type.
 
-eSubType:  the field subtype.
-
-TRUE if type and subtype are compatible
-
-GDAL 2.0 ";
+Returns
+--------
+int:
+    TRUE if type and subtype are compatible
+";
 
 %feature("docstring")  GetJustify "OGRJustification
 OGR_Fld_GetJustify(OGRFieldDefnH hDefn)
@@ -312,12 +361,16 @@ OGRFieldDefn::GetJustify().
 
 Note: no driver is know to use the concept of field justification.
 
-Parameters:
+Parameters
 -----------
+hDefn:
+    handle to the field definition to get justification from.
 
-hDefn:  handle to the field definition to get justification from.
-
-the justification. ";
+Returns
+--------
+OGRJustification:
+    the justification.
+";
 
 %feature("docstring")  SetJustify "void
 OGR_Fld_SetJustify(OGRFieldDefnH hDefn, OGRJustification eJustify)
@@ -329,12 +382,13 @@ Note: no driver is know to use the concept of field justification.
 This function is the same as the CPP method
 OGRFieldDefn::SetJustify().
 
-Parameters:
+Parameters
 -----------
-
-hDefn:  handle to the field definition to set justification to.
-
-eJustify:  the new justification. ";
+hDefn:
+    handle to the field definition to set justification to.
+eJustify:
+    the new justification.
+";
 
 %feature("docstring")  GetWidth "int OGR_Fld_GetWidth(OGRFieldDefnH
 hDefn)
@@ -343,12 +397,17 @@ Get the formatting width for this field.
 
 This function is the same as the CPP method OGRFieldDefn::GetWidth().
 
-Parameters:
+Parameters
 -----------
+hDefn:
+    handle to the field definition to get width from.
 
-hDefn:  handle to the field definition to get width from.
 
-the width, zero means no specified width. ";
+Returns
+--------
+int:
+    the width, zero means no specified width.
+";
 
 %feature("docstring")  SetWidth "void OGR_Fld_SetWidth(OGRFieldDefnH
 hDefn, int nNewWidth)
@@ -357,12 +416,13 @@ Set the formatting width for this field in characters.
 
 This function is the same as the CPP method OGRFieldDefn::SetWidth().
 
-Parameters:
+Parameters
 -----------
-
-hDefn:  handle to the field definition to set width to.
-
-nNewWidth:  the new width. ";
+hDefn:
+    handle to the field definition to set width to.
+nNewWidth:
+    the new width.
+";
 
 %feature("docstring")  GetPrecision "int
 OGR_Fld_GetPrecision(OGRFieldDefnH hDefn)
@@ -374,12 +434,16 @@ This should normally be zero for fields of types other than OFTReal.
 This function is the same as the CPP method
 OGRFieldDefn::GetPrecision().
 
-Parameters:
+Parameters
 -----------
+hDefn:
+    handle to the field definition to get precision from.
 
-hDefn:  handle to the field definition to get precision from.
-
-the precision. ";
+Returns
+--------
+int:
+    the precision.
+";
 
 %feature("docstring")  SetPrecision "void
 OGR_Fld_SetPrecision(OGRFieldDefnH hDefn, int nPrecision)
@@ -391,38 +455,39 @@ This should normally be zero for fields of types other than OFTReal.
 This function is the same as the CPP method
 OGRFieldDefn::SetPrecision().
 
-Parameters:
+Parameters
 -----------
-
-hDefn:  handle to the field definition to set precision to.
-
-nPrecision:  the new precision. ";
+hDefn:
+    handle to the field definition to set precision to.
+nPrecision:
+    the new precision.
+";
 
 %feature("docstring")  Set "void OGR_Fld_Set(OGRFieldDefnH hDefn,
-const char *pszNameIn, OGRFieldType eTypeIn, int nWidthIn, int
+const char \\*pszNameIn, OGRFieldType eTypeIn, int nWidthIn, int
 nPrecisionIn, OGRJustification eJustifyIn)
 
 Set defining parameters for a field in one call.
 
 This function is the same as the CPP method OGRFieldDefn::Set().
 
-Parameters:
+Parameters
 -----------
-
-hDefn:  handle to the field definition to set to.
-
-pszNameIn:  the new name to assign.
-
-eTypeIn:  the new type (one of the OFT values like OFTInteger).
-
-nWidthIn:  the preferred formatting width. Defaults to zero indicating
-undefined.
-
-nPrecisionIn:  number of decimals places for formatting, defaults to
-zero indicating undefined.
-
-eJustifyIn:  the formatting justification (OJLeft or OJRight),
-defaults to OJUndefined. ";
+hDefn:
+    handle to the field definition to set to.
+pszNameIn:
+    the new name to assign.
+eTypeIn:
+    the new type (one of the OFT values like OFTInteger).
+nWidthIn:
+    the preferred formatting width. Defaults to zero indicating undefined.
+nPrecisionIn:
+    number of decimals places for formatting, defaults to
+    zero indicating undefined.
+eJustifyIn:
+    the formatting justification (OJLeft or OJRight),
+    defaults to OJUndefined.
+";
 
 %feature("docstring")  IsIgnored "int OGR_Fld_IsIgnored(OGRFieldDefnH
 hDefn)
@@ -431,12 +496,16 @@ Return whether this field should be omitted when fetching features.
 
 This method is the same as the C++ method OGRFieldDefn::IsIgnored().
 
-Parameters:
+Parameters
 -----------
+hDefn:
+    handle to the field definition
 
-hDefn:  handle to the field definition
-
-ignore state ";
+Returns
+--------
+int:
+    ignore state
+";
 
 %feature("docstring")  SetIgnored "void
 OGR_Fld_SetIgnored(OGRFieldDefnH hDefn, int ignore)
@@ -445,12 +514,13 @@ Set whether this field should be omitted when fetching features.
 
 This method is the same as the C++ method OGRFieldDefn::SetIgnored().
 
-Parameters:
+Parameters
 -----------
-
-hDefn:  handle to the field definition
-
-ignore:  ignore state ";
+hDefn:
+    handle to the field definition
+ignore:
+    ignore state
+";
 
 %feature("docstring")  IsNullable "int
 OGR_Fld_IsNullable(OGRFieldDefnH hDefn)
@@ -466,14 +536,19 @@ done when OGRLayer::CreateFeature()/SetFeature() is called.
 
 This method is the same as the C++ method OGRFieldDefn::IsNullable().
 
-Parameters:
+.. versionadded:: 2.0
+
+Parameters
 -----------
+hDefn:
+    handle to the field definition
 
-hDefn:  handle to the field definition
 
-TRUE if the field is authorized to be null.
-
-GDAL 2.0 ";
+Returns
+--------
+int:
+    TRUE if the field is authorized to be null.
+";
 
 %feature("docstring")  SetNullable "void
 OGR_Fld_SetNullable(OGRFieldDefnH hDefn, int bNullableIn)
@@ -488,14 +563,15 @@ GDAL_DCAP_NOTNULL_FIELDS driver metadata item.
 
 This method is the same as the C++ method OGRFieldDefn::SetNullable().
 
-Parameters:
+.. versionadded:: 2.0
+
+Parameters
 -----------
-
-hDefn:  handle to the field definition
-
-bNullableIn:  FALSE if the field must have a not-null constraint.
-
-GDAL 2.0 ";
+hDefn:
+    handle to the field definition
+bNullableIn:
+    FALSE if the field must have a not-null constraint.
+";
 
 %feature("docstring")  IsUnique "int OGR_Fld_IsUnique(OGRFieldDefnH
 hDefn)
@@ -506,14 +582,19 @@ By default, fields have no unique constraint.
 
 This method is the same as the C++ method OGRFieldDefn::IsUnique().
 
-Parameters:
+.. versionadded:: 3.2
+
+Parameters
 -----------
+hDefn:
+    handle to the field definition
 
-hDefn:  handle to the field definition
 
-TRUE if the field has a unique constraint.
-
-GDAL 3.2 ";
+Returns
+--------
+int:
+    TRUE if the field has a unique constraint.
+";
 
 %feature("docstring")  SetUnique "void
 OGR_Fld_SetUnique(OGRFieldDefnH hDefn, int bUniqueIn)
@@ -529,16 +610,17 @@ values.
 
 This method is the same as the C++ method OGRFieldDefn::SetUnique().
 
-Parameters:
+.. versionadded:: 3.2
+
+Parameters
 -----------
+hDefn:
+    handle to the field definition
+bUniqueIn:
+    TRUE if the field must have a unique constraint.
+";
 
-hDefn:  handle to the field definition
-
-bUniqueIn:  TRUE if the field must have a unique constraint.
-
-GDAL 3.2 ";
-
-%feature("docstring")  GetDomainName "const char*
+%feature("docstring")  GetDomainName "const char\\*
 OGR_Fld_GetDomainName(OGRFieldDefnH hDefn)
 
 Return the name of the field domain for this field.
@@ -551,17 +633,21 @@ level and should be retrieved with GDALDatasetGetFieldDomain().
 This method is the same as the C++ method
 OGRFieldDefn::GetDomainName().
 
-Parameters:
+.. versionadded:: 3.3
+
+Parameters
 -----------
+hDefn:
+    handle to the field definition
 
-hDefn:  handle to the field definition
-
-the field domain name, or an empty string if there is none.
-
-GDAL 3.3 ";
+Returns
+--------
+str:
+    the field domain name, or an empty string if there is none.
+";
 
 %feature("docstring")  SetDomainName "void
-OGR_Fld_SetDomainName(OGRFieldDefnH hDefn, const char *pszFieldName)
+OGR_Fld_SetDomainName(OGRFieldDefnH hDefn, const char \\*pszFieldName)
 
 Set the name of the field domain for this field.
 
@@ -570,17 +656,18 @@ Field domains ( OGRFieldDomain) are attached at the GDALDataset level.
 This method is the same as the C++ method
 OGRFieldDefn::SetDomainName().
 
-Parameters:
+.. versionadded:: 3.3
+
+Parameters
 -----------
-
-hDefn:  handle to the field definition
-
-pszFieldName:  Field domain name.
-
-GDAL 3.3 ";
+hDefn:
+    handle to the field definition
+pszFieldName:
+    Field domain name.
+";
 
 %feature("docstring")  OGRUpdateFieldType "void
-OGRUpdateFieldType(OGRFieldDefn *poFDefn, OGRFieldType eNewType,
+OGRUpdateFieldType(OGRFieldDefn \\*poFDefn, OGRFieldType eNewType,
 OGRFieldSubType eNewSubType)
 
 Update the type of a field definition by \"merging\" its existing type
@@ -589,17 +676,17 @@ with a new type.
 The update is done such as broadening the type. For example a
 OFTInteger updated with OFTInteger64 will be promoted to OFTInteger64.
 
-Parameters:
+.. versionadded:: 2.1
+
+Parameters
 -----------
-
-poFDefn:  the field definition whose type must be updated.
-
-eNewType:  the new field type to merge into the existing type.
-
-eNewSubType:  the new field subtype to merge into the existing
-subtype.
-
-GDAL 2.1 ";
+poFDefn:
+    the field definition whose type must be updated.
+eNewType:
+    the new field type to merge into the existing type.
+eNewSubType:
+    the new field subtype to merge into the existing subtype.
+";
 
 %feature("docstring")  OGR_FldDomain_Destroy "void
 OGR_FldDomain_Destroy(OGRFieldDomainH hFieldDomain)
@@ -608,17 +695,18 @@ Destroy a field domain.
 
 This is the same as the C++ method OGRFieldDomain::~OGRFieldDomain()
 
-Parameters:
+.. versionadded:: 3.3
+
+Parameters
 -----------
-
-hFieldDomain:  the field domain.
-
-GDAL 3.3 ";
+hFieldDomain:
+    the field domain.
+";
 
 %feature("docstring")  OGR_CodedFldDomain_Create "OGRFieldDomainH
-OGR_CodedFldDomain_Create(const char *pszName, const char
-*pszDescription, OGRFieldType eFieldType, OGRFieldSubType
-eFieldSubType, const OGRCodedValue *enumeration)
+OGR_CodedFldDomain_Create(const char \\*pszName, const char
+\\*pszDescription, OGRFieldType eFieldType, OGRFieldSubType
+eFieldSubType, const OGRCodedValue \\*enumeration)
 
 Creates a new coded field domain.
 
@@ -626,125 +714,145 @@ This is the same as the C++ method
 OGRCodedFieldDomain::OGRCodedFieldDomain() (except that the C function
 copies the enumeration, whereas the C++ method moves it)
 
-Parameters:
+.. versionadded:: 3.3
+
+Parameters
 -----------
+pszName:
+    Domain name. Should not be NULL.
+pszDescription:
+    Domain description (can be NULL)
+eFieldType:
+    Field type. Generally numeric. Potentially OFTDateTime
+eFieldSubType:
+    Field subtype.
+enumeration:
+    Enumeration as (code, value) pairs. Should not be NULL.
+    The end of the enumeration is marked by a code set to NULL. The
+    enumeration will be copied. Each code should appear only once, but it
+    is the responsibility of the user to check it.
 
-pszName:  Domain name. Should not be NULL.
-
-pszDescription:  Domain description (can be NULL)
-
-eFieldType:  Field type. Generally numeric. Potentially OFTDateTime
-
-eFieldSubType:  Field subtype.
-
-enumeration:  Enumeration as (code, value) pairs. Should not be NULL.
-The end of the enumeration is marked by a code set to NULL. The
-enumeration will be copied. Each code should appear only once, but it
-is the responsibility of the user to check it.
-
-a new handle that should be freed with OGR_FldDomain_Destroy(), or
-NULL in case of error.
-
-GDAL 3.3 ";
+Returns
+--------
+OGRFieldDomainH:
+    a new handle that should be freed with OGR_FldDomain_Destroy(), or
+    NULL in case of error.
+";
 
 %feature("docstring")  GetUnsetField "static OGRField GetUnsetField()
 ";
 
 %feature("docstring")  OGR_RangeFldDomain_Create "OGRFieldDomainH
-OGR_RangeFldDomain_Create(const char *pszName, const char
-*pszDescription, OGRFieldType eFieldType, OGRFieldSubType
-eFieldSubType, const OGRField *psMin, bool bMinIsInclusive, const
-OGRField *psMax, bool bMaxIsInclusive)
+OGR_RangeFldDomain_Create(const char \\*pszName, const char
+\\*pszDescription, OGRFieldType eFieldType, OGRFieldSubType
+eFieldSubType, const OGRField \\*psMin, bool bMinIsInclusive, const
+OGRField \\*psMax, bool bMaxIsInclusive)
 
 Creates a new range field domain.
 
 This is the same as the C++ method
 OGRRangeFieldDomain::OGRRangeFieldDomain().
 
-Parameters:
+.. versionadded:: 3.3
+
+Parameters
 -----------
+pszName:
+    Domain name. Should not be NULL.
+pszDescription:
+    Domain description (can be NULL)
+eFieldType:
+    Field type. Among OFTInteger, OFTInteger64, OFTReal and OFTDateTime.
+eFieldSubType:
+    Field subtype.
+psMin:
+    Minimum value (can be NULL). The member in the union that is
+    read is consistent with eFieldType
+bMinIsInclusive:
+    Whether the minimum value is included in the range.
+psMax:
+    Maximum value (can be NULL). The member in the union that is
+    read is consistent with eFieldType
+bMaxIsInclusive:
+    Whether the maximum value is included in the range.
 
-pszName:  Domain name. Should not be NULL.
 
-pszDescription:  Domain description (can be NULL)
-
-eFieldType:  Field type. Among OFTInteger, OFTInteger64, OFTReal and
-OFTDateTime.
-
-eFieldSubType:  Field subtype.
-
-psMin:  Minimum value (can be NULL). The member in the union that is
-read is consistent with eFieldType
-
-bMinIsInclusive:  Whether the minimum value is included in the range.
-
-psMax:  Maximum value (can be NULL). The member in the union that is
-read is consistent with eFieldType
-
-bMaxIsInclusive:  Whether the maximum value is included in the range.
-
-a new handle that should be freed with OGR_FldDomain_Destroy()
-
-GDAL 3.3 ";
+Returns
+--------
+OGRFieldDomainH:
+    a new handle that should be freed with OGR_FldDomain_Destroy()
+";
 
 %feature("docstring")  OGR_GlobFldDomain_Create "OGRFieldDomainH
-OGR_GlobFldDomain_Create(const char *pszName, const char
-*pszDescription, OGRFieldType eFieldType, OGRFieldSubType
-eFieldSubType, const char *pszGlob)
+OGR_GlobFldDomain_Create(const char \\*pszName, const char
+\\*pszDescription, OGRFieldType eFieldType, OGRFieldSubType
+eFieldSubType, const char \\*pszGlob)
 
 Creates a new blob field domain.
 
 This is the same as the C++ method
 OGRGlobFieldDomain::OGRGlobFieldDomain()
 
-Parameters:
+.. versionadded:: 3.3
+
+Parameters
 -----------
+pszName:
+    Domain name. Should not be NULL.
+pszDescription:
+    Domain description (can be NULL)
+eFieldType:
+    Field type.
+eFieldSubType:
+    Field subtype.
+pszGlob:
+    Glob expression. Should not be NULL.
 
-pszName:  Domain name. Should not be NULL.
+Returns
+--------
+OGRFieldDomainH:
+    a new handle that should be freed with OGR_FldDomain_Destroy()
+";
 
-pszDescription:  Domain description (can be NULL)
-
-eFieldType:  Field type.
-
-eFieldSubType:  Field subtype.
-
-pszGlob:  Glob expression. Should not be NULL.
-
-a new handle that should be freed with OGR_FldDomain_Destroy()
-
-GDAL 3.3 ";
-
-%feature("docstring")  OGR_FldDomain_GetName "const char*
+%feature("docstring")  OGR_FldDomain_GetName "const char\\*
 OGR_FldDomain_GetName(OGRFieldDomainH hFieldDomain)
 
 Get the name of the field domain.
 
 This is the same as the C++ method OGRFieldDomain::GetName()
 
-Parameters:
+.. versionadded:: 3.3
+
+Parameters
 -----------
+hFieldDomain:
+    Field domain handle.
 
-hFieldDomain:  Field domain handle.
+Returns
+--------
+str:
+    the field domain name.
+";
 
-the field domain name.
-
-GDAL 3.3 ";
-
-%feature("docstring")  OGR_FldDomain_GetDescription "const char*
+%feature("docstring")  OGR_FldDomain_GetDescription "const char\\*
 OGR_FldDomain_GetDescription(OGRFieldDomainH hFieldDomain)
 
 Get the description of the field domain.
 
 This is the same as the C++ method OGRFieldDomain::GetDescription()
 
-Parameters:
+.. versionadded:: 3.3
+
+Parameters
 -----------
+hFieldDomain:
+    Field domain handle.
 
-hFieldDomain:  Field domain handle.
-
-the field domain description (might be empty string).
-
-GDAL 3.3 ";
+Returns
+--------
+str:
+    the field domain description (might be empty string).
+";
 
 %feature("docstring")  OGR_FldDomain_GetDomainType "OGRFieldDomainType OGR_FldDomain_GetDomainType(OGRFieldDomainH
 hFieldDomain)
@@ -753,14 +861,18 @@ Get the type of the field domain.
 
 This is the same as the C++ method OGRFieldDomain::GetDomainType()
 
-Parameters:
+.. versionadded:: 3.3
+
+Parameters
 -----------
+hFieldDomain:
+    Field domain handle.
 
-hFieldDomain:  Field domain handle.
-
-the type of the field domain.
-
-GDAL 3.3 ";
+Returns
+--------
+OGRFieldDomainType:
+    the type of the field domain.
+";
 
 %feature("docstring")  OGR_FldDomain_GetFieldType "OGRFieldType
 OGR_FldDomain_GetFieldType(OGRFieldDomainH hFieldDomain)
@@ -769,14 +881,18 @@ Get the field type of the field domain.
 
 This is the same as the C++ method OGRFieldDomain::GetFieldType()
 
-Parameters:
+.. versionadded:: 3.3
+
+Parameters
 -----------
+hFieldDomain:
+    Field domain handle.
 
-hFieldDomain:  Field domain handle.
-
-the field type of the field domain.
-
-GDAL 3.3 ";
+Returns
+--------
+OGRFieldType:
+    the field type of the field domain.
+";
 
 %feature("docstring")  OGR_FldDomain_GetFieldSubType "OGRFieldSubType
 OGR_FldDomain_GetFieldSubType(OGRFieldDomainH hFieldDomain)
@@ -785,14 +901,18 @@ Get the field subtype of the field domain.
 
 This is the same as OGRFieldDomain::GetFieldSubType()
 
-Parameters:
+.. versionadded:: 3.3
+
+Parameters
 -----------
+hFieldDomain:
+    Field domain handle.
 
-hFieldDomain:  Field domain handle.
-
-the field subtype of the field domain.
-
-GDAL 3.3 ";
+Returns
+--------
+OGRFieldSubType:
+    the field subtype of the field domain.
+";
 
 %feature("docstring")  OGR_FldDomain_GetSplitPolicy "OGRFieldDomainSplitPolicy OGR_FldDomain_GetSplitPolicy(OGRFieldDomainH
 hFieldDomain)
@@ -801,14 +921,18 @@ Get the split policy of the field domain.
 
 This is the same as the C++ method OGRFieldDomain::GetSplitPolicy()
 
-Parameters:
+.. versionadded:: 3.3
+
+Parameters
 -----------
+hFieldDomain:
+    Field domain handle.
 
-hFieldDomain:  Field domain handle.
-
-the split policy of the field domain.
-
-GDAL 3.3 ";
+Returns
+--------
+OGRFieldDomainSplitPolicy:
+    the split policy of the field domain.
+";
 
 %feature("docstring")  OGR_FldDomain_SetSplitPolicy "void
 OGR_FldDomain_SetSplitPolicy(OGRFieldDomainH hFieldDomain,
@@ -818,14 +942,15 @@ Set the split policy of the field domain.
 
 This is the same as the C++ method OGRFieldDomain::SetSplitPolicy()
 
-Parameters:
+.. versionadded:: 3.3
+
+Parameters
 -----------
-
-hFieldDomain:  Field domain handle.
-
-policy:  the split policy of the field domain.
-
-GDAL 3.3 ";
+hFieldDomain:
+    Field domain handle.
+policy:
+    the split policy of the field domain.
+";
 
 %feature("docstring")  OGR_FldDomain_GetMergePolicy "OGRFieldDomainMergePolicy OGR_FldDomain_GetMergePolicy(OGRFieldDomainH
 hFieldDomain)
@@ -834,14 +959,18 @@ Get the split policy of the field domain.
 
 This is the same as the C++ method OGRFieldDomain::GetMergePolicy()
 
-Parameters:
+.. versionadded:: 3.3
+
+Parameters
 -----------
+hFieldDomain:
+    Field domain handle.
 
-hFieldDomain:  Field domain handle.
-
-the split policy of the field domain.
-
-GDAL 3.3 ";
+Returns
+--------
+OGRFieldDomainMergePolicy:
+    the split policy of the field domain.
+";
 
 %feature("docstring")  OGR_FldDomain_SetMergePolicy "void
 OGR_FldDomain_SetMergePolicy(OGRFieldDomainH hFieldDomain,
@@ -851,17 +980,18 @@ Set the split policy of the field domain.
 
 This is the same as the C++ method OGRFieldDomain::SetMergePolicy()
 
-Parameters:
+.. versionadded:: 3.3
+
+Parameters
 -----------
-
-hFieldDomain:  Field domain handle.
-
-policy:  the split policy of the field domain.
-
-GDAL 3.3 ";
+hFieldDomain:
+    Field domain handle.
+policy:
+    the split policy of the field domain.
+";
 
 %feature("docstring")  OGR_CodedFldDomain_GetEnumeration "const
-OGRCodedValue* OGR_CodedFldDomain_GetEnumeration(OGRFieldDomainH
+OGRCodedValue\\* OGR_CodedFldDomain_GetEnumeration(OGRFieldDomainH
 hFieldDomain)
 
 Get the enumeration as (code, value) pairs.
@@ -871,18 +1001,22 @@ The end of the enumeration is signaled by code == NULL
 This is the same as the C++ method
 OGRCodedFieldDomain::GetEnumeration()
 
-Parameters:
+.. versionadded:: 3.3
+
+Parameters
 -----------
+hFieldDomain:
+    Field domain handle.
 
-hFieldDomain:  Field domain handle.
+Returns
+--------
+OGRCodedValue:
+    the (code, value) pairs, or nullptr in case of error.
+";
 
-the (code, value) pairs, or nullptr in case of error.
-
-GDAL 3.3 ";
-
-%feature("docstring")  OGR_RangeFldDomain_GetMin "const OGRField*
+%feature("docstring")  OGR_RangeFldDomain_GetMin "const OGRField\\*
 OGR_RangeFldDomain_GetMin(OGRFieldDomainH hFieldDomain, bool
-*pbIsInclusiveOut)
+\\*pbIsInclusiveOut)
 
 Get the minimum value.
 
@@ -894,21 +1028,24 @@ true when called on the result.
 
 This is the same as the C++ method OGRRangeFieldDomain::GetMin()
 
-Parameters:
+.. versionadded:: 3.3
+
+Parameters
 -----------
+hFieldDomain:
+    Field domain handle.
+pbIsInclusiveOut:
+    set to true if the minimum is included in the range.
 
-hFieldDomain:  Field domain handle.
+Returns
+--------
+OGRField:
+    the minimum value.
+";
 
-pbIsInclusiveOut:  set to true if the minimum is included in the
-range.
-
-the minimum value.
-
-GDAL 3.3 ";
-
-%feature("docstring")  OGR_RangeFldDomain_GetMax "const OGRField*
+%feature("docstring")  OGR_RangeFldDomain_GetMax "const OGRField\\*
 OGR_RangeFldDomain_GetMax(OGRFieldDomainH hFieldDomain, bool
-*pbIsInclusiveOut)
+\\*pbIsInclusiveOut)
 
 Get the maximum value.
 
@@ -920,32 +1057,39 @@ true when called on the result.
 
 This is the same as the C++ method OGRRangeFieldDomain::GetMax()
 
-Parameters:
+.. versionadded:: 3.3
+
+Parameters
 -----------
+hFieldDomain:
+    Field domain handle.
+pbIsInclusiveOut:
+    set to true if the maximum is included in the range.
 
-hFieldDomain:  Field domain handle.
+Returns
+--------
+OGRField:
+    the maximum value.
+";
 
-pbIsInclusiveOut:  set to true if the maximum is included in the
-range.
-
-the maximum value.
-
-GDAL 3.3 ";
-
-%feature("docstring")  OGR_GlobFldDomain_GetGlob "const char*
+%feature("docstring")  OGR_GlobFldDomain_GetGlob "const char\\*
 OGR_GlobFldDomain_GetGlob(OGRFieldDomainH hFieldDomain)
 
 Get the glob expression.
 
 This is the same as the C++ method OGRGlobFieldDomain::GetGlob()
 
-Parameters:
+.. versionadded:: 3.3
+
+Parameters
 -----------
+hFieldDomain:
+    Field domain handle.
 
-hFieldDomain:  Field domain handle.
-
-the glob expression, or nullptr in case of error
-
-GDAL 3.3 ";
+Returns
+--------
+str:
+    the glob expression, or nullptr in case of error
+";
 
 }

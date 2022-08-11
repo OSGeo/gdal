@@ -194,7 +194,7 @@ TIFFRGBAImageOK(TIFF* tif, char emsg[1024])
                         }
 			break;
 		case PHOTOMETRIC_CIELAB:
-                        if ( td->td_samplesperpixel != 3 || colorchannels != 3 || td->td_bitspersample != 8 ) {
+                        if ( td->td_samplesperpixel != 3 || colorchannels != 3 || (td->td_bitspersample != 8 && td->td_bitspersample != 16) ) {
                                 sprintf(emsg,
                                         "Sorry, can not handle image with %s=%"PRIu16", %s=%d and %s=%"PRIu16,
                                         "Samples/pixel", td->td_samplesperpixel,
@@ -1784,7 +1784,7 @@ DECLARESepPutFunc(putRGBUAseparate16bittile)
 /*
  * 8-bit packed CIE L*a*b 1976 samples => RGB
  */
-DECLAREContigPutFunc(putcontig8bitCIELab)
+DECLAREContigPutFunc(putcontig8bitCIELab8)
 {
 	float X, Y, Z;
 	uint32_t r, g, b;
@@ -1803,6 +1803,32 @@ DECLAREContigPutFunc(putcontig8bitCIELab)
 		}
 		cp += toskew;
 		pp += fromskew;
+	}
+}
+
+/*
+ * 16-bit packed CIE L*a*b 1976 samples => RGB
+ */
+DECLAREContigPutFunc(putcontig8bitCIELab16)
+{
+	float X, Y, Z;
+	uint32_t r, g, b;
+	uint16_t *wp = (uint16_t *)pp;
+	(void) y;
+	fromskew *= 3;
+	for( ; h > 0; --h) {
+		for (x = w; x > 0; --x) {
+			TIFFCIELab16ToXYZ(img->cielab,
+					  (uint16_t)wp[0],
+					  (int16_t)wp[1],
+					  (int16_t)wp[2],
+					  &X, &Y, &Z);
+			TIFFXYZToRGB(img->cielab, X, Y, Z, &r, &g, &b);
+			*cp++ = PACK(r, g, b);
+			wp += 3;
+		}
+		cp += toskew;
+		wp += fromskew;
 	}
 }
 
@@ -2395,7 +2421,11 @@ initCIELabConversion(TIFFRGBAImage* img)
 		return NULL;
 	}
 
-	return putcontig8bitCIELab;
+	if (img->bitspersample == 8)
+		return putcontig8bitCIELab8;
+	else if (img->bitspersample == 16)
+		return putcontig8bitCIELab16;
+	return NULL;
 }
 
 /*
@@ -2777,7 +2807,7 @@ PickContigCase(TIFFRGBAImage* img)
 			break;
 		case PHOTOMETRIC_CIELAB:
 			if (img->samplesperpixel == 3 && buildMap(img)) {
-				if (img->bitspersample == 8)
+				if (img->bitspersample == 8 || img->bitspersample == 16)
 					img->put.contig = initCIELabConversion(img);
 				break;
 			}

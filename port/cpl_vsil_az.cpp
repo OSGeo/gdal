@@ -936,8 +936,8 @@ bool VSIAzureFSHandler::SetFileMetadata( const char * pszFilename,
                 const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
                 if( pszKey && pszValue )
                 {
-                    char* pszHeader = CPLStrdup(CPLSPrintf("%s: %s", pszKey, pszValue));
-                    aosList.AddStringDirectly(pszHeader);
+                    const char* pszHeader = CPLSPrintf("%s: %s", pszKey, pszValue);
+                    aosList.AddString(pszHeader);
                     headers = curl_slist_append(headers, pszHeader);
                 }
                 CPLFree(pszKey);

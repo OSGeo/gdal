@@ -789,7 +789,7 @@ def generate_kml(tx, ty, tz, tileext, tile_size, tileswne, options, children=Non
     return s
 
 
-def scale_query_to_tile(dsquery, dstile, tiledriver, options, tilefilename=''):
+def scale_query_to_tile(dsquery, dstile, options, tilefilename=''):
     """Scales down query dataset to the tile dataset"""
 
     querysize = dsquery.RasterXSize
@@ -818,11 +818,18 @@ def scale_query_to_tile(dsquery, dstile, tiledriver, options, tilefilename=''):
             array[:, :, i] = gdalarray.BandReadAsArray(dsquery.GetRasterBand(i + 1),
                                                        0, 0, querysize, querysize)
         im = Image.fromarray(array, 'RGBA')     # Always four bands
-        im1 = im.resize((tile_size, tile_size), Image.ANTIALIAS)
+        im1 = im.resize((tile_size, tile_size), Image.LANCZOS)
         if os.path.exists(tilefilename):
             im0 = Image.open(tilefilename)
             im1 = Image.composite(im1, im0, im1)
-        im1.save(tilefilename, tiledriver)
+
+        params = {}
+        if options.tiledriver == 'WEBP':
+            if options.webp_lossless:
+                params['lossless'] = True
+            else:
+                params['quality'] = options.webp_quality
+        im1.save(tilefilename, options.tiledriver, **params)
 
     else:
 
@@ -1141,6 +1148,17 @@ def nb_data_bands(dataset: gdal.Dataset) -> int:
         return dataset.RasterCount - 1
     return dataset.RasterCount
 
+
+def _get_creation_options(options):
+    copts = []
+    if options.tiledriver == 'WEBP':
+        if options.webp_lossless:
+            copts = [ 'LOSSLESS=True' ]
+        else:
+            copts = [ 'QUALITY=' + str(options.webp_quality) ]
+    return copts
+
+
 def create_base_tile(tile_job_info: 'TileJobInfo', tile_detail: 'TileDetail') -> None:
 
     dataBandsCount = tile_job_info.nb_data_bands
@@ -1222,7 +1240,7 @@ def create_base_tile(tile_job_info: 'TileJobInfo', tile_detail: 'TileDetail') ->
                                 band_list=list(range(1, dataBandsCount + 1)))
             dsquery.WriteRaster(wx, wy, wxsize, wysize, alpha, band_list=[tilebands])
 
-            scale_query_to_tile(dsquery, dstile, tile_job_info.tile_driver, options,
+            scale_query_to_tile(dsquery, dstile, options,
                                 tilefilename=tilefilename)
             del dsquery
 
@@ -1230,7 +1248,7 @@ def create_base_tile(tile_job_info: 'TileJobInfo', tile_detail: 'TileDetail') ->
 
     if options.resampling != 'antialias':
         # Write a copy of tile to png/jpg
-        out_drv.CreateCopy(tilefilename, dstile, strict=0)
+        out_drv.CreateCopy(tilefilename, dstile, strict=0, options=_get_creation_options(options))
 
     del dstile
 
@@ -1246,8 +1264,23 @@ def create_base_tile(tile_job_info: 'TileJobInfo', tile_detail: 'TileDetail') ->
                         swne, tile_job_info.options
                     ).encode('utf-8'))
 
+
 def create_overview_tile(base_tz: int, base_tiles: List[Tuple[int, int]], output_folder: str, tile_job_info: 'TileJobInfo', options: Options):
     """ Generating an overview tile from no more than 4 underlying tiles(base tiles) """
+
+    overview_tz = base_tz - 1
+    overview_tx = base_tiles[0][0] >> 1
+    overview_ty = base_tiles[0][1] >> 1
+    overview_ty_real = GDAL2Tiles.getYTile(overview_ty, overview_tz, options)
+
+    tilefilename = os.path.join(output_folder, str(overview_tz), str(overview_tx),
+                                "%s.%s" % (overview_ty_real, tile_job_info.tile_extension))
+    if options.verbose:
+        print(tilefilename)
+    if options.resume and isfile(tilefilename):
+        if options.verbose:
+            print("Tile generation skipped because of --resume")
+        return
 
     mem_driver = gdal.GetDriverByName('MEM')
     tile_driver = tile_job_info.tile_driver
@@ -1291,57 +1324,61 @@ def create_overview_tile(base_tz: int, base_tiles: List[Tuple[int, int]], output
             else:
                 tileposy = 0
 
+        if dsquerytile.RasterCount == tilebands - 1:
+            # assume that the alpha band is missing and add it
+            tmp_ds = mem_driver.CreateCopy('', dsquerytile, 0)
+            tmp_ds.AddBand()
+            mask = bytearray([255] * (tile_job_info.tile_size * tile_job_info.tile_size))
+            tmp_ds.WriteRaster(0, 0,
+                               tile_job_info.tile_size,
+                               tile_job_info.tile_size,
+                               mask,
+                               band_list=[tilebands])
+            dsquerytile = tmp_ds
+        elif dsquerytile.RasterCount != tilebands:
+            raise Exception('Unexpected number of bands in base tile')
+
+        base_data = dsquerytile.ReadRaster(0, 0,
+                                           tile_job_info.tile_size,
+                                           tile_job_info.tile_size)
+
         dsquery.WriteRaster(
             tileposx, tileposy, tile_job_info.tile_size,
             tile_job_info.tile_size,
-            dsquerytile.ReadRaster(0, 0,
-                                   tile_job_info.tile_size,
-                                   tile_job_info.tile_size),
+            base_data,
             band_list=list(range(1, tilebands + 1)))
 
         usable_base_tiles.append(base_tile)
 
-    overview_tz = base_tz - 1
-    overview_tx = base_tiles[0][0] >> 1
-    overview_ty = base_tiles[0][1] >> 1
-    overview_ty_real = GDAL2Tiles.getYTile(overview_ty, overview_tz, options)
-
-    tilefilename = os.path.join(output_folder, str(overview_tz), str(overview_tx),
-                                "%s.%s" % (overview_ty_real, tile_job_info.tile_extension))
-    if options.verbose:
-        print(tilefilename)
-    if options.resume and isfile(tilefilename):
-        if options.verbose:
-            print("Tile generation skipped because of --resume")
+    if not usable_base_tiles:
         return
 
-    if usable_base_tiles:
-        scale_query_to_tile(dsquery, dstile, tile_driver, options,
-                            tilefilename=tilefilename)
+    scale_query_to_tile(dsquery, dstile, options,
+                        tilefilename=tilefilename)
+    # Write a copy of tile to png/jpg
+    if options.resampling != 'antialias':
         # Write a copy of tile to png/jpg
-        if options.resampling != 'antialias':
-            # Write a copy of tile to png/jpg
-            out_driver.CreateCopy(tilefilename, dstile, strict=0)
-            # Remove useless side car file
-            aux_xml = tilefilename + '.aux.xml'
-            if gdal.VSIStatL(aux_xml) is not None:
-                gdal.Unlink(aux_xml)
+        out_driver.CreateCopy(tilefilename, dstile, strict=0, options=_get_creation_options(options))
+        # Remove useless side car file
+        aux_xml = tilefilename + '.aux.xml'
+        if gdal.VSIStatL(aux_xml) is not None:
+            gdal.Unlink(aux_xml)
 
-        if options.verbose:
-            print("\tbuild from zoom", base_tz, " tiles:", *base_tiles)
+    if options.verbose:
+        print("\tbuild from zoom", base_tz, " tiles:", *base_tiles)
 
-        # Create a KML file for this tile.
-        if tile_job_info.kml:
-            swne = get_tile_swne(tile_job_info, options)
-            if swne is not None:
-                with my_open(os.path.join(
-                    output_folder,
-                    '%d/%d/%d.kml' % (overview_tz, overview_tx, overview_ty_real)
-                ), 'wb') as f:
-                    f.write(generate_kml(
-                        overview_tx, overview_ty, overview_tz, tile_job_info.tile_extension, tile_job_info.tile_size,
-                        swne, options, [(t[0], t[1], base_tz) for t in base_tiles]
-                    ).encode('utf-8'))
+    # Create a KML file for this tile.
+    if tile_job_info.kml:
+        swne = get_tile_swne(tile_job_info, options)
+        if swne is not None:
+            with my_open(os.path.join(
+                output_folder,
+                '%d/%d/%d.kml' % (overview_tz, overview_tx, overview_ty_real)
+            ), 'wb') as f:
+                f.write(generate_kml(
+                    overview_tx, overview_ty, overview_tz, tile_job_info.tile_extension, tile_job_info.tile_size,
+                    swne, options, [(t[0], t[1], base_tz) for t in base_tiles]
+                ).encode('utf-8'))
 
 
 def group_overview_base_tiles(base_tz: int, output_folder: str, tile_job_info: 'TileJobInfo') -> List[List[Tuple[int, int]]]:
@@ -1426,6 +1463,9 @@ def optparse_init() -> optparse.OptionParser:
     p.add_option("--tilesize", dest="tilesize",  metavar="PIXELS", default=256,
                  type='int',
                  help="Width and height in pixel of a tile")
+    p.add_option("--tiledriver", dest="tiledriver",  choices=["PNG", "WEBP"], default='PNG',
+                 type='choice',
+                 help="which tile driver to use for the tiles")
 
     # KML options
     g = optparse.OptionGroup(p, "KML (Google Earth) options",
@@ -1464,6 +1504,16 @@ def optparse_init() -> optparse.OptionParser:
                        "template_tiles.mapml file from GDAL data resources "
                        "will be used"))
     p.add_option_group(g)
+
+    # Webp options
+    g = optparse.OptionGroup(p, "WEBP options",
+                    "Options for WEBP tiledriver")
+    g.add_option("--webp-quality", dest='webp_quality', type=int, default=75,
+                 help='quality of webp image, integer between 1 and 100, default is 75')
+    g.add_option("--webp-lossless", dest='webp_lossless', action="store_true",
+                 help='use lossless compression for the webp image')
+    p.add_option_group(g)
+
 
 
     p.set_defaults(verbose=False, profile="mercator", kml=None, url='',
@@ -1560,6 +1610,15 @@ def options_post_processing(options: Options, input_file: str, output_folder: st
                   "not UTF-8 compatible, and your input file contains non-ascii characters. "
                   "The generated sample googlemaps, openlayers or "
                   "leaflet files might contain some invalid characters as a result\n")
+
+    if options.tiledriver == 'WEBP':
+        if gdal.GetDriverByName(options.tiledriver) is None:
+            exit_with_error('WEBP driver is not available')
+
+        if not options.webp_lossless:
+            if options.webp_quality <= 0 or options.webp_quality > 100:
+                exit_with_error('webp_quality should be in the range [1-100]')
+            options.webp_quality = int(options.webp_quality)
 
     # Output the results
     if options.verbose:
@@ -1675,8 +1734,12 @@ class GDAL2Tiles(object):
         self.tile_size = 256
         if options.tilesize:
             self.tile_size = options.tilesize
-        self.tiledriver = 'PNG'
-        self.tileext = 'png'
+
+        self.tiledriver = options.tiledriver
+        if options.tiledriver == 'PNG':
+            self.tileext = 'png'
+        else:
+            self.tileext = 'webp'
         if options.mpi:
             makedirs(output_folder)
             self.tmp_dir = tempfile.mkdtemp(dir=output_folder)

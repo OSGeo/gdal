@@ -112,6 +112,13 @@ typedef unsigned char boolean;
 #include "jerror.h"
 #include "jpeglib.h"
 
+/* Do optional compile-time version check */
+#if defined(EXPECTED_JPEG_LIB_VERSION) && !defined(LIBJPEG_12_PATH)
+#if EXPECTED_JPEG_LIB_VERSION != JPEG_LIB_VERSION
+#error EXPECTED_JPEG_LIB_VERSION != JPEG_LIB_VERSION
+#endif
+#endif
+
 /*
  * Do we want to do special processing suitable for when JSAMPLE is a
  * 16bit value?
@@ -1423,7 +1430,7 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
 
   TIFFErrorExt(tif->tif_clientdata, "TIFFReadScanline",
                "scanline oriented access is not supported for downsampled JPEG "
-               "compressed images, consider enabling TIFF_JPEGCOLORMODE as "
+               "compressed images, consider enabling TIFFTAG_JPEGCOLORMODE as "
                "JPEGCOLORMODE_RGB.");
   return 0;
 }

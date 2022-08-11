@@ -269,7 +269,7 @@ class OGRMySQLDataSource final: public OGRDataSource
 
     void                ReportError( const char * = nullptr );
 
-    char               *LaunderName( const char * );
+    static char        *LaunderName( const char * );
 
     void                RequestLongResult( OGRMySQLLayer * );
     void                InterruptLongResult();
