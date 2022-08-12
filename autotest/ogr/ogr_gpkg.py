@@ -5055,6 +5055,10 @@ def test_ogr_gpkg_field_domains():
     fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex('with_range_domain_int'))
     assert fld_defn.GetDomainName() == 'range_domain_int'
 
+    sql_lyr = ds.ExecuteSQL("SELECT with_range_domain_int FROM test")
+    assert sql_lyr.GetLayerDefn().GetFieldDefn(0).GetDomainName() == "range_domain_int"
+    ds.ReleaseResultSet(sql_lyr)
+
     ds = None
 
     # Test AlterFieldDefn() support
