@@ -32,7 +32,7 @@ assert os.path.exists(output_dir)
 with open(os.path.join(output_dir, "grib2_table_versions.csv"), "wt") as f:
     f.write("component,version\n")
     f.write(f"wmo,{wmo_github_tag}\n")
-    f.write(f"degrib,2.25\n")
+    f.write("degrib,2.25\n")
 
 r = requests.get(
     f"https://api.github.com/repos/{wmo_github_repo}/commits/HEAD",
@@ -103,7 +103,7 @@ def process_table_4_5():
         if wmo_records[code] is not None:
             if records[code] is None or (
                 "Reserved" in records[code]["name"]
-                and not "Reserved" in wmo_records[code]["name"]
+                and "Reserved" not in wmo_records[code]["name"]
             ):
                 unit = wmo_records[code]["unit"]
                 unit = "-" if unit == "" else unit
@@ -278,7 +278,7 @@ def process_table_4_2():
                         records[code] = wmo_table[code]
                     elif (
                         "Reserved" in records[code]["name"]
-                        and not "Reserved" in wmo_table[code]["name"]
+                        and "Reserved" not in wmo_table[code]["name"]
                     ):
                         # print('Patching ', records[code], ' with ', wmo_table[code])
                         records[code] = wmo_table[code]

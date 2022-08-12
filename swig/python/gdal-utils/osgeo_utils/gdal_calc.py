@@ -620,7 +620,7 @@ def Calc(
                         myNDVs = 1 * numpy.logical_or(myNDVs == 1, myval == myNDV[i])
 
                     # add an array of values for this block to the eval namespace
-                    if not Alpha in myAlphaFileLists:
+                    if Alpha not in myAlphaFileLists:
                         local_namespace[Alpha] = myval
                     myval = None
 

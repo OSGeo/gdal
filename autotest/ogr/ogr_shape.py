@@ -5331,16 +5331,16 @@ def test_ogr_shape_115_shp_zip():
             "polyZ",
         ]
         assert [ds.GetLayer(i).GetFeatureCount() for i in range(4)] == [10, 10, 10, 10]
-        assert not tmp_uncompressed in gdal.ReadDir(dirname)
+        assert tmp_uncompressed not in gdal.ReadDir(dirname)
         gdal.ErrorReset()
         ds.ExecuteSQL("UNCOMPRESS")
         assert gdal.GetLastErrorMsg() == ""
-        assert not tmp_uncompressed in gdal.ReadDir(dirname)
+        assert tmp_uncompressed not in gdal.ReadDir(dirname)
         ds = None
 
         ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
         lyr = ds.GetLayer(0)
-        assert not tmp_uncompressed in gdal.ReadDir(dirname)
+        assert tmp_uncompressed not in gdal.ReadDir(dirname)
         with gdaltest.config_option("OGR_SHAPE_LOCK_DELAY", "0.01"):
             ds.ExecuteSQL("UNCOMPRESS")
         assert tmp_uncompressed in gdal.ReadDir(dirname)

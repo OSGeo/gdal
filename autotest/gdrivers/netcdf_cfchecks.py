@@ -349,7 +349,7 @@ class CFChecker(object):
 
     def checker(self, filename):
 
-        fileSuffix = re.compile("^\S+\.nc$")
+        fileSuffix = re.compile(r"^\S+\.nc$")
 
         print("")
         if self.uploader:
@@ -632,7 +632,7 @@ class CFChecker(object):
                     self.warn = self.warn + 1
 
                 if (
-                    re.match("^(timeSeries|trajectory|profile)$", featureType, re.I)
+                    re.match(r"^(timeSeries|trajectory|profile)$", featureType, re.I)
                     and self.cf_roleCount != 1
                 ):
                     # Should only be a single occurrence of a cf_role attribute
@@ -645,7 +645,7 @@ class CFChecker(object):
 
                 elif (
                     re.match(
-                        "^(timeSeriesProfile|trajectoryProfile)$", featureType, re.I
+                        r"^(timeSeriesProfile|trajectoryProfile)$", featureType, re.I
                     )
                     and self.cf_roleCount > 2
                 ):
@@ -824,7 +824,7 @@ class CFChecker(object):
             return "T"
 
         # Vertical Coordinate
-        if positive and re.match("(up|down)", positive, re.I):
+        if positive and re.match(r"(up|down)", positive, re.I):
             return "Z"
 
         # Variable is a vertical coordinate if the units are dimensionally
@@ -836,13 +836,13 @@ class CFChecker(object):
 
         # Latitude Coordinate
         if re.match(
-            "(degrees_north|degree_north|degrees_N|degree_N|degreesN|degreeN)", units
+            r"(degrees_north|degree_north|degrees_N|degree_N|degreesN|degreeN)", units
         ):
             return "Y"
 
         # Longitude Coordinate
         if re.match(
-            "(degrees_east|degree_east|degrees_E|degree_E|degreesE|degreeE)", units
+            r"(degrees_east|degree_east|degrees_E|degree_E|degreesE|degreeE)", units
         ):
             return "X"
 
@@ -1325,7 +1325,7 @@ class CFChecker(object):
     def parseBlankSeparatedList(self, lst):
         # ----------------------------------------
         """Parse blank separated list"""
-        if re.match("^[a-zA-Z0-9_ ]*$", lst):
+        if re.match(r"^[a-zA-Z0-9_ ]*$", lst):
             return 1
         return 0
 
@@ -1335,7 +1335,7 @@ class CFChecker(object):
         # -------------------------------------------
         """Check list is a blank separated list of words containing alphanumeric characters
         plus underscore '_', period '.', plus '+', hyphen '-', or "at" sign '@'."""
-        if re.match("^[a-zA-Z0-9_ @\-\+\.]*$", lst):
+        if re.match(r"^[a-zA-Z0-9_ @\-\+\.]*$", lst):
             return 1
         return 0
 
@@ -1345,7 +1345,7 @@ class CFChecker(object):
         # -------------------------------------------
         """Check list is a blank or comma separated list of words containing alphanumeric
         characters plus underscore '_', period '.', plus '+', hyphen '-', or "at" sign '@'."""
-        if re.match("^[a-zA-Z0-9_ @\-\+\.,]*$", lst):
+        if re.match(r"^[a-zA-Z0-9_ @\-\+\.,]*$", lst):
             return 1
         return 0
 
@@ -1368,7 +1368,7 @@ class CFChecker(object):
             else:
                 # Split string up into component parts
                 # If a comma is present we assume a comma separated list as names cannot contain commas
-                if re.match("^.*,.*$", conventions):
+                if re.match(r"^.*,.*$", conventions):
                     conventionList = conventions.split(",")
                 else:
                     conventionList = conventions.split()
@@ -1445,7 +1445,7 @@ class CFChecker(object):
 
             # Split string up into component parts
             # If a comma is present we assume a comma separated list as names cannot contain commas
-            if re.match("^.*,.*$", conventions):
+            if re.match(r"^.*,.*$", conventions):
                 conventionList = conventions.split(",")
             else:
                 conventionList = conventions.split()
@@ -1475,7 +1475,7 @@ class CFChecker(object):
         """Check for valid name.  They must begin with a
         letter and be composed of letters, digits and underscores."""
 
-        nameSyntax = re.compile("^[a-zA-Z][a-zA-Z0-9_]*$")
+        nameSyntax = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]*$")
         if not nameSyntax.match(name):
             return 0
 
@@ -2194,7 +2194,7 @@ class CFChecker(object):
                                         rc = 0
 
                             measure = re.sub(":", "", measure)
-                            if not re.match("^(area|volume)$", measure):
+                            if not re.match(r"^(area|volume)$", measure):
                                 print(
                                     "ERROR (7.2): Invalid measure in attribute cell_measures"
                                 )
@@ -2614,7 +2614,7 @@ class CFChecker(object):
         var = self.f[varName]
 
         if "axis" in var.attributes:
-            if not re.match("^(X|Y|Z|T)$", var.attributes["axis"], re.I):
+            if not re.match(r"^(X|Y|Z|T)$", var.attributes["axis"], re.I):
                 print("ERROR (4): Invalid value for axis attribute")
                 self.err = self.err + 1
                 return 0
@@ -2662,7 +2662,7 @@ class CFChecker(object):
         # ----------------------------------------
         var = self.f[varName]
         if "positive" in var.attributes:
-            if not re.match("^(down|up)$", var.attributes["positive"], re.I):
+            if not re.match(r"^(down|up)$", var.attributes["positive"], re.I):
                 print("ERROR (4.3): Invalid value for positive attribute")
                 self.err = self.err + 1
                 return 0
