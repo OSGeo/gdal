@@ -30,13 +30,12 @@
 ###############################################################################
 
 import shutil
-
-
-from osgeo import gdal
+import struct
 
 import gdaltest
 import pytest
-import struct
+
+from osgeo import gdal
 
 ###############################################################################
 # Find WMTS driver
@@ -44,19 +43,20 @@ import struct
 
 def test_wmts_1():
 
-    gdaltest.wmts_drv = gdal.GetDriverByName('WMTS')
+    gdaltest.wmts_drv = gdal.GetDriverByName("WMTS")
 
-    if gdaltest.wmts_drv is not None and gdal.GetDriverByName('WMS') is None:
-        print('Missing WMS driver')
+    if gdaltest.wmts_drv is not None and gdal.GetDriverByName("WMS") is None:
+        print("Missing WMS driver")
         gdaltest.wmts_drv = None
 
     if gdaltest.wmts_drv is not None:
 
-        gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
-        gdal.SetConfigOption('GDAL_DEFAULT_WMS_CACHE_PATH', '/vsimem/cache')
+        gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
+        gdal.SetConfigOption("GDAL_DEFAULT_WMS_CACHE_PATH", "/vsimem/cache")
 
         return
     pytest.skip()
+
 
 ###############################################################################
 # Error: no URL and invalid GDAL_WMTS service file documents
@@ -68,24 +68,25 @@ def test_wmts_2():
         pytest.skip()
 
     gdal.PushErrorHandler()
-    ds = gdal.Open('WMTS:')
+    ds = gdal.Open("WMTS:")
     gdal.PopErrorHandler()
     assert ds is None
 
     gdal.PushErrorHandler()
-    ds = gdal.Open('<GDAL_WMTS>')
+    ds = gdal.Open("<GDAL_WMTS>")
     gdal.PopErrorHandler()
     assert ds is None
 
     gdal.PushErrorHandler()
-    ds = gdal.Open('<GDAL_WMTSxxx/>')
+    ds = gdal.Open("<GDAL_WMTSxxx/>")
     gdal.PopErrorHandler()
     assert ds is None
 
     gdal.PushErrorHandler()
-    ds = gdal.Open('<GDAL_WMTS></GDAL_WMTS>')
+    ds = gdal.Open("<GDAL_WMTS></GDAL_WMTS>")
     gdal.PopErrorHandler()
     assert ds is None
+
 
 ###############################################################################
 # Error: invalid URL
@@ -97,9 +98,10 @@ def test_wmts_3():
         pytest.skip()
 
     gdal.PushErrorHandler()
-    ds = gdal.Open('WMTS:https://non_existing')
+    ds = gdal.Open("WMTS:https://non_existing")
     gdal.PopErrorHandler()
     assert ds is None
+
 
 ###############################################################################
 # Error: invalid URL
@@ -111,9 +113,10 @@ def test_wmts_4():
         pytest.skip()
 
     gdal.PushErrorHandler()
-    ds = gdal.Open('WMTS:/vsimem/non_existing')
+    ds = gdal.Open("WMTS:/vsimem/non_existing")
     gdal.PopErrorHandler()
     assert ds is None
+
 
 ###############################################################################
 # Error: invalid XML in GetCapabilities response
@@ -124,12 +127,13 @@ def test_wmts_5():
     if gdaltest.wmts_drv is None:
         pytest.skip()
 
-    gdal.FileFromMemBuffer('/vsimem/invalid_getcapabilities.xml', '<invalid_xml')
+    gdal.FileFromMemBuffer("/vsimem/invalid_getcapabilities.xml", "<invalid_xml")
 
     gdal.PushErrorHandler()
-    ds = gdal.Open('WMTS:/vsimem/invalid_getcapabilities.xml')
+    ds = gdal.Open("WMTS:/vsimem/invalid_getcapabilities.xml")
     gdal.PopErrorHandler()
     assert ds is None
+
 
 ###############################################################################
 # Error: invalid content in GetCapabilities response
@@ -140,12 +144,13 @@ def test_wmts_6():
     if gdaltest.wmts_drv is None:
         pytest.skip()
 
-    gdal.FileFromMemBuffer('/vsimem/invalid_getcapabilities.xml', '<Capabilities/>')
+    gdal.FileFromMemBuffer("/vsimem/invalid_getcapabilities.xml", "<Capabilities/>")
 
     gdal.PushErrorHandler()
-    ds = gdal.Open('WMTS:/vsimem/invalid_getcapabilities.xml')
+    ds = gdal.Open("WMTS:/vsimem/invalid_getcapabilities.xml")
     gdal.PopErrorHandler()
     assert ds is None
+
 
 ###############################################################################
 # Error: no layers
@@ -156,12 +161,15 @@ def test_wmts_7():
     if gdaltest.wmts_drv is None:
         pytest.skip()
 
-    gdal.FileFromMemBuffer('/vsimem/empty_getcapabilities.xml', '<Capabilities><Contents/></Capabilities>')
+    gdal.FileFromMemBuffer(
+        "/vsimem/empty_getcapabilities.xml", "<Capabilities><Contents/></Capabilities>"
+    )
 
     gdal.PushErrorHandler()
-    ds = gdal.Open('WMTS:/vsimem/empty_getcapabilities.xml')
+    ds = gdal.Open("WMTS:/vsimem/empty_getcapabilities.xml")
     gdal.PopErrorHandler()
     assert ds is None
+
 
 ###############################################################################
 # Error: missing TileMatrixSetLink and Style
@@ -172,18 +180,22 @@ def test_wmts_8():
     if gdaltest.wmts_drv is None:
         pytest.skip()
 
-    gdal.FileFromMemBuffer('/vsimem/missing.xml', """<Capabilities>
+    gdal.FileFromMemBuffer(
+        "/vsimem/missing.xml",
+        """<Capabilities>
     <Contents>
         <Layer>
             <Identifier/>
         </Layer>
     </Contents>
-</Capabilities>""")
+</Capabilities>""",
+    )
 
     gdal.PushErrorHandler()
-    ds = gdal.Open('WMTS:/vsimem/missing.xml')
+    ds = gdal.Open("WMTS:/vsimem/missing.xml")
     gdal.PopErrorHandler()
     assert ds is None
+
 
 ###############################################################################
 # Error: missing TileMatrixSet
@@ -194,7 +206,9 @@ def test_wmts_9():
     if gdaltest.wmts_drv is None:
         pytest.skip()
 
-    gdal.FileFromMemBuffer('/vsimem/missing_tms.xml', """<Capabilities>
+    gdal.FileFromMemBuffer(
+        "/vsimem/missing_tms.xml",
+        """<Capabilities>
     <Contents>
         <Layer>
             <Identifier/>
@@ -207,12 +221,14 @@ def test_wmts_9():
             <ResourceURL format="image/png" template="/vsimem/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpeg" resourceType="tile"/>
         </Layer>
     </Contents>
-</Capabilities>""")
+</Capabilities>""",
+    )
 
     gdal.PushErrorHandler()
-    ds = gdal.Open('WMTS:/vsimem/missing_tms.xml')
+    ds = gdal.Open("WMTS:/vsimem/missing_tms.xml")
     gdal.PopErrorHandler()
     assert ds is None
+
 
 ###############################################################################
 # Error: Missing SupportedCRS
@@ -223,7 +239,9 @@ def test_wmts_10():
     if gdaltest.wmts_drv is None:
         pytest.skip()
 
-    gdal.FileFromMemBuffer('/vsimem/missing_SupportedCRS.xml', """<Capabilities>
+    gdal.FileFromMemBuffer(
+        "/vsimem/missing_SupportedCRS.xml",
+        """<Capabilities>
     <Contents>
         <Layer>
             <Identifier/>
@@ -239,12 +257,14 @@ def test_wmts_10():
             <Identifier>tms</Identifier>
         </TileMatrixSet>
     </Contents>
-</Capabilities>""")
+</Capabilities>""",
+    )
 
     gdal.PushErrorHandler()
-    ds = gdal.Open('WMTS:/vsimem/missing_SupportedCRS.xml')
+    ds = gdal.Open("WMTS:/vsimem/missing_SupportedCRS.xml")
     gdal.PopErrorHandler()
     assert ds is None
+
 
 ###############################################################################
 # Error: Cannot find TileMatrix in TileMatrixSet
@@ -255,7 +275,9 @@ def test_wmts_11():
     if gdaltest.wmts_drv is None:
         pytest.skip()
 
-    gdal.FileFromMemBuffer('/vsimem/no_tilematrix.xml', """<Capabilities>
+    gdal.FileFromMemBuffer(
+        "/vsimem/no_tilematrix.xml",
+        """<Capabilities>
     <Contents>
         <Layer>
             <Identifier/>
@@ -272,12 +294,14 @@ def test_wmts_11():
             <SupportedCRS>urn:ogc:def:crs:EPSG:6.18:3:3857</SupportedCRS>
         </TileMatrixSet>
     </Contents>
-</Capabilities>""")
+</Capabilities>""",
+    )
 
     gdal.PushErrorHandler()
-    ds = gdal.Open('WMTS:/vsimem/no_tilematrix.xml')
+    ds = gdal.Open("WMTS:/vsimem/no_tilematrix.xml")
     gdal.PopErrorHandler()
     assert ds is None
+
 
 ###############################################################################
 # Error: Missing required element in TileMatrix element
@@ -288,7 +312,9 @@ def test_wmts_12():
     if gdaltest.wmts_drv is None:
         pytest.skip()
 
-    gdal.FileFromMemBuffer('/vsimem/missing_required_element_in_tilematrix.xml', """<Capabilities>
+    gdal.FileFromMemBuffer(
+        "/vsimem/missing_required_element_in_tilematrix.xml",
+        """<Capabilities>
     <Contents>
         <Layer>
             <Identifier/>
@@ -306,12 +332,14 @@ def test_wmts_12():
             <TileMatrix/>
         </TileMatrixSet>
     </Contents>
-</Capabilities>""")
+</Capabilities>""",
+    )
 
     gdal.PushErrorHandler()
-    ds = gdal.Open('WMTS:/vsimem/missing_required_element_in_tilematrix.xml')
+    ds = gdal.Open("WMTS:/vsimem/missing_required_element_in_tilematrix.xml")
     gdal.PopErrorHandler()
     assert ds is None
+
 
 ###############################################################################
 # Error: Missing ResourceURL
@@ -322,7 +350,9 @@ def test_wmts_12bis():
     if gdaltest.wmts_drv is None:
         pytest.skip()
 
-    gdal.FileFromMemBuffer('/vsimem/wmts_12bis.xml', """<Capabilities>
+    gdal.FileFromMemBuffer(
+        "/vsimem/wmts_12bis.xml",
+        """<Capabilities>
     <Contents>
         <Layer>
             <Identifier/>
@@ -347,12 +377,14 @@ def test_wmts_12bis():
             </TileMatrix>
         </TileMatrixSet>
     </Contents>
-</Capabilities>""")
+</Capabilities>""",
+    )
 
     gdal.PushErrorHandler()
-    ds = gdal.Open('WMTS:/vsimem/wmts_12bis.xml')
+    ds = gdal.Open("WMTS:/vsimem/wmts_12bis.xml")
     gdal.PopErrorHandler()
     assert ds is None
+
 
 ###############################################################################
 # Error: TileMatrixSetLink points to non-existing TileMatrix
@@ -390,9 +422,10 @@ def test_wmts_tilematrixsetlink_to_non_existing_tilematrix():
         </TileMatrixSet>
     </Contents>
 </Capabilities>"""
-    with gdaltest.tempfile('/vsimem/test_wmts.xml', xml), gdaltest.error_handler():
-        ds = gdal.Open('WMTS:/vsimem/test_wmts.xml')
+    with gdaltest.tempfile("/vsimem/test_wmts.xml", xml), gdaltest.error_handler():
+        ds = gdal.Open("WMTS:/vsimem/test_wmts.xml")
     assert ds is None
+
 
 ###############################################################################
 # Minimal
@@ -403,7 +436,9 @@ def test_wmts_13():
     if gdaltest.wmts_drv is None:
         pytest.skip()
 
-    gdal.FileFromMemBuffer('/vsimem/minimal.xml', """<Capabilities>
+    gdal.FileFromMemBuffer(
+        "/vsimem/minimal.xml",
+        """<Capabilities>
     <Contents>
         <Layer>
             <Identifier/>
@@ -429,17 +464,25 @@ def test_wmts_13():
             </TileMatrix>
         </TileMatrixSet>
     </Contents>
-</Capabilities>""")
+</Capabilities>""",
+    )
 
-    ds = gdal.Open('WMTS:/vsimem/minimal.xml')
+    ds = gdal.Open("WMTS:/vsimem/minimal.xml")
     assert ds is not None
     assert ds.RasterXSize == 256
     assert ds.RasterYSize == 256
     got_gt = ds.GetGeoTransform()
-    expected_gt = (-20037508.342799999, 156543.03392811998, 0.0, 20037508.342799999, 0.0, -156543.03392811998)
+    expected_gt = (
+        -20037508.342799999,
+        156543.03392811998,
+        0.0,
+        20037508.342799999,
+        0.0,
+        -156543.03392811998,
+    )
     for i in range(6):
         assert got_gt[i] == pytest.approx(expected_gt[i], abs=1e-8)
-    assert ds.GetProjectionRef().find('3857') >= 0
+    assert ds.GetProjectionRef().find("3857") >= 0
     assert ds.RasterCount == 4
     for i in range(4):
         assert ds.GetRasterBand(i + 1).GetColorInterpretation() == gdal.GCI_RedBand + i
@@ -450,36 +493,40 @@ def test_wmts_13():
     gdal.PopErrorHandler()
     assert cs == 0
     assert ds.GetSubDatasets() == []
-    assert ds.GetRasterBand(1).GetMetadataItem('Pixel_0_0', 'LocationInfo') is None
-    assert ds.GetRasterBand(1).GetMetadataItem('foo') is None
+    assert ds.GetRasterBand(1).GetMetadataItem("Pixel_0_0", "LocationInfo") is None
+    assert ds.GetRasterBand(1).GetMetadataItem("foo") is None
 
-    for connection_str in ['WMTS:/vsimem/minimal.xml,layer=',
-                           'WMTS:/vsimem/minimal.xml,style=',
-                           'WMTS:/vsimem/minimal.xml,tilematrixset=',
-                           'WMTS:/vsimem/minimal.xml,tilematrixset=tms',
-                           'WMTS:/vsimem/minimal.xml,tilematrix=',
-                           'WMTS:/vsimem/minimal.xml,zoom_level=',
-                           'WMTS:/vsimem/minimal.xml,layer=,style=,tilematrixset=']:
+    for connection_str in [
+        "WMTS:/vsimem/minimal.xml,layer=",
+        "WMTS:/vsimem/minimal.xml,style=",
+        "WMTS:/vsimem/minimal.xml,tilematrixset=",
+        "WMTS:/vsimem/minimal.xml,tilematrixset=tms",
+        "WMTS:/vsimem/minimal.xml,tilematrix=",
+        "WMTS:/vsimem/minimal.xml,zoom_level=",
+        "WMTS:/vsimem/minimal.xml,layer=,style=,tilematrixset=",
+    ]:
         ds = gdal.Open(connection_str)
         assert ds is not None, connection_str
         ds = None
 
-    for connection_str in ['WMTS:/vsimem/minimal.xml,layer=foo',
-                           'WMTS:/vsimem/minimal.xml,style=bar',
-                           'WMTS:/vsimem/minimal.xml,tilematrixset=baz',
-                           'WMTS:/vsimem/minimal.xml,tilematrix=baw',
-                           'WMTS:/vsimem/minimal.xml,zoom_level=30']:
+    for connection_str in [
+        "WMTS:/vsimem/minimal.xml,layer=foo",
+        "WMTS:/vsimem/minimal.xml,style=bar",
+        "WMTS:/vsimem/minimal.xml,tilematrixset=baz",
+        "WMTS:/vsimem/minimal.xml,tilematrix=baw",
+        "WMTS:/vsimem/minimal.xml,zoom_level=30",
+    ]:
         gdal.PushErrorHandler()
         ds = gdal.Open(connection_str)
         gdal.PopErrorHandler()
         assert ds is None, connection_str
         ds = None
 
-    ds = gdal.Open('WMTS:/vsimem/minimal.xml')
-    tmp_ds = gdal.GetDriverByName('MEM').Create('', 256, 256, 4)
+    ds = gdal.Open("WMTS:/vsimem/minimal.xml")
+    tmp_ds = gdal.GetDriverByName("MEM").Create("", 256, 256, 4)
     for i in range(4):
         tmp_ds.GetRasterBand(i + 1).Fill((i + 1) * 255 / 4)
-    tmp_ds = gdal.GetDriverByName('PNG').CreateCopy('/vsimem/0/0/0.png', tmp_ds)
+    tmp_ds = gdal.GetDriverByName("PNG").CreateCopy("/vsimem/0/0/0.png", tmp_ds)
     for i in range(4):
         cs = ds.GetRasterBand(i + 1).Checksum()
         assert cs == tmp_ds.GetRasterBand(i + 1).Checksum()
@@ -489,11 +536,14 @@ def test_wmts_13():
     assert ref_data == got_data
 
     ref_data = tmp_ds.GetRasterBand(1).ReadRaster(0, 0, 256, 256)
-    got_data = ds.GetRasterBand(1).ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, 256, 256)
+    got_data = ds.GetRasterBand(1).ReadRaster(
+        0, 0, ds.RasterXSize, ds.RasterYSize, 256, 256
+    )
     assert ref_data == got_data
 
     ds = None
     wmts_CleanCache()
+
 
 ###############################################################################
 # Nominal RESTful
@@ -504,7 +554,9 @@ def test_wmts_14():
     if gdaltest.wmts_drv is None:
         pytest.skip()
 
-    gdal.FileFromMemBuffer('/vsimem/nominal.xml', """<Capabilities>
+    gdal.FileFromMemBuffer(
+        "/vsimem/nominal.xml",
+        """<Capabilities>
     <Contents>
         <Layer>
             <Identifier>lyr1</Identifier>
@@ -587,36 +639,51 @@ def test_wmts_14():
         </TileMatrixSet>
     </Contents>
     <ServiceMetadataURL xlink:href="/vsimem/nominal.xml"/>
-</Capabilities>""")
+</Capabilities>""",
+    )
 
-    ds = gdal.Open('WMTS:/vsimem/nominal.xml')
+    ds = gdal.Open("WMTS:/vsimem/nominal.xml")
     assert ds is not None
-    assert (ds.GetSubDatasets() == [('WMTS:/vsimem/nominal.xml,layer=lyr1,tilematrixset=tms,style="style=auto"',
-                                'Layer My layer1, tile matrix set tms, style "Default style"'),
-                               ('WMTS:/vsimem/nominal.xml,layer=lyr1,tilematrixset=tms,style=another_style',
-                                'Layer My layer1, tile matrix set tms, style "Another style"'),
-                               ('WMTS:/vsimem/nominal.xml,layer=lyr1,tilematrixset=another_tms,style="style=auto"',
-                                'Layer My layer1, tile matrix set another_tms, style "Default style"'),
-                               ('WMTS:/vsimem/nominal.xml,layer=lyr1,tilematrixset=another_tms,style=another_style',
-                                'Layer My layer1, tile matrix set another_tms, style "Another style"')])
+    assert ds.GetSubDatasets() == [
+        (
+            'WMTS:/vsimem/nominal.xml,layer=lyr1,tilematrixset=tms,style="style=auto"',
+            'Layer My layer1, tile matrix set tms, style "Default style"',
+        ),
+        (
+            "WMTS:/vsimem/nominal.xml,layer=lyr1,tilematrixset=tms,style=another_style",
+            'Layer My layer1, tile matrix set tms, style "Another style"',
+        ),
+        (
+            'WMTS:/vsimem/nominal.xml,layer=lyr1,tilematrixset=another_tms,style="style=auto"',
+            'Layer My layer1, tile matrix set another_tms, style "Default style"',
+        ),
+        (
+            "WMTS:/vsimem/nominal.xml,layer=lyr1,tilematrixset=another_tms,style=another_style",
+            'Layer My layer1, tile matrix set another_tms, style "Another style"',
+        ),
+    ]
     assert ds.RasterXSize == 67108864
     gdal.PushErrorHandler()
-    res = ds.GetRasterBand(1).GetMetadataItem('Pixel_1_2', 'LocationInfo')
+    res = ds.GetRasterBand(1).GetMetadataItem("Pixel_1_2", "LocationInfo")
     gdal.PopErrorHandler()
-    assert res == ''
-    assert ds.GetMetadata() == {'ABSTRACT': 'My abstract', 'TITLE': 'My layer1'}
+    assert res == ""
+    assert ds.GetMetadata() == {"ABSTRACT": "My abstract", "TITLE": "My layer1"}
 
     gdal.PushErrorHandler()
-    gdaltest.wmts_drv.CreateCopy('/vsimem/gdal_nominal.xml', gdal.GetDriverByName('MEM').Create('', 1, 1))
+    gdaltest.wmts_drv.CreateCopy(
+        "/vsimem/gdal_nominal.xml", gdal.GetDriverByName("MEM").Create("", 1, 1)
+    )
     gdal.PopErrorHandler()
 
-    gdaltest.wmts_drv.CreateCopy('/vsimem/gdal_nominal.xml', ds)
+    gdaltest.wmts_drv.CreateCopy("/vsimem/gdal_nominal.xml", ds)
     ds = None
 
-    f = gdal.VSIFOpenL('/vsimem/gdal_nominal.xml', 'rb')
-    data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+    f = gdal.VSIFOpenL("/vsimem/gdal_nominal.xml", "rb")
+    data = gdal.VSIFReadL(1, 10000, f).decode("ascii")
     gdal.VSIFCloseL(f)
-    assert data == """<GDAL_WMTS>
+    assert (
+        data
+        == """<GDAL_WMTS>
   <GetCapabilitiesUrl>/vsimem/nominal.xml</GetCapabilitiesUrl>
   <Layer>lyr1</Layer>
   <Style>style=auto</Style>
@@ -635,56 +702,71 @@ def test_wmts_14():
   <ZeroBlockOnServerException>true</ZeroBlockOnServerException>
 </GDAL_WMTS>
 """
+    )
 
-    ds = gdal.Open('/vsimem/gdal_nominal.xml')
-    gdal.FileFromMemBuffer('/vsimem/2011-10-04/style=auto/tms/tm_18/0/0/2/1.txt', 'foo')
-    res = ds.GetRasterBand(1).GetMetadataItem('Pixel_1_2', 'LocationInfo')
-    assert res == '<LocationInfo>foo</LocationInfo>'
-    res = ds.GetRasterBand(1).GetMetadataItem('Pixel_1_2', 'LocationInfo')
-    assert res == '<LocationInfo>foo</LocationInfo>'
+    ds = gdal.Open("/vsimem/gdal_nominal.xml")
+    gdal.FileFromMemBuffer("/vsimem/2011-10-04/style=auto/tms/tm_18/0/0/2/1.txt", "foo")
+    res = ds.GetRasterBand(1).GetMetadataItem("Pixel_1_2", "LocationInfo")
+    assert res == "<LocationInfo>foo</LocationInfo>"
+    res = ds.GetRasterBand(1).GetMetadataItem("Pixel_1_2", "LocationInfo")
+    assert res == "<LocationInfo>foo</LocationInfo>"
 
-    ds = gdal.Open('<GDAL_WMTS><GetCapabilitiesUrl>/vsimem/nominal.xml</GetCapabilitiesUrl></GDAL_WMTS>')
+    ds = gdal.Open(
+        "<GDAL_WMTS><GetCapabilitiesUrl>/vsimem/nominal.xml</GetCapabilitiesUrl></GDAL_WMTS>"
+    )
     assert ds is not None
 
-    ds = gdal.Open('WMTS:/vsimem/gdal_nominal.xml')
+    ds = gdal.Open("WMTS:/vsimem/gdal_nominal.xml")
     assert ds is not None
 
-    for open_options in [['URL=/vsimem/nominal.xml'],
-                         ['URL=/vsimem/nominal.xml', 'STYLE=style=auto', 'TILEMATRIXSET=tms']]:
-        ds = gdal.OpenEx('WMTS:', open_options=open_options)
+    for open_options in [
+        ["URL=/vsimem/nominal.xml"],
+        ["URL=/vsimem/nominal.xml", "STYLE=style=auto", "TILEMATRIXSET=tms"],
+    ]:
+        ds = gdal.OpenEx("WMTS:", open_options=open_options)
         assert ds is not None
 
-    for open_options in [['URL=/vsimem/nominal.xml', 'STYLE=x', 'TILEMATRIXSET=y'],
-                         ['URL=/vsimem/nominal.xml', 'STYLE=style=auto', 'TILEMATRIX=30'],
-                         ['URL=/vsimem/nominal.xml', 'STYLE=style=auto', 'ZOOM_LEVEL=30']]:
+    for open_options in [
+        ["URL=/vsimem/nominal.xml", "STYLE=x", "TILEMATRIXSET=y"],
+        ["URL=/vsimem/nominal.xml", "STYLE=style=auto", "TILEMATRIX=30"],
+        ["URL=/vsimem/nominal.xml", "STYLE=style=auto", "ZOOM_LEVEL=30"],
+    ]:
         gdal.PushErrorHandler()
-        ds = gdal.OpenEx('WMTS:', open_options=open_options)
+        ds = gdal.OpenEx("WMTS:", open_options=open_options)
         gdal.PopErrorHandler()
         assert ds is None
 
-    ds = gdal.Open('WMTS:/vsimem/nominal.xml')
-    gdal.FileFromMemBuffer('/vsimem/2011-10-04/style=auto/tms/tm_18/0/0/2/1.txt', '<?xml version="1.0" encoding="UTF-8"?><xml_content/>')
-    res = ds.GetRasterBand(1).GetMetadataItem('Pixel_1_2', 'LocationInfo')
-    assert res == """<LocationInfo><xml_content />
+    ds = gdal.Open("WMTS:/vsimem/nominal.xml")
+    gdal.FileFromMemBuffer(
+        "/vsimem/2011-10-04/style=auto/tms/tm_18/0/0/2/1.txt",
+        '<?xml version="1.0" encoding="UTF-8"?><xml_content/>',
+    )
+    res = ds.GetRasterBand(1).GetMetadataItem("Pixel_1_2", "LocationInfo")
+    assert (
+        res
+        == """<LocationInfo><xml_content />
 </LocationInfo>"""
+    )
 
-    ds = gdal.Open('WMTS:/vsimem/gdal_nominal.xml,tilematrix=tm_0')
+    ds = gdal.Open("WMTS:/vsimem/gdal_nominal.xml,tilematrix=tm_0")
     assert ds is not None
     assert ds.RasterXSize == 256
 
-    ds = gdal.OpenEx('WMTS:/vsimem/gdal_nominal.xml', open_options=['tilematrix=tm_0'])
+    ds = gdal.OpenEx("WMTS:/vsimem/gdal_nominal.xml", open_options=["tilematrix=tm_0"])
     assert ds is not None
     assert ds.RasterXSize == 256
 
-    ds = gdal.Open('WMTS:/vsimem/gdal_nominal.xml,zoom_level=0')
+    ds = gdal.Open("WMTS:/vsimem/gdal_nominal.xml,zoom_level=0")
     assert ds is not None
     assert ds.RasterXSize == 256
 
-    ds = gdal.OpenEx('WMTS:/vsimem/gdal_nominal.xml', open_options=['zoom_level=0'])
+    ds = gdal.OpenEx("WMTS:/vsimem/gdal_nominal.xml", open_options=["zoom_level=0"])
     assert ds is not None
     assert ds.RasterXSize == 256
 
-    gdal.FileFromMemBuffer('/vsimem/gdal_nominal.xml', """<GDAL_WMTS>
+    gdal.FileFromMemBuffer(
+        "/vsimem/gdal_nominal.xml",
+        """<GDAL_WMTS>
   <GetCapabilitiesUrl>/vsimem/nominal.xml</GetCapabilitiesUrl>
   <Layer>lyr1</Layer>
   <Style>style=auto</Style>
@@ -701,12 +783,15 @@ def test_wmts_14():
   <UnsafeSSL>true</UnsafeSSL>
   <ZeroBlockHttpCodes>204,404</ZeroBlockHttpCodes>
   <ZeroBlockOnServerException>true</ZeroBlockOnServerException>
-</GDAL_WMTS>""")
-    ds = gdal.Open('WMTS:/vsimem/gdal_nominal.xml')
+</GDAL_WMTS>""",
+    )
+    ds = gdal.Open("WMTS:/vsimem/gdal_nominal.xml")
     assert ds is not None
     assert ds.RasterXSize == 256
 
-    gdal.FileFromMemBuffer('/vsimem/gdal_nominal.xml', """<GDAL_WMTS>
+    gdal.FileFromMemBuffer(
+        "/vsimem/gdal_nominal.xml",
+        """<GDAL_WMTS>
   <GetCapabilitiesUrl>/vsimem/nominal.xml</GetCapabilitiesUrl>
   <Layer>lyr1</Layer>
   <Style>style=auto</Style>
@@ -723,10 +808,12 @@ def test_wmts_14():
   <UnsafeSSL>true</UnsafeSSL>
   <ZeroBlockHttpCodes>204,404</ZeroBlockHttpCodes>
   <ZeroBlockOnServerException>true</ZeroBlockOnServerException>
-</GDAL_WMTS>""")
-    ds = gdal.Open('WMTS:/vsimem/gdal_nominal.xml')
+</GDAL_WMTS>""",
+    )
+    ds = gdal.Open("WMTS:/vsimem/gdal_nominal.xml")
     assert ds is not None
     assert ds.RasterXSize == 256
+
 
 ###############################################################################
 # Nominal KVP
@@ -737,7 +824,9 @@ def test_wmts_15():
     if gdaltest.wmts_drv is None:
         pytest.skip()
 
-    gdal.FileFromMemBuffer('/vsimem/nominal_kvp.xml?service=WMTS&request=GetCapabilities', """<Capabilities xmlns="http://www.opengis.net/wmts/1.0">
+    gdal.FileFromMemBuffer(
+        "/vsimem/nominal_kvp.xml?service=WMTS&request=GetCapabilities",
+        """<Capabilities xmlns="http://www.opengis.net/wmts/1.0">
     <ows:OperationsMetadata>
     <ows:Operation name="GetCapabilities">
       <ows:DCP>
@@ -831,30 +920,37 @@ def test_wmts_15():
             </TileMatrix>
         </TileMatrixSet>
     </Contents>
-</Capabilities>""")
+</Capabilities>""",
+    )
 
-    ds = gdal.Open('/vsimem/nominal_kvp.xml?service=WMTS&request=GetCapabilities')
+    ds = gdal.Open("/vsimem/nominal_kvp.xml?service=WMTS&request=GetCapabilities")
     assert ds is not None
     assert ds.RasterXSize == 67108864
     gdal.PushErrorHandler()
-    res = ds.GetRasterBand(1).GetMetadataItem('Pixel_1_2', 'LocationInfo')
+    res = ds.GetRasterBand(1).GetMetadataItem("Pixel_1_2", "LocationInfo")
     gdal.PopErrorHandler()
-    assert res == ''
+    assert res == ""
 
-    gdaltest.wmts_drv.CreateCopy('/vsimem/gdal_nominal_kvp.xml', ds)
+    gdaltest.wmts_drv.CreateCopy("/vsimem/gdal_nominal_kvp.xml", ds)
     ds = None
 
-    ds = gdal.Open('/vsimem/gdal_nominal_kvp.xml')
-    gdal.FileFromMemBuffer('/vsimem/nominal_kvp.xml?service=WMTS&request=GetFeatureInfo&version=1.0.0&layer=lyr1&style=default_style&InfoFormat=text/plain&TileMatrixSet=tms&TileMatrix=18&TileRow=0&TileCol=0&J=2&I=1&time=2011-10-04', 'bar')
-    res = ds.GetRasterBand(1).GetMetadataItem('Pixel_1_2', 'LocationInfo')
-    assert res == '<LocationInfo>bar</LocationInfo>'
+    ds = gdal.Open("/vsimem/gdal_nominal_kvp.xml")
+    gdal.FileFromMemBuffer(
+        "/vsimem/nominal_kvp.xml?service=WMTS&request=GetFeatureInfo&version=1.0.0&layer=lyr1&style=default_style&InfoFormat=text/plain&TileMatrixSet=tms&TileMatrix=18&TileRow=0&TileCol=0&J=2&I=1&time=2011-10-04",
+        "bar",
+    )
+    res = ds.GetRasterBand(1).GetMetadataItem("Pixel_1_2", "LocationInfo")
+    assert res == "<LocationInfo>bar</LocationInfo>"
 
-    ds = gdal.Open('WMTS:/vsimem/gdal_nominal_kvp.xml')
+    ds = gdal.Open("WMTS:/vsimem/gdal_nominal_kvp.xml")
     assert ds is not None
-    tmp_ds = gdal.GetDriverByName('MEM').Create('', 256, 256, 4)
+    tmp_ds = gdal.GetDriverByName("MEM").Create("", 256, 256, 4)
     for i in range(4):
         tmp_ds.GetRasterBand(i + 1).Fill((i + 1) * 255 / 4)
-    tmp_ds = gdal.GetDriverByName('PNG').CreateCopy('/vsimem/nominal_kvp.xml?service=WMTS&request=GetTile&version=1.0.0&layer=lyr1&style=default_style&format=image/png&TileMatrixSet=tms&TileMatrix=0&TileRow=0&TileCol=0&time=2011-10-04', tmp_ds)
+    tmp_ds = gdal.GetDriverByName("PNG").CreateCopy(
+        "/vsimem/nominal_kvp.xml?service=WMTS&request=GetTile&version=1.0.0&layer=lyr1&style=default_style&format=image/png&TileMatrixSet=tms&TileMatrix=0&TileRow=0&TileCol=0&time=2011-10-04",
+        tmp_ds,
+    )
     for i in range(4):
         cs = ds.GetRasterBand(i + 1).GetOverview(0).Checksum()
         assert cs == tmp_ds.GetRasterBand(i + 1).Checksum()
@@ -864,11 +960,14 @@ def test_wmts_15():
     assert ref_data == got_data
 
     ref_data = tmp_ds.GetRasterBand(1).ReadRaster(0, 0, 256, 256)
-    got_data = ds.GetRasterBand(1).ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, 256, 256)
+    got_data = ds.GetRasterBand(1).ReadRaster(
+        0, 0, ds.RasterXSize, ds.RasterYSize, 256, 256
+    )
     assert ref_data == got_data
 
     ds = None
     wmts_CleanCache()
+
 
 ###############################################################################
 # AOI from layer WGS84BoundingBox
@@ -879,7 +978,9 @@ def test_wmts_16():
     if gdaltest.wmts_drv is None:
         pytest.skip()
 
-    gdal.FileFromMemBuffer('/vsimem/wmts_16.xml', """<Capabilities>
+    gdal.FileFromMemBuffer(
+        "/vsimem/wmts_16.xml",
+        """<Capabilities>
     <Contents>
         <Layer>
             <Identifier>lyr1</Identifier>
@@ -932,9 +1033,10 @@ def test_wmts_16():
         </TileMatrixSet>
     </Contents>
     <ServiceMetadataURL xlink:href="/vsimem/wmts_16.xml"/>
-</Capabilities>""")
+</Capabilities>""",
+    )
 
-    ds = gdal.Open('WMTS:/vsimem/wmts_16.xml')
+    ds = gdal.Open("WMTS:/vsimem/wmts_16.xml")
     assert ds is not None
     assert ds.RasterXSize == 512
     assert ds.RasterYSize == 256
@@ -942,8 +1044,9 @@ def test_wmts_16():
     expected_gt = (-90, 0.3515625, 0.0, 90.0, 0.0, -0.3515625)
     for i in range(6):
         assert got_gt[i] == pytest.approx(expected_gt[i], abs=1e-8)
-    assert ds.GetProjectionRef().find('4326') >= 0
+    assert ds.GetProjectionRef().find("4326") >= 0
     assert ds.GetSpatialRef().GetDataAxisToSRSAxisMapping() == [2, 1]
+
 
 ###############################################################################
 # AOI from layer BoundingBox
@@ -954,7 +1057,9 @@ def test_wmts_17():
     if gdaltest.wmts_drv is None:
         pytest.skip()
 
-    gdal.FileFromMemBuffer('/vsimem/wmts_17.xml', """<Capabilities>
+    gdal.FileFromMemBuffer(
+        "/vsimem/wmts_17.xml",
+        """<Capabilities>
     <Contents>
         <Layer>
             <Identifier>lyr1</Identifier>
@@ -1007,9 +1112,10 @@ def test_wmts_17():
         </TileMatrixSet>
     </Contents>
     <ServiceMetadataURL xlink:href="/vsimem/wmts_17.xml"/>
-</Capabilities>""")
+</Capabilities>""",
+    )
 
-    ds = gdal.Open('WMTS:/vsimem/wmts_17.xml')
+    ds = gdal.Open("WMTS:/vsimem/wmts_17.xml")
     assert ds is not None
     assert ds.RasterXSize == 512
     assert ds.RasterYSize == 256
@@ -1017,7 +1123,8 @@ def test_wmts_17():
     expected_gt = (-90, 0.3515625, 0.0, 90.0, 0.0, -0.3515625)
     for i in range(6):
         assert got_gt[i] == pytest.approx(expected_gt[i], abs=1e-8)
-    assert ds.GetProjectionRef().find('4326') >= 0
+    assert ds.GetProjectionRef().find("4326") >= 0
+
 
 ###############################################################################
 # AOI from TileMatrixSet BoundingBox
@@ -1028,7 +1135,9 @@ def test_wmts_18():
     if gdaltest.wmts_drv is None:
         pytest.skip()
 
-    gdal.FileFromMemBuffer('/vsimem/wmts_18.xml', """<Capabilities>
+    gdal.FileFromMemBuffer(
+        "/vsimem/wmts_18.xml",
+        """<Capabilities>
     <Contents>
         <Layer>
             <Identifier>lyr1</Identifier>
@@ -1081,9 +1190,10 @@ def test_wmts_18():
         </TileMatrixSet>
     </Contents>
     <ServiceMetadataURL xlink:href="/vsimem/wmts_18.xml"/>
-</Capabilities>""")
+</Capabilities>""",
+    )
 
-    ds = gdal.Open('WMTS:/vsimem/wmts_18.xml')
+    ds = gdal.Open("WMTS:/vsimem/wmts_18.xml")
     assert ds is not None
     assert ds.RasterXSize == 512
     assert ds.RasterYSize == 256
@@ -1091,7 +1201,8 @@ def test_wmts_18():
     expected_gt = (-90, 0.3515625, 0.0, 90.0, 0.0, -0.3515625)
     for i in range(6):
         assert got_gt[i] == pytest.approx(expected_gt[i], abs=1e-8)
-    assert ds.GetProjectionRef().find('4326') >= 0
+    assert ds.GetProjectionRef().find("4326") >= 0
+
 
 ###############################################################################
 # AOI from TileMatrixSetLimits
@@ -1102,7 +1213,9 @@ def test_wmts_19():
     if gdaltest.wmts_drv is None:
         pytest.skip()
 
-    gdal.FileFromMemBuffer('/vsimem/wmts_19.xml', """<Capabilities>
+    gdal.FileFromMemBuffer(
+        "/vsimem/wmts_19.xml",
+        """<Capabilities>
     <Contents>
         <Layer>
             <Identifier>lyr1</Identifier>
@@ -1160,9 +1273,10 @@ def test_wmts_19():
         </TileMatrixSet>
     </Contents>
     <ServiceMetadataURL xlink:href="/vsimem/wmts_19.xml"/>
-</Capabilities>""")
+</Capabilities>""",
+    )
 
-    ds = gdal.Open('WMTS:/vsimem/wmts_19.xml')
+    ds = gdal.Open("WMTS:/vsimem/wmts_19.xml")
     assert ds is not None
     assert ds.RasterXSize == 512
     assert ds.RasterYSize == 256
@@ -1170,7 +1284,8 @@ def test_wmts_19():
     expected_gt = (-90, 0.3515625, 0.0, 90.0, 0.0, -0.3515625)
     for i in range(6):
         assert got_gt[i] == pytest.approx(expected_gt[i], abs=1e-8)
-    assert ds.GetProjectionRef().find('4326') >= 0
+    assert ds.GetProjectionRef().find("4326") >= 0
+
 
 ###############################################################################
 # AOI from layer BoundingBox but restricted with TileMatrixSetLimits
@@ -1181,7 +1296,9 @@ def test_wmts_20():
     if gdaltest.wmts_drv is None:
         pytest.skip()
 
-    gdal.FileFromMemBuffer('/vsimem/wmts_20.xml', """<Capabilities>
+    gdal.FileFromMemBuffer(
+        "/vsimem/wmts_20.xml",
+        """<Capabilities>
     <Contents>
         <Layer>
             <ows:BoundingBox crs="urn:ogc:def:crs:EPSG::4326">
@@ -1243,10 +1360,13 @@ def test_wmts_20():
         </TileMatrixSet>
     </Contents>
     <ServiceMetadataURL xlink:href="/vsimem/wmts_20.xml"/>
-</Capabilities>""")
+</Capabilities>""",
+    )
 
-    ds = gdal.OpenEx('WMTS:/vsimem/wmts_20.xml',
-                     open_options = ["CLIP_EXTENT_WITH_MOST_PRECISE_TILE_MATRIX_LIMITS=YES"])
+    ds = gdal.OpenEx(
+        "WMTS:/vsimem/wmts_20.xml",
+        open_options=["CLIP_EXTENT_WITH_MOST_PRECISE_TILE_MATRIX_LIMITS=YES"],
+    )
     assert ds is not None
     assert ds.RasterXSize == 512
     assert ds.RasterYSize == 256
@@ -1254,7 +1374,8 @@ def test_wmts_20():
     expected_gt = (-90, 0.3515625, 0.0, 90.0, 0.0, -0.3515625)
     for i in range(6):
         assert got_gt[i] == pytest.approx(expected_gt[i], abs=1e-8)
-    assert ds.GetProjectionRef().find('4326') >= 0
+    assert ds.GetProjectionRef().find("4326") >= 0
+
 
 ###############################################################################
 # Test ExtendBeyondDateLine
@@ -1265,7 +1386,9 @@ def test_wmts_21():
     if gdaltest.wmts_drv is None:
         pytest.skip()
 
-    gdal.FileFromMemBuffer('/vsimem/wmts_21.xml', """<Capabilities>
+    gdal.FileFromMemBuffer(
+        "/vsimem/wmts_21.xml",
+        """<Capabilities>
     <Contents>
         <Layer>
             <ows:BoundingBox crs="urn:ogc:def:crs:EPSG::4326">
@@ -1323,9 +1446,10 @@ def test_wmts_21():
         </TileMatrixSet>
     </Contents>
     <ServiceMetadataURL xlink:href="/vsimem/wmts_21.xml"/>
-</Capabilities>""")
+</Capabilities>""",
+    )
 
-    ds = gdal.Open('WMTS:/vsimem/wmts_21.xml,extendbeyonddateline=yes')
+    ds = gdal.Open("WMTS:/vsimem/wmts_21.xml,extendbeyonddateline=yes")
     assert ds is not None
     assert ds.RasterXSize == 512
     assert ds.RasterYSize == 256
@@ -1333,21 +1457,30 @@ def test_wmts_21():
     expected_gt = (90, 0.3515625, 0.0, 0.0, 0.0, -0.3515625)
     for i in range(6):
         assert got_gt[i] == pytest.approx(expected_gt[i], abs=1e-8)
-    assert ds.GetProjectionRef().find('4326') >= 0
+    assert ds.GetProjectionRef().find("4326") >= 0
 
-    tmp_ds = gdal.GetDriverByName('MEM').Create('', 256, 256, 4)
+    tmp_ds = gdal.GetDriverByName("MEM").Create("", 256, 256, 4)
     for i in range(4):
         tmp_ds.GetRasterBand(i + 1).Fill(64)
-    tmp3_ds = gdal.GetDriverByName('PNG').CreateCopy('/vsimem/wmts_21/default_style/tms/GoogleCRS84Quad:2/1/3.png', tmp_ds)
+    tmp3_ds = gdal.GetDriverByName("PNG").CreateCopy(
+        "/vsimem/wmts_21/default_style/tms/GoogleCRS84Quad:2/1/3.png", tmp_ds
+    )
 
-    tmp_ds = gdal.GetDriverByName('MEM').Create('', 256, 256, 4)
+    tmp_ds = gdal.GetDriverByName("MEM").Create("", 256, 256, 4)
     for i in range(4):
         tmp_ds.GetRasterBand(i + 1).Fill(128)
-    tmp0_ds = gdal.GetDriverByName('PNG').CreateCopy('/vsimem/wmts_21/default_style/tms/GoogleCRS84Quad:2/1/0.png', tmp_ds)
+    tmp0_ds = gdal.GetDriverByName("PNG").CreateCopy(
+        "/vsimem/wmts_21/default_style/tms/GoogleCRS84Quad:2/1/0.png", tmp_ds
+    )
 
-    assert ds.GetRasterBand(1).ReadRaster(0, 0, 256, 256) == tmp3_ds.GetRasterBand(1).ReadRaster(0, 0, 256, 256)
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 256, 256) == tmp3_ds.GetRasterBand(
+        1
+    ).ReadRaster(0, 0, 256, 256)
 
-    assert ds.GetRasterBand(1).ReadRaster(256, 0, 256, 256) == tmp0_ds.GetRasterBand(1).ReadRaster(0, 0, 256, 256)
+    assert ds.GetRasterBand(1).ReadRaster(256, 0, 256, 256) == tmp0_ds.GetRasterBand(
+        1
+    ).ReadRaster(0, 0, 256, 256)
+
 
 ###############################################################################
 # Test when WGS84BoundingBox is a densified reprojection of the tile matrix bbox
@@ -1358,7 +1491,9 @@ def test_wmts_22():
     if gdaltest.wmts_drv is None:
         pytest.skip()
 
-    gdal.FileFromMemBuffer('/vsimem/wmts_22.xml', """<Capabilities>
+    gdal.FileFromMemBuffer(
+        "/vsimem/wmts_22.xml",
+        """<Capabilities>
     <Contents>
         <Layer>
             <ows:WGS84BoundingBox>
@@ -1393,9 +1528,10 @@ def test_wmts_22():
         </TileMatrixSet>
     </Contents>
     <ServiceMetadataURL xlink:href="/vsimem/wmts_22.xml"/>
-</Capabilities>""")
+</Capabilities>""",
+    )
 
-    ds = gdal.Open('WMTS:/vsimem/wmts_22.xml')
+    ds = gdal.Open("WMTS:/vsimem/wmts_22.xml")
     assert ds is not None
     assert ds.RasterXSize == 2097152
     assert ds.RasterYSize == 2097152
@@ -1403,7 +1539,9 @@ def test_wmts_22():
     expected_gt = (-548576.0, 1.0000000000004, 0.0, 8388608.0, 0.0, -1.0000000000004)
     for i in range(6):
         assert got_gt[i] == pytest.approx(expected_gt[i], abs=1e-8)
-    assert ds.GetProjectionRef().find('3067') >= 0
+    assert ds.GetProjectionRef().find("3067") >= 0
+
+
 ###############################################################################
 #
 
@@ -1413,9 +1551,11 @@ def wmts_23(imagetype, expected_cs):
     if gdaltest.wmts_drv is None:
         pytest.skip()
 
-    inputXml = '/vsimem/' + imagetype + '.xml'
-    serviceUrl = '/vsimem/wmts_23/' + imagetype
-    gdal.FileFromMemBuffer(inputXml, """<Capabilities>
+    inputXml = "/vsimem/" + imagetype + ".xml"
+    serviceUrl = "/vsimem/wmts_23/" + imagetype
+    gdal.FileFromMemBuffer(
+        inputXml,
+        """<Capabilities>
     <Contents>
         <Layer>
             <Identifier/>
@@ -1425,7 +1565,9 @@ def wmts_23(imagetype, expected_cs):
             <Style>
                 <Identifier/>
             </Style>
-            <ResourceURL format="image/png" template=" """ + serviceUrl + """/{TileMatrix}/{TileRow}/{TileCol}.png" resourceType="tile"/>
+            <ResourceURL format="image/png" template=" """
+        + serviceUrl
+        + """/{TileMatrix}/{TileRow}/{TileCol}.png" resourceType="tile"/>
         </Layer>
         <TileMatrixSet>
             <Identifier>tms</Identifier>
@@ -1441,15 +1583,16 @@ def wmts_23(imagetype, expected_cs):
             </TileMatrix>
         </TileMatrixSet>
     </Contents>
-</Capabilities>""")
+</Capabilities>""",
+    )
 
-    tmp_ds = gdal.Open('data/wms/' + imagetype + '.png')
-    assert tmp_ds is not None, 'fail - cannot open tmp_ds'
+    tmp_ds = gdal.Open("data/wms/" + imagetype + ".png")
+    assert tmp_ds is not None, "fail - cannot open tmp_ds"
 
-    tile0_ds = gdal.GetDriverByName('PNG').CreateCopy(serviceUrl + '/0/0/0.png', tmp_ds)
-    assert tile0_ds is not None, 'fail - cannot create tile0'
+    tile0_ds = gdal.GetDriverByName("PNG").CreateCopy(serviceUrl + "/0/0/0.png", tmp_ds)
+    assert tile0_ds is not None, "fail - cannot create tile0"
 
-    ds = gdal.Open('WMTS:' + inputXml)
+    ds = gdal.Open("WMTS:" + inputXml)
     assert ds is not None
 
     assert ds.RasterXSize == 128
@@ -1460,25 +1603,24 @@ def wmts_23(imagetype, expected_cs):
         assert cs == expected_cs[i]
 
 
-
 def test_wmts_23_gray():
-    return wmts_23('gray', [60137, 60137, 60137, 4428])
+    return wmts_23("gray", [60137, 60137, 60137, 4428])
 
 
 def test_wmts_23_grayalpha():
-    return wmts_23('gray+alpha', [39910, 39910, 39910, 63180])
+    return wmts_23("gray+alpha", [39910, 39910, 39910, 63180])
 
 
 def test_wmts_23_pal():
-    return wmts_23('pal', [62950, 59100, 63864, 453])
+    return wmts_23("pal", [62950, 59100, 63864, 453])
 
 
 def test_wmts_23_rgb():
-    return wmts_23('rgb', [1020, 3665, 6180, 4428])
+    return wmts_23("rgb", [1020, 3665, 6180, 4428])
 
 
 def test_wmts_23_rgba():
-    return wmts_23('rgba', [65530, 51449, 1361, 59291])
+    return wmts_23("rgba", [65530, 51449, 1361, 59291])
 
 
 def test_wmts_invalid_global_to_tm_reprojection():
@@ -1486,8 +1628,10 @@ def test_wmts_invalid_global_to_tm_reprojection():
     if gdaltest.wmts_drv is None:
         pytest.skip()
 
-    inputXml = '/vsimem/wmts_invalid_global_to_tm_reprojection.xml'
-    gdal.FileFromMemBuffer(inputXml, """<?xml version="1.0"?>
+    inputXml = "/vsimem/wmts_invalid_global_to_tm_reprojection.xml"
+    gdal.FileFromMemBuffer(
+        inputXml,
+        """<?xml version="1.0"?>
 <Capabilities xmlns="http://www.opengis.net/wmts/1.0"
 xmlns:ows="http://www.opengis.net/ows/1.1"
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0.0">
@@ -1527,13 +1671,15 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0.0">
       </TileMatrix>
     </TileMatrixSet>
   </Contents>
-</Capabilities>""")
+</Capabilities>""",
+    )
 
-    ds = gdal.Open('WMTS:' + inputXml)
+    ds = gdal.Open("WMTS:" + inputXml)
     assert ds.RasterXSize == 512 and ds.RasterYSize == 1024
     ds = None
 
     gdal.Unlink(inputXml)
+
 
 ###############################################################################
 #
@@ -1544,8 +1690,10 @@ def test_wmts_check_no_overflow_zoom_level():
     if gdaltest.wmts_drv is None:
         pytest.skip()
 
-    inputXml = '/vsimem/wmts_check_no_overflow_zoom_level.xml'
-    gdal.FileFromMemBuffer(inputXml, """<?xml version="1.0"?>
+    inputXml = "/vsimem/wmts_check_no_overflow_zoom_level.xml"
+    gdal.FileFromMemBuffer(
+        inputXml,
+        """<?xml version="1.0"?>
 <Capabilities xmlns="http://www.opengis.net/wmts/1.0"
 xmlns:ows="http://www.opengis.net/ows/1.1"
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0.0">
@@ -1792,7 +1940,8 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0.0">
     </TileMatrix>
     </TileMatrixSet>
   </Contents>
-</Capabilities>""")
+</Capabilities>""",
+    )
 
     ds = gdal.Open(inputXml)
     assert ds.RasterXSize == 1073741766 and ds.RasterYSize == 1070224430
@@ -1801,6 +1950,7 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0.0">
     ds = None
 
     gdal.Unlink(inputXml)
+
 
 ###############################################################################
 # Test when local wmts tiles are missing
@@ -1811,7 +1961,9 @@ def test_wmts_24():
     if gdaltest.wmts_drv is None:
         pytest.skip()
 
-    gdal.FileFromMemBuffer('/vsimem/wmts_missing_local_tiles.xml', """<Capabilities>
+    gdal.FileFromMemBuffer(
+        "/vsimem/wmts_missing_local_tiles.xml",
+        """<Capabilities>
     <Contents>
         <Layer>
             <ows:WGS84BoundingBox>
@@ -1846,30 +1998,33 @@ def test_wmts_24():
         </TileMatrixSet>
     </Contents>
     <ServiceMetadataURL xlink:href="/vsimem/wmts_missing_local_tiles.xml"/>
-</Capabilities>""")
+</Capabilities>""",
+    )
 
-    ds = gdal.Open('WMTS:/vsimem/wmts_missing_local_tiles.xml')
-#   Read some data from the image
+    ds = gdal.Open("WMTS:/vsimem/wmts_missing_local_tiles.xml")
+    #   Read some data from the image
     band = ds.GetRasterBand(1)
     assert band is not None
-    structval=band.ReadRaster(0,0,1,1,buf_type=gdal.GDT_UInt16)
+    structval = band.ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_UInt16)
     assert structval is not None
-    data = struct.unpack('h' , structval)
-#   Expect a null value for the pixel data
+    data = struct.unpack("h", structval)
+    #   Expect a null value for the pixel data
     assert data[0] == 0
+
 
 ###############################################################################
 #
 
 
 def wmts_CleanCache():
-    hexstr = '012346789abcdef'
+    hexstr = "012346789abcdef"
     for i in range(len(hexstr)):
         for j in range(len(hexstr)):
-            lst = gdal.ReadDir('/vsimem/cache/%s/%s' % (i, j))
+            lst = gdal.ReadDir("/vsimem/cache/%s/%s" % (i, j))
             if lst is not None:
                 for f in lst:
-                    gdal.Unlink('/vsimem/cache/%s/%s/%s' % (i, j, f))
+                    gdal.Unlink("/vsimem/cache/%s/%s/%s" % (i, j, f))
+
 
 ###############################################################################
 #
@@ -1880,21 +2035,17 @@ def test_wmts_cleanup():
     if gdaltest.wmts_drv is None:
         pytest.skip()
 
-    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', None)
-    gdal.SetConfigOption('GDAL_DEFAULT_WMS_CACHE_PATH', None)
+    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", None)
+    gdal.SetConfigOption("GDAL_DEFAULT_WMS_CACHE_PATH", None)
 
     wmts_CleanCache()
 
-    lst = gdal.ReadDir('/vsimem/')
+    lst = gdal.ReadDir("/vsimem/")
     if lst:
         for f in lst:
-            gdal.Unlink('/vsimem/' + f)
+            gdal.Unlink("/vsimem/" + f)
 
     try:
-        shutil.rmtree('tmp/wmts_cache')
+        shutil.rmtree("tmp/wmts_cache")
     except OSError:
         pass
-
-
-
-

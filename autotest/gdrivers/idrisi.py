@@ -31,7 +31,6 @@
 
 import os
 
-
 import gdaltest
 
 ###############################################################################
@@ -40,8 +39,9 @@ import gdaltest
 
 def test_idrisi_1():
 
-    tst = gdaltest.GDALTest('RST', 'rst/byte.rst', 1, 5044)
+    tst = gdaltest.GDALTest("RST", "rst/byte.rst", 1, 5044)
     return tst.testOpen()
+
 
 ###############################################################################
 # Read test of byte file.
@@ -49,8 +49,9 @@ def test_idrisi_1():
 
 def test_idrisi_2():
 
-    tst = gdaltest.GDALTest('RST', 'rst/real.rst', 1, 5275)
+    tst = gdaltest.GDALTest("RST", "rst/real.rst", 1, 5275)
     return tst.testOpen()
+
 
 ###############################################################################
 #
@@ -58,9 +59,10 @@ def test_idrisi_2():
 
 def test_idrisi_3():
 
-    tst = gdaltest.GDALTest('RST', 'ehdr/float32.bil', 1, 27)
+    tst = gdaltest.GDALTest("RST", "ehdr/float32.bil", 1, 27)
 
-    return tst.testCreate(new_filename='tmp/float32.rst', out_bands=1, vsimem=1)
+    return tst.testCreate(new_filename="tmp/float32.rst", out_bands=1, vsimem=1)
+
 
 ###############################################################################
 #
@@ -68,10 +70,12 @@ def test_idrisi_3():
 
 def test_idrisi_4():
 
-    tst = gdaltest.GDALTest('RST', 'rgbsmall.tif', 2, 21053)
+    tst = gdaltest.GDALTest("RST", "rgbsmall.tif", 2, 21053)
 
-    return tst.testCreateCopy(check_gt=1, check_srs=1,
-                              new_filename='tmp/rgbsmall_cc.rst', vsimem=1)
+    return tst.testCreateCopy(
+        check_gt=1, check_srs=1, new_filename="tmp/rgbsmall_cc.rst", vsimem=1
+    )
+
 
 ###############################################################################
 # Cleanup.
@@ -80,13 +84,10 @@ def test_idrisi_4():
 def test_idrisi_cleanup():
     gdaltest.clean_tmp()
     try:
-        os.unlink('data/rgbsmall.tif.aux.xml')
-        os.unlink('data/rst/real.rst.aux.xml')
-        os.unlink('data/frmt09.cot.aux.xml')
-        os.unlink('data/rst/byte.rst.aux.xml')
-        print('FIXME?: data/rgbsmall.tif.aux.xml is produced by those tests')
+        os.unlink("data/rgbsmall.tif.aux.xml")
+        os.unlink("data/rst/real.rst.aux.xml")
+        os.unlink("data/frmt09.cot.aux.xml")
+        os.unlink("data/rst/byte.rst.aux.xml")
+        print("FIXME?: data/rgbsmall.tif.aux.xml is produced by those tests")
     except OSError:
         pass
-    
-
-

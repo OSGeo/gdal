@@ -39,12 +39,13 @@ as just names e.g. 'gdal_edit somefile.tif ...'
 Scripts: python files that need to called from python in order to be run,
 e.g. 'python path/to/samples/pct2rgb.py somefile.tif ...'
 """
-import os
 import glob
-import sys
+import os
 import subprocess
-import pytest
+import sys
 from pathlib import Path
+
+import pytest
 
 # pytest.skip("THIS TEST IN DRAFT MODE, SKIPPING", allow_module_level=True)
 
@@ -71,7 +72,6 @@ def get_scripts(script_path, excludes):
     os.chdir(here)
     scripts = s1 + s2
     del s1, s2
-
 
     for e in excludes:
         for s in scripts:

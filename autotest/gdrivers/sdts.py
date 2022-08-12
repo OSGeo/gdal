@@ -28,11 +28,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import gdal
-from osgeo import osr
-
-
 import gdaltest
+
+from osgeo import gdal, osr
 
 ###############################################################################
 # Test a truncated version of an SDTS DEM downloaded at
@@ -41,18 +39,17 @@ import gdaltest
 
 def test_sdts_1():
 
-    tst = gdaltest.GDALTest('SDTS', 'STDS_1107834_truncated/1107CATD.DDF', 1, 61672)
+    tst = gdaltest.GDALTest("SDTS", "STDS_1107834_truncated/1107CATD.DDF", 1, 61672)
     srs = osr.SpatialReference()
-    srs.SetWellKnownGeogCS('NAD27')
+    srs.SetWellKnownGeogCS("NAD27")
     srs.SetUTM(16)
-    tst.testOpen(check_prj=srs.ExportToWkt(),
-                    check_gt=(666015, 30, 0, 5040735, 0, -30),
-                    check_filelist=False)
+    tst.testOpen(
+        check_prj=srs.ExportToWkt(),
+        check_gt=(666015, 30, 0, 5040735, 0, -30),
+        check_filelist=False,
+    )
 
-    ds = gdal.Open('data/STDS_1107834_truncated/1107CATD.DDF')
+    ds = gdal.Open("data/STDS_1107834_truncated/1107CATD.DDF")
     md = ds.GetMetadata()
 
-    assert md['TITLE'] == 'ALANSON, MI-24000'
-
-
-
+    assert md["TITLE"] == "ALANSON, MI-24000"

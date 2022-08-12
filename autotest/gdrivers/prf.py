@@ -25,67 +25,68 @@
 ###############################################################################
 
 
-
 import gdaltest
-from osgeo import gdal
 import pytest
+
+from osgeo import gdal
 
 ###############################################################################
 
 
 def test_prf_1():
 
-    tst = gdaltest.GDALTest('prf', './PRF/ph.prf', 1, 43190)
+    tst = gdaltest.GDALTest("prf", "./PRF/ph.prf", 1, 43190)
     return tst.testOpen(check_gt=(1, 2, 3, -7, 5, 6))
 
 
 def test_prf_2():
 
-    ds = gdal.Open('./data/PRF/dem.x-dem')
+    ds = gdal.Open("./data/PRF/dem.x-dem")
 
-    assert ds.RasterXSize == 4330, 'Invalid dataset width'
+    assert ds.RasterXSize == 4330, "Invalid dataset width"
 
-    assert ds.RasterYSize == 4663, 'Invalid dataset height'
+    assert ds.RasterYSize == 4663, "Invalid dataset height"
 
     unittype = ds.GetRasterBand(1).GetUnitType()
-    assert unittype == 'm', 'Failed to read elevation units from x-dem'
+    assert unittype == "m", "Failed to read elevation units from x-dem"
 
     datatype = ds.GetRasterBand(1).DataType
-    assert datatype == gdal.GDT_Float32, 'Failed to read datatype'
+    assert datatype == gdal.GDT_Float32, "Failed to read datatype"
 
     expectedOvCount = 1
     if ds.GetRasterBand(1).GetOverviewCount() != expectedOvCount:
-        print('Overview count must be %d' % expectedOvCount)
-        print('But GetOverviewCount returned %d' % ds.GetRasterBand(1).GetOverviewCount())
-        pytest.fail('did not get expected number of overviews')
+        print("Overview count must be %d" % expectedOvCount)
+        print(
+            "But GetOverviewCount returned %d" % ds.GetRasterBand(1).GetOverviewCount()
+        )
+        pytest.fail("did not get expected number of overviews")
 
     overview = ds.GetRasterBand(1).GetOverview(0)
-    assert overview.XSize == 1082, ('Invalid dataset width %d' % overview.XSize)
-    assert overview.YSize == 1165, ('Invalid dataset height %d' % overview.YSize)
+    assert overview.XSize == 1082, "Invalid dataset width %d" % overview.XSize
+    assert overview.YSize == 1165, "Invalid dataset height %d" % overview.YSize
 
     ds = None
 
 
 def test_prf_3():
 
-    ds = gdal.Open('./data/PRF/ph.prf')
+    ds = gdal.Open("./data/PRF/ph.prf")
 
     expectedOvCount = 0
     if ds.GetRasterBand(1).GetOverviewCount() != expectedOvCount:
-        print('Overview count must be %d' % expectedOvCount)
-        print('But GetOverviewCount returned %d' % ds.GetRasterBand(1).GetOverviewCount())
-        pytest.fail('did not get expected number of overviews')
+        print("Overview count must be %d" % expectedOvCount)
+        print(
+            "But GetOverviewCount returned %d" % ds.GetRasterBand(1).GetOverviewCount()
+        )
+        pytest.fail("did not get expected number of overviews")
 
     ds = None
 
 
 def test_prf_4():
 
-    tst = gdaltest.GDALTest('prf', './PRF/dem.x-dem', 1, 0)
+    tst = gdaltest.GDALTest("prf", "./PRF/dem.x-dem", 1, 0)
     return tst.testOpen(check_gt=(1.5, 1.0, 0.0, 9329.0, 0.0, -2.0))
 
 
 ###############################################################################
-
-
-

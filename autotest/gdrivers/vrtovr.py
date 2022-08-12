@@ -28,10 +28,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import gdal
 import struct
 
 import gdaltest
+
+from osgeo import gdal
 
 ###############################################################################
 # Simple test
@@ -57,16 +58,18 @@ def test_vrtovr_1():
 </VRTDataset>"""
 
     ds = gdal.Open(vrt_string)
-    assert ds.GetRasterBand(1).GetOverviewCount() == 1, \
-        'did not get expected overview count'
+    assert (
+        ds.GetRasterBand(1).GetOverviewCount() == 1
+    ), "did not get expected overview count"
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    assert cs == 4672, 'did not get expected overview checksum'
+    assert cs == 4672, "did not get expected overview checksum"
 
     fl = ds.GetFileList()
-    assert fl == ['data/byte.tif', 'data/int16.tif'], 'did not get expected file list'
+    assert fl == ["data/byte.tif", "data/int16.tif"], "did not get expected file list"
 
     ds = None
+
 
 ###############################################################################
 # Test serialization
@@ -96,19 +99,21 @@ def test_vrtovr_2():
     gdal.VSIFCloseL(f)
 
     ds = gdal.Open("/vsimem/vrtovr_2.vrt", gdal.GA_Update)
-    ds.GetRasterBand(1).SetDescription('foo')
+    ds.GetRasterBand(1).SetDescription("foo")
     ds = None
 
     ds = gdal.Open("/vsimem/vrtovr_2.vrt")
-    assert ds.GetRasterBand(1).GetOverviewCount() == 1, \
-        'did not get expected overview count'
+    assert (
+        ds.GetRasterBand(1).GetOverviewCount() == 1
+    ), "did not get expected overview count"
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    assert cs == 4672, 'did not get expected overview checksum'
+    assert cs == 4672, "did not get expected overview checksum"
 
     ds = None
 
     gdal.Unlink("/vsimem/vrtovr_2.vrt")
+
 
 ###############################################################################
 #
@@ -130,10 +135,12 @@ def test_vrtovr_none():
 </VRTDataset>"""
 
     ds = gdal.Open(vrt_string)
-    assert ds.GetRasterBand(1).GetOverviewCount() == 0, \
-        'did not get expected overview count'
+    assert (
+        ds.GetRasterBand(1).GetOverviewCount() == 0
+    ), "did not get expected overview count"
 
     assert not ds.GetRasterBand(1).GetOverview(0)
+
 
 ###############################################################################
 #
@@ -159,8 +166,9 @@ def test_vrtovr_errors():
 </VRTDataset>"""
 
     ds = gdal.Open(vrt_string)
-    assert ds.GetRasterBand(1).GetOverviewCount() == 1, \
-        'did not get expected overview count'
+    assert (
+        ds.GetRasterBand(1).GetOverviewCount() == 1
+    ), "did not get expected overview count"
 
     assert not ds.GetRasterBand(1).GetOverview(-1)
 
@@ -176,9 +184,9 @@ def test_vrtovr_errors():
 
 def test_vrtovr_virtual():
 
-    tif_tmpfilename = '/vsimem/temp.tif'
-    src_ds = gdal.GetDriverByName('GTiff').Create(tif_tmpfilename, 20, 20, 3)
-    src_ds.BuildOverviews('NEAR', [2, 4])
+    tif_tmpfilename = "/vsimem/temp.tif"
+    src_ds = gdal.GetDriverByName("GTiff").Create(tif_tmpfilename, 20, 20, 3)
+    src_ds.BuildOverviews("NEAR", [2, 4])
     src_ds.GetRasterBand(1).Fill(200)
     src_ds.GetRasterBand(2).Fill(100)
     src_ds.GetRasterBand(1).GetOverview(0).Fill(100)
@@ -186,43 +194,79 @@ def test_vrtovr_virtual():
     src_ds = None
     src_ds = gdal.Open(tif_tmpfilename)
 
-    tmpfilename = '/vsimem/temp.vrt'
-    vrt_ds = gdal.Translate(tmpfilename, src_ds, format='VRT')
-    assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 0 # we normally don't create implicit overviews on that small datasets
+    tmpfilename = "/vsimem/temp.vrt"
+    vrt_ds = gdal.Translate(tmpfilename, src_ds, format="VRT")
+    assert (
+        vrt_ds.GetRasterBand(1).GetOverviewCount() == 0
+    )  # we normally don't create implicit overviews on that small datasets
 
-    with gdaltest.config_option('VRT_VIRTUAL_OVERVIEWS', 'YES'):
-        vrt_ds.BuildOverviews('NEAR', [2, 4, 5, 50]) # level 50 is too big
-    assert gdal.VSIStatL(tmpfilename + '.ovr') is None
+    with gdaltest.config_option("VRT_VIRTUAL_OVERVIEWS", "YES"):
+        vrt_ds.BuildOverviews("NEAR", [2, 4, 5, 50])  # level 50 is too big
+    assert gdal.VSIStatL(tmpfilename + ".ovr") is None
     assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 3
 
     # Clean overviews
-    with gdaltest.config_option('VRT_VIRTUAL_OVERVIEWS', 'YES'):
-        vrt_ds.BuildOverviews('NONE', [])
+    with gdaltest.config_option("VRT_VIRTUAL_OVERVIEWS", "YES"):
+        vrt_ds.BuildOverviews("NONE", [])
     assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 0
 
     # Add in two steps
-    with gdaltest.config_option('VRT_VIRTUAL_OVERVIEWS', 'YES'):
-        vrt_ds.BuildOverviews('NEAR', [2, 4])
-        vrt_ds.BuildOverviews('NEAR', [5])
+    with gdaltest.config_option("VRT_VIRTUAL_OVERVIEWS", "YES"):
+        vrt_ds.BuildOverviews("NEAR", [2, 4])
+        vrt_ds.BuildOverviews("NEAR", [5])
     assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 3
 
-    assert vrt_ds.GetRasterBand(1).GetOverview(0).Checksum() == src_ds.GetRasterBand(1).GetOverview(0).Checksum()
-    assert vrt_ds.GetRasterBand(1).GetOverview(1).Checksum() == src_ds.GetRasterBand(1).GetOverview(1).Checksum()
-    assert vrt_ds.ReadRaster(0,0,20,20,10,10) == src_ds.ReadRaster(0,0,20,20,10,10)
-    assert vrt_ds.GetRasterBand(1).ReadRaster(0,0,20,20,10,10) == src_ds.GetRasterBand(1).ReadRaster(0,0,20,20,10,10)
-    assert vrt_ds.GetRasterBand(1).ReadRaster(0,0,20,20,5,5) == src_ds.GetRasterBand(1).ReadRaster(0,0,20,20,5,5)
-    assert struct.unpack('B' * 4 * 4,vrt_ds.GetRasterBand(1).ReadRaster(0,0,20,20,4,4))[0] == 50
+    assert (
+        vrt_ds.GetRasterBand(1).GetOverview(0).Checksum()
+        == src_ds.GetRasterBand(1).GetOverview(0).Checksum()
+    )
+    assert (
+        vrt_ds.GetRasterBand(1).GetOverview(1).Checksum()
+        == src_ds.GetRasterBand(1).GetOverview(1).Checksum()
+    )
+    assert vrt_ds.ReadRaster(0, 0, 20, 20, 10, 10) == src_ds.ReadRaster(
+        0, 0, 20, 20, 10, 10
+    )
+    assert vrt_ds.GetRasterBand(1).ReadRaster(
+        0, 0, 20, 20, 10, 10
+    ) == src_ds.GetRasterBand(1).ReadRaster(0, 0, 20, 20, 10, 10)
+    assert vrt_ds.GetRasterBand(1).ReadRaster(
+        0, 0, 20, 20, 5, 5
+    ) == src_ds.GetRasterBand(1).ReadRaster(0, 0, 20, 20, 5, 5)
+    assert (
+        struct.unpack(
+            "B" * 4 * 4, vrt_ds.GetRasterBand(1).ReadRaster(0, 0, 20, 20, 4, 4)
+        )[0]
+        == 50
+    )
     vrt_ds = None
 
     # Re-open VRT and re-run checks
     vrt_ds = gdal.Open(tmpfilename)
     assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 3
-    assert vrt_ds.GetRasterBand(1).GetOverview(0).Checksum() == src_ds.GetRasterBand(1).GetOverview(0).Checksum()
-    assert vrt_ds.GetRasterBand(1).GetOverview(1).Checksum() == src_ds.GetRasterBand(1).GetOverview(1).Checksum()
-    assert vrt_ds.ReadRaster(0,0,20,20,10,10) == src_ds.ReadRaster(0,0,20,20,10,10)
-    assert vrt_ds.GetRasterBand(1).ReadRaster(0,0,20,20,10,10) == src_ds.GetRasterBand(1).ReadRaster(0,0,20,20,10,10)
-    assert vrt_ds.GetRasterBand(1).ReadRaster(0,0,20,20,5,5) == src_ds.GetRasterBand(1).ReadRaster(0,0,20,20,5,5)
-    assert struct.unpack('B' * 4 * 4,vrt_ds.GetRasterBand(1).ReadRaster(0,0,20,20,4,4))[0] == 50
+    assert (
+        vrt_ds.GetRasterBand(1).GetOverview(0).Checksum()
+        == src_ds.GetRasterBand(1).GetOverview(0).Checksum()
+    )
+    assert (
+        vrt_ds.GetRasterBand(1).GetOverview(1).Checksum()
+        == src_ds.GetRasterBand(1).GetOverview(1).Checksum()
+    )
+    assert vrt_ds.ReadRaster(0, 0, 20, 20, 10, 10) == src_ds.ReadRaster(
+        0, 0, 20, 20, 10, 10
+    )
+    assert vrt_ds.GetRasterBand(1).ReadRaster(
+        0, 0, 20, 20, 10, 10
+    ) == src_ds.GetRasterBand(1).ReadRaster(0, 0, 20, 20, 10, 10)
+    assert vrt_ds.GetRasterBand(1).ReadRaster(
+        0, 0, 20, 20, 5, 5
+    ) == src_ds.GetRasterBand(1).ReadRaster(0, 0, 20, 20, 5, 5)
+    assert (
+        struct.unpack(
+            "B" * 4 * 4, vrt_ds.GetRasterBand(1).ReadRaster(0, 0, 20, 20, 4, 4)
+        )[0]
+        == 50
+    )
 
     gdal.Unlink(tmpfilename)
     gdal.Unlink(tif_tmpfilename)
@@ -235,20 +279,19 @@ def test_vrtovr_virtual():
 
 def test_vrtovr_virtual_with_preexisting_implicit_ovr():
 
-    src_ds = gdal.GetDriverByName('MEM').Create('', 1000, 1000)
-    src_ds.BuildOverviews('NEAR', [2])
-    vrt_ds = gdal.Translate('', src_ds, format='VRT')
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1000, 1000)
+    src_ds.BuildOverviews("NEAR", [2])
+    vrt_ds = gdal.Translate("", src_ds, format="VRT")
     assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 1
 
-    with gdaltest.config_option('VRT_VIRTUAL_OVERVIEWS', 'YES'):
-        vrt_ds.BuildOverviews('NEAR', [2, 4])
+    with gdaltest.config_option("VRT_VIRTUAL_OVERVIEWS", "YES"):
+        vrt_ds.BuildOverviews("NEAR", [2, 4])
     assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 2
 
 
 ###############################################################################
 # Cleanup.
 
+
 def test_vrtovr_cleanup():
     pass
-
-

@@ -31,8 +31,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import gdal
-from osgeo import ogr
+from osgeo import gdal, ogr
 
 ###############################################################################
 # Generate a .kml/.kmz file with OGR LIBKML driver covering most requirements
@@ -123,44 +122,57 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
     style_table.LoadStyleTable("/vsimem/style.txt")
     gdal.Unlink("/vsimem/style.txt")
 
-    ds_options = ['author_name=Even Rouault',
-                  'author_uri=http://gdal.org',
-                  'author_email=foo@bar.com',
-                  'link=http://gdal.org',
-                  'phonenumber=tel:12345678',
-                  'NLC_MINREFRESHPERIOD=3600',
-                  'NLC_MAXSESSIONLENGTH=-1',
-                  'NLC_COOKIE=cookie',
-                  'NLC_MESSAGE=message',
-                  'NLC_LINKNAME=linkname',
-                  'NLC_LINKDESCRIPTION=linkdescription',
-                  'NLC_LINKSNIPPET=linksnippet',
-                  'NLC_EXPIRES=2014-12-31T23:59:59Z',
-                  'LISTSTYLE_ICON_HREF=http://www.gdal.org/gdalicon.png',
-                  'eiffel_tower_normal_balloonstyle_bgcolor=#FFFF00']
-    ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filename, options=ds_options)
+    ds_options = [
+        "author_name=Even Rouault",
+        "author_uri=http://gdal.org",
+        "author_email=foo@bar.com",
+        "link=http://gdal.org",
+        "phonenumber=tel:12345678",
+        "NLC_MINREFRESHPERIOD=3600",
+        "NLC_MAXSESSIONLENGTH=-1",
+        "NLC_COOKIE=cookie",
+        "NLC_MESSAGE=message",
+        "NLC_LINKNAME=linkname",
+        "NLC_LINKDESCRIPTION=linkdescription",
+        "NLC_LINKSNIPPET=linksnippet",
+        "NLC_EXPIRES=2014-12-31T23:59:59Z",
+        "LISTSTYLE_ICON_HREF=http://www.gdal.org/gdalicon.png",
+        "eiffel_tower_normal_balloonstyle_bgcolor=#FFFF00",
+    ]
+    ds = ogr.GetDriverByName("LIBKML").CreateDataSource(filename, options=ds_options)
 
     ds.SetStyleTable(style_table)
 
-    lyr_options = ['LOOKAT_LONGITUDE=2.2945', 'LOOKAT_LATITUDE=48.85825', 'LOOKAT_RANGE=300',
-                   'LOOKAT_ALTITUDE=30', 'LOOKAT_HEADING=0', 'LOOKAT_TILT=70', 'LOOKAT_ALTITUDEMODE=relativeToGround',
-                   'ADD_REGION=YES', 'REGION_MIN_LOD_PIXELS=128', 'REGION_MAX_LOD_PIXELS=10000000',
-                   'REGION_MIN_FADE_EXTENT=1', 'REGION_MAX_FADE_EXTENT=2', 'SO_HREF=http://www.gdal.org/gdalicon.png',
-                   'LISTSTYLE_ICON_HREF=http://www.gdal.org/gdalicon.png']
-    lyr = ds.CreateLayer('test', options=lyr_options)
-    lyr.CreateField(ogr.FieldDefn('name', ogr.OFTString))
-    lyr.CreateField(ogr.FieldDefn('description', ogr.OFTString))
-    lyr.CreateField(ogr.FieldDefn('nom_francais', ogr.OFTString))
-    lyr.CreateField(ogr.FieldDefn('int_value', ogr.OFTInteger))
-    lyr.CreateField(ogr.FieldDefn('double_value', ogr.OFTReal))
-    lyr.CreateField(ogr.FieldDefn('timestamp', ogr.OFTDateTime))
-    lyr.CreateField(ogr.FieldDefn('begin', ogr.OFTDateTime))
-    lyr.CreateField(ogr.FieldDefn('end', ogr.OFTDateTime))
-    lyr.CreateField(ogr.FieldDefn('snippet', ogr.OFTString))
-    lyr.CreateField(ogr.FieldDefn('altitudeMode', ogr.OFTString))
-    lyr.CreateField(ogr.FieldDefn('extrude', ogr.OFTInteger))
-    lyr.CreateField(ogr.FieldDefn('tessellate', ogr.OFTInteger))
-    lyr.CreateField(ogr.FieldDefn('model', ogr.OFTString))
+    lyr_options = [
+        "LOOKAT_LONGITUDE=2.2945",
+        "LOOKAT_LATITUDE=48.85825",
+        "LOOKAT_RANGE=300",
+        "LOOKAT_ALTITUDE=30",
+        "LOOKAT_HEADING=0",
+        "LOOKAT_TILT=70",
+        "LOOKAT_ALTITUDEMODE=relativeToGround",
+        "ADD_REGION=YES",
+        "REGION_MIN_LOD_PIXELS=128",
+        "REGION_MAX_LOD_PIXELS=10000000",
+        "REGION_MIN_FADE_EXTENT=1",
+        "REGION_MAX_FADE_EXTENT=2",
+        "SO_HREF=http://www.gdal.org/gdalicon.png",
+        "LISTSTYLE_ICON_HREF=http://www.gdal.org/gdalicon.png",
+    ]
+    lyr = ds.CreateLayer("test", options=lyr_options)
+    lyr.CreateField(ogr.FieldDefn("name", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("description", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("nom_francais", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("int_value", ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn("double_value", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("timestamp", ogr.OFTDateTime))
+    lyr.CreateField(ogr.FieldDefn("begin", ogr.OFTDateTime))
+    lyr.CreateField(ogr.FieldDefn("end", ogr.OFTDateTime))
+    lyr.CreateField(ogr.FieldDefn("snippet", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("altitudeMode", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("extrude", ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn("tessellate", ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn("model", ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn("scale_x", ogr.OFTReal))
     lyr.CreateField(ogr.FieldDefn("scale_y", ogr.OFTReal))
     lyr.CreateField(ogr.FieldDefn("scale_z", ogr.OFTReal))
@@ -196,41 +208,53 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
     lyr.CreateField(ogr.FieldDefn("imagepyramid_maxheight", ogr.OFTInteger))
 
     feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetField('name', 'Eiffel tower')
-    feat.SetField('description', 'Famous Paris attraction. Built by Gustave Eiffel in 1889.')
-    feat.SetField('nom_francais', 'Tour Eiffel')
-    feat.SetField('int_value', 12)
-    feat.SetField('double_value', 34.56)
-    feat.SetField('snippet', 'Very cool snippet')
-    feat.SetField('begin', '1889/05/06')
-    feat.SetField('end', '9999/12/31')
-    feat.SetStyleString('@eiffel_tower')
-    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(2.2945 48.85825)'))
+    feat.SetField("name", "Eiffel tower")
+    feat.SetField(
+        "description", "Famous Paris attraction. Built by Gustave Eiffel in 1889."
+    )
+    feat.SetField("nom_francais", "Tour Eiffel")
+    feat.SetField("int_value", 12)
+    feat.SetField("double_value", 34.56)
+    feat.SetField("snippet", "Very cool snippet")
+    feat.SetField("begin", "1889/05/06")
+    feat.SetField("end", "9999/12/31")
+    feat.SetStyleString("@eiffel_tower")
+    feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2.2945 48.85825)"))
     lyr.CreateFeature(feat)
 
     feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetField('name', 'Avenue Gustave Eiffel')
-    feat.SetField('timestamp', '2014/02/22')
-    feat.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(2.29420 48.85746,2.29540 48.85833)'))
-    feat.SetStyleString('PEN(c:#00FF00)')
-    feat.SetField('tessellate', 1)
+    feat.SetField("name", "Avenue Gustave Eiffel")
+    feat.SetField("timestamp", "2014/02/22")
+    feat.SetGeometry(
+        ogr.CreateGeometryFromWkt("LINESTRING(2.29420 48.85746,2.29540 48.85833)")
+    )
+    feat.SetStyleString("PEN(c:#00FF00)")
+    feat.SetField("tessellate", 1)
     lyr.CreateFeature(feat)
 
     feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetField('name', 'Ecole Militaire')
-    feat.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((2.30383 48.85162 15,2.30460 48.85220 15,2.30581 48.85152 15,2.30507 48.85083 15,2.30383 48.85162 15))'))
-    feat.SetField('altitudeMode', 'relativeToGround')
-    feat.SetField('extrude', 1)
-    feat.SetStyleString('BRUSH(fc:#0000FF)')
+    feat.SetField("name", "Ecole Militaire")
+    feat.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "POLYGON((2.30383 48.85162 15,2.30460 48.85220 15,2.30581 48.85152 15,2.30507 48.85083 15,2.30383 48.85162 15))"
+        )
+    )
+    feat.SetField("altitudeMode", "relativeToGround")
+    feat.SetField("extrude", 1)
+    feat.SetStyleString("BRUSH(fc:#0000FF)")
     lyr.CreateFeature(feat)
 
     feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetField('name', 'Champ de Mars')
-    feat.SetGeometry(ogr.CreateGeometryFromWkt('MULTIPOLYGON(((2.29413 48.85703,2.29606 48.85847,2.29837 48.85679,2.29676 48.85543,2.29413 48.85703)),((2.29656 48.85504,2.29929 48.85674,2.30359 48.85364,2.30164 48.85226,2.29656 48.85504)))'))
+    feat.SetField("name", "Champ de Mars")
+    feat.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "MULTIPOLYGON(((2.29413 48.85703,2.29606 48.85847,2.29837 48.85679,2.29676 48.85543,2.29413 48.85703)),((2.29656 48.85504,2.29929 48.85674,2.30359 48.85364,2.30164 48.85226,2.29656 48.85504)))"
+        )
+    )
     lyr.CreateFeature(feat)
 
     feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(2.2945 48.85825 10)'))
+    feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2.2945 48.85825 10)"))
     feat.SetField("tilt", 75)
     feat.SetField("roll", 10)
     feat.SetField("heading", -70)
@@ -243,7 +267,9 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField("name", "a network link")
-    feat.SetField("networklink", "http://developers.google.com/kml/documentation/Point.kml")
+    feat.SetField(
+        "networklink", "http://developers.google.com/kml/documentation/Point.kml"
+    )
     feat.SetField("networklink_refreshVisibility", 1)
     feat.SetField("networklink_flyToView", 1)
     feat.SetField("networklink_refreshInterval", 60)
@@ -251,20 +277,29 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
     lyr.CreateFeature(feat)
 
     feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetField("networklink", "http://developers.google.com/kml/documentation/Point.kml")
+    feat.SetField(
+        "networklink", "http://developers.google.com/kml/documentation/Point.kml"
+    )
     feat.SetField("networklink_viewRefreshTime", 30)
     lyr.CreateFeature(feat)
 
     feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetField("networklink", "http://developers.google.com/kml/documentation/Point.kml")
-    feat.SetField("networklink_refreshMode", 'onExpire')
-    feat.SetField("networklink_viewRefreshMode", 'onRegion')
+    feat.SetField(
+        "networklink", "http://developers.google.com/kml/documentation/Point.kml"
+    )
+    feat.SetField("networklink_refreshMode", "onExpire")
+    feat.SetField("networklink_viewRefreshMode", "onRegion")
     feat.SetField("networklink_viewBoundScale", 0.5)
-    feat.SetField("networklink_viewFormat", 'BBOX=[bboxWest],[bboxSouth],[bboxEast],[bboxNorth]')
+    feat.SetField(
+        "networklink_viewFormat", "BBOX=[bboxWest],[bboxSouth],[bboxEast],[bboxNorth]"
+    )
     lyr.CreateFeature(feat)
 
     feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetField("photooverlay", "http://even.rouault.free.fr/kml/gdalicon_$[level]_$[x]_$[y].png")
+    feat.SetField(
+        "photooverlay",
+        "http://even.rouault.free.fr/kml/gdalicon_$[level]_$[x]_$[y].png",
+    )
     feat.SetField("imagepyramid_tilesize", 256)
     feat.SetField("imagepyramid_maxwidth", 512)
     feat.SetField("imagepyramid_maxheight", 512)
@@ -280,7 +315,7 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
     feat.SetField("heading", 0)
     feat.SetField("tilt", 90)
     feat.SetField("roll", 0)
-    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(2.2945 48.85825)'))
+    feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2.2945 48.85825)"))
     lyr.CreateFeature(feat)
 
     # feat = ogr.Feature(lyr.GetLayerDefn())
@@ -299,21 +334,34 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
     # feat.SetGeometry(ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION (POINT EMPTY,POINT(1 2))'))
     # lyr.CreateFeature(feat)
 
-    lyr_options = ['CAMERA_LONGITUDE=2.2945', 'CAMERA_LATITUDE=48.85825', 'CAMERA_ALTITUDE=30',
-                   'CAMERA_HEADING=120', 'CAMERA_TILT=70', 'CAMERA_ROLL=10', 'CAMERA_ALTITUDEMODE=relativeToGround',
-                   'FOLDER=YES', 'NAME=layer_name', 'DESCRIPTION=description', 'OPEN=1', 'VISIBILITY=1', 'SNIPPET=snippet']
-    ds.CreateLayer('test2', options=lyr_options)
+    lyr_options = [
+        "CAMERA_LONGITUDE=2.2945",
+        "CAMERA_LATITUDE=48.85825",
+        "CAMERA_ALTITUDE=30",
+        "CAMERA_HEADING=120",
+        "CAMERA_TILT=70",
+        "CAMERA_ROLL=10",
+        "CAMERA_ALTITUDEMODE=relativeToGround",
+        "FOLDER=YES",
+        "NAME=layer_name",
+        "DESCRIPTION=description",
+        "OPEN=1",
+        "VISIBILITY=1",
+        "SNIPPET=snippet",
+    ]
+    ds.CreateLayer("test2", options=lyr_options)
 
-    gdal.SetConfigOption('LIBKML_USE_SIMPLEFIELD', 'NO')
-    lyr = ds.CreateLayer('test_data')
-    gdal.SetConfigOption('LIBKML_USE_SIMPLEFIELD', None)
-    lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
+    gdal.SetConfigOption("LIBKML_USE_SIMPLEFIELD", "NO")
+    lyr = ds.CreateLayer("test_data")
+    gdal.SetConfigOption("LIBKML_USE_SIMPLEFIELD", None)
+    lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField("foo", "bar")
-    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(2.2945 48.85825)'))
+    feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2.2945 48.85825)"))
     lyr.CreateFeature(feat)
 
     ds = None
+
 
 ###############################################################################
 # Generate a .kml file with OGR LIBKML driver covering the Update KML features
@@ -326,9 +374,13 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
 def generate_libkml_update(filename):
     gdal.Unlink(filename)
 
-    ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filename,
-                                                        options=['UPDATE_TARGETHREF=http://even.rouault.free.fr/kml/gdal_2.1/test_ogrlibkml.kml'])
-    lyr = ds.CreateLayer('test')
+    ds = ogr.GetDriverByName("LIBKML").CreateDataSource(
+        filename,
+        options=[
+            "UPDATE_TARGETHREF=http://even.rouault.free.fr/kml/gdal_2.1/test_ogrlibkml.kml"
+        ],
+    )
+    lyr = ds.CreateLayer("test")
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetFID(100)
     lyr.CreateFeature(feat)
@@ -336,6 +388,7 @@ def generate_libkml_update(filename):
     lyr.SetFeature(feat)
     lyr.DeleteFeature(1)
     ds = None
+
 
 ###############################################################################
 # Generate a .kml file with GDAL KMLSuperOverlay driver covering the GroundOverlay KML features
@@ -348,16 +401,16 @@ def generate_libkml_update(filename):
 
 def generate_kmlsuperoverlay(filename):
 
-    src_ds = gdal.GetDriverByName('MEM').Create('', 512, 256, 3)
-    src_ds.SetGeoTransform([-180, 360. / 512, 0, 90, 0, -180. / 256])
-    ds = gdal.GetDriverByName('KMLSuperOverlay').CreateCopy(filename, src_ds)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 512, 256, 3)
+    src_ds.SetGeoTransform([-180, 360.0 / 512, 0, 90, 0, -180.0 / 256])
+    ds = gdal.GetDriverByName("KMLSuperOverlay").CreateCopy(filename, src_ds)
     del ds
     src_ds = None
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    generate_libkml('test_ogrlibkml.kml')
-    generate_libkml('test_ogrlibkml.kmz')
-    generate_libkml_update('test_ogrlibkml_update.kml')
-    generate_kmlsuperoverlay('test_superoverlay.kmz')
+    generate_libkml("test_ogrlibkml.kml")
+    generate_libkml("test_ogrlibkml.kmz")
+    generate_libkml_update("test_ogrlibkml_update.kml")
+    generate_kmlsuperoverlay("test_superoverlay.kmz")

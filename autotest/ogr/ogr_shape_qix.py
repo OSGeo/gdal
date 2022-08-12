@@ -31,7 +31,6 @@
 
 import random
 
-
 from osgeo import ogr
 
 ###############################################################################
@@ -58,23 +57,42 @@ def check_qix_non_overlapping_geoms(lyr):
         lyr.ResetReading()
         feat = lyr.GetNextFeature()
         got_geom = feat.GetGeometryRef()
-        assert got_geom.Equals(geom) != 0, \
-            ('expected %s. got %s' % (geom.ExportToWkt(), got_geom.ExportToWkt()))
+        assert got_geom.Equals(geom) != 0, "expected %s. got %s" % (
+            geom.ExportToWkt(),
+            got_geom.ExportToWkt(),
+        )
 
     # Get all geoms in a single gulp. We do not use exactly the extent bounds, because
     # there is an optimization in the shapefile driver to skip the spatial index in that
     # case. That trick can only work with non point geometries of course
-    lyr.SetSpatialFilterRect(extents[0] + 0.001, extents[2] + 0.001, extents[1] - 0.001, extents[3] - 0.001)
+    lyr.SetSpatialFilterRect(
+        extents[0] + 0.001, extents[2] + 0.001, extents[1] - 0.001, extents[3] - 0.001
+    )
     lyr.ResetReading()
     fc = lyr.GetFeatureCount()
-    assert fc == fc_ref, ('expected %d. got %d' % (fc_ref, fc))
+    assert fc == fc_ref, "expected %d. got %d" % (fc_ref, fc)
+
 
 ###############################################################################
 
 
 def build_rectangle_from_point(x, y, radius=0.1):
-    return ogr.CreateGeometryFromWkt('POLYGON((%f %f,%f %f,%f %f,%f %f,%f %f))' %
-                                     (x - radius, y - radius, x - radius, y + radius, x + radius, y + radius, x + radius, y - radius, x - radius, y - radius))
+    return ogr.CreateGeometryFromWkt(
+        "POLYGON((%f %f,%f %f,%f %f,%f %f,%f %f))"
+        % (
+            x - radius,
+            y - radius,
+            x - radius,
+            y + radius,
+            x + radius,
+            y + radius,
+            x + radius,
+            y - radius,
+            x - radius,
+            y - radius,
+        )
+    )
+
 
 ###############################################################################
 # Test geoms on a 10x10 grid
@@ -82,8 +100,8 @@ def build_rectangle_from_point(x, y, radius=0.1):
 
 def test_ogr_shape_qix_1():
 
-    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
-    ds = shape_drv.CreateDataSource('/vsimem/ogr_shape_qix.shp')
+    shape_drv = ogr.GetDriverByName("ESRI Shapefile")
+    ds = shape_drv.CreateDataSource("/vsimem/ogr_shape_qix.shp")
     lyr = ds.CreateLayer("ogr_shape_qix")
 
     for x in range(10):
@@ -93,17 +111,18 @@ def test_ogr_shape_qix_1():
             lyr.CreateFeature(feat)
             feat = None
 
-    ds.ExecuteSQL('CREATE SPATIAL INDEX ON ogr_shape_qix')
+    ds.ExecuteSQL("CREATE SPATIAL INDEX ON ogr_shape_qix")
 
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_shape_qix.shp')
+    ds = ogr.Open("/vsimem/ogr_shape_qix.shp")
     lyr = ds.GetLayer(0)
     ret = check_qix_non_overlapping_geoms(lyr)
 
-    shape_drv.DeleteDataSource('/vsimem/ogr_shape_qix.shp')
+    shape_drv.DeleteDataSource("/vsimem/ogr_shape_qix.shp")
 
     return ret
+
 
 ###############################################################################
 # Test geoms on a 100x100 grid
@@ -111,8 +130,8 @@ def test_ogr_shape_qix_1():
 
 def test_ogr_shape_qix_2():
 
-    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
-    ds = shape_drv.CreateDataSource('/vsimem/ogr_shape_qix.shp')
+    shape_drv = ogr.GetDriverByName("ESRI Shapefile")
+    ds = shape_drv.CreateDataSource("/vsimem/ogr_shape_qix.shp")
     lyr = ds.CreateLayer("ogr_shape_qix")
 
     for x in range(100):
@@ -122,17 +141,18 @@ def test_ogr_shape_qix_2():
             lyr.CreateFeature(feat)
             feat = None
 
-    ds.ExecuteSQL('CREATE SPATIAL INDEX ON ogr_shape_qix')
+    ds.ExecuteSQL("CREATE SPATIAL INDEX ON ogr_shape_qix")
 
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_shape_qix.shp')
+    ds = ogr.Open("/vsimem/ogr_shape_qix.shp")
     lyr = ds.GetLayer(0)
     ret = check_qix_non_overlapping_geoms(lyr)
 
-    shape_drv.DeleteDataSource('/vsimem/ogr_shape_qix.shp')
+    shape_drv.DeleteDataSource("/vsimem/ogr_shape_qix.shp")
 
     return ret
+
 
 ###############################################################################
 # Test 2 separated regions of 10x10 geoms
@@ -140,8 +160,8 @@ def test_ogr_shape_qix_2():
 
 def test_ogr_shape_qix_3():
 
-    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
-    ds = shape_drv.CreateDataSource('/vsimem/ogr_shape_qix.shp')
+    shape_drv = ogr.GetDriverByName("ESRI Shapefile")
+    ds = shape_drv.CreateDataSource("/vsimem/ogr_shape_qix.shp")
     lyr = ds.CreateLayer("ogr_shape_qix")
 
     for x in range(10):
@@ -158,17 +178,18 @@ def test_ogr_shape_qix_3():
             lyr.CreateFeature(feat)
             feat = None
 
-    ds.ExecuteSQL('CREATE SPATIAL INDEX ON ogr_shape_qix')
+    ds.ExecuteSQL("CREATE SPATIAL INDEX ON ogr_shape_qix")
 
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_shape_qix.shp')
+    ds = ogr.Open("/vsimem/ogr_shape_qix.shp")
     lyr = ds.GetLayer(0)
     ret = check_qix_non_overlapping_geoms(lyr)
 
-    shape_drv.DeleteDataSource('/vsimem/ogr_shape_qix.shp')
+    shape_drv.DeleteDataSource("/vsimem/ogr_shape_qix.shp")
 
     return ret
+
 
 ###############################################################################
 #
@@ -200,22 +221,28 @@ def check_qix_random_geoms(lyr):
                 found_geom = True
             else:
                 feat = lyr.GetNextFeature()
-        assert found_geom, ('did not find geometry for %s' % (geom.ExportToWkt()))
+        assert found_geom, "did not find geometry for %s" % (geom.ExportToWkt())
 
     # Get all geoms in a single gulp. We do not use exactly the extent bounds, because
     # there is an optimization in the shapefile driver to skip the spatial index in that
     # case. That trick can only work with non point geometries of course
-    lyr.SetSpatialFilterRect(extents[0] + 0.001, extents[2] + 0.001, extents[1] - 0.001, extents[3] - 0.001)
+    lyr.SetSpatialFilterRect(
+        extents[0] + 0.001, extents[2] + 0.001, extents[1] - 0.001, extents[3] - 0.001
+    )
     lyr.ResetReading()
     fc = lyr.GetFeatureCount()
-    assert fc == fc_ref, ('expected %d. got %d' % (fc_ref, fc))
+    assert fc == fc_ref, "expected %d. got %d" % (fc_ref, fc)
+
 
 ###############################################################################
 
 
 def build_rectangle(x1, y1, x2, y2):
-    return ogr.CreateGeometryFromWkt('POLYGON((%f %f,%f %f,%f %f,%f %f,%f %f))' %
-                                     (x1, y1, x1, y2, x2, y2, x2, y1, x1, y1))
+    return ogr.CreateGeometryFromWkt(
+        "POLYGON((%f %f,%f %f,%f %f,%f %f,%f %f))"
+        % (x1, y1, x1, y2, x2, y2, x2, y1, x1, y1)
+    )
+
 
 ###############################################################################
 # Test random geometries
@@ -223,8 +250,8 @@ def build_rectangle(x1, y1, x2, y2):
 
 def test_ogr_shape_qix_4():
 
-    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
-    ds = shape_drv.CreateDataSource('/vsimem/ogr_shape_qix.shp')
+    shape_drv = ogr.GetDriverByName("ESRI Shapefile")
+    ds = shape_drv.CreateDataSource("/vsimem/ogr_shape_qix.shp")
     lyr = ds.CreateLayer("ogr_shape_qix")
 
     # The 1000,200,10 figures are such that there are
@@ -250,13 +277,10 @@ def test_ogr_shape_qix_4():
         lyr.CreateFeature(feat)
         feat = None
 
-    ds.ExecuteSQL('CREATE SPATIAL INDEX ON ogr_shape_qix')
+    ds.ExecuteSQL("CREATE SPATIAL INDEX ON ogr_shape_qix")
 
     ret = check_qix_random_geoms(lyr)
 
-    shape_drv.DeleteDataSource('/vsimem/ogr_shape_qix.shp')
+    shape_drv.DeleteDataSource("/vsimem/ogr_shape_qix.shp")
 
     return ret
-
-
-

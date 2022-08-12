@@ -31,10 +31,10 @@
 # ******************************************************************************
 
 import os.path
-from numbers import Real, Number
-from pathlib import Path
-from typing import Sequence, Union, List, Tuple, TypeVar, Optional
 from enum import Enum
+from numbers import Number, Real
+from pathlib import Path
+from typing import List, Optional, Sequence, Tuple, TypeVar, Union
 
 T = TypeVar("T")
 MaybeSequence = Union[T, Sequence[T]]
@@ -61,17 +61,17 @@ def get_extension(filename: PathLikeOrStr) -> str:
     returns the suffix without the leading dot.
     special case for shp.zip
     """
-    if os.fspath(filename).lower().endswith('.shp.zip'):
-        return 'shp.zip'
+    if os.fspath(filename).lower().endswith(".shp.zip"):
+        return "shp.zip"
     ext = get_suffix(filename)
-    if ext.startswith('.'):
+    if ext.startswith("."):
         ext = ext[1:]
     return ext
 
 
 def get_byte(number: int, i: int):
-    """ returns the i-th byte from an integer"""
-    return (number & (0xff << (i * 8))) >> (i * 8)
+    """returns the i-th byte from an integer"""
+    return (number & (0xFF << (i * 8))) >> (i * 8)
 
 
 def path_join(*args) -> str:
@@ -95,10 +95,13 @@ def num_or_none(s: Optional[Union[Number, str]]) -> Optional[Number]:
         return None
 
 
-def is_true(b: OptionalBoolStr, accept_none: bool = False,
-            case_insensitive=True,
-            false_str=('NO', 'FALSE', 'OFF'),
-            true_str=('YES', 'TRUE', 'ON')) -> Optional[bool]:
+def is_true(
+    b: OptionalBoolStr,
+    accept_none: bool = False,
+    case_insensitive=True,
+    false_str=("NO", "FALSE", "OFF"),
+    true_str=("YES", "TRUE", "ON"),
+) -> Optional[bool]:
     """
     Returns a boolean value that is represented by a string or a bool
     correlated to the c++ implementation:
@@ -115,5 +118,4 @@ def is_true(b: OptionalBoolStr, accept_none: bool = False,
             return False
         if b in true_str:
             return True
-    raise Exception(f'{b} is not accepted as a valid boolean-like value')
-
+    raise Exception(f"{b} is not accepted as a valid boolean-like value")

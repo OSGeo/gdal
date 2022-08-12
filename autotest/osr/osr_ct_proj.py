@@ -30,9 +30,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import gdaltest
 import os
 
+import gdaltest
 import pytest
 
 from osgeo import gdal, osr
@@ -58,79 +58,182 @@ bonne = 'PROJCS["bonne",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1
 # - proj_version_req: string with minimum proj version required or None
 
 transform_list = [
-
     # Simple straight forward reprojection.
-    ('+proj=utm +zone=11 +datum=WGS84', (398285.45, 2654587.59, 0.0), 0.02,
-     'WGS84', (24.0, -118.0, 0.0), 0.00001,
-     'UTM_WGS84', None, None, None),
-
+    (
+        "+proj=utm +zone=11 +datum=WGS84",
+        (398285.45, 2654587.59, 0.0),
+        0.02,
+        "WGS84",
+        (24.0, -118.0, 0.0),
+        0.00001,
+        "UTM_WGS84",
+        None,
+        None,
+        None,
+    ),
     # Ensure that prime meridian *and* axis orientation changes are applied.
     # Note that this test will fail with PROJ.4 4.7 or earlier, it requires
     # axis support in PROJ 4.8.0.
     #    ('EPSG:27391', (40000, 20000, 0.0), 0.02,
     #     'EPSG:4273', (6.397933,58.358709,0.000000), 0.00001,
     #     'NGO_Oslo_zone1_NGO', None, None, None ),
-
     # Test Bonne projection.
-    ('WGS84', (65.0, 1.0, 0.0), 0.00001,
-     bonne, (47173.75, 557621.30, 0.0), 0.02,
-     'Bonne_WGS84', None, None, None),
-
+    (
+        "WGS84",
+        (65.0, 1.0, 0.0),
+        0.00001,
+        bonne,
+        (47173.75, 557621.30, 0.0),
+        0.02,
+        "Bonne_WGS84",
+        None,
+        None,
+        None,
+    ),
     # Test Two Point Equidistant
-    ('+proj=tpeqd +a=3396000  +b=3396000  +lat_1=36.3201218 +lon_1=-179.1566925 +lat_2=45.8120651 +lon_2=179.3727570 +no_defs', (4983568.76, 2092902.61, 0.0), 0.1,
-     '+proj=latlong +a=3396000 +b=3396000', (-140.0, 40.0, 0.0), 0.000001,
-     'TPED_Mars', None, None, None),
-
+    (
+        "+proj=tpeqd +a=3396000  +b=3396000  +lat_1=36.3201218 +lon_1=-179.1566925 +lat_2=45.8120651 +lon_2=179.3727570 +no_defs",
+        (4983568.76, 2092902.61, 0.0),
+        0.1,
+        "+proj=latlong +a=3396000 +b=3396000",
+        (-140.0, 40.0, 0.0),
+        0.000001,
+        "TPED_Mars",
+        None,
+        None,
+        None,
+    ),
     # test scale factor precision (per #1970)
-    ('data/wkt_rt90.def', (1572570.342, 6728429.67, 0.0), 0.001,
-     ' +proj=utm +zone=33 +ellps=GRS80 +units=m +no_defs', (616531.1155, 6727527.5682, 0.0), 0.001,
-     'ScalePrecision(#1970)', None, None, None),
-
+    (
+        "data/wkt_rt90.def",
+        (1572570.342, 6728429.67, 0.0),
+        0.001,
+        " +proj=utm +zone=33 +ellps=GRS80 +units=m +no_defs",
+        (616531.1155, 6727527.5682, 0.0),
+        0.001,
+        "ScalePrecision(#1970)",
+        None,
+        None,
+        None,
+    ),
     # Test Google Mercator (EPSG:3785)
-    ('EPSG:3785', (1572570.342, 6728429.67, 0.0), 0.001,
-     'WGS84', (51.601722482149995, 14.126639735716626, 0.0), 0.0000001,
-     'GoogleMercator(#3136)', None, None, None),
-
+    (
+        "EPSG:3785",
+        (1572570.342, 6728429.67, 0.0),
+        0.001,
+        "WGS84",
+        (51.601722482149995, 14.126639735716626, 0.0),
+        0.0000001,
+        "GoogleMercator(#3136)",
+        None,
+        None,
+        None,
+    ),
     # Test Equirectangular with all parameters
-    ('+proj=eqc +ellps=sphere  +lat_0=-2 +lat_ts=1 +lon_0=-10', (-14453132.04, 4670184.72, 0.0), 0.1,
-     '+proj=latlong +ellps=sphere', (-140.0, 40.0, 0.0), 0.000001,
-     'Equirectangular(#2706)', None, None, None),
-
+    (
+        "+proj=eqc +ellps=sphere  +lat_0=-2 +lat_ts=1 +lon_0=-10",
+        (-14453132.04, 4670184.72, 0.0),
+        0.1,
+        "+proj=latlong +ellps=sphere",
+        (-140.0, 40.0, 0.0),
+        0.000001,
+        "Equirectangular(#2706)",
+        None,
+        None,
+        None,
+    ),
     # Test Geocentric
-    ('+proj=latlong +datum=WGS84', (-140.0, 40.0, 0.0), 0.000001,
-     'EPSG:4328', (-3748031.46884168, -3144971.82314589, 4077985.57220038), 0.1,
-     'Geocentric', None, None, None),
-
+    (
+        "+proj=latlong +datum=WGS84",
+        (-140.0, 40.0, 0.0),
+        0.000001,
+        "EPSG:4328",
+        (-3748031.46884168, -3144971.82314589, 4077985.57220038),
+        0.1,
+        "Geocentric",
+        None,
+        None,
+        None,
+    ),
     # Test Vertical Datum Shift with a change of horizontal units.
-    ('EPSG:4979', (31.5656461890308, -121.213327277021, 0.0), 0.1,
-     '+proj=utm +zone=11 +datum=WGS84 +geoidgrids=egm96_15.gtx +units=us-ft', (328083.333225467, 11482916.6665952, 41.4697855726348), 0.01,
-     'EGM 96 Conversion', None, "egm96_15.gtx", '6.2.1'),
-
+    (
+        "EPSG:4979",
+        (31.5656461890308, -121.213327277021, 0.0),
+        0.1,
+        "+proj=utm +zone=11 +datum=WGS84 +geoidgrids=egm96_15.gtx +units=us-ft",
+        (328083.333225467, 11482916.6665952, 41.4697855726348),
+        0.01,
+        "EGM 96 Conversion",
+        None,
+        "egm96_15.gtx",
+        "6.2.1",
+    ),
     # Test optimization in case of identical projections (projected)
-    ('+proj=utm +zone=11 +datum=NAD27 +units=m', (440720.0, 3751260.0, 0.0), 0,
-     '+proj=utm +zone=11 +datum=NAD27 +units=m', (440720.0, 3751260.0, 0.0), 0,
-     'No-op Optimization (projected)', None, None, None),
-
+    (
+        "+proj=utm +zone=11 +datum=NAD27 +units=m",
+        (440720.0, 3751260.0, 0.0),
+        0,
+        "+proj=utm +zone=11 +datum=NAD27 +units=m",
+        (440720.0, 3751260.0, 0.0),
+        0,
+        "No-op Optimization (projected)",
+        None,
+        None,
+        None,
+    ),
     # Test optimization in case of identical projections (geodetic)
-    ('+proj=longlat +datum=WGS84', (2, 49, 0.0), 0,
-     '+proj=longlat +datum=WGS84', (2, 49, 0.0), 0,
-     'No-op Optimization (geodetic)', None, None, None),
-
+    (
+        "+proj=longlat +datum=WGS84",
+        (2, 49, 0.0),
+        0,
+        "+proj=longlat +datum=WGS84",
+        (2, 49, 0.0),
+        0,
+        "No-op Optimization (geodetic)",
+        None,
+        None,
+        None,
+    ),
     # Test GRS80 -> EPSG:3857
-    ('+proj=longlat +ellps=GRS80 +towgs84=0,0,0 +no_defs', (2, 49, 0.0), 1e-8,
-     '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs', (222638.981586547, 6274861.39384813, 0), 1e-3,
-     'GRS80 -> EPSG:3857', None, None, None),
-
+    (
+        "+proj=longlat +ellps=GRS80 +towgs84=0,0,0 +no_defs",
+        (2, 49, 0.0),
+        1e-8,
+        "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs",
+        (222638.981586547, 6274861.39384813, 0),
+        1e-3,
+        "GRS80 -> EPSG:3857",
+        None,
+        None,
+        None,
+    ),
     # Test GRS80 -> EPSG:3857
-    ('+proj=longlat +ellps=GRS80 +towgs84=0,0,0 +no_defs', (2, 49, 0.0), 1e-8,
-     '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs', (222638.981586547, 6274861.39384813, 0), 1e-3,
-     'GRS80 -> EPSG:3857', None, None, None),
-
-    ('EPSG:4314', (50, 10, 0.0), 1e-8,
-     'EPSG:4326', (49.9988573027651,9.99881145557889, 0.0), 1e-8,
-     'DHDN -> WGS84 using BETA2007', None, 'BETA2007.gsb', None),
-
-    ("""GEOGCS["DHDN",
+    (
+        "+proj=longlat +ellps=GRS80 +towgs84=0,0,0 +no_defs",
+        (2, 49, 0.0),
+        1e-8,
+        "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs",
+        (222638.981586547, 6274861.39384813, 0),
+        1e-3,
+        "GRS80 -> EPSG:3857",
+        None,
+        None,
+        None,
+    ),
+    (
+        "EPSG:4314",
+        (50, 10, 0.0),
+        1e-8,
+        "EPSG:4326",
+        (49.9988573027651, 9.99881145557889, 0.0),
+        1e-8,
+        "DHDN -> WGS84 using BETA2007",
+        None,
+        "BETA2007.gsb",
+        None,
+    ),
+    (
+        """GEOGCS["DHDN",
     DATUM["Deutsches_Hauptdreiecksnetz",
         SPHEROID["Bessel 1841",6377397.155,299.1528128,
             AUTHORITY["EPSG","7004"]],
@@ -140,25 +243,47 @@ transform_list = [
         AUTHORITY["EPSG","8901"]],
     UNIT["degree",0.0174532925199433,
         AUTHORITY["EPSG","9122"]],
-    AUTHORITY["EPSG","4314"]]""", (50, 10, 0.0), 1e-8,
-     'EPSG:4326', (49.9988572643058,9.99881392529464,0), 1e-8,
-     'DHDN -> WGS84 using TOWGS84 automatically set', 'OSR_CT_USE_DEFAULT_EPSG_TOWGS84=YES', None, None),
-
-    ('+proj=longlat +ellps=bessel +towgs84=598.1,73.7,418.2,0.202,0.045,-2.455,6.7 +no_defs', (10, 50, 0.0), 1e-8,
-     'EPSG:4326', (49.9988572643058,9.99881392529464,0), 1e-8,
-     'DHDN -> WGS84 using explicit TOWGS84', None, None, None),
-
-    ('EPSG:27562', (136555.58288992, 463344.51894296, 0.0), 1e-5,
-     'EPSG:4258', (49, -4, 0), 1e-8,
-     'EPSG:27562 -> EPSG:4258 using OGR_CT_OP_SELECTION=BEST_ACCURACY',
-     'OGR_CT_OP_SELECTION=BEST_ACCURACY',
-     'ntf_r93.gsb', '6.3.2'), # not sure 6.3.2 is the actual min version
+    AUTHORITY["EPSG","4314"]]""",
+        (50, 10, 0.0),
+        1e-8,
+        "EPSG:4326",
+        (49.9988572643058, 9.99881392529464, 0),
+        1e-8,
+        "DHDN -> WGS84 using TOWGS84 automatically set",
+        "OSR_CT_USE_DEFAULT_EPSG_TOWGS84=YES",
+        None,
+        None,
+    ),
+    (
+        "+proj=longlat +ellps=bessel +towgs84=598.1,73.7,418.2,0.202,0.045,-2.455,6.7 +no_defs",
+        (10, 50, 0.0),
+        1e-8,
+        "EPSG:4326",
+        (49.9988572643058, 9.99881392529464, 0),
+        1e-8,
+        "DHDN -> WGS84 using explicit TOWGS84",
+        None,
+        None,
+        None,
+    ),
+    (
+        "EPSG:27562",
+        (136555.58288992, 463344.51894296, 0.0),
+        1e-5,
+        "EPSG:4258",
+        (49, -4, 0),
+        1e-8,
+        "EPSG:27562 -> EPSG:4258 using OGR_CT_OP_SELECTION=BEST_ACCURACY",
+        "OGR_CT_OP_SELECTION=BEST_ACCURACY",
+        "ntf_r93.gsb",
+        "6.3.2",
+    ),  # not sure 6.3.2 is the actual min version
 ]
 
 map_old_grid_name_to_tif_ones = {
-    'ntf_r93.gsb': 'fr_ign_ntf_r93.tif',
-    'BETA2007.gsb': 'de_adv_BETA2007.tif',
-    'egm96_15.gtx': 'us_nga_egm96_15.tif'
+    "ntf_r93.gsb": "fr_ign_ntf_r93.tif",
+    "BETA2007.gsb": "de_adv_BETA2007.tif",
+    "egm96_15.gtx": "us_nga_egm96_15.tif",
 }
 
 ###############################################################################
@@ -166,12 +291,22 @@ map_old_grid_name_to_tif_ones = {
 
 
 @pytest.mark.parametrize(
-    'src_srs,src_xyz,src_error,dst_srs,dst_xyz,dst_error,unit_name,options,grid_req,proj_version_req',
+    "src_srs,src_xyz,src_error,dst_srs,dst_xyz,dst_error,unit_name,options,grid_req,proj_version_req",
     transform_list,
-    ids=[row[6] for row in transform_list]
+    ids=[row[6] for row in transform_list],
 )
-def test_proj(src_srs, src_xyz, src_error,
-             dst_srs, dst_xyz, dst_error, unit_name, options, grid_req, proj_version_req):
+def test_proj(
+    src_srs,
+    src_xyz,
+    src_error,
+    dst_srs,
+    dst_xyz,
+    dst_error,
+    unit_name,
+    options,
+    grid_req,
+    proj_version_req,
+):
 
     if grid_req is not None:
         grid_name = grid_req
@@ -180,32 +315,36 @@ def test_proj(src_srs, src_xyz, src_error,
         found = False
         if search_paths:
             for path in search_paths:
-                if os.path.exists(os.path.join(path, grid_name)) or \
-                   os.path.exists(os.path.join(path, map_old_grid_name_to_tif_ones[grid_name])):
+                if os.path.exists(os.path.join(path, grid_name)) or os.path.exists(
+                    os.path.join(path, map_old_grid_name_to_tif_ones[grid_name])
+                ):
                     found = True
                     break
         if not found:
-            pytest.skip(f'Did not find GRID:{grid_name}')
+            pytest.skip(f"Did not find GRID:{grid_name}")
 
     if proj_version_req is not None:
-        major, minor, micro = proj_version_req.split('.')
+        major, minor, micro = proj_version_req.split(".")
         major, minor, micro = int(major), int(minor), int(micro)
-        if osr.GetPROJVersionMajor() * 10000 + osr.GetPROJVersionMinor() * 100 + osr.GetPROJVersionMicro() <= major * 10000 + minor * 100 + micro:
-            pytest.skip(f'PROJ version < {proj_version_req}')
+        if (
+            osr.GetPROJVersionMajor() * 10000
+            + osr.GetPROJVersionMinor() * 100
+            + osr.GetPROJVersionMicro()
+            <= major * 10000 + minor * 100 + micro
+        ):
+            pytest.skip(f"PROJ version < {proj_version_req}")
 
     src = osr.SpatialReference()
     src.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
-    assert src.SetFromUserInput(src_srs) == 0, \
-        ('SetFromUserInput(%s) failed.' % src_srs)
+    assert src.SetFromUserInput(src_srs) == 0, "SetFromUserInput(%s) failed." % src_srs
 
     dst = osr.SpatialReference()
     dst.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
-    assert dst.SetFromUserInput(dst_srs) == 0, \
-        ('SetFromUserInput(%s) failed.' % dst_srs)
+    assert dst.SetFromUserInput(dst_srs) == 0, "SetFromUserInput(%s) failed." % dst_srs
 
     has_built_ct = False
-    if options and '=' in options:
-        tokens = options.split('=')
+    if options and "=" in options:
+        tokens = options.split("=")
         if len(tokens) == 2:
             key = tokens[0]
             value = tokens[1]
@@ -220,20 +359,25 @@ def test_proj(src_srs, src_xyz, src_error,
 
     result = ct.TransformPoint(src_xyz[0], src_xyz[1], src_xyz[2])
 
-    error = abs(result[0] - dst_xyz[0]) \
-        + abs(result[1] - dst_xyz[1]) \
+    error = (
+        abs(result[0] - dst_xyz[0])
+        + abs(result[1] - dst_xyz[1])
         + abs(result[2] - dst_xyz[2])
+    )
 
-    assert error <= dst_error, \
-        ('Dest error is %g, got (%.15g,%.15g,%.15g)'
-                             % (error, result[0], result[1], result[2]))
+    assert error <= dst_error, "Dest error is %g, got (%.15g,%.15g,%.15g)" % (
+        error,
+        result[0],
+        result[1],
+        result[2],
+    )
 
     ######################################################################
     # Now transform back.
 
     has_built_ct = False
-    if options and '=' in options:
-        tokens = options.split('=')
+    if options and "=" in options:
+        tokens = options.split("=")
         if len(tokens) == 2:
             key = tokens[0]
             value = tokens[1]
@@ -245,13 +389,18 @@ def test_proj(src_srs, src_xyz, src_error,
 
     result = ct.TransformPoint(result[0], result[1], result[2])
 
-    error = abs(result[0] - src_xyz[0]) \
-        + abs(result[1] - src_xyz[1]) \
+    error = (
+        abs(result[0] - src_xyz[0])
+        + abs(result[1] - src_xyz[1])
         + abs(result[2] - src_xyz[2])
+    )
 
-    assert error <= src_error, \
-        ('Back to source error is %g got (%.15g,%.15g,%.15g)'
-                            % (error, result[0], result[1], result[2]))
+    assert error <= src_error, "Back to source error is %g got (%.15g,%.15g,%.15g)" % (
+        error,
+        result[0],
+        result[1],
+        result[2],
+    )
 
 
 @pytest.mark.parametrize(
@@ -266,14 +415,15 @@ def test_transform_bounds_densify(density, expected):
     src.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     assert src.ImportFromEPSG(4326) == 0
     dst = osr.SpatialReference()
-    assert dst.ImportFromProj4(
-       "+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 "
-       "+a=6370997 +b=6370997 +units=m +no_defs"
-    ) == 0
+    assert (
+        dst.ImportFromProj4(
+            "+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 "
+            "+a=6370997 +b=6370997 +units=m +no_defs"
+        )
+        == 0
+    )
     ctr = osr.CoordinateTransformation(src, dst)
-    assert ctr.TransformBounds(
-        40, -120, 64, -80, density
-    ) == pytest.approx(expected)
+    assert ctr.TransformBounds(40, -120, 64, -80, density) == pytest.approx(expected)
 
 
 @pytest.mark.parametrize(
@@ -288,43 +438,56 @@ def test_transform_bounds__normalized_axis(density, expected):
     assert src.ImportFromEPSG(4326) == 0
     src.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     dst = osr.SpatialReference()
-    assert dst.ImportFromProj4(
-       "+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 "
-       "+a=6370997 +b=6370997 +units=m +no_defs"
-    ) == 0
+    assert (
+        dst.ImportFromProj4(
+            "+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 "
+            "+a=6370997 +b=6370997 +units=m +no_defs"
+        )
+        == 0
+    )
     ctr = osr.CoordinateTransformation(src, dst)
-    assert ctr.TransformBounds(
-        -120, 40, -80, 64, density
-    ) == pytest.approx(expected)
+    assert ctr.TransformBounds(-120, 40, -80, 64, density) == pytest.approx(expected)
 
 
 def test_transform_bounds_densify_out_of_bounds():
     src = osr.SpatialReference()
     assert src.ImportFromEPSG(4326) == 0
     dst = osr.SpatialReference()
-    assert dst.ImportFromProj4(
-       "+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 "
-       "+a=6370997 +b=6370997 +units=m +no_defs"
-    ) == 0
+    assert (
+        dst.ImportFromProj4(
+            "+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 "
+            "+a=6370997 +b=6370997 +units=m +no_defs"
+        )
+        == 0
+    )
     ctr = osr.CoordinateTransformation(src, dst)
-    assert ctr.TransformBounds(
-        -120, 40, -80, 64, -1
-    ) == (float("inf"), float("inf"), float("inf"), float("inf"))
+    assert ctr.TransformBounds(-120, 40, -80, 64, -1) == (
+        float("inf"),
+        float("inf"),
+        float("inf"),
+        float("inf"),
+    )
 
 
 def test_transform_bounds_densify_out_of_bounds__geographic_output():
     src = osr.SpatialReference()
-    assert src.ImportFromProj4(
-       "+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 "
-       "+a=6370997 +b=6370997 +units=m +no_defs"
-    ) == 0
+    assert (
+        src.ImportFromProj4(
+            "+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 "
+            "+a=6370997 +b=6370997 +units=m +no_defs"
+        )
+        == 0
+    )
     dst = osr.SpatialReference()
     dst.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     assert dst.ImportFromEPSG(4326) == 0
     ctr = osr.CoordinateTransformation(src, dst)
-    assert ctr.TransformBounds(
-        -120, 40, -80, 64, 1
-    ) == (float("inf"), float("inf"), float("inf"), float("inf"))
+    assert ctr.TransformBounds(-120, 40, -80, 64, 1) == (
+        float("inf"),
+        float("inf"),
+        float("inf"),
+        float("inf"),
+    )
 
 
 def test_transform_bounds_antimeridian():
@@ -335,9 +498,7 @@ def test_transform_bounds_antimeridian():
     dst.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
     assert dst.ImportFromEPSG(3851) == 0
     ctr = osr.CoordinateTransformation(src, dst)
-    assert ctr.TransformBounds(
-        -55.95, 160.6, -25.88, -171.2, 21
-    ) == pytest.approx(
+    assert ctr.TransformBounds(-55.95, 160.6, -25.88, -171.2, 21) == pytest.approx(
         (5228058.6143420935, 1722483.900174921, 8692574.544944234, 4624385.494808555)
     )
     ctr = osr.CoordinateTransformation(dst, src)
@@ -354,17 +515,13 @@ def test_transform_bounds_antimeridian_normalized_axis():
     assert dst.ImportFromEPSG(3851) == 0
     dst.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     ctr = osr.CoordinateTransformation(src, dst)
-    assert ctr.TransformBounds(
-            160.6, -55.95, -171.2, -25.88, 21
-    ) == pytest.approx(
+    assert ctr.TransformBounds(160.6, -55.95, -171.2, -25.88, 21) == pytest.approx(
         (1722483.900174921, 5228058.6143420935, 4624385.494808555, 8692574.544944234)
     )
     ctr = osr.CoordinateTransformation(dst, src)
     assert ctr.TransformBounds(
         1722483.900174921, 5228058.6143420935, 4624385.494808555, 8692574.544944234, 21
-    ) == pytest.approx(
-        (153.2799922, -56.7471249, -162.1813873, -24.6148194)
-    )
+    ) == pytest.approx((153.2799922, -56.7471249, -162.1813873, -24.6148194))
 
 
 def test_transform_bounds__beyond_global_bounds():
@@ -388,9 +545,7 @@ def test_transform_bounds__ignore_inf():
     assert dst.SetFromUserInput("ESRI:102036") == 0
     dst.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     ctr = osr.CoordinateTransformation(src, dst)
-    assert float("inf") not in ctr.TransformBounds(
-        -180.0, -90.0, 180.0, 0.0, 21
-    )
+    assert float("inf") not in ctr.TransformBounds(-180.0, -90.0, 180.0, 0.0, 21)
 
 
 def test_transform_bounds__ignore_inf_geographic():
@@ -422,9 +577,9 @@ def test_transform_bounds__noop_geographic():
     assert dst.ImportFromEPSG(4284) == 0
     dst.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     ctr = osr.CoordinateTransformation(src, dst)
-    assert ctr.TransformBounds(
-        19.57, 35.14, -168.97, 81.91, 21
-    ) == pytest.approx((19.57, 35.14, -168.97, 81.91))
+    assert ctr.TransformBounds(19.57, 35.14, -168.97, 81.91, 21) == pytest.approx(
+        (19.57, 35.14, -168.97, 81.91)
+    )
 
 
 def test_transform_bounds__north_pole():
@@ -439,9 +594,7 @@ def test_transform_bounds__north_pole():
         -1405880.71737131, -1371213.7625429356, 5405880.71737131, 5371213.762542935, 21
     ) == pytest.approx((48.656, -180.0, 90.0, 180.0), rel=1)
     ctr = osr.CoordinateTransformation(dst, src)
-    assert ctr.TransformBounds(
-        60.0, -180.0, 90.0, 180.0, 21
-    ) == pytest.approx(
+    assert ctr.TransformBounds(60.0, -180.0, 90.0, 180.0, 21) == pytest.approx(
         (-1405880.71737131, -1371213.7625429356, 5405880.71737131, 5371213.762542935)
     )
 
@@ -458,9 +611,7 @@ def test_transform_bounds__north_pole__xy():
         -1371213.7625429356, -1405880.71737131, 5371213.762542935, 5405880.71737131, 21
     ) == pytest.approx((-180.0, 48.656, 180.0, 90.0), rel=1)
     ctr = osr.CoordinateTransformation(dst, src)
-    assert ctr.TransformBounds(
-        -180.0, 60.0, 180.0, 90.0, 21
-    ) == pytest.approx(
+    assert ctr.TransformBounds(-180.0, 60.0, 180.0, 90.0, 21) == pytest.approx(
         (-1371213.7625429356, -1405880.71737131, 5371213.762542935, 5405880.71737131)
     )
 
@@ -477,9 +628,7 @@ def test_transform_bounds__south_pole():
         -1405880.71737131, -1371213.7625429356, 5405880.71737131, 5371213.762542935, 21
     ) == pytest.approx((-90, -180.0, -48.656, 180.0), rel=1)
     ctr = osr.CoordinateTransformation(dst, src)
-    assert ctr.TransformBounds(
-        -90.0, -180.0, -60.0, 180.0, 21
-    ) == pytest.approx(
+    assert ctr.TransformBounds(-90.0, -180.0, -60.0, 180.0, 21) == pytest.approx(
         (-1405880.72, -1371213.76, 5405880.72, 5371213.76)
     )
 
@@ -494,13 +643,9 @@ def test_transform_bounds__south_pole__xy():
     ctr = osr.CoordinateTransformation(src, dst)
     assert ctr.TransformBounds(
         -1371213.7625429356, -1405880.71737131, 5371213.762542935, 5405880.71737131, 21
-    ) == pytest.approx(
-        (-180.0, -90, 180.0, -48.656), rel=1
-    )
+    ) == pytest.approx((-180.0, -90, 180.0, -48.656), rel=1)
     ctr = osr.CoordinateTransformation(dst, src)
-    assert ctr.TransformBounds(
-        -180.0, -90.0, 180.0, -60.0, 21
-    ) == pytest.approx(
+    assert ctr.TransformBounds(-180.0, -90.0, 180.0, -60.0, 21) == pytest.approx(
         (-1371213.76, -1405880.72, 5371213.76, 5405880.72)
     )
 

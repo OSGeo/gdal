@@ -32,11 +32,10 @@
 
 import os
 
-
 import gdaltest
-from osgeo import gdal
-from osgeo import ogr
 import pytest
+
+from osgeo import gdal, ogr
 
 ###############################################################################
 # Open file, check number of layers, get first layer,
@@ -45,32 +44,35 @@ import pytest
 
 def test_ogr_vfk_1():
 
-    gdaltest.vfk_drv = ogr.GetDriverByName('VFK')
+    gdaltest.vfk_drv = ogr.GetDriverByName("VFK")
     if gdaltest.vfk_drv is None:
         pytest.skip()
 
-    gdal.SetConfigOption('OGR_VFK_DB_OVERWRITE', 'YES')
+    gdal.SetConfigOption("OGR_VFK_DB_OVERWRITE", "YES")
 
-    gdaltest.vfk_ds = ogr.Open('data/vfk/bylany.vfk')
-    gdal.SetConfigOption('OGR_VFK_DB_OVERWRITE', None)
+    gdaltest.vfk_ds = ogr.Open("data/vfk/bylany.vfk")
+    gdal.SetConfigOption("OGR_VFK_DB_OVERWRITE", None)
 
     assert gdaltest.vfk_ds is not None
 
-    assert gdaltest.vfk_ds.GetLayerCount() == 61, 'expected exactly 61 layers!'
+    assert gdaltest.vfk_ds.GetLayerCount() == 61, "expected exactly 61 layers!"
 
     gdaltest.vfk_layer_par = gdaltest.vfk_ds.GetLayer(0)
 
-    assert gdaltest.vfk_layer_par is not None, 'cannot get first layer'
+    assert gdaltest.vfk_layer_par is not None, "cannot get first layer"
 
-    assert gdaltest.vfk_layer_par.GetName() == 'PAR', \
-        'did not get expected layer name "PAR"'
+    assert (
+        gdaltest.vfk_layer_par.GetName() == "PAR"
+    ), 'did not get expected layer name "PAR"'
 
     defn = gdaltest.vfk_layer_par.GetLayerDefn()
-    assert defn.GetFieldCount() == 28, \
-        ('did not get expected number of fields, got %d' % defn.GetFieldCount())
+    assert defn.GetFieldCount() == 28, (
+        "did not get expected number of fields, got %d" % defn.GetFieldCount()
+    )
 
     fc = gdaltest.vfk_layer_par.GetFeatureCount()
-    assert fc == 1, ('did not get expected feature count, got %d' % fc)
+    assert fc == 1, "did not get expected feature count, got %d" % fc
+
 
 ###############################################################################
 # Read the first feature from layer 'PAR', check envelope
@@ -85,18 +87,21 @@ def test_ogr_vfk_2():
 
     feat = gdaltest.vfk_layer_par.GetNextFeature()
 
-    assert feat.GetFID() == 1, 'did not get expected fid for feature 1'
+    assert feat.GetFID() == 1, "did not get expected fid for feature 1"
 
     geom = feat.GetGeometryRef()
-    assert geom.GetGeometryType() == ogr.wkbPolygon, \
-        'did not get expected geometry type.'
+    assert (
+        geom.GetGeometryType() == ogr.wkbPolygon
+    ), "did not get expected geometry type."
 
     envelope = geom.GetEnvelope()
     area = (envelope[1] - envelope[0]) * (envelope[3] - envelope[2])
     exp_area = 2010.5
 
-    assert area >= exp_area - 0.5 and area <= exp_area + 0.5, \
-        ('envelope area not as expected, got %g.' % area)
+    assert area >= exp_area - 0.5 and area <= exp_area + 0.5, (
+        "envelope area not as expected, got %g." % area
+    )
+
 
 ###############################################################################
 # Read features from layer 'SOBR', test attribute query
@@ -109,8 +114,9 @@ def test_ogr_vfk_3():
 
     gdaltest.vfk_layer_sobr = gdaltest.vfk_ds.GetLayer(43)
 
-    assert gdaltest.vfk_layer_sobr.GetName() == 'SOBR', \
-        'did not get expected layer name "SOBR"'
+    assert (
+        gdaltest.vfk_layer_sobr.GetName() == "SOBR"
+    ), 'did not get expected layer name "SOBR"'
 
     gdaltest.vfk_layer_sobr.SetAttributeFilter("CISLO_BODU = '55'")
 
@@ -122,7 +128,8 @@ def test_ogr_vfk_3():
         feat = gdaltest.vfk_layer_sobr.GetNextFeature()
         count += 1
 
-    assert count == 1, ('did not get expected number of features, got %d' % count)
+    assert count == 1, "did not get expected number of features, got %d" % count
+
 
 ###############################################################################
 # Read features from layer 'SBP', test random access, check length
@@ -133,14 +140,15 @@ def test_ogr_vfk_4():
     if gdaltest.vfk_drv is None:
         pytest.skip()
 
-    gdaltest.vfk_layer_sbp = gdaltest.vfk_ds.GetLayerByName('SBP')
+    gdaltest.vfk_layer_sbp = gdaltest.vfk_ds.GetLayerByName("SBP")
 
     assert gdaltest.vfk_layer_sbp, 'did not get expected layer name "SBP"'
 
     feat = gdaltest.vfk_layer_sbp.GetFeature(5)
     length = int(feat.geometry().Length())
 
-    assert length == 10, ('did not get expected length, got %d' % length)
+    assert length == 10, "did not get expected length, got %d" % length
+
 
 ###############################################################################
 # Read features from layer 'HP', check geometry type
@@ -151,14 +159,16 @@ def test_ogr_vfk_5():
     if gdaltest.vfk_drv is None:
         pytest.skip()
 
-    gdaltest.vfk_layer_hp = gdaltest.vfk_ds.GetLayerByName('HP')
+    gdaltest.vfk_layer_hp = gdaltest.vfk_ds.GetLayerByName("HP")
 
-    assert gdaltest.vfk_layer_hp != 'HP', 'did not get expected layer name "HP"'
+    assert gdaltest.vfk_layer_hp != "HP", 'did not get expected layer name "HP"'
 
     geom_type = gdaltest.vfk_layer_hp.GetGeomType()
 
-    assert geom_type == ogr.wkbLineString, \
-        ('did not get expected geometry type, got %d' % geom_type)
+    assert geom_type == ogr.wkbLineString, (
+        "did not get expected geometry type, got %d" % geom_type
+    )
+
 
 ###############################################################################
 # Re-Open file (test .db persistence)
@@ -172,25 +182,28 @@ def test_ogr_vfk_6():
     gdaltest.vfk_layer_par = None
     gdaltest.vfk_layer_sobr = None
     gdaltest.vfk_ds = None
-    gdaltest.vfk_ds = ogr.Open('data/vfk/bylany.vfk')
+    gdaltest.vfk_ds = ogr.Open("data/vfk/bylany.vfk")
 
     assert gdaltest.vfk_ds is not None
 
-    assert gdaltest.vfk_ds.GetLayerCount() == 61, 'expected exactly 61 layers!'
+    assert gdaltest.vfk_ds.GetLayerCount() == 61, "expected exactly 61 layers!"
 
     gdaltest.vfk_layer_par = gdaltest.vfk_ds.GetLayer(0)
 
-    assert gdaltest.vfk_layer_par is not None, 'cannot get first layer'
+    assert gdaltest.vfk_layer_par is not None, "cannot get first layer"
 
-    assert gdaltest.vfk_layer_par.GetName() == 'PAR', \
-        'did not get expected layer name "PAR"'
+    assert (
+        gdaltest.vfk_layer_par.GetName() == "PAR"
+    ), 'did not get expected layer name "PAR"'
 
     defn = gdaltest.vfk_layer_par.GetLayerDefn()
-    assert defn.GetFieldCount() == 28, \
-        ('did not get expected number of fields, got %d' % defn.GetFieldCount())
+    assert defn.GetFieldCount() == 28, (
+        "did not get expected number of fields, got %d" % defn.GetFieldCount()
+    )
 
     fc = gdaltest.vfk_layer_par.GetFeatureCount()
-    assert fc == 1, ('did not get expected feature count, got %d' % fc)
+    assert fc == 1, "did not get expected feature count, got %d" % fc
+
 
 ###############################################################################
 # Read PAR layer, check data types (Integer64 new in GDAL 2.2)
@@ -203,13 +216,16 @@ def test_ogr_vfk_7():
 
     defn = gdaltest.vfk_layer_par.GetLayerDefn()
 
-    for idx, name, ctype in ((0, "ID", ogr.OFTInteger64),
-                             (1, "STAV_DAT", ogr.OFTInteger),
-                             (2, "DATUM_VZNIKU", ogr.OFTString),
-                             (22, "CENA_NEMOVITOSTI", ogr.OFTReal)):
+    for idx, name, ctype in (
+        (0, "ID", ogr.OFTInteger64),
+        (1, "STAV_DAT", ogr.OFTInteger),
+        (2, "DATUM_VZNIKU", ogr.OFTString),
+        (22, "CENA_NEMOVITOSTI", ogr.OFTReal),
+    ):
         col = defn.GetFieldDefn(idx)
-        assert col.GetName() == name and col.GetType() == ctype, \
-            "PAR: '{}' column name/type mismatch".format(name)
+        assert (
+            col.GetName() == name and col.GetType() == ctype
+        ), "PAR: '{}' column name/type mismatch".format(name)
 
 
 ###############################################################################
@@ -222,20 +238,22 @@ def test_ogr_vfk_8():
         pytest.skip()
 
     # open by SQLite driver first
-    vfk_ds_db = ogr.Open('data/vfk/bylany.db')
+    vfk_ds_db = ogr.Open("data/vfk/bylany.db")
     count1 = vfk_ds_db.GetLayerCount()
     vfk_ds_db = None
 
     # then open by VFK driver
-    os.environ['OGR_VFK_DB_READ'] = 'YES'
-    vfk_ds_db = ogr.Open('data/vfk/bylany.db')
+    os.environ["OGR_VFK_DB_READ"] = "YES"
+    vfk_ds_db = ogr.Open("data/vfk/bylany.db")
     count2 = vfk_ds_db.GetLayerCount()
     vfk_ds_db = None
 
-    assert count1 == count2, \
-        'layer count differs when opening DB by SQLite and VFK drivers'
+    assert (
+        count1 == count2
+    ), "layer count differs when opening DB by SQLite and VFK drivers"
 
-    del os.environ['OGR_VFK_DB_READ']
+    del os.environ["OGR_VFK_DB_READ"]
+
 
 ###############################################################################
 # Open datasource with SUPPRESS_GEOMETRY open option (new in GDAL 2.3)
@@ -248,18 +266,20 @@ def test_ogr_vfk_9():
 
     # open with suppressing geometry
     vfk_ds = None
-    vfk_ds = gdal.OpenEx('data/vfk/bylany.vfk', open_options=['SUPPRESS_GEOMETRY=YES'])
+    vfk_ds = gdal.OpenEx("data/vfk/bylany.vfk", open_options=["SUPPRESS_GEOMETRY=YES"])
 
-    vfk_layer_par = vfk_ds.GetLayerByName('PAR')
+    vfk_layer_par = vfk_ds.GetLayerByName("PAR")
 
-    assert vfk_layer_par != 'PAR', 'did not get expected layer name "PAR"'
+    assert vfk_layer_par != "PAR", 'did not get expected layer name "PAR"'
 
     geom_type = vfk_layer_par.GetGeomType()
     vfk_layer_par = None
     vfk_ds = None
 
-    assert geom_type == ogr.wkbNone, \
-        ('did not get expected geometry type, got %d' % geom_type)
+    assert geom_type == ogr.wkbNone, (
+        "did not get expected geometry type, got %d" % geom_type
+    )
+
 
 ###############################################################################
 # Open datasource with FILE_FIELD open option (new in GDAL 2.4)
@@ -272,19 +292,20 @@ def test_ogr_vfk_10():
 
     # open with suppressing geometry
     vfk_ds = None
-    vfk_ds = gdal.OpenEx('data/vfk/bylany.vfk', open_options=['FILE_FIELD=YES'])
+    vfk_ds = gdal.OpenEx("data/vfk/bylany.vfk", open_options=["FILE_FIELD=YES"])
 
-    vfk_layer_par = vfk_ds.GetLayerByName('PAR')
+    vfk_layer_par = vfk_ds.GetLayerByName("PAR")
 
-    assert vfk_layer_par != 'PAR', 'did not get expected layer name "PAR"'
+    assert vfk_layer_par != "PAR", 'did not get expected layer name "PAR"'
 
     vfk_layer_par.ResetReading()
     feat = vfk_layer_par.GetNextFeature()
-    file_field = feat.GetField('VFK_FILENAME')
+    file_field = feat.GetField("VFK_FILENAME")
     vfk_layer_par = None
     vfk_ds = None
 
-    assert file_field == 'bylany.vfk', 'did not get expected file field value'
+    assert file_field == "bylany.vfk", "did not get expected file field value"
+
 
 ###############################################################################
 # Read PAR layer, check sequential feature access consistency
@@ -310,7 +331,8 @@ def test_ogr_vfk_11():
         if count != count_features():
             feat = gdaltest.vfk_layer_par.GetFeature(i)
             feat.DumpReadable()
-            pytest.fail('did not get expected number of features')
+            pytest.fail("did not get expected number of features")
+
 
 ###############################################################################
 # Read SBP layer, check curved geometry
@@ -321,17 +343,18 @@ def test_ogr_vfk_12():
     if gdaltest.vfk_drv is None:
         pytest.skip()
 
-    gdaltest.vfk_layer_sbp = gdaltest.vfk_ds.GetLayerByName('SBP')
+    gdaltest.vfk_layer_sbp = gdaltest.vfk_ds.GetLayerByName("SBP")
 
     gdaltest.vfk_layer_sbp.SetAttributeFilter("PARAMETRY_SPOJENI = '16'")
     feat = gdaltest.vfk_layer_sbp.GetNextFeature()
     geom = feat.GetGeometryRef()
 
-    assert geom.GetGeometryType() == ogr.wkbLineString, \
-        'did not get expected geometry type.'
+    assert (
+        geom.GetGeometryType() == ogr.wkbLineString
+    ), "did not get expected geometry type."
 
-    assert geom.GetPointCount() == 92, \
-        'did not get expected number of points.'
+    assert geom.GetPointCount() == 92, "did not get expected number of points."
+
 
 ###############################################################################
 # cleanup
@@ -348,13 +371,10 @@ def test_ogr_vfk_cleanup():
     gdaltest.vfk_ds = None
 
     try:
-        os.remove('data/vfk/bylany.db')
+        os.remove("data/vfk/bylany.db")
     except OSError:
         pass
 
 
 ###############################################################################
 #
-
-
-

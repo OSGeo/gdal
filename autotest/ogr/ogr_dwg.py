@@ -28,21 +28,22 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import pytest
 import json
 
-from osgeo import gdal
 import gdaltest
+import pytest
 
-pytestmark = pytest.mark.require_driver('DWG')
+from osgeo import gdal
+
+pytestmark = pytest.mark.require_driver("DWG")
 
 ###############################################################################
 #
 # The test file was contributed by Maxime Colmant, from Mapwize
 # (see https://github.com/OSGeo/gdal/pull/5013)
 #
-# The AutoCAD drawing format version for this file is: 
-# AC1027 - DWG AutoCAD 2013/2014/2015/2016/2017 
+# The AutoCAD drawing format version for this file is:
+# AC1027 - DWG AutoCAD 2013/2014/2015/2016/2017
 #
 # The drawing format can be checked reading the first six bytes of the DWG file
 #
@@ -51,162 +52,192 @@ pytestmark = pytest.mark.require_driver('DWG')
 #
 ###############################################################################
 
+
 def test_ogr_dwg_1():
 
-    ds = gdal.OpenEx('data/cad/Building_A_Floor_0_Mapwize.dwg', allowed_drivers=['DWG'])
+    ds = gdal.OpenEx("data/cad/Building_A_Floor_0_Mapwize.dwg", allowed_drivers=["DWG"])
 
     assert ds is not None
 
-    assert ds.GetLayerCount() == 1, 'expected exactly one layer.'
+    assert ds.GetLayerCount() == 1, "expected exactly one layer."
 
     layer = ds.GetLayer(0)
 
-    assert layer.GetName() == 'entities', \
-        'layer name is expected to be entities.'
+    assert layer.GetName() == "entities", "layer name is expected to be entities."
 
     defn = layer.GetLayerDefn()
 
-    assert defn.GetFieldCount() == 6, \
-        ('did not get expected number of fields in defn. got %d'
-                             % defn.GetFieldCount())
+    assert defn.GetFieldCount() == 6, (
+        "did not get expected number of fields in defn. got %d" % defn.GetFieldCount()
+    )
 
     fc = layer.GetFeatureCount()
 
-    assert fc == 425, ('did not get expected feature count, got %d' % fc)
+    assert fc == 425, "did not get expected feature count, got %d" % fc
 
     layer.ResetReading()
     layer.SetAttributeFilter("layer = 'Trees'")
     tree = layer.GetNextFeature()
     geom = tree.GetGeometryRef()
 
-    assert geom.GetGeometryName() == 'GEOMETRYCOLLECTION', \
-        'expanded block geometry is expected to be GEOMETRYCOLLECTION.'
+    assert (
+        geom.GetGeometryName() == "GEOMETRYCOLLECTION"
+    ), "expanded block geometry is expected to be GEOMETRYCOLLECTION."
 
     ds = None
 
 
 def test_ogr_dwg_2():
 
-    with gdaltest.config_option('DWG_INLINE_BLOCKS', 'FALSE'):
+    with gdaltest.config_option("DWG_INLINE_BLOCKS", "FALSE"):
 
-        ds = gdal.OpenEx('data/cad/Building_A_Floor_0_Mapwize.dwg', allowed_drivers=['DWG'])
+        ds = gdal.OpenEx(
+            "data/cad/Building_A_Floor_0_Mapwize.dwg", allowed_drivers=["DWG"]
+        )
 
         assert ds is not None
 
-        assert ds.GetLayerCount() == 2, 'expected two layers.'
+        assert ds.GetLayerCount() == 2, "expected two layers."
 
         zero = ds.GetLayer(0)
 
-        assert zero.GetName() == 'blocks', \
-            'layer name is expected to be blocks.'
+        assert zero.GetName() == "blocks", "layer name is expected to be blocks."
 
-        layer = ds.GetLayer( 'entities' )
+        layer = ds.GetLayer("entities")
         defn = layer.GetLayerDefn()
 
-        assert defn.GetFieldCount() == 10, \
-            ('did not get expected number of fields in defn. got %d'
-                                % defn.GetFieldCount())
+        assert defn.GetFieldCount() == 10, (
+            "did not get expected number of fields in defn. got %d"
+            % defn.GetFieldCount()
+        )
 
         fc = layer.GetFeatureCount()
 
-        assert fc == 245, ('did not get expected feature count, got %d' % fc)
+        assert fc == 245, "did not get expected feature count, got %d" % fc
 
         layer.ResetReading()
         layer.SetAttributeFilter("layer = 'Trees'")
         tree = layer.GetNextFeature()
         geom = tree.GetGeometryRef()
 
-        assert geom.GetGeometryName() == 'POINT', \
-            'block placement is expected to be POINT.'
+        assert (
+            geom.GetGeometryName() == "POINT"
+        ), "block placement is expected to be POINT."
 
         ds = None
 
+
 def test_ogr_dwg_3():
 
-    with gdaltest.config_option('DWG_INLINE_BLOCKS', 'FALSE'):
+    with gdaltest.config_option("DWG_INLINE_BLOCKS", "FALSE"):
 
-        ds = gdal.OpenEx('data/cad/Building_A_Floor_0_Mapwize.dwg', allowed_drivers=['DWG'])
+        ds = gdal.OpenEx(
+            "data/cad/Building_A_Floor_0_Mapwize.dwg", allowed_drivers=["DWG"]
+        )
 
         assert ds is not None
 
-        layer = ds.GetLayer( 'entities' )
+        layer = ds.GetLayer("entities")
         layer.ResetReading()
         layer.SetAttributeFilter("layer = 'RoomsID'")
 
         dwg_occupants = set()
         for feature in layer:
-            data = json.loads( feature.GetField("blockattributes") )
-            dwg_occupants.add( data['OCCUPANT'] )
+            data = json.loads(feature.GetField("blockattributes"))
+            dwg_occupants.add(data["OCCUPANT"])
 
-        occupants = {'Mederic', 'Everybody', 'Mathieu', 'Alex, Manon', 'Perrine', 'Maxime, Cyprien, Etienne, Thierry, Kevin'}
+        occupants = {
+            "Mederic",
+            "Everybody",
+            "Mathieu",
+            "Alex, Manon",
+            "Perrine",
+            "Maxime, Cyprien, Etienne, Thierry, Kevin",
+        }
 
-        assert occupants == dwg_occupants, \
-            ('block attribute OCCUPANT for features in layer RoomsID is expected to be %s.' % str(occupants) )
+        assert occupants == dwg_occupants, (
+            "block attribute OCCUPANT for features in layer RoomsID is expected to be %s."
+            % str(occupants)
+        )
 
         ds = None
 
 
 def test_ogr_dwg_4():
 
-    with gdaltest.config_options({'DWG_INLINE_BLOCKS':'FALSE','DWG_ATTRIBUTES':'TRUE'}):
+    with gdaltest.config_options(
+        {"DWG_INLINE_BLOCKS": "FALSE", "DWG_ATTRIBUTES": "TRUE"}
+    ):
 
-        ds = gdal.OpenEx('data/cad/Building_A_Floor_0_Mapwize.dwg', allowed_drivers=['DWG'])
+        ds = gdal.OpenEx(
+            "data/cad/Building_A_Floor_0_Mapwize.dwg", allowed_drivers=["DWG"]
+        )
 
         assert ds is not None
 
-        layer = ds.GetLayer( 'entities' )
+        layer = ds.GetLayer("entities")
         defn = layer.GetLayerDefn()
-        
+
         foundMathieu = False
         for feature in layer:
-            if feature.GetField("OCCUPANT") == 'Mathieu' :
+            if feature.GetField("OCCUPANT") == "Mathieu":
                 foundMathieu = True
-            
-        
-        assert defn.GetFieldCount() == 28, \
-            ('did not get expected number of fields in defn. got %d'
-                                % defn.GetFieldCount())
-                                
-        assert defn.GetFieldIndex('AVAILABILITY') >-1, \
-            ('did not get the expected field in defn. AVAILABILITY')
-        assert defn.GetFieldIndex('ROOM') >-1, \
-            ('did not get the expected field in defn. ROOM')
 
-        assert foundMathieu, \
-            ('Mathieu was not found as OCCUPANT field value')
-        
+        assert defn.GetFieldCount() == 28, (
+            "did not get expected number of fields in defn. got %d"
+            % defn.GetFieldCount()
+        )
+
+        assert (
+            defn.GetFieldIndex("AVAILABILITY") > -1
+        ), "did not get the expected field in defn. AVAILABILITY"
+        assert (
+            defn.GetFieldIndex("ROOM") > -1
+        ), "did not get the expected field in defn. ROOM"
+
+        assert foundMathieu, "Mathieu was not found as OCCUPANT field value"
 
         ds = None
-        
+
+
 def test_ogr_dwg_5():
 
-    with gdaltest.config_options({'DWG_INLINE_BLOCKS':'FALSE','DWG_ATTRIBUTES':'TRUE','DWG_ALL_ATTRIBUTES':'FALSE'}):
+    with gdaltest.config_options(
+        {
+            "DWG_INLINE_BLOCKS": "FALSE",
+            "DWG_ATTRIBUTES": "TRUE",
+            "DWG_ALL_ATTRIBUTES": "FALSE",
+        }
+    ):
 
-        ds = gdal.OpenEx('data/cad/attribs.dwg', allowed_drivers=['DWG'])
-
-        assert ds is not None
-
-        layer = ds.GetLayer( 'entities' )
-        defn = layer.GetLayerDefn()
-
-        assert defn.GetFieldCount() == 11, \
-            ('did not get expected number of fields in defn. got %d'
-                                % defn.GetFieldCount())
-
-        ds = None
-        
-    with gdaltest.config_options({'DWG_INLINE_BLOCKS':'FALSE','DWG_ATTRIBUTES':'TRUE'}):
-
-        ds = gdal.OpenEx('data/cad/attribs.dwg', allowed_drivers=['DWG'])
+        ds = gdal.OpenEx("data/cad/attribs.dwg", allowed_drivers=["DWG"])
 
         assert ds is not None
 
-        layer = ds.GetLayer( 'entities' )
+        layer = ds.GetLayer("entities")
         defn = layer.GetLayerDefn()
 
-        assert defn.GetFieldCount() == 32, \
-            ('did not get expected number of fields in defn. got %d'
-                                % defn.GetFieldCount())
+        assert defn.GetFieldCount() == 11, (
+            "did not get expected number of fields in defn. got %d"
+            % defn.GetFieldCount()
+        )
 
         ds = None
 
+    with gdaltest.config_options(
+        {"DWG_INLINE_BLOCKS": "FALSE", "DWG_ATTRIBUTES": "TRUE"}
+    ):
+
+        ds = gdal.OpenEx("data/cad/attribs.dwg", allowed_drivers=["DWG"])
+
+        assert ds is not None
+
+        layer = ds.GetLayer("entities")
+        defn = layer.GetLayerDefn()
+
+        assert defn.GetFieldCount() == 32, (
+            "did not get expected number of fields in defn. got %d"
+            % defn.GetFieldCount()
+        )
+
+        ds = None

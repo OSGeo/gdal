@@ -31,19 +31,20 @@
 ###############################################################################
 
 
+import gdaltest
+import ogrtest
+import pytest
 
 from osgeo import gdal
-import ogrtest
-import gdaltest
-import pytest
 
 ###############################################################################
 
 
 def test_cutline_1():
 
-    tst = gdaltest.GDALTest('VRT', 'cutline_noblend.vrt', 1, 11409)
+    tst = gdaltest.GDALTest("VRT", "cutline_noblend.vrt", 1, 11409)
     return tst.testOpen()
+
 
 ###############################################################################
 
@@ -53,8 +54,9 @@ def test_cutline_2():
     if not ogrtest.have_geos():
         pytest.skip()
 
-    tst = gdaltest.GDALTest('VRT', 'cutline_blend.vrt', 1, 21395)
+    tst = gdaltest.GDALTest("VRT", "cutline_blend.vrt", 1, 21395)
     return tst.testOpen()
+
 
 ###############################################################################
 
@@ -64,8 +66,9 @@ def test_cutline_3():
     if not ogrtest.have_geos():
         pytest.skip()
 
-    tst = gdaltest.GDALTest('VRT', 'cutline_multipolygon.vrt', 1, 20827)
+    tst = gdaltest.GDALTest("VRT", "cutline_multipolygon.vrt", 1, 20827)
     return tst.testOpen()
+
 
 ###############################################################################
 
@@ -75,11 +78,12 @@ def test_cutline_4():
     if not ogrtest.have_geos():
         pytest.skip()
 
-    ds = gdal.Translate('/vsimem/utmsmall.tif', '../gcore/data/utmsmall.tif')
-    ds.BuildOverviews('NEAR', [2])
+    ds = gdal.Translate("/vsimem/utmsmall.tif", "../gcore/data/utmsmall.tif")
+    ds.BuildOverviews("NEAR", [2])
     ds = None
 
-    ds = gdal.Open("""<VRTDataset rasterXSize="100" rasterYSize="100" subClass="VRTWarpedDataset">
+    ds = gdal.Open(
+        """<VRTDataset rasterXSize="100" rasterYSize="100" subClass="VRTWarpedDataset">
   <SRS>PROJCS[&quot;NAD27 / UTM zone 11N&quot;,GEOGCS[&quot;NAD27&quot;,DATUM[&quot;North_American_Datum_1927&quot;,SPHEROID[&quot;Clarke 1866&quot;,6378206.4,294.9786982139006,AUTHORITY[&quot;EPSG&quot;,&quot;7008&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6267&quot;]],PRIMEM[&quot;Greenwich&quot;,0],UNIT[&quot;degree&quot;,0.0174532925199433],AUTHORITY[&quot;EPSG&quot;,&quot;4267&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,-117],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;26711&quot;]]</SRS>
   <GeoTransform>  4.4072000000000000e+05,  5.9999999999999993e+01,  0.0000000000000000e+00,  3.7513200000000000e+06,  0.0000000000000000e+00, -5.9999999999999993e+01</GeoTransform>
   <VRTRasterBand dataType="Byte" band="1" subClass="VRTWarpedRasterBand"/>
@@ -109,14 +113,13 @@ def test_cutline_4():
     </BandList>
     <Cutline>MULTIPOLYGON(((10 10,10 50,60 50, 10 10)),((70 70,70 100,100 100,100 70,70 70),(80 80,80 90,90 90,90 80,80 80)))</Cutline>
   </GDALWarpOptions>
-</VRTDataset>""")
-    out_ds = gdal.Translate('', ds, options='-of MEM -outsize 50%% 50%%')
+</VRTDataset>"""
+    )
+    out_ds = gdal.Translate("", ds, options="-of MEM -outsize 50%% 50%%")
     cs = out_ds.GetRasterBand(1).Checksum()
     assert cs == 5170
 
-    gdal.Unlink('/vsimem/utmsmall.tif')
+    gdal.Unlink("/vsimem/utmsmall.tif")
+
 
 ###############################################################################
-
-
-
