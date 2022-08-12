@@ -343,7 +343,6 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( CPLGetLastErrorType() != CE_None )
     {
-      delete poDS;
       return nullptr;
     }
   }
