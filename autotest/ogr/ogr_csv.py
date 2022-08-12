@@ -47,14 +47,14 @@ def startup_and_cleanup():
         gdal.PushErrorHandler("CPLQuietErrorHandler")
         ogr.GetDriverByName("CSV").DeleteDataSource("tmp/csvwrk")
         gdal.PopErrorHandler()
-    except:
+    except Exception:
         pass
 
     try:
         gdal.PushErrorHandler("CPLQuietErrorHandler")
         ogr.GetDriverByName("CSV").DeleteDataSource("tmp/ogr_csv_29")
         gdal.PopErrorHandler()
-    except:
+    except Exception:
         pass
 
 
@@ -165,7 +165,7 @@ def test_ogr_csv_3():
         gdal.PushErrorHandler("CPLQuietErrorHandler")
         ogr.GetDriverByName("CSV").DeleteDataSource("tmp/csvwrk")
         gdal.PopErrorHandler()
-    except:
+    except Exception:
         pass
 
     #######################################################

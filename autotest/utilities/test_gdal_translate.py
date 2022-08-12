@@ -1228,21 +1228,21 @@ def test_gdal_translate_cleanup():
         pass
     try:
         os.remove("tmp/test_gdal_translate_36.tif")
-    except:
+    except Exception:
         pass
     try:
         os.remove("tmp/test_gdal_translate_36.tif.aux.xml")
-    except:
+    except Exception:
         pass
     try:
         os.remove("tmp/test_gdal_translate_37.tif")
-    except:
+    except Exception:
         pass
     try:
         os.remove("tmp/test_gdal_translate_37.tif.aux.xml")
-    except:
+    except Exception:
         pass
     try:
         gdal.GetDriverByName("HFA").Delete("tmp/test_gdal_translate_38.img")
-    except:
+    except Exception:
         pass

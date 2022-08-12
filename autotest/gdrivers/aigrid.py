@@ -215,7 +215,7 @@ def test_aigrid_online_1():
 
     try:
         rat = ds.GetRasterBand(1).GetDefaultRAT()
-    except:
+    except Exception:
         print("Skipping RAT checking... OG Python bindings have no RAT API")
         return
 
@@ -264,7 +264,7 @@ def test_aigrid_online_2():
                 os.stat("tmp/cache/ai_bug")
             except OSError:
                 pytest.skip()
-        except:
+        except Exception:
             pytest.skip()
 
     tst = gdaltest.GDALTest(

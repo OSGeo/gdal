@@ -99,7 +99,7 @@ def get_color_table(
         color_table = gdal.ColorTable()
         res = color_table_from_color_palette(pal, color_table, **kwargs)
         return color_table if res else None
-    except:
+    except Exception:
         # the input might be a filename of a raster file
         return get_color_table_from_raster(color_palette_or_path_or_strings_or_ds)
 

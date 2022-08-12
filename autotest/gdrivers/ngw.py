@@ -109,7 +109,7 @@ def check_availability(url):
         if limit is None or count is None:
             return True
         return limit - count > 15
-    except:
+    except Exception:
         return False
 
 

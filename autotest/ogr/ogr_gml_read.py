@@ -359,7 +359,7 @@ def test_ogr_gml_7():
 
     try:
         ldefn.GetFieldDefn(0).GetFieldTypeName
-    except:
+    except Exception:
         pytest.skip()
 
     assert (
@@ -555,7 +555,7 @@ def test_ogr_gml_11():
         gml_mtime = os.stat("data/gml/testgeometryelementpath.gml").st_mtime
         gfs_mtime = os.stat("data/gml/testgeometryelementpath.gfs").st_mtime
         touch_gfs = gfs_mtime <= gml_mtime
-    except:
+    except Exception:
         touch_gfs = True
     if touch_gfs:
         print("Touching .gfs file")
@@ -880,7 +880,7 @@ def test_ogr_gml_20():
 
     try:
         ldefn.GetFieldDefn(0).GetFieldTypeName
-    except:
+    except Exception:
         pytest.skip()
 
     idx = ldefn.GetFieldIndex("gml_id")
@@ -1932,7 +1932,7 @@ def test_ogr_gml_46():
             # Validate document
             try:
                 validate("/vsimem/ogr_gml_46.gml")
-            except:
+            except Exception:
                 print("validation failed for format=%s, wkt=%s" % (frmt, wkt))
 
                 f = gdal.VSIFOpenL("/vsimem/ogr_gml_46.gml", "rb")
@@ -2636,7 +2636,7 @@ def test_ogr_gml_59():
         gml_mtime = os.stat("data/gml/testcondition.gml").st_mtime
         gfs_mtime = os.stat("data/gml/testcondition.gfs").st_mtime
         touch_gfs = gfs_mtime <= gml_mtime
-    except:
+    except Exception:
         touch_gfs = True
     if touch_gfs:
         print("Touching .gfs file")
@@ -2704,7 +2704,7 @@ def test_ogr_gml_61():
         gml_mtime = os.stat("data/gml/gmlsubfeature.gml").st_mtime
         gfs_mtime = os.stat("data/gml/gmlsubfeature.gfs").st_mtime
         touch_gfs = gfs_mtime <= gml_mtime
-    except:
+    except Exception:
         touch_gfs = True
     if touch_gfs:
         print("Touching .gfs file")

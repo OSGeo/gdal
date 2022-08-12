@@ -107,7 +107,7 @@ def test_ogr_pg_1():
         gdal.PushErrorHandler("CPLQuietErrorHandler")
         gdaltest.pg_ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
         gdal.PopErrorHandler()
-    except:
+    except Exception:
         gdaltest.pg_ds = None
         gdal.PopErrorHandler()
 
@@ -200,7 +200,7 @@ def test_ogr_pg_2():
     try:
         ogr.OLCStringsAsUTF8
         assert gdaltest.pg_lyr.TestCapability(ogr.OLCStringsAsUTF8)
-    except:
+    except Exception:
         pass
     assert gdaltest.pg_lyr.TestCapability(ogr.OLCSequentialWrite)
     assert gdaltest.pg_lyr.TestCapability(ogr.OLCCreateField)
@@ -893,7 +893,7 @@ def test_ogr_pg_17():
     count = gdaltest.pg_ds.GetLayerCount()
     try:
         layer = gdaltest.pg_ds.GetLayerByName("JunkTableName")
-    except:
+    except Exception:
         layer = None
 
     assert layer is None, "got layer for non-existent table!"
@@ -1903,7 +1903,7 @@ def test_ogr_pg_35():
         )
         # To trigger actual layer creation
         gdaltest.pg_lyr.ResetReading()
-    except:
+    except Exception:
         pass
     finally:
         gdal.PopErrorHandler()
@@ -1916,7 +1916,7 @@ def test_ogr_pg_35():
         )
         # To trigger actual layer creation
         gdaltest.pg_lyr.ResetReading()
-    except:
+    except Exception:
         pass
     finally:
         gdal.PopErrorHandler()
@@ -2168,7 +2168,7 @@ def test_ogr_pg_39():
 
     try:
         assert lyr.GetGeometryColumn() == "point25D", "wrong geometry column name"
-    except:
+    except Exception:
         pass
 
     feat = lyr.GetNextFeature()
@@ -2724,7 +2724,7 @@ def test_ogr_pg_50():
     try:
         dst_feat.SetFieldDoubleList
         bHasSetFieldDoubleList = True
-    except:
+    except Exception:
         bHasSetFieldDoubleList = False
 
     for option in ["NO", "YES"]:

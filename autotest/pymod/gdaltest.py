@@ -633,7 +633,7 @@ class GDALTest(object):
         try:
             for band in range(1, out_bands + 1):
                 new_ds.GetRasterBand(band).WriteRaster(0, 0, xsize, ysize, src_img)
-        except:
+        except Exception:
             pytest.fail("Failed to write raster bands to test file.")
 
         for band in range(1, out_bands + 1):
@@ -1079,7 +1079,7 @@ def rpcs_equal(md1, md2):
                 print(md1[sf])
                 print(md2[sf])
                 return 0
-        except:
+        except Exception:
             post_reason("%s value missing or corrupt." % sf)
             print(md1)
             print(md2)
@@ -1091,7 +1091,7 @@ def rpcs_equal(md1, md2):
             list1 = md1[cf].split()
             list2 = md2[cf].split()
 
-        except:
+        except Exception:
             post_reason("%s value missing or corrupt." % cf)
             print(md1[cf])
             print(md2[cf])
@@ -1173,11 +1173,11 @@ def download_file(
                             "Downloading %s (length = %d bytes)..."
                             % (url, download_size)
                         )
-                    except:
+                    except Exception:
                         print("Downloading %s..." % (url))
                 else:
                     print("Downloading %d bytes from %s..." % (download_size, url))
-            except:
+            except Exception:
                 return False
 
             if download_size >= 0:
@@ -1190,7 +1190,7 @@ def download_file(
                     chunk_size = download_size - len(val)
                 try:
                     chunk = handle.read(chunk_size)
-                except:
+                except Exception:
                     print("Did not get expected data length.")
                     return False
                 if len(chunk) < chunk_size:
@@ -1744,7 +1744,7 @@ def find_lib_windows(libname):
 
         try:
             path = entry.szExePath.decode("latin1")
-        except:
+        except Exception:
             continue
 
         i = path.rfind("\\" + libname)

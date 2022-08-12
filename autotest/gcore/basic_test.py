@@ -588,7 +588,7 @@ def test_basic_test_17_part_2():
             ogr.DontUseExceptions()
             gdal.DontUseExceptions()
             flag = True
-        except:
+        except Exception:
             gdal.DontUseExceptions()
             ogr.DontUseExceptions()
         assert not flag, "expected failure"

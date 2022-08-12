@@ -1087,7 +1087,7 @@ def test_gdalwarp_lib_121():
     # Null dest name
     try:
         gdal.wrapper_GDALWarpDestName(None, [], None)
-    except:
+    except Exception:
         pass
 
     # No option

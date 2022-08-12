@@ -1066,7 +1066,7 @@ def test_ogr_vrt_21():
     gdal.PushErrorHandler("CPLQuietErrorHandler")
     try:
         ret = ogr_vrt_21_internal()
-    except:
+    except Exception:
         ret = "fail"
     gdal.PopErrorHandler()
     return ret
@@ -1193,7 +1193,7 @@ def test_ogr_vrt_22():
     gdal.PushErrorHandler("CPLQuietErrorHandler")
     try:
         ret = ogr_vrt_22_internal()
-    except:
+    except Exception:
         ret = "fail"
     gdal.PopErrorHandler()
     return ret

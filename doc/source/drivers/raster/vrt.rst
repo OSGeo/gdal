@@ -1291,7 +1291,7 @@ Given the following :file:`mandelbrot.py` file :
         from numba import jit
         #print('Using numba')
         g_max_iterations = 100
-    except:
+    except Exception:
         class jit(object):
             def __init__(self, nopython = True, nogil = True):
                 pass

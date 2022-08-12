@@ -83,7 +83,7 @@ def check_feature_geometry(feat, geom, max_error=0.0001):
     """Returns 0 in case of success"""
     try:
         f_geom = feat.GetGeometryRef()
-    except:
+    except Exception:
         f_geom = feat
 
     if geom is not None and isinstance(geom, type("a")):

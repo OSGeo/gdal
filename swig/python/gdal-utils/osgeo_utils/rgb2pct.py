@@ -136,7 +136,7 @@ def doit(**kwargs):
     try:
         ds = rgb2pct(**kwargs)
         return ds, 0
-    except:
+    except Exception:
         return None, 1
 
 

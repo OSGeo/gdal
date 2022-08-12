@@ -2589,7 +2589,7 @@ def test_tiff_write_74():
     try:
         ds = gdal.Open("data/mandrilmini_12bitjpeg.tif")
         ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
-    except:
+    except Exception:
         ds = None
 
     gdal.PopErrorHandler()
@@ -2622,7 +2622,7 @@ def test_tiff_write_74():
 
         try:
             compression = dst_ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE")
-        except:
+        except Exception:
             md = dst_ds.GetMetadata("IMAGE_STRUCTURE")
             compression = md["COMPRESSION"]
 
@@ -2634,7 +2634,7 @@ def test_tiff_write_74():
 
         try:
             nbits = dst_ds.GetRasterBand(3).GetMetadataItem("NBITS", "IMAGE_STRUCTURE")
-        except:
+        except Exception:
             md = dst_ds.GetRasterBand(3).GetMetadata("IMAGE_STRUCTURE")
             nbits = md["NBITS"]
 

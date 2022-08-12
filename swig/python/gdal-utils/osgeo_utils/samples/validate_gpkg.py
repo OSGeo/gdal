@@ -2774,7 +2774,7 @@ class GPKGChecker(object):
             try:
                 c.execute("SELECT 1 FROM sqlite_master")
                 c.fetchone()
-            except:
+            except Exception:
                 self._assert(False, 1, "not a sqlite3 database")
 
             c.execute("PRAGMA foreign_key_check")

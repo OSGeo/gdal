@@ -698,7 +698,7 @@ def test_vsifile_19():
         if options is not None:
             try:
                 etree.fromstring(options)
-            except:
+            except Exception:
                 assert False, (prefix, options)
 
 

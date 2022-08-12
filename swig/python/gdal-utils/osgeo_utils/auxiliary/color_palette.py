@@ -239,7 +239,7 @@ class ColorPalette:
             try:
                 color = self.pal_color_to_rgb(split_line[1])
                 key = split_line[0].strip()
-            except:
+            except Exception:
                 raise Exception("Error reading palette line: {}".format(line))
             try:
                 key = base.num(key)
@@ -334,7 +334,7 @@ class ColorPalette:
                 ) + int(cc[2])
             else:
                 return 0
-        except:
+        except Exception:
             return 0
 
     @staticmethod

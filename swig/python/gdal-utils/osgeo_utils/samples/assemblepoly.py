@@ -102,7 +102,7 @@ def doit(name):
             for item in items:
                 try:
                     link_list.append(int(item))
-                except:
+                except Exception:
                     print("item failed to translate: ", item)
 
         link_coll = ogr.Geometry(type=ogr.wkbGeometryCollection)
@@ -114,7 +114,7 @@ def doit(name):
             poly = ogr.BuildPolygonFromEdges(link_coll)
             print(poly.ExportToWkt())
             feat.SetGeometryDirectly(poly)
-        except:
+        except Exception:
             print("BuildPolygonFromEdges failed.")
 
         # For now we don't actually write back the assembled polygons.

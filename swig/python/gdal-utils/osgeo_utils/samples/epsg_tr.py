@@ -122,7 +122,7 @@ def trHandleCode(set_srid, srs, auth_name, code, deprecated, output_format):
                     proj4text,
                 )
             )
-        except:
+        except Exception:
             pass
 
 

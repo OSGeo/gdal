@@ -104,7 +104,7 @@ def gdal_polygonize(
         gdal.PushErrorHandler("CPLQuietErrorHandler")
         dst_ds = ogr.Open(dst_filename, update=1)
         gdal.PopErrorHandler()
-    except:
+    except Exception:
         dst_ds = None
 
     # =============================================================================
@@ -121,7 +121,7 @@ def gdal_polygonize(
     # =============================================================================
     try:
         dst_layer = dst_ds.GetLayerByName(dst_layername)
-    except:
+    except Exception:
         dst_layer = None
 
     dst_field: int = -1

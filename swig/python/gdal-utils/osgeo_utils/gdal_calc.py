@@ -631,7 +631,7 @@ def Calc(
                 this_calc = calc[bandNo - 1 if len(calc) > 1 else 0]
                 try:
                     myResult = eval(this_calc, global_namespace, local_namespace)
-                except:
+                except Exception:
                     print(f"evaluation of calculation {this_calc} failed")
                     raise
 

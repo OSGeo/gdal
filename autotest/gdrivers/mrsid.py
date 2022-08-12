@@ -159,7 +159,7 @@ def test_mrsid_2():
 
     try:
         data = ds.ReadRaster(0, 0, 515, 515, buf_xsize=10, buf_ysize=10)
-    except:
+    except Exception:
         pytest.fail("Small overview read failed: " + gdal.GetLastErrorMsg())
 
     ds = None

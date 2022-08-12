@@ -1537,7 +1537,7 @@ def test_tiff_ovr_43(both_endian):
             try:
                 ds = gdal.Open("data/mandrilmini_12bitjpeg.tif")
                 ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
-            except:
+            except Exception:
                 ds = None
 
     if gdal.GetLastErrorMsg().find("Unsupported JPEG data precision 12") != -1:

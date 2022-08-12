@@ -84,7 +84,7 @@ def test_vrtfilt_3():
 
     try:
         vrt_ds.GetRasterBand(1).SetMetadataItem
-    except:
+    except Exception:
         pytest.skip()
 
     vrt_ds.GetRasterBand(1).SetMetadataItem("source_0", filterSourceXML, "vrt_sources")
@@ -112,7 +112,7 @@ def test_vrtfilt_4():
 
     try:
         vrt_ds.GetRasterBand(1).SetMetadataItem
-    except:
+    except Exception:
         pytest.skip()
 
     vrt_ds.GetRasterBand(1).SetMetadataItem(

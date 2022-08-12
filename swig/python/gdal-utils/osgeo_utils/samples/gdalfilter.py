@@ -81,7 +81,7 @@ def main(argv=sys.argv):
             for iCoef in range(size * size):
                 try:
                     coefs.append(float(argv[iCoef + i + 1]))
-                except:
+                except Exception:
                     print(
                         "Didn't find enough valid kernel coefficients, need ",
                         size * size,

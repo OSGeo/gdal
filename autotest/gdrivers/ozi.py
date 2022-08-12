@@ -55,7 +55,7 @@ def test_ozi_online_1():
                 os.stat("tmp/cache/Europe 2001_OZF.map")
             except OSError:
                 pytest.skip()
-        except:
+        except Exception:
             pytest.skip()
 
     ds = gdal.Open("tmp/cache/Europe 2001_OZF.map")

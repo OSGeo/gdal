@@ -107,7 +107,7 @@ def main(argv=sys.argv):
             print(cmd)
         else:
             out_ds.ExecuteSQL(cmd)
-    except:
+    except Exception:
         pass
 
     defn = in_layer.GetLayerDefn()

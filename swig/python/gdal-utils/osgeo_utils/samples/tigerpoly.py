@@ -227,7 +227,7 @@ def main(argv=sys.argv):
             feat2.Destroy()
 
             poly_count = poly_count + 1
-        except:
+        except Exception:
             print("BuildPolygonFromEdges failed.")
 
         feat.Destroy()

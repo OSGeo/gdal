@@ -76,7 +76,7 @@ def setup():
         gdal_handle = ctypes.cdll.LoadLibrary(name)
         try:
             gdal_handle_stdcall = ctypes.windll.LoadLibrary(name)
-        except:
+        except Exception:
             gdal_handle_stdcall = gdal_handle
 
         gdal_handle_stdcall.GDALVersionInfo.argtypes = [ctypes.c_char_p]

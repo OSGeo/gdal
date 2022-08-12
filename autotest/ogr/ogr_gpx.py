@@ -238,7 +238,7 @@ def test_ogr_gpx_6():
         gdal.PushErrorHandler("CPLQuietErrorHandler")
         ogr.GetDriverByName("CSV").DeleteDataSource("tmp/gpx.gpx")
         gdal.PopErrorHandler()
-    except:
+    except Exception:
         pass
 
     co_opts = []

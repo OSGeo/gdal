@@ -153,7 +153,7 @@ def doit(**kwargs):
     try:
         ds = pct2rgb(**kwargs)
         return ds, 0
-    except:
+    except Exception:
         return None, 1
 
 

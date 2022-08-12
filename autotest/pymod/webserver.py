@@ -251,7 +251,7 @@ class SequentialHandler(object):
             if req_resp.body:
                 try:
                     request.wfile.write(req_resp.body)
-                except:
+                except Exception:
                     request.wfile.write(req_resp.body.encode("ascii"))
 
     def process(self, method, request):
@@ -468,7 +468,7 @@ class GDAL_ThreadedHttpServer(Thread):
                 self.server.port = port
                 ok = True
                 break
-            except:
+            except Exception:
                 pass
         if not ok:
             raise Exception("could not start server")
@@ -526,7 +526,7 @@ def launch(fork_process=None, handler=None):
             server = GDAL_ThreadedHttpServer(handler)
             server.start_and_wait_ready()
             return (server, server.getPort())
-        except:
+        except Exception:
             return (None, 0)
 
     python_exe = sys.executable
@@ -568,7 +568,7 @@ def main():
         server.start_and_wait_ready()
         print("port=%d" % server.getPort())
         sys.stdout.flush()
-    except:
+    except Exception:
         print("port=0")
         sys.stdout.flush()
         sys.exit(0)

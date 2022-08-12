@@ -819,7 +819,7 @@ def test_fits_vector_write_with_source_fits_metadata():
         got = [f.GetField(i) for i in range(f.GetFieldCount())]
         assert got == expected_f1
 
-    except:
+    except Exception:
         ds = None
         os.unlink(filename)
         raise
@@ -937,7 +937,7 @@ def test_fits_vector_write_without_source_fits_metadata():
         got = [f.GetField(i) for i in range(f.GetFieldCount())]
         assert got == expected_f1
 
-    except:
+    except Exception:
         ds = None
         os.unlink(filename)
         raise
@@ -1058,7 +1058,7 @@ def test_fits_vector_write_without_source_fits_metadata_compute_repeat():
         got = [f.GetField(i) for i in range(f.GetFieldCount())]
         assert got == expected_f1
 
-    except:
+    except Exception:
         ds = None
         os.unlink(filename)
         raise
@@ -1109,7 +1109,7 @@ def test_fits_vector_editing():
         assert lyr.DeleteFeature(1) == ogr.OGRERR_NONE
         assert lyr.GetFeatureCount() == 3
 
-    except:
+    except Exception:
         ds = None
         os.unlink(filename)
         raise

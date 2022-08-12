@@ -119,7 +119,7 @@ def nitf_create(creation_options, set_inverted_color_interp=True, createcopy=Fal
     my_list = list(range(200)) + list(range(20, 220)) + list(range(30, 230))
     try:
         raw_data = array.array("h", my_list).tobytes()
-    except:
+    except Exception:
         # Python 2
         raw_data = array.array("h", my_list).tostring()
 
@@ -327,14 +327,14 @@ def test_nitf_12():
 
     try:  # NG bindings
         blockA = ds.GetMetadataItem("BLOCKA", "TRE")
-    except:
+    except Exception:
         blockA = mdTRE["BLOCKA"]
 
     mdCGM = ds.GetMetadata("CGM")
 
     try:  # NG bindings
         segmentCount = ds.GetMetadataItem("SEGMENT_COUNT", "CGM")
-    except:
+    except Exception:
         segmentCount = mdCGM["SEGMENT_COUNT"]
 
     ds = None
@@ -373,7 +373,7 @@ def test_nitf_13():
     my_list = list(range(200))
     try:
         raw_data = array.array("f", my_list).tobytes()
-    except:
+    except Exception:
         # Python 2
         raw_data = array.array("f", my_list).tostring()
 
@@ -617,7 +617,7 @@ def test_nitf_21():
 
     try:  # NG bindings
         data0 = ds.GetMetadataItem("DATA_0", "TEXT")
-    except:
+    except Exception:
         data0 = mdTEXT["DATA_0"]
 
     ds = None
@@ -1258,7 +1258,7 @@ def test_nitf_31():
         assert (
             ds.GetMetadataItem("CUSTOM", "TRE") == " Test TRE1\\0MORE"
         ), "Did not get expected TRE contents"
-    except:
+    except Exception:
         pass
 
     assert (

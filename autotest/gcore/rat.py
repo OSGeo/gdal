@@ -46,7 +46,7 @@ def test_rat_1():
 
     try:
         rat = gdal.RasterAttributeTable()
-    except:
+    except Exception:
         pytest.skip()
 
     rat.CreateColumn("Value", gdal.GFT_Integer, gdal.GFU_MinMax)

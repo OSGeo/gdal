@@ -444,7 +444,7 @@ def test_ogr_vdv_8():
             open("tmp/ogr_vdv_8/another_file", "wb").close()
             shutil.rmtree("tmp/ogr_vdv_8")
             do_test = False
-        except:
+        except Exception:
             do_test = True
         if do_test:
             ds = ogr.Open("tmp/ogr_vdv_8", update=1)

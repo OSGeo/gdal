@@ -345,7 +345,7 @@ def test_vsicurl_test_redirect():
     gdal.VSIFSeekL(f, 0, 2)
     try:
         assert gdal.VSIFTellL(f) == 1000000
-    except:
+    except Exception:
         gdal.VSIFCloseL(f)
         raise
     gdal.VSIFSeekL(f, 0, 0)
@@ -518,7 +518,7 @@ def test_vsicurl_test_redirect_x_amz():
     gdal.VSIFSeekL(f, 0, 2)
     try:
         assert gdal.VSIFTellL(f) == 1000000
-    except:
+    except Exception:
         gdal.VSIFCloseL(f)
         raise
     gdal.VSIFSeekL(f, 0, 0)
