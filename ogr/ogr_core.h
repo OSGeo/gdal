@@ -881,6 +881,7 @@ int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
 #define OLCAlterGeomFieldDefn  "AlterGeomFieldDefn" /**< Layer capability for geometry field alteration */
 #define OLCTransactions        "Transactions"       /**< Layer capability for transactions */
 #define OLCDeleteFeature       "DeleteFeature"      /**< Layer capability for feature deletion */
+#define OLCUpsertFeature       "UpsertFeature"      /**< Layer capability for feature upsert */
 #define OLCFastSetNextByIndex  "FastSetNextByIndex" /**< Layer capability for setting next feature index */
 #define OLCStringsAsUTF8       "StringsAsUTF8"      /**< Layer capability for strings returned with UTF-8 encoding */
 #define OLCIgnoreFields        "IgnoreFields"       /**< Layer capability for field ignoring */
