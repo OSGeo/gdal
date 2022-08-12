@@ -1441,6 +1441,7 @@ class CPL_DLL GDALAllValidMaskBand : public GDALRasterBand
 
 class CPL_DLL GDALNoDataMaskBand : public GDALRasterBand
 {
+    friend class GDALRasterBand;
     double          dfNoDataValue = 0;
     int64_t         nNoDataValueInt64 = 0;
     uint64_t        nNoDataValueUInt64 = 0;
