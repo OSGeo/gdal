@@ -394,7 +394,7 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
   //poDS->SetDescription( poOpenInfo->pszFilename );
   //poDS->TryLoadXML();
 
-  return poDS;
+  return poDS.release();
 }
 
 
