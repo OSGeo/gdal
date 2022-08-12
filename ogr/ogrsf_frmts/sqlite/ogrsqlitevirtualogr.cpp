@@ -648,6 +648,20 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
         osSQL += OGRSQLiteFieldDefnToSQliteFieldDefn(poFieldDefn,
                                                      bInternalUse,
                                                      false);
+        if( bInternalUse )
+        {
+            const auto& osDomainName = poFieldDefn->GetDomainName();
+            if( !osDomainName.empty() )
+            {
+                osSQL += "_BEGIN_DOMAIN_NAME_";
+                char* pszEncoded = CPLBinaryToHex(
+                    static_cast<int>(osDomainName.size()),
+                    reinterpret_cast<const GByte*>(osDomainName.data()));
+                osSQL += pszEncoded;
+                CPLFree(pszEncoded);
+                osSQL += "_END_DOMAIN_NAME";
+            }
+        }
     }
 
     if( bAddComma )
