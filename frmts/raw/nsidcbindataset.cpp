@@ -332,7 +332,7 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
   CPLErrorReset();
   for( int iBand = 0; iBand < nBands; iBand++ )
   {
-    NSIDCbinRasterBand  *poBand = new NSIDCbinRasterBand( poDS, iBand+1, poDS->fp,
+    NSIDCbinRasterBand  *poBand = new NSIDCbinRasterBand( poDS.get(), iBand+1, poDS->fp,
                                                         300 + iBand * poDS->nRasterXSize,
                                                         nBytesPerSample,
                                                         poDS->nRasterXSize * nBands,
