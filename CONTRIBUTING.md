@@ -44,6 +44,14 @@ python -m venv gdal_venv
 python -m pip install numpy
 ```
 
+Setup pre-commit:
+
+```bash
+python -m pip install pre-commit
+pre-commit install
+```
+
+
 Configure and build:
 
 > **Note**
