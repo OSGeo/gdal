@@ -25,24 +25,23 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
-import pytest
-
 import gdaltest
+import pytest
 
 ###############################################################################
 # When imported build a list of units based on the files available.
 
 init_list = [
-    ('byte.tif.grd', 4672),
+    ("byte.tif.grd", 4672),
 ]
 
 
 @pytest.mark.parametrize(
-    'filename,checksum',
+    "filename,checksum",
     init_list,
-    ids=[tup[0].split('.')[0] for tup in init_list],
+    ids=[tup[0].split(".")[0] for tup in init_list],
 )
-@pytest.mark.require_driver('AAIGrid')
+@pytest.mark.require_driver("AAIGrid")
 def test_aaigrid_open(filename, checksum):
-    ut = gdaltest.GDALTest('AAIGrid', filename, 1, checksum)
+    ut = gdaltest.GDALTest("AAIGrid", filename, 1, checksum)
     ut.testOpen()

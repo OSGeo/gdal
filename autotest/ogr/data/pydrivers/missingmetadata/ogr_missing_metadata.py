@@ -5,4 +5,3 @@
 # or, at the choice of the licensee,
 # Copyright 2019 Even Rouault
 # SPDX-License-Identifier: MIT
-

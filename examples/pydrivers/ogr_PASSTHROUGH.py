@@ -20,7 +20,7 @@ from osgeo import gdal, ogr
 
 try:
     # The gdal_python_driver module is defined by the GDAL library at runtime
-    from gdal_python_driver import BaseDriver, BaseDataset, BaseLayer
+    from gdal_python_driver import BaseDataset, BaseDriver, BaseLayer
 except ImportError:
     # To be able to run in standalone mode
     class BaseDriver(object):
@@ -30,16 +30,15 @@ except ImportError:
         pass
 
     class BaseLayer(object):
-        RandomRead = 'RandomRead'
-        FastSpatialFilter = 'FastSpatialFilter'
-        FastFeatureCount = 'FastFeatureCount'
-        FastGetExtent = 'FastGetExtent'
-        StringsAsUTF8 = 'StringsAsUTF8'
+        RandomRead = "RandomRead"
+        FastSpatialFilter = "FastSpatialFilter"
+        FastFeatureCount = "FastFeatureCount"
+        FastGetExtent = "FastGetExtent"
+        StringsAsUTF8 = "StringsAsUTF8"
         pass
 
 
 class Layer(BaseLayer):
-
     def __init__(self, gdal_layer):
         self.gdal_layer = gdal_layer
         self.name = gdal_layer.GetName()
@@ -55,8 +54,10 @@ class Layer(BaseLayer):
         layer_defn = self.gdal_layer.GetLayerDefn()
         for i in range(layer_defn.GetFieldCount()):
             ogr_field_def = layer_defn.GetFieldDefn(i)
-            field_def = {"name": ogr_field_def.GetName(),
-                         "type": ogr_field_def.GetType()}
+            field_def = {
+                "name": ogr_field_def.GetName(),
+                "type": ogr_field_def.GetType(),
+            }
             res.append(field_def)
         return res
 
@@ -65,8 +66,10 @@ class Layer(BaseLayer):
         layer_defn = self.gdal_layer.GetLayerDefn()
         for i in range(layer_defn.GetGeomFieldCount()):
             ogr_field_def = layer_defn.GetGeomFieldDefn(i)
-            field_def = {"name": ogr_field_def.GetName(),
-                         "type": ogr_field_def.GetType()}
+            field_def = {
+                "name": ogr_field_def.GetName(),
+                "type": ogr_field_def.GetType(),
+            }
             srs = ogr_field_def.GetSpatialRef()
             if srs:
                 field_def["srs"] = srs.ExportToWkt()
@@ -74,8 +77,12 @@ class Layer(BaseLayer):
         return res
 
     def test_capability(self, cap):
-        if cap in (BaseLayer.FastGetExtent, BaseLayer.StringsAsUTF8,
-                   BaseLayer.RandomRead, BaseLayer.FastFeatureCount):
+        if cap in (
+            BaseLayer.FastGetExtent,
+            BaseLayer.StringsAsUTF8,
+            BaseLayer.RandomRead,
+            BaseLayer.FastFeatureCount,
+        ):
             return self.gdal_layer.TestCapability(cap)
         return False
 
@@ -96,9 +103,10 @@ class Layer(BaseLayer):
 
     def spatial_filter_changed(self):
         # the 'inf' test is just for a test_ogrsf oddity
-        if self.spatial_filter and 'inf' not in self.spatial_filter:
+        if self.spatial_filter and "inf" not in self.spatial_filter:
             self.gdal_layer.SetSpatialFilter(
-                ogr.CreateGeometryFromWkt(self.spatial_filter))
+                ogr.CreateGeometryFromWkt(self.spatial_filter)
+            )
         else:
             self.gdal_layer.SetSpatialFilter(None)
 
@@ -107,19 +115,21 @@ class Layer(BaseLayer):
         layer_defn = ogr_f.GetDefnRef()
         for i in range(ogr_f.GetFieldCount()):
             if ogr_f.IsFieldSet(i):
-                fields[layer_defn.GetFieldDefn(
-                    i).GetName()] = ogr_f.GetField(i)
+                fields[layer_defn.GetFieldDefn(i).GetName()] = ogr_f.GetField(i)
         geom_fields = {}
         for i in range(ogr_f.GetGeomFieldCount()):
             g = ogr_f.GetGeomFieldRef(i)
             if g:
-                geom_fields[layer_defn.GetGeomFieldDefn(
-                    i).GetName()] = g.ExportToIsoWkt()
-        return {'id': ogr_f.GetFID(),
-                'type': 'OGRFeature',
-                'style': ogr_f.GetStyleString(),
-                'fields': fields,
-                'geometry_fields': geom_fields}
+                geom_fields[
+                    layer_defn.GetGeomFieldDefn(i).GetName()
+                ] = g.ExportToIsoWkt()
+        return {
+            "id": ogr_f.GetFID(),
+            "type": "OGRFeature",
+            "style": ogr_f.GetStyleString(),
+            "fields": fields,
+            "geometry_fields": geom_fields,
+        }
 
     def __iter__(self):
         for f in self.gdal_layer:
@@ -133,24 +143,24 @@ class Layer(BaseLayer):
 
 
 class Dataset(BaseDataset):
-
     def __init__(self, gdal_ds):
         self.gdal_ds = gdal_ds
-        self.layers = [Layer(gdal_ds.GetLayer(idx))
-                       for idx in range(gdal_ds.GetLayerCount())]
+        self.layers = [
+            Layer(gdal_ds.GetLayer(idx)) for idx in range(gdal_ds.GetLayerCount())
+        ]
         self.metadata = gdal_ds.GetMetadata_Dict()
 
     def close(self):
         del self.gdal_ds
         self.gdal_ds = None
 
-class Driver(BaseDriver):
 
+class Driver(BaseDriver):
     def _identify(self, filename):
-        prefix = 'PASSTHROUGH:'
+        prefix = "PASSTHROUGH:"
         if not filename.startswith(prefix):
             return None
-        return gdal.OpenEx(filename[len(prefix):], gdal.OF_VECTOR)
+        return gdal.OpenEx(filename[len(prefix) :], gdal.OF_VECTOR)
 
     # Required
     def identify(self, filename, first_bytes, open_flags, open_options={}):
@@ -165,8 +175,9 @@ class Driver(BaseDriver):
 
 
 # Test as standalone
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
+
     drv = Driver()
     assert drv.identify(sys.argv[1], None, 0)
     ds = drv.open(sys.argv[1], None, 0)

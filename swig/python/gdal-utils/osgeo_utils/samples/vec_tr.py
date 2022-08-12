@@ -45,6 +45,7 @@ def TransformPoint(xyz):
 
     return (x, y, z)
 
+
 #############################################################################
 
 
@@ -67,12 +68,13 @@ def WalkAndTransform(geom):
 
     return geom
 
+
 #############################################################################
 
 
 def Usage():
-    print('Usage: vec_tr.py infile outfile [layer]')
-    print('')
+    print("Usage: vec_tr.py infile outfile [layer]")
+    print("")
     return 2
 
 
@@ -112,14 +114,14 @@ def main(argv=sys.argv):
     #############################################################################
     # Create output file with similar information.
 
-    shp_driver = ogr.GetDriverByName('ESRI Shapefile')
+    shp_driver = ogr.GetDriverByName("ESRI Shapefile")
     shp_driver.DeleteDataSource(outfile)
 
     shp_ds = shp_driver.CreateDataSource(outfile)
 
-    shp_layer = shp_ds.CreateLayer(in_defn.GetName(),
-                                   geom_type=in_defn.GetGeomType(),
-                                   srs=in_layer.GetSpatialRef())
+    shp_layer = shp_ds.CreateLayer(
+        in_defn.GetName(), geom_type=in_defn.GetGeomType(), srs=in_layer.GetSpatialRef()
+    )
 
     in_field_count = in_defn.GetFieldCount()
 
@@ -160,5 +162,5 @@ def main(argv=sys.argv):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

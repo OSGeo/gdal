@@ -31,7 +31,6 @@
 ###############################################################################
 
 
-
 import gdaltest
 
 ###############################################################################
@@ -40,22 +39,25 @@ import gdaltest
 
 def test_byn_1():
 
-    tst = gdaltest.GDALTest('BYN', 'byn/cgg2013ai08_reduced.byn', 1, 64764)
+    tst = gdaltest.GDALTest("BYN", "byn/cgg2013ai08_reduced.byn", 1, 64764)
     return tst.testOpen()
+
 
 ###############################################################################
 #
+
 
 def test_byn_2():
 
-    tst = gdaltest.GDALTest('BYN', 'byn/cgg2013ai08_reduced.byn', 1, 64764)
-    return tst.testCreateCopy(new_filename='tmp/byn_test_2.byn')
+    tst = gdaltest.GDALTest("BYN", "byn/cgg2013ai08_reduced.byn", 1, 64764)
+    return tst.testCreateCopy(new_filename="tmp/byn_test_2.byn")
+
 
 ###############################################################################
 #
 
+
 def test_byn_invalid_header_bytes():
 
-    tst = gdaltest.GDALTest('BYN', 'byn/test_invalid_header_bytes.byn', 1, 64764)
+    tst = gdaltest.GDALTest("BYN", "byn/test_invalid_header_bytes.byn", 1, 64764)
     return tst.testOpen()
-

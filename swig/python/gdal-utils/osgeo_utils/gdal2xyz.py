@@ -32,25 +32,35 @@
 import sys
 import textwrap
 from numbers import Number, Real
-from typing import Optional, Union, Sequence, Tuple
+from typing import Optional, Sequence, Tuple, Union
+
 import numpy as np
 
 from osgeo import gdal
 from osgeo_utils.auxiliary.base import PathLikeOrStr
-from osgeo_utils.auxiliary.progress import get_progress_callback, OptionalProgressCallback
-from osgeo_utils.auxiliary.util import PathOrDS, get_bands, open_ds
-from osgeo_utils.auxiliary.numpy_util import GDALTypeCodeAndNumericTypeCodeFromDataSet
 from osgeo_utils.auxiliary.gdal_argparse import GDALArgumentParser, GDALScript
+from osgeo_utils.auxiliary.numpy_util import GDALTypeCodeAndNumericTypeCodeFromDataSet
+from osgeo_utils.auxiliary.progress import (
+    OptionalProgressCallback,
+    get_progress_callback,
+)
+from osgeo_utils.auxiliary.util import PathOrDS, get_bands, open_ds
 
 
-def gdal2xyz(srcfile: PathOrDS, dstfile: PathLikeOrStr = None,
-             srcwin: Optional[Sequence[int]] = None,
-             skip: Union[int, Sequence[int]] = 1,
-             band_nums: Optional[Sequence[int]] = None, delim: str = ' ',
-             skip_nodata: bool = False,
-             src_nodata: Optional[Union[Sequence, Number]] = None, dst_nodata: Optional[Union[Sequence, Number]] = None,
-             return_np_arrays: bool = False, pre_allocate_np_arrays: bool = True,
-             progress_callback: OptionalProgressCallback = ...) -> Optional[Tuple]:
+def gdal2xyz(
+    srcfile: PathOrDS,
+    dstfile: PathLikeOrStr = None,
+    srcwin: Optional[Sequence[int]] = None,
+    skip: Union[int, Sequence[int]] = 1,
+    band_nums: Optional[Sequence[int]] = None,
+    delim: str = " ",
+    skip_nodata: bool = False,
+    src_nodata: Optional[Union[Sequence, Number]] = None,
+    dst_nodata: Optional[Union[Sequence, Number]] = None,
+    return_np_arrays: bool = False,
+    pre_allocate_np_arrays: bool = True,
+    progress_callback: OptionalProgressCallback = ...,
+) -> Optional[Tuple]:
     """
     translates a raster file (or dataset) into xyz format
 
@@ -80,7 +90,7 @@ def gdal2xyz(srcfile: PathOrDS, dstfile: PathLikeOrStr = None,
     # Open source file.
     ds = open_ds(srcfile)
     if ds is None:
-        raise Exception(f'Could not open {srcfile}.')
+        raise Exception(f"Could not open {srcfile}.")
 
     bands = get_bands(ds, band_nums)
     band_count = len(bands)
@@ -95,7 +105,7 @@ def gdal2xyz(srcfile: PathOrDS, dstfile: PathLikeOrStr = None,
 
     # Open the output file.
     if dstfile is not None:
-        dst_fh = open(dstfile, 'wt')
+        dst_fh = open(dstfile, "wt")
     elif return_np_arrays:
         dst_fh = None
     else:
@@ -103,17 +113,20 @@ def gdal2xyz(srcfile: PathOrDS, dstfile: PathLikeOrStr = None,
 
     if dst_fh:
         if dt == gdal.GDT_Int32 or dt == gdal.GDT_UInt32:
-            band_format = (("%d" + delim) * len(bands)).rstrip(delim) + '\n'
+            band_format = (("%d" + delim) * len(bands)).rstrip(delim) + "\n"
         else:
-            band_format = (("%g" + delim) * len(bands)).rstrip(delim) + '\n'
+            band_format = (("%g" + delim) * len(bands)).rstrip(delim) + "\n"
 
         # Setup an appropriate print format.
-        if abs(gt[0]) < 180 and abs(gt[3]) < 180 \
-            and abs(ds.RasterXSize * gt[1]) < 180 \
-            and abs(ds.RasterYSize * gt[5]) < 180:
-            frmt = '%.10g' + delim + '%.10g' + delim + '%s'
+        if (
+            abs(gt[0]) < 180
+            and abs(gt[3]) < 180
+            and abs(ds.RasterXSize * gt[1]) < 180
+            and abs(ds.RasterYSize * gt[5]) < 180
+        ):
+            frmt = "%.10g" + delim + "%.10g" + delim + "%s"
         else:
-            frmt = '%.3f' + delim + '%.3f' + delim + '%s'
+            frmt = "%.3f" + delim + "%.3f" + delim + "%s"
 
     if isinstance(src_nodata, Number):
         src_nodata = [src_nodata] * band_count
@@ -220,62 +233,118 @@ def gdal2xyz(srcfile: PathOrDS, dstfile: PathLikeOrStr = None,
 class GDAL2XYZ(GDALScript):
     def __init__(self):
         super().__init__()
-        self.title = 'Translates a raster file into xyz format'
-        self.description = textwrap.dedent('''\
+        self.title = "Translates a raster file into xyz format"
+        self.description = textwrap.dedent(
+            """\
             The gdal2xyz utility can be used to translate a raster file into xyz format.
             It can be used as an alternative to gdal_translate of=xyz,
             But supporting other options, for example:
             * Select more then one band;
             * Skip or replace nodata value;
-            * Return the output as numpy arrays.''')
+            * Return the output as numpy arrays."""
+        )
 
     def get_parser(self, argv) -> GDALArgumentParser:
         parser = self.parser
 
-        parser.add_argument("-skip", dest="skip", action="store_true", default=1,
-                            help="How many rows/cols to skip in each iteration.")
+        parser.add_argument(
+            "-skip",
+            dest="skip",
+            action="store_true",
+            default=1,
+            help="How many rows/cols to skip in each iteration.",
+        )
 
-        parser.add_argument("-srcwin", metavar=('xoff', 'yoff', 'xsize', 'ysize'), dest="srcwin", type=float, nargs=4,
-                            help="Selects a subwindow from the source image for copying based on pixel/line location")
+        parser.add_argument(
+            "-srcwin",
+            metavar=("xoff", "yoff", "xsize", "ysize"),
+            dest="srcwin",
+            type=float,
+            nargs=4,
+            help="Selects a subwindow from the source image for copying based on pixel/line location",
+        )
 
-        parser.add_argument("-b", "-band", "--band", dest="band_nums", metavar="band", type=int, nargs='+',
-                            help="Select bands from the input spectral bands for output. "
-                                 "Bands are numbered from 1 in the order spectral bands are specified. "
-                                 "Multiple -b switches may be used. When no -b switch is used, the first band will be used."
-                                 "In order to use all input bands set -allbands or -b 0..")
+        parser.add_argument(
+            "-b",
+            "-band",
+            "--band",
+            dest="band_nums",
+            metavar="band",
+            type=int,
+            nargs="+",
+            help="Select bands from the input spectral bands for output. "
+            "Bands are numbered from 1 in the order spectral bands are specified. "
+            "Multiple -b switches may be used. When no -b switch is used, the first band will be used."
+            "In order to use all input bands set -allbands or -b 0..",
+        )
 
-        parser.add_argument("-allbands", "--allbands", dest="allbands", action="store_true",
-                            help="Select all input bands.")
+        parser.add_argument(
+            "-allbands",
+            "--allbands",
+            dest="allbands",
+            action="store_true",
+            help="Select all input bands.",
+        )
 
-        parser.add_argument("-csv", dest="delim", const=',', default=' ', action="store_const",
-                            help="Use comma instead of space as a delimiter.")
+        parser.add_argument(
+            "-csv",
+            dest="delim",
+            const=",",
+            default=" ",
+            action="store_const",
+            help="Use comma instead of space as a delimiter.",
+        )
 
-        parser.add_argument("-skipnodata", "--skipnodata", "-skip_nodata", dest="skip_nodata", action="store_true",
-                            help="Exclude the output lines with nodata value (as determined by srcnodata).")
+        parser.add_argument(
+            "-skipnodata",
+            "--skipnodata",
+            "-skip_nodata",
+            dest="skip_nodata",
+            action="store_true",
+            help="Exclude the output lines with nodata value (as determined by srcnodata).",
+        )
 
-        parser.add_argument("-srcnodata", '-nodatavalue', dest="src_nodata", type=Real, nargs='*',
-                            help="The nodata value of the dataset (for skipping or replacing) "
-                                 "Default (None) - Use the dataset nodata value; "
-                                 "Sequence/Number - Use the given nodata value (per band or per dataset).")
+        parser.add_argument(
+            "-srcnodata",
+            "-nodatavalue",
+            dest="src_nodata",
+            type=Real,
+            nargs="*",
+            help="The nodata value of the dataset (for skipping or replacing) "
+            "Default (None) - Use the dataset nodata value; "
+            "Sequence/Number - Use the given nodata value (per band or per dataset).",
+        )
 
-        parser.add_argument("-dstnodata", dest="dst_nodata", type=Real, nargs='*',
-                            help="Replace source nodata with a given nodata. "
-                                 "Has an effect only if not setting -skipnodata. "
-                                 "Default(None) - Use srcnodata, no replacement; "
-                                 "Sequence/Number - Replace the srcnodata with the given nodata value "
-                                 "(per band or per dataset).")
+        parser.add_argument(
+            "-dstnodata",
+            dest="dst_nodata",
+            type=Real,
+            nargs="*",
+            help="Replace source nodata with a given nodata. "
+            "Has an effect only if not setting -skipnodata. "
+            "Default(None) - Use srcnodata, no replacement; "
+            "Sequence/Number - Replace the srcnodata with the given nodata value "
+            "(per band or per dataset).",
+        )
 
-        parser.add_argument("srcfile", metavar="src_dataset", type=str,
-                            help="The source dataset name. It can be either file name, "
-                                 "URL of data source or subdataset name for multi-dataset files.")
+        parser.add_argument(
+            "srcfile",
+            metavar="src_dataset",
+            type=str,
+            help="The source dataset name. It can be either file name, "
+            "URL of data source or subdataset name for multi-dataset files.",
+        )
 
-        parser.add_argument("dstfile", metavar="dst_dataset", type=str,
-                            help="The destination file name.")
+        parser.add_argument(
+            "dstfile",
+            metavar="dst_dataset",
+            type=str,
+            help="The destination file name.",
+        )
 
         return parser
 
     def parse(self, argv) -> dict:
-
         def checkInt(s):
             try:
                 int(s)
@@ -292,12 +361,12 @@ class GDAL2XYZ(GDALScript):
         band_nums = []
         while i < count:
             arg = argv[i]
-            if arg in ('-b', '-band', '--band'):
+            if arg in ("-b", "-band", "--band"):
                 if i == count - 1:
-                    raise Exception(f'Missing argument following {arg}: ')
+                    raise Exception(f"Missing argument following {arg}: ")
                 i += 1
                 if not checkInt(argv[i]):
-                    raise Exception(f'Argument following {arg} should be a integer')
+                    raise Exception(f"Argument following {arg} should be a integer")
                 while i < count and checkInt(argv[i]):
                     band_nums.append(int(argv[i]))
                     i += 1
@@ -307,14 +376,14 @@ class GDAL2XYZ(GDALScript):
 
         kwargs = super(GDAL2XYZ, self).parse(new_argv)
         if band_nums:
-            kwargs['band_nums'] = band_nums
+            kwargs["band_nums"] = band_nums
         return kwargs
 
     def augment_kwargs(self, kwargs) -> dict:
-        if kwargs.get('allbands'):
-            kwargs['band_nums'] = None
-        elif not kwargs.get('band_nums'):
-            kwargs['band_nums'] = 1
+        if kwargs.get("allbands"):
+            kwargs["band_nums"] = None
+        elif not kwargs.get("band_nums"):
+            kwargs["band_nums"] = 1
         del kwargs["allbands"]
         return kwargs
 
@@ -326,5 +395,5 @@ def main(argv=sys.argv):
     return GDAL2XYZ().main(argv)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

@@ -29,9 +29,9 @@
 ###############################################################################
 
 
+import gdaltest
 
 from osgeo import gdal
-import gdaltest
 
 ###############################################################################
 # Read test of simple byte reference data.
@@ -39,8 +39,9 @@ import gdaltest
 
 def test_paux_1():
 
-    tst = gdaltest.GDALTest('PAux', 'paux/small16.raw', 2, 12816)
+    tst = gdaltest.GDALTest("PAux", "paux/small16.raw", 2, 12816)
     return tst.testOpen()
+
 
 ###############################################################################
 # Test copying.
@@ -48,9 +49,10 @@ def test_paux_1():
 
 def test_paux_2():
 
-    tst = gdaltest.GDALTest('PAux', 'byte.tif', 1, 4672)
+    tst = gdaltest.GDALTest("PAux", "byte.tif", 1, 4672)
 
     return tst.testCreateCopy(check_gt=1)
+
 
 ###############################################################################
 # Test /vsimem based.
@@ -58,9 +60,10 @@ def test_paux_2():
 
 def test_paux_3():
 
-    tst = gdaltest.GDALTest('PAux', 'byte.tif', 1, 4672)
+    tst = gdaltest.GDALTest("PAux", "byte.tif", 1, 4672)
 
     return tst.testCreateCopy(vsimem=1)
+
 
 ###############################################################################
 # Cleanup.
@@ -68,7 +71,4 @@ def test_paux_3():
 
 def test_paux_cleanup():
     gdaltest.clean_tmp()
-    gdal.Unlink('/vsimem/byte.tif.tst.aux.xml')
-
-
-
+    gdal.Unlink("/vsimem/byte.tif.tst.aux.xml")

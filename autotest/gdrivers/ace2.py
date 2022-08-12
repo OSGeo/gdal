@@ -28,10 +28,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import gdal
-
-
 import gdaltest
+
+from osgeo import gdal
 
 ###############################################################################
 # Test a fake ACE2 dataset
@@ -39,12 +38,14 @@ import gdaltest
 
 def test_ace2_1():
 
-    f = gdal.VSIFOpenL('/vsimem/45N015E_5M.ACE2', 'wb')
+    f = gdal.VSIFOpenL("/vsimem/45N015E_5M.ACE2", "wb")
     gdal.VSIFSeekL(f, 180 * 180 * 4 - 1, 0)
-    gdal.VSIFWriteL('\0', 1, 1, f)
+    gdal.VSIFWriteL("\0", 1, 1, f)
     gdal.VSIFCloseL(f)
 
-    tst = gdaltest.GDALTest('ACE2', '/vsimem/45N015E_5M.ACE2', 1, 0, filename_absolute=1)
+    tst = gdaltest.GDALTest(
+        "ACE2", "/vsimem/45N015E_5M.ACE2", 1, 0, filename_absolute=1
+    )
     expected_gt = [15.0, 0.08333333333333333, 0.0, 60.0, 0.0, -0.08333333333333333]
     expected_srs = """GEOGCS["WGS 84",
     DATUM["WGS_1984",
@@ -59,9 +60,6 @@ def test_ace2_1():
     AUTHORITY["EPSG","4326"]]"""
     ret = tst.testOpen(check_gt=expected_gt, check_prj=expected_srs)
 
-    gdal.Unlink('/vsimem/45N015E_5M.ACE2')
+    gdal.Unlink("/vsimem/45N015E_5M.ACE2")
 
     return ret
-
-
-

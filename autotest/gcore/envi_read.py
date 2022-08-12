@@ -28,10 +28,10 @@
 ###############################################################################
 
 
+import gdaltest
 import pytest
 
 from osgeo import gdal
-import gdaltest
 
 ###############################################################################
 # Test GDAL_READDIR_LIMIT_ON_OPEN
@@ -39,41 +39,39 @@ import gdaltest
 
 def test_envi_1():
 
-    gdal.SetConfigOption('GDAL_READDIR_LIMIT_ON_OPEN', '1')
+    gdal.SetConfigOption("GDAL_READDIR_LIMIT_ON_OPEN", "1")
 
-    ds = gdal.Open('data/utmsmall.raw')
+    ds = gdal.Open("data/utmsmall.raw")
     filelist = ds.GetFileList()
 
-    gdal.SetConfigOption('GDAL_READDIR_LIMIT_ON_OPEN', None)
+    gdal.SetConfigOption("GDAL_READDIR_LIMIT_ON_OPEN", None)
 
-    assert len(filelist) == 2, 'did not get expected file list.'
+    assert len(filelist) == 2, "did not get expected file list."
+
 
 ###############################################################################
 # When imported build a list of units based on the files available.
 
 
 init_list = [
-    ('byte.raw', 4672),
-    ('int16.raw', 4672),
-    ('uint16.raw', 4672),
-    ('int32.raw', 4672),
-    ('uint32.raw', 4672),
-    ('float32.raw', 4672),
-    ('float64.raw', 4672),
+    ("byte.raw", 4672),
+    ("int16.raw", 4672),
+    ("uint16.raw", 4672),
+    ("int32.raw", 4672),
+    ("uint32.raw", 4672),
+    ("float32.raw", 4672),
+    ("float64.raw", 4672),
     # ('cfloat32.raw', 5028),
     # ('cfloat64.raw', 5028),
 ]
 
 
 @pytest.mark.parametrize(
-    'filename,checksum',
+    "filename,checksum",
     init_list,
-    ids=[tup[0].split('.')[0] for tup in init_list],
+    ids=[tup[0].split(".")[0] for tup in init_list],
 )
-@pytest.mark.require_driver('ENVI')
+@pytest.mark.require_driver("ENVI")
 def test_envi_open(filename, checksum):
-    ut = gdaltest.GDALTest('ENVI', filename, 1, checksum)
+    ut = gdaltest.GDALTest("ENVI", filename, 1, checksum)
     ut.testOpen()
-
-
-

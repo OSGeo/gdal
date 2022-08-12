@@ -13,6 +13,7 @@ from gdal_python_driver import BaseDriver
 # gdal: DRIVER_DCAP_VECTOR = "YES"
 # gdal: DRIVER_DMD_LONGNAME = "my super plugin"
 
+
 class Driver(BaseDriver):
     def __init__(self):
         pass

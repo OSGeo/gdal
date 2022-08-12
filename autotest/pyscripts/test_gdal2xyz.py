@@ -29,27 +29,28 @@
 ###############################################################################
 
 import os
+
 import pytest
 import test_py_scripts
 
 # test that osgeo_utils is available, if not skip all tests
-pytest.importorskip('osgeo_utils')
-pytest.importorskip('numpy')
+pytest.importorskip("osgeo_utils")
+pytest.importorskip("numpy")
 
 from itertools import product
+
 import numpy as np
 
 from osgeo import gdal
 from osgeo.gdal_array import flip_code
-
+from osgeo_utils import gdal2xyz
 from osgeo_utils.auxiliary.raster_creation import create_flat_raster
 from osgeo_utils.samples import gdallocationinfo
-from osgeo_utils import gdal2xyz
 
 
 def test_gdal2xyz_py_1():
-    """ test get_ovr_idx, create_flat_raster """
-    pytest.importorskip('numpy')
+    """test get_ovr_idx, create_flat_raster"""
+    pytest.importorskip("numpy")
 
     size = (3, 3)
     origin = (500_000, 0)
@@ -59,8 +60,15 @@ def test_gdal2xyz_py_1():
     dt = gdal.GDT_Byte
     np_dt = flip_code(dt)
     ds = create_flat_raster(
-        filename='', size=size, origin=origin, pixel_size=pixel_size,
-        nodata_value=nodata_value, fill_value=nodata_value, band_count=band_count, dt=dt)
+        filename="",
+        size=size,
+        origin=origin,
+        pixel_size=pixel_size,
+        nodata_value=nodata_value,
+        fill_value=nodata_value,
+        band_count=band_count,
+        dt=dt,
+    )
     src_nodata = nodata_value
     np.random.seed()
     for bnd_idx in range(band_count):
@@ -70,52 +78,63 @@ def test_gdal2xyz_py_1():
         bnd.WriteArray(data, 0, 0)
     dst_nodata = 254
     for pre_allocate_np_arrays, skip_nodata in product((True, False), (True, False)):
-        geo_x, geo_y, data, nodata = \
-            gdal2xyz.gdal2xyz(
-                ds, None, return_np_arrays=True,
-                src_nodata=src_nodata, dst_nodata=dst_nodata,
-                skip_nodata=skip_nodata, pre_allocate_np_arrays=pre_allocate_np_arrays)
+        geo_x, geo_y, data, nodata = gdal2xyz.gdal2xyz(
+            ds,
+            None,
+            return_np_arrays=True,
+            src_nodata=src_nodata,
+            dst_nodata=dst_nodata,
+            skip_nodata=skip_nodata,
+            pre_allocate_np_arrays=pre_allocate_np_arrays,
+        )
         _pixels, _lines, data2 = gdallocationinfo.gdallocationinfo(
-            ds, x=geo_x, y=geo_y,
+            ds,
+            x=geo_x,
+            y=geo_y,
             resample_alg=gdal.GRIORA_NearestNeighbour,
-            srs=gdallocationinfo.LocationInfoSRS.SameAsDS_SRS)
+            srs=gdallocationinfo.LocationInfoSRS.SameAsDS_SRS,
+        )
         data2[data2 == src_nodata] = dst_nodata
         assert np.all(np.equal(data, data2))
+
 
 ###############################################################################
 # Test -b at beginning
 
+
 def test_gdal2xyz_py_2():
 
-    script = 'gdal2xyz'
+    script = "gdal2xyz"
     folder = test_py_scripts.get_py_script(script)
     if folder is None:
         pytest.skip()
 
-    arguments = '-b 1'
-    arguments += ' '+ test_py_scripts.get_data_path('gcore') + 'byte.tif'
-    arguments += ' tmp/out.xyz'
+    arguments = "-b 1"
+    arguments += " " + test_py_scripts.get_data_path("gcore") + "byte.tif"
+    arguments += " tmp/out.xyz"
 
     test_py_scripts.run_py_script(folder, script, arguments)
 
-    assert os.path.exists('tmp/out.xyz')
-    os.unlink('tmp/out.xyz')
+    assert os.path.exists("tmp/out.xyz")
+    os.unlink("tmp/out.xyz")
+
 
 ###############################################################################
 # Test -b at end
 
+
 def test_gdal2xyz_py_3():
 
-    script = 'gdal2xyz'
+    script = "gdal2xyz"
     folder = test_py_scripts.get_py_script(script)
     if folder is None:
         pytest.skip()
 
-    arguments = test_py_scripts.get_data_path('gcore') + 'byte.tif'
-    arguments += ' tmp/out.xyz'
-    arguments += ' -b 1'
+    arguments = test_py_scripts.get_data_path("gcore") + "byte.tif"
+    arguments += " tmp/out.xyz"
+    arguments += " -b 1"
 
     test_py_scripts.run_py_script(folder, script, arguments)
 
-    assert os.path.exists('tmp/out.xyz')
-    os.unlink('tmp/out.xyz')
+    assert os.path.exists("tmp/out.xyz")
+    os.unlink("tmp/out.xyz")

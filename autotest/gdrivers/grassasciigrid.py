@@ -29,7 +29,6 @@
 ###############################################################################
 
 
-
 import gdaltest
 
 ###############################################################################
@@ -38,11 +37,9 @@ import gdaltest
 
 def test_grassasciigrid_1():
 
-    tst = gdaltest.GDALTest('GRASSASCIIGrid', 'grassasciigrid/grassascii.txt', 1, 212)
+    tst = gdaltest.GDALTest("GRASSASCIIGrid", "grassasciigrid/grassascii.txt", 1, 212)
     expected_gt = [-100.0, 62.5, 0.0, 250.0, 0.0, -41.666666666666664]
     return tst.testOpen(check_gt=expected_gt)
 
+
 ###############################################################################
-
-
-

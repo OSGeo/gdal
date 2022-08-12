@@ -28,11 +28,10 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import gdal
-
-
 import gdaltest
 import pytest
+
+from osgeo import gdal
 
 ###############################################################################
 # Perform simple read test.
@@ -40,17 +39,24 @@ import pytest
 
 def test_gmt_1():
 
-    gdaltest.gmt_drv = gdal.GetDriverByName('GMT')
+    gdaltest.gmt_drv = gdal.GetDriverByName("GMT")
 
     if gdaltest.gmt_drv is None:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('GMT', 'gmt/gmt_1.grd', 1, 34762)
+    tst = gdaltest.GDALTest("GMT", "gmt/gmt_1.grd", 1, 34762)
 
-    gt = (59.958333333333336, 0.083333333333333, 0.0,
-          25.041666666666668, 0.0, -0.083333333333333)
+    gt = (
+        59.958333333333336,
+        0.083333333333333,
+        0.0,
+        25.041666666666668,
+        0.0,
+        -0.083333333333333,
+    )
 
     return tst.testOpen(check_gt=gt)
+
 
 ###############################################################################
 # Verify a simple createcopy operation with 16bit data.
@@ -61,11 +67,8 @@ def test_gmt_2():
     if gdaltest.gmt_drv is None:
         pytest.skip()
 
-    tst = gdaltest.GDALTest('GMT', 'int16.tif', 1, 4672)
+    tst = gdaltest.GDALTest("GMT", "int16.tif", 1, 4672)
     return tst.testCreateCopy(check_gt=1)
 
+
 ###############################################################################
-
-
-
-

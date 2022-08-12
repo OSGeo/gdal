@@ -29,35 +29,44 @@
 ###############################################################################
 
 import time
-from osgeo import gdal
-
 
 import gdaltest
 import pytest
+
+from osgeo import gdal
 
 ###############################################################################
 #
 
 
 def test_vsicurl_streaming_1():
-    drv = gdal.GetDriverByName('HTTP')
+    drv = gdal.GetDriverByName("HTTP")
 
     if drv is None:
         pytest.skip()
 
-    gdal.SetConfigOption('GDAL_HTTP_CONNECTTIMEOUT', '5')
-    fp = gdal.VSIFOpenL('/vsicurl_streaming/http://download.osgeo.org/gdal/data/usgsdem/cded/114p01_0100_deme.dem', 'rb')
-    gdal.SetConfigOption('GDAL_HTTP_CONNECTTIMEOUT', None)
+    gdal.SetConfigOption("GDAL_HTTP_CONNECTTIMEOUT", "5")
+    fp = gdal.VSIFOpenL(
+        "/vsicurl_streaming/http://download.osgeo.org/gdal/data/usgsdem/cded/114p01_0100_deme.dem",
+        "rb",
+    )
+    gdal.SetConfigOption("GDAL_HTTP_CONNECTTIMEOUT", None)
     if fp is None:
-        if gdaltest.gdalurlopen('http://download.osgeo.org/gdal/data/usgsdem/cded/114p01_0100_deme.dem', timeout=4) is None:
-            pytest.skip('cannot open URL')
+        if (
+            gdaltest.gdalurlopen(
+                "http://download.osgeo.org/gdal/data/usgsdem/cded/114p01_0100_deme.dem",
+                timeout=4,
+            )
+            is None
+        ):
+            pytest.skip("cannot open URL")
         pytest.fail()
 
     if gdal.VSIFTellL(fp) != 0:
         gdal.VSIFCloseL(fp)
         pytest.fail()
     data = gdal.VSIFReadL(1, 50, fp)
-    if data.decode('ascii') != '                              114p01DEMe   Base Ma':
+    if data.decode("ascii") != "                              114p01DEMe   Base Ma":
         gdal.VSIFCloseL(fp)
         pytest.fail()
     if gdal.VSIFTellL(fp) != 50:
@@ -70,7 +79,7 @@ def test_vsicurl_streaming_1():
         gdal.VSIFCloseL(fp)
         pytest.fail()
     data = gdal.VSIFReadL(1, 50, fp)
-    if data.decode('ascii') != '                              114p01DEMe   Base Ma':
+    if data.decode("ascii") != "                              114p01DEMe   Base Ma":
         gdal.VSIFCloseL(fp)
         pytest.fail()
     if gdal.VSIFTellL(fp) != 50:
@@ -80,7 +89,7 @@ def test_vsicurl_streaming_1():
     time.sleep(0.5)
     gdal.VSIFSeekL(fp, 2001, 0)
     data_2001 = gdal.VSIFReadL(1, 20, fp)
-    if data_2001.decode('ascii') != '7-32767-32767-32767-':
+    if data_2001.decode("ascii") != "7-32767-32767-32767-":
         gdal.VSIFCloseL(fp)
         pytest.fail(data_2001)
     if gdal.VSIFTellL(fp) != 2001 + 20:
@@ -109,7 +118,7 @@ def test_vsicurl_streaming_1():
 
     gdal.VSIFSeekL(fp, 1024 * 1024 + 100, 0)
     data = gdal.VSIFReadL(1, 20, fp)
-    if data.decode('ascii') != '67-32767-32767-32767':
+    if data.decode("ascii") != "67-32767-32767-32767":
         gdal.VSIFCloseL(fp)
         pytest.fail(data)
     if gdal.VSIFTellL(fp) != 1024 * 1024 + 100 + 20:
@@ -117,6 +126,3 @@ def test_vsicurl_streaming_1():
         pytest.fail()
 
     gdal.VSIFCloseL(fp)
-
-
-

@@ -28,20 +28,21 @@
 # ******************************************************************************
 
 import sys
+
 import numpy as np
 
 from osgeo import gdal, gdal_array
 
+
 def Usage():
-    print('Usage: classify.py src_filename dst_filename')
-    print('')
-    print('  classify.py utm.tif classes.tif')
+    print("Usage: classify.py src_filename dst_filename")
+    print("")
+    print("  classify.py utm.tif classes.tif")
     return 2
 
+
 def doit(src_filename, dst_filename):
-    class_defs = [(1, 10, 20),
-                  (2, 20, 30),
-                  (3, 128, 255)]
+    class_defs = [(1, 10, 20), (2, 20, 30), (3, 128, 255)]
 
     src_ds = gdal.Open(src_filename)
     xsize = src_ds.RasterXSize
@@ -60,7 +61,8 @@ def doit(src_filename, dst_filename):
 
         mask = np.bitwise_and(
             np.greater_equal(src_image, class_start),
-            np.less_equal(src_image, class_end))
+            np.less_equal(src_image, class_end),
+        )
 
         dst_image = np.choose(mask, (dst_image, class_value))
 
@@ -77,5 +79,5 @@ def main(argv=sys.argv, src_filename=None, dst_filename=None):
     return doit(src_filename, dst_filename)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))
