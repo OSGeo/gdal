@@ -43,7 +43,7 @@ for filename in glob.glob(os.path.join(dirname, "*.rst")):
                 if pos > 0:
                     longname = longname[pos + len(" -- ") :]
                 pos = longname.find(" - ")
-                if pos > 0 and not "oapif" in link:
+                if pos > 0 and "oapif" not in link:
                     longname = longname[pos + len(" - ") :]
                 line_before_long_name = False
             elif l.startswith(".. supports_createcopy::"):

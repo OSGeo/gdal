@@ -31,7 +31,7 @@ for filename in matches:
                         break
                     endpos = l.find("`", pos + len(":decl_configoption:`"))
                     configoption = l[pos + len(":decl_configoption:`") : endpos]
-                    if not configoption in configoptions:
+                    if configoption not in configoptions:
                         configoptions[configoption] = set()
                     configoptions[configoption].add(link)
                     pos = endpos

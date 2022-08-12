@@ -188,9 +188,7 @@ def getCompletionScript(name, optList):
             output.append("  esac\n")
     else:
         # ogr type
-        formatParsingCmd = (
-            "$tool --formats | tail -n +2 | grep -o -E '\"[^\"]+\"' | sed 's/\ /__/'"
-        )
+        formatParsingCmd = "$tool --formats | tail -n +2 | grep -o -E '\"[^\"]+\"' | sed 's/\ /__/'"  # noqa: W605
         if "-f" in optList:
             # replace ogrtindex by ogr2ogr to check --formats
             output.append("  tool=${COMP_WORDS[0]/ogrtindex/ogr2ogr}\n")
