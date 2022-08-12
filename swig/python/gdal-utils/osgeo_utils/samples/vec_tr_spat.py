@@ -36,8 +36,8 @@ from osgeo import ogr
 
 
 def Usage():
-    print('Usage: vec_tr_spat.py [-spat xmin ymin xmax ymax] infile outfile [layer]')
-    print('')
+    print("Usage: vec_tr_spat.py [-spat xmin ymin xmax ymax] infile outfile [layer]")
+    print("")
     return 2
 
 
@@ -50,7 +50,7 @@ def main(argv=sys.argv):
     while i < len(argv):
         arg = argv[i]
 
-        if arg == '-spat':
+        if arg == "-spat":
             s_minx = int(argv[i + 1])
             s_miny = int(argv[i + 2])
             s_maxx = int(argv[i + 3])
@@ -89,14 +89,14 @@ def main(argv=sys.argv):
     #############################################################################
     # Create output file with similar information.
 
-    shp_driver = ogr.GetDriverByName('ESRI Shapefile')
+    shp_driver = ogr.GetDriverByName("ESRI Shapefile")
     shp_driver.DeleteDataSource(outfile)
 
     shp_ds = shp_driver.CreateDataSource(outfile)
 
-    shp_layer = shp_ds.CreateLayer(in_defn.GetName(),
-                                   geom_type=in_defn.GetGeomType(),
-                                   srs=in_layer.GetSpatialRef())
+    shp_layer = shp_ds.CreateLayer(
+        in_defn.GetName(), geom_type=in_defn.GetGeomType(), srs=in_layer.GetSpatialRef()
+    )
 
     in_field_count = in_defn.GetFieldCount()
 
@@ -153,5 +153,5 @@ def main(argv=sys.argv):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

@@ -30,8 +30,8 @@
 ###############################################################################
 
 import gdaltest
-import test_cli_utilities
 import pytest
+import test_cli_utilities
 
 ###############################################################################
 # Simple test
@@ -42,6 +42,8 @@ def test_gdalmdiminfo_1():
     if test_cli_utilities.get_gdalmdiminfo_path() is None:
         pytest.skip()
 
-    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalmdiminfo_path() + ' data/mdim.vrt')
-    assert (err is None or err == ''), 'got error/warning'
+    (ret, err) = gdaltest.runexternal_out_and_err(
+        test_cli_utilities.get_gdalmdiminfo_path() + " data/mdim.vrt"
+    )
+    assert err is None or err == "", "got error/warning"
     assert '"type": "group"' in ret

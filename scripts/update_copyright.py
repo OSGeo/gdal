@@ -34,36 +34,36 @@ import os
 # WARNING: Only works from a git repository !
 
 # Please edit for a different author
-author_in_file = 'rouault'
-git_author = 'Even Rouault'
-full_author = 'Even Rouault <even dot rouault at mines-paris dot org>'
+author_in_file = "rouault"
+git_author = "Even Rouault"
+full_author = "Even Rouault <even dot rouault at mines-paris dot org>"
 
-for dirname, dirnames, filenames in os.walk('.'):
+for dirname, dirnames, filenames in os.walk("."):
 
-    if '.svn' in dirname:
+    if ".svn" in dirname:
         continue
-    if '.git' in dirname:
+    if ".git" in dirname:
         continue
-    if 'libpng' in dirname:
+    if "libpng" in dirname:
         continue
-    if 'libjpeg' in dirname:
+    if "libjpeg" in dirname:
         continue
-    if 'libtiff' in dirname:
+    if "libtiff" in dirname:
         continue
-    if 'giflib' in dirname:
+    if "giflib" in dirname:
         continue
-    if 'libgeotiff' in dirname:
+    if "libgeotiff" in dirname:
         continue
-    if 'libjson' in dirname:
+    if "libjson" in dirname:
         continue
 
     # print path to all filenames.
     for filename in filenames:
-        if '.svn' in filename:
+        if ".svn" in filename:
             continue
-        if '.h' not in filename and '.c' not in filename and '.py' not in filename:
+        if ".h" not in filename and ".c" not in filename and ".py" not in filename:
             continue
-        if filename == 'e00read.c' or filename == 'e00compr.h':
+        if filename == "e00read.c" or filename == "e00compr.h":
             continue
         fullfilename = os.path.join(dirname, filename)
 
@@ -72,7 +72,7 @@ for dirname, dirnames, filenames in os.walk('.'):
         maxyear = -1
 
         # Find if we have authored something and commit numbers to ignore (commits that originate from other authors)
-        ret = os.popen('git log %s' % fullfilename)
+        ret = os.popen("git log %s" % fullfilename)
         lines = ret.readlines()
         i = 0
         nlines = len(lines)
@@ -80,7 +80,7 @@ for dirname, dirnames, filenames in os.walk('.'):
         commits_to_ignore = []
         while i < nlines:
             line = lines[i][0:-1]
-            if line.startswith('Author:') and git_author in line:
+            if line.startswith("Author:") and git_author in line:
                 i = i + 1
                 # line = lines[i][0:-1]
                 # year = int(line.split(' ')[7])
@@ -90,12 +90,17 @@ for dirname, dirnames, filenames in os.walk('.'):
                 ignore_commit = False
                 while i < nlines:
                     line = lines[i][0:-1]
-                    if line.startswith('commit'):
+                    if line.startswith("commit"):
                         break
-                    if '(by' in line or 'contributed by' in line or \
-                       'patch' in line or 'Patch' in line or \
-                       'Update copyright' in line or 'From: ' in line or \
-                       'Add BLX Magellan Topo driver' in line:
+                    if (
+                        "(by" in line
+                        or "contributed by" in line
+                        or "patch" in line
+                        or "Patch" in line
+                        or "Update copyright" in line
+                        or "From: " in line
+                        or "Add BLX Magellan Topo driver" in line
+                    ):
                         ignore_commit = True
                     i = i + 1
                 if ignore_commit:
@@ -109,7 +114,7 @@ for dirname, dirnames, filenames in os.walk('.'):
             continue
 
         # Count how many lines we have authored
-        ret = os.popen('git blame %s' % fullfilename)
+        ret = os.popen("git blame %s" % fullfilename)
         lines = ret.readlines()
         i = 0
         nlines = len(lines)
@@ -120,13 +125,13 @@ for dirname, dirnames, filenames in os.walk('.'):
             for commit in commits_to_ignore:
                 if line.startswith(commit):
                     ignore = True
-            if not ignore and 'Copyright' not in line:
+            if not ignore and "Copyright" not in line:
                 idx = line.find("(" + git_author)
                 if idx > 0:
                     count_matching_lines = count_matching_lines + 1
-                    line = line[idx + len(git_author) + 1:]
-                    idx = line.find(' 20')
-                    year = int(line[idx + 1:idx + 5])
+                    line = line[idx + len(git_author) + 1 :]
+                    idx = line.find(" 20")
+                    year = int(line[idx + 1 : idx + 5])
                     if minyear < 0 or year < minyear:
                         minyear = year
                     if maxyear < 0 or year > maxyear:
@@ -137,37 +142,44 @@ for dirname, dirnames, filenames in os.walk('.'):
         if count_matching_lines < 10:
             continue
 
-        print(fullfilename + ' %d-%d' % (minyear, maxyear))
-        f = open(fullfilename, 'rb')
-        f2 = open(fullfilename + '.tmp', 'wb')
+        print(fullfilename + " %d-%d" % (minyear, maxyear))
+        f = open(fullfilename, "rb")
+        f2 = open(fullfilename + ".tmp", "wb")
         lines = f.readlines()
         i = 0
         nlines = len(lines)
         already_added = False
-        if '.py' in filename:
-            prefix = '# '
+        if ".py" in filename:
+            prefix = "# "
         else:
-            prefix = ' * '
+            prefix = " * "
         while i < nlines:
             line = lines[i]
-            if not already_added and 'Copyright' in line:
+            if not already_added and "Copyright" in line:
                 already_added = True
-                if line.startswith('#  '):
-                    prefix = '#  '
-                elif line.startswith('# * '):
-                    prefix = '# * '
-                elif line.startswith('// '):
-                    prefix = '// '
+                if line.startswith("#  "):
+                    prefix = "#  "
+                elif line.startswith("# * "):
+                    prefix = "# * "
+                elif line.startswith("// "):
+                    prefix = "// "
                 while author_in_file not in line:
                     f2.write(line)
                     i = i + 1
                     line = lines[i]
-                    if ('Copyright' not in line and len(line.strip()) < 10) or line.find('Permission to use') > 0:
+                    if (
+                        "Copyright" not in line and len(line.strip()) < 10
+                    ) or line.find("Permission to use") > 0:
                         break
                 if minyear < maxyear:
-                    f2.write('%sCopyright (c) %d-%d, %s\n' % (prefix, minyear, maxyear, full_author))
+                    f2.write(
+                        "%sCopyright (c) %d-%d, %s\n"
+                        % (prefix, minyear, maxyear, full_author)
+                    )
                 else:
-                    f2.write('%sCopyright (c) %d, %s\n' % (prefix, minyear, full_author))
+                    f2.write(
+                        "%sCopyright (c) %d, %s\n" % (prefix, minyear, full_author)
+                    )
                 if author_in_file not in line:
                     f2.write(line)
             else:
@@ -175,4 +187,4 @@ for dirname, dirnames, filenames in os.walk('.'):
             i = i + 1
         f.close()
         f2.close()
-        os.rename(fullfilename + '.tmp', fullfilename)
+        os.rename(fullfilename + ".tmp", fullfilename)

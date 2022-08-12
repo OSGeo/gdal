@@ -29,14 +29,16 @@
 
 # from osgeo import osr
 
-from osgeo import gdal
 import gdaltest
 import pytest
 
-pytestmark = pytest.mark.require_driver('ESRIC')
+from osgeo import gdal
+
+pytestmark = pytest.mark.require_driver("ESRIC")
 
 ###############################################################################
 # Open the dataset
+
 
 def test_esric_1():
 
@@ -47,6 +49,7 @@ def test_esric_1():
 ###############################################################################
 # Check that the configuration was read as expected
 
+
 def test_esric_2():
 
     if gdaltest.esric_ds is None:
@@ -55,24 +58,26 @@ def test_esric_2():
     ds = gdaltest.esric_ds
     b1 = ds.GetRasterBand(1)
 
-    assert ds.RasterCount == 4 and ds.RasterXSize == 2048 and ds.RasterYSize == 2048, \
-            "wrong size or band count"
+    assert (
+        ds.RasterCount == 4 and ds.RasterXSize == 2048 and ds.RasterYSize == 2048
+    ), "wrong size or band count"
 
     assert b1.GetOverviewCount() == 3, "Wrong number of overviews"
 
     wkt = ds.GetProjectionRef()
-    assert 'AUTHORITY["EPSG","3857"]' in wkt, 'wrong SRS'
+    assert 'AUTHORITY["EPSG","3857"]' in wkt, "wrong SRS"
 
     gt = ds.GetGeoTransform()
-    assert gt[0] == pytest.approx(-20037508, abs=1), 'wrong geolocation'
-    assert gt[1] == pytest.approx( 20037508 / 1024, abs=1), 'wrong geolocation'
-    assert gt[2] == 0 and gt[4] == 0, 'wrong geolocation'
-    assert gt[3] == pytest.approx( 20037508, abs=1), 'wrong geolocation'
-    assert gt[5] == pytest.approx(-20037508 / 1024, abs=1), 'wrong geolocation'
+    assert gt[0] == pytest.approx(-20037508, abs=1), "wrong geolocation"
+    assert gt[1] == pytest.approx(20037508 / 1024, abs=1), "wrong geolocation"
+    assert gt[2] == 0 and gt[4] == 0, "wrong geolocation"
+    assert gt[3] == pytest.approx(20037508, abs=1), "wrong geolocation"
+    assert gt[5] == pytest.approx(-20037508 / 1024, abs=1), "wrong geolocation"
 
 
 ###############################################################################
 # Check that the read a missing level generates black
+
 
 def test_esric_3():
 
@@ -83,10 +88,12 @@ def test_esric_3():
     # There are no tiles at this level, driver will return black
     b1 = ds.GetRasterBand(1)
     cs = b1.Checksum()
-    assert cs == 0, 'wrong checksum from missing level'
+    assert cs == 0, "wrong checksum from missing level"
+
 
 ###############################################################################
 # Check that the read of PNG tiles returns the right checksum
+
 
 def test_esric_4():
 
@@ -94,7 +101,7 @@ def test_esric_4():
         pytest.skip()
 
     # Check that the PNG driver is available
-    if not gdal.GetDriverByName('PNG'):
+    if not gdal.GetDriverByName("PNG"):
         pytest.skip()
 
     ds = gdaltest.esric_ds
@@ -109,7 +116,8 @@ def test_esric_4():
 
     cs = l1b2.Checksum()
     expectedcs = 46857
-    assert cs == expectedcs, 'wrong data checksum'
+    assert cs == expectedcs, "wrong data checksum"
+
 
 def test_esric_cleanup():
 

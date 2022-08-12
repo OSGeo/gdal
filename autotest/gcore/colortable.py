@@ -31,10 +31,10 @@
 ###############################################################################
 
 
-
 import gdaltest
-from osgeo import gdal
 import pytest
+
+from osgeo import gdal
 
 ###############################################################################
 # Create a color table.
@@ -48,7 +48,7 @@ def test_colortable_1():
     for i in range(len(gdaltest.test_ct_data)):
         gdaltest.test_ct.SetColorEntry(i, gdaltest.test_ct_data[i])
 
-    
+
 ###############################################################################
 # verify contents.
 
@@ -65,9 +65,9 @@ def test_colortable_2():
             else:
                 o_v = o_data[j]
 
-            assert g_data[j] == o_v, 'color table mismatch'
+            assert g_data[j] == o_v, "color table mismatch"
 
-    
+
 ###############################################################################
 # Test CreateColorRamp()
 
@@ -86,12 +86,10 @@ def test_colortable_3():
 
     assert ct.GetColorEntry(255) == (0, 0, 255, 255)
 
+
 ###############################################################################
 # Cleanup.
 
 
 def test_colortable_cleanup():
     gdaltest.test_ct = None
-
-
-

@@ -33,38 +33,38 @@
 import os
 import subprocess
 import sys
-from osgeo import gdal
-from osgeo import ogr
 
 import pytest
+
+from osgeo import gdal, ogr
 
 try:
     import gdaltest
 except ImportError:
     # running as a subprocess in the windows build (see __main__ block),
     # so conftest.py hasn't run, so sys.path doesn't have pymod in it
-    sys.path.append('../pymod')
+    sys.path.append("../pymod")
     import gdaltest
 
 
-pytestmark = pytest.mark.require_driver('HTTP')
+pytestmark = pytest.mark.require_driver("HTTP")
 
 
 @pytest.fixture(autouse=True)
 def set_http_timeout():
-    with gdaltest.config_option('GDAL_HTTP_TIMEOUT', '5'):
+    with gdaltest.config_option("GDAL_HTTP_TIMEOUT", "5"):
         yield
 
 
 def skip_if_unreachable(url, try_read=False):
     conn = gdaltest.gdalurlopen(url, timeout=4)
     if conn is None:
-        pytest.skip('cannot open URL')
+        pytest.skip("cannot open URL")
     if try_read:
         try:
             conn.read()
         except Exception:
-            pytest.skip('cannot read')
+            pytest.skip("cannot read")
     conn.close()
 
 
@@ -73,35 +73,38 @@ def skip_if_unreachable(url, try_read=False):
 
 
 def test_http_1():
-    url = 'http://gdal.org/gdalicon.png'
-    tst = gdaltest.GDALTest('PNG', url, 1, 7617, filename_absolute=1)
+    url = "http://gdal.org/gdalicon.png"
+    tst = gdaltest.GDALTest("PNG", url, 1, 7617, filename_absolute=1)
     ret = tst.testOpen()
-    if ret == 'fail':
+    if ret == "fail":
         skip_if_unreachable(url)
         pytest.fail()
+
 
 ###############################################################################
 # Verify /vsicurl (subversion file listing)
 
 
 def test_http_2():
-    url = 'https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/gcore/data/byte.tif'
-    tst = gdaltest.GDALTest('GTiff', '/vsicurl/' + url, 1, 4672, filename_absolute=1)
+    url = "https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/gcore/data/byte.tif"
+    tst = gdaltest.GDALTest("GTiff", "/vsicurl/" + url, 1, 4672, filename_absolute=1)
     ret = tst.testOpen()
-    if ret == 'fail':
+    if ret == "fail":
         skip_if_unreachable(url)
         pytest.fail()
+
 
 ###############################################################################
 # Verify /vsicurl (apache file listing)
 
 
 def test_http_3():
-    url = 'http://download.osgeo.org/gdal/data/ehdr/elggll.bil'
-    ds = gdal.Open('/vsicurl/' + url)
+    url = "http://download.osgeo.org/gdal/data/ehdr/elggll.bil"
+    ds = gdal.Open("/vsicurl/" + url)
     if ds is None:
         skip_if_unreachable(url)
         pytest.fail()
+
 
 ###############################################################################
 # Verify /vsicurl (ftp)
@@ -112,23 +115,27 @@ def test_http_4():
     if gdaltest.skip_on_travis():
         pytest.skip()
 
-    url = 'ftp://download.osgeo.org/gdal/data/gtiff/utm.tif'
-    ds = gdal.Open('/vsicurl/' + url)
+    url = "ftp://download.osgeo.org/gdal/data/gtiff/utm.tif"
+    ds = gdal.Open("/vsicurl/" + url)
     if ds is None:
         skip_if_unreachable(url, try_read=True)
-        if sys.platform == 'darwin' and gdal.GetConfigOption('TRAVIS', None) is not None:
+        if (
+            sys.platform == "darwin"
+            and gdal.GetConfigOption("TRAVIS", None) is not None
+        ):
             pytest.skip("Fails on MacOSX Travis sometimes. Not sure why.")
         pytest.fail()
 
     filelist = ds.GetFileList()
-    assert '/vsicurl/ftp://download.osgeo.org/gdal/data/gtiff/utm.tif' in filelist
+    assert "/vsicurl/ftp://download.osgeo.org/gdal/data/gtiff/utm.tif" in filelist
+
 
 ###############################################################################
 # Test HTTP driver with OGR driver
 
 
 def test_http_6():
-    url = 'https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.dbf'
+    url = "https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.dbf"
     ds = ogr.Open(url)
     if ds is None:
         skip_if_unreachable(url, try_read=True)
@@ -138,22 +145,29 @@ def test_http_6():
 
 ###############################################################################
 
+
 def test_http_ssl_verifystatus():
-    with gdaltest.config_option('GDAL_HTTP_SSL_VERIFYSTATUS', 'YES'):
+    with gdaltest.config_option("GDAL_HTTP_SSL_VERIFYSTATUS", "YES"):
         with gdaltest.error_handler():
             # For now this URL doesn't support OCSP stapling...
-            gdal.OpenEx('https://google.com', allowed_drivers=['HTTP'])
+            gdal.OpenEx("https://google.com", allowed_drivers=["HTTP"])
     last_err = gdal.GetLastErrorMsg()
-    if 'timed out' in last_err:
+    if "timed out" in last_err:
         pytest.skip(last_err)
-    if 'No OCSP response received' not in last_err and 'libcurl too old' not in last_err:
+    if (
+        "No OCSP response received" not in last_err
+        and "libcurl too old" not in last_err
+    ):
 
         # The test actually works on Travis Mac
-        if sys.platform == 'darwin' and gdal.GetConfigOption('TRAVIS', None) is not None:
+        if (
+            sys.platform == "darwin"
+            and gdal.GetConfigOption("TRAVIS", None) is not None
+        ):
             pytest.skip()
 
         # The test actually works on build-windows-conda
-        if 'SKIP_GDAL_HTTP_SSL_VERIFYSTATUS' in os.environ:
+        if "SKIP_GDAL_HTTP_SSL_VERIFYSTATUS" in os.environ:
             pytest.skip()
 
         pytest.fail(last_err)
@@ -163,27 +177,27 @@ def test_http_ssl_verifystatus():
 
 
 def test_http_use_capi_store():
-    if sys.platform != 'win32':
+    if sys.platform != "win32":
         with gdaltest.error_handler():
             return test_http_use_capi_store_sub()
 
     # Prints this to stderr in many cases (but doesn't error)
     # Warning 6: GDAL_HTTP_USE_CAPI_STORE requested, but libcurl too old, non-Windows platform or OpenSSL missing.
     subprocess.check_call(
-        [sys.executable, 'gdalhttp.py', '-use_capi_store'],
+        [sys.executable, "gdalhttp.py", "-use_capi_store"],
     )
 
 
 def test_http_use_capi_store_sub():
 
-    with gdaltest.config_option('GDAL_HTTP_USE_CAPI_STORE', 'YES'):
-        gdal.OpenEx('https://google.com', allowed_drivers=['HTTP'])
+    with gdaltest.config_option("GDAL_HTTP_USE_CAPI_STORE", "YES"):
+        gdal.OpenEx("https://google.com", allowed_drivers=["HTTP"])
 
 
 ###############################################################################
 #
 
 
-if __name__ == '__main__':
-    if len(sys.argv) == 2 and sys.argv[1] == '-use_capi_store':
+if __name__ == "__main__":
+    if len(sys.argv) == 2 and sys.argv[1] == "-use_capi_store":
         test_http_use_capi_store_sub()

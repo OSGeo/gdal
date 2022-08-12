@@ -27,11 +27,10 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
-from typing import Union, Optional
+from typing import Optional, Union
 
 import osgeo
-from osgeo import osr, ogr, gdal
-
+from osgeo import gdal, ogr, osr
 from osgeo_utils.auxiliary.array_util import ArrayLike
 
 AnySRS = Union[str, int, osr.SpatialReference, gdal.Dataset]
@@ -39,8 +38,9 @@ OAMS_AXIS_ORDER = int
 _default_axis_order: Optional[OAMS_AXIS_ORDER] = None
 
 
-def get_srs(srs_like: AnySRS,
-            axis_order: Optional[OAMS_AXIS_ORDER] = None) -> osr.SpatialReference:
+def get_srs(
+    srs_like: AnySRS, axis_order: Optional[OAMS_AXIS_ORDER] = None
+) -> osr.SpatialReference:
     """
     returns an SRS object from epsg, pj_string or DataSet or SRS object
 
@@ -57,20 +57,22 @@ def get_srs(srs_like: AnySRS,
     elif isinstance(srs_like, int):
         srs = osr.SpatialReference()
         if srs.ImportFromEPSG(srs_like) != ogr.OGRERR_NONE:
-            raise Exception(f'ogr error when parsing srs from epsg:{srs_like}')
+            raise Exception(f"ogr error when parsing srs from epsg:{srs_like}")
     elif isinstance(srs_like, str):
         srs = osr.SpatialReference()
-        if srs.SetFromUserInput(srs_like) != ogr.OGRERR_NONE:  # accept PROJ string, WKT, PROJJSON, etc.
-            raise Exception(f'ogr error when parsing srs from user input: {srs_like}')
+        if (
+            srs.SetFromUserInput(srs_like) != ogr.OGRERR_NONE
+        ):  # accept PROJ string, WKT, PROJJSON, etc.
+            raise Exception(f"ogr error when parsing srs from user input: {srs_like}")
     else:
-        raise Exception(f'Unknown SRS: {srs_like}')
+        raise Exception(f"Unknown SRS: {srs_like}")
 
     if axis_order is None and srs != srs_like:
         axis_order = _default_axis_order
     if axis_order is not None and int(osgeo.__version__[0]) >= 3:
         # GDAL 3 changes axis order: https://github.com/OSGeo/gdal/issues/1546
         if not isinstance(axis_order, OAMS_AXIS_ORDER):
-            raise Exception(f'Unexpected axis_order: {axis_order}')
+            raise Exception(f"Unexpected axis_order: {axis_order}")
         srs_axis_order = srs.GetAxisMappingStrategy()
         if axis_order != srs_axis_order:
             if srs == srs_like:
@@ -81,16 +83,22 @@ def get_srs(srs_like: AnySRS,
 
 
 def get_axis_order_from_gis_order(gis_order: Optional[bool]):
-    return None if gis_order is None \
-        else osr.OAMS_TRADITIONAL_GIS_ORDER if gis_order \
+    return (
+        None
+        if gis_order is None
+        else osr.OAMS_TRADITIONAL_GIS_ORDER
+        if gis_order
         else osr.OAMS_AUTHORITY_COMPLIANT
+    )
 
 
 def get_gis_order_from_axis_order(axis_order: Optional[OAMS_AXIS_ORDER]):
     return None if axis_order is None else axis_order == osr.OAMS_TRADITIONAL_GIS_ORDER
 
 
-def set_default_axis_order(axis_order: Optional[OAMS_AXIS_ORDER] = None) -> Optional[OAMS_AXIS_ORDER]:
+def set_default_axis_order(
+    axis_order: Optional[OAMS_AXIS_ORDER] = None,
+) -> Optional[OAMS_AXIS_ORDER]:
     global _default_axis_order
     _default_axis_order = axis_order
     return _default_axis_order
@@ -115,7 +123,9 @@ def are_srs_equivalent(srs1: AnySRS, srs2: AnySRS) -> bool:
     return srs1.IsSame(srs2)
 
 
-def get_transform(src_srs: AnySRS, tgt_srs: AnySRS) -> Optional[osr.CoordinateTransformation]:
+def get_transform(
+    src_srs: AnySRS, tgt_srs: AnySRS
+) -> Optional[osr.CoordinateTransformation]:
     src_srs = get_srs(src_srs)
     tgt_srs = get_srs(tgt_srs)
     if src_srs.IsSame(tgt_srs):
@@ -124,8 +134,12 @@ def get_transform(src_srs: AnySRS, tgt_srs: AnySRS) -> Optional[osr.CoordinateTr
         return osr.CoordinateTransformation(src_srs, tgt_srs)
 
 
-def transform_points(ct: Optional[osr.CoordinateTransformation],
-                     x: ArrayLike, y: ArrayLike, z: Optional[ArrayLike] = None) -> None:
+def transform_points(
+    ct: Optional[osr.CoordinateTransformation],
+    x: ArrayLike,
+    y: ArrayLike,
+    z: Optional[ArrayLike] = None,
+) -> None:
     if ct is not None:
         if z is None:
             for idx, (x0, y0) in enumerate(zip(x, y)):

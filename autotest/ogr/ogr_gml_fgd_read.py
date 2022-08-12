@@ -30,81 +30,85 @@
 ###############################################################################
 
 
-
 import ogrtest
-from osgeo import gdal
-from osgeo import ogr
-from osgeo import osr
 import pytest
 
+from osgeo import gdal, ogr, osr
 
 ###############################################################################
 # Test reading Japanese FGD GML (v4) files
 ###############################################################################
 
-_fgd_dir = 'data/gml_jpfgd/'
+_fgd_dir = "data/gml_jpfgd/"
 
 ###############################################################################
-@pytest.fixture(autouse=True, scope='module')
+@pytest.fixture(autouse=True, scope="module")
 def startup_and_cleanup():
 
     # open FGD GML file
-    ds = ogr.Open(_fgd_dir + 'ElevPt.xml')
+    ds = ogr.Open(_fgd_dir + "ElevPt.xml")
 
     if ds is None:
-        if gdal.GetLastErrorMsg().find('Xerces') != -1:
+        if gdal.GetLastErrorMsg().find("Xerces") != -1:
             pytest.skip()
-        pytest.fail('failed to open test file.')
+        pytest.fail("failed to open test file.")
 
 
 ###############################################################################
 # Test reading Japanese FGD GML (v4) ElevPt file
 
+
 def test_ogr_gml_fgd_1():
 
     # open FGD GML file
-    ds = ogr.Open(_fgd_dir + 'ElevPt.xml')
+    ds = ogr.Open(_fgd_dir + "ElevPt.xml")
 
     # check number of layers
-    assert ds.GetLayerCount() == 1, 'Wrong layer count'
+    assert ds.GetLayerCount() == 1, "Wrong layer count"
 
     lyr = ds.GetLayer(0)
 
     # check the SRS
     sr = osr.SpatialReference()
-    sr.ImportFromEPSG(6668)   # JGD2011
-    assert sr.IsSame(lyr.GetSpatialRef(), options = ['IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES']), 'Wrong SRS'
+    sr.ImportFromEPSG(6668)  # JGD2011
+    assert sr.IsSame(
+        lyr.GetSpatialRef(), options=["IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES"]
+    ), "Wrong SRS"
 
     # check the first feature
     feat = lyr.GetNextFeature()
-    assert not ogrtest.check_feature_geometry(feat, 'POINT (133.123456789 34.123456789)'), \
-        'Wrong geometry'
+    assert not ogrtest.check_feature_geometry(
+        feat, "POINT (133.123456789 34.123456789)"
+    ), "Wrong geometry"
 
-    assert feat.GetField('devDate') == '2015-01-07', 'Wrong attribute value'
+    assert feat.GetField("devDate") == "2015-01-07", "Wrong attribute value"
 
 
 ###############################################################################
 # Test reading Japanese FGD GML (v4) BldA file
 
+
 def test_ogr_gml_fgd_2():
 
     # open FGD GML file
-    ds = ogr.Open(_fgd_dir + 'BldA.xml')
+    ds = ogr.Open(_fgd_dir + "BldA.xml")
 
     # check number of layers
-    assert ds.GetLayerCount() == 1, 'Wrong layer count'
+    assert ds.GetLayerCount() == 1, "Wrong layer count"
 
     lyr = ds.GetLayer(0)
 
     # check the SRS
     sr = osr.SpatialReference()
-    sr.ImportFromEPSG(6668)   # JGD2011
-    assert sr.IsSame(lyr.GetSpatialRef(), options = ['IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES']), 'Wrong SRS'
+    sr.ImportFromEPSG(6668)  # JGD2011
+    assert sr.IsSame(
+        lyr.GetSpatialRef(), options=["IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES"]
+    ), "Wrong SRS"
 
-    wkt = 'POLYGON ((139.718509733734 35.6952171397133,139.718444177734 35.6953121947133,139.718496754142 35.6953498949667,139.718550483734 35.6952359447133,139.718509733734 35.6952171397133))'
+    wkt = "POLYGON ((139.718509733734 35.6952171397133,139.718444177734 35.6953121947133,139.718496754142 35.6953498949667,139.718550483734 35.6952359447133,139.718509733734 35.6952171397133))"
 
     # check the first feature
     feat = lyr.GetNextFeature()
-    assert not ogrtest.check_feature_geometry(feat, wkt), 'Wrong geometry'
+    assert not ogrtest.check_feature_geometry(feat, wkt), "Wrong geometry"
 
-    assert feat.GetField('devDate') == '2017-03-07', 'Wrong attribute value'
+    assert feat.GetField("devDate") == "2017-03-07", "Wrong attribute value"

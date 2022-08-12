@@ -30,8 +30,7 @@
 ###############################################################################
 
 import sys
-
-from subprocess import Popen, PIPE, STDOUT
+from subprocess import PIPE, STDOUT, Popen
 
 
 def showHelp():
@@ -40,25 +39,25 @@ def showHelp():
 
 def processLine(line):
     outList = []
-    lvl1 = line.split(' ')
+    lvl1 = line.split(" ")
     lvl2 = []
     for item in lvl1:
-        lvl2 += item.split('[')
+        lvl2 += item.split("[")
     lvl3 = []
     for item in lvl2:
-        lvl3 += item.split(']')
+        lvl3 += item.split("]")
     lvl4 = []
     for item in lvl3:
-        lvl4 += item.split('|')
+        lvl4 += item.split("|")
 
     for item in lvl4:
         if len(item) >= 2:
-            if item[0] == '-':
+            if item[0] == "-":
                 key = item
                 # Handle special cases -key={A/B/C}
-                if (key.count("={") == 1 and key[-1] == '}'):
+                if key.count("={") == 1 and key[-1] == "}":
                     pair = key.split("=")
-                    choices = ((pair[1])[1:-1]).split('/')
+                    choices = ((pair[1])[1:-1]).split("/")
                     for c in choices:
                         outList.append(pair[0] + "=" + c)
                 else:
@@ -72,18 +71,18 @@ def processTool(toolName):
 
     process = Popen(command, stdout=PIPE, stderr=STDOUT)
     result = process.communicate()[0]
-    lines = result.decode('utf-8').split('\n')
+    lines = result.decode("utf-8").split("\n")
     index = 0
 
     while index < len(lines):
-        if 'usage:' in lines[index].lower():
+        if "usage:" in lines[index].lower():
             break
         index += 1
 
     options = []
 
     while index < len(lines):
-        cleanLine = lines[index].strip('\t\r ')
+        cleanLine = lines[index].strip("\t\r ")
         if not cleanLine:
             break
         options += processLine(cleanLine)
@@ -96,14 +95,14 @@ def parseGDALGeneralOptions():
     command = ["gdalinfo", "--help-general"]
     process = Popen(command, stdout=PIPE, stderr=STDOUT)
     result = process.communicate()[0]
-    lines = result.decode('utf-8').split('\n')
+    lines = result.decode("utf-8").split("\n")
     index = 0
     options = []
     while index < len(lines):
-        cleanLine = lines[index].strip('\t\r ')
-        parts = cleanLine.split(':')
-        if parts[0].find('--') == 0:
-            words = parts[0].split(' ')
+        cleanLine = lines[index].strip("\t\r ")
+        parts = cleanLine.split(":")
+        if parts[0].find("--") == 0:
+            words = parts[0].split(" ")
             options.append(words[0])
         index += 1
     return options
@@ -113,17 +112,18 @@ def parseOGRGeneralOptions():
     command = ["ogr2ogr", "--help-general"]
     process = Popen(command, stdout=PIPE, stderr=STDOUT)
     result = process.communicate()[0]
-    lines = result.decode('utf-8').split('\n')
+    lines = result.decode("utf-8").split("\n")
     index = 0
     options = []
     while index < len(lines):
-        cleanLine = lines[index].strip('\t\r ')
-        parts = cleanLine.split(':')
-        if parts[0].find('--') == 0:
-            words = parts[0].split(' ')
+        cleanLine = lines[index].strip("\t\r ")
+        parts = cleanLine.split(":")
+        if parts[0].find("--") == 0:
+            words = parts[0].split(" ")
             options.append(words[0])
         index += 1
     return options
+
 
 # generate completion script section for :
 #   - name : the given gdal/ogr tool
@@ -137,14 +137,14 @@ def getCompletionScript(name, optList):
     output.append("  local cur prev\n")
     output.append("  COMPREPLY=()\n")
     output.append("  _get_comp_words_by_ref cur prev\n")
-    output.append("  case \"$cur\" in\n")
+    output.append('  case "$cur" in\n')
     output.append("    -*)\n")
-    optLine = "      key_list=\""
+    optLine = '      key_list="'
     for item in optList:
         optLine += item + " "
-    optLine += "\"\n"
+    optLine += '"\n'
     output.append(optLine)
-    output.append("      mapfile -t COMPREPLY < <(compgen -W \"$key_list\" -- \"$cur\")\n")
+    output.append('      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")\n')
     output.append("      return 0\n")
     output.append("      ;;\n")
     output.append("  esac\n")
@@ -160,39 +160,47 @@ def getCompletionScript(name, optList):
         formatParsingCmd = "$tool --formats | tail -n +2 | cut -f 3 -d ' '"
         if ("-ot" in optList) or ("-of" in optList) or ("--format" in optList):
             output.append("  tool=${COMP_WORDS[0]}\n")
-            output.append("  case \"$prev\" in\n")
+            output.append('  case "$prev" in\n')
             if "-ot" in optList:
                 output.append("    -ot)\n")
-                output.append("      key_list=\"Byte Int16 UInt16 UInt32 Int32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64\"\n")
-                output.append("      mapfile -t COMPREPLY < <(compgen -W \"$key_list\" -- \"$cur\")\n")
+                output.append(
+                    '      key_list="Byte Int16 UInt16 UInt32 Int32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64"\n'
+                )
+                output.append(
+                    '      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")\n'
+                )
                 output.append("      ;;\n")
             for arg in ("-f", "-of"):
                 if (arg in optList) and isGdal:
                     output.append("    %s)\n" % arg)
-                    output.append("      key_list=\"$( " + formatParsingCmd + ")\"\n")
-                    output.append("      mapfile -t COMPREPLY < <(compgen -W \"$key_list\" -- \"$cur\")\n")
+                    output.append('      key_list="$( ' + formatParsingCmd + ')"\n')
+                    output.append(
+                        '      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")\n'
+                    )
                     output.append("      ;;\n")
             if ("--format" in optList) and isGdal:
                 output.append("    --format)\n")
-                output.append("      key_list=\"$( " + formatParsingCmd + ")\"\n")
-                output.append("      mapfile -t COMPREPLY < <(compgen -W \"$key_list\" -- \"$cur\")\n")
+                output.append('      key_list="$( ' + formatParsingCmd + ')"\n')
+                output.append(
+                    '      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")\n'
+                )
                 output.append("      ;;\n")
             output.append("  esac\n")
     else:
         # ogr type
-        formatParsingCmd = "$tool --formats | tail -n +2 | grep -o -E '\"[^\"]+\"' | sed 's/\ /__/'"
+        formatParsingCmd = "$tool --formats | tail -n +2 | grep -o -E '\"[^\"]+\"' | sed 's/\ /__/'"  # noqa: W605
         if "-f" in optList:
             # replace ogrtindex by ogr2ogr to check --formats
             output.append("  tool=${COMP_WORDS[0]/ogrtindex/ogr2ogr}\n")
-            output.append("  case \"$prev\" in\n")
+            output.append('  case "$prev" in\n')
             for arg in ("-f", "-of"):
                 if (arg in optList) and not isGdal:
                     # completion is more tricky here because of spaces
                     output.append("    %s)\n" % arg)
-                    output.append("      key_list=\"$( " + formatParsingCmd + ")\"\n")
+                    output.append('      key_list="$( ' + formatParsingCmd + ')"\n')
                     output.append("      for iter in $key_list; do\n")
                     output.append("        if [[ $iter =~ ^$cur ]]; then\n")
-                    output.append("          COMPREPLY+=( \"${iter//__/ }\" )\n")
+                    output.append('          COMPREPLY+=( "${iter//__/ }" )\n')
                     output.append("        fi\n")
                     output.append("      done\n")
                     output.append("      ;;\n")
@@ -210,55 +218,54 @@ def main(argv):
         showHelp()
         return 1
 
-    gdaltools = ["gdal2tiles.py",
-                 "gdal2xyz.py",
-                 "gdaladdo",
-                 "gdalbuildvrt",
-                 "gdal_calc.py",
-                 "gdalchksum.py",
-                 "gdalcompare.py",
-                 "gdal-config",
-                 "gdal_contour",
-                 "gdaldem",
-                 "gdal_edit.py",
-                 "gdalenhance",
-                 "gdal_fillnodata.py",
-                 "gdal_grid",
-                 "gdalident.py",
-                 "gdalimport.py",
-                 "gdalinfo",
-                 "gdallocationinfo",
-                 "gdalmanage",
-                 "gdal_merge.py",
-                 "gdalmove.py",
-                 "gdal_polygonize.py",
-                 "gdal_proximity.py",
-                 "gdal_rasterize",
-                 "gdal_retile.py",
-                 "gdal_sieve.py",
-                 "gdalsrsinfo",
-                 "gdaltindex",
-                 "gdaltransform",
-                 "gdal_translate",
-                 "gdalwarp",
-                 "gdal_viewshed",
-                 "gdal_create"]
+    gdaltools = [
+        "gdal2tiles.py",
+        "gdal2xyz.py",
+        "gdaladdo",
+        "gdalbuildvrt",
+        "gdal_calc.py",
+        "gdalchksum.py",
+        "gdalcompare.py",
+        "gdal-config",
+        "gdal_contour",
+        "gdaldem",
+        "gdal_edit.py",
+        "gdalenhance",
+        "gdal_fillnodata.py",
+        "gdal_grid",
+        "gdalident.py",
+        "gdalimport.py",
+        "gdalinfo",
+        "gdallocationinfo",
+        "gdalmanage",
+        "gdal_merge.py",
+        "gdalmove.py",
+        "gdal_polygonize.py",
+        "gdal_proximity.py",
+        "gdal_rasterize",
+        "gdal_retile.py",
+        "gdal_sieve.py",
+        "gdalsrsinfo",
+        "gdaltindex",
+        "gdaltransform",
+        "gdal_translate",
+        "gdalwarp",
+        "gdal_viewshed",
+        "gdal_create",
+    ]
 
-    ogrtools = ["ogr2ogr",
-                "ogrinfo",
-                "ogrlineref",
-                "ogrtindex",
-                "ogrmerge.py"]
+    ogrtools = ["ogr2ogr", "ogrinfo", "ogrlineref", "ogrtindex", "ogrmerge.py"]
 
     # parse general options
     generalOptions = parseGDALGeneralOptions()
     generalOGROptions = parseOGRGeneralOptions()
 
     outFile = argv[1]
-    of = open(outFile, 'w')
+    of = open(outFile, "w")
     of.write("# shellcheck shell=bash disable=SC2148\n")
     of.write("# File auto-generated by completionFinder.py, do not modify manually\n")
-    of.write("""
+    of.write(
+        """
 function_exists() {
     declare -f -F \"$1\" > /dev/null
     return $?
@@ -267,7 +274,8 @@ function_exists() {
 # Checks that bash-completion is recent enough
 function_exists _get_comp_words_by_ref || return 0
 
-""")
+"""
+    )
 
     for name in gdaltools:
         # verbose print

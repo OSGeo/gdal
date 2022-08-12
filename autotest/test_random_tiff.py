@@ -29,6 +29,7 @@
 ###############################################################################
 
 import random
+
 from osgeo import gdal
 
 COMPRESSION_NONE = 1
@@ -53,22 +54,39 @@ TIFFTAG_TILEOFFSETS = 324
 TIFFTAG_TILEBYTECOUNTS = 325
 TIFFTAG_SAMPLEFORMAT = 339
 
-tags = [['TIFFTAG_IMAGEWIDTH', TIFFTAG_IMAGEWIDTH, [0, 1, 0x7FFFFFFF, 0xFFFFFFFF]],
-        ['TIFFTAG_IMAGELENGTH', TIFFTAG_IMAGELENGTH, [0, 1, 0x7FFFFFFF, 0xFFFFFFFF]],
-        ['TIFFTAG_BITSPERSAMPLE', TIFFTAG_BITSPERSAMPLE, [None, 1, 8, 255]],
-        # ['TIFFTAG_COMPRESSION', TIFFTAG_COMPRESSION, [None, COMPRESSION_NONE]],
-        # ['TIFFTAG_PHOTOMETRIC', TIFFTAG_PHOTOMETRIC, [None, PHOTOMETRIC_MINISBLACK]],
-        ['TIFFTAG_STRIPOFFSETS', TIFFTAG_STRIPOFFSETS, [None, 0, 8]],
-        ['TIFFTAG_SAMPLESPERPIXEL', TIFFTAG_SAMPLESPERPIXEL, [None, 1, 255, 65535]],
-        ['TIFFTAG_ROWSPERSTRIP', TIFFTAG_ROWSPERSTRIP, [None, 0, 1, 0x7FFFFFFF, 0xFFFFFFFF]],
-        ['TIFFTAG_STRIPBYTECOUNTS', TIFFTAG_STRIPBYTECOUNTS, [None, 0, 1, 0x7FFFFFFF, 0xFFFFFFFF]],
-        ['TIFFTAG_PLANARCONFIG', TIFFTAG_PLANARCONFIG, [None, PLANARCONFIG_CONTIG, PLANARCONFIG_SEPARATE]],
-        ['TIFFTAG_TILEWIDTH', TIFFTAG_TILEWIDTH, [None, 0, 8, 256, 65536, 0x7FFFFFFF]],
-        ['TIFFTAG_TILELENGTH', TIFFTAG_TILELENGTH, [None, 0, 8, 256, 65536, 0x7FFFFFFF]],
-        ['TIFFTAG_TILEOFFSETS', TIFFTAG_TILEOFFSETS, [None, 0, 8]],
-        ['TIFFTAG_TILEBYTECOUNTS', TIFFTAG_TILEBYTECOUNTS, [None, 0, 1, 0x7FFFFFFF, 0xFFFFFFFF]],
-        # ['TIFFTAG_SAMPLEFORMAT', TIFFTAG_SAMPLEFORMAT, [None, SAMPLEFORMAT_UINT]],
-       ]
+tags = [
+    ["TIFFTAG_IMAGEWIDTH", TIFFTAG_IMAGEWIDTH, [0, 1, 0x7FFFFFFF, 0xFFFFFFFF]],
+    ["TIFFTAG_IMAGELENGTH", TIFFTAG_IMAGELENGTH, [0, 1, 0x7FFFFFFF, 0xFFFFFFFF]],
+    ["TIFFTAG_BITSPERSAMPLE", TIFFTAG_BITSPERSAMPLE, [None, 1, 8, 255]],
+    # ['TIFFTAG_COMPRESSION', TIFFTAG_COMPRESSION, [None, COMPRESSION_NONE]],
+    # ['TIFFTAG_PHOTOMETRIC', TIFFTAG_PHOTOMETRIC, [None, PHOTOMETRIC_MINISBLACK]],
+    ["TIFFTAG_STRIPOFFSETS", TIFFTAG_STRIPOFFSETS, [None, 0, 8]],
+    ["TIFFTAG_SAMPLESPERPIXEL", TIFFTAG_SAMPLESPERPIXEL, [None, 1, 255, 65535]],
+    [
+        "TIFFTAG_ROWSPERSTRIP",
+        TIFFTAG_ROWSPERSTRIP,
+        [None, 0, 1, 0x7FFFFFFF, 0xFFFFFFFF],
+    ],
+    [
+        "TIFFTAG_STRIPBYTECOUNTS",
+        TIFFTAG_STRIPBYTECOUNTS,
+        [None, 0, 1, 0x7FFFFFFF, 0xFFFFFFFF],
+    ],
+    [
+        "TIFFTAG_PLANARCONFIG",
+        TIFFTAG_PLANARCONFIG,
+        [None, PLANARCONFIG_CONTIG, PLANARCONFIG_SEPARATE],
+    ],
+    ["TIFFTAG_TILEWIDTH", TIFFTAG_TILEWIDTH, [None, 0, 8, 256, 65536, 0x7FFFFFFF]],
+    ["TIFFTAG_TILELENGTH", TIFFTAG_TILELENGTH, [None, 0, 8, 256, 65536, 0x7FFFFFFF]],
+    ["TIFFTAG_TILEOFFSETS", TIFFTAG_TILEOFFSETS, [None, 0, 8]],
+    [
+        "TIFFTAG_TILEBYTECOUNTS",
+        TIFFTAG_TILEBYTECOUNTS,
+        [None, 0, 1, 0x7FFFFFFF, 0xFFFFFFFF],
+    ],
+    # ['TIFFTAG_SAMPLEFORMAT', TIFFTAG_SAMPLEFORMAT, [None, SAMPLEFORMAT_UINT]],
+]
 
 
 def generate_tif(comb_val):
@@ -83,32 +101,42 @@ def generate_tif(comb_val):
         comb_val = int(comb_val / len_possible_vals)
         val = possible_vals[idx_val]
 
-        if tag == TIFFTAG_TILEWIDTH or \
-           tag == TIFFTAG_TILELENGTH or \
-           tag == TIFFTAG_TILEOFFSETS or \
-           tag == TIFFTAG_TILEBYTECOUNTS:
+        if (
+            tag == TIFFTAG_TILEWIDTH
+            or tag == TIFFTAG_TILELENGTH
+            or tag == TIFFTAG_TILEOFFSETS
+            or tag == TIFFTAG_TILEBYTECOUNTS
+        ):
             if has_strip:
                 idx_val = 0
                 val = None
         idx_tab.append(idx_val)
 
         if val is not None:
-            if tag == TIFFTAG_STRIPOFFSETS or \
-               tag == TIFFTAG_ROWSPERSTRIP or \
-               tag == TIFFTAG_STRIPBYTECOUNTS:
+            if (
+                tag == TIFFTAG_STRIPOFFSETS
+                or tag == TIFFTAG_ROWSPERSTRIP
+                or tag == TIFFTAG_STRIPBYTECOUNTS
+            ):
                 has_strip = True
             count_non_none = count_non_none + 1
 
-    content = '\x49\x49\x2A\x00\x08\x00\x00\x00' + ('%c' % count_non_none) + '\x00'
+    content = "\x49\x49\x2A\x00\x08\x00\x00\x00" + ("%c" % count_non_none) + "\x00"
     for level, tag in enumerate(tags):
         tag = tag[1]
         possible_vals = tag[2]
         idx = idx_tab[level]
         val = possible_vals[idx]
         if val is not None:
-            content = content + ('%c' % (tag & 255)) + ('%c' % (tag >> 8))
-            content = content + '\x04\x00\x01\x00\x00\x00'
-            content = content + ('%c' % (val & 255)) + ('%c' % ((val >> 8) & 255)) + ('%c' % ((val >> 16) & 255)) + ('%c' % ((val >> 24) & 255))
+            content = content + ("%c" % (tag & 255)) + ("%c" % (tag >> 8))
+            content = content + "\x04\x00\x01\x00\x00\x00"
+            content = (
+                content
+                + ("%c" % (val & 255))
+                + ("%c" % ((val >> 8) & 255))
+                + ("%c" % ((val >> 16) & 255))
+                + ("%c" % ((val >> 24) & 255))
+            )
 
     return content
 
@@ -131,10 +159,10 @@ while True:
     # print(struct.unpack('B' * len(content), content))
 
     # Create in-memory file
-    gdal.FileFromMemBuffer('/vsimem/test.tif', content)
+    gdal.FileFromMemBuffer("/vsimem/test.tif", content)
 
-    print('iter = %d, comb_val_init = %d' % (itern, comb_val))
-    ds = gdal.Open('/vsimem/test.tif')
+    print("iter = %d, comb_val_init = %d" % (itern, comb_val))
+    ds = gdal.Open("/vsimem/test.tif")
     # if ds is not None and ds.RasterCount == 1:
     #    (blockxsize, blockysize) = ds.GetRasterBand(1).GetBlockSize()
     #    if blockxsize == ds.RasterXSize:

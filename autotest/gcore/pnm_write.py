@@ -25,27 +25,25 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
+import gdaltest
 import pytest
 
-import gdaltest
-
-init_list = [
-    ('byte.tif', 4672),
-    ('uint16.tif', 4672)]
+init_list = [("byte.tif", 4672), ("uint16.tif", 4672)]
 
 
 @pytest.mark.parametrize(
-    'filename,checksum',
+    "filename,checksum",
     init_list,
-    ids=[tup[0].split('.')[0] for tup in init_list],
+    ids=[tup[0].split(".")[0] for tup in init_list],
 )
 @pytest.mark.parametrize(
-    'testfunction', [
-        'testCreateCopy',
-        'testCreate',
-    ]
+    "testfunction",
+    [
+        "testCreateCopy",
+        "testCreate",
+    ],
 )
-@pytest.mark.require_driver('PNM')
+@pytest.mark.require_driver("PNM")
 def test_pnm_create(filename, checksum, testfunction):
-    ut = gdaltest.GDALTest('PNM', filename, 1, checksum)
+    ut = gdaltest.GDALTest("PNM", filename, 1, checksum)
     getattr(ut, testfunction)()

@@ -31,27 +31,26 @@
 #  DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
 
-import textwrap
-from numbers import Number
-from typing import Union, Tuple, Optional, Sequence, Dict
 import argparse
 import glob
 import os
 import os.path
-import sys
 import string
+import sys
+import textwrap
+from numbers import Number
+from typing import Dict, Optional, Sequence, Tuple, Union
 
 import numpy
 
-from osgeo import gdal
-from osgeo import gdal_array
-from osgeo_utils.auxiliary.base import is_path_like, PathLikeOrStr, MaybeSequence
-from osgeo_utils.auxiliary.util import GetOutputDriverFor, open_ds
-from osgeo_utils.auxiliary.extent_util import Extent, GT
+from osgeo import gdal, gdal_array
 from osgeo_utils.auxiliary import extent_util
-from osgeo_utils.auxiliary.rectangle import GeoRectangle
-from osgeo_utils.auxiliary.color_table import get_color_table, ColorTableLike
+from osgeo_utils.auxiliary.base import MaybeSequence, PathLikeOrStr, is_path_like
+from osgeo_utils.auxiliary.color_table import ColorTableLike, get_color_table
+from osgeo_utils.auxiliary.extent_util import GT, Extent
 from osgeo_utils.auxiliary.gdal_argparse import GDALArgumentParser, GDALScript
+from osgeo_utils.auxiliary.rectangle import GeoRectangle
+from osgeo_utils.auxiliary.util import GetOutputDriverFor, open_ds
 
 GDALDataType = int
 
@@ -59,9 +58,15 @@ GDALDataType = int
 AlphaList = list(string.ascii_letters)
 
 # set up some default nodatavalues for each datatype
-DefaultNDVLookup = {gdal.GDT_Byte: 255, gdal.GDT_UInt16: 65535, gdal.GDT_Int16: -32768,
-                    gdal.GDT_UInt32: 4294967293, gdal.GDT_Int32: -2147483647,
-                    gdal.GDT_Float32: 3.402823466E+38, gdal.GDT_Float64: 1.7976931348623158E+308}
+DefaultNDVLookup = {
+    gdal.GDT_Byte: 255,
+    gdal.GDT_UInt16: 65535,
+    gdal.GDT_Int16: -32768,
+    gdal.GDT_UInt32: 4294967293,
+    gdal.GDT_Int32: -2147483647,
+    gdal.GDT_Float32: 3.402823466e38,
+    gdal.GDT_Float64: 1.7976931348623158e308,
+}
 
 # tuple of available output datatypes names
 GDALDataTypeNames = tuple(gdal.GetDataTypeName(dt) for dt in DefaultNDVLookup.keys())
@@ -91,21 +96,35 @@ sum all files with hidden noDataValue
     Calc(calc="sum(a,axis=0)", a=['0.tif','1.tif','2.tif'], outfile="sum.tif", hideNoData=True)
 """
 
-def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDataValue: Optional[Number] = None,
-         type: Optional[Union[GDALDataType, str]] = None, format: Optional[str] = None,
-         creation_options: Optional[Sequence[str]] = None, allBands: str = '', overwrite: bool = False,
-         hideNoData: bool = False, projectionCheck: bool = False,
-         color_table: Optional[ColorTableLike] = None,
-         extent: Optional[Extent] = None, projwin: Optional[Union[Tuple, GeoRectangle]] = None,
-         user_namespace: Optional[Dict]=None,
-         debug: bool = False, quiet: bool = False, **input_files):
+
+def Calc(
+    calc: MaybeSequence[str],
+    outfile: Optional[PathLikeOrStr] = None,
+    NoDataValue: Optional[Number] = None,
+    type: Optional[Union[GDALDataType, str]] = None,
+    format: Optional[str] = None,
+    creation_options: Optional[Sequence[str]] = None,
+    allBands: str = "",
+    overwrite: bool = False,
+    hideNoData: bool = False,
+    projectionCheck: bool = False,
+    color_table: Optional[ColorTableLike] = None,
+    extent: Optional[Extent] = None,
+    projwin: Optional[Union[Tuple, GeoRectangle]] = None,
+    user_namespace: Optional[Dict] = None,
+    debug: bool = False,
+    quiet: bool = False,
+    **input_files,
+):
 
     if debug:
         print(f"gdal_calc.py starting calculation {calc}")
 
     if outfile and os.path.isfile(outfile) and not overwrite:
         if type or format or creation_options or hideNoData or extent or projwin:
-            raise Exception("One or several options implying file creation have been provided but Output file exists, must use --overwrite option!")
+            raise Exception(
+                "One or several options implying file creation have been provided but Output file exists, must use --overwrite option!"
+            )
 
     # Single calc value compatibility
     if isinstance(calc, (list, tuple)):
@@ -117,15 +136,19 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
     creation_options = creation_options or []
 
     # set up global namespace for eval with all functions of gdal_array, numpy
-    global_namespace = {key: getattr(module, key)
-                        for module in [gdal_array, numpy] for key in dir(module) if not key.startswith('__')}
+    global_namespace = {
+        key: getattr(module, key)
+        for module in [gdal_array, numpy]
+        for key in dir(module)
+        if not key.startswith("__")
+    }
 
     if user_namespace:
         global_namespace.update(user_namespace)
 
     if not calc:
         raise Exception("No calculation provided.")
-    elif not outfile and format.upper() != 'MEM':
+    elif not outfile and format.upper() != "MEM":
         raise Exception("No output file provided.")
 
     if format is None:
@@ -151,10 +174,10 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
         GT.NON_ZERO_ROTATION: False,
     }
     gt_diff_error = {
-        GT.INCOMPATIBLE_OFFSET: 'different offset',
-        GT.INCOMPATIBLE_PIXEL_SIZE: 'different pixel size',
-        GT.INCOMPATIBLE_ROTATION: 'different rotation',
-        GT.NON_ZERO_ROTATION: 'non zero rotation',
+        GT.INCOMPATIBLE_OFFSET: "different offset",
+        GT.INCOMPATIBLE_PIXEL_SIZE: "different pixel size",
+        GT.INCOMPATIBLE_ROTATION: "different rotation",
+        GT.NON_ZERO_ROTATION: "non zero rotation",
     }
 
     ################################################################
@@ -217,7 +240,11 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
                 dt = myFile.GetRasterBand(myBand).DataType
                 myDataType.append(gdal.GetDataTypeName(dt))
                 myDataTypeNum.append(dt)
-                myNDV.append(None if hideNoData else myFile.GetRasterBand(myBand).GetNoDataValue())
+                myNDV.append(
+                    None
+                    if hideNoData
+                    else myFile.GetRasterBand(myBand).GetNoDataValue()
+                )
 
                 # check that the dimensions of each layer are the same
                 myFileDimensions = [myFile.RasterXSize, myFile.RasterYSize]
@@ -228,7 +255,8 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
                             raise Exception(
                                 f"Error! Dimensions of file {filename} ({myFileDimensions[0]:d}, "
                                 f"{myFileDimensions[1]:d}) are different from other files "
-                                f"({DimensionsCheck[0]:d}, {DimensionsCheck[1]:d}).  Cannot proceed")
+                                f"({DimensionsCheck[0]:d}, {DimensionsCheck[1]:d}).  Cannot proceed"
+                            )
                 else:
                     DimensionsCheck = myFileDimensions
 
@@ -238,7 +266,8 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
                     if projectionCheck and ProjectionCheck != myProjection:
                         raise Exception(
                             f"Error! Projection of file {filename} {myProjection} "
-                            f"are different from other files {ProjectionCheck}.  Cannot proceed")
+                            f"are different from other files {ProjectionCheck}.  Cannot proceed"
+                        )
                 else:
                     ProjectionCheck = myProjection
 
@@ -252,19 +281,25 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
                     if not GeoTransformCheck:
                         GeoTransformCheck = myFileGeoTransform
                     else:
-                        my_gt_diff = extent_util.gt_diff(GeoTransformCheck, myFileGeoTransform, eps=compatible_gt_eps,
-                                                         diff_support=gt_diff_support)
+                        my_gt_diff = extent_util.gt_diff(
+                            GeoTransformCheck,
+                            myFileGeoTransform,
+                            eps=compatible_gt_eps,
+                            diff_support=gt_diff_support,
+                        )
                         if my_gt_diff not in [GT.SAME, GT.ALMOST_SAME]:
                             GeoTransformDiffer = True
                             if my_gt_diff != GT.COMPATIBLE_DIFF:
                                 raise Exception(
                                     f"Error! GeoTransform of file {filename} {myFileGeoTransform} is incompatible "
                                     f"({gt_diff_error[my_gt_diff]}), first file GeoTransform is {GeoTransformCheck}. "
-                                    f"Cannot proceed")
+                                    f"Cannot proceed"
+                                )
                 if debug:
                     print(
                         f"file {alpha}: {filename}, dimensions: "
-                        f"{DimensionsCheck[0]}, {DimensionsCheck[1]}, type: {myDataType[-1]}")
+                        f"{DimensionsCheck[0]}, {DimensionsCheck[1]}, type: {myDataType[-1]}"
+                    )
 
     # process allBands option
     allBandsIndex = None
@@ -275,7 +310,9 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
         try:
             allBandsIndex = myAlphaList.index(allBands)
         except ValueError:
-            raise Exception(f"Error! allBands option was given but Band {allBands} not found.  Cannot proceed")
+            raise Exception(
+                f"Error! allBands option was given but Band {allBands} not found.  Cannot proceed"
+            )
         allBandsCount = myFiles[allBandsIndex].RasterCount
         if allBandsCount <= 1:
             allBandsIndex = None
@@ -283,14 +320,22 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
         allBandsCount = len(calc)
 
     if extent not in [Extent.IGNORE, Extent.FAIL] and (
-        GeoTransformDiffer or isinstance(extent, GeoRectangle)):
+        GeoTransformDiffer or isinstance(extent, GeoRectangle)
+    ):
         # mixing different GeoTransforms/Extents
-        GeoTransformCheck, DimensionsCheck, ExtentCheck = extent_util.calc_geotransform_and_dimensions(
-            GeoTransforms, Dimensions, extent)
+        (
+            GeoTransformCheck,
+            DimensionsCheck,
+            ExtentCheck,
+        ) = extent_util.calc_geotransform_and_dimensions(
+            GeoTransforms, Dimensions, extent
+        )
         if GeoTransformCheck is None:
             raise Exception("Error! The requested extent is empty. Cannot proceed")
         for i in range(len(myFileNames)):
-            temp_vrt_filename, temp_vrt_ds = extent_util.make_temp_vrt(myFiles[i], ExtentCheck)
+            temp_vrt_filename, temp_vrt_ds = extent_util.make_temp_vrt(
+                myFiles[i], ExtentCheck
+            )
             myTempFileNames.append(temp_vrt_filename)
             myFiles[i] = None  # close original ds
             myFiles[i] = temp_vrt_ds  # replace original ds with vrt_ds
@@ -307,28 +352,34 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
     # open output file exists
     if outfile and os.path.isfile(outfile) and not overwrite:
         if allBandsIndex is not None:
-            raise Exception("Error! allBands option was given but Output file exists, must use --overwrite option!")
+            raise Exception(
+                "Error! allBands option was given but Output file exists, must use --overwrite option!"
+            )
         if len(calc) > 1:
             raise Exception(
-                "Error! multiple calc options were given but Output file exists, must use --overwrite option!")
+                "Error! multiple calc options were given but Output file exists, must use --overwrite option!"
+            )
         if debug:
             print(f"Output file {outfile} exists - filling in results into file")
 
-        myOut = open_ds(outfile, access_mode = gdal.OF_UPDATE | gdal.OF_RASTER)
+        myOut = open_ds(outfile, access_mode=gdal.OF_UPDATE | gdal.OF_RASTER)
         if myOut is None:
-            error = 'but cannot be opened for update'
+            error = "but cannot be opened for update"
         elif [myOut.RasterXSize, myOut.RasterYSize] != DimensionsCheck:
-            error = 'but is the wrong size'
+            error = "but is the wrong size"
         elif ProjectionCheck and ProjectionCheck != myOut.GetProjection():
-            error = 'but is the wrong projection'
-        elif GeoTransformCheck and GeoTransformCheck != myOut.GetGeoTransform(can_return_null=True):
-            error = 'but is the wrong geotransform'
+            error = "but is the wrong projection"
+        elif GeoTransformCheck and GeoTransformCheck != myOut.GetGeoTransform(
+            can_return_null=True
+        ):
+            error = "but is the wrong geotransform"
         else:
             error = None
         if error:
             raise Exception(
                 f"Error! Output exists, {error}.  Use the --overwrite option "
-                f"to automatically overwrite the existing file")
+                f"to automatically overwrite the existing file"
+            )
 
         myOutB = myOut.GetRasterBand(1)
         myOutNDV = myOutB.GetNoDataValue()
@@ -343,12 +394,12 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
             if debug:
                 print(f"Generating output file {outfile}")
         else:
-            outfile = ''
+            outfile = ""
 
         # find data type to use
         if not type:
             # use the largest type of the input files
-            if hasattr(gdal, 'DataTypeUnion'):
+            if hasattr(gdal, "DataTypeUnion"):
                 myOutType = myDataTypeNum[0]
                 for dt in myDataTypeNum:
                     myOutType = gdal.DataTypeUnion(myOutType, dt)
@@ -363,8 +414,13 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
         # create file
         myOutDrv = gdal.GetDriverByName(format)
         myOut = myOutDrv.Create(
-            os.fspath(outfile), DimensionsCheck[0], DimensionsCheck[1], allBandsCount,
-            myOutType, creation_options)
+            os.fspath(outfile),
+            DimensionsCheck[0],
+            DimensionsCheck[1],
+            allBandsCount,
+            myOutType,
+            creation_options,
+        )
         if myOut is None:
             raise Exception(f"Error! Could not create output file {outfile}")
 
@@ -380,8 +436,10 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
             myOut.SetProjection(ProjectionCheck)
 
         if NoDataValue is None:
-            myOutNDV = DefaultNDVLookup[myOutType]  # use the default noDataValue for this datatype
-        elif isinstance(NoDataValue, str) and NoDataValue.lower() == 'none':
+            myOutNDV = DefaultNDVLookup[
+                myOutType
+            ]  # use the default noDataValue for this datatype
+        elif isinstance(NoDataValue, str) and NoDataValue.lower() == "none":
             myOutNDV = None  # not to set any noDataValue
         else:
             myOutNDV = NoDataValue  # use the given noDataValue
@@ -404,7 +462,9 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
 
     myOutTypeName = gdal.GetDataTypeName(myOutType)
     if debug:
-        print(f"output file: {outfile}, dimensions: {myOut.RasterXSize}, {myOut.RasterYSize}, type: {myOutTypeName}")
+        print(
+            f"output file: {outfile}, dimensions: {myOut.RasterXSize}, {myOut.RasterYSize}, type: {myOutTypeName}"
+        )
 
     ################################################################
     # find block size to chop grids into bite-sized chunks
@@ -454,8 +514,10 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
                     largest_datatype_per_alpha[Alpha] = band.DataType
                 else:
                     count_file_per_alpha[Alpha] += 1
-                    if hasattr(gdal, 'DataTypeUnion'):
-                        largest_datatype_per_alpha[Alpha] = gdal.DataTypeUnion(largest_datatype_per_alpha[Alpha], band.DataType)
+                    if hasattr(gdal, "DataTypeUnion"):
+                        largest_datatype_per_alpha[Alpha] = gdal.DataTypeUnion(
+                            largest_datatype_per_alpha[Alpha], band.DataType
+                        )
 
         # loop through X-lines
         for X in range(0, nXBlocks):
@@ -477,7 +539,7 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
                 ProgressCt += 1
                 if 10 * ProgressCt / ProgressEnd % 10 != ProgressMk and not quiet:
                     ProgressMk = 10 * ProgressCt / ProgressEnd % 10
-                    print("%d.." % (10*ProgressMk), end=" ")
+                    print("%d.." % (10 * ProgressMk), end=" ")
 
                 # change the block size of the final piece
                 if Y == nYBlocks - 1:
@@ -497,11 +559,17 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
                 numpy_arrays = {}
                 counter_per_alpha = {}
                 for Alpha in count_file_per_alpha:
-                    dtype = gdal_array.GDALTypeCodeToNumericTypeCode(largest_datatype_per_alpha[Alpha])
+                    dtype = gdal_array.GDALTypeCodeToNumericTypeCode(
+                        largest_datatype_per_alpha[Alpha]
+                    )
                     if count_file_per_alpha[Alpha] == 1:
-                        numpy_arrays[Alpha] = numpy.empty((nYValid, nXValid), dtype=dtype)
+                        numpy_arrays[Alpha] = numpy.empty(
+                            (nYValid, nXValid), dtype=dtype
+                        )
                     else:
-                        numpy_arrays[Alpha] = numpy.empty((count_file_per_alpha[Alpha], nYValid, nXValid), dtype=dtype)
+                        numpy_arrays[Alpha] = numpy.empty(
+                            (count_file_per_alpha[Alpha], nYValid, nXValid), dtype=dtype
+                        )
                     counter_per_alpha[Alpha] = 0
 
                 # fetch data for each input layer
@@ -518,17 +586,27 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
                             buf_obj = numpy_arrays[Alpha]
                         else:
                             buf_obj = numpy_arrays[Alpha][counter_per_alpha[Alpha]]
-                        myval = gdal_array.BandReadAsArray(myFiles[i].GetRasterBand(myBandNo),
-                                                           xoff=myX, yoff=myY,
-                                                           win_xsize=nXValid, win_ysize=nYValid,
-                                                           buf_obj=buf_obj)
+                        myval = gdal_array.BandReadAsArray(
+                            myFiles[i].GetRasterBand(myBandNo),
+                            xoff=myX,
+                            yoff=myY,
+                            win_xsize=nXValid,
+                            win_ysize=nYValid,
+                            buf_obj=buf_obj,
+                        )
                         counter_per_alpha[Alpha] += 1
                     else:
-                        myval = gdal_array.BandReadAsArray(myFiles[i].GetRasterBand(myBandNo),
-                                                           xoff=myX, yoff=myY,
-                                                           win_xsize=nXValid, win_ysize=nYValid)
+                        myval = gdal_array.BandReadAsArray(
+                            myFiles[i].GetRasterBand(myBandNo),
+                            xoff=myX,
+                            yoff=myY,
+                            win_xsize=nXValid,
+                            win_ysize=nYValid,
+                        )
                     if myval is None:
-                        raise Exception(f'Input block reading failed from filename {filename[i]}')
+                        raise Exception(
+                            f"Input block reading failed from filename {filename[i]}"
+                        )
 
                     # fill in nodata values
                     if myNDV[i] is not None:
@@ -542,7 +620,7 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
                         myNDVs = 1 * numpy.logical_or(myNDVs == 1, myval == myNDV[i])
 
                     # add an array of values for this block to the eval namespace
-                    if not Alpha in myAlphaFileLists:
+                    if Alpha not in myAlphaFileLists:
                         local_namespace[Alpha] = myval
                     myval = None
 
@@ -553,7 +631,7 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
                 this_calc = calc[bandNo - 1 if len(calc) > 1 else 0]
                 try:
                     myResult = eval(this_calc, global_namespace, local_namespace)
-                except:
+                except Exception:
                     print(f"evaluation of calculation {this_calc} failed")
                     raise
 
@@ -567,7 +645,7 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
                 # write data block to the output file
                 myOutB = myOut.GetRasterBand(bandNo)
                 if gdal_array.BandWriteArray(myOutB, myResult, xoff=myX, yoff=myY) != 0:
-                    raise Exception('Block writing failed')
+                    raise Exception("Block writing failed")
                 myOutB = None  # write to band
 
     # remove temp files
@@ -577,8 +655,8 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
 
     gdal.ErrorReset()
     myOut.FlushCache()
-    if gdal.GetLastErrorMsg() != '':
-        raise Exception('Dataset writing failed')
+    if gdal.GetLastErrorMsg() != "":
+        raise Exception("Dataset writing failed")
 
     if not quiet:
         print("100 - Done")
@@ -588,101 +666,204 @@ def Calc(calc: MaybeSequence[str], outfile: Optional[PathLikeOrStr] = None, NoDa
 
 def doit(opts):
     kwargs = vars(opts)
-    if 'outF' in kwargs:
-        kwargs["outfile"] = kwargs.pop('outF')
+    if "outF" in kwargs:
+        kwargs["outfile"] = kwargs.pop("outF")
     return Calc(**kwargs)
 
 
 class GDALCalc(GDALScript):
     def __init__(self):
         super().__init__()
-        self.title = 'Raster calculator with numpy syntax'
-        self.description = textwrap.dedent('''\
+        self.title = "Raster calculator with numpy syntax"
+        self.description = textwrap.dedent(
+            """\
             Use any basic arithmetic supported by numpy arrays such as +, -, *, and
             along with logical operators such as >.
             Note that all files must have the same dimensions (unless extent option is used),
-            but no projection checking is performed (unless projectionCheck option is used).''')
+            but no projection checking is performed (unless projectionCheck option is used)."""
+        )
         # add an explicit --help option because the standard -h/--help option is not valid as -h is an alpha option
-        self.add_help = '--help'
+        self.add_help = "--help"
         self.optfile_arg = "--optfile"
 
-        self.add_example('add two files together',
-                         '-A input1.tif -B input2.tif --outfile=result.tif --calc="A+B"')
-        self.add_example('average of two files',
-                         '-A input.tif -B input2.tif --outfile=result.tif --calc="(A+B)/2"')
-        self.add_example('average of many files',
-                         '-A input.tif input2.tif input3.tif ... inputN.tif --outfile=result.tif --calc="average(A,axis=0)"')
-        self.add_example('average of many files (using wildcards)',
-                         '-A input*.tif --outfile=result.tif --calc="average(A,axis=0)"')
-        self.add_example('set values of zero and below to null',
-                         '-A input.tif --outfile=result.tif --calc="A*(A>0)" --NoDataValue=0')
-        self.add_example('using logical operator to keep a range of values from input',
-                         '-A input.tif --outfile=result.tif --calc="A*logical_and(A>100,A<150)"')
-        self.add_example('work with multiple bands',
-                         '-A input.tif --A_band=1 -B input.tif --B_band=2 '
-                         '--outfile=result.tif --calc="(A+B)/2" --calc="A*logical_and(A>100,A<150)"')
+        self.add_example(
+            "add two files together",
+            '-A input1.tif -B input2.tif --outfile=result.tif --calc="A+B"',
+        )
+        self.add_example(
+            "average of two files",
+            '-A input.tif -B input2.tif --outfile=result.tif --calc="(A+B)/2"',
+        )
+        self.add_example(
+            "average of many files",
+            '-A input.tif input2.tif input3.tif ... inputN.tif --outfile=result.tif --calc="average(A,axis=0)"',
+        )
+        self.add_example(
+            "average of many files (using wildcards)",
+            '-A input*.tif --outfile=result.tif --calc="average(A,axis=0)"',
+        )
+        self.add_example(
+            "set values of zero and below to null",
+            '-A input.tif --outfile=result.tif --calc="A*(A>0)" --NoDataValue=0',
+        )
+        self.add_example(
+            "using logical operator to keep a range of values from input",
+            '-A input.tif --outfile=result.tif --calc="A*logical_and(A>100,A<150)"',
+        )
+        self.add_example(
+            "work with multiple bands",
+            "-A input.tif --A_band=1 -B input.tif --B_band=2 "
+            '--outfile=result.tif --calc="(A+B)/2" --calc="A*logical_and(A>100,A<150)"',
+        )
 
     @staticmethod
     def add_alpha_args(parser, is_help):
         if is_help:
-            alpha_list = ['A']  # we don't want to make help with all the full alpha list, as it's too long...
+            alpha_list = [
+                "A"
+            ]  # we don't want to make help with all the full alpha list, as it's too long...
         else:
             alpha_list = AlphaList
         for alpha in alpha_list:
             try:
-                band = alpha + '_band'
-                alpha_arg = '-' + alpha
-                band_arg = '--' + band
-                parser.add_argument(alpha_arg, action="extend", nargs='*', type=str,
-                                    help="input gdal raster file, you can use any letter [a-z, A-Z]",
-                                    metavar='filename')
-                parser.add_argument(band_arg, action="extend", nargs='*', type=int,
-                                    help=f"number of raster band for file {alpha} (default 1)", metavar='n')
+                band = alpha + "_band"
+                alpha_arg = "-" + alpha
+                band_arg = "--" + band
+                parser.add_argument(
+                    alpha_arg,
+                    action="extend",
+                    nargs="*",
+                    type=str,
+                    help="input gdal raster file, you can use any letter [a-z, A-Z]",
+                    metavar="filename",
+                )
+                parser.add_argument(
+                    band_arg,
+                    action="extend",
+                    nargs="*",
+                    type=int,
+                    help=f"number of raster band for file {alpha} (default 1)",
+                    metavar="n",
+                )
             except argparse.ArgumentError:
                 pass
 
     def get_parser(self, argv) -> GDALArgumentParser:
         parser = self.parser
-        parser.add_argument("--calc", dest="calc", type=str, required=True, nargs='*', action="extend",
-                            help="calculation in numpy syntax using +-/* or any numpy array functions (i.e. log10()). "
-                                 "May appear multiple times to produce a multi-band file", metavar="expression")
+        parser.add_argument(
+            "--calc",
+            dest="calc",
+            type=str,
+            required=True,
+            nargs="*",
+            action="extend",
+            help="calculation in numpy syntax using +-/* or any numpy array functions (i.e. log10()). "
+            "May appear multiple times to produce a multi-band file",
+            metavar="expression",
+        )
 
-        is_help = '--help' in argv
+        is_help = "--help" in argv
         self.add_alpha_args(parser, is_help)
 
-        parser.add_argument("--outfile", dest="outfile", required=True, metavar="filename",
-                            help="output file to generate or fill")
-        parser.add_argument("--NoDataValue", dest="NoDataValue", type=float, metavar="value",
-                            help="output nodata value (default datatype specific value)")
-        parser.add_argument("--hideNoData", dest="hideNoData", action="store_true",
-                            help="ignores the NoDataValues of the input rasters")
-        parser.add_argument("--type", dest="type", type=str, metavar="datatype", choices=GDALDataTypeNames,
-                            help="output datatype")
-        parser.add_argument("--format", dest="format", type=str, metavar="gdal_format",
-                            help="GDAL format for output file")
         parser.add_argument(
-            "--creation-option", "--co", dest="creation_options", default=[], action="append", metavar="option",
+            "--outfile",
+            dest="outfile",
+            required=True,
+            metavar="filename",
+            help="output file to generate or fill",
+        )
+        parser.add_argument(
+            "--NoDataValue",
+            dest="NoDataValue",
+            type=float,
+            metavar="value",
+            help="output nodata value (default datatype specific value)",
+        )
+        parser.add_argument(
+            "--hideNoData",
+            dest="hideNoData",
+            action="store_true",
+            help="ignores the NoDataValues of the input rasters",
+        )
+        parser.add_argument(
+            "--type",
+            dest="type",
+            type=str,
+            metavar="datatype",
+            choices=GDALDataTypeNames,
+            help="output datatype",
+        )
+        parser.add_argument(
+            "--format",
+            dest="format",
+            type=str,
+            metavar="gdal_format",
+            help="GDAL format for output file",
+        )
+        parser.add_argument(
+            "--creation-option",
+            "--co",
+            dest="creation_options",
+            default=[],
+            action="append",
+            metavar="option",
             help="Passes a creation option to the output format driver. Multiple "
-                 "options may be listed. See format specific documentation for legal "
-                 "creation options for each format.")
-        parser.add_argument("--allBands", dest="allBands", type=str, default="", metavar="[a-z, A-Z]",
-                            help="process all bands of given raster [a-z, A-Z]")
-        parser.add_argument("--overwrite", dest="overwrite", action="store_true",
-                            help="overwrite output file if it already exists")
-        parser.add_argument("--debug", dest="debug", action="store_true", help="print debugging information")
-        parser.add_argument("--quiet", dest="quiet", action="store_true", help="suppress progress messages")
+            "options may be listed. See format specific documentation for legal "
+            "creation options for each format.",
+        )
+        parser.add_argument(
+            "--allBands",
+            dest="allBands",
+            type=str,
+            default="",
+            metavar="[a-z, A-Z]",
+            help="process all bands of given raster [a-z, A-Z]",
+        )
+        parser.add_argument(
+            "--overwrite",
+            dest="overwrite",
+            action="store_true",
+            help="overwrite output file if it already exists",
+        )
+        parser.add_argument(
+            "--debug",
+            dest="debug",
+            action="store_true",
+            help="print debugging information",
+        )
+        parser.add_argument(
+            "--quiet",
+            dest="quiet",
+            action="store_true",
+            help="suppress progress messages",
+        )
 
-        parser.add_argument("--color-table", type=str, dest="color_table", help="color table file name")
+        parser.add_argument(
+            "--color-table", type=str, dest="color_table", help="color table file name"
+        )
 
         group = parser.add_mutually_exclusive_group()
-        group.add_argument("--extent", dest="extent",
-                           choices=[e.name.lower() for e in Extent],
-                           help="how to treat mixed geotrasnforms")
-        group.add_argument("--projwin", dest="projwin", type=float, nargs=4, metavar=('ulx', 'uly', 'lrx', 'lry'),
-                           help="extent corners given in georeferenced coordinates")
+        group.add_argument(
+            "--extent",
+            dest="extent",
+            choices=[e.name.lower() for e in Extent],
+            help="how to treat mixed geotrasnforms",
+        )
+        group.add_argument(
+            "--projwin",
+            dest="projwin",
+            type=float,
+            nargs=4,
+            metavar=("ulx", "uly", "lrx", "lry"),
+            help="extent corners given in georeferenced coordinates",
+        )
 
-        parser.add_argument("--projectionCheck", dest="projectionCheck", action="store_true",
-                            help="check that all rasters share the same projection")
+        parser.add_argument(
+            "--projectionCheck",
+            dest="projectionCheck",
+            action="store_true",
+            help="check that all rasters share the same projection",
+        )
 
         # parser.add_argument('--namespace', dest='user_namespace', action='extend', nargs='*', type=str)
 
@@ -704,19 +885,25 @@ class GDALCalc(GDALScript):
                     for val in alpha_val:
                         val = val.strip('"')
                         # If the shell didn't already expand wildcards
-                        if ('?' in val or '*' in val) and not os.path.exists(val):
+                        if ("?" in val or "*" in val) and not os.path.exists(val):
                             dst_alpha_val += glob.glob(val)
                         else:
                             dst_alpha_val.append(val)
                     if len(dst_alpha_val) == 0:
-                        raise Exception('-A ' + ' '.join(alpha_val) + ' did not expand to any file')
-                    input_files[alpha] = dst_alpha_val if len(dst_alpha_val) > 1 else dst_alpha_val[0]
-            band_key = alpha + '_band'
+                        raise Exception(
+                            "-A " + " ".join(alpha_val) + " did not expand to any file"
+                        )
+                    input_files[alpha] = (
+                        dst_alpha_val if len(dst_alpha_val) > 1 else dst_alpha_val[0]
+                    )
+            band_key = alpha + "_band"
             if band_key in kwargs:
                 band_val = kwargs[band_key]
                 del kwargs[band_key]
                 if band_val is not None:
-                    input_bands[band_key] = band_val if len(band_val) > 1 else band_val[0]
+                    input_bands[band_key] = (
+                        band_val if len(band_val) > 1 else band_val[0]
+                    )
         kwargs = {**kwargs, **input_files, **input_bands}
         # kwargs['input_files'] = input_files
 
@@ -727,5 +914,5 @@ def main(argv=sys.argv):
     return GDALCalc().main(argv)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

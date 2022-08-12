@@ -37,12 +37,15 @@ from osgeo_utils import gdal2tiles
 
 
 class AddAlphaBandToStringVrtTest(TestCase):
-
     def test_adds_the_correct_band_info_3_bands(self):
-        with open(os.path.join(
+        with open(
+            os.path.join(
                 os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                 "data",
-                "warped_rgb.vrt"), 'r') as f:
+                "warped_rgb.vrt",
+            ),
+            "r",
+        ) as f:
             orig_vrt = f.read()
 
         modif_vrt = gdal2tiles.add_alpha_band_to_string_vrt(orig_vrt)
@@ -61,10 +64,14 @@ class AddAlphaBandToStringVrtTest(TestCase):
         This is likely not necessary from a file format/machine standpoint, but is much better for a
         human looking at the file
         """
-        with open(os.path.join(
+        with open(
+            os.path.join(
                 os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                 "data",
-                "warped_rgb.vrt"), 'r') as f:
+                "warped_rgb.vrt",
+            ),
+            "r",
+        ) as f:
             orig_vrt = f.read()
 
         modif_vrt = gdal2tiles.add_alpha_band_to_string_vrt(orig_vrt)
@@ -85,10 +92,14 @@ class AddAlphaBandToStringVrtTest(TestCase):
         self.assertEqual(nb_bands, 4)
 
     def test_adds_the_correct_band_info_1_band(self):
-        with open(os.path.join(
+        with open(
+            os.path.join(
                 os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                 "data",
-                "warped_grey.vrt"), 'r') as f:
+                "warped_grey.vrt",
+            ),
+            "r",
+        ) as f:
             orig_vrt = f.read()
 
         modif_vrt = gdal2tiles.add_alpha_band_to_string_vrt(orig_vrt)
@@ -103,10 +114,14 @@ class AddAlphaBandToStringVrtTest(TestCase):
         self.assertEqual(band2_color.text, "Alpha")
 
     def test_adds_the_alpha_option(self):
-        with open(os.path.join(
+        with open(
+            os.path.join(
                 os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                 "data",
-                "warped_rgb.vrt"), 'r') as f:
+                "warped_rgb.vrt",
+            ),
+            "r",
+        ) as f:
             orig_vrt = f.read()
 
         modif_vrt = gdal2tiles.add_alpha_band_to_string_vrt(orig_vrt)
@@ -117,10 +132,14 @@ class AddAlphaBandToStringVrtTest(TestCase):
         self.assertIsNotNone(alpha_band_option)
         self.assertEqual(alpha_band_option.text, "4")
 
-        with open(os.path.join(
+        with open(
+            os.path.join(
                 os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                 "data",
-                "warped_grey.vrt"), 'r') as f:
+                "warped_grey.vrt",
+            ),
+            "r",
+        ) as f:
             orig_vrt = f.read()
 
         modif_vrt = gdal2tiles.add_alpha_band_to_string_vrt(orig_vrt)
@@ -132,10 +151,14 @@ class AddAlphaBandToStringVrtTest(TestCase):
         self.assertEqual(alpha_band_option.text, "2")
 
     def test_adds_the_init_dest_option(self):
-        with open(os.path.join(
+        with open(
+            os.path.join(
                 os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                 "data",
-                "warped_rgb.vrt"), 'r') as f:
+                "warped_rgb.vrt",
+            ),
+            "r",
+        ) as f:
             orig_vrt = f.read()
 
         modif_vrt = gdal2tiles.add_alpha_band_to_string_vrt(orig_vrt)

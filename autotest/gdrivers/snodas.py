@@ -28,10 +28,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import gdal
-
-
 import gdaltest
+
+from osgeo import gdal
 
 ###############################################################################
 # Test a fake SNODAS dataset
@@ -39,8 +38,15 @@ import gdaltest
 
 def test_snodas_1():
 
-    tst = gdaltest.GDALTest('SNODAS', 'snodas/fake_snodas.hdr', 1, 0)
-    expected_gt = [-124.733749999995, 0.0083333333333330643, 0.0, 52.874583333331302, 0.0, -0.0083333333333330054]
+    tst = gdaltest.GDALTest("SNODAS", "snodas/fake_snodas.hdr", 1, 0)
+    expected_gt = [
+        -124.733749999995,
+        0.0083333333333330643,
+        0.0,
+        52.874583333331302,
+        0.0,
+        -0.0083333333333330054,
+    ]
     expected_srs = """GEOGCS["WGS 84",
     DATUM["WGS_1984",
         SPHEROID["WGS 84",6378137,298.257223563,
@@ -54,14 +60,11 @@ def test_snodas_1():
     AUTHORITY["EPSG","4326"]]"""
     ret = tst.testOpen(check_gt=expected_gt, check_prj=expected_srs, skip_checksum=True)
 
-    if ret == 'success':
-        ds = gdal.Open('data/snodas/fake_snodas.hdr')
+    if ret == "success":
+        ds = gdal.Open("data/snodas/fake_snodas.hdr")
         ds.GetFileList()
         assert ds.GetRasterBand(1).GetNoDataValue() == -9999
         assert ds.GetRasterBand(1).GetMinimum() == 0
         assert ds.GetRasterBand(1).GetMaximum() == 429
 
     return ret
-
-
-
