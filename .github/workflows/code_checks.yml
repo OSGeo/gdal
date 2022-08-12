@@ -63,22 +63,12 @@ jobs:
       - name: Shellcheck
         run: shellcheck -e SC2086,SC2046,SC2164,SC2054 $(find . -name '*.sh' -a -not -name ltmain.sh -a -not -wholename "./autotest/*" -a -not -wholename "./.github/*")
 
-  flake8:
+  linting:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Install Requirements
-        run: |
-            sudo apt install python3-pip
-            sudo pip3 install flake8
-
-      - name: Run flake8
-        run: |
-            export FLAKE8="flake8 --config autotest/setup.cfg"
-            $FLAKE8 autotest
-            $FLAKE8 swig/python/gdal-utils/
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - uses: pre-commit/action@v2.0.0
 
   doxygen:
     runs-on: ubuntu-18.04

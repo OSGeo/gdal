@@ -1,0 +1,21 @@
+[flake8]
+max_line_length = 88
+ignore =
+    C408 # Unnecessary dict/list/tuple call - rewrite as a literal
+    E203 # whitespace before ':' - doesn't work well with black
+    E225 # missing whitespace around operator - let black worry about that
+    E262 # inline comment should start with '# '
+    E265 # block comment should start with '# '
+    E266 # too many leading '#' for block comment
+    E302 # expected 2 blank lines, found 1
+    E402 # module level import not at top of file
+    E501 # line too long - let black handle that
+    E711 # comparison to None should be
+    E712 # comparison to False/True should be
+    E741 # ambiguous variable name
+    F405 # may be undefined, or defined from star imports
+    W291 # trailing
+    W503 # line break occurred before a binary operator - let black worry about that
+    W504 # line break occurred adter a binary operator - let black worry about that
+per-file-ignores =
+    .cmake-format.py:F821
