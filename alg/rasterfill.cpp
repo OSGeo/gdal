@@ -390,7 +390,8 @@ inline void QUAD_CHECK(double& dfQuadDist, float& fQuadValue,
  *
  * @param hTargetBand the raster band to be modified in place.
  * @param hMaskBand a mask band indicating pixels to be interpolated
- * (zero valued).
+ * (zero valued). If hMaskBand is set to NULL, this method will internally use
+ * the mask band returned by GDALGetMaskBand(hTargetBand).
  * @param dfMaxSearchDist the maximum number of pixels to search in all
  * directions to find values to interpolate from.
  * @param bDeprecatedOption unused argument, should be zero.
@@ -440,8 +441,70 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
         nNoDataVal = 4000002;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Determine format driver for temp work files.                    */
+/* -------------------------------------------------------------------- */
+    CPLString osTmpFileDriver = CSLFetchNameValueDef(
+            papszOptions, "TEMP_FILE_DRIVER", "GTiff");
+    GDALDriverH hDriver = GDALGetDriverByName(osTmpFileDriver.c_str());
+
+    if( hDriver == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "TEMP_FILE_DRIVER=%s driver is not registered",
+                 osTmpFileDriver.c_str());
+        return CE_Failure;
+    }
+
+    if( GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE, nullptr) == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "TEMP_FILE_DRIVER=%s driver is incapable of creating "
+                 "temp work files",
+                 osTmpFileDriver.c_str());
+        return CE_Failure;
+    }
+
+    CPLStringList aosWorkFileOptions;
+    if( osTmpFileDriver == "GTiff" )
+    {
+        aosWorkFileOptions.SetNameValue("COMPRESS", "LZW");
+        aosWorkFileOptions.SetNameValue("BIGTIFF", "IF_SAFER");
+    }
+
+    const CPLString osTmpFile = CPLGenerateTempFilename("");
+
+    std::unique_ptr<GDALDataset> poTmpMaskDS;
     if( hMaskBand == nullptr )
+    {
         hMaskBand = GDALGetMaskBand( hTargetBand );
+    }
+    else if( nSmoothingIterations > 0 &&
+             hMaskBand != GDALGetMaskBand( hTargetBand ) )
+    {
+        // If doing smoothing operations and the user provided its own
+        // mask band, we must make a copy of it to be able to update it
+        // when we fill pixels during the initial pass.
+        const CPLString osMaskTmpFile = osTmpFile + "fill_mask_work.tif";
+        poTmpMaskDS.reset(GDALDataset::FromHandle(
+            GDALCreate( hDriver, osMaskTmpFile, nXSize, nYSize, 1,
+                        GDT_Byte,
+                        aosWorkFileOptions.List() )));
+        if( poTmpMaskDS == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                "Could not create poTmpMaskDS work file. Check driver capabilities.");
+            return CE_Failure;
+        }
+        poTmpMaskDS->MarkSuppressOnClose();
+        auto hTmpMaskBand = GDALRasterBand::ToHandle(poTmpMaskDS->GetRasterBand(1));
+        if( GDALRasterBandCopyWholeRaster(
+                hMaskBand, hTmpMaskBand, nullptr, nullptr, nullptr) != CE_None )
+        {
+            return CE_Failure;
+        }
+        hMaskBand = hTmpMaskBand;
+    }
 
     // If there are smoothing iterations, reserve 10% of the progress for them.
     const double dfProgressRatio = nSmoothingIterations > 0 ? 0.9 : 1.0;
@@ -468,55 +531,24 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Determine format driver for temp work files.                    */
-/* -------------------------------------------------------------------- */
-    CPLString osTmpFileDriver = CSLFetchNameValueDef(
-            papszOptions, "TEMP_FILE_DRIVER", "GTiff");
-    GDALDriverH hDriver = GDALGetDriverByName(osTmpFileDriver.c_str());
-
-    if( hDriver == nullptr )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Given driver is not registered");
-        return CE_Failure;
-    }
-
-    if( GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE, nullptr) == nullptr )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Given driver is incapable of creating temp work files");
-        return CE_Failure;
-    }
-
-    char **papszWorkFileOptions = nullptr;
-    if( osTmpFileDriver == "GTiff" )
-    {
-        papszWorkFileOptions = CSLSetNameValue(
-                papszWorkFileOptions, "COMPRESS", "LZW");
-        papszWorkFileOptions = CSLSetNameValue(
-                papszWorkFileOptions, "BIGTIFF", "IF_SAFER");
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Create a work file to hold the Y "last value" indices.          */
 /* -------------------------------------------------------------------- */
-    const CPLString osTmpFile = CPLGenerateTempFilename("");
     const CPLString osYTmpFile = osTmpFile + "fill_y_work.tif";
 
-    GDALDatasetH hYDS =
+    auto poYDS = std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(
         GDALCreate( hDriver, osYTmpFile, nXSize, nYSize, 1,
-                    eType, papszWorkFileOptions );
+                    eType, aosWorkFileOptions.List() )));
 
-    if( hYDS == nullptr )
+    if( poYDS == nullptr )
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
             "Could not create Y index work file. Check driver capabilities.");
         return CE_Failure;
     }
-    GDALDataset::FromHandle(hYDS)->MarkSuppressOnClose();
+    poYDS->MarkSuppressOnClose();
 
-    GDALRasterBandH hYBand = GDALGetRasterBand( hYDS, 1 );
+    GDALRasterBandH hYBand = GDALRasterBand::FromHandle(poYDS->GetRasterBand(1));
 
 /* -------------------------------------------------------------------- */
 /*      Create a work file to hold the pixel value associated with      */
@@ -524,20 +556,20 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
 /* -------------------------------------------------------------------- */
     const CPLString osValTmpFile = osTmpFile + "fill_val_work.tif";
 
-    GDALDatasetH hValDS =
+    auto poValDS = std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(
         GDALCreate( hDriver, osValTmpFile, nXSize, nYSize, 1,
                     GDALGetRasterDataType( hTargetBand ),
-                    papszWorkFileOptions );
+                    aosWorkFileOptions.List() )));
 
-    if( hValDS == nullptr )
+    if( poValDS == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
             "Could not create XY value work file. Check driver capabilities.");
         return CE_Failure;
     }
-    GDALDataset::FromHandle(hValDS)->MarkSuppressOnClose();
+    poValDS->MarkSuppressOnClose();
 
-    GDALRasterBandH hValBand = GDALGetRasterBand( hValDS, 1 );
+    GDALRasterBandH hValBand = GDALRasterBand::FromHandle(poValDS->GetRasterBand(1));
 
 /* -------------------------------------------------------------------- */
 /*      Create a mask file to make it clear what pixels can be filtered */
@@ -545,19 +577,19 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
 /* -------------------------------------------------------------------- */
     const CPLString osFiltMaskTmpFile = osTmpFile + "fill_filtmask_work.tif";
 
-    GDALDatasetH hFiltMaskDS =
+    auto poFiltMaskDS = std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(
         GDALCreate( hDriver, osFiltMaskTmpFile, nXSize, nYSize, 1,
-                    GDT_Byte, papszWorkFileOptions );
+                    GDT_Byte, aosWorkFileOptions.List() )));
 
-    if( hFiltMaskDS == nullptr )
+    if( poFiltMaskDS == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
             "Could not create mask work file. Check driver capabilities.");
         return CE_Failure;
     }
-    GDALDataset::FromHandle(hFiltMaskDS)->MarkSuppressOnClose();
+    poFiltMaskDS->MarkSuppressOnClose();
 
-    GDALRasterBandH hFiltMaskBand = GDALGetRasterBand( hFiltMaskDS, 1 );
+    GDALRasterBandH hFiltMaskBand = GDALRasterBand::FromHandle(poFiltMaskDS->GetRasterBand(1));
 
 /* -------------------------------------------------------------------- */
 /*      Allocate buffers for last scanline and this scanline.           */
@@ -822,7 +854,10 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
             {
                 pabyFiltMask[iX] = 255;
                 if( dfWeightSum > 0.0 )
+                {
+                    pabyMask[iX] = 255;
                     pafScanline[iX] = static_cast<float>(dfValueSum / dfWeightSum);
+                }
                 else
                     pafScanline[iX] = fNoData;
             }
@@ -837,6 +872,18 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
 
         if( eErr != CE_None )
             break;
+
+        if( poTmpMaskDS != nullptr )
+        {
+            // Update (copy of) mask band when it has been provided by the
+            // user
+            eErr =
+                GDALRasterIO( hMaskBand, GF_Write, 0, iY, nXSize, 1,
+                              pabyMask, nXSize, 1, GDT_Byte, 0, 0 );
+
+            if( eErr != CE_None )
+                break;
+        }
 
         eErr =
             GDALRasterIO( hFiltMaskBand, GF_Write, 0, iY, nXSize, 1,
@@ -871,8 +918,13 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
 /* ==================================================================== */
     if( eErr == CE_None && nSmoothingIterations > 0 )
     {
-        // Force masks to be to flushed and recomputed.
-        GDALFlushRasterCache( hMaskBand );
+        if( poTmpMaskDS == nullptr )
+        {
+            // Force masks to be to flushed and recomputed when the user
+            // didn't pass a user-provided hMaskBand, and we assigned it
+            // to be the mask band of hTargetBand.
+            GDALFlushRasterCache( hMaskBand );
+        }
 
         void *pScaledProgress =
             GDALCreateScaledProgress( dfProgressRatio, 1.0, pfnProgress, pProgressArg );
@@ -897,12 +949,6 @@ end:
     CPLFree(pafScanline);
     CPLFree(pabyMask);
     CPLFree(pabyFiltMask);
-
-    GDALClose( hYDS );
-    GDALClose( hValDS );
-    GDALClose( hFiltMaskDS );
-
-    CSLDestroy(papszWorkFileOptions);
 
     return eErr;
 }

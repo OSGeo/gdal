@@ -138,3 +138,121 @@ def test_fillnodata_nodata(
     )
     ar = ds.ReadRaster()
     assert struct.unpack("B" * npixels, ar) == expected
+
+
+def test_fillnodata_user_provided_mask_with_smoothing():
+
+    ar = struct.pack(
+        "f" * (5 * 5),
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        10,
+    )
+
+    ds = gdal.GetDriverByName("MEM").Create("", 5, 5, 1, gdal.GDT_Float32)
+    targetBand = ds.GetRasterBand(1)
+    targetBand.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, ar)
+
+    mask_ds = gdal.GetDriverByName("MEM").Create("", 5, 5)
+    mask_ar = struct.pack(
+        "B" * (5 * 5),
+        255,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        255,
+    )
+    mask_ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, mask_ar)
+
+    expected = [
+        5.0,
+        5.833333492279053,
+        6.5450849533081055,
+        7.105823040008545,
+        8.333333015441895,
+        6.325798988342285,
+        6.566854476928711,
+        7.038447856903076,
+        7.557196140289307,
+        7.811311721801758,
+        7.0352678298950195,
+        7.2065935134887695,
+        7.561786651611328,
+        7.926154613494873,
+        8.114609718322754,
+        7.453090190887451,
+        7.642454147338867,
+        8.04526424407959,
+        8.50459098815918,
+        8.746294975280762,
+        7.5,
+        7.894176959991455,
+        8.454915046691895,
+        9.166666984558105,
+        10.0,
+    ]
+
+    gdal.FillNodata(
+        targetBand=targetBand,
+        maskBand=mask_ds.GetRasterBand(1),
+        maxSearchDist=100,
+        smoothingIterations=10,
+    )
+    got = [x for x in struct.unpack("f" * (5 * 5), targetBand.ReadRaster())]
+    assert got == pytest.approx(expected, 1e-5)
+
+    # Check with get the same result with mask band not explicitly set, and thus
+    # defaulting to the implicit mask band with nodata==0
+
+    ds = gdal.GetDriverByName("MEM").Create("", 5, 5, 1, gdal.GDT_Float32)
+    targetBand = ds.GetRasterBand(1)
+    targetBand.SetNoDataValue(0)
+    targetBand.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, ar)
+
+    gdal.FillNodata(
+        targetBand=targetBand, maskBand=None, maxSearchDist=100, smoothingIterations=10
+    )
+    got = [x for x in struct.unpack("f" * (5 * 5), targetBand.ReadRaster())]
+    assert got == pytest.approx(expected, 1e-5)
