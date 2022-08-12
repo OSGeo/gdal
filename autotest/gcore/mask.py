@@ -30,6 +30,7 @@
 ###############################################################################
 
 import os
+import struct
 
 import gdaltest
 import pytest
@@ -954,10 +955,6 @@ def test_mask_26():
 
 
 ###############################################################################
-# Cleanup.
-
-
-###############################################################################
 # Extensive test of nodata mask for all complex types using real part only
 
 
@@ -989,4 +986,28 @@ def test_mask_27():
 
 
 ###############################################################################
-# Extensive test of real NODATA_VALUES mask for all complex types
+# Test setting nodata after having first queried GetMaskBand()
+
+
+@pytest.mark.parametrize("dt", [gdal.GDT_Byte, gdal.GDT_Int64, gdal.GDT_UInt64])
+def test_mask_setting_nodata(dt):
+    def set_nodata_value(ds, val):
+        if dt == gdal.GDT_Byte:
+            ds.GetRasterBand(1).SetNoDataValue(val)
+        elif dt == gdal.GDT_Int64:
+            ds.GetRasterBand(1).SetNoDataValueAsInt64(val)
+        else:
+            ds.GetRasterBand(1).SetNoDataValueAsUInt64(val)
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, dt)
+    assert ds.GetRasterBand(1).GetMaskBand().ReadRaster() == struct.pack("B", 255)
+    assert ds.GetRasterBand(1).GetMaskBand().ReadRaster() == struct.pack("B", 255)
+    set_nodata_value(ds, 0)
+    assert ds.GetRasterBand(1).GetMaskBand().ReadRaster() == struct.pack("B", 0)
+    assert ds.GetRasterBand(1).GetMaskBand().ReadRaster() == struct.pack("B", 0)
+    set_nodata_value(ds, 1)
+    assert ds.GetRasterBand(1).GetMaskBand().ReadRaster() == struct.pack("B", 255)
+    set_nodata_value(ds, 0)
+    assert ds.GetRasterBand(1).GetMaskBand().ReadRaster() == struct.pack("B", 0)
+    ds.GetRasterBand(1).DeleteNoDataValue()
+    assert ds.GetRasterBand(1).GetMaskBand().ReadRaster() == struct.pack("B", 255)
