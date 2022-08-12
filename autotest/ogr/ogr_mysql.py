@@ -54,7 +54,7 @@ def test_ogr_mysql_1():
 
     try:
         ogr.GetDriverByName("MySQL")
-    except:
+    except Exception:
         pytest.skip()
 
     val = gdal.GetConfigOption("OGR_MYSQL_CONNECTION_STRING", None)

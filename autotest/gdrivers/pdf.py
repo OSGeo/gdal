@@ -719,7 +719,7 @@ def test_pdf_xmp(poppler_or_pdfium):
 def test_pdf_info(poppler_or_pdfium):
     try:
         val = "\xc3\xa9".decode("UTF-8")
-    except:
+    except Exception:
         val = "\u00e9"
 
     options = [

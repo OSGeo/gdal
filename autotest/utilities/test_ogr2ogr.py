@@ -209,7 +209,7 @@ def check_if_has_ogr_pg():
         sys.path.append(path)
     try:
         import ogr_pg
-    except:
+    except Exception:
         pytest.skip()
     ogr_pg.test_ogr_pg_1()
     if gdaltest.pg_ds is None:

@@ -385,7 +385,7 @@ def test_gdal_translate_lib_100():
     # Null dest name
     try:
         gdal.TranslateInternal(None, gdal.Open("../gcore/data/byte.tif"), None)
-    except:
+    except Exception:
         pass
 
 

@@ -219,7 +219,7 @@ def test_gdalmdiminfo_lib_mem_dataset():
 }"""
     try:
         expected = expected.decode("UTF-8")
-    except:
+    except Exception:
         pass
     if ret != expected:
         print(ret)

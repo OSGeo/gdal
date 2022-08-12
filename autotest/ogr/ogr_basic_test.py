@@ -700,7 +700,7 @@ def test_ogr_basic_invalid_unicode():
 
     try:
         ogr.Open(val)
-    except:
+    except Exception:
         pass
 
     data_source = ogr.GetDriverByName("Memory").CreateDataSource("")
@@ -709,7 +709,7 @@ def test_ogr_basic_invalid_unicode():
     feature = ogr.Feature(layer.GetLayerDefn())
     try:
         feature.SetField("attr", val)
-    except:
+    except Exception:
         pass
 
 

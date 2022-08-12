@@ -758,7 +758,7 @@ def test_hfa_unique_values_hist():
 
     try:
         gdal.RasterAttributeTable()
-    except:
+    except Exception:
         pytest.skip()
 
     ds = gdal.Open("data/hfa/i8u_c_i.img")
@@ -855,7 +855,7 @@ def test_hfa_delete_colortable():
 
     try:
         ds.GetRasterBand(1).SetColorTable
-    except:
+    except Exception:
         # OG python bindings don't have SetColorTable, and if we use
         # SetRasterColorTable, it doesn't work either as None isn't a valid
         # value for them
@@ -894,7 +894,7 @@ def test_hfa_delete_colortable2():
 
     try:
         ds.GetRasterBand(1).SetColorTable
-    except:
+    except Exception:
         # OG python bindings don't have SetColorTable, and if we use
         # SetRasterColorTable, it doesn't work either as None isn't a valid
         # value for them
@@ -954,7 +954,7 @@ def test_hfa_ov_nodata():
     gdal.PushErrorHandler("CPLQuietErrorHandler")
     try:
         wrk3_ds = gdal.Open("/vsimem/ov_nodata.img.ovr")
-    except:
+    except Exception:
         wrk3_ds = None
     gdal.PopErrorHandler()
 

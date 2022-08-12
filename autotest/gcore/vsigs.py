@@ -928,7 +928,7 @@ gwE6fxOLyJDxuWRf
                         assert f is not None
                         data = gdal.VSIFReadL(1, 4, f).decode("ascii")
                         gdal.VSIFCloseL(f)
-                except:
+                except Exception:
                     if (
                         gdal.GetLastErrorMsg().find(
                             "CPLRSASHA256Sign() not implemented"
@@ -1034,7 +1034,7 @@ def test_vsigs_read_credentials_oauth2_service_account_json_file(
                     gdal.Unlink("/vsimem/service_account.json")
                     pytest.fail(signed_url)
 
-        except:
+        except Exception:
             if gdal.GetLastErrorMsg().find("CPLRSASHA256Sign() not implemented") >= 0:
                 pytest.skip()
 

@@ -89,7 +89,7 @@ def _GetGeomType(src_geom_type_name):
         return ogr.wkbUnknown
     try:
         max_geom_type = ogr.wkbTriangle
-    except:
+    except Exception:
         # GDAL 2.1 compat
         max_geom_type = ogr.wkbSurface
     for i in range(max_geom_type + 1):

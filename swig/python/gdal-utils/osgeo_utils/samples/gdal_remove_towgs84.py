@@ -77,7 +77,7 @@ def main(argv=sys.argv):
         output = None
         try:
             output = subprocess.check_output(["listgeo", filename]).decode("LATIN1")
-        except:
+        except Exception:
             pass
         if output and output.find("GeogTOWGS84GeoKey") < 0:
             # Check if listgeo is recent enough

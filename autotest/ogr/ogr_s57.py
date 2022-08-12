@@ -487,7 +487,7 @@ def test_ogr_s57_more_than_255_updates_to_feature():
                 os.stat("tmp/cache/US5ME51M")
             except OSError:
                 pytest.skip()
-        except:
+        except Exception:
             pytest.skip()
 
     gdal.ErrorReset()

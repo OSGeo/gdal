@@ -302,7 +302,7 @@ ENDE"""
     try:
         # Python 2
         expected = expected.decode("utf8").encode("iso-8859-1")
-    except:
+    except Exception:
         pass
     assert expected in itf, "Interlis output doesn't match."
 

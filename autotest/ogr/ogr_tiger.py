@@ -62,7 +62,7 @@ def test_ogr_tiger_1():
                 os.stat("tmp/cache/TGR01001/TGR01001.MET")
             except OSError:
                 pytest.skip()
-        except:
+        except Exception:
             pytest.skip()
 
     ogrtest.tiger_ds = ogr.Open("tmp/cache/TGR01001")
@@ -169,7 +169,7 @@ def test_ogr_tiger_3():
                 # gdaltest.post_reason('%s is different' % filename)
                 print("%s is different" % filename)
                 ret = "fail"
-        except:
+        except Exception:
             # gdaltest.post_reason('could not find %s' % filename)
             print("could not find %s" % filename)
             ret = "fail"

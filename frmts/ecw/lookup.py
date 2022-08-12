@@ -168,7 +168,7 @@ for line in pfile.readlines():
     except KeyError:
         print('%s,LOCAL_CS["%s - (unsupported)"]' % (ident, ident))
 
-    except:
+    except Exception:
         print("cant translate: ", line)
         raise
 

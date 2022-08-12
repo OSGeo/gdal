@@ -198,7 +198,7 @@ def main(argv=sys.argv):
     if dst_ds is None:
         try:
             dst_ds = gdal.Open(dst_filename, gdal.GA_Update)
-        except:
+        except Exception:
             dst_ds = None
 
         if dst_ds is None:

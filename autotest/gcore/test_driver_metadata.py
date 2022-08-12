@@ -391,7 +391,7 @@ def test_metadata_openoptionlist(driver_name):
         try:
             parser = etree.XMLParser(schema=schema)
             etree.fromstring(openoptionlist_xml, parser)
-        except:
+        except Exception:
             print(openoptionlist_xml)
             raise
 
@@ -410,7 +410,7 @@ def test_metadata_creationoptionslist(driver_name):
         try:
             parser = etree.XMLParser(schema=schema)
             etree.fromstring(creationoptionslist_xml, parser)
-        except:
+        except Exception:
             print(creationoptionslist_xml)
             raise
 
@@ -429,7 +429,7 @@ def test_metadata_layer_creationoptionslist(driver_name):
         try:
             parser = etree.XMLParser(schema=schema)
             etree.fromstring(creationoptionslist_xml, parser)
-        except:
+        except Exception:
             print(creationoptionslist_xml)
             raise
 
@@ -448,7 +448,7 @@ def test_metadata_multidim_array_creationoptionslist(driver_name):
         try:
             parser = etree.XMLParser(schema=schema)
             etree.fromstring(xml, parser)
-        except:
+        except Exception:
             print(xml)
             raise
 
@@ -467,7 +467,7 @@ def test_metadata_multidim_attribute_creationoptionslist(driver_name):
         try:
             parser = etree.XMLParser(schema=schema)
             etree.fromstring(xml, parser)
-        except:
+        except Exception:
             print(xml)
             raise
 
@@ -486,7 +486,7 @@ def test_metadata_multidim_dataset_creationoptionslist(driver_name):
         try:
             parser = etree.XMLParser(schema=schema)
             etree.fromstring(xml, parser)
-        except:
+        except Exception:
             print(xml)
             raise
 
@@ -505,7 +505,7 @@ def test_metadata_multidim_dimension_creationoptionslist(driver_name):
         try:
             parser = etree.XMLParser(schema=schema)
             etree.fromstring(xml, parser)
-        except:
+        except Exception:
             print(xml)
             raise
 
@@ -526,7 +526,7 @@ def test_metadata_multidim_group_creationoptionslist(driver_name):
             # parser = etree.XMLParser(schema=schema)
             # etree.fromstring(xml, parser)
             etree.fromstring(xml)
-        except:
+        except Exception:
             print(xml)
             raise
 

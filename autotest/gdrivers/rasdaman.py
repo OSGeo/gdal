@@ -53,7 +53,7 @@ def test_rasdaman_1():
         ds = gdal.Open(
             "rasdaman:query='select a[$x_lo:$x_hi,$y_lo:$y_hi] from rgb as a'"
         )
-    except:
+    except Exception:
         gdaltest.rasdamanDriver = None
 
     if ds is None:

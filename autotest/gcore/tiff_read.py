@@ -726,7 +726,7 @@ def test_tiff_12bitjpeg():
     try:
         ds = gdal.Open("data/mandrilmini_12bitjpeg.tif")
         ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
-    except:
+    except Exception:
         ds = None
 
     gdal.PopErrorHandler()
@@ -739,7 +739,7 @@ def test_tiff_12bitjpeg():
 
     try:
         stats = ds.GetRasterBand(1).GetStatistics(0, 1)
-    except:
+    except Exception:
         pass
 
     assert not (
@@ -2618,7 +2618,7 @@ def test_tiff_read_strace_check():
     )
     try:
         (_, err) = gdaltest.runexternal_out_and_err(cmd)
-    except:
+    except Exception:
         # strace not available
         pytest.skip()
 

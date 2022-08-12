@@ -762,7 +762,7 @@ def test_pcidsk_online_rpc():
     except OSError:
         try:
             gdaltest.unzip("tmp/cache", "tmp/cache/pix-test.zip")
-        except:
+        except Exception:
             pytest.skip()
 
     ds = gdal.Open("tmp/cache/demo.PIX")

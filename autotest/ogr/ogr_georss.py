@@ -55,7 +55,7 @@ def startup_and_cleanup():
         if ds is not None:
             gdaltest.have_gml_reader = 1
             ds = None
-    except:
+    except Exception:
         pass
 
     gdaltest.atom_field_values = [
@@ -433,7 +433,7 @@ def test_ogr_georss_10():
     gdal.PushErrorHandler("CPLQuietErrorHandler")
     try:
         lyr = ds.CreateLayer("georss", srs=srs)
-    except:
+    except Exception:
         lyr = None
     gdal.PopErrorHandler()
     assert lyr is None, "should not have accepted EPSG:32631 with GEOM_DIALECT != GML"

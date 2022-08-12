@@ -999,7 +999,7 @@ def test_twms_GIBS():
 
     try:
         subdatasets = gdaltest.subdatasets
-    except:
+    except Exception:
         pytest.skip()
 
     # Connects to the server
@@ -1022,7 +1022,7 @@ def test_twms_inline_configuration():
     try:
         gts = gdaltest.gts
         baseURL = gdaltest.baseURL
-    except:
+    except Exception:
         pytest.skip()
 
     # Try inline base64 configuration

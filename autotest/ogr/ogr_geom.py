@@ -505,7 +505,7 @@ def test_ogr_geom_build_from_edges_1():
     try:
         poly = ogr.BuildPolygonFromEdges(link_coll)
         assert poly is not None
-    except:
+    except Exception:
         pytest.fail()
 
 
@@ -536,7 +536,7 @@ def test_ogr_geom_build_from_edges_2():
     try:
         poly = ogr.BuildPolygonFromEdges(link_coll)
         assert poly is not None
-    except:
+    except Exception:
         pytest.fail()
 
 
@@ -555,7 +555,7 @@ def test_ogr_geom_build_from_edges_3():
         poly = ogr.BuildPolygonFromEdges(src_geom)
         gdal.PopErrorHandler()
         assert poly is None
-    except:
+    except Exception:
         pass
 
     src_geom = ogr.CreateGeometryFromWkt(
@@ -566,7 +566,7 @@ def test_ogr_geom_build_from_edges_3():
         poly = ogr.BuildPolygonFromEdges(src_geom)
         gdal.PopErrorHandler()
         assert poly is None
-    except:
+    except Exception:
         pass
 
 
@@ -607,7 +607,7 @@ def test_ogr_geom_build_from_edges_4():
         assert poly is not None
         wkt = poly.ExportToWkt()
         assert wkt == "POLYGON ((0 0,0 10,10 10,10 0,0 0),(1 1,1 2,2 2,2 1,1 1))"
-    except:
+    except Exception:
         pytest.fail()
 
 
@@ -1306,7 +1306,7 @@ def test_ogr_geom_getlineargeometry():
     ]:
         try:
             (geom_in, geom_out) = geom
-        except:
+        except Exception:
             geom_in = geom_out = geom
         in_wkt = geom_in + " EMPTY"
         g = ogr.CreateGeometryFromWkt(in_wkt)

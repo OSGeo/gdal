@@ -139,7 +139,7 @@ def main(argv=sys.argv):
 
     try:
         drv.DeleteDataSource(outfile)
-    except:
+    except Exception:
         pass
 
     ds = drv.CreateDataSource(outfile)

@@ -553,7 +553,7 @@ def test_osr_ct_options_accuracy():
     try:
         ct.TransformPoint(49, 2, 0)
         assert False
-    except:
+    except Exception:
         pass
 
 
@@ -574,7 +574,7 @@ def test_osr_ct_options_ballpark_disallowed():
     try:
         ct.TransformPoint(49, 2, 0)
         assert False
-    except:
+    except Exception:
         pass
 
 

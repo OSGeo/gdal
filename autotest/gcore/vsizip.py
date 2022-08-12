@@ -354,7 +354,7 @@ def test_vsizip_7():
             local_vars,
         )
         ok = local_vars["ok"]
-    except:
+    except Exception:
         if content == [
             "\u0430\u0431\u0432\u0433\u0434\u0435",
             "\u0436\u0437\u0438\u0439\u043a\u043b",
@@ -426,7 +426,7 @@ def test_vsizip_10():
             local_vars,
         )
         ok = local_vars["ok"]
-    except:
+    except Exception:
         if content == [
             "\u0430\u0431\u0432\u0433\u0434\u0435",
             "\u0436\u0437\u0438\u0439\u043a\u043b",
@@ -457,7 +457,7 @@ def test_vsizip_11():
             local_vars,
         )
         ok = local_vars["ok"]
-    except:
+    except Exception:
         if content == [
             "\u0430\u0431\u0432\u0433\u0434\u0435",
             "\u0436\u0437\u0438\u0439\u043a\u043b",
@@ -550,7 +550,7 @@ def test_vsizip_14():
         x = [""]
         exec("x[0] = u'\u0430\u0431\u0432\u0433\u0434\u0435'")
         cp866_filename = x[0]
-    except:
+    except Exception:
         cp866_filename = "\u0430\u0431\u0432\u0433\u0434\u0435"
 
     with gdaltest.error_handler():

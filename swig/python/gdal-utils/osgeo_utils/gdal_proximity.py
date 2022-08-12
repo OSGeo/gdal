@@ -181,7 +181,7 @@ def gdal_proximity(
             dstband = dst_ds.GetRasterBand(dst_band_n)
         else:
             dst_ds = None
-    except:
+    except Exception:
         dst_ds = None
 
     # =============================================================================

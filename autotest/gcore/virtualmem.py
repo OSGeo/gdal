@@ -69,7 +69,7 @@ def test_virtualmem_1():
             1024 * 1024,
             0,
         )
-    except:
+    except Exception:
         if not sys.platform.startswith("linux"):
             # Also try GetTiledVirtualMemArray() robustness (#5728)
             try:
@@ -84,7 +84,7 @@ def test_virtualmem_1():
                     gdal.GDT_Int16,
                     1024 * 1024,
                 )
-            except:
+            except Exception:
                 pass
             pytest.skip()
 

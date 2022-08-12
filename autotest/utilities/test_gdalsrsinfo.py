@@ -331,7 +331,7 @@ def test_gdalsrsinfo_16():
 
     try:
         (_, err) = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
-    except:
+    except Exception:
         pytest.fail("gdalsrsinfo execution failed")
 
     assert err == ""

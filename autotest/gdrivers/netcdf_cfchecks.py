@@ -396,7 +396,7 @@ class CFChecker(object):
         except AttributeError:
             print("NetCDF Attribute Error:")
             raise
-        except:
+        except Exception:
             print(
                 "\nCould not open file, please check that NetCDF is formatted correctly.\n".upper()
             )
@@ -463,7 +463,7 @@ class CFChecker(object):
         except AttributeError:
             print("NetCDF Attribute Error:")
             raise
-        except:
+        except Exception:
             print(
                 "\nCould not open file, please check that NetCDF is formatted correctly.\n".upper()
             )

@@ -69,7 +69,7 @@ def test_ogr_refcount_2():
         if ds_3._o != gdaltest.ds_1._o:
             gdaltest.post_reason("We did not get the expected pointer.")
             return "failed"
-    except:
+    except Exception:
         pass
 
     if ds_3.GetRefCount() != 2:
@@ -106,7 +106,7 @@ def test_ogr_refcount_4():
         if ds._o != gdaltest.ds_2._o:
             gdaltest.post_reason("failed to fetch expected datasource")
             return "failed"
-    except:
+    except Exception:
         pass
 
 

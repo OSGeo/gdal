@@ -86,7 +86,7 @@ def download_test_data():
                 os.stat("tmp/cache/Autodesk Test.mdb")
             except OSError:
                 pytest.skip()
-        except:
+        except Exception:
             pytest.skip()
 
     pgeo_ds = ogr.Open("tmp/cache/Autodesk Test.mdb")
