@@ -1909,6 +1909,9 @@ bsoncxx::document::value OGRMongoDBv3Layer::BuildIDMatchFilter( bsoncxx::documen
 
 OGRErr OGRMongoDBv3Layer::IUpsertFeature( OGRFeature *poFeature )
 {
+    if( !TestCapability(OLCUpsertFeature) )
+       return OGRERR_FAILURE;
+    
     if( const OGRErr err = PrepareForUpdateOrUpsert(poFeature); err != OGRERR_NONE )
     {
         return err;
@@ -1966,7 +1969,7 @@ int OGRMongoDBv3Layer::TestCapability( const char* pszCap )
     {
         return m_poDS->GetAccess() == GA_Update;
     }
-    else if( EQUAL(pszCap,OLCDeleteFeature) )
+    else if( EQUAL(pszCap, OLCDeleteFeature) || EQUAL(pszCap, OLCUpsertFeature) )
     {
         EstablishFeatureDefn();
         return m_poDS->GetAccess() == GA_Update &&
