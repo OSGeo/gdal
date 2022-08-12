@@ -307,7 +307,6 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
   if( !GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
       !GDALCheckBandCount(nBands, FALSE) )
   {
-    delete poDS;
     return nullptr;
   }
 
