@@ -128,6 +128,7 @@ Raster drivers
    ngsgeoid
    ngw
    nitf
+   nsidcbin
    ntv2
    nwtgrd
    ogcapi
