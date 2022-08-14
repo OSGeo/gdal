@@ -185,14 +185,15 @@ NSIDCbinRasterBand::~NSIDCbinRasterBand()
 double NSIDCbinRasterBand::GetNoDataValue( int *pbSuccess )
 
 {
+  *pbSuccess = TRUE;
+  //if( pbSuccess != nullptr )
+  //  *pbSuccess = TRUE;
+  //   NSIDCbinDataset *poPDS = reinterpret_cast<NSIDCbinDataset *>( poDS );
 
-  if( pbSuccess != nullptr )
-    *pbSuccess = TRUE;
-  // NSIDCbinDataset *poPDS = reinterpret_cast<NSIDCbinDataset *>( poDS );
-  // const char  *pszLine = poPDS->sHeader.missing_int;
+  //const char  *pszLine = poPDS->sHeader.missing_int;
   //
-  // if( pbSuccess != nullptr )
-  //    *pbSuccess = EQUALN(pszLine,  " 0255", 5);
+  //if( pbSuccess != nullptr )
+  // *pbSuccess = EQUALN(pszLine,  " 0255", 5);
   //
   // if (pbSuccess != nullptr) return -999.0;
 
@@ -291,6 +292,23 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
               poOpenInfo->pszFilename );
     return nullptr;
   }
+
+  // avoid unused warnings
+  CPL_IGNORE_RET_VAL(poDS->sHeader.missing_int);
+  CPL_IGNORE_RET_VAL(poDS->sHeader.internal1);
+  CPL_IGNORE_RET_VAL(poDS->sHeader.latitude);
+  CPL_IGNORE_RET_VAL(poDS->sHeader.greenwich);
+  CPL_IGNORE_RET_VAL(poDS->sHeader.internal2);
+  CPL_IGNORE_RET_VAL(poDS->sHeader.jpole);
+  CPL_IGNORE_RET_VAL(poDS->sHeader.ipole);
+  CPL_IGNORE_RET_VAL(poDS->sHeader.julian_start);
+  CPL_IGNORE_RET_VAL(poDS->sHeader.hour_start);
+  CPL_IGNORE_RET_VAL(poDS->sHeader. minute_start);
+  CPL_IGNORE_RET_VAL(poDS->sHeader.julian_end);
+  CPL_IGNORE_RET_VAL(poDS->sHeader. hour_end);
+  CPL_IGNORE_RET_VAL(poDS->sHeader.minute_end);
+  CPL_IGNORE_RET_VAL(poDS->sHeader.channel);
+  CPL_IGNORE_RET_VAL(poDS->sHeader.scaling);
 
   /* -------------------------------------------------------------------- */
   /*      Extract information of interest from the header.                */
