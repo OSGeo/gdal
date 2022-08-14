@@ -302,10 +302,7 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
   const char *psHeader = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
   bool south = STARTS_WITH(psHeader + 230, "ANTARCTIC");
 
-  const int nBands = 1;
-
-  if( !GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
-      !GDALCheckBandCount(nBands, FALSE) )
+  if( !GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) )
   {
     return nullptr;
   }
@@ -330,22 +327,20 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
   poDS->eRasterDataType = GDT_Byte;
 
   CPLErrorReset();
-  for( int iBand = 0; iBand < nBands; iBand++ )
-  {
-    NSIDCbinRasterBand  *poBand = new NSIDCbinRasterBand( poDS.get(), iBand+1, poDS->fp,
-                                                        300 + iBand * poDS->nRasterXSize,
+
+  NSIDCbinRasterBand  *poBand = new NSIDCbinRasterBand( poDS.get(), 1, poDS->fp,
+                                                        300 + poDS->nRasterXSize,
                                                         nBytesPerSample,
-                                                        poDS->nRasterXSize * nBands,
+                                                        poDS->nRasterXSize,
                                                         poDS->eRasterDataType,
                                                         CPL_IS_LSB);
-    poDS->SetBand( iBand+1,
-                   poBand);
+  poDS->SetBand(1, poBand);
 
-    if( CPLGetLastErrorType() != CE_None )
-    {
-      return nullptr;
-    }
+  if( CPLGetLastErrorType() != CE_None )
+  {
+    return nullptr;
   }
+
 
   /* -------------------------------------------------------------------- */
   /*      Geotransform, we simply know this from the documentation.       */
