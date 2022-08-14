@@ -106,11 +106,8 @@ class NSIDCbinDataset final: public GDALPamDataset
     NSIDCbinDataset();
     ~NSIDCbinDataset() override;
     CPLErr GetGeoTransform( double * ) override;
-
-    const char *_GetProjectionRef( void ) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-      return GetSpatialRefFromOldGetProjectionRef();
-    }
+    OGRSpatialReference oSRS;
+    const OGRSpatialReference* GetSpatialRef() const override;
   static GDALDataset *Open( GDALOpenInfo * );
   static int          Identify( GDALOpenInfo * );
 };
@@ -224,7 +221,8 @@ double NSIDCbinRasterBand::GetScale( int *pbSuccess )
 
 NSIDCbinDataset::NSIDCbinDataset() :
   fp(nullptr),
-  eRasterDataType(GDT_Unknown)
+  eRasterDataType(GDT_Unknown),
+  oSRS(OGRSpatialReference() )
 {
   adfGeoTransform[0] = 0.0;
   adfGeoTransform[1] = 1.0;
@@ -369,7 +367,7 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
   /*      FIXME: old or new epsg codes based on header info, or jul/year  */
   /* -------------------------------------------------------------------- */
 
-  OGRSpatialReference oSR;
+
   int epsg = -1;
   if( south )
   {
@@ -393,19 +391,19 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
 
     epsg = 3413;
   }
+  //OGRSpatialReference oSRS;
 
-  if( oSR.importFromEPSG( epsg ) == OGRERR_NONE ) {
-    char *pszWKT = nullptr;
-    oSR.exportToWkt( &pszWKT );
-    poDS->osSRS = pszWKT;
-    CPLFree( pszWKT );
+  if(poDS->oSRS.importFromEPSG( epsg ) == OGRERR_NONE ) {
+    // we good
+  } else {
+    // we not good
   }
 
   /* -------------------------------------------------------------------- */
   /*      Initialize any PAM information.                                 */
   /* -------------------------------------------------------------------- */
-  //poDS->SetDescription( poOpenInfo->pszFilename );
-  //poDS->TryLoadXML();
+  poDS->SetDescription( poOpenInfo->pszFilename );
+  poDS->TryLoadXML();
 
   return poDS.release();
 }
@@ -453,13 +451,12 @@ int NSIDCbinDataset::Identify( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
-const char *NSIDCbinDataset::_GetProjectionRef()
-
+const OGRSpatialReference* NSIDCbinDataset::GetSpatialRef() const
 {
-  return osSRS.c_str();
+  return &oSRS;
 }
 
 /************************************************************************/
