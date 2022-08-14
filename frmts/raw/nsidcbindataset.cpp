@@ -116,7 +116,7 @@ class NSIDCbinDataset final: public GDALPamDataset
 };
 
 
-static const char* stripLeadingZeros_nsidc(const char* buf)
+static const char* stripLeadingSpaces_nsidc(const char* buf)
 {
   const char* ptr = buf;
   /* Go until we run out of characters  or hit something non-zero */
@@ -316,11 +316,11 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
   /* -------------------------------------------------------------------- */
 
   poDS->SetMetadataItem("INSTRUMENT", poDS->sHeader.instrument);
-  poDS->SetMetadataItem("YEAR", stripLeadingZeros_nsidc(poDS->sHeader.year));
-  poDS->SetMetadataItem("JULIAN_DAY", stripLeadingZeros_nsidc(poDS->sHeader.julian));
-  poDS->SetMetadataItem("DATA_DESCRIPTORS", stripLeadingZeros_nsidc(poDS->sHeader.data_descriptors));
+  poDS->SetMetadataItem("YEAR", stripLeadingSpaces_nsidc(poDS->sHeader.year));
+  poDS->SetMetadataItem("JULIAN_DAY", stripLeadingSpaces_nsidc(poDS->sHeader.julian));
+  poDS->SetMetadataItem("DATA_DESCRIPTORS", stripLeadingSpaces_nsidc(poDS->sHeader.data_descriptors));
   poDS->SetMetadataItem("IMAGE_TITLE", poDS->sHeader.imagetitle);
-  poDS->SetMetadataItem("FILENAME", stripLeadingZeros_nsidc(poDS->sHeader.filename));
+  poDS->SetMetadataItem("FILENAME", stripLeadingSpaces_nsidc(poDS->sHeader.filename));
   poDS->SetMetadataItem("DATA_INFORMATION", poDS->sHeader.data_information);
 
   /* -------------------------------------------------------------------- */
