@@ -293,6 +293,9 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDSIn,
                 oFDefn.SetWidth( poSrcFDefn->GetWidth() );
                 oFDefn.SetPrecision( poSrcFDefn->GetPrecision() );
             }
+
+            if( psColDef->col_func == SWQCF_NONE )
+                oFDefn.SetDomainName(poSrcFDefn->GetDomainName());
         }
         else if( poSrcGFDefn != nullptr )
         {
