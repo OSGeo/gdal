@@ -101,12 +101,12 @@ class NSIDCbinDataset final: public GDALPamDataset
     GDALDataType eRasterDataType;
     double      adfGeoTransform[6];
     CPL_DISALLOW_COPY_ASSIGN(NSIDCbinDataset)
-
+    OGRSpatialReference m_oSRS{};
   public:
     NSIDCbinDataset();
     ~NSIDCbinDataset() override;
     CPLErr GetGeoTransform( double * ) override;
-    OGRSpatialReference oSRS;
+
     const OGRSpatialReference* GetSpatialRef() const override;
   static GDALDataset *Open( GDALOpenInfo * );
   static int          Identify( GDALOpenInfo * );
@@ -184,18 +184,10 @@ double NSIDCbinRasterBand::GetNoDataValue( int *pbSuccess )
 {
   if( pbSuccess != nullptr )
     *pbSuccess = TRUE;
-  //   NSIDCbinDataset *poPDS = reinterpret_cast<NSIDCbinDataset *>( poDS );
-
+  // we might check this if other format variants can be different
+  // or if we change the Band type, or if we generalize to choosing Byte vs. Float type
+  // but for now it's constant https://lists.osgeo.org/pipermail/gdal-dev/2022-August/056144.html
   //const char  *pszLine = poPDS->sHeader.missing_int;
-  //
-  //if( pbSuccess != nullptr )
-  // *pbSuccess = EQUALN(pszLine,  " 0255", 5);
-  //
-  // if (pbSuccess != nullptr) return -999.0;
-
-  // I don't understand this business yet, potentially better to always
-  // unscale to 0_250 = 0,100% with Float32
-  // and have an GDAL_UNSCALE_NSIDCBIN = no or something to return raw Byte
   return 255.0; //CPLAtof(pszLine);
 }
 
@@ -208,7 +200,8 @@ double NSIDCbinRasterBand::GetScale( int *pbSuccess )
 {
   if( pbSuccess != nullptr )
     *pbSuccess = TRUE;
-  // const double dfFactor =
+  // again just use a constant unless we see other file variants
+  // also, this might be fraction rather than percentage
   // atof(reinterpret_cast<NSIDCbinDataset*>(poDS)->sHeader.scaling)/100;
   return 0.4;
 }
@@ -221,7 +214,7 @@ double NSIDCbinRasterBand::GetScale( int *pbSuccess )
 NSIDCbinDataset::NSIDCbinDataset() :
   fp(nullptr),
   eRasterDataType(GDT_Unknown),
-  oSRS(OGRSpatialReference() )
+  m_oSRS(OGRSpatialReference() )
 {
   adfGeoTransform[0] = 0.0;
   adfGeoTransform[1] = 1.0;
@@ -390,9 +383,8 @@ GDALDataset *NSIDCbinDataset::Open( GDALOpenInfo * poOpenInfo )
 
     epsg = 3413;
   }
-  //OGRSpatialReference oSRS;
 
-  if(poDS->oSRS.importFromEPSG( epsg ) == OGRERR_NONE ) {
+  if(poDS->m_oSRS.importFromEPSG( epsg ) == OGRERR_NONE ) {
     // we good
   } else {
     // we not good
@@ -455,7 +447,7 @@ int NSIDCbinDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 const OGRSpatialReference* NSIDCbinDataset::GetSpatialRef() const
 {
-  return &oSRS;
+  return &m_oSRS;
 }
 
 /************************************************************************/
