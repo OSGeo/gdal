@@ -501,7 +501,7 @@ const char * CADHeader::getValueName( short code )
 void CADHeader::print() const
 {
     cout << "============ HEADER Section ============\n";
-    for( auto it : valuesMap )
+    for( const auto& it : valuesMap )
     {
         cout << getValueName( it.first ) << ": " << it.second.getString() << "\n";
     }
