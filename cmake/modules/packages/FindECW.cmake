@@ -81,9 +81,13 @@ if (ECW_VERSION_STRING VERSION_GREATER_EQUAL 5.5)
         set(ECW_INCLUDE_DIRS ${ECW_INCLUDE_DIR})
         if(NOT TARGET ECW::ECW_ALL)
             add_library(ECW::ECW_ALL UNKNOWN IMPORTED)
+            set(ECW_INTERFACE_COMPILE_DEFINITIONS "HAVE_COMPRESS")
+            if( "${ECW_LIBRARY}" MATCHES "NCSEcwS" )
+                set(ECW_INTERFACE_COMPILE_DEFINITIONS "${ECW_INTERFACE_COMPILE_DEFINITIONS};NCSECW_STATIC_LIBS")
+            endif()
             set_target_properties(ECW::ECW_ALL PROPERTIES
                                 INTERFACE_INCLUDE_DIRECTORIES "${ECW_INCLUDE_DIRS}"
-                                INTERFACE_COMPILE_DEFINITIONS "HAVE_COMPRESS"
+                                INTERFACE_COMPILE_DEFINITIONS "${ECW_INTERFACE_COMPILE_DEFINITIONS}"
                                 IMPORTED_LINK_INTERFACE_LANGUAGES "C"
                                 IMPORTED_LOCATION "${ECW_LIBRARY}")
         endif()
