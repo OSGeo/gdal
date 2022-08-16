@@ -181,6 +181,10 @@ public:
     GIntBig GetDiskFreeSpace( const char* pszDirname ) override;
     int SupportsSparseFiles( const char* pszPath ) override;
 
+    bool IsLocal( const char* pszPath ) override;
+    bool SupportsSequentialWrite( const char* pszPath, bool /* bAllowLocalTempFile */ ) override;
+    bool SupportsRandomWrite( const char* pszPath, bool /* bAllowLocalTempFile */ ) override;
+
     VSIDIR* OpenDir( const char *pszPath, int nRecurseDepth,
                              const char* const *papszOptions) override;
 
@@ -886,6 +890,65 @@ int VSIUnixStdioFilesystemHandler::SupportsSparseFiles( const char*
     }
     return FALSE;
 #endif
+}
+
+/************************************************************************/
+/*                          IsLocal()                                   */
+/************************************************************************/
+
+bool VSIUnixStdioFilesystemHandler::IsLocal( const char*
+#ifdef __linux
+                                                        pszPath
+#endif
+                                                        )
+{
+#ifdef __linux
+    struct statfs sStatFS;
+    if( statfs( pszPath, &sStatFS ) == 0 )
+    {
+        // See http://en.wikipedia.org/wiki/Comparison_of_file_systems
+        switch( static_cast<unsigned>(sStatFS.f_type) )
+        {
+            // Codes from http://man7.org/linux/man-pages/man2/statfs.2.html
+            case 0x6969U: // NFS
+            case 0x517bU: // SMB
+            case 0xff534d42U: // CIFS
+            case 0xfe534d42U: // SMB2 (https://github.com/libuv/libuv/blob/97dcdb1926f6aca43171e1614338bcef067abd59/src/unix/fs.c#L960)
+                return false;
+        }
+    }
+#else
+    static bool bMessageEmitted = false;
+    if( !bMessageEmitted )
+    {
+        CPLDebug("VSI",
+                 "Sorry: IsLocal() not implemented "
+                 "for this operating system");
+        bMessageEmitted = true;
+    }
+#endif
+    return true;
+}
+
+/************************************************************************/
+/*                    SupportsSequentialWrite()                         */
+/************************************************************************/
+
+bool VSIUnixStdioFilesystemHandler::SupportsSequentialWrite( const char* pszPath, bool /* bAllowLocalTempFile */ )
+{
+    VSIStatBufL sStat;
+    if( VSIStatL(pszPath, &sStat) == 0 )
+        return access(pszPath, W_OK) == 0;
+    return access(CPLGetDirname(pszPath), W_OK) == 0;
+}
+
+/************************************************************************/
+/*                     SupportsRandomWrite()                            */
+/************************************************************************/
+
+bool VSIUnixStdioFilesystemHandler::SupportsRandomWrite( const char* pszPath, bool /* bAllowLocalTempFile */ )
+{
+    return SupportsSequentialWrite(pszPath, false);
 }
 
 /************************************************************************/
