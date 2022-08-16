@@ -269,6 +269,7 @@ static int get_time_seed(void)
 {
 	DEBUG_SEED("get_time_seed");
 
+	/* coverity[store_truncates_time_t] */
 	return (int)time(NULL) * 433494437;
 }
 
