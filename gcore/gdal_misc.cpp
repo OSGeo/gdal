@@ -4226,9 +4226,7 @@ bool GDALCanReliablyUseSiblingFileList(const char* pszFilename)
             // non-ASCII character found
 
             // if this is a network storage, assume no issue
-            if( strstr(pszFilename, "/vsicurl/") ||
-                strstr(pszFilename, "/vsis3/") ||
-                strstr(pszFilename, "/vsicurl/") )
+            if( !VSIIsLocal(pszFilename) )
             {
                 return true;
             }
