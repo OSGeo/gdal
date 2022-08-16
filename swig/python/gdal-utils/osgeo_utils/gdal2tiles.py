@@ -2054,7 +2054,6 @@ class GDAL2Tiles(object):
         self.tsize = None
         self.mercator = None
         self.geodetic = None
-        self.alphaband = None
         self.dataBandsCount = None
         self.out_gt = None
         self.tileswne = None
@@ -2255,8 +2254,6 @@ class GDAL2Tiles(object):
             self.tmp_vrt_filename, self.warped_input_dataset
         )
 
-        # Get alpha band (either directly or from NODATA value)
-        self.alphaband = self.warped_input_dataset.GetRasterBand(1).GetMaskBand()
         self.dataBandsCount = nb_data_bands(self.warped_input_dataset)
 
         # KML test
@@ -2445,8 +2442,33 @@ class GDAL2Tiles(object):
                 self.tmaxz = self.nativezoom
                 self.tmaxz = max(self.tminz, self.tmaxz)
             elif self.tmaxz > self.nativezoom:
-                print("Clamping max zoom level to %d" % self.nativezoom)
-                self.tmaxz = self.nativezoom
+                # If the user requests at a higher precision than the native
+                # one, generate an oversample temporary VRT file, and tile from
+                # it
+                oversample_factor = 1 << (self.tmaxz - self.nativezoom)
+                if self.options.resampling in ("average", "antialias"):
+                    resampleAlg = "average"
+                elif self.options.resampling in (
+                    "near",
+                    "bilinear",
+                    "cubic",
+                    "cubicspline",
+                    "lanczos",
+                    "mode",
+                ):
+                    resampleAlg = self.options.resampling
+                else:
+                    resampleAlg = "bilinear"  # fallback
+                gdal.Translate(
+                    self.tmp_vrt_filename,
+                    input_dataset,
+                    width=self.warped_input_dataset.RasterXSize * oversample_factor,
+                    height=self.warped_input_dataset.RasterYSize * oversample_factor,
+                    resampleAlg=resampleAlg,
+                )
+                self.warped_input_dataset = gdal.Open(self.tmp_vrt_filename)
+                self.out_gt = self.warped_input_dataset.GetGeoTransform()
+                self.nativezoom = self.tmaxz
 
             # Generate table with min max tile coordinates for all zoomlevels
             self.tminmax = list(range(0, self.tmaxz + 1))
