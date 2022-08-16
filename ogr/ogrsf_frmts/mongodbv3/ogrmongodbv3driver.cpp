@@ -1966,12 +1966,13 @@ int OGRMongoDBv3Layer::TestCapability( const char* pszCap )
     }
     if( EQUAL(pszCap, OLCCreateField) ||
              EQUAL(pszCap, OLCCreateGeomField) ||
+             EQUAL(pszCap, OLCUpsertFeature) ||
              EQUAL(pszCap, OLCSequentialWrite) ||
              EQUAL(pszCap, OLCRandomWrite) )
     {
         return m_poDS->GetAccess() == GA_Update;
     }
-    else if( EQUAL(pszCap, OLCDeleteFeature) || EQUAL(pszCap, OLCUpsertFeature) )
+    else if (EQUAL(pszCap, OLCDeleteFeature) )
     {
         EstablishFeatureDefn();
         return m_poDS->GetAccess() == GA_Update &&
