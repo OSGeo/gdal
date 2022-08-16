@@ -1841,7 +1841,8 @@ OGRErr OGRMongoDBv3Layer::ICreateFeature( OGRFeature *poFeature )
 
 OGRErr OGRMongoDBv3Layer::ISetFeature( OGRFeature *poFeature )
 {
-    if( const OGRErr err = PrepareForUpdateOrUpsert(poFeature); err != OGRERR_NONE )
+    const OGRErr err = PrepareForUpdateOrUpsert(poFeature);
+    if( err != OGRERR_NONE )
     {
         return err;
     }
@@ -1912,7 +1913,8 @@ OGRErr OGRMongoDBv3Layer::IUpsertFeature( OGRFeature *poFeature )
     if( !TestCapability(OLCUpsertFeature) )
        return OGRERR_FAILURE;
     
-    if( const OGRErr err = PrepareForUpdateOrUpsert(poFeature); err != OGRERR_NONE )
+    const OGRErr err = PrepareForUpdateOrUpsert(poFeature);
+    if( err != OGRERR_NONE )
     {
         return err;
     }
