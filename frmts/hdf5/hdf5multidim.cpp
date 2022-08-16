@@ -958,7 +958,7 @@ void HDF5Array::InstantiateDimensions(const std::string& osParentName,
     if( poGroup && !mapDimIndexToDimFullName.empty() )
     {
         auto groupDims = poGroup->GetDimensions();
-        for( auto dim: groupDims )
+        for( auto& dim: groupDims )
         {
             oMapFullNameToDim[dim->GetFullName()] = dim;
         }
