@@ -880,6 +880,7 @@ def test_ogr_mongodbv3_2():
     gdal.PopErrorHandler()
     assert ret != 0
 
+
 ###############################################################################
 # test_ogrsf
 
