@@ -872,7 +872,7 @@ CPLErr TileDBDataset::TrySaveXML()
                 eErr = TrySaveXML();
             }
             /* No way we can save into a /vsicurl resource */
-            else if( !STARTS_WITH(psPam->pszPamFilename, "/vsicurl") )
+            else if( !VSISupportsSequentialWrite(psPam->pszPamFilename, false) )
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
                         "Unable to save auxiliary information in %s.",
