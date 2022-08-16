@@ -73,8 +73,25 @@ static bool HasZSTDCompression()
 static CPLString GetTmpFilename(const char* pszFilename,
                                 const char* pszExt)
 {
+    const bool bSupportsRandomWrite =
+        !(STARTS_WITH(pszFilename, "/vsitar/") ||
+          STARTS_WITH(pszFilename, "/vsizip/") ||
+          STARTS_WITH(pszFilename, "/vsigzip/") ||
+          STARTS_WITH(pszFilename, "/vsis3") ||
+          STARTS_WITH(pszFilename, "/vsigs") ||
+          STARTS_WITH(pszFilename, "/vsiaz") ||
+          STARTS_WITH(pszFilename, "/vsiadls") ||
+          STARTS_WITH(pszFilename, "/vsioss"));
     CPLString osTmpFilename;
-    osTmpFilename.Printf("%s.%s", pszFilename, pszExt);
+    if( !bSupportsRandomWrite ||
+        CPLGetConfigOption( "CPL_TMPDIR", nullptr ) != nullptr )
+    {
+        osTmpFilename = CPLGenerateTempFilename(CPLGetBasename(pszFilename));
+    }
+    else
+        osTmpFilename = pszFilename;
+    osTmpFilename += '.';
+    osTmpFilename += pszExt;
     VSIUnlink(osTmpFilename);
     return osTmpFilename;
 }
