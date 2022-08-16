@@ -668,7 +668,6 @@ CPLErr GDALEEDAIRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
         else
         {
             CPLError(CE_Failure, CPLE_AppDefined, "%s",
-                     psResult->pabyData ? reinterpret_cast<const char*>(psResult->pabyData) :
                      psResult->pszErrBuf);
         }
         CPLHTTPDestroyResult(psResult);
@@ -1316,7 +1315,6 @@ bool GDALEEDAIDataset::Open(GDALOpenInfo* poOpenInfo)
         else
         {
             CPLError(CE_Failure, CPLE_AppDefined, "%s",
-                     psResult->pabyData ? reinterpret_cast<const char*>(psResult->pabyData) :
                      psResult->pszErrBuf);
         }
         CPLHTTPDestroyResult(psResult);
