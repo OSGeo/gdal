@@ -101,6 +101,9 @@ public:
     char* GetSignedURL( const char* pszFilename, CSLConstList papszOptions ) override;
 
     std::string GetStreamingFilename(const std::string& osFilename) const override { return osFilename; }
+
+    bool SupportsSequentialWrite( const char* /* pszPath */, bool /* bAllowLocalTempFile */ ) override { return true; }
+    bool SupportsRandomWrite( const char* /* pszPath */, bool /* bAllowLocalTempFile */ ) override;
 };
 
 /************************************************************************/
@@ -140,8 +143,7 @@ VSIVirtualHandle* VSIOSSFSHandler::Open( const char *pszFilename,
 
     if( strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, 'a') != nullptr )
     {
-        if( strchr(pszAccess, '+') != nullptr &&
-            !CPLTestBool(CPLGetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "NO")) )
+        if( strchr(pszAccess, '+') != nullptr && !SupportsRandomWrite(pszFilename, true) )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                         "w+ not supported for /vsioss, unless "
@@ -172,6 +174,16 @@ VSIVirtualHandle* VSIOSSFSHandler::Open( const char *pszFilename,
 
     return
         VSICurlFilesystemHandlerBase::Open(pszFilename, pszAccess, bSetError, papszOptions);
+}
+
+/************************************************************************/
+/*                        SupportsRandomWrite()                         */
+/************************************************************************/
+
+bool VSIOSSFSHandler::SupportsRandomWrite( const char* /* pszPath */, bool bAllowLocalTempFile )
+{
+    return bAllowLocalTempFile &&
+           CPLTestBool(CPLGetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "NO"));
 }
 
 /************************************************************************/

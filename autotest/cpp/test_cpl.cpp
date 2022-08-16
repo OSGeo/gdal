@@ -3738,6 +3738,78 @@ namespace tut
         ensure(!CPLIsASCII("\xFF", 1));
     }
 
+    // Test VSIIsLocal()
+    template<>
+    template<>
+    void object::test<58>()
+    {
+        ensure(VSIIsLocal("/vsimem/"));
+        ensure(VSIIsLocal("/vsigzip//vsimem/tmp.gz"));
+#ifdef HAVE_CURL
+        ensure(!VSIIsLocal("/vsicurl/http://example.com"));
+#endif
+        VSIStatBufL sStat;
+#ifdef _WIN32
+        if( VSIStatL("c:\\", &sStat) == 0 )
+            ensure(VSIIsLocal("c:\\i_do_not_exist"));
+#else
+        if( VSIStatL("/tmp", &sStat) == 0 )
+            ensure(VSIIsLocal("/tmp/i_do_not_exist"));
+#endif
+    }
+
+    // Test VSISupportsSequentialWrite()
+    template<>
+    template<>
+    void object::test<59>()
+    {
+        ensure(VSISupportsSequentialWrite("/vsimem/", false));
+#ifdef HAVE_CURL
+        ensure(!VSISupportsSequentialWrite("/vsicurl/http://example.com", false));
+        ensure(VSISupportsSequentialWrite("/vsis3/test_bucket/", false));
+#endif
+        ensure(VSISupportsSequentialWrite("/vsigzip//vsimem/tmp.gz", false));
+#ifdef HAVE_CURL
+        ensure(!VSISupportsSequentialWrite("/vsigzip//vsicurl/http://example.com/tmp.gz", false));
+#endif
+        VSIStatBufL sStat;
+#ifdef _WIN32
+        if( VSIStatL("c:\\", &sStat) == 0 )
+            ensure(VSISupportsSequentialWrite("c:\\", false));
+#else
+        if( VSIStatL("/tmp", &sStat) == 0 )
+            ensure(VSISupportsSequentialWrite("/tmp/i_do_not_exist", false));
+#endif
+    }
+
+    // Test VSISupportsRandomWrite()
+    template<>
+    template<>
+    void object::test<60>()
+    {
+        ensure(VSISupportsRandomWrite("/vsimem/", false));
+#ifdef HAVE_CURL
+        ensure(!VSISupportsRandomWrite("/vsicurl/http://example.com", false));
+        ensure(!VSISupportsRandomWrite("/vsis3/test_bucket/", false));
+        ensure(!VSISupportsRandomWrite("/vsis3/test_bucket/", true));
+        CPLSetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "YES");
+        ensure(!VSISupportsRandomWrite("/vsis3/test_bucket/", true));
+        CPLSetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", nullptr);
+#endif
+        ensure(!VSISupportsRandomWrite("/vsigzip//vsimem/tmp.gz", false));
+#ifdef HAVE_CURL
+        ensure(!VSISupportsRandomWrite("/vsigzip//vsicurl/http://example.com/tmp.gz", false));
+#endif
+        VSIStatBufL sStat;
+#ifdef _WIN32
+        if( VSIStatL("c:\\", &sStat) == 0 )
+            ensure(VSISupportsRandomWrite("c:\\", false));
+#else
+        if( VSIStatL("/tmp", &sStat) == 0 )
+            ensure(VSISupportsRandomWrite("/tmp", false));
+#endif
+    }
+
     // WARNING: keep that line at bottom and read carefully:
     // If the number of tests reaches 100, increase the MAX_NUMBER_OF_TESTS
     // define at top of this file (and update this comment!)

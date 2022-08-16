@@ -277,6 +277,10 @@ public:
     virtual CPLString GetFSPrefix() const = 0;
     virtual bool      AllowCachedDataFor(const char* pszFilename);
 
+    virtual bool    IsLocal( const char* /* pszPath */ ) override { return false; }
+    virtual bool    SupportsSequentialWrite( const char* /* pszPath */, bool /* bAllowLocalTempFile */ ) override { return false; }
+    virtual bool    SupportsRandomWrite( const char* /* pszPath */, bool /* bAllowLocalTempFile */ ) override { return false; }
+
     std::shared_ptr<std::string> GetRegion( const char* pszURL,
                                    vsi_l_offset nFileOffsetStart );
 
