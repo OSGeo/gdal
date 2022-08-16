@@ -817,6 +817,53 @@ the default behavior of the GTiff driver.
    always written. If set to NO, then the transformation will not be written in
    any situation.
 
+
+Codec Recommendations
+---------------------
+
+
+LZW
+~~~
+
+If you don't know what to choose, choose this one.
+
+DEFLATE
+~~~~~~~
+
+The most commonly supported TIFF codec, especially with older non-geo software.
+
+LERC
+~~~~
+
+Used for storing quantized floating point data. https://github.com/esri/lerc
+
+
+ZSTD
+~~~~
+
+Smaller and faster than DEFLATE, but not as commonly supported.
+
+WEBP
+~~~~
+
+A smaller and faster JPEG.
+
+JXL
+~~~
+
+Next-gen JPG from the JPG group.
+
+
+LZMA
+~~~~
+
+Slow but storage efficient.
+
+CCITTRLE/CCITTFAX3/CCITTFAX4
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Did you happen to have fax files from the 1990s? Use these.
+
 See Also
 --------
 
