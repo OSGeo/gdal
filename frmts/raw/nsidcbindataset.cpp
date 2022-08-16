@@ -108,8 +108,8 @@ class NSIDCbinDataset final: public GDALPamDataset
     CPLErr GetGeoTransform( double * ) override;
 
     const OGRSpatialReference* GetSpatialRef() const override;
-  static GDALDataset *Open( GDALOpenInfo * );
-  static int          Identify( GDALOpenInfo * );
+    static GDALDataset *Open( GDALOpenInfo * );
+    static int  Identify( GDALOpenInfo * );
 };
 
 
@@ -145,6 +145,7 @@ class NSIDCbinRasterBand final: public RawRasterBand
 
   double GetNoDataValue( int *pbSuccess = nullptr ) override;
   double GetScale( int *pbSuccess = nullptr ) override;
+  const char *GetUnitType() override;
 };
 
 
@@ -460,6 +461,22 @@ CPLErr NSIDCbinDataset::GetGeoTransform( double * padfTransform )
   memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
 
   return CE_None;
+}
+
+/************************************************************************/
+/*                             GetUnitType()                            */
+/************************************************************************/
+
+const char *NSIDCbinRasterBand::GetUnitType()
+{
+  // undecided, atm stick with Byte but may switch to Float and lose values > 250
+  // or generalize to non-raw driver
+  // https://lists.osgeo.org/pipermail/gdal-dev/2022-August/056144.html
+  if (eDataType == GDT_Float32)
+    return "Percentage";  // or "Fraction [0,1]"
+
+  // Byte values don't have a clear unit type
+  return "";
 }
 
 /************************************************************************/
