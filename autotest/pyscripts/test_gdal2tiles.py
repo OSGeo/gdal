@@ -47,12 +47,11 @@ def _verify_raster_band_checksums(filename, expected_cs=[]):
     if ds is None:
         pytest.fail('cannot open output file "%s"' % filename)
 
-    num_bands = len(expected_cs)
-    for i in range(num_bands):
-        if ds.GetRasterBand(i + 1).Checksum() != expected_cs[i]:
-            for j in range(num_bands):
-                print(ds.GetRasterBand(j + 1).Checksum())
-            pytest.fail("wrong checksum for band %d (file %s)" % (i + 1, filename))
+    got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]
+    if isinstance(expected_cs[0], list):
+        assert got_cs in expected_cs
+    else:
+        assert got_cs == expected_cs
 
     ds = None
 
@@ -429,6 +428,35 @@ def test_gdal2tiles_py_profile_raster():
         expected_cs=[62125, 59756, 43894, 38539],
     )
 
+    shutil.rmtree("tmp/out_gdal2tiles_smallworld", ignore_errors=True)
+
+
+def test_gdal2tiles_py_profile_raster_oversample():
+
+    script_path = test_py_scripts.get_py_script("gdal2tiles")
+    if script_path is None:
+        pytest.skip()
+
+    shutil.rmtree("tmp/out_gdal2tiles_smallworld", ignore_errors=True)
+
+    test_py_scripts.run_py_script_as_external_script(
+        script_path,
+        "gdal2tiles",
+        "-q -p raster -z 0-2 "
+        + test_py_scripts.get_data_path("gdrivers")
+        + "small_world.tif tmp/out_gdal2tiles_smallworld",
+    )
+
+    assert os.path.exists("tmp/out_gdal2tiles_smallworld/2/0/0.png")
+    assert os.path.exists("tmp/out_gdal2tiles_smallworld/2/3/1.png")
+    _verify_raster_band_checksums(
+        "tmp/out_gdal2tiles_smallworld/2/0/0.png",
+        expected_cs=[[51434, 55441, 63427, 17849], [51193, 55320, 63324, 17849]],  # icc
+    )
+    _verify_raster_band_checksums(
+        "tmp/out_gdal2tiles_smallworld/2/3/1.png",
+        expected_cs=[[44685, 45074, 50871, 56563], [44643, 45116, 50863, 56563]],  # icc
+    )
     shutil.rmtree("tmp/out_gdal2tiles_smallworld", ignore_errors=True)
 
 
