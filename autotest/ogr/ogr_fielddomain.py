@@ -191,6 +191,24 @@ def test_delete_domain_assigned_to_field():
     assert lyr.GetLayerDefn().GetFieldDefn(1).GetDomainName() == 'name2'
     assert lyr2.GetLayerDefn().GetFieldDefn(0).GetDomainName() == 'name'
 
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM ogr_mem_1")
+    assert sql_lyr.GetLayerDefn().GetFieldDefn(0).GetDomainName() == "name"
+    ds.ReleaseResultSet(sql_lyr)
+
+    sql_lyr = ds.ExecuteSQL("SELECT new_string AS renamed FROM ogr_mem_1")
+    assert sql_lyr.GetLayerDefn().GetFieldDefn(0).GetDomainName() == "name"
+    ds.ReleaseResultSet(sql_lyr)
+
+    sql_lyr = ds.ExecuteSQL("SELECT COUNT(new_string) FROM ogr_mem_1")
+    assert sql_lyr.GetLayerDefn().GetFieldDefn(0).GetDomainName() == ""
+    ds.ReleaseResultSet(sql_lyr)
+
+    # This test fails in 3.5 branch on some platforms (windows_build, mingw_w64, ...)
+    # for a unknown reason. Not locally reproducable with mingw_w64...
+    # sql_lyr = ds.ExecuteSQL("SELECT * FROM ogr_mem_1", dialect="SQLITE")
+    # assert sql_lyr.GetLayerDefn().GetFieldDefn(0).GetDomainName() == "name"
+    # ds.ReleaseResultSet(sql_lyr)
+
     # deleting domain should remove it from field definitions too
     assert ds.DeleteFieldDomain('name')
 

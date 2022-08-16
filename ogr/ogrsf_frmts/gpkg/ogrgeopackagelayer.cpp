@@ -565,6 +565,7 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
                     oField.SetSubType( poSrcField->GetSubType() );
                     oField.SetWidth( poSrcField->GetWidth() );
                     oField.SetPrecision( poSrcField->GetPrecision() );
+                    oField.SetDomainName( poSrcField->GetDomainName() );
                     m_poFeatureDefn->AddFieldDefn( &oField );
                     panFieldOrdinals[
                             m_poFeatureDefn->GetFieldCount() - 1] = iCol;
