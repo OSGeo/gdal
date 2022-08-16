@@ -466,7 +466,7 @@ void OGRFlatGeobufLayer::Create() {
     hilbertSort(m_featureItems);
     CPLDebugOnly("FlatGeobuf", "Calc new feature offsets");
     uint64_t featureOffset = 0;
-    for (auto item : m_featureItems) {
+    for (auto& item : m_featureItems) {
         auto featureItem = std::static_pointer_cast<FeatureItem>(item);
         featureItem->nodeItem.offset = featureOffset;
         featureOffset += featureItem->size;
