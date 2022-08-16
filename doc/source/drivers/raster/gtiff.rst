@@ -825,7 +825,7 @@ Codec Recommendations
 LZW
 ~~~
 
-If you don't know what to chose, chose this one.
+If you don't know what to choose, choose this one.
 
 DEFLATE
 ~~~~~~~
