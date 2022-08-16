@@ -1701,6 +1701,66 @@ by the OGRSFDriverManager.
 
 /**
 
+ \fn OGRErr OGRLayer::UpsertFeature( OGRFeature * poFeature );
+
+ \brief Rewrite an existing feature or create a new feature within a layer.
+
+ This function will write a feature to the layer, based on the feature id
+ within the OGRFeature.  If the feature id doesn't exist a new feature will be
+ written.  Otherwise, the existing feature will be rewritten.
+
+ Use OGRLayer::TestCapability(OLCUpsertFeature) to establish if this layer
+ supports upsert writing.
+
+ This method is the same as the C function OGR_L_UpsertFeature().
+
+ @param poFeature the feature to write to disk.
+
+ @return OGRERR_NONE on success.
+
+*/
+
+/**
+
+ \fn OGRErr OGRLayer::IUpsertFeature( OGRFeature * poFeature );
+
+ \brief Rewrite an existing feature or create a new feature within a layer.
+
+ This method is implemented by drivers and not called directly. User code should
+ use UpsertFeature() instead.
+
+ This function will write a feature to the layer, based on the feature id
+ within the OGRFeature.  If the feature id doesn't exist a new feature will be
+ written.  Otherwise, the existing feature will be rewritten.
+
+ @param poFeature the feature to write to disk.
+
+ @return OGRERR_NONE on success.
+ @since GDAL 3.5.2
+
+*/
+
+/**
+
+ \fn OGRErr OGR_L_UpsertFeature( OGRLayerH hLayer, OGRFeatureH hFeat );
+
+ \brief Rewrite an existing feature or create a new feature within a layer.
+
+ This function will write a feature to the layer, based on the feature id
+ within the OGRFeature.  If the feature id doesn't exist a new feature will be
+ written.  Otherwise, the existing feature will be rewritten.
+
+ This function is the same as the C++ method OGRLayer::UpsertFeature().
+
+ @param hLayer handle to the layer to write the feature to.
+ @param hFeat the handle of the feature to write to disk.
+
+ @return OGRERR_NONE on success.
+
+*/
+
+/**
+
  \fn OGRErr OGRLayer::DeleteFeature( GIntBig nFID );
 
  \brief Delete feature from layer.
