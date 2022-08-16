@@ -133,6 +133,8 @@ class CPL_DLL OGRUnionLayer final: public OGRLayer
 
     virtual OGRErr      ISetFeature( OGRFeature* poFeature ) override;
 
+    virtual OGRErr      IUpsertFeature( OGRFeature* poFeature ) override;
+
     virtual OGRFeatureDefn *GetLayerDefn() override;
 
     virtual OGRSpatialReference *GetSpatialRef() override;

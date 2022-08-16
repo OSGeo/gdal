@@ -429,6 +429,22 @@ OGRErr      OGREditableLayer::ICreateFeature( OGRFeature *poFeature )
 }
 
 /************************************************************************/
+/*                          IUpsertFeature()                            */
+/************************************************************************/
+
+OGRErr      OGREditableLayer::IUpsertFeature( OGRFeature* poFeature )
+{
+   if( GetFeature(poFeature->GetFID()) )
+   {
+      return ISetFeature(poFeature);
+   }
+   else
+   {
+      return ICreateFeature(poFeature);
+   }
+}
+
+/************************************************************************/
 /*                          DeleteFeature()                             */
 /************************************************************************/
 

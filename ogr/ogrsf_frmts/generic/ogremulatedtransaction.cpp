@@ -68,6 +68,7 @@ class OGRLayerWithTransaction final: public OGRLayerDecorator
     virtual OGRFeature *GetFeature( GIntBig nFID ) override;
     virtual OGRErr      ISetFeature( OGRFeature *poFeature ) override;
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
+    virtual OGRErr      IUpsertFeature( OGRFeature* poFeature ) override;
 
     virtual OGRErr      Rename(const char* pszNewName) override;
 };
@@ -694,6 +695,18 @@ OGRErr       OGRLayerWithTransaction::ICreateFeature( OGRFeature *poFeature )
     poFeature->SetFID(poSrcFeature->GetFID());
     delete poSrcFeature;
     return eErr;
+}
+
+OGRErr       OGRLayerWithTransaction::IUpsertFeature( OGRFeature* poFeature )
+{
+   if( GetFeature(poFeature->GetFID()) )
+   {
+      return ISetFeature(poFeature);
+   }
+   else
+   {
+      return ICreateFeature(poFeature);
+   }
 }
 
 OGRErr OGRLayerWithTransaction::Rename(const char* pszNewName)

@@ -130,6 +130,12 @@ OGRErr      OGRMutexedLayer::ICreateFeature( OGRFeature *poFeature )
     return OGRLayerDecorator::ICreateFeature(poFeature);
 }
 
+OGRErr      OGRMutexedLayer::IUpsertFeature( OGRFeature* poFeature )
+{
+   CPLMutexHolderOptionalLockD(m_hMutex);
+   return OGRLayerDecorator::IUpsertFeature(poFeature);
+}
+
 OGRErr      OGRMutexedLayer::DeleteFeature( GIntBig nFID )
 {
     CPLMutexHolderOptionalLockD(m_hMutex);

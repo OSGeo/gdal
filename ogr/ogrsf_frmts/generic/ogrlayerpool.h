@@ -130,6 +130,7 @@ class OGRProxiedLayer : public OGRAbstractProxiedLayer
     virtual OGRFeature *GetFeature( GIntBig nFID ) override;
     virtual OGRErr      ISetFeature( OGRFeature *poFeature ) override;
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
+    virtual OGRErr      IUpsertFeature( OGRFeature* poFeature ) override;
     virtual OGRErr      DeleteFeature( GIntBig nFID ) override;
 
     virtual GDALDataset* GetDataset() override;

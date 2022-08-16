@@ -878,6 +878,22 @@ OGRErr OGRUnionLayer::ISetFeature( OGRFeature* poFeature )
 }
 
 /************************************************************************/
+/*                          IUpsertFeature()                            */
+/************************************************************************/
+
+OGRErr OGRUnionLayer::IUpsertFeature( OGRFeature* poFeature )
+{
+   if( GetFeature(poFeature->GetFID()) )
+   {
+      return ISetFeature(poFeature);
+   }
+   else
+   {
+      return ICreateFeature(poFeature);
+   }
+}
+
+/************************************************************************/
 /*                           GetSpatialRef()                            */
 /************************************************************************/
 

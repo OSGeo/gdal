@@ -291,6 +291,22 @@ OGRErr      OGRWarpedLayer::ICreateFeature( OGRFeature *poFeature )
 }
 
 /************************************************************************/
+/*                            IUpsertFeature()                          */
+/************************************************************************/
+
+OGRErr      OGRWarpedLayer::IUpsertFeature( OGRFeature* poFeature )
+{
+   if ( GetFeature(poFeature->GetFID()) )
+   {
+      return ISetFeature(poFeature);
+   }
+   else
+   {
+      return ICreateFeature(poFeature);
+   }
+}
+
+/************************************************************************/
 /*                            GetLayerDefn()                           */
 /************************************************************************/
 

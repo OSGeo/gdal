@@ -139,6 +139,12 @@ OGRErr      OGRLayerDecorator::ICreateFeature( OGRFeature *poFeature )
     return m_poDecoratedLayer->CreateFeature(poFeature);
 }
 
+OGRErr      OGRLayerDecorator::IUpsertFeature( OGRFeature* poFeature )
+{
+   if ( !m_poDecoratedLayer ) return OGRERR_FAILURE;
+   return m_poDecoratedLayer->UpsertFeature(poFeature);
+}
+
 OGRErr      OGRLayerDecorator::DeleteFeature( GIntBig nFID )
 {
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
