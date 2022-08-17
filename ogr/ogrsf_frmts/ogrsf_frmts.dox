@@ -1737,7 +1737,7 @@ by the OGRSFDriverManager.
  @param poFeature the feature to write to disk.
 
  @return OGRERR_NONE on success.
- @since GDAL 3.5.2
+ @since GDAL 3.6.0
 
 */
 
