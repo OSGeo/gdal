@@ -1757,6 +1757,7 @@ by the OGRSFDriverManager.
  @param hFeat the handle of the feature to write to disk.
 
  @return OGRERR_NONE on success.
+ @since GDAL 3.6.0
 
 */
 
