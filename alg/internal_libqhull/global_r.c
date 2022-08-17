@@ -1732,6 +1732,7 @@ void qh_initqhull_globals(qhT *qh, coordT *points, int numpoints, int dim, boolT
     qh->IStracing= 0;
   }
   if (qh->ROTATErandom == 0 || qh->ROTATErandom == -1) {
+    /* coverity[store_truncates_time_t] */
     seed= (int)time(&timedata);
     if (qh->ROTATErandom  == -1) {
       seed= -seed;
@@ -2008,6 +2009,7 @@ void qh_initqhull_start2(qhT *qh, FILE *infile, FILE *outfile, FILE *errfile) {
   qh->tracefacet_id= UINT_MAX;  /* recompile to trace a facet, set to UINT_MAX when done, see userprintf_r.c/qh_fprintf */
   qh->traceridge_id= UINT_MAX;  /* recompile to trace a ridge, set to UINT_MAX when done, see userprintf_r.c/qh_fprintf */
   qh->tracevertex_id= UINT_MAX; /* recompile to trace a vertex, set to UINT_MAX when done, see userprintf_r.c/qh_fprintf */
+  /* coverity[store_truncates_time_t] */
   seed= (int)time(&timedata);
   qh_RANDOMseed_(qh, seed);
   qh->run_id= qh_RANDOMint;

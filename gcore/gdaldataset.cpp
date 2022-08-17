@@ -3870,7 +3870,7 @@ int CPL_STDCALL GDALDumpOpenDatasets( FILE *fp )
 
     CPL_IGNORE_RET_VAL(VSIFPrintf(fp, "Open GDAL Datasets:\n"));
 
-    for( auto oIter: *poAllDatasetMap )
+    for( const auto& oIter: *poAllDatasetMap )
     {
         GDALDumpOpenDatasetsForeach(oIter.first, fp);
     }

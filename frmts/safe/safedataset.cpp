@@ -1458,7 +1458,7 @@ GDALDataset *SAFEDataset::Open( GDALOpenInfo * poOpenInfo )
         const CPLString aosDataUnitValues[3] = { "AMPLITUDE", "COMPLEX", "INTENSITY" };
         if( !isWave )
         {
-            for( auto iterSwath: oMapSwaths2Pols )
+            for( const auto& iterSwath: oMapSwaths2Pols )
             {
                 CPLString osSubDS1 = iterSwath.first;
                 CPLString osSubDS2;
