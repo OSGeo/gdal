@@ -1173,6 +1173,64 @@ inline OGRCurve::ConstIterator begin(const OGRCurve* poCurve) { return poCurve->
 inline OGRCurve::ConstIterator end(const OGRCurve* poCurve) { return poCurve->end(); }
 //! @endcond
 
+
+/************************************************************************/
+/*                           OGRIteratedPoint                           */
+/************************************************************************/
+
+/*!
+ Implementation detail of OGRSimpleCurve::Iterator.
+
+ This class is a simple wrapper over OGRPoint, which shouldn't be directly
+ referenced by the user other than trough auto&& in an iteator
+ over a OGRSimpleCurve.
+
+ Typical usage pattern is:
+ \verbatim
+ for (auto&& p: line)
+ {
+    p.setZ(100);
+ }
+ \endverbatim
+
+ The lifetime of this object is coupled to the one of the curve on which it
+ was returned. It is thus also illegal to modify it once the curve has been
+ deleted.
+
+ @since GDAL 3.6
+ */
+class CPL_DLL OGRIteratedPoint: public OGRPoint
+{
+private:
+    friend class OGRSimpleCurve;
+
+    OGRSimpleCurve* m_poCurve = nullptr;
+    int             m_nPos = 0;
+
+    OGRIteratedPoint() = default;
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRIteratedPoint)
+
+public:
+    /** Set x
+     * @param xIn x
+     */
+    void        setX( double xIn );
+    /** Set y
+     * @param yIn y
+     */
+    void        setY( double yIn );
+    /** Set z
+     * @param zIn z
+     */
+    void        setZ( double zIn );
+    /** Set m
+     * @param mIn m
+     */
+    void        setM( double mIn );
+};
+
+
 /************************************************************************/
 /*                             OGRSimpleCurve                           */
 /************************************************************************/
@@ -1223,7 +1281,7 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
                 Iterator(OGRSimpleCurve* poSelf, int nPos);
                 Iterator(Iterator&& oOther) noexcept; // declared but not defined. Needed for gcc 5.4 at least
                 ~Iterator();
-                OGRPoint& operator*();
+                OGRIteratedPoint& operator*();
                 Iterator& operator++();
                 bool operator!=(const Iterator& it) const;
         };
