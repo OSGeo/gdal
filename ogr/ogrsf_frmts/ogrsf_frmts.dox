@@ -1584,6 +1584,8 @@ by the OGRSFDriverManager.
 
  This method is the same as the C function OGR_L_SetFeature().
 
+ To set a feature, but create it if it doesn't exist see OGRLayer::UpsertFeature().
+
  @param poFeature the feature to write.
 
  @return OGRERR_NONE if the operation works, otherwise an appropriate error
@@ -1649,6 +1651,8 @@ by the OGRSFDriverManager.
  since CreateFeature() is no longer virtual.
 
  This method is the same as the C function OGR_L_CreateFeature().
+
+ To create a feature, but set it if it exists see OGRLayer::UpsertFeature().
 
  @param poFeature the feature to write to disk.
 
