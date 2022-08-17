@@ -579,6 +579,111 @@ def test_vsicurl_no_size_in_HEAD():
 ###############################################################################
 
 
+def test_vsicurl_planetary_computer_url_signing():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/pc_sas_sign_href?href=http://localhost:%d/test_vsicurl_planetary_computer_url_signing.bin"
+        % gdaltest.webserver_port,
+        200,
+        {},
+        '{"msft:expiry":"1970-01-01T00:00:00","href":"http://localhost:%d/test_vsicurl_planetary_computer_url_signing.bin?my_token"}'
+        % gdaltest.webserver_port,
+    )
+    handler.add(
+        "HEAD",
+        "/test_vsicurl_planetary_computer_url_signing.bin?my_token",
+        200,
+        {"Content-Length": "3"},
+    )
+
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_option(
+            "VSICURL_PC_SAS_SIGN_HREF_URL",
+            "http://localhost:%d/pc_sas_sign_href?href=" % gdaltest.webserver_port,
+        ):
+            statres = gdal.VSIStatL(
+                "/vsicurl?pc_url_signing=yes&url=http://localhost:%d/test_vsicurl_planetary_computer_url_signing.bin"
+                % gdaltest.webserver_port
+            )
+            assert statres.size == 3
+
+
+###############################################################################
+
+
+def test_vsicurl_planetary_computer_url_signing_collection():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/pc_sas_token/my_collection",
+        200,
+        {},
+        '{"msft:expiry":"1970-01-01T00:00:00","token":"my_token"}',
+    )
+    handler.add(
+        "HEAD",
+        "/test_vsicurl_planetary_computer_url_signing.bin?my_token",
+        200,
+        {"Content-Length": "3"},
+    )
+    handler.add(
+        "GET",
+        "/pc_sas_token/my_collection",
+        200,
+        {},
+        '{"msft:expiry":"9999-01-01T00:00:00","token":"my_token2"}',
+    )
+    handler.add(
+        "HEAD",
+        "/test_vsicurl_planetary_computer_url_signing2.bin?my_token2",
+        200,
+        {"Content-Length": "4"},
+    )
+    handler.add(
+        "HEAD",
+        "/test_vsicurl_planetary_computer_url_signing3.bin?my_token2",
+        200,
+        {"Content-Length": "5"},
+    )
+
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_option(
+            "VSICURL_PC_SAS_TOKEN_URL",
+            "http://localhost:%d/pc_sas_token/" % gdaltest.webserver_port,
+        ):
+            statres = gdal.VSIStatL(
+                "/vsicurl?pc_url_signing=yes&pc_collection=my_collection&url=http://localhost:%d/test_vsicurl_planetary_computer_url_signing.bin"
+                % gdaltest.webserver_port
+            )
+            assert statres.size == 3
+            statres = gdal.VSIStatL(
+                "/vsicurl?pc_url_signing=yes&pc_collection=my_collection&url=http://localhost:%d/test_vsicurl_planetary_computer_url_signing2.bin"
+                % gdaltest.webserver_port
+            )
+            assert statres.size == 4
+            statres = gdal.VSIStatL(
+                "/vsicurl?pc_url_signing=yes&pc_collection=my_collection&url=http://localhost:%d/test_vsicurl_planetary_computer_url_signing3.bin"
+                % gdaltest.webserver_port
+            )
+            assert statres.size == 5
+
+
+###############################################################################
+
+
 def test_vsicurl_stop_webserver():
 
     if gdaltest.webserver_port == 0:

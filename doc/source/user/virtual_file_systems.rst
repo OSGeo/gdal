@@ -201,6 +201,18 @@ Starting with GDAL 2.3, options can be passed in the filename with the following
 - max_retry=number: default to 0. Setting this option overrides the behavior of the :decl_configoption:`GDAL_HTTP_MAX_RETRY` configuration option.
 - retry_delay=number_in_seconds: default to 30. Setting this option overrides the behavior of the :decl_configoption:`GDAL_HTTP_RETRY_DELAY` configuration option.
 - list_dir=yes/no: whether an attempt to read the file list of the directory where the file is located should be done. Default to YES.
+- useragent=value: HTTP UserAgent header
+- referer=value: HTTP Referer header
+- cookie=value: HTTP Cookie header
+- header_file=value: Filename that contains one or several "Header: Value" lines
+- unsafessl=yes/no
+- low_speed_time=value
+- low_speed_limit=value
+- proxy=value
+- proxyauth=value
+- proxyuserpwd=value
+- pc_url_signing=yes/no: whether to use the URL signing mechanism of Microsoft Planetary Computer (https://planetarycomputer.microsoft.com/docs/concepts/sas/). (GDAL >= 3.5.2)
+- pc_collection=name: name of the collection of the dataset for Planetary Computer URL signing. Only used when pc_url_signing=yes. (GDAL >= 3.5.2)
 
 Partial downloads (requires the HTTP server to support random reading) are done with a 16 KB granularity by default. Starting with GDAL 2.3, the chunk size can be configured with the :decl_configoption:`CPL_VSIL_CURL_CHUNK_SIZE` configuration option, with a value in bytes. If the driver detects sequential reading it will progressively increase the chunk size up to 2 MB to improve download performance. Starting with GDAL 2.3, the :decl_configoption:`GDAL_INGESTED_BYTES_AT_OPEN` configuration option can be set to impose the number of bytes read in one GET call at file opening (can help performance to read Cloud optimized geotiff with a large header).
 
