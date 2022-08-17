@@ -67,9 +67,9 @@ public:
 
     bool get_open_success() const { return _open_success; }
 
-    #ifndef GDAL_SUPPORT
-    virtual void radiance_to_blackbody(int using_chan_no = 0) = 0;   // can override which channel's parameters to use
-    virtual double* get_data(int chan_no=0) = 0;
+    #ifndef GDAL_SUPPORT 
+  //virtual void radiance_to_blackbody(int using_chan_no = 0) = 0;   // can override which channel's parameters to use
+  //  virtual double* get_data(int chan_no=0) = 0;
     #endif
 
     unsigned int get_lines() const { return _lines; }
@@ -92,6 +92,8 @@ public:
 
     float get_col_dir_step() const { return _col_dir_step; }
     float get_line_dir_step() const { return _line_dir_step; }
+    float get_hrv_col_dir_step() const { return _hrv_col_dir_step; }
+    float get_hrv_line_dir_step() const { return _hrv_line_dir_step; }
 
     unsigned int get_f_data_offset() const { return _f_data_offset; }
     unsigned int get_visir_bytes_per_line() const { return _visir_bytes_per_line; }
@@ -130,6 +132,8 @@ protected:
     unsigned int _f_data_size;
     unsigned int _f_header_offset;
     unsigned int _f_header_size;
+    unsigned int _f_trailer_offset;
+    unsigned int _f_trailer_size;
 
     unsigned int _visir_bytes_per_line;   // packed length of a VISIR line, without headers
     unsigned int _visir_packet_size;      // effectively, the spacing between lines of consecutive bands in bytes

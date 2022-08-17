@@ -186,11 +186,11 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     const int i_nBlockYOff = poDS->GetRasterYSize() - 1 - nBlockYOff;
 
     const int nSamples = static_cast<int>((bytes_per_line * 8) / 10);
-    if (poGDS->m_eHRVDealWithSplit != NOT_HRV && nRasterXSize != nSamples )
+    if (poGDS->m_eHRVDealWithSplit == NOT_HRV && nRasterXSize != nSamples )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "nRasterXSize != nSamples");
-        return CE_Failure;
+                 "nRasterXSize %d != nSamples %d", nRasterXSize, nSamples);
+        //return CE_Failure;
     }
 
     unsigned int data_length =  bytes_per_line + (unsigned int)sizeof(SUB_VISIRLINE);
@@ -563,13 +563,13 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
     double origin_y;
 
     if (open_mode != MODE_HRV) {
-        pixel_gsd_x = 1000 * poDS->msg_reader_core->get_col_dir_step();  // convert from km to m
-        pixel_gsd_y = 1000 * poDS->msg_reader_core->get_line_dir_step(); // convert from km to m
+        pixel_gsd_x = 1000.0 * poDS->msg_reader_core->get_col_dir_step();  // convert from km to m
+        pixel_gsd_y = 1000.0 * poDS->msg_reader_core->get_line_dir_step(); // convert from km to m
         origin_x = -pixel_gsd_x * (-(Conversions::nlines / 2.0) + poDS->msg_reader_core->get_col_start());
         origin_y = -pixel_gsd_y * ((Conversions::nlines / 2.0) - poDS->msg_reader_core->get_line_start());
     } else {
-        pixel_gsd_x = 1000 * poDS->msg_reader_core->get_col_dir_step() / 3.0;  // convert from km to m, approximate for HRV
-        pixel_gsd_y = 1000 * poDS->msg_reader_core->get_line_dir_step() / 3.0; // convert from km to m, approximate for HRV
+        pixel_gsd_x = 1000 * poDS->msg_reader_core->get_hrv_col_dir_step();  // convert from km to m, approximate for HRV
+        pixel_gsd_y = 1000 * poDS->msg_reader_core->get_hrv_line_dir_step(); // convert from km to m, approximate for HRV
         origin_x = -pixel_gsd_x * (-(3*Conversions::nlines / 2.0) + 3*poDS->msg_reader_core->get_col_start());
         origin_y = -pixel_gsd_y * ((3*Conversions::nlines / 2.0) - 3*poDS->msg_reader_core->get_line_start());
     }
@@ -584,20 +584,27 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
 
     OGRSpatialReference oSRS;
 
-    oSRS.SetProjCS("Geostationary projection (MSG)");
-    oSRS.SetGEOS(  0, 35785831, 0, 0 );
-    oSRS.SetGeogCS(
-        "MSG Ellipsoid",
-        "MSG_DATUM",
-        "MSG_SPHEROID",
-        Conversions::rpol * 1000.0,
-        1 / ( 1 - Conversions::rpol/Conversions::req)
-    );
+    {
+      const auto& idr = poDS->msg_reader_core->get_image_description_record();
+      //int i;
+      for (i=0; i<6; ++i)
+	{
+	  printf("adf transform %12.3f\n", poDS->adfGeoTransform[i]);
+	}
+      printf("RASTER X %d Y %d\n", poDS->nRasterXSize,  poDS->nRasterYSize);
+      printf("GEOS centres X %f Y %f\n",  origin_x + pixel_gsd_x * ( poDS->nRasterXSize /2),
+	     origin_y - pixel_gsd_y * ( poDS->nRasterYSize /2));
+      printf("GEOS new centres X %f Y %f\n",
+	     origin_x + pixel_gsd_x * ( poDS->nRasterXSize /2 + (idr.referencegrid_hrv.numberOfColumns - idr.plannedCoverage_hrv.lowerWestColumnPlanned) * ((open_mode != MODE_HRV) ? 1.5 : 0.5)),
+	     origin_y - pixel_gsd_y * ( poDS->nRasterYSize /2 + idr.plannedCoverage_hrv.lowerSouthLinePlanned *  ((open_mode != MODE_HRV) ? 1.5 : 0.5)));
+      printf("GEOS avg centres X %f Y %f\n",
+	     origin_x + pixel_gsd_x * ( idr.plannedCoverage_hrv.lowerWestColumnPlanned + idr.plannedCoverage_hrv.lowerEastColumnPlanned)/2 * ((open_mode != MODE_HRV) ? 1.5 : 0.5),
+	     origin_y - pixel_gsd_y * ( idr.plannedCoverage_hrv.lowerSouthLinePlanned + idr.plannedCoverage_hrv.lowerSouthLinePlanned) /2*  ((open_mode != MODE_HRV) ? 1.5 : 0.5));
 
     CPLFree(poDS->pszProjection);
     poDS->pszProjection = nullptr;
     oSRS.exportToWkt( &(poDS->pszProjection) );
-
+    CPLDebug("MSGN", "WKT: %s", poDS->pszProjection);
     const CALIBRATION* cal = poDS->msg_reader_core->get_calibration_parameters();
     char tagname[30];
     char field[300];

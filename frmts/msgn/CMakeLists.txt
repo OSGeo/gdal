@@ -8,7 +8,7 @@ add_gdal_driver(
           PLUGIN_CAPABLE
           NO_DEPS)
 gdal_standard_includes(gdal_MSGN)
-target_compile_definitions(gdal_MSGN PRIVATE -DGDAL_SUPPORT)
+target_compile_definitions(gdal_MSGN PRIVATE )
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
   # These files has CPL_CVSID("$id$") which break ODR and UNITY_BUILD
   set_property(SOURCE msg_basic_types.cpp msgndataset.cpp msg_reader_core.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)

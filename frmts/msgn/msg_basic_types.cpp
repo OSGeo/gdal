@@ -49,6 +49,8 @@ void to_native(GP_PK_HEADER& h) {
 
 void to_native(GP_PK_SH1& h) {
     h.spacecraftId  = CPL_MSBWORD16(h.spacecraftId);
+    h.packetTime.day  = CPL_MSBWORD16(h.packetTime.day);
+    h.packetTime.ms  = CPL_MSBWORD32(h.packetTime.ms);
 }
 
 void to_native(SUB_VISIRLINE& v) {
@@ -109,6 +111,24 @@ void to_native(IMAGE_DESCRIPTION_RECORD& r) {
     to_native(r.plannedCoverage_hrv);
 }
 
+void to_native(ACTUAL_L15_COVERAGE_VISIR_RECORD& r) {
+    r.southernLineActual  = CPL_MSBWORD32(r.southernLineActual);
+    r.northernLineActual  = CPL_MSBWORD32(r.northernLineActual);
+    r.easternColumnActual  = CPL_MSBWORD32(r.easternColumnActual);
+    r.westernColumnActual  = CPL_MSBWORD32(r.westernColumnActual);
+}
+
+void to_native(ACTUAL_L15_COVERAGE_HRV_RECORD& r) {
+    r.lowerSouthLineActual  = CPL_MSBWORD32(r.lowerSouthLineActual);
+    r.lowerNorthLineActual  = CPL_MSBWORD32(r.lowerNorthLineActual);
+    r.lowerEastColumnActual  = CPL_MSBWORD32(r.lowerEastColumnActual);
+    r.lowerWestColumnActual  = CPL_MSBWORD32(r.lowerWestColumnActual);
+    r.upperSouthLineActual  = CPL_MSBWORD32(r.upperSouthLineActual);
+    r.upperNorthLineActual  = CPL_MSBWORD32(r.upperNorthLineActual);
+    r.upperEastColumnActual  = CPL_MSBWORD32(r.upperEastColumnActual);
+    r.upperWestColumnActual  = CPL_MSBWORD32(r.upperWestColumnActual);
+}
+
 void to_string(PH_DATA& d) {
     d.name[29] = 0;
     d.value[49] = 0;
@@ -143,11 +163,14 @@ bool perform_type_size_check(void) {
 #endif
 
 const double Conversions::altitude      =   42164;          // from origin
-const double Conversions::req           =   6378.1690;       // earthequatorial radius
-const double Conversions::rpol          =   6356.5838;       // earth polar radius
-const double Conversions::oblate        =   1.0/298.257;    // oblateness of earth
-const double Conversions::deg_to_rad    =   M_PI/180.0;
-const double Conversions::rad_to_deg    =   180.0/M_PI;
+  // the spheroid in CGMS 03 4.4.3.2 is unique - flattening is 1/295.488
+const double Conversions::req           =   6378.1370;       // earth equatorial radius
+const double Conversions::rpol          =   6356.7523;       // earth polar radius
+  
+// given req and rpol, oblate is already defined. Unused afaik in the gdal code
+const double Conversions::oblate        =   ((req-rpol)/req); // 1.0/298.257;    // oblateness of earth
+const double Conversions::deg_to_rad    =   (M_PI/180.0);
+const double Conversions::rad_to_deg    =   (180.0/M_PI);
 const double Conversions::nlines        =   3712;           // number of lines in an image
 const double Conversions::step          =   17.83/nlines;    // pixel / line step in degrees
 
@@ -159,8 +182,9 @@ const int Conversions::LOFF    = 1856;
 #define SQR(x) ((x)*(x))
 
 void Conversions::convert_pixel_to_geo(double line, double column, double&longitude, double& latitude) {
-    double x = (column - COFF - 0.0) / double(CFAC >> 16);
-    double y = (line - LOFF - 0.0) / double(LFAC >> 16);
+  // x and y are angles in radians
+    double x = (column - COFF - 0.0) / CFAC_scaled;
+    double y = (line - LOFF - 0.0) / LFAC_scaled;
 
     double sd = sqrt(SQR(altitude*cos(x)*cos(y)) - (SQR(cos(y)) + 1.006803*SQR(sin(y)))*1737121856);
     double sn = (altitude*cos(x)*cos(y) - sd)/(SQR(cos(y)) + 1.006803*SQR(sin(y)));
