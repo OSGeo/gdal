@@ -699,14 +699,13 @@ OGRErr       OGRLayerWithTransaction::ICreateFeature( OGRFeature *poFeature )
 
 OGRErr       OGRLayerWithTransaction::IUpsertFeature( OGRFeature* poFeature )
 {
-   if( GetFeature(poFeature->GetFID()) )
-   {
-      return ISetFeature(poFeature);
-   }
-   else
-   {
-      return ICreateFeature(poFeature);
-   }
+    if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
+    OGRFeature* poSrcFeature = new OGRFeature(m_poDecoratedLayer->GetLayerDefn());
+    poSrcFeature->SetFrom(poFeature);
+    poSrcFeature->SetFID(poFeature->GetFID());
+    OGRErr eErr = m_poDecoratedLayer->UpsertFeature(poSrcFeature);
+    delete poSrcFeature;
+    return eErr;
 }
 
 OGRErr OGRLayerWithTransaction::Rename(const char* pszNewName)
