@@ -1192,6 +1192,54 @@ namespace tut
         TestIterator<OGRPolyhedralSurface>("POLYHEDRALSURFACE(((0 0,0 1,1 1,0 0)))", 1);
         TestIterator<OGRTriangulatedSurface>();
         TestIterator<OGRTriangulatedSurface>("TIN(((0 0,0 1,1 1,0 0)))", 1);
+
+        // Test that the update of the iterated point of a linestring is
+        // immediately taken into account (https://github.com/OSGeo/gdal/issues/6215)
+        {
+            OGRLineString oLS;
+            oLS.addPoint(1, 2);
+            oLS.addPoint(3, 4);
+            int i = 0;
+            for( auto&& p: oLS )
+            {
+                p.setX(i * 10);
+                p.setY(i * 10 + 1);
+                p.setZ(i * 10 + 2);
+                p.setM(i * 10 + 3);
+                ensure_equals( oLS.getX(i), p.getX() );
+                ensure_equals( oLS.getY(i), p.getY() );
+                ensure_equals( oLS.getZ(i), p.getZ() );
+                ensure_equals( oLS.getM(i), p.getM() );
+                ++i;
+            }
+        }
+
+        {
+            class PointCounterVisitorAndUpdate: public OGRDefaultGeometryVisitor
+            {
+                public:
+                    PointCounterVisitorAndUpdate() = default;
+
+                    using OGRDefaultGeometryVisitor::visit;
+
+                    void visit(OGRPoint* poPoint) override
+                    {
+                        poPoint->setZ(100);
+                        poPoint->setM(1000);
+                    }
+            };
+
+            OGRLineString oLS;
+            oLS.addPoint(1, 2);
+            oLS.addPoint(3, 4);
+            PointCounterVisitorAndUpdate oVisitor;
+            oLS.accept(&oVisitor);
+
+            ensure_equals( oLS.getZ(0), 100.0 );
+            ensure_equals( oLS.getZ(1), 100.0 );
+            ensure_equals( oLS.getM(0), 1000.0 );
+            ensure_equals( oLS.getM(1), 1000.0 );
+        }
     }
 
     // Test layer, dataset-feature and layer-feature iterators
