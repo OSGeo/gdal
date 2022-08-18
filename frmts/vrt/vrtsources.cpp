@@ -1108,111 +1108,111 @@ VRTSimpleSource::GetSrcDstWindow( double dfXOff, double dfYOff,
 /*      If we haven't had to modify the source rectangle, then the      */
 /*      destination rectangle must be the whole region.                 */
 /* -------------------------------------------------------------------- */
-    if( !bModifiedX && !bModifiedY )
-        return TRUE;
-
+    if( bModifiedX || bModifiedY )
+    {
 /* -------------------------------------------------------------------- */
 /*      Now transform this possibly reduced request back into the       */
 /*      destination buffer coordinates in case the output region is     */
 /*      less than the whole buffer.                                     */
 /* -------------------------------------------------------------------- */
-    double dfDstULX = 0.0;
-    double dfDstULY = 0.0;
-    double dfDstLRX = 0.0;
-    double dfDstLRY = 0.0;
+        double dfDstULX = 0.0;
+        double dfDstULY = 0.0;
+        double dfDstLRX = 0.0;
+        double dfDstLRY = 0.0;
 
-    SrcToDst( *pdfReqXOff, *pdfReqYOff, dfDstULX, dfDstULY );
-    SrcToDst( *pdfReqXOff + *pdfReqXSize, *pdfReqYOff + *pdfReqYSize,
-              dfDstLRX, dfDstLRY );
+        SrcToDst( *pdfReqXOff, *pdfReqYOff, dfDstULX, dfDstULY );
+        SrcToDst( *pdfReqXOff + *pdfReqXSize, *pdfReqYOff + *pdfReqYSize,
+                  dfDstLRX, dfDstLRY );
 #if DEBUG_VERBOSE
-    CPLDebug( "VRT", "dfDstULX=%g dfDstULY=%g dfDstLRX=%g dfDstLRY=%g",
-              dfDstULX, dfDstULY, dfDstLRX, dfDstLRY );
+        CPLDebug( "VRT", "dfDstULX=%g dfDstULY=%g dfDstLRX=%g dfDstLRY=%g",
+                  dfDstULX, dfDstULY, dfDstLRX, dfDstLRY );
 #endif
 
-    if( bModifiedX )
-    {
-        const double dfScaleWinToBufX = nBufXSize / dfXSize;
-
-        const double dfOutXOff = (dfDstULX - dfXOff) * dfScaleWinToBufX;
-        if( dfOutXOff <= 0 )
-            *pnOutXOff = 0;
-        else if( dfOutXOff > INT_MAX )
-            *pnOutXOff = INT_MAX;
-        else
-            *pnOutXOff = static_cast<int>(dfOutXOff+0.001);
-
-        // Apply correction on floating-point source window
+        if( bModifiedX )
         {
-            double dfDstDeltaX = (dfOutXOff - *pnOutXOff) / dfScaleWinToBufX;
-            double dfSrcDeltaX = dfDstDeltaX / m_dfDstXSize * m_dfSrcXSize;
-            *pdfReqXOff -= dfSrcDeltaX;
-            *pdfReqXSize = std::min( *pdfReqXSize + dfSrcDeltaX,
-                                     static_cast<double>(INT_MAX) );
+            const double dfScaleWinToBufX = nBufXSize / dfXSize;
+
+            const double dfOutXOff = (dfDstULX - dfXOff) * dfScaleWinToBufX;
+            if( dfOutXOff <= 0 )
+                *pnOutXOff = 0;
+            else if( dfOutXOff > INT_MAX )
+                *pnOutXOff = INT_MAX;
+            else
+                *pnOutXOff = static_cast<int>(dfOutXOff+0.001);
+
+            // Apply correction on floating-point source window
+            {
+                double dfDstDeltaX = (dfOutXOff - *pnOutXOff) / dfScaleWinToBufX;
+                double dfSrcDeltaX = dfDstDeltaX / m_dfDstXSize * m_dfSrcXSize;
+                *pdfReqXOff -= dfSrcDeltaX;
+                *pdfReqXSize = std::min( *pdfReqXSize + dfSrcDeltaX,
+                                         static_cast<double>(INT_MAX) );
+            }
+
+            double dfOutRightXOff = (dfDstLRX - dfXOff) * dfScaleWinToBufX;
+            if( dfOutRightXOff < dfOutXOff )
+                return FALSE;
+            if( dfOutRightXOff > INT_MAX )
+                dfOutRightXOff = INT_MAX;
+            *pnOutXSize = static_cast<int>(ceil(dfOutRightXOff-0.001) - *pnOutXOff);
+
+            if( *pnOutXSize > INT_MAX - *pnOutXOff ||
+                *pnOutXOff + *pnOutXSize > nBufXSize )
+                *pnOutXSize = nBufXSize - *pnOutXOff;
+
+            // Apply correction on floating-point source window
+            {
+                double dfDstDeltaX = (ceil(dfOutRightXOff) - dfOutRightXOff) / dfScaleWinToBufX;
+                double dfSrcDeltaX = dfDstDeltaX / m_dfDstXSize * m_dfSrcXSize;
+                *pdfReqXSize = std::min( *pdfReqXSize + dfSrcDeltaX,
+                                         static_cast<double>(INT_MAX) );
+            }
         }
 
-        double dfOutRightXOff = (dfDstLRX - dfXOff) * dfScaleWinToBufX;
-        if( dfOutRightXOff < dfOutXOff )
+        if( bModifiedY )
+        {
+            const double dfScaleWinToBufY = nBufYSize / dfYSize;
+
+            const double dfOutYOff = (dfDstULY - dfYOff) * dfScaleWinToBufY;
+            if( dfOutYOff <= 0 )
+                *pnOutYOff = 0;
+            else if( dfOutYOff > INT_MAX )
+                *pnOutYOff = INT_MAX;
+            else
+                *pnOutYOff = static_cast<int>(dfOutYOff+0.001);
+
+            // Apply correction on floating-point source window
+            {
+                double dfDstDeltaY = (dfOutYOff - *pnOutYOff) / dfScaleWinToBufY;
+                double dfSrcDeltaY = dfDstDeltaY / m_dfDstYSize * m_dfSrcYSize;
+                *pdfReqYOff -= dfSrcDeltaY;
+                *pdfReqYSize = std::min( *pdfReqYSize + dfSrcDeltaY,
+                                         static_cast<double>(INT_MAX) );
+            }
+
+            double dfOutTopYOff = (dfDstLRY - dfYOff) * dfScaleWinToBufY;
+            if( dfOutTopYOff < dfOutYOff )
+                return FALSE;
+            if( dfOutTopYOff > INT_MAX )
+                dfOutTopYOff = INT_MAX;
+            *pnOutYSize = static_cast<int>( ceil(dfOutTopYOff-0.001) ) - *pnOutYOff;
+
+            if( *pnOutYSize > INT_MAX - *pnOutYOff ||
+                *pnOutYOff + *pnOutYSize > nBufYSize )
+                *pnOutYSize = nBufYSize - *pnOutYOff;
+
+            // Apply correction on floating-point source window
+            {
+                double dfDstDeltaY = (ceil(dfOutTopYOff) - dfOutTopYOff) / dfScaleWinToBufY;
+                double dfSrcDeltaY = dfDstDeltaY / m_dfDstYSize * m_dfSrcYSize;
+                *pdfReqYSize = std::min( *pdfReqYSize + dfSrcDeltaY,
+                                         static_cast<double>(INT_MAX) );
+            }
+        }
+
+        if( *pnOutXSize < 1 || *pnOutYSize < 1 )
             return FALSE;
-        if( dfOutRightXOff > INT_MAX )
-            dfOutRightXOff = INT_MAX;
-        *pnOutXSize = static_cast<int>(ceil(dfOutRightXOff-0.001) - *pnOutXOff);
-
-        if( *pnOutXSize > INT_MAX - *pnOutXOff ||
-            *pnOutXOff + *pnOutXSize > nBufXSize )
-            *pnOutXSize = nBufXSize - *pnOutXOff;
-
-        // Apply correction on floating-point source window
-        {
-            double dfDstDeltaX = (ceil(dfOutRightXOff) - dfOutRightXOff) / dfScaleWinToBufX;
-            double dfSrcDeltaX = dfDstDeltaX / m_dfDstXSize * m_dfSrcXSize;
-            *pdfReqXSize = std::min( *pdfReqXSize + dfSrcDeltaX,
-                                     static_cast<double>(INT_MAX) );
-        }
     }
-
-    if( bModifiedY )
-    {
-        const double dfScaleWinToBufY = nBufYSize / dfYSize;
-
-        const double dfOutYOff = (dfDstULY - dfYOff) * dfScaleWinToBufY;
-        if( dfOutYOff <= 0 )
-            *pnOutYOff = 0;
-        else if( dfOutYOff > INT_MAX )
-            *pnOutYOff = INT_MAX;
-        else
-            *pnOutYOff = static_cast<int>(dfOutYOff+0.001);
-
-        // Apply correction on floating-point source window
-        {
-            double dfDstDeltaY = (dfOutYOff - *pnOutYOff) / dfScaleWinToBufY;
-            double dfSrcDeltaY = dfDstDeltaY / m_dfDstYSize * m_dfSrcYSize;
-            *pdfReqYOff -= dfSrcDeltaY;
-            *pdfReqYSize = std::min( *pdfReqYSize + dfSrcDeltaY,
-                                     static_cast<double>(INT_MAX) );
-        }
-
-        double dfOutTopYOff = (dfDstLRY - dfYOff) * dfScaleWinToBufY;
-        if( dfOutTopYOff < dfOutYOff )
-            return FALSE;
-        if( dfOutTopYOff > INT_MAX )
-            dfOutTopYOff = INT_MAX;
-        *pnOutYSize = static_cast<int>( ceil(dfOutTopYOff-0.001) ) - *pnOutYOff;
-
-        if( *pnOutYSize > INT_MAX - *pnOutYOff ||
-            *pnOutYOff + *pnOutYSize > nBufYSize )
-            *pnOutYSize = nBufYSize - *pnOutYOff;
-
-        // Apply correction on floating-point source window
-        {
-            double dfDstDeltaY = (ceil(dfOutTopYOff) - dfOutTopYOff) / dfScaleWinToBufY;
-            double dfSrcDeltaY = dfDstDeltaY / m_dfDstYSize * m_dfSrcYSize;
-            *pdfReqYSize = std::min( *pdfReqYSize + dfSrcDeltaY,
-                                     static_cast<double>(INT_MAX) );
-        }
-    }
-
-    if( *pnOutXSize < 1 || *pnOutYSize < 1 )
-        return FALSE;
 
     return TRUE;
 }
