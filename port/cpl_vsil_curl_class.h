@@ -374,6 +374,11 @@ class VSICurlHandle : public VSIVirtualHandle
     bool                m_bUseHead = false;
     bool                m_bUseRedirectURLIfNoQueryStringParams = false;
 
+    // Specific to Planetary Computer signing: https://planetarycomputer.microsoft.com/docs/concepts/sas/
+    bool                m_bPlanetaryComputerURLSigning = false;
+    std::string         m_osPlanetaryComputerCollection{};
+    void                ManagePlanetaryComputerSigning();
+
     int          ReadMultiRangeSingleGet( int nRanges, void ** ppData,
                                          const vsi_l_offset* panOffsets,
                                          const size_t* panSizes );
