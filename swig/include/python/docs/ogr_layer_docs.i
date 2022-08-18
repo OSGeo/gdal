@@ -134,6 +134,8 @@ Rewrite an existing feature.
 
 For more details: :cpp:func:`OGR_L_SetFeature`
 
+To set a feature, but create it if it doesn't exist see OGR_L_UpsertFeature().
+
 Parameters
 -----------
 feature: Feature
@@ -152,6 +154,32 @@ int:
 Create and write a new feature within a layer.
 
 For more details: :cpp:func:`OGR_L_CreateFeature`
+
+To create a feature, but set it if it exists see OGR_L_UpsertFeature().
+
+Parameters
+-----------
+hLayer:
+    handle to the layer to write the feature to.
+hFeat:
+    the handle of the feature to write to disk.
+
+Returns
+--------
+OGRErr:
+    OGRERR_NONE on success.
+";
+
+%feature("docstring")  UpsertFeature "OGRErr
+OGR_L_UpsertFeature(OGRLayerH hLayer, OGRFeatureH hFeat)
+
+Rewrite an existing feature or create a new feature within a layer.
+
+This function will write a feature to the layer, based on the feature id
+within the OGRFeature.  If the feature id doesn't exist a new feature will be
+written.  Otherwise, the existing feature will be rewritten.
+
+This function is the same as the C++ method OGRLayer::UpsertFeature().
 
 Parameters
 -----------
