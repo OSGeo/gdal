@@ -8024,7 +8024,7 @@ def test_tiff_write_163():
     )
     ds = gdal.Open("/vsimem/tiff_write_163.tif")
     cs = ds.GetRasterBand(1).Checksum()
-    assert cs == 47567
+    assert cs == 47600
     # Check that IsBlockAvailable() works properly in that mode
     offset_0_2 = ds.GetRasterBand(1).GetMetadataItem("BLOCK_OFFSET_0_2", "TIFF")
     assert offset_0_2 == str(146 + 2 * 8192)

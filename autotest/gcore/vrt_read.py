@@ -30,6 +30,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import array
 import os
 import shutil
 import struct
@@ -1857,3 +1858,59 @@ def test_vrt_statistics_and_implicit_ovr_recursion_issue():
     assert hist is not None
 
     gdal.GetDriverByName("GTiff").Delete("/vsimem/test.tif")
+
+
+def test_vrt_read_req_coordinates_almost_integer():
+
+    ds = gdal.GetDriverByName("GTiff").Create("/vsimem/in.tif", 3601, 3601)
+    b = (
+        array.array("B", [i for i in range(255)]).tobytes() * (3601 * 3601 // 255)
+        + array.array("B", [0] * (3601 * 3601 % 255)).tobytes()
+    )
+    ds.WriteRaster(0, 0, 3601, 3601, b)
+    ds = None
+
+    gdal.FileFromMemBuffer(
+        "/vsimem/in.vrt",
+        """<VRTDataset rasterXSize="3601" rasterYSize="3601">
+      <VRTRasterBand dataType="Byte" band="1">
+        <SimpleSource>
+          <SourceFilename relativeToVRT="1">in.tif</SourceFilename>
+          <SourceBand>1</SourceBand>
+          <SrcRect xOff="0" yOff="0" xSize="3601" ySize="3601" />
+          <DstRect xOff="0" yOff="0.499999999992505" xSize="1800.50000003" ySize="1800.50000003" />
+        </SimpleSource>
+      </VRTRasterBand>
+    </VRTDataset>""",
+    )
+
+    ds = gdal.Open("/vsimem/in.vrt")
+    expected = [
+        [161, 163, 165, 167, 169, 171],
+        [223, 225, 227, 229, 231, 233],
+        [30, 32, 34, 36, 38, 40],
+        [92, 94, 96, 98, 100, 102],
+        [154, 156, 158, 160, 162, 164],
+        [216, 218, 220, 222, 224, 226],
+    ]
+    assert struct.unpack(
+        "B" * (6 * 6), ds.ReadRaster(1045, 1795, 6, 6)
+    ) == struct.unpack(
+        "B" * (6 * 6), b"".join([array.array("B", x).tobytes() for x in expected])
+    )
+    expected = [
+        [219, 221, 223, 225, 227, 229],
+        [26, 28, 30, 32, 34, 36],
+        [88, 90, 92, 94, 96, 98],
+        [150, 152, 154, 156, 158, 160],
+        [212, 214, 216, 218, 220, 222],
+        [0, 0, 0, 0, 0, 0],
+    ]
+    assert struct.unpack(
+        "B" * (6 * 6), ds.ReadRaster(1043, 1796, 6, 6)
+    ) == struct.unpack(
+        "B" * (6 * 6), b"".join([array.array("B", x).tobytes() for x in expected])
+    )
+
+    gdal.Unlink("/vsimem/in.tif")
+    gdal.Unlink("/vsimem/in.vrt")

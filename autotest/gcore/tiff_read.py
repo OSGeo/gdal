@@ -3610,7 +3610,7 @@ def test_tiff_read_big_strip_chunky_way():
     )
     ds = gdal.Open("/vsimem/test.tif")
     cs = ds.GetRasterBand(1).Checksum()
-    assert cs == 38337
+    assert cs == 38441
     ds = None
     gdal.Unlink("/vsimem/test.tif")
 

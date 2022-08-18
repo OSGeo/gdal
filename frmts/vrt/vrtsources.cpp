@@ -1044,6 +1044,19 @@ VRTSimpleSource::GetSrcDstWindow( double dfXOff, double dfYOff,
     *pnReqXOff = static_cast<int>( floor(*pdfReqXOff) );
     *pnReqYOff = static_cast<int>( floor(*pdfReqYOff) );
 
+    constexpr double EPS = 1e-3;
+    constexpr double ONE_MINUS_EPS = 1.0 - EPS;
+    if( *pdfReqXOff - *pnReqXOff > ONE_MINUS_EPS )
+    {
+        (*pnReqXOff) ++;
+        *pdfReqXOff = *pnReqXOff;
+    }
+    if( *pdfReqYOff - *pnReqYOff > ONE_MINUS_EPS )
+    {
+        (*pnReqYOff) ++;
+        *pdfReqYOff = *pnReqYOff;
+    }
+
     if( *pdfReqXSize > INT_MAX )
         *pnReqXSize = INT_MAX;
     else
@@ -1138,7 +1151,7 @@ VRTSimpleSource::GetSrcDstWindow( double dfXOff, double dfYOff,
             else if( dfOutXOff > INT_MAX )
                 *pnOutXOff = INT_MAX;
             else
-                *pnOutXOff = static_cast<int>(dfOutXOff+0.001);
+                *pnOutXOff = static_cast<int>(dfOutXOff+EPS);
 
             // Apply correction on floating-point source window
             {
@@ -1154,7 +1167,8 @@ VRTSimpleSource::GetSrcDstWindow( double dfXOff, double dfYOff,
                 return FALSE;
             if( dfOutRightXOff > INT_MAX )
                 dfOutRightXOff = INT_MAX;
-            *pnOutXSize = static_cast<int>(ceil(dfOutRightXOff-0.001) - *pnOutXOff);
+            const int nOutRightXOff = static_cast<int>(ceil(dfOutRightXOff-EPS));
+            *pnOutXSize = nOutRightXOff - *pnOutXOff;
 
             if( *pnOutXSize > INT_MAX - *pnOutXOff ||
                 *pnOutXOff + *pnOutXSize > nBufXSize )
@@ -1162,7 +1176,7 @@ VRTSimpleSource::GetSrcDstWindow( double dfXOff, double dfYOff,
 
             // Apply correction on floating-point source window
             {
-                double dfDstDeltaX = (ceil(dfOutRightXOff) - dfOutRightXOff) / dfScaleWinToBufX;
+                double dfDstDeltaX = (nOutRightXOff - dfOutRightXOff) / dfScaleWinToBufX;
                 double dfSrcDeltaX = dfDstDeltaX / m_dfDstXSize * m_dfSrcXSize;
                 *pdfReqXSize = std::min( *pdfReqXSize + dfSrcDeltaX,
                                          static_cast<double>(INT_MAX) );
@@ -1179,7 +1193,7 @@ VRTSimpleSource::GetSrcDstWindow( double dfXOff, double dfYOff,
             else if( dfOutYOff > INT_MAX )
                 *pnOutYOff = INT_MAX;
             else
-                *pnOutYOff = static_cast<int>(dfOutYOff+0.001);
+                *pnOutYOff = static_cast<int>(dfOutYOff+EPS);
 
             // Apply correction on floating-point source window
             {
@@ -1195,7 +1209,8 @@ VRTSimpleSource::GetSrcDstWindow( double dfXOff, double dfYOff,
                 return FALSE;
             if( dfOutTopYOff > INT_MAX )
                 dfOutTopYOff = INT_MAX;
-            *pnOutYSize = static_cast<int>( ceil(dfOutTopYOff-0.001) ) - *pnOutYOff;
+            const int nOutTopYOff = static_cast<int>( ceil(dfOutTopYOff-EPS) );
+            *pnOutYSize = nOutTopYOff - *pnOutYOff;
 
             if( *pnOutYSize > INT_MAX - *pnOutYOff ||
                 *pnOutYOff + *pnOutYSize > nBufYSize )
@@ -1203,7 +1218,7 @@ VRTSimpleSource::GetSrcDstWindow( double dfXOff, double dfYOff,
 
             // Apply correction on floating-point source window
             {
-                double dfDstDeltaY = (ceil(dfOutTopYOff) - dfOutTopYOff) / dfScaleWinToBufY;
+                double dfDstDeltaY = (nOutTopYOff - dfOutTopYOff) / dfScaleWinToBufY;
                 double dfSrcDeltaY = dfDstDeltaY / m_dfDstYSize * m_dfSrcYSize;
                 *pdfReqYSize = std::min( *pdfReqYSize + dfSrcDeltaY,
                                          static_cast<double>(INT_MAX) );
@@ -1213,6 +1228,11 @@ VRTSimpleSource::GetSrcDstWindow( double dfXOff, double dfYOff,
         if( *pnOutXSize < 1 || *pnOutYSize < 1 )
             return FALSE;
     }
+
+    *pdfReqXOff = RoundIfCloseToInt(*pdfReqXOff);
+    *pdfReqYOff = RoundIfCloseToInt(*pdfReqYOff);
+    *pdfReqXSize = RoundIfCloseToInt(*pdfReqXSize);
+    *pdfReqYSize = RoundIfCloseToInt(*pdfReqYSize);
 
     return TRUE;
 }
