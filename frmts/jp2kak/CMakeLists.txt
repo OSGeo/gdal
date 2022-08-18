@@ -8,6 +8,7 @@ gdal_target_link_libraries(gdal_JP2KAK PRIVATE KDU::KDU)
 # according to Compiling_Instructions.txt: "Note that this macro does not normally need to
 #             be set explicitly, since it is automatically configured
 #             by "kdu_arch.h" if the usual "__ARM_NEON__" is found"
+# __ARM_NEON__ appears to be defined when NEON extensions available (https://developer.arm.com/documentation/dui0491/i/Compiler-specific-Features/Predefined-macros)
 if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64")
     target_compile_definitions(gdal_JP2KAK PRIVATE -DKDU_X86_INTRINSICS)
 endif()
