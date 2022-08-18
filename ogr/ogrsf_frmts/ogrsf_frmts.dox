@@ -1627,6 +1627,8 @@ by the OGRSFDriverManager.
 
  This function is the same as the C++ method OGRLayer::SetFeature().
 
+ To set a feature, but create it if it doesn't exist see OGR_L_UpsertFeature().
+
  @param hLayer handle to the layer to write the feature.
  @param hFeat the feature to write.
 
@@ -1695,6 +1697,8 @@ by the OGRSFDriverManager.
  passed feature will have been updated with the new feature id.
 
  This function is the same as the C++ method OGRLayer::CreateFeature().
+
+ To create a feature, but set it if it exists see OGR_L_UpsertFeature().
 
  @param hLayer handle to the layer to write the feature to.
  @param hFeat the handle of the feature to write to disk.
