@@ -299,6 +299,14 @@ static const char* const apszSpecialSyntax[] = {
     "TILEDB:{FILENAME}:{ANY}"
  };
 
+static bool IsSlowSource(const char* pszSrcName)
+{
+    return strstr(pszSrcName, "/vsicurl/http") != nullptr ||
+           strstr(pszSrcName, "/vsicurl/ftp") != nullptr ||
+           (strstr(pszSrcName, "/vsicurl?") != nullptr &&
+            strstr(pszSrcName, "&url=http") != nullptr);
+}
+
 CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
 
 {
@@ -321,8 +329,7 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
         osSourceFilename = m_osSourceFileNameOri;
         bRelativeToVRT = m_bRelativeToVRTOri;
     }
-    else if( strstr(m_osSrcDSName, "/vsicurl/http") != nullptr ||
-             strstr(m_osSrcDSName, "/vsicurl/ftp") != nullptr )
+    else if( IsSlowSource(m_osSrcDSName) )
     {
         // Testing the existence of remote resources can be excruciating
         // slow, so let's just suppose they exist.
@@ -703,8 +710,7 @@ void VRTSimpleSource::GetFileList( char*** ppapszFileList, int *pnSize,
 /* -------------------------------------------------------------------- */
 /*      Is the filename even a real filesystem object?                  */
 /* -------------------------------------------------------------------- */
-        if( strstr(pszFilename, "/vsicurl/http") != nullptr ||
-            strstr(pszFilename, "/vsicurl/ftp") != nullptr )
+        if( IsSlowSource(pszFilename) )
         {
             // Testing the existence of remote resources can be excruciating
             // slow, so just suppose they exist.
