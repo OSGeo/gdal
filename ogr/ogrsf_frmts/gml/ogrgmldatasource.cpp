@@ -1276,15 +1276,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo *poOpenInfo )
     if( EQUAL(pszWriteGFS, "AUTO") )
     {
         if( !bHaveSchema && !poReader->HasStoppedParsing() &&
-            !STARTS_WITH_CI(pszFilename, "/vsitar/") &&
-            !STARTS_WITH_CI(pszFilename, "/vsizip/") &&
-            !STARTS_WITH_CI(pszFilename, "/vsigzip/vsi") &&
-            !STARTS_WITH_CI(pszFilename, "/vsigzip//vsi") &&
-            !STARTS_WITH_CI(pszFilename, "/vsicurl") &&
-            !STARTS_WITH_CI(pszFilename, "/vsis3") &&
-            !STARTS_WITH_CI(pszFilename, "/vsigs") &&
-            !STARTS_WITH_CI(pszFilename, "/vsiaz") &&
-            !STARTS_WITH_CI(pszFilename, "/vsioss") )
+            VSIIsLocal(pszFilename) && VSISupportsSequentialWrite(pszFilename, false) )
         {
             VSIStatBufL sGFSStatBuf;
             if( VSIStatExL(osGFSFilename, &sGFSStatBuf, VSI_STAT_EXISTS_FLAG) != 0 )

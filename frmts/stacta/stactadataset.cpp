@@ -452,8 +452,7 @@ CPLErr STACTARawDataset::IRasterIO( GDALRWFlag eRWFlag,
                     aosAllowedDrivers.AddString("JP2MrSID");
                     aosAllowedDrivers.AddString("JP2OpenJPEG");
                     if( bDownloadWholeMetaTile &&
-                        (STARTS_WITH(osURL, "/vsis3/") ||
-                        STARTS_WITH(osURL, "/vsicurl/")) )
+                        !VSIIsLocal(osURL.c_str()) )
                     {
                         if( m_poMasterDS->m_bSkipMissingMetaTile )
                             CPLPushErrorHandler(CPLQuietErrorHandler);
