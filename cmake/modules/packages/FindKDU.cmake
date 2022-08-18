@@ -39,6 +39,24 @@ if(KDU_ROOT AND EXISTS "${KDU_ROOT}/coresys")
         find_library(KDU_AUX_LIBRARY ${KDU_AUX_SHARED_LIB_NAME}
                      PATH ${KDU_ROOT}/lib/Linux-x86-64-gcc)
 
+    elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "aarch64" AND "${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+        file(READ "${KDU_ROOT}/coresys/make/Makefile-Linux-arm-64-gcc" CORESYS_MAKEFILE_CONTENTS)
+        string(REGEX REPLACE ".*SHARED_LIB_NAME[ \t]*=[ \t]*([^.]*)(\.so).*" "\\1\\2" KDU_SHARED_LIB_NAME ${CORESYS_MAKEFILE_CONTENTS})
+        file(READ "${KDU_ROOT}/managed/make/Makefile-Linux-arm-64-gcc" MANAGED_MAKEFILE_CONTENTS)
+        string(REGEX REPLACE ".*AUX_SHARED_LIB_NAME[ \t]*=[ \t]*([^.]*)(\.so).*" "\\1\\2" KDU_AUX_SHARED_LIB_NAME ${MANAGED_MAKEFILE_CONTENTS})
+
+        string(REGEX REPLACE "libkdu_v([0-9])([0-9A-F])R\.so" "\\1" KDU_MAJOR_VERSION "${KDU_SHARED_LIB_NAME}")
+        string(REGEX REPLACE "libkdu_v([0-9])([0-9A-F])R\.so" "\\2" KDU_MINOR_VERSION "${KDU_SHARED_LIB_NAME}")
+        if( KDU_MINOR_VERSION STREQUAL "A" )
+            set(KDU_MINOR_VERSION 10)
+        endif()
+        set(KDU_VERSION_VAR "${KDU_MAJOR_VERSION}.${KDU_MINOR_VERSION}")
+
+        find_library(KDU_LIBRARY ${KDU_SHARED_LIB_NAME}
+                     PATH ${KDU_ROOT}/lib/Linux-arm-64-gcc)
+        find_library(KDU_AUX_LIBRARY ${KDU_AUX_SHARED_LIB_NAME}
+                     PATH ${KDU_ROOT}/lib/Linux-arm-64-gcc)
+
     elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64" AND "${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
         file(READ "${KDU_ROOT}/coresys/make/Makefile-Mac-x86-64-gcc" CORESYS_MAKEFILE_CONTENTS)
         string(REGEX REPLACE ".*SHARED_LIB_NAME[ \t]*=[ \t]*([^.]*)(\.so).*" "\\1\\2" KDU_SHARED_LIB_NAME ${CORESYS_MAKEFILE_CONTENTS})
@@ -49,6 +67,17 @@ if(KDU_ROOT AND EXISTS "${KDU_ROOT}/coresys")
                      PATH ${KDU_ROOT}/lib/Mac-x86-64-gcc)
         find_library(KDU_AUX_LIBRARY ${KDU_AUX_SHARED_LIB_NAME}
                      PATH ${KDU_ROOT}/lib/Mac-x86-64-gcc)
+
+    elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm64" AND "${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
+        file(READ "${KDU_ROOT}/coresys/make/Makefile-Mac-arm-64-gcc" CORESYS_MAKEFILE_CONTENTS)
+        string(REGEX REPLACE ".*SHARED_LIB_NAME[ \t]*=[ \t]*([^.]*)(\.so).*" "\\1\\2" KDU_SHARED_LIB_NAME ${CORESYS_MAKEFILE_CONTENTS})
+        file(READ "${KDU_ROOT}/managed/make/Makefile-Mac-arm-64-gcc" MANAGED_MAKEFILE_CONTENTS)
+        string(REGEX REPLACE ".*AUX_SHARED_LIB_NAME[ \t]*=[ \t]*([^.]*)(\.so).*" "\\1\\2" KDU_AUX_SHARED_LIB_NAME ${MANAGED_MAKEFILE_CONTENTS})
+
+        find_library(KDU_LIBRARY ${KDU_SHARED_LIB_NAME}
+                     PATH ${KDU_ROOT}/lib/Mac-arm-64-gcc)
+        find_library(KDU_AUX_LIBRARY ${KDU_AUX_SHARED_LIB_NAME}
+                     PATH ${KDU_ROOT}/lib/Mac-arm-64-gcc)
 
      elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "AMD64" AND "${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
         file(READ "${KDU_ROOT}/coresys/coresys_2019.vcxproj" CORESYS_MAKEFILE_CONTENTS)
