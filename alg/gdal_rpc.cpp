@@ -1520,6 +1520,21 @@ static bool GDALRPCExtractDEMWindow( GDALRPCTransformInfo *psTransform,
                 nWidth * sizeof(double) );
     }
 
+#if 0
+    CPLDebug("RPC_DEM", "DEM for %d,%d,%d,%d", nX, nY, nWidth, nHeight);
+    for(int j = 0; j < nHeight; j++)
+    {
+        std::string osLine;
+        for(int i = 0; i < nWidth; ++i )
+        {
+            if( !osLine.empty() )
+                osLine += ", ";
+            osLine += std::to_string(padfOut[j * nWidth + i]);
+        }
+        CPLDebug("RPC_DEM", "%s", osLine.c_str());
+    }
+#endif
+
     return true;
 }
 
