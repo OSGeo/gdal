@@ -212,7 +212,7 @@ def Calc(
             alphas = [alphas]
         else:
             # I guess this alphas should be in the global_namespace,
-            # It would have been better to pass it as user_namepsace, but I'll accept it anyway
+            # It would have been better to pass it as user_namespace, but I'll accept it anyway
             global_namespace[alphas] = filenames
             continue
         for alpha, filename in zip(alphas * len(filenames), filenames):
@@ -847,7 +847,7 @@ class GDALCalc(GDALScript):
             "--extent",
             dest="extent",
             choices=[e.name.lower() for e in Extent],
-            help="how to treat mixed geotrasnforms",
+            help="how to treat mixed geotransforms",
         )
         group.add_argument(
             "--projwin",
