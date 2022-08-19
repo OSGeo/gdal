@@ -276,7 +276,7 @@ For more details: :cpp:func:`OGR_G_ExportToIsoWkb`
 
 Parameters
 -----------
-byte_order: osgeo.ogr.wkbXDR | osgeo.ogr.osgeo.ogr.wkbNDR, default=osgeo.ogr.wkbNDR
+byte_order: osgeo.ogr.wkbXDR | osgeo.ogr.wkbNDR, default=osgeo.ogr.wkbNDR
     One of wkbXDR or wkbNDR indicating MSB or LSB byte order respectively.
 
 Returns

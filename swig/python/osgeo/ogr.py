@@ -6413,7 +6413,7 @@ class Geometry(object):
 
         Parameters
         -----------
-        byte_order: osgeo.ogr.wkbXDR | osgeo.ogr.osgeo.ogr.wkbNDR, default=wkbNDR
+        byte_order: osgeo.ogr.wkbXDR | osgeo.ogr.wkbNDR, default=osgeo.ogr.wkbNDR
             One of wkbXDR or wkbNDR indicating MSB or LSB byte order respectively.
 
         Returns
