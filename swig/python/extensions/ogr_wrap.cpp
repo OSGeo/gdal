@@ -35343,7 +35343,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"Parameters\n"
 		"-----------\n"
-		"byte_order: osgeo.ogr.wkbXDR | osgeo.ogr.osgeo.ogr.wkbNDR, default=wkbNDR\n"
+		"byte_order: osgeo.ogr.wkbXDR | osgeo.ogr.wkbNDR, default=osgeo.ogr.wkbNDR\n"
 		"    One of wkbXDR or wkbNDR indicating MSB or LSB byte order respectively.\n"
 		"\n"
 		"Returns\n"
