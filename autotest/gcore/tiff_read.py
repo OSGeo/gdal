@@ -2699,7 +2699,7 @@ def test_tiff_read_big_strip_chunky_way():
     gdal.Translate('/vsimem/test.tif', 'data/byte.tif', options='-co compress=lzw -outsize 1000 2001  -co blockysize=2001 -r bilinear')
     ds = gdal.Open('/vsimem/test.tif')
     cs = ds.GetRasterBand(1).Checksum()
-    assert cs == 38337
+    assert cs == 38441
     ds = None
     gdal.Unlink('/vsimem/test.tif')
 
