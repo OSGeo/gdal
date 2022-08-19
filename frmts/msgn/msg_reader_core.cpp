@@ -191,7 +191,7 @@ void Msg_reader_core::read_metadata_block(VSILFILE* fin) {
     PH_DATA* hd = (PH_DATA*)&_main_header;
     for (i=0; i < 6; i++) {
         to_string(*hd);
-        printf("[%02d] %s %s", i, hd->name, hd->value);/*ok*/
+        printf("[%02u] %s %s", i, hd->name, hd->value);/*ok*/
         hd++;
     }
     PH_DATA_ID* hdi = (PH_DATA_ID*)&_main_header.dataSetIdentification;
@@ -203,7 +203,7 @@ void Msg_reader_core::read_metadata_block(VSILFILE* fin) {
     hd = (PH_DATA*)(&_main_header.totalFileSize);
     for (i=0; i < 19; i++) {
         to_string(*hd);
-        printf("[%02d] %s %s", i, hd->name, hd->value);/*ok*/
+        printf("[%02u] %s %s", i, hd->name, hd->value);/*ok*/
         hd++;
     }
 #endif // DEBUG

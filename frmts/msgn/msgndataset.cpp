@@ -632,8 +632,8 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
 		     // false northing to handle the fact RSS is only 1/3 disk
 		     pixel_gsd_y *((poDS->m_Shape == RSS) ? ((open_mode != MODE_HRV)  ?
 							     -(idr.plannedCoverage_visir.southernLinePlanned -1) : // MSG-3 vis/NIR N-S P2 
-							     -(idr.plannedCoverage_hrv.lowerSouthLinePlanned +1)) : // MSG-3 HRV N-S P2 -ve N
-				   0.0 ));
+                                                             -(idr.plannedCoverage_hrv.lowerSouthLinePlanned +1)) : // MSG-3 HRV N-S P2 -ve N
+                                   0.0 ));
  
       CPLFree(poDS->pszProjection);
       poDS->pszProjection = nullptr;
