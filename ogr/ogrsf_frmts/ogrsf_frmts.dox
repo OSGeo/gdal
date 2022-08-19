@@ -1836,12 +1836,12 @@ feature id.<p>
 
  <li> <b>OLCSequentialWrite</b> / "SequentialWrite": TRUE if the
 CreateFeature() method works for this layer.  Note this means that this
-particular layer is writable.  The same OGRLayer class  may returned FALSE
+particular layer is writable.  The same OGRLayer class may return FALSE
 for other layer instances that are effectively read-only.<p>
 
  <li> <b>OLCRandomWrite</b> / "RandomWrite": TRUE if the SetFeature() method
-is operational on this layer.   Note this means that this
-particular layer is writable.  The same OGRLayer class  may returned FALSE
+is operational on this layer.  Note this means that this
+particular layer is writable.  The same OGRLayer class may return FALSE
 for other layer instances that are effectively read-only.<p>
 
  <li> <b>OLCUpsertFeature</b> / "UpsertFeature": TRUE if the UpsertFeature()
@@ -1940,12 +1940,12 @@ feature id.<p>
 
  <li> <b>OLCSequentialWrite</b> / "SequentialWrite": TRUE if the
 CreateFeature() method works for this layer.  Note this means that this
-particular layer is writable.  The same OGRLayer class  may returned FALSE
+particular layer is writable.  The same OGRLayer class may return FALSE
 for other layer instances that are effectively read-only.<p>
 
  <li> <b>OLCRandomWrite</b> / "RandomWrite": TRUE if the SetFeature() method
-is operational on this layer.   Note this means that this
-particular layer is writable.  The same OGRLayer class  may returned FALSE
+is operational on this layer.  Note this means that this
+particular layer is writable.  The same OGRLayer class may return FALSE
 for other layer instances that are effectively read-only.<p>
 
  <li> <b>OLCUpsertFeature</b> / "UpsertFeature": TRUE if the UpsertFeature()
