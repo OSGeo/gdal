@@ -179,6 +179,9 @@ This function will write a feature to the layer, based on the feature id
 within the OGRFeature.  If the feature id doesn't exist a new feature will be
 written.  Otherwise, the existing feature will be rewritten.
 
+Use OGR_L_TestCapability(OLCUpsertFeature) to establish if this layer
+supports random access writing via OGR_L_SetFeature().
+
 This function is the same as the C++ method OGRLayer::UpsertFeature().
 
 Parameters

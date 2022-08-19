@@ -1759,6 +1759,9 @@ by the OGRSFDriverManager.
  within the OGRFeature.  If the feature id doesn't exist a new feature will be
  written.  Otherwise, the existing feature will be rewritten.
 
+ Use OGR_L_TestCapability(OLCUpsertFeature) to establish if this layer
+ supports random access writing via OGR_L_SetFeature().
+
  This function is the same as the C++ method OGRLayer::UpsertFeature().
 
  @param hLayer handle to the layer to write the feature to.
@@ -1839,6 +1842,11 @@ for other layer instances that are effectively read-only.<p>
  <li> <b>OLCRandomWrite</b> / "RandomWrite": TRUE if the SetFeature() method
 is operational on this layer.   Note this means that this
 particular layer is writable.  The same OGRLayer class  may returned FALSE
+for other layer instances that are effectively read-only.<p>
+
+ <li> <b>OLCUpsertFeature</b> / "UpsertFeature": TRUE if the UpsertFeature()
+method is operational on this layer.  Note this means that this
+particular layer is writable.  The same OGRLayer class may return FALSE
 for other layer instances that are effectively read-only.<p>
 
  <li> <b>OLCFastSpatialFilter</b> / "FastSpatialFilter": TRUE if this layer
@@ -1938,6 +1946,11 @@ for other layer instances that are effectively read-only.<p>
  <li> <b>OLCRandomWrite</b> / "RandomWrite": TRUE if the SetFeature() method
 is operational on this layer.   Note this means that this
 particular layer is writable.  The same OGRLayer class  may returned FALSE
+for other layer instances that are effectively read-only.<p>
+
+ <li> <b>OLCUpsertFeature</b> / "UpsertFeature": TRUE if the UpsertFeature()
+method is operational on this layer.  Note this means that this 
+particular layer is writable.  The same OGRLayer class may return FALSE
 for other layer instances that are effectively read-only.<p>
 
  <li> <b>OLCFastSpatialFilter</b> / "FastSpatialFilter": TRUE if this layer
