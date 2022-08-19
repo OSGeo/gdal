@@ -224,8 +224,7 @@ Starting with GDAL 2.3, additional HTTP headers can be sent by setting the :decl
 
 As an alternative, starting with GDAL 3.6, the
 :decl_configoption:`GDAL_HTTP_HEADERS` configuration option can also be
-used to specify a comma separated list of key: value pairs. This is an
-alternative to the GDAL_HTTP_HEADER_FILE mechanism. If a comma or a double-quote
+used to specify a comma separated list of key: value pairs. If a comma or a double-quote
 character is needed in the value, then the key: value pair must be
 enclosed in double-quote characters. In that situation, backslash and double
 quote character must be backslash-escaped.
