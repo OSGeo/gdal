@@ -103,6 +103,7 @@ def test_ogr_mongodbv3_init():
     ogrtest.mongodbv3_layer_name_guess_types = None
     ogrtest.mongodbv3_layer_name_with_2d_index = None
     ogrtest.mongodbv3_layer_name_no_spatial_index = None
+    ogrtest.mongodbv3_layer_name_upsert_feature = None
 
     ds = ogr.Open(ogrtest.mongodbv3_test_uri)
     if ds is None:
@@ -853,33 +854,6 @@ def test_ogr_mongodbv3_2():
     gdal.PopErrorHandler()
     assert ret != 0
 
-    # Upsert when feature does not exist
-    gdal.PushErrorHandler()
-    ret = lyr.UpsertFeature(f)
-    gdal.PopErrorHandler()
-    assert ret != 0
-
-    gdal.PushErrorHandler()
-    ret = lyr.DeleteFeature(1)
-    gdal.PopErrorHandler()
-    assert ret != 0
-
-    # Upsert when feature already exists
-    gdal.PushErrorHandler()
-    ret = lyr.CreateFeature(f)
-    gdal.PopErrorHandler()
-    assert ret != 0
-
-    gdal.PushErrorHandler()
-    ret = lyr.UpsertFeature(f)
-    gdal.PopErrorHandler()
-    assert ret != 0
-
-    gdal.PushErrorHandler()
-    ret = lyr.DeleteFeature(1)
-    gdal.PopErrorHandler()
-    assert ret != 0
-
 
 ###############################################################################
 # test_ogrsf
@@ -898,6 +872,57 @@ def test_ogr_mongodbv3_3():
         test_cli_utilities.get_test_ogrsf_path() + " -ro " + ogrtest.mongodbv3_test_uri
     )
     assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
+
+
+###############################################################################
+# Test upserting a feature.
+
+
+def test_ogr_mongodbv3_upsert_feature():
+    if ogrtest.mongodbv3_drv is None:
+        pytest.skip()
+
+    # Open database in read-write
+    ogrtest.mongodbv3_ds = None
+    ogrtest.mongodbv3_ds = ogr.Open(ogrtest.mongodbv3_test_uri, update=1)
+
+    # Create a layer
+    ogrtest.mongodbv3_layer_name_upsert_feature = (
+        ogrtest.mongodbv3_layer_name + "_upsert_feature"
+    )
+    lyr = ogrtest.mongodbv3_ds.CreateLayer(
+        ogrtest.mongodbv3_layer_name_upsert_feature,
+        geom_type=ogr.wkbNone,
+        options=["FID=", "WRITE_OGR_METADATA=NO"],
+    )
+
+    # Add a string field
+    lyr.CreateField(ogr.FieldDefn("test", ogr.OFTString))
+
+    # Create a feature with some data
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("test", "original")
+    assert lyr.CreateFeature(f) == 0
+    assert f.GetFID() == 0
+
+    # Upsert an existing feature
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(0)
+    f.SetField("test", "updated")
+    assert lyr.UpsertFeature(f) == 0
+
+    # Verify that we have set an existing feature
+    f = lyr.GetFeature(0)
+    assert f is not None
+    assert f.GetField("test") == "updated"
+
+    # Upsert a new feature
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(1)
+    assert lyr.UpsertFeature(f) == 0
+
+    # Verify that we have created a feature
+    assert lyr.GetFeature(1) is not None
 
 
 ###############################################################################
@@ -930,6 +955,10 @@ def test_ogr_mongodbv3_cleanup():
     if ogrtest.mongodbv3_layer_name_no_spatial_index is not None:
         ogrtest.mongodbv3_ds.ExecuteSQL(
             "DELLAYER:" + ogrtest.mongodbv3_layer_name_no_spatial_index
+        )
+    if ogrtest.mongodbv3_layer_name_upsert_feature is not None:
+        ogrtest.mongodbv3_ds.ExecuteSQL(
+            "DELLAYER:" + ogrtest.mongodbv3_layer_name_upsert_feature
         )
 
     ogrtest.mongodbv3_ds = None
