@@ -562,17 +562,35 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
     double origin_x;
     double origin_y;
 
-    if (open_mode != MODE_HRV) {
+    {
+      const auto& idr = poDS->msg_reader_core->get_image_description_record();
+      /* there are a number of 'magic' constants below
+	 I trimmed them to get registration for MSG4, MSG3, MSG2 with country outlines  from
+	 http://ec.europa.eu/eurostat/web/gisco/geodata/reference-data/administrative-units-statistical-units
+
+	 Adjust in two phases P1, P2.
+	 I describe direction as outline being NSEW of coast shape when number is changed
+      */
+      
+      if (open_mode != MODE_HRV) {
         pixel_gsd_x = 1000.0 * poDS->msg_reader_core->get_col_dir_step();  // convert from km to m
         pixel_gsd_y = 1000.0 * poDS->msg_reader_core->get_line_dir_step(); // convert from km to m
-        origin_x = -pixel_gsd_x * (-(Conversions::nlines / 2.0) + poDS->msg_reader_core->get_col_start());
-        origin_y = -pixel_gsd_y * ((Conversions::nlines / 2.0) - poDS->msg_reader_core->get_line_start());
-    } else {
-        pixel_gsd_x = 1000 * poDS->msg_reader_core->get_hrv_col_dir_step();  // convert from km to m, approximate for HRV
-        pixel_gsd_y = 1000 * poDS->msg_reader_core->get_hrv_line_dir_step(); // convert from km to m, approximate for HRV
-        origin_x = -pixel_gsd_x * (-(3*Conversions::nlines / 2.0) + 3*poDS->msg_reader_core->get_col_start());
-        origin_y = -pixel_gsd_y * ((3*Conversions::nlines / 2.0) - 3*poDS->msg_reader_core->get_line_start());
-    }
+        origin_x = -pixel_gsd_x * (-(Conversions::nlines / 2.0) + poDS->msg_reader_core->get_col_start()-1);    // all vis/NIR E-W -ve E
+        origin_y = -pixel_gsd_y * ((Conversions::nlines / 2.0) - poDS->msg_reader_core->get_line_start()+1.5);  // set with 4  N-S +ve S
+      } else {
+        pixel_gsd_x = 1000.0 * poDS->msg_reader_core->get_hrv_col_dir_step();  // convert from km to m
+        pixel_gsd_y = 1000.0 * poDS->msg_reader_core->get_hrv_line_dir_step(); // convert from km to m
+	if (poDS->m_Shape == RSS)
+	  {
+	    origin_x = -pixel_gsd_x * (-(3*Conversions::nlines / 2.0) - idr.plannedCoverage_hrv.lowerEastColumnPlanned -1); // MSG3 HRV E-W -ve E
+	    origin_y = -pixel_gsd_y * ((3*Conversions::nlines / 2.0) - idr.plannedCoverage_hrv.lowerSouthLinePlanned+2);    //          N-S -ve S
+	  }
+	else
+	  {      
+	    origin_x = -pixel_gsd_x * (-(3*Conversions::nlines / 2.0) + 1*poDS->msg_reader_core->get_col_start()-3);  // MSG4, MSG2 HRV E-W -ve E
+	    origin_y = -pixel_gsd_y * ((3*Conversions::nlines / 2.0) - 1*poDS->msg_reader_core->get_line_start()+4);  //                N-S +ve S
+	  }
+      }
 
     poDS->adfGeoTransform[0] = origin_x;
     poDS->adfGeoTransform[1] = pixel_gsd_x;
@@ -601,10 +619,28 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
 	     origin_x + pixel_gsd_x * ( idr.plannedCoverage_hrv.lowerWestColumnPlanned + idr.plannedCoverage_hrv.lowerEastColumnPlanned)/2 * ((open_mode != MODE_HRV) ? 1.5 : 0.5),
 	     origin_y - pixel_gsd_y * ( idr.plannedCoverage_hrv.lowerSouthLinePlanned + idr.plannedCoverage_hrv.lowerSouthLinePlanned) /2*  ((open_mode != MODE_HRV) ? 1.5 : 0.5));
 
-    CPLFree(poDS->pszProjection);
-    poDS->pszProjection = nullptr;
-    oSRS.exportToWkt( &(poDS->pszProjection) );
-    CPLDebug("MSGN", "WKT: %s", poDS->pszProjection);
+      oSRS.SetGeogCS(
+		     "MSG Ellipsoid",
+		     "MSG_DATUM",
+		     "MSG_SPHEROID",
+		     Conversions::req * 1000.0,  // SetGeogCS doesn't specify length units, so all must be the same - here m.
+		     1.0/Conversions::oblate // 1 / ( 1 - Conversions::rpol/Conversions::req)
+		     );
+
+      oSRS.SetGEOS(  idr.longitudeOfSSP, (Conversions::altitude - Conversions::req) * 1000.0,  // we're using metres as length unit
+		     0.0 ,
+		     // false northing to handle the fact RSS is only 1/3 disk
+		     pixel_gsd_y *((poDS->m_Shape == RSS) ? ((open_mode != MODE_HRV)  ?
+							     -(idr.plannedCoverage_visir.southernLinePlanned -1) : // MSG-3 vis/NIR N-S P2 
+							     -(idr.plannedCoverage_hrv.lowerSouthLinePlanned +1)) : // MSG-3 HRV N-S P2 -ve N
+				   0.0 ));
+ 
+      CPLFree(poDS->pszProjection);
+      poDS->pszProjection = nullptr;
+      oSRS.exportToWkt( &(poDS->pszProjection) );
+      CPLDebug("MSGN", "WKT: %s", poDS->pszProjection);
+    }
+    
     const CALIBRATION* cal = poDS->msg_reader_core->get_calibration_parameters();
     char tagname[30];
     char field[300];
