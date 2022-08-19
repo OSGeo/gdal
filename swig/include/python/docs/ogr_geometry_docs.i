@@ -224,6 +224,8 @@ passed psEnvelope structure.
 
 For more details: :cpp:func:`OGR_G_GetEnvelope`
 
+.. warning:: Check the return order of the bounds.
+
 Returns
 --------
 minx: float
@@ -238,7 +240,7 @@ the passed psEnvelope structure.
 
 For more details: :cpp:func:`OGR_G_GetEnvelope3D`
 
-.. versionadded:: 1.9.0
+.. warning:: Check the return order of the bounds.
 
 Returns
 --------
@@ -497,8 +499,6 @@ Compute boundary.
 
 For more details: :cpp:func:`OGR_G_Boundary`
 
-.. versionadded:: 1.8.0
-
 Returns
 --------
 Geometry:
@@ -600,8 +600,6 @@ Geometry:
 Compute symmetric difference.
 
 For more details: :cpp:func:`OGR_G_SymDifference`
-
-.. versionadded:: 1.8.0
 
 Parameters
 -----------
@@ -741,8 +739,6 @@ Returns a point guaranteed to lie on the surface.
 
 For more details: :cpp:func:`OGR_G_PointOnSurface`
 
-.. versionadded:: 1.10
-
 Returns
 --------
 Geometry:
@@ -753,8 +749,6 @@ Geometry:
 Compute a simplified geometry.
 
 For more details: :cpp:func:`OGR_G_Simplify`
-
-.. versionadded:: 1.8.0
 
 Parameters
 -----------
@@ -771,8 +765,6 @@ Geometry:
 Simplify the geometry while preserving topology.
 
 For more details: :cpp:func:`OGR_G_SimplifyPreserveTopology`
-
-.. versionadded:: 1.9.0
 
 Parameters
 -----------
@@ -811,8 +803,6 @@ Geometry:
 Polygonizes a set of sparse edges.
 
 For more details: :cpp:func:`OGR_G_Polygonize`
-
-.. versionadded:: 1.9.0
 
 Returns
 --------
