@@ -854,6 +854,12 @@ def test_ogr_mongodbv3_2():
     gdal.PopErrorHandler()
     assert ret != 0
 
+    # Upsert fails in read-only
+    gdal.PushErrorHandler()
+    ret = lyr.UpsertFeature(f)
+    gdal.PopErrorHandler()
+    assert ret != 0
+
 
 ###############################################################################
 # test_ogrsf
