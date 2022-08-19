@@ -976,6 +976,14 @@ int CPLHTTPPopFetchCallback(void)
  * GDAL_HTTP_HEADER_FILE, GDAL_HTTP_VERSION, GDAL_HTTP_SSL_VERIFYSTATUS,
  * GDAL_HTTP_USE_CAPI_STORE, GDAL_GSSAPI_DELEGATION
  *
+ * Starting with GDAL 3.6, the GDAL_HTTP_HEADERS configuration option can also be
+ * used to specify a comma separated list of key: value pairs. This is an
+ * alternative to the GDAL_HTTP_HEADER_FILE mechanism. If a comma or a double-quote
+ * character is needed in the value, then the key: value pair must be
+ * enclosed in double-quote characters. In that situation, backslash and double
+ * quote character must be backslash-escaped.
+ * e.g GDAL_HTTP_HEADERS=Foo: Bar,"Baz: escaped backslash \\, escaped double-quote \", end of value",Another: Header
+ *
  * @return a CPLHTTPResult* structure that must be freed by
  * CPLHTTPDestroyResult(), or NULL if libcurl support is disabled
  */
@@ -2311,6 +2319,17 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
             }
             VSIFCloseL(fp);
         }
+    }
+
+    const char* pszHeaders = CPLGetConfigOption("GDAL_HTTP_HEADERS", nullptr);
+    if( pszHeaders )
+    {
+         const CPLStringList aosTokens(
+             CSLTokenizeString2( pszHeaders, ",", CSLT_HONOURSTRINGS ));
+         for( int i = 0; i < aosTokens.size(); ++i )
+         {
+             headers = curl_slist_append(headers, aosTokens[i]);
+         }
     }
 
     return headers;

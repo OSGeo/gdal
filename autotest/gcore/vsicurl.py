@@ -912,6 +912,41 @@ def test_vsicurl_planetary_computer_url_signing_collection():
 ###############################################################################
 
 
+def test_vsicurl_GDAL_HTTP_HEADERS():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "HEAD",
+        "/test_vsicurl_GDAL_HTTP_HEADERS.bin",
+        200,
+        {"Content-Length": "3"},
+        expected_headers={
+            "Foo": "Bar",
+            "Baz": r'escaped backslash \, escaped double-quote ", end of value',
+            "Another": "Header",
+        },
+    )
+
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_option(
+            "GDAL_HTTP_HEADERS",
+            r'Foo: Bar,"Baz: escaped backslash \\, escaped double-quote \", end of value",Another: Header',
+        ):
+            statres = gdal.VSIStatL(
+                "/vsicurl/http://localhost:%d/test_vsicurl_GDAL_HTTP_HEADERS.bin"
+                % gdaltest.webserver_port
+            )
+            assert statres.size == 3
+
+
+###############################################################################
+
+
 def test_vsicurl_stop_webserver():
 
     if gdaltest.webserver_port == 0:
