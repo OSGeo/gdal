@@ -1061,6 +1061,7 @@ def test_tiff_srs_dynamic_geodetic_crs():
     srs = ds.GetSpatialRef()
     assert gdal.GetLastErrorMsg() == "", srs.ExportToWkt(["FORMAT=WKT2_2019"])
     assert srs.GetAuthorityCode(None) == "8999"
+    assert srs.IsDynamic()
     ds = None
     gdal.Unlink("/vsimem/test_tiff_srs_dynamic_geodetic_crs.tif")
 

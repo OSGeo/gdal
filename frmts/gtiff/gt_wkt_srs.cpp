@@ -1065,7 +1065,7 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
             }
 
             if( bTryCompareToEPSG &&
-                !oSRSGeog.IsSameGeogCS(&oSRS) && EQUAL(osGTiffSRSSource.c_str(), "") )
+                !oSRSGeog.IsSameGeogCS(&oSRS) && osGTiffSRSSource.empty() )
             {
                 // See https://github.com/OSGeo/gdal/issues/5399
                 // where a file has inconsistent GeogSemiMinorAxisGeoKey / GeogInvFlatteningGeoKey
@@ -1086,7 +1086,15 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
             {
                 oSRS.CopyGeogCSFrom(&oSRSGeog);
             }
-            else if( bGCSCodeValid && EQUAL(osGTiffSRSSource.c_str(), "") )
+            else if (osGTiffSRSSource.empty() && oSRSGeog.IsDynamic() &&
+                     psDefn->Model == ModelTypeGeographic )
+            {
+                // We should perhaps be more careful and detect overrides
+                // of geokeys...
+                oSRS = oSRSGeog;
+                bSetDatumEllipsoidCode = false;
+            }
+            else if( bGCSCodeValid && osGTiffSRSSource.empty() )
             {
                 oSRS.SetAuthority( "GEOGCS", "EPSG", nGCS );
             }
