@@ -935,7 +935,7 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
 /* -------------------------------------------------------------------- */
             const GDALReprojectionTransformInfo* psRTI =
                 static_cast<const GDALReprojectionTransformInfo*>(pGIPTI->pReprojectArg);
-            const auto poTargetCRS = psRTI->poForwardTransform->GetTargetCS();
+            const OGRSpatialReference* poTargetCRS = psRTI->poForwardTransform->GetTargetCS();
             if( poTargetCRS != nullptr &&
                 psRTI->poReverseTransform != nullptr &&
                 poTargetCRS->IsGeographic() &&
@@ -986,6 +986,11 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
                 {
                     poSetter.reset();
                     GDALRefreshGenImgProjTransformer(pTransformArg);
+                    pGIPTI =
+                        static_cast<const GDALGenImgProjTransformInfo*>(pTransformArg);
+                    psRTI =
+                        static_cast<const GDALReprojectionTransformInfo*>(pGIPTI->pReprojectArg);
+                    poTargetCRS = psRTI->poForwardTransform->GetTargetCS();
                 }
             }
         }
@@ -2284,6 +2289,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         if( pszSrcCoordEpoch )
         {
             aosOptions.SetNameValue("SRC_COORDINATE_EPOCH", pszSrcCoordEpoch);
+            oSrcSRS.SetCoordinateEpoch(CPLAtof(pszSrcCoordEpoch));
         }
 
         const char* pszDstCoordEpoch = CSLFetchNameValue(papszOptions,
@@ -2291,6 +2297,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         if( pszDstCoordEpoch )
         {
             aosOptions.SetNameValue("DST_COORDINATE_EPOCH", pszDstCoordEpoch);
+            oDstSRS.SetCoordinateEpoch(CPLAtof(pszDstCoordEpoch));
         }
 
         psInfo->pReprojectArg =
