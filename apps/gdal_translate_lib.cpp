@@ -750,8 +750,6 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     if(psOptions->pszOutputSRS != nullptr)
     {
         OGRSpatialReference oOutputSRS;
-        oOutputSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-
         if( oOutputSRS.SetFromUserInput( psOptions->pszOutputSRS ) != OGRERR_NONE )
         {
             CPLError( CE_Failure, CPLE_AppDefined, "Failed to process SRS definition: %s",
@@ -759,22 +757,6 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
             GDALTranslateOptionsFree(psOptions);
             return nullptr;
         }
-
-        char* pszSRS = nullptr;
-        {
-            CPLErrorStateBackuper oErrorStateBackuper;
-            CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-            if( oOutputSRS.exportToWkt( &pszSRS ) != OGRERR_NONE )
-            {
-                CPLFree(pszSRS);
-                pszSRS = nullptr;
-                const char* const apszOptions[] = { "FORMAT=WKT2", nullptr };
-                oOutputSRS.exportToWkt( &pszSRS, apszOptions );
-            }
-        }
-        CPLFree( psOptions->pszOutputSRS );
-        psOptions->pszOutputSRS = CPLStrdup( pszSRS );
-        CPLFree( pszSRS );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1499,14 +1481,19 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 
     if( psOptions->nGCPCount != 0 )
     {
-        const char *pszGCPProjection = psOptions->pszOutputSRS;
-
-        if( pszGCPProjection == nullptr )
-            pszGCPProjection = GDALGetGCPProjection( hSrcDataset );
-        if( pszGCPProjection == nullptr )
-            pszGCPProjection = "";
-
-        poVDS->SetGCPs( psOptions->nGCPCount, psOptions->pasGCPs, pszGCPProjection );
+        OGRSpatialReference oSRS;
+        if( psOptions->pszOutputSRS != nullptr )
+        {
+            oSRS.SetFromUserInput( psOptions->pszOutputSRS );
+            oSRS.SetAxisMappingStrategy( OAMS_TRADITIONAL_GIS_ORDER );
+        }
+        else
+        {
+            const OGRSpatialReference* poSrcSRS = GDALDataset::FromHandle(hSrcDataset)->GetGCPSpatialRef();
+            if( poSrcSRS )
+                oSRS = *poSrcSRS;
+        }
+        poVDS->SetGCPs( psOptions->nGCPCount, psOptions->pasGCPs, !oSRS.IsEmpty() ? &oSRS : nullptr );
     }
 
     else if( !psOptions->bNoGCP && GDALGetGCPCount( hSrcDataset ) > 0 )

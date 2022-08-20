@@ -36,7 +36,7 @@ import struct
 import gdaltest
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, osr
 
 ###############################################################################
 # Simple test
@@ -837,6 +837,36 @@ def test_gdal_translate_lib_not_delete_shared_auxiliary_files():
     os.unlink("tmp/IMG_foo_R1C1.tif")
     os.unlink("tmp/IMG_foo_R1C1.IMD")
     os.unlink("tmp/DIM_foo.XML")
+
+
+###############################################################################
+# Test preservation of IsDynamic() and support for coordinate epoch
+
+
+def test_gdal_translate_lib_coord_epoch_is_dynamic():
+
+    if osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() < 702:
+        pytest.skip("requires PROJ 7.2 or later")
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+
+    out_ds = gdal.Translate(
+        "", src_ds, options="-of MEM -a_srs EPSG:9000 -a_coord_epoch 2021.3"
+    )
+    srs = out_ds.GetSpatialRef()
+    assert srs.IsDynamic()
+    assert srs.GetCoordinateEpoch() == 2021.3
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(9000)
+    assert srs.IsDynamic()
+    srs.SetCoordinateEpoch(2022.0)
+    src_ds.SetSpatialRef(srs)
+
+    out_ds = gdal.Translate("", src_ds, options="-of MEM")
+    srs = out_ds.GetSpatialRef()
+    assert srs.IsDynamic()
+    assert srs.GetCoordinateEpoch() == 2022.0
 
 
 ###############################################################################
