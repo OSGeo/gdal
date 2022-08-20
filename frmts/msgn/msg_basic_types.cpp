@@ -169,14 +169,14 @@ bool perform_type_size_check(void) {
 #endif
 
 const double Conversions::altitude      =   42164;          // km from origin
-  // the spheroid in CGMS 03 4.4.3.2 is unique - flattening is 1/295.488
+    // the spheroid in CGMS 03 4.4.3.2 is unique - flattening is 1/295.488
 const double Conversions::req           =   6378.1370;       // earth equatorial radius
 const double Conversions::rpol          =   6356.7523;       // earth polar radius
 const double Conversions::dtp2           =   (SQR(altitude) - SQR(req));       // square of the distance to the equatorial tangent point
                                                                                // first/last point sensed on the equator
                                                                                // given as 1737121856 - 41678.79 km ^2
   
-// given req and rpol, oblate is already defined. Unused afaik in the gdal code
+    // given req and rpol, oblate is already defined. Unused afaik in the gdal code
 const double Conversions::oblate        =   ((req-rpol)/req); // 1.0/298.257;    // oblateness of earth
 const double Conversions::deg_to_rad    =   (M_PI/180.0);
 const double Conversions::rad_to_deg    =   (180.0/M_PI);
@@ -193,7 +193,7 @@ const double Conversions::LFAC_scaled = ((double)LFAC / (1<<16));
 #define SQR(x) ((x)*(x))
 
 void Conversions::convert_pixel_to_geo(double line, double column, double&longitude, double& latitude) {
-  // x and y are angles in radians
+    // x and y are angles in radians
     double x = (column - COFF - 0.0) / CFAC_scaled;
     double y = (line - LOFF - 0.0) / LFAC_scaled;
 
@@ -225,7 +225,7 @@ void Conversions::compute_pixel_xyz(double line, double column, double& x,double
     double q = tanas;
     double r = tanal * sqrt(1 + q*q);
 
-   double a = q*q + (r*req/rpol)*(r*req/rpol) + p*p;
+    double a = q*q + (r*req/rpol)*(r*req/rpol) + p*p;
     double b = 2 * altitude * p;
     double c = altitude * altitude  - req*req;
 

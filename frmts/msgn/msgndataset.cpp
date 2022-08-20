@@ -236,7 +236,7 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                  (poGDS->m_Shape == WHOLE_DISK ? "whole" : "split HRV"));
 
         CPLDebug("MSGN", "nread = %lu, data_len %d, linenum %d, start %d, offset %d",
-                (long unsigned int) nread, // Mingw_w64 otherwise wants %llu - MSG read will never exceed 32 bits
+         (long unsigned int) nread, // Mingw_w64 otherwise wants %llu - MSG read will never exceed 32 bits
                  data_length,
                  (p->lineNumberInVisirGrid),
                  poGDS->msg_reader_core->get_line_start(),
@@ -510,7 +510,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
                  // full height
                  idr.plannedCoverage_hrv.lowerNorthLinePlanned == idr.plannedCoverage_hrv.lowerSouthLinePlanned + poDS->nRasterYSize -1
                  )
-        {
+    {
             poDS->nRasterXSize *= 3;
             poDS->m_Shape = RSS;
         }
@@ -576,7 +576,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
         if (bands[i]) {
             bool ok_to_add = false;
             switch (open_mode) {
-                case MODE_VISIR:
+        case MODE_VISIR:
                     ok_to_add = i < MSG_NUM_CHANNELS - 1;
                     break;
                 case MODE_RAD:
@@ -595,7 +595,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
             missing_band_count++;
         }
     }
-
+    
     double pixel_gsd_x;
     double pixel_gsd_y;
     double origin_x;
@@ -612,25 +612,25 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
       */
       
       if (open_mode != MODE_HRV) {
-        pixel_gsd_x = 1000.0 * poDS->msg_reader_core->get_col_dir_step();  // convert from km to m
-        pixel_gsd_y = 1000.0 * poDS->msg_reader_core->get_line_dir_step(); // convert from km to m
-        origin_x = -pixel_gsd_x * (-(Conversions::nlines / 2.0) + poDS->msg_reader_core->get_col_start()-1);    // all vis/NIR E-W -ve E
-        origin_y = -pixel_gsd_y * ((Conversions::nlines / 2.0) - poDS->msg_reader_core->get_line_start()+1.5);  // set with 4  N-S +ve S
+      pixel_gsd_x = 1000.0 * poDS->msg_reader_core->get_col_dir_step();  // convert from km to m
+      pixel_gsd_y = 1000.0 * poDS->msg_reader_core->get_line_dir_step(); // convert from km to m
+      origin_x = -pixel_gsd_x * (-(Conversions::nlines / 2.0) + poDS->msg_reader_core->get_col_start()-1);    // all vis/NIR E-W -ve E
+      origin_y = -pixel_gsd_y * ((Conversions::nlines / 2.0) - poDS->msg_reader_core->get_line_start()+1.5);  // set with 4  N-S +ve S
       } else {
-        pixel_gsd_x = 1000.0 * poDS->msg_reader_core->get_hrv_col_dir_step();  // convert from km to m
-        pixel_gsd_y = 1000.0 * poDS->msg_reader_core->get_hrv_line_dir_step(); // convert from km to m
-        if (poDS->m_Shape == RSS)
-          {
-            origin_x = -pixel_gsd_x * (-(3*Conversions::nlines / 2.0) - idr.plannedCoverage_hrv.lowerEastColumnPlanned -1); // MSG3 HRV E-W -ve E
-            origin_y = -pixel_gsd_y * ((3*Conversions::nlines / 2.0) - idr.plannedCoverage_hrv.lowerSouthLinePlanned+2);    //          N-S -ve S
-          }
-        else
-          {      
-            origin_x = -pixel_gsd_x * (-(3*Conversions::nlines / 2.0) + 1*poDS->msg_reader_core->get_col_start()-3);  // MSG4, MSG2 HRV E-W -ve E
-            origin_y = -pixel_gsd_y * ((3*Conversions::nlines / 2.0) - 1*poDS->msg_reader_core->get_line_start()+4);  //                N-S +ve S
+      pixel_gsd_x = 1000.0 * poDS->msg_reader_core->get_hrv_col_dir_step();  // convert from km to m
+      pixel_gsd_y = 1000.0 * poDS->msg_reader_core->get_hrv_line_dir_step(); // convert from km to m
+      if (poDS->m_Shape == RSS)
+      {
+          origin_x = -pixel_gsd_x * (-(3*Conversions::nlines / 2.0) - idr.plannedCoverage_hrv.lowerEastColumnPlanned -1); // MSG3 HRV E-W -ve E
+          origin_y = -pixel_gsd_y * ((3*Conversions::nlines / 2.0) - idr.plannedCoverage_hrv.lowerSouthLinePlanned+2);    //          N-S -ve S
+      }
+      else
+      {      
+          origin_x = -pixel_gsd_x * (-(3*Conversions::nlines / 2.0) + 1*poDS->msg_reader_core->get_col_start()-3);  // MSG4, MSG2 HRV E-W -ve E
+          origin_y = -pixel_gsd_y * ((3*Conversions::nlines / 2.0) - 1*poDS->msg_reader_core->get_line_start()+4);  //                N-S +ve S
           }
       }
-
+      
       /* the conversion to lat/long is in two parts:
          pixels to m (around imaginary circle r=sta height) in the geo projection (affine transformation)
          geo to lat/long via the GEOS projection (in WKT) and the ellipsoid
@@ -650,9 +650,9 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
 
       //int i;
       for (i=0; i<6; ++i)
-        {
+      {
           CPLDebugOnly("MSGN", "adf transform %12.3f\n", poDS->adfGeoTransform[i]);
-        }
+      }
       
       oSRS.SetProjCS("Geostationary projection (MSG)");
 
@@ -671,7 +671,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
                                                              -(idr.plannedCoverage_visir.southernLinePlanned -1) : // MSG-3 vis/NIR N-S P2 
                                                              -(idr.plannedCoverage_hrv.lowerSouthLinePlanned +1)) : // MSG-3 HRV N-S P2 -ve N
                                    0.0 ));
- 
+      
       CPLFree(poDS->pszProjection);
       poDS->pszProjection = nullptr;
       oSRS.exportToWkt( &(poDS->pszProjection) );
@@ -690,12 +690,12 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     snprintf(field, sizeof(field), "%04u%02u%02u/%02u:%02u",
-        poDS->msg_reader_core->get_year(),
-        poDS->msg_reader_core->get_month(),
-        poDS->msg_reader_core->get_day(),
-        poDS->msg_reader_core->get_hour(),
-        poDS->msg_reader_core->get_minute()
-    );
+         poDS->msg_reader_core->get_year(),
+         poDS->msg_reader_core->get_month(),
+         poDS->msg_reader_core->get_day(),
+         poDS->msg_reader_core->get_hour(),
+         poDS->msg_reader_core->get_minute()
+         );
     poDS->SetMetadataItem("Date/Time", field);
 
     snprintf(field, sizeof(field), "%u %u",
@@ -720,9 +720,9 @@ void GDALRegister_MSGN()
 {
     if( GDALGetDriverByName( "MSGN" ) != nullptr )
         return;
-
+    
     GDALDriver *poDriver = new GDALDriver();
-
+    
     poDriver->SetDescription( "MSGN" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,

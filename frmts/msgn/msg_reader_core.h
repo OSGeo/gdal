@@ -43,7 +43,7 @@ typedef struct {
     double A;
     double B;
 } Blackbody_lut_type;
-
+    
 typedef enum {
     VIS0_6  = 2,
     VIS0_8  = 4,
@@ -68,13 +68,13 @@ public:
     bool get_open_success() const { return _open_success; }
 
     #ifndef GDAL_SUPPORT 
-  //virtual void radiance_to_blackbody(int using_chan_no = 0) = 0;   // can override which channel's parameters to use
-  //  virtual double* get_data(int chan_no=0) = 0;
+    //virtual void radiance_to_blackbody(int using_chan_no = 0) = 0;   // can override which channel's parameters to use
+    //  virtual double* get_data(int chan_no=0) = 0;
     #endif
-
+    
     unsigned int get_lines() const { return _lines; }
     unsigned int get_columns() const { return _columns; }
-
+    
     void get_pixel_geo_coordinates(unsigned int line, unsigned int column, double& longitude, double& latitude) const; // x and y relative to this image, not full disc image
     void get_pixel_geo_coordinates(double line, double column, double& longitude, double& latitude); // x and y relative to this image, not full disc image
     double compute_pixel_area_sqkm(double line, double column);
