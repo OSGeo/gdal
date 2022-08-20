@@ -1270,7 +1270,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
         // Assume big result: should check for state=SQLSATE 01004.
         else if( nRetCode == SQL_SUCCESS_WITH_INFO )
         {
-            if( cbDataLen >= static_cast<CPL_SQLLEN>(sizeof(szWrkData)-1) )
+          if( cbDataLen >= static_cast<CPL_SQLLEN>(sizeof(szWrkData)-1) || cbDataLen == SQL_NO_TOTAL )
             {
                 cbDataLen = static_cast<CPL_SQLLEN>(sizeof(szWrkData)-1);
                 if( nFetchType == SQL_C_CHAR )
