@@ -102,6 +102,8 @@ Msg_reader_core::Msg_reader_core( const char* fname ) :
     _col_start(0),
     _col_dir_step(0.0f),
     _line_dir_step(0.0f),
+    _hrv_col_dir_step(0.0f),
+    _hrv_line_dir_step(0.0f),
     _f_data_offset(0),
     _f_data_size(0),
     _f_header_offset(0),
@@ -147,6 +149,8 @@ Msg_reader_core::Msg_reader_core( VSILFILE* fp ) :
     _col_start(0),
     _col_dir_step(0.0f),
     _line_dir_step(0.0f),
+    _hrv_col_dir_step(0.0f),
+    _hrv_line_dir_step(0.0f),
     _f_data_offset(0),
     _f_data_size(0),
     _f_header_offset(0),
@@ -186,6 +190,8 @@ void Msg_reader_core::read_metadata_block(VSILFILE* fin) {
     CPL_IGNORE_RET_VAL(VSIFReadL(&_main_header, sizeof(_main_header), 1, fin));
     CPL_IGNORE_RET_VAL(VSIFReadL(&_sec_header, sizeof(_sec_header), 1, fin));
 
+    PH_DATA_ID* hdi = (PH_DATA_ID*)&_main_header.dataSetIdentification;
+
 #ifdef DEBUG
     // print out all the fields in the header
     PH_DATA* hd = (PH_DATA*)&_main_header;
@@ -194,7 +200,6 @@ void Msg_reader_core::read_metadata_block(VSILFILE* fin) {
         printf("[%02u] %s %s", i, hd->name, hd->value);/*ok*/
         hd++;
     }
-    PH_DATA_ID* hdi = (PH_DATA_ID*)&_main_header.dataSetIdentification;
 
     for (i=0; i < 5; i++) {
         printf("%s %s %s", hdi->name, hdi->size, hdi->address);/*ok*/
@@ -298,12 +303,17 @@ void Msg_reader_core::read_metadata_block(VSILFILE* fin) {
     CPL_IGNORE_RET_VAL(VSIFReadL(&idr, sizeof(IMAGE_DESCRIPTION_RECORD), 1, fin));
     to_native(idr);
     CPLDebugOnly("MSGN",
+                 "idr.longitudeOfSSP = %g", 
+                 idr.longitudeOfSSP);
+    CPLDebugOnly("MSGN",
                  "referencegrid_visir.numberOfLines = %d, "
                  "referencegrid_visir.numberOfColumns = %d",
                  idr.referencegrid_visir.numberOfLines,
                  idr.referencegrid_visir.numberOfColumns);
     _line_dir_step = idr.referencegrid_visir.lineDirGridStep;
     _col_dir_step = idr.referencegrid_visir.columnDirGridStep;
+    _hrv_line_dir_step = idr.referencegrid_hrv.lineDirGridStep;
+    _hrv_col_dir_step = idr.referencegrid_hrv.columnDirGridStep;
 
     CPLDebugOnly("MSGN", "referencegrid_hrv.numberOfLines = %d, "
                  "referencegrid_hrv.numberOfColumns = %d",
@@ -442,20 +452,18 @@ void Msg_reader_core::read_metadata_block(VSILFILE* fin) {
 
             }
         }
-	printf("Band[%d] at %lld\n", visir_line.channelId, VSIFTellL(fin));
     } while (band_count > 0);
 
     TRAILER trailer;
 
     CPL_IGNORE_RET_VAL(VSIFSeekL(fin, _f_trailer_offset, SEEK_SET));
-    printf("After trailer seek %ld %lld\n", sizeof(TRAILER), VSIFTellL(fin));
     
     if( VSIFReadL(&gp_header, sizeof(GP_PK_HEADER), 1, fin) != 1 ||
 	VSIFReadL(&sub_header, sizeof(GP_PK_SH1), 1, fin) != 1 ||
 	VSIFReadL(&trailer, sizeof(TRAILER), 1, fin) != 1)
       {
 	_open_success = false;
-	printf("Trailer fail\n");
+	fprintf(stderr, "Trailer fail\n");
 	return;
       }
 	   

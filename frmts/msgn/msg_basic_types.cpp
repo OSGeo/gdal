@@ -25,7 +25,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-
 #include "cpl_port.h"
 #include "cpl_error.h"
 #include "msg_basic_types.h"
@@ -105,6 +104,13 @@ static void to_native(PLANNED_COVERAGE_HRV& r) {
 }
 
 void to_native(IMAGE_DESCRIPTION_RECORD& r) {
+    float f;
+
+    // convert float using CPL_MSBPTR32
+    memcpy(&f, &r.longitudeOfSSP, sizeof(f));
+    CPL_MSBPTR32(&f);
+    r.longitudeOfSSP = f;
+    
     to_native(r.referencegrid_visir);
     to_native(r.referencegrid_hrv);
     to_native(r.plannedCoverage_visir);
@@ -162,10 +168,13 @@ bool perform_type_size_check(void) {
 }
 #endif
 
-const double Conversions::altitude      =   42164;          // from origin
+const double Conversions::altitude      =   42164;          // km from origin
   // the spheroid in CGMS 03 4.4.3.2 is unique - flattening is 1/295.488
 const double Conversions::req           =   6378.1370;       // earth equatorial radius
 const double Conversions::rpol          =   6356.7523;       // earth polar radius
+const double Conversions::dtp2           =   (SQR(altitude) - SQR(req));       // square of the distance to the equatorial tangent point
+                                                                               // first/last point sensed on the equator
+                                                                               // given as 1737121856 - 41678.79 km ^2
   
 // given req and rpol, oblate is already defined. Unused afaik in the gdal code
 const double Conversions::oblate        =   ((req-rpol)/req); // 1.0/298.257;    // oblateness of earth
@@ -178,6 +187,8 @@ const int Conversions::CFAC    = -781648343;
 const int Conversions::LFAC    = -781648343;
 const int Conversions::COFF    = 1856;
 const int Conversions::LOFF    = 1856;
+const double Conversions::CFAC_scaled = ((double)CFAC / (1<<16));
+const double Conversions::LFAC_scaled = ((double)LFAC / (1<<16));
 
 #define SQR(x) ((x)*(x))
 
@@ -186,7 +197,7 @@ void Conversions::convert_pixel_to_geo(double line, double column, double&longit
     double x = (column - COFF - 0.0) / CFAC_scaled;
     double y = (line - LOFF - 0.0) / LFAC_scaled;
 
-    double sd = sqrt(SQR(altitude*cos(x)*cos(y)) - (SQR(cos(y)) + 1.006803*SQR(sin(y)))*1737121856);
+    double sd = sqrt(SQR(altitude*cos(x)*cos(y)) - (SQR(cos(y)) + 1.006803*SQR(sin(y)))*dtp2); // 1737121856);
     double sn = (altitude*cos(x)*cos(y) - sd)/(SQR(cos(y)) + 1.006803*SQR(sin(y)));
     double s1 = altitude - sn*cos(x)*cos(y);
     double s2 = sn*sin(x)*cos(y);
@@ -196,8 +207,8 @@ void Conversions::convert_pixel_to_geo(double line, double column, double&longit
     longitude = atan(s2/s1);
     latitude  = atan(1.006803*s3/sxy);
 
-    longitude = longitude / M_PI * 180.0;
-    latitude  = latitude  / M_PI * 180.0;
+    longitude = longitude * rad_to_deg;
+    latitude  = latitude  * rad_to_deg;
 }
 
 void Conversions::compute_pixel_xyz(double line, double column, double& x,double& y, double& z) {
@@ -250,8 +261,8 @@ double Conversions::compute_pixel_area_sqkm(double line, double column) {
 
 void Conversions::convert_geo_to_pixel(double longitude, double latitude,unsigned int& line, unsigned int& column) {
 
-    latitude = latitude / 180.0 * M_PI;
-    longitude = longitude / 180.8 * M_PI;
+    latitude = latitude * deg_to_rad;
+    longitude = longitude * deg_to_rad;
 
     double c_lat = atan(0.993243 * tan(latitude));
     double r_l = rpol / sqrt(1 - 0.00675701*cos(c_lat)*cos(c_lat));
@@ -260,8 +271,8 @@ void Conversions::convert_geo_to_pixel(double longitude, double latitude,unsigne
     double r3 = r_l*sin(c_lat);
     double rn = sqrt(r1*r1 + r2*r2 + r3*r3);
 
-    double x = atan(-r2/r1) * (CFAC >> 16) + COFF;
-    double y = asin(-r3/rn) * (LFAC >> 16) + LOFF;
+    double x = atan(-r2/r1) * CFAC_scaled + COFF;
+    double y = asin(-r3/rn) * LFAC_scaled + LOFF;
 
     line = (unsigned int)floor(x + 0.5);
     column = (unsigned int)floor(y + 0.5);

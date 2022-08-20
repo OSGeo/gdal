@@ -26,6 +26,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+#include "cpl_port.h"
+#include "cpl_error.h"
 
 #include "gdal_frmts.h"
 #include "gdal_priv.h"
@@ -46,10 +48,10 @@ typedef enum {
 } open_mode_type;
 
 typedef enum {
-    NOT_HRV,
-    HRV_WHOLE_DISK,
-    HRV_RSS
-} hrv_mode_type;
+    WHOLE_DISK,
+    RSS,                        // letterbox of N 1/3 of earth
+    SPLIT_HRV                   // the half-width HRV, may be sheared into two block to follow the sun W later in the day
+} image_shape_type;
 
 class MSGNRasterBand;
 
@@ -67,7 +69,7 @@ class MSGNDataset final: public GDALDataset
 
     Msg_reader_core*    msg_reader_core;
     open_mode_type      m_open_mode = MODE_VISIR;
-    hrv_mode_type       m_eHRVDealWithSplit = NOT_HRV;
+    image_shape_type    m_Shape = WHOLE_DISK;
     int                 m_nHRVSplitLine = 0;
     int                 m_nHRVLowerShiftX = 0;
     int                 m_nHRVUpperShiftX = 0;
@@ -75,8 +77,8 @@ class MSGNDataset final: public GDALDataset
     char   *pszProjection;
 
   public:
-        MSGNDataset();
-               ~MSGNDataset();
+    MSGNDataset();
+    ~MSGNDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
 
@@ -117,7 +119,7 @@ class MSGNRasterBand final: public GDALRasterBand
 
   public:
 
-        MSGNRasterBand( MSGNDataset *, int , open_mode_type mode, int orig_band_no, int band_in_file);
+    MSGNRasterBand( MSGNDataset *, int , open_mode_type mode, int orig_band_no, int band_in_file);
 
     virtual CPLErr IReadBlock( int, int, void * ) override;
     virtual double GetMinimum( int *pbSuccess = nullptr ) override;
@@ -186,7 +188,7 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     const int i_nBlockYOff = poDS->GetRasterYSize() - 1 - nBlockYOff;
 
     const int nSamples = static_cast<int>((bytes_per_line * 8) / 10);
-    if (poGDS->m_eHRVDealWithSplit == NOT_HRV && nRasterXSize != nSamples )
+    if (poGDS->m_Shape == WHOLE_DISK && nRasterXSize != nSamples )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "nRasterXSize %d != nSamples %d", nRasterXSize, nSamples);
@@ -215,7 +217,7 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     SUB_VISIRLINE* p = (SUB_VISIRLINE*) pszRecord;
     to_native(*p);
 
-    if (p->lineValidity != 1  || poGDS->m_eHRVDealWithSplit != NOT_HRV) {  // Split lines are not full width, so NODATA all first
+    if (p->lineValidity != 1  || poGDS->m_Shape != WHOLE_DISK) {  // Split lines are not full width, so NODATA all first
         for (int c=0; c < nBlockXSize; c++) {
             if (open_mode != MODE_RAD) {
                 ((GUInt16 *)pImage)[c] = (GUInt16)MSGN_NODATA_VALUE;
@@ -226,12 +228,13 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     }
 
     if ( nread != data_length ||
-         (p->lineNumberInVisirGrid - ((open_mode == MODE_HRV && poGDS->m_eHRVDealWithSplit == HRV_RSS) ?
+         (p->lineNumberInVisirGrid - ((open_mode == MODE_HRV && poGDS->m_Shape == RSS) ?
                                       (3 * poGDS->msg_reader_core->get_line_start()) - 2 :
                                       poGDS->msg_reader_core->get_line_start())) != (unsigned int)i_nBlockYOff )
     {
-        CPLDebug("MSGN", "Deal with split %s", poGDS->m_eHRVDealWithSplit == HRV_RSS ? "RSS" :
-                 (poGDS->m_eHRVDealWithSplit ? "whole" : "no") );
+        CPLDebug("MSGN", "Shape %s", poGDS->m_Shape == RSS ? "RSS" :
+                 (poGDS->m_Shape == WHOLE_DISK ? "whole" : "split HRV"));
+
         CPLDebug("MSGN", "nread = %lu, data_len %d, linenum %d, start %d, offset %d",
                 (long unsigned int) nread, // Mingw_w64 otherwise wants %llu - MSG read will never exceed 32 bits
                  data_length,
@@ -253,7 +256,7 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
     if (open_mode != MODE_RAD) {
         int shift = 0;
-        if( poGDS->m_eHRVDealWithSplit != NOT_HRV )
+        if( poGDS->m_Shape == SPLIT_HRV )
             shift = i_nBlockYOff < poGDS->m_nHRVSplitLine ? poGDS->m_nHRVLowerShiftX : poGDS->m_nHRVUpperShiftX;
         for (int c=0; c < nSamples; c++) {
             unsigned short value = 0;
@@ -356,9 +359,6 @@ MSGNDataset::~MSGNDataset()
 CPLErr MSGNDataset::GetGeoTransform( double * padfTransform )
 
 {
-    if( m_open_mode == MODE_HRV && m_eHRVDealWithSplit != NOT_HRV )
-        return CE_Failure;
-
     for (int i=0; i < 6; i++) {
         padfTransform[i] = adfGeoTransform[i];
     }
@@ -373,9 +373,6 @@ CPLErr MSGNDataset::GetGeoTransform( double * padfTransform )
 const char *MSGNDataset::_GetProjectionRef()
 
 {
-    if( m_open_mode == MODE_HRV && m_eHRVDealWithSplit != NOT_HRV )
-        return "";
-
     return pszProjection;
 }
 
@@ -476,6 +473,11 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
         const auto& idr = poDS->msg_reader_core->get_image_description_record();
         // Check if the split layout of the HRV channel meets our expectations
         // to re-assemble it in a consistent way
+        CPLDebug("MSGN", "HRV raw col %d raster X %d raster Y %d",
+                 nRawHRVColumns,
+                 poDS->nRasterXSize,
+                 poDS->nRasterYSize);
+
         if( idr.plannedCoverage_hrv.lowerSouthLinePlanned == 1 &&
             idr.plannedCoverage_hrv.lowerNorthLinePlanned > 1 &&
             idr.plannedCoverage_hrv.lowerNorthLinePlanned < poDS->nRasterYSize &&
@@ -489,7 +491,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
             idr.plannedCoverage_hrv.upperWestColumnPlanned <= poDS->nRasterXSize * 3 )
         {
             poDS->nRasterXSize *= 3;
-            poDS->m_eHRVDealWithSplit = HRV_WHOLE_DISK;
+            poDS->m_Shape = SPLIT_HRV;
             poDS->m_nHRVSplitLine = idr.plannedCoverage_hrv.upperSouthLinePlanned;
             poDS->m_nHRVLowerShiftX = idr.plannedCoverage_hrv.lowerEastColumnPlanned - 1;
             poDS->m_nHRVUpperShiftX = idr.plannedCoverage_hrv.upperEastColumnPlanned - 1;
@@ -510,20 +512,57 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
                  )
         {
             poDS->nRasterXSize *= 3;
-            poDS->m_eHRVDealWithSplit = HRV_RSS;
-            poDS->m_nHRVSplitLine = poDS->nRasterYSize + 1; // never switch over...
-            poDS->m_nHRVLowerShiftX = idr.plannedCoverage_hrv.lowerEastColumnPlanned - 1;
-            poDS->m_nHRVUpperShiftX = 0; // should never be used - could set huge to trigger SEGV
+            poDS->m_Shape = RSS;
         }
         else
         {
-            // In practice, the number of columns of HRV seems to be 1.5x the one
-            // of VISIR bands, but derive it from the paquet header
-            poDS->nRasterXSize = nRawHRVColumns;
+          CPLError(CE_Failure, CPLE_AppDefined,
+                   "HRV neither Whole Disk nor RSS - don't know how to handle");
+          return nullptr;
         }
-        CPLDebug("MSGN", "Deal with split %s", poDS->m_eHRVDealWithSplit == HRV_RSS ? "RSS" :
-                 (poDS->m_eHRVDealWithSplit ? "whole" : "no"));
     }
+    else
+    {
+        const int nRawVisIRColumns = (poDS->msg_reader_core->get_visir_bytes_per_line() * 8) / 10;
+
+        const auto& idr = poDS->msg_reader_core->get_image_description_record();
+        // Check if the VisIR channel is RSS or not, and if it meets our expectations
+        // to re-assemble it in a consistent way
+        CPLDebug("MSGN", "raw col %d raster X %d raster Y %d",
+                 nRawVisIRColumns,
+                 poDS->nRasterXSize,
+                 poDS->nRasterYSize);
+
+        if( idr.plannedCoverage_visir.southernLinePlanned == 1 &&
+            idr.plannedCoverage_visir.northernLinePlanned == poDS->nRasterYSize &&
+            idr.plannedCoverage_visir.easternColumnPlanned >= 1 &&
+            idr.plannedCoverage_visir.westernColumnPlanned == idr.plannedCoverage_visir.easternColumnPlanned + nRawVisIRColumns - 1 &&
+            idr.plannedCoverage_visir.westernColumnPlanned <= poDS->nRasterXSize )
+        {
+            poDS->m_Shape = WHOLE_DISK;
+        }
+        else if( idr.plannedCoverage_visir.northernLinePlanned == idr.referencegrid_visir.numberOfLines && // start at max N
+                 // full expected width
+                 idr.plannedCoverage_visir.westernColumnPlanned == idr.plannedCoverage_visir.easternColumnPlanned + nRawVisIRColumns - 1 &&
+                 idr.plannedCoverage_visir.southernLinePlanned > 1 &&
+                 idr.plannedCoverage_visir.easternColumnPlanned >= 1 &&
+                 idr.plannedCoverage_visir.westernColumnPlanned <= poDS->nRasterXSize  &&
+                 // full height
+                 idr.plannedCoverage_visir.northernLinePlanned == idr.plannedCoverage_visir.southernLinePlanned + poDS->nRasterYSize -1
+                 )
+        {
+            poDS->m_Shape = RSS;
+        }
+        else
+        {
+          CPLError(CE_Failure, CPLE_AppDefined,
+                   "Neither Whole Disk nor RSS - don't know how to handle");
+          return nullptr;
+        }
+    }
+
+    CPLDebug("MSGN", "Shape %s", poDS->m_Shape == RSS ? "RSS" :
+             (poDS->m_Shape == WHOLE_DISK ? "whole" : "split HRV"));
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
@@ -565,11 +604,11 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
     {
       const auto& idr = poDS->msg_reader_core->get_image_description_record();
       /* there are a number of 'magic' constants below
-	 I trimmed them to get registration for MSG4, MSG3, MSG2 with country outlines  from
-	 http://ec.europa.eu/eurostat/web/gisco/geodata/reference-data/administrative-units-statistical-units
+         I trimmed them to get registration for MSG4, MSG3, MSG2 with country outlines  from
+         http://ec.europa.eu/eurostat/web/gisco/geodata/reference-data/administrative-units-statistical-units
 
-	 Adjust in two phases P1, P2.
-	 I describe direction as outline being NSEW of coast shape when number is changed
+         Adjust in two phases P1, P2.
+         I describe direction as outline being NSEW of coast shape when number is changed
       */
       
       if (open_mode != MODE_HRV) {
@@ -580,58 +619,56 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
       } else {
         pixel_gsd_x = 1000.0 * poDS->msg_reader_core->get_hrv_col_dir_step();  // convert from km to m
         pixel_gsd_y = 1000.0 * poDS->msg_reader_core->get_hrv_line_dir_step(); // convert from km to m
-	if (poDS->m_Shape == RSS)
-	  {
-	    origin_x = -pixel_gsd_x * (-(3*Conversions::nlines / 2.0) - idr.plannedCoverage_hrv.lowerEastColumnPlanned -1); // MSG3 HRV E-W -ve E
-	    origin_y = -pixel_gsd_y * ((3*Conversions::nlines / 2.0) - idr.plannedCoverage_hrv.lowerSouthLinePlanned+2);    //          N-S -ve S
-	  }
-	else
-	  {      
-	    origin_x = -pixel_gsd_x * (-(3*Conversions::nlines / 2.0) + 1*poDS->msg_reader_core->get_col_start()-3);  // MSG4, MSG2 HRV E-W -ve E
-	    origin_y = -pixel_gsd_y * ((3*Conversions::nlines / 2.0) - 1*poDS->msg_reader_core->get_line_start()+4);  //                N-S +ve S
-	  }
+        if (poDS->m_Shape == RSS)
+          {
+            origin_x = -pixel_gsd_x * (-(3*Conversions::nlines / 2.0) - idr.plannedCoverage_hrv.lowerEastColumnPlanned -1); // MSG3 HRV E-W -ve E
+            origin_y = -pixel_gsd_y * ((3*Conversions::nlines / 2.0) - idr.plannedCoverage_hrv.lowerSouthLinePlanned+2);    //          N-S -ve S
+          }
+        else
+          {      
+            origin_x = -pixel_gsd_x * (-(3*Conversions::nlines / 2.0) + 1*poDS->msg_reader_core->get_col_start()-3);  // MSG4, MSG2 HRV E-W -ve E
+            origin_y = -pixel_gsd_y * ((3*Conversions::nlines / 2.0) - 1*poDS->msg_reader_core->get_line_start()+4);  //                N-S +ve S
+          }
       }
 
-    poDS->adfGeoTransform[0] = origin_x;
-    poDS->adfGeoTransform[1] = pixel_gsd_x;
-    poDS->adfGeoTransform[2] = 0.0;
+      /* the conversion to lat/long is in two parts:
+         pixels to m (around imaginary circle r=sta height) in the geo projection (affine transformation)
+         geo to lat/long via the GEOS projection (in WKT) and the ellipsoid
+         
+         CGMS/DOC/12/0017 section 4.4.2
+      */
+       
+      poDS->adfGeoTransform[0] = -origin_x;
+      poDS->adfGeoTransform[1] = pixel_gsd_x;
+      poDS->adfGeoTransform[2] = 0.0;
+      
+      poDS->adfGeoTransform[3] = -origin_y;
+      poDS->adfGeoTransform[4] = 0.0;
+      poDS->adfGeoTransform[5] = -pixel_gsd_y;
+      
+      OGRSpatialReference oSRS;
 
-    poDS->adfGeoTransform[3] = origin_y;
-    poDS->adfGeoTransform[4] = 0.0;
-    poDS->adfGeoTransform[5] = -pixel_gsd_y;
-
-    OGRSpatialReference oSRS;
-
-    {
-      const auto& idr = poDS->msg_reader_core->get_image_description_record();
       //int i;
       for (i=0; i<6; ++i)
-	{
-	  printf("adf transform %12.3f\n", poDS->adfGeoTransform[i]);
-	}
-      printf("RASTER X %d Y %d\n", poDS->nRasterXSize,  poDS->nRasterYSize);
-      printf("GEOS centres X %f Y %f\n",  origin_x + pixel_gsd_x * ( poDS->nRasterXSize /2),
-	     origin_y - pixel_gsd_y * ( poDS->nRasterYSize /2));
-      printf("GEOS new centres X %f Y %f\n",
-	     origin_x + pixel_gsd_x * ( poDS->nRasterXSize /2 + (idr.referencegrid_hrv.numberOfColumns - idr.plannedCoverage_hrv.lowerWestColumnPlanned) * ((open_mode != MODE_HRV) ? 1.5 : 0.5)),
-	     origin_y - pixel_gsd_y * ( poDS->nRasterYSize /2 + idr.plannedCoverage_hrv.lowerSouthLinePlanned *  ((open_mode != MODE_HRV) ? 1.5 : 0.5)));
-      printf("GEOS avg centres X %f Y %f\n",
-	     origin_x + pixel_gsd_x * ( idr.plannedCoverage_hrv.lowerWestColumnPlanned + idr.plannedCoverage_hrv.lowerEastColumnPlanned)/2 * ((open_mode != MODE_HRV) ? 1.5 : 0.5),
-	     origin_y - pixel_gsd_y * ( idr.plannedCoverage_hrv.lowerSouthLinePlanned + idr.plannedCoverage_hrv.lowerSouthLinePlanned) /2*  ((open_mode != MODE_HRV) ? 1.5 : 0.5));
+        {
+          CPLDebugOnly("MSGN", "adf transform %12.3f\n", poDS->adfGeoTransform[i]);
+        }
+      
+      oSRS.SetProjCS("Geostationary projection (MSG)");
 
       oSRS.SetGeogCS(
-		     "MSG Ellipsoid",
-		     "MSG_DATUM",
-		     "MSG_SPHEROID",
-		     Conversions::req * 1000.0,  // SetGeogCS doesn't specify length units, so all must be the same - here m.
-		     1.0/Conversions::oblate // 1 / ( 1 - Conversions::rpol/Conversions::req)
-		     );
+                     "MSG Ellipsoid",
+                     "MSG_DATUM",
+                     "MSG_SPHEROID",
+                     Conversions::req * 1000.0,  // SetGeogCS doesn't specify length units, so all must be the same - here m.
+                     1.0/Conversions::oblate // 1 / ( 1 - Conversions::rpol/Conversions::req)
+                     );
 
       oSRS.SetGEOS(  idr.longitudeOfSSP, (Conversions::altitude - Conversions::req) * 1000.0,  // we're using metres as length unit
-		     0.0 ,
-		     // false northing to handle the fact RSS is only 1/3 disk
-		     pixel_gsd_y *((poDS->m_Shape == RSS) ? ((open_mode != MODE_HRV)  ?
-							     -(idr.plannedCoverage_visir.southernLinePlanned -1) : // MSG-3 vis/NIR N-S P2 
+                     0.0 ,
+                     // false northing to handle the fact RSS is only 1/3 disk
+                     pixel_gsd_y *((poDS->m_Shape == RSS) ? ((open_mode != MODE_HRV)  ?
+                                                             -(idr.plannedCoverage_visir.southernLinePlanned -1) : // MSG-3 vis/NIR N-S P2 
                                                              -(idr.plannedCoverage_hrv.lowerSouthLinePlanned +1)) : // MSG-3 HRV N-S P2 -ve N
                                    0.0 ));
  
@@ -665,7 +702,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
          poDS->msg_reader_core->get_line_start(),
          poDS->msg_reader_core->get_col_start()
     );
-    poDS->SetMetadataItem("Origin", field);
+    //poDS->SetMetadataItem("Origin", field);
 
     if (open_info != poOpenInfo) {
         delete open_info;

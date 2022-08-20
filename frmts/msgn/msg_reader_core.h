@@ -122,6 +122,8 @@ protected:
 
     float           _col_dir_step;
     float           _line_dir_step;
+    float           _hrv_col_dir_step;
+    float           _hrv_line_dir_step;
 
     MAIN_PROD_HEADER        _main_header;
     SECONDARY_PROD_HEADER   _sec_header;

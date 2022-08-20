@@ -329,6 +329,7 @@ public:
     static const double altitude;   // from origin
     static const double req;        // earth equatorial radius
     static const double rpol;       // earth polar radius
+    static const double dtp2;       // square of the distance to the equatorial tangent point
     static const double oblate;     // oblateness of earth
     static const double deg_to_rad;
     static const double rad_to_deg;
@@ -339,6 +340,9 @@ public:
     static const int LFAC;     // Line scale factor
     static const int COFF;     // Column offset
     static const int LOFF;     // Line offset
+    static const double CFAC_scaled; // divided by 2^16
+    static const double LFAC_scaled;
+
 };
 
 } // msg_native_format
