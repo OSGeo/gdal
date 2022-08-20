@@ -28,11 +28,7 @@
 
 #include "cpl_port.h"
 
-#ifdef GDAL_CMAKE_BUILD
 #include "gdal_version_full/gdal_version.h"
-#else
-#include "gdal_version.h"
-#endif
 
 #include "filegdbtable.h"
 
