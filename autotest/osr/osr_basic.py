@@ -2215,3 +2215,16 @@ def test_osr_basic_epsg_horizontal_and_ellipsoidal_height():
     sr = osr.SpatialReference()
     assert sr.SetFromUserInput("EPSG:3157+4617") == ogr.OGRERR_NONE
     assert sr.GetAxesCount() == 3
+
+
+###############################################################################
+# Test SRS_PP_CENTRAL_MERIDIAN with a CRS that has only a WKT2 representation
+
+
+def test_osr_basic_eqearth_central_meridian():
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput(
+        "+proj=eqearth +lon_0=150 +x_0=0 +y_0=0 +R=6371008.7714 +units=m +type=crs"
+    )
+    assert srs.GetProjParm(osr.SRS_PP_CENTRAL_MERIDIAN, 0) == 150
