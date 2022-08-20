@@ -51,6 +51,7 @@ apidoc_module_dir = "../../swig/python"
 apidoc_output_dir = "api/python"
 apidoc_excluded_paths = [
     "osgeo/utils.py",
+    "osgeo/gdalnumeric.py",
     "trimmedsysconfig.py",
     "setup.py",
     "get_python_lib.py",
