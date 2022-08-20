@@ -2870,6 +2870,37 @@ def test_gdalwarp_lib_issue_with_te_and_geographic_crs_world_coverage():
 
 
 ###############################################################################
+
+
+def test_gdalwarp_lib_epsg_4326_to_esri_53037():
+
+    # Scenario of https://github.com/OSGeo/gdal/issues/6155
+    src_ds = gdal.GetDriverByName("MEM").Create("", 10800, 5400)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    src_ds.SetSpatialRef(srs)
+    src_ds.SetGeoTransform([-180, 0.033333333333330, 0, 90, 0, -0.033333333333330])
+    # Expension of ESRI:53037 (proj.db of old PROJ releases don't know it)
+    out_ds = gdal.Warp(
+        "",
+        src_ds,
+        format="VRT",
+        dstSRS="+proj=eqearth +lon_0=150 +x_0=0 +y_0=0 +R=6371008.7714 +units=m +type=crs",
+    )
+    assert out_ds.GetGeoTransform() == pytest.approx(
+        (
+            -17243961.61291527,
+            3176.540597910281,
+            0.0,
+            8392929.693707585,
+            0.0,
+            -3176.540597910281,
+        )
+    )
+
+
+###############################################################################
 # Cleanup
 
 
