@@ -463,7 +463,7 @@ void Msg_reader_core::read_metadata_block(VSILFILE* fin) {
     VSIFReadL(&trailer, sizeof(TRAILER), 1, fin) != 1)
     {
     _open_success = false;
-    fprintf(stderr, "Trailer fail\n");
+    fprintf(stderr, "Trailer fail\n");/*ok*/
     return;
     }
     
