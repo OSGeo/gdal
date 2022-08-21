@@ -321,7 +321,10 @@ bool VSIGZipHandle::CloseBaseHandle()
 {
     bool bRet = true;
     if( m_poBaseHandle )
-        bRet = VSIFCloseL(reinterpret_cast<VSILFILE*>(m_poBaseHandle)) == 0;
+    {
+        bRet = m_poBaseHandle->Close() == 0;
+        delete m_poBaseHandle;
+    }
     m_poBaseHandle = nullptr;
     return bRet;
 }
@@ -358,14 +361,14 @@ VSIGZipHandle::VSIGZipHandle( VSIVirtualHandle* poBaseHandle,
     }
     else
     {
-        if( VSIFSeekL(reinterpret_cast<VSILFILE*>(poBaseHandle), 0, SEEK_END) != 0 )
+        if( poBaseHandle->Seek(0, SEEK_END) != 0 )
             CPLError(CE_Failure, CPLE_FileIO, "Seek() failed");
-        m_compressed_size = VSIFTellL(reinterpret_cast<VSILFILE*>(poBaseHandle)) - offset;
+        m_compressed_size = poBaseHandle->Tell() - offset;
         compressed_size = m_compressed_size;
     }
     offsetEndCompressedData = offset + compressed_size;
 
-    if( VSIFSeekL(reinterpret_cast<VSILFILE*>(poBaseHandle), offset, SEEK_SET) != 0 )
+    if( poBaseHandle->Seek(offset, SEEK_SET) != 0 )
         CPLError(CE_Failure, CPLE_FileIO, "Seek() failed");
 
     stream.zalloc = nullptr;
@@ -394,7 +397,7 @@ VSIGZipHandle::VSIGZipHandle( VSIVirtualHandle* poBaseHandle,
     stream.avail_out = static_cast<uInt>(Z_BUFSIZE);
 
     if( offset == 0 ) check_header();  // Skip the .gz header.
-    startOff = VSIFTellL(reinterpret_cast<VSILFILE*>(poBaseHandle)) - stream.avail_in;
+    startOff = poBaseHandle->Tell() - stream.avail_in;
 
     if( transparent == 0 )
     {
@@ -417,7 +420,7 @@ void VSIGZipHandle::SaveInfo_unlocked()
     {
         VSIFilesystemHandler *poFSHandler =
             VSIFileManager::GetHandler( "/vsigzip/" );
-        reinterpret_cast<VSIGZipFilesystemHandler*>(poFSHandler)->
+        cpl::down_cast<VSIGZipFilesystemHandler*>(poFSHandler)->
                                                     SaveInfo_unlocked(this);
         m_bCanSaveInfo = false;
     }
@@ -433,7 +436,7 @@ VSIGZipHandle::~VSIGZipHandle()
     {
         VSIFilesystemHandler *poFSHandler =
             VSIFileManager::GetHandler( "/vsigzip/" );
-        reinterpret_cast<VSIGZipFilesystemHandler*>(poFSHandler)->
+        cpl::down_cast<VSIGZipFilesystemHandler*>(poFSHandler)->
             SaveInfo(this);
     }
 
@@ -460,8 +463,7 @@ VSIGZipHandle::~VSIGZipHandle()
     }
     CPLFree(m_pszBaseFileName);
 
-    if( m_poBaseHandle )
-        CPL_IGNORE_RET_VAL(VSIFCloseL(reinterpret_cast<VSILFILE*>(m_poBaseHandle)));
+    CloseBaseHandle();
 }
 
 /************************************************************************/
@@ -478,25 +480,23 @@ void VSIGZipHandle::check_header()
     {
         if( len ) inbuf[0] = stream.next_in[0];
         errno = 0;
-        len = static_cast<uInt>(
-            VSIFReadL(inbuf + len, 1, static_cast<size_t>(Z_BUFSIZE) >> len,
-                      reinterpret_cast<VSILFILE*>(m_poBaseHandle)));
+        len = static_cast<uInt>(m_poBaseHandle->Read(
+            inbuf + len, 1, static_cast<size_t>(Z_BUFSIZE) >> len));
 #ifdef ENABLE_DEBUG
         CPLDebug("GZIP", CPL_FRMT_GUIB " " CPL_FRMT_GUIB,
-                 VSIFTellL(reinterpret_cast<VSILFILE*>(m_poBaseHandle)),
+                 m_poBaseHandle->Tell(),
                  offsetEndCompressedData);
 #endif
-        if( VSIFTellL(reinterpret_cast<VSILFILE*>(m_poBaseHandle)) > offsetEndCompressedData )
+        if( m_poBaseHandle->Tell() > offsetEndCompressedData )
         {
             len = len + static_cast<uInt>(
-                offsetEndCompressedData - VSIFTellL(reinterpret_cast<VSILFILE*>(m_poBaseHandle)));
-            if( VSIFSeekL(reinterpret_cast<VSILFILE*>(m_poBaseHandle),
-                          offsetEndCompressedData, SEEK_SET) != 0 )
+                offsetEndCompressedData - m_poBaseHandle->Tell());
+            if( m_poBaseHandle->Seek(offsetEndCompressedData, SEEK_SET) != 0 )
                 z_err = Z_DATA_ERROR;
         }
         if( len == 0 )  // && ferror(file)
         {
-            if( VSIFTellL(reinterpret_cast<VSILFILE*>(m_poBaseHandle)) !=
+            if( m_poBaseHandle->Tell() !=
                 offsetEndCompressedData )
                 z_err = Z_ERRNO;
         }
@@ -579,23 +579,23 @@ int VSIGZipHandle::get_byte()
                       reinterpret_cast<VSILFILE*>(m_poBaseHandle)));
 #ifdef ENABLE_DEBUG
         CPLDebug("GZIP", CPL_FRMT_GUIB " " CPL_FRMT_GUIB,
-                 VSIFTellL(reinterpret_cast<VSILFILE*>(m_poBaseHandle)),
+                 m_poBaseHandle->Tell(),
                  offsetEndCompressedData);
 #endif
-        if( VSIFTellL(reinterpret_cast<VSILFILE*>(m_poBaseHandle)) > offsetEndCompressedData )
+        if( m_poBaseHandle->Tell() > offsetEndCompressedData )
         {
             stream.avail_in =
                 stream.avail_in +
                 static_cast<uInt>(
                     offsetEndCompressedData -
-                    VSIFTellL(reinterpret_cast<VSILFILE*>(m_poBaseHandle)));
+                    m_poBaseHandle->Tell());
             if( VSIFSeekL(reinterpret_cast<VSILFILE*>(m_poBaseHandle),
                           offsetEndCompressedData, SEEK_SET) != 0 )
                 return EOF;
         }
         if( stream.avail_in == 0 ) {
             z_eof = 1;
-            if( VSIFTellL(reinterpret_cast<VSILFILE*>(m_poBaseHandle)) !=
+            if( m_poBaseHandle->Tell() !=
                 offsetEndCompressedData )
                 z_err = Z_ERRNO;
             // if( ferror(file) ) z_err = Z_ERRNO;
@@ -962,7 +962,7 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize,
         if( stream.avail_in == 0 && !z_eof )
         {
             vsi_l_offset posInBaseHandle =
-                VSIFTellL(reinterpret_cast<VSILFILE*>(m_poBaseHandle));
+                m_poBaseHandle->Tell();
             if( posInBaseHandle - startOff > m_compressed_size )
             {
                 // If we reach here, file size has changed (because at
@@ -1013,17 +1013,17 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize,
                 VSIFReadL(inbuf, 1, Z_BUFSIZE, reinterpret_cast<VSILFILE*>(m_poBaseHandle)));
 #ifdef ENABLE_DEBUG
             CPLDebug("GZIP", CPL_FRMT_GUIB " " CPL_FRMT_GUIB,
-                     VSIFTellL(reinterpret_cast<VSILFILE*>(m_poBaseHandle)),
+                     m_poBaseHandle->Tell(),
                      offsetEndCompressedData);
 #endif
-            if( VSIFTellL(reinterpret_cast<VSILFILE*>(m_poBaseHandle)) > offsetEndCompressedData )
+            if( m_poBaseHandle->Tell() > offsetEndCompressedData )
             {
 #ifdef ENABLE_DEBUG
                 CPLDebug("GZIP", "avail_in before = %d", stream.avail_in);
 #endif
                 stream.avail_in =
                     stream.avail_in -
-                    static_cast<uInt>(VSIFTellL(reinterpret_cast<VSILFILE*>(m_poBaseHandle)) -
+                    static_cast<uInt>(m_poBaseHandle->Tell() -
                                       offsetEndCompressedData);
                 if( VSIFSeekL(reinterpret_cast<VSILFILE*>(m_poBaseHandle),
                               offsetEndCompressedData, SEEK_SET) != 0 )
@@ -1035,7 +1035,7 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize,
             if( stream.avail_in == 0 )
             {
                 z_eof = 1;
-                if( VSIFTellL(reinterpret_cast<VSILFILE*>(m_poBaseHandle)) !=
+                if( m_poBaseHandle->Tell() !=
                     offsetEndCompressedData )
                 {
                     z_err = Z_ERRNO;
