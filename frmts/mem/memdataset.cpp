@@ -782,7 +782,7 @@ CPLErr MEMDataset::IBuildOverviews( const char *pszResampling,
 /*      involved.                                                       */
 /* -------------------------------------------------------------------- */
     if( nOverviews > 1 &&
-        (STARTS_WITH_CI(pszResampling, "AVER") |
+        (STARTS_WITH_CI(pszResampling, "AVER") ||
          STARTS_WITH_CI(pszResampling, "GAUSS") ||
          EQUAL(pszResampling, "CUBIC") ||
          EQUAL(pszResampling, "CUBICSPLINE") ||
