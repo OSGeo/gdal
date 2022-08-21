@@ -800,7 +800,7 @@ def VectorTranslateOptions(options=None, format=None,
 
     Parameters
     ----------
-    options: 
+    options:
         can be be an array of strings, a string or let empty and filled from other keywords.
     format:
         format ("ESRI Shapefile", etc...)
@@ -1258,7 +1258,7 @@ def GridOptions(options=None, format=None,
         Z value + Z increase value. The default value is 0.
     z_multiply:
         Multiplication ratio for Z field. This can be used for shift from e.g. foot to meters
-        or from  elevation to deep. The result value will be 
+        or from  elevation to deep. The result value will be
         (Z value + Z increase value) * Z multiply value. The default value is 1.
     callback:
         callback method
@@ -2324,6 +2324,7 @@ class GCP(object):
       return base
 
 
+
 # Register GCP in _gdal:
 _gdal.GCP_swigregister(GCP)
 
@@ -3301,9 +3302,9 @@ class MDArray(object):
                ('i', 4): GDT_Int32,
                ('I', 4): GDT_UInt32,
                ('l', 4): GDT_Int32,
-    # ('l',8): GDT_Int64,
-    # ('q',8): GDT_Int64,
-    # ('Q',8): GDT_UInt64,
+    # ('l', 8): GDT_Int64,
+    # ('q', 8): GDT_Int64,
+    # ('Q', 8): GDT_UInt64,
                ('f', 4): GDT_Float32,
                ('d', 8): GDT_Float64
             }
