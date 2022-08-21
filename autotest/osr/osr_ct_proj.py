@@ -665,3 +665,23 @@ def test_transform_bounds__internal_error_message():
         (62.36651782187522, 8.701995124479733, 63.605850064663514, 11.449280848814887)
     )
     assert gdal.GetLastErrorMsg() == ""
+
+
+def test_transform_bounds__epsg_4326_to_esri_53037():
+    """Check that we take into account lon_0=150"""
+
+    src = osr.SpatialReference()
+    src.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
+    assert src.ImportFromEPSG(4326) == 0
+
+    dst = osr.SpatialReference()
+    # Expension of ESRI:53037 (proj.db of old PROJ releases don't know it)
+    dst.SetFromUserInput(
+        "+proj=eqearth +lon_0=150 +x_0=0 +y_0=0 +R=6371008.7714 +units=m +type=crs"
+    )
+
+    ctr = osr.CoordinateTransformation(src, dst)
+    assert ctr.TransformBounds(-90, -180, 90, 180, 21) == pytest.approx(
+        (-17243953.787082285, -8392929.693707585, 17243953.787082285, 8392929.693707585)
+    )
+    assert gdal.GetLastErrorMsg() == ""
