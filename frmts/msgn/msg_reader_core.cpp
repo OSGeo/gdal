@@ -190,7 +190,7 @@ void Msg_reader_core::read_metadata_block(VSILFILE* fin) {
     CPL_IGNORE_RET_VAL(VSIFReadL(&_main_header, sizeof(_main_header), 1, fin));
     CPL_IGNORE_RET_VAL(VSIFReadL(&_sec_header, sizeof(_sec_header), 1, fin));
 
-    PH_DATA_ID* hdi = (PH_DATA_ID*)&_main_header.dataSetIdentification;
+    PH_DATA_ID* hdi;
 
 #ifdef DEBUG
     // print out all the fields in the header
@@ -201,10 +201,12 @@ void Msg_reader_core::read_metadata_block(VSILFILE* fin) {
         hd++;
     }
 
+    hdi = (PH_DATA_ID*)&_main_header.dataSetIdentification;
     for (i=0; i < 5; i++) {
         printf("%s %s %s", hdi->name, hdi->size, hdi->address);/*ok*/
         hdi++;
     }
+    
     hd = (PH_DATA*)(&_main_header.totalFileSize);
     for (i=0; i < 19; i++) {
         to_string(*hd);
