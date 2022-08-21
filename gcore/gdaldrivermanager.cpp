@@ -47,11 +47,7 @@
 #include "gdal_alg_priv.h"
 #include "gdal.h"
 #include "gdal_pam.h"
-#ifdef GDAL_CMAKE_BUILD
 #include "gdal_version_full/gdal_version.h"
-#else
-#include "gdal_version.h"
-#endif
 #include "gdal_thread_pool.h"
 #include "ogr_srs_api.h"
 #include "ograpispy.h"
@@ -779,7 +775,7 @@ char** GDALDriverManager::GetSearchPaths(const char* pszGDAL_DRIVER_PATH)
  *
  * Auto loading can be completely disabled by setting the GDAL_DRIVER_PATH
  * config option to "disable".
- * 
+ *
  * Starting with gdal 3.5, the default search path $(prefix)/lib/gdalplugins
  * can be overridden at compile time by passing -DINSTALL_PLUGIN_DIR=/another/path
  * to cmake.
