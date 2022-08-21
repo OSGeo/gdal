@@ -48,7 +48,6 @@ const unsigned int      RADIOMETRICPROCESSING_RECORD_OFFSET =
 typedef int             INTEGER;                    // 32 bits
 typedef unsigned int    UNSIGNED;                   // 32 bits
 typedef unsigned short  USHORT;                     // 16 bits
-typedef unsigned char   TIME_CDS_SHORT[6];
 typedef unsigned char   TIME_CDS_EXPANDED[10];
 typedef unsigned char   EBYTE;                      // enumerated byte
 typedef unsigned char   UBYTE;                      // enumerated byte
@@ -63,6 +62,11 @@ typedef unsigned char       GP_SVCE_TYPE;     // 8 bits, enumerated
 
 // all structures must be packed on byte boundaries
 #pragma pack(1)
+
+typedef struct {
+    USHORT day;
+    UNSIGNED ms;
+} TIME_CDS_SHORT;
 
 typedef struct {
     unsigned char qualifier1;
@@ -82,6 +86,7 @@ typedef struct {
     char address[16];
 } PH_DATA_ID;
 
+// 1.1.3.3 in MSG_native_format_1_5.doc
 typedef struct {
     PH_DATA     formatName;
     PH_DATA     formatDocumentName;
@@ -112,6 +117,7 @@ typedef struct {
     PH_DATA     udsp;
 } MAIN_PROD_HEADER;
 
+// 1.1.3.4
 typedef struct {
     PH_DATA     abid;
     PH_DATA     smod;
@@ -129,6 +135,7 @@ typedef struct {
     PH_DATA     westColumnSelectedRectangle;
 } SECONDARY_PROD_HEADER;
 
+//1.1.3.7 and 1.1.3.8
 typedef struct {
     UBYTE       visirlineVersion;
     GP_SC_ID    satelliteId;
@@ -167,6 +174,7 @@ typedef struct {
     GP_SC_ID    spacecraftId;
 } GP_PK_SH1;
 
+// 7.2.5 in image data format
 typedef struct {
     double  cal_slope;
     double  cal_offset;
@@ -183,6 +191,7 @@ typedef struct {
     // rest of structure omitted for now
 } RADIOMETRIC_PROCESSING_RECORD;
 
+// 7.2.4
 typedef struct {
     INTEGER     numberOfLines;
     INTEGER     numberOfColumns;
@@ -219,6 +228,77 @@ typedef struct {
     // rest of record omitted, for now
 } IMAGE_DESCRIPTION_RECORD;
 
+typedef struct {
+    UBYTE          nominalImageScanning;
+    UBYTE          reducedScan;
+    TIME_CDS_SHORT forwardScanStart;
+    TIME_CDS_SHORT forwardScanEnd;
+} ACTUAL_SCANNING_SUMMARY_RECORD ;
+
+typedef struct {
+    UBYTE     nominalBehaviour;
+    UBYTE     radScanIrregularity;
+    UBYTE     radStoppage;
+    UBYTE     repeatCycleNotCompleted;
+    UBYTE     gainChangeTookPlace;
+    UBYTE     decontaminationTookPlace;
+    UBYTE     noBBCalibrationAchieved;
+    UBYTE     incorrectTemperature;
+    UBYTE     invalidBBData;
+    UBYTE     invalidAuxOrHKTMData;
+    UBYTE     refocusingMechanismActuated;
+    UBYTE     mirrorBackToReferencePos;
+} RADIOMETER_BEHAVIOUR_RECORD;
+
+typedef struct {
+    UNSIGNED    plannedNumberOfL10Lines[12];
+    UNSIGNED    numberOfMissingL10Lines[12];
+    UNSIGNED    numberOfCorruptedL10Lines[12];
+    UNSIGNED    numberOfReplacedL10Lines[12];
+}RECEPTION_SUMMARY_STATS_RECORD  ;
+
+typedef struct {
+    UBYTE     nominalImage;
+    UBYTE     nonNominalBecauseIncomplete;
+    UBYTE     nonNominalRadiometricQuality;
+    UBYTE     nonNominalGeometricQuality;
+    UBYTE     nonNominalTimeliness;
+    UBYTE     incompleteL15;
+} L15_IMAGE_VALIDITY_RECORD;
+
+typedef struct {
+    INTEGER    southernLineActual;
+    INTEGER    northernLineActual;
+    INTEGER    easternColumnActual;
+    INTEGER    westernColumnActual;
+} ACTUAL_L15_COVERAGE_VISIR_RECORD;
+
+typedef struct {
+    INTEGER    lowerSouthLineActual;
+    INTEGER    lowerNorthLineActual;
+    INTEGER    lowerEastColumnActual;
+    INTEGER    lowerWestColumnActual;
+    INTEGER    upperSouthLineActual;
+    INTEGER    upperNorthLineActual;
+    INTEGER    upperEastColumnActual;
+    INTEGER    upperWestColumnActual;
+} ACTUAL_L15_COVERAGE_HRV_RECORD;
+    
+typedef struct {
+    GP_SC_ID                         satelliteId;
+    ACTUAL_SCANNING_SUMMARY_RECORD   actualScanningSummary;
+    RADIOMETER_BEHAVIOUR_RECORD      radiometerBehaviour;
+    RECEPTION_SUMMARY_STATS_RECORD   receptionSummaryStats;
+    L15_IMAGE_VALIDITY_RECORD        l15ImageValidity[12];
+    ACTUAL_L15_COVERAGE_VISIR_RECORD actualL15CoverageVisir;
+    ACTUAL_L15_COVERAGE_HRV_RECORD   actualL15CoverageHrv;
+} IMAGE_PRODUCTION_STATS_RECORD;
+
+typedef struct {
+    UBYTE       trailerHeaderVersion;
+    IMAGE_PRODUCTION_STATS_RECORD imageProductionStats;
+    // skip the rest - only after actual line/col values
+} TRAILER;
 // disable byte-packing
 #pragma pack()
 
@@ -228,6 +308,8 @@ void to_native(GP_PK_SH1& h);
 void to_native(SUB_VISIRLINE& v);
 void to_native(RADIOMETRIC_PROCESSING_RECORD& r);
 void to_native(IMAGE_DESCRIPTION_RECORD& r);
+void to_native(ACTUAL_L15_COVERAGE_VISIR_RECORD& r);
+void to_native(ACTUAL_L15_COVERAGE_HRV_RECORD& r);
 
 // utility function, alters string fields permanently
 void to_string(PH_DATA& d);
@@ -246,7 +328,10 @@ public:
     static const double altitude;   // from origin
     static const double req;        // earth equatorial radius
     static const double rpol;       // earth polar radius
+    static const double dtp2;       // square of the distance to the equatorial tangent point
     static const double oblate;     // oblateness of earth
+    static const double eccentricity2;// eccentricity squared
+    static const double ratio2;     // (rpol/req)^2
     static const double deg_to_rad;
     static const double rad_to_deg;
     static const double step;       // pixel / line step in degrees
@@ -256,6 +341,9 @@ public:
     static const int LFAC;     // Line scale factor
     static const int COFF;     // Column offset
     static const int LOFF;     // Line offset
+    static const double CFAC_scaled; // divided by 2^16
+    static const double LFAC_scaled;
+
 };
 
 } // msg_native_format
