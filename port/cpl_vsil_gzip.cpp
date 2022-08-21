@@ -2214,7 +2214,7 @@ VSIVirtualHandle* VSIGZipFilesystemHandler::Open( const char *pszFilename,
 bool VSIGZipFilesystemHandler::SupportsSequentialWrite( const char* pszPath, bool bAllowLocalTempFile )
 {
     if( !STARTS_WITH_CI(pszPath, "/vsigzip/") )
-        return pszPath;
+        return false;
     const char* pszBaseFileName = pszPath + strlen("/vsigzip/");
     VSIFilesystemHandler *poFSHandler =
         VSIFileManager::GetHandler(pszBaseFileName);
