@@ -50,7 +50,7 @@ def test_gdalsrsinfo_1():
     assert err is None or err == "", "got error/warning"
 
     assert ret.find("PROJ.4 :") != -1, ret
-    assert ret.find("OGC WKT2:2018 :") != -1, ret
+    assert ret.find("OGC WKT2:2019 :") != -1, ret
 
 
 ###############################################################################
@@ -386,7 +386,7 @@ def test_gdalsrsinfo_all():
     assert "PROJ.4 :" in ret, ret
     assert "OGC WKT1 :" in ret, ret
     assert "OGC WKT2:2015 :" in ret, ret
-    assert "OGC WKT2:2018 :" in ret, ret
+    assert "OGC WKT2:2019 :" in ret, ret
     assert "OGC WKT1 (simple) :" in ret, ret
     assert "OGC WKT1 (no CT) :" in ret, ret
     assert "ESRI WKT :" in ret, ret
