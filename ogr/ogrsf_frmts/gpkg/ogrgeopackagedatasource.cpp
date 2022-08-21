@@ -372,7 +372,8 @@ OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef(int iSrsId,
     // Try to import first from EPSG code, and then from WKT
     if( !(pszOrganization && pszOrganizationCoordsysID
           && EQUAL(pszOrganization, "EPSG") &&
-          atoi(pszOrganizationCoordsysID) == iSrsId &&
+          (atoi(pszOrganizationCoordsysID) == iSrsId ||
+           (dfCoordinateEpoch > 0 && strstr(pszWkt, "DYNAMIC[") == nullptr)) &&
           GDALGPKGImportFromEPSG(poSpatialRef, atoi(pszOrganizationCoordsysID))
           == OGRERR_NONE) &&
         poSpatialRef->importFromWkt(pszWkt) != OGRERR_NONE )
@@ -635,9 +636,11 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
 
     // Translate SRS to WKT.
     CPLCharUniquePtr pszWKT1;
-    CPLCharUniquePtr pszWKT2;
+    CPLCharUniquePtr pszWKT2_2015;
+    CPLCharUniquePtr pszWKT2_2019;
     const char* const apszOptionsWkt1[] = { "FORMAT=WKT1_GDAL", nullptr };
-    const char* const apszOptionsWkt2[] = { "FORMAT=WKT2_2015", nullptr };
+    const char* const apszOptionsWkt2_2015[] = { "FORMAT=WKT2_2015", nullptr };
+    const char* const apszOptionsWkt2_2019[] = { "FORMAT=WKT2_2019", nullptr };
 
     std::string osEpochTest;
     if( oSRS.GetCoordinateEpoch() > 0 && m_bHasEpochColumn )
@@ -658,15 +661,24 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
     }
     {
         char* pszTmp = nullptr;
-        poSRS->exportToWkt( &pszTmp, apszOptionsWkt2 );
-        pszWKT2.reset(pszTmp);
-        if( pszWKT2 && pszWKT2.get()[0] == '\0' )
+        poSRS->exportToWkt( &pszTmp, apszOptionsWkt2_2015 );
+        pszWKT2_2015.reset(pszTmp);
+        if( pszWKT2_2015 && pszWKT2_2015.get()[0] == '\0' )
         {
-            pszWKT2.reset();
+            pszWKT2_2015.reset();
+        }
+    }
+    {
+        char* pszTmp = nullptr;
+        poSRS->exportToWkt( &pszTmp, apszOptionsWkt2_2019 );
+        pszWKT2_2019.reset(pszTmp);
+        if( pszWKT2_2019 && pszWKT2_2019.get()[0] == '\0' )
+        {
+            pszWKT2_2019.reset();
         }
     }
 
-    if( !pszWKT1 && !pszWKT2 )
+    if( !pszWKT1 && !pszWKT2_2015 && !pszWKT2_2019 )
     {
         return DEFAULT_SRID;
     }
@@ -674,20 +686,25 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
     if( oSRS.GetCoordinateEpoch() == 0 || m_bHasEpochColumn )
     {
         // Search if there is already an existing entry with this WKT
-        if( m_bHasDefinition12_063 && pszWKT2 )
+        if( m_bHasDefinition12_063 && (pszWKT2_2015 || pszWKT2_2019))
         {
             if( pszWKT1 )
             {
                 pszSQL = sqlite3_mprintf(
                         "SELECT srs_id FROM gpkg_spatial_ref_sys WHERE "
-                        "(definition = '%q' OR definition_12_063 = '%q')%s",
-                        pszWKT1.get(), pszWKT2.get(), osEpochTest.c_str() );
+                        "(definition = '%q' OR definition_12_063 IN ('%q','%q'))%s",
+                        pszWKT1.get(),
+                        pszWKT2_2015 ? pszWKT2_2015.get() : "invalid",
+                        pszWKT2_2019 ? pszWKT2_2019.get() : "invalid",
+                        osEpochTest.c_str() );
             }
             else
             {
                 pszSQL = sqlite3_mprintf(
                         "SELECT srs_id FROM gpkg_spatial_ref_sys WHERE "
-                        "definition_12_063 = '%q'%s", pszWKT2.get(),
+                        "definition_12_063 IN ('%q', '%q')%s",
+                        pszWKT2_2015 ? pszWKT2_2015.get() : "invalid",
+                        pszWKT2_2019 ? pszWKT2_2019.get() : "invalid",
                         osEpochTest.c_str() );
             }
         }
@@ -751,7 +768,8 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
         }
     }
 
-    if( !m_bHasDefinition12_063 && pszWKT1 == nullptr && pszWKT2 != nullptr )
+    if( !m_bHasDefinition12_063 && pszWKT1 == nullptr &&
+        (pszWKT2_2015 != nullptr || pszWKT2_2019 != nullptr))
     {
         if( !ConvertGpkgSpatialRefSysToExtensionWkt2() )
         {
@@ -816,6 +834,10 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
     // Add new SRS row to gpkg_spatial_ref_sys.
     if( m_bHasDefinition12_063 )
     {
+        // Force WKT2_2019 when we have a dynamic CRS and coordinate epoch
+        const char* pszWKT2 = oSRS.IsDynamic() && oSRS.GetCoordinateEpoch() > 0 && pszWKT2_2019 ? pszWKT2_2019.get() :
+                              pszWKT2_2015 ? pszWKT2_2015.get() : pszWKT2_2019.get();
+
         if( pszAuthorityName != nullptr && nAuthorityCode > 0 )
         {
             pszSQL = sqlite3_mprintf(
@@ -826,7 +848,7 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
                 osEpochColumn.c_str(),
                 GetSrsName(*poSRS), nSRSId, pszAuthorityName, nAuthorityCode,
                 pszWKT1 ? pszWKT1.get() : "undefined",
-                pszWKT2 ? pszWKT2.get() : "undefined",
+                pszWKT2 ? pszWKT2 : "undefined",
                 osEpochVal.c_str());
         }
         else
@@ -839,7 +861,7 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
                 osEpochColumn.c_str(),
                 GetSrsName(*poSRS), nSRSId, "NONE", nSRSId,
                 pszWKT1 ? pszWKT1.get() : "undefined",
-                pszWKT2 ? pszWKT2.get() : "undefined",
+                pszWKT2 ? pszWKT2 : "undefined",
                 osEpochVal.c_str());
         }
     }

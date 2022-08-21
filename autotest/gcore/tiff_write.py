@@ -1985,21 +1985,19 @@ def test_tiff_write_63():
 
 def test_tiff_write_64():
 
-    ds = gdaltest.tiff_drv.Create('tmp/tiff_write_64.tif', 1, 1, 1)
+    ds = gdaltest.tiff_drv.Create("tmp/tiff_write_64.tif", 1, 1, 1)
     srs = osr.SpatialReference()
-    srs.SetFromUserInput('WGS84')
-    ds.SetProjection(srs.ExportToWkt())
+    srs.SetFromUserInput("WGS84")
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    ds.SetSpatialRef(srs)
     ds = None
 
-    ds = gdal.Open('tmp/tiff_write_64.tif')
-    wkt = ds.GetProjection()
+    ds = gdal.Open("tmp/tiff_write_64.tif")
+    got_srs = ds.GetSpatialRef()
+    assert got_srs.IsSame(srs)
     ds = None
 
-    expected_wkt = """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]"""
-
-    assert wkt == expected_wkt, 'coordinate system does not exactly match.'
-
-    gdaltest.tiff_drv.Delete('tmp/tiff_write_64.tif')
+    gdaltest.tiff_drv.Delete("tmp/tiff_write_64.tif")
 
 ###############################################################################
 # Verify that we can write XML metadata.
