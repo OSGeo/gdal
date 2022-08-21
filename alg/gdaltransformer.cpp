@@ -935,7 +935,7 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
 /* -------------------------------------------------------------------- */
             const GDALReprojectionTransformInfo* psRTI =
                 static_cast<const GDALReprojectionTransformInfo*>(pGIPTI->pReprojectArg);
-            const auto poTargetCRS = psRTI->poForwardTransform->GetTargetCS();
+            const OGRSpatialReference* poTargetCRS = psRTI->poForwardTransform->GetTargetCS();
             if( poTargetCRS != nullptr &&
                 psRTI->poReverseTransform != nullptr &&
                 poTargetCRS->IsGeographic() &&
@@ -986,6 +986,44 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
                 {
                     poSetter.reset();
                     GDALRefreshGenImgProjTransformer(pTransformArg);
+                    pGIPTI =
+                        static_cast<const GDALGenImgProjTransformInfo*>(pTransformArg);
+                    psRTI =
+                        static_cast<const GDALReprojectionTransformInfo*>(pGIPTI->pReprojectArg);
+                    poTargetCRS = psRTI->poForwardTransform->GetTargetCS();
+                }
+            }
+
+            // Use TransformBounds() to handle more particular cases
+            const auto poSourceCRS = psRTI->poForwardTransform->GetSourceCS();
+            if( poSourceCRS != nullptr &&
+                poTargetCRS != nullptr &&
+                pGIPTI->adfSrcGeoTransform[1] != 0 &&
+                pGIPTI->adfSrcGeoTransform[2] == 0 &&
+                pGIPTI->adfSrcGeoTransform[4] == 0 &&
+                pGIPTI->adfSrcGeoTransform[5] != 0 )
+            {
+                const double dfULX = pGIPTI->adfSrcGeoTransform[0];
+                const double dfULY = pGIPTI->adfSrcGeoTransform[3];
+                const double dfLRX = dfULX + pGIPTI->adfSrcGeoTransform[1] * nInXSize;
+                const double dfLRY = dfULY + pGIPTI->adfSrcGeoTransform[5] * nInYSize;
+                const double dfMinSrcX = std::min(dfULX, dfLRX);
+                const double dfMinSrcY = std::min(dfULY, dfLRY);
+                const double dfMaxSrcX = std::max(dfULX, dfLRX);
+                const double dfMaxSrcY = std::max(dfULY, dfLRY);
+                double dfTmpMinXOut = std::numeric_limits<double>::max();
+                double dfTmpMinYOut = std::numeric_limits<double>::max();
+                double dfTmpMaxXOut = std::numeric_limits<double>::min();
+                double dfTmpMaxYOut = std::numeric_limits<double>::min();
+                if( psRTI->poForwardTransform->TransformBounds(
+                    dfMinSrcX, dfMinSrcY, dfMaxSrcX, dfMaxSrcY,
+                    &dfTmpMinXOut, &dfTmpMinYOut, &dfTmpMaxXOut, &dfTmpMaxYOut,
+                    2) ) // minimum number of points as we already have a logic above to sample
+                {
+                    dfMinXOut = std::min(dfMinXOut, dfTmpMinXOut);
+                    dfMinYOut = std::min(dfMinYOut, dfTmpMinYOut);
+                    dfMaxXOut = std::max(dfMaxXOut, dfTmpMaxXOut);
+                    dfMaxYOut = std::max(dfMaxYOut, dfTmpMaxYOut);
                 }
             }
         }
@@ -2284,6 +2322,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         if( pszSrcCoordEpoch )
         {
             aosOptions.SetNameValue("SRC_COORDINATE_EPOCH", pszSrcCoordEpoch);
+            oSrcSRS.SetCoordinateEpoch(CPLAtof(pszSrcCoordEpoch));
         }
 
         const char* pszDstCoordEpoch = CSLFetchNameValue(papszOptions,
@@ -2291,6 +2330,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         if( pszDstCoordEpoch )
         {
             aosOptions.SetNameValue("DST_COORDINATE_EPOCH", pszDstCoordEpoch);
+            oDstSRS.SetCoordinateEpoch(CPLAtof(pszDstCoordEpoch));
         }
 
         psInfo->pReprojectArg =

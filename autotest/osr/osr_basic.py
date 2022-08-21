@@ -1998,3 +1998,16 @@ def test_osr_basic_get_linear_units_compound_engineering_crs():
 
     assert srs.GetLinearUnits() == pytest.approx(0.304800609601219)
     assert srs.GetLinearUnitsName() == "US survey foot"
+
+
+###############################################################################
+# Test SRS_PP_CENTRAL_MERIDIAN with a CRS that has only a WKT2 representation
+
+
+def test_osr_basic_eqearth_central_meridian():
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput(
+        "+proj=eqearth +lon_0=150 +x_0=0 +y_0=0 +R=6371008.7714 +units=m +type=crs"
+    )
+    assert srs.GetProjParm(osr.SRS_PP_CENTRAL_MERIDIAN, 0) == 150
