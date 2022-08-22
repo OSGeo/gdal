@@ -144,6 +144,8 @@ mkdir odbc-cpp-wrapper \
   && cd odbc-cpp-wrapper/build \
   && cmake .. \
   && make -j 2 \
-  && make install
+  && make install \
+  && cd ../.. \
+  && rm -rf odbc-cpp-wrapper
 
 ldconfig

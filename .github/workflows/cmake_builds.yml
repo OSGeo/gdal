@@ -82,7 +82,9 @@ jobs:
           && cd odbc-cpp-wrapper/build \
           && /usr/bin/cmake .. \
           && make -j 2 \
-          && sudo make install
+          && sudo make install \
+          && cd ../.. \
+          && rm -rf odbc-cpp-wrapper
         sudo ldconfig
         #
         # Install Arrow C++
