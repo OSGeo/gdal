@@ -389,11 +389,6 @@ if (MINGW AND BUILD_SHARED_LIBS)
     set_target_properties(${GDAL_LIB_TARGET_NAME} PROPERTIES SUFFIX "-${GDAL_SOVERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}")
 endif ()
 
-
-if (MSVC AND NOT BUILD_SHARED_LIBS)
-  target_compile_definitions(${GDAL_LIB_TARGET_NAME} PUBLIC CPL_DISABLE_DLL=)
-endif ()
-
 if (MINGW)
   if (TARGET_CPU MATCHES "x86_64")
     add_definitions(-m64)

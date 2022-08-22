@@ -180,6 +180,9 @@
 /* Define to 1 if the compiler supports -Wzero-as-null-pointer-constant */
 #cmakedefine HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT @HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT@
 
+/* Define if building a static windows lib */
+#cmakedefine CPL_DISABLE_DLL @CPL_DISABLE_DLL@
+
 /* Define to 1 if you have the <atlbase.h> header file. */
 #cmakedefine HAVE_ATLBASE_H 1
 
