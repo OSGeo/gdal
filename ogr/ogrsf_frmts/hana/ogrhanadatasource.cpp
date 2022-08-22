@@ -37,6 +37,7 @@
 #include "odbc/ResultSet.h"
 #include "odbc/ResultSetMetaData.h"
 #include "odbc/Statement.h"
+#include "odbc/StringConverter.h"
 
 #include <algorithm>
 #include <iterator>
@@ -755,7 +756,7 @@ void OGRHanaDataSource::CreateTable(
               + ", PRIMARY KEY ( " + QuotedIdentifier(fidName) + "));";
     }
 
-    ExecuteSQL(sql.c_str());
+    ExecuteSQL(sql);
 }
 
 /************************************************************************/
@@ -873,10 +874,12 @@ void OGRHanaDataSource::Commit()
 /*                            ExecuteSQL()                              */
 /************************************************************************/
 
-void OGRHanaDataSource::ExecuteSQL(const char* sql)
+void OGRHanaDataSource::ExecuteSQL(const CPLString& sql)
 {
+    std::u16string sqlUtf16 = odbc::StringConverter::utf8ToUtf16(
+        sql.c_str(), sql.length());
     odbc::StatementRef stmt = conn_->createStatement();
-    stmt->execute(sql);
+    stmt->execute(sqlUtf16.c_str());
     conn_->commit();
 }
 
@@ -1391,7 +1394,7 @@ void OGRHanaDataSource::CreateSpatialReferenceSystem(
         Literal(wkt).c_str(),
         Literal(proj4).c_str());
 
-    ExecuteSQL(sql.c_str());
+    ExecuteSQL(sql);
 }
 
 /************************************************************************/
@@ -1441,7 +1444,7 @@ void OGRHanaDataSource::CreateParseArrayFunctions(const char* schemaName)
 
     CPLString sql = replaceAll(
         parseStringArrayFunc, "{SCHEMA}", QuotedIdentifier(schemaName));
-    ExecuteSQL(sql.c_str());
+    ExecuteSQL(sql);
 
     // clang-format off
     const CPLString parseTypeArrayFunc =
@@ -1478,7 +1481,7 @@ void OGRHanaDataSource::CreateParseArrayFunctions(const char* schemaName)
     {
         if (type == "STRING")
             continue;
-        ExecuteSQL(replaceAll(sql, "{TYPE}", type).c_str());
+        ExecuteSQL(replaceAll(sql, "{TYPE}", type));
     }
 }
 
