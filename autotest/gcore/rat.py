@@ -32,8 +32,9 @@
 
 
 import gdaltest
-from osgeo import gdal
 import pytest
+
+from osgeo import gdal
 
 ###############################################################################
 # Create a raster attribute table.
@@ -45,11 +46,11 @@ def test_rat_1():
 
     try:
         rat = gdal.RasterAttributeTable()
-    except:
+    except Exception:
         pytest.skip()
 
-    rat.CreateColumn('Value', gdal.GFT_Integer, gdal.GFU_MinMax)
-    rat.CreateColumn('Count', gdal.GFT_Integer, gdal.GFU_PixelCount)
+    rat.CreateColumn("Value", gdal.GFT_Integer, gdal.GFU_MinMax)
+    rat.CreateColumn("Count", gdal.GFT_Integer, gdal.GFU_PixelCount)
 
     rat.SetRowCount(3)
     rat.SetValueAsInt(0, 0, 10)
@@ -61,21 +62,22 @@ def test_rat_1():
 
     rat2 = rat.Clone()
 
-    assert rat2.GetColumnCount() == 2, 'wrong column count'
+    assert rat2.GetColumnCount() == 2, "wrong column count"
 
-    assert rat2.GetRowCount() == 3, 'wrong row count'
+    assert rat2.GetRowCount() == 3, "wrong row count"
 
-    assert rat2.GetNameOfCol(1) == 'Count', 'wrong column name'
+    assert rat2.GetNameOfCol(1) == "Count", "wrong column name"
 
-    assert rat2.GetUsageOfCol(1) == gdal.GFU_PixelCount, 'wrong column usage'
+    assert rat2.GetUsageOfCol(1) == gdal.GFU_PixelCount, "wrong column usage"
 
-    assert rat2.GetTypeOfCol(1) == gdal.GFT_Integer, 'wrong column type'
+    assert rat2.GetTypeOfCol(1) == gdal.GFT_Integer, "wrong column type"
 
-    assert rat2.GetRowOfValue(11.0) == 1, 'wrong row for value'
+    assert rat2.GetRowOfValue(11.0) == 1, "wrong row for value"
 
-    assert rat2.GetValueAsInt(1, 1) == 200, 'wrong field value.'
+    assert rat2.GetValueAsInt(1, 1) == 200, "wrong field value."
 
     gdaltest.saved_rat = rat
+
 
 ###############################################################################
 # Save a RAT in a file, written to .aux.xml, read it back and check it.
@@ -86,42 +88,42 @@ def test_rat_2():
     if gdaltest.saved_rat is None:
         pytest.skip()
 
-    ds = gdal.GetDriverByName('PNM').Create('tmp/rat_2.pnm', 100, 90, 1,
-                                            gdal.GDT_Byte)
+    ds = gdal.GetDriverByName("PNM").Create("tmp/rat_2.pnm", 100, 90, 1, gdal.GDT_Byte)
     ds.GetRasterBand(1).SetDefaultRAT(gdaltest.saved_rat)
 
     ds = None
 
-    ds = gdal.Open('tmp/rat_2.pnm', gdal.GA_Update)
+    ds = gdal.Open("tmp/rat_2.pnm", gdal.GA_Update)
     rat2 = ds.GetRasterBand(1).GetDefaultRAT()
 
-    assert rat2.GetColumnCount() == 2, 'wrong column count'
+    assert rat2.GetColumnCount() == 2, "wrong column count"
 
-    assert rat2.GetRowCount() == 3, 'wrong row count'
+    assert rat2.GetRowCount() == 3, "wrong row count"
 
-    assert rat2.GetNameOfCol(1) == 'Count', 'wrong column name'
+    assert rat2.GetNameOfCol(1) == "Count", "wrong column name"
 
-    assert rat2.GetUsageOfCol(1) == gdal.GFU_PixelCount, 'wrong column usage'
+    assert rat2.GetUsageOfCol(1) == gdal.GFU_PixelCount, "wrong column usage"
 
-    assert rat2.GetTypeOfCol(1) == gdal.GFT_Integer, 'wrong column type'
+    assert rat2.GetTypeOfCol(1) == gdal.GFT_Integer, "wrong column type"
 
-    assert rat2.GetRowOfValue(11.0) == 1, 'wrong row for value'
+    assert rat2.GetRowOfValue(11.0) == 1, "wrong row for value"
 
-    assert rat2.GetValueAsInt(1, 1) == 200, 'wrong field value.'
+    assert rat2.GetValueAsInt(1, 1) == 200, "wrong field value."
 
     # unset the RAT
     ds.GetRasterBand(1).SetDefaultRAT(None)
 
     ds = None
 
-    ds = gdal.Open('tmp/rat_2.pnm')
+    ds = gdal.Open("tmp/rat_2.pnm")
     rat = ds.GetRasterBand(1).GetDefaultRAT()
     ds = None
-    assert rat is None, 'expected a NULL RAT.'
+    assert rat is None, "expected a NULL RAT."
 
-    gdal.GetDriverByName('PNM').Delete('tmp/rat_2.pnm')
+    gdal.GetDriverByName("PNM").Delete("tmp/rat_2.pnm")
 
     gdaltest.saved_rat = None
+
 
 ###############################################################################
 # Save an empty RAT (#5451)
@@ -129,11 +131,12 @@ def test_rat_2():
 
 def test_rat_3():
 
-    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/rat_3.tif', 1, 1)
+    ds = gdal.GetDriverByName("GTiff").Create("/vsimem/rat_3.tif", 1, 1)
     ds.GetRasterBand(1).SetDefaultRAT(gdal.RasterAttributeTable())
     ds = None
 
-    gdal.GetDriverByName('GTiff').Delete('/vsimem/rat_3.tif')
+    gdal.GetDriverByName("GTiff").Delete("/vsimem/rat_3.tif")
+
 
 ###############################################################################
 # Edit an existing RAT (#3783)
@@ -142,17 +145,17 @@ def test_rat_3():
 def test_rat_4():
 
     # Create test RAT
-    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/rat_4.tif', 1, 1)
+    ds = gdal.GetDriverByName("GTiff").Create("/vsimem/rat_4.tif", 1, 1)
     rat = gdal.RasterAttributeTable()
-    rat.CreateColumn('VALUE', gdal.GFT_Integer, gdal.GFU_MinMax)
-    rat.CreateColumn('CLASS', gdal.GFT_String, gdal.GFU_Name)
+    rat.CreateColumn("VALUE", gdal.GFT_Integer, gdal.GFU_MinMax)
+    rat.CreateColumn("CLASS", gdal.GFT_String, gdal.GFU_Name)
     rat.SetValueAsInt(0, 0, 111)
-    rat.SetValueAsString(0, 1, 'Class1')
+    rat.SetValueAsString(0, 1, "Class1")
     ds.GetRasterBand(1).SetDefaultRAT(rat)
     ds = None
 
     # Verify
-    ds = gdal.OpenEx('/vsimem/rat_4.tif')
+    ds = gdal.OpenEx("/vsimem/rat_4.tif")
     gdal_band = ds.GetRasterBand(1)
     rat = gdal_band.GetDefaultRAT()
     assert rat.GetValueAsInt(0, 0) == 111
@@ -160,23 +163,24 @@ def test_rat_4():
 
     # Replace existing RAT
     rat = gdal.RasterAttributeTable()
-    rat.CreateColumn('VALUE', gdal.GFT_Integer, gdal.GFU_MinMax)
-    rat.CreateColumn('CLASS', gdal.GFT_String, gdal.GFU_Name)
+    rat.CreateColumn("VALUE", gdal.GFT_Integer, gdal.GFU_MinMax)
+    rat.CreateColumn("CLASS", gdal.GFT_String, gdal.GFU_Name)
     rat.SetValueAsInt(0, 0, 222)
-    rat.SetValueAsString(0, 1, 'Class1')
-    ds = gdal.OpenEx('/vsimem/rat_4.tif', gdal.OF_RASTER | gdal.OF_UPDATE)
+    rat.SetValueAsString(0, 1, "Class1")
+    ds = gdal.OpenEx("/vsimem/rat_4.tif", gdal.OF_RASTER | gdal.OF_UPDATE)
     gdal_band = ds.GetRasterBand(1)
     gdal_band.SetDefaultRAT(rat)
     ds = None
 
     # Verify
-    ds = gdal.OpenEx('/vsimem/rat_4.tif')
+    ds = gdal.OpenEx("/vsimem/rat_4.tif")
     gdal_band = ds.GetRasterBand(1)
     rat = gdal_band.GetDefaultRAT()
     assert rat is not None
     assert rat.GetValueAsInt(0, 0) == 222
     ds = None
 
-    gdal.GetDriverByName('GTiff').Delete('/vsimem/rat_4.tif')
+    gdal.GetDriverByName("GTiff").Delete("/vsimem/rat_4.tif")
+
 
 ##############################################################################

@@ -33,24 +33,23 @@ import contextlib
 import math
 import os
 import os.path
-from queue import Queue
 import shlex
 import socket
 import stat
 import subprocess
 import sys
-from threading import Thread
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from queue import Queue
+from threading import Thread
 
 import pytest
 
-from osgeo import gdal
-from osgeo import osr
+from osgeo import gdal, osr
 
-cur_name = 'default'
+cur_name = "default"
 
 success_counter = 0
 failure_counter = 0
@@ -87,15 +86,17 @@ argv = gdal.GeneralCmdLineProcessor(sys.argv)
 
 def git_status():
 
-    out, _ = runexternal_out_and_err('git status --porcelain .')
+    out, _ = runexternal_out_and_err("git status --porcelain .")
     return out
 
 
 ###############################################################################
 
+
 def get_lineno_2framesback(frames):
     try:
         import inspect
+
         frame = inspect.currentframe()
         while frames > 0:
             frame = frame.f_back
@@ -105,6 +106,7 @@ def get_lineno_2framesback(frames):
     except ImportError:
         return -1
 
+
 ###############################################################################
 
 
@@ -113,23 +115,25 @@ def post_reason(msg, frames=2):
     global reason
 
     if lineno >= 0:
-        reason = 'line %d: %s' % (lineno, msg)
+        reason = "line %d: %s" % (lineno, msg)
     else:
         reason = msg
+
 
 ###############################################################################
 
 
 def clean_tmp():
-    all_files = os.listdir('tmp')
+    all_files = os.listdir("tmp")
     for filename in all_files:
-        if filename in ['CVS', 'do-not-remove']:
+        if filename in ["CVS", "do-not-remove"]:
             continue
 
         try:
-            os.remove('tmp/' + filename)
+            os.remove("tmp/" + filename)
         except OSError:
             pass
+
 
 ###############################################################################
 
@@ -138,13 +142,26 @@ def testCreateCopyInterruptCallback(pct, message, user_data):
     # pylint: disable=unused-argument
     return pct <= 0.5
 
+
 ###############################################################################
 
 
 class GDALTest(object):
-    def __init__(self, drivername, filename, band, chksum,
-                 xoff=0, yoff=0, xsize=0, ysize=0, options=None,
-                 filename_absolute=0, chksum_after_reopening=None, open_options=None):
+    def __init__(
+        self,
+        drivername,
+        filename,
+        band,
+        chksum,
+        xoff=0,
+        yoff=0,
+        xsize=0,
+        ysize=0,
+        options=None,
+        filename_absolute=0,
+        chksum_after_reopening=None,
+        open_options=None,
+    ):
         self.driver = None
         self.drivername = drivername
         self.filename = filename
@@ -171,12 +188,21 @@ class GDALTest(object):
         if self.driver is None:
             self.driver = gdal.GetDriverByName(self.drivername)
             if self.driver is None:
-                pytest.skip(self.drivername + ' driver not found!')
+                pytest.skip(self.drivername + " driver not found!")
 
-    def testOpen(self, check_prj=None, check_gt=None, gt_epsilon=None,
-                 check_stat=None, check_approx_stat=None,
-                 stat_epsilon=None, skip_checksum=None, check_min=None,
-                 check_max=None, check_filelist=True):
+    def testOpen(
+        self,
+        check_prj=None,
+        check_gt=None,
+        gt_epsilon=None,
+        check_stat=None,
+        check_approx_stat=None,
+        stat_epsilon=None,
+        skip_checksum=None,
+        check_min=None,
+        check_max=None,
+        check_filelist=True,
+    ):
         """check_prj - projection reference, check_gt - geotransformation
         matrix (tuple), gt_epsilon - geotransformation tolerance,
         check_stat - band statistics (tuple), stat_epsilon - statistics
@@ -186,46 +212,59 @@ class GDALTest(object):
         if self.filename_absolute:
             wrk_filename = self.filename
         else:
-            wrk_filename = 'data/' + self.filename
+            wrk_filename = "data/" + self.filename
 
         if self.open_options:
-            ds = gdal.OpenEx(wrk_filename, gdal.OF_RASTER, open_options=self.open_options)
+            ds = gdal.OpenEx(
+                wrk_filename, gdal.OF_RASTER, open_options=self.open_options
+            )
         else:
             ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
 
-        assert ds is not None, ('Failed to open dataset: ' + wrk_filename)
+        assert ds is not None, "Failed to open dataset: " + wrk_filename
 
-        assert ds.GetDriver().ShortName == gdal.GetDriverByName(self.drivername).ShortName, \
-            ('The driver of the returned dataset is %s instead of %s.' % (ds.GetDriver().ShortName, self.drivername))
+        assert (
+            ds.GetDriver().ShortName == gdal.GetDriverByName(self.drivername).ShortName
+        ), "The driver of the returned dataset is %s instead of %s." % (
+            ds.GetDriver().ShortName,
+            self.drivername,
+        )
 
         if self.xsize == 0 and self.ysize == 0:
             self.xsize = ds.RasterXSize
             self.ysize = ds.RasterYSize
 
-        if check_filelist and ds.GetDriver().GetMetadataItem('DCAP_VIRTUALIO') is not None:
+        if (
+            check_filelist
+            and ds.GetDriver().GetMetadataItem("DCAP_VIRTUALIO") is not None
+        ):
             fl = ds.GetFileList()
             if fl is not None and fl and wrk_filename == fl[0]:
 
                 # Copy all files in /vsimem/
                 mainfile_dirname = os.path.dirname(fl[0])
                 for filename in fl:
-                    target_filename = '/vsimem/tmp_testOpen/' + filename[len(mainfile_dirname) + 1:]
+                    target_filename = (
+                        "/vsimem/tmp_testOpen/" + filename[len(mainfile_dirname) + 1 :]
+                    )
                     if stat.S_ISDIR(gdal.VSIStatL(filename).mode):
                         gdal.Mkdir(target_filename, 0)
                     else:
-                        f = gdal.VSIFOpenL(filename, 'rb')
-                        assert f is not None, ('File %s does not exist' % filename)
+                        f = gdal.VSIFOpenL(filename, "rb")
+                        assert f is not None, "File %s does not exist" % filename
                         gdal.VSIFSeekL(f, 0, 2)
                         size = gdal.VSIFTellL(f)
                         gdal.VSIFSeekL(f, 0, 0)
                         data = gdal.VSIFReadL(1, size, f)
                         gdal.VSIFCloseL(f)
                         if data is None:
-                            data = ''
+                            data = ""
                         gdal.FileFromMemBuffer(target_filename, data)
 
                 # Try to open the in-memory file
-                main_virtual_filename = '/vsimem/tmp_testOpen/' + os.path.basename(fl[0])
+                main_virtual_filename = "/vsimem/tmp_testOpen/" + os.path.basename(
+                    fl[0]
+                )
                 virtual_ds = gdal.Open(main_virtual_filename)
                 virtual_ds_is_None = virtual_ds is None
                 virtual_ds = None
@@ -235,24 +274,38 @@ class GDALTest(object):
                 drivers = []
                 for i in range(gdal.GetDriverCount()):
                     drv_name = gdal.GetDriver(i).ShortName
-                    if drv_name.lower() != self.drivername.lower() and not \
-                        ((drv_name.lower() == 'gif' and self.drivername.lower() == 'biggif') or
-                         (drv_name.lower() == 'biggif' and self.drivername.lower() == 'gif')):
+                    if drv_name.lower() != self.drivername.lower() and not (
+                        (
+                            drv_name.lower() == "gif"
+                            and self.drivername.lower() == "biggif"
+                        )
+                        or (
+                            drv_name.lower() == "biggif"
+                            and self.drivername.lower() == "gif"
+                        )
+                    ):
                         drivers += [drv_name]
-                other_ds = gdal.OpenEx(main_virtual_filename, gdal.OF_RASTER, allowed_drivers=drivers)
+                other_ds = gdal.OpenEx(
+                    main_virtual_filename, gdal.OF_RASTER, allowed_drivers=drivers
+                )
                 other_ds_is_None = other_ds is None
                 other_ds_driver_name = None
                 if not other_ds_is_None:
                     other_ds_driver_name = other_ds.GetDriver().ShortName
                 other_ds = None
 
-                for filename in gdal.ReadDirRecursive('/vsimem/tmp_testOpen'):
-                    gdal.Unlink('/vsimem/tmp_testOpen/' + filename)
+                for filename in gdal.ReadDirRecursive("/vsimem/tmp_testOpen"):
+                    gdal.Unlink("/vsimem/tmp_testOpen/" + filename)
 
-                assert not virtual_ds_is_None, \
-                    'File list is not complete or driver does not support /vsimem/'
-                assert other_ds_is_None, \
-                    ('When excluding %s, dataset is still opened by driver %s' % (self.drivername, other_ds_driver_name))
+                assert (
+                    not virtual_ds_is_None
+                ), "File list is not complete or driver does not support /vsimem/"
+                assert (
+                    other_ds_is_None
+                ), "When excluding %s, dataset is still opened by driver %s" % (
+                    self.drivername,
+                    other_ds_driver_name,
+                )
 
         # Do we need to check projection?
         if check_prj is not None:
@@ -264,10 +317,10 @@ class GDALTest(object):
             new_osr = osr.SpatialReference(wkt=new_prj)
 
             if not src_osr.IsSame(new_osr):
-                print('')
-                print('old = %s' % src_osr.ExportToPrettyWkt())
-                print('new = %s' % new_osr.ExportToPrettyWkt())
-                pytest.fail('Projections differ')
+                print("")
+                print("old = %s" % src_osr.ExportToPrettyWkt())
+                print("new = %s" % new_osr.ExportToPrettyWkt())
+                pytest.fail("Projections differ")
 
         # Do we need to check geotransform?
         if check_gt:
@@ -278,10 +331,10 @@ class GDALTest(object):
             new_gt = ds.GetGeoTransform()
             for i in range(6):
                 if new_gt[i] != pytest.approx(check_gt[i], abs=gt_epsilon):
-                    print('')
-                    print('old = ', check_gt)
-                    print('new = ', new_gt)
-                    pytest.fail('Geotransform differs.')
+                    print("")
+                    print("old = ", check_gt)
+                    print("new = ", new_gt)
+                    pytest.fail("Geotransform differs.")
 
         oBand = ds.GetRasterBand(self.band)
         if skip_checksum is None:
@@ -291,8 +344,7 @@ class GDALTest(object):
         if check_approx_stat:
             # Default to 1000th of pixel value range as our test value.
             if stat_epsilon is None:
-                stat_epsilon = \
-                    abs(check_approx_stat[1] - check_approx_stat[0]) / 1000.0
+                stat_epsilon = abs(check_approx_stat[1] - check_approx_stat[0]) / 1000.0
 
             new_stat = oBand.GetStatistics(1, 1)
             for i in range(4):
@@ -301,14 +353,15 @@ class GDALTest(object):
                 # because we need to support old and buggy Python 2.3.
                 # Tested on Linux, Mac OS X and Windows, with Python 2.3/2.4/2.5.
                 sv = str(new_stat[i]).lower()
-                assert not ('n' in sv or 'i' in sv or '#' in sv), \
-                    ('NaN or infinity value encountered \'%s\'.' % sv)
+                assert not ("n" in sv or "i" in sv or "#" in sv), (
+                    "NaN or infinity value encountered '%s'." % sv
+                )
 
                 if new_stat[i] != pytest.approx(check_approx_stat[i], abs=stat_epsilon):
-                    print('')
-                    print('old = ', check_approx_stat)
-                    print('new = ', new_stat)
-                    pytest.fail('Approximate statistics differs.')
+                    print("")
+                    print("old = ", check_approx_stat)
+                    print("new = ", new_stat)
+                    pytest.fail("Approximate statistics differs.")
 
         # Do we need to check statistics?
         if check_stat:
@@ -323,49 +376,67 @@ class GDALTest(object):
             for i in range(4):
 
                 sv = str(new_stat[i]).lower()
-                assert not ('n' in sv or 'i' in sv or '#' in sv), \
-                    ('NaN or infinity value encountered \'%s\'.' % sv)
+                assert not ("n" in sv or "i" in sv or "#" in sv), (
+                    "NaN or infinity value encountered '%s'." % sv
+                )
 
                 if new_stat[i] != pytest.approx(check_stat[i], abs=stat_epsilon):
-                    print('')
-                    print('old = ', check_stat)
-                    print('new = ', new_stat)
-                    pytest.fail('Statistics differs.')
+                    print("")
+                    print("old = ", check_stat)
+                    print("new = ", new_stat)
+                    pytest.fail("Statistics differs.")
 
         if check_min:
-            assert oBand.GetMinimum() == check_min, \
-                ('Unexpected minimum value %s' % str(oBand.GetMinimum()))
+            assert oBand.GetMinimum() == check_min, "Unexpected minimum value %s" % str(
+                oBand.GetMinimum()
+            )
 
         if check_max:
-            assert oBand.GetMaximum() == check_max, \
-                ('Unexpected maximum value %s' % str(oBand.GetMaximum()))
+            assert oBand.GetMaximum() == check_max, "Unexpected maximum value %s" % str(
+                oBand.GetMaximum()
+            )
 
         ds = None
 
-        assert not is_file_open(wrk_filename), 'file still open after dataset closing'
+        assert not is_file_open(wrk_filename), "file still open after dataset closing"
 
         if skip_checksum is not None:
             return
         if self.chksum is None or chksum == self.chksum:
             return
-        pytest.fail('Checksum for band %d in "%s" is %d, but expected %d.'
-                    % (self.band, self.filename, chksum, self.chksum))
+        pytest.fail(
+            'Checksum for band %d in "%s" is %d, but expected %d.'
+            % (self.band, self.filename, chksum, self.chksum)
+        )
 
-    def testCreateCopy(self, check_minmax=1, check_gt=0, check_srs=None,
-                       vsimem=0, new_filename=None, strict_in=0,
-                       skip_preclose_test=0, delete_copy=1, gt_epsilon=None,
-                       check_checksum_not_null=None, interrupt_during_copy=False,
-                       dest_open_options=None, quiet_error_handler=True):
+    def testCreateCopy(
+        self,
+        check_minmax=1,
+        check_gt=0,
+        check_srs=None,
+        vsimem=0,
+        new_filename=None,
+        strict_in=0,
+        skip_preclose_test=0,
+        delete_copy=1,
+        gt_epsilon=None,
+        check_checksum_not_null=None,
+        interrupt_during_copy=False,
+        dest_open_options=None,
+        quiet_error_handler=True,
+    ):
 
         self.testDriver()
 
         if self.filename_absolute:
             wrk_filename = self.filename
         else:
-            wrk_filename = 'data/' + self.filename
+            wrk_filename = "data/" + self.filename
 
         if self.open_options:
-            src_ds = gdal.OpenEx(wrk_filename, gdal.OF_RASTER, open_options=self.open_options)
+            src_ds = gdal.OpenEx(
+                wrk_filename, gdal.OF_RASTER, open_options=self.open_options
+            )
         else:
             src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
 
@@ -377,54 +448,67 @@ class GDALTest(object):
 
         if new_filename is None:
             if vsimem:
-                new_filename = '/vsimem/' + os.path.basename(self.filename) + '.tst'
+                new_filename = "/vsimem/" + os.path.basename(self.filename) + ".tst"
             else:
-                new_filename = 'tmp/' + os.path.basename(self.filename) + '.tst'
+                new_filename = "tmp/" + os.path.basename(self.filename) + ".tst"
 
         if quiet_error_handler:
-            gdal.PushErrorHandler('CPLQuietErrorHandler')
+            gdal.PushErrorHandler("CPLQuietErrorHandler")
         if interrupt_during_copy:
-            new_ds = self.driver.CreateCopy(new_filename, src_ds,
-                                            strict=strict_in,
-                                            options=self.options,
-                                            callback=testCreateCopyInterruptCallback)
+            new_ds = self.driver.CreateCopy(
+                new_filename,
+                src_ds,
+                strict=strict_in,
+                options=self.options,
+                callback=testCreateCopyInterruptCallback,
+            )
         else:
-            new_ds = self.driver.CreateCopy(new_filename, src_ds,
-                                            strict=strict_in,
-                                            options=self.options)
+            new_ds = self.driver.CreateCopy(
+                new_filename, src_ds, strict=strict_in, options=self.options
+            )
         if quiet_error_handler:
             gdal.PopErrorHandler()
 
         if interrupt_during_copy:
             if new_ds is None:
-                gdal.PushErrorHandler('CPLQuietErrorHandler')
+                gdal.PushErrorHandler("CPLQuietErrorHandler")
                 self.driver.Delete(new_filename)
                 gdal.PopErrorHandler()
                 return
             new_ds = None
             self.driver.Delete(new_filename)
-            pytest.fail('CreateCopy() should have failed due to interruption')
+            pytest.fail("CreateCopy() should have failed due to interruption")
 
-        assert new_ds is not None, ('Failed to create test file using CreateCopy method.' +
-                        '\n' + gdal.GetLastErrorMsg())
+        assert new_ds is not None, (
+            "Failed to create test file using CreateCopy method."
+            + "\n"
+            + gdal.GetLastErrorMsg()
+        )
 
-        assert new_ds.GetDriver().ShortName == gdal.GetDriverByName(self.drivername).ShortName, \
-            ('The driver of the returned dataset is %s instead of %s.' % (new_ds.GetDriver().ShortName, self.drivername))
+        assert (
+            new_ds.GetDriver().ShortName
+            == gdal.GetDriverByName(self.drivername).ShortName
+        ), "The driver of the returned dataset is %s instead of %s." % (
+            new_ds.GetDriver().ShortName,
+            self.drivername,
+        )
 
         if self.band > 0 and skip_preclose_test == 0:
             bnd = new_ds.GetRasterBand(self.band)
             if check_checksum_not_null is True:
-                assert bnd.Checksum() != 0, 'Got null checksum on still-open file.'
+                assert bnd.Checksum() != 0, "Got null checksum on still-open file."
             elif self.chksum is not None and bnd.Checksum() != self.chksum:
                 pytest.fail(
-                    'Did not get expected checksum on still-open file.\n'
-                    '    Got %d instead of %d.' % (bnd.Checksum(), self.chksum))
+                    "Did not get expected checksum on still-open file.\n"
+                    "    Got %d instead of %d." % (bnd.Checksum(), self.chksum)
+                )
             if check_minmax:
                 got_minmax = bnd.ComputeRasterMinMax()
-                assert got_minmax == minmax, \
-                    ('Did not get expected min/max values on still-open file.\n'
-                        '    Got %g,%g instead of %g,%g.'
-                        % (got_minmax[0], got_minmax[1], minmax[0], minmax[1]))
+                assert got_minmax == minmax, (
+                    "Did not get expected min/max values on still-open file.\n"
+                    "    Got %g,%g instead of %g,%g."
+                    % (got_minmax[0], got_minmax[1], minmax[0], minmax[1])
+                )
 
         bnd = None
         new_ds = None
@@ -432,26 +516,34 @@ class GDALTest(object):
         # hopefully it's closed now!
 
         if dest_open_options is not None:
-            new_ds = gdal.OpenEx(new_filename, gdal.OF_RASTER, open_options=dest_open_options)
+            new_ds = gdal.OpenEx(
+                new_filename, gdal.OF_RASTER, open_options=dest_open_options
+            )
         else:
             new_ds = gdal.Open(new_filename)
-        assert new_ds is not None, ('Failed to open dataset: ' + new_filename)
+        assert new_ds is not None, "Failed to open dataset: " + new_filename
 
         if self.band > 0:
             bnd = new_ds.GetRasterBand(self.band)
             if check_checksum_not_null is True:
-                assert bnd.Checksum() != 0, 'Got null checksum on reopened file.'
-            elif self.chksum_after_reopening is not None and bnd.Checksum() not in self.chksum_after_reopening:
-                pytest.fail('Did not get expected checksum on reopened file.\n'
-                            '    Got %d instead of %s.'
-                            % (bnd.Checksum(), str(self.chksum_after_reopening)))
+                assert bnd.Checksum() != 0, "Got null checksum on reopened file."
+            elif (
+                self.chksum_after_reopening is not None
+                and bnd.Checksum() not in self.chksum_after_reopening
+            ):
+                pytest.fail(
+                    "Did not get expected checksum on reopened file.\n"
+                    "    Got %d instead of %s."
+                    % (bnd.Checksum(), str(self.chksum_after_reopening))
+                )
 
             if check_minmax:
                 got_minmax = bnd.ComputeRasterMinMax()
-                assert got_minmax == minmax, \
-                    ('Did not get expected min/max values on reopened file.\n'
-                        '    Got %g,%g instead of %g,%g.'
-                        % (got_minmax[0], got_minmax[1], minmax[0], minmax[1]))
+                assert got_minmax == minmax, (
+                    "Did not get expected min/max values on reopened file.\n"
+                    "    Got %g,%g instead of %g,%g."
+                    % (got_minmax[0], got_minmax[1], minmax[0], minmax[1])
+                )
 
         # Do we need to check the geotransform?
         if check_gt:
@@ -460,16 +552,18 @@ class GDALTest(object):
             else:
                 eps = gt_epsilon
             new_gt = new_ds.GetGeoTransform()
-            if new_gt[0] != pytest.approx(src_gt[0], abs=eps) \
-               or new_gt[1] != pytest.approx(src_gt[1], abs=eps) \
-               or new_gt[2] != pytest.approx(src_gt[2], abs=eps) \
-               or new_gt[3] != pytest.approx(src_gt[3], abs=eps) \
-               or new_gt[4] != pytest.approx(src_gt[4], abs=eps) \
-               or new_gt[5] != pytest.approx(src_gt[5], abs=eps):
-                print('')
-                print('old = ', src_gt)
-                print('new = ', new_gt)
-                pytest.fail('Geotransform differs.')
+            if (
+                new_gt[0] != pytest.approx(src_gt[0], abs=eps)
+                or new_gt[1] != pytest.approx(src_gt[1], abs=eps)
+                or new_gt[2] != pytest.approx(src_gt[2], abs=eps)
+                or new_gt[3] != pytest.approx(src_gt[3], abs=eps)
+                or new_gt[4] != pytest.approx(src_gt[4], abs=eps)
+                or new_gt[5] != pytest.approx(src_gt[5], abs=eps)
+            ):
+                print("")
+                print("old = ", src_gt)
+                print("new = ", new_gt)
+                pytest.fail("Geotransform differs.")
 
         # Do we need to check the geotransform?
         if check_srs is not None:
@@ -479,29 +573,37 @@ class GDALTest(object):
             new_osr = osr.SpatialReference(wkt=new_prj)
 
             if not src_osr.IsSame(new_osr):
-                print('')
-                print('old = %s' % src_osr.ExportToPrettyWkt())
-                print('new = %s' % new_osr.ExportToPrettyWkt())
-                pytest.fail('Projections differ')
+                print("")
+                print("old = %s" % src_osr.ExportToPrettyWkt())
+                print("new = %s" % new_osr.ExportToPrettyWkt())
+                pytest.fail("Projections differ")
 
         bnd = None
         new_ds = None
         src_ds = None
 
-        if gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON' and delete_copy == 1:
+        if gdal.GetConfigOption("CPL_DEBUG", "OFF") != "ON" and delete_copy == 1:
             self.driver.Delete(new_filename)
 
-    def testCreate(self, vsimem=0, new_filename=None, out_bands=1,
-                   check_minmax=1, dest_open_options=None):
+    def testCreate(
+        self,
+        vsimem=0,
+        new_filename=None,
+        out_bands=1,
+        check_minmax=1,
+        dest_open_options=None,
+    ):
         self.testDriver()
 
         if self.filename_absolute:
             wrk_filename = self.filename
         else:
-            wrk_filename = 'data/' + self.filename
+            wrk_filename = "data/" + self.filename
 
         if self.open_options:
-            src_ds = gdal.OpenEx(wrk_filename, gdal.OF_RASTER, open_options=self.open_options)
+            src_ds = gdal.OpenEx(
+                wrk_filename, gdal.OF_RASTER, open_options=self.open_options
+            )
         else:
             src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
 
@@ -512,120 +614,154 @@ class GDALTest(object):
 
         if new_filename is None:
             if vsimem:
-                new_filename = '/vsimem/' + self.filename + '.tst'
+                new_filename = "/vsimem/" + self.filename + ".tst"
             else:
-                new_filename = 'tmp/' + os.path.basename(self.filename) + '.tst'
+                new_filename = "tmp/" + os.path.basename(self.filename) + ".tst"
 
-        new_ds = self.driver.Create(new_filename, xsize, ysize, out_bands,
-                                    src_ds.GetRasterBand(self.band).DataType,
-                                    options=self.options)
-        assert new_ds is not None, 'Failed to create test file using Create method.'
+        new_ds = self.driver.Create(
+            new_filename,
+            xsize,
+            ysize,
+            out_bands,
+            src_ds.GetRasterBand(self.band).DataType,
+            options=self.options,
+        )
+        assert new_ds is not None, "Failed to create test file using Create method."
 
         src_ds = None
 
         try:
             for band in range(1, out_bands + 1):
                 new_ds.GetRasterBand(band).WriteRaster(0, 0, xsize, ysize, src_img)
-        except:
-            pytest.fail('Failed to write raster bands to test file.')
+        except Exception:
+            pytest.fail("Failed to write raster bands to test file.")
 
         for band in range(1, out_bands + 1):
-            assert self.chksum is None or new_ds.GetRasterBand(band).Checksum() == self.chksum, \
-                ('Did not get expected checksum on still-open file.\n'
-                    '    Got %d instead of %d.'
-                    % (new_ds.GetRasterBand(band).Checksum(), self.chksum))
+            assert (
+                self.chksum is None
+                or new_ds.GetRasterBand(band).Checksum() == self.chksum
+            ), (
+                "Did not get expected checksum on still-open file.\n"
+                "    Got %d instead of %d."
+                % (new_ds.GetRasterBand(band).Checksum(), self.chksum)
+            )
 
             computed_minmax = new_ds.GetRasterBand(band).ComputeRasterMinMax()
             if computed_minmax != minmax and check_minmax:
-                print('expect: ', minmax)
-                print('got: ', computed_minmax)
-                pytest.fail('Did not get expected min/max values on still-open file.')
+                print("expect: ", minmax)
+                print("got: ", computed_minmax)
+                pytest.fail("Did not get expected min/max values on still-open file.")
 
         new_ds = None
 
         if dest_open_options is not None:
-            new_ds = gdal.OpenEx(new_filename, gdal.OF_RASTER, open_options=dest_open_options)
+            new_ds = gdal.OpenEx(
+                new_filename, gdal.OF_RASTER, open_options=dest_open_options
+            )
         else:
             new_ds = gdal.Open(new_filename)
-        assert new_ds is not None, ('Failed to open dataset: ' + new_filename)
+        assert new_ds is not None, "Failed to open dataset: " + new_filename
 
         for band in range(1, out_bands + 1):
-            assert self.chksum is None or new_ds.GetRasterBand(band).Checksum() == self.chksum, \
-                ('Did not get expected checksum on reopened file.'
-                            '    Got %d instead of %d.'
-                            % (new_ds.GetRasterBand(band).Checksum(), self.chksum))
+            assert (
+                self.chksum is None
+                or new_ds.GetRasterBand(band).Checksum() == self.chksum
+            ), (
+                "Did not get expected checksum on reopened file."
+                "    Got %d instead of %d."
+                % (new_ds.GetRasterBand(band).Checksum(), self.chksum)
+            )
 
-            assert new_ds.GetRasterBand(band).ComputeRasterMinMax() == minmax or not check_minmax, \
-                'Did not get expected min/max values on reopened file.'
+            assert (
+                new_ds.GetRasterBand(band).ComputeRasterMinMax() == minmax
+                or not check_minmax
+            ), "Did not get expected min/max values on reopened file."
 
         new_ds = None
 
-        if gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON':
+        if gdal.GetConfigOption("CPL_DEBUG", "OFF") != "ON":
             self.driver.Delete(new_filename)
 
     def testSetGeoTransform(self):
         self.testDriver()
 
-        wrk_filename = 'data/' + self.filename
+        wrk_filename = "data/" + self.filename
         if self.open_options:
-            src_ds = gdal.OpenEx(wrk_filename, gdal.OF_RASTER, open_options=self.open_options)
+            src_ds = gdal.OpenEx(
+                wrk_filename, gdal.OF_RASTER, open_options=self.open_options
+            )
         else:
             src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
 
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
 
-        new_filename = 'tmp/' + os.path.basename(self.filename) + '.tst'
-        new_ds = self.driver.Create(new_filename, xsize, ysize, 1,
-                                    src_ds.GetRasterBand(self.band).DataType,
-                                    options=self.options)
-        assert new_ds is not None, 'Failed to create test file using Create method.'
+        new_filename = "tmp/" + os.path.basename(self.filename) + ".tst"
+        new_ds = self.driver.Create(
+            new_filename,
+            xsize,
+            ysize,
+            1,
+            src_ds.GetRasterBand(self.band).DataType,
+            options=self.options,
+        )
+        assert new_ds is not None, "Failed to create test file using Create method."
 
         gt = (123.0, 1.18, 0.0, 456.0, 0.0, -1.18)
-        assert new_ds.SetGeoTransform(gt) is gdal.CE_None, \
-            'Failed to set geographic transformation.'
+        assert (
+            new_ds.SetGeoTransform(gt) is gdal.CE_None
+        ), "Failed to set geographic transformation."
 
         src_ds = None
         new_ds = None
 
         new_ds = gdal.Open(new_filename)
-        assert new_ds is not None, ('Failed to open dataset: ' + new_filename)
+        assert new_ds is not None, "Failed to open dataset: " + new_filename
 
         eps = 0.00000001
         new_gt = new_ds.GetGeoTransform()
-        if new_gt[0] != pytest.approx(gt[0], abs=eps) \
-                or new_gt[1] != pytest.approx(gt[1], abs=eps) \
-                or new_gt[2] != pytest.approx(gt[2], abs=eps) \
-                or new_gt[3] != pytest.approx(gt[3], abs=eps) \
-                or new_gt[4] != pytest.approx(gt[4], abs=eps) \
-                or new_gt[5] != pytest.approx(gt[5], abs=eps):
-            print('')
-            print('old = ', gt)
-            print('new = ', new_gt)
-            pytest.fail('Did not get expected geotransform.')
+        if (
+            new_gt[0] != pytest.approx(gt[0], abs=eps)
+            or new_gt[1] != pytest.approx(gt[1], abs=eps)
+            or new_gt[2] != pytest.approx(gt[2], abs=eps)
+            or new_gt[3] != pytest.approx(gt[3], abs=eps)
+            or new_gt[4] != pytest.approx(gt[4], abs=eps)
+            or new_gt[5] != pytest.approx(gt[5], abs=eps)
+        ):
+            print("")
+            print("old = ", gt)
+            print("new = ", new_gt)
+            pytest.fail("Did not get expected geotransform.")
 
         new_ds = None
 
-        if gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON':
+        if gdal.GetConfigOption("CPL_DEBUG", "OFF") != "ON":
             self.driver.Delete(new_filename)
 
     def testSetProjection(self, prj=None, expected_prj=None):
         self.testDriver()
 
-        wrk_filename = 'data/' + self.filename
+        wrk_filename = "data/" + self.filename
         if self.open_options:
-            src_ds = gdal.OpenEx(wrk_filename, gdal.OF_RASTER, open_options=self.open_options)
+            src_ds = gdal.OpenEx(
+                wrk_filename, gdal.OF_RASTER, open_options=self.open_options
+            )
         else:
             src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
 
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
 
-        new_filename = 'tmp/' + os.path.basename(self.filename) + '.tst'
-        new_ds = self.driver.Create(new_filename, xsize, ysize, 1,
-                                    src_ds.GetRasterBand(self.band).DataType,
-                                    options=self.options)
-        assert new_ds is not None, 'Failed to create test file using Create method.'
+        new_filename = "tmp/" + os.path.basename(self.filename) + ".tst"
+        new_ds = self.driver.Create(
+            new_filename,
+            xsize,
+            ysize,
+            1,
+            src_ds.GetRasterBand(self.band).DataType,
+            options=self.options,
+        )
+        assert new_ds is not None, "Failed to create test file using Create method."
 
         gt = (123.0, 1.18, 0.0, 456.0, 0.0, -1.18)
         if prj is None:
@@ -636,14 +772,15 @@ class GDALTest(object):
         src_osr.ImportFromWkt(prj)
 
         new_ds.SetGeoTransform(gt)
-        assert new_ds.SetProjection(prj) is gdal.CE_None, \
-            'Failed to set geographic projection string.'
+        assert (
+            new_ds.SetProjection(prj) is gdal.CE_None
+        ), "Failed to set geographic projection string."
 
         src_ds = None
         new_ds = None
 
         new_ds = gdal.Open(new_filename)
-        assert new_ds is not None, ('Failed to open dataset: ' + new_filename)
+        assert new_ds is not None, "Failed to open dataset: " + new_filename
 
         expected_osr = osr.SpatialReference()
         if expected_prj is None:
@@ -654,36 +791,43 @@ class GDALTest(object):
         new_osr = osr.SpatialReference()
         new_osr.ImportFromWkt(new_ds.GetProjection())
         if not new_osr.IsSame(expected_osr):
-            print('Got: ')
+            print("Got: ")
             print(new_osr.ExportToPrettyWkt())
-            print('Expected:')
+            print("Expected:")
             print(expected_osr.ExportToPrettyWkt())
-            pytest.fail('Did not get expected projection reference.')
+            pytest.fail("Did not get expected projection reference.")
 
         new_ds = None
 
-        if gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON':
+        if gdal.GetConfigOption("CPL_DEBUG", "OFF") != "ON":
             self.driver.Delete(new_filename)
 
     def testSetMetadata(self):
         self.testDriver()
 
-        wrk_filename = 'data/' + self.filename
+        wrk_filename = "data/" + self.filename
         if self.open_options:
-            src_ds = gdal.OpenEx(wrk_filename, gdal.OF_RASTER, open_options=self.open_options)
+            src_ds = gdal.OpenEx(
+                wrk_filename, gdal.OF_RASTER, open_options=self.open_options
+            )
         else:
             src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
 
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
 
-        new_filename = 'tmp/' + os.path.basename(self.filename) + '.tst'
-        new_ds = self.driver.Create(new_filename, xsize, ysize, 1,
-                                    src_ds.GetRasterBand(self.band).DataType,
-                                    options=self.options)
-        assert new_ds is not None, 'Failed to create test file using Create method.'
+        new_filename = "tmp/" + os.path.basename(self.filename) + ".tst"
+        new_ds = self.driver.Create(
+            new_filename,
+            xsize,
+            ysize,
+            1,
+            src_ds.GetRasterBand(self.band).DataType,
+            options=self.options,
+        )
+        assert new_ds is not None, "Failed to create test file using Create method."
 
-        new_ds.SetMetadata({'TEST_KEY': 'TestValue'})
+        new_ds.SetMetadata({"TEST_KEY": "TestValue"})
         # FIXME
         # if new_ds.SetMetadata( dict ) is not gdal.CE_None:
         #     print new_ds.SetMetadata( dict )
@@ -694,43 +838,51 @@ class GDALTest(object):
         new_ds = None
 
         new_ds = gdal.Open(new_filename)
-        assert new_ds is not None, ('Failed to open dataset: ' + new_filename)
+        assert new_ds is not None, "Failed to open dataset: " + new_filename
 
         md_dict = new_ds.GetMetadata()
 
-        assert 'TEST_KEY' in md_dict, 'Metadata item TEST_KEY does not exist.'
+        assert "TEST_KEY" in md_dict, "Metadata item TEST_KEY does not exist."
 
-        assert md_dict['TEST_KEY'] == 'TestValue', 'Did not get expected metadata item.'
+        assert md_dict["TEST_KEY"] == "TestValue", "Did not get expected metadata item."
 
         new_ds = None
 
-        if gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON':
+        if gdal.GetConfigOption("CPL_DEBUG", "OFF") != "ON":
             self.driver.Delete(new_filename)
 
     def testSetNoDataValue(self, delete=False):
         self.testDriver()
 
-        wrk_filename = 'data/' + self.filename
+        wrk_filename = "data/" + self.filename
         if self.open_options:
-            src_ds = gdal.OpenEx(wrk_filename, gdal.OF_RASTER, open_options=self.open_options)
+            src_ds = gdal.OpenEx(
+                wrk_filename, gdal.OF_RASTER, open_options=self.open_options
+            )
         else:
             src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
 
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
 
-        new_filename = 'tmp/' + os.path.basename(self.filename) + '.tst'
-        new_ds = self.driver.Create(new_filename, xsize, ysize, 1,
-                                    src_ds.GetRasterBand(self.band).DataType,
-                                    options=self.options)
-        assert new_ds is not None, 'Failed to create test file using Create method.'
+        new_filename = "tmp/" + os.path.basename(self.filename) + ".tst"
+        new_ds = self.driver.Create(
+            new_filename,
+            xsize,
+            ysize,
+            1,
+            src_ds.GetRasterBand(self.band).DataType,
+            options=self.options,
+        )
+        assert new_ds is not None, "Failed to create test file using Create method."
 
-        if self.options is None or 'PIXELTYPE=SIGNEDBYTE' not in self.options:
+        if self.options is None or "PIXELTYPE=SIGNEDBYTE" not in self.options:
             nodata = 130
         else:
             nodata = 11
-        assert new_ds.GetRasterBand(1).SetNoDataValue(nodata) is gdal.CE_None, \
-            'Failed to set NoData value.'
+        assert (
+            new_ds.GetRasterBand(1).SetNoDataValue(nodata) is gdal.CE_None
+        ), "Failed to set NoData value."
 
         src_ds = None
         new_ds = None
@@ -740,24 +892,27 @@ class GDALTest(object):
         else:
             mode = gdal.GA_ReadOnly
         new_ds = gdal.Open(new_filename, mode)
-        assert new_ds is not None, ('Failed to open dataset: ' + new_filename)
+        assert new_ds is not None, "Failed to open dataset: " + new_filename
 
-        assert nodata == new_ds.GetRasterBand(1).GetNoDataValue(), \
-            'Did not get expected NoData value.'
+        assert (
+            nodata == new_ds.GetRasterBand(1).GetNoDataValue()
+        ), "Did not get expected NoData value."
 
         if delete:
-            assert new_ds.GetRasterBand(1).DeleteNoDataValue() == 0, \
-                'Did not manage to delete nodata value'
+            assert (
+                new_ds.GetRasterBand(1).DeleteNoDataValue() == 0
+            ), "Did not manage to delete nodata value"
 
         new_ds = None
 
         if delete:
             new_ds = gdal.Open(new_filename)
-            assert new_ds.GetRasterBand(1).GetNoDataValue() is None, \
-                'Got nodata value whereas none was expected'
+            assert (
+                new_ds.GetRasterBand(1).GetNoDataValue() is None
+            ), "Got nodata value whereas none was expected"
             new_ds = None
 
-        if gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON':
+        if gdal.GetConfigOption("CPL_DEBUG", "OFF") != "ON":
             self.driver.Delete(new_filename)
 
     def testSetNoDataValueAndDelete(self):
@@ -766,20 +921,27 @@ class GDALTest(object):
     def testSetDescription(self):
         self.testDriver()
 
-        wrk_filename = 'data/' + self.filename
+        wrk_filename = "data/" + self.filename
         if self.open_options:
-            src_ds = gdal.OpenEx(wrk_filename, gdal.OF_RASTER, open_options=self.open_options)
+            src_ds = gdal.OpenEx(
+                wrk_filename, gdal.OF_RASTER, open_options=self.open_options
+            )
         else:
             src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
 
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
 
-        new_filename = 'tmp/' + os.path.basename(self.filename) + '.tst'
-        new_ds = self.driver.Create(new_filename, xsize, ysize, 1,
-                                    src_ds.GetRasterBand(self.band).DataType,
-                                    options=self.options)
-        assert new_ds is not None, 'Failed to create test file using Create method.'
+        new_filename = "tmp/" + os.path.basename(self.filename) + ".tst"
+        new_ds = self.driver.Create(
+            new_filename,
+            xsize,
+            ysize,
+            1,
+            src_ds.GetRasterBand(self.band).DataType,
+            options=self.options,
+        )
+        assert new_ds is not None, "Failed to create test file using Create method."
 
         description = "Description test string"
         new_ds.GetRasterBand(1).SetDescription(description)
@@ -788,54 +950,63 @@ class GDALTest(object):
         new_ds = None
 
         new_ds = gdal.Open(new_filename)
-        assert new_ds is not None, ('Failed to open dataset: ' + new_filename)
+        assert new_ds is not None, "Failed to open dataset: " + new_filename
 
-        assert description == new_ds.GetRasterBand(1).GetDescription(), \
-            'Did not get expected description string.'
+        assert (
+            description == new_ds.GetRasterBand(1).GetDescription()
+        ), "Did not get expected description string."
 
         new_ds = None
 
-        if gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON':
+        if gdal.GetConfigOption("CPL_DEBUG", "OFF") != "ON":
             self.driver.Delete(new_filename)
 
     def testSetUnitType(self):
         self.testDriver()
 
-        wrk_filename = 'data/' + self.filename
+        wrk_filename = "data/" + self.filename
         if self.open_options:
-            src_ds = gdal.OpenEx(wrk_filename, gdal.OF_RASTER, open_options=self.open_options)
+            src_ds = gdal.OpenEx(
+                wrk_filename, gdal.OF_RASTER, open_options=self.open_options
+            )
         else:
             src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
 
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
 
-        new_filename = 'tmp/' + os.path.basename(self.filename) + '.tst'
-        new_ds = self.driver.Create(new_filename, xsize, ysize, 1,
-                                    src_ds.GetRasterBand(self.band).DataType,
-                                    options=self.options)
-        assert new_ds is not None, 'Failed to create test file using Create method.'
+        new_filename = "tmp/" + os.path.basename(self.filename) + ".tst"
+        new_ds = self.driver.Create(
+            new_filename,
+            xsize,
+            ysize,
+            1,
+            src_ds.GetRasterBand(self.band).DataType,
+            options=self.options,
+        )
+        assert new_ds is not None, "Failed to create test file using Create method."
 
-        unit = 'mg/m3'
-        assert new_ds.GetRasterBand(1).SetUnitType(unit) is gdal.CE_None, \
-            'Failed to set unit type.'
+        unit = "mg/m3"
+        assert (
+            new_ds.GetRasterBand(1).SetUnitType(unit) is gdal.CE_None
+        ), "Failed to set unit type."
 
         src_ds = None
         new_ds = None
 
         new_ds = gdal.Open(new_filename)
-        assert new_ds is not None, ('Failed to open dataset: ' + new_filename)
+        assert new_ds is not None, "Failed to open dataset: " + new_filename
 
         new_unit = new_ds.GetRasterBand(1).GetUnitType()
         if new_unit != unit:
-            print('')
-            print('old = ', unit)
-            print('new = ', new_unit)
-            pytest.fail('Did not get expected unit type.')
+            print("")
+            print("old = ", unit)
+            print("new = ", new_unit)
+            pytest.fail("Did not get expected unit type.")
 
         new_ds = None
 
-        if gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON':
+        if gdal.GetConfigOption("CPL_DEBUG", "OFF") != "ON":
             self.driver.Delete(new_filename)
 
 
@@ -845,7 +1016,7 @@ def approx_equal(a, b):
     if a == 0 and b != 0:
         return 0
 
-    if b / a != pytest.approx(1.0, abs=.00000000001):
+    if b / a != pytest.approx(1.0, abs=0.00000000001):
         return 0
     return 1
 
@@ -868,10 +1039,11 @@ def equal_srs_from_wkt(expected_wkt, got_wkt, verbose=True):
     if got_srs.IsSame(expected_srs):
         return 1
     if verbose:
-        print('Expected:\n%s' % expected_wkt)
-        print('Got:     \n%s' % got_wkt)
-        post_reason('SRS differs from expected.')
+        print("Expected:\n%s" % expected_wkt)
+        print("Got:     \n%s" % got_wkt)
+        post_reason("SRS differs from expected.")
     return 0
+
 
 ###############################################################################
 # Compare two sets of RPC metadata, and establish if they are essentially
@@ -880,22 +1052,35 @@ def equal_srs_from_wkt(expected_wkt, got_wkt, verbose=True):
 
 def rpcs_equal(md1, md2):
 
-    simple_fields = ['LINE_OFF', 'SAMP_OFF', 'LAT_OFF', 'LONG_OFF',
-                     'HEIGHT_OFF', 'LINE_SCALE', 'SAMP_SCALE', 'LAT_SCALE',
-                     'LONG_SCALE', 'HEIGHT_SCALE']
-    coef_fields = ['LINE_NUM_COEFF', 'LINE_DEN_COEFF',
-                   'SAMP_NUM_COEFF', 'SAMP_DEN_COEFF']
+    simple_fields = [
+        "LINE_OFF",
+        "SAMP_OFF",
+        "LAT_OFF",
+        "LONG_OFF",
+        "HEIGHT_OFF",
+        "LINE_SCALE",
+        "SAMP_SCALE",
+        "LAT_SCALE",
+        "LONG_SCALE",
+        "HEIGHT_SCALE",
+    ]
+    coef_fields = [
+        "LINE_NUM_COEFF",
+        "LINE_DEN_COEFF",
+        "SAMP_NUM_COEFF",
+        "SAMP_DEN_COEFF",
+    ]
 
     for sf in simple_fields:
 
         try:
             if not approx_equal(float(md1[sf]), float(md2[sf])):
-                post_reason('%s values differ.' % sf)
+                post_reason("%s values differ." % sf)
                 print(md1[sf])
                 print(md2[sf])
                 return 0
-        except:
-            post_reason('%s value missing or corrupt.' % sf)
+        except Exception:
+            post_reason("%s value missing or corrupt." % sf)
             print(md1)
             print(md2)
             return 0
@@ -906,29 +1091,30 @@ def rpcs_equal(md1, md2):
             list1 = md1[cf].split()
             list2 = md2[cf].split()
 
-        except:
-            post_reason('%s value missing or corrupt.' % cf)
+        except Exception:
+            post_reason("%s value missing or corrupt." % cf)
             print(md1[cf])
             print(md2[cf])
             return 0
 
         if len(list1) != 20:
-            post_reason('%s value list length wrong(1)' % cf)
+            post_reason("%s value list length wrong(1)" % cf)
             print(list1)
             return 0
 
         if len(list2) != 20:
-            post_reason('%s value list length wrong(2)' % cf)
+            post_reason("%s value list length wrong(2)" % cf)
             print(list2)
             return 0
 
         for i in range(20):
             if not approx_equal(float(list1[i]), float(list2[i])):
-                post_reason('%s[%d] values differ.' % (cf, i))
+                post_reason("%s[%d] values differ." % (cf, i))
                 print(list1[i], list2[i])
                 return 0
 
     return 1
+
 
 ###############################################################################
 # Test if geotransforms are equal with an epsilon tolerance
@@ -938,10 +1124,10 @@ def rpcs_equal(md1, md2):
 def geotransform_equals(gt1, gt2, gt_epsilon):
     for i in range(6):
         if gt1[i] != pytest.approx(gt2[i], abs=gt_epsilon):
-            print('')
-            print('gt1 = ', gt1)
-            print('gt2 = ', gt2)
-            post_reason('Geotransform differs.')
+            print("")
+            print("gt1 = ", gt1)
+            print("gt2 = ", gt2)
+            post_reason("Geotransform differs.")
             return False
     return True
 
@@ -953,15 +1139,23 @@ def geotransform_equals(gt1, gt2, gt_epsilon):
 # If GDAL_DOWNLOAD_TEST_DATA is not defined, the function fails
 # If GDAL_DOWNLOAD_TEST_DATA is defined, 'url' is downloaded  as 'filename' in 'tmp/cache/'
 
-def download_file(url, filename=None, download_size=-1, force_download=False, max_download_duration=None, base_dir='tmp/cache'):
+
+def download_file(
+    url,
+    filename=None,
+    download_size=-1,
+    force_download=False,
+    max_download_duration=None,
+    base_dir="tmp/cache",
+):
 
     if filename is None:
         filename = os.path.basename(url)
-    elif filename.startswith(base_dir + '/'):
-        filename = filename[len(base_dir + '/'):]
+    elif filename.startswith(base_dir + "/"):
+        filename = filename[len(base_dir + "/") :]
 
     try:
-        os.stat(base_dir + '/' + filename)
+        os.stat(base_dir + "/" + filename)
         return True
     except OSError:
         if force_download or download_test_data():
@@ -974,32 +1168,35 @@ def download_file(url, filename=None, download_size=-1, force_download=False, ma
                 if download_size == -1:
                     try:
                         handle_info = handle.info()
-                        download_size = int(handle_info['content-length'])
-                        print('Downloading %s (length = %d bytes)...' % (url, download_size))
-                    except:
-                        print('Downloading %s...' % (url))
+                        download_size = int(handle_info["content-length"])
+                        print(
+                            "Downloading %s (length = %d bytes)..."
+                            % (url, download_size)
+                        )
+                    except Exception:
+                        print("Downloading %s..." % (url))
                 else:
-                    print('Downloading %d bytes from %s...' % (download_size, url))
-            except:
+                    print("Downloading %d bytes from %s..." % (download_size, url))
+            except Exception:
                 return False
 
             if download_size >= 0:
-                sys.stdout.write('Progress: ')
+                sys.stdout.write("Progress: ")
             nLastTick = -1
-            val = ''.encode('ascii')
+            val = "".encode("ascii")
             while len(val) < download_size or download_size < 0:
                 chunk_size = 1024
                 if download_size >= 0 and len(val) + chunk_size > download_size:
                     chunk_size = download_size - len(val)
                 try:
                     chunk = handle.read(chunk_size)
-                except:
-                    print('Did not get expected data length.')
+                except Exception:
+                    print("Did not get expected data length.")
                     return False
                 if len(chunk) < chunk_size:
                     if download_size < 0:
                         break
-                    print('Did not get expected data length.')
+                    print("Did not get expected data length.")
                     return False
                 val = val + chunk
                 if download_size >= 0:
@@ -1015,8 +1212,11 @@ def download_file(url, filename=None, download_size=-1, force_download=False, ma
                         sys.stdout.write(" - done.\n")
 
                 current_time = time.time()
-                if max_download_duration is not None and current_time - start_time > max_download_duration:
-                    print('Download aborted due to timeout.')
+                if (
+                    max_download_duration is not None
+                    and current_time - start_time > max_download_duration
+                ):
+                    print("Download aborted due to timeout.")
                     return False
 
             try:
@@ -1025,10 +1225,10 @@ def download_file(url, filename=None, download_size=-1, force_download=False, ma
                 os.mkdir(base_dir)
 
             try:
-                open(base_dir + '/' + filename, 'wb').write(val)
+                open(base_dir + "/" + filename, "wb").write(val)
                 return True
             except IOError:
-                print('Cannot write %s' % (filename))
+                print("Cannot write %s" % (filename))
                 return False
         else:
             return False
@@ -1037,20 +1237,21 @@ def download_file(url, filename=None, download_size=-1, force_download=False, ma
 ###############################################################################
 # GDAL data type to python struct format
 def gdal_data_type_to_python_struct_format(datatype):
-    type_char = 'B'
+    type_char = "B"
     if datatype == gdal.GDT_Int16:
-        type_char = 'h'
+        type_char = "h"
     elif datatype == gdal.GDT_UInt16:
-        type_char = 'H'
+        type_char = "H"
     elif datatype == gdal.GDT_Int32:
-        type_char = 'i'
+        type_char = "i"
     elif datatype == gdal.GDT_UInt32:
-        type_char = 'I'
+        type_char = "I"
     elif datatype == gdal.GDT_Float32:
-        type_char = 'f'
+        type_char = "f"
     elif datatype == gdal.GDT_Float64:
-        type_char = 'd'
+        type_char = "d"
     return type_char
+
 
 ###############################################################################
 # Compare the values of the pixels
@@ -1082,10 +1283,16 @@ def compare_ds(ds1, ds2, xoff=0, yoff=0, width=0, height=0, verbose=1):
             if abs(diff) > maxdiff:
                 maxdiff = abs(diff)
                 if verbose:
-                    print("Diff at pixel (%d, %d) : %f" % (i % width, i / width, float(diff)))
+                    print(
+                        "Diff at pixel (%d, %d) : %f"
+                        % (i % width, i / width, float(diff))
+                    )
             elif ndiffs < 10:
                 if verbose:
-                    print("Diff at pixel (%d, %d) : %f" % (i % width, i / width, float(diff)))
+                    print(
+                        "Diff at pixel (%d, %d) : %f"
+                        % (i % width, i / width, float(diff))
+                    )
     if maxdiff != 0 and verbose:
         print("Max diff : %d" % (maxdiff))
         print("Number of diffs : %d" % (ndiffs))
@@ -1096,49 +1303,51 @@ def compare_ds(ds1, ds2, xoff=0, yoff=0, width=0, height=0, verbose=1):
 ###############################################################################
 # Deregister all JPEG2000 drivers, except the one passed as an argument
 
+
 def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
     global jp2kak_drv, jpeg2000_drv, jp2ecw_drv, jp2mrsid_drv, jp2openjpeg_drv, jp2lura_drv
     global jp2kak_drv_unregistered, jpeg2000_drv_unregistered, jp2ecw_drv_unregistered, jp2mrsid_drv_unregistered, jp2openjpeg_drv_unregistered, jp2lura_drv_unregistered
 
     # Deregister other potential conflicting JPEG2000 drivers that will
     # be re-registered in the cleanup
-    jp2kak_drv = gdal.GetDriverByName('JP2KAK')
-    if name_of_driver_to_keep != 'JP2KAK' and jp2kak_drv:
-        gdal.Debug('gdaltest', 'Deregistering JP2KAK')
+    jp2kak_drv = gdal.GetDriverByName("JP2KAK")
+    if name_of_driver_to_keep != "JP2KAK" and jp2kak_drv:
+        gdal.Debug("gdaltest", "Deregistering JP2KAK")
         jp2kak_drv.Deregister()
         jp2kak_drv_unregistered = True
 
-    jpeg2000_drv = gdal.GetDriverByName('JPEG2000')
-    if name_of_driver_to_keep != 'JPEG2000' and jpeg2000_drv:
-        gdal.Debug('gdaltest', 'Deregistering JPEG2000')
+    jpeg2000_drv = gdal.GetDriverByName("JPEG2000")
+    if name_of_driver_to_keep != "JPEG2000" and jpeg2000_drv:
+        gdal.Debug("gdaltest", "Deregistering JPEG2000")
         jpeg2000_drv.Deregister()
         jpeg2000_drv_unregistered = True
 
-    jp2ecw_drv = gdal.GetDriverByName('JP2ECW')
-    if name_of_driver_to_keep != 'JP2ECW' and jp2ecw_drv:
-        gdal.Debug('gdaltest.', 'Deregistering JP2ECW')
+    jp2ecw_drv = gdal.GetDriverByName("JP2ECW")
+    if name_of_driver_to_keep != "JP2ECW" and jp2ecw_drv:
+        gdal.Debug("gdaltest.", "Deregistering JP2ECW")
         jp2ecw_drv.Deregister()
         jp2ecw_drv_unregistered = True
 
-    jp2mrsid_drv = gdal.GetDriverByName('JP2MrSID')
-    if name_of_driver_to_keep != 'JP2MrSID' and jp2mrsid_drv:
-        gdal.Debug('gdaltest.', 'Deregistering JP2MrSID')
+    jp2mrsid_drv = gdal.GetDriverByName("JP2MrSID")
+    if name_of_driver_to_keep != "JP2MrSID" and jp2mrsid_drv:
+        gdal.Debug("gdaltest.", "Deregistering JP2MrSID")
         jp2mrsid_drv.Deregister()
         jp2mrsid_drv_unregistered = True
 
-    jp2openjpeg_drv = gdal.GetDriverByName('JP2OpenJPEG')
-    if name_of_driver_to_keep != 'JP2OpenJPEG' and jp2openjpeg_drv:
-        gdal.Debug('gdaltest.', 'Deregistering JP2OpenJPEG')
+    jp2openjpeg_drv = gdal.GetDriverByName("JP2OpenJPEG")
+    if name_of_driver_to_keep != "JP2OpenJPEG" and jp2openjpeg_drv:
+        gdal.Debug("gdaltest.", "Deregistering JP2OpenJPEG")
         jp2openjpeg_drv.Deregister()
         jp2openjpeg_drv_unregistered = True
 
-    jp2lura_drv = gdal.GetDriverByName('JP2Lura')
-    if name_of_driver_to_keep != 'JP2Lura' and jp2lura_drv:
-        gdal.Debug('gdaltest.', 'Deregistering JP2Lura')
+    jp2lura_drv = gdal.GetDriverByName("JP2Lura")
+    if name_of_driver_to_keep != "JP2Lura" and jp2lura_drv:
+        gdal.Debug("gdaltest.", "Deregistering JP2Lura")
         jp2lura_drv.Deregister()
         jp2lura_drv_unregistered = True
 
     return True
+
 
 ###############################################################################
 # Re-register all JPEG2000 drivers previously disabled by
@@ -1152,34 +1361,35 @@ def reregister_all_jpeg2000_drivers():
     if jp2kak_drv_unregistered:
         jp2kak_drv.Register()
         jp2kak_drv_unregistered = False
-        gdal.Debug('gdaltest', 'Registering JP2KAK')
+        gdal.Debug("gdaltest", "Registering JP2KAK")
 
     if jpeg2000_drv_unregistered:
         jpeg2000_drv.Register()
         jpeg2000_drv_unregistered = False
-        gdal.Debug('gdaltest', 'Registering JPEG2000')
+        gdal.Debug("gdaltest", "Registering JPEG2000")
 
     if jp2ecw_drv_unregistered:
         jp2ecw_drv.Register()
         jp2ecw_drv_unregistered = False
-        gdal.Debug('gdaltest', 'Registering JP2ECW')
+        gdal.Debug("gdaltest", "Registering JP2ECW")
 
     if jp2mrsid_drv_unregistered:
         jp2mrsid_drv.Register()
         jp2mrsid_drv_unregistered = False
-        gdal.Debug('gdaltest', 'Registering JP2MrSID')
+        gdal.Debug("gdaltest", "Registering JP2MrSID")
 
     if jp2openjpeg_drv_unregistered:
         jp2openjpeg_drv.Register()
         jp2openjpeg_drv_unregistered = False
-        gdal.Debug('gdaltest', 'Registering JP2OpenJPEG')
+        gdal.Debug("gdaltest", "Registering JP2OpenJPEG")
 
     if jp2lura_drv_unregistered:
         jp2lura_drv.Register()
         jp2lura_drv_unregistered = False
-        gdal.Debug('gdaltest', 'Registering JP2Lura')
+        gdal.Debug("gdaltest", "Registering JP2Lura")
 
     return True
+
 
 ###############################################################################
 # Determine if the filesystem supports sparse files.
@@ -1197,33 +1407,39 @@ def filesystem_supports_sparse_files(path):
     except OSError:
         return False
 
-    if err != '':
-        post_reason('Cannot determine if filesystem supports sparse files')
+    if err != "":
+        post_reason("Cannot determine if filesystem supports sparse files")
         return False
 
-    if ret.find('fat32') != -1:
-        post_reason('File system does not support sparse files')
+    if ret.find("fat32") != -1:
+        post_reason("File system does not support sparse files")
         return False
 
-    if ret.find('wslfs') != -1 or \
-       ret.find('0x53464846') != -1: # wslfs for older stat versions
-        post_reason('Windows Subsystem for Linux FS is at the time of ' +
-                    'writing not known to support sparse files')
+    if (
+        ret.find("wslfs") != -1 or ret.find("0x53464846") != -1
+    ):  # wslfs for older stat versions
+        post_reason(
+            "Windows Subsystem for Linux FS is at the time of "
+            + "writing not known to support sparse files"
+        )
         return False
 
     # Add here any missing filesystem supporting sparse files
     # See http://en.wikipedia.org/wiki/Comparison_of_file_systems
-    if ret.find('ext3') == -1 and \
-            ret.find('ext4') == -1 and \
-            ret.find('reiser') == -1 and \
-            ret.find('xfs') == -1 and \
-            ret.find('jfs') == -1 and \
-            ret.find('zfs') == -1 and \
-            ret.find('ntfs') == -1:
-        post_reason('Filesystem %s is not believed to support sparse files' % ret)
+    if (
+        ret.find("ext3") == -1
+        and ret.find("ext4") == -1
+        and ret.find("reiser") == -1
+        and ret.find("xfs") == -1
+        and ret.find("jfs") == -1
+        and ret.find("zfs") == -1
+        and ret.find("ntfs") == -1
+    ):
+        post_reason("Filesystem %s is not believed to support sparse files" % ret)
         return False
 
     return True
+
 
 ###############################################################################
 # Unzip a file
@@ -1233,16 +1449,17 @@ def unzip(target_dir, zipfilename, verbose=False):
 
     try:
         import zipfile
+
         zf = zipfile.ZipFile(zipfilename)
     except ImportError:
-        os.system('unzip -d ' + target_dir + ' ' + zipfilename)
+        os.system("unzip -d " + target_dir + " " + zipfilename)
         return
 
     for filename in zf.namelist():
         if verbose:
             print(filename)
         outfilename = os.path.join(target_dir, filename)
-        if filename.endswith('/'):
+        if filename.endswith("/"):
             if not os.path.exists(outfilename):
                 os.makedirs(outfilename)
         else:
@@ -1250,7 +1467,7 @@ def unzip(target_dir, zipfilename, verbose=False):
             if not os.path.exists(outdirname):
                 os.makedirs(outdirname)
 
-            outfile = open(outfilename, 'wb')
+            outfile = open(outfilename, "wb")
             outfile.write(zf.read(filename))
             outfile.close()
 
@@ -1262,88 +1479,100 @@ isnan = math.isnan
 ###############################################################################
 # Return NaN
 
+
 def NaN():
-    return float('nan')
+    return float("nan")
+
 
 ###############################################################################
 # Return positive infinity
 
 
 def posinf():
-    return float('inf')
+    return float("inf")
+
 
 ###############################################################################
 # Return negative infinity
 
 
 def neginf():
-    return float('-inf')
+    return float("-inf")
+
 
 ###############################################################################
 # Has the user requested to download test data
 def download_test_data():
     global count_skipped_tests_download
-    val = gdal.GetConfigOption('GDAL_DOWNLOAD_TEST_DATA', None)
-    if val != 'yes' and val != 'YES':
+    val = gdal.GetConfigOption("GDAL_DOWNLOAD_TEST_DATA", None)
+    if val != "yes" and val != "YES":
 
         if count_skipped_tests_download == 0:
-            print('As GDAL_DOWNLOAD_TEST_DATA environment variable is not defined or set to NO, some tests relying on data to downloaded from the Web will be skipped')
+            print(
+                "As GDAL_DOWNLOAD_TEST_DATA environment variable is not defined or set to NO, some tests relying on data to downloaded from the Web will be skipped"
+            )
         count_skipped_tests_download = count_skipped_tests_download + 1
 
         return False
     return True
 
+
 ###############################################################################
 # Has the user requested to run the slow tests
 def run_slow_tests():
     global count_skipped_tests_slow
-    val = gdal.GetConfigOption('GDAL_RUN_SLOW_TESTS', None)
-    if val != 'yes' and val != 'YES':
+    val = gdal.GetConfigOption("GDAL_RUN_SLOW_TESTS", None)
+    if val != "yes" and val != "YES":
 
         if count_skipped_tests_slow == 0:
-            print('As GDAL_RUN_SLOW_TESTS environment variable is not defined or set to NO, some "slow" tests will be skipped')
+            print(
+                'As GDAL_RUN_SLOW_TESTS environment variable is not defined or set to NO, some "slow" tests will be skipped'
+            )
         count_skipped_tests_slow = count_skipped_tests_slow + 1
 
         return False
     return True
+
 
 ###############################################################################
 # Return true if the platform support symlinks
 
 
 def support_symlink():
-    if sys.platform.startswith('linux'):
+    if sys.platform.startswith("linux"):
         return True
-    if sys.platform.find('freebsd') != -1:
+    if sys.platform.find("freebsd") != -1:
         return True
-    if sys.platform == 'darwin':
+    if sys.platform == "darwin":
         return True
-    if sys.platform.find('sunos') != -1:
+    if sys.platform.find("sunos") != -1:
         return True
     return False
+
 
 ###############################################################################
 # Return True if the test must be skipped
 
 
 def skip_on_travis():
-    val = gdal.GetConfigOption('TRAVIS', None)
+    val = gdal.GetConfigOption("TRAVIS", None)
     if val is not None:
-        post_reason('Test skipped on Travis')
+        post_reason("Test skipped on Travis")
         return True
     return False
+
 
 ###############################################################################
 # Return True if the provided name is in TRAVIS_BRANCH or BUILD_NAME
 
 
 def is_travis_branch(name):
-    if 'TRAVIS_BRANCH' in os.environ:
-        val = os.environ['TRAVIS_BRANCH']
+    if "TRAVIS_BRANCH" in os.environ:
+        val = os.environ["TRAVIS_BRANCH"]
         if name in val:
             return True
-    if 'BUILD_NAME' in os.environ:
-        val = os.environ['BUILD_NAME']
+    if "BUILD_NAME" in os.environ:
+        val = os.environ["BUILD_NAME"]
         if name in val:
             return True
     return False
@@ -1352,8 +1581,9 @@ def is_travis_branch(name):
 ###############################################################################
 # Return True if we run under CI
 
+
 def is_ci():
-    return 'CI' in os.environ
+    return "CI" in os.environ
 
 
 ###############################################################################
@@ -1361,7 +1591,11 @@ def is_ci():
 
 
 def is_github_workflow_mac():
-    return 'GITHUB_WORKFLOW' in os.environ and os.environ['GITHUB_WORKFLOW'] == 'MacOS build'
+    return (
+        "GITHUB_WORKFLOW" in os.environ
+        and os.environ["GITHUB_WORKFLOW"] == "MacOS build"
+    )
+
 
 ###############################################################################
 # find_lib_linux()
@@ -1370,42 +1604,43 @@ def is_github_workflow_mac():
 
 def find_lib_linux(libname):
 
-    f = open('/proc/self/maps')
+    f = open("/proc/self/maps")
     lines = f.readlines()
     f.close()
 
     for line in lines:
-        if line.rfind('/lib' + libname) == -1 or line.find('.so') == -1:
+        if line.rfind("/lib" + libname) == -1 or line.find(".so") == -1:
             continue
 
-        i = line.find(' ')
+        i = line.find(" ")
         if i < 0:
             continue
-        line = line[i + 1:]
-        i = line.find(' ')
+        line = line[i + 1 :]
+        i = line.find(" ")
         if i < 0:
             continue
-        line = line[i + 1:]
-        i = line.find(' ')
+        line = line[i + 1 :]
+        i = line.find(" ")
         if i < 0:
             continue
-        line = line[i + 1:]
-        i = line.find(' ')
+        line = line[i + 1 :]
+        i = line.find(" ")
         if i < 0:
             continue
-        line = line[i + 1:]
-        i = line.find(' ')
+        line = line[i + 1 :]
+        i = line.find(" ")
         if i < 0:
             continue
-        line = line[i + 1:]
+        line = line[i + 1 :]
 
-        soname = line.lstrip().rstrip('\n')
-        if soname.rfind('/lib' + libname) == -1:
+        soname = line.lstrip().rstrip("\n")
+        if soname.rfind("/lib" + libname) == -1:
             continue
 
         return soname
 
     return None
+
 
 ###############################################################################
 # find_lib_sunos()
@@ -1415,24 +1650,25 @@ def find_lib_linux(libname):
 def find_lib_sunos(libname):
 
     pid = os.getpid()
-    lines, _ = runexternal_out_and_err('pmap %d' % pid)
+    lines, _ = runexternal_out_and_err("pmap %d" % pid)
 
-    for line in lines.split('\n'):
-        if line.rfind('/lib' + libname) == -1 or line.find('.so') == -1:
+    for line in lines.split("\n"):
+        if line.rfind("/lib" + libname) == -1 or line.find(".so") == -1:
             continue
 
-        i = line.find('/')
+        i = line.find("/")
         if i < 0:
             continue
         line = line[i:]
 
-        soname = line.lstrip().rstrip('\n')
-        if soname.rfind('/lib' + libname) == -1:
+        soname = line.lstrip().rstrip("\n")
+        if soname.rfind("/lib" + libname) == -1:
             continue
 
         return soname
 
     return None
+
 
 ###############################################################################
 # find_lib_windows()
@@ -1464,7 +1700,7 @@ def find_lib_windows(libname):
             ("modBaseSize", ctypes.c_int),
             ("hModule", ctypes.c_void_p),
             ("szModule", ctypes.c_char * (MAX_MODULE_NAME32 + 1)),
-            ("szExePath", ctypes.c_char * MAX_PATH)
+            ("szExePath", ctypes.c_char * MAX_PATH),
         ]
 
     Module32First = kernel32.Module32First
@@ -1507,17 +1743,17 @@ def find_lib_windows(libname):
             break
 
         try:
-            path = entry.szExePath.decode('latin1')
-        except:
+            path = entry.szExePath.decode("latin1")
+        except Exception:
             continue
 
-        i = path.rfind('\\' + libname)
+        i = path.rfind("\\" + libname)
         if i < 0:
             continue
-        if path[i + 1:].find('\\') >= 0:
+        if path[i + 1 :].find("\\") >= 0:
             continue
         # Avoid matching gdal_PLUGIN.dll
-        if path[i + 1:].find('_') >= 0:
+        if path[i + 1 :].find("_") >= 0:
             continue
         soname = path
         break
@@ -1526,20 +1762,22 @@ def find_lib_windows(libname):
 
     return soname
 
+
 ###############################################################################
 # find_lib()
 
 
 def find_lib(mylib):
-    if sys.platform.startswith('linux'):
+    if sys.platform.startswith("linux"):
         return find_lib_linux(mylib)
-    if sys.platform.startswith('sunos'):
+    if sys.platform.startswith("sunos"):
         return find_lib_sunos(mylib)
-    if sys.platform.startswith('win32'):
+    if sys.platform.startswith("win32"):
         return find_lib_windows(mylib)
     # sorry mac users or other BSDs
     # should be doable
     return None
+
 
 ###############################################################################
 # get_opened_files()
@@ -1549,25 +1787,30 @@ get_opened_files_has_warned = False
 
 
 def get_opened_files():
-    if not sys.platform.startswith('linux'):
+    if not sys.platform.startswith("linux"):
         return []
-    fdpath = '/proc/%d/fd' % os.getpid()
+    fdpath = "/proc/%d/fd" % os.getpid()
     if not os.path.exists(fdpath):
         global get_opened_files_has_warned
         if not get_opened_files_has_warned:
             get_opened_files_has_warned = True
-            print('get_opened_files() not supported due to /proc not being readable')
+            print("get_opened_files() not supported due to /proc not being readable")
         return []
     file_numbers = os.listdir(fdpath)
     filenames = []
     for fd in file_numbers:
         try:
-            filename = os.readlink('%s/%s' % (fdpath, fd))
-            if not filename.startswith('/dev/') and not filename.startswith('pipe:') and filename.find('proj.db') < 0:
+            filename = os.readlink("%s/%s" % (fdpath, fd))
+            if (
+                not filename.startswith("/dev/")
+                and not filename.startswith("pipe:")
+                and filename.find("proj.db") < 0
+            ):
                 filenames.append(filename)
         except OSError:
             pass
     return filenames
+
 
 ###############################################################################
 # is_file_open()
@@ -1579,12 +1822,14 @@ def is_file_open(filename):
             return True
     return False
 
+
 ###############################################################################
 # built_against_curl()
 
 
 def built_against_curl():
-    return gdal.GetDriverByName('HTTP') is not None
+    return gdal.GetDriverByName("HTTP") is not None
+
 
 ###############################################################################
 # error_handler()
@@ -1593,12 +1838,13 @@ def built_against_curl():
 
 
 @contextlib.contextmanager
-def error_handler(error_name='CPLQuietErrorHandler'):
+def error_handler(error_name="CPLQuietErrorHandler"):
     handler = gdal.PushErrorHandler(error_name)
     try:
         yield handler
     finally:
         gdal.PopErrorHandler()
+
 
 ###############################################################################
 # Temporarily define a new value of block cache
@@ -1613,6 +1859,7 @@ def SetCacheMax(val):
     finally:
         gdal.SetCacheMax(oldval)
 
+
 ###############################################################################
 # Temporarily define a configuration option
 
@@ -1625,6 +1872,7 @@ def config_option(key, val):
         yield
     finally:
         gdal.SetConfigOption(key, oldval)
+
 
 ###############################################################################
 # Temporarily define a set of configuration options
@@ -1641,10 +1889,12 @@ def config_options(options):
         for key in options:
             gdal.SetConfigOption(key, oldvals[key])
 
+
 ###############################################################################
 # Temporarily define VSI credentials
 
 credential_keys = set()
+
 
 @contextlib.contextmanager
 def credentials(prefix, options):
@@ -1661,6 +1911,7 @@ def credentials(prefix, options):
             credential_keys.remove(prefix)
             gdal.ClearCredentials(prefix)
 
+
 ###############################################################################
 # Temporarily create a file
 
@@ -1672,6 +1923,7 @@ def tempfile(filename, content):
         yield
     finally:
         gdal.Unlink(filename)
+
 
 ###############################################################################
 # Temporarily enable exceptions
@@ -1701,26 +1953,27 @@ def gdalurlopen(url, timeout=10):
     socket.setdefaulttimeout(timeout)
     proxy = None
 
-    if 'GDAL_HTTP_PROXY' in os.environ:
-        proxy = os.environ['GDAL_HTTP_PROXY']
-        protocol = 'http'
+    if "GDAL_HTTP_PROXY" in os.environ:
+        proxy = os.environ["GDAL_HTTP_PROXY"]
+        protocol = "http"
 
-    if 'GDAL_HTTPS_PROXY' in os.environ and url.startswith('https'):
-        proxy = os.environ['GDAL_HTTPS_PROXY']
-        protocol = 'https'
+    if "GDAL_HTTPS_PROXY" in os.environ and url.startswith("https"):
+        proxy = os.environ["GDAL_HTTPS_PROXY"]
+        protocol = "https"
 
     if proxy is not None:
-        if 'GDAL_HTTP_PROXYUSERPWD' in os.environ:
-            proxyuserpwd = os.environ['GDAL_HTTP_PROXYUSERPWD']
+        if "GDAL_HTTP_PROXYUSERPWD" in os.environ:
+            proxyuserpwd = os.environ["GDAL_HTTP_PROXYUSERPWD"]
             proxy_handler = urllib.request.ProxyHandler(
-                {protocol: f"{protocol}://{proxyuserpwd}@{proxy}"})
+                {protocol: f"{protocol}://{proxyuserpwd}@{proxy}"}
+            )
         else:
             proxyuserpwd = None
             proxy_handler = urllib.request.ProxyHandler(
-                {protocol: f"{protocol}://{proxy}"})
+                {protocol: f"{protocol}://{proxy}"}
+            )
 
-        opener = urllib.request.build_opener(proxy_handler,
-                                             urllib.request.HTTPHandler)
+        opener = urllib.request.build_opener(proxy_handler, urllib.request.HTTPHandler)
 
         urllib.request.install_opener(opener)
 
@@ -1729,49 +1982,53 @@ def gdalurlopen(url, timeout=10):
         socket.setdefaulttimeout(old_timeout)
         return handle
     except urllib.error.HTTPError as e:
-        print(f'HTTP service for {url} is down (HTTP Error: {e.code})')
+        print(f"HTTP service for {url} is down (HTTP Error: {e.code})")
         socket.setdefaulttimeout(old_timeout)
         return None
     except urllib.error.ContentTooShortError:
-        print(f'HTTP content too short for {url}.')
+        print(f"HTTP content too short for {url}.")
         socket.setdefaulttimeout(old_timeout)
         return None
     except urllib.error.URLError as e:
-        print(f'HTTP service for {url} is down (URL Error: {e.reason})')
+        print(f"HTTP service for {url} is down (URL Error: {e.reason})")
         socket.setdefaulttimeout(old_timeout)
         return None
 
 
-def runexternal(cmd, strin=None, check_memleak=True,
-                display_live_on_parent_stdout=False, encoding='latin1'):
+def runexternal(
+    cmd,
+    strin=None,
+    check_memleak=True,
+    display_live_on_parent_stdout=False,
+    encoding="latin1",
+):
     # pylint: disable=unused-argument
     command = shlex.split(cmd)
     if strin is None:
         p = subprocess.Popen(command, stdout=subprocess.PIPE)
     else:
-        p = subprocess.Popen(command, stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE)
-        p.stdin.write(strin.encode('ascii'))
+        p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        p.stdin.write(strin.encode("ascii"))
         p.stdin.close()
 
     if p.stdout is not None:
         if display_live_on_parent_stdout:
-            ret = ''
+            ret = ""
             ret_stdout = p.stdout
             while True:
                 c = ret_stdout.read(1).decode(encoding)
-                if c == '':
+                if c == "":
                     break
                 ret = ret + c
                 sys.stdout.write(c)
         else:
             ret = p.stdout.read().decode(encoding)
     else:
-        ret = ''
+        ret = ""
 
     waitcode = p.wait()
     if waitcode != 0:
-        ret = f'{ret}\nERROR ret code = {waitcode}'
+        ret = f"{ret}\nERROR ret code = {waitcode}"
 
     return ret
 
@@ -1781,11 +2038,10 @@ def _read_in_thread(f, q):
     f.close()
 
 
-def runexternal_out_and_err(cmd, check_memleak=True, encoding='ascii'):
+def runexternal_out_and_err(cmd, check_memleak=True, encoding="ascii"):
     # pylint: disable=unused-argument
     command = shlex.split(cmd)
-    p = subprocess.Popen(command, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE)
+    p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if p.stdout is not None:
         q_stdout = Queue()
@@ -1793,7 +2049,7 @@ def runexternal_out_and_err(cmd, check_memleak=True, encoding='ascii'):
         t_stdout.start()
     else:
         q_stdout = None
-        ret_stdout = ''
+        ret_stdout = ""
 
     if p.stderr is not None:
         q_stderr = Queue()
@@ -1801,7 +2057,7 @@ def runexternal_out_and_err(cmd, check_memleak=True, encoding='ascii'):
         t_stderr.start()
     else:
         q_stderr = None
-        ret_stderr = ''
+        ret_stderr = ""
 
     if q_stdout is not None:
         ret_stdout = q_stdout.get().decode(encoding)
@@ -1810,6 +2066,6 @@ def runexternal_out_and_err(cmd, check_memleak=True, encoding='ascii'):
 
     waitcode = p.wait()
     if waitcode != 0:
-        ret_stderr = f'{ret_stderr}\nERROR ret code = {waitcode}'
+        ret_stderr = f"{ret_stderr}\nERROR ret code = {waitcode}"
 
     return (ret_stdout, ret_stderr)

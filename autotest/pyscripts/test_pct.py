@@ -32,13 +32,13 @@
 import os
 import struct
 
+import gdaltest
+import pytest
+import test_py_scripts
 
+import osgeo_utils.auxiliary.color_table as color_table
 from osgeo import gdal
 from osgeo_utils import gdalattachpct, rgb2pct
-import osgeo_utils.auxiliary.color_table as color_table
-import gdaltest
-import test_py_scripts
-import pytest
 
 ###############################################################################
 # Test rgb2pct
@@ -46,42 +46,50 @@ import pytest
 
 def test_rgb2pct_1():
 
-    script_path = test_py_scripts.get_py_script('rgb2pct')
+    script_path = test_py_scripts.get_py_script("rgb2pct")
     if script_path is None:
         pytest.skip()
 
-    test_py_scripts.run_py_script(script_path, 'rgb2pct', test_py_scripts.get_data_path('gcore') + 'rgbsmall.tif tmp/test_rgb2pct_1.tif')
+    test_py_scripts.run_py_script(
+        script_path,
+        "rgb2pct",
+        test_py_scripts.get_data_path("gcore") + "rgbsmall.tif tmp/test_rgb2pct_1.tif",
+    )
 
-    ds = gdal.Open('tmp/test_rgb2pct_1.tif')
+    ds = gdal.Open("tmp/test_rgb2pct_1.tif")
     assert ds.GetRasterBand(1).Checksum() == 31231
     ds = None
+
 
 ###############################################################################
 # Test pct2rgb
 
 
 def test_pct2rgb_1():
-    gdal_array = pytest.importorskip('osgeo.gdal_array')
+    gdal_array = pytest.importorskip("osgeo.gdal_array")
     try:
         gdal_array.BandRasterIONumPy
     except AttributeError:
-        pytest.skip('osgeo.gdal_array.BandRasterIONumPy is unavailable')
+        pytest.skip("osgeo.gdal_array.BandRasterIONumPy is unavailable")
 
-    script_path = test_py_scripts.get_py_script('pct2rgb')
+    script_path = test_py_scripts.get_py_script("pct2rgb")
     if script_path is None:
         pytest.skip()
 
-    test_py_scripts.run_py_script(script_path, 'pct2rgb', 'tmp/test_rgb2pct_1.tif tmp/test_pct2rgb_1.tif')
+    test_py_scripts.run_py_script(
+        script_path, "pct2rgb", "tmp/test_rgb2pct_1.tif tmp/test_pct2rgb_1.tif"
+    )
 
-    ds = gdal.Open('tmp/test_pct2rgb_1.tif')
+    ds = gdal.Open("tmp/test_pct2rgb_1.tif")
     assert ds.GetRasterBand(1).Checksum() == 20963
 
-    ori_ds = gdal.Open(test_py_scripts.get_data_path('gcore') + 'rgbsmall.tif')
+    ori_ds = gdal.Open(test_py_scripts.get_data_path("gcore") + "rgbsmall.tif")
     max_diff = gdaltest.compare_ds(ori_ds, ds)
     assert max_diff <= 18
 
     ds = None
     ori_ds = None
+
 
 ###############################################################################
 # Test rgb2pct -n option
@@ -89,22 +97,30 @@ def test_pct2rgb_1():
 
 def test_rgb2pct_2():
 
-    script_path = test_py_scripts.get_py_script('rgb2pct')
+    script_path = test_py_scripts.get_py_script("rgb2pct")
     if script_path is None:
         pytest.skip()
 
-    test_py_scripts.run_py_script(script_path, 'rgb2pct', '-n 16 ' + test_py_scripts.get_data_path('gcore') + 'rgbsmall.tif tmp/test_rgb2pct_2.tif')
+    test_py_scripts.run_py_script(
+        script_path,
+        "rgb2pct",
+        "-n 16 "
+        + test_py_scripts.get_data_path("gcore")
+        + "rgbsmall.tif tmp/test_rgb2pct_2.tif",
+    )
 
-    ds = gdal.Open('tmp/test_rgb2pct_2.tif')
+    ds = gdal.Open("tmp/test_rgb2pct_2.tif")
     assert ds.GetRasterBand(1).Checksum() == 16596
 
     ct = ds.GetRasterBand(1).GetRasterColorTable()
     for i in range(16, 255):
         entry = ct.GetColorEntry(i)
-        assert (entry[0] == 0 and entry[1] == 0 and entry[2] == 0), \
-            'Color table has more than 16 entries'
+        assert (
+            entry[0] == 0 and entry[1] == 0 and entry[2] == 0
+        ), "Color table has more than 16 entries"
 
     ds = None
+
 
 ###############################################################################
 # Test rgb2pct -pct option
@@ -112,48 +128,66 @@ def test_rgb2pct_2():
 
 def test_rgb2pct_3():
 
-    script_path = test_py_scripts.get_py_script('rgb2pct')
+    script_path = test_py_scripts.get_py_script("rgb2pct")
     if script_path is None:
         pytest.skip()
 
-    test_py_scripts.run_py_script(script_path, 'rgb2pct', '-pct tmp/test_rgb2pct_2.tif ' + test_py_scripts.get_data_path('gcore') + 'rgbsmall.tif tmp/test_rgb2pct_3.tif')
+    test_py_scripts.run_py_script(
+        script_path,
+        "rgb2pct",
+        "-pct tmp/test_rgb2pct_2.tif "
+        + test_py_scripts.get_data_path("gcore")
+        + "rgbsmall.tif tmp/test_rgb2pct_3.tif",
+    )
 
-    ds = gdal.Open('tmp/test_rgb2pct_3.tif')
+    ds = gdal.Open("tmp/test_rgb2pct_3.tif")
     assert ds.GetRasterBand(1).Checksum() == 16596
 
     ct = ds.GetRasterBand(1).GetRasterColorTable()
     for i in range(16, 255):
         entry = ct.GetColorEntry(i)
-        assert (entry[0] == 0 and entry[1] == 0 and entry[2] == 0), \
-            'Color table has more than 16 entries'
+        assert (
+            entry[0] == 0 and entry[1] == 0 and entry[2] == 0
+        ), "Color table has more than 16 entries"
 
     ds = None
+
 
 ###############################################################################
 # Test pct2rgb with big CT (>256 entries)
 
 
 def test_pct2rgb_4():
-    gdal_array = pytest.importorskip('osgeo.gdal_array')
+    gdal_array = pytest.importorskip("osgeo.gdal_array")
     try:
         gdal_array.BandRasterIONumPy
     except AttributeError:
-        pytest.skip('osgeo.gdal_array.BandRasterIONumPy is unavailable')
+        pytest.skip("osgeo.gdal_array.BandRasterIONumPy is unavailable")
 
-    script_path = test_py_scripts.get_py_script('pct2rgb')
+    script_path = test_py_scripts.get_py_script("pct2rgb")
     if script_path is None:
         pytest.skip()
 
-    test_py_scripts.run_py_script(script_path, 'pct2rgb', '-rgba ' + test_py_scripts.get_data_path('gcore') + 'rat.img tmp/test_pct2rgb_4.tif')
+    test_py_scripts.run_py_script(
+        script_path,
+        "pct2rgb",
+        "-rgba "
+        + test_py_scripts.get_data_path("gcore")
+        + "rat.img tmp/test_pct2rgb_4.tif",
+    )
 
-    ds = gdal.Open('tmp/test_pct2rgb_4.tif')
-    ori_ds = gdal.Open(test_py_scripts.get_data_path('gcore') + 'rat.img')
+    ds = gdal.Open("tmp/test_pct2rgb_4.tif")
+    ori_ds = gdal.Open(test_py_scripts.get_data_path("gcore") + "rat.img")
 
-    ori_data = struct.unpack('H', ori_ds.GetRasterBand(1).ReadRaster(1990, 1990, 1, 1, 1, 1))[0]
-    data = (struct.unpack('B', ds.GetRasterBand(1).ReadRaster(1990, 1990, 1, 1, 1, 1))[0],
-            struct.unpack('B', ds.GetRasterBand(2).ReadRaster(1990, 1990, 1, 1, 1, 1))[0],
-            struct.unpack('B', ds.GetRasterBand(3).ReadRaster(1990, 1990, 1, 1, 1, 1))[0],
-            struct.unpack('B', ds.GetRasterBand(4).ReadRaster(1990, 1990, 1, 1, 1, 1))[0],)
+    ori_data = struct.unpack(
+        "H", ori_ds.GetRasterBand(1).ReadRaster(1990, 1990, 1, 1, 1, 1)
+    )[0]
+    data = (
+        struct.unpack("B", ds.GetRasterBand(1).ReadRaster(1990, 1990, 1, 1, 1, 1))[0],
+        struct.unpack("B", ds.GetRasterBand(2).ReadRaster(1990, 1990, 1, 1, 1, 1))[0],
+        struct.unpack("B", ds.GetRasterBand(3).ReadRaster(1990, 1990, 1, 1, 1, 1))[0],
+        struct.unpack("B", ds.GetRasterBand(4).ReadRaster(1990, 1990, 1, 1, 1, 1))[0],
+    )
 
     ct = ori_ds.GetRasterBand(1).GetRasterColorTable()
     entry = ct.GetColorEntry(ori_data)
@@ -165,15 +199,20 @@ def test_pct2rgb_4():
 
 
 def test_gdalattachpct_1():
-    pct_filename = 'tmp/test_rgb2pct_2.tif'
-    src_filename = test_py_scripts.get_data_path('gcore') + 'rgbsmall.tif'
-    pct_filename4 = 'tmp/test_gdalattachpct_1_4.txt'
+    pct_filename = "tmp/test_rgb2pct_2.tif"
+    src_filename = test_py_scripts.get_data_path("gcore") + "rgbsmall.tif"
+    pct_filename4 = "tmp/test_gdalattachpct_1_4.txt"
 
     # pct from raster
     ct0 = color_table.get_color_table(pct_filename)
     ds1, err = rgb2pct.doit(src_filename=src_filename, pct_filename=pct_filename)
     ct1 = color_table.get_color_table(ds1)
-    assert err == 0 and ds1 is not None and ct1 is not None and color_table.are_equal_color_table(ct0, ct1)
+    assert (
+        err == 0
+        and ds1 is not None
+        and ct1 is not None
+        and color_table.are_equal_color_table(ct0, ct1)
+    )
     ds1 = None
 
     # generate some junk color table
@@ -184,7 +223,9 @@ def test_gdalattachpct_1():
     # assign junk color table
     ds2, err = gdalattachpct.doit(src_filename=src_filename, pct_filename=ct2a)
     ct2b = color_table.get_color_table(ds2)
-    assert err == 0 and ds2 is not None and color_table.are_equal_color_table(ct2a, ct2b)
+    assert (
+        err == 0 and ds2 is not None and color_table.are_equal_color_table(ct2a, ct2b)
+    )
     ds2 = None
 
     # pct from gdal.ColorTable object
@@ -201,7 +242,12 @@ def test_gdalattachpct_1():
     # pct from txt file
     ds5, err = rgb2pct.doit(src_filename=src_filename, pct_filename=ct4)
     ct5 = color_table.get_color_table(ds5)
-    assert err == 0 and ds5 is not None and ct5 is not None and color_table.are_equal_color_table(ct4, ct5)
+    assert (
+        err == 0
+        and ds5 is not None
+        and ct5 is not None
+        and color_table.are_equal_color_table(ct4, ct5)
+    )
     ds5 = None
 
     ct1 = None
@@ -215,18 +261,20 @@ def test_gdalattachpct_1():
 ###############################################################################
 # Cleanup
 
+
 def test_rgb2pct_cleanup():
 
-    lst = ['tmp/test_rgb2pct_1.tif',
-           'tmp/test_pct2rgb_1.tif',
-           'tmp/test_rgb2pct_2.tif',
-           'tmp/test_rgb2pct_3.tif',
-           'tmp/test_pct2rgb_1.tif',
-           'tmp/test_pct2rgb_4.tif',
-           'tmp/test_gdalattachpct_1_4.txt']
+    lst = [
+        "tmp/test_rgb2pct_1.tif",
+        "tmp/test_pct2rgb_1.tif",
+        "tmp/test_rgb2pct_2.tif",
+        "tmp/test_rgb2pct_3.tif",
+        "tmp/test_pct2rgb_1.tif",
+        "tmp/test_pct2rgb_4.tif",
+        "tmp/test_gdalattachpct_1_4.txt",
+    ]
     for filename in lst:
         try:
             os.remove(filename)
         except OSError:
             pass
-

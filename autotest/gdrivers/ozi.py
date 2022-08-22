@@ -29,11 +29,11 @@
 ###############################################################################
 
 import os
-from osgeo import gdal
-
 
 import gdaltest
 import pytest
+
+from osgeo import gdal
 
 ###############################################################################
 # Test reading OZF2 file
@@ -41,40 +41,53 @@ import pytest
 
 def test_ozi_online_1():
 
-    if not gdaltest.download_file('http://www.oziexplorer2.com/maps/Europe2001_setup.exe', 'Europe2001_setup.exe'):
+    if not gdaltest.download_file(
+        "http://www.oziexplorer2.com/maps/Europe2001_setup.exe", "Europe2001_setup.exe"
+    ):
         pytest.skip()
 
     try:
-        os.stat('tmp/cache/Europe 2001_OZF.map')
+        os.stat("tmp/cache/Europe 2001_OZF.map")
     except OSError:
         try:
-            gdaltest.unzip('tmp/cache', 'tmp/cache/Europe2001_setup.exe')
+            gdaltest.unzip("tmp/cache", "tmp/cache/Europe2001_setup.exe")
             try:
-                os.stat('tmp/cache/Europe 2001_OZF.map')
+                os.stat("tmp/cache/Europe 2001_OZF.map")
             except OSError:
                 pytest.skip()
-        except:
+        except Exception:
             pytest.skip()
 
-    ds = gdal.Open('tmp/cache/Europe 2001_OZF.map')
+    ds = gdal.Open("tmp/cache/Europe 2001_OZF.map")
     assert ds is not None
 
     if False:  # pylint: disable=using-constant-test
         gt = ds.GetGeoTransform()
         wkt = ds.GetProjectionRef()
 
-        expected_gt = (-1841870.2731215316, 3310.9550245520159, -13.025246304875619, 8375316.4662204208, -16.912440131236657, -3264.1162527118681)
+        expected_gt = (
+            -1841870.2731215316,
+            3310.9550245520159,
+            -13.025246304875619,
+            8375316.4662204208,
+            -16.912440131236657,
+            -3264.1162527118681,
+        )
         for i in range(6):
-            assert gt[i] == pytest.approx(expected_gt[i], abs=1e-7), 'bad geotransform'
+            assert gt[i] == pytest.approx(expected_gt[i], abs=1e-7), "bad geotransform"
 
     else:
         gcps = ds.GetGCPs()
 
-        assert len(gcps) == 4, 'did not get expected gcp count.'
+        assert len(gcps) == 4, "did not get expected gcp count."
 
         gcp0 = gcps[0]
-        assert gcp0.GCPPixel == 61 and gcp0.GCPLine == 436 and gcp0.GCPX == pytest.approx(-1653990.4525324, abs=0.001) and gcp0.GCPY == pytest.approx(6950885.0402214, abs=0.001), \
-            'did not get expected gcp.'
+        assert (
+            gcp0.GCPPixel == 61
+            and gcp0.GCPLine == 436
+            and gcp0.GCPX == pytest.approx(-1653990.4525324, abs=0.001)
+            and gcp0.GCPY == pytest.approx(6950885.0402214, abs=0.001)
+        ), "did not get expected gcp."
 
         wkt = ds.GetGCPProjection()
 
@@ -82,7 +95,4 @@ def test_ozi_online_1():
     assert wkt == expected_wkt, wkt
 
     cs = ds.GetRasterBand(1).Checksum()
-    assert cs == 16025, 'bad checksum'
-
-
-
+    assert cs == 16025, "bad checksum"

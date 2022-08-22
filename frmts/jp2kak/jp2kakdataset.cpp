@@ -1270,6 +1270,7 @@ namespace {
     class vector_safe_bool {
         bool value;
     public:
+        // cppcheck-suppress uninitMemberVar
         vector_safe_bool() = default;
         // cppcheck-suppress noExplicitConstructor
         vector_safe_bool(bool b) : value{b} {}

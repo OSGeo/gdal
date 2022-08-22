@@ -42,6 +42,7 @@
 #include "geometrywriter.h"
 
 #include <algorithm>
+#include <limits>
 #include <new>
 #include <stdexcept>
 
@@ -465,7 +466,7 @@ void OGRFlatGeobufLayer::Create() {
     hilbertSort(m_featureItems);
     CPLDebugOnly("FlatGeobuf", "Calc new feature offsets");
     uint64_t featureOffset = 0;
-    for (auto item : m_featureItems) {
+    for (auto& item : m_featureItems) {
         auto featureItem = std::static_pointer_cast<FeatureItem>(item);
         featureItem->nodeItem.offset = featureOffset;
         featureOffset += featureItem->size;
@@ -1738,7 +1739,14 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
                 std::copy(reinterpret_cast<const uint8_t *>(&l_le), reinterpret_cast<const uint8_t *>(&l_le + 1), std::back_inserter(properties));
                 try
                 {
-                    properties.reserve(properties.size() + len);
+                    // to avoid coverity scan warning: "To avoid a quadratic time
+                    // penalty when using reserve(), always increase the capacity
+                    /// by a multiple of its current value"
+                    if( properties.size() + len > properties.capacity() &&
+                        properties.size() < std::numeric_limits<size_t>::max() / 2 )
+                    {
+                        properties.reserve(std::max(2 * properties.size(), properties.size() + len));
+                    }
                 }
                 catch( const std::bad_alloc& )
                 {
@@ -1761,7 +1769,14 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
                 std::copy(reinterpret_cast<const uint8_t *>(&l_le), reinterpret_cast<const uint8_t *>(&l_le + 1), std::back_inserter(properties));
                 try
                 {
-                    properties.reserve(properties.size() + len);
+                    // to avoid coverity scan warning: "To avoid a quadratic time
+                    // penalty when using reserve(), always increase the capacity
+                    /// by a multiple of its current value"
+                    if( properties.size() + len > properties.capacity() &&
+                        properties.size() < std::numeric_limits<size_t>::max() / 2 )
+                    {
+                        properties.reserve(std::max(2 * properties.size(), properties.size() + len));
+                    }
                 }
                 catch( const std::bad_alloc& )
                 {

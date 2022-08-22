@@ -29,6 +29,7 @@
 ###############################################################################
 
 import os
+
 from osgeo import gdal
 
 
@@ -52,24 +53,24 @@ def uffd_compare(filename):
 
     """
     ext = os.path.splitext(filename)[1]
-    vsimem = '/vsimem/file{}'.format(ext)
-    filename2 = './data/{}'.format(filename)
-    gdal.FileFromMemBuffer(vsimem, open(filename2, 'rb').read())
+    vsimem = "/vsimem/file{}".format(ext)
+    filename2 = "./data/{}".format(filename)
+    gdal.FileFromMemBuffer(vsimem, open(filename2, "rb").read())
 
     dataset1 = gdal.Open(filename2)
     dataset2 = gdal.Open(vsimem)
     if dataset2 is None:
         gdal.Unlink(vsimem)
         return None
-    if (dataset1.GetMetadata() != dataset2.GetMetadata()):
+    if dataset1.GetMetadata() != dataset2.GetMetadata():
         gdal.Unlink(vsimem)
         return False
-    if (dataset1.RasterCount != dataset2.RasterCount):
+    if dataset1.RasterCount != dataset2.RasterCount:
         gdal.Unlink(vsimem)
         return False
     for i in range(dataset1.RasterCount):
-        checksum1 = dataset1.GetRasterBand(i+1).Checksum()
-        checksum2 = dataset2.GetRasterBand(i+1).Checksum()
+        checksum1 = dataset1.GetRasterBand(i + 1).Checksum()
+        checksum2 = dataset2.GetRasterBand(i + 1).Checksum()
         if not checksum1 == checksum2:
             gdal.Unlink(vsimem)
             return False

@@ -24,7 +24,7 @@ BASE_EXEC_PREFIX = os.path.normpath(sys.base_exec_prefix)
 # Added by GDAL
 def _is_debian():
     for p in sys.path:
-        if 'dist-packages' in p:
+        if "dist-packages" in p:
             return True
     return False
 
@@ -43,7 +43,7 @@ def get_python_lib(plat_specific=0, standard_lib=0, prefix=None):
     If 'prefix' is supplied, use it instead of sys.base_prefix or
     sys.base_exec_prefix -- i.e., ignore 'plat_specific'.
     """
-    is_default_prefix = not prefix or os.path.normpath(prefix) in ('/usr', '/usr/local')
+    is_default_prefix = not prefix or os.path.normpath(prefix) in ("/usr", "/usr/local")
     if prefix is None:
         if standard_lib:
             prefix = plat_specific and BASE_EXEC_PREFIX or BASE_PREFIX
@@ -51,16 +51,18 @@ def get_python_lib(plat_specific=0, standard_lib=0, prefix=None):
             prefix = plat_specific and EXEC_PREFIX or PREFIX
 
     if os.name == "posix":
-        libpython = os.path.join(prefix,
-                                 "lib", "python" + get_python_version())
+        libpython = os.path.join(prefix, "lib", "python" + get_python_version())
         if standard_lib:
             return libpython
         # This check is Debian specific
-        elif (_is_debian() and is_default_prefix and
-              'PYTHONUSERBASE' not in os.environ and
-              'VIRTUAL_ENV' not in os.environ and
-              'real_prefix' not in sys.__dict__ and
-              sys.prefix == sys.base_prefix):
+        elif (
+            _is_debian()
+            and is_default_prefix
+            and "PYTHONUSERBASE" not in os.environ
+            and "VIRTUAL_ENV" not in os.environ
+            and "real_prefix" not in sys.__dict__
+            and sys.prefix == sys.base_prefix
+        ):
             return os.path.join(prefix, "lib", "python3", "dist-packages")
         else:
             return os.path.join(libpython, "site-packages")
@@ -72,5 +74,5 @@ def get_python_lib(plat_specific=0, standard_lib=0, prefix=None):
     else:
         raise Exception(
             "I don't know where Python installs its library "
-            "on platform '%s'" % os.name)
-
+            "on platform '%s'" % os.name
+        )

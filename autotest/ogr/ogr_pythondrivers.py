@@ -30,27 +30,27 @@
 
 
 import gdaltest
-from osgeo import gdal
-from osgeo import ogr
+
+from osgeo import gdal, ogr
 
 
 def test_pythondrivers_init():
-    with gdaltest.config_option('GDAL_PYTHON_DRIVER_PATH', 'data/pydrivers'):
+    with gdaltest.config_option("GDAL_PYTHON_DRIVER_PATH", "data/pydrivers"):
         gdal.AllRegister()
-    assert ogr.GetDriverByName('DUMMY')
+    assert ogr.GetDriverByName("DUMMY")
 
 
 def test_pythondrivers_test_dummy():
-    assert not ogr.Open('UNRELATED:')
-    ds = ogr.Open('DUMMY:')
+    assert not ogr.Open("UNRELATED:")
+    ds = ogr.Open("DUMMY:")
     assert ds
     assert ds.GetLayerCount() == 1
     assert not ds.GetLayer(-1)
     assert not ds.GetLayer(1)
     lyr = ds.GetLayer(0)
     assert lyr
-    assert lyr.GetName() == 'my_layer'
-    assert lyr.GetFIDColumn() == 'my_fid'
+    assert lyr.GetName() == "my_layer"
+    assert lyr.GetFIDColumn() == "my_fid"
     assert lyr.GetLayerDefn()
     assert lyr.GetLayerDefn().GetFieldCount() == 13
     assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
@@ -58,25 +58,25 @@ def test_pythondrivers_test_dummy():
     count = 0
     for f in lyr:
         assert f.GetFID() == count + 1
-        assert f['boolField']
-        assert f['int16Field'] == 32767
-        assert f['int32Field'] == count + 2
-        assert f['int64Field'] == 1234567890123
-        assert f['realField'] == 1.23
-        assert f['floatField'] == 1.2
-        assert f['strField'] == 'foo'
-        assert f['strNullField'] is None
-        assert f.GetFieldAsBinary('binaryField') == b'\x01\x00\x02'
-        assert f['timeField'] == '12:34:56.789'
-        assert f['dateField'] == '2017/04/26'
-        assert f['datetimeField'] == '2017/04/26 12:34:56.789+00'
+        assert f["boolField"]
+        assert f["int16Field"] == 32767
+        assert f["int32Field"] == count + 2
+        assert f["int64Field"] == 1234567890123
+        assert f["realField"] == 1.23
+        assert f["floatField"] == 1.2
+        assert f["strField"] == "foo"
+        assert f["strNullField"] is None
+        assert f.GetFieldAsBinary("binaryField") == b"\x01\x00\x02"
+        assert f["timeField"] == "12:34:56.789"
+        assert f["dateField"] == "2017/04/26"
+        assert f["datetimeField"] == "2017/04/26 12:34:56.789+00"
         assert f.GetGeometryRef()
         count += 1
     assert count == 5
     assert lyr.TestCapability(ogr.OLCFastFeatureCount)
     assert lyr.GetFeature(1).GetFID() == 1
 
-    lyr.SetAttributeFilter('1 = 0')
+    lyr.SetAttributeFilter("1 = 0")
     assert lyr.TestCapability(ogr.OLCFastFeatureCount) == 0
     assert lyr.GetFeatureCount() == 0
     count = 0
@@ -85,7 +85,7 @@ def test_pythondrivers_test_dummy():
     assert count == 0
     lyr.SetAttributeFilter(None)
 
-    lyr.SetSpatialFilter(ogr.CreateGeometryFromWkt('POINT (-100 -100)'))
+    lyr.SetSpatialFilter(ogr.CreateGeometryFromWkt("POINT (-100 -100)"))
     assert lyr.TestCapability(ogr.OLCFastFeatureCount) == 0
     assert lyr.GetFeatureCount() == 0
     count = 0
@@ -97,47 +97,55 @@ def test_pythondrivers_test_dummy():
 
 def test_pythondrivers_missing_metadata():
     count_before = gdal.GetDriverCount()
-    with gdaltest.config_option('GDAL_PYTHON_DRIVER_PATH', 'data/pydrivers/missingmetadata'):
+    with gdaltest.config_option(
+        "GDAL_PYTHON_DRIVER_PATH", "data/pydrivers/missingmetadata"
+    ):
         with gdaltest.error_handler():
             gdal.AllRegister()
-    assert gdal.GetLastErrorMsg() != ''
+    assert gdal.GetLastErrorMsg() != ""
     assert gdal.GetDriverCount() == count_before
 
 
 def test_pythondrivers_unsupported_api_version():
     count_before = gdal.GetDriverCount()
-    with gdaltest.config_option('GDAL_PYTHON_DRIVER_PATH', 'data/pydrivers/unsupportedapiversion'):
+    with gdaltest.config_option(
+        "GDAL_PYTHON_DRIVER_PATH", "data/pydrivers/unsupportedapiversion"
+    ):
         gdal.AllRegister()
     assert gdal.GetDriverCount() == count_before
 
 
 def test_pythondrivers_no_driver_class():
-    with gdaltest.config_option('GDAL_PYTHON_DRIVER_PATH', 'data/pydrivers/nodriverclass'):
+    with gdaltest.config_option(
+        "GDAL_PYTHON_DRIVER_PATH", "data/pydrivers/nodriverclass"
+    ):
         gdal.AllRegister()
-    drv = ogr.GetDriverByName('NO_DRIVER_CLASS')
+    drv = ogr.GetDriverByName("NO_DRIVER_CLASS")
     assert drv
     with gdaltest.error_handler():
-        ogr.Open('FOO:')
-    assert gdal.GetLastErrorMsg() != ''
+        ogr.Open("FOO:")
+    assert gdal.GetLastErrorMsg() != ""
 
-    with gdaltest.config_option('GDAL_SKIP', 'NO_DRIVER_CLASS'):
+    with gdaltest.config_option("GDAL_SKIP", "NO_DRIVER_CLASS"):
         gdal.AllRegister()
 
 
 def test_pythondrivers_missing_identify():
-    with gdaltest.config_option('GDAL_PYTHON_DRIVER_PATH', 'data/pydrivers/missingidentify'):
+    with gdaltest.config_option(
+        "GDAL_PYTHON_DRIVER_PATH", "data/pydrivers/missingidentify"
+    ):
         gdal.AllRegister()
-    drv = ogr.GetDriverByName('MISSING_IDENTIFY')
+    drv = ogr.GetDriverByName("MISSING_IDENTIFY")
     assert drv
     with gdaltest.error_handler():
-        ogr.Open('FOO:')
-    assert gdal.GetLastErrorMsg() != ''
+        ogr.Open("FOO:")
+    assert gdal.GetLastErrorMsg() != ""
 
-    with gdaltest.config_option('GDAL_SKIP', 'MISSING_IDENTIFY'):
+    with gdaltest.config_option("GDAL_SKIP", "MISSING_IDENTIFY"):
         gdal.AllRegister()
 
 
 def test_pythondrivers_cleanup():
-    with gdaltest.config_option('GDAL_SKIP', 'DUMMY'):
+    with gdaltest.config_option("GDAL_SKIP", "DUMMY"):
         gdal.AllRegister()
-    assert not ogr.GetDriverByName('DUMMY')
+    assert not ogr.GetDriverByName("DUMMY")

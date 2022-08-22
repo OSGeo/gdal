@@ -342,6 +342,26 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         OGRFieldType eFieldType = OFTString;
         if (pszDeclType != nullptr)
         {
+            std::string osDeclType(pszDeclType);
+            const char* pszBeginDomainName = strstr(pszDeclType, "_BEGIN_DOMAIN_NAME_");
+            if( pszBeginDomainName )
+            {
+                const char* pszBeginDomainNameOri = pszBeginDomainName;
+                pszBeginDomainName += strlen("_BEGIN_DOMAIN_NAME_");
+                const char* pszEndDomainName = strstr(pszBeginDomainName, "_END_DOMAIN_NAME");
+                if( pszEndDomainName )
+                {
+                    std::string osHEXDomainName(pszBeginDomainName, pszEndDomainName - pszBeginDomainName);
+                    int nBytes = 0;
+                    GByte* pabyDecoded = CPLHexToBinary(osHEXDomainName.c_str(), &nBytes);
+                    oField.SetDomainName(std::string(reinterpret_cast<const char*>(pabyDecoded), nBytes));
+                    CPLFree(pabyDecoded);
+                    osDeclType = std::string(pszDeclType, pszBeginDomainNameOri - pszDeclType) +
+                                 std::string(pszEndDomainName + strlen(pszEndDomainName));
+                }
+            }
+            pszDeclType = osDeclType.c_str();
+
             if (EQUAL(pszDeclType, "INTEGER_BOOLEAN") || EQUAL(pszDeclType, "BOOLEAN"))
             {
                 oField.SetType(OFTInteger);

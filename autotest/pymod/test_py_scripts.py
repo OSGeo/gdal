@@ -29,36 +29,36 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import importlib
 import os
-import sys
 import shlex
+import sys
 
 import gdaltest
-import importlib
 
 ###############################################################################
 # Return the path in which the Python script is found
 #
 
 # path relative to gdal root
-scripts_subdir = 'swig/python/gdal-utils/scripts'
-utils_subdir = 'swig/python/gdal-utils/osgeo_utils'
-samples_subdir = utils_subdir + '/samples'
-samples_path = '../../' + samples_subdir
+scripts_subdir = "swig/python/gdal-utils/scripts"
+utils_subdir = "swig/python/gdal-utils/osgeo_utils"
+samples_subdir = utils_subdir + "/samples"
+samples_path = "../../" + samples_subdir
 
 
 def get_data_path(dir):
-    return f'../{dir}/data/'
+    return f"../{dir}/data/"
 
 
 def get_py_script(script_name):
     # how to get to {root_dir}/gdal from {root_dir}/autotest/X
-    base_gdal_path = os.path.join(os.getcwd(), '..', '..')
+    base_gdal_path = os.path.join(os.getcwd(), "..", "..")
     # now we need to look for the script in the utils or samples subdirs...
     for subdir in [scripts_subdir, samples_subdir]:
         try:
             test_path = os.path.join(base_gdal_path, subdir)
-            test_file_path = os.path.join(test_path, script_name + '.py')
+            test_file_path = os.path.join(test_path, script_name + ".py")
             os.stat(test_file_path)
             return test_path
         except OSError:
@@ -71,33 +71,45 @@ def get_py_script(script_name):
 # Runs a Python script
 # Alias of run_py_script_as_external_script()
 #
-def run_py_script(script_path: str, script_name: str, concatenated_argv: str,
-                  run_as_script: bool = True, run_as_module: bool = False):
+def run_py_script(
+    script_path: str,
+    script_name: str,
+    concatenated_argv: str,
+    run_as_script: bool = True,
+    run_as_module: bool = False,
+):
     result = None
     if run_as_module:
         try:
-            module = importlib.import_module('osgeo_utils.' + script_name)
+            module = importlib.import_module("osgeo_utils." + script_name)
         except ImportError:
-            module = importlib.import_module('osgeo_utils.samples.' + script_name)
+            module = importlib.import_module("osgeo_utils.samples." + script_name)
         argv = [module.__file__] + shlex.split(concatenated_argv)
         result = module.main(argv)
     if run_as_script:
-        result = run_py_script_as_external_script(script_path, script_name, concatenated_argv)
+        result = run_py_script_as_external_script(
+            script_path, script_name, concatenated_argv
+        )
     return result
 
 
 ###############################################################################
 # Runs a Python script in a new process
 #
-def run_py_script_as_external_script(script_path, script_name, concatenated_argv, display_live_on_parent_stdout=False):
+def run_py_script_as_external_script(
+    script_path, script_name, concatenated_argv, display_live_on_parent_stdout=False
+):
 
-    script_file_path = os.path.join(script_path, script_name + '.py')
+    script_file_path = os.path.join(script_path, script_name + ".py")
 
     # print(script_file_path + ' ' + concatenated_argv)
 
     python_exe = sys.executable
-    if sys.platform == 'win32':
-        python_exe = python_exe.replace('\\', '/')
-        script_file_path = script_file_path.replace('\\', '/')
+    if sys.platform == "win32":
+        python_exe = python_exe.replace("\\", "/")
+        script_file_path = script_file_path.replace("\\", "/")
 
-    return gdaltest.runexternal(python_exe + ' ' + script_file_path + ' ' + concatenated_argv, display_live_on_parent_stdout=display_live_on_parent_stdout)
+    return gdaltest.runexternal(
+        python_exe + " " + script_file_path + " " + concatenated_argv,
+        display_live_on_parent_stdout=display_live_on_parent_stdout,
+    )

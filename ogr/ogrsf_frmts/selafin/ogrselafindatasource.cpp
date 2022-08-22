@@ -562,10 +562,23 @@ OGRErr OGRSelafinDataSource::DeleteLayer( int iLayer ) {
         }
         for (int j=0;j<poHeader->nVar;++j)
         {
-            if (VSIFSeekL(poHeader->fp,poHeader->getPosition(i+1)+12,SEEK_SET)!=0 ||
-                Selafin::read_floatarray(poHeader->fp,&dfValues,poHeader->nFileSize) !=poHeader->nPoints ||
-                VSIFSeekL(poHeader->fp,poHeader->getPosition(i)+12,SEEK_SET)!=0 ||
-                Selafin::write_floatarray(poHeader->fp,dfValues,poHeader->nPoints)==0) {
+            bool ok = true;
+            if (VSIFSeekL(poHeader->fp,poHeader->getPosition(i+1)+12,SEEK_SET)!=0 )
+            {
+                ok = false;
+            }
+            else
+            {
+                int ret = Selafin::read_floatarray(poHeader->fp,&dfValues,poHeader->nFileSize);
+                if( ret < 0 || ret !=poHeader->nPoints ||
+                    VSIFSeekL(poHeader->fp,poHeader->getPosition(i)+12,SEEK_SET)!=0 ||
+                    Selafin::write_floatarray(poHeader->fp,dfValues,poHeader->nPoints)==0)
+                {
+                    ok = false;
+                }
+            }
+            if( !ok )
+            {
                 CPLError( CE_Failure, CPLE_FileIO, "Could not update Selafin file %s.\n",pszName);
                 CPLFree(dfValues);
                 return OGRERR_FAILURE;

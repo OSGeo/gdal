@@ -33,21 +33,23 @@ import pytest
 
 from osgeo import gdal, ogr
 
-pytestmark = pytest.mark.require_driver('STACIT')
+pytestmark = pytest.mark.require_driver("STACIT")
 
 
 def test_stacit_basic():
 
-    ds = gdal.Open('data/stacit/test.json')
+    ds = gdal.Open("data/stacit/test.json")
     assert ds is not None
     assert ds.RasterCount == 1
     assert ds.RasterXSize == 40
     assert ds.RasterYSize == 20
-    assert ds.GetSpatialRef().GetName() == 'NAD27 / UTM zone 11N'
-    assert ds.GetGeoTransform() == pytest.approx([440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0], rel=1e-8)
+    assert ds.GetSpatialRef().GetName() == "NAD27 / UTM zone 11N"
+    assert ds.GetGeoTransform() == pytest.approx(
+        [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0], rel=1e-8
+    )
     assert ds.GetRasterBand(1).GetNoDataValue() is None
 
-    vrt = ds.GetMetadata('xml:VRT')[0]
+    vrt = ds.GetMetadata("xml:VRT")[0]
     placement_vrt = """<SimpleSource>
       <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
       <SourceBand>1</SourceBand>
@@ -67,7 +69,7 @@ def test_stacit_basic():
 
 def test_stacit_max_items():
 
-    ds = gdal.OpenEx('data/stacit/test.json', open_options=['MAX_ITEMS=1'])
+    ds = gdal.OpenEx("data/stacit/test.json", open_options=["MAX_ITEMS=1"])
     assert ds is not None
     assert ds.RasterXSize == 20
     assert ds.GetRasterBand(1).Checksum() == 4672
@@ -75,64 +77,92 @@ def test_stacit_max_items():
 
 def test_stacit_multiple_assets():
 
-    ds = gdal.Open('data/stacit/test_multiple_assets.json')
+    ds = gdal.Open("data/stacit/test_multiple_assets.json")
     assert ds is not None
     assert ds.RasterCount == 0
     subds = ds.GetSubDatasets()
     assert subds == [
-        ('STACIT:"data/stacit/test_multiple_assets.json":collection=my_collection,asset=B01,crs=EPSG_26711',
-         'Collection my_collection, Asset B01 of data/stacit/test_multiple_assets.json in CRS EPSG:26711'),
-        ('STACIT:"data/stacit/test_multiple_assets.json":collection=my_collection,asset=B01,crs=EPSG_26712',
-         'Collection my_collection, Asset B01 of data/stacit/test_multiple_assets.json in CRS EPSG:26712'),
-        ('STACIT:"data/stacit/test_multiple_assets.json":collection=my_collection,asset=B02',
-         'Collection my_collection, Asset B02 of data/stacit/test_multiple_assets.json'),
-        ('STACIT:"data/stacit/test_multiple_assets.json":collection=my_collection2,asset=B01',
-         'Collection my_collection2, Asset B01 of data/stacit/test_multiple_assets.json'),
+        (
+            'STACIT:"data/stacit/test_multiple_assets.json":collection=my_collection,asset=B01,crs=EPSG_26711',
+            "Collection my_collection, Asset B01 of data/stacit/test_multiple_assets.json in CRS EPSG:26711",
+        ),
+        (
+            'STACIT:"data/stacit/test_multiple_assets.json":collection=my_collection,asset=B01,crs=EPSG_26712',
+            "Collection my_collection, Asset B01 of data/stacit/test_multiple_assets.json in CRS EPSG:26712",
+        ),
+        (
+            'STACIT:"data/stacit/test_multiple_assets.json":collection=my_collection,asset=B02',
+            "Collection my_collection, Asset B02 of data/stacit/test_multiple_assets.json",
+        ),
+        (
+            'STACIT:"data/stacit/test_multiple_assets.json":collection=my_collection2,asset=B01',
+            "Collection my_collection2, Asset B01 of data/stacit/test_multiple_assets.json",
+        ),
     ]
 
-    ds = gdal.Open('STACIT:"data/stacit/test_multiple_assets.json":collection=my_collection,asset=B01,crs=EPSG_26711')
+    ds = gdal.Open(
+        'STACIT:"data/stacit/test_multiple_assets.json":collection=my_collection,asset=B01,crs=EPSG_26711'
+    )
     assert ds.RasterXSize == 20
     assert ds.RasterYSize == 20
-    assert ds.GetSpatialRef().GetName() == 'NAD27 / UTM zone 11N'
-    assert ds.GetGeoTransform() == pytest.approx([440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0], rel=1e-8)
+    assert ds.GetSpatialRef().GetName() == "NAD27 / UTM zone 11N"
+    assert ds.GetGeoTransform() == pytest.approx(
+        [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0], rel=1e-8
+    )
 
-    ds = gdal.Open('STACIT:"data/stacit/test_multiple_assets.json":collection=my_collection,asset=B01,crs=EPSG_26712')
+    ds = gdal.Open(
+        'STACIT:"data/stacit/test_multiple_assets.json":collection=my_collection,asset=B01,crs=EPSG_26712'
+    )
     assert ds.RasterXSize == 20
     assert ds.RasterYSize == 20
-    assert ds.GetSpatialRef().GetName() == 'NAD27 / UTM zone 12N'
-    assert ds.GetGeoTransform() == pytest.approx([440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0], rel=1e-8)
+    assert ds.GetSpatialRef().GetName() == "NAD27 / UTM zone 12N"
+    assert ds.GetGeoTransform() == pytest.approx(
+        [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0], rel=1e-8
+    )
 
-    ds = gdal.Open('STACIT:"data/stacit/test_multiple_assets.json":collection=my_collection,asset=B02')
+    ds = gdal.Open(
+        'STACIT:"data/stacit/test_multiple_assets.json":collection=my_collection,asset=B02'
+    )
     assert ds.RasterXSize == 20
     assert ds.RasterYSize == 20
-    assert ds.GetSpatialRef().GetName() == 'NAD27 / UTM zone 11N'
-    assert ds.GetGeoTransform() == pytest.approx([-440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0], rel=1e-8)
+    assert ds.GetSpatialRef().GetName() == "NAD27 / UTM zone 11N"
+    assert ds.GetGeoTransform() == pytest.approx(
+        [-440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0], rel=1e-8
+    )
 
-    ds = gdal.Open('STACIT:"data/stacit/test_multiple_assets.json":collection=my_collection2,asset=B01')
+    ds = gdal.Open(
+        'STACIT:"data/stacit/test_multiple_assets.json":collection=my_collection2,asset=B01'
+    )
     assert ds.RasterXSize == 20
     assert ds.RasterYSize == 20
-    assert ds.GetSpatialRef().GetName() == 'NAD27 / UTM zone 13N'
-    assert ds.GetGeoTransform() == pytest.approx([440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0], rel=1e-8)
+    assert ds.GetSpatialRef().GetName() == "NAD27 / UTM zone 13N"
+    assert ds.GetGeoTransform() == pytest.approx(
+        [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0], rel=1e-8
+    )
 
     with gdaltest.error_handler():
-        ds = gdal.Open('STACIT:"data/stacit/test_multiple_assets.json":collection=i_dont_exist')
+        ds = gdal.Open(
+            'STACIT:"data/stacit/test_multiple_assets.json":collection=i_dont_exist'
+        )
     assert ds is None
 
     with gdaltest.error_handler():
-        ds = gdal.Open('STACIT:"data/stacit/test_multiple_assets.json":asset=i_dont_exist')
+        ds = gdal.Open(
+            'STACIT:"data/stacit/test_multiple_assets.json":asset=i_dont_exist'
+        )
     assert ds is None
 
 
 def test_stacit_overlapping_sources():
 
     if ogr.GetGEOSVersionMajor() == 0:
-        pytest.skip('GEOS not available')
+        pytest.skip("GEOS not available")
 
-    ds = gdal.Open('data/stacit/overlapping_sources.json')
+    ds = gdal.Open("data/stacit/overlapping_sources.json")
     assert ds is not None
 
     # Check that the source covered by another one is not listed
-    vrt = ds.GetMetadata('xml:VRT')[0]
+    vrt = ds.GetMetadata("xml:VRT")[0]
     placement_vrt = """
     <ColorInterp>Gray</ColorInterp>
     <SimpleSource>

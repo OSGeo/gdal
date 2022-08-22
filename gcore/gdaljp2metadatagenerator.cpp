@@ -435,6 +435,7 @@ static void GDALGMLJP2XPathUUID(xmlXPathParserContextPtr ctxt, int nargs)
 
     CPLString osRet;
     static int nCounter = 0;
+    // coverity[store_truncates_time_t]
     srand(static_cast<unsigned int>(time(nullptr)) + nCounter);
     ++nCounter;
     for( int i=0; i<4; i ++ )

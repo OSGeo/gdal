@@ -299,7 +299,7 @@ with ``ARRAY:`` using :program:`gdalmdimtranslate`):
 - **DIM_SEPARATOR=string**: Dimension separator in chunk filenames.
   Default to decimal point for ZarrV2 and slash for ZarrV3.
 
-- **BLOSC_CNAME=bloclz/lz4/lz4hc/snappy/zlib/std**: Blosc compressor name.
+- **BLOSC_CNAME=bloclz/lz4/lz4hc/snappy/zlib/zstd**: Blosc compressor name.
   Only used when COMPRESS=BLOSC. Defaults to lz4.
 
 - **BLOSC_CLEVEL=integer** [1-9]: Blosc compression level. Only used when COMPRESS=BLOSC.

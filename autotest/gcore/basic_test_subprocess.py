@@ -31,7 +31,6 @@
 
 from osgeo import gdal
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     # test_basic_test_8
-    print(gdal.VersionInfo('LICENSE'))
+    print(gdal.VersionInfo("LICENSE"))

@@ -351,27 +351,28 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
 
 %extend GDAL_GCP {
 %pythoncode %{
-  def __str__(self):
-    str = '%s (%.2fP,%.2fL) -> (%.7fE,%.7fN,%.2f) %s '\
-          % (self.Id, self.GCPPixel, self.GCPLine,
-             self.GCPX, self.GCPY, self.GCPZ, self.Info )
-    return str
+    def __str__(self):
+      str = '%s (%.2fP,%.2fL) -> (%.7fE,%.7fN,%.2f) %s '\
+            % (self.Id, self.GCPPixel, self.GCPLine,
+               self.GCPX, self.GCPY, self.GCPZ, self.Info )
+      return str
 
-  def serialize(self, with_Z=0):
-    base = [gdalconst.CXT_Element,'GCP']
-    base.append([gdalconst.CXT_Attribute,'Id',[gdalconst.CXT_Text,self.Id]])
-    pixval = '%0.15E' % self.GCPPixel
-    lineval = '%0.15E' % self.GCPLine
-    xval = '%0.15E' % self.GCPX
-    yval = '%0.15E' % self.GCPY
-    zval = '%0.15E' % self.GCPZ
-    base.append([gdalconst.CXT_Attribute,'Pixel',[gdalconst.CXT_Text,pixval]])
-    base.append([gdalconst.CXT_Attribute,'Line',[gdalconst.CXT_Text,lineval]])
-    base.append([gdalconst.CXT_Attribute,'X',[gdalconst.CXT_Text,xval]])
-    base.append([gdalconst.CXT_Attribute,'Y',[gdalconst.CXT_Text,yval]])
-    if with_Z:
-        base.append([gdalconst.CXT_Attribute,'Z',[gdalconst.CXT_Text,zval]])
-    return base
+    def serialize(self, with_Z=0):
+      base = [gdalconst.CXT_Element, 'GCP']
+      base.append([gdalconst.CXT_Attribute, 'Id', [gdalconst.CXT_Text, self.Id]])
+      pixval = '%0.15E' % self.GCPPixel
+      lineval = '%0.15E' % self.GCPLine
+      xval = '%0.15E' % self.GCPX
+      yval = '%0.15E' % self.GCPY
+      zval = '%0.15E' % self.GCPZ
+      base.append([gdalconst.CXT_Attribute, 'Pixel', [gdalconst.CXT_Text, pixval]])
+      base.append([gdalconst.CXT_Attribute, 'Line', [gdalconst.CXT_Text, lineval]])
+      base.append([gdalconst.CXT_Attribute, 'X', [gdalconst.CXT_Text, xval]])
+      base.append([gdalconst.CXT_Attribute, 'Y', [gdalconst.CXT_Text, yval]])
+      if with_Z:
+          base.append([gdalconst.CXT_Attribute, 'Z', [gdalconst.CXT_Text, zval]])
+      return base
+
 %} /* pythoncode */
 }
 
@@ -621,7 +622,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
         if options is None:
             virtualmem = self.GetVirtualMemAuto(eAccess)
         else:
-            virtualmem = self.GetVirtualMemAuto(eAccess,options)
+            virtualmem = self.GetVirtualMemAuto(eAccess, options)
         return gdal_array.VirtualMemGetArray( virtualmem )
 
   def GetTiledVirtualMemArray(self, eAccess=gdalconst.GF_Read, xoff=0, yoff=0,
@@ -642,9 +643,9 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
         if datatype is None:
             datatype = self.DataType
         if options is None:
-            virtualmem = self.GetTiledVirtualMem(eAccess,xoff,yoff,xsize,ysize,tilexsize,tileysize,datatype,cache_size)
+            virtualmem = self.GetTiledVirtualMem(eAccess, xoff, yoff, xsize, ysize, tilexsize, tileysize, datatype, cache_size)
         else:
-            virtualmem = self.GetTiledVirtualMem(eAccess,xoff,yoff,xsize,ysize,tilexsize,tileysize,datatype,cache_size,options)
+            virtualmem = self.GetTiledVirtualMem(eAccess, xoff, yoff, xsize, ysize, tilexsize, tileysize, datatype, cache_size, options)
         return gdal_array.VirtualMemGetArray( virtualmem )
 
   def GetNoDataValue(self):
@@ -939,9 +940,9 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         if band_list is None:
             band_list = list(range(1, self.RasterCount + 1))
         if options is None:
-            virtualmem = self.GetTiledVirtualMem(eAccess,xoff,yoff,xsize,ysize,tilexsize,tileysize,datatype,band_list,tile_organization,cache_size)
+            virtualmem = self.GetTiledVirtualMem(eAccess, xoff, yoff, xsize, ysize, tilexsize, tileysize, datatype, band_list, tile_organization, cache_size)
         else:
-            virtualmem = self.GetTiledVirtualMem(eAccess,xoff,yoff,xsize,ysize,tilexsize,tileysize,datatype,band_list,tile_organization,cache_size, options)
+            virtualmem = self.GetTiledVirtualMem(eAccess, xoff, yoff, xsize, ysize, tilexsize, tileysize, datatype, band_list, tile_organization, cache_size, options)
         return gdal_array.VirtualMemGetArray( virtualmem )
 
     def GetSubDatasets(self):
@@ -1142,15 +1143,15 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
       if dimCount == 1 and type(buffer).__name__ == 'array' and \
          count is None and buffer_stride is None and buffer_datatype is None:
           map_typecode_itemsize_to_gdal = {
-             ('B',1): GDT_Byte,
-             ('h',2): GDT_Int16,
-             ('H',2): GDT_UInt16,
-             ('i',4): GDT_Int32,
-             ('I',4): GDT_UInt32,
-             ('l',4): GDT_Int32,
-             # ('l',8): GDT_Int64,
-             # ('q',8): GDT_Int64,
-             # ('Q',8): GDT_UInt64,
+             ('B', 1): GDT_Byte,
+             ('h', 2): GDT_Int16,
+             ('H', 2): GDT_UInt16,
+             ('i', 4): GDT_Int32,
+             ('I', 4): GDT_UInt32,
+             ('l', 4): GDT_Int32,
+             # ('l', 8): GDT_Int64,
+             # ('q', 8): GDT_Int64,
+             # ('Q', 8): GDT_UInt64,
              ('f', 4): GDT_Float32,
              ('d', 8): GDT_Float64
           }
@@ -1962,7 +1963,7 @@ def VectorTranslateOptions(options=None, format=None,
 
     Parameters
     ----------
-    options: 
+    options:
         can be be an array of strings, a string or let empty and filled from other keywords.
     format:
         format ("ESRI Shapefile", etc...)
@@ -2339,8 +2340,10 @@ def Nearblack(destNameOrDestDS, srcDS, **kwargs):
 
     Parameters
     ----------
-    destNameOrDestDS: Output dataset name or object
-    srcDS: a Dataset object or a filename
+    destNameOrDestDS:
+        Output dataset name or object
+    srcDS:
+        a Dataset object or a filename
     kwargs:
         options: return of gdal.NearblackOptions(), string or array of strings,
         other keywords arguments of gdal.NearblackOptions().
@@ -2377,7 +2380,7 @@ def GridOptions(options=None, format=None,
               z_multiply=None,
               callback=None, callback_data=None):
     """ Create a GridOptions() object that can be passed to gdal.Grid()
-    
+
     Parameters
     ----------
     options:
@@ -2410,10 +2413,16 @@ def GridOptions(options=None, format=None,
     spatFilter:
         spatial filter as (minX, minY, maxX, maxY) bounding box
     zfield:
-        Identifies an attribute field on the features to be used to get a Z value from. This value overrides Z value read from feature geometry record.
+        Identifies an attribute field on the features to be used to get a Z value from.
+        This value overrides Z value read from feature geometry record.
     z_increase:
-        Addition to the attribute field on the features to be used to get a Z value from. The addition should be the same unit as Z value. The result value will be Z value + Z increase value. The default value is 0.
-    z_multiply - Multiplication ratio for Z field. This can be used for shift from e.g. foot to meters or from  elevation to deep. The result value will be (Z value + Z increase value) * Z multiply value.  The default value is 1.
+        Addition to the attribute field on the features to be used to get a Z value from.
+        The addition should be the same unit as Z value. The result value will be
+        Z value + Z increase value. The default value is 0.
+    z_multiply:
+        Multiplication ratio for Z field. This can be used for shift from e.g. foot to meters
+        or from  elevation to deep. The result value will be
+        (Z value + Z increase value) * Z multiply value. The default value is 1.
     callback:
         callback method
     callback_data:
@@ -2466,8 +2475,10 @@ def Grid(destName, srcDS, **kwargs):
 
     Parameters
     ----------
-    destName: Output dataset name
-    srcDS: a Dataset object or a filename
+    destName:
+        Output dataset name
+    srcDS:
+        a Dataset object or a filename
     kwargs:
         options: return of gdal.GridOptions(), string or array of strings,
         other keywords arguments of gdal.GridOptions()
@@ -2496,7 +2507,7 @@ def RasterizeOptions(options=None, format=None,
          add=None,
          callback=None, callback_data=None):
     """Create a RasterizeOptions() object that can be passed to gdal.Rasterize()
-    
+
     Parameters
     ----------
     options:
@@ -2525,19 +2536,29 @@ def RasterizeOptions(options=None, format=None,
     noData:
         nodata value
     initValues:
-        Value or list of values to pre-initialize the output image bands with.  However, it is not marked as the nodata value in the output file.  If only one value is given, the same value is used in all the bands.
+        Value or list of values to pre-initialize the output image bands with.
+         However, it is not marked as the nodata value in the output file.
+          If only one value is given, the same value is used in all the bands.
     bands:
         list of output bands to burn values into
     inverse:
-        whether to invert rasterization, i.e. burn the fixed burn value, or the burn value associated  with the first feature into all parts of the image not inside the provided a polygon.
+        whether to invert rasterization, i.e. burn the fixed burn value, or the
+        burn value associated with the first feature into all parts of the image
+        not inside the provided a polygon.
     allTouched:
-        whether to enable the ALL_TOUCHED rasterization option so that all pixels touched by lines or polygons will be updated, not just those on the line render path, or whose center point is within the polygon.
+        whether to enable the ALL_TOUCHED rasterization option so that all pixels
+        touched by lines or polygons will be updated, not just those on the line
+        render path, or whose center point is within the polygon.
     burnValues:
-        list of fixed values to burn into each band for all objects. Excusive with attribute.
+        list of fixed values to burn into each band for all objects.
+        Excusive with attribute.
     attribute:
-        identifies an attribute field on the features to be used for a burn-in value. The value will be burned into all output bands. Excusive with burnValues.
+        identifies an attribute field on the features to be used for a burn-in value.
+        The value will be burned into all output bands. Excusive with burnValues.
     useZ:
-        whether to indicate that a burn value should be extracted from the "Z" values of the feature. These values are added to the burn value given by burnValues or attribute if provided. As of now, only points and lines are drawn in 3D.
+        whether to indicate that a burn value should be extracted from the "Z" values
+        of the feature. These values are added to the burn value given by burnValues
+        or attribute if provided. As of now, only points and lines are drawn in 3D.
     layers:
         list of layers from the datasource that will be used for input features.
     SQLStatement:
@@ -2632,8 +2653,10 @@ def Rasterize(destNameOrDestDS, srcDS, **kwargs):
 
     Parameters
     ----------
-    destNameOrDestDS: Output dataset name or object
-    srcDS: a Dataset object or a filename
+    destNameOrDestDS:
+        Output dataset name or object
+    srcDS:
+        a Dataset object or a filename
     kwargs:
         options: return of gdal.RasterizeOptions(), string or array of strings,
         other keywords arguments of gdal.RasterizeOptions()
@@ -2817,13 +2840,17 @@ def MultiDimTranslateOptions(options=None, format=None, creationOptions=None,
     creationOptions:
         list of creation options
     arraySpecs:
-        list of array specifications, each of them being an array name or "name={src_array_name},dstname={dst_name},transpose=[1,0],view=[:,::-1]"
+        list of array specifications, each of them being an array name or
+        "name={src_array_name},dstname={dst_name},transpose=[1,0],view=[:,::-1]"
     groupSpecs:
-        list of group specifications, each of them being a group name or "name={src_array_name},dstname={dst_name},recursive=no"
+        list of group specifications, each of them being a group name or
+        "name={src_array_name},dstname={dst_name},recursive=no"
     subsetSpecs:
-        list of subset specifications, each of them being like "{dim_name}({min_val},{max_val})" or "{dim_name}({slice_va})"
+        list of subset specifications, each of them being like
+        "{dim_name}({min_val},{max_val})" or "{dim_name}({slice_va})"
     scaleAxesSpecs:
-        list of dimension scaling specifications, each of them being like "{dim_name}({scale_factor})"
+        list of dimension scaling specifications, each of them being like
+        "{dim_name}({scale_factor})"
     callback:
         callback method
     callback_data:

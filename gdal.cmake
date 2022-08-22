@@ -329,7 +329,7 @@ if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" ST
 endif()
 
 # Default definitions during build
-add_definitions(-DGDAL_COMPILATION -DGDAL_CMAKE_BUILD)
+add_definitions(-DGDAL_COMPILATION)
 
 if (ENABLE_IPO)
   if (POLICY CMP0069)

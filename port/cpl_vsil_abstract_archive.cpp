@@ -884,4 +884,18 @@ char** VSIArchiveFilesystemHandler::ReadDirEx( const char *pszDirname,
     return oDir.StealList();
 }
 
+/************************************************************************/
+/*                               IsLocal()                              */
+/************************************************************************/
+
+bool VSIArchiveFilesystemHandler::IsLocal( const char* pszPath )
+{
+    if( !STARTS_WITH(pszPath, GetPrefix()) )
+        return false;
+    const char* pszBaseFileName = pszPath + strlen(GetPrefix());
+    VSIFilesystemHandler *poFSHandler =
+        VSIFileManager::GetHandler(pszBaseFileName);
+    return poFSHandler->IsLocal(pszPath);
+}
+
 //! @endcond

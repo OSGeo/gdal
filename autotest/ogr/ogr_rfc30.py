@@ -36,17 +36,17 @@ from osgeo import ogr
 
 def test_ogr_rfc30_1():
 
-    filename = '/vsimem/\u00e9.shp'
-    layer_name = '\u00e9'
+    filename = "/vsimem/\u00e9.shp"
+    layer_name = "\u00e9"
 
-    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource(filename)
-    lyr = ds.CreateLayer('foo')
+    ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(filename)
+    lyr = ds.CreateLayer("foo")
     ds = None
 
     ds = ogr.Open(filename)
-    assert ds is not None, 'cannot reopen datasource'
+    assert ds is not None, "cannot reopen datasource"
     lyr = ds.GetLayerByName(layer_name)
-    assert lyr is not None, 'cannot find layer'
+    assert lyr is not None, "cannot find layer"
     ds = None
 
-    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(filename)
+    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(filename)

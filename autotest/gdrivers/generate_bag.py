@@ -33,7 +33,7 @@
 import h5py
 import numpy as np
 
-f = h5py.File('test_georef_metadata.bag','w')
+f = h5py.File("test_georef_metadata.bag", "w")
 bag_root = f.create_group("BAG_root")
 bag_root.attrs["Bag Version"] = "2.0.0"
 xml = """<?xml version="1.0" encoding="UTF-8"?>
@@ -264,48 +264,79 @@ xml = """<?xml version="1.0" encoding="UTF-8"?>
   </gmd:metadataConstraints>
 </gmi:MI_Metadata>
 """
-metadata = bag_root.create_dataset("metadata", (len(xml),), data = [x for x in xml], dtype = 'S1')
+metadata = bag_root.create_dataset(
+    "metadata", (len(xml),), data=[x for x in xml], dtype="S1"
+)
 
-elevation = bag_root.create_dataset("elevation", (4, 6), dtype = 'float32', fillvalue = 0)
-data = np.array([i for i in range(24) ]).reshape(elevation.shape)
+elevation = bag_root.create_dataset("elevation", (4, 6), dtype="float32", fillvalue=0)
+data = np.array([i for i in range(24)]).reshape(elevation.shape)
 elevation[...] = data
 
-uncertainty = bag_root.create_dataset("uncertainty", (4, 6), dtype = 'float32')
+uncertainty = bag_root.create_dataset("uncertainty", (4, 6), dtype="float32")
 
-varres_metadata_struct_type = np.dtype([('index', 'I'), ('dimensions_x', 'I'), ('dimensions_y', 'I'), ('resolution_x', 'f4'), ('resolution_y', 'f4'), ('sw_corner_x', 'f4'), ('sw_corner_y', 'f4')])
-varres_metadata = bag_root.create_dataset("varres_metadata", (4, 6), dtype = varres_metadata_struct_type)
+varres_metadata_struct_type = np.dtype(
+    [
+        ("index", "I"),
+        ("dimensions_x", "I"),
+        ("dimensions_y", "I"),
+        ("resolution_x", "f4"),
+        ("resolution_y", "f4"),
+        ("sw_corner_x", "f4"),
+        ("sw_corner_y", "f4"),
+    ]
+)
+varres_metadata = bag_root.create_dataset(
+    "varres_metadata", (4, 6), dtype=varres_metadata_struct_type
+)
 varres_metadata.attrs["min_resolution_x"] = 1.0
 varres_metadata.attrs["min_resolution_y"] = 1.0
 varres_metadata.attrs["max_resolution_x"] = 8.0
 varres_metadata.attrs["max_resolution_y"] = 8.0
-data = np.array( [(0, 2, 2, 2, 2, 0, 0) for i in range(24)] , dtype = varres_metadata_struct_type).reshape(elevation.shape)
-data[0][1] = np.array((4, 2, 2, 2, 2, 0, 0) , dtype = varres_metadata_struct_type)
+data = np.array(
+    [(0, 2, 2, 2, 2, 0, 0) for i in range(24)], dtype=varres_metadata_struct_type
+).reshape(elevation.shape)
+data[0][1] = np.array((4, 2, 2, 2, 2, 0, 0), dtype=varres_metadata_struct_type)
 varres_metadata[...] = data
 
-varres_refinements_struct_type = np.dtype([('depth', 'f4'), ('depth_uncrt', 'f4')])
-varres_refinements = bag_root.create_dataset("varres_refinements", (1, 8), dtype = varres_refinements_struct_type)
+varres_refinements_struct_type = np.dtype([("depth", "f4"), ("depth_uncrt", "f4")])
+varres_refinements = bag_root.create_dataset(
+    "varres_refinements", (1, 8), dtype=varres_refinements_struct_type
+)
 varres_refinements[...] = np.array([[0, 2, 3, 4, 5, 6, 7, 0]])
 
 Georef_metadata = bag_root.create_group("Georef_metadata")
 
 layer = Georef_metadata.create_group("layer_with_keys_values")
 
-keys = layer.create_dataset("keys", (4, 6), dtype = 'uint32', chunks=(2,3))
+keys = layer.create_dataset("keys", (4, 6), dtype="uint32", chunks=(2, 3))
 keys[...] = np.array([np.arange(6) for i in range(4)]).reshape(elevation.shape)
 
-varres_keys = layer.create_dataset("varres_keys", (1, 8), dtype = 'uint32')
-varres_keys[...] = np.array([1, 1, 1, 0,   0, 1, 1, 1])
+varres_keys = layer.create_dataset("varres_keys", (1, 8), dtype="uint32")
+varres_keys[...] = np.array([1, 1, 1, 0, 0, 1, 1, 1])
 
-comp_type = np.dtype([('int', 'i'), ('str', np.str_, 6), ('float64', 'f8')])
-values = layer.create_dataset("values", (6,), dtype = comp_type)
-data = np.array([(i, "Val   ", i + 1.25) for i in range(6) ], dtype = comp_type)
+comp_type = np.dtype([("int", "i"), ("str", np.str_, 6), ("float64", "f8")])
+values = layer.create_dataset("values", (6,), dtype=comp_type)
+data = np.array([(i, "Val   ", i + 1.25) for i in range(6)], dtype=comp_type)
 values[...] = data
 
 layer = Georef_metadata.create_group("layer_with_values_only")
-values = layer.create_dataset("values", (2,), dtype = comp_type)
-data = np.array([(i, "Val   ", i + 1.25) for i in range(2) ], dtype = comp_type)
+values = layer.create_dataset("values", (2,), dtype=comp_type)
+data = np.array([(i, "Val   ", i + 1.25) for i in range(2)], dtype=comp_type)
 values[...] = data
 
-tracking_list_struct_type = np.dtype([('row', 'I'), ('col', 'I'), ('depth', 'f4'), ('uncertainty', 'f4'), ('track_code', 'B'), ('list_series', 'h')])
-tracking_list = bag_root.create_dataset("tracking_list", (2,), dtype = tracking_list_struct_type)
-tracking_list[...] = np.array([(0,1,2.5,3.5,4,5),(6,7,8.5,9.5,10,11)], dtype = tracking_list_struct_type)
+tracking_list_struct_type = np.dtype(
+    [
+        ("row", "I"),
+        ("col", "I"),
+        ("depth", "f4"),
+        ("uncertainty", "f4"),
+        ("track_code", "B"),
+        ("list_series", "h"),
+    ]
+)
+tracking_list = bag_root.create_dataset(
+    "tracking_list", (2,), dtype=tracking_list_struct_type
+)
+tracking_list[...] = np.array(
+    [(0, 1, 2.5, 3.5, 4, 5), (6, 7, 8.5, 9.5, 10, 11)], dtype=tracking_list_struct_type
+)

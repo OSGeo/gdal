@@ -3,7 +3,7 @@
 if (NOT TARGET ogr_SQLite)
   return()
 endif ()
-if (CMAKE_CROSSCOMPILONG OR WIN32)
+if (CMAKE_CROSSCOMPILING OR WIN32)
   return()
 endif ()
 if (NOT CMAKE_VERSION VERSION_GREATER_EQUAL 3.12)

@@ -25,52 +25,54 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
+import gdaltest
 import pytest
 
-import gdaltest
-
 init_list = [
-    ('byte.tif', 4672),
-    ('int16.tif', 4672),
-    ('uint16.tif', 4672),
-    ('int32.tif', 4672),
-    ('uint32.tif', 4672),
-    ('float32.tif', 4672),
-    ('float64.tif', 4672),
-    ('cint16.tif', 5028),
-    ('cint32.tif', 5028),
-    ('cfloat32.tif', 5028),
-    ('cfloat64.tif', 5028)]
+    ("byte.tif", 4672),
+    ("int16.tif", 4672),
+    ("uint16.tif", 4672),
+    ("int32.tif", 4672),
+    ("uint32.tif", 4672),
+    ("float32.tif", 4672),
+    ("float64.tif", 4672),
+    ("cint16.tif", 5028),
+    ("cint32.tif", 5028),
+    ("cfloat32.tif", 5028),
+    ("cfloat64.tif", 5028),
+]
 
 
 # Some tests we don't need to do for each type.
 @pytest.mark.parametrize(
-    'testfunction', [
-        'testSetGeoTransform',
-        'testSetProjection',
-        'testSetMetadata',
-    ]
+    "testfunction",
+    [
+        "testSetGeoTransform",
+        "testSetProjection",
+        "testSetMetadata",
+    ],
 )
-@pytest.mark.require_driver('GTiff')
+@pytest.mark.require_driver("GTiff")
 def test_gtiff_set(testfunction):
-    ut = gdaltest.GDALTest('GTiff', 'byte.tif', 1, 4672)
+    ut = gdaltest.GDALTest("GTiff", "byte.tif", 1, 4672)
     getattr(ut, testfunction)()
 
 
 # Others we do for each pixel type.
 @pytest.mark.parametrize(
-    'filename,checksum',
+    "filename,checksum",
     init_list,
-    ids=[tup[0].split('.')[0] for tup in init_list],
+    ids=[tup[0].split(".")[0] for tup in init_list],
 )
 @pytest.mark.parametrize(
-    'testfunction', [
-        'testCreateCopy',
-        'testCreate',
-        'testSetNoDataValue',
-    ]
+    "testfunction",
+    [
+        "testCreateCopy",
+        "testCreate",
+        "testSetNoDataValue",
+    ],
 )
-@pytest.mark.require_driver('GTiff')
+@pytest.mark.require_driver("GTiff")
 def test_gtiff_create(filename, checksum, testfunction):
-    ut = gdaltest.GDALTest('GTiff', filename, 1, checksum)
+    ut = gdaltest.GDALTest("GTiff", filename, 1, checksum)
     getattr(ut, testfunction)()

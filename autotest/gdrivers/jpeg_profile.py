@@ -30,49 +30,50 @@
 # Part of a free package of ICC profile found at:
 # http://sourceforge.net/projects/openicc/files/OpenICC-Profiles/
 
-import os
 import base64
+import os
 
-
-from osgeo import gdal
 import pytest
 
+from osgeo import gdal
 
 ###############################################################################
 # Test writing and reading of ICC profile in CreateCopy()
 
+
 def test_jpeg_copy_icc():
 
-    f = open('data/sRGB.icc', 'rb')
+    f = open("data/sRGB.icc", "rb")
     data = f.read()
-    icc = base64.b64encode(data).decode('ascii')
+    icc = base64.b64encode(data).decode("ascii")
     f.close()
 
     # Create dummy file
-    options = ['SOURCE_ICC_PROFILE=' + icc]
+    options = ["SOURCE_ICC_PROFILE=" + icc]
 
-    driver = gdal.GetDriverByName('JPEG')
-    driver_tiff = gdal.GetDriverByName('GTiff')
-    ds = driver_tiff.Create('tmp/icc_test.tiff', 64, 64, 3, gdal.GDT_Byte, options)
+    driver = gdal.GetDriverByName("JPEG")
+    driver_tiff = gdal.GetDriverByName("GTiff")
+    ds = driver_tiff.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_Byte, options)
 
     # Check with dataset from CreateCopy()
-    ds2 = driver.CreateCopy('tmp/icc_test.jpg', ds)
+    ds2 = driver.CreateCopy("tmp/icc_test.jpg", ds)
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
     ds2 = None
 
-    assert md['SOURCE_ICC_PROFILE'] == icc
+    assert md["SOURCE_ICC_PROFILE"] == icc
 
     # Check again with dataset from Open()
-    ds2 = gdal.Open('tmp/icc_test.jpg')
+    ds2 = gdal.Open("tmp/icc_test.jpg")
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
     ds2 = None
 
-    assert md['SOURCE_ICC_PROFILE'] == icc
+    assert md["SOURCE_ICC_PROFILE"] == icc
 
-    driver_tiff.Delete('tmp/icc_test.tiff')
-    driver.Delete('tmp/icc_test.jpg')
+    driver_tiff.Delete("tmp/icc_test.tiff")
+    driver.Delete("tmp/icc_test.jpg")
+
 
 ###############################################################################
 # Test writing and reading of ICC profile in CreateCopy() options
@@ -80,36 +81,37 @@ def test_jpeg_copy_icc():
 
 def test_jpeg_copy_options_icc():
 
-    f = open('data/sRGB.icc', 'rb')
+    f = open("data/sRGB.icc", "rb")
     data = f.read()
-    icc = base64.b64encode(data).decode('ascii')
+    icc = base64.b64encode(data).decode("ascii")
     f.close()
 
     # Create dummy file
-    options = ['SOURCE_ICC_PROFILE=' + icc]
+    options = ["SOURCE_ICC_PROFILE=" + icc]
 
-    driver = gdal.GetDriverByName('JPEG')
-    driver_tiff = gdal.GetDriverByName('GTiff')
-    ds = driver_tiff.Create('tmp/icc_test.tiff', 64, 64, 3, gdal.GDT_Byte)
+    driver = gdal.GetDriverByName("JPEG")
+    driver_tiff = gdal.GetDriverByName("GTiff")
+    ds = driver_tiff.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_Byte)
 
     # Check with dataset from CreateCopy()
-    ds2 = driver.CreateCopy('tmp/icc_test.jpg', ds, options=options)
+    ds2 = driver.CreateCopy("tmp/icc_test.jpg", ds, options=options)
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
     ds2 = None
 
-    assert md['SOURCE_ICC_PROFILE'] == icc
+    assert md["SOURCE_ICC_PROFILE"] == icc
 
     # Check again with dataset from Open()
-    ds2 = gdal.Open('tmp/icc_test.jpg')
+    ds2 = gdal.Open("tmp/icc_test.jpg")
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
     ds2 = None
 
-    assert md['SOURCE_ICC_PROFILE'] == icc
+    assert md["SOURCE_ICC_PROFILE"] == icc
 
-    driver_tiff.Delete('tmp/icc_test.tiff')
-    driver.Delete('tmp/icc_test.jpg')
+    driver_tiff.Delete("tmp/icc_test.tiff")
+    driver.Delete("tmp/icc_test.jpg")
+
 
 ###############################################################################
 # Test writing and reading of 64K+ ICC profile in CreateCopy()
@@ -121,61 +123,56 @@ def test_jpeg_copy_icc_64K():
     # It will still work, but need to test that the segmented ICC profile
     # is put back together correctly.
     # We will simply use the same profile multiple times.
-    f = open('data/sRGB.icc', 'rb')
+    f = open("data/sRGB.icc", "rb")
     data = f.read()
     while len(data) < 200000:
         data += data
-    icc = base64.b64encode(data).decode('ascii')
+    icc = base64.b64encode(data).decode("ascii")
     f.close()
 
     # Create dummy file
-    options = ['SOURCE_ICC_PROFILE=' + icc]
+    options = ["SOURCE_ICC_PROFILE=" + icc]
 
-    driver = gdal.GetDriverByName('JPEG')
-    driver_tiff = gdal.GetDriverByName('GTiff')
-    ds = driver_tiff.Create('tmp/icc_test.tiff', 64, 64, 3, gdal.GDT_Byte, options)
+    driver = gdal.GetDriverByName("JPEG")
+    driver_tiff = gdal.GetDriverByName("GTiff")
+    ds = driver_tiff.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_Byte, options)
 
     # Check with dataset from CreateCopy()
-    ds2 = driver.CreateCopy('tmp/icc_test.jpg', ds, options=['COMMENT=foo'])
+    ds2 = driver.CreateCopy("tmp/icc_test.jpg", ds, options=["COMMENT=foo"])
     ds = None
     md = ds2.GetMetadata("COLOR_PROFILE")
-    comment = ds2.GetMetadataItem('COMMENT')
+    comment = ds2.GetMetadataItem("COMMENT")
     ds2 = None
 
     with pytest.raises(OSError):
-        os.stat('tmp/icc_test.jpg.aux.xml')
-    
+        os.stat("tmp/icc_test.jpg.aux.xml")
 
-    assert comment == 'foo'
+    assert comment == "foo"
 
-    assert md['SOURCE_ICC_PROFILE'] == icc
+    assert md["SOURCE_ICC_PROFILE"] == icc
 
     # Check again with dataset from Open()
-    ds2 = gdal.Open('tmp/icc_test.jpg')
+    ds2 = gdal.Open("tmp/icc_test.jpg")
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds2 = None
 
     with pytest.raises(OSError):
-        os.stat('tmp/icc_test.jpg.aux.xml')
-    
+        os.stat("tmp/icc_test.jpg.aux.xml")
 
-    assert md['SOURCE_ICC_PROFILE'] == icc
+    assert md["SOURCE_ICC_PROFILE"] == icc
 
     # Check again with GetMetadataItem()
-    ds2 = gdal.Open('tmp/icc_test.jpg')
+    ds2 = gdal.Open("tmp/icc_test.jpg")
     source_icc_profile = ds2.GetMetadataItem("SOURCE_ICC_PROFILE", "COLOR_PROFILE")
     ds2 = None
 
     with pytest.raises(OSError):
-        os.stat('tmp/icc_test.jpg.aux.xml')
-    
+        os.stat("tmp/icc_test.jpg.aux.xml")
 
     assert source_icc_profile == icc
 
-    driver_tiff.Delete('tmp/icc_test.tiff')
-    driver.Delete('tmp/icc_test.jpg')
+    driver_tiff.Delete("tmp/icc_test.tiff")
+    driver.Delete("tmp/icc_test.jpg")
+
 
 ###############################################################################################
-
-
-

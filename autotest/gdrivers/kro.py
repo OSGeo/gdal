@@ -29,11 +29,10 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import gdal
-
-
 import gdaltest
 import pytest
+
+from osgeo import gdal
 
 ###############################################################################
 # Create 3-band byte
@@ -41,9 +40,10 @@ import pytest
 
 def test_kro_1():
 
-    tst = gdaltest.GDALTest('KRO', 'rgbsmall.tif', 2, 21053)
+    tst = gdaltest.GDALTest("KRO", "rgbsmall.tif", 2, 21053)
 
     return tst.testCreate()
+
 
 ###############################################################################
 # Create 1-band uint16
@@ -51,9 +51,10 @@ def test_kro_1():
 
 def test_kro_2():
 
-    tst = gdaltest.GDALTest('KRO', '../../gcore/data/uint16.tif', 1, 4672)
+    tst = gdaltest.GDALTest("KRO", "../../gcore/data/uint16.tif", 1, 4672)
 
     return tst.testCreate()
+
 
 ###############################################################################
 # Create 1-band float32
@@ -61,9 +62,10 @@ def test_kro_2():
 
 def test_kro_3():
 
-    tst = gdaltest.GDALTest('KRO', '../../gcore/data/float32.tif', 1, 4672)
+    tst = gdaltest.GDALTest("KRO", "../../gcore/data/float32.tif", 1, 4672)
 
     return tst.testCreate()
+
 
 ###############################################################################
 # Create 4-band rgba uint16
@@ -71,9 +73,10 @@ def test_kro_3():
 
 def test_kro_4():
 
-    tst = gdaltest.GDALTest('KRO', 'png/rgba16.png', 1, 1886)
+    tst = gdaltest.GDALTest("KRO", "png/rgba16.png", 1, 1886)
 
     return tst.testCreate()
+
 
 ###############################################################################
 # Test optimized IO
@@ -83,18 +86,14 @@ def test_kro_5():
 
     # Determine if the filesystem supports sparse files (we don't want to create a real 10 GB
     # file !
-    if not gdaltest.filesystem_supports_sparse_files('tmp'):
+    if not gdaltest.filesystem_supports_sparse_files("tmp"):
         pytest.skip()
 
-    ds = gdal.GetDriverByName('KRO').Create('tmp/kro_5.kro', 100000, 10000, 4)
+    ds = gdal.GetDriverByName("KRO").Create("tmp/kro_5.kro", 100000, 10000, 4)
     ds = None
 
-    ds = gdal.Open('tmp/kro_5.kro')
+    ds = gdal.Open("tmp/kro_5.kro")
     ds.ReadRaster(int(ds.RasterXSize / 2), int(ds.RasterYSize / 2), 100, 100)
     ds = None
 
-    gdal.Unlink('tmp/kro_5.kro')
-
-
-
-
+    gdal.Unlink("tmp/kro_5.kro")

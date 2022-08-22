@@ -28,43 +28,44 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import pytest
+
 from osgeo import gdal
 
-import pytest
 
 def test_vsicredential():
 
     with pytest.raises(Exception):
-        assert gdal.GetCredential(None, 'key')
+        assert gdal.GetCredential(None, "key")
 
     with pytest.raises(Exception):
-        assert gdal.GetCredential('prefix', None)
+        assert gdal.GetCredential("prefix", None)
 
-    assert gdal.GetCredential('prefix', 'key') is None
+    assert gdal.GetCredential("prefix", "key") is None
 
-    assert gdal.GetCredential('prefix', 'key', 'default') == 'default'
-
-    with pytest.raises(Exception):
-        gdal.SetCredential(None, 'key', 'value')
+    assert gdal.GetCredential("prefix", "key", "default") == "default"
 
     with pytest.raises(Exception):
-        gdal.SetCredential('prefix', None, 'value')
+        gdal.SetCredential(None, "key", "value")
 
-    gdal.SetCredential('prefix', 'key', 'value')
-    assert gdal.GetCredential('prefix', 'key') == 'value'
-    assert gdal.GetCredential('prefix/object', 'key') == 'value'
-    assert gdal.GetCredential('prefix', 'key', 'default') == 'value'
-    assert gdal.GetCredential('another_prefix', 'key') is None
+    with pytest.raises(Exception):
+        gdal.SetCredential("prefix", None, "value")
 
-    gdal.SetCredential('prefix', 'key', None)
-    assert gdal.GetCredential('prefix', 'key') is None
+    gdal.SetCredential("prefix", "key", "value")
+    assert gdal.GetCredential("prefix", "key") == "value"
+    assert gdal.GetCredential("prefix/object", "key") == "value"
+    assert gdal.GetCredential("prefix", "key", "default") == "value"
+    assert gdal.GetCredential("another_prefix", "key") is None
 
-    gdal.SetCredential('prefix', 'key', 'value')
-    gdal.ClearCredentials('prefix')
-    assert gdal.GetCredential('prefix', 'key') is None
+    gdal.SetCredential("prefix", "key", None)
+    assert gdal.GetCredential("prefix", "key") is None
 
-    gdal.SetCredential('prefix', 'key', 'value')
-    gdal.ClearCredentials('another_prefix')
-    assert gdal.GetCredential('prefix', 'key') == 'value'
+    gdal.SetCredential("prefix", "key", "value")
+    gdal.ClearCredentials("prefix")
+    assert gdal.GetCredential("prefix", "key") is None
+
+    gdal.SetCredential("prefix", "key", "value")
+    gdal.ClearCredentials("another_prefix")
+    assert gdal.GetCredential("prefix", "key") == "value"
     gdal.ClearCredentials()
-    assert gdal.GetCredential('prefix', 'key') is None
+    assert gdal.GetCredential("prefix", "key") is None

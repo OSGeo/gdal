@@ -6714,8 +6714,68 @@ CPLErr CPL_STDCALL GDALSetDefaultRAT( GDALRasterBandH hBand,
 GDALRasterBand *GDALRasterBand::GetMaskBand()
 
 {
+    const auto HasNoData = [this]() {
+        int bHaveNoDataRaw = FALSE;
+        bool bHaveNoData = false;
+        if( eDataType == GDT_Int64 )
+        {
+            CPL_IGNORE_RET_VAL(GetNoDataValueAsInt64(&bHaveNoDataRaw));
+            bHaveNoData = CPL_TO_BOOL(bHaveNoDataRaw);
+        }
+        else if( eDataType == GDT_UInt64 )
+        {
+            CPL_IGNORE_RET_VAL(GetNoDataValueAsUInt64(&bHaveNoDataRaw));
+            bHaveNoData = CPL_TO_BOOL(bHaveNoDataRaw);
+        }
+        else
+        {
+            const double dfNoDataValue = GetNoDataValue( &bHaveNoDataRaw );
+            if( bHaveNoDataRaw &&
+                GDALNoDataMaskBand::IsNoDataInRange(dfNoDataValue, eDataType) )
+            {
+                bHaveNoData = true;
+            }
+        }
+        return bHaveNoData;
+    };
+
     if( poMask != nullptr )
-        return poMask;
+    {
+        if( bOwnMask )
+        {
+            if( dynamic_cast<GDALAllValidMaskBand*>(poMask) != nullptr )
+            {
+                if( HasNoData() )
+                {
+                    InvalidateMaskBand();
+                }
+            }
+            else if( auto poNoDataMaskBand = dynamic_cast<GDALNoDataMaskBand*>(poMask) )
+            {
+                int bHaveNoDataRaw = FALSE;
+                bool bIsSame = false;
+                if( eDataType == GDT_Int64 )
+                    bIsSame = poNoDataMaskBand->nNoDataValueInt64 == GetNoDataValueAsInt64(&bHaveNoDataRaw) && bHaveNoDataRaw;
+                else if( eDataType == GDT_UInt64 )
+                    bIsSame = poNoDataMaskBand->nNoDataValueUInt64 == GetNoDataValueAsUInt64(&bHaveNoDataRaw) && bHaveNoDataRaw;
+                else
+                {
+                    const double dfNoDataValue = GetNoDataValue(&bHaveNoDataRaw);
+                    if( bHaveNoDataRaw )
+                    {
+                        bIsSame = std::isnan(dfNoDataValue) ?
+                            std::isnan(poNoDataMaskBand->dfNoDataValue) :
+                            poNoDataMaskBand->dfNoDataValue == dfNoDataValue;
+                    }
+                }
+                if( !bIsSame )
+                    InvalidateMaskBand();
+            }
+        }
+
+        if( poMask != nullptr )
+            return poMask;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Check for a mask in a .msk file.                                */
@@ -6799,28 +6859,7 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
 /* -------------------------------------------------------------------- */
 /*      Check for nodata case.                                          */
 /* -------------------------------------------------------------------- */
-    int bHaveNoDataRaw = FALSE;
-    bool bHaveNoData = false;
-    if( eDataType == GDT_Int64 )
-    {
-        CPL_IGNORE_RET_VAL(GetNoDataValueAsInt64(&bHaveNoDataRaw));
-        bHaveNoData = CPL_TO_BOOL(bHaveNoDataRaw);
-    }
-    else if( eDataType == GDT_UInt64 )
-    {
-        CPL_IGNORE_RET_VAL(GetNoDataValueAsUInt64(&bHaveNoDataRaw));
-        bHaveNoData = CPL_TO_BOOL(bHaveNoDataRaw);
-    }
-    else
-    {
-        const double dfNoDataValue = GetNoDataValue( &bHaveNoDataRaw );
-        if( bHaveNoDataRaw &&
-            GDALNoDataMaskBand::IsNoDataInRange(dfNoDataValue, eDataType) )
-        {
-            bHaveNoData = true;
-        }
-    }
-    if( bHaveNoData )
+    if( HasNoData() )
     {
         nMaskFlags = GMF_NODATA;
         try

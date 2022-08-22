@@ -30,25 +30,24 @@
 ###############################################################################
 
 
-
 import gdaltest
-from osgeo import ogr
-from osgeo import osr
-from osgeo import gdal
 import pytest
 
-pytestmark = pytest.mark.require_driver('JML')
+from osgeo import gdal, ogr, osr
+
+pytestmark = pytest.mark.require_driver("JML")
 
 
 ###############################################################################
-@pytest.fixture(autouse=True, scope='module')
+@pytest.fixture(autouse=True, scope="module")
 def startup_and_cleanup():
 
-    gdaltest.jml_read_support = ogr.Open('data/jml/test.jml') is not None
+    gdaltest.jml_read_support = ogr.Open("data/jml/test.jml") is not None
 
     yield
 
-    gdal.Unlink('/vsimem/ogr_jml.jml')
+    gdal.Unlink("/vsimem/ogr_jml.jml")
+
 
 ###############################################################################
 # Test reading
@@ -59,49 +58,55 @@ def test_ogr_jml_1():
     if not gdaltest.jml_read_support:
         pytest.skip()
 
-    ds = ogr.Open('data/jml/test.jml')
+    ds = ogr.Open("data/jml/test.jml")
     assert ds.GetLayerCount() == 1
     assert ds.GetLayer(1) is None
     assert ds.TestCapability(ogr.ODsCCreateLayer) == 0
     assert ds.TestCapability(ogr.ODsCDeleteLayer) == 0
     lyr = ds.GetLayer(0)
-    fields = [('first_property', ogr.OFTString),
-              ('another_property', ogr.OFTString),
-              ('objectAttr', ogr.OFTString),
-              ('attr2', ogr.OFTString),
-              ('attr3', ogr.OFTString),
-              ('int', ogr.OFTInteger),
-              ('double', ogr.OFTReal),
-              ('date', ogr.OFTDateTime),
-              ('datetime', ogr.OFTDateTime),
-              ('R_G_B', ogr.OFTString),
-              ('not_ignored', ogr.OFTString)]
+    fields = [
+        ("first_property", ogr.OFTString),
+        ("another_property", ogr.OFTString),
+        ("objectAttr", ogr.OFTString),
+        ("attr2", ogr.OFTString),
+        ("attr3", ogr.OFTString),
+        ("int", ogr.OFTInteger),
+        ("double", ogr.OFTReal),
+        ("date", ogr.OFTDateTime),
+        ("datetime", ogr.OFTDateTime),
+        ("R_G_B", ogr.OFTString),
+        ("not_ignored", ogr.OFTString),
+    ]
     assert lyr.GetLayerDefn().GetFieldCount() == len(fields)
     for i, field in enumerate(fields):
         field_defn = lyr.GetLayerDefn().GetFieldDefn(i)
         assert field_defn.GetName() == field[0] and field_defn.GetType() == field[1], i
     feat = lyr.GetNextFeature()
-    if feat.GetField('first_property') != 'even' or \
-       feat.GetField('another_property') != 'rouault' or \
-       feat.GetField('objectAttr') != 'foo' or \
-       feat.GetField('attr2') != 'bar' or \
-       feat.GetField('attr3') != 'baz' or \
-       feat.GetField('int') != 123 or \
-       feat.GetField('double') != 1.23 or \
-       feat.GetFieldAsString('date') != '2014/10/18 00:00:00' or \
-       feat.GetFieldAsString('datetime') != '2014/10/18 21:36:45' or \
-       feat.GetField('R_G_B') != '0000FF' or \
-       not feat.IsFieldNull('not_ignored') or \
-       feat.GetStyleString() != 'BRUSH(fc:#0000FF)' or \
-       feat.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 0,0 10,10 10,10 0,0 0))':
+    if (
+        feat.GetField("first_property") != "even"
+        or feat.GetField("another_property") != "rouault"
+        or feat.GetField("objectAttr") != "foo"
+        or feat.GetField("attr2") != "bar"
+        or feat.GetField("attr3") != "baz"
+        or feat.GetField("int") != 123
+        or feat.GetField("double") != 1.23
+        or feat.GetFieldAsString("date") != "2014/10/18 00:00:00"
+        or feat.GetFieldAsString("datetime") != "2014/10/18 21:36:45"
+        or feat.GetField("R_G_B") != "0000FF"
+        or not feat.IsFieldNull("not_ignored")
+        or feat.GetStyleString() != "BRUSH(fc:#0000FF)"
+        or feat.GetGeometryRef().ExportToWkt() != "POLYGON ((0 0,0 10,10 10,10 0,0 0))"
+    ):
         feat.DumpReadable()
         pytest.fail()
 
     feat = lyr.GetNextFeature()
-    if feat.GetFieldAsString('datetime') != '2014/10/18 21:36:45+02' or \
-       feat.GetField('R_G_B') != 'FF00FF' or \
-       feat.GetStyleString() != 'PEN(c:#FF00FF)' or \
-       feat.GetGeometryRef().ExportToWkt() != 'POINT (-1 -1)':
+    if (
+        feat.GetFieldAsString("datetime") != "2014/10/18 21:36:45+02"
+        or feat.GetField("R_G_B") != "FF00FF"
+        or feat.GetStyleString() != "PEN(c:#FF00FF)"
+        or feat.GetGeometryRef().ExportToWkt() != "POINT (-1 -1)"
+    ):
         feat.DumpReadable()
         pytest.fail()
 
@@ -110,7 +115,7 @@ def test_ogr_jml_1():
         feat.DumpReadable()
         pytest.fail()
 
-    
+
 ###############################################################################
 # Test creating a file
 
@@ -118,23 +123,25 @@ def test_ogr_jml_1():
 def test_ogr_jml_2():
 
     # Invalid filename
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = ogr.GetDriverByName('JML').CreateDataSource('/foo/ogr_jml.jml')
+    gdal.PushErrorHandler("CPLQuietErrorHandler")
+    ds = ogr.GetDriverByName("JML").CreateDataSource("/foo/ogr_jml.jml")
     gdal.PopErrorHandler()
     ds = None
 
     # Empty layer
-    ds = ogr.GetDriverByName('JML').CreateDataSource('/vsimem/ogr_jml.jml')
-    lyr = ds.CreateLayer('foo')
+    ds = ogr.GetDriverByName("JML").CreateDataSource("/vsimem/ogr_jml.jml")
+    lyr = ds.CreateLayer("foo")
     lyr.ResetReading()
     lyr.GetNextFeature()
     ds = None
 
-    f = gdal.VSIFOpenL('/vsimem/ogr_jml.jml', 'rb')
-    data = gdal.VSIFReadL(1, 1000, f).decode('ascii')
+    f = gdal.VSIFOpenL("/vsimem/ogr_jml.jml", "rb")
+    data = gdal.VSIFReadL(1, 1000, f).decode("ascii")
     gdal.VSIFCloseL(f)
 
-    assert data == """<?xml version='1.0' encoding='UTF-8'?>
+    assert (
+        data
+        == """<?xml version='1.0' encoding='UTF-8'?>
 <JCSDataFile xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2000/10/XMLSchema-instance" >
 <JCSGMLInputTemplate>
 <CollectionElement>featureCollection</CollectionElement>
@@ -153,23 +160,24 @@ def test_ogr_jml_2():
 </featureCollection>
 </JCSDataFile>
 """
+    )
 
-    gdal.Unlink('/vsimem/ogr_jml.jml')
+    gdal.Unlink("/vsimem/ogr_jml.jml")
 
     # Test all data types
-    ds = ogr.GetDriverByName('JML').CreateDataSource('/vsimem/ogr_jml.jml')
+    ds = ogr.GetDriverByName("JML").CreateDataSource("/vsimem/ogr_jml.jml")
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32632)
-    lyr = ds.CreateLayer('foo', srs=srs)
-    lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
-    lyr.CreateField(ogr.FieldDefn('int', ogr.OFTInteger))
-    lyr.CreateField(ogr.FieldDefn('double', ogr.OFTReal))
-    lyr.CreateField(ogr.FieldDefn('date', ogr.OFTDate))
-    lyr.CreateField(ogr.FieldDefn('datetime', ogr.OFTDateTime))
-    lyr.CreateField(ogr.FieldDefn('datetime2', ogr.OFTDateTime))
+    lyr = ds.CreateLayer("foo", srs=srs)
+    lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("int", ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn("double", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("date", ogr.OFTDate))
+    lyr.CreateField(ogr.FieldDefn("datetime", ogr.OFTDateTime))
+    lyr.CreateField(ogr.FieldDefn("datetime2", ogr.OFTDateTime))
 
     with gdaltest.error_handler():
-        lyr.CreateField(ogr.FieldDefn('time_as_str', ogr.OFTTime))
+        lyr.CreateField(ogr.FieldDefn("time_as_str", ogr.OFTTime))
 
     assert lyr.TestCapability(ogr.OLCCreateField) == 1
     assert lyr.TestCapability(ogr.OLCSequentialWrite) == 1
@@ -181,32 +189,36 @@ def test_ogr_jml_2():
     lyr.CreateFeature(f)
 
     assert lyr.TestCapability(ogr.OLCCreateField) == 0
-    assert lyr.CreateField(ogr.FieldDefn('that_wont_work')) != 0
+    assert lyr.CreateField(ogr.FieldDefn("that_wont_work")) != 0
 
     f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetField('str', 'fo<o')
-    f.SetField('int', 1)
-    f.SetField('double', 1.23)
-    f.SetField('date', '2014-10-19')
-    f.SetField('datetime', '2014-10-19 12:34:56')
-    f.SetField('datetime2', '2014-10-19 12:34:56+02')
-    f.SetField('time_as_str', '12:34:56')
-    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (1 2)'))
-    f.SetStyleString('PEN(c:#112233)')
+    f.SetField("str", "fo<o")
+    f.SetField("int", 1)
+    f.SetField("double", 1.23)
+    f.SetField("date", "2014-10-19")
+    f.SetField("datetime", "2014-10-19 12:34:56")
+    f.SetField("datetime2", "2014-10-19 12:34:56+02")
+    f.SetField("time_as_str", "12:34:56")
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    f.SetStyleString("PEN(c:#112233)")
     lyr.CreateFeature(f)
 
     f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON ((0 0,0 10,10 10,10 0,0 0))'))
-    f.SetStyleString('BRUSH(fc:#112233)')
+    f.SetGeometryDirectly(
+        ogr.CreateGeometryFromWkt("POLYGON ((0 0,0 10,10 10,10 0,0 0))")
+    )
+    f.SetStyleString("BRUSH(fc:#112233)")
     lyr.CreateFeature(f)
 
     ds = None
 
-    f = gdal.VSIFOpenL('/vsimem/ogr_jml.jml', 'rb')
-    data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+    f = gdal.VSIFOpenL("/vsimem/ogr_jml.jml", "rb")
+    data = gdal.VSIFReadL(1, 10000, f).decode("ascii")
     gdal.VSIFCloseL(f)
 
-    assert data == """<?xml version='1.0' encoding='UTF-8'?>
+    assert (
+        data
+        == """<?xml version='1.0' encoding='UTF-8'?>
 <JCSDataFile xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2000/10/XMLSchema-instance" >
 <JCSGMLInputTemplate>
 <CollectionElement>featureCollection</CollectionElement>
@@ -312,85 +324,87 @@ def test_ogr_jml_2():
 </featureCollection>
 </JCSDataFile>
 """
+    )
 
-    gdal.Unlink('/vsimem/ogr_jml.jml')
+    gdal.Unlink("/vsimem/ogr_jml.jml")
 
     # Test with an explicit R_G_B field
-    ds = ogr.GetDriverByName('JML').CreateDataSource('/vsimem/ogr_jml.jml')
-    lyr = ds.CreateLayer('foo')
-    lyr.CreateField(ogr.FieldDefn('R_G_B', ogr.OFTString))
+    ds = ogr.GetDriverByName("JML").CreateDataSource("/vsimem/ogr_jml.jml")
+    lyr = ds.CreateLayer("foo")
+    lyr.CreateField(ogr.FieldDefn("R_G_B", ogr.OFTString))
     f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetField('R_G_B', '112233')
-    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (1 2)'))
+    f.SetField("R_G_B", "112233")
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (1 2)"))
     lyr.CreateFeature(f)
 
     # Test that R_G_B is not overridden by feature style
-    f.SetField('R_G_B', '445566')
-    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (1 2)'))
-    f.SetStyleString('PEN(c:#778899)')
+    f.SetField("R_G_B", "445566")
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    f.SetStyleString("PEN(c:#778899)")
     lyr.CreateFeature(f)
 
     ds = None
 
-    f = gdal.VSIFOpenL('/vsimem/ogr_jml.jml', 'rb')
-    data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+    f = gdal.VSIFOpenL("/vsimem/ogr_jml.jml", "rb")
+    data = gdal.VSIFReadL(1, 10000, f).decode("ascii")
     gdal.VSIFCloseL(f)
 
-    assert '112233' in data and '445566' in data
+    assert "112233" in data and "445566" in data
 
-    gdal.Unlink('/vsimem/ogr_jml.jml')
+    gdal.Unlink("/vsimem/ogr_jml.jml")
 
     # Test CREATE_R_G_B_FIELD=NO
-    ds = ogr.GetDriverByName('JML').CreateDataSource('/vsimem/ogr_jml.jml')
-    lyr = ds.CreateLayer('foo', options=['CREATE_R_G_B_FIELD=NO'])
-    lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
+    ds = ogr.GetDriverByName("JML").CreateDataSource("/vsimem/ogr_jml.jml")
+    lyr = ds.CreateLayer("foo", options=["CREATE_R_G_B_FIELD=NO"])
+    lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
     f = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(f)
     ds = None
 
-    f = gdal.VSIFOpenL('/vsimem/ogr_jml.jml', 'rb')
-    data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+    f = gdal.VSIFOpenL("/vsimem/ogr_jml.jml", "rb")
+    data = gdal.VSIFReadL(1, 10000, f).decode("ascii")
     gdal.VSIFCloseL(f)
 
-    assert 'R_G_B' not in data
+    assert "R_G_B" not in data
 
-    gdal.Unlink('/vsimem/ogr_jml.jml')
+    gdal.Unlink("/vsimem/ogr_jml.jml")
 
     # Test CREATE_OGR_STYLE_FIELD=YES
-    ds = ogr.GetDriverByName('JML').CreateDataSource('/vsimem/ogr_jml.jml')
-    lyr = ds.CreateLayer('foo', options=['CREATE_OGR_STYLE_FIELD=YES'])
-    lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
+    ds = ogr.GetDriverByName("JML").CreateDataSource("/vsimem/ogr_jml.jml")
+    lyr = ds.CreateLayer("foo", options=["CREATE_OGR_STYLE_FIELD=YES"])
+    lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
     f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetStyleString('PEN(c:#445566)')
+    f.SetStyleString("PEN(c:#445566)")
     lyr.CreateFeature(f)
     ds = None
 
-    f = gdal.VSIFOpenL('/vsimem/ogr_jml.jml', 'rb')
-    data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+    f = gdal.VSIFOpenL("/vsimem/ogr_jml.jml", "rb")
+    data = gdal.VSIFReadL(1, 10000, f).decode("ascii")
     gdal.VSIFCloseL(f)
 
-    assert 'OGR_STYLE' in data and 'PEN(c:#445566)' in data
+    assert "OGR_STYLE" in data and "PEN(c:#445566)" in data
 
-    gdal.Unlink('/vsimem/ogr_jml.jml')
+    gdal.Unlink("/vsimem/ogr_jml.jml")
 
     # Test CREATE_OGR_STYLE_FIELD=YES with a R_G_B field
-    ds = ogr.GetDriverByName('JML').CreateDataSource('/vsimem/ogr_jml.jml')
-    lyr = ds.CreateLayer('foo', options=['CREATE_OGR_STYLE_FIELD=YES'])
-    lyr.CreateField(ogr.FieldDefn('R_G_B', ogr.OFTString))
+    ds = ogr.GetDriverByName("JML").CreateDataSource("/vsimem/ogr_jml.jml")
+    lyr = ds.CreateLayer("foo", options=["CREATE_OGR_STYLE_FIELD=YES"])
+    lyr.CreateField(ogr.FieldDefn("R_G_B", ogr.OFTString))
     f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetField('R_G_B', '112233')
-    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (1 2)'))
-    f.SetStyleString('PEN(c:#445566)')
+    f.SetField("R_G_B", "112233")
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    f.SetStyleString("PEN(c:#445566)")
     lyr.CreateFeature(f)
     ds = None
 
-    f = gdal.VSIFOpenL('/vsimem/ogr_jml.jml', 'rb')
-    data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+    f = gdal.VSIFOpenL("/vsimem/ogr_jml.jml", "rb")
+    data = gdal.VSIFReadL(1, 10000, f).decode("ascii")
     gdal.VSIFCloseL(f)
 
-    assert 'OGR_STYLE' in data and 'PEN(c:#445566)' in data and '112233' in data
+    assert "OGR_STYLE" in data and "PEN(c:#445566)" in data and "112233" in data
 
-    gdal.Unlink('/vsimem/ogr_jml.jml')
+    gdal.Unlink("/vsimem/ogr_jml.jml")
+
 
 ###############################################################################
 # Run test_ogrsf
@@ -402,12 +416,16 @@ def test_ogr_jml_3():
         pytest.skip()
 
     import test_cli_utilities
+
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/jml/test.jml')
+    ret = gdaltest.runexternal(
+        test_cli_utilities.get_test_ogrsf_path() + " -ro data/jml/test.jml"
+    )
 
-    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
+    assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
+
 
 ###############################################################################
 # Test a few error cases
@@ -419,7 +437,9 @@ def test_ogr_jml_4():
         pytest.skip()
 
     # Missing CollectionElement, FeatureElement or GeometryElement
-    gdal.FileFromMemBuffer('/vsimem/ogr_jml.jml', """<?xml version='1.0' encoding='UTF-8'?>
+    gdal.FileFromMemBuffer(
+        "/vsimem/ogr_jml.jml",
+        """<?xml version='1.0' encoding='UTF-8'?>
 <JCSDataFile xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2000/10/XMLSchema-instance" >
 <JCSGMLInputTemplate>
 <MISSING_CollectionElement>featureCollection</MISSING_CollectionElement>
@@ -430,18 +450,21 @@ def test_ogr_jml_4():
 </JCSGMLInputTemplate>
 <featureCollection>
 </featureCollection>
-</JCSDataFile>""")
+</JCSDataFile>""",
+    )
 
-    ds = ogr.Open('/vsimem/ogr_jml.jml')
+    ds = ogr.Open("/vsimem/ogr_jml.jml")
     lyr = ds.GetLayer(0)
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    gdal.PushErrorHandler("CPLQuietErrorHandler")
     lyr.GetLayerDefn()
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorType() != 0
     ds = None
 
     # XML malformed in JCSGMLInputTemplate
-    gdal.FileFromMemBuffer('/vsimem/ogr_jml.jml', """<?xml version='1.0' encoding='UTF-8'?>
+    gdal.FileFromMemBuffer(
+        "/vsimem/ogr_jml.jml",
+        """<?xml version='1.0' encoding='UTF-8'?>
 <JCSDataFile xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2000/10/XMLSchema-instance" >
 <JCSGMLInputTemplate>
 <CollectionElement>featureCollection</CollectionElement>
@@ -452,18 +475,21 @@ def test_ogr_jml_4():
 </JCSGMLInputTemplate>
 <featureCollection>
 </featureCollection>
-</JCSDataFile>""")
+</JCSDataFile>""",
+    )
 
-    ds = ogr.Open('/vsimem/ogr_jml.jml')
+    ds = ogr.Open("/vsimem/ogr_jml.jml")
     lyr = ds.GetLayer(0)
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    gdal.PushErrorHandler("CPLQuietErrorHandler")
     lyr.GetLayerDefn()
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorType() != 0
     ds = None
 
     # XML malformed in featureCollection
-    gdal.FileFromMemBuffer('/vsimem/ogr_jml.jml', """<?xml version='1.0' encoding='UTF-8'?>
+    gdal.FileFromMemBuffer(
+        "/vsimem/ogr_jml.jml",
+        """<?xml version='1.0' encoding='UTF-8'?>
 <JCSDataFile xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2000/10/XMLSchema-instance" >
 <JCSGMLInputTemplate>
 <CollectionElement>featureCollection</CollectionElement>
@@ -480,18 +506,21 @@ def test_ogr_jml_4():
 </JCSGMLInputTemplate>
 <featureCollection>
 </INVALID_featureCollection>
-</JCSDataFile>""")
+</JCSDataFile>""",
+    )
 
-    ds = ogr.Open('/vsimem/ogr_jml.jml')
+    ds = ogr.Open("/vsimem/ogr_jml.jml")
     lyr = ds.GetLayer(0)
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    gdal.PushErrorHandler("CPLQuietErrorHandler")
     lyr.GetLayerDefn().GetFieldCount()
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorType() != 0
     ds = None
 
     # XML malformed in featureCollection
-    gdal.FileFromMemBuffer('/vsimem/ogr_jml.jml', """<?xml version='1.0' encoding='UTF-8'?>
+    gdal.FileFromMemBuffer(
+        "/vsimem/ogr_jml.jml",
+        """<?xml version='1.0' encoding='UTF-8'?>
 <JCSDataFile xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2000/10/XMLSchema-instance" >
 <JCSGMLInputTemplate>
 <CollectionElement>featureCollection</CollectionElement>
@@ -509,18 +538,21 @@ def test_ogr_jml_4():
 <featureCollection>
 <feature>
 </featureCollection>
-</JCSDataFile>""")
+</JCSDataFile>""",
+    )
 
-    ds = ogr.Open('/vsimem/ogr_jml.jml')
+    ds = ogr.Open("/vsimem/ogr_jml.jml")
     lyr = ds.GetLayer(0)
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    gdal.PushErrorHandler("CPLQuietErrorHandler")
     lyr.GetLayerDefn().GetFieldCount()
     gdal.PopErrorHandler()
     assert gdal.GetLastErrorType() != 0
     del ds
 
     # Invalid column definitions
-    gdal.FileFromMemBuffer('/vsimem/ogr_jml.jml', """<?xml version='1.0' encoding='UTF-8'?>
+    gdal.FileFromMemBuffer(
+        "/vsimem/ogr_jml.jml",
+        """<?xml version='1.0' encoding='UTF-8'?>
 <JCSDataFile xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2000/10/XMLSchema-instance" >
 <JCSGMLInputTemplate>
 <CollectionElement>featureCollection</CollectionElement>
@@ -580,13 +612,15 @@ def test_ogr_jml_4():
 <featureCollection>
 <feature> <MISSING_geometry/> </feature>
 </featureCollection>
-</JCSDataFile>""")
+</JCSDataFile>""",
+    )
 
-    ds = ogr.Open('/vsimem/ogr_jml.jml')
+    ds = ogr.Open("/vsimem/ogr_jml.jml")
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetFieldCount() == 0
     lyr.GetNextFeature()
     ds = None
+
 
 ###############################################################################
 # Test reading SRS
@@ -597,11 +631,8 @@ def test_ogr_jml_read_srs():
     if not gdaltest.jml_read_support:
         pytest.skip()
 
-    ds = ogr.Open('data/jml/one_point_srid_4326.jml')
+    ds = ogr.Open("data/jml/one_point_srid_4326.jml")
     lyr = ds.GetLayer(0)
-    assert lyr.GetSpatialRef().ExportToWkt().find('4326') >= 0
+    assert lyr.GetSpatialRef().ExportToWkt().find("4326") >= 0
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef() is not None
-
-
-

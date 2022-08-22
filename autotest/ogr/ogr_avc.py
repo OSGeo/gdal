@@ -29,11 +29,10 @@
 ###############################################################################
 
 
-
 import ogrtest
-from osgeo import ogr
-from osgeo import gdal
 import pytest
+
+from osgeo import gdal, ogr
 
 ###############################################################################
 #
@@ -41,17 +40,24 @@ import pytest
 
 def check_content(ds):
 
-    lyr = ds.GetLayerByName('ARC')
-    expect = ['1', '2', '3', '4', '5', '6', '7']
+    lyr = ds.GetLayerByName("ARC")
+    expect = ["1", "2", "3", "4", "5", "6", "7"]
 
-    tr = ogrtest.check_features_against_list(lyr, 'UserID', expect)
+    tr = ogrtest.check_features_against_list(lyr, "UserID", expect)
     assert tr
 
     lyr.ResetReading()
 
     feat = lyr.GetNextFeature()
-    assert (ogrtest.check_feature_geometry(feat, 'LINESTRING (340099.875 4100200.0,340400.0625 4100399.5,340900.125 4100200.0,340700.03125 4100199.5)',
-                                      max_error=0.01) == 0)
+    assert (
+        ogrtest.check_feature_geometry(
+            feat,
+            "LINESTRING (340099.875 4100200.0,340400.0625 4100399.5,340900.125 4100200.0,340700.03125 4100199.5)",
+            max_error=0.01,
+        )
+        == 0
+    )
+
 
 ###############################################################################
 # Open AVCE00 datasource.
@@ -60,12 +66,13 @@ def check_content(ds):
 def test_ogr_avc_1():
 
     # Example given at Annex A of http://avce00.maptools.org/docs/v7_e00_cover.html
-    avc_ds = ogr.Open('data/avc/test.e00')
-    assert avc_ds.GetLayer(0).GetSpatialRef() is not None, 'expected SRS'
+    avc_ds = ogr.Open("data/avc/test.e00")
+    assert avc_ds.GetLayer(0).GetSpatialRef() is not None, "expected SRS"
 
     if avc_ds is not None:
         return check_content(avc_ds)
     pytest.fail()
+
 
 ###############################################################################
 # Open AVCBin datasource.
@@ -73,12 +80,13 @@ def test_ogr_avc_1():
 
 def test_ogr_avc_2():
 
-    avc_ds = ogr.Open('data/avc/testavc/testavc')
-    assert avc_ds.GetLayer(0).GetSpatialRef() is not None, 'expected SRS'
+    avc_ds = ogr.Open("data/avc/testavc/testavc")
+    assert avc_ds.GetLayer(0).GetSpatialRef() is not None, "expected SRS"
 
     if avc_ds is not None:
         return check_content(avc_ds)
     pytest.fail()
+
 
 ###############################################################################
 # Try opening a compressed E00 (which is not supported)
@@ -86,14 +94,15 @@ def test_ogr_avc_2():
 
 def test_ogr_avc_3():
 
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
-    avc_ds = ogr.Open('data/avc/compressed.e00')
+    gdal.PushErrorHandler("CPLQuietErrorHandler")
+    avc_ds = ogr.Open("data/avc/compressed.e00")
     gdal.PopErrorHandler()
     last_error_msg = gdal.GetLastErrorMsg()
 
-    assert avc_ds is None, 'expected failure'
+    assert avc_ds is None, "expected failure"
 
-    assert last_error_msg != '', 'expected error message'
+    assert last_error_msg != "", "expected error message"
+
 
 ###############################################################################
 # Open larger AVCBin datasource.
@@ -101,7 +110,7 @@ def test_ogr_avc_3():
 
 def test_ogr_avc_4():
 
-    for filename in ['data/avc/testpointavc/testpointavc', 'data/avc/testpoint.e00']:
+    for filename in ["data/avc/testpointavc/testpointavc", "data/avc/testpoint.e00"]:
         avc_ds = ogr.Open(filename)
         lyr = avc_ds.GetLayer(0)
         last_feature = None
@@ -115,24 +124,27 @@ def test_ogr_avc_4():
         if last_feature.GetFieldCount() != 7:
             f.DumpReadable()
             pytest.fail(filename)
-        if filename == 'data/avc/testpointavc/testpointavc':
-            fld_name = 'TESTPOINTAVC-ID'
+        if filename == "data/avc/testpointavc/testpointavc":
+            fld_name = "TESTPOINTAVC-ID"
         else:
-            fld_name = 'WELLS-ID'
-        if last_feature.GetField('ValueId') != 80 or last_feature.GetField(fld_name) != 80:
+            fld_name = "WELLS-ID"
+        if (
+            last_feature.GetField("ValueId") != 80
+            or last_feature.GetField(fld_name) != 80
+        ):
             f.DumpReadable()
             pytest.fail(filename)
 
-    
+
 ###############################################################################
 # Open AVCBin datasource with polygon
 
 
 def test_ogr_avc_5():
 
-    for filename in ['data/avc/testpolyavc/testpolyavc', 'data/avc/testpoly.e00']:
+    for filename in ["data/avc/testpolyavc/testpolyavc", "data/avc/testpoly.e00"]:
         avc_ds = ogr.Open(filename)
-        lyr = avc_ds.GetLayerByName('PAL')
+        lyr = avc_ds.GetLayerByName("PAL")
         last_feature = None
         count = 0
         for f in lyr:
@@ -144,17 +156,15 @@ def test_ogr_avc_5():
         if last_feature.GetFieldCount() != 5:
             f.DumpReadable()
             pytest.fail(filename)
-        if last_feature.GetField('ArcIds') != [-4, -5] or last_feature.GetField('AREA') != pytest.approx(9939.059, abs=1e-3):
+        if last_feature.GetField("ArcIds") != [-4, -5] or last_feature.GetField(
+            "AREA"
+        ) != pytest.approx(9939.059, abs=1e-3):
             f.DumpReadable()
             pytest.fail(filename)
-        if filename == 'data/avc/testpolyavc/testpolyavc':
-            expected_wkt = 'POLYGON ((340700.03125 4100199.5,340500.0 4100199.75,340599.96875 4100100.25,340700.03125 4100199.5))'
+        if filename == "data/avc/testpolyavc/testpolyavc":
+            expected_wkt = "POLYGON ((340700.03125 4100199.5,340500.0 4100199.75,340599.96875 4100100.25,340700.03125 4100199.5))"
         else:
-            expected_wkt = 'POLYGON ((340700.03 4100199.5,340500.0 4100199.8,340599.97 4100100.2,340700.03 4100199.5))'
+            expected_wkt = "POLYGON ((340700.03 4100199.5,340500.0 4100199.8,340599.97 4100100.2,340700.03 4100199.5))"
         if last_feature.GetGeometryRef().ExportToWkt() != expected_wkt:
             f.DumpReadable()
             pytest.fail(filename)
-
-    
-
-
