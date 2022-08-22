@@ -29,81 +29,79 @@
 ###############################################################################
 
 
-
-from osgeo import gdal
-from osgeo import osr
-from osgeo import ogr
-
 import gdaltest
 import pytest
+
+from osgeo import gdal, ogr, osr
 
 
 def _ogr_geojsonseq_create(filename, lco, expect_rs):
 
-    ds = ogr.GetDriverByName('GeoJSONSeq').CreateDataSource(filename)
+    ds = ogr.GetDriverByName("GeoJSONSeq").CreateDataSource(filename)
     sr = osr.SpatialReference()
-    sr.SetFromUserInput('WGS84')
-    lyr = ds.CreateLayer('test', srs=sr, options=lco)
-    lyr.CreateField(ogr.FieldDefn('foo'))
+    sr.SetFromUserInput("WGS84")
+    lyr = ds.CreateLayer("test", srs=sr, options=lco)
+    lyr.CreateField(ogr.FieldDefn("foo"))
 
     f = ogr.Feature(lyr.GetLayerDefn())
-    f['foo'] = 'bar"d'
-    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1 2)'))
+    f["foo"] = 'bar"d'
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
     lyr.CreateFeature(f)
 
     f = ogr.Feature(lyr.GetLayerDefn())
-    f['foo'] = 'baz'
-    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(3 4)'))
+    f["foo"] = "baz"
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(3 4)"))
     lyr.CreateFeature(f)
 
     assert not ds.TestCapability(ogr.ODsCCreateLayer)
 
     with gdaltest.error_handler():
-        assert ds.CreateLayer('foo') is None
+        assert ds.CreateLayer("foo") is None
 
     ds = None
 
-    f = gdal.VSIFOpenL(filename, 'rb')
-    first = gdal.VSIFReadL(1, 1, f).decode('ascii')
+    f = gdal.VSIFOpenL(filename, "rb")
+    first = gdal.VSIFReadL(1, 1, f).decode("ascii")
     gdal.VSIFCloseL(f)
     if expect_rs:
-        assert first == '\x1e'
+        assert first == "\x1e"
     else:
-        assert first == '{'
+        assert first == "{"
 
     ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if f['foo'] != 'bar"d' or \
-       f.GetGeometryRef().ExportToWkt() != 'POINT (1 2)':
+    if f["foo"] != 'bar"d' or f.GetGeometryRef().ExportToWkt() != "POINT (1 2)":
         f.DumpReadable()
         pytest.fail()
     f = lyr.GetNextFeature()
-    if f['foo'] != 'baz' or f.GetGeometryRef().ExportToWkt() != 'POINT (3 4)':
+    if f["foo"] != "baz" or f.GetGeometryRef().ExportToWkt() != "POINT (3 4)":
         f.DumpReadable()
         pytest.fail()
     assert lyr.GetNextFeature() is None
     ds = None
 
-    ogr.GetDriverByName('GeoJSONSeq').DeleteDataSource(filename)
+    ogr.GetDriverByName("GeoJSONSeq").DeleteDataSource(filename)
 
 
 def test_ogr_geojsonseq_lf():
-    return _ogr_geojsonseq_create('/vsimem/test', [], False)
+    return _ogr_geojsonseq_create("/vsimem/test", [], False)
 
 
 def test_ogr_geojsonseq_rs():
-    return _ogr_geojsonseq_create('/vsimem/test', ['RS=YES'], True)
+    return _ogr_geojsonseq_create("/vsimem/test", ["RS=YES"], True)
 
 
 def test_ogr_geojsonseq_rs_auto():
-    return _ogr_geojsonseq_create('/vsimem/test.geojsons', [], True)
+    return _ogr_geojsonseq_create("/vsimem/test.geojsons", [], True)
 
 
 def test_ogr_geojsonseq_inline():
 
-    ds = ogr.Open("""{"type":"Feature","properties":{},"geometry":null}
-{"type":"Feature","properties":{},"geometry":null}""")
+    ds = ogr.Open(
+        """{"type":"Feature","properties":{},"geometry":null}
+{"type":"Feature","properties":{},"geometry":null}"""
+    )
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 2
 
@@ -117,13 +115,15 @@ def test_ogr_geojsonseq_prefix():
 
 def test_ogr_geojsonseq_seq_geometries():
 
-    with gdaltest.config_option('OGR_GEOJSONSEQ_CHUNK_SIZE', '10'):
-        ds = ogr.Open("""{"type":"Point","coordinates":[2,49]}
-    {"type":"Point","coordinates":[3,50]}""")
+    with gdaltest.config_option("OGR_GEOJSONSEQ_CHUNK_SIZE", "10"):
+        ds = ogr.Open(
+            """{"type":"Point","coordinates":[2,49]}
+    {"type":"Point","coordinates":[3,50]}"""
+        )
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 2
         f = lyr.GetNextFeature()
-        if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
+        if f.GetGeometryRef().ExportToWkt() != "POINT (2 49)":
             f.DumpReadable()
             pytest.fail()
 
@@ -131,65 +131,65 @@ def test_ogr_geojsonseq_seq_geometries():
 def test_ogr_geojsonseq_seq_geometries_with_errors():
 
     with gdaltest.error_handler():
-        ds = ogr.Open("""{"type":"Point","coordinates":[2,49]}
+        ds = ogr.Open(
+            """{"type":"Point","coordinates":[2,49]}
     {"type":"Point","coordinates":[3,50]}
     foo
     "bar"
     null
 
-    {"type":"Point","coordinates":[3,51]}""")
+    {"type":"Point","coordinates":[3,51]}"""
+        )
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 3
         f = lyr.GetNextFeature()
-        if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
+        if f.GetGeometryRef().ExportToWkt() != "POINT (2 49)":
             f.DumpReadable()
             pytest.fail()
         f = lyr.GetNextFeature()
-        if f.GetGeometryRef().ExportToWkt() != 'POINT (3 50)':
+        if f.GetGeometryRef().ExportToWkt() != "POINT (3 50)":
             f.DumpReadable()
             pytest.fail()
         f = lyr.GetNextFeature()
-        if f.GetGeometryRef().ExportToWkt() != 'POINT (3 51)':
+        if f.GetGeometryRef().ExportToWkt() != "POINT (3 51)":
             f.DumpReadable()
             pytest.fail()
 
 
 def test_ogr_geojsonseq_reprojection():
 
-    filename = '/vsimem/ogr_geojsonseq_reprojection.geojsonl'
-    ds = ogr.GetDriverByName('GeoJSONSeq').CreateDataSource(filename)
+    filename = "/vsimem/ogr_geojsonseq_reprojection.geojsonl"
+    ds = ogr.GetDriverByName("GeoJSONSeq").CreateDataSource(filename)
     sr = osr.SpatialReference()
-    sr.SetFromUserInput('+proj=merc +datum=WGS84')
-    lyr = ds.CreateLayer('test', srs=sr)
+    sr.SetFromUserInput("+proj=merc +datum=WGS84")
+    lyr = ds.CreateLayer("test", srs=sr)
 
     f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetGeometry(ogr.CreateGeometryFromWkt(
-        'POINT(222638.981586547 6242595.9999532)'))
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(222638.981586547 6242595.9999532)"))
     lyr.CreateFeature(f)
     ds = None
 
     ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
+    if f.GetGeometryRef().ExportToWkt() != "POINT (2 49)":
         f.DumpReadable()
         pytest.fail()
     ds = None
 
-    ogr.GetDriverByName('GeoJSONSeq').DeleteDataSource(filename)
+    ogr.GetDriverByName("GeoJSONSeq").DeleteDataSource(filename)
 
 
 def test_ogr_geojsonseq_read_rs_json_pretty():
 
-    ds = ogr.Open('data/geojsonseq/test.geojsons')
+    ds = ogr.Open("data/geojsonseq/test.geojsons")
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if f['foo'] != 'bar' or \
-       f.GetGeometryRef().ExportToWkt() != 'POINT (1 2)':
+    if f["foo"] != "bar" or f.GetGeometryRef().ExportToWkt() != "POINT (1 2)":
         f.DumpReadable()
         pytest.fail()
     f = lyr.GetNextFeature()
-    if f['foo'] != 'baz' or f.GetGeometryRef().ExportToWkt() != 'POINT (3 4)':
+    if f["foo"] != "baz" or f.GetGeometryRef().ExportToWkt() != "POINT (3 4)":
         f.DumpReadable()
         pytest.fail()
     assert lyr.GetNextFeature() is None
@@ -198,13 +198,33 @@ def test_ogr_geojsonseq_read_rs_json_pretty():
 def test_ogr_geojsonseq_test_ogrsf():
 
     import test_cli_utilities
+
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
     ret = gdaltest.runexternal(
-        test_cli_utilities.get_test_ogrsf_path() + ' -ro data/geojsonseq/test.geojsonl')
+        test_cli_utilities.get_test_ogrsf_path() + " -ro data/geojsonseq/test.geojsonl"
+    )
 
-    assert ret.find('INFO') != -1 and ret.find('ERROR') == -1
+    assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
 
 
+###############################################################################
+# Test effect of OGR_GEOJSON_MAX_OBJ_SIZE
 
+
+def test_ogr_geojsonseq_feature_large():
+
+    filename = "/vsimem/test_ogr_geojson_feature_large.geojsonl"
+    feature = (
+        '{"type":"Feature","properties":{},"geometry":{"type":"LineString","coordinates":[%s]}}'
+        % ",".join(["[0,0]" for _ in range(20 * 1024)])
+    )
+    gdal.FileFromMemBuffer(filename, feature + "\n" + feature)
+    assert ogr.Open(filename) is not None
+    with gdaltest.config_option("OGR_GEOJSON_MAX_OBJ_SIZE", "0"):
+        assert ogr.Open(filename) is not None
+    with gdaltest.config_option("OGR_GEOJSON_MAX_OBJ_SIZE", "0.1"):
+        with gdaltest.error_handler():
+            assert ogr.Open(filename) is None
+    gdal.Unlink(filename)

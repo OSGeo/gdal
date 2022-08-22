@@ -31,18 +31,18 @@
 
 import io
 import sys
-from osgeo import gdal
-
 
 import gdaltest
-import test_py_scripts
 import pytest
+import test_py_scripts
+
+from osgeo import gdal
 
 ###############################################################################
 
 
 def run_gdal_ls(argv):
-    script_path = test_py_scripts.get_py_script('gdal_ls')
+    script_path = test_py_scripts.get_py_script("gdal_ls")
     if script_path is None:
         pytest.skip()
 
@@ -60,9 +60,10 @@ def run_gdal_ls(argv):
         ret = gdal_ls.gdal_ls(argv, outstr)
         retstr = outstr.getvalue()
 
-    assert ret == 0, 'got error code : %d' % ret
+    assert ret == 0, "got error code : %d" % ret
 
     return retstr
+
 
 ###############################################################################
 # List one file
@@ -70,27 +71,29 @@ def run_gdal_ls(argv):
 
 def test_gdal_ls_py_1():
     # TODO: Why the '' as the first element of the list here and below?
-    ret_str = run_gdal_ls(['', '-l', test_py_scripts.get_data_path('ogr') + 'poly.shp'])
+    ret_str = run_gdal_ls(["", "-l", test_py_scripts.get_data_path("ogr") + "poly.shp"])
 
-    assert ret_str.find('poly.shp') != -1
+    assert ret_str.find("poly.shp") != -1
+
 
 ###############################################################################
 # List one dir
 
 
 def test_gdal_ls_py_2():
-    ret_str = run_gdal_ls(['', '-l', test_py_scripts.get_data_path('ogr')])
+    ret_str = run_gdal_ls(["", "-l", test_py_scripts.get_data_path("ogr")])
 
-    assert ret_str.find('poly.shp') != -1
+    assert ret_str.find("poly.shp") != -1
+
 
 ###############################################################################
 # List recursively
 
 
 def test_gdal_ls_py_3():
-    ret_str = run_gdal_ls(['', '-R', test_py_scripts.get_data_path('ogr')])
+    ret_str = run_gdal_ls(["", "-R", test_py_scripts.get_data_path("ogr")])
 
-    assert 'topojson1.topojson' in ret_str
+    assert "topojson1.topojson" in ret_str
 
 
 ###############################################################################
@@ -98,9 +101,18 @@ def test_gdal_ls_py_3():
 
 
 def test_gdal_ls_py_4():
-    ret_str = run_gdal_ls(['', '-l', '/vsizip/'+test_py_scripts.get_data_path('ogr')+'shp/poly.zip'])
+    ret_str = run_gdal_ls(
+        ["", "-l", "/vsizip/" + test_py_scripts.get_data_path("ogr") + "shp/poly.zip"]
+    )
 
-    if ret_str.find('-r--r--r--  1 unknown unknown          415 2008-02-11 21:35 /vsizip/'+test_py_scripts.get_data_path('ogr')+'shp/poly.zip/poly.PRJ') == -1:
+    if (
+        ret_str.find(
+            "-r--r--r--  1 unknown unknown          415 2008-02-11 21:35 /vsizip/"
+            + test_py_scripts.get_data_path("ogr")
+            + "shp/poly.zip/poly.PRJ"
+        )
+        == -1
+    ):
         if gdaltest.skip_on_travis():
             # FIXME
             # Fails on Travis with dates at 1970-01-01 00:00
@@ -115,14 +127,17 @@ def test_gdal_ls_py_4():
 
 def test_gdal_ls_py_5():
 
-    drv = gdal.GetDriverByName('HTTP')
+    drv = gdal.GetDriverByName("HTTP")
     if drv is None:
         pytest.skip()
 
-    if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
-        pytest.skip('would stall for a long time')
+    if int(gdal.VersionInfo("VERSION_NUM")) < 1900:
+        pytest.skip("would stall for a long time")
 
-    f = gdal.VSIFOpenL('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip', 'rb')
+    f = gdal.VSIFOpenL(
+        "/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip",
+        "rb",
+    )
     if f is None:
         pytest.skip()
     d = gdal.VSIFReadL(1, 1, f)
@@ -144,11 +159,14 @@ def test_gdal_ls_py_5():
 
 def test_gdal_ls_py_6():
 
-    drv = gdal.GetDriverByName('HTTP')
+    drv = gdal.GetDriverByName("HTTP")
     if drv is None:
         pytest.skip()
 
-    f = gdal.VSIFOpenL('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip', 'rb')
+    f = gdal.VSIFOpenL(
+        "/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip",
+        "rb",
+    )
     if f is None:
         pytest.skip()
     d = gdal.VSIFReadL(1, 1, f)
@@ -156,9 +174,20 @@ def test_gdal_ls_py_6():
     if not d:
         pytest.skip()
 
-    ret_str = run_gdal_ls(['', '-l', '/vsizip/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip'])
+    ret_str = run_gdal_ls(
+        [
+            "",
+            "-l",
+            "/vsizip/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip",
+        ]
+    )
 
-    if ret_str.find('-r--r--r--  1 unknown unknown          415 2008-02-11 21:35 /vsizip/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip/poly.PRJ') == -1:
+    if (
+        ret_str.find(
+            "-r--r--r--  1 unknown unknown          415 2008-02-11 21:35 /vsizip/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip/poly.PRJ"
+        )
+        == -1
+    ):
         if gdaltest.skip_on_travis():
             # FIXME
             # Fails on Travis with dates at 1970-01-01 00:00
@@ -174,17 +203,20 @@ def test_gdal_ls_py_6():
 def test_gdal_ls_py_7():
 
     # Super slow on AppVeyor since a few weeks (Apr 2016)
-    if gdal.GetConfigOption('APPVEYOR') is not None:
-        pytest.skip('Slow on AppVeyor')
+    if gdal.GetConfigOption("APPVEYOR") is not None:
+        pytest.skip("Slow on AppVeyor")
 
-    drv = gdal.GetDriverByName('HTTP')
+    drv = gdal.GetDriverByName("HTTP")
     if drv is None:
         pytest.skip()
 
-    if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
-        pytest.skip('would stall for a long time')
+    if int(gdal.VersionInfo("VERSION_NUM")) < 1900:
+        pytest.skip("would stall for a long time")
 
-    f = gdal.VSIFOpenL('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip', 'rb')
+    f = gdal.VSIFOpenL(
+        "/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip",
+        "rb",
+    )
     if f is None:
         pytest.skip()
     d = gdal.VSIFReadL(1, 1, f)
@@ -207,14 +239,17 @@ def test_gdal_ls_py_8():
     if not gdaltest.run_slow_tests():
         pytest.skip()
 
-    drv = gdal.GetDriverByName('HTTP')
+    drv = gdal.GetDriverByName("HTTP")
     if drv is None:
         pytest.skip()
 
-    if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
-        pytest.skip('would stall for a long time')
+    if int(gdal.VersionInfo("VERSION_NUM")) < 1900:
+        pytest.skip("would stall for a long time")
 
-    f = gdal.VSIFOpenL('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip', 'rb')
+    f = gdal.VSIFOpenL(
+        "/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.zip",
+        "rb",
+    )
     if f is None:
         pytest.skip()
     d = gdal.VSIFReadL(1, 1, f)
@@ -222,8 +257,20 @@ def test_gdal_ls_py_8():
     if not d:
         pytest.skip()
 
-    ret_str = run_gdal_ls(['', '-l', '-R', '-Rzip', 'ftp://download.osgeo.org/gdal/data/aig'])
+    ret_str = run_gdal_ls(
+        ["", "-l", "-R", "-Rzip", "ftp://download.osgeo.org/gdal/data/aig"]
+    )
 
-    assert ret_str.find('-r--r--r--  1 unknown unknown        24576 2007-03-29 00:00 /vsicurl/ftp://download.osgeo.org/gdal/data/aig/nzdem/info/arc0002r.001') != -1
+    assert (
+        ret_str.find(
+            "-r--r--r--  1 unknown unknown        24576 2007-03-29 00:00 /vsicurl/ftp://download.osgeo.org/gdal/data/aig/nzdem/info/arc0002r.001"
+        )
+        != -1
+    )
 
-    assert ret_str.find('-r--r--r--  1 unknown unknown        24576 2007-03-29 12:20 /vsizip//vsicurl/ftp://download.osgeo.org/gdal/data/aig/nzdem.zip/nzdem/info/arc0002r.001') != -1
+    assert (
+        ret_str.find(
+            "-r--r--r--  1 unknown unknown        24576 2007-03-29 12:20 /vsizip//vsicurl/ftp://download.osgeo.org/gdal/data/aig/nzdem.zip/nzdem/info/arc0002r.001"
+        )
+        != -1
+    )

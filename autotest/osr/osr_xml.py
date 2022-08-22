@@ -30,10 +30,9 @@
 
 import re
 
-
 import gdaltest
-from osgeo import osr
 
+from osgeo import osr
 
 ###############################################################################
 # Test the osr.SpatialReference.ImportFromXML() function.
@@ -181,6 +180,7 @@ def test_osr_xml_1():
 
     assert got == expected
 
+
 ###############################################################################
 # Test the osr.SpatialReference.ExportToXML() function.
 #
@@ -196,10 +196,7 @@ def test_osr_xml_2():
     got = srs.ExportToXML()
 
     # Strip the gml:id tags
-    got = re.sub(r' gml:id="[^"]*"', '', got, 0)
-    expected = re.sub(r' gml:id="[^"]*"', '', expected, 0)
+    got = re.sub(r' gml:id="[^"]*"', "", got, 0)
+    expected = re.sub(r' gml:id="[^"]*"', "", expected, 0)
 
     assert got == expected
-
-
-

@@ -29,11 +29,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import gdaltest
 import pytest
 
-import gdaltest
 
-@pytest.mark.require_driver('TileDB')
+@pytest.mark.require_driver("TileDB")
 def test_tiledb_open():
-    ut = gdaltest.GDALTest('TileDB', 'tiledb_array', 1, 4857)
+    ut = gdaltest.GDALTest("TileDB", "tiledb_array", 1, 4857)
     ut.testOpen()

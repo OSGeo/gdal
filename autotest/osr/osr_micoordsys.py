@@ -29,9 +29,9 @@
 ###############################################################################
 
 
+import pytest
 
 from osgeo import osr
-import pytest
 
 ###############################################################################
 # Test the osr.SpatialReference.ImportFromMICoordSys() function.
@@ -41,18 +41,28 @@ import pytest
 def test_osr_micoordsys_1():
 
     srs = osr.SpatialReference()
-    srs.ImportFromMICoordSys('Earth Projection 3, 62, "m", -117.474542888889, 33.7644620277778, 33.9036340277778, 33.6252900277778, 0, 0')
+    srs.ImportFromMICoordSys(
+        'Earth Projection 3, 62, "m", -117.474542888889, 33.7644620277778, 33.9036340277778, 33.6252900277778, 0, 0'
+    )
 
-    if srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_1) != pytest.approx(33.9036340277778, abs=0.0000005) \
-       or srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_2) != pytest.approx(33.6252900277778, abs=0.0000005) \
-       or srs.GetProjParm(osr.SRS_PP_LATITUDE_OF_ORIGIN) != pytest.approx(33.7644620277778, abs=0.0000005) \
-       or srs.GetProjParm(osr.SRS_PP_CENTRAL_MERIDIAN) != pytest.approx((-117.474542888889), abs=0.0000005) \
-       or srs.GetProjParm(osr.SRS_PP_FALSE_EASTING) != pytest.approx(0.0, abs=0.0000005) \
-       or srs.GetProjParm(osr.SRS_PP_FALSE_NORTHING) != pytest.approx(0.0, abs=0.0000005):
+    if (
+        srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_1)
+        != pytest.approx(33.9036340277778, abs=0.0000005)
+        or srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_2)
+        != pytest.approx(33.6252900277778, abs=0.0000005)
+        or srs.GetProjParm(osr.SRS_PP_LATITUDE_OF_ORIGIN)
+        != pytest.approx(33.7644620277778, abs=0.0000005)
+        or srs.GetProjParm(osr.SRS_PP_CENTRAL_MERIDIAN)
+        != pytest.approx((-117.474542888889), abs=0.0000005)
+        or srs.GetProjParm(osr.SRS_PP_FALSE_EASTING)
+        != pytest.approx(0.0, abs=0.0000005)
+        or srs.GetProjParm(osr.SRS_PP_FALSE_NORTHING)
+        != pytest.approx(0.0, abs=0.0000005)
+    ):
         print(srs.ExportToPrettyWkt())
-        pytest.fail('Can not export Lambert Conformal Conic projection.')
+        pytest.fail("Can not export Lambert Conformal Conic projection.")
 
-    
+
 ###############################################################################
 # Test the osr.SpatialReference.ExportToMICoordSys() function.
 #
@@ -61,7 +71,8 @@ def test_osr_micoordsys_1():
 def test_osr_micoordsys_2():
 
     srs = osr.SpatialReference()
-    srs.ImportFromWkt("""PROJCS["unnamed",GEOGCS["NAD27",\
+    srs.ImportFromWkt(
+        """PROJCS["unnamed",GEOGCS["NAD27",\
     DATUM["North_American_Datum_1927",\
     SPHEROID["Clarke 1866",6378206.4,294.9786982139006,\
     AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],\
@@ -72,12 +83,16 @@ def test_osr_micoordsys_2():
     PARAMETER["latitude_of_origin",33.76446202777777],\
     PARAMETER["central_meridian",-117.4745428888889],\
     PARAMETER["false_easting",0],PARAMETER["false_northing",0],\
-    UNIT["metre",1,AUTHORITY["EPSG","9001"]]]""")
+    UNIT["metre",1,AUTHORITY["EPSG","9001"]]]"""
+    )
 
     proj = srs.ExportToMICoordSys()
 
-    assert proj == 'Earth Projection 3, 62, "m", -117.474542888889, 33.7644620277778, 33.9036340277778, 33.6252900277778, 0, 0', \
-        'Can not import Lambert Conformal Conic projection.'
+    assert (
+        proj
+        == 'Earth Projection 3, 62, "m", -117.474542888889, 33.7644620277778, 33.9036340277778, 33.6252900277778, 0, 0'
+    ), "Can not import Lambert Conformal Conic projection."
+
 
 ###############################################################################
 # Test EPSG:3857
@@ -102,6 +117,3 @@ def test_osr_micoordsys_3():
     proj = srs.ExportToMICoordSys()
 
     assert proj == 'Earth Projection 10, 157, "m", 0'
-
-
-

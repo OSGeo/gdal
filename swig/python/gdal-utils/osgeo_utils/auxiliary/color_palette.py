@@ -30,23 +30,23 @@
 
 import os
 import re
+import tempfile
+from collections import OrderedDict
 from numbers import Real
 from pathlib import Path
+from typing import Optional, Sequence, Tuple, Union
 from xml.dom import minidom
-from collections import OrderedDict
-import tempfile
-from typing import Sequence, Union, Optional, Tuple
 
 from osgeo_utils.auxiliary import base
 from osgeo_utils.auxiliary.base import PathLikeOrStr
 
 PathOrStrings = Union[base.PathLikeOrStr, Sequence[str]]
-ColorPaletteOrPathOrStrings = Union['ColorPalette', PathOrStrings]
+ColorPaletteOrPathOrStrings = Union["ColorPalette", PathOrStrings]
 
 
 class ColorPalette:
-    __slots__ = ['pal', 'ndv', '_all_numeric']
-    ndv_keys = [None, 'nv', 'ndv']
+    __slots__ = ["pal", "ndv", "_all_numeric"]
+    ndv_keys = [None, "nv", "ndv"]
 
     def __init__(self):
         self.pal = OrderedDict()
@@ -73,13 +73,13 @@ class ColorPalette:
 
     def get_txt_key(self, key):
         if key in self.ndv_keys:
-            key = 'nv'
+            key = "nv"
         return key
 
     def get_all_keys(self, with_ndv: bool = True):
         keys = self.pal.keys()
         if with_ndv and self.ndv is not None:
-            keys = ['nv', *keys]
+            keys = ["nv", *keys]
         return keys
 
     def replace_absolute_values_with_percent(self, ndv=True):
@@ -90,7 +90,7 @@ class ColorPalette:
                     num = 0
                 elif num > 100:
                     num = 100
-                num = str(num) + '%'
+                num = str(num) + "%"
             new_pal.pal[num] = val
         new_pal._all_numeric = False
         if ndv:
@@ -111,14 +111,14 @@ class ColorPalette:
         for num in self.pal.keys():
             if not isinstance(num, str):
                 continue
-            is_percent = num.endswith('%')
+            is_percent = num.endswith("%")
             if is_percent:
                 return True
         return False
 
     def apply_percent(self, min_val: Real, max_val: Real):
         if min_val is None or max_val is None:
-            raise Exception('no min or max values to apply')
+            raise Exception("no min or max values to apply")
         if self._all_numeric:
             # nothing to do
             return
@@ -127,9 +127,9 @@ class ColorPalette:
         for num in self.pal.keys():
             if not isinstance(num, str):
                 continue
-            is_percent = num.endswith('%')
+            is_percent = num.endswith("%")
             if is_percent:
-                new_num = num.rstrip('%')
+                new_num = num.rstrip("%")
                 try:
                     new_num = base.num(new_num)
                     if is_percent:
@@ -144,16 +144,16 @@ class ColorPalette:
             self._all_numeric = True
         self.pal = new_pal
 
-    def assign(self, other: 'ColorPalette'):
+    def assign(self, other: "ColorPalette"):
         self.pal = other.pal.copy()
         self._all_numeric = other._all_numeric
 
     @staticmethod
     def get_supported_extenstions() -> Sequence[str]:
         return [
-            'txt',  # GDAL Text-based color configuration file
-            'qlr',  # QGIS Layer Definition File (qlr)
-            'qml',  # QGIS Layer Style File (qml)
+            "txt",  # GDAL Text-based color configuration file
+            "qlr",  # QGIS Layer Definition File (qlr)
+            "qml",  # QGIS Layer Style File (qml)
         ]
 
     def is_supported_format(self, filename: PathLikeOrStr):
@@ -177,21 +177,21 @@ class ColorPalette:
         elif isinstance(filename_or_strings, Sequence):
             self.read_file_txt(lines=filename_or_strings)
         else:
-            raise Exception('Unknown input {}'.format(filename_or_strings))
+            raise Exception("Unknown input {}".format(filename_or_strings))
 
     def read_file(self, filename: PathLikeOrStr):
         ext = base.get_extension(filename).lower()
-        if ext in ['qlr', 'qml']:
+        if ext in ["qlr", "qml"]:
             self.read_file_qml(filename)
         else:
             self.read_file_txt(filename)
 
     def read_file_qml(self, qml_filename: PathLikeOrStr, tag_name=None, type=None):
-        """ Read QGIS Layer Style File (qml) or QGIS Layer Definition File (qlr) """
+        """Read QGIS Layer Style File (qml) or QGIS Layer Definition File (qlr)"""
         qlr = minidom.parse(str(qml_filename))
         if tag_name is None:
             if type is None:
-                renderer = qlr.getElementsByTagName('rasterrenderer')
+                renderer = qlr.getElementsByTagName("rasterrenderer")
                 if renderer is None:
                     raise Exception(f'Cannot find "rasterrenderer" in {qml_filename}')
                 type = renderer[0].getAttribute("type")
@@ -204,14 +204,14 @@ class ColorPalette:
                     "singlebandpseudocolor": "item",
                 }
                 if type not in type_to_tag_name:
-                    raise Exception(f'Unknown type: {type} in {qml_filename}')
+                    raise Exception(f"Unknown type: {type} in {qml_filename}")
                 tag_name = type_to_tag_name[type]
 
         self.pal.clear()
         color_palette = qlr.getElementsByTagName(tag_name)
         for palette_entry in color_palette:
             color = palette_entry.getAttribute("color")
-            if str(color).startswith('#'):
+            if str(color).startswith("#"):
                 color = int(color[1:], 16)
             alpha = palette_entry.getAttribute("alpha")
             alpha = int(alpha)
@@ -220,23 +220,27 @@ class ColorPalette:
             key = base.num(key)
             self.pal[key] = color
 
-    def read_file_txt(self, filename: Optional[PathLikeOrStr] = None, lines: Optional[Sequence[str]] = None):
-        """ Read GDAL Text-based color configuration file """
+    def read_file_txt(
+        self,
+        filename: Optional[PathLikeOrStr] = None,
+        lines: Optional[Sequence[str]] = None,
+    ):
+        """Read GDAL Text-based color configuration file"""
         if filename is not None:
             lines = open(filename).readlines()
         if not isinstance(lines, Sequence):
-            raise Exception('unknown input {}'.format(lines))
+            raise Exception("unknown input {}".format(lines))
 
         self.pal.clear()
         for line in lines:
-            split_line = line.strip().split(' ', 1)
+            split_line = line.strip().split(" ", 1)
             if len(split_line) < 2:
                 continue
             try:
                 color = self.pal_color_to_rgb(split_line[1])
                 key = split_line[0].strip()
-            except:
-                raise Exception('Error reading palette line: {}'.format(line))
+            except Exception:
+                raise Exception("Error reading palette line: {}".format(line))
             try:
                 key = base.num(key)
             except ValueError:
@@ -252,16 +256,18 @@ class ColorPalette:
         color = self.get_color(key)
         key = self.get_txt_key(key)
         color_entry = self.color_to_color_entry(color)
-        color_entry = ' '.join(str(c) for c in color_entry)
-        s = '{} {}\n'.format(key, color_entry)
+        color_entry = " ".join(str(c) for c in color_entry)
+        s = "{} {}\n".format(key, color_entry)
         return s
 
-    def write_file(self, color_filename: Optional[PathLikeOrStr] = None, with_ndv: bool = True):
+    def write_file(
+        self, color_filename: Optional[PathLikeOrStr] = None, with_ndv: bool = True
+    ):
         tmp_fd = None
         if color_filename is None:
-            tmp_fd, color_filename = tempfile.mkstemp(suffix='.txt')
+            tmp_fd, color_filename = tempfile.mkstemp(suffix=".txt")
         os.makedirs(os.path.dirname(color_filename), exist_ok=True)
-        with open(color_filename, mode='w') as fp:
+        with open(color_filename, mode="w") as fp:
             for key in self.get_all_keys(with_ndv):
                 fp.write(self.get_txt_color_entry(key))
         if tmp_fd:
@@ -269,28 +275,30 @@ class ColorPalette:
         return color_filename
 
     def to_mem_buffer(self, with_ndv: bool = True) -> str:
-        s = ''
+        s = ""
         for key in self.get_all_keys(with_ndv):
             line = self.get_txt_color_entry(key)
             s = s + line
         return s
 
     @staticmethod
-    def from_string_list(color_palette_strings: Optional[ColorPaletteOrPathOrStrings]) -> 'ColorPalette':
+    def from_string_list(
+        color_palette_strings: Optional[ColorPaletteOrPathOrStrings],
+    ) -> "ColorPalette":
         res = ColorPalette()
         res.read_color_file(color_palette_strings)
         return res
 
     @staticmethod
     def format_number(num):
-        return num if isinstance(num, str) else '{:.2f}'.format(num)
+        return num if isinstance(num, str) else "{:.2f}".format(num)
 
     @staticmethod
     def format_color(col):
-        return col if isinstance(col, str) else '#{:06X}'.format(col)
+        return col if isinstance(col, str) else "#{:06X}".format(col)
 
     @staticmethod
-    def color_to_color_entry(color, with_alpha: Optional[bool]=None):
+    def color_to_color_entry(color, with_alpha: Optional[bool] = None):
         b = base.get_byte(color, 0)
         g = base.get_byte(color, 1)
         r = base.get_byte(color, 2)
@@ -310,19 +318,23 @@ class ColorPalette:
         # r g b a -> argb
         # todo: support color names as implemented in the cpp version of this function...
         # cc = color components
-        cc = re.findall(r'\d+', cc)
+        cc = re.findall(r"\d+", cc)
         try:
             # if not rgb_colors:
             #     return (*(int(c) for c in cc),)
             if len(cc) == 1:
                 return int(cc[0])
             elif len(cc) == 3:
-                return (((((255 << 8) + int(cc[0])) << 8) + int(cc[1])) << 8) + int(cc[2])
+                return (((((255 << 8) + int(cc[0])) << 8) + int(cc[1])) << 8) + int(
+                    cc[2]
+                )
             elif len(cc) == 4:
-                return (((((int(cc[3]) << 8) + int(cc[0])) << 8) + int(cc[1])) << 8) + int(cc[2])
+                return (
+                    ((((int(cc[3]) << 8) + int(cc[0])) << 8) + int(cc[1])) << 8
+                ) + int(cc[2])
             else:
                 return 0
-        except:
+        except Exception:
             return 0
 
     @staticmethod
@@ -330,7 +342,7 @@ class ColorPalette:
         # $CC00FF80
         # $AARRGGBB
         if isinstance(col, str):
-            col = str(col).strip('$')
+            col = str(col).strip("$")
         return int(col, 16)
 
     @staticmethod
@@ -344,22 +356,25 @@ class ColorPalette:
 
     @staticmethod
     def from_mcd(mcd_color_list):
-        color_list = [int(color.lstrip('#'), 16) for color in mcd_color_list]
+        color_list = [int(color.lstrip("#"), 16) for color in mcd_color_list]
         return ColorPalette.from_color_list(color_list)
 
     @staticmethod
     def get_css4_palette():
         from matplotlib._color_data import CSS4_COLORS as color_dict
+
         return ColorPalette.from_mcd(color_dict.values())
 
     @staticmethod
     def get_tableau_palette():
         from matplotlib._color_data import TABLEAU_COLORS as color_dict
+
         return ColorPalette.from_mcd(color_dict.values())
 
     @staticmethod
     def get_xkcd_palette():
         from matplotlib._color_data import XKCD_COLORS as color_dict
+
         return ColorPalette.from_mcd(color_dict.values())
 
     # alias names for backwards compatibility
@@ -372,34 +387,38 @@ def xml_to_color_file(xml_filename: Path, **kwargs) -> Tuple[ColorPalette, Path]
     xml_filename = xml_filename
     pal = ColorPalette()
     pal.read_file_xml(xml_filename, **kwargs)
-    color_filename = xml_filename.with_suffix('.txt')
+    color_filename = xml_filename.with_suffix(".txt")
     pal.write_color_file(color_filename)
     return pal, color_filename
 
 
-def get_file_from_strings(color_palette: ColorPaletteOrPathOrStrings) -> Tuple[str, str]:
+def get_file_from_strings(
+    color_palette: ColorPaletteOrPathOrStrings,
+) -> Tuple[str, str]:
     temp_color_filename = None
     tmp_fd = None
     if isinstance(color_palette, ColorPalette):
-        tmp_fd, temp_color_filename = tempfile.mkstemp(suffix='.txt')
+        tmp_fd, temp_color_filename = tempfile.mkstemp(suffix=".txt")
         color_filename = temp_color_filename
         color_palette.write_color_file(temp_color_filename)
     elif base.is_path_like(color_palette):
         color_filename = color_palette
     elif isinstance(color_palette, Sequence):
-        tmp_fd, temp_color_filename = tempfile.mkstemp(suffix='.txt')
+        tmp_fd, temp_color_filename = tempfile.mkstemp(suffix=".txt")
         color_filename = temp_color_filename
-        with open(temp_color_filename, 'w') as f:
+        with open(temp_color_filename, "w") as f:
             for item in color_palette:
-                f.write(item + '\n')
+                f.write(item + "\n")
     else:
-        raise Exception('Unknown color palette type {}'.format(color_palette))
+        raise Exception("Unknown color palette type {}".format(color_palette))
     if tmp_fd:
         os.close(tmp_fd)
     return color_filename, temp_color_filename
 
 
-def get_color_palette(color_palette_or_path_or_strings: ColorPaletteOrPathOrStrings) -> Optional[ColorPalette]:
+def get_color_palette(
+    color_palette_or_path_or_strings: ColorPaletteOrPathOrStrings,
+) -> Optional[ColorPalette]:
     if color_palette_or_path_or_strings is None:
         return None
     if isinstance(color_palette_or_path_or_strings, ColorPalette):

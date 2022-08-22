@@ -52,7 +52,7 @@ coordinate transformation.
 Details
 -------
 
-See https://github.com/rouault/gdal/blob/coordinate_epoch_v2/gdal/doc/source/user/coordinate_epoch.rst
+See :ref:`coordinate_epoch`
 for impacts on the API, encoding of CRS in a number of formats, and impacts on
 existing utilities.
 

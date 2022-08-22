@@ -24,7 +24,7 @@ jobs:
   build-linux-ubuntu-focal:
     runs-on: ubuntu-20.04
     env:
-      CMAKE_OPTIONS: -DPython_LOOKUP_VERSION=3.8 -DUSE_CCACHE=ON
+      CMAKE_OPTIONS: -DPython_LOOKUP_VERSION=3.8 -DUSE_CCACHE=ON -DSWIG_REGENERATE_PYTHON=ON
       cache-name: cmake-ubuntu-focal
     steps:
     - name: Checkout GDAL
@@ -579,7 +579,7 @@ jobs:
         curl http://download.osgeo.org/proj/proj-datumgrid-1.8.tar.gz > proj-datumgrid-1.8.tar.gz
         tar xvzf proj-datumgrid-1.8.tar.gz
         cd $OLDPWD
-        python3 -m pip install -r $GITHUB_WORKSPACE/autotest/requirements.txt
+        /usr/local/bin/python3.10 -m pip install --user -r $GITHUB_WORKSPACE/autotest/requirements.txt
     - name: Configure ccache
       run: |
           echo CCACHE_BASEDIR=$PWD >> ${GITHUB_ENV}

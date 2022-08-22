@@ -28,11 +28,10 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import ogr
-
-
 import ogrtest
 import pytest
+
+from osgeo import ogr
 
 ###############################################################################
 # Test point layer
@@ -40,18 +39,23 @@ import pytest
 
 def test_ogr_idrisi_1():
 
-    ds = ogr.Open('data/idrisi/points.vct')
+    ds = ogr.Open("data/idrisi/points.vct")
     assert ds is not None
 
     lyr = ds.GetLayer(0)
     assert lyr.GetGeomType() == ogr.wkbPoint
 
-    assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == 'IntegerField'
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "IntegerField"
 
     assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTInteger
 
     sr = lyr.GetSpatialRef()
-    assert sr.ExportToWkt().find('PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",3],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0]') > 0
+    assert (
+        sr.ExportToWkt().find(
+            'PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",3],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0]'
+        )
+        > 0
+    )
 
     assert lyr.GetFeatureCount() == 2
 
@@ -74,11 +78,16 @@ def test_ogr_idrisi_1():
         feat.DumpReadable()
         pytest.fail()
 
-    if feat.GetFieldAsString(3) != 'foo':
+    if feat.GetFieldAsString(3) != "foo":
         feat.DumpReadable()
         pytest.fail()
 
-    if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POINT(400000 5000000)')) != 0:
+    if (
+        ogrtest.check_feature_geometry(
+            feat, ogr.CreateGeometryFromWkt("POINT(400000 5000000)")
+        )
+        != 0
+    ):
         feat.DumpReadable()
         pytest.fail()
 
@@ -87,7 +96,12 @@ def test_ogr_idrisi_1():
         feat.DumpReadable()
         pytest.fail()
 
-    if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POINT (600000 4000000)')) != 0:
+    if (
+        ogrtest.check_feature_geometry(
+            feat, ogr.CreateGeometryFromWkt("POINT (600000 4000000)")
+        )
+        != 0
+    ):
         feat.DumpReadable()
         pytest.fail()
 
@@ -105,13 +119,14 @@ def test_ogr_idrisi_1():
 
     ds = None
 
+
 ###############################################################################
 # Test linestring layer
 
 
 def test_ogr_idrisi_2():
 
-    ds = ogr.Open('data/idrisi/lines.vct')
+    ds = ogr.Open("data/idrisi/lines.vct")
     assert ds is not None
 
     lyr = ds.GetLayer(0)
@@ -130,7 +145,13 @@ def test_ogr_idrisi_2():
         feat.DumpReadable()
         pytest.fail()
 
-    if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('LINESTRING (400000 5000000,600000 4500000)')) != 0:
+    if (
+        ogrtest.check_feature_geometry(
+            feat,
+            ogr.CreateGeometryFromWkt("LINESTRING (400000 5000000,600000 4500000)"),
+        )
+        != 0
+    ):
         feat.DumpReadable()
         pytest.fail()
 
@@ -139,7 +160,13 @@ def test_ogr_idrisi_2():
         feat.DumpReadable()
         pytest.fail()
 
-    if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('LINESTRING (450000 4000000,550000 4500000)')) != 0:
+    if (
+        ogrtest.check_feature_geometry(
+            feat,
+            ogr.CreateGeometryFromWkt("LINESTRING (450000 4000000,550000 4500000)"),
+        )
+        != 0
+    ):
         feat.DumpReadable()
         pytest.fail()
 
@@ -150,13 +177,14 @@ def test_ogr_idrisi_2():
 
     ds = None
 
+
 ###############################################################################
 # Test polygon layer
 
 
 def test_ogr_idrisi_3():
 
-    ds = ogr.Open('data/idrisi/polygons.vct')
+    ds = ogr.Open("data/idrisi/polygons.vct")
     assert ds is not None
 
     lyr = ds.GetLayer(0)
@@ -175,7 +203,15 @@ def test_ogr_idrisi_3():
         feat.DumpReadable()
         pytest.fail()
 
-    if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POLYGON ((400000 4000000,400000 5000000,600000 5000000,600000 4000000,400000 4000000),(450000 4250000,450000 4750000,550000 4750000,550000 4250000,450000 4250000))')) != 0:
+    if (
+        ogrtest.check_feature_geometry(
+            feat,
+            ogr.CreateGeometryFromWkt(
+                "POLYGON ((400000 4000000,400000 5000000,600000 5000000,600000 4000000,400000 4000000),(450000 4250000,450000 4750000,550000 4750000,550000 4250000,450000 4250000))"
+            ),
+        )
+        != 0
+    ):
         feat.DumpReadable()
         pytest.fail()
 
@@ -184,7 +220,15 @@ def test_ogr_idrisi_3():
         feat.DumpReadable()
         pytest.fail()
 
-    if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POLYGON ((400000 4000000,400000 5000000,600000 5000000,600000 4000000,400000 4000000))')) != 0:
+    if (
+        ogrtest.check_feature_geometry(
+            feat,
+            ogr.CreateGeometryFromWkt(
+                "POLYGON ((400000 4000000,400000 5000000,600000 5000000,600000 4000000,400000 4000000))"
+            ),
+        )
+        != 0
+    ):
         feat.DumpReadable()
         pytest.fail()
 
@@ -194,6 +238,3 @@ def test_ogr_idrisi_3():
     assert feat is None
 
     ds = None
-
-
-

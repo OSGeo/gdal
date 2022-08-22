@@ -17,7 +17,7 @@ sudo apt-get install python3.5-dev
 curl -sSL 'https://bootstrap.pypa.io/get-pip.py' | sudo python3.5
 (cd autotest; sudo -H pip install -U -r ./requirements.txt)
 
-sudo pip install lxml flake8 numpy
+sudo pip install lxml numpy
 
 # MSSQL: server side
 docker pull mcr.microsoft.com/mssql/server:2017-latest
@@ -33,11 +33,6 @@ sudo apt-get install -y libogdi3.2-dev
 #sudo apt-get install -y libboost-regex-dev libboost-system-dev libboost-thread-dev
 
 sudo apt-get install doxygen texlive-latex-base
-# flake8 codes to just emulate pyflakes (http://flake8.pycqa.org/en/latest/user/error-codes.html)
-FLAKE8="flake8 --select=F401,F402,F403,F404,F405,F406,F407,F601,F602,F621,F622,F631,F632,F633,F701,F702,F703,F704,F705,F706,F707,F721,F722,F811,F812,F821,F822,F823,F831,F841,F901"
-$FLAKE8 autotest
-$FLAKE8 gdal/swig/python/gdal-utils/scripts
-$FLAKE8 gdal/swig/python/gdal-utils/osgeo_utils/samples
 psql -c "drop database if exists autotest" -U postgres
 psql -c "create database autotest" -U postgres
 psql -c "create extension postgis" -d autotest -U postgres

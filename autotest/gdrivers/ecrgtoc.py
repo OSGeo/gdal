@@ -29,15 +29,15 @@
 ###############################################################################
 
 import os
-from osgeo import gdal
-
 
 import gdaltest
 import pytest
 
+from osgeo import gdal
 
 ###############################################################################
 # Basic test
+
 
 def test_ecrgtoc_1():
 
@@ -75,36 +75,77 @@ def test_ecrgtoc_1():
   </extension_list>
 </Table_of_Contents>"""
 
-    f = gdal.VSIFOpenL('/vsimem/TOC.xml', 'wb')
+    f = gdal.VSIFOpenL("/vsimem/TOC.xml", "wb")
     gdal.VSIFWriteL(toc_xml, 1, len(toc_xml), f)
     gdal.VSIFCloseL(f)
 
-    ds = gdal.Open('/vsimem/TOC.xml')
+    ds = gdal.Open("/vsimem/TOC.xml")
     assert ds is not None
 
-    expected_gt = [-85.43147208121826, 0.00059486040609137061, 0.0, 33.166986564299428, 0.0, -0.00044985604606525913]
+    expected_gt = [
+        -85.43147208121826,
+        0.00059486040609137061,
+        0.0,
+        33.166986564299428,
+        0.0,
+        -0.00044985604606525913,
+    ]
     gt = ds.GetGeoTransform()
     for i in range(6):
         if gt[i] != pytest.approx(expected_gt[i], abs=1e-10):
-            gdaltest.post_reason('did not get expected geotransform')
+            gdaltest.post_reason("did not get expected geotransform")
             print(gt)
 
     wkt = ds.GetProjectionRef()
-    assert wkt.find('WGS 84') != -1, 'did not get expected SRS'
+    assert wkt.find("WGS 84") != -1, "did not get expected SRS"
 
     filelist = ds.GetFileList()
-    assert len(filelist) == 3, 'did not get expected filelist'
+    assert len(filelist) == 3, "did not get expected filelist"
 
-    ds2 = gdal.GetDriverByName('NITF').Create('/vsimem/clfc/2/000000009s0013.lf2', 2304, 2304, 3,
-                                              options=['ICORDS=G', 'TRE=GEOLOB=000605184000800256-85.43147208122+33.16698656430'])
-    ds2.SetGeoTransform([-85.43147208122, 0.00059486040609137061, 0.0, 33.16698656430, 0.0, -0.00044985604606525913])
+    ds2 = gdal.GetDriverByName("NITF").Create(
+        "/vsimem/clfc/2/000000009s0013.lf2",
+        2304,
+        2304,
+        3,
+        options=[
+            "ICORDS=G",
+            "TRE=GEOLOB=000605184000800256-85.43147208122+33.16698656430",
+        ],
+    )
+    ds2.SetGeoTransform(
+        [
+            -85.43147208122,
+            0.00059486040609137061,
+            0.0,
+            33.16698656430,
+            0.0,
+            -0.00044985604606525913,
+        ]
+    )
     ds2.SetProjection(wkt)
     ds2.GetRasterBand(1).Fill(255)
     ds2 = None
 
-    ds2 = gdal.GetDriverByName('NITF').Create('/vsimem/clfc/2/000000009t0013.lf2', 2304, 2304, 3,
-                                              options=['ICORDS=G', 'TRE=GEOLOB=000605184000800256-84.06091370558+33.16698656430'])
-    ds2.SetGeoTransform([-84.06091370558, 0.00059486040609137061, 0.0, 33.16698656430, 0.0, -0.00044985604606525913])
+    ds2 = gdal.GetDriverByName("NITF").Create(
+        "/vsimem/clfc/2/000000009t0013.lf2",
+        2304,
+        2304,
+        3,
+        options=[
+            "ICORDS=G",
+            "TRE=GEOLOB=000605184000800256-84.06091370558+33.16698656430",
+        ],
+    )
+    ds2.SetGeoTransform(
+        [
+            -84.06091370558,
+            0.00059486040609137061,
+            0.0,
+            33.16698656430,
+            0.0,
+            -0.00044985604606525913,
+        ]
+    )
     ds2.SetProjection(wkt)
     ds2 = None
 
@@ -112,7 +153,8 @@ def test_ecrgtoc_1():
 
     ds = None
 
-    assert cs == 5966, 'bad checksum'
+    assert cs == 5966, "bad checksum"
+
 
 ###############################################################################
 # Test overviews
@@ -120,16 +162,17 @@ def test_ecrgtoc_1():
 
 def test_ecrgtoc_2():
 
-    ds = gdal.Open('/vsimem/TOC.xml')
-    ds.BuildOverviews('NEAR', [2])
+    ds = gdal.Open("/vsimem/TOC.xml")
+    ds.BuildOverviews("NEAR", [2])
     ds = None
 
-    ds = gdal.Open('/vsimem/TOC.xml')
+    ds = gdal.Open("/vsimem/TOC.xml")
 
     filelist = ds.GetFileList()
-    assert len(filelist) == 4, 'did not get expected filelist'
+    assert len(filelist) == 4, "did not get expected filelist"
 
     ds = None
+
 
 ###############################################################################
 # Test opening subdataset
@@ -138,17 +181,19 @@ def test_ecrgtoc_2():
 def test_ecrgtoc_3():
 
     # Try different errors
-    for name in ['ECRG_TOC_ENTRY:',
-                 'ECRG_TOC_ENTRY:ProductTitle',
-                 'ECRG_TOC_ENTRY:ProductTitle:DiscId',
-                 'ECRG_TOC_ENTRY:ProductTitle:DiscId:not_existing',
-                 'ECRG_TOC_ENTRY:ProductTitle:DiscId:c:/not_existing',
-                 'ECRG_TOC_ENTRY:ProductTitle:DiscId:1_500_K:not_existing',
-                 'ECRG_TOC_ENTRY:ProductTitle:DiscId:1_500_K:c:/not_existing',
-                 'ECRG_TOC_ENTRY:ProductTitle:DiscId:1_500_K:c:/not_existing:extra',
-                 'ECRG_TOC_ENTRY:ProductTitle:DiscId:inexisting_scale:/vsimem/TOC.xml',
-                 'ECRG_TOC_ENTRY:ProductTitle:DiscId2:/vsimem/TOC.xml',
-                 'ECRG_TOC_ENTRY:ProductTitle2:DiscId:/vsimem/TOC.xml']:
+    for name in [
+        "ECRG_TOC_ENTRY:",
+        "ECRG_TOC_ENTRY:ProductTitle",
+        "ECRG_TOC_ENTRY:ProductTitle:DiscId",
+        "ECRG_TOC_ENTRY:ProductTitle:DiscId:not_existing",
+        "ECRG_TOC_ENTRY:ProductTitle:DiscId:c:/not_existing",
+        "ECRG_TOC_ENTRY:ProductTitle:DiscId:1_500_K:not_existing",
+        "ECRG_TOC_ENTRY:ProductTitle:DiscId:1_500_K:c:/not_existing",
+        "ECRG_TOC_ENTRY:ProductTitle:DiscId:1_500_K:c:/not_existing:extra",
+        "ECRG_TOC_ENTRY:ProductTitle:DiscId:inexisting_scale:/vsimem/TOC.xml",
+        "ECRG_TOC_ENTRY:ProductTitle:DiscId2:/vsimem/TOC.xml",
+        "ECRG_TOC_ENTRY:ProductTitle2:DiscId:/vsimem/TOC.xml",
+    ]:
 
         gdal.PushErrorHandler()
         ds = gdal.Open(name)
@@ -156,18 +201,19 @@ def test_ecrgtoc_3():
         assert ds is None, name
 
     # Legacy syntax
-    ds = gdal.Open('ECRG_TOC_ENTRY:ProductTitle:DiscId:/vsimem/TOC.xml')
+    ds = gdal.Open("ECRG_TOC_ENTRY:ProductTitle:DiscId:/vsimem/TOC.xml")
     assert ds is not None
     ds = None
 
-    ds = gdal.Open('ECRG_TOC_ENTRY:ProductTitle:DiscId:1_500_K:/vsimem/TOC.xml')
+    ds = gdal.Open("ECRG_TOC_ENTRY:ProductTitle:DiscId:1_500_K:/vsimem/TOC.xml")
     assert ds is not None
     ds = None
 
-    gdal.Unlink('/vsimem/TOC.xml')
-    gdal.Unlink('/vsimem/TOC.xml.1.ovr')
-    gdal.Unlink('/vsimem/clfc/2/000000009s0013.lf2')
-    gdal.Unlink('/vsimem/clfc/2/000000009t0013.lf2')
+    gdal.Unlink("/vsimem/TOC.xml")
+    gdal.Unlink("/vsimem/TOC.xml.1.ovr")
+    gdal.Unlink("/vsimem/clfc/2/000000009s0013.lf2")
+    gdal.Unlink("/vsimem/clfc/2/000000009t0013.lf2")
+
 
 ###############################################################################
 # Test dataset with 3 subdatasets
@@ -223,79 +269,95 @@ def test_ecrgtoc_4():
   </extension_list>
 </Table_of_Contents>"""
 
-    f = gdal.VSIFOpenL('/vsimem/TOC.xml', 'wb')
+    f = gdal.VSIFOpenL("/vsimem/TOC.xml", "wb")
     gdal.VSIFWriteL(toc_xml, 1, len(toc_xml), f)
     gdal.VSIFCloseL(f)
 
-    ds = gdal.Open('/vsimem/TOC.xml')
+    ds = gdal.Open("/vsimem/TOC.xml")
     assert ds is not None
-    assert ds.RasterCount == 0, 'bad raster count'
+    assert ds.RasterCount == 0, "bad raster count"
 
-    expected_gt = (-85.43147208121826, 0.00059486040609137061, 0.0, 37.241379310344833, 0.0, -0.00044985604606525913)
+    expected_gt = (
+        -85.43147208121826,
+        0.00059486040609137061,
+        0.0,
+        37.241379310344833,
+        0.0,
+        -0.00044985604606525913,
+    )
     gt = ds.GetGeoTransform()
     for i in range(6):
-        assert gt[i] == pytest.approx(expected_gt[i], abs=1e-10), 'did not get expected geotransform'
+        assert gt[i] == pytest.approx(
+            expected_gt[i], abs=1e-10
+        ), "did not get expected geotransform"
 
     wkt = ds.GetProjectionRef()
-    assert wkt.find('WGS 84') != -1, 'did not get expected SRS'
+    assert wkt.find("WGS 84") != -1, "did not get expected SRS"
 
     filelist = ds.GetFileList()
-    assert len(filelist) == 4, 'did not get expected filelist'
+    assert len(filelist) == 4, "did not get expected filelist"
 
-    subdatasets = ds.GetMetadata('SUBDATASETS')
+    subdatasets = ds.GetMetadata("SUBDATASETS")
     if len(subdatasets) != 6:
         print(filelist)
-        pytest.fail('did not get expected subdatasets')
+        pytest.fail("did not get expected subdatasets")
 
     ds = None
 
-    ds = gdal.Open('ECRG_TOC_ENTRY:ProductTitle:DiscId:1_500_K:/vsimem/TOC.xml')
-    assert ds is not None, 'did not get subdataset'
+    ds = gdal.Open("ECRG_TOC_ENTRY:ProductTitle:DiscId:1_500_K:/vsimem/TOC.xml")
+    assert ds is not None, "did not get subdataset"
     ds = None
 
-    ds = gdal.Open('ECRG_TOC_ENTRY:ProductTitle:DiscId:1_1000_K:/vsimem/TOC.xml')
-    assert ds is not None, 'did not get subdataset'
+    ds = gdal.Open("ECRG_TOC_ENTRY:ProductTitle:DiscId:1_1000_K:/vsimem/TOC.xml")
+    assert ds is not None, "did not get subdataset"
     ds = None
 
-    ds = gdal.Open('ECRG_TOC_ENTRY:ProductTitle:DiscId2:1_500_K:/vsimem/TOC.xml')
-    assert ds is not None, 'did not get subdataset'
+    ds = gdal.Open("ECRG_TOC_ENTRY:ProductTitle:DiscId2:1_500_K:/vsimem/TOC.xml")
+    assert ds is not None, "did not get subdataset"
     ds = None
 
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = gdal.Open('ECRG_TOC_ENTRY:ProductTitle:DiscId:/vsimem/TOC.xml')
+    gdal.PushErrorHandler("CPLQuietErrorHandler")
+    ds = gdal.Open("ECRG_TOC_ENTRY:ProductTitle:DiscId:/vsimem/TOC.xml")
     gdal.PopErrorHandler()
-    assert ds is None, 'should not have got subdataset'
+    assert ds is None, "should not have got subdataset"
 
-    gdal.Unlink('/vsimem/TOC.xml')
+    gdal.Unlink("/vsimem/TOC.xml")
+
 
 ###############################################################################
 
 
 def test_ecrgtoc_online_1():
 
-    if not gdaltest.download_file('http://www.falconview.org/trac/FalconView/downloads/17', 'ECRG_Sample.zip'):
+    if not gdaltest.download_file(
+        "http://www.falconview.org/trac/FalconView/downloads/17", "ECRG_Sample.zip"
+    ):
         pytest.skip()
 
     try:
-        os.stat('tmp/cache/ECRG_Sample.zip')
+        os.stat("tmp/cache/ECRG_Sample.zip")
     except OSError:
         pytest.skip()
 
-    ds = gdal.Open('/vsizip/tmp/cache/ECRG_Sample.zip/ECRG_Sample/EPF/TOC.xml')
+    ds = gdal.Open("/vsizip/tmp/cache/ECRG_Sample.zip/ECRG_Sample/EPF/TOC.xml")
     assert ds is not None
 
-    expected_gt = (-85.43147208121826, 0.00059486040609137061, 0.0, 35.239923224568145, 0.0, -0.00044985604606525913)
+    expected_gt = (
+        -85.43147208121826,
+        0.00059486040609137061,
+        0.0,
+        35.239923224568145,
+        0.0,
+        -0.00044985604606525913,
+    )
     gt = ds.GetGeoTransform()
     for i in range(6):
         if gt[i] != pytest.approx(expected_gt[i], abs=1e-10):
-            gdaltest.post_reason('did not get expected geotransform')
+            gdaltest.post_reason("did not get expected geotransform")
             print(gt)
 
     wkt = ds.GetProjectionRef()
-    assert wkt.find('WGS 84') != -1, 'did not get expected SRS'
+    assert wkt.find("WGS 84") != -1, "did not get expected SRS"
 
     filelist = ds.GetFileList()
-    assert len(filelist) == 7, 'did not get expected filelist'
-
-
-
+    assert len(filelist) == 7, "did not get expected filelist"

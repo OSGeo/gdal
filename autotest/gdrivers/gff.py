@@ -28,11 +28,10 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import gdal
-
-
 import gdaltest
 import pytest
+
+from osgeo import gdal
 
 ###############################################################################
 # Test an extract from a real dataset
@@ -40,14 +39,21 @@ import pytest
 
 def test_gff_1():
     # 12088 = 2048 + 8 * 1255
-    if not gdaltest.download_file('http://sandia.gov/RADAR/complex_data/MiniSAR20050519p0001image008.gff', 'MiniSAR20050519p0001image008.gff', 12088):
+    if not gdaltest.download_file(
+        "http://sandia.gov/RADAR/complex_data/MiniSAR20050519p0001image008.gff",
+        "MiniSAR20050519p0001image008.gff",
+        12088,
+    ):
         pytest.skip()
 
-    tst = gdaltest.GDALTest('GFF', 'tmp/cache/MiniSAR20050519p0001image008.gff', 1, 29757, filename_absolute=1)
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    tst = gdaltest.GDALTest(
+        "GFF",
+        "tmp/cache/MiniSAR20050519p0001image008.gff",
+        1,
+        29757,
+        filename_absolute=1,
+    )
+    gdal.PushErrorHandler("CPLQuietErrorHandler")
     ret = tst.testOpen()
     gdal.PopErrorHandler()
     return ret
-
-
-

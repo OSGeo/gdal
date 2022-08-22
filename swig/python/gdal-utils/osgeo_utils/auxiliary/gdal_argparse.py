@@ -27,10 +27,10 @@
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
-import os
-import sys
 import argparse
+import os
 import shlex
+import sys
 from abc import ABC, abstractmethod
 from gettext import gettext
 from typing import Union
@@ -38,7 +38,6 @@ from warnings import warn
 
 
 class ExtendAction(argparse.Action):
-
     def __call__(self, parser, namespace, values, option_string=None):
         items = getattr(namespace, self.dest) or []
         items.extend(values)
@@ -46,9 +45,15 @@ class ExtendAction(argparse.Action):
 
 
 class GDALArgumentParser(argparse.ArgumentParser):
-
-    def __init__(self, title=None, description=None, formatter_class=None,
-                 fromfile_prefix_chars='@', add_help: Union[str, bool] = True, **kwargs):
+    def __init__(
+        self,
+        title=None,
+        description=None,
+        formatter_class=None,
+        fromfile_prefix_chars="@",
+        add_help: Union[str, bool] = True,
+        **kwargs,
+    ):
         custom_help = isinstance(add_help, str)
         if title:
             if not description:
@@ -58,21 +63,31 @@ class GDALArgumentParser(argparse.ArgumentParser):
                     formatter_class = argparse.RawDescriptionHelpFormatter
                 description = f'{title}\n{"-"*(2+len(title))}\n{description}'
 
-        super().__init__(fromfile_prefix_chars=fromfile_prefix_chars, description=description,
-                         formatter_class=formatter_class,
-                         add_help=add_help and not custom_help, **kwargs)
+        super().__init__(
+            fromfile_prefix_chars=fromfile_prefix_chars,
+            description=description,
+            formatter_class=formatter_class,
+            add_help=add_help and not custom_help,
+            **kwargs,
+        )
         if custom_help:
-            self.add_argument(add_help, action='help', default=argparse.SUPPRESS,
-                              help=gettext('show this help message and exit'))
+            self.add_argument(
+                add_help,
+                action="help",
+                default=argparse.SUPPRESS,
+                help=gettext("show this help message and exit"),
+            )
         if sys.version_info < (3, 8):
             # extend was introduced to the stdlib in Python 3.8
-            self.register('action', 'extend', ExtendAction)
+            self.register("action", "extend", ExtendAction)
 
     def parse_args(self, args=None, optfile_arg=None, **kwargs):
-        if (args is not None
-           and optfile_arg in args
-           and self.fromfile_prefix_chars is not None
-           and optfile_arg is not None):
+        if (
+            args is not None
+            and optfile_arg in args
+            and self.fromfile_prefix_chars is not None
+            and optfile_arg is not None
+        ):
 
             # Replace '--optfile x' with the standard '@x'
             prefix = self.fromfile_prefix_chars[0]
@@ -83,10 +98,15 @@ class GDALArgumentParser(argparse.ArgumentParser):
                 arg = args[i]
                 if arg == optfile_arg:
                     if i == count - 1:
-                        raise Exception(f'Missing filename argument following {optfile_arg}: ')
+                        raise Exception(
+                            f"Missing filename argument following {optfile_arg}: "
+                        )
                     arg = prefix + args[i + 1]
-                    warn(f'"{optfile_arg} {args[i + 1]}" is deprecated. '
-                         f'Please use "{arg}" instead.', DeprecationWarning)
+                    warn(
+                        f'"{optfile_arg} {args[i + 1]}" is deprecated. '
+                        f'Please use "{arg}" instead.',
+                        DeprecationWarning,
+                    )
                     i += 1
                 i += 1
                 new_args.append(arg)
@@ -118,8 +138,13 @@ class GDALScript(ABC):
     def parser(self):
         if self._parser is None:
             self._parser = GDALArgumentParser(
-                prog=self.prog, title=self.title, description=self.description,
-                add_help=self.add_help, epilog=self.get_epilog(), **self.kwargs)
+                prog=self.prog,
+                title=self.title,
+                description=self.description,
+                add_help=self.add_help,
+                epilog=self.get_epilog(),
+                **self.kwargs,
+            )
         return self._parser
 
     @parser.setter
@@ -159,8 +184,8 @@ class GDALScript(ABC):
             prog = os.path.basename(sys.argv[0])
         example_list = []
         for idx, (title, args) in enumerate(self.examples):
-            example_list.append(f'example #{idx+1}: {title}\n{prog} {args}')
-        epilog = '\n\n'.join(example_list)
+            example_list.append(f"example #{idx+1}: {title}\n{prog} {args}")
+        epilog = "\n\n".join(example_list)
         if self.epilog:
-            epilog = epilog + '\n\n' + self.epilog
+            epilog = epilog + "\n\n" + self.epilog
         return epilog or None

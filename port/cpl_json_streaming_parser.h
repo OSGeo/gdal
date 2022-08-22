@@ -85,12 +85,14 @@ class CPL_DLL CPLJSonStreamingParser
         enum State currentState() { return m_aState.back(); }
         void SkipSpace(const char*& pStr, size_t& nLength);
         void AdvanceChar(const char*& pStr, size_t& nLength);
-        bool EmitException(const char* pszMessage);
         bool EmitUnexpectedChar(char ch, const char* pszExpecting = nullptr);
         bool StartNewToken(const char*& pStr, size_t& nLength);
         bool CheckAndEmitTrueFalseOrNull(char ch);
         bool CheckStackEmpty();
         void DecodeUnicode();
+
+    protected:
+        bool EmitException(const char* pszMessage);
 
     public:
         CPLJSonStreamingParser();

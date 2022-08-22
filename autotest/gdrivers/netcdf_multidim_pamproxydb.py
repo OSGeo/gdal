@@ -29,22 +29,23 @@
 ###############################################################################
 
 import sys
-sys.path.append('../pymod')
+
+sys.path.append("../pymod")
 
 import gdaltest
 
 from osgeo import gdal
 
 # Must to be launched from netcdf_multidim.py::test_netcdf_multidim_cache_pamproxydb
-if len(sys.argv) == 2 and sys.argv[1] == '-test_netcdf_multidim_cache_pamproxydb':
+if len(sys.argv) == 2 and sys.argv[1] == "-test_netcdf_multidim_cache_pamproxydb":
 
-    gdal.SetConfigOption('GDAL_PAM_PROXY_DIR', 'tmp/tmppamproxydir')
+    gdal.SetConfigOption("GDAL_PAM_PROXY_DIR", "tmp/tmppamproxydir")
 
-    tmpfilename = 'tmp/tmpdirreadonly/test.nc'
+    tmpfilename = "tmp/tmpdirreadonly/test.nc"
 
     def get_transposed_and_cache():
         ds = gdal.OpenEx(tmpfilename, gdal.OF_MULTIDIM_RASTER)
-        ar = ds.GetRootGroup().OpenMDArray('Band1')
+        ar = ds.GetRootGroup().OpenMDArray("Band1")
         assert ar
         transpose = ar.Transpose([1, 0])
         assert transpose.Cache()
@@ -52,7 +53,7 @@ if len(sys.argv) == 2 and sys.argv[1] == '-test_netcdf_multidim_cache_pamproxydb
             # Cannot cache twice the same array
             assert transpose.Cache() is False
 
-        ar2 = ds.GetRootGroup().OpenMDArray('Band1')
+        ar2 = ds.GetRootGroup().OpenMDArray("Band1")
         assert ar2
         assert ar2.Cache()
 
@@ -61,20 +62,23 @@ if len(sys.argv) == 2 and sys.argv[1] == '-test_netcdf_multidim_cache_pamproxydb
     transposed_data = get_transposed_and_cache()
 
     def check_cache_exists():
-        cache_ds = gdal.OpenEx('tmp/tmppamproxydir/000000_tmp_tmpdirreadonly_test.nc.gmac', gdal.OF_MULTIDIM_RASTER)
+        cache_ds = gdal.OpenEx(
+            "tmp/tmppamproxydir/000000_tmp_tmpdirreadonly_test.nc.gmac",
+            gdal.OF_MULTIDIM_RASTER,
+        )
         assert cache_ds
         rg = cache_ds.GetRootGroup()
-        cached_ar = rg.OpenMDArray('Transposed_view_of__Band1_along__1_0_')
+        cached_ar = rg.OpenMDArray("Transposed_view_of__Band1_along__1_0_")
         assert cached_ar
         assert cached_ar.Read() == transposed_data
 
-        assert rg.OpenMDArray('_Band1') is not None
+        assert rg.OpenMDArray("_Band1") is not None
 
     check_cache_exists()
 
     def check_cache_working():
         ds = gdal.OpenEx(tmpfilename, gdal.OF_MULTIDIM_RASTER)
-        ar = ds.GetRootGroup().OpenMDArray('Band1')
+        ar = ds.GetRootGroup().OpenMDArray("Band1")
         transpose = ar.Transpose([1, 0])
         assert transpose.Read() == transposed_data
         # Again
@@ -84,26 +88,28 @@ if len(sys.argv) == 2 and sys.argv[1] == '-test_netcdf_multidim_cache_pamproxydb
 
     # Now alter the cache directly
     def alter_cache():
-        cache_ds = gdal.OpenEx('tmp/tmppamproxydir/000000_tmp_tmpdirreadonly_test.nc.gmac',
-                               gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        cache_ds = gdal.OpenEx(
+            "tmp/tmppamproxydir/000000_tmp_tmpdirreadonly_test.nc.gmac",
+            gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE,
+        )
         assert cache_ds
         rg = cache_ds.GetRootGroup()
         cached_ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
-        cached_ar.Write(b'\x00' * len(transposed_data))
+        cached_ar.Write(b"\x00" * len(transposed_data))
 
     alter_cache()
 
     # And check we get the altered values
     def check_cache_really_working():
         ds = gdal.OpenEx(tmpfilename, gdal.OF_MULTIDIM_RASTER)
-        ar = ds.GetRootGroup().OpenMDArray('Band1')
+        ar = ds.GetRootGroup().OpenMDArray("Band1")
         transpose = ar.Transpose([1, 0])
-        assert transpose.Read() == b'\x00' * len(transposed_data)
+        assert transpose.Read() == b"\x00" * len(transposed_data)
 
     check_cache_really_working()
 
     gdal.Unlink(tmpfilename)
-    gdal.Unlink('tmp/tmppamproxydir/000000_tmp_tmpdirreadonly_test.nc.gmac')
+    gdal.Unlink("tmp/tmppamproxydir/000000_tmp_tmpdirreadonly_test.nc.gmac")
 
-    print('success')
+    print("success")
     sys.exit(0)

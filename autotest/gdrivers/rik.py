@@ -29,11 +29,11 @@
 ###############################################################################
 
 import os
-from osgeo import gdal
-
 
 import gdaltest
 import pytest
+
+from osgeo import gdal
 
 ###############################################################################
 # Test a RIK map
@@ -42,29 +42,34 @@ import pytest
 
 def test_rik_online_1():
 
-    if gdal.GetDriverByName('RIK') is None:
+    if gdal.GetDriverByName("RIK") is None:
         pytest.skip()
 
-    if not gdaltest.download_file('http://www.lantmateriet.se/upload/filer/kartor/programvaror/sverige500_swe99.zip', 'sverige500_swe99.zip'):
+    if not gdaltest.download_file(
+        "http://www.lantmateriet.se/upload/filer/kartor/programvaror/sverige500_swe99.zip",
+        "sverige500_swe99.zip",
+    ):
         pytest.skip()
 
     try:
-        os.stat('tmp/cache/sverige500_swe99.rik')
-        file_to_test = 'tmp/cache/sverige500_swe99.rik'
+        os.stat("tmp/cache/sverige500_swe99.rik")
+        file_to_test = "tmp/cache/sverige500_swe99.rik"
     except OSError:
         try:
-            print('Uncompressing ZIP file...')
+            print("Uncompressing ZIP file...")
             import zipfile
-            zfobj = zipfile.ZipFile('tmp/cache/sverige500_swe99.zip')
-            outfile = open('tmp/cache/sverige500_swe99.rik', 'wb')
-            outfile.write(zfobj.read('sverige500_swe99.rik'))
+
+            zfobj = zipfile.ZipFile("tmp/cache/sverige500_swe99.zip")
+            outfile = open("tmp/cache/sverige500_swe99.rik", "wb")
+            outfile.write(zfobj.read("sverige500_swe99.rik"))
             outfile.close()
-            file_to_test = 'tmp/cache/sverige500_swe99.rik'
+            file_to_test = "tmp/cache/sverige500_swe99.rik"
         except OSError:
             pytest.skip()
 
-    tst = gdaltest.GDALTest('RIK', file_to_test, 1, 17162, filename_absolute=1)
+    tst = gdaltest.GDALTest("RIK", file_to_test, 1, 17162, filename_absolute=1)
     return tst.testOpen()
+
 
 ###############################################################################
 # Test a LZW compressed RIK dataset
@@ -72,15 +77,15 @@ def test_rik_online_1():
 
 def test_rik_online_2():
 
-    if gdal.GetDriverByName('RIK') is None:
+    if gdal.GetDriverByName("RIK") is None:
         pytest.skip()
 
-    if not gdaltest.download_file('http://trac.osgeo.org/gdal/raw-attachment/ticket/3674/ab-del.rik', 'ab-del.rik'):
+    if not gdaltest.download_file(
+        "http://trac.osgeo.org/gdal/raw-attachment/ticket/3674/ab-del.rik", "ab-del.rik"
+    ):
         pytest.skip()
 
-    tst = gdaltest.GDALTest('RIK', 'tmp/cache/ab-del.rik', 1, 44974, filename_absolute=1)
+    tst = gdaltest.GDALTest(
+        "RIK", "tmp/cache/ab-del.rik", 1, 44974, filename_absolute=1
+    )
     return tst.testOpen()
-
-
-
-

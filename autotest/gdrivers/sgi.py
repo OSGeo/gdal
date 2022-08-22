@@ -29,7 +29,6 @@
 ###############################################################################
 
 
-
 import gdaltest
 
 ###############################################################################
@@ -38,9 +37,10 @@ import gdaltest
 
 def test_sgi_1():
 
-    tst = gdaltest.GDALTest('SGI', 'sgi/byte.sgi', 1, 4672)
+    tst = gdaltest.GDALTest("SGI", "sgi/byte.sgi", 1, 4672)
 
     return tst.testOpen()
+
 
 ###############################################################################
 # Write Test grayscale
@@ -48,9 +48,10 @@ def test_sgi_1():
 
 def test_sgi_2():
 
-    tst = gdaltest.GDALTest('SGI', 'byte.tif', 1, 4672)
+    tst = gdaltest.GDALTest("SGI", "byte.tif", 1, 4672)
 
     return tst.testCreate()
+
 
 ###############################################################################
 # Write Test rgb
@@ -58,10 +59,6 @@ def test_sgi_2():
 
 def test_sgi_3():
 
-    tst = gdaltest.GDALTest('SGI', 'rgbsmall.tif', 2, 21053)
+    tst = gdaltest.GDALTest("SGI", "rgbsmall.tif", 2, 21053)
 
     return tst.testCreate()
-
-
-
-

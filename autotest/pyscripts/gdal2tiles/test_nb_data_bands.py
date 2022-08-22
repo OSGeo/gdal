@@ -29,14 +29,13 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from unittest import mock, TestCase
-from osgeo import gdal
+from unittest import TestCase, mock
 
+from osgeo import gdal
 from osgeo_utils import gdal2tiles
 
 
 class NbDataBandsTest(TestCase):
-
     def setUp(self):
         self.ds = mock.MagicMock()
         alphaband = mock.MagicMock()
@@ -68,7 +67,9 @@ class NbDataBandsTest(TestCase):
     def test_alpha_mask(self):
         SOME_RANDOM_NUMBER = 42
         self.ds.RasterCount = SOME_RANDOM_NUMBER
-        self.ds.GetRasterBand(1).GetMaskBand().GetMaskFlags.return_value = gdal.GMF_ALPHA
+        self.ds.GetRasterBand(
+            1
+        ).GetMaskBand().GetMaskFlags.return_value = gdal.GMF_ALPHA
 
         # Should consider there is an alpha band
         self.assertEqual(gdal2tiles.nb_data_bands(self.ds), SOME_RANDOM_NUMBER - 1)

@@ -29,11 +29,10 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import gdal
-
-
 import gdaltest
 import pytest
+
+from osgeo import gdal
 
 ###############################################################################
 # Test if WEBP driver is present
@@ -41,11 +40,11 @@ import pytest
 
 def test_webp_1():
 
-    gdaltest.webp_drv = gdal.GetDriverByName('WEBP')
+    gdaltest.webp_drv = gdal.GetDriverByName("WEBP")
     if gdaltest.webp_drv is None:
         pytest.skip()
 
-    
+
 ###############################################################################
 # Open() test
 
@@ -55,10 +54,12 @@ def test_webp_2():
     if gdaltest.webp_drv is None:
         pytest.skip()
 
-    ds = gdal.Open('data/webp/rgbsmall.webp')
+    ds = gdal.Open("data/webp/rgbsmall.webp")
     cs = ds.GetRasterBand(1).Checksum()
-    assert cs == 21464 or cs == 21450 or cs == 21459, \
-        'did not get expected checksum on band 1'
+    assert (
+        cs == 21464 or cs == 21450 or cs == 21459
+    ), "did not get expected checksum on band 1"
+
 
 ###############################################################################
 # CreateCopy() test
@@ -69,17 +70,20 @@ def test_webp_3():
     if gdaltest.webp_drv is None:
         pytest.skip()
 
-    src_ds = gdal.Open('data/rgbsmall.tif')
-    out_ds = gdaltest.webp_drv.CreateCopy('/vsimem/webp_3.webp', src_ds, options=['QUALITY=80'])
+    src_ds = gdal.Open("data/rgbsmall.tif")
+    out_ds = gdaltest.webp_drv.CreateCopy(
+        "/vsimem/webp_3.webp", src_ds, options=["QUALITY=80"]
+    )
     src_ds = None
     cs1 = out_ds.GetRasterBand(1).Checksum()
     out_ds = None
-    gdal.Unlink('/vsimem/webp_3.webp')
-    gdal.Unlink('/vsimem/webp_3.webp.aux.xml')
+    gdal.Unlink("/vsimem/webp_3.webp")
+    gdal.Unlink("/vsimem/webp_3.webp.aux.xml")
 
     # 21502 is for libwebp 0.3.0
     # 21787 is for libwebp 1.0.3
     assert cs1 in (21464, 21502, 21695, 21700, 21787)
+
 
 ###############################################################################
 # CreateCopy() on RGBA
@@ -91,23 +95,31 @@ def test_webp_4():
         pytest.skip()
 
     md = gdaltest.webp_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('LOSSLESS') == -1:
+    if md["DMD_CREATIONOPTIONLIST"].find("LOSSLESS") == -1:
         pytest.skip()
 
-    src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
-    out_ds = gdaltest.webp_drv.CreateCopy('/vsimem/webp_4.webp', src_ds)
+    src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")
+    out_ds = gdaltest.webp_drv.CreateCopy("/vsimem/webp_4.webp", src_ds)
     src_ds = None
     cs1 = out_ds.GetRasterBand(1).Checksum()
     cs4 = out_ds.GetRasterBand(4).Checksum()
     out_ds = None
-    gdal.Unlink('/vsimem/webp_4.webp')
+    gdal.Unlink("/vsimem/webp_4.webp")
 
     # 22849 is for libwebp 0.3.0
     # 29229 is for libwebp 1.0.3
-    assert cs1 in (22001, 22849, 34422, 36652, 36658, 45319, 29229), \
-        'did not get expected checksum on band 1'
+    assert cs1 in (
+        22001,
+        22849,
+        34422,
+        36652,
+        36658,
+        45319,
+        29229,
+    ), "did not get expected checksum on band 1"
 
-    assert cs4 == 10807, 'did not get expected checksum on band 4'
+    assert cs4 == 10807, "did not get expected checksum on band 4"
+
 
 ###############################################################################
 # CreateCopy() on RGBA with lossless compression
@@ -119,21 +131,24 @@ def test_webp_5():
         pytest.skip()
 
     md = gdaltest.webp_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('LOSSLESS') == -1:
+    if md["DMD_CREATIONOPTIONLIST"].find("LOSSLESS") == -1:
         pytest.skip()
 
-    src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
-    out_ds = gdaltest.webp_drv.CreateCopy('/vsimem/webp_5.webp', src_ds, options=['LOSSLESS=YES'])
+    src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")
+    out_ds = gdaltest.webp_drv.CreateCopy(
+        "/vsimem/webp_5.webp", src_ds, options=["LOSSLESS=YES"]
+    )
     src_ds = None
     cs1 = out_ds.GetRasterBand(1).Checksum()
     cs4 = out_ds.GetRasterBand(4).Checksum()
     out_ds = None
-    gdal.Unlink('/vsimem/webp_5.webp')
+    gdal.Unlink("/vsimem/webp_5.webp")
 
-    assert cs1 == 12603 or cs1 == 18536 or cs1 == 14800, \
-        'did not get expected checksum on band 1'
+    assert (
+        cs1 == 12603 or cs1 == 18536 or cs1 == 14800
+    ), "did not get expected checksum on band 1"
 
-    assert cs4 == 10807, 'did not get expected checksum on band 4'
+    assert cs4 == 10807, "did not get expected checksum on band 4"
 
 
 ###############################################################################
@@ -146,17 +161,22 @@ def test_webp_6():
         pytest.skip()
 
     md = gdaltest.webp_drv.GetMetadata()
-    if md['DMD_CREATIONOPTIONLIST'].find('LOSSLESS') == -1 or md['DMD_CREATIONOPTIONLIST'].find('EXACT') == -1:
+    if (
+        md["DMD_CREATIONOPTIONLIST"].find("LOSSLESS") == -1
+        or md["DMD_CREATIONOPTIONLIST"].find("EXACT") == -1
+    ):
         pytest.skip()
 
-    src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
-    out_ds = gdaltest.webp_drv.CreateCopy('/vsimem/webp_6.webp', src_ds, options=['LOSSLESS=YES', 'EXACT=1'])
+    src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")
+    out_ds = gdaltest.webp_drv.CreateCopy(
+        "/vsimem/webp_6.webp", src_ds, options=["LOSSLESS=YES", "EXACT=1"]
+    )
     src_ds = None
     cs1 = out_ds.GetRasterBand(1).Checksum()
     cs4 = out_ds.GetRasterBand(4).Checksum()
     out_ds = None
-    gdal.Unlink('/vsimem/webp_6.webp')
+    gdal.Unlink("/vsimem/webp_6.webp")
 
-    assert cs1 == 12603, 'did not get expected checksum on band 1'
+    assert cs1 == 12603, "did not get expected checksum on band 1"
 
-    assert cs4 == 10807, 'did not get expected checksum on band 4'
+    assert cs4 == 10807, "did not get expected checksum on band 4"

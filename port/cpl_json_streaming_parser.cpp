@@ -136,11 +136,10 @@ void CPLJSonStreamingParser::SkipSpace(const char*& pStr, size_t& nLength)
 bool CPLJSonStreamingParser::EmitException(const char* pszMessage)
 {
     m_bExceptionOccurred = true;
-    char szMessage[108];
-    snprintf(szMessage, sizeof(szMessage),
-             "At line %d, character %d: %s",
-             m_nLineCounter, m_nCharCounter, pszMessage);
-    Exception(szMessage);
+    CPLString osMsg;
+    osMsg.Printf("At line %d, character %d: %s",
+                 m_nLineCounter, m_nCharCounter, pszMessage);
+    Exception(osMsg.c_str());
     return false;
 }
 

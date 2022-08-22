@@ -663,6 +663,9 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandler
 
     bool SupportsParallelMultipartUpload() const override { return true; }
 
+    bool SupportsSequentialWrite( const char* /* pszPath */, bool /* bAllowLocalTempFile */ ) override { return true; }
+    bool SupportsRandomWrite( const char* /* pszPath */, bool /* bAllowLocalTempFile */ ) override;
+
     std::string GetStreamingFilename(const std::string& osFilename) const override;
 };
 
@@ -2024,8 +2027,7 @@ VSIVirtualHandle* VSIS3FSHandler::Open( const char *pszFilename,
 
     if( strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, 'a') != nullptr )
     {
-        if( strchr(pszAccess, '+') != nullptr &&
-            !CPLTestBool(CPLGetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "NO")) )
+        if( strchr(pszAccess, '+') != nullptr && !SupportsRandomWrite(pszFilename, true) )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                         "w+ not supported for /vsis3, unless "
@@ -2082,6 +2084,16 @@ VSIVirtualHandle* VSIS3FSHandler::Open( const char *pszFilename,
 
     return
         VSICurlFilesystemHandlerBase::Open(pszFilename, pszAccess, bSetError, papszOptions);
+}
+
+/************************************************************************/
+/*                        SupportsRandomWrite()                         */
+/************************************************************************/
+
+bool VSIS3FSHandler::SupportsRandomWrite( const char* /* pszPath */, bool bAllowLocalTempFile )
+{
+    return bAllowLocalTempFile &&
+           CPLTestBool(CPLGetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "NO"));
 }
 
 /************************************************************************/

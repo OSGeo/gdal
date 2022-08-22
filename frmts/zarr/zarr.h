@@ -161,7 +161,7 @@ public:
     void SetUpdatable(bool bUpdatable)
     {
         auto attrs = m_oGroup.GetAttributes(nullptr);
-        for( auto attr: attrs )
+        for( auto& attr: attrs )
         {
             auto memAttr = std::dynamic_pointer_cast<MEMAttribute>(attr);
             if( memAttr )

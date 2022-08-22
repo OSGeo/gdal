@@ -43,6 +43,7 @@
 #include <array>
 #include <limits>
 #include <set>
+#include <utility>
 #include <vector>
 
 // Suppress deprecation warning for GDALOpenVerticalShiftGrid and GDALApplyVerticalShiftGrid
@@ -2163,7 +2164,10 @@ static void SetupSkipNoSource(int iSrc,
 /*                     AdjustOutputExtentForRPC()                       */
 /************************************************************************/
 
-static void AdjustOutputExtentForRPC( GDALDatasetH hSrcDS,
+/** Returns false if there's no intersection between source extent defined
+ * by RPC and target extent.
+ */
+static bool AdjustOutputExtentForRPC( GDALDatasetH hSrcDS,
                                       GDALDatasetH hDstDS,
                                       GDALTransformerFunc pfnTransformer,
                                       void *hTransformArg,
@@ -2205,6 +2209,13 @@ static void AdjustOutputExtentForRPC( GDALDatasetH hSrcDS,
                     static_cast<int>(std::ceil(dfMaxX)) + nPadding - nWarpDstXOff);
                 nWarpDstYSize = std::min(nWarpDstYSize - nWarpDstYOff,
                     static_cast<int>(std::ceil(dfMaxY)) + nPadding - nWarpDstYOff);
+                if( nWarpDstXSize <= 0 || nWarpDstYSize <= 0 )
+                {
+                    CPLDebug("WARP",
+                             "No intersection between source extent defined "
+                             "by RPC and target extent");
+                    return false;
+                }
                 if( nWarpDstXOff != 0 || nWarpDstYOff != 0 ||
                     nWarpDstXSize != GDALGetRasterXSize( hDstDS ) ||
                     nWarpDstYSize != GDALGetRasterYSize( hDstDS ) )
@@ -2216,6 +2227,7 @@ static void AdjustOutputExtentForRPC( GDALDatasetH hSrcDS,
             }
         }
     }
+    return true;
 }
 
 /************************************************************************/
@@ -2749,14 +2761,20 @@ GDALDatasetH GDALWarpDirect( const char *pszDest, GDALDatasetH hDstDS,
         int nWarpDstXSize = GDALGetRasterXSize( hDstDS );
         int nWarpDstYSize = GDALGetRasterYSize( hDstDS );
 
-        AdjustOutputExtentForRPC( hSrcDS,
+        if( !AdjustOutputExtentForRPC( hSrcDS,
                                   hDstDS,
                                   pfnTransformer,
                                   hTransformArg,
                                   psWO,
                                   psOptions,
                                   nWarpDstXOff, nWarpDstYOff,
-                                  nWarpDstXSize, nWarpDstYSize );
+                                  nWarpDstXSize, nWarpDstYSize ) )
+        {
+            GDALDestroyTransformer( hTransformArg );
+            GDALDestroyWarpOptions( psWO );
+            GDALReleaseDataset(hWrkSrcDS);
+            continue;
+        }
 
         /* We need to recreate the transform when operating on an overview */
         if( poSrcOvrDS != nullptr )
@@ -3403,7 +3421,7 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
                                  &pabSuccess[0]);
 
             // Compute the resolution at sampling points
-            std::vector<double> adfRes;
+            std::vector<std::pair<double,double>> aoResPairs;
             const int nSrcXSize = GDALGetRasterXSize(hSrcDS);
             const int nSrcYSize = GDALGetRasterYSize(hSrcDS);
 
@@ -3424,24 +3442,59 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
                         Distance(padfX[i+2] - padfX[i], padfY[i+2] - padfY[i]);
                     if( std::isfinite(dfRes1) && std::isfinite(dfRes2) )
                     {
-                        adfRes.push_back((dfRes1 + dfRes2) / 2);
+                        aoResPairs.push_back(std::pair<double, double>(dfRes1, dfRes2));
                     }
                 }
             }
 
             // Find the minimum resolution that is at least 10 times greater
-            // than te median, to remove outliers.
-            std::sort(adfRes.begin(), adfRes.end());
-            if( !adfRes.empty() )
+            // than the median, to remove outliers.
+            // Start first by doing that on dfRes1, then dfRes2 and then their
+            // average.
+            std::sort(aoResPairs.begin(), aoResPairs.end(),
+                      [](const std::pair<double,double>& oPair1, const std::pair<double,double>& oPair2) {
+                          return oPair1.first < oPair2.first; });
+            if( !aoResPairs.empty() )
             {
-                const double dfMedian = adfRes[ adfRes.size() / 2 ];
-                for( const double dfRes: adfRes )
+                std::vector<std::pair<double,double>> aoResPairsNew;
+                const double dfMedian1 = aoResPairs[ aoResPairs.size() / 2 ].first;
+                for( const auto& oPair: aoResPairs )
                 {
-                    if( dfRes > dfMedian / 10 )
+                    if( oPair.first > dfMedian1 / 10 )
                     {
-                        dfResFromSourceAndTargetExtent = std::min(
-                            dfResFromSourceAndTargetExtent, dfRes);
-                        break;
+                        aoResPairsNew.push_back(oPair);
+                    }
+                }
+
+                aoResPairs = std::move(aoResPairsNew);
+                std::sort(aoResPairs.begin(), aoResPairs.end(),
+                      [](const std::pair<double,double>& oPair1, const std::pair<double,double>& oPair2) {
+                          return oPair1.second < oPair2.second; });
+                if( !aoResPairs.empty() )
+                {
+                    std::vector<double> adfRes;
+                    const double dfMedian2 = aoResPairs[ aoResPairs.size() / 2 ].second;
+                    for( const auto& oPair: aoResPairs )
+                    {
+                        if( oPair.second > dfMedian2 / 10 )
+                        {
+                            adfRes.push_back((oPair.first + oPair.second) / 2);
+                        }
+                    }
+
+                    std::sort(adfRes.begin(), adfRes.end());
+                    if( !adfRes.empty() )
+                    {
+                        const double dfMedian = adfRes[ adfRes.size() / 2 ];
+                        for( const double dfRes: adfRes )
+                        {
+                            if( dfRes > dfMedian / 10 )
+                            {
+                                dfResFromSourceAndTargetExtent = std::min(
+                                    dfResFromSourceAndTargetExtent, dfRes);
+                                break;
+                            }
+                        }
                     }
                 }
             }

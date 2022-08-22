@@ -35,6 +35,8 @@
 #include "cpl_port.h"
 #include "cpl_progress.h"
 
+#include <stdbool.h>
+
 /**
  * \file cpl_vsi.h
  *
@@ -218,6 +220,12 @@ int CPL_DLL     VSIStatExL( const char * pszFilename, VSIStatBufL * psStatBuf, i
 int CPL_DLL     VSIIsCaseSensitiveFS( const char * pszFilename );
 
 int CPL_DLL     VSISupportsSparseFiles( const char* pszPath );
+
+bool CPL_DLL    VSIIsLocal( const char* pszPath );
+
+bool CPL_DLL    VSISupportsSequentialWrite( const char* pszPath, bool bAllowLocalTempFile );
+
+bool CPL_DLL    VSISupportsRandomWrite( const char* pszPath, bool bAllowLocalTempFile );
 
 int CPL_DLL     VSIHasOptimizedReadMultiRange( const char* pszPath );
 

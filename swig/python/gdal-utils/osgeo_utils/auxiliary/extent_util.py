@@ -30,9 +30,9 @@
 import math
 import os
 import tempfile
-from numbers import Number
 from enum import Enum
-from typing import Optional, Union, Sequence, Dict
+from numbers import Number
+from typing import Dict, Optional, Sequence, Union
 
 from osgeo import gdal
 from osgeo_utils.auxiliary.rectangle import GeoRectangle
@@ -50,7 +50,7 @@ def parse_extent(extent: Union[str, Extent]) -> Extent:
         return Extent[extent.upper()]
     elif isinstance(extent, Extent):
         return extent
-    raise Exception('Error: Unknown extent %s' % extent)
+    raise Exception("Error: Unknown extent %s" % extent)
 
 
 class GT(Enum):
@@ -66,17 +66,34 @@ class GT(Enum):
 GeoTransform = Sequence[Number]
 
 
-def gt_diff(gt0: GeoTransform, gt1: GeoTransform, diff_support: Dict[GT, bool], eps: Union[Number, Dict[GT, Number]]=0.0):
+def gt_diff(
+    gt0: GeoTransform,
+    gt1: GeoTransform,
+    diff_support: Dict[GT, bool],
+    eps: Union[Number, Dict[GT, Number]] = 0.0,
+):
     if gt0 == gt1:
         return GT.SAME
     if isinstance(eps, Number):
-        eps = {GT.INCOMPATIBLE_OFFSET: eps, GT.INCOMPATIBLE_PIXEL_SIZE: eps, GT.INCOMPATIBLE_ROTATION: eps}
+        eps = {
+            GT.INCOMPATIBLE_OFFSET: eps,
+            GT.INCOMPATIBLE_PIXEL_SIZE: eps,
+            GT.INCOMPATIBLE_ROTATION: eps,
+        }
     same = {
-        GT.INCOMPATIBLE_OFFSET:     eps[GT.INCOMPATIBLE_OFFSET]     >= (abs(gt0[0] - gt1[0]) + abs(gt0[3] - gt1[3])),
-        GT.INCOMPATIBLE_PIXEL_SIZE: eps[GT.INCOMPATIBLE_PIXEL_SIZE] >= (abs(gt0[1] - gt1[1]) + abs(gt0[5] - gt1[5])),
-        GT.INCOMPATIBLE_ROTATION:   eps[GT.INCOMPATIBLE_ROTATION]   >= (abs(gt0[2] - gt1[2]) + abs(gt0[4] - gt1[4])),
-        GT.NON_ZERO_ROTATION:       gt0[2] == gt0[4] == gt1[2] == gt1[4] == 0}
-    if same[GT.INCOMPATIBLE_OFFSET] and same[GT.INCOMPATIBLE_PIXEL_SIZE] and same[GT.INCOMPATIBLE_ROTATION]:
+        GT.INCOMPATIBLE_OFFSET: eps[GT.INCOMPATIBLE_OFFSET]
+        >= (abs(gt0[0] - gt1[0]) + abs(gt0[3] - gt1[3])),
+        GT.INCOMPATIBLE_PIXEL_SIZE: eps[GT.INCOMPATIBLE_PIXEL_SIZE]
+        >= (abs(gt0[1] - gt1[1]) + abs(gt0[5] - gt1[5])),
+        GT.INCOMPATIBLE_ROTATION: eps[GT.INCOMPATIBLE_ROTATION]
+        >= (abs(gt0[2] - gt1[2]) + abs(gt0[4] - gt1[4])),
+        GT.NON_ZERO_ROTATION: gt0[2] == gt0[4] == gt1[2] == gt1[4] == 0,
+    }
+    if (
+        same[GT.INCOMPATIBLE_OFFSET]
+        and same[GT.INCOMPATIBLE_PIXEL_SIZE]
+        and same[GT.INCOMPATIBLE_ROTATION]
+    ):
         return GT.ALMOST_SAME
     for reason in same.keys():
         if not same[reason] and not diff_support[reason]:
@@ -84,11 +101,15 @@ def gt_diff(gt0: GeoTransform, gt1: GeoTransform, diff_support: Dict[GT, bool], 
     return GT.COMPATIBLE_DIFF
 
 
-def calc_geotransform_and_dimensions(geotransforms: Sequence[GeoTransform], dimensions, input_extent: Union[GeoRectangle, Extent] = None):
+def calc_geotransform_and_dimensions(
+    geotransforms: Sequence[GeoTransform],
+    dimensions,
+    input_extent: Union[GeoRectangle, Extent] = None,
+):
     # extents differ, but pixel size and rotation are the same.
     # we'll make a union or an intersection
     if geotransforms is None or len(geotransforms) != len(dimensions):
-        raise Exception('Error! GeoTransforms and Dimensions have different lengths!')
+        raise Exception("Error! GeoTransforms and Dimensions have different lengths!")
 
     if isinstance(input_extent, GeoRectangle):
         gt = geotransforms[0]
@@ -98,26 +119,30 @@ def calc_geotransform_and_dimensions(geotransforms: Sequence[GeoTransform], dime
         is_union = input_extent == Extent.UNION
         for gt, size in zip(geotransforms, dimensions):
             extent = GeoRectangle.from_geotransform_and_size(gt, size)
-            out_extent = extent if out_extent is None else \
-                out_extent.union(extent) if is_union else out_extent.intersect(extent)
+            out_extent = (
+                extent
+                if out_extent is None
+                else out_extent.union(extent)
+                if is_union
+                else out_extent.intersect(extent)
+            )
     else:
-        raise Exception(f'Unknown input extent format {input_extent}')
+        raise Exception(f"Unknown input extent format {input_extent}")
 
     if out_extent is None or out_extent.is_empty():
         return None, None, None
     else:
         pixel_size = (gt[1], gt[5])
         pix_extent = out_extent.to_pixels(pixel_size)
-        gt = (out_extent.left,
-              gt[1], gt[2],
-              out_extent.up,
-              gt[4], gt[5])
+        gt = (out_extent.left, gt[1], gt[2], out_extent.up, gt[4], gt[5])
     return gt, (math.ceil(pix_extent.w), math.ceil(pix_extent.h)), out_extent
 
 
 def make_temp_vrt(ds, extent: GeoRectangle):
-    options = gdal.BuildVRTOptions(outputBounds=(extent.min_x, extent.min_y, extent.max_x, extent.max_y))
-    tmp_fd, vrt_filename = tempfile.mkstemp(suffix='.vrt')
+    options = gdal.BuildVRTOptions(
+        outputBounds=(extent.min_x, extent.min_y, extent.max_x, extent.max_y)
+    )
+    tmp_fd, vrt_filename = tempfile.mkstemp(suffix=".vrt")
     vrt_ds = gdal.BuildVRT(vrt_filename, ds, options=options)
     os.close(tmp_fd)
     if vrt_ds is None:

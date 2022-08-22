@@ -546,6 +546,9 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
 
     bool SupportsParallelMultipartUpload() const override { return true; }
 
+    bool SupportsSequentialWrite( const char* /* pszPath */, bool /* bAllowLocalTempFile */ ) override { return true; }
+    bool SupportsRandomWrite( const char* /* pszPath */, bool /* bAllowLocalTempFile */ ) override;
+
     CPLString InitiateMultipartUpload(
                                 const std::string& /* osFilename */ ,
                                 IVSIS3LikeHandleHelper *,
@@ -1297,8 +1300,7 @@ VSIVirtualHandle* VSIAzureFSHandler::Open( const char *pszFilename,
 
     if( strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, 'a') != nullptr )
     {
-        if( strchr(pszAccess, '+') != nullptr &&
-            !CPLTestBool(CPLGetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "NO")) )
+        if( strchr(pszAccess, '+') != nullptr && !SupportsRandomWrite(pszFilename, true) )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                         "w+ not supported for /vsiaz, unless "
@@ -1322,6 +1324,16 @@ VSIVirtualHandle* VSIAzureFSHandler::Open( const char *pszFilename,
 
     return
         VSICurlFilesystemHandlerBase::Open(pszFilename, pszAccess, bSetError, papszOptions);
+}
+
+/************************************************************************/
+/*                        SupportsRandomWrite()                         */
+/************************************************************************/
+
+bool VSIAzureFSHandler::SupportsRandomWrite( const char* /* pszPath */, bool bAllowLocalTempFile )
+{
+    return bAllowLocalTempFile &&
+           CPLTestBool(CPLGetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "NO"));
 }
 
 /************************************************************************/

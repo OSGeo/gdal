@@ -74,7 +74,7 @@ RUN if test "${HDF4_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then ( \
     ); fi
 
 # Build likbkea
-ARG KEA_VERSION=1.4.14
+ARG KEA_VERSION=1.4.15
 RUN if test "${KEA_VERSION}" != ""; then ( \
     apk add --no-cache cmake \
     && wget -q https://github.com/ubarsc/kealib/archive/kealib-${KEA_VERSION}.zip \

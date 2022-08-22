@@ -454,15 +454,21 @@ void OGRPointIterator::destroy( OGRPointIterator* poIter )
 /*                     OGRSimpleCurve::Iterator                         */
 /************************************************************************/
 
+void OGRIteratedPoint::setX( double xIn ) { OGRPoint::setX(xIn); m_poCurve->setPoint(m_nPos, xIn, getY()); }
+
+void OGRIteratedPoint::setY( double yIn ) { OGRPoint::setY(yIn); m_poCurve->setPoint(m_nPos, getX(), yIn); }
+
+void OGRIteratedPoint::setZ( double zIn ) { OGRPoint::setZ(zIn); m_poCurve->setZ(m_nPos, zIn); }
+
+void OGRIteratedPoint::setM( double mIn ) { OGRPoint::setM(mIn); m_poCurve->setM(m_nPos, mIn); }
+
 struct OGRSimpleCurve::Iterator::Private
 {
     CPL_DISALLOW_COPY_ASSIGN(Private)
     Private() = default;
 
     bool m_bUpdateChecked = true;
-    OGRPoint m_oPoint{};
-    OGRSimpleCurve* m_poSelf = nullptr;
-    int m_nPos = 0;
+    OGRIteratedPoint m_oPoint{};
 };
 
 void OGRSimpleCurve::Iterator::update()
@@ -470,11 +476,15 @@ void OGRSimpleCurve::Iterator::update()
     if( !m_poPrivate->m_bUpdateChecked )
     {
         OGRPoint oPointBefore;
-        m_poPrivate->m_poSelf->getPoint(m_poPrivate->m_nPos, &oPointBefore);
+        m_poPrivate->m_oPoint.m_poCurve->getPoint(m_poPrivate->m_oPoint.m_nPos, &oPointBefore);
         if( oPointBefore != m_poPrivate->m_oPoint )
         {
-            m_poPrivate->m_poSelf->setPoint(m_poPrivate->m_nPos,
-                                            &m_poPrivate->m_oPoint);
+            if( m_poPrivate->m_oPoint.Is3D() )
+                m_poPrivate->m_oPoint.m_poCurve->set3D(true);
+            if( m_poPrivate->m_oPoint.IsMeasured() )
+                m_poPrivate->m_oPoint.m_poCurve->setMeasured(true);
+            m_poPrivate->m_oPoint.m_poCurve->setPoint(m_poPrivate->m_oPoint.m_nPos,
+                                                      &m_poPrivate->m_oPoint);
         }
         m_poPrivate->m_bUpdateChecked = true;
     }
@@ -483,8 +493,8 @@ void OGRSimpleCurve::Iterator::update()
 OGRSimpleCurve::Iterator::Iterator(OGRSimpleCurve* poSelf, int nPos):
     m_poPrivate(new Private())
 {
-    m_poPrivate->m_poSelf = poSelf;
-    m_poPrivate->m_nPos = nPos;
+    m_poPrivate->m_oPoint.m_poCurve = poSelf;
+    m_poPrivate->m_oPoint.m_nPos = nPos;
 }
 
 OGRSimpleCurve::Iterator::~Iterator()
@@ -492,10 +502,10 @@ OGRSimpleCurve::Iterator::~Iterator()
     update();
 }
 
-OGRPoint& OGRSimpleCurve::Iterator::operator*()
+OGRIteratedPoint& OGRSimpleCurve::Iterator::operator*()
 {
     update();
-    m_poPrivate->m_poSelf->getPoint(m_poPrivate->m_nPos, &m_poPrivate->m_oPoint);
+    m_poPrivate->m_oPoint.m_poCurve->getPoint(m_poPrivate->m_oPoint.m_nPos, &m_poPrivate->m_oPoint);
     m_poPrivate->m_bUpdateChecked = false;
     return m_poPrivate->m_oPoint;
 }
@@ -503,13 +513,13 @@ OGRPoint& OGRSimpleCurve::Iterator::operator*()
 OGRSimpleCurve::Iterator& OGRSimpleCurve::Iterator::operator++()
 {
     update();
-    ++m_poPrivate->m_nPos;
+    ++m_poPrivate->m_oPoint.m_nPos;
     return *this;
 }
 
 bool OGRSimpleCurve::Iterator::operator!=(const Iterator& it) const
 {
-    return m_poPrivate->m_nPos != it.m_poPrivate->m_nPos;
+    return m_poPrivate->m_oPoint.m_nPos != it.m_poPrivate->m_oPoint.m_nPos;
 }
 
 OGRSimpleCurve::Iterator OGRSimpleCurve::begin()
@@ -531,7 +541,7 @@ struct OGRSimpleCurve::ConstIterator::Private
     CPL_DISALLOW_COPY_ASSIGN(Private)
     Private() = default;
 
-    mutable OGRPoint m_oPoint{};
+    mutable OGRIteratedPoint m_oPoint{};
     const OGRSimpleCurve* m_poSelf = nullptr;
     int m_nPos = 0;
 };

@@ -53,10 +53,10 @@ The :program:`gdalsrsinfo` utility reports information about a given SRS from on
     - ``wkt_simple``: OGC WKT 1 (simplified)
     - ``wkt_noct``: OGC WKT 1 (without OGC CT params)
     - ``wkt_esri``: ESRI WKT format
-    - ``wkt``: Latest WKT version supported, currently wkt2_2018
-    - ``wkt2``: Latest WKT2 version supported, currently wkt2_2018
+    - ``wkt``: Latest WKT version supported, currently wkt2_2019
+    - ``wkt2``: Latest WKT2 version supported, currently wkt2_2019
     - ``wkt2_2015``: OGC WKT2:2015
-    - ``wkt2_2018``: OGC WKT2:2018
+    - ``wkt2_2019``: OGC WKT2:2019 (for GDAL < 3.6, use ``wkt2_2018``)
     - ``mapinfo``: Mapinfo style CoordSys format
     - ``xml``: XML format (GML based)
 
@@ -212,7 +212,7 @@ Example
             BBOX[-90,-180,90,180],
             ID["EPSG",1237]]]
 
-    OGC WKT2:2018 :
+    OGC WKT2:2019 :
     BOUNDCRS[
         SOURCECRS[
             GEOGCRS["WGS 72",

@@ -30,7 +30,7 @@
 
 
 class GeoRectangle:
-    __slots__ = ['x', 'y', 'w', 'h']
+    __slots__ = ["x", "y", "w", "h"]
 
     def __init__(self, x, y, w, h, allow_negative_size=False):
         if w <= 0:
@@ -87,8 +87,12 @@ class GeoRectangle:
     def align(self, geo_transform):
         # compute the pixel-aligned bounding box (larger than the feature's bbox)
         left = self.min_x - (self.min_x - geo_transform[0]) % geo_transform[1]
-        right = self.max_x + (geo_transform[1] - ((self.max_x - geo_transform[0]) % geo_transform[1]))
-        bottom = self.min_y + (geo_transform[5] - ((self.min_y - geo_transform[3]) % geo_transform[5]))
+        right = self.max_x + (
+            geo_transform[1] - ((self.max_x - geo_transform[0]) % geo_transform[1])
+        )
+        bottom = self.min_y + (
+            geo_transform[5] - ((self.min_y - geo_transform[3]) % geo_transform[5])
+        )
         top = self.max_y - (self.max_y - geo_transform[3]) % geo_transform[5]
         return self.from_lrud(left, right, top, bottom)
 
@@ -120,7 +124,7 @@ class GeoRectangle:
 
     @classmethod
     def from_lurd(cls, l, u, r, d):
-        """  from projwin (minx maxy maxx miny) == (ulx uly lrx lry) == (l u r d) """
+        """from projwin (minx maxy maxx miny) == (ulx uly lrx lry) == (l u r d)"""
         ret = cls(l, d, r - l, u - d)
         return ret
 
@@ -139,7 +143,7 @@ class GeoRectangle:
     @classmethod
     # # same as cls
     def from_xywhps(cls, x, y, w, h, px, py):
-        ret = cls(x, y, w*px, h*py, True)
+        ret = cls(x, y, w * px, h * py, True)
         return ret
 
     @classmethod
@@ -182,8 +186,13 @@ class GeoRectangle:
             return extent
 
     def to_pixels(self, pixel_size):
-        return self.from_xwyh(self.x / pixel_size[0], self.w / pixel_size[0],
-                              self.y / pixel_size[1], self.h / pixel_size[1], True)
+        return self.from_xwyh(
+            self.x / pixel_size[0],
+            self.w / pixel_size[0],
+            self.y / pixel_size[1],
+            self.h / pixel_size[1],
+            True,
+        )
 
     @classmethod
     def from_geotransform_and_size_to_pix(cls, gt, size):
@@ -285,4 +294,3 @@ def get_points_extent(gt, cols, rows):
         transform_point(cols, rows),
         transform_point(cols, 0),
     ]
-
