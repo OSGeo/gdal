@@ -577,7 +577,7 @@ jobs:
         curl http://download.osgeo.org/proj/proj-datumgrid-1.8.tar.gz > proj-datumgrid-1.8.tar.gz
         tar xvzf proj-datumgrid-1.8.tar.gz
         cd $OLDPWD
-        python3 -m pip install -r $GITHUB_WORKSPACE/autotest/requirements.txt
+        /usr/local/bin/python3.10 -m pip install --user -r $GITHUB_WORKSPACE/autotest/requirements.txt
     - name: Configure ccache
       run: |
           echo CCACHE_BASEDIR=$PWD >> ${GITHUB_ENV}

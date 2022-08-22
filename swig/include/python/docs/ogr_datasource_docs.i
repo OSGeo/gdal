@@ -12,8 +12,9 @@ Deprecated Use GDALClose() in GDAL 2.0
 
 Parameters
 -----------
-
-hDS:  handle to allocated datasource object. ";
+hDS:
+    handle to allocated datasource object.
+";
 
 %feature("docstring")  Reference "int OGR_DS_Reference(OGRDataSourceH
 hDataSource) ";

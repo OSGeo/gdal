@@ -31,6 +31,7 @@
 
 import os
 import sys
+
 import requests
 
 ok_set = dict()
@@ -38,21 +39,21 @@ broken_set = {}
 
 
 def check(filename):
-    f = open(filename, 'r')
+    f = open(filename, "r")
     lines = f.readlines()
 
     for i, line in enumerate(lines):
-        line = line.strip('\n')
+        line = line.strip("\n")
         pos = line.find('<a href="')
         if pos >= 0:
             pos += len('<a href="')
             end_pos = line.find('"', pos)
             while end_pos < 0:
                 i += 1
-                line += lines[i].strip('\n')
+                line += lines[i].strip("\n")
                 end_pos = line.find('"', pos)
             url = line[pos:end_pos]
-            sharp = url.find('#')
+            sharp = url.find("#")
             if sharp == 0:
                 continue
             elif sharp > 0:
@@ -60,20 +61,20 @@ def check(filename):
             if url in ok_set:
                 continue
             if url in broken_set:
-                print('ERROR: Broken link %s in %s' % (url, filename))
-            print('Checking %s...' % url)
-            if url.startswith('http'):
+                print("ERROR: Broken link %s in %s" % (url, filename))
+            print("Checking %s..." % url)
+            if url.startswith("http"):
                 r = requests.get(url, verify=False)
                 if r.status_code == requests.codes.ok:
                     ok_set[url] = True
                 else:
-                    print('ERROR: Broken link %s in %s' % (url, filename))
+                    print("ERROR: Broken link %s in %s" % (url, filename))
                     broken_set[url] = True
             else:
                 checked_filename = os.path.join(os.path.dirname(filename), url)
                 # print(checked_filename)
                 if not os.path.exists(checked_filename):
-                    print('ERROR: Broken link %s in %s' % (url, filename))
+                    print("ERROR: Broken link %s in %s" % (url, filename))
                     broken_set[url] = True
                 else:
                     ok_set[url] = True

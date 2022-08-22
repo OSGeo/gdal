@@ -77,51 +77,56 @@
 
 
 import os
-from osgeo import ogr
-
 
 import gdaltest
 import pytest
+
+from osgeo import ogr
 
 ###############################################################################
 
 
 def test_ogr_ntf_1():
 
-    if not gdaltest.download_file('http://www.ordnancesurvey.co.uk/oswebsite/products/strategi/sampledata/stratntf.exe', 'stratntf.exe'):
+    if not gdaltest.download_file(
+        "http://www.ordnancesurvey.co.uk/oswebsite/products/strategi/sampledata/stratntf.exe",
+        "stratntf.exe",
+    ):
         pytest.skip()
 
     try:
-        os.stat('tmp/cache/SS.ntf')
+        os.stat("tmp/cache/SS.ntf")
     except OSError:
         try:
-            gdaltest.unzip('tmp/cache', 'tmp/cache/stratntf.exe')
+            gdaltest.unzip("tmp/cache", "tmp/cache/stratntf.exe")
             try:
-                os.stat('tmp/cache/SS.ntf')
+                os.stat("tmp/cache/SS.ntf")
             except OSError:
                 pytest.skip()
         except OSError:
             pytest.skip()
 
-    ds = ogr.Open('tmp/cache/SS.ntf')
+    ds = ogr.Open("tmp/cache/SS.ntf")
     assert ds.GetLayerCount() == 5
 
-    layers = [('STRATEGI_POINT', ogr.wkbPoint, 9193),
-              ('STRATEGI_LINE', ogr.wkbLineString, 8369),
-              ('STRATEGI_TEXT', ogr.wkbPoint, 1335),
-              ('STRATEGI_NODE', ogr.wkbNone, 10991),
-              ('FEATURE_CLASSES', ogr.wkbNone, 224)]
+    layers = [
+        ("STRATEGI_POINT", ogr.wkbPoint, 9193),
+        ("STRATEGI_LINE", ogr.wkbLineString, 8369),
+        ("STRATEGI_TEXT", ogr.wkbPoint, 1335),
+        ("STRATEGI_NODE", ogr.wkbNone, 10991),
+        ("FEATURE_CLASSES", ogr.wkbNone, 224),
+    ]
 
     for l in layers:
         lyr = ds.GetLayerByName(l[0])
         assert lyr.GetLayerDefn().GetGeomType() == l[1]
         assert lyr.GetFeatureCount() == l[2]
         if l[1] != ogr.wkbNone:
-            assert lyr.GetSpatialRef().ExportToWkt().find('OSGB 1936') != -1
+            assert lyr.GetSpatialRef().ExportToWkt().find("OSGB 1936") != -1
 
-    lyr = ds.GetLayerByName('STRATEGI_POINT')
+    lyr = ds.GetLayerByName("STRATEGI_POINT")
     feat = lyr.GetNextFeature()
-    assert feat.GetGeometryRef().ExportToWkt() == 'POINT (222904 127850)'
+    assert feat.GetGeometryRef().ExportToWkt() == "POINT (222904 127850)"
 
     ds.Destroy()
 
@@ -129,46 +134,51 @@ def test_ogr_ntf_1():
 ###############################################################################
 def test_ogr_ntf_2():
 
-    if not gdaltest.download_file('http://www.ordnancesurvey.co.uk/oswebsite/products/meridian2/sampledata/meridian2ntf.exe', 'meridian2ntf.exe'):
+    if not gdaltest.download_file(
+        "http://www.ordnancesurvey.co.uk/oswebsite/products/meridian2/sampledata/meridian2ntf.exe",
+        "meridian2ntf.exe",
+    ):
         pytest.skip()
 
     try:
-        os.stat('tmp/cache/Port_Talbot_NTF/SS78.ntf')
+        os.stat("tmp/cache/Port_Talbot_NTF/SS78.ntf")
     except OSError:
         try:
-            gdaltest.unzip('tmp/cache', 'tmp/cache/meridian2ntf.exe')
+            gdaltest.unzip("tmp/cache", "tmp/cache/meridian2ntf.exe")
             try:
-                os.stat('tmp/cache/Port_Talbot_NTF/SS78.ntf')
+                os.stat("tmp/cache/Port_Talbot_NTF/SS78.ntf")
             except OSError:
                 pytest.skip()
         except OSError:
             pytest.skip()
 
-    ds = ogr.Open('tmp/cache/Port_Talbot_NTF/SS78.ntf')
+    ds = ogr.Open("tmp/cache/Port_Talbot_NTF/SS78.ntf")
     assert ds.GetLayerCount() == 5
 
-    layers = [('MERIDIAN2_POINT', ogr.wkbPoint, 408),
-              ('MERIDIAN2_LINE', ogr.wkbLineString, 513),
-              ('MERIDIAN2_TEXT', ogr.wkbPoint, 7),
-              ('MERIDIAN2_NODE', ogr.wkbNone, 397),
-              ('FEATURE_CLASSES', ogr.wkbNone, 50)]
+    layers = [
+        ("MERIDIAN2_POINT", ogr.wkbPoint, 408),
+        ("MERIDIAN2_LINE", ogr.wkbLineString, 513),
+        ("MERIDIAN2_TEXT", ogr.wkbPoint, 7),
+        ("MERIDIAN2_NODE", ogr.wkbNone, 397),
+        ("FEATURE_CLASSES", ogr.wkbNone, 50),
+    ]
 
     for l in layers:
         lyr = ds.GetLayerByName(l[0])
         assert lyr.GetLayerDefn().GetGeomType() == l[1]
         assert lyr.GetFeatureCount() == l[2]
         if l[1] != ogr.wkbNone:
-            assert lyr.GetSpatialRef().ExportToWkt().find('OSGB 1936') != -1
+            assert lyr.GetSpatialRef().ExportToWkt().find("OSGB 1936") != -1
 
-    lyr = ds.GetLayerByName('MERIDIAN2_POINT')
+    lyr = ds.GetLayerByName("MERIDIAN2_POINT")
     feat = lyr.GetNextFeature()
-    assert feat.GetGeometryRef().ExportToWkt() == 'POINT (275324 189274)'
+    assert feat.GetGeometryRef().ExportToWkt() == "POINT (275324 189274)"
 
-    lyr = ds.GetLayerByName('MERIDIAN2_LINE')
+    lyr = ds.GetLayerByName("MERIDIAN2_LINE")
     feat = lyr.GetNextFeature()
-    assert feat.GetGeometryRef().ExportToWkt() == 'LINESTRING (275324 189274,275233 189114,275153 189048)'
+    assert (
+        feat.GetGeometryRef().ExportToWkt()
+        == "LINESTRING (275324 189274,275233 189114,275153 189048)"
+    )
 
     ds.Destroy()
-
-
-

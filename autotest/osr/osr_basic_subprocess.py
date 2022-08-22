@@ -31,13 +31,13 @@
 
 from osgeo import osr
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # This test use auxiliary database created with proj 6.3.2
     # (tested up to 8.0.0) and can be sensitive to future
     # database structure change.
     #
     # See PR https://github.com/OSGeo/gdal/pull/3590
-    osr.SetPROJAuxDbPath('../cpp/data/test_aux.db')
+    osr.SetPROJAuxDbPath("../cpp/data/test_aux.db")
     sr = osr.SpatialReference()
     assert sr.ImportFromEPSG(4326) == 0
     assert sr.ImportFromEPSG(111111) == 0

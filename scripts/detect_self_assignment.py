@@ -6,14 +6,14 @@ f = open(sys.argv[1], "rt")
 lines = f.readlines()
 ret = 0
 for i, line in enumerate(lines):
-    if line and line[len(line) - 1] == '\n':
+    if line and line[len(line) - 1] == "\n":
         line = line[0:-1]
-    tab = line.split('=')
+    tab = line.split("=")
     if len(tab) != 2:
         continue
     left = tab[0].strip()
     right = tab[1].strip()
-    if right and right[len(right) - 1] == ';':
+    if right and right[len(right) - 1] == ";":
         right = right[0:-1]
     else:
         continue

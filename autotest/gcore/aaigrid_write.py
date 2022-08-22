@@ -26,27 +26,27 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
-import pytest
-
 import gdaltest
+import pytest
 
 ###############################################################################
 # When imported build a list of units based on the files available.
 
 init_list = [
-    ('byte.tif', 4672),
-    ('int16.tif', 4672),
-    ('uint16.tif', 4672),
-    ('float32.tif', 4672),
-    ('utmsmall.tif', 50054)]
+    ("byte.tif", 4672),
+    ("int16.tif", 4672),
+    ("uint16.tif", 4672),
+    ("float32.tif", 4672),
+    ("utmsmall.tif", 50054),
+]
 
 
 @pytest.mark.parametrize(
-    'filename,checksum',
+    "filename,checksum",
     init_list,
-    ids=[tup[0].split('.')[0] for tup in init_list],
+    ids=[tup[0].split(".")[0] for tup in init_list],
 )
-@pytest.mark.require_driver('AAIGrid')
+@pytest.mark.require_driver("AAIGrid")
 def test_aaigrid_create(filename, checksum):
-    ut = gdaltest.GDALTest('AAIGrid', filename, 1, checksum)
+    ut = gdaltest.GDALTest("AAIGrid", filename, 1, checksum)
     ut.testCreateCopy()

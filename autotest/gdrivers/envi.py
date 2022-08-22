@@ -32,11 +32,12 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import gdal, osr
 import struct
 
 import gdaltest
 import pytest
+
+from osgeo import gdal, osr
 
 ###############################################################################
 # Perform simple read test.
@@ -44,7 +45,7 @@ import pytest
 
 def test_envi_1():
 
-    tst = gdaltest.GDALTest('envi', 'envi/aea.dat', 1, 14823)
+    tst = gdaltest.GDALTest("envi", "envi/aea.dat", 1, 14823)
 
     prj = """PROJCS["unnamed",
     GEOGCS["Ellipse Based",
@@ -61,9 +62,10 @@ def test_envi_1():
     PARAMETER["false_northing",0],
     UNIT["Meter",1]]"""
 
-    return tst.testOpen(check_prj=prj,
-                        check_gt=(-936408.178, 28.5, 0.0,
-                                  2423902.344, 0.0, -28.5))
+    return tst.testOpen(
+        check_prj=prj, check_gt=(-936408.178, 28.5, 0.0, 2423902.344, 0.0, -28.5)
+    )
+
 
 ###############################################################################
 # Verify this can be exported losslessly.
@@ -71,8 +73,9 @@ def test_envi_1():
 
 def test_envi_2():
 
-    tst = gdaltest.GDALTest('envi', 'envi/aea.dat', 1, 14823)
+    tst = gdaltest.GDALTest("envi", "envi/aea.dat", 1, 14823)
     return tst.testCreateCopy(check_gt=1)
+
 
 ###############################################################################
 # Try the Create interface with an RGB image.
@@ -80,8 +83,9 @@ def test_envi_2():
 
 def test_envi_3():
 
-    tst = gdaltest.GDALTest('envi', 'rgbsmall.tif', 2, 21053)
+    tst = gdaltest.GDALTest("envi", "rgbsmall.tif", 2, 21053)
     return tst.testCreate()
+
 
 ###############################################################################
 # Test LCC Projection.
@@ -89,7 +93,7 @@ def test_envi_3():
 
 def test_envi_4():
 
-    tst = gdaltest.GDALTest('envi', 'envi/aea.dat', 1, 24)
+    tst = gdaltest.GDALTest("envi", "envi/aea.dat", 1, 24)
 
     prj = """PROJCS["unnamed",
     GEOGCS["NAD83",
@@ -109,13 +113,14 @@ def test_envi_4():
 
     return tst.testSetProjection(prj=prj)
 
+
 ###############################################################################
 # Test TM Projection.
 
 
 def test_envi_5():
 
-    tst = gdaltest.GDALTest('envi', 'envi/aea.dat', 1, 24)
+    tst = gdaltest.GDALTest("envi", "envi/aea.dat", 1, 24)
     prj = """PROJCS["unnamed",
     GEOGCS["GCS_unnamed",
         DATUM["D_unnamed",
@@ -136,13 +141,14 @@ def test_envi_5():
 
     return tst.testSetProjection(prj=prj)
 
+
 ###############################################################################
 # Test LAEA Projection.
 
 
 def test_envi_6():
 
-    gdaltest.envi_tst = gdaltest.GDALTest('envi', 'envi/aea.dat', 1, 24)
+    gdaltest.envi_tst = gdaltest.GDALTest("envi", "envi/aea.dat", 1, 24)
 
     prj = """PROJCS["unnamed",
     GEOGCS["Unknown datum based upon the Authalic Sphere",
@@ -162,14 +168,16 @@ def test_envi_6():
 
     return gdaltest.envi_tst.testSetProjection(prj=prj)
 
+
 ###############################################################################
 # Verify VSIF*L capacity
 
 
 def test_envi_7():
 
-    tst = gdaltest.GDALTest('envi', 'envi/aea.dat', 1, 14823)
+    tst = gdaltest.GDALTest("envi", "envi/aea.dat", 1, 14823)
     return tst.testCreateCopy(check_gt=1, vsimem=1)
+
 
 ###############################################################################
 # Test fix for #3751
@@ -177,14 +185,15 @@ def test_envi_7():
 
 def test_envi_8():
 
-    ds = gdal.GetDriverByName('ENVI').Create('/vsimem/foo.bsq', 10, 10, 1)
+    ds = gdal.GetDriverByName("ENVI").Create("/vsimem/foo.bsq", 10, 10, 1)
     set_gt = (50000, 1, 0, 4500000, 0, -1)
     ds.SetGeoTransform(set_gt)
     got_gt = ds.GetGeoTransform()
-    assert set_gt == got_gt, 'did not get expected geotransform'
+    assert set_gt == got_gt, "did not get expected geotransform"
     ds = None
 
-    gdal.GetDriverByName('ENVI').Delete('/vsimem/foo.bsq')
+    gdal.GetDriverByName("ENVI").Delete("/vsimem/foo.bsq")
+
 
 ###############################################################################
 # Verify reading a compressed file
@@ -192,8 +201,9 @@ def test_envi_8():
 
 def test_envi_9():
 
-    tst = gdaltest.GDALTest('envi', 'envi/aea_compressed.dat', 1, 14823)
+    tst = gdaltest.GDALTest("envi", "envi/aea_compressed.dat", 1, 14823)
     return tst.testCreateCopy(check_gt=1)
+
 
 ###############################################################################
 # Test RPC reading and writing
@@ -201,20 +211,21 @@ def test_envi_9():
 
 def test_envi_10():
 
-    src_ds = gdal.Open('data/envi/envirpc.img')
-    out_ds = gdal.GetDriverByName('ENVI').CreateCopy('/vsimem/envirpc.img', src_ds)
+    src_ds = gdal.Open("data/envi/envirpc.img")
+    out_ds = gdal.GetDriverByName("ENVI").CreateCopy("/vsimem/envirpc.img", src_ds)
     src_ds = None
     del out_ds
 
-    gdal.Unlink('/vsimem/envirpc.img.aux.xml')
+    gdal.Unlink("/vsimem/envirpc.img.aux.xml")
 
-    ds = gdal.Open('/vsimem/envirpc.img')
-    md = ds.GetMetadata('RPC')
+    ds = gdal.Open("/vsimem/envirpc.img")
+    md = ds.GetMetadata("RPC")
     ds = None
 
-    gdal.GetDriverByName('ENVI').Delete('/vsimem/envirpc.img')
+    gdal.GetDriverByName("ENVI").Delete("/vsimem/envirpc.img")
 
-    assert md['HEIGHT_OFF'] == '3355'
+    assert md["HEIGHT_OFF"] == "3355"
+
 
 ###############################################################################
 # Check .sta reading
@@ -222,11 +233,12 @@ def test_envi_10():
 
 def test_envi_11():
 
-    ds = gdal.Open('data/envi/envistat')
+    ds = gdal.Open("data/envi/envistat")
     val = ds.GetRasterBand(1).GetStatistics(0, 0)
     ds = None
 
-    assert val == [1.0, 3.0, 2.0, 0.5], 'bad stats'
+    assert val == [1.0, 3.0, 2.0, 0.5], "bad stats"
+
 
 ###############################################################################
 # Test category names reading and writing
@@ -234,25 +246,26 @@ def test_envi_11():
 
 def test_envi_12():
 
-    src_ds = gdal.Open('data/envi/testenviclasses')
-    out_ds = gdal.GetDriverByName('ENVI').CreateCopy('/vsimem/testenviclasses', src_ds)
+    src_ds = gdal.Open("data/envi/testenviclasses")
+    out_ds = gdal.GetDriverByName("ENVI").CreateCopy("/vsimem/testenviclasses", src_ds)
     src_ds = None
     del out_ds
 
-    gdal.Unlink('/vsimem/testenviclasses.aux.xml')
+    gdal.Unlink("/vsimem/testenviclasses.aux.xml")
 
-    ds = gdal.Open('/vsimem/testenviclasses')
+    ds = gdal.Open("/vsimem/testenviclasses")
     category = ds.GetRasterBand(1).GetCategoryNames()
     ct = ds.GetRasterBand(1).GetColorTable()
 
-    assert category == ['Black', 'White'], 'bad category names'
+    assert category == ["Black", "White"], "bad category names"
 
-    assert ct.GetCount() == 2, 'bad color entry count'
+    assert ct.GetCount() == 2, "bad color entry count"
 
-    assert ct.GetColorEntry(0) == (0, 0, 0, 255), 'bad color entry'
+    assert ct.GetColorEntry(0) == (0, 0, 0, 255), "bad color entry"
 
     ds = None
-    gdal.GetDriverByName('ENVI').Delete('/vsimem/testenviclasses')
+    gdal.GetDriverByName("ENVI").Delete("/vsimem/testenviclasses")
+
 
 ###############################################################################
 # Test writing of metadata from the ENVI metadata domain and read it back (#4957)
@@ -260,21 +273,22 @@ def test_envi_12():
 
 def test_envi_13():
 
-    ds = gdal.GetDriverByName('ENVI').Create('/vsimem/envi_13.dat', 1, 1)
-    ds.SetMetadata(['lines=100', 'sensor_type=Landsat TM', 'foo'], 'ENVI')
+    ds = gdal.GetDriverByName("ENVI").Create("/vsimem/envi_13.dat", 1, 1)
+    ds.SetMetadata(["lines=100", "sensor_type=Landsat TM", "foo"], "ENVI")
     ds = None
 
-    gdal.Unlink('/vsimem/envi_13.dat.aux.xml')
+    gdal.Unlink("/vsimem/envi_13.dat.aux.xml")
 
-    ds = gdal.Open('/vsimem/envi_13.dat')
+    ds = gdal.Open("/vsimem/envi_13.dat")
     lines = ds.RasterYSize
-    val = ds.GetMetadataItem('sensor_type', 'ENVI')
+    val = ds.GetMetadataItem("sensor_type", "ENVI")
     ds = None
-    gdal.GetDriverByName('ENVI').Delete('/vsimem/envi_13.dat')
+    gdal.GetDriverByName("ENVI").Delete("/vsimem/envi_13.dat")
 
     assert lines == 1
 
-    assert val == 'Landsat TM'
+    assert val == "Landsat TM"
+
 
 ###############################################################################
 # Test that the image file is at the expected size on closing (#6662)
@@ -282,13 +296,14 @@ def test_envi_13():
 
 def test_envi_14():
 
-    gdal.GetDriverByName('ENVI').Create('/vsimem/envi_14.dat', 3, 4, 5, gdal.GDT_Int16)
+    gdal.GetDriverByName("ENVI").Create("/vsimem/envi_14.dat", 3, 4, 5, gdal.GDT_Int16)
 
-    gdal.Unlink('/vsimem/envi_14.dat.aux.xml')
+    gdal.Unlink("/vsimem/envi_14.dat.aux.xml")
 
-    assert gdal.VSIStatL('/vsimem/envi_14.dat').size == 3 * 4 * 5 * 2
+    assert gdal.VSIStatL("/vsimem/envi_14.dat").size == 3 * 4 * 5 * 2
 
-    gdal.GetDriverByName('ENVI').Delete('/vsimem/envi_14.dat')
+    gdal.GetDriverByName("ENVI").Delete("/vsimem/envi_14.dat")
+
 
 ###############################################################################
 # Test reading and writing geotransform matrix with rotation
@@ -296,21 +311,32 @@ def test_envi_14():
 
 def test_envi_15():
 
-    src_ds = gdal.Open('data/envi/rotation.img')
+    src_ds = gdal.Open("data/envi/rotation.img")
     got_gt = src_ds.GetGeoTransform()
-    expected_gt = [736600.089, 1.0981889363046606, -2.4665727356350224,
-                   4078126.75, -2.4665727356350224, -1.0981889363046606]
-    assert max([abs((got_gt[i] - expected_gt[i]) / expected_gt[i]) for i in range(6)]) <= 1e-5, \
-        'did not get expected geotransform'
+    expected_gt = [
+        736600.089,
+        1.0981889363046606,
+        -2.4665727356350224,
+        4078126.75,
+        -2.4665727356350224,
+        -1.0981889363046606,
+    ]
+    assert (
+        max([abs((got_gt[i] - expected_gt[i]) / expected_gt[i]) for i in range(6)])
+        <= 1e-5
+    ), "did not get expected geotransform"
 
-    gdal.GetDriverByName('ENVI').CreateCopy('/vsimem/envi_15.dat', src_ds)
+    gdal.GetDriverByName("ENVI").CreateCopy("/vsimem/envi_15.dat", src_ds)
 
-    ds = gdal.Open('/vsimem/envi_15.dat')
+    ds = gdal.Open("/vsimem/envi_15.dat")
     got_gt = ds.GetGeoTransform()
-    assert max([abs((got_gt[i] - expected_gt[i]) / expected_gt[i]) for i in range(6)]) <= 1e-5, \
-        'did not get expected geotransform'
+    assert (
+        max([abs((got_gt[i] - expected_gt[i]) / expected_gt[i]) for i in range(6)])
+        <= 1e-5
+    ), "did not get expected geotransform"
     ds = None
-    gdal.GetDriverByName('ENVI').Delete('/vsimem/envi_15.dat')
+    gdal.GetDriverByName("ENVI").Delete("/vsimem/envi_15.dat")
+
 
 ###############################################################################
 # Test reading a truncated ENVI dataset (see #915)
@@ -318,20 +344,22 @@ def test_envi_15():
 
 def test_envi_truncated():
 
-    gdal.GetDriverByName('ENVI').CreateCopy('/vsimem/envi_truncated.dat',
-                                            gdal.Open('data/byte.tif'))
+    gdal.GetDriverByName("ENVI").CreateCopy(
+        "/vsimem/envi_truncated.dat", gdal.Open("data/byte.tif")
+    )
 
-    f = gdal.VSIFOpenL('/vsimem/envi_truncated.dat', 'rb+')
+    f = gdal.VSIFOpenL("/vsimem/envi_truncated.dat", "rb+")
     gdal.VSIFTruncateL(f, int(20 * 20 / 2))
     gdal.VSIFCloseL(f)
 
-    with gdaltest.config_option('RAW_CHECK_FILE_SIZE', 'YES'):
-        ds = gdal.Open('/vsimem/envi_truncated.dat')
+    with gdaltest.config_option("RAW_CHECK_FILE_SIZE", "YES"):
+        ds = gdal.Open("/vsimem/envi_truncated.dat")
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
-    gdal.GetDriverByName('ENVI').Delete('/vsimem/envi_truncated.dat')
+    gdal.GetDriverByName("ENVI").Delete("/vsimem/envi_truncated.dat")
 
     assert cs == 2315
+
 
 ###############################################################################
 # Test writing & reading GCPs (#1528)
@@ -339,8 +367,8 @@ def test_envi_truncated():
 
 def test_envi_gcp():
 
-    filename = '/vsimem/test_envi_gcp.dat'
-    ds = gdal.GetDriverByName('ENVI').Create(filename, 1, 1)
+    filename = "/vsimem/test_envi_gcp.dat"
+    ds = gdal.GetDriverByName("ENVI").Create(filename, 1, 1)
     gcp = gdal.GCP()
     gcp.GCPPixel = 1
     gcp.GCPLine = 2
@@ -361,7 +389,8 @@ def test_envi_gcp():
     assert gcp.GCPX == 3
     assert gcp.GCPY == 4
 
-    gdal.GetDriverByName('ENVI').Delete(filename)
+    gdal.GetDriverByName("ENVI").Delete(filename)
+
 
 ###############################################################################
 # Test updating big endian ordered (#1796)
@@ -369,16 +398,17 @@ def test_envi_gcp():
 
 def test_envi_bigendian():
 
-    ds = gdal.Open('data/envi/uint16_envi_bigendian.dat')
+    ds = gdal.Open("data/envi/uint16_envi_bigendian.dat")
     assert ds.GetRasterBand(1).Checksum() == 4672
     ds = None
 
-    for ext in ('dat', 'hdr'):
-        filename = 'uint16_envi_bigendian.' + ext
-        gdal.FileFromMemBuffer('/vsimem/' + filename,
-                            open('data/envi/' + filename, 'rb').read())
+    for ext in ("dat", "hdr"):
+        filename = "uint16_envi_bigendian." + ext
+        gdal.FileFromMemBuffer(
+            "/vsimem/" + filename, open("data/envi/" + filename, "rb").read()
+        )
 
-    filename = '/vsimem/uint16_envi_bigendian.dat'
+    filename = "/vsimem/uint16_envi_bigendian.dat"
     ds = gdal.Open(filename, gdal.GA_Update)
     ds.SetGeoTransform([0, 2, 0, 0, 0, -2])
     ds = None
@@ -387,25 +417,28 @@ def test_envi_bigendian():
     assert ds.GetRasterBand(1).Checksum() == 4672
     ds = None
 
-    gdal.GetDriverByName('ENVI').Delete(filename)
+    gdal.GetDriverByName("ENVI").Delete(filename)
+
 
 ###############################################################################
 # Test different interleaving
 
 
-@pytest.mark.parametrize('filename_suffix, expected_interleave', [('bip', 'PIXEL'),
-                                                                  ('bil', 'LINE'),
-                                                                  ('bsq', 'BAND')])
+@pytest.mark.parametrize(
+    "filename_suffix, expected_interleave",
+    [("bip", "PIXEL"), ("bil", "LINE"), ("bsq", "BAND")],
+)
 def test_envi_interleaving(filename_suffix, expected_interleave):
 
-    filename = f'data/envi/envi_rgbsmall_{filename_suffix}.img'
+    filename = f"data/envi/envi_rgbsmall_{filename_suffix}.img"
     ds = gdal.Open(filename)
     assert ds, filename
-    assert ds.GetMetadataItem('INTERLEAVE', 'IMAGE_STRUCTURE') == expected_interleave
+    assert ds.GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE") == expected_interleave
     assert ds.GetRasterBand(1).Checksum() == 20718, filename
     assert ds.GetRasterBand(2).Checksum() == 20669, filename
     assert ds.GetRasterBand(3).Checksum() == 20895, filename
     ds = None
+
 
 ###############################################################################
 # Test nodata
@@ -413,18 +446,18 @@ def test_envi_interleaving(filename_suffix, expected_interleave):
 
 def test_envi_nodata():
 
-    filename = '/vsimem/test_envi_nodata.dat'
-    ds = gdal.GetDriverByName('ENVI').Create(filename, 1, 1)
+    filename = "/vsimem/test_envi_nodata.dat"
+    ds = gdal.GetDriverByName("ENVI").Create(filename, 1, 1)
     ds.GetRasterBand(1).SetNoDataValue(1)
     ds = None
 
-    gdal.Unlink(filename + '.aux.xml')
+    gdal.Unlink(filename + ".aux.xml")
 
     ds = gdal.Open(filename)
     assert ds.GetRasterBand(1).GetNoDataValue() == 1.0
     ds = None
 
-    gdal.GetDriverByName('ENVI').Delete(filename)
+    gdal.GetDriverByName("ENVI").Delete(filename)
 
 
 ###############################################################################
@@ -433,75 +466,83 @@ def test_envi_nodata():
 
 def test_envi_rotation_180():
 
-    filename = '/vsimem/test_envi_rotation_180.dat'
-    ds = gdal.GetDriverByName('ENVI').Create(filename, 1, 1)
-    ds.SetGeoTransform([0,10,0,0,0,10])
+    filename = "/vsimem/test_envi_rotation_180.dat"
+    ds = gdal.GetDriverByName("ENVI").Create(filename, 1, 1)
+    ds.SetGeoTransform([0, 10, 0, 0, 0, 10])
     ds = None
 
-    gdal.Unlink(filename + '.aux.xml')
+    gdal.Unlink(filename + ".aux.xml")
 
     ds = gdal.Open(filename)
     got_gt = ds.GetGeoTransform()
-    assert got_gt == (0,10,0,0,0,10)
+    assert got_gt == (0, 10, 0, 0, 0, 10)
     ds = None
 
-    gdal.GetDriverByName('ENVI').Delete(filename)
+    gdal.GetDriverByName("ENVI").Delete(filename)
+
 
 ###############################################################################
 # Test writing different interleaving
 
 
-@pytest.mark.parametrize('interleaving', ['bip', 'bil', 'bsq'])
-@pytest.mark.parametrize('explicit', [True, False])
+@pytest.mark.parametrize("interleaving", ["bip", "bil", "bsq"])
+@pytest.mark.parametrize("explicit", [True, False])
 def test_envi_writing_interleaving(interleaving, explicit):
 
-    srcfilename = 'data/envi/envi_rgbsmall_' + interleaving + '.img'
-    dstfilename = '/vsimem/out'
+    srcfilename = "data/envi/envi_rgbsmall_" + interleaving + ".img"
+    dstfilename = "/vsimem/out"
     try:
-        creationOptions = ['INTERLEAVE=' + interleaving] if explicit else []
-        gdal.Translate(dstfilename, srcfilename,
-                       format = 'ENVI',
-                       creationOptions=creationOptions)
-        ref_data = open(srcfilename, 'rb').read()
-        f = gdal.VSIFOpenL(dstfilename, 'rb')
+        creationOptions = ["INTERLEAVE=" + interleaving] if explicit else []
+        gdal.Translate(
+            dstfilename, srcfilename, format="ENVI", creationOptions=creationOptions
+        )
+        ref_data = open(srcfilename, "rb").read()
+        f = gdal.VSIFOpenL(dstfilename, "rb")
         if f:
             got_data = gdal.VSIFReadL(1, len(ref_data), f)
             gdal.VSIFCloseL(f)
             assert got_data == ref_data
     finally:
         gdal.Unlink(dstfilename)
-        gdal.Unlink(dstfilename + '.hdr')
+        gdal.Unlink(dstfilename + ".hdr")
+
 
 ###############################################################################
 # Test writing different interleaving (larger file)
 
 
-@pytest.mark.parametrize('interleaving', ['bip', 'bil', 'bsq'])
+@pytest.mark.parametrize("interleaving", ["bip", "bil", "bsq"])
 def test_envi_writing_interleaving_larger_file(interleaving):
 
-    dstfilename = '/vsimem/out'
+    dstfilename = "/vsimem/out"
     try:
         xsize = 10000
         ysize = 10
         bands = 100
         with gdaltest.SetCacheMax(xsize * (ysize // 2)):
-            ds = gdal.GetDriverByName('ENVI').Create(dstfilename, xsize, ysize, bands, options = ['INTERLEAVE=' + interleaving])
+            ds = gdal.GetDriverByName("ENVI").Create(
+                dstfilename, xsize, ysize, bands, options=["INTERLEAVE=" + interleaving]
+            )
             ds.GetRasterBand(1).Fill(1)
             for i in range(bands):
-                v = struct.pack('B', i+1)
-                ds.GetRasterBand(i+1).WriteRaster(0, 0, xsize, ysize // 2, v * (xsize * (ysize // 2)))
+                v = struct.pack("B", i + 1)
+                ds.GetRasterBand(i + 1).WriteRaster(
+                    0, 0, xsize, ysize // 2, v * (xsize * (ysize // 2))
+                )
             for i in range(bands):
-                v = struct.pack('B', i+1)
-                ds.GetRasterBand(i+1).WriteRaster(0, ysize // 2, xsize, ysize // 2, v * (xsize * (ysize // 2)))
+                v = struct.pack("B", i + 1)
+                ds.GetRasterBand(i + 1).WriteRaster(
+                    0, ysize // 2, xsize, ysize // 2, v * (xsize * (ysize // 2))
+                )
             ds = None
 
         ds = gdal.Open(dstfilename)
         for i in range(bands):
-            v = struct.pack('B', i+1)
-            assert ds.GetRasterBand(i+1).ReadRaster() == v * (xsize * ysize)
+            v = struct.pack("B", i + 1)
+            assert ds.GetRasterBand(i + 1).ReadRaster() == v * (xsize * ysize)
     finally:
         gdal.Unlink(dstfilename)
-        gdal.Unlink(dstfilename + '.hdr')
+        gdal.Unlink(dstfilename + ".hdr")
 
 
 ###############################################################################
@@ -545,13 +586,14 @@ def test_envi_add_hdr():
     drv.Delete("/vsimem/test.int")
     drv.Delete("/vsimem/test.int.mph")
 
+
 ###############################################################################
 # Test .hdr as an additional extension, not a replacement one
 
 
 def test_envi_edit_coordinate_system_string():
 
-    filename = '/vsimem/test.bin'
+    filename = "/vsimem/test.bin"
     drv = gdal.GetDriverByName("ENVI")
     ds = drv.Create(filename, 1, 1)
     srs = osr.SpatialReference()
@@ -565,12 +607,12 @@ def test_envi_edit_coordinate_system_string():
     ds.SetSpatialRef(srs)
     ds = None
 
-    fp = gdal.VSIFOpenL(filename[0:-4] + '.hdr', 'rb')
+    fp = gdal.VSIFOpenL(filename[0:-4] + ".hdr", "rb")
     assert fp
-    content = gdal.VSIFReadL(1, 1000, fp).decode('utf-8')
+    content = gdal.VSIFReadL(1, 1000, fp).decode("utf-8")
     gdal.VSIFCloseL(fp)
 
-    assert content.count('coordinate system string') == 1
+    assert content.count("coordinate system string") == 1
 
     ds = gdal.Open(filename)
     assert ds.GetSpatialRef().IsProjected()

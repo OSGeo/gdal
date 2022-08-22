@@ -75,7 +75,7 @@ static void Usage(const char* pszErrorMsg = nullptr)
             "                                        proj4, epsg,\n"
 #endif
             "                                        wkt1, wkt_simple, wkt_noct, wkt_esri,\n"
-            "                                        wkt2, wkt2_2015, wkt2_2018, mapinfo, xml }\n\n" );
+            "                                        wkt2, wkt2_2015, wkt2_2019, mapinfo, xml }\n\n" );
 
     if( pszErrorMsg != nullptr )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
@@ -247,7 +247,7 @@ MAIN_START(argc, argv)
                 if ( bFindEPSG )
                     printf("\nEPSG:%d\n\n",nEPSGCode);
                 const char* papszOutputTypes[] =
-                    {"proj4", "wkt1", "wkt2_2015", "wkt2_2018", "wkt_simple","wkt_noct","wkt_esri","mapinfo","xml",
+                    {"proj4", "wkt1", "wkt2_2015", "wkt2_2019", "wkt_simple","wkt_noct","wkt_esri","mapinfo","xml",
 #if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 2
                      "PROJJSON",
 #endif
@@ -256,7 +256,7 @@ MAIN_START(argc, argv)
             }
             else if ( EQUAL("wkt_all", pszOutputType ) ) {
                 const char* papszOutputTypes[] =
-                    { "wkt1", "wkt2_2015", "wkt2_2018", "wkt_simple", "wkt_noct", "wkt_esri", nullptr };
+                    { "wkt1", "wkt2_2015", "wkt2_2019", "wkt_simple", "wkt_noct", "wkt_esri", nullptr };
                 PrintSRSOutputTypes( oSRS, papszOutputTypes, bPretty );
             }
             else {
@@ -488,8 +488,9 @@ CPLErr PrintSRS( const OGRSpatialReference &oSRS,
 
     else if ( EQUAL("wkt", pszOutputType ) ||
               EQUAL("wkt2", pszOutputType ) ||
-              EQUAL("wkt2_2018", pszOutputType ) ) {
-        if ( bPrintSep ) printf("OGC WKT2:2018 :\n");
+              EQUAL("wkt2_2018", pszOutputType ) ||
+              EQUAL("wkt2_2019", pszOutputType ) ) {
+        if ( bPrintSep ) printf("OGC WKT2:2019 :\n");
         const char* const apszOptions[] = {
             "FORMAT=WKT2_2018", bPretty ? "MULTILINE=YES" : nullptr, nullptr };
         oSRS.exportToWkt(&pszOutput, apszOptions);

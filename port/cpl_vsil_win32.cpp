@@ -79,6 +79,7 @@ public:
                       { (void) pszFilename; return FALSE; }
     virtual GIntBig  GetDiskFreeSpace( const char* pszDirname ) override;
     virtual int SupportsSparseFiles( const char* pszPath ) override;
+    virtual bool      IsLocal( const char* pszPath ) override;
 };
 
 /************************************************************************/
@@ -1010,6 +1011,24 @@ int VSIWin32FilesystemHandler::SupportsSparseFiles( const char* pszPath )
     GetVolumeInformation(osPath.c_str(), nullptr, 0, nullptr,
                          nullptr, &dwVolFlags, nullptr, 0);
     return (dwVolFlags & FILE_SUPPORTS_SPARSE_FILES);
+}
+
+/************************************************************************/
+/*                          IsLocal()                                   */
+/************************************************************************/
+
+bool VSIWin32FilesystemHandler::IsLocal( const char* pszPath)
+{
+    if( STARTS_WITH(pszPath, "\\\\" ) || STARTS_WITH(pszPath, "//" ) )
+        return false;
+    std::string osPath(pszPath);
+    if( osPath.size() >= 3 && osPath[1] == ':' &&
+        (osPath[2] == '\\' || osPath[2] == '/') )
+    {
+        osPath.resize( 3 );
+        return GetDriveType(osPath.c_str()) != DRIVE_REMOTE;
+    }
+    return true;
 }
 
 /************************************************************************/

@@ -28,11 +28,10 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import gdal
-
-
 import gdaltest
 import pytest
+
+from osgeo import gdal
 
 #
 # The rasdaman DB must be created like this :
@@ -46,13 +45,15 @@ import pytest
 
 
 def test_rasdaman_1():
-    gdaltest.rasdamanDriver = gdal.GetDriverByName('RASDAMAN')
+    gdaltest.rasdamanDriver = gdal.GetDriverByName("RASDAMAN")
     if gdaltest.rasdamanDriver is None:
         pytest.skip()
 
     try:
-        ds = gdal.Open("rasdaman:query='select a[$x_lo:$x_hi,$y_lo:$y_hi] from rgb as a'")
-    except:
+        ds = gdal.Open(
+            "rasdaman:query='select a[$x_lo:$x_hi,$y_lo:$y_hi] from rgb as a'"
+        )
+    except Exception:
         gdaltest.rasdamanDriver = None
 
     if ds is None:
@@ -62,7 +63,8 @@ def test_rasdaman_1():
         pytest.skip()
 
     cs = ds.GetRasterBand(1).Checksum()
-    assert cs == 61774, 'did not get expected checksum'
+    assert cs == 61774, "did not get expected checksum"
+
 
 ###############################################################################
 # Test opening a non existing collection
@@ -72,8 +74,11 @@ def test_rasdaman_2():
     if gdaltest.rasdamanDriver is None:
         pytest.skip()
 
-    ds = gdal.Open("rasdaman:query='select a[$x_lo:$x_hi,$y_lo:$y_hi] from notexisting as a'")
+    ds = gdal.Open(
+        "rasdaman:query='select a[$x_lo:$x_hi,$y_lo:$y_hi] from notexisting as a'"
+    )
     assert ds is None
+
 
 ###############################################################################
 # Test syntax error
@@ -86,6 +91,3 @@ def test_rasdaman_3():
     ds = gdal.Open("rasdaman:query='select'")
 
     assert ds is None
-
-
-

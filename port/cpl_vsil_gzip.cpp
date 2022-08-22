@@ -254,6 +254,9 @@ public:
 
     const char* GetOptions() override;
 
+    virtual bool    SupportsSequentialWrite( const char* pszPath, bool bAllowLocalTempFile ) override;
+    virtual bool    SupportsRandomWrite( const char* /* pszPath */, bool /* bAllowLocalTempFile */ ) override { return false; }
+
     void SaveInfo( VSIGZipHandle* poHandle );
     void SaveInfo_unlocked( VSIGZipHandle* poHandle );
 };
@@ -2202,6 +2205,20 @@ VSIVirtualHandle* VSIGZipFilesystemHandler::Open( const char *pszFilename,
         return VSICreateBufferedReaderHandle(poGZIPHandle);
 
     return nullptr;
+}
+
+/************************************************************************/
+/*                      SupportsSequentialWrite()                       */
+/************************************************************************/
+
+bool VSIGZipFilesystemHandler::SupportsSequentialWrite( const char* pszPath, bool bAllowLocalTempFile )
+{
+    if( !STARTS_WITH_CI(pszPath, "/vsigzip/") )
+        return false;
+    const char* pszBaseFileName = pszPath + strlen("/vsigzip/");
+    VSIFilesystemHandler *poFSHandler =
+        VSIFileManager::GetHandler(pszBaseFileName);
+    return poFSHandler->SupportsSequentialWrite(pszPath, bAllowLocalTempFile);
 }
 
 /************************************************************************/

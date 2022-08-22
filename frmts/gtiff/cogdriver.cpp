@@ -73,8 +73,17 @@ static bool HasZSTDCompression()
 static CPLString GetTmpFilename(const char* pszFilename,
                                 const char* pszExt)
 {
+    const bool bSupportsRandomWrite = VSISupportsRandomWrite(pszFilename, false);
     CPLString osTmpFilename;
-    osTmpFilename.Printf("%s.%s", pszFilename, pszExt);
+    if( !bSupportsRandomWrite ||
+        CPLGetConfigOption( "CPL_TMPDIR", nullptr ) != nullptr )
+    {
+        osTmpFilename = CPLGenerateTempFilename(CPLGetBasename(pszFilename));
+    }
+    else
+        osTmpFilename = pszFilename;
+    osTmpFilename += '.';
+    osTmpFilename += pszExt;
     VSIUnlink(osTmpFilename);
     return osTmpFilename;
 }

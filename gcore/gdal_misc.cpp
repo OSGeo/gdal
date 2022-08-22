@@ -50,11 +50,7 @@
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
-#ifdef GDAL_CMAKE_BUILD
 #include "gdal_version_full/gdal_version.h"
-#else
-#include "gdal_version.h"
-#endif
 #include "gdal.h"
 #include "gdal_mdreader.h"
 #include "gdal_priv.h"
@@ -4226,9 +4222,7 @@ bool GDALCanReliablyUseSiblingFileList(const char* pszFilename)
             // non-ASCII character found
 
             // if this is a network storage, assume no issue
-            if( strstr(pszFilename, "/vsicurl/") ||
-                strstr(pszFilename, "/vsis3/") ||
-                strstr(pszFilename, "/vsicurl/") )
+            if( !VSIIsLocal(pszFilename) )
             {
                 return true;
             }

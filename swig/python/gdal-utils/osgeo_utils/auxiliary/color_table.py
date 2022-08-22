@@ -34,8 +34,12 @@ from typing import Optional, Union
 
 from osgeo import gdal
 from osgeo_utils.auxiliary.base import PathLikeOrStr
-from osgeo_utils.auxiliary.util import open_ds, PathOrDS
-from osgeo_utils.auxiliary.color_palette import get_color_palette, ColorPaletteOrPathOrStrings, ColorPalette
+from osgeo_utils.auxiliary.color_palette import (
+    ColorPalette,
+    ColorPaletteOrPathOrStrings,
+    get_color_palette,
+)
+from osgeo_utils.auxiliary.util import PathOrDS, open_ds
 
 ColorTableLike = Union[gdal.ColorTable, ColorPaletteOrPathOrStrings]
 
@@ -50,11 +54,16 @@ def get_color_table_from_raster(path_or_ds: PathOrDS) -> Optional[gdal.ColorTabl
     return ct.Clone()
 
 
-def color_table_from_color_palette(pal: ColorPalette, color_table: gdal.ColorTable,
-                                   fill_missing_colors=True, min_key=0, max_key=255) -> bool:
-    """ returns None if pal has no values, otherwise returns a gdal.ColorTable from the given ColorPalette"""
+def color_table_from_color_palette(
+    pal: ColorPalette,
+    color_table: gdal.ColorTable,
+    fill_missing_colors=True,
+    min_key=0,
+    max_key=255,
+) -> bool:
+    """returns None if pal has no values, otherwise returns a gdal.ColorTable from the given ColorPalette"""
     if not pal.pal or not pal.is_numeric():
-        raise Exception('palette has no values or not fully numeric')
+        raise Exception("palette has no values or not fully numeric")
     if fill_missing_colors:
         keys = sorted(list(pal.pal.keys()))
         if min_key is None:
@@ -68,14 +77,18 @@ def color_table_from_color_palette(pal: ColorPalette, color_table: gdal.ColorTab
             color_table.SetColorEntry(key, c)
     else:
         for key, col in pal.pal.items():
-            color_table.SetColorEntry(key, pal.color_to_color_entry(col))  # set color for each key
+            color_table.SetColorEntry(
+                key, pal.color_to_color_entry(col)
+            )  # set color for each key
     return True
 
 
-def get_color_table(color_palette_or_path_or_strings_or_ds: Optional[ColorTableLike],
-                    **kwargs) -> Optional[gdal.ColorTable]:
-    if (color_palette_or_path_or_strings_or_ds is None or
-       isinstance(color_palette_or_path_or_strings_or_ds, gdal.ColorTable)):
+def get_color_table(
+    color_palette_or_path_or_strings_or_ds: Optional[ColorTableLike], **kwargs
+) -> Optional[gdal.ColorTable]:
+    if color_palette_or_path_or_strings_or_ds is None or isinstance(
+        color_palette_or_path_or_strings_or_ds, gdal.ColorTable
+    ):
         return color_palette_or_path_or_strings_or_ds
 
     if isinstance(color_palette_or_path_or_strings_or_ds, gdal.Dataset):
@@ -86,7 +99,7 @@ def get_color_table(color_palette_or_path_or_strings_or_ds: Optional[ColorTableL
         color_table = gdal.ColorTable()
         res = color_table_from_color_palette(pal, color_table, **kwargs)
         return color_table if res else None
-    except:
+    except Exception:
         # the input might be a filename of a raster file
         return get_color_table_from_raster(color_palette_or_path_or_strings_or_ds)
 
@@ -106,7 +119,9 @@ def get_fixed_color_table(c=(0, 0, 0, 0), count=1):
     return color_table
 
 
-def are_equal_color_table(color_table1: gdal.ColorTable, color_table2: gdal.ColorTable) -> bool:
+def are_equal_color_table(
+    color_table1: gdal.ColorTable, color_table2: gdal.ColorTable
+) -> bool:
     if color_table1.GetCount() != color_table2.GetCount():
         return False
     for i in range(color_table1.GetCount()):
@@ -117,16 +132,18 @@ def are_equal_color_table(color_table1: gdal.ColorTable, color_table2: gdal.Colo
     return True
 
 
-def write_color_table_to_file(color_table: gdal.ColorTable, color_filename: Optional[PathLikeOrStr]):
+def write_color_table_to_file(
+    color_table: gdal.ColorTable, color_filename: Optional[PathLikeOrStr]
+):
     tmp_fd = None
     if color_filename is None:
-        tmp_fd, color_filename = tempfile.mkstemp(suffix='.txt')
+        tmp_fd, color_filename = tempfile.mkstemp(suffix=".txt")
     os.makedirs(os.path.dirname(color_filename), exist_ok=True)
-    with open(color_filename, mode='w') as fp:
+    with open(color_filename, mode="w") as fp:
         for i in range(color_table.GetCount()):
             color_entry = color_table.GetColorEntry(i)
-            color_entry = ' '.join(str(c) for c in color_entry)
-            fp.write('{} {}\n'.format(i, color_entry))
+            color_entry = " ".join(str(c) for c in color_entry)
+            fp.write("{} {}\n".format(i, color_entry))
     if tmp_fd:
         os.close(tmp_fd)
     return color_filename

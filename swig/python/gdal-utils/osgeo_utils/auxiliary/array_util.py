@@ -28,7 +28,7 @@
 #  DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
 import array
-from typing import Union, Sequence, TYPE_CHECKING
+from typing import TYPE_CHECKING, Sequence, Union
 
 ScalarLike = Union[
     int,
@@ -51,6 +51,7 @@ else:
 
 try:
     from numpy import ndarray
+
     ArrayLike = Union[ArrayLike, ndarray]
 except ImportError:
     pass
@@ -58,11 +59,18 @@ except ImportError:
 ArrayOrScalarLike = Union[ArrayLike, ScalarLike]
 
 
-def array_dist(x: ArrayOrScalarLike, y: ArrayOrScalarLike, is_max: bool = True) -> ScalarLike:
+def array_dist(
+    x: ArrayOrScalarLike, y: ArrayOrScalarLike, is_max: bool = True
+) -> ScalarLike:
     if isinstance(x, ScalarLike.__args__):
-        return abs(x-y)
+        return abs(x - y)
     try:
         from osgeo_utils.auxiliary.numpy_util import array_dist as np_array_dist
+
         return np_array_dist(x=x, y=y, is_max=is_max)
     except ImportError:
-        return max(abs(a-b) for a, b in zip(x, y)) if is_max else max(abs(a-b) for a, b in zip(x, y))
+        return (
+            max(abs(a - b) for a, b in zip(x, y))
+            if is_max
+            else max(abs(a - b) for a, b in zip(x, y))
+        )

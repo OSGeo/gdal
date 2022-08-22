@@ -29,7 +29,6 @@
 ###############################################################################
 
 
-
 import gdaltest
 
 ###############################################################################
@@ -38,8 +37,5 @@ import gdaltest
 
 def test_mff2_1():
 
-    tst = gdaltest.GDALTest('MFF2', 'mff2/bytemff2', 1, 4672)
+    tst = gdaltest.GDALTest("MFF2", "mff2/bytemff2", 1, 4672)
     return tst.testOpen()
-
-
-

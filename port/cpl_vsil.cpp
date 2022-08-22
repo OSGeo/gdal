@@ -959,6 +959,85 @@ int VSISupportsSparseFiles( const char* pszPath )
 }
 
 /************************************************************************/
+/*                           VSIIsLocal()                               */
+/************************************************************************/
+
+/**
+ * \brief Returns if the file/filesystem is "local".
+ *
+ * The concept of local is mostly by opposition with a network / remote
+ * file system whose access time can be long.
+ *
+ * /vsimem/ is considered to be a local file system, although a non-persistent
+ * one.
+ *
+ * @param pszPath the path of the filesystem object to be tested.
+ * UTF-8 encoded.
+ *
+ * @return TRUE or FALSE
+ *
+ * @since GDAL 3.6
+ */
+
+bool VSIIsLocal( const char* pszPath )
+{
+    VSIFilesystemHandler *poFSHandler =
+        VSIFileManager::GetHandler( pszPath );
+
+    return poFSHandler->IsLocal( pszPath );
+}
+
+/************************************************************************/
+/*                      VSISupportsSequentialWrite()                    */
+/************************************************************************/
+
+/**
+ * \brief Returns if the filesystem supports sequential write.
+ *
+ * @param pszPath the path of the filesystem object to be tested.
+ * UTF-8 encoded.
+ * @param bAllowLocalTempFile whether the file system is allowed to use a
+ * local temporary file before uploading to the target location.
+ *
+ * @return TRUE or FALSE
+ *
+ * @since GDAL 3.6
+ */
+
+bool VSISupportsSequentialWrite( const char* pszPath, bool bAllowLocalTempFile )
+{
+    VSIFilesystemHandler *poFSHandler =
+        VSIFileManager::GetHandler( pszPath );
+
+    return poFSHandler->SupportsSequentialWrite( pszPath, bAllowLocalTempFile );
+}
+
+/************************************************************************/
+/*                      VSISupportsRandomWrite()                        */
+/************************************************************************/
+
+/**
+ * \brief Returns if the filesystem supports random write.
+ *
+ * @param pszPath the path of the filesystem object to be tested.
+ * UTF-8 encoded.
+ * @param bAllowLocalTempFile whether the file system is allowed to use a
+ * local temporary file before uploading to the target location.
+ *
+ * @return TRUE or FALSE
+ *
+ * @since GDAL 3.6
+ */
+
+bool VSISupportsRandomWrite( const char* pszPath, bool bAllowLocalTempFile )
+{
+    VSIFilesystemHandler *poFSHandler =
+        VSIFileManager::GetHandler( pszPath );
+
+    return poFSHandler->SupportsRandomWrite( pszPath, bAllowLocalTempFile );
+}
+
+/************************************************************************/
 /*                     VSIHasOptimizedReadMultiRange()                  */
 /************************************************************************/
 

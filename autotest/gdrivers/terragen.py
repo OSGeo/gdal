@@ -28,18 +28,19 @@
 ###############################################################################
 
 
+import gdaltest
 
 from osgeo import gdal
-import gdaltest
 
 ###############################################################################
 
 
 def test_terragen_1():
 
-    tst = gdaltest.GDALTest('terragen', 'terragen/float32.ter', 1, 1128)
+    tst = gdaltest.GDALTest("terragen", "terragen/float32.ter", 1, 1128)
 
     return tst.testOpen()
+
 
 ###############################################################################
 # Write
@@ -47,14 +48,14 @@ def test_terragen_1():
 
 def test_terragen_2():
 
-    gdal.Translate('/vsimem/out.ter', 'data/float32.tif', options='-of TERRAGEN -co MINUSERPIXELVALUE=74 -co MAXUSERPIXELVALUE=255')
-    gdal.Translate('/vsimem/out.tif', '/vsimem/out.ter', options='-unscale')
-    ds = gdal.Open('/vsimem/out.tif')
+    gdal.Translate(
+        "/vsimem/out.ter",
+        "data/float32.tif",
+        options="-of TERRAGEN -co MINUSERPIXELVALUE=74 -co MAXUSERPIXELVALUE=255",
+    )
+    gdal.Translate("/vsimem/out.tif", "/vsimem/out.ter", options="-unscale")
+    ds = gdal.Open("/vsimem/out.tif")
     assert ds.GetRasterBand(1).Checksum() == 4672
     ds = None
-    gdal.GetDriverByName('TERRAGEN').Delete('/vsimem/out.ter')
-    gdal.GetDriverByName('TERRAGEN').Delete('/vsimem/out.tif')
-
-
-
-
+    gdal.GetDriverByName("TERRAGEN").Delete("/vsimem/out.ter")
+    gdal.GetDriverByName("TERRAGEN").Delete("/vsimem/out.tif")

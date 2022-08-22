@@ -33,14 +33,14 @@ import pytest
 from osgeo import gdal, osr
 
 # test that osgeo_utils and numpy are available, otherwise skip all tests
-pytest.importorskip('osgeo_utils')
+pytest.importorskip("osgeo_utils")
 
-from osgeo_utils.auxiliary import osr_util, array_util
+from osgeo_utils.auxiliary import array_util, osr_util
 
 
 def test_gis_order():
     pj4326_gis2 = osr_util.get_srs(4326)  # tests the correct default
-    if gdal.GetConfigOption('OSR_DEFAULT_AXIS_MAPPING_STRATEGY') is None:
+    if gdal.GetConfigOption("OSR_DEFAULT_AXIS_MAPPING_STRATEGY") is None:
         assert pj4326_gis2.GetAxisMappingStrategy() == osr.OAMS_AUTHORITY_COMPLIANT
 
     pj4326_auth = osr_util.get_srs(4326, axis_order=osr.OAMS_AUTHORITY_COMPLIANT)
@@ -50,7 +50,7 @@ def test_gis_order():
     assert pj4326_gis.GetAxisMappingStrategy() == osr.OAMS_TRADITIONAL_GIS_ORDER
 
     assert not osr_util.are_srs_equivalent(pj4326_gis, pj4326_auth)
-    if gdal.GetConfigOption('OSR_DEFAULT_AXIS_MAPPING_STRATEGY') is None:
+    if gdal.GetConfigOption("OSR_DEFAULT_AXIS_MAPPING_STRATEGY") is None:
         assert osr_util.are_srs_equivalent(pj4326_auth, 4326)
         assert not osr_util.are_srs_equivalent(pj4326_gis, 4326)
 
@@ -60,7 +60,7 @@ def test_gis_order():
     # axis order is not reflected in proj strings
     assert isinstance(pj4326_str, str) and pj4326_str == pj4326_str2
 
-    if gdal.GetConfigOption('OSR_DEFAULT_AXIS_MAPPING_STRATEGY') is None:
+    if gdal.GetConfigOption("OSR_DEFAULT_AXIS_MAPPING_STRATEGY") is None:
         assert osr_util.are_srs_equivalent(pj4326_str, 4326)
     assert osr_util.are_srs_equivalent(pj4326_auth, pj4326_str)
     assert not osr_util.are_srs_equivalent(pj4326_gis, pj4326_str)
@@ -68,7 +68,7 @@ def test_gis_order():
     osr_util.set_default_axis_order(osr.OAMS_TRADITIONAL_GIS_ORDER)  # sets gis order
 
     srs = osr_util.get_srs(4326)  # check the the default was changed
-    if gdal.GetConfigOption('OSR_DEFAULT_AXIS_MAPPING_STRATEGY') is None:
+    if gdal.GetConfigOption("OSR_DEFAULT_AXIS_MAPPING_STRATEGY") is None:
         assert srs.GetAxisMappingStrategy() == osr.OAMS_TRADITIONAL_GIS_ORDER
 
     # check that srs object is not affected by default
@@ -98,11 +98,11 @@ def test_gis_order():
     osr_util.set_default_axis_order()
 
     srs = osr_util.get_srs(4326)  # check the the default was restored
-    if gdal.GetConfigOption('OSR_DEFAULT_AXIS_MAPPING_STRATEGY') is None:
+    if gdal.GetConfigOption("OSR_DEFAULT_AXIS_MAPPING_STRATEGY") is None:
         assert srs.GetAxisMappingStrategy() == osr.OAMS_AUTHORITY_COMPLIANT
 
     srs = osr_util.get_srs(pj4326_str)
-    if gdal.GetConfigOption('OSR_DEFAULT_AXIS_MAPPING_STRATEGY') is None:
+    if gdal.GetConfigOption("OSR_DEFAULT_AXIS_MAPPING_STRATEGY") is None:
         assert srs.GetAxisMappingStrategy() == osr.OAMS_AUTHORITY_COMPLIANT
 
     # check that srs object is not affected by default
@@ -124,11 +124,11 @@ def test_gis_order2():
     srs_from_epsg = osr.SpatialReference()
     srs_from_epsg.ImportFromEPSG(4326)
 
-    if gdal.GetConfigOption('OSR_DEFAULT_AXIS_MAPPING_STRATEGY') is None:
+    if gdal.GetConfigOption("OSR_DEFAULT_AXIS_MAPPING_STRATEGY") is None:
         assert srs_from_epsg.GetAxisMappingStrategy() == osr.OAMS_AUTHORITY_COMPLIANT
     srs_from_str = osr.SpatialReference()
     srs_from_str.ImportFromProj4(pj4326_str)
-    if gdal.GetConfigOption('OSR_DEFAULT_AXIS_MAPPING_STRATEGY') is None:
+    if gdal.GetConfigOption("OSR_DEFAULT_AXIS_MAPPING_STRATEGY") is None:
         assert srs_from_str.GetAxisMappingStrategy() == osr.OAMS_AUTHORITY_COMPLIANT
         assert srs_from_epsg.IsSame(srs_from_str)
 
@@ -169,4 +169,3 @@ def test_transform():
         osr_util.transform_points(ct, x, y)
         d = array_util.array_dist(x, utm_x), array_util.array_dist(y, utm_y)
         assert max(d) < 0.01
-

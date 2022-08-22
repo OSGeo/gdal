@@ -29,7 +29,6 @@
 ###############################################################################
 
 
-
 import gdaltest
 
 ###############################################################################
@@ -38,8 +37,5 @@ import gdaltest
 
 def test_dipex_1():
 
-    tst = gdaltest.GDALTest('DIPEx', 'dipex/fakedipex.dat', 1, 1)
+    tst = gdaltest.GDALTest("DIPEx", "dipex/fakedipex.dat", 1, 1)
     return tst.testOpen()
-
-
-
