@@ -510,7 +510,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
                  // full height
                  idr.plannedCoverage_hrv.lowerNorthLinePlanned == idr.plannedCoverage_hrv.lowerSouthLinePlanned + poDS->nRasterYSize -1
                  )
-    {
+        {
             poDS->nRasterXSize *= 3;
             poDS->m_Shape = RSS;
         }
@@ -648,12 +648,6 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
 
     OGRSpatialReference oSRS;
 
-    //int i;
-    for (i=0; i<6; ++i)
-    {
-        CPLDebugOnly("MSGN", "adf transform %12.3f\n", poDS->adfGeoTransform[i]);
-    }
-
     oSRS.SetProjCS("Geostationary projection (MSG)");
 
     oSRS.SetGeogCS(
@@ -675,7 +669,6 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLFree(poDS->pszProjection);
     poDS->pszProjection = nullptr;
     oSRS.exportToWkt( &(poDS->pszProjection) );
-    CPLDebug("MSGN", "WKT: %s", poDS->pszProjection);
     }
 
     const CALIBRATION* cal = poDS->msg_reader_core->get_calibration_parameters();
