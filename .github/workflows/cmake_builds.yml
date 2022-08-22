@@ -78,7 +78,7 @@ jobs:
         # Download and compile odbc-cpp-wrapper
         sudo apt-get install -y -q cmake
         wget https://github.com/SAP/odbc-cpp-wrapper/archive/refs/tags/v1.1.tar.gz -O odbc-cpp-wrapper.tar.gz \
-          && mkdir odbc-cpp-wrapper
+          && mkdir odbc-cpp-wrapper \
           && tar -xvf odbc-cpp-wrapper.tar.gz -C odbc-cpp-wrapper --strip-components=1 \
           && mkdir odbc-cpp-wrapper/build \
           && cd odbc-cpp-wrapper/build \
