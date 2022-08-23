@@ -136,11 +136,16 @@ curl -v -j -k -s -L -H "Cookie: eula_3_1_agreed=tools.hana.ondemand.com/develope
 export PATH=/usr/sap/hdbclient:$PATH
 
 # Download and compile odbc-cpp-wrapper
-git clone https://github.com/SAP/odbc-cpp-wrapper.git \
+ODBCCPP_VERSION=1.1
+mkdir odbc-cpp-wrapper \
+  && wget -q https://github.com/SAP/odbc-cpp-wrapper/archive/refs/tags/v${ODBCCPP_VERSION}.tar.gz -O - \
+      | tar xz -C odbc-cpp-wrapper --strip-components=1 \
   && mkdir odbc-cpp-wrapper/build \
   && cd odbc-cpp-wrapper/build \
   && cmake .. \
   && make -j 2 \
-  && make install
+  && make install \
+  && cd ../.. \
+  && rm -rf odbc-cpp-wrapper
 
 ldconfig

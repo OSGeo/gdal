@@ -947,6 +947,40 @@ def test_ogr_hana_30():
 
 
 ###############################################################################
+# Test string encoding when creating new layers
+
+
+def test_ogr_hana_31():
+    ds = open_datasource(1)
+    layer_name = get_test_name() + "_TABLE_\U0001f608"
+    layer = ds.CreateLayer(layer_name)
+    assert layer is not None
+    assert layer.GetName() == layer_name, pytest.fail(
+        "GetName() returned %s instead of %s" % (layer.GetName(), layer_name)
+    )
+
+    ds = open_datasource(0)
+    layer = ds.GetLayerByName(layer_name)
+    assert layer is not None
+
+
+###############################################################################
+# Test string encoding in DataSource::ExecuteSQL
+
+
+def test_ogr_hana_32():
+    ds = open_datasource(1)
+    layer_name = get_test_name() + "_TABLE_\U0001f608"
+    sql = "CREATE COLUMN TABLE %s (A INT, B INT)" % layer_name
+    with gdaltest.error_handler():
+        ds.ExecuteSQL(sql)
+
+    ds = open_datasource(0)
+    layer = ds.CreateLayer(layer_name)
+    assert layer is not None
+
+
+###############################################################################
 #  Create a table from data/poly.shp
 
 

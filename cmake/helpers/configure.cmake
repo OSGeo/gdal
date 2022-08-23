@@ -43,6 +43,10 @@ check_type_size("unsigned long" SIZEOF_UNSIGNED_LONG)
 check_type_size("void*" SIZEOF_VOIDP)
 check_type_size("size_t" SIZEOF_SIZE_T)
 
+if(MSVC AND NOT BUILD_SHARED_LIBS)
+  set(CPL_DISABLE_DLL 1)
+endif()
+
 if (MSVC)
   set(HAVE_VSNPRINTF 1)
 

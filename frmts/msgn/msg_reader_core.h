@@ -92,6 +92,8 @@ public:
 
     float get_col_dir_step() const { return _col_dir_step; }
     float get_line_dir_step() const { return _line_dir_step; }
+    float get_hrv_col_dir_step() const { return _hrv_col_dir_step; }
+    float get_hrv_line_dir_step() const { return _hrv_line_dir_step; }
 
     unsigned int get_f_data_offset() const { return _f_data_offset; }
     unsigned int get_visir_bytes_per_line() const { return _visir_bytes_per_line; }
@@ -120,6 +122,8 @@ protected:
 
     float           _col_dir_step;
     float           _line_dir_step;
+    float           _hrv_col_dir_step;
+    float           _hrv_line_dir_step;
 
     MAIN_PROD_HEADER        _main_header;
     SECONDARY_PROD_HEADER   _sec_header;
@@ -130,6 +134,8 @@ protected:
     unsigned int _f_data_size;
     unsigned int _f_header_offset;
     unsigned int _f_header_size;
+    unsigned int _f_trailer_offset;
+    unsigned int _f_trailer_size;
 
     unsigned int _visir_bytes_per_line;   // packed length of a VISIR line, without headers
     unsigned int _visir_packet_size;      // effectively, the spacing between lines of consecutive bands in bytes
