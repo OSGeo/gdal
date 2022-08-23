@@ -102,10 +102,14 @@ Msg_reader_core::Msg_reader_core( const char* fname ) :
     _col_start(0),
     _col_dir_step(0.0f),
     _line_dir_step(0.0f),
+    _hrv_col_dir_step(0.0f),
+    _hrv_line_dir_step(0.0f),
     _f_data_offset(0),
     _f_data_size(0),
     _f_header_offset(0),
     _f_header_size(0),
+    _f_trailer_offset(0),
+    _f_trailer_size(0),
     _visir_bytes_per_line(0),
     _visir_packet_size(0),
     _hrv_bytes_per_line(0),
@@ -145,10 +149,14 @@ Msg_reader_core::Msg_reader_core( VSILFILE* fp ) :
     _col_start(0),
     _col_dir_step(0.0f),
     _line_dir_step(0.0f),
+    _hrv_col_dir_step(0.0f),
+    _hrv_line_dir_step(0.0f),
     _f_data_offset(0),
     _f_data_size(0),
     _f_header_offset(0),
     _f_header_size(0),
+    _f_trailer_offset(0),
+    _f_trailer_size(0),
     _visir_bytes_per_line(0),
     _visir_packet_size(0),
     _hrv_bytes_per_line(0),
@@ -182,24 +190,27 @@ void Msg_reader_core::read_metadata_block(VSILFILE* fin) {
     CPL_IGNORE_RET_VAL(VSIFReadL(&_main_header, sizeof(_main_header), 1, fin));
     CPL_IGNORE_RET_VAL(VSIFReadL(&_sec_header, sizeof(_sec_header), 1, fin));
 
+    PH_DATA_ID* hdi;
+
 #ifdef DEBUG
     // print out all the fields in the header
     PH_DATA* hd = (PH_DATA*)&_main_header;
-    for (int i=0; i < 6; i++) {
+    for (i=0; i < 6; i++) {
         to_string(*hd);
-        printf("[%02d] %s %s", i, hd->name, hd->value);/*ok*/
+        printf("[%02u] %s %s", i, hd->name, hd->value);/*ok*/
         hd++;
     }
-    PH_DATA_ID* hdi = (PH_DATA_ID*)&_main_header.dataSetIdentification;
 
+    hdi = (PH_DATA_ID*)&_main_header.dataSetIdentification;
     for (i=0; i < 5; i++) {
         printf("%s %s %s", hdi->name, hdi->size, hdi->address);/*ok*/
         hdi++;
     }
+    
     hd = (PH_DATA*)(&_main_header.totalFileSize);
-    for (int i=0; i < 19; i++) {
+    for (i=0; i < 19; i++) {
         to_string(*hd);
-        printf("[%02d] %s %s", i, hd->name, hd->value);/*ok*/
+        printf("[%02u] %s %s", i, hd->name, hd->value);/*ok*/
         hd++;
     }
 #endif // DEBUG
@@ -207,10 +218,13 @@ void Msg_reader_core::read_metadata_block(VSILFILE* fin) {
     // extract data & header positions
 
     for (i=0; i < 5; i++) {
-        PH_DATA_ID* hdi = (PH_DATA_ID*)&_main_header.dataSetIdentification[i];
+        hdi = (PH_DATA_ID*)&_main_header.dataSetIdentification[i];
         if (STARTS_WITH(hdi->name, "15Header")) {
             sscanf(hdi->size, "%u", &_f_header_size);
             sscanf(hdi->address, "%u", &_f_header_offset);
+        } else if (STARTS_WITH(hdi->name, "15Trailer")) {
+            sscanf(hdi->size, "%u", &_f_trailer_size);
+            sscanf(hdi->address, "%u", &_f_trailer_offset);
         } else
             if (STARTS_WITH(hdi->name, "15Data")) {
             sscanf(hdi->size, "%u", &_f_data_size);
@@ -220,20 +234,21 @@ void Msg_reader_core::read_metadata_block(VSILFILE* fin) {
 #ifdef DEBUG
     printf("Data: %u %u\n", _f_data_offset, _f_data_size);/*ok*/
     printf("Header: %u %u\n", _f_header_offset, _f_header_size);/*ok*/
+    printf("Trailer: %u %u\n", _f_trailer_offset, _f_trailer_size);/*ok*/
 #endif // DEBUG
 
     unsigned int lines;
     sscanf(_sec_header.northLineSelectedRectangle.value, "%u", &_lines);
     sscanf(_sec_header.southLineSelectedRectangle.value, "%u", &lines);
     _line_start = lines;
-    if( lines > 0 && _lines >= lines - 1 )
+    if( lines > 0 && _lines >= lines - 1 ) // if starting N of S edge, _lines counts what's there...
         _lines -= lines - 1;
 
     unsigned int cols;
     sscanf(_sec_header.westColumnSelectedRectangle.value, "%u", &_columns);
     sscanf(_sec_header.eastColumnSelectedRectangle.value, "%u", &cols);
     _col_start = cols;
-    if( cols > 0 && _columns >= cols - 1 )
+    if( cols > 0 && _columns >= cols - 1 ) // if starting W of the E edge, _cols counts what's there
         _columns -= cols - 1;
 
 #ifdef DEBUG
@@ -272,7 +287,7 @@ void Msg_reader_core::read_metadata_block(VSILFILE* fin) {
     memcpy((void*)_calibration, (void*)&rad.level1_5ImageCalibration,sizeof(_calibration));
 
 #ifdef DEBUG
-    for (unsigned int i=0; i < MSG_NUM_CHANNELS; i++) {
+    for (i=0; i < MSG_NUM_CHANNELS; i++) {
         if (_calibration[i].cal_slope < 0 || _calibration[i].cal_slope > 0.4)
         {
             printf("Warning: calibration slope (%f) out of nominal range. MSG reader probably broken\n", _calibration[i].cal_slope);/*ok*/
@@ -290,12 +305,17 @@ void Msg_reader_core::read_metadata_block(VSILFILE* fin) {
     CPL_IGNORE_RET_VAL(VSIFReadL(&idr, sizeof(IMAGE_DESCRIPTION_RECORD), 1, fin));
     to_native(idr);
     CPLDebugOnly("MSGN",
+                 "idr.longitudeOfSSP = %g", 
+                 idr.longitudeOfSSP);
+    CPLDebugOnly("MSGN",
                  "referencegrid_visir.numberOfLines = %d, "
                  "referencegrid_visir.numberOfColumns = %d",
                  idr.referencegrid_visir.numberOfLines,
                  idr.referencegrid_visir.numberOfColumns);
     _line_dir_step = idr.referencegrid_visir.lineDirGridStep;
     _col_dir_step = idr.referencegrid_visir.columnDirGridStep;
+    _hrv_line_dir_step = idr.referencegrid_hrv.lineDirGridStep;
+    _hrv_col_dir_step = idr.referencegrid_hrv.columnDirGridStep;
 
     CPLDebugOnly("MSGN", "referencegrid_hrv.numberOfLines = %d, "
                  "referencegrid_hrv.numberOfColumns = %d",
@@ -354,6 +374,13 @@ void Msg_reader_core::read_metadata_block(VSILFILE* fin) {
                  visir_line.channelId,
                  visir_line.lineNumberInVisirGrid,
                  gp_header.packetLength);
+
+        to_native(sub_header);
+
+        CPLDebugOnly("MSGN", "subheader spacecraft  = %d,  day = %u, sec = %.3f",
+                 sub_header.spacecraftId,
+                 sub_header.packetTime.day,
+                 sub_header.packetTime.ms/1000.0);
 
         // Sanity checks
         if( gp_header.packetLength < sizeof(GP_PK_SH1) + sizeof(SUB_VISIRLINE) - 1 ||
@@ -428,6 +455,53 @@ void Msg_reader_core::read_metadata_block(VSILFILE* fin) {
             }
         }
     } while (band_count > 0);
+
+    TRAILER trailer;
+
+    CPL_IGNORE_RET_VAL(VSIFSeekL(fin, _f_trailer_offset, SEEK_SET));
+
+    if( VSIFReadL(&gp_header, sizeof(GP_PK_HEADER), 1, fin) != 1 ||
+        VSIFReadL(&sub_header, sizeof(GP_PK_SH1), 1, fin) != 1 ||
+        VSIFReadL(&trailer, sizeof(TRAILER), 1, fin) != 1)
+    {
+        _open_success = false;
+        fprintf(stderr, "Trailer fail\n");/*ok*/
+        return;
+    }
+
+    to_native(trailer.imageProductionStats.actualL15CoverageVisir);
+    to_native(trailer.imageProductionStats.actualL15CoverageHrv);
+
+    CPLDebugOnly("MSGN", "Trailer Version %d, satellite %d", trailer.trailerHeaderVersion,
+         trailer.imageProductionStats.satelliteId);
+
+    CPLDebugOnly("MSGN", "\nactualL15CoverageVisir.SouthernLineActual = %d, \n"
+         "actualL15CoverageVisir.NorthernLineActual = %d, \n"
+         "actualL15CoverageVisir.EasternColumnActual = %d, \n "
+         "actualL15CoverageVisir.WesternColumnActual = %d",
+         trailer.imageProductionStats.actualL15CoverageVisir.southernLineActual,
+         trailer.imageProductionStats.actualL15CoverageVisir.northernLineActual,
+         trailer.imageProductionStats.actualL15CoverageVisir.easternColumnActual,
+         trailer.imageProductionStats.actualL15CoverageVisir.westernColumnActual);
+
+    CPLDebugOnly("MSGN", "\nactualCoverage_hrv.lowerSouthLineActual = %d, \n"
+         "actualCoverage_hrv.lowerNorthLineActual = %d, \n"
+         "actualCoverage_hrv.lowerEastColumnActual = %d, \n "
+         "actualCoverage_hrv.lowerWestColumnActual = %d",
+         trailer.imageProductionStats.actualL15CoverageHrv.lowerSouthLineActual,
+         trailer.imageProductionStats.actualL15CoverageHrv.lowerNorthLineActual,
+         trailer.imageProductionStats.actualL15CoverageHrv.lowerEastColumnActual,
+         trailer.imageProductionStats.actualL15CoverageHrv.lowerWestColumnActual);
+
+    CPLDebugOnly("MSGN", "\nactualCoverage_hrv.upperSouthLineActual = %d, \n"
+         "actualCoverage_hrv.upperNorthLineActual = %d, \n"
+         "actualCoverage_hrv.upperEastColumnActual = %d, \n "
+         "actualCoverage_hrv.upperWestColumnActual = %d",
+         trailer.imageProductionStats.actualL15CoverageHrv.upperSouthLineActual,
+         trailer.imageProductionStats.actualL15CoverageHrv.upperNorthLineActual,
+         trailer.imageProductionStats.actualL15CoverageHrv.upperEastColumnActual,
+         trailer.imageProductionStats.actualL15CoverageHrv.upperWestColumnActual);
+
 }
 
 #ifndef GDAL_SUPPORT
@@ -444,11 +518,13 @@ int Msg_reader_core::_chan_to_idx(Msg_channel_names channel) {
 }
 
 void Msg_reader_core::get_pixel_geo_coordinates(unsigned int line, unsigned int column, double& longitude, double& latitude) const {
-    Conversions::convert_pixel_to_geo((unsigned int)(line + _line_start), (unsigned int)(column + _col_start), longitude, latitude);
+    Conversions::convert_pixel_to_geo((double)(line + _line_start), (double)(column + _col_start), longitude, latitude);
+    longitude += _img_desc_record.longitudeOfSSP;
 }
 
 void Msg_reader_core::get_pixel_geo_coordinates(double line, double column, double& longitude, double& latitude) {
     Conversions::convert_pixel_to_geo(line + _line_start, column + _col_start, longitude, latitude);
+    longitude += _img_desc_record.longitudeOfSSP;
 }
 
 double Msg_reader_core::compute_pixel_area_sqkm(double line, double column) {
