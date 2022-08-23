@@ -3446,8 +3446,8 @@ class GDAL2Tiles(object):
         #subheader { height: 12px; text-align: right; font-size: 10px; color: #555;}
         #map { height: 90%%; border: 1px solid #888; }
     </style>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.3.1/css/ol.css" type="text/css">
-    <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.3.1/build/ol.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@main/dist/en/v7.0.0/legacy/ol.css" type="text/css">
+    <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@main/dist/en/v7.0.0/legacy/ol.js"></script>
     <script src="https://unpkg.com/ol-layerswitcher@3.5.0"></script>
     <link rel="stylesheet" href="https://unpkg.com/ol-layerswitcher@3.5.0/src/ol-layerswitcher.css" />
 </head>
@@ -3463,7 +3463,7 @@ class GDAL2Tiles(object):
             undefinedHTML: '&nbsp;'
         });
         var map = new ol.Map({
-            controls: ol.control.defaults().extend([mousePositionControl]),
+            controls:  ol.control.defaults.defaults().extend([mousePositionControl]),
             target: 'map',
 """
             % args
