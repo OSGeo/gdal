@@ -3463,7 +3463,7 @@ class GDAL2Tiles(object):
             undefinedHTML: '&nbsp;'
         });
         var map = new ol.Map({
-            controls:  ol.control.defaults.defaults().extend([mousePositionControl]),
+            controls: ol.control.defaults.defaults().extend([mousePositionControl]),
             target: 'map',
 """
             % args
