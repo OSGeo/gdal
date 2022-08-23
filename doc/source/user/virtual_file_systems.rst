@@ -220,7 +220,17 @@ The :decl_configoption:`GDAL_HTTP_PROXY` (for both HTTP and HTTPS protocols), :d
 
 Starting with GDAL 2.1.3, the :decl_configoption:`CURL_CA_BUNDLE` or :decl_configoption:`SSL_CERT_FILE` configuration options can be used to set the path to the Certification Authority (CA) bundle file (if not specified, curl will use a file in a system location).
 
-Starting with GDAL 2.3, additional HTTP headers can be sent by setting the :decl_configoption:`GDAL_HTTP_HEADER_FILE` configuration option to point to a filename of a text file with "key: value" HTTP headers.   :decl_configoption:`CPL_CURL_VERBOSE` set to ``YES`` allows one to see them and more, when combined with ``--debug``.
+Starting with GDAL 2.3, additional HTTP headers can be sent by setting the :decl_configoption:`GDAL_HTTP_HEADER_FILE` configuration option to point to a filename of a text file with "key: value" HTTP headers.
+
+As an alternative, starting with GDAL 3.6, the
+:decl_configoption:`GDAL_HTTP_HEADERS` configuration option can also be
+used to specify a comma separated list of key: value pairs. If a comma or a double-quote
+character is needed in the value, then the key: value pair must be
+enclosed in double-quote characters. In that situation, backslash and double
+quote character must be backslash-escaped.
+e.g GDAL_HTTP_HEADERS=Foo: Bar,"Baz: escaped backslash \\, escaped double-quote \", end of value",Another: Header
+
+:decl_configoption:`CPL_CURL_VERBOSE` set to ``YES`` allows one to see them and more, when combined with ``--debug``.
 
 Starting with GDAL 2.3, the :decl_configoption:`GDAL_HTTP_MAX_RETRY` (number of attempts) and :decl_configoption:`GDAL_HTTP_RETRY_DELAY` (in seconds) configuration option can be set, so that request retries are done in case of HTTP errors 429, 502, 503 or 504.
 
