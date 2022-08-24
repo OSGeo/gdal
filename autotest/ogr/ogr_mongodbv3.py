@@ -909,26 +909,26 @@ def test_ogr_mongodbv3_upsert_feature():
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField("test", "original")
     assert lyr.CreateFeature(f) == 0
-    assert f.GetFID() == 0
+    newID = f.GetFID()
 
     # Upsert an existing feature
-    f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetFID(0)
+    f = lyr.GetFeature(newID)
+    assert f is not None
     f.SetField("test", "updated")
     assert lyr.UpsertFeature(f) == 0
 
     # Verify that we have set an existing feature
-    f = lyr.GetFeature(0)
+    f = lyr.GetFeature(newID)
     assert f is not None
     assert f.GetField("test") == "updated"
 
     # Upsert a new feature
-    f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetFID(1)
+    featureCount = lyr.GetFeatureCount()
+    f.SetFID(-1)
     assert lyr.UpsertFeature(f) == 0
 
     # Verify that we have created a feature
-    assert lyr.GetFeature(1) is not None
+    assert lyr.GetFeatureCount() == featureCount + 1
 
 
 ###############################################################################
