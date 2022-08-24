@@ -1128,7 +1128,12 @@ OGRErr OGRHanaTableLayer::ICreateFeature(OGRFeature* feature)
                 GetFullTableNameQuoted(schemaName_, tableName_).c_str());
 
             if (currentIdentityValueStmt_.isNull())
+            {
                 currentIdentityValueStmt_ = dataSource_->PrepareStatement(sql.c_str());
+
+                if( currentIdentityValueStmt_.isNull())
+                    return OGRERR_FAILURE;
+            }
 
             odbc::ResultSetRef rsIdentity = currentIdentityValueStmt_->executeQuery();
             if ( rsIdentity->next() )
@@ -1293,14 +1298,23 @@ OGRErr OGRHanaTableLayer::CreateField(OGRFieldDefn* srsField, int approxOK)
         return OGRERR_FAILURE;
     }
 
+    if (srsField->GetNameRef() == nullptr)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined, "Field name cannot be NULL");
+        return OGRERR_FAILURE;
+    }
+
     EnsureInitialized();
 
     OGRFieldDefn dstField(srsField);
 
     if (launderColumnNames_)
     {
-        CPLString launderName = LaunderName(dstField.GetNameRef());
-        dstField.SetName(launderName.c_str());
+        auto nameRes = dataSource_->LaunderName(dstField.GetNameRef());
+        if (nameRes.first != OGRERR_NONE)
+            return nameRes.first;
+        dstField.SetName(nameRes.second.c_str());
     }
 
     if (fidFieldIndex_ != OGRNullFID
@@ -1455,9 +1469,14 @@ OGRErr OGRHanaTableLayer::CreateGeomField(OGRGeomFieldDefn* geomField, int)
     }
 
 
-    CPLString clmName(launderColumnNames_
-                      ? LaunderName(geomField->GetNameRef()).c_str()
-                      : geomField->GetNameRef());
+    CPLString clmName(geomField->GetNameRef());
+    if (launderColumnNames_)
+    {
+        auto nameRes = dataSource_->LaunderName(geomField->GetNameRef());
+        if (nameRes.first != OGRERR_NONE)
+            return nameRes.first;
+        clmName.swap(nameRes.second);
+    }
 
     if (clmName.empty())
         clmName = FindGeomFieldName(*featureDefn_);
@@ -1588,9 +1607,15 @@ OGRErr OGRHanaTableLayer::AlterFieldDefn(
         return OGRERR_FAILURE;
     }
 
-    CPLString clmName = launderColumnNames_
-                            ? LaunderName(newFieldDefn->GetNameRef())
-                            : CPLString(newFieldDefn->GetNameRef());
+    CPLString clmName(newFieldDefn->GetNameRef());
+
+    if (launderColumnNames_)
+    {
+        auto nameRes = dataSource_->LaunderName(newFieldDefn->GetNameRef());
+        if (nameRes.first != OGRERR_NONE)
+            return nameRes.first;
+        clmName.swap(nameRes.second);
+    }
 
     ColumnTypeInfo columnTypeInfo = GetColumnTypeInfo(*newFieldDefn);
 
