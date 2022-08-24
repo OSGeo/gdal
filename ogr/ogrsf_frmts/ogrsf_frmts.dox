@@ -1760,7 +1760,7 @@ by the OGRSFDriverManager.
  written.  Otherwise, the existing feature will be rewritten.
 
  Use OGR_L_TestCapability(OLCUpsertFeature) to establish if this layer
- supports random access writing via OGR_L_SetFeature().
+ supports upsert writing.
 
  This function is the same as the C++ method OGRLayer::UpsertFeature().
 
