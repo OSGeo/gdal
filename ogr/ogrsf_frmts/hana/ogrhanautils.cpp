@@ -99,22 +99,6 @@ CPLString GetFullColumnNameQuoted(
            + QuotedIdentifier(columnName);
 }
 
-CPLString LaunderName(const char* name)
-{
-    if (name == nullptr)
-        return nullptr;
-
-    CPLString newName(name);
-    for (std::size_t i = 0; newName[i] != '\0'; ++i)
-    {
-        char c = static_cast<char>(toupper(newName[i]));
-        if (c == '-' || c == '#')
-            c = '_';
-        newName[i] = c;
-    }
-    return newName;
-}
-
 CPLString Literal(const CPLString& value)
 {
     CPLString ret("'");
