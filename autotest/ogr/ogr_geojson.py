@@ -2380,6 +2380,51 @@ def test_ogr_geojson_56():
 """
     assert json.loads(got) == json.loads(expected)
 
+    # Test polygon geometry with one longitude at +/- 180deg (#6250)
+    gdal.VectorTranslate(
+        "/vsimem/out.json",
+        """{
+  "type": "FeatureCollection",
+  "features": [
+      { "type": "Feature", "geometry": {"type":"Polygon","coordinates":[[[-180,50],[179.5,50.0],[179.5,40],[-180,45],[-180,50]]]} }
+  ]
+}""",
+        format="GeoJSON",
+        layerCreationOptions=["RFC7946=YES", "WRITE_BBOX=YES"],
+    )
+
+    got = read_file("/vsimem/out.json")
+    gdal.Unlink("/vsimem/out.json")
+    expected = """{
+"type": "FeatureCollection",
+"features": [
+{ "type": "Feature", "properties": { }, "bbox": [ -180.0, 40.0, 179.5, 50.0 ], "geometry": { "type": "Polygon", "coordinates": [ [ [ -180.0, 50.0 ], [ -180.0, 45.0 ], [ 179.5, 40.0 ], [ 179.5, 50.0 ], [ -180.0, 50.0 ] ] ] } }
+],
+"bbox": [ -180.0000000, 40.0000000, 179.5000000, 50.0000000 ]
+}
+"""
+    assert json.loads(got) == json.loads(expected)
+
+    # Test WRAPDATELINE=NO (#6250)
+    gdal.VectorTranslate(
+        "/vsimem/out.json",
+        """{"type":"LineString","coordinates":[[179,50],[-179,50]]}""",
+        format="GeoJSON",
+        layerCreationOptions=["RFC7946=YES", "WRITE_BBOX=YES", "WRAPDATELINE=NO"],
+    )
+
+    got = read_file("/vsimem/out.json")
+    gdal.Unlink("/vsimem/out.json")
+    expected = """{
+"type": "FeatureCollection",
+"features": [
+{ "type": "Feature", "properties": { }, "bbox": [ -179.0, 50.0, 179.0, 50.0 ], "geometry": { "type": "LineString", "coordinates": [ [ 179.0, 50.0 ], [ -179.0, 50.0 ] ] } }
+],
+"bbox": [ -179.0000000, 50.0000000, 179.0000000, 50.0000000 ]
+}
+"""
+    assert json.loads(got) == json.loads(expected)
+
 
 ###############################################################################
 # Test RFC 7946 and reprojection

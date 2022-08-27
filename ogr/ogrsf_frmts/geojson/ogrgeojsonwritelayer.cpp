@@ -57,6 +57,8 @@ OGRGeoJSONWriteLayer::OGRGeoJSONWriteLayer( const char* pszName,
         CSLFetchNameValueDef(papszOptions, "SIGNIFICANT_FIGURES", "-1"))),
     bRFC7946_(CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "RFC7946", "FALSE"))),
+    bWrapDateLine_(CPLTestBool(
+        CSLFetchNameValueDef(papszOptions, "WRAPDATELINE", "YES"))),
     poCT_(poCT)
 {
     poFeatureDefn_->Reference();
@@ -164,7 +166,7 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature( OGRFeature* poFeature )
         OGRGeometry* poGeometry = poFeatureToWrite->GetGeometryRef();
         if( poGeometry )
         {
-            const char* const apszOptions[] = { "WRAPDATELINE=YES", nullptr };
+            const char* const apszOptions[] = { bWrapDateLine_ ? "WRAPDATELINE=YES" : nullptr, nullptr };
             OGRGeometry* poNewGeom =
                 OGRGeometryFactory::transformWithOptions(
                     poGeometry, poCT_, const_cast<char**>(apszOptions),
