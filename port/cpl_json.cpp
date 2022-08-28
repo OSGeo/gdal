@@ -427,6 +427,8 @@ bool CPLJSONDocument::LoadUrl(const std::string & /*osUrl*/, const char* const* 
 
     return bResult;
 #else
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "LoadUrl() not supported in a build without Curl");
     return false;
 #endif
 }
@@ -1082,6 +1084,7 @@ std::vector<CPLJSONObject> CPLJSONObject::GetChildren() const
     it.key = nullptr;
     it.val = nullptr;
     it.entry = nullptr;
+    // cppcheck-suppress cstyleCast
     json_object_object_foreachC( TO_JSONOBJ(m_poJsonObject), it ) {
         aoChildren.push_back(CPLJSONObject(it.key, it.val));
     }

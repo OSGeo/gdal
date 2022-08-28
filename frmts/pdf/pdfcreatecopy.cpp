@@ -34,6 +34,7 @@
 #include "cpl_error.h"
 #include "ogr_spatialref.h"
 #include "ogr_geometry.h"
+#include "memdataset.h"
 #include "vrtdataset.h"
 
 #include "pdfobject.h"
@@ -3887,7 +3888,7 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteBlock(GDALDataset* poSrcDS,
 
     CPLErr eErr = CE_None;
     GDALDataset* poBlockSrcDS = nullptr;
-    GDALDatasetH hMemDS = nullptr;
+    std::unique_ptr<MEMDataset> poMEMDS;
     GByte* pabyMEMDSBuffer = nullptr;
 
     if (eCompressMethod == COMPRESS_DEFAULT)
@@ -3991,21 +3992,13 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteBlock(GDALDataset* poSrcDS,
         if (nBands == 4)
             nBands = 3;
 
-        GDALDriverH hMemDriver = GDALGetDriverByName("MEM");
-        if( hMemDriver == nullptr )
-            return GDALPDFObjectNum();
-
-        hMemDS = GDALCreate(hMemDriver, "MEM:::",
-                            nReqXSize, nReqYSize, 0,
-                            GDT_Byte, nullptr);
-        if (hMemDS == nullptr)
-            return GDALPDFObjectNum();
+        poMEMDS.reset(MEMDataset::Create("", nReqXSize, nReqYSize,
+                                         0, GDT_Byte, nullptr));
 
         pabyMEMDSBuffer =
             (GByte*)VSIMalloc3(nReqXSize, nReqYSize, nBands);
         if (pabyMEMDSBuffer == nullptr)
         {
-            GDALClose(hMemDS);
             return GDALPDFObjectNum();
         }
 
@@ -4019,24 +4012,19 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteBlock(GDALDataset* poSrcDS,
         if( eErr != CE_None )
         {
             CPLFree(pabyMEMDSBuffer);
-            GDALClose(hMemDS);
             return GDALPDFObjectNum();
         }
 
         int iBand;
         for(iBand = 0; iBand < nBands; iBand ++)
         {
-            char** papszMEMDSOptions = nullptr;
-            char szTmp[64];
-            memset(szTmp, 0, sizeof(szTmp));
-            CPLPrintPointer(szTmp,
-                            pabyMEMDSBuffer + iBand * nReqXSize * nReqYSize, sizeof(szTmp));
-            papszMEMDSOptions = CSLSetNameValue(papszMEMDSOptions, "DATAPOINTER", szTmp);
-            GDALAddBand(hMemDS, GDT_Byte, papszMEMDSOptions);
-            CSLDestroy(papszMEMDSOptions);
+            auto hBand = MEMCreateRasterBandEx( poMEMDS.get(), iBand + 1,
+                                                pabyMEMDSBuffer + iBand * nReqXSize * nReqYSize,
+                                                GDT_Byte, 0, 0, false );
+            poMEMDS->AddMEMBand(hBand);
         }
 
-        poBlockSrcDS = (GDALDataset*) hMemDS;
+        poBlockSrcDS = poMEMDS.get();
     }
 
     auto nImageId = AllocNewObject();
@@ -4236,11 +4224,6 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteBlock(GDALDataset* poSrcDS,
 end:
     CPLFree(pabyMEMDSBuffer);
     pabyMEMDSBuffer = nullptr;
-    if( hMemDS != nullptr )
-    {
-        GDALClose(hMemDS);
-        hMemDS = nullptr;
-    }
 
     EndObjWithStream();
 

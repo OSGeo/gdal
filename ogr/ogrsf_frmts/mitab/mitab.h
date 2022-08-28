@@ -1607,6 +1607,8 @@ class TABText final : public TABFeature,
 
     virtual void DumpMIF(FILE *fpOut = nullptr) override;
 
+    void        SetLabelFromStyleString(const char* pszStyleString);
+
     const char *GetTextString() const;
     double      GetTextAngle() const;
     double      GetTextBoxHeight() const;

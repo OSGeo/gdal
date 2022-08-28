@@ -509,6 +509,7 @@ class CPL_DLL OGRGeometry
     virtual OGRGeometry *Boundary() const CPL_WARN_UNUSED_RESULT;
     virtual double  Distance( const OGRGeometry * ) const ;
     virtual OGRGeometry *ConvexHull() const CPL_WARN_UNUSED_RESULT;
+    virtual OGRGeometry *ConcaveHull(double dfRatio, bool bAllowHoles) const CPL_WARN_UNUSED_RESULT;
     virtual OGRGeometry *Buffer( double dfDist, int nQuadSegs = 30 )
         const CPL_WARN_UNUSED_RESULT;
     virtual OGRGeometry *Intersection( const OGRGeometry *)
@@ -1091,7 +1092,8 @@ class CPL_DLL OGRCurve : public OGRGeometry
                 std::unique_ptr<Private> m_poPrivate;
             public:
                 ConstIterator(const OGRCurve* poSelf, bool bStart);
-                ConstIterator(ConstIterator&& oOther) noexcept; // declared but not defined. Needed for gcc 5.4 at least
+                ConstIterator(ConstIterator&& oOther) noexcept;
+                ConstIterator& operator=(ConstIterator&& oOther);
                 ~ConstIterator();
                 const OGRPoint& operator*() const;
                 ConstIterator& operator++();
@@ -1142,6 +1144,7 @@ class CPL_DLL OGRCurve : public OGRGeometry
     virtual OGRPointIterator* getPointIterator() const = 0;
     virtual OGRBoolean IsConvex() const;
     virtual double get_Area() const = 0;
+    virtual int isClockwise() const;
 
     /** Down-cast to OGRSimpleCurve*.
      * Implies prior checking that wkbFlatten(getGeometryType()) == wkbLineString or wkbCircularString. */
@@ -1169,6 +1172,64 @@ inline OGRCurve::ConstIterator begin(const OGRCurve* poCurve) { return poCurve->
 /** @see OGRCurve::end() const */
 inline OGRCurve::ConstIterator end(const OGRCurve* poCurve) { return poCurve->end(); }
 //! @endcond
+
+
+/************************************************************************/
+/*                           OGRIteratedPoint                           */
+/************************************************************************/
+
+/*!
+ Implementation detail of OGRSimpleCurve::Iterator.
+
+ This class is a simple wrapper over OGRPoint, which shouldn't be directly
+ referenced by the user other than trough auto&& in an iteator
+ over a OGRSimpleCurve.
+
+ Typical usage pattern is:
+ \verbatim
+ for (auto&& p: line)
+ {
+    p.setZ(100);
+ }
+ \endverbatim
+
+ The lifetime of this object is coupled to the one of the curve on which it
+ was returned. It is thus also illegal to modify it once the curve has been
+ deleted.
+
+ @since GDAL 3.6
+ */
+class CPL_DLL OGRIteratedPoint: public OGRPoint
+{
+private:
+    friend class OGRSimpleCurve;
+
+    OGRSimpleCurve* m_poCurve = nullptr;
+    int             m_nPos = 0;
+
+    OGRIteratedPoint() = default;
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRIteratedPoint)
+
+public:
+    /** Set x
+     * @param xIn x
+     */
+    void        setX( double xIn );
+    /** Set y
+     * @param yIn y
+     */
+    void        setY( double yIn );
+    /** Set z
+     * @param zIn z
+     */
+    void        setZ( double zIn );
+    /** Set m
+     * @param mIn m
+     */
+    void        setM( double mIn );
+};
+
 
 /************************************************************************/
 /*                             OGRSimpleCurve                           */
@@ -1220,7 +1281,7 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
                 Iterator(OGRSimpleCurve* poSelf, int nPos);
                 Iterator(Iterator&& oOther) noexcept; // declared but not defined. Needed for gcc 5.4 at least
                 ~Iterator();
-                OGRPoint& operator*();
+                OGRIteratedPoint& operator*();
                 Iterator& operator++();
                 bool operator!=(const Iterator& it) const;
         };
@@ -1442,6 +1503,7 @@ class CPL_DLL OGRLineString : public OGRSimpleCurve
     // Non-standard from OGRGeometry.
     virtual OGRwkbGeometryType getGeometryType() const override;
     virtual const char *getGeometryName() const override;
+    virtual int isClockwise() const override;
 
     /** Return pointer of this in upper class */
     inline OGRSimpleCurve* toUpperClass() { return this; }
@@ -1527,7 +1589,6 @@ class CPL_DLL OGRLinearRing : public OGRLineString
     // Non standard.
     virtual const char *getGeometryName() const override;
     virtual OGRLinearRing *clone() const override;
-    virtual int isClockwise() const;
     virtual void reverseWindingOrder();
     virtual void closeRings() override;
     OGRBoolean isPointInRing( const OGRPoint* pt,
@@ -2351,7 +2412,7 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     OGRGeometry **papoGeoms = nullptr;
 
     std::string exportToWktInternal(const OGRWktOptions& opts, OGRErr *err,
-        std::string exclude = std::string()) const;
+                                    const std::string& exclude = std::string()) const;
     static OGRGeometryCollection* TransferMembersAndDestroy(
         OGRGeometryCollection* poSrc,
         OGRGeometryCollection* poDst );

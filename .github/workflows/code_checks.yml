@@ -4,6 +4,8 @@ on:
     push:
         paths-ignore:
             - 'doc/**'
+        branches-ignore:
+            - 'backport**'
     pull_request:
         paths-ignore:
             - 'doc/**'
@@ -12,6 +14,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
 
   cppcheck_2004:
@@ -19,24 +24,29 @@ jobs:
     if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install Requirements
         run: |
           sudo apt update
-          sudo apt install -y cppcheck libsqlite3-dev ccache sqlite3 libproj-dev
+          sudo apt install -y cppcheck libsqlite3-dev ccache sqlite3 libproj-dev cmake
 
-      - name: Run configure
-        run: (./autogen.sh && ./configure)
+      - name: Run cmake
+        run: |
+          mkdir build
+          cd build
+          cmake ..
 
       - name: Run cppcheck test
-        run: ./scripts/cppcheck.sh
+        run: |
+          cd build
+          ../scripts/cppcheck.sh
 
   code_quality_checks:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Detect tabulations
         run: ./scripts/detect_tabulations.sh
@@ -53,28 +63,18 @@ jobs:
       - name: Shellcheck
         run: shellcheck -e SC2086,SC2046,SC2164,SC2054 $(find . -name '*.sh' -a -not -name ltmain.sh -a -not -wholename "./autotest/*" -a -not -wholename "./.github/*")
 
-  flake8:
+  linting:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Install Requirements
-        run: |
-            sudo apt install python3-pip
-            sudo pip3 install flake8
-
-      - name: Run flake8
-        run: |
-            export FLAKE8="flake8 --config autotest/setup.cfg"
-            $FLAKE8 autotest
-            $FLAKE8 swig/python/gdal-utils/
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - uses: pre-commit/action@v3.0.0
 
   doxygen:
     runs-on: ubuntu-18.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install Requirements
         run: |
@@ -91,7 +91,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install Requirements
         run: |

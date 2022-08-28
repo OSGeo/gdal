@@ -361,6 +361,9 @@ class JPGRasterBand final: public GDALPamRasterBand
     virtual CPLErr IReadBlock( int, int, void * ) override;
     virtual GDALColorInterp GetColorInterpretation() override;
 
+    virtual GDALSuggestedBlockAccessPattern GetSuggestedBlockAccessPattern()
+        const override { return GSBAP_TOP_TO_BOTTOM; }
+
     virtual GDALRasterBand *GetMaskBand() override;
     virtual int             GetMaskFlags() override;
 

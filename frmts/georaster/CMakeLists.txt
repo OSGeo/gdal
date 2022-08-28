@@ -13,12 +13,15 @@ if (GDAL_ENABLE_DRIVER_JPEG AND GDAL_USE_JPEG_INTERNAL)
   target_compile_definitions(gdal_GEOR PRIVATE -DJPEG_SUPPORTED)
 endif ()
 
-gdal_target_link_libraries(gdal_GEOR PRIVATE Oracle::OCI)
-
+# Include libjpeg first so that if we want to use jpeg-turbo on homebrew
+# /usr/local/opt/jpeg-turbo gets included first, before /usr/local/opt
+# that contains libjpeg 9e
 if (GDAL_ENABLE_DRIVER_JPEG AND (NOT GDAL_USE_JPEG_INTERNAL))
   target_compile_definitions(gdal_GEOR PRIVATE -DJPEG_SUPPORTED)
   gdal_target_link_libraries(gdal_GEOR PRIVATE JPEG::JPEG)
 endif ()
+
+gdal_target_link_libraries(gdal_GEOR PRIVATE Oracle::OCI)
 
 if (NOT GDAL_USE_ZLIB_INTERNAL)
   gdal_target_link_libraries(gdal_GEOR PRIVATE ZLIB::ZLIB)

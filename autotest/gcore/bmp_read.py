@@ -27,49 +27,53 @@
 ###############################################################################
 
 
+import gdaltest
 import pytest
 
-import gdaltest
-
-
 init_list = [
-    ('1bit.bmp', 200),
-    ('4bit_pal.bmp', 2587),
-    ('8bit_pal.bmp', 4672),
-    ('byte_rle8.bmp', 4672)]
+    ("1bit.bmp", 200),
+    ("4bit_pal.bmp", 2587),
+    ("8bit_pal.bmp", 4672),
+    ("byte_rle8.bmp", 4672),
+]
 
 
 @pytest.mark.parametrize(
-    'filename,checksum',
+    "filename,checksum",
     init_list,
-    ids=[tup[0].split('.')[0] for tup in init_list],
+    ids=[tup[0].split(".")[0] for tup in init_list],
 )
-@pytest.mark.require_driver('BMP')
+@pytest.mark.require_driver("BMP")
 def test_bmp_open(filename, checksum):
-    ut = gdaltest.GDALTest('BMP', filename, 1, checksum)
+    ut = gdaltest.GDALTest("BMP", filename, 1, checksum)
     ut.testOpen()
 
 
 def test_bmp_online_1():
 
-    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/bmp/8bit_pal_rle.bmp', '8bit_pal_rle.bmp'):
+    if not gdaltest.download_file(
+        "http://download.osgeo.org/gdal/data/bmp/8bit_pal_rle.bmp", "8bit_pal_rle.bmp"
+    ):
         pytest.skip()
 
-    tst = gdaltest.GDALTest('BMP', 'tmp/cache/8bit_pal_rle.bmp', 1, 17270, filename_absolute=1)
+    tst = gdaltest.GDALTest(
+        "BMP", "tmp/cache/8bit_pal_rle.bmp", 1, 17270, filename_absolute=1
+    )
 
     return tst.testOpen()
 
 
 def test_bmp_online_2():
 
-    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/bmp/24bit.bmp', '24bit.bmp'):
+    if not gdaltest.download_file(
+        "http://download.osgeo.org/gdal/data/bmp/24bit.bmp", "24bit.bmp"
+    ):
         pytest.skip()
 
-    tst = gdaltest.GDALTest('BMP', 'tmp/cache/24bit.bmp', 1, 7158, filename_absolute=1)
-    if tst == 'success':
-        tst = gdaltest.GDALTest('BMP', 'tmp/cache/24bit.bmp', 3, 27670, filename_absolute=1)
+    tst = gdaltest.GDALTest("BMP", "tmp/cache/24bit.bmp", 1, 7158, filename_absolute=1)
+    if tst == "success":
+        tst = gdaltest.GDALTest(
+            "BMP", "tmp/cache/24bit.bmp", 3, 27670, filename_absolute=1
+        )
 
     return tst.testOpen()
-
-
-

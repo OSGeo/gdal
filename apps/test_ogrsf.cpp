@@ -121,6 +121,19 @@ MAIN_START(nArgc, papszArgv)
     int bRet = TRUE;
     int nThreads = 1;
 
+    if( EQUAL(CPLGetConfigOption("DRIVER_WISHED", ""), "FileGDB") )
+    {
+        auto poFileGDB = GetGDALDriverManager()->GetDriverByName("FileGDB");
+        auto poOpenFileGDB = GetGDALDriverManager()->GetDriverByName("OpenFileGDB");
+        if( poFileGDB && poOpenFileGDB )
+        {
+            GetGDALDriverManager()->DeregisterDriver(poFileGDB);
+            GetGDALDriverManager()->DeregisterDriver(poOpenFileGDB);
+            GetGDALDriverManager()->RegisterDriver(poFileGDB);
+            GetGDALDriverManager()->RegisterDriver(poOpenFileGDB);
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Processing command line arguments.                              */
 /* -------------------------------------------------------------------- */
@@ -388,6 +401,50 @@ static int TestDataset( GDALDriver** ppoDriver )
     poDS->GetMetadata( nullptr );
     poDS->GetMetadataItem( "", nullptr );
 
+    if ( !poDriver->GetMetadataItem( GDAL_DCAP_VECTOR ))
+    {
+        printf("FAILURE: Driver does not advertize GDAL_DCAP_VECTOR!\n" );
+        bRet = false;
+    }
+
+    // Test consistency of datasource capabilities and driver metadata
+    if ( poDS->TestCapability(ODsCCreateLayer) && !poDriver->GetMetadataItem( GDAL_DCAP_CREATE_LAYER ) )
+    {
+        printf("FAILURE: Dataset advertizes ODsCCreateLayer capability but driver metadata does not advertize GDAL_DCAP_CREATE_LAYER!\n" );
+        bRet = false;
+    }
+    if ( !bReadOnly
+         && poDriver->GetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS )
+         && poDriver->GetMetadataItem( GDAL_DCAP_CREATE_LAYER )
+         && !poDS->TestCapability(ODsCCreateLayer) )
+    {
+        printf("FAILURE: Driver advertizes GDAL_DCAP_CREATE_LAYER and GDAL_DCAP_MULTIPLE_VECTOR_LAYERS capability but dataset does not advertize ODsCCreateLayer!\n" );
+        bRet = false;
+    }
+
+    if ( poDS->TestCapability(ODsCDeleteLayer) && !poDriver->GetMetadataItem( GDAL_DCAP_DELETE_LAYER ) )
+    {
+        printf("FAILURE: Dataset advertizes ODsCDeleteLayer capability but driver metadata does not advertize GDAL_DCAP_DELETE_LAYER!\n" );
+        bRet = false;
+    }
+
+    if ( poDriver->GetMetadataItem( GDAL_DCAP_CREATE_FIELD ) && !poDriver->GetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES ) )
+    {
+        bRet = FALSE;
+        printf("FAILURE: Driver metadata advertizes GDAL_DCAP_CREATE_FIELD but does not include GDAL_DMD_CREATIONFIELDDATATYPES!\n" );
+    }
+    if ( poDriver->GetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES ) && !poDriver->GetMetadataItem( GDAL_DCAP_CREATE_FIELD ) )
+    {
+        bRet = FALSE;
+        printf("FAILURE: Driver metadata includes GDAL_DMD_CREATIONFIELDDATATYPES but does not advertize GDAL_DCAP_CREATE_FIELD!\n" );
+    }
+    if ( poDriver->GetMetadataItem( GDAL_DMD_CREATIONFIELDDATASUBTYPES ) && !poDriver->GetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES ) )
+    {
+        bRet = FALSE;
+        printf("FAILURE: Driver metadata includes GDAL_DMD_CREATIONFIELDDATASUBTYPES but does not include GDAL_DMD_CREATIONFIELDDATATYPES!\n" );
+    }
+
+
 /* -------------------------------------------------------------------- */
 /*      Process optional SQL request.                                   */
 /* -------------------------------------------------------------------- */
@@ -641,14 +698,14 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
             bRet = FALSE;
         }
 
-        OGRFieldDefn oFieldDate("date", OFTDate);
+        OGRFieldDefn oFieldDate("mydate", OFTDate);
         CPLPushErrorHandler(CPLQuietErrorHandler);
         const bool bDateFieldOK =
             LOG_ACTION(poLayer->CreateField(&oFieldDate)) == OGRERR_NONE;
         CPLPopErrorHandler();
-        if( bDateFieldOK && (iFieldDate = poLayer->GetLayerDefn()->GetFieldIndex("date")) < 0 )
+        if( bDateFieldOK && (iFieldDate = poLayer->GetLayerDefn()->GetFieldIndex("mydate")) < 0 )
         {
-            printf("ERROR: %s: CreateField(date) returned OK but field was not created.\n",
+            printf("ERROR: %s: CreateField(mydate) returned OK but field was not created.\n",
                    poDriver->GetDescription());
             bRet = FALSE;
         }
@@ -914,7 +971,8 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
             poLayer = LOG_ACTION(poDS->GetLayerByName(osLayerNameToTest));
             if( poLayer != nullptr )
             {
-                if( poLayer->GetGeomType() != eExpectedGeomType )
+                if( poLayer->GetGeomType() != eExpectedGeomType &&
+                    !(eGeomType == wkbGeometryCollection25D && EQUAL(poDriver->GetDescription(), "OpenFileGDB")) )
                 {
                     printf("ERROR: %s: GetGeomType() returns %d but %d "
                            "was expected (and %d originally set).\n",
@@ -940,7 +998,7 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
         if( poDS != nullptr )
         {
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            poLayer = LOG_ACTION(poDS->CreateLayer(CPLGetFilename(osFilename), nullptr, eGeomType));
+            LOG_ACTION(poDS->CreateLayer(CPLGetFilename(osFilename), nullptr, eGeomType));
             CPLPopErrorHandler();
             LOG_ACTION(GDALClose(poDS));
 
@@ -1040,7 +1098,7 @@ static void Usage()
 /*                           TestBasic()                                */
 /************************************************************************/
 
-static int TestBasic( OGRLayer *poLayer )
+static int TestBasic( GDALDataset* poDS, OGRLayer *poLayer )
 {
     int bRet = TRUE;
 
@@ -1127,6 +1185,112 @@ static int TestBasic( OGRLayer *poLayer )
                    (poFDefn->GetGeomFieldCount() == 1) ? "WARNING" : "ERROR",
                    poLayer->GetSpatialRef(),
                    poFDefn->GetGeomFieldDefn(0)->GetSpatialRef());
+        }
+    }
+
+    // Test consistency of layer capabilities and driver metadata
+    if ( poDS )
+    {
+        GDALDriver *poDriver = poDS->GetDriver();
+
+        const bool bLayerShouldHaveEditCapabilities = !bReadOnly && !pszSQLStatement;
+
+        // metadata measure tests
+        if ( poLayer->TestCapability(OLCMeasuredGeometries) && !poDriver->GetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES ) )
+        {
+            bRet = FALSE;
+            printf("FAILURE: Layer advertizes OLCMeasuredGeometries capability but driver metadata does not advertize GDAL_DCAP_MEASURED_GEOMETRIES!\n" );
+        }
+        if ( poDS->TestCapability( ODsCMeasuredGeometries ) && !poDriver->GetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES ) )
+        {
+            bRet = FALSE;
+            printf("FAILURE: Datasource advertizes ODsCMeasuredGeometries capability but driver metadata does not advertize GDAL_DCAP_MEASURED_GEOMETRIES!\n" );
+        }
+        if ( poLayer->TestCapability(OLCMeasuredGeometries) && !poDS->TestCapability( ODsCMeasuredGeometries ) )
+        {
+            bRet = FALSE;
+            printf("FAILURE: Layer advertizes OLCMeasuredGeometries capability but datasource does not advertize ODsCMeasuredGeometries!\n" );
+        }
+
+        // metadata curve tests
+        if ( poLayer->TestCapability(OLCCurveGeometries) && !poDriver->GetMetadataItem( GDAL_DCAP_CURVE_GEOMETRIES ) )
+        {
+            bRet = FALSE;
+            printf("FAILURE: Layer advertizes OLCCurveGeometries capability but driver metadata does not advertize GDAL_DCAP_CURVE_GEOMETRIES!\n" );
+        }
+        if ( poDS->TestCapability( ODsCCurveGeometries ) && !poDriver->GetMetadataItem( GDAL_DCAP_CURVE_GEOMETRIES ) )
+        {
+            bRet = FALSE;
+            printf("FAILURE: Datasource advertizes ODsCCurveGeometries capability but driver metadata does not advertize GDAL_DCAP_CURVE_GEOMETRIES!\n" );
+        }
+        if ( poLayer->TestCapability(OLCCurveGeometries) && !poDS->TestCapability( ODsCCurveGeometries ) )
+        {
+            bRet = FALSE;
+            printf("FAILURE: Layer advertizes OLCCurveGeometries capability but datasource does not advertize ODsCCurveGeometries!\n" );
+        }
+
+        // metadata z dimension tests
+        if ( poLayer->TestCapability(OLCZGeometries) && !poDriver->GetMetadataItem( GDAL_DCAP_Z_GEOMETRIES ) )
+        {
+            bRet = FALSE;
+            printf("FAILURE: Layer advertizes OLCZGeometries capability but driver metadata does not advertize GDAL_DCAP_Z_GEOMETRIES!\n" );
+        }
+        if ( poDS->TestCapability( ODsCZGeometries ) && !poDriver->GetMetadataItem( GDAL_DCAP_Z_GEOMETRIES ) )
+        {
+            bRet = FALSE;
+            printf("FAILURE: Datasource advertizes ODsCZGeometries capability but driver metadata does not advertize GDAL_DCAP_Z_GEOMETRIES!\n" );
+        }
+        if ( poLayer->TestCapability(OLCZGeometries) && !poDS->TestCapability( ODsCZGeometries ) )
+        {
+            bRet = FALSE;
+            printf("FAILURE: Layer advertizes OLCZGeometries capability but datasource does not advertize ODsCZGeometries!\n" );
+        }
+
+
+        // note -- it's not safe to test the reverse case for these next two situations as some drivers only support
+        // CreateField() on newly created layers before the first feature is written
+        if ( poLayer->TestCapability(OLCCreateField) && !poDriver->GetMetadataItem( GDAL_DCAP_CREATE_FIELD ) )
+        {
+            bRet = FALSE;
+            printf("FAILURE: Layer advertizes OLCCreateField capability but driver metadata does not advertize GDAL_DCAP_CREATE_FIELD!\n" );
+        }
+        if ( poLayer->TestCapability(OLCCreateField) && !poDriver->GetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES ) )
+        {
+            bRet = FALSE;
+            printf("FAILURE: Layer advertizes OLCCreateField capability but driver metadata does not include GDAL_DMD_CREATIONFIELDDATATYPES!\n" );
+        }
+
+        if ( poLayer->TestCapability(OLCDeleteField) && !poDriver->GetMetadataItem( GDAL_DCAP_DELETE_FIELD ) )
+        {
+            bRet = FALSE;
+            printf("FAILURE: Layer advertizes OLCDeleteField capability but driver metadata does not advertize GDAL_DCAP_DELETE_FIELD!\n" );
+        }
+        if ( bLayerShouldHaveEditCapabilities && poDriver->GetMetadataItem( GDAL_DCAP_DELETE_FIELD ) && !poLayer->TestCapability(OLCDeleteField) )
+        {
+            bRet = FALSE;
+            printf("FAILURE: Driver metadata advertizes GDAL_DCAP_DELETE_FIELD but layer capability does not advertize OLCDeleteField!\n" );
+        }
+
+        if ( poLayer->TestCapability(OLCReorderFields) && !poDriver->GetMetadataItem( GDAL_DCAP_REORDER_FIELDS ) )
+        {
+            bRet = FALSE;
+            printf("FAILURE: Layer advertizes OLCReorderFields capability but driver metadata does not advertize GDAL_DCAP_REORDER_FIELDS!\n" );
+        }
+        if ( bLayerShouldHaveEditCapabilities && poDriver->GetMetadataItem( GDAL_DCAP_REORDER_FIELDS ) && !poLayer->TestCapability(OLCReorderFields) )
+        {
+            bRet = FALSE;
+            printf("FAILURE: Driver metadata advertizes GDAL_DCAP_REORDER_FIELDS but layer capability does not advertize OLCReorderFields!\n" );
+        }
+
+        if ( poLayer->TestCapability(OLCAlterFieldDefn) && !poDriver->GetMetadataItem( GDAL_DMD_ALTER_FIELD_DEFN_FLAGS ) )
+        {
+            bRet = FALSE;
+            printf("FAILURE: Layer advertizes OLCAlterFieldDefn capability but driver metadata does not include GDAL_DMD_ALTER_FIELD_DEFN_FLAGS!\n" );
+        }
+        if ( bLayerShouldHaveEditCapabilities && poDriver->GetMetadataItem( GDAL_DMD_ALTER_FIELD_DEFN_FLAGS ) && !poLayer->TestCapability(OLCAlterFieldDefn) )
+        {
+            bRet = FALSE;
+            printf("FAILURE: Driver metadata advertizes GDAL_DMD_ALTER_FIELD_DEFN_FLAGS but layer capability does not advertize OLCAlterFieldDefn!\n" );
         }
     }
 
@@ -1293,6 +1457,10 @@ static int TestOGRLayerFeatureCount( GDALDataset* poDS, OGRLayer *poLayer,
     OGRFeatureDefn* poLayerDefn = LOG_ACTION(poLayer->GetLayerDefn());
     int nGeomFieldCount = LOG_ACTION(poLayerDefn->GetGeomFieldCount());
 
+    const bool bLayerHasMeasuredGeometriesCapability = poLayer->TestCapability( ODsCMeasuredGeometries );
+    const bool bLayerHasCurveGeometriesCapability = poLayer->TestCapability( OLCCurveGeometries );
+    const bool bLayerHasZGeometriesCapability = poLayer->TestCapability( OLCZGeometries );
+
     CPLErrorReset();
 
     for( auto&& poFeature: poLayer )
@@ -1311,6 +1479,23 @@ static int TestOGRLayerFeatureCount( GDALDataset* poDS, OGRLayer *poLayer,
         for( int iGeom = 0; iGeom < nGeomFieldCount; iGeom ++ )
         {
             OGRGeometry* poGeom = poFeature->GetGeomFieldRef(iGeom);
+
+            if ( poGeom && poGeom->IsMeasured() && !bLayerHasMeasuredGeometriesCapability )
+            {
+                bRet = FALSE;
+                printf("FAILURE: Layer has a feature with measured geometries but no ODsCMeasuredGeometries capability!\n" );
+            }
+            if ( poGeom && poGeom->hasCurveGeometry() && !bLayerHasCurveGeometriesCapability )
+            {
+                bRet = FALSE;
+                printf("FAILURE: Layer has a feature with curved geometries but no OLCCurveGeometries capability!\n" );
+            }
+            if ( poGeom && poGeom->Is3D() && !bLayerHasZGeometriesCapability )
+            {
+                bRet = FALSE;
+                printf("FAILURE: Layer has a feature with 3D geometries but no OLCZGeometries capability!\n" );
+            }
+
             OGRSpatialReference * poGFldSRS =
                 poLayerDefn->GetGeomFieldDefn(iGeom)->GetSpatialRef();
 
@@ -3496,7 +3681,7 @@ static int TestOGRLayer( GDALDataset* poDS, OGRLayer * poLayer,
 /* -------------------------------------------------------------------- */
 /*      Basic tests.                                                   */
 /* -------------------------------------------------------------------- */
-    bRet &= TestBasic(poLayer);
+    bRet &= TestBasic(poDS, poLayer);
 
 /* -------------------------------------------------------------------- */
 /*      Test feature count accuracy.                                    */

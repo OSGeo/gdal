@@ -40,6 +40,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_mem_cache.h"
 #include "cpl_minixml.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
@@ -261,16 +262,8 @@ typedef struct {
     int         bApplyDEMVDatumShift;
 
     GDALDataset *poDS;
-    double     *padfDEMBuffer;
-    int         nDEMExtractions;
-    int         nBufferMaxRadius;
-    int         nHitsInBuffer;
-    int         nBufferX;
-    int         nBufferY;
-    int         nBufferWidth;
-    int         nBufferHeight;
-    int         nLastQueriedX;
-    int         nLastQueriedY;
+    // the key is (nYBlock << 32) | nXBlock)
+    lru11::Cache<uint64_t, std::shared_ptr<std::vector<double>>>* poCacheDEM;
 
     OGRCoordinateTransformation *poCT;
 
@@ -1116,7 +1109,7 @@ void GDALDestroyRPCTransformer( void *pTransformAlg )
 
     if( psTransform->poDS )
         GDALClose(psTransform->poDS);
-    CPLFree(psTransform->padfDEMBuffer);
+    delete psTransform->poCacheDEM;
     if( psTransform->poCT )
         OCTDestroyCoordinateTransformation(
             reinterpret_cast<OGRCoordinateTransformationH>(psTransform->poCT));
@@ -1412,113 +1405,91 @@ static bool GDALRPCExtractDEMWindow( GDALRPCTransformInfo *psTransform,
                                      int nX, int nY, int nWidth, int nHeight,
                                      double* padfOut )
 {
-    psTransform->nDEMExtractions++;
-    if( psTransform->padfDEMBuffer == nullptr )
+    constexpr int BLOCK_SIZE = 64;
+
+    // Request the DEM by blocks of BLOCK_SIZE * BLOCK_SIZE and put them
+    // in poCacheDEM
+    if( psTransform->poCacheDEM == nullptr )
+        psTransform->poCacheDEM = new lru11::Cache<uint64_t, std::shared_ptr<std::vector<double>>>();
+
+    const int nXIters = (nX + nWidth - 1) / BLOCK_SIZE - nX / BLOCK_SIZE + 1;
+    const int nYIters = (nY + nHeight - 1) / BLOCK_SIZE - nY / BLOCK_SIZE + 1;
+    const int nRasterXSize = psTransform->poDS->GetRasterXSize();
+    const int nRasterYSize = psTransform->poDS->GetRasterYSize();
+    for(int iY = 0; iY < nYIters; iY++)
     {
-        // Should only happen in case of failed memory allocation.
-        return psTransform->poDS->GetRasterBand(1)->
-                                  RasterIO(GF_Read, nX, nY, nWidth, nHeight,
-                                           padfOut, nWidth, nHeight,
-                                           GDT_Float64, 0, 0,
-                                           nullptr) == CE_None;
+        const int nBlockY = nY / BLOCK_SIZE + iY;
+        const int nReqYSize = std::min( nRasterYSize - nBlockY * BLOCK_SIZE, BLOCK_SIZE );
+        const int nFirstLineInCachedBlock = (iY == 0) ? nY % BLOCK_SIZE : 0;
+        const int nFirstLineInOutput = (iY == 0) ? 0 : BLOCK_SIZE - (nY % BLOCK_SIZE) + (iY - 1) * BLOCK_SIZE;
+        const int nLinesToCopy =
+            (nYIters == 1) ? nHeight :
+            (iY == 0) ? BLOCK_SIZE - (nY % BLOCK_SIZE) :
+            (iY == nYIters - 1) ? 1 + (nY + nHeight - 1) % BLOCK_SIZE :
+            BLOCK_SIZE;
+        for(int iX = 0; iX < nXIters; iX++)
+        {
+            const int nBlockX = nX / BLOCK_SIZE + iX;
+            const int nReqXSize = std::min( nRasterXSize - nBlockX * BLOCK_SIZE, BLOCK_SIZE );
+            const uint64_t nKey = (static_cast<uint64_t>(nBlockY) << 32) | nBlockX;
+            const int nFirstColInCachedBlock = (iX == 0) ? nX % BLOCK_SIZE : 0;
+            const int nFirstColInOutput = (iX == 0) ? 0 : BLOCK_SIZE - (nX % BLOCK_SIZE) + (iX - 1) * BLOCK_SIZE;
+            const int nColsToCopy =
+                (nXIters == 1) ? nWidth :
+                (iX == 0) ? BLOCK_SIZE - (nX % BLOCK_SIZE) :
+                (iX == nXIters - 1) ? 1 + (nX + nWidth - 1) % BLOCK_SIZE :
+                BLOCK_SIZE;
+
+#if 0
+            CPLDebug("RPC", "nY=%d nX=%d nBlockY=%d nBlockX=%d "
+                     "nFirstLineInCachedBlock=%d nFirstLineInOutput=%d nLinesToCopy=%d "
+                     "nFirstColInCachedBlock=%d nFirstColInOutput=%d nColsToCopy=%d",
+                     nY, nX, nBlockY, nBlockX, nFirstLineInCachedBlock, nFirstLineInOutput, nLinesToCopy,
+                     nFirstColInCachedBlock, nFirstColInOutput, nColsToCopy);
+#endif
+
+            std::shared_ptr<std::vector<double>> poValue;
+            if( !psTransform->poCacheDEM->tryGet(nKey, poValue) )
+            {
+                poValue = std::make_shared<std::vector<double>>(nReqXSize * nReqYSize);
+                CPLErr eErr = psTransform->poDS->GetRasterBand(1)->RasterIO(GF_Read,
+                                nBlockX * BLOCK_SIZE, nBlockY * BLOCK_SIZE,
+                                nReqXSize, nReqYSize,
+                                poValue->data(),
+                                nReqXSize, nReqYSize,
+                                GDT_Float64,
+                                0, 0, nullptr);
+                if( eErr != CE_None )
+                {
+                    return false;
+                }
+                psTransform->poCacheDEM->insert(nKey, poValue);
+            }
+
+            // Compose the cached block to the final buffer
+            for( int j=0; j<nLinesToCopy; j++)
+            {
+                memcpy( padfOut + (nFirstLineInOutput + j) * nWidth + nFirstColInOutput,
+                        poValue->data() + (nFirstLineInCachedBlock + j) * nReqXSize + nFirstColInCachedBlock,
+                        nColsToCopy * sizeof(double) );
+            }
+        }
     }
 
-    // Instead of reading just nWidth * nHeight pixels (with those being <= 4),
-    // target a larger buffer since small extractions can be costly, particular
-    // with VRT.
-    if( !(nX >= psTransform->nBufferX &&
-          nX + nWidth <= psTransform->nBufferX + psTransform->nBufferWidth &&
-          nY >= psTransform->nBufferY &&
-          nY + nHeight <= psTransform->nBufferY + psTransform->nBufferHeight ) )
+#if 0
+    CPLDebug("RPC_DEM", "DEM for %d,%d,%d,%d", nX, nY, nWidth, nHeight);
+    for(int j = 0; j < nHeight; j++)
     {
-#ifdef DEBUG_VERBOSE_EXTRACT_DEM
-        CPLDebug("RPC", "Current request: %d,%d-%dx%d",
-                  nX, nY, nWidth, nHeight);
-        CPLDebug("RPC", "Hits in last DEM buffer: %d (%d pixels)",
-                 psTransform->nHitsInBuffer,
-                 psTransform->nBufferWidth * psTransform->nBufferHeight);
-        CPLDebug("RPC", "Last DEM buffer: %d,%d-%dx%d",
-                 psTransform->nBufferX,
-                 psTransform->nBufferY,
-                 psTransform->nBufferWidth,
-                 psTransform->nBufferHeight);
-#endif
-        const int nRasterXSize = psTransform->poDS->GetRasterXSize();
-        const int nRasterYSize = psTransform->poDS->GetRasterYSize();
-        // If we have only queried a few points, no need to extract on a large
-        // window We will progressively extend the window up to its maximum size
-        // if we extract a significant number of points.
-        int nRadius = psTransform->nBufferMaxRadius;
-        if( psTransform->nDEMExtractions <
-            psTransform->nBufferMaxRadius * psTransform->nBufferMaxRadius )
+        std::string osLine;
+        for(int i = 0; i < nWidth; ++i )
         {
-            nRadius = static_cast<int> (
-                  sqrt(static_cast<double>(psTransform->nDEMExtractions)) );
-            CPLAssert( nRadius <= psTransform->nBufferMaxRadius );
+            if( !osLine.empty() )
+                osLine += ", ";
+            osLine += std::to_string(padfOut[j * nWidth + i]);
         }
-        // Check if there's some overlap between consecutive requests to decide
-        // if we must have a buffer around the interest window.
-        const int nDiffX = nX - psTransform->nLastQueriedX;
-        const int nDiffY = nY - psTransform->nLastQueriedY;
-        if( psTransform->nLastQueriedX >= 0 &&
-            (nDiffX > nRadius || -nDiffX > nRadius ||
-             nDiffY > nRadius || -nDiffY > nRadius) )
-        {
-            nRadius = 0;
-        }
-        psTransform->nBufferX = nX - nRadius;
-        if( psTransform->nBufferX < 0 )
-            psTransform->nBufferX = 0;
-        psTransform->nBufferY = nY - nRadius;
-        if( psTransform->nBufferY < 0 )
-            psTransform->nBufferY = 0;
-        psTransform->nBufferWidth = nWidth + 2 * nRadius;
-        if( psTransform->nBufferX + psTransform->nBufferWidth > nRasterXSize )
-            psTransform->nBufferWidth = nRasterXSize - psTransform->nBufferX;
-        psTransform->nBufferHeight = nHeight + 2 * nRadius;
-        if( psTransform->nBufferY + psTransform->nBufferHeight > nRasterYSize )
-            psTransform->nBufferHeight = nRasterYSize - psTransform->nBufferY;
-#ifdef DEBUG_VERBOSE_EXTRACT_DEM
-        CPLDebug("RPC", "New DEM buffer: %d,%d-%dx%d",
-                 psTransform->nBufferX,
-                 psTransform->nBufferY,
-                 psTransform->nBufferWidth,
-                 psTransform->nBufferHeight);
-#endif
-        CPLErr eErr = psTransform->poDS->GetRasterBand(1)->RasterIO(GF_Read,
-                        psTransform->nBufferX, psTransform->nBufferY,
-                        psTransform->nBufferWidth, psTransform->nBufferHeight,
-                        psTransform->padfDEMBuffer,
-                        psTransform->nBufferWidth, psTransform->nBufferHeight,
-                        GDT_Float64, 0, 0, nullptr);
-        if( eErr != CE_None )
-        {
-            psTransform->nBufferX = -1;
-            psTransform->nBufferY = -1;
-            psTransform->nBufferWidth = -1;
-            psTransform->nBufferHeight = -1;
-            return false;
-        }
-#ifdef DEBUG_VERBOSE_EXTRACT_DEM
-         psTransform->nHitsInBuffer = 1;
-#endif
+        CPLDebug("RPC_DEM", "%s", osLine.c_str());
     }
-    else
-    {
-#ifdef DEBUG_VERBOSE
-        psTransform->nHitsInBuffer++;
 #endif
-    }
-    psTransform->nLastQueriedX = nX;
-    psTransform->nLastQueriedY = nY;
-
-    for( int i=0; i<nHeight; i++)
-    {
-        memcpy( padfOut + i * nWidth,
-                psTransform->padfDEMBuffer + (nY - psTransform->nBufferY + i) *
-                    psTransform->nBufferWidth + nX - psTransform->nBufferX,
-                nWidth * sizeof(double) );
-    }
 
     return true;
 }
@@ -1947,29 +1918,6 @@ static bool GDALRPCOpenDEM( GDALRPCTransformInfo* psTransform )
     if( psTransform->poDS != nullptr &&
         psTransform->poDS->GetRasterCount() >= 1 )
     {
-        psTransform->nBufferMaxRadius =
-            atoi(CPLGetConfigOption("GDAL_RPC_DEM_BUFFER_MAX_RADIUS", "2"));
-        psTransform->nHitsInBuffer = 0;
-        constexpr int nMaxWindowSize = 4;
-        if( psTransform->nBufferMaxRadius <= 0 ||
-            psTransform->nBufferMaxRadius > (INT_MAX - nMaxWindowSize) / 2 )
-        {
-            return false;
-        }
-        const int nWindowSize = nMaxWindowSize + 2 * psTransform->nBufferMaxRadius;
-        psTransform->padfDEMBuffer = static_cast<double*>(VSI_MALLOC3_VERBOSE(
-            nWindowSize, nWindowSize, sizeof(double) ));
-        if( psTransform->padfDEMBuffer == nullptr )
-        {
-            return false;
-        }
-        psTransform->nBufferX = -1;
-        psTransform->nBufferY = -1;
-        psTransform->nBufferWidth = -1;
-        psTransform->nBufferHeight = -1;
-        psTransform->nLastQueriedX = -1;
-        psTransform->nLastQueriedY = -1;
-
         OGRSpatialReference oDEMSRS;
         if ( psTransform->pszDEMSRS != nullptr )
         {

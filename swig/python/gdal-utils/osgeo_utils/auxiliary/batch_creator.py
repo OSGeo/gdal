@@ -29,16 +29,19 @@
 # ******************************************************************************
 
 import os
-import sys
 import pkgutil
+import sys
 from pathlib import Path
-from typing import Sequence, Optional, List
+from typing import List, Optional, Sequence
 
 import osgeo_utils
 from osgeo_utils.auxiliary.base import PathLikeOrStr
 
 
-def batch_creator(filename_list: Sequence[PathLikeOrStr], batch_content: str = r'@python "%~dp0\%~n0.py" %*'):
+def batch_creator(
+    filename_list: Sequence[PathLikeOrStr],
+    batch_content: str = r'@python "%~dp0\%~n0.py" %*',
+):
     """
     :param filename_list: list of file names (full path)
     :param batch_content: contents of the wrapper batch file
@@ -48,10 +51,10 @@ def batch_creator(filename_list: Sequence[PathLikeOrStr], batch_content: str = r
     """
     try:
         for script_name in filename_list:
-            py_name = Path(script_name).with_suffix('.py')
+            py_name = Path(script_name).with_suffix(".py")
             if os.path.exists(py_name):
-                batch_name = py_name.with_suffix('.bat')
-                print(f'Creating: {batch_name}...')
+                batch_name = py_name.with_suffix(".bat")
+                print(f"Creating: {batch_name}...")
                 with open(batch_name, "w") as file:
                     file.write(batch_content)
         return 0
@@ -67,9 +70,11 @@ def get_sub_modules(module) -> List[str]:
     return sub_modules
 
 
-def batch_creator_by_modules(script_names: Sequence[str] = None, root: Optional[PathLikeOrStr] = None):
+def batch_creator_by_modules(
+    script_names: Sequence[str] = None, root: Optional[PathLikeOrStr] = None
+):
     if root is None:
-        root = Path(sys.executable).parents[0] / 'Scripts'
+        root = Path(sys.executable).parents[0] / "Scripts"
     if script_names is None:
         script_names = get_sub_modules(osgeo_utils)
     scripts = [Path(root) / Path(s).name for s in script_names]
@@ -81,5 +86,5 @@ def main(argv=sys.argv):
     return batch_creator_by_modules(scripts_list)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

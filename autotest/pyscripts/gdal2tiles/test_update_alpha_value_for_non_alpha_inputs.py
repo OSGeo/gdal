@@ -29,7 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from unittest import mock, TestCase
+from unittest import TestCase, mock
 
 from osgeo_utils import gdal2tiles
 
@@ -41,11 +41,10 @@ class AttrDict(dict):
 
 
 class UpdateAlphaValueForNonAlphaInputsTest(TestCase):
-
     def setUp(self):
         self.DEFAULT_OPTIONS = {
-            'srcnodata': None,
-            'verbose': True,
+            "srcnodata": None,
+            "verbose": True,
         }
         self.DEFAULT_ATTRDICT_OPTIONS = AttrDict(self.DEFAULT_OPTIONS)
 
@@ -56,5 +55,7 @@ class UpdateAlphaValueForNonAlphaInputsTest(TestCase):
 
     def test_do_nothing_on_2_or_4_bands_inputs(self):
         self.mock_dataset.RasterCount = 4
-        modif_dataset = gdal2tiles.update_alpha_value_for_non_alpha_inputs(self.mock_dataset)
+        modif_dataset = gdal2tiles.update_alpha_value_for_non_alpha_inputs(
+            self.mock_dataset
+        )
         self.assertEqual(modif_dataset, self.mock_dataset)

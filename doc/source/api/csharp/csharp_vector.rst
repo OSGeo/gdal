@@ -41,7 +41,7 @@ Open a DataSource
 
 A :file:`DataSource` wraps a OGR source (e.g a filename) and is created as follows:
 
-.. code-block:: 
+.. code-block:: c#
 
     /* -------------------------------------------------------------------- */
     /*      Register format(s).                                             */

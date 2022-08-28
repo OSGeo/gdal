@@ -33,6 +33,7 @@
 #include <vector>
 #include <unordered_set>
 #include "filegdb_fielddomain.h"
+#include "filegdb_relationship.h"
 
 #ifdef __linux
 #include <sys/types.h>
@@ -273,7 +274,7 @@ int OGRPGeoDataSource::Open( GDALOpenInfo *poOpenInfo )
         }
     }
 
-    // collect domains
+    // collect domains and relationships
     if ( m_bHasGdbItemsTable )
     {
         CPLODBCStatement oItemsStmt( &oSession );
@@ -292,6 +293,14 @@ int OGRPGeoDataSource::Open( GDALOpenInfo *poOpenInfo )
                         m_oMapFieldDomains[domainName] = std::move(poDomain);
                     }
                 }
+                else if( strstr(osDefinition, "DERelationshipClassInfo") != nullptr )
+                {
+                    if( auto poRelationship = ParseXMLRelationshipDef(osDefinition) )
+                    {
+                        const auto relationshipName = poRelationship->GetName();
+                        m_osMapRelationships[relationshipName] = std::move(poRelationship);
+                    }
+                }
             }
         }
     }
@@ -305,6 +314,13 @@ int OGRPGeoDataSource::Open( GDALOpenInfo *poOpenInfo )
 
 int OGRPGeoDataSource::TestCapability( CPL_UNUSED const char * pszCap )
 {
+    if( EQUAL(pszCap,ODsCMeasuredGeometries) )
+        return TRUE;
+    else if( EQUAL(pszCap,ODsCCurveGeometries) )
+        return TRUE;
+    else if( EQUAL(pszCap,ODsCZGeometries) )
+        return TRUE;
+
     return FALSE;
 }
 
@@ -538,6 +554,38 @@ OGRLayer * OGRPGeoDataSource::ExecuteSQL( const char *pszSQLCommand,
         poLayer->SetSpatialFilter( poSpatialFilter );
 
     return poLayer;
+}
+
+
+/************************************************************************/
+/*                        GetRelationshipNames()                        */
+/************************************************************************/
+
+std::vector<std::string> OGRPGeoDataSource::GetRelationshipNames( CPL_UNUSED CSLConstList papszOptions ) const
+
+{
+    std::vector<std::string> oasNames;
+    oasNames.reserve(m_osMapRelationships.size());
+    for ( auto it = m_osMapRelationships.begin(); it != m_osMapRelationships.end(); ++it )
+    {
+        oasNames.emplace_back(it->first);
+    }
+    return oasNames;
+}
+
+
+/************************************************************************/
+/*                        GetRelationship()                             */
+/************************************************************************/
+
+const GDALRelationship* OGRPGeoDataSource::GetRelationship(const std::string& name) const
+
+{
+    auto it = m_osMapRelationships.find(name);
+    if (it==m_osMapRelationships.end())
+        return nullptr;
+
+    return it->second.get();
 }
 
 /************************************************************************/

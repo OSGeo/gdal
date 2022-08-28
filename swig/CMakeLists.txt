@@ -18,6 +18,7 @@ set(GDAL_SWIG_COMMON_INTERFACE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/include/Operations.i
     ${CMAKE_CURRENT_SOURCE_DIR}/include/osr.i
     ${CMAKE_CURRENT_SOURCE_DIR}/include/RasterAttributeTable.i
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/Relationship.i
     ${CMAKE_CURRENT_SOURCE_DIR}/include/Transform.i
     ${CMAKE_CURRENT_SOURCE_DIR}/include/XMLNode.i
     ${CMAKE_CURRENT_SOURCE_DIR}/include/MultiDimensional.i)

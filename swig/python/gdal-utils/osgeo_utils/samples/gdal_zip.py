@@ -34,8 +34,8 @@ from osgeo import gdal
 
 
 def Usage():
-    print('Usage: gdal_zip [-r] zip_filename source_file*')
-    return -1
+    print("Usage: gdal_zip [-r] zip_filename source_file*")
+    return 2
 
 
 def copy_file(srcfile, targetfile, recurse):
@@ -44,19 +44,22 @@ def copy_file(srcfile, targetfile, recurse):
         subfiles = gdal.ReadDir(srcfile)
         if subfiles:
             for subfile in subfiles:
-                if subfile != '.' and subfile != '..' and \
-                   not copy_file(srcfile + '/' + subfile, targetfile, True):
+                if (
+                    subfile != "."
+                    and subfile != ".."
+                    and not copy_file(srcfile + "/" + subfile, targetfile, True)
+                ):
                     return False
             return True
 
-    fin = gdal.VSIFOpenL(srcfile, 'rb')
+    fin = gdal.VSIFOpenL(srcfile, "rb")
     if not fin:
-        print('Cannot open ' + srcfile)
+        print("Cannot open " + srcfile)
         return False
 
-    fout = gdal.VSIFOpenL(targetfile + '/' + srcfile, 'wb')
+    fout = gdal.VSIFOpenL(targetfile + "/" + srcfile, "wb")
     if not fout:
-        print('Cannot create ' + targetfile + '/' + srcfile)
+        print("Cannot create " + targetfile + "/" + srcfile)
         gdal.VSIFCloseL(fin)
         return False
 
@@ -67,12 +70,12 @@ def copy_file(srcfile, targetfile, recurse):
         buf = gdal.VSIFReadL(1, buf_max_size, fin)
         if buf is None:
             if copied == 0:
-                print('Cannot read from%s' % srcfile)
+                print("Cannot read from%s" % srcfile)
                 ret = False
             break
         buf_size = len(buf)
         if gdal.VSIFWriteL(buf, 1, buf_size, fout) != buf_size:
-            print('Error writing %d bytes' % buf_size)
+            print("Error writing %d bytes" % buf_size)
             ret = False
             break
         copied += buf_size
@@ -93,14 +96,14 @@ def gdal_zip(argv, progress=None):
     if argv is None:
         return -1
 
-    if gdal.GetConfigOption('GDAL_NUM_THREADS') is None:
-        gdal.SetConfigOption('GDAL_NUM_THREADS', 'ALL_CPUS')
+    if gdal.GetConfigOption("GDAL_NUM_THREADS") is None:
+        gdal.SetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS")
 
     for i in range(1, len(argv)):
-        if argv[i] == '-r':
+        if argv[i] == "-r":
             recurse = True
-        elif argv[i][0] == '-':
-            print('Unrecognized option : %s' % argv[i])
+        elif argv[i][0] == "-":
+            print("Unrecognized option : %s" % argv[i])
             return Usage()
         elif targetfile is None:
             targetfile = argv[i]
@@ -110,9 +113,9 @@ def gdal_zip(argv, progress=None):
     if not srcfiles or targetfile is None:
         return Usage()
 
-    if not targetfile.endswith('.zip'):
-        targetfile += '.zip'
-    targetfile = '/vsizip/' + targetfile
+    if not targetfile.endswith(".zip"):
+        targetfile += ".zip"
+    targetfile = "/vsizip/" + targetfile
 
     ret = 0
     for srcfile in srcfiles:
@@ -127,5 +130,5 @@ def main(argv=sys.argv):
     return gdal_zip(argv)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

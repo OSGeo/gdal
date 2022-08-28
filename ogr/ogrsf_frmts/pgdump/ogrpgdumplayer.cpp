@@ -109,6 +109,7 @@ int OGRPGDumpLayer::TestCapability( const char * pszCap )
         EQUAL(pszCap,OLCCreateField) ||
         EQUAL(pszCap,OLCCreateGeomField) ||
         EQUAL(pszCap,OLCCurveGeometries) ||
+        EQUAL(pszCap,OLCZGeometries) ||
         EQUAL(pszCap,OLCMeasuredGeometries) )
         return TRUE;
     else

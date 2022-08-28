@@ -865,6 +865,8 @@ int OGRLIBKMLLayer::TestCapability( const char *pszCap )
         result = bUpdate && m_poKmlUpdate;
     else if( EQUAL( pszCap, OLCStringsAsUTF8 ) )
         result = TRUE;
+    else if( EQUAL( pszCap, OLCZGeometries ) )
+        result = TRUE;
 
     return result;
 }

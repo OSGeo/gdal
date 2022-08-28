@@ -31,8 +31,7 @@
 
 import sys
 
-from osgeo import gdal
-from osgeo import ogr
+from osgeo import gdal, ogr
 
 DEFAULT = 0
 UPDATE_ONLY = 1
@@ -43,32 +42,65 @@ APPEND_ONLY = 2
 
 
 def Usage():
-    print('ogrupdate.py -src name -dst name [-srclayer name] [-dstlayer name] [-matchfield name] [-update_only | -append_new_only]')
-    print('             [-compare_before_update] [-preserve_fid] [-select field_list] [-dry_run] [-progress] [-skip_failures] [-quiet]')
-    print('')
-    print('Update a target datasource with the features of a source datasource. Contrary to ogr2ogr,')
-    print('this script tries to match features, based on FID or field value equality, between the datasources,')
-    print('to decide whether to create a new feature, or to update an existing one.')
-    print('')
-    print('There are 3 modes :')
-    print('(default):        *update* features of the target layer that match features from the source layer')
-    print('                  and *append* new features from the source layer that do not match any feature from the target layer.')
-    print('-update_only:     *update* features of the target layer that match features from the source layer;')
-    print('                  do *not append* new features if a source feature has no match in the target layer.')
-    print('-append_new_only: do *not update* features of the target layer that match features from the source layer;')
-    print('                  *append* new features from the source layer that do not match any feature from the target layer.')
-    print('')
-    print('Other options : ')
-    print(' * If -matchfield is *not* specified, the match criterion is based on FID equality.')
-    print(' * When -compare_before_update is specified, a test on all fields of the matching source and target features')
-    print('   will be done before determining if an update of the target feature is really necessary.')
-    print(' * When -preserve_fid is specified, new features that are appended will try to reuse the FID')
-    print('   of the source feature. Note: not all drivers do actually honour that request.')
-    print(' * When -select is specified, only the list of fields specified will be updated. This option is only compatible')
-    print('   with -update_only.')
-    print('')
+    print(
+        "Usage: ogrupdate.py -src name -dst name [-srclayer name] [-dstlayer name] [-matchfield name] [-update_only | -append_new_only]"
+    )
+    print(
+        "             [-compare_before_update] [-preserve_fid] [-select field_list] [-dry_run] [-progress] [-skip_failures] [-quiet]"
+    )
+    print("")
+    print(
+        "Update a target datasource with the features of a source datasource. Contrary to ogr2ogr,"
+    )
+    print(
+        "this script tries to match features, based on FID or field value equality, between the datasources,"
+    )
+    print("to decide whether to create a new feature, or to update an existing one.")
+    print("")
+    print("There are 3 modes :")
+    print(
+        "(default):        *update* features of the target layer that match features from the source layer"
+    )
+    print(
+        "                  and *append* new features from the source layer that do not match any feature from the target layer."
+    )
+    print(
+        "-update_only:     *update* features of the target layer that match features from the source layer;"
+    )
+    print(
+        "                  do *not append* new features if a source feature has no match in the target layer."
+    )
+    print(
+        "-append_new_only: do *not update* features of the target layer that match features from the source layer;"
+    )
+    print(
+        "                  *append* new features from the source layer that do not match any feature from the target layer."
+    )
+    print("")
+    print("Other options : ")
+    print(
+        " * If -matchfield is *not* specified, the match criterion is based on FID equality."
+    )
+    print(
+        " * When -compare_before_update is specified, a test on all fields of the matching source and target features"
+    )
+    print(
+        "   will be done before determining if an update of the target feature is really necessary."
+    )
+    print(
+        " * When -preserve_fid is specified, new features that are appended will try to reuse the FID"
+    )
+    print(
+        "   of the source feature. Note: not all drivers do actually honour that request."
+    )
+    print(
+        " * When -select is specified, only the list of fields specified will be updated. This option is only compatible"
+    )
+    print("   with -update_only.")
+    print("")
 
-    return 1
+    return 2
+
 
 ###############################################################
 # ogrupdate_analyse_args()
@@ -106,79 +138,81 @@ def ogrupdate_analyse_args(argv, progress=None, progress_arg=None):
     i = 0
     while i < len(argv):
         arg = argv[i]
-        if arg == '-src' and i + 1 < len(argv):
+        if arg == "-src" and i + 1 < len(argv):
             i = i + 1
             src_filename = argv[i]
-        elif arg == '-dst' and i + 1 < len(argv):
+        elif arg == "-dst" and i + 1 < len(argv):
             i = i + 1
             dst_filename = argv[i]
-        elif arg == '-srclayer' and i + 1 < len(argv):
+        elif arg == "-srclayer" and i + 1 < len(argv):
             i = i + 1
             src_layername = argv[i]
-        elif arg == '-dstlayer' and i + 1 < len(argv):
+        elif arg == "-dstlayer" and i + 1 < len(argv):
             i = i + 1
             dst_layername = argv[i]
-        elif arg == '-matchfield' and i + 1 < len(argv):
+        elif arg == "-matchfield" and i + 1 < len(argv):
             i = i + 1
             matchfieldname = argv[i]
-        elif arg == '-update_only':
+        elif arg == "-update_only":
             update_mode = UPDATE_ONLY
-        elif arg == '-append_new_only':
+        elif arg == "-append_new_only":
             update_mode = APPEND_ONLY
-        elif arg == '-preserve_fid':
+        elif arg == "-preserve_fid":
             preserve_fid = True
-        elif arg == '-compare_before_update':
+        elif arg == "-compare_before_update":
             compare_before_update = True
         elif arg == "-select" and i + 1 < len(argv):
             i = i + 1
             pszSelect = argv[i]
-            if pszSelect.find(',') != -1:
-                papszSelFields = pszSelect.split(',')
+            if pszSelect.find(",") != -1:
+                papszSelFields = pszSelect.split(",")
             else:
-                papszSelFields = pszSelect.split(' ')
-            if papszSelFields[0] == '':
+                papszSelFields = pszSelect.split(" ")
+            if papszSelFields[0] == "":
                 papszSelFields = []
-        elif arg == '-dry_run':
+        elif arg == "-dry_run":
             dry_run = True
-        elif arg == '-progress':
+        elif arg == "-progress":
             progress = ogr.TermProgress_nocb
             progress_arg = None
-        elif arg == '-q' or arg == '-quiet':
+        elif arg == "-q" or arg == "-quiet":
             quiet = True
-        elif arg[0:5] == '-skip':
+        elif arg[0:5] == "-skip":
             skip_failures = True
         else:
-            print('Unrecognized argument : %s' % arg)
+            print("Unrecognized argument : %s" % arg)
             return Usage()
         i = i + 1
 
     if src_filename is None:
-        print('Missing -src')
+        print("Missing -src")
         return 1
 
     if dst_filename is None:
-        print('Missing -dst')
+        print("Missing -dst")
         return 1
 
     src_ds = ogr.Open(src_filename)
     if src_ds is None:
-        print('Cannot open source datasource %s' % src_filename)
+        print("Cannot open source datasource %s" % src_filename)
         return 1
 
     dst_ds = ogr.Open(dst_filename, update=1)
     if dst_ds is None:
-        print('Cannot open destination datasource %s' % dst_filename)
+        print("Cannot open destination datasource %s" % dst_filename)
         return 1
 
     if src_layername is None:
         if src_ds.GetLayerCount() > 1:
-            print('Source datasource has more than 1 layers. -srclayer must be specified')
+            print(
+                "Source datasource has more than 1 layers. -srclayer must be specified"
+            )
             return 1
         src_layer = src_ds.GetLayer(0)
     else:
         src_layer = src_ds.GetLayerByName(src_layername)
     if src_layer is None:
-        print('Cannot open source layer')
+        print("Cannot open source layer")
         return 1
 
     src_layername = src_layer.GetName()
@@ -191,19 +225,27 @@ def ogrupdate_analyse_args(argv, progress=None, progress_arg=None):
     else:
         dst_layer = dst_ds.GetLayerByName(dst_layername)
     if dst_layer is None:
-        print('Cannot open destination layer')
+        print("Cannot open destination layer")
         return 1
 
-    if matchfieldname is None and dst_layer.TestCapability(ogr.OLCRandomRead) == 0 and not quiet:
-        print('Warning: target layer does not advertise fast random read capability. Update might be slow')
+    if (
+        matchfieldname is None
+        and dst_layer.TestCapability(ogr.OLCRandomRead) == 0
+        and not quiet
+    ):
+        print(
+            "Warning: target layer does not advertise fast random read capability. Update might be slow"
+        )
 
     if papszSelFields is not None and compare_before_update:
-        print('Warning: -select and -compare_before_update are not compatible. Ignoring -compare_before_update')
+        print(
+            "Warning: -select and -compare_before_update are not compatible. Ignoring -compare_before_update"
+        )
         compare_before_update = False
 
     if papszSelFields is not None:
         if update_mode != UPDATE_ONLY:
-            print('-select is only compatible with -update_only')
+            print("-select is only compatible with -update_only")
             return 1
 
     updated_count = [0]
@@ -226,27 +268,43 @@ def ogrupdate_analyse_args(argv, progress=None, progress_arg=None):
                     are_comparable = False
         if not are_comparable:
             if not quiet:
-                print('-compare_before_update ignored since layer definitions do not match')
+                print(
+                    "-compare_before_update ignored since layer definitions do not match"
+                )
             compare_before_update = False
 
-    ret = ogrupdate_process(src_layer, dst_layer, matchfieldname, update_mode,
-                            preserve_fid, compare_before_update, papszSelFields, dry_run, skip_failures,
-                            updated_count, updated_failed, inserted_count, inserted_failed,
-                            progress, progress_arg)
+    ret = ogrupdate_process(
+        src_layer,
+        dst_layer,
+        matchfieldname,
+        update_mode,
+        preserve_fid,
+        compare_before_update,
+        papszSelFields,
+        dry_run,
+        skip_failures,
+        updated_count,
+        updated_failed,
+        inserted_count,
+        inserted_failed,
+        progress,
+        progress_arg,
+    )
 
     if not quiet:
-        print('Summary :')
-        print('Features updated  : %d' % updated_count[0])
-        print('Features appended : %d' % inserted_count[0])
+        print("Summary :")
+        print("Features updated  : %d" % updated_count[0])
+        print("Features appended : %d" % inserted_count[0])
         if updated_failed[0] != 0:
-            print('Failed updates    : %d' % updated_failed[0])
+            print("Failed updates    : %d" % updated_failed[0])
         if inserted_failed[0] != 0:
-            print('Failed inserts    : %d' % inserted_failed[0])
+            print("Failed inserts    : %d" % inserted_failed[0])
 
     src_ds = None
     dst_ds = None
 
     return ret
+
 
 ###############################################################
 # AreFeaturesEqual()
@@ -268,15 +326,28 @@ def AreFeaturesEqual(src_feat, dst_feat):
         return src_geom.Equals(dst_geom)
     return True
 
+
 ###############################################################
 # ogrupdate_process()
 
 
-def ogrupdate_process(src_layer, dst_layer, matchfieldname=None, update_mode=DEFAULT,
-                      preserve_fid=False, compare_before_update=False,
-                      papszSelFields=None, dry_run=False, skip_failures=False,
-                      updated_count_out=None, updated_failed_out=None, inserted_count_out=None, inserted_failed_out=None,
-                      progress=None, progress_arg=None):
+def ogrupdate_process(
+    src_layer,
+    dst_layer,
+    matchfieldname=None,
+    update_mode=DEFAULT,
+    preserve_fid=False,
+    compare_before_update=False,
+    papszSelFields=None,
+    dry_run=False,
+    skip_failures=False,
+    updated_count_out=None,
+    updated_failed_out=None,
+    inserted_count_out=None,
+    inserted_failed_out=None,
+    progress=None,
+    progress_arg=None,
+):
 
     src_layer_defn = src_layer.GetLayerDefn()
     dst_layer_defn = dst_layer.GetLayerDefn()
@@ -284,12 +355,12 @@ def ogrupdate_process(src_layer, dst_layer, matchfieldname=None, update_mode=DEF
     if matchfieldname is not None:
         src_idx = src_layer.GetLayerDefn().GetFieldIndex(matchfieldname)
         if src_idx < 0:
-            print('Cannot find field to match in source layer')
+            print("Cannot find field to match in source layer")
             return 1
         src_type = src_layer.GetLayerDefn().GetFieldDefn(src_idx).GetType()
         dst_idx = dst_layer_defn.GetFieldIndex(matchfieldname)
         if dst_idx < 0:
-            print('Cannot find field to match in destination layer')
+            print("Cannot find field to match in destination layer")
             return 1
         dst_type = dst_layer_defn.GetFieldDefn(dst_idx).GetType()
 
@@ -323,7 +394,10 @@ def ogrupdate_process(src_layer, dst_layer, matchfieldname=None, update_mode=DEF
 
         iter_src_feature = iter_src_feature + 1
         if progress is not None:
-            if progress(iter_src_feature * 1.0 / src_featurecount, "", progress_arg) != 1:
+            if (
+                progress(iter_src_feature * 1.0 / src_featurecount, "", progress_arg)
+                != 1
+            ):
                 return 1
 
         # Do we match on the FID ?
@@ -358,12 +432,24 @@ def ogrupdate_process(src_layer, dst_layer, matchfieldname=None, update_mode=DEF
                     for fieldname in papszSelFields:
                         fld_src_idx = src_layer_defn.GetFieldIndex(fieldname)
                         fld_dst_idx = dst_layer_defn.GetFieldIndex(fieldname)
-                        if src_layer_defn.GetFieldDefn(fld_dst_idx).GetType() == ogr.OFTReal:
-                            dst_feat.SetField(fld_dst_idx, src_feat.GetFieldAsDouble(fld_src_idx))
-                        elif src_layer_defn.GetFieldDefn(fld_dst_idx).GetType() == ogr.OFTInteger:
-                            dst_feat.SetField(fld_dst_idx, src_feat.GetFieldAsInteger(fld_src_idx))
+                        if (
+                            src_layer_defn.GetFieldDefn(fld_dst_idx).GetType()
+                            == ogr.OFTReal
+                        ):
+                            dst_feat.SetField(
+                                fld_dst_idx, src_feat.GetFieldAsDouble(fld_src_idx)
+                            )
+                        elif (
+                            src_layer_defn.GetFieldDefn(fld_dst_idx).GetType()
+                            == ogr.OFTInteger
+                        ):
+                            dst_feat.SetField(
+                                fld_dst_idx, src_feat.GetFieldAsInteger(fld_src_idx)
+                            )
                         else:
-                            dst_feat.SetField(fld_dst_idx, src_feat.GetFieldAsString(fld_src_idx))
+                            dst_feat.SetField(
+                                fld_dst_idx, src_feat.GetFieldAsString(fld_src_idx)
+                            )
                 else:
                     dst_feat.SetFrom(src_feat)  # resets the FID
                     dst_feat.SetFID(dst_fid)
@@ -417,12 +503,24 @@ def ogrupdate_process(src_layer, dst_layer, matchfieldname=None, update_mode=DEF
                     for fieldname in papszSelFields:
                         fld_src_idx = src_layer_defn.GetFieldIndex(fieldname)
                         fld_dst_idx = dst_layer_defn.GetFieldIndex(fieldname)
-                        if src_layer_defn.GetFieldDefn(fld_dst_idx).GetType() == ogr.OFTReal:
-                            dst_feat.SetField(fld_dst_idx, src_feat.GetFieldAsDouble(fld_src_idx))
-                        elif src_layer_defn.GetFieldDefn(fld_dst_idx).GetType() == ogr.OFTInteger:
-                            dst_feat.SetField(fld_dst_idx, src_feat.GetFieldAsInteger(fld_src_idx))
+                        if (
+                            src_layer_defn.GetFieldDefn(fld_dst_idx).GetType()
+                            == ogr.OFTReal
+                        ):
+                            dst_feat.SetField(
+                                fld_dst_idx, src_feat.GetFieldAsDouble(fld_src_idx)
+                            )
+                        elif (
+                            src_layer_defn.GetFieldDefn(fld_dst_idx).GetType()
+                            == ogr.OFTInteger
+                        ):
+                            dst_feat.SetField(
+                                fld_dst_idx, src_feat.GetFieldAsInteger(fld_src_idx)
+                            )
                         else:
-                            dst_feat.SetField(fld_dst_idx, src_feat.GetFieldAsString(fld_src_idx))
+                            dst_feat.SetField(
+                                fld_dst_idx, src_feat.GetFieldAsString(fld_src_idx)
+                            )
                 else:
                     dst_feat.SetFrom(src_feat)
                     dst_feat.SetFID(dst_fid)
@@ -437,9 +535,11 @@ def ogrupdate_process(src_layer, dst_layer, matchfieldname=None, update_mode=DEF
 
         if ret != 0:
             if not skip_failures:
-                if gdal.GetLastErrorMsg() == '':
-                    print('An error occurred during feature insertion/update. '
-                          'Interrupting processing.')
+                if gdal.GetLastErrorMsg() == "":
+                    print(
+                        "An error occurred during feature insertion/update. "
+                        "Interrupting processing."
+                    )
                 ret = 1
                 break
             else:
@@ -465,5 +565,5 @@ def main(argv=sys.argv):
     return ogrupdate_analyse_args(argv[1:])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

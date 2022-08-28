@@ -132,6 +132,10 @@ class OGRProxiedLayer : public OGRAbstractProxiedLayer
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
     virtual OGRErr      DeleteFeature( GIntBig nFID ) override;
 
+    virtual GDALDataset* GetDataset() override;
+    virtual bool         GetArrowStream(struct ArrowArrayStream* out_stream,
+                                        CSLConstList papszOptions = nullptr) override;
+
     virtual const char *GetName() override;
     virtual OGRwkbGeometryType GetGeomType() override;
     virtual OGRFeatureDefn *GetLayerDefn() override;
@@ -149,6 +153,7 @@ class OGRProxiedLayer : public OGRAbstractProxiedLayer
     virtual OGRErr      DeleteField( int iField ) override;
     virtual OGRErr      ReorderFields( int* panMap ) override;
     virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags ) override;
+    virtual OGRErr      AlterGeomFieldDefn( int iGeomField, const OGRGeomFieldDefn* poNewGeomFieldDefn, int nFlags ) override;
 
     virtual OGRErr      SyncToDisk() override;
 

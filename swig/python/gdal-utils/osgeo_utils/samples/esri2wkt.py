@@ -32,9 +32,15 @@
 import sys
 
 from osgeo import osr
-
 from osgeo_utils.auxiliary.base import MaybeSequence, PathLikeOrStr
 from osgeo_utils.auxiliary.gdal_argparse import GDALArgumentParser, GDALScript
+
+
+def Usage():
+    print(
+        f"Usage: {sys.argv[0]} -- This is a sample. Read source to know how to use. --"
+    )
+    return 2
 
 
 def esri2wkt(prj_filename: PathLikeOrStr):
@@ -48,7 +54,7 @@ def esri2wkt(prj_filename: PathLikeOrStr):
     prj_srs = osr.SpatialReference()
     err = prj_srs.ImportFromESRI(prj_lines)
     if err != 0:
-        print('Error = %d' % err)
+        print("Error = %d" % err)
         return 1
     else:
         print(prj_srs.ExportToPrettyWkt())
@@ -68,12 +74,14 @@ def esri2wkt_multi(filenames: MaybeSequence[PathLikeOrStr]):
 class ESRI2WKT(GDALScript):
     def __init__(self):
         super().__init__()
-        self.title = 'Transforms files from ESRI prj format into WKT format'
+        self.title = "Transforms files from ESRI prj format into WKT format"
 
     def get_parser(self, argv) -> GDALArgumentParser:
         parser = self.parser
 
-        parser.add_argument("filenames", metavar='filename', type=str, nargs='*', help="esri .prj file")
+        parser.add_argument(
+            "filenames", metavar="filename", type=str, nargs="*", help="esri .prj file"
+        )
 
         return parser
 
@@ -82,8 +90,10 @@ class ESRI2WKT(GDALScript):
 
 
 def main(argv=sys.argv):
+    if len(sys.argv) < 2:
+        return Usage()
     return ESRI2WKT().main(argv)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

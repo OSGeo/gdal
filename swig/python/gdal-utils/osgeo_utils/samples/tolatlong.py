@@ -33,21 +33,20 @@
 
 import sys
 
-from osgeo import gdal
-from osgeo import osr
+from osgeo import gdal, osr
 
 # =============================================================================
 
 
 def Usage():
-    print('')
-    print('Read coordinate system and geotransformation matrix from input')
-    print('file and report latitude/longitude coordinates for the center')
-    print('of the specified pixel.')
-    print('')
-    print('Usage: tolatlong.py pixel line infile')
-    print('')
-    return 1
+    print("")
+    print("Read coordinate system and geotransformation matrix from input")
+    print("file and report latitude/longitude coordinates for the center")
+    print("of the specified pixel.")
+    print("")
+    print("Usage: tolatlong.py pixel line infile")
+    print("")
+    return 2
 
 
 def main(argv=sys.argv):
@@ -107,12 +106,15 @@ def main(argv=sys.argv):
     (lon, lat, height) = ct.TransformPoint(X, Y)
 
     # Report results
-    print('pixel: %g\t\t\tline: %g' % (pixel, line))
-    print('latitude: %fd\t\tlongitude: %fd' % (lat, lon))
-    print('latitude: %s\t\tlongitude: %s' % (gdal.DecToDMS(lat, 'Lat', 2), gdal.DecToDMS(lon, 'Long', 2)))
+    print("pixel: %g\t\t\tline: %g" % (pixel, line))
+    print("latitude: %fd\t\tlongitude: %fd" % (lat, lon))
+    print(
+        "latitude: %s\t\tlongitude: %s"
+        % (gdal.DecToDMS(lat, "Lat", 2), gdal.DecToDMS(lon, "Long", 2))
+    )
 
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

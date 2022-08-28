@@ -57,7 +57,19 @@ namespace PCIDSK {
         void Load();
         void RebuildSegmentData(void);
         bool loaded_;
-        struct PCIDSKGCP2SegInfo;
+
+        struct PCIDSKGCP2SegInfo
+        {
+            std::vector<PCIDSK::GCP> gcps;
+            unsigned int num_gcps;
+            PCIDSKBuffer seg_data;
+
+            std::string map_units;   ///< PCI mapunits string
+            std::string proj_parms;  ///< Additional projection parameters
+            unsigned int num_proj;
+            bool changed;
+        };
+
         PCIDSKGCP2SegInfo* pimpl_;
     };
 }

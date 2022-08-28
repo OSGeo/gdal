@@ -38,9 +38,9 @@ from osgeo import ogr
 
 
 def Usage():
-    print('Usage: get_soundg.py <s57file> <shapefile>')
-    print('')
-    return 1
+    print("Usage: get_soundg.py <s57file> <shapefile>")
+    print("")
+    return 2
 
 
 def main(argv=sys.argv):
@@ -54,17 +54,17 @@ def main(argv=sys.argv):
     # Open the S57 file, and find the SOUNDG layer.
 
     ds = ogr.Open(s57filename)
-    src_soundg = ds.GetLayerByName('SOUNDG')
+    src_soundg = ds.GetLayerByName("SOUNDG")
 
     # -
     # Create the output shapefile.
 
-    shp_driver = ogr.GetDriverByName('ESRI Shapefile')
+    shp_driver = ogr.GetDriverByName("ESRI Shapefile")
     shp_driver.DeleteDataSource(shpfilename)
 
     shp_ds = shp_driver.CreateDataSource(shpfilename)
 
-    shp_layer = shp_ds.CreateLayer('out', geom_type=ogr.wkbPoint25D)
+    shp_layer = shp_ds.CreateLayer("out", geom_type=ogr.wkbPoint25D)
 
     src_defn = src_soundg.GetLayerDefn()
     field_count = src_defn.GetFieldCount()
@@ -84,7 +84,7 @@ def main(argv=sys.argv):
         else:
             out_mapping.append(shp_layer.GetLayerDefn().GetFieldCount() - 1)
 
-    fd = ogr.FieldDefn('ELEV', ogr.OFTReal)
+    fd = ogr.FieldDefn("ELEV", ogr.OFTReal)
     fd.SetWidth(12)
     fd.SetPrecision(4)
     shp_layer.CreateField(fd)
@@ -105,7 +105,7 @@ def main(argv=sys.argv):
             for fld_index in range(field_count):
                 feat2.SetField(out_mapping[fld_index], feat.GetField(fld_index))
 
-            feat2.SetField('ELEV', pnt.GetZ(0))
+            feat2.SetField("ELEV", pnt.GetZ(0))
             feat2.SetGeometry(pnt)
             shp_layer.CreateFeature(feat2)
             feat2.Destroy()
@@ -122,5 +122,5 @@ def main(argv=sys.argv):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

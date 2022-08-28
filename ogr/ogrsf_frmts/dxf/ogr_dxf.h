@@ -510,19 +510,19 @@ public:
 
     VSILFILE           *fp;
 
-    int                 iSrcBufferOffset;
-    int                 nSrcBufferBytes;
-    int                 iSrcBufferFileOffset;
+    unsigned int        iSrcBufferOffset;
+    unsigned int        nSrcBufferBytes;
+    unsigned int        iSrcBufferFileOffset;
     char                achSrcBuffer[1025];
 
-    int                 nLastValueSize;
+    unsigned int        nLastValueSize;
     int                 nLineNumber;
 
     int                 ReadValue( char *pszValueBuffer,
                                    int nValueBufferSize = 81 );
     void                UnreadValue();
     void                LoadDiskChunk();
-    void                ResetReadPointer( int iNewOffset, int nNewLineNumber = 0 );
+    void                ResetReadPointer( unsigned int iNewOffset, int nNewLineNumber = 0 );
 };
 
 /************************************************************************/
@@ -550,7 +550,7 @@ class OGRDXFDataSource final: public OGRDataSource
     CPLString           osName;
     std::vector<OGRLayer*> apoLayers;
 
-    int                 iEntitiesOffset;
+    unsigned int        iEntitiesOffset;
     int                 iEntitiesLineNumber;
 
     std::map<CPLString,DXFBlockDefinition> oBlockMap;

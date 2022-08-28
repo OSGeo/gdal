@@ -31,19 +31,22 @@
 
 import glob
 import sys
+
 from osgeo import ogr
 
 
-def fix(filename, verbose = 1):
+def fix(filename, verbose=1):
     something_done = False
 
     if verbose:
-        print('Analyzing ' + filename)
+        print("Analyzing " + filename)
     # Fixes issue https://github.com/opengeospatial/geopackage/pull/463
     ds = ogr.Open(filename)
-    lyr = ds.ExecuteSQL("SELECT sql FROM sqlite_master WHERE " +
-                        "name = 'gpkg_metadata_reference_column_name_update' AND " +
-                        "sql LIKE '%NEW.column_nameIS NOT NULL%'")
+    lyr = ds.ExecuteSQL(
+        "SELECT sql FROM sqlite_master WHERE "
+        + "name = 'gpkg_metadata_reference_column_name_update' AND "
+        + "sql LIKE '%NEW.column_nameIS NOT NULL%'"
+    )
     buggy_sql = None
     f = lyr.GetNextFeature()
     if f:
@@ -52,26 +55,28 @@ def fix(filename, verbose = 1):
     ds = None
     if buggy_sql:
         if verbose:
-            print('  Fixing invalid gpkg_metadata_reference_column_name_update trigger')
+            print("  Fixing invalid gpkg_metadata_reference_column_name_update trigger")
         ds = ogr.Open(filename, update=1)
+        ds.ExecuteSQL("DROP TRIGGER gpkg_metadata_reference_column_name_update")
         ds.ExecuteSQL(
-            'DROP TRIGGER gpkg_metadata_reference_column_name_update')
-        ds.ExecuteSQL(buggy_sql.replace('NEW.column_nameIS NOT NULL',
-                                        'NEW.column_name IS NOT NULL'))
+            buggy_sql.replace(
+                "NEW.column_nameIS NOT NULL", "NEW.column_name IS NOT NULL"
+            )
+        )
         ds = None
         something_done = True
 
     if verbose and not something_done:
-        print('  Nothing to change')
+        print("  Nothing to change")
 
 
 def main(argv=sys.argv):
     if len(argv) != 2:
-        print('Usage: fix_gpkg.py my.gpkg|*.gpkg')
-        return 1
+        print("Usage: fix_gpkg.py my.gpkg|*.gpkg")
+        return 2
 
     filename = argv[1]
-    if '*' in filename:
+    if "*" in filename:
         for filename in glob.glob(filename):
             fix(filename)
     else:
@@ -79,5 +84,5 @@ def main(argv=sys.argv):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

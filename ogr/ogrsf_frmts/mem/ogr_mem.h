@@ -98,6 +98,9 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL: public OGRLayer
     virtual OGRErr      AlterFieldDefn( int iField,
                                         OGRFieldDefn* poNewFieldDefn,
                                         int nFlags ) override;
+    virtual OGRErr      AlterGeomFieldDefn( int iGeomField,
+                                            const OGRGeomFieldDefn* poNewGeomFieldDefn,
+                                            int nFlagsIn ) override;
     virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poGeomField,
                                          int bApproxOK = TRUE ) override;
 

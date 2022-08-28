@@ -50,6 +50,7 @@ class GDALRasterAttributeTable;
 class GDALProxyDataset;
 class GDALProxyRasterBand;
 class GDALAsyncReader;
+class GDALRelationship;
 
 /* -------------------------------------------------------------------- */
 /*      Pull in the public declarations.  This gets the C apis, and     */
@@ -811,6 +812,10 @@ private:
     virtual bool        UpdateFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
                                           std::string& failureReason);
 
+    virtual std::vector<std::string> GetRelationshipNames(CSLConstList papszOptions = nullptr) const;
+
+    virtual const GDALRelationship* GetRelationship(const std::string& name) const;
+
     virtual OGRLayer   *CreateLayer( const char *pszName,
                                      OGRSpatialReference *poSpatialRef = nullptr,
                                      OGRwkbGeometryType eGType = wkbUnknown,
@@ -1144,6 +1149,23 @@ typedef enum
     GMVR_0_AND_255_ONLY,    /*! Only 0 and 255 */
 } GDALMaskValueRange;
 
+/** Suggested/most efficient access pattern to blocks. */
+typedef int GDALSuggestedBlockAccessPattern;
+
+/** Unknown, or no particular read order is suggested. */
+constexpr GDALSuggestedBlockAccessPattern GSBAP_UNKNOWN = 0;
+
+/** Random access to blocks is efficient. */
+constexpr GDALSuggestedBlockAccessPattern GSBAP_RANDOM = 1;
+
+/** Reading by strips from top to bottom is the most efficient. */
+constexpr GDALSuggestedBlockAccessPattern GSBAP_TOP_TO_BOTTOM = 2;
+
+/** Reading by strips from bottom to top is the most efficient. */
+constexpr GDALSuggestedBlockAccessPattern GSBAP_BOTTOM_TO_TOP = 3;
+
+/** Reading the largest chunk from the raster is the most efficient (can be combined with above values). */
+constexpr GDALSuggestedBlockAccessPattern GSBAP_LARGEST_CHUNK_POSSIBLE = 0x100;
 
 /** A single raster band (or channel). */
 
@@ -1245,6 +1267,9 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     GDALDataType GetRasterDataType( void );
     void        GetBlockSize( int *, int * );
     CPLErr      GetActualBlockSize ( int, int, int *, int * );
+
+    virtual GDALSuggestedBlockAccessPattern GetSuggestedBlockAccessPattern() const;
+
     GDALAccess  GetAccess();
 
     CPLErr      RasterIO( GDALRWFlag, int, int, int, int,
@@ -1416,6 +1441,7 @@ class CPL_DLL GDALAllValidMaskBand : public GDALRasterBand
 
 class CPL_DLL GDALNoDataMaskBand : public GDALRasterBand
 {
+    friend class GDALRasterBand;
     double          dfNoDataValue = 0;
     int64_t         nNoDataValueInt64 = 0;
     uint64_t        nNoDataValueUInt64 = 0;
@@ -1916,7 +1942,14 @@ public:
 
     static
     bool CopyValue(const void* pSrc, const GDALExtendedDataType& srcType,
-                     void* pDst, const GDALExtendedDataType& dstType);
+                   void* pDst, const GDALExtendedDataType& dstType);
+
+    static
+    bool CopyValues(const void* pSrc, const GDALExtendedDataType& srcType,
+                    GPtrDiff_t nSrcStrideInElts,
+                    void* pDst, const GDALExtendedDataType& dstType,
+                    GPtrDiff_t nDstStrideInElts,
+                    size_t nValues);
 
 private:
     GDALExtendedDataType(size_t nMaxStringLength, GDALExtendedDataTypeSubType eSubType);
@@ -2453,6 +2486,18 @@ protected:
 
     std::shared_ptr<GDALGroup> GetCacheRootGroup(bool bCanCreate,
                                                  std::string& osCacheFilenameOut) const;
+
+    // Returns if bufferStride values express a transposed view of the array
+    bool IsTransposedRequest(const size_t* count,
+                             const GPtrDiff_t* bufferStride) const;
+
+    // Should only be called if IsTransposedRequest() returns true
+    bool ReadForTransposedRequest(const GUInt64* arrayStartIdx,
+                                  const size_t* count,
+                                  const GInt64* arrayStep,
+                                  const GPtrDiff_t* bufferStride,
+                                  const GDALExtendedDataType& bufferDataType,
+                                  void* pDstBuffer) const;
 //! @endcond
 
 public:
@@ -2606,7 +2651,7 @@ public:
     {
         GUInt64 m_nStartIdx;
         GInt64  m_nIncr;
-        Range(GUInt64 nStartIdx = 0, GInt64 nIncr = 0):
+        explicit Range(GUInt64 nStartIdx = 0, GInt64 nIncr = 0):
             m_nStartIdx(nStartIdx), m_nIncr(nIncr) {}
     };
 
@@ -2811,6 +2856,247 @@ public:
 };
 //! @endcond
 
+/************************************************************************/
+/*                           Relationships                              */
+/************************************************************************/
+
+/**
+ * Definition of a table relationship.
+ *
+ * GDALRelationship describes the relationship between two tables, including
+ * properties such as the cardinality of the relationship and the participating
+ * tables.
+ *
+ * Not all relationship properties are supported by all data formats.
+ *
+ * @since GDAL 3.6
+ */
+class CPL_DLL GDALRelationship
+{
+protected:
+/*! @cond Doxygen_Suppress */
+    std::string                 m_osName{};
+    std::string                 m_osLeftTableName{};
+    std::string                 m_osRightTableName{};
+    GDALRelationshipCardinality m_eCardinality = GDALRelationshipCardinality::GRC_ONE_TO_MANY;
+    std::string                 m_osMappingTableName{};
+    std::vector<std::string>    m_osListLeftTableFields{};
+    std::vector<std::string>    m_osListRightTableFields{};
+    std::vector<std::string>    m_osListLeftMappingTableFields{};
+    std::vector<std::string>    m_osListRightMappingTableFields{};
+    GDALRelationshipType        m_eType = GDALRelationshipType::GRT_ASSOCIATION;
+    std::string                 m_osForwardPathLabel{};
+    std::string                 m_osBackwardPathLabel{};
+    std::string                 m_osRelatedTableType{};
+
+/*! @endcond */
+
+public:
+    /**
+     * Constructor for a relationship between two tables.
+     * @param osName relationship name
+     * @param osLeftTableName left table name
+     * @param osRightTableName right table name
+     * @param eCardinality cardinality of relationship
+     */
+    GDALRelationship(const std::string& osName,
+                     const std::string& osLeftTableName,
+                     const std::string& osRightTableName,
+                     GDALRelationshipCardinality eCardinality = GDALRelationshipCardinality::GRC_ONE_TO_MANY )
+        : m_osName(osName), m_osLeftTableName(osLeftTableName), m_osRightTableName(osRightTableName), m_eCardinality(eCardinality)
+    {}
+
+    /** Get the name of the relationship */
+    const std::string& GetName() const { return m_osName; }
+
+    /** Get the cardinality of the relationship */
+    GDALRelationshipCardinality GetCardinality() const { return m_eCardinality; }
+
+    /** Get the name of the left (or base/origin) table in the relationship.
+     *
+     * @see GetRightTableName()
+     */
+    const std::string& GetLeftTableName() const { return m_osLeftTableName; }
+
+    /** Get the name of the right (or related/destination) table in the relationship */
+    const std::string& GetRightTableName() const { return m_osRightTableName; }
+
+    /** Get the name of the mapping table for many-to-many relationships.
+     *
+     * @see SetMappingTableName()
+    */
+    const std::string& GetMappingTableName() const { return m_osMappingTableName; }
+
+    /** Sets the name of the mapping table for many-to-many relationships.
+     *
+     * @see GetMappingTableName()
+    */
+    void SetMappingTableName( const std::string& osName ) { m_osMappingTableName = osName; }
+
+    /** Get the names of the participating fields from the left table in the relationship.
+     *
+     * @see GetRightTableFields()
+     * @see SetLeftTableFields()
+     */
+    const std::vector<std::string>& GetLeftTableFields() const { return m_osListLeftTableFields; }
+
+    /** Get the names of the participating fields from the right table in the relationship.
+     *
+     * @see GetLeftTableFields()
+     * @see SetRightTableFields()
+     */
+    const std::vector<std::string>& GetRightTableFields() const { return m_osListRightTableFields; }
+
+    /** Sets the names of the participating fields from the left table in the relationship.
+     *
+     * @see GetLeftTableFields()
+     * @see SetRightTableFields()
+    */
+    void SetLeftTableFields( const std::vector<std::string>& osListFields ) { m_osListLeftTableFields = osListFields; }
+
+    /** Sets the names of the participating fields from the right table in the relationship.
+     *
+     * @see GetRightTableFields()
+     * @see SetLeftTableFields()
+    */
+    void SetRightTableFields( const std::vector<std::string>& osListFields ) { m_osListRightTableFields = osListFields; }
+
+    /** Get the names of the mapping table fields which correspond to the participating fields from the left table in the relationship.
+     *
+     * @see GetRightMappingTableFields()
+     * @see SetLeftMappingTableFields()
+     */
+    const std::vector<std::string>& GetLeftMappingTableFields() const { return m_osListLeftMappingTableFields; }
+
+    /** Get the names of the mapping table fields which correspond to the participating fields from the right table in the relationship.
+     *
+     * @see GetLeftMappingTableFields()
+     * @see SetRightMappingTableFields()
+     */
+    const std::vector<std::string>& GetRightMappingTableFields() const { return m_osListRightMappingTableFields; }
+
+    /** Sets the names of the mapping table fields which correspond to the participating fields from the left table in the relationship.
+     *
+     * @see GetLeftMappingTableFields()
+     * @see SetRightMappingTableFields()
+    */
+    void SetLeftMappingTableFields( const std::vector<std::string>& osListFields ) { m_osListLeftMappingTableFields = osListFields; }
+
+    /** Sets the names of the mapping table fields which correspond to the participating fields from the right table in the relationship.
+     *
+     * @see GetRightMappingTableFields()
+     * @see SetLeftMappingTableFields()
+    */
+    void SetRightMappingTableFields( const std::vector<std::string>& osListFields ) { m_osListRightMappingTableFields = osListFields; }
+
+    /** Get the type of the relationship.
+     *
+     * @see SetType()
+    */
+    GDALRelationshipType GetType() const { return m_eType; }
+
+    /** Sets the type of the relationship.
+     *
+     * @see GetType()
+    */
+    void SetType( GDALRelationshipType eType ) { m_eType = eType; }
+
+    /** Get the label of the forward path for the relationship.
+     *
+     * The forward and backward path labels are free-form, user-friendly strings
+     * which can be used to generate descriptions of the relationship between features
+     * from the right and left tables.
+     *
+     * E.g. when the left table contains buildings and the right table contains
+     * furniture, the forward path label could be "contains" and the backward path
+     * label could be "is located within". A client could then generate a
+     * user friendly description string such as "fire hose 1234 is located within building 15a".
+     *
+     * @see SetForwardPathLabel()
+     * @see GetBackwardPathLabel()
+    */
+    const std::string& GetForwardPathLabel() const { return m_osForwardPathLabel; }
+
+    /** Sets the label of the forward path for the relationship.
+     *
+     * The forward and backward path labels are free-form, user-friendly strings
+     * which can be used to generate descriptions of the relationship between features
+     * from the right and left tables.
+     *
+     * E.g. when the left table contains buildings and the right table contains
+     * furniture, the forward path label could be "contains" and the backward path
+     * label could be "is located within". A client could then generate a
+     * user friendly description string such as "fire hose 1234 is located within building 15a".
+     *
+     * @see GetForwardPathLabel()
+     * @see SetBackwardPathLabel()
+    */
+    void SetForwardPathLabel( const std::string& osLabel ) { m_osForwardPathLabel = osLabel; }
+
+    /** Get the label of the backward path for the relationship.
+     *
+     * The forward and backward path labels are free-form, user-friendly strings
+     * which can be used to generate descriptions of the relationship between features
+     * from the right and left tables.
+     *
+     * E.g. when the left table contains buildings and the right table contains
+     * furniture, the forward path label could be "contains" and the backward path
+     * label could be "is located within". A client could then generate a
+     * user friendly description string such as "fire hose 1234 is located within building 15a".
+     *
+     * @see SetBackwardPathLabel()
+     * @see GetForwardPathLabel()
+    */
+    const std::string& GetBackwardPathLabel() const { return m_osBackwardPathLabel; }
+
+    /** Sets the label of the backward path for the relationship.
+     *
+     * The forward and backward path labels are free-form, user-friendly strings
+     * which can be used to generate descriptions of the relationship between features
+     * from the right and left tables.
+     *
+     * E.g. when the left table contains buildings and the right table contains
+     * furniture, the forward path label could be "contains" and the backward path
+     * label could be "is located within". A client could then generate a
+     * user friendly description string such as "fire hose 1234 is located within building 15a".
+     *
+     * @see GetBackwardPathLabel()
+     * @see SetForwardPathLabel()
+    */
+    void SetBackwardPathLabel( const std::string& osLabel ) { m_osBackwardPathLabel = osLabel; }
+
+    /** Get the type string of the related table.
+     *
+     * This a free-form string representing the type of related features, where the
+     * exact interpretation is format dependent. For instance, table types from GeoPackage
+     * relationships will directly reflect the categories from the GeoPackage related
+     * tables extension (i.e. "media", "simple attributes", "features", "attributes" and "tiles").
+     *
+     * @see SetRelatedTableType()
+    */
+    const std::string& GetRelatedTableType() const { return m_osRelatedTableType; }
+
+    /** Sets the type string of the related table.
+     *
+     * This a free-form string representing the type of related features, where the
+     * exact interpretation is format dependent. For instance, table types from GeoPackage
+     * relationships will directly reflect the categories from the GeoPackage related
+     * tables extension (i.e. "media", "simple attributes", "features", "attributes" and "tiles").
+     *
+     * @see GetRelatedTableType()
+    */
+    void SetRelatedTableType( const std::string& osType ) { m_osRelatedTableType = osType; }
+
+    /** Convert a GDALRelationship* to a GDALRelationshipH.
+     */
+    static inline GDALRelationshipH ToHandle(GDALRelationship* poRelationship)
+        { return static_cast<GDALRelationshipH>(poRelationship); }
+
+    /** Convert a GDALRelationshipH to a GDALRelationship*.
+     */
+    static inline GDALRelationship* FromHandle(GDALRelationshipH hRelationship)
+        { return static_cast<GDALRelationship*>(hRelationship); }
+};
 
 /* ==================================================================== */
 /*      An assortment of overview related stuff.                        */

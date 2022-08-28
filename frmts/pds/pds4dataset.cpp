@@ -1903,9 +1903,9 @@ PDS4Dataset* PDS4Dataset::OpenInternal(GDALOpenInfo* poOpenInfo)
             int nPixelOffset = 0;
             int nLineOffset = 0;
             vsi_l_offset nBandOffset = 0;
+            int nCountPreviousDim = 1;
             for( int i = nDIM - 1; i >= 0; i-- )
             {
-                int nCountPreviousDim = i+1 < nDIM ? anElements[i+1] : 1;
                 if( szOrder[i] == 'S' )
                 {
                     if( nSpacing > static_cast<vsi_l_offset>(
@@ -1939,6 +1939,7 @@ PDS4Dataset* PDS4Dataset::OpenInternal(GDALOpenInfo* poOpenInfo)
                     nBandOffset = nSpacing * nCountPreviousDim;
                     nSpacing = nBandOffset;
                 }
+                nCountPreviousDim = anElements[i];
             }
 
             // Retrieve no data value
@@ -4135,6 +4136,8 @@ int PDS4Dataset::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
         return eAccess == GA_Update;
+    else if( EQUAL(pszCap,ODsCZGeometries) )
+        return TRUE;
     else
         return FALSE;
 }
@@ -4817,6 +4820,13 @@ void GDALRegister_PDS4()
     poDriver->SetDescription( "PDS4" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DELETE_FIELD, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_REORDER_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_ALTER_FIELD_DEFN_FLAGS, "Name Type WidthPrecision" );
+    poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
+
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "NASA Planetary Data System 4" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,

@@ -324,6 +324,7 @@ void CPLWorkerThreadPool::WaitEvent()
             break;
         }
         m_cv.wait(oGuard);
+        // cppcheck-suppress knownConditionTrueFalse
         if( nPendingJobs < nPendingJobsBefore )
         {
             break;

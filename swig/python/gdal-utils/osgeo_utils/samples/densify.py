@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-#******************************************************************************
+# ******************************************************************************
 #  $Id$
 #
 #  Project:  GDAL
 #  Purpose:  Densifies linestrings by a tolerance.
 #  Author:   Howard Butler, hobu.inc@gmail.com
 #
-#******************************************************************************
+# ******************************************************************************
 #  Copyright (c) 2008, Howard Butler <hobu.inc@gmail.com>
 #  Copyright (c) 2021, Idan Miara <idan@miara.com>
 #
@@ -27,52 +27,109 @@
 #  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
-#******************************************************************************
+# ******************************************************************************
 
 import math
 import os
 import sys
 
-from osgeo import osr
-from osgeo import ogr
+from osgeo import ogr, osr
+
 ogr.UseExceptions()
 
 
-class Translator(object):
+def Usage():
+    print(
+        f"Usage: {sys.argv[0]} -- This is a sample. Read source to know how to use. --"
+    )
+    return 2
 
+
+class Translator(object):
     def construct_parser(self):
-        from optparse import OptionParser, OptionGroup
+        from optparse import OptionGroup, OptionParser
+
         usage = "usage: %prog [options] arg"
         parser = OptionParser(usage)
         g = OptionGroup(parser, "Base options", "Basic Translation Options")
-        g.add_option("-i", "--input", dest="src_filename",
-                     help="OGR input data source", metavar="INPUT")
-        g.add_option("-o", "--output", dest='dst_filename',
-                     help="OGR output data source", metavar="OUTPUT")
-        g.add_option("-n", "--nooverwrite",
-                     action="store_false", dest="overwrite",
-                     help="Do not overwrite the existing output file")
+        g.add_option(
+            "-i",
+            "--input",
+            dest="src_filename",
+            help="OGR input data source",
+            metavar="INPUT",
+        )
+        g.add_option(
+            "-o",
+            "--output",
+            dest="dst_filename",
+            help="OGR output data source",
+            metavar="OUTPUT",
+        )
+        g.add_option(
+            "-n",
+            "--nooverwrite",
+            action="store_false",
+            dest="overwrite",
+            help="Do not overwrite the existing output file",
+        )
 
-        g.add_option("-of", "-f", "--driver", dest="driver_name",
-                     help="OGR output driver.  Defaults to \"ESRI Shapefile\"", metavar="DRIVER")
+        g.add_option(
+            "-of",
+            "-f",
+            "--driver",
+            dest="driver_name",
+            help='OGR output driver.  Defaults to "ESRI Shapefile"',
+            metavar="DRIVER",
+        )
 
-        g.add_option('-w', "--where", dest="where",
-                     help="""SQL attribute filter -- enclose in quotes "PNAME='Cedar River'" """,)
-        g.add_option('-s', "--spat", dest="spat",
-                     help="""Spatial query extents -- minx miny maxx maxy""",
-                     type=float, nargs=4)
-        g.add_option('-l', "--layer", dest="layer",
-                     help="""The name of the input layer to translate, if not given, the first layer on the data source is used""",)
+        g.add_option(
+            "-w",
+            "--where",
+            dest="where",
+            help="""SQL attribute filter -- enclose in quotes "PNAME='Cedar River'" """,
+        )
+        g.add_option(
+            "-s",
+            "--spat",
+            dest="spat",
+            help="""Spatial query extents -- minx miny maxx maxy""",
+            type=float,
+            nargs=4,
+        )
+        g.add_option(
+            "-l",
+            "--layer",
+            dest="layer",
+            help="""The name of the input layer to translate, if not given, the first layer on the data source is used""",
+        )
 
-        g.add_option('-k', "--select", dest="fields",
-                     help="""Comma separated list of fields to include -- field1,field2,field3,...,fieldn""",)
-        g.add_option('-t', '--target-srs', dest="t_srs",
-                     help="""Target SRS -- the spatial reference system to project the data to""")
-        g.add_option('-a', '--assign-srs', dest="a_srs",
-                     help="""Assign SRS -- the spatial reference to assign to the input data""")
-        g.add_option("-q", "--quiet",
-                     action="store_false", dest="verbose", default=False,
-                     help="don't print status messages to stdout")
+        g.add_option(
+            "-k",
+            "--select",
+            dest="fields",
+            help="""Comma separated list of fields to include -- field1,field2,field3,...,fieldn""",
+        )
+        g.add_option(
+            "-t",
+            "--target-srs",
+            dest="t_srs",
+            help="""Target SRS -- the spatial reference system to project the data to""",
+        )
+        g.add_option(
+            "-a",
+            "--assign-srs",
+            dest="a_srs",
+            help="""Assign SRS -- the spatial reference to assign to the input data""",
+        )
+        g.add_option(
+            "-q",
+            "--quiet",
+            action="store_false",
+            dest="verbose",
+            default=False,
+            help="don't print status messages to stdout",
+        )
         parser.add_option_group(g)
 
         if self.opts:
@@ -131,29 +188,70 @@ class Translator(object):
 
         if not self.out_drv:
             raise Exception(
-                f"The '{self.options.driver_name}' driver was not found, did you misspell it or is it not available in this GDAL build?")
-        if not self.out_drv.TestCapability('CreateDataSource'):
+                f"The '{self.options.driver_name}' driver was not found, did you misspell it or is it not available in this GDAL build?"
+            )
+        if not self.out_drv.TestCapability("CreateDataSource"):
             raise Exception(
-                f"The '{self.options.driver_name}' driver does not support creating layers, you will have to choose another output driver")
+                f"The '{self.options.driver_name}' driver does not support creating layers, you will have to choose another output driver"
+            )
         if not self.options.dst_filename:
             raise Exception("No output layer was specified")
-        if self.options.driver_name == 'ESRI Shapefile':
+        if self.options.driver_name == "ESRI Shapefile":
             path, filename = os.path.split(os.path.abspath(self.options.dst_filename))
             name, _ = os.path.splitext(filename)
             if self.options.overwrite:
                 # special case the Shapefile driver, which behaves specially.
-                if os.path.exists(os.path.join(path, name,) + '.shp'):
-                    os.remove(os.path.join(path, name,) + '.shp')
-                    os.remove(os.path.join(path, name,) + '.shx')
-                    os.remove(os.path.join(path, name,) + '.dbf')
+                if os.path.exists(
+                    os.path.join(
+                        path,
+                        name,
+                    )
+                    + ".shp"
+                ):
+                    os.remove(
+                        os.path.join(
+                            path,
+                            name,
+                        )
+                        + ".shp"
+                    )
+                    os.remove(
+                        os.path.join(
+                            path,
+                            name,
+                        )
+                        + ".shx"
+                    )
+                    os.remove(
+                        os.path.join(
+                            path,
+                            name,
+                        )
+                        + ".dbf"
+                    )
             else:
-                if os.path.exists(os.path.join(path, name,) + ".shp"):
-                    raise Exception("The file '%s' already exists, but the overwrite option is not specified" % (os.path.join(path, name,) + ".shp"))
+                if os.path.exists(
+                    os.path.join(
+                        path,
+                        name,
+                    )
+                    + ".shp"
+                ):
+                    raise Exception(
+                        "The file '%s' already exists, but the overwrite option is not specified"
+                        % (
+                            os.path.join(
+                                path,
+                                name,
+                            )
+                            + ".shp"
+                        )
+                    )
 
         if self.options.overwrite:
-            dsco = ('OVERWRITE=YES',)
+            dsco = ("OVERWRITE=YES",)
         else:
-            dsco = (),
+            dsco = ((),)
 
         self.out_ds = self.out_drv.CreateDataSource(self.options.dst_filename, dsco)
 
@@ -162,15 +260,17 @@ class Translator(object):
             self.out_srs.SetFromUserInput(self.options.t_srs)
         else:
             self.out_srs = None
-        self.output = self.out_ds.CreateLayer(self.options.dst_filename,
-                                              geom_type=self.input.GetLayerDefn().GetGeomType(),
-                                              srs=self.out_srs)
+        self.output = self.out_ds.CreateLayer(
+            self.options.dst_filename,
+            geom_type=self.input.GetLayerDefn().GetGeomType(),
+            srs=self.out_srs,
+        )
 
     def make_fields(self):
         defn = self.input.GetLayerDefn()
 
         if self.options.fields:
-            fields = self.options.fields.split(',')
+            fields = self.options.fields.split(",")
             for i in range(defn.GetFieldCount()):
                 fld = defn.GetFieldDefn(i)
                 for f in fields:
@@ -208,7 +308,6 @@ class Translator(object):
 
 
 class Densify(Translator):
-
     def calcpoint(self, x0, x1, y0, y1, d):
         a = x1 - x0
         b = y1 - y0
@@ -248,14 +347,16 @@ class Densify(Translator):
     def distance(self, x0, x1, y0, y1):
         deltax = x0 - x1
         deltay = y0 - y1
-        d2 = (deltax)**2 + (deltay)**2
+        d2 = (deltax) ** 2 + (deltay) ** 2
         d = math.sqrt(d2)
         return d
 
     def densify(self, geometry):
         gtype = geometry.GetGeometryType()
         if not (gtype == ogr.wkbLineString or gtype == ogr.wkbMultiLineString):
-            raise Exception("The densify function only works on linestring or multilinestring geometries")
+            raise Exception(
+                "The densify function only works on linestring or multilinestring geometries"
+            )
 
         g = ogr.Geometry(ogr.wkbLineString)
 
@@ -346,7 +447,6 @@ class Densify(Translator):
 
 
 def GetLength(geometry):
-
     def get_distance(x1, y1, x2, y2):
         """Return the euclidean distance between this point and another."""
         deltax = x1 - x2
@@ -381,26 +481,39 @@ def GetLength(geometry):
 
 
 def main(argv=sys.argv):
+    if len(argv) < 2:
+        return Usage()
+
     import optparse
 
     options = []
-    o = optparse.make_option("-r", "--remainder", dest="remainder",
-                             type="choice", default='end',
-                             help="""what to do with the remainder -- place it at the beginning,
+    o = optparse.make_option(
+        "-r",
+        "--remainder",
+        dest="remainder",
+        type="choice",
+        default="end",
+        help="""what to do with the remainder -- place it at the beginning,
 place it at the end, or evenly distribute it across the segment""",
-                             choices=['end', 'begin', 'uniform'])
+        choices=["end", "begin", "uniform"],
+    )
     options.append(o)
-    o = optparse.make_option("-d", "--distance", dest='distance', type="float",
-                             help="""Threshold distance for point placement.  If the
+    o = optparse.make_option(
+        "-d",
+        "--distance",
+        dest="distance",
+        type="float",
+        help="""Threshold distance for point placement.  If the
 'uniform' remainder is used, points will be evenly placed
 along the segment in a fashion that makes sure they are
 no further apart than the threshold.  If 'beg' or 'end'
 is chosen, the threshold distance will be used as an absolute value.""",
-                             metavar="DISTANCE")
+        metavar="DISTANCE",
+    )
     options.append(o)
     d = Densify(argv[1:], options=options)
     d.process()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

@@ -28,21 +28,31 @@
 # ******************************************************************************
 
 import sys
-from osgeo import gdal
+
 import numpy as np
 
-from osgeo import gdal_array
+from osgeo import gdal, gdal_array
+
+
+def Usage():
+    print(
+        f"Usage: {sys.argv[0]} -- This is a sample. Read source to know how to use. --"
+    )
+    return 2
 
 
 def doit(src_filename, dst_magnitude, dst_phase):
     src_ds = gdal.Open(src_filename)
     xsize = src_ds.RasterXSize
     ysize = src_ds.RasterYSize
-    print('{} x {}'.format(xsize, ysize))
+    print("{} x {}".format(xsize, ysize))
 
     src_image = src_ds.GetRasterBand(1).ReadAsArray()
-    mag_image = pow(np.real(src_image) * np.real(src_image) +
-                    np.imag(src_image) * np.imag(src_image), 0.5)
+    mag_image = pow(
+        np.real(src_image) * np.real(src_image)
+        + np.imag(src_image) * np.imag(src_image),
+        0.5,
+    )
     gdal_array.SaveArray(mag_image, dst_magnitude)
 
     phase_image = np.angle(src_image)
@@ -51,9 +61,11 @@ def doit(src_filename, dst_magnitude, dst_phase):
 
 
 def main(argv=sys.argv):
-    src_filename = 'complex.tif'
-    dst_magnitude = 'magnitude.tif'
-    dst_phase = 'phase.tif'
+    if len(sys.argv) <= 4:
+        return Usage()
+    # src_filename = 'complex.tif'
+    # dst_magnitude = 'magnitude.tif'
+    # dst_phase = 'phase.tif'
     if len(argv) > 1:
         src_filename = argv[1]
     if len(argv) > 2:
@@ -63,5 +75,5 @@ def main(argv=sys.argv):
     return doit(src_filename, dst_magnitude, dst_phase)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

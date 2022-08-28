@@ -524,6 +524,8 @@ OGRErr CPL_DLL OSRExportToERM( OGRSpatialReferenceH, char *, char *, char * );
 OGRErr CPL_DLL OSRMorphToESRI( OGRSpatialReferenceH );
 OGRErr CPL_DLL OSRMorphFromESRI( OGRSpatialReferenceH );
 
+OGRErr CPL_DLL OSRStripVertical( OGRSpatialReferenceH );
+
 OGRSpatialReferenceH CPL_DLL OSRConvertToOtherProjection(
                                     OGRSpatialReferenceH hSRS,
                                     const char* pszTargetProjection,

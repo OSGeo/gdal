@@ -44,6 +44,7 @@ CPL_CVSID("$Id$")
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunknown-pragmas"
 #pragma clang diagnostic ignored "-Wdocumentation"
+#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #endif
 
 #include <libxml/parser.h>
@@ -434,6 +435,7 @@ static void GDALGMLJP2XPathUUID(xmlXPathParserContextPtr ctxt, int nargs)
 
     CPLString osRet;
     static int nCounter = 0;
+    // coverity[store_truncates_time_t]
     srand(static_cast<unsigned int>(time(nullptr)) + nCounter);
     ++nCounter;
     for( int i=0; i<4; i ++ )

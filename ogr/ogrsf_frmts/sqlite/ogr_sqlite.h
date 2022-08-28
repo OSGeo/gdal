@@ -651,7 +651,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
         return GetSpatialRefFromOldGetProjectionRef();
     }
 
-    char               *LaunderName( const char * );
+    static char        *LaunderName( const char * );
     int                 FetchSRSId( const OGRSpatialReference * poSRS );
     OGRSpatialReference*FetchSRS( int nSRID );
 
@@ -672,6 +672,10 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 
     int                 GetUndefinedSRID() const { return m_nUndefinedSRID; }
     bool                HasGeometryColumns() const { return m_bHaveGeometryColumns; }
+
+    std::vector<std::string> GetRelationshipNames(CSLConstList papszOptions = nullptr) const override;
+
+    const GDALRelationship* GetRelationship(const std::string& name) const override;
 
     void                ReloadLayers();
 

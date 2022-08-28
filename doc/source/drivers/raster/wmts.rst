@@ -153,6 +153,11 @@ It is important that there be no spaces or other content before the
 |                                   | ;REQUEST=GetCapabilities          |
 |                                   | .                                 |
 +-----------------------------------+-----------------------------------+
+| <ExtraQueryParameters>foo=bar&amp;| URL query parameters to add to    |
+|                                   | all requests (GetCapabilities,    |
+|                                   | GetTile, GetFeatureInfo)          |
+|                                   | (added in GDAL 3.5.1)             |
++-----------------------------------+-----------------------------------+
 | <Layer>layer_id</Layer>           | Layer identifier (optional, but   |
 |                                   | may be needed to disambiguate     |
 |                                   | between several layers)           |
@@ -336,6 +341,11 @@ It is important that there be no spaces or other content before the
 |                                   | to "GDAL WMS driver               |
 |                                   | (http://www.gdal.org/frmt_wms.htm |
 |                                   | l)").                             |
++-----------------------------------+-----------------------------------+
+| <Accept>mimetype>/Accept>         | HTTP Accept header to specify the |
+|                                   | MIME type of the expected output  |
+|                                   | of the server. Empty by default.  |
+|                                   | (added in GDAL 3.5.1)             |
 +-----------------------------------+-----------------------------------+
 | <UserPwd>user:password</UserPwd>  | User and Password for HTTP        |
 |                                   | authentication (optional).        |

@@ -30,8 +30,17 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import ogr
 import sys
+
+from osgeo import ogr
+
+
+def Usage():
+    print("Usage: assemblepoly.py [datasource]")
+    print("")
+    print("  assemblepoly.py  /u/data/ntf/bl2000/HALTON.NTF")
+    print("  assemblepoly.py  PG:dbname=test")
+    return 2
 
 
 def doit(name):
@@ -56,8 +65,8 @@ def doit(name):
     lines_hash = {}
 
     feat = line_layer.GetNextFeature()
-    geom_id_field = feat.GetFieldIndex('GEOM_ID')
-    tile_ref_field = feat.GetFieldIndex('TILE_REF')
+    geom_id_field = feat.GetFieldIndex("GEOM_ID")
+    tile_ref_field = feat.GetFieldIndex("TILE_REF")
     while feat is not None:
         geom_id = feat.GetField(geom_id_field)
         tile_ref = feat.GetField(tile_ref_field)
@@ -72,30 +81,29 @@ def doit(name):
 
         feat = line_layer.GetNextFeature()
 
-    print('Got %d lines.' % len(lines_hash))
-
+    print("Got %d lines." % len(lines_hash))
 
     #############################################################################
     # Read all polygon features.
 
     feat = poly_layer.GetNextFeature()
-    link_field = feat.GetFieldIndex('GEOM_ID_OF_LINK')
-    tile_ref_field = feat.GetFieldIndex('TILE_REF')
+    link_field = feat.GetFieldIndex("GEOM_ID_OF_LINK")
+    tile_ref_field = feat.GetFieldIndex("TILE_REF")
 
     while feat is not None:
         tile_ref = feat.GetField(tile_ref_field)
         link_list = feat.GetField(link_field)
 
         # If the list is in string form we need to convert it.
-        if type(link_list).__name__ == 'str':
-            colon = link_list.find(':')
-            items = link_list[colon + 1:-1].split(',')
+        if type(link_list).__name__ == "str":
+            colon = link_list.find(":")
+            items = link_list[colon + 1 : -1].split(",")
             link_list = []
             for item in items:
                 try:
                     link_list.append(int(item))
-                except:
-                    print('item failed to translate: ', item)
+                except Exception:
+                    print("item failed to translate: ", item)
 
         link_coll = ogr.Geometry(type=ogr.wkbGeometryCollection)
         for geom_id in link_list:
@@ -106,22 +114,23 @@ def doit(name):
             poly = ogr.BuildPolygonFromEdges(link_coll)
             print(poly.ExportToWkt())
             feat.SetGeometryDirectly(poly)
-        except:
-            print('BuildPolygonFromEdges failed.')
+        except Exception:
+            print("BuildPolygonFromEdges failed.")
 
-    # For now we don't actually write back the assembled polygons.
-    #    poly_layer.SetFeature( feat )
+        # For now we don't actually write back the assembled polygons.
+        #    poly_layer.SetFeature( feat )
         feat.Destroy()
 
         feat = poly_layer.GetNextFeature()
 
 
-def main(argv=sys.argv):
-    name = 'PG:dbname=test'
+def main(argv=sys.argv, name=None):
     if len(argv) > 1:
         name = argv[1]
+    if not name:
+        return Usage()
     return doit(name)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

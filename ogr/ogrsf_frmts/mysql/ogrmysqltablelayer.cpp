@@ -649,6 +649,12 @@ int OGRMySQLTableLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCSequentialWrite) )
         return bUpdateAccess;
 
+    else if( EQUAL(pszCap,OLCMeasuredGeometries) )
+        return TRUE;
+
+    else if( EQUAL(pszCap,OLCZGeometries) )
+        return TRUE;
+
     else
         return FALSE;
 }

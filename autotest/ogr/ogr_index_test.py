@@ -26,36 +26,35 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
-import os
 import contextlib
+import os
 
-from osgeo import ogr
 import ogrtest
 import pytest
+
+from osgeo import ogr
 
 ###############################################################################
 
 
-@pytest.fixture(autouse=True, scope='module')
+@pytest.fixture(autouse=True, scope="module")
 def startup_and_cleanup():
     yield
 
-    for filename in ['join_t.idm', 'join_t.ind']:
+    for filename in ["join_t.idm", "join_t.ind"]:
         assert not os.path.exists(filename)
 
-    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(
-        'tmp/ogr_index_10.shp')
-    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(
-        'tmp/ogr_index_11.dbf')
+    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/ogr_index_10.shp")
+    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/ogr_index_11.dbf")
 
 
 @contextlib.contextmanager
 def create_index_p_test_file():
-    drv = ogr.GetDriverByName('MapInfo File')
-    p_ds = drv.CreateDataSource('index_p.mif')
-    p_lyr = p_ds.CreateLayer('index_p')
+    drv = ogr.GetDriverByName("MapInfo File")
+    p_ds = drv.CreateDataSource("index_p.mif")
+    p_lyr = p_ds.CreateLayer("index_p")
 
-    ogrtest.quick_create_layer_def(p_lyr, [('PKEY', ogr.OFTInteger)])
+    ogrtest.quick_create_layer_def(p_lyr, [("PKEY", ogr.OFTInteger)])
     ogrtest.quick_create_feature(p_lyr, [5], None)
     ogrtest.quick_create_feature(p_lyr, [10], None)
     ogrtest.quick_create_feature(p_lyr, [9], None)
@@ -67,32 +66,31 @@ def create_index_p_test_file():
 
     yield
 
-    ogr.GetDriverByName('MapInfo File').DeleteDataSource('index_p.mif')
+    ogr.GetDriverByName("MapInfo File").DeleteDataSource("index_p.mif")
 
 
 @contextlib.contextmanager
 def create_join_t_test_file(create_index=False):
-    drv = ogr.GetDriverByName('ESRI Shapefile')
-    s_ds = drv.CreateDataSource('join_t.dbf')
-    s_lyr = s_ds.CreateLayer('join_t',
-                             geom_type=ogr.wkbNone)
+    drv = ogr.GetDriverByName("ESRI Shapefile")
+    s_ds = drv.CreateDataSource("join_t.dbf")
+    s_lyr = s_ds.CreateLayer("join_t", geom_type=ogr.wkbNone)
 
-    ogrtest.quick_create_layer_def(s_lyr,
-                                   [('SKEY', ogr.OFTInteger),
-                                    ('VALUE', ogr.OFTString, 16)])
+    ogrtest.quick_create_layer_def(
+        s_lyr, [("SKEY", ogr.OFTInteger), ("VALUE", ogr.OFTString, 16)]
+    )
 
     for i in range(20):
-        ogrtest.quick_create_feature(s_lyr, [i, 'Value ' + str(i)], None)
+        ogrtest.quick_create_feature(s_lyr, [i, "Value " + str(i)], None)
 
     if create_index:
-        s_ds.ExecuteSQL('CREATE INDEX ON join_t USING value')
-        s_ds.ExecuteSQL('CREATE INDEX ON join_t USING skey')
+        s_ds.ExecuteSQL("CREATE INDEX ON join_t USING value")
+        s_ds.ExecuteSQL("CREATE INDEX ON join_t USING skey")
 
     s_ds.Release()
 
     yield
 
-    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('join_t.dbf')
+    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("join_t.dbf")
 
 
 ###############################################################################
@@ -100,21 +98,22 @@ def create_join_t_test_file(create_index=False):
 
 
 def test_ogr_index_can_join_without_index():
-    expect = ['Value 5', 'Value 10', 'Value 9', 'Value 4', 'Value 3',
-              'Value 1']
+    expect = ["Value 5", "Value 10", "Value 9", "Value 4", "Value 3", "Value 1"]
 
     with create_index_p_test_file(), create_join_t_test_file():
-        p_ds = ogr.OpenShared('index_p.mif', update=0)
+        p_ds = ogr.OpenShared("index_p.mif", update=0)
 
         sql_lyr = p_ds.ExecuteSQL(
-            'SELECT * FROM index_p p ' +
-            'LEFT JOIN "join_t.dbf".join_t j ON p.PKEY = j.SKEY ')
+            "SELECT * FROM index_p p "
+            + 'LEFT JOIN "join_t.dbf".join_t j ON p.PKEY = j.SKEY '
+        )
 
-        tr = ogrtest.check_features_against_list(sql_lyr, 'VALUE', expect)
+        tr = ogrtest.check_features_against_list(sql_lyr, "VALUE", expect)
 
         p_ds.ReleaseResultSet(sql_lyr)
 
     assert tr
+
 
 ###############################################################################
 # Create an INDEX on the SKEY and VALUE field in the join table.
@@ -122,24 +121,26 @@ def test_ogr_index_can_join_without_index():
 
 def test_ogr_index_creating_index_causes_index_files_to_be_created():
     with create_join_t_test_file(create_index=True):
-        for filename in ['join_t.idm', 'join_t.ind']:
+        for filename in ["join_t.idm", "join_t.ind"]:
             assert os.path.exists(filename)
+
 
 ###############################################################################
 # Check that indexable single int lookup works.
 
 
 def test_ogr_index_indexed_single_integer_lookup_works():
-    expect = ['Value 5']
+    expect = ["Value 5"]
 
     with create_join_t_test_file(create_index=True):
-        s_ds = ogr.OpenShared('join_t.dbf', update=1)
+        s_ds = ogr.OpenShared("join_t.dbf", update=1)
 
-        s_lyr = s_ds.GetLayerByName('join_t')
-        s_lyr.SetAttributeFilter('SKEY = 5')
+        s_lyr = s_ds.GetLayerByName("join_t")
+        s_lyr.SetAttributeFilter("SKEY = 5")
 
-        tr = ogrtest.check_features_against_list(s_lyr, 'VALUE', expect)
+        tr = ogrtest.check_features_against_list(s_lyr, "VALUE", expect)
     assert tr
+
 
 ###############################################################################
 # Check that indexable single string lookup works.
@@ -149,12 +150,12 @@ def test_ogr_index_indexed_single_string_works():
     expect = [5]
 
     with create_join_t_test_file(create_index=True):
-        s_ds = ogr.OpenShared('join_t.dbf', update=1)
-        s_lyr = s_ds.GetLayerByName('join_t')
+        s_ds = ogr.OpenShared("join_t.dbf", update=1)
+        s_lyr = s_ds.GetLayerByName("join_t")
 
         s_lyr.SetAttributeFilter("VALUE='Value 5'")
 
-        tr = ogrtest.check_features_against_list(s_lyr, 'SKEY', expect)
+        tr = ogrtest.check_features_against_list(s_lyr, "SKEY", expect)
     assert tr
 
 
@@ -166,34 +167,35 @@ def test_ogr_index_unimplemented_range_query_works():
     expect = [0, 1, 2]
 
     with create_join_t_test_file(create_index=True):
-        s_ds = ogr.OpenShared('join_t.dbf', update=1)
-        s_lyr = s_ds.GetLayerByName('join_t')
-        s_lyr.SetAttributeFilter('SKEY < 3')
+        s_ds = ogr.OpenShared("join_t.dbf", update=1)
+        s_lyr = s_ds.GetLayerByName("join_t")
+        s_lyr.SetAttributeFilter("SKEY < 3")
 
-        tr = ogrtest.check_features_against_list(s_lyr, 'SKEY', expect)
+        tr = ogrtest.check_features_against_list(s_lyr, "SKEY", expect)
 
     assert tr
+
 
 ###############################################################################
 # Try join again.
 
 
 def test_ogr_index_indexed_join_works():
-    expect = ['Value 5', 'Value 10', 'Value 9', 'Value 4', 'Value 3',
-              'Value 1']
+    expect = ["Value 5", "Value 10", "Value 9", "Value 4", "Value 3", "Value 1"]
 
-    with create_index_p_test_file(), \
-            create_join_t_test_file(create_index=True):
-        p_ds = ogr.OpenShared('index_p.mif', update=0)
+    with create_index_p_test_file(), create_join_t_test_file(create_index=True):
+        p_ds = ogr.OpenShared("index_p.mif", update=0)
         sql_lyr = p_ds.ExecuteSQL(
-            'SELECT * FROM index_p p ' +
-            'LEFT JOIN "join_t.dbf".join_t j ON p.PKEY = j.SKEY ')
+            "SELECT * FROM index_p p "
+            + 'LEFT JOIN "join_t.dbf".join_t j ON p.PKEY = j.SKEY '
+        )
 
-        tr = ogrtest.check_features_against_list(sql_lyr, 'VALUE', expect)
+        tr = ogrtest.check_features_against_list(sql_lyr, "VALUE", expect)
 
         p_ds.ReleaseResultSet(sql_lyr)
 
     assert tr
+
 
 ###############################################################################
 # Test that dropping the index causes index files to be removed
@@ -201,36 +203,38 @@ def test_ogr_index_indexed_join_works():
 
 def test_ogr_index_drop_index_removes_files():
     with create_join_t_test_file(create_index=True):
-        s_ds = ogr.OpenShared('join_t.dbf', update=1)
+        s_ds = ogr.OpenShared("join_t.dbf", update=1)
 
-        s_ds.ExecuteSQL('DROP INDEX ON join_t USING value')
-        s_ds.ExecuteSQL('DROP INDEX ON join_t USING skey')
+        s_ds.ExecuteSQL("DROP INDEX ON join_t USING value")
+        s_ds.ExecuteSQL("DROP INDEX ON join_t USING skey")
 
         s_ds.Release()
 
         # After dataset closing, check that the index files do not exist after
         # dropping the index
-        for filename in ['join_t.idm', 'join_t.ind']:
+        for filename in ["join_t.idm", "join_t.ind"]:
             assert not os.path.exists(filename)
+
 
 ###############################################################################
 # Test that attribute filters work after an index on that attribute is dropped
 
 
 def test_ogr_index_attribute_filter_works_after_drop_index():
-    expect = ['Value 5']
+    expect = ["Value 5"]
 
     with create_join_t_test_file(create_index=True):
-        s_ds = ogr.OpenShared('join_t.dbf', update=1)
-        s_lyr = s_ds.GetLayerByName('join_t')
+        s_ds = ogr.OpenShared("join_t.dbf", update=1)
+        s_lyr = s_ds.GetLayerByName("join_t")
 
-        s_ds.ExecuteSQL('DROP INDEX ON join_t USING value')
-        s_ds.ExecuteSQL('DROP INDEX ON join_t USING skey')
+        s_ds.ExecuteSQL("DROP INDEX ON join_t USING value")
+        s_ds.ExecuteSQL("DROP INDEX ON join_t USING skey")
 
-        s_lyr.SetAttributeFilter('SKEY = 5')
+        s_lyr.SetAttributeFilter("SKEY = 5")
 
-        tr = ogrtest.check_features_against_list(s_lyr, 'VALUE', expect)
+        tr = ogrtest.check_features_against_list(s_lyr, "VALUE", expect)
         assert tr
+
 
 ###############################################################################
 # Test that dropping, then re-creating the index causes index files to be
@@ -240,23 +244,24 @@ def test_ogr_index_attribute_filter_works_after_drop_index():
 def test_ogr_index_recreating_index_causes_index_files_to_be_created():
 
     with create_join_t_test_file(create_index=True):
-        s_ds = ogr.OpenShared('join_t.dbf', update=1)
+        s_ds = ogr.OpenShared("join_t.dbf", update=1)
 
-        s_ds.ExecuteSQL('DROP INDEX ON join_t USING value')
-        s_ds.ExecuteSQL('DROP INDEX ON join_t USING skey')
+        s_ds.ExecuteSQL("DROP INDEX ON join_t USING value")
+        s_ds.ExecuteSQL("DROP INDEX ON join_t USING skey")
 
         s_ds.Release()
 
         # Re-create an index
-        s_ds = ogr.OpenShared('join_t.dbf', update=1)
-        s_ds.ExecuteSQL('CREATE INDEX ON join_t USING value')
+        s_ds = ogr.OpenShared("join_t.dbf", update=1)
+        s_ds.ExecuteSQL("CREATE INDEX ON join_t USING value")
         s_ds.Release()
 
-        for filename in ['join_t.idm', 'join_t.ind']:
+        for filename in ["join_t.idm", "join_t.ind"]:
             try:
                 os.stat(filename)
             except (OSError, FileNotFoundError):
                 pytest.fail("%s should exist" % filename)
+
 
 ###############################################################################
 # Test that dropping, then re-creating the index causes the correct index data
@@ -266,21 +271,22 @@ def test_ogr_index_recreating_index_causes_index_files_to_be_created():
 def test_ogr_index_recreating_index_causes_index_to_be_populated():
 
     with create_join_t_test_file(create_index=True):
-        s_ds = ogr.OpenShared('join_t.dbf', update=1)
+        s_ds = ogr.OpenShared("join_t.dbf", update=1)
 
-        s_ds.ExecuteSQL('DROP INDEX ON join_t USING value')
-        s_ds.ExecuteSQL('DROP INDEX ON join_t USING skey')
+        s_ds.ExecuteSQL("DROP INDEX ON join_t USING value")
+        s_ds.ExecuteSQL("DROP INDEX ON join_t USING skey")
 
         s_ds.Release()
 
         # Re-create an index
-        s_ds = ogr.OpenShared('join_t.dbf', update=1)
-        s_ds.ExecuteSQL('CREATE INDEX ON join_t USING value')
+        s_ds = ogr.OpenShared("join_t.dbf", update=1)
+        s_ds.ExecuteSQL("CREATE INDEX ON join_t USING value")
         s_ds.Release()
 
-        with open('join_t.idm', 'rt') as f:
+        with open("join_t.idm", "rt") as f:
             xml = f.read()
-        assert xml.find('VALUE') != -1, 'VALUE column is not indexed (1)'
+        assert xml.find("VALUE") != -1, "VALUE column is not indexed (1)"
+
 
 ###############################################################################
 # Text that adding an index to different columns in separate calls causes both
@@ -290,30 +296,31 @@ def test_ogr_index_recreating_index_causes_index_to_be_populated():
 def test_ogr_index_creating_index_in_separate_steps_works():
 
     with create_join_t_test_file(create_index=True):
-        s_ds = ogr.OpenShared('join_t.dbf', update=1)
+        s_ds = ogr.OpenShared("join_t.dbf", update=1)
 
-        s_ds.ExecuteSQL('DROP INDEX ON join_t USING value')
-        s_ds.ExecuteSQL('DROP INDEX ON join_t USING skey')
+        s_ds.ExecuteSQL("DROP INDEX ON join_t USING value")
+        s_ds.ExecuteSQL("DROP INDEX ON join_t USING skey")
 
         s_ds.Release()
 
         # Re-create an index
-        s_ds = ogr.OpenShared('join_t.dbf', update=1)
-        s_ds.ExecuteSQL('CREATE INDEX ON join_t USING value')
+        s_ds = ogr.OpenShared("join_t.dbf", update=1)
+        s_ds.ExecuteSQL("CREATE INDEX ON join_t USING value")
         s_ds.Release()
 
         # Close the dataset and re-open
-        s_ds = ogr.OpenShared('join_t.dbf', update=1)
+        s_ds = ogr.OpenShared("join_t.dbf", update=1)
         # At this point the .ind was opened in read-only. Now it
         # will be re-opened in read-write mode
-        s_ds.ExecuteSQL('CREATE INDEX ON join_t USING skey')
+        s_ds.ExecuteSQL("CREATE INDEX ON join_t USING skey")
 
         s_ds.Release()
 
-        with open('join_t.idm', 'rt') as f:
+        with open("join_t.idm", "rt") as f:
             xml = f.read()
-        assert xml.find('VALUE') != -1, 'VALUE column is not indexed (2)'
-        assert xml.find('SKEY') != -1, 'SKEY column is not indexed (2)'
+        assert xml.find("VALUE") != -1, "VALUE column is not indexed (2)"
+        assert xml.find("SKEY") != -1, "SKEY column is not indexed (2)"
+
 
 ###############################################################################
 # Test fix for #4326
@@ -321,48 +328,46 @@ def test_ogr_index_creating_index_in_separate_steps_works():
 
 def test_ogr_index_10():
 
-    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource(
-        'tmp/ogr_index_10.shp'
-    )
-    lyr = ds.CreateLayer('ogr_index_10')
-    lyr.CreateField(ogr.FieldDefn('intfield', ogr.OFTInteger))
-    lyr.CreateField(ogr.FieldDefn('realfield', ogr.OFTReal))
-    lyr.CreateField(ogr.FieldDefn('strfield', ogr.OFTString))
+    ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("tmp/ogr_index_10.shp")
+    lyr = ds.CreateLayer("ogr_index_10")
+    lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn("realfield", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField(0, 1)
     feat.SetField(1, 1)
     feat.SetField(2, "foo")
     lyr.CreateFeature(feat)
     feat = None
-    ds.ExecuteSQL('create index on ogr_index_10 using intfield')
-    ds.ExecuteSQL('create index on ogr_index_10 using realfield')
+    ds.ExecuteSQL("create index on ogr_index_10 using intfield")
+    ds.ExecuteSQL("create index on ogr_index_10 using realfield")
 
-    lyr.SetAttributeFilter('intfield IN (1)')
+    lyr.SetAttributeFilter("intfield IN (1)")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     assert feat is not None
 
-    lyr.SetAttributeFilter('intfield = 1')
+    lyr.SetAttributeFilter("intfield = 1")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     assert feat is not None
 
-    lyr.SetAttributeFilter('intfield IN (2)')
+    lyr.SetAttributeFilter("intfield IN (2)")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     assert feat is None
 
-    lyr.SetAttributeFilter('intfield IN (1.0)')
+    lyr.SetAttributeFilter("intfield IN (1.0)")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     assert feat is not None
 
-    lyr.SetAttributeFilter('intfield = 1.0')
+    lyr.SetAttributeFilter("intfield = 1.0")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     assert feat is not None
 
-    lyr.SetAttributeFilter('intfield IN (1.1)')
+    lyr.SetAttributeFilter("intfield IN (1.1)")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     assert feat is None
@@ -372,32 +377,32 @@ def test_ogr_index_10():
     feat = lyr.GetNextFeature()
     assert feat is not None
 
-    lyr.SetAttributeFilter('realfield IN (1.0)')
+    lyr.SetAttributeFilter("realfield IN (1.0)")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     assert feat is not None
 
-    lyr.SetAttributeFilter('realfield = 1.0')
+    lyr.SetAttributeFilter("realfield = 1.0")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     assert feat is not None
 
-    lyr.SetAttributeFilter('realfield IN (1.1)')
+    lyr.SetAttributeFilter("realfield IN (1.1)")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     assert feat is None
 
-    lyr.SetAttributeFilter('realfield IN (1)')
+    lyr.SetAttributeFilter("realfield IN (1)")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     assert feat is not None
 
-    lyr.SetAttributeFilter('realfield = 1')
+    lyr.SetAttributeFilter("realfield = 1")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     assert feat is not None
 
-    lyr.SetAttributeFilter('realfield IN (2)')
+    lyr.SetAttributeFilter("realfield IN (2)")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     assert feat is None
@@ -424,6 +429,7 @@ def test_ogr_index_10():
 
     ds = None
 
+
 ###############################################################################
 # Test support for OR and AND expression
 
@@ -439,12 +445,10 @@ def ogr_index_11_check(lyr, expected_fids):
 
 def test_ogr_index_11():
 
-    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource(
-        'tmp/ogr_index_11.dbf'
-    )
-    lyr = ds.CreateLayer('ogr_index_11', geom_type=ogr.wkbNone)
-    lyr.CreateField(ogr.FieldDefn('intfield', ogr.OFTInteger))
-    lyr.CreateField(ogr.FieldDefn('strfield', ogr.OFTString))
+    ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("tmp/ogr_index_11.dbf")
+    lyr = ds.CreateLayer("ogr_index_11", geom_type=ogr.wkbNone)
+    lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
 
     ogrtest.quick_create_feature(lyr, [1, "foo"], None)
     ogrtest.quick_create_feature(lyr, [1, "bar"], None)
@@ -452,8 +456,8 @@ def test_ogr_index_11():
     ogrtest.quick_create_feature(lyr, [2, "bar"], None)
     ogrtest.quick_create_feature(lyr, [3, "bar"], None)
 
-    ds.ExecuteSQL('CREATE INDEX ON ogr_index_11 USING intfield')
-    ds.ExecuteSQL('CREATE INDEX ON ogr_index_11 USING strfield')
+    ds.ExecuteSQL("CREATE INDEX ON ogr_index_11 USING intfield")
+    ds.ExecuteSQL("CREATE INDEX ON ogr_index_11 USING strfield")
 
     lyr.SetAttributeFilter("intfield = 1 OR strfield = 'bar'")
     ogr_index_11_check(lyr, [0, 1, 3])

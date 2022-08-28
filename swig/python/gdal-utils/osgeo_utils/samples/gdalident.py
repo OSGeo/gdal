@@ -37,8 +37,8 @@ from osgeo import gdal
 
 
 def Usage():
-    print('Usage: gdalident.py [-r] file(s)')
-    return 1
+    print("Usage: gdalident.py [-r] file(s)")
+    return 2
 
 
 def ProcessTarget(target, recursive, report_failure, filelist=None):
@@ -48,9 +48,9 @@ def ProcessTarget(target, recursive, report_failure, filelist=None):
         driver = gdal.IdentifyDriver(target)
 
     if driver is not None:
-        print('%s: %s' % (target, driver.ShortName))
+        print("%s: %s" % (target, driver.ShortName))
     elif report_failure:
-        print('%s: unrecognized' % target)
+        print("%s: unrecognized" % target)
 
     if recursive and driver is None:
         try:
@@ -79,10 +79,10 @@ def main(argv=sys.argv):
     while i < len(argv):
         arg = argv[i]
 
-        if arg == '-r':
+        if arg == "-r":
             recursive = 1
 
-        elif arg == '-f':
+        elif arg == "-f":
             report_failure = 1
 
         else:
@@ -97,5 +97,5 @@ def main(argv=sys.argv):
         ProcessTarget(f, recursive, report_failure)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

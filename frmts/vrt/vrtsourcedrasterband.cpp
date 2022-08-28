@@ -715,20 +715,6 @@ CPLErr VRTSourcedRasterBand::ComputeRasterMinMax( int bApproxOK, double* adfMinM
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      If we have overview bands, use them for min/max.                */
-/* -------------------------------------------------------------------- */
-    auto l_poDS = cpl::down_cast<VRTDataset*>(poDS);
-    if( l_poDS->m_apoOverviews.empty() && // do not use virtual overviews
-        bApproxOK && GetOverviewCount() > 0 && !HasArbitraryOverviews() )
-    {
-        GDALRasterBand * const poBand
-            = GetRasterSampleOverview( GDALSTAT_APPROX_NUMSAMPLES );
-
-        if( poBand != this )
-            return poBand->ComputeRasterMinMax( TRUE, adfMinMax );
-    }
-
     const std::string osFctId("VRTSourcedRasterBand::ComputeRasterMinMax");
     GDALAntiRecursionGuard oGuard(osFctId);
     if( oGuard.GetCallDepth() >= 32 )
@@ -742,6 +728,33 @@ CPLErr VRTSourcedRasterBand::ComputeRasterMinMax( int bApproxOK, double* adfMinM
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Recursion detected");
         return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we have overview bands, use them for min/max.                */
+/* -------------------------------------------------------------------- */
+    if( bApproxOK && GetOverviewCount() > 0 && !HasArbitraryOverviews() )
+    {
+        GDALRasterBand * const poBand
+            = GetRasterSampleOverview( GDALSTAT_APPROX_NUMSAMPLES );
+
+        if( poBand != nullptr && poBand != this )
+        {
+            auto l_poDS = cpl::down_cast<VRTDataset*>(poDS);
+            if( l_poDS && !l_poDS->m_apoOverviews.empty() &&
+                dynamic_cast<VRTSourcedRasterBand*>(poBand) != nullptr )
+            {
+                auto apoTmpOverviews = std::move(l_poDS->m_apoOverviews);
+                l_poDS->m_apoOverviews.clear();
+                auto eErr = poBand->GDALRasterBand::ComputeRasterMinMax( TRUE, adfMinMax );
+                l_poDS->m_apoOverviews = std::move(apoTmpOverviews);
+                return eErr;
+            }
+            else
+            {
+                return poBand->ComputeRasterMinMax( TRUE, adfMinMax );
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -784,6 +797,54 @@ VRTSourcedRasterBand::ComputeStatistics( int bApproxOK,
                                          void *pProgressData )
 
 {
+    const std::string osFctId("VRTSourcedRasterBand::ComputeStatistics");
+    GDALAntiRecursionGuard oGuard(osFctId);
+    if( oGuard.GetCallDepth() >= 32 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Recursion detected");
+        return CE_Failure;
+    }
+
+    GDALAntiRecursionGuard oGuard2(oGuard, poDS->GetDescription());
+    if( oGuard2.GetCallDepth() >= 2 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Recursion detected");
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we have overview bands, use them for statistics.             */
+/* -------------------------------------------------------------------- */
+    if( bApproxOK && GetOverviewCount() > 0 && !HasArbitraryOverviews() )
+    {
+        GDALRasterBand * const poBand
+            = GetRasterSampleOverview( GDALSTAT_APPROX_NUMSAMPLES );
+
+        if( poBand != nullptr && poBand != this )
+        {
+            auto l_poDS = cpl::down_cast<VRTDataset*>(poDS);
+            if( l_poDS && !l_poDS->m_apoOverviews.empty() &&
+                dynamic_cast<VRTSourcedRasterBand*>(poBand) != nullptr )
+            {
+                auto apoTmpOverviews = std::move(l_poDS->m_apoOverviews);
+                l_poDS->m_apoOverviews.clear();
+                auto eErr = poBand->GDALRasterBand::ComputeStatistics( TRUE,
+                                              pdfMin, pdfMax,
+                                              pdfMean, pdfStdDev,
+                                              pfnProgress, pProgressData );
+                l_poDS->m_apoOverviews = std::move(apoTmpOverviews);
+                return eErr;
+            }
+            else
+            {
+                return poBand->ComputeStatistics( TRUE,
+                                                  pdfMin, pdfMax,
+                                                  pdfMean, pdfStdDev,
+                                                  pfnProgress, pProgressData );
+            }
+        }
+    }
+
     const auto GetNoDataValueOfSingleSource = [this](int& bHasNoData)
     {
         auto poBand = cpl::down_cast<VRTSimpleSource*>(papoSources[0])->GetRasterBand();
@@ -812,38 +873,6 @@ VRTSourcedRasterBand::ComputeStatistics( int bApproxOK,
 
     if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
-
-/* -------------------------------------------------------------------- */
-/*      If we have overview bands, use them for statistics.             */
-/* -------------------------------------------------------------------- */
-    auto l_poDS = cpl::down_cast<VRTDataset*>(poDS);
-    if( l_poDS->m_apoOverviews.empty() && // do not use virtual overviews
-        bApproxOK && GetOverviewCount() > 0 && !HasArbitraryOverviews() )
-    {
-        GDALRasterBand * const poBand
-            = GetRasterSampleOverview( GDALSTAT_APPROX_NUMSAMPLES );
-
-        if( poBand != this )
-            return poBand->ComputeStatistics( TRUE,
-                                              pdfMin, pdfMax,
-                                              pdfMean, pdfStdDev,
-                                              pfnProgress, pProgressData );
-    }
-
-    const std::string osFctId("VRTSourcedRasterBand::ComputeStatistics");
-    GDALAntiRecursionGuard oGuard(osFctId);
-    if( oGuard.GetCallDepth() >= 32 )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Recursion detected");
-        return CE_Failure;
-    }
-
-    GDALAntiRecursionGuard oGuard2(oGuard, poDS->GetDescription());
-    if( oGuard2.GetCallDepth() >= 2 )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Recursion detected");
-        return CE_Failure;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Try with source bands.                                          */
@@ -899,6 +928,41 @@ CPLErr VRTSourcedRasterBand::GetHistogram( double dfMin, double dfMax,
                                            void *pProgressData )
 
 {
+/* -------------------------------------------------------------------- */
+/*      If we have overviews, use them for the histogram.               */
+/* -------------------------------------------------------------------- */
+    if( bApproxOK && GetOverviewCount() > 0 && !HasArbitraryOverviews() )
+    {
+        // FIXME: Should we use the most reduced overview here or use some
+        // minimum number of samples like GDALRasterBand::ComputeStatistics()
+        // does?
+        GDALRasterBand *poBand = GetRasterSampleOverview( 0 );
+
+        if( poBand != nullptr && poBand != this )
+        {
+            auto l_poDS = cpl::down_cast<VRTDataset*>(poDS);
+            if( l_poDS && !l_poDS->m_apoOverviews.empty() &&
+                dynamic_cast<VRTSourcedRasterBand*>(poBand) != nullptr )
+            {
+                auto apoTmpOverviews = std::move(l_poDS->m_apoOverviews);
+                l_poDS->m_apoOverviews.clear();
+                auto eErr = poBand->GDALRasterBand::GetHistogram( dfMin, dfMax, nBuckets,
+                                                     panHistogram,
+                                                     bIncludeOutOfRange, bApproxOK,
+                                                     pfnProgress, pProgressData );
+                l_poDS->m_apoOverviews = std::move(apoTmpOverviews);
+                return eErr;
+            }
+            else
+            {
+                return poBand->GetHistogram( dfMin, dfMax, nBuckets,
+                                             panHistogram,
+                                             bIncludeOutOfRange, bApproxOK,
+                                             pfnProgress, pProgressData );
+            }
+        }
+    }
+
     if( nSources != 1 )
         return VRTRasterBand::GetHistogram( dfMin, dfMax,
                                              nBuckets, panHistogram,
@@ -907,27 +971,6 @@ CPLErr VRTSourcedRasterBand::GetHistogram( double dfMin, double dfMax,
 
     if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
-
-/* -------------------------------------------------------------------- */
-/*      If we have overviews, use them for the histogram.               */
-/* -------------------------------------------------------------------- */
-    auto l_poDS = cpl::down_cast<VRTDataset*>(poDS);
-    if( l_poDS->m_apoOverviews.empty() && // do not use virtual overviews
-        bApproxOK && GetOverviewCount() > 0 && !HasArbitraryOverviews() )
-    {
-        // FIXME: Should we use the most reduced overview here or use some
-        // minimum number of samples like GDALRasterBand::ComputeStatistics()
-        // does?
-        GDALRasterBand *poBestOverview = GetRasterSampleOverview( 0 );
-
-        if( poBestOverview != this )
-        {
-            return poBestOverview->GetHistogram( dfMin, dfMax, nBuckets,
-                                                 panHistogram,
-                                                 bIncludeOutOfRange, bApproxOK,
-                                                 pfnProgress, pProgressData );
-        }
-    }
 
     const std::string osFctId("VRTSourcedRasterBand::GetHistogram");
     GDALAntiRecursionGuard oGuard(osFctId);

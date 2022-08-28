@@ -26,7 +26,6 @@
 ###############################################################################
 
 
-
 from osgeo import osr
 
 ###############################################################################
@@ -37,14 +36,15 @@ from osgeo import osr
 
 def test_osr_erm_1():
 
-    for sphere_datum in ['SPHERE', 'SPHERE2', 'USSPHERE']:
+    for sphere_datum in ["SPHERE", "SPHERE2", "USSPHERE"]:
         srs = osr.SpatialReference()
-        srs.ImportFromERM('MRWORLD', sphere_datum, 'METRE')
+        srs.ImportFromERM("MRWORLD", sphere_datum, "METRE")
 
-        assert srs.GetInvFlattening() == 0.0 and not abs(srs.GetSemiMajor() - srs.GetSemiMinor() > 0.0000005), \
-            'Wrong ERMapper spherical datum parameters (bug #3787). Be sure your "ecw_cs.wkt" is from 20890 revision or newer.'
+        assert srs.GetInvFlattening() == 0.0 and not abs(
+            srs.GetSemiMajor() - srs.GetSemiMinor() > 0.0000005
+        ), 'Wrong ERMapper spherical datum parameters (bug #3787). Be sure your "ecw_cs.wkt" is from 20890 revision or newer.'
 
-    
+
 ###############################################################################
 # Confirm that unsupported SRSes will be translated from/to EPSG:n
 # format (#3955)
@@ -54,13 +54,11 @@ def test_osr_erm_1():
 def test_osr_erm_2():
 
     srs = osr.SpatialReference()
-    assert srs.ImportFromERM('EPSG:3395', 'EPSG:3395', 'METRE') == 0 and srs.IsProjected(), \
-        'EPSG:n import failed.'
+    assert (
+        srs.ImportFromERM("EPSG:3395", "EPSG:3395", "METRE") == 0 and srs.IsProjected()
+    ), "EPSG:n import failed."
 
     srs2 = osr.SpatialReference()
-    srs2.SetFromUserInput('EPSG:3395')
+    srs2.SetFromUserInput("EPSG:3395")
 
-    assert srs2.IsSame(srs), 'EPSG:n import does not match.'
-
-
-
+    assert srs2.IsSame(srs), "EPSG:n import does not match."

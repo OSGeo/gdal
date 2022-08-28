@@ -29,10 +29,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from unittest import mock, TestCase
+from unittest import TestCase, mock
 
 from osgeo import gdal, osr
-
 from osgeo_utils import gdal2tiles
 
 
@@ -43,13 +42,12 @@ class AttrDict(dict):
 
 
 class ReprojectDatasetTest(TestCase):
-
     def setUp(self):
         self.DEFAULT_OPTIONS = {
-            'verbose': True,
-            'resampling': 'near',
-            'title': '',
-            'url': '',
+            "verbose": True,
+            "resampling": "near",
+            "title": "",
+            "url": "",
         }
         self.DEFAULT_ATTRDICT_OPTIONS = AttrDict(self.DEFAULT_OPTIONS)
         self.mercator_srs = osr.SpatialReference()
@@ -67,18 +65,22 @@ class ReprojectDatasetTest(TestCase):
         from_ds = mock.MagicMock()
         from_ds.GetGCPCount = mock.MagicMock(return_value=0)
 
-        to_ds = gdal2tiles.reproject_dataset(from_ds, self.mercator_srs, self.mercator_srs)
+        to_ds = gdal2tiles.reproject_dataset(
+            from_ds, self.mercator_srs, self.mercator_srs
+        )
 
         self.assertEqual(from_ds, to_ds)
 
-    @mock.patch('osgeo_utils.gdal2tiles.gdal', spec=gdal)
-    def test_returns_warped_vrt_dataset_when_from_srs_different_from_to_srs(self, mock_gdal):
+    @mock.patch("osgeo_utils.gdal2tiles.gdal", spec=gdal)
+    def test_returns_warped_vrt_dataset_when_from_srs_different_from_to_srs(
+        self, mock_gdal
+    ):
         mock_gdal.AutoCreateWarpedVRT = mock.MagicMock(spec=gdal.Dataset)
         from_ds = mock.MagicMock(spec=gdal.Dataset)
         from_ds.GetGCPCount = mock.MagicMock(return_value=0)
 
         gdal2tiles.reproject_dataset(from_ds, self.mercator_srs, self.geodetic_srs)
 
-        mock_gdal.AutoCreateWarpedVRT.assert_called_with(from_ds,
-                                                         self.mercator_srs.ExportToWkt(),
-                                                         self.geodetic_srs.ExportToWkt())
+        mock_gdal.AutoCreateWarpedVRT.assert_called_with(
+            from_ds, self.mercator_srs.ExportToWkt(), self.geodetic_srs.ExportToWkt()
+        )

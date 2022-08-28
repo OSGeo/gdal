@@ -200,6 +200,10 @@ void CPL_DLL GDALRegister_OGCAPI(void);
 void CPL_DLL GDALRegister_STACTA(void);
 void CPL_DLL GDALRegister_Zarr(void);
 void CPL_DLL GDALRegister_STACIT(void);
+void CPL_DLL GDALRegister_JPEGXL(void);
+void CPL_DLL GDALRegister_BASISU(void);
+void CPL_DLL GDALRegister_KTX2(void);
+void CPL_DLL GDALRegister_BASISU_KTX2(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */

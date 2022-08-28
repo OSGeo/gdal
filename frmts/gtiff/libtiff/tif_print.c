@@ -81,7 +81,7 @@ _TIFFPrintField(FILE* fd, const TIFFField *fip,
     /* Print a user-friendly name for tags of relatively common use, but */
     /* which aren't registered by libtiff itself. */
     const char* field_name = fip->field_name;
-    if( fip->field_name != NULL && strncmp(fip->field_name, "Tag ", 4) == 0 ) {
+    if( TIFFFieldIsAnonymous(fip) ) {
         for( size_t i = 0; i < NTAGS; ++i ) {
             if( fip->field_tag == tagnames[i].tag ) {
                 field_name = tagnames[i].name;
@@ -110,7 +110,7 @@ _TIFFPrintField(FILE* fd, const TIFFField *fip,
 			fprintf(fd, "0x%"PRIx32, ((uint32_t *) raw_data)[j]);
 		else if (fip->field_type == TIFF_RATIONAL
 			|| fip->field_type == TIFF_SRATIONAL) {
-			int tv_size = _TIFFSetGetFieldSize(fip->set_field_type);
+			int tv_size = TIFFFieldSetGetSize(fip);
 			if(tv_size==8)
 				fprintf(fd, "%lf", ((double*)raw_data)[j]);
 			else
@@ -149,7 +149,7 @@ _TIFFPrettyPrintField(TIFF* tif, const TIFFField *fip, FILE* fd, uint32_t tag,
         (void) tif;
 
 	/* do not try to pretty print auto-defined fields */
-	if (fip->field_name != NULL && strncmp(fip->field_name,"Tag ", 4) == 0) {
+	if ( TIFFFieldIsAnonymous(fip) ) {
 		return 0;
 	}
         
@@ -199,13 +199,9 @@ _TIFFPrettyPrintField(TIFF* tif, const TIFFField *fip, FILE* fd, uint32_t tag,
 			return 1;
 		}
 		case TIFFTAG_RICHTIFFIPTC:
-			/*
-			 * XXX: for some weird reason RichTIFFIPTC tag
-			 * defined as array of LONG values.
-			 */
 			fprintf(fd,
 			    "  RichTIFFIPTC Data: <present>, %"PRIu32" bytes\n",
-			    value_count * 4u);
+			    value_count);
 			return 1;
 
 		case TIFFTAG_PHOTOSHOP:
@@ -619,7 +615,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 						continue;
 				} else {
 					/*--: Rational2Double: For Rationals evaluate "set_field_type" to determine internal storage size. */
-					int tv_size = _TIFFSetGetFieldSize(fip->set_field_type);
+					int tv_size = TIFFFieldSetGetSize(fip);
 					raw_data = _TIFFmalloc(
 					    tv_size
 					    * value_count);

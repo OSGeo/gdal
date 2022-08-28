@@ -31,6 +31,8 @@
 #include "ogrgeopackageutility.h"
 #include "ogrsqliteutility.h"
 #include "ogr_p.h"
+#include "ogr_recordbatch.h"
+#include "ograrrowarrayhelper.h"
 
 CPL_CVSID("$Id$")
 
@@ -154,6 +156,161 @@ OGRFeature *OGRGeoPackageLayer::GetNextFeature()
 }
 
 /************************************************************************/
+/*                         ParseDateField()                             */
+/************************************************************************/
+
+bool OGRGeoPackageLayer::ParseDateField(sqlite3_stmt* hStmt,
+                                        int iRawField,
+                                        int nSqlite3ColType,
+                                        OGRField* psField,
+                                        const OGRFieldDefn* poFieldDefn,
+                                        GIntBig nFID)
+{
+    if( nSqlite3ColType == SQLITE_TEXT )
+    {
+        const char* pszTxt = reinterpret_cast<const char*>(sqlite3_column_text( hStmt, iRawField ));
+        if( pszTxt == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                     sqlite3_errmsg(m_poDS->GetDB()));
+            return false;
+        }
+        const size_t nLen = strlen(pszTxt);
+        // nominal format: "YYYY-MM-DD" (10 characters)
+        const bool bNominalFormat = (
+            nLen == 10 && pszTxt[4] == '-' && pszTxt[7] == '-');
+        if ( OGRParseDate(pszTxt, psField, 0) )
+        {
+            if( !bNominalFormat || psField->Date.Hour != 0 ||
+                psField->Date.Minute != 0 || psField->Date.Second != 0 )
+            {
+                constexpr int line = __LINE__;
+                if( !m_poDS->m_oSetGPKGLayerWarnings[line] )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Non-conformant content for record "
+                             CPL_FRMT_GIB " in column %s, %s, "
+                             "successfully parsed",
+                             nFID,
+                             poFieldDefn->GetNameRef(), pszTxt);
+                    m_poDS->m_oSetGPKGLayerWarnings[line] = true;
+                }
+            }
+        }
+        else
+        {
+            OGR_RawField_SetUnset(psField);
+            constexpr int line = __LINE__;
+            if( !m_poDS->m_oSetGPKGLayerWarnings[line] )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Invalid content for record "
+                         CPL_FRMT_GIB " in column %s: %s",
+                         nFID,
+                         poFieldDefn->GetNameRef(), pszTxt);
+                m_poDS->m_oSetGPKGLayerWarnings[line] = true;
+            }
+            return false;
+        }
+    }
+    else
+    {
+        constexpr int line = __LINE__;
+        if( !m_poDS->m_oSetGPKGLayerWarnings[line] )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Unexpected data type for record "
+                     CPL_FRMT_GIB " in column %s",
+                     nFID,
+                     poFieldDefn->GetNameRef());
+            m_poDS->m_oSetGPKGLayerWarnings[line] = true;
+        }
+        return false;
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                        ParseDateTimeField()                          */
+/************************************************************************/
+
+bool OGRGeoPackageLayer::ParseDateTimeField(sqlite3_stmt* hStmt,
+                                            int iRawField,
+                                            int nSqlite3ColType,
+                                            OGRField* psField,
+                                            const OGRFieldDefn* poFieldDefn,
+                                            GIntBig nFID)
+{
+    if( nSqlite3ColType == SQLITE_TEXT )
+    {
+        const char* pszTxt = reinterpret_cast<const char*>(sqlite3_column_text( hStmt, iRawField ));
+        if( pszTxt == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                     sqlite3_errmsg(m_poDS->GetDB()));
+            return false;
+        }
+        const size_t nLen = strlen(pszTxt);
+        // nominal format: "YYYY-MM-DDTHH:MM:SS.SSSZ" (24 characters)
+        // but we also silently accept without timezone as OGR can
+        // write this
+        const bool bNominalFormat = (
+            nLen >= 23 &&
+            pszTxt[4] == '-' && pszTxt[7] == '-' &&
+            pszTxt[10] == 'T' && pszTxt[13] == ':' && pszTxt[16] == ':' &&
+            pszTxt[19] == '.');
+        if ( OGRParseDate(pszTxt, psField, 0) )
+        {
+            if( !bNominalFormat )
+            {
+                constexpr int line = __LINE__;
+                if( !m_poDS->m_oSetGPKGLayerWarnings[line] )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Non-conformant content for record "
+                             CPL_FRMT_GIB " in column %s, %s, "
+                             "successfully parsed",
+                             nFID,
+                             poFieldDefn->GetNameRef(), pszTxt);
+                    m_poDS->m_oSetGPKGLayerWarnings[line] = true;
+                }
+            }
+        }
+        else
+        {
+            OGR_RawField_SetUnset(psField);
+            constexpr int line = __LINE__;
+            if( !m_poDS->m_oSetGPKGLayerWarnings[line] )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Invalid content for record "
+                         CPL_FRMT_GIB " in column %s: %s",
+                         nFID,
+                         poFieldDefn->GetNameRef(), pszTxt);
+               m_poDS->m_oSetGPKGLayerWarnings[line] = true;
+            }
+            return false;
+        }
+    }
+    else
+    {
+        constexpr int line = __LINE__;
+        if( !m_poDS->m_oSetGPKGLayerWarnings[line] )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Unexpected data type for record "
+                     CPL_FRMT_GIB " in column %s",
+                     nFID,
+                     poFieldDefn->GetNameRef());
+            m_poDS->m_oSetGPKGLayerWarnings[line] = true;
+        }
+        return false;
+    }
+    return true;
+}
+
+/************************************************************************/
 /*                         TranslateFeature()                           */
 /************************************************************************/
 
@@ -196,7 +353,7 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
             OGRSpatialReference* poSrs = poGeomFieldDefn->GetSpatialRef();
             int iGpkgSize = sqlite3_column_bytes(hStmt, iGeomCol);
             // coverity[tainted_data_return]
-            GByte *pabyGpkg = (GByte *)sqlite3_column_blob(hStmt, iGeomCol);
+            const GByte *pabyGpkg = static_cast<const GByte *>(sqlite3_column_blob(hStmt, iGeomCol));
             OGRGeometry *poGeom = GPkgGeometryToOGR(pabyGpkg, iGpkgSize, nullptr);
             if ( poGeom == nullptr )
             {
@@ -216,9 +373,10 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
 /* -------------------------------------------------------------------- */
 /*      set the fields.                                                 */
 /* -------------------------------------------------------------------- */
-    for( int iField = 0; iField < m_poFeatureDefn->GetFieldCount(); iField++ )
+    const int nFieldCount =  m_poFeatureDefn->GetFieldCount();
+    for( int iField = 0; iField < nFieldCount; iField++ )
     {
-        OGRFieldDefn *poFieldDefn = m_poFeatureDefn->GetFieldDefn( iField );
+        const OGRFieldDefn *poFieldDefn = m_poFeatureDefn->GetFieldDefnUnsafe( iField );
         if ( poFieldDefn->IsIgnored() )
             continue;
 
@@ -234,17 +392,17 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
         switch( poFieldDefn->GetType() )
         {
             case OFTInteger:
-                poFeature->SetField( iField,
+                poFeature->SetFieldSameTypeUnsafe( iField,
                     sqlite3_column_int( hStmt, iRawField ) );
                 break;
 
             case OFTInteger64:
-                poFeature->SetField( iField,
+                poFeature->SetFieldSameTypeUnsafe( iField,
                     sqlite3_column_int64( hStmt, iRawField ) );
                 break;
 
             case OFTReal:
-                poFeature->SetField( iField,
+                poFeature->SetFieldSameTypeUnsafe( iField,
                     sqlite3_column_double( hStmt, iRawField ) );
                 break;
 
@@ -252,127 +410,56 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
             {
                 const int nBytes = sqlite3_column_bytes( hStmt, iRawField );
                 // coverity[tainted_data_return]
-                const GByte* pabyData = reinterpret_cast<const GByte*>(
-                    sqlite3_column_blob( hStmt, iRawField ) );
-                poFeature->SetField( iField, nBytes,
-                                     const_cast<GByte*>(pabyData) );
+                const void* pabyData = sqlite3_column_blob( hStmt, iRawField );
+                if( pabyData != nullptr || nBytes == 0 )
+                {
+                    poFeature->SetField( iField, nBytes, pabyData );
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                             sqlite3_errmsg(m_poDS->GetDB()));
+                }
                 break;
             }
 
             case OFTDate:
             {
-                if( nSqlite3ColType == SQLITE_TEXT )
-                {
-                    const char* pszTxt = (const char*)sqlite3_column_text( hStmt, iRawField );
-                    int nYear, nMonth, nDay;
-                    if( sscanf(pszTxt, "%d-%d-%d", &nYear, &nMonth, &nDay) == 3 )
-                    {
-                        poFeature->SetField(iField, nYear, nMonth, nDay, 0, 0, 0, 0);
-                    }
-                    else if ( sscanf(pszTxt, "%d/%d/%d", &nYear, &nMonth, &nDay) == 3 )
-                    {
-                        poFeature->SetField(iField, nYear, nMonth, nDay, 0, 0, 0, 0);
-                        constexpr int line = __LINE__;
-                        if( !m_poDS->m_oSetGPKGLayerWarnings[line] )
-                        {
-                            CPLError(CE_Warning, CPLE_AppDefined,
-                                     "Non-conformant content for record "
-                                     CPL_FRMT_GIB " in column %s, %s, "
-                                     "successfully parsed",
-                                     poFeature->GetFID(),
-                                     poFieldDefn->GetNameRef(), pszTxt);
-                            m_poDS->m_oSetGPKGLayerWarnings[line] = true;
-                        }
-                    }
-                    else
-                    {
-                        constexpr int line = __LINE__;
-                        if( !m_poDS->m_oSetGPKGLayerWarnings[line] )
-                        {
-                            CPLError(CE_Warning, CPLE_AppDefined,
-                                     "Invalid content for record "
-                                     CPL_FRMT_GIB " in column %s: %s",
-                                     poFeature->GetFID(),
-                                     poFieldDefn->GetNameRef(), pszTxt);
-                            m_poDS->m_oSetGPKGLayerWarnings[line] = true;
-                        }
-                    }
-                }
-                else
-                {
-                    constexpr int line = __LINE__;
-                    if( !m_poDS->m_oSetGPKGLayerWarnings[line] )
-                    {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                 "Unexpected data type for record "
-                                 CPL_FRMT_GIB " in column %s",
-                                 poFeature->GetFID(),
-                                 poFieldDefn->GetNameRef());
-                        m_poDS->m_oSetGPKGLayerWarnings[line] = true;
-                    }
-                }
+                auto psField = poFeature->GetRawFieldRef(iField);
+                CPL_IGNORE_RET_VAL(
+                    ParseDateField(hStmt, iRawField, nSqlite3ColType, psField,
+                                   poFieldDefn, poFeature->GetFID()));
                 break;
             }
 
             case OFTDateTime:
             {
-                if( nSqlite3ColType == SQLITE_TEXT )
-                {
-                    const char* pszTxt = (const char*)sqlite3_column_text( hStmt, iRawField );
-                    OGRField sField;
-                    if( OGRParseXMLDateTime(pszTxt, &sField) )
-                    {
-                        poFeature->SetField(iField, &sField);
-                    }
-                    else if ( OGRParseDate(pszTxt, &sField, 0) )
-                    {
-                        poFeature->SetField(iField, &sField);
-                        constexpr int line = __LINE__;
-                        if( !m_poDS->m_oSetGPKGLayerWarnings[line] )
-                        {
-                            CPLError(CE_Warning, CPLE_AppDefined,
-                                     "Non-conformant content for record "
-                                     CPL_FRMT_GIB " in column %s, %s, "
-                                     "successfully parsed",
-                                     poFeature->GetFID(),
-                                     poFieldDefn->GetNameRef(), pszTxt);
-                            m_poDS->m_oSetGPKGLayerWarnings[line] = true;
-                        }
-                    }
-                    else
-                    {
-                        constexpr int line = __LINE__;
-                        if( !m_poDS->m_oSetGPKGLayerWarnings[line] )
-                        {
-                            CPLError(CE_Warning, CPLE_AppDefined,
-                                     "Invalid content for record "
-                                     CPL_FRMT_GIB " in column %s: %s",
-                                     poFeature->GetFID(),
-                                     poFieldDefn->GetNameRef(), pszTxt);
-                           m_poDS->m_oSetGPKGLayerWarnings[line] = true;
-                        }
-                    }
-                }
-                else
-                {
-                    constexpr int line = __LINE__;
-                    if( !m_poDS->m_oSetGPKGLayerWarnings[line] )
-                    {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                 "Unexpected data type for record "
-                                 CPL_FRMT_GIB " in column %s",
-                                 poFeature->GetFID(),
-                                 poFieldDefn->GetNameRef());
-                        m_poDS->m_oSetGPKGLayerWarnings[line] = true;
-                    }
-                }
+                auto psField = poFeature->GetRawFieldRef(iField);
+                CPL_IGNORE_RET_VAL(
+                    ParseDateTimeField(hStmt, iRawField, nSqlite3ColType, psField,
+                                       poFieldDefn, poFeature->GetFID()));
                 break;
             }
 
             case OFTString:
-                poFeature->SetField( iField,
-                        (const char *) sqlite3_column_text( hStmt, iRawField ) );
+            {
+                const char* pszTxt = reinterpret_cast<const char*>(
+                    sqlite3_column_text( hStmt, iRawField ));
+                if( pszTxt )
+                {
+                    char* pszTxtDup = VSI_STRDUP_VERBOSE(pszTxt);
+                    if( pszTxtDup )
+                    {
+                        poFeature->SetFieldSameTypeUnsafe( iField, pszTxtDup );
+                    }
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                             sqlite3_errmsg(m_poDS->GetDB()));
+                }
                 break;
+            }
 
             default:
                 break;
@@ -381,6 +468,334 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
 
     return poFeature;
 }
+
+/************************************************************************/
+/*                      GetNextArrowArray()                             */
+/************************************************************************/
+
+int OGRGeoPackageLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
+                                           struct ArrowArray* out_array)
+{
+    if( CPLTestBool(CPLGetConfigOption("OGR_GPKG_STREAM_BASE_IMPL", "NO")) )
+    {
+        return OGRLayer::GetNextArrowArray(stream, out_array);
+    }
+
+    int errorErrno = EIO;
+    memset(out_array, 0, sizeof(*out_array));
+
+    if( m_bEOF )
+        return 0;
+
+    if( m_poQueryStatement == nullptr )
+    {
+        ResetStatement();
+        if (m_poQueryStatement == nullptr)
+            return 0;
+    }
+    sqlite3_stmt* hStmt = m_poQueryStatement;
+
+    OGRArrowArrayHelper sHelper(m_poDS, m_poFeatureDefn,
+                                m_aosArrowArrayStreamOptions,
+                                out_array);
+    if( out_array->release == nullptr )
+    {
+        return ENOMEM;
+    }
+
+    struct tm brokenDown;
+    memset(&brokenDown, 0, sizeof(brokenDown));
+
+    int iFeat = 0;
+    for(; iFeat < sHelper.nMaxBatchSize; iFeat++ )
+    {
+/* -------------------------------------------------------------------- */
+/*      Fetch a record (unless otherwise instructed)                    */
+/* -------------------------------------------------------------------- */
+        if( bDoStep )
+        {
+            int rc = sqlite3_step( hStmt );
+            if( rc != SQLITE_ROW )
+            {
+                if ( rc != SQLITE_DONE )
+                {
+                    sqlite3_reset(hStmt);
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                            "In GetNextArrowArray(): sqlite3_step() : %s",
+                            sqlite3_errmsg(m_poDS->GetDB()) );
+                }
+
+                ClearStatement();
+                m_bEOF = true;
+
+                break;
+            }
+        }
+        else
+        {
+            bDoStep = true;
+        }
+
+        iNextShapeId++;
+
+        m_nFeaturesRead++;
+
+        GIntBig nFID;
+        if( iFIDCol >= 0 )
+        {
+            nFID = sqlite3_column_int64( hStmt, iFIDCol );
+            if( m_pszFidColumn == nullptr && nFID == 0 )
+            {
+                // Might be the case for views with joins.
+                nFID = iNextShapeId;
+            }
+        }
+        else
+            nFID = iNextShapeId;
+
+        if( sHelper.panFIDValues )
+        {
+            sHelper.panFIDValues[iFeat] = nFID;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Process Geometry if we have a column.                           */
+/* -------------------------------------------------------------------- */
+        if( iGeomCol >= 0 && sHelper.mapOGRGeomFieldToArrowField[0] > 0 )
+        {
+            const int iArrowField = sHelper.mapOGRGeomFieldToArrowField[0];
+            auto psArray = out_array->children[iArrowField];
+
+            size_t nWKBSize = 0;
+            if ( sqlite3_column_type(hStmt, iGeomCol) != SQLITE_NULL )
+            {
+                std::unique_ptr<OGRGeometry> poGeom;
+                const GByte *pabyWkb = nullptr;
+                const int iGpkgSize = sqlite3_column_bytes(hStmt, iGeomCol);
+                // coverity[tainted_data_return]
+                const GByte *pabyGpkg = static_cast<const GByte *>(sqlite3_column_blob(hStmt, iGeomCol));
+                if( m_poFilterGeom == nullptr &&
+                    iGpkgSize >= 8 && pabyGpkg && pabyGpkg[0] == 'G' && pabyGpkg[1] == 'P' )
+                {
+                    GPkgHeader oHeader;
+
+                    /* Read header */
+                    OGRErr err = GPkgHeaderFromWKB(pabyGpkg, iGpkgSize, &oHeader);
+                    if ( err == OGRERR_NONE )
+                    {
+                        /* WKB pointer */
+                        pabyWkb = pabyGpkg + oHeader.nHeaderLen;
+                        nWKBSize = iGpkgSize - oHeader.nHeaderLen;
+                    }
+                }
+                else
+                {
+                    poGeom.reset(GPkgGeometryToOGR(pabyGpkg, iGpkgSize, nullptr));
+                    if ( poGeom == nullptr )
+                    {
+                        // Try also spatialite geometry blobs
+                        OGRGeometry* poGeomPtr = nullptr;
+                        if( OGRSQLiteImportSpatiaLiteGeometry( pabyGpkg, iGpkgSize,
+                                                                      &poGeomPtr ) != OGRERR_NONE )
+                        {
+                            CPLError( CE_Failure, CPLE_AppDefined, "Unable to read geometry");
+                        }
+                        poGeom.reset(poGeomPtr);
+                    }
+                    if( poGeom != nullptr )
+                    {
+                        nWKBSize = poGeom->WkbSize();
+                    }
+                    if( m_poFilterGeom != nullptr &&
+                        !FilterGeometry( poGeom.get() ) )
+                    {
+                        continue;
+                    }
+                }
+
+                if( nWKBSize != 0 )
+                {
+                    GByte* outPtr = sHelper.GetPtrForStringOrBinary(iArrowField, iFeat, nWKBSize);
+                    if( outPtr == nullptr )
+                    {
+                        errorErrno = ENOMEM;
+                        goto error;
+                    }
+                    if( poGeom )
+                    {
+                        poGeom->exportToWkb(wkbNDR, outPtr, wkbVariantIso);
+                    }
+                    else
+                    {
+                        memcpy(outPtr, pabyWkb, nWKBSize);
+                    }
+                }
+                else
+                {
+                    sHelper.SetEmptyStringOrBinary(psArray, iFeat);
+                }
+            }
+
+            if( nWKBSize == 0 )
+            {
+                if( !sHelper.SetNull(iArrowField, iFeat) )
+                {
+                    errorErrno = ENOMEM;
+                    goto error;
+                }
+            }
+        }
+
+        for( int iField = 0; iField < sHelper.nFieldCount; iField++ )
+        {
+            const int iArrowField = sHelper.mapOGRFieldToArrowField[iField];
+            if( iArrowField < 0 )
+                continue;
+            const OGRFieldDefn *poFieldDefn = m_poFeatureDefn->GetFieldDefnUnsafe( iField );
+
+            auto psArray = out_array->children[iArrowField];
+            const int iRawField = panFieldOrdinals[iField];
+
+            const int nSqlite3ColType = sqlite3_column_type( hStmt, iRawField );
+            if( nSqlite3ColType == SQLITE_NULL )
+            {
+                if( !sHelper.SetNull(iArrowField, iFeat) )
+                {
+                    errorErrno = ENOMEM;
+                    goto error;
+                }
+                continue;
+            }
+
+            switch( poFieldDefn->GetType() )
+            {
+                case OFTInteger:
+                {
+                    const int nVal = sqlite3_column_int( hStmt, iRawField );
+                    if( poFieldDefn->GetSubType() == OFSTBoolean )
+                    {
+                        if( nVal != 0 )
+                        {
+                            sHelper.SetBoolOn(psArray, iFeat);
+                        }
+                    }
+                    else if( poFieldDefn->GetSubType() == OFSTInt16 )
+                    {
+                        sHelper.SetInt16(psArray, iFeat,
+                                         static_cast<int16_t>(nVal));
+                    }
+                    else
+                    {
+                        sHelper.SetInt32(psArray, iFeat, nVal);
+                    }
+                    break;
+                }
+
+                case OFTInteger64:
+                {
+                    sHelper.SetInt64(psArray, iFeat,
+                                     sqlite3_column_int64( hStmt, iRawField ));
+                    break;
+                }
+
+                case OFTReal:
+                {
+                    const double dfVal = sqlite3_column_double( hStmt, iRawField );
+                    if( poFieldDefn->GetSubType() == OFSTFloat32 )
+                    {
+                        sHelper.SetFloat(psArray, iFeat, static_cast<float>(dfVal));
+                    }
+                    else
+                    {
+                        sHelper.SetDouble(psArray, iFeat, dfVal);
+                    }
+                    break;
+                }
+
+                case OFTBinary:
+                {
+                    const uint32_t nBytes = static_cast<uint32_t>(sqlite3_column_bytes( hStmt, iRawField ));
+                    // coverity[tainted_data_return]
+                    const void* pabyData = sqlite3_column_blob( hStmt, iRawField );
+                    if( pabyData != nullptr || nBytes == 0 )
+                    {
+                        GByte* outPtr = sHelper.GetPtrForStringOrBinary(iArrowField, iFeat, nBytes);
+                        if( outPtr == nullptr )
+                        {
+                            errorErrno = ENOMEM;
+                            goto error;
+                        }
+                        if( nBytes )
+                            memcpy(outPtr, pabyData, nBytes);
+                    }
+                    else
+                    {
+                        sHelper.SetEmptyStringOrBinary(psArray, iFeat);
+                    }
+                    break;
+                }
+
+                case OFTDate:
+                {
+                    OGRField ogrField;
+                    if( ParseDateField(hStmt, iRawField, nSqlite3ColType, &ogrField,
+                                       poFieldDefn, nFID) )
+                    {
+                        sHelper.SetDate(psArray, iFeat, brokenDown, ogrField);
+                    }
+                    break;
+                }
+
+                case OFTDateTime:
+                {
+                    OGRField ogrField;
+                    if( ParseDateTimeField(hStmt, iRawField, nSqlite3ColType, &ogrField,
+                                          poFieldDefn, nFID) )
+                    {
+                        sHelper.SetDateTime(psArray, iFeat, brokenDown, ogrField);
+                    }
+                    break;
+                }
+
+                case OFTString:
+                {
+                    const auto pszTxt = reinterpret_cast<const char*>(sqlite3_column_text( hStmt, iRawField ));
+                    if( pszTxt != nullptr )
+                    {
+                        const size_t nBytes = strlen(pszTxt);
+                        GByte* outPtr = sHelper.GetPtrForStringOrBinary(iArrowField, iFeat, nBytes);
+                        if( outPtr == nullptr )
+                        {
+                            errorErrno = ENOMEM;
+                            goto error;
+                        }
+                        if( nBytes )
+                            memcpy(outPtr, pszTxt, nBytes);
+                    }
+                    else
+                    {
+                        sHelper.SetEmptyStringOrBinary(psArray, iFeat);
+                        CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                                 sqlite3_errmsg(m_poDS->GetDB()));
+                    }
+                    break;
+                }
+
+                default:
+                    break;
+            }
+        }
+    }
+
+    sHelper.Shrink(iFeat);
+
+    return 0;
+
+error:
+    sHelper.ClearArray();
+    return errorErrno;
+}
+
 
 /************************************************************************/
 /*                      GetFIDColumn()                                  */
@@ -404,6 +819,10 @@ int OGRGeoPackageLayer::TestCapability ( const char * pszCap )
         return TRUE;
     else if ( EQUAL(pszCap, OLCStringsAsUTF8) )
         return TRUE;
+    else if ( EQUAL(pszCap, OLCFastGetArrowStream) )
+        return TRUE;
+    else if ( EQUAL(pszCap, OLCZGeometries) )
+        return TRUE;
     else
         return FALSE;
 }
@@ -426,7 +845,7 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
 
     const int    nRawColumns = sqlite3_column_count( hStmt );
 
-    panFieldOrdinals = (int *) CPLMalloc( sizeof(int) * nRawColumns );
+    panFieldOrdinals = static_cast<int *>(CPLMalloc( sizeof(int) * nRawColumns ));
 
     const bool bPromoteToInteger64 =
         CPLTestBool(CPLGetConfigOption("OGR_PROMOTE_TO_INTEGER64", "FALSE"));
@@ -519,6 +938,7 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
                     oField.SetSubType( poSrcField->GetSubType() );
                     oField.SetWidth( poSrcField->GetWidth() );
                     oField.SetPrecision( poSrcField->GetPrecision() );
+                    oField.SetDomainName( poSrcField->GetDomainName() );
                     m_poFeatureDefn->AddFieldDefn( &oField );
                     panFieldOrdinals[
                             m_poFeatureDefn->GetFieldCount() - 1] = iCol;
@@ -548,7 +968,7 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
             {
                 // coverity[tainted_data_return]
                 const GByte* pabyGpkg =
-                        (const GByte*)sqlite3_column_blob( hStmt, iCol  );
+                        reinterpret_cast<const GByte*>(sqlite3_column_blob( hStmt, iCol  ));
                 GPkgHeader oHeader;
                 OGRGeometry* poGeom = nullptr;
                 int nSRID = 0;
@@ -641,7 +1061,7 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
             int nMaxWidth = 0;
             const OGRFieldType eFieldType =
                 GPkgFieldToOGR(pszDeclType, eSubType, nMaxWidth);
-            if( (int)eFieldType <= OFTMaxType )
+            if( static_cast<int>(eFieldType) <= OFTMaxType )
             {
                 oField.SetType(eFieldType);
                 oField.SetSubType(eSubType);

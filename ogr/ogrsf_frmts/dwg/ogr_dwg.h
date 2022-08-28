@@ -210,7 +210,7 @@ class OGRDWGDataSource final: public OGRDataSource
     // Implemented in ogrdxf_blockmap.cpp
     void                ReadBlocksSection();
     void                ReadAttDefinitions();
-    OGRGeometry        *SimplifyBlockGeometry( OGRGeometryCollection * );
+    static OGRGeometry        *SimplifyBlockGeometry( OGRGeometryCollection * );
     DWGBlockDefinition *LookupBlock( const char *pszName );
     std::map<CPLString,DWGBlockDefinition> &GetBlockMap() { return oBlockMap; }
 

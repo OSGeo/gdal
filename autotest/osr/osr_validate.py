@@ -30,7 +30,6 @@
 ###############################################################################
 
 
-
 from osgeo import osr
 
 ###############################################################################
@@ -42,6 +41,7 @@ def test_osr_validate_1():
     empty_srs = osr.SpatialReference()
     assert empty_srs.Validate() != 0
 
+
 ###############################################################################
 # Unrecognized root node
 
@@ -51,6 +51,7 @@ def test_osr_validate_2():
     srs = osr.SpatialReference()
     srs.ImportFromWkt("FOO[]")
     assert srs.Validate() != 0
+
 
 ###############################################################################
 # COMPD_CS errors
@@ -77,6 +78,7 @@ def test_osr_validate_3():
     srs = osr.SpatialReference()
     srs.ImportFromWkt("""COMPD_CS["MYNAME",FOO[]]""")
     assert srs.Validate() != 0
+
 
 ###############################################################################
 # VERT_CS errors
@@ -116,13 +118,18 @@ def test_osr_validate_4():
 
     # No UNIT child in VERT_CS
     srs = osr.SpatialReference()
-    srs.ImportFromWkt("""VERT_CS["MYNAME",VERT_DATUM["MYNAME",2005,AUTHORITY["EPSG","0"]]]""")
+    srs.ImportFromWkt(
+        """VERT_CS["MYNAME",VERT_DATUM["MYNAME",2005,AUTHORITY["EPSG","0"]]]"""
+    )
     assert srs.Validate() != 0
 
     # Too many AXIS children in VERT_CS
     srs = osr.SpatialReference()
-    srs.ImportFromWkt("""VERT_CS["MYNAME",VERT_DATUM["MYNAME",2005,AUTHORITY["EPSG","0"]],UNIT["metre",1],AXIS["foo",foo],AXIS["bar",bar]]""")
+    srs.ImportFromWkt(
+        """VERT_CS["MYNAME",VERT_DATUM["MYNAME",2005,AUTHORITY["EPSG","0"]],UNIT["metre",1],AXIS["foo",foo],AXIS["bar",bar]]"""
+    )
     assert srs.Validate() != 0
+
 
 ###############################################################################
 # GEOCCS errors
@@ -134,22 +141,30 @@ def test_osr_validate_5():
 
     # PRIMEM has wrong number of children (1),not 2 or 3 as expected
     srs = osr.SpatialReference()
-    srs.ImportFromWkt('GEOCCS["My Geocentric",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM[],UNIT["meter",1]]')
+    srs.ImportFromWkt(
+        'GEOCCS["My Geocentric",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM[],UNIT["meter",1]]'
+    )
     assert srs.Validate() != 0
 
     # UNIT has wrong number of children (1), not 2
     srs = osr.SpatialReference()
-    srs.ImportFromWkt('GEOCCS["My Geocentric",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT[]]')
+    srs.ImportFromWkt(
+        'GEOCCS["My Geocentric",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT[]]'
+    )
     assert srs.Validate() != 0
 
     # AXIS has wrong number of children (1), not 2
     srs = osr.SpatialReference()
-    srs.ImportFromWkt('GEOCCS["My Geocentric",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],AXIS[],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["meter",1]]')
+    srs.ImportFromWkt(
+        'GEOCCS["My Geocentric",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],AXIS[],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["meter",1]]'
+    )
     assert srs.Validate() != 0
 
     # AUTHORITY has wrong number of children (1), not 2
     srs = osr.SpatialReference()
-    srs.ImportFromWkt('GEOCCS["My Geocentric",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["meter",1],AUTHORITY[]]')
+    srs.ImportFromWkt(
+        'GEOCCS["My Geocentric",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["meter",1],AUTHORITY[]]'
+    )
     assert srs.Validate() != 0
 
     # Unexpected child for GEOCCS `FOO'
@@ -164,18 +179,25 @@ def test_osr_validate_5():
 
     # No PRIMEM child in GEOCCS
     srs = osr.SpatialReference()
-    srs.ImportFromWkt('GEOCCS["My Geocentric",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]]]]')
+    srs.ImportFromWkt(
+        'GEOCCS["My Geocentric",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]]]]'
+    )
     assert srs.Validate() != 0
 
     # No UNIT child in GEOCCS
     srs = osr.SpatialReference()
-    srs.ImportFromWkt('GEOCCS["My Geocentric",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]]],PRIMEM["Greenwich",0]]')
+    srs.ImportFromWkt(
+        'GEOCCS["My Geocentric",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]]],PRIMEM["Greenwich",0]]'
+    )
     assert srs.Validate() != 0
 
     # Wrong number of AXIS children in GEOCCS
     srs = osr.SpatialReference()
-    srs.ImportFromWkt('GEOCCS["My Geocentric",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],AXIS["foo",foo],UNIT["meter",1]]')
+    srs.ImportFromWkt(
+        'GEOCCS["My Geocentric",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],AXIS["foo",foo],UNIT["meter",1]]'
+    )
     assert srs.Validate() != 0
+
 
 ###############################################################################
 # PROJCS errors
@@ -212,17 +234,23 @@ def test_osr_validate_6():
 
     # Unsupported, but recognised PROJECTION `Tunisia_Mining_Grid'
     srs = osr.SpatialReference()
-    srs.ImportFromWkt('PROJCS["WGS 84 / UTM zone 31N",PROJECTION["Tunisia_Mining_Grid"]]')
+    srs.ImportFromWkt(
+        'PROJCS["WGS 84 / UTM zone 31N",PROJECTION["Tunisia_Mining_Grid"]]'
+    )
     assert srs.Validate() != 0
 
     # Unexpected child for PROJECTION `FOO'
     srs = osr.SpatialReference()
-    srs.ImportFromWkt('PROJCS["WGS 84 / UTM zone 31N",PROJECTION["Transverse_Mercator", FOO]]')
+    srs.ImportFromWkt(
+        'PROJCS["WGS 84 / UTM zone 31N",PROJECTION["Transverse_Mercator", FOO]]'
+    )
     assert srs.Validate() != 0
 
     # AUTHORITY has wrong number of children (0), not 2
     srs = osr.SpatialReference()
-    srs.ImportFromWkt('PROJCS["WGS 84 / UTM zone 31N",PROJECTION["Transverse_Mercator", AUTHORITY]]')
+    srs.ImportFromWkt(
+        'PROJCS["WGS 84 / UTM zone 31N",PROJECTION["Transverse_Mercator", AUTHORITY]]'
+    )
     assert srs.Validate() != 0
 
     # AUTHORITY has wrong number of children (0), not 2
@@ -245,7 +273,5 @@ def test_osr_validate_6():
     srs.ImportFromWkt('PROJCS["WGS 84 / UTM zone 31N"]')
     assert srs.Validate() != 0
 
+
 ###############################################################################
-
-
-

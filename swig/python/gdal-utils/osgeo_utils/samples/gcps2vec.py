@@ -31,20 +31,18 @@
 
 import sys
 
-from osgeo import gdal
-from osgeo import ogr
-from osgeo import osr
+from osgeo import gdal, ogr, osr
 
 
 def Usage():
-    print('Usage: gcps2vec.py [-of <ogr_drivername>] [-p] <raster_file> <vector_file>')
-    return 1
+    print("Usage: gcps2vec.py [-of <ogr_drivername>] [-p] <raster_file> <vector_file>")
+    return 2
 
 
 def main(argv=sys.argv):
     src_filename = None
     dst_filename = None
-    driver_name = 'GML'
+    driver_name = "GML"
     pixel_out = False
 
     argv = gdal.GeneralCmdLineProcessor(argv)
@@ -56,11 +54,11 @@ def main(argv=sys.argv):
     while i < len(argv):
         arg = argv[i]
 
-        if arg == '-of':
+        if arg == "-of":
             i = i + 1
             driver_name = argv[i]
 
-        elif arg == '-p':
+        elif arg == "-p":
             pixel_out = True
 
         elif src_filename is None:
@@ -77,16 +75,23 @@ def main(argv=sys.argv):
     if dst_filename is None:
         return Usage()
 
-    return gcps2vec(src_filename=src_filename, dst_filename=dst_filename, driver_name=driver_name, pixel_out=pixel_out)
+    return gcps2vec(
+        src_filename=src_filename,
+        dst_filename=dst_filename,
+        driver_name=driver_name,
+        pixel_out=pixel_out,
+    )
 
 
-def gcps2vec(src_filename: str, dst_filename: str, driver_name: str, pixel_out: bool = False):
+def gcps2vec(
+    src_filename: str, dst_filename: str, driver_name: str, pixel_out: bool = False
+):
     # ----------------------------------------------------------------------------
     # Open input file, and fetch GCPs.
     # ----------------------------------------------------------------------------
     ds = gdal.Open(src_filename)
     if ds is None:
-        print(f'Unable to open {src_filename}')
+        print(f"Unable to open {src_filename}")
         return 1
 
     gcp_srs = ds.GetGCPProjection()
@@ -95,7 +100,7 @@ def gcps2vec(src_filename: str, dst_filename: str, driver_name: str, pixel_out: 
     ds = None
 
     if gcps is None or not gcps:
-        print(f'No GCPs on file {src_filename}!')
+        print(f"No GCPs on file {src_filename}!")
         return 1
 
     # ----------------------------------------------------------------------------
@@ -104,7 +109,7 @@ def gcps2vec(src_filename: str, dst_filename: str, driver_name: str, pixel_out: 
 
     driver = ogr.GetDriverByName(driver_name)
     if driver is None:
-        print(f'No driver named {driver_name} available.')
+        print(f"No driver named {driver_name} available.")
         return 1
 
     ds = driver.CreateDataSource(dst_filename)
@@ -120,28 +125,28 @@ def gcps2vec(src_filename: str, dst_filename: str, driver_name: str, pixel_out: 
     else:
         geom_type = ogr.wkbPoint
 
-    layer = ds.CreateLayer('gcps', srs, geom_type=geom_type)
+    layer = ds.CreateLayer("gcps", srs, geom_type=geom_type)
 
     if not pixel_out:
-        fd = ogr.FieldDefn('Pixel', ogr.OFTReal)
+        fd = ogr.FieldDefn("Pixel", ogr.OFTReal)
         layer.CreateField(fd)
 
-        fd = ogr.FieldDefn('Line', ogr.OFTReal)
+        fd = ogr.FieldDefn("Line", ogr.OFTReal)
         layer.CreateField(fd)
     else:
-        fd = ogr.FieldDefn('X', ogr.OFTReal)
+        fd = ogr.FieldDefn("X", ogr.OFTReal)
         layer.CreateField(fd)
 
-        fd = ogr.FieldDefn('Y', ogr.OFTReal)
+        fd = ogr.FieldDefn("Y", ogr.OFTReal)
         layer.CreateField(fd)
 
-        fd = ogr.FieldDefn('Z', ogr.OFTReal)
+        fd = ogr.FieldDefn("Z", ogr.OFTReal)
         layer.CreateField(fd)
 
-    fd = ogr.FieldDefn('Id', ogr.OFTString)
+    fd = ogr.FieldDefn("Id", ogr.OFTString)
     layer.CreateField(fd)
 
-    fd = ogr.FieldDefn('Info', ogr.OFTString)
+    fd = ogr.FieldDefn("Info", ogr.OFTString)
     layer.CreateField(fd)
 
     # ----------------------------------------------------------------------------
@@ -154,18 +159,18 @@ def gcps2vec(src_filename: str, dst_filename: str, driver_name: str, pixel_out: 
 
         if not pixel_out:
             geom = ogr.Geometry(geom_type)
-            feat.SetField('Pixel', gcp.GCPPixel)
-            feat.SetField('Line', gcp.GCPLine)
+            feat.SetField("Pixel", gcp.GCPPixel)
+            feat.SetField("Line", gcp.GCPLine)
             geom.SetPoint(0, gcp.GCPX, gcp.GCPY, gcp.GCPZ)
         else:
             geom = ogr.Geometry(geom_type)
-            feat.SetField('X', gcp.GCPX)
-            feat.SetField('Y', gcp.GCPY)
-            feat.SetField('Z', gcp.GCPZ)
+            feat.SetField("X", gcp.GCPX)
+            feat.SetField("Y", gcp.GCPY)
+            feat.SetField("Z", gcp.GCPZ)
             geom.SetPoint(0, gcp.GCPPixel, gcp.GCPLine)
 
-        feat.SetField('Id', gcp.Id)
-        feat.SetField('Info', gcp.Info)
+        feat.SetField("Id", gcp.Id)
+        feat.SetField("Info", gcp.Info)
 
         feat.SetGeometryDirectly(geom)
         layer.CreateFeature(feat)
@@ -174,5 +179,5 @@ def gcps2vec(src_filename: str, dst_filename: str, driver_name: str, pixel_out: 
     ds.Destroy()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

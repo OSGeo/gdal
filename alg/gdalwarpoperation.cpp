@@ -2446,7 +2446,7 @@ CPLErr GDALWarpOperation::CreateKernelMask( GDALWarpKernel *poKernel,
           : (static_cast<GIntBig>(nXSize) * nYSize + nExtraElts + 31) / 8;
 
         const size_t nByteSize_t = static_cast<size_t>(nBytes);
-#if SIZEOF_VOIDP != 8
+#if SIZEOF_VOIDP == 4
         if( static_cast<GIntBig>(nByteSize_t) != nBytes )
         {
             CPLError(

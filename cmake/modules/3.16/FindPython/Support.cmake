@@ -332,7 +332,7 @@ function (_PYTHON_GET_CONFIG_VAR _PYTHON_PGCV_VALUE NAME)
     string (REGEX MATCHALL "-(l|framework)[ ]*[^ ]+" _values "${_values}")
     # remove elements relative to python library itself
     #backport# list (FILTER _values EXCLUDE REGEX "-lpython")
-    list_filter_exlude (_values "-lpython")
+    list_filter_exclude (_values "-lpython")
     list (REMOVE_DUPLICATES _values)
   endif()
 

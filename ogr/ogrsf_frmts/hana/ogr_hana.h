@@ -346,7 +346,7 @@ public:
 
     int Open(const char* newName, char** options, int update);
 
-    uint GetMajorVersion() const { return majorVersion_; }
+    int GetMajorVersion() const { return majorVersion_; }
     OGRErr DeleteLayer(int index) override;
     int GetLayerCount() override { return static_cast<int>(layers_.size()); }
     OGRLayer* GetLayer(int index) override;

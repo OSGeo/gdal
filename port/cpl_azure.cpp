@@ -791,7 +791,7 @@ CPLString VSIAzureBlobHandleHelper::GetSignedURL(CSLConstList papszOptions)
     if( m_osStorageKey.empty() )
         return m_osURL;
 
-    CPLString osStartDate(CPLGetAWS_SIGN4_Timestamp());
+    CPLString osStartDate(CPLGetAWS_SIGN4_Timestamp(time(nullptr)));
     const char* pszStartDate = CSLFetchNameValue(papszOptions, "START_DATE");
     if( pszStartDate )
         osStartDate = pszStartDate;

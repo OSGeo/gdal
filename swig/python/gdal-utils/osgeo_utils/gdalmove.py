@@ -40,13 +40,19 @@ from osgeo import gdal, osr
 
 def fmt_loc(srs_obj, loc):
     if srs_obj.IsProjected():
-        return '%12.3f %12.3f' % (loc[0], loc[1])
-    return '%12.8f %12.8f' % (loc[0], loc[1])
+        return "%12.3f %12.3f" % (loc[0], loc[1])
+    return "%12.8f %12.8f" % (loc[0], loc[1])
+
 
 ###############################################################################
 
 
-def move(filename: str, t_srs: str, s_srs: Optional[str] = None, pixel_threshold: Optional[float] = None):
+def move(
+    filename: str,
+    t_srs: str,
+    s_srs: Optional[str] = None,
+    pixel_threshold: Optional[float] = None,
+):
 
     # -------------------------------------------------------------------------
     # Open the file.
@@ -57,28 +63,27 @@ def move(filename: str, t_srs: str, s_srs: Optional[str] = None, pixel_threshold
     # Compute the current (s_srs) locations of the four corners and center
     # of the image.
     # -------------------------------------------------------------------------
-    corners_names = [
-        'Upper Left',
-        'Lower Left',
-        'Upper Right',
-        'Lower Right',
-        'Center']
+    corners_names = ["Upper Left", "Lower Left", "Upper Right", "Lower Right", "Center"]
 
     corners_pixel_line = [
         (0, 0, 0),
         (0, ds.RasterYSize, 0),
         (ds.RasterXSize, 0, 0),
         (ds.RasterXSize, ds.RasterYSize, 0),
-        (ds.RasterXSize / 2.0, ds.RasterYSize / 2.0, 0.0)]
+        (ds.RasterXSize / 2.0, ds.RasterYSize / 2.0, 0.0),
+    ]
 
     orig_gt = ds.GetGeoTransform()
 
     corners_s_geo = []
     for item in corners_pixel_line:
         corners_s_geo.append(
-            (orig_gt[0] + item[0] * orig_gt[1] + item[1] * orig_gt[2],
-             orig_gt[3] + item[0] * orig_gt[4] + item[1] * orig_gt[5],
-             item[2]))
+            (
+                orig_gt[0] + item[0] * orig_gt[1] + item[1] * orig_gt[2],
+                orig_gt[3] + item[0] * orig_gt[4] + item[1] * orig_gt[5],
+                item[2],
+            )
+        )
 
     # -------------------------------------------------------------------------
     # Prepare a transformation from source to destination srs.
@@ -113,12 +118,14 @@ def move(filename: str, t_srs: str, s_srs: Optional[str] = None, pixel_threshold
     ur = corners_t_geo[2]
     ll = corners_t_geo[1]
 
-    new_gt = (ul[0],
-              (ur[0] - ul[0]) / ds.RasterXSize,
-              (ll[0] - ul[0]) / ds.RasterYSize,
-              ul[1],
-              (ur[1] - ul[1]) / ds.RasterXSize,
-              (ll[1] - ul[1]) / ds.RasterYSize)
+    new_gt = (
+        ul[0],
+        (ur[0] - ul[0]) / ds.RasterXSize,
+        (ll[0] - ul[0]) / ds.RasterYSize,
+        ul[1],
+        (ur[1] - ul[1]) / ds.RasterXSize,
+        (ll[1] - ul[1]) / ds.RasterYSize,
+    )
 
     inv_new_gt = gdal.InvGeoTransform(new_gt)
 
@@ -131,40 +138,59 @@ def move(filename: str, t_srs: str, s_srs: Optional[str] = None, pixel_threshold
     error_pixel_line = []
     corners_pixel_line_new = []
 
-    print('___Corner___ ________Original________  _______Adjusted_________   ______ Err (geo) ______ _Err (pix)_')
+    print(
+        "___Corner___ ________Original________  _______Adjusted_________   ______ Err (geo) ______ _Err (pix)_"
+    )
 
     for i in range(len(corners_s_geo)):  # pylint: disable=consider-using-enumerate
 
         item = corners_pixel_line[i]
         corners_t_new_geo.append(
-            (new_gt[0] + item[0] * new_gt[1] + item[1] * new_gt[2],
-             new_gt[3] + item[0] * new_gt[4] + item[1] * new_gt[5],
-             item[2]))
+            (
+                new_gt[0] + item[0] * new_gt[1] + item[1] * new_gt[2],
+                new_gt[3] + item[0] * new_gt[4] + item[1] * new_gt[5],
+                item[2],
+            )
+        )
 
-        error_geo.append((corners_t_new_geo[i][0] - corners_t_geo[i][0],
-                          corners_t_new_geo[i][1] - corners_t_geo[i][1],
-                          0.0))
+        error_geo.append(
+            (
+                corners_t_new_geo[i][0] - corners_t_geo[i][0],
+                corners_t_new_geo[i][1] - corners_t_geo[i][1],
+                0.0,
+            )
+        )
 
         item = corners_t_geo[i]
         corners_pixel_line_new.append(
-            (inv_new_gt[0] + item[0] * inv_new_gt[1] + item[1] * inv_new_gt[2],
-             inv_new_gt[3] + item[0] * inv_new_gt[4] + item[1] * inv_new_gt[5],
-             item[2]))
+            (
+                inv_new_gt[0] + item[0] * inv_new_gt[1] + item[1] * inv_new_gt[2],
+                inv_new_gt[3] + item[0] * inv_new_gt[4] + item[1] * inv_new_gt[5],
+                item[2],
+            )
+        )
 
         error_pixel_line.append(
-            (corners_pixel_line_new[i][0] - corners_pixel_line[i][0],
-             corners_pixel_line_new[i][1] - corners_pixel_line[i][1],
-             corners_pixel_line_new[i][2] - corners_pixel_line[i][2]))
+            (
+                corners_pixel_line_new[i][0] - corners_pixel_line[i][0],
+                corners_pixel_line_new[i][1] - corners_pixel_line[i][1],
+                corners_pixel_line_new[i][2] - corners_pixel_line[i][2],
+            )
+        )
 
-        print('%-11s %s %s %s %5.2f %5.2f' %
-              (corners_names[i],
-               fmt_loc(s_srs_obj, corners_s_geo[i]),
-               fmt_loc(t_srs_obj, corners_t_geo[i]),
-               fmt_loc(t_srs_obj, error_geo[i]),
-               error_pixel_line[i][0],
-               error_pixel_line[i][1]))
+        print(
+            "%-11s %s %s %s %5.2f %5.2f"
+            % (
+                corners_names[i],
+                fmt_loc(s_srs_obj, corners_s_geo[i]),
+                fmt_loc(t_srs_obj, corners_t_geo[i]),
+                fmt_loc(t_srs_obj, error_geo[i]),
+                error_pixel_line[i][0],
+                error_pixel_line[i][1],
+            )
+        )
 
-    print('')
+    print("")
 
     # -------------------------------------------------------------------------
     # Do we want to update the file?
@@ -187,27 +213,32 @@ def move(filename: str, t_srs: str, s_srs: Optional[str] = None, pixel_threshold
         ds = None
         ds = gdal.Open(filename, gdal.GA_Update)
 
-        print('Updating file...')
+        print("Updating file...")
         ds.SetGeoTransform(new_gt)
         ds.SetProjection(t_srs_obj.ExportToWkt())
-        print('Done.')
+        print("Done.")
 
     elif pixel_threshold is None:
-        print('No error threshold in pixels selected with -et, file not updated.')
+        print("No error threshold in pixels selected with -et, file not updated.")
 
     else:
-        print(f"""Maximum check point error is {max_error:.5f} pixels which exceeds the
-                error threshold so the file has not been updated.""")
+        print(
+            f"""Maximum check point error is {max_error:.5f} pixels which exceeds the
+                error threshold so the file has not been updated."""
+        )
 
     ds = None
+
 
 ###############################################################################
 
 
 def Usage():
-    print("""Usage: gdalmove.py [-s_srs <srs_defn>] -t_srs <srs_defn>
-            [-et <max_pixel_err>] target_file""")
-    return 1
+    print(
+        """Usage: gdalmove.py [-s_srs <srs_defn>] -t_srs <srs_defn>
+            [-et <max_pixel_err>] target_file"""
+    )
+    return 2
 
 
 def main(argv=sys.argv):
@@ -231,15 +262,15 @@ def main(argv=sys.argv):
     i = 1
     while i < len(argv):
 
-        if argv[i] == '-s_srs' and i < len(argv) - 1:
+        if argv[i] == "-s_srs" and i < len(argv) - 1:
             s_srs = argv[i + 1]
             i += 1
 
-        elif argv[i] == '-t_srs' and i < len(argv) - 1:
+        elif argv[i] == "-t_srs" and i < len(argv) - 1:
             t_srs = argv[i + 1]
             i += 1
 
-        elif argv[i] == '-et' and i < len(argv) - 1:
+        elif argv[i] == "-et" and i < len(argv) - 1:
             pixel_threshold = float(argv[i + 1])
             i += 1
 
@@ -247,22 +278,22 @@ def main(argv=sys.argv):
             filename = argv[i]
 
         else:
-            print('Urecognised argument: ' + argv[i])
+            print("Urecognised argument: " + argv[i])
             return Usage()
 
         i = i + 1
         # next argument
 
     if filename is None:
-        print('Missing name of file to operate on, but required.')
+        print("Missing name of file to operate on, but required.")
         return Usage()
 
     if t_srs is None:
-        print('Target SRS (-t_srs) missing, but required.')
+        print("Target SRS (-t_srs) missing, but required.")
         return Usage()
 
     move(filename, t_srs=t_srs, s_srs=s_srs, pixel_threshold=pixel_threshold)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

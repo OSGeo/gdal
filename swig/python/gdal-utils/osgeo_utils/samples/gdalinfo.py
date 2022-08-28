@@ -33,8 +33,7 @@
 
 import sys
 
-from osgeo import gdal
-from osgeo import osr
+from osgeo import gdal, osr
 
 # **********************************************************************
 #                               Usage()
@@ -42,9 +41,11 @@ from osgeo import osr
 
 
 def Usage():
-    print("Usage: gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]\n" +
-          "                [-norat] [-noct] [-nofl] [-checksum] [-mdd domain]* datasetname")
-    return 1
+    print(
+        "Usage: gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]\n"
+        + "                [-norat] [-noct] [-nofl] [-checksum] [-mdd domain]* datasetname"
+    )
+    return 2
 
 
 def EQUAL(a, b):
@@ -52,9 +53,9 @@ def EQUAL(a, b):
 
 
 def main(argv=None):
-    version_num = int(gdal.VersionInfo('VERSION_NUM'))
+    version_num = int(gdal.VersionInfo("VERSION_NUM"))
     if version_num < 1800:  # because of GetGeoTransform(can_return_null)
-        print('ERROR: Python bindings of GDAL 1.8.0 or later required')
+        print("ERROR: Python bindings of GDAL 1.8.0 or later required")
         return 1
 
     bComputeMinMax = False
@@ -96,15 +97,17 @@ def main(argv=None):
         return 1
 
     nArgc = len(argv)
-# --------------------------------------------------------------------
-#      Parse arguments.
-# --------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    #      Parse arguments.
+    # --------------------------------------------------------------------
     i = 1
     while i < nArgc:
 
         if EQUAL(argv[i], "--utility_version"):
-            print("%s is running against GDAL %s" %
-                  (argv[0], gdal.VersionInfo("RELEASE_NAME")))
+            print(
+                "%s is running against GDAL %s"
+                % (argv[0], gdal.VersionInfo("RELEASE_NAME"))
+            )
             return 0
         elif EQUAL(argv[i], "-mm"):
             bComputeMinMax = True
@@ -131,7 +134,7 @@ def main(argv=None):
             papszExtraMDDomains.append(argv[i])
         elif EQUAL(argv[i], "-nofl"):
             bShowFileList = False
-        elif argv[i][0] == '-':
+        elif argv[i][0] == "-":
             return Usage()
         elif pszFilename is None:
             pszFilename = argv[i]
@@ -143,9 +146,9 @@ def main(argv=None):
     if pszFilename is None:
         return Usage()
 
-# --------------------------------------------------------------------
-#      Open dataset.
-# --------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    #      Open dataset.
+    # --------------------------------------------------------------------
     hDataset = gdal.Open(pszFilename, gdal.GA_ReadOnly)
 
     if hDataset is None:
@@ -154,13 +157,11 @@ def main(argv=None):
 
         return 1
 
-# --------------------------------------------------------------------
-#      Report general info.
-# --------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    #      Report general info.
+    # --------------------------------------------------------------------
     hDriver = hDataset.GetDriver()
-    print("Driver: %s/%s" % (
-        hDriver.ShortName,
-        hDriver.LongName))
+    print("Driver: %s/%s" % (hDriver.ShortName, hDriver.LongName))
 
     papszFileList = hDataset.GetFileList()
     if papszFileList is None or not papszFileList:
@@ -173,9 +174,9 @@ def main(argv=None):
 
     print("Size is %d, %d" % (hDataset.RasterXSize, hDataset.RasterYSize))
 
-# --------------------------------------------------------------------
-#      Report projection.
-# --------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    #      Report projection.
+    # --------------------------------------------------------------------
     pszProjection = hDataset.GetProjectionRef()
     if pszProjection is not None:
 
@@ -187,33 +188,37 @@ def main(argv=None):
         else:
             print("Coordinate System is `%s'" % pszProjection)
 
-# --------------------------------------------------------------------
-#      Report Geotransform.
-# --------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    #      Report Geotransform.
+    # --------------------------------------------------------------------
     adfGeoTransform = hDataset.GetGeoTransform(can_return_null=True)
     if adfGeoTransform is not None:
 
         if adfGeoTransform[2] == 0.0 and adfGeoTransform[4] == 0.0:
-            print("Origin = (%.15f,%.15f)" % (
-                adfGeoTransform[0], adfGeoTransform[3]))
+            print("Origin = (%.15f,%.15f)" % (adfGeoTransform[0], adfGeoTransform[3]))
 
-            print("Pixel Size = (%.15f,%.15f)" % (
-                adfGeoTransform[1], adfGeoTransform[5]))
+            print(
+                "Pixel Size = (%.15f,%.15f)" % (adfGeoTransform[1], adfGeoTransform[5])
+            )
 
         else:
-            print("GeoTransform =\n"
-                  "  %.16g, %.16g, %.16g\n"
-                  "  %.16g, %.16g, %.16g" % (
-                      adfGeoTransform[0],
-                      adfGeoTransform[1],
-                      adfGeoTransform[2],
-                      adfGeoTransform[3],
-                      adfGeoTransform[4],
-                      adfGeoTransform[5]))
+            print(
+                "GeoTransform =\n"
+                "  %.16g, %.16g, %.16g\n"
+                "  %.16g, %.16g, %.16g"
+                % (
+                    adfGeoTransform[0],
+                    adfGeoTransform[1],
+                    adfGeoTransform[2],
+                    adfGeoTransform[3],
+                    adfGeoTransform[4],
+                    adfGeoTransform[5],
+                )
+            )
 
-# --------------------------------------------------------------------
-#      Report GCPs.
-# --------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    #      Report GCPs.
+    # --------------------------------------------------------------------
     if bShowGCPs and hDataset.GetGCPCount() > 0:
 
         pszProjection = hDataset.GetGCPProjection()
@@ -225,23 +230,31 @@ def main(argv=None):
                 print("GCP Projection = \n%s" % pszPrettyWkt)
 
             else:
-                print("GCP Projection = %s" %
-                      pszProjection)
+                print("GCP Projection = %s" % pszProjection)
 
         gcps = hDataset.GetGCPs()
         i = 0
         for gcp in gcps:
 
-            print("GCP[%3d]: Id=%s, Info=%s\n"
-                  "          (%.15g,%.15g) -> (%.15g,%.15g,%.15g)" % (
-                      i, gcp.Id, gcp.Info,
-                      gcp.GCPPixel, gcp.GCPLine,
-                      gcp.GCPX, gcp.GCPY, gcp.GCPZ))
+            print(
+                "GCP[%3d]: Id=%s, Info=%s\n"
+                "          (%.15g,%.15g) -> (%.15g,%.15g,%.15g)"
+                % (
+                    i,
+                    gcp.Id,
+                    gcp.Info,
+                    gcp.GCPPixel,
+                    gcp.GCPLine,
+                    gcp.GCPX,
+                    gcp.GCPY,
+                    gcp.GCPZ,
+                )
+            )
             i = i + 1
 
-# --------------------------------------------------------------------
-#      Report metadata.
-# --------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    #      Report metadata.
+    # --------------------------------------------------------------------
     if bShowMetadata:
         papszMetadata = hDataset.GetMetadata_List()
     else:
@@ -259,9 +272,9 @@ def main(argv=None):
                 for metadata in papszMetadata:
                     print("  %s" % metadata)
 
-# --------------------------------------------------------------------
-#      Report "IMAGE_STRUCTURE" metadata.
-# --------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    #      Report "IMAGE_STRUCTURE" metadata.
+    # --------------------------------------------------------------------
     if bShowMetadata:
         papszMetadata = hDataset.GetMetadata_List("IMAGE_STRUCTURE")
     else:
@@ -271,18 +284,18 @@ def main(argv=None):
         for metadata in papszMetadata:
             print("  %s" % metadata)
 
-# --------------------------------------------------------------------
-#      Report subdatasets.
-# --------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    #      Report subdatasets.
+    # --------------------------------------------------------------------
     papszMetadata = hDataset.GetMetadata_List("SUBDATASETS")
     if papszMetadata:
         print("Subdatasets:")
         for metadata in papszMetadata:
             print("  %s" % metadata)
 
-# --------------------------------------------------------------------
-#      Report geolocation.
-# --------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    #      Report geolocation.
+    # --------------------------------------------------------------------
     if bShowMetadata:
         papszMetadata = hDataset.GetMetadata_List("GEOLOCATION")
     else:
@@ -292,9 +305,9 @@ def main(argv=None):
         for metadata in papszMetadata:
             print("  %s" % metadata)
 
-# --------------------------------------------------------------------
-#      Report RPCs
-# --------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    #      Report RPCs
+    # --------------------------------------------------------------------
     if bShowMetadata:
         papszMetadata = hDataset.GetMetadata_List("RPC")
     else:
@@ -304,41 +317,42 @@ def main(argv=None):
         for metadata in papszMetadata:
             print("  %s" % metadata)
 
-# --------------------------------------------------------------------
-#      Setup projected to lat/long transform if appropriate.
-# --------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    #      Setup projected to lat/long transform if appropriate.
+    # --------------------------------------------------------------------
     if pszProjection:
         hProj = osr.SpatialReference(pszProjection)
         if hProj is not None:
             hLatLong = hProj.CloneGeogCS()
 
         if hLatLong is not None:
-            gdal.PushErrorHandler('CPLQuietErrorHandler')
+            gdal.PushErrorHandler("CPLQuietErrorHandler")
             hTransform = osr.CoordinateTransformation(hProj, hLatLong)
             gdal.PopErrorHandler()
-            if gdal.GetLastErrorMsg().find('Unable to load PROJ.4 library') != -1:
+            if gdal.GetLastErrorMsg().find("Unable to load PROJ.4 library") != -1:
                 hTransform = None
 
-# --------------------------------------------------------------------
-#      Report corners.
-# --------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    #      Report corners.
+    # --------------------------------------------------------------------
     print("Corner Coordinates:")
-    GDALInfoReportCorner(hDataset, hTransform, "Upper Left",
-                         0.0, 0.0)
-    GDALInfoReportCorner(hDataset, hTransform, "Lower Left",
-                         0.0, hDataset.RasterYSize)
-    GDALInfoReportCorner(hDataset, hTransform, "Upper Right",
-                         hDataset.RasterXSize, 0.0)
-    GDALInfoReportCorner(hDataset, hTransform, "Lower Right",
-                         hDataset.RasterXSize,
-                         hDataset.RasterYSize)
-    GDALInfoReportCorner(hDataset, hTransform, "Center",
-                         hDataset.RasterXSize / 2.0,
-                         hDataset.RasterYSize / 2.0)
+    GDALInfoReportCorner(hDataset, hTransform, "Upper Left", 0.0, 0.0)
+    GDALInfoReportCorner(hDataset, hTransform, "Lower Left", 0.0, hDataset.RasterYSize)
+    GDALInfoReportCorner(hDataset, hTransform, "Upper Right", hDataset.RasterXSize, 0.0)
+    GDALInfoReportCorner(
+        hDataset, hTransform, "Lower Right", hDataset.RasterXSize, hDataset.RasterYSize
+    )
+    GDALInfoReportCorner(
+        hDataset,
+        hTransform,
+        "Center",
+        hDataset.RasterXSize / 2.0,
+        hDataset.RasterYSize / 2.0,
+    )
 
-# ====================================================================
-#      Loop over bands.
-# ====================================================================
+    # ====================================================================
+    #      Loop over bands.
+    # ====================================================================
     for iBand in range(hDataset.RasterCount):
 
         hBand = hDataset.GetRasterBand(iBand + 1)
@@ -353,14 +367,18 @@ def main(argv=None):
         # }
 
         (nBlockXSize, nBlockYSize) = hBand.GetBlockSize()
-        print("Band %d Block=%dx%d Type=%s, ColorInterp=%s" % (iBand + 1,
-                                                               nBlockXSize, nBlockYSize,
-                                                               gdal.GetDataTypeName(hBand.DataType),
-                                                               gdal.GetColorInterpretationName(
-                                                                   hBand.GetRasterColorInterpretation())))
+        print(
+            "Band %d Block=%dx%d Type=%s, ColorInterp=%s"
+            % (
+                iBand + 1,
+                nBlockXSize,
+                nBlockYSize,
+                gdal.GetDataTypeName(hBand.DataType),
+                gdal.GetColorInterpretationName(hBand.GetRasterColorInterpretation()),
+            )
+        )
 
-        if hBand.GetDescription() is not None \
-                and hBand.GetDescription():
+        if hBand.GetDescription() is not None and hBand.GetDescription():
             print("  Description = %s" % hBand.GetDescription())
 
         dfMin = hBand.GetMinimum()
@@ -377,8 +395,9 @@ def main(argv=None):
                 gdal.ErrorReset()
                 adfCMinMax = hBand.ComputeRasterMinMax(False)
                 if gdal.GetLastErrorType() == gdal.CE_None:
-                    line = line + ("  Computed Min/Max=%.3f,%.3f" % (
-                        adfCMinMax[0], adfCMinMax[1]))
+                    line = line + (
+                        "  Computed Min/Max=%.3f,%.3f" % (adfCMinMax[0], adfCMinMax[1])
+                    )
 
             print(line)
 
@@ -386,21 +405,24 @@ def main(argv=None):
         # Dirty hack to recognize if stats are valid. If invalid, the returned
         # stddev is negative
         if stats[3] >= 0.0:
-            print("  Minimum=%.3f, Maximum=%.3f, Mean=%.3f, StdDev=%.3f" % (
-                stats[0], stats[1], stats[2], stats[3]))
+            print(
+                "  Minimum=%.3f, Maximum=%.3f, Mean=%.3f, StdDev=%.3f"
+                % (stats[0], stats[1], stats[2], stats[3])
+            )
 
         if bReportHistograms:
 
-            hist = hBand.GetDefaultHistogram(force=True, callback=gdal.TermProgress_nocb)
+            hist = hBand.GetDefaultHistogram(
+                force=True, callback=gdal.TermProgress_nocb
+            )
             if hist is not None:
                 dfMin = hist[0]
                 dfMax = hist[1]
                 nBucketCount = hist[2]
                 panHistogram = hist[3]
 
-                print("  %d buckets from %g to %g:" % (
-                    nBucketCount, dfMin, dfMax))
-                line = '  '
+                print("  %d buckets from %g to %g:" % (nBucketCount, dfMin, dfMax))
+                line = "  "
                 for bucket in panHistogram:
                     line = line + ("%d " % bucket)
 
@@ -429,12 +451,13 @@ def main(argv=None):
 
                     line = line + ("%dx%d" % (hOverview.XSize, hOverview.YSize))
 
-                    pszResampling = \
-                        hOverview.GetMetadataItem("RESAMPLING", "")
+                    pszResampling = hOverview.GetMetadataItem("RESAMPLING", "")
 
-                    if pszResampling is not None \
-                       and len(pszResampling) >= 12 \
-                       and EQUAL(pszResampling[0:12], "AVERAGE_BIT2"):
+                    if (
+                        pszResampling is not None
+                        and len(pszResampling) >= 12
+                        and EQUAL(pszResampling[0:12], "AVERAGE_BIT2")
+                    ):
                         line = line + "*"
 
                 else:
@@ -476,8 +499,7 @@ def main(argv=None):
                 line = line + "ALL_VALID "
             print(line)
 
-            if hMaskBand is not None and \
-                    hMaskBand.GetOverviewCount() > 0:
+            if hMaskBand is not None and hMaskBand.GetOverviewCount() > 0:
 
                 line = "  Overviews of mask band: "
                 for iOverview in range(hMaskBand.GetOverviewCount()):
@@ -510,8 +532,7 @@ def main(argv=None):
         if not offset:
             offset = 0.0
         if scale != 1.0 or offset != 0.0:
-            print("  Offset: %.15g,   Scale:%.15g" %
-                  (offset, scale))
+            print("  Offset: %.15g,   Scale:%.15g" % (offset, scale))
 
         if bShowMetadata:
             papszMetadata = hBand.GetMetadata_List()
@@ -532,24 +553,29 @@ def main(argv=None):
                 print("    %s" % metadata)
 
         hTable = hBand.GetRasterColorTable()
-        if hBand.GetRasterColorInterpretation() == gdal.GCI_PaletteIndex  \
-                and hTable is not None:
+        if (
+            hBand.GetRasterColorInterpretation() == gdal.GCI_PaletteIndex
+            and hTable is not None
+        ):
 
-            print("  Color Table (%s with %d entries)" % (
-                gdal.GetPaletteInterpretationName(
-                    hTable.GetPaletteInterpretation()),
-                hTable.GetCount()))
+            print(
+                "  Color Table (%s with %d entries)"
+                % (
+                    gdal.GetPaletteInterpretationName(
+                        hTable.GetPaletteInterpretation()
+                    ),
+                    hTable.GetCount(),
+                )
+            )
 
             if bShowColorTable:
 
                 for i in range(hTable.GetCount()):
                     sEntry = hTable.GetColorEntry(i)
-                    print("  %3d: %d,%d,%d,%d" % (
-                        i,
-                        sEntry[0],
-                        sEntry[1],
-                        sEntry[2],
-                        sEntry[3]))
+                    print(
+                        "  %3d: %d,%d,%d,%d"
+                        % (i, sEntry[0], sEntry[1], sEntry[2], sEntry[3])
+                    )
 
         if bShowRAT:
             pass
@@ -558,6 +584,7 @@ def main(argv=None):
             # GDALRATDumpReadable( hRAT, None );
 
     return 0
+
 
 # **********************************************************************
 #                        GDALInfoReportCorner()
@@ -568,33 +595,31 @@ def GDALInfoReportCorner(hDataset, hTransform, corner_name, x, y):
 
     line = "%-11s " % corner_name
 
-# --------------------------------------------------------------------
-#      Transform the point into georeferenced coordinates.
-# --------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    #      Transform the point into georeferenced coordinates.
+    # --------------------------------------------------------------------
     adfGeoTransform = hDataset.GetGeoTransform(can_return_null=True)
     if adfGeoTransform is not None:
-        dfGeoX = adfGeoTransform[0] + adfGeoTransform[1] * x \
-            + adfGeoTransform[2] * y
-        dfGeoY = adfGeoTransform[3] + adfGeoTransform[4] * x \
-            + adfGeoTransform[5] * y
+        dfGeoX = adfGeoTransform[0] + adfGeoTransform[1] * x + adfGeoTransform[2] * y
+        dfGeoY = adfGeoTransform[3] + adfGeoTransform[4] * x + adfGeoTransform[5] * y
 
     else:
         line = line + ("(%7.1f,%7.1f)" % (x, y))
         print(line)
         return False
 
-# --------------------------------------------------------------------
-#      Report the georeferenced coordinates.
-# --------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    #      Report the georeferenced coordinates.
+    # --------------------------------------------------------------------
     if abs(dfGeoX) < 181 and abs(dfGeoY) < 91:
         line = line + ("(%12.7f,%12.7f) " % (dfGeoX, dfGeoY))
 
     else:
         line = line + ("(%12.3f,%12.3f) " % (dfGeoX, dfGeoY))
 
-# --------------------------------------------------------------------
-#      Transform to latlong and report.
-# --------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    #      Transform to latlong and report.
+    # --------------------------------------------------------------------
     if hTransform is not None:
         pnt = hTransform.TransformPoint(dfGeoX, dfGeoY, 0)
         if pnt is not None:
@@ -606,5 +631,5 @@ def GDALInfoReportCorner(hDataset, hTransform, corner_name, x, y):
     return True
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

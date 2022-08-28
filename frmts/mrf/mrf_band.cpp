@@ -48,11 +48,13 @@
 #include "ogr_spatialref.h"
 
 #include <vector>
-#include <assert.h>
+#include <cassert>
 #include <zlib.h>
 #if defined(ZSTD_SUPPORT)
 #include <zstd.h>
 #endif
+
+using namespace std::chrono;
 
 NAMESPACE_MRF_START
 
@@ -238,6 +240,13 @@ static void *DeflateBlock(buf_mgr &src, size_t extrasize, int flags) {
         CPLFree(dbuff); // Safe to call with NULL
         return nullptr;
     }
+    if( dst.size > src.size )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "DeflateBlock(): dst.size > src.size");
+        CPLFree(dbuff); // Safe to call with NULL
+        return nullptr;
+    }
 
     // source size is used to hold the output size
     src.size = dst.size;
@@ -391,9 +400,9 @@ MRFRasterBand::MRFRasterBand( MRFDataset *parent_dataset,
         zstd_level = image.quality;
 
 #if !defined(ZSTD_SUPPORT)
-    if (dodeflate) { // signal error condition to caller
+    if (dozstd) { // signal error condition to caller
         CPLError(CE_Failure, CPLE_AssertionFailed, "MRF: ZSTD support is not available");
-        dodeflate = FALSE;
+        dozstd = FALSE;
     }
 #endif
         // Chose zstd over deflate if both are enabled and available
@@ -563,10 +572,11 @@ CPLErr MRFRasterBand::ReadInterleavedBlock(int xblk, int yblk, void *buffer) {
         }
 
 // Just the right mix of templates and macros make deinterleaving tidy
-#define CpySI(T) cpy_stride_in<T> (ob, reinterpret_cast<T *>(poMRFDS->GetPBuffer()) + i,\
+        void* pbuffer = poMRFDS->GetPBuffer();
+#define CpySI(T) cpy_stride_in<T> (ob, reinterpret_cast<T *>(pbuffer) + i,\
     blockSizeBytes()/sizeof(T), img.pagesize.c)
 
-        // Page is already in poDS->pbuffer, not empty
+        // Page is already in poMRFDS->pbuffer, not empty
         // There are only four cases, since only the data size matters
         switch (GDALGetDataTypeSize(eDataType)/8)
         {
@@ -692,6 +702,7 @@ CPLErr MRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer) {
     }
 
     buf_mgr filedst={static_cast<char *>(outbuff), poMRFDS->pbsize};
+    auto start_time = steady_clock::now();
     Compress(filedst, filesrc);
 
     // Where the output is, in case we deflate
@@ -717,6 +728,8 @@ CPLErr MRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer) {
         }
     }
 #endif
+
+    poMRFDS->write_timer += duration_cast<nanoseconds>(steady_clock::now() - start_time);
 
     // Write and update the tile index
     ret = poMRFDS->WriteTile(usebuff, infooffset, filedst.size);
@@ -912,6 +925,8 @@ CPLErr MRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer) {
     buf_mgr src = {(char *)data, static_cast<size_t>(tinfo.size)};
     buf_mgr dst;
 
+    auto start_time = steady_clock::now();
+
     // We got the data, do we need to decompress it before decoding?
     if (dodeflate) {
         if (img.pageSizeBytes > INT_MAX - 1440) {
@@ -995,6 +1010,8 @@ CPLErr MRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer) {
         CPLPushErrorHandler(CPLQuietErrorHandler);
     CPLErr ret = Decompress(dst, src);
 
+    poMRFDS->read_timer += duration_cast<nanoseconds>(steady_clock::now() - start_time);
+
     dst.size = img.pageSizeBytes; // In case the decompress failed, force it back
 
     // Swap whatever we decompressed if we need to
@@ -1061,6 +1078,8 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
         if (is_Endianess_Dependent(img.dt, img.comp) && (img.nbo != NET_ORDER))
             swab_buff(src, img);
 
+        auto start_time = steady_clock::now();
+
         // Compress functions need to return the compressed size in
         // the bytes in buffer field
         Compress(dst, src);
@@ -1086,6 +1105,7 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
             }
         }
 #endif
+        poMRFDS->write_timer += duration_cast<nanoseconds>(steady_clock::now() - start_time);
         return poMRFDS->WriteTile(usebuff, infooffset , dst.size);
     }
 
@@ -1187,6 +1207,8 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
     buf_mgr dst = {outbuff, poMRFDS->pbsize};
     CPLErr ret;
 
+    auto start_time = steady_clock::now();
+
     ret = Compress(dst, src);
     if (ret != CE_None) {
         // Compress failed, write it as an empty tile
@@ -1220,6 +1242,8 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
             CPLError(CE_Failure, CPLE_AppDefined, "MRF: ZStd compression error");
     }
 #endif
+
+    poMRFDS->write_timer += duration_cast<nanoseconds>(steady_clock::now() - start_time);
 
     if (!usebuff) { // Error was signaled
         CPLFree(tbuffer);

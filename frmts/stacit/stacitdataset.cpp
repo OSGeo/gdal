@@ -79,6 +79,7 @@ class STACITDataset final: public VRTDataset
 {
         bool Open(GDALOpenInfo* poOpenInfo);
         bool SetupDataset(GDALOpenInfo* poOpenInfo,
+                          const std::string& osSTACITFilename,
                           std::map<std::string, Collection>& oMapCollection);
         bool SetSubdatasets(
                     const std::string& osFilename,
@@ -405,6 +406,7 @@ static void ParseAsset(const CPLJSONObject& jAsset,
 /************************************************************************/
 
 bool STACITDataset::SetupDataset(GDALOpenInfo* poOpenInfo,
+                                 const std::string& osSTACITFilename,
                                  std::map<std::string, Collection>& oMapCollection)
 {
     auto& collection = oMapCollection.begin()->second;
@@ -492,10 +494,39 @@ bool STACITDataset::SetupDataset(GDALOpenInfo* poOpenInfo,
 
     // Open of the items to find the number of bands, their data type
     // and nodata.
-    CPLString osFirstItemName(items.front().osFilename);
-    if( osFirstItemName.find("http") == 0 )
-        osFirstItemName = "/vsicurl/" + osFirstItemName;
-    auto poItemDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(osFirstItemName));
+    const auto BuildVSICurlFilename = [&osSTACITFilename, &collection](const std::string& osFilename)
+    {
+        std::string osRet;
+        if( STARTS_WITH(osFilename.c_str(), "http") )
+        {
+            if( STARTS_WITH(osSTACITFilename.c_str(), "https://planetarycomputer.microsoft.com/api/") )
+            {
+                osRet = "/vsicurl?pc_url_signing=yes&pc_collection=";
+                osRet += collection.osName;
+                osRet += "&url=";
+                char* pszEncoded = CPLEscapeString(osFilename.c_str(), -1, CPLES_URL);
+                CPLString osEncoded(pszEncoded);
+                CPLFree(pszEncoded);
+                // something is confused if the whole URL appears as /vsicurl...blabla_without_slash.tif"
+                // so transform back %2F to /
+                osEncoded.replaceAll("%2F", '/');
+                osRet += osEncoded;
+            }
+            else
+            {
+                osRet = "/vsicurl/";
+                osRet += osFilename;
+            }
+        }
+        else
+        {
+            osRet = osFilename;
+        }
+        return osRet;
+    };
+
+    const auto osFirstItemName(BuildVSICurlFilename(items.front().osFilename));
+    auto poItemDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(osFirstItemName.c_str()));
     if( !poItemDS )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -565,9 +596,7 @@ bool STACITDataset::SetupDataset(GDALOpenInfo* poOpenInfo,
         // Add items as VRT sources
         for( const auto& assetItem: items )
         {
-            CPLString osItemName(assetItem.osFilename);
-            if( osItemName.find("http") == 0 )
-                osItemName = "/vsicurl/" + osItemName;
+            const auto osItemName(BuildVSICurlFilename(assetItem.osFilename));
             const double dfDstXOff = (assetItem.dfXMin - dfXMin) / dfXRes;
             const double dfDstXSize = (assetItem.dfXMax - assetItem.dfXMin ) / dfXRes;
             const double dfDstYOff = (dfYMax - assetItem.dfYMax) / dfYRes;
@@ -866,7 +895,7 @@ bool STACITDataset::Open(GDALOpenInfo* poOpenInfo)
     }
     else
     {
-        return SetupDataset(poOpenInfo, oMapCollection);
+        return SetupDataset(poOpenInfo, osFilename, oMapCollection);
     }
 }
 

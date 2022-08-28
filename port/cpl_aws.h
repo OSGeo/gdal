@@ -46,7 +46,7 @@
 CPLString CPLGetLowerCaseHexSHA256( const void *pabyData, size_t nBytes );
 CPLString CPLGetLowerCaseHexSHA256( const CPLString& osStr );
 
-CPLString CPLGetAWS_SIGN4_Timestamp();
+CPLString CPLGetAWS_SIGN4_Timestamp(GIntBig timestamp);
 
 CPLString CPLAWSURLEncode(const CPLString& osURL, bool bEncodeSlash = true);
 
@@ -133,6 +133,8 @@ enum class AWSCredentialsSource
 {
     REGULAR,         // credentials from env variables or ~/.aws/crediential
     EC2,             // credentials from EC2 private networking
+    WEB_IDENTITY,    // credentials from Web Identity Token
+                     // See https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html
     ASSUMED_ROLE     // credentials from an STS assumed role
                      // See https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-cli.html
                      // and https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_request.html
@@ -157,7 +159,14 @@ class VSIS3HandleHelper final: public IVSIS3LikeHandleHelper
 
         void RebuildURL() override;
 
-        static bool GetConfigurationFromEC2(const std::string& osPathForOption,
+        static bool GetConfigurationFromAssumeRoleWithWebIdentity(bool bForceRefresh,
+                                                                  const std::string& osPathForOption,
+                                                                  CPLString& osSecretAccessKey,
+                                                                  CPLString& osAccessKeyId,
+                                                                  CPLString& osSessionToken);
+
+        static bool GetConfigurationFromEC2(bool bForceRefresh,
+                                            const std::string& osPathForOption,
                                             CPLString& osSecretAccessKey,
                                             CPLString& osAccessKeyId,
                                             CPLString& osSessionToken);
@@ -182,6 +191,10 @@ class VSIS3HandleHelper final: public IVSIS3LikeHandleHelper
                                      CPLString& osSessionToken,
                                      CPLString& osRegion,
                                      AWSCredentialsSource& eCredentialsSource);
+
+        void RefreshCredentials(const std::string& osPathForOption,
+                                bool bForceRefresh) const;
+
   protected:
 
     public:

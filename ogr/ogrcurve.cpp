@@ -454,15 +454,21 @@ void OGRPointIterator::destroy( OGRPointIterator* poIter )
 /*                     OGRSimpleCurve::Iterator                         */
 /************************************************************************/
 
+void OGRIteratedPoint::setX( double xIn ) { OGRPoint::setX(xIn); m_poCurve->setPoint(m_nPos, xIn, getY()); }
+
+void OGRIteratedPoint::setY( double yIn ) { OGRPoint::setY(yIn); m_poCurve->setPoint(m_nPos, getX(), yIn); }
+
+void OGRIteratedPoint::setZ( double zIn ) { OGRPoint::setZ(zIn); m_poCurve->setZ(m_nPos, zIn); }
+
+void OGRIteratedPoint::setM( double mIn ) { OGRPoint::setM(mIn); m_poCurve->setM(m_nPos, mIn); }
+
 struct OGRSimpleCurve::Iterator::Private
 {
     CPL_DISALLOW_COPY_ASSIGN(Private)
     Private() = default;
 
     bool m_bUpdateChecked = true;
-    OGRPoint m_oPoint{};
-    OGRSimpleCurve* m_poSelf = nullptr;
-    int m_nPos = 0;
+    OGRIteratedPoint m_oPoint{};
 };
 
 void OGRSimpleCurve::Iterator::update()
@@ -470,11 +476,15 @@ void OGRSimpleCurve::Iterator::update()
     if( !m_poPrivate->m_bUpdateChecked )
     {
         OGRPoint oPointBefore;
-        m_poPrivate->m_poSelf->getPoint(m_poPrivate->m_nPos, &oPointBefore);
+        m_poPrivate->m_oPoint.m_poCurve->getPoint(m_poPrivate->m_oPoint.m_nPos, &oPointBefore);
         if( oPointBefore != m_poPrivate->m_oPoint )
         {
-            m_poPrivate->m_poSelf->setPoint(m_poPrivate->m_nPos,
-                                            &m_poPrivate->m_oPoint);
+            if( m_poPrivate->m_oPoint.Is3D() )
+                m_poPrivate->m_oPoint.m_poCurve->set3D(true);
+            if( m_poPrivate->m_oPoint.IsMeasured() )
+                m_poPrivate->m_oPoint.m_poCurve->setMeasured(true);
+            m_poPrivate->m_oPoint.m_poCurve->setPoint(m_poPrivate->m_oPoint.m_nPos,
+                                                      &m_poPrivate->m_oPoint);
         }
         m_poPrivate->m_bUpdateChecked = true;
     }
@@ -483,8 +493,8 @@ void OGRSimpleCurve::Iterator::update()
 OGRSimpleCurve::Iterator::Iterator(OGRSimpleCurve* poSelf, int nPos):
     m_poPrivate(new Private())
 {
-    m_poPrivate->m_poSelf = poSelf;
-    m_poPrivate->m_nPos = nPos;
+    m_poPrivate->m_oPoint.m_poCurve = poSelf;
+    m_poPrivate->m_oPoint.m_nPos = nPos;
 }
 
 OGRSimpleCurve::Iterator::~Iterator()
@@ -492,10 +502,10 @@ OGRSimpleCurve::Iterator::~Iterator()
     update();
 }
 
-OGRPoint& OGRSimpleCurve::Iterator::operator*()
+OGRIteratedPoint& OGRSimpleCurve::Iterator::operator*()
 {
     update();
-    m_poPrivate->m_poSelf->getPoint(m_poPrivate->m_nPos, &m_poPrivate->m_oPoint);
+    m_poPrivate->m_oPoint.m_poCurve->getPoint(m_poPrivate->m_oPoint.m_nPos, &m_poPrivate->m_oPoint);
     m_poPrivate->m_bUpdateChecked = false;
     return m_poPrivate->m_oPoint;
 }
@@ -503,13 +513,13 @@ OGRPoint& OGRSimpleCurve::Iterator::operator*()
 OGRSimpleCurve::Iterator& OGRSimpleCurve::Iterator::operator++()
 {
     update();
-    ++m_poPrivate->m_nPos;
+    ++m_poPrivate->m_oPoint.m_nPos;
     return *this;
 }
 
 bool OGRSimpleCurve::Iterator::operator!=(const Iterator& it) const
 {
-    return m_poPrivate->m_nPos != it.m_poPrivate->m_nPos;
+    return m_poPrivate->m_oPoint.m_nPos != it.m_poPrivate->m_oPoint.m_nPos;
 }
 
 OGRSimpleCurve::Iterator OGRSimpleCurve::begin()
@@ -531,7 +541,7 @@ struct OGRSimpleCurve::ConstIterator::Private
     CPL_DISALLOW_COPY_ASSIGN(Private)
     Private() = default;
 
-    mutable OGRPoint m_oPoint{};
+    mutable OGRIteratedPoint m_oPoint{};
     const OGRSimpleCurve* m_poSelf = nullptr;
     int m_nPos = 0;
 };
@@ -580,6 +590,8 @@ struct OGRCurve::ConstIterator::Private
 {
     CPL_DISALLOW_COPY_ASSIGN(Private)
     Private() = default;
+    Private(Private&&) = delete;
+    Private& operator=(Private&&) = default;
 
     OGRPoint m_oPoint{};
     std::unique_ptr<OGRPointIterator> m_poIterator{};
@@ -594,6 +606,17 @@ OGRCurve::ConstIterator::ConstIterator(const OGRCurve* poSelf, bool bStart):
         if( !m_poPrivate->m_poIterator->getNextPoint(&m_poPrivate->m_oPoint) )
             m_poPrivate->m_poIterator.reset();
     }
+}
+
+OGRCurve::ConstIterator::ConstIterator(ConstIterator&& oOther) noexcept:
+    m_poPrivate(std::move(oOther.m_poPrivate))
+{
+}
+
+OGRCurve::ConstIterator& OGRCurve::ConstIterator::operator=(ConstIterator&& oOther)
+{
+    m_poPrivate = std::move(oOther.m_poPrivate);
+    return *this;
 }
 
 OGRCurve::ConstIterator::~ConstIterator() = default;
@@ -623,4 +646,149 @@ OGRCurve::ConstIterator OGRCurve::begin() const
 OGRCurve::ConstIterator OGRCurve::end() const
 {
     return {this, false};
+}
+
+/************************************************************************/
+/*                            epsilonEqual()                            */
+/************************************************************************/
+
+constexpr double EPSILON = 1.0E-5;
+
+static inline bool epsilonEqual(double a, double b, double eps)
+{
+    return ::fabs(a - b) < eps;
+}
+
+/************************************************************************/
+/*                            isClockwise()                             */
+/************************************************************************/
+
+/**
+ * \brief Returns TRUE if the ring has clockwise winding (or less than 2 points)
+ *
+ * Assumes that the line is closed.
+ *
+ * @return TRUE if clockwise otherwise FALSE.
+ */
+
+int OGRCurve::isClockwise() const
+
+{
+    const int nPointCount = getNumPoints();
+    if( nPointCount < 3 )
+        return TRUE;
+
+    bool bUseFallback = false;
+
+    // Find the lowest rightmost vertex.
+    auto oIter = begin();
+    const OGRPoint oStartPoint = *oIter;
+    OGRPoint oPointBefore = oStartPoint;
+    OGRPoint oPointBeforeSel;
+    OGRPoint oPointSel = oStartPoint;
+    OGRPoint oPointNextSel;
+    bool bNextPointIsNextSel = false;
+    int v = 0;
+
+    for( int i = 1; i < nPointCount - 1; i++ )
+    {
+         ++oIter;
+        OGRPoint oPointCur = *oIter;
+        if( bNextPointIsNextSel )
+        {
+            oPointNextSel = oPointCur;
+            bNextPointIsNextSel = false;
+        }
+        if( oPointCur.getY() < oPointSel.getY() ||
+            ( oPointCur.getY() == oPointSel.getY() &&
+              oPointCur.getX() > oPointSel.getX() ) )
+        {
+            v = i;
+            oPointBeforeSel = oPointBefore;
+            oPointSel = oPointCur;
+            bUseFallback = false;
+            bNextPointIsNextSel = true;
+        }
+        else if( oPointCur.getY() == oPointSel.getY() &&
+                oPointCur.getX() == oPointSel.getX() )
+        {
+            // Two vertex with same coordinates are the lowest rightmost
+            // vertex.  Cannot use that point as the pivot (#5342).
+            bUseFallback = true;
+        }
+        oPointBefore = oPointCur;
+    }
+    const OGRPoint oPointN_m2 = *oIter;
+
+    if( bNextPointIsNextSel )
+    {
+        oPointNextSel = oPointN_m2;
+    }
+
+    // Previous.
+    if( v == 0 )
+    {
+        oPointBeforeSel = oPointN_m2;
+    }
+
+    if( epsilonEqual(oPointBeforeSel.getX(), oPointSel.getX(), EPSILON) &&
+        epsilonEqual(oPointBeforeSel.getY(), oPointSel.getY(), EPSILON) )
+    {
+        // Don't try to be too clever by retrying with a next point.
+        // This can lead to false results as in the case of #3356.
+        bUseFallback = true;
+    }
+
+    const double dx0 = oPointBeforeSel.getX() - oPointSel.getX();
+    const double dy0 = oPointBeforeSel.getY() - oPointSel.getY();
+
+    // Following.
+    if( v + 1 >= nPointCount - 1 )
+    {
+        oPointNextSel = oStartPoint;
+    }
+
+    if( epsilonEqual(oPointNextSel.getX(), oPointSel.getX(), EPSILON) &&
+        epsilonEqual(oPointNextSel.getY(), oPointSel.getY(), EPSILON) )
+    {
+        // Don't try to be too clever by retrying with a next point.
+        // This can lead to false results as in the case of #3356.
+        bUseFallback = true;
+    }
+
+    const double dx1 = oPointNextSel.getX() - oPointSel.getX();
+    const double dy1 = oPointNextSel.getY() - oPointSel.getY();
+
+    const double crossproduct = dx1 * dy0 - dx0 * dy1;
+
+    if( !bUseFallback )
+    {
+        if( crossproduct > 0 )       // CCW
+            return FALSE;
+        else if( crossproduct < 0 )  // CW
+            return TRUE;
+    }
+
+    // This is a degenerate case: the extent of the polygon is less than EPSILON
+    // or 2 nearly identical points were found.
+    // Try with Green Formula as a fallback, but this is not a guarantee
+    // as we'll probably be affected by numerical instabilities.
+    oIter = begin();
+    oPointBefore = oStartPoint;
+    ++oIter;
+    auto oPointCur = *oIter;
+    double dfSum = oStartPoint.getX() * (oPointCur.getY() - oStartPoint.getY());
+
+    for( int i = 1; i < nPointCount-1; i++ )
+    {
+        ++oIter;
+        auto oPointNext = *oIter;
+        dfSum += oPointCur.getX() * (oPointNext.getY() - oPointBefore.getY());
+        oPointBefore = oPointCur;
+        oPointCur = oPointNext;
+    }
+
+    dfSum += oPointCur.getX() * (oStartPoint.getY() - oPointBefore.getY());
+
+    return dfSum < 0;
 }

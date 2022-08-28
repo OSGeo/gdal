@@ -29,7 +29,6 @@
 ###############################################################################
 
 
-
 import gdaltest
 
 ###############################################################################
@@ -39,7 +38,7 @@ import gdaltest
 
 def test_isis2_1():
 
-    tst = gdaltest.GDALTest('ISIS2', 'isis2/arvidson_original_truncated.cub', 1, 382)
+    tst = gdaltest.GDALTest("ISIS2", "isis2/arvidson_original_truncated.cub", 1, 382)
     expected_prj = """PROJCS["SIMPLE_CYLINDRICAL VENUS",
     GEOGCS["GCS_VENUS",
         DATUM["D_VENUS",
@@ -53,19 +52,27 @@ def test_isis2_1():
     PARAMETER["false_easting",0],
     PARAMETER["false_northing",0],
     UNIT["meter",1]]"""
-    expected_gt = (10157400.403618813, 1200.0000476837158, 0.0, -585000.02324581146, 0.0, -1200.0000476837158)
-    return tst.testOpen(check_prj=expected_prj,
-                        check_gt=expected_gt)
+    expected_gt = (
+        10157400.403618813,
+        1200.0000476837158,
+        0.0,
+        -585000.02324581146,
+        0.0,
+        -1200.0000476837158,
+    )
+    return tst.testOpen(check_prj=expected_prj, check_gt=expected_gt)
 
 
 ###############################################################################
 # Test simple creation on disk.
 
+
 def test_isis2_2():
 
-    tst = gdaltest.GDALTest('ISIS2', 'byte.tif', 1, 4672)
+    tst = gdaltest.GDALTest("ISIS2", "byte.tif", 1, 4672)
 
     return tst.testCreate()
+
 
 ###############################################################################
 # Test a different data type with some options.
@@ -73,10 +80,12 @@ def test_isis2_2():
 
 def test_isis2_3():
 
-    tst = gdaltest.GDALTest('ISIS2', 'float32.tif', 1, 4672,
-                            options=['LABELING_METHOD=DETACHED', 'IMAGE_EXTENSION=qub'])
+    tst = gdaltest.GDALTest(
+        "ISIS2",
+        "float32.tif",
+        1,
+        4672,
+        options=["LABELING_METHOD=DETACHED", "IMAGE_EXTENSION=qub"],
+    )
 
     return tst.testCreateCopy(vsimem=1)
-
-
-

@@ -32,10 +32,10 @@
 
 import os
 import sys
+
 import numpy
 
-from osgeo import gdal
-from osgeo import gdal_array
+from osgeo import gdal, gdal_array
 
 # Input looks like this:
 """
@@ -52,13 +52,13 @@ from osgeo import gdal_array
 def next_point(fd):
 
     line = fd.readline().strip()
-    while line != '' and line.find('PNT_') == -1:
+    while line != "" and line.find("PNT_") == -1:
         line = fd.readline()
 
-    if line == '':
+    if line == "":
         return None
 
-    name_tokens = line.split('_')
+    name_tokens = line.split("_")
 
     # Read LATITUDE line
     line = fd.readline().strip()
@@ -73,7 +73,14 @@ def next_point(fd):
     lon_src = float(tokens[1]) + float(tokens[2]) / 60.0 + float(tokens[3]) / 3600.0
     lon_dst = float(tokens[5]) + float(tokens[6]) / 60.0 + float(tokens[7]) / 3600.0
 
-    return (int(name_tokens[1]), int(name_tokens[2]), lat_src, lon_src, lat_dst, lon_dst)
+    return (
+        int(name_tokens[1]),
+        int(name_tokens[2]),
+        lat_src,
+        lon_src,
+        lat_dst,
+        lon_dst,
+    )
 
 
 def read_grid_crs_to_crs(filename, shape):
@@ -94,11 +101,12 @@ def read_grid_crs_to_crs(filename, shape):
         ptuple = next_point(fd)
 
     if points_found < shape[0] * shape[1]:
-        print('points found:   ', points_found)
-        print('points expected:', shape[1] * shape[2])
+        print("points found:   ", points_found)
+        print("points expected:", shape[1] * shape[2])
         return None
 
     return grid
+
 
 ###############################################################################
 # This function creates a regular grid of lat/long values with one
@@ -128,17 +136,19 @@ def new_create_grid(griddef):
 
     return numpy.array([lon_band, lat_band])
 
+
 ##############################################################################
 # This function writes a grid out in form suitable to use as input to the
 # htdp program.
 
 
 def write_grid(grid, out_filename):
-    fd_out = open(out_filename, 'w')
+    fd_out = open(out_filename, "w")
     for i in range(grid.shape[2]):
         for j in range(grid.shape[1]):
             fd_out.write('%f %f 0 "PNT_%d_%d"\n' % (grid[1, j, i], grid[0, j, i], i, j))
     fd_out.close()
+
 
 ##############################################################################
 # Write the resulting grid out in GeoTIFF format.
@@ -148,19 +158,32 @@ def write_gdal_grid(filename, grid, griddef):
 
     ps_x = (griddef[2] - griddef[0]) / (griddef[4] - 1)
     ps_y = (griddef[3] - griddef[1]) / (griddef[5] - 1)
-    geotransform = (griddef[0] - ps_x * 0.5, ps_x, 0.0,
-                    griddef[1] - ps_y * 0.5, 0.0, ps_y)
+    geotransform = (
+        griddef[0] - ps_x * 0.5,
+        ps_x,
+        0.0,
+        griddef[1] - ps_y * 0.5,
+        0.0,
+        ps_y,
+    )
 
     grid = grid.astype(numpy.float32)
-    ds = gdal_array.SaveArray(grid, filename, format='CTable2')
+    ds = gdal_array.SaveArray(grid, filename, format="CTable2")
     ds.SetGeoTransform(geotransform)
+
 
 #############################################################################
 
 
-def write_control(control_fn, out_grid_fn, in_grid_fn,
-                  src_crs_id, src_crs_date,
-                  dst_crs_id, dst_crs_date):
+def write_control(
+    control_fn,
+    out_grid_fn,
+    in_grid_fn,
+    src_crs_id,
+    src_crs_date,
+    dst_crs_id,
+    dst_crs_date,
+):
 
     # start_date, end_date should be something like "2011.0"
 
@@ -179,21 +202,25 @@ def write_control(control_fn, out_grid_fn, in_grid_fn,
 0
 """
 
-    control_filled = control_template % (out_grid_fn,
-                                         src_crs_id,
-                                         dst_crs_id,
-                                         src_crs_date,
-                                         dst_crs_date,
-                                         in_grid_fn)
+    control_filled = control_template % (
+        out_grid_fn,
+        src_crs_id,
+        dst_crs_id,
+        src_crs_date,
+        dst_crs_date,
+        in_grid_fn,
+    )
 
-    open(control_fn, 'w').write(control_filled)
+    open(control_fn, "w").write(control_filled)
+
 
 #############################################################################
 
 
 def Usage(brief=1):
-    print("""
-crs2crs2grid.py
+    print(
+        """
+Usage: crs2crs2grid.py
         <src_crs_id> <src_crs_date> <dst_crs_id> <dst_crs_year>
         [-griddef <ul_lon> <ul_lat> <ll_lon> <ll_lat> <lon_count> <lat_count>]
         [-htdp <path_to_exe>] [-wrkdir <dirpath>] [-kwf]
@@ -206,10 +233,12 @@ crs2crs2grid.py
 
 eg.
  crs2crs2grid.py 29 2002.0 8 2002.0 -o nad83_2002.ct2
- """)
+ """
+    )
 
     if brief == 0:
-        print("""
+        print(
+            """
 The output file will be in CTable2 format suitable for use with PROJ.4
 +nadgrids= directive.
 
@@ -238,9 +267,11 @@ CRS Ids
  14...ITRF90                             26...IGS05 = ITRF2005
  15...ITRF91                             27...ITRF2008
                                          28...IGS08 = ITRF2008
-""")
+"""
+        )
 
-    return 1
+    return 2
+
 
 #############################################################################
 # Main
@@ -265,8 +296,8 @@ def main(argv=sys.argv):
     # Decent representation of continental US
     griddef = (-127.0, 50.0, -66.0, 25.0, 611, 251)
 
-    htdp_path = 'htdp'
-    wrkdir = '.'
+    htdp_path = "htdp"
+    wrkdir = "."
     kwf = 0
     output_grid_name = None
 
@@ -275,35 +306,37 @@ def main(argv=sys.argv):
     i = 1
     while i < len(argv):
 
-        if argv[i] == '-griddef' and i < len(argv) - 6:
-            griddef = (float(argv[i + 1]),
-                       float(argv[i + 2]),
-                       float(argv[i + 3]),
-                       float(argv[i + 4]),
-                       float(argv[i + 5]),
-                       float(argv[i + 6]))
+        if argv[i] == "-griddef" and i < len(argv) - 6:
+            griddef = (
+                float(argv[i + 1]),
+                float(argv[i + 2]),
+                float(argv[i + 3]),
+                float(argv[i + 4]),
+                float(argv[i + 5]),
+                float(argv[i + 6]),
+            )
             i = i + 6
 
-        elif argv[i] == '-htdp' and i < len(argv) - 1:
+        elif argv[i] == "-htdp" and i < len(argv) - 1:
             htdp_path = argv[i + 1]
             i = i + 1
 
-        elif argv[i] == '-kwf':
+        elif argv[i] == "-kwf":
             kwf = 1
 
-        elif argv[i] == '-wrkdir' and i < len(argv) - 1:
+        elif argv[i] == "-wrkdir" and i < len(argv) - 1:
             wrkdir = argv[i + 1]
             i = i + 1
 
-        elif argv[i] == '-o' and i < len(argv) - 1:
+        elif argv[i] == "-o" and i < len(argv) - 1:
             output_grid_name = argv[i + 1]
             i = i + 1
 
-        elif argv[i] == '-h' or argv[i] == '--help':
+        elif argv[i] == "-h" or argv[i] == "--help":
             return Usage(brief=0)
 
-        elif argv[i][0] == '-':
-            print('Urecognised argument: ' + argv[i])
+        elif argv[i][0] == "-":
+            print("Urecognised argument: " + argv[i])
             return Usage()
 
         elif src_crs_id is None:
@@ -319,47 +352,61 @@ def main(argv=sys.argv):
             dst_crs_date = argv[i]
 
         else:
-            print('Urecognised argument: ' + argv[i])
+            print("Urecognised argument: " + argv[i])
             return Usage()
 
         i = i + 1
         # next argument
 
     if output_grid_name is None:
-        print('Missing output grid name (-o)')
+        print("Missing output grid name (-o)")
         return Usage()
 
     if dst_crs_date is None:
-        print('Source and Destination CRS Ids and Dates are mandatory, '
-              'not all provided.')
+        print(
+            "Source and Destination CRS Ids and Dates are mandatory, "
+            "not all provided."
+        )
         return Usage()
 
     # Do a bit of validation of parameters.
-    if src_crs_id < 1 or src_crs_id > 32 \
-       or dst_crs_id < 1 or dst_crs_id > 32:
-        print('Invalid source or destination CRS Id %d and %d.'
-              % (src_crs_id, dst_crs_id))
+    if src_crs_id < 1 or src_crs_id > 32 or dst_crs_id < 1 or dst_crs_id > 32:
+        print(
+            "Invalid source or destination CRS Id %d and %d." % (src_crs_id, dst_crs_id)
+        )
         return Usage(brief=0)
 
-    if float(src_crs_date) < 1700.0 or float(src_crs_date) > 2300.0 \
-       or float(dst_crs_date) < 1700.0 or float(dst_crs_date) > 2300.0:
-        print('Source or destination CRS date seems odd %s and %s.'
-              % (src_crs_date, dst_crs_date))
+    if (
+        float(src_crs_date) < 1700.0
+        or float(src_crs_date) > 2300.0
+        or float(dst_crs_date) < 1700.0
+        or float(dst_crs_date) > 2300.0
+    ):
+        print(
+            "Source or destination CRS date seems odd %s and %s."
+            % (src_crs_date, dst_crs_date)
+        )
         return Usage(brief=0)
 
     # Prepare out set of working file names.
 
-    in_grid_fn = wrkdir + '/crs2crs_input.txt'
-    out_grid_fn = wrkdir + '/crs2crs_output.txt'
-    control_fn = wrkdir + '/crs2crs_control.txt'
+    in_grid_fn = wrkdir + "/crs2crs_input.txt"
+    out_grid_fn = wrkdir + "/crs2crs_output.txt"
+    control_fn = wrkdir + "/crs2crs_control.txt"
 
     # Write out the source grid file.
     grid = new_create_grid(griddef)
 
     write_grid(grid, in_grid_fn)
-    write_control(control_fn, out_grid_fn, in_grid_fn,
-                  src_crs_id, src_crs_date,
-                  dst_crs_id, dst_crs_date)
+    write_control(
+        control_fn,
+        out_grid_fn,
+        in_grid_fn,
+        src_crs_id,
+        src_crs_date,
+        dst_crs_id,
+        dst_crs_date,
+    )
 
     # Run htdp to transform the data.
     try:
@@ -367,12 +414,12 @@ def main(argv=sys.argv):
     except OSError:
         pass
 
-    rc = os.system(htdp_path + ' < ' + control_fn)
+    rc = os.system(htdp_path + " < " + control_fn)
     if rc != 0:
-        print('htdp run failed!')
+        print("htdp run failed!")
         return 1
 
-    print('htdp run complete.')
+    print("htdp run complete.")
 
     adjustment = read_grid_crs_to_crs(out_grid_fn, grid.shape)
     if adjustment is None:
@@ -390,9 +437,9 @@ def main(argv=sys.argv):
         os.unlink(out_grid_fn)
         os.unlink(control_fn)
 
-    print('Processing complete: see ' + output_grid_name)
+    print("Processing complete: see " + output_grid_name)
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

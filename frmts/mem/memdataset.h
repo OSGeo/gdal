@@ -79,6 +79,13 @@ class CPL_DLL MEMDataset CPL_NON_FINAL: public GDALDataset
     virtual void                LeaveReadWrite();
 #endif
 
+    friend void GDALRegister_MEM();
+
+    // cppcheck-suppress unusedPrivateFunction
+    static GDALDataset *CreateBase( const char * pszFilename,
+                                int nXSize, int nYSize, int nBands,
+                                GDALDataType eType, char ** papszParamList );
+
   public:
                  MEMDataset();
     virtual      ~MEMDataset();
@@ -125,8 +132,10 @@ class CPL_DLL MEMDataset CPL_NON_FINAL: public GDALDataset
 
     std::shared_ptr<GDALGroup> GetRootGroup() const override;
 
+    void   AddMEMBand(GDALRasterBandH hMEMBand);
+
     static GDALDataset *Open( GDALOpenInfo * );
-    static GDALDataset *Create( const char * pszFilename,
+    static MEMDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParamList );
     static GDALDataset *CreateMultiDimensional( const char * pszFilename,

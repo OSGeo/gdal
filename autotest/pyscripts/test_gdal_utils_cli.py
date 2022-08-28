@@ -49,8 +49,9 @@ Resources used:
  - https://stackoverflow.com/questions/13493288/python-cli-program-unit-testing
 """
 
-import sys
 import subprocess
+import sys
+
 import pytest
 
 # Skip if gdal-utils is not known to pip (and therefore not registered in

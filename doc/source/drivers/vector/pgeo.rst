@@ -74,6 +74,13 @@ Field domains
 
 Coded and range field domains are supported.
 
+Relationships
+-------------
+
+.. versionadded:: 3.6
+
+Relationship retrieval is supported.
+
 How to use PGeo driver with unixODBC and MDB Tools (on Unix and Linux)
 ----------------------------------------------------------------------
 

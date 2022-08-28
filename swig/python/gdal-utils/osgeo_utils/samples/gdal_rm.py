@@ -34,28 +34,28 @@ from osgeo import gdal
 
 
 def Usage():
-    print('Usage: gdal_rm [-r] filename')
-    return -1
+    print("Usage: gdal_rm [-r] filename")
+    return 2
 
 
 def gdal_rm_recurse(filename, simulate=False):
 
     delete_self = True
-    if filename.endswith('/*'):
+    if filename.endswith("/*"):
         delete_self = False
         filename = filename[0:-2]
 
     dir_contents = gdal.ReadDir(filename)
     if dir_contents:
         for f in dir_contents:
-            if f not in ('.', '..'):
-                ret = gdal_rm_recurse(filename + '/' + f, simulate=simulate)
+            if f not in (".", ".."):
+                ret = gdal_rm_recurse(filename + "/" + f, simulate=simulate)
                 if ret != 0:
                     return ret
         if not delete_self:
             return 0
         elif simulate:
-            print('Rmdir(%s)' % filename)
+            print("Rmdir(%s)" % filename)
             return 0
         else:
             ret = gdal.Rmdir(filename)
@@ -68,7 +68,7 @@ def gdal_rm_recurse(filename, simulate=False):
             return ret
     else:
         if simulate:
-            print('Unlink(%s)' % filename)
+            print("Unlink(%s)" % filename)
             return 0
         return gdal.Unlink(filename)
 
@@ -87,38 +87,38 @@ def gdal_rm(argv, progress=None):
         if not argv[i]:
             return Usage()
 
-        if argv[i] == '-r':
+        if argv[i] == "-r":
             recurse = True
-        elif argv[i] == '-simulate':
+        elif argv[i] == "-simulate":
             simulate = True
-        elif argv[i][0] == '-':
-            print('Unexpected option : %s' % argv[i])
+        elif argv[i][0] == "-":
+            print("Unexpected option : %s" % argv[i])
             return Usage()
         elif filename is None:
             filename = argv[i]
         else:
-            print('Unexpected option : %s' % argv[i])
+            print("Unexpected option : %s" % argv[i])
             return Usage()
 
     if filename is None:
         return Usage()
 
-    if filename == '/':
-        user_input = input('Please confirm with YES your action: ')
-        if user_input != 'YES':
-            print('Aborted')
+    if filename == "/":
+        user_input = input("Please confirm with YES your action: ")
+        if user_input != "YES":
+            print("Aborted")
             return 1
 
     if recurse:
         ret = gdal_rm_recurse(filename, simulate=simulate)
     else:
         if simulate:
-            print('gdal.Unlink(%s)' % filename)
+            print("gdal.Unlink(%s)" % filename)
             ret = 0
         else:
             ret = gdal.Unlink(filename)
     if ret != 0:
-        print('Deletion failed')
+        print("Deletion failed")
     return ret
 
 
@@ -126,5 +126,5 @@ def main(argv=sys.argv):
     return gdal_rm(argv)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

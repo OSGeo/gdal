@@ -39,7 +39,8 @@ add_library(
   ogreditablelayer.cpp
   ogremulatedtransaction.cpp
   ogrmutexeddatasource.cpp
-  ogrmutexedlayer.cpp)
+  ogrmutexedlayer.cpp
+  ograrrowarrayhelper.cpp)
 gdal_standard_includes(ogrsf_generic)
 add_dependencies(ogrsf_generic generate_gdal_version_h)
 target_compile_options(ogrsf_generic PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})

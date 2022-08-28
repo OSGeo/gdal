@@ -71,7 +71,7 @@ void OGRDXFReader::Initialize( VSILFILE *fpIn )
 /*                          ResetReadPointer()                          */
 /************************************************************************/
 
-void OGRDXFReader::ResetReadPointer( int iNewOffset,
+void OGRDXFReader::ResetReadPointer( unsigned int iNewOffset,
     int nNewLineNumber /* = 0 */ )
 
 {
@@ -94,8 +94,6 @@ void OGRDXFReader::ResetReadPointer( int iNewOffset,
 void OGRDXFReader::LoadDiskChunk()
 
 {
-    CPLAssert( iSrcBufferOffset >= 0 );
-
     if( nSrcBufferBytes - iSrcBufferOffset > 511 )
         return;
 
@@ -137,7 +135,7 @@ int OGRDXFReader::ReadValueRaw( char *pszValueBuf, int nValueBufSize )
 /* -------------------------------------------------------------------- */
 /*      Capture the value code, and skip past it.                       */
 /* -------------------------------------------------------------------- */
-    int iStartSrcBufferOffset = iSrcBufferOffset;
+    unsigned int iStartSrcBufferOffset = iSrcBufferOffset;
     int nValueCode = atoi(achSrcBuffer + iSrcBufferOffset);
 
     nLineNumber ++;
@@ -166,7 +164,7 @@ int OGRDXFReader::ReadValueRaw( char *pszValueBuf, int nValueBufSize )
 /* -------------------------------------------------------------------- */
 /*      Capture the value string.                                       */
 /* -------------------------------------------------------------------- */
-    int iEOL = iSrcBufferOffset;
+    unsigned int iEOL = iSrcBufferOffset;
     CPLString osValue;
 
     nLineNumber ++;
@@ -178,10 +176,10 @@ int OGRDXFReader::ReadValueRaw( char *pszValueBuf, int nValueBufSize )
         iEOL++;
 
     bool bLongLine = false;
-    while( achSrcBuffer[iEOL] == '\0' )
+    while( achSrcBuffer[iEOL] == '\0' || (achSrcBuffer[iEOL] == '\r' && achSrcBuffer[iEOL+1] == '\0') )
     {
-        // The line is longer than the buffer. Let's copy what we have so
-        // far into our string, and read more
+        // The line is longer than the buffer (or the line ending is split at end of buffer).
+        // Let's copy what we have so far into our string, and read more
         const auto nValueLength = osValue.length();
 
         if( nValueLength + iEOL - iSrcBufferOffset > 1048576 )
@@ -231,7 +229,7 @@ int OGRDXFReader::ReadValueRaw( char *pszValueBuf, int nValueBufSize )
     }
 
     // Copy the last (normally, the only) section of this line into the buffer
-    if( (iEOL - iSrcBufferOffset) >
+    if( static_cast<int>(iEOL - iSrcBufferOffset) >
         nValueBufSize - static_cast<int>(nValueBufLen) - 1 )
     {
         strncpy( pszValueBuf + nValueBufLen,

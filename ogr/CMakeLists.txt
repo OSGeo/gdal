@@ -141,6 +141,7 @@ target_public_header(
   gdal
   HEADERS
   ogr_api.h
+  ogr_recordbatch.h
   ogr_core.h
   ogr_feature.h
   ogr_featurestyle.h

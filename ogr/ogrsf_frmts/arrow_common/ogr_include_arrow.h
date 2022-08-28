@@ -42,6 +42,7 @@
 #include "arrow/array.h"
 #include "arrow/builder.h"
 #include "arrow/array/array_dict.h"
+#include "arrow/c/bridge.h"
 #include "arrow/ipc/reader.h"
 #include "arrow/ipc/writer.h"
 #include "arrow/io/file.h"

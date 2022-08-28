@@ -40,6 +40,8 @@
 #include "cpl_string.h"
 #include "gdal.h"
 #include "gdal_alg.h"
+#include "gdal_priv.h"
+#include "memdataset.h"
 #include "ogr_api.h"
 #include "ogr_core.h"
 #include "ogr_geometry.h"
@@ -337,20 +339,15 @@ GDALWarpCutlineMasker( void *pMaskFuncArg,
 /* -------------------------------------------------------------------- */
     GByte *pabyPolyMask = static_cast<GByte *>(CPLCalloc(nXSize, nYSize));
 
-    char szDataPointer[100] = {};
+    auto poMEMDS = MEMDataset::Create( "warp_temp", nXSize, nYSize, 0, GDT_Byte, nullptr );
+    GDALRasterBandH hMEMBand = MEMCreateRasterBandEx( poMEMDS,
+                                                      1, pabyPolyMask,
+                                                      GDT_Byte,
+                                                      0, 0,
+                                                      false );
+    poMEMDS->AddMEMBand(hMEMBand);
 
-    // cppcheck-suppress redundantCopy
-    snprintf( szDataPointer, sizeof(szDataPointer), "DATAPOINTER=" );
-    CPLPrintPointer(
-        szDataPointer+strlen(szDataPointer),
-        pabyPolyMask,
-        static_cast<int>(sizeof(szDataPointer) - strlen(szDataPointer)) );
-
-    GDALDatasetH hMemDS = GDALCreate( hMemDriver, "warp_temp",
-                                      nXSize, nYSize, 0, GDT_Byte, nullptr );
-    char *apszOptions[] = { szDataPointer, nullptr };
-    GDALAddBand( hMemDS, GDT_Byte, apszOptions );
-
+    GDALDatasetH hMemDS = GDALDataset::ToHandle(poMEMDS);
     double adfGeoTransform[6] = { 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
     GDALSetGeoTransform( hMemDS, adfGeoTransform );
 

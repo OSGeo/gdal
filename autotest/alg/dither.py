@@ -30,10 +30,9 @@
 ###############################################################################
 
 
-
+import pytest
 
 from osgeo import gdal
-import pytest
 
 ###############################################################################
 # Test
@@ -41,15 +40,16 @@ import pytest
 
 def test_dither_1():
 
-    drv = gdal.GetDriverByName('GTiff')
+    drv = gdal.GetDriverByName("GTiff")
 
-    src_ds = gdal.Open('../gdrivers/data/rgbsmall.tif')
+    src_ds = gdal.Open("../gdrivers/data/rgbsmall.tif")
     r_band = src_ds.GetRasterBand(1)
     g_band = src_ds.GetRasterBand(2)
     b_band = src_ds.GetRasterBand(3)
 
-    dst_ds = drv.Create('tmp/rgbsmall.tif', src_ds.RasterXSize,
-                        src_ds.RasterYSize, 1, gdal.GDT_Byte)
+    dst_ds = drv.Create(
+        "tmp/rgbsmall.tif", src_ds.RasterXSize, src_ds.RasterYSize, 1, gdal.GDT_Byte
+    )
     dst_band = dst_ds.GetRasterBand(1)
 
     ct = gdal.ColorTable()
@@ -67,10 +67,18 @@ def test_dither_1():
     dst_band = None
     dst_ds = None
 
-    assert ct.GetCount() == nColors, 'color table size wrong'
+    assert ct.GetCount() == nColors, "color table size wrong"
 
-    ref_ct = [(36, 48, 32, 255), (92, 120, 20, 255), (88, 96, 20, 255), (92, 132, 56, 255),
-              (0, 0, 0, 255), (96, 152, 24, 255), (60, 112, 32, 255), (164, 164, 108, 255)]
+    ref_ct = [
+        (36, 48, 32, 255),
+        (92, 120, 20, 255),
+        (88, 96, 20, 255),
+        (92, 132, 56, 255),
+        (0, 0, 0, 255),
+        (96, 152, 24, 255),
+        (60, 112, 32, 255),
+        (164, 164, 108, 255),
+    ]
 
     for i in range(nColors):
         ct_data = ct.GetColorEntry(i)
@@ -82,16 +90,11 @@ def test_dither_1():
                 for k in range(nColors):
                     print(ct.GetColorEntry(k))
                     print(ref_ct[k])
-                pytest.fail('color table mismatch')
+                pytest.fail("color table mismatch")
 
-    if cs == cs_expected or gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON':
-        drv.Delete('tmp/rgbsmall.tif')
+    if cs == cs_expected or gdal.GetConfigOption("CPL_DEBUG", "OFF") != "ON":
+        drv.Delete("tmp/rgbsmall.tif")
 
     if cs != cs_expected:
-        print('Got: ', cs)
-        pytest.fail('got wrong checksum')
-
-    
-
-
-
+        print("Got: ", cs)
+        pytest.fail("got wrong checksum")

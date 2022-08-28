@@ -31,9 +31,11 @@
 
 import math
 import sys
+
 import numpy as np
 
 from osgeo import gdal, gdal_array
+
 gdal.TermProgress = gdal.TermProgress_nocb
 
 
@@ -41,49 +43,57 @@ gdal.TermProgress = gdal.TermProgress_nocb
 
 
 def Usage():
-    print('Usage: rel.py -lsrcaz azimuth -lsrcel elevation [-elstep step]')
-    print('       [-dx xsize] [-dy ysize] [-b band] [-ot type] infile outfile')
-    print('Produce a shaded relief image from elevation data')
-    print('')
-    print('  -lsrcaz azimuth   Azimuth angle of the diffuse light source (0..360 degrees)')
-    print('  -lsrcel elevation Elevation angle of the diffuse light source (0..180 degrees)')
-    print('  -elstep step      Elevation change corresponding to a change of one grey level')
-    print('                    (default 1)')
-    print('  -dx xsize         X and Y dimensions (in meters) of one pixel on the ground')
-    print('  -dy ysize         (taken from the geotransform matrix by default)')
-    print('  -r range	       Dynamic range for output image (default 255)')
-    print('  -b band	       Select a band number to convert (default 1)')
-    print('  -ot type	       Data type of the output dataset')
-    print('                    (Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/')
-    print('                     CInt16/CInt32/CFloat32/CFloat64, default is Byte)')
-    print('  infile	       Name of the input file')
-    print('  outfile	       Name of the output file')
-    print('')
-    return 1
+    print("Usage: rel.py -lsrcaz azimuth -lsrcel elevation [-elstep step]")
+    print("       [-dx xsize] [-dy ysize] [-b band] [-ot type] infile outfile")
+    print("Produce a shaded relief image from elevation data")
+    print("")
+    print(
+        "  -lsrcaz azimuth   Azimuth angle of the diffuse light source (0..360 degrees)"
+    )
+    print(
+        "  -lsrcel elevation Elevation angle of the diffuse light source (0..180 degrees)"
+    )
+    print(
+        "  -elstep step      Elevation change corresponding to a change of one grey level"
+    )
+    print("                    (default 1)")
+    print(
+        "  -dx xsize         X and Y dimensions (in meters) of one pixel on the ground"
+    )
+    print("  -dy ysize         (taken from the geotransform matrix by default)")
+    print("  -r range	       Dynamic range for output image (default 255)")
+    print("  -b band	       Select a band number to convert (default 1)")
+    print("  -ot type	       Data type of the output dataset")
+    print("                    (Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/")
+    print("                     CInt16/CInt32/CFloat32/CFloat64, default is Byte)")
+    print("  infile	       Name of the input file")
+    print("  outfile	       Name of the output file")
+    print("")
+    return 2
 
 
 def ParseType(typ):
-    if typ == 'Byte':
+    if typ == "Byte":
         return gdal.GDT_Byte
-    if typ == 'Int16':
+    if typ == "Int16":
         return gdal.GDT_Int16
-    if typ == 'UInt16':
+    if typ == "UInt16":
         return gdal.GDT_UInt16
-    if typ == 'Int32':
+    if typ == "Int32":
         return gdal.GDT_Int32
-    if typ == 'UInt32':
+    if typ == "UInt32":
         return gdal.GDT_UInt32
-    if typ == 'Float32':
+    if typ == "Float32":
         return gdal.GDT_Float32
-    if typ == 'Float64':
+    if typ == "Float64":
         return gdal.GDT_Float64
-    if typ == 'CInt16':
+    if typ == "CInt16":
         return gdal.GDT_CInt16
-    if typ == 'CInt32':
+    if typ == "CInt32":
         return gdal.GDT_CInt32
-    if typ == 'CFloat32':
+    if typ == "CFloat32":
         return gdal.GDT_CFloat32
-    if typ == 'CFloat64':
+    if typ == "CFloat64":
         return gdal.GDT_CFloat64
     return gdal.GDT_Byte
 
@@ -91,8 +101,8 @@ def ParseType(typ):
 def main(argv=sys.argv):
     infile = None
     outfile = None
-    iBand = 1	    # The first band will be converted by default
-    driver_name = 'GTiff'
+    iBand = 1  # The first band will be converted by default
+    driver_name = "GTiff"
     typ = gdal.GDT_Byte
 
     lsrcaz = None
@@ -107,35 +117,35 @@ def main(argv=sys.argv):
     while i < len(argv):
         arg = argv[i]
 
-        if arg == '-b':
+        if arg == "-b":
             i += 1
             iBand = int(argv[i])
 
-        elif arg == '-ot':
+        elif arg == "-ot":
             i += 1
             typ = ParseType(argv[i])
 
-        elif arg == '-lsrcaz':
+        elif arg == "-lsrcaz":
             i += 1
             lsrcaz = float(argv[i])
 
-        elif arg == '-lsrcel':
+        elif arg == "-lsrcel":
             i += 1
             lsrcel = float(argv[i])
 
-        elif arg == '-elstep':
+        elif arg == "-elstep":
             i += 1
             elstep = float(argv[i])
 
-        elif arg == '-dx':
+        elif arg == "-dx":
             i += 1
             xsize = float(argv[i])
 
-        elif arg == '-dy':
+        elif arg == "-dy":
             i += 1
             ysize = float(argv[i])
 
-        elif arg == '-r':
+        elif arg == "-r":
             i += 1
             dyn_range = float(argv[i])
 
@@ -170,15 +180,21 @@ def main(argv=sys.argv):
 
     indataset = gdal.Open(infile, gdal.GA_ReadOnly)
     if indataset is None:
-        print('Cannot open', infile)
+        print("Cannot open", infile)
         return 2
 
     if indataset.RasterXSize < 3 or indataset.RasterYSize < 3:
-        print('Input image is too small to process, minimum size is 3x3')
+        print("Input image is too small to process, minimum size is 3x3")
         return 3
 
     out_driver = gdal.GetDriverByName(driver_name)
-    outdataset = out_driver.Create(outfile, indataset.RasterXSize, indataset.RasterYSize, indataset.RasterCount, typ)
+    outdataset = out_driver.Create(
+        outfile,
+        indataset.RasterXSize,
+        indataset.RasterYSize,
+        indataset.RasterCount,
+        typ,
+    )
     outband = outdataset.GetRasterBand(1)
 
     geotransform = indataset.GetGeoTransform()
@@ -191,7 +207,7 @@ def main(argv=sys.argv):
 
     inband = indataset.GetRasterBand(iBand)
     if inband is None:
-        print('Cannot load band', iBand, 'from the', infile)
+        print("Cannot load band", iBand, "from the", infile)
         return 2
 
     numtype = gdal_array.GDALTypeCodeTonpTypeCode(typ)
@@ -234,5 +250,5 @@ def main(argv=sys.argv):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

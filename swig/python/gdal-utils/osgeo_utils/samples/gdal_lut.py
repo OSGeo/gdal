@@ -30,9 +30,11 @@
 # ******************************************************************************
 
 import sys
+
 import numpy as np
 
 from osgeo import gdal
+
 gdal.TermProgress = gdal.TermProgress_nocb
 
 
@@ -53,13 +55,15 @@ def read_lut(filename):
 
     return lut
 
+
 # =============================================================================
 # Usage()
 # =============================================================================
 
 
 def Usage():
-    print("""
+    print(
+        """
 Usage: gdal_lut.py src_file [-srcband] [dst_file] [-dstband] -lutfile filename
                    [-of format] [-co name=value]*
 
@@ -78,12 +82,13 @@ would map input pixel values 0,1,2,3,4,5 to 0,5,11,12,12,13 respectively.
 Values not mapped by the lut file (for instance values 6-255 in the above
 case) will be left unaltered.  Sixteen bit (UInt16) output values are
 supported as well as luts of more than 256 input values.
-""")
-    return 1
+"""
+    )
+    return 2
 
 
 def main(argv=sys.argv):
-    driver_name = 'GTiff'
+    driver_name = "GTiff"
     src_filename = None
     dst_filename = None
     src_band_n = 1
@@ -101,23 +106,23 @@ def main(argv=sys.argv):
     while i < len(argv):
         arg = argv[i]
 
-        if arg == '-of':
+        if arg == "-of":
             i = i + 1
             driver_name = argv[i]
 
-        elif arg == '-co':
+        elif arg == "-co":
             i = i + 1
             create_options.append(argv[i])
 
-        elif arg == '-lutfile':
+        elif arg == "-lutfile":
             i = i + 1
             lut_filename = argv[i]
 
-        elif arg == '-srcband':
+        elif arg == "-srcband":
             i = i + 1
             src_band_n = int(argv[i])
 
-        elif arg == '-dstband':
+        elif arg == "-dstband":
             i = i + 1
             dst_band_n = int(argv[i])
 
@@ -128,12 +133,12 @@ def main(argv=sys.argv):
             dst_filename = argv[i]
 
         else:
-            Usage()
+            return Usage()
 
         i = i + 1
 
     if src_filename is None or lut_filename is None:
-        Usage()
+        return Usage()
 
     # ----------------------------------------------------------------------------
     # Load the LUT file.
@@ -177,7 +182,7 @@ def main(argv=sys.argv):
         dst_ds = None
 
     if src_ds is None:
-        print('Unable to open ', src_filename)
+        print("Unable to open ", src_filename)
         return 1
 
     src_band = src_ds.GetRasterBand(src_band_n)
@@ -193,17 +198,20 @@ def main(argv=sys.argv):
     if dst_ds is None:
         try:
             dst_ds = gdal.Open(dst_filename, gdal.GA_Update)
-        except:
+        except Exception:
             dst_ds = None
 
         if dst_ds is None:
-            dst_ds = dst_driver.Create(dst_filename,
-                                       src_ds.RasterXSize,
-                                       src_ds.RasterYSize,
-                                       1, gc, options=create_options)
+            dst_ds = dst_driver.Create(
+                dst_filename,
+                src_ds.RasterXSize,
+                src_ds.RasterYSize,
+                1,
+                gc,
+                options=create_options,
+            )
             dst_ds.SetProjection(src_ds.GetProjection())
             dst_ds.SetGeoTransform(src_ds.GetGeoTransform())
-
 
     dst_band = dst_ds.GetRasterBand(dst_band_n)
 
@@ -225,5 +233,5 @@ def main(argv=sys.argv):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

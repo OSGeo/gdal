@@ -30,12 +30,10 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import gdal
-from osgeo import osr
-
-
 import gdaltest
 import pytest
+
+from osgeo import gdal, osr
 
 ###############################################################################
 # Perform simple read test.
@@ -43,12 +41,18 @@ import pytest
 
 def test_ers_1():
 
-    tst = gdaltest.GDALTest('ERS', 'ers/srtm.ers', 1, 64074)
+    tst = gdaltest.GDALTest("ERS", "ers/srtm.ers", 1, 64074)
     tst.testOpen()
-    ds = gdal.Open('data/ers/srtm.ers')
+    ds = gdal.Open("data/ers/srtm.ers")
     md = ds.GetRasterBand(1).GetMetadata()
-    expected_md = {'STATISTICS_MEAN': '-4020.25', 'STATISTICS_MINIMUM': '-4315', 'STATISTICS_MAXIMUM': '-3744', 'STATISTICS_MEDIAN': '-4000'}
+    expected_md = {
+        "STATISTICS_MEAN": "-4020.25",
+        "STATISTICS_MINIMUM": "-4315",
+        "STATISTICS_MAXIMUM": "-3744",
+        "STATISTICS_MEDIAN": "-4000",
+    }
     assert md == expected_md
+
 
 ###############################################################################
 # Create simple copy and check.
@@ -56,9 +60,9 @@ def test_ers_1():
 
 def test_ers_2():
 
-    tst = gdaltest.GDALTest('ERS', 'ehdr/float32.bil', 1, 27)
-    return tst.testCreateCopy(new_filename='tmp/float32.ers',
-                              check_gt=1, vsimem=1)
+    tst = gdaltest.GDALTest("ERS", "ehdr/float32.bil", 1, 27)
+    return tst.testCreateCopy(new_filename="tmp/float32.ers", check_gt=1, vsimem=1)
+
 
 ###############################################################################
 # Test multi-band file.
@@ -66,8 +70,9 @@ def test_ers_2():
 
 def test_ers_3():
 
-    tst = gdaltest.GDALTest('ERS', 'rgbsmall.tif', 2, 21053)
-    return tst.testCreate(new_filename='tmp/rgbsmall.ers')
+    tst = gdaltest.GDALTest("ERS", "rgbsmall.tif", 2, 21053)
+    return tst.testCreate(new_filename="tmp/rgbsmall.ers")
+
 
 ###############################################################################
 # Test HeaderOffset case.
@@ -82,8 +87,9 @@ def test_ers_4():
     PRIMEM["Greenwich",0],
     UNIT["degree",0.0174532925199433]]"""
 
-    tst = gdaltest.GDALTest('ERS', 'ers/ers_dem.ers', 1, 56588)
+    tst = gdaltest.GDALTest("ERS", "ers/ers_dem.ers", 1, 56588)
     return tst.testOpen(check_prj=srs, check_gt=gt)
+
 
 ###############################################################################
 # Confirm we can recognised signed 8bit data.
@@ -91,12 +97,13 @@ def test_ers_4():
 
 def test_ers_5():
 
-    ds = gdal.Open('data/ers/8s.ers')
-    md = ds.GetRasterBand(1).GetMetadata('IMAGE_STRUCTURE')
+    ds = gdal.Open("data/ers/8s.ers")
+    md = ds.GetRasterBand(1).GetMetadata("IMAGE_STRUCTURE")
 
-    assert md['PIXELTYPE'] == 'SIGNEDBYTE', 'Failed to detect SIGNEDBYTE'
+    assert md["PIXELTYPE"] == "SIGNEDBYTE", "Failed to detect SIGNEDBYTE"
 
     ds = None
+
 
 ###############################################################################
 # Confirm a copy preserves the signed byte info.
@@ -104,19 +111,20 @@ def test_ers_5():
 
 def test_ers_6():
 
-    drv = gdal.GetDriverByName('ERS')
+    drv = gdal.GetDriverByName("ERS")
 
-    src_ds = gdal.Open('data/ers/8s.ers')
+    src_ds = gdal.Open("data/ers/8s.ers")
 
-    ds = drv.CreateCopy('tmp/8s.ers', src_ds)
+    ds = drv.CreateCopy("tmp/8s.ers", src_ds)
 
-    md = ds.GetRasterBand(1).GetMetadata('IMAGE_STRUCTURE')
+    md = ds.GetRasterBand(1).GetMetadata("IMAGE_STRUCTURE")
 
-    assert md['PIXELTYPE'] == 'SIGNEDBYTE', 'Failed to detect SIGNEDBYTE'
+    assert md["PIXELTYPE"] == "SIGNEDBYTE", "Failed to detect SIGNEDBYTE"
 
     ds = None
 
-    drv.Delete('tmp/8s.ers')
+    drv.Delete("tmp/8s.ers")
+
 
 ###############################################################################
 # Test opening a file with everything in lower case.
@@ -124,11 +132,12 @@ def test_ers_6():
 
 def test_ers_7():
 
-    ds = gdal.Open('data/ers/caseinsensitive.ers')
+    ds = gdal.Open("data/ers/caseinsensitive.ers")
 
     desc = ds.GetRasterBand(1).GetDescription()
 
-    assert desc == 'RTP 1st Vertical Derivative', 'did not get expected values.'
+    assert desc == "RTP 1st Vertical Derivative", "did not get expected values."
+
 
 ###############################################################################
 # Test GCP support
@@ -136,35 +145,43 @@ def test_ers_7():
 
 def test_ers_8():
 
-    src_ds = gdal.Open('../gcore/data/gcps.vrt')
-    drv = gdal.GetDriverByName('ERS')
-    ds = drv.CreateCopy('/vsimem/ers_8.ers', src_ds)
+    src_ds = gdal.Open("../gcore/data/gcps.vrt")
+    drv = gdal.GetDriverByName("ERS")
+    ds = drv.CreateCopy("/vsimem/ers_8.ers", src_ds)
     ds = None
 
-    gdal.Unlink('/vsimem/ers_8.ers.aux.xml')
+    gdal.Unlink("/vsimem/ers_8.ers.aux.xml")
 
-    ds = gdal.Open('/vsimem/ers_8.ers')
+    ds = gdal.Open("/vsimem/ers_8.ers")
     expected_gcps = src_ds.GetGCPs()
     gcps = ds.GetGCPs()
     gcp_count = ds.GetGCPCount()
     wkt = ds.GetGCPProjection()
     ds = None
 
-    assert wkt == """PROJCS["NUTM11",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.978698213898,AUTHORITY["EPSG","7008"]],TOWGS84[-3,142,183,0,0,0,0],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Metre",1],AXIS["Easting",EAST],AXIS["Northing",NORTH]]""", \
-        'did not get expected GCP projection'
+    assert (
+        wkt.replace(',AUTHORITY["EPSG","9122"]', "").replace(
+            ',AUTHORITY["EPSG","9108"]', ""
+        )
+        == """PROJCS["NUTM11",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.978698213898,AUTHORITY["EPSG","7008"]],TOWGS84[-3,142,183,0,0,0,0],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Metre",1],AXIS["Easting",EAST],AXIS["Northing",NORTH]]"""
+    ), "did not get expected GCP projection"
 
-    assert len(gcps) == len(expected_gcps) and len(gcps) == gcp_count, \
-        'did not get expected GCP number'
+    assert (
+        len(gcps) == len(expected_gcps) and len(gcps) == gcp_count
+    ), "did not get expected GCP number"
 
     for i, gcp in enumerate(gcps):
-        if gcp.GCPPixel != pytest.approx(expected_gcps[i].GCPPixel, abs=1e-6) or \
-           gcp.GCPLine != pytest.approx(expected_gcps[i].GCPLine, abs=1e-6) or \
-           gcp.GCPX != pytest.approx(expected_gcps[i].GCPX, abs=1e-6) or \
-           gcp.GCPY != pytest.approx(expected_gcps[i].GCPY, abs=1e-6):
+        if (
+            gcp.GCPPixel != pytest.approx(expected_gcps[i].GCPPixel, abs=1e-6)
+            or gcp.GCPLine != pytest.approx(expected_gcps[i].GCPLine, abs=1e-6)
+            or gcp.GCPX != pytest.approx(expected_gcps[i].GCPX, abs=1e-6)
+            or gcp.GCPY != pytest.approx(expected_gcps[i].GCPY, abs=1e-6)
+        ):
             print(gcps[i])
-            pytest.fail('did not get expected GCP %d' % i)
+            pytest.fail("did not get expected GCP %d" % i)
 
-    drv.Delete('/vsimem/ers_8.ers')
+    drv.Delete("/vsimem/ers_8.ers")
+
 
 ###############################################################################
 # Test NoData support (#4207)
@@ -172,24 +189,25 @@ def test_ers_8():
 
 def test_ers_9():
 
-    drv = gdal.GetDriverByName('ERS')
-    ds = drv.Create('/vsimem/ers_9.ers', 1, 1)
+    drv = gdal.GetDriverByName("ERS")
+    ds = drv.Create("/vsimem/ers_9.ers", 1, 1)
     ds.GetRasterBand(1).SetNoDataValue(123)
     ds = None
 
-    f = gdal.VSIFOpenL('/vsimem/ers_9.ers.aux.xml', 'rb')
+    f = gdal.VSIFOpenL("/vsimem/ers_9.ers.aux.xml", "rb")
     if f is not None:
         gdal.VSIFCloseL(f)
-        drv.Delete('/vsimem/ers_9.ers')
-        pytest.fail('/vsimem/ers_9.ers.aux.xml should not exist')
+        drv.Delete("/vsimem/ers_9.ers")
+        pytest.fail("/vsimem/ers_9.ers.aux.xml should not exist")
 
-    ds = gdal.Open('/vsimem/ers_9.ers')
+    ds = gdal.Open("/vsimem/ers_9.ers")
     val = ds.GetRasterBand(1).GetNoDataValue()
     ds = None
 
-    drv.Delete('/vsimem/ers_9.ers')
+    drv.Delete("/vsimem/ers_9.ers")
 
-    assert val == 123, 'did not get expected nodata value'
+    assert val == 123, "did not get expected nodata value"
+
 
 ###############################################################################
 # Test PROJ, DATUM, UNITS support (#4229)
@@ -197,17 +215,22 @@ def test_ers_9():
 
 def test_ers_10():
 
-    drv = gdal.GetDriverByName('ERS')
-    ds = drv.Create('/vsimem/ers_10.ers', 1, 1, options=['DATUM=GDA94', 'PROJ=MGA55', 'UNITS=METERS'])
+    drv = gdal.GetDriverByName("ERS")
+    ds = drv.Create(
+        "/vsimem/ers_10.ers",
+        1,
+        1,
+        options=["DATUM=GDA94", "PROJ=MGA55", "UNITS=METERS"],
+    )
 
     proj = ds.GetMetadataItem("PROJ", "ERS")
     datum = ds.GetMetadataItem("DATUM", "ERS")
     units = ds.GetMetadataItem("UNITS", "ERS")
-    assert proj == 'MGA55', 'did not get expected PROJ'
+    assert proj == "MGA55", "did not get expected PROJ"
 
-    assert datum == 'GDA94', 'did not get expected DATUM'
+    assert datum == "GDA94", "did not get expected DATUM"
 
-    assert units == 'METERS', 'did not get expected UNITS'
+    assert units == "METERS", "did not get expected UNITS"
 
     # This should be overridden by the above values
     sr = osr.SpatialReference()
@@ -217,21 +240,21 @@ def test_ers_10():
     proj = ds.GetMetadataItem("PROJ", "ERS")
     datum = ds.GetMetadataItem("DATUM", "ERS")
     units = ds.GetMetadataItem("UNITS", "ERS")
-    assert proj == 'MGA55', 'did not get expected PROJ'
+    assert proj == "MGA55", "did not get expected PROJ"
 
-    assert datum == 'GDA94', 'did not get expected DATUM'
+    assert datum == "GDA94", "did not get expected DATUM"
 
-    assert units == 'METERS', 'did not get expected UNITS'
+    assert units == "METERS", "did not get expected UNITS"
 
     ds = None
 
-    f = gdal.VSIFOpenL('/vsimem/ers_10.ers.aux.xml', 'rb')
+    f = gdal.VSIFOpenL("/vsimem/ers_10.ers.aux.xml", "rb")
     if f is not None:
         gdal.VSIFCloseL(f)
-        drv.Delete('/vsimem/ers_10.ers')
-        pytest.fail('/vsimem/ers_10.ers.aux.xml should not exist')
+        drv.Delete("/vsimem/ers_10.ers")
+        pytest.fail("/vsimem/ers_10.ers.aux.xml should not exist")
 
-    ds = gdal.Open('/vsimem/ers_10.ers')
+    ds = gdal.Open("/vsimem/ers_10.ers")
     wkt = ds.GetProjectionRef()
     proj = ds.GetMetadataItem("PROJ", "ERS")
     datum = ds.GetMetadataItem("DATUM", "ERS")
@@ -239,59 +262,63 @@ def test_ers_10():
     md_ers = ds.GetMetadata("ERS")
     ds = None
 
-    drv.Delete('/vsimem/ers_10.ers')
+    drv.Delete("/vsimem/ers_10.ers")
 
-    assert proj == 'MGA55', 'did not get expected PROJ'
+    assert proj == "MGA55", "did not get expected PROJ"
 
-    assert datum == 'GDA94', 'did not get expected DATUM'
+    assert datum == "GDA94", "did not get expected DATUM"
 
-    assert units == 'METERS', 'did not get expected UNITS'
+    assert units == "METERS", "did not get expected UNITS"
 
-    assert md_ers["PROJ"] == proj and md_ers["DATUM"] == datum and md_ers["UNITS"] == units, \
-        ('GetMetadata() not consistent with '
-                             'GetMetadataItem()')
+    assert (
+        md_ers["PROJ"] == proj and md_ers["DATUM"] == datum and md_ers["UNITS"] == units
+    ), ("GetMetadata() not consistent with " "GetMetadataItem()")
 
-    assert wkt.startswith("""PROJCS["MGA55"""), 'did not get expected projection'
+    assert wkt.startswith("""PROJCS["MGA55"""), "did not get expected projection"
 
-    ds = drv.Create('/vsimem/ers_10.ers', 1, 1, options=['DATUM=GDA94', 'PROJ=MGA55', 'UNITS=FEET'])
+    ds = drv.Create(
+        "/vsimem/ers_10.ers", 1, 1, options=["DATUM=GDA94", "PROJ=MGA55", "UNITS=FEET"]
+    )
     ds = None
 
     # Check that we can update those values with SetProjection()
-    ds = gdal.Open('/vsimem/ers_10.ers', gdal.GA_Update)
+    ds = gdal.Open("/vsimem/ers_10.ers", gdal.GA_Update)
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
     ds.SetProjection(sr.ExportToWkt())
     proj = ds.GetMetadataItem("PROJ", "ERS")
     datum = ds.GetMetadataItem("DATUM", "ERS")
     units = ds.GetMetadataItem("UNITS", "ERS")
-    assert proj == 'GEODETIC', 'did not get expected PROJ'
+    assert proj == "GEODETIC", "did not get expected PROJ"
 
-    assert datum == 'WGS84', 'did not get expected DATUM'
+    assert datum == "WGS84", "did not get expected DATUM"
 
-    assert units == 'METERS', 'did not get expected UNITS'
+    assert units == "METERS", "did not get expected UNITS"
     ds = None
 
-    ds = gdal.Open('/vsimem/ers_10.ers')
+    ds = gdal.Open("/vsimem/ers_10.ers")
     proj = ds.GetMetadataItem("PROJ", "ERS")
     datum = ds.GetMetadataItem("DATUM", "ERS")
     units = ds.GetMetadataItem("UNITS", "ERS")
     ds = None
 
-    drv.Delete('/vsimem/ers_10.ers')
+    drv.Delete("/vsimem/ers_10.ers")
 
-    assert proj == 'GEODETIC', 'did not get expected PROJ'
+    assert proj == "GEODETIC", "did not get expected PROJ"
 
-    assert datum == 'WGS84', 'did not get expected DATUM'
+    assert datum == "WGS84", "did not get expected DATUM"
 
-    assert units == 'METERS', 'did not get expected UNITS'
+    assert units == "METERS", "did not get expected UNITS"
+
 
 ###############################################################################
 # Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=8744
 
 
 def test_ers_recursive_opening():
-    ds = gdal.Open('/vsitar/data/ers/test_ers_recursive.tar/test.ers')
+    ds = gdal.Open("/vsitar/data/ers/test_ers_recursive.tar/test.ers")
     ds.GetFileList()
+
 
 ###############################################################################
 # Cleanup
@@ -299,7 +326,3 @@ def test_ers_recursive_opening():
 
 def test_ers_cleanup():
     gdaltest.clean_tmp()
-
-
-
-

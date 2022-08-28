@@ -3631,18 +3631,10 @@ SWIGINTERN double OSRSpatialReferenceShadow_GetLinearUnits(OSRSpatialReferenceSh
     return OSRGetLinearUnits( self, 0 );
   }
 SWIGINTERN char const *OSRSpatialReferenceShadow_GetLinearUnitsName(OSRSpatialReferenceShadow *self){
-    const char *name = 0;
-    if ( OSRIsProjected( self ) ) {
-      name = OSRGetAttrValue( self, "PROJCS|UNIT", 0 );
-    }
-    else if ( OSRIsLocal( self ) ) {
-      name = OSRGetAttrValue( self, "LOCAL_CS|UNIT", 0 );
-    }
-
-    if (name != 0)
-      return name;
-
-    return "Meter";
+    char *name = NULL;
+    // Return code ignored.
+    OSRGetLinearUnits( self, &name );
+    return (const char*)name;
   }
 SWIGINTERN char const *OSRSpatialReferenceShadow_GetAuthorityCode(OSRSpatialReferenceShadow *self,char const *target_key){
     return OSRGetAuthorityCode( self, target_key );
@@ -4053,6 +4045,9 @@ SWIGINTERN OSRSpatialReferenceShadow *OSRSpatialReferenceShadow_CloneGeogCS(OSRS
 SWIGINTERN OSRSpatialReferenceShadow *OSRSpatialReferenceShadow_Clone(OSRSpatialReferenceShadow *self){
     return (OSRSpatialReferenceShadow*) OSRClone(self);
   }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_StripVertical(OSRSpatialReferenceShadow *self){
+    return OSRStripVertical(self);
+  }
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_Validate(OSRSpatialReferenceShadow *self){
     return OSRValidate(self);
   }
@@ -4082,12 +4077,6 @@ SWIGINTERN bool OGRCoordinateTransformationOptions_SetAreaOfInterest(OGRCoordina
         westLongitudeDeg, southLatitudeDeg,
         eastLongitudeDeg, northLatitudeDeg);
   }
-SWIGINTERN bool OGRCoordinateTransformationOptions_SetOperation(OGRCoordinateTransformationOptions *self,char const *operation){
-    return OCTCoordinateTransformationOptionsSetOperation(self, operation, false);
-  }
-SWIGINTERN bool OGRCoordinateTransformationOptions_SetDesiredAccuracy(OGRCoordinateTransformationOptions *self,double accuracy){
-    return OCTCoordinateTransformationOptionsSetDesiredAccuracy(self, accuracy);
-  }
 
 SWIGINTERN int
 SWIG_AsVal_bool (PyObject *obj, bool *val)
@@ -4102,6 +4091,12 @@ SWIG_AsVal_bool (PyObject *obj, bool *val)
   return SWIG_OK;
 }
 
+SWIGINTERN bool OGRCoordinateTransformationOptions_SetOperation(OGRCoordinateTransformationOptions *self,char const *operation,bool inverseCT=false){
+    return OCTCoordinateTransformationOptionsSetOperation(self, operation, inverseCT);
+  }
+SWIGINTERN bool OGRCoordinateTransformationOptions_SetDesiredAccuracy(OGRCoordinateTransformationOptions *self,double accuracy){
+    return OCTCoordinateTransformationOptionsSetDesiredAccuracy(self, accuracy);
+  }
 SWIGINTERN bool OGRCoordinateTransformationOptions_SetBallparkAllowed(OGRCoordinateTransformationOptions *self,bool allowBallpark){
     return OCTCoordinateTransformationOptionsSetBallparkAllowed(self, allowBallpark);
   }
@@ -4114,6 +4109,9 @@ SWIGINTERN OSRCoordinateTransformationShadow *new_OSRCoordinateTransformationSha
   }
 SWIGINTERN void delete_OSRCoordinateTransformationShadow(OSRCoordinateTransformationShadow *self){
     OCTDestroyCoordinateTransformation( self );
+  }
+SWIGINTERN OSRCoordinateTransformationShadow *OSRCoordinateTransformationShadow_GetInverse(OSRCoordinateTransformationShadow *self){
+    return OCTGetInverse(self);
   }
 SWIGINTERN void OSRCoordinateTransformationShadow_TransformPoint__SWIG_0(OSRCoordinateTransformationShadow *self,double inout[3]){
     if (self == NULL)
@@ -14704,6 +14702,59 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_SpatialReference_StripVertical(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  OGRErr result;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_StripVertical" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (OGRErr)OSRSpatialReferenceShadow_StripVertical(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if ( ReturnSame(resultobj == Py_None || resultobj == 0) ) {
+      resultobj = PyInt_FromLong( result );
+    }
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_SpatialReference_Validate(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
@@ -15206,15 +15257,18 @@ SWIGINTERN PyObject *_wrap_CoordinateTransformationOptions_SetOperation(PyObject
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   OGRCoordinateTransformationOptions *arg1 = (OGRCoordinateTransformationOptions *) 0 ;
   char *arg2 = (char *) 0 ;
+  bool arg3 = (bool) false ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   int res2 ;
   char *buf2 = 0 ;
   int alloc2 = 0 ;
-  PyObject *swig_obj[2] ;
+  bool val3 ;
+  int ecode3 = 0 ;
+  PyObject *swig_obj[3] ;
   bool result;
   
-  if (!SWIG_Python_UnpackTuple(args, "CoordinateTransformationOptions_SetOperation", 2, 2, swig_obj)) SWIG_fail;
+  if (!SWIG_Python_UnpackTuple(args, "CoordinateTransformationOptions_SetOperation", 2, 3, swig_obj)) SWIG_fail;
   res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_OGRCoordinateTransformationOptions, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CoordinateTransformationOptions_SetOperation" "', argument " "1"" of type '" "OGRCoordinateTransformationOptions *""'"); 
@@ -15225,11 +15279,18 @@ SWIGINTERN PyObject *_wrap_CoordinateTransformationOptions_SetOperation(PyObject
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "CoordinateTransformationOptions_SetOperation" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = reinterpret_cast< char * >(buf2);
+  if (swig_obj[2]) {
+    ecode3 = SWIG_AsVal_bool(swig_obj[2], &val3);
+    if (!SWIG_IsOK(ecode3)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "CoordinateTransformationOptions_SetOperation" "', argument " "3"" of type '" "bool""'");
+    } 
+    arg3 = static_cast< bool >(val3);
+  }
   {
     if ( bUseExceptions ) {
       ClearErrorState();
     }
-    result = (bool)OGRCoordinateTransformationOptions_SetOperation(arg1,(char const *)arg2);
+    result = (bool)OGRCoordinateTransformationOptions_SetOperation(arg1,(char const *)arg2,arg3);
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -15522,6 +15583,43 @@ SWIGINTERN PyObject *_wrap_delete_CoordinateTransformation(PyObject *SWIGUNUSEDP
 #endif
   }
   resultobj = SWIG_Py_Void();
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_CoordinateTransformation_GetInverse(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRCoordinateTransformationShadow *arg1 = (OSRCoordinateTransformationShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  OSRCoordinateTransformationShadow *result = 0 ;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_OSRCoordinateTransformationShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CoordinateTransformation_GetInverse" "', argument " "1"" of type '" "OSRCoordinateTransformationShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRCoordinateTransformationShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (OSRCoordinateTransformationShadow *)OSRCoordinateTransformationShadow_GetInverse(arg1);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OSRCoordinateTransformationShadow, SWIG_POINTER_OWN |  0 );
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
 fail:
@@ -18042,6 +18140,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "SpatialReference_ExportToMICoordSys", _wrap_SpatialReference_ExportToMICoordSys, METH_O, "SpatialReference_ExportToMICoordSys(SpatialReference self) -> OGRErr"},
 	 { "SpatialReference_CloneGeogCS", _wrap_SpatialReference_CloneGeogCS, METH_O, "SpatialReference_CloneGeogCS(SpatialReference self) -> SpatialReference"},
 	 { "SpatialReference_Clone", _wrap_SpatialReference_Clone, METH_O, "SpatialReference_Clone(SpatialReference self) -> SpatialReference"},
+	 { "SpatialReference_StripVertical", _wrap_SpatialReference_StripVertical, METH_O, "SpatialReference_StripVertical(SpatialReference self) -> OGRErr"},
 	 { "SpatialReference_Validate", _wrap_SpatialReference_Validate, METH_O, "SpatialReference_Validate(SpatialReference self) -> OGRErr"},
 	 { "SpatialReference_MorphToESRI", _wrap_SpatialReference_MorphToESRI, METH_O, "SpatialReference_MorphToESRI(SpatialReference self) -> OGRErr"},
 	 { "SpatialReference_MorphFromESRI", _wrap_SpatialReference_MorphFromESRI, METH_O, "SpatialReference_MorphFromESRI(SpatialReference self) -> OGRErr"},
@@ -18053,7 +18152,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "new_CoordinateTransformationOptions", _wrap_new_CoordinateTransformationOptions, METH_NOARGS, "new_CoordinateTransformationOptions() -> CoordinateTransformationOptions"},
 	 { "delete_CoordinateTransformationOptions", _wrap_delete_CoordinateTransformationOptions, METH_O, "delete_CoordinateTransformationOptions(CoordinateTransformationOptions self)"},
 	 { "CoordinateTransformationOptions_SetAreaOfInterest", _wrap_CoordinateTransformationOptions_SetAreaOfInterest, METH_VARARGS, "CoordinateTransformationOptions_SetAreaOfInterest(CoordinateTransformationOptions self, double westLongitudeDeg, double southLatitudeDeg, double eastLongitudeDeg, double northLatitudeDeg) -> bool"},
-	 { "CoordinateTransformationOptions_SetOperation", _wrap_CoordinateTransformationOptions_SetOperation, METH_VARARGS, "CoordinateTransformationOptions_SetOperation(CoordinateTransformationOptions self, char const * operation) -> bool"},
+	 { "CoordinateTransformationOptions_SetOperation", _wrap_CoordinateTransformationOptions_SetOperation, METH_VARARGS, "CoordinateTransformationOptions_SetOperation(CoordinateTransformationOptions self, char const * operation, bool inverseCT=False) -> bool"},
 	 { "CoordinateTransformationOptions_SetDesiredAccuracy", _wrap_CoordinateTransformationOptions_SetDesiredAccuracy, METH_VARARGS, "CoordinateTransformationOptions_SetDesiredAccuracy(CoordinateTransformationOptions self, double accuracy) -> bool"},
 	 { "CoordinateTransformationOptions_SetBallparkAllowed", _wrap_CoordinateTransformationOptions_SetBallparkAllowed, METH_VARARGS, "CoordinateTransformationOptions_SetBallparkAllowed(CoordinateTransformationOptions self, bool allowBallpark) -> bool"},
 	 { "CoordinateTransformationOptions_swigregister", CoordinateTransformationOptions_swigregister, METH_O, NULL},
@@ -18063,6 +18162,7 @@ static PyMethodDef SwigMethods[] = {
 		"new_CoordinateTransformation(SpatialReference src, SpatialReference dst, CoordinateTransformationOptions options) -> CoordinateTransformation\n"
 		""},
 	 { "delete_CoordinateTransformation", _wrap_delete_CoordinateTransformation, METH_O, "delete_CoordinateTransformation(CoordinateTransformation self)"},
+	 { "CoordinateTransformation_GetInverse", _wrap_CoordinateTransformation_GetInverse, METH_O, "CoordinateTransformation_GetInverse(CoordinateTransformation self) -> CoordinateTransformation"},
 	 { "CoordinateTransformation_TransformPoint", _wrap_CoordinateTransformation_TransformPoint, METH_VARARGS, "\n"
 		"CoordinateTransformation_TransformPoint(CoordinateTransformation self, double [3] inout)\n"
 		"CoordinateTransformation_TransformPoint(CoordinateTransformation self, double [4] inout)\n"

@@ -96,7 +96,6 @@ TIFFClientOpen(
 	assert(sizeof(int32_t) == 4);
 	assert(sizeof(uint64_t) == 8);
 	assert(sizeof(int64_t) == 8);
-	assert(sizeof(tmsize_t)==sizeof(void*));
 	{
 		union{
 			uint8_t a8[2];
@@ -666,6 +665,15 @@ int
 TIFFIsBigEndian(TIFF* tif)
 {
 	return (tif->tif_header.common.tiff_magic == TIFF_BIGENDIAN);
+}
+
+/*
+ * Return nonzero if given file is BigTIFF style.
+ */
+int
+TIFFIsBigTIFF(TIFF *tif)
+{
+	return (tif->tif_header.common.tiff_version == TIFF_VERSION_BIG);
 }
 
 /*

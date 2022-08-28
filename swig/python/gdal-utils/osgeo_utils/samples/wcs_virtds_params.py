@@ -34,14 +34,14 @@
 import os
 import sys
 
-from osgeo import gdal
-from osgeo import ogr
-from osgeo import osr
+from osgeo import gdal, ogr, osr
 
 
 def Usage():
-    print('Usage: wcs_virtds_params.py [-lyr_name name] [-tileindex field_name] [-t_srs srsdef] -src_srs_name field_name ogr_ds_tileindex')
-    return 1
+    print(
+        "Usage: wcs_virtds_params.py [-lyr_name name] [-tileindex field_name] [-t_srs srsdef] -src_srs_name field_name ogr_ds_tileindex"
+    )
+    return 2
 
 
 def main(argv=sys.argv):
@@ -50,7 +50,7 @@ def main(argv=sys.argv):
     ogr_ds_name = None
     lyr_name = None
 
-    tileitem = 'location'
+    tileitem = "location"
     tilesrs = None
     srsname = None
 
@@ -74,7 +74,7 @@ def main(argv=sys.argv):
             iArg = iArg + 1
             srsname = argv[iArg]
 
-        elif argv[iArg][0] == '-':
+        elif argv[iArg][0] == "-":
             return Usage()
 
         elif ogr_ds_name is None:
@@ -87,25 +87,25 @@ def main(argv=sys.argv):
 
     ogr_ds = ogr.Open(ogr_ds_name)
     if ogr_ds is None:
-        raise Exception('cannot open %s' % ogr_ds_name)
+        raise Exception("cannot open %s" % ogr_ds_name)
     if ogr_ds.GetLayerCount() == 1:
         lyr = ogr_ds.GetLayer(0)
     elif lyr_name is None:
-        raise Exception('-lyr_name should be specified')
+        raise Exception("-lyr_name should be specified")
     else:
         lyr = ogr_ds.GetLayerByName(lyr_name)
 
     if lyr.GetLayerDefn().GetFieldIndex(tileitem) < 0:
-        raise Exception('%s field cannot be found in layer definition' % tileitem)
+        raise Exception("%s field cannot be found in layer definition" % tileitem)
 
     if lyr.GetLayerDefn().GetFieldIndex(tilesrs) < 0:
-        raise Exception('%s field cannot be found in layer definition' % tilesrs)
+        raise Exception("%s field cannot be found in layer definition" % tilesrs)
 
     lyr_srs = lyr.GetSpatialRef()
     if srsname is not None:
         srs = osr.SpatialReference()
         if srs.SetFromUserInput(srsname) != 0:
-            raise Exception('invalid value for -t_srs : %s' % srsname)
+            raise Exception("invalid value for -t_srs : %s" % srsname)
 
         # Sanity check
         if lyr_srs is not None:
@@ -116,19 +116,22 @@ def main(argv=sys.argv):
 
             srs_proj4 = srs.ExportToProj4()
             if lyr_srs_proj4 != srs_proj4:
-                raise Exception('-t_srs overrides the layer SRS in an incompatible way : (%s, %s)' % (srs_proj4, lyr_srs_proj4))
+                raise Exception(
+                    "-t_srs overrides the layer SRS in an incompatible way : (%s, %s)"
+                    % (srs_proj4, lyr_srs_proj4)
+                )
     else:
         srs = lyr_srs
 
     if srs is None:
-        raise Exception('cannot fetch source SRS')
+        raise Exception("cannot fetch source SRS")
 
     srs.AutoIdentifyEPSG()
     authority_name = srs.GetAuthorityName(None)
     authority_code = srs.GetAuthorityCode(None)
     dst_wkt = srs.ExportToWkt()
-    if authority_name != 'EPSG' or authority_code is None:
-        raise Exception('cannot fetch source SRS as EPSG:XXXX code : %s' % dst_wkt)
+    if authority_name != "EPSG" or authority_code is None:
+        raise Exception("cannot fetch source SRS as EPSG:XXXX code : %s" % dst_wkt)
 
     counter = 0
     xres = 0
@@ -145,10 +148,10 @@ def main(argv=sys.argv):
             gdal_ds_name = os.path.join(os.path.dirname(ogr_ds_name), gdal_ds_name)
         gdal_ds = gdal.Open(gdal_ds_name)
         if gdal_ds is None:
-            raise Exception('cannot open %s' % gdal_ds_name)
+            raise Exception("cannot open %s" % gdal_ds_name)
         warped_vrt_ds = gdal.AutoCreateWarpedVRT(gdal_ds, None, dst_wkt)
         if warped_vrt_ds is None:
-            raise Exception('cannot warp %s to %s' % (gdal_ds_name, dst_wkt))
+            raise Exception("cannot warp %s to %s" % (gdal_ds_name, dst_wkt))
         gt = warped_vrt_ds.GetGeoTransform()
         xres += gt[1]
         yres += gt[5]
@@ -157,7 +160,7 @@ def main(argv=sys.argv):
         counter = counter + 1
 
     if counter == 0:
-        raise Exception('tileindex is empty')
+        raise Exception("tileindex is empty")
 
     xres /= counter
     yres /= counter
@@ -167,8 +170,9 @@ def main(argv=sys.argv):
 
     layername = lyr.GetName()
 
-    if ogr_ds.GetDriver().GetName() != 'ESRI Shapefile':
-        print("""LAYER
+    if ogr_ds.GetDriver().GetName() != "ESRI Shapefile":
+        print(
+            """LAYER
       NAME "%s_tileindex"
       TYPE POLYGON
       STATUS OFF
@@ -177,14 +181,17 @@ def main(argv=sys.argv):
       PROJECTION
         "+init=epsg:%s"
       END
-    END""" % (layername, ogr_ds_name, lyr.GetName(), authority_code))
+    END"""
+            % (layername, ogr_ds_name, lyr.GetName(), authority_code)
+        )
         print("")
 
         tileindex = "%s_tileindex" % layername
     else:
         tileindex = ogr_ds_name
 
-    print("""LAYER
+    print(
+        """LAYER
       NAME "%s"
       TYPE RASTER
       STATUS ON
@@ -202,10 +209,27 @@ def main(argv=sys.argv):
        "wcs_size"        "%d %d"
        "wcs_resolution"  "%f %f"
       END
-    END""" % (layername, tileindex, tileitem, tilesrs, authority_code, layername, xmin, ymin, xmax, ymax, xsize, ysize, xres, abs(yres)))
+    END"""
+        % (
+            layername,
+            tileindex,
+            tileitem,
+            tilesrs,
+            authority_code,
+            layername,
+            xmin,
+            ymin,
+            xmax,
+            ymax,
+            xsize,
+            ysize,
+            xres,
+            abs(yres),
+        )
+    )
 
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

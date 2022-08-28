@@ -329,7 +329,7 @@ class OGRMSSQLSpatialLayer CPL_NON_FINAL: public OGRLayer
     virtual const char *GetGeometryColumn() override;
 
     virtual int         TestCapability( const char * ) override;
-    char*               GByteArrayToHexString( const GByte* pabyData, int nLen);
+    static char*        GByteArrayToHexString( const GByte* pabyData, int nLen);
 
     void               SetLayerStatus( int nStatus ) { nLayerStatus = nStatus; }
     int                GetLayerStatus() { return nLayerStatus; }
@@ -589,7 +589,7 @@ public:
                                     const char *pszDialect ) override;
     virtual void        ReleaseResultSet( OGRLayer * poLayer ) override;
 
-    char                *LaunderName( const char *pszSrcName );
+    static char        *LaunderName( const char *pszSrcName );
     OGRErr              InitializeMetadataTables();
 
     OGRSpatialReference* FetchSRS( int nId );

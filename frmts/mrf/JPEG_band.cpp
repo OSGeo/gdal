@@ -73,6 +73,12 @@ CPL_C_END
 #include <brunsli/decode.h>
 #endif
 
+#if defined(EXPECTED_JPEG_LIB_VERSION) && !defined(LIBJPEG_12_H)
+#if EXPECTED_JPEG_LIB_VERSION != JPEG_LIB_VERSION
+#error EXPECTED_JPEG_LIB_VERSION != JPEG_LIB_VERSION
+#endif
+#endif
+
 NAMESPACE_MRF_START
 
 typedef BitMap2D<> BitMask;

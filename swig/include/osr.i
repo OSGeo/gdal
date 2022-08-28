@@ -468,18 +468,10 @@ public:
   }
 
   const char *GetLinearUnitsName() {
-    const char *name = 0;
-    if ( OSRIsProjected( self ) ) {
-      name = OSRGetAttrValue( self, "PROJCS|UNIT", 0 );
-    }
-    else if ( OSRIsLocal( self ) ) {
-      name = OSRGetAttrValue( self, "LOCAL_CS|UNIT", 0 );
-    }
-
-    if (name != 0)
-      return name;
-
-    return "Meter";
+    char *name = NULL;
+    // Return code ignored.
+    OSRGetLinearUnits( self, &name );
+    return (const char*)name;
   }
 
   const char *GetAuthorityCode( const char *target_key ) {
@@ -1116,6 +1108,10 @@ public:
     return (OSRSpatialReferenceShadow*) OSRClone(self);
   }
 
+  OGRErr StripVertical() {
+    return OSRStripVertical(self);
+  }
+
   OGRErr Validate() {
     return OSRValidate(self);
   }
@@ -1177,8 +1173,8 @@ public:
         eastLongitudeDeg, northLatitudeDeg);
   }
 
-  bool SetOperation(const char* operation) {
-    return OCTCoordinateTransformationOptionsSetOperation(self, operation, false);
+  bool SetOperation(const char* operation, bool inverseCT = false) {
+    return OCTCoordinateTransformationOptionsSetOperation(self, operation, inverseCT);
   }
 
   bool SetDesiredAccuracy(double accuracy) {
@@ -1213,6 +1209,11 @@ public:
 
   ~OSRCoordinateTransformationShadow() {
     OCTDestroyCoordinateTransformation( self );
+  }
+
+  %newobject GetInverse;
+  OSRCoordinateTransformationShadow* GetInverse() {
+    return OCTGetInverse(self);
   }
 
 // Need to apply argin typemap second so the numinputs=1 version gets applied

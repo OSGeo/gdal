@@ -282,11 +282,11 @@ struct _TIFFFieldArray {
 };
 
 struct _TIFFField {
-	uint32_t field_tag;                       /* field's tag */
+	uint32_t field_tag;                     /* field's tag */
 	short field_readcount;                  /* read count/TIFF_VARIABLE/TIFF_SPP */
 	short field_writecount;                 /* write count/TIFF_VARIABLE */
 	TIFFDataType field_type;                /* type of associated data */
-	uint32_t reserved;                        /* reserved for future extension */
+	uint32_t field_anonymous;               /* if true, this is a unknown / anonymous tag */
 	TIFFSetGetFieldType set_field_type;     /* type to be passed to TIFFSetField */
 	TIFFSetGetFieldType get_field_type;     /* type to be passed to TIFFGetField */
 	unsigned short field_bit;               /* bit in fieldsset bit vector */

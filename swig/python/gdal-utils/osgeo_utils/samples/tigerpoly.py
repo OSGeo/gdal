@@ -31,24 +31,23 @@
 
 import sys
 
-from osgeo import ogr
-from osgeo import osr
+from osgeo import ogr, osr
 
 
 #############################################################################
 class Module(object):
-
     def __init__(self):
         self.lines = {}
         self.poly_line_links = {}
+
 
 #############################################################################
 
 
 def Usage():
-    print('Usage: tigerpoly.py infile [outfile].shp')
-    print('')
-    return 1
+    print("Usage: tigerpoly.py infile [outfile].shp")
+    print("")
+    return 2
 
 
 def main(argv=sys.argv):
@@ -71,7 +70,7 @@ def main(argv=sys.argv):
         i = i + 1
 
     if outfile is None:
-        outfile = 'poly.shp'
+        outfile = "poly.shp"
 
     if infile is None:
         return Usage()
@@ -81,21 +80,20 @@ def main(argv=sys.argv):
 
     ds = ogr.Open(infile, update=0)
 
-    poly_layer = ds.GetLayerByName('Polygon')
+    poly_layer = ds.GetLayerByName("Polygon")
 
     #############################################################################
     # Create output file for the composed polygons.
 
     nad83 = osr.SpatialReference()
-    nad83.SetFromUserInput('NAD83')
+    nad83.SetFromUserInput("NAD83")
 
-    shp_driver = ogr.GetDriverByName('ESRI Shapefile')
+    shp_driver = ogr.GetDriverByName("ESRI Shapefile")
     shp_driver.DeleteDataSource(outfile)
 
     shp_ds = shp_driver.CreateDataSource(outfile)
 
-    shp_layer = shp_ds.CreateLayer('out', geom_type=ogr.wkbPolygon,
-                                   srs=nad83)
+    shp_layer = shp_ds.CreateLayer("out", geom_type=ogr.wkbPolygon, srs=nad83)
 
     src_defn = poly_layer.GetLayerDefn()
     poly_field_count = src_defn.GetFieldCount()
@@ -112,14 +110,14 @@ def main(argv=sys.argv):
     # Read all features in the line layer, holding just the geometry in a hash
     # for fast lookup by TLID.
 
-    line_layer = ds.GetLayerByName('CompleteChain')
+    line_layer = ds.GetLayerByName("CompleteChain")
     line_count = 0
 
     modules_hash = {}
 
     feat = line_layer.GetNextFeature()
-    geom_id_field = feat.GetFieldIndex('TLID')
-    tile_ref_field = feat.GetFieldIndex('MODULE')
+    geom_id_field = feat.GetFieldIndex("TLID")
+    tile_ref_field = feat.GetFieldIndex("MODULE")
     while feat is not None:
         geom_id = feat.GetField(geom_id_field)
         tile_ref = feat.GetField(tile_ref_field)
@@ -137,19 +135,19 @@ def main(argv=sys.argv):
 
         feat = line_layer.GetNextFeature()
 
-    print('Got %d lines in %d modules.' % (line_count, len(modules_hash)))
+    print("Got %d lines in %d modules." % (line_count, len(modules_hash)))
 
     #############################################################################
     # Read all polygon/chain links and build a hash keyed by POLY_ID listing
     # the chains (by TLID) attached to it.
 
-    link_layer = ds.GetLayerByName('PolyChainLink')
+    link_layer = ds.GetLayerByName("PolyChainLink")
 
     feat = link_layer.GetNextFeature()
-    geom_id_field = feat.GetFieldIndex('TLID')
-    tile_ref_field = feat.GetFieldIndex('MODULE')
-    lpoly_field = feat.GetFieldIndex('POLYIDL')
-    rpoly_field = feat.GetFieldIndex('POLYIDR')
+    geom_id_field = feat.GetFieldIndex("TLID")
+    tile_ref_field = feat.GetFieldIndex("MODULE")
+    lpoly_field = feat.GetFieldIndex("POLYIDL")
+    rpoly_field = feat.GetFieldIndex("POLYIDR")
 
     link_count = 0
 
@@ -182,14 +180,14 @@ def main(argv=sys.argv):
 
         feat = link_layer.GetNextFeature()
 
-    print('Processed %d links.' % link_count)
+    print("Processed %d links." % link_count)
 
     #############################################################################
     # Process all polygon features.
 
     feat = poly_layer.GetNextFeature()
-    tile_ref_field = feat.GetFieldIndex('MODULE')
-    polyid_field = feat.GetFieldIndex('POLYID')
+    tile_ref_field = feat.GetFieldIndex("MODULE")
+    polyid_field = feat.GetFieldIndex("POLYID")
 
     poly_count = 0
     degenerate_count = 0
@@ -229,17 +227,17 @@ def main(argv=sys.argv):
             feat2.Destroy()
 
             poly_count = poly_count + 1
-        except:
-            print('BuildPolygonFromEdges failed.')
+        except Exception:
+            print("BuildPolygonFromEdges failed.")
 
         feat.Destroy()
 
         feat = poly_layer.GetNextFeature()
 
     if degenerate_count:
-        print('Discarded %d degenerate polygons.' % degenerate_count)
+        print("Discarded %d degenerate polygons." % degenerate_count)
 
-    print('Built %d polygons.' % poly_count)
+    print("Built %d polygons." % poly_count)
 
     #############################################################################
     # Cleanup
@@ -250,5 +248,5 @@ def main(argv=sys.argv):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

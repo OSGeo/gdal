@@ -864,7 +864,16 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape,
                 }
 
                 const int nNumInteriorRings = poPoly->getNumInteriorRings();
-                apoRings.reserve(apoRings.size() + nNumInteriorRings + 1);
+                // to avoid coverity scan warning: "To avoid a quadratic time
+                // penalty when using reserve(), always increase the capacity
+                /// by a multiple of its current value"
+                if( apoRings.size() + nNumInteriorRings + 1 > apoRings.capacity() &&
+                    apoRings.size() < std::numeric_limits<size_t>::max() / 2 )
+                {
+                    apoRings.reserve(std::max(
+                        2 * apoRings.size(),
+                        apoRings.size() + apoRings.size() + nNumInteriorRings + 1));
+                }
                 for(const auto poRing: poPoly)
                 {
                     const int nNumPoints = poRing->getNumPoints();

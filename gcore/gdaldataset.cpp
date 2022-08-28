@@ -2912,14 +2912,14 @@ struct GDALAntiRecursionStruct
     {
         std::string osFilename;
         int         nOpenFlags;
-        int         nSizeAllowedDrivers;
+        std::string osAllowedDrivers;
 
         DatasetContext(const std::string& osFilenameIn,
                         int nOpenFlagsIn,
-                        int nSizeAllowedDriversIn) :
+                        const std::string& osAllowedDriversIn) :
             osFilename(osFilenameIn),
             nOpenFlags(nOpenFlagsIn),
-            nSizeAllowedDrivers(nSizeAllowedDriversIn) {}
+            osAllowedDrivers(osAllowedDriversIn) {}
     };
 
     struct DatasetContextCompare {
@@ -2928,7 +2928,7 @@ struct GDALAntiRecursionStruct
                     (lhs.osFilename == rhs.osFilename &&
                     (lhs.nOpenFlags < rhs.nOpenFlags ||
                         (lhs.nOpenFlags == rhs.nOpenFlags &&
-                        lhs.nSizeAllowedDrivers < rhs.nSizeAllowedDrivers)));
+                        lhs.osAllowedDrivers < rhs.osAllowedDrivers)));
         }
     };
 
@@ -3031,7 +3031,7 @@ char **GDALDataset::GetFileList()
 
     GDALAntiRecursionStruct& sAntiRecursion = GetAntiRecursion();
     const GDALAntiRecursionStruct::DatasetContext datasetCtxt(
-        osMainFilename, 0, 0);
+        osMainFilename, 0, std::string());
     auto& aosDatasetList = sAntiRecursion.aosDatasetNamesWithFlags;
     if( aosDatasetList.find(datasetCtxt) != aosDatasetList.end() )
         return nullptr;
@@ -3407,8 +3407,11 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
         return nullptr;
     }
 
+    std::string osAllowedDrivers;
+    for( CSLConstList papszIter = papszAllowedDrivers; papszIter && *papszIter; ++papszIter )
+        osAllowedDrivers += *papszIter;
     auto dsCtxt = GDALAntiRecursionStruct::DatasetContext(
-        std::string(pszFilename), nOpenFlags, CSLCount(papszAllowedDrivers));
+        std::string(pszFilename), nOpenFlags, osAllowedDrivers);
     if( sAntiRecursion.aosDatasetNamesWithFlags.find(dsCtxt) !=
                 sAntiRecursion.aosDatasetNamesWithFlags.end() )
     {
@@ -3867,7 +3870,7 @@ int CPL_STDCALL GDALDumpOpenDatasets( FILE *fp )
 
     CPL_IGNORE_RET_VAL(VSIFPrintf(fp, "Open GDAL Datasets:\n"));
 
-    for( auto oIter: *poAllDatasetMap )
+    for( const auto& oIter: *poAllDatasetMap )
     {
         GDALDumpOpenDatasetsForeach(oIter.first, fp);
     }
@@ -5399,7 +5402,6 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
                     poFeature = nullptr;
                 }
             }
-            int nFeaturesToAdd = nFeatCount;
 
             CPLErrorReset();
             bool bStopTransaction = false;
@@ -5408,14 +5410,14 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
                 bStopTransaction = true;
                 if( poDstLayer->StartTransaction() != OGRERR_NONE )
                     break;
-                for( int i = 0; i < nFeaturesToAdd; ++i )
+                for( int i = 0; i < nFeatCount; ++i )
                 {
                     if( poDstLayer->CreateFeature( papoDstFeature[i] ) !=
                        OGRERR_NONE )
                     {
-                        nFeaturesToAdd = i;
                         bStopTransfer = true;
                         bStopTransaction = false;
+                        break;
                     }
                 }
                 if( bStopTransaction )
@@ -8781,6 +8783,87 @@ bool GDALDatasetUpdateFieldDomain(GDALDatasetH hDS,
                                 nullptr : CPLStrdup(failureReason.c_str());
     }
     return bRet;
+}
+
+/************************************************************************/
+/*                        GetRelationshipNames()                        */
+/************************************************************************/
+
+/** Returns a list of the names of all relationships stored in the dataset.
+ *
+ * @param papszOptions Driver specific options determining how relationships
+ * should be retrieved. Pass nullptr for default behavior.
+ *
+ * @return list of relationship names
+ * @since GDAL 3.6
+ */
+std::vector<std::string> GDALDataset::GetRelationshipNames(CPL_UNUSED CSLConstList papszOptions) const{
+    return {};
+}
+
+/************************************************************************/
+/*                     GDALDatasetGetRelationshipNames()                */
+/************************************************************************/
+
+/** Returns a list of the names of all relationships stored in the dataset.
+ *
+ * This is the same as the C++ method GDALDataset::GetRelationshipNames().
+ *
+ * @param hDS Dataset handle.
+ * @param papszOptions Driver specific options determining how relationships
+ * should be retrieved. Pass nullptr for default behavior.
+ *
+ * @return list of relationship names, to be freed with CSLDestroy()
+ * @since GDAL 3.6
+ */
+char ** GDALDatasetGetRelationshipNames( GDALDatasetH hDS,CSLConstList papszOptions )
+{
+    VALIDATE_POINTER1(hDS, __func__, nullptr);
+    auto names = GDALDataset::FromHandle(hDS)->GetRelationshipNames(papszOptions);
+    CPLStringList res;
+    for( const auto& name: names )
+    {
+        res.AddString(name.c_str());
+    }
+    return res.StealList();
+}
+
+
+/************************************************************************/
+/*                        GetRelationship()                             */
+/************************************************************************/
+
+/** Get a relationship from its name.
+ *
+ * @return the relationship, or nullptr if not found.
+ * @since GDAL 3.6
+ */
+const GDALRelationship* GDALDataset::GetRelationship(CPL_UNUSED const std::string& name) const
+{
+    return nullptr;
+}
+
+/************************************************************************/
+/*                      GDALDatasetGetRelationship()                    */
+/************************************************************************/
+
+/** Get a relationship from its name.
+ *
+ * This is the same as the C++ method GDALDataset::GetRelationship().
+ *
+ * @param hDS Dataset handle.
+ * @param pszName Name of relationship.
+ * @return the relationship (ownership remains to the dataset), or nullptr if not found.
+ * @since GDAL 3.6
+ */
+GDALRelationshipH GDALDatasetGetRelationship(GDALDatasetH hDS,
+                                             const char* pszName)
+{
+    VALIDATE_POINTER1(hDS, __func__, nullptr);
+    VALIDATE_POINTER1(pszName, __func__, nullptr);
+    return GDALRelationship::ToHandle(
+        const_cast<GDALRelationship*>(
+            GDALDataset::FromHandle(hDS)->GetRelationship(pszName)));
 }
 
 //! @cond Doxygen_Suppress

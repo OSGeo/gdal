@@ -34,15 +34,16 @@ import sys
 from typing import Optional
 
 from osgeo import gdal
-
 from osgeo_utils.auxiliary.base import PathLikeOrStr
 from osgeo_utils.auxiliary.util import GetOutputDriverFor
 
 
 def Usage():
-    print("""Usage: gdal_sieve [-q] [-st threshold] [-4] [-8] [-o name=value]
-           srcfile [-nomask] [-mask filename] [-of format] [dstfile]""")
-    return 1
+    print(
+        """Usage: gdal_sieve [-q] [-st threshold] [-4] [-8] [-o name=value]
+           srcfile [-nomask] [-mask filename] [-of format] [dstfile]"""
+    )
+    return 2
 
 
 def main(argv=sys.argv):
@@ -54,7 +55,7 @@ def main(argv=sys.argv):
     dst_filename = None
     driver_name = None
 
-    mask = 'default'
+    mask = "default"
 
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
@@ -65,35 +66,35 @@ def main(argv=sys.argv):
     while i < len(argv):
         arg = argv[i]
 
-        if arg == '-of' or arg == '-f':
+        if arg == "-of" or arg == "-f":
             i = i + 1
             driver_name = argv[i]
 
-        elif arg == '-4':
+        elif arg == "-4":
             connectedness = 4
 
-        elif arg == '-8':
+        elif arg == "-8":
             connectedness = 8
 
-        elif arg == '-q' or arg == '-quiet':
+        elif arg == "-q" or arg == "-quiet":
             quiet = True
 
-        elif arg == '-st':
+        elif arg == "-st":
             i = i + 1
             threshold = int(argv[i])
 
-        elif arg == '-nomask':
-            mask = 'none'
+        elif arg == "-nomask":
+            mask = "none"
 
-        elif arg == '-mask':
+        elif arg == "-mask":
             i = i + 1
             mask = argv[i]
 
-        elif arg == '-mask':
+        elif arg == "-mask":
             i = i + 1
             mask = argv[i]
 
-        elif arg[:2] == '-h':
+        elif arg[:2] == "-h":
             return Usage()
 
         elif src_filename is None:
@@ -110,24 +111,36 @@ def main(argv=sys.argv):
     if src_filename is None:
         return Usage()
 
-    return gdal_sieve(src_filename=src_filename, dst_filename=dst_filename, driver_name=driver_name,
-                      mask=mask, threshold=threshold, connectedness=connectedness, quiet=quiet)
+    return gdal_sieve(
+        src_filename=src_filename,
+        dst_filename=dst_filename,
+        driver_name=driver_name,
+        mask=mask,
+        threshold=threshold,
+        connectedness=connectedness,
+        quiet=quiet,
+    )
 
 
-def gdal_sieve(src_filename: Optional[str] = None,
-               dst_filename: PathLikeOrStr = None, driver_name: Optional[str] = None, mask: str = 'default',
-               threshold: int = 2, connectedness: int = 4,
-               quiet: bool = False):
+def gdal_sieve(
+    src_filename: Optional[str] = None,
+    dst_filename: PathLikeOrStr = None,
+    driver_name: Optional[str] = None,
+    mask: str = "default",
+    threshold: int = 2,
+    connectedness: int = 4,
+    quiet: bool = False,
+):
     # =============================================================================
     # 	Verify we have next gen bindings with the sievefilter method.
     # =============================================================================
     try:
         gdal.SieveFilter
     except AttributeError:
-        print('')
+        print("")
         print('gdal.SieveFilter() not available.  You are likely using "old gen"')
-        print('bindings or an older version of the next gen bindings.')
-        print('')
+        print("bindings or an older version of the next gen bindings.")
+        print("")
         return 1
 
     # =============================================================================
@@ -140,14 +153,14 @@ def gdal_sieve(src_filename: Optional[str] = None,
         src_ds = gdal.Open(src_filename, gdal.GA_ReadOnly)
 
     if src_ds is None:
-        print('Unable to open %s ' % src_filename)
+        print("Unable to open %s " % src_filename)
         return 1
 
     srcband = src_ds.GetRasterBand(1)
 
-    if mask == 'default':
+    if mask == "default":
         maskband = srcband.GetMaskBand()
-    elif mask == 'none':
+    elif mask == "none":
         maskband = None
     else:
         mask_ds = gdal.Open(mask)
@@ -162,10 +175,11 @@ def gdal_sieve(src_filename: Optional[str] = None,
             driver_name = GetOutputDriverFor(dst_filename)
 
         drv = gdal.GetDriverByName(driver_name)
-        dst_ds = drv.Create(dst_filename, src_ds.RasterXSize, src_ds.RasterYSize, 1,
-                            srcband.DataType)
+        dst_ds = drv.Create(
+            dst_filename, src_ds.RasterXSize, src_ds.RasterYSize, 1, srcband.DataType
+        )
         wkt = src_ds.GetProjection()
-        if wkt != '':
+        if wkt != "":
             dst_ds.SetProjection(wkt)
         gt = src_ds.GetGeoTransform(can_return_null=True)
         if gt is not None:
@@ -187,9 +201,9 @@ def gdal_sieve(src_filename: Optional[str] = None,
     else:
         prog_func = gdal.TermProgress_nocb
 
-    result = gdal.SieveFilter(srcband, maskband, dstband,
-                              threshold, connectedness,
-                              callback=prog_func)
+    result = gdal.SieveFilter(
+        srcband, maskband, dstband, threshold, connectedness, callback=prog_func
+    )
 
     src_ds = None
     dst_ds = None
@@ -197,5 +211,6 @@ def gdal_sieve(src_filename: Optional[str] = None,
 
     return result
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

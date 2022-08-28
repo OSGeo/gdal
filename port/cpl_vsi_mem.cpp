@@ -304,7 +304,8 @@ int VSIMemHandle::Close()
     {
 #ifdef DEBUG_VERBOSE
         CPLDebug("VSIMEM", "Closing handle %p on %s: ref_count=%d (before)",
-                 this, poFile->osFilename.c_str(), poFile.use_count());
+                 this, poFile->osFilename.c_str(),
+                 static_cast<int>(poFile.use_count()));
 #endif
         poFile = nullptr;
     }
@@ -548,7 +549,7 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
         oFileList[poFile->osFilename] = poFile;
 #ifdef DEBUG_VERBOSE
         CPLDebug("VSIMEM", "Creating file %s: ref_count=%d",
-                 pszFilename, poFile.use_count());
+                 pszFilename, static_cast<int>(poFile.use_count()));
 #endif
         poFile->nMaxLength = nMaxLength;
     }
@@ -580,7 +581,7 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
 
 #ifdef DEBUG_VERBOSE
     CPLDebug("VSIMEM", "Opening handle %p on %s: ref_count=%d",
-             poHandle, pszFilename, poFile.use_count());
+             poHandle, pszFilename, static_cast<int>(poFile.use_count()));
 #endif
     if( strstr(pszAccess, "a") )
         poHandle->m_nOffset = poFile->nLength;
@@ -663,7 +664,8 @@ int VSIMemFilesystemHandler::Unlink_unlocked( const char * pszFilename )
 
 #ifdef DEBUG_VERBOSE
     std::shared_ptr<VSIMemFile> poFile = oFileList[osFilename];
-    CPLDebug("VSIMEM", "Unlink %s: ref_count=%d (before)", pszFilename, poFile.use_count());
+    CPLDebug("VSIMEM", "Unlink %s: ref_count=%d (before)",
+             pszFilename, static_cast<int>(poFile.use_count()));
 #endif
     oFileList.erase( oFileList.find(osFilename) );
 
@@ -694,7 +696,7 @@ int VSIMemFilesystemHandler::Mkdir( const char * pszPathname,
     oFileList[osPathname] = poFile;
 #ifdef DEBUG_VERBOSE
     CPLDebug("VSIMEM", "Mkdir on %s: ref_count=%d",
-             pszPathname, poFile.use_count());
+             pszPathname, static_cast<int>(poFile.use_count()));
 #endif
     return 0;
 }
@@ -902,6 +904,8 @@ void VSIInstallMemFileHandler()
  * A virtual memory file is created from the passed buffer with the indicated
  * filename.  Under normal conditions the filename would need to be absolute
  * and within the /vsimem/ portion of the filesystem.
+ * Starting with GDAL 3.6, nullptr can also be passed as pszFilename to mean
+ * an anonymous file, that is destroyed when the handle is closed.
  *
  * If bTakeOwnership is TRUE, then the memory file system handler will take
  * ownership of the buffer, freeing it when the file is deleted.  Otherwise
@@ -909,7 +913,7 @@ void VSIInstallMemFileHandler()
  * long as it might be accessed as a file.  In no circumstances does this
  * function take a copy of the pabyData contents.
  *
- * @param pszFilename the filename to be created.
+ * @param pszFilename the filename to be created, or nullptr
  * @param pabyData the data buffer for the file.
  * @param nDataLength the length of buffer in bytes.
  * @param bTakeOwnership TRUE to transfer "ownership" of buffer or FALSE.
@@ -931,13 +935,10 @@ VSILFILE *VSIFileFromMemBuffer( const char *pszFilename,
         static_cast<VSIMemFilesystemHandler *>(
                 VSIFileManager::GetHandler("/vsimem/"));
 
-    if( pszFilename == nullptr )
-        return nullptr;
-
     const CPLString osFilename =
-        VSIMemFilesystemHandler::NormalizePath(pszFilename);
-    if( osFilename.empty() )
-        return nullptr;
+        pszFilename ?
+            VSIMemFilesystemHandler::NormalizePath(pszFilename) :
+        std::string();
 
     std::shared_ptr<VSIMemFile> poFile = std::make_shared<VSIMemFile>();
 
@@ -947,19 +948,26 @@ VSILFILE *VSIFileFromMemBuffer( const char *pszFilename,
     poFile->nLength = nDataLength;
     poFile->nAllocLength = nDataLength;
 
+    if( !osFilename.empty() )
     {
         CPLMutexHolder oHolder( &poHandler->hMutex );
         poHandler->Unlink_unlocked(osFilename);
         poHandler->oFileList[poFile->osFilename] = poFile;
 #ifdef DEBUG_VERBOSE
         CPLDebug("VSIMEM", "VSIFileFromMemBuffer() %s: ref_count=%d (after)",
-                 poFile->osFilename.c_str(), poFile->use_count());
+                 poFile->osFilename.c_str(),
+                 static_cast<int>(poFile.use_count()));
 #endif
     }
 
-    // TODO(schwehr): Fix this so that the using statement is not needed.
-    // Will just adding the bool for bSetError be okay?
-    return reinterpret_cast<VSILFILE *>( poHandler->Open( osFilename, "r+" ) );
+/* -------------------------------------------------------------------- */
+/*      Setup the file handle on this file.                             */
+/* -------------------------------------------------------------------- */
+    VSIMemHandle *poHandle = new VSIMemHandle;
+
+    poHandle->poFile = poFile;
+    poHandle->bUpdate = true;
+    return reinterpret_cast<VSILFILE *>(poHandle);
 }
 
 /************************************************************************/
@@ -1017,7 +1025,8 @@ GByte *VSIGetMemFileBuffer( const char *pszFilename,
         poHandler->oFileList.erase( poHandler->oFileList.find(osFilename) );
 #ifdef DEBUG_VERBOSE
         CPLDebug("VSIMEM", "VSIGetMemFileBuffer() %s: ref_count=%d (before)",
-                 poFile->osFilename.c_str(), poFile.use_count());
+                 poFile->osFilename.c_str(),
+                 static_cast<int>(poFile.use_count()));
 #endif
         poFile->pabyData = nullptr;
         poFile->nLength = 0;

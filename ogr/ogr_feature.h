@@ -35,6 +35,8 @@
 #include "ogr_featurestyle.h"
 #include "ogr_geometry.h"
 
+#include <cstddef>
+
 #include <exception>
 #include <memory>
 #include <string>
@@ -307,8 +309,8 @@ class CPL_DLL OGRFeatureDefn
     int                 GetFieldCountUnsafe() const { return static_cast<int>(apoFieldDefn.size()); }
 
     // Those methods don't check i is n range.
-    OGRFieldDefn       *GetFieldDefnUnsafe( int i ) { if( apoFieldDefn.empty() ) GetFieldDefn(i); return apoFieldDefn[i].get(); }
-    const OGRFieldDefn *GetFieldDefnUnsafe( int i ) const { if( apoFieldDefn.empty() ) GetFieldDefn(i); return apoFieldDefn[i].get(); }
+    OGRFieldDefn       *GetFieldDefnUnsafe( int i ) { if( apoFieldDefn.empty() ) GetFieldDefn(i); return apoFieldDefn[static_cast<std::size_t>(i)].get(); }
+    const OGRFieldDefn *GetFieldDefnUnsafe( int i ) const { if( apoFieldDefn.empty() ) GetFieldDefn(i); return apoFieldDefn[static_cast<std::size_t>(i)].get(); }
 //! @endcond
 
     virtual void        AddFieldDefn( const OGRFieldDefn * );
@@ -412,10 +414,13 @@ class CPL_DLL OGRFeature
         FieldValue(OGRFeature* poFeature, int iFieldIndex);
         FieldValue(const OGRFeature* poFeature, int iFieldIndex);
         FieldValue(const FieldValue& oOther) = delete;
+        FieldValue& Assign(const FieldValue& oOther);
 
       public:
 //! @cond Doxygen_Suppress
         ~FieldValue();
+
+        FieldValue& operator=(FieldValue&& oOther);
 //! @endcond
 
         /** Set a field value from another one. */
@@ -1064,10 +1069,13 @@ public:
                         bool        bMaxIsInclusive);
 
     OGRRangeFieldDomain* Clone() const override {
-        return new OGRRangeFieldDomain(m_osName, m_osDescription,
+        auto poDomain = new OGRRangeFieldDomain(m_osName, m_osDescription,
                                        m_eFieldType, m_eFieldSubType,
                                        m_sMin, m_bMinIsInclusive,
                                        m_sMax, m_bMaxIsInclusive);
+        poDomain->SetMergePolicy(m_eMergePolicy);
+        poDomain->SetSplitPolicy(m_eSplitPolicy);
+        return poDomain;
     }
 
     /** Get the minimum value.
@@ -1133,9 +1141,12 @@ public:
                        const std::string& osBlob);
 
     OGRGlobFieldDomain* Clone() const override {
-        return new OGRGlobFieldDomain(m_osName, m_osDescription,
+        auto poDomain = new OGRGlobFieldDomain(m_osName, m_osDescription,
                                       m_eFieldType, m_eFieldSubType,
                                       m_osGlob);
+        poDomain->SetMergePolicy(m_eMergePolicy);
+        poDomain->SetSplitPolicy(m_eSplitPolicy);
+        return poDomain;
     }
 
     /** Get the glob expression.

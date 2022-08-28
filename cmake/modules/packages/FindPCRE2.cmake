@@ -9,20 +9,19 @@
 # Find the native PCRE2 headers and libraries.
 
 find_path(PCRE2_INCLUDE_DIR NAMES pcre2.h)
-find_library(PCRE2_LIBRARY NAMES pcre2-8 pcre2-8d pcre2-8-static pcre2-8-staticd NAMES_PER_DIR)
+find_library(PCRE2-8_LIBRARY NAMES pcre2-8 pcre2-8d pcre2-8-static pcre2-8-staticd NAMES_PER_DIR)
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(PCRE2
-                                  FOUND_VAR PCRE2_FOUND
-                                  REQUIRED_VARS PCRE2_LIBRARY PCRE2_INCLUDE_DIR)
-mark_as_advanced(PCRE2_INCLUDE_DIR PCRE2_LIBRARY)
+                                  REQUIRED_VARS PCRE2-8_LIBRARY PCRE2_INCLUDE_DIR)
+mark_as_advanced(PCRE2_INCLUDE_DIR PCRE2-8_LIBRARY)
 if(PCRE2_FOUND)
-    set(PCRE2_LIBRARIES ${PCRE2_LIBRARY})
+    list(APPEND PCRE2_LIBRARIES ${PCRE2-8_LIBRARY})
     set(PCRE2_INCLUDE_DIRS ${PCRE2_INCLUDE_DIR})
-    if(NOT TARGET PCRE2::PCRE2)
-        add_library(PCRE2::PCRE2 UNKNOWN IMPORTED)
-        set_target_properties(PCRE2::PCRE2 PROPERTIES
+    if(NOT TARGET PCRE2::PCRE2-8)
+        add_library(PCRE2::PCRE2-8 UNKNOWN IMPORTED)
+        set_target_properties(PCRE2::PCRE2-8 PROPERTIES
                               INTERFACE_INCLUDE_DIRECTORIES ${PCRE2_INCLUDE_DIR}
                               IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-                              IMPORTED_LOCATION ${PCRE2_LIBRARY})
+                              IMPORTED_LOCATION ${PCRE2-8_LIBRARY})
     endif()
 endif()

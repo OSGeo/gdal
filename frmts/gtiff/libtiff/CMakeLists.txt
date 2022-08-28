@@ -82,16 +82,20 @@ if (GDAL_USE_LERC_INTERNAL)
 endif ()
 
 # Now external libraries
-if (NOT GDAL_USE_ZLIB_INTERNAL)
-  gdal_target_link_libraries(libtiff PRIVATE ZLIB::ZLIB)
-endif ()
 
-if (NOT GDAL_USE_JPEG_INTERNAL)
+# Include libjpeg first so that if we want to use jpeg-turbo on homebrew
+# /usr/local/opt/jpeg-turbo gets included first, before /usr/local/opt
+# that contains libjpeg 9e
+if (GDAL_USE_JPEG AND NOT GDAL_USE_JPEG_INTERNAL)
   # Use a separate object library so that external libjpeg headers are only applied to tif_jpeg.c and tif_ojpeg.c, but
   # not tif_jpeg_12.c !
   add_library(libtiff_jpeg OBJECT tif_jpeg.c tif_ojpeg.c)
   target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:libtiff_jpeg>)
   target_compile_options(libtiff_jpeg PRIVATE ${GDAL_C_WARNING_FLAGS})
+  if (MSVC)
+    # Suppress '<unnamed-tag>': structure was padded due to alignment specifier in tif_jpeg.c
+    target_compile_options(libtiff_jpeg PRIVATE /wd4324)
+  endif ()
   set_property(TARGET libtiff_jpeg PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
   target_compile_definitions(libtiff_jpeg PRIVATE -DJPEG_SUPPORT -DOJPEG_SUPPORT)
   target_include_directories(libtiff_jpeg PRIVATE $<TARGET_PROPERTY:cpl,SOURCE_DIR> $<TARGET_PROPERTY:cpl,BINARY_DIR>)
@@ -104,14 +108,18 @@ if (NOT GDAL_USE_JPEG_INTERNAL)
   endif ()
 endif ()
 
+if (NOT GDAL_USE_ZLIB_INTERNAL)
+  gdal_target_link_libraries(libtiff PRIVATE ZLIB::ZLIB)
+endif ()
+
 if (GDAL_USE_DEFLATE)
   target_compile_definitions(libtiff PRIVATE -DLIBDEFLATE_SUPPORT)
   gdal_target_link_libraries(libtiff PRIVATE Deflate::Deflate)
 endif ()
 
-if (GDAL_USE_JPEG12_INTERNAL)
+if ((GDAL_USE_JPEG OR GDAL_USE_JPEG_INTERNAL) AND GDAL_USE_JPEG12_INTERNAL)
   target_sources(libtiff PRIVATE tif_jpeg_12.c)
-  target_compile_definitions(libtiff PRIVATE -DJPEG_SUPPORT -DJPEG_DUAL_MODE_8_12)
+  target_compile_definitions(libtiff PRIVATE -DJPEG_DUAL_MODE_8_12)
   target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:libjpeg12,BINARY_DIR>)
 endif ()
 

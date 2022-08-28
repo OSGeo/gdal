@@ -31,17 +31,27 @@
 # ******************************************************************************
 import os
 from numbers import Real
-from typing import Optional, Union, Sequence, Tuple, Dict, Any, Iterator, List
+from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union
 
-from osgeo import gdal, __version__ as gdal_version_str
-from osgeo_utils.auxiliary.base import get_extension, is_path_like, PathLikeOrStr, enum_to_str, OptionalBoolStr, \
-    is_true, \
-    MaybeSequence, T
+from osgeo import __version__ as gdal_version_str
+from osgeo import gdal
+from osgeo_utils.auxiliary.base import (
+    MaybeSequence,
+    OptionalBoolStr,
+    PathLikeOrStr,
+    T,
+    enum_to_str,
+    get_extension,
+    is_path_like,
+    is_true,
+)
 
 PathOrDS = Union[PathLikeOrStr, gdal.Dataset]
 DataTypeOrStr = Union[str, int]
 CreationOptions = Optional[Dict[str, Any]]
-gdal_version = tuple(int(s) for s in str(gdal_version_str).split('.') if s.isdigit())[:3]
+gdal_version = tuple(int(s) for s in str(gdal_version_str).split(".") if s.isdigit())[
+    :3
+]
 
 
 def DoesDriverHandleExtension(drv: gdal.Driver, ext: str) -> bool:
@@ -53,13 +63,16 @@ def GetOutputDriversFor(filename: PathLikeOrStr, is_raster=True) -> List[str]:
     filename = os.fspath(filename)
     drv_list = []
     ext = get_extension(filename)
-    if ext.lower() == 'vrt':
-        return ['VRT']
+    if ext.lower() == "vrt":
+        return ["VRT"]
     for i in range(gdal.GetDriverCount()):
         drv = gdal.GetDriver(i)
-        if (drv.GetMetadataItem(gdal.DCAP_CREATE) is not None or
-            drv.GetMetadataItem(gdal.DCAP_CREATECOPY) is not None) and \
-            drv.GetMetadataItem(gdal.DCAP_RASTER if is_raster else gdal.DCAP_VECTOR) is not None:
+        if (
+            drv.GetMetadataItem(gdal.DCAP_CREATE) is not None
+            or drv.GetMetadataItem(gdal.DCAP_CREATECOPY) is not None
+        ) and drv.GetMetadataItem(
+            gdal.DCAP_RASTER if is_raster else gdal.DCAP_VECTOR
+        ) is not None:
             if ext and DoesDriverHandleExtension(drv, ext):
                 drv_list.append(drv.ShortName)
             else:
@@ -69,17 +82,25 @@ def GetOutputDriversFor(filename: PathLikeOrStr, is_raster=True) -> List[str]:
 
     # GMT is registered before netCDF for opening reasons, but we want
     # netCDF to be used by default for output.
-    if ext.lower() == 'nc' and len(drv_list) >= 2 and \
-        drv_list[0].upper() == 'GMT' and drv_list[1].upper() == 'NETCDF':
-        drv_list = ['NETCDF', 'GMT']
+    if (
+        ext.lower() == "nc"
+        and len(drv_list) >= 2
+        and drv_list[0].upper() == "GMT"
+        and drv_list[1].upper() == "NETCDF"
+    ):
+        drv_list = ["NETCDF", "GMT"]
 
     return drv_list
 
 
-def GetOutputDriverFor(filename: PathLikeOrStr, is_raster=True, default_raster_format='GTiff',
-                       default_vector_format='ESRI Shapefile') -> str:
+def GetOutputDriverFor(
+    filename: PathLikeOrStr,
+    is_raster=True,
+    default_raster_format="GTiff",
+    default_vector_format="ESRI Shapefile",
+) -> str:
     if not filename:
-        return 'MEM'
+        return "MEM"
     drv_list = GetOutputDriversFor(filename, is_raster)
     ext = get_extension(filename)
     if not drv_list:
@@ -87,12 +108,17 @@ def GetOutputDriverFor(filename: PathLikeOrStr, is_raster=True, default_raster_f
             return default_raster_format if is_raster else default_vector_format
         else:
             raise Exception("Cannot guess driver for %s" % filename)
-    elif len(drv_list) > 1:
-        print("Several drivers matching %s extension. Using %s" % (ext if ext else '', drv_list[0]))
+    elif len(drv_list) > 1 and not (drv_list[0] == "GTiff" and drv_list[1] == "COG"):
+        print(
+            "Several drivers matching %s extension. Using %s"
+            % (ext if ext else "", drv_list[0])
+        )
     return drv_list[0]
 
 
-def open_ds(filename_or_ds: MaybeSequence[PathOrDS], *args, **kwargs) -> MaybeSequence[gdal.Dataset]:
+def open_ds(
+    filename_or_ds: MaybeSequence[PathOrDS], *args, **kwargs
+) -> MaybeSequence[gdal.Dataset]:
     if not isinstance(filename_or_ds, PathOrDS.__args__):
         return [open_ds(f) for f in filename_or_ds]
     ods = OpenDS(filename_or_ds, *args, **kwargs)
@@ -117,8 +143,9 @@ def get_pixel_size(filename_or_ds: PathOrDS) -> Tuple[Real, Real]:
 ListOfTupleTT_OrT = List[Union[T, Tuple[T, T]]]
 
 
-def get_sizes_factors_resolutions(filename_or_ds: PathOrDS, dim: Optional[int] = 0) -> \
-     Tuple[ListOfTupleTT_OrT[int], ListOfTupleTT_OrT[Real], ListOfTupleTT_OrT[Real]]:
+def get_sizes_factors_resolutions(
+    filename_or_ds: PathOrDS, dim: Optional[int] = 0
+) -> Tuple[ListOfTupleTT_OrT[int], ListOfTupleTT_OrT[Real], ListOfTupleTT_OrT[Real]]:
 
     ds = open_ds(filename_or_ds)
     bnd = ds.GetRasterBand(1)
@@ -148,13 +175,15 @@ def get_sizes_factors_resolutions(filename_or_ds: PathOrDS, dim: Optional[int] =
 def get_best_ovr_by_resolutions(requested_res: Real, resolutions: Sequence[Real]):
     for ovr, res in enumerate(resolutions):
         if res > requested_res:
-            return max(0, ovr-1)
-    return len(resolutions)-1
+            return max(0, ovr - 1)
+    return len(resolutions) - 1
 
 
-def get_ovr_idx(filename_or_ds: PathOrDS,
-                ovr_idx: Optional[int] = None,
-                ovr_res: Optional[Union[int, float]] = None) -> int:
+def get_ovr_idx(
+    filename_or_ds: PathOrDS,
+    ovr_idx: Optional[int] = None,
+    ovr_res: Optional[Union[int, float]] = None,
+) -> int:
     """
     This function uses a different convention than the GDAL API itself:
     * ovr_idx = 0 means the full resolution image (GDAL API: no OVERVIEW_LEVEL)
@@ -172,12 +201,16 @@ def get_ovr_idx(filename_or_ds: PathOrDS,
     """
     if ovr_res is not None:
         if ovr_idx is not None:
-            raise Exception(f'ovr_idx({ovr_idx}) and ovr_res({ovr_res}) are mutually exclusive both were set')
+            raise Exception(
+                f"ovr_idx({ovr_idx}) and ovr_res({ovr_res}) are mutually exclusive both were set"
+            )
         ovr_idx = float(ovr_res)
     if ovr_idx is None:
         return 0
     if isinstance(ovr_idx, Sequence):
-        ovr_idx = ovr_idx[0]  # in case resolution in both axis were given we'll consider only x resolution
+        ovr_idx = ovr_idx[
+            0
+        ]  # in case resolution in both axis were given we'll consider only x resolution
     if isinstance(ovr_idx, int):
         if ovr_idx < 0:
             overview_count = get_ovr_count(filename_or_ds)
@@ -186,12 +219,12 @@ def get_ovr_idx(filename_or_ds: PathOrDS,
         _sizes, _factors, resolutions = get_sizes_factors_resolutions(filename_or_ds)
         ovr_idx = get_best_ovr_by_resolutions(ovr_idx, resolutions)
     else:
-        raise Exception(f'Got an unexpected overview: {ovr_idx}')
+        raise Exception(f"Got an unexpected overview: {ovr_idx}")
     return ovr_idx
 
 
 class OpenDS:
-    __slots__ = ['filename', 'ds', 'args', 'kwargs', 'own', 'silent_fail']
+    __slots__ = ["filename", "ds", "args", "kwargs", "own", "silent_fail"]
 
     def __init__(self, filename_or_ds: PathOrDS, silent_fail=False, *args, **kwargs):
         self.ds: Optional[gdal.Dataset] = None
@@ -242,7 +275,7 @@ class OpenDS:
         if not open_options:
             open_options = dict()
         elif isinstance(open_options, Sequence):
-            open_options = {k: v for k, v in (s.split('=', 1) for s in open_options)}
+            open_options = {k: v for k, v in (s.split("=", 1) for s in open_options)}
         else:
             open_options = dict(open_options)
         ovr_idx = get_ovr_idx(filename, ovr_idx)
@@ -250,12 +283,16 @@ class OpenDS:
         if ovr_idx == 0:
             if ovr_only:
                 if gdal_version >= (3, 3):
-                    open_options["OVERVIEW_LEVEL"] = 'NONE'
+                    open_options["OVERVIEW_LEVEL"] = "NONE"
                 else:
-                    raise Exception('You asked to not expose overviews, Which is not supported in your gdal version, '
-                                    'please update your gdal version to gdal >= 3.3 or do not ask to hide overviews')
+                    raise Exception(
+                        "You asked to not expose overviews, Which is not supported in your gdal version, "
+                        "please update your gdal version to gdal >= 3.3 or do not ask to hide overviews"
+                    )
         else:  # if ovr_idx > 0:
-            open_options["OVERVIEW_LEVEL"] = f'{ovr_idx - 1}{"only" if ovr_only else ""}'
+            open_options[
+                "OVERVIEW_LEVEL"
+            ] = f'{ovr_idx - 1}{"only" if ovr_only else ""}'
         if logger is not None:
             s = 'opening file: "{}"'.format(filename)
             if open_options:
@@ -291,7 +328,9 @@ def get_band_minimum(band: gdal.Band):
     return band.GetMinimum()
 
 
-def get_raster_band(filename_or_ds: PathOrDS, bnd_index: int = 1, ovr_index: Optional[int] = None):
+def get_raster_band(
+    filename_or_ds: PathOrDS, bnd_index: int = 1, ovr_index: Optional[int] = None
+):
     with OpenDS(filename_or_ds) as ds:
         bnd = ds.GetRasterBand(bnd_index)
         if ovr_index is not None:
@@ -308,7 +347,9 @@ def get_raster_minimum(filename_or_ds: PathOrDS, bnd_index: Optional[int] = 1):
             return get_band_minimum(bnd)
 
 
-def get_raster_min_max(filename_or_ds: PathOrDS, bnd_index: int = 1, approx_ok: Union[bool, int] = False):
+def get_raster_min_max(
+    filename_or_ds: PathOrDS, bnd_index: int = 1, approx_ok: Union[bool, int] = False
+):
     with OpenDS(filename_or_ds) as ds:
         bnd = ds.GetRasterBand(bnd_index)
         min_max = bnd.ComputeRasterMinMax(int(approx_ok))
@@ -327,7 +368,9 @@ def unset_nodatavalue(filename_or_ds: PathOrDS):
             b.DeleteNoDataValue()
 
 
-def get_metadata_item(filename_or_ds: PathOrDS, key: str, domain: str, default: Any = None):
+def get_metadata_item(
+    filename_or_ds: PathOrDS, key: str, domain: str, default: Any = None
+):
     key = key.strip()
     domain = domain.strip()
     with OpenDS(filename_or_ds) as ds:
@@ -335,21 +378,29 @@ def get_metadata_item(filename_or_ds: PathOrDS, key: str, domain: str, default: 
         return metadata_item if metadata_item is not None else default
 
 
-def get_image_structure_metadata(filename_or_ds: PathOrDS, key: str, default: Any = None):
-    return get_metadata_item(filename_or_ds, key=key, domain="IMAGE_STRUCTURE", default=default)
+def get_image_structure_metadata(
+    filename_or_ds: PathOrDS, key: str, default: Any = None
+):
+    return get_metadata_item(
+        filename_or_ds, key=key, domain="IMAGE_STRUCTURE", default=default
+    )
 
 
 def get_bigtiff_creation_option_value(big_tiff: OptionalBoolStr):
-    return "IF_SAFER" if big_tiff is None \
-        else big_tiff if bool(big_tiff) and isinstance(big_tiff, str) \
+    return (
+        "IF_SAFER"
+        if big_tiff is None
+        else big_tiff
+        if bool(big_tiff) and isinstance(big_tiff, str)
         else str(is_true(big_tiff))
+    )
 
 
 def get_ext_by_of(of: str):
     ext = enum_to_str(of).lower()
-    if ext in ['gtiff', 'cog', 'mem']:
-        ext = 'tif'
-    return '.' + ext
+    if ext in ["gtiff", "cog", "mem"]:
+        ext = "tif"
+    return "." + ext
 
 
 def get_band_nums(ds: gdal.Dataset, band_nums: Optional[MaybeSequence[int]] = None):
@@ -360,8 +411,11 @@ def get_band_nums(ds: gdal.Dataset, band_nums: Optional[MaybeSequence[int]] = No
     return band_nums
 
 
-def get_bands(filename_or_ds: PathOrDS, band_nums: Optional[MaybeSequence[int]] = None, ovr_idx: Optional[int] = None) \
-            -> List[gdal.Band]:
+def get_bands(
+    filename_or_ds: PathOrDS,
+    band_nums: Optional[MaybeSequence[int]] = None,
+    ovr_idx: Optional[int] = None,
+) -> List[gdal.Band]:
     """
     returns a list of gdal bands of the given dataset
     :param filename_or_ds: filename or the dataset itself
@@ -376,18 +430,22 @@ def get_bands(filename_or_ds: PathOrDS, band_nums: Optional[MaybeSequence[int]] 
     for band_num in band_nums:
         band: gdal.Band = ds.GetRasterBand(band_num)
         if band is None:
-            raise Exception(f'Could not get band {band_num} from file {filename_or_ds}')
+            raise Exception(f"Could not get band {band_num} from file {filename_or_ds}")
         if ovr_idx:
             ovr_idx = get_ovr_idx(ds, ovr_idx)
             if ovr_idx != 0:
-                band = band.GetOverview(ovr_idx-1)
+                band = band.GetOverview(ovr_idx - 1)
             if band is None:
-                raise Exception(f'Could not get overview {ovr_idx} from band {band_num} of file {filename_or_ds}')
+                raise Exception(
+                    f"Could not get overview {ovr_idx} from band {band_num} of file {filename_or_ds}"
+                )
         bands.append(band)
     return bands
 
 
-def get_scales_and_offsets(bands: Union[PathOrDS, MaybeSequence[gdal.Band]]) -> Tuple[bool, MaybeSequence[Real], MaybeSequence[Real]]:
+def get_scales_and_offsets(
+    bands: Union[PathOrDS, MaybeSequence[gdal.Band]]
+) -> Tuple[bool, MaybeSequence[Real], MaybeSequence[Real]]:
     if isinstance(bands, PathOrDS.__args__):
         bands = get_bands(bands)
     single_band = not isinstance(bands, Sequence)
@@ -395,7 +453,9 @@ def get_scales_and_offsets(bands: Union[PathOrDS, MaybeSequence[gdal.Band]]) -> 
         bands = [bands]
     scales = [bnd.GetScale() or 1 for bnd in bands]
     offsets = [bnd.GetOffset() or 0 for bnd in bands]
-    is_scaled = any(scale != 1 for scale in scales) or any(offset != 0 for offset in offsets)
+    is_scaled = any(scale != 1 for scale in scales) or any(
+        offset != 0 for offset in offsets
+    )
     if single_band:
         scales, offsets = scales[0], offsets[0]
     return is_scaled, scales, offsets

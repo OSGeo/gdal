@@ -872,7 +872,7 @@ CPLErr TileDBDataset::TrySaveXML()
                 eErr = TrySaveXML();
             }
             /* No way we can save into a /vsicurl resource */
-            else if( !STARTS_WITH(psPam->pszPamFilename, "/vsicurl") )
+            else if( !VSISupportsSequentialWrite(psPam->pszPamFilename, false) )
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
                         "Unable to save auxiliary information in %s.",
@@ -1418,7 +1418,8 @@ GDALDataset *TileDBDataset::Open( GDALOpenInfo * poOpenInfo )
         else
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                "Wrong number of dimensions %li expected 2 or 3.", dims.size() );
+                "Wrong number of dimensions %d: expected 2 or 3.",
+                static_cast<int>(dims.size()) );
             return nullptr;
         }
 
@@ -1782,7 +1783,7 @@ void TileDBDataset::SetBlockSize( GDALRasterBand* poBand, char** &papszOptions)
 /************************************************************************/
 
 TileDBDataset* TileDBDataset::CreateLL( const char *pszFilename,
-                         int nXSize, int nYSize, int nBands,
+                         int nXSize, int nYSize, int nBandsIn,
                          GDALDataType eType,
                          char **papszOptions )
 {
@@ -1797,11 +1798,11 @@ TileDBDataset* TileDBDataset::CreateLL( const char *pszFilename,
         poDS->nRasterXSize = nXSize;
         poDS->nRasterYSize = nYSize;
         poDS->eDataType = eType;
-        poDS->nBands = nBands;
+        poDS->nBands = nBandsIn;
         poDS->eAccess = GA_Update;
         poDS->bGlobalOrder = true;
 
-        if ( nBands == 0 ) // subdatasets
+        if ( poDS->nBands == 0 ) // subdatasets
         {
             poDS->eIndexMode = ATTRIBUTES;
         }
@@ -1887,13 +1888,13 @@ TileDBDataset* TileDBDataset::CreateLL( const char *pszFilename,
                     *poDS->m_ctx, "Y",{0, h},
                     uint64_t( poDS->nBlockYSize ) );
 
-        if ( ( nBands == 0 ) || ( poDS->eIndexMode == ATTRIBUTES ) )
+        if ( ( poDS->nBands == 0 ) || ( poDS->eIndexMode == ATTRIBUTES ) )
         {
             poDS->AddDimensions( domain, d2, d1, nullptr );
         }
         else
         {
-            auto d3 = tiledb::Dimension::create<uint64_t>( *poDS->m_ctx, "BANDS", {1, uint64_t( nBands )}, 1);
+            auto d3 = tiledb::Dimension::create<uint64_t>( *poDS->m_ctx, "BANDS", {1, uint64_t( poDS->nBands )}, 1);
             poDS->AddDimensions( domain, d2, d1, &d3 );
         }
 
@@ -2178,7 +2179,7 @@ CPLErr TileDBDataset::CopySubDatasets( GDALDataset* poSrcDS,
 /************************************************************************/
 
 GDALDataset *
-TileDBDataset::Create( const char * pszFilename, int nXSize, int nYSize, int nBands,
+TileDBDataset::Create( const char * pszFilename, int nXSize, int nYSize, int nBandsIn,
         GDALDataType eType, char ** papszOptions )
 
 {
@@ -2188,7 +2189,7 @@ TileDBDataset::Create( const char * pszFilename, int nXSize, int nYSize, int nBa
 
         std::unique_ptr<TileDBDataset> poDS(
             TileDBDataset::CreateLL( osArrayPath, nXSize, nYSize,
-                                    nBands, eType, papszOptions ));
+                                    nBandsIn, eType, papszOptions ));
 
         if( !poDS )
             return nullptr;

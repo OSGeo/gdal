@@ -126,6 +126,7 @@ char* removeargnames(char* pszBuf)
 
 static void ignore_ret(char* x)
 {
+    (void)x;
 }
 
 int main(int argc, char* argv[])
@@ -141,22 +142,22 @@ int main(int argc, char* argv[])
     FILE* fDst;
     JavaDocInstance* instances = (JavaDocInstance*)calloc(sizeof(JavaDocInstance), 3000);
     int nInstances = 0;
-    char szLine[512];
+    char szLine[1024];
     char szClass[256];
     char javadoc[16384];
     szClass[0] = 0;
-    while(fgets(szLine, 255, fSrc))
+    while(fgets(szLine, 1023, fSrc))
     {
         if (strstr(szLine, "/**") == NULL) continue;
 begin:
         strcpy(javadoc, szLine);
-        while(fgets(szLine, 255, fSrc))
+        while(fgets(szLine, 1023, fSrc))
         {
             strcat(javadoc, szLine);
             if (strstr(szLine, "*/"))
                 break;
         }
-        while(fgets(szLine, 255, fSrc))
+        while(fgets(szLine, 1023, fSrc))
         {
             if (szLine[0] == 10)
                 continue;
@@ -212,7 +213,7 @@ begin:
         char szPackage[256];
         szPackage[0] = 0;
 
-        while(fgets(szLine, 255, fSrc))
+        while(fgets(szLine, 1023, fSrc))
         {
             char szMethodName[1024];
             char* szOriLine = strdup(szLine);
@@ -255,7 +256,7 @@ begin:
                     strcpy(szMethodName, szLine);
                     do
                     {
-                        ignore_ret(fgets(szLine, 255, fSrc));
+                        ignore_ret(fgets(szLine, 1023, fSrc));
                         strcpy(szMethodName + strlen(szMethodName) - 1, szLine);
                     } while (!strchr(szMethodName,')'));
                     strcpy(szLine, szMethodName);
@@ -282,7 +283,7 @@ begin:
                             {
                                 do
                                 {
-                                    ignore_ret(fgets(szLine, 255, fSrc));
+                                    ignore_ret(fgets(szLine, 1023, fSrc));
                                 } while (!strchr(szLine,'}'));
                             }
                             break;
@@ -310,7 +311,7 @@ begin:
                                         nBrackets --;
                                     }
                                 }
-                                ignore_ret(fgets(szLine, 255, fSrc));
+                                ignore_ret(fgets(szLine, 1023, fSrc));
                             } while(bFoundOpen == FALSE || nBrackets > 0);
                         }
                         else

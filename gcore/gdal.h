@@ -283,6 +283,11 @@ typedef void *GDALRasterAttributeTableH;
 /** Opaque type used for the C bindings of the C++ GDALAsyncReader class */
 typedef void *GDALAsyncReaderH;
 
+/** Opaque type used for the C bindings of the C++ GDALRelationship class
+ *  @since GDAL 3.6
+ */
+typedef void *GDALRelationshipH;
+
 /** Type to express pixel, line or band spacing. Signed 64 bit integer. */
 typedef GIntBig GSpacing;
 
@@ -466,6 +471,47 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  */
 #define GDAL_DCAP_GNM         "DCAP_GNM"
 
+/** Capability set by a driver that can create layers.
+ * @since GDAL 3.6
+ */
+#define GDAL_DCAP_CREATE_LAYER "DCAP_CREATE_LAYER"
+
+/** Capability set by a driver that can delete layers.
+ * @since GDAL 3.6
+ */
+#define GDAL_DCAP_DELETE_LAYER "DCAP_DELETE_LAYER"
+
+/** Capability set by a driver that can create fields.
+ * @since GDAL 3.6
+ */
+#define GDAL_DCAP_CREATE_FIELD "DCAP_CREATE_FIELD"
+
+/** Capability set by a driver that can delete fields.
+ * @since GDAL 3.6
+ */
+#define GDAL_DCAP_DELETE_FIELD "DCAP_DELETE_FIELD"
+
+/** Capability set by a driver that can reorder fields.
+ * @since GDAL 3.6
+ */
+#define GDAL_DCAP_REORDER_FIELDS "DCAP_REORDER_FIELDS"
+
+/** List of (space separated) flags support by the OGRLayer::AlterFieldDefn() API.
+ *
+ * Supported values are "Name", "Type", "WidthPrecision", "Nullable", "Default", "Unique"
+ * and "Domain", corresponding respectively to the ALTER_NAME_FLAG,
+ * ALTER_TYPE_FLAG, ALTER_WIDTH_PRECISION_FLAG, ALTER_NULLABLE_FLAG,
+ * ALTER_DEFAULT_FLAG, ALTER_UNIQUE_FLAG, and ALTER_DOMAIN_FLAG flags.
+ *
+ * Note that advertizing one of these flags doesn't necessarily mean that
+ * all modifications of the corresponding property can be made. For example,
+ * altering the field type may be restricted by the current type of the field,
+ * etc.
+ *
+ * @since GDAL 3.6
+ */
+#define GDAL_DMD_ALTER_FIELD_DEFN_FLAGS "GDAL_DMD_ALTER_FIELD_DEFN_FLAGS"
+
 /** Capability set by a driver that can create fields with NOT NULL constraint.
  * @since GDAL 2.0
  */
@@ -493,6 +539,35 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  */
 #define GDAL_DCAP_NONSPATIAL     "DCAP_NONSPATIAL"
 
+/** Capability set by a driver that can support curved geometries.
+ * @since GDAL 3.6
+ */
+#define GDAL_DCAP_CURVE_GEOMETRIES "DCAP_CURVE_GEOMETRIES"
+
+/** Capability set by a driver that can support measured geometries.
+ *
+ * @since GDAL 3.6
+ */
+#define GDAL_DCAP_MEASURED_GEOMETRIES "DCAP_MEASURED_GEOMETRIES"
+
+/** Capability set by a driver that can support the Z dimension for geometries.
+ *
+ * @since GDAL 3.6
+ */
+#define GDAL_DCAP_Z_GEOMETRIES "DCAP_Z_GEOMETRIES"
+
+/** List of (space separated) flags which reflect the geometry handling behavior of a driver.
+ *
+ * Supported values are currently:
+ *
+ * - "EquatesMultiAndSingleLineStringDuringWrite" and "EquatesMultiAndSinglePolygonDuringWrite". These
+ *   flags indicate that the driver does not differentiate between single-part
+ *   and multi-part linestring and polygon geometries when writing features respectively.
+ *
+ * @since GDAL 3.6
+ */
+#define GDAL_DMD_GEOMETRY_FLAGS "GDAL_DMD_GEOMETRY_FLAGS"
+
 /** Capability set by drivers which support feature styles.
  * @since GDAL 2.3
  */
@@ -519,6 +594,12 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  */
 #define GDAL_DCAP_FIELD_DOMAINS "DCAP_FIELD_DOMAINS"
 
+/** Capability set by drivers for formats which support reading table relationships.
+ *
+ * @since GDAL 3.6
+ */
+#define GDAL_DCAP_RELATIONSHIPS "DCAP_RELATIONSHIPS"
+
 /** Capability set by drivers for formats which support renaming vector layers.
  *
  * @since GDAL 3.5
@@ -533,6 +614,23 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  * @since GDAL 3.5
  */
 #define GDAL_DMD_CREATION_FIELD_DOMAIN_TYPES "DMD_CREATION_FIELD_DOMAIN_TYPES"
+
+/** List of (space separated) flags support by the OGRLayer::AlterGeomFieldDefn() API.
+ *
+ * Supported values are "Name", "Type", "Nullable", "SRS", "CoordinateEpoch",
+ * corresponding respectively to the ALTER_GEOM_FIELD_DEFN_NAME_FLAG,
+ * ALTER_GEOM_FIELD_DEFN_TYPE_FLAG, ALTER_GEOM_FIELD_DEFN_NULLABLE_FLAG,
+ * ALTER_GEOM_FIELD_DEFN_SRS_FLAG, ALTER_GEOM_FIELD_DEFN_SRS_COORD_EPOCH_FLAG
+ * flags. Note that advertizing one of these flags doesn't necessarily mean that
+ * all modifications of the corresponding property can be made. For example,
+ * altering the geometry type may be restricted by the type of the geometries in
+ * the field, or changing the nullable state to non-nullable is not possible if
+ * null geometries are present, etc.
+ *
+ * @since GDAL 3.6
+ */
+#define GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS "DMD_ALTER_GEOM_FIELD_DEFN_FLAGS"
+
 
 /** Value for GDALDimension::GetType() specifying the X axis of a horizontal CRS.
  * @since GDAL 3.1
@@ -921,6 +1019,10 @@ bool CPL_DLL GDALDatasetUpdateFieldDomain(GDALDatasetH hDS,
                                           OGRFieldDomainH hFieldDomain,
                                           char** ppszFailureReason);
 
+char CPL_DLL ** GDALDatasetGetRelationshipNames(GDALDatasetH, CSLConstList) CPL_WARN_UNUSED_RESULT;
+GDALRelationshipH CPL_DLL GDALDatasetGetRelationship(GDALDatasetH hDS,
+                                                     const char* pszName);
+
 /* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */
 /* ==================================================================== */
@@ -1201,6 +1303,14 @@ GDALCopyBits( const GByte *pabySrcData, int nSrcOffset, int nSrcStep,
               GByte *pabyDstData, int nDstOffset, int nDstStep,
               int nBitCount, int nStepCount );
 
+void CPL_DLL
+GDALDeinterleave(const void* pSourceBuffer,
+                 GDALDataType eSourceDT,
+                 int nComponents,
+                 void** ppDestBuffer,
+                 GDALDataType eDestDT,
+                 size_t nIters);
+
 int CPL_DLL CPL_STDCALL GDALLoadWorldFile( const char *, double * );
 int CPL_DLL CPL_STDCALL GDALReadWorldFile( const char *, const char *,
                                            double * );
@@ -1455,6 +1565,69 @@ void CPL_DLL* CPL_STDCALL
 
 int CPL_DLL CPL_STDCALL GDALRATGetRowOfValue( GDALRasterAttributeTableH, double );
 void CPL_DLL CPL_STDCALL GDALRATRemoveStatistics( GDALRasterAttributeTableH );
+
+/* -------------------------------------------------------------------- */
+/*                          Relationships                               */
+/* -------------------------------------------------------------------- */
+
+/** Cardinality of relationship.
+ *
+ * @since GDAL 3.6
+ */
+typedef enum
+{
+    /** One-to-one */
+    GRC_ONE_TO_ONE,
+    /** One-to-many */
+    GRC_ONE_TO_MANY,
+    /** Many-to-one */
+    GRC_MANY_TO_ONE,
+    /** Many-to-many */
+    GRC_MANY_TO_MANY,
+} GDALRelationshipCardinality;
+
+/** Type of relationship.
+ *
+ * @since GDAL 3.6
+ */
+typedef enum
+{
+    /** Composite relationship */
+    GRT_COMPOSITE,
+    /** Association relationship */
+    GRT_ASSOCIATION,
+    /** Aggregation relationship */
+    GRT_AGGREGATION,
+} GDALRelationshipType;
+
+GDALRelationshipH CPL_DLL GDALRelationshipCreate(const char*,
+                                                 const char*,
+                                                 const char*,
+                                                 GDALRelationshipCardinality );
+void CPL_DLL CPL_STDCALL GDALDestroyRelationship(GDALRelationshipH);
+const char CPL_DLL* GDALRelationshipGetName(GDALRelationshipH);
+GDALRelationshipCardinality CPL_DLL GDALRelationshipGetCardinality(GDALRelationshipH);
+const char CPL_DLL* GDALRelationshipGetLeftTableName(GDALRelationshipH);
+const char CPL_DLL* GDALRelationshipGetRightTableName(GDALRelationshipH);
+const char CPL_DLL* GDALRelationshipGetMappingTableName(GDALRelationshipH);
+void CPL_DLL GDALRelationshipSetMappingTableName(GDALRelationshipH, const char*);
+char CPL_DLL** GDALRelationshipGetLeftTableFields(GDALRelationshipH);
+char CPL_DLL** GDALRelationshipGetRightTableFields(GDALRelationshipH);
+void CPL_DLL GDALRelationshipSetLeftTableFields(GDALRelationshipH, CSLConstList);
+void CPL_DLL GDALRelationshipSetRightTableFields(GDALRelationshipH, CSLConstList);
+char CPL_DLL** GDALRelationshipGetLeftMappingTableFields(GDALRelationshipH);
+char CPL_DLL** GDALRelationshipGetRightMappingTableFields(GDALRelationshipH);
+void CPL_DLL GDALRelationshipSetLeftMappingTableFields(GDALRelationshipH, CSLConstList);
+void CPL_DLL GDALRelationshipSetRightMappingTableFields(GDALRelationshipH, CSLConstList);
+GDALRelationshipType CPL_DLL GDALRelationshipGetType(GDALRelationshipH);
+void CPL_DLL GDALRelationshipSetType(GDALRelationshipH, GDALRelationshipType);
+const char CPL_DLL* GDALRelationshipGetForwardPathLabel(GDALRelationshipH);
+void CPL_DLL GDALRelationshipSetForwardPathLabel(GDALRelationshipH, const char*);
+const char CPL_DLL* GDALRelationshipGetBackwardPathLabel(GDALRelationshipH);
+void CPL_DLL GDALRelationshipSetBackwardPathLabel(GDALRelationshipH, const char*);
+const char CPL_DLL* GDALRelationshipGetRelatedTableType(GDALRelationshipH);
+void CPL_DLL GDALRelationshipSetRelatedTableType(GDALRelationshipH, const char*);
+
 
 /* ==================================================================== */
 /*      GDAL Cache Management                                           */

@@ -31,12 +31,11 @@ if (GDAL_ENABLE_DRIVER_JPEG AND GDAL_USE_JPEG_INTERNAL)
   gdal_add_vendored_lib(gdal_NITF libjpeg)
 endif()
 
-if (NOT GDAL_USE_TIFF_INTERNAL)
-  gdal_target_link_libraries(gdal_NITF PRIVATE TIFF::TIFF)
-endif ()
-
 if (GDAL_ENABLE_DRIVER_JPEG)
   target_compile_definitions(gdal_NITF PRIVATE -DJPEG_SUPPORTED)
+  # Include libjpeg first so that if we want to use jpeg-turbo on homebrew
+  # /usr/local/opt/jpeg-turbo gets included first, before /usr/local/opt
+  # triggered by libtiff, that contains libjpeg 9e
   if (NOT GDAL_USE_JPEG_INTERNAL)
     gdal_target_link_libraries(gdal_NITF PRIVATE JPEG::JPEG)
   endif ()
@@ -45,3 +44,7 @@ if (GDAL_ENABLE_DRIVER_JPEG)
     target_include_directories(gdal_NITF PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
   endif ()
 endif()
+
+if (NOT GDAL_USE_TIFF_INTERNAL)
+  gdal_target_link_libraries(gdal_NITF PRIVATE TIFF::TIFF)
+endif ()

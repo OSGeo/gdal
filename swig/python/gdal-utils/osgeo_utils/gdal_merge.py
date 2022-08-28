@@ -39,24 +39,49 @@ from osgeo_utils.auxiliary.util import GetOutputDriverFor
 
 progress = gdal.TermProgress_nocb
 
-__version__ = '$id$'[5:-1]
+__version__ = "$id$"[5:-1]
 
 
 # =============================================================================
-def raster_copy(s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
-                t_fh, t_xoff, t_yoff, t_xsize, t_ysize, t_band_n,
-                nodata=None, verbose=0):
+def raster_copy(
+    s_fh,
+    s_xoff,
+    s_yoff,
+    s_xsize,
+    s_ysize,
+    s_band_n,
+    t_fh,
+    t_xoff,
+    t_yoff,
+    t_xsize,
+    t_ysize,
+    t_band_n,
+    nodata=None,
+    verbose=0,
+):
 
     if verbose != 0:
-        print('Copy %d,%d,%d,%d to %d,%d,%d,%d.'
-              % (s_xoff, s_yoff, s_xsize, s_ysize,
-                 t_xoff, t_yoff, t_xsize, t_ysize))
+        print(
+            "Copy %d,%d,%d,%d to %d,%d,%d,%d."
+            % (s_xoff, s_yoff, s_xsize, s_ysize, t_xoff, t_yoff, t_xsize, t_ysize)
+        )
 
     if nodata is not None:
         return raster_copy_with_nodata(
-            s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
-            t_fh, t_xoff, t_yoff, t_xsize, t_ysize, t_band_n,
-            nodata)
+            s_fh,
+            s_xoff,
+            s_yoff,
+            s_xsize,
+            s_ysize,
+            s_band_n,
+            t_fh,
+            t_xoff,
+            t_yoff,
+            t_xsize,
+            t_ysize,
+            t_band_n,
+            nodata,
+        )
 
     s_band = s_fh.GetRasterBand(s_band_n)
     m_band = None
@@ -68,33 +93,58 @@ def raster_copy(s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
         m_band = s_band
     if m_band is not None:
         return raster_copy_with_mask(
-            s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
-            t_fh, t_xoff, t_yoff, t_xsize, t_ysize, t_band_n,
-            m_band)
+            s_fh,
+            s_xoff,
+            s_yoff,
+            s_xsize,
+            s_ysize,
+            s_band_n,
+            t_fh,
+            t_xoff,
+            t_yoff,
+            t_xsize,
+            t_ysize,
+            t_band_n,
+            m_band,
+        )
 
     s_band = s_fh.GetRasterBand(s_band_n)
     t_band = t_fh.GetRasterBand(t_band_n)
 
-    data = s_band.ReadRaster(s_xoff, s_yoff, s_xsize, s_ysize,
-                             t_xsize, t_ysize, t_band.DataType)
-    t_band.WriteRaster(t_xoff, t_yoff, t_xsize, t_ysize,
-                       data, t_xsize, t_ysize, t_band.DataType)
+    data = s_band.ReadRaster(
+        s_xoff, s_yoff, s_xsize, s_ysize, t_xsize, t_ysize, t_band.DataType
+    )
+    t_band.WriteRaster(
+        t_xoff, t_yoff, t_xsize, t_ysize, data, t_xsize, t_ysize, t_band.DataType
+    )
 
     return 0
+
 
 # =============================================================================
 
 
-def raster_copy_with_nodata(s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
-                            t_fh, t_xoff, t_yoff, t_xsize, t_ysize, t_band_n,
-                            nodata):
+def raster_copy_with_nodata(
+    s_fh,
+    s_xoff,
+    s_yoff,
+    s_xsize,
+    s_ysize,
+    s_band_n,
+    t_fh,
+    t_xoff,
+    t_yoff,
+    t_xsize,
+    t_ysize,
+    t_band_n,
+    nodata,
+):
     import numpy as np
 
     s_band = s_fh.GetRasterBand(s_band_n)
     t_band = t_fh.GetRasterBand(t_band_n)
 
-    data_src = s_band.ReadAsArray(s_xoff, s_yoff, s_xsize, s_ysize,
-                                  t_xsize, t_ysize)
+    data_src = s_band.ReadAsArray(s_xoff, s_yoff, s_xsize, s_ysize, t_xsize, t_ysize)
     data_dst = t_band.ReadAsArray(t_xoff, t_yoff, t_xsize, t_ysize)
 
     if not np.isnan(nodata):
@@ -108,21 +158,32 @@ def raster_copy_with_nodata(s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
 
     return 0
 
+
 # =============================================================================
 
 
-def raster_copy_with_mask(s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
-                          t_fh, t_xoff, t_yoff, t_xsize, t_ysize, t_band_n,
-                          m_band):
+def raster_copy_with_mask(
+    s_fh,
+    s_xoff,
+    s_yoff,
+    s_xsize,
+    s_ysize,
+    s_band_n,
+    t_fh,
+    t_xoff,
+    t_yoff,
+    t_xsize,
+    t_ysize,
+    t_band_n,
+    m_band,
+):
     import numpy as np
 
     s_band = s_fh.GetRasterBand(s_band_n)
     t_band = t_fh.GetRasterBand(t_band_n)
 
-    data_src = s_band.ReadAsArray(s_xoff, s_yoff, s_xsize, s_ysize,
-                                  t_xsize, t_ysize)
-    data_mask = m_band.ReadAsArray(s_xoff, s_yoff, s_xsize, s_ysize,
-                                   t_xsize, t_ysize)
+    data_src = s_band.ReadAsArray(s_xoff, s_yoff, s_xsize, s_ysize, t_xsize, t_ysize)
+    data_mask = m_band.ReadAsArray(s_xoff, s_yoff, s_xsize, s_ysize, t_xsize, t_ysize)
     data_dst = t_band.ReadAsArray(t_xoff, t_yoff, t_xsize, t_ysize)
 
     mask_test = np.equal(data_mask, 0)
@@ -131,6 +192,7 @@ def raster_copy_with_mask(s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
     t_band.WriteArray(to_write, t_xoff, t_yoff)
 
     return 0
+
 
 # =============================================================================
 
@@ -152,6 +214,7 @@ def names_to_fileinfos(names):
             file_infos.append(fi)
 
     return file_infos
+
 
 # *****************************************************************************
 
@@ -206,13 +269,10 @@ class file_info(object):
         return 1
 
     def report(self):
-        print('Filename: ' + self.filename)
-        print('File Size: %dx%dx%d'
-              % (self.xsize, self.ysize, self.bands))
-        print('Pixel Size: %f x %f'
-              % (self.geotransform[1], self.geotransform[5]))
-        print('UL:(%f,%f)   LR:(%f,%f)'
-              % (self.ulx, self.uly, self.lrx, self.lry))
+        print("Filename: " + self.filename)
+        print("File Size: %dx%dx%d" % (self.xsize, self.ysize, self.bands))
+        print("Pixel Size: %f x %f" % (self.geotransform[1], self.geotransform[5]))
+        print("UL:(%f,%f)   LR:(%f,%f)" % (self.ulx, self.uly, self.lrx, self.lry))
 
     def copy_into(self, t_fh, s_band=1, t_band=1, nodata_arg=None, verbose=0):
         """
@@ -259,10 +319,12 @@ class file_info(object):
         # compute target window in pixel coordinates.
         tw_xoff = int((tgw_ulx - t_geotransform[0]) / t_geotransform[1] + 0.1)
         tw_yoff = int((tgw_uly - t_geotransform[3]) / t_geotransform[5] + 0.1)
-        tw_xsize = int((tgw_lrx - t_geotransform[0]) / t_geotransform[1] + 0.5) \
-            - tw_xoff
-        tw_ysize = int((tgw_lry - t_geotransform[3]) / t_geotransform[5] + 0.5) \
-            - tw_yoff
+        tw_xsize = (
+            int((tgw_lrx - t_geotransform[0]) / t_geotransform[1] + 0.5) - tw_xoff
+        )
+        tw_ysize = (
+            int((tgw_lry - t_geotransform[3]) / t_geotransform[5] + 0.5) - tw_yoff
+        )
 
         if tw_xsize < 1 or tw_ysize < 1:
             return 1
@@ -270,10 +332,12 @@ class file_info(object):
         # Compute source window in pixel coordinates.
         sw_xoff = int((tgw_ulx - self.geotransform[0]) / self.geotransform[1] + 0.1)
         sw_yoff = int((tgw_uly - self.geotransform[3]) / self.geotransform[5] + 0.1)
-        sw_xsize = int((tgw_lrx - self.geotransform[0]) /
-                       self.geotransform[1] + 0.5) - sw_xoff
-        sw_ysize = int((tgw_lry - self.geotransform[3]) /
-                       self.geotransform[5] + 0.5) - sw_yoff
+        sw_xsize = (
+            int((tgw_lrx - self.geotransform[0]) / self.geotransform[1] + 0.5) - sw_xoff
+        )
+        sw_ysize = (
+            int((tgw_lry - self.geotransform[3]) / self.geotransform[5] + 0.5) - sw_yoff
+        )
 
         if sw_xsize < 1 or sw_ysize < 1:
             return 1
@@ -281,21 +345,36 @@ class file_info(object):
         # Open the source file, and copy the selected region.
         s_fh = gdal.Open(self.filename)
 
-        return raster_copy(s_fh, sw_xoff, sw_yoff, sw_xsize, sw_ysize, s_band,
-                           t_fh, tw_xoff, tw_yoff, tw_xsize, tw_ysize, t_band,
-                           nodata_arg, verbose)
+        return raster_copy(
+            s_fh,
+            sw_xoff,
+            sw_yoff,
+            sw_xsize,
+            sw_ysize,
+            s_band,
+            t_fh,
+            tw_xoff,
+            tw_yoff,
+            tw_xsize,
+            tw_ysize,
+            t_band,
+            nodata_arg,
+            verbose,
+        )
 
 
 # =============================================================================
 def Usage():
-    print('Usage: gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*')
-    print('                     [-ps pixelsize_x pixelsize_y] [-tap] [-separate] [-q] [-v] [-pct]')
+    print("Usage: gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*")
+    print(
+        "                     [-ps pixelsize_x pixelsize_y] [-tap] [-separate] [-q] [-v] [-pct]"
+    )
     print('                     [-ul_lr ulx uly lrx lry] [-init "value [value...]"]')
-    print('                     [-n nodata_value] [-a_nodata output_nodata_value]')
-    print('                     [-ot datatype] [-createonly] input_files')
-    print('                     [--help-general]')
-    print('')
-    return 1
+    print("                     [-n nodata_value] [-a_nodata output_nodata_value]")
+    print("                     [-ot datatype] [-createonly] input_files")
+    print("                     [--help-general]")
+    print("")
+    return 2
 
 
 def gdal_merge(argv=None):
@@ -303,7 +382,7 @@ def gdal_merge(argv=None):
     quiet = 0
     names = []
     driver_name = None
-    out_file = 'out.tif'
+    out_file = "out.tif"
 
     ulx = None
     psize_x = None
@@ -329,74 +408,74 @@ def gdal_merge(argv=None):
     while i < len(argv):
         arg = argv[i]
 
-        if arg == '-o':
+        if arg == "-o":
             i = i + 1
             out_file = argv[i]
 
-        elif arg == '-v':
+        elif arg == "-v":
             verbose = 1
 
-        elif arg == '-q' or arg == '-quiet':
+        elif arg == "-q" or arg == "-quiet":
             quiet = 1
 
-        elif arg == '-createonly':
+        elif arg == "-createonly":
             createonly = 1
 
-        elif arg == '-separate':
+        elif arg == "-separate":
             separate = 1
 
-        elif arg == '-seperate':
+        elif arg == "-seperate":
             separate = 1
 
-        elif arg == '-pct':
+        elif arg == "-pct":
             copy_pct = 1
 
-        elif arg == '-ot':
+        elif arg == "-ot":
             i = i + 1
             band_type = gdal.GetDataTypeByName(argv[i])
             if band_type == gdal.GDT_Unknown:
-                print('Unknown GDAL data type: %s' % argv[i])
+                print("Unknown GDAL data type: %s" % argv[i])
                 return 1
 
-        elif arg == '-init':
+        elif arg == "-init":
             i = i + 1
             str_pre_init = argv[i].split()
             for x in str_pre_init:
                 pre_init.append(float(x))
 
-        elif arg == '-n':
+        elif arg == "-n":
             i = i + 1
             nodata = float(argv[i])
 
-        elif arg == '-a_nodata':
+        elif arg == "-a_nodata":
             i = i + 1
             a_nodata = float(argv[i])
 
-        elif arg == '-f' or arg == '-of':
+        elif arg == "-f" or arg == "-of":
             i = i + 1
             driver_name = argv[i]
 
-        elif arg == '-co':
+        elif arg == "-co":
             i = i + 1
             create_options.append(argv[i])
 
-        elif arg == '-ps':
+        elif arg == "-ps":
             psize_x = float(argv[i + 1])
             psize_y = -1 * abs(float(argv[i + 2]))
             i = i + 2
 
-        elif arg == '-tap':
+        elif arg == "-tap":
             bTargetAlignedPixels = True
 
-        elif arg == '-ul_lr':
+        elif arg == "-ul_lr":
             ulx = float(argv[i + 1])
             uly = float(argv[i + 2])
             lrx = float(argv[i + 3])
             lry = float(argv[i + 4])
             i = i + 4
 
-        elif arg[:1] == '-':
-            print('Unrecognized command option: %s' % arg)
+        elif arg[:1] == "-":
+            print("Unrecognized command option: %s" % arg)
             return Usage()
 
         else:
@@ -405,7 +484,7 @@ def gdal_merge(argv=None):
         i = i + 1
 
     if not names:
-        print('No input files selected.')
+        print("No input files selected.")
         return Usage()
 
     if driver_name is None:
@@ -413,12 +492,15 @@ def gdal_merge(argv=None):
 
     driver = gdal.GetDriverByName(driver_name)
     if driver is None:
-        print('Format driver %s not found, pick a supported driver.' % driver_name)
+        print("Format driver %s not found, pick a supported driver." % driver_name)
         return 1
 
     DriverMD = driver.GetMetadata()
-    if 'DCAP_CREATE' not in DriverMD:
-        print('Format driver %s does not support creation and piecewise writing.\nPlease select a format that does, such as GTiff (the default) or HFA (Erdas Imagine).' % driver_name)
+    if "DCAP_CREATE" not in DriverMD:
+        print(
+            "Format driver %s does not support creation and piecewise writing.\nPlease select a format that does, such as GTiff (the default) or HFA (Erdas Imagine)."
+            % driver_name
+        )
         return 1
 
     # Collect information on all the source files.
@@ -444,7 +526,7 @@ def gdal_merge(argv=None):
         band_type = file_infos[0].band_type
 
     # Try opening as an existing file.
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    gdal.PushErrorHandler("CPLQuietErrorHandler")
     t_fh = gdal.Open(out_file, gdal.GA_Update)
     gdal.PopErrorHandler()
 
@@ -470,10 +552,9 @@ def gdal_merge(argv=None):
         else:
             bands = file_infos[0].bands
 
-        t_fh = driver.Create(out_file, xsize, ysize, bands,
-                             band_type, create_options)
+        t_fh = driver.Create(out_file, xsize, ysize, bands, band_type, create_options)
         if t_fh is None:
-            print('Creation failed, terminating gdal_merge.')
+            print("Creation failed, terminating gdal_merge.")
             return 1
 
         t_fh.SetGeoTransform(geotransform)
@@ -487,7 +568,9 @@ def gdal_merge(argv=None):
             for fi in file_infos:
                 bands = bands + fi.bands
             if t_fh.RasterCount < bands:
-                print('Existing output file has less bands than the input files. You should delete it before. Terminating gdal_merge.')
+                print(
+                    "Existing output file has less bands than the input files. You should delete it before. Terminating gdal_merge."
+                )
                 return 1
         else:
             bands = min(file_infos[0].bands, t_fh.RasterCount)
@@ -519,10 +602,15 @@ def gdal_merge(argv=None):
 
         if verbose != 0:
             print("")
-            print("Processing file %5d of %5d, %6.3f%% completed in %d minutes."
-                  % (fi_processed + 1, len(file_infos),
-                     fi_processed * 100.0 / len(file_infos),
-                     int(round((time.time() - start_time) / 60.0))))
+            print(
+                "Processing file %5d of %5d, %6.3f%% completed in %d minutes."
+                % (
+                    fi_processed + 1,
+                    len(file_infos),
+                    fi_processed * 100.0 / len(file_infos),
+                    int(round((time.time() - start_time) / 60.0)),
+                )
+            )
             fi.report()
 
         if separate == 0:
@@ -540,8 +628,10 @@ def gdal_merge(argv=None):
     # Force file to be closed.
     t_fh = None
 
+
 def main(argv=sys.argv):
     return gdal_merge(argv)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

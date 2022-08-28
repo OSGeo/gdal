@@ -35,15 +35,14 @@ import sys
 from typing import Optional
 
 from osgeo import gdal
-
 from osgeo_utils.auxiliary.base import PathLikeOrStr
+from osgeo_utils.auxiliary.color_table import ColorTableLike, get_color_table
 from osgeo_utils.auxiliary.util import GetOutputDriverFor, open_ds
-from osgeo_utils.auxiliary.color_table import get_color_table, ColorTableLike
 
 
 def Usage():
-    print('Usage: gdalattachpct.py <pctfile> <infile> <outfile>')
-    return 1
+    print("Usage: gdalattachpct.py <pctfile> <infile> <outfile>")
+    return 2
 
 
 def main(argv=sys.argv):
@@ -63,7 +62,7 @@ def main(argv=sys.argv):
     while i < len(argv):
         arg = argv[i]
 
-        if arg == '-of' or arg == '-f':
+        if arg == "-of" or arg == "-f":
             i = i + 1
             driver_name = argv[i]
 
@@ -81,13 +80,21 @@ def main(argv=sys.argv):
 
         i = i + 1
 
-    _ds, err = doit(src_filename=src_filename, pct_filename=pct_filename,
-                    dst_filename=dst_filename, driver_name=driver_name)
+    _ds, err = doit(
+        src_filename=src_filename,
+        pct_filename=pct_filename,
+        dst_filename=dst_filename,
+        driver_name=driver_name,
+    )
     return err
 
 
-def doit(src_filename, pct_filename: Optional[ColorTableLike],
-         dst_filename: Optional[PathLikeOrStr] = None, driver_name: Optional[str] = None):
+def doit(
+    src_filename,
+    pct_filename: Optional[ColorTableLike],
+    dst_filename: Optional[PathLikeOrStr] = None,
+    driver_name: Optional[str] = None,
+):
 
     # =============================================================================
     # Get the PCT.
@@ -95,7 +102,7 @@ def doit(src_filename, pct_filename: Optional[ColorTableLike],
 
     ct = get_color_table(pct_filename)
     if pct_filename is not None and ct is None:
-        print('No color table on file ', pct_filename)
+        print("No color table on file ", pct_filename)
         return None, 1
 
     # =============================================================================
@@ -104,7 +111,7 @@ def doit(src_filename, pct_filename: Optional[ColorTableLike],
 
     src_ds = open_ds(src_filename)
 
-    mem_ds = gdal.GetDriverByName('MEM').CreateCopy('mem', src_ds)
+    mem_ds = gdal.GetDriverByName("MEM").CreateCopy("mem", src_ds)
 
     # =============================================================================
     # Assign the color table in memory.
@@ -125,10 +132,10 @@ def doit(src_filename, pct_filename: Optional[ColorTableLike],
         print('"%s" driver not registered.' % driver_name)
         return None, 1
 
-    if driver_name.upper() == 'MEM':
+    if driver_name.upper() == "MEM":
         out_ds = mem_ds
     else:
-        out_ds = dst_driver.CreateCopy(dst_filename or '', mem_ds)
+        out_ds = dst_driver.CreateCopy(dst_filename or "", mem_ds)
 
     mem_ds = None
     src_ds = None
@@ -136,5 +143,5 @@ def doit(src_filename, pct_filename: Optional[ColorTableLike],
     return out_ds, 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

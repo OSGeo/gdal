@@ -31,26 +31,24 @@
 
 import sys
 
-from osgeo import gdal
-from osgeo import ogr
-from osgeo import osr
+from osgeo import gdal, ogr, osr
 
 
 def Usage():
-    print('Usage: gcp2ogr.py [-f ogr_drv_name] gdal_in_dataset ogr_out_dataset')
-    return 1
+    print("Usage: gcp2ogr.py [-f ogr_drv_name] gdal_in_dataset ogr_out_dataset")
+    return 2
 
 
 def main(argv=sys.argv):
-    out_format = 'ESRI Shapefile'
+    out_format = "ESRI Shapefile"
     in_dataset = None
     out_dataset = None
     i = 1
     while i < len(argv):
-        if argv[i] == '-f':
+        if argv[i] == "-f":
             i += 1
             out_format = argv[i]
-        elif argv[i][0] == '-':
+        elif argv[i][0] == "-":
             Usage()
         elif in_dataset is None:
             in_dataset = argv[i]
@@ -67,24 +65,24 @@ def main(argv=sys.argv):
     out_ds = ogr.GetDriverByName(out_format).CreateDataSource(out_dataset)
     sr = None
     wkt = ds.GetGCPProjection()
-    if wkt != '':
+    if wkt != "":
         sr = osr.SpatialReference(wkt)
-    out_lyr = out_ds.CreateLayer('gcps', geom_type=ogr.wkbPoint, srs=sr)
-    out_lyr.CreateField(ogr.FieldDefn('Id', ogr.OFTString))
-    out_lyr.CreateField(ogr.FieldDefn('Info', ogr.OFTString))
-    out_lyr.CreateField(ogr.FieldDefn('X', ogr.OFTReal))
-    out_lyr.CreateField(ogr.FieldDefn('Y', ogr.OFTReal))
+    out_lyr = out_ds.CreateLayer("gcps", geom_type=ogr.wkbPoint, srs=sr)
+    out_lyr.CreateField(ogr.FieldDefn("Id", ogr.OFTString))
+    out_lyr.CreateField(ogr.FieldDefn("Info", ogr.OFTString))
+    out_lyr.CreateField(ogr.FieldDefn("X", ogr.OFTReal))
+    out_lyr.CreateField(ogr.FieldDefn("Y", ogr.OFTReal))
     gcps = ds.GetGCPs()
     for gcp in gcps:
         f = ogr.Feature(out_lyr.GetLayerDefn())
-        f.SetField('Id', gcp.Id)
-        f.SetField('Info', gcp.Info)
-        f.SetField('X', gcp.GCPPixel)
-        f.SetField('Y', gcp.GCPLine)
-        f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(%f %f)' % (gcp.GCPX, gcp.GCPY)))
+        f.SetField("Id", gcp.Id)
+        f.SetField("Info", gcp.Info)
+        f.SetField("X", gcp.GCPPixel)
+        f.SetField("Y", gcp.GCPLine)
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(%f %f)" % (gcp.GCPX, gcp.GCPY)))
         out_lyr.CreateFeature(f)
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

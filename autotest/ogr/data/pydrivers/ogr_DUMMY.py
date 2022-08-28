@@ -21,7 +21,7 @@
 
 try:
     # The gdal_python_driver module is defined by the GDAL library at runtime
-    from gdal_python_driver import BaseDriver, BaseDataset, BaseLayer
+    from gdal_python_driver import BaseDataset, BaseDriver, BaseLayer
 except ImportError:
     # To be able to run in standalone mode
     class BaseDriver(object):
@@ -39,42 +39,47 @@ class Layer(BaseLayer):
 
         # Reserved attribute names. Either those or the corresponding method
         # must be defined
-        self.name = 'my_layer'  # Required, or name() method
+        self.name = "my_layer"  # Required, or name() method
 
-        self.fid_name = 'my_fid'  # Optional
+        self.fid_name = "my_fid"  # Optional
 
-        self.fields = [{'name': 'boolField', 'type': 'Boolean'},
-                       {'name': 'int16Field', 'type': 'Integer16'},
-                       {'name': 'int32Field', 'type': 'Integer'},
-                       {'name': 'int64Field', 'type': 'Integer64'},
-                       {'name': 'realField', 'type': 'Real'},
-                       {'name': 'floatField', 'type': 'Float'},
-                       {'name': 'strField', 'type': 'String'},
-                       {'name': 'strNullField', 'type': 'String'},
-                       {'name': 'strUnsetField', 'type': 'String'},
-                       {'name': 'binaryField', 'type': 'Binary'},
-                       {'name': 'timeField', 'type': 'Time'},
-                       {'name': 'dateField', 'type': 'Date'},
-                       {'name': 'datetimeField', 'type': 'DateTime'}]  # Required, or fields() method
+        self.fields = [
+            {"name": "boolField", "type": "Boolean"},
+            {"name": "int16Field", "type": "Integer16"},
+            {"name": "int32Field", "type": "Integer"},
+            {"name": "int64Field", "type": "Integer64"},
+            {"name": "realField", "type": "Real"},
+            {"name": "floatField", "type": "Float"},
+            {"name": "strField", "type": "String"},
+            {"name": "strNullField", "type": "String"},
+            {"name": "strUnsetField", "type": "String"},
+            {"name": "binaryField", "type": "Binary"},
+            {"name": "timeField", "type": "Time"},
+            {"name": "dateField", "type": "Date"},
+            {"name": "datetimeField", "type": "DateTime"},
+        ]  # Required, or fields() method
 
-        self.geometry_fields = [{'name': 'geomField',
-                                 'type': 'Point',  # optional
-                                 'srs': 'EPSG:4326'  # optional
-                                 }]  # Required, or geometry_fields() method
+        self.geometry_fields = [
+            {
+                "name": "geomField",
+                "type": "Point",  # optional
+                "srs": "EPSG:4326",  # optional
+            }
+        ]  # Required, or geometry_fields() method
 
-        self.metadata = {'foo': 'bar'}  # optional
+        self.metadata = {"foo": "bar"}  # optional
 
         # uncomment if __iter__() honour self.attribute_filter
-        #self.iterator_honour_attribute_filter = True
+        # self.iterator_honour_attribute_filter = True
 
         # uncomment if __iter__() honour self.spatial_filter
-        #self.iterator_honour_spatial_filter = True
+        # self.iterator_honour_spatial_filter = True
 
         # uncomment if feature_count() honour self.attribute_filter
-        #self.feature_count_honour_attribute_filter = True
+        # self.feature_count_honour_attribute_filter = True
 
         # uncomment if feature_count() honour self.spatial_filter
-        #self.feature_count_honour_spatial_filter = True
+        # self.feature_count_honour_spatial_filter = True
 
         # End of reserved attribute names
 
@@ -149,25 +154,27 @@ class Layer(BaseLayer):
     def __iter__(self):
         for i in range(self.count):
             properties = {
-                'boolField': True,
-                'int16Field': 32767,
-                'int32Field': i + 2,
-                'int64Field': 1234567890123,
-                'realField': 1.23,
-                'floatField': 1.2,
-                'strField': 'foo',
-                'strNullField': None,
-                'binaryField': b'\x01\x00\x02',
-                'timeField': '12:34:56.789',
-                'dateField': '2017-04-26',
-                'datetimeField': '2017-04-26T12:34:56.789Z'}
+                "boolField": True,
+                "int16Field": 32767,
+                "int32Field": i + 2,
+                "int64Field": 1234567890123,
+                "realField": 1.23,
+                "floatField": 1.2,
+                "strField": "foo",
+                "strNullField": None,
+                "binaryField": b"\x01\x00\x02",
+                "timeField": "12:34:56.789",
+                "dateField": "2017-04-26",
+                "datetimeField": "2017-04-26T12:34:56.789Z",
+            }
 
-            yield {"type": "OGRFeature",
-                   "id": i + 1,
-                   "fields": properties,
-                   "geometry_fields": {"geomField": "POINT(2 49)"},
-                   "style": "SYMBOL(a:0)" if i % 2 == 0 else None,
-                   }
+            yield {
+                "type": "OGRFeature",
+                "id": i + 1,
+                "fields": properties,
+                "geometry_fields": {"geomField": "POINT(2 49)"},
+                "style": "SYMBOL(a:0)" if i % 2 == 0 else None,
+            }
 
     # Optional
     # def feature_by_id(self, fid):
@@ -180,7 +187,7 @@ class Dataset(BaseDataset):
     def __init__(self, filename):
         # If the layers member is set, layer_count() and layer() will not be used
         self.layers = [Layer()]
-        self.metadata = {'foo': 'bar'}
+        self.metadata = {"foo": "bar"}
 
     # Optional, called on native object destruction
     def close(self):
@@ -210,7 +217,7 @@ class Driver(BaseDriver):
 
     # Required
     def identify(self, filename, first_bytes, open_flags, open_options={}):
-        return filename == 'DUMMY:'
+        return filename == "DUMMY:"
 
     # Required
     def open(self, filename, first_bytes, open_flags, open_options={}):

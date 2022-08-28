@@ -28,10 +28,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import gdal
-
-
 import gdaltest
+
+from osgeo import gdal
 
 ###############################################################################
 # Test a fake CTG dataset
@@ -39,7 +38,7 @@ import gdaltest
 
 def test_ctg_1():
 
-    tst = gdaltest.GDALTest('CTG', 'ctg/fake_grid_cell', 1, 21)
+    tst = gdaltest.GDALTest("CTG", "ctg/fake_grid_cell", 1, 21)
     expected_gt = [421000.0, 200.0, 0.0, 5094400.0, 0.0, -200.0]
     expected_srs = """PROJCS["WGS 84 / UTM zone 14N",
     GEOGCS["WGS 84",
@@ -65,16 +64,14 @@ def test_ctg_1():
     AXIS["Northing",NORTH]]"""
     ret = tst.testOpen(check_gt=expected_gt, check_prj=expected_srs)
 
-    if ret == 'success':
-        ds = gdal.Open('data/ctg/fake_grid_cell')
+    if ret == "success":
+        ds = gdal.Open("data/ctg/fake_grid_cell")
         lst = ds.GetRasterBand(1).GetCategoryNames()
-        assert lst is not None and lst, 'expected non empty category names for band 1'
+        assert lst is not None and lst, "expected non empty category names for band 1"
         lst = ds.GetRasterBand(2).GetCategoryNames()
-        assert lst is None, 'expected empty category names for band 2'
-        assert ds.GetRasterBand(1).GetNoDataValue() == 0, \
-            'did not get expected nodata value'
+        assert lst is None, "expected empty category names for band 2"
+        assert (
+            ds.GetRasterBand(1).GetNoDataValue() == 0
+        ), "did not get expected nodata value"
 
     return ret
-
-
-

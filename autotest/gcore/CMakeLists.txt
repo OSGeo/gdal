@@ -36,6 +36,7 @@ foreach (
         pnm_write
         rasterio
         rat
+        relationship
         rfc30
         testnonboundtoswig
         thread_test

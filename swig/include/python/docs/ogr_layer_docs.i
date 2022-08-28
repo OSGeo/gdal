@@ -30,18 +30,22 @@ This function is the same as the CPP OGRLayer::GetFeatureCount().
 
 Note: since GDAL 2.0, this method returns a GIntBig (previously a int)
 
-Parameters:
+Parameters
 -----------
+hLayer:
+    handle to the layer that owned the features.
+bForce:
+    Flag indicating whether the count should be computed even if
+    it is expensive.
 
-hLayer:  handle to the layer that owned the features.
-
-bForce:  Flag indicating whether the count should be computed even if
-it is expensive.
-
-feature count, -1 if count not known. ";
+Returns
+--------
+int:
+    feature count, -1 if count not known.
+";
 
 %feature("docstring")  GetExtent "OGRErr OGR_L_GetExtent(OGRLayerH
-hLayer, OGREnvelope *psExtent, int bForce)
+hLayer, OGREnvelope \\*psExtent, int bForce)
 
 Fetch the extent of this layer.
 
@@ -63,21 +67,25 @@ cursor of the layer.
 
 This function is the same as the C++ method OGRLayer::GetExtent().
 
-Parameters:
+Parameters
 -----------
+hLayer:
+    handle to the layer from which to get extent.
+psExtent:
+    the structure in which the extent value will be returned.
+bForce:
+    Flag indicating whether the extent should be computed even if
+    it is expensive.
 
-hLayer:  handle to the layer from which to get extent.
-
-psExtent:  the structure in which the extent value will be returned.
-
-bForce:  Flag indicating whether the extent should be computed even if
-it is expensive.
-
-OGRERR_NONE on success, OGRERR_FAILURE if extent not known. ";
+Returns
+--------
+OGRErr:
+    OGRERR_NONE on success, OGRERR_FAILURE if extent not known.
+";
 
 %feature("docstring")  GetExtentEx "OGRErr
 OGR_L_GetExtentEx(OGRLayerH hLayer, int iGeomField, OGREnvelope
-*psExtent, int bForce)
+\\*psExtent, int bForce)
 
 Fetch the extent of this layer, on the specified geometry field.
 
@@ -99,26 +107,29 @@ cursor of the layer.
 
 This function is the same as the C++ method OGRLayer::GetExtent().
 
-Parameters:
+Parameters
 -----------
+hLayer:
+    handle to the layer from which to get extent.
+iGeomField:
+    the index of the geometry field on which to compute the extent.
+psExtent:
+    the structure in which the extent value will be returned.
+bForce:
+    Flag indicating whether the extent should be computed even if
+    it is expensive.
 
-hLayer:  handle to the layer from which to get extent.
-
-iGeomField:  the index of the geometry field on which to compute the
-extent.
-
-psExtent:  the structure in which the extent value will be returned.
-
-bForce:  Flag indicating whether the extent should be computed even if
-it is expensive.
-
-OGRERR_NONE on success, OGRERR_FAILURE if extent not known. ";
+Returns
+--------
+OGRErr:
+    OGRERR_NONE on success, OGRERR_FAILURE if extent not known.
+";
 
 %feature("docstring")  ContainGeomSpecialField "static int
-ContainGeomSpecialField(swq_expr_node *expr, int nLayerFieldCount) ";
+ContainGeomSpecialField(swq_expr_node \\*expr, int nLayerFieldCount) ";
 
 %feature("docstring")  SetAttributeFilter "OGRErr
-OGR_L_SetAttributeFilter(OGRLayerH hLayer, const char *pszQuery)
+OGR_L_SetAttributeFilter(OGRLayerH hLayer, const char \\*pszQuery)
 
 Set a new attribute query.
 
@@ -127,10 +138,10 @@ features via the OGR_L_GetNextFeature() function. Only features for
 which the query evaluates as true will be returned.
 
 The query string should be in the format of an SQL WHERE clause. For
-instance \"population > 1000000 and population < 5000000\" where
+instance \'population > 1000000 and population < 5000000\' where
 population is an attribute in the layer. The query format is a
 restricted form of SQL WHERE clause as defined
-\"eq_format=restricted_where\" about half way through this document:
+\'eq_format=restricted_where\' about half way through this document:
 
 http://ogdi.sourceforge.net/prop/6.2.CapabilitiesMetadata.html
 
@@ -140,17 +151,20 @@ the current reading position (ala OGR_L_ResetReading()).
 This function is the same as the C++ method
 OGRLayer::SetAttributeFilter().
 
-Parameters:
+Parameters
 -----------
+hLayer:
+    handle to the layer on which attribute query will be executed.
+pszQuery:
+    query in restricted SQL WHERE format, or NULL to clear the
+    current query.
 
-hLayer:  handle to the layer on which attribute query will be
-executed.
-
-pszQuery:  query in restricted SQL WHERE format, or NULL to clear the
-current query.
-
-OGRERR_NONE if successfully installed, or an error code if the query
-expression is in error, or some other failure occurs. ";
+Returns
+--------
+OGRErr:
+    OGRERR_NONE if successfully installed, or an error code if the query
+    expression is in error, or some other failure occurs.
+";
 
 %feature("docstring")  GetFeature "OGRFeatureH
 OGR_L_GetFeature(OGRLayerH hLayer, GIntBig nFeatureId)
@@ -179,14 +193,18 @@ The returned feature should be free with OGR_F_Destroy().
 
 This function is the same as the C++ method OGRLayer::GetFeature( ).
 
-Parameters:
+Parameters
 -----------
+hLayer:
+    handle to the layer that owned the feature.
+nFeatureId:
+    the feature id of the feature to read.
 
-hLayer:  handle to the layer that owned the feature.
-
-nFeatureId:  the feature id of the feature to read.
-
-a handle to a feature now owned by the caller, or NULL on failure. ";
+Returns
+--------
+OGRFeatureH:
+    a handle to a feature now owned by the caller, or NULL on failure.
+";
 
 %feature("docstring")  SetNextByIndex "OGRErr
 OGR_L_SetNextByIndex(OGRLayerH hLayer, GIntBig nIndex)
@@ -209,15 +227,18 @@ TestCapability() method with a value of OLCFastSetNextByIndex.
 
 This method is the same as the C++ method OGRLayer::SetNextByIndex()
 
-Parameters:
+Parameters
 -----------
+hLayer:
+    handle to the layer
+nIndex:
+    the index indicating how many steps into the result set to seek.
 
-hLayer:  handle to the layer
-
-nIndex:  the index indicating how many steps into the result set to
-seek.
-
-OGRERR_NONE on success or an error code. ";
+Returns
+--------
+OGRErr:
+    OGRERR_NONE on success or an error code.
+";
 
 %feature("docstring")  GetNextFeature "OGRFeatureH
 OGR_L_GetNextFeature(OGRLayerH hLayer)
@@ -249,12 +270,16 @@ OGR_L_ResetReading() might be needed.
 This function is the same as the C++ method
 OGRLayer::GetNextFeature().
 
-Parameters:
+Parameters
 -----------
+hLayer:
+    handle to the layer from which feature are read.
 
-hLayer:  handle to the layer from which feature are read.
-
-a handle to a feature, or NULL if no more features are available. ";
+Returns
+--------
+OGRFeatureH:
+    a handle to a feature, or NULL if no more features are available.
+";
 
 %feature("docstring")  SetFeature "OGRErr OGR_L_SetFeature(OGRLayerH
 hLayer, OGRFeatureH hFeat)
@@ -269,15 +294,18 @@ supports random access writing via OGR_L_SetFeature().
 
 This function is the same as the C++ method OGRLayer::SetFeature().
 
-Parameters:
+Parameters
 -----------
+hLayer:
+    handle to the layer to write the feature.
+hFeat:
+    the feature to write.
 
-hLayer:  handle to the layer to write the feature.
-
-hFeat:  the feature to write.
-
-OGRERR_NONE if the operation works, otherwise an appropriate error
-code (e.g OGRERR_NON_EXISTING_FEATURE if the feature does not exist).
+Returns
+--------
+OGRErr:
+    OGRERR_NONE if the operation works, otherwise an appropriate error
+    code (e.g OGRERR_NON_EXISTING_FEATURE if the feature does not exist).
 ";
 
 %feature("docstring")  CreateFeature "OGRErr
@@ -294,14 +322,18 @@ new feature id.
 
 This function is the same as the C++ method OGRLayer::CreateFeature().
 
-Parameters:
+Parameters
 -----------
+hLayer:
+    handle to the layer to write the feature to.
+hFeat:
+    the handle of the feature to write to disk.
 
-hLayer:  handle to the layer to write the feature to.
-
-hFeat:  the handle of the feature to write to disk.
-
-OGRERR_NONE on success. ";
+Returns
+--------
+OGRErr:
+    OGRERR_NONE on success.
+";
 
 %feature("docstring")  CreateField "OGRErr
 OGR_L_CreateField(OGRLayerH hLayer, OGRFieldDefnH hField, int
@@ -330,17 +362,21 @@ creating any feature to the layer.
 
 This function is the same as the C++ method OGRLayer::CreateField().
 
-Parameters:
+Parameters
 -----------
+hLayer:
+    handle to the layer to write the field definition.
+hField:
+    handle of the field definition to write to disk.
+bApproxOK:
+    If TRUE, the field may be created in a slightly different
+    form depending on the limitations of the format driver.
 
-hLayer:  handle to the layer to write the field definition.
-
-hField:  handle of the field definition to write to disk.
-
-bApproxOK:  If TRUE, the field may be created in a slightly different
-form depending on the limitations of the format driver.
-
-OGRERR_NONE on success. ";
+Returns
+--------
+OGRErr:
+    OGRERR_NONE on success.
+";
 
 %feature("docstring")  DeleteField "OGRErr
 OGR_L_DeleteField(OGRLayerH hLayer, int iField)
@@ -364,19 +400,23 @@ file/database should be updated accordingly.
 
 This function is the same as the C++ method OGRLayer::DeleteField().
 
-Parameters:
+.. versionadded:: 1.9.0
+
+Parameters
 -----------
+hLayer:
+    handle to the layer.
+iField:
+    index of the field to delete.
 
-hLayer:  handle to the layer.
-
-iField:  index of the field to delete.
-
-OGRERR_NONE on success.
-
-OGR 1.9.0 ";
+Returns
+--------
+OGRErr:
+    OGRERR_NONE on success.
+";
 
 %feature("docstring")  ReorderFields "OGRErr
-OGR_L_ReorderFields(OGRLayerH hLayer, int *panMap)
+OGR_L_ReorderFields(OGRLayerH hLayer, int \\*panMap)
 
 Reorder all the fields of a layer.
 
@@ -392,9 +432,9 @@ definition.
 panMap is such that,for each field definition at position i after
 reordering, its position before reordering was panMap[i].
 
-For example, let suppose the fields were \"0\",\"1\",\"2\",\"3\",\"4\"
+For example, let suppose the fields were \'0\',\'1\',\'2\',\'3\',\'4\'
 initially. ReorderFields([0,2,3,1,4]) will reorder them as
-\"0\",\"2\",\"3\",\"1\",\"4\".
+\'0\',\'2\',\'3\',\'1\',\'4\'.
 
 Not all drivers support this function. You can query a layer to check
 if it supports it with the OLCReorderFields capability. Some drivers
@@ -404,18 +444,22 @@ file/database should be updated accordingly.
 
 This function is the same as the C++ method OGRLayer::ReorderFields().
 
-Parameters:
+.. versionadded:: 1.9.0
+
+Parameters
 -----------
+hLayer:
+    handle to the layer.
+panMap:
+    an array of GetLayerDefn()-> OGRFeatureDefn::GetFieldCount()
+    elements which is a permutation of [0, GetLayerDefn()->
+    OGRFeatureDefn::GetFieldCount()-1].
 
-hLayer:  handle to the layer.
-
-panMap:  an array of GetLayerDefn()-> OGRFeatureDefn::GetFieldCount()
-elements which is a permutation of [0, GetLayerDefn()->
-OGRFeatureDefn::GetFieldCount()-1].
-
-OGRERR_NONE on success.
-
-OGR 1.9.0 ";
+Returns
+--------
+OGRErr:
+    OGRERR_NONE on success.
+";
 
 %feature("docstring")  ReorderField "OGRErr
 OGR_L_ReorderField(OGRLayerH hLayer, int iOldFieldPos, int
@@ -439,9 +483,9 @@ The field definition that was at initial position iOldFieldPos will be
 moved at position iNewFieldPos, and elements between will be shuffled
 accordingly.
 
-For example, let suppose the fields were \"0\",\"1\",\"2\",\"3\",\"4\"
+For example, let suppose the fields were \'0\',\'1\',\'2\',\'3\',\'4\'
 initially. ReorderField(1, 3) will reorder them as
-\"0\",\"2\",\"3\",\"1\",\"4\".
+\'0\',\'2\',\'3\',\'1\',\'4\'.
 
 Not all drivers support this function. You can query a layer to check
 if it supports it with the OLCReorderFields capability. Some drivers
@@ -451,20 +495,24 @@ file/database should be updated accordingly.
 
 This function is the same as the C++ method OGRLayer::ReorderField().
 
-Parameters:
+.. versionadded:: 1.9.0
+
+Parameters
 -----------
+hLayer:
+    handle to the layer.
+iOldFieldPos:
+    previous position of the field to move. Must be in the
+    range [0,GetFieldCount()-1].
+iNewFieldPos:
+    new position of the field to move. Must be in the range
+    [0,GetFieldCount()-1].
 
-hLayer:  handle to the layer.
-
-iOldFieldPos:  previous position of the field to move. Must be in the
-range [0,GetFieldCount()-1].
-
-iNewFieldPos:  new position of the field to move. Must be in the range
-[0,GetFieldCount()-1].
-
-OGRERR_NONE on success.
-
-OGR 1.9.0 ";
+Returns
+--------
+OGRErr:
+    OGRERR_NONE on success.
+";
 
 %feature("docstring")  AlterFieldDefn "OGRErr
 OGR_L_AlterFieldDefn(OGRLayerH hLayer, int iField, OGRFieldDefnH
@@ -491,24 +539,28 @@ not support all update flags.
 This function is the same as the C++ method
 OGRLayer::AlterFieldDefn().
 
-Parameters:
+.. versionadded:: 1.9.0
+
+Parameters
 -----------
+hLayer:
+    handle to the layer.
+iField:
+    index of the field whose definition must be altered.
+hNewFieldDefn:
+    new field definition
+nFlags:
+    combination of ALTER_NAME_FLAG, ALTER_TYPE_FLAG,
+    ALTER_WIDTH_PRECISION_FLAG, ALTER_NULLABLE_FLAG and ALTER_DEFAULT_FLAG
+    to indicate which of the name and/or type and/or width and precision
+    fields and/or nullability from the new field definition must be taken
+    into account.
 
-hLayer:  handle to the layer.
-
-iField:  index of the field whose definition must be altered.
-
-hNewFieldDefn:  new field definition
-
-nFlags:  combination of ALTER_NAME_FLAG, ALTER_TYPE_FLAG,
-ALTER_WIDTH_PRECISION_FLAG, ALTER_NULLABLE_FLAG and ALTER_DEFAULT_FLAG
-to indicate which of the name and/or type and/or width and precision
-fields and/or nullability from the new field definition must be taken
-into account.
-
-OGRERR_NONE on success.
-
-OGR 1.9.0 ";
+Returns
+--------
+OGRErr:
+    OGRERR_NONE on success.
+";
 
 %feature("docstring")  CreateGeomField "OGRErr
 OGR_L_CreateGeomField(OGRLayerH hLayer, OGRGeomFieldDefnH hField, int
@@ -537,19 +589,23 @@ creating any feature to the layer.
 
 This function is the same as the C++ method OGRLayer::CreateField().
 
-Parameters:
+.. versionadded:: 1.11
+
+Parameters
 -----------
+hLayer:
+    handle to the layer to write the field definition.
+hField:
+    handle of the geometry field definition to write to disk.
+bApproxOK:
+    If TRUE, the field may be created in a slightly different
+    form depending on the limitations of the format driver.
 
-hLayer:  handle to the layer to write the field definition.
-
-hField:  handle of the geometry field definition to write to disk.
-
-bApproxOK:  If TRUE, the field may be created in a slightly different
-form depending on the limitations of the format driver.
-
-OGRERR_NONE on success.
-
-OGR 1.11 ";
+Returns
+--------
+OGRErr:
+    OGRERR_NONE on success.
+";
 
 %feature("docstring")  StartTransaction "OGRErr
 OGR_L_StartTransaction(OGRLayerH hLayer)
@@ -570,12 +626,16 @@ transactions at layer scope.
 This function is the same as the C++ method
 OGRLayer::StartTransaction().
 
-Parameters:
+Parameters
 -----------
+hLayer:
+    handle to the layer
 
-hLayer:  handle to the layer
-
-OGRERR_NONE on success. ";
+Returns
+--------
+OGRErr:
+    OGRERR_NONE on success.
+";
 
 %feature("docstring")  CommitTransaction "OGRErr
 OGR_L_CommitTransaction(OGRLayerH hLayer)
@@ -590,12 +650,16 @@ always return OGRERR_NONE.
 This function is the same as the C++ method
 OGRLayer::CommitTransaction().
 
-Parameters:
+Parameters
 -----------
+hLayer:
+    handle to the layer
 
-hLayer:  handle to the layer
-
-OGRERR_NONE on success. ";
+Returns
+--------
+OGRErr:
+    OGRERR_NONE on success.
+";
 
 %feature("docstring")  RollbackTransaction "OGRErr
 OGR_L_RollbackTransaction(OGRLayerH hLayer)
@@ -611,12 +675,16 @@ always return OGRERR_NONE.
 This function is the same as the C++ method
 OGRLayer::RollbackTransaction().
 
-Parameters:
+Parameters
 -----------
+hLayer:
+    handle to the layer
 
-hLayer:  handle to the layer
-
-OGRERR_NONE on success. ";
+Returns
+--------
+OGRErr:
+    OGRERR_NONE on success.
+";
 
 %feature("docstring")  GetLayerDefn "OGRFeatureDefnH
 OGR_L_GetLayerDefn(OGRLayerH hLayer)
@@ -629,15 +697,19 @@ encapsulates the attribute schema of the features of the layer.
 
 This function is the same as the C++ method OGRLayer::GetLayerDefn().
 
-Parameters:
+Parameters
 -----------
+hLayer:
+    handle to the layer to get the schema information.
 
-hLayer:  handle to the layer to get the schema information.
-
-a handle to the feature definition. ";
+Returns
+--------
+OGRFeatureDefnH:
+    a handle to the feature definition.
+";
 
 %feature("docstring")  FindFieldIndex "int
-OGR_L_FindFieldIndex(OGRLayerH hLayer, const char *pszFieldName, int
+OGR_L_FindFieldIndex(OGRLayerH hLayer, const char \\*pszFieldName, int
 bExactMatch)
 
 Find the index of field in a layer.
@@ -652,7 +724,11 @@ OCI driver).
 
 This method is the same as the C++ method OGRLayer::FindFieldIndex().
 
-field index, or -1 if the field doesn't exist ";
+Returns
+--------
+int:
+    field index, or -1 if the field doesn't exist
+";
 
 %feature("docstring")  GetSpatialRef "OGRSpatialReferenceH
 OGR_L_GetSpatialRef(OGRLayerH hLayer)
@@ -664,15 +740,19 @@ modified or freed by the application.
 
 This function is the same as the C++ method OGRLayer::GetSpatialRef().
 
-Parameters:
+Parameters
 -----------
+hLayer:
+    handle to the layer to get the spatial reference from.
 
-hLayer:  handle to the layer to get the spatial reference from.
-
-spatial reference, or NULL if there isn't one. ";
+Returns
+--------
+OGRSpatialReferenceH:
+    spatial reference, or NULL if there isn't one.
+";
 
 %feature("docstring")  TestCapability "int
-OGR_L_TestCapability(OGRLayerH hLayer, const char *pszCap)
+OGR_L_TestCapability(OGRLayerH hLayer, const char \\*pszCap)
 
 Test if this layer supported the named capability.
 
@@ -681,86 +761,90 @@ but #defined constants exists to ensure correct spelling. Specific
 layer types may implement class specific capabilities, but this can't
 generally be discovered by the caller.
 
-OLCRandomRead / \"RandomRead\": TRUE if the GetFeature() method is
+OLCRandomRead / \'RandomRead\': TRUE if the GetFeature() method is
 implemented in an optimized way for this layer, as opposed to the
 default implementation using ResetReading() and GetNextFeature() to
 find the requested feature id.
 
-OLCSequentialWrite / \"SequentialWrite\": TRUE if the CreateFeature()
+OLCSequentialWrite / \'SequentialWrite\': TRUE if the CreateFeature()
 method works for this layer. Note this means that this particular
 layer is writable. The same OGRLayer class may returned FALSE for
 other layer instances that are effectively read-only.
 
-OLCRandomWrite / \"RandomWrite\": TRUE if the SetFeature() method is
+OLCRandomWrite / \'RandomWrite\': TRUE if the SetFeature() method is
 operational on this layer. Note this means that this particular layer
 is writable. The same OGRLayer class may returned FALSE for other
 layer instances that are effectively read-only.
 
-OLCFastSpatialFilter / \"FastSpatialFilter\": TRUE if this layer
+OLCFastSpatialFilter / \'FastSpatialFilter\': TRUE if this layer
 implements spatial filtering efficiently. Layers that effectively read
 all features, and test them with the OGRFeature intersection methods
 should return FALSE. This can be used as a clue by the application
 whether it should build and maintain its own spatial index for
 features in this layer.
 
-OLCFastFeatureCount / \"FastFeatureCount\": TRUE if this layer can
+OLCFastFeatureCount / \'FastFeatureCount\': TRUE if this layer can
 return a feature count (via OGR_L_GetFeatureCount()) efficiently, i.e.
 without counting the features. In some cases this will return TRUE
 until a spatial filter is installed after which it will return FALSE.
 
-OLCFastGetExtent / \"FastGetExtent\": TRUE if this layer can return
+OLCFastGetExtent / \'FastGetExtent\': TRUE if this layer can return
 its data extent (via OGR_L_GetExtent()) efficiently, i.e. without
 scanning all the features. In some cases this will return TRUE until a
 spatial filter is installed after which it will return FALSE.
 
-OLCFastSetNextByIndex / \"FastSetNextByIndex\": TRUE if this layer can
+OLCFastSetNextByIndex / \'FastSetNextByIndex\': TRUE if this layer can
 perform the SetNextByIndex() call efficiently, otherwise FALSE.
 
-OLCCreateField / \"CreateField\": TRUE if this layer can create new
+OLCCreateField / \'CreateField\': TRUE if this layer can create new
 fields on the current layer using CreateField(), otherwise FALSE.
 
-OLCCreateGeomField / \"CreateGeomField\": (GDAL >= 1.11) TRUE if this
+OLCCreateGeomField / \'CreateGeomField\': (GDAL >= 1.11) TRUE if this
 layer can create new geometry fields on the current layer using
 CreateGeomField(), otherwise FALSE.
 
-OLCDeleteField / \"DeleteField\": TRUE if this layer can delete
+OLCDeleteField / \'DeleteField\': TRUE if this layer can delete
 existing fields on the current layer using DeleteField(), otherwise
 FALSE.
 
-OLCReorderFields / \"ReorderFields\": TRUE if this layer can reorder
+OLCReorderFields / \'ReorderFields\': TRUE if this layer can reorder
 existing fields on the current layer using ReorderField() or
 ReorderFields(), otherwise FALSE.
 
-OLCAlterFieldDefn / \"AlterFieldDefn\": TRUE if this layer can alter
+OLCAlterFieldDefn / \'AlterFieldDefn\': TRUE if this layer can alter
 the definition of an existing field on the current layer using
 AlterFieldDefn(), otherwise FALSE.
 
-OLCDeleteFeature / \"DeleteFeature\": TRUE if the DeleteFeature()
+OLCDeleteFeature / \'DeleteFeature\': TRUE if the DeleteFeature()
 method is supported on this layer, otherwise FALSE.
 
-OLCStringsAsUTF8 / \"StringsAsUTF8\": TRUE if values of OFTString
+OLCStringsAsUTF8 / \'StringsAsUTF8\': TRUE if values of OFTString
 fields are assured to be in UTF-8 format. If FALSE the encoding of
 fields is uncertain, though it might still be UTF-8.
 
-OLCTransactions / \"Transactions\": TRUE if the StartTransaction(),
+OLCTransactions / \'Transactions\': TRUE if the StartTransaction(),
 CommitTransaction() and RollbackTransaction() methods work in a
 meaningful way, otherwise FALSE.
 
-OLCCurveGeometries / \"CurveGeometries\": TRUE if this layer supports
+OLCCurveGeometries / \'CurveGeometries\': TRUE if this layer supports
 writing curve geometries or may return such geometries. (GDAL 2.0).
 
 This function is the same as the C++ method
 OGRLayer::TestCapability().
 
-Parameters:
+Parameters
 -----------
+hLayer:
+    handle to the layer to get the capability from.
+pszCap:
+    the name of the capability to test.
 
-hLayer:  handle to the layer to get the capability from.
-
-pszCap:  the name of the capability to test.
-
-TRUE if the layer has the requested capability, or FALSE otherwise.
-OGRLayers will return FALSE for any unrecognized capabilities. ";
+Returns
+--------
+int:
+    TRUE if the layer has the requested capability, or FALSE otherwise.
+    OGRLayers will return FALSE for any unrecognized capabilities.
+";
 
 %feature("docstring")  GetSpatialFilter "OGRGeometryH
 OGR_L_GetSpatialFilter(OGRLayerH hLayer)
@@ -773,12 +857,16 @@ be altered or deleted by the caller.
 This function is the same as the C++ method
 OGRLayer::GetSpatialFilter().
 
-Parameters:
+Parameters
 -----------
+hLayer:
+    handle to the layer to get the spatial filter from.
 
-hLayer:  handle to the layer to get the spatial filter from.
-
-a handle to the spatial filter geometry. ";
+Returns
+--------
+OGRGeometryH:
+    a handle to the spatial filter geometry.
+";
 
 %feature("docstring")  SetSpatialFilter "void
 OGR_L_SetSpatialFilter(OGRLayerH hLayer, OGRGeometryH hGeom)
@@ -810,14 +898,15 @@ this may be generalized.
 This function is the same as the C++ method
 OGRLayer::SetSpatialFilter.
 
-Parameters:
+Parameters
 -----------
-
-hLayer:  handle to the layer on which to set the spatial filter.
-
-hGeom:  handle to the geometry to use as a filtering region. NULL may
-be passed indicating that the current spatial filter should be
-cleared, but no new one instituted. ";
+hLayer:
+    handle to the layer on which to set the spatial filter.
+hGeom:
+    handle to the geometry to use as a filtering region. NULL may
+    be passed indicating that the current spatial filter should be
+    cleared, but no new one instituted.
+";
 
 %feature("docstring")  SetSpatialFilterEx "void
 OGR_L_SetSpatialFilterEx(OGRLayerH hLayer, int iGeomField,
@@ -851,19 +940,19 @@ successive calls are done with different iGeomField values.
 This function is the same as the C++ method
 OGRLayer::SetSpatialFilter.
 
-Parameters:
+.. versionadded:: 1.11
+
+Parameters
 -----------
-
-hLayer:  handle to the layer on which to set the spatial filter.
-
-iGeomField:  index of the geometry field on which the spatial filter
-operates.
-
-hGeom:  handle to the geometry to use as a filtering region. NULL may
-be passed indicating that the current spatial filter should be
-cleared, but no new one instituted.
-
-GDAL 1.11 ";
+hLayer:
+    handle to the layer on which to set the spatial filter.
+iGeomField:
+    index of the geometry field on which the spatial filter operates.
+hGeom:
+    handle to the geometry to use as a filtering region. NULL may
+    be passed indicating that the current spatial filter should be
+    cleared, but no new one instituted.
+";
 
 %feature("docstring")  SetSpatialFilterRect "void
 OGR_L_SetSpatialFilterRect(OGRLayerH hLayer, double dfMinX, double
@@ -887,18 +976,19 @@ OGRLayer::SetSpatialFilter(NULL).
 This method is the same as the C++ method
 OGRLayer::SetSpatialFilterRect().
 
-Parameters:
+Parameters
 -----------
-
-hLayer:  handle to the layer on which to set the spatial filter.
-
-dfMinX:  the minimum X coordinate for the rectangular region.
-
-dfMinY:  the minimum Y coordinate for the rectangular region.
-
-dfMaxX:  the maximum X coordinate for the rectangular region.
-
-dfMaxY:  the maximum Y coordinate for the rectangular region. ";
+hLayer:
+    handle to the layer on which to set the spatial filter.
+dfMinX:
+    the minimum X coordinate for the rectangular region.
+dfMinY:
+    the minimum Y coordinate for the rectangular region.
+dfMaxX:
+    the maximum X coordinate for the rectangular region.
+dfMaxY:
+    the maximum Y coordinate for the rectangular region.
+";
 
 %feature("docstring")  SetSpatialFilterRectEx "void
 OGR_L_SetSpatialFilterRectEx(OGRLayerH hLayer, int iGeomField, double
@@ -923,23 +1013,23 @@ OGRLayer::SetSpatialFilter(NULL).
 This method is the same as the C++ method
 OGRLayer::SetSpatialFilterRect().
 
-Parameters:
+.. versionadded:: 1.11 
+
+Parameters
 -----------
-
-hLayer:  handle to the layer on which to set the spatial filter.
-
-iGeomField:  index of the geometry field on which the spatial filter
-operates.
-
-dfMinX:  the minimum X coordinate for the rectangular region.
-
-dfMinY:  the minimum Y coordinate for the rectangular region.
-
-dfMaxX:  the maximum X coordinate for the rectangular region.
-
-dfMaxY:  the maximum Y coordinate for the rectangular region.
-
-GDAL 1.11 ";
+hLayer:
+    handle to the layer on which to set the spatial filter.
+iGeomField:
+    index of the geometry field on which the spatial filter operates.
+dfMinX:
+    the minimum X coordinate for the rectangular region.
+dfMinY:
+    the minimum Y coordinate for the rectangular region.
+dfMaxX:
+    the maximum X coordinate for the rectangular region.
+dfMaxY:
+    the maximum Y coordinate for the rectangular region.
+";
 
 %feature("docstring")  ResetReading "void
 OGR_L_ResetReading(OGRLayerH hLayer)
@@ -950,10 +1040,11 @@ This affects GetNextFeature().
 
 This function is the same as the C++ method OGRLayer::ResetReading().
 
-Parameters:
+Parameters
 -----------
-
-hLayer:  handle to the layer on which features are read. ";
+hLayer:
+    handle to the layer on which features are read.
+";
 
 %feature("docstring")  SyncToDisk "OGRErr OGR_L_SyncToDisk(OGRLayerH
 hLayer)
@@ -974,13 +1065,17 @@ OGR_DS_Destroy() that will ensure all data is correctly flushed.
 
 This method is the same as the C++ method OGRLayer::SyncToDisk()
 
-Parameters:
+Parameters
 -----------
+hLayer:
+    handle to the layer
 
-hLayer:  handle to the layer
-
-OGRERR_NONE if no error occurs (even if nothing is done) or an error
-code. ";
+Returns
+--------
+OGRErr:
+    OGRERR_NONE if no error occurs (even if nothing is done) or an error
+    code.
+";
 
 %feature("docstring")  DeleteFeature "OGRErr
 OGR_L_DeleteFeature(OGRLayerH hLayer, GIntBig nFID)
@@ -995,40 +1090,47 @@ check if the driver supports feature deletion.
 
 This method is the same as the C++ method OGRLayer::DeleteFeature().
 
-Parameters:
+Parameters
 -----------
+hLayer:
+    handle to the layer
+nFID:
+    the feature id to be deleted from the layer
 
-hLayer:  handle to the layer
-
-nFID:  the feature id to be deleted from the layer
-
-OGRERR_NONE if the operation works, otherwise an appropriate error
-code (e.g OGRERR_NON_EXISTING_FEATURE if the feature does not exist).
+Returns
+--------
+OGRErr:
+    OGRERR_NONE if the operation works, otherwise an appropriate error
+    code (e.g OGRERR_NON_EXISTING_FEATURE if the feature does not exist).
 ";
 
 %feature("docstring")  GetFeaturesRead "GIntBig
 OGR_L_GetFeaturesRead(OGRLayerH hLayer) ";
 
-%feature("docstring")  GetFIDColumn "const char*
+%feature("docstring")  GetFIDColumn "const char\\*
 OGR_L_GetFIDColumn(OGRLayerH hLayer)
 
 This method returns the name of the underlying database column being
-used as the FID column, or \"\" if not supported.
+used as the FID column, or \'\' if not supported.
 
 This method is the same as the C++ method OGRLayer::GetFIDColumn()
 
-Parameters:
+Parameters
 -----------
+hLayer:
+    handle to the layer
 
-hLayer:  handle to the layer
+Returns
+--------
+str:
+    fid column name.
+";
 
-fid column name. ";
-
-%feature("docstring")  GetGeometryColumn "const char*
+%feature("docstring")  GetGeometryColumn "const char\\*
 OGR_L_GetGeometryColumn(OGRLayerH hLayer)
 
 This method returns the name of the underlying database column being
-used as the geometry column, or \"\" if not supported.
+used as the geometry column, or \'\' if not supported.
 
 For layers with multiple geometry fields, this method only returns the
 geometry type of the first geometry column. For other columns, use OGR
@@ -1038,12 +1140,16 @@ i)).
 This method is the same as the C++ method
 OGRLayer::GetGeometryColumn()
 
-Parameters:
+Parameters
 -----------
+hLayer:
+    handle to the layer
 
-hLayer:  handle to the layer
-
-geometry column name. ";
+Returns
+--------
+str:
+    geometry column name.
+";
 
 %feature("docstring")  GetStyleTable "OGRStyleTableH
 OGR_L_GetStyleTable(OGRLayerH hLayer)
@@ -1061,7 +1167,7 @@ OGR_L_SetStyleTable(OGRLayerH hLayer, OGRStyleTableH hStyleTable)
 
 Set style table. ";
 
-%feature("docstring")  GetName "const char* OGR_L_GetName(OGRLayerH
+%feature("docstring")  GetName "const char\\* OGR_L_GetName(OGRLayerH
 hLayer)
 
 Return the layer name.
@@ -1073,14 +1179,18 @@ initialization.
 
 This function is the same as the C++ method OGRLayer::GetName().
 
-Parameters:
+.. versionadded:: 1.8.0
+
+Parameters
 -----------
+hLayer:
+    handle to the layer.
 
-hLayer:  handle to the layer.
-
-the layer name (must not been freed)
-
-OGR 1.8.0 ";
+Returns
+--------
+str:
+    the layer name (must not been freed)
+";
 
 %feature("docstring")  GetGeomType "OGRwkbGeometryType
 OGR_L_GetGeomType(OGRLayerH hLayer)
@@ -1100,17 +1210,21 @@ wkbNone.
 
 This function is the same as the C++ method OGRLayer::GetGeomType().
 
-Parameters:
+.. versionadded:: 1.8.0
+
+Parameters
 -----------
+hLayer:
+    handle to the layer.
 
-hLayer:  handle to the layer.
-
-the geometry type
-
-OGR 1.8.0 ";
+Returns
+--------
+OGRwkbGeometryType:
+    the geometry type
+";
 
 %feature("docstring")  SetIgnoredFields "OGRErr
-OGR_L_SetIgnoredFields(OGRLayerH hLayer, const char **papszFields)
+OGR_L_SetIgnoredFields(OGRLayerH hLayer, const char \\*\\*papszFields)
 
 Set which fields can be omitted when retrieving features from the
 layer.
@@ -1121,46 +1235,50 @@ subsequent calls to GetFeature() / GetNextFeature() and thus save some
 processing time and/or bandwidth.
 
 Besides field names of the layers, the following special fields can be
-passed: \"OGR_GEOMETRY\" to ignore geometry and \"OGR_STYLE\" to
+passed: \'OGR_GEOMETRY\' to ignore geometry and \'OGR_STYLE\' to
 ignore layer style.
 
 By default, no fields are ignored.
 
 This method is the same as the C++ method OGRLayer::SetIgnoredFields()
 
-Parameters:
+Parameters
 -----------
+hLayer:
+    handle to the layer
+papszFields:
+    an array of field names terminated by NULL item.
+    If NULL is passed, the ignored list is cleared.
 
-hLayer:  handle to the layer
-
-papszFields:  an array of field names terminated by NULL item. If NULL
-is passed, the ignored list is cleared.
-
-OGRERR_NONE if all field names have been resolved (even if the driver
-does not support this method) ";
+Returns
+-------
+OGRErr:
+    OGRERR_NONE if all field names have been resolved (even if the driver
+    does not support this method)
+";
 
 %feature("docstring")  clone_spatial_filter "static OGRErr
-clone_spatial_filter(OGRLayer *pLayer, OGRGeometry **ppGeometry) ";
+clone_spatial_filter(OGRLayer \\*pLayer, OGRGeometry \\*\\*ppGeometry) ";
 
 %feature("docstring")  create_field_map "static OGRErr
-create_field_map(OGRFeatureDefn *poDefn, int **map) ";
+create_field_map(OGRFeatureDefn \\*poDefn, int \\*\\*map) ";
 
 %feature("docstring")  set_result_schema "static OGRErr
-set_result_schema(OGRLayer *pLayerResult, OGRFeatureDefn *poDefnInput,
-OGRFeatureDefn *poDefnMethod, int *mapInput, int *mapMethod, bool
-combined, const char *const *papszOptions) ";
+set_result_schema(OGRLayer \\*pLayerResult, OGRFeatureDefn \\*poDefnInput,
+OGRFeatureDefn \\*poDefnMethod, int \\*mapInput, int \\*mapMethod, bool
+combined, const char \\*const \\*papszOptions) ";
 
-%feature("docstring")  set_filter_from "static OGRGeometry*
-set_filter_from(OGRLayer *pLayer, OGRGeometry
-*pGeometryExistingFilter, OGRFeature *pFeature) ";
+%feature("docstring")  set_filter_from "static OGRGeometry\\*
+set_filter_from(OGRLayer \\*pLayer, OGRGeometry
+\\*pGeometryExistingFilter, OGRFeature \\*pFeature) ";
 
-%feature("docstring")  promote_to_multi "static OGRGeometry*
-promote_to_multi(OGRGeometry *poGeom) ";
+%feature("docstring")  promote_to_multi "static OGRGeometry\\*
+promote_to_multi(OGRGeometry \\*poGeom) ";
 
 %feature("docstring")  Intersection "OGRErr
 OGR_L_Intersection(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
-OGRLayerH pLayerResult, char **papszOptions, GDALProgressFunc
-pfnProgress, void *pProgressArg)
+OGRLayerH pLayerResult, char \\*\\*papszOptions, GDALProgressFunc
+pfnProgress, void \\*pProgressArg)
 
 Intersection of two layers.
 
@@ -1209,34 +1327,39 @@ layer has an unknown geometry type.
 
 This function is the same as the C++ method OGRLayer::Intersection().
 
-Parameters:
------------
-
-pLayerInput:  the input layer. Should not be NULL.
-
-pLayerMethod:  the method layer. Should not be NULL.
-
-pLayerResult:  the layer where the features resulting from the
-operation are inserted. Should not be NULL. See above the note about
-the schema.
-
-papszOptions:  NULL terminated list of options (may be NULL).
-
-pfnProgress:  a GDALProgressFunc() compatible callback function for
-reporting progress or NULL.
-
-pProgressArg:  argument to be passed to pfnProgress. May be NULL.
-
-an error code if there was an error or the execution was interrupted,
-OGRERR_NONE otherwise.
-
 The first geometry field is always used.
 
-OGR 1.10 ";
+.. versionadded:: 1.10
+
+Parameters
+-----------
+pLayerInput:
+    the input layer. Should not be NULL.
+pLayerMethod:
+    the method layer. Should not be NULL.
+pLayerResult:
+    the layer where the features resulting from the
+    operation are inserted. Should not be NULL. See above the note about
+    the schema.
+papszOptions:
+    NULL terminated list of options (may be NULL).
+pfnProgress:
+    a GDALProgressFunc() compatible callback function for
+    reporting progress or NULL.
+pProgressArg:
+    argument to be passed to pfnProgress. May be NULL.
+
+
+Returns
+-------
+OGRErr:
+    an error code if there was an error or the execution was interrupted,
+    OGRERR_NONE otherwise.
+";
 
 %feature("docstring")  Union "OGRErr OGR_L_Union(OGRLayerH
 pLayerInput, OGRLayerH pLayerMethod, OGRLayerH pLayerResult, char
-**papszOptions, GDALProgressFunc pfnProgress, void *pProgressArg)
+\\*\\*papszOptions, GDALProgressFunc pfnProgress, void \\*pProgressArg)
 
 Union of two layers.
 
@@ -1282,35 +1405,39 @@ layer has an unknown geometry type.
 
 This function is the same as the C++ method OGRLayer::Union().
 
-Parameters:
------------
-
-pLayerInput:  the input layer. Should not be NULL.
-
-pLayerMethod:  the method layer. Should not be NULL.
-
-pLayerResult:  the layer where the features resulting from the
-operation are inserted. Should not be NULL. See above the note about
-the schema.
-
-papszOptions:  NULL terminated list of options (may be NULL).
-
-pfnProgress:  a GDALProgressFunc() compatible callback function for
-reporting progress or NULL.
-
-pProgressArg:  argument to be passed to pfnProgress. May be NULL.
-
-an error code if there was an error or the execution was interrupted,
-OGRERR_NONE otherwise.
-
 The first geometry field is always used.
 
-OGR 1.10 ";
+.. versionadded:: 1.10
+
+Parameters
+-----------
+pLayerInput:
+    the input layer. Should not be NULL.
+pLayerMethod:
+    the method layer. Should not be NULL.
+pLayerResult:
+    the layer where the features resulting from the
+    operation are inserted. Should not be NULL. See above the note about
+    the schema.
+papszOptions:
+    NULL terminated list of options (may be NULL).
+pfnProgress:
+    a GDALProgressFunc() compatible callback function for
+    reporting progress or NULL.
+pProgressArg:
+    argument to be passed to pfnProgress. May be NULL.
+
+Returns
+-------
+OGRErr:
+    an error code if there was an error or the execution was interrupted,
+    OGRERR_NONE otherwise.
+";
 
 %feature("docstring")  SymDifference "OGRErr
 OGR_L_SymDifference(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
-OGRLayerH pLayerResult, char **papszOptions, GDALProgressFunc
-pfnProgress, void *pProgressArg)
+OGRLayerH pLayerResult, char \\*\\*papszOptions, GDALProgressFunc
+pfnProgress, void \\*pProgressArg)
 
 Symmetrical difference of two layers.
 
@@ -1347,34 +1474,38 @@ created from the fields of the method layer.
 
 This function is the same as the C++ method OGRLayer::SymDifference().
 
-Parameters:
------------
-
-pLayerInput:  the input layer. Should not be NULL.
-
-pLayerMethod:  the method layer. Should not be NULL.
-
-pLayerResult:  the layer where the features resulting from the
-operation are inserted. Should not be NULL. See above the note about
-the schema.
-
-papszOptions:  NULL terminated list of options (may be NULL).
-
-pfnProgress:  a GDALProgressFunc() compatible callback function for
-reporting progress or NULL.
-
-pProgressArg:  argument to be passed to pfnProgress. May be NULL.
-
-an error code if there was an error or the execution was interrupted,
-OGRERR_NONE otherwise.
-
 The first geometry field is always used.
 
-OGR 1.10 ";
+.. versionadded:: 1.10
+
+Parameters
+-----------
+pLayerInput:
+    the input layer. Should not be NULL.
+pLayerMethod:
+    the method layer. Should not be NULL.
+pLayerResult:
+    the layer where the features resulting from the
+    operation are inserted. Should not be NULL. See above the note about
+    the schema.
+papszOptions:
+    NULL terminated list of options (may be NULL).
+pfnProgress:
+    a GDALProgressFunc() compatible callback function for
+    reporting progress or NULL.
+pProgressArg:
+    argument to be passed to pfnProgress. May be NULL.
+
+Returns
+-------
+OGRErr:
+    an error code if there was an error or the execution was interrupted,
+    OGRERR_NONE otherwise.
+";
 
 %feature("docstring")  Identity "OGRErr OGR_L_Identity(OGRLayerH
 pLayerInput, OGRLayerH pLayerMethod, OGRLayerH pLayerResult, char
-**papszOptions, GDALProgressFunc pfnProgress, void *pProgressArg)
+\\*\\*papszOptions, GDALProgressFunc pfnProgress, void \\*pProgressArg)
 
 Identify the features of this layer with the ones from the identity
 layer.
@@ -1418,34 +1549,38 @@ layer has an unknown geometry type.
 
 This function is the same as the C++ method OGRLayer::Identity().
 
-Parameters:
------------
-
-pLayerInput:  the input layer. Should not be NULL.
-
-pLayerMethod:  the method layer. Should not be NULL.
-
-pLayerResult:  the layer where the features resulting from the
-operation are inserted. Should not be NULL. See above the note about
-the schema.
-
-papszOptions:  NULL terminated list of options (may be NULL).
-
-pfnProgress:  a GDALProgressFunc() compatible callback function for
-reporting progress or NULL.
-
-pProgressArg:  argument to be passed to pfnProgress. May be NULL.
-
-an error code if there was an error or the execution was interrupted,
-OGRERR_NONE otherwise.
-
 The first geometry field is always used.
 
-OGR 1.10 ";
+.. versionadded:: 1.10
+
+Parameters
+-----------
+pLayerInput:
+    the input layer. Should not be NULL.
+pLayerMethod:
+    the method layer. Should not be NULL.
+pLayerResult:
+    the layer where the features resulting from the
+    operation are inserted. Should not be NULL. See above the note about
+    the schema.
+papszOptions:
+    NULL terminated list of options (may be NULL).
+pfnProgress:
+    a GDALProgressFunc() compatible callback function for
+    reporting progress or NULL.
+pProgressArg:
+    argument to be passed to pfnProgress. May be NULL.
+
+Returns
+-------
+OGRErr:
+    an error code if there was an error or the execution was interrupted,
+    OGRERR_NONE otherwise.
+";
 
 %feature("docstring")  Update "OGRErr OGR_L_Update(OGRLayerH
 pLayerInput, OGRLayerH pLayerMethod, OGRLayerH pLayerResult, char
-**papszOptions, GDALProgressFunc pfnProgress, void *pProgressArg)
+\\*\\*papszOptions, GDALProgressFunc pfnProgress, void \\*pProgressArg)
 
 Update this layer with features from the update layer.
 
@@ -1480,36 +1615,40 @@ created from the fields of the input layer.
 METHOD_PREFIX=string. Set a prefix for the field names that will be
 created from the fields of the method layer.
 
-This function is the same as the C++ method OGRLayer::Update().
-
-Parameters:
------------
-
-pLayerInput:  the input layer. Should not be NULL.
-
-pLayerMethod:  the method layer. Should not be NULL.
-
-pLayerResult:  the layer where the features resulting from the
-operation are inserted. Should not be NULL. See above the note about
-the schema.
-
-papszOptions:  NULL terminated list of options (may be NULL).
-
-pfnProgress:  a GDALProgressFunc() compatible callback function for
-reporting progress or NULL.
-
-pProgressArg:  argument to be passed to pfnProgress. May be NULL.
-
-an error code if there was an error or the execution was interrupted,
-OGRERR_NONE otherwise.
-
 The first geometry field is always used.
 
-OGR 1.10 ";
+This function is the same as the C++ method OGRLayer::Update().
+
+.. versionadded:: 1.10
+
+Parameters
+-----------
+pLayerInput:
+    the input layer. Should not be NULL.
+pLayerMethod:
+    the method layer. Should not be NULL.
+pLayerResult:
+    the layer where the features resulting from the
+    operation are inserted. Should not be NULL. See above the note about
+    the schema.
+papszOptions:
+    NULL terminated list of options (may be NULL).
+pfnProgress:
+    a GDALProgressFunc() compatible callback function for
+    reporting progress or NULL.
+pProgressArg:
+    argument to be passed to pfnProgress. May be NULL.
+
+Returns
+-------
+OGRErr:
+    an error code if there was an error or the execution was interrupted,
+    OGRERR_NONE otherwise.
+";
 
 %feature("docstring")  Clip "OGRErr OGR_L_Clip(OGRLayerH pLayerInput,
-OGRLayerH pLayerMethod, OGRLayerH pLayerResult, char **papszOptions,
-GDALProgressFunc pfnProgress, void *pProgressArg)
+OGRLayerH pLayerMethod, OGRLayerH pLayerResult, char \\*\\*papszOptions,
+GDALProgressFunc pfnProgress, void \\*pProgressArg)
 
 Clip off areas that are not covered by the method layer.
 
@@ -1539,34 +1678,38 @@ created from the fields of the method layer.
 
 This function is the same as the C++ method OGRLayer::Clip().
 
-Parameters:
------------
-
-pLayerInput:  the input layer. Should not be NULL.
-
-pLayerMethod:  the method layer. Should not be NULL.
-
-pLayerResult:  the layer where the features resulting from the
-operation are inserted. Should not be NULL. See above the note about
-the schema.
-
-papszOptions:  NULL terminated list of options (may be NULL).
-
-pfnProgress:  a GDALProgressFunc() compatible callback function for
-reporting progress or NULL.
-
-pProgressArg:  argument to be passed to pfnProgress. May be NULL.
-
-an error code if there was an error or the execution was interrupted,
-OGRERR_NONE otherwise.
-
 The first geometry field is always used.
 
-OGR 1.10 ";
+.. versionadded:: 1.10
+
+Parameters
+-----------
+pLayerInput:
+    the input layer. Should not be NULL.
+pLayerMethod:
+    the method layer. Should not be NULL.
+pLayerResult:
+    the layer where the features resulting from the
+    operation are inserted. Should not be NULL. See above the note about
+    the schema.
+papszOptions:
+    NULL terminated list of options (may be NULL).
+pfnProgress:
+    a GDALProgressFunc() compatible callback function for
+    reporting progress or NULL.
+pProgressArg:
+    argument to be passed to pfnProgress. May be NULL.
+
+Returns
+-------
+OGRErr:
+    an error code if there was an error or the execution was interrupted,
+    OGRERR_NONE otherwise.
+";
 
 %feature("docstring")  Erase "OGRErr OGR_L_Erase(OGRLayerH
 pLayerInput, OGRLayerH pLayerMethod, OGRLayerH pLayerResult, char
-**papszOptions, GDALProgressFunc pfnProgress, void *pProgressArg)
+\\*\\*papszOptions, GDALProgressFunc pfnProgress, void \\*pProgressArg)
 
 Remove areas that are covered by the method layer.
 
@@ -1595,29 +1738,33 @@ created from the fields of the method layer.
 
 This function is the same as the C++ method OGRLayer::Erase().
 
-Parameters:
------------
-
-pLayerInput:  the input layer. Should not be NULL.
-
-pLayerMethod:  the method layer. Should not be NULL.
-
-pLayerResult:  the layer where the features resulting from the
-operation are inserted. Should not be NULL. See above the note about
-the schema.
-
-papszOptions:  NULL terminated list of options (may be NULL).
-
-pfnProgress:  a GDALProgressFunc() compatible callback function for
-reporting progress or NULL.
-
-pProgressArg:  argument to be passed to pfnProgress. May be NULL.
-
-an error code if there was an error or the execution was interrupted,
-OGRERR_NONE otherwise.
-
 The first geometry field is always used.
 
-OGR 1.10 ";
+.. versionadded:: 1.10
+
+Parameters
+-----------
+pLayerInput:
+    the input layer. Should not be NULL.
+pLayerMethod:
+    the method layer. Should not be NULL.
+pLayerResult:
+    the layer where the features resulting from the
+    operation are inserted. Should not be NULL. See above the note about
+    the schema.
+papszOptions:
+    NULL terminated list of options (may be NULL).
+pfnProgress:
+    a GDALProgressFunc() compatible callback function for
+    reporting progress or NULL.
+pProgressArg:
+    argument to be passed to pfnProgress. May be NULL.
+
+Returns
+-------
+OGRErr:
+    an error code if there was an error or the execution was interrupted,
+    OGRERR_NONE otherwise.
+";
 
 }

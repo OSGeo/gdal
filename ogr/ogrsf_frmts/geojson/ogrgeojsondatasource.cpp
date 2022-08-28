@@ -484,6 +484,8 @@ int OGRGeoJSONDataSource::TestCapability( const char* pszCap )
 {
     if( EQUAL( pszCap, ODsCCreateLayer ) )
         return fpOut_ != nullptr && nLayers_ == 0;
+    else if( EQUAL(pszCap, ODsCZGeometries) )
+        return TRUE;
 
     return FALSE;
 }

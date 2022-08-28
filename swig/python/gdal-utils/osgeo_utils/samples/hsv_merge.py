@@ -34,6 +34,7 @@
 import sys
 
 import numpy
+
 from osgeo import gdal
 
 # =============================================================================
@@ -78,6 +79,7 @@ def rgb_to_hsv(r, g, b):
 
     return hsv
 
+
 # =============================================================================
 # hsv_to_rgb()
 #
@@ -106,19 +108,22 @@ def hsv_to_rgb(hsv):
 
     return rgb
 
+
 # =============================================================================
 # Usage()
 
 
 def Usage():
-    print("""Usage: hsv_merge.py [-q] [-of format] src_color src_greyscale dst_color
+    print(
+        """Usage: hsv_merge.py [-q] [-of format] src_color src_greyscale dst_color
 
 where src_color is a RGB or RGBA dataset,
       src_greyscale is a greyscale dataset (e.g. the result of gdaldem hillshade)
       dst_color will be a RGB or RGBA dataset using the greyscale as the
       intensity for the color dataset.
-""")
-    return 1
+"""
+    )
+    return 2
 
 
 def main(argv=sys.argv):
@@ -126,7 +131,7 @@ def main(argv=sys.argv):
     if argv is None:
         return 0
 
-    driver_name = 'GTiff'
+    driver_name = "GTiff"
     src_color_filename = None
     src_greyscale_filename = None
     dst_color_filename = None
@@ -137,11 +142,11 @@ def main(argv=sys.argv):
     while i < len(argv):
         arg = argv[i]
 
-        if arg == '-of':
+        if arg == "-of":
             i = i + 1
             driver_name = argv[i]
 
-        elif arg == '-q' or arg == '-quiet':
+        elif arg == "-q" or arg == "-quiet":
             quiet = True
 
         elif src_color_filename is None:
@@ -153,12 +158,12 @@ def main(argv=sys.argv):
         elif dst_color_filename is None:
             dst_color_filename = argv[i]
         else:
-            Usage()
+            return Usage()
 
         i = i + 1
 
     if dst_color_filename is None:
-        Usage()
+        return Usage()
 
     datatype = gdal.GDT_Byte
 
@@ -166,14 +171,19 @@ def main(argv=sys.argv):
     colordataset = gdal.Open(src_color_filename, gdal.GA_ReadOnly)
 
     # check for 3 or 4 bands in the color file
-    if (colordataset.RasterCount != 3 and colordataset.RasterCount != 4):
-        print('Source image does not appear to have three or four bands as required.')
+    if colordataset.RasterCount != 3 and colordataset.RasterCount != 4:
+        print("Source image does not appear to have three or four bands as required.")
         return 1
 
     # define output format, name, size, type and set projection
     out_driver = gdal.GetDriverByName(driver_name)
-    outdataset = out_driver.Create(dst_color_filename, colordataset.RasterXSize,
-                                   colordataset.RasterYSize, colordataset.RasterCount, datatype)
+    outdataset = out_driver.Create(
+        dst_color_filename,
+        colordataset.RasterXSize,
+        colordataset.RasterYSize,
+        colordataset.RasterCount,
+        datatype,
+    )
     outdataset.SetProjection(hilldataset.GetProjection())
     outdataset.SetGeoTransform(hilldataset.GetGeoTransform())
 
@@ -190,8 +200,8 @@ def main(argv=sys.argv):
     hillbandnodatavalue = hillband.GetNoDataValue()
 
     # check for same file size
-    if ((rBand.YSize != hillband.YSize) or (rBand.XSize != hillband.XSize)):
-        print('Color and hillshade must be the same size in pixels.')
+    if (rBand.YSize != hillband.YSize) or (rBand.XSize != hillband.XSize):
+        print("Color and hillshade must be the same size in pixels.")
         return 1
 
     # loop over lines to apply hillshade
@@ -238,5 +248,5 @@ def main(argv=sys.argv):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

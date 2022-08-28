@@ -2,16 +2,6 @@
 
 set(GDAL_ROOT_TEST_DIR "${PROJECT_SOURCE_DIR}/autotest")
 
-if (NOT CMAKE_CROSSCOMPILING)
-  if (LINUX)
-    add_library(vsipreload MODULE ${PROJECT_SOURCE_DIR}/port/vsipreload.cpp)
-    target_link_libraries(vsipreload PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
-    if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
-      set_property(SOURCE ${PROJECT_SOURCE_DIR}/port/vsipreload.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
-    endif ()
-  endif ()
-endif ()
-
 add_executable(
   gdal_unit_test
   tut/tut_gdal.cpp
@@ -222,6 +212,7 @@ gdal_autotest_target(testdestroy test-destroy testdestroy.cpp "")
 gdal_autotest_target(test_include_from_c_file test-include-from-C-file test_include_from_c_file.c "")
 gdal_autotest_target(test_c_include_from_cpp_file test-C-include-from-CPP-file test_c_include_from_cpp_file.cpp "")
 gdal_autotest_target(testperfcopywords test-performance-copy-words testperfcopywords.cpp "")
+gdal_autotest_target(testperfdeinterleave test-performance-deinterleave testperfdeinterleave.cpp "")
 gdal_autotest_target(bug1488 test-bug1488 bug1488.cpp "")
 gdal_autotest_target(testlog test-log testlog.cpp "")
 if (UNIX)

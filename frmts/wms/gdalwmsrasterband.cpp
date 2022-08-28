@@ -182,7 +182,6 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
             if (success && (request.pabyData != nullptr) && (request.nDataLen > 0)) {
                 CPLString file_name(BufferToVSIFile(request.pabyData, request.nDataLen));
                 if (!file_name.empty()) {
-                    bool wms_exception = false;
                     /* check for error xml */
                     if (request.nDataLen >= 20) {
                         const char *download_data = reinterpret_cast<char *>(request.pabyData);
@@ -193,7 +192,6 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                                 CPLError(CE_Failure, CPLE_AppDefined,
                                         "GDALWMS: The server returned unknown exception.");
                             }
-                            wms_exception = true;
                             ret = CE_Failure;
                         }
                     }
@@ -213,7 +211,7 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                             }
                         }
                     }
-                    else if (wms_exception && m_parent_dataset->m_zeroblock_on_serverexceptions) {
+                    else if (m_parent_dataset->m_zeroblock_on_serverexceptions) {
                         ret = EmptyBlock(request.x, request.y, nBand, p);
                         if (ret != CE_None)
                             CPLError(ret, CPLE_AppDefined, "GDALWMS: EmptyBlock failed.");
@@ -903,7 +901,7 @@ CPLErr GDALWMSRasterBand::EmptyBlock(int x, int y, int to_buffer_band, void *buf
                         }
                     }
                 }
-            } 
+            }
             if (p != nullptr) {
                 int hasNDV;
                 double valNDV = band->GetNoDataValue(&hasNDV);

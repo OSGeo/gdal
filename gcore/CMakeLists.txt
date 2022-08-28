@@ -37,6 +37,7 @@ add_library(
   gdalabstractbandblockcache.cpp
   gdalarraybandblockcache.cpp
   gdalhashsetbandblockcache.cpp
+  gdalrelationship.cpp
   overview.cpp
   rasterio.cpp
   rawdataset.cpp

@@ -201,6 +201,18 @@ Starting with GDAL 2.3, options can be passed in the filename with the following
 - max_retry=number: default to 0. Setting this option overrides the behavior of the :decl_configoption:`GDAL_HTTP_MAX_RETRY` configuration option.
 - retry_delay=number_in_seconds: default to 30. Setting this option overrides the behavior of the :decl_configoption:`GDAL_HTTP_RETRY_DELAY` configuration option.
 - list_dir=yes/no: whether an attempt to read the file list of the directory where the file is located should be done. Default to YES.
+- useragent=value: HTTP UserAgent header
+- referer=value: HTTP Referer header
+- cookie=value: HTTP Cookie header
+- header_file=value: Filename that contains one or several "Header: Value" lines
+- unsafessl=yes/no
+- low_speed_time=value
+- low_speed_limit=value
+- proxy=value
+- proxyauth=value
+- proxyuserpwd=value
+- pc_url_signing=yes/no: whether to use the URL signing mechanism of Microsoft Planetary Computer (https://planetarycomputer.microsoft.com/docs/concepts/sas/). (GDAL >= 3.5.2)
+- pc_collection=name: name of the collection of the dataset for Planetary Computer URL signing. Only used when pc_url_signing=yes. (GDAL >= 3.5.2)
 
 Partial downloads (requires the HTTP server to support random reading) are done with a 16 KB granularity by default. Starting with GDAL 2.3, the chunk size can be configured with the :decl_configoption:`CPL_VSIL_CURL_CHUNK_SIZE` configuration option, with a value in bytes. If the driver detects sequential reading it will progressively increase the chunk size up to 2 MB to improve download performance. Starting with GDAL 2.3, the :decl_configoption:`GDAL_INGESTED_BYTES_AT_OPEN` configuration option can be set to impose the number of bytes read in one GET call at file opening (can help performance to read Cloud optimized geotiff with a large header).
 
@@ -266,7 +278,8 @@ Several authentication methods are possible, and are attempted in the following 
 2. The :decl_configoption:`AWS_SECRET_ACCESS_KEY` and :decl_configoption:`AWS_ACCESS_KEY_ID` configuration options can be set. The :decl_configoption:`AWS_SESSION_TOKEN` configuration option must be set when temporary credentials are used.
 3. Starting with GDAL 2.3, alternate ways of providing credentials similar to what the "aws" command line utility or Boto3 support can be used. If the above mentioned environment variables are not provided, the ``~/.aws/credentials`` or ``%UserProfile%/.aws/credentials`` file will be read (or the file pointed by :decl_configoption:`CPL_AWS_CREDENTIALS_FILE`). The profile may be specified with the :decl_configoption:`AWS_DEFAULT_PROFILE` environment variable, or starting with GDAL 3.2 with the :decl_configoption:`AWS_PROFILE` environment variable (the default profile is "default").
 4. The ``~/.aws/config`` or ``%UserProfile%/.aws/config`` file may also be used (or the file pointer by :decl_configoption:`AWS_CONFIG_FILE`) to retrieve credentials and the AWS region.
-5. If none of the above method succeeds, instance profile credentials will be retrieved when GDAL is used on EC2 instances.
+5. If :decl_configoption:`AWS_ROLE_ARN` and :decl_configoption:`AWS_WEB_IDENTITY_TOKEN_FILE` are defined we will rely on credentials mechanism for web identity token based AWS sts action AssumeRoleWithWebIdentity (See.: https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
+6. If none of the above method succeeds, instance profile credentials will be retrieved when GDAL is used on EC2 instances.
 
 The :decl_configoption:`AWS_REGION` (or :decl_configoption:`AWS_DEFAULT_REGION` starting with GDAL 2.3) configuration option may be set to one of the supported S3 regions and defaults to ``us-east-1``.
 
@@ -581,7 +594,23 @@ This file system handler also allows sequential writing of files (no seeks or re
 
 The filename syntax must be only :file:`/vsistdin/`.
 
-The file operations available are of course limited to Read() and forward Seek(). Full seek in the first MB of a file is possible, and it is cached so that closing, re-opening :file:`/vsistdin/` and reading within this first megabyte is possible multiple times in the same process.
+The file operations available are of course limited to Read() and forward Seek().
+Full seek in the first MB of a file is possible, and it is cached so that closing,
+re-opening :file:`/vsistdin/` and reading within this first megabyte is possible
+multiple times in the same process.
+
+Starting with GDAL 3.6, the size of the in-memory cache can be controlled with
+the :decl_configoption:`CPL_VSISTDIN_BUFFER_LIMIT` configuration option, by
+specifying a size in bytes (or using a MB or GB suffix, e.g. "1GB"), or -1 for unlimited.
+The "/vsistdin?buffer_limit=value" syntax can also be used.
+
+/vsistdin filenames can be combined with other file system. For example, to
+read a file within a potentially big ZIP file streamed to gdal_translate:
+
+::
+
+    cat file.tif.zip | gdal_translate /vsizip/{/vsistdin?buffer_limit=-1}/path/to/some.tif out.tif
+
 
 .. _vsistdout:
 

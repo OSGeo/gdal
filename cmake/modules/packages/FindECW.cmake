@@ -81,9 +81,13 @@ if (ECW_VERSION_STRING VERSION_GREATER_EQUAL 5.5)
         set(ECW_INCLUDE_DIRS ${ECW_INCLUDE_DIR})
         if(NOT TARGET ECW::ECW_ALL)
             add_library(ECW::ECW_ALL UNKNOWN IMPORTED)
+            set(ECW_INTERFACE_COMPILE_DEFINITIONS "HAVE_COMPRESS")
+            if( "${ECW_LIBRARY}" MATCHES "NCSEcwS" )
+                set(ECW_INTERFACE_COMPILE_DEFINITIONS "${ECW_INTERFACE_COMPILE_DEFINITIONS};NCSECW_STATIC_LIBS")
+            endif()
             set_target_properties(ECW::ECW_ALL PROPERTIES
                                 INTERFACE_INCLUDE_DIRECTORIES "${ECW_INCLUDE_DIRS}"
-                                INTERFACE_COMPILE_DEFINITIONS "HAVE_COMPRESS"
+                                INTERFACE_COMPILE_DEFINITIONS "${ECW_INTERFACE_COMPILE_DEFINITIONS}"
                                 IMPORTED_LINK_INTERFACE_LANGUAGES "C"
                                 IMPORTED_LOCATION "${ECW_LIBRARY}")
         endif()
@@ -92,48 +96,69 @@ elseif(ECW_VERSION_STRING VERSION_GREATER_EQUAL 4.0)
     # We could likely handle other versions, but not done currently
     message(FATAL_ERROR "Only ECW SDK 3.3 and >= 5.5 are supported")
 else()
-    # Case of ECW SDK 3.3. We need to find extra libraries than the base NCSEcw.
-    find_library(ECW_LIBRARY NCSEcw)
-    find_library(ECWnet_LIBRARY NCSCnet)
-    find_library(ECWC_LIBRARY NCSEcwC)
-    find_library(NCSUtil_LIBRARY NCSUtil)
-    mark_as_advanced(ECW_LIBRARY ECWnet_LIBRARY ECWC_LIBRARY NCSUtil_LIBRARY)
-    find_package_handle_standard_args(ECW
-                                      REQUIRED_VARS ECW_LIBRARY ECWnet_LIBRARY ECWC_LIBRARY NCSUtil_LIBRARY ECW_INCLUDE_DIR
-                                      VERSION_VAR ECW_VERSION_STRING)
-    if(ECW_FOUND)
-        set(ECW_LIBRARIES ${ECW_LIBRARY} ${ECWnet_LIBRARY} ${ECWC_LIBRARY} ${NCSUtil_LIBRARY})
-        set(ECW_INCLUDE_DIRS ${ECW_INCLUDE_DIR})
-        if(NOT TARGET ECW::ECW)
-            add_library(ECW::ECW UNKNOWN IMPORTED)
-            set_target_properties(ECW::ECW PROPERTIES
-                                INTERFACE_INCLUDE_DIRECTORIES "${ECW_INCLUDE_DIRS}"
-                                IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-                                IMPORTED_LOCATION "${ECW_LIBRARY}")
+    find_library(ECWJ_LIBRARY libecwj2)
+    if(ECWJ_LIBRARY)
+        # ECW SDK 3.3 built by gisinternals
+        mark_as_advanced(ECWJ_LIBRARY)
+        find_package_handle_standard_args(ECW
+                                          REQUIRED_VARS ECWJ_LIBRARY ECW_INCLUDE_DIR
+                                          VERSION_VAR ECW_VERSION_STRING)
+        if(ECW_FOUND)
+            set(ECW_LIBRARIES ${ECWJ_LIBRARY})
+            set(ECW_INCLUDE_DIRS ${ECW_INCLUDE_DIR})
+            if(NOT TARGET ECW::ECW_ALL)
+                add_library(ECW::ECW_ALL UNKNOWN IMPORTED)
+                set_target_properties(ECW::ECW_ALL PROPERTIES
+                                    INTERFACE_INCLUDE_DIRECTORIES "${ECW_INCLUDE_DIRS}"
+                                    IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+                                    INTERFACE_COMPILE_DEFINITIONS "${ECW_INTERFACE_COMPILE_DEFINITIONS}"
+                                    IMPORTED_LOCATION "${ECWJ_LIBRARY}")
+            endif()
         endif()
-        if(NOT TARGET ECW::ECWC)
-            add_library(ECW::ECWC UNKNOWN IMPORTED)
-            set_target_properties(ECW::ECWC PROPERTIES
-                                  IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-                                  IMPORTED_LOCATION "${ECWC_LIBRARY}")
-        endif()
-        if(NOT TARGET ECW::ECWnet)
-            add_library(ECW::ECWnet UNKNOWN IMPORTED)
-            set_target_properties(ECW::ECWnet PROPERTIES
-                                  IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-                                  IMPORTED_LOCATION "${ECWnet_LIBRARY}")
-        endif()
-        if(NOT TARGET ECW::NCSUtil)
-            add_library(ECW::NCSUtil UNKNOWN IMPORTED)
-            set_target_properties(ECW::NCSUtil PROPERTIES
-                                  IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-                                  IMPORTED_LOCATION "${NCSUtil_LIBRARY}")
-        endif()
-        if(NOT TARGET ECW::ECW_ALL)
-            add_library(ECW::ECW_ALL INTERFACE IMPORTED)
-            set_target_properties(ECW::ECW_ALL PROPERTIES
-                         INTERFACE_INCLUDE_DIRECTORIES "${ECW_INCLUDE_DIRS}"
-                         INTERFACE_LINK_LIBRARIES "ECW::ECW;ECW::ECWC;ECW::ECWnet;ECW::NCSUtil")
+    else()
+        # Case of ECW SDK 3.3. We need to find extra libraries than the base NCSEcw.
+        find_library(ECW_LIBRARY NCSEcw)
+        find_library(ECWnet_LIBRARY NCSCnet)
+        find_library(ECWC_LIBRARY NCSEcwC)
+        find_library(NCSUtil_LIBRARY NCSUtil)
+        mark_as_advanced(ECW_LIBRARY ECWnet_LIBRARY ECWC_LIBRARY NCSUtil_LIBRARY)
+        find_package_handle_standard_args(ECW
+                                          REQUIRED_VARS ECW_LIBRARY ECWnet_LIBRARY ECWC_LIBRARY NCSUtil_LIBRARY ECW_INCLUDE_DIR
+                                          VERSION_VAR ECW_VERSION_STRING)
+        if(ECW_FOUND)
+            set(ECW_LIBRARIES ${ECW_LIBRARY} ${ECWnet_LIBRARY} ${ECWC_LIBRARY} ${NCSUtil_LIBRARY})
+            set(ECW_INCLUDE_DIRS ${ECW_INCLUDE_DIR})
+            if(NOT TARGET ECW::ECW)
+                add_library(ECW::ECW UNKNOWN IMPORTED)
+                set_target_properties(ECW::ECW PROPERTIES
+                                    INTERFACE_INCLUDE_DIRECTORIES "${ECW_INCLUDE_DIRS}"
+                                    IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+                                    IMPORTED_LOCATION "${ECW_LIBRARY}")
+            endif()
+            if(NOT TARGET ECW::ECWC)
+                add_library(ECW::ECWC UNKNOWN IMPORTED)
+                set_target_properties(ECW::ECWC PROPERTIES
+                                      IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+                                      IMPORTED_LOCATION "${ECWC_LIBRARY}")
+            endif()
+            if(NOT TARGET ECW::ECWnet)
+                add_library(ECW::ECWnet UNKNOWN IMPORTED)
+                set_target_properties(ECW::ECWnet PROPERTIES
+                                      IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+                                      IMPORTED_LOCATION "${ECWnet_LIBRARY}")
+            endif()
+            if(NOT TARGET ECW::NCSUtil)
+                add_library(ECW::NCSUtil UNKNOWN IMPORTED)
+                set_target_properties(ECW::NCSUtil PROPERTIES
+                                      IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+                                      IMPORTED_LOCATION "${NCSUtil_LIBRARY}")
+            endif()
+            if(NOT TARGET ECW::ECW_ALL)
+                add_library(ECW::ECW_ALL INTERFACE IMPORTED)
+                set_target_properties(ECW::ECW_ALL PROPERTIES
+                             INTERFACE_INCLUDE_DIRECTORIES "${ECW_INCLUDE_DIRS}"
+                             INTERFACE_LINK_LIBRARIES "ECW::ECW;ECW::ECWC;ECW::ECWnet;ECW::NCSUtil")
+            endif()
         endif()
     endif()
 endif()

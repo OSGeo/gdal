@@ -375,17 +375,6 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
 
     // Get layer base name
     CPLString osBaseLayerName = CPLGetBasename(pszFilename);
-    CPLString osExt = CPLGetExtension(pszFilename);
-    if( STARTS_WITH(pszFilename, "/vsigzip/") && EQUAL(osExt, "gz") ) {
-        size_t nPos=std::string::npos;
-        if (strlen(pszFilename)>3) nPos=osExt.find_last_of('.',strlen(pszFilename)-4);
-        if (nPos!=std::string::npos) {
-            osExt=osExt.substr(nPos+1,strlen(pszFilename)-4-nPos);
-            osBaseLayerName=osBaseLayerName.substr(0,nPos);
-        } else {
-            osExt="";
-        }
-    }
 
     // Read header of file to get common information for all layers
     // poHeader now owns fp
@@ -573,10 +562,23 @@ OGRErr OGRSelafinDataSource::DeleteLayer( int iLayer ) {
         }
         for (int j=0;j<poHeader->nVar;++j)
         {
-            if (VSIFSeekL(poHeader->fp,poHeader->getPosition(i+1)+12,SEEK_SET)!=0 ||
-                Selafin::read_floatarray(poHeader->fp,&dfValues,poHeader->nFileSize) !=poHeader->nPoints ||
-                VSIFSeekL(poHeader->fp,poHeader->getPosition(i)+12,SEEK_SET)!=0 ||
-                Selafin::write_floatarray(poHeader->fp,dfValues,poHeader->nPoints)==0) {
+            bool ok = true;
+            if (VSIFSeekL(poHeader->fp,poHeader->getPosition(i+1)+12,SEEK_SET)!=0 )
+            {
+                ok = false;
+            }
+            else
+            {
+                int ret = Selafin::read_floatarray(poHeader->fp,&dfValues,poHeader->nFileSize);
+                if( ret < 0 || ret !=poHeader->nPoints ||
+                    VSIFSeekL(poHeader->fp,poHeader->getPosition(i)+12,SEEK_SET)!=0 ||
+                    Selafin::write_floatarray(poHeader->fp,dfValues,poHeader->nPoints)==0)
+                {
+                    ok = false;
+                }
+            }
+            if( !ok )
+            {
                 CPLError( CE_Failure, CPLE_FileIO, "Could not update Selafin file %s.\n",pszName);
                 CPLFree(dfValues);
                 return OGRERR_FAILURE;

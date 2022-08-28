@@ -462,21 +462,29 @@ void FGDB_CPLAddXMLAttribute(CPLXMLNode* node, const char* attrname, const char*
 /*                          FGDBLaunderName()                            */
 /*************************************************************************/
 
-std::string FGDBLaunderName(const std::string& name)
+std::wstring FGDBLaunderName(const std::wstring& name)
 {
-    std::string newName = name;
+    std::wstring newName = name;
 
-    if ( newName[0]>='0' && newName[0]<='9' )
+    // https://support.esri.com/en/technical-article/000005588
+
+    // "Do not start field or table names with an underscore or a number."
+    // But we can see in the wild table names starting with underscore...
+    // (cf https://github.com/OSGeo/gdal/issues/4112)
+    if( !newName.empty() && newName[0]>='0' && newName[0]<='9' )
     {
-        newName = "_" + newName;
+        newName = StringToWString("_") + newName;
     }
 
-    for(size_t i=0; i < newName.size(); i++)
+    // "Essentially, eliminate anything that is not alphanumeric or an underscore."
+    // Note: alphanumeric unicode is supported
+    for( size_t i=0; i < newName.size(); i++)
     {
         if ( !( newName[i] == '_' ||
               ( newName[i]>='0' && newName[i]<='9') ||
               ( newName[i]>='a' && newName[i]<='z') ||
-              ( newName[i]>='A' && newName[i]<='Z') ))
+              ( newName[i]>='A' && newName[i]<='Z') ||
+               newName[i] >= 128 ) )
         {
             newName[i] = '_';
         }
@@ -489,9 +497,9 @@ std::string FGDBLaunderName(const std::string& name)
 /*                     FGDBEscapeUnsupportedPrefixes()                   */
 /*************************************************************************/
 
-std::string FGDBEscapeUnsupportedPrefixes(const std::string& className)
+std::wstring FGDBEscapeUnsupportedPrefixes(const std::wstring& className)
 {
-    std::string newName = className;
+    std::wstring newName = className;
     // From ESRI docs
     // Feature classes starting with these strings are unsupported.
     static const char* const UNSUPPORTED_PREFIXES[] = {"sde_", "gdb_", "delta_", nullptr};
@@ -499,9 +507,11 @@ std::string FGDBEscapeUnsupportedPrefixes(const std::string& className)
     for (int i = 0; UNSUPPORTED_PREFIXES[i] != nullptr; i++)
     {
         // cppcheck-suppress stlIfStrFind
-        if (newName.find(UNSUPPORTED_PREFIXES[i]) == 0)
+        if (newName.find(StringToWString(UNSUPPORTED_PREFIXES[i])) == 0)
         {
-            newName = "_" + newName;
+            // Normally table names shouldn't start with underscore, but
+            // there are such in the wild (cf https://github.com/OSGeo/gdal/issues/4112)
+            newName = StringToWString("_") + newName;
             break;
         }
     }
@@ -513,10 +523,10 @@ std::string FGDBEscapeUnsupportedPrefixes(const std::string& className)
 /*                        FGDBEscapeReservedKeywords()                   */
 /*************************************************************************/
 
-std::string FGDBEscapeReservedKeywords(const std::string& name)
+std::wstring FGDBEscapeReservedKeywords(const std::wstring& name)
 {
-    std::string newName = name;
-    std::string upperName = CPLString(name).toupper();
+    std::string newName = WStringToString(name);
+    std::string upperName = CPLString(newName).toupper();
 
     // From ESRI docs
     static const char* const RESERVED_WORDS[] = {FGDB_OID_NAME, "ADD", "ALTER", "AND", "AS", "ASC", "BETWEEN",
@@ -537,5 +547,5 @@ std::string FGDBEscapeReservedKeywords(const std::string& name)
         }
     }
 
-    return newName;
+    return StringToWString(newName);
 }

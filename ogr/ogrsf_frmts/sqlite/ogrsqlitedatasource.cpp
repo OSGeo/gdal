@@ -48,6 +48,7 @@
 #include <sys/stat.h>
 #include <map>
 #include <set>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -307,6 +308,45 @@ int OGRSQLiteDataSource::GetSpatialiteVersionNumber()
     return v;
 }
 
+
+/************************************************************************/
+/*                        GetRelationshipNames()                        */
+/************************************************************************/
+
+std::vector<std::string> OGRSQLiteDataSource::GetRelationshipNames( CPL_UNUSED CSLConstList papszOptions ) const
+
+{
+    if ( !m_bHasPopulatedRelationships )
+        LoadRelationshipsFromForeignKeys();
+
+    std::vector<std::string> oasNames;
+    oasNames.reserve( m_osMapRelationships.size() );
+    for ( auto it = m_osMapRelationships.begin(); it != m_osMapRelationships.end(); ++it )
+    {
+        oasNames.emplace_back( it->first );
+    }
+    return oasNames;
+}
+
+
+/************************************************************************/
+/*                        GetRelationship()                             */
+/************************************************************************/
+
+const GDALRelationship *OGRSQLiteDataSource::GetRelationship( const std::string &name ) const
+
+{
+    if ( !m_bHasPopulatedRelationships )
+        LoadRelationshipsFromForeignKeys();
+
+    auto it = m_osMapRelationships.find( name );
+    if ( it == m_osMapRelationships.end() )
+        return nullptr;
+
+    return it->second.get();
+}
+
+
 /************************************************************************/
 /*                       OGRSQLiteBaseDataSource()                      */
 /************************************************************************/
@@ -474,6 +514,109 @@ OGRErr OGRSQLiteBaseDataSource::PragmaCheck(
 
     return OGRERR_NONE;
 }
+
+/************************************************************************/
+/*                LoadRelationshipsFromForeignKeys()                    */
+/************************************************************************/
+
+void OGRSQLiteBaseDataSource::LoadRelationshipsFromForeignKeys() const
+
+{
+    m_osMapRelationships.clear();
+
+#if SQLITE_VERSION_NUMBER >= 3016000L
+    if( hDB )
+    {
+        auto oResult = SQLQuery( hDB,
+                                 "SELECT m.name, p.id, p.seq, p.\"table\", p.\"from\", p.\"to\", p.on_delete FROM sqlite_master m "
+                                 "JOIN pragma_foreign_key_list(m.name) p ON m.name != p.\"table\" "
+                                 "WHERE m.type = 'table' "
+                                 "ORDER BY m.name" );
+
+        if ( !oResult )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, "Cannot load relationships" );
+            return;
+        }
+
+        for ( int iRecord = 0; iRecord < oResult->RowCount(); iRecord++ )
+        {
+            const char* pszBaseTableName = oResult->GetValue(0, iRecord);
+            if ( !pszBaseTableName )
+                continue;
+
+            // skip over foreign keys which relate to private GPKG tables
+            if ( STARTS_WITH(pszBaseTableName, "gpkg_") )
+                continue;
+
+            const char* pszRelatedTableName = oResult->GetValue(3, iRecord);
+            if ( !pszRelatedTableName )
+                continue;
+
+            const char* pszBaseFieldName = oResult->GetValue(4, iRecord);
+            if ( !pszBaseFieldName )
+                continue;
+
+            const char* pszRelatedFieldName = oResult->GetValue(5, iRecord);
+            if ( !pszRelatedFieldName )
+                continue;
+
+            const int nId = oResult->GetValueAsInteger(1, iRecord);
+
+            // form relationship name by appending foreign key id to base and related table names
+            std::ostringstream stream;
+            stream << pszBaseTableName << '_' << pszRelatedTableName;
+            if ( nId > 0 )
+            {
+                // note we use nId + 1 here as the first id will be zero, and we'd like subsequent relations to have
+                // names starting with _2, _3 etc, not _1, _2 etc.
+                stream << '_' << ( nId + 1 );
+            }
+            const std::string osRelationName = stream.str();
+
+            auto it = m_osMapRelationships.find( osRelationName );
+            if ( it != m_osMapRelationships.end() )
+            {
+                // already have a relationship with this name -- that means that the base and related table name and id are the same, so we've found a
+                // multi-column relationship
+                auto osListLeftFields = it->second->GetLeftTableFields();
+                osListLeftFields.emplace_back( pszBaseFieldName );
+                it->second->SetLeftTableFields(osListLeftFields);
+
+                auto osListRightFields = it->second->GetRightTableFields();
+                osListRightFields.emplace_back( pszRelatedFieldName );
+                it->second->SetRightTableFields(osListRightFields);
+            }
+            else
+            {
+                std::unique_ptr< GDALRelationship > poRelationship( new GDALRelationship( osRelationName,
+                                                                                          pszBaseTableName,
+                                                                                          pszRelatedTableName,
+                                                                                          GRC_ONE_TO_MANY ) );
+                poRelationship->SetLeftTableFields({pszBaseFieldName});
+                poRelationship->SetRightTableFields({pszRelatedFieldName});
+                poRelationship->SetRelatedTableType("feature");
+
+                if ( const char* pszOnDeleteAction = oResult->GetValue(6, iRecord) )
+                {
+                  if ( EQUAL( pszOnDeleteAction, "CASCADE") )
+                  {
+                    poRelationship->SetType( GRT_COMPOSITE );
+                  }
+                }
+
+                m_osMapRelationships[osRelationName] = std::move(poRelationship);
+            }
+        }
+
+        m_bHasPopulatedRelationships = true;
+    }
+#else
+    CPLError( CE_Warning, CPLE_AppDefined, "SQLite relationship discovery requires sqlite version 3.16.0 or later" );
+    m_bHasPopulatedRelationships = true;
+#endif
+}
+
 
 /************************************************************************/
 /*                        OGRSQLiteDataSource()                         */
@@ -2373,7 +2516,9 @@ int OGRSQLiteDataSource::TestCapability( const char * pszCap )
 int OGRSQLiteBaseDataSource::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,ODsCTransactions) )
-        return TRUE;
+        return true;
+    else if( EQUAL(pszCap,ODsCZGeometries) )
+        return true;
     else
         return GDALPamDataset::TestCapability(pszCap);
 }
@@ -2637,20 +2782,6 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
 
         DeleteLayer( pszLayerName );
         return nullptr;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Special case GetVSILFILE() command (used by GDAL MBTiles driver)*/
-/* -------------------------------------------------------------------- */
-    if (strcmp(pszSQLCommand, "GetVSILFILE()") == 0)
-    {
-        if (fpMainFile == nullptr)
-            return nullptr;
-
-        char szVal[64];
-        int nRet = CPLPrintPointer( szVal, fpMainFile, sizeof(szVal)-1 );
-        szVal[nRet] = '\0';
-        return new OGRSQLiteSingleFeatureLayer( "VSILFILE", szVal );
     }
 
 /* -------------------------------------------------------------------- */

@@ -36,8 +36,7 @@
 
 import sys
 
-from osgeo import gdal
-from osgeo import ogr
+from osgeo import gdal, ogr
 
 bReadOnly = False
 bVerbose = True
@@ -48,6 +47,7 @@ papszOptions = None
 
 def EQUAL(a, b):
     return a.lower() == b.lower()
+
 
 # **********************************************************************
 #                                main()
@@ -61,9 +61,9 @@ def main(argv=None):
     global nFetchFID
     global papszOptions
 
-    version_num = int(gdal.VersionInfo('VERSION_NUM'))
+    version_num = int(gdal.VersionInfo("VERSION_NUM"))
     if version_num < 1800:  # because of ogr.GetFieldTypeName
-        print('ERROR: Python bindings of GDAL 1.8.0 or later required')
+        print("ERROR: Python bindings of GDAL 1.8.0 or later required")
         return 1
 
     pszWHERE = None
@@ -82,11 +82,11 @@ def main(argv=None):
 
     argv = ogr.GeneralCmdLineProcessor(argv)
 
-# --------------------------------------------------------------------
-#      Processing command line arguments.
-# --------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    #      Processing command line arguments.
+    # --------------------------------------------------------------------
     if argv is None:
-        return 1
+        return 2
 
     nArgc = len(argv)
 
@@ -94,8 +94,10 @@ def main(argv=None):
     while iArg < nArgc:
 
         if EQUAL(argv[iArg], "--utility_version"):
-            print("%s is running against GDAL %s" %
-                  (argv[0], gdal.VersionInfo("RELEASE_NAME")))
+            print(
+                "%s is running against GDAL %s"
+                % (argv[0], gdal.VersionInfo("RELEASE_NAME"))
+            )
             return 0
 
         elif EQUAL(argv[iArg], "-ro"):
@@ -145,12 +147,12 @@ def main(argv=None):
             bSummaryOnly = True
 
         elif len(argv[iArg]) > 8 and EQUAL(argv[iArg][0:8], "-fields="):
-            options['DISPLAY_FIELDS'] = argv[iArg][7:len(argv[iArg])]
+            options["DISPLAY_FIELDS"] = argv[iArg][7 : len(argv[iArg])]
 
         elif len(argv[iArg]) > 6 and EQUAL(argv[iArg][0:6], "-geom="):
-            options['DISPLAY_GEOMETRY'] = argv[iArg][6:len(argv[iArg])]
+            options["DISPLAY_GEOMETRY"] = argv[iArg][6 : len(argv[iArg])]
 
-        elif argv[iArg][0] == '-':
+        elif argv[iArg][0] == "-":
             return Usage()
 
         elif pszDataSource is None:
@@ -166,9 +168,9 @@ def main(argv=None):
     if pszDataSource is None:
         return Usage()
 
-# --------------------------------------------------------------------
-#      Open data source.
-# --------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    #      Open data source.
+    # --------------------------------------------------------------------
     poDS = None
     poDriver = None
 
@@ -179,12 +181,14 @@ def main(argv=None):
             print("Had to open data source read-only.")
             bReadOnly = True
 
-# --------------------------------------------------------------------
-#      Report failure.
-# --------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    #      Report failure.
+    # --------------------------------------------------------------------
     if poDS is None:
-        print("FAILURE:\n"
-              "Unable to open datasource `%s' with the following drivers." % pszDataSource)
+        print(
+            "FAILURE:\n"
+            "Unable to open datasource `%s' with the following drivers." % pszDataSource
+        )
 
         for iDriver in range(ogr.GetDriverCount()):
             print("  -> %s" % ogr.GetDriver(iDriver).GetName())
@@ -193,23 +197,30 @@ def main(argv=None):
 
     poDriver = poDS.GetDriver()
 
-# --------------------------------------------------------------------
-#      Some information messages.
-# --------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    #      Some information messages.
+    # --------------------------------------------------------------------
     if bVerbose:
-        print("INFO: Open of `%s'\n"
-              "      using driver `%s' successful." % (pszDataSource, poDriver.GetName()))
+        print(
+            "INFO: Open of `%s'\n"
+            "      using driver `%s' successful." % (pszDataSource, poDriver.GetName())
+        )
 
     poDS_Name = poDS.GetName()
-    if str(type(pszDataSource)) == "<type 'unicode'>" and str(type(poDS_Name)) == "<type 'str'>":
+    if (
+        str(type(pszDataSource)) == "<type 'unicode'>"
+        and str(type(poDS_Name)) == "<type 'str'>"
+    ):
         poDS_Name = poDS_Name.decode("utf8")
     if bVerbose and pszDataSource != poDS_Name:
-        print("INFO: Internal data source name `%s'\n"
-              "      different from user name `%s'." % (poDS_Name, pszDataSource))
+        print(
+            "INFO: Internal data source name `%s'\n"
+            "      different from user name `%s'." % (poDS_Name, pszDataSource)
+        )
 
-# --------------------------------------------------------------------
-#      Special case for -sql clause.  No source layers required.
-# --------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    #      Special case for -sql clause.  No source layers required.
+    # --------------------------------------------------------------------
     if pszSQLStatement is not None:
         poResultSet = None
 
@@ -219,8 +230,7 @@ def main(argv=None):
             print("layer names ignored in combination with -sql.")
 
         if pszGeomField is None:
-            poResultSet = poDS.ExecuteSQL(pszSQLStatement, poSpatialFilter,
-                                          pszDialect)
+            poResultSet = poDS.ExecuteSQL(pszSQLStatement, poSpatialFilter, pszDialect)
         else:
             poResultSet = poDS.ExecuteSQL(pszSQLStatement, None, pszDialect)
 
@@ -260,18 +270,24 @@ def main(argv=None):
                             if iGeom > 0:
                                 line = line + ", "
                             poGFldDefn = poLayer.GetLayerDefn().GetGeomFieldDefn(iGeom)
-                            line = line + "%s" % ogr.GeometryTypeToName(poGFldDefn.GetType())
+                            line = line + "%s" % ogr.GeometryTypeToName(
+                                poGFldDefn.GetType()
+                            )
                         line = line + ")"
 
                     if poLayer.GetLayerDefn().GetGeomType() != ogr.wkbUnknown:
-                        line = line + " (%s)" % ogr.GeometryTypeToName(poLayer.GetLayerDefn().GetGeomType())
+                        line = line + " (%s)" % ogr.GeometryTypeToName(
+                            poLayer.GetLayerDefn().GetGeomType()
+                        )
 
                     print(line)
                 else:
                     if iRepeat != 0:
                         poLayer.ResetReading()
 
-                    ReportOnLayer(poLayer, pszWHERE, pszGeomField, poSpatialFilter, options)
+                    ReportOnLayer(
+                        poLayer, pszWHERE, pszGeomField, poSpatialFilter, options
+                    )
 
         else:
             # --------------------------------------------------------------------
@@ -289,12 +305,13 @@ def main(argv=None):
 
                 ReportOnLayer(poLayer, pszWHERE, pszGeomField, poSpatialFilter, options)
 
-# --------------------------------------------------------------------
-#      Close down.
-# --------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    #      Close down.
+    # --------------------------------------------------------------------
     poDS.Destroy()
 
     return 0
+
 
 # **********************************************************************
 #                               Usage()
@@ -302,12 +319,15 @@ def main(argv=None):
 
 
 def Usage():
-    print("Usage: ogrinfo [--help-general] [-ro] [-q] [-where restricted_where]\n"
-          "               [-spat xmin ymin xmax ymax] [-geomfield field] [-fid fid]\n"
-          "               [-sql statement] [-al] [-so] [-fields={YES/NO}]\n"
-          "               [-geom={YES/NO/SUMMARY}][--formats]\n"
-          "               datasource_name [layer [layer ...]]")
-    return 1
+    print(
+        "Usage: ogrinfo [--help-general] [-ro] [-q] [-where restricted_where]\n"
+        "               [-spat xmin ymin xmax ymax] [-geomfield field] [-fid fid]\n"
+        "               [-sql statement] [-al] [-so] [-fields={YES/NO}]\n"
+        "               [-geom={YES/NO/SUMMARY}][--formats]\n"
+        "               datasource_name [layer [layer ...]]"
+    )
+    return 2
+
 
 # **********************************************************************
 #                           ReportOnLayer()
@@ -318,9 +338,9 @@ def ReportOnLayer(poLayer, pszWHERE, pszGeomField, poSpatialFilter, options):
 
     poDefn = poLayer.GetLayerDefn()
 
-# --------------------------------------------------------------------
-#      Set filters if provided.
-# --------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    #      Set filters if provided.
+    # --------------------------------------------------------------------
     if pszWHERE is not None:
         if poLayer.SetAttributeFilter(pszWHERE) != 0:
             print("FAILURE: SetAttributeFilter(%s) failed." % pszWHERE)
@@ -336,9 +356,9 @@ def ReportOnLayer(poLayer, pszWHERE, pszGeomField, poSpatialFilter, options):
         else:
             poLayer.SetSpatialFilter(poSpatialFilter)
 
-# --------------------------------------------------------------------
-#      Report various overall information.
-# --------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    #      Report various overall information.
+    # --------------------------------------------------------------------
     print("")
 
     print("Layer name: %s" % poDefn.GetName())
@@ -348,7 +368,13 @@ def ReportOnLayer(poLayer, pszWHERE, pszGeomField, poSpatialFilter, options):
         if nGeomFieldCount > 1:
             for iGeom in range(nGeomFieldCount):
                 poGFldDefn = poLayer.GetLayerDefn().GetGeomFieldDefn(iGeom)
-                print("Geometry (%s): %s" % (poGFldDefn.GetNameRef(), ogr.GeometryTypeToName(poGFldDefn.GetType())))
+                print(
+                    "Geometry (%s): %s"
+                    % (
+                        poGFldDefn.GetNameRef(),
+                        ogr.GeometryTypeToName(poGFldDefn.GetType()),
+                    )
+                )
         else:
             print("Geometry: %s" % ogr.GeometryTypeToName(poDefn.GetGeomType()))
 
@@ -359,11 +385,16 @@ def ReportOnLayer(poLayer, pszWHERE, pszGeomField, poSpatialFilter, options):
                 poGFldDefn = poLayer.GetLayerDefn().GetGeomFieldDefn(iGeom)
                 oExt = poLayer.GetExtent(True, geom_field=iGeom, can_return_null=True)
                 if oExt is not None:
-                    print("Extent (%s): (%f, %f) - (%f, %f)" % (poGFldDefn.GetNameRef(), oExt[0], oExt[2], oExt[1], oExt[3]))
+                    print(
+                        "Extent (%s): (%f, %f) - (%f, %f)"
+                        % (poGFldDefn.GetNameRef(), oExt[0], oExt[2], oExt[1], oExt[3])
+                    )
         else:
             oExt = poLayer.GetExtent(True, can_return_null=True)
             if oExt is not None:
-                print("Extent: (%f, %f) - (%f, %f)" % (oExt[0], oExt[2], oExt[1], oExt[3]))
+                print(
+                    "Extent: (%f, %f) - (%f, %f)" % (oExt[0], oExt[2], oExt[1], oExt[3])
+                )
 
         if nGeomFieldCount > 1:
             for iGeom in range(nGeomFieldCount):
@@ -394,15 +425,19 @@ def ReportOnLayer(poLayer, pszWHERE, pszGeomField, poSpatialFilter, options):
         for iAttr in range(poDefn.GetFieldCount()):
             poField = poDefn.GetFieldDefn(iAttr)
 
-            print("%s: %s (%d.%d)" % (
-                poField.GetNameRef(),
-                poField.GetFieldTypeName(poField.GetType()),
-                poField.GetWidth(),
-                poField.GetPrecision()))
+            print(
+                "%s: %s (%d.%d)"
+                % (
+                    poField.GetNameRef(),
+                    poField.GetFieldTypeName(poField.GetType()),
+                    poField.GetWidth(),
+                    poField.GetPrecision(),
+                )
+            )
 
-# --------------------------------------------------------------------
-#      Read, and dump features.
-# --------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    #      Read, and dump features.
+    # --------------------------------------------------------------------
     poFeature = None
 
     if nFetchFID == ogr.NullFID and not bSummaryOnly:
@@ -429,19 +464,20 @@ def DumpReadableFeature(poFeature, options=None):
     poDefn = poFeature.GetDefnRef()
     print("OGRFeature(%s):%ld" % (poDefn.GetName(), poFeature.GetFID()))
 
-    if 'DISPLAY_FIELDS' not in options or EQUAL(options['DISPLAY_FIELDS'], 'yes'):
+    if "DISPLAY_FIELDS" not in options or EQUAL(options["DISPLAY_FIELDS"], "yes"):
         for iField in range(poDefn.GetFieldCount()):
 
             poFDefn = poDefn.GetFieldDefn(iField)
 
             line = "  %s (%s) = " % (
                 poFDefn.GetNameRef(),
-                ogr.GetFieldTypeName(poFDefn.GetType()))
+                ogr.GetFieldTypeName(poFDefn.GetType()),
+            )
 
             if poFeature.IsFieldSet(iField):
                 try:
                     line = line + "%s" % (poFeature.GetFieldAsString(iField))
-                except:
+                except Exception:
                     # For Python3 on non-UTF8 strings
                     line = line + "%s" % (poFeature.GetFieldAsBinary(iField))
             else:
@@ -451,12 +487,14 @@ def DumpReadableFeature(poFeature, options=None):
 
     if poFeature.GetStyleString() is not None:
 
-        if 'DISPLAY_STYLE' not in options or EQUAL(options['DISPLAY_STYLE'], 'yes'):
+        if "DISPLAY_STYLE" not in options or EQUAL(options["DISPLAY_STYLE"], "yes"):
             print("  Style = %s" % poFeature.GetStyleString())
 
     nGeomFieldCount = poFeature.GetGeomFieldCount()
     if nGeomFieldCount > 0:
-        if 'DISPLAY_GEOMETRY' not in options or not EQUAL(options['DISPLAY_GEOMETRY'], 'no'):
+        if "DISPLAY_GEOMETRY" not in options or not EQUAL(
+            options["DISPLAY_GEOMETRY"], "no"
+        ):
             for iField in range(nGeomFieldCount):
                 poGFldDefn = poFeature.GetDefnRef().GetGeomFieldDefn(iField)
                 poGeometry = poFeature.GetGeomFieldRef(iField)
@@ -466,7 +504,7 @@ def DumpReadableFeature(poFeature, options=None):
                         sys.stdout.write("%s = " % poGFldDefn.GetNameRef())
                     DumpReadableGeometry(poGeometry, "", options)
 
-    print('')
+    print("")
 
 
 def DumpReadableGeometry(poGeometry, pszPrefix, options):
@@ -474,9 +512,9 @@ def DumpReadableGeometry(poGeometry, pszPrefix, options):
     if pszPrefix is None:
         pszPrefix = ""
 
-    if 'DISPLAY_GEOMETRY' in options and EQUAL(options['DISPLAY_GEOMETRY'], 'SUMMARY'):
+    if "DISPLAY_GEOMETRY" in options and EQUAL(options["DISPLAY_GEOMETRY"], "SUMMARY"):
 
-        line = ("%s%s : " % (pszPrefix, poGeometry.GetGeometryName()))
+        line = "%s%s : " % (pszPrefix, poGeometry.GetGeometryName())
         eType = poGeometry.GetGeometryType()
         if eType == ogr.wkbLineString or eType == ogr.wkbLineString25D:
             line = line + ("%d points" % poGeometry.GetPointCount())
@@ -498,20 +536,23 @@ def DumpReadableGeometry(poGeometry, pszPrefix, options):
                     line = line + ")"
             print(line)
 
-        elif eType == ogr.wkbMultiPoint or \
-                eType == ogr.wkbMultiPoint25D or \
-                eType == ogr.wkbMultiLineString or \
-                eType == ogr.wkbMultiLineString25D or \
-                eType == ogr.wkbMultiPolygon or \
-                eType == ogr.wkbMultiPolygon25D or \
-                eType == ogr.wkbGeometryCollection or \
-                eType == ogr.wkbGeometryCollection25D:
+        elif (
+            eType == ogr.wkbMultiPoint
+            or eType == ogr.wkbMultiPoint25D
+            or eType == ogr.wkbMultiLineString
+            or eType == ogr.wkbMultiLineString25D
+            or eType == ogr.wkbMultiPolygon
+            or eType == ogr.wkbMultiPolygon25D
+            or eType == ogr.wkbGeometryCollection
+            or eType == ogr.wkbGeometryCollection25D
+        ):
 
             line = line + "%d geometries:" % poGeometry.GetGeometryCount()
             print(line)
             for ig in range(poGeometry.GetGeometryCount()):
                 subgeom = poGeometry.GetGeometryRef(ig)
                 from sys import version_info
+
                 if version_info >= (3, 0, 0):
                     exec('print("", end=" ")')
                 else:
@@ -520,11 +561,14 @@ def DumpReadableGeometry(poGeometry, pszPrefix, options):
         else:
             print(line)
 
-    elif 'DISPLAY_GEOMETRY' not in options or EQUAL(options['DISPLAY_GEOMETRY'], 'yes') \
-            or EQUAL(options['DISPLAY_GEOMETRY'], 'WKT'):
+    elif (
+        "DISPLAY_GEOMETRY" not in options
+        or EQUAL(options["DISPLAY_GEOMETRY"], "yes")
+        or EQUAL(options["DISPLAY_GEOMETRY"], "WKT")
+    ):
 
         print("%s%s" % (pszPrefix, poGeometry.ExportToWkt()))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

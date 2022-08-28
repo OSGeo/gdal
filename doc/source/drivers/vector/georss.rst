@@ -245,7 +245,7 @@ GeoRSS feed
            content = handle.read()
        except urllib2.HTTPError, e:
            print 'HTTP service for %s is down (HTTP Error: %d)' % (url, e.code)
-       except:
+       except Exception:
            print 'HTTP service for %s is down.' %(url)
 
        # Create in-memory file from the downloaded content

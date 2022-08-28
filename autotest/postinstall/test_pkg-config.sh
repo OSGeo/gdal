@@ -28,11 +28,10 @@ case "$UNAME,$2" in
     export DYLD_LIBRARY_PATH=$prefix/lib
     ;;
   Linux*)
-    export LD_LIBRARY_PATH=$prefix/lib
     ;;
   MINGW*,)
     alias ldd="sh -c 'objdump -x \$1.exe' --"
-    LDD_SUBSTR="DLL Name: libgdal.dll"
+    LDD_SUBSTR="DLL Name: libgdal"
     export PATH="$prefix/bin:$PATH"
     ;;
   *,--static)
@@ -46,7 +45,7 @@ check_ldd(){
   printf "Testing expected ldd output ... "
   NTESTS=$(($NTESTS + 1))
   LDD_OUTPUT=$(ldd ./$1 | grep libgdal)
-  LDD_SUBSTR=${LDD_SUBSTR:-$LD_LIBRARY_PATH/libgdal.}
+  LDD_SUBSTR=${LDD_SUBSTR:-libgdal.}
   case "$LDD_OUTPUT" in
     *$LDD_SUBSTR*)
       echo "passed" ;;
@@ -56,12 +55,12 @@ check_ldd(){
   esac
 }
 
-PKG_CONFIG_MODVERSION=$(pkg-config gdal --modversion)
+PKG_CONFIG_MODVERSION=$(pkg-config gdal --modversion) | sed "s/-dev//"
 
 check_version(){
   printf "Testing expected version ... "
   NTESTS=$(($NTESTS + 1))
-  VERSION_OUTPUT=$(./$1)
+  VERSION_OUTPUT=$(./$1) | sed "s/-dev//"
   case "$VERSION_OUTPUT" in
     $PKG_CONFIG_MODVERSION*)
       echo "passed" ;;

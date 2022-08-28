@@ -3863,6 +3863,28 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
             CPLDebug("GDALVectorTranslate", "Transferring layer NATIVE_DATA");
         }
 
+        // For FileGeodatabase, automatically set CREATE_SHAPE_AREA_AND_LENGTH_FIELDS=YES
+        // creation option if the source layer has a Shape_Area/Shape_Length field
+        if( papszDestCreationOptions &&
+            strstr(papszDestCreationOptions, "CREATE_SHAPE_AREA_AND_LENGTH_FIELDS") != nullptr &&
+            CSLFetchNameValue(m_papszLCO, "CREATE_SHAPE_AREA_AND_LENGTH_FIELDS") == nullptr )
+        {
+            const auto poSrcLayerDefn = poSrcLayer->GetLayerDefn();
+            const int nIdxShapeArea = poSrcLayerDefn->GetFieldIndex("Shape_Area");
+            const int nIdxShapeLength = poSrcLayerDefn->GetFieldIndex("Shape_Length");
+            if( (nIdxShapeArea >= 0 && poSrcLayerDefn->GetFieldDefn(nIdxShapeArea)->GetDefault() != nullptr &&
+                 EQUAL(poSrcLayerDefn->GetFieldDefn(nIdxShapeArea)->GetDefault(), "FILEGEODATABASE_SHAPE_AREA") &&
+                 (m_papszSelFields == nullptr || CSLFindString(m_papszSelFields, "Shape_Area") >= 0)) ||
+                (nIdxShapeLength >= 0 && poSrcLayerDefn->GetFieldDefn(nIdxShapeLength)->GetDefault() != nullptr &&
+                 EQUAL(poSrcLayerDefn->GetFieldDefn(nIdxShapeLength)->GetDefault(), "FILEGEODATABASE_SHAPE_LENGTH") &&
+                 (m_papszSelFields == nullptr || CSLFindString(m_papszSelFields, "Shape_Length") >= 0)) )
+            {
+                papszLCOTemp = CSLSetNameValue(papszLCOTemp,
+                               "CREATE_SHAPE_AREA_AND_LENGTH_FIELDS", "YES");
+                CPLDebug("GDALVectorTranslate", "Setting CREATE_SHAPE_AREA_AND_LENGTH_FIELDS=YES");
+            }
+        }
+
         OGRSpatialReference* poOutputSRSClone = nullptr;
         if( poOutputSRS != nullptr )
         {
@@ -4426,7 +4448,7 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
     // Detect if we can directly pass the source feature to the CreateFeature()
     // method of the target layer, without doing any copying of field content.
     psInfo->m_bCanAvoidSetFrom = false;
-    if( !m_bExplodeCollections && iSrcZField == -1 )
+    if( !m_bExplodeCollections && iSrcZField == -1 && poDstFDefn != nullptr )
     {
         psInfo->m_bCanAvoidSetFrom = true;
         const int nDstGeomFieldCount = poDstFDefn->GetGeomFieldCount();
@@ -4953,6 +4975,8 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
                         continue;
                 }
 
+                // poFeature hasn't been moved if iSrcZField != -1
+                // cppcheck-suppress accessMoved
                 if (iSrcZField != -1 && poFeature != nullptr)
                 {
                     SetZ(poDstGeometry, poFeature->GetFieldAsDouble(iSrcZField));

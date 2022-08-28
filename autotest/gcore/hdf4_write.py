@@ -25,39 +25,40 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
-import pytest
 import gdaltest
+import pytest
 
 init_list = [
-    ('byte.tif', 4672),
-    ('int16.tif', 4672),
-    ('uint16.tif', 4672),
-    ('int32.tif', 4672),
-    ('uint32.tif', 4672),
-    ('float32.tif', 4672),
-    ('float64.tif', 4672),
-    ('utmsmall.tif', 50054)
+    ("byte.tif", 4672),
+    ("int16.tif", 4672),
+    ("uint16.tif", 4672),
+    ("int32.tif", 4672),
+    ("uint32.tif", 4672),
+    ("float32.tif", 4672),
+    ("float64.tif", 4672),
+    ("utmsmall.tif", 50054),
 ]
 
 
+@pytest.mark.parametrize("rank", [2, 3], ids=lambda x: "rank%d" % x)
 @pytest.mark.parametrize(
-    'rank', [2, 3], ids=lambda x: 'rank%d' % x
+    "filename,checksum", init_list, ids=[arg[0].split(".")[0] for arg in init_list]
 )
 @pytest.mark.parametrize(
-    'filename,checksum', init_list, ids=[arg[0].split('.')[0] for arg in init_list]
+    "testfunction",
+    [
+        "testCreateCopy",
+        "testCreate",
+        "testSetGeoTransform",
+        "testSetProjection",
+        "testSetMetadata",
+        "testSetNoDataValue",
+        "testSetDescription",
+    ],
 )
-@pytest.mark.parametrize(
-    'testfunction', [
-        'testCreateCopy',
-        'testCreate',
-        'testSetGeoTransform',
-        'testSetProjection',
-        'testSetMetadata',
-        'testSetNoDataValue',
-        'testSetDescription',
-    ]
-)
-@pytest.mark.require_driver('HDF4Image')
+@pytest.mark.require_driver("HDF4Image")
 def test_hdf4_write(filename, checksum, testfunction, rank):
-    ut = gdaltest.GDALTest('HDF4Image', filename, 1, checksum, options=['RANK=%d' % rank])
+    ut = gdaltest.GDALTest(
+        "HDF4Image", filename, 1, checksum, options=["RANK=%d" % rank]
+    )
     getattr(ut, testfunction)()

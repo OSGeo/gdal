@@ -4,6 +4,8 @@ on:
     push:
         paths-ignore:
             - 'doc/**'
+        branches-ignore:
+            - 'backport**'
     pull_request:
         paths-ignore:
             - 'doc/**'
@@ -12,19 +14,22 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
 
   ubuntu_20_04_build:
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
     env:
-        HANA_CONNECTION_STR: "DRIVER=/usr/sap/hdbclient/libodbcHDB.so;HOST=917df316-4e01-4a10-be54-eac1b6ab15fb.hana.prod-us10.hanacloud.ondemand.com;PORT=443;USER=GDALCI;PASSWORD=Z2!.S-bN]vh62\\G"
+        HANA_CONNECTION_STR: "DRIVER=/usr/sap/hdbclient/libodbcHDB.so;HOST=917df316-4e01-4a10-be54-eac1b6ab15fb.hana.prod-us10.hanacloud.ondemand.com;PORT=443;USER=GDALCI;PASSWORD=u7t!Ukeugzq7"
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Cache deps
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache-deps
         with:
           path: /tmp/docker
@@ -50,7 +55,7 @@ jobs:
           echo "::set-output name=arch::$ARCH"
 
       - name: Cache build
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache-build
         with:
           path: ${{ github.workspace }}/ccache.tar.gz
@@ -66,24 +71,6 @@ jobs:
       - name: Fetching ccache.tar.gz from Docker build
         run: docker run --rm -v $PWD:/mytmp gdal cp /build/ccache.tar.gz /mytmp
 
-      - name: Run C++ tests
-        run: docker run -e GITHUB_WORKFLOW --rm gdal sh -c "cd /build/autotest/cpp && make quick_test && make testsse2 && (if (g++ -march=native -dM -E -x c++ - < /dev/null | grep AVX2 >/dev/null); then make testavx2; else /bin/true; fi)"
-
-      - name: Run SWIG Java tests
-        run: docker run --rm gdal sh -c "cd /build/swig/java && make test"
-
-      - name: Run SWIG CSharp tests
-        run: docker run --rm gdal sh -c "cd /build/swig/csharp && make && make test"
-
-      - name: Build GDAL Python sdist distribution
-        run: docker run --rm gdal sh -c "cd /build/swig/python && python3 setup.py sdist"
-
-      - name: Build gdal-utils Python bdist_wheel distribution
-        run: docker run --rm gdal sh -c "cd /build/swig/python/gdal-utils && python3 -m pip install wheel && python3 setup.py bdist_wheel"
-
-      - name: Run pytest
+      - name: Run tests
         # --security-opt seccomp=unconfined, so that the userfaulfd syscall is available
-        run: docker run -e CI -e TRAVIS=yes -e TRAVIS_BRANCH=ubuntu_2004 -e GITHUB_WORKFLOW -e OGR_HANA_CONNECTION_STRING=${HANA_CONNECTION_STR} --security-opt seccomp=unconfined --rm gdal sh -c "cd /build/autotest && pip3 install -U -r requirements.txt && pip3 install -U hdbcli && pytest"
-
-      - name: Build fake ossfuzz fuzzers
-        run: docker run --rm gdal sh -c "cd /build/fuzzers && make dummyfuzzers_dynamic"
+        run: docker run -e CI -e TRAVIS=yes -e TRAVIS_BRANCH=ubuntu_2004 -e GITHUB_WORKFLOW -e OGR_HANA_CONNECTION_STRING=${HANA_CONNECTION_STR} --security-opt seccomp=unconfined --rm gdal sh -c "cd /build && pip3 install -U -r autotest/requirements.txt && pip3 install -U hdbcli && cd build && ctest -V"
