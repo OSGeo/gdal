@@ -44,12 +44,8 @@ static std::nullptr_t CPLErrorInvalidLength(const char *message) {
 
 OGRPoint *GeometryReader::readPoint()
 {
-    const auto xy = m_geometry->xy();
-    if (xy == nullptr)
-        return CPLErrorInvalidPointer("XY data");
     const auto offsetXy = m_offset * 2;
-    const auto aXy = xy->data();
-    if (offsetXy >= xy->size())
+    if (offsetXy >= m_length)
         return CPLErrorInvalidLength("XY data");
     if (m_hasZ) {
         const auto z = m_geometry->z();
@@ -65,13 +61,13 @@ OGRPoint *GeometryReader::readPoint()
             if (m_offset >= pM->size())
                 return CPLErrorInvalidLength("M data");
             const auto aM = pM->data();
-            return new OGRPoint { EndianScalar(aXy[offsetXy + 0]),
-                                  EndianScalar(aXy[offsetXy + 1]),
+            return new OGRPoint { EndianScalar(m_xy[offsetXy + 0]),
+                                  EndianScalar(m_xy[offsetXy + 1]),
                                   EndianScalar(aZ[m_offset]),
                                   EndianScalar(aM[m_offset]) };
         } else {
-            return new OGRPoint { EndianScalar(aXy[offsetXy + 0]),
-                                  EndianScalar(aXy[offsetXy + 1]),
+            return new OGRPoint { EndianScalar(m_xy[offsetXy + 0]),
+                                  EndianScalar(m_xy[offsetXy + 1]),
                                   EndianScalar(aZ[m_offset]) };
         }
     } else if (m_hasM) {
@@ -81,22 +77,22 @@ OGRPoint *GeometryReader::readPoint()
         if (m_offset >= pM->size())
             return CPLErrorInvalidLength("M data");
         const auto aM = pM->data();
-        return OGRPoint::createXYM( EndianScalar(aXy[offsetXy + 0]),
-                                    EndianScalar(aXy[offsetXy + 1]),
+        return OGRPoint::createXYM( EndianScalar(m_xy[offsetXy + 0]),
+                                    EndianScalar(m_xy[offsetXy + 1]),
                                     EndianScalar(aM[m_offset]) );
     } else {
-        return new OGRPoint { EndianScalar(aXy[offsetXy + 0]),
-                              EndianScalar(aXy[offsetXy + 1]) };
+        return new OGRPoint { EndianScalar(m_xy[offsetXy + 0]),
+                              EndianScalar(m_xy[offsetXy + 1]) };
     }
 }
 
 OGRMultiPoint *GeometryReader::readMultiPoint()
 {
-    m_length = m_length / 2;
-    if (m_length >= feature_max_buffer_size)
+    auto length = m_length / 2;
+    if (length >= feature_max_buffer_size)
         return CPLErrorInvalidLength("MultiPoint");
     auto mp = cpl::make_unique<OGRMultiPoint>();
-    for (uint32_t i = 0; i < m_length; i++) {
+    for (uint32_t i = 0; i < length; i++) {
         m_offset = i;
         const auto p = readPoint();
         if (p == nullptr)
@@ -132,15 +128,9 @@ OGRErr GeometryReader::readSimpleCurve(OGRSimpleCurve *sc)
     if (m_offset > feature_max_buffer_size || m_length > feature_max_buffer_size - m_offset)
         return CPLErrorInvalidSize("curve offset max");
     const uint32_t offsetLen = m_length + m_offset;
-    auto xy = m_geometry->xy();
-    if (xy == nullptr) {
-        CPLErrorInvalidPointer("XY data");
-        return OGRERR_CORRUPT_DATA;
-    }
-    if (offsetLen > xy->size() / 2)
+    if (offsetLen > m_xylength / 2)
         return CPLErrorInvalidSize("curve XY offset");
-    const auto aXy = xy->data();
-    const auto ogrXY = reinterpret_cast<const OGRRawPoint *>(aXy) + m_offset;
+    const auto ogrXY = reinterpret_cast<const OGRRawPoint *>(m_xy) + m_offset;
     if (m_hasZ) {
         const auto pZ = m_geometry->z();
         if (pZ == nullptr) {
@@ -451,6 +441,8 @@ OGRGeometry *GeometryReader::read()
     if (xySize >= (feature_max_buffer_size / sizeof(OGRRawPoint)))
         return CPLErrorInvalidLength("XY data");
     m_length = xySize;
+    m_xylength = m_length;
+    m_xy = pXy->data();
 
     switch (m_geometryType) {
         case GeometryType::Point: return readPoint();
