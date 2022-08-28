@@ -1109,3 +1109,44 @@ def test_gdalinfo_if_option():
         encoding="UTF-8",
     )
     assert err is not None
+
+
+###############################################################################
+# Test STAC JSON output
+
+
+def test_gdalinfo_stac_json():
+    if test_cli_utilities.get_gdalinfo_path() is None:
+        pytest.skip()
+
+    ret, _ = gdaltest.runexternal_out_and_err(
+        test_cli_utilities.get_gdalinfo_path()
+        + " -json -proj4 -stats -hist ../gcore/data/byte.tif",
+        encoding="UTF-8",
+    )
+    data = json.loads(ret)
+
+    assert "stac" in data
+    stac = data["stac"]
+
+    assert "properties" in stac
+    properties = stac["properties"]
+    assert properties["proj:shape"] == [20, 20]
+
+    assert properties["proj:wkt2"].startswith("PROJCRS")
+    assert properties["proj:epsg"] == 26711
+    assert isinstance(properties["proj:projjson"], dict)
+    assert properties["proj:transform"] == [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0]
+
+    assert len(stac["raster:bands"]) == 1
+    raster_band = stac["raster:bands"][0]
+    assert raster_band["data_type"] == "uint8"
+    assert raster_band["stats"] == {
+        "minimum": 74.0,
+        "maximum": 255.0,
+        "mean": 126.765,
+        "stddev": 22.928,
+    }
+    assert "histogram" in raster_band
+
+    assert len(stac["eo:bands"]) == 1
