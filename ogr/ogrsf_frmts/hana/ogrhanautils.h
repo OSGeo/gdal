@@ -56,7 +56,6 @@ CPLString GetFullTableName(
     const CPLString& schemaName, const CPLString& tableName);
 CPLString GetFullTableNameQuoted(
     const CPLString& schemaName, const CPLString& tableName);
-CPLString LaunderName(const char* name);
 CPLString Literal(const CPLString& value);
 CPLString QuotedIdentifier(const CPLString& value);
 
