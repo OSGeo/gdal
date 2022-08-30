@@ -170,7 +170,7 @@ Relationships
 
 .. versionadded:: 3.6
 
-Relationship retrieval is supported.
+Relationship retrieval, creation, deletion and updating is supported.
 
 Hiearchical organization
 ------------------------

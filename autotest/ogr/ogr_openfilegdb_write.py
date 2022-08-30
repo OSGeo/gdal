@@ -2473,6 +2473,699 @@ def test_ogr_openfilegdb_write_domains_from_other_gdb():
 
 
 ###############################################################################
+# Test writing relationships
+
+
+def test_ogr_openfilegdb_write_relationships():
+
+    dirname = "/vsimem/out.gdb"
+    try:
+        ds = gdal.GetDriverByName("OpenFileGDB").Create(
+            dirname, 0, 0, 0, gdal.GDT_Unknown
+        )
+
+        relationship = gdal.Relationship(
+            "my_relationship", "origin_table", "dest_table", gdal.GRC_ONE_TO_ONE
+        )
+        relationship.SetLeftTableFields(["o_pkey"])
+        relationship.SetRightTableFields(["dest_pkey"])
+        relationship.SetRelatedTableType("media")
+
+        # no tables yet
+        assert not ds.AddRelationship(relationship)
+
+        lyr = ds.CreateLayer("origin_table", geom_type=ogr.wkbNone)
+        fld_defn = ogr.FieldDefn("o_pkey", ogr.OFTInteger)
+        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+        lyr = ds.CreateLayer("dest_table", geom_type=ogr.wkbNone)
+        fld_defn = ogr.FieldDefn("dest_pkey", ogr.OFTInteger)
+        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+        ds = gdal.OpenEx(dirname, gdal.GA_Update)
+
+        items_lyr = ds.GetLayerByName("GDB_Items")
+        f = items_lyr.GetFeature(1)
+        assert f["Path"] == "\\"
+        root_dataset_uuid = f["UUID"]
+
+        f = items_lyr.GetFeature(3)
+        assert f["Name"] == "origin_table"
+        origin_table_uuid = f["UUID"]
+
+        f = items_lyr.GetFeature(4)
+        assert f["Name"] == "dest_table"
+        dest_table_uuid = f["UUID"]
+
+        ds = gdal.OpenEx(dirname, gdal.GA_Update)
+
+        assert ds.AddRelationship(relationship)
+
+        assert set(ds.GetRelationshipNames()) == {"my_relationship"}
+        retrieved_rel = ds.GetRelationship("my_relationship")
+        assert retrieved_rel.GetCardinality() == gdal.GRC_ONE_TO_ONE
+        assert retrieved_rel.GetType() == gdal.GRT_ASSOCIATION
+        assert retrieved_rel.GetLeftTableName() == "origin_table"
+        assert retrieved_rel.GetRightTableName() == "dest_table"
+        assert retrieved_rel.GetLeftTableFields() == ["o_pkey"]
+        assert retrieved_rel.GetRightTableFields() == ["dest_pkey"]
+        assert retrieved_rel.GetRelatedTableType() == "media"
+
+        # check metadata contents
+        items_lyr = ds.GetLayerByName("GDB_Items")
+        f = items_lyr.GetFeature(5)
+        relationship_uuid = f["UUID"]
+        assert f["Name"] == "my_relationship"
+        assert (
+            f["Definition"]
+            == """<DERelationshipClassInfo xsi:type="typens:DERelationshipClassInfo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:typens="http://www.esri.com/schemas/ArcGIS/10.1">
+  <CatalogPath>\\my_relationship</CatalogPath>
+  <Name>my_relationship</Name>
+  <ChildrenExpanded>false</ChildrenExpanded>
+  <DatasetType>esriDTRelationshipClass</DatasetType>
+  <DSID>5</DSID>
+  <Versioned>false</Versioned>
+  <CanVersion>false</CanVersion>
+  <ConfigurationKeyword></ConfigurationKeyword>
+  <RequiredGeodatabaseClientVersion>10.0</RequiredGeodatabaseClientVersion>
+  <HasOID>false</HasOID>
+  <GPFieldInfoExs xsi:type="typens:ArrayOfGPFieldInfoEx" />
+  <OIDFieldName></OIDFieldName>
+  <CLSID></CLSID>
+  <EXTCLSID></EXTCLSID>
+  <RelationshipClassNames xsi:type="typens:Names" />
+  <AliasName></AliasName>
+  <ModelName></ModelName>
+  <HasGlobalID>false</HasGlobalID>
+  <GlobalIDFieldName></GlobalIDFieldName>
+  <RasterFieldName></RasterFieldName>
+  <ExtensionProperties xsi:type="typens:PropertySet">
+    <PropertyArray xsi:type="typens:ArrayOfPropertySetProperty" />
+  </ExtensionProperties>
+  <ControllerMemberships xsi:type="typens:ArrayOfControllerMembership" />
+  <EditorTrackingEnabled>false</EditorTrackingEnabled>
+  <CreatorFieldName></CreatorFieldName>
+  <CreatedAtFieldName></CreatedAtFieldName>
+  <EditorFieldName></EditorFieldName>
+  <EditedAtFieldName></EditedAtFieldName>
+  <IsTimeInUTC>true</IsTimeInUTC>
+  <Cardinality>esriRelCardinalityOneToOne</Cardinality>
+  <Notification>esriRelNotificationNone</Notification>
+  <IsAttributed>false</IsAttributed>
+  <IsComposite>false</IsComposite>
+  <OriginClassNames xsi:type="typens:Names">
+    <Name>origin_table</Name>
+  </OriginClassNames>
+  <DestinationClassNames xsi:type="typens:Names">
+    <Name>dest_table</Name>
+  </DestinationClassNames>
+  <KeyType>esriRelKeyTypeSingle</KeyType>
+  <ClassKey>esriRelClassKeyUndefined</ClassKey>
+  <ForwardPathLabel></ForwardPathLabel>
+  <BackwardPathLabel></BackwardPathLabel>
+  <IsReflexive>false</IsReflexive>
+  <OriginClassKeys xsi:type="typens:ArrayOfRelationshipClassKey">
+    <RelationshipClassKey xsi:type="typens:RelationshipClassKey">
+      <ObjectKeyName>o_pkey</ObjectKeyName>
+      <ClassKeyName></ClassKeyName>
+      <KeyRole>esriRelKeyRoleOriginPrimary</KeyRole>
+    </RelationshipClassKey>
+    <RelationshipClassKey xsi:type="typens:RelationshipClassKey">
+      <ObjectKeyName>dest_pkey</ObjectKeyName>
+      <ClassKeyName></ClassKeyName>
+      <KeyRole>esriRelKeyRoleOriginForeign</KeyRole>
+    </RelationshipClassKey>
+  </OriginClassKeys>
+  <RelationshipRules xsi:type="typens:ArrayOfRelationshipRule" />
+  <IsAttachmentRelationship>true</IsAttachmentRelationship>
+  <ChangeTracked>false</ChangeTracked>
+  <ReplicaTracked>false</ReplicaTracked>
+</DERelationshipClassInfo>\n"""
+        )
+        assert f["DatasetSubtype1"] == 1
+        assert f["DatasetSubtype2"] == 0
+        assert (
+            f["Documentation"]
+            == """<metadata xml:lang="en">
+  <Esri>
+    <CreaDate></CreaDate>
+    <CreaTime></CreaTime>
+    <ArcGISFormat>1.0</ArcGISFormat>
+    <SyncOnce>TRUE</SyncOnce>
+    <DataProperties>
+      <lineage />
+    </DataProperties>
+  </Esri>
+</metadata>
+"""
+        )
+        assert (
+            f["ItemInfo"]
+            == """<ESRI_ItemInformation culture="">
+  <name>my_relationship</name>
+  <catalogPath>\\my_relationship</catalogPath>
+  <snippet></snippet>
+  <description></description>
+  <summary></summary>
+  <title>my_relationship</title>
+  <tags></tags>
+  <type>File Geodatabase Relationship Class</type>
+  <typeKeywords>
+    <typekeyword>Data</typekeyword>
+    <typekeyword>Dataset</typekeyword>
+    <typekeyword>Vector Data</typekeyword>
+    <typekeyword>Feature Data</typekeyword>
+    <typekeyword>File Geodatabase</typekeyword>
+    <typekeyword>GDB</typekeyword>
+    <typekeyword>Relationship Class</typekeyword>
+  </typeKeywords>
+  <url></url>
+  <datalastModifiedTime></datalastModifiedTime>
+  <extent>
+    <xmin></xmin>
+    <ymin></ymin>
+    <xmax></xmax>
+    <ymax></ymax>
+  </extent>
+  <minScale>0</minScale>
+  <maxScale>0</maxScale>
+  <spatialReference></spatialReference>
+  <accessInformation></accessInformation>
+  <licenseInfo></licenseInfo>
+  <typeID>fgdb_relationship</typeID>
+  <isContainer>false</isContainer>
+  <browseDialogOnly>false</browseDialogOnly>
+  <propNames></propNames>
+  <propValues></propValues>
+</ESRI_ItemInformation>
+"""
+        )
+        # check item relationships have been created
+        item_relationships_lyr = ds.GetLayerByName("GDB_ItemRelationships")
+
+        f = item_relationships_lyr.GetFeature(3)
+        assert f["OriginID"] == origin_table_uuid
+        assert f["DestID"] == relationship_uuid
+        assert f["Type"] == "{725BADAB-3452-491B-A795-55F32D67229C}"
+
+        f = item_relationships_lyr.GetFeature(4)
+        assert f["OriginID"] == dest_table_uuid
+        assert f["DestID"] == relationship_uuid
+        assert f["Type"] == "{725BADAB-3452-491B-A795-55F32D67229C}"
+
+        f = item_relationships_lyr.GetFeature(5)
+        assert f["OriginID"] == root_dataset_uuid
+        assert f["DestID"] == relationship_uuid
+        assert f["Type"] == "{DC78F1AB-34E4-43AC-BA47-1C4EABD0E7C7}"
+
+        ds = gdal.OpenEx(dirname, gdal.GA_Update)
+        assert set(ds.GetRelationshipNames()) == {"my_relationship"}
+
+        # one to many
+        lyr = ds.CreateLayer("origin_table_1_to_many", geom_type=ogr.wkbNone)
+        fld_defn = ogr.FieldDefn("o_pkey", ogr.OFTInteger)
+        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+        lyr = ds.CreateLayer("dest_table_1_to_many", geom_type=ogr.wkbNone)
+        fld_defn = ogr.FieldDefn("dest_pkey", ogr.OFTInteger)
+        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+        ds = gdal.OpenEx(dirname, gdal.GA_Update)
+
+        # should be rejected -- duplicate name
+        assert not ds.AddRelationship(relationship)
+
+        relationship = gdal.Relationship(
+            "my_one_to_many_relationship",
+            "origin_table_1_to_many",
+            "dest_table_1_to_many",
+            gdal.GRC_ONE_TO_MANY,
+        )
+        relationship.SetLeftTableFields(["o_pkey"])
+        relationship.SetRightTableFields(["dest_pkey"])
+        relationship.SetType(gdal.GRT_COMPOSITE)
+        relationship.SetForwardPathLabel("fwd label")
+        relationship.SetBackwardPathLabel("backward label")
+        assert ds.AddRelationship(relationship)
+
+        ds = gdal.OpenEx(dirname, gdal.GA_Update)
+        assert set(ds.GetRelationshipNames()) == {
+            "my_relationship",
+            "my_one_to_many_relationship",
+        }
+        retrieved_rel = ds.GetRelationship("my_one_to_many_relationship")
+        assert retrieved_rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
+        assert retrieved_rel.GetType() == gdal.GRT_COMPOSITE
+        assert retrieved_rel.GetLeftTableName() == "origin_table_1_to_many"
+        assert retrieved_rel.GetRightTableName() == "dest_table_1_to_many"
+        assert retrieved_rel.GetLeftTableFields() == ["o_pkey"]
+        assert retrieved_rel.GetRightTableFields() == ["dest_pkey"]
+        assert retrieved_rel.GetForwardPathLabel() == "fwd label"
+        assert retrieved_rel.GetBackwardPathLabel() == "backward label"
+        assert retrieved_rel.GetRelatedTableType() == "feature"
+
+        items_lyr = ds.GetLayerByName("GDB_Items")
+        f = items_lyr.GetFeature(8)
+        assert f["Name"] == "my_one_to_many_relationship"
+        assert (
+            f["Definition"]
+            == """<DERelationshipClassInfo xsi:type="typens:DERelationshipClassInfo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:typens="http://www.esri.com/schemas/ArcGIS/10.1">
+  <CatalogPath>\\my_one_to_many_relationship</CatalogPath>
+  <Name>my_one_to_many_relationship</Name>
+  <ChildrenExpanded>false</ChildrenExpanded>
+  <DatasetType>esriDTRelationshipClass</DatasetType>
+  <DSID>8</DSID>
+  <Versioned>false</Versioned>
+  <CanVersion>false</CanVersion>
+  <ConfigurationKeyword></ConfigurationKeyword>
+  <RequiredGeodatabaseClientVersion>10.0</RequiredGeodatabaseClientVersion>
+  <HasOID>false</HasOID>
+  <GPFieldInfoExs xsi:type="typens:ArrayOfGPFieldInfoEx" />
+  <OIDFieldName></OIDFieldName>
+  <CLSID></CLSID>
+  <EXTCLSID></EXTCLSID>
+  <RelationshipClassNames xsi:type="typens:Names" />
+  <AliasName></AliasName>
+  <ModelName></ModelName>
+  <HasGlobalID>false</HasGlobalID>
+  <GlobalIDFieldName></GlobalIDFieldName>
+  <RasterFieldName></RasterFieldName>
+  <ExtensionProperties xsi:type="typens:PropertySet">
+    <PropertyArray xsi:type="typens:ArrayOfPropertySetProperty" />
+  </ExtensionProperties>
+  <ControllerMemberships xsi:type="typens:ArrayOfControllerMembership" />
+  <EditorTrackingEnabled>false</EditorTrackingEnabled>
+  <CreatorFieldName></CreatorFieldName>
+  <CreatedAtFieldName></CreatedAtFieldName>
+  <EditorFieldName></EditorFieldName>
+  <EditedAtFieldName></EditedAtFieldName>
+  <IsTimeInUTC>true</IsTimeInUTC>
+  <Cardinality>esriRelCardinalityOneToMany</Cardinality>
+  <Notification>esriRelNotificationNone</Notification>
+  <IsAttributed>false</IsAttributed>
+  <IsComposite>true</IsComposite>
+  <OriginClassNames xsi:type="typens:Names">
+    <Name>origin_table_1_to_many</Name>
+  </OriginClassNames>
+  <DestinationClassNames xsi:type="typens:Names">
+    <Name>dest_table_1_to_many</Name>
+  </DestinationClassNames>
+  <KeyType>esriRelKeyTypeSingle</KeyType>
+  <ClassKey>esriRelClassKeyUndefined</ClassKey>
+  <ForwardPathLabel>fwd label</ForwardPathLabel>
+  <BackwardPathLabel>backward label</BackwardPathLabel>
+  <IsReflexive>false</IsReflexive>
+  <OriginClassKeys xsi:type="typens:ArrayOfRelationshipClassKey">
+    <RelationshipClassKey xsi:type="typens:RelationshipClassKey">
+      <ObjectKeyName>o_pkey</ObjectKeyName>
+      <ClassKeyName></ClassKeyName>
+      <KeyRole>esriRelKeyRoleOriginPrimary</KeyRole>
+    </RelationshipClassKey>
+    <RelationshipClassKey xsi:type="typens:RelationshipClassKey">
+      <ObjectKeyName>dest_pkey</ObjectKeyName>
+      <ClassKeyName></ClassKeyName>
+      <KeyRole>esriRelKeyRoleOriginForeign</KeyRole>
+    </RelationshipClassKey>
+  </OriginClassKeys>
+  <RelationshipRules xsi:type="typens:ArrayOfRelationshipRule" />
+  <IsAttachmentRelationship>false</IsAttachmentRelationship>
+  <ChangeTracked>false</ChangeTracked>
+  <ReplicaTracked>false</ReplicaTracked>
+</DERelationshipClassInfo>\n"""
+        )
+        assert f["DatasetSubtype1"] == 2
+        assert f["DatasetSubtype2"] == 0
+
+        # many to many relationship
+        lyr = ds.CreateLayer("origin_table_many_to_many", geom_type=ogr.wkbNone)
+        fld_defn = ogr.FieldDefn("o_pkey", ogr.OFTInteger)
+        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+        lyr = ds.CreateLayer("dest_table_many_to_many", geom_type=ogr.wkbNone)
+        fld_defn = ogr.FieldDefn("dest_pkey", ogr.OFTInteger)
+        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+        lyr = ds.CreateLayer("mapping_table_many_to_many", geom_type=ogr.wkbNone)
+        fld_defn = ogr.FieldDefn("dest_pkey", ogr.OFTInteger)
+        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+        lyr = ds.CreateLayer("many_to_many", geom_type=ogr.wkbNone)
+        fld_defn = ogr.FieldDefn("RID", ogr.OFTInteger)
+        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+        fld_defn = ogr.FieldDefn("origin_fk", ogr.OFTInteger)
+        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+        fld_defn = ogr.FieldDefn("destination_fk", ogr.OFTInteger)
+        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+        ds = gdal.OpenEx(dirname, gdal.GA_Update)
+
+        relationship = gdal.Relationship(
+            "many_to_many",
+            "origin_table_many_to_many",
+            "dest_table_many_to_many",
+            gdal.GRC_MANY_TO_MANY,
+        )
+        relationship.SetLeftTableFields(["o_pkey"])
+        relationship.SetRightTableFields(["dest_pkey"])
+        relationship.SetMappingTableName("mapping_table_many_to_many")
+        relationship.SetLeftMappingTableFields(["origin_fk"])
+        relationship.SetRightMappingTableFields(["destination_fk"])
+
+        # this should be rejected -- the mapping table name MUST match the relationship name
+        assert not ds.AddRelationship(relationship)
+
+        relationship.SetMappingTableName("many_to_many")
+        assert ds.AddRelationship(relationship)
+
+        ds = gdal.OpenEx(dirname, gdal.GA_Update)
+        assert set(ds.GetRelationshipNames()) == {
+            "my_relationship",
+            "my_one_to_many_relationship",
+            "many_to_many",
+        }
+        retrieved_rel = ds.GetRelationship("many_to_many")
+        assert retrieved_rel.GetCardinality() == gdal.GRC_MANY_TO_MANY
+        assert retrieved_rel.GetType() == gdal.GRT_ASSOCIATION
+        assert retrieved_rel.GetLeftTableName() == "origin_table_many_to_many"
+        assert retrieved_rel.GetRightTableName() == "dest_table_many_to_many"
+        assert retrieved_rel.GetLeftTableFields() == ["o_pkey"]
+        assert retrieved_rel.GetRightTableFields() == ["dest_pkey"]
+        assert retrieved_rel.GetMappingTableName() == "many_to_many"
+        assert retrieved_rel.GetLeftMappingTableFields() == ["origin_fk"]
+        assert retrieved_rel.GetRightMappingTableFields() == ["destination_fk"]
+
+        items_lyr = ds.GetLayerByName("GDB_Items")
+        f = items_lyr.GetFeature(13)
+        assert f["Name"] == "many_to_many"
+        assert (
+            f["Definition"]
+            == """<DERelationshipClassInfo xsi:type="typens:DERelationshipClassInfo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:typens="http://www.esri.com/schemas/ArcGIS/10.1">
+  <CatalogPath>\\many_to_many</CatalogPath>
+  <Name>many_to_many</Name>
+  <ChildrenExpanded>false</ChildrenExpanded>
+  <DatasetType>esriDTRelationshipClass</DatasetType>
+  <DSID>13</DSID>
+  <Versioned>false</Versioned>
+  <CanVersion>false</CanVersion>
+  <ConfigurationKeyword></ConfigurationKeyword>
+  <RequiredGeodatabaseClientVersion>10.0</RequiredGeodatabaseClientVersion>
+  <HasOID>false</HasOID>
+  <GPFieldInfoExs xsi:type="typens:ArrayOfGPFieldInfoEx">
+    <GPFieldInfoEx xsi:type="typens:GPFieldInfoEx">
+      <Name>OBJECTID</Name>
+    </GPFieldInfoEx>
+    <GPFieldInfoEx xsi:type="typens:GPFieldInfoEx">
+      <Name>origin_fk</Name>
+    </GPFieldInfoEx>
+    <GPFieldInfoEx xsi:type="typens:GPFieldInfoEx">
+      <Name>destination_fk</Name>
+    </GPFieldInfoEx>
+  </GPFieldInfoExs>
+  <OIDFieldName>OBJECTID</OIDFieldName>
+  <CLSID></CLSID>
+  <EXTCLSID></EXTCLSID>
+  <RelationshipClassNames xsi:type="typens:Names" />
+  <AliasName></AliasName>
+  <ModelName></ModelName>
+  <HasGlobalID>false</HasGlobalID>
+  <GlobalIDFieldName></GlobalIDFieldName>
+  <RasterFieldName></RasterFieldName>
+  <ExtensionProperties xsi:type="typens:PropertySet">
+    <PropertyArray xsi:type="typens:ArrayOfPropertySetProperty" />
+  </ExtensionProperties>
+  <ControllerMemberships xsi:type="typens:ArrayOfControllerMembership" />
+  <EditorTrackingEnabled>false</EditorTrackingEnabled>
+  <CreatorFieldName></CreatorFieldName>
+  <CreatedAtFieldName></CreatedAtFieldName>
+  <EditorFieldName></EditorFieldName>
+  <EditedAtFieldName></EditedAtFieldName>
+  <IsTimeInUTC>true</IsTimeInUTC>
+  <Cardinality>esriRelCardinalityManyToMany</Cardinality>
+  <Notification>esriRelNotificationNone</Notification>
+  <IsAttributed>false</IsAttributed>
+  <IsComposite>false</IsComposite>
+  <OriginClassNames xsi:type="typens:Names">
+    <Name>origin_table_many_to_many</Name>
+  </OriginClassNames>
+  <DestinationClassNames xsi:type="typens:Names">
+    <Name>dest_table_many_to_many</Name>
+  </DestinationClassNames>
+  <KeyType>esriRelKeyTypeSingle</KeyType>
+  <ClassKey>esriRelClassKeyUndefined</ClassKey>
+  <ForwardPathLabel></ForwardPathLabel>
+  <BackwardPathLabel></BackwardPathLabel>
+  <IsReflexive>false</IsReflexive>
+  <OriginClassKeys xsi:type="typens:ArrayOfRelationshipClassKey">
+    <RelationshipClassKey xsi:type="typens:RelationshipClassKey">
+      <ObjectKeyName>o_pkey</ObjectKeyName>
+      <ClassKeyName></ClassKeyName>
+      <KeyRole>esriRelKeyRoleOriginPrimary</KeyRole>
+    </RelationshipClassKey>
+    <RelationshipClassKey xsi:type="typens:RelationshipClassKey">
+      <ObjectKeyName>origin_fk</ObjectKeyName>
+      <ClassKeyName></ClassKeyName>
+      <KeyRole>esriRelKeyRoleOriginForeign</KeyRole>
+    </RelationshipClassKey>
+  </OriginClassKeys>
+  <DestinationClassKeys xsi:type="typens:ArrayOfRelationshipClassKey">
+    <RelationshipClassKey xsi:type="typens:RelationshipClassKey">
+      <ObjectKeyName>dest_pkey</ObjectKeyName>
+      <ClassKeyName></ClassKeyName>
+      <KeyRole>esriRelKeyRoleDestinationPrimary</KeyRole>
+    </RelationshipClassKey>
+    <RelationshipClassKey xsi:type="typens:RelationshipClassKey">
+      <ObjectKeyName>destination_fk</ObjectKeyName>
+      <ClassKeyName></ClassKeyName>
+      <KeyRole>esriRelKeyRoleDestinationForeign</KeyRole>
+    </RelationshipClassKey>
+  </DestinationClassKeys>
+  <RelationshipRules xsi:type="typens:ArrayOfRelationshipRule" />
+  <IsAttachmentRelationship>false</IsAttachmentRelationship>
+  <ChangeTracked>false</ChangeTracked>
+  <ReplicaTracked>false</ReplicaTracked>
+</DERelationshipClassInfo>\n"""
+        )
+        assert f["DatasetSubtype1"] == 3
+        assert f["DatasetSubtype2"] == 0
+
+        # many to many relationship, auto create mapping table
+        lyr = ds.CreateLayer("origin_table_many_to_many2", geom_type=ogr.wkbNone)
+        fld_defn = ogr.FieldDefn("o_pkey", ogr.OFTInteger)
+        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+        lyr = ds.CreateLayer("dest_table_many_to_many2", geom_type=ogr.wkbNone)
+        fld_defn = ogr.FieldDefn("dest_pkey", ogr.OFTInteger)
+        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+        ds = gdal.OpenEx(dirname, gdal.GA_Update)
+
+        relationship = gdal.Relationship(
+            "many_to_many_auto",
+            "origin_table_many_to_many2",
+            "dest_table_many_to_many2",
+            gdal.GRC_MANY_TO_MANY,
+        )
+        relationship.SetLeftTableFields(["o_pkey"])
+        relationship.SetRightTableFields(["dest_pkey"])
+
+        assert ds.AddRelationship(relationship)
+
+        ds = gdal.OpenEx(dirname, gdal.GA_Update)
+        assert set(ds.GetRelationshipNames()) == {
+            "my_relationship",
+            "my_one_to_many_relationship",
+            "many_to_many",
+            "many_to_many_auto",
+        }
+        retrieved_rel = ds.GetRelationship("many_to_many_auto")
+        assert retrieved_rel.GetCardinality() == gdal.GRC_MANY_TO_MANY
+        assert retrieved_rel.GetType() == gdal.GRT_ASSOCIATION
+        assert retrieved_rel.GetLeftTableName() == "origin_table_many_to_many2"
+        assert retrieved_rel.GetRightTableName() == "dest_table_many_to_many2"
+        assert retrieved_rel.GetLeftTableFields() == ["o_pkey"]
+        assert retrieved_rel.GetRightTableFields() == ["dest_pkey"]
+        assert retrieved_rel.GetMappingTableName() == "many_to_many_auto"
+        assert retrieved_rel.GetLeftMappingTableFields() == ["origin_fk"]
+        assert retrieved_rel.GetRightMappingTableFields() == ["destination_fk"]
+        # make sure mapping table was created
+        mapping_table = ds.GetLayerByName("many_to_many_auto")
+        assert mapping_table is not None
+        lyr_defn = mapping_table.GetLayerDefn()
+        assert mapping_table.GetFIDColumn() == "RID"
+        assert lyr_defn.GetFieldIndex("origin_fk") >= 0
+        assert lyr_defn.GetFieldIndex("destination_fk") >= 0
+
+        items_lyr = ds.GetLayerByName("GDB_Items")
+        f = items_lyr.GetFeature(16)
+        relationship_uuid = f["UUID"]
+        assert f["Name"] == "many_to_many_auto"
+        assert f["Type"] == "{B606A7E1-FA5B-439C-849C-6E9C2481537B}"
+
+        # delete relationship
+        assert not ds.DeleteRelationship("i dont exist")
+        assert set(ds.GetRelationshipNames()) == {
+            "my_relationship",
+            "my_one_to_many_relationship",
+            "many_to_many",
+            "many_to_many_auto",
+        }
+
+        assert ds.DeleteRelationship("many_to_many_auto")
+        assert set(ds.GetRelationshipNames()) == {
+            "my_relationship",
+            "my_one_to_many_relationship",
+            "many_to_many",
+        }
+        ds = gdal.OpenEx(dirname, gdal.GA_Update)
+        assert set(ds.GetRelationshipNames()) == {
+            "my_relationship",
+            "my_one_to_many_relationship",
+            "many_to_many",
+        }
+
+        # make sure we are correctly cleaned up
+        items_lyr = ds.GetLayerByName("GDB_Items")
+        for f in items_lyr:
+            assert f["UUID"] != relationship_uuid
+
+        # check item relationships have been created
+        item_relationships_lyr = ds.GetLayerByName("GDB_ItemRelationships")
+        for f in item_relationships_lyr:
+            assert f["OriginID"] != relationship_uuid
+            assert f["DestID"] != relationship_uuid
+
+        # update relationship
+        relationship = gdal.Relationship(
+            "i dont exist",
+            "origin_table_1_to_many",
+            "dest_table_1_to_many",
+            gdal.GRC_ONE_TO_MANY,
+        )
+        assert not ds.UpdateRelationship(relationship)
+
+        relationship = gdal.Relationship(
+            "my_one_to_many_relationship",
+            "origin_table_1_to_many",
+            "dest_table_1_to_many",
+            gdal.GRC_ONE_TO_MANY,
+        )
+        relationship.SetLeftTableFields(["o_pkey"])
+        relationship.SetRightTableFields(["dest_pkey"])
+        relationship.SetType(gdal.GRT_COMPOSITE)
+        relationship.SetForwardPathLabel("my new fwd label")
+        relationship.SetBackwardPathLabel("my new backward label")
+        assert ds.UpdateRelationship(relationship)
+
+        ds = gdal.OpenEx(dirname, gdal.GA_Update)
+        assert set(ds.GetRelationshipNames()) == {
+            "my_relationship",
+            "my_one_to_many_relationship",
+            "many_to_many",
+        }
+        retrieved_rel = ds.GetRelationship("my_one_to_many_relationship")
+        assert retrieved_rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
+        assert retrieved_rel.GetType() == gdal.GRT_COMPOSITE
+        assert retrieved_rel.GetLeftTableName() == "origin_table_1_to_many"
+        assert retrieved_rel.GetRightTableName() == "dest_table_1_to_many"
+        assert retrieved_rel.GetLeftTableFields() == ["o_pkey"]
+        assert retrieved_rel.GetRightTableFields() == ["dest_pkey"]
+        assert retrieved_rel.GetForwardPathLabel() == "my new fwd label"
+        assert retrieved_rel.GetBackwardPathLabel() == "my new backward label"
+        assert retrieved_rel.GetRelatedTableType() == "feature"
+
+        # change relationship tables
+        lyr = ds.CreateLayer("new_origin_table", geom_type=ogr.wkbNone)
+        fld_defn = ogr.FieldDefn("new_o_pkey", ogr.OFTInteger)
+        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+        lyr = ds.CreateLayer("new_dest_table", geom_type=ogr.wkbNone)
+        fld_defn = ogr.FieldDefn("new_dest_pkey", ogr.OFTInteger)
+        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+        ds = gdal.OpenEx(dirname, gdal.GA_Update)
+        relationship = gdal.Relationship(
+            "my_one_to_many_relationship",
+            "new_origin_table",
+            "new_dest_table",
+            gdal.GRC_ONE_TO_MANY,
+        )
+        relationship.SetLeftTableFields(["new_o_pkey"])
+        relationship.SetRightTableFields(["new_dest_pkey"])
+        assert ds.UpdateRelationship(relationship)
+
+        ds = gdal.OpenEx(dirname, gdal.GA_Update)
+        assert set(ds.GetRelationshipNames()) == {
+            "my_relationship",
+            "my_one_to_many_relationship",
+            "many_to_many",
+        }
+        retrieved_rel = ds.GetRelationship("my_one_to_many_relationship")
+        assert retrieved_rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
+        assert retrieved_rel.GetType() == gdal.GRT_ASSOCIATION
+        assert retrieved_rel.GetLeftTableName() == "new_origin_table"
+        assert retrieved_rel.GetRightTableName() == "new_dest_table"
+        assert retrieved_rel.GetLeftTableFields() == ["new_o_pkey"]
+        assert retrieved_rel.GetRightTableFields() == ["new_dest_pkey"]
+
+        # make sure GDB_ItemRelationships table has been updated
+        items_lyr = ds.GetLayerByName("GDB_Items")
+        f = items_lyr.GetFeature(8)
+        relationship_uuid = f["UUID"]
+        assert f["Name"] == "my_one_to_many_relationship"
+        assert f["Type"] == "{B606A7E1-FA5B-439C-849C-6E9C2481537B}"
+
+        f = items_lyr.GetFeature(18)
+        assert f["Name"] == "new_origin_table"
+        origin_table_uuid = f["UUID"]
+
+        f = items_lyr.GetFeature(19)
+        assert f["Name"] == "new_dest_table"
+        dest_table_uuid = f["UUID"]
+
+        item_relationships_lyr = ds.GetLayerByName("GDB_ItemRelationships")
+
+        assert (
+            len(
+                [
+                    f
+                    for f in item_relationships_lyr
+                    if f["OriginID"] == origin_table_uuid
+                    and f["DestID"] == relationship_uuid
+                    and f["Type"] == "{725BADAB-3452-491B-A795-55F32D67229C}"
+                ]
+            )
+            == 1
+        )
+        assert (
+            len(
+                [
+                    f
+                    for f in item_relationships_lyr
+                    if f["OriginID"] == dest_table_uuid
+                    and f["DestID"] == relationship_uuid
+                    and f["Type"] == "{725BADAB-3452-491B-A795-55F32D67229C}"
+                ]
+            )
+            == 1
+        )
+        assert (
+            len(
+                [
+                    f
+                    for f in item_relationships_lyr
+                    if f["OriginID"] == root_dataset_uuid
+                    and f["DestID"] == relationship_uuid
+                    and f["Type"] == "{DC78F1AB-34E4-43AC-BA47-1C4EABD0E7C7}"
+                ]
+            )
+            == 1
+        )
+
+    finally:
+        gdal.RmdirRecursive(dirname)
+
+
+###############################################################################
 # Test emulated transactions
 
 
