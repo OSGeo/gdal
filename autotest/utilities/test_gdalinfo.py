@@ -1119,11 +1119,15 @@ def test_gdalinfo_stac_json():
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
 
+    tmpfilename = "tmp/test_gdalinfo_stac_json.tif"
+    shutil.copy("../gcore/data/byte.tif", tmpfilename)
     ret, _ = gdaltest.runexternal_out_and_err(
         test_cli_utilities.get_gdalinfo_path()
-        + " -json -proj4 -stats -hist ../gcore/data/byte.tif",
+        + " -json -proj4 -stats -hist "
+        + tmpfilename,
         encoding="UTF-8",
     )
+    gdal.GetDriverByName("GTiff").Delete(tmpfilename)
     data = json.loads(ret)
 
     assert "stac" in data
@@ -1135,7 +1139,10 @@ def test_gdalinfo_stac_json():
 
     assert properties["proj:wkt2"].startswith("PROJCRS")
     assert properties["proj:epsg"] == 26711
-    assert isinstance(properties["proj:projjson"], dict)
+    from osgeo import osr
+
+    if osr.GetPROJVersionMajor() >= 7:
+        assert isinstance(properties["proj:projjson"], dict)
     assert properties["proj:transform"] == [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0]
 
     assert len(stac["raster:bands"]) == 1

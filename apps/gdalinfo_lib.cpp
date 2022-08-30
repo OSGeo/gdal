@@ -402,17 +402,21 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
             }
             json_object_object_add(poCoordinateSystem, "wkt", poWkt);
 
-            const char *epsg = OSRGetAuthorityCode(hSRS, nullptr);
-            if (epsg)
+            const char *pszAuthCode = OSRGetAuthorityCode(hSRS, nullptr);
+            const char *pszAuthName = OSRGetAuthorityName(hSRS, nullptr);
+            if (pszAuthCode && pszAuthName && EQUAL(pszAuthName, "EPSG"))
             {
-                json_object *poEPSG = json_object_new_int64(atoi(epsg));
+                json_object *poEPSG = json_object_new_int64(atoi(pszAuthCode));
                 json_object_object_add(poStacProperties, "proj:epsg", poEPSG);
             }
             char * pszProjJson = nullptr;
+            CPLPushErrorHandler(CPLQuietErrorHandler); // PROJJSON requires PROJ >= 6.2
             OGRErr result = OSRExportToPROJJSON(hSRS, &pszProjJson, nullptr);
+            CPLPopErrorHandler();
             if (result == OGRERR_NONE) {
                 json_object *poStacProjJson = json_tokener_parse(pszProjJson);
                 json_object_object_add(poStacProperties, "proj:projjson", poStacProjJson);
+                CPLFree(pszProjJson);
             }
 
             json_object* poAxisMapping = json_object_new_array();
