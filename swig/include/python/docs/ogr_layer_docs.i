@@ -134,7 +134,7 @@ Rewrite an existing feature.
 
 For more details: :cpp:func:`OGR_L_SetFeature`
 
-To set a feature, but create it if it doesn't exist see :cpp:func:`OGR_L_UpsertFeature`.
+To set a feature, but create it if it doesn't exist see :py:meth:`.Layer.UpsertFeature`.
 
 Parameters
 -----------
@@ -155,7 +155,7 @@ Create and write a new feature within a layer.
 
 For more details: :cpp:func:`OGR_L_CreateFeature`
 
-To create a feature, but set it if it exists see :cpp:func:`OGR_L_UpsertFeature`.
+To create a feature, but set it if it exists see :py:meth:`.Layer.UpsertFeature`.
 
 Parameters
 -----------
