@@ -329,6 +329,8 @@ protected:
         const CPLString& wkt,
         const CPLString& proj4);
 
+    std::pair<OGRErr, CPLString> LaunderName(const char* name);
+
     bool IsTransactionStarted() const { return isTransactionStarted_; }
 
     void CreateParseArrayFunctions(const char* schemaName);

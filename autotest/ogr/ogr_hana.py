@@ -826,6 +826,40 @@ def test_ogr_hana_32():
 
 
 ###############################################################################
+# Test LAUNDER option on non-ASCII characters
+
+
+def test_ogr_hana_33():
+    ds = open_datasource(1)
+
+    def launder_name(s):
+        return s.upper().replace("-", "_").replace("#", "_")
+
+    # Test layer name
+    layer_name = get_test_name() + "_table_-#äöü#\U0001f608"
+    layer = ds.CreateLayer(
+        layer_name, geom_type=ogr.wkbNone, options=["FID=fid", "LAUNDER=YES"]
+    )
+    expected_layer_name = launder_name(layer_name)
+    assert layer.GetName() == expected_layer_name, pytest.fail(
+        "GetName() returned %s instead of %s" % (layer.GetName(), expected_layer_name)
+    )
+
+    # Test field name
+    field_defn = ogr.FieldDefn("field_-#äöü#\U0001f608", ogr.OFTInteger)
+
+    assert layer.CreateField(field_defn) == ogr.OGRERR_NONE, (
+        "CreateField failed for %s" % field_defn.GetNameRef()
+    )
+    new_field_defn = layer.GetLayerDefn().GetFieldDefn(1)
+    expected_field_name = launder_name(field_defn.GetNameRef())
+    assert new_field_defn.GetNameRef() == expected_field_name, pytest.fail(
+        "GetNameRef() returned %s instead of %s"
+        % (new_field_defn.GetNameRef(), expected_field_name)
+    )
+
+
+###############################################################################
 #  Create a table from data/poly.shp
 
 def create_tpoly_table(ds, layer_name='TPOLY'):
