@@ -238,6 +238,18 @@ with control information.
 
     ``sum``: compute the weighted sum of all non-NODATA contributing pixels (since GDAL 3.1)
 
+    .. note::
+
+        When downsampling is performed (use of :option:`-tr` or :option:`-ts`), existing
+        overviews (either internal/implicit or external ones) on the source image
+        will be used by default by selecting the closest overview to the desired output
+        resolution.
+        The resampling method used to create those overviews is generally not the one you
+        specify through the :option:`-r` option. Some formats, like JPEG2000, can contain
+        significant outliers due to wavelet compression works. It might thus be useful in
+        those situations to use the :option:`-ovr` ``NONE`` option to prevent existing overviews to
+        be used.
+
 .. option:: -srcnodata <value [value...]>
 
     Set nodata masking values for input bands (different values can be supplied
