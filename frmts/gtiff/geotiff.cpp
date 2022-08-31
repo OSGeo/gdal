@@ -19701,8 +19701,10 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 // GDALDatasetCopyWholeRaster can cope with it.
                 GDALDataset* poSrcOvrDS = poOvrDS ?
                     (iOvrLevel == 0 ? poOvrDS.get() :
-                        GDALCreateOverviewDataset(poOvrDS.get(), iOvrLevel - 1, TRUE)) :
-                    GDALCreateOverviewDataset(poSrcDS, iOvrLevel, TRUE);
+                        GDALCreateOverviewDataset(poOvrDS.get(), iOvrLevel - 1,
+                                                  /* bThisLevelOnly = */true)) :
+                    GDALCreateOverviewDataset(poSrcDS, iOvrLevel,
+                                              /* bThisLevelOnly = */true);
                 GDALRasterBand* poSrcOvrBand = poOvrDS ?
                     (iOvrLevel == 0 ? poOvrDS->GetRasterBand(1):
                         poOvrDS->GetRasterBand(1)->GetOverview(iOvrLevel - 1)) :

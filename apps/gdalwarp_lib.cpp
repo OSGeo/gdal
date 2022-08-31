@@ -2593,13 +2593,15 @@ GDALDatasetH GDALWarpDirect( const char *pszDest, GDALDatasetH hDstDS,
                 {
                     CPLDebug("WARP", "Selecting overview level %d for %s",
                                 iOvr, GDALGetDescription(hSrcDS));
-                    poSrcOvrDS = GDALCreateOverviewDataset( poSrcDS, iOvr, FALSE );
+                    poSrcOvrDS = GDALCreateOverviewDataset( poSrcDS, iOvr,
+                                                            /* bThisLevelOnly = */false );
                 }
             }
         }
         else if( psOptions->nOvLevel >= 0 )
         {
-            poSrcOvrDS = GDALCreateOverviewDataset( poSrcDS, psOptions->nOvLevel, TRUE );
+            poSrcOvrDS = GDALCreateOverviewDataset( poSrcDS, psOptions->nOvLevel,
+                                                    /* bThisLevelOnly = */true );
             if( poSrcOvrDS == nullptr )
             {
                 if( !psOptions->bQuiet )
@@ -2609,7 +2611,8 @@ GDALDatasetH GDALWarpDirect( const char *pszDest, GDALDatasetH hDstDS,
                             psOptions->nOvLevel, GDALGetDescription(hSrcDS), nOvCount - 1);
                 }
                 if( nOvCount > 0 )
-                    poSrcOvrDS = GDALCreateOverviewDataset( poSrcDS, nOvCount - 1, FALSE );
+                    poSrcOvrDS = GDALCreateOverviewDataset( poSrcDS, nOvCount - 1,
+                                                            /* bThisLevelOnly = */false );
             }
             else
             {
