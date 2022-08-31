@@ -241,7 +241,7 @@ with control information.
     .. note::
 
         When downsampling is performed (use of :option:`-tr` or :option:`-ts`), existing
-        overviews on the source rather (either internal/implicit or external ones)
+        overviews (either internal/implicit or external ones) on the source image
         will be used by default by selecting the closest overview to the desired output
         resolution.
         The resampling method used to create those overviews is generally not the one you
