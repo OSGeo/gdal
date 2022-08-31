@@ -113,6 +113,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
 
     virtual OGRErr      ISetFeature( OGRFeature *poFeature ) CPL_WARN_UNUSED_RESULT;
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature )  CPL_WARN_UNUSED_RESULT;
+    virtual OGRErr      IUpsertFeature( OGRFeature *poFeature )  CPL_WARN_UNUSED_RESULT;
 
 //! @cond Doxygen_Suppress
     CPLStringList  m_aosArrowArrayStreamOptions{};
@@ -180,6 +181,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
 
     OGRErr      SetFeature( OGRFeature *poFeature )  CPL_WARN_UNUSED_RESULT;
     OGRErr      CreateFeature( OGRFeature *poFeature ) CPL_WARN_UNUSED_RESULT;
+    OGRErr      UpsertFeature( OGRFeature *poFeature )  CPL_WARN_UNUSED_RESULT;
 
     virtual OGRErr      DeleteFeature( GIntBig nFID )  CPL_WARN_UNUSED_RESULT;
 

@@ -134,6 +134,8 @@ Rewrite an existing feature.
 
 For more details: :cpp:func:`OGR_L_SetFeature`
 
+To set a feature, but create it if it doesn't exist see :py:meth:`.Layer.UpsertFeature`.
+
 Parameters
 -----------
 feature: Feature
@@ -152,6 +154,24 @@ int:
 Create and write a new feature within a layer.
 
 For more details: :cpp:func:`OGR_L_CreateFeature`
+
+To create a feature, but set it if it exists see :py:meth:`.Layer.UpsertFeature`.
+
+Parameters
+-----------
+feature: Feature
+    The feature to write to disk.
+
+Returns
+--------
+int:
+    :py:const:`osgeo.ogr.OGRERR_NONE` on success.
+";
+
+%feature("docstring")  UpsertFeature "
+Rewrite an existing feature or create a new feature within a layer.
+
+For more details: :cpp:func:`OGR_L_UpsertFeature`
 
 Parameters
 -----------

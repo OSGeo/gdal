@@ -1584,6 +1584,8 @@ by the OGRSFDriverManager.
 
  This method is the same as the C function OGR_L_SetFeature().
 
+ To set a feature, but create it if it doesn't exist see OGRLayer::UpsertFeature().
+
  @param poFeature the feature to write.
 
  @return OGRERR_NONE if the operation works, otherwise an appropriate error
@@ -1625,6 +1627,8 @@ by the OGRSFDriverManager.
 
  This function is the same as the C++ method OGRLayer::SetFeature().
 
+ To set a feature, but create it if it doesn't exist see OGR_L_UpsertFeature().
+
  @param hLayer handle to the layer to write the feature.
  @param hFeat the feature to write.
 
@@ -1649,6 +1653,8 @@ by the OGRSFDriverManager.
  since CreateFeature() is no longer virtual.
 
  This method is the same as the C function OGR_L_CreateFeature().
+
+ To create a feature, but set it if it exists see OGRLayer::UpsertFeature().
 
  @param poFeature the feature to write to disk.
 
@@ -1692,10 +1698,77 @@ by the OGRSFDriverManager.
 
  This function is the same as the C++ method OGRLayer::CreateFeature().
 
+ To create a feature, but set it if it exists see OGR_L_UpsertFeature().
+
  @param hLayer handle to the layer to write the feature to.
  @param hFeat the handle of the feature to write to disk.
 
  @return OGRERR_NONE on success.
+
+*/
+
+/**
+
+ \fn OGRErr OGRLayer::UpsertFeature( OGRFeature * poFeature );
+
+ \brief Rewrite an existing feature or create a new feature within a layer.
+
+ This function will write a feature to the layer, based on the feature id
+ within the OGRFeature.  If the feature id doesn't exist a new feature will be
+ written.  Otherwise, the existing feature will be rewritten.
+
+ Use OGRLayer::TestCapability(OLCUpsertFeature) to establish if this layer
+ supports upsert writing.
+
+ This method is the same as the C function OGR_L_UpsertFeature().
+
+ @param poFeature the feature to write to disk.
+
+ @return OGRERR_NONE on success.
+ @since GDAL 3.6.0
+
+*/
+
+/**
+
+ \fn OGRErr OGRLayer::IUpsertFeature( OGRFeature * poFeature );
+
+ \brief Rewrite an existing feature or create a new feature within a layer.
+
+ This method is implemented by drivers and not called directly. User code should
+ use UpsertFeature() instead.
+
+ This function will write a feature to the layer, based on the feature id
+ within the OGRFeature.  If the feature id doesn't exist a new feature will be
+ written.  Otherwise, the existing feature will be rewritten.
+
+ @param poFeature the feature to write to disk.
+
+ @return OGRERR_NONE on success.
+ @since GDAL 3.6.0
+
+*/
+
+/**
+
+ \fn OGRErr OGR_L_UpsertFeature( OGRLayerH hLayer, OGRFeatureH hFeat );
+
+ \brief Rewrite an existing feature or create a new feature within a layer.
+
+ This function will write a feature to the layer, based on the feature id
+ within the OGRFeature.  If the feature id doesn't exist a new feature will be
+ written.  Otherwise, the existing feature will be rewritten.
+
+ Use OGR_L_TestCapability(OLCUpsertFeature) to establish if this layer
+ supports upsert writing.
+
+ This function is the same as the C++ method OGRLayer::UpsertFeature().
+
+ @param hLayer handle to the layer to write the feature to.
+ @param hFeat the handle of the feature to write to disk.
+
+ @return OGRERR_NONE on success.
+ @since GDAL 3.6.0
 
 */
 
@@ -1763,12 +1836,17 @@ feature id.<p>
 
  <li> <b>OLCSequentialWrite</b> / "SequentialWrite": TRUE if the
 CreateFeature() method works for this layer.  Note this means that this
-particular layer is writable.  The same OGRLayer class  may returned FALSE
+particular layer is writable.  The same OGRLayer class may return FALSE
 for other layer instances that are effectively read-only.<p>
 
  <li> <b>OLCRandomWrite</b> / "RandomWrite": TRUE if the SetFeature() method
-is operational on this layer.   Note this means that this
-particular layer is writable.  The same OGRLayer class  may returned FALSE
+is operational on this layer.  Note this means that this
+particular layer is writable.  The same OGRLayer class may return FALSE
+for other layer instances that are effectively read-only.<p>
+
+ <li> <b>OLCUpsertFeature</b> / "UpsertFeature": TRUE if the UpsertFeature()
+method is operational on this layer.  Note this means that this
+particular layer is writable.  The same OGRLayer class may return FALSE
 for other layer instances that are effectively read-only.<p>
 
  <li> <b>OLCFastSpatialFilter</b> / "FastSpatialFilter": TRUE if this layer
@@ -1862,12 +1940,17 @@ feature id.<p>
 
  <li> <b>OLCSequentialWrite</b> / "SequentialWrite": TRUE if the
 CreateFeature() method works for this layer.  Note this means that this
-particular layer is writable.  The same OGRLayer class  may returned FALSE
+particular layer is writable.  The same OGRLayer class may return FALSE
 for other layer instances that are effectively read-only.<p>
 
  <li> <b>OLCRandomWrite</b> / "RandomWrite": TRUE if the SetFeature() method
-is operational on this layer.   Note this means that this
-particular layer is writable.  The same OGRLayer class  may returned FALSE
+is operational on this layer.  Note this means that this
+particular layer is writable.  The same OGRLayer class may return FALSE
+for other layer instances that are effectively read-only.<p>
+
+ <li> <b>OLCUpsertFeature</b> / "UpsertFeature": TRUE if the UpsertFeature()
+method is operational on this layer.  Note this means that this 
+particular layer is writable.  The same OGRLayer class may return FALSE
 for other layer instances that are effectively read-only.<p>
 
  <li> <b>OLCFastSpatialFilter</b> / "FastSpatialFilter": TRUE if this layer

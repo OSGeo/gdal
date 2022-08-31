@@ -85,6 +85,7 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL: public OGRLayer
     OGRFeature         *GetFeature( GIntBig nFeatureId ) override;
     OGRErr              ISetFeature( OGRFeature *poFeature ) override;
     OGRErr              ICreateFeature( OGRFeature *poFeature ) override;
+    OGRErr              IUpsertFeature(OGRFeature* poFeature) override;
     virtual OGRErr      DeleteFeature( GIntBig nFID ) override;
 
     OGRFeatureDefn *    GetLayerDefn() override { return m_poFeatureDefn; }
