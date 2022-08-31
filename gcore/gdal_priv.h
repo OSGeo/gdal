@@ -3229,7 +3229,7 @@ void GDALRasterIOExtraArgSetResampleAlg(GDALRasterIOExtraArg* psExtraArg,
 
 
 GDALDataset* GDALCreateOverviewDataset(GDALDataset* poDS, int nOvrLevel,
-                                       int bThisLevelOnly);
+                                       bool bThisLevelOnly);
 
 // Should cover particular cases of #3573, #4183, #4506, #6578
 // Behavior is undefined if fVal1 or fVal2 are NaN (should be tested before
