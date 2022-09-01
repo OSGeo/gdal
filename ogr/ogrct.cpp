@@ -1553,6 +1553,8 @@ int OGRProjCT::Initialize( const OGRSpatialReference * poSourceIn,
             {
                 proj_destroy(srcCRS);
                 proj_destroy(targetCRS);
+                if( area )
+                    proj_area_destroy(area);
                 return FALSE;
             }
             CPLStringList aosOptions;
