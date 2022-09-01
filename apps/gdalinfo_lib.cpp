@@ -666,20 +666,12 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
             json_object_put(poMetadata);
 
         // Include eo:cloud_cover in stac output
-        char **papszMetadata = GDALGetMetadata(hDataset, "IMAGERY");
-        if( papszMetadata != nullptr && *papszMetadata != nullptr ) {
-            json_object * poValue = nullptr;
-            for (int i = 0; papszMetadata[i] != nullptr; ++i) {
-                char *pszKey = nullptr;
-                const char *pszValue =
-                    CPLParseNameValue( papszMetadata[i], &pszKey );
-                if( pszKey && strcmp(pszKey, "CLOUDCOVER") == 0 )
-                {
-                    poValue = json_object_new_int( atoi(pszValue) );
-                    json_object_object_add( poStac, "eo:cloud_cover", poValue );
-                    CPLFree( pszKey );
-                }
-            }
+        const char* pszCloudCover = GDALGetMetadataItem(hDataset, "CLOUDCOVER", "IMAGERY");
+        json_object * poValue = nullptr;
+        if( pszCloudCover )
+        {
+            poValue = json_object_new_int(atoi(pszCloudCover));
+            json_object_object_add(poStac, "eo:cloud_cover", poValue);
         }
     }
 
