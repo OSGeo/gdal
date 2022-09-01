@@ -2548,7 +2548,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
     psOptions->bNoXMP = false;
 
     bool bParsedMaskArgument = false;
-    bool bOutsideExplicitlySet = false;
+    bool bOutsizeExplicitlySet = false;
     bool bGotSourceFilename = false;
     bool bGotDestFilename = false;
 
@@ -2888,7 +2888,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
                 psOptions->dfOYSizePct = CPLAtofM(papszArgv[i]);
             else
                 psOptions->nOYSizePixel = atoi(papszArgv[i]);
-            bOutsideExplicitlySet = true;
+            bOutsizeExplicitlySet = true;
         }
 
         else if( i+2 < argc && EQUAL(papszArgv[i],"-tr") )
@@ -3108,7 +3108,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
         return nullptr;
     }
 
-    if( bOutsideExplicitlySet &&
+    if( bOutsizeExplicitlySet &&
         psOptions->nOXSizePixel == 0 && psOptions->dfOXSizePct == 0.0 &&
         psOptions->nOYSizePixel == 0 && psOptions->dfOYSizePct == 0.0 )
     {
