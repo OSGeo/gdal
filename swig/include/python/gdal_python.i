@@ -1488,6 +1488,7 @@ def TranslateOptions(options=None, format=None,
               outputSRS=None, nogcp=False, GCPs=None,
               noData=None, rgbExpand=None,
               stats = False, rat = True, xmp = True, resampleAlg=None,
+              overviewLevel = 'AUTO',
               callback=None, callback_data=None):
     """Create a TranslateOptions() object that can be passed to gdal.Translate()
 
@@ -1553,6 +1554,8 @@ def TranslateOptions(options=None, format=None,
         whether to copy XMP metadata
     resampleAlg:
         resampling mode
+    overviewLevel:
+        To specify which overview level of source files must be used
     callback:
         callback method
     callback_data:
@@ -1639,6 +1642,19 @@ def TranslateOptions(options=None, format=None,
                 new_options += ['-r', str(resampleAlg)]
         if xRes != 0 and yRes != 0:
             new_options += ['-tr', _strHighPrec(xRes), _strHighPrec(yRes)]
+
+        if overviewLevel is None or isinstance(overviewLevel, str):
+            pass
+        elif isinstance(overviewLevel, int):
+            if overviewLevel < 0:
+                overviewLevel = 'AUTO' + str(overviewLevel)
+            else:
+                overviewLevel = str(overviewLevel)
+        else:
+            overviewLevel = None
+
+        if overviewLevel is not None and overviewLevel != 'AUTO':
+            new_options += ['-ovr', overviewLevel]
 
     if return_option_list:
         return new_options

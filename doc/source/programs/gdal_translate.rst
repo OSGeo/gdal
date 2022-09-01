@@ -22,6 +22,7 @@ Synopsis
         [-if format]* [-of format]
         [-b band]* [-mask band] [-expand {gray|rgb|rgba}]
         [-outsize xsize[%]|0 ysize[%]|0] [-tr xres yres]
+        [-ovr level|AUTO|AUTO-n|NONE]
         [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,rms,mode}]
         [-unscale] [-scale[_bn] [src_min src_max [dst_min dst_max]]]* [-exponent[_bn] exp_val]*
         [-srcwin xoff yoff xsize ysize] [-epo] [-eco]
@@ -95,6 +96,28 @@ resampling, and rescaling pixels in the process.
     set target resolution. The values must be expressed in georeferenced units.
     Both must be positive values. This is mutually exclusive with
     :option:`-outsize` and :option:`-a_ullr`.
+
+.. option:: -ovr <level|AUTO|AUTO-n|NONE>
+
+    .. versionadded:: 3.6
+
+    To specify which overview level of source file must be used. The default choice,
+    AUTO, will select the overview level whose resolution is the closest to the
+    target resolution. Specify an integer value (0-based, i.e. 0=1st overview level)
+    to select a particular level. Specify AUTO-n where n is an integer greater or
+    equal to 1, to select an overview level below the AUTO one. Or specify NONE to
+    force the base resolution to be used (can be useful if overviews have been
+    generated with a low quality resampling method, and a higher quality resampling method
+    is specified with :option:`-r`.
+
+    When :option:`-ovr` is specified to an integer value,
+    and none of :option:`-outsize` and :option:`-tr` is specified, the size of
+    the overview will be used as the output size.
+
+    When :option:`-ovr` is specified, values of :option:`-srcwin`, when specified,
+    should be expressed as pixel offset and size of the full resolution source dataset.
+    Similarly when using :option:`-outsize` with percentage values, they refer to the size
+    of the full resolution source dataset.
 
 .. option:: -r {nearest (default),bilinear,cubic,cubicspline,lanczos,average,rms,mode}
 
