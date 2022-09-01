@@ -1015,6 +1015,49 @@ def test_ogr_hana_33():
 
 
 ###############################################################################
+# Test mandatory connection parameters
+
+
+def test_ogr_hana_34():
+    def test_connection(conn_str, expected_param):
+        with gdaltest.error_handler():
+            ds = ogr.Open("HANA:" + conn_str, update=1)
+        assert ds is None
+        expected_msg = (
+            "Mandatory connection parameter '%s' is missing." % expected_param
+        )
+        assert gdal.GetLastErrorMsg() == expected_msg, pytest.fail(
+            "Missing connection parameter %s is not reported" % expected_param
+        )
+
+    test_connection("DSN=DB1;PASSWORD=p1;SCHEMA=A", "USER")
+    test_connection("DSN=DB1;USER=u1;PxSSWORD=p1;SCHEMA=A", "PASSWORD")
+    test_connection("DSN=DB1;USER=u1;PASSWORD=p1;SCjHEMA=A", "SCHEMA")
+
+    test_connection(
+        "DRRIVER=libodbcHDB.so;HOST=host1;PORT=305;USER=u1;PASSWORD=p1;SCHEMA=A",
+        "DRIVER",
+    )
+    test_connection(
+        "DRIVER=libodbcHDB.so;DDOST=host1;PORT=305;USER=u1;PASSWORD=p1;SCHEMA=A", "HOST"
+    )
+    test_connection(
+        "DRIVER=libodbcHDB.so;HOST=host1;P9ORT=305;USER=u1;PASSWORD=p1;SCHEMA=A", "PORT"
+    )
+    test_connection(
+        "DRIVER=libodbcHDB.so;HOST=host1;PORT=305;USSTR=u1;PASSWORD=p1;SCHEMA=A", "USER"
+    )
+    test_connection(
+        "DRIVER=libodbcHDB.so;HOST=host1;PORT=305;USER=u1;PHASSWORD=p1;SCHEMA=A",
+        "PASSWORD",
+    )
+    test_connection(
+        "DRIVER=libodbcHDB.so;HOST=host1;PORT=305;USER=u1;PASSWORD=p1;SCHEM_A=A",
+        "SCHEMA",
+    )
+
+
+###############################################################################
 #  Create a table from data/poly.shp
 
 
