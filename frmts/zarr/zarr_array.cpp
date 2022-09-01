@@ -2910,10 +2910,14 @@ static GDALExtendedDataType ParseDtype(bool isZarrV2,
             if( nBytes <= 0 || nBytes >= 1000 )
                 break;
 
-            if( chEndianness == '<' )
-                elt.needByteSwapping = (CPL_IS_LSB == 0);
-            else if( chEndianness == '>' )
-                elt.needByteSwapping = (CPL_IS_LSB != 0);
+            elt.needByteSwapping = false;
+            if( (nBytes > 1 && chType != 'S') || chType == 'U' )
+            {
+                if( chEndianness == '<' )
+                    elt.needByteSwapping = (CPL_IS_LSB == 0);
+                else if( chEndianness == '>' )
+                    elt.needByteSwapping = (CPL_IS_LSB != 0);
+            }
 
             GDALDataType eDT;
             if( !elts.empty() )
