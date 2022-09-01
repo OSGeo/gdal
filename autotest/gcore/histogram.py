@@ -722,6 +722,7 @@ def test_histogram_errors():
         [-0.5, math.inf],
         [-math.inf, math.inf],
         [-sys.float_info.max, sys.float_info.max],  # leads to dfScale == 0
+        [0, 1e-309],  # leads to dfScale == inf
         [0, 0],
     ],
 )

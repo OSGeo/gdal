@@ -3301,7 +3301,7 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
 
     const double dfScale = nBuckets / (dfMax - dfMin);
-    if( dfScale == 0 )
+    if( dfScale == 0 || !std::isfinite(dfScale) )
     {
         ReportError( CE_Failure, CPLE_IllegalArg,
                      "dfMin and dfMax should be finite values such that "
@@ -3466,7 +3466,7 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                     bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
                     continue;
 
-                // Given that dfValue and dfMin are not NaN, and dfScale > 0,
+                // Given that dfValue and dfMin are not NaN, and dfScale > 0 and finite,
                 // the result of the multiplication cannot be NaN
                 const double dfIndex = floor((dfValue - dfMin) * dfScale);
 
@@ -3658,7 +3658,7 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                         ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
                         continue;
 
-                    // Given that dfValue and dfMin are not NaN, and dfScale > 0,
+                    // Given that dfValue and dfMin are not NaN, and dfScale > 0 and finite,
                     // the result of the multiplication cannot be NaN
                     const double dfIndex = floor((dfValue - dfMin) * dfScale);
 
