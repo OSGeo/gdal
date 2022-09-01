@@ -1836,13 +1836,13 @@ std::vector<std::shared_ptr<GDALDimension>> HDF4EOSGridGroup::GetDimensions(CSLC
             adfUpLeft[1] = CPLPackedDMSToDec(adfUpLeft[1]);
         }
 
-        m_varX = std::make_shared<GDALMDArrayRegularlySpaced>(
+        m_varX = GDALMDArrayRegularlySpaced::Create(
             GetFullName(), m_dims[1]->GetName(), m_dims[1],
             adfUpLeft[0],
             (adfLowRight[0] - adfUpLeft[0]) / nXSize, 0.5);
         m_dims[1]->SetIndexingVariable(m_varX);
 
-        m_varY = std::make_shared<GDALMDArrayRegularlySpaced>(
+        m_varY = GDALMDArrayRegularlySpaced::Create(
             GetFullName(), m_dims[0]->GetName(), m_dims[0],
             adfUpLeft[1],
             (adfLowRight[1] - adfUpLeft[1]) / nYSize, 0.5);
@@ -2548,13 +2548,13 @@ std::vector<std::shared_ptr<GDALDimension>> HDF4SDSGroup::GetDimensions(CSLConst
             }
             m_dims = newDims;
 
-            m_varX = std::make_shared<GDALMDArrayRegularlySpaced>(
+            m_varX = GDALMDArrayRegularlySpaced::Create(
                 GetFullName(), m_dims[1]->GetName(), m_dims[1],
                 CPLAtof(aosCoeffs[0]),
                 CPLAtof(aosCoeffs[1]), 0.5);
             m_dims[1]->SetIndexingVariable(m_varX);
 
-            m_varY = std::make_shared<GDALMDArrayRegularlySpaced>(
+            m_varY = GDALMDArrayRegularlySpaced::Create(
                 GetFullName(), m_dims[0]->GetName(), m_dims[0],
                 CPLAtof(aosCoeffs[3]),
                 CPLAtof(aosCoeffs[5]), 0.5);
