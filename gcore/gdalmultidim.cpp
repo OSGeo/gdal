@@ -6800,7 +6800,7 @@ std::shared_ptr<GDALMDArrayResampled> GDALMDArrayResampled::Create(
     auto poDimY = std::make_shared<GDALDimensionWeakIndexingVar>(
         std::string(), "dimY", GDAL_DIM_TYPE_HORIZONTAL_Y, "NORTH",
         poReprojectedDS->GetRasterYSize());
-    auto varY = std::make_shared<GDALMDArrayRegularlySpaced>(
+    auto varY = GDALMDArrayRegularlySpaced::Create(
                      std::string(), poDimY->GetName(), poDimY,
                      adfGeoTransform[3] + adfGeoTransform[5] / 2,
                      adfGeoTransform[5],
@@ -6810,7 +6810,7 @@ std::shared_ptr<GDALMDArrayResampled> GDALMDArrayResampled::Create(
     auto poDimX = std::make_shared<GDALDimensionWeakIndexingVar>(
         std::string(), "dimX", GDAL_DIM_TYPE_HORIZONTAL_X, "EAST",
         poReprojectedDS->GetRasterXSize());
-    auto varX = std::make_shared<GDALMDArrayRegularlySpaced>(
+    auto varX = GDALMDArrayRegularlySpaced::Create(
                      std::string(), poDimX->GetName(), poDimX,
                      adfGeoTransform[0] + adfGeoTransform[1] / 2,
                      adfGeoTransform[1],
@@ -11066,6 +11066,19 @@ GDALMDArrayRegularlySpaced::GDALMDArrayRegularlySpaced(
     m_dfOffsetInIncrement(dfOffsetInIncrement),
     m_dims{poDim}
 {}
+
+std::shared_ptr<GDALMDArrayRegularlySpaced> GDALMDArrayRegularlySpaced::Create(
+            const std::string& osParentName,
+            const std::string& osName,
+            const std::shared_ptr<GDALDimension>& poDim,
+            double dfStart, double dfIncrement,
+            double dfOffsetInIncrement)
+{
+    auto poArray = std::make_shared<GDALMDArrayRegularlySpaced>(
+        osParentName, osName, poDim, dfStart, dfIncrement, dfOffsetInIncrement);
+    poArray->SetSelf(poArray);
+    return poArray;
+}
 
 const std::vector<std::shared_ptr<GDALDimension>>& GDALMDArrayRegularlySpaced::GetDimensions() const
 {

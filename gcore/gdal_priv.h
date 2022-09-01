@@ -2672,6 +2672,13 @@ public:
                 double dfStart, double dfIncrement,
                 double dfOffsetInIncrement);
 
+    static std::shared_ptr<GDALMDArrayRegularlySpaced> Create(
+                const std::string& osParentName,
+                const std::string& osName,
+                const std::shared_ptr<GDALDimension>& poDim,
+                double dfStart, double dfIncrement,
+                double dfOffsetInIncrement);
+
     bool IsWritable() const override { return false; }
 
     const std::string& GetFilename() const override { return m_osEmptyFilename; }

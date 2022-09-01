@@ -7664,13 +7664,13 @@ protected:
         if( m_poDS->GetGeoTransform(adfGeoTransform) == CE_None &&
             adfGeoTransform[2] == 0 && adfGeoTransform[4] == 0 )
         {
-            m_varX = std::make_shared<GDALMDArrayRegularlySpaced>(
+            m_varX = GDALMDArrayRegularlySpaced::Create(
                 "/", "X", m_dims[1],
                 adfGeoTransform[0],
                 adfGeoTransform[1], 0.5);
             m_dims[1]->SetIndexingVariable(m_varX);
 
-            m_varY = std::make_shared<GDALMDArrayRegularlySpaced>(
+            m_varY = GDALMDArrayRegularlySpaced::Create(
                 "/", "Y", m_dims[0],
                 adfGeoTransform[3],
                 adfGeoTransform[5], 0.5);
