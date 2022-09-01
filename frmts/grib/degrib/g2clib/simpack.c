@@ -74,6 +74,13 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
          nbits=0;
       else
          nbits=idrstmpl[3];
+
+      if( dscale == 0.0 )
+      {
+          fprintf(stderr, "Invalid dscale == 0 value\n");
+          *lcpack = -1;
+          return;
+      }
 //
 //  Find max and min values in the data
 //
