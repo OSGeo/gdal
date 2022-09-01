@@ -247,7 +247,9 @@ else ()
 
   # For some reason, above tests detect xxxx64 symbols for iOS, which are not
   # available at build time.
-  if (${CMAKE_SYSTEM_NAME} MATCHES "iOS")
+  # This is also necessary for Mac Catalyst builds.
+  # Cf https://lists.osgeo.org/pipermail/gdal-dev/2022-August/056174.html
+  if (${CMAKE_SYSTEM_NAME} MATCHES "iOS" OR ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(VSI_FOPEN64 "fopen")
     set(VSI_FTRUNCATE64 "ftruncate")
     set(VSI_FTELL64 "ftell")

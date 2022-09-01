@@ -291,6 +291,25 @@ OGRErr      OGRWarpedLayer::ICreateFeature( OGRFeature *poFeature )
 }
 
 /************************************************************************/
+/*                            IUpsertFeature()                          */
+/************************************************************************/
+
+OGRErr      OGRWarpedLayer::IUpsertFeature( OGRFeature* poFeature )
+{
+    OGRErr eErr;
+
+    OGRFeature* poFeatureNew = WarpedFeatureToSrcFeature(poFeature);
+    if( poFeatureNew == nullptr )
+        return OGRERR_FAILURE;
+
+    eErr = m_poDecoratedLayer->UpsertFeature(poFeatureNew);
+
+    delete poFeatureNew;
+
+    return eErr;
+}
+
+/************************************************************************/
 /*                            GetLayerDefn()                           */
 /************************************************************************/
 

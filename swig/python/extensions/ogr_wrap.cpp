@@ -3882,6 +3882,9 @@ SWIGINTERN OGRErr OGRLayerShadow_SetFeature(OGRLayerShadow *self,OGRFeatureShado
 SWIGINTERN OGRErr OGRLayerShadow_CreateFeature(OGRLayerShadow *self,OGRFeatureShadow *feature){
     return OGR_L_CreateFeature(self, feature);
   }
+SWIGINTERN OGRErr OGRLayerShadow_UpsertFeature(OGRLayerShadow *self,OGRFeatureShadow *feature){
+    return OGR_L_UpsertFeature(self, feature);
+  }
 SWIGINTERN OGRErr OGRLayerShadow_DeleteFeature(OGRLayerShadow *self,GIntBig fid){
     return OGR_L_DeleteFeature(self, fid);
   }
@@ -10120,6 +10123,75 @@ SWIGINTERN PyObject *_wrap_Layer_CreateFeature(PyObject *SWIGUNUSEDPARM(self), P
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
       result = (OGRErr)OGRLayerShadow_CreateFeature(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if ( ReturnSame(resultobj == Py_None || resultobj == 0) ) {
+      resultobj = PyInt_FromLong( result );
+    }
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Layer_UpsertFeature(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
+  OGRFeatureShadow *arg2 = (OGRFeatureShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject *swig_obj[2] ;
+  OGRErr result;
+  
+  if (!SWIG_Python_UnpackTuple(args, "Layer_UpsertFeature", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_UpsertFeature" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
+  res2 = SWIG_ConvertPtr(swig_obj[1], &argp2,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Layer_UpsertFeature" "', argument " "2"" of type '" "OGRFeatureShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< OGRFeatureShadow * >(argp2);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_UpsertFeature(arg1,arg2);
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -31322,6 +31394,8 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"For more details: :cpp:func:`OGR_L_SetFeature`\n"
 		"\n"
+		"To set a feature, but create it if it doesn't exist see :py:meth:`.Layer.UpsertFeature`.\n"
+		"\n"
 		"Parameters\n"
 		"-----------\n"
 		"feature: Feature\n"
@@ -31342,6 +31416,26 @@ static PyMethodDef SwigMethods[] = {
 		"Create and write a new feature within a layer.\n"
 		"\n"
 		"For more details: :cpp:func:`OGR_L_CreateFeature`\n"
+		"\n"
+		"To create a feature, but set it if it exists see :py:meth:`.Layer.UpsertFeature`.\n"
+		"\n"
+		"Parameters\n"
+		"-----------\n"
+		"feature: Feature\n"
+		"    The feature to write to disk.\n"
+		"\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    :py:const:`osgeo.ogr.OGRERR_NONE` on success.\n"
+		"\n"
+		""},
+	 { "Layer_UpsertFeature", _wrap_Layer_UpsertFeature, METH_VARARGS, "\n"
+		"Layer_UpsertFeature(Layer self, Feature feature) -> OGRErr\n"
+		"\n"
+		"Rewrite an existing feature or create a new feature within a layer.\n"
+		"\n"
+		"For more details: :cpp:func:`OGR_L_UpsertFeature`\n"
 		"\n"
 		"Parameters\n"
 		"-----------\n"

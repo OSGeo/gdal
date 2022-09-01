@@ -1156,6 +1156,10 @@ public:
   OGRErr CreateFeature(OGRFeatureShadow *feature) {
     return OGR_L_CreateFeature(self, feature);
   }
+
+  OGRErr UpsertFeature(OGRFeatureShadow *feature) {
+    return OGR_L_UpsertFeature(self, feature);
+  }
 %clear OGRFeatureShadow *feature;
 
   OGRErr DeleteFeature(GIntBig fid) {

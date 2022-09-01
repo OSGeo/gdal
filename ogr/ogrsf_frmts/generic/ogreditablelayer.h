@@ -100,6 +100,7 @@ class CPL_DLL OGREditableLayer : public OGRLayerDecorator
     virtual OGRFeature *GetFeature( GIntBig nFID ) override;
     virtual OGRErr      ISetFeature( OGRFeature *poFeature ) override;
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
+    virtual OGRErr      IUpsertFeature( OGRFeature* poFeature ) override;
     virtual OGRErr      DeleteFeature( GIntBig nFID ) override;
 
     virtual OGRwkbGeometryType GetGeomType() override;

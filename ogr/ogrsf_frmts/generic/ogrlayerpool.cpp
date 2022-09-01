@@ -354,6 +354,16 @@ OGRErr      OGRProxiedLayer::ICreateFeature( OGRFeature *poFeature )
 }
 
 /************************************************************************/
+/*                            IUpsertFeature()                          */
+/************************************************************************/
+
+OGRErr      OGRProxiedLayer::IUpsertFeature( OGRFeature* poFeature )
+{
+   if ( poUnderlyingLayer == nullptr && !OpenUnderlyingLayer() ) return OGRERR_FAILURE;
+   return poUnderlyingLayer->UpsertFeature(poFeature);
+}
+
+/************************************************************************/
 /*                           DeleteFeature()                            */
 /************************************************************************/
 

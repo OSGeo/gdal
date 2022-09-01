@@ -220,7 +220,17 @@ The :decl_configoption:`GDAL_HTTP_PROXY` (for both HTTP and HTTPS protocols), :d
 
 Starting with GDAL 2.1.3, the :decl_configoption:`CURL_CA_BUNDLE` or :decl_configoption:`SSL_CERT_FILE` configuration options can be used to set the path to the Certification Authority (CA) bundle file (if not specified, curl will use a file in a system location).
 
-Starting with GDAL 2.3, additional HTTP headers can be sent by setting the :decl_configoption:`GDAL_HTTP_HEADER_FILE` configuration option to point to a filename of a text file with "key: value" HTTP headers.   :decl_configoption:`CPL_CURL_VERBOSE` set to ``YES`` allows one to see them and more, when combined with ``--debug``.
+Starting with GDAL 2.3, additional HTTP headers can be sent by setting the :decl_configoption:`GDAL_HTTP_HEADER_FILE` configuration option to point to a filename of a text file with "key: value" HTTP headers.
+
+As an alternative, starting with GDAL 3.6, the
+:decl_configoption:`GDAL_HTTP_HEADERS` configuration option can also be
+used to specify a comma separated list of key: value pairs. If a comma or a double-quote
+character is needed in the value, then the key: value pair must be
+enclosed in double-quote characters. In that situation, backslash and double
+quote character must be backslash-escaped.
+e.g GDAL_HTTP_HEADERS=Foo: Bar,"Baz: escaped backslash \\, escaped double-quote \", end of value",Another: Header
+
+:decl_configoption:`CPL_CURL_VERBOSE` set to ``YES`` allows one to see them and more, when combined with ``--debug``.
 
 Starting with GDAL 2.3, the :decl_configoption:`GDAL_HTTP_MAX_RETRY` (number of attempts) and :decl_configoption:`GDAL_HTTP_RETRY_DELAY` (in seconds) configuration option can be set, so that request retries are done in case of HTTP errors 429, 502, 503 or 504.
 
@@ -278,7 +288,7 @@ Several authentication methods are possible, and are attempted in the following 
 2. The :decl_configoption:`AWS_SECRET_ACCESS_KEY` and :decl_configoption:`AWS_ACCESS_KEY_ID` configuration options can be set. The :decl_configoption:`AWS_SESSION_TOKEN` configuration option must be set when temporary credentials are used.
 3. Starting with GDAL 2.3, alternate ways of providing credentials similar to what the "aws" command line utility or Boto3 support can be used. If the above mentioned environment variables are not provided, the ``~/.aws/credentials`` or ``%UserProfile%/.aws/credentials`` file will be read (or the file pointed by :decl_configoption:`CPL_AWS_CREDENTIALS_FILE`). The profile may be specified with the :decl_configoption:`AWS_DEFAULT_PROFILE` environment variable, or starting with GDAL 3.2 with the :decl_configoption:`AWS_PROFILE` environment variable (the default profile is "default").
 4. The ``~/.aws/config`` or ``%UserProfile%/.aws/config`` file may also be used (or the file pointer by :decl_configoption:`AWS_CONFIG_FILE`) to retrieve credentials and the AWS region.
-5. If :decl_configoption:`AWS_ROLE_ARN` and :decl_configoption:`AWS_WEB_IDENTITY_TOKEN_FILE` are defined we will rely on credentials mechanism for web identity token based AWS sts action AssumeRoleWithWebIdentity (See.: https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
+5. Starting with GDAL 3.6, if :decl_configoption:`AWS_ROLE_ARN` and :decl_configoption:`AWS_WEB_IDENTITY_TOKEN_FILE` are defined we will rely on credentials mechanism for web identity token based AWS sts action AssumeRoleWithWebIdentity (See.: https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
 6. If none of the above method succeeds, instance profile credentials will be retrieved when GDAL is used on EC2 instances.
 
 The :decl_configoption:`AWS_REGION` (or :decl_configoption:`AWS_DEFAULT_REGION` starting with GDAL 2.3) configuration option may be set to one of the supported S3 regions and defaults to ``us-east-1``.

@@ -199,6 +199,48 @@ def test_vrtfilt_7():
 
 
 ###############################################################################
+
+
+def test_vrtfilt_invalid_kernel_size():
+
+    vrt_ds = gdal.GetDriverByName("VRT").Create("", 50, 50, 1)
+
+    filterSourceXML = """ <KernelFilteredSource>
+      <SourceFilename>data/rgbsmall.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="50" ySize="50"/>
+      <DstRect xOff="0" yOff="0" xSize="50" ySize="50"/>
+      <Kernel>
+        <Size>-3</Size> <!-- negative value -->
+        <Coefs>0.111111 0.111111 0.111111 0.111111 0.111111 0.111111 0.111111 0.111111 0.111111</Coefs>
+      </Kernel>
+    </KernelFilteredSource>"""
+
+    md = {}
+    md["source_0"] = filterSourceXML
+
+    with gdaltest.error_handler():
+        assert vrt_ds.GetRasterBand(1).SetMetadata(md, "vrt_sources") != gdal.CE_None
+
+    filterSourceXML = """ <KernelFilteredSource>
+      <SourceFilename>data/rgbsmall.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="50" ySize="50"/>
+      <DstRect xOff="0" yOff="0" xSize="50" ySize="50"/>
+      <Kernel>
+        <Size>46341</Size> <!-- value larger than sqrt(INT_MAX) -->
+        <Coefs>0.111111 0.111111 0.111111 0.111111 0.111111 0.111111 0.111111 0.111111 0.111111</Coefs>
+      </Kernel>
+    </KernelFilteredSource>"""
+
+    md = {}
+    md["source_0"] = filterSourceXML
+
+    with gdaltest.error_handler():
+        assert vrt_ds.GetRasterBand(1).SetMetadata(md, "vrt_sources") != gdal.CE_None
+
+
+###############################################################################
 # Cleanup.
 
 

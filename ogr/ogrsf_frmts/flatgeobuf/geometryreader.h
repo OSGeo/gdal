@@ -41,6 +41,8 @@ class GeometryReader {
         const bool m_hasZ;
         const bool m_hasM;
 
+        const double *m_xy = nullptr;
+        uint32_t m_xylength = 0;
         uint32_t m_length = 0;
         uint32_t m_offset = 0;
 

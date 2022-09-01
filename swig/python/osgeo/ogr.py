@@ -1376,6 +1376,8 @@ class Layer(MajorObject):
 
         For more details: :cpp:func:`OGR_L_SetFeature`
 
+        To set a feature, but create it if it doesn't exist see :py:meth:`.Layer.UpsertFeature`.
+
         Parameters
         -----------
         feature: Feature
@@ -1400,6 +1402,8 @@ class Layer(MajorObject):
 
         For more details: :cpp:func:`OGR_L_CreateFeature`
 
+        To create a feature, but set it if it exists see :py:meth:`.Layer.UpsertFeature`.
+
         Parameters
         -----------
         feature: Feature
@@ -1412,6 +1416,27 @@ class Layer(MajorObject):
 
         """
         return _ogr.Layer_CreateFeature(self, *args)
+
+    def UpsertFeature(self, *args) -> "OGRErr":
+        r"""
+        UpsertFeature(Layer self, Feature feature) -> OGRErr
+
+        Rewrite an existing feature or create a new feature within a layer.
+
+        For more details: :cpp:func:`OGR_L_UpsertFeature`
+
+        Parameters
+        -----------
+        feature: Feature
+            The feature to write to disk.
+
+        Returns
+        --------
+        int:
+            :py:const:`osgeo.ogr.OGRERR_NONE` on success.
+
+        """
+        return _ogr.Layer_UpsertFeature(self, *args)
 
     def DeleteFeature(self, *args) -> "OGRErr":
         r"""

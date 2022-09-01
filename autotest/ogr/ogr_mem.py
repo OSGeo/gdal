@@ -935,3 +935,40 @@ def test_ogr_mem_arrow_stream_pyarrow():
     assert len(batches) == 1
     arrays = batches[0].flatten()
     assert len(arrays) == 2
+
+
+###############################################################################
+# Test upserting a feature.
+
+
+def test_ogr_mem_upsert_feature():
+    # Create a memory layer
+    lyr = gdaltest.mem_ds.CreateLayer("upsert_feature")
+
+    # Add a string field
+    lyr.CreateField(ogr.FieldDefn("test", ogr.OFTString))
+
+    # Create a feature with some data
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("test", "original")
+    assert lyr.CreateFeature(f) == 0
+    assert f.GetFID() == 0
+
+    # Upsert an existing feature
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(0)
+    f.SetField("test", "updated")
+    assert lyr.UpsertFeature(f) == 0
+
+    # Verify that we have set an existing feature
+    f = lyr.GetFeature(0)
+    assert f is not None
+    assert f.GetField("test") == "updated"
+
+    # Upsert a new feature
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(1)
+    assert lyr.UpsertFeature(f) == 0
+
+    # Verify that we have created a feature
+    assert lyr.GetFeature(1) is not None

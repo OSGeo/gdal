@@ -254,6 +254,9 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
     json_object *poJsonObject = nullptr;
     json_object *poBands = nullptr;
     json_object *poMetadata = nullptr;
+    json_object *poStac = nullptr;
+    json_object *poStacRasterBands = nullptr;
+    json_object *poStacEOBands = nullptr;
 
     const bool bJson = psOptions->eFormat == GDALINFO_FORMAT_JSON;
 
@@ -272,6 +275,9 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
         poJsonObject = json_object_new_object();
         poBands = json_object_new_array();
         poMetadata = json_object_new_object();
+        poStac = json_object_new_object();
+        poStacRasterBands = json_object_new_array();
+        poStacEOBands = json_object_new_array();
 
         json_object_object_add(poJsonObject, "description", poDescription);
         json_object_object_add(poJsonObject, "driverShortName",
@@ -344,7 +350,11 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
 
         json_object_array_add(poSize, poSizeX);
         json_object_array_add(poSize, poSizeY);
+
+        json_object *poStacSize = nullptr;
+        json_object_deep_copy(poSize, &poStacSize, nullptr);
         json_object_object_add(poJsonObject, "size", poSize);
+        json_object_object_add(poStac, "proj:shape", poStacSize);
     }
     else
     {
@@ -382,7 +392,30 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
         if( bJson )
         {
             json_object *poWkt = json_object_new_string(pszPrettyWkt);
+            if (strcmp(psOptions->pszWKTFormat, "WKT2") == 0)
+            {
+                json_object *poStacWkt = nullptr;
+                json_object_deep_copy(poWkt, &poStacWkt, nullptr);
+                json_object_object_add(poStac, "proj:wkt2", poStacWkt);
+            }
             json_object_object_add(poCoordinateSystem, "wkt", poWkt);
+
+            const char *pszAuthCode = OSRGetAuthorityCode(hSRS, nullptr);
+            const char *pszAuthName = OSRGetAuthorityName(hSRS, nullptr);
+            if (pszAuthCode && pszAuthName && EQUAL(pszAuthName, "EPSG"))
+            {
+                json_object *poEPSG = json_object_new_int64(atoi(pszAuthCode));
+                json_object_object_add(poStac, "proj:epsg", poEPSG);
+            }
+            char * pszProjJson = nullptr;
+            CPLPushErrorHandler(CPLQuietErrorHandler); // PROJJSON requires PROJ >= 6.2
+            OGRErr result = OSRExportToPROJJSON(hSRS, &pszProjJson, nullptr);
+            CPLPopErrorHandler();
+            if (result == OGRERR_NONE) {
+                json_object *poStacProjJson = json_tokener_parse(pszProjJson);
+                json_object_object_add(poStac, "proj:projjson", poStacProjJson);
+                CPLFree(pszProjJson);
+            }
 
             json_object* poAxisMapping = json_object_new_array();
             for( int i = 0; i < nAxesCount; i++ )
@@ -462,18 +495,28 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
         if( bJson )
         {
             json_object *poGeoTransform = json_object_new_array();
+            // Deep copy wasn't working on the array, for some reason, so we
+            // build the geotransform STAC array at the same time.
+            json_object *poStacGeoTransform = json_object_new_array();
 
             for( int i = 0; i < 6; i++ )
             {
                 json_object *poGeoTransformCoefficient =
                     json_object_new_double_with_precision(adfGeoTransform[i],
                                                           16);
+                json_object *poStacGeoTransformCoefficient =
+                    json_object_new_double_with_precision(adfGeoTransform[i],
+                                                          16);
+
                 json_object_array_add(poGeoTransform,
                                       poGeoTransformCoefficient);
+                json_object_array_add(poStacGeoTransform,
+                                      poStacGeoTransformCoefficient);
             }
 
             json_object_object_add(poJsonObject, "geoTransform",
                                    poGeoTransform);
+            json_object_object_add(poStac, "proj:transform", poStacGeoTransform);
         }
         else
         {
@@ -621,6 +664,15 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
             json_object_object_add( poJsonObject, "metadata", poMetadata );
         else
             json_object_put(poMetadata);
+
+        // Include eo:cloud_cover in stac output
+        const char* pszCloudCover = GDALGetMetadataItem(hDataset, "CLOUDCOVER", "IMAGERY");
+        json_object * poValue = nullptr;
+        if( pszCloudCover )
+        {
+            poValue = json_object_new_int(atoi(pszCloudCover));
+            json_object_object_add(poStac, "eo:cloud_cover", poValue);
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -757,11 +809,15 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
     {
         json_object *poBand = nullptr;
         json_object *poBandMetadata = nullptr;
+        json_object *poStacRasterBand = nullptr;
+        json_object *poStacEOBand = nullptr;
 
         if( bJson )
         {
             poBand = json_object_new_object();
             poBandMetadata = json_object_new_object();
+            poStacRasterBand = json_object_new_object();
+            poStacEOBand = json_object_new_object();
         }
 
         GDALRasterBandH const hBand = GDALGetRasterBand( hDataset, iBand+1 );
@@ -800,6 +856,55 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
             json_object_object_add(poBand, "type", poType);
             json_object_object_add(poBand, "colorInterpretation",
                                    poColorInterp);
+
+            const char *stacDataType = nullptr;
+            switch (eDT)
+            {
+            case GDT_Byte:
+                stacDataType = "uint8";
+                break;
+            case GDT_UInt16:
+                stacDataType = "uint16";
+                break;
+            case GDT_Int16:
+                stacDataType = "int16";
+                break;
+            case GDT_UInt32:
+                stacDataType = "uint32";
+                break;
+            case GDT_Int32:
+                stacDataType = "int32";
+                break;
+            case GDT_UInt64:
+                stacDataType = "uint64";
+                break;
+            case GDT_Int64:
+                stacDataType = "int64";
+                break;
+            case GDT_Float32:
+                stacDataType = "float32";
+                break;
+            case GDT_Float64:
+                stacDataType = "float64";
+                break;
+            case GDT_CInt16:
+                stacDataType = "cint16";
+                break;
+            case GDT_CInt32:
+                stacDataType = "cint32";
+                break;
+            case GDT_CFloat32:
+                stacDataType = "cfloat32";
+                break;
+            case GDT_CFloat64:
+                stacDataType = "cfloat64";
+                break;
+            case GDT_Unknown:
+            case GDT_TypeCount:
+                stacDataType = nullptr;
+            }
+            if (stacDataType)
+                json_object_object_add(poStacRasterBand, "data_type", json_object_new_string(stacDataType));
         }
         else
         {
@@ -822,6 +927,10 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
                     json_object_new_string(GDALGetDescription(hBand));
                 json_object_object_add(poBand, "description",
                                        poBandDescription);
+
+                json_object *poStacBandDescription =
+                    json_object_new_string(GDALGetDescription(hBand));
+                json_object_object_add(poStacEOBand, "description", poStacBandDescription);
             }
             else
             {
@@ -913,21 +1022,36 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
         {
             if( bJson )
             {
+                json_object *poStacStats = json_object_new_object();
                 json_object *poMinimum =
                     gdal_json_object_new_double_or_str_for_non_finite(dfMinStat, 3);
                 json_object_object_add(poBand, "minimum", poMinimum);
+                json_object *poStacMinimum =
+                    gdal_json_object_new_double_or_str_for_non_finite(dfMinStat, 3);
+                json_object_object_add(poStacStats, "minimum", poStacMinimum);
 
                 json_object *poMaximum =
                     gdal_json_object_new_double_or_str_for_non_finite(dfMaxStat, 3);
                 json_object_object_add(poBand, "maximum", poMaximum);
+                json_object *poStacMaximum =
+                    gdal_json_object_new_double_or_str_for_non_finite(dfMaxStat, 3);
+                json_object_object_add(poStacStats, "maximum", poStacMaximum);
 
                 json_object *poMean =
                     gdal_json_object_new_double_or_str_for_non_finite(dfMean, 3);
                 json_object_object_add(poBand, "mean", poMean);
+                json_object *poStacMean =
+                    gdal_json_object_new_double_or_str_for_non_finite(dfMean, 3);
+                json_object_object_add(poStacStats, "mean", poStacMean);
 
                 json_object *poStdDev =
                     gdal_json_object_new_double_or_str_for_non_finite(dfStdDev, 3);
                 json_object_object_add(poBand, "stdDev", poStdDev);
+                json_object *poStacStdDev =
+                    gdal_json_object_new_double_or_str_for_non_finite(dfStdDev, 3);
+                json_object_object_add(poStacStats, "stddev", poStacStdDev);
+
+                json_object_object_add(poStacRasterBand, "stats", poStacStats);
             }
             else
             {
@@ -991,7 +1115,10 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
                 if( bJson )
                 {
                     json_object_object_add(poHistogram, "buckets", poBuckets);
+                    json_object *poStacHistogram = nullptr;
+                    json_object_deep_copy(poHistogram, &poStacHistogram, nullptr);
                     json_object_object_add(poBand, "histogram", poHistogram);
+                    json_object_object_add(poStacRasterBand, "histogram", poStacHistogram);
                 }
                 else
                 {
@@ -1028,6 +1155,9 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
                 if( bJson )
                 {
                     json_object *poNoDataValue = json_object_new_int64(nNoData);
+                    json_object *poStacNoDataValue = nullptr;
+                    json_object_deep_copy(poNoDataValue, &poStacNoDataValue, nullptr);
+                    json_object_object_add(poStacRasterBand, "nodata", poStacNoDataValue);
                     json_object_object_add(poBand, "noDataValue",
                                            poNoDataValue);
                 }
@@ -1050,6 +1180,9 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
                     {
                         json_object *poNoDataValue = json_object_new_int64(
                                                     static_cast<int64_t>(nNoData));
+                        json_object *poStacNoDataValue = nullptr;
+                        json_object_deep_copy(poNoDataValue, &poStacNoDataValue, nullptr);
+                        json_object_object_add(poStacRasterBand, "nodata", poStacNoDataValue);
                         json_object_object_add(poBand, "noDataValue",
                                                poNoDataValue);
                     }
@@ -1108,6 +1241,9 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
                 {
                     json_object *poNoDataValue = gdal_json_object_new_double_significant_digits(
                         dfNoData, nSignificantDigits);
+                    json_object *poStacNoDataValue = nullptr;
+                    json_object_deep_copy(poNoDataValue, &poStacNoDataValue, nullptr);
+                    json_object_object_add(poStacRasterBand, "nodata", poStacNoDataValue);
                     json_object_object_add(poBand, "noDataValue",
                                             poNoDataValue);
                 }
@@ -1364,6 +1500,9 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
             {
                 json_object *poUnit =
                     json_object_new_string(GDALGetRasterUnitType(hBand));
+                json_object *poStacUnit = nullptr;
+                json_object_deep_copy(poUnit, &poStacUnit, nullptr);
+                json_object_object_add(poStacRasterBand, "unit", poStacUnit);
                 json_object_object_add(poBand, "unit", poUnit);
             }
             else
@@ -1409,6 +1548,12 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
                     GDALGetRasterOffset(hBand, &bSuccess), 15);
                 json_object *poScale = json_object_new_double_with_precision(
                     GDALGetRasterScale(hBand, &bSuccess), 15);
+                json_object *poStacScale = nullptr;
+                json_object *poStacOffset = nullptr;
+                json_object_deep_copy(poScale, &poStacScale, nullptr);
+                json_object_deep_copy(poOffset, &poStacOffset, nullptr);
+                json_object_object_add(poStacRasterBand, "scale", poStacScale);
+                json_object_object_add(poStacRasterBand, "offset", poStacOffset);
                 json_object_object_add(poBand, "offset", poOffset);
                 json_object_object_add(poBand, "scale", poScale);
             }
@@ -1519,12 +1664,19 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
             }
         }
         if(bJson)
+        {
             json_object_array_add(poBands, poBand);
+            json_object_array_add(poStacRasterBands, poStacRasterBand);
+            json_object_array_add(poStacEOBands, poStacEOBand);
+        }
     }
 
     if(bJson)
     {
         json_object_object_add(poJsonObject, "bands", poBands);
+        json_object_object_add(poStac, "raster:bands", poStacRasterBands);
+        json_object_object_add(poStac, "eo:bands", poStacEOBands);
+        json_object_object_add(poJsonObject, "stac", poStac);
         Concat(osStr, psOptions->bStdoutOutput, "%s",
                json_object_to_json_string_ext(poJsonObject,
                                               JSON_C_TO_STRING_PRETTY

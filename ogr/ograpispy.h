@@ -114,6 +114,7 @@ void OGRAPISpy_L_SetNextByIndex( OGRLayerH hLayer, GIntBig nIndex );
 void OGRAPISpy_L_GetNextFeature( OGRLayerH hLayer );
 void OGRAPISpy_L_SetFeature( OGRLayerH hLayer, OGRFeatureH hFeat );
 void OGRAPISpy_L_CreateFeature( OGRLayerH hLayer, OGRFeatureH hFeat );
+void OGRAPISpy_L_UpsertFeature( OGRLayerH hLayer, OGRFeatureH hFeat );
 void OGRAPISpy_L_CreateField( OGRLayerH hLayer, OGRFieldDefnH hField,
                               int bApproxOK );
 void OGRAPISpy_L_DeleteField( OGRLayerH hLayer, int iField );

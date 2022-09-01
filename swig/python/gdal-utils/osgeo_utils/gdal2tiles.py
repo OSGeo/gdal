@@ -1793,7 +1793,7 @@ def optparse_init() -> optparse.OptionParser:
         "-g",
         "--googlekey",
         dest="googlekey",
-        help="Google Maps API key from http://code.google.com/apis/maps/signup.html",
+        help="Google Maps API key from https://developers.google.com/maps/faq?csw=1#using-google-maps-apis",
     )
     g.add_option(
         "-b",
@@ -2965,7 +2965,14 @@ class GDAL2Tiles(object):
         args["xml_escaped_title"] = gdal.EscapeString(
             self.options.title, gdal.CPLES_XML
         )
-        args["googlemapskey"] = self.options.googlekey
+        args["googlemapsurl"] = "https://maps.googleapis.com/maps/api/js"
+        if self.options.googlekey != "INSERT_YOUR_KEY_HERE":
+            args["googlemapsurl"] += "?key=" + self.options.googlekey
+            args["googlemapsurl_hint"] = ""
+        else:
+            args[
+                "googlemapsurl_hint"
+            ] = "<!-- Replace URL below with https://maps.googleapis.com/maps/api/js?key=INSERT_YOUR_KEY_HERE -->"
         args["south"], args["west"], args["north"], args["east"] = self.swne
         args["minzoom"] = self.tminz
         args["maxzoom"] = self.tmaxz
@@ -2973,6 +2980,518 @@ class GDAL2Tiles(object):
         args["tileformat"] = self.tileext
         args["publishurl"] = self.options.url
         args["copyright"] = self.options.copyright
+
+        # Logic below inspired from https://www.gavinharriss.com/code/opacity-control
+        # which borrowed on gdal2tiles itself to migrate from Google Maps V2 to V3
+
+        args[
+            "custom_tile_overlay_js"
+        ] = """
+// Beginning of https://github.com/gavinharriss/google-maps-v3-opacity-control/blob/master/CustomTileOverlay.js
+// with CustomTileOverlay.prototype.getTileUrl() method customized for gdal2tiles needs.
+
+/*******************************************************************************
+Copyright (c) 2010-2012. Gavin Harriss
+Site: http://www.gavinharriss.com/
+Originally developed for: http://www.topomap.co.nz/
+Licences: Creative Commons Attribution 3.0 New Zealand License
+http://creativecommons.org/licenses/by/3.0/nz/
+******************************************************************************/
+
+CustomTileOverlay = function (map, opacity) {
+    this.tileSize = new google.maps.Size(256, 256); // Change to tile size being used
+
+    this.map = map;
+    this.opacity = opacity;
+    this.tiles = [];
+
+    this.visible = false;
+    this.initialized = false;
+
+    this.self = this;
+}
+
+CustomTileOverlay.prototype = new google.maps.OverlayView();
+
+CustomTileOverlay.prototype.getTile = function (p, z, ownerDocument) {
+    // If tile already exists then use it
+    for (var n = 0; n < this.tiles.length; n++) {
+        if (this.tiles[n].id == 't_' + p.x + '_' + p.y + '_' + z) {
+            return this.tiles[n];
+        }
+    }
+
+    // If tile doesn't exist then create it
+    var tile = ownerDocument.createElement('div');
+    var tp = this.getTileUrlCoord(p, z);
+    tile.id = 't_' + tp.x + '_' + tp.y + '_' + z
+    tile.style.width = this.tileSize.width + 'px';
+    tile.style.height = this.tileSize.height + 'px';
+    tile.style.backgroundImage = 'url(' + this.getTileUrl(tp, z) + ')';
+    tile.style.backgroundRepeat = 'no-repeat';
+
+    if (!this.visible) {
+        tile.style.display = 'none';
+    }
+
+    this.tiles.push(tile)
+
+    this.setObjectOpacity(tile);
+
+    return tile;
+}
+
+// Save memory / speed up the display by deleting tiles out of view
+// Essential for use on iOS devices such as iPhone and iPod!
+CustomTileOverlay.prototype.deleteHiddenTiles = function (zoom) {
+    var bounds = this.map.getBounds();
+    var tileNE = this.getTileUrlCoordFromLatLng(bounds.getNorthEast(), zoom);
+    var tileSW = this.getTileUrlCoordFromLatLng(bounds.getSouthWest(), zoom);
+
+    var minX = tileSW.x - 1;
+    var maxX = tileNE.x + 1;
+    var minY = tileSW.y - 1;
+    var maxY = tileNE.y + 1;
+
+    var tilesToKeep = [];
+    var tilesLength = this.tiles.length;
+    for (var i = 0; i < tilesLength; i++) {
+        var idParts = this.tiles[i].id.split("_");
+        var tileX = Number(idParts[1]);
+        var tileY = Number(idParts[2]);
+        var tileZ = Number(idParts[3]);
+        if ((
+                (minX < maxX && (tileX >= minX && tileX <= maxX))
+                || (minX > maxX && ((tileX >= minX && tileX <= (Math.pow(2, zoom) - 1)) || (tileX >= 0 && tileX <= maxX))) // Lapped the earth!
+            )
+            && (tileY >= minY && tileY <= maxY)
+            && tileZ == zoom) {
+            tilesToKeep.push(this.tiles[i]);
+        }
+        else {
+            delete this.tiles[i];
+        }
+    }
+
+    this.tiles = tilesToKeep;
+};
+
+CustomTileOverlay.prototype.pointToTile = function (point, z) {
+    var projection = this.map.getProjection();
+    var worldCoordinate = projection.fromLatLngToPoint(point);
+    var pixelCoordinate = new google.maps.Point(worldCoordinate.x * Math.pow(2, z), worldCoordinate.y * Math.pow(2, z));
+    var tileCoordinate = new google.maps.Point(Math.floor(pixelCoordinate.x / this.tileSize.width), Math.floor(pixelCoordinate.y / this.tileSize.height));
+    return tileCoordinate;
+}
+
+CustomTileOverlay.prototype.getTileUrlCoordFromLatLng = function (latlng, zoom) {
+    return this.getTileUrlCoord(this.pointToTile(latlng, zoom), zoom)
+}
+
+CustomTileOverlay.prototype.getTileUrlCoord = function (coord, zoom) {
+    var tileRange = 1 << zoom;
+    var y = tileRange - coord.y - 1;
+    var x = coord.x;
+    if (x < 0 || x >= tileRange) {
+        x = (x % tileRange + tileRange) % tileRange;
+    }
+    return new google.maps.Point(x, y);
+}
+
+// Modified for gdal2tiles needs
+CustomTileOverlay.prototype.getTileUrl = function (tile, zoom) {
+
+      if ((zoom < mapMinZoom) || (zoom > mapMaxZoom)) {
+          return "https://gdal.org/resources/gdal2tiles/none.png";
+      }
+      var ymax = 1 << zoom;
+      var y = ymax - tile.y -1;
+      var tileBounds = new google.maps.LatLngBounds(
+          fromMercatorPixelToLatLng( new google.maps.Point( (tile.x)*256, (y+1)*256 ) , zoom ),
+          fromMercatorPixelToLatLng( new google.maps.Point( (tile.x+1)*256, (y)*256 ) , zoom )
+      );
+      if (mapBounds.intersects(tileBounds)) {
+          return zoom+"/"+tile.x+"/"+tile.y+".png";
+      } else {
+          return "https://gdal.org/resources/gdal2tiles/none.png";
+      }
+
+}
+
+CustomTileOverlay.prototype.initialize = function () {
+    if (this.initialized) {
+        return;
+    }
+    var self = this.self;
+    this.map.overlayMapTypes.insertAt(0, self);
+    this.initialized = true;
+}
+
+CustomTileOverlay.prototype.hide = function () {
+    this.visible = false;
+
+    var tileCount = this.tiles.length;
+    for (var n = 0; n < tileCount; n++) {
+        this.tiles[n].style.display = 'none';
+    }
+}
+
+CustomTileOverlay.prototype.show = function () {
+    this.initialize();
+    this.visible = true;
+    var tileCount = this.tiles.length;
+    for (var n = 0; n < tileCount; n++) {
+        this.tiles[n].style.display = '';
+    }
+}
+
+CustomTileOverlay.prototype.releaseTile = function (tile) {
+    tile = null;
+}
+
+CustomTileOverlay.prototype.setOpacity = function (op) {
+    this.opacity = op;
+
+    var tileCount = this.tiles.length;
+    for (var n = 0; n < tileCount; n++) {
+        this.setObjectOpacity(this.tiles[n]);
+    }
+}
+
+CustomTileOverlay.prototype.setObjectOpacity = function (obj) {
+    if (this.opacity > 0) {
+        if (typeof (obj.style.filter) == 'string') { obj.style.filter = 'alpha(opacity:' + this.opacity + ')'; }
+        if (typeof (obj.style.KHTMLOpacity) == 'string') { obj.style.KHTMLOpacity = this.opacity / 100; }
+        if (typeof (obj.style.MozOpacity) == 'string') { obj.style.MozOpacity = this.opacity / 100; }
+        if (typeof (obj.style.opacity) == 'string') { obj.style.opacity = this.opacity / 100; }
+    }
+}
+
+// End of https://github.com/gavinharriss/google-maps-v3-opacity-control/blob/master/CustomTileOverlay.js
+"""
+
+        args[
+            "ext_draggable_object_js"
+        ] = """
+// Beginning of https://github.com/gavinharriss/google-maps-v3-opacity-control/blob/master/ExtDraggableObject.js
+
+/**
+ * @name ExtDraggableObject
+ * @version 1.0
+ * @author Gabriel Schneider
+ * @copyright (c) 2009 Gabriel Schneider
+ * @fileoverview This sets up a given DOM element to be draggable
+ *     around the page.
+ */
+
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * Sets up a DOM element to be draggable. The options available
+ *     within {@link ExtDraggableObjectOptions} are: top, left, container,
+ *     draggingCursor, draggableCursor, intervalX, intervalY,
+ *     toleranceX, toleranceY, restrictX, and restrictY.
+ * @param {HTMLElement} src The element to make draggable
+ * @param {ExtDraggableObjectOptions} [opts] options
+ * @constructor
+ */
+function ExtDraggableObject(src, opt_drag) {
+  var me = this;
+  var event_ = (window["GEvent"]||google.maps.Event||google.maps.event);
+  var opt_drag_=opt_drag||{};
+  var draggingCursor_ = opt_drag_.draggingCursor||"default";
+  var draggableCursor_ = opt_drag_.draggableCursor||"default";
+  var moving_ = false, preventDefault_;
+  var currentX_, currentY_, formerY_, formerX_, formerMouseX_, formerMouseY_;
+  var top_, left_;
+  var mouseDownEvent_, mouseUpEvent_, mouseMoveEvent_;
+  var originalX_, originalY_;
+  var halfIntervalX_ = Math.round(opt_drag_.intervalX/2);
+  var halfIntervalY_ = Math.round(opt_drag_.intervalY/2);
+  var target_ = src.setCapture?src:document;
+
+  if (typeof opt_drag_.intervalX !== "number") {
+    opt_drag_.intervalX = 1;
+  }
+  if (typeof opt_drag_.intervalY !== "number") {
+    opt_drag_.intervalY = 1;
+  }
+  if (typeof opt_drag_.toleranceX !== "number") {
+    opt_drag_.toleranceX = Infinity;
+  }
+  if (typeof opt_drag_.toleranceY !== "number") {
+    opt_drag_.toleranceY = Infinity;
+  }
+
+  mouseDownEvent_ = event_.addDomListener(src, "mousedown", mouseDown_);
+  mouseUpEvent_ = event_.addDomListener(target_, "mouseup", mouseUp_);
+
+  setCursor_(false);
+  if (opt_drag_.container) {
+
+  }
+  src.style.position = "absolute";
+  opt_drag_.left = opt_drag_.left||src.offsetLeft;
+  opt_drag_.top = opt_drag_.top||src.offsetTop;
+  opt_drag_.interval = opt_drag_.interval||1;
+  moveTo_(opt_drag_.left, opt_drag_.top, false);
+
+  /**
+   * Set the cursor for {@link src} based on whether or not
+   *     the element is currently being dragged.
+   * @param {Boolean} a Is the element being dragged?
+   * @private
+   */
+  function setCursor_(a) {
+    if(a) {
+      src.style.cursor = draggingCursor_;
+    } else {
+      src.style.cursor = draggableCursor_;
+    }
+  }
+
+  /**
+   * Moves the element {@link src} to the given
+   *     location.
+   * @param {Number} x The left position to move to.
+   * @param {Number} y The top position to move to.
+   * @param {Boolean} prevent Prevent moving?
+   * @private
+   */
+  function moveTo_(x, y, prevent) {
+    var roundedIntervalX_, roundedIntervalY_;
+    left_ = Math.round(x);
+    top_ = Math.round(y);
+    if (opt_drag_.intervalX>1) {
+      roundedIntervalX_ = Math.round(left_%opt_drag_.intervalX);
+      left_ = (roundedIntervalX_<halfIntervalX_)?(left_-roundedIntervalX_):(left_+(opt_drag_.intervalX-roundedIntervalX_));
+    }
+    if (opt_drag_.intervalY>1) {
+      roundedIntervalY_ = Math.round(top_%opt_drag_.intervalY);
+      top_ = (roundedIntervalY_<halfIntervalY_)?(top_-roundedIntervalY_):(top_+(opt_drag_.intervalY-roundedIntervalY_));
+    }
+    if (opt_drag_.container&&opt_drag_.container.offsetWidth) {
+      left_ = Math.max(0,Math.min(left_,opt_drag_.container.offsetWidth-src.offsetWidth));
+      top_ = Math.max(0,Math.min(top_,opt_drag_.container.offsetHeight-src.offsetHeight));
+    }
+    if (typeof currentX_ === "number") {
+      if (((left_-currentX_)>opt_drag_.toleranceX||(currentX_-(left_+src.offsetWidth))>opt_drag_.toleranceX)||((top_-currentY_)>opt_drag_.toleranceY||(currentY_-(top_+src.offsetHeight))>opt_drag_.toleranceY)) {
+        left_ = originalX_;
+        top_ = originalY_;
+      }
+    }
+    if(!opt_drag_.restrictX&&!prevent) {
+      src.style.left = left_ + "px";
+    }
+    if(!opt_drag_.restrictY&&!prevent) {
+      src.style.top = top_ + "px";
+    }
+  }
+
+  /**
+   * Handles the mousemove event.
+   * @param {event} ev The event data sent by the browser.
+   * @private
+   */
+  function mouseMove_(ev) {
+    var e=ev||event;
+    currentX_ = formerX_+((e.pageX||(e.clientX+document.body.scrollLeft+document.documentElement.scrollLeft))-formerMouseX_);
+    currentY_ = formerY_+((e.pageY||(e.clientY+document.body.scrollTop+document.documentElement.scrollTop))-formerMouseY_);
+    formerX_ = currentX_;
+    formerY_ = currentY_;
+    formerMouseX_ = e.pageX||(e.clientX+document.body.scrollLeft+document.documentElement.scrollLeft);
+    formerMouseY_ = e.pageY||(e.clientY+document.body.scrollTop+document.documentElement.scrollTop);
+    if (moving_) {
+      moveTo_(currentX_,currentY_, preventDefault_);
+      event_.trigger(me, "drag", {mouseX: formerMouseX_, mouseY: formerMouseY_, startLeft: originalX_, startTop: originalY_, event:e});
+    }
+  }
+
+  /**
+   * Handles the mousedown event.
+   * @param {event} ev The event data sent by the browser.
+   * @private
+   */
+  function mouseDown_(ev) {
+    var e=ev||event;
+    setCursor_(true);
+    event_.trigger(me, "mousedown", e);
+    if (src.style.position !== "absolute") {
+      src.style.position = "absolute";
+      return;
+    }
+    formerMouseX_ = e.pageX||(e.clientX+document.body.scrollLeft+document.documentElement.scrollLeft);
+    formerMouseY_ = e.pageY||(e.clientY+document.body.scrollTop+document.documentElement.scrollTop);
+    originalX_ = src.offsetLeft;
+    originalY_ = src.offsetTop;
+    formerX_ = originalX_;
+    formerY_ = originalY_;
+    mouseMoveEvent_ = event_.addDomListener(target_, "mousemove", mouseMove_);
+    if (src.setCapture) {
+      src.setCapture();
+    }
+    if (e.preventDefault) {
+      e.preventDefault();
+      e.stopPropagation();
+    } else {
+      e.cancelBubble=true;
+      e.returnValue=false;
+    }
+    moving_ = true;
+    event_.trigger(me, "dragstart", {mouseX: formerMouseX_, mouseY: formerMouseY_, startLeft: originalX_, startTop: originalY_, event:e});
+  }
+
+  /**
+   * Handles the mouseup event.
+   * @param {event} ev The event data sent by the browser.
+   * @private
+   */
+  function mouseUp_(ev) {
+    var e=ev||event;
+    if (moving_) {
+      setCursor_(false);
+      event_.removeListener(mouseMoveEvent_);
+      if (src.releaseCapture) {
+        src.releaseCapture();
+      }
+      moving_ = false;
+      event_.trigger(me, "dragend", {mouseX: formerMouseX_, mouseY: formerMouseY_, startLeft: originalX_, startTop: originalY_, event:e});
+    }
+    currentX_ = currentY_ = null;
+    event_.trigger(me, "mouseup", e);
+  }
+
+  /**
+   * Move the element {@link src} to the given location.
+   * @param {Point} point An object with an x and y property
+   *     that represents the location to move to.
+   */
+  me.moveTo = function(point) {
+    moveTo_(point.x, point.y, false);
+  };
+
+  /**
+   * Move the element {@link src} by the given amount.
+   * @param {Size} size An object with an x and y property
+   *     that represents distance to move the element.
+   */
+  me.moveBy = function(size) {
+    moveTo_(src.offsetLeft + size.width, src.offsetHeight + size.height, false);
+  }
+
+  /**
+   * Sets the cursor for the dragging state.
+   * @param {String} cursor The name of the cursor to use.
+   */
+  me.setDraggingCursor = function(cursor) {
+    draggingCursor_ = cursor;
+    setCursor_(moving_);
+  };
+
+  /**
+   * Sets the cursor for the draggable state.
+   * @param {String} cursor The name of the cursor to use.
+   */
+  me.setDraggableCursor = function(cursor) {
+    draggableCursor_ = cursor;
+    setCursor_(moving_);
+  };
+
+  /**
+   * Returns the current left location.
+   * @return {Number}
+   */
+  me.left = function() {
+    return left_;
+  };
+
+  /**
+   * Returns the current top location.
+   * @return {Number}
+   */
+  me.top = function() {
+    return top_;
+  };
+
+  /**
+   * Returns the number of intervals the element has moved
+   *     along the X axis. Useful for scrollbar type
+   *     applications.
+   * @return {Number}
+   */
+  me.valueX = function() {
+    var i = opt_drag_.intervalX||1;
+    return Math.round(left_ / i);
+  };
+
+  /**
+   * Returns the number of intervals the element has moved
+   *     along the Y axis. Useful for scrollbar type
+   *     applications.
+   * @return {Number}
+   */
+  me.valueY = function() {
+    var i = opt_drag_.intervalY||1;
+    return Math.round(top_ / i);
+  };
+
+  /**
+   * Sets the left position of the draggable object based on
+   *     intervalX.
+   * @param {Number} value The location to move to.
+   */
+  me.setValueX = function(value) {
+    moveTo_(value * opt_drag_.intervalX, top_, false);
+  };
+
+  /**
+   * Sets the top position of the draggable object based on
+   *     intervalY.
+   * @param {Number} value The location to move to.
+   */
+  me.setValueY = function(value) {
+    moveTo_(left_, value * opt_drag_.intervalY, false);
+  };
+
+  /**
+   * Prevents the default movement behavior of the object.
+   *     The object can still be moved by other methods.
+   */
+  me.preventDefaultMovement = function(prevent) {
+    preventDefault_ = prevent;
+  };
+}
+  /**
+   * @name ExtDraggableObjectOptions
+   * @class This class represents the optional parameter passed into constructor of
+   * <code>ExtDraggableObject</code>.
+   * @property {Number} [top] Top pixel
+   * @property {Number} [left] Left pixel
+   * @property {HTMLElement} [container] HTMLElement as container.
+   * @property {String} [draggingCursor] Dragging Cursor
+   * @property {String} [draggableCursor] Draggable Cursor
+   * @property {Number} [intervalX] Interval in X direction
+   * @property {Number} [intervalY] Interval in Y direction
+   * @property {Number} [toleranceX] Tolerance X in pixel
+   * @property {Number} [toleranceY] Tolerance Y in pixel
+   * @property {Boolean} [restrictX] Whether to restrict move in X direction
+   * @property {Boolean} [restrictY] Whether to restrict move in Y direction
+   */
+
+ // End of https://github.com/gavinharriss/google-maps-v3-opacity-control/blob/master/ExtDraggableObject.js
+"""
 
         s = (
             r"""<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -2989,122 +3508,25 @@ class GDAL2Tiles(object):
               #subheader { height: 12px; text-align: right; font-size: 10px; color: #555;}
               #map { height: 95%%; border: 1px solid #888; }
           </style>
-          <script src='http://maps.google.com/maps?file=api&amp;v=2&amp;key=%(googlemapskey)s'></script>
+          %(googlemapsurl_hint)s
+          <script src='%(googlemapsurl)s'></script>
           <script>
           //<![CDATA[
 
-          /*
+                /*
                  * Constants for given map
                  * TODO: read it from tilemapresource.xml
                  */
 
-                var mapBounds = new GLatLngBounds(new GLatLng(%(south)s, %(west)s), new GLatLng(%(north)s, %(east)s));
+                var mapBounds = new google.maps.LatLngBounds(
+                    new google.maps.LatLng(%(south)s, %(west)s),
+                    new google.maps.LatLng(%(north)s, %(east)s));
                 var mapMinZoom = %(minzoom)s;
                 var mapMaxZoom = %(maxzoom)s;
 
-                var opacity = 0.75;
+
+                var initialOpacity = 0.75 * 100;
                 var map;
-                var hybridOverlay;
-
-                /*
-                 * Create a Custom Opacity GControl
-                 */
-
-                var CTransparencyLENGTH = 58;
-                // maximum width that the knob can move (slide width minus knob width)
-
-                function CTransparencyControl( overlay ) {
-                    this.overlay = overlay;
-                    this.opacity = overlay.getTileLayer().getOpacity();
-                }
-                CTransparencyControl.prototype = new GControl();
-
-                // This function positions the slider to match the specified opacity
-                CTransparencyControl.prototype.setSlider = function(pos) {
-                    var left = Math.round((CTransparencyLENGTH*pos));
-                    this.slide.left = left;
-                    this.knob.style.left = left+"px";
-                    this.knob.style.top = "0px";
-                }
-
-                // This function reads the slider and sets the overlay opacity level
-                CTransparencyControl.prototype.setOpacity = function() {
-                    // set the global variable
-                    opacity = this.slide.left/CTransparencyLENGTH;
-                    this.map.clearOverlays();
-                    this.map.addOverlay(this.overlay, { zPriority: 0 });
-                    if (this.map.getCurrentMapType() == G_HYBRID_MAP) {
-                        this.map.addOverlay(hybridOverlay);
-                    }
-                }
-
-                // This gets called by the API when addControl(new CTransparencyControl())
-                CTransparencyControl.prototype.initialize = function(map) {
-                    var that=this;
-                    this.map = map;
-
-                    // Is this MSIE, if so we need to use AlphaImageLoader
-                    var agent = navigator.userAgent.toLowerCase();
-                    if ((agent.indexOf("msie") > -1) && (agent.indexOf("opera") < 1)){this.ie = true} else {this.ie = false}
-
-                    // create the background graphic as a <div> containing an image
-                    var container = document.createElement("div");
-                    container.style.width="70px";
-                    container.style.height="21px";
-
-                    // Handle transparent PNG files in MSIE
-                    if (this.ie) {
-                      var loader = "filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(src='https://gdal.org/resources/gdal2tiles/opacity-slider.png', sizingMethod='crop');";
-                      container.innerHTML = '<div style="height:21px; width:70px; ' +loader+ '" ></div>';
-                    } else {
-                      container.innerHTML = '<div style="height:21px; width:70px; background-image: url(https://gdal.org/resources/gdal2tiles/opacity-slider.png)" ></div>';
-                    }
-
-                    // create the knob as a GDraggableObject
-                    // Handle transparent PNG files in MSIE
-                    if (this.ie) {
-                      var loader = "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='https://gdal.org/resources/gdal2tiles/opacity-slider.png', sizingMethod='crop');";
-                      this.knob = document.createElement("div");
-                      this.knob.style.height="21px";
-                      this.knob.style.width="13px";
-                  this.knob.style.overflow="hidden";
-                      this.knob_img = document.createElement("div");
-                      this.knob_img.style.height="21px";
-                      this.knob_img.style.width="83px";
-                      this.knob_img.style.filter=loader;
-                  this.knob_img.style.position="relative";
-                  this.knob_img.style.left="-70px";
-                      this.knob.appendChild(this.knob_img);
-                    } else {
-                      this.knob = document.createElement("div");
-                      this.knob.style.height="21px";
-                      this.knob.style.width="13px";
-                      this.knob.style.backgroundImage="url(https://gdal.org/resources/gdal2tiles/opacity-slider.png)";
-                      this.knob.style.backgroundPosition="-70px 0px";
-                    }
-                    container.appendChild(this.knob);
-                    this.slide=new GDraggableObject(this.knob, {container:container});
-                    this.slide.setDraggableCursor('pointer');
-                    this.slide.setDraggingCursor('pointer');
-                    this.container = container;
-
-                    // attach the control to the map
-                    map.getContainer().appendChild(container);
-
-                    // init slider
-                    this.setSlider(this.opacity);
-
-                    // Listen for the slider being moved and set the opacity
-                    GEvent.addListener(this.slide, "dragend", function() {that.setOpacity()});
-                    //GEvent.addListener(this.container, "click", function( x, y ) { alert(x, y) });
-
-                    return container;
-                  }
-
-                  // Set the default position for the control
-                  CTransparencyControl.prototype.getDefaultPosition = function() {
-                    return new GControlPosition(G_ANCHOR_TOP_RIGHT, new GSize(7, 47));
-                  }
 
                 /*
                  * Full-screen Window Resize
@@ -3138,110 +3560,168 @@ class GDAL2Tiles(object):
                 }
 
 
+                // getZoomByBounds(): adapted from https://stackoverflow.com/a/9982152
+                /**
+                * Returns the zoom level at which the given rectangular region fits in the map view.
+                * The zoom level is computed for the currently selected map type.
+                * @param {google.maps.Map} map
+                * @param {google.maps.LatLngBounds} bounds
+                * @return {Number} zoom level
+                **/
+                function getZoomByBounds(  map, bounds ){
+                  var MAX_ZOOM = 21 ;
+                  var MIN_ZOOM =  0 ;
+
+                  var ne= map.getProjection().fromLatLngToPoint( bounds.getNorthEast() );
+                  var sw= map.getProjection().fromLatLngToPoint( bounds.getSouthWest() );
+
+                  var worldCoordWidth = Math.abs(ne.x-sw.x);
+                  var worldCoordHeight = Math.abs(ne.y-sw.y);
+                  //Fit padding in pixels
+                  var FIT_PAD = 40;
+                  for( var zoom = MAX_ZOOM; zoom >= MIN_ZOOM; --zoom ){
+                      if( worldCoordWidth*(1<<zoom)+2*FIT_PAD < map.getDiv().offsetWidth &&
+                          worldCoordHeight*(1<<zoom)+2*FIT_PAD < map.getDiv().offsetHeight )
+                      {
+                          if( zoom > mapMaxZoom )
+                              zoom = mapMaxZoom;
+                          return zoom;
+                      }
+                  }
+                  return 0;
+                }
+
+                function fromMercatorPixelToLatLng(pixel, zoom)
+                {
+                    var CST = 6378137 * Math.PI;
+                    var res = 2 * CST / 256 / Math.pow(2, zoom);
+                    var X = -CST + pixel.x * res;
+                    var Y = CST - pixel.y * res;
+                    var lon = X / CST * 180;
+                    var lat = Math.atan(Math.sinh(Y / CST * Math.PI)) / Math.PI * 180;
+                    return new google.maps.LatLng(lat, lon);
+                }
+
+
+                var OPACITY_MAX_PIXELS = 57; // Width of opacity control image
+
+                function createOpacityControl(map, opacity) {
+                    var sliderImageUrl = "https://gdal.org/resources/gdal2tiles/opacity-slider.png";
+
+                    // Create main div to hold the control.
+                    var opacityDiv = document.createElement('DIV');
+                    var opacityDivMargin = 5;
+                    opacityDiv.setAttribute("style", "margin:" + opacityDivMargin + "px;overflow-x:hidden;overflow-y:hidden;background:url(" + sliderImageUrl + ") no-repeat;width:71px;height:21px;cursor:pointer;");
+
+                    // Create knob
+                    var opacityKnobDiv = document.createElement('DIV');
+                    opacityKnobDiv.setAttribute("style", "padding:0;margin:0;overflow-x:hidden;overflow-y:hidden;background:url(" + sliderImageUrl + ") no-repeat -71px 0;width:14px;height:21px;");
+                    opacityDiv.appendChild(opacityKnobDiv);
+
+                    var opacityCtrlKnob = new ExtDraggableObject(opacityKnobDiv, {
+                        restrictY: true,
+                        container: opacityDiv
+                    });
+
+                    google.maps.event.addListener(opacityCtrlKnob, "dragend", function () {
+                        setOpacity(opacityCtrlKnob.valueX());
+                    });
+
+                    google.maps.event.addDomListener(opacityDiv, "click", function (e) {
+                        var left = this.getBoundingClientRect().left;
+                        var x = e.pageX - left - opacityDivMargin;
+                        opacityCtrlKnob.setValueX(x);
+                        setOpacity(x);
+                    });
+
+                    map.controls[google.maps.ControlPosition.TOP_RIGHT].push(opacityDiv);
+
+                    // Set initial value
+                    var initialValue = OPACITY_MAX_PIXELS / (100 / opacity);
+                    opacityCtrlKnob.setValueX(initialValue);
+                    setOpacity(initialValue);
+                }
+
+                function setOpacity(pixelX) {
+                    // Range = 0 to OPACITY_MAX_PIXELS
+                    var value = (100 / OPACITY_MAX_PIXELS) * pixelX;
+                    if (value < 0) value = 0;
+                    if (value == 0) {
+                        if (overlay.visible == true) {
+                            overlay.hide();
+                        }
+                    }
+                    else {
+                        overlay.setOpacity(value);
+                        if (overlay.visible == false) {
+                            overlay.show();
+                        }
+                    }
+                }
+
+                function createCopyrightControl(map, copyright) {
+                    const label = document.createElement("label");
+                    label.style.backgroundColor = "#ffffff";
+                    label.textContent = copyright;
+
+                    const div = document.createElement("div");
+                    div.appendChild(label);
+
+                    map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(div);
+                }
+
+                %(ext_draggable_object_js)s
+
                 /*
                  * Main load function:
                  */
 
                 function load() {
 
-                   if (GBrowserIsCompatible()) {
+                    var options = {
+                      center: mapBounds.getCenter(),
+                      zoom: mapMaxZoom,
+                      mapTypeId: google.maps.MapTypeId.HYBRID,
 
-                      // Bug in the Google Maps: Copyright for Overlay is not correctly displayed
-                      var gcr = GMapType.prototype.getCopyrights;
-                      GMapType.prototype.getCopyrights = function(bounds,zoom) {
-                          return ["%(copyright)s"].concat(gcr.call(this,bounds,zoom));
+                      // Add map type control
+                      mapTypeControl: true,
+                      mapTypeControlOptions: {
+                          style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+                          position: google.maps.ControlPosition.TOP_LEFT
+                      },
+
+                      // Add scale
+                      scaleControl: true,
+                      scaleControlOptions: {
+                          position: google.maps.ControlPosition.BOTTOM_RIGHT
                       }
+                    };
 
-                      map = new GMap2( document.getElementById("map"), { backgroundColor: '#fff' } );
+                    map = new google.maps.Map( document.getElementById("map"), options);
+                    google.maps.event.addListenerOnce(map, "projection_changed", function() {
+                       map.setZoom(getZoomByBounds( map, mapBounds ));
+                    });
 
-                      map.addMapType(G_PHYSICAL_MAP);
-                      map.setMapType(G_PHYSICAL_MAP);
+                    %(custom_tile_overlay_js)s
 
-                      map.setCenter( mapBounds.getCenter(), map.getBoundsZoomLevel( mapBounds ));
+                    overlay = new CustomTileOverlay(map, initialOpacity);
+                    overlay.show();
 
-                      hybridOverlay = new GTileLayerOverlay( G_HYBRID_MAP.getTileLayers()[1] );
-                      GEvent.addListener(map, "maptypechanged", function() {
-                        if (map.getCurrentMapType() == G_HYBRID_MAP) {
-                            map.addOverlay(hybridOverlay);
-                        } else {
-                           map.removeOverlay(hybridOverlay);
-                        }
-                      } );
+                    google.maps.event.addListener(map, 'tilesloaded', function () {
+                        overlay.deleteHiddenTiles(map.getZoom());
+                    });
 
-                      var tilelayer = new GTileLayer(GCopyrightCollection(''), mapMinZoom, mapMaxZoom);
-                      var mercator = new GMercatorProjection(mapMaxZoom+1);
-                      tilelayer.getTileUrl = function(tile,zoom) {
-                          if ((zoom < mapMinZoom) || (zoom > mapMaxZoom)) {
-                              return "https://gdal.org/resources/gdal2tiles/none.png";
-                          }
-                          var ymax = 1 << zoom;
-                          var y = ymax - tile.y -1;
-                          var tileBounds = new GLatLngBounds(
-                              mercator.fromPixelToLatLng( new GPoint( (tile.x)*256, (tile.y+1)*256 ) , zoom ),
-                              mercator.fromPixelToLatLng( new GPoint( (tile.x+1)*256, (tile.y)*256 ) , zoom )
-                          );
-                          if (mapBounds.intersects(tileBounds)) {
-                              return zoom+"/"+tile.x+"/"+y+".png";
-                          } else {
-                              return "https://gdal.org/resources/gdal2tiles/none.png";
-                          }
-                      }
-                      // IE 7-: support for PNG alpha channel
-                      // Unfortunately, the opacity for whole overlay is then not changeable, either or...
-                      tilelayer.isPng = function() { return true;};
-                      tilelayer.getOpacity = function() { return opacity; }
+                    // Add opacity control and set initial value
+                    createOpacityControl(map, initialOpacity);
 
-                      overlay = new GTileLayerOverlay( tilelayer );
-                      map.addOverlay(overlay);
+                    var copyright = "%(copyright)s";
+                    if( copyright != "" ) {
+                        createCopyrightControl(map, copyright);
+                    }
 
-                      map.addControl(new GLargeMapControl());
-                      map.addControl(new GHierarchicalMapTypeControl());
-                      map.addControl(new CTransparencyControl( overlay ));
-        """
-            % args
-        )  # noqa
-        if self.kml:
-            s += """
-                      map.addMapType(G_SATELLITE_3D_MAP);
-                      map.getEarthInstance(getEarthInstanceCB);
-        """
-        s += """
-
-                      map.enableContinuousZoom();
-                      map.enableScrollWheelZoom();
-
-                      map.setMapType(G_HYBRID_MAP);
-                   }
-                   resize();
+                    resize();
                 }
-        """
-        if self.kml:
-            s += (
-                """
-                function getEarthInstanceCB(object) {
-                   var ge = object;
 
-                   if (ge) {
-                       var url = document.location.toString();
-                       url = url.substr(0,url.lastIndexOf('/'))+'/doc.kml';
-                       var link = ge.createLink("");
-                       if ("%(publishurl)s") { link.setHref("%(publishurl)s/doc.kml") }
-                       else { link.setHref(url) };
-                       var networkLink = ge.createNetworkLink("");
-                       networkLink.setName("TMS Map Overlay");
-                       networkLink.setFlyToView(true);
-                       networkLink.setLink(link);
-                       ge.getFeatures().appendChild(networkLink);
-                   } else {
-                       // alert("You should open a KML in Google Earth");
-                       // add div with the link to generated KML... - maybe JavaScript redirect to the URL of KML?
-                   }
-                }
-        """
-                % args
-            )  # noqa
-        s += (
-            """
                 onresize=function(){ resize(); };
 
                 //]]>
@@ -3258,6 +3738,10 @@ class GDAL2Tiles(object):
         """
             % args
         )  # noqa
+
+        # TODO? when there is self.kml, before the transition to GoogleMapsV3 API,
+        # we used to offer a way to display the KML file in Google Earth
+        # cf https://github.com/OSGeo/gdal/blob/32f32a69bbf5c408c6c8ac2cc6f1d915a7a1c576/swig/python/gdal-utils/osgeo_utils/gdal2tiles.py#L3203 to #L3243
 
         return s
 
@@ -3446,8 +3930,8 @@ class GDAL2Tiles(object):
         #subheader { height: 12px; text-align: right; font-size: 10px; color: #555;}
         #map { height: 90%%; border: 1px solid #888; }
     </style>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.3.1/css/ol.css" type="text/css">
-    <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.3.1/build/ol.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@main/dist/en/v7.0.0/legacy/ol.css" type="text/css">
+    <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@main/dist/en/v7.0.0/legacy/ol.js"></script>
     <script src="https://unpkg.com/ol-layerswitcher@3.5.0"></script>
     <link rel="stylesheet" href="https://unpkg.com/ol-layerswitcher@3.5.0/src/ol-layerswitcher.css" />
 </head>
@@ -3463,7 +3947,7 @@ class GDAL2Tiles(object):
             undefinedHTML: '&nbsp;'
         });
         var map = new ol.Map({
-            controls: ol.control.defaults().extend([mousePositionControl]),
+            controls: ol.control.defaults.defaults().extend([mousePositionControl]),
             target: 'map',
 """
             % args

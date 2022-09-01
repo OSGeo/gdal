@@ -941,6 +941,18 @@ void OGRAPISpy_L_CreateFeature( OGRLayerH hLayer, OGRFeatureH hFeat )
     OGRAPISpyFileClose();
 }
 
+void OGRAPISpy_L_UpsertFeature( OGRLayerH hLayer, OGRFeatureH hFeat )
+{
+    CPLMutexHolderD(&hMutex);
+    OGRAPISpyFlushDefered();
+    OGRAPISpyDumpFeature(hFeat);
+    fprintf(fpSpyFile, "%s.UpsertFeature(f)\n",
+            OGRAPISpyGetLayerVar(hLayer).c_str());
+    // In case layer defn is changed afterwards.
+    fprintf(fpSpyFile, "f = None\n");
+    OGRAPISpyFileClose();
+}
+
 static void OGRAPISpyDumpFieldDefn( OGRFieldDefn* poFieldDefn )
 {
     CPLMutexHolderD(&hMutex);

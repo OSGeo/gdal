@@ -3122,3 +3122,30 @@ def test_zarr_read_test_overflow_in_AllocateWorkingBuffers_due_to_type_change():
 
     finally:
         gdal.RmdirRecursive("/vsimem/test.zarr")
+
+
+def test_zarr_read_do_not_crash_on_invalid_byteswap_on_ascii_string():
+
+    try:
+        gdal.Mkdir("/vsimem/test.zarr", 0)
+
+        j = {
+            "chunks": [1],
+            "compressor": None,
+            "dtype": [["x", ">S2"]],  # byteswap here is not really valid...
+            "fill_value": base64.b64encode(b"XX").decode("utf-8"),
+            "filters": None,
+            "order": "C",
+            "shape": [1],
+            "zarr_format": 2,
+        }
+
+        gdal.FileFromMemBuffer("/vsimem/test.zarr/.zarray", json.dumps(j))
+
+        ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER)
+        assert ds
+        rg = ds.GetRootGroup()
+        rg.OpenMDArray("test")
+
+    finally:
+        gdal.RmdirRecursive("/vsimem/test.zarr")

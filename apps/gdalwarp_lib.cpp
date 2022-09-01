@@ -73,6 +73,12 @@
 #define USE_PROJ_BASED_VERTICAL_SHIFT_METHOD
 #endif
 
+// those values shouldn't be changed, because overview levels >= 0 are meant
+// to be overview indices, and ovr_level < OVR_LEVEL_AUTO mean overview level
+// automatically selected minus (OVR_LEVEL_AUTO - ovr_level)
+constexpr int OVR_LEVEL_AUTO = -2;
+constexpr int OVR_LEVEL_NONE = -1;
+
 CPL_CVSID("$Id$")
 
 /************************************************************************/
@@ -2507,7 +2513,7 @@ GDALDatasetH GDALWarpDirect( const char *pszDest, GDALDatasetH hDstDS,
         GDALDataset* poSrcDS = static_cast<GDALDataset*>(hSrcDS);
         GDALDataset* poSrcOvrDS = nullptr;
         int nOvCount = poSrcDS->GetRasterBand(1)->GetOverviewCount();
-        if( psOptions->nOvLevel <= -2 && nOvCount > 0 )
+        if( psOptions->nOvLevel <= OVR_LEVEL_AUTO && nOvCount > 0 )
         {
             double dfTargetRatio = 0;
             if( bFigureoutCorrespondingWindow )
@@ -2588,18 +2594,20 @@ GDALDatasetH GDALWarpDirect( const char *pszDest, GDALDatasetH hDstDS,
                     if( fabs(dfOvrRatio - dfTargetRatio) < 1e-1 )
                         break;
                 }
-                iOvr += (psOptions->nOvLevel+2);
+                iOvr += (psOptions->nOvLevel - OVR_LEVEL_AUTO);
                 if( iOvr >= 0 )
                 {
                     CPLDebug("WARP", "Selecting overview level %d for %s",
                                 iOvr, GDALGetDescription(hSrcDS));
-                    poSrcOvrDS = GDALCreateOverviewDataset( poSrcDS, iOvr, FALSE );
+                    poSrcOvrDS = GDALCreateOverviewDataset( poSrcDS, iOvr,
+                                                            /* bThisLevelOnly = */false );
                 }
             }
         }
         else if( psOptions->nOvLevel >= 0 )
         {
-            poSrcOvrDS = GDALCreateOverviewDataset( poSrcDS, psOptions->nOvLevel, TRUE );
+            poSrcOvrDS = GDALCreateOverviewDataset( poSrcDS, psOptions->nOvLevel,
+                                                    /* bThisLevelOnly = */true );
             if( poSrcOvrDS == nullptr )
             {
                 if( !psOptions->bQuiet )
@@ -2609,7 +2617,8 @@ GDALDatasetH GDALWarpDirect( const char *pszDest, GDALDatasetH hDstDS,
                             psOptions->nOvLevel, GDALGetDescription(hSrcDS), nOvCount - 1);
                 }
                 if( nOvCount > 0 )
-                    poSrcOvrDS = GDALCreateOverviewDataset( poSrcDS, nOvCount - 1, FALSE );
+                    poSrcOvrDS = GDALCreateOverviewDataset( poSrcDS, nOvCount - 1,
+                                                            /* bThisLevelOnly = */false );
             }
             else
             {
@@ -4519,7 +4528,7 @@ GDALWarpAppOptions *GDALWarpAppOptionsNew(char** papszArgv,
     psOptions->bCopyBandInfo = true;
     psOptions->pszMDConflictValue = CPLStrdup("*");
     psOptions->bSetColorInterpretation = false;
-    psOptions->nOvLevel = -2;
+    psOptions->nOvLevel = OVR_LEVEL_AUTO;
     psOptions->bNoVShift = false;
 
 /* -------------------------------------------------------------------- */
@@ -4872,11 +4881,11 @@ GDALWarpAppOptions *GDALWarpAppOptionsNew(char** papszArgv,
         {
             const char* pszOvLevel = papszArgv[++i];
             if( EQUAL(pszOvLevel, "AUTO") )
-                psOptions->nOvLevel = -2;
+                psOptions->nOvLevel = OVR_LEVEL_AUTO;
             else if( STARTS_WITH_CI(pszOvLevel, "AUTO-") )
-                psOptions->nOvLevel = -2-atoi(pszOvLevel + 5);
+                psOptions->nOvLevel = OVR_LEVEL_AUTO-atoi(pszOvLevel + strlen("AUTO-"));
             else if( EQUAL(pszOvLevel, "NONE") )
-                psOptions->nOvLevel = -1;
+                psOptions->nOvLevel = OVR_LEVEL_NONE;
             else if( CPLGetValueType(pszOvLevel) == CPL_VALUE_INTEGER )
                 psOptions->nOvLevel = atoi(pszOvLevel);
             else

@@ -1109,3 +1109,68 @@ def test_gdalinfo_if_option():
         encoding="UTF-8",
     )
     assert err is not None
+
+
+###############################################################################
+# Test STAC JSON output
+
+
+def test_gdalinfo_stac_json():
+    if test_cli_utilities.get_gdalinfo_path() is None:
+        pytest.skip()
+
+    tmpfilename = "tmp/test_gdalinfo_stac_json.tif"
+    shutil.copy("../gcore/data/byte.tif", tmpfilename)
+    ret, _ = gdaltest.runexternal_out_and_err(
+        test_cli_utilities.get_gdalinfo_path()
+        + " -json -proj4 -stats -hist "
+        + tmpfilename,
+        encoding="UTF-8",
+    )
+    gdal.GetDriverByName("GTiff").Delete(tmpfilename)
+    data = json.loads(ret)
+
+    assert "stac" in data
+    stac = data["stac"]
+
+    assert stac["proj:shape"] == [20, 20]
+
+    assert stac["proj:wkt2"].startswith("PROJCRS")
+    assert stac["proj:epsg"] == 26711
+    from osgeo import osr
+
+    if osr.GetPROJVersionMajor() >= 7:
+        assert isinstance(stac["proj:projjson"], dict)
+    assert stac["proj:transform"] == [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0]
+
+    assert len(stac["raster:bands"]) == 1
+    raster_band = stac["raster:bands"][0]
+    assert raster_band["data_type"] == "uint8"
+    assert raster_band["stats"] == {
+        "minimum": 74.0,
+        "maximum": 255.0,
+        "mean": 126.765,
+        "stddev": 22.928,
+    }
+    assert "histogram" in raster_band
+
+    assert len(stac["eo:bands"]) == 1
+
+    # Test eo:bands cloud_cover
+    # https://github.com/OSGeo/gdal/pull/6265#issuecomment-1232229669
+    tmpfilename = "tmp/test_gdalinfo_stac_json_cloud_cover.tif"
+    shutil.copy("../gcore/data/md_dg.tif", tmpfilename)
+    shutil.copy(
+        "../gcore/data/md_dg.IMD", "tmp/test_gdalinfo_stac_json_cloud_cover.IMD"
+    )
+    shutil.copy(
+        "../gcore/data/md_dg.RPB", "tmp/test_gdalinfo_stac_json_cloud_cover.RPB"
+    )
+    ret, _ = gdaltest.runexternal_out_and_err(
+        test_cli_utilities.get_gdalinfo_path() + " -json " + tmpfilename,
+        encoding="UTF-8",
+    )
+    gdal.GetDriverByName("GTiff").Delete(tmpfilename)
+    data = json.loads(ret)
+
+    assert data["stac"]["eo:cloud_cover"] == 2

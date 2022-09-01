@@ -2716,6 +2716,13 @@ public:
                 double dfStart, double dfIncrement,
                 double dfOffsetInIncrement);
 
+    static std::shared_ptr<GDALMDArrayRegularlySpaced> Create(
+                const std::string& osParentName,
+                const std::string& osName,
+                const std::shared_ptr<GDALDimension>& poDim,
+                double dfStart, double dfIncrement,
+                double dfOffsetInIncrement);
+
     bool IsWritable() const override { return false; }
 
     const std::string& GetFilename() const override { return m_osEmptyFilename; }
@@ -3229,7 +3236,7 @@ void GDALRasterIOExtraArgSetResampleAlg(GDALRasterIOExtraArg* psExtraArg,
 
 
 GDALDataset* GDALCreateOverviewDataset(GDALDataset* poDS, int nOvrLevel,
-                                       int bThisLevelOnly);
+                                       bool bThisLevelOnly);
 
 // Should cover particular cases of #3573, #4183, #4506, #6578
 // Behavior is undefined if fVal1 or fVal2 are NaN (should be tested before

@@ -244,6 +244,10 @@ Layer creation options
    7946 <https://tools.ietf.org/html/rfc7946>`__ standard. Otherwise
    `GeoJSON 2008 <http://geojson.org/geojson-spec.html>`__ initial
    version will be used. Default is NO (thus GeoJSON 2008)
+-  **WRAPDATELINE** \=YES/NO (OGR >= 3.5.2) Whether to apply heuristics
+   to split geometries that cross dateline. Only used when coordinate
+   transformation occurs or when RFC7946=YES. Default is YES (and also the
+   behavior for OGR < 3.5.2).
 -  **WRITE_NAME**\ =YES/NO. (OGR >= 2.2) Whether to write a "name"
    property at feature collection level with layer name. Defaults to
    YES.

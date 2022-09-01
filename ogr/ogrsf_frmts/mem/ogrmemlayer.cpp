@@ -456,6 +456,26 @@ OGRErr OGRMemLayer::ICreateFeature( OGRFeature *poFeature )
 }
 
 /************************************************************************/
+/*                           UpsertFeature()                            */
+/************************************************************************/
+
+OGRErr OGRMemLayer::IUpsertFeature(OGRFeature* poFeature)
+
+{
+   if( !TestCapability(OLCUpsertFeature) )
+      return OGRERR_FAILURE;
+
+   if( GetFeature(poFeature->GetFID()) )
+   {
+      return SetFeature(poFeature);
+   }
+   else
+   {
+      return CreateFeature(poFeature);
+   }
+}
+
+/************************************************************************/
 /*                           DeleteFeature()                            */
 /************************************************************************/
 
@@ -536,7 +556,7 @@ int OGRMemLayer::TestCapability( const char *pszCap )
     else if( EQUAL(pszCap, OLCFastSpatialFilter) )
         return FALSE;
 
-    else if( EQUAL(pszCap, OLCDeleteFeature) )
+    else if( EQUAL(pszCap, OLCDeleteFeature) || EQUAL(pszCap, OLCUpsertFeature) )
         return m_bUpdatable;
 
     else if( EQUAL(pszCap, OLCCreateField) ||

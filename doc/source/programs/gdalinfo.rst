@@ -32,7 +32,11 @@ The following command line parameters can appear in any order
 
 .. option:: -json
 
-    Display the output in json format.
+    Display the output in json format. Since GDAL 3.6, this includes key-value
+    pairs useful for building a `STAC item
+    <https://github.com/radiantearth/stac-spec/blob/v1.0.0/item-spec/item-spec.md>`_
+    , including statistics and histograms if ``-stats`` or ``-hist`` flags are
+    passed, respectively.
 
 .. option:: -mm
 
