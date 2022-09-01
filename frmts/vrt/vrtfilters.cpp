@@ -30,9 +30,11 @@
 #include "cpl_port.h"
 #include "vrtdataset.h"
 
+#include <cmath>
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -614,6 +616,14 @@ CPLErr VRTKernelFilteredSource::XMLInit( CPLXMLNode *psTree,
 
     if( nNewKernelSize == 0 )
         return CE_None;
+    // To prevent a integer overflow when computing nNewKernelSize * nNewKernelSize
+    if( nNewKernelSize < 0 ||
+        nNewKernelSize > static_cast<int>(std::sqrt(static_cast<double>(std::numeric_limits<int>::max()))) )
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Invalid value for kernel size: %d", nNewKernelSize);
+        return CE_Failure;
+    }
 
     char **papszCoefItems =
         CSLTokenizeString( CPLGetXMLValue(psTree,"Kernel.Coefs","") );
