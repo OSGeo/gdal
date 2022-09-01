@@ -281,6 +281,9 @@ static CPLString VSICurlGetURLFromFilename(const char* pszFilename,
                                            bool* pbPlanetaryComputerURLSigning,
                                            char** ppszPlanetaryComputerCollection)
 {
+    if( ppszPlanetaryComputerCollection )
+        *ppszPlanetaryComputerCollection = nullptr;
+
     if( !STARTS_WITH(pszFilename, "/vsicurl/") &&
         !STARTS_WITH(pszFilename, "/vsicurl?") )
         return pszFilename;
@@ -377,7 +380,10 @@ static CPLString VSICurlGetURLFromFilename(const char* pszFilename,
                 else if( EQUAL(pszKey, "pc_collection") )
                 {
                     if( ppszPlanetaryComputerCollection )
+                    {
+                        CPLFree(*ppszPlanetaryComputerCollection);
                         *ppszPlanetaryComputerCollection = CPLStrdup(pszValue);
+                    }
                 }
                 else
                 {
