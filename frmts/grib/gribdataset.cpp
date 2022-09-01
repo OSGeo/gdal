@@ -1767,7 +1767,7 @@ void GRIBArray::Init(GRIBGroup* poGroup,
             poGroup->m_oMapDims[osName] = poDimY;
             poGroup->m_dims.emplace_back(poDimY);
 
-            auto var = std::make_shared<GDALMDArrayRegularlySpaced>(
+            auto var = GDALMDArrayRegularlySpaced::Create(
                 "/", poDimY->GetName(), poDimY,
                 adfGT[3] + poDS->GetRasterYSize() * adfGT[5],
                 -adfGT[5], 0.5);
@@ -1788,7 +1788,7 @@ void GRIBArray::Init(GRIBGroup* poGroup,
             poGroup->m_oMapDims[osName] = poDimX;
             poGroup->m_dims.emplace_back(poDimX);
 
-            auto var = std::make_shared<GDALMDArrayRegularlySpaced>(
+            auto var = GDALMDArrayRegularlySpaced::Create(
                 "/", poDimX->GetName(), poDimX,
                 adfGT[0],
                 adfGT[1], 0.5);
