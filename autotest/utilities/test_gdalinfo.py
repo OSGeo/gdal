@@ -1133,17 +1133,15 @@ def test_gdalinfo_stac_json():
     assert "stac" in data
     stac = data["stac"]
 
-    assert "properties" in stac
-    properties = stac["properties"]
-    assert properties["proj:shape"] == [20, 20]
+    assert stac["proj:shape"] == [20, 20]
 
-    assert properties["proj:wkt2"].startswith("PROJCRS")
-    assert properties["proj:epsg"] == 26711
+    assert stac["proj:wkt2"].startswith("PROJCRS")
+    assert stac["proj:epsg"] == 26711
     from osgeo import osr
 
     if osr.GetPROJVersionMajor() >= 7:
-        assert isinstance(properties["proj:projjson"], dict)
-    assert properties["proj:transform"] == [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0]
+        assert isinstance(stac["proj:projjson"], dict)
+    assert stac["proj:transform"] == [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0]
 
     assert len(stac["raster:bands"]) == 1
     raster_band = stac["raster:bands"][0]
@@ -1157,3 +1155,22 @@ def test_gdalinfo_stac_json():
     assert "histogram" in raster_band
 
     assert len(stac["eo:bands"]) == 1
+
+    # Test eo:bands cloud_cover
+    # https://github.com/OSGeo/gdal/pull/6265#issuecomment-1232229669
+    tmpfilename = "tmp/test_gdalinfo_stac_json_cloud_cover.tif"
+    shutil.copy("../gcore/data/md_dg.tif", tmpfilename)
+    shutil.copy(
+        "../gcore/data/md_dg.IMD", "tmp/test_gdalinfo_stac_json_cloud_cover.IMD"
+    )
+    shutil.copy(
+        "../gcore/data/md_dg.RPB", "tmp/test_gdalinfo_stac_json_cloud_cover.RPB"
+    )
+    ret, _ = gdaltest.runexternal_out_and_err(
+        test_cli_utilities.get_gdalinfo_path() + " -json " + tmpfilename,
+        encoding="UTF-8",
+    )
+    gdal.GetDriverByName("GTiff").Delete(tmpfilename)
+    data = json.loads(ret)
+
+    assert data["stac"]["eo:cloud_cover"] == 2
