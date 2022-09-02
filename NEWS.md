@@ -1,3 +1,174 @@
+# GDAL/OGR 3.5.2 Release Notes
+
+## Build
+
+All:
+* Fix build with OpenCL support on case-sensitive Apple systems (#6117)
+
+CMake:
+* fix typo in function call in cmake/modules/3.16/FindPython/Support.cmake (#6009)
+* fix gdal.pc and gdal-config generation when CMAKE_INSTALL_xxxx is an absolute path (#6004)
+* remove GDAL_INSTALL_[FULL_]INCLUDEDIR and use standard CMAKE_INSTALL_[FULL_]INCLUDEDIR
+* add support for iOS and Mac Catalyst
+* fix build issue with system sqlite3 on Mac (#6011)
+* do not add -Wl,--no-undefined to linker flags for -fsanitize builds
+* check for blosc_cbuffer_validate() presence to use Blosc (for Ubuntu 18.04)
+* do not try Lerc on big-endian builds
+* fix build with GDAL_BUILD_OPTIONAL_DRIVERS:BOOL=OFF (#6031)
+* compatibility fix for cmake < 3.13 with mingw
+* check if extra iconv charsets are available, and emit a warning if not (e.g if glibc-gconv-extra is missing on Fedora)
+* only build my_test_sqlite3_ext if sqlite3ext.h is available
+* FindPoppler.cmake: add POPPLER_EXTRA_LIBRARIES (e.g. for gisinternals to add linking to freetype)
+* FindECW: add support for gisinternals libecwj 3.3
+* fix static linking of ECW SDK 5.5 on Windows (#6190)
+* Rename PCRE2::PCRE2 to PCRE2::PCRE2-8 (#6120)
+* tune external JPEG inclusion order to make it easier on Homebrew to build against libjpeg-turbo (#6134)
+* fix typo in fuzzer CMakeLists.txt
+* JP2KAK: add support for ARM builds (#6228)
+* Fix propagation of CPL_DISABLE_DLL
+
+configure.ac:
+* fix JXL tests
+
+## GDAL 3.5.2
+
+# Port
+
+* /vsicurl?: add pc_url_signing=yes, pc_collection query parameters to sign resources of Microsoft Planetary Computer
+
+# Algorithms
+
+* gdalwarp/GDALCreateGenImgProjTransformer2: support identity source geotransform as a valid one (#5954)
+* GDALCreateGenImgProjTransformer2(): properly set coordinate epoch on source and target CRS objects
+* Transformer: add [SRC_/DST_]GEOLOC_ARRAY] transformer options to be able to separate dataset to wrap and dataset with geolocation array
+* Geoloc transformer: fix issue in GDALInverseBilinearInterpolation() if provided with a rectangle
+* GDALWarp(): take into account SRS implied by [SRC_]GEOLOC_ARRAY transformer option
+* GDALFillNodata(): make it work properly when providing a non-null hMaskBand and using smoothing iterations (rasterio/rasterio#2474)
+* RPC DEM extraction: use a block base approach to query the DEM (helps getting reproducible results when DEM is VRT)
+
+# Core
+
+* GetHistogram(): deal with undefined behaviour when raster values are at infinity, or with pathological min/max bounds
+* GetHistogram(): Support 64 bit images (#6061)
+* Pleiades metadata reader: make it work with PNEO suffixed _P/_RGB/_NED filenames
+* GDALMDReader::ReadXMLToList(): make it suffix repeated elements with a occurence counter, even when they are not consecutive (#6047)
+* GetMaskBand(): make it update the returned object when setting/updating/unsetting nodata value
+* Multidim API: avoid 'Driver implementation issue: m_pSelf not set' error on GDALMDArrayRegularlySpaced arrays (#6296)
+
+# Utilities:
+
+* gdal_translate: preserve dynamic nature of dynamic CRS specified with -a_srs
+* gdaldem: GDALColorReliefParseColorFile(): fix memleak
+* gdalbuildvrt: honour VRT_VIRTUAL_OVERVIEWS config option if already set
+* gdalbuildvrt: skip source datasets that just touch by an edge the area of interest, and would result in a source with 0 width/height
+* gdalwarp: do not error out with a memory allocation failure if warping from a source with RPC to a target dataset with a no-overlapping extent, but emit a warning
+* gdalwarp: fix issue with wrong resolution when reprojecting between geographic CRS with source extent slightly off [-180,180]
+* gdalwarp: fix target extent computation in EPSG:4326 to ESRI:53037 (#6155)
+* gdal2tiles: allow oversampling in -p raster mode (#6207)
+* gdal2tiles: fix OpenLayers CDN (#6262)
+* gdal2tiles: fix googlemaps.html to port from ancient Google Maps V2 API to V3
+
+# Raster drivers
+
+COG driver:
+ * fix issue when writing onto /vsis3/ with CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE=YES (#6205)
+
+ENVI driver:
+ * fix duplicated 'coordinate system string' when editing an existing file (#6130)
+
+GRIB driver:
+ * degrib: use #define tricks to prefix C symbols with gdal_ (#6269)
+
+GTiff driver:
+ * avoid SetMetadata() to cancel effect of SetGeoTransform() (#6015)
+ * SRS reading: morph Projected CRS, Geographic CRS, datum and ellipsoid names of citations from their ESRI variant to EPSG WKT2 ones
+ * fix reading some JPEG compressed COG files through /vsicurl/
+ * preserve dynamic CRS when reading it
+
+MSGN driver:
+ * fix georeferencing (#6244)
+
+netCDF driver:
+ * avoid error in SetMetadataItem() when computing statistics (3.5.0 regression, #6023)
+ * fix exposing geotransform in file with lon lat coordinates (3.5.0 regression)
+ * allow getting geotransform from a variable indexed by latitude, longitude variables, not following CF conventions (3.5.0 regression, #6174)
+
+Rasterlite driver:
+ * avoid integer overflows on broken image (ossfuzz#50693)
+
+SAR_CEOS driver:
+ * fix memory leak
+
+STACIT driver:
+ * make it work with Planetary Computer and resource URL signing
+
+VRT driver:
+ * fix awful performance of ComputeStatistics(approx_ok=True) on a VRT with several sources and an explicit <OverviewList> (QGIS/QGIS#49285)
+ * make it skip existence check for /vsicurl?...url=http sources
+ * GetSrcDstWindow(): make it work in a more reliable way when floating point coordinates are very close to integers
+ * avoid integer overflow on invalid Kernel.Size value (ossfuzz#50569)
+
+Zarr driver:
+ * avoid crash on invalid '>Sxxx' data type with fill_value (ossfuzz#50853)
+
+## OGR 3.5.2
+
+### Core
+
+* OGR SQL: fix memory leak on 3 or more OR/AND clauses
+* OGR SQL and SQLite dialects: propagate source domain field name onto target field definitions (#6185)
+* OGRFeature::SetField(field, const char*): raise a warning if setting a too big value for a Integer(32) field
+
+### OGRSpatialReference
+
+* OGRSpatialReference::SetFromUserInput(): fix crash on invalid PROJJSON (3.5.1 regression, fixes ossfuzz#49204)
+* Improve TransformBounds error handling
+* OGRSpatialReference: evaluate OSR_DEFAULT_AXIS_MAPPING_STRATEGY config option at each object constructin (#6084)
+* OGRSpatialReference::FindProjParm(): make SRS_PP_CENTRAL_MERIDIAN work with a CRS that has only a WKT2 representation (#6155)
+* TransformBounds(): make it work in scenario for EPSG:4326 to ESRI:53037 (#6155)
+* OGRProjCT::Initialize(): fix memleak in error code path (ossfuzz#49786)
+
+### Vector drivers
+
+All:
+ * return ODsCMeasuredGeometries and GDAL_DCAP_VECTOR capability in relevant drivers
+
+CSV driver:
+ * fix AUTODETECT_SIZE_LIMIT=0 meaning unlimited size (3.5.1 regression)
+
+DXF driver:
+ * Fix missing dictionary in data/trailer.dxf (#6013)
+
+GeoJSON driver:
+ * avoid emitting too many messages when parsing feature beyond limit of OGR_GEOJSON_MAX_OBJ_SIZE and error out early
+ * RFC7946 writer: do not change geometries that have a point at +/- 180deg longitude; add a WRAPDATELINE=YES/NO layer creation option (#6250)
+
+GeoJSONSeq driver:
+ * make max allowed size of feature configurable with the OGR_GEOJSON_MAX_OBJ_SIZE configuration option
+
+GPKG driver:
+ * propagate source domain field name onto target field definitions in SQL result layer (#6185)
+ * preserve dynamic CRS when writing it and reading it, and associated with a coordinate epoch
+
+HANA driver:
+ * fix string encoding in OGRHanaDataSource::ExecuteSQL
+ * LaunderName returns wrong value for non-ASCII characters
+
+ODBC driver:
+ * fix issue with odbc large data (#6196)
+
+Parquet driver:
+ * fix compression methods: remove BZ2 and LZ4_FRAME and substitute LZ4 with LZ4_RAW
+
+## SWIG Language Bindings
+
+All:
+ * fix wrong typemaps for char** arguments of gdal.ViewshedGenerate (#6086)
+
+Python bindings:
+ * fix memory leak on gdal.GetFileMetadata()
+ * fix memory leak on GetFieldAsBinary() when it returns a 0-byte field
+
 # GDAL/OGR 3.5.1 Release Notes
 
 ## Build
