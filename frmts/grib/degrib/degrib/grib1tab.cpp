@@ -1019,7 +1019,7 @@ const GRIB1ParmTable parm_table_nceptab_129[256] = {
    /* 168 */ {"TCLSW", "Total column-integrated supercooled liquid water", "kg/m^2", UC_NONE},
    /* 169 */ {"TCOLM", "Total column-integrated melting ice", "kg/m^2", UC_NONE},
    /* 170 */ {"ELRDI", "Ellrod Index", "-", UC_NONE},
-   /* 171 */ {"TSEC", "Seconds prior to initial reference time (defined in octects 18-20)", "sec", UC_NONE},
+   /* 171 */ {"TSEC", "Seconds prior to initial reference time (defined in octets 18-20)", "sec", UC_NONE},
    /* 172 */ {"TSECA", "Seconds after initial reference time (defined in octets 18-20)", "sec", UC_NONE},
    /* 173 */ {"NUM", "Number of samples/observations", "-", UC_NONE},
    /* 174 */ {"AEPRS", "Analysis error of pressure", "Pa", UC_NONE},
