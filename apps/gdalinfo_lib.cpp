@@ -918,6 +918,12 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
                         GDALGetRasterColorInterpretation(hBand)) );
         }
 
+        if (bJson)
+        {
+            json_object *poBandName = json_object_new_string(CPLSPrintf("b%i", iBand + 1));
+            json_object_object_add(poStacEOBand, "name", poBandName);
+        }
+
         if( GDALGetDescription( hBand ) != nullptr
             && strlen(GDALGetDescription( hBand )) > 0 )
         {
@@ -936,6 +942,17 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
             {
                 Concat( osStr, psOptions->bStdoutOutput, "  Description = %s\n",
                         GDALGetDescription(hBand) );
+            }
+        }
+        else
+        {
+            if (bJson)
+            {
+                json_object *poColorInterp =
+                    json_object_new_string(
+                        GDALGetColorInterpretationName(
+                            GDALGetRasterColorInterpretation(hBand)));
+                json_object_object_add(poStacEOBand, "description", poColorInterp);
             }
         }
 
