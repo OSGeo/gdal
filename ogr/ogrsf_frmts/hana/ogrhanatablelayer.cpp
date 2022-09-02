@@ -419,7 +419,7 @@ OGRHanaTableLayer::OGRHanaTableLayer(
 
 OGRHanaTableLayer::~OGRHanaTableLayer()
 {
-    FlushPendingFeatures();
+    FlushPendingBatches();
 }
 
 /* -------------------------------------------------------------------- */
@@ -844,20 +844,60 @@ OGRErr OGRHanaTableLayer::DropTable()
 }
 
 /* -------------------------------------------------------------------- */
-/*                        FlushPendingFeatures()                        */
+/*                        ExecutePendingBatches()                       */
 /* -------------------------------------------------------------------- */
 
-void OGRHanaTableLayer::FlushPendingFeatures()
+OGRErr OGRHanaTableLayer::ExecutePendingBatches()
 {
-    if (HasPendingFeatures())
-        dataSource_->Commit();
+    try
+    {
+        if (!deleteFeatureStmt_.isNull()
+            && deleteFeatureStmt_->getBatchDataSize() > 0)
+            deleteFeatureStmt_->executeBatch();
+        if (!insertFeatureStmtWithFID_.isNull()
+            && insertFeatureStmtWithFID_->getBatchDataSize() > 0)
+            insertFeatureStmtWithFID_->executeBatch();
+        if (!insertFeatureStmtWithoutFID_.isNull()
+            && insertFeatureStmtWithoutFID_->getBatchDataSize() > 0)
+            insertFeatureStmtWithoutFID_->executeBatch();
+        if (!updateFeatureStmt_.isNull()
+            && updateFeatureStmt_->getBatchDataSize() > 0)
+            updateFeatureStmt_->executeBatch();
+
+        ClearBatches();
+
+        return OGRERR_NONE;
+    }
+    catch (const odbc::Exception& ex)
+    {
+        ClearBatches();
+
+        CPLError(
+            CE_Failure, CPLE_AppDefined, "Failed to execute batch insert: %s",
+            ex.what());
+        return OGRERR_FAILURE;
+    }
 }
 
 /* -------------------------------------------------------------------- */
-/*                        HasPendingFeatures()                          */
+/*                        FlushPendingBatches()                         */
 /* -------------------------------------------------------------------- */
 
-bool OGRHanaTableLayer::HasPendingFeatures() const
+void OGRHanaTableLayer::FlushPendingBatches()
+{
+    if (HasPendingBatches())
+    {
+        OGRErr err = ExecutePendingBatches();
+        if (OGRERR_NONE != err)
+            dataSource_->Commit();
+    }
+}
+
+/* -------------------------------------------------------------------- */
+/*                        HasPendingBatches()                          */
+/* -------------------------------------------------------------------- */
+
+bool OGRHanaTableLayer::HasPendingBatches() const
 {
     return (!deleteFeatureStmt_.isNull()
             && deleteFeatureStmt_->getBatchDataSize() > 0)
@@ -1013,7 +1053,7 @@ OGRErr OGRHanaTableLayer::GetGeometryWkb(
 
 void OGRHanaTableLayer::ResetReading()
 {
-    FlushPendingFeatures();
+    FlushPendingBatches();
 
     OGRHanaLayer::ResetReading();
 }
@@ -1802,30 +1842,11 @@ OGRErr OGRHanaTableLayer::StartTransaction()
 
 OGRErr OGRHanaTableLayer::CommitTransaction()
 {
-    try
+    if (HasPendingBatches())
     {
-        if (!deleteFeatureStmt_.isNull()
-            && deleteFeatureStmt_->getBatchDataSize() > 0)
-            deleteFeatureStmt_->executeBatch();
-        if (!insertFeatureStmtWithFID_.isNull()
-            && insertFeatureStmtWithFID_->getBatchDataSize() > 0)
-            insertFeatureStmtWithFID_->executeBatch();
-        if (!insertFeatureStmtWithoutFID_.isNull()
-            && insertFeatureStmtWithoutFID_->getBatchDataSize() > 0)
-            insertFeatureStmtWithoutFID_->executeBatch();
-        if (!updateFeatureStmt_.isNull()
-            && updateFeatureStmt_->getBatchDataSize() > 0)
-            updateFeatureStmt_->executeBatch();
-
-        ClearBatches();
-    }
-    catch (const odbc::Exception& ex)
-    {
-        ClearBatches();
-        CPLError(
-            CE_Failure, CPLE_AppDefined, "Failed to execute batch insert: %s",
-            ex.what());
-        return OGRERR_FAILURE;
+        OGRErr err = ExecutePendingBatches();
+        if (OGRERR_NONE != err)
+            return err;
     }
 
     dataSource_->CommitTransaction();

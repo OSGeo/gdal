@@ -205,8 +205,9 @@ private:
         bool withFID,
         const char* functionName);
 
-    void FlushPendingFeatures();
-    bool HasPendingFeatures() const;
+    OGRErr ExecutePendingBatches();
+    void FlushPendingBatches();
+    bool HasPendingBatches() const;
     ColumnTypeInfo GetColumnTypeInfo(const OGRFieldDefn& field) const;
     OGRErr GetGeometryWkb(OGRFeature* feature, int fieldIndex, Binary& binary);
     void ClearBatches();
