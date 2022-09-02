@@ -672,6 +672,32 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
     return _gdal.Band_SetNoDataValue(self, value)
 
 %}
+
+%feature("shadow") ComputeRasterMinMax %{
+def ComputeRasterMinMax(self, *args, **kwargs):
+    """ComputeRasterMinMax(Band self, bool approx_ok=False, bool can_return_none=False) -> (min, max) or None"""
+
+    if len(args) == 1:
+        kwargs["approx_ok"] = args[0]
+        args = ()
+
+    if "approx_ok" in kwargs:
+        # Compatibility with older signature that used int for approx_ok
+        if kwargs["approx_ok"] == 0:
+            kwargs["approx_ok"] = False
+        elif kwargs["approx_ok"] == 1:
+            kwargs["approx_ok"] = True
+        elif isinstance(kwargs["approx_ok"], int):
+            raise Exception("approx_ok value should be 0/1/False/True")
+
+    # can_return_null is used in other methods
+    if "can_return_null" in kwargs:
+        kwargs["can_return_none"] = kwargs["can_return_null"];
+        del kwargs["can_return_null"]
+
+    return $action(self, *args, **kwargs)
+%}
+
 }
 
 %extend GDALDatasetShadow {

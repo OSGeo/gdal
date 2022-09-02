@@ -6320,8 +6320,14 @@ SWIGINTERN int GDALRasterBandShadow_Checksum(GDALRasterBandShadow *self,int xoff
     int nysize = (ysize!=0) ? *ysize : GDALGetRasterBandYSize( self );
     return GDALChecksumImage( self, xoff, yoff, nxsize, nysize );
   }
-SWIGINTERN void GDALRasterBandShadow_ComputeRasterMinMax(GDALRasterBandShadow *self,double argout[2],int approx_ok=0){
-    GDALComputeRasterMinMax( self, approx_ok, argout );
+SWIGINTERN void GDALRasterBandShadow_ComputeRasterMinMax(GDALRasterBandShadow *self,double argout[2],int *isvalid,bool approx_ok=false,bool can_return_none=false){
+    *isvalid = GDALComputeRasterMinMax( self, approx_ok, argout ) == CE_None;
+    if( !can_return_none && !*isvalid )
+    {
+        *isvalid = true;
+        argout[0] = CPLAtof("nan");
+        argout[1] = CPLAtof("nan");
+    }
   }
 SWIGINTERN void GDALRasterBandShadow_ComputeBandStats(GDALRasterBandShadow *self,double argout[2],int samplestep=1){
     GDALComputeBandStats( self, samplestep, argout+0, argout+1,
@@ -31721,35 +31727,52 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_Band_ComputeRasterMinMax(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_Band_ComputeRasterMinMax(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   double *arg2 ;
-  int arg3 = (int) 0 ;
+  int *arg3 = (int *) 0 ;
+  bool arg4 = (bool) false ;
+  bool arg5 = (bool) false ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   double argout2[2] ;
-  int val3 ;
-  int ecode3 = 0 ;
-  PyObject *swig_obj[2] ;
+  int isvalid2 ;
+  bool val4 ;
+  int ecode4 = 0 ;
+  bool val5 ;
+  int ecode5 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  char * kwnames[] = {
+    (char *)"self",  (char *)"approx_ok",  (char *)"can_return_none",  NULL 
+  };
   
   {
-    /* %typemap(in,numinputs=0) (double argout2[ANY]) */
-    memset(argout2, 0, sizeof(argout2));
+    /* %typemap(in,numinputs=0) (double argout2[2], int* isvalid2) */
     arg2 = argout2;
+    arg3 = &isvalid2;
   }
-  if (!SWIG_Python_UnpackTuple(args, "Band_ComputeRasterMinMax", 1, 2, swig_obj)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OO:Band_ComputeRasterMinMax", kwnames, &obj0, &obj1, &obj2)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_ComputeRasterMinMax" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
-  if (swig_obj[1]) {
-    ecode3 = SWIG_AsVal_int(swig_obj[1], &val3);
-    if (!SWIG_IsOK(ecode3)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Band_ComputeRasterMinMax" "', argument " "3"" of type '" "int""'");
+  if (obj1) {
+    ecode4 = SWIG_AsVal_bool(obj1, &val4);
+    if (!SWIG_IsOK(ecode4)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "Band_ComputeRasterMinMax" "', argument " "4"" of type '" "bool""'");
     } 
-    arg3 = static_cast< int >(val3);
+    arg4 = static_cast< bool >(val4);
+  }
+  if (obj2) {
+    ecode5 = SWIG_AsVal_bool(obj2, &val5);
+    if (!SWIG_IsOK(ecode5)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "Band_ComputeRasterMinMax" "', argument " "5"" of type '" "bool""'");
+    } 
+    arg5 = static_cast< bool >(val5);
   }
   {
     if ( bUseExceptions ) {
@@ -31757,7 +31780,7 @@ SWIGINTERN PyObject *_wrap_Band_ComputeRasterMinMax(PyObject *SWIGUNUSEDPARM(sel
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      GDALRasterBandShadow_ComputeRasterMinMax(arg1,arg2,arg3);
+      GDALRasterBandShadow_ComputeRasterMinMax(arg1,arg2,arg3,arg4,arg5);
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -31771,9 +31794,16 @@ SWIGINTERN PyObject *_wrap_Band_ComputeRasterMinMax(PyObject *SWIGUNUSEDPARM(sel
   }
   resultobj = SWIG_Py_Void();
   {
-    /* %typemap(argout) (double argout[ANY]) */
-    PyObject *out = CreateTupleFromDoubleArray( arg2, 2 );
-    resultobj = t_output_helper(resultobj,out);
+    /* %typemap(argout) (double argout[2], int* isvalid)  */
+    PyObject *r;
+    if ( !*arg3 ) {
+      Py_INCREF(Py_None);
+      r = Py_None;
+    }
+    else {
+      r = CreateTupleFromDoubleArray(arg2, 2);
+    }
+    resultobj = t_output_helper(resultobj,r);
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -46392,7 +46422,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "Band_GetOverviewCount", _wrap_Band_GetOverviewCount, METH_O, "Band_GetOverviewCount(Band self) -> int"},
 	 { "Band_GetOverview", _wrap_Band_GetOverview, METH_VARARGS, "Band_GetOverview(Band self, int i) -> Band"},
 	 { "Band_Checksum", (PyCFunction)(void(*)(void))_wrap_Band_Checksum, METH_VARARGS|METH_KEYWORDS, "Band_Checksum(Band self, int xoff=0, int yoff=0, int * xsize=None, int * ysize=None) -> int"},
-	 { "Band_ComputeRasterMinMax", _wrap_Band_ComputeRasterMinMax, METH_VARARGS, "Band_ComputeRasterMinMax(Band self, int approx_ok=0)"},
+	 { "Band_ComputeRasterMinMax", (PyCFunction)(void(*)(void))_wrap_Band_ComputeRasterMinMax, METH_VARARGS|METH_KEYWORDS, "Band_ComputeRasterMinMax(Band self, bool approx_ok=False, bool can_return_none=False)"},
 	 { "Band_ComputeBandStats", _wrap_Band_ComputeBandStats, METH_VARARGS, "Band_ComputeBandStats(Band self, int samplestep=1)"},
 	 { "Band_Fill", _wrap_Band_Fill, METH_VARARGS, "Band_Fill(Band self, double real_fill, double imag_fill=0.0) -> CPLErr"},
 	 { "Band_WriteRaster", (PyCFunction)(void(*)(void))_wrap_Band_WriteRaster, METH_VARARGS|METH_KEYWORDS, "Band_WriteRaster(Band self, int xoff, int yoff, int xsize, int ysize, GIntBig buf_len, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None) -> CPLErr"},
