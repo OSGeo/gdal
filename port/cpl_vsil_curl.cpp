@@ -962,18 +962,33 @@ static bool Iso8601ToUnixTime(const char* pszDT, GIntBig* pnUnixTime)
 
 void VSICurlHandle::ManagePlanetaryComputerSigning()
 {
-    if( m_bPlanetaryComputerURLSigning &&
-        !m_osPlanetaryComputerCollection.empty() )
+    if( !m_bPlanetaryComputerURLSigning )
+        return;
+
+    // Take global lock
+    static std::mutex goMutex;
+    std::lock_guard<std::mutex> oLock(goMutex);
+
+    struct PCSigningInfo
     {
-        static std::mutex goMutex;
-        static std::string gosCollection;
-        static std::string gosQueryString;
-        static GIntBig gnExpireTimestamp = 0;
-        std::lock_guard<std::mutex> oLock(goMutex);
-        const auto nTimestamp = time(nullptr);
-        constexpr int knExpirationDelayMargin = 60;
-        if( gosCollection != m_osPlanetaryComputerCollection ||
-            nTimestamp + knExpirationDelayMargin > gnExpireTimestamp )
+        std::string osQueryString{};
+        GIntBig     nExpireTimestamp = 0;
+    };
+
+    PCSigningInfo sSigningInfo;
+    constexpr int knExpirationDelayMargin = 60;
+
+    if( !m_osPlanetaryComputerCollection.empty() )
+    {
+        // key is the name of a collection
+        static lru11::Cache<std::string, PCSigningInfo> goCacheCollection{1024};
+
+        if( goCacheCollection.tryGet(m_osPlanetaryComputerCollection, sSigningInfo) &&
+            time(nullptr) + knExpirationDelayMargin <= sSigningInfo.nExpireTimestamp )
+        {
+            m_osQueryString = sSigningInfo.osQueryString;
+        }
+        else
         {
             const auto psResult = CPLHTTPFetch(
                 (std::string(CPLGetConfigOption(
@@ -988,43 +1003,60 @@ void VSICurlHandle::ManagePlanetaryComputerSigning()
                 {
                     m_osQueryString = '?';
                     m_osQueryString += pszToken;
-                    gosCollection = m_osPlanetaryComputerCollection;
-                    gosQueryString = m_osQueryString;
-                    gnExpireTimestamp = 0;
+
+                    sSigningInfo.osQueryString = m_osQueryString;
+                    sSigningInfo.nExpireTimestamp = 0;
+                    const char* pszExpiry = aosKeyVals.FetchNameValue("msft:expiry");
+                    if( pszExpiry )
+                    {
+                        Iso8601ToUnixTime(pszExpiry, &sSigningInfo.nExpireTimestamp);
+                    }
+                    goCacheCollection.insert(m_osPlanetaryComputerCollection, sSigningInfo);
+
                     CPLDebug("VSICURL", "Got token from Planetary Computer: %s", m_osQueryString.c_str());
                 }
-                const char* pszExpiry = aosKeyVals.FetchNameValue("msft:expiry");
-                if( pszExpiry )
-                {
-                    Iso8601ToUnixTime(pszExpiry, &gnExpireTimestamp);
-                }
-
                 CPLHTTPDestroyResult(psResult);
             }
         }
+    }
+    else
+    {
+        // key is a URL
+        static lru11::Cache<std::string, PCSigningInfo> goCacheURL{1024};
+
+        if( goCacheURL.tryGet(m_pszURL, sSigningInfo) &&
+            time(nullptr) + knExpirationDelayMargin <= sSigningInfo.nExpireTimestamp )
+        {
+            m_osQueryString = sSigningInfo.osQueryString;
+        }
         else
         {
-            m_osQueryString = gosQueryString;
-        }
-    }
-    else if( m_bPlanetaryComputerURLSigning && m_osQueryString.empty() )
-    {
-        const auto psResult = CPLHTTPFetch(
-            (std::string(CPLGetConfigOption(
-                "VSICURL_PC_SAS_SIGN_HREF_URL", "https://planetarycomputer.microsoft.com/api/sas/v1/sign?href=")) +
-                m_pszURL).c_str(),
-            nullptr);
-        if( psResult )
-        {
-            // We could/should handle expiration...
-            const auto aosKeyVals = ParseSimpleJson(reinterpret_cast<const char*>(psResult->pabyData));
-            const char* pszHref = aosKeyVals.FetchNameValue("href");
-            if( pszHref && STARTS_WITH(pszHref, m_pszURL) )
+            const auto psResult = CPLHTTPFetch(
+                (std::string(CPLGetConfigOption(
+                    "VSICURL_PC_SAS_SIGN_HREF_URL", "https://planetarycomputer.microsoft.com/api/sas/v1/sign?href=")) +
+                    m_pszURL).c_str(),
+                nullptr);
+            if( psResult )
             {
-                m_osQueryString = pszHref + strlen(m_pszURL);
-                CPLDebug("VSICURL", "Got signature from Planetary Computer: %s", m_osQueryString.c_str());
+                const auto aosKeyVals = ParseSimpleJson(reinterpret_cast<const char*>(psResult->pabyData));
+                const char* pszHref = aosKeyVals.FetchNameValue("href");
+                if( pszHref && STARTS_WITH(pszHref, m_pszURL) )
+                {
+                    m_osQueryString = pszHref + strlen(m_pszURL);
+
+                    sSigningInfo.osQueryString = m_osQueryString;
+                    sSigningInfo.nExpireTimestamp = 0;
+                    const char* pszExpiry = aosKeyVals.FetchNameValue("msft:expiry");
+                    if( pszExpiry )
+                    {
+                        Iso8601ToUnixTime(pszExpiry, &sSigningInfo.nExpireTimestamp);
+                    }
+                    goCacheURL.insert(m_pszURL, sSigningInfo);
+
+                    CPLDebug("VSICURL", "Got signature from Planetary Computer: %s", m_osQueryString.c_str());
+                }
+                CPLHTTPDestroyResult(psResult);
             }
-            CPLHTTPDestroyResult(psResult);
         }
     }
 }
