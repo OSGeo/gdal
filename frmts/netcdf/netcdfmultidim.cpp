@@ -508,7 +508,7 @@ netCDFSharedResources::~netCDFSharedResources()
 #ifdef NCDF_DEBUG
         CPLDebug("GDAL_netCDF", "calling nc_close( %d)", m_cdfid);
 #endif
-        int status = nc_close(m_cdfid);
+        int status = GDAL_nc_close(m_cdfid);
         NCDF_ERR(status);
     }
 
@@ -4008,10 +4008,10 @@ GDALDataset *netCDFDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
             status2 = nc_open_mem(CPLGetFilename(osFilenameForNCOpen), nMode, static_cast<size_t>(nVmaSize), pVma, &cdfid);
         }
         else
-          status2 = nc_open(osFilenameForNCOpen, nMode, &cdfid);
+          status2 = GDAL_nc_open(osFilenameForNCOpen, nMode, &cdfid);
         poSharedResources->m_pUffdCtx = pCtx;
 #else
-        status2 = nc_open(osFilenameForNCOpen, nMode, &cdfid);
+        status2 = GDAL_nc_open(osFilenameForNCOpen, nMode, &cdfid);
 #endif
     }
     if( status2 != NC_NOERR )
