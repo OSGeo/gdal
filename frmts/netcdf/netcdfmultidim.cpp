@@ -3245,6 +3245,7 @@ std::vector<GUInt64> netCDFVariable::GetBlockSize() const
     // We add 1 to the dimension count, for 2D char variables that we
     // expose as a 1D variable.
     std::vector<size_t> anTemp(1 + nDimCount);
+    CPLMutexHolderD(&hNCMutex);
     nc_inq_var_chunking(m_gid, m_varid, &nStorageType, &anTemp[0]);
     if( nStorageType == NC_CHUNKED )
     {
