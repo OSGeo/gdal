@@ -278,6 +278,9 @@ int GDALOverviewDataset::CloseDependentDatasets()
 {
     bool bRet = false;
 
+    if( poOvrDS )
+        poOvrDS->SetEnableOverviews(true);
+
     if( poMainDS )
     {
         for( int i = 0; i < nBands; ++i )
