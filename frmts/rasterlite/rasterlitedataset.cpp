@@ -198,8 +198,9 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
         }
         const int nTileXSize = OGR_F_GetFieldAsInteger(hFeat, 2);
         const int nTileYSize = OGR_F_GetFieldAsInteger(hFeat, 3);
-        if( nTileXSize <= 0 || nTileXSize >= std::numeric_limits<int>::max() / 2 ||
-            nTileYSize <= 0 || nTileYSize >= std::numeric_limits<int>::max() / 2 )
+        constexpr int MAX_INT_DIV_2 = std::numeric_limits<int>::max() / 2;
+        if( nTileXSize <= 0 || nTileXSize >= MAX_INT_DIV_2 ||
+            nTileYSize <= 0 || nTileYSize >= MAX_INT_DIV_2 )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "invalid tile size");
             OGR_F_Destroy(hFeat);
@@ -210,10 +211,11 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
 
         const double dfDstXOff = ( oEnvelope.MinX - minx ) / poGDS->adfGeoTransform[1];
         const double dfDstYOff = ( maxy - oEnvelope.MaxY ) / ( -poGDS->adfGeoTransform[5] );
-        if( !(dfDstXOff >= std::numeric_limits<int>::min() / 2 &&
-              dfDstXOff <= std::numeric_limits<int>::max() / 2) ||
-            !(dfDstYOff >= std::numeric_limits<int>::min() / 2 &&
-              dfDstYOff <= std::numeric_limits<int>::max() / 2) )
+        constexpr int MIN_INT_DIV_2 = std::numeric_limits<int>::min() / 2;
+        if( !(dfDstXOff >= MIN_INT_DIV_2 &&
+              dfDstXOff <= MAX_INT_DIV_2) ||
+            !(dfDstYOff >= MIN_INT_DIV_2 &&
+              dfDstYOff <= MAX_INT_DIV_2) )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "invalid geometry");
             OGR_F_Destroy(hFeat);
