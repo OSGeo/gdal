@@ -686,34 +686,38 @@ class DataSource(MajorObject):
         """
         return _ogr.DataSource_GetName(self, *args)
 
-    def DeleteLayer(self, *args) -> "OGRErr":
-        r"""
-        DeleteLayer(DataSource self, int index) -> OGRErr
-
-        OGRErr OGR_DS_DeleteLayer(OGRDataSourceH hDS, int iLayer)
+    def DeleteLayer(self, value) -> "OGRErr":
+        """
+        DeleteLayer(DataSource self, value) -> OGRErr
 
         Delete the indicated layer from the datasource.
 
-        If this method is supported the ODsCDeleteLayer capability will test
-        TRUE on the OGRDataSource.
-
-        Deprecated Use GDALDatasetDeleteLayer() in GDAL 2.0
+        For more details: :c:func:`OGR_DS_DeleteLayer`
 
         Parameters
         -----------
-        hDS:
-            handle to the datasource
-        iLayer:
-            the index of the layer to delete.
+        value: str | int
+            index or name of the layer to delete.
 
         Returns
         -------
-        OGRErr:
-            OGRERR_NONE on success, or OGRERR_UNSUPPORTED_OPERATION if deleting
+        int:
+            :py:const:`osgeo.ogr.OGRERR_NONE` on success, or :py:const:`osgeo.ogr.OGRERR_UNSUPPORTED_OPERATION` if deleting
             layers is not supported for this datasource.
-
         """
-        return _ogr.DataSource_DeleteLayer(self, *args)
+
+        if isinstance(value, str):
+            for i in range(self.GetLayerCount()):
+                name = self.GetLayer(i).GetName()
+                if name == value:
+                    return _ogr.DataSource_DeleteLayer(self, i)
+            raise ValueError("Layer %s not found to delete" % value)
+        elif isinstance(value, int):
+            return _ogr.DataSource_DeleteLayer(self, value)
+        else:
+            raise TypeError("Input %s is not of String or Int type" % type(value))
+
+
 
     def SyncToDisk(self, *args) -> "OGRErr":
         r"""
@@ -1053,19 +1057,6 @@ class DataSource(MajorObject):
             return self.GetLayerByIndex(iLayer)
         else:
             raise TypeError("Input %s is not of String or Int type" % type(iLayer))
-
-    def DeleteLayer(self, value):
-        """Deletes the layer given an index or layer name"""
-        if isinstance(value, str):
-            for i in range(self.GetLayerCount()):
-                name = self.GetLayer(i).GetName()
-                if name == value:
-                    return _ogr.DataSource_DeleteLayer(self, i)
-            raise ValueError("Layer %s not found to delete" % value)
-        elif isinstance(value, int):
-            return _ogr.DataSource_DeleteLayer(self, value)
-        else:
-            raise TypeError("Input %s is not of String or Int type" % type(value))
 
 
 # Register DataSource in _ogr:
@@ -3341,16 +3332,41 @@ class Feature(object):
         """
         return _ogr.Feature_SetFieldInteger64(self, *args)
 
-    def SetField(self, *args) -> "void":
-        r"""
-        SetField(Feature self, int id, char const * value)
-        SetField(Feature self, char const * field_name, char const * value)
-        SetField(Feature self, int id, double value)
-        SetField(Feature self, char const * field_name, double value)
-        SetField(Feature self, int id, int year, int month, int day, int hour, int minute, float second, int tzflag)
-        SetField(Feature self, char const * field_name, int year, int month, int day, int hour, int minute, float second, int tzflag)
+        # With several override, SWIG cannot dispatch automatically unicode strings
+        # to the right implementation, so we have to do it at hand
+    def SetField(self, *args) -> "OGRErr":
         """
+        SetField(self, int id, char value)
+        SetField(self, char name, char value)
+        SetField(self, int id, int value)
+        SetField(self, char name, int value)
+        SetField(self, int id, double value)
+        SetField(self, char name, double value)
+        SetField(self, int id, int year, int month, int day, int hour, int minute,
+            int second, int tzflag)
+        SetField(self, char name, int year, int month, int day, int hour,
+            int minute, int second, int tzflag)
+        """
+
+        if len(args) == 2 and args[1] is None:
+            return _ogr.Feature_SetFieldNull(self, args[0])
+
+        if len(args) == 2 and (type(args[1]) == type(1) or type(args[1]) == type(12345678901234)):
+            fld_index = args[0]
+            if isinstance(fld_index, str):
+                fld_index = self._getfieldindex(fld_index)
+            return _ogr.Feature_SetFieldInteger64(self, fld_index, args[1])
+
+
+        if len(args) == 2 and isinstance(args[1], str):
+            fld_index = args[0]
+            if isinstance(fld_index, str):
+                fld_index = self._getfieldindex(fld_index)
+            return _ogr.Feature_SetFieldString(self, fld_index, args[1])
+
         return _ogr.Feature_SetField(self, *args)
+
+
 
     def SetFieldIntegerList(self, *args) -> "void":
         r"""
@@ -3933,7 +3949,7 @@ class Feature(object):
         else:
             idx = self._getfieldindex(key)
             if idx != -1:
-                self.SetField2(idx, value)
+                self._SetField2(idx, value)
             else:
                 idx = self.GetGeomFieldIndex(key)
                 if idx != -1:
@@ -3977,7 +3993,7 @@ class Feature(object):
             else:
                 return self.SetGeomField(fld_index, value)
         else:
-            return self.SetField2(fld_index, value)
+            return self._SetField2(fld_index, value)
 
     def GetField(self, fld_index):
         if isinstance(fld_index, str):
@@ -4015,45 +4031,11 @@ class Feature(object):
     # For Python3 on non-UTF8 strings
             return self.GetFieldAsBinary(fld_index)
 
-    # With several override, SWIG cannot dispatch automatically unicode strings
-    # to the right implementation, so we have to do it at hand
-    def SetField(self, *args):
-        """
-        SetField(self, int id, char value)
-        SetField(self, char name, char value)
-        SetField(self, int id, int value)
-        SetField(self, char name, int value)
-        SetField(self, int id, double value)
-        SetField(self, char name, double value)
-        SetField(self, int id, int year, int month, int day, int hour, int minute,
-            int second, int tzflag)
-        SetField(self, char name, int year, int month, int day, int hour,
-            int minute, int second, int tzflag)
-        """
-
-        if len(args) == 2 and args[1] is None:
-            return _ogr.Feature_SetFieldNull(self, args[0])
-
-        if len(args) == 2 and (type(args[1]) == type(1) or type(args[1]) == type(12345678901234)):
-            fld_index = args[0]
-            if isinstance(fld_index, str):
-                fld_index = self._getfieldindex(fld_index)
-            return _ogr.Feature_SetFieldInteger64(self, fld_index, args[1])
-
-
-        if len(args) == 2 and isinstance(args[1], str):
-            fld_index = args[0]
-            if isinstance(fld_index, str):
-                fld_index = self._getfieldindex(fld_index)
-            return _ogr.Feature_SetFieldString(self, fld_index, args[1])
-
-        return _ogr.Feature_SetField(self, *args)
-
-    def SetField2(self, fld_index, value):
+    def _SetField2(self, fld_index, value):
         if isinstance(fld_index, str):
             fld_index = self._getfieldindex(fld_index)
         if (fld_index < 0) or (fld_index > self.GetFieldCount()):
-            raise KeyError("Illegal field requested in SetField2()")
+            raise KeyError("Illegal field requested in _SetField2()")
 
         if value is None:
             self.SetFieldNull(fld_index)
@@ -4073,7 +4055,7 @@ class Feature(object):
                 self.SetFieldStringList(fld_index, value)
                 return
             else:
-                raise TypeError('Unsupported type of list in SetField2(). Type of element is %s' % str(type(value[0])))
+                raise TypeError('Unsupported type of list in _SetField2(). Type of element is %s' % str(type(value[0])))
 
         try:
             self.SetField(fld_index, value)

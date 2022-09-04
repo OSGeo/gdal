@@ -3411,6 +3411,7 @@ class MDArray(object):
 
     shape = property(fget=GetShape, doc='Returns the shape of the array.')
 
+
     def GetNoDataValue(self):
       """GetNoDataValue(MDArray self) -> value """
 
@@ -3435,7 +3436,6 @@ class MDArray(object):
           return _gdal.MDArray_SetNoDataValueUInt64(self, value)
 
       return _gdal.MDArray_SetNoDataValueDouble(self, value)
-
 
 
 # Register MDArray in _gdal:
@@ -3795,9 +3795,18 @@ class Band(MajorObject):
         r"""SetRasterColorInterpretation(Band self, GDALColorInterp val) -> CPLErr"""
         return _gdal.Band_SetRasterColorInterpretation(self, *args)
 
-    def GetNoDataValue(self, *args) -> "void":
-        r"""GetNoDataValue(Band self)"""
-        return _gdal.Band_GetNoDataValue(self, *args)
+    def GetNoDataValue(self):
+        """GetNoDataValue(Band self) -> value """
+
+        if self.DataType == gdalconst.GDT_Int64:
+            return _gdal.Band_GetNoDataValueAsInt64(self)
+
+        if self.DataType == gdalconst.GDT_UInt64:
+            return _gdal.Band_GetNoDataValueAsUInt64(self)
+
+        return _gdal.Band_GetNoDataValue(self)
+
+
 
     def GetNoDataValueAsInt64(self, *args) -> "void":
         r"""GetNoDataValueAsInt64(Band self)"""
@@ -3807,9 +3816,18 @@ class Band(MajorObject):
         r"""GetNoDataValueAsUInt64(Band self)"""
         return _gdal.Band_GetNoDataValueAsUInt64(self, *args)
 
-    def SetNoDataValue(self, *args) -> "CPLErr":
-        r"""SetNoDataValue(Band self, double d) -> CPLErr"""
-        return _gdal.Band_SetNoDataValue(self, *args)
+    def SetNoDataValue(self, value) -> "CPLErr":
+        """SetNoDataValue(Band self, value) -> CPLErr"""
+
+        if self.DataType == gdalconst.GDT_Int64:
+            return _gdal.Band_SetNoDataValueAsInt64(self, value)
+
+        if self.DataType == gdalconst.GDT_UInt64:
+            return _gdal.Band_SetNoDataValueAsUInt64(self, value)
+
+        return _gdal.Band_SetNoDataValue(self, value)
+
+
 
     def SetNoDataValueAsInt64(self, *args) -> "CPLErr":
         r"""SetNoDataValueAsInt64(Band self, GIntBig v) -> CPLErr"""
@@ -3868,8 +3886,22 @@ class Band(MajorObject):
         return _gdal.Band_GetStatistics(self, *args)
 
     def ComputeStatistics(self, *args) -> "CPLErr":
-        r"""ComputeStatistics(Band self, bool approx_ok, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"""
-        return _gdal.Band_ComputeStatistics(self, *args)
+        """ComputeStatistics(Band self, bool approx_ok, callback=None) -> CPLErr"""
+
+    # For backward compatibility. New SWIG has stricter typing and really
+    # enforces bool
+        approx_ok = args[0]
+        if approx_ok == 0:
+            approx_ok = False
+        elif approx_ok == 1:
+            approx_ok = True
+        new_args = [approx_ok]
+        for arg in args[1:]:
+            new_args.append( arg )
+
+        return _gdal.Band_ComputeStatistics(self, *new_args)
+
+
 
     def SetStatistics(self, *args) -> "CPLErr":
         r"""SetStatistics(Band self, double min, double max, double mean, double stddev) -> CPLErr"""
@@ -4025,23 +4057,6 @@ class Band(MajorObject):
         return _gdal.Band_ReadBlock(self, *args, **kwargs)
 
 
-    def ComputeStatistics(self, *args):
-      """ComputeStatistics(Band self, bool approx_ok, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"""
-
-    # For backward compatibility. New SWIG has stricter typing and really
-    # enforces bool
-      approx_ok = args[0]
-      if approx_ok == 0:
-          approx_ok = False
-      elif approx_ok == 1:
-          approx_ok = True
-      new_args = [approx_ok]
-      for arg in args[1:]:
-          new_args.append( arg )
-
-      return _gdal.Band_ComputeStatistics(self, *new_args)
-
-
     def ReadRaster(self, xoff=0, yoff=0, xsize=None, ysize=None,
                    buf_xsize=None, buf_ysize=None, buf_type=None,
                    buf_pixel_space=None, buf_line_space=None,
@@ -4176,29 +4191,6 @@ class Band(MajorObject):
           else:
               virtualmem = self.GetTiledVirtualMem(eAccess, xoff, yoff, xsize, ysize, tilexsize, tileysize, datatype, cache_size, options)
           return gdal_array.VirtualMemGetArray( virtualmem )
-
-    def GetNoDataValue(self):
-      """GetNoDataValue(Band self) -> value """
-
-      if self.DataType == gdalconst.GDT_Int64:
-          return _gdal.Band_GetNoDataValueAsInt64(self)
-
-      if self.DataType == gdalconst.GDT_UInt64:
-          return _gdal.Band_GetNoDataValueAsUInt64(self)
-
-      return _gdal.Band_GetNoDataValue(self)
-
-
-    def SetNoDataValue(self, value):
-      """SetNoDataValue(Band self, value) -> CPLErr"""
-
-      if self.DataType == gdalconst.GDT_Int64:
-          return _gdal.Band_SetNoDataValueAsInt64(self, value)
-
-      if self.DataType == gdalconst.GDT_UInt64:
-          return _gdal.Band_SetNoDataValueAsUInt64(self, value)
-
-      return _gdal.Band_SetNoDataValue(self, value)
 
 
 
