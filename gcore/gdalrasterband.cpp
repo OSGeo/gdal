@@ -6455,17 +6455,19 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
  * \brief Compute the min/max values for a band.
  *
  * @see GDALRasterBand::ComputeRasterMinMax()
+ *
+ * @note Prior to GDAL 3.6, this function returned void
  */
 
-void CPL_STDCALL
+CPLErr CPL_STDCALL
 GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
                          double adfMinMax[2] )
 
 {
-    VALIDATE_POINTER0( hBand, "GDALComputeRasterMinMax" );
+    VALIDATE_POINTER1( hBand, "GDALComputeRasterMinMax", CE_Failure );
 
     GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
-    poBand->ComputeRasterMinMax( bApproxOK, adfMinMax );
+    return poBand->ComputeRasterMinMax( bApproxOK, adfMinMax );
 }
 
 /************************************************************************/

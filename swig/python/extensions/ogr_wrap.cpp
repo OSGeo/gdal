@@ -10451,7 +10451,7 @@ SWIGINTERN PyObject *_wrap_Layer_GetExtent(PyObject *SWIGUNUSEDPARM(self), PyObj
   int arg6 = (int) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
-  double argout2[6] ;
+  double argout2[4] ;
   int isvalid2 ;
   int val4 ;
   int ecode4 = 0 ;
@@ -10468,7 +10468,7 @@ SWIGINTERN PyObject *_wrap_Layer_GetExtent(PyObject *SWIGUNUSEDPARM(self), PyObj
   };
   
   {
-    /* %typemap(in) (double argout2[4], int* isvalid2) */
+    /* %typemap(in,numinputs=0) (double argout2[4], int* isvalid2) */
     arg2 = argout2;
     arg3 = &isvalid2;
   }

@@ -141,49 +141,39 @@
 }
 
 
-
-%typemap(in,numinputs=0) (double argout[6], int* isvalid) ( double argout[6], int isvalid )
+%define TYPEMAP_IN_ARGOUT_ARRAY_IS_VALID(num_values)
+%typemap(in,numinputs=0) (double argout[num_values], int* isvalid) ( double argout[num_values], int isvalid )
 {
-  /* %typemap(in,numinputs=0) (double argout[6], int* isvalid) */
+  /* %typemap(in,numinputs=0) (double argout[num_values], int* isvalid) */
   $1 = argout;
   $2 = &isvalid;
 }
+%enddef
 
-%typemap(argout) (double argout[6], int* isvalid)
+%define TYPEMAP_ARGOUT_ARGOUT_ARRAY_IS_VALID(num_values)
+%typemap(argout) (double argout[num_values], int* isvalid)
 {
-   /* %typemap(argout) (double argout[6], int* isvalid)  */
+   /* %typemap(argout) (double argout[num_values], int* isvalid)  */
   PyObject *r;
   if ( !*$2 ) {
     Py_INCREF(Py_None);
     r = Py_None;
   }
   else {
-    r = CreateTupleFromDoubleArray($1, 6);
+    r = CreateTupleFromDoubleArray($1, num_values);
   }
   $result = t_output_helper($result,r);
 }
+%enddef
 
+TYPEMAP_IN_ARGOUT_ARRAY_IS_VALID(2)
+TYPEMAP_ARGOUT_ARGOUT_ARRAY_IS_VALID(2)
 
-%typemap(in,numinputs=0) (double argout[4], int* isvalid) ( double argout[6], int isvalid )
-{
-  /* %typemap(in) (double argout[4], int* isvalid) */
-  $1 = argout;
-  $2 = &isvalid;
-}
+TYPEMAP_IN_ARGOUT_ARRAY_IS_VALID(4)
+TYPEMAP_ARGOUT_ARGOUT_ARRAY_IS_VALID(4)
 
-%typemap(argout) (double argout[4], int* isvalid)
-{
-   /* %typemap(argout) (double argout[4], int* isvalid)  */
-  PyObject *r;
-  if ( !*$2 ) {
-    Py_INCREF(Py_None);
-    r = Py_None;
-  }
-  else {
-    r = CreateTupleFromDoubleArray($1, 4);
-  }
-  $result = t_output_helper($result,r);
-}
+TYPEMAP_IN_ARGOUT_ARRAY_IS_VALID(6)
+TYPEMAP_ARGOUT_ARGOUT_ARRAY_IS_VALID(6)
 
 
 /*

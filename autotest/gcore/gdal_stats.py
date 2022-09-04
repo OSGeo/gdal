@@ -27,6 +27,7 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
+import math
 import os
 import shutil
 import struct
@@ -791,6 +792,21 @@ def test_stats_all_nodata():
 
     ds = gdal.GetDriverByName("MEM").Create("", 2000, 2000)
     ds.GetRasterBand(1).SetNoDataValue(0)
+
+    with gdaltest.error_handler():
+        minmax = ds.GetRasterBand(1).ComputeRasterMinMax()
+        assert math.isnan(minmax[0])
+        assert math.isnan(minmax[1])
+
+    with gdaltest.error_handler():
+        minmax = ds.GetRasterBand(1).ComputeRasterMinMax(can_return_none=True)
+    assert minmax is None
+
+    with gdaltest.error_handler():
+        # can_return_null also accepted for similarity with other methods
+        minmax = ds.GetRasterBand(1).ComputeRasterMinMax(can_return_null=True)
+    assert minmax is None
+
     approx_ok = 1
     force = 1
     with gdaltest.error_handler():

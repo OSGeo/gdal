@@ -309,9 +309,25 @@ public:
 %clear (int*);
 #endif
 
+#if defined(SWIGPYTHON)
+
+%feature("kwargs") ComputeRasterMinMax;
+  void ComputeRasterMinMax( double argout[2], int* isvalid, bool approx_ok = false, bool can_return_none = false) {
+    *isvalid = GDALComputeRasterMinMax( self, approx_ok, argout ) == CE_None;
+    if( !can_return_none && !*isvalid )
+    {
+        *isvalid = true;
+        argout[0] = CPLAtof("nan");
+        argout[1] = CPLAtof("nan");
+    }
+  }
+%clear (CPLErr);
+
+#else
   void ComputeRasterMinMax( double argout[2], int approx_ok = 0) {
     GDALComputeRasterMinMax( self, approx_ok, argout );
   }
+#endif
 
   void ComputeBandStats( double argout[2], int samplestep = 1) {
     GDALComputeBandStats( self, samplestep, argout+0, argout+1,
