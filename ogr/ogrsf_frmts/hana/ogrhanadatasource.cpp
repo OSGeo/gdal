@@ -1374,10 +1374,18 @@ std::pair<OGRErr, CPLString> OGRHanaDataSource::LaunderName(const char* name)
     odbc::PreparedStatementRef stmt = PrepareStatement(sql);
     stmt->setString(1, odbc::String(newName.c_str()));
     odbc::ResultSetRef rsName = stmt->executeQuery();
-    rsName->next();
-    auto upperCaseName = *rsName->getString(1);
+    OGRErr err = OGRERR_NONE;
+    if (rsName->next())
+    {
+        newName.swap(*rsName->getString(1));
+    }
+    else
+    {
+        err = OGRERR_FAILURE;
+        newName.clear();
+    }
     rsName->close();
-    return {OGRERR_NONE, upperCaseName};
+    return {err, newName};
 }
 
 /************************************************************************/
