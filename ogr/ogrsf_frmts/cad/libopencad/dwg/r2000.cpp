@@ -1765,14 +1765,13 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
                             break;
                         }
 
-                        CADAttrib * attrib = static_cast<CADAttrib *>(
-                                GetGeometry( iLayerIndex, dCurrentEntHandle ) );
-
+                        auto geometry = GetGeometry( iLayerIndex, dCurrentEntHandle );
+                        CADAttrib * attrib = dynamic_cast<CADAttrib *>(geometry);
                         if( attrib )
                         {
                             blockRefAttributes.push_back( CADAttrib( * attrib ) );
-                            delete attrib;
                         }
+                        delete geometry;
                         delete attDefObj;
                         break;
                     }
@@ -1784,14 +1783,13 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
                         else
                             dCurrentEntHandle = attDefObj->stChed.hNextEntity.getAsLong( attDefObj->stCed.hObjectHandle );
 
-                        CADAttrib * attrib = static_cast<CADAttrib *>(
-                                GetGeometry( iLayerIndex, dCurrentEntHandle ) );
-
+                        auto geometry = GetGeometry( iLayerIndex, dCurrentEntHandle );
+                        CADAttrib * attrib = dynamic_cast<CADAttrib *>(geometry);
                         if( attrib )
                         {
                             blockRefAttributes.push_back( CADAttrib( * attrib ) );
-                            delete attrib;
                         }
+                        delete geometry;
                         delete attDefObj;
                     }
                     else
