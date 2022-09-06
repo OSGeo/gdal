@@ -996,6 +996,19 @@ def test_gdal_translate_lib_overview_level():
 
 
 ###############################################################################
+# Test copying a raster with no input band
+
+
+def test_gdal_translate_lib_no_input_band():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 0)
+    with gdaltest.error_handler():
+        gdal.Translate("", src_ds, format="MEM")
+    with gdaltest.error_handler():
+        gdal.Translate("", src_ds, format="MEM", outputType=gdal.GDT_Int16)
+
+
+###############################################################################
 # Cleanup
 
 

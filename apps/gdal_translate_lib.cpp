@@ -1385,14 +1385,14 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     // Build overview dataset if -ovr is specified
     GDALDataset* poSrcOvrDS = nullptr;
     GDALDataset* poSrcDSOri = poSrcDS;
-    const int nOvCount = poSrcDS->GetRasterBand(1)->GetOverviewCount();
-    if( psOptions->nOvLevel < OVR_LEVEL_AUTO && nOvCount > 0 )
+    const auto poFirstBand = poSrcDS->GetRasterBand(1);
+    const int nOvCount = poFirstBand ? poFirstBand->GetOverviewCount() : 0;
+    if( psOptions->nOvLevel < OVR_LEVEL_AUTO && poFirstBand && nOvCount > 0 )
     {
         int iOvr = 0;
         for( ; iOvr < nOvCount - 1; iOvr++ )
         {
-            if( poSrcDS->GetRasterBand(1)->GetOverview(iOvr)->
-                        GetXSize() <= nOXSize )
+            if( poFirstBand->GetOverview(iOvr)->GetXSize() <= nOXSize )
             {
                 break;
             }
