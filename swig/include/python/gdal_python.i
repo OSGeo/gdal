@@ -496,23 +496,6 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
 
 %pythoncode %{
 
-  def ComputeStatistics(self, *args):
-    """ComputeStatistics(Band self, bool approx_ok, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"""
-
-    # For backward compatibility. New SWIG has stricter typing and really
-    # enforces bool
-    approx_ok = args[0]
-    if approx_ok == 0:
-        approx_ok = False
-    elif approx_ok == 1:
-        approx_ok = True
-    new_args = [approx_ok]
-    for arg in args[1:]:
-        new_args.append( arg )
-
-    return _gdal.Band_ComputeStatistics(self, *new_args)
-
-
   def ReadRaster(self, xoff=0, yoff=0, xsize=None, ysize=None,
                  buf_xsize=None, buf_ysize=None, buf_type=None,
                  buf_pixel_space=None, buf_line_space=None,
@@ -648,7 +631,28 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
             virtualmem = self.GetTiledVirtualMem(eAccess, xoff, yoff, xsize, ysize, tilexsize, tileysize, datatype, cache_size, options)
         return gdal_array.VirtualMemGetArray( virtualmem )
 
-  def GetNoDataValue(self):
+%}
+
+%feature("shadow") ComputeStatistics %{
+def ComputeStatistics(self, *args) -> "CPLErr":
+    """ComputeStatistics(Band self, bool approx_ok, callback=None) -> CPLErr"""
+
+    # For backward compatibility. New SWIG has stricter typing and really
+    # enforces bool
+    approx_ok = args[0]
+    if approx_ok == 0:
+        approx_ok = False
+    elif approx_ok == 1:
+        approx_ok = True
+    new_args = [approx_ok]
+    for arg in args[1:]:
+        new_args.append( arg )
+
+    return $action(self, *new_args)
+%}
+
+%feature("shadow") GetNoDataValue %{
+def GetNoDataValue(self):
     """GetNoDataValue(Band self) -> value """
 
     if self.DataType == gdalconst.GDT_Int64:
@@ -657,10 +661,12 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
     if self.DataType == gdalconst.GDT_UInt64:
         return _gdal.Band_GetNoDataValueAsUInt64(self)
 
-    return _gdal.Band_GetNoDataValue(self)
+    return $action(self)
+%}
 
 
-  def SetNoDataValue(self, value):
+%feature("shadow") SetNoDataValue %{
+def SetNoDataValue(self, value) -> "CPLErr":
     """SetNoDataValue(Band self, value) -> CPLErr"""
 
     if self.DataType == gdalconst.GDT_Int64:
@@ -669,8 +675,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
     if self.DataType == gdalconst.GDT_UInt64:
         return _gdal.Band_SetNoDataValueAsUInt64(self, value)
 
-    return _gdal.Band_SetNoDataValue(self, value)
-
+    return $action(self, value)
 %}
 
 %feature("shadow") ComputeRasterMinMax %{
@@ -1040,6 +1045,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         else:
             return self._SetGCPs2(gcps, wkt_or_spatial_ref)
 %}
+
 }
 
 %extend GDALMajorObjectShadow {
@@ -1268,6 +1274,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
 
   shape = property(fget=GetShape, doc='Returns the shape of the array.')
 
+
   def GetNoDataValue(self):
     """GetNoDataValue(MDArray self) -> value """
 
@@ -1292,8 +1299,8 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         return _gdal.MDArray_SetNoDataValueUInt64(self, value)
 
     return _gdal.MDArray_SetNoDataValueDouble(self, value)
-
 %}
+
 }
 
 %extend GDALAttributeHS {

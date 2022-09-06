@@ -101,30 +101,6 @@ OGRLayerH:
     a handle to the layer, or NULL if an error occurs.
 ";
 
-%feature("docstring")  DeleteLayer "
-OGRErr OGR_DS_DeleteLayer(OGRDataSourceH hDS, int iLayer)
-
-Delete the indicated layer from the datasource.
-
-If this method is supported the ODsCDeleteLayer capability will test
-TRUE on the OGRDataSource.
-
-Deprecated Use GDALDatasetDeleteLayer() in GDAL 2.0
-
-Parameters
------------
-hDS:
-    handle to the datasource
-iLayer:
-    the index of the layer to delete.
-
-Returns
--------
-OGRErr:
-    OGRERR_NONE on success, or OGRERR_UNSUPPORTED_OPERATION if deleting
-    layers is not supported for this datasource.
-";
-
 %feature("docstring")  GetLayerByName "OGRLayerH
 OGR_DS_GetLayerByName(OGRDataSourceH hDS, const char \\*pszLayerName)
 
