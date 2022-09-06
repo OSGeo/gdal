@@ -2613,3 +2613,19 @@ def test_netcdf_multidim_read_transposed_bigger_file():
     assert delay < 1
 
     gdal.Unlink("tmp/test_netcdf_multidim_read_transposed_bigger_file.nc")
+
+
+def test_netcdf_multidim_var_alldatatypes_opened_twice():
+    """Test https://github.com/OSGeo/gdal/pull/6311"""
+
+    ds1 = gdal.OpenEx("data/netcdf/alldatatypes.nc", gdal.OF_MULTIDIM_RASTER)
+    assert ds1
+    rg1 = ds1.GetRootGroup()
+    assert rg1
+    assert rg1.OpenMDArray("string_var") is not None
+
+    ds2 = gdal.OpenEx("data/netcdf/alldatatypes.nc", gdal.OF_MULTIDIM_RASTER)
+    assert ds2
+    rg2 = ds2.GetRootGroup()
+    assert rg2
+    assert rg2.OpenMDArray("string_var") is not None

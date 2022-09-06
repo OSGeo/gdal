@@ -162,6 +162,57 @@ static CPLErr NCDFGetCoordAndBoundVarFullNames( int nCdfId,
 
 CPLMutex *hNCMutex = nullptr;
 
+// Workaround https://github.com/OSGeo/gdal/issues/6253
+// Having 2 netCDF handles on the same file doesn't work in a multi-threaded
+// way. Apparently having the same handle works better (this is OK since
+// we have a global mutex on the netCDF library)
+static std::map<std::string, int> goMapNameToNetCDFId;
+static std::map<int, std::pair<std::string, int>> goMapNetCDFIdToKeyAndCount;
+
+int GDAL_nc_open(const char* pszFilename, int nMode, int* pID)
+{
+    std::string osKey(pszFilename);
+    osKey += "#####";
+    osKey += std::to_string(nMode);
+    auto oIter = goMapNameToNetCDFId.find(osKey);
+    if( oIter == goMapNameToNetCDFId.end() )
+    {
+        int ret = nc_open(pszFilename, nMode, pID);
+        if( ret != NC_NOERR )
+            return ret;
+        goMapNameToNetCDFId[osKey] = *pID;
+        goMapNetCDFIdToKeyAndCount[*pID] = std::pair<std::string, int>(osKey, 1);
+        return ret;
+    }
+    else
+    {
+        *pID = oIter->second;
+        goMapNetCDFIdToKeyAndCount[oIter->second].second ++;
+        return NC_NOERR;
+    }
+}
+
+int GDAL_nc_close(int cdfid)
+{
+    int ret = NC_NOERR;
+    auto oIter = goMapNetCDFIdToKeyAndCount.find(cdfid);
+    if( oIter != goMapNetCDFIdToKeyAndCount.end() )
+    {
+        if( --oIter->second.second == 0 )
+        {
+            ret = nc_close(cdfid);
+            goMapNameToNetCDFId.erase(oIter->second.first);
+            goMapNetCDFIdToKeyAndCount.erase(oIter);
+        }
+    }
+    else
+    {
+        // we can go here if file opened with nc_open_mem() or nc_create()
+        ret = nc_close(cdfid);
+    }
+    return ret;
+}
+
 /************************************************************************/
 /* ==================================================================== */
 /*                         netCDFRasterBand                             */
@@ -2834,7 +2885,7 @@ netCDFDataset::~netCDFDataset()
 #ifdef NCDF_DEBUG
         CPLDebug("GDAL_netCDF", "calling nc_close( %d)", cdfid);
 #endif
-        int status = nc_close(cdfid);
+        int status = GDAL_nc_close(cdfid);
 #ifdef ENABLE_UFFD
         NETCDF_UFFD_UNMAP(pCtx);
 #endif
@@ -7472,7 +7523,7 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
                   eFormat == NCDF_FORMAT_NC4,
                   nLayerId, nDimIdToGrow, nNewSize) )
     {
-        nc_close(new_cdfid);
+        GDAL_nc_close(new_cdfid);
         return false;
     }
 
@@ -7498,7 +7549,7 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
             if( status != NC_NOERR )
             {
                 CPLFree(panGroupIds);
-                nc_close(new_cdfid);
+                GDAL_nc_close(new_cdfid);
                 return false;
             }
             if( !CloneGrp(panGroupIds[i], nNewGrpId,
@@ -7506,7 +7557,7 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
                           nLayerId, nDimIdToGrow, nNewSize) )
             {
                 CPLFree(panGroupIds);
-                nc_close(new_cdfid);
+                GDAL_nc_close(new_cdfid);
                 return false;
             }
         }
@@ -7527,9 +7578,9 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
     }
 #endif
 
-    nc_close(cdfid);
+    GDAL_nc_close(cdfid);
     cdfid = -1;
-    nc_close(new_cdfid);
+    GDAL_nc_close(new_cdfid);
 
     CPLString osOriFilename(osFilename + ".ori");
     if( VSIRename(osFilename, osOriFilename) != 0 ||
@@ -7549,7 +7600,7 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
         CPLFree(pszTemp);
     }
 #endif
-    status = nc_open(osFilenameForNCOpen, NC_WRITE, &cdfid);
+    status = GDAL_nc_open(osFilenameForNCOpen, NC_WRITE, &cdfid);
     NCDF_ERR(status);
     if( status != NC_NOERR )
         return false;
@@ -8281,7 +8332,7 @@ bool netCDFDatasetCreateTempFile( NetCDFFormatEnum eFormat,
         }
     }
 
-    nc_close(nCdfId);
+    GDAL_nc_close(nCdfId);
     return true;
 }
 
@@ -8517,9 +8568,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
             status2 = nc_open_mem(CPLGetFilename(osFilenameForNCOpen), nMode, static_cast<size_t>(nVmaSize), pVma, &cdfid);
         }
         else
-            status2 = nc_open(osFilenameForNCOpen, nMode, &cdfid);
+            status2 = GDAL_nc_open(osFilenameForNCOpen, nMode, &cdfid);
 #else
-        status2 = nc_open(osFilenameForNCOpen, nMode, &cdfid);
+        status2 = GDAL_nc_open(osFilenameForNCOpen, nMode, &cdfid);
 #endif
     }
     if( status2 != NC_NOERR )
@@ -8604,7 +8655,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
                      "%s is a netCDF file, but %s is not a variable.",
                      poOpenInfo->pszFilename, osSubdatasetName.c_str());
 
-            nc_close(cdfid);
+            GDAL_nc_close(cdfid);
 #ifdef ENABLE_UFFD
             NETCDF_UFFD_UNMAP(pCtx);
 #endif
