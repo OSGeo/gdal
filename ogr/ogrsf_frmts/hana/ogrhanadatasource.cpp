@@ -166,19 +166,19 @@ CPLString BuildConnectionString(char** openOptions)
     const char* paramDSN =
         CSLFetchNameValueDef(openOptions, OpenOptionsConstants::DSN, nullptr);
     const char* paramDriver =
-        CSLFetchNameValueDef(openOptions, OpenOptionsConstants::DRIVER, "");
+        CSLFetchNameValueDef(openOptions, OpenOptionsConstants::DRIVER, nullptr);
     const char* paramHost =
-        CSLFetchNameValueDef(openOptions, OpenOptionsConstants::HOST, "");
+        CSLFetchNameValueDef(openOptions, OpenOptionsConstants::HOST, nullptr);
     const char* paramPort =
-        CSLFetchNameValueDef(openOptions, OpenOptionsConstants::PORT, "");
+        CSLFetchNameValueDef(openOptions, OpenOptionsConstants::PORT, nullptr);
     const char* paramDatabase =
         CSLFetchNameValueDef(openOptions, OpenOptionsConstants::DATABASE, "");
     const char* paramUser =
-        CSLFetchNameValueDef(openOptions, OpenOptionsConstants::USER, "");
+        CSLFetchNameValueDef(openOptions, OpenOptionsConstants::USER, nullptr);
     const char* paramPassword =
-        CSLFetchNameValueDef(openOptions, OpenOptionsConstants::PASSWORD, "");
+        CSLFetchNameValueDef(openOptions, OpenOptionsConstants::PASSWORD, nullptr);
     const char* paramSchema =
-        CSLFetchNameValueDef(openOptions, OpenOptionsConstants::SCHEMA, "");
+        CSLFetchNameValueDef(openOptions, OpenOptionsConstants::SCHEMA, nullptr);
 
     if (CPLFetchBool(openOptions, OpenOptionsConstants::ENCRYPT, false))
     {
@@ -198,6 +198,33 @@ CPLString BuildConnectionString(char** openOptions)
     addParameter(OpenOptionsConstants::PACKET_SIZE, "PACKETSIZE");
     addParameter(
         OpenOptionsConstants::SPLIT_BATCH_COMMANDS, "SPLITBATCHCOMMANDS");
+
+    bool isValid = true;
+    auto checkMandatoryParameter = [&isValid](const char* paramName, const char* paramValue)
+    {
+        if (paramValue != nullptr)
+            return;
+
+        isValid = false;
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Mandatory connection parameter '%s' is missing.", paramName);
+    };
+
+    // Check all mandatory parameters
+    if (paramDSN == nullptr)
+    {
+        checkMandatoryParameter(OpenOptionsConstants::DRIVER, paramDriver);
+        checkMandatoryParameter(OpenOptionsConstants::HOST, paramHost);
+        checkMandatoryParameter(OpenOptionsConstants::PORT, paramPort);
+    }
+
+    checkMandatoryParameter(OpenOptionsConstants::USER, paramUser);
+    checkMandatoryParameter(OpenOptionsConstants::PASSWORD, paramPassword);
+    checkMandatoryParameter(OpenOptionsConstants::SCHEMA, paramSchema);
+
+    if (!isValid)
+        return "";
 
     // For more details on how to escape special characters in passwords,
     // see
@@ -647,20 +674,17 @@ int OGRHanaDataSource::Open(const char* newName, char** openOptions, int update)
     std::size_t prefixLength = strlen(GetPrefix());
     char** connOptions = CSLTokenizeStringComplex(newName + prefixLength, ";", TRUE, FALSE);
 
-    int ret = FALSE;
-
     const char* paramSchema = CSLFetchNameValueDef(
         connOptions, OpenOptionsConstants::SCHEMA, nullptr);
-    if (paramSchema == nullptr)
-    {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "HANA parameter '%s' is missing:\n", "SCHEMA");
-    }
-    else
-    {
+    if (paramSchema != nullptr)
         schemaName_ = paramSchema;
 
+    int ret = FALSE;
+
+    CPLString connectionStr = BuildConnectionString(connOptions);
+
+    if (!connectionStr.empty())
+    {
         connEnv_ = odbc::Environment::create();
         conn_ = connEnv_->createConnection();
         conn_->setAutoCommit(false);
@@ -673,7 +697,6 @@ int OGRHanaDataSource::Open(const char* newName, char** openOptions, int update)
 
         try
         {
-            CPLString connectionStr = BuildConnectionString(connOptions);
             conn_->connect(connectionStr.c_str());
         }
         catch (const odbc::Exception& ex)
