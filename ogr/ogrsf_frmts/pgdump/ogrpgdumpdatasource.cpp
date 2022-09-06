@@ -457,16 +457,16 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
         if (eType == wkbNone)
             osCommand.Printf(
                 "%s ( "
-                "   %s %s, "
-                "   CONSTRAINT \"%s_pk\" PRIMARY KEY (%s) )",
+                "%s %s, "
+                "CONSTRAINT \"%s_pk\" PRIMARY KEY (%s) )",
                 osCreateTable.c_str(), osFIDColumnNameEscaped.c_str(),
                 pszSerialType, pszTableName, osFIDColumnNameEscaped.c_str() );
         else
             osCommand.Printf(
                 "%s ( "
-                "   %s %s, "
-                "   WKB_GEOMETRY %s, "
-                "   CONSTRAINT \"%s_pk\" PRIMARY KEY (%s) )",
+                "%s %s, "
+                "WKB_GEOMETRY %s, "
+                "CONSTRAINT \"%s_pk\" PRIMARY KEY (%s) )",
                 osCreateTable.c_str(), osFIDColumnNameEscaped.c_str(),
                 pszSerialType, pszGeomType, pszTableName,
                 osFIDColumnNameEscaped.c_str() );
