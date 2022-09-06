@@ -20,94 +20,96 @@ Implementing the Dataset
 
 We will start showing minimal implementation of a read-only driver for the Japanese DEM format (`jdemdataset.cpp <https://github.com/OSGeo/gdal/blob/master/frmts/jdem/jdemdataset.cpp>`_). First we declare a format specific dataset class, JDEMDataset in this case.
 
-.. code-block::
+.. code-block:: c++
 
-    class JDEMDataset : public GDALPamDataset
+    class JDEMDataset final: public GDALPamDataset
     {
         friend class JDEMRasterBand;
-        FILE        *fp;
-        GByte       abyHeader[1012];
 
-    public:
-                    ~JDEMDataset();
+        VSILFILE           *m_fp = nullptr;
+        GByte               m_abyHeader[HEADER_SIZE];
+        OGRSpatialReference m_oSRS{};
+
+      public:
+                         JDEMDataset();
+                        ~JDEMDataset();
+
         static GDALDataset *Open( GDALOpenInfo * );
-        static int          Identify( GDALOpenInfo * );
-        CPLErr      GetGeoTransform( double * padfTransform );
-        const char *GetProjectionRef();
+        static int Identify( GDALOpenInfo * );
+
+        CPLErr GetGeoTransform( double * padfTransform ) override;
+        const OGRSpatialReference* GetSpatialRef() const override;
     };
 
 In general we provide capabilities for a driver, by overriding the various virtual methods on the GDALDataset base class. However, the Open() method is special. This is not a virtual method on the base class, and we will need a freestanding function for this operation, so we declare it static. Implementing it as a method in the JDEMDataset class is convenient because we have privileged access to modify the contents of the database object.
 
 The open method itself may look something like this:
 
-.. code-block::
+.. code-block:: c++
 
     GDALDataset *JDEMDataset::Open( GDALOpenInfo *poOpenInfo )
     {
         // Confirm that the header is compatible with a JDEM dataset.
-        if( !Identify(poOpenInfo) )
-            return NULL;
+        if (!Identify(poOpenInfo))
+            return nullptr;
 
         // Confirm the requested access is supported.
         if( poOpenInfo->eAccess == GA_Update )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                    "The JDEM driver does not support update access to existing "
-                    "datasets.");
-            return NULL;
+                     "The JDEM driver does not support update access to existing "
+                     "datasets.");
+            return nullptr;
         }
 
-        // Check that the file pointer from GDALOpenInfo* is available
-        if( poOpenInfo->fpL == NULL )
+        // Check that the file pointer from GDALOpenInfo* is available.
+        if( poOpenInfo->fpL == nullptr )
         {
-            return NULL;
+            return nullptr;
         }
 
         // Create a corresponding GDALDataset.
-        JDEMDataset *poDS = new JDEMDataset();
+        auto poDS = cpl::make_unique<JDEMDataset>();
 
         // Borrow the file pointer from GDALOpenInfo*.
-        poDS->fp = poOpenInfo->fpL;
-        poOpenInfo->fpL = NULL;
+        std::swap(poDS->m_fp, poOpenInfo->fpL);
 
-        // Read the header.
-        VSIFReadL(poDS->abyHeader, 1, 1012, poDS->fp);
-        poDS->nRasterXSize =
-            JDEMGetField(reinterpret_cast<char *>(poDS->abyHeader) + 23, 3);
-        poDS->nRasterYSize =
-            JDEMGetField(reinterpret_cast<char *>(poDS->abyHeader) + 26, 3);
-        if( poDS->nRasterXSize <= 0 || poDS->nRasterYSize <= 0 )
+        // Store the header (we have already checked it is at least HEADER_SIZE
+        // byte large).
+        memcpy(poDS->m_abyHeader, poOpenInfo->pabyHeader, HEADER_SIZE);
+
+        const char *psHeader = reinterpret_cast<const char *>(poDS->m_abyHeader);
+        poDS->nRasterXSize = JDEMGetField(psHeader + 23, 3);
+        poDS->nRasterYSize = JDEMGetField(psHeader + 26, 3);
+        if( !GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) )
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                    "Invalid dimensions : %d x %d",
-                    poDS->nRasterXSize, poDS->nRasterYSize);
-            delete poDS;
-            return NULL;
+            return nullptr;
         }
 
         // Create band information objects.
-        poDS->SetBand(1, new JDEMRasterBand(poDS, 1));
+        poDS->SetBand(1, new JDEMRasterBand(poDS.get(), 1));
 
         // Initialize any PAM information.
         poDS->SetDescription(poOpenInfo->pszFilename);
         poDS->TryLoadXML();
 
-        // Initialize default overviews.
-        poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
-        return poDS;
+        // Check for overviews.
+        poDS->oOvManager.Initialize(poDS.get(), poOpenInfo->pszFilename);
+
+        return poDS.release();
     }
 
 The first step in any database Open function is to verify that the file
 being passed is in fact of the type this driver is for.  It is important
 to realize that each driver's Open function is called in turn till one
-succeeds.  Drivers must quietly return NULL if the passed file is not of
+succeeds.  Drivers must quietly return nullptr if the passed file is not of
 their format.  They should only produce an error if the file does appear to
 be of their supported format, but is for some reason unsupported or corrupt.
 The information on the file to be opened is passed in contained in a
 GDALOpenInfo object.  The GDALOpenInfo includes the following public
 data members:
 
-.. code-block::
+.. code-block:: c++
 
     char        *pszFilename;
     char**      papszOpenOptions;
@@ -125,42 +127,59 @@ In this typical testing example it is verified that the file was successfully op
 
 The identification is in fact delegated to a Identify() static function :
 
-.. code-block::
+.. code-block:: c++
 
     /************************************************************************/
     /*                              Identify()                              */
     /************************************************************************/
     int JDEMDataset::Identify( GDALOpenInfo * poOpenInfo )
     {
-        // Confirm that the header has what appears to be dates in the
-        // expected locations.  Sadly this is a relatively weak test.
-        if( poOpenInfo->nHeaderBytes < 50 )
+        if( poOpenInfo->nHeaderBytes < HEADER_SIZE )
             return FALSE;
 
+        // Confirm that the header has what appears to be dates in the
+        // expected locations.
         // Check if century values seem reasonable.
         const char *psHeader = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
-        if( (!EQUALN(psHeader + 11, "19", 2) &&
-            !EQUALN(psHeader + 11, "20", 2)) ||
-            (!EQUALN(psHeader + 15, "19", 2) &&
-            !EQUALN(psHeader + 15, "20", 2)) ||
-            (!EQUALN(psHeader + 19, "19", 2) &&
-            !EQUALN(psHeader + 19, "20", 2)) )
+        if( (!STARTS_WITH_CI(psHeader + 11, "19") &&
+             !STARTS_WITH_CI(psHeader + 11, "20")) ||
+            (!STARTS_WITH_CI(psHeader + 15, "19") &&
+             !STARTS_WITH_CI(psHeader + 15, "20")) ||
+            (!STARTS_WITH_CI(psHeader + 19, "19") &&
+             !STARTS_WITH_CI(psHeader + 19, "20")) )
         {
             return FALSE;
         }
+
+        // Check the extent too. In particular, that we are in the first quadrant,
+        // as this is only for Japan.
+        const double dfLLLat = JDEMGetAngle(psHeader + 29);
+        const double dfLLLong = JDEMGetAngle(psHeader + 36);
+        const double dfURLat = JDEMGetAngle(psHeader + 43);
+        const double dfURLong = JDEMGetAngle(psHeader + 50);
+        if( dfLLLat > 90 || dfLLLat < 0 ||
+            dfLLLong > 180 ||dfLLLong < 0 ||
+            dfURLat > 90 || dfURLat < 0 ||
+            dfURLong > 180 || dfURLong < 0 ||
+            dfLLLat > dfURLat ||
+            dfLLLong > dfURLong )
+        {
+            return FALSE;
+        }
+
         return TRUE;
     }
 
 It is important to make the "is this my format" test as stringent as
-possible.  In this particular case the test is weak, and a file that happened
-to have 19s or 20s at a few locations could be erroneously recognized as
-JDEM format, causing it to not be handled properly.
+possible.  In this particular case, we check that dates are in the 19th or
+20th centry, but as this might also be too weak, we check that the geospatial
+extent is consistent, and valid for Japan.
 Once we are satisfied that the file is of our format, we can do any other
 tests that are necessary to validate the file is usable, and in particular
 that we can provide the level of access desired.  Since the JDEM driver does
 not provide update support, error out in that case.
 
-.. code-block::
+.. code-block:: c++
 
     if( poOpenInfo->eAccess == GA_Update )
     {
@@ -171,55 +190,63 @@ not provide update support, error out in that case.
     }
 
 Next we need to create an instance of the database class in which we will set various information of interest.
+We create it as a std::unique_ptr<JDEMDataset> with the cpl::make_unique<>
+utility (equivalent to std::make_unique<> available in C++14 and later), to
+make memory management easier in error code paths.
 
-.. code-block::
+.. code-block:: c++
 
     // Check that the file pointer from GDALOpenInfo* is available.
     if( poOpenInfo->fpL == NULL )
     {
         return NULL;
     }
-    JDEMDataset *poDS = new JDEMDataset();
+    auto poDS = cpl::make_unique<JDEMDataset>();
 
     // Borrow the file pointer from GDALOpenInfo*.
-    poDS->fp = poOpenInfo->fpL;
-    poOpenInfo->fpL = NULL;
+    std::swap(poDS->m_fp, poOpenInfo->fpL);
 
-At this point we "borrow" the file handle that was held by GDALOpenInfo*. This file pointer uses the VSI*L GDAL API to access files on disk. This virtualized POSIX-style API allows some special capabilities like supporting large files, in-memory files and zipped files.
+At this point we "borrow" the file handle that was held by GDALOpenInfo* (we
+did make sure that poDS->m_fp is initialized to nullptr in the inline member definition).
+This file pointer uses the VSI*L GDAL API to access files on disk. This virtualized POSIX-style API allows some special capabilities like supporting large files, in-memory files and zipped files.
 
 Next the X and Y size are extracted from the header. The `nRasterXSize` and `nRasterYSize` are data fields inherited from the GDALDataset base class, and must be set by the Open() method.
 
-.. code-block::
+.. code-block:: c++
 
-    VSIFReadL(poDS->abyHeader, 1, 1012, poDS->fp);
-    poDS->nRasterXSize =
-        JDEMGetField(reinterpret_cast<char *>(poDS->abyHeader) + 23, 3);
-    poDS->nRasterYSize =
-        JDEMGetField(reinterpret_cast<char *>(poDS->abyHeader) + 26, 3);
-    if  (poDS->nRasterXSize <= 0 || poDS->nRasterYSize <= 0 )
+    // Store the header (we have already checked it is at least HEADER_SIZE
+    // byte large).
+    memcpy(poDS->m_abyHeader, poOpenInfo->pabyHeader, HEADER_SIZE);
+
+    const char *psHeader = reinterpret_cast<const char *>(poDS->m_abyHeader);
+    poDS->nRasterXSize = JDEMGetField(psHeader + 23, 3);
+    poDS->nRasterYSize = JDEMGetField(psHeader + 26, 3);
+    if( !GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                "Invalid dimensions : %d x %d",
-                poDS->nRasterXSize, poDS->nRasterYSize);
-        delete poDS;
-        return NULL;
+        return nullptr;
     }
+
 
 All the bands related to this dataset must be created and attached using the SetBand() method. We will explore the JDEMRasterBand() class shortly.
 
-.. code-block::
+.. code-block:: c++
 
     // Create band information objects.
-    poDS->SetBand(1, new JDEMRasterBand(poDS, 1));
+    poDS->SetBand(1, new JDEMRasterBand(poDS.get(), 1));
 
-Finally we assign a name to the dataset object, and call the GDALPamDataset TryLoadXML() method which can initialize auxiliary information from an .aux.xml file if available. For more details on these services review the GDALPamDataset and related classes.
+Finally we assign a name to the dataset object, and call the GDALPamDataset TryLoadXML() method which can initialize auxiliary information from an .aux.xml file if available. We also initialize for external overviews (in a .ovr
+side car file). For more details on these services review the GDALPamDataset and related classes.
 
-.. code-block::
+.. code-block:: c++
 
         // Initialize any PAM information.
         poDS->SetDescription( poOpenInfo->pszFilename );
         poDS->TryLoadXML();
-        return poDS;
+
+        // Check for overviews.
+        poDS->oOvManager.Initialize(poDS.get(), poOpenInfo->pszFilename);
+
+        return poDS.release();
     }
 
 Implementing the RasterBand
@@ -227,14 +254,23 @@ Implementing the RasterBand
 
 Similar to the customized JDEMDataset class subclassed from GDALDataset, we also need to declare and implement a customized JDEMRasterBand derived from :cpp:class:`GDALRasterBand` for access to the band(s) of the JDEM file. For JDEMRasterBand the declaration looks like this:
 
-.. code-block::
+.. code-block:: c++
 
-    class JDEMRasterBand : public GDALPamRasterBand
+    class JDEMRasterBand final: public GDALPamRasterBand
     {
-    public:
-        JDEMRasterBand( JDEMDataset *, int );
-        virtual CPLErr IReadBlock( int, int, void * );
+        friend class JDEMDataset;
+
+        int          m_nRecordSize = 0;
+        char        *m_pszRecord = nullptr;
+        bool         m_bBufferAllocFailed = false;
+
+      public:
+                    JDEMRasterBand( JDEMDataset *, int );
+                   ~JDEMRasterBand();
+
+        virtual CPLErr IReadBlock( int, int, void * ) override;
     };
+
 
 The constructor may have any signature, and is only called from the Open() method. Other virtual methods, such as :cpp:func:`GDALRasterBand::IReadBlock` must be exactly matched to the method signature in gdal_priv.h.
 
@@ -242,11 +278,15 @@ The constructor implementation looks like this:
 
 .. code-block::
 
-    JDEMRasterBand::JDEMRasterBand( JDEMDataset *poDSIn, int nBandIn )
+    JDEMRasterBand::JDEMRasterBand( JDEMDataset *poDSIn, int nBandIn ) :
+        // Cannot overflow as nBlockXSize <= 999.
+        m_nRecordSize(poDSIn->GetRasterXSize() * 5 + 9 + 2)
     {
         poDS = poDSIn;
         nBand = nBandIn;
+
         eDataType = GDT_Float32;
+
         nBlockXSize = poDS->GetRasterXSize();
         nBlockYSize = 1;
     }
@@ -265,34 +305,58 @@ The full set of possible GDALDataType values are declared in gdal.h, and include
 
 Next we see the implementation of the code that actually reads the image data, IReadBlock().
 
-.. code-block::
+.. code-block:: c++
 
-    CPLErr JDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                    void * pImage )
+    CPLErr JDEMRasterBand::IReadBlock( int /* nBlockXOff */,
+                                       int nBlockYOff,
+                                       void * pImage )
+
     {
-        JDEMDataset *poGDS = static_cast<JDEMDataset *>(poDS);
-        int nRecordSize = nBlockXSize * 5 + 9 + 2;
-        VSIFSeekL(poGDS->fp, 1011 + nRecordSize*nBlockYOff, SEEK_SET);
-        char *pszRecord = static_cast<char *>(CPLMalloc(nRecordSize));
-        VSIFReadL(pszRecord, 1, nRecordSize, poGDS->fp);
-        if( !EQUALN(reinterpret_cast<char *>(poGDS->abyHeader), pszRecord, 6) )
+        JDEMDataset *poGDS = cpl::down_cast<JDEMDataset *>(poDS);
+
+        if (m_pszRecord == nullptr)
         {
-            CPLFree(pszRecord);
+            if (m_bBufferAllocFailed)
+                return CE_Failure;
+
+            m_pszRecord = static_cast<char *>(VSI_MALLOC_VERBOSE(m_nRecordSize));
+            if (m_pszRecord == nullptr)
+            {
+                m_bBufferAllocFailed = true;
+                return CE_Failure;
+            }
+        }
+
+        CPL_IGNORE_RET_VAL(
+            VSIFSeekL(poGDS->m_fp, 1011 + m_nRecordSize * nBlockYOff, SEEK_SET));
+
+        if( VSIFReadL(m_pszRecord, m_nRecordSize, 1, poGDS->m_fp) != 1 )
+        {
             CPLError(CE_Failure, CPLE_AppDefined,
-                    "JDEM Scanline corrupt.  Perhaps file was not transferred "
-                    "in binary mode?");
+                     "Cannot read scanline %d", nBlockYOff);
             return CE_Failure;
         }
-        if( JDEMGetField(pszRecord + 6, 3) != nBlockYOff + 1 )
+
+        if( !EQUALN(reinterpret_cast<char *>(poGDS->m_abyHeader), m_pszRecord, 6) )
         {
-            CPLFree(pszRecord);
             CPLError(CE_Failure, CPLE_AppDefined,
-                    "JDEM scanline out of order, JDEM driver does not "
-                    "currently support partial datasets.");
+                     "JDEM Scanline corrupt.  Perhaps file was not transferred "
+                     "in binary mode?");
             return CE_Failure;
         }
+
+        if( JDEMGetField(m_pszRecord + 6, 3) != nBlockYOff + 1 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "JDEM scanline out of order, JDEM driver does not "
+                     "currently support partial datasets.");
+            return CE_Failure;
+        }
+
         for( int i = 0; i < nBlockXSize; i++ )
-            ((float *) pImage)[i] = JDEMGetField(pszRecord + 9 + 5 * i, 5) * 0.1;
+            static_cast<float *>(pImage)[i] =
+                JDEMGetField(m_pszRecord + 9 + 5 * i, 5) * 0.1f;
+
         return CE_None;
     }
 
@@ -311,29 +375,32 @@ void CPL_DLL GDALRegister_JDEM(void);
 
 The definition in the driver file is:
 
-.. code-block::
+.. code-block:: c++
 
     void GDALRegister_JDEM()
+
     {
         if( !GDAL_CHECK_VERSION("JDEM") )
             return;
 
-        if( GDALGetDriverByName("JDEM") != NULL )
+        if( GDALGetDriverByName("JDEM") != nullptr )
             return;
 
         GDALDriver *poDriver = new GDALDriver();
+
         poDriver->SetDescription("JDEM");
         poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-        poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
-                                "Japanese DEM (.mem)");
-        poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
-                                "frmt_various.html#JDEM");
+        poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Japanese DEM (.mem)");
+        poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/jdem.html");
         poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "mem");
         poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+
         poDriver->pfnOpen = JDEMDataset::Open;
         poDriver->pfnIdentify = JDEMDataset::Identify;
+
         GetGDALDriverManager()->RegisterDriver(poDriver);
     }
+
 
 Note the use of GDAL_CHECK_VERSION macro. This is an optional macro for drivers inside GDAL tree that don't depend on external libraries, but that can be very useful if you compile your driver as a plugin (that is to say, an out-of-tree driver). As the GDAL C++ ABI may, and will, change between GDAL releases (for example from GDAL 1.x to 1.y), it may be necessary to recompile your driver against the header files of the GDAL version with which you want to make it work. The GDAL_CHECK_VERSION macro will check that the GDAL version with which the driver was compiled and the version against which it is running are compatible.
 
@@ -360,13 +427,12 @@ Adding Driver to GDAL Tree
 
 Note that the GDALRegister_JDEM() method must be called by the higher level program in order to have access to the JDEM driver. Normal practice when writing new drivers is to:
 
-- Add a driver directory under gdal/frmts, with the directory name the same as the short name.
-- Add a GNUmakefile and makefile.vc in that directory modeled on those from other similar directories (i.e. the jdem directory).
+- Add a driver directory under frmts, with the directory name the same as the short name.
+- Add a CMakeLists.txt in that directory modeled on those from other similar directories (i.e. the jdem directory).
+- Reference the new driver in frmts/CMakeLists.txt, using the gdal_optional_format() or gdal_dependent_format() functions depending if it requires no external depency or it has at least one.
 - Add the module with the dataset, and rasterband implementation. Generally this is called <short_name>dataset.cpp, with all the GDAL specific code in one file, though that is not required.
-- Add the registration entry point declaration (i.e. GDALRegister_JDEM()) to gdal/gcore/gdal_frmts.h.
+- Add the registration entry point declaration (i.e. GDALRegister_JDEM()) to gcore/gdal_frmts.h.
 - Add a call to the registration function to frmts/gdalallregister.cpp, protected by an appropriate #ifdef.
-- Add the format short name to the GDAL_FORMATS macro in GDALmake.opt.in (and to GDALmake.opt).
-- Add a format specific item to the EXTRAFLAGS macro in frmts/makefile.vc.
 
 Once this is all done, it should be possible to rebuild GDAL, and have the new format available in all the utilities. The :ref:`gdalinfo` utility can be used to test that opening and reporting on the format is working, and the :ref:`gdal_translate` utility can be used to test image reading.
 
@@ -375,44 +441,56 @@ Adding Georeferencing
 
 Now we will take the example a step forward, adding georeferencing support. We add the following two virtual method overrides to JDEMDataset, taking care to exactly match the signature of the method on the GDALDataset base class.
 
-.. code-block::
+.. code-block:: c++
 
-    CPLErr      GetGeoTransform( double * padfTransform );
-    const char *GetProjectionRef();
+    CPLErr GetGeoTransform( double * padfTransform ) override;
+    const OGRSpatialReference* GetSpatialRef() const override;
 
 The implementation of :cpp:func:`GDALDataset::GetGeoTransform` just copies the usual geotransform matrix into the supplied buffer. Note that :cpp:func:`GDALDataset::GetGeoTransform` may be called a lot, so it isn't generally wise to do a lot of computation in it. In many cases the Open() will collect the geotransform, and this method will just copy it over. Also note that the geotransform return is based on an anchor point at the top left corner of the top left pixel, not the center of pixel approach used in some packages.
 
-.. code-block::
+.. code-block:: c++
 
-    CPLErr JDEMDataset::GetGeoTransform( double * padfTransform )
+    CPLErr JDEMDataset::GetGeoTransform( double *padfTransform )
     {
-        const char *psHeader = reinterpret_cast<char *>(abyHeader);
+        const char *psHeader = reinterpret_cast<const char *>(m_abyHeader);
+
         const double dfLLLat = JDEMGetAngle(psHeader + 29);
         const double dfLLLong = JDEMGetAngle(psHeader + 36);
         const double dfURLat = JDEMGetAngle(psHeader + 43);
         const double dfURLong = JDEMGetAngle(psHeader + 50);
+
         padfTransform[0] = dfLLLong;
         padfTransform[3] = dfURLat;
         padfTransform[1] = (dfURLong - dfLLLong) / GetRasterXSize();
         padfTransform[2] = 0.0;
+
         padfTransform[4] = 0.0;
         padfTransform[5] = -1 * (dfURLat - dfLLLat) / GetRasterYSize();
+
         return CE_None;
     }
 
-The :cpp:func:`GDALDataset::GetProjectionRef` method returns a pointer to an internal string containing a coordinate system definition in OGC WKT format. In this case the coordinate system is fixed for all files of this format, but in more complex cases a definition may need to be composed on the fly, in which case it may be helpful to use the :cpp:class:`OGRSpatialReference` class to help build the definition.
+The :cpp:func:`GDALDataset::GetSpatialRef` method returns a pointer to an internal OGRSpatialReference object.
 
-.. code-block::
+.. code-block:: c++
 
-    const char *JDEMDataset::GetProjectionRef()
+    const OGRSpatialReference *JDEMDataset::GetSpatialRef() const
     {
-        return
-            "GEOGCS[\"Tokyo\",DATUM[\"Tokyo\",SPHEROID[\"Bessel 1841\","
-            "6377397.155,299.1528128,AUTHORITY[\"EPSG\",7004]],TOWGS84[-148,"
-            "507,685,0,0,0,0],AUTHORITY[\"EPSG\",6301]],PRIMEM[\"Greenwich\","
-            "0,AUTHORITY[\"EPSG\",8901]],UNIT[\"DMSH\",0.0174532925199433,"
-            "AUTHORITY[\"EPSG\",9108]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],"
-            "AUTHORITY[\"EPSG\",4301]]";
+        return &m_oSRS;
+    }
+
+In this case the coordinate system is fixed for all files of this format, and
+has been initialized in the JDEMDataset constructor. But in more complex cases,
+a definition may need to be composed on the fly, in which case it may be
+helpful to use the :cpp:class:`OGRSpatialReference` class to help build the definition.
+
+.. code-block:: c++
+
+    JDEMDataset::JDEMDataset()
+    {
+        std::fill_n(m_abyHeader, CPL_ARRAYSIZE(m_abyHeader), static_cast<GByte>(0));
+        m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        m_oSRS.importFromEPSG(4301); // Tokyo geographic CRS
     }
 
 This completes explanation of the features of the JDEM driver. The full source for jdemdataset.cpp can be reviewed as needed.
@@ -426,9 +504,9 @@ Formats can also report that they have arbitrary overviews, by overriding the :c
 
 However, by far the most common approach to implementing overviews is to use the default support in GDAL for external overviews stored in TIFF files with the same name as the dataset, but the extension .ovr appended. In order to enable reading and creation of this style of overviews it is necessary for the GDALDataset to initialize the `oOvManager` object within itself. This is typically accomplished with a call like the following near the end of the Open() method (after the PAM :cpp:func:`GDALDataset::TryLoadXML`).
 
-.. code-block::
+.. code-block:: c++
 
-    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
+    poDS->oOvManager.Initialize(poDS.get(), poOpenInfo->pszFilename);
 
 This will enable default implementations for reading and creating overviews for the format. It is advised that this be enabled for all simple file system based formats unless there is a custom overview mechanism to be tied into.
 
@@ -456,7 +534,7 @@ The GDALDriver::CreateCopy() method call is passed through directly, so that met
 The full implementation of the CreateCopy function for JPEG (which is assigned to pfnCreateCopy in the GDALDriver object) is here.
 static GDALDataset *
 
-.. code-block::
+.. code-block:: c++
 
     JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                     int bStrict, char ** papszOptions,
@@ -567,7 +645,7 @@ In the case of dynamic creation, there is no source dataset. Instead the size, n
 
 The following sample implement PCI .aux labeled raw raster creation. It follows a common approach of creating a blank, but valid file using non-GDAL calls, and then calling GDALOpen(,GA_Update) at the end to return a writable file handle. This avoids having to duplicate the various setup actions in the Open() function.
 
-.. code-block::
+.. code-block:: c++
 
     GDALDataset *PAuxDataset::Create( const char * pszFilename,
                                     int nXSize, int nYSize, int nBands,
@@ -681,7 +759,7 @@ In these cases the format specific band class may not be required, or if require
 
 The Open() method for the dataset then instantiates raster bands passing all the layout information to the constructor. For instance, the PNM driver uses the following calls to create it's raster bands.
 
-.. code-block::
+.. code-block:: c++
 
     if( poOpenInfo->pabyHeader[1] == '5' )
     {
