@@ -680,6 +680,10 @@ bool SRPDataset::GetFromRecord( const char* pszFileName, DDFRecord * record )
     snprintf(szValue, sizeof(szValue), "%d", SCA);
     SetMetadataItem( "SRP_SCA", szValue );
 
+    // PSP Pixel Spacing, Microns at capture stage {000.0 - 100.0}
+    snprintf(szValue, sizeof(szValue), "%3.1f", PSP);
+    SetMetadataItem("SRP_PSP", szValue);
+
     nBands = 1;
     for( int i = 0; i < nBands; i++ )
         SetBand( i+1, new SRPRasterBand( this, i+1 ) );
