@@ -887,3 +887,26 @@ def test_ogr2ogr_t_coord_epoch():
     g = f.GetGeometryRef()
     assert g.GetX(0) != 120 and abs(g.GetX(0) - 120) < 1e-5
     assert g.GetY(0) != -40 and abs(g.GetY(0) - -40) < 1e-5
+
+
+###############################################################################
+# Test laundering of geometry column name when outputing to PostgreSQL (#6261)
+
+
+def test_ogr2ogr_launder_geometry_column_name():
+
+    if gdal.GetDriverByName("PGDump") is None:
+        pytest.skip("PGDump driver not available")
+
+    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    lyr = srcDS.CreateLayer("test", geom_type=ogr.wkbNone)
+    lyr.CreateGeomField(ogr.GeomFieldDefn("SHAPE", ogr.wkbPoint))
+    out_filename = "/vsimem/test_ogr2ogr_launder_geometry_column_name.sql"
+    assert gdal.VectorTranslate(out_filename, srcDS, format="PGDump") is not None
+    f = gdal.VSIFOpenL(out_filename, "rb")
+    assert f
+    sql = gdal.VSIFReadL(1, 10000, f).decode("utf-8")
+    gdal.VSIFCloseL(f)
+    gdal.Unlink(out_filename)
+    assert "SHAPE" not in sql
+    assert "shape" in sql

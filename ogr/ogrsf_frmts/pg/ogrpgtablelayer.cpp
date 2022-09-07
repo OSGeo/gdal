@@ -768,6 +768,7 @@ void OGRPGTableLayer::SetTableDefinition(const char* pszFIDColumnName,
     {
         m_osFirstGeometryFieldName = pszGFldName;
     }
+    m_osLCOGeomType = pszGeomType;
 }
 
 /************************************************************************/
@@ -2350,7 +2351,7 @@ OGRErr OGRPGTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
     if( EQUAL(poGeomField->GetNameRef(), "") )
     {
         if( poFeatureDefn->GetGeomFieldCount() == 0 )
-            poGeomField->SetName( "wkb_geometry" );
+            poGeomField->SetName( EQUAL(m_osLCOGeomType.c_str(), "geography") ? "the_geog" : "wkb_geometry" );
         else
             poGeomField->SetName(
                 CPLSPrintf("wkb_geometry%d", poFeatureDefn->GetGeomFieldCount()+1) );
@@ -2398,7 +2399,7 @@ OGRErr OGRPGTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
     poGeomField->SetNullable( poGeomFieldIn->IsNullable() );
     poGeomField->nSRSId = nSRSId;
     poGeomField->GeometryTypeFlags = GeometryTypeFlags;
-    poGeomField->ePostgisType = GEOM_TYPE_GEOMETRY;
+    poGeomField->ePostgisType = EQUAL(m_osLCOGeomType.c_str(), "geography") ? GEOM_TYPE_GEOGRAPHY : GEOM_TYPE_GEOMETRY;
 
 /* -------------------------------------------------------------------- */
 /*      Create the new field.                                           */
