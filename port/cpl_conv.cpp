@@ -1699,25 +1699,20 @@ CPLGetConfigOption( const char *pszKey, const char *pszDefault )
             CSLFetchNameValue(const_cast<char **>(g_papszConfigOptions), pszKey);
     }
 
-    if( pszResult == nullptr )
+    if( gbIgnoreEnvVariables )
     {
-#if !defined(DEBUG)
-        if( !gbIgnoreEnvVariables )
-        {
-            pszResult = getenv(pszKey);
-        }
-#else
         const char* pszEnvVar = getenv(pszKey);
-        if( pszEnvVar && gbIgnoreEnvVariables )
+        if( pszEnvVar != nullptr )
         {
-            CPLDebugOnly("GDAL", "Ignoring environment variable %s=%s",
-                         pszKey, pszEnvVar);
+            CPLDebug("CPL",
+                     "Ignoring environment variable %s=%s because of "
+                     "ignore-env-vars=yes setting in configuration file",
+                     pszKey, pszEnvVar);
         }
-        else
-        {
-            pszResult = pszEnvVar;
-        }
-#endif
+    }
+    else if( pszResult == nullptr )
+    {
+        pszResult = getenv(pszKey);
     }
 
     if( pszResult == nullptr )
@@ -2212,10 +2207,11 @@ void CPLLoadConfigOptionsFromFile(const char* pszFilename, int bOverrideEnvVars)
                 }
                 else
                 {
-                    CPLDebugOnly("CPL",
-                                 "Ignoring configuration option %s from "
-                                 "configuration file as it is already set "
-                                 "as an environment variable", pszKey);
+                    CPLDebug("CPL",
+                             "Ignoring configuration option %s=%s from "
+                             "configuration file as it is already set "
+                             "as an environment variable",
+                             pszKey, pszValue);
                 }
             }
             CPLFree(pszKey);
