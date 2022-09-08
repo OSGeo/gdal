@@ -156,11 +156,11 @@ def test_ogr_shape_4():
 
     gdaltest.shape_lyr.SetAttributeFilter("PRFEDEA = 'nulled'")
     feat_read = gdaltest.shape_lyr.GetNextFeature()
-    assert feat_read is not None, "Didnt get feature with null geometry back."
+    assert feat_read is not None, "Didn't get feature with null geometry back."
 
     if feat_read.GetGeometryRef() is not None:
         print(feat_read.GetGeometryRef().ExportToWkt())
-        pytest.fail("Didnt get null geometry as expected.")
+        pytest.fail("Didn't get null geometry as expected.")
 
 
 ###############################################################################

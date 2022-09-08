@@ -6486,7 +6486,7 @@ void TABText::SetLabelFromStyleString(const char* pszStyleString)
     }
 
 #if 0
-    // Commented out since it is harcoded to 0x808080.
+    // Commented out since it is hardcoded to 0x808080.
     // Set the ShadowColor
     const char* pszShadowColor = poLabelStyle->ShadowColor(bIsNull);
     if(bIsNull) pszShadowColor = nullptr;

@@ -102,7 +102,7 @@ jobs:
         python3 -m pip install -U pip wheel setuptools numpy
         python3 -m pip install -r $GITHUB_WORKSPACE/autotest/requirements.txt
 
-    - name: Buid libjxl
+    - name: Build libjxl
       run: |
         # Build libjxl
         # libjxl being still unstable, if the main branch fails to compile/test
@@ -120,7 +120,7 @@ jobs:
             && cd ../.. \
             && rm -rf libjxl
 
-    - name: Buid libQB3
+    - name: Build libQB3
       run: |
         # Build libQB3
         # Used by the MRF driver
@@ -133,7 +133,7 @@ jobs:
             && cd ../../.. \
             && rm -rf QB3
 
-    - name: Buid libbasisu
+    - name: Build libbasisu
       run: |
         # Used by the BASISU and KTX2 drivers
         git clone -b cmake https://github.com/rouault/basis_universal.git \

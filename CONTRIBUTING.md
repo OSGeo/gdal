@@ -83,7 +83,7 @@ pytest autotest
 
 Make sure the Vagrant binary is installed on your system.
 
-Perform inital setup of the Vagrant GDAL virtual machine:
+Perform initial setup of the Vagrant GDAL virtual machine:
 ```bash
 # VAGRANT_VM_CPU=number_of_cpus
 vagrant up

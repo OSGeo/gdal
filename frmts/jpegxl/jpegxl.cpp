@@ -74,7 +74,7 @@ class JPEGXLDataset final: public GDALJP2AbstractDataset
 
     bool                Open(GDALOpenInfo* poOpenInfo);
 
-    void                GetDecodedImage(void* pabyOuputData, size_t nOutputDataSize);
+    void                GetDecodedImage(void* pabyOutputData, size_t nOutputDataSize);
 
 protected:
 
@@ -745,7 +745,7 @@ bool JPEGXLDataset::Open(GDALOpenInfo* poOpenInfo)
     JxlResizableParallelRunnerSetThreads(m_parallelRunner.get(), nThreads);
 #endif
 
-    // Instanciate bands
+    // Instantiate bands
     const int nNonExtraBands = l_nBands - m_nNonAlphaExtraChannels;
     for(int i = 1; i <= l_nBands; i++ )
     {
@@ -949,7 +949,7 @@ const char* JPEGXLDataset::GetMetadataItem(const char* pszName, const char* pszD
 /*                        GetDecodedImage()                             */
 /************************************************************************/
 
-void JPEGXLDataset::GetDecodedImage(void* pabyOuputData, size_t nOutputDataSize)
+void JPEGXLDataset::GetDecodedImage(void* pabyOutputData, size_t nOutputDataSize)
 {
     JxlDecoderRewind(m_decoder.get());
     VSIFSeekL(m_fp, 0, SEEK_SET);
@@ -1029,7 +1029,7 @@ void JPEGXLDataset::GetDecodedImage(void* pabyOuputData, size_t nOutputDataSize)
             // to do progressive decoding, but at the time of writing, libjxl
             // seems to just call the callback when all the image is decompressed
             if( JxlDecoderSetImageOutBuffer(
-                    m_decoder.get(), &format, pabyOuputData, nOutputDataSize)
+                    m_decoder.get(), &format, pabyOutputData, nOutputDataSize)
                     != JXL_DEC_SUCCESS )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -1106,7 +1106,7 @@ void JPEGXLDataset::GetDecodedImage(void* pabyOuputData, size_t nOutputDataSize)
             }
         };
 
-        Rescale(pabyOuputData, nBands - m_nNonAlphaExtraChannels);
+        Rescale(pabyOutputData, nBands - m_nNonAlphaExtraChannels);
         for( int i = 0; i < m_nNonAlphaExtraChannels; ++i )
         {
             Rescale(m_abyExtraChannels[i].data(), 1);

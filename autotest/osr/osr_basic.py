@@ -193,7 +193,7 @@ def test_osr_basic_3():
         str(srs.GetAuthorityCode("PROJCS|UNIT")) != "9001"
     ), "Got METER authority code on linear units."
 
-    assert srs.GetLinearUnitsName() == "Foot", "Didnt get Foot linear units"
+    assert srs.GetLinearUnitsName() == "Foot", "Didn't get Foot linear units"
 
     assert srs.GetLinearUnits() == pytest.approx(0.3048006096012192, 1e-16)
 

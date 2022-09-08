@@ -232,7 +232,7 @@ Relationships
 
 .. versionadded:: 3.6
 
-Relationship retrieval is supported. Relationships will be reported for tables which utilise FOREIGN KEY
+Relationship retrieval is supported. Relationships will be reported for tables which utilize FOREIGN KEY
 constraints.
 
 Dataset open options

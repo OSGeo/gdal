@@ -83,7 +83,7 @@ def test_tiff_write_2():
     new_ds = gdaltest.tiff_drv.CreateCopy("tmp/test_2.tif", src_ds)
 
     bnd = new_ds.GetRasterBand(1)
-    assert bnd.Checksum() == 5028, "Didnt get expected checksum on still-open file"
+    assert bnd.Checksum() == 5028, "Didn't get expected checksum on still-open file"
 
     bnd = None
     new_ds = None
@@ -92,7 +92,7 @@ def test_tiff_write_2():
 
     new_ds = gdal.Open("tmp/test_2.tif")
     bnd = new_ds.GetRasterBand(1)
-    assert bnd.Checksum() == 5028, "Didnt get expected checksum on reopened file"
+    assert bnd.Checksum() == 5028, "Didn't get expected checksum on reopened file"
 
     assert bnd.ComputeRasterMinMax() == (
         74.0,
@@ -118,7 +118,7 @@ def test_tiff_write_3():
     new_ds = gdaltest.tiff_drv.CreateCopy("tmp/test_3.tif", src_ds, options=options)
 
     bnd = new_ds.GetRasterBand(1)
-    assert bnd.Checksum() == 50054, "Didnt get expected checksum on still-open file"
+    assert bnd.Checksum() == 50054, "Didn't get expected checksum on still-open file"
 
     bnd = None
     new_ds = None
@@ -327,7 +327,7 @@ def test_tiff_write_9():
 
     new_ds = gdal.Open("tmp/test_9.tif")
     bnd = new_ds.GetRasterBand(1)
-    assert bnd.Checksum() == 5287, "Didnt get expected checksum on reopened file"
+    assert bnd.Checksum() == 5287, "Didn't get expected checksum on reopened file"
 
     bnd = None
     new_ds = None
@@ -830,7 +830,7 @@ def test_tiff_write_19():
         new_ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
         and new_ds.GetRasterBand(2).Checksum() == src_ds.GetRasterBand(2).Checksum()
         and new_ds.GetRasterBand(3).Checksum() == src_ds.GetRasterBand(3).Checksum()
-    ), "Didnt get expected checksum on reopened file"
+    ), "Didn't get expected checksum on reopened file"
 
     new_ds = None
     src_ds = None
@@ -1447,18 +1447,18 @@ def tiff_write_big_odd_bits(vrtfilename, tmpfilename, nbits, interleaving):
     ds = gdal.Open(tmpfilename)
     bnd = ds.GetRasterBand(1)
     cs = bnd.Checksum()
-    assert cs == 4672, "Didnt get expected checksum on band 1"
+    assert cs == 4672, "Didn't get expected checksum on band 1"
     md = bnd.GetMetadata("IMAGE_STRUCTURE")
-    assert md["NBITS"] == str(nbits), "Didnt get expected NBITS value"
+    assert md["NBITS"] == str(nbits), "Didn't get expected NBITS value"
 
     bnd = ds.GetRasterBand(2)
-    assert bnd.Checksum() == 4672, "Didnt get expected checksum on band 2"
+    assert bnd.Checksum() == 4672, "Didn't get expected checksum on band 2"
     bnd = ds.GetRasterBand(3)
-    assert bnd.Checksum() == 4672, "Didnt get expected checksum on band 3"
+    assert bnd.Checksum() == 4672, "Didn't get expected checksum on band 3"
     bnd = None
 
     md = ds.GetMetadata("IMAGE_STRUCTURE")
-    assert md["INTERLEAVE"] == interleaving, "Didnt get expected interleaving"
+    assert md["INTERLEAVE"] == interleaving, "Didn't get expected interleaving"
 
     ds = None
 
@@ -1547,7 +1547,7 @@ def test_tiff_write_44():
     bnd = ds.GetRasterBand(1)
     md = bnd.GetMetadata("IMAGE_STRUCTURE")
     bnd = None
-    assert md["NBITS"] == "9", "Didnt get expected NBITS value"
+    assert md["NBITS"] == "9", "Didn't get expected NBITS value"
 
     ds2 = gdaltest.tiff_drv.CreateCopy("tmp/tw_44_copy.tif", ds)
     ds2 = None
@@ -1556,7 +1556,7 @@ def test_tiff_write_44():
     bnd = ds2.GetRasterBand(1)
     md = bnd.GetMetadata("IMAGE_STRUCTURE")
     bnd = None
-    assert md["NBITS"] == "9", "Didnt get expected NBITS value"
+    assert md["NBITS"] == "9", "Didn't get expected NBITS value"
 
     ds = None
     ds2 = None
@@ -1579,7 +1579,7 @@ def test_tiff_write_45():
     bnd = ds.GetRasterBand(1)
     md = bnd.GetMetadata("IMAGE_STRUCTURE")
     bnd = None
-    assert md["NBITS"] == "17", "Didnt get expected NBITS value"
+    assert md["NBITS"] == "17", "Didn't get expected NBITS value"
 
     ds2 = gdaltest.tiff_drv.CreateCopy("tmp/tw_45_copy.tif", ds)
     ds2 = None
@@ -1588,7 +1588,7 @@ def test_tiff_write_45():
     bnd = ds2.GetRasterBand(1)
     md = bnd.GetMetadata("IMAGE_STRUCTURE")
     bnd = None
-    assert md["NBITS"] == "17", "Didnt get expected NBITS value"
+    assert md["NBITS"] == "17", "Didn't get expected NBITS value"
 
     ds = None
     ds2 = None
@@ -1677,7 +1677,7 @@ def test_tiff_write_48():
 
     new_ds = None
     new_ds = gdal.Open("tmp/tiff_write_48.tif")
-    assert new_ds.GetRasterBand(1).Checksum() == 50054, "Didnt get expected checksum "
+    assert new_ds.GetRasterBand(1).Checksum() == 50054, "Didn't get expected checksum "
 
     new_ds = None
 
@@ -1710,7 +1710,7 @@ def test_tiff_write_49():
         assert (
             new_ds.GetRasterBand(i + 1).Checksum()
             == src_ds.GetRasterBand(i + 1).Checksum()
-        ), "Didnt get expected checksum "
+        ), "Didn't get expected checksum "
 
     src_ds = None
     new_ds = None
@@ -1754,7 +1754,7 @@ def test_tiff_write_50():
         assert (
             new_ds.GetRasterBand(i + 1).Checksum()
             == src_ds.GetRasterBand(i + 1).Checksum()
-        ), "Didnt get expected checksum "
+        ), "Didn't get expected checksum "
 
     src_ds = None
     new_ds = None
@@ -5036,7 +5036,7 @@ def test_tiff_write_122():
     md = new_ds.GetMetadata()
 
     if "TIFFTAG_RESOLUTIONUNIT" not in md:
-        pytest.fail("Couldnt find tag TIFFTAG_RESOLUTIONUNIT")
+        pytest.fail("Couldn't find tag TIFFTAG_RESOLUTIONUNIT")
 
     elif md["TIFFTAG_RESOLUTIONUNIT"] != "1 (unitless)":
         pytest.fail(

@@ -18,7 +18,7 @@ GDAL with the C# bindings and example applications can be loaded using
 Usage 
 -----
 
-The Conda package for GDAL version 3.5.0 and later uses the CMAKE build scripts and therefore there have been changes in the build process and the artefacts produced.
+The Conda package for GDAL version 3.5.0 and later uses the CMAKE build scripts and therefore there have been changes in the build process and the artifacts produced.
 
     :ref:`csharp_conda_35`
 
@@ -38,10 +38,10 @@ The Conda package for GDAL version 3.5.0 and later is built using the new Cmake 
 
 On all architectures (i.e. Windows, Linux and Mac), the bindings are compiled using .NET6.0 as the current (at the time of writing) LTS version.
 
-Package Artefacts
+Package Artifacts
 +++++++++++++++++
 
-The Conda package contains two sets of artefacts:
+The Conda package contains two sets of artifacts:
 
 * The SWIG wrapper Dynamic Shared Objects (DSO) - :file:`gdal_wrap.dll` or :file:`libgdal_wrap.so` or :file:`libgdal_wrap.dylib` etc. These are loaded as one would expect for a Conda package (i.e. in the :file:`bin` folder in Windows and the :file:`lib` folder in Unix) and thus will automatically link to the correct version of the GDAL DSO and the dependencies, and
 
@@ -52,12 +52,12 @@ Usage
 
 To use the bindings in your application, you will need to basically do the following:
 
-#. Add the relevent Packages to you application as local packages, and
+#. Add the relevant Packages to you application as local packages, and
 #. Add the DSOs to the search path for the application.
 
 The former is not complicated and can be done by defining a local source, either global (as `is explained here <https://docs.microsoft.com/en-us/nuget/hosting-packages/local-feeds>`__ ) or in the build command as is shown below.
 
-The latter can be based on Conda for a console application, as is shown below, but if you are working in an IDE (which being a .NET IDE knows nothing about Conda) and/or working on a GUI application (which is not going to be running in a Conda environment) you are going to have to sort out the DSOs your self; probably involving copying the relevent DSOs into the application package.
+The latter can be based on Conda for a console application, as is shown below, but if you are working in an IDE (which being a .NET IDE knows nothing about Conda) and/or working on a GUI application (which is not going to be running in a Conda environment) you are going to have to sort out the DSOs your self; probably involving copying the relevant DSOs into the application package.
 
 Usage Example - Windows
 +++++++++++++++++++++++

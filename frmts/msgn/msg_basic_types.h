@@ -236,7 +236,7 @@ typedef struct {
 } ACTUAL_SCANNING_SUMMARY_RECORD ;
 
 typedef struct {
-    UBYTE     nominalBehaviour;
+    UBYTE     nominalBehavior;
     UBYTE     radScanIrregularity;
     UBYTE     radStoppage;
     UBYTE     repeatCycleNotCompleted;
@@ -248,7 +248,7 @@ typedef struct {
     UBYTE     invalidAuxOrHKTMData;
     UBYTE     refocusingMechanismActuated;
     UBYTE     mirrorBackToReferencePos;
-} RADIOMETER_BEHAVIOUR_RECORD;
+} RADIOMETER_BEHAVIOR_RECORD;
 
 typedef struct {
     UNSIGNED    plannedNumberOfL10Lines[12];
@@ -287,7 +287,7 @@ typedef struct {
 typedef struct {
     GP_SC_ID                         satelliteId;
     ACTUAL_SCANNING_SUMMARY_RECORD   actualScanningSummary;
-    RADIOMETER_BEHAVIOUR_RECORD      radiometerBehaviour;
+    RADIOMETER_BEHAVIOR_RECORD      radiometerBehavior;
     RECEPTION_SUMMARY_STATS_RECORD   receptionSummaryStats;
     L15_IMAGE_VALIDITY_RECORD        l15ImageValidity[12];
     ACTUAL_L15_COVERAGE_VISIR_RECORD actualL15CoverageVisir;

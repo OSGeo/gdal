@@ -747,7 +747,7 @@ class FlatBufferBuilder {
 
   /// @brief Serialize a collection of Strings into a FlatBuffer `vector`.
   /// This is a convenience function for a common case.
-  /// @param begin The begining iterator of the collection
+  /// @param begin The beginning iterator of the collection
   /// @param end The ending iterator of the collection
   /// @return Returns a typed `Offset` into the serialized data indicating
   /// where the vector is stored.

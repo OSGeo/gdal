@@ -112,7 +112,7 @@ CPLErr QB3_Band::Decompress(buf_mgr& dst, buf_mgr& src)
         }
 
         if (static_cast<size_t>(img.pageSizeBytes) != qb3_decoded_size(pdQB3)) {
-            CPLError(CE_Failure, CPLE_AppDefined, "MRF: QB3 incorect decoded tile size");
+            CPLError(CE_Failure, CPLE_AppDefined, "MRF: QB3 incorrect decoded tile size");
             throw CE_Failure;
         }
 

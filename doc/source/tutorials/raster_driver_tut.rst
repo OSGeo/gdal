@@ -429,7 +429,7 @@ Note that the GDALRegister_JDEM() method must be called by the higher level prog
 
 - Add a driver directory under frmts, with the directory name the same as the short name.
 - Add a CMakeLists.txt in that directory modeled on those from other similar directories (i.e. the jdem directory).
-- Reference the new driver in frmts/CMakeLists.txt, using the gdal_optional_format() or gdal_dependent_format() functions depending if it requires no external depency or it has at least one.
+- Reference the new driver in frmts/CMakeLists.txt, using the gdal_optional_format() or gdal_dependent_format() functions depending if it requires no external dependency or it has at least one.
 - Add the module with the dataset, and rasterband implementation. Generally this is called <short_name>dataset.cpp, with all the GDAL specific code in one file, though that is not required.
 - Add the registration entry point declaration (i.e. GDALRegister_JDEM()) to gcore/gdal_frmts.h.
 - Add a call to the registration function to frmts/gdalallregister.cpp, protected by an appropriate #ifdef.
