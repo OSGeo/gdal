@@ -111,12 +111,12 @@ or through the ``--config`` command line switch.
 
 The value of environment variables set before GDAL starts will be used instead
 of the value set in the configuration files, unless, starting with GDAL 3.6,
-the configuration file starts with a ``[general]`` section that contains a
+the configuration file starts with a ``[directives]`` section that contains a
 ``ignore-env-variables=yes`` entry.
 
 .. code-block::
 
-    [general]
+    [directives]
     # ignore environent variables. Take only into account the content of the
     # [configoptions] section, or ones defined programmatically with
     # CPLSetConfigOption / CPLSetThreadLocalConfigOption.

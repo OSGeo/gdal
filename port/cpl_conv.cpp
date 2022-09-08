@@ -2042,7 +2042,7 @@ path=/vsis3/sentinel-s2-l1c
 AWS_REQUEST_PAYER=requester
 \endverbatim
 
-Starting with GDAL 3.6, a leading [general] section might be added with
+Starting with GDAL 3.6, a leading [directives] section might be added with
 a "ignore-env-vars=yes" setting to indicate that, starting with that point,
 all environment variables should be ignored, and only configuration options
 defined in the [configoptions] sections or through the CPLSetConfigOption() /
@@ -2106,13 +2106,13 @@ void CPLLoadConfigOptionsFromFile(const char* pszFilename, int bOverrideEnvVars)
             bInSubsection = false;
             osPath.clear();
         }
-        else if( strcmp(pszLine, "[general]") == 0 )
+        else if( strcmp(pszLine, "[directives]") == 0 )
         {
             nSectionCounter ++;
             if( nSectionCounter != 1 )
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "The [general] section should be the first one in "
+                         "The [directives] section should be the first one in "
                          "the file, otherwise some its settings might not be "
                          "used correctly.");
             }
@@ -2131,7 +2131,7 @@ void CPLLoadConfigOptionsFromFile(const char* pszFilename, int bOverrideEnvVars)
                 else
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
-                             "Ignoring %s line in [general] section",
+                             "Ignoring %s line in [directives] section",
                              pszLine);
                 }
             }
@@ -2241,7 +2241,7 @@ void CPLLoadConfigOptionsFromFile(const char* pszFilename, int bOverrideEnvVars)
  * CPLLoadConfigOptionsFromFile() will be called with bOverrideEnvVars = false,
  * that is the value of environment variables previously set will be used instead
  * of the value set in the configuration files (unless the configuration file
- * contains a leading [general] section with a "ignore-env-vars=yes" setting).
+ * contains a leading [directives] section with a "ignore-env-vars=yes" setting).
  *
  * This function is automatically called by GDALDriverManager() constructor
  *

@@ -3820,7 +3820,7 @@ namespace tut
         ensure( CPLGetConfigOption("SOME_ENV_VAR_FOR_TEST_CPL_61", nullptr) != nullptr );
 
         VSILFILE* fp = VSIFOpenL("/vsimem/.gdal/gdalrc", "wb");
-        VSIFPrintfL(fp, "[general]\n");
+        VSIFPrintfL(fp, "[directives]\n");
         VSIFPrintfL(fp, "ignore-env-vars=yes\n");
         VSIFPrintfL(fp, "[configoptions]\n");
         VSIFPrintfL(fp, "CONFIG_OPTION_FOR_TEST_CPL_61=BAR\n");
@@ -3837,7 +3837,7 @@ namespace tut
 
         // Reset ignore-env-vars=no
         fp = VSIFOpenL("/vsimem/.gdal/gdalrc", "wb");
-        VSIFPrintfL(fp, "[general]\n");
+        VSIFPrintfL(fp, "[directives]\n");
         VSIFPrintfL(fp, "ignore-env-vars=no\n");
         VSIFPrintfL(fp, "[configoptions]\n");
         VSIFPrintfL(fp, "SOME_ENV_VAR_FOR_TEST_CPL_61=BAR\n");
