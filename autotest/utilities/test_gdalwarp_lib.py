@@ -1161,16 +1161,16 @@ def test_gdalwarp_lib_125():
         src_ds_1 = gdal.GetDriverByName("MEM").Create("", 2, 2)
         src_ds_1.SetGeoTransform([10, 1, 0, 10, 0, -1])
         if i == 1 or i == 3:
-            src_ds_1.GetRasterBand(1).SetMetadataItem("STATISTICS_MINIUM", "5")
+            src_ds_1.GetRasterBand(1).SetMetadataItem("STATISTICS_MINIMUM", "5")
 
         src_ds_2 = gdal.GetDriverByName("MEM").Create("", 2, 2)
         src_ds_2.SetGeoTransform([10, 1, 0, 10, 0, -1])
         if i == 2 or i == 3:
-            src_ds_2.GetRasterBand(1).SetMetadataItem("STATISTICS_MINIUM", "5")
+            src_ds_2.GetRasterBand(1).SetMetadataItem("STATISTICS_MINIMUM", "5")
 
         out_ds = gdal.Warp("", [src_ds_1, src_ds_2], format="MEM")
 
-        assert out_ds.GetRasterBand(1).GetMetadataItem("STATISTICS_MINIUM") is None, i
+        assert out_ds.GetRasterBand(1).GetMetadataItem("STATISTICS_MINIMUM") is None, i
 
 
 ###############################################################################

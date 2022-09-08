@@ -499,7 +499,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
                 {
                     CPLDebug("OpenFileGDB",
                              "Table %s declare a CRS '%s' in its XML "
-                             "defininition (or in its parent's one), "
+                             "definition (or in its parent's one), "
                              "but its .gdbtable declares '%s'. "
                              "Using the former",
                              GetDescription(),

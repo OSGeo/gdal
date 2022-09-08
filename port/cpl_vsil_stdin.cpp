@@ -63,7 +63,7 @@ static size_t gnBufferLimit = 0; // maximum that can be allocated
 static size_t gnBufferAlloc = 0; // current allocation
 static size_t gnBufferLen = 0;   // number of valid bytes in gpabyBuffer
 static uint64_t gnRealPos = 0;     // current offset on stdin
-static bool   gbHasSeekedToEnd = false;
+static bool   gbHasSoughtToEnd = false;
 static uint64_t gnFileSize = 0;
 
 /************************************************************************/
@@ -180,7 +180,7 @@ size_t VSIStdinHandle::ReadAndCache( void* pUserBuffer, size_t nToRead )
     if( nRead < nToRead )
     {
         gnFileSize = gnRealPos;
-        gbHasSeekedToEnd = true;
+        gbHasSoughtToEnd = true;
     }
 
     return nRead;
@@ -209,7 +209,7 @@ int VSIStdinHandle::Seek( vsi_l_offset nOffset, int nWhence )
             return -1;
         }
 
-        if( gbHasSeekedToEnd )
+        if( gbHasSoughtToEnd )
         {
             m_nCurOff = gnFileSize;
             return 0;
@@ -369,7 +369,7 @@ int VSIStdinHandle::Close()
         gosStdinFilename.clear();
         gnRealPos = ftell(stdin);
         gnBufferLen = 0;
-        gbHasSeekedToEnd = false;
+        gbHasSoughtToEnd = false;
         gnFileSize = 0;
     }
     return 0;
@@ -521,7 +521,7 @@ static bool ParseFilename(const char* pszFilename)
             gosStdinFilename.clear();
             gnRealPos = ftell(stdin);
             gnBufferLen = 0;
-            gbHasSeekedToEnd = false;
+            gbHasSoughtToEnd = false;
             gnFileSize = 0;
         }
     }
@@ -551,7 +551,7 @@ static bool ParseFilename(const char* pszFilename)
             gnBufferLimit = 0;
             gnBufferLen = 0;
             gnRealPos = 0;
-            gbHasSeekedToEnd = false;
+            gbHasSoughtToEnd = false;
             gnFileSize = 0;
         }
     }
@@ -606,7 +606,7 @@ int VSIStdinFilesystemHandler::Stat( const char * pszFilename,
 
     if( nFlags & VSI_STAT_SIZE_FLAG )
     {
-        if( gbHasSeekedToEnd )
+        if( gbHasSoughtToEnd )
             pStatBuf->st_size = gnFileSize;
         else
         {

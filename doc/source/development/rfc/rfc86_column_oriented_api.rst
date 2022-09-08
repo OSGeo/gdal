@@ -206,7 +206,7 @@ OGRLayer has a base implementation of GetArrowStream() that is such:
   may fallback to the default (slower) implementation when filters are set.
 
   Mixing calls to GetNextFeature() and get_next() is not recommended, as
-  the behaviour will be unspecified (but it should not crash).
+  the behavior will be unspecified (but it should not crash).
 
   When get_next() returns 0, and the array is no longer needed, it must
   be released with the following procedure, to take into account that it might
@@ -218,13 +218,13 @@ OGRLayer has a base implementation of GetArrowStream() that is such:
           if( out_array->release )
               out_array->release(out_array)
 
-Drivers that have a specialized implementation should advertize the
+Drivers that have a specialized implementation should advertise the
 new OLCFastGetArrowStream layer capability.
 
 Other remarks
 -------------
 
-Using directly (as a producer or a consumer) a ArrowArray is admitedly not
+Using directly (as a producer or a consumer) a ArrowArray is admittedly not
 trivial, and requires good intimacy with the Arrow C data interface and columnar
 array specifications, to know, in which buffer of an array, data is to be read,
 which data type void* buffers should be cast to, how to use buffers that contain
@@ -235,7 +235,7 @@ GeoPandas, Numpy libraries which offer easier and safer access to record batches
 The study of the gdal_array._RecordBatchAsNumpy() method added to the SWIG Python
 bindings can give a good hint of how to use an ArrowArray object, in conjunction
 with the associated ArrowSchema. DuckDB is also another example of using the ArrowArray
-inferface: https://github.com/duckdb/duckdb/blob/master/src/common/types/data_chunk.cpp
+interface: https://github.com/duckdb/duckdb/blob/master/src/common/types/data_chunk.cpp
 
 It is not expected that most drivers will have a dedicated implementation of
 GetArrowStream() or its callbacks. Implementing it requires a non-trivial effort, and
@@ -373,7 +373,7 @@ and pa.RecordBatch.from_arrays() being able to merge them faster.
 
 This demonstrates that:
 
-- the new API can yield signficant performance gains to
+- the new API can yield significant performance gains to
   ingest a OGR layer as a GeoPandas GeoDataFrame, of the order of a 4x - 10x
   speed-up compared to pyogrio, even without a specialized implementation of
   GetArrowStream(), and with formats that have a natural row organization
@@ -405,7 +405,7 @@ New dependencies
 
 - For Python bindings: none at compile time. At runtime, pyarrow is imported
   by GetArrowStreamAsPyArrow().
-  The GetArrowStreamAsNumPy() method is implemented internaly by the
+  The GetArrowStreamAsNumPy() method is implemented internally by the
   gdal_array module, and thus is only available if Numpy is available at compile time
   and runtime.
 

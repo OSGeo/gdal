@@ -1492,7 +1492,7 @@ CPLStringList GDALCreateGeolocationMetadata( GDALDatasetH hBaseDS,
         return CPLStringList();
     }
 
-    // Import the GEOLOCATION metadata from the geolocation datset, if existing
+    // Import the GEOLOCATION metadata from the geolocation dataset, if existing
     auto papszGeolocMDFromGeolocDS = poGeolocDS->GetMetadata("GEOLOCATION");
     if( papszGeolocMDFromGeolocDS )
         aosMD = CSLDuplicate(papszGeolocMDFromGeolocDS);

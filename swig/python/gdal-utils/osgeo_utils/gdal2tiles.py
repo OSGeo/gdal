@@ -886,7 +886,7 @@ def scale_query_to_tile(dsquery, dstile, options, tilefilename=""):
 
         if tilefilename.startswith("/vsi"):
             raise Exception(
-                "Outputing to /vsi file systems with antialias mode is not supported"
+                "Outputting to /vsi file systems with antialias mode is not supported"
             )
 
         # Scaling by PIL (Python Imaging Library) - improved Lanczos

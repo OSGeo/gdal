@@ -1225,7 +1225,7 @@ def test_nitf_30():
     gdal.GetDriverByName("NITF").Delete("/vsimem/nitf30_no_src_md.ntf")
     assert (
         "NITF_BLOCKA_BLOCK_INSTANCE_01" not in md
-    ), "unexpectdly found BLOCKA metadata."
+    ), "unexpectedly found BLOCKA metadata."
 
     # Test USE_SRC_NITF_METADATA=NO
     gdal.GetDriverByName("NITF").CreateCopy(
@@ -1237,7 +1237,7 @@ def test_nitf_30():
     gdal.GetDriverByName("NITF").Delete("/vsimem/nitf30_no_src_md.ntf")
     assert (
         "NITF_BLOCKA_BLOCK_INSTANCE_01" not in md
-    ), "unexpectdly found BLOCKA metadata."
+    ), "unexpectedly found BLOCKA metadata."
 
 
 ###############################################################################

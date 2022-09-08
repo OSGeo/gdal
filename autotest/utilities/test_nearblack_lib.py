@@ -262,7 +262,7 @@ def test_nearblack_lib_9():
         maxNonBlack=1,
     )
 
-    # all countour is valid -> no erosion
+    # all contour is valid -> no erosion
     _test_nearblack(
         [
             [255, 255, 255, 255, 255],

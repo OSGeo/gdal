@@ -890,7 +890,7 @@ def test_ogr2ogr_t_coord_epoch():
 
 
 ###############################################################################
-# Test laundering of geometry column name when outputing to PostgreSQL (#6261)
+# Test laundering of geometry column name when outputting to PostgreSQL (#6261)
 
 
 def test_ogr2ogr_launder_geometry_column_name():

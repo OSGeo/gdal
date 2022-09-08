@@ -658,7 +658,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
                1.0/Conversions::oblate // 1 / ( 1 - Conversions::rpol/Conversions::req)
                );
 
-    oSRS.SetGEOS(  idr.longitudeOfSSP, (Conversions::altitude - Conversions::req) * 1000.0,  // we're using metres as length unit
+    oSRS.SetGEOS(  idr.longitudeOfSSP, (Conversions::altitude - Conversions::req) * 1000.0,  // we're using meters as length unit
                0.0 ,
                // false northing to handle the fact RSS is only 1/3 disk
                pixel_gsd_y *((poDS->m_Shape == RSS) ? ((open_mode != MODE_HRV)  ?

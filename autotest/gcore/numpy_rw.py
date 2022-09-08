@@ -62,7 +62,7 @@ def test_numpy_rw_2():
     assert ds is not None, "Failed to open memory array as dataset."
 
     bnd = ds.GetRasterBand(1)
-    assert bnd.Checksum() == 50054, "Didnt get expected checksum on reopened file"
+    assert bnd.Checksum() == 50054, "Didn't get expected checksum on reopened file"
     ds = None
 
 

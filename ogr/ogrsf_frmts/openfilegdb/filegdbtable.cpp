@@ -2099,7 +2099,7 @@ void FileGDBTable::InstallFilterEnvelope(const OGREnvelope* psFilterEnvelope)
 /*                  GetMinMaxProjYForSpatialIndex()                     */
 /************************************************************************/
 
-// ESRI software seems to have an extremely weird behaviour regarding spatial
+// ESRI software seems to have an extremely weird behavior regarding spatial
 // indexing of geometries.
 // When a projected CRS is associated with a layer, the northing of geometries
 // is clamped, using the returned (dfYMin,dfYMax) values of this method.

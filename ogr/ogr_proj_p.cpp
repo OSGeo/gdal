@@ -78,10 +78,10 @@ static unsigned g_projNetworkEnabledGenerationCounter = 0;
 #endif
 
 #if !defined(_WIN32) && defined(HAVE_PTHREAD_ATFORK)
-static bool g_bForkOccured = false;
-static void ForkOccured(void)
+static bool g_bForkOccurred = false;
+static void ForkOccurred(void)
 {
-    g_bForkOccured = true;
+    g_bForkOccurred = true;
 }
 #endif
 
@@ -110,7 +110,7 @@ struct OSRPJContextHolder
 #endif
     {
 #if HAVE_PTHREAD_ATFORK
-        pthread_atfork(nullptr, nullptr, ForkOccured);
+        pthread_atfork(nullptr, nullptr, ForkOccurred);
 #endif
         init();
     }
@@ -201,7 +201,7 @@ static OSRPJContextHolder& GetProjTLSContextHolder()
     // In that situation we must make sure *not* to use the same underlying
     // file open descriptor to the sqlite3 database, since seeks&reads in one
 #if defined(HAVE_PTHREAD_ATFORK)
-    if( g_bForkOccured )
+    if( g_bForkOccurred )
 #else
     // of the parent or child will affect the other end.
     const pid_t curpid = getpid();
@@ -209,7 +209,7 @@ static OSRPJContextHolder& GetProjTLSContextHolder()
 #endif
     {
 #if defined(HAVE_PTHREAD_ATFORK)
-        g_bForkOccured = false;
+        g_bForkOccurred = false;
 #else
         l_projContext.curpid = curpid;
 #endif

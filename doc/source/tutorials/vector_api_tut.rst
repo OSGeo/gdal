@@ -675,7 +675,7 @@ Reading From OGR using the Arrow C Stream data interface
 
 .. versionadded:: 3.6
 
-Instead of retrieving features one at a time, it is also possible to retrive
+Instead of retrieving features one at a time, it is also possible to retrieve
 them by batches, with a column-oriented memory layout, using the
 :cpp:func:`OGRLayer::GetArrowStream` method. Note that this method is more
 difficult to use than the traditional :cpp:func:`OGRLayer::GetNextFeature` approach,
@@ -727,7 +727,7 @@ https://github.com/apache/arrow/blob/master/cpp/src/arrow/c/abi.h
 to get API/ABI compatibility with Apache Arrow C++. This header file must be
 explicitly included when the related array batch API is used.
 
-The GetArrowStream() method has the followin signature:
+The GetArrowStream() method has the following signature:
 
   .. code-block:: cpp
 
@@ -801,7 +801,7 @@ OGRLayer has a base implementation of GetArrowStream() that is such:
   may fallback to the default (slower) implementation when filters are set.
 
   Mixing calls to GetNextFeature() and get_next() is not recommended, as
-  the behaviour will be unspecified (but it should not crash).
+  the behavior will be unspecified (but it should not crash).
 
   When get_next() returns 0, and the array is no longer needed, it must
   be released with the following procedure, to take into account that it might
@@ -813,10 +813,10 @@ OGRLayer has a base implementation of GetArrowStream() that is such:
           if( out_array->release )
               out_array->release(out_array)
 
-Drivers that have a specialized implementation advertize the
+Drivers that have a specialized implementation advertise the
 new OLCFastGetArrowStream layer capability.
 
-Using directly (as a producer or a consumer) a ArrowArray is admitedly not
+Using directly (as a producer or a consumer) a ArrowArray is admittedly not
 trivial, and requires good intimacy with the Arrow C data interface and columnar
 array specifications, to know, in which buffer of an array, data is to be read,
 which data type void* buffers should be cast to, how to use buffers that contain

@@ -169,7 +169,7 @@ for line in pfile.readlines():
         print('%s,LOCAL_CS["%s - (unsupported)"]' % (ident, ident))
 
     except Exception:
-        print("cant translate: ", line)
+        print("can't translate: ", line)
         raise
 
 # Translate datums to their underlying spheroid information.
