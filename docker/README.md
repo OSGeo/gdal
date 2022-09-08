@@ -91,7 +91,7 @@ docker run --rm -v /home:/home osgeo/gdal:alpine-small-latest gdalinfo $PWD/my.t
 
 ## Troubleshooting
 
-If getting a ``<jemalloc>: arena 0 background thread creation failed (1)`` error message when running the osgeo/gdal[:ubuntu-full-XXXX] images on a Linux host with an old distributions (RHEL/CentOS 7), adding `--privileged` to the docker run command line should help (see https://github.com/OSGeo/gdal/issues/6331)
+If you are getting a ``<jemalloc>: arena 0 background thread creation failed (1)`` error message when running the osgeo/gdal[:ubuntu-full-XXXX] images on a Linux host with an old distribution (RHEL/CentOS 7), adding `--privileged` to the docker run command line should help (see https://github.com/OSGeo/gdal/issues/6331)
 
 # Images of releases
 
