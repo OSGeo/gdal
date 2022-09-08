@@ -89,6 +89,10 @@ docker pull osgeo/gdal:alpine-small-latest
 docker run --rm -v /home:/home osgeo/gdal:alpine-small-latest gdalinfo $PWD/my.tif
 ```
 
+## Troubleshooting
+
+If you are getting a ``<jemalloc>: arena 0 background thread creation failed (1)`` error message when running the osgeo/gdal[:ubuntu-full-XXXX] images on a Linux host with an old distribution (RHEL/CentOS 7), adding `--privileged` to the docker run command line should help (see https://github.com/OSGeo/gdal/issues/6331)
+
 # Images of releases
 
 Tagged images of recent past releases are available. The last ones (at time of writing) are for GDAL 3.5.0 and PROJ 9.0.1, for linux/amd64 and linux/arm64:
