@@ -68,6 +68,10 @@ static std::string gosSourceProfileAccessKeyId;
 static std::string gosSourceProfileSecretAccessKey;
 static std::string gosSourceProfileSessionToken;
 
+// The below variables are used for web identity settings in aws/config
+static std::string gosRoleArnWebIdentity;
+static std::string gosWebIdentityTokenFile;
+
 /************************************************************************/
 /*                         CPLGetLowerCaseHex()                         */
 /************************************************************************/
@@ -753,6 +757,8 @@ static bool ReadAWSWebIdentityTokenFile(const std::string& osWebIdentityTokenFil
 
 bool VSIS3HandleHelper::GetConfigurationFromAssumeRoleWithWebIdentity(bool bForceRefresh,
                                                                       const std::string& osPathForOption,
+                                                                      const std::string& osRoleArnIn,
+                                                                      const std::string& osWebIdentityTokenFileIn,
                                                                       CPLString& osSecretAccessKey,
                                                                       CPLString& osAccessKeyId,
                                                                       CPLString& osSessionToken)
@@ -773,15 +779,16 @@ bool VSIS3HandleHelper::GetConfigurationFromAssumeRoleWithWebIdentity(bool bForc
         }
     }
 
-    const CPLString roleArn = VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_ROLE_ARN", "");
+    const CPLString roleArn = !osRoleArnIn.empty() ? osRoleArnIn :
+        VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_ROLE_ARN", "");
     if( roleArn.empty() )
     {
         CPLDebug("AWS", "AWS_ROLE_ARN configuration option not defined");
         return false;
     }
 
-    const CPLString webIdentityTokenFile =  VSIGetPathSpecificOption(osPathForOption.c_str(),
-                                                             "AWS_WEB_IDENTITY_TOKEN_FILE", "");
+    const CPLString webIdentityTokenFile = !osWebIdentityTokenFileIn.empty() ? osWebIdentityTokenFileIn :
+        VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_WEB_IDENTITY_TOKEN_FILE", "");
     if( webIdentityTokenFile.empty() )
     {
         CPLDebug("AWS", "AWS_WEB_IDENTITY_TOKEN_FILE configuration option not defined");
@@ -1096,6 +1103,7 @@ static bool ReadAWSCredentials(const std::string& osProfile,
 
 bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
                                                 const std::string& osPathForOption,
+                                                const char* pszProfile,
                                                 CPLString& osSecretAccessKey,
                                                 CPLString& osAccessKeyId,
                                                 CPLString& osSessionToken,
@@ -1105,15 +1113,20 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
                                                 CPLString& osSourceProfile,
                                                 CPLString& osExternalId,
                                                 CPLString& osMFASerial,
-                                                CPLString& osRoleSessionName)
+                                                CPLString& osRoleSessionName,
+                                                CPLString& osWebIdentityTokenFile)
 {
     // See http://docs.aws.amazon.com/cli/latest/userguide/cli-config-files.html
     // If AWS_DEFAULT_PROFILE is set (obsolete, no longer documented), use it in priority
     // Otherwise use AWS_PROFILE
     // Otherwise fallback to "default"
-    const char* pszProfile = VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_DEFAULT_PROFILE", "");
-    if( pszProfile[0] == '\0' )
-        pszProfile = VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_PROFILE", "");
+    const char* pszProfileOri = pszProfile;
+    if( pszProfile == nullptr )
+    {
+        pszProfile = VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_DEFAULT_PROFILE", "");
+        if( pszProfile[0] == '\0' )
+            pszProfile = VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_PROFILE", "");
+    }
     const CPLString osProfile(pszProfile[0] != '\0' ? pszProfile : "default");
 
 #ifdef WIN32
@@ -1237,6 +1250,10 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
                     {
                         osRoleSessionName = pszValue;
                     }
+                    else if( strcmp(pszKey, "web_identity_token_file") == 0 )
+                    {
+                        osWebIdentityTokenFile = pszValue;
+                    }
                 }
                 CPLFree(pszKey);
             }
@@ -1254,7 +1271,8 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
     }
 
     return (!osAccessKeyId.empty() && !osSecretAccessKey.empty()) ||
-           (!osRoleArn.empty() && !osSourceProfile.empty());
+           (!osRoleArn.empty() && !osSourceProfile.empty()) ||
+           (pszProfileOri != nullptr && !osRoleArn.empty() && !osWebIdentityTokenFile.empty());
 }
 
 
@@ -1370,7 +1388,7 @@ static bool GetTemporaryCredentialsForRole(const std::string& osRoleArn,
 /*               GetOrRefreshTemporaryCredentialsForRole()              */
 /************************************************************************/
 
-static bool GetOrRefreshTemporaryCredentialsForRole(bool bForceRefresh,
+bool VSIS3HandleHelper::GetOrRefreshTemporaryCredentialsForRole(bool bForceRefresh,
                                                     CPLString& osSecretAccessKey,
                                                     CPLString& osAccessKeyId,
                                                     CPLString& osSessionToken,
@@ -1390,6 +1408,26 @@ static bool GetOrRefreshTemporaryCredentialsForRole(bool bForceRefresh,
             osSessionToken = gosGlobalSessionToken;
             osRegion = gosRegion;
             return true;
+        }
+    }
+
+    if( !gosRoleArnWebIdentity.empty() )
+    {
+        if( GetConfigurationFromAssumeRoleWithWebIdentity(bForceRefresh,
+                                                          std::string(),
+                                                          gosRoleArnWebIdentity,
+                                                          gosWebIdentityTokenFile,
+                                                          osSecretAccessKey,
+                                                          osAccessKeyId,
+                                                          osSessionToken) )
+        {
+            gosSourceProfileSecretAccessKey = osSecretAccessKey;
+            gosSourceProfileAccessKeyId = osAccessKeyId;
+            gosSourceProfileSessionToken = osSessionToken;
+        }
+        else
+        {
+            return false;
         }
     }
 
@@ -1491,8 +1529,10 @@ bool VSIS3HandleHelper::GetConfiguration(const std::string& osPathForOption,
     CPLString osExternalId;
     CPLString osMFASerial;
     CPLString osRoleSessionName;
+    CPLString osWebIdentityTokenFile;
     // coverity[tainted_data]
     if( GetConfigurationFromAWSConfigFiles(osPathForOption,
+                                           /* pszProfile = */ nullptr,
                                            osSecretAccessKey, osAccessKeyId,
                                            osSessionToken, osRegion,
                                            osCredentials,
@@ -1500,21 +1540,67 @@ bool VSIS3HandleHelper::GetConfiguration(const std::string& osPathForOption,
                                            osSourceProfile,
                                            osExternalId,
                                            osMFASerial,
-                                           osRoleSessionName) )
+                                           osRoleSessionName,
+                                           osWebIdentityTokenFile) )
     {
         if( osSecretAccessKey.empty() && !osRoleArn.empty() )
         {
-            // Get the credentials for the source profile, that will be
-            // used to sign the STS AssumedRole request.
-            if( !ReadAWSCredentials(osSourceProfile, osCredentials,
-                                    osSecretAccessKey,
-                                    osAccessKeyId,
-                                    osSessionToken) )
+            // Check if the default profile is pointing to another profile
+            // that has a role_arn and web_identity_token_file settings.
+            if( !osSourceProfile.empty() )
             {
-                VSIError(VSIE_AWSInvalidCredentials,
-                         "Cannot retrieve credentials for source profile %s",
-                         osSourceProfile.c_str());
-                return false;
+                CPLString osSecretAccessKeySP;
+                CPLString osAccessKeyIdSP;
+                CPLString osSessionTokenSP;
+                CPLString osRegionSP;
+                CPLString osCredentialsSP;
+                CPLString osRoleArnSP;
+                CPLString osSourceProfileSP;
+                CPLString osExternalIdSP;
+                CPLString osMFASerialSP;
+                CPLString osRoleSessionNameSP;
+                if( GetConfigurationFromAWSConfigFiles(osPathForOption,
+                                                       osSourceProfile.c_str(),
+                                                       osSecretAccessKeySP,
+                                                       osAccessKeyIdSP,
+                                                       osSessionTokenSP,
+                                                       osRegionSP,
+                                                       osCredentialsSP,
+                                                       osRoleArnSP,
+                                                       osSourceProfileSP,
+                                                       osExternalIdSP,
+                                                       osMFASerialSP,
+                                                       osRoleSessionNameSP,
+                                                       osWebIdentityTokenFile) )
+                {
+                    if( GetConfigurationFromAssumeRoleWithWebIdentity(/* bForceRefresh = */ false,
+                                                                      osPathForOption,
+                                                                      osRoleArnSP,
+                                                                      osWebIdentityTokenFile,
+                                                                      osSecretAccessKey, osAccessKeyId,
+                                                                      osSessionToken) )
+                    {
+                        CPLMutexHolder oHolder( &ghMutex );
+                        gosRoleArnWebIdentity = osRoleArnSP;
+                        gosWebIdentityTokenFile = osWebIdentityTokenFile;
+                    }
+                }
+            }
+
+            if( gosRoleArnWebIdentity.empty() )
+            {
+                // Get the credentials for the source profile, that will be
+                // used to sign the STS AssumedRole request.
+                if( !ReadAWSCredentials(osSourceProfile, osCredentials,
+                                        osSecretAccessKey,
+                                        osAccessKeyId,
+                                        osSessionToken) )
+                {
+                    VSIError(VSIE_AWSInvalidCredentials,
+                             "Cannot retrieve credentials for source profile %s",
+                             osSourceProfile.c_str());
+                    return false;
+                }
             }
 
             std::string osTempSecretAccessKey;
@@ -1568,6 +1654,8 @@ bool VSIS3HandleHelper::GetConfiguration(const std::string& osPathForOption,
         // WebIdentity method: use Web Identity Token
         if( GetConfigurationFromAssumeRoleWithWebIdentity(/* bForceRefresh = */ false,
                                                           osPathForOption,
+                                                          /* osRoleArnIn = */ std::string(),
+                                                          /* osWebIdentityTokenFileIn = */ std::string(),
                                                           osSecretAccessKey, osAccessKeyId,
                                                           osSessionToken) )
         {
@@ -1625,6 +1713,8 @@ void VSIS3HandleHelper::ClearCache()
     gosSourceProfileSecretAccessKey.clear();
     gosSourceProfileSessionToken.clear();
     gosRegion.clear();
+    gosRoleArnWebIdentity.clear();
+    gosWebIdentityTokenFile.clear();
 }
 
 /************************************************************************/
@@ -1791,6 +1881,8 @@ void VSIS3HandleHelper::RefreshCredentials(const std::string& osPathForOption,
         CPLString osRegion;
         if( GetConfigurationFromAssumeRoleWithWebIdentity(bForceRefresh,
                                                           osPathForOption.c_str(),
+                                                          std::string(),
+                                                          std::string(),
                                                           osSecretAccessKey,
                                                           osAccessKeyId,
                                                           osSessionToken) )

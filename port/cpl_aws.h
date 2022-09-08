@@ -159,8 +159,16 @@ class VSIS3HandleHelper final: public IVSIS3LikeHandleHelper
 
         void RebuildURL() override;
 
+        static bool GetOrRefreshTemporaryCredentialsForRole(bool bForceRefresh,
+                                                            CPLString& osSecretAccessKey,
+                                                            CPLString& osAccessKeyId,
+                                                            CPLString& osSessionToken,
+                                                            CPLString& osRegion);
+
         static bool GetConfigurationFromAssumeRoleWithWebIdentity(bool bForceRefresh,
                                                                   const std::string& osPathForOption,
+                                                                  const std::string& osRoleArnIn,
+                                                                  const std::string& osWebIdentityTokenFileIn,
                                                                   CPLString& osSecretAccessKey,
                                                                   CPLString& osAccessKeyId,
                                                                   CPLString& osSessionToken);
@@ -173,6 +181,7 @@ class VSIS3HandleHelper final: public IVSIS3LikeHandleHelper
 
         static bool GetConfigurationFromAWSConfigFiles(
                                      const std::string& osPathForOption,
+                                     const char* pszProfile,
                                      CPLString& osSecretAccessKey,
                                      CPLString& osAccessKeyId,
                                      CPLString& osSessionToken,
@@ -182,7 +191,8 @@ class VSIS3HandleHelper final: public IVSIS3LikeHandleHelper
                                      CPLString& osSourceProfile,
                                      CPLString& osExternalId,
                                      CPLString& osMFASerial,
-                                     CPLString& osRoleSessionName);
+                                     CPLString& osRoleSessionName,
+                                     CPLString& osWebIdentityTokenFile);
 
         static bool GetConfiguration(const std::string& osPathForOption,
                                      CSLConstList papszOptions,

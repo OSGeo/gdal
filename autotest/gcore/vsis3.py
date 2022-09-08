@@ -4965,6 +4965,174 @@ role_session_name = my_role_session_name
 
 
 ###############################################################################
+# Read credentials from sts AssumeRoleWithWebIdentity
+def test_vsis3_read_credentials_sts_assume_role_with_web_identity_from_config_file(
+    aws_test_config, webserver_port
+):
+    options = {
+        "AWS_SECRET_ACCESS_KEY": "",
+        "AWS_ACCESS_KEY_ID": "",
+        "CPL_AWS_CREDENTIALS_FILE": "/vsimem/aws_credentials",
+        "AWS_CONFIG_FILE": "/vsimem/aws_config",
+        "AWS_PROFILE": "my_profile",
+        "AWS_STS_ENDPOINT": "localhost:%d" % webserver_port,
+        "CPL_AWS_STS_ROOT_URL": "http://localhost:%d" % webserver_port,
+    }
+
+    gdal.VSICurlClearCache()
+
+    gdal.FileFromMemBuffer("/vsimem/web_identity_token_file", "token")
+
+    gdal.FileFromMemBuffer("/vsimem/aws_credentials", "")
+
+    gdal.FileFromMemBuffer(
+        "/vsimem/aws_config",
+        """
+[profile foo]
+role_arn = foo_role_arn
+web_identity_token_file = /vsimem/web_identity_token_file
+[profile my_profile]
+role_arn = my_profile_role_arn
+source_profile = foo
+""",
+    )
+
+    gdal.VSICurlClearCache()
+
+    assumeRoleWithWebIdentityResponseXML = """<AssumeRoleWithWebIdentityResponse xmlns="https://sts.amazonaws.com/doc/2011-06-15/">
+          <AssumeRoleWithWebIdentityResult>
+            <SubjectFromWebIdentityToken>amzn1.account.AF6RHO7KZU5XRVQJGXK6HB56KR2A</SubjectFromWebIdentityToken>
+            <Audience>client.5498841531868486423.1548@apps.example.com</Audience>
+            <AssumedRoleUser>
+              <Arn>arn:aws:sts::123456789012:assumed-role/FederatedWebIdentityRole/app1</Arn>
+              <AssumedRoleId>AROACLKWSDQRAOEXAMPLE:app1</AssumedRoleId>
+            </AssumedRoleUser>
+            <Credentials>
+              <SessionToken>AWS_SESSION_TOKEN</SessionToken>
+              <SecretAccessKey>AWS_SECRET_ACCESS_KEY</SecretAccessKey>
+              <Expiration>9999-01-01T00:00:00Z</Expiration>
+              <AccessKeyId>AWS_ACCESS_KEY_ID</AccessKeyId>
+            </Credentials>
+            <SourceIdentity>SourceIdentityValue</SourceIdentity>
+            <Provider>www.amazon.com</Provider>
+          </AssumeRoleWithWebIdentityResult>
+          <ResponseMetadata>
+            <RequestId>ad4156e9-bce1-11e2-82e6-6b6efEXAMPLE</RequestId>
+          </ResponseMetadata>
+        </AssumeRoleWithWebIdentityResponse>"""
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/?Action=AssumeRoleWithWebIdentity&RoleSessionName=gdal&Version=2011-06-15&RoleArn=foo_role_arn&WebIdentityToken=token",
+        200,
+        {},
+        assumeRoleWithWebIdentityResponseXML,
+    )
+
+    # Note that the Expiration is in the past, so for a next request we will
+    # have to renew
+    handler.add(
+        "GET",
+        "/?Action=AssumeRole&RoleArn=my_profile_role_arn&RoleSessionName=GDAL-session&Version=2011-06-15&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AWS_ACCESS_KEY_ID%2F20150101%2Fus-east-1%2Fsts%2Faws4_request&X-Amz-Date=20150101T000000Z&X-Amz-SignedHeaders=host&X-Amz-Signature=5caba7475a051defc12c3b0ba0c2afa2245232207e1aec46b5c8e848414daaef",
+        200,
+        {},
+        """<AssumeRoleResponse><AssumeRoleResult><Credentials>
+            <AccessKeyId>TEMP_ACCESS_KEY_ID</AccessKeyId>
+            <SecretAccessKey>TEMP_SECRET_ACCESS_KEY</SecretAccessKey>
+            <SessionToken>TEMP_SESSION_TOKEN</SessionToken>
+            <Expiration>1970-01-01T01:00:00Z</Expiration>
+        </Credentials></AssumeRoleResult></AssumeRoleResponse>""",
+    )
+
+    handler.add(
+        "GET",
+        "/s3_fake_bucket/resource",
+        200,
+        {},
+        "foo",
+        expected_headers={
+            "Authorization": "AWS4-HMAC-SHA256 Credential=TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature=d5e8167e066e7439e0e57a43e1167f9ee7efe4b451c72de1a3a150f6fc033403",
+            "X-Amz-Security-Token": "TEMP_SESSION_TOKEN",
+        },
+    )
+
+    handler2 = webserver.SequentialHandler()
+    handler2.add(
+        "GET",
+        "/?Action=AssumeRoleWithWebIdentity&RoleSessionName=gdal&Version=2011-06-15&RoleArn=foo_role_arn&WebIdentityToken=token",
+        200,
+        {},
+        assumeRoleWithWebIdentityResponseXML,
+    )
+
+    handler2.add(
+        "GET",
+        "/?Action=AssumeRole&RoleArn=my_profile_role_arn&RoleSessionName=GDAL-session&Version=2011-06-15&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AWS_ACCESS_KEY_ID%2F20150101%2Fus-east-1%2Fsts%2Faws4_request&X-Amz-Date=20150101T000000Z&X-Amz-SignedHeaders=host&X-Amz-Signature=5caba7475a051defc12c3b0ba0c2afa2245232207e1aec46b5c8e848414daaef",
+        200,
+        {},
+        """<AssumeRoleResponse><AssumeRoleResult><Credentials>
+            <AccessKeyId>TEMP_ACCESS_KEY_ID</AccessKeyId>
+            <SecretAccessKey>TEMP_SECRET_ACCESS_KEY</SecretAccessKey>
+            <SessionToken>TEMP_SESSION_TOKEN</SessionToken>
+            <Expiration>9999-01-01T01:00:00Z</Expiration>
+        </Credentials></AssumeRoleResult></AssumeRoleResponse>""",
+    )
+
+    handler2.add(
+        "GET",
+        "/s3_fake_bucket/resource2",
+        200,
+        {},
+        "foo",
+        expected_headers={
+            "Authorization": "AWS4-HMAC-SHA256 Credential=TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature=d5abb4e09ad29ad3810cfe21702e7e2e9071798c441acaed9613d62ed8600556",
+            "X-Amz-Security-Token": "TEMP_SESSION_TOKEN",
+        },
+    )
+
+    handler2.add(
+        "GET",
+        "/s3_fake_bucket/resource3",
+        200,
+        {},
+        "foo",
+        expected_headers={
+            "Authorization": "AWS4-HMAC-SHA256 Credential=TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature=a158ddb8b5fd40fd5226c0ca28c14620863b8157c870e7e96ff841662aaef79a",
+            "X-Amz-Security-Token": "TEMP_SESSION_TOKEN",
+        },
+    )
+
+    try:
+        with webserver.install_http_handler(handler):
+            with gdaltest.config_options(options):
+                f = open_for_read("/vsis3/s3_fake_bucket/resource")
+            assert f is not None
+            data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+            gdal.VSIFCloseL(f)
+        assert data == "foo"
+
+        with webserver.install_http_handler(handler2):
+            with gdaltest.config_options(options):
+                f = open_for_read("/vsis3/s3_fake_bucket/resource2")
+                assert f is not None
+                data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+                gdal.VSIFCloseL(f)
+                assert data == "foo"
+
+                f = open_for_read("/vsis3/s3_fake_bucket/resource3")
+                assert f is not None
+                data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+                gdal.VSIFCloseL(f)
+                assert data == "foo"
+
+    finally:
+        gdal.Unlink("/vsimem/web_identity_token_file")
+        gdal.Unlink("/vsimem/aws_credentials")
+        gdal.Unlink("/vsimem/aws_config")
+
+
+###############################################################################
 
 
 def test_vsis3_non_existing_file_GDAL_DISABLE_READDIR_ON_OPEN(
