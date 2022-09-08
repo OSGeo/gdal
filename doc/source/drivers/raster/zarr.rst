@@ -49,7 +49,19 @@ For Zarr V3, the dataset name recognized by the Open() method of the driver is
 a directory that contains a :file:`zarr.json` file (root of the dataset).
 
 For datasets on file systems where file listing is not reliable, as often with
-/vsicurl/, it is also possible to prefix the directory name with ``ZARR:``.
+/vsicurl/, it is also possible to prefix the directory name with ``ZARR:``,
+and it is necessary to surround the /vsicurl/-prefixed URL with double quotes.
+e.g `ZARR:"/vsicurl/https://example.org/foo.zarr"`. Note that when passing such
+string in a command line shell, extra quoting might be necessary to preserve the
+double-quoting.
+
+For example with a Bash shell, the whole connection string needs to be surrounded
+with single-quote characters:
+
+::
+
+    gdalmdiminfo 'ZARR:"/vsicurl/https://example.org/foo.zarr"'
+
 
 Compression methods
 -------------------
@@ -379,7 +391,12 @@ Convert a 2D slice (the one at index 0 of the non-2D dimension) of a 3D array to
 
 ::
 
-    gdal_translate ZARR:"my.zarr":/group/myarray:0 out.tif
+    gdal_translate 'ZARR:"my.zarr":/group/myarray:0' out.tif
+
+
+.. note::
+    The single quoting around the connection string is specific to the Bash shell
+    to make sure that the double quoting is preserved.
 
 
 See Also:
