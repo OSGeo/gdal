@@ -325,7 +325,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
         // Overview has ZONE 'R' and Legend ZONE 'D' but because the Zone 'D' is also a valid
         // Zone we need an additional check. -> In all cases of Overview/Legend the values of
         // the BoundingBox are equal so we simply check here that NW == SE is. 
-        bool isLegendOrOverview =
+        toc->entries[i].isOverviewOrLegend =
             (toc->entries[i].zone[0] == 'R' ||  // Overview
                 (toc->entries[i].zone[0] == 'D' &&  // Legend
                     memcmp(&(toc->entries[i].seLong), &(toc->entries[i].nwLong), sizeof(toc->entries[i].nwLong)) == 0 &&
@@ -334,7 +334,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
         bool isPolarZone = (toc->entries[i].zone[0] == '9') || (toc->entries[i].zone[0] == 'J');
 
         // make additional checks of the bounding for charts (without Legends and Overviews)
-        if (!isLegendOrOverview)
+        if (!toc->entries[i].isOverviewOrLegend)
         {
             if (!(fabs(toc->entries[i].seLong) <= 360.0) ||
                 !(fabs(toc->entries[i].nwLong) <= 360.0) ||
@@ -549,17 +549,14 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
         frameEntry->filename[12] = '\0';
         bOK &= strlen(frameEntry->filename) > 0;
 
-        /* Check if the filename is an overview or legend */
-        for( int j = 0; j < 12; j++ )
+        // Check (case insensitive) if the filename is an overview or legend
+        // some CADRG maps have legend name smaller than 8.3 then the extension
+        // has blanks (0x20) at the end -> check only the first 3 letters of the extension.
+        const char* fileExt = CPLGetExtension(frameEntry->filename);
+        if (EQUALN(fileExt, "ovr", 3) ||
+            EQUALN(fileExt, "lgd", 3))
         {
-            if (strcmp(&(frameEntry->filename[j]),".OVR") == 0 ||
-                strcmp(&(frameEntry->filename[j]),".ovr") == 0 ||
-                strcmp(&(frameEntry->filename[j]),".LGD") == 0 ||
-                strcmp(&(frameEntry->filename[j]),".lgd") == 0)
-            {
-                entry->isOverviewOrLegend = TRUE;
-                break;
-            }
+            entry->isOverviewOrLegend = TRUE;
         }
 
         /* Extract series code */
