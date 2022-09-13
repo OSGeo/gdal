@@ -1461,6 +1461,7 @@ OGRErr OGRHanaTableLayer::CreateField(OGRFieldDefn* srsField, int approxOK)
     featureDefn_->AddFieldDefn(&dstField);
 
     ClearQueryStatement();
+    ResetPreparedStatements();
 
     return OGRERR_NONE;
 }
