@@ -849,6 +849,32 @@ CPLErr VRTRasterBand::SetNoDataValue( double dfNewValue )
 }
 
 /************************************************************************/
+/*                     IsNoDataValueInDataTypeRange()                   */
+/************************************************************************/
+
+bool VRTRasterBand::IsNoDataValueInDataTypeRange() const
+{
+    if( m_bNoDataSetAsInt64 )
+        return eDataType == GDT_Int64;
+    if( m_bNoDataSetAsUInt64 )
+        return eDataType == GDT_UInt64;
+    if( !m_bNoDataValueSet )
+        return true;
+    if( !std::isfinite(m_dfNoDataValue) )
+        return eDataType == GDT_Float32 || eDataType == GDT_Float64;
+    GByte abyTempBuffer[2 * sizeof(double)];
+    CPLAssert( GDALGetDataTypeSizeBytes(eDataType) <= static_cast<int>(sizeof(abyTempBuffer)) );
+    GDALCopyWords(&m_dfNoDataValue, GDT_Float64, 0,
+                  &abyTempBuffer[0], eDataType, 0,
+                  1);
+    double dfNoDataValueAfter = 0;
+    GDALCopyWords(&abyTempBuffer[0], eDataType, 0,
+                  &dfNoDataValueAfter, GDT_Float64, 0,
+                  1);
+    return std::fabs(dfNoDataValueAfter - m_dfNoDataValue) < 1.0;
+}
+
+/************************************************************************/
 /*                       SetNoDataValueAsInt64()                        */
 /************************************************************************/
 
