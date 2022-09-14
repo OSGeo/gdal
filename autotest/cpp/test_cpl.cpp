@@ -3810,6 +3810,50 @@ namespace tut
 #endif
     }
 
+    // Test ignore-env-vars = yes of configuration file
+    template<>
+    template<>
+    void object::test<61>()
+    {
+        char szEnvVar[] = "SOME_ENV_VAR_FOR_TEST_CPL_61=FOO";
+        putenv(szEnvVar);
+        ensure( CPLGetConfigOption("SOME_ENV_VAR_FOR_TEST_CPL_61", nullptr) != nullptr );
+
+        VSILFILE* fp = VSIFOpenL("/vsimem/.gdal/gdalrc", "wb");
+        VSIFPrintfL(fp, "[directives]\n");
+        VSIFPrintfL(fp, "ignore-env-vars=yes\n");
+        VSIFPrintfL(fp, "[configoptions]\n");
+        VSIFPrintfL(fp, "CONFIG_OPTION_FOR_TEST_CPL_61=BAR\n");
+        VSIFCloseL(fp);
+
+        // Load configuration file
+        CPLLoadConfigOptionsFromFile("/vsimem/.gdal/gdalrc", false);
+
+        // Check that reading configuration option works
+        ensure( EQUAL(CPLGetConfigOption("CONFIG_OPTION_FOR_TEST_CPL_61", ""), "BAR") );
+
+        // Check that environment variables are not read as configuration options
+        ensure( CPLGetConfigOption("SOME_ENV_VAR_FOR_TEST_CPL_61", nullptr) == nullptr );
+
+        // Reset ignore-env-vars=no
+        fp = VSIFOpenL("/vsimem/.gdal/gdalrc", "wb");
+        VSIFPrintfL(fp, "[directives]\n");
+        VSIFPrintfL(fp, "ignore-env-vars=no\n");
+        VSIFPrintfL(fp, "[configoptions]\n");
+        VSIFPrintfL(fp, "SOME_ENV_VAR_FOR_TEST_CPL_61=BAR\n");
+        VSIFCloseL(fp);
+
+        // Reload configuration file
+        CPLLoadConfigOptionsFromFile("/vsimem/.gdal/gdalrc", false);
+
+        // Check that environment variables are read as configuration options
+        // and override configuration options
+        ensure( CPLGetConfigOption("SOME_ENV_VAR_FOR_TEST_CPL_61", nullptr) != nullptr );
+        ensure_equals( std::string(CPLGetConfigOption("SOME_ENV_VAR_FOR_TEST_CPL_61", "")), std::string("FOO") );
+
+        VSIUnlink("/vsimem/.gdal/gdalrc");
+    }
+
     // WARNING: keep that line at bottom and read carefully:
     // If the number of tests reaches 100, increase the MAX_NUMBER_OF_TESTS
     // define at top of this file (and update this comment!)

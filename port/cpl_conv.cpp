@@ -103,6 +103,7 @@ CPL_CVSID("$Id$")
 
 static CPLMutex *hConfigMutex = nullptr;
 static volatile char **g_papszConfigOptions = nullptr;
+static bool gbIgnoreEnvVariables = false; // if true, only take into account configuration options set through configuration file or CPLSetConfigOption()/CPLSetThreadLocalConfigOption()
 
 // Used by CPLOpenShared() and friends.
 static CPLMutex *hSharedFileMutex = nullptr;
@@ -1698,8 +1699,21 @@ CPLGetConfigOption( const char *pszKey, const char *pszDefault )
             CSLFetchNameValue(const_cast<char **>(g_papszConfigOptions), pszKey);
     }
 
-    if( pszResult == nullptr )
+    if( gbIgnoreEnvVariables )
+    {
+        const char* pszEnvVar = getenv(pszKey);
+        if( pszEnvVar != nullptr )
+        {
+            CPLDebug("CPL",
+                     "Ignoring environment variable %s=%s because of "
+                     "ignore-env-vars=yes setting in configuration file",
+                     pszKey, pszEnvVar);
+        }
+    }
+    else if( pszResult == nullptr )
+    {
         pszResult = getenv(pszKey);
+    }
 
     if( pszResult == nullptr )
         return pszDefault;
@@ -2028,6 +2042,12 @@ path=/vsis3/sentinel-s2-l1c
 AWS_REQUEST_PAYER=requester
 \endverbatim
 
+Starting with GDAL 3.6, a leading [directives] section might be added with
+a "ignore-env-vars=yes" setting to indicate that, starting with that point,
+all environment variables should be ignored, and only configuration options
+defined in the [configoptions] sections or through the CPLSetConfigOption() /
+CPLSetThreadLocalConfigOption() functions should be taken into account.
+
 This function is typically called by CPLLoadConfigOptionsFromPredefinedFiles()
 
 @param pszFilename File where to load configuration from.
@@ -2042,10 +2062,17 @@ void CPLLoadConfigOptionsFromFile(const char* pszFilename, int bOverrideEnvVars)
         return;
     CPLDebug("CPL", "Loading configuration from %s", pszFilename);
     const char* pszLine;
-    bool bInConfigOptions = false;
-    bool bInCredentials = false;
+    enum class Section
+    {
+        NONE,
+        GENERAL,
+        CONFIG_OPTIONS,
+        CREDENTIALS,
+    };
+    Section eCurrentSection = Section::NONE;
     bool bInSubsection = false;
     std::string osPath;
+    int nSectionCounter = 0;
 
     const auto IsSpaceOnly = [](const char* pszStr)
     {
@@ -2069,17 +2096,48 @@ void CPLLoadConfigOptionsFromFile(const char* pszFilename, int bOverrideEnvVars)
         }
         else if( strcmp(pszLine, "[configoptions]") == 0 )
         {
-            bInConfigOptions = true;
-            bInCredentials = false;
+            nSectionCounter ++;
+            eCurrentSection = Section::CONFIG_OPTIONS;
         }
         else if( strcmp(pszLine, "[credentials]") == 0 )
         {
-            bInConfigOptions = false;
-            bInCredentials = true;
+            nSectionCounter ++;
+            eCurrentSection = Section::CREDENTIALS;
             bInSubsection = false;
             osPath.clear();
         }
-        else if( bInCredentials )
+        else if( strcmp(pszLine, "[directives]") == 0 )
+        {
+            nSectionCounter ++;
+            if( nSectionCounter != 1 )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "The [directives] section should be the first one in "
+                         "the file, otherwise some its settings might not be "
+                         "used correctly.");
+            }
+            eCurrentSection = Section::GENERAL;
+        }
+        else if( eCurrentSection == Section::GENERAL )
+        {
+            char* pszKey = nullptr;
+            const char* pszValue = CPLParseNameValue(pszLine, &pszKey);
+            if( pszKey && pszValue )
+            {
+                if( strcmp(pszKey, "ignore-env-vars") == 0 )
+                {
+                    gbIgnoreEnvVariables = CPLTestBool(pszValue);
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Ignoring %s line in [directives] section",
+                             pszLine);
+                }
+            }
+            CPLFree(pszKey);
+        }
+        else if( eCurrentSection == Section::CREDENTIALS )
         {
             if( strncmp(pszLine, "[.", 2) == 0 )
             {
@@ -2121,8 +2179,7 @@ void CPLLoadConfigOptionsFromFile(const char* pszFilename, int bOverrideEnvVars)
             }
             else if( pszLine[0] == '[' )
             {
-                bInConfigOptions = false;
-                bInCredentials = false;
+                eCurrentSection = Section::NONE;
             }
             else
             {
@@ -2133,16 +2190,15 @@ void CPLLoadConfigOptionsFromFile(const char* pszFilename, int bOverrideEnvVars)
         }
         else if( pszLine[0] == '[' )
         {
-            bInConfigOptions = false;
-            bInCredentials = false;
+            eCurrentSection = Section::NONE;
         }
-        else if( bInConfigOptions )
+        else if( eCurrentSection == Section::CONFIG_OPTIONS )
         {
             char* pszKey = nullptr;
             const char* pszValue = CPLParseNameValue(pszLine, &pszKey);
             if( pszKey && pszValue )
             {
-                if( bOverrideEnvVars || getenv(pszKey) == nullptr )
+                if( bOverrideEnvVars || gbIgnoreEnvVariables || getenv(pszKey) == nullptr )
                 {
                     CPLDebugOnly("CPL",
                                  "Setting configuration option %s=%s",
@@ -2151,10 +2207,11 @@ void CPLLoadConfigOptionsFromFile(const char* pszFilename, int bOverrideEnvVars)
                 }
                 else
                 {
-                    CPLDebugOnly("CPL",
-                                 "Ignoring configuration option %s from "
-                                 "configuration file as it is already set "
-                                 "as an environment variable", pszKey);
+                    CPLDebug("CPL",
+                             "Ignoring configuration option %s=%s from "
+                             "configuration file as it is already set "
+                             "as an environment variable",
+                             pszKey, pszValue);
                 }
             }
             CPLFree(pszKey);
@@ -2183,7 +2240,8 @@ void CPLLoadConfigOptionsFromFile(const char* pszFilename, int bOverrideEnvVars)
  *
  * CPLLoadConfigOptionsFromFile() will be called with bOverrideEnvVars = false,
  * that is the value of environment variables previously set will be used instead
- * of the value set in the configuration files.
+ * of the value set in the configuration files (unless the configuration file
+ * contains a leading [directives] section with a "ignore-env-vars=yes" setting).
  *
  * This function is automatically called by GDALDriverManager() constructor
  *

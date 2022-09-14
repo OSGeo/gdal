@@ -90,8 +90,11 @@ The following locations are tried by :cpp:func:`CPLLoadConfigOptionsFromPredefin
  - for Windows builds, the location pointed by $(USERPROFILE)/.gdal/gdalrc
    is attempted.
 
-A configuration file is a text file in a .ini style format, that lists
-configuration options and their values. Lines starting with `#` are comment lines.
+A configuration file is a text file in a .ini style format.
+Lines starting with `#` are comment lines.
+
+The file may contain a ``[configoptions]`` section, that lists configuration
+options and their values.
 
 Example:
 
@@ -107,7 +110,42 @@ by calls to :cpp:func:`CPLSetConfigOption` or  :cpp:func:`CPLSetThreadLocalConfi
 or through the ``--config`` command line switch.
 
 The value of environment variables set before GDAL starts will be used instead
-of the value set in the configuration files.
+of the value set in the configuration files, unless, starting with GDAL 3.6,
+the configuration file starts with a ``[directives]`` section that contains a
+``ignore-env-variables=yes`` entry.
+
+.. code-block::
+
+    [directives]
+    # ignore environent variables. Take only into account the content of the
+    # [configoptions] section, or ones defined programmatically with
+    # CPLSetConfigOption / CPLSetThreadLocalConfigOption.
+    ignore-env-variables=yes
+
+
+Starting with GDAL 3.5, a configuration file can also contain credentials
+(or more generally options related to a virtual file system) for a given path prefix,
+that can also be set with :cpp:func:`VSISetCredential`. Credentials should be put under
+a ``[credentials]`` section, and for each path prefix, under a relative subsection
+whose name starts with "[." (e.g. "[.some_arbitrary_name]"), and whose first
+key is "path".
+
+Example:
+
+.. code-block::
+
+    [credentials]
+
+    [.private_bucket]
+    path=/vsis3/my_private_bucket
+    AWS_SECRET_ACCESS_KEY=...
+    AWS_ACCESS_KEY_ID=...
+
+    [.sentinel_s2_l1c]
+    path=/vsis3/sentinel-s2-l1c
+    AWS_REQUEST_PAYER=requester
+    \endverbatim
+
 
 .. _list_config_options:
 
