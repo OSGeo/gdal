@@ -1712,7 +1712,6 @@ void DIMAPDataset::SetMetadataFromXML(
             continue;
 
         // Logic to support directly access a name/value entry
-
         if( psParent->psChild != nullptr
             && psParent->psChild->eType == CXT_Text ) {
             CPLString osName = apszMetadataTranslation[iTrItem + 1];
@@ -1726,6 +1725,7 @@ void DIMAPDataset::SetMetadataFromXML(
                 bWarnedDiscarding = true;
                 CPLDebug("DIMAP", "Discarding too long metadata item");
             }
+            continue;
         }
         
         // Logic to support a parent element with many name/values.
