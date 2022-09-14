@@ -1934,24 +1934,6 @@ def options_post_processing(
             "Install PIL (Python Imaging Library) and numpy.",
         )
 
-    try:
-        os.path.basename(input_file).encode("ascii")
-    except UnicodeEncodeError:
-        full_ascii = False
-    else:
-        full_ascii = True
-
-    # LC_CTYPE check
-    if not full_ascii and "UTF-8" not in os.environ.get("LC_CTYPE", ""):
-        if not options.quiet:
-            print(
-                "\nWARNING: "
-                "You are running gdal2tiles.py with a LC_CTYPE environment variable that is "
-                "not UTF-8 compatible, and your input file contains non-ascii characters. "
-                "The generated sample googlemaps, openlayers or "
-                "leaflet files might contain some invalid characters as a result\n"
-            )
-
     if options.tiledriver == "WEBP":
         if gdal.GetDriverByName(options.tiledriver) is None:
             exit_with_error("WEBP driver is not available")
