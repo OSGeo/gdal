@@ -3497,11 +3497,6 @@ def test_ogr_sqlite_iterate_and_update():
 
 def test_ogr_sqlite_unique():
 
-    if gdaltest.is_travis_branch("trusty_32bit") or gdaltest.is_travis_branch(
-        "trusty_clang"
-    ):
-        pytest.skip("gcc too old")
-
     ds = ogr.GetDriverByName("SQLite").CreateDataSource("/vsimem/ogr_gpkg_unique.db")
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
 
@@ -3532,10 +3527,11 @@ def test_ogr_sqlite_unique():
     # and indexes
     # Note: leave create table in a single line because of regex spaces testing
     sql = (
-        'CREATE TABLE IF NOT EXISTS "test2" ( "fid" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "field_default" TEXT, "field_no_unique" TEXT, "field_unique" TEXT UNIQUE,`field unique2` TEXT UNIQUE,field_unique3 TEXT UNIQUE, FIELD_UNIQUE_INDEX TEXT, `field unique index2`, "field_unique_index3" TEXT, NOT_UNIQUE TEXT);',
+        'CREATE TABLE IF NOT EXISTS "test2" ( "fid" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,\n"field_default" TEXT, "field_no_unique" TEXT DEFAULT \'UNIQUE\',"field_unique" TEXT UNIQUE,`field unique2` TEXT UNIQUE,field_unique3 TEXT UNIQUE, FIELD_UNIQUE_INDEX TEXT, `field unique index2`, "field_unique_index3" TEXT, NOT_UNIQUE TEXT);',
         "CREATE UNIQUE INDEX test2_unique_idx ON test2(field_unique_index);",  # field_unique_index in lowercase whereas in uppercase in CREATE TABLE statement
         "CREATE UNIQUE INDEX test2_unique_idx2 ON test2(`field unique index2`);",
         'CREATE UNIQUE INDEX test2_unique_idx3 ON test2("field_unique_index3");',
+        'CREATE UNIQUE INDEX test2_unique_idx4 ON test2("NOT_UNIQUE", "fid");',
     )
 
     for s in sql:
