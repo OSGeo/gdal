@@ -1059,7 +1059,7 @@ def test_ogr_geojson_38():
     # Test read support
     ds = gdal.OpenEx(
         """{"type": "FeatureCollection", "features": [
-{ "type": "Feature", "properties": { "dt": "2014-11-20 12:34:56+0100", "dt2": "2014\\/11\\/20", "date":"2014\\/11\\/20", "time":"12:34:56", "no_dt": "2014-11-20 12:34:56+0100", "no_dt2": "2014-11-20 12:34:56+0100" }, "geometry": null },
+{ "type": "Feature", "properties": { "dt": "2014-11-20 12:34:56+0100", "dt2": "2014\\/11\\/20", "date":"2014\\/11\\/20", "time":"12:34:56", "no_dt": "2014-11-20 12:34:56+0100", "no_dt2": "2014-11-20 12:34:56+0100", "no_date": "2022/05/12 blah" }, "geometry": null },
 { "type": "Feature", "properties": { "dt": "2014\\/11\\/20", "dt2": "2014\\/11\\/20T12:34:56Z", "date":"2014-11-20", "time":"12:34:56", "no_dt": "foo", "no_dt2": 1 }, "geometry": null }
 ] }"""
     )
@@ -1085,6 +1085,10 @@ def test_ogr_geojson_38():
     )
     assert (
         feat_defn.GetFieldDefn(feat_defn.GetFieldIndex("no_dt2")).GetType()
+        == ogr.OFTString
+    )
+    assert (
+        feat_defn.GetFieldDefn(feat_defn.GetFieldIndex("no_date")).GetType()
         == ogr.OFTString
     )
     f = lyr.GetNextFeature()
