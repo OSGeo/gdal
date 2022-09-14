@@ -691,6 +691,124 @@ double VRTSourcedRasterBand::GetMaximum( int *pbSuccess )
 }
 
 /************************************************************************/
+/* IsMosaicOfNonOverlappingSimpleSourcesOfFullRasterNoResAndTypeChange() */
+/************************************************************************/
+
+/* Returns true if the VRT raster band consists of non-overlapping simple sources
+ * or complex sources that don't change values, and use the full extent of the source band.
+ */
+bool VRTSourcedRasterBand::IsMosaicOfNonOverlappingSimpleSourcesOfFullRasterNoResAndTypeChange(bool bAllowMaxValAdjustment) const
+{
+    bool bRet = true;
+    CPLRectObj sGlobalBounds;
+    sGlobalBounds.minx = 0;
+    sGlobalBounds.miny = 0;
+    sGlobalBounds.maxx = nRasterXSize;
+    sGlobalBounds.maxy = nRasterYSize;
+    CPLQuadTree* hQuadTree = CPLQuadTreeCreate(&sGlobalBounds, nullptr);
+    for( int i = 0; i < nSources; ++i )
+    {
+        if( !papoSources[i]->IsSimpleSource() )
+        {
+            bRet = false;
+            break;
+        }
+
+        auto poSimpleSource = cpl::down_cast<VRTSimpleSource*>(papoSources[i]);
+        auto poComplexSource = dynamic_cast<VRTComplexSource*>(papoSources[i]);
+        if( poComplexSource )
+        {
+            if( !EQUAL(poComplexSource->GetType(), "ComplexSource") ||
+                !poComplexSource->AreValuesUnchanged() )
+            {
+                bRet = false;
+                break;
+            }
+        }
+        else
+        {
+            if( !EQUAL(poSimpleSource->GetType(), "SimpleSource") )
+            {
+                bRet = false;
+                break;
+            }
+        }
+
+        if( !bAllowMaxValAdjustment &&
+            poSimpleSource->NeedMaxValAdjustment() )
+        {
+            bRet = false;
+            break;
+        }
+
+        auto poSimpleSourceBand = poSimpleSource->GetRasterBand();
+        if( poSimpleSourceBand == nullptr ||
+            poSimpleSourceBand->GetRasterDataType() != eDataType )
+        {
+            bRet = false;
+            break;
+        }
+
+        double dfReqXOff = 0.0;
+        double dfReqYOff = 0.0;
+        double dfReqXSize = 0.0;
+        double dfReqYSize = 0.0;
+        int nReqXOff = 0;
+        int nReqYOff = 0;
+        int nReqXSize = 0;
+        int nReqYSize = 0;
+        int nOutXOff = 0;
+        int nOutYOff = 0;
+        int nOutXSize = 0;
+        int nOutYSize = 0;
+
+        bool bError = false;
+        if( !poSimpleSource->GetSrcDstWindow(
+                0, 0, nRasterXSize, nRasterYSize, nRasterXSize, nRasterYSize,
+                &dfReqXOff, &dfReqYOff,
+                &dfReqXSize, &dfReqYSize,
+                &nReqXOff, &nReqYOff,
+                &nReqXSize, &nReqYSize,
+                &nOutXOff, &nOutYOff,
+                &nOutXSize, &nOutYSize,
+                bError ) ||
+                nReqXOff != 0 || nReqYOff != 0 ||
+                nReqXSize != poSimpleSourceBand->GetXSize() ||
+                nReqYSize != poSimpleSourceBand->GetYSize() ||
+                nOutXSize != nReqXSize ||
+                nOutYSize != nReqYSize )
+        {
+            bRet = false;
+            break;
+        }
+
+        CPLRectObj sBounds;
+        constexpr double EPSILON = 1e-1;
+        sBounds.minx = nOutXOff + EPSILON;
+        sBounds.miny = nOutYOff + EPSILON;
+        sBounds.maxx = nOutXOff + nOutXSize - EPSILON;
+        sBounds.maxy = nOutYOff + nOutYSize - EPSILON;
+
+        // Check that the new source doesn't overlap an existing one.
+        int nFeatureCount = 0;
+        void** pahRet = CPLQuadTreeSearch(hQuadTree, &sBounds, &nFeatureCount);
+        CPLFree(pahRet);
+        if( nFeatureCount != 0 )
+        {
+            bRet = false;
+            break;
+        }
+
+        CPLQuadTreeInsertWithBounds(hQuadTree,
+                                    reinterpret_cast<void*>(static_cast<uintptr_t>(i)),
+                                    &sBounds);
+    }
+    CPLQuadTreeDestroy(hQuadTree);
+
+    return bRet;
+}
+
+/************************************************************************/
 /*                       ComputeRasterMinMax()                          */
 /************************************************************************/
 
@@ -757,32 +875,145 @@ CPLErr VRTSourcedRasterBand::ComputeRasterMinMax( int bApproxOK, double* adfMinM
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Try with source bands.                                          */
-/* -------------------------------------------------------------------- */
-
-    adfMinMax[0] = 0.0;
-    adfMinMax[1] = 0.0;
-    for( int iSource = 0; iSource < nSources; iSource++ )
+    if( IsMosaicOfNonOverlappingSimpleSourcesOfFullRasterNoResAndTypeChange(/*bAllowMaxValAdjustment = */ true) )
     {
-        double adfSourceMinMax[2] = { 0.0, 0.0 };
-        const CPLErr eErr =
-            papoSources[iSource]->ComputeRasterMinMax(
-                GetXSize(), GetYSize(), bApproxOK, adfSourceMinMax );
-        if( eErr != CE_None )
+        CPLDebugOnly("VRT", "ComputeRasterMinMax(): use optimized code path for mosaic");
+
+        uint64_t nCoveredArea = 0;
+
+        // If source bands have nodata value, we can't use source band's ComputeRasterMinMax()
+        // as we don't know if there are pixels actually at the nodata value,
+        // so use ComputeStatistics() instead that takes into account that aspect.
+        bool bUseComputeStatistics = false;
+        for( int i = 0; i < nSources; ++i )
         {
-            const CPLErr eErr2 =
-                GDALRasterBand::ComputeRasterMinMax( bApproxOK, adfMinMax );
-            return eErr2;
+            auto poSimpleSource = cpl::down_cast<VRTSimpleSource*>(papoSources[i]);
+            auto poSimpleSourceBand = poSimpleSource->GetRasterBand();
+            int bHasNoData = FALSE;
+            CPL_IGNORE_RET_VAL(poSimpleSourceBand->GetNoDataValue(&bHasNoData));
+            if( bHasNoData )
+            {
+                bUseComputeStatistics = true;
+                break;
+            }
+            nCoveredArea += static_cast<uint64_t>(poSimpleSourceBand->GetXSize()) *
+                            poSimpleSourceBand->GetYSize();
         }
 
-        if( iSource == 0 || adfSourceMinMax[0] < adfMinMax[0] )
-            adfMinMax[0] = adfSourceMinMax[0];
-        if( iSource == 0 || adfSourceMinMax[1] > adfMinMax[1] )
-            adfMinMax[1] = adfSourceMinMax[1];
-    }
+        if( bUseComputeStatistics )
+        {
+            CPLErr eErr;
+            std::string osLastErrorMsg;
+            {
+                CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
+                CPLErrorStateBackuper oErrorStateBackuper;
+                CPLErrorReset();
+                eErr = ComputeStatistics(bApproxOK, &adfMinMax[0], &adfMinMax[1],
+                                         nullptr, nullptr, nullptr, nullptr);
+                if( eErr == CE_Failure )
+                {
+                    osLastErrorMsg = CPLGetLastErrorMsg();
+                }
+            }
+            if( eErr == CE_Failure )
+            {
+                if( strstr(osLastErrorMsg.c_str(), "no valid pixels found") != nullptr )
+                {
+                    ReportError(
+                        CE_Failure, CPLE_AppDefined,
+                        "Failed to compute min/max, no valid pixels found in sampling." );
+                }
+                else
+                {
+                    ReportError(
+                        CE_Failure, CPLE_AppDefined, "%s", osLastErrorMsg.c_str());
+                }
+            }
+            return eErr;
+        }
 
-    return CE_None;
+        const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+        const bool bSignedByte =
+            pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE");
+
+        double dfGlobalMin = std::numeric_limits<double>::max();
+        double dfGlobalMax = -std::numeric_limits<double>::max();
+
+        // If the mosaic doesn't cover the whole VRT raster, take into account
+        // VRT nodata value.
+        if( nCoveredArea < static_cast<uint64_t>(nRasterXSize) * nRasterYSize )
+        {
+            if( m_bNoDataValueSet && m_bHideNoDataValue )
+            {
+                if( IsNoDataValueInDataTypeRange() )
+                {
+                    dfGlobalMin = std::min(dfGlobalMin, m_dfNoDataValue);
+                    dfGlobalMax = std::max(dfGlobalMax, m_dfNoDataValue);
+                }
+            }
+            else if( !m_bNoDataValueSet )
+            {
+                dfGlobalMin = std::min(dfGlobalMin, 0.0);
+                dfGlobalMax = std::max(dfGlobalMax, 0.0);
+            }
+        }
+
+        for( int i = 0; i < nSources; ++i )
+        {
+            auto poSimpleSource = cpl::down_cast<VRTSimpleSource*>(papoSources[i]);
+            double adfMinMaxSource[2] = {0};
+
+            auto poSimpleSourceBand = poSimpleSource->GetRasterBand();
+            CPLErr eErr = poSimpleSourceBand->ComputeRasterMinMax(bApproxOK, adfMinMaxSource);
+            if( eErr == CE_Failure )
+            {
+                return CE_Failure;
+            }
+            else
+            {
+                if( poSimpleSource->NeedMaxValAdjustment() )
+                {
+                    const double dfMaxValue = static_cast<double>(poSimpleSource->m_nMaxValue);
+                    adfMinMaxSource[0] = std::min(adfMinMaxSource[0], dfMaxValue);
+                    adfMinMaxSource[1] = std::min(adfMinMaxSource[1], dfMaxValue);
+                }
+
+                if( m_bNoDataValueSet && !m_bHideNoDataValue &&
+                    m_dfNoDataValue >= adfMinMaxSource[0] && m_dfNoDataValue <= adfMinMaxSource[1] )
+                {
+                    return GDALRasterBand::ComputeRasterMinMax(bApproxOK, adfMinMax);
+                }
+
+                dfGlobalMin = std::min(dfGlobalMin, adfMinMaxSource[0]);
+                dfGlobalMax = std::max(dfGlobalMax, adfMinMaxSource[1]);
+            }
+
+            // Early exit if we know we reached theoretical bounds
+            if( eDataType == GDT_Byte && !bSignedByte &&
+                dfGlobalMin == 0.0 && dfGlobalMax == 255.0 )
+            {
+                break;
+            }
+        }
+
+        if( dfGlobalMin > dfGlobalMax )
+        {
+            adfMinMax[0] = 0.0;
+            adfMinMax[1] = 0.0;
+            ReportError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Failed to compute min/max, no valid pixels found in sampling." );
+            return CE_Failure;
+        }
+
+        adfMinMax[0] = dfGlobalMin;
+        adfMinMax[1] = dfGlobalMax;
+        return CE_None;
+    }
+    else
+    {
+        return GDALRasterBand::ComputeRasterMinMax(bApproxOK, adfMinMax);
+    }
 }
 
 /************************************************************************/
@@ -845,76 +1076,206 @@ VRTSourcedRasterBand::ComputeStatistics( int bApproxOK,
         }
     }
 
-    const auto GetNoDataValueOfSingleSource = [this](int& bHasNoData)
+    if( IsMosaicOfNonOverlappingSimpleSourcesOfFullRasterNoResAndTypeChange(/*bAllowMaxValAdjustment = */ false) )
     {
-        auto poBand = cpl::down_cast<VRTSimpleSource*>(papoSources[0])->GetRasterBand();
-        if( !poBand )
-        {
-            bHasNoData = FALSE;
-            return 0.0;
-        }
-        return poBand->GetNoDataValue(&bHasNoData);
-    };
+        CPLDebugOnly("VRT", "ComputeStatistics(): use optimized code path for mosaic");
 
-    int bHasNoData = FALSE;
-    if( nSources != 1 ||
-        (m_bNoDataValueSet && !(
-            papoSources[0]->IsSimpleSource() &
-            EQUAL(cpl::down_cast<VRTSimpleSource*>(papoSources[0])->GetType(),
-                  "SimpleSource") &&
-            m_dfNoDataValue == GetNoDataValueOfSingleSource(bHasNoData) &&
-            bHasNoData)) )
+        double dfGlobalMin = std::numeric_limits<double>::max();
+        double dfGlobalMax = -std::numeric_limits<double>::max();
+#ifdef naive_update_not_used
+        // This native method uses the fact that stddev = sqrt(sum_of_squares/N - mean^2)
+        // and that thus sum_of_squares = N * (stddev^2 + mean^2)
+        double dfGlobalSum = 0;
+        double dfGlobalSumSquare = 0;
+#else
+        // This method uses https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Parallel_algorithm
+        // which is more numerically robust
+        double dfGlobalMean = 0;
+        double dfGlobalM2 = 0;
+#endif
+        uint64_t nGlobalValidPixels = 0;
+
+        const auto UpdateStatsWithConstantValue =
+            [&dfGlobalMin, &dfGlobalMax,
+#ifdef naive_update_not_used
+             &dfGlobalSum, &dfGlobalSumSquare,
+#else
+             &dfGlobalMean, &dfGlobalM2,
+#endif
+             &nGlobalValidPixels]
+            (double dfVal, uint64_t nPixelCount)
+        {
+            dfGlobalMin = std::min(dfGlobalMin, dfVal);
+            dfGlobalMax = std::max(dfGlobalMax, dfVal);
+#ifdef naive_update_not_used
+            dfGlobalSum += dfVal * nPixelCount;
+            dfGlobalSumSquare += dfVal * dfVal * nPixelCount;
+#else
+            const auto nNewGlobalValidPixels = nGlobalValidPixels + nPixelCount;
+            const double dfDelta = dfVal - dfGlobalMean;
+            dfGlobalMean += nPixelCount * dfDelta / nNewGlobalValidPixels;
+            dfGlobalM2 += dfDelta * dfDelta * nPixelCount * nGlobalValidPixels / nNewGlobalValidPixels;
+#endif
+            nGlobalValidPixels += nPixelCount;
+        };
+
+        for( int i = 0; i < nSources; ++i )
+        {
+            auto poSimpleSource = cpl::down_cast<VRTSimpleSource*>(papoSources[i]);
+            auto poSimpleSourceBand = poSimpleSource->GetRasterBand();
+            int bHasNoData = FALSE;
+            const double dfNoDataValue = poSimpleSourceBand->GetNoDataValue(&bHasNoData);
+            CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
+            CPLErrorStateBackuper oErrorStateBackuper;
+            void* pScaledProgress = GDALCreateScaledProgress(
+                static_cast<double>(i) / nSources,
+                static_cast<double>(i + 1) / nSources,
+                pfnProgress, pProgressData);
+            double dfMin = 0;
+            double dfMax = 0;
+            double dfMean = 0;
+            double dfStdDev = 0;
+            CPLErr eErr = poSimpleSourceBand->ComputeStatistics(
+                    bApproxOK, &dfMin, &dfMax, &dfMean, &dfStdDev,
+                    pScaledProgress ? GDALScaledProgress : GDALDummyProgress, pScaledProgress);
+            GDALDestroyScaledProgress(pScaledProgress);
+            const char* pszValidPercent = poSimpleSourceBand->GetMetadataItem("STATISTICS_VALID_PERCENT");
+            const uint64_t nPixelCount = static_cast<uint64_t>(
+                poSimpleSourceBand->GetXSize()) * poSimpleSourceBand->GetYSize();
+            const uint64_t nValidPixels = pszValidPercent ?
+                static_cast<uint64_t>(
+                    CPLAtof(pszValidPercent) * nPixelCount / 100.0) :
+                nPixelCount;
+            if( eErr == CE_Failure )
+            {
+                if( pszValidPercent != nullptr && CPLAtof(pszValidPercent) == 0.0 )
+                {
+                    // ok: no valid sample
+                }
+                else
+                {
+                    return CE_Failure;
+                }
+            }
+            else
+            {
+                if( !bHasNoData && m_bNoDataValueSet && !m_bHideNoDataValue &&
+                    m_dfNoDataValue >= dfMin && m_dfNoDataValue <= dfMax )
+                {
+                    // If the VRT band nodata value is in the [min, max] range
+                    // of the source and that the source has no nodata value set,
+                    // then we can't use the optimization.
+                    CPLDebugOnly("VRT", "ComputeStatistics(): revert back to "
+                                 "generic case because of nodata value in range "
+                                 "of source raster");
+                    return GDALRasterBand::ComputeStatistics(  bApproxOK,
+                                          pdfMin, pdfMax,
+                                          pdfMean, pdfStdDev,
+                                          pfnProgress, pProgressData );
+                }
+
+                dfGlobalMin = std::min(dfGlobalMin, dfMin);
+                dfGlobalMax = std::max(dfGlobalMax, dfMax);
+#ifdef naive_update_not_used
+                dfGlobalSum += nValidPixels * dfMean;
+                dfGlobalSumSquare += nValidPixels * (dfStdDev * dfStdDev + dfMean * dfMean);
+                nGlobalValidPixels += nValidPixels;
+#else
+                const auto nNewGlobalValidPixels = nGlobalValidPixels + nValidPixels;
+                const double dfDelta = dfMean - dfGlobalMean;
+                dfGlobalMean += nValidPixels * dfDelta / nNewGlobalValidPixels;
+                dfGlobalM2 += nValidPixels * dfStdDev * dfStdDev +
+                    dfDelta * dfDelta * nValidPixels * nGlobalValidPixels / nNewGlobalValidPixels;
+                nGlobalValidPixels = nNewGlobalValidPixels;
+#endif
+            }
+            if( nValidPixels < nPixelCount && bHasNoData &&
+                !std::isnan(dfNoDataValue) &&
+                (!m_bNoDataValueSet || dfNoDataValue != m_dfNoDataValue) )
+            {
+                const auto eBandDT = poSimpleSourceBand->GetRasterDataType();
+                // Check that the band nodata value is in the range of the
+                // original raster type
+                GByte abyTempBuffer[2 * sizeof(double)];
+                CPLAssert( GDALGetDataTypeSizeBytes(eBandDT) <= static_cast<int>(sizeof(abyTempBuffer)) );
+                GDALCopyWords(&dfNoDataValue, GDT_Float64, 0,
+                              &abyTempBuffer[0], eBandDT, 0,
+                              1);
+                double dfNoDataValueAfter = dfNoDataValue;
+                GDALCopyWords(&abyTempBuffer[0], eBandDT, 0,
+                              &dfNoDataValueAfter, GDT_Float64, 0,
+                              1);
+                if( !std::isfinite(dfNoDataValue) ||
+                    std::fabs(dfNoDataValueAfter - dfNoDataValue) < 1.0 )
+                {
+                    UpdateStatsWithConstantValue(dfNoDataValueAfter, nPixelCount - nValidPixels);
+                }
+            }
+        }
+
+        const uint64_t nTotalPixels = static_cast<uint64_t>(nRasterXSize) * nRasterYSize;
+        if( m_bNoDataValueSet && m_bHideNoDataValue &&
+            !std::isnan(m_dfNoDataValue) && IsNoDataValueInDataTypeRange() )
+        {
+            UpdateStatsWithConstantValue(m_dfNoDataValue, nTotalPixels - nGlobalValidPixels);
+        }
+        else if( !m_bNoDataValueSet )
+        {
+            nGlobalValidPixels = nTotalPixels;
+        }
+
+#ifdef naive_update_not_used
+        const double dfGlobalMean = nGlobalValidPixels > 0 ? dfGlobalSum / nGlobalValidPixels : 0;
+        const double dfGlobalStdDev = nGlobalValidPixels > 0 ?
+            sqrt(dfGlobalSumSquare / nGlobalValidPixels - dfGlobalMean * dfGlobalMean) : 0;
+#else
+        const double dfGlobalStdDev = nGlobalValidPixels > 0 ? sqrt(dfGlobalM2 / nGlobalValidPixels) : 0;
+#endif
+        if( nGlobalValidPixels > 0 )
+        {
+            if( bApproxOK )
+            {
+                SetMetadataItem( "STATISTICS_APPROXIMATE", "YES" );
+            }
+            else if( GetMetadataItem( "STATISTICS_APPROXIMATE" ) )
+            {
+                SetMetadataItem( "STATISTICS_APPROXIMATE",  nullptr );
+            }
+            SetStatistics( dfGlobalMin, dfGlobalMax, dfGlobalMean, dfGlobalStdDev );
+        }
+        else
+        {
+            dfGlobalMin = 0.0;
+            dfGlobalMax = 0.0;
+        }
+
+        SetValidPercent( nTotalPixels, nGlobalValidPixels );
+
+        if( pdfMin )
+            *pdfMin = dfGlobalMin;
+        if( pdfMax )
+            *pdfMax = dfGlobalMax;
+        if( pdfMean )
+            *pdfMean = dfGlobalMean;
+        if( pdfStdDev )
+            *pdfStdDev = dfGlobalStdDev;
+
+        if( nGlobalValidPixels == 0 )
+        {
+            ReportError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Failed to compute statistics, no valid pixels found in sampling." );
+        }
+
+        return nGlobalValidPixels > 0 ? CE_None : CE_Failure;
+    }
+    else
     {
         return GDALRasterBand::ComputeStatistics(  bApproxOK,
                                               pdfMin, pdfMax,
                                               pdfMean, pdfStdDev,
                                               pfnProgress, pProgressData );
     }
-
-    if( pfnProgress == nullptr )
-        pfnProgress = GDALDummyProgress;
-
-/* -------------------------------------------------------------------- */
-/*      Try with source bands.                                          */
-/* -------------------------------------------------------------------- */
-
-    double dfMin = 0.0;
-    double dfMax = 0.0;
-    double dfMean = 0.0;
-    double dfStdDev = 0.0;
-
-    const CPLErr eErr =
-        papoSources[0]->ComputeStatistics( GetXSize(), GetYSize(), bApproxOK,
-                                           &dfMin, &dfMax,
-                                           &dfMean, &dfStdDev,
-                                           pfnProgress, pProgressData );
-    if( eErr != CE_None )
-    {
-        const CPLErr eErr2 =
-            GDALRasterBand::ComputeStatistics( bApproxOK,
-                                               pdfMin, pdfMax,
-                                               pdfMean, pdfStdDev,
-                                               pfnProgress, pProgressData );
-        return eErr2;
-    }
-
-    SetStatistics( dfMin, dfMax, dfMean, dfStdDev );
-
-/* -------------------------------------------------------------------- */
-/*      Record results.                                                 */
-/* -------------------------------------------------------------------- */
-    if( pdfMin != nullptr )
-        *pdfMin = dfMin;
-    if( pdfMax != nullptr )
-        *pdfMax = dfMax;
-
-    if( pdfMean != nullptr )
-        *pdfMean = dfMean;
-
-    if( pdfStdDev != nullptr )
-        *pdfStdDev = dfStdDev;
-
-    return CE_None;
 }
 
 /************************************************************************/

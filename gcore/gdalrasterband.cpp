@@ -5301,6 +5301,7 @@ inline double GetPixelValue( GDALDataType eDataType,
 /*                         SetValidPercent()                            */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 /**
  * \brief Set percentage of valid (not nodata) pixels.
  *
@@ -5342,6 +5343,7 @@ void GDALRasterBand::SetValidPercent(GUIntBig nSampleCount, GUIntBig nValidCount
         }
     }
 }
+//! @endcond
 
 /************************************************************************/
 /*                         ComputeStatistics()                          */

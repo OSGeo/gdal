@@ -6303,7 +6303,7 @@ SWIGINTERN CPLErr GDALRasterBandShadow_GetStatistics(GDALRasterBandShadow *self,
     return GDALGetRasterStatistics( self, approx_ok, force,
 				    min, max, mean, stddev );
   }
-SWIGINTERN CPLErr GDALRasterBandShadow_ComputeStatistics(GDALRasterBandShadow *self,bool approx_ok,double *min=NULL,double *max=NULL,double *mean=NULL,double *stddev=NULL,GDALProgressFunc callback=NULL,void *callback_data=NULL){
+SWIGINTERN CPLErr GDALRasterBandShadow_ComputeStatistics(GDALRasterBandShadow *self,bool approx_ok,double *min,double *max,double *mean,double *stddev,GDALProgressFunc callback=NULL,void *callback_data=NULL){
     return GDALComputeRasterStatistics( self, approx_ok, min, max, mean, stddev, callback, callback_data );
   }
 SWIGINTERN CPLErr GDALRasterBandShadow_SetStatistics(GDALRasterBandShadow *self,double min,double max,double mean,double stddev){
@@ -31310,14 +31310,14 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_Band_ComputeStatistics(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_Band_ComputeStatistics(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   bool arg2 ;
-  double *arg3 = (double *) NULL ;
-  double *arg4 = (double *) NULL ;
-  double *arg5 = (double *) NULL ;
-  double *arg6 = (double *) NULL ;
+  double *arg3 = (double *) 0 ;
+  double *arg4 = (double *) 0 ;
+  double *arg5 = (double *) 0 ;
+  double *arg6 = (double *) 0 ;
   GDALProgressFunc arg7 = (GDALProgressFunc) NULL ;
   void *arg8 = (void *) NULL ;
   void *argp1 = 0 ;
@@ -31332,7 +31332,13 @@ SWIGINTERN PyObject *_wrap_Band_ComputeStatistics(PyObject *SWIGUNUSEDPARM(self)
   int res5 = SWIG_TMPOBJ ;
   double temp6 ;
   int res6 = SWIG_TMPOBJ ;
-  PyObject *swig_obj[4] ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  char * kwnames[] = {
+    (char *)"self",  (char *)"approx_ok",  (char *)"callback",  (char *)"callback_data",  NULL 
+  };
   CPLErr result;
   
   /* %typemap(arginit) ( const char* callback_data=NULL)  */
@@ -31346,35 +31352,35 @@ SWIGINTERN PyObject *_wrap_Band_ComputeStatistics(PyObject *SWIGUNUSEDPARM(self)
   arg4 = &temp4;
   arg5 = &temp5;
   arg6 = &temp6;
-  if (!SWIG_Python_UnpackTuple(args, "Band_ComputeStatistics", 2, 4, swig_obj)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO|OO:Band_ComputeStatistics", kwnames, &obj0, &obj1, &obj2, &obj3)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_ComputeStatistics" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
-  ecode2 = SWIG_AsVal_bool(swig_obj[1], &val2);
+  ecode2 = SWIG_AsVal_bool(obj1, &val2);
   if (!SWIG_IsOK(ecode2)) {
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Band_ComputeStatistics" "', argument " "2"" of type '" "bool""'");
   } 
   arg2 = static_cast< bool >(val2);
-  if (swig_obj[2]) {
+  if (obj2) {
     {
       /* %typemap(in) (GDALProgressFunc callback = NULL) */
       /* callback_func typemap */
       
       /* In some cases 0 is passed instead of None. */
       /* See https://github.com/OSGeo/gdal/pull/219 */
-      if ( PyLong_Check(swig_obj[2]) || PyInt_Check(swig_obj[2]) )
+      if ( PyLong_Check(obj2) || PyInt_Check(obj2) )
       {
-        if( PyLong_AsLong(swig_obj[2]) == 0 )
+        if( PyLong_AsLong(obj2) == 0 )
         {
-          swig_obj[2] = Py_None;
+          obj2 = Py_None;
         }
       }
       
-      if (swig_obj[2] && swig_obj[2] != Py_None ) {
+      if (obj2 && obj2 != Py_None ) {
         void* cbfunction = NULL;
-        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( swig_obj[2],
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj2,
             (void**)&cbfunction,
             SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
             SWIG_POINTER_EXCEPTION | 0 ));
@@ -31382,12 +31388,12 @@ SWIGINTERN PyObject *_wrap_Band_ComputeStatistics(PyObject *SWIGUNUSEDPARM(self)
         if ( cbfunction == GDALTermProgress ) {
           arg7 = GDALTermProgress;
         } else {
-          if (!PyCallable_Check(swig_obj[2])) {
+          if (!PyCallable_Check(obj2)) {
             PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
-          psProgressInfo->psPyCallback = swig_obj[2];
+          psProgressInfo->psPyCallback = obj2;
           arg7 = PyProgressProxy;
         }
         
@@ -31395,10 +31401,10 @@ SWIGINTERN PyObject *_wrap_Band_ComputeStatistics(PyObject *SWIGUNUSEDPARM(self)
       
     }
   }
-  if (swig_obj[3]) {
+  if (obj3) {
     {
       /* %typemap(in) ( void* callback_data=NULL)  */
-      psProgressInfo->psPyCallbackData = swig_obj[3] ;
+      psProgressInfo->psPyCallbackData = obj3 ;
     }
   }
   {
@@ -46417,7 +46423,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "Band_SetOffset", _wrap_Band_SetOffset, METH_VARARGS, "Band_SetOffset(Band self, double val) -> CPLErr"},
 	 { "Band_SetScale", _wrap_Band_SetScale, METH_VARARGS, "Band_SetScale(Band self, double val) -> CPLErr"},
 	 { "Band_GetStatistics", _wrap_Band_GetStatistics, METH_VARARGS, "Band_GetStatistics(Band self, int approx_ok, int force) -> CPLErr"},
-	 { "Band_ComputeStatistics", _wrap_Band_ComputeStatistics, METH_VARARGS, "Band_ComputeStatistics(Band self, bool approx_ok, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"},
+	 { "Band_ComputeStatistics", (PyCFunction)(void(*)(void))_wrap_Band_ComputeStatistics, METH_VARARGS|METH_KEYWORDS, "Band_ComputeStatistics(Band self, bool approx_ok, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"},
 	 { "Band_SetStatistics", _wrap_Band_SetStatistics, METH_VARARGS, "Band_SetStatistics(Band self, double min, double max, double mean, double stddev) -> CPLErr"},
 	 { "Band_GetOverviewCount", _wrap_Band_GetOverviewCount, METH_O, "Band_GetOverviewCount(Band self) -> int"},
 	 { "Band_GetOverview", _wrap_Band_GetOverview, METH_VARARGS, "Band_GetOverview(Band self, int i) -> Band"},

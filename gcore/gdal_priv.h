@@ -1182,7 +1182,6 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     CPL_INTERNAL void           SetFlushBlockErr( CPLErr eErr );
     CPL_INTERNAL CPLErr         UnreferenceBlock( GDALRasterBlock* poBlock );
-    CPL_INTERNAL void           SetValidPercent( GUIntBig nSampleCount, GUIntBig nValidCount );
     CPL_INTERNAL void           IncDirtyBlocks(int nInc);
 
   protected:
@@ -1221,6 +1220,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     int          EnterReadWrite(GDALRWFlag eRWFlag);
     void         LeaveReadWrite();
     void         InitRWLock();
+    void         SetValidPercent( GUIntBig nSampleCount, GUIntBig nValidCount );
 //! @endcond
 
   protected:

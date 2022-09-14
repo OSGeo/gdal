@@ -1515,106 +1515,6 @@ double VRTSimpleSource::GetMaximum( int nXSize, int nYSize, int *pbSuccess )
 }
 
 /************************************************************************/
-/*                       ComputeRasterMinMax()                          */
-/************************************************************************/
-
-CPLErr VRTSimpleSource::ComputeRasterMinMax( int nXSize, int nYSize,
-                                             int bApproxOK, double* adfMinMax )
-{
-    // The window we will actually request from the source raster band.
-    double dfReqXOff = 0.0;
-    double dfReqYOff = 0.0;
-    double dfReqXSize = 0.0;
-    double dfReqYSize = 0.0;
-    int nReqXOff = 0;
-    int nReqYOff = 0;
-    int nReqXSize = 0;
-    int nReqYSize = 0;
-
-    // The window we will actual set _within_ the pData buffer.
-    int nOutXOff = 0;
-    int nOutYOff = 0;
-    int nOutXSize = 0;
-    int nOutYSize = 0;
-
-    bool bError = false;
-    auto l_band = GetRasterBand();
-    if( !l_band ||
-        !GetSrcDstWindow( 0, 0, nXSize, nYSize,
-                          nXSize, nYSize,
-                          &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
-                          &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
-                          &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize,
-                          bError ) ||
-        nReqXOff != 0 || nReqYOff != 0 ||
-        nReqXSize != l_band->GetXSize() ||
-        nReqYSize != l_band->GetYSize())
-    {
-        return CE_Failure;
-    }
-
-    const CPLErr eErr =
-        l_band->ComputeRasterMinMax( bApproxOK, adfMinMax );
-    if( NeedMaxValAdjustment() )
-    {
-        if( adfMinMax[0] > m_nMaxValue )
-            adfMinMax[0] = m_nMaxValue;
-        if( adfMinMax[1] > m_nMaxValue )
-            adfMinMax[1] = m_nMaxValue;
-    }
-    return eErr;
-}
-
-/************************************************************************/
-/*                         ComputeStatistics()                          */
-/************************************************************************/
-
-CPLErr VRTSimpleSource::ComputeStatistics(
-    int nXSize, int nYSize,
-    int bApproxOK,
-    double *pdfMin, double *pdfMax,
-    double *pdfMean, double *pdfStdDev,
-    GDALProgressFunc pfnProgress, void *pProgressData )
-{
-    // The window we will actually request from the source raster band.
-    double dfReqXOff = 0.0;
-    double dfReqYOff = 0.0;
-    double dfReqXSize = 0.0;
-    double dfReqYSize = 0.0;
-    int nReqXOff = 0;
-    int nReqYOff = 0;
-    int nReqXSize = 0;
-    int nReqYSize = 0;
-
-    // The window we will actual set _within_ the pData buffer.
-    int nOutXOff = 0;
-    int nOutYOff = 0;
-    int nOutXSize = 0;
-    int nOutYSize = 0;
-
-    bool bError = false;
-    auto l_band = GetRasterBand();
-    if( !l_band ||
-        NeedMaxValAdjustment() ||
-        !GetSrcDstWindow( 0, 0, nXSize, nYSize,
-                          nXSize, nYSize,
-                          &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
-                          &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
-                          &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize,
-                          bError ) ||
-        nReqXOff != 0 || nReqYOff != 0 ||
-        nReqXSize != l_band->GetXSize() ||
-        nReqYSize != l_band->GetYSize())
-    {
-        return CE_Failure;
-    }
-
-    return l_band->ComputeStatistics( bApproxOK, pdfMin, pdfMax,
-                                      pdfMean, pdfStdDev,
-                                      pfnProgress, pProgressData );
-}
-
-/************************************************************************/
 /*                            GetHistogram()                            */
 /************************************************************************/
 
@@ -2131,35 +2031,6 @@ double VRTAveragedSource::GetMaximum( int /* nXSize */,
 {
     *pbSuccess = FALSE;
     return 0.0;
-}
-
-/************************************************************************/
-/*                       ComputeRasterMinMax()                          */
-/************************************************************************/
-
-CPLErr VRTAveragedSource::ComputeRasterMinMax( int /* nXSize */,
-                                               int /* nYSize */,
-                                               int /* bApproxOK */,
-                                               double* /* adfMinMax */)
-{
-    return CE_Failure;
-}
-
-/************************************************************************/
-/*                         ComputeStatistics()                          */
-/************************************************************************/
-
-CPLErr VRTAveragedSource::ComputeStatistics( int /* nXSize */,
-                                             int /* nYSize */,
-                                             int /* bApproxOK */,
-                                             double * /* pdfMin */,
-                                             double * /* pdfMax */,
-                                             double * /* pdfMean */,
-                                             double * /* pdfStdDev */,
-                                             GDALProgressFunc /* pfnProgress */,
-                                             void * /* pProgressData */ )
-{
-    return CE_Failure;
 }
 
 /************************************************************************/
@@ -3036,21 +2907,6 @@ double VRTComplexSource::GetMaximum( int nXSize, int nYSize, int *pbSuccess )
 }
 
 /************************************************************************/
-/*                       ComputeRasterMinMax()                          */
-/************************************************************************/
-
-CPLErr VRTComplexSource::ComputeRasterMinMax( int nXSize, int nYSize, int bApproxOK, double* adfMinMax )
-{
-    if( AreValuesUnchanged() )
-    {
-        return VRTSimpleSource::ComputeRasterMinMax( nXSize, nYSize, bApproxOK,
-                                                     adfMinMax);
-    }
-
-    return CE_Failure;
-}
-
-/************************************************************************/
 /*                            GetHistogram()                            */
 /************************************************************************/
 
@@ -3068,28 +2924,6 @@ CPLErr VRTComplexSource::GetHistogram( int nXSize, int nYSize,
                                               panHistogram,
                                               bIncludeOutOfRange, bApproxOK,
                                               pfnProgress, pProgressData );
-    }
-
-    return CE_Failure;
-}
-
-/************************************************************************/
-/*                         ComputeStatistics()                          */
-/************************************************************************/
-
-CPLErr VRTComplexSource::ComputeStatistics( int nXSize, int nYSize,
-                                            int bApproxOK,
-                                            double *pdfMin, double *pdfMax,
-                                            double *pdfMean, double *pdfStdDev,
-                                            GDALProgressFunc pfnProgress,
-                                            void *pProgressData )
-{
-    if( AreValuesUnchanged() )
-    {
-        return VRTSimpleSource::ComputeStatistics( nXSize, nYSize, bApproxOK,
-                                                   pdfMin, pdfMax,
-                                                   pdfMean, pdfStdDev,
-                                                   pfnProgress, pProgressData );
     }
 
     return CE_Failure;
@@ -3189,35 +3023,6 @@ double VRTFuncSource::GetMaximum( int /* nXSize */,
 {
     *pbSuccess = FALSE;
     return 0;
-}
-
-/************************************************************************/
-/*                       ComputeRasterMinMax()                          */
-/************************************************************************/
-
-CPLErr VRTFuncSource::ComputeRasterMinMax( int /* nXSize */,
-                                           int /* nYSize */,
-                                           int /* bApproxOK */,
-                                           double* /* adfMinMax */ )
-{
-    return CE_Failure;
-}
-
-/************************************************************************/
-/*                         ComputeStatistics()                          */
-/************************************************************************/
-
-CPLErr VRTFuncSource::ComputeStatistics( int /* nXSize */,
-                                         int /* nYSize */,
-                                         int /* bApproxOK */,
-                                         double * /* pdfMin */,
-                                         double * /* pdfMax */,
-                                         double * /* pdfMean */,
-                                         double * /* pdfStdDev */,
-                                         GDALProgressFunc /* pfnProgress */,
-                                         void * /* pProgressData */ )
-{
-    return CE_Failure;
 }
 
 /************************************************************************/

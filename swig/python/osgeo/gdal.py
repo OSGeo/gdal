@@ -3885,21 +3885,23 @@ class Band(MajorObject):
         r"""GetStatistics(Band self, int approx_ok, int force) -> CPLErr"""
         return _gdal.Band_GetStatistics(self, *args)
 
-    def ComputeStatistics(self, *args) -> "CPLErr":
-        """ComputeStatistics(Band self, bool approx_ok, callback=None) -> CPLErr"""
+    def ComputeStatistics(self, *args, **kwargs) -> "CPLErr":
+        """ComputeStatistics(Band self, bool approx_ok, callback=None, callback_data=None) -> CPLErr"""
 
-    # For backward compatibility. New SWIG has stricter typing and really
-    # enforces bool
-        approx_ok = args[0]
-        if approx_ok == 0:
-            approx_ok = False
-        elif approx_ok == 1:
-            approx_ok = True
-        new_args = [approx_ok]
-        for arg in args[1:]:
-            new_args.append( arg )
+        if len(args) == 1:
+            kwargs["approx_ok"] = args[0]
+            args = ()
 
-        return _gdal.Band_ComputeStatistics(self, *new_args)
+        if "approx_ok" in kwargs:
+    # Compatibility with older signature that used int for approx_ok
+            if kwargs["approx_ok"] == 0:
+                kwargs["approx_ok"] = False
+            elif kwargs["approx_ok"] == 1:
+                kwargs["approx_ok"] = True
+            elif isinstance(kwargs["approx_ok"], int):
+                raise Exception("approx_ok value should be 0/1/False/True")
+
+        return _gdal.Band_ComputeStatistics(self, *args, **kwargs)
 
 
 
