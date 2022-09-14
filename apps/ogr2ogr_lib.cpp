@@ -5071,15 +5071,20 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
 
                     if( m_bMakeValid )
                     {
+                        const bool bIsGeomCollection =
+                            wkbFlatten(poDstGeometry->getGeometryType()) == wkbGeometryCollection;
                         OGRGeometry* poValidGeom = poDstGeometry->MakeValid();
                         delete poDstGeometry;
                         poDstGeometry = poValidGeom;
                         if( poDstGeometry == nullptr )
                             goto end_loop;
-                        OGRGeometry* poCleanedGeom =
-                            OGRGeometryFactory::removeLowerDimensionSubGeoms(poDstGeometry);
-                        delete poDstGeometry;
-                        poDstGeometry = poCleanedGeom;
+                        if( !bIsGeomCollection )
+                        {
+                            OGRGeometry* poCleanedGeom =
+                                OGRGeometryFactory::removeLowerDimensionSubGeoms(poDstGeometry);
+                            delete poDstGeometry;
+                            poDstGeometry = poCleanedGeom;
+                        }
                     }
 
                     if( eGType != GEOMTYPE_UNCHANGED )

@@ -568,7 +568,9 @@ def test_ogr2ogr_lib_makevalid():
     with gdaltest.tempfile(tmpfilename,"""id,WKT
 1,"POLYGON ((0 0,10 10,0 10,10 0,0 0))"
 2,"POLYGON ((0 0,0 1,0.5 1,0.5 0.75,0.5 1,1 1,1 0,0 0))"
-"""):
+3,"GEOMETRYCOLLECTION(POINT(1 2),LINESTRING(3 4,5 6))"
+""",
+    ):
         if make_valid_available:
             ds = gdal.VectorTranslate('', tmpfilename, format='Memory', makeValid=True)
         else:
@@ -581,8 +583,17 @@ def test_ogr2ogr_lib_makevalid():
     f = lyr.GetNextFeature()
     assert ogrtest.check_feature_geometry(f, "MULTIPOLYGON (((0 0,5 5,10 0,0 0)),((5 5,0 10,10 10,5 5)))") == 0
     f = lyr.GetNextFeature()
-    assert ogrtest.check_feature_geometry(f, "POLYGON ((0 0,0 1,0.5 1.0,1 1,1 0,0 0))") == 0
-
+    assert (
+        ogrtest.check_feature_geometry(f, "POLYGON ((0 0,0 1,0.5 1.0,1 1,1 0,0 0))")
+        == 0
+    )
+    f = lyr.GetNextFeature()
+    assert (
+        ogrtest.check_feature_geometry(
+            f, "GEOMETRYCOLLECTION(POINT(1 2),LINESTRING(3 4,5 6))"
+        )
+        == 0
+    )
 
 
 ###############################################################################
