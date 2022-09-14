@@ -126,9 +126,7 @@ def test_ogr_hana_2():
     shp_ds = ogr.Open("data/poly.shp")
     shp_layer = shp_ds.GetLayer(0)
 
-    assert (
-        layer.GetFeatureCount() == shp_layer.GetFeatureCount()
-    ), "feature count does not match"
+    check_feature_count(layer, shp_layer.GetFeatureCount())
     assert layer.GetSpatialRef().GetAuthorityCode(
         None
     ) == shp_layer.GetSpatialRef().GetAuthorityCode(None), "spatial ref does not match"
@@ -167,9 +165,7 @@ def test_ogr_hana_3():
     layer.SetAttributeFilter("EAS_ID > 160 AND EAS_ID < 170")
     tr = ogrtest.check_features_against_list(layer, "EAS_ID", [168, 169, 166, 165])
 
-    assert layer.GetFeatureCount() == 4, (
-        "GetFeatureCount() returned %d instead of 4" % layer.GetFeatureCount()
-    )
+    check_feature_count(layer, 4)
 
     assert tr
 
@@ -185,9 +181,7 @@ def test_ogr_hana_4():
     geom = ogr.CreateGeometryFromWkt("LINESTRING(479505 4763195,480526 4762819)")
     layer.SetSpatialFilter(geom)
 
-    assert layer.GetFeatureCount() == 1, (
-        "GetFeatureCount() returned %d instead of 1" % layer.GetFeatureCount()
-    )
+    check_feature_count(layer, 1)
 
     assert ogrtest.check_features_against_list(layer, "EAS_ID", [158])
 
@@ -292,9 +286,7 @@ def test_ogr_hana_9():
 def test_ogr_hana_10():
     ds = open_datasource()
     layer = ds.ExecuteSQL("SELECT EAS_ID FROM tpoly WHERE EAS_ID IN (158, 170) ")
-    assert layer.GetFeatureCount() == 2, (
-        "GetFeatureCount() returned %d instead of 2" % layer.GetFeatureCount()
-    )
+    check_feature_count(layer, 2)
     assert ogrtest.check_features_against_list(layer, "EAS_ID", [158, 170])
 
 
@@ -305,7 +297,7 @@ def test_ogr_hana_10():
 def test_ogr_hana_11():
     ds = open_datasource()
     layer = ds.ExecuteSQL("SELECT DISTINCT EAS_ID FROM TPOLY ORDER BY EAS_ID DESC")
-    assert layer.GetFeatureCount() == 10
+    check_feature_count(layer, 10)
 
     expected = [179, 173, 172, 171, 170, 169, 168, 166, 165, 158]
     tr = ogrtest.check_features_against_list(layer, "EAS_ID", expected)
@@ -367,12 +359,7 @@ def test_ogr_hana_15():
     dst_feat.SetFID(-1)
     layer.CreateFeature(dst_feat)
 
-    assert (
-        feat_count + 1
-    ) == layer.GetFeatureCount(), "Feature count %d is not as expected %d" % (
-        layer.GetFeatureCount(),
-        feat_count + 1,
-    )
+    check_feature_count(layer, feat_count + 1)
 
 
 ###############################################################################
@@ -1058,6 +1045,96 @@ def test_ogr_hana_34():
 
 
 ###############################################################################
+# Test transaction capabilities
+
+
+def test_ogr_hana_35():
+    ds = open_datasource(1)
+    assert ds.TestCapability(ogr.ODsCTransactions) == 1
+    layer_name = get_test_name()
+    table_name = f'"{gdaltest.hana_schema_name}"."{layer_name}"'
+    create_tpoly_table(ds, layer_name)
+
+    ds_other = open_datasource(1)
+    layer_other = ds_other.GetLayerByName(layer_name)
+
+    # test deletion without transactions
+    layer = ds.GetLayerByName(layer_name)
+    feat_count = layer.GetFeatureCount()
+    ds.ExecuteSQL(f"DELETE FROM {table_name} WHERE OGR_FID = 10")
+    check_feature_count(layer, feat_count - 1)
+
+    # test deletion with transactions
+    layer = ds.GetLayerByName(layer_name)
+    feat_count = layer.GetFeatureCount()
+
+    layer.StartTransaction()
+    ds.ExecuteSQL(f"DELETE FROM {table_name} WHERE OGR_FID = 9")
+    check_feature_count(layer, feat_count - 1)
+    check_feature_count(layer_other, feat_count)
+    layer.CommitTransaction()
+
+    check_feature_count(layer, feat_count - 1)
+    check_feature_count(layer_other, feat_count - 1)
+
+    # test creation with transactions
+    layer = ds.GetLayerByName(layer_name)
+    feat_count = layer.GetFeatureCount()
+
+    layer.StartTransaction()
+    dst_feat = ogr.Feature(feature_def=layer.GetLayerDefn())
+    dst_feat.SetField("EAS_ID", 2000)
+    dst_feat.SetFID(889)
+    layer.CreateFeature(dst_feat)
+    # note, the feature count is not incremented as the insert is still in a batch
+    check_feature_count(layer, feat_count)
+    check_feature_count(layer_other, feat_count)
+    layer.CommitTransaction()
+
+    check_feature_count(layer, feat_count + 1)
+    check_feature_count(layer_other, feat_count + 1)
+
+
+###############################################################################
+# Test transaction errors
+
+
+def test_ogr_hana_36():
+    ds = open_datasource(1)
+    assert ds.TestCapability(ogr.ODsCTransactions) == 1
+
+    # test data source
+    assert ds.StartTransaction() == 0
+    assert ds.CommitTransaction() == 0
+
+    assert ds.StartTransaction() == 0
+    assert ds.RollbackTransaction() == 0
+
+    assert ds.CommitTransaction() != 0
+    assert ds.RollbackTransaction() != 0
+
+    assert ds.StartTransaction() == 0
+    assert ds.StartTransaction() != 0
+    assert ds.CommitTransaction() == 0
+
+    # test layer
+    layer_name = get_test_name()
+    create_tpoly_table(ds, layer_name)
+    layer = ds.GetLayerByName(layer_name)
+    assert layer.StartTransaction() == 0
+    assert layer.CommitTransaction() == 0
+
+    assert layer.StartTransaction() == 0
+    assert layer.RollbackTransaction() == 0
+
+    assert layer.CommitTransaction() != 0
+    assert layer.RollbackTransaction() != 0
+
+    assert layer.StartTransaction() == 0
+    assert layer.StartTransaction() != 0
+
+
+###############################################################################
 #  Create a table from data/poly.shp
 
 
@@ -1203,6 +1280,14 @@ def check_bboxes(actual, expected, max_error=0.001):
     if max(minx, maxx, miny, maxy) > max_error:
         print(actual)
         pytest.fail("Extents do not match")
+
+
+def check_feature_count(layer, expected):
+    count = layer.GetFeatureCount()
+    assert count == expected, "Feature count %d is not as expected %d" % (
+        count,
+        expected,
+    )
 
 
 def check_values(actual, expected, max_error=0.001):

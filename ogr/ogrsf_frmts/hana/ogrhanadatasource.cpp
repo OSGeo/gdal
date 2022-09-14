@@ -907,7 +907,8 @@ void OGRHanaDataSource::ExecuteSQL(const CPLString& sql)
         sql.c_str(), sql.length());
     odbc::StatementRef stmt = conn_->createStatement();
     stmt->execute(sqlUtf16.c_str());
-    conn_->commit();
+    if (!IsTransactionStarted())
+        conn_->commit();
 }
 
 /************************************************************************/

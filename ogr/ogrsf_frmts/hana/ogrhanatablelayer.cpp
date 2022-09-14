@@ -888,7 +888,7 @@ void OGRHanaTableLayer::FlushPendingBatches()
     if (HasPendingBatches())
     {
         OGRErr err = ExecutePendingBatches();
-        if (OGRERR_NONE != err)
+        if (OGRERR_NONE == err && !dataSource_->IsTransactionStarted())
             dataSource_->Commit();
     }
 }
@@ -1850,8 +1850,7 @@ OGRErr OGRHanaTableLayer::CommitTransaction()
             return err;
     }
 
-    dataSource_->CommitTransaction();
-    return OGRERR_NONE;
+    return dataSource_->CommitTransaction();
 }
 
 /************************************************************************/
