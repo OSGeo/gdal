@@ -2571,7 +2571,7 @@ ENVIDataset *ENVIDataset::Open( GDALOpenInfo *poOpenInfo, bool bFileSizeCheck )
     if( pszDataIgnoreValue != nullptr )
     {
         for( int i = 0; i < poDS->nBands; i++ )
-            reinterpret_cast<RawRasterBand *>(poDS->GetRasterBand(i + 1))
+            cpl::down_cast<RawRasterBand *>(poDS->GetRasterBand(i + 1))
                 ->SetNoDataValue(CPLAtof(pszDataIgnoreValue));
     }
 
@@ -2789,7 +2789,7 @@ ENVIRasterBand::ENVIRasterBand( GDALDataset *poDSIn, int nBandIn,
 
 void ENVIRasterBand::SetDescription( const char *pszDescription )
 {
-    reinterpret_cast<ENVIDataset *>(poDS)->bHeaderDirty = true;
+    cpl::down_cast<ENVIDataset *>(poDS)->bHeaderDirty = true;
     RawRasterBand::SetDescription(pszDescription);
 }
 
@@ -2799,7 +2799,7 @@ void ENVIRasterBand::SetDescription( const char *pszDescription )
 
 CPLErr ENVIRasterBand::SetCategoryNames( char **papszCategoryNamesIn )
 {
-    reinterpret_cast<ENVIDataset *>(poDS)->bHeaderDirty = true;
+    cpl::down_cast<ENVIDataset *>(poDS)->bHeaderDirty = true;
     return RawRasterBand::SetCategoryNames(papszCategoryNamesIn);
 }
 
@@ -2809,7 +2809,7 @@ CPLErr ENVIRasterBand::SetCategoryNames( char **papszCategoryNamesIn )
 
 CPLErr ENVIRasterBand::SetNoDataValue( double dfNoDataValue )
 {
-    reinterpret_cast<ENVIDataset *>(poDS)->bHeaderDirty = true;
+    cpl::down_cast<ENVIDataset *>(poDS)->bHeaderDirty = true;
     return RawRasterBand::SetNoDataValue(dfNoDataValue);
 }
 
