@@ -1088,6 +1088,8 @@ int OGRParseDate( const char *pszInput,
 
         bGotSomething = true;
     }
+    else if( bGotSomething && *pszInput != '\0' )
+        return FALSE;
 
     // No date or time!
     if( !bGotSomething )
