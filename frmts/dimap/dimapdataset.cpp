@@ -1560,7 +1560,7 @@ int DIMAPDataset::ReadImageInformation2()
         while (psLocatedGeometricValuesNode != nullptr)
         {
             CPLXMLNode *psLocationType = CPLGetXMLNode(psLocatedGeometricValuesNode, "LOCATION_TYPE");
-            if (!EQUAL(psLocationType->psChild->pszValue, "center"))
+            if (psLocationType==nullptr || !EQUAL(psLocationType->psChild->pszValue, "center"))
             {
                 psLocatedGeometricValuesNode = psLocatedGeometricValuesNode->psNext;
                 continue;
