@@ -619,3 +619,81 @@ def test_envi_edit_coordinate_system_string():
     ds = None
 
     drv.Delete(filename)
+
+
+###############################################################################
+# Test reading "default bands"
+
+
+def test_envi_read_default_bands():
+
+    gdal.FileFromMemBuffer(
+        "/vsimem/test.hdr",
+        """ENVI
+samples = 1
+lines = 1
+bands = 3
+header offset = 0
+file type = ENVI Standard
+data type = 1
+interleave = bip
+sensor type = Unknown
+byte order = 0
+default bands = {3, 2, 1}""",
+    )
+    gdal.FileFromMemBuffer("/vsimem/test.bin", "xyz")
+
+    ds = gdal.Open("/vsimem/test.bin")
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_BlueBand
+    assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GreenBand
+    assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_RedBand
+    ds = None
+    assert gdal.VSIStatL("/vsimem/test.bin.aux.xml") is None
+    gdal.GetDriverByName("ENVI").Delete("/vsimem/test.bin")
+
+
+###############################################################################
+# Test writing "default bands"
+
+
+def test_envi_write_default_bands():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 3)
+    src_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_BlueBand)
+    src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_RedBand)
+    src_ds.GetRasterBand(3).SetColorInterpretation(gdal.GCI_GreenBand)
+    gdal.GetDriverByName("ENVI").CreateCopy("/vsimem/test.bin", src_ds)
+
+    fp = gdal.VSIFOpenL("/vsimem/test.hdr", "rb")
+    assert fp
+    content = gdal.VSIFReadL(1, 1000, fp).decode("utf-8")
+    gdal.VSIFCloseL(fp)
+
+    gdal.GetDriverByName("ENVI").Delete("/vsimem/test.bin")
+
+    assert "default bands = {2, 3, 1}" in content, content
+
+
+###############################################################################
+# Test writing "default bands"
+
+
+def test_envi_write_default_bands_duplicate_color_interp():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 6)
+    src_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_BlueBand)
+    src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_RedBand)
+    src_ds.GetRasterBand(3).SetColorInterpretation(gdal.GCI_GreenBand)
+    src_ds.GetRasterBand(4).SetColorInterpretation(gdal.GCI_BlueBand)
+    src_ds.GetRasterBand(5).SetColorInterpretation(gdal.GCI_RedBand)
+    src_ds.GetRasterBand(6).SetColorInterpretation(gdal.GCI_GreenBand)
+    gdal.GetDriverByName("ENVI").CreateCopy("/vsimem/test.bin", src_ds)
+
+    fp = gdal.VSIFOpenL("/vsimem/test.hdr", "rb")
+    assert fp
+    content = gdal.VSIFReadL(1, 1000, fp).decode("utf-8")
+    gdal.VSIFCloseL(fp)
+
+    gdal.GetDriverByName("ENVI").Delete("/vsimem/test.bin")
+
+    assert "default bands" not in content, content

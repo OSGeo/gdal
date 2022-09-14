@@ -469,6 +469,42 @@ void ENVIDataset::FlushCache(bool bAtClosing)
 
     // Write the metadata that was read into the ENVI domain.
     char **papszENVIMetadata = GetMetadata("ENVI");
+    if( CSLFetchNameValue(papszENVIMetadata, "default bands") == nullptr &&
+        CSLFetchNameValue(papszENVIMetadata, "default_bands") == nullptr )
+    {
+        int nRBand = 0;
+        int nGBand = 0;
+        int nBBand = 0;
+        for ( int i = 1; i <= nBands; i++ )
+        {
+            const auto eInterp = GetRasterBand(i)->GetColorInterpretation();
+            if( eInterp == GCI_RedBand )
+            {
+                if( nRBand == 0 )
+                    nRBand = i;
+                else
+                    nRBand = -1;
+            }
+            else if( eInterp == GCI_GreenBand )
+            {
+                if( nGBand == 0 )
+                    nGBand = i;
+                else
+                    nGBand = -1;
+            }
+            else if( eInterp == GCI_BlueBand )
+            {
+                if( nBBand == 0 )
+                    nBBand = i;
+                else
+                    nBBand = -1;
+            }
+        }
+        if( nRBand > 0 && nGBand > 0 && nBBand > 0 )
+        {
+            bOK &= VSIFPrintfL(fp, "default bands = {%d, %d, %d}\n", nRBand, nGBand, nBBand) >= 0;
+        }
+    }
 
     const int count = CSLCount(papszENVIMetadata);
 
@@ -2531,6 +2567,28 @@ ENVIDataset *ENVIDataset::Open( GDALOpenInfo *poOpenInfo, bool bFileSizeCheck )
         CSLDestroy(papszBandNames);
     }
 
+    // Apply "default bands" if we have it to set RGB color interpretation.
+    const char* pszDefaultBands = poDS->m_aosHeader["default_bands"];
+    if( pszDefaultBands != nullptr)
+    {
+        const CPLStringList aosDefaultBands(poDS->SplitList(pszDefaultBands));
+        if( aosDefaultBands.size() == 3 )
+        {
+            const int nRBand = atoi(aosDefaultBands[0]);
+            const int nGBand = atoi(aosDefaultBands[1]);
+            const int nBBand = atoi(aosDefaultBands[2]);
+            if( nRBand >= 1 && nRBand <= poDS->nBands &&
+                nGBand >= 1 && nGBand <= poDS->nBands &&
+                nBBand >= 1 && nBBand <= poDS->nBands &&
+                nRBand != nGBand && nRBand != nBBand && nGBand != nBBand )
+            {
+                poDS->GetRasterBand(nRBand)->SetColorInterpretation(GCI_RedBand);
+                poDS->GetRasterBand(nGBand)->SetColorInterpretation(GCI_GreenBand);
+                poDS->GetRasterBand(nBBand)->SetColorInterpretation(GCI_BlueBand);
+            }
+        }
+    }
+
     // Apply class names if we have them.
     const char* pszClassNames = poDS->m_aosHeader["class_names"];
     if( pszClassNames != nullptr )
@@ -2811,6 +2869,16 @@ CPLErr ENVIRasterBand::SetNoDataValue( double dfNoDataValue )
 {
     cpl::down_cast<ENVIDataset *>(poDS)->bHeaderDirty = true;
     return RawRasterBand::SetNoDataValue(dfNoDataValue);
+}
+
+/************************************************************************/
+/*                         SetColorInterpretation()                     */
+/************************************************************************/
+
+CPLErr ENVIRasterBand::SetColorInterpretation( GDALColorInterp eColorInterp )
+{
+    cpl::down_cast<ENVIDataset *>(poDS)->bHeaderDirty = true;
+    return RawRasterBand::SetColorInterpretation(eColorInterp);
 }
 
 /************************************************************************/
