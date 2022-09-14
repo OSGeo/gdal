@@ -79,7 +79,8 @@ class DIMAPDataset final: public GDALPamDataset
     int ReadImageInformation2();  // DIMAP 2.
 
     void SetMetadataFromXML( CPLXMLNode *psProduct,
-                             const char * const apszMetadataTranslation[] );
+                             const char * const apszMetadataTranslation[],
+                             bool bKeysFromRoot=true);
 
   public:
     DIMAPDataset();
@@ -1550,6 +1551,33 @@ int DIMAPDataset::ReadImageInformation2()
         CSLDestroy(papszRPC);
     }
 
+    CPLXMLNode *psLocatedUseAreaNode =
+        CPLGetXMLNode(
+            psDoc,
+            "Geometric_Data.Use_Area");
+    if(psLocatedUseAreaNode!=nullptr) {
+        CPLXMLNode *psLocatedGeometricValuesNode = psLocatedUseAreaNode->psChild;
+        while (psLocatedGeometricValuesNode != nullptr)
+        {
+            CPLXMLNode *psLocationType = CPLGetXMLNode(psLocatedGeometricValuesNode, "LOCATION_TYPE");
+            if (psLocationType==nullptr || psLocationType->psChild == nullptr || !EQUAL(psLocationType->psChild->pszValue, "center"))
+            {
+                psLocatedGeometricValuesNode = psLocatedGeometricValuesNode->psNext;
+                continue;
+            }
+            static const char *const apszLGVTranslationDim[] =
+                {
+                    "SATELLITE_ALTITUDE", "",
+                    "Acquisition_Angles","",
+                    "Solar_Incidences","",
+                    "Ground_Sample_Distance","",
+                    nullptr, nullptr};
+
+            SetMetadataFromXML(psLocatedGeometricValuesNode, apszLGVTranslationDim, false);
+            break;
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Set Band metadata from the <Band_Radiance> and                  */
 /*                                <Band_Spectral_Range> content         */
@@ -1659,12 +1687,16 @@ int DIMAPDataset::ReadImageInformation2()
 /************************************************************************/
 
 void DIMAPDataset::SetMetadataFromXML(
-    CPLXMLNode *psProductIn, const char * const apszMetadataTranslation[] )
+    CPLXMLNode *psProductIn, const char * const apszMetadataTranslation[],
+    bool bKeysFromRoot )
 {
-    CPLXMLNode *psDoc = CPLGetXMLNode( psProductIn, "=Dimap_Document" );
-    if( psDoc == nullptr )
-    {
-        psDoc = CPLGetXMLNode( psProductIn, "=PHR_DIMAP_Document" );
+    CPLXMLNode *psDoc = psProductIn;
+    if(bKeysFromRoot) {
+        psDoc = CPLGetXMLNode(psProductIn, "=Dimap_Document");
+        if (psDoc == nullptr)
+        {
+            psDoc = CPLGetXMLNode(psProductIn, "=PHR_DIMAP_Document");
+        }
     }
 
     bool bWarnedDiscarding = false;
@@ -1679,16 +1711,25 @@ void DIMAPDataset::SetMetadataFromXML(
         if( psParent == nullptr )
             continue;
 
-        // Hackey logic to support directly access a name/value entry
-        // or a parent element with many name/values.
-
-        CPLXMLNode *psTarget = nullptr;
+        // Logic to support directly access a name/value entry
         if( psParent->psChild != nullptr
-            && psParent->psChild->eType == CXT_Text )
-            psTarget = psParent;
-        else
-            psTarget = psParent->psChild;
-
+            && psParent->psChild->eType == CXT_Text ) {
+            CPLString osName = apszMetadataTranslation[iTrItem + 1];
+            osName += apszMetadataTranslation[iTrItem];
+            // Limit size to avoid perf issues when inserting
+            // in metadata list
+            if (osName.size() < 128)
+                SetMetadataItem(osName, psParent->psChild->pszValue);
+            else if (!bWarnedDiscarding)
+            {
+                bWarnedDiscarding = true;
+                CPLDebug("DIMAP", "Discarding too long metadata item");
+            }
+            continue;
+        }
+        
+        // Logic to support a parent element with many name/values.
+        CPLXMLNode *psTarget = psParent->psChild;
         for( ; psTarget != nullptr && psTarget != psParent;
              psTarget = psTarget->psNext )
         {
