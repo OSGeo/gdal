@@ -102,6 +102,24 @@ struct Binary
     std::size_t size;
 };
 
+enum class BatchOperation
+{
+    ALL = 0,
+    DELETE = 1,
+    INSERT = 2,
+    UPDATE = 4
+};
+
+inline BatchOperation operator&(BatchOperation a, BatchOperation b)
+{
+    return static_cast<BatchOperation>(static_cast<std::underlying_type<BatchOperation>::type>(a) & static_cast<std::underlying_type<BatchOperation>::type>(b));
+}
+
+inline BatchOperation operator|(BatchOperation a, BatchOperation b)
+{
+    return static_cast<BatchOperation>(static_cast<std::underlying_type<BatchOperation>::type>(a) | static_cast<std::underlying_type<BatchOperation>::type>(b));
+}
+
 /************************************************************************/
 /*                             OGRHanaLayer                             */
 /************************************************************************/
@@ -205,7 +223,7 @@ private:
         bool withFID,
         const char* functionName);
 
-    OGRErr ExecutePendingBatches();
+    OGRErr ExecutePendingBatches(BatchOperation op);
     void FlushPendingBatches();
     bool HasPendingBatches() const;
     ColumnTypeInfo GetColumnTypeInfo(const OGRFieldDefn& field) const;

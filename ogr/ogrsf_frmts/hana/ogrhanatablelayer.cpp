@@ -847,24 +847,31 @@ OGRErr OGRHanaTableLayer::DropTable()
 /*                        ExecutePendingBatches()                       */
 /* -------------------------------------------------------------------- */
 
-OGRErr OGRHanaTableLayer::ExecutePendingBatches()
+OGRErr OGRHanaTableLayer::ExecutePendingBatches(BatchOperation op)
 {
+    auto hasFlag = [op](BatchOperation flag)
+    {
+        return (op & flag) == flag;
+    };
+
     try
     {
         if (!deleteFeatureStmt_.isNull()
-            && deleteFeatureStmt_->getBatchDataSize() > 0)
+            && deleteFeatureStmt_->getBatchDataSize() > 0
+            && (hasFlag(BatchOperation::DELETE) || hasFlag(BatchOperation::ALL)))
             deleteFeatureStmt_->executeBatch();
         if (!insertFeatureStmtWithFID_.isNull()
-            && insertFeatureStmtWithFID_->getBatchDataSize() > 0)
+            && insertFeatureStmtWithFID_->getBatchDataSize() > 0
+            && (hasFlag(BatchOperation::INSERT) || hasFlag(BatchOperation::ALL)))
             insertFeatureStmtWithFID_->executeBatch();
         if (!insertFeatureStmtWithoutFID_.isNull()
-            && insertFeatureStmtWithoutFID_->getBatchDataSize() > 0)
+            && insertFeatureStmtWithoutFID_->getBatchDataSize() > 0
+            && (hasFlag(BatchOperation::INSERT) || hasFlag(BatchOperation::ALL)))
             insertFeatureStmtWithoutFID_->executeBatch();
         if (!updateFeatureStmt_.isNull()
-            && updateFeatureStmt_->getBatchDataSize() > 0)
+            && updateFeatureStmt_->getBatchDataSize() > 0
+            && (hasFlag(BatchOperation::UPDATE) || hasFlag(BatchOperation::ALL)))
             updateFeatureStmt_->executeBatch();
-
-        ClearBatches();
 
         return OGRERR_NONE;
     }
@@ -873,7 +880,7 @@ OGRErr OGRHanaTableLayer::ExecutePendingBatches()
         ClearBatches();
 
         CPLError(
-            CE_Failure, CPLE_AppDefined, "Failed to execute batch insert: %s",
+            CE_Failure, CPLE_AppDefined, "Failed to execute batch commands: %s",
             ex.what());
         return OGRERR_FAILURE;
     }
@@ -887,14 +894,14 @@ void OGRHanaTableLayer::FlushPendingBatches()
 {
     if (HasPendingBatches())
     {
-        OGRErr err = ExecutePendingBatches();
+        OGRErr err = ExecutePendingBatches(BatchOperation::ALL);
         if (OGRERR_NONE == err && !dataSource_->IsTransactionStarted())
             dataSource_->Commit();
     }
 }
 
 /* -------------------------------------------------------------------- */
-/*                        HasPendingBatches()                          */
+/*                        HasPendingBatches()                           */
 /* -------------------------------------------------------------------- */
 
 bool OGRHanaTableLayer::HasPendingBatches() const
@@ -1123,7 +1130,7 @@ OGRErr OGRHanaTableLayer::ICreateFeature(OGRFeature* feature)
         return OGRERR_FAILURE;
     }
 
-    if( nullptr == feature )
+    if (nullptr == feature)
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "NULL pointer to OGRFeature passed to CreateFeature()." );
@@ -1131,6 +1138,10 @@ OGRErr OGRHanaTableLayer::ICreateFeature(OGRFeature* feature)
     }
 
     EnsureInitialized();
+
+    OGRErr err = ExecutePendingBatches(BatchOperation::DELETE | BatchOperation::UPDATE);
+    if (OGRERR_NONE != err)
+        return err;
 
     GIntBig nFID = feature->GetFID();
     bool withFID = nFID != OGRNullFID;
@@ -1147,7 +1158,7 @@ OGRErr OGRHanaTableLayer::ICreateFeature(OGRFeature* feature)
                 return OGRERR_FAILURE;
         }
 
-        OGRErr err = SetStatementParameters(*stmt, feature, true, withFID, "CreateFeature");
+        err = SetStatementParameters(*stmt, feature, true, withFID, "CreateFeature");
 
         if (OGRERR_NONE != err)
             return err;
@@ -1170,17 +1181,16 @@ OGRErr OGRHanaTableLayer::ICreateFeature(OGRFeature* feature)
             if (currentIdentityValueStmt_.isNull())
             {
                 currentIdentityValueStmt_ = dataSource_->PrepareStatement(sql.c_str());
-
                 if( currentIdentityValueStmt_.isNull())
                     return OGRERR_FAILURE;
             }
 
             odbc::ResultSetRef rsIdentity = currentIdentityValueStmt_->executeQuery();
-            if ( rsIdentity->next() )
+            if (rsIdentity->next())
             {
-              odbc::Long id = rsIdentity->getLong( 1 );
-              if ( !id.isNull() )
-                feature->SetFID(static_cast<GIntBig>( *id ) );
+              odbc::Long id = rsIdentity->getLong(1);
+              if (!id.isNull())
+                feature->SetFID(static_cast<GIntBig>(*id));
             }
             rsIdentity->close();
         }
@@ -1241,6 +1251,10 @@ OGRErr OGRHanaTableLayer::DeleteFeature(GIntBig nFID)
             return OGRERR_FAILURE;
     }
 
+    OGRErr err = ExecutePendingBatches(BatchOperation::INSERT | BatchOperation::UPDATE);
+    if (OGRERR_NONE != err)
+        return err;
+
     deleteFeatureStmt_->setLong(1, odbc::Long(static_cast<std::int64_t>(nFID)));
     bool withBatch = dataSource_->IsTransactionStarted();
     if (withBatch)
@@ -1299,9 +1313,13 @@ OGRErr OGRHanaTableLayer::ISetFeature(OGRFeature* feature)
             return OGRERR_FAILURE;
     }
 
+    OGRErr err = ExecutePendingBatches(BatchOperation::DELETE | BatchOperation::INSERT);
+    if (OGRERR_NONE != err)
+        return err;
+
     try
     {
-        OGRErr err = SetStatementParameters(
+        err = SetStatementParameters(
             *updateFeatureStmt_, feature, false, false, "SetFeature");
 
         if (OGRERR_NONE != err)
@@ -1845,7 +1863,7 @@ OGRErr OGRHanaTableLayer::CommitTransaction()
 {
     if (HasPendingBatches())
     {
-        OGRErr err = ExecutePendingBatches();
+        OGRErr err = ExecutePendingBatches(BatchOperation::ALL);
         if (OGRERR_NONE != err)
             return err;
     }
