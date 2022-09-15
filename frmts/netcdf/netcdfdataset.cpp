@@ -9073,24 +9073,24 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
     // of useless dims with empty string.
     if( panDimIds )
     {
-        int nMaxDimId = -1;
+        const int nMaxDimId = *std::max_element(panDimIds, panDimIds + ndims);
+        std::set<int> oSetExistingDimIds;
         for( int i = 0; i < ndims; i++ )
         {
-            nMaxDimId = std::max(nMaxDimId, panDimIds[i]);
+            oSetExistingDimIds.insert(panDimIds[i]);
+        }
+        std::set<int> oSetDimIdsUsedByVar;
+        for( int i = 0; i < nd; i++ )
+        {
+            oSetDimIdsUsedByVar.insert(paDimIds[i]);
         }
         for( int j = 0; j <= nMaxDimId; j++ ){
             // Is j dim used?
-            int i;
-            for( i = 0; i < ndims; i++ )
-            {
-                if( panDimIds[i] == j )
-                    break;
-            }
-            if( i < ndims )
+            if( oSetExistingDimIds.find(j) != oSetExistingDimIds.end() )
             {
                 // Useful dim.
                 char szTemp[NC_MAX_NAME + 1] = {};
-                status = nc_inq_dimname(cdfid, panDimIds[i], szTemp);
+                status = nc_inq_dimname(cdfid, j, szTemp);
                 if( status != NC_NOERR )
                 {
                     CPLFree(paDimIds);
@@ -9103,12 +9103,16 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
                     return nullptr;
                 }
                 poDS->papszDimName.AddString(szTemp);
-                int nDimGroupId = -1;
-                int nDimVarId = -1;
-                if( NCDFResolveVar(cdfid, poDS->papszDimName[j],
-                                &nDimGroupId, &nDimVarId) == CE_None )
+
+                if( oSetDimIdsUsedByVar.find(j) != oSetDimIdsUsedByVar.end() )
                 {
-                    poDS->ReadAttributes(nDimGroupId, nDimVarId);
+                    int nDimGroupId = -1;
+                    int nDimVarId = -1;
+                    if( NCDFResolveVar(cdfid, poDS->papszDimName[j],
+                                    &nDimGroupId, &nDimVarId) == CE_None )
+                    {
+                        poDS->ReadAttributes(nDimGroupId, nDimVarId);
+                    }
                 }
             }
             else
