@@ -1884,7 +1884,24 @@ static bool BuildDataType(int gid, int varid, int nVarType,
         else if( nVarType == NC_SHORT )
         {
             bPerfectDataTypeMatch = true;
-            eDataType = GDT_Int16;
+            char *pszTemp = nullptr;
+            bool bSignedData = true;
+            if( varid >= 0 && NCDFGetAttr(gid, varid, "_Unsigned", &pszTemp) == CE_None )
+            {
+                if( EQUAL(pszTemp, "true") )
+                    bSignedData = false;
+                else if( EQUAL(pszTemp, "false") )
+                    bSignedData = true;
+                CPLFree(pszTemp);
+            }
+            if( !bSignedData )
+            {
+                eDataType = GDT_UInt16;
+            }
+            else
+            {
+                eDataType = GDT_Int16;
+            }
         }
         else if( nVarType == NC_INT )
         {
@@ -3292,7 +3309,8 @@ std::vector<std::shared_ptr<GDALAttribute>> netCDFVariable::GetAttributes(CSLCon
              !EQUAL(szAttrName, CF_SCALE_FACTOR) &&
              !EQUAL(szAttrName, CF_ADD_OFFSET) &&
              !EQUAL(szAttrName, CF_GRD_MAPPING) &&
-             !(EQUAL(szAttrName, "_Unsigned") && m_nVarType == NC_BYTE)) )
+             !(EQUAL(szAttrName, "_Unsigned") &&
+               (m_nVarType == NC_BYTE || m_nVarType == NC_SHORT))) )
         {
             res.emplace_back(netCDFAttribute::Create(
                 m_poShared, m_gid, m_varid, szAttrName));
