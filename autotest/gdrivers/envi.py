@@ -622,10 +622,10 @@ def test_envi_edit_coordinate_system_string():
 
 
 ###############################################################################
-# Test reading "default bands"
+# Test reading "default bands" in RGB mode
 
 
-def test_envi_read_default_bands():
+def test_envi_read_default_bands_rgb():
 
     gdal.FileFromMemBuffer(
         "/vsimem/test.hdr",
@@ -653,10 +653,41 @@ default bands = {3, 2, 1}""",
 
 
 ###############################################################################
-# Test writing "default bands"
+# Test reading "default bands" in Gray mode
 
 
-def test_envi_write_default_bands():
+def test_envi_read_default_bands_gray():
+
+    gdal.FileFromMemBuffer(
+        "/vsimem/test.hdr",
+        """ENVI
+samples = 1
+lines = 1
+bands = 3
+header offset = 0
+file type = ENVI Standard
+data type = 1
+interleave = bip
+sensor type = Unknown
+byte order = 0
+default bands = {2}""",
+    )
+    gdal.FileFromMemBuffer("/vsimem/test.bin", "xyz")
+
+    ds = gdal.Open("/vsimem/test.bin")
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_Undefined
+    assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GrayIndex
+    assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_Undefined
+    ds = None
+    assert gdal.VSIStatL("/vsimem/test.bin.aux.xml") is None
+    gdal.GetDriverByName("ENVI").Delete("/vsimem/test.bin")
+
+
+###############################################################################
+# Test writing "default bands" in RGB mode
+
+
+def test_envi_write_default_bands_rgb():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 3)
     src_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_BlueBand)
@@ -675,10 +706,32 @@ def test_envi_write_default_bands():
 
 
 ###############################################################################
-# Test writing "default bands"
+# Test writing "default bands" in Gray mode
 
 
-def test_envi_write_default_bands_duplicate_color_interp():
+def test_envi_write_default_bands_gray():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 3)
+    src_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_Undefined)
+    src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_GrayIndex)
+    src_ds.GetRasterBand(3).SetColorInterpretation(gdal.GCI_Undefined)
+    gdal.GetDriverByName("ENVI").CreateCopy("/vsimem/test.bin", src_ds)
+
+    fp = gdal.VSIFOpenL("/vsimem/test.hdr", "rb")
+    assert fp
+    content = gdal.VSIFReadL(1, 1000, fp).decode("utf-8")
+    gdal.VSIFCloseL(fp)
+
+    gdal.GetDriverByName("ENVI").Delete("/vsimem/test.bin")
+
+    assert "default bands = {2}" in content, content
+
+
+###############################################################################
+# Test writing "default bands" when it doesn't work
+
+
+def test_envi_write_default_bands_duplicate_color_rgb():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 6)
     src_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_BlueBand)
@@ -687,6 +740,27 @@ def test_envi_write_default_bands_duplicate_color_interp():
     src_ds.GetRasterBand(4).SetColorInterpretation(gdal.GCI_BlueBand)
     src_ds.GetRasterBand(5).SetColorInterpretation(gdal.GCI_RedBand)
     src_ds.GetRasterBand(6).SetColorInterpretation(gdal.GCI_GreenBand)
+    gdal.GetDriverByName("ENVI").CreateCopy("/vsimem/test.bin", src_ds)
+
+    fp = gdal.VSIFOpenL("/vsimem/test.hdr", "rb")
+    assert fp
+    content = gdal.VSIFReadL(1, 1000, fp).decode("utf-8")
+    gdal.VSIFCloseL(fp)
+
+    gdal.GetDriverByName("ENVI").Delete("/vsimem/test.bin")
+
+    assert "default bands" not in content, content
+
+
+###############################################################################
+# Test writing "default bands" when it doesn't work
+
+
+def test_envi_write_default_bands_duplicate_color_gray():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 6)
+    src_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_GrayIndex)
+    src_ds.GetRasterBand(3).SetColorInterpretation(gdal.GCI_GrayIndex)
     gdal.GetDriverByName("ENVI").CreateCopy("/vsimem/test.bin", src_ds)
 
     fp = gdal.VSIFOpenL("/vsimem/test.hdr", "rb")

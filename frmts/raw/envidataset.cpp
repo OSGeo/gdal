@@ -472,13 +472,21 @@ void ENVIDataset::FlushCache(bool bAtClosing)
     if( CSLFetchNameValue(papszENVIMetadata, "default bands") == nullptr &&
         CSLFetchNameValue(papszENVIMetadata, "default_bands") == nullptr )
     {
+        int nGrayBand = 0;
         int nRBand = 0;
         int nGBand = 0;
         int nBBand = 0;
         for ( int i = 1; i <= nBands; i++ )
         {
             const auto eInterp = GetRasterBand(i)->GetColorInterpretation();
-            if( eInterp == GCI_RedBand )
+            if( eInterp == GCI_GrayIndex )
+            {
+                if( nGrayBand == 0 )
+                    nGrayBand = i;
+                else
+                    nGrayBand = -1;
+            }
+            else if( eInterp == GCI_RedBand )
             {
                 if( nRBand == 0 )
                     nRBand = i;
@@ -503,6 +511,10 @@ void ENVIDataset::FlushCache(bool bAtClosing)
         if( nRBand > 0 && nGBand > 0 && nBBand > 0 )
         {
             bOK &= VSIFPrintfL(fp, "default bands = {%d, %d, %d}\n", nRBand, nGBand, nBBand) >= 0;
+        }
+        else if( nGrayBand > 0 && nRBand == 0 && nGBand == 0 && nBBand == 0 )
+        {
+            bOK &= VSIFPrintfL(fp, "default bands = {%d}\n", nGrayBand) >= 0;
         }
     }
 
@@ -2585,6 +2597,14 @@ ENVIDataset *ENVIDataset::Open( GDALOpenInfo *poOpenInfo, bool bFileSizeCheck )
                 poDS->GetRasterBand(nRBand)->SetColorInterpretation(GCI_RedBand);
                 poDS->GetRasterBand(nGBand)->SetColorInterpretation(GCI_GreenBand);
                 poDS->GetRasterBand(nBBand)->SetColorInterpretation(GCI_BlueBand);
+            }
+        }
+        else if( aosDefaultBands.size() == 1 )
+        {
+            const int nGrayBand = atoi(aosDefaultBands[0]);
+            if( nGrayBand >= 1 && nGrayBand <= poDS->nBands )
+            {
+                poDS->GetRasterBand(nGrayBand)->SetColorInterpretation(GCI_GrayIndex);
             }
         }
     }
