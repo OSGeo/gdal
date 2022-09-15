@@ -1474,6 +1474,7 @@ def test_ogr_csv_37():
 1,49,a,2,100
 2,50,b,3,
 3,49,c,
+4,0,d,0,0
 """)
 
     ds = gdal.OpenEx('/vsimem/ogr_csv_37.csv', gdal.OF_VECTOR,
@@ -1489,6 +1490,10 @@ def test_ogr_csv_37():
         pytest.fail()
     f = lyr.GetNextFeature()
     if f.GetGeometryRef() is not None:
+        f.DumpReadable()
+        pytest.fail()
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != "POINT (0 0)":
         f.DumpReadable()
         pytest.fail()
     ds = None
