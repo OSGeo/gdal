@@ -42,6 +42,7 @@ if (GDAL_USE_POPPLER)
   # installed, create a dummy one in a temporary directory
   # To be removed once https://bugs.launchpad.net/ubuntu/+source/poppler/+bug/1989434 is fixed
   if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND
+      "${Poppler_INCLUDE_DIRS}" STREQUAL "/usr/include/poppler" AND
       EXISTS /usr/include/poppler/goo/gmem.h AND
       NOT EXISTS /usr/include/poppler/goo/GooCheckedOps.h)
       file(READ /usr/include/poppler/goo/gmem.h GMEM_H_CONTENTS)
