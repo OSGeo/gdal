@@ -2627,6 +2627,7 @@ yyerrlab:
   if (!yyerrstatus)
     {
       ++yynerrs;
+      (void)yynerrs;
 #if ! YYERROR_VERBOSE
       yyerror (context, YY_("syntax error"));
 #else

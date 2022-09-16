@@ -168,7 +168,6 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
-    int nLineCount = 0;
     int nBytesPerPixel = 0;
     int nWidth = 0;
     int nHeight = 0;
@@ -193,8 +192,6 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
     const char *pszLine = nullptr;
     while( (pszLine = CPLReadLineL( poOpenInfo->fpL )) != nullptr )
     {
-        nLineCount++;
-
         if( EQUAL(pszLine,"END_USGS_DOQ_HEADER") )
             break;
 
