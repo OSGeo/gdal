@@ -590,17 +590,6 @@ GIFDataset::CreateCopy(
     }
     else
     {
-        int nLinesToRead = 0;
-        for( int i = 0; i < 4; i++)
-        {
-            for( int j = InterlacedOffset[i];
-                 j < nYSize;
-                 j += InterlacedJumps[i] )
-            {
-                nLinesToRead++;
-            }
-        }
-
         int nLinesRead = 0;
         // Need to perform 4 passes on the images:
         for( int i = 0; i < 4; i++)

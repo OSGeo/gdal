@@ -3940,7 +3940,7 @@ GDALDataset *netCDFDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
     // Try opening the dataset.
 #if defined(NCDF_DEBUG) && defined(ENABLE_UFFD)
     CPLDebug("GDAL_netCDF", "calling nc_open_mem(%s)", osFilename.c_str());
-#elseif defined(NCDF_DEBUG) && !defined(ENABLE_UFFD)
+#elif defined(NCDF_DEBUG) && !defined(ENABLE_UFFD)
     CPLDebug("GDAL_netCDF", "calling nc_open(%s)", osFilename.c_str());
 #endif
     int cdfid = -1;
