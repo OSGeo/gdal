@@ -298,9 +298,63 @@ if (Python_Interpreter_FOUND)
     OUTPUT ${PY_SO_LIST}
     COMMAND ${CMAKE_COMMAND} ${WERROR_DEV_FLAG} -P ${BUILD_EXT_FILENAME}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    DEPENDS ${GDAL_LIB_TARGET_NAME} ${GDAL_PYTHON_PYSOURCES} ${GDAL_PYTHON_CSOURCES})
+    DEPENDS ${GDAL_LIB_TARGET_NAME} ${GDAL_PYTHON_PYSOURCES} ${GDAL_PYTHON_CSOURCES} ${BUILD_EXT_FILENAME})
 
-  add_custom_target(python_binding ALL DEPENDS ${PY_SO_LIST} ${GDAL_PYTHON_PYSOURCES} ${GDAL_LIB_TARGET_NAME})
+  set(INSTALL_WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+  set(PY_SO_LIST_WITH_RPATH)
+  if (NOT ONLY_GENERATE_FOR_NON_DEBUG)
+    if(${GDAL_SET_INSTALL_RELATIVE_RPATH})
+        # TODO: we should support that, but that's involved as it requires
+        # knowing where Python will install the generated .so files
+        message(WARNING "The Python bindings target does not currently "
+                        "support setting relative RPATH on the Python wrapper "
+                        "shared libraries. "
+                        "Disable GDAL_SET_INSTALL_RELATIVE_RPATH and set "
+                        "an absolute value for CMAKE_INSTALL_RPATH")
+    elseif(NOT "${CMAKE_INSTALL_RPATH}" STREQUAL "")
+
+        # If a CMAKE_INSTALL_RPATH is specified, we need to do a build in a
+        # dedicated "for_install" subdirectory that adds --rpath to python setup.py build_ext
+        # and install that one when the "install" target is run
+        # We cannot set this install rpath to regular build artifacts, to avoid
+        # inconsistencies.
+        # This is admitedly quite convoluted because CMake cannot do the usual
+        # magic of setting/unsetting RPATH on binaries it is not aware of.
+
+        set(INSTALL_WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/for_install")
+        file(MAKE_DIRECTORY "${INSTALL_WORKING_DIRECTORY}")
+        # We need to copy a few things from the build directory to the for_install one:
+        # the gdal-utils and extensions subdirectories, README.rst, and osgeo/*.py files
+        file(MAKE_DIRECTORY "${INSTALL_WORKING_DIRECTORY}/osgeo")
+        symlink_or_copy("${CMAKE_CURRENT_SOURCE_DIR}/gdal-utils" "${INSTALL_WORKING_DIRECTORY}/gdal-utils")
+        set(BUILD_EXT_WITH_RPATH_CONTENT)
+        string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "configure_file(\"${CMAKE_CURRENT_SOURCE_DIR}/README.rst\" \"${INSTALL_WORKING_DIRECTORY}/README.rst\" @ONLY)\n")
+        string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "file(COPY \"${CMAKE_CURRENT_BINARY_DIR}/extensions\" DESTINATION \"${INSTALL_WORKING_DIRECTORY}\")\n")
+        string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "file(GLOB PY_FILES \"${CMAKE_CURRENT_BINARY_DIR}/osgeo/*.py\")\n")
+        string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "foreach(_file IN LISTS PY_FILES)\n")
+        string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "  file(COPY \"\${_file}\" DESTINATION \"${INSTALL_WORKING_DIRECTORY}/osgeo\")\n")
+        string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "endforeach()\n")
+        string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "execute_process(COMMAND ${Python_EXECUTABLE} ${SETUP_PY_FILENAME} build_ext --rpath=${CMAKE_INSTALL_RPATH} --inplace --force WORKING_DIRECTORY ${INSTALL_WORKING_DIRECTORY})\n")
+
+        foreach (f IN LISTS PY_SO_LIST)
+          list(APPEND PY_SO_LIST_WITH_RPATH "${INSTALL_WORKING_DIRECTORY}/${f}")
+          if (CMAKE_VERSION VERSION_GREATER 3.12)
+            string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "file(TOUCH_NOCREATE \"${INSTALL_WORKING_DIRECTORY}/${f}\")\n")
+          endif ()
+        endforeach ()
+
+        set(BUILD_EXT_WITH_RPATH_FILENAME ${CMAKE_CURRENT_BINARY_DIR}/build_ext_with_rpath.cmake)
+        file(WRITE ${BUILD_EXT_WITH_RPATH_FILENAME} "${BUILD_EXT_WITH_RPATH_CONTENT}")
+        add_custom_command(
+          OUTPUT ${PY_SO_LIST_WITH_RPATH}
+          COMMAND ${CMAKE_COMMAND} ${WERROR_DEV_FLAG} -P ${BUILD_EXT_WITH_RPATH_FILENAME}
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+          DEPENDS ${GDAL_LIB_TARGET_NAME} ${GDAL_PYTHON_PYSOURCES} ${GDAL_PYTHON_CSOURCES} ${BUILD_EXT_WITH_RPATH_FILENAME})
+
+    endif()
+  endif()
+
+  add_custom_target(python_binding ALL DEPENDS ${PY_SO_LIST} ${PY_SO_LIST_WITH_RPATH} ${GDAL_PYTHON_PYSOURCES} ${GDAL_LIB_TARGET_NAME})
 
   # Generate wheel
   if (ONLY_GENERATE_FOR_NON_DEBUG)
@@ -395,7 +449,7 @@ if (Python_Interpreter_FOUND)
                    @ONLY)
     install(
       CODE "execute_process(COMMAND ${CMAKE_COMMAND} ${WERROR_DEV_FLAG} -P ${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake
-                                  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})")
+                                  WORKING_DIRECTORY ${INSTALL_WORKING_DIRECTORY})")
 
   endif ()
 
