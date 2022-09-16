@@ -1372,6 +1372,7 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
             poClass->SetFeatureCount(poClass->GetFeatureCount() + 1);
 
         const CPLXMLNode* const * papsGeometry = poFeature->GetGeometryList();
+        bool bGeometryColumnJustCreated = false;
         if( !bOnlyDetectSRS && papsGeometry != nullptr && papsGeometry[0] != nullptr )
         {
             if( poClass->GetGeometryPropertyCount() == 0 )
@@ -1380,6 +1381,7 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
                 const auto nPos = osGeomName.rfind('|');
                 if( nPos != std::string::npos )
                     osGeomName = osGeomName.substr(nPos + 1);
+                bGeometryColumnJustCreated = true;
                 poClass->AddGeometryProperty(
                     new GMLGeometryPropertyDefn(osGeomName.c_str(),
                                                 m_osSingleGeomElemPath.c_str(),
@@ -1419,12 +1421,16 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
                 }
 
                 // Merge geometry type into layer.
-                if( poClass->GetFeatureCount() == 1 && eGType == wkbUnknown )
-                    eGType = wkbNone;
-
-                poClass->GetGeometryProperty(0)->SetType(
-                    static_cast<int>(OGRMergeGeometryTypesEx(
-                        eGType, poGeometry->getGeometryType(), true)));
+                if( bGeometryColumnJustCreated )
+                {
+                    poClass->GetGeometryProperty(0)->SetType(poGeometry->getGeometryType());
+                }
+                else
+                {
+                    poClass->GetGeometryProperty(0)->SetType(
+                        static_cast<int>(OGRMergeGeometryTypesEx(
+                            eGType, poGeometry->getGeometryType(), true)));
+                }
 
                 // Merge extents.
                 if (!poGeometry->IsEmpty())
