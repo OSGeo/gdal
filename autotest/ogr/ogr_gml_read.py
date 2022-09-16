@@ -4421,3 +4421,20 @@ def test_ogr_gml_too_nested():
         assert lyr.GetNextFeature() is not None
 
     gdal.Unlink("data/gml/too_nested.gfs")
+
+
+###############################################################################
+
+
+def test_ogr_gml_first_feature_without_geometry():
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
+    tmpfilename = "/vsimem/first_feature_without_geometry.gml"
+    with gdaltest.tempfile(
+        tmpfilename, open("data/gml/first_feature_without_geometry.gml", "rb").read()
+    ):
+        ds = ogr.Open(tmpfilename)
+        assert ds.GetLayer(0).GetGeomType() == ogr.wkbPoint
+    gdal.Unlink(tmpfilename[0:-3] + "gfs")
