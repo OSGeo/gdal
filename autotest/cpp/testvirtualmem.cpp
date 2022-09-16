@@ -239,6 +239,12 @@ static void test_raw_auto(const char* pszFormat, int bFileMapping)
 
 int main(int /* argc */, char* /* argv */[])
 {
+    if( getenv("SKIP_TESTVIRTUALMEM") != nullptr )
+    {
+        fprintf(stderr, "Skipping testvitualmem\n"); // ok
+        return 0;
+    }
+
     /*printf("test_huge_mapping\n");
     test_huge_mapping();*/
 

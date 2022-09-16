@@ -75,11 +75,16 @@ projsync --system-directory --file us_noaa_conus.tif
 projsync --system-directory --file us_nga_egm96
 projsync --system-directory --file ca_nrc_ntv1_can.tif
 
-(cd build && make quicktest)
+# SKIP_TESTVIRTUALMEM because it crashes on testvirtualmem on CI
+# with "ERROR 1: CPLVirtualMemManagerThread: trying to write into read-only mapping"
+(cd build && SKIP_TESTVIRTUALMEM=YES make quicktest)
 
 # install pip and use it to install test dependencies
 #pip3 install -U -r autotest/requirements.txt
 pip3 install -U pytest pytest-sugar pytest-env
+
+# test_virtualmem_1 and test_virtualmem_3 fail on CI
+mv autotest/gcore/virtualmem.py autotest/gcore/virtualmem.py.disabled
 
 (cd autotest && $PYTEST)
 

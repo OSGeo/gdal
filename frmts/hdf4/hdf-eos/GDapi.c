@@ -95,9 +95,9 @@ Jun  05, 2003 Bruce Beaumont / Abe Taaheri
 #include "hdf4compat.h"
 
 extern  void for_init(int32, int32, float64 *, int32, const char *, const char *, int32 *,
-                      int32 (*for_trans[])());
+                      int32 (*for_trans[])(double, double, double*, double*));
 extern  void inv_init(int32, int32, float64 *, int32, const char *, const char *, int32 *,
-                      int32 (*inv_trans[])());
+                      int32 (*inv_trans[])(double, double, double*, double*));
 
 #define	GDIDOFFSET 4194304
 #define SQUARE(x)       ((x) * (x))   /* x**2 */
@@ -1026,7 +1026,6 @@ GDdefproj(int32 gridID, int32 projcode, int32 zonecode, int32 spherecode,
     int32           gdVgrpID;	/* Grid root Vgroup ID */
     int32           idOffset = GDIDOFFSET;	/* Grid ID offset */
     int32           slen;	/* String length */
-    float64         EHconvAng();
     char            utlbuf[1024];	/* Utility Buffer */
     char            projparmbuf[512];	/* Projection parameter metadata
 					 * string */
@@ -5776,7 +5775,7 @@ GDgetdefaults(int32 projcode, int32 zonecode, float64 projparm[],
 	      int32 spherecode, float64 upleftpt[], float64 lowrightpt[])
 {
     int32           errorcode = 0, status = 0;
-    int32(*for_trans[100]) ();
+    int32(*for_trans[100]) (double, double, double*, double*);
 
     float64         lon, lat, plat, x, y;
     float64         plon, tlon, llon, rlon, pplon, LLon, LLat, RLon, RLat;
@@ -6312,7 +6311,7 @@ GDll2ij(int32 projcode, int32 zonecode, float64 projparm[],
     intn            status = 0;	/* routine return status variable */
 
     int32           errorcode = 0;	/* GCTP error code */
-    int32(*for_trans[100]) ();	/* GCTP function pointer */
+    int32(*for_trans[100]) (double, double, double*, double*);	/* GCTP function pointer */
 
     float64         xVal;	/* Scaled x distance */
     float64         yVal;	/* Scaled y distance */
@@ -6324,7 +6323,6 @@ GDll2ij(int32 projcode, int32 zonecode, float64 projparm[],
     float64         latrad;	/* Latitude in radians of point */
     float64         scaleX;	/* X scale factor */
     float64         scaleY;	/* Y scale factor */
-    float64         EHconvAng();/* Angle conversion routine */
     float64         xMtr0 = 0, xMtr1, yMtr0 = 0, yMtr1;
     float64         lonrad1;	/* Longitude in radians of lowright point */
 
@@ -6585,13 +6583,12 @@ GDrs2ll(int32 projcode, float64 projparm[],
     intn            status = 0;	    /* routine return status variable */
 
     int32           errorcode = 0;  /* GCTP error code */
-    int32(*inv_trans[100]) ();	    /* GCTP function pointer */
+    int32(*inv_trans[100]) (double, double, double*, double*);	    /* GCTP function pointer */
 
     float64         pixadjX = 0.0;  /* Pixel adjustment (x) */
     float64         pixadjY = 0.0;  /* Pixel adjustment (y) */
     float64         lonrad;	    /* Longitude in radians of point */
     float64         latrad;	    /* Latitude in radians of point */
-    float64         EHconvAng();    /* Angle conversion routine */
     float64         xMtr;	    /* X value in meters from GCTP */
     float64         yMtr;	    /* Y value in meters from GCTP */
     float64         epsilon;
@@ -10656,7 +10653,7 @@ static intn GDll2mm_cea(int32 projcode,int32 zonecode, int32 spherecode,
     float64         latrad0;     /* Latitude in radians of upleft point */
     float64         lonrad;	/* Longitude in radians of point */
     float64         latrad;	/* Latitude in radians of point */
-    int32(*for_trans[100]) ();	/* GCTP function pointer */
+    int32(*for_trans[100]) (double, double, double*, double*);	/* GCTP function pointer */
 
     if(npnts <= 0)
       {
@@ -10781,7 +10778,7 @@ static intn GDmm2ll_cea(int32 projcode,int32 zonecode, int32 spherecode,
 {
     intn            status = 0;	/* routine return status variable */
     int32           errorcode = 0;	/* GCTP error code */
-    int32(*inv_trans[100]) ();	/* GCTP function pointer */
+    int32(*inv_trans[100]) (double, double, double*, double*);	/* GCTP function pointer */
     int32 i;
 
     if(npnts <= 0)
