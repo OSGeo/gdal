@@ -114,6 +114,7 @@ class OGRCSVLayer final: public OGRLayer
     int                 iNfdcLatitudeS;
     bool                bHonourStrings;
 
+    bool                m_bIsGNIS = false; // https://www.usgs.gov/u.s.-board-on-geographic-names/download-gnis-data
     int                 iLongitudeField;
     int                 iLatitudeField;
     int                 iZField;
