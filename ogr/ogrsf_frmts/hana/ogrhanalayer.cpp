@@ -853,7 +853,7 @@ OGRErr OGRHanaLayer::GetExtent(int iGeomField, OGREnvelope* extent, int force)
 }
 
 /************************************************************************/
-/*                            GetFeatureCount()                          */
+/*                            GetFeatureCount()                         */
 /************************************************************************/
 
 GIntBig OGRHanaLayer::GetFeatureCount(CPL_UNUSED int force)

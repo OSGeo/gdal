@@ -163,6 +163,8 @@ public:
     explicit OGRHanaLayer(OGRHanaDataSource* datasource);
     ~OGRHanaLayer() override;
 
+    virtual bool IsTableLayer() const { return false; }
+
     void ResetReading() override;
 
     OGRErr GetExtent(OGREnvelope* extent, int force = TRUE) override
@@ -202,6 +204,7 @@ private:
     odbc::PreparedStatementRef deleteFeatureStmt_;
     odbc::PreparedStatementRef updateFeatureStmt_;
 
+    bool allowAutoFIDOnCreateFeature_ = false;
     std::size_t batchSize_ = DEFAULT_BATCH_SIZE;
     std::size_t defaultStringSize_ = DEFAULT_STRING_SIZE;
     bool launderColumnNames_ = true;
@@ -224,7 +227,6 @@ private:
         const char* functionName);
 
     OGRErr ExecutePendingBatches(BatchOperation op);
-    void FlushPendingBatches();
     bool HasPendingBatches() const;
     ColumnTypeInfo GetColumnTypeInfo(const OGRFieldDefn& field) const;
     OGRErr GetGeometryWkb(OGRFeature* feature, int fieldIndex, Binary& binary);
@@ -238,9 +240,17 @@ public:
         int update);
     ~OGRHanaTableLayer() override;
 
+    bool IsTableLayer() const override { return true; }
+
     OGRErr DropTable();
 
     void ResetReading() override;
+    OGRErr GetExtent(OGREnvelope* extent, int force = TRUE) override
+    {
+        return GetExtent(0, extent, force);
+    }
+    OGRErr GetExtent(int geomField, OGREnvelope* extent, int force) override;
+    GIntBig GetFeatureCount(int force) override;
     const char* GetName() override { return tableName_.c_str(); }
     int TestCapability(const char* capabilities) override;
 
@@ -264,6 +274,8 @@ public:
     OGRErr StartTransaction() override;
     OGRErr CommitTransaction() override;
     OGRErr RollbackTransaction() override;
+
+    void FlushPendingBatches(bool commit);
 };
 
 /************************************************************************/

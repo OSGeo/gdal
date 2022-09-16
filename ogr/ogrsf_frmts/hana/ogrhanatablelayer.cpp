@@ -38,8 +38,9 @@
 #include <sstream>
 
 #include "odbc/Exception.h"
-#include "odbc/ResultSet.h"
 #include "odbc/PreparedStatement.h"
+#include "odbc/ResultSet.h"
+#include "odbc/Statement.h"
 #include "odbc/Types.h"
 
 CPL_CVSID("$Id$")
@@ -419,7 +420,7 @@ OGRHanaTableLayer::OGRHanaTableLayer(
 
 OGRHanaTableLayer::~OGRHanaTableLayer()
 {
-    FlushPendingBatches();
+    FlushPendingBatches(true);
 }
 
 /* -------------------------------------------------------------------- */
@@ -437,13 +438,26 @@ OGRErr OGRHanaTableLayer::Initialize()
         return err;
 
     if (fidFieldIndex_ != OGRNullFID)
+    {
         CPLDebug(
             "HANA", "table %s has FID column %s.", tableName_.c_str(),
             fidFieldName_.c_str());
+
+        CPLString sql = CPLString().Printf(
+            "SELECT COUNT(*) FROM %s", GetFullTableNameQuoted(schemaName_, tableName_).c_str());
+        odbc::StatementRef stmt = dataSource_->CreateStatement();
+        odbc::ResultSetRef rs = stmt->executeQuery(sql.c_str());
+        allowAutoFIDOnCreateFeature_ = rs->next() ? (*rs->getLong(1) == 0) : false;
+        rs->close();
+    }
     else
+    {
         CPLDebug(
             "HANA", "table %s has no FID column, FIDs will not be reliable!",
             tableName_.c_str());
+
+        allowAutoFIDOnCreateFeature_ = true;
+    }
 
     return OGRERR_NONE;
 }
@@ -880,8 +894,8 @@ OGRErr OGRHanaTableLayer::ExecutePendingBatches(BatchOperation op)
         ClearBatches();
 
         CPLError(
-            CE_Failure, CPLE_AppDefined, "Failed to execute batch commands: %s",
-            ex.what());
+            CE_Failure, CPLE_AppDefined,
+            "Failed to execute batch commands: %s", ex.what());
         return OGRERR_FAILURE;
     }
 }
@@ -890,14 +904,14 @@ OGRErr OGRHanaTableLayer::ExecutePendingBatches(BatchOperation op)
 /*                        FlushPendingBatches()                         */
 /* -------------------------------------------------------------------- */
 
-void OGRHanaTableLayer::FlushPendingBatches()
+void OGRHanaTableLayer::FlushPendingBatches(bool commit)
 {
-    if (HasPendingBatches())
-    {
-        OGRErr err = ExecutePendingBatches(BatchOperation::ALL);
-        if (OGRERR_NONE == err && !dataSource_->IsTransactionStarted())
-            dataSource_->Commit();
-    }
+    if (!HasPendingBatches())
+        return;
+
+    OGRErr err = ExecutePendingBatches(BatchOperation::ALL);
+    if (OGRERR_NONE == err && commit && !dataSource_->IsTransactionStarted())
+        dataSource_->Commit();
 }
 
 /* -------------------------------------------------------------------- */
@@ -1055,12 +1069,40 @@ OGRErr OGRHanaTableLayer::GetGeometryWkb(
 }
 
 /************************************************************************/
+/*                                 GetExtent()                          */
+/************************************************************************/
+
+OGRErr OGRHanaTableLayer::GetExtent(int geomField, OGREnvelope* extent, int force)
+{
+    if(geomField >=0 && geomField < GetLayerDefn()->GetGeomFieldCount())
+    {
+        FlushPendingBatches(false);
+    }
+
+    return OGRHanaLayer::GetExtent(geomField, extent, force);
+}
+
+/************************************************************************/
+/*                              GetFeatureCount()                       */
+/************************************************************************/
+
+GIntBig OGRHanaTableLayer::GetFeatureCount(int force)
+{
+    FlushPendingBatches(false);
+
+    return OGRHanaLayer::GetFeatureCount(force);
+}
+
+/************************************************************************/
 /*                              ResetReading()                          */
 /************************************************************************/
 
 void OGRHanaTableLayer::ResetReading()
 {
-    FlushPendingBatches();
+    FlushPendingBatches(false);
+
+    if (OGRNullFID != fidFieldIndex_ && nextFeatureId_ > 0)
+        allowAutoFIDOnCreateFeature_ = false;
 
     OGRHanaLayer::ResetReading();
 }
@@ -1143,36 +1185,43 @@ OGRErr OGRHanaTableLayer::ICreateFeature(OGRFeature* feature)
     if (OGRERR_NONE != err)
         return err;
 
-    GIntBig nFID = feature->GetFID();
-    bool withFID = nFID != OGRNullFID;
-    bool withBatch = withFID && dataSource_->IsTransactionStarted();
+    bool hasFID = feature->GetFID() != OGRNullFID;
+    if (hasFID && OGRNullFID != fidFieldIndex_)
+        allowAutoFIDOnCreateFeature_ = false;
+
+    if (!hasFID && allowAutoFIDOnCreateFeature_)
+    {
+        feature->SetFID(nextFeatureId_++);
+        hasFID = true;
+    }
+
+    bool useBatch = hasFID && dataSource_->IsTransactionStarted();
 
     try
     {
-        odbc::PreparedStatementRef& stmt = withFID ? insertFeatureStmtWithFID_ : insertFeatureStmtWithoutFID_;
+        odbc::PreparedStatementRef& stmt = hasFID ? insertFeatureStmtWithFID_ : insertFeatureStmtWithoutFID_;
 
         if (stmt.isNull())
         {
-            stmt = CreateInsertFeatureStatement(withFID);
+            stmt = CreateInsertFeatureStatement(hasFID);
             if (stmt.isNull())
                 return OGRERR_FAILURE;
         }
 
-        err = SetStatementParameters(*stmt, feature, true, withFID, "CreateFeature");
-
+        err = SetStatementParameters(*stmt, feature, true, hasFID, "CreateFeature");
         if (OGRERR_NONE != err)
             return err;
 
-        if (withBatch)
+        if (useBatch)
             stmt->addBatch();
 
-        auto ret = ExecuteUpdate(*stmt, withBatch, "CreateFeature");
+        auto ret = ExecuteUpdate(*stmt, useBatch, "CreateFeature");
 
         err = ret.first;
         if (OGRERR_NONE != err)
             return err;
 
-        if (!withFID)
+        if (!hasFID && OGRNullFID != fidFieldIndex_)
         {
             const CPLString sql = CPLString().Printf(
                 "SELECT CURRENT_IDENTITY_VALUE() \"current identity value\" FROM %s",
@@ -1282,8 +1331,8 @@ OGRErr OGRHanaTableLayer::ISetFeature(OGRFeature* feature)
 
     if( nullptr == feature )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "NULL pointer to OGRFeature passed to SetFeature()." );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                  "NULL pointer to OGRFeature passed to SetFeature().");
         return OGRERR_FAILURE;
     }
 
@@ -1312,6 +1361,9 @@ OGRErr OGRHanaTableLayer::ISetFeature(OGRFeature* feature)
         if (updateFeatureStmt_.isNull())
             return OGRERR_FAILURE;
     }
+
+    if (OGRNullFID != fidFieldIndex_)
+        allowAutoFIDOnCreateFeature_ = false;
 
     OGRErr err = ExecutePendingBatches(BatchOperation::DELETE | BatchOperation::INSERT);
     if (OGRERR_NONE != err)
@@ -1441,6 +1493,8 @@ OGRErr OGRHanaTableLayer::CreateField(OGRFieldDefn* srsField, int approxOK)
             CPLString().Printf(" DEFAULT %s", GetColumnDefaultValue(dstField));
     }
 
+    FlushPendingBatches(false);
+
     const CPLString sql = CPLString().Printf(
         "ALTER TABLE %s ADD(%s)",
         GetFullTableNameQuoted(schemaName_, tableName_).c_str(),
@@ -1518,6 +1572,8 @@ OGRErr OGRHanaTableLayer::CreateGeomField(OGRGeomFieldDefn* geomField, int)
         return OGRERR_FAILURE;
     }
 
+    FlushPendingBatches(false);
+
     int srid = dataSource_->GetSrsId(geomField->GetSpatialRef());
     if (srid == UNDETERMINED_SRID)
     {
@@ -1593,6 +1649,8 @@ OGRErr OGRHanaTableLayer::DeleteField(int field)
     }
 
     EnsureInitialized();
+
+    FlushPendingBatches(false);
 
     CPLString clmName = featureDefn_->GetFieldDefn(field)->GetNameRef();
     CPLString sql = CPLString().Printf(
@@ -1675,6 +1733,8 @@ OGRErr OGRHanaTableLayer::AlterFieldDefn(
             return nameRes.first;
         clmName.swap(nameRes.second);
     }
+
+    FlushPendingBatches(false);
 
     ColumnTypeInfo columnTypeInfo = GetColumnTypeInfo(*newFieldDefn);
 

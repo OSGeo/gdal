@@ -1866,6 +1866,16 @@ OGRErr OGRHanaDataSource::CommitTransaction()
 
     try
     {
+        for (size_t i = 0; i < layers_.size(); ++i)
+        {
+            OGRHanaLayer* layer = static_cast<OGRHanaLayer*>(layers_[i].get());
+            if(layer->IsTableLayer())
+            {
+                OGRHanaTableLayer* tableLayer = static_cast<OGRHanaTableLayer*>(layer);
+                tableLayer->FlushPendingBatches(false);
+            }
+        }
+
         conn_->commit();
     }
     catch (const odbc::Exception& ex)
