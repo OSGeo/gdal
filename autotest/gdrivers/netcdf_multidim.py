@@ -2629,3 +2629,15 @@ def test_netcdf_multidim_var_alldatatypes_opened_twice():
     rg2 = ds2.GetRootGroup()
     assert rg2
     assert rg2.OpenMDArray("string_var") is not None
+
+
+def test_netcdf_multidim_short_as_unsigned():
+    """Test https://github.com/OSGeo/gdal/issues/6352"""
+
+    ds = gdal.OpenEx("data/netcdf/short_as_unsigned.nc", gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    var = rg.OpenMDArray("Band1")
+    assert var.GetDataType().GetNumericDataType() == gdal.GDT_UInt16
+    assert var.GetAttribute("valid_range").Read() == (1, 65533)
+    assert var.GetAttribute("_FillValue").Read() == 65535
+    assert struct.unpack("H" * 7, var.Read()) == (65532, 65533, 65534, 65535, 0, 1, 2)
