@@ -37,7 +37,7 @@ from osgeo import ogr
 import pytest
 
 
-pytestmark = pytest.mark.require_driver('GMT')
+pytestmark = pytest.mark.require_driver("OGR_GMT")
 
 ###############################################################################
 @pytest.fixture(autouse=True, scope='module')
@@ -179,6 +179,8 @@ def test_ogr_gmt_5():
     gmt_ds = None
 
     # Reopen.
+
+    assert "@R" in open("tmp/mpoly.gmt", "rt", encoding="UTF-8").read()
 
     ds = ogr.Open('tmp/mpoly.gmt')
     lyr = ds.GetLayer(0)
