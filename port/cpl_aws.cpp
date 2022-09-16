@@ -821,7 +821,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAssumeRoleWithWebIdentity(bool bForc
     {
         const CPLString osSTS_asuume_role_with_web_identity_URL =
             osStsRootUrl + "/?Action=AssumeRoleWithWebIdentity&RoleSessionName=gdal"
-            "&Version=2011-06-15&RoleArn=" + roleArn + "&WebIdentityToken=" + webIdentityToken;
+            "&Version=2011-06-15&RoleArn=" + CPLAWSURLEncode(roleArn) + "&WebIdentityToken=" + CPLAWSURLEncode(webIdentityToken);
 
         CPLPushErrorHandler(CPLQuietErrorHandler);
 

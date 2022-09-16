@@ -33,6 +33,7 @@ import os.path
 import stat
 import sys
 import tempfile
+import urllib
 
 import gdaltest
 import pytest
@@ -4441,6 +4442,7 @@ def test_vsis3_read_credentials_sts_assume_role_with_web_identity(
     fp.close()
 
     aws_role_arn = "arn:aws:iam:role/test"
+    aws_role_arn_encoded = urllib.parse.quote_plus(aws_role_arn)
     options = {
         "CPL_AWS_CREDENTIALS_FILE": "",
         "AWS_CONFIG_FILE": "",
@@ -4455,7 +4457,7 @@ def test_vsis3_read_credentials_sts_assume_role_with_web_identity(
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        f"/?Action=AssumeRoleWithWebIdentity&RoleSessionName=gdal&Version=2011-06-15&RoleArn={aws_role_arn}&WebIdentityToken=token",
+        f"/?Action=AssumeRoleWithWebIdentity&RoleSessionName=gdal&Version=2011-06-15&RoleArn={aws_role_arn_encoded}&WebIdentityToken=token",
         200,
         {},
         """<AssumeRoleWithWebIdentityResponse xmlns="https://sts.amazonaws.com/doc/2011-06-15/">
