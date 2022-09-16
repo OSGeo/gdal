@@ -75,7 +75,9 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename,
         CPLString osWKT;
         CPLString osProj4;
         CPLString osEPSG;
-        vsi_l_offset nStartOfLine = VSIFTellL(m_fp);
+        vsi_l_offset nStartOfLine = 0;
+
+        VSIFSeekL(m_fp, 0, SEEK_SET);
 
         while( ReadLine() && osLine[0] == '#' )
         {
