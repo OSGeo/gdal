@@ -53,6 +53,7 @@
 #include "cpl_quad_tree.h"
 #include "cpl_worker_thread_pool.h"
 
+#include <atomic>
 #include <fstream>
 #include <string>
 
@@ -3852,6 +3853,106 @@ namespace tut
         ensure_equals( std::string(CPLGetConfigOption("SOME_ENV_VAR_FOR_TEST_CPL_61", "")), std::string("FOO") );
 
         VSIUnlink("/vsimem/.gdal/gdalrc");
+    }
+
+    // Test CPLWorkerThreadPool recursion
+    template<>
+    template<>
+    void object::test<62>()
+    {
+        struct Context
+        {
+            CPLWorkerThreadPool oThreadPool{};
+            std::atomic<int> nCounter{0};
+            std::mutex mutex{};
+            std::condition_variable cv{};
+            bool you_can_leave = false;
+            int threadStarted = 0;
+        };
+        Context ctxt;
+        ctxt.oThreadPool.Setup(2, nullptr, nullptr, /* waitAllStarted = */ true);
+
+        struct Data
+        {
+            Context* psCtxt;
+            int iJob;
+            GIntBig nThreadLambda;
+
+            Data(Context* psCtxtIn, int iJobIn):
+                psCtxt(psCtxtIn), iJob(iJobIn) {}
+            Data(const Data&) = default;
+        };
+        const auto lambda = [](void* pData)
+        {
+            auto psData = static_cast<Data*>(pData);
+            if( psData->iJob > 0 )
+            {
+                // wait for both threads to be started
+                std::unique_lock<std::mutex> guard(psData->psCtxt->mutex);
+                psData->psCtxt->threadStarted ++;
+                psData->psCtxt->cv.notify_one();
+                while( psData->psCtxt->threadStarted < 2 )
+                {
+                    psData->psCtxt->cv.wait(guard);
+                }
+            }
+
+            psData->nThreadLambda = CPLGetPID();
+            //fprintf(stderr, "lambda %d: " CPL_FRMT_GIB "\n",
+            //        psData->iJob, psData->nThreadLambda);
+            const auto lambda2 = [](void* pData2)
+            {
+                const auto psData2 = static_cast<Data*>(pData2);
+                const int iJob = psData2->iJob;
+                const int nCounter = psData2->psCtxt->nCounter ++;
+                CPL_IGNORE_RET_VAL(nCounter);
+                const auto nThreadLambda2 = CPLGetPID();
+                // fprintf(stderr, "lambda2 job=%d, counter(before)=%d, thread=" CPL_FRMT_GIB "\n", iJob, nCounter, nThreadLambda2);
+                if( iJob == 100 + 0 )
+                {
+                    ensure(nThreadLambda2 != psData2->nThreadLambda);
+                    // make sure that job 0 run in the other thread
+                    // takes sufficiently long that job 2 has been submitted
+                    // before it completes
+                    std::unique_lock<std::mutex> guard(psData2->psCtxt->mutex);
+                    while( !psData2->psCtxt->you_can_leave )
+                    {
+                        psData2->psCtxt->cv.wait(guard);
+                    }
+                }
+                else if( iJob == 100 + 1 || iJob == 100 + 2 )
+                    ensure(nThreadLambda2 == psData2->nThreadLambda);
+            };
+            auto poQueue = psData->psCtxt->oThreadPool.CreateJobQueue();
+            Data d0(*psData);
+            d0.iJob = 100 + d0.iJob * 3 + 0;
+            Data d1(*psData);
+            d1.iJob = 100 + d1.iJob * 3 + 1;
+            Data d2(*psData);
+            d2.iJob = 100 + d2.iJob * 3 + 2;
+            poQueue->SubmitJob(lambda2, &d0);
+            poQueue->SubmitJob(lambda2, &d1);
+            poQueue->SubmitJob(lambda2, &d2);
+            if( psData->iJob == 0 )
+            {
+                std::lock_guard<std::mutex> guard(psData->psCtxt->mutex);
+                psData->psCtxt->you_can_leave = true;
+                psData->psCtxt->cv.notify_one();
+            }
+        };
+        {
+            auto poQueue = ctxt.oThreadPool.CreateJobQueue();
+            Data data0(&ctxt, 0);
+            poQueue->SubmitJob(lambda, &data0);
+        }
+        {
+            auto poQueue = ctxt.oThreadPool.CreateJobQueue();
+            Data data1(&ctxt, 1);
+            Data data2(&ctxt, 2);
+            poQueue->SubmitJob(lambda, &data1);
+            poQueue->SubmitJob(lambda, &data2);
+        }
+        ensure_equals(ctxt.nCounter, 3 * 3);
     }
 
     // WARNING: keep that line at bottom and read carefully:
