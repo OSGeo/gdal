@@ -203,7 +203,7 @@ int TABSeamless::OpenForRead(const char *pszFname,
      * but we do not support it in this class.
      *------------------------------------------------------------*/
     GBool bSeamlessFound = FALSE;
-    for (int i=0; !bSeamlessFound && papszTABFile && papszTABFile[i]; i++)
+    for (int i=0; !bSeamlessFound && papszTABFile[i]; i++)
     {
         const char *pszStr = papszTABFile[i];
         while(*pszStr != '\0' && isspace(static_cast<unsigned char>(*pszStr)))
