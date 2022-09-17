@@ -2302,7 +2302,6 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                         if( !bAlreadyVisitedMG &&
                             poEltCT->getParticle() != nullptr )
                         {
-                            bool bSubSimpleEnoughOut = true;
                             int nSubCountSubElt = 0;
 
                             // Process attributes
@@ -2310,7 +2309,7 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                                                     poEltCT->getAttributeUses();
                             const size_t nAttrListSize = (poAttrList != nullptr) ?
                                                                 poAttrList->size(): 0;
-                            for(size_t j=0; bSubSimpleEnoughOut && j< nAttrListSize; ++j )
+                            for(size_t j=0; j< nAttrListSize; ++j )
                             {
                                 XSAttributeUse* poAttr = poAttrList->elementAt(j);
                                 GMLASField oField;
@@ -2326,6 +2325,7 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                                 }
                             }
 
+                            bool bSubSimpleEnoughOut = true;
                             if( !FindElementsWithMustBeToLevel(
                                             osFullXPath,
                                             poEltCT->getParticle()->
