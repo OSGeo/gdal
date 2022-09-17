@@ -34,26 +34,6 @@ if (GDAL_USE_POPPLER)
   endif ()
   target_compile_definitions(gdal_PDF PRIVATE -DHAVE_POPPLER -DPOPPLER_MAJOR_VERSION=${Poppler_VERSION_MAJOR}
                                               -DPOPPLER_MINOR_VERSION=${Poppler_VERSION_MINOR})
-
-  # Workaround https://bugs.launchpad.net/ubuntu/+source/poppler/+bug/1989434
-  # which is an issue with broken security update on Ubuntu 18.04 of
-  # poppler 0.62.0-2ubuntu2.13
-  # If we detect that gmem.h includes GooCheckedOps.h but that one is not
-  # installed, create a dummy one in a temporary directory
-  # To be removed once https://bugs.launchpad.net/ubuntu/+source/poppler/+bug/1989434 is fixed
-  if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND
-      "${Poppler_INCLUDE_DIRS}" STREQUAL "/usr/include/poppler" AND
-      EXISTS /usr/include/poppler/goo/gmem.h AND
-      NOT EXISTS /usr/include/poppler/goo/GooCheckedOps.h)
-      file(READ /usr/include/poppler/goo/gmem.h GMEM_H_CONTENTS)
-      if ("${GMEM_H_CONTENTS}" MATCHES "GooCheckedOps.h")
-          set(TEMP_DIRECTORY_POPPLER "${CMAKE_CURRENT_BINARY_DIR}/temp_poppler")
-          message(STATUS "Creating dummy ${TEMP_DIRECTORY_POPPLER}/GooCheckedOps.h to workaround Poppler packaging issue")
-          file(MAKE_DIRECTORY "${TEMP_DIRECTORY_POPPLER}")
-          file(WRITE "${TEMP_DIRECTORY_POPPLER}/GooCheckedOps.h" "// Dummy GooCheckedOps.h\n")
-          target_include_directories(gdal_PDF PRIVATE "${TEMP_DIRECTORY_POPPLER}")
-      endif ()
-  endif ()
 endif ()
 if (GDAL_USE_PODOFO)
   target_compile_definitions(gdal_PDF PRIVATE -DHAVE_PODOFO)
