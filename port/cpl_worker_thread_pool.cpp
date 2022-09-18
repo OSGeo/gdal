@@ -45,6 +45,8 @@ struct CPLWorkerThreadJob
     void          *pData;
 };
 
+static thread_local CPLWorkerThreadPool* threadLocalCurrentThreadPool = nullptr;
+
 /************************************************************************/
 /*                         CPLWorkerThreadPool()                        */
 /************************************************************************/
@@ -96,6 +98,8 @@ void CPLWorkerThreadPool::WorkerThreadFunction(void* user_data)
     CPLWorkerThread* psWT = static_cast<CPLWorkerThread*>(user_data);
     CPLWorkerThreadPool* poTP = psWT->poTP;
 
+    threadLocalCurrentThreadPool = poTP;
+
     if( psWT->pfnInitFunc )
         psWT->pfnInitFunc( psWT->pInitData );
 
@@ -131,10 +135,37 @@ bool CPLWorkerThreadPool::SubmitJob( CPLThreadFunc pfnFunc, void* pData )
 {
     CPLAssert( !aWT.empty() );
 
+    bool bMustIncrementWaitingWorkerThreadsAfterSubmission = false;
+    if( threadLocalCurrentThreadPool == this )
+    {
+        // If there are waiting threads, we can submit this job asynchronously
+        {
+            std::unique_lock<std::mutex> oGuard(m_mutex);
+            if( nWaitingWorkerThreads > 0 )
+            {
+                bMustIncrementWaitingWorkerThreadsAfterSubmission = true;
+                nWaitingWorkerThreads --;
+            }
+        }
+        if( !bMustIncrementWaitingWorkerThreadsAfterSubmission )
+        {
+            // otherwise there is a risk of deadlock, so execute synchronously.
+            pfnFunc(pData);
+            return true;
+        }
+    }
+
     CPLWorkerThreadJob* psJob = static_cast<CPLWorkerThreadJob *>(
         VSI_MALLOC_VERBOSE(sizeof(CPLWorkerThreadJob)));
     if( psJob == nullptr )
+    {
+        if( bMustIncrementWaitingWorkerThreadsAfterSubmission )
+        {
+            std::unique_lock<std::mutex> oGuard(m_mutex);
+            nWaitingWorkerThreads ++;
+        }
         return false;
+    }
     psJob->pfnFunc = pfnFunc;
     psJob->pData = pData;
 
@@ -143,11 +174,19 @@ bool CPLWorkerThreadPool::SubmitJob( CPLThreadFunc pfnFunc, void* pData )
     if( psItem == nullptr )
     {
         VSIFree(psJob);
+        if( bMustIncrementWaitingWorkerThreadsAfterSubmission )
+        {
+            std::unique_lock<std::mutex> oGuard(m_mutex);
+            nWaitingWorkerThreads ++;
+        }
         return false;
     }
     psItem->pData = psJob;
 
     std::unique_lock<std::mutex> oGuard(m_mutex);
+
+    if( bMustIncrementWaitingWorkerThreadsAfterSubmission )
+        nWaitingWorkerThreads ++;
 
     psItem->psNext = psJobQueue;
     psJobQueue = psItem;
@@ -199,6 +238,17 @@ bool CPLWorkerThreadPool::SubmitJobs(CPLThreadFunc pfnFunc,
                                      const std::vector<void*>& apData)
 {
     CPLAssert( !aWT.empty() );
+
+    if( threadLocalCurrentThreadPool == this )
+    {
+        // If SubmitJob() is called from a worker thread of this queue,
+        // then synchronously run the task to avoid deadlock.
+        for(size_t i=0;i<apData.size();i++)
+        {
+            pfnFunc(apData[i]);
+        }
+        return true;
+    }
 
     std::unique_lock<std::mutex> oGuard(m_mutex);
 
