@@ -1620,6 +1620,14 @@ are the source band numbers (between 1 and N), possibly out-of-order or with rep
 The ``mask`` value can be used to specify the global mask band. This can also
 be seen as an equivalent of running `gdal_translate -of VRT -b num1 ... -b numN`.
 
+Multi-threading optimizations
+-----------------------------
+
+Starting with GDAL 3.6, the ComputeStatistics() implementation can benefit from
+multi-threading if the sources are not overlapping and belong to different
+datasets. This can be enabled by setting the :decl_configoption:`GDAL_NUM_THREADS`
+configuration option to an integer or ``ALL_CPUS``.
+
 Multi-threading issues
 ----------------------
 
