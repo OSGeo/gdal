@@ -119,12 +119,6 @@ static CPLErr NCDFPutAttr( int nCdfId, int nVarId,
 static CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue );
 static CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue );
 
-static double NCDFGetDefaultNoDataValue( int nCdfId, int nVarId, int nVarType, bool& bGotNoData );
-#ifdef NETCDF_HAS_NC4
-static int64_t NCDFGetDefaultNoDataValueAsInt64( int nCdfId, int nVarId, bool& bGotNoData );
-static uint64_t NCDFGetDefaultNoDataValueAsUInt64( int nCdfId, int nVarId, bool& bGotNoData );
-#endif
-
 // Replace this where used.
 static char **NCDFTokenizeArray( const char *pszValue );
 static void CopyMetadata( GDALDataset* poSrcDS,
@@ -10654,6 +10648,13 @@ void GDALRegister_netCDF()
 "   </Option>"
 "</MultiDimArrayCreationOptionList>" );
 
+    poDriver->SetMetadataItem(GDAL_DMD_MULTIDIM_ARRAY_OPENOPTIONLIST,
+"<MultiDimArrayOpenOptionList>"
+"   <Option name='USE_DEFAULT_FILL_AS_NODATA' type='boolean' "
+    "description='Whether the default fill value should be used as nodata "
+    "when there is no _FillValue or missing_value attribute' default='NO'/>"
+"</MultiDimArrayOpenOptionList>" );
+
     poDriver->SetMetadataItem(GDAL_DMD_MULTIDIM_ATTRIBUTE_CREATIONOPTIONLIST,
 "<MultiDimAttributeCreationOptionList>"
 "   <Option name='NC_TYPE' type='string-select' default='netCDF data type'>"
@@ -12113,7 +12114,7 @@ double NCDFGetDefaultNoDataValue( int nCdfId, int nVarId, int nVarType, bool& bG
 /*                      NCDFGetDefaultNoDataValueAsInt64()              */
 /************************************************************************/
 
-static int64_t NCDFGetDefaultNoDataValueAsInt64( int nCdfId, int nVarId, bool& bGotNoData )
+int64_t NCDFGetDefaultNoDataValueAsInt64( int nCdfId, int nVarId, bool& bGotNoData )
 
 {
     int nNoFill = 0;
@@ -12135,7 +12136,7 @@ static int64_t NCDFGetDefaultNoDataValueAsInt64( int nCdfId, int nVarId, bool& b
 /*                     NCDFGetDefaultNoDataValueAsUInt64()              */
 /************************************************************************/
 
-static uint64_t NCDFGetDefaultNoDataValueAsUInt64( int nCdfId, int nVarId, bool& bGotNoData )
+uint64_t NCDFGetDefaultNoDataValueAsUInt64( int nCdfId, int nVarId, bool& bGotNoData )
 
 {
     int nNoFill = 0;
