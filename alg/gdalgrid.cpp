@@ -139,9 +139,9 @@ GDALGridInverseDistanceToAPower( const void *poOptionsIn, GUInt32 nPoints,
             poOptionsIn);
 
     // Pre-compute search ellipse parameters.
-    const double dfRadius1 = poOptions->dfRadius1 * poOptions->dfRadius1;
-    const double dfRadius2 = poOptions->dfRadius2 * poOptions->dfRadius2;
-    const double dfR12 = dfRadius1 * dfRadius2;
+    const double dfRadius1Square = poOptions->dfRadius1 * poOptions->dfRadius1;
+    const double dfRadius2Square = poOptions->dfRadius2 * poOptions->dfRadius2;
+    const double dfR12Square = dfRadius1Square * dfRadius2Square;
 
     // Compute coefficients for coordinate system rotation.
     const double dfAngle = TO_RADIANS * poOptions->dfAngle;
@@ -173,7 +173,7 @@ GDALGridInverseDistanceToAPower( const void *poOptionsIn, GUInt32 nPoints,
         }
 
         // Is this point located inside the search ellipse?
-        if( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
+        if( dfRadius2Square * dfRX * dfRX + dfRadius1Square * dfRY * dfRY <= dfR12Square )
         {
             // If the test point is close to the grid node, use the point
             // value directly as a node value to avoid singularity.
@@ -265,6 +265,8 @@ GDALGridInverseDistanceToAPowerNearestNeighbor(
     double *pdfValue,
     void* hExtraParamsIn )
 {
+    CPL_IGNORE_RET_VAL(nPoints);
+
     const
     GDALGridInverseDistanceToAPowerNearestNeighborOptions *const poOptions =
       static_cast<
@@ -279,75 +281,48 @@ GDALGridInverseDistanceToAPowerNearestNeighbor(
     GDALGridExtraParameters* psExtraParams =
         static_cast<GDALGridExtraParameters *>(hExtraParamsIn);
     CPLQuadTree* phQuadTree = psExtraParams->hQuadTree;
+    CPLAssert(phQuadTree);
 
     const double dfRPower2 = psExtraParams->dfRadiusPower2PreComp;
-    const double dfRPower4 = psExtraParams->dfRadiusPower4PreComp;
-
     const double dfPowerDiv2 = psExtraParams->dfPowerDiv2PreComp;
 
     std::multimap<double, double> oMapDistanceToZValues;
-    if( phQuadTree != nullptr )
-    {
-        const double dfSearchRadius = dfRadius;
-        CPLRectObj sAoi;
-        sAoi.minx = dfXPoint - dfSearchRadius;
-        sAoi.miny = dfYPoint - dfSearchRadius;
-        sAoi.maxx = dfXPoint + dfSearchRadius;
-        sAoi.maxy = dfYPoint + dfSearchRadius;
-        int nFeatureCount = 0;
-        GDALGridPoint** papsPoints = reinterpret_cast<GDALGridPoint **>(
-                CPLQuadTreeSearch(phQuadTree, &sAoi, &nFeatureCount) );
-        if( nFeatureCount != 0 )
-        {
-            for( int k = 0; k < nFeatureCount; k++ )
-            {
-                const int i = papsPoints[k]->i;
-                const double dfRX = padfX[i] - dfXPoint;
-                const double dfRY = padfY[i] - dfYPoint;
 
-                const double dfR2 = dfRX * dfRX + dfRY * dfRY;
-                // real distance + smoothing
-                const double dfRsmoothed2 = dfR2 + dfSmoothing2;
-                if( dfRsmoothed2 < 0.0000000000001 )
-                {
-                    *pdfValue = padfZ[i];
-                    CPLFree(papsPoints);
-                    return CE_None;
-                }
-                // is point within real distance?
-                if( dfR2 <= dfRPower2 )
-                {
-                    oMapDistanceToZValues.insert(
-                        std::make_pair(dfRsmoothed2, padfZ[i]) );
-                }
-            }
-        }
-        CPLFree(papsPoints);
-    }
-    else
+    const double dfSearchRadius = dfRadius;
+    CPLRectObj sAoi;
+    sAoi.minx = dfXPoint - dfSearchRadius;
+    sAoi.miny = dfYPoint - dfSearchRadius;
+    sAoi.maxx = dfXPoint + dfSearchRadius;
+    sAoi.maxy = dfYPoint + dfSearchRadius;
+    int nFeatureCount = 0;
+    GDALGridPoint** papsPoints = reinterpret_cast<GDALGridPoint **>(
+            CPLQuadTreeSearch(phQuadTree, &sAoi, &nFeatureCount) );
+    if( nFeatureCount != 0 )
     {
-        for( GUInt32 i = 0; i < nPoints; i++ )
+        for( int k = 0; k < nFeatureCount; k++ )
         {
+            const int i = papsPoints[k]->i;
             const double dfRX = padfX[i] - dfXPoint;
             const double dfRY = padfY[i] - dfYPoint;
+
             const double dfR2 = dfRX * dfRX + dfRY * dfRY;
+            // real distance + smoothing
             const double dfRsmoothed2 = dfR2 + dfSmoothing2;
-
-            // Is this point located inside the search circle?
-            if( dfRPower2 * dfRX * dfRX + dfRPower2 * dfRY * dfRY <= dfRPower4 )
+            if( dfRsmoothed2 < 0.0000000000001 )
             {
-                // If the test point is close to the grid node, use the point
-                // value directly as a node value to avoid singularity.
-                if( dfRsmoothed2 < 0.0000000000001 )
-                {
-                    *pdfValue = padfZ[i];
-                    return CE_None;
-                }
-
-                oMapDistanceToZValues.insert(std::make_pair(dfRsmoothed2, padfZ[i]) );
+                *pdfValue = padfZ[i];
+                CPLFree(papsPoints);
+                return CE_None;
+            }
+            // is point within real distance?
+            if( dfR2 <= dfRPower2 )
+            {
+                oMapDistanceToZValues.insert(
+                    std::make_pair(dfRsmoothed2, padfZ[i]) );
             }
         }
     }
+    CPLFree(papsPoints);
 
     double dfNominator = 0.0;
     double dfDenominator = 0.0;
@@ -551,10 +526,10 @@ GDALGridMovingAverage( const void *poOptionsIn, GUInt32 nPoints,
     const GDALGridMovingAverageOptions * const poOptions =
         static_cast<const GDALGridMovingAverageOptions *>(poOptionsIn);
     // Pre-compute search ellipse parameters.
-    const double dfRadius1 = poOptions->dfRadius1 * poOptions->dfRadius1;
-    double dfSearchRadius = poOptions->dfRadius1;
-    const double dfRadius2 = poOptions->dfRadius2 * poOptions->dfRadius2;
-    const double dfR12 = dfRadius1 * dfRadius2;
+    const double dfRadius1Square = poOptions->dfRadius1 * poOptions->dfRadius1;
+    const double dfRadius2Square = poOptions->dfRadius2 * poOptions->dfRadius2;
+    const double dfSearchRadius = std::max(poOptions->dfRadius1, poOptions->dfRadius2);
+    const double dfR12Square = dfRadius1Square * dfRadius2Square;
 
     GDALGridExtraParameters* psExtraParams = static_cast<GDALGridExtraParameters *>(hExtraParamsIn);
     CPLQuadTree* phQuadTree = psExtraParams->hQuadTree;
@@ -587,7 +562,7 @@ GDALGridMovingAverage( const void *poOptionsIn, GUInt32 nPoints,
                 const double dfRX = padfX[i] - dfXPoint;
                 const double dfRY = padfY[i] - dfYPoint;
 
-                if( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
+                if( dfRadius2Square * dfRX * dfRX + dfRadius1Square * dfRY * dfRY <= dfR12Square )
                 {
                     dfAccumulator += padfZ[i];
                     n++;
@@ -612,15 +587,13 @@ GDALGridMovingAverage( const void *poOptionsIn, GUInt32 nPoints,
             }
 
             // Is this point located inside the search ellipse?
-            if( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
+            if( dfRadius2Square * dfRX * dfRX + dfRadius1Square * dfRY * dfRY <= dfR12Square )
             {
                 dfAccumulator += padfZ[i];
                 n++;
             }
         }
     }
-
-    
 
     if( n < poOptions->nMinPoints || n == 0 )
     {
@@ -674,9 +647,9 @@ GDALGridNearestNeighbor( const void *poOptionsIn, GUInt32 nPoints,
     const GDALGridNearestNeighborOptions * const poOptions =
         static_cast<const GDALGridNearestNeighborOptions *>(poOptionsIn);
     // Pre-compute search ellipse parameters.
-    const double dfRadius1 = poOptions->dfRadius1 * poOptions->dfRadius1;
-    const double dfRadius2 = poOptions->dfRadius2 * poOptions->dfRadius2;
-    double dfR12 = dfRadius1 * dfRadius2;
+    const double dfRadius1Square = poOptions->dfRadius1 * poOptions->dfRadius1;
+    const double dfRadius2Square = poOptions->dfRadius2 * poOptions->dfRadius2;
+    const double dfR12Square = dfRadius1Square * dfRadius2Square;
     GDALGridExtraParameters* psExtraParams =
         static_cast<GDALGridExtraParameters *>(hExtraParamsIn);
     CPLQuadTree* hQuadTree = psExtraParams->hQuadTree;
@@ -689,16 +662,13 @@ GDALGridNearestNeighbor( const void *poOptionsIn, GUInt32 nPoints,
 
     // If the nearest point will not be found, its value remains as NODATA.
     double dfNearestValue = poOptions->dfNoDataValue;
-    // Nearest distance will be initialized with the distance to the first
-    // point in array.
-    double dfNearestR = std::numeric_limits<double>::max();
     GUInt32 i = 0;
 
     double dfSearchRadius = psExtraParams->dfInitialSearchRadius;
     if( hQuadTree != nullptr)
     {
-        if( dfRadius1 > 0 )
-            dfSearchRadius = poOptions->dfRadius1;
+        if( poOptions->dfRadius1 > 0 || poOptions->dfRadius2 > 0 )
+            dfSearchRadius = std::max(poOptions->dfRadius1, poOptions->dfRadius2);
         CPLRectObj sAoi;
         while( dfSearchRadius > 0 )
         {
@@ -711,8 +681,9 @@ GDALGridNearestNeighbor( const void *poOptionsIn, GUInt32 nPoints,
                     CPLQuadTreeSearch(hQuadTree, &sAoi, &nFeatureCount) );
             if( nFeatureCount != 0 )
             {
-                if( dfRadius1 > 0 )
-                    dfNearestR = dfRadius1;
+                // Nearest distance will be initialized with the distance to the first
+                // point in array.
+                double dfNearestRSquare = std::numeric_limits<double>::max();
                 for( int k = 0; k < nFeatureCount; k++)
                 {
                     const int idx = papsPoints[k]->i;
@@ -720,9 +691,9 @@ GDALGridNearestNeighbor( const void *poOptionsIn, GUInt32 nPoints,
                     const double dfRY = padfY[idx] - dfYPoint;
 
                     const double dfR2 = dfRX * dfRX + dfRY * dfRY;
-                    if( dfR2 <= dfNearestR )
+                    if( dfR2 <= dfNearestRSquare )
                     {
-                        dfNearestR = dfR2;
+                        dfNearestRSquare = dfR2;
                         dfNearestValue = padfZ[idx];
                     }
                 }
@@ -732,7 +703,7 @@ GDALGridNearestNeighbor( const void *poOptionsIn, GUInt32 nPoints,
             }
 
             CPLFree(papsPoints);
-            if( dfRadius1 > 0 )
+            if( poOptions->dfRadius1 > 0 || poOptions->dfRadius2 > 0 )
                 break;
             dfSearchRadius *= 2;
 #if DEBUG_VERBOSE
@@ -744,6 +715,7 @@ GDALGridNearestNeighbor( const void *poOptionsIn, GUInt32 nPoints,
     }
     else
     {
+        double dfNearestRSquare = std::numeric_limits<double>::max();
         while( i < nPoints )
         {
             double dfRX = padfX[i] - dfXPoint;
@@ -759,12 +731,14 @@ GDALGridNearestNeighbor( const void *poOptionsIn, GUInt32 nPoints,
             }
 
             // Is this point located inside the search ellipse?
-            if( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
+            const double dfRXSquare = dfRX * dfRX;
+            const double dfRYSquare = dfRY * dfRY;
+            if( dfRadius2Square * dfRXSquare + dfRadius1Square * dfRYSquare <= dfR12Square )
             {
-                const double dfR2 = dfRX * dfRX + dfRY * dfRY;
-                if( dfR2 <= dfNearestR )
+                const double dfR2 = dfRXSquare + dfRYSquare;
+                if( dfR2 <= dfNearestRSquare )
                 {
-                    dfNearestR = dfR2;
+                    dfNearestRSquare = dfR2;
                     dfNearestValue = padfZ[i];
                 }
             }
@@ -828,10 +802,10 @@ GDALGridDataMetricMinimum( const void *poOptionsIn, GUInt32 nPoints,
         static_cast<const GDALGridDataMetricsOptions *>(poOptionsIn);
 
     // Pre-compute search ellipse parameters.
-    const double dfRadius1 = poOptions->dfRadius1 * poOptions->dfRadius1;
-    double dfSearchRadius = poOptions->dfRadius1;
-    const double dfRadius2 = poOptions->dfRadius2 * poOptions->dfRadius2;
-    const double dfR12 = dfRadius1 * dfRadius2;
+    const double dfRadius1Square = poOptions->dfRadius1 * poOptions->dfRadius1;
+    const double dfRadius2Square = poOptions->dfRadius2 * poOptions->dfRadius2;
+    const double dfSearchRadius = std::max(poOptions->dfRadius1, poOptions->dfRadius2);
+    const double dfR12Square = dfRadius1Square * dfRadius2Square;
 
     GDALGridExtraParameters* psExtraParams = static_cast<GDALGridExtraParameters *>(hExtraParamsIn);
     CPLQuadTree* phQuadTree = psExtraParams->hQuadTree;
@@ -842,7 +816,7 @@ GDALGridDataMetricMinimum( const void *poOptionsIn, GUInt32 nPoints,
     const double dfCoeff1 = bRotated ? cos(dfAngle) : 0.0;
     const double dfCoeff2 = bRotated ? sin(dfAngle) : 0.0;
 
-    double dfMinimumValue=0.0;
+    double dfMinimumValue = std::numeric_limits<double>::max();
     GUInt32 n = 0;
     if( phQuadTree != nullptr)
     {
@@ -862,16 +836,10 @@ GDALGridDataMetricMinimum( const void *poOptionsIn, GUInt32 nPoints,
                 const double dfRX = padfX[i] - dfXPoint;
                 const double dfRY = padfY[i] - dfYPoint;
 
-                if( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
+                if( dfRadius2Square * dfRX * dfRX + dfRadius1Square * dfRY * dfRY <= dfR12Square )
                 {
-                    if(n){
-                        if (dfMinimumValue>padfZ[i]){
-                            dfMinimumValue=padfZ[i];
-                        }
-                    }
-                    else{
-                        dfMinimumValue=padfZ[i];
-                    }
+                    if( dfMinimumValue > padfZ[i] )
+                        dfMinimumValue = padfZ[i];
                     n++;
                 }
             }
@@ -895,17 +863,10 @@ GDALGridDataMetricMinimum( const void *poOptionsIn, GUInt32 nPoints,
             }
 
             // Is this point located inside the search ellipse?
-            if( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
+            if( dfRadius2Square * dfRX * dfRX + dfRadius1Square * dfRY * dfRY <= dfR12Square )
             {
-                if( n > 0 )
-                {
-                    if( dfMinimumValue > padfZ[i] )
-                        dfMinimumValue = padfZ[i];
-                }
-                else
-                {
+                if( dfMinimumValue > padfZ[i] )
                     dfMinimumValue = padfZ[i];
-                }
                 n++;
             }
 
@@ -913,7 +874,6 @@ GDALGridDataMetricMinimum( const void *poOptionsIn, GUInt32 nPoints,
         }
 
     }
-    
 
     if( n < poOptions->nMinPoints || n == 0 )
     {
@@ -977,10 +937,10 @@ GDALGridDataMetricMaximum( const void *poOptionsIn, GUInt32 nPoints,
         static_cast<const GDALGridDataMetricsOptions *>(poOptionsIn);
 
     // Pre-compute search ellipse parameters.
-    const double dfRadius1 = poOptions->dfRadius1 * poOptions->dfRadius1;
-    double dfSearchRadius = poOptions->dfRadius1;
-    const double dfRadius2 = poOptions->dfRadius2 * poOptions->dfRadius2;
-    const double dfR12 = dfRadius1 * dfRadius2;
+    const double dfRadius1Square = poOptions->dfRadius1 * poOptions->dfRadius1;
+    const double dfRadius2Square = poOptions->dfRadius2 * poOptions->dfRadius2;
+    const double dfSearchRadius = std::max(poOptions->dfRadius1, poOptions->dfRadius2);
+    const double dfR12Square = dfRadius1Square * dfRadius2Square;
 
     GDALGridExtraParameters* psExtraParams = static_cast<GDALGridExtraParameters *>(hExtraParamsIn);
     CPLQuadTree* phQuadTree = psExtraParams->hQuadTree;
@@ -991,7 +951,7 @@ GDALGridDataMetricMaximum( const void *poOptionsIn, GUInt32 nPoints,
     const double dfCoeff1 = bRotated ? cos(dfAngle) : 0.0;
     const double dfCoeff2 = bRotated ? sin(dfAngle) : 0.0;
 
-    double dfMaximumValue=0.0;
+    double dfMaximumValue = -std::numeric_limits<double>::max();
     GUInt32 n = 0;
     if( phQuadTree != nullptr)
     {
@@ -1011,16 +971,10 @@ GDALGridDataMetricMaximum( const void *poOptionsIn, GUInt32 nPoints,
                 const double dfRX = padfX[i] - dfXPoint;
                 const double dfRY = padfY[i] - dfYPoint;
 
-                if( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
+                if( dfRadius2Square * dfRX * dfRX + dfRadius1Square * dfRY * dfRY <= dfR12Square )
                 {
-                    if(n){
-                        if (dfMaximumValue<padfZ[i]){
-                            dfMaximumValue=padfZ[i];
-                        }
-                    }
-                    else{
-                        dfMaximumValue=padfZ[i];
-                    }
+                    if( dfMaximumValue < padfZ[i] )
+                        dfMaximumValue = padfZ[i];
                     n++;
                 }
             }
@@ -1044,17 +998,10 @@ GDALGridDataMetricMaximum( const void *poOptionsIn, GUInt32 nPoints,
             }
 
             // Is this point located inside the search ellipse?
-            if( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
+            if( dfRadius2Square * dfRX * dfRX + dfRadius1Square * dfRY * dfRY <= dfR12Square )
             {
-                if( n )
-                {
-                    if( dfMaximumValue < padfZ[i] )
-                        dfMaximumValue = padfZ[i];
-                }
-                else
-                {
+                if( dfMaximumValue < padfZ[i] )
                     dfMaximumValue = padfZ[i];
-                }
                 n++;
             }
 
@@ -1062,8 +1009,6 @@ GDALGridDataMetricMaximum( const void *poOptionsIn, GUInt32 nPoints,
         }
 
     }
-
-   
 
     if( n < poOptions->nMinPoints
          || n == 0 )
@@ -1128,10 +1073,10 @@ GDALGridDataMetricRange( const void *poOptionsIn, GUInt32 nPoints,
     const GDALGridDataMetricsOptions *const poOptions =
         static_cast<const GDALGridDataMetricsOptions *>(poOptionsIn);
     // Pre-compute search ellipse parameters.
-    const double dfRadius1 = poOptions->dfRadius1 * poOptions->dfRadius1;
-    double dfSearchRadius = poOptions->dfRadius1;
-    const double dfRadius2 = poOptions->dfRadius2 * poOptions->dfRadius2;
-    const double dfR12 = dfRadius1 * dfRadius2;
+    const double dfRadius1Square = poOptions->dfRadius1 * poOptions->dfRadius1;
+    const double dfRadius2Square = poOptions->dfRadius2 * poOptions->dfRadius2;
+    const double dfSearchRadius = std::max(poOptions->dfRadius1, poOptions->dfRadius2);
+    const double dfR12Square = dfRadius1Square * dfRadius2Square;
 
     GDALGridExtraParameters* psExtraParams = static_cast<GDALGridExtraParameters *>(hExtraParamsIn);
     CPLQuadTree* phQuadTree = psExtraParams->hQuadTree;
@@ -1142,8 +1087,8 @@ GDALGridDataMetricRange( const void *poOptionsIn, GUInt32 nPoints,
     const double dfCoeff1 = bRotated ? cos(dfAngle) : 0.0;
     const double dfCoeff2 = bRotated ? sin(dfAngle) : 0.0;
 
-    double dfMaximumValue = 0.0;
-    double dfMinimumValue = 0.0;
+    double dfMaximumValue = -std::numeric_limits<double>::max();
+    double dfMinimumValue = std::numeric_limits<double>::max();
     GUInt32 n = 0;
     if( phQuadTree != nullptr)
     {
@@ -1163,21 +1108,13 @@ GDALGridDataMetricRange( const void *poOptionsIn, GUInt32 nPoints,
                 const double dfRX = padfX[i] - dfXPoint;
                 const double dfRY = padfY[i] - dfYPoint;
 
-                if( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
+                if( dfRadius2Square * dfRX * dfRX + dfRadius1Square * dfRY * dfRY <= dfR12Square )
                 {
-                    if( n > 0 )
-                    {
-                        if( dfMinimumValue > padfZ[i] )
-                            dfMinimumValue = padfZ[i];
-                        if( dfMaximumValue < padfZ[i] )
-                            dfMaximumValue = padfZ[i];
-                    }
-                    else
-                    {
+                    if( dfMinimumValue > padfZ[i] )
                         dfMinimumValue = padfZ[i];
+                    if( dfMaximumValue < padfZ[i] )
                         dfMaximumValue = padfZ[i];
-                    }
-                    n++;
+                    n ++;
                 }
             }
         }
@@ -1200,29 +1137,19 @@ GDALGridDataMetricRange( const void *poOptionsIn, GUInt32 nPoints,
             }
 
             // Is this point located inside the search ellipse?
-            if( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
+            if( dfRadius2Square * dfRX * dfRX + dfRadius1Square * dfRY * dfRY <= dfR12Square )
             {
-                if( n > 0 )
-                {
-                    if( dfMinimumValue > padfZ[i] )
-                        dfMinimumValue = padfZ[i];
-                    if( dfMaximumValue < padfZ[i] )
-                        dfMaximumValue = padfZ[i];
-                }
-                else
-                {
+                if( dfMinimumValue > padfZ[i] )
                     dfMinimumValue = padfZ[i];
+                if( dfMaximumValue < padfZ[i] )
                     dfMaximumValue = padfZ[i];
-                }
-                n++;
+                n ++;
             }
 
             i++;
         }
 
     }
-
-    
 
     if( n < poOptions->nMinPoints || n == 0 )
     {
@@ -1284,10 +1211,10 @@ GDALGridDataMetricCount( const void *poOptionsIn, GUInt32 nPoints,
         static_cast<const GDALGridDataMetricsOptions *>(poOptionsIn);
 
     // Pre-compute search ellipse parameters.
-    const double dfRadius1 = poOptions->dfRadius1 * poOptions->dfRadius1;
-    double dfSearchRadius = poOptions->dfRadius1;
-    const double dfRadius2 = poOptions->dfRadius2 * poOptions->dfRadius2;
-    const double dfR12 = dfRadius1 * dfRadius2;
+    const double dfRadius1Square = poOptions->dfRadius1 * poOptions->dfRadius1;
+    const double dfRadius2Square = poOptions->dfRadius2 * poOptions->dfRadius2;
+    const double dfSearchRadius = std::max(poOptions->dfRadius1, poOptions->dfRadius2);
+    const double dfR12Square = dfRadius1Square * dfRadius2Square;
 
     GDALGridExtraParameters* psExtraParams = static_cast<GDALGridExtraParameters *>(hExtraParamsIn);
     CPLQuadTree* phQuadTree = psExtraParams->hQuadTree;
@@ -1317,7 +1244,7 @@ GDALGridDataMetricCount( const void *poOptionsIn, GUInt32 nPoints,
                 const double dfRX = padfX[i] - dfXPoint;
                 const double dfRY = padfY[i] - dfYPoint;
 
-                if( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
+                if( dfRadius2Square * dfRX * dfRX + dfRadius1Square * dfRY * dfRY <= dfR12Square )
                 {
                     n++;
                 }
@@ -1342,7 +1269,7 @@ GDALGridDataMetricCount( const void *poOptionsIn, GUInt32 nPoints,
             }
 
             // Is this point located inside the search ellipse?
-            if( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
+            if( dfRadius2Square * dfRX * dfRX + dfRadius1Square * dfRY * dfRY <= dfR12Square )
             {
                 n++;
             }
@@ -1351,8 +1278,6 @@ GDALGridDataMetricCount( const void *poOptionsIn, GUInt32 nPoints,
         }
 
     }
-
-   
 
     if( n < poOptions->nMinPoints )
     {
@@ -1419,10 +1344,10 @@ GDALGridDataMetricAverageDistance( const void *poOptionsIn, GUInt32 nPoints,
         static_cast<const GDALGridDataMetricsOptions *>(poOptionsIn);
 
     // Pre-compute search ellipse parameters.
-    const double dfRadius1 = poOptions->dfRadius1 * poOptions->dfRadius1;
-    double dfSearchRadius = poOptions->dfRadius1;
-    const double dfRadius2 = poOptions->dfRadius2 * poOptions->dfRadius2;
-    const double dfR12 = dfRadius1 * dfRadius2;
+    const double dfRadius1Square = poOptions->dfRadius1 * poOptions->dfRadius1;
+    const double dfRadius2Square = poOptions->dfRadius2 * poOptions->dfRadius2;
+    const double dfSearchRadius = std::max(poOptions->dfRadius1, poOptions->dfRadius2);
+    const double dfR12Square = dfRadius1Square * dfRadius2Square;
 
     GDALGridExtraParameters* psExtraParams = static_cast<GDALGridExtraParameters *>(hExtraParamsIn);
     CPLQuadTree* phQuadTree = psExtraParams->hQuadTree;
@@ -1453,7 +1378,7 @@ GDALGridDataMetricAverageDistance( const void *poOptionsIn, GUInt32 nPoints,
                 const double dfRX = padfX[i] - dfXPoint;
                 const double dfRY = padfY[i] - dfYPoint;
 
-                if( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
+                if( dfRadius2Square * dfRX * dfRX + dfRadius1Square * dfRY * dfRY <= dfR12Square )
                 {
                     dfAccumulator += sqrt( dfRX * dfRX + dfRY * dfRY );
                     n++;
@@ -1480,7 +1405,7 @@ GDALGridDataMetricAverageDistance( const void *poOptionsIn, GUInt32 nPoints,
             }
 
             // Is this point located inside the search ellipse?
-            if( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
+            if( dfRadius2Square * dfRX * dfRX + dfRadius1Square * dfRY * dfRY <= dfR12Square )
             {
                 dfAccumulator += sqrt( dfRX * dfRX + dfRY * dfRY );
                 n++;
@@ -1489,8 +1414,6 @@ GDALGridDataMetricAverageDistance( const void *poOptionsIn, GUInt32 nPoints,
             i++;
         }
     }
-
-    
 
     if( n < poOptions->nMinPoints || n == 0 )
     {
@@ -1558,10 +1481,10 @@ GDALGridDataMetricAverageDistancePts( const void *poOptionsIn, GUInt32 nPoints,
     const GDALGridDataMetricsOptions *const poOptions =
         static_cast<const GDALGridDataMetricsOptions *>(poOptionsIn);
     // Pre-compute search ellipse parameters.
-    const double dfRadius1 = poOptions->dfRadius1 * poOptions->dfRadius1;
-    double dfSearchRadius = poOptions->dfRadius1;
-    const double dfRadius2 = poOptions->dfRadius2 * poOptions->dfRadius2;
-    const double dfR12 = dfRadius1 * dfRadius2;
+    const double dfRadius1Square = poOptions->dfRadius1 * poOptions->dfRadius1;
+    const double dfRadius2Square = poOptions->dfRadius2 * poOptions->dfRadius2;
+    const double dfSearchRadius = std::max(poOptions->dfRadius1, poOptions->dfRadius2);
+    const double dfR12Square = dfRadius1Square * dfRadius2Square;
 
     GDALGridExtraParameters* psExtraParams = static_cast<GDALGridExtraParameters *>(hExtraParamsIn);
     CPLQuadTree* phQuadTree = psExtraParams->hQuadTree;
@@ -1592,7 +1515,7 @@ GDALGridDataMetricAverageDistancePts( const void *poOptionsIn, GUInt32 nPoints,
                 const double dfRX1 = padfX[i] - dfXPoint;
                 const double dfRY1 = padfY[i] - dfYPoint;
 
-                if( dfRadius2 * dfRX1 * dfRX1 + dfRadius1 * dfRY1 * dfRY1 <= dfR12 )
+                if( dfRadius2Square * dfRX1 * dfRX1 + dfRadius1Square * dfRY1 * dfRY1 <= dfR12Square )
                 {
                     for( int j = k; j < nFeatureCount; j++ )
                     // Search all the remaining points within the ellipse and compute
@@ -1602,7 +1525,7 @@ GDALGridDataMetricAverageDistancePts( const void *poOptionsIn, GUInt32 nPoints,
                         double dfRX2 = padfX[ji] - dfXPoint;
                         double dfRY2 = padfY[ji] - dfYPoint;
 
-                        if( dfRadius2 * dfRX2 * dfRX2 + dfRadius1 * dfRY2 * dfRY2 <= dfR12 )
+                        if( dfRadius2Square * dfRX2 * dfRX2 + dfRadius1Square * dfRY2 * dfRY2 <= dfR12Square )
                         {
                             const double dfRX = padfX[ji] - padfX[i];
                             const double dfRY = padfY[ji] - padfY[i];
@@ -1633,7 +1556,7 @@ GDALGridDataMetricAverageDistancePts( const void *poOptionsIn, GUInt32 nPoints,
             }
 
             // Is this point located inside the search ellipse?
-            if( dfRadius2 * dfRX1 * dfRX1 + dfRadius1 * dfRY1 * dfRY1 <= dfR12 )
+            if( dfRadius2Square * dfRX1 * dfRX1 + dfRadius1Square * dfRY1 * dfRY1 <= dfR12Square )
             {
                 // Search all the remaining points within the ellipse and compute
                 // distances between them and the first point.
@@ -1653,8 +1576,8 @@ GDALGridDataMetricAverageDistancePts( const void *poOptionsIn, GUInt32 nPoints,
                         dfRY2 = dfRYRotated;
                     }
 
-                    if( dfRadius2 * dfRX2 * dfRX2 + dfRadius1 * dfRY2 * dfRY2
-                        <= dfR12 )
+                    if( dfRadius2Square * dfRX2 * dfRX2 + dfRadius1Square * dfRY2 * dfRY2
+                        <= dfR12Square )
                     {
                         const double dfRX = padfX[j] - padfX[i];
                         const double dfRY = padfY[j] - padfY[i];
@@ -1672,7 +1595,6 @@ GDALGridDataMetricAverageDistancePts( const void *poOptionsIn, GUInt32 nPoints,
     }
 
     // Search for the first point within the search ellipse.
-    
     if( n < poOptions->nMinPoints || n == 0 )
     {
         *pdfValue = poOptions->dfNoDataValue;
@@ -2025,7 +1947,7 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     bool bCreateQuadTree = false;
 
     const unsigned int nPointCountThreshold = atoi(CPLGetConfigOption("GDAL_GRID_POINT_COUNT_THRESHOLD", "100"));
- 
+
     // Starting address aligned on 32-byte boundary for AVX.
     float* pafXAligned = nullptr;
     float* pafYAligned = nullptr;
@@ -2159,6 +2081,8 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
         }
         case GGA_MovingAverage:
         {
+            const auto poOptionsOld = static_cast<
+                const GDALGridMovingAverageOptions*>(poOptions);
             poOptionsNew = CPLMalloc(sizeof(GDALGridMovingAverageOptions));
             memcpy(poOptionsNew,
                    poOptions,
@@ -2166,102 +2090,100 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
 
             pfnGDALGridMethod = GDALGridMovingAverage;
             bCreateQuadTree = (nPoints > nPointCountThreshold &&
-                static_cast<const GDALGridMovingAverageOptions *>(poOptions)->dfAngle == 0.0 &&
-                static_cast<const GDALGridMovingAverageOptions *>(poOptions)->dfRadius1 ==
-                static_cast<const GDALGridMovingAverageOptions *>(poOptions)->dfRadius2 &&
-                static_cast<const GDALGridMovingAverageOptions *>(poOptions)->dfRadius1 != 0.0);
+                poOptionsOld->dfAngle == 0.0 &&
+                (poOptionsOld->dfRadius1 > 0.0 || poOptionsOld->dfRadius2 > 0.0));
             break;
         }
         case GGA_NearestNeighbor:
         {
+            const auto poOptionsOld = static_cast<
+                const GDALGridNearestNeighborOptions*>(poOptions);
             poOptionsNew = CPLMalloc(sizeof(GDALGridNearestNeighborOptions));
             memcpy(poOptionsNew, poOptions,
                    sizeof(GDALGridNearestNeighborOptions));
 
             pfnGDALGridMethod = GDALGridNearestNeighbor;
             bCreateQuadTree = (nPoints > nPointCountThreshold &&
-                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfAngle == 0.0 &&
-                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 ==
-                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius2 &&
-                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 != 0.0);
+                poOptionsOld->dfAngle == 0.0 &&
+                (poOptionsOld->dfRadius1 > 0.0 || poOptionsOld->dfRadius2 > 0.0));
             break;
         }
         case GGA_MetricMinimum:
         {
+            const auto poOptionsOld = static_cast<
+                const GDALGridDataMetricsOptions*>(poOptions);
             poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
             pfnGDALGridMethod = GDALGridDataMetricMinimum;
             bCreateQuadTree = (nPoints > nPointCountThreshold &&
-                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfAngle == 0.0 &&
-                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius1 ==
-                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius2 &&
-                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius1 != 0.0);
+                poOptionsOld->dfAngle == 0.0 &&
+                (poOptionsOld->dfRadius1 > 0.0 || poOptionsOld->dfRadius2 > 0.0));
             break;
         }
         case GGA_MetricMaximum:
         {
+            const auto poOptionsOld = static_cast<
+                const GDALGridDataMetricsOptions*>(poOptions);
             poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
             pfnGDALGridMethod = GDALGridDataMetricMaximum;
             bCreateQuadTree = (nPoints > nPointCountThreshold &&
-                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfAngle == 0.0 &&
-                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius1 ==
-                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius2 &&
-                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius1 != 0.0);
+                poOptionsOld->dfAngle == 0.0 &&
+                (poOptionsOld->dfRadius1 > 0.0 || poOptionsOld->dfRadius2 > 0.0));
             break;
         }
         case GGA_MetricRange:
         {
+            const auto poOptionsOld = static_cast<
+                const GDALGridDataMetricsOptions*>(poOptions);
             poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
             pfnGDALGridMethod = GDALGridDataMetricRange;
             bCreateQuadTree = (nPoints > nPointCountThreshold &&
-                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfAngle == 0.0 &&
-                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius1 ==
-                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius2 &&
-                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius1 != 0.0);
+                poOptionsOld->dfAngle == 0.0 &&
+                (poOptionsOld->dfRadius1 > 0.0 || poOptionsOld->dfRadius2 > 0.0));
             break;
         }
         case GGA_MetricCount:
         {
+            const auto poOptionsOld = static_cast<
+                const GDALGridDataMetricsOptions*>(poOptions);
             poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
             pfnGDALGridMethod = GDALGridDataMetricCount;
             bCreateQuadTree = (nPoints > nPointCountThreshold &&
-                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfAngle == 0.0 &&
-                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius1 ==
-                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius2 &&
-                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius1 != 0.0);
+                poOptionsOld->dfAngle == 0.0 &&
+                (poOptionsOld->dfRadius1 > 0.0 || poOptionsOld->dfRadius2 > 0.0));
             break;
         }
         case GGA_MetricAverageDistance:
         {
+            const auto poOptionsOld = static_cast<
+                const GDALGridDataMetricsOptions*>(poOptions);
             poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
             pfnGDALGridMethod = GDALGridDataMetricAverageDistance;
             bCreateQuadTree = (nPoints > nPointCountThreshold &&
-                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfAngle == 0.0 &&
-                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius1 ==
-                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius2 &&
-                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius1 != 0.0);
+                poOptionsOld->dfAngle == 0.0 &&
+                (poOptionsOld->dfRadius1 > 0.0 || poOptionsOld->dfRadius2 > 0.0));
             break;
         }
         case GGA_MetricAverageDistancePts:
         {
+            const auto poOptionsOld = static_cast<
+                const GDALGridDataMetricsOptions*>(poOptions);
             poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
             pfnGDALGridMethod = GDALGridDataMetricAverageDistancePts;
             bCreateQuadTree = (nPoints > nPointCountThreshold &&
-                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfAngle == 0.0 &&
-                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius1 ==
-                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius2 &&
-                static_cast<const GDALGridDataMetricsOptions *>(poOptions)->dfRadius1 != 0.0);
+                poOptionsOld->dfAngle == 0.0 &&
+                (poOptionsOld->dfRadius1 > 0.0 || poOptionsOld->dfRadius2 > 0.0));
             break;
         }
         case GGA_Linear:
@@ -2329,6 +2251,13 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     if( bCreateQuadTree )
     {
         GDALGridContextCreateQuadTree(psContext);
+        if( psContext->sExtraParameters.hQuadTree == nullptr &&
+            eAlgorithm == GGA_InverseDistanceToAPowerNearestNeighbor )
+        {
+            // shouldn't happen unless memory allocation failure occurs
+            GDALGridContextFree(psContext);
+            return nullptr;
+        }
     }
 
     /* -------------------------------------------------------------------- */
@@ -2343,7 +2272,6 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
         const double dfRadius =
             static_cast<const GDALGridInverseDistanceToAPowerNearestNeighborOptions*>(poOptions)->dfRadius;
         psContext->sExtraParameters.dfRadiusPower2PreComp = pow ( dfRadius, 2 );
-        psContext->sExtraParameters.dfRadiusPower4PreComp = pow ( dfRadius, 4 );
     }
 
     if( eAlgorithm == GGA_Linear )
@@ -2905,6 +2833,13 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
 
             pszValue = CSLFetchNameValue( papszParams, "radius" );
             poPowerOpts->dfRadius = pszValue ? CPLAtofM(pszValue) : 1.0;
+            if( !(poPowerOpts->dfRadius > 0) )
+            {
+                CPLError( CE_Failure, CPLE_IllegalArg,
+                          "Radius value should be strictly positive" );
+                CSLDestroy( papszParams );
+                return CE_Failure;
+            }
 
             pszValue = CSLFetchNameValue( papszParams, "max_points" );
             poPowerOpts->nMaxPoints = static_cast<GUInt32>(
