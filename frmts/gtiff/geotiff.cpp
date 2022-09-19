@@ -18762,39 +18762,37 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         l_nCompression = COMPRESSION_NONE;
 
 /* -------------------------------------------------------------------- */
-/*      Set the alpha channel if it is the last one.                    */
+/*      Set the alpha channel if we find one.                           */
 /* -------------------------------------------------------------------- */
-    if( poSrcDS->GetRasterBand(l_nBands)->GetColorInterpretation() ==
-        GCI_AlphaBand )
+    uint16_t *extraSamples = nullptr;
+    uint16_t nExtraSamples = 0;
+    if( TIFFGetField(l_hTIFF, TIFFTAG_EXTRASAMPLES, &nExtraSamples, &extraSamples) && nExtraSamples>0 )
     {
-        uint16_t *v = nullptr;
-        uint16_t count = 0;
-        if( TIFFGetField( l_hTIFF, TIFFTAG_EXTRASAMPLES, &count, &v ) )
+        // We need to allocate a new array as (current) libtiff
+        // versions will not like that we reuse the array we got from
+        // TIFFGetField().
+        uint16_t *pasNewExtraSamples =
+            static_cast<uint16_t *>(
+                CPLMalloc(nExtraSamples * sizeof(uint16_t)));
+        memcpy(pasNewExtraSamples, extraSamples, nExtraSamples * sizeof(uint16_t));
+        uint16_t nAlpha = GTiffGetAlphaValue(
+            CPLGetConfigOption(
+                "GTIFF_ALPHA",
+                CSLFetchNameValue(papszOptions, "ALPHA")),
+            DEFAULT_ALPHA_TYPE);
+        const int nBaseSamples = l_nBands - nExtraSamples;
+        for( int iExtraBand=nBaseSamples+1; iExtraBand<=l_nBands; iExtraBand++)
         {
-            const int nBaseSamples = l_nBands - count;
-            if( l_nBands > nBaseSamples && l_nBands - nBaseSamples - 1 < count )
+            if (poSrcDS->GetRasterBand(iExtraBand)->GetColorInterpretation() ==
+                GCI_AlphaBand)
             {
-                // We need to allocate a new array as (current) libtiff
-                // versions will not like that we reuse the array we got from
-                // TIFFGetField().
-
-                uint16_t* pasNewExtraSamples =
-                    static_cast<uint16_t *>(
-                        CPLMalloc( count * sizeof(uint16_t) ) );
-                memcpy( pasNewExtraSamples, v, count * sizeof(uint16_t) );
-                pasNewExtraSamples[l_nBands - nBaseSamples - 1] =
-                    GTiffGetAlphaValue(
-                        CPLGetConfigOption(
-                            "GTIFF_ALPHA",
-                            CSLFetchNameValue(papszOptions,"ALPHA") ),
-                        DEFAULT_ALPHA_TYPE);
-
-                TIFFSetField( l_hTIFF, TIFFTAG_EXTRASAMPLES, count,
-                              pasNewExtraSamples);
-
-                CPLFree(pasNewExtraSamples);
+                pasNewExtraSamples[iExtraBand-nBaseSamples-1]=nAlpha;
             }
         }
+        TIFFSetField(l_hTIFF, TIFFTAG_EXTRASAMPLES, nExtraSamples,
+                     pasNewExtraSamples);
+
+        CPLFree(pasNewExtraSamples);
     }
 
 /* -------------------------------------------------------------------- */
