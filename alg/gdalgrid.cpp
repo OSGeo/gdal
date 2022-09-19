@@ -2791,11 +2791,20 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
             pszValue = CSLFetchNameValue( papszParams, "smoothing" );
             poPowerOpts->dfSmoothing = pszValue ? CPLAtofM(pszValue) : 0.0;
 
-            pszValue = CSLFetchNameValue( papszParams, "radius1" );
-            poPowerOpts->dfRadius1 = pszValue ? CPLAtofM(pszValue) : 0.0;
+            pszValue = CSLFetchNameValue( papszParams, "radius" );
+            if( pszValue )
+            {
+                poPowerOpts->dfRadius1 = CPLAtofM(pszValue);
+                poPowerOpts->dfRadius2 = poPowerOpts->dfRadius1;
+            }
+            else
+            {
+                pszValue = CSLFetchNameValue( papszParams, "radius1" );
+                poPowerOpts->dfRadius1 = pszValue ? CPLAtofM(pszValue) : 0.0;
 
-            pszValue = CSLFetchNameValue( papszParams, "radius2" );
-            poPowerOpts->dfRadius2 = pszValue ? CPLAtofM(pszValue) : 0.0;
+                pszValue = CSLFetchNameValue( papszParams, "radius2" );
+                poPowerOpts->dfRadius2 = pszValue ? CPLAtofM(pszValue) : 0.0;
+            }
 
             pszValue = CSLFetchNameValue( papszParams, "angle" );
             poPowerOpts->dfAngle = pszValue ? CPLAtofM(pszValue) : 0.0;
@@ -2862,11 +2871,20 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
             GDALGridMovingAverageOptions * const poAverageOpts =
                 static_cast<GDALGridMovingAverageOptions *>(*ppOptions);
 
-            const char *pszValue = CSLFetchNameValue( papszParams, "radius1" );
-            poAverageOpts->dfRadius1 = pszValue ? CPLAtofM(pszValue) : 0.0;
+            const char* pszValue = CSLFetchNameValue( papszParams, "radius" );
+            if( pszValue )
+            {
+                poAverageOpts->dfRadius1 = CPLAtofM(pszValue);
+                poAverageOpts->dfRadius2 = poAverageOpts->dfRadius1;
+            }
+            else
+            {
+                pszValue = CSLFetchNameValue( papszParams, "radius1" );
+                poAverageOpts->dfRadius1 = pszValue ? CPLAtofM(pszValue) : 0.0;
 
-            pszValue = CSLFetchNameValue( papszParams, "radius2" );
-            poAverageOpts->dfRadius2 = pszValue ? CPLAtofM(pszValue) : 0.0;
+                pszValue = CSLFetchNameValue( papszParams, "radius2" );
+                poAverageOpts->dfRadius2 = pszValue ? CPLAtofM(pszValue) : 0.0;
+            }
 
             pszValue = CSLFetchNameValue( papszParams, "angle" );
             poAverageOpts->dfAngle = pszValue ? CPLAtofM(pszValue) : 0.0;
@@ -2888,11 +2906,20 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
             GDALGridNearestNeighborOptions * const poNeighborOpts =
                 static_cast<GDALGridNearestNeighborOptions *>(*ppOptions);
 
-            const char *pszValue = CSLFetchNameValue( papszParams, "radius1" );
-            poNeighborOpts->dfRadius1 = pszValue ? CPLAtofM(pszValue) : 0.0;
+            const char* pszValue = CSLFetchNameValue( papszParams, "radius" );
+            if( pszValue )
+            {
+                poNeighborOpts->dfRadius1 = CPLAtofM(pszValue);
+                poNeighborOpts->dfRadius2 = poNeighborOpts->dfRadius1;
+            }
+            else
+            {
+                pszValue = CSLFetchNameValue( papszParams, "radius1" );
+                poNeighborOpts->dfRadius1 = pszValue ? CPLAtofM(pszValue) : 0.0;
 
-            pszValue = CSLFetchNameValue( papszParams, "radius2" );
-            poNeighborOpts->dfRadius2 = pszValue ? CPLAtofM(pszValue) : 0.0;
+                pszValue = CSLFetchNameValue( papszParams, "radius2" );
+                poNeighborOpts->dfRadius2 = pszValue ? CPLAtofM(pszValue) : 0.0;
+            }
 
             pszValue = CSLFetchNameValue( papszParams, "angle" );
             poNeighborOpts->dfAngle = pszValue ? CPLAtofM(pszValue) : 0.0;
@@ -2914,11 +2941,20 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
             GDALGridDataMetricsOptions * const poMetricsOptions =
                 static_cast<GDALGridDataMetricsOptions *>(*ppOptions);
 
-            const char *pszValue = CSLFetchNameValue( papszParams, "radius1" );
-            poMetricsOptions->dfRadius1 = pszValue ? CPLAtofM(pszValue) : 0.0;
+            const char* pszValue = CSLFetchNameValue( papszParams, "radius" );
+            if( pszValue )
+            {
+                poMetricsOptions->dfRadius1 = CPLAtofM(pszValue);
+                poMetricsOptions->dfRadius2 = poMetricsOptions->dfRadius1;
+            }
+            else
+            {
+                pszValue = CSLFetchNameValue( papszParams, "radius1" );
+                poMetricsOptions->dfRadius1 = pszValue ? CPLAtofM(pszValue) : 0.0;
 
-            pszValue = CSLFetchNameValue( papszParams, "radius2" );
-            poMetricsOptions->dfRadius2 = pszValue ? CPLAtofM(pszValue) : 0.0;
+                pszValue = CSLFetchNameValue( papszParams, "radius2" );
+                poMetricsOptions->dfRadius2 = pszValue ? CPLAtofM(pszValue) : 0.0;
+            }
 
             pszValue = CSLFetchNameValue( papszParams, "angle" );
             poMetricsOptions->dfAngle = pszValue ? CPLAtofM(pszValue) : 0.0;

@@ -183,6 +183,8 @@ parameters:
 - ``radius2``: The second radius (Y axis if rotation angle is 0)
   of search ellipse. Set this parameter to zero to use whole point array.
   Default is 0.0.
+- ``radius``: Set first and second radius (mutually exclusive with radius1 and radius2).
+  Default is 0.0. Added in GDAL 3.6
 - ``angle``: Angle of search ellipse rotation in degrees
   (counter clockwise, default 0.0).
 - ``max_points``: Maximum number of data points to use. Do not
@@ -231,6 +233,8 @@ Moving average algorithm. It has following parameters:
 - ``radius2``: The second radius (Y axis if rotation angle is 0)
   of search ellipse. Set this parameter to zero to use whole point array.
   Default is 0.0.
+- ``radius``: Set first and second radius (mutually exclusive with radius1 and radius2).
+  Default is 0.0. Added in GDAL 3.6
 - ``angle``: Angle of search ellipse rotation in degrees
   (counter clockwise, default 0.0).
 - ``min_points``: Minimum number of data points to use. If less
@@ -255,6 +259,8 @@ Nearest neighbor algorithm. It has following parameters:
 - ``radius2``: The second radius (Y axis if rotation angle is 0)
   of search ellipse. Set this parameter to zero to use whole point array.
   Default is 0.0.
+- ``radius``: Set first and second radius (mutually exclusive with radius1 and radius2).
+  Default is 0.0. Added in GDAL 3.6
 - ``angle``: Angle of search ellipse rotation in degrees
   (counter clockwise, default 0.0).
 - ``nodata``: NODATA marker to fill empty points (default
@@ -316,6 +322,8 @@ All the metrics have the same set of options:
 - ``radius2``: The second radius (Y axis if rotation angle is 0)
   of search ellipse. Set this parameter to zero to use whole point array.
   Default is 0.0.
+- ``radius``: Set first and second radius (mutually exclusive with radius1 and radius2).
+  Default is 0.0. Added in GDAL 3.6
 - ``angle``: Angle of search ellipse rotation in degrees
   (counter clockwise, default 0.0).
 - ``min_points``: Minimum number of data points to use. If less
