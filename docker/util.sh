@@ -273,7 +273,7 @@ if test "${RELEASE}" = "yes"; then
     fi
 
     LABEL_ARGS=(
-       "--label" "org.opencontainers.image.description=GDAL is an open source X/MIT licensed translator library for raster and vector geospatial data formats." \
+       "--label" "org.opencontainers.image.description=GDAL is an open source MIT licensed translator library for raster and vector geospatial data formats." \
        "--label" "org.opencontainers.image.title=GDAL ${TARGET_IMAGE}" \
        "--label" "org.opencontainers.image.licenses=MIT" \
        "--label" "org.opencontainers.image.source=https://github.com/${GDAL_REPOSITORY}" \
@@ -282,7 +282,7 @@ if test "${RELEASE}" = "yes"; then
        "--label" "org.opencontainers.image.version=${TAG_NAME}" \
     )
 
-    docker $(build_cmd) "${BUILD_ARGS[@]}" --target builder -t "${BUILDER_IMAGE_NAME}" "${SCRIPT_DIR}"
+    docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" --target builder -t "${BUILDER_IMAGE_NAME}" "${SCRIPT_DIR}"
     docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" -t "${IMAGE_NAME}" "${SCRIPT_DIR}"
 
     if test "${DOCKER_BUILDX}" != "buildx"; then
