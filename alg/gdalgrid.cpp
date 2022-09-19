@@ -2773,6 +2773,8 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
 /* -------------------------------------------------------------------- */
 /*      Parse algorithm parameters and assign defaults.                 */
 /* -------------------------------------------------------------------- */
+    const char* const* papszKnownOptions = nullptr;
+
     switch( *peAlgorithm )
     {
         case GGA_InverseDistanceToAPower:
@@ -2820,6 +2822,11 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
             pszValue = CSLFetchNameValue( papszParams, "nodata" );
             poPowerOpts->dfNoDataValue = pszValue ? CPLAtofM(pszValue) : 0.0;
 
+            static const char* const apszKnownOptions[] = {
+                "power", "smoothing", "radius1", "radius2", "angle",
+                "max_points", "min_points", "nodata", nullptr };
+            papszKnownOptions = apszKnownOptions;
+
             break;
         }
         case GGA_InverseDistanceToAPowerNearestNeighbor:
@@ -2861,6 +2868,12 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
             pszValue = CSLFetchNameValue( papszParams, "nodata" );
             poPowerOpts->dfNoDataValue = pszValue ? CPLAtofM(pszValue) : 0.0;
 
+            static const char* const apszKnownOptions[] = {
+                "power", "smoothing", "radius",
+                "max_points", "min_points", "nodata",
+                nullptr };
+            papszKnownOptions = apszKnownOptions;
+
             break;
         }
         case GGA_MovingAverage:
@@ -2896,6 +2909,12 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
             pszValue = CSLFetchNameValue( papszParams, "nodata" );
             poAverageOpts->dfNoDataValue = pszValue ? CPLAtofM(pszValue) : 0.0;
 
+            static const char* const apszKnownOptions[] = {
+                "radius", "radius1", "radius2", "angle",
+                "min_points", "nodata",
+                 nullptr };
+            papszKnownOptions = apszKnownOptions;
+
             break;
         }
         case GGA_NearestNeighbor:
@@ -2926,6 +2945,12 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
 
             pszValue = CSLFetchNameValue( papszParams, "nodata" );
             poNeighborOpts->dfNoDataValue = pszValue ? CPLAtofM(pszValue) : 0.0;
+
+            static const char* const apszKnownOptions[] = {
+                "radius", "radius1", "radius2", "angle",
+                "nodata", nullptr };
+            papszKnownOptions = apszKnownOptions;
+
             break;
         }
         case GGA_MetricMinimum:
@@ -2965,6 +2990,13 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
             pszValue = CSLFetchNameValue( papszParams, "nodata" );
             poMetricsOptions->dfNoDataValue =
                 pszValue ? CPLAtofM(pszValue) : 0.0;
+
+	    static const char* const apszKnownOptions[] = {
+                "radius", "radius1", "radius2", "angle",
+                "min_points", "nodata",
+                nullptr };
+            papszKnownOptions = apszKnownOptions;
+
             break;
         }
         case GGA_Linear:
@@ -2980,8 +3012,41 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
 
             pszValue = CSLFetchNameValue( papszParams, "nodata" );
             poLinearOpts->dfNoDataValue = pszValue ? CPLAtofM(pszValue) : 0.0;
+
+            static const char* const apszKnownOptions[] = {
+                "radius", "nodata", nullptr };
+            papszKnownOptions = apszKnownOptions;
+
             break;
          }
+    }
+
+    if( papszKnownOptions )
+    {
+        for(int i = 1; papszParams[i] != nullptr; ++i )
+        {
+            char* pszKey = nullptr;
+            CPL_IGNORE_RET_VAL(CPLParseNameValue(papszParams[i], &pszKey));
+            if( pszKey )
+            {
+                bool bKnownKey = false;
+                for( const char* const* papszKnownKeyIter = papszKnownOptions;
+                    *papszKnownKeyIter; ++papszKnownKeyIter )
+                {
+                    if( EQUAL(*papszKnownKeyIter, pszKey) )
+                    {
+                        bKnownKey = true;
+                        break;
+                    }
+                }
+                if( !bKnownKey )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Option %s ignored", pszKey);
+                }
+            }
+            CPLFree(pszKey);
+        }
     }
 
     CSLDestroy( papszParams );
