@@ -467,6 +467,8 @@ typedef enum {
 /** Inverse distance to a power method control options */
 typedef struct
 {
+    /*! Added in GDAL 3.6 to detect potential ABI issues. Should be set to sizeof(GDALGridInverseDistanceToAPowerOptions) */
+    size_t  nSizeOfStructure;
     /*! Weighting power. */
     double  dfPower;
     /*! Smoothing parameter. */
@@ -504,6 +506,8 @@ typedef struct
 /** Inverse distance to a power, with nearest neighbour search, control options */
 typedef struct
 {
+    /*! Added in GDAL 3.6 to detect potential ABI issues. Should be set to sizeof(GDALGridInverseDistanceToAPowerNearestNeighborOptions) */
+    size_t  nSizeOfStructure;
     /*! Weighting power. */
     double  dfPower;
     /*! The radius of search circle. */
@@ -531,6 +535,8 @@ typedef struct
 /** Moving average method control options */
 typedef struct
 {
+    /*! Added in GDAL 3.6 to detect potential ABI issues. Should be set to sizeof(GDALGridMovingAverageOptions) */
+    size_t  nSizeOfStructure;
     /*! The first radius (X axis if rotation angle is 0) of search ellipse. */
     double  dfRadius1;
     /*! The second radius (Y axis if rotation angle is 0) of search ellipse. */
@@ -553,6 +559,8 @@ typedef struct
 /** Nearest neighbor method control options */
 typedef struct
 {
+    /*! Added in GDAL 3.6 to detect potential ABI issues. Should be set to sizeof(GDALGridNearestNeighborOptions) */
+    size_t  nSizeOfStructure;
     /*! The first radius (X axis if rotation angle is 0) of search ellipse. */
     double  dfRadius1;
     /*! The second radius (Y axis if rotation angle is 0) of search ellipse. */
@@ -569,6 +577,8 @@ typedef struct
 /** Data metrics method control options */
 typedef struct
 {
+    /*! Added in GDAL 3.6 to detect potential ABI issues. Should be set to sizeof(GDALGridDataMetricsOptions) */
+    size_t  nSizeOfStructure;
     /*! The first radius (X axis if rotation angle is 0) of search ellipse. */
     double  dfRadius1;
     /*! The second radius (Y axis if rotation angle is 0) of search ellipse. */
@@ -591,6 +601,8 @@ typedef struct
 /** Linear method control options */
 typedef struct
 {
+    /*! Added in GDAL 3.6 to detect potential ABI issues. Should be set to sizeof(GDALGridLinearOptions) */
+    size_t  nSizeOfStructure;
     /*! In case the point to be interpolated does not fit into a triangle of
      * the Delaunay triangulation, use that maximum distance to search a nearest
      * neighbour, or use nodata otherwise. If set to -1, the search distance is infinite.

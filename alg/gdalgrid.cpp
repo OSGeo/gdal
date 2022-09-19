@@ -1961,6 +1961,14 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     {
         case GGA_InverseDistanceToAPower:
         {
+            const auto poOptionsOld = static_cast<
+                const GDALGridInverseDistanceToAPowerOptions*>(poOptions);
+            if( poOptionsOld->nSizeOfStructure != sizeof(*poOptionsOld) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Wrong value of nSizeOfStructure member");
+                return nullptr;
+            }
             poOptionsNew =
                 CPLMalloc(sizeof(GDALGridInverseDistanceToAPowerOptions));
             memcpy(poOptionsNew, poOptions,
@@ -2069,6 +2077,14 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
         }
         case GGA_InverseDistanceToAPowerNearestNeighbor:
         {
+            const auto poOptionsOld = static_cast<
+                const GDALGridInverseDistanceToAPowerNearestNeighborOptions*>(poOptions);
+            if( poOptionsOld->nSizeOfStructure != sizeof(*poOptionsOld) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Wrong value of nSizeOfStructure member");
+                return nullptr;
+            }
             poOptionsNew = CPLMalloc(
                 sizeof(GDALGridInverseDistanceToAPowerNearestNeighborOptions));
             memcpy(poOptionsNew, poOptions,
@@ -2083,6 +2099,12 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
         {
             const auto poOptionsOld = static_cast<
                 const GDALGridMovingAverageOptions*>(poOptions);
+            if( poOptionsOld->nSizeOfStructure != sizeof(*poOptionsOld) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Wrong value of nSizeOfStructure member");
+                return nullptr;
+            }
             poOptionsNew = CPLMalloc(sizeof(GDALGridMovingAverageOptions));
             memcpy(poOptionsNew,
                    poOptions,
@@ -2098,6 +2120,12 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
         {
             const auto poOptionsOld = static_cast<
                 const GDALGridNearestNeighborOptions*>(poOptions);
+            if( poOptionsOld->nSizeOfStructure != sizeof(*poOptionsOld) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Wrong value of nSizeOfStructure member");
+                return nullptr;
+            }
             poOptionsNew = CPLMalloc(sizeof(GDALGridNearestNeighborOptions));
             memcpy(poOptionsNew, poOptions,
                    sizeof(GDALGridNearestNeighborOptions));
@@ -2112,6 +2140,12 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
         {
             const auto poOptionsOld = static_cast<
                 const GDALGridDataMetricsOptions*>(poOptions);
+            if( poOptionsOld->nSizeOfStructure != sizeof(*poOptionsOld) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Wrong value of nSizeOfStructure member");
+                return nullptr;
+            }
             poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
@@ -2125,6 +2159,12 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
         {
             const auto poOptionsOld = static_cast<
                 const GDALGridDataMetricsOptions*>(poOptions);
+            if( poOptionsOld->nSizeOfStructure != sizeof(*poOptionsOld) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Wrong value of nSizeOfStructure member");
+                return nullptr;
+            }
             poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
@@ -2138,6 +2178,12 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
         {
             const auto poOptionsOld = static_cast<
                 const GDALGridDataMetricsOptions*>(poOptions);
+            if( poOptionsOld->nSizeOfStructure != sizeof(*poOptionsOld) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Wrong value of nSizeOfStructure member");
+                return nullptr;
+            }
             poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
@@ -2151,6 +2197,12 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
         {
             const auto poOptionsOld = static_cast<
                 const GDALGridDataMetricsOptions*>(poOptions);
+            if( poOptionsOld->nSizeOfStructure != sizeof(*poOptionsOld) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Wrong value of nSizeOfStructure member");
+                return nullptr;
+            }
             poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
@@ -2164,6 +2216,12 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
         {
             const auto poOptionsOld = static_cast<
                 const GDALGridDataMetricsOptions*>(poOptions);
+            if( poOptionsOld->nSizeOfStructure != sizeof(*poOptionsOld) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Wrong value of nSizeOfStructure member");
+                return nullptr;
+            }
             poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
@@ -2177,6 +2235,12 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
         {
             const auto poOptionsOld = static_cast<
                 const GDALGridDataMetricsOptions*>(poOptions);
+            if( poOptionsOld->nSizeOfStructure != sizeof(*poOptionsOld) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Wrong value of nSizeOfStructure member");
+                return nullptr;
+            }
             poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
@@ -2188,6 +2252,14 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
         }
         case GGA_Linear:
         {
+            const auto poOptionsOld = static_cast<
+                const GDALGridLinearOptions*>(poOptions);
+            if( poOptionsOld->nSizeOfStructure != sizeof(*poOptionsOld) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Wrong value of nSizeOfStructure member");
+                return nullptr;
+            }
             poOptionsNew = CPLMalloc(sizeof(GDALGridLinearOptions));
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridLinearOptions));
 
@@ -2787,6 +2859,8 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
                 static_cast<GDALGridInverseDistanceToAPowerOptions *>(
                     *ppOptions);
 
+            poPowerOpts->nSizeOfStructure = sizeof(*poPowerOpts);
+
             const char *pszValue = CSLFetchNameValue( papszParams, "power" );
             poPowerOpts->dfPower = pszValue ? CPLAtofM(pszValue) : 2.0;
 
@@ -2841,6 +2915,8 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
                     GDALGridInverseDistanceToAPowerNearestNeighborOptions *>(
                         *ppOptions);
 
+            poPowerOpts->nSizeOfStructure = sizeof(*poPowerOpts);
+
             const char *pszValue = CSLFetchNameValue( papszParams, "power" );
             poPowerOpts->dfPower = pszValue ? CPLAtofM(pszValue) : 2.0;
 
@@ -2884,6 +2960,8 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
             GDALGridMovingAverageOptions * const poAverageOpts =
                 static_cast<GDALGridMovingAverageOptions *>(*ppOptions);
 
+            poAverageOpts->nSizeOfStructure = sizeof(*poAverageOpts);
+
             const char* pszValue = CSLFetchNameValue( papszParams, "radius" );
             if( pszValue )
             {
@@ -2924,6 +3002,8 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
 
             GDALGridNearestNeighborOptions * const poNeighborOpts =
                 static_cast<GDALGridNearestNeighborOptions *>(*ppOptions);
+
+            poNeighborOpts->nSizeOfStructure = sizeof(*poNeighborOpts);
 
             const char* pszValue = CSLFetchNameValue( papszParams, "radius" );
             if( pszValue )
@@ -2966,6 +3046,8 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
             GDALGridDataMetricsOptions * const poMetricsOptions =
                 static_cast<GDALGridDataMetricsOptions *>(*ppOptions);
 
+            poMetricsOptions->nSizeOfStructure = sizeof(*poMetricsOptions);
+
             const char* pszValue = CSLFetchNameValue( papszParams, "radius" );
             if( pszValue )
             {
@@ -3006,6 +3088,8 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
 
             GDALGridLinearOptions * const poLinearOpts =
                 static_cast<GDALGridLinearOptions *>(*ppOptions);
+
+            poLinearOpts->nSizeOfStructure = sizeof(*poLinearOpts);
 
             const char *pszValue = CSLFetchNameValue( papszParams, "radius" );
             poLinearOpts->dfRadius = pszValue ? CPLAtofM(pszValue) : -1.0;
