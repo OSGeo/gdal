@@ -3144,7 +3144,12 @@ bool netCDFVariable::SetRawNoDataValue(const void* pNoData)
     if( pNoData == nullptr )
     {
         m_abyNoData.clear();
-        ret = nc_del_att(m_gid, m_varid, _FillValue);
+        nc_type atttype = NC_NAT;
+        size_t attlen = 0;
+        if( nc_inq_att(m_gid, m_varid, _FillValue, &atttype, &attlen) == NC_NOERR )
+            ret = nc_del_att(m_gid, m_varid, _FillValue);
+        else
+            ret = NC_NOERR;
     }
     else
     {

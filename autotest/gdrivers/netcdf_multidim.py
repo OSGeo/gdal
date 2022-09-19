@@ -720,6 +720,7 @@ def test_netcdf_multidim_create_nc3():
             "my_var_no_dim", [], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
         )
         assert var
+        assert var.DeleteNoDataValue() == gdal.CE_None
         assert var.SetNoDataValueDouble(1) == gdal.CE_None
         assert struct.unpack("d", var.Read()) == (1,)
         assert var.GetNoDataValueAsDouble() == 1
