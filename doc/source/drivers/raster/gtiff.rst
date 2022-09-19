@@ -733,7 +733,7 @@ the default behavior of the GTiff driver.
 -  :decl_configoption:`ESRI_XML_PAM` : Can be set to TRUE to force metadata in the xml:ESRI
    domain to be written to PAM.
 -  :decl_configoption:`COMPRESS_OVERVIEW` :  See `Creation Options COMPRESS <#creation-options>`__ section.
-   Set the compression type to use for overviews
+   Set the compression type to use for overviews. For internal overviews, only honoured since GDAL 3.6
 -  :decl_configoption:`PHOTOMETRIC_OVERVIEW` :  YCBCR
    Set the photometric color space for overview creation
 -  :decl_configoption:`PREDICTOR_OVERVIEW` : Integer 1,2 or 3.

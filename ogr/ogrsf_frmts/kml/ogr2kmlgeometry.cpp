@@ -131,6 +131,8 @@ static void MakeKMLCoordinate( char *pszTarget, size_t nTargetLen,
         nTargetLen --;
     }
 
+    CPL_IGNORE_RET_VAL(nTargetLen);
+
 #if 0
     if( !b3D )
     {

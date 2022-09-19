@@ -31,6 +31,7 @@
 ###############################################################################
 
 import array
+import math
 import os
 import shutil
 import struct
@@ -1914,3 +1915,177 @@ def test_vrt_read_req_coordinates_almost_integer():
 
     gdal.Unlink("/vsimem/in.tif")
     gdal.Unlink("/vsimem/in.vrt")
+
+
+###############################################################################
+# Test ComputeStatistics() mosaic optimization
+
+
+@pytest.mark.parametrize("approx_ok", [False, True])
+def test_vrt_read_compute_statistics_mosaic_optimization(approx_ok):
+
+    src_ds = gdal.Translate("", gdal.Open("data/byte.tif"), format="MEM")
+    src_ds1 = gdal.Translate("", src_ds, options="-of MEM -srcwin 0 0 8 20")
+    src_ds2 = gdal.Translate("", src_ds, options="-of MEM -srcwin 8 0 12 20")
+    vrt_ds = gdal.BuildVRT("", [src_ds1, src_ds2])
+
+    assert vrt_ds.GetRasterBand(1).ComputeRasterMinMax(
+        approx_ok
+    ) == src_ds.GetRasterBand(1).ComputeRasterMinMax(approx_ok)
+
+    def callback(pct, message, user_data):
+        user_data[0] = pct
+        return 1  # 1 to continue, 0 to stop
+
+    user_data = [0]
+    vrt_stats = vrt_ds.GetRasterBand(1).ComputeStatistics(
+        approx_ok, callback=callback, callback_data=user_data
+    )
+    assert user_data[0] == 1.0
+    assert vrt_stats == pytest.approx(
+        src_ds.GetRasterBand(1).ComputeStatistics(approx_ok)
+    )
+    if approx_ok:
+        assert (
+            vrt_ds.GetRasterBand(1).GetMetadataItem("STATISTICS_APPROXIMATE") == "YES"
+        )
+    else:
+        assert vrt_ds.GetRasterBand(1).GetMetadataItem("STATISTICS_APPROXIMATE") is None
+    assert vrt_ds.GetRasterBand(1).GetMetadataItem("STATISTICS_VALID_PERCENT") == "100"
+    if not approx_ok:
+        assert vrt_ds.GetRasterBand(1).GetMetadataItem("STATISTICS_MINIMUM") == "74"
+        assert vrt_ds.GetRasterBand(1).GetMetadataItem("STATISTICS_MAXIMUM") == "255"
+
+
+###############################################################################
+# Test ComputeStatistics() mosaic optimization with nodata at VRT band
+
+
+def test_vrt_read_compute_statistics_mosaic_optimization_nodata():
+
+    src_ds = gdal.Translate("", gdal.Open("data/byte.tif"), format="MEM")
+    src_ds1 = gdal.Translate("", src_ds, options="-of MEM -srcwin 0 0 8 20")
+    # hole of 2 pixels at columns 9 and 10
+    src_ds2 = gdal.Translate("", src_ds, options="-of MEM -srcwin 10 0 10 20")
+    vrt_ds = gdal.BuildVRT("", [src_ds1, src_ds2], VRTNodata=10)
+    vrt_materialized = gdal.Translate("", vrt_ds, format="MEM")
+
+    assert vrt_ds.GetRasterBand(1).ComputeRasterMinMax(
+        False
+    ) == vrt_materialized.GetRasterBand(1).ComputeRasterMinMax(False)
+
+    vrt_stats = vrt_ds.GetRasterBand(1).ComputeStatistics(False)
+    assert vrt_stats == pytest.approx(
+        vrt_materialized.GetRasterBand(1).ComputeStatistics(False)
+    )
+    assert vrt_ds.GetRasterBand(1).GetMetadataItem("STATISTICS_APPROXIMATE") is None
+    assert vrt_ds.GetRasterBand(1).GetMetadataItem("STATISTICS_VALID_PERCENT") == "90"
+
+
+###############################################################################
+# Test ComputeStatistics() mosaic optimization with nodata at VRT band, but hidden
+
+
+def test_vrt_read_compute_statistics_mosaic_optimization_nodata_hidden():
+
+    src_ds = gdal.Translate("", gdal.Open("data/byte.tif"), format="MEM")
+    src_ds1 = gdal.Translate("", src_ds, options="-of MEM -srcwin 0 0 8 20")
+    # hole of 2 pixels at columns 9 and 10
+    src_ds2 = gdal.Translate("", src_ds, options="-of MEM -srcwin 10 0 10 20")
+    vrt_ds = gdal.BuildVRT("", [src_ds1, src_ds2], VRTNodata=10, hideNodata=True)
+    vrt_materialized = gdal.Translate("", vrt_ds, format="MEM")
+
+    assert vrt_ds.GetRasterBand(1).ComputeRasterMinMax(
+        False
+    ) == vrt_materialized.GetRasterBand(1).ComputeRasterMinMax(False)
+
+    vrt_stats = vrt_ds.GetRasterBand(1).ComputeStatistics(False)
+    assert vrt_stats == pytest.approx(
+        vrt_materialized.GetRasterBand(1).ComputeStatistics(False)
+    )
+    assert vrt_ds.GetRasterBand(1).GetMetadataItem("STATISTICS_APPROXIMATE") is None
+    assert vrt_ds.GetRasterBand(1).GetMetadataItem("STATISTICS_VALID_PERCENT") == "100"
+
+
+###############################################################################
+# Test ComputeStatistics() mosaic optimization with nodata on source bands
+
+
+@pytest.mark.parametrize(
+    "band_ndv,global_ndv", [(10, None), (1, None), (None, 10), (10, 10)]
+)
+def test_vrt_read_compute_statistics_mosaic_optimization_src_with_nodata(
+    band_ndv, global_ndv
+):
+
+    src_ds = gdal.Translate("", gdal.Open("data/byte.tif"), format="MEM")
+    src_ds1 = gdal.Translate(
+        "", src_ds, options="-of MEM -srcwin 0 0 8 20 -scale 0 255 10 10"
+    )
+    src_ds2 = gdal.Translate("", src_ds, options="-of MEM -srcwin 8 0 12 20")
+    vrt_ds = gdal.BuildVRT("", [src_ds1, src_ds2])
+    if band_ndv:
+        src_ds1.GetRasterBand(1).SetNoDataValue(band_ndv)
+    if global_ndv:
+        vrt_ds.GetRasterBand(1).SetNoDataValue(global_ndv)
+
+    vrt_materialized = gdal.Translate("", vrt_ds, format="MEM")
+
+    assert vrt_ds.GetRasterBand(1).ComputeRasterMinMax(
+        False
+    ) == vrt_materialized.GetRasterBand(1).ComputeRasterMinMax(False)
+
+    vrt_stats = vrt_ds.GetRasterBand(1).ComputeStatistics(False)
+    assert vrt_stats == pytest.approx(
+        vrt_materialized.GetRasterBand(1).ComputeStatistics(False)
+    )
+
+
+###############################################################################
+# Test ComputeStatistics() mosaic optimization with all at nodata
+
+
+def test_vrt_read_compute_statistics_mosaic_optimization_src_with_nodata_all():
+
+    src_ds = gdal.Translate("", gdal.Open("data/byte.tif"), format="MEM")
+    src_ds1 = gdal.Translate(
+        "", src_ds, options="-of MEM -srcwin 0 0 8 20 -scale 0 255 10 10"
+    )
+    src_ds2 = gdal.Translate(
+        "", src_ds, options="-of MEM -srcwin 8 0 12 20 -scale 0 255 10 10"
+    )
+    vrt_ds = gdal.BuildVRT("", [src_ds1, src_ds2], VRTNodata=10)
+    src_ds1.GetRasterBand(1).SetNoDataValue(10)
+    src_ds2.GetRasterBand(1).SetNoDataValue(10)
+
+    with gdaltest.error_handler():
+        minmax = vrt_ds.GetRasterBand(1).ComputeRasterMinMax(False)
+    assert math.isnan(minmax[0])
+    assert math.isnan(minmax[1])
+
+    with gdaltest.error_handler():
+        vrt_stats = vrt_ds.GetRasterBand(1).ComputeStatistics(False)
+        assert vrt_stats == [0, 0, 0, 0]
+        assert vrt_ds.GetRasterBand(1).GetMetadataItem("STATISTICS_MINIMUM") is None
+
+
+###############################################################################
+# Test ComputeStatistics() mosaic optimization in a case where it shouldn't
+# trigger
+
+
+def test_vrt_read_compute_statistics_mosaic_optimization_not_triggered():
+
+    src_ds = gdal.Translate("", gdal.Open("data/byte.tif"), format="MEM")
+    # Overlapping sources
+    src_ds1 = gdal.Translate("", src_ds, options="-of MEM -srcwin 0 0 10 20")
+    src_ds2 = gdal.Translate("", src_ds, options="-of MEM -srcwin 9 0 11 20")
+    vrt_ds = gdal.BuildVRT("", [src_ds1, src_ds2])
+
+    assert (
+        vrt_ds.GetRasterBand(1).ComputeRasterMinMax()
+        == src_ds.GetRasterBand(1).ComputeRasterMinMax()
+    )
+
+    vrt_stats = vrt_ds.GetRasterBand(1).ComputeStatistics(False)
+    assert vrt_stats == src_ds.GetRasterBand(1).ComputeStatistics(False)

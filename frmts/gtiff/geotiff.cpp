@@ -646,6 +646,14 @@ private:
                                      GDALProgressFunc pfnProgress,
                                      void * pProgressData);
 
+    void           GetOverviewParameters(int& nCompression,
+                                         int& nPlanarConfig,
+                                         uint16_t& nPredictor,
+                                         int& nOvrJpegQuality,
+                                         std::string& osNoData,
+                                         uint16_t*& panExtraSampleValues,
+                                         uint16_t& nExtraSamples) const;
+
   protected:
     virtual int         CloseDependentDatasets() override;
 
@@ -11286,6 +11294,108 @@ static void CreateTIFFColorTable(GDALColorTable* poColorTable,
 }
 
 /************************************************************************/
+/*                        GetOverviewParameters()                       */
+/************************************************************************/
+
+void GTiffDataset::GetOverviewParameters(int& nCompression,
+                                         int& nPlanarConfig,
+                                         uint16_t& nPredictor,
+                                         int& nOvrJpegQuality,
+                                         std::string& osNoData,
+                                         uint16_t*& panExtraSampleValues,
+                                         uint16_t& nExtraSamples) const
+{
+/* -------------------------------------------------------------------- */
+/*      Determine compression method.                                   */
+/* -------------------------------------------------------------------- */
+    nCompression = m_nCompression;
+    const char* pszCompressValue = CPLGetConfigOption( "COMPRESS_OVERVIEW", nullptr );
+    if( pszCompressValue != nullptr )
+    {
+        nCompression = GTIFFGetCompressionMethod(pszCompressValue, "COMPRESS_OVERVIEW");
+        if( nCompression < 0 )
+        {
+            nCompression = m_nCompression;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Determine planar configuration.                                 */
+/* -------------------------------------------------------------------- */
+    nPlanarConfig = m_nPlanarConfig;
+    const char* pszInterleave = CPLGetConfigOption( "INTERLEAVE_OVERVIEW", nullptr );
+    if( pszInterleave != nullptr && pszInterleave[0] != '\0' )
+    {
+        if( EQUAL( pszInterleave, "PIXEL" ) )
+            nPlanarConfig = PLANARCONFIG_CONTIG;
+        else if( EQUAL( pszInterleave, "BAND" ) )
+            nPlanarConfig = PLANARCONFIG_SEPARATE;
+        else
+        {
+            CPLError(
+                CE_Warning, CPLE_AppDefined,
+                "INTERLEAVE_OVERVIEW=%s unsupported, "
+                "value must be PIXEL or BAND. ignoring",
+                pszInterleave );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Determine predictor tag                                         */
+/* -------------------------------------------------------------------- */
+    nPredictor = PREDICTOR_NONE;
+    if( GTIFFSupportsPredictor(nCompression) )
+    {
+        if ( CPLGetConfigOption( "PREDICTOR_OVERVIEW", nullptr ) != nullptr )
+        {
+            nPredictor = static_cast<uint16_t>(atoi(CPLGetConfigOption("PREDICTOR_OVERVIEW","1")));
+        }
+        else if( GTIFFSupportsPredictor(m_nCompression) )
+            TIFFGetField( m_hTIFF, TIFFTAG_PREDICTOR, &nPredictor );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Determine JPEG quality                                          */
+/* -------------------------------------------------------------------- */
+    nOvrJpegQuality = m_nJpegQuality;
+    if( nCompression == COMPRESSION_JPEG &&
+        CPLGetConfigOption( "JPEG_QUALITY_OVERVIEW", nullptr ) != nullptr )
+    {
+        nOvrJpegQuality =
+            atoi(CPLGetConfigOption("JPEG_QUALITY_OVERVIEW","75"));
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set nodata.                                                     */
+/* -------------------------------------------------------------------- */
+    if( m_bNoDataSet )
+    {
+        osNoData = GTiffFormatGDALNoDataTagValue(m_dfNoDataValue);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Fetch extra sample tag                                          */
+/* -------------------------------------------------------------------- */
+    panExtraSampleValues = nullptr;
+    nExtraSamples = 0;
+    if( TIFFGetField( m_hTIFF, TIFFTAG_EXTRASAMPLES, &nExtraSamples,
+                      &panExtraSampleValues) )
+    {
+        uint16_t* panExtraSampleValuesNew =
+            static_cast<uint16_t*>(
+                CPLMalloc(nExtraSamples * sizeof(uint16_t)) );
+        memcpy( panExtraSampleValuesNew, panExtraSampleValues,
+                nExtraSamples * sizeof(uint16_t));
+        panExtraSampleValues = panExtraSampleValuesNew;
+    }
+    else
+    {
+        panExtraSampleValues = nullptr;
+        nExtraSamples = 0;
+    }
+}
+
+/************************************************************************/
 /*                  CreateOverviewsFromSrcOverviews()                   */
 /************************************************************************/
 
@@ -11345,55 +11455,17 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS,
 
     GTIFFBuildOverviewMetadata( "NONE", this, osMetadata );
 
-/* -------------------------------------------------------------------- */
-/*      Fetch extra sample tag                                          */
-/* -------------------------------------------------------------------- */
+    int nCompression;
+    int nPlanarConfig;
+    uint16_t nPredictor;
+    int nOvrJpegQuality;
+    std::string osNoData;
     uint16_t *panExtraSampleValues = nullptr;
     uint16_t nExtraSamples = 0;
-
-    if( TIFFGetField( m_hTIFF, TIFFTAG_EXTRASAMPLES, &nExtraSamples,
-                      &panExtraSampleValues) )
-    {
-        uint16_t* panExtraSampleValuesNew =
-            static_cast<uint16_t*>(
-                CPLMalloc(nExtraSamples * sizeof(uint16_t)) );
-        memcpy( panExtraSampleValuesNew, panExtraSampleValues,
-                nExtraSamples * sizeof(uint16_t));
-        panExtraSampleValues = panExtraSampleValuesNew;
-    }
-    else
-    {
-        panExtraSampleValues = nullptr;
-        nExtraSamples = 0;
-    }
-
-    int l_nCompression = m_nCompression;
-    const char* pszCompressValue = CPLGetConfigOption( "COMPRESS_OVERVIEW", nullptr );
-    if( pszCompressValue != nullptr )
-    {
-        l_nCompression = GTIFFGetCompressionMethod(pszCompressValue, "COMPRESS_OVERVIEW");
-        if( l_nCompression < 0 )
-        {
-            l_nCompression = m_nCompression;
-        }
-    }
-
-
-/* -------------------------------------------------------------------- */
-/*      Fetch predictor tag                                             */
-/* -------------------------------------------------------------------- */
-    uint16_t nPredictor = PREDICTOR_NONE;
-    if( GTIFFSupportsPredictor(l_nCompression) )
-    {
-        if ( CPLGetConfigOption( "PREDICTOR_OVERVIEW", nullptr ) != nullptr )
-        {
-            nPredictor = static_cast<uint16_t>(atoi(CPLGetConfigOption("PREDICTOR_OVERVIEW","1")));
-        }
-        else
-        {
-            TIFFGetField( m_hTIFF, TIFFTAG_PREDICTOR, &nPredictor );
-        }
-    }
+    GetOverviewParameters(nCompression, nPlanarConfig,
+                          nPredictor, nOvrJpegQuality,
+                          osNoData,
+                          panExtraSampleValues, nExtraSamples);
 
     int nOvrBlockXSize = 0;
     int nOvrBlockYSize = 0;
@@ -11415,31 +11487,15 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS,
         int nOXSize = poOvrBand->GetXSize();
         int nOYSize = poOvrBand->GetYSize();
 
-        int nOvrJpegQuality = m_nJpegQuality;
-        if( l_nCompression == COMPRESSION_JPEG &&
-            CPLGetConfigOption( "JPEG_QUALITY_OVERVIEW", nullptr ) != nullptr )
-        {
-            nOvrJpegQuality =
-                atoi(CPLGetConfigOption("JPEG_QUALITY_OVERVIEW","75"));
-        }
-
-        CPLString osNoData; // don't move this in inner scope
-        const char* pszNoData = nullptr;
-        if( m_bNoDataSet )
-        {
-            osNoData = GTiffFormatGDALNoDataTagValue(m_dfNoDataValue);
-            pszNoData = osNoData.c_str();
-        }
-
         toff_t nOverviewOffset =
                 GTIFFWriteDirectory(m_hTIFF, FILETYPE_REDUCEDIMAGE,
                                     nOXSize, nOYSize,
-                                    nOvBitsPerSample, m_nPlanarConfig,
+                                    nOvBitsPerSample, nPlanarConfig,
                                     m_nSamplesPerPixel,
                                     nOvrBlockXSize,
                                     nOvrBlockYSize,
                                     TRUE,
-                                    l_nCompression, l_nPhotometric, m_nSampleFormat,
+                                    nCompression, l_nPhotometric, m_nSampleFormat,
                                     nPredictor,
                                     panRed, panGreen, panBlue,
                                     nExtraSamples, panExtraSampleValues,
@@ -11447,7 +11503,7 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS,
                                     nOvrJpegQuality >= 0 ?
                                         CPLSPrintf("%d", nOvrJpegQuality) : nullptr,
                                     CPLSPrintf("%d", m_nJpegTablesMode),
-                                    pszNoData,
+                                    osNoData.empty() ? nullptr : osNoData.c_str(),
                                     m_anLercAddCompressionAndVersion,
                                     m_bWriteCOGLayout);
 
@@ -11738,33 +11794,17 @@ CPLErr GTiffDataset::IBuildOverviews(
 
     GTIFFBuildOverviewMetadata( pszResampling, this, osMetadata );
 
-/* -------------------------------------------------------------------- */
-/*      Fetch extra sample tag                                          */
-/* -------------------------------------------------------------------- */
+    int nCompression;
+    int nPlanarConfig;
+    uint16_t nPredictor;
+    int nOvrJpegQuality;
+    std::string osNoData;
     uint16_t *panExtraSampleValues = nullptr;
     uint16_t nExtraSamples = 0;
-
-    if( TIFFGetField( m_hTIFF, TIFFTAG_EXTRASAMPLES, &nExtraSamples,
-                      &panExtraSampleValues) )
-    {
-        uint16_t* panExtraSampleValuesNew =
-            static_cast<uint16_t*>( CPLMalloc(nExtraSamples * sizeof(uint16_t)) );
-        memcpy( panExtraSampleValuesNew, panExtraSampleValues,
-                nExtraSamples * sizeof(uint16_t) );
-        panExtraSampleValues = panExtraSampleValuesNew;
-    }
-    else
-    {
-        panExtraSampleValues = nullptr;
-        nExtraSamples = 0;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Fetch predictor tag                                             */
-/* -------------------------------------------------------------------- */
-    uint16_t nPredictor = PREDICTOR_NONE;
-    if( GTIFFSupportsPredictor(m_nCompression) )
-        TIFFGetField( m_hTIFF, TIFFTAG_PREDICTOR, &nPredictor );
+    GetOverviewParameters(nCompression, nPlanarConfig,
+                          nPredictor, nOvrJpegQuality,
+                          osNoData,
+                          panExtraSampleValues, nExtraSamples);
 
 /* -------------------------------------------------------------------- */
 /*      Establish which of the overview levels we already have, and     */
@@ -11830,29 +11870,13 @@ CPLErr GTiffDataset::IBuildOverviews(
                 (GetRasterYSize() + panOverviewList[i] - 1)
                 / panOverviewList[i];
 
-            int nOvrJpegQuality = m_nJpegQuality;
-            if( m_nCompression == COMPRESSION_JPEG &&
-                CPLGetConfigOption( "JPEG_QUALITY_OVERVIEW", nullptr ) != nullptr )
-            {
-                nOvrJpegQuality =
-                    atoi(CPLGetConfigOption("JPEG_QUALITY_OVERVIEW","75"));
-            }
-
-            CPLString osNoData; // don't move this in inner scope
-            const char* pszNoData = nullptr;
-            if( m_bNoDataSet )
-            {
-                osNoData = GTiffFormatGDALNoDataTagValue(m_dfNoDataValue);
-                pszNoData = osNoData.c_str();
-            }
-
             const toff_t nOverviewOffset =
                 GTIFFWriteDirectory(
                     m_hTIFF, FILETYPE_REDUCEDIMAGE,
                     nOXSize, nOYSize,
-                    nOvBitsPerSample, m_nPlanarConfig,
+                    nOvBitsPerSample, nPlanarConfig,
                     m_nSamplesPerPixel, nOvrBlockXSize, nOvrBlockYSize, TRUE,
-                    m_nCompression, m_nPhotometric, m_nSampleFormat,
+                    nCompression, m_nPhotometric, m_nSampleFormat,
                     nPredictor,
                     panRed, panGreen, panBlue,
                     nExtraSamples, panExtraSampleValues,
@@ -11860,7 +11884,7 @@ CPLErr GTiffDataset::IBuildOverviews(
                     nOvrJpegQuality >= 0 ?
                                 CPLSPrintf("%d", nOvrJpegQuality) : nullptr,
                     CPLSPrintf("%d", m_nJpegTablesMode),
-                    pszNoData,
+                    osNoData.empty() ? nullptr: osNoData.c_str(),
                     m_anLercAddCompressionAndVersion,
                     false
             );

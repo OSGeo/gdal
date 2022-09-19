@@ -272,8 +272,18 @@ if test "${RELEASE}" = "yes"; then
         fi
     fi
 
-    docker $(build_cmd) "${BUILD_ARGS[@]}" --target builder -t "${BUILDER_IMAGE_NAME}" "${SCRIPT_DIR}"
-    docker $(build_cmd) "${BUILD_ARGS[@]}" -t "${IMAGE_NAME}" "${SCRIPT_DIR}"
+    LABEL_ARGS=(
+       "--label" "org.opencontainers.image.description=GDAL is an open source MIT licensed translator library for raster and vector geospatial data formats." \
+       "--label" "org.opencontainers.image.title=GDAL ${TARGET_IMAGE}" \
+       "--label" "org.opencontainers.image.licenses=MIT" \
+       "--label" "org.opencontainers.image.source=https://github.com/${GDAL_REPOSITORY}" \
+       "--label" "org.opencontainers.image.url=https://github.com/${GDAL_REPOSITORY}" \
+       "--label" "org.opencontainers.image.revision=${GDAL_VERSION}" \
+       "--label" "org.opencontainers.image.version=${TAG_NAME}" \
+    )
+
+    docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" --target builder -t "${BUILDER_IMAGE_NAME}" "${SCRIPT_DIR}"
+    docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" -t "${IMAGE_NAME}" "${SCRIPT_DIR}"
 
     if test "${DOCKER_BUILDX}" != "buildx"; then
         check_image "${IMAGE_NAME}"
@@ -281,7 +291,7 @@ if test "${RELEASE}" = "yes"; then
 
     if test "x${PUSH_GDAL_DOCKER_IMAGE}" = "xyes"; then
         if test "${DOCKER_BUILDX}" = "buildx"; then
-          docker $(build_cmd) "${BUILD_ARGS[@]}" -t "${IMAGE_NAME}" --push "${SCRIPT_DIR}"
+          docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" -t "${IMAGE_NAME}" --push "${SCRIPT_DIR}"
         else
           docker push "${IMAGE_NAME}"
         fi

@@ -573,6 +573,26 @@ netCDFRasterBand::netCDFRasterBand( const netCDFRasterBand::CONSTRUCTOR_OPEN&,
         }
     }
 
+    bool bHasUnderscoreUnsignedAttr = false;
+    bool bUnderscoreUnsignedAttrVal = false;
+    {
+        char *pszTemp = nullptr;
+        if( NCDFGetAttr(cdfid, nZId, "_Unsigned", &pszTemp) == CE_None )
+        {
+            if( EQUAL(pszTemp, "true") )
+            {
+                bHasUnderscoreUnsignedAttr = true;
+                bUnderscoreUnsignedAttrVal = true;
+            }
+            else if( EQUAL(pszTemp, "false") )
+            {
+                bHasUnderscoreUnsignedAttr = true;
+                bUnderscoreUnsignedAttrVal = false;
+            }
+            CPLFree(pszTemp);
+        }
+    }
+
     // Look for valid_range or valid_min/valid_max.
 
     // First look for valid_range.
@@ -611,6 +631,26 @@ netCDFRasterBand::netCDFRasterBand( const netCDFRasterBand::CONSTRUCTOR_OPEN&,
             }
         }
 
+        if( bValidRangeValid &&
+            (adfValidRange[0] < 0 || adfValidRange[1] < 0) &&
+            nc_datatype == NC_SHORT &&
+            bHasUnderscoreUnsignedAttr &&
+            bUnderscoreUnsignedAttrVal )
+        {
+            if( adfValidRange[0] < 0 )
+                adfValidRange[0] += 65536;
+            if( adfValidRange[1] < 0 )
+                adfValidRange[1] += 65536;
+            if( adfValidRange[0] <= adfValidRange[1] )
+            {
+                // Updating metadata item
+                GDALPamRasterBand::SetMetadataItem("valid_range",
+                    CPLSPrintf("{%d,%d}",
+                               static_cast<int>(adfValidRange[0]),
+                               static_cast<int>(adfValidRange[1])));
+            }
+        }
+
         if (bValidRangeValid && adfValidRange[0] > adfValidRange[1])
         {
             CPLError(
@@ -641,26 +681,14 @@ netCDFRasterBand::netCDFRasterBand( const netCDFRasterBand::CONSTRUCTOR_OPEN&,
             bSignedData = true;
         }
 
-        // Fix nodata value as it was stored signed.
-        if( !bSignedData && dfNoData < 0 )
-        {
-            dfNoData += 256;
-        }
-
         // If we got valid_range, test for signed/unsigned range.
-        // http://www.unidata.ucar.edu/software/netcdf/docs/netcdf/Attribute-Conventions.html
+        // https://docs.unidata.ucar.edu/netcdf-c/current/attribute_conventions.html
         if( bValidRangeValid )
         {
             // If we got valid_range={0,255}, treat as unsigned.
             if( adfValidRange[0] == 0 && adfValidRange[1] == 255 )
             {
                 bSignedData = false;
-                // Fix nodata value as it was stored signed.
-                if( dfNoData < 0 )
-                {
-                    dfNoData += 256;
-                }
-
                 // Reset valid_range.
                 bValidRangeValid = false;
             }
@@ -673,24 +701,11 @@ netCDFRasterBand::netCDFRasterBand( const netCDFRasterBand::CONSTRUCTOR_OPEN&,
             }
         }
         // Else test for _Unsigned.
-        // http://www.unidata.ucar.edu/software/netcdf/docs/BestPractices.html
+        // https://docs.unidata.ucar.edu/nug/current/best_practices.html
         else
         {
-            char *pszTemp = nullptr;
-            if( NCDFGetAttr(cdfid, nZId, "_Unsigned", &pszTemp) == CE_None )
-            {
-                if( EQUAL(pszTemp, "true") )
-                    bSignedData = false;
-                else if( EQUAL(pszTemp, "false") )
-                    bSignedData = true;
-                CPLFree(pszTemp);
-            }
-
-            // Fix nodata value as it was stored signed.
-            if( !bSignedData && dfNoData < 0 )
-            {
-                dfNoData += 256;
-            }
+            if( bHasUnderscoreUnsignedAttr )
+                bSignedData = !bUnderscoreUnsignedAttrVal;
         }
 
         if( bSignedData )
@@ -699,14 +714,48 @@ netCDFRasterBand::netCDFRasterBand( const netCDFRasterBand::CONSTRUCTOR_OPEN&,
             // See http://trac.osgeo.org/gdal/wiki/rfc14_imagestructure
             GDALPamRasterBand::SetMetadataItem("PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE");
         }
+        else if( dfNoData < 0 )
+        {
+            // Fix nodata value as it was stored signed.
+            dfNoData += 256;
+            if( pszNoValueName )
+            {
+                // Updating metadata item
+                GDALPamRasterBand::SetMetadataItem(pszNoValueName,
+                                   CPLSPrintf("%d", static_cast<int>(dfNoData)));
+            }
+        }
+    }
+    else if( nc_datatype == NC_SHORT )
+    {
+        if( bHasUnderscoreUnsignedAttr )
+        {
+            bSignedData = !bUnderscoreUnsignedAttrVal;
+            if( !bSignedData )
+                eDataType = GDT_UInt16;
+        }
+
+        // Fix nodata value as it was stored signed.
+        if( !bSignedData && dfNoData < 0 )
+        {
+            dfNoData += 65536;
+            if( pszNoValueName )
+            {
+                // Updating metadata item
+                GDALPamRasterBand::SetMetadataItem(pszNoValueName,
+                                   CPLSPrintf("%d", static_cast<int>(dfNoData)));
+            }
+        }
     }
 
 #ifdef NETCDF_HAS_NC4
-    if( nc_datatype == NC_UBYTE ||
-        nc_datatype == NC_USHORT ||
-        nc_datatype == NC_UINT ||
-        nc_datatype == NC_UINT64 )
+    else if( nc_datatype == NC_UBYTE ||
+             nc_datatype == NC_USHORT ||
+             nc_datatype == NC_UINT ||
+             nc_datatype == NC_UINT64 )
+    {
         bSignedData = false;
+    }
 #endif
 
     CPLDebug("GDAL_netCDF", "netcdf type=%d gdal type=%d signedByte=%d",
@@ -2086,6 +2135,11 @@ CPLErr netCDFRasterBand::CreateBandMetadata( const int *paDimIds,
         if( status != NC_NOERR )
             continue;
 
+        if( GetMetadataItem(szMetaName) != nullptr )
+        {
+            continue;
+        }
+
         char *pszMetaValue = nullptr;
         if( NCDFGetAttr(cdfid, nZId, szMetaName, &pszMetaValue) == CE_None )
         {
@@ -2360,13 +2414,23 @@ bool netCDFRasterBand::FetchNetcdfChunk( size_t xstart,
                                          nYChunkSize, false);
         }
     }
-    else if( eDataType == GDT_Int16 )
+    else if( nc_datatype == NC_SHORT )
     {
         status = nc_get_vara_short(cdfid, nZId, start, edge,
                                    static_cast<short *>(pImageNC));
         if( status == NC_NOERR )
-            CheckData<short>(pImage, pImageNC, edge[nBandXPos], nYChunkSize,
-                             false);
+        {
+            if( eDataType == GDT_Int16 )
+            {
+                CheckData<GInt16>(pImage, pImageNC, edge[nBandXPos], nYChunkSize,
+                                  false);
+            }
+            else
+            {
+                CheckData<GUInt16>(pImage, pImageNC, edge[nBandXPos], nYChunkSize,
+                                   false);
+            }
+        }
     }
     else if( eDataType == GDT_Int32 )
     {
@@ -2702,7 +2766,7 @@ CPLErr netCDFRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
             status = nc_put_vara_uchar(cdfid, nZId, start, edge,
                                        static_cast<unsigned char *>(pImage));
     }
-    else if( eDataType == GDT_Int16 )
+    else if( nc_datatype == NC_SHORT )
     {
         status = nc_put_vara_short(cdfid, nZId, start, edge,
                                    static_cast<short *>(pImage));
@@ -8510,7 +8574,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
     // Try opening the dataset.
 #if defined(NCDF_DEBUG) && defined(ENABLE_UFFD)
     CPLDebug("GDAL_netCDF", "calling nc_open_mem(%s)", poDS->osFilename.c_str());
-#elseif defined(NCDF_DEBUG) && !defined(ENABLE_UFFD)
+#elif defined(NCDF_DEBUG) && !defined(ENABLE_UFFD)
     CPLDebug("GDAL_netCDF", "calling nc_open(%s)", poDS->osFilename.c_str());
 #endif
     int cdfid = -1;
@@ -9009,24 +9073,24 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
     // of useless dims with empty string.
     if( panDimIds )
     {
-        int nMaxDimId = -1;
+        const int nMaxDimId = *std::max_element(panDimIds, panDimIds + ndims);
+        std::set<int> oSetExistingDimIds;
         for( int i = 0; i < ndims; i++ )
         {
-            nMaxDimId = std::max(nMaxDimId, panDimIds[i]);
+            oSetExistingDimIds.insert(panDimIds[i]);
+        }
+        std::set<int> oSetDimIdsUsedByVar;
+        for( int i = 0; i < nd; i++ )
+        {
+            oSetDimIdsUsedByVar.insert(paDimIds[i]);
         }
         for( int j = 0; j <= nMaxDimId; j++ ){
             // Is j dim used?
-            int i;
-            for( i = 0; i < ndims; i++ )
-            {
-                if( panDimIds[i] == j )
-                    break;
-            }
-            if( i < ndims )
+            if( oSetExistingDimIds.find(j) != oSetExistingDimIds.end() )
             {
                 // Useful dim.
                 char szTemp[NC_MAX_NAME + 1] = {};
-                status = nc_inq_dimname(cdfid, panDimIds[i], szTemp);
+                status = nc_inq_dimname(cdfid, j, szTemp);
                 if( status != NC_NOERR )
                 {
                     CPLFree(paDimIds);
@@ -9039,12 +9103,16 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
                     return nullptr;
                 }
                 poDS->papszDimName.AddString(szTemp);
-                int nDimGroupId = -1;
-                int nDimVarId = -1;
-                if( NCDFResolveVar(cdfid, poDS->papszDimName[j],
-                                &nDimGroupId, &nDimVarId) == CE_None )
+
+                if( oSetDimIdsUsedByVar.find(j) != oSetDimIdsUsedByVar.end() )
                 {
-                    poDS->ReadAttributes(nDimGroupId, nDimVarId);
+                    int nDimGroupId = -1;
+                    int nDimVarId = -1;
+                    if( NCDFResolveVar(cdfid, poDS->papszDimName[j],
+                                    &nDimGroupId, &nDimVarId) == CE_None )
+                    {
+                        poDS->ReadAttributes(nDimGroupId, nDimVarId);
+                    }
                 }
             }
             else

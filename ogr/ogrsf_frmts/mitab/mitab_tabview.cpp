@@ -209,7 +209,7 @@ int TABView::OpenForRead(const char *pszFname,
      *------------------------------------------------------------*/
     GBool bCreateViewFound = FALSE;
     for (int i=0;
-         !bCreateViewFound && m_papszTABFile && m_papszTABFile[i];
+         !bCreateViewFound && m_papszTABFile[i];
          i++)
     {
         const char *pszStr = m_papszTABFile[i];

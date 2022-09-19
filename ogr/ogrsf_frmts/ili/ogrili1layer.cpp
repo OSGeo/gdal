@@ -389,7 +389,7 @@ OGRErr OGRILI1Layer::ICreateFeature( OGRFeature *poFeature ) {
               char* pszString
                   = CPLRecode( pszRaw, CPL_ENC_UTF8, CPL_ENC_ISO8859_1 );
               //Replace spaces
-              for(size_t i=0; i<strlen(pszString); i++ ) {
+              for(size_t i=0; pszString[i] != '\0'; i++ ) {
                   if (pszString[i] == ' ') pszString[i] = '_';
               }
               VSIFPrintfL( fp, " %s", pszString );
