@@ -1533,6 +1533,7 @@ OGRErr OGRHanaTableLayer::CreateField(OGRFieldDefn* srsField, int approxOK)
     featureDefn_->AddFieldDefn(&dstField);
 
     ClearQueryStatement();
+    ResetReading();
     ResetPreparedStatements();
 
     return OGRERR_NONE;
@@ -1623,6 +1624,8 @@ OGRErr OGRHanaTableLayer::CreateGeomField(OGRGeomFieldDefn* geomField, int)
          srid, newGeomField->IsNullable() == TRUE});
     featureDefn_->AddGeomFieldDefn(std::move(newGeomField));
 
+    ClearQueryStatement();
+    ResetReading();
     ResetPreparedStatements();
 
     return OGRERR_NONE;
@@ -1678,6 +1681,8 @@ OGRErr OGRHanaTableLayer::DeleteField(int field)
     attrColumns_.erase(it);
     OGRErr ret = featureDefn_->DeleteFieldDefn(field);
 
+    ClearQueryStatement();
+    ResetReading();
     ResetPreparedStatements();
 
     return ret;
