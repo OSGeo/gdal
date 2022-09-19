@@ -129,14 +129,14 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
             static_cast<GDALGridInverseDistanceToAPowerOptions *>(pOptions);
         CPLprintf("Options are "
                   "\"power=%f:smoothing=%f:radius1=%f:radius2=%f:angle=%f"
-                  ":max_points=%lu:min_points=%lu:nodata=%f\"\n",
+                  ":max_points=%u:min_points=%u:nodata=%f\"\n",
                   pOptions2->dfPower,
                   pOptions2->dfSmoothing,
                   pOptions2->dfRadius1,
                   pOptions2->dfRadius2,
                   pOptions2->dfAngle,
-                  static_cast<unsigned long>(pOptions2->nMaxPoints),
-                  static_cast<unsigned long>(pOptions2->nMinPoints),
+                  pOptions2->nMaxPoints,
+                  pOptions2->nMinPoints,
                   pOptions2->dfNoDataValue);
         break;
     }
@@ -148,12 +148,12 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
                 pOptions);
         CPLprintf("Options are "
                   "\"power=%f:smoothing=%f:radius=%f"
-                  ":max_points=%lu:min_points=%lu:nodata=%f\"\n",
+                  ":max_points=%u:min_points=%u:nodata=%f\"\n",
                   pOptions2->dfPower,
                   pOptions2->dfSmoothing,
                   pOptions2->dfRadius,
-                  static_cast<unsigned long>(pOptions2->nMaxPoints),
-                  static_cast<unsigned long>(pOptions2->nMinPoints),
+                  pOptions2->nMaxPoints,
+                  pOptions2->nMinPoints,
                   pOptions2->dfNoDataValue);
         break;
     }
@@ -163,12 +163,12 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
         GDALGridMovingAverageOptions *pOptions2 =
             static_cast<GDALGridMovingAverageOptions *>(pOptions);
         CPLprintf("Options are "
-                  "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
+                  "\"radius1=%f:radius2=%f:angle=%f:min_points=%u"
                   ":nodata=%f\"\n",
                   pOptions2->dfRadius1,
                   pOptions2->dfRadius2,
                   pOptions2->dfAngle,
-                  static_cast<unsigned long>(pOptions2->nMinPoints),
+                  pOptions2->nMinPoints,
                   pOptions2->dfNoDataValue);
         break;
     }
@@ -191,12 +191,12 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
         GDALGridDataMetricsOptions *pOptions2 =
             static_cast<GDALGridDataMetricsOptions *>(pOptions);
         CPLprintf("Options are "
-                  "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
+                  "\"radius1=%f:radius2=%f:angle=%f:min_points=%u"
                   ":nodata=%f\"\n",
                   pOptions2->dfRadius1,
                   pOptions2->dfRadius2,
                   pOptions2->dfAngle,
-                  static_cast<unsigned long>(pOptions2->nMinPoints),
+                  pOptions2->nMinPoints,
                   pOptions2->dfNoDataValue);
             break;
     }
@@ -206,12 +206,12 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
         GDALGridDataMetricsOptions *pOptions2 =
             static_cast<GDALGridDataMetricsOptions *>(pOptions);
         CPLprintf("Options are "
-                  "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
+                  "\"radius1=%f:radius2=%f:angle=%f:min_points=%u"
                   ":nodata=%f\"\n",
                   pOptions2->dfRadius1,
                   pOptions2->dfRadius2,
                   pOptions2->dfAngle,
-                  static_cast<unsigned long>(pOptions2->nMinPoints),
+                  pOptions2->nMinPoints,
                   pOptions2->dfNoDataValue);
         break;
     }
@@ -221,12 +221,12 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
         GDALGridDataMetricsOptions *pOptions2 =
             static_cast<GDALGridDataMetricsOptions *>(pOptions);
         CPLprintf("Options are "
-                  "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
+                  "\"radius1=%f:radius2=%f:angle=%f:min_points=%u"
                   ":nodata=%f\"\n",
                   pOptions2->dfRadius1,
                   pOptions2->dfRadius2,
                   pOptions2->dfAngle,
-                  static_cast<unsigned long>(pOptions2->nMinPoints),
+                  pOptions2->nMinPoints,
                   pOptions2->dfNoDataValue);
         break;
     }
@@ -236,12 +236,12 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
         GDALGridDataMetricsOptions *pOptions2 =
             static_cast<GDALGridDataMetricsOptions *>(pOptions);
         CPLprintf("Options are "
-                  "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
+                  "\"radius1=%f:radius2=%f:angle=%f:min_points=%u"
                   ":nodata=%f\"\n",
                   pOptions2->dfRadius1,
                   pOptions2->dfRadius2,
                   pOptions2->dfAngle,
-                  static_cast<unsigned long>(pOptions2->nMinPoints),
+                  pOptions2->nMinPoints,
                   pOptions2->dfNoDataValue);
         break;
     }
@@ -251,12 +251,12 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
         GDALGridDataMetricsOptions *pOptions2 =
             static_cast<GDALGridDataMetricsOptions *>(pOptions);
         CPLprintf("Options are "
-                  "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
+                  "\"radius1=%f:radius2=%f:angle=%f:min_points=%u"
                   ":nodata=%f\"\n",
                   pOptions2->dfRadius1,
                   pOptions2->dfRadius2,
                   pOptions2->dfAngle,
-                  static_cast<unsigned long>(pOptions2->nMinPoints),
+                  pOptions2->nMinPoints,
                   pOptions2->dfNoDataValue);
         break;
     }
@@ -266,12 +266,12 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
         GDALGridDataMetricsOptions *pOptions2 =
             static_cast<GDALGridDataMetricsOptions *>(pOptions);
         CPLprintf("Options are "
-                  "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
+                  "\"radius1=%f:radius2=%f:angle=%f:min_points=%u"
                   ":nodata=%f\"\n",
                   pOptions2->dfRadius1,
                   pOptions2->dfRadius2,
                   pOptions2->dfAngle,
-                  static_cast<unsigned long>(pOptions2->nMinPoints),
+                  pOptions2->nMinPoints,
                   pOptions2->dfNoDataValue);
         break;
     }
@@ -295,107 +295,37 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
 }
 
 /************************************************************************/
-/*                          ProcessGeometry()                           */
-/*                                                                      */
 /*  Extract point coordinates from the geometry reference and set the   */
 /*  Z value as requested. Test whether we are in the clipped region     */
 /*  before processing.                                                  */
 /************************************************************************/
 
-static void ProcessGeometry( OGRPoint *poGeom, OGRGeometry *poClipSrc,
-                             int iBurnField, double dfBurnValue,
-                             const double dfIncreaseBurnValue,
-                             const double dfMultiplyBurnValue,
-                             std::vector<double> &adfX,
-                             std::vector<double> &adfY,
-                             std::vector<double> &adfZ )
-
+class GDALGridGeometryVisitor final: public OGRDefaultConstGeometryVisitor
 {
-    if ( poClipSrc && !poGeom->Within(poClipSrc) )
-        return;
+public:
+    const OGRGeometry *poClipSrc = nullptr;
+    int iBurnField = 0;
+    double dfBurnValue = 0;
+    double dfIncreaseBurnValue = 0;
+    double dfMultiplyBurnValue = 1;
+    std::vector<double> adfX{};
+    std::vector<double> adfY{};
+    std::vector<double> adfZ{};
 
-    adfX.push_back( poGeom->getX() );
-    adfY.push_back( poGeom->getY() );
-    if ( iBurnField < 0 )
-        adfZ.push_back(  (poGeom->getZ() + dfIncreaseBurnValue) * dfMultiplyBurnValue  );
-    else
-        adfZ.push_back( (dfBurnValue + dfIncreaseBurnValue) * dfMultiplyBurnValue );
-}
-
-/************************************************************************/
-/*                       ProcessCommonGeometry()                        */
-/*                                                                      */
-/*  Process recursively geometry and extract points.                    */
-/************************************************************************/
-
-static void ProcessCommonGeometry(OGRGeometry* poGeom, OGRGeometry *poClipSrc,
-                                int iBurnField, double dfBurnValue,
-                                const double dfIncreaseBurnValue,
-                                const double dfMultiplyBurnValue,
-                                std::vector<double> &adfX,
-                                std::vector<double> &adfY,
-                                std::vector<double> &adfZ)
-{
-    if (nullptr == poGeom)
-        return;
-
-    OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
-    switch (eType)
+    using OGRDefaultConstGeometryVisitor::visit;
+    void visit(const OGRPoint* p) override
     {
-    case wkbPoint:
-        return ProcessGeometry(poGeom->toPoint(), poClipSrc,
-            iBurnField, dfBurnValue, dfIncreaseBurnValue, dfMultiplyBurnValue, adfX, adfY, adfZ);
-    case wkbLinearRing:
-    case wkbLineString:
-        {
-            OGRLineString *poLS = poGeom->toLineString();
-            OGRPoint point;
-            for (int pointIndex = 0; pointIndex < poLS->getNumPoints(); pointIndex++)
-            {
-                poLS->getPoint(pointIndex, &point);
-                ProcessCommonGeometry(&point, poClipSrc,
-                    iBurnField, dfBurnValue, dfIncreaseBurnValue, dfMultiplyBurnValue, adfX, adfY, adfZ);
-            }
-        }
-        break;
-    case wkbPolygon:
-        {
-            OGRPolygon* poPoly = poGeom->toPolygon();
-            OGRLinearRing* poRing = poPoly->getExteriorRing();
-            ProcessCommonGeometry(poRing, poClipSrc,
-                iBurnField, dfBurnValue, dfIncreaseBurnValue, dfMultiplyBurnValue, adfX, adfY, adfZ);
+        if ( poClipSrc && !p->Within(poClipSrc) )
+            return;
 
-            const int nRings = poPoly->getNumInteriorRings();
-            if (nRings > 0)
-            {
-                for (int ir = 0; ir < nRings; ++ir)
-                {
-                    poRing = poPoly->getInteriorRing(ir);
-                    ProcessCommonGeometry(poRing, poClipSrc,
-                        iBurnField, dfBurnValue, dfIncreaseBurnValue, dfMultiplyBurnValue, adfX, adfY, adfZ);
-                }
-            }
-        }
-        break;
-    case wkbMultiPoint:
-    case wkbMultiPolygon:
-    case wkbMultiLineString:
-    case wkbGeometryCollection:
-        {
-            OGRGeometryCollection* pOGRGeometryCollection = poGeom->toGeometryCollection();
-            for (int i = 0; i < pOGRGeometryCollection->getNumGeometries(); ++i)
-            {
-                ProcessCommonGeometry(pOGRGeometryCollection->getGeometryRef(i), poClipSrc,
-                    iBurnField, dfBurnValue, dfIncreaseBurnValue, dfMultiplyBurnValue, adfX, adfY, adfZ);
-            }
-        }
-        break;
-    case wkbUnknown:
-    case wkbNone:
-    default:
-        break;
+        adfX.push_back( p->getX() );
+        adfY.push_back( p->getY() );
+        if ( iBurnField < 0 )
+            adfZ.push_back( (p->getZ() + dfIncreaseBurnValue) * dfMultiplyBurnValue  );
+        else
+            adfZ.push_back( (dfBurnValue + dfIncreaseBurnValue) * dfMultiplyBurnValue );
     }
-}
+};
 
 /************************************************************************/
 /*                            ProcessLayer()                            */
@@ -405,7 +335,7 @@ static void ProcessCommonGeometry(OGRGeometry* poGeom, OGRGeometry *poClipSrc,
 /************************************************************************/
 
 static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
-                          OGRGeometry *poClipSrc,
+                          const OGRGeometry *poClipSrc,
                           int nXSize, int nYSize, int nBand,
                           bool& bIsXExtentSet, bool& bIsYExtentSet,
                           double& dfXMin, double& dfXMax,
@@ -441,26 +371,28 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
 /*      Collect the geometries from this layer, and build list of       */
 /*      values to be interpolated.                                      */
 /* -------------------------------------------------------------------- */
-    OGRFeature *poFeat;
-    std::vector<double> adfX, adfY, adfZ;
+    GDALGridGeometryVisitor oVisitor;
+    oVisitor.poClipSrc = poClipSrc;
+    oVisitor.iBurnField = iBurnField;
+    oVisitor.dfIncreaseBurnValue = dfIncreaseBurnValue;
+    oVisitor.dfMultiplyBurnValue = dfMultiplyBurnValue;
 
-    OGR_L_ResetReading( hSrcLayer );
-
-    while( (poFeat = reinterpret_cast<OGRFeature*>(OGR_L_GetNextFeature( hSrcLayer ))) != nullptr )
+    for( auto&& poFeat: OGRLayer::FromHandle(hSrcLayer) )
     {
-        OGRGeometry *poGeom = poFeat->GetGeometryRef();
-        double  dfBurnValue = 0.0;
+        const OGRGeometry *poGeom = poFeat->GetGeometryRef();
+        if( poGeom )
+        {
+            double  dfBurnValue = 0.0;
 
-        if ( iBurnField >= 0 )
-            dfBurnValue = poFeat->GetFieldAsDouble( iBurnField );
+            if ( iBurnField >= 0 )
+                dfBurnValue = poFeat->GetFieldAsDouble( iBurnField );
+            oVisitor.dfBurnValue = dfBurnValue;
 
-        ProcessCommonGeometry(poGeom, poClipSrc, iBurnField, dfBurnValue,
-            dfIncreaseBurnValue, dfMultiplyBurnValue, adfX, adfY, adfZ);
-
-        OGRFeature::DestroyFeature( poFeat );
+            poGeom->accept(&oVisitor);
+        }
     }
 
-    if ( adfX.empty() )
+    if ( oVisitor.adfX.empty() )
     {
         printf( "No point geometry found on layer %s, skipping.\n",
                 OGR_FD_GetName( OGR_L_GetLayerDefn( hSrcLayer ) ) );
@@ -500,15 +432,13 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
     if ( !bQuiet )
     {
         printf( "Grid data type is \"%s\"\n", GDALGetDataTypeName(eType) );
-        printf("Grid size = (%lu %lu).\n",
-               static_cast<unsigned long>(nXSize),
-               static_cast<unsigned long>(nYSize));
+        printf("Grid size = (%d %d).\n", nXSize, nYSize);
         CPLprintf( "Corner coordinates = (%f %f)-(%f %f).\n",
                 dfXMin - dfDeltaX / 2, dfYMax + dfDeltaY / 2,
                 dfXMax + dfDeltaX / 2, dfYMin - dfDeltaY / 2 );
         CPLprintf( "Grid cell size = (%f %f).\n", dfDeltaX, dfDeltaY );
         printf("Source point count = %lu.\n",
-               static_cast<unsigned long>(adfX.size()));
+               static_cast<unsigned long>(oVisitor.adfX.size()));
         PrintAlgorithmAndOptions( eAlgorithm, pOptions );
         printf("\n");
     }
@@ -558,8 +488,8 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
         ((nYSize + nBlockYSize - 1) / nBlockYSize);
 
     GDALGridContext* psContext = GDALGridContextCreate( eAlgorithm, pOptions,
-                                                        static_cast<int>(adfX.size()),
-                                                        &(adfX[0]), &(adfY[0]), &(adfZ[0]),
+                                                        static_cast<int>(oVisitor.adfX.size()),
+                                                        &(oVisitor.adfX[0]), &(oVisitor.adfY[0]), &(oVisitor.adfZ[0]),
                                                         TRUE );
     if( psContext == nullptr )
     {
