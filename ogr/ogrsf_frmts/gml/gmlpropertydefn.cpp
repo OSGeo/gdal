@@ -242,3 +242,27 @@ GMLGeometryPropertyDefn::~GMLGeometryPropertyDefn()
     CPLFree(m_pszName);
     CPLFree(m_pszSrcElement);
 }
+
+/************************************************************************/
+/*                           MergeSRSName()                             */
+/************************************************************************/
+
+void GMLGeometryPropertyDefn::MergeSRSName( const std::string& osSRSName )
+
+{
+    if(!m_bSRSNameConsistent)
+        return;
+
+    if( m_osSRSName.empty() )
+    {
+        m_osSRSName = osSRSName;
+    }
+    else
+    {
+        m_bSRSNameConsistent = osSRSName == m_osSRSName;
+        if (!m_bSRSNameConsistent)
+        {
+            m_osSRSName.clear();
+        }
+    }
+}

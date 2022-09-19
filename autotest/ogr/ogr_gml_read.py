@@ -4438,3 +4438,30 @@ def test_ogr_gml_first_feature_without_geometry():
         ds = ogr.Open(tmpfilename)
         assert ds.GetLayer(0).GetGeomType() == ogr.wkbPoint
     gdal.Unlink(tmpfilename[0:-3] + "gfs")
+
+
+###############################################################################
+# Test FORCE_SRS_DETECTION open option on dataset with multiple geometry fields
+
+
+def test_ogr_gml_force_srs_detection_multiple_geom_fields():
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
+    # With .xsd
+    ds = gdal.OpenEx(
+        "data/gml/multiple_geometry_fields_srs_detection.gml",
+        open_options=["FORCE_SRS_DETECTION=YES"],
+    )
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef() is None
+    assert (
+        lyr.GetLayerDefn().GetGeomFieldDefn(1).GetSpatialRef().GetAuthorityCode(None)
+        == "32631"
+    )
+    assert (
+        lyr.GetLayerDefn().GetGeomFieldDefn(2).GetSpatialRef().GetAuthorityCode(None)
+        == "32632"
+    )
+    assert lyr.GetLayerDefn().GetGeomFieldDefn(3).GetSpatialRef() is None
