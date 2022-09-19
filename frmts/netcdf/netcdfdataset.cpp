@@ -11118,6 +11118,7 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
     double dfValue = 0.0;
     size_t m;
     char szTemp[256];
+    bool bSetDoubleFromStr = false;
 
     switch( nAttrType )
     {
@@ -11125,6 +11126,7 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
         CPL_IGNORE_RET_VAL(
             nc_get_att_text(nCdfId, nVarId, pszAttrName, pszAttrValue));
         pszAttrValue[nAttrLen] = '\0';
+        bSetDoubleFromStr = true;
         dfValue = 0.0;
         break;
     case NC_BYTE:
@@ -11212,6 +11214,7 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
         char **ppszTemp =
             static_cast<char **>(CPLCalloc(nAttrLen, sizeof(char *)));
         nc_get_att_string(nCdfId, nVarId, pszAttrName, ppszTemp);
+        bSetDoubleFromStr = true;
         dfValue = 0.0;
         for( m = 0; m < nAttrLen - 1; m++ )
         {
@@ -11315,9 +11318,21 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
     if( nAttrLen > 1 && nAttrType!= NC_CHAR )
         NCDFSafeStrcat(&pszAttrValue, "}", &nAttrValueSize);
 
+    if( bSetDoubleFromStr )
+    {
+        if( CPLGetValueType(pszAttrValue) == CPL_VALUE_STRING )
+        {
+            if( pszValue == nullptr && pdfValue != nullptr )
+                return CE_Failure;
+        }
+        dfValue = CPLAtof(pszAttrValue);
+    }
+
     /* set return values */
-    if( bSetPszValue ) *pszValue = pszAttrValue;
-    else CPLFree(pszAttrValue);
+    if( bSetPszValue )
+        *pszValue = pszAttrValue;
+    else
+        CPLFree(pszAttrValue);
     if( pdfValue ) *pdfValue = dfValue;
 
     return CE_None;
