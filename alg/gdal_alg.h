@@ -489,8 +489,6 @@ typedef struct
     /*! Maximum number of data points to use.
      *
      * Do not search for more points than this number.
-     * If less amount of points found the grid node considered empty and will
-     * be filled with NODATA marker.
      */
     GUInt32 nMaxPoints;
     /*! Minimum number of data points to use.
@@ -518,8 +516,6 @@ typedef struct
     /*! Maximum number of data points to use.
      *
      * Do not search for more points than this number.
-     * If less amount of points found the grid node considered empty and will
-     * be filled with NODATA marker.
      */
     GUInt32 nMaxPoints;
     /*! Minimum number of data points to use.
