@@ -280,7 +280,7 @@ GDALGridInverseDistanceToAPowerNearestNeighbor(
 
     GDALGridExtraParameters* psExtraParams =
         static_cast<GDALGridExtraParameters *>(hExtraParamsIn);
-    CPLQuadTree* phQuadTree = psExtraParams->hQuadTree;
+    const CPLQuadTree* phQuadTree = psExtraParams->hQuadTree;
     CPLAssert(phQuadTree);
 
     const double dfRPower2 = psExtraParams->dfRadiusPower2PreComp;
@@ -351,6 +351,151 @@ GDALGridInverseDistanceToAPowerNearestNeighbor(
     }
 
     if( n < poOptions->nMinPoints || dfDenominator == 0.0 )
+    {
+        *pdfValue = poOptions->dfNoDataValue;
+    }
+    else
+    {
+        *pdfValue = dfNominator / dfDenominator;
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*        GDALGridInverseDistanceToAPowerNearestNeighborPerQuadrant()   */
+/************************************************************************/
+
+/**
+ * Inverse distance to a power with nearest neighbor search, with a per-quadrant
+ * search logic.
+ */
+static CPLErr
+GDALGridInverseDistanceToAPowerNearestNeighborPerQuadrant(
+    const void *poOptionsIn, GUInt32 /*nPoints*/,
+    const double *padfX, const double *padfY,
+    const double *padfZ,
+    double dfXPoint, double dfYPoint,
+    double *pdfValue,
+    void* hExtraParamsIn )
+{
+    const
+    GDALGridInverseDistanceToAPowerNearestNeighborOptions *const poOptions =
+      static_cast<
+          const GDALGridInverseDistanceToAPowerNearestNeighborOptions *>(
+          poOptionsIn);
+    const double dfRadius = poOptions->dfRadius;
+    const double dfSmoothing = poOptions->dfSmoothing;
+    const double dfSmoothing2 = dfSmoothing * dfSmoothing;
+
+    const GUInt32 nMaxPoints = poOptions->nMaxPoints;
+    const GUInt32 nMinPointsPerQuadrant = poOptions->nMinPointsPerQuadrant;
+    const GUInt32 nMaxPointsPerQuadrant = poOptions->nMaxPointsPerQuadrant;
+
+    GDALGridExtraParameters* psExtraParams =
+        static_cast<GDALGridExtraParameters *>(hExtraParamsIn);
+    const CPLQuadTree* phQuadTree = psExtraParams->hQuadTree;
+    CPLAssert(phQuadTree);
+
+    const double dfRPower2 = psExtraParams->dfRadiusPower2PreComp;
+    const double dfPowerDiv2 = psExtraParams->dfPowerDiv2PreComp;
+    std::multimap<double, double> oMapDistanceToZValuesPerQuadrant[4];
+
+    const double dfSearchRadius = dfRadius;
+    CPLRectObj sAoi;
+    sAoi.minx = dfXPoint - dfSearchRadius;
+    sAoi.miny = dfYPoint - dfSearchRadius;
+    sAoi.maxx = dfXPoint + dfSearchRadius;
+    sAoi.maxy = dfYPoint + dfSearchRadius;
+    int nFeatureCount = 0;
+    GDALGridPoint** papsPoints = reinterpret_cast<GDALGridPoint **>(
+            CPLQuadTreeSearch(phQuadTree, &sAoi, &nFeatureCount) );
+    if( nFeatureCount != 0 )
+    {
+        for( int k = 0; k < nFeatureCount; k++ )
+        {
+            const int i = papsPoints[k]->i;
+            const double dfRX = padfX[i] - dfXPoint;
+            const double dfRY = padfY[i] - dfYPoint;
+
+            const double dfR2 = dfRX * dfRX + dfRY * dfRY;
+            // real distance + smoothing
+            const double dfRsmoothed2 = dfR2 + dfSmoothing2;
+            if( dfRsmoothed2 < 0.0000000000001 )
+            {
+                *pdfValue = padfZ[i];
+                CPLFree(papsPoints);
+                return CE_None;
+            }
+            // is point within real distance?
+            if( dfR2 <= dfRPower2 )
+            {
+                const int iQuadrant =
+                    ((dfRX >= 0) ? 1 : 0) |
+                    (((dfRY >= 0) ? 1 : 0) << 1);
+                oMapDistanceToZValuesPerQuadrant[iQuadrant].insert(
+                    std::make_pair(dfRsmoothed2, padfZ[i]) );
+            }
+        }
+    }
+    CPLFree(papsPoints);
+
+
+    std::multimap<double, double>::iterator aoIter[] = {
+        oMapDistanceToZValuesPerQuadrant[0].begin(),
+        oMapDistanceToZValuesPerQuadrant[1].begin(),
+        oMapDistanceToZValuesPerQuadrant[2].begin(),
+        oMapDistanceToZValuesPerQuadrant[3].begin(),
+    };
+    constexpr int ALL_QUADRANT_FLAGS = 1 + 2 + 4 + 8;
+
+    // Examine all "neighbors" within the radius (sorted by distance via the
+    // multimap), and use the closest n points based on distance until the max
+    // is reached.
+    // Do that by fetching the nearest point in quadrant 0, then the nearest
+    // point in quadrant 1, 2 and 3, and starting againg with the next nearest
+    // point in quarant 0, etc.
+    int nQuadrantIterFinishedFlag = 0;
+    GUInt32 anPerQuadrant[4] = {0};
+    double dfNominator = 0.0;
+    double dfDenominator = 0.0;
+    GUInt32 n = 0;
+    for( int iQuadrant = 0; /* true */ ; iQuadrant = (iQuadrant + 1) % 4 )
+    {
+        if( aoIter[iQuadrant] == oMapDistanceToZValuesPerQuadrant[iQuadrant].end() ||
+            (nMaxPointsPerQuadrant > 0 && anPerQuadrant[iQuadrant] >= nMaxPointsPerQuadrant) )
+        {
+            nQuadrantIterFinishedFlag |= 1 << iQuadrant;
+            if( nQuadrantIterFinishedFlag == ALL_QUADRANT_FLAGS )
+                break;
+            continue;
+        }
+
+        const double dfR2 = aoIter[iQuadrant]->first;
+        const double dfZ = aoIter[iQuadrant]->second;
+        ++ aoIter[iQuadrant];
+
+        const double dfW = pow(dfR2, dfPowerDiv2);
+        const double dfInvW = 1.0 / dfW;
+        dfNominator += dfInvW * dfZ;
+        dfDenominator += dfInvW;
+        n++;
+        anPerQuadrant[iQuadrant] ++;
+        if( nMaxPoints > 0 && n >= nMaxPoints )
+        {
+            break;
+        }
+    }
+
+    if( nMinPointsPerQuadrant > 0 &&
+        (anPerQuadrant[0] < nMinPointsPerQuadrant ||
+         anPerQuadrant[1] < nMinPointsPerQuadrant ||
+         anPerQuadrant[2] < nMinPointsPerQuadrant ||
+         anPerQuadrant[3] < nMinPointsPerQuadrant) )
+    {
+        *pdfValue = poOptions->dfNoDataValue;
+    }
+    else if( n < poOptions->nMinPoints || dfDenominator == 0.0 )
     {
         *pdfValue = poOptions->dfNoDataValue;
     }
@@ -532,7 +677,7 @@ GDALGridMovingAverage( const void *poOptionsIn, GUInt32 nPoints,
     const double dfR12Square = dfRadius1Square * dfRadius2Square;
 
     GDALGridExtraParameters* psExtraParams = static_cast<GDALGridExtraParameters *>(hExtraParamsIn);
-    CPLQuadTree* phQuadTree = psExtraParams->hQuadTree;
+    const CPLQuadTree* phQuadTree = psExtraParams->hQuadTree;
 
     // Compute coefficients for coordinate system rotation.
     const double dfAngle = TO_RADIANS * poOptions->dfAngle;
@@ -602,6 +747,131 @@ GDALGridMovingAverage( const void *poOptionsIn, GUInt32 nPoints,
     else
     {
         *pdfValue = dfAccumulator / n;
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                 GDALGridMovingAveragePerQuadrant()                   */
+/************************************************************************/
+
+/**
+ * Moving average, with a per-quadrant search logic.
+ */
+static CPLErr GDALGridMovingAveragePerQuadrant(
+    const void *poOptionsIn, GUInt32 /*nPoints*/,
+    const double *padfX, const double *padfY,
+    const double *padfZ,
+    double dfXPoint, double dfYPoint,
+    double *pdfValue,
+    void* hExtraParamsIn )
+{
+    const GDALGridMovingAverageOptions * const poOptions =
+        static_cast<const GDALGridMovingAverageOptions *>(poOptionsIn);
+    const double dfRadius1Square = poOptions->dfRadius1 * poOptions->dfRadius1;
+    const double dfRadius2Square = poOptions->dfRadius2 * poOptions->dfRadius2;
+    const double dfR12Square = dfRadius1Square * dfRadius2Square;
+
+    const GUInt32 nMaxPoints = poOptions->nMaxPoints;
+    const GUInt32 nMinPointsPerQuadrant = poOptions->nMinPointsPerQuadrant;
+    const GUInt32 nMaxPointsPerQuadrant = poOptions->nMaxPointsPerQuadrant;
+
+    GDALGridExtraParameters* psExtraParams =
+        static_cast<GDALGridExtraParameters *>(hExtraParamsIn);
+    const CPLQuadTree* phQuadTree = psExtraParams->hQuadTree;
+    CPLAssert(phQuadTree);
+
+    std::multimap<double, double> oMapDistanceToZValuesPerQuadrant[4];
+
+    const double dfSearchRadius = std::max(poOptions->dfRadius1, poOptions->dfRadius2);
+    CPLRectObj sAoi;
+    sAoi.minx = dfXPoint - dfSearchRadius;
+    sAoi.miny = dfYPoint - dfSearchRadius;
+    sAoi.maxx = dfXPoint + dfSearchRadius;
+    sAoi.maxy = dfYPoint + dfSearchRadius;
+    int nFeatureCount = 0;
+    GDALGridPoint** papsPoints = reinterpret_cast<GDALGridPoint **>(
+            CPLQuadTreeSearch(phQuadTree, &sAoi, &nFeatureCount) );
+    if( nFeatureCount != 0 )
+    {
+        for( int k = 0; k < nFeatureCount; k++ )
+        {
+            const int i = papsPoints[k]->i;
+            const double dfRX = padfX[i] - dfXPoint;
+            const double dfRY = padfY[i] - dfYPoint;
+            const double dfRXSquare = dfRX * dfRX;
+            const double dfRYSquare = dfRY * dfRY;
+
+            if( dfRadius2Square * dfRXSquare + dfRadius1Square * dfRYSquare <= dfR12Square )
+            {
+                const int iQuadrant =
+                    ((dfRX >= 0) ? 1 : 0) |
+                    (((dfRY >= 0) ? 1 : 0) << 1);
+                oMapDistanceToZValuesPerQuadrant[iQuadrant].insert(
+                    std::make_pair(dfRXSquare + dfRYSquare, padfZ[i]) );
+            }
+        }
+    }
+    CPLFree(papsPoints);
+
+
+    std::multimap<double, double>::iterator aoIter[] = {
+        oMapDistanceToZValuesPerQuadrant[0].begin(),
+        oMapDistanceToZValuesPerQuadrant[1].begin(),
+        oMapDistanceToZValuesPerQuadrant[2].begin(),
+        oMapDistanceToZValuesPerQuadrant[3].begin(),
+    };
+    constexpr int ALL_QUADRANT_FLAGS = 1 + 2 + 4 + 8;
+
+    // Examine all "neighbors" within the radius (sorted by distance via the
+    // multimap), and use the closest n points based on distance until the max
+    // is reached.
+    // Do that by fetching the nearest point in quadrant 0, then the nearest
+    // point in quadrant 1, 2 and 3, and starting againg with the next nearest
+    // point in quarant 0, etc.
+    int nQuadrantIterFinishedFlag = 0;
+    GUInt32 anPerQuadrant[4] = {0};
+    double dfNominator = 0.0;
+    GUInt32 n = 0;
+    for( int iQuadrant = 0; /* true */ ; iQuadrant = (iQuadrant + 1) % 4 )
+    {
+        if( aoIter[iQuadrant] == oMapDistanceToZValuesPerQuadrant[iQuadrant].end() ||
+            (nMaxPointsPerQuadrant > 0 && anPerQuadrant[iQuadrant] >= nMaxPointsPerQuadrant) )
+        {
+            nQuadrantIterFinishedFlag |= 1 << iQuadrant;
+            if( nQuadrantIterFinishedFlag == ALL_QUADRANT_FLAGS )
+                break;
+            continue;
+        }
+
+        const double dfZ = aoIter[iQuadrant]->second;
+        ++ aoIter[iQuadrant];
+
+        dfNominator += dfZ;
+        n++;
+        anPerQuadrant[iQuadrant] ++;
+        if( nMaxPoints > 0 && n >= nMaxPoints )
+        {
+            break;
+        }
+    }
+
+    if( nMinPointsPerQuadrant > 0 &&
+        (anPerQuadrant[0] < nMinPointsPerQuadrant ||
+         anPerQuadrant[1] < nMinPointsPerQuadrant ||
+         anPerQuadrant[2] < nMinPointsPerQuadrant ||
+         anPerQuadrant[3] < nMinPointsPerQuadrant) )
+    {
+        *pdfValue = poOptions->dfNoDataValue;
+    }
+    else if( n < poOptions->nMinPoints || n == 0 )
+    {
+        *pdfValue = poOptions->dfNoDataValue;
+    }
+    else
+    {
+        *pdfValue = dfNominator / n;
     }
 
     return CE_None;
@@ -888,6 +1158,160 @@ GDALGridDataMetricMinimum( const void *poOptionsIn, GUInt32 nPoints,
 }
 
 /************************************************************************/
+/*           GDALGridDataMetricMinimumOrMaximumPerQuadrant()            */
+/************************************************************************/
+
+/**
+ * Minimum or maximum data value (data metric), with a per-quadrant search logic.
+ */
+template<bool IS_MIN>
+static CPLErr
+GDALGridDataMetricMinimumOrMaximumPerQuadrant( const void *poOptionsIn,
+                           const double *padfX, const double *padfY,
+                           const double *padfZ,
+                           double dfXPoint, double dfYPoint, double *pdfValue,
+                           void * hExtraParamsIn )
+{
+    const GDALGridDataMetricsOptions *const poOptions =
+        static_cast<const GDALGridDataMetricsOptions *>(poOptionsIn);
+
+    // Pre-compute search ellipse parameters.
+    const double dfRadius1Square = poOptions->dfRadius1 * poOptions->dfRadius1;
+    const double dfRadius2Square = poOptions->dfRadius2 * poOptions->dfRadius2;
+    const double dfSearchRadius = std::max(poOptions->dfRadius1, poOptions->dfRadius2);
+    const double dfR12Square = dfRadius1Square * dfRadius2Square;
+
+    // const GUInt32 nMaxPoints = poOptions->nMaxPoints;
+    const GUInt32 nMinPointsPerQuadrant = poOptions->nMinPointsPerQuadrant;
+    const GUInt32 nMaxPointsPerQuadrant = poOptions->nMaxPointsPerQuadrant;
+
+    GDALGridExtraParameters* psExtraParams = static_cast<GDALGridExtraParameters *>(hExtraParamsIn);
+    const CPLQuadTree* phQuadTree = psExtraParams->hQuadTree;
+    CPLAssert(phQuadTree);
+
+    CPLRectObj sAoi;
+    sAoi.minx = dfXPoint - dfSearchRadius;
+    sAoi.miny = dfYPoint - dfSearchRadius;
+    sAoi.maxx = dfXPoint + dfSearchRadius;
+    sAoi.maxy = dfYPoint + dfSearchRadius;
+    int nFeatureCount = 0;
+    GDALGridPoint** papsPoints = reinterpret_cast<GDALGridPoint **>(
+            CPLQuadTreeSearch(phQuadTree, &sAoi, &nFeatureCount) );
+    std::multimap<double, double> oMapDistanceToZValuesPerQuadrant[4];
+
+    if( nFeatureCount != 0 )
+    {
+        for( int k = 0; k < nFeatureCount; k++ )
+        {
+            const int i = papsPoints[k]->i;
+            const double dfRX = padfX[i] - dfXPoint;
+            const double dfRY = padfY[i] - dfYPoint;
+            const double dfRXSquare = dfRX * dfRX;
+            const double dfRYSquare = dfRY * dfRY;
+
+            if( dfRadius2Square * dfRXSquare + dfRadius1Square * dfRYSquare <= dfR12Square )
+            {
+                const int iQuadrant =
+                    ((dfRX >= 0) ? 1 : 0) |
+                    (((dfRY >= 0) ? 1 : 0) << 1);
+                oMapDistanceToZValuesPerQuadrant[iQuadrant].insert(
+                    std::make_pair(dfRXSquare + dfRYSquare, padfZ[i]) );
+            }
+        }
+    }
+    CPLFree(papsPoints);
+
+
+    std::multimap<double, double>::iterator aoIter[] = {
+        oMapDistanceToZValuesPerQuadrant[0].begin(),
+        oMapDistanceToZValuesPerQuadrant[1].begin(),
+        oMapDistanceToZValuesPerQuadrant[2].begin(),
+        oMapDistanceToZValuesPerQuadrant[3].begin(),
+    };
+    constexpr int ALL_QUADRANT_FLAGS = 1 + 2 + 4 + 8;
+
+    // Examine all "neighbors" within the radius (sorted by distance via the
+    // multimap), and use the closest n points based on distance until the max
+    // is reached.
+    // Do that by fetching the nearest point in quadrant 0, then the nearest
+    // point in quadrant 1, 2 and 3, and starting againg with the next nearest
+    // point in quarant 0, etc.
+    int nQuadrantIterFinishedFlag = 0;
+    GUInt32 anPerQuadrant[4] = {0};
+    double dfExtremum = IS_MIN ? std::numeric_limits<double>::max() : -std::numeric_limits<double>::max();
+    GUInt32 n = 0;
+    for( int iQuadrant = 0; /* true */ ; iQuadrant = (iQuadrant + 1) % 4 )
+    {
+        if( aoIter[iQuadrant] == oMapDistanceToZValuesPerQuadrant[iQuadrant].end() ||
+            (nMaxPointsPerQuadrant > 0 && anPerQuadrant[iQuadrant] >= nMaxPointsPerQuadrant) )
+        {
+            nQuadrantIterFinishedFlag |= 1 << iQuadrant;
+            if( nQuadrantIterFinishedFlag == ALL_QUADRANT_FLAGS )
+                break;
+            continue;
+        }
+
+        const double dfZ = aoIter[iQuadrant]->second;
+        ++ aoIter[iQuadrant];
+
+        if( IS_MIN )
+        {
+            if( dfExtremum > dfZ )
+                dfExtremum = dfZ;
+        }
+        else
+        {
+            if( dfExtremum < dfZ )
+                dfExtremum = dfZ;
+        }
+        n++;
+        anPerQuadrant[iQuadrant] ++;
+        /*if( nMaxPoints > 0 && n >= nMaxPoints )
+        {
+            break;
+        }*/
+    }
+
+    if( nMinPointsPerQuadrant > 0 &&
+        (anPerQuadrant[0] < nMinPointsPerQuadrant ||
+         anPerQuadrant[1] < nMinPointsPerQuadrant ||
+         anPerQuadrant[2] < nMinPointsPerQuadrant ||
+         anPerQuadrant[3] < nMinPointsPerQuadrant) )
+    {
+        *pdfValue = poOptions->dfNoDataValue;
+    }
+    else if( n < poOptions->nMinPoints || n == 0 )
+    {
+        *pdfValue = poOptions->dfNoDataValue;
+    }
+    else
+    {
+        *pdfValue = dfExtremum;
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*               GDALGridDataMetricMinimumPerQuadrant()                 */
+/************************************************************************/
+
+/**
+ * Minimum data value (data metric), with a per-quadrant search logic.
+ */
+static CPLErr
+GDALGridDataMetricMinimumPerQuadrant( const void *poOptionsIn, GUInt32 /* nPoints */,
+                           const double *padfX, const double *padfY,
+                           const double *padfZ,
+                           double dfXPoint, double dfYPoint, double *pdfValue,
+                           void * hExtraParamsIn )
+{
+    return GDALGridDataMetricMinimumOrMaximumPerQuadrant</*IS_MIN=*/true>(
+        poOptionsIn, padfX, padfY, padfZ, dfXPoint, dfYPoint, pdfValue,
+        hExtraParamsIn);
+}
+
+/************************************************************************/
 /*                      GDALGridDataMetricMaximum()                     */
 /************************************************************************/
 
@@ -1021,6 +1445,25 @@ GDALGridDataMetricMaximum( const void *poOptionsIn, GUInt32 nPoints,
     }
 
     return CE_None;
+}
+
+/************************************************************************/
+/*               GDALGridDataMetricMaximumPerQuadrant()                 */
+/************************************************************************/
+
+/**
+ * Maximum data value (data metric), with a per-quadrant search logic.
+ */
+static CPLErr
+GDALGridDataMetricMaximumPerQuadrant( const void *poOptionsIn, GUInt32 /* nPoints */,
+                           const double *padfX, const double *padfY,
+                           const double *padfZ,
+                           double dfXPoint, double dfYPoint, double *pdfValue,
+                           void * hExtraParamsIn )
+{
+    return GDALGridDataMetricMinimumOrMaximumPerQuadrant</*IS_MIN=*/false>(
+        poOptionsIn, padfX, padfY, padfZ, dfXPoint, dfYPoint, pdfValue,
+        hExtraParamsIn);
 }
 
 /************************************************************************/
@@ -1163,6 +1606,136 @@ GDALGridDataMetricRange( const void *poOptionsIn, GUInt32 nPoints,
     return CE_None;
 }
 
+
+/************************************************************************/
+/*                  GDALGridDataMetricRangePerQuadrant()                */
+/************************************************************************/
+
+/**
+ * Data range (data metric), with a per-quadrant search logic.
+ */
+static CPLErr
+GDALGridDataMetricRangePerQuadrant( const void *poOptionsIn, GUInt32 /* nPoints */,
+                           const double *padfX, const double *padfY,
+                           const double *padfZ,
+                           double dfXPoint, double dfYPoint, double *pdfValue,
+                           void * hExtraParamsIn )
+{
+    const GDALGridDataMetricsOptions *const poOptions =
+        static_cast<const GDALGridDataMetricsOptions *>(poOptionsIn);
+
+    // Pre-compute search ellipse parameters.
+    const double dfRadius1Square = poOptions->dfRadius1 * poOptions->dfRadius1;
+    const double dfRadius2Square = poOptions->dfRadius2 * poOptions->dfRadius2;
+    const double dfSearchRadius = std::max(poOptions->dfRadius1, poOptions->dfRadius2);
+    const double dfR12Square = dfRadius1Square * dfRadius2Square;
+
+    // const GUInt32 nMaxPoints = poOptions->nMaxPoints;
+    const GUInt32 nMinPointsPerQuadrant = poOptions->nMinPointsPerQuadrant;
+    const GUInt32 nMaxPointsPerQuadrant = poOptions->nMaxPointsPerQuadrant;
+
+    GDALGridExtraParameters* psExtraParams = static_cast<GDALGridExtraParameters *>(hExtraParamsIn);
+    const CPLQuadTree* phQuadTree = psExtraParams->hQuadTree;
+    CPLAssert(phQuadTree);
+
+    CPLRectObj sAoi;
+    sAoi.minx = dfXPoint - dfSearchRadius;
+    sAoi.miny = dfYPoint - dfSearchRadius;
+    sAoi.maxx = dfXPoint + dfSearchRadius;
+    sAoi.maxy = dfYPoint + dfSearchRadius;
+    int nFeatureCount = 0;
+    GDALGridPoint** papsPoints = reinterpret_cast<GDALGridPoint **>(
+            CPLQuadTreeSearch(phQuadTree, &sAoi, &nFeatureCount) );
+    std::multimap<double, double> oMapDistanceToZValuesPerQuadrant[4];
+
+    if( nFeatureCount != 0 )
+    {
+        for( int k = 0; k < nFeatureCount; k++ )
+        {
+            const int i = papsPoints[k]->i;
+            const double dfRX = padfX[i] - dfXPoint;
+            const double dfRY = padfY[i] - dfYPoint;
+            const double dfRXSquare = dfRX * dfRX;
+            const double dfRYSquare = dfRY * dfRY;
+
+            if( dfRadius2Square * dfRXSquare + dfRadius1Square * dfRYSquare <= dfR12Square )
+            {
+                const int iQuadrant =
+                    ((dfRX >= 0) ? 1 : 0) |
+                    (((dfRY >= 0) ? 1 : 0) << 1);
+                oMapDistanceToZValuesPerQuadrant[iQuadrant].insert(
+                    std::make_pair(dfRXSquare + dfRYSquare, padfZ[i]) );
+            }
+        }
+    }
+    CPLFree(papsPoints);
+
+
+    std::multimap<double, double>::iterator aoIter[] = {
+        oMapDistanceToZValuesPerQuadrant[0].begin(),
+        oMapDistanceToZValuesPerQuadrant[1].begin(),
+        oMapDistanceToZValuesPerQuadrant[2].begin(),
+        oMapDistanceToZValuesPerQuadrant[3].begin(),
+    };
+    constexpr int ALL_QUADRANT_FLAGS = 1 + 2 + 4 + 8;
+
+    // Examine all "neighbors" within the radius (sorted by distance via the
+    // multimap), and use the closest n points based on distance until the max
+    // is reached.
+    // Do that by fetching the nearest point in quadrant 0, then the nearest
+    // point in quadrant 1, 2 and 3, and starting againg with the next nearest
+    // point in quarant 0, etc.
+    int nQuadrantIterFinishedFlag = 0;
+    GUInt32 anPerQuadrant[4] = {0};
+    double dfMaximumValue = -std::numeric_limits<double>::max();
+    double dfMinimumValue = std::numeric_limits<double>::max();
+    GUInt32 n = 0;
+    for( int iQuadrant = 0; /* true */ ; iQuadrant = (iQuadrant + 1) % 4 )
+    {
+        if( aoIter[iQuadrant] == oMapDistanceToZValuesPerQuadrant[iQuadrant].end() ||
+            (nMaxPointsPerQuadrant > 0 && anPerQuadrant[iQuadrant] >= nMaxPointsPerQuadrant) )
+        {
+            nQuadrantIterFinishedFlag |= 1 << iQuadrant;
+            if( nQuadrantIterFinishedFlag == ALL_QUADRANT_FLAGS )
+                break;
+            continue;
+        }
+
+        const double dfZ = aoIter[iQuadrant]->second;
+        ++ aoIter[iQuadrant];
+
+        if( dfMinimumValue > dfZ )
+            dfMinimumValue = dfZ;
+        if( dfMaximumValue < dfZ )
+            dfMaximumValue = dfZ;
+        n++;
+        anPerQuadrant[iQuadrant] ++;
+        /*if( nMaxPoints > 0 && n >= nMaxPoints )
+        {
+            break;
+        }*/
+    }
+
+    if( nMinPointsPerQuadrant > 0 &&
+        (anPerQuadrant[0] < nMinPointsPerQuadrant ||
+         anPerQuadrant[1] < nMinPointsPerQuadrant ||
+         anPerQuadrant[2] < nMinPointsPerQuadrant ||
+         anPerQuadrant[3] < nMinPointsPerQuadrant) )
+    {
+        *pdfValue = poOptions->dfNoDataValue;
+    }
+    else if( n < poOptions->nMinPoints || n == 0 )
+    {
+        *pdfValue = poOptions->dfNoDataValue;
+    }
+    else
+    {
+        *pdfValue = dfMaximumValue - dfMinimumValue;
+    }
+
+    return CE_None;
+}
+
 /************************************************************************/
 /*                       GDALGridDataMetricCount()                      */
 /************************************************************************/
@@ -1280,6 +1853,129 @@ GDALGridDataMetricCount( const void *poOptionsIn, GUInt32 nPoints,
     }
 
     if( n < poOptions->nMinPoints )
+    {
+        *pdfValue = poOptions->dfNoDataValue;
+    }
+    else
+    {
+        *pdfValue = static_cast<double>(n);
+    }
+
+    return CE_None;
+}
+
+
+/************************************************************************/
+/*                  GDALGridDataMetricCountPerQuadrant()                */
+/************************************************************************/
+
+/**
+ * Number of data points (data metric), with a per-quadrant search logic.
+ */
+static CPLErr
+GDALGridDataMetricCountPerQuadrant( const void *poOptionsIn, GUInt32 /* nPoints */,
+                           const double *padfX, const double *padfY,
+                           const double *padfZ,
+                           double dfXPoint, double dfYPoint, double *pdfValue,
+                           void * hExtraParamsIn )
+{
+    const GDALGridDataMetricsOptions *const poOptions =
+        static_cast<const GDALGridDataMetricsOptions *>(poOptionsIn);
+
+    // Pre-compute search ellipse parameters.
+    const double dfRadius1Square = poOptions->dfRadius1 * poOptions->dfRadius1;
+    const double dfRadius2Square = poOptions->dfRadius2 * poOptions->dfRadius2;
+    const double dfSearchRadius = std::max(poOptions->dfRadius1, poOptions->dfRadius2);
+    const double dfR12Square = dfRadius1Square * dfRadius2Square;
+
+    // const GUInt32 nMaxPoints = poOptions->nMaxPoints;
+    const GUInt32 nMinPointsPerQuadrant = poOptions->nMinPointsPerQuadrant;
+    const GUInt32 nMaxPointsPerQuadrant = poOptions->nMaxPointsPerQuadrant;
+
+    GDALGridExtraParameters* psExtraParams = static_cast<GDALGridExtraParameters *>(hExtraParamsIn);
+    const CPLQuadTree* phQuadTree = psExtraParams->hQuadTree;
+    CPLAssert(phQuadTree);
+
+    CPLRectObj sAoi;
+    sAoi.minx = dfXPoint - dfSearchRadius;
+    sAoi.miny = dfYPoint - dfSearchRadius;
+    sAoi.maxx = dfXPoint + dfSearchRadius;
+    sAoi.maxy = dfYPoint + dfSearchRadius;
+    int nFeatureCount = 0;
+    GDALGridPoint** papsPoints = reinterpret_cast<GDALGridPoint **>(
+            CPLQuadTreeSearch(phQuadTree, &sAoi, &nFeatureCount) );
+    std::multimap<double, double> oMapDistanceToZValuesPerQuadrant[4];
+
+    if( nFeatureCount != 0 )
+    {
+        for( int k = 0; k < nFeatureCount; k++ )
+        {
+            const int i = papsPoints[k]->i;
+            const double dfRX = padfX[i] - dfXPoint;
+            const double dfRY = padfY[i] - dfYPoint;
+            const double dfRXSquare = dfRX * dfRX;
+            const double dfRYSquare = dfRY * dfRY;
+
+            if( dfRadius2Square * dfRXSquare + dfRadius1Square * dfRYSquare <= dfR12Square )
+            {
+                const int iQuadrant =
+                    ((dfRX >= 0) ? 1 : 0) |
+                    (((dfRY >= 0) ? 1 : 0) << 1);
+                oMapDistanceToZValuesPerQuadrant[iQuadrant].insert(
+                    std::make_pair(dfRXSquare + dfRYSquare, padfZ[i]) );
+            }
+        }
+    }
+    CPLFree(papsPoints);
+
+
+    std::multimap<double, double>::iterator aoIter[] = {
+        oMapDistanceToZValuesPerQuadrant[0].begin(),
+        oMapDistanceToZValuesPerQuadrant[1].begin(),
+        oMapDistanceToZValuesPerQuadrant[2].begin(),
+        oMapDistanceToZValuesPerQuadrant[3].begin(),
+    };
+    constexpr int ALL_QUADRANT_FLAGS = 1 + 2 + 4 + 8;
+
+    // Examine all "neighbors" within the radius (sorted by distance via the
+    // multimap), and use the closest n points based on distance until the max
+    // is reached.
+    // Do that by fetching the nearest point in quadrant 0, then the nearest
+    // point in quadrant 1, 2 and 3, and starting againg with the next nearest
+    // point in quarant 0, etc.
+    int nQuadrantIterFinishedFlag = 0;
+    GUInt32 anPerQuadrant[4] = {0};
+    GUInt32 n = 0;
+    for( int iQuadrant = 0; /* true */ ; iQuadrant = (iQuadrant + 1) % 4 )
+    {
+        if( aoIter[iQuadrant] == oMapDistanceToZValuesPerQuadrant[iQuadrant].end() ||
+            (nMaxPointsPerQuadrant > 0 && anPerQuadrant[iQuadrant] >= nMaxPointsPerQuadrant) )
+        {
+            nQuadrantIterFinishedFlag |= 1 << iQuadrant;
+            if( nQuadrantIterFinishedFlag == ALL_QUADRANT_FLAGS )
+                break;
+            continue;
+        }
+
+        ++ aoIter[iQuadrant];
+
+        n++;
+        anPerQuadrant[iQuadrant] ++;
+        /*if( nMaxPoints > 0 && n >= nMaxPoints )
+        {
+            break;
+        }*/
+    }
+
+    if( nMinPointsPerQuadrant > 0 &&
+        (anPerQuadrant[0] < nMinPointsPerQuadrant ||
+         anPerQuadrant[1] < nMinPointsPerQuadrant ||
+         anPerQuadrant[2] < nMinPointsPerQuadrant ||
+         anPerQuadrant[3] < nMinPointsPerQuadrant) )
+    {
+        *pdfValue = poOptions->dfNoDataValue;
+    }
+    else if( n < poOptions->nMinPoints )
     {
         *pdfValue = poOptions->dfNoDataValue;
     }
@@ -1428,7 +2124,131 @@ GDALGridDataMetricAverageDistance( const void *poOptionsIn, GUInt32 nPoints,
 }
 
 /************************************************************************/
-/*                 GDALGridDataMetricAverageDistance()                  */
+/*           GDALGridDataMetricAverageDistancePerQuadrant()             */
+/************************************************************************/
+
+/**
+ * Average distance (data metric), with a per-quadrant search logic.
+ */
+static CPLErr
+GDALGridDataMetricAverageDistancePerQuadrant( const void *poOptionsIn, GUInt32 /* nPoints */,
+                           const double *padfX, const double *padfY,
+                           const double *padfZ,
+                           double dfXPoint, double dfYPoint, double *pdfValue,
+                           void * hExtraParamsIn )
+{
+    const GDALGridDataMetricsOptions *const poOptions =
+        static_cast<const GDALGridDataMetricsOptions *>(poOptionsIn);
+
+    // Pre-compute search ellipse parameters.
+    const double dfRadius1Square = poOptions->dfRadius1 * poOptions->dfRadius1;
+    const double dfRadius2Square = poOptions->dfRadius2 * poOptions->dfRadius2;
+    const double dfSearchRadius = std::max(poOptions->dfRadius1, poOptions->dfRadius2);
+    const double dfR12Square = dfRadius1Square * dfRadius2Square;
+
+    // const GUInt32 nMaxPoints = poOptions->nMaxPoints;
+    const GUInt32 nMinPointsPerQuadrant = poOptions->nMinPointsPerQuadrant;
+    const GUInt32 nMaxPointsPerQuadrant = poOptions->nMaxPointsPerQuadrant;
+
+    GDALGridExtraParameters* psExtraParams = static_cast<GDALGridExtraParameters *>(hExtraParamsIn);
+    const CPLQuadTree* phQuadTree = psExtraParams->hQuadTree;
+    CPLAssert(phQuadTree);
+
+    CPLRectObj sAoi;
+    sAoi.minx = dfXPoint - dfSearchRadius;
+    sAoi.miny = dfYPoint - dfSearchRadius;
+    sAoi.maxx = dfXPoint + dfSearchRadius;
+    sAoi.maxy = dfYPoint + dfSearchRadius;
+    int nFeatureCount = 0;
+    GDALGridPoint** papsPoints = reinterpret_cast<GDALGridPoint **>(
+            CPLQuadTreeSearch(phQuadTree, &sAoi, &nFeatureCount) );
+    std::multimap<double, double> oMapDistanceToZValuesPerQuadrant[4];
+
+    if( nFeatureCount != 0 )
+    {
+        for( int k = 0; k < nFeatureCount; k++ )
+        {
+            const int i = papsPoints[k]->i;
+            const double dfRX = padfX[i] - dfXPoint;
+            const double dfRY = padfY[i] - dfYPoint;
+            const double dfRXSquare = dfRX * dfRX;
+            const double dfRYSquare = dfRY * dfRY;
+
+            if( dfRadius2Square * dfRXSquare + dfRadius1Square * dfRYSquare <= dfR12Square )
+            {
+                const int iQuadrant =
+                    ((dfRX >= 0) ? 1 : 0) |
+                    (((dfRY >= 0) ? 1 : 0) << 1);
+                oMapDistanceToZValuesPerQuadrant[iQuadrant].insert(
+                    std::make_pair(dfRXSquare + dfRYSquare, padfZ[i]) );
+            }
+        }
+    }
+    CPLFree(papsPoints);
+
+
+    std::multimap<double, double>::iterator aoIter[] = {
+        oMapDistanceToZValuesPerQuadrant[0].begin(),
+        oMapDistanceToZValuesPerQuadrant[1].begin(),
+        oMapDistanceToZValuesPerQuadrant[2].begin(),
+        oMapDistanceToZValuesPerQuadrant[3].begin(),
+    };
+    constexpr int ALL_QUADRANT_FLAGS = 1 + 2 + 4 + 8;
+
+    // Examine all "neighbors" within the radius (sorted by distance via the
+    // multimap), and use the closest n points based on distance until the max
+    // is reached.
+    // Do that by fetching the nearest point in quadrant 0, then the nearest
+    // point in quadrant 1, 2 and 3, and starting againg with the next nearest
+    // point in quarant 0, etc.
+    int nQuadrantIterFinishedFlag = 0;
+    GUInt32 anPerQuadrant[4] = {0};
+    GUInt32 n = 0;
+    double dfAccumulator = 0;
+    for( int iQuadrant = 0; /* true */ ; iQuadrant = (iQuadrant + 1) % 4 )
+    {
+        if( aoIter[iQuadrant] == oMapDistanceToZValuesPerQuadrant[iQuadrant].end() ||
+            (nMaxPointsPerQuadrant > 0 && anPerQuadrant[iQuadrant] >= nMaxPointsPerQuadrant) )
+        {
+            nQuadrantIterFinishedFlag |= 1 << iQuadrant;
+            if( nQuadrantIterFinishedFlag == ALL_QUADRANT_FLAGS )
+                break;
+            continue;
+        }
+
+        dfAccumulator += sqrt( aoIter[iQuadrant]->first );
+        ++ aoIter[iQuadrant];
+
+        n++;
+        anPerQuadrant[iQuadrant] ++;
+        /*if( nMaxPoints > 0 && n >= nMaxPoints )
+        {
+            break;
+        }*/
+    }
+
+    if( nMinPointsPerQuadrant > 0 &&
+        (anPerQuadrant[0] < nMinPointsPerQuadrant ||
+         anPerQuadrant[1] < nMinPointsPerQuadrant ||
+         anPerQuadrant[2] < nMinPointsPerQuadrant ||
+         anPerQuadrant[3] < nMinPointsPerQuadrant) )
+    {
+        *pdfValue = poOptions->dfNoDataValue;
+    }
+    else if( n < poOptions->nMinPoints || n == 0 )
+    {
+        *pdfValue = poOptions->dfNoDataValue;
+    }
+    else
+    {
+        *pdfValue = dfAccumulator / n;
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                 GDALGridDataMetricAverageDistancePts()               */
 /************************************************************************/
 
 /**
@@ -2091,8 +2911,16 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                    sizeof(
                        GDALGridInverseDistanceToAPowerNearestNeighborOptions));
 
-            pfnGDALGridMethod = GDALGridInverseDistanceToAPowerNearestNeighbor;
-            bCreateQuadTree = TRUE;
+            if( poOptionsOld->nMinPointsPerQuadrant != 0 ||
+                poOptionsOld->nMaxPointsPerQuadrant != 0 )
+            {
+                pfnGDALGridMethod = GDALGridInverseDistanceToAPowerNearestNeighborPerQuadrant;
+            }
+            else
+            {
+                pfnGDALGridMethod = GDALGridInverseDistanceToAPowerNearestNeighbor;
+            }
+            bCreateQuadTree = true;
             break;
         }
         case GGA_MovingAverage:
@@ -2110,10 +2938,19 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                    poOptions,
                    sizeof(GDALGridMovingAverageOptions));
 
-            pfnGDALGridMethod = GDALGridMovingAverage;
-            bCreateQuadTree = (nPoints > nPointCountThreshold &&
-                poOptionsOld->dfAngle == 0.0 &&
-                (poOptionsOld->dfRadius1 > 0.0 || poOptionsOld->dfRadius2 > 0.0));
+            if( poOptionsOld->nMinPointsPerQuadrant != 0 ||
+                poOptionsOld->nMaxPointsPerQuadrant != 0 )
+            {
+                pfnGDALGridMethod = GDALGridMovingAveragePerQuadrant;
+                bCreateQuadTree = true;
+            }
+            else
+            {
+                pfnGDALGridMethod = GDALGridMovingAverage;
+                bCreateQuadTree = (nPoints > nPointCountThreshold &&
+                    poOptionsOld->dfAngle == 0.0 &&
+                    (poOptionsOld->dfRadius1 > 0.0 || poOptionsOld->dfRadius2 > 0.0));
+            }
             break;
         }
         case GGA_NearestNeighbor:
@@ -2149,10 +2986,19 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
             poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
-            pfnGDALGridMethod = GDALGridDataMetricMinimum;
-            bCreateQuadTree = (nPoints > nPointCountThreshold &&
-                poOptionsOld->dfAngle == 0.0 &&
-                (poOptionsOld->dfRadius1 > 0.0 || poOptionsOld->dfRadius2 > 0.0));
+            if( poOptionsOld->nMinPointsPerQuadrant != 0 ||
+                poOptionsOld->nMaxPointsPerQuadrant != 0 )
+            {
+                pfnGDALGridMethod = GDALGridDataMetricMinimumPerQuadrant;
+                bCreateQuadTree = true;
+            }
+            else
+            {
+                pfnGDALGridMethod = GDALGridDataMetricMinimum;
+                bCreateQuadTree = (nPoints > nPointCountThreshold &&
+                    poOptionsOld->dfAngle == 0.0 &&
+                    (poOptionsOld->dfRadius1 > 0.0 || poOptionsOld->dfRadius2 > 0.0));
+            }
             break;
         }
         case GGA_MetricMaximum:
@@ -2168,10 +3014,20 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
             poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
-            pfnGDALGridMethod = GDALGridDataMetricMaximum;
-            bCreateQuadTree = (nPoints > nPointCountThreshold &&
-                poOptionsOld->dfAngle == 0.0 &&
-                (poOptionsOld->dfRadius1 > 0.0 || poOptionsOld->dfRadius2 > 0.0));
+            if( poOptionsOld->nMinPointsPerQuadrant != 0 ||
+                poOptionsOld->nMaxPointsPerQuadrant != 0 )
+            {
+                pfnGDALGridMethod = GDALGridDataMetricMaximumPerQuadrant;
+                bCreateQuadTree = true;
+            }
+            else
+            {
+                pfnGDALGridMethod = GDALGridDataMetricMaximum;
+                bCreateQuadTree = (nPoints > nPointCountThreshold &&
+                    poOptionsOld->dfAngle == 0.0 &&
+                    (poOptionsOld->dfRadius1 > 0.0 || poOptionsOld->dfRadius2 > 0.0));
+            }
+
             break;
         }
         case GGA_MetricRange:
@@ -2187,10 +3043,20 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
             poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
-            pfnGDALGridMethod = GDALGridDataMetricRange;
-            bCreateQuadTree = (nPoints > nPointCountThreshold &&
-                poOptionsOld->dfAngle == 0.0 &&
-                (poOptionsOld->dfRadius1 > 0.0 || poOptionsOld->dfRadius2 > 0.0));
+            if( poOptionsOld->nMinPointsPerQuadrant != 0 ||
+                poOptionsOld->nMaxPointsPerQuadrant != 0 )
+            {
+                pfnGDALGridMethod = GDALGridDataMetricRangePerQuadrant;
+                bCreateQuadTree = true;
+            }
+            else
+            {
+                pfnGDALGridMethod = GDALGridDataMetricRange;
+                bCreateQuadTree = (nPoints > nPointCountThreshold &&
+                    poOptionsOld->dfAngle == 0.0 &&
+                    (poOptionsOld->dfRadius1 > 0.0 || poOptionsOld->dfRadius2 > 0.0));
+            }
+
             break;
         }
         case GGA_MetricCount:
@@ -2206,10 +3072,20 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
             poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
-            pfnGDALGridMethod = GDALGridDataMetricCount;
-            bCreateQuadTree = (nPoints > nPointCountThreshold &&
-                poOptionsOld->dfAngle == 0.0 &&
-                (poOptionsOld->dfRadius1 > 0.0 || poOptionsOld->dfRadius2 > 0.0));
+            if( poOptionsOld->nMinPointsPerQuadrant != 0 ||
+                poOptionsOld->nMaxPointsPerQuadrant != 0 )
+            {
+                pfnGDALGridMethod = GDALGridDataMetricCountPerQuadrant;
+                bCreateQuadTree = true;
+            }
+            else
+            {
+                pfnGDALGridMethod = GDALGridDataMetricCount;
+                bCreateQuadTree = (nPoints > nPointCountThreshold &&
+                    poOptionsOld->dfAngle == 0.0 &&
+                    (poOptionsOld->dfRadius1 > 0.0 || poOptionsOld->dfRadius2 > 0.0));
+            }
+
             break;
         }
         case GGA_MetricAverageDistance:
@@ -2225,10 +3101,20 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
             poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
 
-            pfnGDALGridMethod = GDALGridDataMetricAverageDistance;
-            bCreateQuadTree = (nPoints > nPointCountThreshold &&
-                poOptionsOld->dfAngle == 0.0 &&
-                (poOptionsOld->dfRadius1 > 0.0 || poOptionsOld->dfRadius2 > 0.0));
+            if( poOptionsOld->nMinPointsPerQuadrant != 0 ||
+                poOptionsOld->nMaxPointsPerQuadrant != 0 )
+            {
+                pfnGDALGridMethod = GDALGridDataMetricAverageDistancePerQuadrant;
+                bCreateQuadTree = true;
+            }
+            else
+            {
+                pfnGDALGridMethod = GDALGridDataMetricAverageDistance;
+                bCreateQuadTree = (nPoints > nPointCountThreshold &&
+                    poOptionsOld->dfAngle == 0.0 &&
+                    (poOptionsOld->dfRadius1 > 0.0 || poOptionsOld->dfRadius2 > 0.0));
+            }
+
             break;
         }
         case GGA_MetricAverageDistancePts:
@@ -2248,6 +3134,7 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
             bCreateQuadTree = (nPoints > nPointCountThreshold &&
                 poOptionsOld->dfAngle == 0.0 &&
                 (poOptionsOld->dfRadius1 > 0.0 || poOptionsOld->dfRadius2 > 0.0));
+
             break;
         }
         case GGA_Linear:
@@ -2324,7 +3211,8 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     {
         GDALGridContextCreateQuadTree(psContext);
         if( psContext->sExtraParameters.hQuadTree == nullptr &&
-            eAlgorithm == GGA_InverseDistanceToAPowerNearestNeighbor )
+            (eAlgorithm == GGA_InverseDistanceToAPowerNearestNeighbor ||
+             pfnGDALGridMethod == GDALGridMovingAveragePerQuadrant) )
         {
             // shouldn't happen unless memory allocation failure occurs
             GDALGridContextFree(psContext);
@@ -2791,7 +3679,54 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
 
     if( EQUAL(papszParams[0], szAlgNameInvDist) )
     {
-        *peAlgorithm = GGA_InverseDistanceToAPower;
+        if( CSLFetchNameValue( papszParams, "min_points_per_quadrant" ) ||
+            CSLFetchNameValue( papszParams, "max_points_per_quadrant" ) )
+        {
+            // Remap invdist to invdistnn if per quadrant is required
+            if( CSLFetchNameValue(papszParams, "radius") == nullptr )
+            {
+                const double dfRadius1 = CPLAtofM(CSLFetchNameValueDef( papszParams, "radius1", "1" ));
+                const double dfRadius2 = CPLAtofM(CSLFetchNameValueDef( papszParams, "radius2", "1" ));
+                if( dfRadius1 != dfRadius2 )
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "radius1 != radius2 not supported when "
+                             "min_points_per_quadrant and/or max_points_per_quadrant is specified");
+                    CSLDestroy( papszParams );
+                    return CE_Failure;
+                }
+            }
+
+            if( CPLAtofM(CSLFetchNameValueDef( papszParams, "angle", "0" )) != 0 )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "angle != 0 not supported when "
+                         "min_points_per_quadrant and/or max_points_per_quadrant is specified");
+                CSLDestroy( papszParams );
+                return CE_Failure;
+            }
+
+            char** papszNewParams = CSLAddString(nullptr, "invdistnn");
+            if( CSLFetchNameValue(papszParams, "radius") == nullptr )
+            {
+                papszNewParams = CSLSetNameValue(papszNewParams, "radius",
+                                                 CSLFetchNameValueDef( papszParams, "radius1", "1" ));
+            }
+            for( const char* pszItem : { "radius", "power", "smoothing", "max_points", "min_points", "nodata" } )
+            {
+                const char* pszValue = CSLFetchNameValue(papszParams, pszItem);
+                if( pszValue )
+                    papszNewParams = CSLSetNameValue(papszNewParams, pszItem, pszValue);
+            }
+            CSLDestroy(papszParams);
+            papszParams = papszNewParams;
+
+            *peAlgorithm = GGA_InverseDistanceToAPowerNearestNeighbor;
+        }
+        else
+        {
+            *peAlgorithm = GGA_InverseDistanceToAPower;
+        }
     }
     else if( EQUAL(papszParams[0], szAlgNameInvDistNearestNeighbor) )
     {
@@ -2944,10 +3879,18 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
             pszValue = CSLFetchNameValue( papszParams, "nodata" );
             poPowerOpts->dfNoDataValue = pszValue ? CPLAtofM(pszValue) : 0.0;
 
+            pszValue = CSLFetchNameValue( papszParams, "min_points_per_quadrant" );
+            poPowerOpts->nMinPointsPerQuadrant = static_cast<GUInt32>(
+                pszValue ? CPLAtofM(pszValue) : 0);
+
+            pszValue = CSLFetchNameValue( papszParams, "max_points_per_quadrant" );
+            poPowerOpts->nMaxPointsPerQuadrant = static_cast<GUInt32>(
+                pszValue ? CPLAtofM(pszValue) : 0);
+
             static const char* const apszKnownOptions[] = {
                 "power", "smoothing", "radius",
                 "max_points", "min_points", "nodata",
-                nullptr };
+                "min_points_per_quadrant", "max_points_per_quadrant", nullptr };
             papszKnownOptions = apszKnownOptions;
 
             break;
@@ -2984,13 +3927,53 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
             poAverageOpts->nMinPoints = static_cast<GUInt32>(
                 pszValue ? CPLAtofM(pszValue) : 0);
 
+            pszValue = CSLFetchNameValue( papszParams, "max_points" );
+            poAverageOpts->nMaxPoints = static_cast<GUInt32>(
+                pszValue ? CPLAtofM(pszValue) : 0);
+
             pszValue = CSLFetchNameValue( papszParams, "nodata" );
             poAverageOpts->dfNoDataValue = pszValue ? CPLAtofM(pszValue) : 0.0;
 
+            pszValue = CSLFetchNameValue( papszParams, "min_points_per_quadrant" );
+            poAverageOpts->nMinPointsPerQuadrant = static_cast<GUInt32>(
+                pszValue ? CPLAtofM(pszValue) : 0);
+
+            pszValue = CSLFetchNameValue( papszParams, "max_points_per_quadrant" );
+            poAverageOpts->nMaxPointsPerQuadrant = static_cast<GUInt32>(
+                pszValue ? CPLAtofM(pszValue) : 0);
+
+            if( poAverageOpts->nMinPointsPerQuadrant != 0 ||
+                poAverageOpts->nMaxPointsPerQuadrant != 0 )
+            {
+                if( !(poAverageOpts->dfRadius1 > 0) ||
+                    !(poAverageOpts->dfRadius2 > 0) )
+                {
+                    CPLError( CE_Failure, CPLE_IllegalArg,
+                              "Radius value should be strictly positive when "
+                              "per quadrant parameters are specified" );
+                    CSLDestroy( papszParams );
+                    return CE_Failure;
+                }
+                if( poAverageOpts->dfAngle != 0 )
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "angle != 0 not supported when "
+                              "per quadrant parameters are specified" );
+                    CSLDestroy( papszParams );
+                    return CE_Failure;
+                }
+            }
+            else if( poAverageOpts->nMaxPoints > 0 )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "max_points is ignored unless one of "
+                         "min_points_per_quadrant or max_points_per_quadrant is >= 1");
+            }
+
             static const char* const apszKnownOptions[] = {
                 "radius", "radius1", "radius2", "angle",
-                "min_points", "nodata",
-                 nullptr };
+                "min_points", "max_points", "nodata",
+                "min_points_per_quadrant", "max_points_per_quadrant", nullptr };
             papszKnownOptions = apszKnownOptions;
 
             break;
@@ -3073,10 +4056,49 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
             poMetricsOptions->dfNoDataValue =
                 pszValue ? CPLAtofM(pszValue) : 0.0;
 
-	    static const char* const apszKnownOptions[] = {
+            pszValue = CSLFetchNameValue( papszParams, "min_points_per_quadrant" );
+            poMetricsOptions->nMinPointsPerQuadrant = static_cast<GUInt32>(
+                pszValue ? CPLAtofM(pszValue) : 0);
+
+            pszValue = CSLFetchNameValue( papszParams, "max_points_per_quadrant" );
+            poMetricsOptions->nMaxPointsPerQuadrant = static_cast<GUInt32>(
+                pszValue ? CPLAtofM(pszValue) : 0);
+
+            if( poMetricsOptions->nMinPointsPerQuadrant != 0 ||
+                poMetricsOptions->nMaxPointsPerQuadrant != 0 )
+            {
+                if( *peAlgorithm == GGA_MetricAverageDistancePts )
+                {
+                    CPLError( CE_Failure, CPLE_NotSupported,
+                              "Algorithm %s not supported when "
+                              "per quadrant parameters are specified",
+                              szAlgNameAverageDistancePts );
+                    CSLDestroy( papszParams );
+                    return CE_Failure;
+                }
+                if( !(poMetricsOptions->dfRadius1 > 0) ||
+                    !(poMetricsOptions->dfRadius2 > 0) )
+                {
+                    CPLError( CE_Failure, CPLE_IllegalArg,
+                              "Radius value should be strictly positive when "
+                              "per quadrant parameters are specified" );
+                    CSLDestroy( papszParams );
+                    return CE_Failure;
+                }
+                if( poMetricsOptions->dfAngle != 0 )
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "angle != 0 not supported when "
+                              "per quadrant parameters are specified" );
+                    CSLDestroy( papszParams );
+                    return CE_Failure;
+                }
+            }
+
+            static const char* const apszKnownOptions[] = {
                 "radius", "radius1", "radius2", "angle",
                 "min_points", "nodata",
-                nullptr };
+                "min_points_per_quadrant", "max_points_per_quadrant", nullptr };
             papszKnownOptions = apszKnownOptions;
 
             break;

@@ -146,15 +146,22 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
         GDALGridInverseDistanceToAPowerNearestNeighborOptions *pOptions2 =
             static_cast<GDALGridInverseDistanceToAPowerNearestNeighborOptions *>(
                 pOptions);
-        CPLprintf("Options are "
-                  "\"power=%f:smoothing=%f:radius=%f"
-                  ":max_points=%u:min_points=%u:nodata=%f\"\n",
-                  pOptions2->dfPower,
-                  pOptions2->dfSmoothing,
-                  pOptions2->dfRadius,
-                  pOptions2->nMaxPoints,
-                  pOptions2->nMinPoints,
-                  pOptions2->dfNoDataValue);
+        CPLString osStr;
+        osStr.Printf("power=%f:smoothing=%f:radius=%f"
+                     ":max_points=%u:min_points=%u:nodata=%f",
+                     pOptions2->dfPower,
+                     pOptions2->dfSmoothing,
+                     pOptions2->dfRadius,
+                     pOptions2->nMaxPoints,
+                     pOptions2->nMinPoints,
+                     pOptions2->dfNoDataValue);
+        if( pOptions2->nMinPointsPerQuadrant > 0 )
+            osStr += CPLSPrintf(":min_points_per_quadrant=%u",
+                                pOptions2->nMinPointsPerQuadrant);
+        if( pOptions2->nMaxPointsPerQuadrant > 0 )
+            osStr += CPLSPrintf(":max_points_per_quadrant=%u",
+                                pOptions2->nMaxPointsPerQuadrant);
+        printf("Options are: \"%s\n", osStr.c_str()); /* ok */
         break;
     }
     case GGA_MovingAverage:
@@ -162,14 +169,24 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
         printf("Algorithm name: \"%s\".\n", szAlgNameAverage);
         GDALGridMovingAverageOptions *pOptions2 =
             static_cast<GDALGridMovingAverageOptions *>(pOptions);
-        CPLprintf("Options are "
-                  "\"radius1=%f:radius2=%f:angle=%f:min_points=%u"
-                  ":nodata=%f\"\n",
-                  pOptions2->dfRadius1,
-                  pOptions2->dfRadius2,
-                  pOptions2->dfAngle,
-                  pOptions2->nMinPoints,
-                  pOptions2->dfNoDataValue);
+        CPLString osStr;
+        osStr.Printf("radius1=%f:radius2=%f:angle=%f:min_points=%u"
+                     ":nodata=%f",
+                     pOptions2->dfRadius1,
+                     pOptions2->dfRadius2,
+                     pOptions2->dfAngle,
+                     pOptions2->nMinPoints,
+                     pOptions2->dfNoDataValue);
+        if( pOptions2->nMinPointsPerQuadrant > 0 )
+            osStr += CPLSPrintf(":min_points_per_quadrant=%u",
+                                pOptions2->nMinPointsPerQuadrant);
+        if( pOptions2->nMaxPointsPerQuadrant > 0 )
+            osStr += CPLSPrintf(":max_points_per_quadrant=%u",
+                                pOptions2->nMaxPointsPerQuadrant);
+        if( pOptions2->nMaxPoints > 0 )
+            osStr += CPLSPrintf(":max_points=%u",
+                                pOptions2->nMaxPoints);
+        printf("Options are: \"%s\n", osStr.c_str()); /* ok */
         break;
     }
     case GGA_NearestNeighbor:
@@ -186,93 +203,55 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
         break;
     }
     case GGA_MetricMinimum:
-    {
-        printf("Algorithm name: \"%s\".\n", szAlgNameMinimum);
-        GDALGridDataMetricsOptions *pOptions2 =
-            static_cast<GDALGridDataMetricsOptions *>(pOptions);
-        CPLprintf("Options are "
-                  "\"radius1=%f:radius2=%f:angle=%f:min_points=%u"
-                  ":nodata=%f\"\n",
-                  pOptions2->dfRadius1,
-                  pOptions2->dfRadius2,
-                  pOptions2->dfAngle,
-                  pOptions2->nMinPoints,
-                  pOptions2->dfNoDataValue);
-            break;
-    }
     case GGA_MetricMaximum:
-    {
-        printf("Algorithm name: \"%s\".\n", szAlgNameMaximum);
-        GDALGridDataMetricsOptions *pOptions2 =
-            static_cast<GDALGridDataMetricsOptions *>(pOptions);
-        CPLprintf("Options are "
-                  "\"radius1=%f:radius2=%f:angle=%f:min_points=%u"
-                  ":nodata=%f\"\n",
-                  pOptions2->dfRadius1,
-                  pOptions2->dfRadius2,
-                  pOptions2->dfAngle,
-                  pOptions2->nMinPoints,
-                  pOptions2->dfNoDataValue);
-        break;
-    }
     case GGA_MetricRange:
-    {
-        printf("Algorithm name: \"%s\".\n", szAlgNameRange);
-        GDALGridDataMetricsOptions *pOptions2 =
-            static_cast<GDALGridDataMetricsOptions *>(pOptions);
-        CPLprintf("Options are "
-                  "\"radius1=%f:radius2=%f:angle=%f:min_points=%u"
-                  ":nodata=%f\"\n",
-                  pOptions2->dfRadius1,
-                  pOptions2->dfRadius2,
-                  pOptions2->dfAngle,
-                  pOptions2->nMinPoints,
-                  pOptions2->dfNoDataValue);
-        break;
-    }
     case GGA_MetricCount:
-    {
-        printf("Algorithm name: \"%s\".\n", szAlgNameCount);
-        GDALGridDataMetricsOptions *pOptions2 =
-            static_cast<GDALGridDataMetricsOptions *>(pOptions);
-        CPLprintf("Options are "
-                  "\"radius1=%f:radius2=%f:angle=%f:min_points=%u"
-                  ":nodata=%f\"\n",
-                  pOptions2->dfRadius1,
-                  pOptions2->dfRadius2,
-                  pOptions2->dfAngle,
-                  pOptions2->nMinPoints,
-                  pOptions2->dfNoDataValue);
-        break;
-    }
     case GGA_MetricAverageDistance:
-    {
-        printf("Algorithm name: \"%s\".\n", szAlgNameAverageDistance);
-        GDALGridDataMetricsOptions *pOptions2 =
-            static_cast<GDALGridDataMetricsOptions *>(pOptions);
-        CPLprintf("Options are "
-                  "\"radius1=%f:radius2=%f:angle=%f:min_points=%u"
-                  ":nodata=%f\"\n",
-                  pOptions2->dfRadius1,
-                  pOptions2->dfRadius2,
-                  pOptions2->dfAngle,
-                  pOptions2->nMinPoints,
-                  pOptions2->dfNoDataValue);
-        break;
-    }
     case GGA_MetricAverageDistancePts:
     {
-        printf("Algorithm name: \"%s\".\n", szAlgNameAverageDistancePts);
+        const char* pszAlgName = "";
+        switch ( eAlgorithm )
+        {
+            case GGA_MetricMinimum:
+                pszAlgName = szAlgNameMinimum;
+                break;
+            case GGA_MetricMaximum:
+                pszAlgName = szAlgNameMaximum;
+                break;
+            case GGA_MetricRange:
+                pszAlgName = szAlgNameRange;
+                break;
+            case GGA_MetricCount:
+                pszAlgName = szAlgNameCount;
+                break;
+            case GGA_MetricAverageDistance:
+                pszAlgName = szAlgNameAverageDistance;
+                break;
+            case GGA_MetricAverageDistancePts:
+                pszAlgName = szAlgNameAverageDistancePts;
+                break;
+            default:
+                CPLAssert(false);
+                break;
+        }
+        printf("Algorithm name: \"%s\".\n", pszAlgName);
         GDALGridDataMetricsOptions *pOptions2 =
             static_cast<GDALGridDataMetricsOptions *>(pOptions);
-        CPLprintf("Options are "
-                  "\"radius1=%f:radius2=%f:angle=%f:min_points=%u"
-                  ":nodata=%f\"\n",
-                  pOptions2->dfRadius1,
-                  pOptions2->dfRadius2,
-                  pOptions2->dfAngle,
-                  pOptions2->nMinPoints,
-                  pOptions2->dfNoDataValue);
+        CPLString osStr;
+        osStr.Printf("radius1=%f:radius2=%f:angle=%f:min_points=%u"
+                     ":nodata=%f",
+                     pOptions2->dfRadius1,
+                     pOptions2->dfRadius2,
+                     pOptions2->dfAngle,
+                     pOptions2->nMinPoints,
+                     pOptions2->dfNoDataValue);
+        if( pOptions2->nMinPointsPerQuadrant > 0 )
+            osStr += CPLSPrintf(":min_points_per_quadrant=%u",
+                                pOptions2->nMinPointsPerQuadrant);
+        if( pOptions2->nMaxPointsPerQuadrant > 0 )
+            osStr += CPLSPrintf(":max_points_per_quadrant=%u",
+                                pOptions2->nMaxPointsPerQuadrant);
+        printf("Options are: \"%s\n", osStr.c_str()); /* ok */
         break;
     }
     case GGA_Linear:

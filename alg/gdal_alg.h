@@ -526,6 +526,17 @@ typedef struct
     GUInt32 nMinPoints;
     /*! No data marker to fill empty points. */
     double  dfNoDataValue;
+    /*! Maximum number of data points to use for each of the 4 quadrants.
+     *
+     * Do not search for more points than this number.
+     */
+    GUInt32 nMaxPointsPerQuadrant;
+    /*! Minimum number of data points to use for each of the 4 quadrants.
+     *
+     * If less amount of points found the grid node considered empty and will
+     * be filled with NODATA marker.
+     */
+    GUInt32 nMinPointsPerQuadrant;
 } GDALGridInverseDistanceToAPowerNearestNeighborOptions;
 
 /** Moving average method control options */
@@ -542,6 +553,11 @@ typedef struct
      * Ellipse rotated counter clockwise.
      */
     double  dfAngle;
+    /*! Maximum number of data points to use.
+     *
+     * Do not search for more points than this number.
+     */
+    GUInt32 nMaxPoints;
     /*! Minimum number of data points to average.
      *
      * If less amount of points found the grid node considered empty and will
@@ -550,6 +566,17 @@ typedef struct
     GUInt32 nMinPoints;
     /*! No data marker to fill empty points. */
     double  dfNoDataValue;
+    /*! Maximum number of data points to use for each of the 4 quadrants.
+     *
+     * Do not search for more points than this number.
+     */
+    GUInt32 nMaxPointsPerQuadrant;
+    /*! Minimum number of data points to use for each of the 4 quadrants.
+     *
+     * If less amount of points found the grid node considered empty and will
+     * be filled with NODATA marker.
+     */
+    GUInt32 nMinPointsPerQuadrant;
 } GDALGridMovingAverageOptions;
 
 /** Nearest neighbor method control options */
@@ -592,6 +619,17 @@ typedef struct
     GUInt32 nMinPoints;
     /*! No data marker to fill empty points. */
     double  dfNoDataValue;
+    /*! Maximum number of data points to use for each of the 4 quadrants.
+     *
+     * Do not search for more points than this number.
+     */
+    GUInt32 nMaxPointsPerQuadrant;
+    /*! Minimum number of data points to use for each of the 4 quadrants.
+     *
+     * If less amount of points found the grid node considered empty and will
+     * be filled with NODATA marker.
+     */
+    GUInt32 nMinPointsPerQuadrant;
 } GDALGridDataMetricsOptions;
 
 /** Linear method control options */
