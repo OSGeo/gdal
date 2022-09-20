@@ -33,6 +33,7 @@ import os
 import shutil
 import struct
 import sys
+import numpy
 
 import gdaltest
 import pytest
@@ -10255,6 +10256,73 @@ def test_tiff_write_createcopy_alpha_not_in_last_band(options):
 
     gdal.GetDriverByName("GTiff").Delete(tmpfilename)
 
+
+###############################################################################
+# Test JXL compression
+def test_tiff_write_jpegxl_band_combinations():
+
+    tmpfilename = "/vsimem/test_tiff_write_jpegxl_band_combinations.tif"
+    md = gdal.GetDriverByName("GTiff").GetMetadata()
+    if md["DMD_CREATIONOPTIONLIST"].find("JXL") == -1:
+        pytest.skip()
+
+    
+    src_ds = gdal.GetDriverByName("MEM").Create("", 64, 64, 6)
+    for b in range(6):
+        bnd = src_ds.GetRasterBand(b+1)
+        data = numpy.random.bytes(64*64)
+        bnd.WriteRaster(0,0,64,64,data)
+        #bnd.Fill(b+1)
+        #print(bnd.Checksum())
+
+    cilists = [
+        [gdal.GCI_RedBand],
+        [gdal.GCI_RedBand,gdal.GCI_Undefined],
+        [gdal.GCI_RedBand,gdal.GCI_AlphaBand],
+        [gdal.GCI_Undefined,gdal.GCI_AlphaBand],
+        [gdal.GCI_RedBand,gdal.GCI_GreenBand,gdal.GCI_BlueBand],
+        [gdal.GCI_RedBand,gdal.GCI_GreenBand,gdal.GCI_BlueBand,gdal.GCI_AlphaBand],
+        [gdal.GCI_RedBand,gdal.GCI_GreenBand,gdal.GCI_BlueBand,gdal.GCI_AlphaBand,gdal.GCI_Undefined],
+        [gdal.GCI_RedBand,gdal.GCI_GreenBand,gdal.GCI_BlueBand,gdal.GCI_Undefined,gdal.GCI_Undefined],
+        [gdal.GCI_RedBand,gdal.GCI_GreenBand,gdal.GCI_AlphaBand,gdal.GCI_Undefined,gdal.GCI_BlueBand],
+    ]
+
+    types = [
+        gdal.GDT_Byte,
+        gdal.GDT_UInt16,
+    ]
+
+    creationOptions = [
+        ["COMPRESS=JXL","INTERLEAVE=BAND"],
+        ["COMPRESS=JXL","INTERLEAVE=PIXEL"],
+    ]
+
+    for dtype in types:
+        for copts in creationOptions:
+            for cilist in cilists:
+                bid = 1
+                bandlist = []
+                for ci in cilist:
+                    bandlist.append(bid)
+                    bid+=1
+                vrtds = gdal.Translate("",src_ds,format="vrt",bandList=bandlist,outputType=dtype)
+                bid=1
+                for ci in cilist:
+                    vrtds.GetRasterBand(bid).SetColorInterpretation(ci)
+                    bid+=1
+
+                ds = gdal.Translate(tmpfilename,vrtds,creationOptions=copts)
+                ds=None
+                ds=gdal.Open(tmpfilename)
+                bid = 1
+                for ci in cilist:
+                    assert ds.GetRasterBand(bid).Checksum() == src_ds.GetRasterBand(bid).Checksum()
+                    bid+=1
+                vrtds=None
+                ds=None
+                gdal.Unlink(tmpfilename)
+
+    
 
 def test_tiff_write_cleanup():
     gdaltest.tiff_drv = None

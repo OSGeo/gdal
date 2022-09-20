@@ -475,17 +475,6 @@ JXLSetupEncode(TIFF* tif)
 
         TIFFDirectory *td = &tif->tif_dir;
 
-        if (!sp->lossless && td->td_planarconfig == PLANARCONFIG_CONTIG)
-        {
-            if ((td->td_samplesperpixel >= 3 && td->td_photometric != PHOTOMETRIC_RGB) ||
-                (td->td_samplesperpixel <3 && td->td_photometric != PHOTOMETRIC_MINISBLACK))
-            {
-                TIFFErrorExt(tif->tif_clientdata, module,
-                             "JXL: lossy mode only supports MINISBLACK or RGB photometric");
-                return 0;
-            }
-        }
-
         if( GetJXLDataType(tif) < 0 )
             return 0;
 
