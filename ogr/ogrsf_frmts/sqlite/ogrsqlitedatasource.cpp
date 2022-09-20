@@ -1058,7 +1058,6 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, bool bRegisterOGR2SQLit
 #ifdef SQLITE_OPEN_URI
     if ( m_osFilenameForSQLiteOpen.empty() &&
           (flagsIn & SQLITE_OPEN_READWRITE) == 0 &&
-          !(bUseOGRVFS || STARTS_WITH(m_pszFilename, "/vsi")) &&
           !STARTS_WITH(m_pszFilename, "file:") &&
           CPLTestBool(CSLFetchNameValueDef(papszOpenOptions, "NOLOCK", "NO")) )
     {
@@ -1071,7 +1070,10 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, bool bRegisterOGR2SQLit
 #ifdef _WIN32
         osFilenameForURI.replaceAll('\\', '/');
 #endif
-        osFilenameForURI.replaceAll("//", '/');
+        if( !STARTS_WITH(m_pszFilename, "/vsicurl/http") )
+        {
+            osFilenameForURI.replaceAll("//", '/');
+        }
 #ifdef _WIN32
         if( osFilenameForURI.size() > 3 && osFilenameForURI[1] == ':' &&
             osFilenameForURI[2] == '/' )
