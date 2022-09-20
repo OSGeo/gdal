@@ -8480,6 +8480,7 @@ def test_tiff_write_createcopy_alpha_not_in_last_band(options):
     )
     assert statBuf is None, "did not expect PAM file"
     ds = gdal.Open(tmpfilename)
+    assert ds.GetMetadataItem("TIFFTAG_EXTRASAMPLES", "_DEBUG_") == "0,0,0,2,0"
     assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_GrayIndex
     assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_Undefined
     assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_Undefined
@@ -8498,6 +8499,7 @@ def test_tiff_write_createcopy_alpha_not_in_last_band(options):
     )
     assert statBuf is None, "did not expect PAM file"
     ds = gdal.Open(tmpfilename)
+    assert ds.GetMetadataItem("TIFFTAG_EXTRASAMPLES", "_DEBUG_") == "0,2,0"
     assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
     assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GreenBand
     assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
@@ -8517,6 +8519,7 @@ def test_tiff_write_createcopy_alpha_not_in_last_band(options):
     )
     assert statBuf is None, "did not expect PAM file"
     ds = gdal.Open(tmpfilename)
+    assert ds.GetMetadataItem("TIFFTAG_EXTRASAMPLES", "_DEBUG_") == "0,2,0"
     assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
     assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GreenBand
     assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
