@@ -401,6 +401,10 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
         }
     }
 
+    // Produce north-up images
+    if( dfYMin < dfYMax )
+        std::swap(dfYMin, dfYMax);
+
 /* -------------------------------------------------------------------- */
 /*      Perform gridding.                                               */
 /* -------------------------------------------------------------------- */
@@ -413,8 +417,7 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
         printf( "Grid data type is \"%s\"\n", GDALGetDataTypeName(eType) );
         printf("Grid size = (%d %d).\n", nXSize, nYSize);
         CPLprintf( "Corner coordinates = (%f %f)-(%f %f).\n",
-                dfXMin - dfDeltaX / 2, dfYMax + dfDeltaY / 2,
-                dfXMax + dfDeltaX / 2, dfYMin - dfDeltaY / 2 );
+                   dfXMin, dfYMin, dfXMax, dfYMax );
         CPLprintf( "Grid cell size = (%f %f).\n", dfDeltaX, dfDeltaY );
         printf("Source point count = %lu.\n",
                static_cast<unsigned long>(oVisitor.adfX.size()));
