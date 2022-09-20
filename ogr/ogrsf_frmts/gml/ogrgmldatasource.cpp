@@ -1236,9 +1236,10 @@ bool OGRGMLDataSource::Open( GDALOpenInfo *poOpenInfo )
 
     // Force a first pass to establish the schema.  Eventually we will have
     // mechanisms for remembering the schema and related information.
+    const char* pszForceSRSDetection = CSLFetchNameValue(
+        poOpenInfo->papszOpenOptions, "FORCE_SRS_DETECTION");
     if( !bHaveSchema ||
-        CPLFetchBool(poOpenInfo->papszOpenOptions, "FORCE_SRS_DETECTION",
-                     false) )
+        (pszForceSRSDetection && CPLTestBool(pszForceSRSDetection)) )
     {
         bool bOnlyDetectSRS = bHaveSchema;
         if( !poReader->PrescanForSchema(true, bOnlyDetectSRS) )
@@ -1348,6 +1349,34 @@ bool OGRGMLDataSource::Open( GDALOpenInfo *poOpenInfo )
     {
         papoLayers[nLayers] = TranslateGMLSchema(poReader->GetClass(nLayers));
         nLayers++;
+    }
+
+    // Warn if we have geometry columns without known CRS due to only using
+    // the .xsd
+    if( bHaveSchema && pszForceSRSDetection == nullptr )
+    {
+        bool bExitLoop = false;
+        for( int i = 0; !bExitLoop && i < nLayers; ++i )
+        {
+            const auto poLayer = papoLayers[i];
+            const auto poLayerDefn = poLayer->GetLayerDefn();
+            const auto nGeomFieldCount = poLayerDefn->GetGeomFieldCount();
+            for( int j = 0; j < nGeomFieldCount; ++j )
+            {
+                if( poLayerDefn->GetGeomFieldDefn(j)->GetSpatialRef() == nullptr )
+                {
+                    bExitLoop = true;
+                    break;
+                }
+            }
+        }
+        if( bExitLoop )
+        {
+            CPLDebug("GML",
+                     "Geometry fields without known CRS have been detected. "
+                     "You may want to specify the FORCE_SRS_DETECTION open "
+                     "option to YES.");
+        }
     }
 
     return true;
