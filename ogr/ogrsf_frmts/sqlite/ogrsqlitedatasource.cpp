@@ -909,7 +909,8 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, bool bRegisterOGR2SQLit
         OGR2SQLITE_Register();
 
     const bool bUseOGRVFS =
-        CPLTestBool(CPLGetConfigOption("SQLITE_USE_OGR_VFS", "NO"));
+        CPLTestBool(CPLGetConfigOption("SQLITE_USE_OGR_VFS", "NO")) ||
+        STARTS_WITH(m_pszFilename, "/vsi");
 
 #ifdef SQLITE_OPEN_URI
     if ( m_osFilenameForSQLiteOpen.empty() &&
@@ -966,20 +967,16 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, bool bRegisterOGR2SQLit
     CPLString osJournalMode =
                         CPLGetConfigOption("OGR_SQLITE_JOURNAL", "");
 
+    if (bUseOGRVFS )
+    {
+        pMyVFS = OGRSQLiteCreateVFS(OGRSQLiteBaseDataSourceNotifyFileOpened, this);
+        sqlite3_vfs_register(pMyVFS, 0);
+    }
+
     for( int iterOpen = 0; iterOpen < 2 ; iterOpen++ )
     {
-        int rc;
-        if (bUseOGRVFS || STARTS_WITH(m_pszFilename, "/vsi"))
-        {
-            pMyVFS = OGRSQLiteCreateVFS(OGRSQLiteBaseDataSourceNotifyFileOpened, this);
-            sqlite3_vfs_register(pMyVFS, 0);
-            rc = sqlite3_open_v2( m_osFilenameForSQLiteOpen.c_str(), &hDB, flags, pMyVFS->zName );
-        }
-        else
-        {
-            rc = sqlite3_open_v2( m_osFilenameForSQLiteOpen.c_str(), &hDB, flags, nullptr );
-        }
-
+        int rc = sqlite3_open_v2( m_osFilenameForSQLiteOpen.c_str(),
+                                  &hDB, flags, pMyVFS ? pMyVFS->zName : nullptr );
         if( rc != SQLITE_OK )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
