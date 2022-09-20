@@ -1260,15 +1260,15 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
     const GByte* pabyHeader = poOpenInfo->pabyHeader;
     if( STARTS_WITH_CI(poOpenInfo->pszFilename, "GPKG:") )
     {
-        char** papszTokens = CSLTokenizeString2(poOpenInfo->pszFilename, ":", 0);
+        char** papszTokens = CSLTokenizeString2(poOpenInfo->pszFilename, ":", CSLT_HONOURSTRINGS);
         int nCount = CSLCount(papszTokens);
-        if( nCount < 3 )
+        if( nCount < 2 )
         {
             CSLDestroy(papszTokens);
             return FALSE;
         }
 
-        if( nCount == 3 )
+        if( nCount <= 3 )
         {
             osFilename = papszTokens[1];
         }
@@ -1290,7 +1290,8 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
                 osFilename += papszTokens[i];
             }
         }
-        osSubdatasetTableName = papszTokens[nCount-1];
+        if( nCount >= 3 )
+            osSubdatasetTableName = papszTokens[nCount-1];
 
         CSLDestroy(papszTokens);
         VSILFILE *fp = VSIFOpenL(osFilename, "rb");
