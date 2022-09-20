@@ -288,6 +288,9 @@ static void OGRCSVDriverUnload( GDALDriver * )
 /*                           RegisterOGRCSV()                           */
 /************************************************************************/
 
+#define XSTRINGIFY(x) #x
+#define STRINGIFY(x) XSTRINGIFY(x)
+
 void RegisterOGRCSV()
 
 {
@@ -374,6 +377,7 @@ void RegisterOGRCSV()
 "    <Value>AUTO</Value>"
 "  </Option>"
 "  <Option name='EMPTY_STRING_AS_NULL' type='boolean' description='Whether to consider empty strings as null fields on reading' default='NO'/>"
+"  <Option name='MAX_LINE_SIZE' type='int' description='Maximum number of bytes for a line (-1=unlimited)' default='" STRINGIFY(OGR_CSV_DEFAULT_MAX_LINE_SIZE) "'/>"
 "</OpenOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
