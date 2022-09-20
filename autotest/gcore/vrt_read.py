@@ -606,8 +606,9 @@ def test_vrt_read_17():
 
     # Note: AveragedSource with resampling does not give consistent results
     # depending on the RasterIO() request
-    cs = vrt_ds.GetRasterBand(1).Checksum()
-    assert cs == 847
+    mem_ds = gdal.GetDriverByName("MEM").CreateCopy("", vrt_ds)
+    cs = mem_ds.GetRasterBand(1).Checksum()
+    assert cs == 799
 
 
 ###############################################################################
