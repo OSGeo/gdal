@@ -37,7 +37,7 @@ wget -q https://sqlite.org/2022/sqlite-autoconf-3370200.tar.gz
 tar xzf sqlite-autoconf-3370200.tar.gz
 cd sqlite-autoconf-3370200
 CC="ccache $NDK_TOOLCHAIN/bin/aarch64-linux-android24-clang" ./configure \
-  --prefix=/tmp/install --host=x86_64-linux-android24
+  --prefix=/tmp/install --host=aarch64-linux-android24
 make -j3
 make install
 cd ..
