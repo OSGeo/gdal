@@ -198,6 +198,7 @@ jobs:
         find $GITHUB_WORKSPACE/install-gdal || /bin/true
     - name: install
       run: |
+        export PATH=$CMAKE_DIR:/usr/local/bin:/usr/bin:/bin # Avoid CMake config from brew etc.
         touch $GITHUB_WORKSPACE/man/man1/gdalinfo.1
         touch $GITHUB_WORKSPACE/man/man1/gdaladdo.1
         (cd $GITHUB_WORKSPACE/superbuild/build; cmake ..)
