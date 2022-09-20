@@ -89,6 +89,8 @@ class CPL_DLL CPLWorkerThreadPool
         CPLList* psWaitingWorkerThreadsList = nullptr;
         int nWaitingWorkerThreads = 0;
 
+        int m_nMaxThreads = 0;
+
         static void WorkerThreadFunction(void* user_data);
 
         void DeclareJobFinished();
@@ -115,7 +117,7 @@ class CPL_DLL CPLWorkerThreadPool
         void WaitEvent();
 
         /** Return the number of threads setup */
-        int GetThreadCount() const { return static_cast<int>(aWT.size()); }
+        int GetThreadCount() const { return m_nMaxThreads; }
 };
 
 /** Job queue */

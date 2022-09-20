@@ -2863,7 +2863,7 @@ namespace tut
     void object::test<40>()
     {
         CPLWorkerThreadPool oPool;
-        ensure(oPool.Setup(2, nullptr, nullptr));
+        ensure(oPool.Setup(2, nullptr, nullptr, false));
 
         const auto myJob = [](void* pData)
         {

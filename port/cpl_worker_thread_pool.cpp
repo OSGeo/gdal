@@ -133,15 +133,16 @@ void CPLWorkerThreadPool::WorkerThreadFunction(void* user_data)
  */
 bool CPLWorkerThreadPool::SubmitJob( CPLThreadFunc pfnFunc, void* pData )
 {
-    CPLAssert( !aWT.empty() );
+    CPLAssert( m_nMaxThreads > 0 );
 
     bool bMustIncrementWaitingWorkerThreadsAfterSubmission = false;
     if( threadLocalCurrentThreadPool == this )
     {
-        // If there are waiting threads, we can submit this job asynchronously
+        // If there are waiting threads or we have not started all allowed
+        // threads, we can submit this job asynchronously
         {
             std::unique_lock<std::mutex> oGuard(m_mutex);
-            if( nWaitingWorkerThreads > 0 )
+            if( nWaitingWorkerThreads > 0 || static_cast<int>(aWT.size()) < m_nMaxThreads )
             {
                 bMustIncrementWaitingWorkerThreadsAfterSubmission = true;
                 nWaitingWorkerThreads --;
@@ -187,6 +188,28 @@ bool CPLWorkerThreadPool::SubmitJob( CPLThreadFunc pfnFunc, void* pData )
 
     if( bMustIncrementWaitingWorkerThreadsAfterSubmission )
         nWaitingWorkerThreads ++;
+
+    if( static_cast<int>(aWT.size()) < m_nMaxThreads )
+    {
+        // CPLDebug("CPL", "Starting new thread...");
+        std::unique_ptr<CPLWorkerThread> wt(new CPLWorkerThread);
+        wt->pfnInitFunc = nullptr;
+        wt->pInitData = nullptr;
+        wt->poTP = this;
+        wt->bMarkedAsWaiting = false;
+        wt->hThread =
+            CPLCreateJoinableThread(WorkerThreadFunction, wt.get());
+        if( wt->hThread == nullptr )
+        {
+            VSIFree(psJob);
+            VSIFree(psItem);
+            return false;
+        }
+        else
+        {
+            aWT.emplace_back(std::move(wt));
+        }
+    }
 
     psItem->psNext = psJobQueue;
     psJobQueue = psItem;
@@ -237,7 +260,7 @@ bool CPLWorkerThreadPool::SubmitJob( CPLThreadFunc pfnFunc, void* pData )
 bool CPLWorkerThreadPool::SubmitJobs(CPLThreadFunc pfnFunc,
                                      const std::vector<void*>& apData)
 {
-    CPLAssert( !aWT.empty() );
+    CPLAssert( m_nMaxThreads > 0 );
 
     if( threadLocalCurrentThreadPool == this )
     {
@@ -257,6 +280,26 @@ bool CPLWorkerThreadPool::SubmitJobs(CPLThreadFunc pfnFunc,
 
     for(size_t i=0;i<apData.size();i++)
     {
+        if( static_cast<int>(aWT.size()) < m_nMaxThreads )
+        {
+            std::unique_ptr<CPLWorkerThread> wt(new CPLWorkerThread);
+            wt->pfnInitFunc = nullptr;
+            wt->pInitData = nullptr;
+            wt->poTP = this;
+            wt->bMarkedAsWaiting = false;
+            wt->hThread =
+                CPLCreateJoinableThread(WorkerThreadFunction, wt.get());
+            if( wt->hThread == nullptr )
+            {
+                if( aWT.empty() )
+                    return false;
+            }
+            else
+            {
+                aWT.emplace_back(std::move(wt));
+            }
+        }
+
         CPLWorkerThreadJob* psJob = static_cast<CPLWorkerThreadJob*>(
             VSI_MALLOC_VERBOSE(sizeof(CPLWorkerThreadJob)));
         if( psJob == nullptr )
@@ -417,6 +460,16 @@ bool CPLWorkerThreadPool::Setup(int nThreads,
 {
     CPLAssert( nThreads > 0 );
 
+    if( nThreads > static_cast<int>(aWT.size()) &&
+        pfnInitFunc == nullptr && pasInitData == nullptr &&
+        !bWaitallStarted )
+    {
+        std::lock_guard<std::mutex> oGuard(m_mutex);
+        if( nThreads > m_nMaxThreads )
+            m_nMaxThreads = nThreads;
+        return true;
+    }
+
     bool bRet = true;
     for(int i=static_cast<int>(aWT.size());i<nThreads;i++)
     {
@@ -434,6 +487,12 @@ bool CPLWorkerThreadPool::Setup(int nThreads,
             break;
         }
         aWT.emplace_back(std::move(wt));
+    }
+
+    {
+        std::lock_guard<std::mutex> oGuard(m_mutex);
+        if( nThreads > m_nMaxThreads )
+            m_nMaxThreads = nThreads;
     }
 
     if( bWaitallStarted )
