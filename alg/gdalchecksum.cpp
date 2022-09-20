@@ -59,7 +59,7 @@ CPL_CVSID("$Id$")
  * @param nXSize pixel size of window to read.
  * @param nYSize line size of window to read.
  *
- * @return Checksum value.
+ * @return Checksum value, or -1 in case of error (starting with GDAL 3.6)
  */
 
 int CPL_STDCALL
@@ -87,7 +87,7 @@ GDALChecksumImage( GDALRasterBandH hBand,
                                 GDALGetDataTypeSizeBytes(eDstDataType)));
         if( padfLineData == nullptr )
         {
-            return 0;
+            return -1;
         }
 
         for( int iLine = nYOff; iLine < nYOff + nYSize; iLine++ )
@@ -99,6 +99,7 @@ GDALChecksumImage( GDALRasterBandH hBand,
                 CPLError(CE_Failure, CPLE_FileIO,
                          "Checksum value couldn't be computed due to "
                          "I/O read error.");
+                nChecksum = -1;
                 break;
             }
             const int nCount = bComplex ? nXSize * 2 : nXSize;
@@ -147,7 +148,7 @@ GDALChecksumImage( GDALRasterBandH hBand,
                                 GDALGetDataTypeSizeBytes(eDstDataType)));
         if( panLineData == nullptr )
         {
-            return 0;
+            return -1;
         }
 
         for( int iLine = nYOff; iLine < nYOff + nYSize; iLine++ )
@@ -159,6 +160,7 @@ GDALChecksumImage( GDALRasterBandH hBand,
                 CPLError(CE_Failure, CPLE_FileIO,
                          "Checksum value could not be computed due to I/O "
                          "read error.");
+                nChecksum = -1;
                 break;
             }
             const int nCount = bComplex ? nXSize * 2 : nXSize;

@@ -160,9 +160,9 @@ def test_aigrid_broken():
 
     ds = gdal.Open("tmp/broken_aigrid")
     with gdaltest.error_handler():
-        assert ds.GetRasterBand(1).Checksum() == 0
+        assert ds.GetRasterBand(1).Checksum() == -1
     with gdaltest.error_handler():
-        assert ds.GetRasterBand(1).Checksum() == 0
+        assert ds.GetRasterBand(1).Checksum() == -1
     ds = None
 
     shutil.rmtree("tmp/broken_aigrid")

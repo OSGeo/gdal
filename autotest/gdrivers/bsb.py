@@ -112,7 +112,7 @@ def test_bsb_5():
     if gdaltest.bsb_dr is None:
         pytest.skip()
 
-    tst = gdaltest.GDALTest("BSB", "bsb/rgbsmall_truncated.kap", 1, 29696)
+    tst = gdaltest.GDALTest("BSB", "bsb/rgbsmall_truncated.kap", 1, -1)
 
     gdal.PushErrorHandler("CPLQuietErrorHandler")
     ret = tst.testOpen()
@@ -129,7 +129,7 @@ def test_bsb_6():
     if gdaltest.bsb_dr is None:
         pytest.skip()
 
-    tst = gdaltest.GDALTest("BSB", "bsb/rgbsmall_truncated2.kap", 1, 29696)
+    tst = gdaltest.GDALTest("BSB", "bsb/rgbsmall_truncated2.kap", 1, -1)
 
     gdal.PushErrorHandler("CPLQuietErrorHandler")
     ret = tst.testOpen()
