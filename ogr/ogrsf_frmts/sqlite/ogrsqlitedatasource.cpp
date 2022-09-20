@@ -913,10 +913,13 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, bool bRegisterOGR2SQLit
         STARTS_WITH(m_pszFilename, "/vsi");
 
 #ifdef SQLITE_OPEN_URI
+    const bool bNoLock = CPLTestBool(CSLFetchNameValueDef(papszOpenOptions, "NOLOCK", "NO"));
+    const char* pszImmutable = CSLFetchNameValue(papszOpenOptions, "IMMUTABLE");
+    const bool bImmutable = pszImmutable && CPLTestBool(pszImmutable);
     if ( m_osFilenameForSQLiteOpen.empty() &&
           (flagsIn & SQLITE_OPEN_READWRITE) == 0 &&
           !STARTS_WITH(m_pszFilename, "file:") &&
-          CPLTestBool(CSLFetchNameValueDef(papszOpenOptions, "NOLOCK", "NO")) )
+          (bNoLock || bImmutable))
     {
         m_osFilenameForSQLiteOpen = "file:";
 
@@ -940,7 +943,15 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, bool bRegisterOGR2SQLit
 #endif
 
         m_osFilenameForSQLiteOpen += osFilenameForURI;
-        m_osFilenameForSQLiteOpen += "?nolock=1";
+        m_osFilenameForSQLiteOpen += "?";
+        if( bNoLock )
+            m_osFilenameForSQLiteOpen += "nolock=1";
+        if( bImmutable )
+        {
+            if( m_osFilenameForSQLiteOpen.back() != '?' )
+                m_osFilenameForSQLiteOpen += '&';
+            m_osFilenameForSQLiteOpen += "immutable=1";
+        }
     }
 #endif
     if( m_osFilenameForSQLiteOpen.empty() )
@@ -1058,8 +1069,7 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, bool bRegisterOGR2SQLit
         }
 
 #ifdef SQLITE_OPEN_URI
-        if( iterOpen == 0 && m_osFilenameForSQLiteOpen != m_pszFilename &&
-            m_osFilenameForSQLiteOpen.find("?nolock=1") != std::string::npos )
+        if( iterOpen == 0 && bNoLock && !bImmutable )
         {
             int nRowCount = 0, nColCount = 0;
             char** papszResult = nullptr;
@@ -1128,12 +1138,37 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, bool bRegisterOGR2SQLit
             }
             if( bIsWAL )
             {
+#ifdef SQLITE_OPEN_URI
+                if( pszImmutable == nullptr &&
+                    (flags & SQLITE_OPEN_READONLY) != 0 &&
+                    m_osFilenameForSQLiteOpen == m_pszFilename )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "%s: this file is a WAL-enabled database. "
+                             "It cannot be opened "
+                             "because it is presumably read-only or in a "
+                             "read-only directory. Retrying with IMMUTABLE=YES open option",
+                             pszErrMsg);
+                    sqlite3_free( pszErrMsg );
+                    CloseDB();
+                    m_osFilenameForSQLiteOpen.clear();
+                    papszOpenOptions = CSLSetNameValue(papszOpenOptions, "IMMUTABLE", "YES");
+                    return OpenOrCreateDB(flagsIn, bRegisterOGR2SQLiteExtensions);
+                }
+#endif
+
                 CPLError(CE_Failure, CPLE_AppDefined,
                     "%s: this file is a WAL-enabled database. "
                     "It cannot be opened "
                     "because it is presumably read-only or in a "
-                    "read-only directory.",
-                    pszErrMsg);
+                    "read-only directory.%s",
+                    pszErrMsg,
+#ifdef SQLITE_OPEN_URI
+                    pszImmutable != nullptr ? "" : " Try opening with IMMUTABLE=YES open option"
+#else
+                    ""
+#endif
+                );
             }
             else
             {
@@ -1163,7 +1198,8 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, bool bRegisterOGR2SQLit
     }
 
     if( m_osFilenameForSQLiteOpen != m_pszFilename &&
-            m_osFilenameForSQLiteOpen.find("?nolock=1") != std::string::npos )
+            (m_osFilenameForSQLiteOpen.find("?nolock=1") != std::string::npos ||
+             m_osFilenameForSQLiteOpen.find("&nolock=1") != std::string::npos) )
     {
         m_bNoLock = true;
         CPLDebug("SQLite", "%s open in nolock mode", m_pszFilename);
