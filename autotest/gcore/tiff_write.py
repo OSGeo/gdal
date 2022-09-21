@@ -10323,21 +10323,17 @@ def test_tiff_write_jpegxl_band_combinations():
                 vrtds = gdal.Translate(
                     "", src_ds, format="vrt", bandList=bandlist, outputType=dtype
                 )
-                bid = 1
-                for ci in cilist:
-                    vrtds.GetRasterBand(bid).SetColorInterpretation(ci)
-                    bid += 1
+                for idx, ci in enumerate(cilist):
+                    vrtds.GetRasterBand(idx + 1).SetColorInterpretation(ci)
 
                 ds = gdal.Translate(tmpfilename, vrtds, creationOptions=copts)
                 ds = None
                 ds = gdal.Open(tmpfilename)
-                bid = 1
-                for ci in cilist:
+                for idx in range(len(cilist)):
                     assert (
-                        ds.GetRasterBand(bid).Checksum()
-                        == src_ds.GetRasterBand(bid).Checksum()
+                        ds.GetRasterBand(idx + 1).Checksum()
+                        == src_ds.GetRasterBand(idx + 1).Checksum()
                     )
-                    bid += 1
                 vrtds = None
                 ds = None
                 gdal.Unlink(tmpfilename)

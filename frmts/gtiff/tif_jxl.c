@@ -339,7 +339,7 @@ JXLPreDecode(TIFF* tif, uint16_t s)
         uint32_t nFirstExtraChannel = (bAlphaEmbedded)?1:0;
         size_t main_buffer_size = sp->uncompressed_size;
         size_t channel_size = main_buffer_size / td->td_samplesperpixel;
-        uint8_t *extra_channel_buffer;
+        uint8_t *extra_channel_buffer = NULL;
 
         int nBytesPerSample = GetJXLDataTypeSize(format.data_type);
 
@@ -744,7 +744,7 @@ JXLPostEncode(TIFF* tif)
             if(bAlphaEmbedded) nMainChannels++;
             main_size *= nMainChannels;
             main_buffer = _TIFFmalloc(main_size);
-            int outChunkSize = td->td_bitspersample / 8 * nMainChannels;
+            int outChunkSize = nBytesPerSample * nMainChannels;
             int inStep = nBytesPerSample * td->td_samplesperpixel;
             uint8_t *cur_outbuffer=main_buffer;
             uint8_t *cur_inbuffer=sp->uncompressed_buffer;
@@ -765,6 +765,7 @@ JXLPostEncode(TIFF* tif)
                     TIFFErrorExt(tif->tif_clientdata, module,
                                  "JxlEncoderSetExtraChannelInfo(%d) failed",iChannel);
                     JxlEncoderDestroy(enc);
+                    _TIFFfree(main_buffer);
                     return 0;
                 }
             }
