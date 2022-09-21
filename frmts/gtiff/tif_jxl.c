@@ -102,6 +102,19 @@ static int GetJXLDataType(TIFF* tif)
         "Unsupported combination of SampleFormat and BitsPerSample");
     return -1;
 }
+static int GetJXLDataTypeSize(JxlDataType dtype) {
+    switch (dtype)
+    {
+    case JXL_TYPE_UINT8:
+        return 1;
+    case JXL_TYPE_UINT16:
+        return 2;
+    case JXL_TYPE_FLOAT:
+        return 4;
+    default:
+        return 0;
+    }
+}
 
 static int
 JXLFixupTags(TIFF* tif)
@@ -147,8 +160,15 @@ static int SetupUncompressedBuffer(TIFF* tif, JXLState* sp,
                 sp->segment_height = td->td_rowsperstrip;
     }
 
-    new_size_64 = (uint64_t)sp->segment_width * sp->segment_height *
-                                        (td->td_bitspersample / 8);
+    JxlDataType dtype = GetJXLDataType(tif);
+    if(dtype<0) {
+        _TIFFfree(sp->uncompressed_buffer);
+        sp->uncompressed_buffer = 0;
+        sp->uncompressed_alloc = 0;
+        return 0;
+    }
+    int nBytesPerSample = GetJXLDataTypeSize(dtype);
+    new_size_64 = (uint64_t)sp->segment_width * sp->segment_height * nBytesPerSample;
     if( td->td_planarconfig == PLANARCONFIG_CONTIG )
     {
         new_size_64 *= td->td_samplesperpixel;
@@ -291,12 +311,14 @@ JXLPreDecode(TIFF* tif, uint16_t s)
             JxlDecoderReleaseInput(sp->decoder);
             return 0;
         }
+
         if (td->td_planarconfig == PLANARCONFIG_CONTIG)
         {
             if( info.num_color_channels + info.num_extra_channels != td->td_samplesperpixel ) {
                 TIFFErrorExt(tif->tif_clientdata, module,
                              "JXL basic info invalid number of channels");
                 JxlDecoderReleaseInput(sp->decoder);
+                return 0;
             }
         } else
         {
@@ -318,6 +340,8 @@ JXLPreDecode(TIFF* tif, uint16_t s)
         size_t main_buffer_size = sp->uncompressed_size;
         size_t channel_size = main_buffer_size / td->td_samplesperpixel;
         uint8_t *extra_channel_buffer;
+
+        int nBytesPerSample = GetJXLDataTypeSize(format.data_type);
 
         if( nFirstExtraChannel < info.num_extra_channels ){
             int nExtraChannelsToExtract = info.num_extra_channels - nFirstExtraChannel;
@@ -389,27 +413,25 @@ JXLPreDecode(TIFF* tif, uint16_t s)
         }
         if( nFirstExtraChannel < info.num_extra_channels ){
             //first reorder the main buffer
-            int pixSize = td->td_bitspersample/8;
             int nMainChannels = bAlphaEmbedded?info.num_color_channels+1:info.num_color_channels;
-            pixSize *= nMainChannels;
-            int fullPixSize = td->td_samplesperpixel*td->td_bitspersample/8;
+            int mainPixSize = nMainChannels*nBytesPerSample;
+            int fullPixSize = td->td_samplesperpixel*nBytesPerSample;
             unsigned int outOff = sp->uncompressed_size - fullPixSize;
-            int inOff = main_buffer_size - pixSize;
-            for(;inOff>=0;inOff-=pixSize,outOff-=fullPixSize)
+            int inOff = main_buffer_size - mainPixSize;
+            for(;inOff>=0;inOff-=mainPixSize,outOff-=fullPixSize)
             {
-                memcpy(sp->uncompressed_buffer+outOff,sp->uncompressed_buffer+inOff,pixSize);
+                memcpy(sp->uncompressed_buffer+outOff,sp->uncompressed_buffer+inOff,mainPixSize);
             }
             //then copy over the data from the extra_channel_buffer
             int nExtraChannelsToExtract = info.num_extra_channels - nFirstExtraChannel;
-            pixSize = td->td_bitspersample/8;
             for( int i = 0; i < nExtraChannelsToExtract; ++i )
             {
-                outOff = (i+nMainChannels)*pixSize;
+                outOff = (i+nMainChannels)*nBytesPerSample;
                 uint8_t *channel_buffer = extra_channel_buffer+i*channel_size;
-                for(;outOff<sp->uncompressed_size;outOff+=fullPixSize,channel_buffer+=pixSize) {
+                for(;outOff<sp->uncompressed_size;outOff+=fullPixSize,channel_buffer+=nBytesPerSample) {
                     memcpy(sp->uncompressed_buffer+outOff,
                     channel_buffer,
-                    pixSize);
+                    nBytesPerSample);
                 }
             }
             _TIFFfree(extra_channel_buffer);
@@ -574,7 +596,7 @@ JXLPostEncode(TIFF* tif)
         format.align = 0;
 
 #ifdef HAVE_JxlEncoderSetCodestreamLevel
-        if( td->td_bitspersample > 8 )
+        if( td->td_bitspersample > 12 )
         {
             JxlEncoderSetCodestreamLevel(enc, 10);
         }
@@ -710,6 +732,8 @@ JXLPostEncode(TIFF* tif)
         
         uint8_t *main_buffer = sp->uncompressed_buffer;
         unsigned int main_size = sp->uncompressed_size;
+        int nBytesPerSample = GetJXLDataTypeSize(format.data_type);
+
 #ifdef HAVE_JxlExtraChannels
         if (td->td_planarconfig == PLANARCONFIG_CONTIG &&
             (basic_info.num_extra_channels > 1 ||
@@ -721,7 +745,7 @@ JXLPostEncode(TIFF* tif)
             main_size *= nMainChannels;
             main_buffer = _TIFFmalloc(main_size);
             int outChunkSize = td->td_bitspersample / 8 * nMainChannels;
-            int inStep = td->td_bitspersample / 8 * td->td_samplesperpixel;
+            int inStep = nBytesPerSample * td->td_samplesperpixel;
             uint8_t *cur_outbuffer=main_buffer;
             uint8_t *cur_inbuffer=sp->uncompressed_buffer;
             for( ; cur_outbuffer-main_buffer<main_size ; cur_outbuffer+=outChunkSize, cur_inbuffer+=inStep  ) {
@@ -730,7 +754,7 @@ JXLPostEncode(TIFF* tif)
             JxlExtraChannelInfo extra_channel_info;
             JxlEncoderInitExtraChannelInfo(JXL_CHANNEL_OPTIONAL,
                                            &extra_channel_info);
-            extra_channel_info.bits_per_sample = td->td_bitspersample;
+            extra_channel_info.bits_per_sample = basic_info.bits_per_sample;
             extra_channel_info.exponent_bits_per_sample = basic_info.exponent_bits_per_sample;
             for(int iChannel=nMainChannels; iChannel<td->td_samplesperpixel; iChannel++)
             {
@@ -770,8 +794,8 @@ JXLPostEncode(TIFF* tif)
             if(bAlphaEmbedded) nMainChannels++;
             int extra_channel_size = (sp->uncompressed_size / td->td_samplesperpixel);
             uint8_t *extra_channel_buffer = _TIFFmalloc(extra_channel_size);
-            int inStep = td->td_bitspersample / 8 * td->td_samplesperpixel;
-            int outStep = td->td_bitspersample / 8;
+            int inStep = nBytesPerSample * td->td_samplesperpixel;
+            int outStep = nBytesPerSample;
             for(int iChannel=nMainChannels; iChannel<td->td_samplesperpixel; iChannel++)
             {
                 uint8_t *cur_outbuffer = extra_channel_buffer;
