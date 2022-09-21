@@ -10265,24 +10265,41 @@ def test_tiff_write_jpegxl_band_combinations():
     if md["DMD_CREATIONOPTIONLIST"].find("JXL") == -1:
         pytest.skip()
 
-    
     src_ds = gdal.GetDriverByName("MEM").Create("", 64, 64, 6)
     for b in range(6):
-        bnd = src_ds.GetRasterBand(b+1)
-        bnd.Fill(b+1)
+        bnd = src_ds.GetRasterBand(b + 1)
+        bnd.Fill(b + 1)
         bnd.FlushCache()
-        assert(bnd.Checksum()!=0, "bnd.Fill failed")
+        assert (bnd.Checksum() != 0, "bnd.Fill failed")
 
     cilists = [
         [gdal.GCI_RedBand],
-        [gdal.GCI_RedBand,gdal.GCI_Undefined],
-        [gdal.GCI_RedBand,gdal.GCI_AlphaBand],
-        [gdal.GCI_Undefined,gdal.GCI_AlphaBand],
-        [gdal.GCI_RedBand,gdal.GCI_GreenBand,gdal.GCI_BlueBand],
-        [gdal.GCI_RedBand,gdal.GCI_GreenBand,gdal.GCI_BlueBand,gdal.GCI_AlphaBand],
-        [gdal.GCI_RedBand,gdal.GCI_GreenBand,gdal.GCI_BlueBand,gdal.GCI_AlphaBand,gdal.GCI_Undefined],
-        [gdal.GCI_RedBand,gdal.GCI_GreenBand,gdal.GCI_BlueBand,gdal.GCI_Undefined,gdal.GCI_Undefined],
-        [gdal.GCI_RedBand,gdal.GCI_GreenBand,gdal.GCI_AlphaBand,gdal.GCI_Undefined,gdal.GCI_BlueBand],
+        [gdal.GCI_RedBand, gdal.GCI_Undefined],
+        [gdal.GCI_RedBand, gdal.GCI_AlphaBand],
+        [gdal.GCI_Undefined, gdal.GCI_AlphaBand],
+        [gdal.GCI_RedBand, gdal.GCI_GreenBand, gdal.GCI_BlueBand],
+        [gdal.GCI_RedBand, gdal.GCI_GreenBand, gdal.GCI_BlueBand, gdal.GCI_AlphaBand],
+        [
+            gdal.GCI_RedBand,
+            gdal.GCI_GreenBand,
+            gdal.GCI_BlueBand,
+            gdal.GCI_AlphaBand,
+            gdal.GCI_Undefined,
+        ],
+        [
+            gdal.GCI_RedBand,
+            gdal.GCI_GreenBand,
+            gdal.GCI_BlueBand,
+            gdal.GCI_Undefined,
+            gdal.GCI_Undefined,
+        ],
+        [
+            gdal.GCI_RedBand,
+            gdal.GCI_GreenBand,
+            gdal.GCI_AlphaBand,
+            gdal.GCI_Undefined,
+            gdal.GCI_BlueBand,
+        ],
     ]
 
     types = [
@@ -10291,8 +10308,8 @@ def test_tiff_write_jpegxl_band_combinations():
     ]
 
     creationOptions = [
-        ["TILED=YES","COMPRESS=JXL","INTERLEAVE=BAND"],
-        ["TILED=YES","COMPRESS=JXL","INTERLEAVE=PIXEL"],
+        ["TILED=YES", "COMPRESS=JXL", "INTERLEAVE=BAND"],
+        ["TILED=YES", "COMPRESS=JXL", "INTERLEAVE=PIXEL"],
     ]
 
     for dtype in types:
@@ -10302,24 +10319,29 @@ def test_tiff_write_jpegxl_band_combinations():
                 bandlist = []
                 for ci in cilist:
                     bandlist.append(bid)
-                    bid+=1
-                vrtds = gdal.Translate("",src_ds,format="vrt",bandList=bandlist,outputType=dtype)
-                bid=1
-                for ci in cilist:
-                    vrtds.GetRasterBand(bid).SetColorInterpretation(ci)
-                    bid+=1
-
-                ds = gdal.Translate(tmpfilename,vrtds,creationOptions=copts)
-                ds=None
-                ds=gdal.Open(tmpfilename)
+                    bid += 1
+                vrtds = gdal.Translate(
+                    "", src_ds, format="vrt", bandList=bandlist, outputType=dtype
+                )
                 bid = 1
                 for ci in cilist:
-                    assert ds.GetRasterBand(bid).Checksum() == src_ds.GetRasterBand(bid).Checksum()
-                    bid+=1
-                vrtds=None
-                ds=None
+                    vrtds.GetRasterBand(bid).SetColorInterpretation(ci)
+                    bid += 1
+
+                ds = gdal.Translate(tmpfilename, vrtds, creationOptions=copts)
+                ds = None
+                ds = gdal.Open(tmpfilename)
+                bid = 1
+                for ci in cilist:
+                    assert (
+                        ds.GetRasterBand(bid).Checksum()
+                        == src_ds.GetRasterBand(bid).Checksum()
+                    )
+                    bid += 1
+                vrtds = None
+                ds = None
                 gdal.Unlink(tmpfilename)
-    
+
 
 def test_tiff_write_cleanup():
     gdaltest.tiff_drv = None
