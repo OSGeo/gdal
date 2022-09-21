@@ -451,6 +451,7 @@ void RegisterOGRGeoPackage()
 COMPRESSION_OPTIONS
 "  <Option name='PRELUDE_STATEMENTS' type='string' scope='raster,vector' description='SQL statement(s) to send on the SQLite connection before any other ones'/>"
 "  <Option name='NOLOCK' type='boolean' description='Whether the database should be opened in nolock mode'/>"
+"  <Option name='IMMUTABLE' type='boolean' description='Whether the database should be opened in immutable mode'/>"
 "</OpenOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
