@@ -10315,11 +10315,8 @@ def test_tiff_write_jpegxl_band_combinations():
     for dtype in types:
         for copts in creationOptions:
             for cilist in cilists:
-                bid = 1
-                bandlist = []
-                for ci in cilist:
-                    bandlist.append(bid)
-                    bid += 1
+                bandlist = [idx + 1 for idx in range(len(cilist))]
+``
                 vrtds = gdal.Translate(
                     "", src_ds, format="vrt", bandList=bandlist, outputType=dtype
                 )
