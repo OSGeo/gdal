@@ -348,6 +348,8 @@ JXLPreDecode(TIFF* tif, uint16_t s)
             format.num_channels=1;
             main_buffer_size = channel_size * (info.num_color_channels + (bAlphaEmbedded?1:0));
             extra_channel_buffer = _TIFFmalloc(channel_size*nExtraChannelsToExtract);
+            if( extra_channel_buffer == NULL )
+                return 0;
             for( int i = 0; i < nExtraChannelsToExtract; ++i )
             {
                 size_t buffer_size;
@@ -390,6 +392,7 @@ JXLPreDecode(TIFF* tif, uint16_t s)
             TIFFErrorExt(tif->tif_clientdata, module,
                          "JxlDecoderProcessInput() (second call) failed with %d", status);
             JxlDecoderReleaseInput(sp->decoder);
+            _TIFFfree(extra_channel_buffer);
             return 0;
         }
 
@@ -400,6 +403,7 @@ JXLPreDecode(TIFF* tif, uint16_t s)
             TIFFErrorExt(tif->tif_clientdata, module,
                          "JxlDecoderSetImageOutBuffer() failed with %d", status);
             JxlDecoderReleaseInput(sp->decoder);
+            _TIFFfree(extra_channel_buffer);
             return 0;
         }
 
@@ -409,6 +413,7 @@ JXLPreDecode(TIFF* tif, uint16_t s)
             TIFFErrorExt(tif->tif_clientdata, module,
                          "JxlDecoderProcessInput() (third call) failed with %d", status);
             JxlDecoderReleaseInput(sp->decoder);
+            _TIFFfree(extra_channel_buffer);
             return 0;
         }
         if( nFirstExtraChannel < info.num_extra_channels ){
@@ -744,6 +749,8 @@ JXLPostEncode(TIFF* tif)
             if(bAlphaEmbedded) nMainChannels++;
             main_size *= nMainChannels;
             main_buffer = _TIFFmalloc(main_size);
+            if( main_buffer == NULL )
+                return 0;
             int outChunkSize = nBytesPerSample * nMainChannels;
             int inStep = nBytesPerSample * td->td_samplesperpixel;
             uint8_t *cur_outbuffer=main_buffer;
@@ -795,6 +802,8 @@ JXLPostEncode(TIFF* tif)
             if(bAlphaEmbedded) nMainChannels++;
             int extra_channel_size = (sp->uncompressed_size / td->td_samplesperpixel);
             uint8_t *extra_channel_buffer = _TIFFmalloc(extra_channel_size);
+            if( extra_channel_buffer == NULL )
+                return 0;
             int inStep = nBytesPerSample * td->td_samplesperpixel;
             int outStep = nBytesPerSample;
             for(int iChannel=nMainChannels; iChannel<td->td_samplesperpixel; iChannel++)
