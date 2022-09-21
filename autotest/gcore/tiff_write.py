@@ -10270,7 +10270,7 @@ def test_tiff_write_jpegxl_band_combinations():
         bnd = src_ds.GetRasterBand(b + 1)
         bnd.Fill(b + 1)
         bnd.FlushCache()
-        assert (bnd.Checksum() != 0, "bnd.Fill failed")
+        assert bnd.Checksum() != 0, "bnd.Fill failed"
 
     cilists = [
         [gdal.GCI_RedBand],
