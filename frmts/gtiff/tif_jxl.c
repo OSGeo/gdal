@@ -737,9 +737,9 @@ JXLPostEncode(TIFF* tif)
         
         uint8_t *main_buffer = sp->uncompressed_buffer;
         unsigned int main_size = sp->uncompressed_size;
-        int nBytesPerSample = GetJXLDataTypeSize(format.data_type);
 
 #ifdef HAVE_JxlExtraChannels
+        int nBytesPerSample = GetJXLDataTypeSize(format.data_type);
         if (td->td_planarconfig == PLANARCONFIG_CONTIG &&
             (basic_info.num_extra_channels > 1 ||
              (basic_info.num_extra_channels == 1 && !bAlphaEmbedded)))
