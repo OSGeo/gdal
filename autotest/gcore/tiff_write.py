@@ -10296,6 +10296,13 @@ def test_tiff_write_jpegxl_band_combinations():
         [
             gdal.GCI_RedBand,
             gdal.GCI_GreenBand,
+            gdal.GCI_BlueBand,
+            gdal.GCI_Undefined,
+            gdal.GCI_AlphaBand,
+        ],
+        [
+            gdal.GCI_RedBand,
+            gdal.GCI_GreenBand,
             gdal.GCI_AlphaBand,
             gdal.GCI_Undefined,
             gdal.GCI_BlueBand,
@@ -10312,6 +10319,8 @@ def test_tiff_write_jpegxl_band_combinations():
         ["TILED=YES", "COMPRESS=JXL", "INTERLEAVE=PIXEL"],
     ]
 
+    jpegxl_drv = gdal.GetDriverByName("JPEGXL")
+
     for dtype in types:
         for copts in creationOptions:
             for cilist in cilists:
@@ -10324,12 +10333,69 @@ def test_tiff_write_jpegxl_band_combinations():
 
                 ds = gdal.Translate(tmpfilename, vrtds, creationOptions=copts)
                 ds = None
+                # print(dtype, copts, cilist)
                 ds = gdal.Open(tmpfilename)
                 for idx in range(len(cilist)):
-                    assert (
-                        ds.GetRasterBand(idx + 1).Checksum()
-                        == src_ds.GetRasterBand(idx + 1).Checksum()
+                    gdal.ErrorReset()
+                    got_cs = ds.GetRasterBand(idx + 1).Checksum()
+                    assert gdal.GetLastErrorMsg() == ""
+                    assert got_cs == src_ds.GetRasterBand(idx + 1).Checksum(), (
+                        dtype,
+                        copts,
+                        cilist,
+                        idx,
                     )
+
+                # Check that color interpreation inside JXL data is properly encoded
+                if jpegxl_drv and "INTERLEAVE=PIXEL" in copts:
+                    jxl_offset = ds.GetRasterBand(1).GetMetadataItem(
+                        "BLOCK_OFFSET_0_0", "TIFF"
+                    )
+                    jxl_ds = gdal.Open(
+                        "/vsisubfile/%s_-1,%s" % (jxl_offset, tmpfilename)
+                    )
+                    assert jxl_ds
+                    for idx in range(len(cilist)):
+                        got_cs = jxl_ds.GetRasterBand(idx + 1).Checksum()
+                        assert got_cs == src_ds.GetRasterBand(idx + 1).Checksum(), (
+                            dtype,
+                            copts,
+                            cilist,
+                            idx,
+                        )
+
+                    if (
+                        vrtds.RasterCount >= 3
+                        and vrtds.GetRasterBand(1).GetColorInterpretation()
+                        == gdal.GCI_RedBand
+                        and vrtds.GetRasterBand(2).GetColorInterpretation()
+                        == gdal.GCI_GreenBand
+                        and vrtds.GetRasterBand(3).GetColorInterpretation()
+                        == gdal.GCI_BlueBand
+                    ):
+                        assert (
+                            jxl_ds.GetRasterBand(1).GetColorInterpretation()
+                            == gdal.GCI_RedBand
+                        )
+                        assert (
+                            jxl_ds.GetRasterBand(2).GetColorInterpretation()
+                            == gdal.GCI_GreenBand
+                        )
+                        assert (
+                            jxl_ds.GetRasterBand(3).GetColorInterpretation()
+                            == gdal.GCI_BlueBand
+                        )
+                    # Check that alpha band is preserved
+                    for idx in range(len(cilist)):
+                        if (
+                            vrtds.GetRasterBand(idx + 1).GetColorInterpretation()
+                            == gdal.GCI_AlphaBand
+                        ):
+                            assert (
+                                jxl_ds.GetRasterBand(idx + 1).GetColorInterpretation()
+                                == gdal.GCI_AlphaBand
+                            )
+
                 vrtds = None
                 ds = None
                 gdal.Unlink(tmpfilename)
