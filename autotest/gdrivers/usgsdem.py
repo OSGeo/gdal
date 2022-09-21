@@ -295,7 +295,7 @@ def test_usgsdem_with_spaces_after_byte_864():
 def test_usgsdem_with_header_of_918_bytes():
 
     tst = gdaltest.GDALTest(
-        "USGSDEM", "usgsdem/fema06-140cm_2995441b_truncated.dem", 1, 0
+        "USGSDEM", "usgsdem/fema06-140cm_2995441b_truncated.dem", 1, -1
     )
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS("NAD83")

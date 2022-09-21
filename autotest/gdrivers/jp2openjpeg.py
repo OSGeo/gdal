@@ -3802,7 +3802,7 @@ def test_jp2openjpeg_STRICT_NO():
 
     ds = gdal.Open(filename)
     with gdaltest.error_handler():
-        assert ds.GetRasterBand(1).Checksum() == 0
+        assert ds.GetRasterBand(1).Checksum() == -1
     ds = None
 
     ds = gdal.OpenEx(filename, open_options=["STRICT=NO"])

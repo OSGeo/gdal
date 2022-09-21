@@ -3325,7 +3325,7 @@ def test_tiff_read_corrupted_jpeg_cloud_optimized():
 
     with gdaltest.error_handler():
         cs1 = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs1 == 0:
+    if cs1 == -1:
         print("Expected error while writing overview with libjpeg-6b")
     elif cs1 != 1133:
         pytest.fail(cs1)
@@ -3340,10 +3340,10 @@ def test_tiff_read_ycbcr_lzw():
     tests = [
         ("ycbcr_11_lzw.tif", 13459, 12939, 12414),
         ("ycbcr_12_lzw.tif", 13565, 13105, 12660),
-        ("ycbcr_14_lzw.tif", 0, 0, 0),  # not supported
+        ("ycbcr_14_lzw.tif", -1, -1, -1),  # not supported
         ("ycbcr_21_lzw.tif", 13587, 13297, 12760),
         ("ycbcr_22_lzw.tif", 13393, 13137, 12656),
-        ("ycbcr_24_lzw.tif", 0, 0, 0),  # not supported
+        ("ycbcr_24_lzw.tif", -1, -1, -1),  # not supported
         ("ycbcr_41_lzw.tif", 13218, 12758, 12592),
         ("ycbcr_42_lzw.tif", 13277, 12779, 12614),
         ("ycbcr_42_lzw_optimized.tif", 19918, 20120, 19087),
@@ -3353,12 +3353,12 @@ def test_tiff_read_ycbcr_lzw():
 
     for (filename, cs1, cs2, cs3) in tests:
         ds = gdal.Open("data/" + filename)
-        if cs1 == 0:
+        if cs1 == -1:
             gdal.PushErrorHandler()
         got_cs1 = ds.GetRasterBand(1).Checksum()
         got_cs2 = ds.GetRasterBand(2).Checksum()
         got_cs3 = ds.GetRasterBand(3).Checksum()
-        if cs1 == 0:
+        if cs1 == -1:
             gdal.PopErrorHandler()
         assert got_cs1 == cs1 and got_cs2 == cs2 and got_cs3 == cs3, (
             filename,
@@ -3862,7 +3862,7 @@ def test_tiff_read_progressive_jpeg_denial_of_service():
         del os.environ["LIBTIFF_JPEG_MAX_ALLOWED_SCAN_NUMBER"]
         del os.environ["JPEGMEM"]
         cs = ds.GetRasterBand(1).Checksum()
-        assert cs == 0 and gdal.GetLastErrorMsg() != ""
+        assert cs == -1 and gdal.GetLastErrorMsg() != ""
 
     # Should error out with 'TIFFjpeg_progress_monitor:Scan number...
     gdal.ErrorReset()
@@ -3873,7 +3873,7 @@ def test_tiff_read_progressive_jpeg_denial_of_service():
         cs = ds.GetRasterBand(1).Checksum()
         del os.environ["LIBTIFF_ALLOW_LARGE_LIBJPEG_MEM_ALLOC"]
         del os.environ["LIBTIFF_JPEG_MAX_ALLOWED_SCAN_NUMBER"]
-        assert cs == 0 and gdal.GetLastErrorMsg() != ""
+        assert cs == -1 and gdal.GetLastErrorMsg() != ""
 
 
 ###############################################################################
@@ -3920,7 +3920,7 @@ def test_tiff_read_mmap_interface():
             ds = gdal.Open(tmpfile)
             cs = ds.GetRasterBand(1).Checksum()
         gdal.SetConfigOption("GTIFF_USE_MMAP", None)
-        assert cs == 0, (options, cs)
+        assert cs == -1, (options, cs)
         gdal.Unlink(tmpfile)
 
     gdal.Unlink(tmpfile)
@@ -3991,7 +3991,7 @@ def test_tiff_read_zstd_corrupted():
     if md["DMD_CREATIONOPTIONLIST"].find("ZSTD") == -1:
         pytest.skip()
 
-    ut = gdaltest.GDALTest("GTiff", "byte_zstd_corrupted.tif", 1, 0)
+    ut = gdaltest.GDALTest("GTiff", "byte_zstd_corrupted.tif", 1, -1)
     with gdaltest.error_handler():
         return ut.testOpen()
 
@@ -4006,7 +4006,7 @@ def test_tiff_read_zstd_corrupted2():
     if md["DMD_CREATIONOPTIONLIST"].find("ZSTD") == -1:
         pytest.skip()
 
-    ut = gdaltest.GDALTest("GTiff", "byte_zstd_corrupted2.tif", 1, 0)
+    ut = gdaltest.GDALTest("GTiff", "byte_zstd_corrupted2.tif", 1, -1)
     with gdaltest.error_handler():
         return ut.testOpen()
 

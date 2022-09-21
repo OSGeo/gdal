@@ -91,7 +91,7 @@ def test_vrt_read_non_existing_source(filename):
     if ds is None:
         return
 
-    assert cs == 0
+    assert cs == -1
 
     ds.GetMetadata()
     ds.GetRasterBand(1).GetMetadata()
@@ -278,7 +278,7 @@ def test_vrt_read_7():
     gdal.FileFromMemBuffer(filename, content)
     ds = gdal.Open(filename)
     with gdaltest.error_handler():
-        assert ds.GetRasterBand(1).Checksum() == 0
+        assert ds.GetRasterBand(1).Checksum() == -1
     gdal.Unlink(filename)
 
 
@@ -606,8 +606,9 @@ def test_vrt_read_17():
 
     # Note: AveragedSource with resampling does not give consistent results
     # depending on the RasterIO() request
-    cs = vrt_ds.GetRasterBand(1).Checksum()
-    assert cs == 847
+    mem_ds = gdal.GetDriverByName("MEM").CreateCopy("", vrt_ds)
+    cs = mem_ds.GetRasterBand(1).Checksum()
+    assert cs == 799
 
 
 ###############################################################################
@@ -1409,7 +1410,7 @@ def test_vrt_invalid_source_band():
 </VRTDataset>"""
     ds = gdal.Open(vrt_text)
     with gdaltest.error_handler():
-        assert ds.GetRasterBand(1).Checksum() == 0
+        assert ds.GetRasterBand(1).Checksum() == -1
 
 
 def test_vrt_protocol():

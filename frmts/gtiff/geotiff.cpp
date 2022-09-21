@@ -7107,7 +7107,7 @@ CPLErr GTiffRGBABand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
     }
 
-    m_poGDS->m_nLoadedBlock = nBlockId;
+    m_poGDS->m_nLoadedBlock = eErr == CE_None ? nBlockId : -1;
 
 /* -------------------------------------------------------------------- */
 /*      Handle simple case of eight bit data, and pixel interleaving.   */
