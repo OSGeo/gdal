@@ -6149,6 +6149,24 @@ def test_netcdf_read_unrelated_dim():
     assert ds.GetMetadata() == {"Band1#foo": "bar"}
 
 
+###############################################################################
+
+
+def test_netcdf_read_missing_value_text_numeric():
+
+    ds = gdal.Open("data/netcdf/missing_value_text_numeric.nc")
+    assert ds.GetRasterBand(1).GetNoDataValue() == 12
+
+
+###############################################################################
+
+
+def test_netcdf_read_missing_value_text_non_numeric():
+
+    ds = gdal.Open("data/netcdf/missing_value_text_non_numeric.nc")
+    assert ds.GetRasterBand(1).GetNoDataValue() is None
+
+
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.

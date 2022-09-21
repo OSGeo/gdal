@@ -376,6 +376,11 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  */
 #define GDAL_DMD_MULTIDIM_ARRAY_CREATIONOPTIONLIST "DMD_MULTIDIM_ARRAY_CREATIONOPTIONLIST"
 
+/** XML snippet with multidimensional array open options.
+ * @since GDAL 3.6
+ */
+#define GDAL_DMD_MULTIDIM_ARRAY_OPENOPTIONLIST "DMD_MULTIDIM_ARRAY_OPENOPTIONLIST"
+
 /** XML snippet with multidimensional attribute creation options.
  * @since GDAL 3.1
  */

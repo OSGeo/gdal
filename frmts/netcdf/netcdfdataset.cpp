@@ -119,12 +119,6 @@ static CPLErr NCDFPutAttr( int nCdfId, int nVarId,
 static CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue );
 static CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue );
 
-static double NCDFGetDefaultNoDataValue( int nCdfId, int nVarId, int nVarType, bool& bGotNoData );
-#ifdef NETCDF_HAS_NC4
-static int64_t NCDFGetDefaultNoDataValueAsInt64( int nCdfId, int nVarId, bool& bGotNoData );
-static uint64_t NCDFGetDefaultNoDataValueAsUInt64( int nCdfId, int nVarId, bool& bGotNoData );
-#endif
-
 // Replace this where used.
 static char **NCDFTokenizeArray( const char *pszValue );
 static void CopyMetadata( GDALDataset* poSrcDS,
@@ -10654,6 +10648,13 @@ void GDALRegister_netCDF()
 "   </Option>"
 "</MultiDimArrayCreationOptionList>" );
 
+    poDriver->SetMetadataItem(GDAL_DMD_MULTIDIM_ARRAY_OPENOPTIONLIST,
+"<MultiDimArrayOpenOptionList>"
+"   <Option name='USE_DEFAULT_FILL_AS_NODATA' type='boolean' "
+    "description='Whether the default fill value should be used as nodata "
+    "when there is no _FillValue or missing_value attribute' default='NO'/>"
+"</MultiDimArrayOpenOptionList>" );
+
     poDriver->SetMetadataItem(GDAL_DMD_MULTIDIM_ATTRIBUTE_CREATIONOPTIONLIST,
 "<MultiDimAttributeCreationOptionList>"
 "   <Option name='NC_TYPE' type='string-select' default='netCDF data type'>"
@@ -11118,6 +11119,7 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
     double dfValue = 0.0;
     size_t m;
     char szTemp[256];
+    bool bSetDoubleFromStr = false;
 
     switch( nAttrType )
     {
@@ -11125,6 +11127,7 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
         CPL_IGNORE_RET_VAL(
             nc_get_att_text(nCdfId, nVarId, pszAttrName, pszAttrValue));
         pszAttrValue[nAttrLen] = '\0';
+        bSetDoubleFromStr = true;
         dfValue = 0.0;
         break;
     case NC_BYTE:
@@ -11212,6 +11215,7 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
         char **ppszTemp =
             static_cast<char **>(CPLCalloc(nAttrLen, sizeof(char *)));
         nc_get_att_string(nCdfId, nVarId, pszAttrName, ppszTemp);
+        bSetDoubleFromStr = true;
         dfValue = 0.0;
         for( m = 0; m < nAttrLen - 1; m++ )
         {
@@ -11315,9 +11319,21 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
     if( nAttrLen > 1 && nAttrType!= NC_CHAR )
         NCDFSafeStrcat(&pszAttrValue, "}", &nAttrValueSize);
 
+    if( bSetDoubleFromStr )
+    {
+        if( CPLGetValueType(pszAttrValue) == CPL_VALUE_STRING )
+        {
+            if( pszValue == nullptr && pdfValue != nullptr )
+                return CE_Failure;
+        }
+        dfValue = CPLAtof(pszAttrValue);
+    }
+
     /* set return values */
-    if( bSetPszValue ) *pszValue = pszAttrValue;
-    else CPLFree(pszAttrValue);
+    if( bSetPszValue )
+        *pszValue = pszAttrValue;
+    else
+        CPLFree(pszAttrValue);
     if( pdfValue ) *pdfValue = dfValue;
 
     return CE_None;
@@ -12098,7 +12114,7 @@ double NCDFGetDefaultNoDataValue( int nCdfId, int nVarId, int nVarType, bool& bG
 /*                      NCDFGetDefaultNoDataValueAsInt64()              */
 /************************************************************************/
 
-static int64_t NCDFGetDefaultNoDataValueAsInt64( int nCdfId, int nVarId, bool& bGotNoData )
+int64_t NCDFGetDefaultNoDataValueAsInt64( int nCdfId, int nVarId, bool& bGotNoData )
 
 {
     int nNoFill = 0;
@@ -12120,7 +12136,7 @@ static int64_t NCDFGetDefaultNoDataValueAsInt64( int nCdfId, int nVarId, bool& b
 /*                     NCDFGetDefaultNoDataValueAsUInt64()              */
 /************************************************************************/
 
-static uint64_t NCDFGetDefaultNoDataValueAsUInt64( int nCdfId, int nVarId, bool& bGotNoData )
+uint64_t NCDFGetDefaultNoDataValueAsUInt64( int nCdfId, int nVarId, bool& bGotNoData )
 
 {
     int nNoFill = 0;

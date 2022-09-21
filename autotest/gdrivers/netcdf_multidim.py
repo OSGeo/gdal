@@ -720,6 +720,7 @@ def test_netcdf_multidim_create_nc3():
             "my_var_no_dim", [], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
         )
         assert var
+        assert var.DeleteNoDataValue() == gdal.CE_None
         assert var.SetNoDataValueDouble(1) == gdal.CE_None
         assert struct.unpack("d", var.Read()) == (1,)
         assert var.GetNoDataValueAsDouble() == 1
@@ -2641,3 +2642,169 @@ def test_netcdf_multidim_short_as_unsigned():
     assert var.GetAttribute("valid_range").Read() == (1, 65533)
     assert var.GetAttribute("_FillValue").Read() == 65535
     assert struct.unpack("H" * 7, var.Read()) == (65532, 65533, 65534, 65535, 0, 1, 2)
+
+
+###############################################################################
+
+
+def test_netcdf_multidim_read_missing_value_text_numeric():
+
+    ds = gdal.OpenEx(
+        "data/netcdf/missing_value_text_numeric.nc", gdal.OF_MULTIDIM_RASTER
+    )
+    rg = ds.GetRootGroup()
+    var = rg.OpenMDArray("Band1")
+    assert var.GetNoDataValue() == 12
+
+
+###############################################################################
+
+
+def test_netcdf_read_missing_value_text_non_numeric():
+
+    ds = gdal.OpenEx(
+        "data/netcdf/missing_value_text_non_numeric.nc", gdal.OF_MULTIDIM_RASTER
+    )
+    rg = ds.GetRootGroup()
+    var = rg.OpenMDArray("Band1")
+    assert var.GetNoDataValue() is None
+
+
+###############################################################################
+
+
+def test_netcdf_read_missing_value_text_numeric_not_in_range():
+
+    ds = gdal.OpenEx(
+        "data/netcdf/missing_value_text_numeric_not_in_range.nc",
+        gdal.OF_MULTIDIM_RASTER,
+    )
+    rg = ds.GetRootGroup()
+    var = rg.OpenMDArray("Band1")
+    assert var.GetNoDataValue() is None
+
+
+###############################################################################
+
+
+def test_netcdf_multidim_update_missing_value():
+
+    drv = gdal.GetDriverByName("netCDF")
+    filename = "tmp/test_netcdf_multidim_update_missing_value.nc"
+
+    def create():
+        ds = drv.CreateMultiDimensional(filename)
+        rg = ds.GetRootGroup()
+        var = rg.CreateMDArray("var", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+        attr = var.CreateAttribute(
+            "missing_value", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        attr.Write(1)
+
+    create()
+
+    def update():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        var = rg.OpenMDArray("var")
+        assert var.GetNoDataValue() == 1
+        assert var.SetNoDataValueDouble(2) == gdal.CE_None
+
+    update()
+
+    def check():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        var = rg.OpenMDArray("var")
+        assert var.GetAttribute("missing_value") is not None
+        assert var.GetAttribute("missing_value").Read() == 2
+        assert var.GetAttribute("_FillValue") is None
+
+    check()
+
+    gdal.Unlink(filename)
+
+
+###############################################################################
+
+
+def test_netcdf_multidim_update_missing_value_and_FillValue():
+
+    drv = gdal.GetDriverByName("netCDF")
+    filename = "tmp/test_netcdf_multidim_update_missing_value_and_FillValue.nc"
+
+    def create():
+        ds = drv.CreateMultiDimensional(filename)
+        rg = ds.GetRootGroup()
+        var = rg.CreateMDArray("var", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+        attr = var.CreateAttribute(
+            "missing_value", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        attr.Write(1)
+        attr = var.CreateAttribute(
+            "_FillValue", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        attr.Write(1)
+
+    create()
+
+    def update():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        var = rg.OpenMDArray("var")
+        assert var.GetNoDataValue() == 1
+        with gdaltest.error_handler():
+            assert var.SetNoDataValueDouble(2) != gdal.CE_None
+
+    update()
+
+    def check():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        var = rg.OpenMDArray("var")
+        assert var.GetNoDataValue() == 1
+
+    check()
+
+    gdal.Unlink(filename)
+
+
+###############################################################################
+
+
+def test_netcdf_multidim_USE_DEFAULT_FILL_AS_NODATA():
+
+    ds = gdal.OpenEx("data/netcdf/alldatatypes.nc", gdal.OF_MULTIDIM_RASTER)
+    assert ds
+    rg = ds.GetRootGroup()
+    assert rg
+
+    var = rg.OpenMDArray("int_var")
+    assert var.GetNoDataValue() is None
+
+    var = rg.OpenMDArray("byte_var", ["USE_DEFAULT_FILL_AS_NODATA=YES"])
+    assert var.GetNoDataValue() is None
+
+    var = rg.OpenMDArray("short_var", ["USE_DEFAULT_FILL_AS_NODATA=YES"])
+    assert var.GetNoDataValue() == -32767
+
+    var = rg.OpenMDArray("ushort_var", ["USE_DEFAULT_FILL_AS_NODATA=YES"])
+    assert var.GetNoDataValue() == 65535
+
+    var = rg.OpenMDArray("int_var", ["USE_DEFAULT_FILL_AS_NODATA=YES"])
+    assert var.GetNoDataValue() == -2147483647
+
+    var = rg.OpenMDArray("uint_var", ["USE_DEFAULT_FILL_AS_NODATA=YES"])
+    assert var.GetNoDataValue() == 4294967295
+
+    var = rg.OpenMDArray("float_var", ["USE_DEFAULT_FILL_AS_NODATA=YES"])
+    assert var.GetNoDataValue() == pytest.approx(9.969209968386869e36, rel=1e-8)
+
+    var = rg.OpenMDArray("double_var", ["USE_DEFAULT_FILL_AS_NODATA=YES"])
+    assert var.GetNoDataValue() == pytest.approx(9.969209968386869e36, rel=1e-15)
+
+    var = rg.OpenMDArray("int64_var", ["USE_DEFAULT_FILL_AS_NODATA=YES"])
+    assert var.GetNoDataValue() == -9223372036854775806
+
+    var = rg.OpenMDArray("uint64_var", ["USE_DEFAULT_FILL_AS_NODATA=YES"])
+    assert var.GetNoDataValue() == 18446744073709551614
