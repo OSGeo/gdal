@@ -33,7 +33,6 @@ import os
 import shutil
 import struct
 import sys
-import numpy
 
 import gdaltest
 import pytest
@@ -10270,10 +10269,9 @@ def test_tiff_write_jpegxl_band_combinations():
     src_ds = gdal.GetDriverByName("MEM").Create("", 64, 64, 6)
     for b in range(6):
         bnd = src_ds.GetRasterBand(b+1)
-        data = numpy.random.bytes(64*64)
-        bnd.WriteRaster(0,0,64,64,data)
-        #bnd.Fill(b+1)
-        #print(bnd.Checksum())
+        bnd.Fill(b+1)
+        bnd.FlushCache()
+        assert(bnd.Checksum()!=0, "bnd.Fill failed")
 
     cilists = [
         [gdal.GCI_RedBand],
@@ -10293,8 +10291,8 @@ def test_tiff_write_jpegxl_band_combinations():
     ]
 
     creationOptions = [
-        ["COMPRESS=JXL","INTERLEAVE=BAND"],
-        ["COMPRESS=JXL","INTERLEAVE=PIXEL"],
+        ["TILED=YES","COMPRESS=JXL","INTERLEAVE=BAND"],
+        ["TILED=YES","COMPRESS=JXL","INTERLEAVE=PIXEL"],
     ]
 
     for dtype in types:
@@ -10321,7 +10319,6 @@ def test_tiff_write_jpegxl_band_combinations():
                 vrtds=None
                 ds=None
                 gdal.Unlink(tmpfilename)
-
     
 
 def test_tiff_write_cleanup():

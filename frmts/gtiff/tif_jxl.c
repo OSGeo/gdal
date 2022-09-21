@@ -465,15 +465,12 @@ JXLDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
 static int
 JXLSetupEncode(TIFF* tif)
 {
-        static const char module[] = "JXLSetupEncode";
         JXLState* sp = EncoderState(tif);
 
         assert(sp != NULL);
         if (sp->state & LSTATE_INIT_DECODE) {
             sp->state = 0;
         }
-
-        TIFFDirectory *td = &tif->tif_dir;
 
         if( GetJXLDataType(tif) < 0 )
             return 0;
