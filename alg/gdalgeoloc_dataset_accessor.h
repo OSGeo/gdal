@@ -38,8 +38,6 @@ class GDALGeoLocDatasetAccessors
 {
     typedef class GDALGeoLocDatasetAccessors AccessorType;
 
-    static constexpr int TILE_SIZE = 1024;
-
     GDALGeoLocTransformInfo*  m_psTransform;
 
     CPLStringList    m_aosGTiffCreationOptions{};
@@ -54,6 +52,9 @@ class GDALGeoLocDatasetAccessors
     bool         LoadGeoloc(bool bIsRegularGrid);
 
 public:
+
+    static constexpr int TILE_SIZE = 1024;
+
     GDALCachedPixelAccessor<double, TILE_SIZE> geolocXAccessor;
     GDALCachedPixelAccessor<double, TILE_SIZE> geolocYAccessor;
     GDALCachedPixelAccessor<float, TILE_SIZE>  backMapXAccessor;
