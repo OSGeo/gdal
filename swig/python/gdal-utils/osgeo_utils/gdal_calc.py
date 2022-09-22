@@ -59,9 +59,21 @@ GDALDataType = int
 AlphaList = list(string.ascii_letters)
 
 # set up some default nodatavalues for each datatype
-DefaultNDVLookup = {gdal.GDT_Byte: 255, gdal.GDT_UInt16: 65535, gdal.GDT_Int16: -32768,
-                    gdal.GDT_UInt32: 4294967293, gdal.GDT_Int32: -2147483647,
-                    gdal.GDT_Float32: 3.402823466E+38, gdal.GDT_Float64: 1.7976931348623158E+308}
+DefaultNDVLookup = {
+    gdal.GDT_Byte: 255,
+    gdal.GDT_UInt16: 65535,
+    gdal.GDT_Int16: -32768,
+    gdal.GDT_UInt32: 4294967293,
+    gdal.GDT_Int32: -2147483647,
+    gdal.GDT_UInt64: None,
+    gdal.GDT_Int64: None,
+    gdal.GDT_Float32: 3.402823466e38,
+    gdal.GDT_Float64: 1.7976931348623158e308,
+    gdal.GDT_CInt16: None,
+    gdal.GDT_CInt32: None,
+    gdal.GDT_CFloat32: None,
+    gdal.GDT_CFloat64: None,
+}
 
 # tuple of available output datatypes names
 GDALDataTypeNames = tuple(gdal.GetDataTypeName(dt) for dt in DefaultNDVLookup.keys())
