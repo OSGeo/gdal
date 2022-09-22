@@ -6,7 +6,8 @@ on:
             - 'doc/**'
         branches-ignore:
             - 'backport**'
-    # Disabled because of https://github.com/OSGeo/gdal/issues/5618
+
+    # Disabled because run is quite slow, especially for Mac
     #pull_request:
     #    paths-ignore:
     #        - 'doc/**'
@@ -27,36 +28,53 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        platform: ['ubuntu-latest','windows-latest','macos-10.15']
+        platform: ['ubuntu-latest','windows-latest','macos-latest']
 
     env:
-      PLATFORM: ${{ matrix.platform }}
+      GHA_CI_PLATFORM: ${{ matrix.platform }}
+      CACHE_NUMBER: 0
 
     steps:
     - uses: actions/checkout@v3
 
+    - name: Support longpaths
+      run: git config --system core.longpaths true
+      if: matrix.platform == 'windows-latest'
+
+    - name: Cache Conda Environment
+      uses: actions/cache@v2
+      with:
+        path: ~/conda_pkgs_dir
+        key: ${{ runner.os }}-${{ steps.get-date.outputs.today }}-conda-${{ env.CACHE_NUMBER }}
+
     - uses: conda-incubator/setup-miniconda@v2
       with:
+        #miniforge-variant: Mambaforge
+        miniforge-version: latest
+        use-mamba: true
         channels: conda-forge
-        auto-update-conda: true
+        #auto-update-conda: true
+        use-only-tar-bz2: true
+
+    - uses: ilammy/msvc-dev-cmd@v1
+      if: matrix.platform == 'windows-latest'
+
+    - name: Remove conflicting libraries
+      shell: cmd
+      if: matrix.platform == 'windows-latest'
+      run: |
+          rd /s /q C:\Strawberry
 
     - name: Setup
       shell: bash -l {0}
       run: |
           source ./ci/travis/conda/setup.sh
 
-    - name: Support longpaths
-      run: git config --system core.longpaths true
-      if: matrix.platform == 'windows-latest'
-
     - name: Build
       shell: bash -l {0}
       run: |
           source ../ci/travis/conda/compile.sh
       working-directory: ./gdal-feedstock
-
-    - uses: ilammy/msvc-dev-cmd@v1
-      if: matrix.platform == 'windows-latest'
 
     - uses: actions/upload-artifact@v3
       with:
