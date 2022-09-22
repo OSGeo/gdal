@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:gml="http://www.opengis.net/gml/3.2"
+           xmlns:other="other"
+           targetNamespace="other"
+           elementFormDefault="qualified">
+<xs:import namespace="http://www.opengis.net/gml/3.2" schemaLocation="http://schemas.opengis.net/gml/3.2.1/gml.xsd"/>
+<xs:complexType name="OtherType">
+    <xs:sequence minOccurs="0">
+        <xs:element ref="gml:AbstractCRS"/>
+    </xs:sequence>
+</xs:complexType>
+</xs:schema>
