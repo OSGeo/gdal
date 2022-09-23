@@ -79,12 +79,16 @@ but no projection checking is performed (unless projectionCheck option is used).
 
 .. option:: --type=<datatype>
 
-    Output datatype, must be one of [``Int32``, ``Int16``, ``Float64``, ``UInt16``, ``Byte``, ``UInt32``, ``Float32``].
+    Output datatype, must be one of [``Byte``, ``UInt16``, ``Int16``, ``UInt32``, ``Int32``, ``UInt64``, ``Int64``, ``Float64``, ``Float32``, ``CInt16``, ``CInt32``, ``CFloat64``, ``CFloat32``].
 
     .. note::
 
        Despite the datatype set using ``--type``, when doing intermediate aritmethic operations using operands of the
        same type, the operation result will honor the original datatype. This may lead into unexpected results in the final result.
+
+    .. note::
+
+        UInt64, Int64, CInt16, CInt32, CFloat32, CFloat64 have been added in GDAL 3.5.3
 
 .. option:: --format=<gdal_format>
 
@@ -101,15 +105,15 @@ but no projection checking is performed (unless projectionCheck option is used).
 
     This option determines how to handle rasters with different extents.
     This option is mutually exclusive with the `projwin` option, which is used for providing a custom extent.
-    
+
     For all the options below the pixel size (resolution) and SRS (Spatial Reference System) of all the input rasters must be the same.
-    
+
     ``ignore`` (default) - only the dimensions of the rasters are compared. if the dimensions do not agree the operation will fail.
-    
+
     ``fail`` - the dimensions and the extent (bounds) of the rasters must agree, otherwise the operation will fail.
-    
+
     ``union`` - the extent (bounds) of the output will be the minimal rectangle that contains all the input extents.
-    
+
     ``intersect`` - the extent (bounds) of the output will be the maximal rectangle that is contained in all the input extents.
 
 .. option:: --projwin <ulx> <uly> <lrx> <lry>
