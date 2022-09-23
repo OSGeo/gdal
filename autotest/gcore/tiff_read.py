@@ -4579,12 +4579,19 @@ def test_tiff_read_unhandled_codec_unknown_name():
 # Test reading a 4 band jxl tiff created before 3.6 where alpha vs undefined
 # channel handling was not explicitely handled (#6393)
 
+
 def test_tiff_jxl_read_for_files_created_before_6393():
+    md = gdal.GetDriverByName("GTiff").GetMetadata()
+    if md["DMD_CREATIONOPTIONLIST"].find("JXL") == -1:
+        pytest.skip()
     gdal.ErrorReset()
     with gdaltest.error_handler():
-        ds = gdal.Open("data/jxl-rgbi.tif")
+        ds = gdal.Open("data/gtiff/jxl-rgbi.tif")
         dsorig = gdal.Open("data/rgba.tif")
 
         for i in range(ds.RasterCount):
-            assert ds.GetRasterBand(i + 1).Checksum() == dsorig.GetRasterBand(i+1).Checksum()
+            assert (
+                ds.GetRasterBand(i + 1).Checksum()
+                == dsorig.GetRasterBand(i + 1).Checksum()
+            )
     assert gdal.GetLastErrorMsg() == ""
