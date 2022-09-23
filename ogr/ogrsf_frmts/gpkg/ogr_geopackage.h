@@ -122,6 +122,8 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
     int                 m_nSRID = -1; // Unknown Cartesain
     double              m_dfTMSMinX = 0.0;
     double              m_dfTMSMaxY = 0.0;
+    int                 m_nBandCountFromMetadata = 0;
+    std::unique_ptr<GDALColorTable> m_poCTFromMetadata{};
 
     int                 m_nOverviewCount = 0;
     GDALGeoPackageDataset** m_papoOverviewDS = nullptr;

@@ -2127,11 +2127,37 @@ bool GDALGeoPackageDataset::InitRaster( GDALGeoPackageDataset* poParentDS,
         return false;
     }
 
-    int nBandCount = atoi(CSLFetchNameValueDef(papszOpenOptionsIn, "BAND_COUNT", "4"));
-    if( nBandCount != 1 && nBandCount != 2 && nBandCount != 3 && nBandCount != 4 )
-        nBandCount = 4;
-    if( (poParentDS ? poParentDS->m_eDT : m_eDT) != GDT_Byte )
+    int nBandCount = 0;
+    const char* pszBAND_COUNT = CSLFetchNameValue(papszOpenOptionsIn, "BAND_COUNT");
+    if( poParentDS )
+    {
+        nBandCount = poParentDS->GetRasterCount();
+    }
+    else if( m_eDT != GDT_Byte )
+    {
+        if( pszBAND_COUNT != nullptr && !EQUAL(pszBAND_COUNT, "AUTO") && !EQUAL(pszBAND_COUNT, "1") )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "BAND_COUNT ignored for non-Byte data");
+        }
         nBandCount = 1;
+    }
+    else
+    {
+        if( pszBAND_COUNT != nullptr && !EQUAL(pszBAND_COUNT, "AUTO") )
+        {
+            nBandCount = atoi(pszBAND_COUNT);
+            if( nBandCount == 1 )
+                GetMetadata("IMAGE_STRUCTURE");
+        }
+        else
+        {
+            GetMetadata("IMAGE_STRUCTURE");
+            nBandCount = m_nBandCountFromMetadata;
+        }
+        if( nBandCount <= 0 || nBandCount > 4 )
+            nBandCount = 4;
+    }
 
     return InitRaster(poParentDS, pszTableName, nZoomLevel, nBandCount, dfMinX, dfMaxY,
                       dfPixelXSize, dfPixelYSize, nTileWidth, nTileHeight,
@@ -2274,6 +2300,11 @@ bool GDALGeoPackageDataset::InitRaster( GDALGeoPackageDataset* poParentDS,
                 poNewBand->SetNoDataValueInternal(dfNoDataValue);
         }
         SetBand( i, poNewBand );
+
+        if( nBandCount == 1 && m_poCTFromMetadata )
+        {
+            poNewBand->AssignColorTable(m_poCTFromMetadata.get());
+        }
     }
 
     if( !ComputeTileAndPixelShifts() )
@@ -3631,7 +3662,36 @@ char **GDALGeoPackageDataset::GetMetadata( const char *pszDomain )
                     char** papszIter = papszDomainList;
                     while( papszIter && *papszIter )
                     {
-                        if( !EQUAL(*papszIter, "") && !EQUAL(*papszIter, "IMAGE_STRUCTURE") )
+                        if( EQUAL(*papszIter, "IMAGE_STRUCTURE") )
+                        {
+                            CSLConstList papszMD = oLocalMDMD.GetMetadata(*papszIter);
+                            const char* pszBAND_COUNT = CSLFetchNameValue(
+                                papszMD, "BAND_COUNT");
+                            if( pszBAND_COUNT )
+                                m_nBandCountFromMetadata = atoi(pszBAND_COUNT);
+
+                            const char* pszCOLOR_TABLE = CSLFetchNameValue(
+                                papszMD, "COLOR_TABLE");
+                            if( pszCOLOR_TABLE )
+                            {
+                                const CPLStringList aosTokens(CSLTokenizeString2(pszCOLOR_TABLE, "{,", 0));
+                                if( (aosTokens.size() % 4) == 0 )
+                                {
+                                    const int nColors = aosTokens.size() / 4;
+                                    m_poCTFromMetadata = cpl::make_unique<GDALColorTable>();
+                                    for(int iColor = 0; iColor < nColors; ++iColor )
+                                    {
+                                        GDALColorEntry sEntry;
+                                        sEntry.c1 = static_cast<short>(atoi(aosTokens[4 * iColor + 0]));
+                                        sEntry.c2 = static_cast<short>(atoi(aosTokens[4 * iColor + 1]));
+                                        sEntry.c3 = static_cast<short>(atoi(aosTokens[4 * iColor + 2]));
+                                        sEntry.c4 = static_cast<short>(atoi(aosTokens[4 * iColor + 3]));
+                                        m_poCTFromMetadata->SetColorEntry(iColor, &sEntry);
+                                    }
+                                }
+                            }
+                        }
+                        else if( !EQUAL(*papszIter, "") )
                             oMDMD.SetMetadata(oLocalMDMD.GetMetadata(*papszIter), *papszIter);
                         papszIter ++;
                     }
@@ -4084,8 +4144,37 @@ CPLErr GDALGeoPackageDataset::FlushMetadata()
             if( !EQUAL(*papszIter, "") &&
                 !EQUAL(*papszIter, "IMAGE_STRUCTURE") &&
                 !EQUAL(*papszIter, "GEOPACKAGE") )
+            {
                 oLocalMDMD.SetMetadata(oMDMD.GetMetadata(*papszIter), *papszIter);
+            }
             papszIter ++;
+        }
+        if( m_nBandCountFromMetadata > 0 )
+        {
+            oLocalMDMD.SetMetadataItem(
+                "BAND_COUNT", CPLSPrintf("%d", m_nBandCountFromMetadata), "IMAGE_STRUCTURE");
+            if( nBands == 1 )
+            {
+                const auto poCT = GetRasterBand(1)->GetColorTable();
+                if( poCT )
+                {
+                    std::string osVal("{");
+                    const int nColorCount = poCT->GetColorEntryCount();
+                    for( int i = 0; i < nColorCount; ++i )
+                    {
+                        if( i > 0 )
+                            osVal += ',';
+                        const GDALColorEntry* psEntry = poCT->GetColorEntry(i);
+                        osVal += CPLSPrintf("{%d,%d,%d,%d}",
+                                            psEntry->c1,
+                                            psEntry->c2,
+                                            psEntry->c3,
+                                            psEntry->c4);
+                    }
+                    osVal += '}';
+                    oLocalMDMD.SetMetadataItem("COLOR_TABLE", osVal.c_str(), "IMAGE_STRUCTURE");
+                }
+            }
         }
         psXMLNode = oLocalMDMD.Serialize();
     }
@@ -5121,14 +5210,20 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
 
     if( EQUAL(pszTilingScheme, "CUSTOM") )
     {
-        GDALDataset* poDS = nullptr;
+        GDALGeoPackageDataset* poDS = nullptr;
         GDALDriver* poThisDriver = reinterpret_cast<GDALDriver*>(
                                                 GDALGetDriverByName("GPKG"));
         if( poThisDriver != nullptr )
         {
-            poDS = poThisDriver->DefaultCreateCopy(
+            poDS = cpl::down_cast<GDALGeoPackageDataset*>(poThisDriver->DefaultCreateCopy(
                 pszFilename, poSrcDS, bStrict,
-                apszUpdatedOptions, pfnProgress, pProgressData );
+                apszUpdatedOptions, pfnProgress, pProgressData ));
+
+            if( poDS != nullptr && poSrcDS->GetRasterBand(1)->GetRasterDataType() == GDT_Byte && nBands <= 3 )
+            {
+                poDS->m_nBandCountFromMetadata = nBands;
+                poDS->m_bMetadataDirty = true;
+            }
         }
         return poDS;
     }
