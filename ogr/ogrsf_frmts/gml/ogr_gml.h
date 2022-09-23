@@ -37,6 +37,7 @@
 #include "gmlutils.h"
 
 #include <memory>
+#include <vector>
 
 class OGRGMLDataSource;
 
@@ -160,6 +161,8 @@ class OGRGMLDataSource final: public OGRDataSource
 
     OGRSpatialReference m_oStandaloneGeomSRS{};
     std::unique_ptr<OGRGeometry> m_poStandaloneGeom{};
+
+    std::vector<std::string> m_aosGMLExtraElements{};
 
     void                FindAndParseTopElements(VSILFILE* fp);
     void                SetExtents(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);

@@ -213,7 +213,7 @@ class CPL_DLL GMLFeatureClass
 
     bool        HasFeatureProperties();
 
-    int         AddProperty( GMLPropertyDefn * );
+    int         AddProperty( GMLPropertyDefn *, int iPos = -1 );
     int         AddGeometryProperty( GMLGeometryPropertyDefn * );
     void        ClearGeometryProperties();
 

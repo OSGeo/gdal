@@ -674,6 +674,8 @@ bool OGRGMLDataSource::Open( GDALOpenInfo *poOpenInfo )
 
     // Find <gml:description>, <gml:name> and <gml:boundedBy> and if it is
     // a standalone geometry
+    // Also look for <gml:description>, <gml:identifier> and <gml:name> inside
+    // a feature
     FindAndParseTopElements(fp);
 
     if( m_poStandaloneGeom )
@@ -1673,6 +1675,20 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
         }
         oField.SetNullable(poProperty->IsNullable());
         poLayer->GetLayerDefn()->AddGeomFieldDefn(&oField);
+    }
+
+    if( poReader->GetClassCount() == 1 )
+    {
+        int iInsertPos = 0;
+        for( const auto& osElt: m_aosGMLExtraElements )
+        {
+            GMLPropertyDefn* poProperty = new GMLPropertyDefn(osElt.c_str(), osElt.c_str());
+            poProperty->SetType(GMLPT_String);
+            if( poClass->AddProperty(poProperty, iInsertPos) == iInsertPos )
+                ++ iInsertPos;
+            else
+                delete poProperty;
+        }
     }
 
     for( int iField = 0; iField < poClass->GetPropertyCount(); iField++ )
@@ -2873,6 +2889,10 @@ void OGRGMLDataSource::FindAndParseTopElements(VSILFILE *fp)
     }
 
     const char *pszFeatureMember = strstr(pszXML, "<gml:featureMember");
+    if( pszFeatureMember == nullptr )
+        pszFeatureMember = strstr(pszXML, ":featureMember>");
+    if( pszFeatureMember == nullptr )
+        pszFeatureMember = strstr(pszXML, "<wfs:member>");
 
     // Is it a standalone geometry ?
     if( pszFeatureMember == nullptr && pszStartTag != nullptr )
@@ -2967,6 +2987,17 @@ void OGRGMLDataSource::FindAndParseTopElements(VSILFILE *fp)
                 SetMetadataItem("NAME", pszTmp);
             CPLFree(pszTmp);
         }
+    }
+
+    // Detect a few fields in gml: namespace inside features
+    if( pszFeatureMember )
+    {
+        if( strstr(pszFeatureMember, "<gml:description>") )
+            m_aosGMLExtraElements.push_back("description");
+        if( strstr(pszFeatureMember, "<gml:identifier>") || strstr(pszFeatureMember, "<gml:identifier ") )
+            m_aosGMLExtraElements.push_back("identifier");
+        if( strstr(pszFeatureMember, "<gml:name>") || strstr(pszFeatureMember, "<gml:name ") )
+            m_aosGMLExtraElements.push_back("name");
     }
 
     char *pszEndBoundedBy = strstr(pszXML, "</wfs:boundedBy>");
