@@ -166,49 +166,11 @@ template<class T> void VRTFlushCacheStruct<T>::FlushCache(T& obj, bool bAtClosin
 
     obj.m_bNeedsFlush = false;
 
-    /* -------------------------------------------------------------------- */
-    /*      Create the output file.                                         */
-    /* -------------------------------------------------------------------- */
-    VSILFILE *fpVRT = VSIFOpenL( obj.GetDescription(), "w" );
-    if( fpVRT == nullptr )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                "Failed to write .vrt file in FlushCache(bool bAtClosing)." );
-        return;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Convert tree to a single block of XML text.                     */
-    /* -------------------------------------------------------------------- */
-    const char* pszDescription = obj.GetDescription();
-    char *l_pszVRTPath = CPLStrdup(
-        pszDescription[0] && !STARTS_WITH(pszDescription, "<VRTDataset") ?
-            CPLGetPath(pszDescription): "" );
-    CPLXMLNode *psDSTree = obj.T::SerializeToXML( l_pszVRTPath );
-    char *pszXML = CPLSerializeXMLTree( psDSTree );
-
+    // Serialize XML representation to disk
+    const std::string osVRTPath( CPLGetPath(obj.GetDescription()) );
+    CPLXMLNode *psDSTree = obj.T::SerializeToXML( osVRTPath.c_str() );
+    CPLSerializeXMLTreeToFile(psDSTree, obj.GetDescription());
     CPLDestroyXMLNode( psDSTree );
-
-    CPLFree( l_pszVRTPath );
-    bool bOK = true;
-    if( pszXML )
-    {
-        /* ------------------------------------------------------------------ */
-        /*      Write to disk.                                                */
-        /* ------------------------------------------------------------------ */
-        bOK &=
-            VSIFWriteL( pszXML, 1, strlen(pszXML), fpVRT )
-            == strlen(pszXML);
-        CPLFree(pszXML);
-    }
-    if( VSIFCloseL( fpVRT ) != 0 )
-        bOK = false;
-    if( !bOK )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                "Failed to write .vrt file in FlushCache(bool bAtClosing)." );
-        return;
-    }
 }
 
 /************************************************************************/
