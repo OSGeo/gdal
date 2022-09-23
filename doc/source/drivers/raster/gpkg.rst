@@ -110,7 +110,9 @@ The following open options are available:
    Defaults to NO.
 -  **TILE_FORMAT**\ =PNG_JPEG/PNG/PNG8/JPEG/WEBP: Format used to store
    tiles. See :ref:`raster.gpkg.tile_formats`. Only used in
-   update mode. Defaults to PNG_JPEG.
+   update mode and for Byte data type.
+   Defaults to PNG_JPEG, unless, starting with GDAL 3.6, if the
+   raster has one band, in which case PNG is used.
 -  **QUALITY**\ =1-100: Quality setting for JPEG and WEBP compression.
    Only used in update mode. Default to 75.
 -  **ZLEVEL**\ =1-9: DEFLATE compression level for PNG tiles. Only used
@@ -179,6 +181,8 @@ Tile formats
 Tiled rasters
 ^^^^^^^^^^^^^
 
+This section only applies for raster of Byte data type.
+
 GeoPackage can store tiles in different formats, PNG and/or JPEG for the
 baseline specification, and WebP for extended GeoPackage. Support for
 those tile formats depend if the underlying drivers are available in
@@ -194,6 +198,7 @@ clipping at the right or bottom edges of the raster, or when a dataset
 is opened with a non-default area of interest, or with a non-custom
 tiling scheme. On the contrary, for fully opaque tiles, JPEG format will
 be used.
+Starting with GDAL 3.6, if the raster has only one band, the default is PNG.
 
 It is possible to select one unique tile format by setting the
 creation/open option TILE_FORMAT to one of PNG, JPEG or WEBP. When using

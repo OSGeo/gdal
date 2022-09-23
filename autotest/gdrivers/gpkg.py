@@ -1577,7 +1577,7 @@ def test_gpkg_17():
     # Without padding, immediately after create copy
     ds = gdal.Open("data/byte.tif")
     out_ds = gdaltest.gpkg_dr.CreateCopy(
-        "/vsimem/tmp.gpkg", ds, options=["TILE_FORMAT=PNG", "BLOCKSIZE=10"]
+        "/vsimem/tmp.gpkg", ds, options=["BLOCKSIZE=10"]
     )
     out_ds.BuildOverviews("NEAR", [2])
     out_ds = None
@@ -1595,17 +1595,15 @@ def test_gpkg_17():
     out_ds = None
     gdal.Unlink("/vsimem/tmp.gpkg")
 
-    # Without padding, after reopening, and BAND_COUNT = 1
+    # Without padding, after reopening
     ds = gdal.Open("data/byte.tif")
     out_ds = gdaltest.gpkg_dr.CreateCopy(
-        "/vsimem/tmp.gpkg", ds, options=["TILE_FORMAT=PNG", "BLOCKSIZE=10"]
+        "/vsimem/tmp.gpkg", ds, options=["BLOCKSIZE=10"]
     )
     out_ds = None
-    # FIXME? Should we eventually write the driver somewhere in metadata ?
     out_ds = gdal.OpenEx(
         "/vsimem/tmp.gpkg",
         gdal.OF_RASTER | gdal.OF_UPDATE,
-        open_options=["TILE_FORMAT=PNG", "BAND_COUNT=1"],
     )
     out_ds.BuildOverviews("NEAR", [2])
     out_ds = None
@@ -1621,10 +1619,7 @@ def test_gpkg_17():
     # Without padding, after reopening
     ds = gdal.Open("data/byte.tif")
     with gdaltest.config_option("CREATE_METADATA_TABLES", "NO"):
-        gdaltest.gpkg_dr.CreateCopy(
-            "/vsimem/tmp.gpkg", ds, options=["TILE_FORMAT=PNG", "BLOCKSIZE=10"]
-        )
-    # FIXME? Should we eventually write the driver somewhere in metadata ?
+        gdaltest.gpkg_dr.CreateCopy("/vsimem/tmp.gpkg", ds, options=["BLOCKSIZE=10"])
     out_ds = gdal.OpenEx(
         "/vsimem/tmp.gpkg",
         gdal.OF_RASTER | gdal.OF_UPDATE,

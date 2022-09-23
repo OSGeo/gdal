@@ -2154,6 +2154,12 @@ bool GDALGeoPackageDataset::InitRaster( GDALGeoPackageDataset* poParentDS,
         {
             GetMetadata("IMAGE_STRUCTURE");
             nBandCount = m_nBandCountFromMetadata;
+            if( nBandCount == 1 )
+                m_eTF = GPKG_TF_PNG;
+        }
+        if( nBandCount == 1 && !m_osTFFromMetadata.empty() )
+        {
+            m_eTF = GDALGPKGMBTilesGetTileFormat(m_osTFFromMetadata.c_str());
         }
         if( nBandCount <= 0 || nBandCount > 4 )
             nBandCount = 4;
@@ -3690,7 +3696,16 @@ char **GDALGeoPackageDataset::GetMetadata( const char *pszDomain )
                                     }
                                 }
                             }
+
+                            const char* pszTILE_FORMAT = CSLFetchNameValue(
+                                papszMD, "TILE_FORMAT");
+                            if( pszTILE_FORMAT )
+                            {
+                                m_osTFFromMetadata = pszTILE_FORMAT;
+                                oMDMD.SetMetadataItem("TILE_FORMAT", pszTILE_FORMAT, "IMAGE_STRUCTURE");
+                            }
                         }
+
                         else if( !EQUAL(*papszIter, "") )
                             oMDMD.SetMetadata(oLocalMDMD.GetMetadata(*papszIter), *papszIter);
                         papszIter ++;
@@ -4174,6 +4189,22 @@ CPLErr GDALGeoPackageDataset::FlushMetadata()
                     osVal += '}';
                     oLocalMDMD.SetMetadataItem("COLOR_TABLE", osVal.c_str(), "IMAGE_STRUCTURE");
                 }
+            }
+            if( nBands == 1 )
+            {
+                const char* pszTILE_FORMAT = nullptr;
+                switch( m_eTF )
+                {
+                    case GPKG_TF_PNG_JPEG: pszTILE_FORMAT = "JPEG_PNG"; break;
+                    case GPKG_TF_PNG: break;
+                    case GPKG_TF_PNG8: pszTILE_FORMAT = "PNG8"; break;
+                    case GPKG_TF_JPEG: pszTILE_FORMAT = "JPEG"; break;
+                    case GPKG_TF_WEBP: pszTILE_FORMAT = "WEBP"; break;
+                    case GPKG_TF_PNG_16BIT: break;
+                    case GPKG_TF_TIFF_32BIT_FLOAT: break;
+                }
+                if( pszTILE_FORMAT )
+                    oLocalMDMD.SetMetadataItem("TILE_FORMAT", pszTILE_FORMAT, "IMAGE_STRUCTURE");
             }
         }
         psXMLNode = oLocalMDMD.Serialize();
@@ -4856,7 +4887,13 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         else
         {
             if( pszTF )
+            {
                 m_eTF = GDALGPKGMBTilesGetTileFormat(pszTF);
+                if( nBandsIn == 1 && m_eTF != GPKG_TF_PNG )
+                    m_bMetadataDirty = true;
+            }
+            else if( nBandsIn == 1 )
+                m_eTF = GPKG_TF_PNG;
         }
 
         if( eDT != GDT_Byte )
