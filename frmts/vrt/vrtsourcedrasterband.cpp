@@ -1834,7 +1834,12 @@ CPLErr VRTSourcedRasterBand::AddSimpleSource(
     VRTSimpleSource *poSimpleSource = nullptr;
 
     if( pszResampling != nullptr && STARTS_WITH_CI(pszResampling, "aver") )
-        poSimpleSource = new VRTAveragedSource();
+    {
+        auto poAveragedSource = new VRTAveragedSource();
+        poSimpleSource = poAveragedSource;
+        if( dfNoDataValueIn != VRT_NODATA_UNSET )
+            poAveragedSource->SetNoDataValue( dfNoDataValueIn );
+    }
     else
     {
         poSimpleSource = new VRTSimpleSource();
@@ -1851,9 +1856,6 @@ CPLErr VRTSourcedRasterBand::AddSimpleSource(
                                   dfSrcXSize, dfSrcYSize );
     poSimpleSource->SetDstWindow( dfDstXOff, dfDstYOff,
                                   dfDstXSize, dfDstYSize );
-
-    if( dfNoDataValueIn != VRT_NODATA_UNSET )
-        poSimpleSource->SetNoDataValue( dfNoDataValueIn );
 
 /* -------------------------------------------------------------------- */
 /*      add to list.                                                    */
@@ -1881,14 +1883,19 @@ CPLErr VRTSourcedRasterBand::AddSimpleSource(
     VRTSimpleSource *poSimpleSource = nullptr;
 
     if( pszResampling != nullptr && STARTS_WITH_CI(pszResampling, "aver") )
-        poSimpleSource = new VRTAveragedSource();
+    {
+        auto poAveragedSource = new VRTAveragedSource();
+        poSimpleSource = poAveragedSource;
+        if( dfNoDataValueIn != VRT_NODATA_UNSET )
+            poAveragedSource->SetNoDataValue( dfNoDataValueIn );
+    }
     else
     {
         poSimpleSource = new VRTSimpleSource();
         if( dfNoDataValueIn != VRT_NODATA_UNSET )
             CPLError(
                 CE_Warning, CPLE_AppDefined,
-                "NODATA setting not currently supported for nearest  "
+                "NODATA setting not currently supported for "
                 "neighbour sampled simple sources on Virtual Datasources." );
     }
 
@@ -1899,9 +1906,6 @@ CPLErr VRTSourcedRasterBand::AddSimpleSource(
                      dfSrcXSize, dfSrcYSize,
                      dfDstXOff, dfDstYOff,
                      dfDstXSize, dfDstYSize );
-
-    if( dfNoDataValueIn != VRT_NODATA_UNSET )
-        poSimpleSource->SetNoDataValue( dfNoDataValueIn );
 
 /* -------------------------------------------------------------------- */
 /*      add to list.                                                    */
