@@ -2265,13 +2265,20 @@ CPLXMLNode *VRTComplexSource::SerializeToXML( const char *pszVRTPath )
 
     if( m_bNoDataSet )
     {
-        auto l_band = GetRasterBand();
-        if( l_band )
+        GDALDataType eBandDT = GDT_Unknown;
+        double dfNoDataValue = m_dfNoDataValue;
+        const auto kMaxFloat = std::numeric_limits<float>::max();
+        if( std::fabs(std::fabs(m_dfNoDataValue) - kMaxFloat) < 1e-10 * kMaxFloat )
         {
-            const double dfNoDataValue = GetAdjustedNoDataValue();
-            CPLSetXMLValue( psSrc, "NODATA", VRTSerializeNoData(
-                dfNoDataValue, l_band->GetRasterDataType(), 16).c_str());
+            auto l_band = GetRasterBand();
+            if( l_band )
+            {
+                dfNoDataValue = GetAdjustedNoDataValue();
+                eBandDT = l_band->GetRasterDataType();
+            }
         }
+        CPLSetXMLValue( psSrc, "NODATA", VRTSerializeNoData(
+            dfNoDataValue, eBandDT, 16).c_str());
     }
 
     switch( m_eScalingType )
