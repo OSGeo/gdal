@@ -3876,7 +3876,7 @@ namespace tut
         {
             Context* psCtxt;
             int iJob;
-            GIntBig nThreadLambda;
+            GIntBig nThreadLambda = 0;
 
             Data(Context* psCtxtIn, int iJobIn):
                 psCtxt(psCtxtIn), iJob(iJobIn) {}
