@@ -11324,6 +11324,7 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
         {
             if( ppszValue == nullptr && pdfValue != nullptr )
             {
+                CPLFree(pszAttrValue);
                 return CE_Failure;
             }
         }
