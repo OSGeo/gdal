@@ -110,9 +110,6 @@ static GDALDataset *OGRODSDriverOpen( GDALOpenInfo* poOpenInfo )
         bIsZIP = true;
     }
 
-    VSILFILE* fpContent = nullptr;
-    VSILFILE* fpSettings = nullptr;
-
     std::string osPrefixedFilename;
     if( bIsZIP )
     {
@@ -138,30 +135,24 @@ static GDALDataset *OGRODSDriverOpen( GDALOpenInfo* poOpenInfo )
         return nullptr;
     }
 
-    if( bIsODSPrefixed || bIsZIP )
+    VSILFILE* fpContent = VSIFOpenL(osContentFilename, "rb");
+    if (fpContent == nullptr)
+        return nullptr;
+
+    char szBuffer[1024];
+    int nRead = (int)VSIFReadL(szBuffer, 1, sizeof(szBuffer) - 1, fpContent);
+    szBuffer[nRead] = 0;
+
+    if (strstr(szBuffer, "<office:document-content") == nullptr)
     {
-        fpContent = VSIFOpenL(osContentFilename, "rb");
-        if (fpContent == nullptr)
-            return nullptr;
-
-        char szBuffer[1024];
-        int nRead = (int)VSIFReadL(szBuffer, 1, sizeof(szBuffer) - 1, fpContent);
-        szBuffer[nRead] = 0;
-
-        if (strstr(szBuffer, "<office:document-content") == nullptr)
-        {
-            VSIFCloseL(fpContent);
-            return nullptr;
-        }
-
-        /* We could also check that there's a <office:spreadsheet>, but it might be further */
-        /* in the XML due to styles, etc... */
-    }
-    else
-    {
+        VSIFCloseL(fpContent);
         return nullptr;
     }
 
+    /* We could also check that there's a <office:spreadsheet>, but it might be further */
+    /* in the XML due to styles, etc... */
+
+    VSILFILE* fpSettings = nullptr;
     if( bIsZIP )
     {
         CPLString osTmpFilename(CPLSPrintf("%s/settings.xml", osPrefixedFilename.c_str()));
