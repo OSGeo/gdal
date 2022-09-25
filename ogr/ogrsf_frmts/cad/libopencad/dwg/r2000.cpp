@@ -1425,8 +1425,11 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
                 image->setImageSizeInPx( imageSizeInPx );
                 CADVector pixelSizeInACADUnits( cadImageDef->dfXPixelSize, cadImageDef->dfYPixelSize );
                 image->setPixelSizeInACADUnits( pixelSizeInACADUnits );
-                image->setResolutionUnits(
-                    static_cast<CADImage::ResolutionUnit>( cadImageDef->dResUnits ) );
+                if( CADImage::IsValidResolutionUnit( cadImageDef->dResUnits ) )
+                {
+                    image->setResolutionUnits(
+                        static_cast<CADImage::ResolutionUnit>( cadImageDef->dResUnits ) );
+                }
                 bool bTransparency = (cadImage->dDisplayProps & 0x08) != 0;
                 image->setOptions( bTransparency,
                                    cadImage->bClipping,
