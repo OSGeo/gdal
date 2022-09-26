@@ -407,8 +407,8 @@ Creation Options
    * ``LERC_ZSTD`` is available when ``LERC`` and ``ZSTD`` are available.
 
    * ``JXL`` is for JPEG-XL, and is only available when using internal libtiff and building GDAL against
-     https://github.com/libjxl/libjxl . JXL compression may only be used alongside ``INTERLEAVE=PIXEL``
-     (the default) on datasets with 4 bands or less.
+     https://github.com/libjxl/libjxl . For GDAL < 3.6.0, JXL compression may only be used alongside
+     ``INTERLEAVE=PIXEL`` (the default) on datasets with 4 bands or less.
 
    * ``NONE`` is the default.
 
@@ -487,7 +487,9 @@ Creation Options
 
 -  **JXL_LOSSLESS=YES/NO**: Set whether JPEG-XL compression should be lossless
    (YES, default) or lossy (NO). For lossy compression, the underlying data
-   should be either gray, gray+alpha, rgb or rgb+alpha.
+   should be either gray, gray+alpha, rgb or rgb+alpha. For lossy compression,
+   the pixel data should span the whole range of the underlying pixel type (i.e.
+   0-255 for Byte, 0-65535 for UInt16)
 
 -  **JXL_EFFORT=[1-9]**: Level of effort for JPEG-XL compression.
    The higher, the smaller file and slower compression time. Default is 5.
