@@ -145,32 +145,55 @@ GDALChecksumImage( GDALRasterBandH hBand,
         int nBlockXSize = 0;
         int nBlockYSize = 0;
         GDALGetBlockSize(hBand, &nBlockXSize, &nBlockYSize);
+        const int nDstDataTypeSize = GDALGetDataTypeSizeBytes(eDstDataType);
+        int nChunkXSize = nBlockXSize;
+        const int nChunkYSize = nBlockYSize;
+        if( nBlockXSize < nXSize )
+        {
+            const GIntBig nMaxChunkSize = std::max(
+                static_cast<GIntBig>(10 * 1000 * 1000), GDALGetCacheMax64() / 10 );
+            if( static_cast<GIntBig>(nXSize) * nChunkYSize < nMaxChunkSize / nDstDataTypeSize )
+            {
+                // A full line of height nChunkYSize can fit in the maximum
+                // allowed memory
+                nChunkXSize = nXSize;
+            }
+            else
+            {
+                // Otherwise compute a size that is a multiple of nBlockXSize
+                nChunkXSize = static_cast<int>(std::min(
+                    static_cast<GIntBig>(nXSize),
+                    nBlockXSize * std::max(
+                    static_cast<GIntBig>(1),
+                    nMaxChunkSize / (
+                        static_cast<GIntBig>(nBlockXSize) * nChunkYSize * nDstDataTypeSize))));
+            }
+        }
 
-        int *panBlockData = static_cast<GInt32 *>(
-            VSI_MALLOC3_VERBOSE(nBlockXSize, nBlockYSize,
-                                GDALGetDataTypeSizeBytes(eDstDataType)));
-        if( panBlockData == nullptr )
+        int *panChunkData = static_cast<GInt32 *>(
+            VSI_MALLOC3_VERBOSE(nChunkXSize, nChunkYSize, nDstDataTypeSize));
+        if( panChunkData == nullptr )
         {
             return -1;
         }
         const int nValsPerIter = bComplex ? 2 : 1;
 
-        const int nYBlocks = DIV_ROUND_UP(nYSize, nBlockYSize);
-        const int nXBlocks = DIV_ROUND_UP(nXSize, nBlockXSize);
+        const int nYBlocks = DIV_ROUND_UP(nYSize, nChunkYSize);
+        const int nXBlocks = DIV_ROUND_UP(nXSize, nChunkXSize);
         for( int iYBlock = 0; iYBlock < nYBlocks; ++iYBlock )
         {
-            const int iYStart = iYBlock * nBlockYSize;
-            const int iYEnd = iYBlock == nYBlocks - 1 ? nYSize : iYStart + nBlockYSize;
-            const int nBlockHeight = iYEnd - iYStart;
+            const int iYStart = iYBlock * nChunkYSize;
+            const int iYEnd = iYBlock == nYBlocks - 1 ? nYSize : iYStart + nChunkYSize;
+            const int nChunkActualHeight = iYEnd - iYStart;
             for( int iXBlock = 0; iXBlock < nXBlocks; ++iXBlock )
             {
-                const int iXStart = iXBlock * nBlockXSize;
-                const int iXEnd = iXBlock == nXBlocks - 1 ? nXSize : iXStart + nBlockXSize;
-                const int nBlockWidth = iXEnd - iXStart;
+                const int iXStart = iXBlock * nChunkXSize;
+                const int iXEnd = iXBlock == nXBlocks - 1 ? nXSize : iXStart + nChunkXSize;
+                const int nChunkActualXSize = iXEnd - iXStart;
                 if( GDALRasterIO( hBand, GF_Read, iXStart, iYStart,
-                                  nBlockWidth, nBlockHeight,
-                                  panBlockData,
-                                  nBlockWidth, nBlockHeight,
+                                  nChunkActualXSize, nChunkActualHeight,
+                                  panChunkData,
+                                  nChunkActualXSize, nChunkActualHeight,
                                   eDstDataType,
                                   0, 0 ) != CE_None )
                 {
@@ -181,16 +204,16 @@ GDALChecksumImage( GDALRasterBandH hBand,
                     iYBlock = nYBlocks;
                     break;
                 }
-                const int xIters = nValsPerIter * nBlockWidth;
+                const int xIters = nValsPerIter * nChunkActualXSize;
                 for( int iY = iYStart; iY < iYEnd; ++iY)
                 {
                     // Initialize iPrime so that it is consistent with a
                     // per full line iteration strategy
                     iPrime = (nValsPerIter * (iY * nXSize + iXStart)) % 11;
-                    const int nOffset = nValsPerIter * (iY - iYStart) * nBlockWidth;
+                    const int nOffset = nValsPerIter * (iY - iYStart) * nChunkActualXSize;
                     for( int i = 0; i < xIters; ++i )
                     {
-                        nChecksum += panBlockData[nOffset + i] % anPrimes[iPrime++];
+                        nChecksum += panChunkData[nOffset + i] % anPrimes[iPrime++];
                         if( iPrime > 10 )
                             iPrime = 0;
                     }
@@ -199,7 +222,7 @@ GDALChecksumImage( GDALRasterBandH hBand,
             }
         }
 
-        CPLFree( panBlockData );
+        CPLFree( panChunkData );
     }
     else
     {
