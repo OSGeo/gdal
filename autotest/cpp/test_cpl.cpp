@@ -2890,7 +2890,7 @@ namespace tut
             for( int i = 0; i < 1000; i++ )
             {
                 res[i] = i;
-                resPtr[i] = &res[i];
+                resPtr[i] = res.data() + i;
             }
             oPool.SubmitJobs(myJob, resPtr);
             oPool.WaitEvent();
@@ -3876,7 +3876,7 @@ namespace tut
         {
             Context* psCtxt;
             int iJob;
-            GIntBig nThreadLambda;
+            GIntBig nThreadLambda = 0;
 
             Data(Context* psCtxtIn, int iJobIn):
                 psCtxt(psCtxtIn), iJob(iJobIn) {}
