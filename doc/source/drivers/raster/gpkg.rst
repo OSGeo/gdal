@@ -65,6 +65,9 @@ By default, the driver will expose a GeoPackage dataset as a four band
 with the various encodings of tiles that can be stored. It is possible
 to specify an explicit number of bands with the BAND_COUNT opening
 option.
+Starting with GDAL 3.6, a special metadata item is written when creating
+a GeoPackage raster with GDAL (when using the default CUSTOM tiling scheme),
+and it is used on reading as the default number of bands.
 
 The driver will use the geographic/projected extent indicated in the
 `gpkg_contents <http://www.geopackage.org/spec/#_contents>`__ table, and
@@ -89,11 +92,15 @@ The following open options are available:
    filled in the *gpkg_tile_matrix* table. By default, the driver will
    select the maximum zoom level, such as at least one tile at that zoom
    level is found in the raster table.
--  **BAND_COUNT**\ =1/2/3/4: Number of bands of the dataset exposed
-   after opening. Some conversions will be done when possible and
+-  **BAND_COUNT**\ =AUTO/1/2/3/4: Number of bands of the dataset exposed
+   after opening. Only used for Byte data type.
+   Some conversions will be done when possible and
    implemented, but this might fail in some cases, depending on the
-   BAND_COUNT value and the number of bands of the tile. Defaults to 4
-   (which is the always safe value).
+   BAND_COUNT value and the number of bands of the tile.
+   Before GDAL 3.6, the default value is 4 (which is the always safe value).
+   Starting with GDAL 3.6, when the metadata of the file contains an hint
+   of the number of bands, this one is used in AUTO mode (default value), or
+   fallback to 4 when it is not present.
 -  **MINX**\ =value: Minimum longitude/easting of the area of interest.
 -  **MINY**\ =value: Minimum latitude/northing of the area of interest.
 -  **MAXX**\ =value: Maximum longitude/easting of the area of interest.
@@ -103,7 +110,9 @@ The following open options are available:
    Defaults to NO.
 -  **TILE_FORMAT**\ =PNG_JPEG/PNG/PNG8/JPEG/WEBP: Format used to store
    tiles. See :ref:`raster.gpkg.tile_formats`. Only used in
-   update mode. Defaults to PNG_JPEG.
+   update mode and for Byte data type.
+   Defaults to PNG_JPEG, unless, starting with GDAL 3.6, if the
+   raster has one band, in which case PNG is used.
 -  **QUALITY**\ =1-100: Quality setting for JPEG and WEBP compression.
    Only used in update mode. Default to 75.
 -  **ZLEVEL**\ =1-9: DEFLATE compression level for PNG tiles. Only used
@@ -172,6 +181,8 @@ Tile formats
 Tiled rasters
 ^^^^^^^^^^^^^
 
+This section only applies for raster of Byte data type.
+
 GeoPackage can store tiles in different formats, PNG and/or JPEG for the
 baseline specification, and WebP for extended GeoPackage. Support for
 those tile formats depend if the underlying drivers are available in
@@ -187,6 +198,7 @@ clipping at the right or bottom edges of the raster, or when a dataset
 is opened with a non-default area of interest, or with a non-custom
 tiling scheme. On the contrary, for fully opaque tiles, JPEG format will
 be used.
+Starting with GDAL 3.6, if the raster has only one band, the default is PNG.
 
 It is possible to select one unique tile format by setting the
 creation/open option TILE_FORMAT to one of PNG, JPEG or WEBP. When using
