@@ -519,3 +519,106 @@ def test_jpegxl_createcopy_errors():
             is None
         )
         assert gdal.GetLastErrorMsg() != ""
+
+
+###############################################################################
+def test_jpegxl_band_combinations():
+
+    drv = gdal.GetDriverByName("JPEGXL")
+    if drv.GetMetadataItem("JXL_ENCODER_SUPPORT_EXTRA_CHANNELS") is None:
+        pytest.skip()
+
+    tmpfilename = "/vsimem/test_jpegxl_band_combinations.jxl"
+    src_ds = gdal.GetDriverByName("MEM").Create("", 64, 64, 6)
+    for b in range(6):
+        bnd = src_ds.GetRasterBand(b + 1)
+        bnd.Fill(b + 1)
+        bnd.FlushCache()
+        assert bnd.Checksum() != 0, "bnd.Fill failed"
+
+    cilists = [
+        [gdal.GCI_RedBand],
+        [gdal.GCI_RedBand, gdal.GCI_Undefined],
+        [gdal.GCI_RedBand, gdal.GCI_AlphaBand],
+        [gdal.GCI_Undefined, gdal.GCI_AlphaBand],
+        [gdal.GCI_RedBand, gdal.GCI_GreenBand, gdal.GCI_BlueBand],
+        [gdal.GCI_RedBand, gdal.GCI_GreenBand, gdal.GCI_BlueBand, gdal.GCI_AlphaBand],
+        [
+            gdal.GCI_RedBand,
+            gdal.GCI_GreenBand,
+            gdal.GCI_BlueBand,
+            gdal.GCI_AlphaBand,
+            gdal.GCI_Undefined,
+        ],
+        [
+            gdal.GCI_RedBand,
+            gdal.GCI_GreenBand,
+            gdal.GCI_BlueBand,
+            gdal.GCI_Undefined,
+            gdal.GCI_Undefined,
+        ],
+        [
+            gdal.GCI_RedBand,
+            gdal.GCI_GreenBand,
+            gdal.GCI_BlueBand,
+            gdal.GCI_Undefined,
+            gdal.GCI_AlphaBand,
+        ],
+        [
+            gdal.GCI_RedBand,
+            gdal.GCI_GreenBand,
+            gdal.GCI_AlphaBand,
+            gdal.GCI_Undefined,
+            gdal.GCI_BlueBand,
+        ],
+    ]
+
+    types = [
+        gdal.GDT_Byte,
+        gdal.GDT_UInt16,
+    ]
+
+    for dtype in types:
+        for cilist in cilists:
+            bandlist = [idx + 1 for idx in range(len(cilist))]
+            vrtds = gdal.Translate(
+                "", src_ds, format="vrt", bandList=bandlist, outputType=dtype
+            )
+            for idx, ci in enumerate(cilist):
+                vrtds.GetRasterBand(idx + 1).SetColorInterpretation(ci)
+
+            ds = gdal.Translate(tmpfilename, vrtds)
+            ds = None
+            gdal.Unlink(tmpfilename + ".aux.xml")
+            # print(dtype, cilist)
+            ds = gdal.Open(tmpfilename)
+            for idx in range(len(cilist)):
+                assert (
+                    ds.GetRasterBand(idx + 1).Checksum()
+                    == src_ds.GetRasterBand(idx + 1).Checksum()
+                ), (dtype, cilist, idx)
+            if (
+                vrtds.RasterCount >= 3
+                and vrtds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
+                and vrtds.GetRasterBand(2).GetColorInterpretation()
+                == gdal.GCI_GreenBand
+                and vrtds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
+            ):
+                assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
+                assert (
+                    ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GreenBand
+                )
+                assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
+            # Check that alpha band is preserved
+            for idx in range(len(cilist)):
+                if (
+                    vrtds.GetRasterBand(idx + 1).GetColorInterpretation()
+                    == gdal.GCI_AlphaBand
+                ):
+                    assert (
+                        ds.GetRasterBand(idx + 1).GetColorInterpretation()
+                        == gdal.GCI_AlphaBand
+                    )
+            vrtds = None
+            ds = None
+            gdal.Unlink(tmpfilename)
