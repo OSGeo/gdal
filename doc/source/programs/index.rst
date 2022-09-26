@@ -113,6 +113,7 @@ Vector programs
    ogrtindex
    ogrlineref
    ogrmerge
+   ogr_layer_algebra
 
 .. only:: html
 
@@ -122,6 +123,7 @@ Vector programs
     - :ref:`ogrtindex`: Creates a tileindex.
     - :ref:`ogrlineref`: Create linear reference and provide some calculations using it.
     - :ref:`ogrmerge`: Merge several vector datasets into a single one.
+    - :ref:`ogr_layer_algebra`: Performs various Vector layer algebraic operations.
 
 Geographic network programs
 ---------------------------

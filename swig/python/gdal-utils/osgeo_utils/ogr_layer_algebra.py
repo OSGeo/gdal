@@ -158,7 +158,7 @@ def CreateLayer(
 ###############################################################################
 
 
-def main(argv=None):
+def main(argv=sys.argv):
     version_num = int(gdal.VersionInfo("VERSION_NUM"))
     if version_num < 1100000:
         print("ERROR: Python bindings of GDAL 1.10 or later required")
