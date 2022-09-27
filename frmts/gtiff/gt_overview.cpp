@@ -1027,6 +1027,7 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
                       nJpegQuality );
         GTIFFSetJpegQuality(GDALDataset::ToHandle(hODS), nJpegQuality);
     }
+
     const char* pszWebpLevel =
         papszOptions ?
             CSLFetchNameValue(papszOptions, "WEBP_LEVEL") :
@@ -1039,6 +1040,17 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
             TIFFSetField( hTIFF, TIFFTAG_WEBP_LEVEL, nWebpLevel );
             GTIFFSetWebPLevel(GDALDataset::ToHandle(hODS), nWebpLevel);
         }
+    }
+
+    const char* pszWebpLossless =
+        papszOptions ?
+            CSLFetchNameValue(papszOptions, "WEBP_LOSSLESS") :
+            CPLGetConfigOption( "WEBP_LOSSLESS_OVERVIEW", nullptr );
+    if( nCompression == COMPRESSION_WEBP && pszWebpLossless != nullptr )
+    {
+        const bool bWebpLossless = CPLTestBool(pszWebpLossless);
+        TIFFSetField( hTIFF, TIFFTAG_WEBP_LOSSLESS, static_cast<int>(bWebpLossless) );
+        GTIFFSetWebPLossless(GDALDataset::ToHandle(hODS), bWebpLossless);
     }
 
     const char* pszJPEGTablesMode =

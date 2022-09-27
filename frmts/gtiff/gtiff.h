@@ -48,6 +48,7 @@ void    GTIFFGetOverviewBlockSize( GDALRasterBandH hBand, int* pnBlockXSize, int
 void    GTIFFSetJpegQuality( GDALDatasetH hGTIFFDS, int nJpegQuality );
 void    GTIFFSetWebPLevel( GDALDatasetH hGTIFFDS, int nWebPLevel );
 void    GTIFFSetJpegTablesMode( GDALDatasetH hGTIFFDS, int nJpegTablesMode );
+void    GTIFFSetWebPLossless( GDALDatasetH hGTIFFDS, bool bWebpLossless );
 void    GTIFFSetZLevel( GDALDatasetH hGTIFFDS, int nZLevel );
 void    GTIFFSetZSTDLevel( GDALDatasetH hGTIFFDS, int nZSTDLevel );
 void    GTIFFSetMaxZError( GDALDatasetH hGTIFFDS, double dfMaxZError );
