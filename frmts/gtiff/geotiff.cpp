@@ -15745,6 +15745,37 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                                                 bHasHuffmanTable);
         }
     }
+    else if( eAccess == GA_Update )
+    {
+        if( m_nCompression == COMPRESSION_WEBP )
+        {
+            const char* pszReversibility = GetMetadataItem(
+                "COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE");
+            if( pszReversibility && strstr(pszReversibility, "LOSSLESS") )
+            {
+                m_bWebPLossless = true;
+            }
+            else if( pszReversibility && strstr(pszReversibility, "LOSSY") )
+            {
+                m_bWebPLossless = false;
+            }
+        }
+#ifdef HAVE_JXL
+        else if( m_nCompression == COMPRESSION_JXL )
+        {
+            const char* pszReversibility = GetMetadataItem(
+                "COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE");
+            if( pszReversibility && strstr(pszReversibility, "LOSSLESS") )
+            {
+                m_bJXLLossless = true;
+            }
+            else if( pszReversibility && strstr(pszReversibility, "LOSSY") )
+            {
+                m_bJXLLossless = false;
+            }
+        }
+#endif
+    }
 
     if( GTIFFSupportsPredictor(m_nCompression) )
     {
@@ -20424,7 +20455,11 @@ char **GTiffDataset::GetMetadataDomainList()
 char **GTiffDataset::GetMetadata( const char * pszDomain )
 
 {
-    if( pszDomain == nullptr || !EQUAL(pszDomain, "IMAGE_STRUCTURE") )
+    if( pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE") )
+    {
+        GTiffDataset::GetMetadataItem("COMPRESSION_REVERSIBILITY", pszDomain);
+    }
+    else
     {
         LoadGeoreferencingAndPamIfNeeded();
     }
@@ -20546,7 +20581,43 @@ const char *GTiffDataset::GetMetadataItem( const char *pszName,
                                            const char *pszDomain )
 
 {
-    if( pszDomain == nullptr || !EQUAL(pszDomain, "IMAGE_STRUCTURE") )
+    if( pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE") )
+    {
+        if( (m_nCompression == COMPRESSION_WEBP ||
+             m_nCompression == COMPRESSION_JXL) &&
+            EQUAL(pszName, "COMPRESSION_REVERSIBILITY") &&
+            m_oGTiffMDMD.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == nullptr )
+        {
+            const char* pszDriverName =
+                m_nCompression == COMPRESSION_WEBP ? "WEBP" : "JPEGXL";
+            auto poTileDriver = GDALGetDriverByName(pszDriverName);
+            if( poTileDriver )
+            {
+                vsi_l_offset nOffset = 0;
+                vsi_l_offset nSize = 0;
+                IsBlockAvailable(0, &nOffset, &nSize);
+                if( nSize > 0 )
+                {
+                    const std::string osSubfile(
+                        CPLSPrintf("/vsisubfile/" CPL_FRMT_GUIB "_%d,%s",
+                                   static_cast<GUIntBig>(nOffset),
+                                   static_cast<int>(std::min(static_cast<vsi_l_offset>(1024), nSize)),
+                                   m_pszFilename));
+                    const char* const apszDrivers[] = { pszDriverName, nullptr };
+                    auto poWebPDataset = std::unique_ptr<GDALDataset>(
+                        GDALDataset::Open(osSubfile.c_str(), GDAL_OF_RASTER, apszDrivers));
+                    if( poWebPDataset )
+                    {
+                        const char* pszReversibility =
+                            poWebPDataset->GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE");
+                        if( pszReversibility )
+                            m_oGTiffMDMD.SetMetadataItem("COMPRESSION_REVERSIBILITY", pszReversibility, "IMAGE_STRUCTURE");
+                    }
+                }
+            }
+        }
+    }
+    else
     {
         LoadGeoreferencingAndPamIfNeeded();
     }

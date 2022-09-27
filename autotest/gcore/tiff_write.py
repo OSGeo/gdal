@@ -8311,14 +8311,22 @@ def test_tiff_write_171_zstd_predictor():
 
 def test_tiff_write_webp():
 
-    md = gdaltest.tiff_drv.GetMetadata()
+    drv = gdal.GetDriverByName("GTiff")
+    md = drv.GetMetadata()
     if md["DMD_CREATIONOPTIONLIST"].find("WEBP") == -1:
         pytest.skip()
 
-    ut = gdaltest.GDALTest(
-        "GTiff", "md_ge_rgb_0010000.tif", 0, None, options=["COMPRESS=WEBP"]
-    )
-    return ut.testCreateCopy()
+    filename = "/vsimem/test_tiff_write_webp.tif"
+    src_ds = gdal.Open("data/md_ge_rgb_0010000.tif")
+    drv.CreateCopy(filename, src_ds, options=["COMPRESS=WEBP"])
+    ds = gdal.Open(filename)
+    if gdal.GetDriverByName("WEBP"):
+        assert ds.GetMetadata("IMAGE_STRUCTURE")["COMPRESSION_REVERSIBILITY"] == "LOSSY"
+    cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
+    assert cs != [0, 0, 0]
+
+    drv.Delete(filename)
+    gdal.Unlink("data/md_ge_rgb_0010000.tif.aux.xml")
 
 
 ###############################################################################
@@ -8340,6 +8348,10 @@ def test_tiff_write_tiled_webp():
         filename, src_ds, options=["COMPRESS=WEBP", "WEBP_LOSSLESS=true", "TILED=true"]
     )
     ds = gdal.Open(filename)
+    if gdal.GetDriverByName("WEBP"):
+        assert (
+            ds.GetMetadata("IMAGE_STRUCTURE")["COMPRESSION_REVERSIBILITY"] == "LOSSLESS"
+        )
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     assert cs == [21212, 21053, 21349]
 
@@ -9435,14 +9447,31 @@ def test_tiff_write_lerc_float_with_nan(gdalDataType, structType):
 # Test JXL compression
 
 
-def test_tiff_write_jpegxl_byte_single_band():
+@pytest.mark.parametrize("lossless", ["YES", "NO", None])
+def test_tiff_write_jpegxl_byte_single_band(lossless):
 
-    md = gdaltest.tiff_drv.GetMetadata()
+    drv = gdal.GetDriverByName("GTiff")
+    md = drv.GetMetadata()
     if md["DMD_CREATIONOPTIONLIST"].find("JXL") == -1:
         pytest.skip()
 
-    ut = gdaltest.GDALTest("GTiff", "byte.tif", 1, 4672, options=["COMPRESS=JXL"])
-    return ut.testCreateCopy()
+    outfile = "/vsimem/test_tiff_write_jpegxl_byte_single_band.tif"
+    options = ["COMPRESS=JXL"]
+    if lossless:
+        options += ["JXL_LOSSLESS=" + lossless]
+    drv.CreateCopy(outfile, gdal.Open("data/byte.tif"), options=options)
+    ds = gdal.Open(outfile)
+    if gdal.GetDriverByName("JPEGXL"):
+        assert ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == (
+            "LOSSY" if lossless == "NO" else "LOSSLESS (possibly)"
+        )
+    cs = ds.GetRasterBand(1).Checksum()
+    if lossless == "NO":
+        assert cs != 0 and cs != 4672
+    else:
+        assert cs == 4672
+    ds = None
+    drv.Delete(outfile)
 
 
 ###############################################################################
