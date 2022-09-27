@@ -1158,30 +1158,21 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
     if( nOrientation == SQL_FETCH_NEXT && nOffset == 0 )
     {
         nRetCode = SQLFetch( m_hStmt );
-        if( Failed(nRetCode) )
-        {
-            if( nRetCode != SQL_NO_DATA )
-            {
-                CPLError( CE_Failure, CPLE_AppDefined, "%s",
-                          m_poSession->GetLastError() );
-            }
-            return FALSE;
-        }
     }
     else
     {
         nRetCode = SQLFetchScroll(m_hStmt,
                                   static_cast<SQLSMALLINT>(nOrientation),
                                   nOffset);
-        if( Failed(nRetCode) )
+    }
+    if( Failed(nRetCode) )
+    {
+        if( nRetCode != SQL_NO_DATA )
         {
-            if( nRetCode == SQL_NO_DATA )
-            {
-                CPLError( CE_Failure, CPLE_AppDefined, "%s",
-                          m_poSession->GetLastError() );
-            }
-            return FALSE;
+            CPLError( CE_Failure, CPLE_AppDefined, "%s",
+                      m_poSession->GetLastError() );
         }
+        return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
