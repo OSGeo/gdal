@@ -4412,7 +4412,7 @@ static void GDALCopyWholeRasterGetSwathSize(
 
     // aim for one row of blocks.  Do not settle for less.
     int nSwathCols  = nXSize;
-    int nSwathLines = nBlockYSize;
+    int nSwathLines = nMaxBlockYSize;
 
     const char* pszSrcCompression =
         poSrcPrototypeBand->GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE");
