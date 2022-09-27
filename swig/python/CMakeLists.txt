@@ -258,7 +258,7 @@ if (Python_Interpreter_FOUND)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/README.rst ${CMAKE_CURRENT_BINARY_DIR}/README.rst @ONLY)
 
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/get_suffix.py
-       "from setuptools.command.build_ext import EXTENSION_SUFFIXES; print(EXTENSION_SUFFIXES[0])\n")
+       "from importlib.machinery import EXTENSION_SUFFIXES; print(EXTENSION_SUFFIXES[0])\n")
   execute_process(
     COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/get_suffix.py
     OUTPUT_VARIABLE PY_EXT_SUFFIX
