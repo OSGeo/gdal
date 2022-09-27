@@ -77,6 +77,9 @@
 #if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifdef HAVE_PREAD_BSD
+#include <sys/uio.h>
+#endif
 
 #include <limits>
 #include <new>
@@ -235,7 +238,7 @@ class VSIUnixStdioHandle final : public VSIVirtualHandle
         return reinterpret_cast<void *>(static_cast<uintptr_t>(fileno(fp))); }
     VSIRangeStatus GetRangeStatus( vsi_l_offset nOffset,
                                    vsi_l_offset nLength ) override;
-#ifdef HAVE_PREAD64
+#if defined(HAVE_PREAD64) || (defined(HAVE_PREAD_BSD) && SIZEOF_OFF_T == 8)
     bool      HasPRead() const override;
     size_t    PRead( void* /*pBuffer*/, size_t /* nSize */, vsi_l_offset /*nOffset*/ ) const override;
 #endif
@@ -619,7 +622,7 @@ VSIRangeStatus VSIUnixStdioHandle::GetRangeStatus( vsi_l_offset
 /*                             HasPRead()                               */
 /************************************************************************/
 
-#ifdef HAVE_PREAD64
+#if defined(HAVE_PREAD64) || (defined(HAVE_PREAD_BSD) && SIZEOF_OFF_T == 8)
 bool VSIUnixStdioHandle::HasPRead() const
 {
     return true;
@@ -631,7 +634,11 @@ bool VSIUnixStdioHandle::HasPRead() const
 
 size_t VSIUnixStdioHandle::PRead( void* pBuffer, size_t nSize, vsi_l_offset nOffset ) const
 {
+#ifdef HAVE_PREAD64
     return pread64( fileno(fp), pBuffer, nSize, nOffset );
+#else
+    return pread( fileno(fp), pBuffer, nSize, static_cast<off_t>(nOffset) );
+#endif
 }
 #endif
 
