@@ -69,7 +69,7 @@ computer.
 .. option:: -a_srs <srs_def>
 
     Override the projection for the
-    output file.  The <i>srs_def> may be any of the usual GDAL/OGR forms,
+    output file.  The *srs_def* may be any of the usual GDAL/OGR forms,
     complete WKT, PROJ.4, EPSG:n or a file containing the WKT.
     No reprojection is done.
 
@@ -334,7 +334,7 @@ gdal_grid. All you need is create a virtual dataset header (VRT) for you CSV
 file and use it as input datasource for \ref gdal_grid. You can find details
 on VRT format at :ref:`vector.vrt` description page.
 
-Here is a small example. Let we have a CSV file called <i>dem.csv>
+Here is a small example. Let we have a CSV file called *dem.csv*
 containing
 
 ::
@@ -346,7 +346,7 @@ containing
     87077.6,891995,135.01
     ...
 
-For above data we will create <i>dem.vrt> header with the following
+For above data we will create *dem.vrt* header with the following
 content:
 
 .. code-block:: xml
@@ -360,9 +360,9 @@ content:
     </OGRVRTDataSource>
 
 This description specifies so called 2.5D geometry with three coordinates X, Y
-and Z. Z value will be used for interpolation. Now you can use <i>dem.vrt>
+and Z. Z value will be used for interpolation. Now you can use *dem.vrt*
 with all OGR programs (start with \ref ogrinfo to test that everything works
-fine). The datasource will contain single layer called <i>"dem"> filled
+fine). The datasource will contain single layer called *"dem"* filled
 with point features constructed from values in CSV file. Using this technique
 you can handle CSV files with more than three columns, switch columns, etc.
 
@@ -393,9 +393,9 @@ Values to interpolate will be read from Z value of geometry record.
     gdal_grid -a invdist:power=2.0:smoothing=1.0 -txe 85000 89000 -tye 894000 890000 -outsize 400 400 -of GTiff -ot Float64 -l dem dem.vrt dem.tiff
 
 The next command does the same thing as the previous one, but reads values to
-interpolate from the attribute field specified with <b>-zfield</b> option
+interpolate from the attribute field specified with **-zfield** option
 instead of geometry record. So in this case X and Y coordinates are being
-taken from geometry and Z is being taken from the <i>"Elevation"> field.
+taken from geometry and Z is being taken from the *"Elevation"* field.
 The GDAL_NUM_THREADS is also set to parallelize the computation.
 
 ::
