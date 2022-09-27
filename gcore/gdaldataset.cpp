@@ -8866,6 +8866,238 @@ GDALRelationshipH GDALDatasetGetRelationship(GDALDatasetH hDS,
             GDALDataset::FromHandle(hDS)->GetRelationship(pszName)));
 }
 
+
+/************************************************************************/
+/*                         AddRelationship()                            */
+/************************************************************************/
+
+/** Add a relationship to the dataset.
+ *
+ * Only a few drivers will support this operation, and some of them might only
+ * support it only for some types of relationships.
+ *
+ * A dataset having at least some support for this
+ * operation should report the GDsCAddRelationship dataset capability.
+ *
+ * Anticipated failures will not be emitted through the CPLError()
+ * infrastructure, but will be reported in the failureReason output parameter.
+ *
+ * When adding a many-to-many relationship (GDALRelationshipCardinality::GRC_MANY_TO_MANY),
+ * it is possible to omit the mapping table name (see GDALRelationship::GetMappingTableName)
+ * to instruct the driver to create an appropriately named and structured mapping table.
+ * Some dataset formats require particular naming conventions and field structures
+ * for the mapping table, and delegating the construction of the mapping table
+ * to the driver will avoid these pitfalls.
+ *
+ * @param relationship The relationship definition.
+ * @param failureReason      Output parameter. Will contain an error message if
+ *                           an error occurs.
+ * @return true in case of success.
+ * @since GDAL 3.6
+ */
+bool GDALDataset::AddRelationship(CPL_UNUSED std::unique_ptr<GDALRelationship>&& relationship,
+                                  std::string& failureReason)
+{
+    failureReason = "AddRelationship not supported by this driver";
+    return false;
+}
+
+/************************************************************************/
+/*                     GDALDatasetAddRelationship()                     */
+/************************************************************************/
+
+/** Add a relationship to the dataset.
+ *
+ * Only a few drivers will support this operation, and some of them might only
+ * support it only for some types of relationships.
+ *
+ * A dataset having at least some support for this
+ * operation should report the GDsCAddRelationship dataset capability.
+ *
+ * Anticipated failures will not be emitted through the CPLError()
+ * infrastructure, but will be reported in the failureReason output parameter.
+ *
+ * When adding a many-to-many relationship (GDALRelationshipCardinality::GRC_MANY_TO_MANY),
+ * it is possible to omit the mapping table name (see GDALRelationshipGetMappingTableName)
+ * to instruct the driver to create an appropriately named and structured mapping table.
+ * Some dataset formats require particular naming conventions and field structures
+ * for the mapping table, and delegating the construction of the mapping table
+ * to the driver will avoid these pitfalls.
+ *
+ * @param hDS                Dataset handle.
+ * @param hRelationship      The relationship definition. Contrary to the C++ version,
+ *                           the passed object is copied.
+ * @param ppszFailureReason  Output parameter. Will contain an error message if
+ *                           an error occurs (*ppszFailureReason to be freed
+ *                           with CPLFree). May be NULL.
+ * @return true in case of success.
+ * @since GDAL 3.6
+ */
+bool GDALDatasetAddRelationship(GDALDatasetH hDS,
+                                GDALRelationshipH hRelationship,
+                                char** ppszFailureReason)
+{
+    VALIDATE_POINTER1(hDS, __func__, false);
+    VALIDATE_POINTER1(hRelationship, __func__, false);
+    std::unique_ptr<GDALRelationship> poRelationship(
+                 new GDALRelationship( *GDALRelationship::FromHandle(hRelationship) ) );
+    std::string failureReason;
+    const bool bRet =
+        GDALDataset::FromHandle(hDS)->AddRelationship(
+             std::move(poRelationship), failureReason);
+    if( ppszFailureReason )
+    {
+        *ppszFailureReason = failureReason.empty() ?
+                                nullptr : CPLStrdup(failureReason.c_str());
+    }
+    return bRet;
+}
+
+
+/************************************************************************/
+/*                        DeleteRelationship()                          */
+/************************************************************************/
+
+/** Removes a relationship from the dataset.
+ *
+ * Only a few drivers will support this operation.
+ *
+ * A dataset having at least some support for this
+ * operation should report the GDsCDeleteRelationship dataset capability.
+ *
+ * Anticipated failures will not be emitted through the CPLError()
+ * infrastructure, but will be reported in the failureReason output parameter.
+ *
+ * @param name The relationship name.
+ * @param failureReason      Output parameter. Will contain an error message if
+ *                           an error occurs.
+ * @return true in case of success.
+ * @since GDAL 3.6
+ */
+bool GDALDataset::DeleteRelationship(CPL_UNUSED const std::string& name,
+                                     std::string& failureReason)
+{
+    failureReason = "DeleteRelationship not supported by this driver";
+    return false;
+}
+
+/************************************************************************/
+/*                  GDALDatasetDeleteRelationship()                     */
+/************************************************************************/
+
+/** Removes a relationship from the dataset.
+ *
+ * Only a few drivers will support this operation.
+ *
+ * A dataset having at least some support for this
+ * operation should report the GDsCDeleteRelationship dataset capability.
+ *
+ * Anticipated failures will not be emitted through the CPLError()
+ * infrastructure, but will be reported in the ppszFailureReason output parameter.
+ *
+ * @param hDS                Dataset handle.
+ * @param pszName            The relationship name.
+ * @param ppszFailureReason  Output parameter. Will contain an error message if
+ *                           an error occurs (*ppszFailureReason to be freed
+ *                           with CPLFree). May be NULL.
+ * @return true in case of success.
+ * @since GDAL 3.6
+ */
+bool GDALDatasetDeleteRelationship(GDALDatasetH hDS,
+                                   const char* pszName,
+                                   char** ppszFailureReason)
+{
+    VALIDATE_POINTER1(hDS, __func__, false);
+    VALIDATE_POINTER1(pszName, __func__, false);
+    std::string failureReason;
+    const bool bRet =
+        GDALDataset::FromHandle(hDS)->DeleteRelationship(
+             pszName, failureReason);
+    if( ppszFailureReason )
+    {
+        *ppszFailureReason = failureReason.empty() ?
+                                nullptr : CPLStrdup(failureReason.c_str());
+    }
+    return bRet;
+}
+
+
+/************************************************************************/
+/*                       UpdateRelationship()                           */
+/************************************************************************/
+
+
+/** Updates an existing relationship by replacing its definition.
+ *
+ * The existing relationship with matching name will be replaced.
+ *
+ * Only a few drivers will support this operation, and some of them might only
+ * support it only for some types of relationships.
+ * A dataset having at least some support for this
+ * operation should report the GDsCUpdateRelationship dataset capability.
+ *
+ * Anticipated failures will not be emitted through the CPLError()
+ * infrastructure, but will be reported in the failureReason output parameter.
+ *
+ * @param relationship   The relationship definition.
+ * @param failureReason  Output parameter. Will contain an error message if
+ *                       an error occurs.
+ * @return true in case of success.
+ * @since GDAL 3.6
+ */
+bool GDALDataset::UpdateRelationship(CPL_UNUSED std::unique_ptr<GDALRelationship> &&relationship, std::string &failureReason)
+{
+    failureReason = "UpdateRelationship not supported by this driver";
+    return false;
+}
+
+
+/************************************************************************/
+/*                  GDALDatasetUpdateRelationship()                     */
+/************************************************************************/
+
+/** Updates an existing relationship by replacing its definition.
+ *
+ * The existing relationship with matching name will be replaced.
+ *
+ * Only a few drivers will support this operation, and some of them might only
+ * support it only for some types of relationships.
+ * A dataset having at least some support for this
+ * operation should report the GDsCUpdateRelationship dataset capability.
+ *
+ * Anticipated failures will not be emitted through the CPLError()
+ * infrastructure, but will be reported in the failureReason output parameter.
+ *
+ * @param hDS                Dataset handle.
+ * @param hRelationship      The relationship definition. Contrary to the C++ version,
+ *                           the passed object is copied.
+ * @param ppszFailureReason  Output parameter. Will contain an error message if
+ *                           an error occurs (*ppszFailureReason to be freed
+ *                           with CPLFree). May be NULL.
+ * @return true in case of success.
+ * @since GDAL 3.5
+ */
+bool GDALDatasetUpdateRelationship(GDALDatasetH hDS,
+                                   GDALRelationshipH hRelationship,
+                                   char** ppszFailureReason)
+{
+    VALIDATE_POINTER1(hDS, __func__, false);
+    VALIDATE_POINTER1(hRelationship, __func__, false);
+    std::unique_ptr< GDALRelationship> poRelationship(
+                 new GDALRelationship( *GDALRelationship::FromHandle(hRelationship) ) );
+    std::string failureReason;
+    const bool bRet =
+        GDALDataset::FromHandle(hDS)->UpdateRelationship(
+             std::move(poRelationship), failureReason);
+    if( ppszFailureReason )
+    {
+        *ppszFailureReason = failureReason.empty() ?
+                                nullptr : CPLStrdup(failureReason.c_str());
+    }
+    return bRet;
+}
+
+
 //! @cond Doxygen_Suppress
 
 /************************************************************************/

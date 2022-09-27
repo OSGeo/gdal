@@ -955,6 +955,27 @@ OGRErr AbortSQL() {
   }
   %clear const char* name;
 
+  %apply Pointer NONNULL {GDALRelationshipShadow* relationship};
+  bool AddRelationship(GDALRelationshipShadow* relationship)
+  {
+      return GDALDatasetAddRelationship(self, (GDALRelationshipH)relationship, NULL);
+  }
+  %clear GDALRelationshipShadow* relationship;
+
+  %apply Pointer NONNULL {const char* name};
+  bool DeleteRelationship(const char* name)
+  {
+      return GDALDatasetDeleteRelationship(self, name, NULL);
+  }
+  %clear const char* name;
+
+  %apply Pointer NONNULL {GDALRelationshipShadow* relationship};
+  bool UpdateRelationship(GDALRelationshipShadow* relationship)
+  {
+      return GDALDatasetUpdateRelationship(self, (GDALRelationshipH)relationship, NULL);
+  }
+  %clear GDALRelationshipShadow* relationship;
+
 } /* extend */
 }; /* GDALDatasetShadow */
 

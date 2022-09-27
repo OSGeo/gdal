@@ -605,6 +605,40 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  */
 #define GDAL_DCAP_RELATIONSHIPS "DCAP_RELATIONSHIPS"
 
+/** Capability set by drivers for formats which support creating table relationships.
+ * @since GDAL 3.6
+ */
+#define GDAL_DCAP_CREATE_RELATIONSHIP "DCAP_CREATE_RELATIONSHIP"
+
+/** Capability set by drivers for formats which support deleting table relationships.
+ * @since GDAL 3.6
+ */
+#define GDAL_DCAP_DELETE_RELATIONSHIP "DCAP_DELETE_RELATIONSHIP"
+
+/** Capability set by drivers for formats which support updating existing table relationships.
+ * @since GDAL 3.6
+ */
+#define GDAL_DCAP_UPDATE_RELATIONSHIP "DCAP_UPDATE_RELATIONSHIP"
+
+/** List of (space separated) flags indicating the features of relationships are supported by the driver.
+ *
+ * Supported values are:
+ *
+ * - "OneToOne": supports one-to-one relationships, see GDALRelationshipCardinality::GRC_ONE_TO_ONE
+ * - "OneToMany": supports one-to-many relationships, see GDALRelationshipCardinality::GRC_ONE_TO_MANY
+ * - "ManyToOne": supports many-to-one relationships, see GDALRelationshipCardinality::GRC_MANY_TO_ONE
+ * - "ManyToMany": supports many-to-many relationships, see GDALRelationshipCardinality::GRC_MANY_TO_MANY
+ * - "Composite": supports composite relationship types, see GDALRelationshipType::GRT_COMPOSITE
+ * - "Association": supports association relationship types, see GDALRelationshipType::GRT_ASSOCIATION
+ * - "Aggregation": supports aggregation relationship types, see GDALRelationshipType::GRT_AGGREGATION
+ * - "MultipleFieldKeys": multiple fields can be used for relationship keys. If not present then only a single field name can be used.
+ * - "ForwardPathLabel": supports forward path labels
+ * - "BackwardPathLabel": supports backward path labels
+ *
+ * @since GDAL 3.6
+ */
+#define GDAL_DMD_RELATIONSHIP_FLAGS "GDAL_DMD_RELATIONSHIP_FLAGS"
+
 /** Capability set by drivers for formats which support renaming vector layers.
  *
  * @since GDAL 3.5
@@ -636,7 +670,6 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  */
 #define GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS "DMD_ALTER_GEOM_FIELD_DEFN_FLAGS"
 
-
 /** Value for GDALDimension::GetType() specifying the X axis of a horizontal CRS.
  * @since GDAL 3.1
  */
@@ -662,6 +695,9 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  */
 #define GDAL_DIM_TYPE_PARAMETRIC        "PARAMETRIC"
 
+#define GDsCAddRelationship    "AddRelationship"     /**< Dataset capability for supporting AddRelationship() (at least partially) */
+#define GDsCDeleteRelationship "DeleteRelationship"  /**< Dataset capability for supporting DeleteRelationship()*/
+#define GDsCUpdateRelationship "UpdateRelationship"  /**< Dataset capability for supporting UpdateRelationship()*/
 
 void CPL_DLL CPL_STDCALL GDALAllRegister( void );
 
@@ -1027,6 +1063,16 @@ bool CPL_DLL GDALDatasetUpdateFieldDomain(GDALDatasetH hDS,
 char CPL_DLL ** GDALDatasetGetRelationshipNames(GDALDatasetH, CSLConstList) CPL_WARN_UNUSED_RESULT;
 GDALRelationshipH CPL_DLL GDALDatasetGetRelationship(GDALDatasetH hDS,
                                                      const char* pszName);
+
+bool CPL_DLL GDALDatasetAddRelationship(GDALDatasetH hDS,
+                                        GDALRelationshipH hRelationship,
+                                        char** ppszFailureReason);
+bool CPL_DLL GDALDatasetDeleteRelationship(GDALDatasetH hDS,
+                                           const char* pszName,
+                                           char** ppszFailureReason);
+bool CPL_DLL GDALDatasetUpdateRelationship(GDALDatasetH hDS,
+                                           GDALRelationshipH hRelationship,
+                                           char** ppszFailureReason);
 
 /* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */

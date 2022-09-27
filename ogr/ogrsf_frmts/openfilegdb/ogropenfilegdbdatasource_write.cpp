@@ -49,6 +49,7 @@
 #include "ogrsf_frmts.h"
 
 #include "filegdb_fielddomain.h"
+#include "filegdb_relationship.h"
 
 #include <random>
 #include <sstream>
@@ -308,6 +309,74 @@ bool OGROpenFileGDBDataSource::RegisterInItemRelationships(const std::string& os
     fields[iProperties].Integer = 1;
     return oTable.CreateFeature(fields, nullptr) &&
            oTable.Sync();
+}
+
+/***********************************************************************/
+/*              RegisterRelationshipInItemRelationships()              */
+/***********************************************************************/
+
+bool OGROpenFileGDBDataSource::RegisterRelationshipInItemRelationships(const std::string& osRelationshipGUID,
+                                                                       const std::string& osOriginGUID,
+                                                                       const std::string& osDestGUID)
+{
+    // Relationships to register:
+    // 1. Origin table -> new relationship as DatasetsRelatedThrough
+    // 2. Destination table -> new relationship as DatasetsRelatedThrough
+    // 3. Root dataset -> new relationship as DatasetInFolder
+    if ( !RegisterInItemRelationships(osOriginGUID,
+                                      osRelationshipGUID,
+                                      pszDatasetsRelatedThroughUUID) )
+        return false;
+    if ( !RegisterInItemRelationships(osDestGUID,
+                                      osRelationshipGUID,
+                                      pszDatasetsRelatedThroughUUID) )
+        return false;
+    if ( !RegisterInItemRelationships(m_osRootGUID,
+                                      osRelationshipGUID,
+                                      pszDatasetInFolderUUID) )
+        return false;
+
+    return true;
+}
+
+/***********************************************************************/
+/*              RemoveRelationshipFromItemRelationships()              */
+/***********************************************************************/
+
+bool OGROpenFileGDBDataSource::RemoveRelationshipFromItemRelationships(const std::string& osRelationshipGUID)
+{
+    FileGDBTable oTable;
+    if( !oTable.Open(m_osGDBItemRelationshipsFilename.c_str(), true) )
+        return false;
+
+    // while we've only found item relationships with the relationship UUID in the DestID field,
+    // let's be super-careful and also check against the OriginID UUID, just in case there's some
+    // previously unencountered situations where a relationship UUID is placed in OriginID
+    FETCH_FIELD_IDX_WITH_RET(iOriginID, "OriginID", FGFT_GUID, false);
+    FETCH_FIELD_IDX_WITH_RET(iDestID, "DestID", FGFT_GUID, false);
+
+    for( int iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount(); ++iCurFeat )
+    {
+        iCurFeat = oTable.GetAndSelectNextNonEmptyRow(iCurFeat);
+        if( iCurFeat < 0 )
+            break;
+
+        const auto psOriginID = oTable.GetFieldValue(iOriginID);
+        if( psOriginID && psOriginID->String == osRelationshipGUID )
+        {
+            oTable.DeleteFeature(iCurFeat + 1);
+        }
+        else
+        {
+            const auto psDestID = oTable.GetFieldValue(iDestID);
+            if( psDestID && psDestID->String == osRelationshipGUID )
+            {
+                oTable.DeleteFeature(iCurFeat + 1);
+            }
+        }
+    }
+
+    return true;
 }
 
 /***********************************************************************/
@@ -1668,6 +1737,423 @@ const GDALRelationship* OGROpenFileGDBDataSource::GetRelationship(const std::str
 
     return it->second.get();
 }
+
+
+/************************************************************************/
+/*                          AddRelationship()                           */
+/************************************************************************/
+
+bool OGROpenFileGDBDataSource::AddRelationship(std::unique_ptr<GDALRelationship>&& relationship,
+                                               std::string& failureReason)
+{
+    const auto relationshipName = relationship->GetName();
+    if( eAccess != GA_Update )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "AddRelationship() not supported on read-only dataset");
+        return false;
+    }
+
+    if( GetRelationship(relationshipName) != nullptr )
+    {
+        failureReason = "A relationship of identical name already exists";
+        return false;
+    }
+
+    if ( relationship->GetCardinality() == GDALRelationshipCardinality::GRC_MANY_TO_ONE )
+    {
+        failureReason = "Many to one relationships are not supported";
+        return false;
+    }
+    else if ( relationship->GetCardinality() == GDALRelationshipCardinality::GRC_MANY_TO_MANY &&
+              !relationship->GetMappingTableName().empty() &&
+              relationship->GetName() != relationship->GetMappingTableName() )
+    {
+        failureReason = "Mapping table name must match relationship name for many-to-many relationships";
+        return false;
+    }
+
+    if( m_bInTransaction && !BackupSystemTablesForTransaction() )
+        return false;
+
+    const std::string osThisGUID = OFGDBGenerateUUID();
+
+    FileGDBTable oTable;
+    if( !oTable.Open(m_osGDBItemsFilename.c_str(), true) )
+        return false;
+
+    // hopefully this just needs to be a unique value. Seems to autoincrement when created from ArcMap at least!
+    const int iDsId = oTable.GetTotalRecordCount() + 1;
+
+    std::string osMappingTableOidName;
+    if ( relationship->GetCardinality() == GDALRelationshipCardinality::GRC_MANY_TO_MANY )
+    {
+        if ( !relationship->GetMappingTableName().empty() )
+        {
+            auto poLayer = GetLayerByName(relationship->GetMappingTableName().c_str());
+            if (poLayer)
+            {
+                osMappingTableOidName = poLayer->GetFIDColumn();
+            }
+        }
+        else
+        {
+            // auto create mapping table
+            CPLStringList aosOptions;
+            aosOptions.SetNameValue("FID", "RID");
+            OGRLayer * poMappingTable = ICreateLayer( relationship->GetName().c_str(), nullptr, wkbNone, aosOptions );
+            if ( !poMappingTable )
+            {
+                failureReason = "Could not create mapping table " + relationship->GetMappingTableName();
+                return false;
+            }
+
+            OGRFieldDefn oOriginFkFieldDefn("origin_fk", OFTString);
+            if( poMappingTable->CreateField( &oOriginFkFieldDefn) != OGRERR_NONE )
+            {
+                failureReason = "Could not create origin_fk field in mapping table " + relationship->GetMappingTableName();
+                return false;
+            }
+
+            OGRFieldDefn oDestinationFkFieldDefn("destination_fk", OFTString);
+            if( poMappingTable->CreateField( &oDestinationFkFieldDefn) != OGRERR_NONE )
+            {
+                failureReason = "Could not create destination_fk field in mapping table " + relationship->GetMappingTableName();
+                return false;
+            }
+
+            osMappingTableOidName = "RID";
+            relationship->SetMappingTableName(relationship->GetName());
+            relationship->SetLeftMappingTableFields({"origin_fk"});
+            relationship->SetRightMappingTableFields({"destination_fk"});
+        }
+    }
+
+    std::string osXML = BuildXMLRelationshipDef(relationship.get(), iDsId, osMappingTableOidName, failureReason);
+    if( osXML.empty() )
+    {
+        return false;
+    }
+
+    std::string osItemInfoXML = BuildXMLRelationshipItemInfo(relationship.get(), failureReason);
+    if( osItemInfoXML.empty() )
+    {
+        return false;
+    }
+
+    std::string osDocumentationXML = BuildXMLRelationshipDocumentation(relationship.get(), failureReason);
+    if( osDocumentationXML.empty() )
+    {
+        return false;
+    }
+
+    std::string osOriginUUID;
+    if( !FindUUIDFromName(relationship->GetLeftTableName(), osOriginUUID) )
+    {
+        failureReason = ( "Left table " + relationship->GetLeftTableName() + " is not an existing layer in the dataset" ).c_str();
+        return false;
+    }
+    std::string osDestinationUUID;
+    if( !FindUUIDFromName(relationship->GetRightTableName(), osDestinationUUID) )
+    {
+        failureReason = ( "Right table " + relationship->GetRightTableName() + " is not an existing layer in the dataset" ).c_str();
+        return false;
+    }
+
+    FETCH_FIELD_IDX(iUUID, "UUID", FGFT_GLOBALID);
+    FETCH_FIELD_IDX(iType, "Type", FGFT_GUID);
+    FETCH_FIELD_IDX(iName, "Name", FGFT_STRING);
+    FETCH_FIELD_IDX(iPhysicalName, "PhysicalName", FGFT_STRING);
+    FETCH_FIELD_IDX(iPath, "Path", FGFT_STRING);
+    FETCH_FIELD_IDX(iDatasetSubtype1, "DatasetSubtype1", FGFT_INT32);
+    FETCH_FIELD_IDX(iDatasetSubtype2, "DatasetSubtype2", FGFT_INT32);
+    FETCH_FIELD_IDX(iURL, "URL", FGFT_STRING);
+    FETCH_FIELD_IDX(iDefinition, "Definition", FGFT_XML);
+    FETCH_FIELD_IDX(iDocumentation, "Documentation", FGFT_XML);
+    FETCH_FIELD_IDX(iItemInfo, "ItemInfo", FGFT_XML);
+    FETCH_FIELD_IDX(iProperties, "Properties", FGFT_INT32);
+
+    std::vector<OGRField> fields(oTable.GetFieldCount(),
+                                 FileGDBField::UNSET_FIELD);
+    fields[iUUID].String = const_cast<char*>(osThisGUID.c_str());
+    fields[iType].String = const_cast<char*>(pszRelationshipTypeUUID);
+    fields[iName].String = const_cast<char*>(relationshipName.c_str());
+    CPLString osUCName(relationshipName);
+    osUCName.toupper();
+    fields[iPhysicalName].String = const_cast<char*>(osUCName.c_str());
+    const std::string osPath = "\\" + relationshipName;
+    fields[iPath].String = const_cast<char*>(osPath.c_str());
+    switch (relationship->GetCardinality())
+    {
+        case GDALRelationshipCardinality::GRC_ONE_TO_ONE:
+            fields[iDatasetSubtype1].Integer = 1;
+            break;
+        case GDALRelationshipCardinality::GRC_ONE_TO_MANY:
+            fields[iDatasetSubtype1].Integer = 2;
+            break;
+        case GDALRelationshipCardinality::GRC_MANY_TO_MANY:
+            fields[iDatasetSubtype1].Integer = 3;
+            break;
+        case GDALRelationshipCardinality::GRC_MANY_TO_ONE:
+            //unreachable
+            break;
+    }
+    fields[iDatasetSubtype2].Integer = 0;
+    fields[iURL].String = const_cast<char*>("");
+    fields[iDefinition].String = const_cast<char*>(osXML.c_str());
+    fields[iDocumentation].String = const_cast<char*>(osDocumentationXML.c_str());
+    fields[iItemInfo].String = const_cast<char*>(osItemInfoXML.c_str());
+    fields[iProperties].Integer = 1;
+
+    if( !(oTable.CreateFeature(fields, nullptr) && oTable.Sync()) )
+        return false;
+
+    if ( !RegisterRelationshipInItemRelationships(osThisGUID, osOriginUUID, osDestinationUUID) )
+        return false;
+
+    m_osMapRelationships[relationshipName] = std::move(relationship);
+
+    return true;
+}
+
+/************************************************************************/
+/*                         DeleteRelationship()                         */
+/************************************************************************/
+
+bool OGROpenFileGDBDataSource::DeleteRelationship(const std::string& name,
+                                                  std::string& failureReason)
+{
+    if( eAccess != GA_Update )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "DeleteRelationship() not supported on read-only dataset");
+        return false;
+    }
+
+    if( m_bInTransaction && !BackupSystemTablesForTransaction() )
+        return false;
+
+    // Remove from GDB_Items
+    std::string osUUID;
+    {
+        FileGDBTable oTable;
+        if( !oTable.Open(m_osGDBItemsFilename.c_str(), true) )
+            return false;
+
+        FETCH_FIELD_IDX_WITH_RET(iUUID, "UUID", FGFT_GLOBALID, false);
+        FETCH_FIELD_IDX_WITH_RET(iType, "Type", FGFT_GUID, false);
+        FETCH_FIELD_IDX_WITH_RET(iName, "Name", FGFT_STRING, false);
+
+        for( int iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount(); ++iCurFeat )
+        {
+            iCurFeat = oTable.GetAndSelectNextNonEmptyRow(iCurFeat);
+            if( iCurFeat < 0 )
+                break;
+
+            const auto psType = oTable.GetFieldValue(iType);
+            if( !psType ||
+                !EQUAL(psType->String, pszRelationshipTypeUUID) )
+            {
+                continue;
+            }
+
+            const auto psName = oTable.GetFieldValue(iName);
+            if( psName && strcmp(psName->String, name.c_str()) != 0 )
+            {
+                continue;
+            }
+
+            const auto psUUID = oTable.GetFieldValue(iUUID);
+            if( psUUID )
+            {
+                osUUID = psUUID->String;
+                if ( !(oTable.DeleteFeature(iCurFeat + 1) && oTable.Sync()) )
+                {
+                    failureReason = "Could not delete relationship from GDB_Items table";
+                    return false;
+                }
+            }
+        }
+    }
+
+    if ( osUUID.empty() )
+    {
+        failureReason = "Could not find relationship with name " + name;
+        return false;
+    }
+
+    if ( !RemoveRelationshipFromItemRelationships( osUUID ) )
+    {
+        failureReason = "Could not remove relationship from GDB_ItemRelationships";
+        return false;
+    }
+
+    m_osMapRelationships.erase( name );
+    return true;
+}
+
+/************************************************************************/
+/*                        UpdateRelationship()                          */
+/************************************************************************/
+
+bool OGROpenFileGDBDataSource::UpdateRelationship(std::unique_ptr<GDALRelationship>&& relationship,
+                                                  std::string& failureReason)
+{
+    const auto relationshipName = relationship->GetName();
+    if( eAccess != GA_Update )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "UpdateRelationship() not supported on read-only dataset");
+        return false;
+    }
+
+    if( GetRelationship(relationshipName) == nullptr )
+    {
+        failureReason = "The relationship should already exist to be updated";
+        return false;
+    }
+
+    if ( relationship->GetCardinality() == GDALRelationshipCardinality::GRC_MANY_TO_ONE )
+    {
+        failureReason = "Many to one relationships are not supported";
+        return false;
+    }
+
+    if( m_bInTransaction && !BackupSystemTablesForTransaction() )
+        return false;
+
+    std::string osOriginUUID;
+    if( !FindUUIDFromName(relationship->GetLeftTableName(), osOriginUUID) )
+    {
+        failureReason = ( "Left table " + relationship->GetLeftTableName() + " is not an existing layer in the dataset" ).c_str();
+        return false;
+    }
+    std::string osDestinationUUID;
+    if( !FindUUIDFromName(relationship->GetRightTableName(), osDestinationUUID) )
+    {
+        failureReason = ( "Right table " + relationship->GetRightTableName() + " is not an existing layer in the dataset" ).c_str();
+        return false;
+    }
+
+    FileGDBTable oTable;
+    if( !oTable.Open(m_osGDBItemsFilename.c_str(), true) )
+        return false;
+
+    // hopefully this just needs to be a unique value. Seems to autoincrement when created from ArcMap at least!
+    const int iDsId = oTable.GetTotalRecordCount() + 1;
+
+    std::string osMappingTableOidName;
+    if ( relationship->GetCardinality() == GDALRelationshipCardinality::GRC_MANY_TO_MANY )
+    {
+        if ( !relationship->GetMappingTableName().empty() )
+        {
+            auto poLayer = GetLayerByName(relationship->GetMappingTableName().c_str());
+            if (poLayer)
+            {
+                osMappingTableOidName = poLayer->GetFIDColumn();
+            }
+        }
+        if ( osMappingTableOidName.empty() )
+        {
+            failureReason = "Relationship mapping table does not exist";
+            return false;
+        }
+    }
+
+    std::string osXML = BuildXMLRelationshipDef(relationship.get(), iDsId, osMappingTableOidName, failureReason);
+    if( osXML.empty() )
+    {
+        return false;
+    }
+
+    FETCH_FIELD_IDX_WITH_RET(iUUID, "UUID", FGFT_GLOBALID, false);
+    FETCH_FIELD_IDX_WITH_RET(iType, "Type", FGFT_GUID, false);
+    FETCH_FIELD_IDX_WITH_RET(iName, "Name", FGFT_STRING, false);
+    FETCH_FIELD_IDX_WITH_RET(iDefinition, "Definition", FGFT_XML, false);
+    FETCH_FIELD_IDX_WITH_RET(iDatasetSubtype1, "DatasetSubtype1", FGFT_INT32, false);
+
+    bool bMatchFound = false;
+    std::string osUUID;
+    for( int iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount(); ++iCurFeat )
+    {
+        iCurFeat = oTable.GetAndSelectNextNonEmptyRow(iCurFeat);
+        if( iCurFeat < 0 )
+            break;
+        const auto psName = oTable.GetFieldValue(iName);
+        if( psName && psName->String == relationshipName )
+        {
+            const auto psType = oTable.GetFieldValue(iType);
+            if( psType &&
+                EQUAL(psType->String, pszRelationshipTypeUUID) )
+            {
+                const auto psUUID = oTable.GetFieldValue(iUUID);
+                if( psUUID )
+                {
+                    osUUID = psUUID->String;
+                }
+
+                auto asFields = oTable.GetAllFieldValues();
+
+                if( !OGR_RawField_IsNull(&asFields[iDefinition]) &&
+                    !OGR_RawField_IsUnset(&asFields[iDefinition]) )
+                {
+                    CPLFree(asFields[iDefinition].String);
+                }
+                asFields[iDefinition].String = CPLStrdup(osXML.c_str());
+
+                switch (relationship->GetCardinality())
+                {
+                    case GDALRelationshipCardinality::GRC_ONE_TO_ONE:
+                        asFields[iDatasetSubtype1].Integer = 1;
+                        break;
+                    case GDALRelationshipCardinality::GRC_ONE_TO_MANY:
+                        asFields[iDatasetSubtype1].Integer = 2;
+                        break;
+                    case GDALRelationshipCardinality::GRC_MANY_TO_MANY:
+                        asFields[iDatasetSubtype1].Integer = 3;
+                        break;
+                    case GDALRelationshipCardinality::GRC_MANY_TO_ONE:
+                        //unreachable
+                        break;
+                }
+
+                bool bRet = oTable.UpdateFeature(iCurFeat + 1,
+                                                 asFields,
+                                                 nullptr);
+                oTable.FreeAllFieldValues(asFields);
+                if( !bRet )
+                    return false;
+                bMatchFound = true;
+                break;
+            }
+        }
+
+        if( !oTable.Sync() )
+        {
+            return false;
+        }
+    }
+
+    if( !bMatchFound )
+        return false;
+
+    // First delete all existing item relationships for the item, and then we'll rebuild them again.
+    if ( !RemoveRelationshipFromItemRelationships( osUUID ) )
+    {
+        failureReason = "Could not remove relationship from GDB_ItemRelationships";
+        return false;
+    }
+    if ( !RegisterRelationshipInItemRelationships(osUUID, osOriginUUID, osDestinationUUID) )
+    {
+        failureReason = "Could not register relationship in GDB_ItemRelationships";
+        return false;
+    }
+
+    m_osMapRelationships[relationshipName] = std::move(relationship);
+
+    return true;
+}
+
 
 /************************************************************************/
 /*                        StartTransaction()                            */
