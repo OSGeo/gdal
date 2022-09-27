@@ -461,8 +461,10 @@ bool JPEGXLDataset::Open(GDALOpenInfo* poOpenInfo)
                 return false;
             }
 
-            CPLDebug("JPEGXL", "uses_original_profile = %d",
-                     info.uses_original_profile);
+            GDALDataset::SetMetadataItem(
+                "COMPRESSION_REVERSIBILITY",
+                 info.uses_original_profile ? "LOSSLESS (possibly)": "LOSSY",
+                 "IMAGE_STRUCTURE");
 
             nRasterXSize = static_cast<int>(info.xsize);
             nRasterYSize = static_cast<int>(info.ysize);
