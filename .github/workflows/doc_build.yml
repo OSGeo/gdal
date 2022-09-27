@@ -47,11 +47,7 @@ jobs:
           cmake --install .
           ldconfig
           popd
-    - name: Pin sphinx version
-      # Avoid https://github.com/sphinx-doc/sphinx/issues/10865
-      shell: bash -l {0}
-      run: |
-          python3 -m pip install --user "sphinx<5.2.0"
+
     - name: Print versions
       shell: bash -l {0}
       run: |
