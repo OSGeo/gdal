@@ -52,6 +52,7 @@
 #include "cpl_minixml.h"
 #include "cpl_quad_tree.h"
 #include "cpl_worker_thread_pool.h"
+#include "cpl_vsi_virtual.h"
 
 #include <atomic>
 #include <fstream>
@@ -3953,6 +3954,66 @@ namespace tut
             poQueue->SubmitJob(lambda, &data2);
         }
         ensure_equals(ctxt.nCounter, 3 * 3);
+    }
+
+    // Test /vsimem/ PRead() implementation
+    template<>
+    template<>
+    void object::test<63>()
+    {
+        char szContent[] = "abcd";
+        VSILFILE* fp = VSIFileFromMemBuffer( "", reinterpret_cast<GByte*>(szContent), 4, FALSE );
+        VSIVirtualHandle* poHandle = reinterpret_cast<VSIVirtualHandle*>(fp);
+        ensure(poHandle->HasPRead());
+        {
+            char szBuffer[5] = {0};
+            ensure_equals(poHandle->PRead(szBuffer, 2, 1), 2U);
+            ensure_equals(std::string(szBuffer), std::string("bc"));
+        }
+        {
+            char szBuffer[5] = {0};
+            ensure_equals(poHandle->PRead(szBuffer, 4, 1), 3U);
+            ensure_equals(std::string(szBuffer), std::string("bcd"));
+        }
+        {
+            char szBuffer[5] = {0};
+            ensure_equals(poHandle->PRead(szBuffer, 1, 4), 0U);
+            ensure_equals(std::string(szBuffer), std::string());
+        }
+        VSIFCloseL(fp);
+    }
+
+    // Test regular file system PRead() implementation
+    template<>
+    template<>
+    void object::test<64>()
+    {
+        VSILFILE* fp = VSIFOpenL("temp_test_64.bin", "wb+");
+        if( fp == nullptr )
+            return;
+        VSIVirtualHandle* poHandle = reinterpret_cast<VSIVirtualHandle*>(fp);
+        poHandle->Write( "abcd", 4, 1 );
+        if( poHandle->HasPRead() )
+        {
+            poHandle->Flush();
+            {
+                char szBuffer[5] = {0};
+                ensure_equals(poHandle->PRead(szBuffer, 2, 1), 2U);
+                ensure_equals(std::string(szBuffer), std::string("bc"));
+            }
+            {
+                char szBuffer[5] = {0};
+                ensure_equals(poHandle->PRead(szBuffer, 4, 1), 3U);
+                ensure_equals(std::string(szBuffer), std::string("bcd"));
+            }
+            {
+                char szBuffer[5] = {0};
+                ensure_equals(poHandle->PRead(szBuffer, 1, 4), 0U);
+                ensure_equals(std::string(szBuffer), std::string());
+            }
+        }
+        VSIFCloseL(fp);
+        VSIUnlink("temp_test_64.bin");
     }
 
     // WARNING: keep that line at bottom and read carefully:

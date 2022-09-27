@@ -238,6 +238,8 @@ else ()
     set(VSI_FOPEN64 "fopen")
   endif ()
 
+  check_function_exists(pread64 HAVE_PREAD64)
+
   check_function_exists(ftruncate64 HAVE_FTRUNCATE64)
   if (HAVE_FTRUNCATE64)
     set(VSI_FTRUNCATE64 "ftruncate64")

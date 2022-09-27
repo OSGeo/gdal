@@ -235,6 +235,10 @@ class VSIUnixStdioHandle final : public VSIVirtualHandle
         return reinterpret_cast<void *>(static_cast<uintptr_t>(fileno(fp))); }
     VSIRangeStatus GetRangeStatus( vsi_l_offset nOffset,
                                    vsi_l_offset nLength ) override;
+#ifdef HAVE_PREAD64
+    bool      HasPRead() const override;
+    size_t    PRead( void* /*pBuffer*/, size_t /* nSize */, vsi_l_offset /*nOffset*/ ) const override;
+#endif
 };
 
 /************************************************************************/
@@ -610,6 +614,26 @@ VSIRangeStatus VSIUnixStdioHandle::GetRangeStatus( vsi_l_offset
     return VSI_RANGE_STATUS_UNKNOWN;
 #endif
 }
+
+/************************************************************************/
+/*                             HasPRead()                               */
+/************************************************************************/
+
+#ifdef HAVE_PREAD64
+bool VSIUnixStdioHandle::HasPRead() const
+{
+    return true;
+}
+
+/************************************************************************/
+/*                              PRead()                                 */
+/************************************************************************/
+
+size_t VSIUnixStdioHandle::PRead( void* pBuffer, size_t nSize, vsi_l_offset nOffset ) const
+{
+    return pread64( fileno(fp), pBuffer, nSize, nOffset );
+}
+#endif
 
 /************************************************************************/
 /* ==================================================================== */
