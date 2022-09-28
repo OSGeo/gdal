@@ -15587,12 +15587,9 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     if( TIFFGetField( m_hTIFF, TIFFTAG_GDAL_METADATA, &pszText ) )
     {
         CPLXMLNode *psRoot = CPLParseXMLString( pszText );
-        CPLXMLNode *psItem = nullptr;
-
-        if( psRoot != nullptr && psRoot->eType == CXT_Element
-            && EQUAL(psRoot->pszValue,"GDALMetadata") )
-            psItem = psRoot->psChild;
-
+        const CPLXMLNode *psItem = psRoot ? CPLGetXMLNode(psRoot, "=GDALMetadata") : nullptr;
+        if( psItem )
+            psItem = psItem->psChild;
         for( ; psItem != nullptr; psItem = psItem->psNext )
         {
 
@@ -16420,12 +16417,9 @@ void GTiffDataset::ScanDirectories()
                     strstr(pszText, "grid_name") != nullptr )
                 {
                     CPLXMLNode *psRoot = CPLParseXMLString( pszText );
-                    CPLXMLNode *psItem = nullptr;
-
-                    if( psRoot != nullptr && psRoot->eType == CXT_Element
-                        && EQUAL(psRoot->pszValue,"GDALMetadata") )
-                        psItem = psRoot->psChild;
-
+                    const CPLXMLNode *psItem = psRoot ? CPLGetXMLNode(psRoot, "=GDALMetadata") : nullptr;
+                    if( psItem )
+                        psItem = psItem->psChild;
                     for( ; psItem != nullptr; psItem = psItem->psNext )
                     {
 
