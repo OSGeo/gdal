@@ -137,6 +137,10 @@ class VSICachedFile final : public VSIVirtualHandle
     int Close() override;
     void *GetNativeFileDescriptor() override
         { return m_poBase->GetNativeFileDescriptor(); }
+
+    bool HasPRead() const override { return m_poBase->HasPRead(); }
+    size_t PRead( void* pBuffer, size_t nSize, vsi_l_offset nOffset ) const override
+        { return m_poBase->PRead(pBuffer, nSize, nOffset); }
 };
 
 /************************************************************************/
