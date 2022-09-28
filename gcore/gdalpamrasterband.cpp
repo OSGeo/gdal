@@ -1029,7 +1029,7 @@ CPLErr GDALPamRasterBand::SetOffset( double dfNewOffset )
     if( psPam == nullptr )
         return GDALRasterBand::SetOffset( dfNewOffset );
 
-    if( psPam->dfOffset != dfNewOffset )
+    if( !psPam->bOffsetSet || psPam->dfOffset != dfNewOffset )
     {
         psPam->dfOffset = dfNewOffset;
         psPam->bOffsetSet = true;
@@ -1068,7 +1068,7 @@ CPLErr GDALPamRasterBand::SetScale( double dfNewScale )
     if( psPam == nullptr )
         return GDALRasterBand::SetScale( dfNewScale );
 
-    if( dfNewScale != psPam->dfScale )
+    if( !psPam->bScaleSet || dfNewScale != psPam->dfScale )
     {
         psPam->dfScale = dfNewScale;
         psPam->bScaleSet = true;
