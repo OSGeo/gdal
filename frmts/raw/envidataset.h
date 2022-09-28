@@ -161,6 +161,8 @@ class ENVIRasterBand final: public RawRasterBand
     void SetDescription( const char * ) override;
     CPLErr SetNoDataValue( double ) override;
     CPLErr SetColorInterpretation( GDALColorInterp eColorInterp ) override;
+    CPLErr SetOffset( double ) override;
+    CPLErr SetScale( double ) override;
 
     CPLErr SetCategoryNames( char ** ) override;
 };
