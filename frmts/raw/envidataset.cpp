@@ -467,6 +467,60 @@ void ENVIDataset::FlushCache(bool bAtClosing)
         bOK &= VSIFPrintfL(fp, "data ignore value = %.18g\n", dfNoDataValue) >= 0;
     }
 
+    // Write "data offset values", if needed
+    {
+        bool bHasOffset = false;
+        for ( int i = 1; i <= nBands; i++ )
+        {
+            int bHasValue = FALSE;
+            CPL_IGNORE_RET_VAL(GetRasterBand(i)->GetOffset(&bHasValue));
+            if( bHasValue )
+                bHasOffset = true;
+        }
+        if( bHasOffset )
+        {
+            bOK &= VSIFPrintfL(fp, "data offset values = {") >= 0;
+            for ( int i = 1; i <= nBands; i++ )
+            {
+                int bHasValue = FALSE;
+                double dfValue = GetRasterBand(i)->GetOffset(&bHasValue);
+                if( !bHasValue )
+                    dfValue = 0;
+                bOK &= VSIFPrintfL(fp, "%.18g", dfValue) >= 0;
+                if ( i != nBands )
+                    bOK &= VSIFPrintfL(fp, ", ") >= 0;
+            }
+            bOK &= VSIFPrintfL(fp, "}\n") >= 0;
+        }
+    }
+
+    // Write "data gain values", if needed
+    {
+        bool bHasScale = false;
+        for ( int i = 1; i <= nBands; i++ )
+        {
+            int bHasValue = FALSE;
+            CPL_IGNORE_RET_VAL(GetRasterBand(i)->GetScale(&bHasValue));
+            if( bHasValue )
+                bHasScale = true;
+        }
+        if( bHasScale )
+        {
+            bOK &= VSIFPrintfL(fp, "data gain values = {") >= 0;
+            for ( int i = 1; i <= nBands; i++ )
+            {
+                int bHasValue = FALSE;
+                double dfValue = GetRasterBand(i)->GetScale(&bHasValue);
+                if( !bHasValue )
+                    dfValue = 1;
+                bOK &= VSIFPrintfL(fp, "%.18g", dfValue) >= 0;
+                if ( i != nBands )
+                    bOK &= VSIFPrintfL(fp, ", ") >= 0;
+            }
+            bOK &= VSIFPrintfL(fp, "}\n") >= 0;
+        }
+    }
+
     // Write the metadata that was read into the ENVI domain.
     char **papszENVIMetadata = GetMetadata("ENVI");
     if( CSLFetchNameValue(papszENVIMetadata, "default bands") == nullptr &&
@@ -556,6 +610,8 @@ void ENVIDataset::FlushCache(bool bAtClosing)
              poKey == "map info" ||
              poKey == "projection info" ||
              poKey == "data ignore value" ||
+             poKey == "data offset values" ||
+             poKey == "data gain values" ||
              poKey == "coordinate system string" )
         {
             CSLDestroy(papszTokens);
@@ -2609,6 +2665,30 @@ ENVIDataset *ENVIDataset::Open( GDALOpenInfo *poOpenInfo, bool bFileSizeCheck )
         }
     }
 
+    // Apply data offset values
+    if( const char* pszDataOffsetValues = poDS->m_aosHeader["data_offset_values"] )
+    {
+        const CPLStringList aosValues(poDS->SplitList(pszDataOffsetValues));
+        if( aosValues.size() == poDS->nBands )
+        {
+            for( int i = 0; i < poDS->nBands; ++i )
+                poDS->GetRasterBand(i+1)->SetOffset(CPLAtof(aosValues[i]));
+        }
+    }
+
+    // Apply data gain values
+    if( const char* pszDataGainValues = poDS->m_aosHeader["data_gain_values"] )
+    {
+        const CPLStringList aosValues(poDS->SplitList(pszDataGainValues));
+        if( aosValues.size() == poDS->nBands )
+        {
+            for( int i = 0; i < poDS->nBands; ++i )
+            {
+                poDS->GetRasterBand(i+1)->SetScale(CPLAtof(aosValues[i]));
+            }
+        }
+    }
+
     // Apply class names if we have them.
     const char* pszClassNames = poDS->m_aosHeader["class_names"];
     if( pszClassNames != nullptr )
@@ -2899,6 +2979,26 @@ CPLErr ENVIRasterBand::SetColorInterpretation( GDALColorInterp eColorInterp )
 {
     cpl::down_cast<ENVIDataset *>(poDS)->bHeaderDirty = true;
     return RawRasterBand::SetColorInterpretation(eColorInterp);
+}
+
+/************************************************************************/
+/*                             SetOffset()                              */
+/************************************************************************/
+
+CPLErr ENVIRasterBand::SetOffset( double dfValue )
+{
+    cpl::down_cast<ENVIDataset *>(poDS)->bHeaderDirty = true;
+    return RawRasterBand::SetOffset(dfValue);
+}
+
+/************************************************************************/
+/*                             SetScale()                               */
+/************************************************************************/
+
+CPLErr ENVIRasterBand::SetScale( double dfValue )
+{
+    cpl::down_cast<ENVIDataset *>(poDS)->bHeaderDirty = true;
+    return RawRasterBand::SetScale(dfValue);
 }
 
 /************************************************************************/
