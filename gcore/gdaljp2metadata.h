@@ -219,6 +219,12 @@ public:
     static int   IsUUID_XMP(const GByte *abyUUID);
 };
 
+CPLXMLNode* GDALGetJPEG2000Structure(const char* pszFilename,
+                                     VSILFILE* fp,
+                                     CSLConstList papszOptions);
+
+const char CPL_DLL *GDALGetJPEG2000Reversibility(const char* pszFilename,
+                                                 VSILFILE* fp);
 #endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* ndef GDAL_JP2READER_H_INCLUDED */

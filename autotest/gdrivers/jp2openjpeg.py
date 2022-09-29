@@ -95,9 +95,14 @@ def test_jp2openjpeg_3():
     ds = gdal.Open("data/jpeg2000/int16.jp2")
     ds_ref = gdal.Open("data/int16.tif")
 
+    # 9x7 wavelet
+    assert ds.GetMetadata("IMAGE_STRUCTURE")["COMPRESSION_REVERSIBILITY"] == "LOSSY"
+    assert ds.GetMetadata("IMAGE_STRUCTURE")["COMPRESSION_REVERSIBILITY"] == "LOSSY"
+    assert ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == "LOSSY"
+
     maxdiff = gdaltest.compare_ds(ds, ds_ref)
-    print(ds.GetRasterBand(1).Checksum())
-    print(ds_ref.GetRasterBand(1).Checksum())
+    # print(ds.GetRasterBand(1).Checksum())
+    # print(ds_ref.GetRasterBand(1).Checksum())
 
     ds = None
     ds_ref = None
@@ -116,6 +121,11 @@ def test_jp2openjpeg_3():
 def test_jp2openjpeg_4(out_filename="tmp/jp2openjpeg_4.jp2"):
 
     src_ds = gdal.Open("data/jpeg2000/byte.jp2")
+    # 5x3 wavelet with Kakadu < 6.4 last layer at -256.0
+    assert (
+        src_ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE")
+        == "LOSSLESS"
+    )
     src_wkt = src_ds.GetProjectionRef()
     src_gt = src_ds.GetGeoTransform()
 

@@ -3041,7 +3041,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 
 char **ECWDataset::GetMetadataDomainList()
 {
-    return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
+    return BuildMetadataDomainList(GDALJP2AbstractDataset::GetMetadataDomainList(),
                                    TRUE,
                                    "ECW", "GML", nullptr);
 }
@@ -3062,7 +3062,7 @@ const char *ECWDataset::GetMetadataItem( const char * pszName,
         if (EQUAL(pszName, "UNITS"))
             return m_osUnitsCode.size() ? m_osUnitsCode.c_str() : "METERS";
     }
-    return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
+    return GDALJP2AbstractDataset::GetMetadataItem(pszName, pszDomain);
 }
 
 /************************************************************************/
@@ -3081,7 +3081,7 @@ char **ECWDataset::GetMetadata( const char *pszDomain )
         return oECWMetadataList.List();
     }
     else if( pszDomain == nullptr || !EQUAL(pszDomain,"GML") )
-        return GDALPamDataset::GetMetadata( pszDomain );
+        return GDALJP2AbstractDataset::GetMetadata( pszDomain );
     else
         return papszGMLMetadata;
 }

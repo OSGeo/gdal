@@ -2210,13 +2210,32 @@ CPLXMLNode* GDALGetJPEG2000Structure(const char* pszFilename,
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s", pszFilename);
         return nullptr;
     }
+    auto psRet = GDALGetJPEG2000Structure(pszFilename, fp, papszOptions);
+    CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
+    return psRet;
+}
+
+
+#ifndef DOXYGEN_SKIP
+
+/************************************************************************/
+/*                        GDALGetJPEG2000Structure()                    */
+/************************************************************************/
+
+CPLXMLNode* GDALGetJPEG2000Structure(const char* pszFilename,
+                                     VSILFILE* fp,
+                                     CSLConstList papszOptions)
+{
+    if( fp == nullptr )
+        return GDALGetJPEG2000Structure(pszFilename, papszOptions);
+
     GByte abyHeader[16];
-    if( VSIFReadL(abyHeader, 16, 1, fp) != 1 ||
+    if( VSIFSeekL(fp, 0, SEEK_SET) != 0 ||
+        VSIFReadL(abyHeader, 16, 1, fp) != 1 ||
         (memcmp(abyHeader, jpc_header, sizeof(jpc_header)) != 0 &&
          memcmp(abyHeader + 4, jp2_box_jp, sizeof(jp2_box_jp)) != 0) )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s is not a JPEG2000 file", pszFilename);
-        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         return nullptr;
     }
 
@@ -2266,6 +2285,117 @@ CPLXMLNode* GDALGetJPEG2000Structure(const char* pszFilename,
                  dc.nMaxLineCount);
     }
 
-    CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
     return psParent;
 }
+
+/************************************************************************/
+/*                     GDALGetJPEG2000Reversibility()                   */
+/************************************************************************/
+
+const char* GDALGetJPEG2000Reversibility(const char* pszFilename,
+                                         VSILFILE* fp)
+{
+    const char* const apszOptions[] = {
+        "ALLOW_GET_FILE_SIZE=NO",
+        "STOP_AT_SOD=YES",
+        "CODESTREAM_MARKERS=COD,COM",
+        nullptr
+    };
+    CPLXMLNode* psRes = GDALGetJPEG2000Structure(pszFilename, fp, apszOptions);
+    if( psRes == nullptr )
+        return nullptr;
+    const char* pszReversibility = nullptr;
+    const CPLXMLNode* psJP2C = CPLSearchXMLNode(psRes, "JP2KCodeStream");
+    if( psJP2C )
+    {
+        const char* pszTransformation = nullptr;
+        const char* pszCOM = nullptr;
+        for( const CPLXMLNode* psMarker = psJP2C->psChild;
+                psMarker; psMarker = psMarker->psNext )
+        {
+            if( psMarker->eType == CXT_Element &&
+                strcmp(psMarker->pszValue, "Marker") == 0 &&
+                strcmp(CPLGetXMLValue(psMarker, "name", ""), "COD") == 0 )
+            {
+                for( const CPLXMLNode* psField = psMarker->psChild;
+                         psField; psField = psField->psNext )
+                {
+                    if( psField->eType == CXT_Element &&
+                        strcmp(psField->pszValue, "Field") == 0 &&
+                        strcmp(CPLGetXMLValue(psField, "name", ""), "SPcod_transformation") == 0 )
+                    {
+                        pszTransformation = CPLGetXMLValue(psField, nullptr, nullptr);
+                        break;
+                    }
+                }
+            }
+            else if( psMarker->eType == CXT_Element &&
+                     strcmp(psMarker->pszValue, "Marker") == 0 &&
+                     strcmp(CPLGetXMLValue(psMarker, "name", ""), "COM") == 0 )
+            {
+                for( const CPLXMLNode* psField = psMarker->psChild;
+                         psField; psField = psField->psNext )
+                {
+                    if( psField->eType == CXT_Element &&
+                        strcmp(psField->pszValue, "Field") == 0 &&
+                        strcmp(CPLGetXMLValue(psField, "name", ""), "COM") == 0 )
+                    {
+                        pszCOM = CPLGetXMLValue(psField, nullptr, nullptr);
+                        break;
+                    }
+                }
+            }
+        }
+
+        if( pszTransformation != nullptr &&
+            strcmp(pszTransformation, "0") == 0 ) // 0 = 9x7 irreversible wavelet
+        {
+            pszReversibility = "LOSSY";
+        }
+        else if( pszTransformation != nullptr &&
+            strcmp(pszTransformation, "1") == 0 ) // 1 = 5x3 reversible wavelet
+        {
+            // 5x3 wavelet by itself doesn't guarantee full lossless mode
+            // if quality layers are discarded. hence the "possibly"
+            pszReversibility = "LOSSLESS (possibly)";
+
+            if( pszCOM &&
+                STARTS_WITH(pszCOM, "Kdu-Layer-Info: log_2{Delta-D(squared-error)/Delta-L(bytes)}, L(bytes)") )
+            {
+                if( strstr(pszCOM, "-192.0,") != nullptr )
+                {
+                    // Not really sure to understand this fully, but experimentaly
+                    // I've found that if the last row in the Kdu-Layer-Info
+                    // includes a line starting with "-192.0", it means that the
+                    // last layer includes everything to be lossless.
+                    pszReversibility = "LOSSLESS";
+                }
+                else
+                {
+                    pszReversibility = "LOSSY";
+                }
+            }
+            // Kakadu < 6.4
+            else if( pszCOM &&
+                        STARTS_WITH(pszCOM, "Kdu-Layer-Info: log_2{Delta-D(MSE)/[2^16*Delta-L(bytes)]}, L(bytes)") )
+            {
+                if( strstr(pszCOM, "-256.0,") != nullptr )
+                {
+                    // Not really sure to understand this fully, but experimentaly
+                    // I've found that if the last row in the Kdu-Layer-Info
+                    // includes a line starting with "-256.0", it means that the
+                    // last layer includes everything to be lossless.
+                    pszReversibility = "LOSSLESS";
+                }
+                else
+                {
+                    pszReversibility = "LOSSY";
+                }
+            }
+        }
+    }
+    CPLDestroyXMLNode(psRes);
+    return pszReversibility;
+}
+
+#endif /* #ifndef DOXYGEN_SKIP */

@@ -247,6 +247,7 @@ class JP2OpenJPEGDataset final: public GDALJP2AbstractDataset
 
   protected:
     virtual int         CloseDependentDatasets() override;
+    virtual VSILFILE* GetFileHandle() override { return fp; }
 
   public:
                 JP2OpenJPEGDataset();
