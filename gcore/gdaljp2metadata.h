@@ -59,11 +59,15 @@ class CPL_DLL GDALJP2Box
 
     GByte      *pabyData = nullptr;
 
+    bool        m_bAllowGetFileSize = true;
+
     CPL_DISALLOW_COPY_ASSIGN(GDALJP2Box)
 
 public:
     explicit    GDALJP2Box( VSILFILE * = nullptr );
                 ~GDALJP2Box();
+
+    void        SetAllowGetFileSize(bool b) { m_bAllowGetFileSize = b; }
 
     int         SetOffset( GIntBig nNewOffset );
     int         ReadBox();
