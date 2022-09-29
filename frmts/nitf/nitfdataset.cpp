@@ -3050,6 +3050,28 @@ char **NITFDataset::GetMetadataDomainList()
 }
 
 /************************************************************************/
+/*                      InitializeImageStructureMetadata()              */
+/************************************************************************/
+
+void NITFDataset::InitializeImageStructureMetadata()
+{
+    if( oSpecialMD.GetMetadata("IMAGE_STRUCTURE") != nullptr )
+        return;
+
+    oSpecialMD.SetMetadata(GDALPamDataset::GetMetadata("IMAGE_STRUCTURE"), "IMAGE_STRUCTURE");
+    if( poJ2KDataset )
+    {
+        const char* pszReversibility = poJ2KDataset->GetMetadataItem(
+            "COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE");
+        if( pszReversibility )
+        {
+            oSpecialMD.SetMetadataItem(
+                "COMPRESSION_REVERSIBILITY", pszReversibility, "IMAGE_STRUCTURE");
+        }
+    }
+}
+
+/************************************************************************/
 /*                            GetMetadata()                             */
 /************************************************************************/
 
@@ -3126,6 +3148,14 @@ char **NITFDataset::GetMetadata( const char * pszDomain )
         return oSpecialMD.GetMetadata( pszDomain );
     }
 
+    if( pszDomain != nullptr &&
+        EQUAL(pszDomain,"IMAGE_STRUCTURE") &&
+        poJ2KDataset )
+    {
+        InitializeImageStructureMetadata();
+        return oSpecialMD.GetMetadata( pszDomain );
+    }
+
     return GDALPamDataset::GetMetadata( pszDomain );
 }
 
@@ -3196,6 +3226,15 @@ const char *NITFDataset::GetMetadataItem(const char * pszName,
     if( pszDomain != nullptr && EQUAL(pszDomain,"OVERVIEWS")
         && !osRSetVRT.empty() )
         return osRSetVRT;
+
+    if( pszDomain != nullptr &&
+        EQUAL(pszDomain,"IMAGE_STRUCTURE") &&
+        poJ2KDataset &&
+        EQUAL(pszName, "COMPRESSION_REVERSIBILITY") )
+    {
+        InitializeImageStructureMetadata();
+        return oSpecialMD.GetMetadataItem( pszName, pszDomain );
+    }
 
     // For unit test purposes
     if( pszDomain != nullptr && EQUAL(pszDomain,"DEBUG")

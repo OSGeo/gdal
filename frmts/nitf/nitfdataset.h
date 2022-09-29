@@ -99,6 +99,7 @@ class NITFDataset final: public GDALPamDataset
     void         InitializeCGMMetadata();
     void         InitializeTextMetadata();
     void         InitializeTREMetadata();
+    void         InitializeImageStructureMetadata();
 
     GIntBig     *panJPEGBlockOffset;
     GByte       *pabyJPEGBlock;
