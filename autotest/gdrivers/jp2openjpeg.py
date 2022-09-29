@@ -147,6 +147,9 @@ def test_jp2openjpeg_4(out_filename="tmp/jp2openjpeg_4.jp2"):
     assert gdal.VSIStatL(out_filename + ".aux.xml") is None
 
     ds = gdal.Open(out_filename)
+    assert (
+        ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == "LOSSLESS"
+    )
     cs = ds.GetRasterBand(1).Checksum()
     got_wkt = ds.GetProjectionRef()
     got_gt = ds.GetGeoTransform()
@@ -3819,3 +3822,24 @@ def test_jp2openjpeg_STRICT_NO():
     with gdaltest.error_handler():
         assert ds.GetRasterBand(1).Checksum() == 5058
     ds = None
+
+
+###############################################################################
+# Test REVERSIBLE=YES with QUALITY != 100
+
+
+def test_jp2openjpeg_reversible_quality_not_100():
+
+    filename = "/vsimem/temp.jp2"
+    gdaltest.jp2openjpeg_drv.CreateCopy(
+        filename,
+        gdal.Open("data/byte.tif"),
+        options=["REVERSIBLE=YES", "QUALITY=90"],
+    )
+
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).Checksum() != 4672
+    assert ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == "LOSSY"
+    ds = None
+
+    gdaltest.jp2openjpeg_drv.Delete(filename)

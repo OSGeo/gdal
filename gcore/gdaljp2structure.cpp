@@ -2392,6 +2392,19 @@ const char* GDALGetJPEG2000Reversibility(const char* pszFilename,
                     pszReversibility = "LOSSY";
                 }
             }
+            else if( pszCOM && STARTS_WITH(pszCOM, "Created by OpenJPEG") )
+            {
+                // Starting with GDAL 3.6, the JP2OpenJPEG driver will write
+                // if the encoding parameters are lossless/lossy (for 5x3 wavelets)
+                if( strstr(pszCOM, "LOSSLESS settings used") )
+                {
+                    pszReversibility = "LOSSLESS";
+                }
+                else if( strstr(pszCOM, "LOSSY settings used") )
+                {
+                    pszReversibility = "LOSSY";
+                }
+            }
         }
     }
     CPLDestroyXMLNode(psRes);
