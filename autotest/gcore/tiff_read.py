@@ -27,6 +27,7 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
+import array
 import os
 import shutil
 import struct
@@ -4595,3 +4596,298 @@ def test_tiff_jxl_read_for_files_created_before_6393():
                 == dsorig.GetRasterBand(i + 1).Checksum()
             )
     assert gdal.GetLastErrorMsg() == ""
+
+
+###############################################################################
+# Test multi-threaded decoding
+
+
+@pytest.mark.parametrize(
+    "reopen,xsize,ysize,nbands,dtype,creation_options",
+    [
+        (
+            True,
+            64,
+            96,
+            3,
+            gdal.GDT_Byte,
+            [
+                "COMPRESS=LZW",
+                "PREDICTOR=2",
+                "TILED=YES",
+                "BLOCKXSIZE=16",
+                "BLOCKYSIZE=32",
+            ],
+        ),  # raster size is multiple of block size
+        (
+            True,
+            100,
+            100,
+            3,
+            gdal.GDT_UInt16,
+            ["COMPRESS=LZW", "TILED=YES", "BLOCKXSIZE=16", "BLOCKYSIZE=32"],
+        ),
+        (
+            True,
+            100,
+            100,
+            3,
+            gdal.GDT_Byte,
+            [
+                "COMPRESS=LZW",
+                "TILED=YES",
+                "BLOCKXSIZE=16",
+                "BLOCKYSIZE=32",
+                "INTERLEAVE=BAND",
+            ],
+        ),
+        (
+            True,
+            100,
+            100,
+            1,
+            gdal.GDT_Byte,
+            [
+                "COMPRESS=LZW",
+                "TILED=YES",
+                "BLOCKXSIZE=16",
+                "BLOCKYSIZE=32",
+                "INTERLEAVE=BAND",
+            ],
+        ),
+        (
+            False,
+            100,
+            100,
+            3,
+            gdal.GDT_Byte,
+            ["COMPRESS=LZW", "TILED=YES", "BLOCKXSIZE=16", "BLOCKYSIZE=32"],
+        ),
+        (
+            False,
+            100,
+            100,
+            3,
+            gdal.GDT_Byte,
+            [
+                "COMPRESS=LZW",
+                "TILED=YES",
+                "BLOCKXSIZE=16",
+                "BLOCKYSIZE=32",
+                "INTERLEAVE=BAND",
+            ],
+        ),
+        (
+            False,
+            100,
+            100,
+            3,
+            gdal.GDT_Byte,
+            ["COMPRESS=LZW", "BLOCKYSIZE=18"],
+        ),  # strip organization, block height *not* multiple of height
+        (
+            False,
+            100,
+            100,
+            5,
+            gdal.GDT_Byte,
+            ["COMPRESS=LZW", "BLOCKYSIZE=50"],
+        ),  # strip organization, block height multiple of height. Also test nbands = 5
+        # Try all supported compression methods
+        (False, 100, 100, 3, gdal.GDT_Byte, ["COMPRESS=NONE", "BLOCKYSIZE=18"]),
+        (False, 100, 100, 3, gdal.GDT_Byte, ["COMPRESS=DEFLATE", "BLOCKYSIZE=18"]),
+        (False, 100, 100, 3, gdal.GDT_Byte, ["COMPRESS=ZSTD", "BLOCKYSIZE=18"]),
+        (False, 100, 100, 3, gdal.GDT_Byte, ["COMPRESS=LZMA", "BLOCKYSIZE=18"]),
+        (
+            False,
+            100,
+            100,
+            3,
+            gdal.GDT_Byte,
+            ["COMPRESS=WEBP", "WEBP_LOSSLESS=YES", "BLOCKYSIZE=18"],
+        ),
+        (
+            False,
+            100,
+            100,
+            3,
+            gdal.GDT_Byte,
+            ["COMPRESS=JPEG", "JPEG_QUALITY=95", "PHOTOMETRIC=YCBCR", "BLOCKYSIZE=16"],
+        ),
+        (False, 100, 100, 1, gdal.GDT_Byte, ["COMPRESS=JPEG", "BLOCKYSIZE=16"]),
+        (False, 100, 100, 3, gdal.GDT_Byte, ["COMPRESS=LERC", "BLOCKYSIZE=18"]),
+        (False, 100, 100, 3, gdal.GDT_Byte, ["COMPRESS=JXL", "BLOCKYSIZE=18"]),
+        (False, 100, 100, 3, gdal.GDT_Byte, ["COMPRESS=PACKBITS", "BLOCKYSIZE=18"]),
+    ],
+)
+def test_tiff_read_multi_threaded(
+    reopen, xsize, ysize, nbands, dtype, creation_options
+):
+
+    assert creation_options[0].startswith("COMPRESS=")
+    method = creation_options[0][len("COMPRESS=") :]
+    if method not in gdal.GetDriverByName("GTiff").GetMetadataItem(
+        "DMD_CREATIONOPTIONLIST"
+    ):
+        pytest.skip(f"Compression method {method} not supported in this build")
+
+    ref_ds = gdal.GetDriverByName("MEM").Create("", xsize, ysize, nbands, dtype)
+    for band in range(ref_ds.RasterCount):
+        buf = b""
+        for j in range(ref_ds.RasterYSize):
+            buf += array.array(
+                "B", [band * 10 + j + i for i in range(ref_ds.RasterXSize)]
+            )
+        ref_ds.GetRasterBand(band + 1).WriteRaster(
+            0, 0, ref_ds.RasterXSize, ref_ds.RasterYSize, buf, buf_type=gdal.GDT_Byte
+        )
+
+    tmpfile = "tmp/test_tiff_read_multi_threaded.tif"
+    if not reopen:
+        creation_options += ["NUM_THREADS=ALL_CPUS"]
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmpfile,
+        ref_ds.RasterXSize,
+        ref_ds.RasterYSize,
+        ref_ds.RasterCount,
+        ref_ds.GetRasterBand(1).DataType,
+        options=creation_options,
+    )
+    ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, ref_ds.ReadRaster())
+
+    if reopen:
+        ds = None
+        ds = gdal.OpenEx(tmpfile, open_options=["NUM_THREADS=ALL_CPUS"])
+
+    pixel_size = gdal.GetDataTypeSize(dtype) // 8
+    if method == "JPEG":
+        tmp_ds = gdal.GetDriverByName("MEM").Create("", xsize, ysize, nbands, dtype)
+        tmp_ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, ds.ReadRaster())
+        for i in range(nbands):
+            assert tmp_ds.GetRasterBand(i + 1).ComputeStatistics(0) == pytest.approx(
+                ref_ds.GetRasterBand(i + 1).ComputeStatistics(0), abs=1
+            )
+    else:
+        assert ds.ReadRaster() == ref_ds.ReadRaster()
+        assert ds.ReadRaster(buf_type=gdal.GDT_Byte) == ref_ds.ReadRaster(
+            buf_type=gdal.GDT_Byte
+        )
+        assert ds.ReadRaster(buf_xsize=ds.RasterXSize // 2) == ref_ds.ReadRaster(
+            buf_xsize=ds.RasterXSize // 2
+        )
+        assert ds.ReadRaster(
+            buf_pixel_space=nbands * pixel_size, buf_band_space=pixel_size
+        ) == ref_ds.ReadRaster(
+            buf_pixel_space=nbands * pixel_size, buf_band_space=pixel_size
+        )
+        assert ds.GetRasterBand(1).ReadRaster() == ref_ds.GetRasterBand(1).ReadRaster()
+        assert ds.GetRasterBand(1).ReadRaster() == ref_ds.GetRasterBand(1).ReadRaster()
+        ds.FlushCache()
+        blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
+        if blockxsize < ds.RasterXSize:
+            assert ds.ReadRaster(
+                blockxsize, blockysize, 2 * blockxsize, 2 * blockysize
+            ) == ref_ds.ReadRaster(
+                blockxsize, blockysize, 2 * blockxsize, 2 * blockysize
+            )
+        assert ds.ReadRaster(20, 40, 35, 50) == ref_ds.ReadRaster(20, 40, 35, 50)
+        assert ds.ReadRaster(
+            1, 1, ds.RasterXSize - 2, ds.RasterYSize - 2
+        ) == ref_ds.ReadRaster(1, 1, ds.RasterXSize - 2, ds.RasterYSize - 2)
+        assert ds.ReadRaster(
+            1,
+            1,
+            ds.RasterXSize - 2,
+            ds.RasterYSize - 2,
+            buf_pixel_space=nbands * pixel_size,
+            buf_band_space=pixel_size,
+        ) == ref_ds.ReadRaster(
+            1,
+            1,
+            ds.RasterXSize - 2,
+            ds.RasterYSize - 2,
+            buf_pixel_space=nbands * pixel_size,
+            buf_band_space=pixel_size,
+        )
+
+    ds = None
+    gdal.Unlink(tmpfile)
+
+
+###############################################################################
+# Test multi-threaded decoding with /vsicurl
+
+
+@pytest.mark.parametrize("use_dataset_readraster", [True, False])
+def test_tiff_read_mult_threaded_vsicurl(use_dataset_readraster):
+
+    if gdal.GetDriverByName("HTTP") is None:
+        pytest.skip()
+
+    webserver_process = None
+    webserver_port = 0
+
+    (webserver_process, webserver_port) = webserver.launch(
+        handler=webserver.DispatcherHttpHandler
+    )
+    if webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    try:
+        ref_filename = "../gdrivers/data/utm.tif"
+        ref_ds = gdal.Open(ref_filename)
+
+        filesize = gdal.VSIStatL(ref_filename).size
+        handler = webserver.SequentialHandler()
+        handler.add("HEAD", "/utm.tif", 200, {"Content-Length": "%d" % filesize})
+
+        def method(request):
+            # sys.stderr.write('%s\n' % str(request.headers))
+
+            if request.headers["Range"].startswith("bytes="):
+                rng = request.headers["Range"][len("bytes=") :]
+                assert len(rng.split("-")) == 2
+                start = int(rng.split("-")[0])
+                end = int(rng.split("-")[1])
+
+                request.protocol_version = "HTTP/1.1"
+                request.send_response(206)
+                request.send_header("Content-type", "application/octet-stream")
+                request.send_header(
+                    "Content-Range", "bytes %d-%d/%d" % (start, end, filesize)
+                )
+                request.send_header("Content-Length", end - start + 1)
+                request.send_header("Connection", "close")
+                request.end_headers()
+                with open(ref_filename, "rb") as f:
+                    f.seek(start, 0)
+                    request.wfile.write(f.read(end - start + 1))
+
+        _, blockYSize = ref_ds.GetRasterBand(1).GetBlockSize()
+        for i in range(2 + ref_ds.RasterYSize // blockYSize):
+            handler.add("GET", "/utm.tif", custom_method=method)
+
+        with webserver.install_http_handler(handler):
+            with gdaltest.config_options(
+                {
+                    "GDAL_NUM_THREADS": "2",
+                    "CPL_VSIL_CURL_ALLOWED_EXTENSIONS": ".tif",
+                    "GDAL_DISABLE_READDIR_ON_OPEN": "EMPTY_DIR",
+                }
+            ):
+                ds = gdal.Open("/vsicurl/http://127.0.0.1:%d/utm.tif" % webserver_port)
+                assert ds is not None, "could not open dataset"
+
+                if use_dataset_readraster:
+                    data = ds.ReadRaster()
+                else:
+                    data = ds.GetRasterBand(1).ReadRaster()
+
+        assert data == ref_ds.ReadRaster()
+
+    finally:
+        webserver.server_stop(webserver_process, webserver_port)
+
+        gdal.VSICurlClearCache()

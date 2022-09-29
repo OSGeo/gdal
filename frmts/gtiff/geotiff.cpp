@@ -337,6 +337,8 @@ enum class GTiffProfile: GByte
     GDALGEOTIFF
 };
 
+static void ThreadDecompressionFunc(void*);
+
 class GTiffDataset final : public GDALPamDataset
 {
 public:
@@ -357,6 +359,8 @@ private:
     friend class GTiffRGBABand;
     friend class GTiffSplitBand;
     friend class GTiffSplitBitmapBand;
+
+    friend void  ThreadDecompressionFunc(void*);
 
     friend void  GTIFFSetJpegQuality( GDALDatasetH hGTIFFDS, int nJpegQuality );
     friend void  GTIFFSetJpegTablesMode( GDALDatasetH hGTIFFDS, int nJpegTablesMode );
@@ -384,6 +388,7 @@ private:
     CPLVirtualMem        *m_pBaseMapping = nullptr;
     GByte                *m_pTempBufferForCommonDirectIO = nullptr;
     CPLVirtualMem        *m_psVirtualMemIOMapping = nullptr;
+    CPLWorkerThreadPool  *m_poThreadPool = nullptr;
     std::unique_ptr<CPLJobQueue> m_poCompressQueue{};
     CPLMutex             *m_hCompressThreadPoolMutex = nullptr;
 
@@ -579,8 +584,8 @@ private:
 
     void           DiscardLsb(GByte* pabyBuffer, GPtrDiff_t nBytes, int iBand) const;
     void           GetDiscardLsbOption( char** papszOptions );
-    void           InitCompressionThreads( char** papszOptions );
-    void           InitCreationOrOpenOptions( char** papszOptions );
+    void           InitCompressionThreads( bool bUpdateMode, CSLConstList papszOptions );
+    void           InitCreationOrOpenOptions( bool bUpdateMode, CSLConstList papszOptions );
     static void    ThreadCompressionFunc( void* pData );
     void           WaitCompletionForJobIdx( int i );
     void           WaitCompletionForBlock( int nBlockId );
@@ -672,7 +677,15 @@ private:
     virtual const GDAL_GCP *GetGCPs() override;
     CPLErr SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
                     const OGRSpatialReference* poSRS ) override;
-
+#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
+    bool           IsMultiThreadedReadCompatible() const;
+    CPLErr         MultiThreadedRead(int nXOff, int nYOff, int nXSize, int nYSize,
+                                     void * pData,
+                                     GDALDataType eBufType,
+                                     int nBandCount, const int *panBandMap,
+                                     GSpacing nPixelSpace, GSpacing nLineSpace,
+                                     GSpacing nBandSpace);
+#endif
     virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
                               int nXOff, int nYOff, int nXSize, int nYSize,
                               void * pData, int nBufXSize, int nBufYSize,
@@ -1351,6 +1364,8 @@ public:
              GTiffRasterBand( GTiffDataset *, int );
     virtual ~GTiffRasterBand();
 
+    virtual bool     IsBaseGTiffClass() const { return true; }
+
     virtual CPLErr IReadBlock( int, int, void * ) override;
     virtual CPLErr IWriteBlock( int, int, void * ) override;
 
@@ -1722,7 +1737,7 @@ int GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
           (m_poGDS->m_nPhotometric == PHOTOMETRIC_MINISBLACK ||
            m_poGDS->m_nPhotometric == PHOTOMETRIC_RGB ||
            m_poGDS->m_nPhotometric == PHOTOMETRIC_PALETTE) &&
-          m_poGDS->m_nBitsPerSample == nDTSizeBits) )
+          IsBaseGTiffClass()) )
     {
         return -1;
     }
@@ -2373,11 +2388,40 @@ CPLErr GTiffDataset::IRasterIO( GDALRWFlag eRWFlag,
             return static_cast<CPLErr>(nErr);
     }
 
+#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
+    bool bCanUseMultiThreadedRead = false;
+    if( m_poThreadPool &&
+             eRWFlag == GF_Read &&
+             nBufXSize == nXSize &&
+             nBufYSize == nYSize &&
+             IsMultiThreadedReadCompatible() )
+    {
+        const int nBlockX1 = nXOff / m_nBlockXSize;
+        const int nBlockY1 = nYOff / m_nBlockYSize;
+        const int nBlockX2 = (nXOff + nXSize - 1) / m_nBlockXSize;
+        const int nBlockY2 = (nYOff + nYSize - 1) / m_nBlockYSize;
+        const int nXBlocks = nBlockX2 - nBlockX1 + 1;
+        const int nYBlocks = nBlockY2 - nBlockY1 + 1;
+        const int nBlocks = nXBlocks * nYBlocks *
+            (m_nPlanarConfig == PLANARCONFIG_CONTIG ? 1 : nBandCount);
+        if( nBlocks > 1 )
+        {
+            bCanUseMultiThreadedRead = true;
+        }
+    }
+#endif
+
     void* pBufferedData = nullptr;
     if( eAccess == GA_ReadOnly &&
         eRWFlag == GF_Read &&
-        m_nPlanarConfig == PLANARCONFIG_CONTIG &&
-        HasOptimizedReadMultiRange() )
+        (nBands == 1 || m_nPlanarConfig == PLANARCONFIG_CONTIG) &&
+        HasOptimizedReadMultiRange()
+#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
+        && !(bCanUseMultiThreadedRead &&
+             reinterpret_cast<VSIVirtualHandle*>(
+                VSI_TIFFGetVSILFile(TIFFClientdata( m_hTIFF )))->HasPRead())
+#endif
+    )
     {
         pBufferedData = cpl::down_cast<GTiffRasterBand *>(
             GetRasterBand(1))->CacheMultiRange(nXOff, nYOff,
@@ -2385,6 +2429,15 @@ CPLErr GTiffDataset::IRasterIO( GDALRWFlag eRWFlag,
                                                nBufXSize, nBufYSize,
                                                psExtraArg);
     }
+#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
+    else if( bCanUseMultiThreadedRead )
+    {
+        return MultiThreadedRead(nXOff, nYOff, nXSize, nYSize,
+                                 pData, eBufType,
+                                 nBandCount, panBandMap,
+                                 nPixelSpace, nLineSpace, nBandSpace);
+    }
+#endif
 
     ++m_nJPEGOverviewVisibilityCounter;
     const CPLErr eErr =
@@ -2404,6 +2457,912 @@ CPLErr GTiffDataset::IRasterIO( GDALRWFlag eRWFlag,
 
     return eErr;
 }
+
+#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
+
+struct GTiffDecompressContext
+{
+    std::mutex oMutex{};
+    bool       bSuccess = true;
+
+    VSIVirtualHandle* poHandle = nullptr;
+    GTiffDataset* poDS = nullptr;
+    GDALDataType eDT = GDT_Unknown;
+    int nXOff = 0;
+    int nYOff = 0;
+    int nXSize = 0;
+    int nYSize = 0;
+    int nBlockXStart = 0;
+    int nBlockYStart = 0;
+    int nBlockXEnd = 0;
+    int nBlockYEnd = 0;
+    GByte* pabyData = nullptr;
+    GDALDataType eBufType = GDT_Unknown;
+    int nBufDTSize = 0;
+    int nBandCount = 0;
+    const int *panBandMap = nullptr;
+    GSpacing nPixelSpace = 0;
+    GSpacing nLineSpace = 0;
+    GSpacing nBandSpace = 0;
+    bool     bHasPRead = false;
+    bool     bCacheAllBands = false;
+    bool     bSkipBlockCache = false;
+    bool     bUseBIPOptim = false;
+    bool     bUseDeinterleaveOptimNoBlockCache = false;
+    bool     bUseDeinterleaveOptimBlockCache = false;
+    bool     bIsTiled = false;
+    bool     bTIFFIsBigEndian = false;
+    int      nBlocksPerRow = 0;
+
+    uint16_t nPredictor = 0;
+
+    uint32_t nJPEGTableSize = 0;
+    void*    pJPEGTable = nullptr;
+    uint16_t nYCrbCrSubSampling0 = 2;
+    uint16_t nYCrbCrSubSampling1 = 2;
+
+    uint16_t *pExtraSamples = nullptr;
+    uint16_t nExtraSampleCount = 0;
+};
+
+struct GTiffDecompressJob
+{
+    GTiffDecompressContext* psContext = nullptr;
+    int iBand = 0; // or -1 to indicate all bands of panBandMap
+    int nXBlock = 0;
+    int nYBlock = 0;
+    vsi_l_offset nOffset = 0;
+    vsi_l_offset nSize = 0;
+};
+
+/************************************************************************/
+/*                     ThreadDecompressionFunc()                        */
+/************************************************************************/
+
+static void ThreadDecompressionFunc(void* pData)
+{
+    const auto psJob = static_cast<const GTiffDecompressJob*>(pData);
+    auto psContext = psJob->psContext;
+    auto poDS = psContext->poDS;
+
+    const int nBandsPerStrile =
+        poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG ? poDS->nBands : 1;
+    const int nBandsToWrite = poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG ?
+        psContext->nBandCount : 1;
+
+    const int nXOffsetInBlock =
+        psJob->nXBlock == psContext->nBlockXStart ?
+            psContext->nXOff % poDS->m_nBlockXSize :
+            0;
+    const int nXOffsetInData =
+        psJob->nXBlock == psContext->nBlockXStart ?
+            0 :
+            (psJob->nXBlock - psContext->nBlockXStart) * poDS->m_nBlockXSize -
+                (psContext->nXOff % poDS->m_nBlockXSize);
+    const int nXSize =
+        psJob->nXBlock == psContext->nBlockXStart && psJob->nXBlock == psContext->nBlockXEnd ?
+            psContext->nXSize :
+        psJob->nXBlock == psContext->nBlockXStart ?
+            poDS->m_nBlockXSize - (psContext->nXOff % poDS->m_nBlockXSize) :
+        psJob->nXBlock == psContext->nBlockXEnd ?
+            (((psContext->nXOff + psContext->nXSize) % poDS->m_nBlockXSize) == 0 ?
+                poDS->m_nBlockXSize : ((psContext->nXOff + psContext->nXSize) % poDS->m_nBlockXSize)) :
+            poDS->m_nBlockXSize;
+
+    const int nYOffsetInBlock =
+        psJob->nYBlock == psContext->nBlockYStart ?
+            psContext->nYOff % poDS->m_nBlockYSize :
+            0;
+    const int nYOffsetInData =
+        psJob->nYBlock == psContext->nBlockYStart ?
+            0 :
+            (psJob->nYBlock - psContext->nBlockYStart) * poDS->m_nBlockYSize -
+                (psContext->nYOff % poDS->m_nBlockYSize);
+    const int nYSize =
+        psJob->nYBlock == psContext->nBlockYStart && psJob->nYBlock == psContext->nBlockYEnd ?
+            psContext->nYSize :
+        psJob->nYBlock == psContext->nBlockYStart ?
+            poDS->m_nBlockYSize - (psContext->nYOff % poDS->m_nBlockYSize) :
+        psJob->nYBlock == psContext->nBlockYEnd ?
+            (((psContext->nYOff + psContext->nYSize) % poDS->m_nBlockYSize) == 0 ?
+                poDS->m_nBlockYSize : ((psContext->nYOff + psContext->nYSize) % poDS->m_nBlockYSize)) :
+            poDS->m_nBlockYSize;
+#if 0
+    CPLDebug("GTiff",
+             "nXBlock = %d, nYBlock = %d, "
+             "nXOffsetInBlock = %d, nXOffsetInData = %d, nXSize = %d, "
+             "nYOffsetInBlock = %d, nYOffsetInData = %d, nYSize = %d\n",
+             psJob->nXBlock, psJob->nYBlock,
+             nXOffsetInBlock, nXOffsetInData, nXSize,
+             nYOffsetInBlock, nYOffsetInData, nYSize);
+#endif
+
+    if( psJob->nSize == 0 )
+    {
+        {
+            std::lock_guard<std::mutex> oLock(psContext->oMutex);
+            if( !psContext->bSuccess )
+                return;
+        }
+        const double dfNoDataValue = poDS->m_bNoDataSet ? poDS->m_dfNoDataValue : 0;
+        for( int y = 0; y < nYSize; ++y )
+        {
+            for( int i = 0; i < nBandsToWrite; ++i )
+            {
+                const int iDstBandIdx = poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG ?
+                    i : psJob->iBand;
+                GDALCopyWords64(&dfNoDataValue, GDT_Float64, 0,
+                              psContext->pabyData + iDstBandIdx * psContext->nBandSpace
+                                       + (y + nYOffsetInData) * psContext->nLineSpace
+                                       + nXOffsetInData * psContext->nPixelSpace,
+                              psContext->eBufType,
+                              static_cast<int>(psContext->nPixelSpace),
+                              nXSize);
+            }
+        }
+        return;
+    }
+
+    const int nBandsToCache = psContext->bCacheAllBands ? poDS->nBands : nBandsToWrite;
+    std::vector<GDALRasterBlock*> apoBlocks(nBandsToCache);
+    std::vector<bool> abAlreadyLoadedBlocks(nBandsToCache);
+    int nAlreadyLoadedBlocks = 0;
+    std::vector<GByte> abyInput;
+
+    struct FreeBlocks
+    {
+        std::vector<GDALRasterBlock*>& m_apoBlocks;
+
+        explicit FreeBlocks(std::vector<GDALRasterBlock*>& apoBlocksIn): m_apoBlocks(apoBlocksIn) {}
+        ~FreeBlocks()
+        {
+            for( auto* poBlock: m_apoBlocks )
+            {
+                if( poBlock )
+                    poBlock->DropLock();
+            }
+        }
+    };
+    FreeBlocks oFreeBlocks(apoBlocks);
+
+    const auto LoadBlocks = [&]()
+    {
+        for( int i = 0; i < nBandsToCache; ++i )
+        {
+            const int iBand =
+                psContext->bCacheAllBands ? i + 1 :
+                poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG ?
+                    psContext->panBandMap[i] : psJob->iBand + 1;
+            apoBlocks[i] = poDS->GetRasterBand( iBand )->
+                TryGetLockedBlockRef( psJob->nXBlock, psJob->nYBlock );
+            if( apoBlocks[i] == nullptr )
+            {
+                apoBlocks[i] = poDS->GetRasterBand( iBand )->
+                    GetLockedBlockRef( psJob->nXBlock, psJob->nYBlock, TRUE );
+                if( apoBlocks[i] == nullptr )
+                    return false;
+            }
+            else
+            {
+                abAlreadyLoadedBlocks[i] = true;
+                nAlreadyLoadedBlocks ++;
+            }
+        }
+        return true;
+    };
+
+    const auto AllocInputBuffer = [&]()
+    {
+        bool bError = false;
+#if SIZEOF_VOIDP == 4
+        if(  psJob->nSize != static_cast<size_t>(psJob->nSize) )
+        {
+            bError = true;
+        }
+        else
+#endif
+        {
+            try
+            {
+                abyInput.resize(static_cast<size_t>(psJob->nSize));
+            }
+            catch( const std::exception& )
+            {
+                bError = true;
+            }
+        }
+        if( bError )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Cannot allocate working buffer of size " CPL_FRMT_GUIB,
+                     static_cast<GUIntBig>(psJob->nSize));
+            return false;
+        }
+        return true;
+    };
+
+    if( psContext->bHasPRead )
+    {
+        {
+            std::lock_guard<std::mutex> oLock(psContext->oMutex);
+            if( !psContext->bSuccess )
+                return;
+
+            if( !psContext->bSkipBlockCache && !LoadBlocks() )
+            {
+                psContext->bSuccess = false;
+                return;
+            }
+        }
+        if( nAlreadyLoadedBlocks != nBandsToCache )
+        {
+            if( !AllocInputBuffer() )
+            {
+                std::lock_guard<std::mutex> oLock(psContext->oMutex);
+                psContext->bSuccess = false;
+                return;
+            }
+            if( psContext->poHandle->PRead(abyInput.data(), abyInput.size(), psJob->nOffset) != abyInput.size() )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot read " CPL_FRMT_GUIB " bytes at offset " CPL_FRMT_GUIB,
+                         static_cast<GUIntBig>(psJob->nSize),
+                         static_cast<GUIntBig>(psJob->nOffset));
+
+                std::lock_guard<std::mutex> oLock(psContext->oMutex);
+                psContext->bSuccess = false;
+                return;
+            }
+        }
+    }
+    else
+    {
+        std::lock_guard<std::mutex> oLock(psContext->oMutex);
+        if( !psContext->bSuccess )
+            return;
+
+        if( !psContext->bSkipBlockCache && !LoadBlocks() )
+        {
+            psContext->bSuccess = false;
+            return;
+        }
+
+        if( nAlreadyLoadedBlocks != nBandsToCache )
+        {
+            if( !AllocInputBuffer() )
+            {
+                psContext->bSuccess = false;
+                return;
+            }
+            if( psContext->poHandle->Seek(psJob->nOffset, SEEK_SET) != 0 ||
+                psContext->poHandle->Read(abyInput.data(), abyInput.size(), 1) != 1 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot read " CPL_FRMT_GUIB " bytes at offset " CPL_FRMT_GUIB,
+                         static_cast<GUIntBig>(psJob->nSize),
+                         static_cast<GUIntBig>(psJob->nOffset));
+                psContext->bSuccess = false;
+                return;
+            }
+        }
+    }
+
+    const int nDTSize = GDALGetDataTypeSizeBytes(psContext->eDT);
+    GByte* pDstPtr = psContext->pabyData
+                   + nYOffsetInData * psContext->nLineSpace
+                   + nXOffsetInData * psContext->nPixelSpace;
+
+    if( nAlreadyLoadedBlocks != nBandsToCache )
+    {
+        // Generate a dummy in-memory TIFF file that has all the needed tags
+        // from the original file
+        CPLString osTmpFilename;
+        osTmpFilename.Printf("/vsimem/decompress_%p.tif", psJob);
+        VSILFILE* fpTmp = VSIFOpenL(osTmpFilename.c_str(), "wb+");
+        TIFF* hTIFFTmp = VSI_TIFFOpen(osTmpFilename.c_str(),
+            psContext->bTIFFIsBigEndian ? "wb+" : "wl+", fpTmp);
+        CPLAssert( hTIFFTmp != nullptr );
+        const int nBlocksPerColumn = DIV_ROUND_UP(poDS->nRasterYSize, poDS->m_nBlockYSize);
+        const int nBlockYSize =
+            (psContext->bIsTiled || psJob->nYBlock < nBlocksPerColumn-1) ? poDS->m_nBlockYSize :
+            (poDS->nRasterYSize % poDS->m_nBlockYSize) == 0 ? poDS->m_nBlockYSize :
+            poDS->nRasterYSize % poDS->m_nBlockYSize;
+        TIFFSetField(hTIFFTmp, TIFFTAG_IMAGEWIDTH, poDS->m_nBlockXSize);
+        TIFFSetField(hTIFFTmp, TIFFTAG_IMAGELENGTH, nBlockYSize);
+        TIFFSetField(hTIFFTmp, TIFFTAG_BITSPERSAMPLE, poDS->m_nBitsPerSample);
+        TIFFSetField(hTIFFTmp, TIFFTAG_COMPRESSION, poDS->m_nCompression);
+        TIFFSetField(hTIFFTmp, TIFFTAG_PHOTOMETRIC, poDS->m_nPhotometric);
+        TIFFSetField(hTIFFTmp, TIFFTAG_SAMPLEFORMAT, poDS->m_nSampleFormat);
+        TIFFSetField(hTIFFTmp, TIFFTAG_SAMPLESPERPIXEL,
+             poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG ? poDS->m_nSamplesPerPixel : 1);
+        TIFFSetField(hTIFFTmp, TIFFTAG_ROWSPERSTRIP, nBlockYSize);
+        TIFFSetField(hTIFFTmp, TIFFTAG_PLANARCONFIG, poDS->m_nPlanarConfig);
+        if( psContext->nPredictor != PREDICTOR_NONE )
+            TIFFSetField(hTIFFTmp, TIFFTAG_PREDICTOR, psContext->nPredictor);
+        if( poDS->m_nCompression == COMPRESSION_LERC )
+        {
+            TIFFSetField(hTIFFTmp, TIFFTAG_LERC_PARAMETERS, 2,
+                        poDS->m_anLercAddCompressionAndVersion);
+        }
+        else if( poDS->m_nCompression == COMPRESSION_JPEG )
+        {
+            if( psContext->pJPEGTable )
+            {
+                TIFFSetField(hTIFFTmp, TIFFTAG_JPEGTABLES,
+                             psContext->nJPEGTableSize, psContext->pJPEGTable);
+            }
+            if( poDS->m_nPhotometric == PHOTOMETRIC_YCBCR )
+            {
+                TIFFSetField(hTIFFTmp, TIFFTAG_YCBCRSUBSAMPLING,
+                             psContext->nYCrbCrSubSampling0,
+                             psContext->nYCrbCrSubSampling1);
+            }
+        }
+        if( psContext->pExtraSamples )
+        {
+            TIFFSetField(hTIFFTmp, TIFFTAG_EXTRASAMPLES,
+                         psContext->nExtraSampleCount, psContext->pExtraSamples);
+        }
+        TIFFWriteCheck( hTIFFTmp, FALSE, "ThreadDecompressionFunc" );
+        TIFFWriteDirectory( hTIFFTmp );
+        XTIFFClose(hTIFFTmp);
+
+        // Re-open file
+        hTIFFTmp = VSI_TIFFOpen(osTmpFilename.c_str(), "r", fpTmp);
+        CPLAssert( hTIFFTmp != nullptr );
+        poDS->RestoreVolatileParameters(hTIFFTmp);
+
+        bool bRet = true;
+        // Request m_nBlockYSize line in the block, except on the bottom-most
+        // tile/strip.
+        const int nBlockReqYSize =
+            (psJob->nYBlock < nBlocksPerColumn-1) ? poDS->m_nBlockYSize :
+            (poDS->nRasterYSize % poDS->m_nBlockYSize) == 0 ? poDS->m_nBlockYSize :
+            poDS->nRasterYSize % poDS->m_nBlockYSize;
+
+        const size_t nReqSize = static_cast<size_t>(
+            poDS->m_nBlockXSize) * nBlockReqYSize * nBandsPerStrile * nDTSize;
+
+        GByte* pabyOutput;
+        std::vector<GByte> abyOutput;
+        if( poDS->m_nCompression == COMPRESSION_NONE &&
+            !TIFFIsByteSwapped(poDS->m_hTIFF) &&
+            abyInput.size() >= nReqSize &&
+            (psContext->bSkipBlockCache || nBandsPerStrile > 1) )
+        {
+            pabyOutput = abyInput.data();
+        }
+        else
+        {
+            if( psContext->bSkipBlockCache || nBandsPerStrile > 1 )
+            {
+                abyOutput.resize(nReqSize);
+                pabyOutput = abyOutput.data();
+            }
+            else
+            {
+                pabyOutput = static_cast<GByte*>(apoBlocks[0]->GetDataRef());
+            }
+            if( !TIFFReadFromUserBuffer( hTIFFTmp, 0,
+                                         abyInput.data(), abyInput.size(),
+                                         pabyOutput, nReqSize ) &&
+                !poDS->m_bIgnoreReadErrors )
+            {
+                bRet = false;
+            }
+        }
+        XTIFFClose(hTIFFTmp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpTmp));
+        VSIUnlink(osTmpFilename.c_str());
+
+        if( !bRet )
+        {
+            std::lock_guard<std::mutex> oLock(psContext->oMutex);
+            psContext->bSuccess = false;
+            return;
+        }
+
+        if( !psContext->bSkipBlockCache && nBandsPerStrile > 1 )
+        {
+            // Copy pixel-interleaved all-band buffer to cached blocks
+
+            if( psContext->bUseDeinterleaveOptimBlockCache )
+            {
+                // Optimization
+                std::vector<void*> ppDestBuffers(poDS->nBands);
+                for(int i = 0; i < poDS->nBands; ++i )
+                {
+                    ppDestBuffers[i] = apoBlocks[i]->GetDataRef();
+                }
+                GDALDeinterleave(
+                    pabyOutput,
+                    psContext->eDT,
+                    poDS->nBands,
+                    ppDestBuffers.data(),
+                    psContext->eDT,
+                    static_cast<size_t>(nBlockReqYSize) * poDS->m_nBlockXSize);
+            }
+            else
+            {
+                // General case
+                for( int i = 0; i < nBandsToCache; ++i )
+                {
+                    if( !abAlreadyLoadedBlocks[i] )
+                    {
+                        const int iBand =
+                            psContext->bCacheAllBands ? i : psContext->panBandMap[i] - 1;
+                        GDALCopyWords64(
+                            pabyOutput + iBand * nDTSize,
+                            psContext->eDT,
+                            nDTSize * poDS->nBands,
+                            apoBlocks[i]->GetDataRef(),
+                            psContext->eDT,
+                            nDTSize,
+                            static_cast<size_t>(nBlockReqYSize) * poDS->m_nBlockXSize);
+                    }
+                }
+            }
+        }
+
+        const GByte* pSrcPtr = pabyOutput +
+                (static_cast<size_t>(nYOffsetInBlock) *
+                poDS->m_nBlockXSize + nXOffsetInBlock) * nDTSize * nBandsPerStrile;
+        const size_t nSrcLineInc = poDS->m_nBlockXSize * nDTSize * nBandsPerStrile;
+
+        // Optimization when writing to BIP buffer.
+        if( psContext->bUseBIPOptim )
+        {
+            for( int y = 0; y < nYSize; ++y )
+            {
+                GDALCopyWords64(
+                    pSrcPtr,
+                    psContext->eDT,
+                    nDTSize,
+                    pDstPtr,
+                    psContext->eBufType,
+                    psContext->nBufDTSize,
+                    static_cast<size_t>(nXSize) * poDS->nBands);
+                pSrcPtr += nSrcLineInc;
+                pDstPtr += psContext->nLineSpace;
+            }
+            return;
+        }
+
+        if( psContext->bSkipBlockCache )
+        {
+            // Copy from pixel-interleaved all-band buffer (or temporary buffer
+            // for single-band/separate case) into final buffer
+            if( psContext->bUseDeinterleaveOptimNoBlockCache )
+            {
+                // Optimization
+                std::vector<void*> ppDestBuffers(psContext->nBandCount);
+                for(int i = 0; i < psContext->nBandCount; ++i )
+                {
+                    ppDestBuffers[i] = pDstPtr +
+                        (psContext->panBandMap[i] - 1) * psContext->nBandSpace;
+                }
+                for( int y = 0; y < nYSize; ++y )
+                {
+                    GDALDeinterleave(
+                        pSrcPtr,
+                        psContext->eDT,
+                        psContext->nBandCount,
+                        ppDestBuffers.data(),
+                        psContext->eDT,
+                        nXSize);
+                    pSrcPtr += nSrcLineInc;
+                    for(int i = 0; i < psContext->nBandCount; ++i )
+                    {
+                        ppDestBuffers[i] = static_cast<GByte*>(ppDestBuffers[i]) + psContext->nLineSpace;
+                    }
+                }
+                return;
+            }
+
+            // General case
+            for( int y = 0; y < nYSize; ++y )
+            {
+                for( int i = 0; i < nBandsToWrite; ++i )
+                {
+                    const int iSrcBandIdx = poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG ?
+                        psContext->panBandMap[i] - 1 : 0;
+                    const int iDstBandIdx = poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG ?
+                        i : psJob->iBand;
+                    GDALCopyWords64(
+                        pSrcPtr + iSrcBandIdx * nDTSize + y * nSrcLineInc,
+                        psContext->eDT,
+                        nDTSize * nBandsPerStrile,
+                        pDstPtr + iDstBandIdx * psContext->nBandSpace
+                                + y * psContext->nLineSpace,
+                        psContext->eBufType,
+                        static_cast<int>(psContext->nPixelSpace),
+                        nXSize);
+                }
+            }
+            return;
+        }
+    }
+
+    CPLAssert( !psContext->bSkipBlockCache );
+
+    // Compose cached blocks into final buffer
+    for( int i = 0; i < nBandsToWrite; ++i )
+    {
+        const int iSrcBandIdx =
+            psContext->bCacheAllBands ? psContext->panBandMap[i] - 1 :
+            poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG ? i : 0;
+        const int iDstBandIdx = poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG ?
+            i : psJob->iBand;
+        const GByte* pSrcPtr = static_cast<GByte*>(apoBlocks[iSrcBandIdx]->GetDataRef()) +
+            (static_cast<size_t>(nYOffsetInBlock) *
+                poDS->m_nBlockXSize + nXOffsetInBlock) * nDTSize;
+        for( int y = 0; y < nYSize; ++y )
+        {
+            GDALCopyWords64(
+                pSrcPtr + static_cast<size_t>(y) * poDS->m_nBlockXSize * nDTSize,
+                psContext->eDT,
+                nDTSize,
+                pDstPtr + iDstBandIdx * psContext->nBandSpace
+                        + y * psContext->nLineSpace,
+                psContext->eBufType,
+                static_cast<int>(psContext->nPixelSpace),
+                nXSize);
+        }
+    }
+}
+
+/************************************************************************/
+/*                    IsMultiThreadedReadCompatible()                   */
+/************************************************************************/
+
+bool GTiffDataset::IsMultiThreadedReadCompatible() const
+{
+    return cpl::down_cast<GTiffRasterBand*>(papoBands[0])->IsBaseGTiffClass() &&
+           !m_bStreamingIn &&
+           !m_bStreamingOut &&
+           (m_nCompression == COMPRESSION_NONE ||
+            m_nCompression == COMPRESSION_ADOBE_DEFLATE ||
+            m_nCompression == COMPRESSION_LZW ||
+            m_nCompression == COMPRESSION_PACKBITS ||
+            m_nCompression == COMPRESSION_LZMA ||
+            m_nCompression == COMPRESSION_ZSTD ||
+            m_nCompression == COMPRESSION_LERC ||
+            m_nCompression == COMPRESSION_JXL ||
+            m_nCompression == COMPRESSION_WEBP ||
+            m_nCompression == COMPRESSION_JPEG);
+}
+
+/************************************************************************/
+/*                        MultiThreadedRead()                           */
+/************************************************************************/
+
+CPLErr GTiffDataset::MultiThreadedRead( int nXOff, int nYOff, int nXSize, int nYSize,
+                                        void * pData,
+                                        GDALDataType eBufType,
+                                        int nBandCount, const int *panBandMap,
+                                        GSpacing nPixelSpace, GSpacing nLineSpace,
+                                        GSpacing nBandSpace)
+{
+    auto poQueue = m_poThreadPool->CreateJobQueue();
+    if( poQueue == nullptr )
+    {
+        return CE_Failure;
+    }
+
+    const int nBlockXStart = nXOff / m_nBlockXSize;
+    const int nBlockYStart = nYOff / m_nBlockYSize;
+    const int nBlockXEnd = (nXOff + nXSize - 1) / m_nBlockXSize;
+    const int nBlockYEnd = (nYOff + nYSize - 1) / m_nBlockYSize;
+    const int nXBlocks = nBlockXEnd - nBlockXStart + 1;
+    const int nYBlocks = nBlockYEnd - nBlockYStart + 1;
+    const int nStrilePerBlock = m_nPlanarConfig == PLANARCONFIG_CONTIG ? 1 : nBandCount;
+    const int nBlocks = nXBlocks * nYBlocks * nStrilePerBlock;
+
+    GTiffDecompressContext sContext;
+    sContext.poHandle = reinterpret_cast<VSIVirtualHandle*>(
+        VSI_TIFFGetVSILFile(TIFFClientdata( m_hTIFF )));
+    sContext.bHasPRead = sContext.poHandle->HasPRead()
+#ifdef DEBUG
+        && CPLTestBool(CPLGetConfigOption("GTIFF_ALLOW_PREAD", "YES"))
+#endif
+        ;
+    sContext.poDS = this;
+    sContext.eDT = GetRasterBand(1)->GetRasterDataType();
+    sContext.nXOff = nXOff;
+    sContext.nYOff = nYOff;
+    sContext.nXSize = nXSize;
+    sContext.nYSize = nYSize;
+    sContext.nBlockXStart = nBlockXStart;
+    sContext.nBlockXEnd = nBlockXEnd;
+    sContext.nBlockYStart = nBlockYStart;
+    sContext.nBlockYEnd = nBlockYEnd;
+    sContext.pabyData = static_cast<GByte*>(pData);
+    sContext.eBufType = eBufType;
+    sContext.nBufDTSize = GDALGetDataTypeSizeBytes(eBufType);
+    sContext.nBandCount = nBandCount;
+    sContext.panBandMap = panBandMap;
+    sContext.nPixelSpace = nPixelSpace;
+    sContext.nLineSpace = nLineSpace;
+    sContext.nBandSpace = nBandSpace;
+    sContext.bIsTiled = CPL_TO_BOOL( TIFFIsTiled(m_hTIFF) );
+    sContext.bTIFFIsBigEndian = CPL_TO_BOOL( TIFFIsBigEndian(m_hTIFF) );
+    sContext.nPredictor = PREDICTOR_NONE;
+    sContext.nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, m_nBlockXSize);
+
+    if( m_bDirectIO )
+    {
+        sContext.bSkipBlockCache = true;
+    }
+    else if( nXOff == 0 && nYOff == 0 &&
+             nXSize == nRasterXSize && nYSize == nRasterYSize )
+    {
+        if( m_nPlanarConfig == PLANARCONFIG_SEPARATE )
+        {
+            sContext.bSkipBlockCache = true;
+        }
+        else if( nBandCount == nBands )
+        {
+            sContext.bSkipBlockCache = true;
+            for( int i = 0; i < nBands; ++i )
+            {
+                if( panBandMap[i] != i + 1 )
+                {
+                    sContext.bSkipBlockCache = false;
+                    break;
+                }
+            }
+        }
+    }
+
+    if( m_nPlanarConfig == PLANARCONFIG_CONTIG &&
+        nBandCount == nBands &&
+        nPixelSpace == nBands * sContext.nBufDTSize )
+    {
+        sContext.bUseBIPOptim = true;
+        for( int i = 0; i < nBands; ++i )
+        {
+            if( panBandMap[i] != i + 1 )
+            {
+                sContext.bUseBIPOptim = false;
+                break;
+            }
+        }
+    }
+
+    if( m_nPlanarConfig == PLANARCONFIG_CONTIG &&
+        (nBands == 3 || nBands == 4) &&
+        nBands == nBandCount &&
+        (sContext.eDT == GDT_Byte ||
+         sContext.eDT == GDT_Int16 ||
+         sContext.eDT == GDT_UInt16) )
+    {
+        if( sContext.bSkipBlockCache )
+        {
+            if( sContext.eBufType == sContext.eDT &&
+                nPixelSpace == sContext.nBufDTSize )
+            {
+                sContext.bUseDeinterleaveOptimNoBlockCache = true;
+            }
+        }
+        else
+        {
+            sContext.bUseDeinterleaveOptimBlockCache = true;
+            for( int i = 0; i < nBands; ++i )
+            {
+                if( panBandMap[i] != i + 1 )
+                {
+                    sContext.bUseDeinterleaveOptimBlockCache = false;
+                    break;
+                }
+            }
+        }
+    }
+
+    // In contig mode, if only one band is requested, check if we have
+    // enough cache to cache all bands.
+    if( !sContext.bSkipBlockCache && nBands != 1 &&
+        m_nPlanarConfig == PLANARCONFIG_CONTIG &&
+        nBandCount == 1 )
+    {
+        const GIntBig nRequiredMem =
+            static_cast<GIntBig>(nBands) * nXBlocks * nYBlocks *
+            m_nBlockXSize * m_nBlockYSize *
+            GDALGetDataTypeSizeBytes(sContext.eDT);
+        if( nRequiredMem > GDALGetCacheMax64() )
+        {
+            if( !m_bHasWarnedDisableAggressiveBandCaching )
+            {
+                CPLDebug( "GTiff",
+                          "Disable aggressive band caching. "
+                          "Cache not big enough. "
+                          "At least " CPL_FRMT_GIB " bytes necessary",
+                          nRequiredMem );
+                m_bHasWarnedDisableAggressiveBandCaching = true;
+            }
+        }
+        else
+        {
+            sContext.bCacheAllBands = true;
+            if( (nBands == 3 || nBands == 4) &&
+                (sContext.eDT == GDT_Byte ||
+                 sContext.eDT == GDT_Int16 ||
+                 sContext.eDT == GDT_UInt16) )
+            {
+                sContext.bUseDeinterleaveOptimBlockCache = true;
+            }
+        }
+    }
+
+    if( eAccess == GA_Update )
+    {
+        // Make sure to flush all dirty blocks we will access.
+        std::vector<int> anBandsToCheck;
+        if( m_nPlanarConfig == PLANARCONFIG_CONTIG && nBands > 1 )
+        {
+            for( int i = 0; i < nBands; ++i )
+            {
+                anBandsToCheck.push_back(i);
+            }
+        }
+        else
+        {
+            for( int i = 0; i < nBandCount; ++i )
+            {
+                anBandsToCheck.push_back(panBandMap[i]-1);
+            }
+        }
+        if( !anBandsToCheck.empty() )
+        {
+            for( int y = 0; y < nYBlocks; ++y )
+            {
+                for( int x = 0; x < nXBlocks; ++x )
+                {
+                    for( const int iBand: anBandsToCheck )
+                    {
+                        auto poBlock = papoBands[iBand]->TryGetLockedBlockRef(
+                            nBlockXStart + x, nBlockYStart + y);
+                        if( poBlock )
+                        {
+                            CPLErr eErr = CE_None;
+                            if( poBlock->GetDirty() )
+                            {
+                                eErr = poBlock->Write();
+                            }
+                            poBlock->DropLock();
+                            if( eErr == CE_Failure )
+                            {
+                                return CE_Failure;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Flush last active multi-band contiguous buffer
+        FlushBlockBuf();
+
+        auto& oQueue = m_poBaseDS ? m_poBaseDS->m_asQueueJobIdx : m_asQueueJobIdx;
+        if( !oQueue.empty() )
+        {
+            for( int y = 0; y < nYBlocks; ++y )
+            {
+                for( int x = 0; x < nXBlocks; ++x )
+                {
+                    for( int i = 0; i < nStrilePerBlock; ++i )
+                    {
+                        int nBlockId = nBlockXStart + x +
+                            (nBlockYStart + y) * sContext.nBlocksPerRow;
+                        if( m_nPlanarConfig == PLANARCONFIG_SEPARATE )
+                            nBlockId += (panBandMap[i] - 1) * m_nBlocksPerBand;
+
+                        WaitCompletionForBlock(nBlockId);
+                    }
+                }
+            }
+        }
+
+        // Flush to file, and then to disk if using pread() interface
+        VSI_TIFFFlushBufferedWrite( TIFFClientdata( m_hTIFF ) );
+        if( sContext.bHasPRead )
+            sContext.poHandle->Flush();
+    }
+
+    if( GTIFFSupportsPredictor(m_nCompression) )
+    {
+        TIFFGetField( m_hTIFF, TIFFTAG_PREDICTOR, &sContext.nPredictor );
+    }
+    else if( m_nCompression == COMPRESSION_JPEG )
+    {
+        TIFFGetField( m_hTIFF, TIFFTAG_JPEGTABLES,
+                      &sContext.nJPEGTableSize, &sContext.pJPEGTable );
+        if( m_nPhotometric == PHOTOMETRIC_YCBCR )
+        {
+            TIFFGetFieldDefaulted( m_hTIFF, TIFFTAG_YCBCRSUBSAMPLING,
+                                   &sContext.nYCrbCrSubSampling0,
+                                   &sContext.nYCrbCrSubSampling1 );
+        }
+    }
+    TIFFGetField(m_hTIFF, TIFFTAG_EXTRASAMPLES,
+                 &sContext.nExtraSampleCount, &sContext.pExtraSamples);
+
+    // We need to do that as threads will access the block cache
+    TemporarilyDropReadWriteLock();
+
+    // Create one job per tile/strip
+    vsi_l_offset nFileSize = 0;
+    std::vector<GTiffDecompressJob> asJobs(nBlocks);
+    int iJob = 0;
+    for( int y = 0; y < nYBlocks; ++y )
+    {
+        for( int x = 0; x < nXBlocks; ++x )
+        {
+            for( int i = 0; i < nStrilePerBlock; ++i )
+            {
+                asJobs[iJob].psContext = &sContext;
+                asJobs[iJob].iBand =
+                    m_nPlanarConfig == PLANARCONFIG_CONTIG ? -1 : panBandMap[i] - 1;
+                asJobs[iJob].nXBlock = nBlockXStart + x;
+                asJobs[iJob].nYBlock = nBlockYStart + y;
+
+                int nBlockId = asJobs[iJob].nXBlock +
+                    asJobs[iJob].nYBlock * sContext.nBlocksPerRow;
+                if( m_nPlanarConfig == PLANARCONFIG_SEPARATE )
+                    nBlockId += asJobs[iJob].iBand * m_nBlocksPerBand;
+
+                if( !sContext.bHasPRead )
+                {
+                    // Taking the mutex here is only needed when bHasPRead == false
+                    // since we could have concurrent uses of the handle, when
+                    // when reading the TIFF TileOffsets / TileByteCounts array
+                    std::lock_guard<std::mutex> oLock(sContext.oMutex);
+
+                    IsBlockAvailable(nBlockId, &asJobs[iJob].nOffset, &asJobs[iJob].nSize);
+                }
+                else
+                {
+                    IsBlockAvailable(nBlockId, &asJobs[iJob].nOffset, &asJobs[iJob].nSize);
+                }
+
+                // Sanity check on block size
+                if( asJobs[iJob].nSize > 100U * 1024 * 1024 )
+                {
+                    if( nFileSize == 0 )
+                    {
+                        std::lock_guard<std::mutex> oLock(sContext.oMutex);
+                        sContext.poHandle->Seek(0, SEEK_END);
+                        nFileSize = sContext.poHandle->Tell();
+                    }
+                    if( asJobs[iJob].nSize > nFileSize )
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Cannot read " CPL_FRMT_GUIB " bytes at offset " CPL_FRMT_GUIB,
+                                 static_cast<GUIntBig>(asJobs[iJob].nSize),
+                                 static_cast<GUIntBig>(asJobs[iJob].nOffset));
+
+                        std::lock_guard<std::mutex> oLock(sContext.oMutex);
+                        sContext.bSuccess = false;
+                        break;
+                    }
+                }
+
+                poQueue->SubmitJob(ThreadDecompressionFunc, &asJobs[iJob]);
+
+                ++ iJob;
+            }
+        }
+    }
+
+    // Wait for all jobs to have been completed
+    poQueue->WaitCompletion();
+
+    // Undo effect of above TemporarilyDropReadWriteLock()
+    ReacquireReadWriteLock();
+
+    return sContext.bSuccess ? CE_None : CE_Failure;
+}
+
+#endif
 
 /************************************************************************/
 /*                        FetchBufferVirtualMemIO                       */
@@ -3923,14 +4882,15 @@ int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
                             GSpacing nBandSpace,
                             GDALRasterIOExtraArg* psExtraArg )
 {
-    const GDALDataType eDataType = GetRasterBand(1)->GetRasterDataType();
+    auto poProtoBand = cpl::down_cast<GTiffRasterBand*>(papoBands[0]);
+    const GDALDataType eDataType = poProtoBand->GetRasterDataType();
     const int nDTSizeBits = GDALGetDataTypeSizeBits(eDataType);
     if( !(eRWFlag == GF_Read &&
           m_nCompression == COMPRESSION_NONE &&
           (m_nPhotometric == PHOTOMETRIC_MINISBLACK ||
            m_nPhotometric == PHOTOMETRIC_RGB ||
            m_nPhotometric == PHOTOMETRIC_PALETTE) &&
-          m_nBitsPerSample == nDTSizeBits) )
+          poProtoBand->IsBaseGTiffClass()) )
     {
         return -1;
     }
@@ -4719,33 +5679,65 @@ CPLErr GTiffRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             return static_cast<CPLErr>(nErr);
     }
 
+#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
+    bool bCanUseMultiThreadedRead = false;
+    if( eRWFlag == GF_Read &&
+        m_poGDS->m_poThreadPool != nullptr &&
+        nXSize == nBufXSize && nYSize == nBufYSize &&
+        m_poGDS->IsMultiThreadedReadCompatible() )
+    {
+        const int nBlockX1 = nXOff / nBlockXSize;
+        const int nBlockY1 = nYOff / nBlockYSize;
+        const int nBlockX2 = (nXOff + nXSize - 1) / nBlockXSize;
+        const int nBlockY2 = (nYOff + nYSize - 1) / nBlockYSize;
+        const int nXBlocks = nBlockX2 - nBlockX1 + 1;
+        const int nYBlocks = nBlockY2 - nBlockY1 + 1;
+        if( nXBlocks > 1 || nYBlocks > 1 )
+        {
+            bCanUseMultiThreadedRead = true;
+        }
+    }
+#endif
+
     void* pBufferedData = nullptr;
     if( m_poGDS->eAccess == GA_ReadOnly &&
         eRWFlag == GF_Read &&
         m_poGDS->HasOptimizedReadMultiRange() )
     {
-        GTiffRasterBand* poBandForCache = this;
+#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
+        if( bCanUseMultiThreadedRead &&
+            reinterpret_cast<VSIVirtualHandle*>(
+                VSI_TIFFGetVSILFile(TIFFClientdata( m_poGDS->m_hTIFF )))->HasPRead() )
+        {
+            // use the multi-threaded implementation rather than the multi-range one
+        }
+        else
+        {
+            bCanUseMultiThreadedRead = false;
+#endif
+            GTiffRasterBand* poBandForCache = this;
 
 #ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
-        if( !m_poGDS->m_bStreamingIn &&
-            m_poGDS->m_bBlockOrderRowMajor &&
-            m_poGDS->m_bLeaderSizeAsUInt4 &&
-            m_poGDS->m_bMaskInterleavedWithImagery &&
-            m_poGDS->m_poImageryDS )
-        {
-            poBandForCache = cpl::down_cast<GTiffRasterBand*>(
-                m_poGDS->m_poImageryDS->GetRasterBand(1));
+            if( !m_poGDS->m_bStreamingIn &&
+                m_poGDS->m_bBlockOrderRowMajor &&
+                m_poGDS->m_bLeaderSizeAsUInt4 &&
+                m_poGDS->m_bMaskInterleavedWithImagery &&
+                m_poGDS->m_poImageryDS )
+            {
+                poBandForCache = cpl::down_cast<GTiffRasterBand*>(
+                    m_poGDS->m_poImageryDS->GetRasterBand(1));
+            }
+#endif
+            pBufferedData = poBandForCache->CacheMultiRange(
+                                            nXOff, nYOff, nXSize, nYSize,
+                                            nBufXSize, nBufYSize,
+                                            psExtraArg);
+#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
         }
 #endif
-        pBufferedData = poBandForCache->CacheMultiRange(
-                                        nXOff, nYOff, nXSize, nYSize,
-                                        nBufXSize, nBufYSize,
-                                        psExtraArg);
     }
 
-    if( m_poGDS->nBands != 1 &&
-        m_poGDS->m_nPlanarConfig == PLANARCONFIG_CONTIG &&
-        eRWFlag == GF_Read &&
+    if( eRWFlag == GF_Read &&
         nXSize == nBufXSize && nYSize == nBufYSize )
     {
         const int nBlockX1 = nXOff / nBlockXSize;
@@ -4754,22 +5746,37 @@ CPLErr GTiffRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         const int nBlockY2 = (nYOff + nYSize - 1) / nBlockYSize;
         const int nXBlocks = nBlockX2 - nBlockX1 + 1;
         const int nYBlocks = nBlockY2 - nBlockY1 + 1;
-        const GIntBig nRequiredMem =
-            static_cast<GIntBig>(m_poGDS->nBands) * nXBlocks * nYBlocks *
-            nBlockXSize * nBlockYSize *
-            GDALGetDataTypeSizeBytes(eDataType);
-        if( nRequiredMem > GDALGetCacheMax64() )
+
+#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
+        if( bCanUseMultiThreadedRead )
         {
-            if( !m_poGDS->m_bHasWarnedDisableAggressiveBandCaching )
+            return m_poGDS->MultiThreadedRead(nXOff, nYOff, nXSize, nYSize,
+                                              pData, eBufType,
+                                              1, &nBand,
+                                              nPixelSpace, nLineSpace, 0);
+        }
+        else
+#endif
+        if( m_poGDS->nBands != 1 &&
+            m_poGDS->m_nPlanarConfig == PLANARCONFIG_CONTIG )
+        {
+            const GIntBig nRequiredMem =
+                static_cast<GIntBig>(m_poGDS->nBands) * nXBlocks * nYBlocks *
+                nBlockXSize * nBlockYSize *
+                GDALGetDataTypeSizeBytes(eDataType);
+            if( nRequiredMem > GDALGetCacheMax64() )
             {
-                CPLDebug( "GTiff",
-                          "Disable aggressive band caching. "
-                          "Cache not big enough. "
-                          "At least " CPL_FRMT_GIB " bytes necessary",
-                          nRequiredMem );
-                m_poGDS->m_bHasWarnedDisableAggressiveBandCaching = true;
+                if( !m_poGDS->m_bHasWarnedDisableAggressiveBandCaching )
+                {
+                    CPLDebug( "GTiff",
+                              "Disable aggressive band caching. "
+                              "Cache not big enough. "
+                              "At least " CPL_FRMT_GIB " bytes necessary",
+                              nRequiredMem );
+                    m_poGDS->m_bHasWarnedDisableAggressiveBandCaching = true;
+                }
+                m_poGDS->m_bLoadingOtherBands = true;
             }
-            m_poGDS->m_bLoadingOtherBands = true;
         }
     }
 
@@ -6810,6 +7817,8 @@ class GTiffSplitBand final : public GTiffRasterBand
              GTiffSplitBand( GTiffDataset *, int );
     virtual ~GTiffSplitBand() {}
 
+    bool     IsBaseGTiffClass() const override { return false; }
+
     virtual int IGetDataCoverageStatus( int nXOff, int nYOff,
                                         int nXSize, int nYSize,
                                         int nMaskFlagStop,
@@ -6956,6 +7965,8 @@ class GTiffRGBABand final : public GTiffRasterBand
   public:
                    GTiffRGBABand( GTiffDataset *, int );
     virtual ~GTiffRGBABand() {}
+
+    bool     IsBaseGTiffClass() const override { return false; }
 
     virtual int IGetDataCoverageStatus( int nXOff, int nYOff,
                                         int nXSize, int nYSize,
@@ -7171,6 +8182,8 @@ class GTiffOddBitsBand CPL_NON_FINAL: public GTiffRasterBand
 
                    GTiffOddBitsBand( GTiffDataset *, int );
     virtual ~GTiffOddBitsBand() {}
+
+    bool     IsBaseGTiffClass() const override { return false; }
 
     virtual CPLErr IReadBlock( int, int, void * ) override;
     virtual CPLErr IWriteBlock( int, int, void * ) override;
@@ -8460,6 +9473,7 @@ int GTiffDataset::Finalize()
             }
         }
         CPLDestroyMutex(m_hCompressThreadPoolMutex);
+        m_hCompressThreadPoolMutex = nullptr;
         m_poCompressQueue.reset();
     }
 
@@ -8971,9 +9985,8 @@ void GTiffDataset::FillEmptyTiles()
                     break;
 
                 vsi_l_offset nOffset = 0;
-                bool b = IsBlockAvailable( iBlock, &nOffset, &nRawSize);
-                CPL_IGNORE_RET_VAL(b);
-                CPLAssert(b);
+                if( !IsBlockAvailable( iBlock, &nOffset, &nRawSize) )
+                    break;
 
                 // When using compression, get back the compressed block
                 // so we can use the raw API to write it faster.
@@ -9387,7 +10400,7 @@ bool GTiffDataset::WriteEncodedStrip( uint32_t strip, GByte* pabyData,
 /*                        InitCompressionThreads()                      */
 /************************************************************************/
 
-void GTiffDataset::InitCompressionThreads( char** papszOptions )
+void GTiffDataset::InitCompressionThreads( bool bUpdateMode, CSLConstList papszOptions )
 {
     // Raster == tile, then no need for threads
     if( m_nBlockXSize == nRasterXSize && m_nBlockYSize == nRasterYSize )
@@ -9404,18 +10417,19 @@ void GTiffDataset::InitCompressionThreads( char** papszOptions )
             nThreads = 1024; // to please Coverity
         if( nThreads > 1 )
         {
-            if( m_nCompression == COMPRESSION_NONE )
+            if( (bUpdateMode && m_nCompression != COMPRESSION_NONE)
+#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
+                     || (nBands >= 1 && IsMultiThreadedReadCompatible())
+#endif
+                   )
             {
-                CPLDebug( "GTiff",
-                          "NUM_THREADS ignored with uncompressed" );
-            }
-            else
-            {
-                CPLDebug("GTiff", "Using %d threads for compression", nThreads);
+                CPLDebug("GTiff",
+                         "Using up to %d threads for compression/decompression",
+                         nThreads);
 
-                auto poThreadPool = GDALGetGlobalThreadPool(nThreads);
-                if( poThreadPool )
-                    m_poCompressQueue = poThreadPool->CreateJobQueue();
+                m_poThreadPool = GDALGetGlobalThreadPool(nThreads);
+                if( bUpdateMode && m_poThreadPool )
+                    m_poCompressQueue = m_poThreadPool->CreateJobQueue();
 
                 if( m_poCompressQueue != nullptr )
                 {
@@ -9465,7 +10479,7 @@ void GTiffDataset::InitCompressionThreads( char** papszOptions )
 /*                       GetGTIFFKeysFlavor()                           */
 /************************************************************************/
 
-static GTIFFKeysFlavorEnum GetGTIFFKeysFlavor( char** papszOptions )
+static GTIFFKeysFlavorEnum GetGTIFFKeysFlavor( CSLConstList papszOptions )
 {
     const char* pszGeoTIFFKeysFlavor =
         CSLFetchNameValueDef( papszOptions, "GEOTIFF_KEYS_FLAVOR", "STANDARD" );
@@ -9478,7 +10492,7 @@ static GTIFFKeysFlavorEnum GetGTIFFKeysFlavor( char** papszOptions )
 /*                       GetGeoTIFFVersion()                            */
 /************************************************************************/
 
-static GeoTIFFVersionEnum GetGeoTIFFVersion( char** papszOptions )
+static GeoTIFFVersionEnum GetGeoTIFFVersion( CSLConstList papszOptions )
 {
     const char* pszVersion =
         CSLFetchNameValueDef( papszOptions, "GEOTIFF_VERSION", "AUTO" );
@@ -9493,9 +10507,9 @@ static GeoTIFFVersionEnum GetGeoTIFFVersion( char** papszOptions )
 /*                      InitCreationOrOpenOptions()                     */
 /************************************************************************/
 
-void GTiffDataset::InitCreationOrOpenOptions( char** papszOptions )
+void GTiffDataset::InitCreationOrOpenOptions( bool bUpdateMode, CSLConstList papszOptions )
 {
-    InitCompressionThreads(papszOptions);
+    InitCompressionThreads(bUpdateMode, papszOptions);
 
     m_eGeoTIFFKeysFlavor = GetGTIFFKeysFlavor(papszOptions);
     m_eGeoTIFFVersion = GetGeoTIFFVersion(papszOptions);
@@ -9530,12 +10544,6 @@ void GTiffDataset::ThreadCompressionFunc( void* pData )
         TIFFSetField(hTIFFTmp, TIFFTAG_LERC_PARAMETERS, 2,
                     poDS->m_anLercAddCompressionAndVersion);
     }
-
-    TIFFSetField(hTIFFTmp, TIFFTAG_PHOTOMETRIC, poDS->m_nPhotometric);
-    TIFFSetField(hTIFFTmp, TIFFTAG_SAMPLEFORMAT, poDS->m_nSampleFormat);
-    TIFFSetField(hTIFFTmp, TIFFTAG_SAMPLESPERPIXEL, poDS->m_nSamplesPerPixel);
-    TIFFSetField(hTIFFTmp, TIFFTAG_ROWSPERSTRIP, poDS->m_nBlockYSize);
-    TIFFSetField(hTIFFTmp, TIFFTAG_PLANARCONFIG, poDS->m_nPlanarConfig);
 
     poDS->RestoreVolatileParameters(hTIFFTmp);
 
@@ -9806,7 +10814,7 @@ void GTiffDataset::WaitCompletionForBlock(int nBlockId)
     auto& oQueue = m_poBaseDS ? m_poBaseDS->m_asQueueJobIdx : m_asQueueJobIdx;
     auto& asJobs = m_poBaseDS ? m_poBaseDS->m_asCompressionJobs : m_asCompressionJobs;
 
-    if( poQueue != nullptr )
+    if( poQueue != nullptr && !oQueue.empty() )
     {
         for( int i = 0; i < static_cast<int>(asJobs.size()); ++i )
         {
@@ -9839,6 +10847,21 @@ bool GTiffDataset::SubmitCompressionJob( int nStripOrTile, GByte* pabyData,
 /* -------------------------------------------------------------------- */
     auto poQueue = m_poBaseDS ?
         m_poBaseDS->m_poCompressQueue.get() : m_poCompressQueue.get();
+
+    if( poQueue && m_nCompression == COMPRESSION_NONE )
+    {
+        // We don't do multi-threaded compression for uncompressed...
+        // but we must wait for other related compression tasks (e.g mask)
+        // to be completed
+        poQueue->WaitCompletion();
+
+        // Flush remaining data
+        auto& oQueue = m_poBaseDS ? m_poBaseDS->m_asQueueJobIdx : m_asQueueJobIdx;
+        while( !oQueue.empty() )
+        {
+            WaitCompletionForJobIdx(oQueue.front());
+        }
+    }
 
     if( poQueue == nullptr ||
           !(m_nCompression == COMPRESSION_ADOBE_DEFLATE ||
@@ -13859,10 +14882,8 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     if( CPLFetchBool( poOpenInfo->papszOpenOptions, "SPARSE_OK", false ) )
         poDS->m_bWriteEmptyTiles = false;
 
-    if( poOpenInfo->eAccess == GA_Update )
-    {
-        poDS->InitCreationOrOpenOptions(poOpenInfo->papszOpenOptions);
-    }
+    poDS->InitCreationOrOpenOptions(poOpenInfo->eAccess == GA_Update,
+                                    poOpenInfo->papszOpenOptions);
 
     poDS->m_bLoadPam = true;
     poDS->m_bColorProfileMetadataChanged = false;
@@ -18236,7 +19257,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->m_nJXLEffort = GTiffGetJXLEffort(papszParamList);
     poDS->m_fJXLDistance = GTiffGetJXLDistance(papszParamList);
 #endif
-    poDS->InitCreationOrOpenOptions(papszParamList);
+    poDS->InitCreationOrOpenOptions(true, papszParamList);
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
@@ -19497,7 +20518,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     poDS->m_nJXLEffort = GTiffGetJXLEffort(papszOptions);
     poDS->m_fJXLDistance = GTiffGetJXLDistance(papszOptions);
 #endif
-    poDS->InitCreationOrOpenOptions(papszOptions);
+    poDS->InitCreationOrOpenOptions(true, papszOptions);
 
     if( l_nCompression == COMPRESSION_ADOBE_DEFLATE ||
         l_nCompression == COMPRESSION_LERC )

@@ -342,11 +342,12 @@ class VSICurlHandle : public VSIVirtualHandle
 
     bool            m_bCached = true;
 
-    FileProp  oFileProp{};
+    mutable FileProp  oFileProp{};
 
+    mutable std::mutex m_oMutex{};
     CPLString       m_osFilename{}; // e.g "/vsicurl/http://example.com/foo"
     char*           m_pszURL = nullptr;     // e.g "http://example.com/foo"
-    std::string     m_osQueryString{};      // e.g. an Azure SAS
+    mutable std::string     m_osQueryString{};      // e.g. an Azure SAS
 
     char          **m_papszHTTPOptions = nullptr;
 
@@ -380,14 +381,17 @@ class VSICurlHandle : public VSIVirtualHandle
     bool                m_bUseRedirectURLIfNoQueryStringParams = false;
 
     // Specific to Planetary Computer signing: https://planetarycomputer.microsoft.com/docs/concepts/sas/
-    bool                m_bPlanetaryComputerURLSigning = false;
-    std::string         m_osPlanetaryComputerCollection{};
-    void                ManagePlanetaryComputerSigning();
+    mutable bool                m_bPlanetaryComputerURLSigning = false;
+    mutable std::string         m_osPlanetaryComputerCollection{};
+    void                ManagePlanetaryComputerSigning() const;
 
     int          ReadMultiRangeSingleGet( int nRanges, void ** ppData,
                                          const vsi_l_offset* panOffsets,
                                          const size_t* panSizes );
-    CPLString    GetRedirectURLIfValid(bool& bHasExpired);
+    CPLString    GetRedirectURLIfValid(bool& bHasExpired) const;
+
+    void         UpdateRedirectInfo( CURL* hCurlHandle,
+                                     const WriteFuncStruct& sWriteFuncHeaderData );
 
   protected:
     virtual struct curl_slist* GetCurlHeaders( const CPLString& /*osVerb*/,
@@ -418,6 +422,9 @@ class VSICurlHandle : public VSIVirtualHandle
     int Eof() override;
     int Flush() override;
     int Close() override;
+
+    bool      HasPRead() const override { return true; }
+    size_t    PRead( void* pBuffer, size_t nSize, vsi_l_offset nOffset ) const override;
 
     bool IsKnownFileSize() const { return oFileProp.bHasComputedFileSize; }
     vsi_l_offset         GetFileSizeOrHeaders(bool bSetError, bool bGetHeaders);
