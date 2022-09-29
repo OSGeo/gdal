@@ -8358,25 +8358,50 @@ def test_tiff_write_171_zstd_predictor():
 # Test WEBP compression
 
 
-def test_tiff_write_webp():
+@pytest.mark.parametrize("writeImageStructureMetadata", [True, False])
+def test_tiff_write_webp(writeImageStructureMetadata):
 
-    md = gdaltest.tiff_drv.GetMetadata()
+    drv = gdal.GetDriverByName("GTiff")
+    md = drv.GetMetadata()
     if md["DMD_CREATIONOPTIONLIST"].find("WEBP") == -1:
         pytest.skip()
 
-    ut = gdaltest.GDALTest(
-        "GTiff", "md_ge_rgb_0010000.tif", 0, None, options=["COMPRESS=WEBP"]
-    )
-    return ut.testCreateCopy()
+    filename = "/vsimem/test_tiff_write_webp.tif"
+    src_ds = gdal.Open("data/md_ge_rgb_0010000.tif")
+    with gdaltest.config_option(
+        "GTIFF_WRITE_IMAGE_STRUCTURE_METADATA",
+        "YES" if writeImageStructureMetadata else "NO",
+    ):
+        drv.CreateCopy(filename, src_ds, options=["COMPRESS=WEBP", "WEBP_LEVEL=50"])
+    ds = gdal.Open(filename)
+
+    assert ds.GetMetadataItem("WEBP_LOSSLESS", "_DEBUG_") == "0"
+
+    if writeImageStructureMetadata:
+        assert ds.GetMetadataItem("WEBP_LEVEL", "_DEBUG_") == "50"
+        assert ds.GetMetadata("IMAGE_STRUCTURE")["WEBP_LEVEL"] == "50"
+    else:
+        assert ds.GetMetadataItem("WEBP_LEVEL", "_DEBUG_") == "75"
+
+    if writeImageStructureMetadata or gdal.GetDriverByName("WEBP") is not None:
+        assert ds.GetMetadata("IMAGE_STRUCTURE")["COMPRESSION_REVERSIBILITY"] == "LOSSY"
+
+    cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
+    assert cs != [0, 0, 0]
+
+    drv.Delete(filename)
+    gdal.Unlink("data/md_ge_rgb_0010000.tif.aux.xml")
 
 
 ###############################################################################
 # Test WEBP compression with internal tiling
 
 
-def test_tiff_write_tiled_webp():
+@pytest.mark.parametrize("writeImageStructureMetadata", [True, False])
+def test_tiff_write_tiled_webp(writeImageStructureMetadata):
 
-    md = gdaltest.tiff_drv.GetMetadata()
+    drv = gdal.GetDriverByName("GTiff")
+    md = drv.GetMetadata()
     if md["DMD_CREATIONOPTIONLIST"].find("WEBP") == -1:
         pytest.skip()
 
@@ -8385,14 +8410,38 @@ def test_tiff_write_tiled_webp():
 
     filename = "/vsimem/tiff_write_tiled_webp.tif"
     src_ds = gdal.Open("data/md_ge_rgb_0010000.tif")
-    gdaltest.tiff_drv.CreateCopy(
-        filename, src_ds, options=["COMPRESS=WEBP", "WEBP_LOSSLESS=true", "TILED=true"]
-    )
+    with gdaltest.config_option(
+        "GTIFF_WRITE_IMAGE_STRUCTURE_METADATA",
+        "YES" if writeImageStructureMetadata else "NO",
+    ):
+        drv.CreateCopy(
+            filename,
+            src_ds,
+            options=["COMPRESS=WEBP", "WEBP_LOSSLESS=true", "TILED=true"],
+        )
     ds = gdal.Open(filename)
+    if writeImageStructureMetadata:
+        assert ds.GetMetadataItem("WEBP_LOSSLESS", "_DEBUG_") == "1"
+    else:
+        assert ds.GetMetadataItem("WEBP_LOSSLESS", "_DEBUG_") == "0"
+    if writeImageStructureMetadata or gdal.GetDriverByName("WEBP"):
+        assert (
+            ds.GetMetadata("IMAGE_STRUCTURE")["COMPRESSION_REVERSIBILITY"] == "LOSSLESS"
+        )
+    assert ds.GetMetadataItem("WEBP_LEVEL", "IMAGE_STRUCTURE") is None
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     assert cs == [21212, 21053, 21349]
 
-    gdaltest.tiff_drv.Delete(filename)
+    ds = None
+    ds = gdal.Open(filename, gdal.GA_Update)
+    if writeImageStructureMetadata or gdal.GetDriverByName("WEBP"):
+        assert ds.GetMetadataItem("WEBP_LOSSLESS", "_DEBUG_") == "1"
+        assert (
+            ds.GetMetadata("IMAGE_STRUCTURE")["COMPRESSION_REVERSIBILITY"] == "LOSSLESS"
+        )
+    ds = None
+
+    drv.Delete(filename)
     gdal.Unlink("data/md_ge_rgb_0010000.tif.aux.xml")
 
 
@@ -9484,14 +9533,72 @@ def test_tiff_write_lerc_float_with_nan(gdalDataType, structType):
 # Test JXL compression
 
 
-def test_tiff_write_jpegxl_byte_single_band():
+@pytest.mark.parametrize("lossless", ["YES", "NO", None])
+@pytest.mark.parametrize("writeImageStructureMetadata", [True, False])
+def test_tiff_write_jpegxl_byte_single_band(lossless, writeImageStructureMetadata):
 
-    md = gdaltest.tiff_drv.GetMetadata()
+    drv = gdal.GetDriverByName("GTiff")
+    md = drv.GetMetadata()
     if md["DMD_CREATIONOPTIONLIST"].find("JXL") == -1:
         pytest.skip()
 
-    ut = gdaltest.GDALTest("GTiff", "byte.tif", 1, 4672, options=["COMPRESS=JXL"])
-    return ut.testCreateCopy()
+    outfile = "/vsimem/test_tiff_write_jpegxl_byte_single_band.tif"
+    options = ["COMPRESS=JXL"]
+    if lossless:
+        options += ["JXL_LOSSLESS=" + lossless]
+    if lossless == "NO":
+        options += ["JXL_DISTANCE=0.5", "JXL_EFFORT=4"]
+    with gdaltest.config_option(
+        "GTIFF_WRITE_IMAGE_STRUCTURE_METADATA",
+        "YES" if writeImageStructureMetadata else "NO",
+    ):
+        drv.CreateCopy(outfile, gdal.Open("data/byte.tif"), options=options)
+    ds = gdal.Open(outfile)
+
+    if writeImageStructureMetadata:
+        assert ds.GetMetadataItem("JXL_LOSSLESS", "_DEBUG_") == (
+            "0" if lossless == "NO" else "1"
+        )
+        if lossless == "NO":
+            assert float(ds.GetMetadataItem("JXL_DISTANCE", "_DEBUG_")) == 0.5
+            assert ds.GetMetadataItem("JXL_EFFORT", "_DEBUG_") == "4"
+    else:
+        # Default values
+        assert ds.GetMetadataItem("JXL_LOSSLESS", "_DEBUG_") == "1"
+        assert float(ds.GetMetadataItem("JXL_DISTANCE", "_DEBUG_")) == 1.0
+        assert ds.GetMetadataItem("JXL_EFFORT", "_DEBUG_") == "5"
+
+    if writeImageStructureMetadata:
+        assert ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == (
+            "LOSSY" if lossless == "NO" else "LOSSLESS"
+        )
+    elif gdal.GetDriverByName("JPEGXL") is not None:
+        assert ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == (
+            "LOSSY" if lossless == "NO" else "LOSSLESS (possibly)"
+        )
+    cs = ds.GetRasterBand(1).Checksum()
+    if lossless == "NO":
+        assert cs != 0 and cs != 4672
+    else:
+        assert cs == 4672
+    ds = None
+
+    ds = gdal.Open(outfile, gdal.GA_Update)
+    if writeImageStructureMetadata:
+        assert ds.GetMetadataItem("JXL_LOSSLESS", "_DEBUG_") == (
+            "0" if lossless == "NO" else "1"
+        )
+    if writeImageStructureMetadata:
+        assert ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == (
+            "LOSSY" if lossless == "NO" else "LOSSLESS"
+        )
+    elif gdal.GetDriverByName("JPEGXL") is not None:
+        assert ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == (
+            "LOSSY" if lossless == "NO" else "LOSSLESS (possibly)"
+        )
+    ds = None
+
+    drv.Delete(outfile)
 
 
 ###############################################################################

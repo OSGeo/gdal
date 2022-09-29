@@ -108,6 +108,8 @@ CPL_CVSID("$Id$")
 #define STRINGIFY(x) #x
 #define XSTRINGIFY(x) STRINGIFY(x)
 
+#define DEFAULT_WEBP_LEVEL  75
+
 static bool bGlobalInExternalOvr = false;
 
 static thread_local int gnThreadLocalLibtiffError = 0;
@@ -456,7 +458,7 @@ private:
     signed char m_nZLevel = -1;
     signed char m_nLZMAPreset = -1;
     signed char m_nZSTDLevel = -1;
-    signed char m_nWebPLevel = -1;
+    signed char m_nWebPLevel = DEFAULT_WEBP_LEVEL;
     signed char m_nJpegQuality = -1;
     signed char m_nJpegTablesMode = -1;
 
@@ -13788,6 +13790,47 @@ bool GTIFFIsStandardColorInterpretation(GDALDatasetH hSrcDS,
     return bStandardColorInterp;
 }
 
+static signed char GTiffGetWebPLevel(CSLConstList papszOptions)
+{
+    int nWebPLevel = DEFAULT_WEBP_LEVEL;
+    const char* pszValue = CSLFetchNameValue( papszOptions, "WEBP_LEVEL" );
+    if( pszValue != nullptr )
+    {
+        nWebPLevel = atoi( pszValue );
+        if( !(nWebPLevel >= 1 && nWebPLevel <= 100) )
+        {
+            CPLError( CE_Warning, CPLE_IllegalArg,
+                      "WEBP_LEVEL=%s value not recognised, ignoring.",
+                      pszValue );
+            nWebPLevel = DEFAULT_WEBP_LEVEL;
+        }
+    }
+    return static_cast<signed char>(nWebPLevel);
+}
+
+static bool GTiffGetWebPLossless(CSLConstList papszOptions)
+{
+    return CPLFetchBool( papszOptions, "WEBP_LOSSLESS", false);
+}
+
+#if HAVE_JXL
+static bool GTiffGetJXLLossless(CSLConstList papszOptions)
+{
+    return CPLTestBool(CSLFetchNameValueDef(papszOptions, "JXL_LOSSLESS", "TRUE"));
+}
+
+static uint32_t GTiffGetJXLEffort(CSLConstList papszOptions)
+{
+    return atoi(CSLFetchNameValueDef(papszOptions, "JXL_EFFORT", "5"));
+}
+
+static float GTiffGetJXLDistance(CSLConstList papszOptions)
+{
+    return static_cast<float>(CPLAtof(CSLFetchNameValueDef(papszOptions, "JXL_DISTANCE", "1.0")));
+}
+
+#endif
+
 /************************************************************************/
 /*                           WriteMetadata()                            */
 /************************************************************************/
@@ -13976,6 +14019,55 @@ bool GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *l_hTIFF,
                                 "ALIGNED_LEVELS", pszAlignedLevels,
                                 0, nullptr, "TILING_SCHEME" );
         }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write information about some codecs.                            */
+/* -------------------------------------------------------------------- */
+    if( CPLTestBool(CPLGetConfigOption("GTIFF_WRITE_IMAGE_STRUCTURE_METADATA", "YES")) )
+    {
+        const char* pszCompress = CSLFetchNameValue(l_papszCreationOptions,
+                                                    "COMPRESS");
+        if( pszCompress && EQUAL(pszCompress, "WEBP") )
+        {
+            if( GTiffGetWebPLossless(l_papszCreationOptions) )
+            {
+                AppendMetadataItem( &psRoot, &psTail,
+                                    "COMPRESSION_REVERSIBILITY",
+                                    "LOSSLESS",
+                                    0, nullptr, "IMAGE_STRUCTURE" );
+            }
+            else
+            {
+                AppendMetadataItem( &psRoot, &psTail,
+                                    "WEBP_LEVEL",
+                                    CPLSPrintf("%d", GTiffGetWebPLevel(l_papszCreationOptions)),
+                                    0, nullptr, "IMAGE_STRUCTURE" );
+            }
+        }
+#if HAVE_JXL
+        else if( pszCompress && EQUAL(pszCompress, "JXL") )
+        {
+            if( GTiffGetJXLLossless(l_papszCreationOptions) )
+            {
+                AppendMetadataItem( &psRoot, &psTail,
+                                    "COMPRESSION_REVERSIBILITY",
+                                    "LOSSLESS",
+                                    0, nullptr, "IMAGE_STRUCTURE" );
+            }
+            else
+            {
+                AppendMetadataItem( &psRoot, &psTail,
+                                    "JXL_DISTANCE",
+                                    CPLSPrintf("%f", GTiffGetJXLDistance(l_papszCreationOptions)),
+                                    0, nullptr, "IMAGE_STRUCTURE" );
+            }
+            AppendMetadataItem( &psRoot, &psTail,
+                                "JXL_EFFORT",
+                                CPLSPrintf("%d", GTiffGetJXLEffort(l_papszCreationOptions)),
+                                0, nullptr, "IMAGE_STRUCTURE" );
+        }
+#endif
     }
 
 /* -------------------------------------------------------------------- */
@@ -16658,7 +16750,63 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
             if( pszKey == nullptr || pszValue == nullptr )
                 continue;
             if( EQUAL(pszDomain, "IMAGE_STRUCTURE") )
-                continue;
+            {
+                if( m_nCompression == COMPRESSION_WEBP &&
+                    EQUAL(pszKey, "COMPRESSION_REVERSIBILITY") )
+                {
+                    if( EQUAL(pszValue, "LOSSLESS") )
+                        m_bWebPLossless = true;
+                    else if( EQUAL(pszValue, "LOSSY") )
+                        m_bWebPLossless = false;
+                }
+                else if( m_nCompression == COMPRESSION_WEBP &&
+                         EQUAL(pszKey, "WEBP_LEVEL") )
+                {
+                    const int nLevel = atoi(pszValue);
+                    if( nLevel >= 1 && nLevel <= 100 )
+                    {
+                        m_oGTiffMDMD.SetMetadataItem(
+                            "COMPRESSION_REVERSIBILITY", "LOSSY", "IMAGE_STRUCTURE");
+                        m_bWebPLossless = false;
+                        m_nWebPLevel = static_cast<signed char>(nLevel);
+                    }
+                }
+#if HAVE_JXL
+                else if( m_nCompression == COMPRESSION_JXL &&
+                         EQUAL(pszKey, "COMPRESSION_REVERSIBILITY") )
+                {
+                    if( EQUAL(pszValue, "LOSSLESS") )
+                        m_bJXLLossless = true;
+                    else if( EQUAL(pszValue, "LOSSY") )
+                        m_bJXLLossless = false;
+                }
+                else if( m_nCompression == COMPRESSION_JXL &&
+                         EQUAL(pszKey, "JXL_DISTANCE") )
+                {
+                    const double dfVal = CPLAtof(pszValue);
+                    if( dfVal > 0 && dfVal <= 15 )
+                    {
+                        m_oGTiffMDMD.SetMetadataItem(
+                            "COMPRESSION_REVERSIBILITY", "LOSSY", "IMAGE_STRUCTURE");
+                        m_bJXLLossless = false;
+                        m_fJXLDistance = static_cast<float>(dfVal);
+                    }
+                }
+                else if( m_nCompression == COMPRESSION_JXL &&
+                         EQUAL(pszKey, "JXL_EFFORT") )
+                {
+                    const int nEffort = atoi(pszValue);
+                    if( nEffort >= 1 && nEffort <= 9 )
+                    {
+                        m_nJXLEffort = nEffort;
+                    }
+                }
+#endif
+                else
+                {
+                    continue;
+                }
+            }
 
             bool bIsXML = false;
 
@@ -16789,6 +16937,39 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
             SetJPEGQualityAndTablesModeFromFile(nQuality, bHasQuantizationTable,
                                                 bHasHuffmanTable);
         }
+    }
+    else if( eAccess == GA_Update &&
+             m_oGTiffMDMD.GetMetadataItem("COMPRESSION_REVERSIBILITY",
+                                          "IMAGE_STRUCTURE") == nullptr )
+    {
+        if( m_nCompression == COMPRESSION_WEBP )
+        {
+            const char* pszReversibility = GetMetadataItem(
+                "COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE");
+            if( pszReversibility && strstr(pszReversibility, "LOSSLESS") )
+            {
+                m_bWebPLossless = true;
+            }
+            else if( pszReversibility && strstr(pszReversibility, "LOSSY") )
+            {
+                m_bWebPLossless = false;
+            }
+        }
+#ifdef HAVE_JXL
+        else if( m_nCompression == COMPRESSION_JXL )
+        {
+            const char* pszReversibility = GetMetadataItem(
+                "COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE");
+            if( pszReversibility && strstr(pszReversibility, "LOSSLESS") )
+            {
+                m_bJXLLossless = true;
+            }
+            else if( pszReversibility && strstr(pszReversibility, "LOSSY") )
+            {
+                m_bJXLLossless = false;
+            }
+        }
+#endif
     }
 
     if( GTIFFSupportsPredictor(m_nCompression) )
@@ -17611,47 +17792,6 @@ static signed char GTiffGetZSTDPreset(char** papszOptions)
 static double GTiffGetLERCMaxZError(char** papszOptions)
 {
     return CPLAtof(CSLFetchNameValueDef( papszOptions, "MAX_Z_ERROR", "0.0") );
-}
-
-#if HAVE_JXL
-static bool GTiffGetJXLLossless(CSLConstList papszOptions)
-{
-    return CPLTestBool(CSLFetchNameValueDef(papszOptions, "JXL_LOSSLESS", "TRUE"));
-}
-
-static uint32_t GTiffGetJXLEffort(CSLConstList papszOptions)
-{
-    return atoi(CSLFetchNameValueDef(papszOptions, "JXL_EFFORT", "5"));
-}
-
-static float GTiffGetJXLDistance(CSLConstList papszOptions)
-{
-    return static_cast<float>(CPLAtof(CSLFetchNameValueDef(papszOptions, "JXL_DISTANCE", "1.0")));
-}
-
-#endif
-
-static signed char GTiffGetWebPLevel(char** papszOptions)
-{
-    int nWebPLevel = -1;
-    const char* pszValue = CSLFetchNameValue( papszOptions, "WEBP_LEVEL" );
-    if( pszValue != nullptr )
-    {
-        nWebPLevel = atoi( pszValue );
-        if( !(nWebPLevel >= 1 && nWebPLevel <= 100) )
-        {
-            CPLError( CE_Warning, CPLE_IllegalArg,
-                      "WEBP_LEVEL=%s value not recognised, ignoring.",
-                      pszValue );
-            nWebPLevel = -1;
-        }
-    }
-    return static_cast<signed char>(nWebPLevel);
-}
-
-static bool GTiffGetWebPLossless(char** papszOptions)
-{
-    return CPLFetchBool( papszOptions, "WEBP_LOSSLESS", false);
 }
 
 static signed char GTiffGetZLevel(char** papszOptions)
@@ -18579,7 +18719,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         TIFFSetField( l_hTIFF, TIFFTAG_JXL_DISTANCE, l_fJXLDistance );
     }
 #endif
-    if( l_nCompression == COMPRESSION_WEBP && l_nWebPLevel != -1)
+    if( l_nCompression == COMPRESSION_WEBP )
         TIFFSetField( l_hTIFF, TIFFTAG_WEBP_LEVEL, l_nWebPLevel);
     if( l_nCompression == COMPRESSION_WEBP && l_bWebPLossless)
         TIFFSetField( l_hTIFF, TIFFTAG_WEBP_LOSSLESS, 1);
@@ -21466,7 +21606,11 @@ char **GTiffDataset::GetMetadataDomainList()
 char **GTiffDataset::GetMetadata( const char * pszDomain )
 
 {
-    if( pszDomain == nullptr || !EQUAL(pszDomain, "IMAGE_STRUCTURE") )
+    if( pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE") )
+    {
+        GTiffDataset::GetMetadataItem("COMPRESSION_REVERSIBILITY", pszDomain);
+    }
+    else
     {
         LoadGeoreferencingAndPamIfNeeded();
     }
@@ -21588,7 +21732,43 @@ const char *GTiffDataset::GetMetadataItem( const char *pszName,
                                            const char *pszDomain )
 
 {
-    if( pszDomain == nullptr || !EQUAL(pszDomain, "IMAGE_STRUCTURE") )
+    if( pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE") )
+    {
+        if( (m_nCompression == COMPRESSION_WEBP ||
+             m_nCompression == COMPRESSION_JXL) &&
+            EQUAL(pszName, "COMPRESSION_REVERSIBILITY") &&
+            m_oGTiffMDMD.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == nullptr )
+        {
+            const char* pszDriverName =
+                m_nCompression == COMPRESSION_WEBP ? "WEBP" : "JPEGXL";
+            auto poTileDriver = GDALGetDriverByName(pszDriverName);
+            if( poTileDriver )
+            {
+                vsi_l_offset nOffset = 0;
+                vsi_l_offset nSize = 0;
+                IsBlockAvailable(0, &nOffset, &nSize);
+                if( nSize > 0 )
+                {
+                    const std::string osSubfile(
+                        CPLSPrintf("/vsisubfile/" CPL_FRMT_GUIB "_%d,%s",
+                                   static_cast<GUIntBig>(nOffset),
+                                   static_cast<int>(std::min(static_cast<vsi_l_offset>(1024), nSize)),
+                                   m_pszFilename));
+                    const char* const apszDrivers[] = { pszDriverName, nullptr };
+                    auto poWebPDataset = std::unique_ptr<GDALDataset>(
+                        GDALDataset::Open(osSubfile.c_str(), GDAL_OF_RASTER, apszDrivers));
+                    if( poWebPDataset )
+                    {
+                        const char* pszReversibility =
+                            poWebPDataset->GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE");
+                        if( pszReversibility )
+                            m_oGTiffMDMD.SetMetadataItem("COMPRESSION_REVERSIBILITY", pszReversibility, "IMAGE_STRUCTURE");
+                    }
+                }
+            }
+        }
+    }
+    else
     {
         LoadGeoreferencingAndPamIfNeeded();
     }
@@ -21673,6 +21853,28 @@ const char *GTiffDataset::GetMetadataItem( const char *pszName,
         {
             return m_bHasUsedReadEncodedAPI ? "1" : "0";
         }
+        else if( EQUAL( pszName, "WEBP_LOSSLESS") )
+        {
+            return m_bWebPLossless ? "1" : "0";
+        }
+        else if( EQUAL( pszName, "WEBP_LEVEL") )
+        {
+            return CPLSPrintf("%d", m_nWebPLevel);
+        }
+#if HAVE_JXL
+        else if( EQUAL( pszName, "JXL_LOSSLESS") )
+        {
+            return m_bJXLLossless ? "1" : "0";
+        }
+        else if( EQUAL( pszName, "JXL_DISTANCE") )
+        {
+            return CPLSPrintf("%f", m_fJXLDistance);
+        }
+        else if( EQUAL( pszName, "JXL_EFFORT") )
+        {
+            return CPLSPrintf("%u", m_nJXLEffort);
+        }
+#endif
         return nullptr;
     }
 
@@ -22607,7 +22809,7 @@ void GDALRegister_GTiff()
 #if WEBP_ENCODER_ABI_VERSION >= 0x0100
 "   <Option name='WEBP_LOSSLESS' type='boolean' description='Whether lossless compression should be used' default='FALSE'/>"
 #endif
-"   <Option name='WEBP_LEVEL' type='int' description='WEBP quality level. Low values result in higher compression ratios' default='75'/>";
+"   <Option name='WEBP_LEVEL' type='int' description='WEBP quality level. Low values result in higher compression ratios' default='" XSTRINGIFY(DEFAULT_WEBP_LEVEL) "'/>";
     }
 #ifdef HAVE_JXL
     osOptions += ""

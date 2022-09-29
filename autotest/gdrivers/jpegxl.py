@@ -76,16 +76,27 @@ def test_jpegxl_rgba():
     return tst.testCreateCopy(vsimem=1)
 
 
-def test_jpegxl_rgba_lossless_no():
+@pytest.mark.parametrize("lossless", ["YES", "NO", None])
+def test_jpegxl_rgba_lossless_param(lossless):
 
     src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")
     outfilename = "/vsimem/out.jxl"
-    gdal.GetDriverByName("JPEGXL").CreateCopy(
-        outfilename, src_ds, options=["LOSSLESS=NO"]
-    )
+    options = []
+    if lossless:
+        options += ["LOSSLESS=" + lossless]
+    gdal.GetDriverByName("JPEGXL").CreateCopy(outfilename, src_ds, options=options)
     ds = gdal.Open(outfilename)
+    assert (
+        ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == "LOSSY"
+        if lossless == "NO"
+        else "LOSSLESS (possibly)"
+    )
     cs = ds.GetRasterBand(1).Checksum()
-    assert cs != 0 and cs != src_ds.GetRasterBand(1).Checksum()
+    assert cs != 0
+    if lossless == "NO":
+        assert cs != src_ds.GetRasterBand(1).Checksum()
+    else:
+        assert cs == src_ds.GetRasterBand(1).Checksum()
 
     ds = None
     gdal.GetDriverByName("JPEGXL").Delete(outfilename)
@@ -99,6 +110,7 @@ def test_jpegxl_rgba_distance():
         outfilename, src_ds, options=["DISTANCE=2"]
     )
     ds = gdal.Open(outfilename)
+    assert ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == "LOSSY"
     cs = ds.GetRasterBand(1).Checksum()
     assert cs != 0 and cs != src_ds.GetRasterBand(1).Checksum()
 
@@ -118,6 +130,7 @@ def test_jpegxl_rgba_quality(quality, equivalent_distance):
         outfilename, src_ds, options=["QUALITY=" + str(quality)]
     )
     ds = gdal.Open(outfilename)
+    assert ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == "LOSSY"
     cs = ds.GetRasterBand(1).Checksum()
     assert cs != 0 and cs != src_ds.GetRasterBand(1).Checksum()
 
@@ -144,7 +157,9 @@ def test_jpegxl_xmp():
     gdal.GetDriverByName("JPEGXL").CreateCopy(outfilename, src_ds)
     assert gdal.VSIStatL(outfilename + ".aux.xml") is None
     ds = gdal.Open(outfilename)
-    assert set(ds.GetMetadataDomainList()) == set(["DERIVED_SUBDATASETS", "xml:XMP"])
+    assert set(ds.GetMetadataDomainList()) == set(
+        ["DERIVED_SUBDATASETS", "xml:XMP", "IMAGE_STRUCTURE"]
+    )
     assert ds.GetMetadata("xml:XMP")[0].startswith("<?xpacket")
 
     ds = None

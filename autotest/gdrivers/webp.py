@@ -101,6 +101,10 @@ def test_webp_4():
     src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")
     out_ds = gdaltest.webp_drv.CreateCopy("/vsimem/webp_4.webp", src_ds)
     src_ds = None
+    assert (
+        out_ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE")
+        == "LOSSY"
+    )
     cs1 = out_ds.GetRasterBand(1).Checksum()
     cs4 = out_ds.GetRasterBand(4).Checksum()
     out_ds = None
@@ -139,6 +143,10 @@ def test_webp_5():
         "/vsimem/webp_5.webp", src_ds, options=["LOSSLESS=YES"]
     )
     src_ds = None
+    assert (
+        out_ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE")
+        == "LOSSLESS"
+    )
     cs1 = out_ds.GetRasterBand(1).Checksum()
     cs4 = out_ds.GetRasterBand(4).Checksum()
     out_ds = None
