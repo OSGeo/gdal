@@ -3601,6 +3601,55 @@ def test_tiff_write_90_webp(external_ovr):
 
 
 ###############################################################################
+# Test WEBP_LOSSLESS propagation and overriding while creating overviews
+# on a newly created dataset
+
+
+@pytest.mark.parametrize("external_ovr", [True, False])
+def test_tiff_write_90_webp_lossless(external_ovr):
+    drv = gdal.GetDriverByName("GTiff")
+    md = drv.GetMetadata()
+    if md["DMD_CREATIONOPTIONLIST"].find("WEBP") == -1:
+        pytest.skip()
+
+    checksums = {}
+    for i in range(2):
+        src_ds = gdal.Open("../gdrivers/data/utm.tif")
+        fname = "tmp/tiff_write_90_webp_lossless_%d" % i
+
+        ds = drv.Create(fname, 512, 512, 3, options=["COMPRESS=WEBP"])
+
+        data = src_ds.GetRasterBand(1).ReadRaster()
+        ds.GetRasterBand(1).WriteRaster(0, 0, 512, 512, data)
+        ds.GetRasterBand(2).WriteRaster(0, 0, 512, 512, data)
+        ds.GetRasterBand(3).WriteRaster(0, 0, 512, 512, data)
+
+        options = {}
+        if external_ovr:
+            ds = None
+            ds = gdal.Open(fname)
+            options["COMPRESS_OVERVIEW"] = "WEBP"
+        if i == 1:
+            options["WEBP_LOSSLESS_OVERVIEW"] = "YES"
+        with gdaltest.config_options(options):
+            ds.BuildOverviews("AVERAGE", overviewlist=[2])
+
+        src_ds = None
+        ds = None
+
+        ds = gdal.Open(fname)
+        checksums[i] = [
+            ds.GetRasterBand(1).Checksum(),
+            ds.GetRasterBand(1).GetOverview(0).Checksum(),
+        ]
+        ds = None
+        drv.Delete(fname)
+
+    assert checksums[0][0] == checksums[1][0]
+    assert checksums[0][1] != checksums[1][1]
+
+
+###############################################################################
 # Test JPEG_QUALITY propagation while creating (internal) overviews after re-opening
 
 

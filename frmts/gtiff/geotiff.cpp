@@ -365,6 +365,7 @@ private:
     friend void  GTIFFSetJpegQuality( GDALDatasetH hGTIFFDS, int nJpegQuality );
     friend void  GTIFFSetJpegTablesMode( GDALDatasetH hGTIFFDS, int nJpegTablesMode );
     friend void  GTIFFSetWebPLevel( GDALDatasetH hGTIFFDS, int nWebPLevel );
+    friend void  GTIFFSetWebPLossless( GDALDatasetH hGTIFFDS, bool bWebPLossless );
     friend void  GTIFFSetZLevel( GDALDatasetH hGTIFFDS, int nZLevel );
     friend void  GTIFFSetZSTDLevel( GDALDatasetH hGTIFFDS, int nZSTDLevel );
     friend void  GTIFFSetMaxZError( GDALDatasetH hGTIFFDS, double dfMaxZError );
@@ -1219,6 +1220,26 @@ void GTIFFSetWebPLevel( GDALDatasetH hGTIFFDS, int nWebpLevel )
 
     for( int i = 0; i < poDS->m_nOverviewCount; ++i )
         poDS->m_papoOverviewDS[i]->m_nWebPLevel = poDS->m_nWebPLevel;
+}
+
+/************************************************************************/
+/*                       GTIFFSetWebPLossless()                         */
+/* Called by GTIFFBuildOverviews() to set webp lossless on the IFD      */
+/* of the .ovr file.                                                    */
+/************************************************************************/
+
+void GTIFFSetWebPLossless( GDALDatasetH hGTIFFDS, bool bWebpLossless )
+{
+    CPLAssert(
+        EQUAL(GDALGetDriverShortName(GDALGetDatasetDriver(hGTIFFDS)), "GTIFF"));
+
+    GTiffDataset* const poDS = static_cast<GTiffDataset *>(hGTIFFDS);
+    poDS->m_bWebPLossless = bWebpLossless;
+
+    poDS->ScanDirectories();
+
+    for( int i = 0; i < poDS->m_nOverviewCount; ++i )
+        poDS->m_papoOverviewDS[i]->m_bWebPLossless = poDS->m_bWebPLossless;
 }
 
 /************************************************************************/
@@ -12201,6 +12222,12 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
         nWebpLevel = atoi(opt);
     }
 
+    bool bWebpLossless = m_bWebPLossless;
+    if( const char* opt = CPLGetConfigOption( "WEBP_LOSSLESS_OVERVIEW", nullptr ) )
+    {
+        bWebpLossless = CPLTestBool(opt);
+    }
+
     double dfMaxZError = m_dfMaxZError;
     if( const char* opt = CPLGetConfigOption( "MAX_Z_ERROR_OVERVIEW", nullptr ) )
     {
@@ -12225,7 +12252,7 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
     poODS->m_nZLevel = static_cast<signed char>(nZLevel);
     poODS->m_nLZMAPreset = m_nLZMAPreset;
     poODS->m_nZSTDLevel = static_cast<signed char>(nZSTDLevel);
-    poODS->m_bWebPLossless = m_bWebPLossless;
+    poODS->m_bWebPLossless = bWebpLossless;
     poODS->m_nJpegTablesMode = m_nJpegTablesMode;
     poODS->m_dfMaxZError = dfMaxZError;
     memcpy(poODS->m_anLercAddCompressionAndVersion, m_anLercAddCompressionAndVersion,

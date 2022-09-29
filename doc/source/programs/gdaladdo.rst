@@ -138,6 +138,9 @@ For JPEG compressed external and internal overviews, the JPEG quality can be set
 For WEBP compressed external and internal overviews, the WEBP quality level can be set with
 ``--config WEBP_LEVEL_OVERVIEW value``. If not set, will default to 75.
 
+For WEBP compressed external and internal overviews, the WEBP lossless/lossy switch can be set with
+``--config WEBP_LOSSLESS_OVERVIEW value``. If not set, will default to NO (lossy). Added in GDAL 3.6.0
+
 For LERC compressed external and internal overviews, the max error threshold can be set with
 ``--config MAX_Z_ERROR_OVERVIEW value``. If not set, will default to 0 (lossless). Added in GDAL 3.4.1
 

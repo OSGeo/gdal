@@ -748,6 +748,8 @@ the default behavior of the GTiff driver.
    Quality of JPEG compressed overviews, either internal or external.
 -  :decl_configoption:`WEBP_LEVEL_OVERVIEW` : Integer between 1 and 100. Default value: 75.
    WEBP quality level of overviews, either internal or external.
+-  :decl_configoption:`WEBP_LOSSLESS_OVERVIEW` : Boolean value (YES/NO). Default value: NO.
+   Whether WEBP compression is lossless or not. Added in GDAL 3.6
 -  :decl_configoption:`ZLEVEL_OVERVIEW` : Integer between 1 and 9 (or 12 when libdeflate is used). Default value: 6.
    Deflate compression level of overviews, for COMPRESS_OVERVIEW=DEFLATE or LERC_DEFLATE, either internal or external.
    Added in GDAL 3.4.1
