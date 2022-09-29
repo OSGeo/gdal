@@ -312,6 +312,8 @@ OGRErr OSRSetStatePlaneWithUnits( OGRSpatialReferenceH hSRS,
  * matching by researching the EPSG catalog.
  *
  * @return OGRERR_NONE or OGRERR_UNSUPPORTED_SRS.
+ *
+ * @see OGRSpatialReference::FindBestMatch()
  */
 
 OGRErr OGRSpatialReference::AutoIdentifyEPSG()
