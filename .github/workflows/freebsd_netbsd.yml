@@ -1,0 +1,67 @@
+name: FreeBSD build
+
+on:
+    push:
+        paths-ignore:
+            - 'doc/**'
+        branches:
+            - '!backport**'
+    pull_request:
+        paths-ignore:
+            - 'doc/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  freebsd:
+    runs-on: macos-12
+    name: FreeBSD build
+    steps:
+    - uses: actions/checkout@v2
+    - uses: vmactions/freebsd-vm@v0
+      with:
+        usesh: true
+        copyback: false
+        prepare: |
+          pkg install -y cmake proj curl expat geos python py39-pip py39-lxml
+          python -m pip install -U pytest pytest-sugar pytest-env
+
+        run: |
+          NPROC=`sysctl hw.ncpu | awk '{print $2}'`
+          mkdir build
+          cd build
+          cmake .. -Werror=dev -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DWERROR_DEV_FLAG="-Werror=dev"
+          make -j$NPROC
+          projsync --system-directory --file us_noaa_conus.tif
+          projsync --system-directory --file us_nga_egm96
+          projsync --system-directory --file ca_nrc_ntv1_can.tif
+          # For some reason, the gdal::TileMatrixSet related test fails on
+          # CI, but not inside a FreeBSD VirtualBox VM
+          export SKIP_TILEMATRIXSET_TEST=YES
+          ctest -V -j$NPROC
+
+  #netbsd:
+  #  runs-on: macos-12
+  #  name: NetBSD build
+  #  steps:
+  #  - uses: actions/checkout@v2
+  #  - uses: vmactions/netbsd-vm@v0
+  #    with:
+  #      usesh: true
+  #      copyback: false
+  #      prepare: |
+  #        pkg_add cmake proj curl expat
+  #
+  #      run: |
+  #        #NPROC=`sysctl hw.ncpu | awk '{print $2}'`
+  #        NPROC=2
+  #        mkdir build
+  #        cd build
+  #        cmake .. -Werror=dev -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DWERROR_DEV_FLAG="-Werror=dev" -DACCEPT_MISSING_SQLITE3_RTREE:BOOL=ON
+  #        make -j$NPROC
+
