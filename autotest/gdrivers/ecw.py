@@ -814,9 +814,9 @@ def test_ecw_22():
     ds = gdal.Open("data/ecw/spif83.ecw")
 
     expected_wkt = """PROJCS["L2CAL6M",GEOGCS["NAD83",DATUM["North_American_Datum_1983",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6269"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4269"]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",32.7833333078095],PARAMETER["standard_parallel_2",33.8833333208765],PARAMETER["latitude_of_origin",32.166666682432],PARAMETER["central_meridian",-116.249999974595],PARAMETER["false_easting",2000000],PARAMETER["false_northing",500000],UNIT["Metre",1],AXIS["Easting",EAST],AXIS["Northing",NORTH]]"""
-    wkt = ds.GetProjectionRef()
-
-    assert wkt == expected_wkt, "did not get expected SRS."
+    expected_srs = osr.SpatialReference()
+    expected_srs.ImportFromWkt(expected_wkt)
+    assert ds.GetSpatialRef().IsSame(expected_srs), "did not get expected SRS."
 
 
 ###############################################################################
@@ -2419,8 +2419,7 @@ def test_ecw_online_2():
     ds.GetRasterBand(1).Checksum()
     assert len(ds.GetGCPs()) == 15, "bad number of GCP"
 
-    expected_wkt = """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]"""
-    assert ds.GetGCPProjection() == expected_wkt, "bad GCP projection"
+    assert ds.GetGCPSpatialRef().GetAuthorityCode(None) == "4326"
 
     ds = None
 

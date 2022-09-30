@@ -3118,8 +3118,7 @@ def test_jp2openjpeg_online_2():
     ds.GetRasterBand(1).Checksum()
     assert len(ds.GetGCPs()) == 15, "bad number of GCP"
 
-    expected_wkt = """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]"""
-    assert ds.GetGCPProjection() == expected_wkt, "bad GCP projection"
+    assert ds.GetGCPSpatialRef().GetAuthorityCode(None) == "4326"
 
     ds = None
 

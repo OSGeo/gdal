@@ -50,7 +50,7 @@ def test_gff_1():
         "GFF",
         "tmp/cache/MiniSAR20050519p0001image008.gff",
         1,
-        29757,
+        -1,
         filename_absolute=1,
     )
     gdal.PushErrorHandler("CPLQuietErrorHandler")
