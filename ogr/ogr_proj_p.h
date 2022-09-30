@@ -44,6 +44,12 @@ void OSRCleanupTLSContext();
 
 class OSRProjTLSCache
 {
+        struct OSRPJDeleter
+        {
+            void operator()(PJ* pj) const { proj_destroy(pj); }
+        };
+        typedef std::unique_ptr<PJ, OSRPJDeleter> UniquePtrPJ;
+
         struct EPSGCacheKey
         {
             int nCode_;
@@ -70,14 +76,14 @@ class OSRProjTLSCache
             }
         };
 
-        lru11::Cache<EPSGCacheKey, std::shared_ptr<PJ>,
+        lru11::Cache<EPSGCacheKey, UniquePtrPJ,
                      lru11::NullLock,
                       std::unordered_map<
                         EPSGCacheKey,
                         typename std::list<lru11::KeyValuePair<EPSGCacheKey,
-                            std::shared_ptr<PJ>>>::iterator,
+                            UniquePtrPJ>>::iterator,
                             EPSGCacheKeyHasher>> m_oCacheEPSG{};
-        lru11::Cache<std::string, std::shared_ptr<PJ>> m_oCacheWKT{};
+        lru11::Cache<std::string, UniquePtrPJ> m_oCacheWKT{};
 
     public:
         OSRProjTLSCache() = default;

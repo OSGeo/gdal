@@ -287,11 +287,6 @@ OSRProjTLSCache* OSRGetProjTLSCache()
     return &l_projContext.oCache;
 }
 
-struct OSRPJDeleter
-{
-    void operator()(PJ* pj) const { proj_destroy(pj); }
-};
-
 void OSRProjTLSCache::clear()
 {
     m_oCacheEPSG.clear();
@@ -300,11 +295,11 @@ void OSRProjTLSCache::clear()
 
 PJ* OSRProjTLSCache::GetPJForEPSGCode(int nCode, bool bUseNonDeprecated, bool bAddTOWGS84)
 {
-    std::shared_ptr<PJ> cached;
     const EPSGCacheKey key(nCode, bUseNonDeprecated, bAddTOWGS84);
-    if( m_oCacheEPSG.tryGet(key, cached) )
+    auto cached = m_oCacheEPSG.getPtr(key);
+    if( cached )
     {
-        return proj_clone(OSRGetProjTLSContext(), cached.get());
+        return proj_clone(OSRGetProjTLSContext(), cached->get());
     }
     return nullptr;
 }
@@ -312,24 +307,24 @@ PJ* OSRProjTLSCache::GetPJForEPSGCode(int nCode, bool bUseNonDeprecated, bool bA
 void OSRProjTLSCache::CachePJForEPSGCode(int nCode, bool bUseNonDeprecated, bool bAddTOWGS84, PJ* pj)
 {
     const EPSGCacheKey key(nCode, bUseNonDeprecated, bAddTOWGS84);
-    m_oCacheEPSG.insert(key, std::shared_ptr<PJ>(
-                    proj_clone(OSRGetProjTLSContext(), pj), OSRPJDeleter()));
+    m_oCacheEPSG.insert(key, UniquePtrPJ(
+                                proj_clone(OSRGetProjTLSContext(), pj)));
 }
 
 PJ* OSRProjTLSCache::GetPJForWKT(const std::string& wkt)
 {
-    std::shared_ptr<PJ> cached;
-    if( m_oCacheWKT.tryGet(wkt, cached) )
+    auto cached = m_oCacheWKT.getPtr(wkt);
+    if( cached )
     {
-        return proj_clone(OSRGetProjTLSContext(), cached.get());
+        return proj_clone(OSRGetProjTLSContext(), cached->get());
     }
     return nullptr;
 }
 
 void OSRProjTLSCache::CachePJForWKT(const std::string& wkt, PJ* pj)
 {
-    m_oCacheWKT.insert(wkt, std::shared_ptr<PJ>(
-                    proj_clone(OSRGetProjTLSContext(), pj), OSRPJDeleter()));
+    m_oCacheWKT.insert(wkt, UniquePtrPJ(
+                                proj_clone(OSRGetProjTLSContext(), pj)));
 }
 
 /************************************************************************/
