@@ -2045,10 +2045,16 @@ namespace tut
         ensure_equals( cache.getMaxSize(), 2U );
         ensure_equals( cache.getElasticity(), 1U );
         ensure_equals( cache.getMaxAllowedSize(), 3U );
+        int out;
+        ensure( !cache.removeAndRecycleOldestEntry(out) );
 
         cache.insert(0, 1);
         val = 0;
         ensure( cache.tryGet(0, val) );
+        int* ptr = cache.getPtr(0);
+        ensure( ptr );
+        ensure_equals( *ptr, 1 );
+        ensure( cache.getPtr(-1) == nullptr );
         ensure_equals( val, 1 );
         ensure_equals( cache.get(0), 1 );
         ensure_equals( cache.getCopy(0), 1);
@@ -2063,6 +2069,12 @@ namespace tut
         };
         cache.cwalk( lambda );
         ensure( visited) ;
+
+        out = -1;
+        ensure( cache.removeAndRecycleOldestEntry(out) );
+        ensure_equals( out, 1 );
+
+        cache.insert(0, 1);
         cache.insert(0, 2);
         ensure_equals( cache.get(0), 2 );
         ensure_equals( cache.size(), 1U );
@@ -2078,6 +2090,48 @@ namespace tut
         ensure( cache.remove(2) );
         ensure( !cache.contains(2) );
         ensure_equals( cache.size(), 1U );
+
+        {
+            // Check that MyObj copy constructor and copy-assignment operator
+            // are not neede
+            struct MyObj
+            {
+                int m_v;
+                MyObj(int v): m_v(v) {}
+                MyObj(const MyObj&) = delete;
+                MyObj& operator=(const MyObj&) = delete;
+                MyObj(MyObj&&) = default;
+                MyObj& operator=(MyObj&&) = default;
+            };
+            lru11::Cache<int,MyObj> cacheMyObj(2,0);
+            ensure_equals( cacheMyObj.insert(0, MyObj(0)).m_v, 0 );
+            cacheMyObj.getPtr(0);
+            ensure_equals( cacheMyObj.insert(1, MyObj(1)).m_v, 1 );
+            ensure_equals( cacheMyObj.insert(2, MyObj(2)).m_v, 2 );
+            MyObj outObj(-1);
+            cacheMyObj.removeAndRecycleOldestEntry(outObj);
+        }
+
+        {
+            // Check that MyObj copy constructor and copy-assignment operator
+            // are not triggered
+            struct MyObj
+            {
+                int m_v;
+                MyObj(int v): m_v(v) {}
+                MyObj(const MyObj&): m_v(-1) { ensure(0); }
+                MyObj& operator=(const MyObj&) { ensure(0); return *this; }
+                MyObj(MyObj&&) = default;
+                MyObj& operator=(MyObj&&) = default;
+            };
+            lru11::Cache<int,MyObj> cacheMyObj(2,0);
+            ensure_equals( cacheMyObj.insert(0, MyObj(0)).m_v, 0 );
+            cacheMyObj.getPtr(0);
+            ensure_equals( cacheMyObj.insert(1, MyObj(1)).m_v, 1 );
+            ensure_equals( cacheMyObj.insert(2, MyObj(2)).m_v, 2 );
+            MyObj outObj(-1);
+            cacheMyObj.removeAndRecycleOldestEntry(outObj);
+        }
     }
 
     // Test CPLJSONDocument
