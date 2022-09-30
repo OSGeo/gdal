@@ -76,6 +76,7 @@ class OSRProjTLSCache
             }
         };
 
+        PJ_CONTEXT* m_tlsContext = nullptr; // never use it directly. use GetPJContext()
         lru11::Cache<EPSGCacheKey, UniquePtrPJ,
                      lru11::NullLock,
                       std::unordered_map<
@@ -85,8 +86,13 @@ class OSRProjTLSCache
                             EPSGCacheKeyHasher>> m_oCacheEPSG{};
         lru11::Cache<std::string, UniquePtrPJ> m_oCacheWKT{};
 
+        PJ_CONTEXT* GetPJContext();
+
+        OSRProjTLSCache(const OSRProjTLSCache&) = delete;
+        OSRProjTLSCache& operator=(const OSRProjTLSCache&) = delete;
+
     public:
-        OSRProjTLSCache() = default;
+        explicit OSRProjTLSCache(PJ_CONTEXT* tlsContext): m_tlsContext(tlsContext) {}
 
         void clear();
 
