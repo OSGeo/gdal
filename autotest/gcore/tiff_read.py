@@ -4824,6 +4824,9 @@ def test_tiff_read_multi_threaded_vsicurl(use_dataset_readraster):
     if not check_libtiff_internal_or_at_least(4, 0, 11):
         pytest.skip()
 
+    if gdaltest.is_travis_branch("macos_build"):
+        pytest.skip("fails randomly")
+
     if gdal.GetDriverByName("HTTP") is None:
         pytest.skip()
 
