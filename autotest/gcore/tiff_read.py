@@ -4819,7 +4819,10 @@ def test_tiff_read_multi_threaded(
 
 
 @pytest.mark.parametrize("use_dataset_readraster", [True, False])
-def test_tiff_read_mult_threaded_vsicurl(use_dataset_readraster):
+def test_tiff_read_multi_threaded_vsicurl(use_dataset_readraster):
+
+    if not check_libtiff_internal_or_at_least(4, 0, 11):
+        pytest.skip()
 
     if gdal.GetDriverByName("HTTP") is None:
         pytest.skip()
