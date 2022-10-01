@@ -66,6 +66,7 @@ struct KeyValuePair {
   V value;
 
   KeyValuePair(const K& k, const V& v) : key(k), value(v) {}
+  KeyValuePair(const K& k, V&& v): key(k), value(std::move(v)) {}
 };
 
 /**
@@ -128,6 +129,20 @@ class Cache {
     cache_[k] = keys_.begin();
     prune();
   }
+  Value& insert(const Key& k, Value&& v) {
+    Guard g(lock_);
+    const auto iter = cache_.find(k);
+    if (iter != cache_.end()) {
+      iter->second->value = std::move(v);
+      keys_.splice(keys_.begin(), keys_, iter->second);
+      return keys_.front().value;
+    }
+
+    keys_.emplace_front(k, std::move(v));
+    cache_[k] = keys_.begin();
+    prune();
+    return keys_.front().value;
+  }
   bool tryGet(const Key& kIn, Value& vOut) {
     Guard g(lock_);
     const auto iter = cache_.find(kIn);
@@ -150,6 +165,15 @@ class Cache {
     }
     keys_.splice(keys_.begin(), keys_, iter->second);
     return iter->second->value;
+  }
+  Value* getPtr(const Key& k) {
+    Guard g(lock_);
+    const auto iter = cache_.find(k);
+    if (iter == cache_.end()) {
+      return nullptr;
+    }
+    keys_.splice(keys_.begin(), keys_, iter->second);
+    return &(iter->second->value);
   }
   /**
    * returns a copy of the stored object (if found)
@@ -179,6 +203,17 @@ class Cache {
     }
     kOut = keys_.back().key;
     vOut = keys_.back().value;
+    return true;
+  }
+
+  bool removeAndRecycleOldestEntry(Value& vOut) {
+    Guard g(lock_);
+    if( keys_.empty() ) {
+        return false;
+    }
+    vOut = std::move(keys_.back().value);
+    cache_.erase(keys_.back().key);
+    keys_.pop_back();
     return true;
   }
 
