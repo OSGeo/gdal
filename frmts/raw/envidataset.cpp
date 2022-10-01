@@ -1744,7 +1744,17 @@ bool ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
         }
     }
 
-    m_oSRS = oSRS;
+    // Try to identify the CRS with the database
+    auto poBestCRSMatch = oSRS.FindBestMatch();
+    if( poBestCRSMatch )
+    {
+        m_oSRS = *poBestCRSMatch;
+        poBestCRSMatch->Release();
+    }
+    else
+    {
+        m_oSRS = oSRS;
+    }
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     CSLDestroy(papszFields);

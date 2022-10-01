@@ -602,6 +602,7 @@ def test_envi_edit_coordinate_system_string():
     ds = None
 
     ds = gdal.Open(filename, gdal.GA_Update)
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(3261)
     ds.SetSpatialRef(srs)
@@ -615,7 +616,9 @@ def test_envi_edit_coordinate_system_string():
     assert content.count("coordinate system string") == 1
 
     ds = gdal.Open(filename)
-    assert ds.GetSpatialRef().IsProjected()
+    srs = ds.GetSpatialRef()
+    assert srs.IsProjected()
+    assert srs.GetAuthorityCode(None) == "3261"
     ds = None
 
     drv.Delete(filename)

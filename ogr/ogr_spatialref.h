@@ -420,6 +420,9 @@ class CPL_DLL OGRSpatialReference
     OGRSpatialReferenceH* FindMatches( char** papszOptions,
                                        int* pnEntries,
                                        int** ppanMatchConfidence ) const;
+    OGRSpatialReference*  FindBestMatch(int nMinimumMatchConfidence = 90,
+                                        const char* pszPreferredAuthority = "EPSG",
+                                        CSLConstList papszOptions = nullptr) const;
 
     int         GetEPSGGeogCS() const;
 
