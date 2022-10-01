@@ -19,7 +19,9 @@
 # https://github.com/google/oss-fuzz/blob/master/projects/gdal/Dockerfile
 
 echo "SRC=$SRC"
+echo "PWD=$PWD"
 ls -ltr $SRC
+ls -ltr $SRC/gdal
 
 BUILD_SH_FROM_REPO="$SRC/gdal/fuzzers/build.sh"
 if test -f "$BUILD_SH_FROM_REPO"; then
