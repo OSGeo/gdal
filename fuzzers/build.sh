@@ -18,6 +18,15 @@
 # This script is meant to be run by
 # https://github.com/google/oss-fuzz/blob/master/projects/gdal/Dockerfile
 
+BUILD_SH_FROM_REPO="$SRC/gdal/fuzzers/build.sh"
+if test -f "$BUILD_SH_FROM_REPO"; then
+    if test "$0" != "$BUILD_SH_FROM_REPO"; then
+        echo "Running $BUILD_SH_FROM_REPO"
+        exec "$BUILD_SH_FROM_REPO"
+        exit $?
+    fi
+fi
+
 rm -rf proj
 git clone --depth 1 https://github.com/OSGeo/PROJ proj
 
