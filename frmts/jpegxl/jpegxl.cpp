@@ -431,8 +431,9 @@ bool JPEGXLDataset::Open(GDALOpenInfo* poOpenInfo)
             const size_t nRead = VSIFReadL(m_abyInputData.data(), 1, m_abyInputData.size(), m_fp);
             if( nRead == 0 )
             {
-                // For some reason, it can happen that JXL_DEC_NEED_MORE_INPUT
-                // is called whereas we have reached end of file
+#ifdef HAVE_JXL_BOX_API
+                JxlDecoderCloseInput(m_decoder.get());
+#endif
                 break;
             }
             if( JxlDecoderSetInput(m_decoder.get(), m_abyInputData.data(), nRead) !=
@@ -442,6 +443,12 @@ bool JPEGXLDataset::Open(GDALOpenInfo* poOpenInfo)
                          "JxlDecoderSetInput() failed");
                 return false;
             }
+#ifdef HAVE_JXL_BOX_API
+            if( nRead < m_abyInputData.size() )
+            {
+                JxlDecoderCloseInput(m_decoder.get());
+            }
+#endif
         }
         else if( status == JXL_DEC_BASIC_INFO )
         {
