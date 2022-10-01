@@ -612,7 +612,7 @@ jobs:
       run: |
         ctest --test-dir $GITHUB_WORKSPACE/build -V -j 3
       env:
-        GITHUB_WORKFLOW: "MacOS build"
+        BUILD_NAME: "MacOS build"
     - name: Install
       run: cmake --build $GITHUB_WORKSPACE/build --target install -j 3
     - name: Test post-install usage (with pkg-config)
