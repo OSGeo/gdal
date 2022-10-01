@@ -81,6 +81,7 @@ CPLString CPLGetAWS_SIGN4_Authorization(const CPLString& osSecretAccessKey,
                                         const CPLString& osCanonicalURI,
                                         const CPLString& osCanonicalQueryString,
                                         const CPLString& osXAMZContentSHA256,
+                                        bool bAddHeaderAMZContentSHA256,
                                         const CPLString& osTimestamp);
 
 class IVSIS3LikeHandleHelper

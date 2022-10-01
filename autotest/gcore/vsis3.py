@@ -4874,17 +4874,25 @@ role_session_name = my_role_session_name
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/?Action=AssumeRole&ExternalId=my_external_id&RoleArn=arn%3Aaws%3Aiam%3A%3A557268267719%3Arole%2Frole&RoleSessionName=my_role_session_name&SerialNumber=my_mfa_serial&Version=2011-06-15&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AWS_ACCESS_KEY_ID%2F20150101%2Fus-east-1%2Fsts%2Faws4_request&X-Amz-Date=20150101T000000Z&X-Amz-SignedHeaders=host&X-Amz-Signature=cfd8163f2a5438e4957a079c4e40cf36053092722fcb7ecdc4cdc706791684b8",
+        "/?Action=AssumeRole&ExternalId=my_external_id&RoleArn=arn%3Aaws%3Aiam%3A%3A557268267719%3Arole%2Frole&RoleSessionName=my_role_session_name&SerialNumber=my_mfa_serial&Version=2011-06-15",
         200,
         {},
         expired_xml_response,
+        expected_headers={
+            "Authorization": "AWS4-HMAC-SHA256 Credential=AWS_ACCESS_KEY_ID/20150101/us-east-1/sts/aws4_request,SignedHeaders=host,Signature=3dd83fa260ec68bb50814f7fceb0ad79712de94a1ee0b285d13a8069e0a16ab4",
+            "X-Amz-Date": "20150101T000000Z",
+        },
     )
     handler.add(
         "GET",
-        "/?Action=AssumeRole&ExternalId=my_external_id&RoleArn=arn%3Aaws%3Aiam%3A%3A557268267719%3Arole%2Frole&RoleSessionName=my_role_session_name&SerialNumber=my_mfa_serial&Version=2011-06-15&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AWS_ACCESS_KEY_ID%2F20150101%2Fus-east-1%2Fsts%2Faws4_request&X-Amz-Date=20150101T000000Z&X-Amz-SignedHeaders=host&X-Amz-Signature=cfd8163f2a5438e4957a079c4e40cf36053092722fcb7ecdc4cdc706791684b8",
+        "/?Action=AssumeRole&ExternalId=my_external_id&RoleArn=arn%3Aaws%3Aiam%3A%3A557268267719%3Arole%2Frole&RoleSessionName=my_role_session_name&SerialNumber=my_mfa_serial&Version=2011-06-15",
         200,
         {},
         expired_xml_response,
+        expected_headers={
+            "Authorization": "AWS4-HMAC-SHA256 Credential=AWS_ACCESS_KEY_ID/20150101/us-east-1/sts/aws4_request,SignedHeaders=host,Signature=3dd83fa260ec68bb50814f7fceb0ad79712de94a1ee0b285d13a8069e0a16ab4",
+            "X-Amz-Date": "20150101T000000Z",
+        },
     )
     handler.add(
         "GET",
@@ -4917,7 +4925,7 @@ role_session_name = my_role_session_name
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/?Action=AssumeRole&ExternalId=my_external_id&RoleArn=arn%3Aaws%3Aiam%3A%3A557268267719%3Arole%2Frole&RoleSessionName=my_role_session_name&SerialNumber=my_mfa_serial&Version=2011-06-15&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AWS_ACCESS_KEY_ID%2F20150101%2Fus-east-1%2Fsts%2Faws4_request&X-Amz-Date=20150101T000000Z&X-Amz-SignedHeaders=host&X-Amz-Signature=cfd8163f2a5438e4957a079c4e40cf36053092722fcb7ecdc4cdc706791684b8",
+        "/?Action=AssumeRole&ExternalId=my_external_id&RoleArn=arn%3Aaws%3Aiam%3A%3A557268267719%3Arole%2Frole&RoleSessionName=my_role_session_name&SerialNumber=my_mfa_serial&Version=2011-06-15",
         200,
         {},
         non_expired_xml_response,
@@ -5036,7 +5044,7 @@ source_profile = foo
     # have to renew
     handler.add(
         "GET",
-        "/?Action=AssumeRole&RoleArn=my_profile_role_arn&RoleSessionName=GDAL-session&Version=2011-06-15&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AWS_ACCESS_KEY_ID%2F20150101%2Fus-east-1%2Fsts%2Faws4_request&X-Amz-Date=20150101T000000Z&X-Amz-SignedHeaders=host&X-Amz-Signature=5caba7475a051defc12c3b0ba0c2afa2245232207e1aec46b5c8e848414daaef",
+        "/?Action=AssumeRole&RoleArn=my_profile_role_arn&RoleSessionName=GDAL-session&Version=2011-06-15",
         200,
         {},
         """<AssumeRoleResponse><AssumeRoleResult><Credentials>
@@ -5070,7 +5078,7 @@ source_profile = foo
 
     handler2.add(
         "GET",
-        "/?Action=AssumeRole&RoleArn=my_profile_role_arn&RoleSessionName=GDAL-session&Version=2011-06-15&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AWS_ACCESS_KEY_ID%2F20150101%2Fus-east-1%2Fsts%2Faws4_request&X-Amz-Date=20150101T000000Z&X-Amz-SignedHeaders=host&X-Amz-Signature=5caba7475a051defc12c3b0ba0c2afa2245232207e1aec46b5c8e848414daaef",
+        "/?Action=AssumeRole&RoleArn=my_profile_role_arn&RoleSessionName=GDAL-session&Version=2011-06-15",
         200,
         {},
         """<AssumeRoleResponse><AssumeRoleResult><Credentials>

@@ -322,6 +322,7 @@ CPLGetAWS_SIGN4_Authorization( const CPLString& osSecretAccessKey,
                                const CPLString& osCanonicalURI,
                                const CPLString& osCanonicalQueryString,
                                const CPLString& osXAMZContentSHA256,
+                               bool bAddHeaderAMZContentSHA256,
                                const CPLString& osTimestamp )
 {
     CPLString osSignedHeaders;
@@ -336,7 +337,7 @@ CPLGetAWS_SIGN4_Authorization( const CPLString& osSecretAccessKey,
                                                     osCanonicalURI,
                                                     osCanonicalQueryString,
                                                     osXAMZContentSHA256,
-                                                    true, // bAddHeaderAMZContentSHA256
+                                                    bAddHeaderAMZContentSHA256,
                                                     osTimestamp,
                                                     osSignedHeaders));
 
@@ -1306,11 +1307,6 @@ static bool GetTemporaryCredentialsForRole(const std::string& osRoleArn,
     const std::string osHost(CPLGetConfigOption("AWS_STS_ENDPOINT", "sts.amazonaws.com"));
 
     std::map<std::string, std::string> oMap;
-    oMap["X-Amz-Algorithm"] = "AWS4-HMAC-SHA256";
-    oMap["X-Amz-Credential"] =
-        osAccessKeyId + "/" + osDate + "/" + osRegion + "/" + osService + "/aws4_request";
-    oMap["X-Amz-Date"] = osXAMZDate;
-    oMap["X-Amz-SignedHeaders"] = "host";
     oMap["Version"] = "2011-06-15";
     oMap["Action"] = "AssumeRole";
     oMap["RoleArn"] = osRoleArn;
@@ -1335,28 +1331,36 @@ static bool GetTemporaryCredentialsForRole(const std::string& osRoleArn,
     }
     CPLString osCanonicalQueryString(osQueryString.substr(1));
 
-    CPLString osSignedHeaders;
-    const CPLString osSignature =
-      CPLGetAWS_SIGN4_Signature(
+    const CPLString osAuthorization =
+      CPLGetAWS_SIGN4_Authorization(
         osSecretAccessKey,
+        osAccessKeyId,
         osSessionToken,
         osRegion,
         std::string(), //m_osRequestPayer,
         osService,
         osVerb,
-        nullptr, /* existing headers */
+        nullptr, // psExistingHeaders,
         osHost,
         "/",
         osCanonicalQueryString,
         CPLGetLowerCaseHexSHA256(std::string()),
         false, // bAddHeaderAMZContentSHA256
-        osXAMZDate,
-        osSignedHeaders);
+        osXAMZDate);
 
     bool bRet = false;
     const bool bUseHTTPS = CPLTestBool(CPLGetConfigOption("AWS_HTTPS", "YES"));
-    const std::string osURL = (bUseHTTPS ? "https://" : "http://") + osHost + "/" + osQueryString + "&X-Amz-Signature=" + osSignature;
-    CPLHTTPResult* psResult = CPLHTTPFetch( osURL.c_str(), nullptr );
+
+    CPLStringList aosOptions;
+    std::string headers;
+    if( !osSessionToken.empty() )
+        headers += "X-Amz-Security-Token: " + osSessionToken + "\r\n";
+    headers += "X-Amz-Date: " + osXAMZDate + "\r\n";
+    headers += "Authorization: " + osAuthorization;
+    aosOptions.AddNameValue("HEADERS", headers.c_str());
+
+    const std::string osURL = (bUseHTTPS ? "https://" : "http://") + osHost + "/" + osQueryString;
+    CPLHTTPResult* psResult = CPLHTTPFetch( osURL.c_str(), aosOptions.List() );
     if( psResult )
     {
         if( psResult->nStatus == 0 && psResult->pabyData != nullptr )
@@ -1940,6 +1944,7 @@ VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
         CPLAWSURLEncode("/" + m_osBucket + "/" + m_osObjectKey, false).c_str(),
         osCanonicalQueryString,
         osXAMZContentSHA256,
+        true, // bAddHeaderAMZContentSHA256
         osXAMZDate);
 
     struct curl_slist *headers=nullptr;
