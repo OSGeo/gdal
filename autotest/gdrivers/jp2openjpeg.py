@@ -95,9 +95,14 @@ def test_jp2openjpeg_3():
     ds = gdal.Open("data/jpeg2000/int16.jp2")
     ds_ref = gdal.Open("data/int16.tif")
 
+    # 9x7 wavelet
+    assert ds.GetMetadata("IMAGE_STRUCTURE")["COMPRESSION_REVERSIBILITY"] == "LOSSY"
+    assert ds.GetMetadata("IMAGE_STRUCTURE")["COMPRESSION_REVERSIBILITY"] == "LOSSY"
+    assert ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == "LOSSY"
+
     maxdiff = gdaltest.compare_ds(ds, ds_ref)
-    print(ds.GetRasterBand(1).Checksum())
-    print(ds_ref.GetRasterBand(1).Checksum())
+    # print(ds.GetRasterBand(1).Checksum())
+    # print(ds_ref.GetRasterBand(1).Checksum())
 
     ds = None
     ds_ref = None
@@ -116,6 +121,11 @@ def test_jp2openjpeg_3():
 def test_jp2openjpeg_4(out_filename="tmp/jp2openjpeg_4.jp2"):
 
     src_ds = gdal.Open("data/jpeg2000/byte.jp2")
+    # 5x3 wavelet with Kakadu < 6.4 last layer at -256.0
+    assert (
+        src_ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE")
+        == "LOSSLESS"
+    )
     src_wkt = src_ds.GetProjectionRef()
     src_gt = src_ds.GetGeoTransform()
 
@@ -137,6 +147,9 @@ def test_jp2openjpeg_4(out_filename="tmp/jp2openjpeg_4.jp2"):
     assert gdal.VSIStatL(out_filename + ".aux.xml") is None
 
     ds = gdal.Open(out_filename)
+    assert (
+        ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == "LOSSLESS"
+    )
     cs = ds.GetRasterBand(1).Checksum()
     got_wkt = ds.GetProjectionRef()
     got_gt = ds.GetGeoTransform()
@@ -3808,3 +3821,24 @@ def test_jp2openjpeg_STRICT_NO():
     with gdaltest.error_handler():
         assert ds.GetRasterBand(1).Checksum() == 5058
     ds = None
+
+
+###############################################################################
+# Test REVERSIBLE=YES with QUALITY != 100
+
+
+def test_jp2openjpeg_reversible_quality_not_100():
+
+    filename = "/vsimem/temp.jp2"
+    gdaltest.jp2openjpeg_drv.CreateCopy(
+        filename,
+        gdal.Open("data/byte.tif"),
+        options=["REVERSIBLE=YES", "QUALITY=90"],
+    )
+
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).Checksum() != 4672
+    assert ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == "LOSSY"
+    ds = None
+
+    gdaltest.jp2openjpeg_drv.Delete(filename)
