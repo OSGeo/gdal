@@ -4824,10 +4824,8 @@ def test_tiff_read_multi_threaded_vsicurl(use_dataset_readraster):
     if not check_libtiff_internal_or_at_least(4, 0, 11):
         pytest.skip()
 
-    if (
-        not use_dataset_readraster
-        and gdaltest.is_travis_branch("macos_build")
-        or gdaltest.is_github_workflow_mac()
+    if (not use_dataset_readraster) and (
+        gdaltest.is_travis_branch("macos_build") or gdaltest.is_github_workflow_mac()
     ):
         pytest.skip("fails randomly")
 
