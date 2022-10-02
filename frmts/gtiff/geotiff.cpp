@@ -339,7 +339,9 @@ enum class GTiffProfile: GByte
     GDALGEOTIFF
 };
 
+#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
 static void ThreadDecompressionFunc(void*);
+#endif
 
 class GTiffDataset final : public GDALPamDataset
 {
@@ -362,7 +364,9 @@ private:
     friend class GTiffSplitBand;
     friend class GTiffSplitBitmapBand;
 
+#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
     friend void  ThreadDecompressionFunc(void*);
+#endif
 
     friend void  GTIFFSetJpegQuality( GDALDatasetH hGTIFFDS, int nJpegQuality );
     friend void  GTIFFSetJpegTablesMode( GDALDatasetH hGTIFFDS, int nJpegTablesMode );
