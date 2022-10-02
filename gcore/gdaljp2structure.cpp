@@ -2244,6 +2244,8 @@ CPLXMLNode* GDALGetJPEG2000Structure(const char* pszFilename,
     dc.nCurLineCount = 0;
     dc.nMaxLineCount = atoi(CSLFetchNameValueDef(papszOptions,"MAX_LINES",
           CPLGetConfigOption("GDAL_JPEG2000_STRUCTURE_MAX_LINES", "500000")));
+    if( dc.nMaxLineCount > INT_MAX - 1 )
+        dc.nMaxLineCount = INT_MAX - 1;
     dc.bDumpAll = CPLFetchBool(papszOptions, "ALL", false);
     dc.bDumpCodestream = dc.bDumpAll || CPLFetchBool(papszOptions, "CODESTREAM", false);
     dc.bDumpBinaryContent = dc.bDumpAll || CPLFetchBool(papszOptions, "BINARY_CONTENT", false);
