@@ -1192,6 +1192,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         CPLXMLNode* psLastChild = nullptr;
         if( VSIFReadL(pabyMarkerData, nMarkerSize - 2, 1, fp) != 1 )
         {
+            psMarker = CreateCurrentMarker();
             AddError(psMarker, psLastChild, psDumpContext,
                      "Cannot read marker data", nOffset);
             break;
