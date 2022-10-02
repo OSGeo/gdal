@@ -1604,8 +1604,10 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     static_assert(sizeof(adfSrcWinOri) == sizeof(psOptions->adfSrcWin),
                   "inconsistent adfSrcWin size");
     memcpy(adfSrcWinOri, psOptions->adfSrcWin, sizeof(psOptions->adfSrcWin));
-    const double dfRatioX = static_cast<double>(poSrcDSOri->GetRasterXSize()) / poSrcDS->GetRasterXSize();
-    const double dfRatioY = static_cast<double>(poSrcDSOri->GetRasterYSize()) / poSrcDS->GetRasterYSize();
+    const double dfRatioX = poSrcDS->GetRasterXSize() == 0 ? 1.0 :
+        static_cast<double>(poSrcDSOri->GetRasterXSize()) / poSrcDS->GetRasterXSize();
+    const double dfRatioY = poSrcDS->GetRasterYSize() == 0 ? 1.0 :
+        static_cast<double>(poSrcDSOri->GetRasterYSize()) / poSrcDS->GetRasterYSize();
     psOptions->adfSrcWin[0] /= dfRatioX;
     psOptions->adfSrcWin[1] /= dfRatioY;
     psOptions->adfSrcWin[2] /= dfRatioX;
