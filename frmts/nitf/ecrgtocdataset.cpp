@@ -471,8 +471,7 @@ ECRGTOCProxyRasterDataSet::ECRGTOCProxyRasterDataSet(
     int nXSizeIn, int nYSizeIn,
     double dfMinXIn, double dfMaxYIn,
     double dfPixelXSizeIn, double dfPixelYSizeIn ) :
-    // Mark as shared since the VRT will take several references if we are in
-    // RGBA mode (4 bands for this dataset).
+    // Mark as shared since the VRT will take several references
     GDALProxyPoolDataset(fileNameIn, nXSizeIn, nYSizeIn, GA_ReadOnly,
                          TRUE, SRS_WKT_WGS84_LAT_LONG),
     checkDone(FALSE),
@@ -486,7 +485,9 @@ ECRGTOCProxyRasterDataSet::ECRGTOCProxyRasterDataSet(
     for( int i = 0; i < 3; i++ )
     {
         SetBand(i + 1,
-                new GDALProxyPoolRasterBand(this, i+1, GDT_Byte, nXSizeIn, 1));
+                new GDALProxyPoolRasterBand(this, i+1, GDT_Byte,
+                                            /* nBlockXSize = */ 0,
+                                            /* nBlockYSize = */ 0));
     }
 }
 
@@ -638,6 +639,12 @@ GDALDataset* ECRGTOCSubDataset::Build(  const char* pszProductTitle,
                                         CPLString().Printf("%s.%d", pszTOCFilename, nCountSubDataset));
 
     poVirtualDS->papszFileList = poVirtualDS->GDALDataset::GetFileList();
+
+    // Rather hacky... Force GDAL_FORCE_CACHING=NO so that the GDALProxyPoolRasterBand
+    // do not use the GDALRasterBand::IRasterIO() default implementation,
+    // which would rely on the block size of GDALProxyPoolRasterBand, which
+    // we don't know...
+    CPLConfigOptionSetter oSetter("GDAL_FORCE_CACHING", "NO", false);
 
     for( int i=0; i < static_cast<int>( aosFrameDesc.size() ); i++)
     {
