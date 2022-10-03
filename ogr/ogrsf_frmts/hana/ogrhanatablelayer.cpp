@@ -34,7 +34,6 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
-#include <regex>
 #include <sstream>
 
 #include "odbc/Exception.h"
@@ -149,15 +148,40 @@ ColumnTypeInfo ParseColumnTypeInfo(const CPLString& typeDef)
     }
     else
     {
-        const auto regex = std::regex(R"((\w+)+\((\d+(,\d+)*)\)$)");
-        std::smatch match;
-        std::regex_search(typeDef, match, regex);
+        std::string match_1;
+        std::string match_2;
 
-        if (match.size() != 0)
-        {
-            typeName.assign(match[1]);
-            typeSize = ParseIntValues(match[2].str().c_str());
-        }
+        std::size_t bracket = typeDef.find('(');
+        std::size_t bracket_2 = typeDef.find(')');
+
+        if (bracket!=std::string::npos && bracket_2!=std::string::npos){
+
+            match_1 = typeDef.substr(0,bracket);
+            int dif = bracket_2 - bracket;
+            match_2 = typeDef.substr (bracket+1, dif-1);
+
+            int si = match_1.size()-1;
+            bool alnu = true;
+            while(si != 0 && alnu != false){
+                char str = match_1[si];
+                alnu = isalnum(str);
+                si-=1;
+            }
+
+            si = match_2.size()-1;
+            bool digi = true;
+            while(si != 0 && digi != false){
+                char str_2 = match_2[si];
+                digi = isdigit(str_2);
+                si -= 1;
+            }
+
+
+            if(alnu == true && digi == true){
+                typeName.assign(match_1);
+                typeSize = ParseIntValues(match_2.str().c_str());
+            }
+		}
 
         if (typeSize.empty() || typeSize.size() > 2)
         {
