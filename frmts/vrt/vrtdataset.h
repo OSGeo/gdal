@@ -966,6 +966,8 @@ protected:
 
     GDALRasterBand*     GetRasterBandNoOpen() const { return m_poRasterBand; }
 
+    virtual bool        ValidateOpenedBand(GDALRasterBand* /*poBand*/) const { return true; }
+
 public:
             VRTSimpleSource();
             VRTSimpleSource( const VRTSimpleSource* poSrcSource,
