@@ -2682,7 +2682,8 @@ CPLErr HFARasterBand::CleanOverviews()
 /************************************************************************/
 
 CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
-                                      int nReqOverviews, int *panOverviewList,
+                                      int nReqOverviews,
+                                      const int *panOverviewList,
                                       GDALProgressFunc pfnProgress,
                                       void *pProgressData )
 
@@ -4222,8 +4223,8 @@ CPLErr HFADataset::ReadProjection()
 /************************************************************************/
 
 CPLErr HFADataset::IBuildOverviews( const char *pszResampling,
-                                    int nOverviews, int *panOverviewList,
-                                    int nListBands, int *panBandList,
+                                    int nOverviews, const int *panOverviewList,
+                                    int nListBands, const int *panBandList,
                                     GDALProgressFunc pfnProgress,
                                     void *pProgressData )
 

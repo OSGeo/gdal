@@ -686,8 +686,10 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
     const double*       GetGeoTransform() const { return m_adfGeoTransform; }
     bool                IsRL2MixedResolutions() const { return m_bRL2MixedResolutions; }
 
-    virtual CPLErr IBuildOverviews( const char *, int, int *,
-                                    int, int *, GDALProgressFunc, void * ) override;
+    virtual CPLErr IBuildOverviews( const char *,
+                                    int, const int *,
+                                    int, const int *,
+                                    GDALProgressFunc, void * ) override;
 
 #endif
     OGRSQLiteDataSource* GetParentDS() const { return m_poParentDS; }

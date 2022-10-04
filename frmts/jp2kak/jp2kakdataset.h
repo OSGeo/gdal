@@ -103,8 +103,10 @@ class JP2KAKDataset final: public GDALJP2AbstractDataset
              JP2KAKDataset();
     virtual ~JP2KAKDataset() override;
 
-    virtual CPLErr IBuildOverviews( const char *, int, int *,
-                                    int, int *, GDALProgressFunc,
+    virtual CPLErr IBuildOverviews( const char *,
+                                    int, const int *,
+                                    int, const int *,
+                                    GDALProgressFunc,
                                     void * ) override;
 
     static void KakaduInitialize();

@@ -703,7 +703,9 @@ private:
                               GDALRasterIOExtraArg* psExtraArg ) override;
     virtual char **GetFileList() override;
 
-    virtual CPLErr IBuildOverviews( const char *, int, int *, int, int *,
+    virtual CPLErr IBuildOverviews( const char *,
+                                    int, const int *,
+                                    int, const int *,
                                     GDALProgressFunc, void * ) override;
 
     CPLErr         OpenOffset( TIFF *,
@@ -12716,8 +12718,8 @@ CPLErr GTiffDataset::CreateInternalMaskOverviews(int nOvrBlockXSize,
 
 CPLErr GTiffDataset::IBuildOverviews(
     const char * pszResampling,
-    int nOverviews, int * panOverviewList,
-    int nBandsIn, int * panBandList,
+    int nOverviews, const int * panOverviewList,
+    int nBandsIn, const int * panBandList,
     GDALProgressFunc pfnProgress, void * pProgressData )
 
 {

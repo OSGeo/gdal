@@ -3378,8 +3378,8 @@ int NITFDataset::CheckForRSets( const char *pszNITFFilename,
 /************************************************************************/
 
 CPLErr NITFDataset::IBuildOverviews( const char *pszResampling,
-                                     int nOverviews, int *panOverviewList,
-                                     int nListBands, int *panBandList,
+                                     int nOverviews, const int *panOverviewList,
+                                     int nListBands, const int *panBandList,
                                      GDALProgressFunc pfnProgress,
                                      void * pProgressData )
 

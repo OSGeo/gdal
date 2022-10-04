@@ -123,8 +123,8 @@ class CPL_DLL MEMDataset CPL_NON_FINAL: public GDALDataset
                                GSpacing nBandSpaceBuf,
                                GDALRasterIOExtraArg* psExtraArg) override;
     virtual CPLErr  IBuildOverviews( const char *pszResampling,
-                                     int nOverviews, int *panOverviewList,
-                                     int nListBands, int *panBandList,
+                                     int nOverviews, const int *panOverviewList,
+                                     int nListBands, const int *panBandList,
                                      GDALProgressFunc pfnProgress,
                                      void * pProgressData ) override;
 

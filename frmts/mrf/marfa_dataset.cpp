@@ -217,8 +217,8 @@ CPLErr MRFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSiz
 
 CPLErr MRFDataset::IBuildOverviews(
     const char* pszResampling,
-    int nOverviews, int* panOverviewList,
-    int nBandsIn, int* panBandList,
+    int nOverviews, const int* panOverviewList,
+    int nBandsIn, const int* panBandList,
     GDALProgressFunc pfnProgress, void* pProgressData)
 
 {

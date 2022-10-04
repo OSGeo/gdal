@@ -2679,7 +2679,7 @@ GDALGetRasterSampleOverviewEx( GDALRasterBandH hBand, GUIntBig nDesiredSamples )
 /************************************************************************/
 
 /**
- * \fn GDALRasterBand::BuildOverviews(const char*, int, int*, GDALProgressFunc, void*)
+ * \fn GDALRasterBand::BuildOverviews(const char*, int, const int*, GDALProgressFunc, void*)
  * \brief Build raster overview(s)
  *
  * If the operation is unsupported for the indicated dataset, then
@@ -2708,7 +2708,7 @@ GDALGetRasterSampleOverviewEx( GDALRasterBandH hBand, GUIntBig nDesiredSamples )
 
 CPLErr GDALRasterBand::BuildOverviews( const char* /*pszResampling*/,
                                        int /*nOverviews*/,
-                                       int* /*panOverviewList*/,
+                                       const int* /*panOverviewList*/,
                                        GDALProgressFunc /*pfnProgress*/,
                                        void * /*pProgressData*/ )
 

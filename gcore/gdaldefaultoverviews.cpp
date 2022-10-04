@@ -571,8 +571,8 @@ CPLErr
 GDALDefaultOverviews::BuildOverviewsSubDataset(
     const char * pszPhysicalFile,
     const char * pszResampling,
-    int nOverviews, int * panOverviewList,
-    int nBands, int * panBandList,
+    int nOverviews, const int * panOverviewList,
+    int nBands, const int * panBandList,
     GDALProgressFunc pfnProgress, void * pProgressData)
 
 {
@@ -624,8 +624,8 @@ CPLErr
 GDALDefaultOverviews::BuildOverviews(
     const char * pszBasename,
     const char * pszResampling,
-    int nOverviews, int * panOverviewList,
-    int nBands, int * panBandList,
+    int nOverviews, const int * panOverviewList,
+    int nBands, const int * panBandList,
     GDALProgressFunc pfnProgress, void * pProgressData)
 
 {

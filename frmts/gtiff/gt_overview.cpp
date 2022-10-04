@@ -299,8 +299,8 @@ static int GTIFFGetMaxColorChannels( int photometric )
 
 CPLErr
 GTIFFBuildOverviews( const char * pszFilename,
-                     int nBands, GDALRasterBand **papoBandList,
-                     int nOverviews, int * panOverviewList,
+                     int nBands, GDALRasterBand* const* papoBandList,
+                     int nOverviews, const int * panOverviewList,
                      const char * pszResampling,
                      GDALProgressFunc pfnProgress, void * pProgressData )
 
@@ -315,7 +315,7 @@ GTIFFBuildOverviews( const char * pszFilename,
 
 CPLErr
 GTIFFBuildOverviewsEx( const char * pszFilename,
-                       int nBands, GDALRasterBand **papoBandList,
+                       int nBands, GDALRasterBand * const* papoBandList,
                        int nOverviews,
                        const int * panOverviewList,
                        const std::pair<int, int>* pasOverviewSize,

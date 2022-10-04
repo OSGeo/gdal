@@ -410,8 +410,10 @@ protected:
         void *, int, int, GDALDataType,
         int, int *, GSpacing, GSpacing, GSpacing, GDALRasterIOExtraArg*) override;
 
-    virtual CPLErr IBuildOverviews(const char*, int, int*, int, int*,
-        GDALProgressFunc, void*) override;
+    virtual CPLErr IBuildOverviews(const char*,
+                                   int, const int*,
+                                   int, const int*,
+                                   GDALProgressFunc, void*) override;
 
     virtual int CloseDependentDatasets() override;
 

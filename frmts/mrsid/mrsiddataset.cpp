@@ -221,8 +221,9 @@ class MrSIDDataset final: public GDALJP2AbstractDataset
   protected:
     virtual int         CloseDependentDatasets() override;
 
-    virtual CPLErr      IBuildOverviews( const char *, int, int *,
-                                         int, int *, GDALProgressFunc, void * ) override;
+    virtual CPLErr      IBuildOverviews( const char *,
+                                         int, const int *,
+                                         int, const int *, GDALProgressFunc, void * ) override;
 
   public:
     explicit    MrSIDDataset(int bIsJPEG2000);
@@ -1002,8 +1003,10 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
 /*                          IBuildOverviews()                           */
 /************************************************************************/
 
-CPLErr MrSIDDataset::IBuildOverviews( const char *, int, int *,
-                                      int, int *, GDALProgressFunc,
+CPLErr MrSIDDataset::IBuildOverviews( const char *,
+                                      int, const int *,
+                                      int, const int *,
+                                      GDALProgressFunc,
                                       void * )
 {
         CPLError( CE_Warning, CPLE_AppDefined,

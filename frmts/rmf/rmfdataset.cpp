@@ -2272,8 +2272,8 @@ RMFDataset* RMFDataset::OpenOverview(RMFDataset* poParent, GDALOpenInfo* poOpenI
 }
 
 CPLErr RMFDataset::IBuildOverviews( const char* pszResampling,
-                                    int nOverviews, int* panOverviewList,
-                                    int nBandsIn, int* panBandList,
+                                    int nOverviews, const int* panOverviewList,
+                                    int nBandsIn, const int* panBandList,
                                     GDALProgressFunc pfnProgress,
                                     void* pProgressData )
 {

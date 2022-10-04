@@ -337,7 +337,7 @@ RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, nullptr,  GetRasterSampleOverview,
                         (GUIntBig arg1), (arg1))
 
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, BuildOverviews,
-                        (const char * arg1, int arg2, int *arg3,
+                        (const char * arg1, int arg2, const int *arg3,
                         GDALProgressFunc arg4, void * arg5),
                         (arg1, arg2, arg3, arg4, arg5))
 

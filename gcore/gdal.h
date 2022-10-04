@@ -994,8 +994,10 @@ int CPL_DLL CPL_STDCALL GDALDereferenceDataset( GDALDatasetH );
 int CPL_DLL CPL_STDCALL GDALReleaseDataset( GDALDatasetH );
 
 CPLErr CPL_DLL CPL_STDCALL
-GDALBuildOverviews( GDALDatasetH, const char *, int, int *,
-                    int, int *, GDALProgressFunc, void * ) CPL_WARN_UNUSED_RESULT;
+GDALBuildOverviews( GDALDatasetH, const char *,
+                    int, const int *,
+                    int, const int *,
+                    GDALProgressFunc, void * ) CPL_WARN_UNUSED_RESULT;
 void CPL_DLL CPL_STDCALL GDALGetOpenDatasets( GDALDatasetH **hDS, int *pnCount );
 int CPL_DLL CPL_STDCALL GDALGetAccess( GDALDatasetH hDS );
 void CPL_DLL CPL_STDCALL GDALFlushCache( GDALDatasetH hDS );

@@ -193,8 +193,8 @@ class CPL_DLL GDALPamDataset : public GDALDataset
     virtual CPLErr CloneInfo( GDALDataset *poSrcDS, int nCloneInfoFlags );
 
     CPLErr IBuildOverviews( const char *pszResampling,
-                            int nOverviews, int *panOverviewList,
-                            int nListBands, int *panBandList,
+                            int nOverviews, const int *panOverviewList,
+                            int nListBands, const int *panBandList,
                             GDALProgressFunc pfnProgress,
                             void * pProgressData ) override;
 

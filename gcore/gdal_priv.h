@@ -231,15 +231,15 @@ class CPL_DLL GDALDefaultOverviews
 
     CPLErr     BuildOverviews( const char * pszBasename,
                                const char * pszResampling,
-                               int nOverviews, int * panOverviewList,
-                               int nBands, int * panBandList,
+                               int nOverviews, const int * panOverviewList,
+                               int nBands, const int * panBandList,
                                GDALProgressFunc pfnProgress,
                                void *pProgressData );
 
     CPLErr     BuildOverviewsSubDataset( const char * pszPhysicalFile,
                                          const char * pszResampling,
-                                         int nOverviews, int * panOverviewList,
-                                         int nBands, int * panBandList,
+                                         int nOverviews, const int * panOverviewList,
+                                         int nBands, const int * panBandList,
                                          GDALProgressFunc pfnProgress,
                                          void *pProgressData );
 
@@ -386,8 +386,10 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     GDALDefaultOverviews oOvManager{};
 
-    virtual CPLErr IBuildOverviews( const char *, int, int *,
-                                    int, int *, GDALProgressFunc, void * );
+    virtual CPLErr IBuildOverviews( const char *,
+                                    int, const int *,
+                                    int, const int *,
+                                    GDALProgressFunc, void * );
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
@@ -612,8 +614,10 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     static GDALDataset **GetOpenDatasets( int *pnDatasetCount );
 
-    CPLErr BuildOverviews( const char *, int, int *,
-                           int, int *, GDALProgressFunc, void * );
+    CPLErr BuildOverviews( const char *,
+                           int, const int *,
+                           int, const int *,
+                           GDALProgressFunc, void * );
 
 #ifndef DOXYGEN_XML
     void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, ...)  CPL_PRINT_FUNC_FORMAT (4, 5);
@@ -1354,7 +1358,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual GDALRasterBand *GetRasterSampleOverview( GUIntBig );
     virtual CPLErr BuildOverviews( const char * pszResampling,
                                    int nOverviews,
-                                   int * panOverviewList,
+                                   const int * panOverviewList,
                                    GDALProgressFunc pfnProgress,
                                    void * pProgressData );
 
@@ -3121,9 +3125,9 @@ public:
 //! @cond Doxygen_Suppress
 /* Only exported for drivers as plugin. Signature may change */
 CPLErr CPL_DLL
-GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
+GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand* const * papoSrcBands,
                                  int nOverviews,
-                                 GDALRasterBand*** papapoOverviewBands,
+                                 GDALRasterBand* const* const * papapoOverviewBands,
                                  const char * pszResampling,
                                  GDALProgressFunc pfnProgress, void * pProgressData );
 
@@ -3159,16 +3163,16 @@ CPL_C_START
 CPLErr CPL_DLL
 HFAAuxBuildOverviews( const char *pszOvrFilename, GDALDataset *poParentDS,
                       GDALDataset **ppoDS,
-                      int nBands, int *panBandList,
-                      int nNewOverviews, int *panNewOverviewList,
+                      int nBands, const int *panBandList,
+                      int nNewOverviews, const int *panNewOverviewList,
                       const char *pszResampling,
                       GDALProgressFunc pfnProgress,
                       void *pProgressData );
 
 CPLErr CPL_DLL
 GTIFFBuildOverviews( const char * pszFilename,
-                     int nBands, GDALRasterBand **papoBandList,
-                     int nOverviews, int * panOverviewList,
+                     int nBands, GDALRasterBand * const* papoBandList,
+                     int nOverviews, const int * panOverviewList,
                      const char * pszResampling,
                      GDALProgressFunc pfnProgress, void * pProgressData );
 

@@ -121,8 +121,8 @@ class MBTilesDataset final: public GDALPamDataset, public GDALGPKGMBTilesLikePse
 
     virtual CPLErr    IBuildOverviews(
                         const char * pszResampling,
-                        int nOverviews, int * panOverviewList,
-                        int nBandsIn, CPL_UNUSED int * panBandList,
+                        int nOverviews, const int * panOverviewList,
+                        int nBandsIn, const int * /* panBandList */,
                         GDALProgressFunc pfnProgress, void * pProgressData ) override;
 
     virtual int                 GetLayerCount() override
@@ -3413,8 +3413,8 @@ static int GetFloorPowerOfTwo(int n)
 
 CPLErr MBTilesDataset::IBuildOverviews(
                         const char * pszResampling,
-                        int nOverviews, int * panOverviewList,
-                        int nBandsIn, int * /*panBandList*/,
+                        int nOverviews, const int * panOverviewList,
+                        int nBandsIn, const int * /*panBandList*/,
                         GDALProgressFunc pfnProgress, void * pProgressData )
 {
     if( GetAccess() != GA_Update )

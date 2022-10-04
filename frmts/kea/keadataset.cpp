@@ -618,9 +618,11 @@ void * KEADataset::GetInternalHandle(const char *)
 
 // this is called by GDALDataset::BuildOverviews. we implement this function to support
 // building of overviews
-CPLErr KEADataset::IBuildOverviews(const char *pszResampling, int nOverviews, int *panOverviewList,
-                                    int nListBands, int *panBandList, GDALProgressFunc pfnProgress,
-                                    void *pProgressData)
+CPLErr KEADataset::IBuildOverviews(const char *pszResampling,
+                                   int nOverviews, const int *panOverviewList,
+                                   int nListBands, const int *panBandList,
+                                   GDALProgressFunc pfnProgress,
+                                   void *pProgressData)
 {
     // go through the list of bands that have been passed in
     int nCurrentBand, nOK = 1;

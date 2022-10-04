@@ -1978,8 +1978,8 @@ CPLErr GDALSetGCPs2( GDALDatasetH hDS, int nGCPCount,
  */
 
 CPLErr GDALDataset::BuildOverviews( const char *pszResampling,
-                                    int nOverviews, int *panOverviewList,
-                                    int nListBands, int *panBandList,
+                                    int nOverviews, const int *panOverviewList,
+                                    int nListBands, const int *panBandList,
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData )
 
@@ -2022,8 +2022,8 @@ CPLErr GDALDataset::BuildOverviews( const char *pszResampling,
 
 CPLErr CPL_STDCALL GDALBuildOverviews( GDALDatasetH hDataset,
                                        const char *pszResampling,
-                                       int nOverviews, int *panOverviewList,
-                                       int nListBands, int *panBandList,
+                                       int nOverviews, const int *panOverviewList,
+                                       int nListBands, const int *panBandList,
                                        GDALProgressFunc pfnProgress,
                                        void * pProgressData )
 
@@ -2043,8 +2043,8 @@ CPLErr CPL_STDCALL GDALBuildOverviews( GDALDatasetH hDataset,
 
 //! @cond Doxygen_Suppress
 CPLErr GDALDataset::IBuildOverviews( const char *pszResampling,
-                                     int nOverviews, int *panOverviewList,
-                                     int nListBands, int *panBandList,
+                                     int nOverviews, const int *panOverviewList,
+                                     int nListBands, const int *panBandList,
                                      GDALProgressFunc pfnProgress,
                                      void * pProgressData )
 

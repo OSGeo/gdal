@@ -1827,8 +1827,9 @@ void JPGDatasetCommon::InitInternalOverviews()
 
 CPLErr JPGDatasetCommon::IBuildOverviews( const char *pszResampling,
                                           int nOverviewsListCount,
-                                          int *panOverviewList,
-                                          int nListBands, int *panBandList,
+                                          const int *panOverviewList,
+                                          int nListBands,
+                                          const int *panBandList,
                                           GDALProgressFunc pfnProgress,
                                           void * pProgressData )
 {

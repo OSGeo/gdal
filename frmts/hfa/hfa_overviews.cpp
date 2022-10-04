@@ -45,8 +45,8 @@ CPL_CVSID("$Id$")
 CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename,
                              GDALDataset *poParentDS,
                              GDALDataset **ppoODS,
-                             int nBands, int *panBandList,
-                             int nNewOverviews, int *panNewOverviewList,
+                             int nBands, const int *panBandList,
+                             int nNewOverviews, const int *panNewOverviewList,
                              const char *pszResampling,
                              GDALProgressFunc pfnProgress,
                              void *pProgressData )

@@ -1515,8 +1515,8 @@ const OGRSpatialReference *PCIDSK2Dataset::GetSpatialRef() const
 /************************************************************************/
 
 CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
-                                        int nOverviews, int *panOverviewList,
-                                        int nListBands, int *panBandList,
+                                        int nOverviews, const int *panOverviewList,
+                                        int nListBands, const int *panBandList,
                                         GDALProgressFunc pfnProgress,
                                         void *pProgressData )
 
@@ -1585,6 +1585,7 @@ CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
     int nNewOverviews = 0;
     int *panNewOverviewList = reinterpret_cast<int *>(
         CPLCalloc( sizeof( int ), nOverviews ) );
+    std::vector<bool> abFoundOverviewFactor(nOverviews);
     for( int i = 0; i < nOverviews && poBand != nullptr; i++ )
     {
         for( int j = 0; j < poBand->GetOverviewCount(); j++ )
@@ -1600,13 +1601,11 @@ CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
                 || nOvFactor == GDALOvLevelAdjust2( panOverviewList[i],
                                                     poBand->GetXSize(),
                                                     poBand->GetYSize() ) )
-                panOverviewList[i] *= -1;
+                abFoundOverviewFactor[i] = true;
         }
 
-        if( panOverviewList[i] > 0 )
+        if( !abFoundOverviewFactor[i] )
             panNewOverviewList[nNewOverviews++] = panOverviewList[i];
-        else
-            panOverviewList[i] *= -1;
     }
 
 /* -------------------------------------------------------------------- */

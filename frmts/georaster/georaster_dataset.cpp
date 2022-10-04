@@ -2682,9 +2682,9 @@ const char* GeoRasterDataset::_GetGCPProjection()
 
 CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
                                           int nOverviews,
-                                          int* panOverviewList,
+                                          const int* panOverviewList,
                                           int nListBands,
-                                          int* panBandList,
+                                          const int* panBandList,
                                           GDALProgressFunc pfnProgress,
                                           void* pProgressData )
 {

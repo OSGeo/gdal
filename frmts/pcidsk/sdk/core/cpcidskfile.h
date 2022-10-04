@@ -71,7 +71,7 @@ namespace PCIDSK
         int  CreateSegment( std::string name, std::string description,
             eSegType seg_type, int data_blocks ) override;
         void DeleteSegment( int segment ) override;
-        void CreateOverviews( int chan_count, int *chan_list,
+        void CreateOverviews( int chan_count, const int *chan_list,
             int factor, std::string resampling ) override;
 
         int       GetWidth() const override { return width; }

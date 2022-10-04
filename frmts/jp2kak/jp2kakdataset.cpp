@@ -704,8 +704,8 @@ JP2KAKDataset::~JP2KAKDataset()
 /************************************************************************/
 
 CPLErr JP2KAKDataset::IBuildOverviews( const char *pszResampling,
-                                       int nOverviews, int *panOverviewList,
-                                       int nListBands, int *panBandList,
+                                       int nOverviews, const int *panOverviewList,
+                                       int nListBands, const int *panBandList,
                                        GDALProgressFunc pfnProgress,
                                        void *pProgressData )
 

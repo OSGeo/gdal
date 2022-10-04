@@ -2157,9 +2157,9 @@ bool VRTDataset::AddVirtualOverview(int nOvFactor, const char* pszResampling)
 CPLErr
 VRTDataset::IBuildOverviews( const char *pszResampling,
                              int nOverviews,
-                             int *panOverviewList,
+                             const int *panOverviewList,
                              int nListBands,
-                             int *panBandList,
+                             const int *panBandList,
                              GDALProgressFunc pfnProgress,
                              void * pProgressData )
 {

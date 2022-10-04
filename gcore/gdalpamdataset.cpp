@@ -1214,8 +1214,8 @@ char **GDALPamDataset::GetFileList()
 
 //! @cond Doxygen_Suppress
 CPLErr GDALPamDataset::IBuildOverviews( const char *pszResampling,
-                                        int nOverviews, int *panOverviewList,
-                                        int nListBands, int *panBandList,
+                                        int nOverviews, const int *panOverviewList,
+                                        int nListBands, const int *panBandList,
                                         GDALProgressFunc pfnProgress,
                                         void * pProgressData )
 

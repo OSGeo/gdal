@@ -234,9 +234,9 @@ public:
     CPLErr IBuildOverviews(
                const char* pszResampling,
                int nOverviews,
-               int* panOverviewList,
+               const int* panOverviewList,
                int nListBandsover,
-               int* panBandList,
+               const int* panBandList,
                GDALProgressFunc pfnProgress,
                void* pProgresoversData ) override;
     CPLErr CreateMaskBand( int nFlags ) override;

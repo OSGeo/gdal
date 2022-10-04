@@ -51,8 +51,10 @@ class CPL_DLL GDALProxyDataset : public GDALDataset
     virtual GDALDataset *RefUnderlyingDataset() const = 0;
     virtual void UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset) const;
 
-    CPLErr IBuildOverviews( const char *, int, int *,
-                            int, int *, GDALProgressFunc, void * ) override;
+    CPLErr IBuildOverviews( const char *,
+                            int, const int *,
+                            int, const int *,
+                            GDALProgressFunc, void * ) override;
     CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                       void *, int, int, GDALDataType,
                       int, int *, GSpacing, GSpacing, GSpacing,
@@ -170,7 +172,7 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
     int GetOverviewCount() override;
     GDALRasterBand *GetOverview( int ) override;
     GDALRasterBand *GetRasterSampleOverview( GUIntBig ) override;
-    CPLErr BuildOverviews( const char *, int, int *,
+    CPLErr BuildOverviews( const char *, int, const int *,
                            GDALProgressFunc, void * ) override;
 
     CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,

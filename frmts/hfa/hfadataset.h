@@ -120,8 +120,8 @@ class HFADataset final : public GDALPamDataset
 
     virtual void   FlushCache(bool bAtClosing) override;
     virtual CPLErr IBuildOverviews( const char *pszResampling,
-                                    int nOverviews, int *panOverviewList,
-                                    int nListBands, int *panBandList,
+                                    int nOverviews, const int *panOverviewList,
+                                    int nListBands, const int *panBandList,
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData ) override;
 };
@@ -183,7 +183,7 @@ class HFARasterBand final : public GDALPamRasterBand
     virtual CPLErr SetMetadata( char **, const char * = "" ) override;
     virtual CPLErr SetMetadataItem( const char *, const char *,
                                     const char * = "" ) override;
-    virtual CPLErr BuildOverviews( const char *, int, int *,
+    virtual CPLErr BuildOverviews( const char *, int, const int *,
                                    GDALProgressFunc, void * ) override;
 
     virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,

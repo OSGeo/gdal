@@ -4786,9 +4786,9 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
  */
 
 CPLErr
-GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
+GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand* const* papoSrcBands,
                                   int nOverviews,
-                                  GDALRasterBand*** papapoOverviewBands,
+                                  GDALRasterBand* const * const * papapoOverviewBands,
                                   const char * pszResampling,
                                   GDALProgressFunc pfnProgress,
                                   void * pProgressData )

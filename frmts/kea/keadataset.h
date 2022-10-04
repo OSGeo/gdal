@@ -104,9 +104,11 @@ public:
 
 protected:
     // this method builds overviews for the specified bands.
-    virtual CPLErr IBuildOverviews(const char *pszResampling, int nOverviews, int *panOverviewList,
-                                    int nListBands, int *panBandList, GDALProgressFunc pfnProgress,
-                                    void *pProgressData) override;
+    virtual CPLErr IBuildOverviews(const char *pszResampling,
+                                   int nOverviews, const int *panOverviewList,
+                                   int nListBands, const int *panBandList,
+                                   GDALProgressFunc pfnProgress,
+                                   void *pProgressData) override;
 
     // internal method to update m_papszMetadataList
     void UpdateMetadataList();
