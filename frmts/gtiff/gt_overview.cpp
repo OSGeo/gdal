@@ -335,9 +335,9 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
     TIFF *hOTIFF = nullptr;
     int nBitsPerPixel = 0;
     int nCompression = COMPRESSION_NONE;
-    int nPhotometric = 0;
+    uint16_t nPhotometric = 0;
     int nSampleFormat = 0;
-    int nPlanarConfig = 0;
+    uint16_t nPlanarConfig = 0;
     int iOverview = 0;
     int nXSize = 0;
     int nYSize = 0;
@@ -588,84 +588,14 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
     else
         nPhotometric = PHOTOMETRIC_MINISBLACK;
 
-    const char* pszPhotometric = GetOptionValue("PHOTOMETRIC", "PHOTOMETRIC_OVERVIEW");
-    if( pszPhotometric != nullptr && pszPhotometric[0] != '\0' )
+    const char* pszOptionKey = "";
+    const char* pszPhotometric = GetOptionValue("PHOTOMETRIC", "PHOTOMETRIC_OVERVIEW", &pszOptionKey);
+    if( !GTIFFUpdatePhotometric(pszPhotometric, pszOptionKey,
+                                nCompression, pszInterleave,
+                                nBands,
+                                nPhotometric, nPlanarConfig) )
     {
-        if( EQUAL( pszPhotometric, "MINISBLACK" ) )
-            nPhotometric = PHOTOMETRIC_MINISBLACK;
-        else if( EQUAL( pszPhotometric, "MINISWHITE" ) )
-            nPhotometric = PHOTOMETRIC_MINISWHITE;
-        else if( EQUAL( pszPhotometric, "RGB" ))
-        {
-            nPhotometric = PHOTOMETRIC_RGB;
-        }
-        else if( EQUAL( pszPhotometric, "CMYK" ))
-        {
-            nPhotometric = PHOTOMETRIC_SEPARATED;
-        }
-        else if( EQUAL( pszPhotometric, "YCBCR" ))
-        {
-            nPhotometric = PHOTOMETRIC_YCBCR;
-
-            // Because of subsampling, setting YCBCR without JPEG compression
-            // leads to a crash currently. Would need to make
-            // GTiffRasterBand::IWriteBlock() aware of subsampling so that it
-            // doesn't overrun buffer size returned by libtiff.
-            if( nCompression != COMPRESSION_JPEG )
-            {
-                CPLError(
-                    CE_Failure, CPLE_NotSupported,
-                    "Currently, PHOTOMETRIC_OVERVIEW=YCBCR requires "
-                    "COMPRESS_OVERVIEW=JPEG" );
-                return CE_Failure;
-            }
-
-            if( pszInterleave != nullptr &&
-                pszInterleave[0] != '\0' &&
-                nPlanarConfig == PLANARCONFIG_SEPARATE )
-            {
-                CPLError(
-                    CE_Failure, CPLE_NotSupported,
-                    "PHOTOMETRIC_OVERVIEW=YCBCR requires "
-                    "INTERLEAVE_OVERVIEW=PIXEL" );
-                return CE_Failure;
-            }
-            else
-            {
-                nPlanarConfig = PLANARCONFIG_CONTIG;
-            }
-
-            // YCBCR strictly requires 3 bands. Not less, not more
-            // Issue an explicit error message as libtiff one is a bit cryptic:
-            // JPEGLib:Bogus input colorspace.
-            if( nBands != 3 )
-            {
-                CPLError(
-                    CE_Failure, CPLE_NotSupported,
-                    "PHOTOMETRIC_OVERVIEW=YCBCR requires a source raster "
-                    "with only 3 bands (RGB)" );
-                return CE_Failure;
-            }
-        }
-        else if( EQUAL( pszPhotometric, "CIELAB" ))
-        {
-            nPhotometric = PHOTOMETRIC_CIELAB;
-        }
-        else if( EQUAL( pszPhotometric, "ICCLAB" ))
-        {
-            nPhotometric = PHOTOMETRIC_ICCLAB;
-        }
-        else if( EQUAL( pszPhotometric, "ITULAB" ))
-        {
-            nPhotometric = PHOTOMETRIC_ITULAB;
-        }
-        else
-        {
-            CPLError(
-                CE_Warning, CPLE_IllegalArg,
-                "PHOTOMETRIC_OVERVIEW=%s value not recognised, ignoring.",
-                pszPhotometric );
-        }
+        return CE_Failure;
     }
 
 /* -------------------------------------------------------------------- */

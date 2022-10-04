@@ -638,13 +638,31 @@ GDALDefaultOverviews::BuildOverviews(
     if( nOverviews == 0 )
         return CleanOverviews();
 
+    const auto GetOptionValue = [papszOptions](const char* pszOptionKey,
+                                               const char* pszConfigOptionKey)
+    {
+        const char* pszVal = pszOptionKey ? CSLFetchNameValue(papszOptions, pszOptionKey) : nullptr;
+        if( pszVal )
+        {
+            return pszVal;
+        }
+        pszVal = CSLFetchNameValue(papszOptions, pszConfigOptionKey);
+        if( pszVal )
+        {
+            return pszVal;
+        }
+        pszVal = CPLGetConfigOption(pszConfigOptionKey, nullptr);
+        return pszVal;
+    };
+
 /* -------------------------------------------------------------------- */
 /*      If we don't already have an overview file, we need to decide    */
 /*      what format to use.                                             */
 /* -------------------------------------------------------------------- */
     if( poODS == nullptr )
     {
-        bOvrIsAux = CPLTestBool(CPLGetConfigOption( "USE_RRD", "NO" ));
+        const char* pszUseRRD = GetOptionValue(nullptr, "USE_RRD");
+        bOvrIsAux = pszUseRRD && CPLTestBool(pszUseRRD);
         if( bOvrIsAux )
         {
             osOvrFilename = CPLResetExtension(poDS->GetDescription(),"aux");
@@ -955,16 +973,17 @@ GDALDefaultOverviews::BuildOverviews(
 /* -------------------------------------------------------------------- */
     if( HaveMaskFile() && poMaskDS && eErr == CE_None )
     {
-        // Some config option are not compatible with mask overviews
+        // Some options are not compatible with mask overviews
         // so unset them, and define more sensible values.
-        const bool bJPEG =
-            EQUAL(CPLGetConfigOption("COMPRESS_OVERVIEW", ""), "JPEG");
-        const bool bPHOTOMETRIC_YCBCR =
-            EQUAL(CPLGetConfigOption("PHOTOMETRIC_OVERVIEW", ""), "YCBCR");
+        CPLStringList aosMaskOptions(papszOptions);
+        const char* pszCompress = GetOptionValue("COMPRESS", "COMPRESS_OVERVIEW");
+        const bool bJPEG = pszCompress && EQUAL(pszCompress, "JPEG");
+        const char* pszPhotometric = GetOptionValue("PHOTOMETRIC", "PHOTOMETRIC_OVERVIEW");
+        const bool bPHOTOMETRIC_YCBCR = pszPhotometric && EQUAL(pszPhotometric, "YCBCR");
         if( bJPEG )
-            CPLSetThreadLocalConfigOption("COMPRESS_OVERVIEW", "DEFLATE");
+            aosMaskOptions.SetNameValue("COMPRESS", "DEFLATE");
         if( bPHOTOMETRIC_YCBCR )
-            CPLSetThreadLocalConfigOption("PHOTOMETRIC_OVERVIEW", "");
+            aosMaskOptions.SetNameValue("PHOTOMETRIC", "MINISBLACK");
 
         pScaledProgress = GDALCreateScaledProgress(
                     double(nBands) / (nBands + 1),
@@ -972,14 +991,8 @@ GDALDefaultOverviews::BuildOverviews(
                     pfnProgress, pProgressData );
         eErr = poMaskDS->BuildOverviews( pszResampling, nOverviews, panOverviewList,
                                   0, nullptr, GDALScaledProgress, pScaledProgress,
-                                  papszOptions );
+                                  aosMaskOptions.List() );
         GDALDestroyScaledProgress( pScaledProgress );
-
-        // Restore config option.
-        if( bJPEG )
-            CPLSetThreadLocalConfigOption("COMPRESS_OVERVIEW", "JPEG");
-        if( bPHOTOMETRIC_YCBCR )
-            CPLSetThreadLocalConfigOption("PHOTOMETRIC_OVERVIEW", "YCBCR");
 
         if( bOwnMaskDS )
         {
