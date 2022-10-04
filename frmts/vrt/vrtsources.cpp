@@ -788,7 +788,7 @@ void VRTSimpleSource::OpenSource() const
 /* -------------------------------------------------------------------- */
 
     m_poRasterBand = proxyDS->GetRasterBand(m_nBand);
-    if( m_poRasterBand == nullptr )
+    if( m_poRasterBand == nullptr || !ValidateOpenedBand(m_poRasterBand) )
     {
         proxyDS->ReleaseRef();
         return;
