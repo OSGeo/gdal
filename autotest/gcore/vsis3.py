@@ -4991,7 +4991,7 @@ def test_vsis3_read_credentials_sts_assume_role_with_web_identity_from_config_fi
 
     gdal.VSICurlClearCache()
 
-    gdal.FileFromMemBuffer("/vsimem/web_identity_token_file", "token")
+    gdal.FileFromMemBuffer("/vsimem/web_identity_token_file", "token\n")
 
     gdal.FileFromMemBuffer("/vsimem/aws_credentials", "")
 

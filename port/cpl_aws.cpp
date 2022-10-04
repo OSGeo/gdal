@@ -749,6 +749,9 @@ static bool ReadAWSWebIdentityTokenFile(const std::string& osWebIdentityTokenFil
 
     webIdentityToken = reinterpret_cast<char *>(pabyOut);
     VSIFree(pabyOut);
+    // Remove trailing end-of-line character
+    if( !webIdentityToken.empty() && webIdentityToken.back() == '\n' )
+        webIdentityToken.resize(webIdentityToken.size() - 1);
     return !webIdentityToken.empty();
 }
 
