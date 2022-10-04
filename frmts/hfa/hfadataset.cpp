@@ -2705,12 +2705,8 @@ CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
     GDALRasterBand **papoOvBands = static_cast<GDALRasterBand **>(
         CPLCalloc(sizeof(void*), nReqOverviews));
 
-    bool bNoRegen = false;
-    if( STARTS_WITH_CI(pszResampling, "NO_REGEN:") )
-    {
-        pszResampling += 9;
-        bNoRegen = true;
-    }
+    const bool bRegenerate = CPLTestBool(
+        CSLFetchNameValueDef(papszOptions, "REGENERATE", "YES"));
 
     // Loop over overview levels requested.
     for( int iOverview = 0; iOverview < nReqOverviews; iOverview++ )
@@ -2769,7 +2765,7 @@ CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
 
     CPLErr eErr = CE_None;
 
-    if( !bNoRegen )
+    if( bRegenerate )
         eErr = GDALRegenerateOverviewsEx((GDALRasterBandH) this,
                                        nReqOverviews,
                                        (GDALRasterBandH *) papoOvBands,

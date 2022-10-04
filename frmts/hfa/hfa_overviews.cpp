@@ -114,15 +114,15 @@ CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename,
     // We avoid regenerating the new layers here, because if we did
     // it would use the base layer from the .aux file as the source
     // data, and that is fake (all invalid tiles).
-    CPLString oAdjustedResampling = "NO_REGEN:";
-    oAdjustedResampling += pszResampling;
+    CPLStringList aosOptions(papszOptions);
+    aosOptions.SetNameValue("REGENERATE", "NO");
 
     CPLErr eErr =
-        (*ppoODS)->BuildOverviews(oAdjustedResampling,
+        (*ppoODS)->BuildOverviews(pszResampling,
                                   nNewOverviews, panNewOverviewList,
                                   nBands, panBandList,
                                   pfnProgress, pProgressData,
-                                  papszOptions);
+                                  aosOptions.List());
 
     return eErr;
 }
