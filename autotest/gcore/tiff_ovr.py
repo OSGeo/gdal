@@ -372,14 +372,15 @@ def test_tiff_ovr_9(both_endian):
 
     shutil.copyfile("data/rgbsmall.tif", "tmp/ovr9.tif")
 
-    with gdaltest.config_options(
-        {"COMPRESS_OVERVIEW": "JPEG", "PHOTOMETRIC_OVERVIEW": "YCBCR"}
-    ):
-        ds = gdal.Open("tmp/ovr9.tif", gdal.GA_ReadOnly)
+    ds = gdal.Open("tmp/ovr9.tif", gdal.GA_ReadOnly)
 
-        assert ds is not None, "Failed to open test dataset."
+    assert ds is not None, "Failed to open test dataset."
 
-        ds.BuildOverviews("AVERAGE", overviewlist=[2])
+    ds.BuildOverviews(
+        "AVERAGE",
+        overviewlist=[2],
+        options=["COMPRESS_OVERVIEW=JPEG", "PHOTOMETRIC_OVERVIEW=YCBCR"],
+    )
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     exp_cs_list = (
@@ -395,6 +396,13 @@ def test_tiff_ovr_9(both_endian):
     # Re-check after dataset reopening
     ds = gdal.Open("tmp/ovr9.tif", gdal.GA_ReadOnly)
 
+    assert (
+        ds.GetRasterBand(1)
+        .GetOverview(0)
+        .GetDataset()
+        .GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE")
+        == "YCbCr JPEG"
+    )
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
 
     ds = None

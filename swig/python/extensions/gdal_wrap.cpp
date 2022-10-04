@@ -4699,16 +4699,17 @@ CreateCIntListFromSequence( PyObject* pySeq, int* pnSize ) {
   return ret;
 }
 
-SWIGINTERN int GDALDatasetShadow_BuildOverviews(GDALDatasetShadow *self,char const *resampling="NEAREST",int overviewlist=0,int *pOverviews=0,GDALProgressFunc callback=NULL,void *callback_data=NULL){
+SWIGINTERN int GDALDatasetShadow_BuildOverviews(GDALDatasetShadow *self,char const *resampling="NEAREST",int overviewlist=0,int *pOverviews=0,GDALProgressFunc callback=NULL,void *callback_data=NULL,char **options=NULL){
 
-    return GDALBuildOverviews(  self,
+    return GDALBuildOverviewsEx(  self,
                                 resampling ? resampling : "NEAREST",
                                 overviewlist,
                                 pOverviews,
                                 0,
                                 0,
                                 callback,
-                                callback_data);
+                                callback_data,
+                                options);
   }
 SWIGINTERN int GDALDatasetShadow_GetGCPCount(GDALDatasetShadow *self){
     return GDALGetGCPCount( self );
@@ -18344,6 +18345,7 @@ SWIGINTERN PyObject *_wrap_Dataset_BuildOverviews(PyObject *SWIGUNUSEDPARM(self)
   int *arg4 = (int *) 0 ;
   GDALProgressFunc arg5 = (GDALProgressFunc) NULL ;
   void *arg6 = (void *) NULL ;
+  char **arg7 = (char **) NULL ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   int res2 ;
@@ -18354,8 +18356,9 @@ SWIGINTERN PyObject *_wrap_Dataset_BuildOverviews(PyObject *SWIGUNUSEDPARM(self)
   PyObject * obj2 = 0 ;
   PyObject * obj3 = 0 ;
   PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
   char * kwnames[] = {
-    (char *)"self",  (char *)"resampling",  (char *)"overviewlist",  (char *)"callback",  (char *)"callback_data",  NULL 
+    (char *)"self",  (char *)"resampling",  (char *)"overviewlist",  (char *)"callback",  (char *)"callback_data",  (char *)"options",  NULL 
   };
   int result;
   
@@ -18366,7 +18369,7 @@ SWIGINTERN PyObject *_wrap_Dataset_BuildOverviews(PyObject *SWIGUNUSEDPARM(self)
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
   arg6 = psProgressInfo;
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOO:Dataset_BuildOverviews", kwnames, &obj0, &obj1, &obj2, &obj3, &obj4)) SWIG_fail;
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOOO:Dataset_BuildOverviews", kwnames, &obj0, &obj1, &obj2, &obj3, &obj4, &obj5)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_BuildOverviews" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
@@ -18432,13 +18435,24 @@ SWIGINTERN PyObject *_wrap_Dataset_BuildOverviews(PyObject *SWIGUNUSEDPARM(self)
       psProgressInfo->psPyCallbackData = obj4 ;
     }
   }
+  if (obj5) {
+    {
+      /* %typemap(in) char **options */
+      int bErr = FALSE;
+      arg7 = CSLFromPySequence(obj5, &bErr);
+      if( bErr )
+      {
+        SWIG_fail;
+      }
+    }
+  }
   {
     if ( bUseExceptions ) {
       ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      result = (int)GDALDatasetShadow_BuildOverviews(arg1,(char const *)arg2,arg3,arg4,arg5,arg6);
+      result = (int)GDALDatasetShadow_BuildOverviews(arg1,(char const *)arg2,arg3,arg4,arg5,arg6,arg7);
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -18462,6 +18476,10 @@ SWIGINTERN PyObject *_wrap_Dataset_BuildOverviews(PyObject *SWIGUNUSEDPARM(self)
     CPLFree(psProgressInfo);
     
   }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg7 );
+  }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
 fail:
@@ -18475,6 +18493,10 @@ fail:
     
     CPLFree(psProgressInfo);
     
+  }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg7 );
   }
   return NULL;
 }
@@ -46391,7 +46413,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "Dataset_SetSpatialRef", _wrap_Dataset_SetSpatialRef, METH_VARARGS, "Dataset_SetSpatialRef(Dataset self, SpatialReference srs) -> CPLErr"},
 	 { "Dataset_GetGeoTransform", (PyCFunction)(void(*)(void))_wrap_Dataset_GetGeoTransform, METH_VARARGS|METH_KEYWORDS, "Dataset_GetGeoTransform(Dataset self, int * can_return_null=None)"},
 	 { "Dataset_SetGeoTransform", _wrap_Dataset_SetGeoTransform, METH_VARARGS, "Dataset_SetGeoTransform(Dataset self, double [6] argin) -> CPLErr"},
-	 { "Dataset_BuildOverviews", (PyCFunction)(void(*)(void))_wrap_Dataset_BuildOverviews, METH_VARARGS|METH_KEYWORDS, "Dataset_BuildOverviews(Dataset self, char const * resampling=\"NEAREST\", int overviewlist=0, GDALProgressFunc callback=0, void * callback_data=None) -> int"},
+	 { "Dataset_BuildOverviews", (PyCFunction)(void(*)(void))_wrap_Dataset_BuildOverviews, METH_VARARGS|METH_KEYWORDS, "Dataset_BuildOverviews(Dataset self, char const * resampling=\"NEAREST\", int overviewlist=0, GDALProgressFunc callback=0, void * callback_data=None, char ** options=None) -> int"},
 	 { "Dataset_GetGCPCount", _wrap_Dataset_GetGCPCount, METH_O, "Dataset_GetGCPCount(Dataset self) -> int"},
 	 { "Dataset_GetGCPProjection", _wrap_Dataset_GetGCPProjection, METH_O, "Dataset_GetGCPProjection(Dataset self) -> char const *"},
 	 { "Dataset_GetGCPSpatialRef", _wrap_Dataset_GetGCPSpatialRef, METH_O, "Dataset_GetGCPSpatialRef(Dataset self) -> SpatialReference"},
