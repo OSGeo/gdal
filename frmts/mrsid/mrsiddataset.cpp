@@ -223,7 +223,8 @@ class MrSIDDataset final: public GDALJP2AbstractDataset
 
     virtual CPLErr      IBuildOverviews( const char *,
                                          int, const int *,
-                                         int, const int *, GDALProgressFunc, void * ) override;
+                                         int, const int *, GDALProgressFunc, void *,
+                                         CSLConstList papszOptions ) override;
 
   public:
     explicit    MrSIDDataset(int bIsJPEG2000);
@@ -1007,7 +1008,8 @@ CPLErr MrSIDDataset::IBuildOverviews( const char *,
                                       int, const int *,
                                       int, const int *,
                                       GDALProgressFunc,
-                                      void * )
+                                      void *,
+                                      CSLConstList )
 {
         CPLError( CE_Warning, CPLE_AppDefined,
                           "MrSID overviews are built-in, so building external "

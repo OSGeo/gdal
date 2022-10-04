@@ -442,7 +442,8 @@ private:
     virtual CPLErr IBuildOverviews( const char *,
                                     int, const int *,
                                     int, const int *,
-                                    GDALProgressFunc, void * ) override;
+                                    GDALProgressFunc, void *,
+                                    CSLConstList papszOptions ) override;
 
     static int bPdfiumInit;
 #endif

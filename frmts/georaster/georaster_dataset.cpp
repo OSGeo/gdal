@@ -2686,7 +2686,8 @@ CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
                                           int nListBands,
                                           const int* panBandList,
                                           GDALProgressFunc pfnProgress,
-                                          void* pProgressData )
+                                          void* pProgressData,
+                                          CSLConstList papszOptions )
 {
     (void) panBandList;
     (void) nListBands;
@@ -2870,13 +2871,14 @@ CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
             i / (double) nBands, ( i + 1) / (double) nBands,
             pfnProgress, pProgressData );
 
-        eErr = GDALRegenerateOverviews(
+        eErr = GDALRegenerateOverviewsEx(
             (GDALRasterBandH) poBand,
             poBand->nOverviewCount,
             (GDALRasterBandH*) poBand->papoOverviews,
             pszResampling,
             GDALScaledProgress,
-            pScaledProgressData );
+            pScaledProgressData,
+            papszOptions);
 
         GDALDestroyScaledProgress( pScaledProgressData );
     }

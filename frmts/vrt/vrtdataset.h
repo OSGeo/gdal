@@ -271,7 +271,8 @@ class CPL_DLL VRTDataset CPL_NON_FINAL: public GDALDataset
     virtual CPLErr IBuildOverviews( const char *,
                                     int, const int *,
                                     int, const int *,
-                                    GDALProgressFunc, void * ) override;
+                                    GDALProgressFunc, void *,
+                                    CSLConstList papszOptions ) override;
 
     std::shared_ptr<GDALGroup> GetRootGroup() const override;
 
@@ -331,7 +332,8 @@ public:
     virtual CPLErr IBuildOverviews( const char *,
                                     int, const int *,
                                     int, const int *,
-                                    GDALProgressFunc, void * ) override;
+                                    GDALProgressFunc, void *,
+                                    CSLConstList papszOptions ) override;
 
     virtual CPLErr SetMetadataItem( const char *pszName, const char *pszValue,
                                     const char *pszDomain = "" ) override;

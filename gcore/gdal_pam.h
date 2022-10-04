@@ -196,7 +196,8 @@ class CPL_DLL GDALPamDataset : public GDALDataset
                             int nOverviews, const int *panOverviewList,
                             int nListBands, const int *panBandList,
                             GDALProgressFunc pfnProgress,
-                            void * pProgressData ) override;
+                            void * pProgressData,
+                            CSLConstList papszOptions ) override;
 
     // "semi private" methods.
     void   MarkPamDirty() { nPamFlags |= GPF_DIRTY; }

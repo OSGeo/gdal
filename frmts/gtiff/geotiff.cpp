@@ -706,7 +706,8 @@ private:
     virtual CPLErr IBuildOverviews( const char *,
                                     int, const int *,
                                     int, const int *,
-                                    GDALProgressFunc, void * ) override;
+                                    GDALProgressFunc, void *,
+                                    CSLConstList papszOptions ) override;
 
     CPLErr         OpenOffset( TIFF *,
                                toff_t nDirOffset, GDALAccess,
@@ -12720,7 +12721,8 @@ CPLErr GTiffDataset::IBuildOverviews(
     const char * pszResampling,
     int nOverviews, const int * panOverviewList,
     int nBandsIn, const int * panBandList,
-    GDALProgressFunc pfnProgress, void * pProgressData )
+    GDALProgressFunc pfnProgress, void * pProgressData,
+    CSLConstList papszOptions)
 
 {
     ScanDirectories();
@@ -12775,7 +12777,7 @@ CPLErr GTiffDataset::IBuildOverviews(
 
         CPLErr eErr = GDALDataset::IBuildOverviews(
             pszResampling, nOverviews, panOverviewList,
-            nBandsIn, panBandList, pfnProgress, pProgressData );
+            nBandsIn, panBandList, pfnProgress, pProgressData, papszOptions );
         if( eErr == CE_None && m_poMaskDS )
         {
             ReportError(CE_Warning, CPLE_NotSupported,
@@ -12809,7 +12811,8 @@ CPLErr GTiffDataset::IBuildOverviews(
         if( m_nOverviewCount == 0 )
             return GDALDataset::IBuildOverviews(
                 pszResampling, nOverviews, panOverviewList,
-                nBandsIn, panBandList, pfnProgress, pProgressData );
+                nBandsIn, panBandList, pfnProgress, pProgressData,
+                papszOptions );
 
         return CleanOverviews();
     }
@@ -12995,11 +12998,11 @@ CPLErr GTiffDataset::IBuildOverviews(
             }
         }
 
-        eErr = GDALRegenerateOverviews(
+        eErr = GDALRegenerateOverviewsEx(
             m_poMaskDS->GetRasterBand(1),
             nMaskOverviews,
             reinterpret_cast<GDALRasterBandH *>( papoOverviewBands ),
-            pszResampling, GDALDummyProgress, nullptr );
+            pszResampling, GDALDummyProgress, nullptr, papszOptions );
         CPLFree(papoOverviewBands);
     }
 
@@ -13095,7 +13098,7 @@ CPLErr GTiffDataset::IBuildOverviews(
         GDALRegenerateOverviewsMultiBand( nBandsIn, papoBandList,
                                           nNewOverviews, papapoOverviewBands,
                                           pszResampling, pfnProgress,
-                                          pProgressData );
+                                          pProgressData, papszOptions );
 
         for( int iBand = 0; iBand < nBandsIn; ++iBand )
         {
@@ -13159,13 +13162,14 @@ CPLErr GTiffDataset::IBuildOverviews(
                     (iBand + 1) / static_cast<double>( nBandsIn ),
                     pfnProgress, pProgressData );
 
-            eErr = GDALRegenerateOverviews(
+            eErr = GDALRegenerateOverviewsEx(
                 poBand,
                 nNewOverviews,
                 reinterpret_cast<GDALRasterBandH *>( papoOverviewBands ),
                 pszResampling,
                 GDALScaledProgress,
-                pScaledProgressData );
+                pScaledProgressData,
+                papszOptions );
 
             GDALDestroyScaledProgress( pScaledProgressData );
         }

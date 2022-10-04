@@ -1309,11 +1309,12 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
         anOverviewFactors.insert(anOverviewFactors.end(),
                                  anOverviewFactorsSet.begin(),
                                  anOverviewFactorsSet.end());
-        CPLConfigOptionSetter oSetter("VRT_VIRTUAL_OVERVIEWS", "YES", false);
+        const char* const apszOptions [] = { "VRT_VIRTUAL_OVERVIEWS=YES", nullptr };
         poVRTDS->BuildOverviews(pszResampling ? pszResampling : "nearest",
                                 static_cast<int>(anOverviewFactors.size()),
                                 &anOverviewFactors[0],
-                                0, nullptr, nullptr, nullptr);
+                                0, nullptr, nullptr, nullptr,
+                                apszOptions );
     }
 }
 

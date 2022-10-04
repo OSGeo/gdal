@@ -2699,6 +2699,8 @@ GDALGetRasterSampleOverviewEx( GDALRasterBandH hBand, GUIntBig nDesiredSamples )
  * @param panOverviewList the list of overview decimation factors to build.
  * @param pfnProgress a function to call to report progress, or NULL.
  * @param pProgressData application data to pass to the progress function.
+ * @param papszOptions (GDAL >= 3.6) NULL terminated list of options as
+ *                     key=value pairs, or NULL
  *
  * @return CE_None on success or CE_Failure if the operation doesn't work.
  */
@@ -2710,7 +2712,8 @@ CPLErr GDALRasterBand::BuildOverviews( const char* /*pszResampling*/,
                                        int /*nOverviews*/,
                                        const int* /*panOverviewList*/,
                                        GDALProgressFunc /*pfnProgress*/,
-                                       void * /*pProgressData*/ )
+                                       void * /*pProgressData*/,
+                                       CSLConstList /* papszOptions */ )
 
 {
     ReportError( CE_Failure, CPLE_NotSupported,

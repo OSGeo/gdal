@@ -555,7 +555,7 @@ CPLErr GDALDefaultOverviews::CleanOverviews()
     {
         const CPLErr eErr2 = poMaskDS->BuildOverviews(
                             nullptr, 0, nullptr, 0, nullptr,
-                            nullptr, nullptr);
+                            nullptr, nullptr, nullptr);
         if( eErr2 != CE_None )
             return eErr2;
     }
@@ -573,7 +573,8 @@ GDALDefaultOverviews::BuildOverviewsSubDataset(
     const char * pszResampling,
     int nOverviews, const int * panOverviewList,
     int nBands, const int * panBandList,
-    GDALProgressFunc pfnProgress, void * pProgressData)
+    GDALProgressFunc pfnProgress, void * pProgressData,
+    CSLConstList papszOptions)
 
 {
     if( osOvrFilename.length() == 0 && nOverviews > 0 )
@@ -613,7 +614,8 @@ GDALDefaultOverviews::BuildOverviewsSubDataset(
     }
 
     return BuildOverviews( nullptr, pszResampling, nOverviews, panOverviewList,
-                           nBands, panBandList, pfnProgress, pProgressData );
+                           nBands, panBandList, pfnProgress, pProgressData,
+                           papszOptions );
 }
 
 /************************************************************************/
@@ -626,7 +628,8 @@ GDALDefaultOverviews::BuildOverviews(
     const char * pszResampling,
     int nOverviews, const int * panOverviewList,
     int nBands, const int * panBandList,
-    GDALProgressFunc pfnProgress, void * pProgressData)
+    GDALProgressFunc pfnProgress, void * pProgressData,
+    CSLConstList papszOptions)
 
 {
     if( pfnProgress == nullptr )
@@ -804,7 +807,8 @@ GDALDefaultOverviews::BuildOverviews(
                                      nBands, panBandList,
                                      nNewOverviews, panNewOverviewList,
                                      pszResampling,
-                                     GDALScaledProgress, pScaledProgress );
+                                     GDALScaledProgress, pScaledProgress,
+                                     papszOptions );
         }
 
         // HFAAuxBuildOverviews doesn't actually generate overviews
@@ -831,7 +835,8 @@ GDALDefaultOverviews::BuildOverviews(
         eErr = GTIFFBuildOverviews( osOvrFilename, nBands, pahBands,
                                     nNewOverviews, panNewOverviewList,
                                     pszResampling,
-                                    GDALScaledProgress, pScaledProgress );
+                                    GDALScaledProgress, pScaledProgress,
+                                    papszOptions );
 
         // Probe for proxy overview filename.
         if( eErr == CE_Failure )
@@ -845,7 +850,8 @@ GDALDefaultOverviews::BuildOverviews(
                 eErr = GTIFFBuildOverviews( osOvrFilename, nBands, pahBands,
                                             nNewOverviews, panNewOverviewList,
                                             pszResampling,
-                                            GDALScaledProgress, pScaledProgress );
+                                            GDALScaledProgress, pScaledProgress,
+                                            papszOptions );
             }
         }
 
@@ -926,11 +932,12 @@ GDALDefaultOverviews::BuildOverviews(
                     dfOffset + dfScale * iBand / nBands,
                     dfOffset + dfScale * (iBand+1) / nBands,
                     GDALScaledProgress, pScaledOverviewWithoutMask );
-            eErr = GDALRegenerateOverviews( GDALRasterBand::ToHandle(poBand),
+            eErr = GDALRegenerateOverviewsEx( GDALRasterBand::ToHandle(poBand),
                                             nNewOverviews,
                                             reinterpret_cast<GDALRasterBandH*>(papoOverviewBands),
                                             pszResampling,
-                                            GDALScaledProgress, pScaledProgress );
+                                            GDALScaledProgress, pScaledProgress,
+                                            papszOptions );
             GDALDestroyScaledProgress( pScaledProgress );
         }
     }
@@ -964,7 +971,8 @@ GDALDefaultOverviews::BuildOverviews(
                     1.0,
                     pfnProgress, pProgressData );
         eErr = poMaskDS->BuildOverviews( pszResampling, nOverviews, panOverviewList,
-                                  0, nullptr, GDALScaledProgress, pScaledProgress );
+                                  0, nullptr, GDALScaledProgress, pScaledProgress,
+                                  papszOptions );
         GDALDestroyScaledProgress( pScaledProgress );
 
         // Restore config option.

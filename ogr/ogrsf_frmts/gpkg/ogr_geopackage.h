@@ -260,7 +260,8 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
         virtual CPLErr      IBuildOverviews( const char *,
                                              int, const int *,
                                              int, const int *,
-                                             GDALProgressFunc, void * ) override;
+                                             GDALProgressFunc, void *,
+                                             CSLConstList papszOptions ) override;
 
         virtual int         GetLayerCount() override { return m_nLayers; }
         int                 Open( GDALOpenInfo* poOpenInfo );

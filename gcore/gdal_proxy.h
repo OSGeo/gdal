@@ -54,7 +54,8 @@ class CPL_DLL GDALProxyDataset : public GDALDataset
     CPLErr IBuildOverviews( const char *,
                             int, const int *,
                             int, const int *,
-                            GDALProgressFunc, void * ) override;
+                            GDALProgressFunc, void *,
+                            CSLConstList papszOptions ) override;
     CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                       void *, int, int, GDALDataType,
                       int, int *, GSpacing, GSpacing, GSpacing,
@@ -173,7 +174,7 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
     GDALRasterBand *GetOverview( int ) override;
     GDALRasterBand *GetRasterSampleOverview( GUIntBig ) override;
     CPLErr BuildOverviews( const char *, int, const int *,
-                           GDALProgressFunc, void * ) override;
+                           GDALProgressFunc, void *, CSLConstList papszOptions ) override;
 
     CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                        int nBufXSize, int nBufYSize,

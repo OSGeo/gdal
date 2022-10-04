@@ -100,7 +100,8 @@ class PCIDSK2Dataset final: public GDALPamDataset
     virtual CPLErr IBuildOverviews( const char *,
                                     int, const int *,
                                     int, const int *,
-                                    GDALProgressFunc, void * ) override;
+                                    GDALProgressFunc, void *,
+                                    CSLConstList papszOptions ) override;
 
     virtual int                 GetLayerCount() override { return (int) apoLayers.size(); }
     virtual OGRLayer            *GetLayer( int ) override;

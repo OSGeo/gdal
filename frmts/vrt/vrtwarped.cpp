@@ -1089,7 +1089,8 @@ VRTWarpedDataset::IBuildOverviews( const char * /* pszResampling */,
                                    int /* nListBands */,
                                    const int * /* panBandList */,
                                    GDALProgressFunc pfnProgress,
-                                   void * pProgressData )
+                                   void * pProgressData,
+                                   CSLConstList /*papszOptions*/ )
 {
     if( m_poWarper == nullptr )
         return CE_Failure;
@@ -1512,7 +1513,8 @@ CPLErr VRTWarpedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
         int nOvFactor = atoi(papszTokens[iOverview]);
 
         if (nOvFactor > 0)
-            BuildOverviews( "NEAREST", 1, &nOvFactor, 0, nullptr, nullptr, nullptr );
+            BuildOverviews( "NEAREST", 1, &nOvFactor, 0, nullptr, nullptr, nullptr,
+                            /*papszOptions=*/ nullptr );
         else
             CPLError(
                 CE_Failure, CPLE_AppDefined,

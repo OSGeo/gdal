@@ -49,7 +49,8 @@ CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename,
                              int nNewOverviews, const int *panNewOverviewList,
                              const char *pszResampling,
                              GDALProgressFunc pfnProgress,
-                             void *pProgressData )
+                             void *pProgressData,
+                             CSLConstList papszOptions )
 
 {
     // If the .aux file doesn't exist yet then create it now.
@@ -92,7 +93,7 @@ CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename,
         CPLString osDepFileOpt = "DEPENDENT_FILE=";
         osDepFileOpt += CPLGetFilename(poParentDS->GetDescription());
 
-        const char *apszOptions[4] =
+        const char * const apszOptions[4] =
             { "COMPRESSED=YES", "AUX=YES", osDepFileOpt.c_str(), nullptr };
 
         *ppoODS =
@@ -100,7 +101,7 @@ CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename,
                                 poParentDS->GetRasterXSize(),
                                 poParentDS->GetRasterYSize(),
                                 poParentDS->GetRasterCount(),
-                                eDT, const_cast<char **>(apszOptions));
+                                eDT, apszOptions);
 
         if( *ppoODS == nullptr )
             return CE_Failure;
@@ -120,7 +121,8 @@ CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename,
         (*ppoODS)->BuildOverviews(oAdjustedResampling,
                                   nNewOverviews, panNewOverviewList,
                                   nBands, panBandList,
-                                  pfnProgress, pProgressData);
+                                  pfnProgress, pProgressData,
+                                  papszOptions);
 
     return eErr;
 }

@@ -2161,7 +2161,8 @@ VRTDataset::IBuildOverviews( const char *pszResampling,
                              int nListBands,
                              const int *panBandList,
                              GDALProgressFunc pfnProgress,
-                             void * pProgressData )
+                             void * pProgressData,
+                             CSLConstList papszOptions )
 {
     if( CPLTestBool(CPLGetConfigOption("VRT_VIRTUAL_OVERVIEWS", "NO")) )
     {
@@ -2220,7 +2221,8 @@ VRTDataset::IBuildOverviews( const char *pszResampling,
                                          nListBands,
                                          panBandList,
                                          pfnProgress,
-                                         pProgressData );
+                                         pProgressData,
+                                         papszOptions );
 
     m_apoOverviews.clear();
     return eErr;

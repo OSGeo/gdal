@@ -219,7 +219,8 @@ CPLErr MRFDataset::IBuildOverviews(
     const char* pszResampling,
     int nOverviews, const int* panOverviewList,
     int nBandsIn, const int* panBandList,
-    GDALProgressFunc pfnProgress, void* pProgressData)
+    GDALProgressFunc pfnProgress, void* pProgressData,
+    CSLConstList papszOptions)
 
 {
     CPLErr       eErr = CE_None;
@@ -235,7 +236,7 @@ CPLErr MRFDataset::IBuildOverviews(
         CPLDebug("MRF", "File open read-only, creating overviews externally.");
         return GDALDataset::IBuildOverviews(
             pszResampling, nOverviews, panOverviewList,
-            nBands, panBandList, pfnProgress, pProgressData);
+            nBands, panBandList, pfnProgress, pProgressData, papszOptions);
     }
 
     /* -------------------------------------------------------------------- */
@@ -249,7 +250,7 @@ CPLErr MRFDataset::IBuildOverviews(
         if (current.size.l == 0)
             return GDALDataset::IBuildOverviews(pszResampling,
                 nOverviews, panOverviewList,
-                nBands, panBandList, pfnProgress, pProgressData);
+                nBands, panBandList, pfnProgress, pProgressData, papszOptions);
         // We should clean overviews, but this is not possible in an MRF
         return CE_None;
     }
@@ -404,7 +405,7 @@ CPLErr MRFDataset::IBuildOverviews(
                 // Could rewrite this loop so this function only gets called once
                 //
                 GDALRegenerateOverviewsMultiBand(nBands, papoBandList, 1, papapoOverviewBands,
-                    pszResampling, pfnProgress, pProgressData);
+                    pszResampling, pfnProgress, pProgressData, papszOptions);
             }
         }
     }

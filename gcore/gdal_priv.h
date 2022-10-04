@@ -234,14 +234,16 @@ class CPL_DLL GDALDefaultOverviews
                                int nOverviews, const int * panOverviewList,
                                int nBands, const int * panBandList,
                                GDALProgressFunc pfnProgress,
-                               void *pProgressData );
+                               void *pProgressData,
+                               CSLConstList papszOptions );
 
     CPLErr     BuildOverviewsSubDataset( const char * pszPhysicalFile,
                                          const char * pszResampling,
                                          int nOverviews, const int * panOverviewList,
                                          int nBands, const int * panBandList,
                                          GDALProgressFunc pfnProgress,
-                                         void *pProgressData );
+                                         void *pProgressData,
+                                         CSLConstList papszOptions );
 
     CPLErr     CleanOverviews();
 
@@ -389,7 +391,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual CPLErr IBuildOverviews( const char *,
                                     int, const int *,
                                     int, const int *,
-                                    GDALProgressFunc, void * );
+                                    GDALProgressFunc, void *,
+                                    CSLConstList papszOptions );
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
@@ -617,7 +620,12 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     CPLErr BuildOverviews( const char *,
                            int, const int *,
                            int, const int *,
-                           GDALProgressFunc, void * );
+                           GDALProgressFunc, void *,
+                           CSLConstList papszOptions
+#ifndef DOXYGEN_SKIP
+                           OPTIONAL_OUTSIDE_GDAL(nullptr)
+#endif
+                         );
 
 #ifndef DOXYGEN_XML
     void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, ...)  CPL_PRINT_FUNC_FORMAT (4, 5);
@@ -1360,7 +1368,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                                    int nOverviews,
                                    const int * panOverviewList,
                                    GDALProgressFunc pfnProgress,
-                                   void * pProgressData );
+                                   void * pProgressData,
+                                   CSLConstList papszOptions );
 
     virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                                int nBufXSize, int nBufYSize,
@@ -3129,7 +3138,8 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand* const * papoSrcBand
                                  int nOverviews,
                                  GDALRasterBand* const* const * papapoOverviewBands,
                                  const char * pszResampling,
-                                 GDALProgressFunc pfnProgress, void * pProgressData );
+                                 GDALProgressFunc pfnProgress, void * pProgressData,
+                                 CSLConstList papszOptions );
 
 typedef CPLErr (*GDALResampleFunction)
                       ( double dfXRatioDstToSrc,
@@ -3167,14 +3177,16 @@ HFAAuxBuildOverviews( const char *pszOvrFilename, GDALDataset *poParentDS,
                       int nNewOverviews, const int *panNewOverviewList,
                       const char *pszResampling,
                       GDALProgressFunc pfnProgress,
-                      void *pProgressData );
+                      void *pProgressData,
+                      CSLConstList papszOptions );
 
 CPLErr CPL_DLL
 GTIFFBuildOverviews( const char * pszFilename,
                      int nBands, GDALRasterBand * const* papoBandList,
                      int nOverviews, const int * panOverviewList,
                      const char * pszResampling,
-                     GDALProgressFunc pfnProgress, void * pProgressData );
+                     GDALProgressFunc pfnProgress, void * pProgressData,
+                     CSLConstList papszOptions );
 
 int CPL_DLL GDALBandGetBestOverviewLevel(GDALRasterBand* poBand,
                                          int &nXOff, int &nYOff,

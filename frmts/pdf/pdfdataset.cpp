@@ -2360,10 +2360,11 @@ PDFDataset::PDFDataset( PDFDataset* poParentDSIn, int nXSize, int nYSize ) :
 /************************************************************************/
 
 CPLErr PDFDataset::IBuildOverviews( const char *pszResampling,
-                                       int nOverviews, const int *panOverviewList,
-                                       int nListBands, const int *panBandList,
-                                       GDALProgressFunc pfnProgress,
-                                       void *pProgressData )
+                                    int nOverviews, const int *panOverviewList,
+                                    int nListBands, const int *panBandList,
+                                    GDALProgressFunc pfnProgress,
+                                    void *pProgressData,
+                                    CSLConstList papszOptions )
 
 {
 /* -------------------------------------------------------------------- */
@@ -2380,7 +2381,8 @@ CPLErr PDFDataset::IBuildOverviews( const char *pszResampling,
     return GDALPamDataset::IBuildOverviews( pszResampling,
                                             nOverviews, panOverviewList,
                                             nListBands, panBandList,
-                                            pfnProgress, pProgressData );
+                                            pfnProgress, pProgressData,
+                                            papszOptions );
 }
 
 #endif  // ~ HAVE_PDFIUM

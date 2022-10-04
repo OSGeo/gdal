@@ -123,7 +123,8 @@ class HFADataset final : public GDALPamDataset
                                     int nOverviews, const int *panOverviewList,
                                     int nListBands, const int *panBandList,
                                     GDALProgressFunc pfnProgress,
-                                    void * pProgressData ) override;
+                                    void * pProgressData,
+                                    CSLConstList papszOptions ) override;
 };
 
 /************************************************************************/
@@ -184,7 +185,8 @@ class HFARasterBand final : public GDALPamRasterBand
     virtual CPLErr SetMetadataItem( const char *, const char *,
                                     const char * = "" ) override;
     virtual CPLErr BuildOverviews( const char *, int, const int *,
-                                   GDALProgressFunc, void * ) override;
+                                   GDALProgressFunc, void *,
+                                   CSLConstList papszOptions ) override;
 
     virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
                                         int *pnBuckets,

@@ -849,10 +849,11 @@ void MEMDataset::AddMEMBand(GDALRasterBandH hMEMBand)
 /************************************************************************/
 
 CPLErr MEMDataset::IBuildOverviews( const char *pszResampling,
-                                     int nOverviews, const int *panOverviewList,
-                                     int nListBands, const int *panBandList,
-                                     GDALProgressFunc pfnProgress,
-                                     void * pProgressData )
+                                    int nOverviews, const int *panOverviewList,
+                                    int nListBands, const int *panBandList,
+                                    GDALProgressFunc pfnProgress,
+                                    void * pProgressData,
+                                    CSLConstList papszOptions )
 {
     if( nBands == 0 )
     {
@@ -915,7 +916,8 @@ CPLErr MEMDataset::IBuildOverviews( const char *pszResampling,
                                     1, &panOverviewList[i],
                                     nListBands, panBandList,
                                     GDALScaledProgress,
-                                    pScaledProgress );
+                                    pScaledProgress,
+                                    papszOptions );
             GDALDestroyScaledProgress( pScaledProgress );
             dfAccPixels += dfPixels;
             if( eErr == CE_Failure )
@@ -1069,12 +1071,13 @@ CPLErr MEMDataset::IBuildOverviews( const char *pszResampling,
             poMaskBand->bOwnMask = false;
             poMaskBand->poMask = poMaskBand;
             poMaskBand->nMaskFlags = 0;
-            eErr = GDALRegenerateOverviews(
+            eErr = GDALRegenerateOverviewsEx(
                                         (GDALRasterBandH) poMaskBand,
                                         nNewOverviews,
                                         (GDALRasterBandH*)papoMaskOverviewBands,
                                         pszResampling,
-                                        GDALScaledProgress, pScaledProgress );
+                                        GDALScaledProgress, pScaledProgress,
+                                        papszOptions);
             poMaskBand->InvalidateMaskBand();
             GDALDestroyScaledProgress( pScaledProgress );
         }
@@ -1086,11 +1089,12 @@ CPLErr MEMDataset::IBuildOverviews( const char *pszResampling,
                     1.0 * (iBand+(bMustGenerateMaskOvr ? 0.5 : 1)) / nBands,
                     1.0 * (iBand+1)/ nBands,
                     pfnProgress, pProgressData );
-            eErr = GDALRegenerateOverviews( (GDALRasterBandH) poBand,
+            eErr = GDALRegenerateOverviewsEx( (GDALRasterBandH) poBand,
                                             nNewOverviews,
                                             (GDALRasterBandH*)papoOverviewBands,
                                             pszResampling,
-                                            GDALScaledProgress, pScaledProgress );
+                                            GDALScaledProgress, pScaledProgress,
+                                            papszOptions);
             GDALDestroyScaledProgress( pScaledProgress );
         }
     }

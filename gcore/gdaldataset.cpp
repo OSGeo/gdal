@@ -1949,7 +1949,7 @@ CPLErr GDALSetGCPs2( GDALDatasetH hDS, int nGCPCount,
  * to "ALL_CPUS" or a integer value to specify the number of threads to use for
  * overview computation.
  *
- * This method is the same as the C function GDALBuildOverviews().
+ * This method is the same as the C function GDALBuildOverviewsEx().
  *
  * @param pszResampling one of "AVERAGE", "AVERAGE_MAGPHASE", "RMS",
  * "BILINEAR", "CUBIC", "CUBICSPLINE", "GAUSS", "LANCZOS", "MODE", "NEAREST",
@@ -1962,6 +1962,8 @@ CPLErr GDALSetGCPs2( GDALDatasetH hDS, int nGCPCount,
  * @param panBandList list of band numbers.
  * @param pfnProgress a function to call to report progress, or NULL.
  * @param pProgressData application data to pass to the progress function.
+ * @param papszOptions (GDAL >= 3.6) NULL terminated list of options as
+ *                     key=value pairs, or NULL
  *
  * @return CE_None on success or CE_Failure if the operation doesn't work.
  *
@@ -1974,15 +1976,15 @@ CPLErr GDALSetGCPs2( GDALDatasetH hDS, int nGCPCount,
  *                              GDALDummyProgress, nullptr );
  * \endcode
  *
- * @see GDALRegenerateOverviews()
+ * @see GDALRegenerateOverviewsEx()
  */
 
 CPLErr GDALDataset::BuildOverviews( const char *pszResampling,
                                     int nOverviews, const int *panOverviewList,
                                     int nListBands, const int *panBandList,
                                     GDALProgressFunc pfnProgress,
-                                    void * pProgressData )
-
+                                    void * pProgressData,
+                                    CSLConstList papszOptions )
 {
     int *panAllBandList = nullptr;
 
@@ -2000,9 +2002,24 @@ CPLErr GDALDataset::BuildOverviews( const char *pszResampling,
     if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
 
+    // At time of writing, all overview generation options are actually
+    // expected to be passed as configuration options.
+    std::vector<std::unique_ptr<CPLConfigOptionSetter>> apoConfigOptionSetter;
+    for( CSLConstList papszIter = papszOptions; papszIter && *papszIter; ++papszIter )
+    {
+        char* pszKey = nullptr;
+        const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
+        if( pszKey && pszValue )
+        {
+            apoConfigOptionSetter.emplace_back(
+                cpl::make_unique<CPLConfigOptionSetter>(pszKey, pszValue, false));
+        }
+        CPLFree(pszKey);
+    }
+
     const CPLErr eErr =
         IBuildOverviews(pszResampling, nOverviews, panOverviewList, nListBands,
-                        panBandList, pfnProgress, pProgressData);
+                        panBandList, pfnProgress, pProgressData, papszOptions);
 
     if( panAllBandList != nullptr )
         CPLFree(panAllBandList);
@@ -2017,7 +2034,7 @@ CPLErr GDALDataset::BuildOverviews( const char *pszResampling,
 /**
  * \brief Build raster overview(s)
  *
- * @see GDALDataset::BuildOverviews()
+ * @see GDALDataset::BuildOverviews() and GDALBuildOverviews()
  */
 
 CPLErr CPL_STDCALL GDALBuildOverviews( GDALDatasetH hDataset,
@@ -2032,7 +2049,34 @@ CPLErr CPL_STDCALL GDALBuildOverviews( GDALDatasetH hDataset,
 
     return GDALDataset::FromHandle(hDataset)
         ->BuildOverviews(pszResampling, nOverviews, panOverviewList, nListBands,
-                         panBandList, pfnProgress, pProgressData);
+                         panBandList, pfnProgress, pProgressData, nullptr);
+}
+
+/************************************************************************/
+/*                         GDALBuildOverviews()                         */
+/************************************************************************/
+
+/**
+ * \brief Build raster overview(s)
+ *
+ * @see GDALDataset::BuildOverviews()
+ * @since GDAL 3.6
+ */
+
+CPLErr CPL_STDCALL GDALBuildOverviewsEx( GDALDatasetH hDataset,
+                                         const char *pszResampling,
+                                         int nOverviews, const int *panOverviewList,
+                                         int nListBands, const int *panBandList,
+                                         GDALProgressFunc pfnProgress,
+                                         void * pProgressData,
+                                         CSLConstList papszOptions )
+
+{
+    VALIDATE_POINTER1(hDataset, "GDALBuildOverviews", CE_Failure);
+
+    return GDALDataset::FromHandle(hDataset)
+        ->BuildOverviews(pszResampling, nOverviews, panOverviewList, nListBands,
+                         panBandList, pfnProgress, pProgressData, papszOptions);
 }
 
 /************************************************************************/
@@ -2046,13 +2090,14 @@ CPLErr GDALDataset::IBuildOverviews( const char *pszResampling,
                                      int nOverviews, const int *panOverviewList,
                                      int nListBands, const int *panBandList,
                                      GDALProgressFunc pfnProgress,
-                                     void * pProgressData )
+                                     void * pProgressData,
+                                     CSLConstList papszOptions )
 
 {
     if( oOvManager.IsInitialized() )
         return oOvManager.BuildOverviews(
             nullptr, pszResampling, nOverviews, panOverviewList, nListBands,
-            panBandList, pfnProgress, pProgressData);
+            panBandList, pfnProgress, pProgressData, papszOptions);
     else
     {
         ReportError(CE_Failure, CPLE_NotSupported,

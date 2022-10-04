@@ -302,14 +302,15 @@ GTIFFBuildOverviews( const char * pszFilename,
                      int nBands, GDALRasterBand* const* papoBandList,
                      int nOverviews, const int * panOverviewList,
                      const char * pszResampling,
-                     GDALProgressFunc pfnProgress, void * pProgressData )
+                     GDALProgressFunc pfnProgress, void * pProgressData,
+                     CSLConstList papszOptions )
 
 {
     return GTIFFBuildOverviewsEx(pszFilename, nBands, papoBandList,
                                  nOverviews, panOverviewList,
                                  nullptr,
                                  pszResampling,
-                                 nullptr,
+                                 papszOptions,
                                  pfnProgress, pProgressData);
 }
 
@@ -464,18 +465,33 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
         }
     }
 
+    const auto GetOptionValue = [papszOptions](const char* pszOptionKey,
+                                               const char* pszConfigOptionKey,
+                                               const char** ppszKeyUsed = nullptr)
+    {
+        const char* pszVal = CSLFetchNameValue(papszOptions, pszOptionKey);
+        if( pszVal )
+        {
+            if( ppszKeyUsed )
+                *ppszKeyUsed = pszOptionKey;
+            return pszVal;
+        }
+        pszVal = CPLGetConfigOption(pszConfigOptionKey, nullptr);
+        if( pszVal && ppszKeyUsed )
+            *ppszKeyUsed = pszConfigOptionKey;
+        return pszVal;
+    };
+
 /* -------------------------------------------------------------------- */
 /*      Use specified compression method.                               */
 /* -------------------------------------------------------------------- */
-    const char *pszCompress = papszOptions ?
-        CSLFetchNameValue(papszOptions, "COMPRESS") :
-        CPLGetConfigOption( "COMPRESS_OVERVIEW", nullptr );
+    const char *pszCompressKey = "";
+    const char *pszCompress = GetOptionValue("COMPRESS", "COMPRESS_OVERVIEW", &pszCompressKey);
 
     if( pszCompress != nullptr && pszCompress[0] != '\0' )
     {
         nCompression =
-            GTIFFGetCompressionMethod(pszCompress,
-                    papszOptions ? "COMPRESS" : "COMPRESS_OVERVIEW");
+            GTIFFGetCompressionMethod(pszCompress, pszCompressKey);
         if( nCompression < 0 )
             return CE_Failure;
     }
@@ -532,9 +548,7 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
         }
     }
 
-    const char* pszInterleave = papszOptions ?
-        CSLFetchNameValue(papszOptions, "INTERLEAVE") :
-        CPLGetConfigOption( "INTERLEAVE_OVERVIEW", nullptr );
+    const char* pszInterleave = GetOptionValue("INTERLEAVE", "INTERLEAVE_OVERVIEW");
     if( pszInterleave != nullptr && pszInterleave[0] != '\0' )
     {
         if( EQUAL( pszInterleave, "PIXEL" ) )
@@ -574,9 +588,7 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
     else
         nPhotometric = PHOTOMETRIC_MINISBLACK;
 
-    const char* pszPhotometric = papszOptions ?
-        CSLFetchNameValue(papszOptions, "PHOTOMETRIC") :
-        CPLGetConfigOption( "PHOTOMETRIC_OVERVIEW", nullptr );
+    const char* pszPhotometric = GetOptionValue("PHOTOMETRIC", "PHOTOMETRIC_OVERVIEW");
     if( pszPhotometric != nullptr && pszPhotometric[0] != '\0' )
     {
         if( EQUAL( pszPhotometric, "MINISBLACK" ) )
@@ -662,9 +674,7 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
     int nPredictor = PREDICTOR_NONE;
     if( GTIFFSupportsPredictor(nCompression) )
     {
-        const char* pszPredictor = papszOptions ?
-            CSLFetchNameValue(papszOptions, "PREDICTOR") :
-            CPLGetConfigOption( "PREDICTOR_OVERVIEW", nullptr );
+        const char* pszPredictor = GetOptionValue("PREDICTOR", "PREDICTOR_OVERVIEW");
         if( pszPredictor != nullptr )
         {
             nPredictor = atoi( pszPredictor );
@@ -707,9 +717,7 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
     /* -------------------------------------------------------------------- */
     /*      Should the file be created as a bigtiff file?                   */
     /* -------------------------------------------------------------------- */
-        const char *pszBIGTIFF = papszOptions ?
-            CSLFetchNameValue(papszOptions, "BIGTIFF") :
-            CPLGetConfigOption( "BIGTIFF_OVERVIEW", nullptr );
+        const char *pszBIGTIFF = GetOptionValue("BIGTIFF", "BIGTIFF_OVERVIEW");
 
         if( pszBIGTIFF == nullptr )
             pszBIGTIFF = "IF_SAFER";
@@ -900,9 +908,7 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
         {
             anExtraSamples.push_back(
                 GTiffGetAlphaValue(
-                    papszOptions ?
-                        CSLFetchNameValue(papszOptions, "ALPHA") :
-                        CPLGetConfigOption("GTIFF_ALPHA", nullptr),
+                    GetOptionValue("ALPHA", "GTIFF_ALPHA"),
                     DEFAULT_ALPHA_TYPE));
         }
         else
@@ -960,12 +966,8 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
                              static_cast<int>(anExtraSamples.size()),
                              anExtraSamples.empty() ? nullptr : anExtraSamples.data(),
                              osMetadata,
-                             papszOptions ?
-                                CSLFetchNameValue(papszOptions, "JPEG_QUALITY") :
-                                CPLGetConfigOption( "JPEG_QUALITY_OVERVIEW", nullptr ),
-                             papszOptions ?
-                                CSLFetchNameValue(papszOptions, "JPEG_TABLESMODE") :
-                                CPLGetConfigOption( "JPEG_TABLESMODE_OVERVIEW", nullptr ),
+                             GetOptionValue("JPEG_QUALITY", "JPEG_QUALITY_OVERVIEW"),
+                             GetOptionValue("JPEG_TABLESMODE", "JPEG_TABLESMODE_OVERVIEW"),
                              pszNoData,
                              panLercAddCompressionAndVersion,
                              false
@@ -1000,8 +1002,7 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
     aosOpenOptions.SetNameValue("NUM_THREADS",
                                 CSLFetchNameValue(papszOptions, "NUM_THREADS"));
     aosOpenOptions.SetNameValue("SPARSE_OK",
-                                CSLFetchNameValueDef(papszOptions, "SPARSE_OK",
-                                     CPLGetConfigOption("SPARSE_OK_OVERVIEW", nullptr)));
+                                GetOptionValue("SPARSE_OK", "SPARSE_OK_OVERVIEW"));
     aosOpenOptions.SetNameValue("@MASK_OVERVIEW_DATASET",
                                 CSLFetchNameValue(papszOptions, "MASK_OVERVIEW_DATASET"));
     GDALDataset *hODS = GDALDataset::Open( pszFilename,
@@ -1016,10 +1017,7 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     TIFF *hTIFF = static_cast<TIFF *>( hODS->GetInternalHandle(nullptr) );
 
-    const char* pszJPEGQuality =
-        papszOptions ?
-            CSLFetchNameValue(papszOptions, "JPEG_QUALITY") :
-            CPLGetConfigOption( "JPEG_QUALITY_OVERVIEW", nullptr );
+    const char* pszJPEGQuality = GetOptionValue("JPEG_QUALITY", "JPEG_QUALITY_OVERVIEW");
     if( nCompression == COMPRESSION_JPEG && pszJPEGQuality != nullptr )
     {
         const int nJpegQuality = atoi(pszJPEGQuality);
@@ -1028,10 +1026,7 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
         GTIFFSetJpegQuality(GDALDataset::ToHandle(hODS), nJpegQuality);
     }
 
-    const char* pszWebpLevel =
-        papszOptions ?
-            CSLFetchNameValue(papszOptions, "WEBP_LEVEL") :
-            CPLGetConfigOption( "WEBP_LEVEL_OVERVIEW", nullptr );
+    const char* pszWebpLevel = GetOptionValue("WEBP_LEVEL", "WEBP_LEVEL_OVERVIEW");
     if( nCompression == COMPRESSION_WEBP && pszWebpLevel != nullptr )
     {
         const int nWebpLevel = atoi(pszWebpLevel);
@@ -1042,10 +1037,7 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
         }
     }
 
-    const char* pszWebpLossless =
-        papszOptions ?
-            CSLFetchNameValue(papszOptions, "WEBP_LOSSLESS") :
-            CPLGetConfigOption( "WEBP_LOSSLESS_OVERVIEW", nullptr );
+    const char* pszWebpLossless = GetOptionValue("WEBP_LOSSLESS", "WEBP_LOSSLESS_OVERVIEW");
     if( nCompression == COMPRESSION_WEBP && pszWebpLossless != nullptr )
     {
         const bool bWebpLossless = CPLTestBool(pszWebpLossless);
@@ -1053,10 +1045,7 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
         GTIFFSetWebPLossless(GDALDataset::ToHandle(hODS), bWebpLossless);
     }
 
-    const char* pszJPEGTablesMode =
-        papszOptions ?
-            CSLFetchNameValue(papszOptions, "JPEG_TABLESMODE") :
-            CPLGetConfigOption( "JPEG_TABLESMODE_OVERVIEW", nullptr );
+    const char* pszJPEGTablesMode = GetOptionValue("JPEG_TABLESMODE", "JPEG_TABLESMODE_OVERVIEW");
     if( nCompression == COMPRESSION_JPEG && pszJPEGTablesMode != nullptr )
     {
         const int nJpegTablesMode = atoi(pszJPEGTablesMode);
@@ -1065,10 +1054,7 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
         GTIFFSetJpegTablesMode(GDALDataset::ToHandle(hODS), nJpegTablesMode);
     }
 
-    const char* pszZLevel =
-        papszOptions ?
-            CSLFetchNameValue(papszOptions, "ZLEVEL") :
-            CPLGetConfigOption( "ZLEVEL_OVERVIEW", nullptr );
+    const char* pszZLevel = GetOptionValue("ZLEVEL", "ZLEVEL_OVERVIEW");
     if( (nCompression == COMPRESSION_DEFLATE ||
          anLercAddCompressionAndVersion[1] == LERC_ADD_COMPRESSION_DEFLATE) &&
          pszZLevel != nullptr )
@@ -1081,10 +1067,7 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
         }
     }
 
-    const char* pszZSTDLevel =
-        papszOptions ?
-            CSLFetchNameValue(papszOptions, "ZSTD_LEVEL") :
-            CPLGetConfigOption( "ZSTD_LEVEL_OVERVIEW", nullptr );
+    const char* pszZSTDLevel = GetOptionValue("ZSTD_LEVEL", "ZSTD_LEVEL_OVERVIEW");
     if( (nCompression == COMPRESSION_ZSTD ||
          anLercAddCompressionAndVersion[1] == LERC_ADD_COMPRESSION_ZSTD) &&
          pszZSTDLevel != nullptr )
@@ -1097,10 +1080,7 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
         }
     }
 
-    const char* pszMaxZError =
-        papszOptions ?
-            CSLFetchNameValue(papszOptions, "MAX_Z_ERROR") :
-            CPLGetConfigOption( "MAX_Z_ERROR_OVERVIEW", nullptr );
+    const char* pszMaxZError = GetOptionValue("MAX_Z_ERROR", "MAX_Z_ERROR_OVERVIEW");
     if( nCompression == COMPRESSION_LERC &&
          pszMaxZError != nullptr )
     {
@@ -1249,7 +1229,8 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
                     GDALRegenerateOverviewsMultiBand(
                         nBands, papoBandList,
                         nOverviews, papapoOverviewBands,
-                        pszResampling, pfnProgress, pProgressData );
+                        pszResampling, pfnProgress, pProgressData,
+                        papszOptions);
         }
 
         for( int iBand = 0; iBand < nBands; iBand++ )
@@ -1312,13 +1293,14 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
 
                 if( eErr == CE_None )
                     eErr =
-                        GDALRegenerateOverviews(
+                        GDALRegenerateOverviewsEx(
                             hSrcBand,
                             nDstOverviews,
                             reinterpret_cast<GDALRasterBandH *>( papoOverviews ),
                             pszResampling,
                             GDALScaledProgress,
-                            pScaledProgressData );
+                            pScaledProgressData,
+                            papszOptions);
             }
 
             GDALDestroyScaledProgress( pScaledProgressData );

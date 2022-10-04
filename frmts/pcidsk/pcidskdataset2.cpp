@@ -1518,7 +1518,8 @@ CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
                                         int nOverviews, const int *panOverviewList,
                                         int nListBands, const int *panBandList,
                                         GDALProgressFunc pfnProgress,
-                                        void *pProgressData )
+                                        void *pProgressData,
+                                        CSLConstList papszOptions )
 
 {
     PCIDSK2Band *poBand = reinterpret_cast<PCIDSK2Band*>(
@@ -1560,7 +1561,8 @@ CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
 
         return GDALDataset::IBuildOverviews(
             pszResampling, nOverviews, panOverviewList,
-            nListBands, panBandList, pfnProgress, pProgressData );
+            nListBands, panBandList, pfnProgress, pProgressData,
+            papszOptions);
     }
 
     if( nListBands == 0 )
@@ -1679,11 +1681,12 @@ CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
 
         if( nNewOverviews > 0 )
         {
-            eErr = GDALRegenerateOverviews( (GDALRasterBandH) poBand,
+            eErr = GDALRegenerateOverviewsEx( (GDALRasterBandH) poBand,
                                             nNewOverviews,
                                             reinterpret_cast<GDALRasterBandH*>( papoOverviewBands ),
                                             pszResampling,
-                                            pfnProgress, pProgressData );
+                                            pfnProgress, pProgressData,
+                                            papszOptions );
 
             // Mark the regenerated overviews as valid.
             for( int i = 0; i < static_cast<int>( anRegenLevels.size() ); i++ )

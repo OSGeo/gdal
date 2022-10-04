@@ -689,7 +689,8 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
     virtual CPLErr IBuildOverviews( const char *,
                                     int, const int *,
                                     int, const int *,
-                                    GDALProgressFunc, void * ) override;
+                                    GDALProgressFunc, void *,
+                                    CSLConstList papszOptions ) override;
 
 #endif
     OGRSQLiteDataSource* GetParentDS() const { return m_poParentDS; }

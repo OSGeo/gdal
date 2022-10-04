@@ -298,7 +298,8 @@ private:
                                          int nOverviews, const int * panOverviewList,
                                          int nBandsIn, const int * panBandList,
                                          GDALProgressFunc pfnProgress,
-                                         void * pProgressData ) override;
+                                         void * pProgressData,
+                                         CSLConstList papszOptions ) override;
     virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
                               int nXOff, int nYOff, int nXSize, int nYSize,
                               void * pData, int nBufXSize, int nBufYSize,

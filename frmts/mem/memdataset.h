@@ -126,7 +126,8 @@ class CPL_DLL MEMDataset CPL_NON_FINAL: public GDALDataset
                                      int nOverviews, const int *panOverviewList,
                                      int nListBands, const int *panBandList,
                                      GDALProgressFunc pfnProgress,
-                                     void * pProgressData ) override;
+                                     void * pProgressData,
+                                     CSLConstList papszOptions ) override;
 
     virtual CPLErr          CreateMaskBand( int nFlagsIn ) override;
 

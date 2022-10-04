@@ -238,7 +238,8 @@ public:
                int nListBandsover,
                const int* panBandList,
                GDALProgressFunc pfnProgress,
-               void* pProgresoversData ) override;
+               void* pProgresoversData,
+               CSLConstList papszOptions) override;
     CPLErr CreateMaskBand( int nFlags ) override;
     // cppcheck-suppress functionStatic
     OGRErr StartTransaction(int /* bForce */ =FALSE) override

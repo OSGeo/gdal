@@ -1217,7 +1217,8 @@ CPLErr GDALPamDataset::IBuildOverviews( const char *pszResampling,
                                         int nOverviews, const int *panOverviewList,
                                         int nListBands, const int *panBandList,
                                         GDALProgressFunc pfnProgress,
-                                        void * pProgressData )
+                                        void * pProgressData,
+                                        CSLConstList papszOptions )
 
 {
 /* -------------------------------------------------------------------- */
@@ -1228,7 +1229,8 @@ CPLErr GDALPamDataset::IBuildOverviews( const char *pszResampling,
         return GDALDataset::IBuildOverviews( pszResampling,
                                              nOverviews, panOverviewList,
                                              nListBands, panBandList,
-                                             pfnProgress, pProgressData );
+                                             pfnProgress, pProgressData,
+                                             papszOptions );
 
 /* -------------------------------------------------------------------- */
 /*      If we appear to have subdatasets and to have a physical         */
@@ -1241,13 +1243,15 @@ CPLErr GDALPamDataset::IBuildOverviews( const char *pszResampling,
             psPam->osPhysicalFilename, pszResampling,
             nOverviews, panOverviewList,
             nListBands, panBandList,
-            pfnProgress, pProgressData );
+            pfnProgress, pProgressData,
+            papszOptions);
     }
 
     return GDALDataset::IBuildOverviews( pszResampling,
                                          nOverviews, panOverviewList,
                                          nListBands, panBandList,
-                                         pfnProgress, pProgressData );
+                                         pfnProgress, pProgressData,
+                                         papszOptions );
 }
 //! @endcond
 

@@ -107,7 +107,8 @@ class JP2KAKDataset final: public GDALJP2AbstractDataset
                                     int, const int *,
                                     int, const int *,
                                     GDALProgressFunc,
-                                    void * ) override;
+                                    void *,
+                                    CSLConstList papszOptions ) override;
 
     static void KakaduInitialize();
     static GDALDataset *Open( GDALOpenInfo * );
