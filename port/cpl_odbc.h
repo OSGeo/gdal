@@ -174,6 +174,7 @@ class CPL_DLL CPLODBCSession {
 
     CPL_DISALLOW_COPY_ASSIGN(CPLODBCSession)
 
+  protected:
     CPLString m_osLastError{};
     HENV      m_hEnv = nullptr;
     HDBC      m_hDBC = nullptr;
@@ -225,6 +226,7 @@ class CPL_DLL CPLODBCStatement {
 
     CPL_DISALLOW_COPY_ASSIGN(CPLODBCStatement)
 
+  protected:
     int m_nFlags = 0;
 
     CPLODBCSession     *m_poSession = nullptr;
