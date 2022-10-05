@@ -5204,6 +5204,14 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
         return nullptr;
     }
 
+    int bHasNoData = FALSE;
+    double dfNoDataValue =
+            poSrcDS->GetRasterBand(1)->GetNoDataValue(&bHasNoData);
+    if( eDT != GDT_Byte && bHasNoData )
+    {
+        poDS->GetRasterBand(1)->SetNoDataValue(dfNoDataValue);
+    }
+
     poDS->SetGeoTransform(adfGeoTransform);
     poDS->SetProjection(pszWKT);
     CPLFree(pszWKT);
@@ -5211,14 +5219,6 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
     if( nTargetBands == 1 && nBands == 1 && poSrcDS->GetRasterBand(1)->GetColorTable() != nullptr )
     {
         poDS->GetRasterBand(1)->SetColorTable( poSrcDS->GetRasterBand(1)->GetColorTable() );
-    }
-
-    int bHasNoData = FALSE;
-    double dfNoDataValue =
-            poSrcDS->GetRasterBand(1)->GetNoDataValue(&bHasNoData);
-    if( eDT != GDT_Byte && bHasNoData )
-    {
-        poDS->GetRasterBand(1)->SetNoDataValue(dfNoDataValue);
     }
 
     hTransformArg =
