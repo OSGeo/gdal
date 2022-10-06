@@ -4150,6 +4150,37 @@ def test_gpkg_flushing_not_all_bands(tile_format):
 
 
 ###############################################################################
+# Test bugfix for scenario of https://github.com/OSGeo/gdal/pull/6476
+
+
+def test_gpkg_uint16_tiling_scheme_nodata_overview():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 100, 100, 1, gdal.GDT_UInt16)
+    src_ds.GetRasterBand(1).SetNoDataValue(-9999)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    src_ds.SetProjection(srs.ExportToWkt())
+    src_ds.SetGeoTransform(
+        [-180, src_ds.RasterXSize / 360.0, 0, 90, 0, -src_ds.RasterYSize / 180.0]
+    )
+
+    out_filename = "/vsimem/test.gpkg"
+    ds = gdal.GetDriverByName("GPKG").CreateCopy(
+        out_filename, src_ds, options=["TILING_SCHEME=GoogleCRS84Quad"]
+    )
+    assert (
+        ds.GetRasterBand(1).GetNoDataValue() == src_ds.GetRasterBand(1).GetNoDataValue()
+    )
+    assert (
+        ds.GetRasterBand(1).GetOverview(0).GetNoDataValue()
+        == src_ds.GetRasterBand(1).GetNoDataValue()
+    )
+    ds = None
+
+    gdal.Unlink("/vsimem/tmp.gpkg")
+
+
+###############################################################################
 #
 
 
