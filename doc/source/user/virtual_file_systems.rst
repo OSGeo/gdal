@@ -313,7 +313,7 @@ accept a comma-separated list of storage class names and defaults to ``GLACIER,D
 
 Since GDAL 3.1, the :cpp:func:`VSIRename` operation is supported (first doing a copy of the original file and then deleting it)
 
-Since GDAL 3.1, the :cpp:func:`VSIRmdirRecursive` operation is supported (using batch deletion method). The :decl_configoption:`CPL_VSIS3_USE_BASE_RMDIR_RECURSIVE` configuration option can be set to YES if using a S3-like API that doesn't support batch deletion (GDAL >= 3.2)
+Since GDAL 3.1, the :cpp:func:`VSIRmdirRecursive` operation is supported (using batch deletion method). The :decl_configoption:`CPL_VSIS3_USE_BASE_RMDIR_RECURSIVE` configuration option can be set to YES if using a S3-like API that doesn't support batch deletion (GDAL >= 3.2). Starting with GDAL 3.6, this can be set as a path-specific option in the :ref:`GDAL configuration file <gdal_configuration_file>`
 
 Starting with GDAL 3.5, profiles that use IAM role assumption (see https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-role.html) are handled. The ``role_arn`` and ``source_profile`` keywords are required in such profiles. The optional ``external_id``, ``mfa_serial`` and ``role_session_name`` can be specified. ``credential_source`` is not supported currently.
 
