@@ -5504,6 +5504,9 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
         return nullptr;
     }
 
+    // Assign nodata values before the SetGeoTransform call.
+    // SetGeoTransform will trigger creation of the overview datasets for each zoom level
+    // and at that point the nodata value needs to be known.
     int bHasNoData = FALSE;
     double dfNoDataValue =
             poSrcDS->GetRasterBand(1)->GetNoDataValue(&bHasNoData);
