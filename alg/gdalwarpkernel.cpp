@@ -6107,25 +6107,45 @@ static void GWKAverageOrModeThread( void* pData)
             // [iDstX,iDstY]x[iDstX+1,iDstY+1] square back to source
             // coordinates, and take the bounding box of the got source
             // coordinates.
-            const double dfXMin = std::min(padfX[iDstX],padfX2[iDstX]) -
-                                    poWK->nSrcXOff;
+
+            if( padfX[iDstX] > padfX2[iDstX] )
+                std::swap(padfX[iDstX], padfX2[iDstX]);
+
+            // Detect situations where the target pixel is close to the
+            // antimeridian and when padfX[iDstX] and padfX2[iDstX] are very
+            // close to the left-most and right-most columns of the source
+            // raster. The 2 value below was experimentally determined to
+            // avoid false-positives and false-negatives.
+            // Adresses https://github.com/OSGeo/gdal/issues/6478
+            bool bWrapOverX = false;
+            const int nThresholdWrapOverX = std::min(2, nSrcXSize / 10);
+            if( poWK->nSrcXOff == 0 &&
+                padfX[iDstX] * poWK->dfXScale < nThresholdWrapOverX &&
+                (nSrcXSize - padfX2[iDstX]) * poWK->dfXScale < nThresholdWrapOverX )
+            {
+                bWrapOverX = true;
+                std::swap(padfX[iDstX], padfX2[iDstX]);
+                padfX2[iDstX] += nSrcXSize;
+            }
+
+            const double dfXMin = padfX[iDstX] - poWK->nSrcXOff;
             int iSrcXMin =
                 std::max(static_cast<int>(floor(dfXMin + 1e-10)), 0);
-            const double dfXMax = std::max(padfX[iDstX],padfX2[iDstX])  -
-                                    poWK->nSrcXOff;
-            int iSrcXMax =
-                std::min(static_cast<int>(ceil(dfXMax - 1e-10)), nSrcXSize);
-            const double dfYMin = std::min(padfY[iDstX],padfY2[iDstX]) -
-                                    poWK->nSrcYOff;
-            int iSrcYMin =
-                std::max(static_cast<int>(floor(dfYMin + 1e-10)), 0);
-            const double dfYMax = std::max(padfY[iDstX],padfY2[iDstX]) -
-                                    poWK->nSrcYOff;
-            int iSrcYMax =
-                std::min(static_cast<int>(ceil(dfYMax - 1e-10)), nSrcYSize);
-
+            const double dfXMax = padfX2[iDstX] - poWK->nSrcXOff;
+            int iSrcXMax = static_cast<int>(ceil(dfXMax - 1e-10));
+            if( !bWrapOverX )
+                iSrcXMax = std::min(iSrcXMax, nSrcXSize);
             if( iSrcXMin == iSrcXMax && iSrcXMax < nSrcXSize )
                 iSrcXMax++;
+
+            if( padfY[iDstX] > padfY2[iDstX] )
+                std::swap(padfY[iDstX], padfY2[iDstX]);
+            const double dfYMin = padfY[iDstX]- poWK->nSrcYOff;
+            int iSrcYMin =
+                std::max(static_cast<int>(floor(dfYMin + 1e-10)), 0);
+            const double dfYMax = padfY2[iDstX] - poWK->nSrcYOff;
+            int iSrcYMax =
+                std::min(static_cast<int>(ceil(dfYMax - 1e-10)), nSrcYSize);
             if( iSrcYMin == iSrcYMax && iSrcYMax < nSrcYSize )
                 iSrcYMax++;
 
@@ -6174,6 +6194,9 @@ static void GWKAverageOrModeThread( void* pData)
                         iSrcOffset = iSrcXMin + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
                         for( int iSrcX = iSrcXMin; iSrcX < iSrcXMax; iSrcX++, iSrcOffset++ )
                         {
+                            if( bWrapOverX )
+                                iSrcOffset = (iSrcX % nSrcXSize) + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
+
                             if( poWK->panUnifiedSrcValid != nullptr
                                 && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
                                      & (0x01 << (iSrcOffset & 0x1f))) )
@@ -6232,6 +6255,9 @@ static void GWKAverageOrModeThread( void* pData)
                         iSrcOffset = iSrcXMin + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
                         for( int iSrcX = iSrcXMin; iSrcX < iSrcXMax; iSrcX++, iSrcOffset++ )
                         {
+                            if( bWrapOverX )
+                                iSrcOffset = (iSrcX % nSrcXSize) + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
+
                             if( poWK->panUnifiedSrcValid != nullptr
                                 && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
                                      & (0x01 << (iSrcOffset & 0x1f))) )
@@ -6286,6 +6312,9 @@ static void GWKAverageOrModeThread( void* pData)
                         iSrcOffset = iSrcXMin + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
                         for( int iSrcX = iSrcXMin; iSrcX < iSrcXMax; iSrcX++, iSrcOffset++ )
                         {
+                            if( bWrapOverX )
+                                iSrcOffset = (iSrcX % nSrcXSize) + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
+
                             if( poWK->panUnifiedSrcValid != nullptr
                                 && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
                                      & (0x01 << (iSrcOffset & 0x1f))) )
@@ -6347,11 +6376,11 @@ static void GWKAverageOrModeThread( void* pData)
 
                         for( int iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++ )
                         {
-                            for( int iSrcX = iSrcXMin;
-                                 iSrcX < iSrcXMax;
-                                 iSrcX++ )
+                            iSrcOffset = iSrcXMin + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
+                            for( int iSrcX = iSrcXMin; iSrcX < iSrcXMax; iSrcX++, iSrcOffset++ )
                             {
-                                iSrcOffset = iSrcX + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
+                                if( bWrapOverX )
+                                    iSrcOffset = (iSrcX % nSrcXSize) + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
 
                                 if( poWK->panUnifiedSrcValid != nullptr
                                     && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
@@ -6416,11 +6445,11 @@ static void GWKAverageOrModeThread( void* pData)
 
                         for( int iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++ )
                         {
-                            for( int iSrcX = iSrcXMin;
-                                 iSrcX < iSrcXMax;
-                                 iSrcX++ )
+                            iSrcOffset = iSrcXMin + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
+                            for( int iSrcX = iSrcXMin; iSrcX < iSrcXMax; iSrcX++, iSrcOffset++ )
                             {
-                                iSrcOffset = iSrcX + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
+                                if( bWrapOverX )
+                                    iSrcOffset = (iSrcX % nSrcXSize) + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
 
                                 if( poWK->panUnifiedSrcValid != nullptr
                                     && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
@@ -6471,9 +6500,11 @@ static void GWKAverageOrModeThread( void* pData)
                     // This code adapted from nAlgo 1 method, GRA_Average.
                     for( int iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++ )
                     {
-                        for( int iSrcX = iSrcXMin; iSrcX < iSrcXMax; iSrcX++ )
+                        iSrcOffset = iSrcXMin + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
+                        for( int iSrcX = iSrcXMin; iSrcX < iSrcXMax; iSrcX++, iSrcOffset++ )
                         {
-                            iSrcOffset = iSrcX + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
+                            if( bWrapOverX )
+                                iSrcOffset = (iSrcX % nSrcXSize) + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
 
                             if( poWK->panUnifiedSrcValid != nullptr
                                 && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
@@ -6522,9 +6553,11 @@ static void GWKAverageOrModeThread( void* pData)
                     // This code adapted from nAlgo 1 method, GRA_Average.
                     for( int iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++ )
                     {
-                        for( int iSrcX = iSrcXMin; iSrcX < iSrcXMax; iSrcX++ )
+                        iSrcOffset = iSrcXMin + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
+                        for( int iSrcX = iSrcXMin; iSrcX < iSrcXMax; iSrcX++, iSrcOffset++ )
                         {
-                            iSrcOffset = iSrcX + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
+                            if( bWrapOverX )
+                                iSrcOffset = (iSrcX % nSrcXSize) + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
 
                             if( poWK->panUnifiedSrcValid != nullptr
                                 && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
@@ -6574,9 +6607,11 @@ static void GWKAverageOrModeThread( void* pData)
                     // This code adapted from nAlgo 1 method, GRA_Average.
                     for( int iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++ )
                     {
-                        for( int iSrcX = iSrcXMin; iSrcX < iSrcXMax; iSrcX++ )
+                        iSrcOffset = iSrcXMin + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
+                        for( int iSrcX = iSrcXMin; iSrcX < iSrcXMax; iSrcX++, iSrcOffset++ )
                         {
-                            iSrcOffset = iSrcX + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
+                            if( bWrapOverX )
+                                iSrcOffset = (iSrcX % nSrcXSize) + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
 
                             if( poWK->panUnifiedSrcValid != nullptr
                                 && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
