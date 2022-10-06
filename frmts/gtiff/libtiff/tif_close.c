@@ -52,8 +52,10 @@ TIFFCleanup(TIFF* tif)
 	(*tif->tif_cleanup)(tif);
 	TIFFFreeDirectory(tif);
 
-	if (tif->tif_dirlist)
-		_TIFFfree(tif->tif_dirlist);
+	if (tif->tif_dirlistoff)
+		_TIFFfree(tif->tif_dirlistoff);
+	if (tif->tif_dirlistdirn)
+		_TIFFfree(tif->tif_dirlistdirn);
 
 	/*
          * Clean up client info links.

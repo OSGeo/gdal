@@ -1571,12 +1571,22 @@ TIFFDefaultDirectory(TIFF* tif)
 }
 
 static int
-TIFFAdvanceDirectory(TIFF* tif, uint64_t* nextdir, uint64_t* off)
+TIFFAdvanceDirectory(TIFF* tif, uint64_t* nextdiroff, uint64_t* off, uint16_t* nextdirnum)
 {
 	static const char module[] = "TIFFAdvanceDirectory";
+
+	/* Add this directory to the directory list, if not already in. */
+	if (!_TIFFCheckDirNumberAndOffset(tif, *nextdirnum, *nextdiroff)) {
+		TIFFErrorExt(tif->tif_clientdata, module, "Starting directory %"PRIu16" at offset 0x%"PRIx64" (%"PRIu64") might cause an IFD loop",
+			*nextdirnum, *nextdiroff, *nextdiroff);
+		*nextdiroff = 0;
+		*nextdirnum = 0;
+		return(0);
+	}
+
 	if (isMapped(tif))
 	{
-		uint64_t poff=*nextdir;
+		uint64_t poff=*nextdiroff;
 		if (!(tif->tif_flags&TIFF_BIGTIFF))
 		{
 			tmsize_t poffa,poffb,poffc,poffd;
@@ -1587,7 +1597,7 @@ TIFFAdvanceDirectory(TIFF* tif, uint64_t* nextdir, uint64_t* off)
 			if (((uint64_t)poffa != poff) || (poffb < poffa) || (poffb < (tmsize_t)sizeof(uint16_t)) || (poffb > tif->tif_size))
 			{
 				TIFFErrorExt(tif->tif_clientdata,module,"Error fetching directory count");
-                                  *nextdir=0;
+                                  *nextdiroff=0;
 				return(0);
 			}
 			_TIFFmemcpy(&dircount,tif->tif_base+poffa,sizeof(uint16_t));
@@ -1605,7 +1615,7 @@ TIFFAdvanceDirectory(TIFF* tif, uint64_t* nextdir, uint64_t* off)
 			_TIFFmemcpy(&nextdir32,tif->tif_base+poffc,sizeof(uint32_t));
 			if (tif->tif_flags&TIFF_SWAB)
 				TIFFSwabLong(&nextdir32);
-			*nextdir=nextdir32;
+			*nextdiroff=nextdir32;
 		}
 		else
 		{
@@ -1637,11 +1647,10 @@ TIFFAdvanceDirectory(TIFF* tif, uint64_t* nextdir, uint64_t* off)
 			}
 			if (off!=NULL)
 				*off=(uint64_t)poffc;
-			_TIFFmemcpy(nextdir,tif->tif_base+poffc,sizeof(uint64_t));
+			_TIFFmemcpy(nextdiroff,tif->tif_base+poffc,sizeof(uint64_t));
 			if (tif->tif_flags&TIFF_SWAB)
-				TIFFSwabLong8(nextdir);
+				TIFFSwabLong8(nextdiroff);
 		}
-		return(1);
 	}
 	else
 	{
@@ -1649,7 +1658,7 @@ TIFFAdvanceDirectory(TIFF* tif, uint64_t* nextdir, uint64_t* off)
 		{
 			uint16_t dircount;
 			uint32_t nextdir32;
-			if (!SeekOK(tif, *nextdir) ||
+			if (!SeekOK(tif, *nextdiroff) ||
 			    !ReadOK(tif, &dircount, sizeof (uint16_t))) {
 				TIFFErrorExt(tif->tif_clientdata, module, "%s: Error fetching directory count",
 				    tif->tif_name);
@@ -1670,13 +1679,13 @@ TIFFAdvanceDirectory(TIFF* tif, uint64_t* nextdir, uint64_t* off)
 			}
 			if (tif->tif_flags & TIFF_SWAB)
 				TIFFSwabLong(&nextdir32);
-			*nextdir=nextdir32;
+			*nextdiroff=nextdir32;
 		}
 		else
 		{
 			uint64_t dircount64;
 			uint16_t dircount16;
-			if (!SeekOK(tif, *nextdir) ||
+			if (!SeekOK(tif, *nextdiroff) ||
 			    !ReadOK(tif, &dircount64, sizeof (uint64_t))) {
 				TIFFErrorExt(tif->tif_clientdata, module, "%s: Error fetching directory count",
 				    tif->tif_name);
@@ -1696,17 +1705,27 @@ TIFFAdvanceDirectory(TIFF* tif, uint64_t* nextdir, uint64_t* off)
 			else
 				(void) TIFFSeekFile(tif,
 				    dircount16*20, SEEK_CUR);
-			if (!ReadOK(tif, nextdir, sizeof (uint64_t))) {
+			if (!ReadOK(tif, nextdiroff, sizeof (uint64_t))) {
 				TIFFErrorExt(tif->tif_clientdata, module,
                                              "%s: Error fetching directory link",
 				    tif->tif_name);
 				return (0);
 			}
 			if (tif->tif_flags & TIFF_SWAB)
-				TIFFSwabLong8(nextdir);
+				TIFFSwabLong8(nextdiroff);
 		}
-		return (1);
 	}
+	if (*nextdiroff != 0) {
+		(*nextdirnum)++;
+		/* Check next directory for IFD looping and if so, set it as last directory. */
+		if (!_TIFFCheckDirNumberAndOffset(tif, *nextdirnum, *nextdiroff)) {
+			TIFFWarningExt(tif->tif_clientdata, module, "the next directory %"PRIu16" at offset 0x%"PRIx64" (%"PRIu64") might be an IFD loop. Treating directory %"PRIu16" as last directory",
+				*nextdirnum, *nextdiroff, *nextdiroff, *nextdirnum-1);
+			*nextdiroff = 0;
+			(*nextdirnum)--;
+		}
+	}
+	return (1);
 }
 
 /*
@@ -1716,14 +1735,16 @@ uint16_t
 TIFFNumberOfDirectories(TIFF* tif)
 {
 	static const char module[] = "TIFFNumberOfDirectories";
-	uint64_t nextdir;
+	uint64_t nextdiroff;
+	uint16_t nextdirnum;
 	uint16_t n;
 	if (!(tif->tif_flags&TIFF_BIGTIFF))
-		nextdir = tif->tif_header.classic.tiff_diroff;
+		nextdiroff = tif->tif_header.classic.tiff_diroff;
 	else
-		nextdir = tif->tif_header.big.tiff_diroff;
+		nextdiroff = tif->tif_header.big.tiff_diroff;
+	nextdirnum = 0;
 	n = 0;
-	while (nextdir != 0 && TIFFAdvanceDirectory(tif, &nextdir, NULL))
+	while (nextdiroff != 0 && TIFFAdvanceDirectory(tif, &nextdiroff, NULL, &nextdirnum))
         {
                 if (n != 65535) {
                         ++n;
@@ -1746,28 +1767,30 @@ TIFFNumberOfDirectories(TIFF* tif)
 int
 TIFFSetDirectory(TIFF* tif, uint16_t dirn)
 {
-	uint64_t nextdir;
+	uint64_t nextdiroff;
+	uint16_t nextdirnum;
 	uint16_t n;
 
 	if (!(tif->tif_flags&TIFF_BIGTIFF))
-		nextdir = tif->tif_header.classic.tiff_diroff;
+		nextdiroff = tif->tif_header.classic.tiff_diroff;
 	else
-		nextdir = tif->tif_header.big.tiff_diroff;
-	for (n = dirn; n > 0 && nextdir != 0; n--)
-		if (!TIFFAdvanceDirectory(tif, &nextdir, NULL))
+		nextdiroff = tif->tif_header.big.tiff_diroff;
+	nextdirnum = 0;
+	for (n = dirn; n > 0 && nextdiroff != 0; n--)
+		if (!TIFFAdvanceDirectory(tif, &nextdiroff, NULL, &nextdirnum))
 			return (0);
-	tif->tif_nextdiroff = nextdir;
+	/* If the n-th directory could not be reached (does not exist),
+	 * return here without touching anything further. */
+	if (nextdiroff == 0 || n > 0)
+		return (0);
+
+	tif->tif_nextdiroff = nextdiroff;
 	/*
 	 * Set curdir to the actual directory index.  The
 	 * -1 is because TIFFReadDirectory will increment
 	 * tif_curdir after successfully reading the directory.
 	 */
 	tif->tif_curdir = (dirn - n) - 1;
-	/*
-	 * Reset tif_dirnumber counter and start new list of seen directories.
-	 * We need this to prevent IFD loops.
-	 */
-	tif->tif_dirnumber = 0;
 	return (TIFFReadDirectory(tif));
 }
 
@@ -1780,13 +1803,42 @@ TIFFSetDirectory(TIFF* tif, uint16_t dirn)
 int
 TIFFSetSubDirectory(TIFF* tif, uint64_t diroff)
 {
-	tif->tif_nextdiroff = diroff;
-	/*
-	 * Reset tif_dirnumber counter and start new list of seen directories.
-	 * We need this to prevent IFD loops.
+	/* Match nextdiroff and curdir for consistent IFD-loop checking.
+	 * Only with TIFFSetSubDirectory() the IFD list can be corrupted with invalid offsets
+	 * within the main IFD tree.
+	 * In the case of several subIFDs of a main image,
+	 * there are two possibilities that are not even mutually exclusive.
+	 * a.) The subIFD tag contains an array with all offsets of the subIFDs.
+	 * b.) The SubIFDs are concatenated with their NextIFD parameters.
+	 * (refer to https://www.awaresystems.be/imaging/tiff/specification/TIFFPM6.pdf.)
 	 */
-	tif->tif_dirnumber = 0;
-	return (TIFFReadDirectory(tif));
+	int retval;
+	uint16_t curdir = 0;
+	int8_t probablySubIFD = 0;
+	if (diroff == 0) {
+		/* Special case to invalidate the tif_lastdiroff member. */
+		tif->tif_curdir = 65535;
+	} else {
+		if (!_TIFFGetDirNumberFromOffset(tif, diroff, &curdir)) {
+			/* Non-existing offsets might point to a SubIFD or invalid IFD.*/
+			probablySubIFD = 1;
+		}
+		/* -1 because TIFFReadDirectory() will increment tif_curdir. */
+		tif->tif_curdir = curdir - 1;
+	}
+
+	tif->tif_nextdiroff = diroff;
+	retval = TIFFReadDirectory(tif);
+	/* If failed, curdir was not incremented in TIFFReadDirectory(), so set it back. */
+	if (!retval )tif->tif_curdir++;
+	if (retval && probablySubIFD) {
+		/* Reset IFD list to start new one for SubIFD chain and also start SubIFD chain with tif_curdir=0. */
+		tif->tif_dirnumber = 0;
+		tif->tif_curdir = 0; /* first directory of new chain */
+		/* add this offset to new IFD list */
+		_TIFFCheckDirNumberAndOffset(tif, tif->tif_curdir, diroff);
+	}
+	return (retval);
 }
 
 /*
@@ -1810,12 +1862,15 @@ TIFFLastDirectory(TIFF* tif)
 
 /*
  * Unlink the specified directory from the directory chain.
+ * Note: First directory starts with number dirn=1.
+ * This is different to TIFFSetDirectory() where the first directory starts with zero.
  */
 int
 TIFFUnlinkDirectory(TIFF* tif, uint16_t dirn)
 {
 	static const char module[] = "TIFFUnlinkDirectory";
 	uint64_t nextdir;
+	uint16_t nextdirnum;
 	uint64_t off;
 	uint16_t n;
 
@@ -1839,19 +1894,21 @@ TIFFUnlinkDirectory(TIFF* tif, uint16_t dirn)
 		nextdir = tif->tif_header.big.tiff_diroff;
 		off = 8;
 	}
+	nextdirnum = 0;		/* First directory is dirn=0 */
+
 	for (n = dirn-1; n > 0; n--) {
 		if (nextdir == 0) {
 			TIFFErrorExt(tif->tif_clientdata, module, "Directory %"PRIu16" does not exist", dirn);
 			return (0);
 		}
-		if (!TIFFAdvanceDirectory(tif, &nextdir, &off))
+		if (!TIFFAdvanceDirectory(tif, &nextdir, &off, &nextdirnum))
 			return (0);
 	}
 	/*
 	 * Advance to the directory to be unlinked and fetch
 	 * the offset of the directory that follows.
 	 */
-	if (!TIFFAdvanceDirectory(tif, &nextdir, NULL))
+	if (!TIFFAdvanceDirectory(tif, &nextdir, NULL, &nextdirnum))
 		return (0);
 	/*
 	 * Go back and patch the link field of the preceding

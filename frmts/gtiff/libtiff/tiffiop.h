@@ -118,7 +118,8 @@ struct tiff {
 	uint64_t               tif_diroff;       /* file offset of current directory */
 	uint64_t               tif_nextdiroff;   /* file offset of following directory */
 	uint64_t               tif_lastdiroff;   /* file offset of last directory written so far */
-	uint64_t*              tif_dirlist;      /* list of offsets to already seen directories to prevent IFD looping */
+	uint64_t*              tif_dirlistoff;   /* list of offsets to already seen directories to prevent IFD looping */
+	uint16_t*              tif_dirlistdirn;  /* list of directory numbers to already seen directories to prevent IFD looping */
 	uint16_t               tif_dirlistsize;  /* number of entries in offset list */
 	uint16_t               tif_dirnumber;    /* number of already seen directories */
 	TIFFDirectory        tif_dir;          /* internal rep of current directory */
