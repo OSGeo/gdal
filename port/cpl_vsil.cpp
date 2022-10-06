@@ -2720,18 +2720,31 @@ const char* VSIGetFileSystemOptions( const char* pszFilename )
 }
 
 /************************************************************************/
-/*                          VSISetCredential()                          */
+/*                       VSISetPathSpecificOption()                     */
 /************************************************************************/
 
-static std::mutex oMutexCredentials;
+static std::mutex oMutexPathSpecificOptions;
 
 // key is a path prefix
 // value is a map of key, value pair
-static std::map<std::string, std::map<std::string, std::string>> oMapCredentials;
+static std::map<std::string, std::map<std::string, std::string>> oMapPathSpecificOptions;
 
 /**
  * \brief Set a credential (or more generally an option related to a
  *        virtual file system) for a given path prefix.
+ * @deprecated in GDAL 3.6 for the bettern named VSISetPathSpecificOption()
+ * @see VSISetPathSpecificOption()
+ */
+void VSISetCredential( const char* pszPathPrefix, const char* pszKey, const char* pszValue )
+{
+    VSISetPathSpecificOption(pszPathPrefix, pszKey, pszValue);
+}
+
+/**
+ * \brief Set a path specific option for a given path prefix.
+ *
+ * Such option is typically, but not limited to, a credential setting for a
+ * virtual file system.
  *
  * That option may also be set as a configuration option with CPLSetConfigOption(),
  * but this function allows to specify them with a granularity at the level of a
@@ -2753,19 +2766,19 @@ static std::map<std::string, std::map<std::string, std::string>> oMapCredentials
  * @param pszKey        Option name. Must NOT be NULL.
  * @param pszValue      Option value. May be NULL to erase it.
  *
- * @since GDAL 3.5
+ * @since GDAL 3.6
  */
 
-void VSISetCredential( const char* pszPathPrefix, const char* pszKey, const char* pszValue )
+void VSISetPathSpecificOption( const char* pszPathPrefix, const char* pszKey, const char* pszValue )
 {
-    std::lock_guard<std::mutex> oLock(oMutexCredentials);
-    auto oIter = oMapCredentials.find(pszPathPrefix);
+    std::lock_guard<std::mutex> oLock(oMutexPathSpecificOptions);
+    auto oIter = oMapPathSpecificOptions.find(pszPathPrefix);
     CPLString osKey(pszKey);
     osKey.toupper();
-    if( oIter == oMapCredentials.end() )
+    if( oIter == oMapPathSpecificOptions.end() )
     {
         if( pszValue != nullptr )
-            oMapCredentials[pszPathPrefix][osKey] = pszValue;
+            oMapPathSpecificOptions[pszPathPrefix][osKey] = pszValue;
     }
     else if( pszValue != nullptr )
         oIter->second[osKey] = pszValue;
@@ -2774,53 +2787,77 @@ void VSISetCredential( const char* pszPathPrefix, const char* pszKey, const char
 }
 
 /************************************************************************/
-/*                         VSIClearCredentials()                        */
+/*                       VSIClearPathSpecificOptions()                  */
 /************************************************************************/
 
 /**
- * \brief Clear credentials set with VSISetCredential()
- *
- * Note that no particular care is taken to remove them from RAM in a secure way.
- *
- * @param pszPathPrefix If set to NULL, all credentials are cleared.
- *                      If set to not-NULL, only those set with
- *                      VSISetCredential(pszPathPrefix, ...) will be cleared.
- *
- * @since GDAL 3.5
+ * \brief Clear path specific options set with VSISetPathSpecificOption()
+ * @deprecated in GDAL 3.6 for the bettern named VSIClearPathSpecificOptions()
+ * @see VSIClearPathSpecificOptions()
  */
 void VSIClearCredentials(const char* pszPathPrefix)
 {
-    std::lock_guard<std::mutex> oLock(oMutexCredentials);
+    return VSIClearPathSpecificOptions(pszPathPrefix);
+}
+
+/**
+ * \brief Clear path specific options set with VSISetPathSpecificOption()
+ *
+ * Note that no particular care is taken to remove them from RAM in a secure way.
+ *
+ * @param pszPathPrefix If set to NULL, all path specific options are cleared.
+ *                      If set to not-NULL, only those set with
+ *                      VSISetPathSpecificOption(pszPathPrefix, ...) will be cleared.
+ *
+ * @since GDAL 3.6
+ */
+void VSIClearPathSpecificOptions(const char* pszPathPrefix)
+{
+    std::lock_guard<std::mutex> oLock(oMutexPathSpecificOptions);
     if( pszPathPrefix == nullptr )
     {
-        oMapCredentials.clear();
+        oMapPathSpecificOptions.clear();
     }
     else
     {
-        oMapCredentials.erase(pszPathPrefix);
+        oMapPathSpecificOptions.erase(pszPathPrefix);
     }
 }
 
 /************************************************************************/
-/*                           VSIGetCredential()                         */
+/*                        VSIGetPathSpecificOption()                    */
 /************************************************************************/
 
 /**
- * \brief Get a credential option for a given path.
+ * \brief Get the value of a credential (or more generally an option related to a
+ *        virtual file system) for a given path.
+ * @deprecated in GDAL 3.6 for the bettern named VSIGetPathSpecificOption()
+ * @see VSIGetPathSpecificOption()
+ */
+const char* VSIGetCredential( const char* pszPath, const char* pszKey, const char* pszDefault )
+{
+    return VSIGetPathSpecificOption(pszPath, pszKey, pszDefault);
+}
+
+/**
+ * \brief Get the value a path specific option.
+ *
+ * Such option is typically, but not limited to, a credential setting for a
+ * virtual file system.
  *
  * If no match occurs, CPLGetConfigOption(pszKey, pszDefault) is returned.
  *
- * Mostly to be use by virtual file system implementations.
+ * Mostly to be used by virtual file system implementations.
  *
- * @since GDAL 3.5
- * @see VSISetCredential()
+ * @since GDAL 3.6
+ * @see VSISetPathSpecificOption()
  */
-const char* VSIGetCredential( const char* pszPath, const char* pszKey,
-                              const char* pszDefault )
+const char* VSIGetPathSpecificOption( const char* pszPath, const char* pszKey,
+                                      const char* pszDefault )
 {
     {
-        std::lock_guard<std::mutex> oLock(oMutexCredentials);
-        for (auto it = oMapCredentials.rbegin(); it != oMapCredentials.rend(); ++it)
+        std::lock_guard<std::mutex> oLock(oMutexPathSpecificOptions);
+        for (auto it = oMapPathSpecificOptions.rbegin(); it != oMapPathSpecificOptions.rend(); ++it)
         {
             if( STARTS_WITH(pszPath, it->first.c_str()) )
             {

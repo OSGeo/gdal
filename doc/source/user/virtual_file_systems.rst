@@ -152,12 +152,12 @@ Cloud storage services require setting credentials. For some of them, they can
 be provided through configuration files (~/.aws/config, ~/.boto, ..) or through
 environment variables / configuration options.
 
-Starting with GDAL 3.5, :cpp:func:`VSISetCredential` can be used to set configuration
+Starting with GDAL 3.6, :cpp:func:`VSISetPathSpecificOption` can be used to set configuration
 options with a granularity at the level of a file path, which makes it easier if using
 the same virtual file system but with different credentials (e.g. different
 credentials for bucket "/vsis3/foo" and "/vsis3/bar")
 
-Starting with GDAL 3.5, credentials can be specified in a
+Starting with GDAL 3.5, credentials (or path specific options) can be specified in a
 :ref:`GDAL configuration file <gdal_configuration_file>`, either in a specific one
 explicitly loaded with :cpp:func:`CPLLoadConfigOptionsFromFile`, or
 one of the default automatically loaded by :cpp:func:`CPLLoadConfigOptionsFromPredefinedFiles`.
