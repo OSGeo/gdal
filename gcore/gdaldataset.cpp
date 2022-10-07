@@ -4559,15 +4559,16 @@ indicated name, coordinate system, geometry type.
 The papszOptions argument
 can be used to control driver specific creation options.  These options are
 normally documented in the format specific documentation.
+That function will try to validate the creation option list passed to the
+driver with the GDALValidateCreationOptions() method. This check can be
+disabled by defining the configuration option GDAL_VALIDATE_CREATION_OPTIONS set to NO.
 
-In GDAL 2.0, drivers should extend the ICreateLayer() method and not
-CreateLayer().  CreateLayer() adds validation of layer creation options, before
+Drivers should extend the ICreateLayer() method and not
+CreateLayer(). CreateLayer() adds validation of layer creation options, before
 delegating the actual work to ICreateLayer().
 
 This method is the same as the C function GDALDatasetCreateLayer() and the
 deprecated OGR_DS_CreateLayer().
-
-In GDAL 1.X, this method used to be in the OGRDataSource class.
 
 Example:
 
@@ -4618,7 +4619,11 @@ OGRLayer *GDALDataset::CreateLayer( const char * pszName,
                                       char **papszOptions )
 
 {
-    ValidateLayerCreationOptions(papszOptions);
+    if( CPLTestBool(CPLGetConfigOption("GDAL_VALIDATE_CREATION_OPTIONS",
+                                       "YES")) )
+    {
+        ValidateLayerCreationOptions(papszOptions);
+    }
 
     if( OGR_GT_IsNonLinear(eGType) && !TestCapability(ODsCCurveGeometries) )
     {
