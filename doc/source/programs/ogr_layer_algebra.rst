@@ -117,17 +117,17 @@ input source , a method source and generates the output of the operation in the 
     
     Layer creation option (format specific)
 
-..option:: -input_fields <NONE|ALL|fld1,fld2,fld3...>
+.. option:: -input_fields <NONE|ALL|fld1,fld2,fld3...>
 
     Comma-delimited list of fields from input layer to copy to the output layer ,
     if eligible according to the operation
 
-..option:: -method_fields <NONE|ALL|fld1,fld2,fld3...>
+.. option:: -method_fields <NONE|ALL|fld1,fld2,fld3...>
 
     Comma-delimited list of fields from method layer to copy to the output layer ,
     if eligible according to the operation
 
-..option:: -nlt <geom_type>
+.. option:: -nlt <geom_type>
 
     Define the geometry type for the created layer. 
     One of NONE, GEOMETRY, POINT, LINESTRING, POLYGON, GEOMETRYCOLLECTION,
@@ -152,7 +152,7 @@ input source , a method source and generates the output of the operation in the 
     Starting with GDAL 3.0.5, -nlt CONVERT_TO_LINEAR and 
     -nlt PROMOTE_TO_MULTI can be used simultaneously.
 
-..option:: -a_srs <srs_def>
+.. option:: -a_srs <srs_def>
 
     Assign an output SRS, but without reprojecting (use -t_srs to reproject)
 
