@@ -29,7 +29,7 @@ help:
 generated_rst_files: .doxygen_up_to_date
 	$(PYTHON) "$(SOURCEDIR)/build_driver_summary.py" "$(SOURCEDIR)/drivers/raster" raster_driver_summary "$(SOURCEDIR)/drivers/raster/driver_summary.rst"
 	$(PYTHON) "$(SOURCEDIR)/build_driver_summary.py" "$(SOURCEDIR)/drivers/vector" vector_driver_summary "$(SOURCEDIR)/drivers/vector/driver_summary.rst"
-	$(PYTHON) "$(SOURCEDIR)/build_configoptions_index.py"  "$(SOURCEDIR)" "$(SOURCEDIR)/user/configoptions_index_generated.rst"
+	$(PYTHON) "$(SOURCEDIR)/build_configoptions_index.py"  "$(SOURCEDIR)" "$(BUILDDIR)/xml" "$(SOURCEDIR)/user/configoptions_index_generated.rst"
 
 .PHONY: html latexpdf
 html: generated_rst_files
