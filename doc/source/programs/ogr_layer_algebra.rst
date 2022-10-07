@@ -67,5 +67,103 @@ input source , a method source and generates the output of the operation in the 
 
         The erase method creates a layer, which has features from the input layer whose areas are erased by the features in the method layer. 
         By default the result layer has attributes of the input layer. 
+        
+.. option:: -input_ds <path>
+
+    Input data set path for the operation to be performed.
+     For operations involving 2 datasets, this is one of the dataset.
+
+.. option:: -input_lyr <name>
+
+    Layer name of the ``input_ds`` for which the operations have to be performed ( Optional )
+
+.. option:: -method_ds <path>
+
+    Method data set path for the operation to be performed. 
+    This is usually the conditional data set supplied to the operation ( ex: clip , erase , update )
+    This is the Second data set in the operation ( ex : Union, Intersection , SymDifference )
+
+.. option:: -method_lyr <name>
+
+    Layer name of the ``method_ds`` for which the operations have to be performed ( Optional )
+
+.. option:: -output_ds <path>
+
+    Output data set path for writing the result of the operations performed by ogr_layer_algebra
+
+.. option:: -output_lyr_name <name>
+
+    Layer name of the ``output_lyr_name`` where the output vector has to be written. ( Optional )
+
+.. option:: -overwrite
+
+    Indicates wether the ``output_ds`` have to be overwritten with the generated result of ogr_layer_algebra
+
+.. option:: -opt <NAME=VALUE>
+
+    Attributes for which the operation has to run on ``input_ds`` and ``method_ds``
+
+.. option:: -f <format_name>
+
+    Select the output format. Starting with GDAL 2.3, if not specified,
+    the format is guessed from the extension (previously was ESRI Shapefile).
+    Use the short format name
+
+.. option:: -dsco <NAME=VALUE>
+    
+    Dataset creation option (format specific)
+
+.. option:: -lco <NAME=VALUE>
+    
+    Layer creation option (format specific)
+
+..option:: -input_fields <NONE|ALL|fld1,fld2,fld3...>
+
+    Comma-delimited list of fields from input layer to copy to the output layer ,
+    if eligible according to the operation
+
+..option:: -method_fields <NONE|ALL|fld1,fld2,fld3...>
+
+    Comma-delimited list of fields from method layer to copy to the output layer ,
+    if eligible according to the operation
+
+..option:: -nlt <geom_type>
+
+    Define the geometry type for the created layer. 
+    One of NONE, GEOMETRY, POINT, LINESTRING, POLYGON, GEOMETRYCOLLECTION,
+    MULTIPOINT, MULTIPOLYGON, MULTILINESTRING, CIRCULARSTRING, COMPOUNDCURVE, 
+    CURVEPOLYGON, MULTICURVE, and MULTISURFACE non-linear geometry types.
+    Add Z, M, or ZM to the type name to specify coordinates with elevation, 
+    measure, or elevation and measure. PROMOTE_TO_MULTI can be used to 
+    automatically promote layers that mix polygon or multipolygons 
+    to multipolygons, and layers that mix linestrings or multilinestrings
+    to multilinestrings. Can be useful when converting shapefiles to 
+    PostGIS and other target drivers that implement strict checks for geometry types.
+    CONVERT_TO_LINEAR can be used to to convert non-linear geometry types into 
+    linear geometry types by approximating them, and CONVERT_TO_CURVE to promote
+    a non-linear type to its generalized curve type (POLYGON to CURVEPOLYGON,
+    MULTIPOLYGON to MULTISURFACE, LINESTRING to COMPOUNDCURVE, MULTILINESTRING 
+    to MULTICURVE). Starting with version 2.1 the type can be defined as measured 
+    (“25D” remains as an alias for single “Z”). Some forced geometry conversions 
+    may result in invalid geometries, for example when forcing conversion 
+    of multi-part multipolygons with -nlt POLYGON, the resulting polygon will
+    break the Simple Features rules.
+
+    Starting with GDAL 3.0.5, -nlt CONVERT_TO_LINEAR and 
+    -nlt PROMOTE_TO_MULTI can be used simultaneously.
+
+..option:: -a_srs <srs_def>
+
+    Assign an output SRS, but without reprojecting (use -t_srs to reproject)
+
+    The coordinate reference systems that can be passed are anything supported by the
+    OGRSpatialReference.SetFromUserInput() call, which includes EPSG Projected,
+    Geographic or Compound CRS (i.e. EPSG:4296), a well known text (WKT) CRS definition, 
+    PROJ.4 declarations, or the name of a .prj file containing a WKT CRS definition.
+
+
+
+
+
 
 
