@@ -816,6 +816,15 @@ private:
 
     virtual const GDALRelationship* GetRelationship(const std::string& name) const;
 
+    virtual bool        AddRelationship(std::unique_ptr<GDALRelationship>&& relationship,
+                                        std::string& failureReason);
+
+    virtual bool        DeleteRelationship(const std::string& name,
+                                           std::string& failureReason);
+
+    virtual bool        UpdateRelationship(std::unique_ptr<GDALRelationship>&& relationship,
+                                           std::string& failureReason);
+
     virtual OGRLayer   *CreateLayer( const char *pszName,
                                      OGRSpatialReference *poSpatialRef = nullptr,
                                      OGRwkbGeometryType eGType = wkbUnknown,

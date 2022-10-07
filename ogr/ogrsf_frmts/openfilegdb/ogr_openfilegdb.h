@@ -58,6 +58,8 @@ constexpr const char* pszRelationshipTypeUUID = "{b606a7e1-fa5b-439c-849c-6e9c24
 constexpr const char* pszDatasetInFeatureDatasetUUID = "{a1633a59-46ba-4448-8706-d8abe2b2b02e}";
 constexpr const char* pszDatasetInFolderUUID = "{dc78f1ab-34e4-43ac-ba47-1c4eabd0e7c7}";
 constexpr const char* pszDomainInDatasetUUID = "{17e08adb-2b31-4dcd-8fdd-df529e88f843}";
+constexpr const char* pszDatasetsRelatedThroughUUID = "{725badab-3452-491b-a795-55f32d67229c}";
+
 
 /***********************************************************************/
 /*                       FETCH_FIELD_IDX()                             */
@@ -462,6 +464,15 @@ public:
 
   const GDALRelationship* GetRelationship(const std::string& name) const override;
 
+  bool        AddRelationship(std::unique_ptr<GDALRelationship>&& relationship,
+                              std::string& failureReason) override;
+
+  bool        DeleteRelationship(const std::string& name,
+                                 std::string& failureReason) override;
+
+  bool        UpdateRelationship(std::unique_ptr<GDALRelationship>&& relationship,
+                                 std::string& failureReason) override;
+
   bool                GetExistingSpatialRef( const std::string& osWKT,
                                              double dfXOrigin,
                                              double dfYOrigin,
@@ -491,6 +502,12 @@ public:
   bool                RegisterInItemRelationships(const std::string& osOriginGUID,
                                                   const std::string& osDestGUID,
                                                   const std::string& osTypeGUID);
+
+  bool                RegisterRelationshipInItemRelationships(const std::string& osRelationshipGUID,
+                                                              const std::string& osOriginGUID,
+                                                              const std::string& osDestGUID);
+
+  bool                RemoveRelationshipFromItemRelationships(const std::string& osRelationshipGUID);
 
   bool                RegisterFeatureDatasetInItems(const std::string& osFeatureDatasetGUID,
                                                     const std::string& osName,

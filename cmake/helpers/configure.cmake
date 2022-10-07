@@ -238,6 +238,20 @@ else ()
     set(VSI_FOPEN64 "fopen")
   endif ()
 
+  check_type_size("off_t" SIZEOF_OFF_T)
+
+  check_function_exists(pread64 HAVE_PREAD64)
+  if( NOT HAVE_PREAD64 )
+    check_c_source_compiles(
+      "
+         #include <sys/types.h>
+         #include <sys/uio.h>
+         #include <unistd.h>
+         int main() { pread(0, NULL, 0, 0); return 0; }
+        "
+      HAVE_PREAD_BSD)
+  endif()
+
   check_function_exists(ftruncate64 HAVE_FTRUNCATE64)
   if (HAVE_FTRUNCATE64)
     set(VSI_FTRUNCATE64 "ftruncate64")

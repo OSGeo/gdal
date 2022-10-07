@@ -258,7 +258,7 @@ if (Python_Interpreter_FOUND)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/README.rst ${CMAKE_CURRENT_BINARY_DIR}/README.rst @ONLY)
 
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/get_suffix.py
-       "from setuptools.command.build_ext import EXTENSION_SUFFIXES; print(EXTENSION_SUFFIXES[0])\n")
+       "from importlib.machinery import EXTENSION_SUFFIXES; print(EXTENSION_SUFFIXES[0])\n")
   execute_process(
     COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/get_suffix.py
     OUTPUT_VARIABLE PY_EXT_SUFFIX
@@ -271,34 +271,74 @@ if (Python_Interpreter_FOUND)
   endif ()
 
   # Generate extension
-
-  # setup.py build_ext --inplace doesn't refresh the .so files if the source files haven't changed, which may cause the
-  # add_custom_command(OUTPUT ${PY_SO_LIST} ...) to be re-run, even when not needed.
-  set(BUILD_EXT_EXTRA_CONTENT)
-  if (CMAKE_VERSION VERSION_GREATER 3.12)
-    foreach (f IN LISTS PY_SO_LIST)
-      string(APPEND BUILD_EXT_EXTRA_CONTENT "file(TOUCH_NOCREATE ${f})\n")
-    endforeach ()
-  endif ()
-
   if (ONLY_GENERATE_FOR_NON_DEBUG)
     set(BUILD_EXT_FILENAME ${CMAKE_CURRENT_BINARY_DIR}/build_ext_$<CONFIG>.cmake)
     file(
       GENERATE
       OUTPUT ${BUILD_EXT_FILENAME}
       CONTENT
-        "execute_process(COMMAND $<IF:$<NOT:$<CONFIG:Debug>>,${Python_EXECUTABLE} ${SETUP_PY_FILENAME} build_ext --inplace,${CMAKE_COMMAND} -E echo \"setup.py build_ext only run in configuration != Debug\">)\n${BUILD_EXT_EXTRA_CONTENT}"
+        "file(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/build)\n
+         execute_process(COMMAND $<IF:$<NOT:$<CONFIG:Debug>>,${Python_EXECUTABLE} ${SETUP_PY_FILENAME} build_ext --inplace,${CMAKE_COMMAND} -E echo \"setup.py build_ext only run in configuration != Debug\">)\n"
       )
   else ()
     set(BUILD_EXT_FILENAME ${CMAKE_CURRENT_BINARY_DIR}/build_ext.cmake)
-    file(WRITE ${BUILD_EXT_FILENAME}
-         "execute_process(COMMAND ${Python_EXECUTABLE} ${SETUP_PY_FILENAME} build_ext --inplace)\n${BUILD_EXT_EXTRA_CONTENT}")
+    file(
+      GENERATE
+      OUTPUT ${BUILD_EXT_FILENAME}
+      CONTENT
+         "file(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/build)\n
+          execute_process(COMMAND ${Python_EXECUTABLE} ${SETUP_PY_FILENAME} build_ext --inplace)\n")
   endif ()
+
+  if((CMAKE_VERSION VERSION_GREATER_EQUAL 3.12) AND CMAKE_NM AND BUILD_SHARED_LIBS AND NOT _isMultiConfig)
+      # Optimization to avoid rebuilding the .o and .so each time libgdal
+      # is touched. We only consider the list of exported symbols as the
+      # dependency rule
+      set(GDAL_LIB_DEP_FOR_PY_SO "gdal_symbols.txt")
+      if(WIN32 OR APPLE)
+          set(NM_OPTIONS "-g")
+      else()
+          set(NM_OPTIONS "-gD")
+      endif()
+      file(
+          GENERATE
+          OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/generate_gdal_symbols_txt.cmake"
+          CONTENT
+              "cmake_policy(VERSION 3.12)
+               execute_process(COMMAND ${CMAKE_NM} ${NM_OPTIONS} $<TARGET_FILE:${GDAL_LIB_TARGET_NAME}>
+                               OUTPUT_VARIABLE symbols
+                               RESULT_VARIABLE res)
+               if( \${res} EQUAL 0 )
+                 string(REGEX REPLACE \"\\n\" \";\" symbols \"\${symbols}\")
+                 # Match lines like '00000000006dddb0 T GDALAllRegister'
+                 list(FILTER symbols INCLUDE REGEX \"^[0-9a-f]+ T (.*)$\")
+                 list(TRANSFORM symbols REPLACE \"^[0-9a-f]+ T (.*)$\" \"\\\\1\")
+                 if(symbols)
+                     list(SORT symbols)
+                     file(WRITE ${GDAL_LIB_DEP_FOR_PY_SO}.tmp \"$<TARGET_FILE:${GDAL_LIB_TARGET_NAME}>;\${symbols}\")
+                     execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${GDAL_LIB_DEP_FOR_PY_SO}.tmp ${GDAL_LIB_DEP_FOR_PY_SO})
+                 else()
+                     file(TOUCH ${GDAL_LIB_DEP_FOR_PY_SO})
+                 endif()
+               else()
+                 file(TOUCH ${GDAL_LIB_DEP_FOR_PY_SO})
+               endif()")
+      add_custom_command(
+        OUTPUT ${GDAL_LIB_DEP_FOR_PY_SO}
+        COMMAND
+            ${CMAKE_COMMAND} ${WERROR_DEV_FLAG} -P "generate_gdal_symbols_txt.cmake"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        DEPENDS ${GDAL_LIB_TARGET_NAME})
+  else()
+      set(GDAL_LIB_DEP_FOR_PY_SO "${GDAL_LIB_TARGET_NAME}")
+  endif()
+
   add_custom_command(
     OUTPUT ${PY_SO_LIST}
     COMMAND ${CMAKE_COMMAND} ${WERROR_DEV_FLAG} -P ${BUILD_EXT_FILENAME}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    DEPENDS ${GDAL_LIB_TARGET_NAME} ${GDAL_PYTHON_PYSOURCES} ${GDAL_PYTHON_CSOURCES} ${BUILD_EXT_FILENAME})
+    DEPENDS ${GDAL_LIB_DEP_FOR_PY_SO} ${GDAL_PYTHON_PYSOURCES} ${GDAL_PYTHON_CSOURCES} ${BUILD_EXT_FILENAME}
+            ${PROJECT_SOURCE_DIR}/gcore/gdal_priv.h)
 
   set(INSTALL_WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
   set(PY_SO_LIST_WITH_RPATH)
@@ -334,22 +374,24 @@ if (Python_Interpreter_FOUND)
         string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "foreach(_file IN LISTS PY_FILES)\n")
         string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "  file(COPY \"\${_file}\" DESTINATION \"${INSTALL_WORKING_DIRECTORY}/osgeo\")\n")
         string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "endforeach()\n")
-        string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "execute_process(COMMAND ${Python_EXECUTABLE} ${SETUP_PY_FILENAME} build_ext --rpath=${CMAKE_INSTALL_RPATH} --inplace --force WORKING_DIRECTORY ${INSTALL_WORKING_DIRECTORY})\n")
+        string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "file(REMOVE_RECURSE ${INSTALL_WORKING_DIRECTORY}/build)\n")
+        string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "execute_process(COMMAND ${Python_EXECUTABLE} ${SETUP_PY_FILENAME} build_ext --rpath=${CMAKE_INSTALL_RPATH} --inplace WORKING_DIRECTORY ${INSTALL_WORKING_DIRECTORY})\n")
 
         foreach (f IN LISTS PY_SO_LIST)
           list(APPEND PY_SO_LIST_WITH_RPATH "${INSTALL_WORKING_DIRECTORY}/${f}")
-          if (CMAKE_VERSION VERSION_GREATER 3.12)
-            string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "file(TOUCH_NOCREATE \"${INSTALL_WORKING_DIRECTORY}/${f}\")\n")
-          endif ()
         endforeach ()
 
         set(BUILD_EXT_WITH_RPATH_FILENAME ${CMAKE_CURRENT_BINARY_DIR}/build_ext_with_rpath.cmake)
-        file(WRITE ${BUILD_EXT_WITH_RPATH_FILENAME} "${BUILD_EXT_WITH_RPATH_CONTENT}")
+        file(
+          GENERATE
+          OUTPUT ${BUILD_EXT_WITH_RPATH_FILENAME}
+          CONTENT "${BUILD_EXT_WITH_RPATH_CONTENT}")
         add_custom_command(
           OUTPUT ${PY_SO_LIST_WITH_RPATH}
           COMMAND ${CMAKE_COMMAND} ${WERROR_DEV_FLAG} -P ${BUILD_EXT_WITH_RPATH_FILENAME}
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-          DEPENDS ${GDAL_LIB_TARGET_NAME} ${GDAL_PYTHON_PYSOURCES} ${GDAL_PYTHON_CSOURCES} ${BUILD_EXT_WITH_RPATH_FILENAME})
+          DEPENDS ${GDAL_LIB_DEP_FOR_PY_SO} ${GDAL_PYTHON_PYSOURCES} ${GDAL_PYTHON_CSOURCES} ${BUILD_EXT_WITH_RPATH_FILENAME}
+                  ${PROJECT_SOURCE_DIR}/gcore/gdal_priv.h)
 
     endif()
   endif()

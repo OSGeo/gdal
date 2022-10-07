@@ -71,6 +71,11 @@ class CPL_DLL VSIVirtualHandle {
     virtual VSIRangeStatus GetRangeStatus( CPL_UNUSED vsi_l_offset nOffset,
                                            CPL_UNUSED vsi_l_offset nLength )
                                           { return VSI_RANGE_STATUS_UNKNOWN; }
+    virtual bool      HasPRead() const;
+    virtual size_t    PRead( void* pBuffer, size_t nSize, vsi_l_offset nOffset ) const;
+
+    // NOTE: when adding new methods, besides the "actual" implementations,
+    // also consider the VSICachedFile one.
 
     virtual           ~VSIVirtualHandle() { }
 };

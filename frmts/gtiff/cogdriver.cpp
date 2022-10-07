@@ -1129,8 +1129,15 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
         papszOptions, "OVERVIEW_COMPRESS", osCompress.c_str());
 
     CPLConfigOptionSetter ovrCompressSetter("COMPRESS_OVERVIEW", pszOverviewCompress, true);
-    CPLConfigOptionSetter ovrQualityJpegSetter("JPEG_QUALITY_OVERVIEW", CSLFetchNameValue(papszOptions, "OVERVIEW_QUALITY"), true);
-    CPLConfigOptionSetter ovrQualityWebpSetter("WEBP_LEVEL_OVERVIEW", CSLFetchNameValue(papszOptions, "OVERVIEW_QUALITY"), true);
+    const char* pszOverviewQuality = CSLFetchNameValue(papszOptions, "OVERVIEW_QUALITY");
+    CPLConfigOptionSetter ovrQualityJpegSetter("JPEG_QUALITY_OVERVIEW", pszOverviewQuality, true);
+    CPLConfigOptionSetter ovrQualityWebpSetter("WEBP_LEVEL_OVERVIEW", pszOverviewQuality, true);
+
+    std::unique_ptr<CPLConfigOptionSetter> poWebpLosslessSetter;
+    if( pszOverviewQuality && CPLAtof(pszOverviewQuality) == 100.0 )
+    {
+        poWebpLosslessSetter.reset(new CPLConfigOptionSetter("WEBP_LOSSLESS_OVERVIEW", "TRUE", true));
+    }
 
     std::unique_ptr<CPLConfigOptionSetter> poPhotometricSetter;
     if (nBands == 3 && EQUAL(pszOverviewCompress, "JPEG") )

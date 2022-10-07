@@ -2679,6 +2679,18 @@ class Dataset(MajorObject):
         r"""GetRelationship(Dataset self, char const * name) -> Relationship"""
         return _gdal.Dataset_GetRelationship(self, *args)
 
+    def AddRelationship(self, *args) -> "bool":
+        r"""AddRelationship(Dataset self, Relationship relationship) -> bool"""
+        return _gdal.Dataset_AddRelationship(self, *args)
+
+    def DeleteRelationship(self, *args) -> "bool":
+        r"""DeleteRelationship(Dataset self, char const * name) -> bool"""
+        return _gdal.Dataset_DeleteRelationship(self, *args)
+
+    def UpdateRelationship(self, *args) -> "bool":
+        r"""UpdateRelationship(Dataset self, Relationship relationship) -> bool"""
+        return _gdal.Dataset_UpdateRelationship(self, *args)
+
     def ReadRaster1(self, *args, **kwargs) -> "CPLErr":
         r"""ReadRaster1(Dataset self, double xoff, double yoff, double xsize, double ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, int band_list=0, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, GIntBig * buf_band_space=None, GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour, GDALProgressFunc callback=0, void * callback_data=None, void * inputOutputBuf=None) -> CPLErr"""
         return _gdal.Dataset_ReadRaster1(self, *args, **kwargs)

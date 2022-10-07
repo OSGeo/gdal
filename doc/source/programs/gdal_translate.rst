@@ -175,6 +175,11 @@ resampling, and rescaling pixels in the process.
     Apply the scale/offset metadata for the bands to convert scaled values to
     unscaled values.  It is also often necessary to reset the output datatype
     with the :option:`-ot` switch.
+    The unscaled value is computed from the scaled raw value with the following
+    formula:
+
+    .. math::
+        {unscaled\_value} = {scaled\_value} * {scale} + {offset}
 
 .. option:: -srcwin <xoff> <yoff> <xsize> <ysize>
 

@@ -143,6 +143,9 @@ class VSIMemHandle final : public VSIVirtualHandle
     int Eof() override;
     int Close() override;
     int Truncate( vsi_l_offset nNewSize ) override;
+
+    bool      HasPRead() const override { return true; }
+    size_t    PRead( void* /*pBuffer*/, size_t /* nSize */, vsi_l_offset /*nOffset*/ ) const override;
 };
 
 /************************************************************************/
@@ -402,6 +405,22 @@ size_t VSIMemHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
     m_nOffset += nBytesToRead;
 
     return nCount;
+}
+
+/************************************************************************/
+/*                              PRead()                                 */
+/************************************************************************/
+
+size_t VSIMemHandle::PRead( void* pBuffer, size_t nSize, vsi_l_offset nOffset ) const
+{
+    if( nOffset < poFile->nLength )
+    {
+        const size_t nToCopy = static_cast<size_t>(
+            std::min(static_cast<vsi_l_offset>(poFile->nLength - nOffset), static_cast<vsi_l_offset>(nSize)));
+        memcpy( pBuffer, poFile->pabyData + static_cast<size_t>(nOffset), nToCopy );
+        return nToCopy;
+    }
+    return 0;
 }
 
 /************************************************************************/

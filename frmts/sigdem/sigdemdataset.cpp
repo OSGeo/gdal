@@ -69,24 +69,19 @@ constexpr int32_t NO_DATA = 0x80000000;
 constexpr char SIGDEM_FILE_TYPE[6] = { 'S', 'I', 'G', 'D', 'E', 'M' };
 
 static OGRSpatialReference* BuildSRS(const char* pszWKT) {
-    OGRSpatialReference* poSRS = new OGRSpatialReference(pszWKT);
-    if (poSRS->morphFromESRI() != OGRERR_NONE) {
+    OGRSpatialReference* poSRS = new OGRSpatialReference();
+    if (poSRS->importFromWkt(pszWKT) != OGRERR_NONE) {
         delete poSRS;
         return nullptr;
     } else {
         if (poSRS->AutoIdentifyEPSG() != OGRERR_NONE) {
-            int nEntries = 0;
-            int* panConfidence = nullptr;
-            OGRSpatialReferenceH* pahSRS = poSRS->FindMatches(nullptr,
-                    &nEntries, &panConfidence);
-            if (nEntries == 1 && panConfidence[0] == 100) {
+            auto poSRSMatch = poSRS->FindBestMatch(100);
+            if( poSRSMatch )
+            {
                 poSRS->Release();
-                poSRS = reinterpret_cast<OGRSpatialReference*>(pahSRS[0]);
-                CPLFree(pahSRS);
-            } else {
-                OSRFreeSRSArray(pahSRS);
+                poSRS = poSRSMatch;
+                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             }
-            CPLFree(panConfidence);
         }
         return poSRS;
     }

@@ -93,7 +93,7 @@ struct OSRPJContextHolder
     unsigned projNetworkEnabledGenerationCounter = 0;
 #endif
     PJ_CONTEXT* context = nullptr;
-    OSRProjTLSCache oCache{};
+    OSRProjTLSCache oCache;
 #if !defined(_WIN32)
 #if !defined(HAVE_PTHREAD_ATFORK)
     pid_t curpid = 0;
@@ -104,9 +104,9 @@ struct OSRPJContextHolder
 #endif
 
 #if !defined(_WIN32)
-    OSRPJContextHolder()
+    OSRPJContextHolder(): oCache(init())
 #if !defined(HAVE_PTHREAD_ATFORK)
-        : curpid(getpid())
+        , curpid(getpid())
 #endif
     {
 #if HAVE_PTHREAD_ATFORK
@@ -115,12 +115,12 @@ struct OSRPJContextHolder
         init();
     }
 #else
-    OSRPJContextHolder() { init(); }
+    OSRPJContextHolder(): oCache(init()) {}
 #endif
 
     ~OSRPJContextHolder();
 
-    void init();
+    PJ_CONTEXT* init();
     void deinit();
 
 private:
@@ -128,13 +128,14 @@ private:
     OSRPJContextHolder& operator=(const OSRPJContextHolder&) = delete;
 };
 
-void OSRPJContextHolder::init()
+PJ_CONTEXT* OSRPJContextHolder::init()
 {
     if( !context )
     {
         context = proj_context_create();
         proj_log_func (context, nullptr, osr_proj_logger);
     }
+    return context;
 }
 
 
@@ -200,10 +201,10 @@ static OSRPJContextHolder& GetProjTLSContextHolder()
     // Detect if we are now running in a child process created by fork()
     // In that situation we must make sure *not* to use the same underlying
     // file open descriptor to the sqlite3 database, since seeks&reads in one
+    // of the parent or child will affect the other end.
 #if defined(HAVE_PTHREAD_ATFORK)
     if( g_bForkOccurred )
 #else
-    // of the parent or child will affect the other end.
     const pid_t curpid = getpid();
     if( curpid != l_projContext.curpid )
 #endif
@@ -287,24 +288,27 @@ OSRProjTLSCache* OSRGetProjTLSCache()
     return &l_projContext.oCache;
 }
 
-struct OSRPJDeleter
-{
-    void operator()(PJ* pj) const { proj_destroy(pj); }
-};
-
 void OSRProjTLSCache::clear()
 {
     m_oCacheEPSG.clear();
     m_oCacheWKT.clear();
+    m_tlsContext = nullptr;
+}
+
+PJ_CONTEXT* OSRProjTLSCache::GetPJContext()
+{
+    if( m_tlsContext == nullptr )
+        m_tlsContext = OSRGetProjTLSContext();
+    return m_tlsContext;
 }
 
 PJ* OSRProjTLSCache::GetPJForEPSGCode(int nCode, bool bUseNonDeprecated, bool bAddTOWGS84)
 {
-    std::shared_ptr<PJ> cached;
     const EPSGCacheKey key(nCode, bUseNonDeprecated, bAddTOWGS84);
-    if( m_oCacheEPSG.tryGet(key, cached) )
+    auto cached = m_oCacheEPSG.getPtr(key);
+    if( cached )
     {
-        return proj_clone(OSRGetProjTLSContext(), cached.get());
+        return proj_clone(GetPJContext(), cached->get());
     }
     return nullptr;
 }
@@ -312,24 +316,24 @@ PJ* OSRProjTLSCache::GetPJForEPSGCode(int nCode, bool bUseNonDeprecated, bool bA
 void OSRProjTLSCache::CachePJForEPSGCode(int nCode, bool bUseNonDeprecated, bool bAddTOWGS84, PJ* pj)
 {
     const EPSGCacheKey key(nCode, bUseNonDeprecated, bAddTOWGS84);
-    m_oCacheEPSG.insert(key, std::shared_ptr<PJ>(
-                    proj_clone(OSRGetProjTLSContext(), pj), OSRPJDeleter()));
+    m_oCacheEPSG.insert(key, UniquePtrPJ(
+                                proj_clone(GetPJContext(), pj)));
 }
 
 PJ* OSRProjTLSCache::GetPJForWKT(const std::string& wkt)
 {
-    std::shared_ptr<PJ> cached;
-    if( m_oCacheWKT.tryGet(wkt, cached) )
+    auto cached = m_oCacheWKT.getPtr(wkt);
+    if( cached )
     {
-        return proj_clone(OSRGetProjTLSContext(), cached.get());
+        return proj_clone(GetPJContext(), cached->get());
     }
     return nullptr;
 }
 
 void OSRProjTLSCache::CachePJForWKT(const std::string& wkt, PJ* pj)
 {
-    m_oCacheWKT.insert(wkt, std::shared_ptr<PJ>(
-                    proj_clone(OSRGetProjTLSContext(), pj), OSRPJDeleter()));
+    m_oCacheWKT.insert(wkt, UniquePtrPJ(
+                                proj_clone(GetPJContext(), pj)));
 }
 
 /************************************************************************/

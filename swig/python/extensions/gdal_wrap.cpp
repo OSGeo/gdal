@@ -5098,6 +5098,15 @@ SWIGINTERN char **GDALDatasetShadow_GetRelationshipNames(GDALDatasetShadow *self
 SWIGINTERN GDALRelationshipShadow *GDALDatasetShadow_GetRelationship(GDALDatasetShadow *self,char const *name){
     return (GDALRelationshipShadow*) GDALDatasetGetRelationship(self, name);
   }
+SWIGINTERN bool GDALDatasetShadow_AddRelationship(GDALDatasetShadow *self,GDALRelationshipShadow *relationship){
+      return GDALDatasetAddRelationship(self, (GDALRelationshipH)relationship, NULL);
+  }
+SWIGINTERN bool GDALDatasetShadow_DeleteRelationship(GDALDatasetShadow *self,char const *name){
+      return GDALDatasetDeleteRelationship(self, name, NULL);
+  }
+SWIGINTERN bool GDALDatasetShadow_UpdateRelationship(GDALDatasetShadow *self,GDALRelationshipShadow *relationship){
+      return GDALDatasetUpdateRelationship(self, (GDALRelationshipH)relationship, NULL);
+  }
 SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,double xoff,double yoff,double xsize,double ysize,void **buf,int *buf_xsize=0,int *buf_ysize=0,GDALDataType *buf_type=0,int band_list=0,int *pband_list=0,GIntBig *buf_pixel_space=0,GIntBig *buf_line_space=0,GIntBig *buf_band_space=0,GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour,GDALProgressFunc callback=NULL,void *callback_data=NULL,void *inputOutputBuf=NULL){
     *buf = NULL;
 
@@ -21748,6 +21757,168 @@ SWIGINTERN PyObject *_wrap_Dataset_GetRelationship(PyObject *SWIGUNUSEDPARM(self
   return resultobj;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Dataset_AddRelationship(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
+  GDALRelationshipShadow *arg2 = (GDALRelationshipShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject *swig_obj[2] ;
+  bool result;
+  
+  if (!SWIG_Python_UnpackTuple(args, "Dataset_AddRelationship", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_AddRelationship" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
+  res2 = SWIG_ConvertPtr(swig_obj[1], &argp2,SWIGTYPE_p_GDALRelationshipShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Dataset_AddRelationship" "', argument " "2"" of type '" "GDALRelationshipShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< GDALRelationshipShadow * >(argp2);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)GDALDatasetShadow_AddRelationship(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Dataset_DeleteRelationship(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
+  char *arg2 = (char *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  PyObject *swig_obj[2] ;
+  bool result;
+  
+  if (!SWIG_Python_UnpackTuple(args, "Dataset_DeleteRelationship", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_DeleteRelationship" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
+  res2 = SWIG_AsCharPtrAndSize(swig_obj[1], &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Dataset_DeleteRelationship" "', argument " "2"" of type '" "char const *""'");
+  }
+  arg2 = reinterpret_cast< char * >(buf2);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)GDALDatasetShadow_DeleteRelationship(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Dataset_UpdateRelationship(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
+  GDALRelationshipShadow *arg2 = (GDALRelationshipShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject *swig_obj[2] ;
+  bool result;
+  
+  if (!SWIG_Python_UnpackTuple(args, "Dataset_UpdateRelationship", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_UpdateRelationship" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
+  res2 = SWIG_ConvertPtr(swig_obj[1], &argp2,SWIGTYPE_p_GDALRelationshipShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Dataset_UpdateRelationship" "', argument " "2"" of type '" "GDALRelationshipShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< GDALRelationshipShadow * >(argp2);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)GDALDatasetShadow_UpdateRelationship(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
   return NULL;
 }
 
@@ -46263,6 +46434,9 @@ static PyMethodDef SwigMethods[] = {
 	 { "Dataset_UpdateFieldDomain", _wrap_Dataset_UpdateFieldDomain, METH_VARARGS, "Dataset_UpdateFieldDomain(Dataset self, FieldDomain fieldDomain) -> bool"},
 	 { "Dataset_GetRelationshipNames", _wrap_Dataset_GetRelationshipNames, METH_VARARGS, "Dataset_GetRelationshipNames(Dataset self, char ** options=None) -> char **"},
 	 { "Dataset_GetRelationship", _wrap_Dataset_GetRelationship, METH_VARARGS, "Dataset_GetRelationship(Dataset self, char const * name) -> Relationship"},
+	 { "Dataset_AddRelationship", _wrap_Dataset_AddRelationship, METH_VARARGS, "Dataset_AddRelationship(Dataset self, Relationship relationship) -> bool"},
+	 { "Dataset_DeleteRelationship", _wrap_Dataset_DeleteRelationship, METH_VARARGS, "Dataset_DeleteRelationship(Dataset self, char const * name) -> bool"},
+	 { "Dataset_UpdateRelationship", _wrap_Dataset_UpdateRelationship, METH_VARARGS, "Dataset_UpdateRelationship(Dataset self, Relationship relationship) -> bool"},
 	 { "Dataset_ReadRaster1", (PyCFunction)(void(*)(void))_wrap_Dataset_ReadRaster1, METH_VARARGS|METH_KEYWORDS, "Dataset_ReadRaster1(Dataset self, double xoff, double yoff, double xsize, double ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, int band_list=0, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, GIntBig * buf_band_space=None, GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour, GDALProgressFunc callback=0, void * callback_data=None, void * inputOutputBuf=None) -> CPLErr"},
 	 { "Dataset_swigregister", Dataset_swigregister, METH_O, NULL},
 	 { "delete_Group", _wrap_delete_Group, METH_O, "delete_Group(Group self)"},

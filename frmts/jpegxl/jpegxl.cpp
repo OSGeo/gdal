@@ -431,8 +431,9 @@ bool JPEGXLDataset::Open(GDALOpenInfo* poOpenInfo)
             const size_t nRead = VSIFReadL(m_abyInputData.data(), 1, m_abyInputData.size(), m_fp);
             if( nRead == 0 )
             {
-                // For some reason, it can happen that JXL_DEC_NEED_MORE_INPUT
-                // is called whereas we have reached end of file
+#ifdef HAVE_JXL_BOX_API
+                JxlDecoderCloseInput(m_decoder.get());
+#endif
                 break;
             }
             if( JxlDecoderSetInput(m_decoder.get(), m_abyInputData.data(), nRead) !=
@@ -442,6 +443,12 @@ bool JPEGXLDataset::Open(GDALOpenInfo* poOpenInfo)
                          "JxlDecoderSetInput() failed");
                 return false;
             }
+#ifdef HAVE_JXL_BOX_API
+            if( nRead < m_abyInputData.size() )
+            {
+                JxlDecoderCloseInput(m_decoder.get());
+            }
+#endif
         }
         else if( status == JXL_DEC_BASIC_INFO )
         {
@@ -461,8 +468,10 @@ bool JPEGXLDataset::Open(GDALOpenInfo* poOpenInfo)
                 return false;
             }
 
-            CPLDebug("JPEGXL", "uses_original_profile = %d",
-                     info.uses_original_profile);
+            GDALDataset::SetMetadataItem(
+                "COMPRESSION_REVERSIBILITY",
+                 info.uses_original_profile ? "LOSSLESS (possibly)": "LOSSY",
+                 "IMAGE_STRUCTURE");
 
             nRasterXSize = static_cast<int>(info.xsize);
             nRasterYSize = static_cast<int>(info.ysize);
@@ -773,6 +782,28 @@ bool JPEGXLDataset::Open(GDALOpenInfo* poOpenInfo)
             const size_t nIndex = static_cast<size_t>(i - 1 - nNonExtraBands);
             if( JxlDecoderGetExtraChannelInfo(m_decoder.get(), nIndex, &sExtraInfo) == JXL_DEC_SUCCESS )
             {
+                switch( sExtraInfo.type )
+                {
+                    case JXL_CHANNEL_ALPHA: eInterp = GCI_AlphaBand; break;
+                    case JXL_CHANNEL_DEPTH: osBandName = "Depth channel"; break;
+                    case JXL_CHANNEL_SPOT_COLOR: osBandName = "Spot color channel"; break;
+                    case JXL_CHANNEL_SELECTION_MASK: osBandName = "Selection mask channel"; break;
+                    case JXL_CHANNEL_BLACK: osBandName = "Black channel"; break;
+                    case JXL_CHANNEL_CFA: osBandName = "CFA channel"; break;
+                    case JXL_CHANNEL_THERMAL: osBandName = "Thermal channel"; break;
+                    case JXL_CHANNEL_RESERVED0:
+                    case JXL_CHANNEL_RESERVED1:
+                    case JXL_CHANNEL_RESERVED2:
+                    case JXL_CHANNEL_RESERVED3:
+                    case JXL_CHANNEL_RESERVED4:
+                    case JXL_CHANNEL_RESERVED5:
+                    case JXL_CHANNEL_RESERVED6:
+                    case JXL_CHANNEL_RESERVED7:
+                    case JXL_CHANNEL_UNKNOWN:
+                    case JXL_CHANNEL_OPTIONAL:
+                        break;
+                }
+
                 if( sExtraInfo.name_length > 0 )
                 {
                     std::string osName;
@@ -783,30 +814,6 @@ bool JPEGXLDataset::Open(GDALOpenInfo* poOpenInfo)
                         osName != CPLSPrintf("Band %d", i) )
                     {
                         osBandName = osName;
-                    }
-                }
-                else
-                {
-                    switch( sExtraInfo.type )
-                    {
-                        case JXL_CHANNEL_ALPHA: eInterp = GCI_AlphaBand; break;
-                        case JXL_CHANNEL_DEPTH: osBandName = "Depth channel"; break;
-                        case JXL_CHANNEL_SPOT_COLOR: osBandName = "Spot color channel"; break;
-                        case JXL_CHANNEL_SELECTION_MASK: osBandName = "Selection mask channel"; break;
-                        case JXL_CHANNEL_BLACK: osBandName = "Black channel"; break;
-                        case JXL_CHANNEL_CFA: osBandName = "CFA channel"; break;
-                        case JXL_CHANNEL_THERMAL: osBandName = "Thermal channel"; break;
-                        case JXL_CHANNEL_RESERVED0:
-                        case JXL_CHANNEL_RESERVED1:
-                        case JXL_CHANNEL_RESERVED2:
-                        case JXL_CHANNEL_RESERVED3:
-                        case JXL_CHANNEL_RESERVED4:
-                        case JXL_CHANNEL_RESERVED5:
-                        case JXL_CHANNEL_RESERVED6:
-                        case JXL_CHANNEL_RESERVED7:
-                        case JXL_CHANNEL_UNKNOWN:
-                        case JXL_CHANNEL_OPTIONAL:
-                            break;
                     }
                 }
             }
@@ -1678,19 +1685,23 @@ JPEGXLDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
 
 #ifdef HAVE_JxlEncoderInitExtraChannelInfo
     if( abyJPEG.empty() &&
-        basic_info.num_extra_channels > 0 && basic_info.alpha_bits == 0 )
+        basic_info.num_extra_channels > 0 )
     {
         if( basic_info.num_extra_channels >= 5 )
             JxlEncoderSetCodestreamLevel(encoder.get(), 10);
 
-        JxlExtraChannelInfo extra_channel_info;
-        JxlEncoderInitExtraChannelInfo(JXL_CHANNEL_OPTIONAL,
-                                       &extra_channel_info);
-        extra_channel_info.bits_per_sample = basic_info.bits_per_sample;
-        extra_channel_info.exponent_bits_per_sample = basic_info.exponent_bits_per_sample;
         for( int i = (bHasInterleavedAlphaBand ? 1 : 0);
                     i < static_cast<int>(basic_info.num_extra_channels); ++i )
         {
+            const int nBand = static_cast<int>(1 + basic_info.num_color_channels + i);
+            const auto poBand = poSrcDS->GetRasterBand(nBand);
+            JxlExtraChannelInfo extra_channel_info;
+            JxlEncoderInitExtraChannelInfo(
+                poBand->GetColorInterpretation() == GCI_AlphaBand ? JXL_CHANNEL_ALPHA : JXL_CHANNEL_OPTIONAL,
+                &extra_channel_info);
+            extra_channel_info.bits_per_sample = basic_info.bits_per_sample;
+            extra_channel_info.exponent_bits_per_sample = basic_info.exponent_bits_per_sample;
+
             const uint32_t nIndex = static_cast<uint32_t>(i);
             if( JXL_ENC_SUCCESS != JxlEncoderSetExtraChannelInfo(
                     encoder.get(), nIndex, &extra_channel_info) )
@@ -1699,9 +1710,8 @@ JPEGXLDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
                          "JxlEncoderSetExtraChannelInfo() failed");
                 return nullptr;
             }
-            const int nBand = static_cast<int>(1 + basic_info.num_color_channels + i);
             std::string osChannelName(CPLSPrintf("Band %d", nBand));
-            const char* pszDescription = poSrcDS->GetRasterBand(nBand)->GetDescription();
+            const char* pszDescription = poBand->GetDescription();
             if( pszDescription && pszDescription[0] != '\0' )
                 osChannelName = pszDescription;
             if( JXL_ENC_SUCCESS != JxlEncoderSetExtraChannelName(

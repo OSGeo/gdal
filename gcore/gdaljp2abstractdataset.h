@@ -41,11 +41,13 @@ class CPL_DLL GDALJP2AbstractDataset: public GDALGeorefPamDataset
     GDALDataset*        poMemDS = nullptr;
     char**              papszMetadataFiles = nullptr;
     int                 m_nWORLDFILEIndex = -1;
+    CPLStringList       m_aosImageStructureMetadata{};
 
     CPL_DISALLOW_COPY_ASSIGN(GDALJP2AbstractDataset)
 
   protected:
     int CloseDependentDatasets() override;
+    virtual VSILFILE* GetFileHandle() { return nullptr; }
 
   public:
     GDALJP2AbstractDataset();
@@ -57,6 +59,9 @@ class CPL_DLL GDALJP2AbstractDataset: public GDALGeorefPamDataset
     void LoadVectorLayers( int bOpenRemoteResources = FALSE );
 
     char **GetFileList( void ) override;
+
+    char**      GetMetadata(const char * pszDomain = "" ) override;
+    const char* GetMetadataItem(const char* pszName, const char * pszDomain = "" ) override;
 
     int GetLayerCount() override;
     OGRLayer *GetLayer( int i ) override;

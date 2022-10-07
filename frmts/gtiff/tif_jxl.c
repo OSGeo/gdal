@@ -335,7 +335,34 @@ JXLPreDecode(TIFF* tif, uint16_t s)
         format.data_type = jxlDataType;
         format.endianness = JXL_NATIVE_ENDIAN;
         format.align = 0;
-        int bAlphaEmbedded = (info.alpha_bits!=0);
+        // alpha_bits is set even for a gray, gray, Alpha, gray, gray
+        // or for R, G, B, undefined, Alpha
+        // Probably a defect of libjxl: https://github.com/libjxl/libjxl/issues/1773
+        // So for num_color_channels==3, num_color_channels > 1 and
+        // alpha_bits != 0, get information of the first extra channel to
+        // check if it is alpha, to detect R, G, B, Alpha, undefined.
+        // Note: there's no difference in the codestream if writing RGBAU
+        // as num_channels == 3 with 2 extra channels the first one being
+        // explicitly set to alpha, or with num_channels == 4.
+        int bAlphaEmbedded = 0;
+        if( info.alpha_bits !=0 )
+        {
+            if( (info.num_color_channels==3 || info.num_color_channels==1) &&
+                (info.num_extra_channels==1) )
+            {
+                bAlphaEmbedded = 1;
+            }
+            else if( info.num_color_channels==3 && info.num_extra_channels > 1 )
+            {
+                JxlExtraChannelInfo extra_channel_info;
+                memset(&extra_channel_info, 0, sizeof(extra_channel_info));
+                if( JxlDecoderGetExtraChannelInfo(sp->decoder, 0, &extra_channel_info) == JXL_DEC_SUCCESS &&
+                    extra_channel_info.type == JXL_CHANNEL_ALPHA )
+                {
+                    bAlphaEmbedded = 1;
+                }
+            }
+        }
         uint32_t nFirstExtraChannel = (bAlphaEmbedded)?1:0;
         size_t main_buffer_size = sp->uncompressed_size;
         size_t channel_size = main_buffer_size / td->td_samplesperpixel;
@@ -353,7 +380,9 @@ JXLPreDecode(TIFF* tif, uint16_t s)
             for( int i = 0; i < nExtraChannelsToExtract; ++i )
             {
                 size_t buffer_size;
-                if( JxlDecoderExtraChannelBufferSize(sp->decoder, &format, &buffer_size, i+nFirstExtraChannel)
+                const int iCorrectedIdx = i+nFirstExtraChannel;
+
+                if( JxlDecoderExtraChannelBufferSize(sp->decoder, &format, &buffer_size, iCorrectedIdx)
                         != JXL_DEC_SUCCESS  )
                 {
                     TIFFErrorExt(tif->tif_clientdata, module,
@@ -369,6 +398,60 @@ JXLPreDecode(TIFF* tif, uint16_t s)
                     _TIFFfree(extra_channel_buffer);
                     return 0;
                 }
+
+#if 0
+                // Check consistency of JXL codestream header regarding
+                // extra alpha channels and TIFF ExtraSamples tag
+                JxlExtraChannelInfo extra_channel_info;
+                memset(&extra_channel_info, 0, sizeof(extra_channel_info));
+                if( JxlDecoderGetExtraChannelInfo(sp->decoder, iCorrectedIdx, &extra_channel_info) == JXL_DEC_SUCCESS )
+                {
+                    if( extra_channel_info.type == JXL_CHANNEL_ALPHA &&
+                        !extra_channel_info.alpha_premultiplied )
+                    {
+                        if( iCorrectedIdx < td->td_extrasamples &&
+                            td->td_sampleinfo[iCorrectedIdx] == EXTRASAMPLE_UNASSALPHA )
+                        {
+                            // ok
+                        }
+                        else
+                        {
+                            TIFFWarningExt(tif->tif_clientdata, module,
+                                           "Unpremultiplied alpha channel expected from JXL codestream "
+                                           "in extra channel %d, but other value found in ExtraSamples tag", iCorrectedIdx);
+                        }
+                    }
+                    else if( extra_channel_info.type == JXL_CHANNEL_ALPHA &&
+                             extra_channel_info.alpha_premultiplied )
+                    {
+                        if( iCorrectedIdx < td->td_extrasamples &&
+                            td->td_sampleinfo[iCorrectedIdx] == EXTRASAMPLE_ASSOCALPHA )
+                        {
+                            // ok
+                        }
+                        else
+                        {
+                            TIFFWarningExt(tif->tif_clientdata, module,
+                                           "Premultiplied alpha channel expected from JXL codestream "
+                                           "in extra channel %d, but other value found in ExtraSamples tag", iCorrectedIdx);
+                        }
+                    }
+                    else if( iCorrectedIdx < td->td_extrasamples &&
+                             td->td_sampleinfo[iCorrectedIdx] == EXTRASAMPLE_UNASSALPHA )
+                    {
+                        TIFFWarningExt(tif->tif_clientdata, module,
+                                       "Unpremultiplied alpha channel expected from ExtraSamples tag "
+                                       "in extra channel %d, but other value found in JXL codestream", iCorrectedIdx);
+                    }
+                    else if( iCorrectedIdx < td->td_extrasamples &&
+                             td->td_sampleinfo[iCorrectedIdx] == EXTRASAMPLE_ASSOCALPHA )
+                    {
+                        TIFFWarningExt(tif->tif_clientdata, module,
+                                       "Premultiplied alpha channel expected from ExtraSamples tag "
+                                       "in extra channel %d, but other value found in JXL codestream", iCorrectedIdx);
+                    }
+                }
+#endif
                 if( JxlDecoderSetExtraChannelBuffer(
                         sp->decoder, &format,
                         extra_channel_buffer+i*channel_size,
@@ -734,12 +817,12 @@ JXLPostEncode(TIFF* tif)
             JxlEncoderDestroy(enc);
             return 0;
         }
-        
+
         uint8_t *main_buffer = sp->uncompressed_buffer;
         unsigned int main_size = sp->uncompressed_size;
-        int nBytesPerSample = GetJXLDataTypeSize(format.data_type);
 
 #ifdef HAVE_JxlExtraChannels
+        int nBytesPerSample = GetJXLDataTypeSize(format.data_type);
         if (td->td_planarconfig == PLANARCONFIG_CONTIG &&
             (basic_info.num_extra_channels > 1 ||
              (basic_info.num_extra_channels == 1 && !bAlphaEmbedded)))
@@ -758,16 +841,30 @@ JXLPostEncode(TIFF* tif)
             for( ; cur_outbuffer-main_buffer<main_size ; cur_outbuffer+=outChunkSize, cur_inbuffer+=inStep  ) {
                 memcpy(cur_outbuffer,cur_inbuffer,outChunkSize);
             }
-            JxlExtraChannelInfo extra_channel_info;
-            JxlEncoderInitExtraChannelInfo(JXL_CHANNEL_OPTIONAL,
-                                           &extra_channel_info);
-            extra_channel_info.bits_per_sample = basic_info.bits_per_sample;
-            extra_channel_info.exponent_bits_per_sample = basic_info.exponent_bits_per_sample;
             for(int iChannel=nMainChannels; iChannel<td->td_samplesperpixel; iChannel++)
             {
+                JxlExtraChannelInfo extra_channel_info;
+                int channelType = JXL_CHANNEL_OPTIONAL;
+                const int iExtraChannel = iChannel - nMainChannels + bAlphaEmbedded;
+                if( iExtraChannel < td->td_extrasamples &&
+                    (td->td_sampleinfo[iExtraChannel] == EXTRASAMPLE_UNASSALPHA ||
+                     td->td_sampleinfo[iExtraChannel] == EXTRASAMPLE_ASSOCALPHA))
+                {
+                    channelType = JXL_CHANNEL_ALPHA;
+                }
+                JxlEncoderInitExtraChannelInfo(channelType,
+                                               &extra_channel_info);
+                extra_channel_info.bits_per_sample = basic_info.bits_per_sample;
+                extra_channel_info.exponent_bits_per_sample = basic_info.exponent_bits_per_sample;
+                if( iExtraChannel < td->td_extrasamples &&
+                    td->td_sampleinfo[iExtraChannel] == EXTRASAMPLE_ASSOCALPHA )
+                {
+                    extra_channel_info.alpha_premultiplied = JXL_TRUE;
+                }
+
                 if (JXL_ENC_SUCCESS != JxlEncoderSetExtraChannelInfo(
                     enc,
-                    (bAlphaEmbedded)?iChannel-nMainChannels+1:iChannel-nMainChannels, &extra_channel_info))
+                    iExtraChannel, &extra_channel_info))
                 {
                     TIFFErrorExt(tif->tif_clientdata, module,
                                  "JxlEncoderSetExtraChannelInfo(%d) failed",iChannel);
@@ -778,7 +875,7 @@ JXLPostEncode(TIFF* tif)
             }
         }
 #endif
-        
+
 
         int retCode = JxlEncoderAddImageFrame(opts, &format, main_buffer, main_size);
         //cleanup now

@@ -877,7 +877,17 @@ def test_nitf_jp2openjpeg_npje_numerically_lossless():
         ds.GetMetadataItem("J2KLRA", "TRE")
         == "0050000102000000.03125000100.06250000200.12500000300.25000000400.50000000500.60000000600.70000000700.80000000800.90000000901.00000001001.10000001101.20000001201.30000001301.50000001401.70000001502.00000001602.30000001703.50000001803.90000001912.000000"
     )
-    assert ds.GetMetadataItem("COMRAT", "DEBUG") in ("N141", "N142", "N143", "N169")
+    assert ds.GetMetadataItem("COMRAT", "DEBUG") in (
+        "N141",
+        "N142",
+        "N143",
+        "N147",
+        "N169",
+        "N174",
+    )
+    assert (
+        ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == "LOSSLESS"
+    )
 
     # Get the JPEG2000 code stream subfile
     jpeg2000_ds_name = ds.GetMetadataItem("JPEG2000_DATASET_NAME", "DEBUG")
@@ -965,6 +975,7 @@ def test_nitf_jp2openjpeg_npje_visually_lossless():
     finally:
         gdaltest.reregister_all_jpeg2000_drivers()
     assert ds.GetMetadataItem("COMRAT", "DEBUG").startswith("V")
+    assert ds.GetMetadata("IMAGE_STRUCTURE")["COMPRESSION_REVERSIBILITY"] == "LOSSY"
 
     # Get the JPEG2000 code stream subfile
     jpeg2000_ds_name = ds.GetMetadataItem("JPEG2000_DATASET_NAME", "DEBUG")

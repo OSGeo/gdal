@@ -4028,7 +4028,7 @@ OGRGeometryH OGR_G_ConvexHull( OGRGeometryH hTarget )
  * hull. Frequently used to convert a multi-point into a polygonal area.
  * that contains all the points in the input Geometry.
  *
- * A new geometry object is created and returned containing the convex
+ * A new geometry object is created and returned containing the concave
  * hull of the geometry on which the method is invoked.
  *
  * This method is the same as the C function OGR_G_ConcaveHull().

@@ -75,9 +75,12 @@ def skip_if_unreachable(url, try_read=False):
 def test_http_1():
     url = "http://gdal.org/gdalicon.png"
     tst = gdaltest.GDALTest("PNG", url, 1, 7617, filename_absolute=1)
-    ret = tst.testOpen()
-    if ret == "fail":
+    try:
+        tst.testOpen()
+    except Exception:
         skip_if_unreachable(url)
+        if gdaltest.is_travis_branch("build-windows-conda"):
+            pytest.xfail("randomly fail on that configuration for unknown reason")
         pytest.fail()
 
 

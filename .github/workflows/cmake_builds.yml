@@ -482,6 +482,7 @@ jobs:
         SKIP_OGR_GMLAS_HUGE_PROCESSING_TIME: YES
         SKIP_OGR_GMLAS_HTTP_RELATED: YES
         SKIP_GDAL_HTTP_SSL_VERIFYSTATUS: YES
+        BUILD_NAME: "build-windows-conda"
     - name: Install
       shell: bash -l {0}
       run: |
@@ -581,7 +582,7 @@ jobs:
         brew update
         brew outdated
         brew install postgresql || brew link postgresql
-        brew install pkg-config freexl libxml2 libspatialite geos proj libgeotiff openjpeg giflib libaec postgis poppler doxygen unixodbc jpeg-turbo
+        brew install pkg-config freexl libxml2 libspatialite geos proj libgeotiff openjpeg giflib libaec postgis poppler doxygen unixodbc jpeg-turbo aom jpeg-xl libheif
         brew install ccache swig
         # gdal is automatically installed as a dependency for postgis
         brew uninstall --ignore-dependencies gdal
@@ -612,7 +613,7 @@ jobs:
       run: |
         ctest --test-dir $GITHUB_WORKSPACE/build -V -j 3
       env:
-        GITHUB_WORKFLOW: "MacOS build"
+        BUILD_NAME: "MacOS build"
     - name: Install
       run: cmake --build $GITHUB_WORKSPACE/build --target install -j 3
     - name: Test post-install usage (with pkg-config)

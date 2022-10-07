@@ -61,7 +61,7 @@ function(gdal_swig_binding_target)
   endif()
   add_custom_command(
           OUTPUT ${_OUTPUT} ${BINDING_LANGUAGE_OUTPUT}
-          COMMAND ${SWIG_EXECUTABLE} ${_SWIG_ARGS} ${SWIG_DEFINES} -I${PROJECT_SOURCE_DIR}/gdal
+          COMMAND ${SWIG_EXECUTABLE} ${_SWIG_ARGS} ${SWIG_DEFINES}
           $<$<BOOL:${_SWIG_CXX}>:-c++> -${_SWIG_BINDING}
           -o ${_OUTPUT}
           ${PROJECT_SOURCE_DIR}/swig/include/${_SWIG_TARGET}.i

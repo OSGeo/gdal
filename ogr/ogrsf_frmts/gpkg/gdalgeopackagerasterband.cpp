@@ -300,13 +300,22 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::SetColorTable(GDALColorTable* poCT)
         return CE_Failure;
     }
 
+    AssignColorTable(poCT);
+    return CE_None;
+}
+
+/************************************************************************/
+/*                          AssignColorTable()                          */
+/************************************************************************/
+
+void GDALGPKGMBTilesLikeRasterBand::AssignColorTable(const GDALColorTable* poCT)
+{
     m_poTPD->m_bTriedEstablishingCT = true;
     delete m_poTPD->m_poCT;
     if( poCT != nullptr )
         m_poTPD->m_poCT = poCT->Clone();
     else
         m_poTPD->m_poCT = nullptr;
-    return CE_None;
 }
 
 /************************************************************************/

@@ -3086,3 +3086,44 @@ int VSIVirtualHandle::ReadMultiRange( int nRanges, void ** ppData,
 }
 
 #endif  // #ifndef DOXYGEN_SKIP
+
+/************************************************************************/
+/*                            HasPRead()                                */
+/************************************************************************/
+
+/** Returns whether this file handle supports the PRead() method.
+ *
+ * @since GDAL 3.6
+ */
+bool VSIVirtualHandle::HasPRead() const
+{
+    return false;
+}
+
+/************************************************************************/
+/*                             PRead()                                  */
+/************************************************************************/
+
+/** Do a parallel-compatible read operation.
+ *
+ * This methods reads into pBuffer up to nSize bytes starting at offset nOffset
+ * in the file. The current file offset is not affected by this method.
+ *
+ * The implementation is thread-safe: several threads can issue PRead()
+ * concurrently on the same VSIVirtualHandle object.
+ *
+ * This method has the same semantics as pread() Linux operation. It is only
+ * available if HasPRead() returns true.
+ *
+ * @param pBuffer output buffer (must be at least nSize bytes large).
+ * @param nSize   number of bytes to read in the file.
+ * @param nOffset file offset from which to read.
+ * @return number of bytes read.
+ * @since GDAL 3.6
+ */
+size_t VSIVirtualHandle::PRead( CPL_UNUSED void* pBuffer,
+                                CPL_UNUSED size_t nSize,
+                                CPL_UNUSED vsi_l_offset nOffset ) const
+{
+    return 0;
+}

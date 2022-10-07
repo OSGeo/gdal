@@ -11078,12 +11078,11 @@ static CPLErr NCDFSafeStrcat(char **ppszDest, const char *pszSrc,
 }
 
 /* helper function for NCDFGetAttr() */
-/* sets pdfValue to first value returned */
-/* and if bSetPszValue=True sets pszValue with all attribute values */
-/* pszValue is the responsibility of the caller and must be freed */
+/* if pdfValue != nullptr, sets *pdfValue to first value returned */
+/* if ppszValue != nullptr, sets *ppszValue with all attribute values */
+/* *ppszValue is the responsibility of the caller and must be freed */
 static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
-                            double *pdfValue, char **pszValue,
-                            bool bSetPszValue )
+                            double *pdfValue, char **ppszValue )
 {
     nc_type nAttrType = NC_NAT;
     size_t nAttrLen = 0;
@@ -11323,17 +11322,21 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
     {
         if( CPLGetValueType(pszAttrValue) == CPL_VALUE_STRING )
         {
-            if( pszValue == nullptr && pdfValue != nullptr )
+            if( ppszValue == nullptr && pdfValue != nullptr )
+            {
+                CPLFree(pszAttrValue);
                 return CE_Failure;
+            }
         }
         dfValue = CPLAtof(pszAttrValue);
     }
 
     /* set return values */
-    if( bSetPszValue )
-        *pszValue = pszAttrValue;
+    if( ppszValue )
+        *ppszValue = pszAttrValue;
     else
         CPLFree(pszAttrValue);
+
     if( pdfValue ) *pdfValue = dfValue;
 
     return CE_None;
@@ -11343,14 +11346,14 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
 CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName,
                     double *pdfValue )
 {
-    return NCDFGetAttr1(nCdfId, nVarId, pszAttrName, pdfValue, nullptr, false);
+    return NCDFGetAttr1(nCdfId, nVarId, pszAttrName, pdfValue, nullptr);
 }
 
 /* pszValue is the responsibility of the caller and must be freed */
 CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName,
                     char **pszValue )
 {
-    return NCDFGetAttr1(nCdfId, nVarId, pszAttrName, nullptr, pszValue, true);
+    return NCDFGetAttr1(nCdfId, nVarId, pszAttrName, nullptr, pszValue);
 }
 
 /* By default write NC_CHAR, but detect for int/float/double and */
