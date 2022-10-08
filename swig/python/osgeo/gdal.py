@@ -2508,7 +2508,7 @@ class Dataset(MajorObject):
         return _gdal.Dataset_SetGeoTransform(self, *args)
 
     def BuildOverviews(self, *args, **kwargs) -> "int":
-        r"""BuildOverviews(Dataset self, char const * resampling="NEAREST", int overviewlist=0, GDALProgressFunc callback=0, void * callback_data=None) -> int"""
+        r"""BuildOverviews(Dataset self, char const * resampling="NEAREST", int overviewlist=0, GDALProgressFunc callback=0, void * callback_data=None, char ** options=None) -> int"""
         return _gdal.Dataset_BuildOverviews(self, *args, **kwargs)
 
     def GetGCPCount(self, *args) -> "int":

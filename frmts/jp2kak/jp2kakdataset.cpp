@@ -704,10 +704,11 @@ JP2KAKDataset::~JP2KAKDataset()
 /************************************************************************/
 
 CPLErr JP2KAKDataset::IBuildOverviews( const char *pszResampling,
-                                       int nOverviews, int *panOverviewList,
-                                       int nListBands, int *panBandList,
+                                       int nOverviews, const int *panOverviewList,
+                                       int nListBands, const int *panBandList,
                                        GDALProgressFunc pfnProgress,
-                                       void *pProgressData )
+                                       void *pProgressData,
+                                       CSLConstList papszOptions )
 
 {
     // In order for building external overviews to work properly, we
@@ -728,7 +729,8 @@ CPLErr JP2KAKDataset::IBuildOverviews( const char *pszResampling,
     return GDALPamDataset::IBuildOverviews(pszResampling,
                                            nOverviews, panOverviewList,
                                            nListBands, panBandList,
-                                           pfnProgress, pProgressData);
+                                           pfnProgress, pProgressData,
+                                           papszOptions);
 }
 
 /************************************************************************/

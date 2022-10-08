@@ -582,7 +582,8 @@ private:
     void          LoadICCProfile();
 
     CPLErr        RegisterNewOverviewDataset( toff_t nOverviewOffset,
-                                              int l_nJpegQuality );
+                                              int l_nJpegQuality,
+                                              CSLConstList papszOptions );
     CPLErr        CreateOverviewsFromSrcOverviews( GDALDataset* poSrcDS,
                                                    GDALDataset* poOvrDS );
     CPLErr        CreateInternalMaskOverviews( int nOvrBlockXSize,
@@ -658,13 +659,15 @@ private:
                                      GDALProgressFunc pfnProgress,
                                      void * pProgressData);
 
-    void           GetOverviewParameters(int& nCompression,
-                                         int& nPlanarConfig,
+    bool           GetOverviewParameters(int& nCompression,
+                                         uint16_t& nPlanarConfig,
                                          uint16_t& nPredictor,
+                                         uint16_t& nPhotometric,
                                          int& nOvrJpegQuality,
                                          std::string& osNoData,
                                          uint16_t*& panExtraSampleValues,
-                                         uint16_t& nExtraSamples) const;
+                                         uint16_t& nExtraSamples,
+                                         CSLConstList papszOptions) const;
 
   protected:
     virtual int         CloseDependentDatasets() override;
@@ -703,8 +706,11 @@ private:
                               GDALRasterIOExtraArg* psExtraArg ) override;
     virtual char **GetFileList() override;
 
-    virtual CPLErr IBuildOverviews( const char *, int, int *, int, int *,
-                                    GDALProgressFunc, void * ) override;
+    virtual CPLErr IBuildOverviews( const char *,
+                                    int, const int *,
+                                    int, const int *,
+                                    GDALProgressFunc, void *,
+                                    CSLConstList papszOptions ) override;
 
     CPLErr         OpenOffset( TIFF *,
                                toff_t nDirOffset, GDALAccess,
@@ -12213,37 +12219,55 @@ CPLErr GTiffDataset::CleanOverviews()
 /************************************************************************/
 
 CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
-                                                int l_nJpegQuality)
+                                                int l_nJpegQuality,
+                                                CSLConstList papszOptions)
 {
     if( m_nOverviewCount == 127 )
         return CE_Failure;
 
+    const auto GetOptionValue = [papszOptions](const char* pszOptionKey,
+                                               const char* pszConfigOptionKey)
+    {
+        const char* pszVal = CSLFetchNameValue(papszOptions, pszOptionKey);
+        if( pszVal )
+        {
+            return pszVal;
+        }
+        pszVal = CSLFetchNameValue(papszOptions, pszConfigOptionKey);
+        if( pszVal )
+        {
+            return pszVal;
+        }
+        pszVal = CPLGetConfigOption(pszConfigOptionKey, nullptr);
+        return pszVal;
+    };
+
     int nZLevel = m_nZLevel;
-    if( const char* opt = CPLGetConfigOption( "ZLEVEL_OVERVIEW", nullptr ) )
+    if( const char* opt = GetOptionValue( "ZLEVEL", "ZLEVEL_OVERVIEW") )
     {
         nZLevel = atoi(opt);
     }
 
     int nZSTDLevel = m_nZSTDLevel;
-    if( const char* opt = CPLGetConfigOption( "ZSTD_LEVEL_OVERVIEW", nullptr ) )
+    if( const char* opt = GetOptionValue( "ZSTD_LEVEL", "ZSTD_LEVEL_OVERVIEW") )
     {
         nZSTDLevel = atoi(opt);
     }
 
     int nWebpLevel = m_nWebPLevel;
-    if( const char* opt = CPLGetConfigOption( "WEBP_LEVEL_OVERVIEW", nullptr ) )
+    if( const char* opt = GetOptionValue( "WEBP_LEVEL", "WEBP_LEVEL_OVERVIEW" ) )
     {
         nWebpLevel = atoi(opt);
     }
 
     bool bWebpLossless = m_bWebPLossless;
-    if( const char* opt = CPLGetConfigOption( "WEBP_LOSSLESS_OVERVIEW", nullptr ) )
+    if( const char* opt = GetOptionValue( "WEBP_LOSSLESS", "WEBP_LOSSLESS_OVERVIEW" ) )
     {
         bWebpLossless = CPLTestBool(opt);
     }
 
     double dfMaxZError = m_dfMaxZError;
-    if( const char* opt = CPLGetConfigOption( "MAX_Z_ERROR_OVERVIEW", nullptr ) )
+    if( const char* opt = GetOptionValue( "MAX_Z_ERROR", "MAX_Z_ERROR_OVERVIEW" ) )
     {
         dfMaxZError = CPLAtof(opt);
     }
@@ -12251,7 +12275,8 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
     GTiffDataset* poODS = new GTiffDataset();
     poODS->ShareLockWithParentDataset(this);
     poODS->m_pszFilename = CPLStrdup(m_pszFilename);
-    if( CPLTestBool(CPLGetConfigOption("SPARSE_OK_OVERVIEW", "NO")) )
+    const char* pszSparseOK = GetOptionValue("SPARSE_OK", "SPARSE_OK_OVERVIEW");
+    if( pszSparseOK && CPLTestBool(pszSparseOK) )
     {
         poODS->m_bWriteEmptyTiles = false;
         poODS->m_bFillEmptyTilesAtClosing = false;
@@ -12357,26 +12382,145 @@ static void CreateTIFFColorTable(GDALColorTable* poColorTable,
     panBlue = &(anTBlue[0]);
 }
 
+
+/************************************************************************/
+/*                       GTIFFUpdatePhotometric()                      */
+/************************************************************************/
+
+bool GTIFFUpdatePhotometric(const char* pszPhotometric,
+                            const char* pszOptionKey,
+                            int nCompression,
+                            const char* pszInterleave,
+                            int nBands,
+                            uint16_t& nPhotometric,
+                            uint16_t& nPlanarConfig)
+{
+    if( pszPhotometric != nullptr && pszPhotometric[0] != '\0' )
+    {
+        if( EQUAL( pszPhotometric, "MINISBLACK" ) )
+            nPhotometric = PHOTOMETRIC_MINISBLACK;
+        else if( EQUAL( pszPhotometric, "MINISWHITE" ) )
+            nPhotometric = PHOTOMETRIC_MINISWHITE;
+        else if( EQUAL( pszPhotometric, "RGB" ))
+        {
+            nPhotometric = PHOTOMETRIC_RGB;
+        }
+        else if( EQUAL( pszPhotometric, "CMYK" ))
+        {
+            nPhotometric = PHOTOMETRIC_SEPARATED;
+        }
+        else if( EQUAL( pszPhotometric, "YCBCR" ))
+        {
+            nPhotometric = PHOTOMETRIC_YCBCR;
+
+            // Because of subsampling, setting YCBCR without JPEG compression
+            // leads to a crash currently. Would need to make
+            // GTiffRasterBand::IWriteBlock() aware of subsampling so that it
+            // doesn't overrun buffer size returned by libtiff.
+            if( nCompression != COMPRESSION_JPEG )
+            {
+                CPLError(
+                    CE_Failure, CPLE_NotSupported,
+                    "Currently, %s=YCBCR requires JPEG compression", pszOptionKey );
+                return false;
+            }
+
+            if( pszInterleave != nullptr &&
+                pszInterleave[0] != '\0' &&
+                nPlanarConfig == PLANARCONFIG_SEPARATE )
+            {
+                CPLError(
+                    CE_Failure, CPLE_NotSupported,
+                    "%s=YCBCR requires PIXEL interleaving", pszOptionKey );
+                return false;
+            }
+            else
+            {
+                nPlanarConfig = PLANARCONFIG_CONTIG;
+            }
+
+            // YCBCR strictly requires 3 bands. Not less, not more
+            // Issue an explicit error message as libtiff one is a bit cryptic:
+            // JPEGLib:Bogus input colorspace.
+            if( nBands != 3 )
+            {
+                CPLError(
+                    CE_Failure, CPLE_NotSupported,
+                    "%s=YCBCR requires a source raster "
+                    "with only 3 bands (RGB)", pszOptionKey );
+                return false;
+            }
+        }
+        else if( EQUAL( pszPhotometric, "CIELAB" ))
+        {
+            nPhotometric = PHOTOMETRIC_CIELAB;
+        }
+        else if( EQUAL( pszPhotometric, "ICCLAB" ))
+        {
+            nPhotometric = PHOTOMETRIC_ICCLAB;
+        }
+        else if( EQUAL( pszPhotometric, "ITULAB" ))
+        {
+            nPhotometric = PHOTOMETRIC_ITULAB;
+        }
+        else
+        {
+            CPLError(
+                CE_Warning, CPLE_IllegalArg,
+                "%s=%s value not recognised, ignoring.",
+                pszOptionKey, pszPhotometric );
+        }
+    }
+    return true;
+}
+
 /************************************************************************/
 /*                        GetOverviewParameters()                       */
 /************************************************************************/
 
-void GTiffDataset::GetOverviewParameters(int& nCompression,
-                                         int& nPlanarConfig,
+bool GTiffDataset::GetOverviewParameters(int& nCompression,
+                                         uint16_t& nPlanarConfig,
                                          uint16_t& nPredictor,
+                                         uint16_t& nPhotometric,
                                          int& nOvrJpegQuality,
                                          std::string& osNoData,
                                          uint16_t*& panExtraSampleValues,
-                                         uint16_t& nExtraSamples) const
+                                         uint16_t& nExtraSamples,
+                                         CSLConstList papszOptions) const
 {
+    const auto GetOptionValue = [papszOptions](const char* pszOptionKey,
+                                               const char* pszConfigOptionKey,
+                                               const char** ppszKeyUsed = nullptr)
+    {
+        const char* pszVal = CSLFetchNameValue(papszOptions, pszOptionKey);
+        if( pszVal )
+        {
+            if( ppszKeyUsed )
+                *ppszKeyUsed = pszOptionKey;
+            return pszVal;
+        }
+        pszVal = CSLFetchNameValue(papszOptions, pszConfigOptionKey);
+        if( pszVal )
+        {
+            if( ppszKeyUsed )
+                *ppszKeyUsed = pszConfigOptionKey;
+            return pszVal;
+        }
+        pszVal = CPLGetConfigOption(pszConfigOptionKey, nullptr);
+        if( pszVal && ppszKeyUsed )
+            *ppszKeyUsed = pszConfigOptionKey;
+        return pszVal;
+    };
+
 /* -------------------------------------------------------------------- */
 /*      Determine compression method.                                   */
 /* -------------------------------------------------------------------- */
     nCompression = m_nCompression;
-    const char* pszCompressValue = CPLGetConfigOption( "COMPRESS_OVERVIEW", nullptr );
+    const char* pszOptionKey = "";
+    const char* pszCompressValue = GetOptionValue("COMPRESS", "COMPRESS_OVERVIEW", &pszOptionKey );
     if( pszCompressValue != nullptr )
     {
-        nCompression = GTIFFGetCompressionMethod(pszCompressValue, "COMPRESS_OVERVIEW");
+        nCompression = GTIFFGetCompressionMethod(pszCompressValue, pszOptionKey);
         if( nCompression < 0 )
         {
             nCompression = m_nCompression;
@@ -12387,7 +12531,7 @@ void GTiffDataset::GetOverviewParameters(int& nCompression,
 /*      Determine planar configuration.                                 */
 /* -------------------------------------------------------------------- */
     nPlanarConfig = m_nPlanarConfig;
-    const char* pszInterleave = CPLGetConfigOption( "INTERLEAVE_OVERVIEW", nullptr );
+    const char* pszInterleave = GetOptionValue( "INTERLEAVE", "INTERLEAVE_OVERVIEW", &pszOptionKey );
     if( pszInterleave != nullptr && pszInterleave[0] != '\0' )
     {
         if( EQUAL( pszInterleave, "PIXEL" ) )
@@ -12398,9 +12542,9 @@ void GTiffDataset::GetOverviewParameters(int& nCompression,
         {
             CPLError(
                 CE_Warning, CPLE_AppDefined,
-                "INTERLEAVE_OVERVIEW=%s unsupported, "
+                "%s=%s unsupported, "
                 "value must be PIXEL or BAND. ignoring",
-                pszInterleave );
+                pszOptionKey, pszInterleave );
         }
     }
 
@@ -12410,23 +12554,39 @@ void GTiffDataset::GetOverviewParameters(int& nCompression,
     nPredictor = PREDICTOR_NONE;
     if( GTIFFSupportsPredictor(nCompression) )
     {
-        if ( CPLGetConfigOption( "PREDICTOR_OVERVIEW", nullptr ) != nullptr )
+        const char* pszPredictor = GetOptionValue("PREDICTOR", "PREDICTOR_OVERVIEW");
+        if ( pszPredictor != nullptr )
         {
-            nPredictor = static_cast<uint16_t>(atoi(CPLGetConfigOption("PREDICTOR_OVERVIEW","1")));
+            nPredictor = static_cast<uint16_t>(atoi(pszPredictor));
         }
         else if( GTIFFSupportsPredictor(m_nCompression) )
             TIFFGetField( m_hTIFF, TIFFTAG_PREDICTOR, &nPredictor );
     }
 
 /* -------------------------------------------------------------------- */
+/*      Determine photometric tag                                       */
+/* -------------------------------------------------------------------- */
+    nPhotometric = m_nPhotometric;
+    const char* pszPhotometric = GetOptionValue("PHOTOMETRIC", "PHOTOMETRIC_OVERVIEW", &pszOptionKey);
+    if( !GTIFFUpdatePhotometric(pszPhotometric, pszOptionKey,
+                                nCompression, pszInterleave,
+                                nBands,
+                                nPhotometric, nPlanarConfig) )
+    {
+        return false;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Determine JPEG quality                                          */
 /* -------------------------------------------------------------------- */
     nOvrJpegQuality = m_nJpegQuality;
-    if( nCompression == COMPRESSION_JPEG &&
-        CPLGetConfigOption( "JPEG_QUALITY_OVERVIEW", nullptr ) != nullptr )
+    if( nCompression == COMPRESSION_JPEG )
     {
-        nOvrJpegQuality =
-            atoi(CPLGetConfigOption("JPEG_QUALITY_OVERVIEW","75"));
+        const char* pszJPEGQuality = GetOptionValue("JPEG_QUALITY", "JPEG_QUALITY_OVERVIEW");
+        if( pszJPEGQuality != nullptr )
+        {
+            nOvrJpegQuality = atoi(pszJPEGQuality);
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -12457,6 +12617,8 @@ void GTiffDataset::GetOverviewParameters(int& nCompression,
         panExtraSampleValues = nullptr;
         nExtraSamples = 0;
     }
+
+    return true;
 }
 
 /************************************************************************/
@@ -12477,23 +12639,29 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS,
 
     int nOvBitsPerSample = m_nBitsPerSample;
 
-    int l_nPhotometric = m_nPhotometric;
-    const char* psvPhotometricValue = CPLGetConfigOption( "PHOTOMETRIC_OVERVIEW", nullptr );
-    if( psvPhotometricValue != nullptr )
+/* -------------------------------------------------------------------- */
+/*      Do we need some metadata for the overviews?                     */
+/* -------------------------------------------------------------------- */
+    CPLString osMetadata;
+
+    GTIFFBuildOverviewMetadata( "NONE", this, osMetadata );
+
+    int nCompression;
+    uint16_t nPlanarConfig;
+    uint16_t nPredictor;
+    uint16_t nPhotometric;
+    int nOvrJpegQuality;
+    std::string osNoData;
+    uint16_t *panExtraSampleValues = nullptr;
+    uint16_t nExtraSamples = 0;
+    if( !GetOverviewParameters(nCompression, nPlanarConfig,
+                          nPredictor, nPhotometric, nOvrJpegQuality,
+                          osNoData,
+                          panExtraSampleValues, nExtraSamples,
+                          /*papszOptions=*/nullptr) )
     {
-        if ( EQUAL (psvPhotometricValue, "YCBCR" ) && nBands == 3)
-        {
-            l_nPhotometric = PHOTOMETRIC_YCBCR;
-        }
-        else
-        {
-            ReportError(CE_Warning, CPLE_NotSupported,
-            "Building external overviews with PHOTOMETRIC_OVERVIEW's other than YCBCR are not supported "
-            );
-        }
+        return CE_Failure;
     }
-
-
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a palette?  If so, create a TIFF compatible version. */
@@ -12505,31 +12673,12 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS,
     unsigned short *panGreen = nullptr;
     unsigned short *panBlue = nullptr;
 
-    if( l_nPhotometric == PHOTOMETRIC_PALETTE && m_poColorTable != nullptr )
+    if( nPhotometric == PHOTOMETRIC_PALETTE && m_poColorTable != nullptr )
     {
         CreateTIFFColorTable(m_poColorTable, nOvBitsPerSample,
                              anTRed, anTGreen, anTBlue,
                              panRed, panGreen, panBlue);
     }
-
-/* -------------------------------------------------------------------- */
-/*      Do we need some metadata for the overviews?                     */
-/* -------------------------------------------------------------------- */
-    CPLString osMetadata;
-
-    GTIFFBuildOverviewMetadata( "NONE", this, osMetadata );
-
-    int nCompression;
-    int nPlanarConfig;
-    uint16_t nPredictor;
-    int nOvrJpegQuality;
-    std::string osNoData;
-    uint16_t *panExtraSampleValues = nullptr;
-    uint16_t nExtraSamples = 0;
-    GetOverviewParameters(nCompression, nPlanarConfig,
-                          nPredictor, nOvrJpegQuality,
-                          osNoData,
-                          panExtraSampleValues, nExtraSamples);
 
     int nOvrBlockXSize = 0;
     int nOvrBlockYSize = 0;
@@ -12559,7 +12708,7 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS,
                                     nOvrBlockXSize,
                                     nOvrBlockYSize,
                                     TRUE,
-                                    nCompression, l_nPhotometric, m_nSampleFormat,
+                                    nCompression, nPhotometric, m_nSampleFormat,
                                     nPredictor,
                                     panRed, panGreen, panBlue,
                                     nExtraSamples, panExtraSampleValues,
@@ -12575,7 +12724,8 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS,
             eErr = CE_Failure;
         else
             eErr = RegisterNewOverviewDataset(nOverviewOffset,
-                                              nOvrJpegQuality);
+                                              nOvrJpegQuality,
+                                              nullptr);
     }
 
     // For directory reloading, so that the chaining to the next directory is
@@ -12716,9 +12866,10 @@ CPLErr GTiffDataset::CreateInternalMaskOverviews(int nOvrBlockXSize,
 
 CPLErr GTiffDataset::IBuildOverviews(
     const char * pszResampling,
-    int nOverviews, int * panOverviewList,
-    int nBandsIn, int * panBandList,
-    GDALProgressFunc pfnProgress, void * pProgressData )
+    int nOverviews, const int * panOverviewList,
+    int nBandsIn, const int * panBandList,
+    GDALProgressFunc pfnProgress, void * pProgressData,
+    CSLConstList papszOptions)
 
 {
     ScanDirectories();
@@ -12734,8 +12885,10 @@ CPLErr GTiffDataset::IBuildOverviews(
 /* -------------------------------------------------------------------- */
     bool bUseGenericHandling = false;
 
-    if( CPLTestBool(CPLGetConfigOption( "USE_RRD", "NO" ))
-        || CPLTestBool(CPLGetConfigOption( "TIFF_USE_OVR", "NO" )) )
+    if( CPLTestBool(CSLFetchNameValueDef(papszOptions, "USE_RRD",
+                                         CPLGetConfigOption( "USE_RRD", "NO" )))
+        || CPLTestBool(CSLFetchNameValueDef(papszOptions, "TIFF_USE_OVR",
+                                            CPLGetConfigOption( "TIFF_USE_OVR", "NO" ))) )
     {
         bUseGenericHandling = true;
     }
@@ -12764,16 +12917,15 @@ CPLErr GTiffDataset::IBuildOverviews(
             return CE_Failure;
         }
 
-        std::unique_ptr<CPLConfigOptionSetter> poSetter;
+        CPLStringList aosOptions(papszOptions);
         if( !m_bWriteEmptyTiles )
         {
-            poSetter.reset(
-                new CPLConfigOptionSetter("SPARSE_OK_OVERVIEW", "YES", true));
+            aosOptions.SetNameValue("SPARSE_OK", "YES");
         }
 
         CPLErr eErr = GDALDataset::IBuildOverviews(
             pszResampling, nOverviews, panOverviewList,
-            nBandsIn, panBandList, pfnProgress, pProgressData );
+            nBandsIn, panBandList, pfnProgress, pProgressData, aosOptions );
         if( eErr == CE_None && m_poMaskDS )
         {
             ReportError(CE_Warning, CPLE_NotSupported,
@@ -12807,7 +12959,8 @@ CPLErr GTiffDataset::IBuildOverviews(
         if( m_nOverviewCount == 0 )
             return GDALDataset::IBuildOverviews(
                 pszResampling, nOverviews, panOverviewList,
-                nBandsIn, panBandList, pfnProgress, pProgressData );
+                nBandsIn, panBandList, pfnProgress, pProgressData,
+                papszOptions );
 
         return CleanOverviews();
     }
@@ -12835,6 +12988,30 @@ CPLErr GTiffDataset::IBuildOverviews(
         nOvBitsPerSample = 8;
 
 /* -------------------------------------------------------------------- */
+/*      Do we need some metadata for the overviews?                     */
+/* -------------------------------------------------------------------- */
+    CPLString osMetadata;
+
+    GTIFFBuildOverviewMetadata( pszResampling, this, osMetadata );
+
+    int nCompression;
+    uint16_t nPlanarConfig;
+    uint16_t nPredictor;
+    uint16_t nPhotometric;
+    int nOvrJpegQuality;
+    std::string osNoData;
+    uint16_t *panExtraSampleValues = nullptr;
+    uint16_t nExtraSamples = 0;
+    if( !GetOverviewParameters(nCompression, nPlanarConfig,
+                          nPredictor, nPhotometric, nOvrJpegQuality,
+                          osNoData,
+                          panExtraSampleValues, nExtraSamples,
+                          papszOptions) )
+    {
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Do we have a palette?  If so, create a TIFF compatible version. */
 /* -------------------------------------------------------------------- */
     std::vector<unsigned short> anTRed;
@@ -12844,31 +13021,12 @@ CPLErr GTiffDataset::IBuildOverviews(
     unsigned short *panGreen = nullptr;
     unsigned short *panBlue = nullptr;
 
-    if( m_nPhotometric == PHOTOMETRIC_PALETTE && m_poColorTable != nullptr )
+    if( nPhotometric == PHOTOMETRIC_PALETTE && m_poColorTable != nullptr )
     {
         CreateTIFFColorTable(m_poColorTable, nOvBitsPerSample,
                              anTRed, anTGreen, anTBlue,
                              panRed, panGreen, panBlue);
     }
-
-/* -------------------------------------------------------------------- */
-/*      Do we need some metadata for the overviews?                     */
-/* -------------------------------------------------------------------- */
-    CPLString osMetadata;
-
-    GTIFFBuildOverviewMetadata( pszResampling, this, osMetadata );
-
-    int nCompression;
-    int nPlanarConfig;
-    uint16_t nPredictor;
-    int nOvrJpegQuality;
-    std::string osNoData;
-    uint16_t *panExtraSampleValues = nullptr;
-    uint16_t nExtraSamples = 0;
-    GetOverviewParameters(nCompression, nPlanarConfig,
-                          nPredictor, nOvrJpegQuality,
-                          osNoData,
-                          panExtraSampleValues, nExtraSamples);
 
 /* -------------------------------------------------------------------- */
 /*      Establish which of the overview levels we already have, and     */
@@ -12940,7 +13098,7 @@ CPLErr GTiffDataset::IBuildOverviews(
                     nOXSize, nOYSize,
                     nOvBitsPerSample, nPlanarConfig,
                     m_nSamplesPerPixel, nOvrBlockXSize, nOvrBlockYSize, TRUE,
-                    nCompression, m_nPhotometric, m_nSampleFormat,
+                    nCompression, nPhotometric, m_nSampleFormat,
                     nPredictor,
                     panRed, panGreen, panBlue,
                     nExtraSamples, panExtraSampleValues,
@@ -12957,7 +13115,8 @@ CPLErr GTiffDataset::IBuildOverviews(
                 eErr = CE_Failure;
             else
                 eErr = RegisterNewOverviewDataset(nOverviewOffset,
-                                                  nOvrJpegQuality);
+                                                  nOvrJpegQuality,
+                                                  papszOptions);
         }
     }
 
@@ -12993,11 +13152,11 @@ CPLErr GTiffDataset::IBuildOverviews(
             }
         }
 
-        eErr = GDALRegenerateOverviews(
+        eErr = GDALRegenerateOverviewsEx(
             m_poMaskDS->GetRasterBand(1),
             nMaskOverviews,
             reinterpret_cast<GDALRasterBandH *>( papoOverviewBands ),
-            pszResampling, GDALDummyProgress, nullptr );
+            pszResampling, GDALDummyProgress, nullptr, papszOptions );
         CPLFree(papoOverviewBands);
     }
 
@@ -13093,7 +13252,7 @@ CPLErr GTiffDataset::IBuildOverviews(
         GDALRegenerateOverviewsMultiBand( nBandsIn, papoBandList,
                                           nNewOverviews, papapoOverviewBands,
                                           pszResampling, pfnProgress,
-                                          pProgressData );
+                                          pProgressData, papszOptions );
 
         for( int iBand = 0; iBand < nBandsIn; ++iBand )
         {
@@ -13157,13 +13316,14 @@ CPLErr GTiffDataset::IBuildOverviews(
                     (iBand + 1) / static_cast<double>( nBandsIn ),
                     pfnProgress, pProgressData );
 
-            eErr = GDALRegenerateOverviews(
+            eErr = GDALRegenerateOverviewsEx(
                 poBand,
                 nNewOverviews,
                 reinterpret_cast<GDALRasterBandH *>( papoOverviewBands ),
                 pszResampling,
                 GDALScaledProgress,
-                pScaledProgressData );
+                pScaledProgressData,
+                papszOptions );
 
             GDALDestroyScaledProgress( pScaledProgressData );
         }

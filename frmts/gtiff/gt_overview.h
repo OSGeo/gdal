@@ -64,7 +64,7 @@ void GTIFFBuildOverviewMetadata( const char *pszResampling,
 
 CPLErr
 GTIFFBuildOverviewsEx( const char * pszFilename,
-                       int nBands, GDALRasterBand **papoBandList,
+                       int nBands, GDALRasterBand * const* papoBandList,
                        int nOverviews,
                        const int * panOverviewList,
                        const std::pair<int, int>* pasOverviewSize,

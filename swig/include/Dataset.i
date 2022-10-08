@@ -378,21 +378,24 @@ public:
   int BuildOverviews( const char *resampling,
                       int overviewlist, int *pOverviews,
                       GDALProgressFunc callback = NULL,
-                      void* callback_data=NULL ) {
+                      void* callback_data=NULL,
+                      char** options = NULL ) {
 #else
   int BuildOverviews( const char *resampling = "NEAREST",
                       int overviewlist = 0 , int *pOverviews = 0,
                       GDALProgressFunc callback = NULL,
-                      void* callback_data=NULL ) {
+                      void* callback_data=NULL,
+                      char** options = NULL ) {
 #endif
-    return GDALBuildOverviews(  self,
+    return GDALBuildOverviewsEx(  self,
                                 resampling ? resampling : "NEAREST",
                                 overviewlist,
                                 pOverviews,
                                 0,
                                 0,
                                 callback,
-                                callback_data);
+                                callback_data,
+                                options);
   }
 #ifndef SWIGCSHARP
 %clear (int overviewlist, int *pOverviews);

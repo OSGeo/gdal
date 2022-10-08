@@ -3145,9 +3145,10 @@ OGRErr GDALGeoPackageDataset::UpdateGpkgContentsLastChange(
 
 CPLErr GDALGeoPackageDataset::IBuildOverviews(
                         const char * pszResampling,
-                        int nOverviews, int * panOverviewList,
-                        int nBandsIn, int * /*panBandList*/,
-                        GDALProgressFunc pfnProgress, void * pProgressData )
+                        int nOverviews, const int * panOverviewList,
+                        int nBandsIn, const int * /*panBandList*/,
+                        GDALProgressFunc pfnProgress, void * pProgressData,
+                        CSLConstList papszOptions )
 {
     if( GetAccess() != GA_Update )
     {
@@ -3416,7 +3417,8 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
     if( eErr == CE_None )
         eErr = GDALRegenerateOverviewsMultiBand(nBands, papoBands,
                                      nOverviews, papapoOverviewBands,
-                                     pszResampling, pfnProgress, pProgressData );
+                                     pszResampling, pfnProgress, pProgressData,
+                                     papszOptions);
 
     for( int iBand = 0; iBand < nBands; iBand++ )
     {

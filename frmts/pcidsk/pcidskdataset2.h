@@ -97,8 +97,11 @@ class PCIDSK2Dataset final: public GDALPamDataset
 
     virtual void FlushCache(bool bAtClosing) override;
 
-    virtual CPLErr IBuildOverviews( const char *, int, int *,
-                                    int, int *, GDALProgressFunc, void * ) override;
+    virtual CPLErr IBuildOverviews( const char *,
+                                    int, const int *,
+                                    int, const int *,
+                                    GDALProgressFunc, void *,
+                                    CSLConstList papszOptions ) override;
 
     virtual int                 GetLayerCount() override { return (int) apoLayers.size(); }
     virtual OGRLayer            *GetLayer( int ) override;

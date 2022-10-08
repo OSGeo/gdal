@@ -213,7 +213,7 @@ DEFINE_EXTERNAL_CLASS(OGRLayerShadow, OSGeo.OGR.Layer)
 /*! Thirty two bit floating point */ %ds_rasterio_functions(DataType.GDT_Float32,float)
 /*! Sixty four bit floating point */ %ds_rasterio_functions(DataType.GDT_Float64,double)
 
-public int BuildOverviews( string resampling, int[] overviewlist, $module.GDALProgressFuncDelegate callback, string callback_data) {
+public int BuildOverviews( string resampling, int[] overviewlist, $module.GDALProgressFuncDelegate callback, string callback_data, string[] options) {
       int retval;
       if (overviewlist.Length <= 0)
         throw new ArgumentException("overviewlist size is small (BuildOverviews)");
@@ -221,13 +221,18 @@ public int BuildOverviews( string resampling, int[] overviewlist, $module.GDALPr
       IntPtr ptr = Marshal.AllocHGlobal(overviewlist.Length * Marshal.SizeOf(overviewlist[0]));
       try {
           Marshal.Copy(overviewlist, 0, ptr, overviewlist.Length);
-          retval = BuildOverviews(resampling, overviewlist.Length, ptr, callback, callback_data);
+          retval = BuildOverviews(resampling, overviewlist.Length, ptr, callback, callback_data, options);
       } finally {
           Marshal.FreeHGlobal(ptr);
       }
       GC.KeepAlive(this);
       return retval;
   }
+
+public int BuildOverviews( string resampling, int[] overviewlist, $module.GDALProgressFuncDelegate callback, string callback_data) {
+      return BuildOverviews( resampling, overviewlist, null, null, null);
+  }
+
 public int BuildOverviews( string resampling, int[] overviewlist) {
       return BuildOverviews( resampling, overviewlist, null, null);
   }

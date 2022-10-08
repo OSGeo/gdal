@@ -55,6 +55,13 @@ void    GTIFFSetMaxZError( GDALDatasetH hGTIFFDS, double dfMaxZError );
 int     GTIFFGetCompressionMethod( const char* pszValue,
                                    const char* pszVariableName );
 bool    GTIFFSupportsPredictor(int nCompression);
+bool GTIFFUpdatePhotometric(const char* pszPhotometric,
+                            const char* pszOptionKey,
+                            int nCompression,
+                            const char* pszInterleave,
+                            int nBands,
+                            uint16_t& nPhotometric,
+                            uint16_t& nPlanarConfig);
 
 void GTiffDatasetWriteRPCTag( TIFF *hTIFF, char **papszRPCMD );
 char** GTiffDatasetReadRPCTag( TIFF *hTIFF );

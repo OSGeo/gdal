@@ -3378,10 +3378,11 @@ int NITFDataset::CheckForRSets( const char *pszNITFFilename,
 /************************************************************************/
 
 CPLErr NITFDataset::IBuildOverviews( const char *pszResampling,
-                                     int nOverviews, int *panOverviewList,
-                                     int nListBands, int *panBandList,
+                                     int nOverviews, const int *panOverviewList,
+                                     int nListBands, const int *panBandList,
                                      GDALProgressFunc pfnProgress,
-                                     void * pProgressData )
+                                     void * pProgressData,
+                                     CSLConstList papszOptions )
 
 {
 /* -------------------------------------------------------------------- */
@@ -3404,7 +3405,8 @@ CPLErr NITFDataset::IBuildOverviews( const char *pszResampling,
         && !poJ2KDataset->GetMetadataItem( "OVERVIEW_FILE", "OVERVIEWS" ) )
         poJ2KDataset->BuildOverviews( pszResampling, 0, nullptr,
                                        nListBands, panBandList,
-                                       GDALDummyProgress, nullptr );
+                                       GDALDummyProgress, nullptr,
+                                       /* papszOptions = */ nullptr );
 
 /* -------------------------------------------------------------------- */
 /*      Use the overview manager to build requested overviews.          */
@@ -3412,7 +3414,8 @@ CPLErr NITFDataset::IBuildOverviews( const char *pszResampling,
     CPLErr eErr = GDALPamDataset::IBuildOverviews( pszResampling,
                                                    nOverviews, panOverviewList,
                                                    nListBands, panBandList,
-                                                   pfnProgress, pProgressData );
+                                                   pfnProgress, pProgressData,
+                                                   papszOptions );
 
 /* -------------------------------------------------------------------- */
 /*      If we are working with jpeg or jpeg2000, let the underlying     */

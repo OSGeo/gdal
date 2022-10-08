@@ -1515,10 +1515,11 @@ const OGRSpatialReference *PCIDSK2Dataset::GetSpatialRef() const
 /************************************************************************/
 
 CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
-                                        int nOverviews, int *panOverviewList,
-                                        int nListBands, int *panBandList,
+                                        int nOverviews, const int *panOverviewList,
+                                        int nListBands, const int *panBandList,
                                         GDALProgressFunc pfnProgress,
-                                        void *pProgressData )
+                                        void *pProgressData,
+                                        CSLConstList papszOptions )
 
 {
     PCIDSK2Band *poBand = reinterpret_cast<PCIDSK2Band*>(
@@ -1560,7 +1561,8 @@ CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
 
         return GDALDataset::IBuildOverviews(
             pszResampling, nOverviews, panOverviewList,
-            nListBands, panBandList, pfnProgress, pProgressData );
+            nListBands, panBandList, pfnProgress, pProgressData,
+            papszOptions);
     }
 
     if( nListBands == 0 )
@@ -1585,6 +1587,7 @@ CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
     int nNewOverviews = 0;
     int *panNewOverviewList = reinterpret_cast<int *>(
         CPLCalloc( sizeof( int ), nOverviews ) );
+    std::vector<bool> abFoundOverviewFactor(nOverviews);
     for( int i = 0; i < nOverviews && poBand != nullptr; i++ )
     {
         for( int j = 0; j < poBand->GetOverviewCount(); j++ )
@@ -1600,13 +1603,11 @@ CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
                 || nOvFactor == GDALOvLevelAdjust2( panOverviewList[i],
                                                     poBand->GetXSize(),
                                                     poBand->GetYSize() ) )
-                panOverviewList[i] *= -1;
+                abFoundOverviewFactor[i] = true;
         }
 
-        if( panOverviewList[i] > 0 )
+        if( !abFoundOverviewFactor[i] )
             panNewOverviewList[nNewOverviews++] = panOverviewList[i];
-        else
-            panOverviewList[i] *= -1;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1680,11 +1681,12 @@ CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
 
         if( nNewOverviews > 0 )
         {
-            eErr = GDALRegenerateOverviews( (GDALRasterBandH) poBand,
+            eErr = GDALRegenerateOverviewsEx( (GDALRasterBandH) poBand,
                                             nNewOverviews,
                                             reinterpret_cast<GDALRasterBandH*>( papoOverviewBands ),
                                             pszResampling,
-                                            pfnProgress, pProgressData );
+                                            pfnProgress, pProgressData,
+                                            papszOptions );
 
             // Mark the regenerated overviews as valid.
             for( int i = 0; i < static_cast<int>( anRegenLevels.size() ); i++ )

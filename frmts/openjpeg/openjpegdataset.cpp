@@ -284,10 +284,11 @@ class JP2OpenJPEGDataset final: public GDALJP2AbstractDataset
                                GDALRasterIOExtraArg* psExtraArg) override;
 
     CPLErr IBuildOverviews( const char *pszResampling,
-                                       int nOverviews, int *panOverviewList,
-                                       int nListBands, int *panBandList,
-                                       GDALProgressFunc pfnProgress,
-                                       void *pProgressData ) override;
+                            int nOverviews, const int *panOverviewList,
+                            int nListBands, const int *panBandList,
+                            GDALProgressFunc pfnProgress,
+                            void *pProgressData,
+                            CSLConstList papszOptions ) override;
 
     static void         WriteBox(VSILFILE* fp, GDALJP2Box* poBox);
     static void         WriteGDALMetadataBox( VSILFILE* fp, GDALDataset* poSrcDS,
@@ -744,10 +745,11 @@ CPLErr  JP2OpenJPEGDataset::IRasterIO( GDALRWFlag eRWFlag,
 /************************************************************************/
 
 CPLErr JP2OpenJPEGDataset::IBuildOverviews( const char *pszResampling,
-                                       int nOverviews, int *panOverviewList,
-                                       int nListBands, int *panBandList,
+                                       int nOverviews, const int *panOverviewList,
+                                       int nListBands, const int *panBandList,
                                        GDALProgressFunc pfnProgress,
-                                       void *pProgressData )
+                                       void *pProgressData,
+                                       CSLConstList papszOptions )
 
 {
     // In order for building external overviews to work properly, we
@@ -764,7 +766,8 @@ CPLErr JP2OpenJPEGDataset::IBuildOverviews( const char *pszResampling,
     return GDALPamDataset::IBuildOverviews(pszResampling,
                                            nOverviews, panOverviewList,
                                            nListBands, panBandList,
-                                           pfnProgress, pProgressData);
+                                           pfnProgress, pProgressData,
+                                           papszOptions);
 }
 
 

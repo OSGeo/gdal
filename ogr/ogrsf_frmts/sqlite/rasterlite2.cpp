@@ -100,7 +100,7 @@ bool OGRSQLiteDataSource::OpenRaster()
         const char* pszAbstract = papszRow[2];
         if( pszCoverageName != nullptr )
         {
-            rl2CoveragePtr cvg = rl2_create_coverage_from_dbms( 
+            rl2CoveragePtr cvg = rl2_create_coverage_from_dbms(
                                                             hDB,
                                                             nullptr,
                                                             pszCoverageName );
@@ -2319,9 +2319,10 @@ GDALDataset *OGRSQLiteDriverCreateCopy( const char* pszName,
 
 CPLErr OGRSQLiteDataSource::IBuildOverviews(
     const char * pszResampling,
-    int nOverviews, int * panOverviewList,
-    int nBandsIn, int * /*panBandList */,
-    GDALProgressFunc /*pfnProgress*/, void * /*pProgressData*/ )
+    int nOverviews, const int * panOverviewList,
+    int nBandsIn, const int * /*panBandList */,
+    GDALProgressFunc /*pfnProgress*/, void * /*pProgressData*/,
+    CSLConstList /* papszOptions */)
 
 {
     if( nBandsIn != nBands )
