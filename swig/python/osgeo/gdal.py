@@ -1977,6 +1977,10 @@ def GetThreadLocalConfigOption(*args) -> "char const *":
     r"""GetThreadLocalConfigOption(char const * pszKey, char const * pszDefault=None) -> char const *"""
     return _gdal.GetThreadLocalConfigOption(*args)
 
+def SetPathSpecificOption(*args) -> "void":
+    r"""SetPathSpecificOption(char const * pszPathPrefix, char const * pszKey, char const * pszValue)"""
+    return _gdal.SetPathSpecificOption(*args)
+
 def SetCredential(*args) -> "void":
     r"""SetCredential(char const * pszPathPrefix, char const * pszKey, char const * pszValue)"""
     return _gdal.SetCredential(*args)
@@ -1985,9 +1989,17 @@ def GetCredential(*args) -> "char const *":
     r"""GetCredential(char const * pszPathPrefix, char const * pszKey, char const * pszDefault=None) -> char const *"""
     return _gdal.GetCredential(*args)
 
+def GetPathSpecificOption(*args) -> "char const *":
+    r"""GetPathSpecificOption(char const * pszPathPrefix, char const * pszKey, char const * pszDefault=None) -> char const *"""
+    return _gdal.GetPathSpecificOption(*args)
+
 def ClearCredentials(*args) -> "void":
     r"""ClearCredentials(char const * pszPathPrefix=None)"""
     return _gdal.ClearCredentials(*args)
+
+def ClearPathSpecificOptions(*args) -> "void":
+    r"""ClearPathSpecificOptions(char const * pszPathPrefix=None)"""
+    return _gdal.ClearPathSpecificOptions(*args)
 
 def CPLBinaryToHex(*args) -> "retStringAndCPLFree *":
     r"""CPLBinaryToHex(int nBytes) -> retStringAndCPLFree *"""

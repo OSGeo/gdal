@@ -3619,19 +3619,19 @@ namespace tut
         ensure_equals(CPLGetLastErrorType(), CE_None);
 
         {
-            const char* pszVal = VSIGetCredential("/vsi_test/foo/bar", "FOO", nullptr);
+            const char* pszVal = VSIGetPathSpecificOption("/vsi_test/foo/bar", "FOO", nullptr);
             ensure(pszVal != nullptr);
             ensure_equals(std::string(pszVal), std::string("BAR"));
         }
 
         {
-            const char* pszVal = VSIGetCredential("/vsi_test/foo/bar", "FOO2", nullptr);
+            const char* pszVal = VSIGetPathSpecificOption("/vsi_test/foo/bar", "FOO2", nullptr);
             ensure(pszVal != nullptr);
             ensure_equals(std::string(pszVal), std::string("BAR2"));
         }
 
         {
-            const char* pszVal = VSIGetCredential("/vsi_test/bar/baz", "BAR", nullptr);
+            const char* pszVal = VSIGetPathSpecificOption("/vsi_test/bar/baz", "BAR", nullptr);
             ensure(pszVal != nullptr);
             ensure_equals(std::string(pszVal), std::string("BAZ"));
         }
@@ -3642,11 +3642,11 @@ namespace tut
             ensure_equals(std::string(pszVal), std::string("BAR"));
         }
 
-        VSIClearCredentials("/vsi_test/bar/baz");
+        VSIClearPathSpecificOptions("/vsi_test/bar/baz");
         CPLSetConfigOption("configoptions_FOO", nullptr);
 
         {
-            const char* pszVal = VSIGetCredential("/vsi_test/bar/baz", "BAR", nullptr);
+            const char* pszVal = VSIGetPathSpecificOption("/vsi_test/bar/baz", "BAR", nullptr);
             ensure(pszVal == nullptr);
         }
 
@@ -3717,12 +3717,12 @@ namespace tut
         ensure_equals(CPLGetLastErrorType(), CE_Warning);
 
         {
-            const char* pszVal = VSIGetCredential("/vsi_test/foo", "FOO", nullptr);
+            const char* pszVal = VSIGetPathSpecificOption("/vsi_test/foo", "FOO", nullptr);
             ensure(pszVal != nullptr);
         }
 
         {
-            const char* pszVal = VSIGetCredential("/vsi_test/foo", "BAR", nullptr);
+            const char* pszVal = VSIGetPathSpecificOption("/vsi_test/foo", "BAR", nullptr);
             ensure(pszVal == nullptr);
         }
 

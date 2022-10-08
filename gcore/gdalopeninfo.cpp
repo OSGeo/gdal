@@ -354,7 +354,7 @@ retry:  // TODO(schwehr): Stop using goto.
         else
         {
             const char* pszOptionVal =
-                CPLGetConfigOption( "GDAL_DISABLE_READDIR_ON_OPEN", "NO" );
+                VSIGetPathSpecificOption( pszFilename, "GDAL_DISABLE_READDIR_ON_OPEN", "NO" );
             if (EQUAL(pszOptionVal, "EMPTY_DIR"))
             {
                 papszSiblingFiles =
@@ -417,7 +417,7 @@ char** GDALOpenInfo::GetSiblingFiles()
 
     CPLString osDir = CPLGetDirname( pszFilename );
     const int nMaxFiles =
-        atoi(CPLGetConfigOption("GDAL_READDIR_LIMIT_ON_OPEN", "1000"));
+        atoi(VSIGetPathSpecificOption( pszFilename, "GDAL_READDIR_LIMIT_ON_OPEN", "1000"));
     papszSiblingFiles = VSIReadDirEx( osDir, nMaxFiles );
     if( nMaxFiles > 0 && CSLCount(papszSiblingFiles) > nMaxFiles )
     {

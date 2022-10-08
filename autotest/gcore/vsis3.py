@@ -2448,6 +2448,78 @@ def test_vsis3_rmdir_recursive(aws_test_config, webserver_port):
 
 
 ###############################################################################
+# Test RmdirRecursive() with CPL_VSIS3_USE_BASE_RMDIR_RECURSIVE=YES
+
+
+def test_vsis3_rmdir_recursive_no_batch_deletion(aws_test_config, webserver_port):
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/test_vsis3_rmdir_recursive_no_batch_deletion/?prefix=somedir%2F",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+        <ListBucketResult>
+            <Prefix>somedir/</Prefix>
+            <Marker/>
+            <Contents>
+                <Key>somedir/test.txt</Key>
+                <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                <Size>40</Size>
+            </Contents>
+            <Contents>
+                <Key>somedir/test2.txt</Key>
+                <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                <Size>40</Size>
+            </Contents>
+        </ListBucketResult>
+        """,
+    )
+    handler.add(
+        "DELETE",
+        "/test_vsis3_rmdir_recursive_no_batch_deletion/somedir/test.txt",
+        204,
+    )
+    handler.add(
+        "DELETE",
+        "/test_vsis3_rmdir_recursive_no_batch_deletion/somedir/test2.txt",
+        204,
+    )
+    handler.add("GET", "/test_vsis3_rmdir_recursive_no_batch_deletion/somedir/", 404)
+    handler.add(
+        "GET",
+        "/test_vsis3_rmdir_recursive_no_batch_deletion/?delimiter=%2F&max-keys=100&prefix=somedir%2F",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix>somedir/</Prefix>
+                <Contents/>
+            </ListBucketResult>
+            """,
+    )
+    handler.add(
+        "DELETE",
+        "/test_vsis3_rmdir_recursive_no_batch_deletion/somedir/",
+        204,
+    )
+    gdal.SetPathSpecificOption(
+        "/vsis3/test_vsis3_rmdir_recursive_no_batch_deletion",
+        "CPL_VSIS3_USE_BASE_RMDIR_RECURSIVE",
+        "YES",
+    )
+    with webserver.install_http_handler(handler):
+        assert (
+            gdal.RmdirRecursive(
+                "/vsis3/test_vsis3_rmdir_recursive_no_batch_deletion/somedir"
+            )
+            == 0
+        )
+    gdal.ClearPathSpecificOptions()
+
+
+###############################################################################
 # Test multipart upload with a fake AWS server
 
 

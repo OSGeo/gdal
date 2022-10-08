@@ -3548,7 +3548,7 @@ VSIVirtualHandle* VSICurlFilesystemHandlerBase::Open( const char *pszFilename,
                                   nullptr, nullptr));
 
     const char* pszOptionVal =
-        CPLGetConfigOption( "GDAL_DISABLE_READDIR_ON_OPEN", "NO" );
+        VSIGetPathSpecificOption( pszFilename, "GDAL_DISABLE_READDIR_ON_OPEN", "NO" );
     const bool bSkipReadDir = !bListDir || bEmptyDir ||
         EQUAL(pszOptionVal, "EMPTY_DIR") || CPLTestBool(pszOptionVal) ||
         !AllowCachedDataFor(pszFilename);
@@ -4535,7 +4535,7 @@ int VSICurlFilesystemHandlerBase::Stat( const char *pszFilename,
                                   nullptr, nullptr));
 
     const char* pszOptionVal =
-        CPLGetConfigOption( "GDAL_DISABLE_READDIR_ON_OPEN", "NO" );
+        VSIGetPathSpecificOption( pszFilename, "GDAL_DISABLE_READDIR_ON_OPEN", "NO" );
     const bool bSkipReadDir = !bListDir || bEmptyDir ||
         EQUAL(pszOptionVal, "EMPTY_DIR") || CPLTestBool(pszOptionVal) ||
         !AllowCachedDataFor(pszFilename);

@@ -773,14 +773,14 @@ bool VSIS3HandleHelper::GetConfigurationFromAssumeRoleWithWebIdentity(bool bForc
         }
     }
 
-    const CPLString roleArn = VSIGetCredential(osPathForOption.c_str(), "AWS_ROLE_ARN", "");
+    const CPLString roleArn = VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_ROLE_ARN", "");
     if( roleArn.empty() )
     {
         CPLDebug("AWS", "AWS_ROLE_ARN configuration option not defined");
         return false;
     }
 
-    const CPLString webIdentityTokenFile =  VSIGetCredential(osPathForOption.c_str(),
+    const CPLString webIdentityTokenFile =  VSIGetPathSpecificOption(osPathForOption.c_str(),
                                                              "AWS_WEB_IDENTITY_TOKEN_FILE", "");
     if( webIdentityTokenFile.empty() )
     {
@@ -788,18 +788,18 @@ bool VSIS3HandleHelper::GetConfigurationFromAssumeRoleWithWebIdentity(bool bForc
         return false;
     }
 
-    const CPLString stsRegionalEndpoints = VSIGetCredential(osPathForOption.c_str(),
+    const CPLString stsRegionalEndpoints = VSIGetPathSpecificOption(osPathForOption.c_str(),
                                                             "AWS_STS_REGIONAL_ENDPOINTS", "regional");
 
     std::string osStsDefaultUrl;
     if (stsRegionalEndpoints == "regional") {
-        const CPLString osRegion = VSIGetCredential(osPathForOption.c_str(), "AWS_REGION", "us-east-1");
+        const CPLString osRegion = VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_REGION", "us-east-1");
         osStsDefaultUrl = "https://sts." + osRegion + ".amazonaws.com";
     } else {
         osStsDefaultUrl = "https://sts.amazonaws.com";
     }
     const CPLString osStsRootUrl(
-        VSIGetCredential(osPathForOption.c_str(), "CPL_AWS_STS_ROOT_URL", osStsDefaultUrl.c_str()));
+        VSIGetPathSpecificOption(osPathForOption.c_str(), "CPL_AWS_STS_ROOT_URL", osStsDefaultUrl.c_str()));
 
     // Get token from web identity token file
     CPLString webIdentityToken;
@@ -887,10 +887,10 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(bool bForceRefresh,
     const CPLString osEC2DefaultURL("http://169.254.169.254");
     // coverity[tainted_data]
     const CPLString osEC2RootURL(
-        VSIGetCredential(osPathForOption.c_str(), "CPL_AWS_EC2_API_ROOT_URL", osEC2DefaultURL));
+        VSIGetPathSpecificOption(osPathForOption.c_str(), "CPL_AWS_EC2_API_ROOT_URL", osEC2DefaultURL));
     // coverity[tainted_data]
     const CPLString osECSRelativeURI(
-        VSIGetCredential(osPathForOption.c_str(), "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", ""));
+        VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", ""));
     CPLString osToken;
     if( osEC2RootURL == osEC2DefaultURL && !osECSRelativeURI.empty() )
     {
@@ -1111,9 +1111,9 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
     // If AWS_DEFAULT_PROFILE is set (obsolete, no longer documented), use it in priority
     // Otherwise use AWS_PROFILE
     // Otherwise fallback to "default"
-    const char* pszProfile = VSIGetCredential(osPathForOption.c_str(), "AWS_DEFAULT_PROFILE", "");
+    const char* pszProfile = VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_DEFAULT_PROFILE", "");
     if( pszProfile[0] == '\0' )
-        pszProfile = VSIGetCredential(osPathForOption.c_str(), "AWS_PROFILE", "");
+        pszProfile = VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_PROFILE", "");
     const CPLString osProfile(pszProfile[0] != '\0' ? pszProfile : "default");
 
 #ifdef WIN32
@@ -1133,7 +1133,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
     // GDAL specific config option (mostly for testing purpose, but also
     // used in production in some cases)
     const char* pszCredentials =
-        VSIGetCredential(osPathForOption.c_str(), "CPL_AWS_CREDENTIALS_FILE", nullptr );
+        VSIGetPathSpecificOption(osPathForOption.c_str(), "CPL_AWS_CREDENTIALS_FILE", nullptr );
     if( pszCredentials )
     {
         osCredentials = pszCredentials;
@@ -1150,7 +1150,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
 
     // And then ~/.aws/config file (unless AWS_CONFIG_FILE is defined)
     const char* pszAWSConfigFileEnv =
-        VSIGetCredential(osPathForOption.c_str(), "AWS_CONFIG_FILE", nullptr );
+        VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_CONFIG_FILE", nullptr );
     CPLString osConfig;
     if( pszAWSConfigFileEnv )
     {
@@ -1436,9 +1436,9 @@ bool VSIS3HandleHelper::GetConfiguration(const std::string& osPathForOption,
     // AWS_REGION is GDAL specific. Later overloaded by standard
     // AWS_DEFAULT_REGION
     osRegion = CSLFetchNameValueDef(papszOptions, "AWS_REGION",
-            VSIGetCredential(osPathForOption.c_str(), "AWS_REGION", "us-east-1"));
+            VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_REGION", "us-east-1"));
 
-    if( CPLTestBool(VSIGetCredential(osPathForOption.c_str(), "AWS_NO_SIGN_REQUEST", "NO")) )
+    if( CPLTestBool(VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_NO_SIGN_REQUEST", "NO")) )
     {
         osSecretAccessKey.clear();
         osAccessKeyId.clear();
@@ -1448,12 +1448,12 @@ bool VSIS3HandleHelper::GetConfiguration(const std::string& osPathForOption,
 
     osSecretAccessKey = CSLFetchNameValueDef(papszOptions,
         "AWS_SECRET_ACCESS_KEY",
-        VSIGetCredential(osPathForOption.c_str(), "AWS_SECRET_ACCESS_KEY", ""));
+        VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_SECRET_ACCESS_KEY", ""));
     if( !osSecretAccessKey.empty() )
     {
         osAccessKeyId = CSLFetchNameValueDef(papszOptions,
             "AWS_ACCESS_KEY_ID",
-            VSIGetCredential(osPathForOption.c_str(), "AWS_ACCESS_KEY_ID", ""));
+            VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_ACCESS_KEY_ID", ""));
         if( osAccessKeyId.empty() )
         {
             VSIError(VSIE_AWSInvalidCredentials,
@@ -1463,7 +1463,7 @@ bool VSIS3HandleHelper::GetConfiguration(const std::string& osPathForOption,
 
         osSessionToken = CSLFetchNameValueDef(papszOptions,
             "AWS_SESSION_TOKEN",
-            VSIGetCredential(osPathForOption.c_str(), "AWS_SESSION_TOKEN", ""));
+            VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_SESSION_TOKEN", ""));
         return true;
     }
 
@@ -1657,16 +1657,16 @@ VSIS3HandleHelper* VSIS3HandleHelper::BuildFromURI( const char* pszURI,
     // " This variable overrides the default region of the in-use profile, if set."
     const CPLString osDefaultRegion = CSLFetchNameValueDef(
         papszOptions, "AWS_DEFAULT_REGION",
-        VSIGetCredential(osPathForOption.c_str(), "AWS_DEFAULT_REGION", ""));
+        VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_DEFAULT_REGION", ""));
     if( !osDefaultRegion.empty() )
     {
         osRegion = osDefaultRegion;
     }
 
     const CPLString osEndpoint =
-        VSIGetCredential(osPathForOption.c_str(), "AWS_S3_ENDPOINT", "s3.amazonaws.com");
+        VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_S3_ENDPOINT", "s3.amazonaws.com");
     const CPLString osRequestPayer =
-        VSIGetCredential(osPathForOption.c_str(), "AWS_REQUEST_PAYER", "");
+        VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_REQUEST_PAYER", "");
     CPLString osBucket;
     CPLString osObjectKey;
     if( pszURI != nullptr && pszURI[0] != '\0' &&
@@ -1675,12 +1675,12 @@ VSIS3HandleHelper* VSIS3HandleHelper::BuildFromURI( const char* pszURI,
     {
         return nullptr;
     }
-    const bool bUseHTTPS = CPLTestBool(VSIGetCredential(osPathForOption.c_str(), "AWS_HTTPS", "YES"));
+    const bool bUseHTTPS = CPLTestBool(VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_HTTPS", "YES"));
     const bool bIsValidNameForVirtualHosting =
         osBucket.find('.') == std::string::npos;
     const bool bUseVirtualHosting = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "AWS_VIRTUAL_HOSTING",
-                VSIGetCredential(osPathForOption.c_str(), "AWS_VIRTUAL_HOSTING",
+                VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_VIRTUAL_HOSTING",
                            bIsValidNameForVirtualHosting ? "TRUE" : "FALSE")));
     return new VSIS3HandleHelper(osSecretAccessKey, osAccessKeyId,
                                  osSessionToken,
@@ -1819,7 +1819,7 @@ VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
 
     RefreshCredentials(osPathForOption, /* bForceRefresh = */ false);
 
-    CPLString osXAMZDate = VSIGetCredential(osPathForOption.c_str(), "AWS_TIMESTAMP", "");
+    CPLString osXAMZDate = VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_TIMESTAMP", "");
     if( osXAMZDate.empty() )
         osXAMZDate = CPLGetAWS_SIGN4_Timestamp(time(nullptr));
 
@@ -2079,7 +2079,7 @@ CPLString VSIS3HandleHelper::GetSignedURL(CSLConstList papszOptions)
     osPathForOption += m_osObjectKey;
 
     CPLString osXAMZDate = CSLFetchNameValueDef(papszOptions, "START_DATE",
-        VSIGetCredential(osPathForOption.c_str(), "AWS_TIMESTAMP", ""));
+        VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_TIMESTAMP", ""));
     if( osXAMZDate.empty() )
         osXAMZDate = CPLGetAWS_SIGN4_Timestamp(time(nullptr));
     CPLString osDate(osXAMZDate);

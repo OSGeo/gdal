@@ -186,9 +186,12 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (GetConfigOption) wrapper_CPLGetConfigOption;
 %rename (SetThreadLocalConfigOption) CPLSetThreadLocalConfigOption;
 %rename (GetThreadLocalConfigOption) wrapper_CPLGetThreadLocalConfigOption;
-%rename (SetCredential) VSISetCredential;
+%rename (SetCredential) wrapper_VSISetCredential;
 %rename (GetCredential) wrapper_VSIGetCredential;
 %rename (ClearCredentials) wrapper_VSIClearCredentials;
+%rename (SetPathSpecificOption) VSISetPathSpecificOption;
+%rename (GetPathSpecificOption) wrapper_VSIGetPathSpecificOption;
+%rename (ClearPathSpecificOptions) wrapper_VSIClearPathSpecificOptions;
 %rename (CPLBinaryToHex) CPLBinaryToHex;
 %rename (CPLHexToBinary) CPLHexToBinary;
 %rename (FileFromMemBuffer) wrapper_VSIFileFromMemBuffer;
@@ -484,12 +487,22 @@ const char *wrapper_CPLGetThreadLocalConfigOption( const char * pszKey, const ch
 }
 
 %apply Pointer NONNULL {const char * pszPathPrefix};
-void VSISetCredential( const char* pszPathPrefix, const char * pszKey, const char * pszValue );
+void VSISetPathSpecificOption( const char* pszPathPrefix, const char * pszKey, const char * pszValue );
 
 %inline {
+void wrapper_VSISetCredential( const char* pszPathPrefix, const char * pszKey, const char * pszValue )
+{
+    VSISetPathSpecificOption(pszPathPrefix, pszKey, pszValue);
+}
+
 const char *wrapper_VSIGetCredential( const char* pszPathPrefix, const char * pszKey, const char * pszDefault = NULL )
 {
-    return VSIGetCredential( pszPathPrefix, pszKey, pszDefault );
+    return VSIGetPathSpecificOption( pszPathPrefix, pszKey, pszDefault );
+}
+
+const char *wrapper_VSIGetPathSpecificOption( const char* pszPathPrefix, const char * pszKey, const char * pszDefault = NULL )
+{
+    return VSIGetPathSpecificOption( pszPathPrefix, pszKey, pszDefault );
 }
 }
 
@@ -500,7 +513,11 @@ const char *wrapper_VSIGetCredential( const char* pszPathPrefix, const char * ps
 %inline {
 void wrapper_VSIClearCredentials(const char * pszPathPrefix = NULL)
 {
-    VSIClearCredentials( pszPathPrefix );
+    VSIClearPathSpecificOptions( pszPathPrefix );
+}
+void wrapper_VSIClearPathSpecificOptions(const char * pszPathPrefix = NULL)
+{
+    VSIClearPathSpecificOptions( pszPathPrefix );
 }
 }
 
