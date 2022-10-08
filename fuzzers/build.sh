@@ -33,7 +33,7 @@ else
     ARCH_SUFFIX=""
 fi
 
-if test "$CIFUZZ" = "True"; then
+if test "${CIFUZZ:-}" = "True"; then
   echo "Running under CI fuzz"
 
   PACKAGES="zlib1g-dev${ARCH_SUFFIX} libexpat-dev${ARCH_SUFFIX} liblzma-dev${ARCH_SUFFIX} \
