@@ -2879,3 +2879,41 @@ OBJECT_LIST_INPUT(GDALEDTComponentHS)
     $1 = &val;
   }
 }
+
+/***************************************************
+ * Typemaps for Layer.GetGeometryTypes()
+ ***************************************************/
+%typemap(in,numinputs=0) (OGRGeometryTypeCounter** ppRet, int* pnEntryCount) ( OGRGeometryTypeCounter* pRet = NULL, int nEntryCount = 0 )
+{
+  /* %typemap(in,numinputs=0) (OGRGeometryTypeCounter** ppRet, int* pnEntryCount) */
+  $1 = &pRet;
+  $2 = &nEntryCount;
+}
+
+%typemap(argout)  (OGRGeometryTypeCounter** ppRet, int* pnEntryCount)
+{
+  /* %typemap(argout)  (OGRGeometryTypeCounter** ppRet, int* pnEntryCount) */
+  Py_DECREF($result);
+  int nEntryCount = *($2);
+  OGRGeometryTypeCounter* pRet = *($1);
+  if( pRet == NULL )
+  {
+      PyErr_SetString( PyExc_RuntimeError, CPLGetLastErrorMsg() );
+      SWIG_fail;
+  }
+  $result = PyDict_New();
+  for(int i = 0; i < nEntryCount; ++ i)
+  {
+      PyObject *key = PyInt_FromLong( (int)(pRet[i].eGeomType) );
+      PyObject *val = PyLong_FromLongLong( pRet[i].nCount );
+      PyDict_SetItem($result, key, val );
+      Py_DECREF(key);
+      Py_DECREF(val);
+  }
+}
+
+%typemap(freearg)  (OGRGeometryTypeCounter** ppRet, int* pnEntryCount)
+{
+    /* %typemap(freearg)  (OGRGeometryTypeCounter** ppRet, int* pnEntryCount) */
+    VSIFree(*$1);
+}

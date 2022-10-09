@@ -317,6 +317,12 @@ F_VAL_ALLOW_NULL_WHEN_DEFAULT = _ogr.F_VAL_ALLOW_NULL_WHEN_DEFAULT
 
 F_VAL_ALL = _ogr.F_VAL_ALL
 
+GGT_COUNT_NOT_NEEDED = _ogr.GGT_COUNT_NOT_NEEDED
+
+GGT_STOP_IF_MIXED = _ogr.GGT_STOP_IF_MIXED
+
+GGT_GEOMCOLLECTIONZ_TINZ = _ogr.GGT_GEOMCOLLECTIONZ_TINZ
+
 OLCRandomRead = _ogr.OLCRandomRead
 
 OLCSequentialWrite = _ogr.OLCSequentialWrite
@@ -2112,6 +2118,37 @@ class Layer(MajorObject):
     def GetArrowStream(self, *args) -> "ArrowArrayStream *":
         r"""GetArrowStream(Layer self, char ** options=None) -> ArrowArrayStream"""
         return _ogr.Layer_GetArrowStream(self, *args)
+
+    def GetGeometryTypes(self, *args, **kwargs) -> "void":
+        r"""
+        GetGeometryTypes(Layer self, int geom_field=0, int flags=0, GDALProgressFunc callback=0, void * callback_data=None)
+
+        Get actual geometry types found in features.
+
+        For more details: :cpp:func:`OGR_L_GetGeometryTypes`
+
+        Parameters
+        -----------
+        geom_field: int, optional
+            index of the geometry field
+        flags: int, optional
+            0, or a combination of :py:const:`osgeo.ogr.GGT_COUNT_NOT_NEEDED`,
+            :py:const:`osgeo.ogr.GGT_STOP_IF_MIXED` and
+            :py:const:`osgeo.ogr.GGT_GEOMCOLLECTIONZ_TINZ`
+        callback: Callable, optional
+            a GDALProgressFunc() compatible callback function for
+            cancellation or None.
+        callback_data:
+            Argument to be passed to 'callback'. May be None.
+
+        Returns
+        -------
+        dict:
+            A dictionary whose keys are :py:const:`osgeo.ogr.wkbXXXX` constants and
+            values the corresponding number of geometries of that type in the layer.
+
+        """
+        return _ogr.Layer_GetGeometryTypes(self, *args, **kwargs)
 
     def Reference(self):
       "For backwards compatibility only."

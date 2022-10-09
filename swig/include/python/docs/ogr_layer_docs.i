@@ -514,7 +514,7 @@ For more details: :cpp:func:`OGR_L_GetStyleTable`
 ";
 
 %feature("docstring")  SetStyleTableDirectly "
-Set style table (and take ownership) 
+Set style table (and take ownership)
 
 For more details: :cpp:func:`OGR_L_SetStyleTableDirectly`
 ";
@@ -757,6 +757,32 @@ Returns
 int:
     An error code if there was an error or the execution was interrupted,
     :py:const:`osgeo.ogr.OGRERR_NONE` otherwise.
+";
+
+%feature("docstring")  GetGeometryTypes "
+Get actual geometry types found in features.
+
+For more details: :cpp:func:`OGR_L_GetGeometryTypes`
+
+Parameters
+-----------
+geom_field: int, optional
+    index of the geometry field
+flags: int, optional
+    0, or a combination of :py:const:`osgeo.ogr.GGT_COUNT_NOT_NEEDED`,
+    :py:const:`osgeo.ogr.GGT_STOP_IF_MIXED` and
+    :py:const:`osgeo.ogr.GGT_GEOMCOLLECTIONZ_TINZ`
+callback: Callable, optional
+    a GDALProgressFunc() compatible callback function for
+    cancellation or None.
+callback_data:
+    Argument to be passed to 'callback'. May be None.
+
+Returns
+-------
+dict:
+    A dictionary whose keys are :py:const:`osgeo.ogr.wkbXXXX` constants and
+    values the corresponding number of geometries of that type in the layer.
 ";
 
 }
