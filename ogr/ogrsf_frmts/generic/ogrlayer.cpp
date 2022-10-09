@@ -6337,3 +6337,199 @@ bool OGR_L_GetArrowStream(OGRLayerH hLayer,
 
     return OGRLayer::FromHandle(hLayer)->GetArrowStream(out_stream, papszOptions);
 }
+
+/************************************************************************/
+/*                     OGRLayer::GetGeometryTypes()                     */
+/************************************************************************/
+
+/** \brief Get actual geometry types found in features.
+ *
+ * This method iterates over features to retrieve their geometry types. This
+ * is mostly useful for layers that report a wkbUnknown geometry type with
+ * GetGeomType() or GetGeomFieldDefn(iGeomField)->GetType().
+ *
+ * By default this method returns an array of nEntryCount entries with each
+ * geometry type (in OGRGeometryTypeCounter::eGeomType) and the corresponding
+ * number of features (in OGRGeometryTypeCounter::nCount).
+ * Features without geometries are reported as eGeomType == wkbNone.
+ *
+ * The nFlagsGGT parameter can be a combination (with binary or operator) of the
+ * following hints:
+ * <ul>
+ * <li>OGR_GGT_COUNT_NOT_NEEDED: to indicate that only the set of geometry types
+ * matter, not the number of features per geometry type. Consequently the value of
+ * OGRGeometryTypeCounter::nCount should be ignored.</li>
+ * <li>OGR_GGT_STOP_IF_MIXED: to indicate that the implementation may stop iterating
+ * over features as soon as 2 different geometry types (not counting null geometries)
+ * are found. The value of OGRGeometryTypeCounter::nCount should be ignored
+ * (zero might be systematically reported by some implementations).</li>
+ * <li>OGR_GGT_GEOMCOLLECTIONZ_TINZ: to indicate that if a geometry is of type
+ * wkbGeometryCollection25D and its first sub-geometry is of type wkbTINZ,
+ * wkbTINZ should be reported as geometry type. This is mostly useful for
+ * the ESRI Shapefile and (Open)FileGDB drivers regarding MultiPatch geometries.</li>
+ * </ul>
+ *
+ * If the layer has no features, a non-NULL returned array with nEntryCount == 0
+ * will be returned.
+ *
+ * Spatial and/or attribute filters will be taken into account.
+ *
+ * This method will error out on a layer without geometry fields
+ * (GetGeomType() == wkbNone).
+ *
+ * A cancellation callback may be provided. The progress percentage it is called
+ * with is not relevant. The callback should return TRUE if processing should go
+ * on, or FALSE if it should be interrupted.
+ *
+ * @param iGeomField Geometry field index.
+ * @param nFlagsGGT Hint flags. 0, or combination of OGR_GGT_COUNT_NOT_NEEDED,
+ *                  OGR_GGT_STOP_IF_MIXED, OGR_GGT_GEOMCOLLECTIONZ_TINZ
+ * @param[out] nEntryCountOut Number of entries in the returned array.
+ * @param pfnProgress Cancellation callback. May be NULL.
+ * @param pProgressData User data for the cancellation callback. May be NULL.
+ * @return an array of nEntryCount that must be freed with CPLFree(),
+ *         or NULL in case of error
+ * @since GDAL 3.6
+ */
+OGRGeometryTypeCounter* OGRLayer::GetGeometryTypes(int iGeomField,
+                                                   int nFlagsGGT,
+                                                   int& nEntryCountOut,
+                                                   GDALProgressFunc pfnProgress,
+                                                   void* pProgressData)
+{
+    OGRFeatureDefn *poDefn = GetLayerDefn();
+    const int nGeomFieldCount = poDefn->GetGeomFieldCount();
+    if( iGeomField < 0 || iGeomField >= nGeomFieldCount )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid value for iGeomField");
+        nEntryCountOut = 0;
+        return nullptr;
+    }
+
+    // Ignore all fields but the geometry one of interest
+    CPLStringList aosIgnoredFieldsRestore;
+    CPLStringList aosIgnoredFields;
+    const int nFieldCount = poDefn->GetFieldCount();
+    for( int iField = 0; iField < nFieldCount; iField++ )
+    {
+        const auto poFieldDefn = poDefn->GetFieldDefn(iField);
+        const char* pszName = poFieldDefn->GetNameRef();
+        if( poFieldDefn->IsIgnored() )
+            aosIgnoredFieldsRestore.AddString(pszName);
+        if( iField != iGeomField )
+            aosIgnoredFields.AddString(pszName);
+    }
+    for( int iField = 0; iField < nGeomFieldCount; iField++ )
+    {
+        const auto poFieldDefn = poDefn->GetGeomFieldDefn(iField);
+        const char* pszName = poFieldDefn->GetNameRef();
+        if( poFieldDefn->IsIgnored() )
+            aosIgnoredFieldsRestore.AddString(pszName);
+        if( iField != iGeomField )
+            aosIgnoredFields.AddString(pszName);
+    }
+    if( poDefn->IsStyleIgnored() )
+        aosIgnoredFieldsRestore.AddString("OGR_STYLE");
+    aosIgnoredFields.AddString("OGR_STYLE");
+    SetIgnoredFields(const_cast<const char**>(aosIgnoredFields.List()));
+
+    // Iterate over features
+    std::map<OGRwkbGeometryType, int64_t> oMapCount;
+    std::set<OGRwkbGeometryType> oSetNotNull;
+    const bool bGeomCollectionZTInZ = (nFlagsGGT & OGR_GGT_GEOMCOLLECTIONZ_TINZ) != 0;
+    const bool bStopIfMixed = (nFlagsGGT & OGR_GGT_STOP_IF_MIXED) != 0;
+    if( pfnProgress == GDALDummyProgress )
+        pfnProgress = nullptr;
+    bool bInterrupted = false;
+    for( auto&& poFeature: *this )
+    {
+        const auto poGeom = poFeature->GetGeomFieldRef(iGeomField);
+        if( poGeom == nullptr )
+        {
+            ++ oMapCount[wkbNone];
+        }
+        else
+        {
+            auto eGeomType = poGeom->getGeometryType();
+            if( bGeomCollectionZTInZ &&
+                eGeomType == wkbGeometryCollection25D )
+            {
+                const auto poGC = poGeom->toGeometryCollection();
+                if( poGC->getNumGeometries() > 0 )
+                {
+                    auto eSubGeomType = poGC->getGeometryRef(0)->getGeometryType();
+                    if( eSubGeomType == wkbTINZ )
+                        eGeomType = wkbTINZ;
+                }
+            }
+            ++ oMapCount[eGeomType];
+            if( bStopIfMixed )
+            {
+                oSetNotNull.insert(eGeomType);
+                if( oSetNotNull.size() == 2 )
+                    break;
+            }
+        }
+        if( pfnProgress && !pfnProgress(0.0, "", pProgressData) )
+        {
+            bInterrupted = true;
+            break;
+        }
+    }
+
+    // Restore ignore fields state
+    SetIgnoredFields(const_cast<const char**>(aosIgnoredFieldsRestore.List()));
+
+    if( bInterrupted )
+    {
+        nEntryCountOut = 0;
+        return nullptr;
+    }
+
+    // Format result
+    nEntryCountOut = static_cast<int>(oMapCount.size());
+    OGRGeometryTypeCounter* pasRet = static_cast<OGRGeometryTypeCounter*>(
+        CPLCalloc(1 + nEntryCountOut, sizeof(OGRGeometryTypeCounter)));
+    int i = 0;
+    for( const auto& oIter: oMapCount )
+    {
+        pasRet[i].eGeomType = oIter.first;
+        pasRet[i].nCount = oIter.second;
+        ++i;
+    }
+    return pasRet;
+}
+
+/************************************************************************/
+/*                      OGR_L_GetGeometryTypes()                        */
+/************************************************************************/
+
+/** \brief Get actual geometry types found in features.
+ *
+ * See OGRLayer::GetGeometryTypes() for details.
+ *
+ * @param hLayer Layer.
+ * @param iGeomField Geometry field index.
+ * @param nFlags Hint flags. 0, or combination of OGR_GGT_COUNT_NOT_NEEDED,
+ *               OGR_GGT_STOP_IF_MIXED, OGR_GGT_GEOMCOLLECTIONZ_TINZ
+ * @param[out] pnEntryCount Pointer to the number of entries in the returned
+ *                          array. Must not be NULL.
+ * @param pfnProgress Cancellation callback. May be NULL.
+ * @param pProgressData User data for the cancellation callback. May be NULL.
+ * @return an array of *pnEntryCount that must be freed with CPLFree(),
+ *         or NULL in case of error
+ * @since GDAL 3.6
+ */
+OGRGeometryTypeCounter *OGR_L_GetGeometryTypes(OGRLayerH hLayer,
+                                               int iGeomField,
+                                               int nFlags,
+                                               int *pnEntryCount,
+                                               GDALProgressFunc pfnProgress,
+                                               void* pProgressData)
+{
+    VALIDATE_POINTER1( hLayer, "OGR_L_GetGeometryTypes", nullptr );
+    VALIDATE_POINTER1( pnEntryCount, "OGR_L_GetGeometryTypes", nullptr );
+
+    return OGRLayer::FromHandle(hLayer)->GetGeometryTypes(
+        iGeomField, nFlags, *pnEntryCount, pfnProgress, pProgressData);
+}

@@ -46,6 +46,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 CPL_C_START
 
@@ -599,6 +600,29 @@ typedef void *OGRSFDriverH;
 
 const char CPL_DLL* OGR_L_GetName( OGRLayerH );
 OGRwkbGeometryType CPL_DLL OGR_L_GetGeomType( OGRLayerH );
+
+/** Result item of OGR_L_GetGeometryTypes */
+typedef struct
+{
+    /** Geometry type */
+    OGRwkbGeometryType eGeomType;
+    /** Number of geometries of type eGeomType */
+    int64_t            nCount;
+} OGRGeometryTypeCounter;
+
+/** Flag for OGR_L_GetGeometryTypes() indicating that
+ * OGRGeometryTypeCounter::nCount value is not needed */
+#define OGR_GGT_COUNT_NOT_NEEDED     0x1
+/** Flag for OGR_L_GetGeometryTypes() indicating that iteration might stop as
+ * sooon as 2 distinct geometry types are found. */
+#define OGR_GGT_STOP_IF_MIXED        0x2
+/** Flag for OGR_L_GetGeometryTypes() indicating that a GeometryCollectionZ
+ * whose first subgeometry is a TinZ should be reported as TinZ */
+#define OGR_GGT_GEOMCOLLECTIONZ_TINZ 0x4
+OGRGeometryTypeCounter CPL_DLL *OGR_L_GetGeometryTypes(
+            OGRLayerH hLayer, int iGeomField, int nFlags, int *pnEntryCount,
+            GDALProgressFunc pfnProgress, void* pProgressData);
+
 OGRGeometryH CPL_DLL OGR_L_GetSpatialFilter( OGRLayerH );
 void   CPL_DLL OGR_L_SetSpatialFilter( OGRLayerH, OGRGeometryH );
 void   CPL_DLL OGR_L_SetSpatialFilterRect( OGRLayerH,

@@ -227,6 +227,9 @@ class CPL_DLL OGRLayer : public GDALMajorObject
 
     virtual OGRErr      SetIgnoredFields( const char **papszFields );
 
+    virtual OGRGeometryTypeCounter* GetGeometryTypes(int iGeomField, int nFlagsGGT, int& nEntryCountOut,
+                                                     GDALProgressFunc pfnProgress, void* pProgressData);
+
     OGRErr              Intersection( OGRLayer *pLayerMethod,
                                       OGRLayer *pLayerResult,
                                       char** papszOptions = nullptr,
