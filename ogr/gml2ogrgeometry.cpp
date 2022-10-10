@@ -1510,6 +1510,69 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             }
         }
 
+        /* Detect if the last object in the following hierarchy is a ArcByCenterPoint
+            <gml:Ring>
+                <gml:curveMember> (may be repeated)
+                    <gml:Curve>
+                        <gml:segments>
+                            ....
+                            <gml:ArcByCenterPoint ... />
+                        </gml:segments>
+                    </gml:Curve>
+                </gml:curveMember>
+            </gml:Ring>
+        */
+        bool bLastChildIsApproximateArc = false;
+        for( const CPLXMLNode *psChild = psNode->psChild;
+             psChild != nullptr;
+             psChild = psChild->psNext )
+        {
+            if( psChild->eType == CXT_Element
+                && EQUAL(BareGMLElement(psChild->pszValue), "curveMember") )
+            {
+                const CPLXMLNode* psCurveMemberChild = GetChildElement(psChild);
+                if( psCurveMemberChild && psCurveMemberChild->eType == CXT_Element
+                    && EQUAL(BareGMLElement(psCurveMemberChild->pszValue), "Curve") )
+                {
+                    const CPLXMLNode* psCurveChild = GetChildElement(psCurveMemberChild);
+                    if( psCurveChild && psCurveChild->eType == CXT_Element
+                        && EQUAL(BareGMLElement(psCurveChild->pszValue), "segments") )
+                    {
+                        for( const CPLXMLNode *psChild2 = psCurveChild->psChild;
+                             psChild2 != nullptr;
+                             psChild2 = psChild2->psNext )
+                        {
+                            if( psChild2->eType == CXT_Element
+                                && EQUAL(BareGMLElement(psChild2->pszValue), "ArcByCenterPoint") )
+                            {
+                                storeArcByCenterPointParameters(psChild2,
+                                                           pszSRSName,
+                                                           bLastChildIsApproximateArc,
+                                                           dfLastCurveApproximateArcRadius,
+                                                           bLastCurveWasApproximateArcInvertedAxisOrder);
+                            }
+                            else
+                            {
+                                bLastChildIsApproximateArc = false;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        bLastChildIsApproximateArc = false;
+                    }
+                }
+                else
+                {
+                    bLastChildIsApproximateArc = false;
+                }
+            }
+            else
+            {
+                bLastChildIsApproximateArc = false;
+            }
+        }
+
         if( poRing )
         {
             if( poRing->getNumPoints() >= 2 &&
@@ -1541,6 +1604,37 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                              "ArcByCenterPoint to end of "
                              "curve");
                     poLS->setPoint(0, &p2);
+                }
+            }
+            else if( poRing->getNumPoints() >= 2 &&
+                bLastChildIsApproximateArc && !poRing->get_IsClosed() &&
+                wkbFlatten(poRing->getGeometryType()) == wkbLineString )
+            {
+                OGRLineString* poLS = poRing->toLineString();
+
+                OGRPoint p;
+                OGRPoint p2;
+                poLS->StartPoint(&p);
+                poLS->EndPoint(&p2);
+                double dfDistance = 0.0;
+                if( bLastCurveWasApproximateArcInvertedAxisOrder )
+                    dfDistance =
+                        OGR_GreatCircle_Distance(
+                            p.getX(), p.getY(),
+                            p2.getX(), p2.getY());
+                else
+                    dfDistance =
+                        OGR_GreatCircle_Distance(
+                            p.getY(), p.getX(),
+                            p2.getY(), p2.getX());
+                if( dfDistance <
+                        dfLastCurveApproximateArcRadius / 5.0 )
+                {
+                    CPLDebug("OGR",
+                             "Moving approximate end of "
+                             "ArcByCenterPoint to start of "
+                             "curve");
+                    poLS->setPoint(poLS->getNumPoints() - 1, &p);
                 }
             }
 
