@@ -273,6 +273,21 @@ cd $(dirname $0)/../autotest/gdrivers/data
 find . -type f -exec zip -j $OUT/gdal_fuzzer_seed_corpus.zip {} \; >/dev/null
 cd $OLDPWD
 
+
+echo "Building filename_fuzzer_seed_corpus.zip"
+cd $(dirname $0)/../autotest/gcore/data
+rm -f $OUT/filename_fuzzer_seed_corpus.zip
+{
+  printf "***NEWFILE***:filename\\n"
+  printf "filename"
+  printf "***NEWFILE***:content\\n"
+  cat byte.tif
+} > filename_byte.tar
+zip -r $OUT/filename_fuzzer_seed_corpus.zip filename_byte.tar >/dev/null
+rm filename_byte.tar
+cd $OLDPWD
+
+
 echo "Building gdal_filesystem_fuzzer_seed_corpus.zip"
 cp $OUT/gdal_fuzzer_seed_corpus.zip $OUT/gdal_filesystem_fuzzer_seed_corpus.zip
 
