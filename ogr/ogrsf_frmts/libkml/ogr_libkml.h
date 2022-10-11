@@ -62,6 +62,7 @@ class OGRLIBKMLLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<
     OGRFeatureDefn           *m_poOgrFeatureDefn;
     kmldom::SchemaPtr         m_poKmlSchema;
     OGRSpatialReference      *m_poOgrSRS;
+    std::unique_ptr<OGRCoordinateTransformation> m_poCT{};
 
     bool                      m_bReadGroundOverlay;
     bool                      m_bUseSimpleField;
@@ -87,6 +88,7 @@ class OGRLIBKMLLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<
   public:
     OGRLIBKMLLayer            ( const char *pszLayerName,
                                 OGRwkbGeometryType eGType,
+                                const OGRSpatialReference *poSRSIn,
                                 OGRLIBKMLDataSource *poOgrDS,
                                 kmldom::ElementPtr poKmlRoot,
                                 kmldom::ContainerPtr poKmlContainer,
@@ -182,6 +184,7 @@ class OGRLIBKMLLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<
 class OGRLIBKMLDataSource final: public OGRDataSource
 {
     char                     *m_pszName;
+    bool                      m_bIssuedCTError = false;
 
     /***** layers *****/
     OGRLIBKMLLayer          **papoLayers;
@@ -266,9 +269,11 @@ class OGRLIBKMLDataSource final: public OGRDataSource
     void                      Updated() { bUpdated = true; }
 
     int                       ParseLayers( kmldom::ContainerPtr poKmlContainer,
-                                           OGRSpatialReference *poOgrSRS,
                                            bool bRecurse );
     kmldom::SchemaPtr         FindSchema( const char *pszSchemaUrl);
+
+    bool IsFirstCTError() const { return !m_bIssuedCTError; }
+    void IssuedFirstCTError() { m_bIssuedCTError = true; }
 
   private:
     /***** methods to write out various datasource types at destroy *****/
@@ -312,6 +317,7 @@ class OGRLIBKMLDataSource final: public OGRDataSource
 
     OGRLIBKMLLayer           *AddLayer( const char *pszLayerName,
                                         OGRwkbGeometryType eGType,
+                                        const OGRSpatialReference* poSRS,
                                         OGRLIBKMLDataSource * poOgrDS,
                                         kmldom::ElementPtr poKmlRoot,
                                         kmldom::ContainerPtr poKmlContainer,
