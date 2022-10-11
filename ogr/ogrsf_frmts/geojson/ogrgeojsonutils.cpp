@@ -453,7 +453,7 @@ bool GeoJSONSeqFileIsObject( GDALOpenInfo* poOpenInfo )
     {
         if( !(bReadMoreBytes && poOpenInfo->nHeaderBytes >= 6000 &&
               poOpenInfo->TryToIngest(1000 * 1000) &&
-             !IsGeoJSONLikeObject(reinterpret_cast<const char*>(poOpenInfo->pabyHeader),
+              IsGeoJSONLikeObject(reinterpret_cast<const char*>(poOpenInfo->pabyHeader),
                                   bMightBeSequence, bReadMoreBytes)) )
         {
             return false;
