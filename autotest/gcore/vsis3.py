@@ -5002,13 +5002,6 @@ def test_vsis3_DISABLE_READDIR_ON_OPEN_option(aws_test_config, webserver_port):
         {"Content-Length": "3", "Content-Range": "bytes 0-2/3"},
         "foo",
     )
-    handler.add(
-        "GET",
-        "/test_vsis3_DISABLE_READDIR_ON_OPEN_option/test.bin",
-        206,
-        {"Content-Length": "3", "Content-Range": "bytes 0-2/3"},
-        "foo",
-    )
     with webserver.install_http_handler(handler):
         f = gdal.VSIFOpenExL(
             "/vsis3/test_vsis3_DISABLE_READDIR_ON_OPEN_option/test.bin",

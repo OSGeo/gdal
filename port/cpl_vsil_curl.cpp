@@ -1403,14 +1403,17 @@ retry:
                 // Add first bytes to cache
                 if( sWriteFuncData.pBuffer != nullptr )
                 {
-                    for( size_t nOffset = 0;
-                            nOffset + knDOWNLOAD_CHUNK_SIZE <= sWriteFuncData.nSize;
-                            nOffset += knDOWNLOAD_CHUNK_SIZE )
+                    size_t nOffset = 0;
+                    while( nOffset < sWriteFuncData.nSize )
                     {
+                        const size_t nToCache = std::min<size_t>(
+                            sWriteFuncData.nSize - nOffset,
+                            knDOWNLOAD_CHUNK_SIZE);
                         poFS->AddRegion(m_pszURL,
                                         nOffset,
-                                        knDOWNLOAD_CHUNK_SIZE,
+                                        nToCache,
                                         sWriteFuncData.pBuffer + nOffset);
+                        nOffset += nToCache;
                     }
                 }
             }
