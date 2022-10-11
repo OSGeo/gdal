@@ -3524,7 +3524,7 @@ bool VSICurlFilesystemHandlerBase::IsAllowedFilename( const char* pszFilename )
 VSIVirtualHandle* VSICurlFilesystemHandlerBase::Open( const char *pszFilename,
                                                   const char *pszAccess,
                                                   bool bSetError,
-                                                  CSLConstList /* papszOptions */ )
+                                                  CSLConstList papszOptions )
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) &&
         !STARTS_WITH_CI(pszFilename, "/vsicurl?") )
@@ -3548,7 +3548,9 @@ VSIVirtualHandle* VSICurlFilesystemHandlerBase::Open( const char *pszFilename,
                                   nullptr, nullptr));
 
     const char* pszOptionVal =
-        VSIGetPathSpecificOption( pszFilename, "GDAL_DISABLE_READDIR_ON_OPEN", "NO" );
+        CSLFetchNameValueDef(
+            papszOptions, "DISABLE_READDIR_ON_OPEN",
+            VSIGetPathSpecificOption( pszFilename, "GDAL_DISABLE_READDIR_ON_OPEN", "NO" ));
     const bool bSkipReadDir = !bListDir || bEmptyDir ||
         EQUAL(pszOptionVal, "EMPTY_DIR") || CPLTestBool(pszOptionVal) ||
         !AllowCachedDataFor(pszFilename);
