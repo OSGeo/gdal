@@ -40,6 +40,7 @@ function (build_fuzzer)
   endif ()
 endfunction ()
 
+build_fuzzer(NAME filename_fuzzer SOURCES filename_fuzzer.cpp)
 build_fuzzer(NAME gdal_fuzzer SOURCES gdal_fuzzer.cpp)
 build_fuzzer(NAME gdal_translate_fuzzer SOURCES gdal_translate_fuzzer.cpp)
 build_fuzzer(NAME gdal_vector_translate_fuzzer SOURCES gdal_vector_translate_fuzzer.cpp)
