@@ -228,3 +228,28 @@ def test_ogr_geojsonseq_feature_large():
         with gdaltest.error_handler():
             assert ogr.Open(filename) is None
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test bugfix for #3892
+
+
+def test_ogr_geojsonseq_feature_starting_with_big_properties():
+
+    filename = "/vsimem/test_ogr_geojsonseq_feature_starting_with_big_properties"
+    s = "\n".join(
+        [
+            '{"properties":{"foo":"%s"},"type":"Feature","geometry":null}'
+            % ("x" * 10000)
+            for i in range(2)
+        ]
+    )
+    gdal.FileFromMemBuffer(
+        filename,
+        s,
+    )
+    ds = ogr.Open(filename)
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 2
+    gdal.Unlink(filename)
