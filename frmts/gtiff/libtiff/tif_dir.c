@@ -136,32 +136,30 @@ setExtraSamples(TIFF* tif, va_list ap, uint32_t* v)
 }
 
 /*
- * Confirm we have "samplesperpixel" ink names separated by \0.  Returns 
+ * Count ink names separated by \0.  Returns
  * zero if the ink names are not as expected.
  */
-static uint32_t
-checkInkNamesString(TIFF* tif, uint32_t slen, const char* s)
+static uint16_t
+countInkNamesString(TIFF *tif, uint32_t slen, const char *s)
 {
-	TIFFDirectory* td = &tif->tif_dir;
-	uint16_t i = td->td_samplesperpixel;
+	uint16_t i = 0;
+	const char *ep = s + slen;
+	const char *cp = s;
 
 	if (slen > 0) {
-		const char* ep = s+slen;
-		const char* cp = s;
-		for (; i > 0; i--) {
+		do {
 			for (; cp < ep && *cp != '\0'; cp++) {}
 			if (cp >= ep)
 				goto bad;
 			cp++;				/* skip \0 */
-		}
-		return ((uint32_t)(cp - s));
+			i++;
+		} while (cp < ep);
+		return (i);
 	}
 bad:
 	TIFFErrorExt(tif->tif_clientdata, "TIFFSetField",
-	    "%s: Invalid InkNames value; expecting %"PRIu16" names, found %"PRIu16,
-	    tif->tif_name,
-	    td->td_samplesperpixel,
-	    (uint16_t)(td->td_samplesperpixel-i));
+		"%s: Invalid InkNames value; no NUL at given buffer end location %"PRIu32", after %"PRIu16" ink",
+		tif->tif_name, slen, i);
 	return (0);
 }
 
@@ -478,13 +476,61 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 		_TIFFsetFloatArray(&td->td_refblackwhite, va_arg(ap, float*), 6);
 		break;
 	case TIFFTAG_INKNAMES:
-		v = (uint16_t) va_arg(ap, uint16_vap);
-		s = va_arg(ap, char*);
-		v = checkInkNamesString(tif, v, s);
-		status = v > 0;
-		if( v > 0 ) {
-			_TIFFsetNString(&td->td_inknames, s, v);
-			td->td_inknameslen = v;
+		{
+			v = (uint16_t) va_arg(ap, uint16_vap);
+			s = va_arg(ap, char*);
+			uint16_t ninksinstring;
+			ninksinstring = countInkNamesString(tif, v, s);
+			status = ninksinstring > 0;
+			if(ninksinstring > 0 ) {
+				_TIFFsetNString(&td->td_inknames, s, v);
+				td->td_inknameslen = v;
+				/* Set NumberOfInks to the value ninksinstring */
+				if (TIFFFieldSet(tif, FIELD_NUMBEROFINKS))
+				{
+					if (td->td_numberofinks != ninksinstring) {
+						TIFFErrorExt(tif->tif_clientdata, module,
+							"Warning %s; Tag %s:\n  Value %"PRIu16" of NumberOfInks is different from the number of inks %"PRIu16".\n  -> NumberOfInks value adapted to %"PRIu16"",
+							tif->tif_name, fip->field_name, td->td_numberofinks, ninksinstring, ninksinstring);
+						td->td_numberofinks = ninksinstring;
+					}
+				} else {
+					td->td_numberofinks = ninksinstring;
+					TIFFSetFieldBit(tif, FIELD_NUMBEROFINKS);
+				}
+				if (TIFFFieldSet(tif, FIELD_SAMPLESPERPIXEL))
+				{
+					if (td->td_numberofinks != td->td_samplesperpixel) {
+						TIFFErrorExt(tif->tif_clientdata, module,
+							"Warning %s; Tag %s:\n  Value %"PRIu16" of NumberOfInks is different from the SamplesPerPixel value %"PRIu16"",
+							tif->tif_name, fip->field_name, td->td_numberofinks, td->td_samplesperpixel);
+					}
+				}
+			}
+		}
+		break;
+	case TIFFTAG_NUMBEROFINKS:
+		v = (uint16_t)va_arg(ap, uint16_vap);
+		/* If InkNames already set also NumberOfInks is set accordingly and should be equal */
+		if (TIFFFieldSet(tif, FIELD_INKNAMES))
+		{
+			if (v != td->td_numberofinks) {
+				TIFFErrorExt(tif->tif_clientdata, module,
+					"Error %s; Tag %s:\n  It is not possible to set the value %"PRIu32" for NumberOfInks\n  which is different from the number of inks in the InkNames tag (%"PRIu16")",
+					tif->tif_name, fip->field_name, v, td->td_numberofinks);
+				/* Do not set / overwrite number of inks already set by InkNames case accordingly. */
+				status = 0;
+			}
+		} else {
+			td->td_numberofinks = (uint16_t)v;
+			if (TIFFFieldSet(tif, FIELD_SAMPLESPERPIXEL))
+			{
+				if (td->td_numberofinks != td->td_samplesperpixel) {
+					TIFFErrorExt(tif->tif_clientdata, module,
+						"Warning %s; Tag %s:\n  Value %"PRIu32" of NumberOfInks is different from the SamplesPerPixel value %"PRIu16"",
+						tif->tif_name, fip->field_name, v, td->td_samplesperpixel);
+				}
+			}
 		}
 		break;
 	case TIFFTAG_PERSAMPLE:
@@ -986,34 +1032,6 @@ _TIFFVGetField(TIFF* tif, uint32_t tag, va_list ap)
 	if (fip->field_bit == FIELD_CUSTOM) {
 		standard_tag = 0;
 	}
-	
-        if( standard_tag == TIFFTAG_NUMBEROFINKS )
-        {
-            int i;
-            for (i = 0; i < td->td_customValueCount; i++) {
-                uint16_t val;
-                TIFFTagValue *tv = td->td_customValues + i;
-                if (tv->info->field_tag != standard_tag)
-                    continue;
-                if( tv->value == NULL )
-                    return 0;
-                val = *(uint16_t *)tv->value;
-                /* Truncate to SamplesPerPixel, since the */
-                /* setting code for INKNAMES assume that there are SamplesPerPixel */
-                /* inknames. */
-                /* Fixes http://bugzilla.maptools.org/show_bug.cgi?id=2599 */
-                if( val > td->td_samplesperpixel )
-                {
-                    TIFFWarningExt(tif->tif_clientdata,"_TIFFVGetField",
-                                   "Truncating NumberOfInks from %u to %"PRIu16,
-                                   val, td->td_samplesperpixel);
-                    val = td->td_samplesperpixel;
-                }
-                *va_arg(ap, uint16_t*) = val;
-                return 1;
-            }
-            return 0;
-        }
 
 	switch (standard_tag) {
 		case TIFFTAG_SUBFILETYPE:
@@ -1194,6 +1212,9 @@ _TIFFVGetField(TIFF* tif, uint32_t tag, va_list ap)
 			break;
 		case TIFFTAG_INKNAMES:
 			*va_arg(ap, const char**) = td->td_inknames;
+			break;
+		case TIFFTAG_NUMBEROFINKS:
+			*va_arg(ap, uint16_t *) = td->td_numberofinks;
 			break;
 		default:
 			{
@@ -1531,6 +1552,17 @@ TIFFDefaultDirectory(TIFF* tif)
 	tif->tif_tagmethods.vsetfield = _TIFFVSetField;  
 	tif->tif_tagmethods.vgetfield = _TIFFVGetField;
 	tif->tif_tagmethods.printdir = NULL;
+	/* additional default values */
+	td->td_planarconfig = PLANARCONFIG_CONTIG;
+	td->td_compression = COMPRESSION_NONE;
+	td->td_subfiletype = 0;
+	td->td_minsamplevalue = 0;
+	/* td_bitspersample=1 is always set in TIFFDefaultDirectory(). 
+	 * Therefore, td_maxsamplevalue has to be re-calculated in TIFFGetFieldDefaulted(). */
+	td->td_maxsamplevalue = 1;  /* Default for td_bitspersample=1 */
+	td->td_extrasamples = 0;
+	td->td_sampleinfo = NULL;
+
 	/*
 	 *  Give client code a chance to install their own
 	 *  tag extensions & methods, prior to compression overloads,
@@ -1631,7 +1663,7 @@ TIFFAdvanceDirectory(TIFF* tif, uint64_t* nextdiroff, uint64_t* off, uint16_t* n
 			poffb=poffa+sizeof(uint64_t);
 			if (poffb > tif->tif_size)
 			{
-				TIFFErrorExt(tif->tif_clientdata,module,"Error fetching directory link");
+				TIFFErrorExt(tif->tif_clientdata,module,"Error fetching directory count");
 				return(0);
 			}
 			_TIFFmemcpy(&dircount64,tif->tif_base+poffa,sizeof(uint64_t));
@@ -1789,7 +1821,7 @@ TIFFSetDirectory(TIFF* tif, uint16_t dirn)
 	for (n = dirn; n > 0 && nextdiroff != 0; n--)
 		if (!TIFFAdvanceDirectory(tif, &nextdiroff, NULL, &nextdirnum))
 			return (0);
-	/* If the n-th directory could not be reached (does not exist),
+	/* If the n-th directory could not be reached (does not exist), 
 	 * return here without touching anything further. */
 	if (nextdiroff == 0 || n > 0)
 		return (0);
@@ -1813,10 +1845,10 @@ TIFFSetDirectory(TIFF* tif, uint16_t dirn)
 int
 TIFFSetSubDirectory(TIFF* tif, uint64_t diroff)
 {
-	/* Match nextdiroff and curdir for consistent IFD-loop checking.
+	/* Match nextdiroff and curdir for consistent IFD-loop checking. 
 	 * Only with TIFFSetSubDirectory() the IFD list can be corrupted with invalid offsets
 	 * within the main IFD tree.
-	 * In the case of several subIFDs of a main image,
+	 * In the case of several subIFDs of a main image, 
 	 * there are two possibilities that are not even mutually exclusive.
 	 * a.) The subIFD tag contains an array with all offsets of the subIFDs.
 	 * b.) The SubIFDs are concatenated with their NextIFD parameters.
@@ -1840,10 +1872,10 @@ TIFFSetSubDirectory(TIFF* tif, uint64_t diroff)
 	tif->tif_nextdiroff = diroff;
 	retval = TIFFReadDirectory(tif);
 	/* If failed, curdir was not incremented in TIFFReadDirectory(), so set it back. */
-	if (!retval )tif->tif_curdir++;
+	if (!retval )tif->tif_curdir++; 
 	if (retval && probablySubIFD) {
 		/* Reset IFD list to start new one for SubIFD chain and also start SubIFD chain with tif_curdir=0. */
-		tif->tif_dirnumber = 0;
+		tif->tif_dirnumber = 0; 
 		tif->tif_curdir = 0; /* first directory of new chain */
 		/* add this offset to new IFD list */
 		_TIFFCheckDirNumberAndOffset(tif, tif->tif_curdir, diroff);
@@ -1872,7 +1904,7 @@ TIFFLastDirectory(TIFF* tif)
 
 /*
  * Unlink the specified directory from the directory chain.
- * Note: First directory starts with number dirn=1.
+ * Note: First directory starts with number dirn=1. 
  * This is different to TIFFSetDirectory() where the first directory starts with zero.
  */
 int

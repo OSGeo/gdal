@@ -697,7 +697,8 @@ gtTileContig(TIFFRGBAImage* img, uint32_t* raster, uint32_t w, uint32_t h)
 		this_tw = tw - fromskew;
 		this_toskew = toskew + fromskew;
 	    }
-	    (*put)(img, raster+y*w+tocol, tocol, y, this_tw, nrow, fromskew, this_toskew, buf + pos);
+	    tmsize_t roffset = (tmsize_t) y * w + tocol;
+	    (*put)(img, raster + roffset, tocol, y, this_tw, nrow, fromskew, this_toskew, buf + pos);
 	    tocol += this_tw;
 	    col += this_tw;
 	    /*
@@ -885,7 +886,8 @@ gtTileSeparate(TIFFRGBAImage* img, uint32_t* raster, uint32_t w, uint32_t h)
 				this_tw = tw - fromskew;
 				this_toskew = toskew + fromskew;
 			}
-			(*put)(img, raster+y*w+tocol, tocol, y, this_tw, nrow, fromskew, this_toskew, \
+			tmsize_t roffset = (tmsize_t) y * w + tocol;
+			(*put)(img, raster + roffset, tocol, y, this_tw, nrow, fromskew, this_toskew, \
 				p0 + pos, p1 + pos, p2 + pos, (alpha?(pa+pos):NULL));
 			tocol += this_tw;
 			col += this_tw;
@@ -995,7 +997,8 @@ gtStripContig(TIFFRGBAImage* img, uint32_t* raster, uint32_t w, uint32_t h)
 
 		pos = ((row + img->row_offset) % rowsperstrip) * scanline + \
 			((tmsize_t) img->col_offset * img->samplesperpixel);
-		(*put)(img, raster+y*w, 0, y, w, nrow, fromskew, toskew, buf + pos);
+		tmsize_t roffset = (tmsize_t) y * w;
+		(*put)(img, raster + roffset, 0, y, w, nrow, fromskew, toskew, buf + pos);
 		y += ((flip & FLIP_VERTICALLY) ? -(int32_t) nrow : (int32_t) nrow);
 	}
 
@@ -1153,7 +1156,8 @@ gtStripSeparate(TIFFRGBAImage* img, uint32_t* raster, uint32_t w, uint32_t h)
 
 		pos = ((row + img->row_offset) % rowsperstrip) * scanline + \
 			((tmsize_t) img->col_offset * img->samplesperpixel);
-		(*put)(img, raster+y*w, 0, y, w, nrow, fromskew, toskew, p0 + pos, p1 + pos,
+		tmsize_t roffset = (tmsize_t) y * w;
+		(*put)(img, raster + roffset, 0, y, w, nrow, fromskew, toskew, p0 + pos, p1 + pos,
 		    p2 + pos, (alpha?(pa+pos):NULL));
 		y += ((flip & FLIP_VERTICALLY) ? -(int32_t) nrow : (int32_t) nrow);
 	}
@@ -1841,82 +1845,6 @@ DECLAREContigPutFunc(putcontig8bitCIELab16)
 	TIFFYCbCrtoRGB(img->ycbcr, (Y), Cb, Cr, &r, &g, &b);		\
 	dst = PACK(r, g, b);						\
 }
-
-/*
- * 8-bit packed YCbCr samples => RGB 
- * This function is generic for different sampling sizes, 
- * and can handle blocks sizes that aren't multiples of the
- * sampling size.  However, it is substantially less optimized
- * than the specific sampling cases.  It is used as a fallback
- * for difficult blocks.
- */
-#ifdef notdef
-static void putcontig8bitYCbCrGenericTile( 
-    TIFFRGBAImage* img, 
-    uint32_t* cp,
-    uint32_t x, uint32_t y,
-    uint32_t w, uint32_t h,
-    int32_t fromskew, int32_t toskew,
-    unsigned char* pp,
-    int h_group, 
-    int v_group )
-
-{
-    uint32_t* cp1 = cp+w+toskew;
-    uint32_t* cp2 = cp1+w+toskew;
-    uint32_t* cp3 = cp2+w+toskew;
-    int32_t incr = 3*w+4*toskew;
-    int32_t   Cb, Cr;
-    int     group_size = v_group * h_group + 2;
-
-    (void) y;
-    fromskew = (fromskew * group_size) / h_group;
-
-    for( yy = 0; yy < h; yy++ )
-    {
-        unsigned char *pp_line;
-        int     y_line_group = yy / v_group;
-        int     y_remainder = yy - y_line_group * v_group;
-
-        pp_line = pp + v_line_group * 
-
-        
-        for( xx = 0; xx < w; xx++ )
-        {
-            Cb = pp
-        }
-    }
-    for (; h >= 4; h -= 4) {
-	x = w>>2;
-	do {
-	    Cb = pp[16];
-	    Cr = pp[17];
-
-	    YCbCrtoRGB(cp [0], pp[ 0]);
-	    YCbCrtoRGB(cp [1], pp[ 1]);
-	    YCbCrtoRGB(cp [2], pp[ 2]);
-	    YCbCrtoRGB(cp [3], pp[ 3]);
-	    YCbCrtoRGB(cp1[0], pp[ 4]);
-	    YCbCrtoRGB(cp1[1], pp[ 5]);
-	    YCbCrtoRGB(cp1[2], pp[ 6]);
-	    YCbCrtoRGB(cp1[3], pp[ 7]);
-	    YCbCrtoRGB(cp2[0], pp[ 8]);
-	    YCbCrtoRGB(cp2[1], pp[ 9]);
-	    YCbCrtoRGB(cp2[2], pp[10]);
-	    YCbCrtoRGB(cp2[3], pp[11]);
-	    YCbCrtoRGB(cp3[0], pp[12]);
-	    YCbCrtoRGB(cp3[1], pp[13]);
-	    YCbCrtoRGB(cp3[2], pp[14]);
-	    YCbCrtoRGB(cp3[3], pp[15]);
-
-	    cp += 4, cp1 += 4, cp2 += 4, cp3 += 4;
-	    pp += 18;
-	} while (--x);
-	cp += incr, cp1 += incr, cp2 += incr, cp3 += incr;
-	pp += fromskew;
-    }
-}
-#endif
 
 /*
  * 8-bit packed YCbCr samples w/ 4,4 subsampling => RGB
