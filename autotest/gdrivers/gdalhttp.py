@@ -198,6 +198,26 @@ def test_http_use_capi_store_sub():
 
 
 ###############################################################################
+
+
+def test_http_keep_alive():
+
+    # Rather dummy test. Just trigger the code path
+
+    with gdaltest.config_option("GDAL_HTTP_TCP_KEEPALIVE", "YES"):
+        gdal.OpenEx("https://google.com", allowed_drivers=["HTTP"])
+
+    with gdaltest.config_options(
+        {
+            "GDAL_HTTP_TCP_KEEPALIVE": "YES",
+            "GDAL_HTTP_TCP_KEEPINTVL": "1",
+            "GDAL_HTTP_TCP_KEEPIDLE": "1",
+        }
+    ):
+        gdal.OpenEx("https://google.com", allowed_drivers=["HTTP"])
+
+
+###############################################################################
 #
 
 
