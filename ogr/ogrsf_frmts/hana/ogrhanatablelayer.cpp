@@ -34,7 +34,6 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
-#include <regex>
 #include <sstream>
 
 #include "odbc/Exception.h"
@@ -119,15 +118,22 @@ CPLString GetParameterValue(short type, const CPLString& typeName, bool isArray)
         return "?";
 }
 
-std::vector<int> ParseIntValues(const char* str)
+std::vector<int> ParseIntValues(const std::string& str)
 {
     std::vector<int> values;
-    std::stringstream stream(str);
-    while (stream.good())
+    try
     {
-        std::string value;
-        getline(stream, value, ',');
-        values.push_back(std::atoi(value.c_str()));
+        std::stringstream stream(str);
+        while (stream.good())
+        {
+            std::string value;
+            std::getline(stream, value, ',');
+            values.push_back(std::stoi(value.c_str()));
+        }
+    }
+    catch (...)
+    {
+        values.clear();
     }
     return values;
 }
@@ -143,20 +149,23 @@ ColumnTypeInfo ParseColumnTypeInfo(const CPLString& typeDef)
     CPLString typeName;
     std::vector<int> typeSize;
 
-    if (std::strstr(typeDef, "(") == nullptr)
+    const size_t posStart = typeDef.find("(");
+    if (posStart == std::string::npos)
     {
         typeName = typeDef;
     }
     else
     {
-        const auto regex = std::regex(R"((\w+)+\((\d+(,\d+)*)\)$)");
-        std::smatch match;
-        std::regex_search(typeDef, match, regex);
-
-        if (match.size() != 0)
+        const size_t posEnd = typeDef.rfind(")");
+        if (posEnd != std::string::npos && posEnd > posStart)
         {
-            typeName.assign(match[1]);
-            typeSize = ParseIntValues(match[2].str().c_str());
+            const size_t posLast = typeDef.find_last_not_of(" \n\r\t");
+            if (posLast == posEnd)
+            {
+                typeName = typeDef.substr(0, posStart);
+                const std::string values = typeDef.substr(posStart + 1, posEnd - posStart - 1);
+                typeSize = ParseIntValues(values);
+            }
         }
 
         if (typeSize.empty() || typeSize.size() > 2)
@@ -165,6 +174,8 @@ ColumnTypeInfo ParseColumnTypeInfo(const CPLString& typeDef)
             return {"", odbc::SQLDataTypes::Unknown, 0, 0};
         }
     }
+
+    typeName.Trim();
 
     if (EQUAL(typeName.c_str(), "BOOLEAN"))
         return {typeName, odbc::SQLDataTypes::Boolean, 0, 0};
