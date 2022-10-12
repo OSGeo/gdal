@@ -526,6 +526,7 @@
         return
 
     def keys(self):
+        """Return the list of field names (of the layer definition)"""
         names = []
         for i in range(self.GetFieldCount()):
             fieldname = self.GetFieldDefnRef(i).GetName()
@@ -533,12 +534,29 @@
         return names
 
     def items(self):
+        """Return a dictionary with the field names as key, and their value in the feature"""
         keys = self.keys()
         output = {}
         for key in keys:
             output[key] = self.GetField(key)
         return output
+
     def geometry(self):
+        """ Return the feature geometry
+
+            The lifetime of the returned geometry is bound to the one of its belonging
+            feature.
+
+            For more details: :cpp:func:`OGR_F_GetGeometryRef`
+
+            The GetGeometryRef() method is also available as an alias of geometry()
+
+            Returns
+            --------
+            Geometry:
+                the geometry, or None.
+        """
+
         return self.GetGeometryRef()
 
     def ExportToJson(self, as_object=False, options=None):

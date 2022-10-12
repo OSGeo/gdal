@@ -142,22 +142,21 @@ After this call the OGRFeature will have a NULL geometry.
 
 the pointer to the geometry. ";
 
-%feature("docstring")  GetGeometryRef "OGRGeometryH
-OGR_F_GetGeometryRef(OGRFeatureH hFeat)
+%feature("docstring")  GetGeometryRef "
+Return the feature geometry
 
-Fetch a handle to feature geometry.
+The lifetime of the returned geometry is bound to the one of its belonging
+feature.
 
-This function is essentially the same as the C++ method
-OGRFeature::GetGeometryRef() (the only difference is that this C
-function honours OGRGetNonLinearGeometriesEnabledFlag())
+For more details: :cpp:func:`OGR_F_GetGeometryRef`
 
-Parameters
------------
-hFeat:
-    handle to the feature to get geometry from.
+The geometry() method is also available as an alias of GetGeometryRef()
 
-a handle to internal feature geometry. This object should not be
-modified. ";
+Returns
+--------
+Geometry:
+    the geometry, or None.
+";
 
 %feature("docstring")  GetGeomFieldRef "OGRGeometryH
 OGR_F_GetGeomFieldRef(OGRFeatureH hFeat, int iField)
@@ -1171,7 +1170,7 @@ serialized back to the datasource, OGR_L_SetFeature() must be used
 afterwards. Or if this is a new feature, OGR_L_CreateFeature() must be
 used afterwards.
 
-.. versionadded:: 2.0 
+.. versionadded:: 2.0
 
 Parameters
 -----------

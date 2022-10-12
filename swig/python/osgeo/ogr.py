@@ -2401,22 +2401,21 @@ class Feature(object):
     def GetGeometryRef(self, *args) -> "OGRGeometryShadow *":
         r"""
         GetGeometryRef(Feature self) -> Geometry
-        OGRGeometryH
-        OGR_F_GetGeometryRef(OGRFeatureH hFeat)
 
-        Fetch a handle to feature geometry.
+        Return the feature geometry
 
-        This function is essentially the same as the C++ method
-        OGRFeature::GetGeometryRef() (the only difference is that this C
-        function honours OGRGetNonLinearGeometriesEnabledFlag())
+        The lifetime of the returned geometry is bound to the one of its belonging
+        feature.
 
-        Parameters
-        -----------
-        hFeat:
-            handle to the feature to get geometry from.
+        For more details: :cpp:func:`OGR_F_GetGeometryRef`
 
-        a handle to internal feature geometry. This object should not be
-        modified. 
+        The geometry() method is also available as an alias of GetGeometryRef()
+
+        Returns
+        --------
+        Geometry:
+            the geometry, or None.
+
         """
         return _ogr.Feature_GetGeometryRef(self, *args)
 
@@ -4064,6 +4063,7 @@ class Feature(object):
         return
 
     def keys(self):
+        """Return the list of field names (of the layer definition)"""
         names = []
         for i in range(self.GetFieldCount()):
             fieldname = self.GetFieldDefnRef(i).GetName()
@@ -4071,12 +4071,29 @@ class Feature(object):
         return names
 
     def items(self):
+        """Return a dictionary with the field names as key, and their value in the feature"""
         keys = self.keys()
         output = {}
         for key in keys:
             output[key] = self.GetField(key)
         return output
+
     def geometry(self):
+        """ Return the feature geometry
+
+            The lifetime of the returned geometry is bound to the one of its belonging
+            feature.
+
+            For more details: :cpp:func:`OGR_F_GetGeometryRef`
+
+            The GetGeometryRef() method is also available as an alias of geometry()
+
+            Returns
+            --------
+            Geometry:
+                the geometry, or None.
+        """
+
         return self.GetGeometryRef()
 
     def ExportToJson(self, as_object=False, options=None):
