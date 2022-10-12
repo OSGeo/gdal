@@ -1756,9 +1756,14 @@ VSILFILE *VSIFOpenExL( const char * pszFilename, const char * pszAccess,
  * @param bSetError flag determining whether or not this open call
  * should set VSIErrors on failure.
  * @param papszOptions NULL or NULL-terminated list of strings. The content is
- *                     highly file system dependent. Currently only MIME headers
- *                     such as Content-Type and Content-Encoding are supported
- *                     for the /vsis3/, /vsigs/, /vsiaz/, /vsiadls/ file systems.
+ *                     highly file system dependent.
+ *                     MIME headers such as Content-Type and Content-Encoding are
+ *                     supported for the /vsis3/, /vsigs/, /vsiaz/, /vsiadls/
+ *                     file systems.
+ *                     Starting with GDAL 3.6, the DISABLE_READDIR_ON_OPEN=YES/NO
+ *                     option is supported for /vsicurl/ and other network-based
+ *                     file systems. By default, directory file listing is done,
+ *                     unless YES is specified.
  *
  * @return NULL on failure, or the file handle.
  *
