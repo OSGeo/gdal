@@ -16,7 +16,7 @@ It builds a virtual mosaic from the items.
 A STACIT dataset which has no subdatasets is actually a :ref:`raster.vrt` dataset.
 Thus, translating it into VRT will result in a VRT file that directly references the items.
 
-Note that `STAC API ItemCollections <https://github.com/radiantearth/stac-api-spec/blob/main/fragments/itemcollection/README.md>`_ are not the same as `STAC API Collections <https://github.com/radiantearth/stac-api-spec/blob/master/stac-spec/collection-spec/collection-spec.md>`_ or `STAC Collections <https://github.com/radiantearth/stac-spec/tree/master/collection-spec>`_. STAC API ItemCollections are GeoJSON FeatureCollections enhanced with STAC entities.
+Note that `STAC API ItemCollections <https://github.com/radiantearth/stac-api-spec/blob/main/fragments/itemcollection/README.md>`_ are not the same as  `STAC Collections <https://github.com/radiantearth/stac-spec/tree/master/collection-spec>`_. STAC API ItemCollections are GeoJSON FeatureCollections enhanced with STAC entities.
 
 Open syntax
 -----------
