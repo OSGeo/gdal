@@ -147,6 +147,7 @@ public:
     virtual bool    IsLocal( const char* /* pszPath */ ) { return true; }
     virtual bool    SupportsSequentialWrite( const char* /* pszPath */, bool /* bAllowLocalTempFile */ ) { return true; }
     virtual bool    SupportsRandomWrite( const char* /* pszPath */, bool /* bAllowLocalTempFile */ ) { return true; }
+    virtual bool    SupportsRead( const char* /* pszPath */ ) { return true; }
 };
 #endif /* #ifndef DOXYGEN_SKIP */
 
