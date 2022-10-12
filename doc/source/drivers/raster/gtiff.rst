@@ -370,11 +370,11 @@ Creation Options
 -  **TILED=YES**: By default striped TIFF files are created. This
    option can be used to force creation of tiled TIFF files.
 
--  **BLOCKXSIZE=n**: Sets tile width, defaults to 256.
+-  **BLOCKXSIZE=n**: Sets tile width, defaults to 256. Must be divisible by 16.
 
 -  **BLOCKYSIZE=n**: Set tile or strip height. Tile height defaults to
    256, strip height defaults to a value such that one strip is 8K or
-   less.
+   less. Must be divisible by 16.
 
 -  **NBITS=n**: Create a file with less than 8 bits per sample by
    passing a value from 1 to 7. The apparent pixel type should be Byte.

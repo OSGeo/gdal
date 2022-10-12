@@ -35,7 +35,7 @@ Creation Options
 General creation options
 ************************
 
--  **BLOCKSIZE=n**: Sets the tile width and height in pixels. Defaults to 512.
+-  **BLOCKSIZE=n**: Sets the tile width and height in pixels. Defaults to 512. Must be divisible by 16.
 
 -  **COMPRESS=[NONE/LZW/JPEG/DEFLATE/ZSTD/WEBP/LERC/LERC_DEFLATE/LERC_ZSTD/LZMA]**: Set the compression to use.
    Defaults to ``LZW`` starting with GDAL 3.4 (default in previous version is ``NONE``).
