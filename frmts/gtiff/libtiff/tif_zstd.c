@@ -160,7 +160,7 @@ ZSTDDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
                 TIFFErrorExt(tif->tif_clientdata, module,
                     "Not enough data at scanline %lu (short %lu bytes)",
                     (unsigned long) tif->tif_row,
-                    (unsigned long) (size_t)occ - out_buffer.pos);
+                    (unsigned long) ((size_t)occ - out_buffer.pos));
                 return 0;
         }
 

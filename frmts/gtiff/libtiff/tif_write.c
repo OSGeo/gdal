@@ -602,22 +602,6 @@ TIFFWriteCheck(TIFF* tif, int tiles, const char* module)
 		    "Must set \"ImageWidth\" before writing data");
 		return (0);
 	}
-	if (tif->tif_dir.td_samplesperpixel == 1) {
-		/*
-		 * Planarconfiguration is irrelevant in case of single band
-		 * images and need not be included. We will set it anyway,
-		 * because this field is used in other parts of library even
-		 * in the single band case.
-		 */
-		if (!TIFFFieldSet(tif, FIELD_PLANARCONFIG))
-                    tif->tif_dir.td_planarconfig = PLANARCONFIG_CONTIG;
-	} else {
-		if (!TIFFFieldSet(tif, FIELD_PLANARCONFIG)) {
-			TIFFErrorExt(tif->tif_clientdata, module,
-			    "Must set \"PlanarConfiguration\" before writing data");
-			return (0);
-		}
-	}
 	if (tif->tif_dir.td_stripoffset_p == NULL && !TIFFSetupStrips(tif)) {
 		tif->tif_dir.td_nstrips = 0;
 		TIFFErrorExt(tif->tif_clientdata, module, "No space for %s arrays",

@@ -242,6 +242,7 @@ ZIPDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
                 uInt avail_out_before = (uint64_t)occ < 0xFFFFFFFFU ? (uInt) occ : 0xFFFFFFFFU;
                 sp->stream.avail_in = avail_in_before;
                 sp->stream.avail_out = avail_out_before;
+		/* coverity[overrun-buffer-arg] */
 		state = inflate(&sp->stream, Z_PARTIAL_FLUSH);
 		tif->tif_rawcc -= (avail_in_before - sp->stream.avail_in);
                 occ -= (avail_out_before - sp->stream.avail_out);
@@ -432,6 +433,7 @@ ZIPEncode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
 	do {
                 uInt avail_in_before = (uint64_t)cc <= 0xFFFFFFFFU ? (uInt)cc : 0xFFFFFFFFU;
                 sp->stream.avail_in = avail_in_before;
+		/* coverity[overrun-buffer-arg] */
 		if (deflate(&sp->stream, Z_NO_FLUSH) != Z_OK) {
 			TIFFErrorExt(tif->tif_clientdata, module, 
 				     "Encoder error: %s",

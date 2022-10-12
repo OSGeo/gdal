@@ -87,9 +87,6 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryDoubleArray(TIFF* tif, TIFFDirEn
 static enum TIFFReadDirEntryErr TIFFReadDirEntryIfd8Array(TIFF* tif, TIFFDirEntry* direntry, uint64_t** value);
 
 static enum TIFFReadDirEntryErr TIFFReadDirEntryPersampleShort(TIFF* tif, TIFFDirEntry* direntry, uint16_t* value);
-#if 0
-static enum TIFFReadDirEntryErr TIFFReadDirEntryPersampleDouble(TIFF* tif, TIFFDirEntry* direntry, double* value);
-#endif
 
 static void TIFFReadDirEntryCheckedByte(TIFF* tif, TIFFDirEntry* direntry, uint8_t* value);
 static void TIFFReadDirEntryCheckedSbyte(TIFF* tif, TIFFDirEntry* direntry, int8_t* value);
@@ -3190,36 +3187,6 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryPersampleShort(TIFF* tif, TIFFDi
 	return(err);
 }
 
-#if 0
-static enum TIFFReadDirEntryErr TIFFReadDirEntryPersampleDouble(TIFF* tif, TIFFDirEntry* direntry, double* value)
-{
-	enum TIFFReadDirEntryErr err;
-	double* m;
-	double* na;
-	uint16_t nb;
-	if (direntry->tdir_count<(uint64_t)tif->tif_dir.td_samplesperpixel)
-		return(TIFFReadDirEntryErrCount);
-	err=TIFFReadDirEntryDoubleArray(tif,direntry,&m);
-	if (err!=TIFFReadDirEntryErrOk)
-		return(err);
-	na=m;
-	nb=tif->tif_dir.td_samplesperpixel;
-	*value=*na++;
-	nb--;
-	while (nb>0)
-	{
-		if (*na++!=*value)
-		{
-			err=TIFFReadDirEntryErrPsdif;
-			break;
-		}
-		nb--;
-	}
-	_TIFFfree(m);
-	return(err);
-}
-#endif
-
 static void TIFFReadDirEntryCheckedByte(TIFF* tif, TIFFDirEntry* direntry, uint8_t* value)
 {
 	(void) tif;
@@ -3980,6 +3947,8 @@ TIFFReadDirectory(TIFF* tif)
 	 * without a PlanarConfiguration directory entry.
 	 * Thus we setup a default value here, even though
 	 * the TIFF spec says there is no default value.
+	 * After PlanarConfiguration is preset in TIFFDefaultDirectory()
+	 * the following setting is not needed, but does not harm either.
 	 */
 	TIFFSetField(tif,TIFFTAG_PLANARCONFIG,PLANARCONFIG_CONTIG);
 	/*
@@ -5139,7 +5108,7 @@ _TIFFGetDirNumberFromOffset(TIFF *tif, uint64_t diroff, uint16_t* dirn)
 	}
 
 	/* Check if offset is already in the list and return matching directory number.
-	 * Otherwise update IFD list using TIFFNumberOfDirectories()
+	 * Otherwise update IFD list using TIFFNumberOfDirectories() 
 	 * and search again in IFD list.
 	 */
 	for (n = 0; n < tif->tif_dirnumber && tif->tif_dirlistoff && tif->tif_dirlistdirn; n++) {
@@ -7061,9 +7030,11 @@ static int _TIFFFetchStrileValue(TIFF* tif,
         {
             td->td_stripoffsetbyteallocsize = nStripArrayAllocNew;
             /* Initialize new entries to ~0 / -1 */
+            /* coverity[overrun-buffer-arg] */
             memset(td->td_stripoffset_p + nStripArrayAllocBefore,
                 0xFF,
                 (td->td_stripoffsetbyteallocsize - nStripArrayAllocBefore) * sizeof(uint64_t) );
+            /* coverity[overrun-buffer-arg] */
             memset(td->td_stripbytecount_p + nStripArrayAllocBefore,
                 0xFF,
                 (td->td_stripoffsetbyteallocsize - nStripArrayAllocBefore) * sizeof(uint64_t) );

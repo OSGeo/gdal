@@ -117,6 +117,7 @@ typedef struct {
 	/* CMYK parameters */
 	int     td_inknameslen;
 	char*   td_inknames;
+	uint16_t td_numberofinks;                 /* number of inks in InkNames string */
 
 	int     td_customValueCount;
         TIFFTagValue *td_customValues;
@@ -174,6 +175,7 @@ typedef struct {
 #define FIELD_TRANSFERFUNCTION         44
 #define FIELD_INKNAMES                 46
 #define FIELD_SUBIFD                   49
+#define FIELD_NUMBEROFINKS             50
 /*      FIELD_CUSTOM (see tiffio.h)    65 */
 /* end of support for well-known tags; codec-private tags follow */
 #define FIELD_CODEC                    66  /* base of codec-private tags */
