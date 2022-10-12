@@ -88,6 +88,8 @@ class VSIStdoutFilesystemHandler final : public VSIFilesystemHandler
                             CSLConstList /* papszOptions */ ) override;
     int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
               int nFlags ) override;
+
+    bool SupportsRead( const char* /* pszPath */ ) override { return false; }
 };
 
 /************************************************************************/
@@ -258,6 +260,8 @@ class VSIStdoutRedirectFilesystemHandler final : public VSIFilesystemHandler
                             CSLConstList /* papszOptions */ ) override;
     int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
               int nFlags ) override;
+
+    bool SupportsRead( const char* /* pszPath */ ) override { return false; }
 };
 
 /************************************************************************/
