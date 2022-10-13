@@ -1567,6 +1567,7 @@ void CPLODBCStatement::ClearColumnData()
 /*                               Failed()                               */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 /** Failed */
 int CPLODBCStatement::Failed( int nResultCode )
 
@@ -1576,6 +1577,7 @@ int CPLODBCStatement::Failed( int nResultCode )
 
     return TRUE;
 }
+//! @endcond
 
 /************************************************************************/
 /*                         Append(const char *)                         */
