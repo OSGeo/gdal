@@ -302,7 +302,7 @@ def test_ogr_gpkg_6():
 
 
 ###############################################################################
-# Add a feature / read a feature / delete a feature
+# Add a feature / read a feature / set a feature / upsert a feature / delete a feature
 
 
 def test_ogr_gpkg_7():
@@ -367,9 +367,21 @@ def test_ogr_gpkg_7():
         lyr.TestCapability(ogr.OLCDeleteFeature) == 1
     ), "lyr.TestCapability(ogr.OLCDeleteFeature) != 1"
 
+    # Test upserting an existing feature
+    feat.SetField("dummy", "updated")
+    assert lyr.UpsertFeature(feat) == 0, "cannot upsert existing feature"
+    upserted_feat = lyr.GetFeature(feat.GetFID())
+    assert (
+        upserted_feat.GetField("dummy") == "updated"
+    ), "upsert failed to update existing feature"
+
     # Delete a feature
     lyr.DeleteFeature(feat.GetFID())
     assert lyr.GetFeatureCount() == 1, "delete feature did not delete"
+
+    # Test upserting a non-existing feature
+    assert lyr.UpsertFeature(feat) == 0, "cannot upsert non-existing feature"
+    assert lyr.GetFeatureCount() == 1, "upsert failed to add non-existing feature"
 
     # Test updating non-existing feature
     feat.SetFID(-10)
