@@ -2040,6 +2040,26 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
 }
 
 /************************************************************************/
+/*                           IUpsertFeature()                           */
+/************************************************************************/
+
+OGRErr OGRGeoPackageTableLayer::IUpsertFeature( OGRFeature* poFeature )
+
+{
+   if ( !TestCapability(OLCUpsertFeature) )
+      return OGRERR_FAILURE;
+
+   if ( GetFeature(poFeature->GetFID()) )
+   {
+      return SetFeature(poFeature);
+   }
+   else
+   {
+      return CreateFeature(poFeature);
+   }
+}
+
+/************************************************************************/
 /*                         SetAttributeFilter()                         */
 /************************************************************************/
 
@@ -2831,6 +2851,7 @@ int OGRGeoPackageTableLayer::TestCapability ( const char * pszCap )
         return m_poDS->GetUpdate() && m_bIsTable;
     }
     else if ( EQUAL(pszCap, OLCDeleteFeature) ||
+              EQUAL(pszCap, OLCUpsertFeature) ||
               EQUAL(pszCap, OLCRandomWrite) )
     {
         return m_poDS->GetUpdate() && m_pszFidColumn != nullptr;
