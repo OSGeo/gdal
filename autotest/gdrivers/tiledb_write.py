@@ -239,7 +239,10 @@ def test_tiledb_write_band_meta(mode):
 
     options = ["INTERLEAVE=%s" % (mode)]
 
-    new_ds = gdaltest.tiledb_drv.CreateCopy("tmp/tiledb_meta", src_ds, options=options)
+    gdaltest.tiledb_drv.CreateCopy("tmp/tiledb_meta", src_ds, options=options)
+
+    # open array in update mode
+    new_ds = gdal.Open("tmp/tiledb_meta", gdal.GA_Update)
 
     meta = new_ds.GetMetadata("IMAGE_STRUCTURE")
     assert meta["INTERLEAVE"] == mode, "Did not get expected mode"
