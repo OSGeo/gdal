@@ -858,9 +858,14 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteSRS_ISO32000(GDALDataset* poSrcDS,
     const char * pszAuthorityCode = OSRGetAuthorityCode( hSRS, nullptr );
     const char * pszAuthorityName = OSRGetAuthorityName( hSRS, nullptr );
     int nEPSGCode = 0;
-    if( pszAuthorityName != nullptr && EQUAL(pszAuthorityName, "EPSG") &&
-        pszAuthorityCode != nullptr )
+    if( pszAuthorityName != nullptr &&
+        pszAuthorityCode != nullptr &&
+        (EQUAL(pszAuthorityName, "EPSG") ||
+         (EQUAL(pszAuthorityName, "ESRI") &&
+          CPLTestBool(CPLGetConfigOption("GDAL_PDF_WRITE_ESRI_CODE_AS_EPSG", "NO")))) )
+    {
         nEPSGCode = atoi(pszAuthorityCode);
+    }
 
     int bIsGeographic = OSRIsGeographic(hSRS);
 
