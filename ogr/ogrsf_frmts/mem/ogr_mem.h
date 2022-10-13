@@ -72,6 +72,8 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL: public OGRLayer
     // doesn't change.
     IOGRMemLayerFeatureIterator* GetIterator();
 
+    const OGRFeature   *GetFeatureRef( GIntBig nFeatureId );
+
   public:
                         OGRMemLayer( const char * pszName,
                                      OGRSpatialReference *poSRS,
