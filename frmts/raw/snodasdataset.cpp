@@ -52,6 +52,7 @@ class SNODASDataset final: public RawDataset
     double      dfMin;
     int         bHasMax;
     double      dfMax;
+    OGRSpatialReference m_oSRS{};
 
     friend class SNODASRasterBand;
 
@@ -62,10 +63,7 @@ class SNODASDataset final: public RawDataset
     ~SNODASDataset() override;
 
     CPLErr GetGeoTransform( double * padfTransform ) override;
-    const char *_GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override { return &m_oSRS; }
 
     char **GetFileList() override;
 
@@ -170,6 +168,9 @@ SNODASDataset::SNODASDataset() :
     bHasMax(false),
     dfMax(0.0)
 {
+    m_oSRS.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -186,16 +187,6 @@ SNODASDataset::~SNODASDataset()
 
 {
     FlushCache(true);
-}
-
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char *SNODASDataset::_GetProjectionRef()
-
-{
-    return SRS_WKT_WGS84_LAT_LONG;
 }
 
 /************************************************************************/
