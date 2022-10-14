@@ -38,6 +38,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_mask.h"
 #include "cpl_minixml.h"
 #include "cpl_progress.h"
 #include "cpl_string.h"
@@ -351,7 +352,7 @@ template<class T> static CPLErr GDALWarpNoDataMaskerT( const double *padfNoData,
         if( pData[iOffset] == nNoData )
         {
             bAllValid = FALSE;
-            panValidityMask[iOffset>>5] &= ~(0x01 << (iOffset & 0x1f));
+            CPLMaskClear(panValidityMask, iOffset);
         }
     }
     *pbOutAllValid = bAllValid;
@@ -431,7 +432,7 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
                   (!bIsNoDataNan && ARE_REAL_EQUAL(fVal, fNoData)) )
               {
                   bAllValid = FALSE;
-                  panValidityMask[iOffset>>5] &= ~(0x01 << (iOffset & 0x1f));
+                  CPLMaskClear(panValidityMask, iOffset);
               }
           }
           *pbOutAllValid = bAllValid;
@@ -460,7 +461,7 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
                   (!bIsNoDataNan && ARE_REAL_EQUAL(dfVal, dfNoData)) )
               {
                   bAllValid = FALSE;
-                  panValidityMask[iOffset>>5] &= ~(0x01 << (iOffset & 0x1f));
+                  CPLMaskClear(panValidityMask, iOffset);
               }
           }
           *pbOutAllValid = bAllValid;
@@ -492,8 +493,7 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
                           iPixel + static_cast<size_t>(iLine) * nXSize;
 
                       bAllValid = FALSE;
-                      panValidityMask[iOffset>>5] &=
-                          ~(0x01 << (iOffset & 0x1f));
+                      CPLMaskClear(panValidityMask, iOffset);
                   }
               }
           }
@@ -790,7 +790,7 @@ GDALWarpSrcMaskMasker( void *pMaskFuncArg,
     for( size_t iPixel = 0; iPixel < nPixels; iPixel++ )
     {
         if( pabySrcMask[iPixel] == 0 )
-            panMask[iPixel>>5] &= ~(0x01 << (iPixel & 0x1f));
+            CPLMaskClear(panMask, iPixel);
     }
 
     CPLFree( pabySrcMask );

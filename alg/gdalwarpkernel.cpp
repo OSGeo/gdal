@@ -47,6 +47,7 @@
 #include "cpl_atomic_ops.h"
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_mask.h"
 #include "cpl_multiproc.h"
 #include "cpl_progress.h"
 #include "cpl_string.h"
@@ -706,8 +707,7 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
  *       GUInt32 *panBandMask = poKern->papanBandSrcValid[nBand];
  *       int    iPixelOffset = nPixel + nLine * poKern->nSrcXSize;
  *
- *       bIsValid = panBandMask[iPixelOffset>>5]
- *                  & (0x01 << (iPixelOffset & 0x1f));
+ *       bIsValid = CPLMaskGet(panBandMask, iPixelOffset)
  *   }
  * \endcode
  */
@@ -1484,8 +1484,7 @@ static bool GWKSetPixelValueRealT( const GDALWarpKernel *poWK, int iBand,
         if( poWK->pafDstDensity != nullptr )
             dfDstDensity = poWK->pafDstDensity[iDstOffset];
         else if( poWK->panDstValid != nullptr
-                 && !((poWK->panDstValid[iDstOffset>>5]
-                       & (0x01 << (iDstOffset & 0x1f))) ) )
+                 && !CPLMaskGet(poWK->panDstValid, iDstOffset) )
             dfDstDensity = 0.0;
 
         // It seems like we also ought to be testing panDstValid[] here!
@@ -1555,8 +1554,7 @@ static bool GWKSetPixelValue( const GDALWarpKernel *poWK, int iBand,
         if( poWK->pafDstDensity != nullptr )
             dfDstDensity = poWK->pafDstDensity[iDstOffset];
         else if( poWK->panDstValid != nullptr
-                 && !((poWK->panDstValid[iDstOffset>>5]
-                       & (0x01 << (iDstOffset & 0x1f))) ) )
+                 && !CPLMaskGet(poWK->panDstValid, iDstOffset) )
             dfDstDensity = 0.0;
 
         double dfDstReal = 0.0;
@@ -1800,8 +1798,7 @@ static bool GWKSetPixelValueReal( const GDALWarpKernel *poWK, int iBand,
         if( poWK->pafDstDensity != nullptr )
             dfDstDensity = poWK->pafDstDensity[iDstOffset];
         else if( poWK->panDstValid != nullptr
-                 && !((poWK->panDstValid[iDstOffset>>5]
-                       & (0x01 << (iDstOffset & 0x1f))) ) )
+                 && !CPLMaskGet(poWK->panDstValid, iDstOffset) )
             dfDstDensity = 0.0;
 
         // It seems like we also ought to be testing panDstValid[] here!
@@ -1925,8 +1922,7 @@ static bool GWKGetPixelValue( const GDALWarpKernel *poWK, int iBand,
 
     if( poWK->papanBandSrcValid != nullptr
         && poWK->papanBandSrcValid[iBand] != nullptr
-        && !((poWK->papanBandSrcValid[iBand][iSrcOffset>>5]
-              & (0x01 << (iSrcOffset & 0x1f)))) )
+        && !CPLMaskGet(poWK->papanBandSrcValid[iBand], iSrcOffset) )
     {
         *pdfDensity = 0.0;
         return false;
@@ -2026,8 +2022,7 @@ static bool GWKGetPixelValueReal( const GDALWarpKernel *poWK, int iBand,
 
     if( poWK->papanBandSrcValid != nullptr
         && poWK->papanBandSrcValid[iBand] != nullptr
-        && !((poWK->papanBandSrcValid[iBand][iSrcOffset>>5]
-              & (0x01 << (iSrcOffset & 0x1f)))) )
+        && !CPLMaskGet(poWK->papanBandSrcValid[iBand], iSrcOffset) )
     {
         *pdfDensity = 0.0;
         return false;
@@ -2114,14 +2109,12 @@ static bool GWKGetPixelRow( const GDALWarpKernel *poWK, int iBand,
         {
             for( int i = 0; i < nSrcLen; i += 2 )
             {
-                if( poWK->panUnifiedSrcValid[(iSrcOffset+i)>>5]
-                    & (0x01 << ((iSrcOffset+i) & 0x1f)) )
+                if( CPLMaskGet(poWK->panUnifiedSrcValid, iSrcOffset+i) )
                     bHasValid = true;
                 else
                     padfDensity[i] = 0.0;
 
-                if( poWK->panUnifiedSrcValid[(iSrcOffset+i+1)>>5]
-                    & (0x01 << ((iSrcOffset+i+1) & 0x1f)) )
+                if( CPLMaskGet(poWK->panUnifiedSrcValid, iSrcOffset+i+1) )
                     bHasValid = true;
                 else
                     padfDensity[i+1] = 0.0;
@@ -2139,14 +2132,12 @@ static bool GWKGetPixelRow( const GDALWarpKernel *poWK, int iBand,
         {
             for( int i = 0; i < nSrcLen; i += 2 )
             {
-                if( poWK->papanBandSrcValid[iBand][(iSrcOffset+i)>>5]
-                    & (0x01 << ((iSrcOffset+i) & 0x1f)) )
+                if( CPLMaskGet(poWK->papanBandSrcValid[iBand], iSrcOffset+i) )
                     bHasValid = true;
                 else
                     padfDensity[i] = 0.0;
 
-                if( poWK->papanBandSrcValid[iBand][(iSrcOffset+i+1)>>5]
-                    & (0x01 << ((iSrcOffset+i+1) & 0x1f)) )
+                if( CPLMaskGet(poWK->papanBandSrcValid[iBand], iSrcOffset+i+1) )
                     bHasValid = true;
                 else
                     padfDensity[i+1] = 0.0;
@@ -2392,12 +2383,10 @@ static bool GWKGetPixelT( const GDALWarpKernel *poWK, int iBand,
     T *pSrc = reinterpret_cast<T *>(poWK->papabySrcImage[iBand]);
 
     if( ( poWK->panUnifiedSrcValid != nullptr
-          && !((poWK->panUnifiedSrcValid[iSrcOffset>>5]
-                & (0x01 << (iSrcOffset & 0x1f))) ) )
+          && !CPLMaskGet(poWK->panUnifiedSrcValid, iSrcOffset) )
         || ( poWK->papanBandSrcValid != nullptr
              && poWK->papanBandSrcValid[iBand] != nullptr
-             && !((poWK->papanBandSrcValid[iBand][iSrcOffset>>5]
-                   & (0x01 << (iSrcOffset & 0x1f)))) ) )
+             && !CPLMaskGet(poWK->papanBandSrcValid[iBand], iSrcOffset)) )
     {
         *pdfDensity = 0.0;
         return false;
@@ -4965,8 +4954,7 @@ static void GWKGeneralCaseThread( void* pData)
             }
 
             if( poWK->panUnifiedSrcValid != nullptr
-                && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
-                     & (0x01 << (iSrcOffset & 0x1f))) )
+                && !CPLMaskGet(poWK->panUnifiedSrcValid, iSrcOffset) )
                 continue;
 
 /* ==================================================================== */
@@ -5058,8 +5046,7 @@ static void GWKGeneralCaseThread( void* pData)
 
             if( poWK->panDstValid != nullptr )
             {
-                poWK->panDstValid[iDstOffset>>5] |=
-                    0x01 << (iDstOffset & 0x1f);
+                CPLMaskSet(poWK->panDstValid, iDstOffset);
             }
         } /* Next iDstX */
 
@@ -5198,8 +5185,7 @@ static void GWKRealCaseThread( void* pData)
             }
 
             if( poWK->panUnifiedSrcValid != nullptr
-                && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
-                     & (0x01 << (iSrcOffset & 0x1f))) )
+                && !CPLMaskGet(poWK->panUnifiedSrcValid, iSrcOffset) )
                 continue;
 
 /* ==================================================================== */
@@ -5326,8 +5312,7 @@ static void GWKRealCaseThread( void* pData)
 
             if( poWK->panDstValid != nullptr )
             {
-                poWK->panDstValid[iDstOffset>>5] |=
-                    0x01 << (iDstOffset & 0x1f);
+                CPLMaskSet(poWK->panDstValid, iDstOffset);
             }
         }  // Next iDstX.
 
@@ -5669,8 +5654,7 @@ static void GWKNearestThread( void* pData )
 /*      Do not try to apply invalid source pixels to the dest.          */
 /* -------------------------------------------------------------------- */
             if( poWK->panUnifiedSrcValid != nullptr
-                && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
-                     & (0x01 << (iSrcOffset & 0x1f))) )
+                && !CPLMaskGet(poWK->panUnifiedSrcValid, iSrcOffset) )
                 continue;
 
 /* -------------------------------------------------------------------- */
@@ -5740,8 +5724,7 @@ static void GWKNearestThread( void* pData )
 
             if( poWK->panDstValid != nullptr )
             {
-                poWK->panDstValid[iDstOffset>>5] |=
-                    0x01 << (iDstOffset & 0x1f);
+                CPLMaskSet(poWK->panDstValid, iDstOffset);
             }
         } /* Next iDstX */
 
@@ -6198,8 +6181,7 @@ static void GWKAverageOrModeThread( void* pData)
                                 iSrcOffset = (iSrcX % nSrcXSize) + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
 
                             if( poWK->panUnifiedSrcValid != nullptr
-                                && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
-                                     & (0x01 << (iSrcOffset & 0x1f))) )
+                                && !CPLMaskGet(poWK->panUnifiedSrcValid, iSrcOffset) )
                             {
                                 continue;
                             }
@@ -6259,8 +6241,7 @@ static void GWKAverageOrModeThread( void* pData)
                                 iSrcOffset = (iSrcX % nSrcXSize) + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
 
                             if( poWK->panUnifiedSrcValid != nullptr
-                                && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
-                                     & (0x01 << (iSrcOffset & 0x1f))) )
+                                && !CPLMaskGet(poWK->panUnifiedSrcValid, iSrcOffset) )
                             {
                                 continue;
                             }
@@ -6316,8 +6297,7 @@ static void GWKAverageOrModeThread( void* pData)
                                 iSrcOffset = (iSrcX % nSrcXSize) + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
 
                             if( poWK->panUnifiedSrcValid != nullptr
-                                && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
-                                     & (0x01 << (iSrcOffset & 0x1f))) )
+                                && !CPLMaskGet(poWK->panUnifiedSrcValid, iSrcOffset) )
                             {
                                 continue;
                             }
@@ -6383,8 +6363,7 @@ static void GWKAverageOrModeThread( void* pData)
                                     iSrcOffset = (iSrcX % nSrcXSize) + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
 
                                 if( poWK->panUnifiedSrcValid != nullptr
-                                    && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
-                                         & (0x01 << (iSrcOffset & 0x1f))) )
+                                    && !CPLMaskGet(poWK->panUnifiedSrcValid, iSrcOffset) )
                                     continue;
 
                                 if( GWKGetPixelValue(
@@ -6452,8 +6431,7 @@ static void GWKAverageOrModeThread( void* pData)
                                     iSrcOffset = (iSrcX % nSrcXSize) + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
 
                                 if( poWK->panUnifiedSrcValid != nullptr
-                                    && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
-                                         & (0x01 << (iSrcOffset & 0x1f))) )
+                                    && !CPLMaskGet(poWK->panUnifiedSrcValid, iSrcOffset) )
                                     continue;
 
                                 if( GWKGetPixelValue(
@@ -6507,8 +6485,7 @@ static void GWKAverageOrModeThread( void* pData)
                                 iSrcOffset = (iSrcX % nSrcXSize) + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
 
                             if( poWK->panUnifiedSrcValid != nullptr
-                                && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
-                                     & (0x01 << (iSrcOffset & 0x1f))) )
+                                && !CPLMaskGet(poWK->panUnifiedSrcValid, iSrcOffset) )
                             {
                                 continue;
                             }
@@ -6560,8 +6537,7 @@ static void GWKAverageOrModeThread( void* pData)
                                 iSrcOffset = (iSrcX % nSrcXSize) + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
 
                             if( poWK->panUnifiedSrcValid != nullptr
-                                && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
-                                     & (0x01 << (iSrcOffset & 0x1f))) )
+                                && !CPLMaskGet(poWK->panUnifiedSrcValid, iSrcOffset) )
                             {
                                 continue;
                             }
@@ -6614,8 +6590,7 @@ static void GWKAverageOrModeThread( void* pData)
                                 iSrcOffset = (iSrcX % nSrcXSize) + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
 
                             if( poWK->panUnifiedSrcValid != nullptr
-                                && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
-                                     & (0x01 << (iSrcOffset & 0x1f))) )
+                                && !CPLMaskGet(poWK->panUnifiedSrcValid, iSrcOffset) )
                             {
                                 continue;
                             }
@@ -6683,8 +6658,7 @@ static void GWKAverageOrModeThread( void* pData)
 
             if( poWK->panDstValid != nullptr )
             {
-                poWK->panDstValid[iDstOffset>>5] |=
-                    0x01 << (iDstOffset & 0x1f);
+                CPLMaskSet(poWK->panDstValid, iDstOffset);
             }
         } /* Next iDstX */
 
