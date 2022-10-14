@@ -534,6 +534,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     OGRErr              RenameFieldInAuxiliaryTables(
                             const char* pszOldName, const char* pszNewName);
 
+    bool                FeatureIDExists( GIntBig nFID );
+
     CPL_DISALLOW_COPY_ASSIGN(OGRGeoPackageTableLayer)
 
     public:
