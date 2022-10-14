@@ -4,6 +4,8 @@
 ogr_layer_algebra.py
 ================================================================================
 
+.. versionadded:: 3.6
+
 .. only:: html
 
     Performs various Vector layer algebraic operations.
@@ -105,7 +107,7 @@ input source , a method source and generates the output of the operation in the 
 
 .. option:: -f <format_name>
 
-    Select the output format. Starting with GDAL 2.3, if not specified,
+    Select the output format.If not specified,
     the format is guessed from the extension (previously was ESRI Shapefile).
     Use the short format name
 
@@ -131,30 +133,12 @@ input source , a method source and generates the output of the operation in the 
 
     Define the geometry type for the created layer. 
     One of NONE, GEOMETRY, POINT, LINESTRING, POLYGON, GEOMETRYCOLLECTION,
-    MULTIPOINT, MULTIPOLYGON, MULTILINESTRING, CIRCULARSTRING, COMPOUNDCURVE, 
-    CURVEPOLYGON, MULTICURVE, and MULTISURFACE non-linear geometry types.
-    Add Z, M, or ZM to the type name to specify coordinates with elevation, 
-    measure, or elevation and measure. PROMOTE_TO_MULTI can be used to 
-    automatically promote layers that mix polygon or multipolygons 
-    to multipolygons, and layers that mix linestrings or multilinestrings
-    to multilinestrings. Can be useful when converting shapefiles to 
-    PostGIS and other target drivers that implement strict checks for geometry types.
-    CONVERT_TO_LINEAR can be used to to convert non-linear geometry types into 
-    linear geometry types by approximating them, and CONVERT_TO_CURVE to promote
-    a non-linear type to its generalized curve type (POLYGON to CURVEPOLYGON,
-    MULTIPOLYGON to MULTISURFACE, LINESTRING to COMPOUNDCURVE, MULTILINESTRING 
-    to MULTICURVE). Starting with version 2.1 the type can be defined as measured 
-    (“25D” remains as an alias for single “Z”). Some forced geometry conversions 
-    may result in invalid geometries, for example when forcing conversion 
-    of multi-part multipolygons with -nlt POLYGON, the resulting polygon will
-    break the Simple Features rules.
-
-    Starting with GDAL 3.0.5, -nlt CONVERT_TO_LINEAR and 
-    -nlt PROMOTE_TO_MULTI can be used simultaneously.
+    MULTIPOINT, MULTIPOLYGON, GEOMETRY25D, POINT25D, LINESTRING25D, POLYGON25D,
+    GEOMETRYCOLLECTION25D, MULTIPOINT25D, MULTIPOLYGON25D.
 
 .. option:: -a_srs <srs_def>
 
-    Assign an output SRS, but without reprojecting (use -t_srs to reproject)
+    Assign an output SRS, but without reprojecting
 
     The coordinate reference systems that can be passed are anything supported by the
     OGRSpatialReference.SetFromUserInput() call, which includes EPSG Projected,
