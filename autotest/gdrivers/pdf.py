@@ -76,6 +76,11 @@ def poppler_or_pdfium(request):
         yield backend
 
 
+def have_read_support():
+    md = gdal.GetDriverByName("PDF").GetMetadata()
+    return "HAVE_POPPLER" in md or "HAVE_PDFIUM" in md or "HAVE_PODOFO" in md
+
+
 ###############################################################################
 # Returns True if we run with poppler
 
@@ -2059,8 +2064,8 @@ if (button == 4) app.launchURL('http://gdal.org/');</Javascript>
         <Width>20</Width>
         <Height>10</Height>
 
-        <Georeferencing ISO32000ExtensionFormat="true" OGCBestPracticeFormat="true"> 
-            <SRS dataAxisToSRSAxisMapping="2,1">EPSG:4326</SRS> 
+        <Georeferencing ISO32000ExtensionFormat="true" OGCBestPracticeFormat="true">
+            <SRS dataAxisToSRSAxisMapping="2,1">EPSG:4326</SRS>
             <BoundingBox x1="1" y1="1" x2="19" y2="9"/>
             <BoundingPolygon>POLYGON((1 1,19 1,19 9,1 9,1 1))</BoundingPolygon>
             <ControlPoint x="1"  y="1"  GeoY="-90"  GeoX="-180"/>
@@ -2400,8 +2405,8 @@ def test_pdf_composition_raster_georeferenced():
         <Width>110</Width>
         <Height>110</Height>
 
-        <Georeferencing id="georeferenced"> 
-            <SRS>EPSG:26711</SRS> 
+        <Georeferencing id="georeferenced">
+            <SRS>EPSG:26711</SRS>
             <BoundingBox x1="10" y1="5" x2="105" y2="100"/>
             <ControlPoint x="5"  y="5"   GeoY="3750120"  GeoX="440720"/>
             <ControlPoint x="5"  y="105"  GeoY="3751320"  GeoX="440720"/>
@@ -2452,8 +2457,8 @@ def test_pdf_composition_vector_georeferenced():
         <Width>110</Width>
         <Height>110</Height>
 
-        <Georeferencing id="georeferenced"> 
-            <SRS dataAxisToSRSAxisMapping="2,1">EPSG:4326</SRS> 
+        <Georeferencing id="georeferenced">
+            <SRS dataAxisToSRSAxisMapping="2,1">EPSG:4326</SRS>
             <BoundingBox x1="10" y1="5" x2="105" y2="105"/>
             <ControlPoint x="5"  y="5"   GeoY="49"  GeoX="2"/>
             <ControlPoint x="5"  y="105"  GeoY="50"  GeoX="2"/>
@@ -2522,8 +2527,8 @@ def test_pdf_composition_vector_georeferenced_reprojected():
         <Width>110</Width>
         <Height>110</Height>
 
-        <Georeferencing id="georeferenced"> 
-            <SRS dataAxisToSRSAxisMapping="2,1">EPSG:4326</SRS> 
+        <Georeferencing id="georeferenced">
+            <SRS dataAxisToSRSAxisMapping="2,1">EPSG:4326</SRS>
             <BoundingBox x1="10" y1="5" x2="105" y2="105"/>
             <ControlPoint x="5"  y="5"   GeoY="49"  GeoX="2"/>
             <ControlPoint x="5"  y="105"  GeoY="50"  GeoX="2"/>
@@ -2911,7 +2916,7 @@ def test_pdf_composition_error_missing_srs():
     xml_content = """<PDFComposition>
     <Page>
 
-        <Georeferencing> 
+        <Georeferencing>
             <!--<SRS dataAxisToSRSAxisMapping="2,1">EPSG:4326</SRS> -->
             <BoundingBox x1="1" y1="1" x2="19" y2="9"/>
             <BoundingPolygon>POLYGON((1 1,19 1,19 9,1 9,1 1))</BoundingPolygon>
@@ -2947,7 +2952,7 @@ def test_pdf_composition_error_missing_control_point():
     xml_content = """<PDFComposition>
     <Page>
 
-        <Georeferencing> 
+        <Georeferencing>
             <SRS dataAxisToSRSAxisMapping="2,1">EPSG:4326</SRS>
             <ControlPoint x="1"  y="1"  GeoY="-90"  GeoX="-180"/>
             <ControlPoint x="19" y="1"  GeoY="90"   GeoX="180"/>
@@ -2981,7 +2986,7 @@ def test_pdf_composition_error_missing_attribute_in_control_point():
     xml_content = """<PDFComposition>
     <Page>
 
-        <Georeferencing> 
+        <Georeferencing>
             <SRS dataAxisToSRSAxisMapping="2,1">EPSG:4326</SRS>
             <BoundingBox x1="1" y1="1" x2="19" y2="9"/>
             <BoundingPolygon>POLYGON((1 1,19 1,19 9,1 9,1 1))</BoundingPolygon>
@@ -3020,7 +3025,7 @@ def test_pdf_composition_error_invalid_bbox():
     xml_content = """<PDFComposition>
     <Page>
 
-        <Georeferencing> 
+        <Georeferencing>
             <SRS dataAxisToSRSAxisMapping="2,1">EPSG:4326</SRS>
             <BoundingBox x1="1" y1="1" x2="1" y2="9"/>
             <BoundingPolygon>POLYGON((1 1,19 1,19 9,1 9,1 1))</BoundingPolygon>
@@ -3271,3 +3276,19 @@ def test_pdf_composition_outline_item_setlayerstate_pointing_to_invalid_layer_id
     assert not out_ds
     assert gdal.GetLastErrorMsg() == "Referencing layer of unknown id: non_existing"
     gdal.Unlink(out_filename)
+
+
+###############################################################################
+# Test reading ISO:32000 CRS in ESRI namespace written as EPSG code
+# (https://github.com/OSGeo/gdal/issues/6522)
+
+
+@pytest.mark.skipif(not have_read_support(), reason="no read support available")
+def test_pdf_iso32000_esri_as_epsg():
+
+    gdal.ErrorReset()
+    ds = gdal.Open("data/pdf/esri_102422_as_epsg_code.pdf")
+    sr = ds.GetSpatialRef()
+    assert sr.GetAuthorityName(None) == "ESRI"
+    assert sr.GetAuthorityCode(None) == "102422"
+    assert gdal.GetLastErrorMsg() == ""
