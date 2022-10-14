@@ -383,7 +383,7 @@ def test_ogr_gpkg_7():
     assert (
         lyr.UpsertFeature(feat) == ogr.OGRERR_NONE
     ), "cannot upsert non-existing feature"
-    assert lyr.GetFeatureCount() == 1, "upsert failed to add non-existing feature"
+    assert lyr.GetFeatureCount() == 2, "upsert failed to add non-existing feature"
 
     # Test updating non-existing feature
     feat.SetFID(-10)
