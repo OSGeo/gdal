@@ -28,6 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import ogrtest
 import pytest
 import test_py_scripts
 
@@ -35,10 +36,19 @@ from osgeo import ogr
 
 ###############################################################################
 
+# Skip if no geos
+@pytest.fixture(autouse=True, scope="module")
+def startup_and_cleanup():
+    if not ogrtest.have_geos():
+        pytest.skip()
+
+
+###############################################################################
+
 # Test Intersection
 
 
-def test_ogr_layer_algebra_1():
+def test_ogr_layer_algebra_intersection():
 
     script_path = test_py_scripts.get_py_script("ogr_layer_algebra")
     if script_path is None:
@@ -101,7 +111,7 @@ def test_ogr_layer_algebra_1():
 # Test Union
 
 
-def test_ogr_layer_algebra_2():
+def test_ogr_layer_algebra_union():
 
     script_path = test_py_scripts.get_py_script("ogr_layer_algebra")
     if script_path is None:
@@ -164,7 +174,7 @@ def test_ogr_layer_algebra_2():
 # Test Symmetric Difference
 
 
-def test_ogr_layer_algebra_3():
+def test_ogr_layer_algebra_symdifference():
 
     script_path = test_py_scripts.get_py_script("ogr_layer_algebra")
     if script_path is None:
@@ -232,7 +242,7 @@ def test_ogr_layer_algebra_3():
 # Test Identity
 
 
-def test_ogr_layer_algebra_4():
+def test_ogr_layer_algebra_identity():
 
     script_path = test_py_scripts.get_py_script("ogr_layer_algebra")
     if script_path is None:
@@ -300,7 +310,7 @@ def test_ogr_layer_algebra_4():
 # Test Update
 
 
-def test_ogr_layer_algebra_5():
+def test_ogr_layer_algebra_update():
 
     script_path = test_py_scripts.get_py_script("ogr_layer_algebra")
     if script_path is None:
@@ -363,7 +373,7 @@ def test_ogr_layer_algebra_5():
 # Test Clip
 
 
-def test_ogr_layer_algebra_6():
+def test_ogr_layer_algebra_clip():
 
     script_path = test_py_scripts.get_py_script("ogr_layer_algebra")
     if script_path is None:
@@ -426,7 +436,7 @@ def test_ogr_layer_algebra_6():
 # Test Erase
 
 
-def test_ogr_layer_algebra_7():
+def test_ogr_layer_algebra_erase():
 
     script_path = test_py_scripts.get_py_script("ogr_layer_algebra")
     if script_path is None:
