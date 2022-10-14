@@ -73,7 +73,7 @@ input source , a method source and generates the output of the operation in the 
 .. option:: -input_ds <path>
 
     Input data set path for the operation to be performed.
-     For operations involving 2 datasets, this is one of the dataset.
+    For operations involving 2 datasets, this is one of the dataset.
 
 .. option:: -input_lyr <name>
 
