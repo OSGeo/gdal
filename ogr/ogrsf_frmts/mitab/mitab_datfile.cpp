@@ -493,6 +493,13 @@ int TABDATFile::GetNumRecords() { return m_numRecords; }
  **********************************************************************/
 TABRawBinBlock *TABDATFile::GetRecordBlock(int nRecordId)
 {
+    if( m_fp == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Operation not supported on closed table.");
+        return nullptr;
+    }
+
     m_bCurRecordDeletedFlag = FALSE;
     m_bWriteEOF = FALSE;
 
@@ -802,6 +809,12 @@ static int TABDATFileSetFieldDefinition(TABDATFieldDef *psFieldDef,
 int TABDATFile::AddField(const char *pszName, TABFieldType eType,
                          int nWidth, int nPrecision /* =0 */)
 {
+    if( m_fp == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Operation not supported on closed table.");
+        return -1;
+    }
     if (m_eAccessMode == TABRead || m_eTableType != TABTableNative)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -894,6 +907,8 @@ int TABDATFile::AddField(const char *pszName, TABFieldType eType,
         VSIRename(osTmpFile, osOriginalFile);
         if( Open(osOriginalFile, TABReadWrite) < 0 )
         {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot reopen %s", osOriginalFile.c_str());
             CPLFree(pasFieldDefTmp);
             return -1;
         }
@@ -915,6 +930,12 @@ int TABDATFile::AddField(const char *pszName, TABFieldType eType,
 
 int TABDATFile::DeleteField( int iField )
 {
+    if( m_fp == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Operation not supported on closed table.");
+        return -1;
+    }
     if (m_eAccessMode == TABRead || m_eTableType != TABTableNative)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -1052,6 +1073,12 @@ int TABDATFile::DeleteField( int iField )
 
 int TABDATFile::ReorderFields( int *panMap )
 {
+    if( m_fp == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Operation not supported on closed table.");
+        return -1;
+    }
     if (m_eAccessMode == TABRead || m_eTableType != TABTableNative)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -1198,6 +1225,12 @@ int TABDATFile::ReorderFields( int *panMap )
 int TABDATFile::AlterFieldDefn( int iField, OGRFieldDefn *poNewFieldDefn,
                                 int nFlags )
 {
+    if( m_fp == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Operation not supported on closed table.");
+        return -1;
+    }
     if (m_eAccessMode == TABRead || m_eTableType != TABTableNative)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
