@@ -2046,9 +2046,8 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
 bool OGRGeoPackageTableLayer::FeatureIDExists( GIntBig nFID )
 {
    CPLString soSQL;
-   soSQL.Printf("SELECT %s FROM \"%s\" m "
+   soSQL.Printf("SELECT 1 FROM \"%s\" "
                 "WHERE \"%s\" = " CPL_FRMT_GIB,
-                m_soColumns.c_str(),
                 SQLEscapeName(m_pszTableName).c_str(),
                 SQLEscapeName(m_pszFidColumn).c_str(),
                 nFID);
@@ -2061,7 +2060,7 @@ bool OGRGeoPackageTableLayer::FeatureIDExists( GIntBig nFID )
       sqlite3_finalize(poStmt);
       CPLError(CE_Failure, CPLE_AppDefined,
                "failed to prepare SQL: %s", soSQL.c_str());
-      return nullptr;
+      return false;
    }
 
    err = sqlite3_step(poStmt);
