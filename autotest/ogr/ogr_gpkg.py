@@ -367,9 +367,37 @@ def test_ogr_gpkg_7():
         lyr.TestCapability(ogr.OLCDeleteFeature) == 1
     ), "lyr.TestCapability(ogr.OLCDeleteFeature) != 1"
 
+    assert lyr.GetFeatureCount() == 2
+
+    def get_feature_count_from_gpkg_contents():
+        sql_lyr = gpkg_ds.ExecuteSQL(
+            'SELECT feature_count FROM gpkg_ogr_contents WHERE table_name = "field_test_layer"',
+            dialect="DEBUG",
+        )
+        f = sql_lyr.GetNextFeature()
+        ret = f.GetField(0)
+        gpkg_ds.ReleaseResultSet(sql_lyr)
+        return ret
+
+    assert get_feature_count_from_gpkg_contents() == 2
+
+    assert lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn())) == ogr.OGRERR_NONE
+
+    assert lyr.GetFeatureCount() == 3
+
+    # 2 is expected here since CreateFeature() has temporarily disable triggers
+    assert get_feature_count_from_gpkg_contents() == 2
+
     # Test upserting an existing feature
     feat.SetField("dummy", "updated")
+    fid = feat.GetFID()
     assert lyr.UpsertFeature(feat) == ogr.OGRERR_NONE, "cannot upsert existing feature"
+
+    assert feat.GetFID() == fid
+
+    # UpsertFeature() has serialized value 3 and re-enables triggers
+    assert get_feature_count_from_gpkg_contents() == 3
+
     upserted_feat = lyr.GetFeature(feat.GetFID())
     assert (
         upserted_feat.GetField("dummy") == "updated"
@@ -377,13 +405,30 @@ def test_ogr_gpkg_7():
 
     # Delete a feature
     lyr.DeleteFeature(feat.GetFID())
-    assert lyr.GetFeatureCount() == 1, "delete feature did not delete"
+
+    assert get_feature_count_from_gpkg_contents() is None
+
+    lyr.SyncToDisk()
+
+    assert get_feature_count_from_gpkg_contents() is None
+
+    assert lyr.GetFeatureCount() == 2, "delete feature did not delete"
+
+    assert get_feature_count_from_gpkg_contents() == 2
 
     # Test upserting a non-existing feature
     assert (
         lyr.UpsertFeature(feat) == ogr.OGRERR_NONE
     ), "cannot upsert non-existing feature"
-    assert lyr.GetFeatureCount() == 2, "upsert failed to add non-existing feature"
+    assert feat.GetFID() == fid
+
+    assert get_feature_count_from_gpkg_contents() == 3
+
+    assert lyr.GetFeatureCount() == 3, "upsert failed to add non-existing feature"
+
+    lyr.SyncToDisk()
+
+    assert get_feature_count_from_gpkg_contents() == 3
 
     # Test updating non-existing feature
     feat.SetFID(-10)

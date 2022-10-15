@@ -444,7 +444,8 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindInsertParameters( OGRFeature *poFeatu
 //
 CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL( OGRFeature *poFeature,
                                                              bool bAddFID,
-                                                             bool bBindUnsetFields )
+                                                             bool bBindUnsetFields,
+                                                             bool bUpsert )
 {
     bool bNeedComma = false;
     OGRFeatureDefn *poFeatureDefn = poFeature->GetDefnRef();
@@ -456,8 +457,10 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL( OGRFeature *poFeatu
                           SQLEscapeName(m_pszTableName).c_str());
 
     /* Set up our SQL string basics */
-    CPLString osSQLFront;
-    osSQLFront.Printf("INSERT INTO \"%s\" ( ",
+    CPLString osSQLFront("INSERT");
+    if( bUpsert )
+        osSQLFront += " OR REPLACE";
+    osSQLFront += CPLSPrintf(" INTO \"%s\" ( ",
                       SQLEscapeName(m_pszTableName).c_str());
 
     CPLString osSQLBack;
@@ -1718,7 +1721,7 @@ static float rtreeValueUp(double d){
   return f;
 }
 
-OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
+OGRErr OGRGeoPackageTableLayer::CreateOrUpsertFeature( OGRFeature *poFeature, bool bUpsert )
 {
     if( !m_bFeatureDefnCompleted )
         GetLayerDefn();
@@ -1733,10 +1736,41 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
 
+    if( bUpsert && !RunDeferredSpatialIndexUpdate() )
+        return OGRERR_FAILURE;
+
 #ifdef ENABLE_GPKG_OGR_CONTENTS
-    if( m_bOGRFeatureCountTriggersEnabled )
+    if( bUpsert )
     {
-        DisableFeatureCountTriggers();
+        if( m_nTotalFeatureCount >= 0 )
+        {
+            // There's no reliable way of knowing if a new row has been inserted
+            // or just updated, so serialize known value and then
+            // invalidate feature count.
+            if( m_poDS->m_bHasGPKGOGRContents )
+            {
+                const char* pszCount = CPLSPrintf(CPL_FRMT_GIB,
+                                                  m_nTotalFeatureCount);
+                char* pszSQL = sqlite3_mprintf(
+                    "UPDATE gpkg_ogr_contents SET feature_count = %s WHERE "
+                    "lower(table_name )= lower('%q')",
+                    pszCount, m_pszTableName);
+                SQLCommand(m_poDS->GetDB(), pszSQL);
+                sqlite3_free(pszSQL);
+            }
+            m_nTotalFeatureCount = -1;
+
+            if( !m_bOGRFeatureCountTriggersEnabled )
+                CreateFeatureCountTriggers();
+        }
+    }
+    else
+    {
+        // To maximize performance of insertion, disable feature count triggers
+        if( m_bOGRFeatureCountTriggersEnabled )
+        {
+            DisableFeatureCountTriggers();
+        }
     }
 #endif
 
@@ -1802,7 +1836,7 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     /* If there's a unset field with a default value, then we must create */
     /* a specific INSERT statement to avoid unset fields to be bound to NULL */
-    if( m_poInsertStatement && (bHasDefaultValue || m_bInsertStatementWithFID != (poFeature->GetFID() != OGRNullFID)) )
+    if( m_poInsertStatement && (bHasDefaultValue || m_bInsertStatementWithFID != (poFeature->GetFID() != OGRNullFID) || m_bInsertStatementWithUpsert != bUpsert ) )
     {
         sqlite3_finalize(m_poInsertStatement);
         m_poInsertStatement = nullptr;
@@ -1814,7 +1848,8 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
         /* Only work with fields that are set */
         /* Do not stick values into SQL, use placeholder and bind values later */
         m_bInsertStatementWithFID = poFeature->GetFID() != OGRNullFID;
-        CPLString osCommand = FeatureGenerateInsertSQL(poFeature, m_bInsertStatementWithFID, !bHasDefaultValue);
+        m_bInsertStatementWithUpsert = bUpsert;
+        CPLString osCommand = FeatureGenerateInsertSQL(poFeature, m_bInsertStatementWithFID, !bHasDefaultValue, bUpsert);
 
         /* Prepare the SQL into a statement */
         sqlite3 *poDb = m_poDS->GetDB();
@@ -1865,7 +1900,7 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     /* Read the latest FID value */
     GIntBig nFID = sqlite3_last_insert_rowid(m_poDS->GetDB());
-    if( nFID || poFeature->GetFID() == 0 )
+    if( nFID != 0 )
     {
         poFeature->SetFID(nFID);
         if( m_iFIDAsRegularColumnIndex >= 0 )
@@ -1886,7 +1921,7 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
             poGeom->getEnvelope(&oEnv);
             UpdateExtent(&oEnv);
 
-            if( !m_bDeferredSpatialIndexCreation && m_poDS->IsInTransaction() )
+            if( !bUpsert && !m_bDeferredSpatialIndexCreation && m_poDS->IsInTransaction() )
             {
                 m_nCountInsertInTransaction ++;
                 if( m_nCountInsertInTransactionThreshold < 0 )
@@ -1926,6 +1961,11 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     /* All done! */
     return OGRERR_NONE;
+}
+
+OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
+{
+    return CreateOrUpsertFeature(poFeature, /* bUpsert=*/ false);
 }
 
 /************************************************************************/
@@ -2034,52 +2074,14 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
 }
 
 /************************************************************************/
-/*                          FeatureIDExists()                           */
-/************************************************************************/
-
-bool OGRGeoPackageTableLayer::FeatureIDExists( GIntBig nFID )
-{
-   CPLString soSQL;
-   soSQL.Printf("SELECT 1 FROM \"%s\" "
-                "WHERE \"%s\" = " CPL_FRMT_GIB,
-                SQLEscapeName(m_pszTableName).c_str(),
-                SQLEscapeName(m_pszFidColumn).c_str(),
-                nFID);
-
-   sqlite3_stmt* poStmt = nullptr;
-   int err = sqlite3_prepare_v2(
-      m_poDS->GetDB(), soSQL.c_str(), -1, &poStmt, nullptr);
-   if ( err != SQLITE_OK )
-   {
-      sqlite3_finalize(poStmt);
-      CPLError(CE_Failure, CPLE_AppDefined,
-               "failed to prepare SQL: %s", soSQL.c_str());
-      return false;
-   }
-
-   err = sqlite3_step(poStmt);
-   sqlite3_finalize(poStmt);
-   return (err == SQLITE_ROW);
-}
-
-/************************************************************************/
 /*                           IUpsertFeature()                           */
 /************************************************************************/
 
 OGRErr OGRGeoPackageTableLayer::IUpsertFeature( OGRFeature* poFeature )
 
 {
-   if ( !TestCapability(OLCUpsertFeature) )
-      return OGRERR_FAILURE;
-
-   if ( FeatureIDExists(poFeature->GetFID()) )
-   {
-      return SetFeature(poFeature);
-   }
-   else
-   {
-      return CreateFeature(poFeature);
-   }
+   return CreateOrUpsertFeature(poFeature,
+                                /* bUpsert = */ poFeature->GetFID() != OGRNullFID);
 }
 
 /************************************************************************/
