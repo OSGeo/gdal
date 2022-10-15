@@ -60,6 +60,18 @@ def test_mem_md_basic():
     assert not rg.GetAttribute("not existing")
     assert not rg.GetVectorLayerNames()
     assert not rg.OpenVectorLayer("not existing")
+    with gdaltest.enable_exceptions(), pytest.raises(Exception):
+        rg.OpenMDArray("not existing")
+    with gdaltest.enable_exceptions(), pytest.raises(Exception):
+        rg.OpenMDArrayFromFullname("not existing")
+    with gdaltest.enable_exceptions(), pytest.raises(Exception):
+        rg.OpenGroup("not existing")
+    with gdaltest.enable_exceptions(), pytest.raises(Exception):
+        rg.OpenGroupFromFullname("not existing")
+    with gdaltest.enable_exceptions(), pytest.raises(Exception):
+        rg.GetAttribute("not existing")
+    with gdaltest.enable_exceptions(), pytest.raises(Exception):
+        rg.OpenVectorLayer("not existing")
 
 
 def test_mem_md_subgroup():
@@ -91,6 +103,8 @@ def test_mem_md_subgroup():
     array = rg.OpenMDArrayFromFullname('/subgroup/myarray')
     assert array is not None
     assert array.GetFullName() == '/subgroup/myarray'
+    with gdaltest.enable_exceptions(), pytest.raises(Exception):
+        array.GetAttribute("not existing")
 
     copy_ds = drv.CreateCopy('', ds)
     assert copy_ds
@@ -1827,6 +1841,8 @@ def test_mem_md_array_resolvemdarray():
     b.CreateMDArray("var_c", [], gdal.ExtendedDataType.Create(gdal.GDT_Int16))
 
     assert rg.ResolveMDArray("x", "/") is None
+    with gdaltest.enable_exceptions(), pytest.raises(Exception):
+        rg.ResolveMDArray("x", "/")
 
     assert rg.ResolveMDArray("/a/var_a", "/").GetFullName() == "/a/var_a"
     assert rg.ResolveMDArray("var_a", "/").GetFullName() == "/a/var_a"

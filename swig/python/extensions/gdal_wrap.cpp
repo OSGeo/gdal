@@ -5203,34 +5203,90 @@ SWIGINTERN char **GDALGroupHS_GetMDArrayNames(GDALGroupHS *self,char **options=0
     return GDALGroupGetMDArrayNames( self, options );
   }
 SWIGINTERN GDALMDArrayHS *GDALGroupHS_OpenMDArray(GDALGroupHS *self,char const *name,char **options=0){
-    return GDALGroupOpenMDArray(self, name, options);
+
+    CPLErr eLastErrorType = CPLGetLastErrorType();
+
+    GDALMDArrayH hRet = GDALGroupOpenMDArray(self, name, options);
+
+    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+        CPLError(CE_Failure, CPLE_AppDefined, "Array %s does not exist", name);
+
+    return hRet;
   }
 SWIGINTERN GDALMDArrayHS *GDALGroupHS_OpenMDArrayFromFullname(GDALGroupHS *self,char const *name,char **options=0){
-    return GDALGroupOpenMDArrayFromFullname(self, name, options);
+
+    CPLErr eLastErrorType = CPLGetLastErrorType();
+
+    GDALMDArrayH hRet = GDALGroupOpenMDArrayFromFullname(self, name, options);
+
+    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+        CPLError(CE_Failure, CPLE_AppDefined, "Array %s does not exist", name);
+
+    return hRet;
   }
 SWIGINTERN GDALMDArrayHS *GDALGroupHS_ResolveMDArray(GDALGroupHS *self,char const *name,char const *starting_point,char **options=0){
-    return GDALGroupResolveMDArray(self, name, starting_point, options);
+
+    CPLErr eLastErrorType = CPLGetLastErrorType();
+
+    GDALMDArrayH hRet = GDALGroupResolveMDArray(self, name, starting_point, options);
+
+    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+        CPLError(CE_Failure, CPLE_AppDefined, "Array %s does not exist", name);
+
+    return hRet;
   }
 SWIGINTERN char **GDALGroupHS_GetGroupNames(GDALGroupHS *self,char **options=0){
     return GDALGroupGetGroupNames( self, options );
   }
 SWIGINTERN GDALGroupHS *GDALGroupHS_OpenGroup(GDALGroupHS *self,char const *name,char **options=0){
-    return GDALGroupOpenGroup(self, name, options);
+
+    CPLErr eLastErrorType = CPLGetLastErrorType();
+
+    GDALGroupH hRet = GDALGroupOpenGroup(self, name, options);
+
+    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+        CPLError(CE_Failure, CPLE_AppDefined, "Group %s does not exist", name);
+
+    return hRet;
   }
 SWIGINTERN GDALGroupHS *GDALGroupHS_OpenGroupFromFullname(GDALGroupHS *self,char const *name,char **options=0){
-    return GDALGroupOpenGroupFromFullname(self, name, options);
+
+    CPLErr eLastErrorType = CPLGetLastErrorType();
+
+    GDALGroupH hRet = GDALGroupOpenGroupFromFullname(self, name, options);
+
+    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+        CPLError(CE_Failure, CPLE_AppDefined, "Group %s does not exist", name);
+
+    return hRet;
   }
 SWIGINTERN char **GDALGroupHS_GetVectorLayerNames(GDALGroupHS *self,char **options=0){
     return GDALGroupGetVectorLayerNames( self, options );
   }
 SWIGINTERN OGRLayerShadow *GDALGroupHS_OpenVectorLayer(GDALGroupHS *self,char const *name,char **options=0){
-    return (OGRLayerShadow*) GDALGroupOpenVectorLayer(self, name, options);
+
+    CPLErr eLastErrorType = CPLGetLastErrorType();
+
+    OGRLayerH hRet = GDALGroupOpenVectorLayer(self, name, options);
+
+    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+        CPLError(CE_Failure, CPLE_AppDefined, "Vector layer %s does not exist", name);
+
+    return (OGRLayerShadow*) hRet;
   }
 SWIGINTERN void GDALGroupHS_GetDimensions(GDALGroupHS *self,GDALDimensionHS ***pdims,size_t *pnCount,char **options=0){
     *pdims = GDALGroupGetDimensions(self, pnCount, options);
   }
 SWIGINTERN GDALAttributeHS *GDALGroupHS_GetAttribute(GDALGroupHS *self,char const *name){
-    return GDALGroupGetAttribute(self, name);
+
+    CPLErr eLastErrorType = CPLGetLastErrorType();
+
+    GDALAttributeH hRet = GDALGroupGetAttribute(self, name);
+
+    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+        CPLError(CE_Failure, CPLE_AppDefined, "Attribute %s does not exist", name);
+
+    return hRet;
   }
 SWIGINTERN void GDALGroupHS_GetAttributes(GDALGroupHS *self,GDALAttributeHS ***pattrs,size_t *pnCount,char **options=0){
     *pattrs = GDALGroupGetAttributes(self, pnCount, options);
@@ -5753,7 +5809,15 @@ SWIGINTERN CPLErr GDALMDArrayHS_AdviseRead(GDALMDArrayHS *self,int nDims1,GUIntB
     return CE_None;
   }
 SWIGINTERN GDALAttributeHS *GDALMDArrayHS_GetAttribute(GDALMDArrayHS *self,char const *name){
-    return GDALMDArrayGetAttribute(self, name);
+
+    CPLErr eLastErrorType = CPLGetLastErrorType();
+
+    GDALAttributeH hRet = GDALMDArrayGetAttribute(self, name);
+
+    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+        CPLError(CE_Failure, CPLE_AppDefined, "Attribute %s does not exist", name);
+
+    return hRet;
   }
 SWIGINTERN void GDALMDArrayHS_GetAttributes(GDALMDArrayHS *self,GDALAttributeHS ***pattrs,size_t *pnCount,char **options=0){
     *pattrs = GDALMDArrayGetAttributes(self, pnCount, options);
