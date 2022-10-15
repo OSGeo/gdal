@@ -1507,10 +1507,10 @@ void OGRGeoPackageTableLayer::DisableFeatureCount()
 }
 
 /************************************************************************/
-/*                      CreateTriggers()                                */
+/*                     CreateFeatureCountTriggers()                     */
 /************************************************************************/
 
-void OGRGeoPackageTableLayer::CreateTriggers(const char* pszTableName)
+void OGRGeoPackageTableLayer::CreateFeatureCountTriggers(const char* pszTableName)
 {
     if( m_bAddOGRFeatureCountTriggers )
     {
@@ -1543,10 +1543,10 @@ void OGRGeoPackageTableLayer::CreateTriggers(const char* pszTableName)
 }
 
 /************************************************************************/
-/*                      DisableTriggers()                               */
+/*                   DisableFeatureCountTriggers()                      */
 /************************************************************************/
 
-void OGRGeoPackageTableLayer::DisableTriggers(bool bNullifyFeatureCount)
+void OGRGeoPackageTableLayer::DisableFeatureCountTriggers(bool bNullifyFeatureCount)
 {
     if( m_bOGRFeatureCountTriggersEnabled )
     {
@@ -1742,7 +1742,7 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
 #ifdef ENABLE_GPKG_OGR_CONTENTS
     if( m_bOGRFeatureCountTriggersEnabled )
     {
-        DisableTriggers();
+        DisableFeatureCountTriggers();
     }
 #endif
 
@@ -2338,7 +2338,7 @@ OGRErr OGRGeoPackageTableLayer::DeleteFeature(GIntBig nFID)
 #ifdef ENABLE_GPKG_OGR_CONTENTS
     if( m_bOGRFeatureCountTriggersEnabled )
     {
-        DisableTriggers();
+        DisableFeatureCountTriggers();
     }
 #endif
 
@@ -2541,7 +2541,7 @@ OGRErr OGRGeoPackageTableLayer::SyncToDisk()
         return OGRERR_FAILURE;
 
 #ifdef ENABLE_GPKG_OGR_CONTENTS
-    CreateTriggers();
+    CreateFeatureCountTriggers();
 #endif
 
     // Both are exclusive
@@ -3603,7 +3603,7 @@ OGRErr OGRGeoPackageTableLayer::Rename(const char* pszDstTableName)
         return OGRERR_FAILURE;
 
 #ifdef ENABLE_GPKG_OGR_CONTENTS
-    DisableTriggers(false);
+    DisableFeatureCountTriggers(false);
 #endif
 
     CPLString osSQL;
@@ -3746,7 +3746,7 @@ OGRErr OGRGeoPackageTableLayer::Rename(const char* pszDstTableName)
     if( eErr == OGRERR_NONE)
     {
 #ifdef ENABLE_GPKG_OGR_CONTENTS
-        CreateTriggers(pszDstTableName);
+        CreateFeatureCountTriggers(pszDstTableName);
 #endif
 
         eErr = m_poDS->SoftCommitTransaction();

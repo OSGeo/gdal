@@ -517,8 +517,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     OGRErr              RecreateTable(const CPLString& osColumnsForCreate,
                                       const CPLString& osFieldListForSelect);
 #ifdef ENABLE_GPKG_OGR_CONTENTS
-    void                CreateTriggers(const char* pszTableName = nullptr);
-    void                DisableTriggers(bool bNullifyFeatureCount = true);
+    void                CreateFeatureCountTriggers(const char* pszTableName = nullptr);
+    void                DisableFeatureCountTriggers(bool bNullifyFeatureCount = true);
 #endif
 
     void                CheckGeometryType( OGRFeature *poFeature );
