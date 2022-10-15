@@ -534,6 +534,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     OGRErr              RenameFieldInAuxiliaryTables(
                             const char* pszOldName, const char* pszNewName);
 
+    bool                FeatureIDExists( GIntBig nFID );
+
     CPL_DISALLOW_COPY_ASSIGN(OGRGeoPackageTableLayer)
 
     public:
@@ -562,6 +564,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     void                ResetReading() override;
     OGRErr              ICreateFeature( OGRFeature *poFeater ) override;
     OGRErr              ISetFeature( OGRFeature *poFeature ) override;
+    OGRErr              IUpsertFeature( OGRFeature* poFeature ) override;
     OGRErr              DeleteFeature(GIntBig nFID) override;
     virtual void        SetSpatialFilter( OGRGeometry * ) override;
     virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override
