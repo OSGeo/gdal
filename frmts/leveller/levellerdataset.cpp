@@ -261,11 +261,11 @@ class LevellerDataset final: public GDALPamDataset
     bool load_from_file(VSILFILE*, const char*);
 
     static bool locate_data(vsi_l_offset&, size_t&, VSILFILE*, const char*);
-    bool get(int&, VSILFILE*, const char*);
-    bool get(size_t& n, VSILFILE* fp, const char* psz)
-        { return this->get((int&)n, fp, psz); }
-    bool get(double&, VSILFILE*, const char*);
-    bool get(char*, size_t, VSILFILE*, const char*);
+    static bool get(int&, VSILFILE*, const char*);
+    static bool get(size_t& n, VSILFILE* fp, const char* psz)
+        { return get((int&)n, fp, psz); }
+    static bool get(double&, VSILFILE*, const char*);
+    static bool get(char*, size_t, VSILFILE*, const char*);
 
     bool write_header();
     bool write_tag(const char*, int);
@@ -1073,7 +1073,7 @@ bool LevellerDataset::get(int& n, VSILFILE* fp, const char* psz)
     vsi_l_offset offset;
     size_t len;
 
-    if(this->locate_data(offset, len, fp, psz))
+    if(locate_data(offset, len, fp, psz))
     {
         GInt32 value;
         if(1 == VSIFReadL(&value, sizeof(value), 1, fp))
@@ -1095,7 +1095,7 @@ bool LevellerDataset::get(double& d, VSILFILE* fp, const char* pszTag)
     vsi_l_offset offset;
     size_t len;
 
-    if(this->locate_data(offset, len, fp, pszTag))
+    if(locate_data(offset, len, fp, pszTag))
     {
         if(1 == VSIFReadL(&d, sizeof(d), 1, fp))
         {
@@ -1120,7 +1120,7 @@ bool LevellerDataset::get(char* pszValue, size_t maxchars, VSILFILE* fp, const c
     vsi_l_offset offset;
     size_t len;
 
-    if(this->locate_data(offset, len, fp, szTag))
+    if(locate_data(offset, len, fp, szTag))
     {
         if(len > maxchars)
             return false;
@@ -1364,7 +1364,7 @@ bool LevellerDataset::load_from_file(VSILFILE* file, const char* pszFilename)
 
         // Get vertical (elev) coordsys.
         int bHasVertCS = FALSE;
-        if(this->get(bHasVertCS, file, "coordsys_haselevm") && bHasVertCS)
+        if(get(bHasVertCS, file, "coordsys_haselevm") && bHasVertCS)
         {
             get(m_dElevScale, file, "coordsys_em_scale");
             get(m_dElevBase, file, "coordsys_em_base");

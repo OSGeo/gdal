@@ -2660,7 +2660,7 @@ bool VSIS3FSHandler::SetFileMetadata( const char * pszFilename,
         CPLAddXMLAttributeAndValue(psTagging, "xmlns",
                                     "http://s3.amazonaws.com/doc/2006-03-01/");
         CPLXMLNode* psTagSet = CPLCreateXMLNode(psTagging, CXT_Element, "TagSet");
-        for( int i = 0; papszMetadata && papszMetadata[i]; ++i )
+        for( int i = 0; papszMetadata[i]; ++i )
         {
             char* pszKey = nullptr;
             const char* pszValue = CPLParseNameValue(papszMetadata[i], &pszKey);

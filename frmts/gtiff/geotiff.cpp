@@ -2573,10 +2573,10 @@ static void ThreadDecompressionFunc(void* pData)
             (psJob->nXBlock - psContext->nBlockXStart) * poDS->m_nBlockXSize -
                 (psContext->nXOff % poDS->m_nBlockXSize);
     const int nXSize =
-        psJob->nXBlock == psContext->nBlockXStart && psJob->nXBlock == psContext->nBlockXEnd ?
-            psContext->nXSize :
         psJob->nXBlock == psContext->nBlockXStart ?
-            poDS->m_nBlockXSize - (psContext->nXOff % poDS->m_nBlockXSize) :
+            (psJob->nXBlock == psContext->nBlockXEnd ?
+                psContext->nXSize :
+                poDS->m_nBlockXSize - (psContext->nXOff % poDS->m_nBlockXSize)) :
         psJob->nXBlock == psContext->nBlockXEnd ?
             (((psContext->nXOff + psContext->nXSize) % poDS->m_nBlockXSize) == 0 ?
                 poDS->m_nBlockXSize : ((psContext->nXOff + psContext->nXSize) % poDS->m_nBlockXSize)) :
@@ -2592,10 +2592,10 @@ static void ThreadDecompressionFunc(void* pData)
             (psJob->nYBlock - psContext->nBlockYStart) * poDS->m_nBlockYSize -
                 (psContext->nYOff % poDS->m_nBlockYSize);
     const int nYSize =
-        psJob->nYBlock == psContext->nBlockYStart && psJob->nYBlock == psContext->nBlockYEnd ?
-            psContext->nYSize :
         psJob->nYBlock == psContext->nBlockYStart ?
-            poDS->m_nBlockYSize - (psContext->nYOff % poDS->m_nBlockYSize) :
+            (psJob->nYBlock == psContext->nBlockYEnd ?
+                psContext->nYSize :
+                poDS->m_nBlockYSize - (psContext->nYOff % poDS->m_nBlockYSize)) :
         psJob->nYBlock == psContext->nBlockYEnd ?
             (((psContext->nYOff + psContext->nYSize) % poDS->m_nBlockYSize) == 0 ?
                 poDS->m_nBlockYSize : ((psContext->nYOff + psContext->nYSize) % poDS->m_nBlockYSize)) :
