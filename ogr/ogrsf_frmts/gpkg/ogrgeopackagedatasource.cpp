@@ -6299,6 +6299,8 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
 
         for( int i = 0; i < m_nLayers; i++ )
         {
+            if( m_papoLayers[i]->SyncToDisk() != OGRERR_NONE )
+                return nullptr;
 #ifdef ENABLE_GPKG_OGR_CONTENTS
             if( bRollback ||
                 (bInsertOrDelete &&
@@ -6307,8 +6309,6 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
                 m_papoLayers[i]->DisableFeatureCount();
             }
 #endif
-            if( m_papoLayers[i]->SyncToDisk() != OGRERR_NONE )
-                return nullptr;
         }
     }
 

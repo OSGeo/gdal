@@ -3746,10 +3746,23 @@ def test_ogr_gpkg_42():
 
     assert foo_has_trigger(ds)
 
-    assert get_feature_count_from_gpkg_contents(ds) is None
+    assert get_feature_count_from_gpkg_contents(ds) == 5
 
     fc = lyr.GetFeatureCount()
     assert fc == 5
+
+    assert get_feature_count_from_gpkg_contents(ds) == 5
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    assert get_feature_count_from_gpkg_contents(ds) is None
+    assert lyr.SyncToDisk() == ogr.OGRERR_NONE
+
+    assert get_feature_count_from_gpkg_contents(ds) == 6
+
+    assert lyr.DeleteFeature(f.GetFID()) == ogr.OGRERR_NONE
+    assert get_feature_count_from_gpkg_contents(ds) is None
+    assert lyr.SyncToDisk() == ogr.OGRERR_NONE
 
     assert get_feature_count_from_gpkg_contents(ds) == 5
 

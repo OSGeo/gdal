@@ -88,17 +88,11 @@ OGRErr OGRGeoPackageTableLayer::SaveTimestamp()
     OGRErr err = m_poDS->UpdateGpkgContentsLastChange(m_pszTableName);
 
 #ifdef ENABLE_GPKG_OGR_CONTENTS
-    if( m_bIsTable && err == OGRERR_NONE && m_poDS->m_bHasGPKGOGRContents )
+    if( m_bIsTable && err == OGRERR_NONE && m_poDS->m_bHasGPKGOGRContents &&
+        !m_bOGRFeatureCountTriggersEnabled && m_nTotalFeatureCount >= 0 )
     {
         CPLString osFeatureCount;
-        if( m_nTotalFeatureCount >= 0 )
-        {
-            osFeatureCount.Printf(CPL_FRMT_GIB, m_nTotalFeatureCount);
-        }
-        else
-        {
-            osFeatureCount = "NULL";
-        }
+        osFeatureCount.Printf(CPL_FRMT_GIB, m_nTotalFeatureCount);
         char* pszSQL = sqlite3_mprintf(
                     "UPDATE gpkg_ogr_contents SET "
                     "feature_count = %s "
@@ -2540,10 +2534,6 @@ OGRErr OGRGeoPackageTableLayer::SyncToDisk()
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
 
-#ifdef ENABLE_GPKG_OGR_CONTENTS
-    CreateFeatureCountTriggers();
-#endif
-
     // Both are exclusive
     CreateSpatialIndexIfNecessary();
     if( !RunDeferredSpatialIndexUpdate() )
@@ -2552,6 +2542,10 @@ OGRErr OGRGeoPackageTableLayer::SyncToDisk()
     /* Save metadata back to the database */
     SaveExtent();
     SaveTimestamp();
+
+#ifdef ENABLE_GPKG_OGR_CONTENTS
+    CreateFeatureCountTriggers();
+#endif
 
     return OGRERR_NONE;
 }
