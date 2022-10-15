@@ -6293,6 +6293,7 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
 #ifdef ENABLE_GPKG_OGR_CONTENTS
         const bool bInsertOrDelete =
             osSQLCommand.ifind("insert into ") != std::string::npos ||
+            osSQLCommand.ifind("insert or replace into ") != std::string::npos ||
             osSQLCommand.ifind("delete from ") != std::string::npos;
         const bool bRollback = osSQLCommand.ifind("rollback ") != std::string::npos;
 #endif
@@ -7617,6 +7618,11 @@ bool GDALGeoPackageDataset::OpenOrCreateDB(int flags)
         CPL_TO_BOOL(OGRSQLiteBaseDataSource::OpenOrCreateDB(flags, false));
     if( !bSuccess )
         return false;
+
+    // Turning on recursive_triggers is needed so that DELETE triggers fire
+    // in a INSERT OR REPLACE statement. In particular this is needed to
+    // make sure gpkg_ogr_contents.feature_count is properly updated.
+    SQLCommand(hDB, "PRAGMA recursive_triggers = 1");
 
     InstallSQLFunctions();
 

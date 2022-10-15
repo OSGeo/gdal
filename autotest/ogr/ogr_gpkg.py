@@ -3762,7 +3762,8 @@ def test_ogr_gpkg_42():
 
     assert lyr.DeleteFeature(f.GetFID()) == ogr.OGRERR_NONE
     assert get_feature_count_from_gpkg_contents(ds) is None
-    assert lyr.SyncToDisk() == ogr.OGRERR_NONE
+
+    ds.ExecuteSQL("INSERT OR REPLACE INTO foo (fid) VALUES (1)")
 
     assert get_feature_count_from_gpkg_contents(ds) == 5
 
