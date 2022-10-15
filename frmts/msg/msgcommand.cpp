@@ -136,7 +136,7 @@ std::string MSGCommand::parse(std::string const& command_line)
         {
           while ((iPos < static_cast<int>(command_line.length())) && (command_line[iPos] == ' '))
             ++iPos;
-          if (command_line[iPos] == '(')
+          if (iPos < static_cast<int>(command_line.length()) && command_line[iPos] == '(')
           {
             ++iPos; // skip the ( bracket
             int i = 1;
@@ -159,7 +159,7 @@ std::string MSGCommand::parse(std::string const& command_line)
             ++iPos; // skip the ) bracket
             while ((iPos < static_cast<int>(command_line.length())) && (command_line[iPos] == ' '))
               ++iPos;
-            if (command_line[iPos] == ',')
+            if (iPos < static_cast<int>(command_line.length()) && command_line[iPos] == ',')
               ++iPos;
           }
           else
@@ -189,7 +189,7 @@ std::string MSGCommand::parse(std::string const& command_line)
           while ((iPos < static_cast<int>(command_line.length())) && (command_line[iPos] == ' '))
             ++iPos;
           // additional correctness checks
-          if (command_line[iPos] != ')')
+          if (iPos < static_cast<int>(command_line.length()) && command_line[iPos] != ')')
             sErr = "Invalid syntax. Please review the MSG(...) statement.";
           else if ((iNrChannels() > 1) && (channel[11] != 0))
             sErr = "It is not possible to combine channel 12 (HRV) with the other channels.";

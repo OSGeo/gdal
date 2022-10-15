@@ -324,7 +324,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
 
         // Overview has ZONE 'R' and Legend ZONE 'D' but because the Zone 'D' is also a valid
         // Zone we need an additional check. -> In all cases of Overview/Legend the values of
-        // the BoundingBox are equal so we simply check here that NW == SE is. 
+        // the BoundingBox are equal so we simply check here that NW == SE is.
         toc->entries[i].isOverviewOrLegend =
             (toc->entries[i].zone[0] == 'R' ||  // Overview
                 (toc->entries[i].zone[0] == 'D' &&  // Legend
@@ -641,7 +641,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
             else
                 subdir = CPLStrdup(CPLFormFilename(baseDir, frameEntry->directory, nullptr));
 #if !defined(_WIN32) && !defined(_WIN32_CE)
-            if( VSIStatL( subdir, &sStatBuf ) != 0 && strlen(subdir) > strlen(baseDir) && subdir[strlen(baseDir)] != 0)
+            if( VSIStatL( subdir, &sStatBuf ) != 0 && strlen(subdir) > strlen(baseDir) )
             {
                 char* c = subdir + strlen(baseDir)+1;
                 while(*c)
