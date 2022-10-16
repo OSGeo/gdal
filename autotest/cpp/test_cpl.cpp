@@ -632,6 +632,15 @@ namespace tut
         oCopy.Clear();
         ensure( "c3", EQUAL(oCopy2[0],"test") );
 
+        // Test move constructor
+        CPLStringList oMoved(std::move(oCopy2));
+        ensure( "c_move_constructor", EQUAL(oMoved[0],"test") );
+
+        // Test move assignment operator
+        CPLStringList oMoved2;
+        oMoved2 = std::move(oMoved);
+        ensure( "c_move_assignment", EQUAL(oMoved2[0],"test") );
+
         // Test sorting
         CPLStringList oTestSort;
         oTestSort.AddNameValue("Z", "1");
@@ -2224,10 +2233,13 @@ namespace tut
         {
             // Copy constructor
             CPLJSONDocument oDocument;
+            ensure( oDocument.LoadMemory(std::string("true")) );
             oDocument.GetRoot();
             CPLJSONDocument oDocument2(oDocument);
-            CPLJSONObject oObj;
+            CPLJSONObject oObj(oDocument.GetRoot());
+            ensure( oObj.ToBool() );
             CPLJSONObject oObj2(oObj);
+            ensure( oObj2.ToBool() );
             // Assignment operator
             oDocument2 = oDocument;
             auto& oDocument2Ref(oDocument2);
@@ -2235,6 +2247,11 @@ namespace tut
             oObj2 = oObj;
             auto& oObj2Ref(oObj2);
             oObj2 = oObj2Ref;
+            CPLJSONObject oObj3(std::move(oObj2));
+            ensure( oObj3.ToBool() );
+            CPLJSONObject oObj4;
+            oObj4 = std::move(oObj3);
+            ensure( oObj4.ToBool() );
         }
         {
             // Move constructor
