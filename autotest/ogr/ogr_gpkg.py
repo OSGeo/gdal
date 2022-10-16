@@ -77,6 +77,18 @@ def startup_and_cleanup():
 
 
 ###############################################################################
+
+
+def get_sqlite_version():
+    ds = ogr.Open(":memory:")
+    sql_lyr = ds.ExecuteSQL("SELECT sqlite_version()")
+    f = sql_lyr.GetNextFeature()
+    version = f.GetField(0)
+    ds.ReleaseResultSet(sql_lyr)
+    return tuple([int(x) for x in version.split(".")[0:3]])
+
+
+###############################################################################
 # Validate a geopackage
 
 
@@ -6497,16 +6509,10 @@ def test_ogr_gpkg_alter_geom_field_defn():
     lyr.CreateFeature(f)
     f = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(f)
-
-    sql_lyr = ds.ExecuteSQL("SELECT sqlite_version()")
-    f = sql_lyr.GetNextFeature()
-    version = f.GetField(0)
-    ds.ReleaseResultSet(sql_lyr)
-
     ds = None
 
     # Test renaming column (only supported for SQLite >= 3.26)
-    if tuple([int(x) for x in version.split(".")[0:2]]) >= (3, 26):
+    if get_sqlite_version() >= (3, 26, 0):
         ds = ogr.Open(filename, update=1)
         lyr = ds.GetLayer(0)
         assert lyr.TestCapability(ogr.OLCAlterGeomFieldDefn)
@@ -6862,3 +6868,122 @@ def test_ogr_gpkg_immutable():
         os.chmod("tmp/read_only_test_ogr_gpkg_immutable", 0o755)
         os.unlink("tmp/read_only_test_ogr_gpkg_immutable/test.gpkg")
         os.rmdir("tmp/read_only_test_ogr_gpkg_immutable")
+
+
+###############################################################################
+
+
+@pytest.mark.skipif(
+    get_sqlite_version() < (3, 24, 0),
+    reason="sqlite >= 3.24 needed",
+)
+@pytest.mark.parametrize("with_geom", [True, False])
+def test_ogr_gpkg_upsert_without_fid(with_geom):
+
+    filename = "/vsimem/test_ogr_gpkg_upsert_without_fid.gpkg"
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    lyr = ds.CreateLayer(
+        "foo", geom_type=(ogr.wkbUnknown if with_geom else ogr.wkbNone)
+    )
+    assert lyr.CreateField(ogr.FieldDefn("other", ogr.OFTString)) == ogr.OGRERR_NONE
+    unique_field = ogr.FieldDefn("unique_field", ogr.OFTString)
+    unique_field.SetUnique(True)
+    assert lyr.CreateField(unique_field) == ogr.OGRERR_NONE
+    for i in range(5):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetField("unique_field", i + 1)
+        if i < 4 and with_geom:
+            f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (%d %d)" % (i, i)))
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    ds = None
+
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("unique_field", "2")
+    f.SetField("other", "foo")
+    if with_geom:
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (10 10)"))
+    assert lyr.UpsertFeature(f) == ogr.OGRERR_NONE
+
+    if get_sqlite_version() >= (3, 35, 0):
+        assert f.GetFID() == 2
+
+    if with_geom:
+        sql_lyr = ds.ExecuteSQL(
+            "SELECT 1 FROM sqlite_master WHERE name = 'rtree_foo_geom_update1'",
+            dialect="DEBUG",
+        )
+        assert sql_lyr.GetFeatureCount() == 0
+        ds.ReleaseResultSet(sql_lyr)
+
+        sql_lyr = ds.ExecuteSQL(
+            "SELECT 1 FROM sqlite_master WHERE name = 'rtree_foo_geom_update1_old_geom_null'",
+            dialect="DEBUG",
+        )
+        assert sql_lyr.GetFeatureCount() == 1
+        ds.ReleaseResultSet(sql_lyr)
+
+        sql_lyr = ds.ExecuteSQL(
+            "SELECT 1 FROM sqlite_master WHERE name = 'rtree_foo_geom_update1_old_geom_notnull'",
+            dialect="DEBUG",
+        )
+        assert sql_lyr.GetFeatureCount() == 1
+        ds.ReleaseResultSet(sql_lyr)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("unique_field", "3")
+    assert lyr.UpsertFeature(f) == ogr.OGRERR_NONE
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("unique_field", "4")
+    if with_geom:
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (20 20)"))
+    assert lyr.UpsertFeature(f) == ogr.OGRERR_NONE
+
+    ds = None
+
+    assert validate(filename)
+
+    ds = ogr.Open(filename)
+
+    if with_geom:
+        sql_lyr = ds.ExecuteSQL(
+            "SELECT 1 FROM sqlite_master WHERE name = 'rtree_foo_geom_update1'",
+            dialect="DEBUG",
+        )
+        assert sql_lyr.GetFeatureCount() == 1
+        ds.ReleaseResultSet(sql_lyr)
+
+        sql_lyr = ds.ExecuteSQL(
+            "SELECT 1 FROM sqlite_master WHERE name = 'rtree_foo_geom_update1_old_geom_null'",
+            dialect="DEBUG",
+        )
+        assert sql_lyr.GetFeatureCount() == 0
+        ds.ReleaseResultSet(sql_lyr)
+
+        sql_lyr = ds.ExecuteSQL(
+            "SELECT 1 FROM sqlite_master WHERE name = 'rtree_foo_geom_update1_old_geom_notnull'",
+            dialect="DEBUG",
+        )
+        assert sql_lyr.GetFeatureCount() == 0
+        ds.ReleaseResultSet(sql_lyr)
+
+    lyr = ds.GetLayer(0)
+
+    f = lyr.GetFeature(2)
+    assert f["unique_field"] == "2"
+    assert f["other"] == "foo"
+    if with_geom:
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (10 10)"
+
+    f = lyr.GetFeature(3)
+    assert f.GetGeometryRef() is None
+
+    f = lyr.GetFeature(4)
+    if with_geom:
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (20 20)"
+
+    ds = None
+    gdal.Unlink(filename)

@@ -475,6 +475,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     sqlite3_stmt*               m_poUpdateStatement = nullptr;
     bool                        m_bInsertStatementWithFID = false;
     bool                        m_bInsertStatementWithUpsert = false;
+    std::string                 m_osInsertStatementUpsertUniqueColumnName{};
     sqlite3_stmt*               m_poInsertStatement = nullptr;
     sqlite3_stmt*               m_poGetFeatureStatement = nullptr;
     bool                        m_bDeferredSpatialIndexCreation = false;
@@ -497,6 +498,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     int                         m_nCountInsertInTransactionThreshold = -1;
     GIntBig                     m_nCountInsertInTransaction = 0;
     std::vector<CPLString >     m_aoRTreeTriggersSQL{};
+    bool                        m_bUpdate1TriggerDisabled = false;
+    std::string                 m_osUpdate1Trigger{};
     typedef struct
     {
         GIntBig nId;
@@ -531,6 +534,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
 
     bool                StartDeferredSpatialIndexUpdate();
     bool                FlushPendingSpatialIndexUpdate();
+    void                WorkaroundUpdate1TriggerIssue();
+    void                RevertWorkaroundUpdate1TriggerIssue();
 
     OGRErr              RenameFieldInAuxiliaryTables(
                             const char* pszOldName, const char* pszNewName);
@@ -663,7 +668,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     OGRErr              BuildColumns();
     bool                IsGeomFieldSet( OGRFeature *poFeature );
     CPLString           FeatureGenerateUpdateSQL( OGRFeature *poFeature );
-    CPLString           FeatureGenerateInsertSQL( OGRFeature *poFeature, bool bAddFID, bool bBindUnsetFields, bool bUpsert );
+    CPLString           FeatureGenerateInsertSQL( OGRFeature *poFeature, bool bAddFID, bool bBindUnsetFields, bool bUpsert, const std::string& osUpsertUniqueColumnName );
     OGRErr              FeatureBindUpdateParameters( OGRFeature *poFeature, sqlite3_stmt *poStmt );
     OGRErr              FeatureBindInsertParameters( OGRFeature *poFeature, sqlite3_stmt *poStmt, bool bAddFID, bool bBindUnsetFields );
     OGRErr              FeatureBindParameters( OGRFeature *poFeature, sqlite3_stmt *poStmt, int *pnColCount, bool bAddFID, bool bBindUnsetFields );
