@@ -15,7 +15,7 @@ Synopsis
 
 .. code-block::
 
-    ogr2ogr [--help-general] [-skipfailures] [-append] [-update]
+    ogr2ogr [--help-general] [-skipfailures] [-append | -upsert] [-update]
             [-select field_list] [-where restricted_where|@filename]
             [-progress] [-sql <sql statement>|@filename] [-dialect dialect]
             [-preserve_fid] [-fid FID] [-limit nb_features]
@@ -70,6 +70,27 @@ output coordinate system or even reprojecting the features during translation.
 .. option:: -append
 
     Append to existing layer instead of creating new
+
+.. option:: -upsert
+
+    .. versionadded:: 3.6
+
+    Variant of :option:`-append` where the :cpp:func:`OGRLayer::UpsertFeature`
+    operation is used to insert or update features instead of appending with
+    :cpp:func:`OGRLayer::CreateFeature`.
+
+    This is currently implemented only in a few drivers:
+    :ref:`vector.gpkg` and :ref:`vector.mongodbv3`.
+
+    The upsert operation uses the FID of the input feature, when it is set
+    and is a "significant" (that is the FID column name is not the empty string),
+    as the key to update existing features. It is crucial to make sure that
+    the FID in the source and target layers are consistent.
+
+    For the GPKG driver, it is also possible to upsert features whose FID is unset
+    or non-significant (:option:`-unsetFid` can be used to ignore the FID from
+    the source feature), when there is a UNIQUE column that is not the
+    integer primary key.
 
 .. option:: -overwrite
 
