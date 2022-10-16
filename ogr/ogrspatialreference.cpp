@@ -803,13 +803,25 @@ OGRSpatialReferenceH CPL_STDCALL OSRNewSpatialReference( const char *pszWKT )
 /*                        OGRSpatialReference()                         */
 /************************************************************************/
 
-/** Simple copy constructor. See also Clone().
+/** Copy constructor. See also Clone().
  * @param oOther other spatial reference
  */
 OGRSpatialReference::OGRSpatialReference(const OGRSpatialReference &oOther) :
     d(new Private())
 {
     *this = oOther;
+}
+
+/************************************************************************/
+/*                        OGRSpatialReference()                         */
+/************************************************************************/
+
+/** Move constructor.
+ * @param oOther other spatial reference
+ */
+OGRSpatialReference::OGRSpatialReference(OGRSpatialReference &&oOther) :
+    d(std::move(oOther.d))
+{
 }
 
 /************************************************************************/
@@ -919,6 +931,26 @@ OGRSpatialReference::operator=(const OGRSpatialReference &oSource)
             SetDataAxisToSRSAxisMapping( oSource.d->m_axisMapping );
 
         d->m_coordinateEpoch = oSource.d->m_coordinateEpoch;
+    }
+
+    return *this;
+}
+
+/************************************************************************/
+/*                             operator=()                              */
+/************************************************************************/
+
+/** Move assignment operator.
+ * @param oSource SRS to assign to *this
+ * @return *this
+ */
+OGRSpatialReference &
+OGRSpatialReference::operator=(OGRSpatialReference &&oSource)
+
+{
+    if( &oSource != this )
+    {
+        d = std::move(oSource.d);
     }
 
     return *this;
