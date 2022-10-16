@@ -101,6 +101,18 @@ CPLStringList::CPLStringList( const CPLStringList &oOther ):
 }
 
 /************************************************************************/
+/*                           CPLStringList()                            */
+/************************************************************************/
+
+//! Move constructor
+CPLStringList::CPLStringList( CPLStringList&& oOther ):
+    CPLStringList()
+
+{
+    operator=(std::move(oOther));
+}
+
+/************************************************************************/
 /*                             operator=()                              */
 /************************************************************************/
 
