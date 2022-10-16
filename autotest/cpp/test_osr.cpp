@@ -472,4 +472,34 @@ namespace tut
         }
     }
 
+    // Test constructors and assignment operators
+    template<>
+    template<>
+    void object::test<11>()
+    {
+        OGRSpatialReference oSRS;
+        oSRS.importFromEPSG(32631);
+
+        OGRSpatialReference oSRS2(oSRS);
+        ensure( oSRS2.GetAuthorityCode(nullptr) != nullptr );
+
+        OGRSpatialReference oSRS3;
+        OGRSpatialReference& oSRSRef(oSRS);
+        oSRS = oSRSRef;
+        ensure( oSRS.GetAuthorityCode(nullptr) != nullptr );
+        oSRS3 = oSRS;
+        ensure( oSRS3.GetAuthorityCode(nullptr) != nullptr );
+
+        OGRSpatialReference oSRS4(std::move(oSRS));
+        ensure( oSRS4.GetAuthorityCode(nullptr) != nullptr );
+
+        OGRSpatialReference oSRS5;
+        OGRSpatialReference& oSRS4Ref(oSRS4);
+        oSRS4 = std::move(oSRS4Ref);
+        ensure( oSRS4.GetAuthorityCode(nullptr) != nullptr );
+        oSRS5 = std::move(oSRS4);
+        ensure( oSRS5.GetAuthorityCode(nullptr) != nullptr );
+
+    }
+
 } // namespace tut
