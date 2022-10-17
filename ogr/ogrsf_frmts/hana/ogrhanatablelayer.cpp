@@ -883,19 +883,19 @@ OGRErr OGRHanaTableLayer::ExecutePendingBatches(BatchOperation op)
     {
         if (!deleteFeatureStmt_.isNull()
             && deleteFeatureStmt_->getBatchDataSize() > 0
-            && (hasFlag(BatchOperation::DELETE) || hasFlag(BatchOperation::ALL)))
+            && hasFlag(BatchOperation::DELETE))
             deleteFeatureStmt_->executeBatch();
         if (!insertFeatureStmtWithFID_.isNull()
             && insertFeatureStmtWithFID_->getBatchDataSize() > 0
-            && (hasFlag(BatchOperation::INSERT) || hasFlag(BatchOperation::ALL)))
+            && hasFlag(BatchOperation::INSERT))
             insertFeatureStmtWithFID_->executeBatch();
         if (!insertFeatureStmtWithoutFID_.isNull()
             && insertFeatureStmtWithoutFID_->getBatchDataSize() > 0
-            && (hasFlag(BatchOperation::INSERT) || hasFlag(BatchOperation::ALL)))
+            && hasFlag(BatchOperation::INSERT))
             insertFeatureStmtWithoutFID_->executeBatch();
         if (!updateFeatureStmt_.isNull()
             && updateFeatureStmt_->getBatchDataSize() > 0
-            && (hasFlag(BatchOperation::UPDATE) || hasFlag(BatchOperation::ALL)))
+            && hasFlag(BatchOperation::UPDATE))
             updateFeatureStmt_->executeBatch();
 
         return OGRERR_NONE;

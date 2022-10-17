@@ -104,10 +104,11 @@ struct Binary
 
 enum class BatchOperation
 {
-    ALL = 0,
+    NONE = 0,
     DELETE = 1,
     INSERT = 2,
-    UPDATE = 4
+    UPDATE = 4,
+    ALL = 7
 };
 
 inline BatchOperation operator&(BatchOperation a, BatchOperation b)
