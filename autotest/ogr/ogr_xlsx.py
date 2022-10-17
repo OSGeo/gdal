@@ -549,3 +549,29 @@ def test_ogr_xlsx_read_cells_with_inline_formatting():
     lyr = ds.GetLayer(0)
     got = [(f[0], f[1], f[2]) for f in lyr]
     assert got == [(1, "text 2", "text 3"), (2, "text 4", "text5")]
+
+
+###############################################################################
+# Test reading a XLSX file without a XLSX extension
+
+
+def test_ogr_xlsx_read_no_xlsx_extension():
+
+    tmpfilename = "/vsimem/temp"
+    with gdaltest.tempfile(
+        tmpfilename, open("data/xlsx/cells_with_inline_formatting.xlsx", "rb").read()
+    ):
+        assert ogr.Open(tmpfilename) is not None
+
+
+###############################################################################
+# Test reading a XLSX file with XLSX: prefix
+
+
+def test_ogr_xlsx_read_xlsx_prefix():
+
+    tmpfilename = "/vsimem/temp"
+    with gdaltest.tempfile(
+        tmpfilename, open("data/xlsx/cells_with_inline_formatting.xlsx", "rb").read()
+    ):
+        assert ogr.Open("XLSX:" + tmpfilename) is not None

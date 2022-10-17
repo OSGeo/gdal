@@ -397,6 +397,10 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 		}
                 fputs("\n", fd);
 	}
+	if (TIFFFieldSet(tif, FIELD_NUMBEROFINKS)) {
+		fprintf(fd, "  NumberOfInks: %d\n",
+			td->td_numberofinks);
+	}
 	if (TIFFFieldSet(tif,FIELD_THRESHHOLDING)) {
 		fprintf(fd, "  Thresholding: ");
 		switch (td->td_threshholding) {

@@ -303,6 +303,10 @@ Open options
    multi-threaded compression by specifying the number of worker
    threads. Worth it for slow compression algorithms such as DEFLATE or
    LZMA. Default is compression in the main thread.
+   Starting with GDAL 3.6, this option also enables multi-threaded decoding
+   when RasterIO() requests intersect several tiles/strips.
+   The :decl_configoption:`GDAL_NUM_THREADS` configuration option can also
+   be used as an alternative to setting the open option.
 
 -  **GEOREF_SOURCES=string**: (GDAL > 2.2) Define which georeferencing
    sources are allowed and their priority order. See
@@ -366,11 +370,11 @@ Creation Options
 -  **TILED=YES**: By default striped TIFF files are created. This
    option can be used to force creation of tiled TIFF files.
 
--  **BLOCKXSIZE=n**: Sets tile width, defaults to 256.
+-  **BLOCKXSIZE=n**: Sets tile width, defaults to 256. Must be divisible by 16.
 
 -  **BLOCKYSIZE=n**: Set tile or strip height. Tile height defaults to
    256, strip height defaults to a value such that one strip is 8K or
-   less.
+   less. Must be divisible by 16 when TILED=YES.
 
 -  **NBITS=n**: Create a file with less than 8 bits per sample by
    passing a value from 1 to 7. The apparent pixel type should be Byte.
@@ -407,8 +411,8 @@ Creation Options
    * ``LERC_ZSTD`` is available when ``LERC`` and ``ZSTD`` are available.
 
    * ``JXL`` is for JPEG-XL, and is only available when using internal libtiff and building GDAL against
-     https://github.com/libjxl/libjxl . JXL compression may only be used alongside ``INTERLEAVE=PIXEL``
-     (the default) on datasets with 4 bands or less.
+     https://github.com/libjxl/libjxl . For GDAL < 3.6.0, JXL compression may only be used alongside
+     ``INTERLEAVE=PIXEL`` (the default) on datasets with 4 bands or less.
 
    * ``NONE`` is the default.
 
@@ -487,7 +491,9 @@ Creation Options
 
 -  **JXL_LOSSLESS=YES/NO**: Set whether JPEG-XL compression should be lossless
    (YES, default) or lossy (NO). For lossy compression, the underlying data
-   should be either gray, gray+alpha, rgb or rgb+alpha.
+   should be either gray, gray+alpha, rgb or rgb+alpha. For lossy compression,
+   the pixel data should span the whole range of the underlying pixel type (i.e.
+   0-255 for Byte, 0-65535 for UInt16)
 
 -  **JXL_EFFORT=[1-9]**: Level of effort for JPEG-XL compression.
    The higher, the smaller file and slower compression time. Default is 5.
@@ -742,6 +748,8 @@ the default behavior of the GTiff driver.
    Quality of JPEG compressed overviews, either internal or external.
 -  :decl_configoption:`WEBP_LEVEL_OVERVIEW` : Integer between 1 and 100. Default value: 75.
    WEBP quality level of overviews, either internal or external.
+-  :decl_configoption:`WEBP_LOSSLESS_OVERVIEW` : Boolean value (YES/NO). Default value: NO.
+   Whether WEBP compression is lossless or not. Added in GDAL 3.6
 -  :decl_configoption:`ZLEVEL_OVERVIEW` : Integer between 1 and 9 (or 12 when libdeflate is used). Default value: 6.
    Deflate compression level of overviews, for COMPRESS_OVERVIEW=DEFLATE or LERC_DEFLATE, either internal or external.
    Added in GDAL 3.4.1
@@ -808,6 +816,8 @@ the default behavior of the GTiff driver.
    LZMA. Will be ignored for JPEG. Default is compression in the main
    thread. Note: this configuration option also apply to other parts to
    GDAL (warping, gridding, ...).
+   Starting with GDAL 3.6, this option also enables multi-threaded decoding
+   when RasterIO() requests intersect several tiles/strips.
 -  :decl_configoption:`GTIFF_WRITE_TOWGS84` =AUTO/YES/NO: (GDAL >= 3.0.3). When set to AUTO, a
    GeogTOWGS84GeoKey geokey will be written with TOWGS84 3 or 7-parameter
    Helmert transformation, if the CRS has no EPSG code attached to it, or if

@@ -1008,7 +1008,7 @@ def test_jpeg_27_max_memory():
         cs = ds.GetRasterBand(1).Checksum()
         del os.environ["JPEGMEM"]
         gdal.SetConfigOption("GDAL_JPEG_MAX_ALLOWED_SCAN_NUMBER", None)
-        assert cs == 0 and gdal.GetLastErrorMsg() != ""
+        assert cs == -1 and gdal.GetLastErrorMsg() != ""
 
 
 def test_jpeg_27_max_scan_number():
@@ -1022,7 +1022,7 @@ def test_jpeg_27_max_scan_number():
         cs = ds.GetRasterBand(1).Checksum()
         gdal.SetConfigOption("GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC", None)
         gdal.SetConfigOption("GDAL_JPEG_MAX_ALLOWED_SCAN_NUMBER", None)
-        assert cs == 0 and gdal.GetLastErrorMsg() != ""
+        assert cs == -1 and gdal.GetLastErrorMsg() != ""
 
 
 ###############################################################################

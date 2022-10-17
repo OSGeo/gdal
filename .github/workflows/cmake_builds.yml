@@ -198,6 +198,7 @@ jobs:
         find $GITHUB_WORKSPACE/install-gdal || /bin/true
     - name: install
       run: |
+        export PATH=$CMAKE_DIR:/usr/local/bin:/usr/bin:/bin # Avoid CMake config from brew etc.
         touch $GITHUB_WORKSPACE/man/man1/gdalinfo.1
         touch $GITHUB_WORKSPACE/man/man1/gdaladdo.1
         (cd $GITHUB_WORKSPACE/superbuild/build; cmake ..)
@@ -207,12 +208,19 @@ jobs:
         export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib
         $GITHUB_WORKSPACE/install-gdal/bin/gdalinfo --version
         PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/python3/dist-packages python3 -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
+    - name: CMake with rpath
+      run: |
+        export PATH=$CMAKE_DIR:/usr/local/bin:/usr/bin:/bin # Avoid CMake config from brew etc.
+        (cd $GITHUB_WORKSPACE/superbuild/build; cmake .. "-DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal-with-rpath" "-DCMAKE_INSTALL_RPATH=$GITHUB_WORKSPACE/install-gdal-with-rpath/lib")
+        cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -- -j$(nproc)
+        # For some reason, during the install phase of above invokation, the Python bindings are rebuilt after the build phase, and without the rpath... Can't reproduce that locally
+        # PYTHONPATH=$GITHUB_WORKSPACE/install-gdal-with-rpath/lib/python3/dist-packages python -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
     - name: Rerun using Mono
       run: |
         export PATH=$CMAKE_DIR:/usr/local/bin:/usr/bin:/bin # Avoid CMake config from brew etc.
         cd $GITHUB_WORKSPACE/superbuild/build
         rm -rf swig/csharp
-        cmake  ${CMAKE_OPTIONS} -DCSHARP_MONO=ON -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror ..
+        cmake  ${CMAKE_OPTIONS} -DCSHARP_MONO=ON -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal -UCMAKE_INSTALL_RPATH -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror ..
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -- -j$(nproc)
         # Below fails with errors like 'System.InvalidProgramException: Invalid IL code in CreateData:Main (string[]): IL_00c4: callvirt  0x0a00000c'
         # ctest -V -R "^csharp.*"
@@ -474,6 +482,7 @@ jobs:
         SKIP_OGR_GMLAS_HUGE_PROCESSING_TIME: YES
         SKIP_OGR_GMLAS_HTTP_RELATED: YES
         SKIP_GDAL_HTTP_SSL_VERIFYSTATUS: YES
+        BUILD_NAME: "build-windows-conda"
     - name: Install
       shell: bash -l {0}
       run: |
@@ -573,7 +582,7 @@ jobs:
         brew update
         brew outdated
         brew install postgresql || brew link postgresql
-        brew install pkg-config freexl libxml2 libspatialite geos proj libgeotiff openjpeg giflib libaec postgis poppler doxygen unixodbc jpeg-turbo
+        brew install pkg-config freexl libxml2 libspatialite geos proj libgeotiff openjpeg giflib libaec postgis poppler doxygen unixodbc jpeg-turbo aom jpeg-xl libheif
         brew install ccache swig
         # gdal is automatically installed as a dependency for postgis
         brew uninstall --ignore-dependencies gdal
@@ -604,7 +613,7 @@ jobs:
       run: |
         ctest --test-dir $GITHUB_WORKSPACE/build -V -j 3
       env:
-        GITHUB_WORKFLOW: "MacOS build"
+        BUILD_NAME: "MacOS build"
     - name: Install
       run: cmake --build $GITHUB_WORKSPACE/build --target install -j 3
     - name: Test post-install usage (with pkg-config)

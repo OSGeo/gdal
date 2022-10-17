@@ -112,8 +112,11 @@ public:
 
     virtual char      **GetFileList(void) override;
 
-    virtual CPLErr IBuildOverviews( const char *, int, int *,
-                                    int, int *, GDALProgressFunc, void * ) override;
+    virtual CPLErr IBuildOverviews( const char *,
+                                    int, const int *,
+                                    int, const int *,
+                                    GDALProgressFunc, void *,
+                                    CSLConstList papszOptions ) override;
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
@@ -220,21 +223,24 @@ char **PDSDataset::GetFileList()
 /************************************************************************/
 
 CPLErr PDSDataset::IBuildOverviews( const char *pszResampling,
-                                    int nOverviews, int *panOverviewList,
-                                    int nListBands, int *panBandList,
+                                    int nOverviews, const int *panOverviewList,
+                                    int nListBands, const int *panBandList,
                                     GDALProgressFunc pfnProgress,
-                                    void * pProgressData )
+                                    void * pProgressData,
+                                    CSLConstList papszOptions )
 {
     if( poCompressedDS != nullptr )
         return poCompressedDS->BuildOverviews( pszResampling,
                                                nOverviews, panOverviewList,
                                                nListBands, panBandList,
-                                               pfnProgress, pProgressData );
+                                               pfnProgress, pProgressData,
+                                               papszOptions );
 
     return RawDataset::IBuildOverviews( pszResampling,
                                         nOverviews, panOverviewList,
                                         nListBands, panBandList,
-                                        pfnProgress, pProgressData );
+                                        pfnProgress, pProgressData,
+                                        papszOptions );
 }
 
 /************************************************************************/

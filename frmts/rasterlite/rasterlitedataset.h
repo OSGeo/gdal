@@ -33,7 +33,7 @@
 #include "gdal_pam.h"
 #include "ogr_api.h"
 
-char** RasterliteGetTileDriverOptions(char** papszOptions);
+char** RasterliteGetTileDriverOptions(CSLConstList papszOptions);
 
 OGRDataSourceH RasterliteOpenSQLiteDB(const char* pszFilename,
                                       GDALAccess eAccess);
@@ -74,9 +74,10 @@ class RasterliteDataset final: public GDALPamDataset
     virtual char** GetFileList() override;
 
     virtual CPLErr IBuildOverviews( const char * pszResampling,
-                                    int nOverviews, int * panOverviewList,
-                                    int nBands, int * panBandList,
-                                    GDALProgressFunc pfnProgress, void * pProgressData ) override;
+                                    int nOverviews, const int * panOverviewList,
+                                    int nBands, const int * panBandList,
+                                    GDALProgressFunc pfnProgress, void * pProgressData,
+                                    CSLConstList papszOptions ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -124,7 +125,7 @@ class RasterliteDataset final: public GDALPamDataset
     CPLErr ReloadOverviews();
     CPLErr CreateOverviewLevel(const char * pszResampling,
                                int nOvrFactor,
-                               char** papszOptions,
+                               CSLConstList papszOptions,
                                GDALProgressFunc pfnProgress,
                                void * pProgressData);
 };

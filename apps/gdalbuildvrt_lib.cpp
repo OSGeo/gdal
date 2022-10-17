@@ -1011,17 +1011,18 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
         VRTSimpleSource* poSimpleSource;
         if (bAllowSrcNoData)
         {
-            poSimpleSource = new VRTComplexSource();
+            auto poComplexSource = new VRTComplexSource();
+            poSimpleSource = poComplexSource;
             if (nSrcNoDataCount > 0)
             {
                 if (iBand-1 < nSrcNoDataCount)
-                    poSimpleSource->SetNoDataValue( padfSrcNoData[iBand-1] );
+                    poComplexSource->SetNoDataValue( padfSrcNoData[iBand-1] );
                 else
-                    poSimpleSource->SetNoDataValue( padfSrcNoData[nSrcNoDataCount - 1] );
+                    poComplexSource->SetNoDataValue( padfSrcNoData[nSrcNoDataCount - 1] );
             }
             else if( psDatasetProperties->abHasNoData[0] )
             {
-                poSimpleSource->SetNoDataValue( psDatasetProperties->adfNoDataValues[0] );
+                poComplexSource->SetNoDataValue( psDatasetProperties->adfNoDataValues[0] );
             }
         }
         else if( bUseSrcMaskBand && psDatasetProperties->abHasMaskBand[0] )
@@ -1203,8 +1204,9 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
             VRTSimpleSource* poSimpleSource;
             if (bAllowSrcNoData && psDatasetProperties->abHasNoData[nSelBand - 1])
             {
-                poSimpleSource = new VRTComplexSource();
-                poSimpleSource->SetNoDataValue( psDatasetProperties->adfNoDataValues[nSelBand - 1] );
+                auto poComplexSource = new VRTComplexSource();
+                poSimpleSource = poComplexSource;
+                poComplexSource->SetNoDataValue( psDatasetProperties->adfNoDataValues[nSelBand - 1] );
             }
             else if( bUseSrcMaskBand && psDatasetProperties->abHasMaskBand[nSelBand - 1] )
             {
@@ -1307,11 +1309,12 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
         anOverviewFactors.insert(anOverviewFactors.end(),
                                  anOverviewFactorsSet.begin(),
                                  anOverviewFactorsSet.end());
-        CPLConfigOptionSetter oSetter("VRT_VIRTUAL_OVERVIEWS", "YES", false);
+        const char* const apszOptions [] = { "VRT_VIRTUAL_OVERVIEWS=YES", nullptr };
         poVRTDS->BuildOverviews(pszResampling ? pszResampling : "nearest",
                                 static_cast<int>(anOverviewFactors.size()),
                                 &anOverviewFactors[0],
-                                0, nullptr, nullptr, nullptr);
+                                0, nullptr, nullptr, nullptr,
+                                apszOptions );
     }
 }
 

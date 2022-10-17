@@ -2293,7 +2293,7 @@ int* VSIS3FSHandler::UnlinkBatch( CSLConstList papszFiles )
 int VSIS3FSHandler::RmdirRecursive( const char* pszDirname )
 {
     // Some S3-like APIs do not support DeleteObjects
-    if( CPLTestBool(CPLGetConfigOption("CPL_VSIS3_USE_BASE_RMDIR_RECURSIVE", "NO")) )
+    if( CPLTestBool(VSIGetPathSpecificOption(pszDirname, "CPL_VSIS3_USE_BASE_RMDIR_RECURSIVE", "NO")) )
         return VSIFilesystemHandler::RmdirRecursive(pszDirname);
 
     // For debug / testing only
@@ -2660,7 +2660,7 @@ bool VSIS3FSHandler::SetFileMetadata( const char * pszFilename,
         CPLAddXMLAttributeAndValue(psTagging, "xmlns",
                                     "http://s3.amazonaws.com/doc/2006-03-01/");
         CPLXMLNode* psTagSet = CPLCreateXMLNode(psTagging, CXT_Element, "TagSet");
-        for( int i = 0; papszMetadata && papszMetadata[i]; ++i )
+        for( int i = 0; papszMetadata[i]; ++i )
         {
             char* pszKey = nullptr;
             const char* pszValue = CPLParseNameValue(papszMetadata[i], &pszKey);

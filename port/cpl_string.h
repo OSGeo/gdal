@@ -443,6 +443,7 @@ class CPL_DLL CPLStringList
     explicit CPLStringList( char **papszList, int bTakeOwnership=TRUE );
     explicit CPLStringList( CSLConstList papszList );
     CPLStringList( const CPLStringList& oOther );
+    CPLStringList( CPLStringList&& oOther );
     ~CPLStringList();
 
     CPLStringList &Clear();

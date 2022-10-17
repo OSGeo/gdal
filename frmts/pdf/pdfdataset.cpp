@@ -2360,10 +2360,11 @@ PDFDataset::PDFDataset( PDFDataset* poParentDSIn, int nXSize, int nYSize ) :
 /************************************************************************/
 
 CPLErr PDFDataset::IBuildOverviews( const char *pszResampling,
-                                       int nOverviews, int *panOverviewList,
-                                       int nListBands, int *panBandList,
-                                       GDALProgressFunc pfnProgress,
-                                       void *pProgressData )
+                                    int nOverviews, const int *panOverviewList,
+                                    int nListBands, const int *panBandList,
+                                    GDALProgressFunc pfnProgress,
+                                    void *pProgressData,
+                                    CSLConstList papszOptions )
 
 {
 /* -------------------------------------------------------------------- */
@@ -2380,7 +2381,8 @@ CPLErr PDFDataset::IBuildOverviews( const char *pszResampling,
     return GDALPamDataset::IBuildOverviews( pszResampling,
                                             nOverviews, panOverviewList,
                                             nListBands, panBandList,
-                                            pfnProgress, pProgressData );
+                                            pfnProgress, pProgressData,
+                                            papszOptions );
 }
 
 #endif  // ~ HAVE_PDFIUM
@@ -6615,16 +6617,61 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
 
     OGRSpatialReference oSRS;
     oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    int bSRSOK = FALSE;
-    if (nEPSGCode != 0 &&
-        oSRS.importFromEPSG(nEPSGCode) == OGRERR_NONE)
+
+    if( poGCSWKT != nullptr )
     {
-        bSRSOK = TRUE;
         CPLFree(pszWKT);
-        pszWKT = nullptr;
-        oSRS.exportToWkt(&pszWKT);
+        pszWKT = CPLStrdup(poGCSWKT->GetString().c_str());
     }
-    else
+
+    bool bSRSOK = false;
+    if (nEPSGCode != 0 )
+    {
+        // At time of writing EPSG CRS codes are <= 32767.
+        // The usual practice is that codes >= 100000 are in the ESRI namespace
+        // instead
+        if( nEPSGCode >= 100000 )
+        {
+            CPLErrorHandlerPusher oHandler(CPLQuietErrorHandler);
+            if( oSRS.SetFromUserInput(CPLSPrintf("ESRI:%d", nEPSGCode)) == OGRERR_NONE )
+            {
+                bSRSOK = true;
+
+                // Check consistency of ESRI:xxxx and WKT definitions
+                if( poGCSWKT != nullptr )
+                {
+                    OGRSpatialReference oSRSFromWKT;
+                    oSRSFromWKT.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                    if (oSRSFromWKT.importFromWkt(pszWKT) == OGRERR_NONE )
+                    {
+                        if( !EQUAL(oSRS.GetName(), oSRSFromWKT.GetName()) &&
+                            !oSRS.IsSame(&oSRSFromWKT) )
+                        {
+                            CPLDebug("PDF",
+                                     "Definition from ESRI:%d and WKT=%s do not match. Using WKT string",
+                                     nEPSGCode, pszWKT);
+                            bSRSOK = false;
+                        }
+                    }
+                }
+                if( bSRSOK )
+                {
+                    CPLFree(pszWKT);
+                    pszWKT = nullptr;
+                    oSRS.exportToWkt(&pszWKT);
+                }
+            }
+        }
+        else if( oSRS.importFromEPSG(nEPSGCode) == OGRERR_NONE)
+        {
+            bSRSOK = true;
+            CPLFree(pszWKT);
+            pszWKT = nullptr;
+            oSRS.exportToWkt(&pszWKT);
+        }
+    }
+
+    if( !bSRSOK )
     {
         if (poGCSWKT == nullptr)
         {
@@ -6633,12 +6680,6 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
             return FALSE;
         }
 
-        CPLFree(pszWKT);
-        pszWKT = CPLStrdup(poGCSWKT->GetString().c_str());
-    }
-
-    if (!bSRSOK)
-    {
         if (oSRS.importFromWkt(pszWKT) != OGRERR_NONE)
         {
             CPLFree(pszWKT);

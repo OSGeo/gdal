@@ -602,6 +602,7 @@ def test_envi_edit_coordinate_system_string():
     ds = None
 
     ds = gdal.Open(filename, gdal.GA_Update)
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(3261)
     ds.SetSpatialRef(srs)
@@ -615,7 +616,9 @@ def test_envi_edit_coordinate_system_string():
     assert content.count("coordinate system string") == 1
 
     ds = gdal.Open(filename)
-    assert ds.GetSpatialRef().IsProjected()
+    srs = ds.GetSpatialRef()
+    assert srs.IsProjected()
+    assert srs.GetAuthorityCode(None) == "3261"
     ds = None
 
     drv.Delete(filename)
@@ -771,3 +774,105 @@ def test_envi_write_default_bands_duplicate_color_gray():
     gdal.GetDriverByName("ENVI").Delete("/vsimem/test.bin")
 
     assert "default bands" not in content, content
+
+
+###############################################################################
+# Test reading "data offset values"
+
+
+def test_envi_read_data_offset_values():
+
+    gdal.FileFromMemBuffer(
+        "/vsimem/test.hdr",
+        """ENVI
+samples = 1
+lines = 1
+bands = 3
+header offset = 0
+file type = ENVI Standard
+data type = 1
+interleave = bip
+sensor type = Unknown
+byte order = 0
+data offset values = {3.5,2,1}""",
+    )
+    gdal.FileFromMemBuffer("/vsimem/test.bin", "xyz")
+
+    ds = gdal.Open("/vsimem/test.bin")
+    assert ds.GetRasterBand(1).GetOffset() == 3.5
+    assert ds.GetRasterBand(2).GetOffset() == 2
+    assert ds.GetRasterBand(3).GetOffset() == 1
+    ds = None
+    assert gdal.VSIStatL("/vsimem/test.bin.aux.xml") is None
+    gdal.GetDriverByName("ENVI").Delete("/vsimem/test.bin")
+
+
+###############################################################################
+# Test reading "data gain values"
+
+
+def test_envi_read_data_gain_values():
+
+    gdal.FileFromMemBuffer(
+        "/vsimem/test.hdr",
+        """ENVI
+samples = 1
+lines = 1
+bands = 3
+header offset = 0
+file type = ENVI Standard
+data type = 1
+interleave = bip
+sensor type = Unknown
+byte order = 0
+data gain values = {3.5,2,1}""",
+    )
+    gdal.FileFromMemBuffer("/vsimem/test.bin", "xyz")
+
+    ds = gdal.Open("/vsimem/test.bin")
+    assert ds.GetRasterBand(1).GetScale() == 3.5
+    assert ds.GetRasterBand(2).GetScale() == 2
+    assert ds.GetRasterBand(3).GetScale() == 1
+    ds = None
+    assert gdal.VSIStatL("/vsimem/test.bin.aux.xml") is None
+    gdal.GetDriverByName("ENVI").Delete("/vsimem/test.bin")
+
+
+###############################################################################
+# Test writing "data offset values"
+
+
+def test_envi_write_data_offset_values():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 3)
+    src_ds.GetRasterBand(2).SetOffset(10)
+    gdal.GetDriverByName("ENVI").CreateCopy("/vsimem/test.bin", src_ds)
+
+    fp = gdal.VSIFOpenL("/vsimem/test.hdr", "rb")
+    assert fp
+    content = gdal.VSIFReadL(1, 1000, fp).decode("utf-8")
+    gdal.VSIFCloseL(fp)
+
+    gdal.GetDriverByName("ENVI").Delete("/vsimem/test.bin")
+
+    assert "data offset values = {0, 10, 0}" in content, content
+
+
+###############################################################################
+# Test writing "data gain values"
+
+
+def test_envi_write_data_gain_values():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 3)
+    src_ds.GetRasterBand(2).SetScale(10)
+    gdal.GetDriverByName("ENVI").CreateCopy("/vsimem/test.bin", src_ds)
+
+    fp = gdal.VSIFOpenL("/vsimem/test.hdr", "rb")
+    assert fp
+    content = gdal.VSIFReadL(1, 1000, fp).decode("utf-8")
+    gdal.VSIFCloseL(fp)
+
+    gdal.GetDriverByName("ENVI").Delete("/vsimem/test.bin")
+
+    assert "data gain values = {1, 10, 1}" in content, content

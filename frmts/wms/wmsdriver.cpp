@@ -186,7 +186,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
             if (!poCT->Transform(1, &dfWestLongitudeDeg, &dfNorthLatitudeDeg) ||
                 !poCT->Transform(1, &dfEastLongitudeDeg, &dfSouthLatitudeDeg))
             {
-                CPLError(CE_Failure, CPLE_AppDefined, 
+                CPLError(CE_Failure, CPLE_AppDefined,
                     "Failed transforming coordinates to the requested SRS");
                 return nullptr;
             }
@@ -659,23 +659,17 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
     {
         OGRSpatialReference oSRS;
         oSRS.importFromWkt(osWKT);
-        oSRS.morphFromESRI();
 
-        int nEntries = 0;
-        int* panConfidence = nullptr;
-        OGRSpatialReferenceH* pahSRS =
-            oSRS.FindMatches(nullptr, &nEntries, &panConfidence);
-        if( nEntries == 1 && panConfidence[0] == 100 )
+        const auto poSRSMatch = oSRS.FindBestMatch(100);
+        if( poSRSMatch )
         {
-            OGRSpatialReference* poSRS =
-                reinterpret_cast<OGRSpatialReference*>(pahSRS[0]);
-            oSRS = *poSRS;
+            oSRS = *poSRSMatch;
+            poSRSMatch->Release();
+            const char* pszAuthName = oSRS.GetAuthorityName(nullptr);
             const char* pszCode = oSRS.GetAuthorityCode(nullptr);
-            if( pszCode )
+            if( pszAuthName && EQUAL(pszAuthName, "EPSG") && pszCode )
                 nWKID = atoi(pszCode);
         }
-        OSRFreeSRSArray(pahSRS);
-        CPLFree(panConfidence);
 
         char* pszWKT = nullptr;
         oSRS.exportToWkt(&pszWKT);

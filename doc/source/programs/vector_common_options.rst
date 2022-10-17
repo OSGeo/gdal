@@ -49,7 +49,7 @@ All GDAL OGR command line programs support the following common options.
     Control what debugging messages are emitted.
     A value of ON will enable all debug messages.
     A value of OFF will disable all debug messages.
-    Otherwise, a debug messege will be emitted if its
+    Otherwise, a debug message will be emitted if its
     category appears somewhere in the value string.
 
 .. option:: --help-general

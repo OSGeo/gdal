@@ -513,7 +513,7 @@ def test_mrf_cached_source():
     ds = gdal.Open("/vsimem/out.mrf")
     with gdaltest.error_handler():
         cs = ds.GetRasterBand(1).Checksum()
-    expected_cs = 0
+    expected_cs = -1
     assert cs == expected_cs
     ds = None
     cleanup()

@@ -3050,6 +3050,28 @@ char **NITFDataset::GetMetadataDomainList()
 }
 
 /************************************************************************/
+/*                      InitializeImageStructureMetadata()              */
+/************************************************************************/
+
+void NITFDataset::InitializeImageStructureMetadata()
+{
+    if( oSpecialMD.GetMetadata("IMAGE_STRUCTURE") != nullptr )
+        return;
+
+    oSpecialMD.SetMetadata(GDALPamDataset::GetMetadata("IMAGE_STRUCTURE"), "IMAGE_STRUCTURE");
+    if( poJ2KDataset )
+    {
+        const char* pszReversibility = poJ2KDataset->GetMetadataItem(
+            "COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE");
+        if( pszReversibility )
+        {
+            oSpecialMD.SetMetadataItem(
+                "COMPRESSION_REVERSIBILITY", pszReversibility, "IMAGE_STRUCTURE");
+        }
+    }
+}
+
+/************************************************************************/
 /*                            GetMetadata()                             */
 /************************************************************************/
 
@@ -3126,6 +3148,14 @@ char **NITFDataset::GetMetadata( const char * pszDomain )
         return oSpecialMD.GetMetadata( pszDomain );
     }
 
+    if( pszDomain != nullptr &&
+        EQUAL(pszDomain,"IMAGE_STRUCTURE") &&
+        poJ2KDataset )
+    {
+        InitializeImageStructureMetadata();
+        return oSpecialMD.GetMetadata( pszDomain );
+    }
+
     return GDALPamDataset::GetMetadata( pszDomain );
 }
 
@@ -3196,6 +3226,15 @@ const char *NITFDataset::GetMetadataItem(const char * pszName,
     if( pszDomain != nullptr && EQUAL(pszDomain,"OVERVIEWS")
         && !osRSetVRT.empty() )
         return osRSetVRT;
+
+    if( pszDomain != nullptr &&
+        EQUAL(pszDomain,"IMAGE_STRUCTURE") &&
+        poJ2KDataset &&
+        EQUAL(pszName, "COMPRESSION_REVERSIBILITY") )
+    {
+        InitializeImageStructureMetadata();
+        return oSpecialMD.GetMetadataItem( pszName, pszDomain );
+    }
 
     // For unit test purposes
     if( pszDomain != nullptr && EQUAL(pszDomain,"DEBUG")
@@ -3339,10 +3378,11 @@ int NITFDataset::CheckForRSets( const char *pszNITFFilename,
 /************************************************************************/
 
 CPLErr NITFDataset::IBuildOverviews( const char *pszResampling,
-                                     int nOverviews, int *panOverviewList,
-                                     int nListBands, int *panBandList,
+                                     int nOverviews, const int *panOverviewList,
+                                     int nListBands, const int *panBandList,
                                      GDALProgressFunc pfnProgress,
-                                     void * pProgressData )
+                                     void * pProgressData,
+                                     CSLConstList papszOptions )
 
 {
 /* -------------------------------------------------------------------- */
@@ -3365,7 +3405,8 @@ CPLErr NITFDataset::IBuildOverviews( const char *pszResampling,
         && !poJ2KDataset->GetMetadataItem( "OVERVIEW_FILE", "OVERVIEWS" ) )
         poJ2KDataset->BuildOverviews( pszResampling, 0, nullptr,
                                        nListBands, panBandList,
-                                       GDALDummyProgress, nullptr );
+                                       GDALDummyProgress, nullptr,
+                                       /* papszOptions = */ nullptr );
 
 /* -------------------------------------------------------------------- */
 /*      Use the overview manager to build requested overviews.          */
@@ -3373,7 +3414,8 @@ CPLErr NITFDataset::IBuildOverviews( const char *pszResampling,
     CPLErr eErr = GDALPamDataset::IBuildOverviews( pszResampling,
                                                    nOverviews, panOverviewList,
                                                    nListBands, panBandList,
-                                                   pfnProgress, pProgressData );
+                                                   pfnProgress, pProgressData,
+                                                   papszOptions );
 
 /* -------------------------------------------------------------------- */
 /*      If we are working with jpeg or jpeg2000, let the underlying     */

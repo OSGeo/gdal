@@ -3400,3 +3400,19 @@ def test_ogr_gmlas_huge_processing_time():
         with gdaltest.error_handler():
             ds = gdal.OpenEx("GMLAS:data/gmlas/test_max_time_xerces.xml")
         assert ds is None
+
+
+###############################################################################
+# Test opening a file whose .xsd points to GML schemas to a non-OGC official
+# location, which causes some issues when the other namespaces imported by
+# the GML schemas are not edited to point to the unofficial location.
+
+
+def test_ogr_gmlas_schema_not_in_ogc_schema_location():
+
+    gdal.ErrorReset()
+    assert (
+        gdal.OpenEx("GMLAS:data/gmlas/test_gml_schema_not_in_ogc_schema_location.gml")
+        is not None
+    )
+    assert gdal.GetLastErrorMsg() == ""

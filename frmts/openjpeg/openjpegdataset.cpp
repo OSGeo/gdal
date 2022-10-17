@@ -247,6 +247,7 @@ class JP2OpenJPEGDataset final: public GDALJP2AbstractDataset
 
   protected:
     virtual int         CloseDependentDatasets() override;
+    virtual VSILFILE* GetFileHandle() override { return fp; }
 
   public:
                 JP2OpenJPEGDataset();
@@ -283,10 +284,11 @@ class JP2OpenJPEGDataset final: public GDALJP2AbstractDataset
                                GDALRasterIOExtraArg* psExtraArg) override;
 
     CPLErr IBuildOverviews( const char *pszResampling,
-                                       int nOverviews, int *panOverviewList,
-                                       int nListBands, int *panBandList,
-                                       GDALProgressFunc pfnProgress,
-                                       void *pProgressData ) override;
+                            int nOverviews, const int *panOverviewList,
+                            int nListBands, const int *panBandList,
+                            GDALProgressFunc pfnProgress,
+                            void *pProgressData,
+                            CSLConstList papszOptions ) override;
 
     static void         WriteBox(VSILFILE* fp, GDALJP2Box* poBox);
     static void         WriteGDALMetadataBox( VSILFILE* fp, GDALDataset* poSrcDS,
@@ -743,10 +745,11 @@ CPLErr  JP2OpenJPEGDataset::IRasterIO( GDALRWFlag eRWFlag,
 /************************************************************************/
 
 CPLErr JP2OpenJPEGDataset::IBuildOverviews( const char *pszResampling,
-                                       int nOverviews, int *panOverviewList,
-                                       int nListBands, int *panBandList,
+                                       int nOverviews, const int *panOverviewList,
+                                       int nListBands, const int *panBandList,
                                        GDALProgressFunc pfnProgress,
-                                       void *pProgressData )
+                                       void *pProgressData,
+                                       CSLConstList papszOptions )
 
 {
     // In order for building external overviews to work properly, we
@@ -763,7 +766,8 @@ CPLErr JP2OpenJPEGDataset::IBuildOverviews( const char *pszResampling,
     return GDALPamDataset::IBuildOverviews(pszResampling,
                                            nOverviews, panOverviewList,
                                            nListBands, panBandList,
-                                           pfnProgress, pProgressData);
+                                           pfnProgress, pProgressData,
+                                           papszOptions);
 }
 
 
@@ -3116,6 +3120,28 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     parameters.cblockh_init = nCblockH;
     parameters.mode = 0;
 
+    std::string osComment;
+    const char* pszCOM = CSLFetchNameValue(papszOptions, "COMMENT");
+    if( pszCOM )
+    {
+        osComment = pszCOM;
+        parameters.cp_comment = &osComment[0];
+    }
+    else if( !bIsIrreversible )
+    {
+        osComment = "Created by OpenJPEG version ";
+        osComment += opj_version();
+        if( adfRates.back() == 1.0 && !bYCBCR420 )
+        {
+            osComment += ". LOSSLESS settings used";
+        }
+        else
+        {
+            osComment += ". LOSSY settings used";
+        }
+        parameters.cp_comment = &osComment[0];
+    }
+
 #if IS_OPENJPEG_OR_LATER(2,3,0)
     // Was buggy before for some of the options
     const char* pszCodeBlockStyle = CSLFetchNameValue(papszOptions, "CODEBLOCK_STYLE");
@@ -4348,6 +4374,7 @@ void GDALRegister_JP2OpenJPEG()
 #if IS_OPENJPEG_OR_LATER(2,5,0)
 "   <Option name='TLM' type='boolean' description='True to insert TLM marker segments' default='false'/>"
 #endif
+"   <Option name='COMMENT' type='string' description='Content of the COM(ment) marker'/>"
 "</CreationOptionList>"  );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

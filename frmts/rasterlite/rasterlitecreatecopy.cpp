@@ -39,7 +39,7 @@ CPL_CVSID("$Id$")
 /*                  RasterliteGetTileDriverOptions ()                   */
 /************************************************************************/
 
-static char** RasterliteAddTileDriverOptionsForDriver(char** papszOptions,
+static char** RasterliteAddTileDriverOptionsForDriver(CSLConstList papszOptions,
                                                     char** papszTileDriverOptions,
                                                     const char* pszOptionName,
                                                     const char* pszExpectedDriverName)
@@ -64,7 +64,7 @@ static char** RasterliteAddTileDriverOptionsForDriver(char** papszOptions,
     return papszTileDriverOptions;
 }
 
-char** RasterliteGetTileDriverOptions(char** papszOptions)
+char** RasterliteGetTileDriverOptions(CSLConstList papszOptions)
 {
     const char* pszDriverName =
         CSLFetchNameValueDef(papszOptions, "DRIVER", "GTiff");

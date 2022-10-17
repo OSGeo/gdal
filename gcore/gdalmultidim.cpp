@@ -1684,7 +1684,7 @@ bool GDALAbstractMDArray::CheckReadWriteParams(const GUInt64* arrayStartIdx,
                     return false;
                 }
             }
-#if SIZEOF_VOID == 4
+#if SIZEOF_VOIDP == 4
             if( static_cast<size_t>(nOffset) != nOffset )
             {
                 lamda_error();
@@ -2992,8 +2992,10 @@ CPLStringList GDALAttribute::ReadAsStringArray() const
 std::vector<int> GDALAttribute::ReadAsIntArray() const
 {
     const auto nElts = GetTotalElementsCount();
+#if SIZEOF_VOIDP == 4
     if( nElts > static_cast<size_t>(nElts) )
         return {};
+#endif
     std::vector<int> res(static_cast<size_t>(nElts));
     const auto& dims = GetDimensions();
     const auto nDims = GetDimensionCount();
@@ -3020,8 +3022,10 @@ std::vector<int> GDALAttribute::ReadAsIntArray() const
 std::vector<double> GDALAttribute::ReadAsDoubleArray() const
 {
     const auto nElts = GetTotalElementsCount();
+#if SIZEOF_VOIDP == 4
     if( nElts > static_cast<size_t>(nElts) )
         return {};
+#endif
     std::vector<double> res(static_cast<size_t>(nElts));
     const auto& dims = GetDimensions();
     const auto nDims = GetDimensionCount();
@@ -4659,10 +4663,10 @@ static std::shared_ptr<GDALMDArray> CreateSlicedArray(
             GDALSlicedMDArray::Range range;
             const GUInt64 nDimSize(srcDims[nCurSrcDim]->GetSize());
             range.m_nIncr = EQUAL(pszInc, "") ? 1 : CPLAtoGIntBig(pszInc);
-            if( range.m_nIncr == 0 )
+            if( range.m_nIncr == 0 || range.m_nIncr == std::numeric_limits<GInt64>::min() )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                            "Invalid increment 0");
+                            "Invalid increment");
                 return nullptr;
             }
             auto startIdx(CPLAtoGIntBig(pszStart));
@@ -4673,9 +4677,10 @@ static std::shared_ptr<GDALMDArray> CreateSlicedArray(
                 else
                     startIdx = nDimSize + startIdx;
             }
+            const bool bPosIncr = range.m_nIncr > 0;
             range.m_nStartIdx = startIdx;
             range.m_nStartIdx = EQUAL(pszStart, "") ?
-                (range.m_nIncr > 0 ? 0 : nDimSize-1) :
+                (bPosIncr ? 0 : nDimSize-1) :
                 range.m_nStartIdx;
             if( range.m_nStartIdx >= nDimSize - 1)
                 range.m_nStartIdx = nDimSize - 1;
@@ -4690,21 +4695,20 @@ static std::shared_ptr<GDALMDArray> CreateSlicedArray(
             }
             GUInt64 nEndIdx = endIdx;
             nEndIdx = EQUAL(pszEnd, "") ?
-                (range.m_nIncr < 0 ? 0 : nDimSize) :
+                (!bPosIncr ? 0 : nDimSize) :
                     nEndIdx;
-            if( (range.m_nIncr > 0 && range.m_nStartIdx >= nEndIdx) ||
-                (range.m_nIncr < 0 && range.m_nStartIdx <= nEndIdx) )
+            if( (bPosIncr && range.m_nStartIdx >= nEndIdx) ||
+                (!bPosIncr && range.m_nStartIdx <= nEndIdx) )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                             "Output dimension of size 0 is not allowed");
                 return nullptr;
             }
-            int inc = (EQUAL(pszEnd, "") && range.m_nIncr < 0) ? 1 : 0;
-            const GUInt64 newSize = range.m_nIncr > 0 ?
-                (nEndIdx - range.m_nStartIdx) / range.m_nIncr +
-                    (((inc + nEndIdx - range.m_nStartIdx) % range.m_nIncr) ? 1 : 0):
-                (inc + range.m_nStartIdx - nEndIdx) / -range.m_nIncr +
-                    (((inc + range.m_nStartIdx - nEndIdx) % -range.m_nIncr) ? 1 : 0);
+            int inc = (EQUAL(pszEnd, "") && !bPosIncr) ? 1 : 0;
+            const auto nAbsIncr = std::abs(range.m_nIncr);
+            const GUInt64 newSize = bPosIncr ?
+                DIV_ROUND_UP(nEndIdx - range.m_nStartIdx, nAbsIncr):
+                DIV_ROUND_UP(inc + range.m_nStartIdx - nEndIdx, nAbsIncr);
             if( range.m_nStartIdx == 0 &&
                 range.m_nIncr == 1 &&
                 newSize == srcDims[nCurSrcDim]->GetSize() )
@@ -11567,6 +11571,7 @@ struct GDALPamMultiDim::Private
     struct ArrayInfo
     {
         std::shared_ptr<OGRSpatialReference> poSRS{};
+        // cppcheck-suppress unusedStructMember
         Statistics stats{};
     };
 

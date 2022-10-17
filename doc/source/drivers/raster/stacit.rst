@@ -10,15 +10,13 @@ STACIT - Spatio-Temporal Asset Catalog Items
 
 .. built_in_by_default::
 
-This driver supports opening JSON files, or usually the result of a remote query,
-that are the ``items`` link of a
-`STAC Collection <https://github.com/radiantearth/stac-api-spec/blob/master/stac-spec/collection-spec/collection-spec.md>`_,
-and whose items also implement the
-`Projection Extension Specification <https://github.com/stac-extensions/projection/>`_.
+This driver supports opening STAC API ItemCollections, with the input usually being a `STAC API search query <https://github.com/radiantearth/stac-api-spec/tree/main/item-search>`_ or the results saved as a JSON file. Items in the response must include projection information following the `Projection Extension Specification <https://github.com/stac-extensions/projection/>`_.
 It builds a virtual mosaic from the items.
 
 A STACIT dataset which has no subdatasets is actually a :ref:`raster.vrt` dataset.
 Thus, translating it into VRT will result in a VRT file that directly references the items.
+
+Note that `STAC API ItemCollections <https://github.com/radiantearth/stac-api-spec/blob/main/fragments/itemcollection/README.md>`_ are not the same as  `STAC Collections <https://github.com/radiantearth/stac-spec/tree/master/collection-spec>`_. STAC API ItemCollections are GeoJSON FeatureCollections enhanced with STAC entities.
 
 Open syntax
 -----------
@@ -27,13 +25,13 @@ STACIT datasets/subdatasets can be accessed with one of the following syntaxes:
 
 * ``filename.json``: local file
 
-* ``STACIT:"https://example.com/filename.json"``: remote file
+* ``STACIT:"https://example.com/filename.json"``: remote file or query
 
-* ``STACIT:"filename.json":asset=my_asset``: specify an asset of a local/remote file
+* ``STACIT:"filename.json":asset=my_asset``: specify the name of the asset GDAL should read (i.e. "visual")
 
-* ``STACIT:"filename.json":collection=my_collect,asset=my_asset``: specify a collection + asset of a local/remote file
+* ``STACIT:"filename.json":collection=my_collect,asset=my_asset``: limit to items in a given collection and specify asset to read
 
-* ``STACIT:"filename.json":collection=my_collect,asset=my_asset,crs=my_crs``: specify a collection + asset + CRS of a local/remote file
+* ``STACIT:"filename.json":collection=my_collect,asset=my_asset,crs=my_crs``: specify a collection, asset, and limit to items in a given CRS
 
 Open options
 ------------
@@ -44,9 +42,9 @@ The following open options are supported:
 
 * ``COLLECTION`` = string. Name of collection to filter items.
 
-* ``ASSET`` = string. Name of asset to filter items.
-
 * ``CRS`` = string. Name of CRS to filter items.
+
+* ``ASSET`` = string. Name of asset to read.
 
 * ``RESOLUTION`` = AVERAGE/HIGHEST/LOWEST. Strategy to use to determine dataset resolution. Default is AVERAGE.
 

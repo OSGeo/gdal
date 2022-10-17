@@ -233,7 +233,7 @@ GDALDataset *MAPDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     const int nLines = CSLCount( papszLines );
-    if( nLines < 2 )
+    if( nLines < 3 )
     {
         delete poDS;
         CSLDestroy(papszLines);

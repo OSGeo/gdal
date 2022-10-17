@@ -174,8 +174,10 @@ class GDALScript(ABC):
         try:
             self.doit(**kwargs)
             return 0
-        except Exception as e:
-            print(e)
+        except Exception:
+            import traceback
+
+            traceback.print_exc()
             return 1
 
     def get_epilog(self):

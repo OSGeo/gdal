@@ -99,6 +99,7 @@ class NITFDataset final: public GDALPamDataset
     void         InitializeCGMMetadata();
     void         InitializeTextMetadata();
     void         InitializeTREMetadata();
+    void         InitializeImageStructureMetadata();
 
     GIntBig     *panJPEGBlockOffset;
     GByte       *pabyJPEGBlock;
@@ -179,8 +180,11 @@ class NITFDataset final: public GDALPamDataset
     virtual const char *GetMetadataItem( const char * pszName,
                                          const char * pszDomain = "" ) override;
     virtual void   FlushCache(bool bAtClosing) override;
-    virtual CPLErr IBuildOverviews( const char *, int, int *,
-                                    int, int *, GDALProgressFunc, void * ) override;
+    virtual CPLErr IBuildOverviews( const char *,
+                                    int, const int *,
+                                    int, const int *,
+                                    GDALProgressFunc, void *,
+                                    CSLConstList papszOptions ) override;
 
     static int          Identify( GDALOpenInfo * );
     static NITFDataset *OpenInternal( GDALOpenInfo *,
@@ -307,8 +311,9 @@ class NITFProxyPamRasterBand CPL_NON_FINAL: public GDALPamRasterBand
         virtual int GetOverviewCount() override;
         virtual GDALRasterBand *GetOverview(int) override;
         virtual GDALRasterBand *GetRasterSampleOverview( GUIntBig ) override;
-        virtual CPLErr BuildOverviews( const char *, int, int *,
-                                    GDALProgressFunc, void * ) override;
+        virtual CPLErr BuildOverviews( const char *, int, const int *,
+                                    GDALProgressFunc, void *,
+                                    CSLConstList papszOptions) override;
 
         virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                                 int nBufXSize, int nBufYSize,

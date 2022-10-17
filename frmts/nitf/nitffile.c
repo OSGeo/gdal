@@ -1318,17 +1318,17 @@ int NITFCreateEx( const char *pszFilename,
     if (nBands > 9 || nIM > 20 || nPixels > 2048 || nLines > 2048 ||
         nNPPBH > 2048 || nNPPBV > 2048 || nCur > 52428799 )
     {
-        nCLevel = 5;
+        nCLevel = MAX(nCLevel, 5);
     }
     if (nPixels > 8192 || nLines > 8192 ||
         nNPPBH > 8192 || nNPPBV > 8192 || nCur > 1073741833 || nDES > 10)
     {
-        nCLevel = 6;
+        nCLevel = MAX(nCLevel, 6);
     }
     if (nBands > 256 || nPixels > 65536 || nLines > 65536 ||
         nCur > 2147483647 || nDES > 50)
     {
-        nCLevel = 7;
+        nCLevel = MAX(nCLevel, 7);
     }
     OVR( 2,  9, CLEVEL,       CPLSPrintf("%02d", nCLevel)     );
 

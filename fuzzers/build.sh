@@ -18,6 +18,111 @@
 # This script is meant to be run by
 # https://github.com/google/oss-fuzz/blob/master/projects/gdal/Dockerfile
 
+BUILD_SH_FROM_REPO="$SRC/gdal/fuzzers/build.sh"
+if test -f "$BUILD_SH_FROM_REPO"; then
+    if test "$0" != "$BUILD_SH_FROM_REPO"; then
+        echo "Running $BUILD_SH_FROM_REPO"
+        exec "$BUILD_SH_FROM_REPO"
+        exit $?
+    fi
+fi
+
+if [ "$ARCHITECTURE" = "i386" ]; then
+    ARCH_SUFFIX=":i386"
+else
+    ARCH_SUFFIX=""
+fi
+
+if test "${CIFUZZ:-}" = "True"; then
+  echo "Running under CI fuzz"
+
+  PACKAGES="zlib1g-dev${ARCH_SUFFIX} libexpat-dev${ARCH_SUFFIX} liblzma-dev${ARCH_SUFFIX} \
+          libpng-dev${ARCH_SUFFIX} libgif-dev${ARCH_SUFFIX} \
+          libjpeg-dev${ARCH_SUFFIX} \
+          libwebp-dev${ARCH_SUFFIX} \
+          libzstd-dev${ARCH_SUFFIX} \
+          libsqlite3-dev${ARCH_SUFFIX}"
+  apt-get install -y $PACKAGES sqlite3
+
+  # build libproj.a (proj master required)
+  git clone --depth 1 https://github.com/OSGeo/PROJ proj
+  cd proj
+  cmake . -DBUILD_SHARED_LIBS:BOOL=OFF \
+          -DENABLE_TIFF:BOOL=OFF \
+          -DENABLE_CURL:BOOL=OFF \
+          -DCMAKE_INSTALL_PREFIX=/usr \
+          -DBUILD_APPS:BOOL=OFF \
+          -DBUILD_TESTING:BOOL=OFF
+  make -j$(nproc) -s
+  make install
+  cd ..
+
+  mkdir build
+  cd build
+  cmake .. \
+        -DCMAKE_BUILD_TYPE=Debug \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DBUILD_TESTING=OFF -DBUILD_APPS=OFF \
+        -DGDAL_BUILD_OPTIONAL_DRIVERS:BOOL=OFF \
+        -DOGR_BUILD_OPTIONAL_DRIVERS:BOOL=OFF \
+        -DOGR_ENABLE_DRIVER_GML:BOOL=ON \
+        -DOGR_ENABLE_DRIVER_GPKG:BOOL=ON \
+        -DOGR_ENABLE_DRIVER_SQLITE:BOOL=ON \
+        -DGDAL_ENABLE_DRIVER_ZARR:BOOL=ON \
+        -DGDAL_USE_TIFF_INTERNAL=ON \
+        -DGDAL_USE_GEOTIFF_INTERNAL=ON
+  make -j$(nproc) GDAL
+  cd ..
+
+  SRC_DIR=$SRC/gdal
+
+  echo "Building gdal_fuzzer"
+  $CXX $CXXFLAGS \
+            -I$SRC_DIR/port -I$SRC_DIR/build/port \
+            -I$SRC_DIR/gcore -I$SRC_DIR/build/gcore \
+            -I$SRC_DIR/alg -I$SRC_DIR/apps -I$SRC_DIR/ogr \
+            -I$SRC_DIR/ogr/ogrsf_frmts \
+            -I$SRC_DIR/ogr/ogrsf_frmts/sqlite  \
+            $(dirname $0)/gdal_fuzzer.cpp -o $OUT/gdal_fuzzer \
+            $LIB_FUZZING_ENGINE \
+            -L$SRC_DIR/build -lgdal \
+            -lproj \
+            -Wl,-Bstatic -lzstd -lwebp -llzma -lexpat -lsqlite3 -lgif -ljpeg -lpng -lz \
+            -Wl,-Bdynamic -ldl -lpthread
+
+  echo "Building ogr_fuzzer"
+  $CXX $CXXFLAGS \
+            -I$SRC_DIR/port -I$SRC_DIR/build/port \
+            -I$SRC_DIR/gcore -I$SRC_DIR/build/gcore \
+            -I$SRC_DIR/alg -I$SRC_DIR/apps -I$SRC_DIR/ogr \
+            -I$SRC_DIR/ogr/ogrsf_frmts \
+            -I$SRC_DIR/ogr/ogrsf_frmts/sqlite  \
+            $(dirname $0)/ogr_fuzzer.cpp -o $OUT/ogr_fuzzer \
+            $LIB_FUZZING_ENGINE \
+            -L$SRC_DIR/build -lgdal \
+            -L$SRC/install/lib -lproj \
+            -Wl,-Bstatic -lzstd -lwebp -llzma -lexpat -lsqlite3 -lgif -ljpeg -lpng -lz \
+            -Wl,-Bdynamic -ldl -lpthread
+
+  echo "Building gdal_fuzzer_seed_corpus.zip"
+  cd $(dirname $0)/../autotest/gcore/data
+  rm -f $OUT/gdal_fuzzer_seed_corpus.zip
+  find . -type f -exec zip -j $OUT/gdal_fuzzer_seed_corpus.zip {} \; >/dev/null
+  cd $OLDPWD
+  cd $(dirname $0)/../autotest/gdrivers/data
+  find . -type f -exec zip -j $OUT/gdal_fuzzer_seed_corpus.zip {} \; >/dev/null
+  cd $OLDPWD
+
+  echo "Building ogr_fuzzer_seed_corpus.zip"
+  CUR_DIR=$PWD
+  cd $(dirname $0)/../autotest/ogr/data
+  rm -f $OUT/ogr_fuzzer_seed_corpus.zip
+  find . -type f -exec zip -j $OUT/ogr_fuzzer_seed_corpus.zip {} \; >/dev/null
+  cd $CUR_DIR
+
+  exit 0
+fi
+
 rm -rf proj
 git clone --depth 1 https://github.com/OSGeo/PROJ proj
 
@@ -43,12 +148,6 @@ git clone --depth 1 https://gitbox.apache.org/repos/asf/xerces-c.git
 # Build sqlite from source to avoid upstream bugs
 rm -rf sqlite
 git clone --depth 1 https://github.com/sqlite/sqlite sqlite
-
-if [ "$ARCHITECTURE" = "i386" ]; then
-    ARCH_SUFFIX=":i386"
-else
-    ARCH_SUFFIX=""
-fi
 
 # libxerces-c-dev${ARCH_SUFFIX}
 # libsqlite3-dev${ARCH_SUFFIX}

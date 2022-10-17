@@ -2129,6 +2129,7 @@ void OGROpenFileGDBLayer::RefreshXMLDefinitionInMemory()
 
     CPLAddXMLAttributeAndValue(psRoot, "xmlns:typens", "http://www.esri.com/schemas/ArcGIS/10.3");
     CPLAddXMLAttributeAndValue(psRoot, "xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
+    CPLAddXMLAttributeAndValue(psRoot, "xmlns:xs", "http://www.w3.org/2001/XMLSchema");
     CPLAddXMLAttributeAndValue(psRoot, "xsi:type",
        m_eGeomType == wkbNone ? "typens:DETableInfo" : "typens:DEFeatureClassInfo");
     CPLCreateXMLElementAndValue(psRoot, "CatalogPath", m_osPath.c_str());

@@ -69,11 +69,13 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
-                          VSILFILE  *fp, const char *pszFilenameIn,
+                          VSILFILE  *fp, int nMaxLineSize,
+                          const char *pszFilenameIn,
                           int bNewIn, int bInWriteModeIn,
                           char chDelimiterIn ) :
     poFeatureDefn(nullptr),
     fpCSV(fp),
+    m_nMaxLineSize(nMaxLineSize),
     nNextFID(1),
     bHasFieldNames(false),
     bNew(CPL_TO_BOOL(bNewIn)),
@@ -383,7 +385,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
             {
                 VSIRewindL(fpCSVT);
                 papszFieldTypes = CSVReadParseLine3L(fpCSVT,
-                                                     OGR_CSV_MAX_LINE_SIZE, // nMaxLineSize
+                                                     m_nMaxLineSize,
                                                      ",",
                                                      true, // bHonourStrings
                                                      false, // bKeepLeadingAndClosingQuotes
@@ -986,7 +988,7 @@ char **OGRCSVLayer::AutodetectFieldTypes(char **papszOpenOptions,
     {
         char **papszTokens =
             CSVReadParseLine3L(fp,
-                               OGR_CSV_MAX_LINE_SIZE,
+                               m_nMaxLineSize,
                                szDelimiter,
                                true, // bHonourStrings
                                bQuotedFieldAsString,
@@ -1306,7 +1308,7 @@ void OGRCSVLayer::ResetReading()
     if( bHasFieldNames )
         CSLDestroy(
             CSVReadParseLine3L( fpCSV,
-                                OGR_CSV_MAX_LINE_SIZE,
+                                m_nMaxLineSize,
                                 szDelimiter,
                                 bHonourStrings,
                                 false, // bKeepLeadingAndClosingQuotes
@@ -1329,7 +1331,7 @@ char **OGRCSVLayer::GetNextLineTokens()
     {
         // Read the CSV record.
         char **papszTokens = CSVReadParseLine3L( fpCSV,
-                                OGR_CSV_MAX_LINE_SIZE,
+                                m_nMaxLineSize,
                                 szDelimiter,
                                 bHonourStrings,
                                 false, // bKeepLeadingAndClosingQuotes

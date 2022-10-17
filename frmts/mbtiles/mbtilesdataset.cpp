@@ -121,9 +121,10 @@ class MBTilesDataset final: public GDALPamDataset, public GDALGPKGMBTilesLikePse
 
     virtual CPLErr    IBuildOverviews(
                         const char * pszResampling,
-                        int nOverviews, int * panOverviewList,
-                        int nBandsIn, CPL_UNUSED int * panBandList,
-                        GDALProgressFunc pfnProgress, void * pProgressData ) override;
+                        int nOverviews, const int * panOverviewList,
+                        int nBandsIn, const int * /* panBandList */,
+                        GDALProgressFunc pfnProgress, void * pProgressData,
+                        CSLConstList papszOptions ) override;
 
     virtual int                 GetLayerCount() override
                         { return static_cast<int>(m_apoLayers.size()); }
@@ -3413,9 +3414,10 @@ static int GetFloorPowerOfTwo(int n)
 
 CPLErr MBTilesDataset::IBuildOverviews(
                         const char * pszResampling,
-                        int nOverviews, int * panOverviewList,
-                        int nBandsIn, int * /*panBandList*/,
-                        GDALProgressFunc pfnProgress, void * pProgressData )
+                        int nOverviews, const int * panOverviewList,
+                        int nBandsIn, const int * /*panBandList*/,
+                        GDALProgressFunc pfnProgress, void * pProgressData,
+                        CSLConstList papszOptions )
 {
     if( GetAccess() != GA_Update )
     {
@@ -3530,7 +3532,8 @@ CPLErr MBTilesDataset::IBuildOverviews(
 
     CPLErr eErr = GDALRegenerateOverviewsMultiBand(nBands, papoBands,
                                      iCurOverview, papapoOverviewBands,
-                                     pszResampling, pfnProgress, pProgressData );
+                                     pszResampling, pfnProgress, pProgressData,
+                                     papszOptions);
 
     for( int iBand = 0; iBand < nBands; iBand++ )
     {

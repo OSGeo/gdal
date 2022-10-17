@@ -85,6 +85,7 @@ public:
     explicit CPLJSONObject(const std::string &osName, const CPLJSONObject &oParent);
     ~CPLJSONObject();
     CPLJSONObject(const CPLJSONObject &other);
+    CPLJSONObject(CPLJSONObject &&other);
     CPLJSONObject &operator=(const CPLJSONObject &other);
     CPLJSONObject &operator=(CPLJSONObject &&other);
 

@@ -6144,9 +6144,27 @@ def test_netcdf_short_as_unsigned():
 def test_netcdf_read_unrelated_dim():
     """Test https://github.com/OSGeo/gdal/issues/6367"""
 
-    ds = gdal.Open("data/test_not_report_unrelated_dim.nc")
+    ds = gdal.Open("data/netcdf/test_not_report_unrelated_dim.nc")
     # Test that "unrelated_dim" metadata is not reported
     assert ds.GetMetadata() == {"Band1#foo": "bar"}
+
+
+###############################################################################
+
+
+def test_netcdf_read_missing_value_text_numeric():
+
+    ds = gdal.Open("data/netcdf/missing_value_text_numeric.nc")
+    assert ds.GetRasterBand(1).GetNoDataValue() == 12
+
+
+###############################################################################
+
+
+def test_netcdf_read_missing_value_text_non_numeric():
+
+    ds = gdal.Open("data/netcdf/missing_value_text_non_numeric.nc")
+    assert ds.GetRasterBand(1).GetNoDataValue() is None
 
 
 def test_clean_tmp():

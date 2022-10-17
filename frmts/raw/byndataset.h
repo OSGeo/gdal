@@ -83,7 +83,7 @@ Table 1: Header description (80 bytes)
 --:-----------:------------------:------:----:---:---------------------------
 
 Items #18 to 22 must be defined if the grid is a geoid model.
- 
+
 Table 2: Sub-Type
 
 # Type (item #8)                 # Sub-Type (item #13)
@@ -127,9 +127,9 @@ Table 3: Ellipsoids
 
 Data (Row x Column x byte size)
 
-The data are stored by rows starting from the north. Each row is stored from the west to 
-the east. The data are either short (2 bytes) or long (4 bytes) integers. The size of the 
-bytes is defined in the header (item #10). 
+The data are stored by rows starting from the north. Each row is stored from the west to
+the east. The data are either short (2 bytes) or long (4 bytes) integers. The size of the
+bytes is defined in the header (item #10).
 
 The total size of the file is 80 bytes + (Row x Column x (2 or 4) bytes)
 
@@ -214,7 +214,7 @@ class BYNDataset final: public RawDataset
 
     VSILFILE    *fpImage;
     double      adfGeoTransform[6];
-    char*       pszProjection;
+    mutable OGRSpatialReference m_oSRS{};
     BYNHeader   hHeader;
 
     void        UpdateHeader();
@@ -230,14 +230,9 @@ class BYNDataset final: public RawDataset
 
     CPLErr GetGeoTransform( double * padfTransform ) override;
     CPLErr SetGeoTransform( double * padfTransform ) override;
-    const char *_GetProjectionRef() override;
-    CPLErr _SetProjection( const char* pszProjString ) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );

@@ -3346,6 +3346,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                                     GDAL_DMD_MULTIDIM_GROUP_CREATIONOPTIONLIST,
                                     GDAL_DMD_MULTIDIM_DIMENSION_CREATIONOPTIONLIST,
                                     GDAL_DMD_MULTIDIM_ARRAY_CREATIONOPTIONLIST,
+                                    GDAL_DMD_MULTIDIM_ARRAY_OPENOPTIONLIST,
                                     GDAL_DMD_MULTIDIM_ATTRIBUTE_CREATIONOPTIONLIST,
                                     GDAL_DS_LAYER_CREATIONOPTIONLIST } )
             {

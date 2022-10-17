@@ -1827,10 +1827,12 @@ void JPGDatasetCommon::InitInternalOverviews()
 
 CPLErr JPGDatasetCommon::IBuildOverviews( const char *pszResampling,
                                           int nOverviewsListCount,
-                                          int *panOverviewList,
-                                          int nListBands, int *panBandList,
+                                          const int *panOverviewList,
+                                          int nListBands,
+                                          const int *panBandList,
                                           GDALProgressFunc pfnProgress,
-                                          void * pProgressData )
+                                          void * pProgressData,
+                                          CSLConstList papszOptions )
 {
     bHasInitInternalOverviews = true;
     nInternalOverviewsCurrent = 0;
@@ -1839,7 +1841,8 @@ CPLErr JPGDatasetCommon::IBuildOverviews( const char *pszResampling,
                                            nOverviewsListCount,
                                            panOverviewList,
                                            nListBands, panBandList,
-                                           pfnProgress, pProgressData);
+                                           pfnProgress, pProgressData,
+                                           papszOptions);
 }
 
 /************************************************************************/
@@ -3656,7 +3659,8 @@ void   JPGAddEXIF        ( GDALDataType eWorkDT,
         }
         CPLErr eErr = GDALRegenerateOverviewsMultiBand(nBands, papoSrcBands,
                                                        1, papapoOverviewBands,
-                                                       "AVERAGE", nullptr, nullptr);
+                                                       "AVERAGE", nullptr, nullptr,
+                                                       /* papszOptions = */ nullptr);
         CPLFree(papoSrcBands);
         for(int i = 0; i < nBands; i++)
         {

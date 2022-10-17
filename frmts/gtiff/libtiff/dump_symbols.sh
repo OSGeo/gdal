@@ -2,9 +2,19 @@
 # GDAL specific script to extract exported libtiff symbols that can be renamed
 # to keep them internal to GDAL as much as possible
 
-gcc ./*.c -fPIC -shared -o libtiff.so -I. -I../../../port  -I../../../generated_headers  -DPIXARLOG_SUPPORT -DZIP_SUPPORT -DOJPEG_SUPPORT -DLZMA_SUPPORT -DZSTD_SUPPORT ${ZSTD_INCLUDE} -DWEBP_SUPPORT ${WEBP_INCLUDE} -DLERC_SUPPORT -I../../../third_party/LercLib -DHOST_FILLORDER=0
+if ! test -f $PWD/port/cpl_config.h; then
+  echo "ERROR: This script should be run from the top of the build directory"
+  return 1
+fi
 
-OUT_FILE=gdal_libtiff_symbol_rename.h
+if ! test -f $PWD/../port/cpl_port.h; then
+  echo "ERROR: The build directory should be a sub-directory immediately under the root of the source tree"
+  return 1
+fi
+
+gcc $PWD/../frmts/gtiff/libtiff/*.c -fPIC -shared -o libtiff.so -I$PWD/../frmts/gtiff/libtiff -I$PWD/../port -I$PWD/port -DGDAL_COMPILATION -DPIXARLOG_SUPPORT -DZIP_SUPPORT -DOJPEG_SUPPORT -DLZMA_SUPPORT -DZSTD_SUPPORT ${ZSTD_INCLUDE} -DWEBP_SUPPORT ${WEBP_INCLUDE} -DLERC_SUPPORT -I$PWD/../third_party/LercLib -DHOST_FILLORDER=0
+
+OUT_FILE=$PWD/../frmts/gtiff/libtiff/gdal_libtiff_symbol_rename.h
 
 rm $OUT_FILE 2>/dev/null
 

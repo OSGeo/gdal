@@ -52,6 +52,7 @@
 #include "cpl_minixml.h"
 #include "cpl_quad_tree.h"
 #include "cpl_worker_thread_pool.h"
+#include "cpl_vsi_virtual.h"
 
 #include <atomic>
 #include <fstream>
@@ -630,6 +631,15 @@ namespace tut
         CPLStringList oCopy2(oCopy);
         oCopy.Clear();
         ensure( "c3", EQUAL(oCopy2[0],"test") );
+
+        // Test move constructor
+        CPLStringList oMoved(std::move(oCopy2));
+        ensure( "c_move_constructor", EQUAL(oMoved[0],"test") );
+
+        // Test move assignment operator
+        CPLStringList oMoved2;
+        oMoved2 = std::move(oMoved);
+        ensure( "c_move_assignment", EQUAL(oMoved2[0],"test") );
 
         // Test sorting
         CPLStringList oTestSort;
@@ -2044,10 +2054,16 @@ namespace tut
         ensure_equals( cache.getMaxSize(), 2U );
         ensure_equals( cache.getElasticity(), 1U );
         ensure_equals( cache.getMaxAllowedSize(), 3U );
+        int out;
+        ensure( !cache.removeAndRecycleOldestEntry(out) );
 
         cache.insert(0, 1);
         val = 0;
         ensure( cache.tryGet(0, val) );
+        int* ptr = cache.getPtr(0);
+        ensure( ptr );
+        ensure_equals( *ptr, 1 );
+        ensure( cache.getPtr(-1) == nullptr );
         ensure_equals( val, 1 );
         ensure_equals( cache.get(0), 1 );
         ensure_equals( cache.getCopy(0), 1);
@@ -2062,6 +2078,12 @@ namespace tut
         };
         cache.cwalk( lambda );
         ensure( visited) ;
+
+        out = -1;
+        ensure( cache.removeAndRecycleOldestEntry(out) );
+        ensure_equals( out, 1 );
+
+        cache.insert(0, 1);
         cache.insert(0, 2);
         ensure_equals( cache.get(0), 2 );
         ensure_equals( cache.size(), 1U );
@@ -2077,6 +2099,48 @@ namespace tut
         ensure( cache.remove(2) );
         ensure( !cache.contains(2) );
         ensure_equals( cache.size(), 1U );
+
+        {
+            // Check that MyObj copy constructor and copy-assignment operator
+            // are not neede
+            struct MyObj
+            {
+                int m_v;
+                MyObj(int v): m_v(v) {}
+                MyObj(const MyObj&) = delete;
+                MyObj& operator=(const MyObj&) = delete;
+                MyObj(MyObj&&) = default;
+                MyObj& operator=(MyObj&&) = default;
+            };
+            lru11::Cache<int,MyObj> cacheMyObj(2,0);
+            ensure_equals( cacheMyObj.insert(0, MyObj(0)).m_v, 0 );
+            cacheMyObj.getPtr(0);
+            ensure_equals( cacheMyObj.insert(1, MyObj(1)).m_v, 1 );
+            ensure_equals( cacheMyObj.insert(2, MyObj(2)).m_v, 2 );
+            MyObj outObj(-1);
+            cacheMyObj.removeAndRecycleOldestEntry(outObj);
+        }
+
+        {
+            // Check that MyObj copy constructor and copy-assignment operator
+            // are not triggered
+            struct MyObj
+            {
+                int m_v;
+                MyObj(int v): m_v(v) {}
+                MyObj(const MyObj&): m_v(-1) { ensure(0); }
+                MyObj& operator=(const MyObj&) { ensure(0); return *this; }
+                MyObj(MyObj&&) = default;
+                MyObj& operator=(MyObj&&) = default;
+            };
+            lru11::Cache<int,MyObj> cacheMyObj(2,0);
+            ensure_equals( cacheMyObj.insert(0, MyObj(0)).m_v, 0 );
+            cacheMyObj.getPtr(0);
+            ensure_equals( cacheMyObj.insert(1, MyObj(1)).m_v, 1 );
+            ensure_equals( cacheMyObj.insert(2, MyObj(2)).m_v, 2 );
+            MyObj outObj(-1);
+            cacheMyObj.removeAndRecycleOldestEntry(outObj);
+        }
     }
 
     // Test CPLJSONDocument
@@ -2169,10 +2233,13 @@ namespace tut
         {
             // Copy constructor
             CPLJSONDocument oDocument;
+            ensure( oDocument.LoadMemory(std::string("true")) );
             oDocument.GetRoot();
             CPLJSONDocument oDocument2(oDocument);
-            CPLJSONObject oObj;
+            CPLJSONObject oObj(oDocument.GetRoot());
+            ensure( oObj.ToBool() );
             CPLJSONObject oObj2(oObj);
+            ensure( oObj2.ToBool() );
             // Assignment operator
             oDocument2 = oDocument;
             auto& oDocument2Ref(oDocument2);
@@ -2180,6 +2247,11 @@ namespace tut
             oObj2 = oObj;
             auto& oObj2Ref(oObj2);
             oObj2 = oObj2Ref;
+            CPLJSONObject oObj3(std::move(oObj2));
+            ensure( oObj3.ToBool() );
+            CPLJSONObject oObj4;
+            oObj4 = std::move(oObj3);
+            ensure( oObj4.ToBool() );
         }
         {
             // Move constructor
@@ -2863,7 +2935,7 @@ namespace tut
     void object::test<40>()
     {
         CPLWorkerThreadPool oPool;
-        ensure(oPool.Setup(2, nullptr, nullptr));
+        ensure(oPool.Setup(2, nullptr, nullptr, false));
 
         const auto myJob = [](void* pData)
         {
@@ -2890,7 +2962,7 @@ namespace tut
             for( int i = 0; i < 1000; i++ )
             {
                 res[i] = i;
-                resPtr[i] = &res[i];
+                resPtr[i] = res.data() + i;
             }
             oPool.SubmitJobs(myJob, resPtr);
             oPool.WaitEvent();
@@ -3564,19 +3636,19 @@ namespace tut
         ensure_equals(CPLGetLastErrorType(), CE_None);
 
         {
-            const char* pszVal = VSIGetCredential("/vsi_test/foo/bar", "FOO", nullptr);
+            const char* pszVal = VSIGetPathSpecificOption("/vsi_test/foo/bar", "FOO", nullptr);
             ensure(pszVal != nullptr);
             ensure_equals(std::string(pszVal), std::string("BAR"));
         }
 
         {
-            const char* pszVal = VSIGetCredential("/vsi_test/foo/bar", "FOO2", nullptr);
+            const char* pszVal = VSIGetPathSpecificOption("/vsi_test/foo/bar", "FOO2", nullptr);
             ensure(pszVal != nullptr);
             ensure_equals(std::string(pszVal), std::string("BAR2"));
         }
 
         {
-            const char* pszVal = VSIGetCredential("/vsi_test/bar/baz", "BAR", nullptr);
+            const char* pszVal = VSIGetPathSpecificOption("/vsi_test/bar/baz", "BAR", nullptr);
             ensure(pszVal != nullptr);
             ensure_equals(std::string(pszVal), std::string("BAZ"));
         }
@@ -3587,11 +3659,11 @@ namespace tut
             ensure_equals(std::string(pszVal), std::string("BAR"));
         }
 
-        VSIClearCredentials("/vsi_test/bar/baz");
+        VSIClearPathSpecificOptions("/vsi_test/bar/baz");
         CPLSetConfigOption("configoptions_FOO", nullptr);
 
         {
-            const char* pszVal = VSIGetCredential("/vsi_test/bar/baz", "BAR", nullptr);
+            const char* pszVal = VSIGetPathSpecificOption("/vsi_test/bar/baz", "BAR", nullptr);
             ensure(pszVal == nullptr);
         }
 
@@ -3662,12 +3734,12 @@ namespace tut
         ensure_equals(CPLGetLastErrorType(), CE_Warning);
 
         {
-            const char* pszVal = VSIGetCredential("/vsi_test/foo", "FOO", nullptr);
+            const char* pszVal = VSIGetPathSpecificOption("/vsi_test/foo", "FOO", nullptr);
             ensure(pszVal != nullptr);
         }
 
         {
-            const char* pszVal = VSIGetCredential("/vsi_test/foo", "BAR", nullptr);
+            const char* pszVal = VSIGetPathSpecificOption("/vsi_test/foo", "BAR", nullptr);
             ensure(pszVal == nullptr);
         }
 
@@ -3876,7 +3948,7 @@ namespace tut
         {
             Context* psCtxt;
             int iJob;
-            GIntBig nThreadLambda;
+            GIntBig nThreadLambda = 0;
 
             Data(Context* psCtxtIn, int iJobIn):
                 psCtxt(psCtxtIn), iJob(iJobIn) {}
@@ -3953,6 +4025,66 @@ namespace tut
             poQueue->SubmitJob(lambda, &data2);
         }
         ensure_equals(ctxt.nCounter, 3 * 3);
+    }
+
+    // Test /vsimem/ PRead() implementation
+    template<>
+    template<>
+    void object::test<63>()
+    {
+        char szContent[] = "abcd";
+        VSILFILE* fp = VSIFileFromMemBuffer( "", reinterpret_cast<GByte*>(szContent), 4, FALSE );
+        VSIVirtualHandle* poHandle = reinterpret_cast<VSIVirtualHandle*>(fp);
+        ensure(poHandle->HasPRead());
+        {
+            char szBuffer[5] = {0};
+            ensure_equals(poHandle->PRead(szBuffer, 2, 1), 2U);
+            ensure_equals(std::string(szBuffer), std::string("bc"));
+        }
+        {
+            char szBuffer[5] = {0};
+            ensure_equals(poHandle->PRead(szBuffer, 4, 1), 3U);
+            ensure_equals(std::string(szBuffer), std::string("bcd"));
+        }
+        {
+            char szBuffer[5] = {0};
+            ensure_equals(poHandle->PRead(szBuffer, 1, 4), 0U);
+            ensure_equals(std::string(szBuffer), std::string());
+        }
+        VSIFCloseL(fp);
+    }
+
+    // Test regular file system PRead() implementation
+    template<>
+    template<>
+    void object::test<64>()
+    {
+        VSILFILE* fp = VSIFOpenL("temp_test_64.bin", "wb+");
+        if( fp == nullptr )
+            return;
+        VSIVirtualHandle* poHandle = reinterpret_cast<VSIVirtualHandle*>(fp);
+        poHandle->Write( "abcd", 4, 1 );
+        if( poHandle->HasPRead() )
+        {
+            poHandle->Flush();
+            {
+                char szBuffer[5] = {0};
+                ensure_equals(poHandle->PRead(szBuffer, 2, 1), 2U);
+                ensure_equals(std::string(szBuffer), std::string("bc"));
+            }
+            {
+                char szBuffer[5] = {0};
+                ensure_equals(poHandle->PRead(szBuffer, 4, 1), 3U);
+                ensure_equals(std::string(szBuffer), std::string("bcd"));
+            }
+            {
+                char szBuffer[5] = {0};
+                ensure_equals(poHandle->PRead(szBuffer, 1, 4), 0U);
+                ensure_equals(std::string(szBuffer), std::string());
+            }
+        }
+        VSIFCloseL(fp);
+        VSIUnlink("temp_test_64.bin");
     }
 
     // WARNING: keep that line at bottom and read carefully:

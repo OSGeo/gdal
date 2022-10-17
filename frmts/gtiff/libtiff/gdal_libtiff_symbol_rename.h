@@ -11,7 +11,6 @@
 #define ChopUpSingleUncompressedStrip gdal_ChopUpSingleUncompressedStrip
 #define CLAMPw gdal_CLAMPw
 #define cl_hash gdal_cl_hash
-#define codeLoop gdal_codeLoop
 #define cvtcmap gdal_cvtcmap
 #define DoubleToRational gdal_DoubleToRational
 #define DoubleToSrational gdal_DoubleToSrational
@@ -270,7 +269,8 @@
 #define put8bitcmaptile gdal_put8bitcmaptile
 #define putagreytile gdal_putagreytile
 #define putCMYKseparate8bittile gdal_putCMYKseparate8bittile
-#define putcontig8bitCIELab gdal_putcontig8bitCIELab
+#define putcontig8bitCIELab16 gdal_putcontig8bitCIELab16
+#define putcontig8bitCIELab8 gdal_putcontig8bitCIELab8
 #define putcontig8bitYCbCr11tile gdal_putcontig8bitYCbCr11tile
 #define putcontig8bitYCbCr12tile gdal_putcontig8bitYCbCr12tile
 #define putcontig8bitYCbCr21tile gdal_putcontig8bitYCbCr21tile
@@ -325,6 +325,7 @@
 #define TIFFCheckRead gdal_TIFFCheckRead
 #define _TIFFCheckRealloc gdal__TIFFCheckRealloc
 #define TIFFCheckTile gdal_TIFFCheckTile
+#define TIFFCIELab16ToXYZ gdal_TIFFCIELab16ToXYZ
 #define TIFFCIELabToRGBInit gdal_TIFFCIELabToRGBInit
 #define TIFFCIELabToXYZ gdal_TIFFCIELabToXYZ
 #define _TIFFClampDoubleToFloat gdal__TIFFClampDoubleToFloat
@@ -332,6 +333,7 @@
 #define TIFFClampDoubleToInt32 gdal_TIFFClampDoubleToInt32
 #define TIFFClampDoubleToInt8 gdal_TIFFClampDoubleToInt8
 #define TIFFClampDoubleToUInt16 gdal_TIFFClampDoubleToUInt16
+#define _TIFFClampDoubleToUInt32 gdal__TIFFClampDoubleToUInt32
 #define TIFFClampDoubleToUInt32 gdal_TIFFClampDoubleToUInt32
 #define TIFFClampDoubleToUInt8 gdal_TIFFClampDoubleToUInt8
 #define TIFFCleanup gdal_TIFFCleanup
@@ -351,7 +353,6 @@
 #define TIFFCurrentRow gdal_TIFFCurrentRow
 #define TIFFCurrentStrip gdal_TIFFCurrentStrip
 #define TIFFCurrentTile gdal_TIFFCurrentTile
-#define _TIFFDataSize gdal__TIFFDataSize
 #define TIFFDataWidth gdal_TIFFDataWidth
 #define TIFFDefaultDirectory gdal_TIFFDefaultDirectory
 #define TIFFDefaultRefBlackWhite gdal_TIFFDefaultRefBlackWhite
@@ -373,9 +374,12 @@
 #define TIFFFetchStripThing gdal_TIFFFetchStripThing
 #define TIFFFetchSubjectDistance gdal_TIFFFetchSubjectDistance
 #define TIFFFieldDataType gdal_TIFFFieldDataType
+#define TIFFFieldIsAnonymous gdal_TIFFFieldIsAnonymous
 #define TIFFFieldName gdal_TIFFFieldName
 #define TIFFFieldPassCount gdal_TIFFFieldPassCount
 #define TIFFFieldReadCount gdal_TIFFFieldReadCount
+#define TIFFFieldSetGetCountSize gdal_TIFFFieldSetGetCountSize
+#define TIFFFieldSetGetSize gdal_TIFFFieldSetGetSize
 #define TIFFFieldTag gdal_TIFFFieldTag
 #define TIFFFieldWithName gdal_TIFFFieldWithName
 #define TIFFFieldWithTag gdal_TIFFFieldWithTag
@@ -425,6 +429,7 @@
 #define TIFFGetWriteProc gdal_TIFFGetWriteProc
 #define TIFFGrowStrips gdal_TIFFGrowStrips
 #define TIFFIsBigEndian gdal_TIFFIsBigEndian
+#define TIFFIsBigTIFF gdal_TIFFIsBigTIFF
 #define TIFFIsByteSwapped gdal_TIFFIsByteSwapped
 #define TIFFIsCODECConfigured gdal_TIFFIsCODECConfigured
 #define TIFFIsMSB2LSB gdal_TIFFIsMSB2LSB
@@ -549,11 +554,15 @@
 #define TIFFReadDirEntryLongArray gdal_TIFFReadDirEntryLongArray
 #define TIFFReadDirEntryOutputErr gdal_TIFFReadDirEntryOutputErr
 #define TIFFReadDirEntryPersampleShort gdal_TIFFReadDirEntryPersampleShort
+#define TIFFReadDirEntrySbyte gdal_TIFFReadDirEntrySbyte
 #define TIFFReadDirEntrySbyteArray gdal_TIFFReadDirEntrySbyteArray
 #define TIFFReadDirEntryShort gdal_TIFFReadDirEntryShort
 #define TIFFReadDirEntryShortArray gdal_TIFFReadDirEntryShortArray
+#define TIFFReadDirEntrySlong gdal_TIFFReadDirEntrySlong
+#define TIFFReadDirEntrySlong8 gdal_TIFFReadDirEntrySlong8
 #define TIFFReadDirEntrySlong8Array gdal_TIFFReadDirEntrySlong8Array
 #define TIFFReadDirEntrySlongArray gdal_TIFFReadDirEntrySlongArray
+#define TIFFReadDirEntrySshort gdal_TIFFReadDirEntrySshort
 #define TIFFReadDirEntrySshortArray gdal_TIFFReadDirEntrySshortArray
 #define TIFFReadEncodedStrip gdal_TIFFReadEncodedStrip
 #define _TIFFReadEncodedStripAndAllocBuffer gdal__TIFFReadEncodedStripAndAllocBuffer
@@ -607,14 +616,12 @@
 #define TIFFSetFileName gdal_TIFFSetFileName
 #define TIFFSetFileno gdal_TIFFSetFileno
 #define _TIFFsetFloatArray gdal__TIFFsetFloatArray
-#define _TIFFSetGetFieldSize gdal__TIFFSetGetFieldSize
 #define _TIFFSetGetType gdal__TIFFSetGetType
 #define _TIFFsetLong8Array gdal__TIFFsetLong8Array
 #define _TIFFsetLongArray gdal__TIFFsetLongArray
 #define TIFFSetMode gdal_TIFFSetMode
 #define _TIFFsetNString gdal__TIFFsetNString
 #define _TIFFsetShortArray gdal__TIFFsetShortArray
-#define _TIFFsetString gdal__TIFFsetString
 #define TIFFSetSubDirectory gdal_TIFFSetSubDirectory
 #define TIFFSetTagExtender gdal_TIFFSetTagExtender
 #define _TIFFSetupFields gdal__TIFFSetupFields

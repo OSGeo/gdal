@@ -877,7 +877,17 @@ def test_nitf_jp2openjpeg_npje_numerically_lossless():
         ds.GetMetadataItem("J2KLRA", "TRE")
         == "0050000102000000.03125000100.06250000200.12500000300.25000000400.50000000500.60000000600.70000000700.80000000800.90000000901.00000001001.10000001101.20000001201.30000001301.50000001401.70000001502.00000001602.30000001703.50000001803.90000001912.000000"
     )
-    assert ds.GetMetadataItem("COMRAT", "DEBUG") in ("N141", "N142", "N143", "N169")
+    assert ds.GetMetadataItem("COMRAT", "DEBUG") in (
+        "N141",
+        "N142",
+        "N143",
+        "N147",
+        "N169",
+        "N174",
+    )
+    assert (
+        ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == "LOSSLESS"
+    )
 
     # Get the JPEG2000 code stream subfile
     jpeg2000_ds_name = ds.GetMetadataItem("JPEG2000_DATASET_NAME", "DEBUG")
@@ -965,6 +975,7 @@ def test_nitf_jp2openjpeg_npje_visually_lossless():
     finally:
         gdaltest.reregister_all_jpeg2000_drivers()
     assert ds.GetMetadataItem("COMRAT", "DEBUG").startswith("V")
+    assert ds.GetMetadata("IMAGE_STRUCTURE")["COMPRESSION_REVERSIBILITY"] == "LOSSY"
 
     # Get the JPEG2000 code stream subfile
     jpeg2000_ds_name = ds.GetMetadataItem("JPEG2000_DATASET_NAME", "DEBUG")
@@ -4989,29 +5000,47 @@ def test_nitf_create_three_images_final_uncompressed():
 
     gdal.Unlink("/vsimem/out.ntf")
 
-    src_ds = gdal.Open("data/rgbsmall.tif")
+    src_ds_2049 = gdal.GetDriverByName("MEM").Create("", 2049, 1)
+    src_ds_2049.GetRasterBand(1).Fill(1)
+
+    src_ds_8193 = gdal.GetDriverByName("MEM").Create("", 8193, 1)
+    src_ds_8193.GetRasterBand(1).Fill(2)
 
     # Write first image segment, reserve space for two other ones and a DES
     ds = gdal.GetDriverByName("NITF").CreateCopy(
-        "/vsimem/out.ntf", src_ds, options=["NUMI=3", "NUMDES=1"]
+        "/vsimem/out.ntf", src_ds_2049, options=["NUMI=3", "NUMDES=1"]
     )
     assert ds is not None
     assert gdal.GetLastErrorMsg() == ""
     ds = None
 
-    # Write second image segment
+    # Check CLEVEL value
+    f = gdal.VSIFOpenL("/vsimem/out.ntf", "rb")
+    gdal.VSIFSeekL(f, 9, 0)
+    assert gdal.VSIFReadL(1, 2, f) == b"05"
+    gdal.VSIFCloseL(f)
+
+    # Write second image segment. Will bump CLEVEL to 06
     ds = gdal.GetDriverByName("NITF").CreateCopy(
-        "/vsimem/out.ntf", src_ds, options=["APPEND_SUBDATASET=YES", "IC=C3", "IDLVL=2"]
+        "/vsimem/out.ntf",
+        src_ds_8193,
+        options=["APPEND_SUBDATASET=YES", "IC=C3", "IDLVL=2"],
     )
     assert ds is not None
     assert gdal.GetLastErrorMsg() == ""
     ds = None
+
+    # Check CLEVEL value
+    f = gdal.VSIFOpenL("/vsimem/out.ntf", "rb")
+    gdal.VSIFSeekL(f, 9, 0)
+    assert gdal.VSIFReadL(1, 2, f) == b"06"
+    gdal.VSIFCloseL(f)
 
     # Write third and final image segment and DES
     des_data = "02U" + " " * 166 + r"0004ABCD1234567\0890"
     ds = gdal.GetDriverByName("NITF").CreateCopy(
         "/vsimem/out.ntf",
-        src_ds,
+        src_ds_2049,
         options=["APPEND_SUBDATASET=YES", "IDLVL=3", "DES=DES1=" + des_data],
     )
     assert ds is not None
@@ -5019,19 +5048,15 @@ def test_nitf_create_three_images_final_uncompressed():
     ds = None
 
     ds = gdal.Open("/vsimem/out.ntf")
+    assert ds.GetMetadataItem("NITF_CLEVEL") == "06"
     assert ds.GetMetadata("xml:DES") is not None
-    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+    assert ds.GetRasterBand(1).ComputeBandStats() == pytest.approx((1.0, 0.0))
 
     ds = gdal.Open("NITF_IM:1:/vsimem/out.ntf")
-    (exp_mean, exp_stddev) = (65.9532, 46.9026375565)
-    (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
-
-    assert exp_mean == pytest.approx(mean, abs=0.1) and exp_stddev == pytest.approx(
-        stddev, abs=0.1
-    ), "did not get expected mean or standard dev."
+    assert ds.GetRasterBand(1).ComputeBandStats() == pytest.approx((2.0, 0.0))
 
     ds = gdal.Open("NITF_IM:2:/vsimem/out.ntf")
-    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+    assert ds.GetRasterBand(1).ComputeBandStats() == pytest.approx((1.0, 0.0))
     ds = None
 
     gdal.GetDriverByName("NITF").Delete("/vsimem/out.ntf")

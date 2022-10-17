@@ -338,7 +338,7 @@ with ``ARRAY:`` using :program:`gdalmdimtranslate`):
 - **LZMA_DELTA=integer** : Delta distance in byte. Only used when COMPRESS=LZMA.
   Defaults to 1.
 
-- **ZSTD_LEVEL=integer** [1-9]: ZSTD compression level. Only used when COMPRESS=ZSTD.
+- **ZSTD_LEVEL=integer** [1-22]: ZSTD compression level. Only used when COMPRESS=ZSTD.
   Defaults to 13.
 
 - **LZ4_ACCELERATION=integer** [1-]: LZ4 acceleration factor.

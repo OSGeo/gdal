@@ -39,7 +39,7 @@ CPLWorkerThreadPool* GDALGetGlobalThreadPool(int nThreads)
     if( gpoCompressThreadPool == nullptr )
     {
         gpoCompressThreadPool = new CPLWorkerThreadPool();
-        if( !gpoCompressThreadPool->Setup(nThreads, nullptr, nullptr) )
+        if( !gpoCompressThreadPool->Setup(nThreads, nullptr, nullptr, false) )
         {
             delete gpoCompressThreadPool;
             gpoCompressThreadPool = nullptr;

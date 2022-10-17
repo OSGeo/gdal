@@ -1391,20 +1391,29 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
 
         if( bGetExtents && papsGeometry != nullptr )
         {
-            OGRGeometry *poGeometry = GML_BuildOGRGeometryFromList(
-                papsGeometry, true, m_bInvertAxisOrderIfLatLong,
-                nullptr, m_bConsiderEPSGAsURN,
-                m_eSwapCoordinates,
-                m_bGetSecondaryGeometryOption,
-                hCacheSRS, m_bFaceHoleNegative );
-
-            if( poGeometry != nullptr && poClass->GetGeometryPropertyCount() > 0 )
+            const int nIters = std::min(poFeature->GetGeometryCount(),
+                                        poClass->GetGeometryPropertyCount());
+            for(int i = 0; i < nIters; ++i )
             {
+                if( papsGeometry[i] == nullptr )
+                    continue;
+
+                const CPLXMLNode *myGeometryList[2] = {papsGeometry[i], nullptr};
+                OGRGeometry *poGeometry = GML_BuildOGRGeometryFromList(
+                    myGeometryList, true, m_bInvertAxisOrderIfLatLong,
+                    nullptr, m_bConsiderEPSGAsURN,
+                    m_eSwapCoordinates,
+                    m_bGetSecondaryGeometryOption,
+                    hCacheSRS, m_bFaceHoleNegative );
+                if( poGeometry == nullptr )
+                    continue;
+
+                auto poGeomProperty = poClass->GetGeometryProperty(i);
                 OGRwkbGeometryType eGType = static_cast<OGRwkbGeometryType>(
-                    poClass->GetGeometryProperty(0)->GetType());
+                    poGeomProperty->GetType());
 
                 const char* pszSRSName =
-                    GML_ExtractSrsNameFromGeometry(papsGeometry,
+                    GML_ExtractSrsNameFromGeometry(myGeometryList,
                                                     osWork,
                                                     m_bConsiderEPSGAsURN);
                 if( pszSRSName != nullptr )
@@ -1417,17 +1426,20 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
                 }
                 if( m_pszGlobalSRSName == nullptr || pszSRSName != nullptr)
                 {
-                    poClass->MergeSRSName(pszSRSName);
+                    if( poClass->GetGeometryPropertyCount() == 1 )
+                        poClass->MergeSRSName(pszSRSName);
+                    else
+                        poGeomProperty->MergeSRSName(pszSRSName ? pszSRSName : "");
                 }
 
                 // Merge geometry type into layer.
                 if( bGeometryColumnJustCreated )
                 {
-                    poClass->GetGeometryProperty(0)->SetType(poGeometry->getGeometryType());
+                    poGeomProperty->SetType(poGeometry->getGeometryType());
                 }
                 else
                 {
-                    poClass->GetGeometryProperty(0)->SetType(
+                    poGeomProperty->SetType(
                         static_cast<int>(OGRMergeGeometryTypesEx(
                             eGType, poGeometry->getGeometryType(), true)));
                 }

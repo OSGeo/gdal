@@ -12,6 +12,9 @@ available at:
 
   http://www.nar-associates.com/nurbs/
 
+David F. Rogers agreed explictly that the subset of his code in this file to
+be used under the following license (cf https://github.com/OSGeo/gdal/issues/6524)
+
 Copyright (c) 2009, David F. Rogers
 All rights reserved.
 

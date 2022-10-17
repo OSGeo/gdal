@@ -137,12 +137,13 @@ CPLErr GDALProxyDataset::IRasterIO( GDALRWFlag eRWFlag,
 
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, IBuildOverviews,
                         ( const char *pszResampling,
-                          int nOverviews, int *panOverviewList,
-                          int nListBands, int *panBandList,
+                          int nOverviews, const int *panOverviewList,
+                          int nListBands, const int *panBandList,
                           GDALProgressFunc pfnProgress,
-                          void * pProgressData ),
+                          void * pProgressData, CSLConstList papszOptions ),
                         ( pszResampling, nOverviews, panOverviewList,
-                          nListBands, panBandList, pfnProgress, pProgressData ))
+                          nListBands, panBandList, pfnProgress, pProgressData,
+                          papszOptions ))
 
 void  GDALProxyDataset::FlushCache(bool bAtClosing)
 {
@@ -390,9 +391,9 @@ RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, nullptr,  GetRasterSampleOverview,
                         (GUIntBig arg1), (arg1))
 
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, BuildOverviews,
-                        (const char * arg1, int arg2, int *arg3,
-                        GDALProgressFunc arg4, void * arg5),
-                        (arg1, arg2, arg3, arg4, arg5))
+                        (const char * arg1, int arg2, const int *arg3,
+                        GDALProgressFunc arg4, void * arg5, CSLConstList papszOptions),
+                        (arg1, arg2, arg3, arg4, arg5, papszOptions))
 
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, AdviseRead,
                         ( int nXOff, int nYOff, int nXSize, int nYSize,

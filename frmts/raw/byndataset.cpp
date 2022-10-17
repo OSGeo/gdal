@@ -127,9 +127,9 @@ CPLErr BYNRasterBand::SetScale( double dfNewValue )
 
 BYNDataset::BYNDataset() :
         fpImage(nullptr),
-        pszProjection(nullptr),
         hHeader{0,0,0,0,0,0,0,0,0.0,0,0,0,0,0,0,0,0,0.0,0.0,0,0,0.0,0}
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -157,8 +157,6 @@ BYNDataset::~BYNDataset()
             CPLError( CE_Failure, CPLE_FileIO, "I/O error" );
         }
     }
-
-    CPLFree( pszProjection );
 }
 
 /************************************************************************/
@@ -413,24 +411,21 @@ CPLErr BYNDataset::SetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *BYNDataset::_GetProjectionRef()
+const OGRSpatialReference* BYNDataset::GetSpatialRef() const
 
 {
-    if( pszProjection )
-        return pszProjection;
-
-    OGRSpatialReference oSRS;
+    if( !m_oSRS.IsEmpty() )
+        return &m_oSRS;
 
     /* Try to use a prefefined EPSG compound CS */
 
     if( hHeader.nDatum == 1 && hHeader.nVDatum == 2 )
     {
-        oSRS.importFromEPSG( BYN_DATUM_1_VDATUM_2 );
-        oSRS.exportToWkt( &pszProjection );
-        return pszProjection;
+        m_oSRS.importFromEPSG( BYN_DATUM_1_VDATUM_2 );
+        return &m_oSRS;
     }
 
     /* Build the GEOGCS based on Datum ( or Ellipsoid )*/
@@ -438,9 +433,9 @@ const char *BYNDataset::_GetProjectionRef()
     bool bNoGeogCS = false;
 
     if( hHeader.nDatum == 0 )
-        oSRS.importFromEPSG( BYN_DATUM_0 );
+        m_oSRS.importFromEPSG( BYN_DATUM_0 );
     else if( hHeader.nDatum == 1 )
-        oSRS.importFromEPSG( BYN_DATUM_1 );
+        m_oSRS.importFromEPSG( BYN_DATUM_1 );
     else
     {
         /* Build GEOGCS based on Ellipsoid (Table 3) */
@@ -448,7 +443,7 @@ const char *BYNDataset::_GetProjectionRef()
         if( hHeader.nEllipsoid > -1 &&
             hHeader.nEllipsoid < static_cast<GInt16>
                                  (CPL_ARRAYSIZE(EllipsoidTable)))
-            oSRS.SetGeogCS(
+            m_oSRS.SetGeogCS(
                 CPLSPrintf("BYN Ellipsoid(%d)", hHeader.nEllipsoid),
                 "Unspecified",
                 EllipsoidTable[ hHeader.nEllipsoid ].pszName,
@@ -478,8 +473,7 @@ const char *BYNDataset::_GetProjectionRef()
         if( bNoGeogCS )
             return nullptr;
 
-        oSRS.exportToWkt( &pszProjection );
-        return pszProjection;
+        return &m_oSRS;
     }
 
     oSRSVert.importFromEPSG( nVertCS );
@@ -489,40 +483,37 @@ const char *BYNDataset::_GetProjectionRef()
     if( oSRSComp.SetCompoundCS(
             CPLSPrintf("BYN Datum(%d) & VDatum(%d)",
             hHeader.nDatum, hHeader.nDatum),
-            &oSRS,
+            &m_oSRS,
             &oSRSVert ) == CE_None )
     {
         /* Return COMPD_CS with GEOGCS and VERT_CS */
 
-        oSRSComp.exportToWkt( &pszProjection );
-        return pszProjection;
+        m_oSRS = oSRSComp;
+        m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        return &m_oSRS;
     }
 
-    return "";
+    return nullptr;
 }
 
 /************************************************************************/
-/*                          SetProjectionRef()                          */
+/*                          SetSpatialRef()                             */
 /************************************************************************/
 
-CPLErr BYNDataset::_SetProjection( const char* pszProjString )
+CPLErr BYNDataset::SetSpatialRef( const OGRSpatialReference* poSRS )
 
 {
-    OGRSpatialReference oSRS;
-
-    OGRErr eOGRErr = oSRS.importFromWkt( pszProjString );
-
-    if( eOGRErr != OGRERR_NONE )
-    {
+    if( poSRS == nullptr )
         return CE_Failure;
-    }
+
+    m_oSRS = *poSRS;
 
     /* Try to recognize prefefined EPSG compound CS */
 
-    if( oSRS.IsCompound() )
+    if( poSRS->IsCompound() )
     {
-        const char* pszAuthName = oSRS.GetAuthorityName( "COMPD_CS" );
-        const char* pszAuthCode = oSRS.GetAuthorityCode( "COMPD_CS" );
+        const char* pszAuthName = poSRS->GetAuthorityName( "COMPD_CS" );
+        const char* pszAuthCode = poSRS->GetAuthorityCode( "COMPD_CS" );
 
         if( pszAuthName != nullptr &&
             pszAuthCode != nullptr &&
@@ -539,35 +530,35 @@ CPLErr BYNDataset::_SetProjection( const char* pszProjString )
 
     /* Try to match GEOGCS */
 
-    if( oSRS.IsGeographic() )
+    if( poSRS->IsGeographic() )
     {
         oSRSTemp.importFromEPSG( BYN_DATUM_0 );
-        if( oSRS.IsSameGeogCS( &oSRSTemp ) )
+        if( poSRS->IsSameGeogCS( &oSRSTemp ) )
             hHeader.nDatum = 0;
         else
         {
             oSRSTemp.importFromEPSG( BYN_DATUM_1 );
-            if( oSRS.IsSameGeogCS( &oSRSTemp ) )
+            if( poSRS->IsSameGeogCS( &oSRSTemp ) )
                 hHeader.nDatum = 1;
         }
     }
 
     /* Try to match VERT_CS */
 
-    if( oSRS.IsVertical() )
+    if( poSRS->IsVertical() )
     {
         oSRSTemp.importFromEPSG( BYN_VDATUM_1 );
-        if( oSRS.IsSameVertCS( &oSRSTemp ) )
+        if( poSRS->IsSameVertCS( &oSRSTemp ) )
             hHeader.nVDatum = 1;
         else
         {
             oSRSTemp.importFromEPSG( BYN_VDATUM_2 );
-            if( oSRS.IsSameVertCS( &oSRSTemp ) )
+            if( poSRS->IsSameVertCS( &oSRSTemp ) )
                 hHeader.nVDatum = 2;
             else
             {
                 oSRSTemp.importFromEPSG( BYN_VDATUM_3 );
-                if( oSRS.IsSameVertCS( &oSRSTemp ) )
+                if( poSRS->IsSameVertCS( &oSRSTemp ) )
                     hHeader.nVDatum = 3;
             }
         }

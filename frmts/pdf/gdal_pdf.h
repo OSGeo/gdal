@@ -439,8 +439,11 @@ private:
     static int          Identify( GDALOpenInfo * );
 
 #ifdef HAVE_PDFIUM
-    virtual CPLErr IBuildOverviews( const char *, int, int *,
-                                    int, int *, GDALProgressFunc, void * ) override;
+    virtual CPLErr IBuildOverviews( const char *,
+                                    int, const int *,
+                                    int, const int *,
+                                    GDALProgressFunc, void *,
+                                    CSLConstList papszOptions ) override;
 
     static int bPdfiumInit;
 #endif

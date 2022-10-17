@@ -102,7 +102,7 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(
     }
     const char chDelimiter = m_poCSVLayer->GetDelimiter();
     OGRCSVLayer *poCSVTmpLayer = new OGRCSVLayer(
-        osLayerName, nullptr, osTmpFilename, true, true, chDelimiter);
+        osLayerName, nullptr, -1, osTmpFilename, true, true, chDelimiter);
     poCSVTmpLayer->BuildFeatureDefn(nullptr, nullptr, m_papszOpenOptions);
     poCSVTmpLayer->SetCRLF(m_poCSVLayer->GetCRLF());
     poCSVTmpLayer->SetCreateCSVT(bCreateCSVT || bHasCSVT);
@@ -285,7 +285,7 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(
         return OGRERR_FAILURE;
     }
 
-    m_poCSVLayer = new OGRCSVLayer(osLayerName, fp,
+    m_poCSVLayer = new OGRCSVLayer(osLayerName, fp, -1,
                                    osFilename,
                                    false, /* new */
                                    true, /* update */
@@ -754,11 +754,22 @@ bool OGRCSVDataSource::OpenTable( const char *pszFilename,
         }
     }
 
+    int nMaxLineSize = atoi(CPLGetConfigOption(
+        "OGR_CSV_MAX_LINE_SIZE",
+        CSLFetchNameValueDef(papszOpenOptionsIn,
+             "MAX_LINE_SIZE", CPLSPrintf("%d", OGR_CSV_DEFAULT_MAX_LINE_SIZE))));
+    size_t nMaxLineSizeAsSize_t = static_cast<size_t>(nMaxLineSize);
+    if( nMaxLineSize == 0 )
+    {
+        nMaxLineSize = -1;
+        nMaxLineSizeAsSize_t = static_cast<size_t>(-1);
+    }
+
     // Read and parse a line.  Did we get multiple fields?
 
     std::string osLine;
     {
-        const char *pszLine = CPLReadLine2L(fp, OGR_CSV_MAX_LINE_SIZE, nullptr);
+        const char *pszLine = CPLReadLine2L(fp, nMaxLineSize, nullptr);
         if( pszLine == nullptr )
         {
             VSIFCloseL(fp);
@@ -786,7 +797,7 @@ bool OGRCSVDataSource::OpenTable( const char *pszFilename,
                 // of fields, if using tabulation.
                 VSIRewindL(fp);
                 char **papszTokens =
-                    CSVReadParseLine3L(fp, OGR_CSV_MAX_LINE_SIZE, "\t",
+                    CSVReadParseLine3L(fp, nMaxLineSizeAsSize_t, "\t",
                                        bHonourStrings,
                                        false, // bKeepLeadingAndClosingQuotes
                                        false, // bMergeDelimiter
@@ -795,7 +806,7 @@ bool OGRCSVDataSource::OpenTable( const char *pszFilename,
                 const int nTokens1 = CSLCount(papszTokens);
                 CSLDestroy(papszTokens);
                 papszTokens =
-                    CSVReadParseLine3L(fp, OGR_CSV_MAX_LINE_SIZE, "\t",
+                    CSVReadParseLine3L(fp, nMaxLineSizeAsSize_t, "\t",
                                        bHonourStrings,
                                        false, // bKeepLeadingAndClosingQuotes
                                        false, // bMergeDelimiter
@@ -844,7 +855,7 @@ bool OGRCSVDataSource::OpenTable( const char *pszFilename,
     char szDelimiter[2];
     szDelimiter[0] = chDelimiter;
     szDelimiter[1] = 0;
-    char **papszFields = CSVReadParseLine3L(fp, OGR_CSV_MAX_LINE_SIZE,
+    char **papszFields = CSVReadParseLine3L(fp, nMaxLineSizeAsSize_t,
                                             szDelimiter,
                                             true, // bHonourStrings,
                                             false, // bKeepLeadingAndClosingQuotes
@@ -881,7 +892,8 @@ bool OGRCSVDataSource::OpenTable( const char *pszFilename,
     if (EQUAL(pszFilename, "/vsistdin/"))
         osLayerName = "layer";
 
-    OGRCSVLayer *poCSVLayer = new OGRCSVLayer(osLayerName, fp, pszFilename,
+    OGRCSVLayer *poCSVLayer = new OGRCSVLayer(osLayerName, fp, nMaxLineSize,
+                                              pszFilename,
                                               FALSE, bUpdate, chDelimiter);
     poCSVLayer->BuildFeatureDefn(pszNfdcRunwaysGeomField,
                                  pszGeonamesGeomFieldPrefix,
@@ -981,7 +993,8 @@ OGRCSVDataSource::ICreateLayer( const char *pszLayerName,
 
     // Create a layer.
 
-    OGRCSVLayer *poCSVLayer = new OGRCSVLayer(pszLayerName, nullptr, osFilename,
+    OGRCSVLayer *poCSVLayer = new OGRCSVLayer(pszLayerName, nullptr, -1,
+                                              osFilename,
                                               true, true, chDelimiter);
 
     poCSVLayer->BuildFeatureDefn();

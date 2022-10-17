@@ -50,13 +50,9 @@ constexpr int MAX_EPSG = 32768;
 /*                         OGRSXFDataSource()                           */
 /************************************************************************/
 
-OGRSXFDataSource::OGRSXFDataSource() :
-    papoLayers(nullptr),
-    nLayers(0),
-    fpSXF(nullptr),
-    hIOMutex(nullptr)
+OGRSXFDataSource::OGRSXFDataSource()
 {
-    oSXFPassport.stMapDescription.pSpatRef = nullptr;
+    memset(&oSXFPassport.informationFlags, 0, sizeof(oSXFPassport.informationFlags));
 }
 
 /************************************************************************/
@@ -66,9 +62,7 @@ OGRSXFDataSource::OGRSXFDataSource() :
 OGRSXFDataSource::~OGRSXFDataSource()
 
 {
-    for( size_t i = 0; i < nLayers; i++ )
-        delete papoLayers[i];
-    CPLFree( papoLayers );
+    m_apoLayers.clear();
 
     if (nullptr != oSXFPassport.stMapDescription.pSpatRef)
     {
@@ -115,10 +109,10 @@ int OGRSXFDataSource::TestCapability( const char * pszCap )
 OGRLayer *OGRSXFDataSource::GetLayer( int iLayer )
 
 {
-    if( iLayer < 0 || iLayer >= (int)nLayers )
+    if( iLayer < 0 || iLayer >= GetLayerCount() )
         return nullptr;
     else
-        return papoLayers[iLayer];
+        return m_apoLayers[iLayer].get();
 }
 
 /************************************************************************/
@@ -280,7 +274,7 @@ int OGRSXFDataSource::Open(const char * pszFilename, bool bUpdateIn,
         }
     }
 
-    if (nLayers == 0)//create default set of layers
+    if (m_apoLayers.empty())//create default set of layers
     {
         CreateLayers();
     }
@@ -491,15 +485,19 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
     if (passport.version == 3)
     {
         short nNoObjClass, nNoSemClass;
-        /* nObjectsRead = */ VSIFReadL(&nNoObjClass, 2, 1, fpSXFIn);
-        /* nObjectsRead = */ VSIFReadL(&nNoSemClass, 2, 1, fpSXFIn);
+        if( VSIFReadL(&nNoObjClass, 2, 1, fpSXFIn) != 1 )
+            return OGRERR_FAILURE;
+        if( VSIFReadL(&nNoSemClass, 2, 1, fpSXFIn) != 1 )
+            return OGRERR_FAILURE;
         GByte byMask[8];
-        /* nObjectsRead = */ VSIFReadL(&byMask, 8, 1, fpSXFIn);
+        if( VSIFReadL(&byMask, 8, 1, fpSXFIn) != 1 )
+            return OGRERR_FAILURE;
 
         int nCorners[8];
 
         //get projected corner coords
-        /* nObjectsRead = */ VSIFReadL(&nCorners, 32, 1, fpSXFIn);
+        if( VSIFReadL(&nCorners, 32, 1, fpSXFIn) != 1 )
+            return OGRERR_FAILURE;
 
         for( int i = 0; i < 8; i++ )
         {
@@ -522,7 +520,8 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
             bIsX = !bIsX;
         }
         //get geographic corner coords
-        /* nObjectsRead = */ VSIFReadL(&nCorners, 32, 1, fpSXFIn);
+        if( VSIFReadL(&nCorners, 32, 1, fpSXFIn) != 1 )
+            return OGRERR_FAILURE;
 
         for( int i = 0; i < 8; i++ )
         {
@@ -533,7 +532,8 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
     else if (passport.version == 4)
     {
         int nEPSG = 0;
-        /* nObjectsRead = */ VSIFReadL(&nEPSG, 4, 1, fpSXFIn);
+        if( VSIFReadL(&nEPSG, 4, 1, fpSXFIn) != 1 )
+            return OGRERR_FAILURE;
         CPL_LSBPTR32(&nEPSG);
 
         if (nEPSG >= MIN_EPSG && nEPSG <= MAX_EPSG) //TODO: check epsg valid range
@@ -543,7 +543,8 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
         }
 
         double dfCorners[8];
-        /* nObjectsRead = */ VSIFReadL(&dfCorners, 64, 1, fpSXFIn);
+        if( VSIFReadL(&dfCorners, 64, 1, fpSXFIn) != 1 )
+            return OGRERR_FAILURE;
 
         for( int i = 0; i < 8; i++ )
         {
@@ -566,7 +567,8 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
             bIsX = !bIsX;
         }
         //get geographic corner coords
-        /* nObjectsRead = */ VSIFReadL(&dfCorners, 64, 1, fpSXFIn);
+        if( VSIFReadL(&dfCorners, 64, 1, fpSXFIn) != 1 )
+            return OGRERR_FAILURE;
 
         for( int i = 0; i < 8; i++ )
         {
@@ -581,7 +583,8 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
     }
 
     GByte anData[8] = { 0 };
-    /* nObjectsRead = */ VSIFReadL(&anData, 8, 1, fpSXFIn);
+    if( VSIFReadL(&anData, 8, 1, fpSXFIn) != 1 )
+        return OGRERR_FAILURE;
     long iEllips = anData[0];
     long iVCS = anData[1];
     long iProjSys = anData[2];
@@ -621,7 +624,8 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
             // cppcheck-suppress unusedStructMember
             GUInt32 nFrameCode;
         } buff;
-        /* nObjectsRead = */ VSIFReadL(&buff, 20, 1, fpSXFIn);
+        if( VSIFReadL(&buff, 20, 1, fpSXFIn) != 1 )
+            return OGRERR_FAILURE;
         CPL_LSBPTR32(&buff.nRes);
         CPL_LSBPTR32(&buff.nFrameCode);
         passport.stMapDescription.nResolution = buff.nRes; //resolution
@@ -633,7 +637,8 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
         }
 
         int anParams[5];
-        /* nObjectsRead = */ VSIFReadL(&anParams, 20, 1, fpSXFIn);
+        if( VSIFReadL(&anParams, 20, 1, fpSXFIn) != 1 )
+            return OGRERR_FAILURE;
         for(int i = 0; i < 5; i++)
         {
             CPL_LSBPTR32(&anParams[i]);
@@ -681,7 +686,8 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
 
         VSIFSeekL(fpSXFIn, 312, SEEK_SET);
         GUInt32 buff[10];
-        /* nObjectsRead = */ VSIFReadL(&buff, 40, 1, fpSXFIn);
+        if( VSIFReadL(&buff, 40, 1, fpSXFIn) != 1 )
+            return OGRERR_FAILURE;
         for(int i = 0; i < 10; i++)
         {
             CPL_LSBPTR32(&buff[i]);
@@ -692,7 +698,8 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
             passport.stMapDescription.stFrameCoords[i] = buff[1 + i];
 
         double adfParams[6] = {};
-        /* nObjectsRead = */ VSIFReadL(&adfParams, 48, 1, fpSXFIn);
+        if( VSIFReadL(&adfParams, 48, 1, fpSXFIn) != 1 )
+            return OGRERR_FAILURE;
         for(int i = 0; i < 6; i++)
         {
             CPL_LSBPTR64(&adfParams[i]);
@@ -717,7 +724,8 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
 
     passport.stMapDescription.dfScale = passport.nScale;
 
-    double dfCoeff = double(passport.stMapDescription.dfScale) / passport.stMapDescription.nResolution;
+    const double dfCoeff = passport.stMapDescription.nResolution == 0 ? 0 :
+        double(passport.stMapDescription.dfScale) / passport.stMapDescription.nResolution;
     passport.stMapDescription.bIsRealCoordinates = passport.informationFlags.bRealCoordinatesCompliance;
     passport.stMapDescription.stCoordAcc = passport.informationFlags.stCoordAcc;
 
@@ -908,10 +916,9 @@ void OGRSXFDataSource::FillLayers()
             break;
         }
 
-        for( size_t i = 0; i < nLayers; i++ )
+        for( const auto& poLayer: m_apoLayers )
         {
-            OGRSXFLayer* pOGRSXFLayer = (OGRSXFLayer*)papoLayers[i];
-            if (pOGRSXFLayer && pOGRSXFLayer->AddRecord(nFID, buff[3], nOffset, bHasSemantic, nSemanticSize) == TRUE)
+            if (poLayer->AddRecord(nFID, buff[3], nOffset, bHasSemantic, nSemanticSize) == TRUE)
             {
                 break;
             }
@@ -920,34 +927,28 @@ void OGRSXFDataSource::FillLayers()
         VSIFSeekL(fpSXF, nOffset, SEEK_SET);
     }
     //3. delete empty layers
-    for( size_t i = 0; i < nLayers; i++ )
+    for( size_t i = 0; i < m_apoLayers.size(); /* increment in loop */ )
     {
-        OGRSXFLayer* pOGRSXFLayer = (OGRSXFLayer*)papoLayers[i];
-        if (pOGRSXFLayer && pOGRSXFLayer->GetFeatureCount() == 0)
+        OGRSXFLayer* pOGRSXFLayer = m_apoLayers[i].get();
+        if (pOGRSXFLayer->GetFeatureCount() == 0)
         {
-            delete pOGRSXFLayer;
-            size_t nDeletedLayerIndex = i;
-            while (nDeletedLayerIndex < nLayers - 1)
-            {
-                papoLayers[nDeletedLayerIndex] = papoLayers[nDeletedLayerIndex + 1];
-                nDeletedLayerIndex++;
-            }
-            nLayers--;
-            i--;
+            m_apoLayers.erase(m_apoLayers.begin() + i);
         }
-        else if (pOGRSXFLayer)
+        else
+        {
             pOGRSXFLayer->ResetReading();
+            ++i;
+        }
     }
 }
 
 OGRSXFLayer* OGRSXFDataSource::GetLayerById(GByte nID)
 {
-    for (size_t i = 0; i < nLayers; i++)
+    for( const auto& poLayer: m_apoLayers )
     {
-        OGRSXFLayer* pOGRSXFLayer = (OGRSXFLayer*)papoLayers[i];
-        if (pOGRSXFLayer && pOGRSXFLayer->GetId() == nID)
+        if (poLayer->GetId() == nID)
         {
-            return pOGRSXFLayer;
+            return poLayer.get();
         }
     }
     return nullptr;
@@ -956,10 +957,9 @@ OGRSXFLayer* OGRSXFDataSource::GetLayerById(GByte nID)
 void OGRSXFDataSource::CreateLayers()
 {
     //default layers set
-    papoLayers = (OGRLayer**)CPLRealloc(papoLayers, sizeof(OGRLayer*)* (nLayers + 1));
-    OGRSXFLayer* pLayer = new OGRSXFLayer(fpSXF, &hIOMutex, 0, CPLString("SYSTEM"), oSXFPassport.version, oSXFPassport.stMapDescription);
-    papoLayers[nLayers] = pLayer;
-    nLayers++;
+    m_apoLayers.emplace_back(
+        cpl::make_unique<OGRSXFLayer>(fpSXF, &hIOMutex, static_cast<GByte>(0), CPLString("SYSTEM"), oSXFPassport.version, oSXFPassport.stMapDescription));
+    auto pLayer = m_apoLayers.back().get();
 
     //default codes
     for (unsigned int i = 1000000001; i < 1000000015; i++)
@@ -968,9 +968,8 @@ void OGRSXFDataSource::CreateLayers()
     }
     pLayer->AddClassifyCode(91000000);
 
-    papoLayers = (OGRLayer**)CPLRealloc(papoLayers, sizeof(OGRLayer*)* (nLayers + 1));
-    papoLayers[nLayers] = new OGRSXFLayer(fpSXF, &hIOMutex, 255, CPLString("Not_Classified"), oSXFPassport.version, oSXFPassport.stMapDescription);
-    nLayers++;
+    m_apoLayers.emplace_back(
+        cpl::make_unique<OGRSXFLayer>(fpSXF, &hIOMutex, static_cast<GByte>(255), CPLString("Not_Classified"), oSXFPassport.version, oSXFPassport.stMapDescription));
 }
 
 void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC, const char* const* papszOpenOpts)
@@ -1038,7 +1037,6 @@ void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC, const char* const* papszOpe
         VSIFReadL(&LAYER, sizeof(LAYER), 1, fpRSC);
         CPL_LSBPTR32(&(LAYER.nLength));
         CPL_LSBPTR16(&(LAYER.nSemanticCount));
-        papoLayers = (OGRLayer**)CPLRealloc(papoLayers, sizeof(OGRLayer*)* (nLayers + 1));
         bool bLayerFullName = CPLTestBool(
                  CSLFetchNameValueDef(papszOpenOpts,
                                       "SXF_LAYER_FULLNAME",
@@ -1055,7 +1053,8 @@ void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC, const char* const* papszOpe
             else
                 pszRecoded = CPLStrdup(LAYER.szName);
 
-            papoLayers[nLayers] = new OGRSXFLayer(fpSXF, &hIOMutex, LAYER.nNo, CPLString(pszRecoded), oSXFPassport.version, oSXFPassport.stMapDescription);
+            m_apoLayers.emplace_back(cpl::make_unique<OGRSXFLayer>(
+                fpSXF, &hIOMutex, LAYER.nNo, CPLString(pszRecoded), oSXFPassport.version, oSXFPassport.stMapDescription));
         }
         else
         {
@@ -1068,18 +1067,17 @@ void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC, const char* const* papszOpe
             else
                 pszRecoded = CPLStrdup(LAYER.szShortName);
 
-            papoLayers[nLayers] = new OGRSXFLayer(fpSXF, &hIOMutex, LAYER.nNo, CPLString(pszRecoded), oSXFPassport.version, oSXFPassport.stMapDescription);
+            m_apoLayers.emplace_back(cpl::make_unique<OGRSXFLayer>(
+                fpSXF, &hIOMutex, LAYER.nNo, CPLString(pszRecoded), oSXFPassport.version, oSXFPassport.stMapDescription));
         }
         CPLFree(pszRecoded);
-        nLayers++;
 
         nOffset += LAYER.nLength;
         VSIFSeekL(fpRSC, nOffset, SEEK_SET);
     }
 
-    papoLayers = (OGRLayer**)CPLRealloc(papoLayers, sizeof(OGRLayer*)* (nLayers + 1));
-    papoLayers[nLayers] = new OGRSXFLayer(fpSXF, &hIOMutex, 255, CPLString("Not_Classified"), oSXFPassport.version, oSXFPassport.stMapDescription);
-    nLayers++;
+    m_apoLayers.emplace_back(cpl::make_unique<OGRSXFLayer>(
+        fpSXF, &hIOMutex, static_cast<GByte>(255), CPLString("Not_Classified"), oSXFPassport.version, oSXFPassport.stMapDescription));
 
     char szObjectsID[4];
     struct _object{

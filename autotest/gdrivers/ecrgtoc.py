@@ -133,6 +133,8 @@ def test_ecrgtoc_1():
         3,
         options=[
             "ICORDS=G",
+            "BLOCKXSIZE=128",
+            "BLOCKYSIZE=256",
             "TRE=GEOLOB=000605184000800256-84.06091370558+33.16698656430",
         ],
     )
@@ -152,6 +154,20 @@ def test_ecrgtoc_1():
     cs = ds.GetRasterBand(1).Checksum()
 
     ds = None
+
+    assert cs == 5966, "bad checksum"
+
+
+###############################################################################
+# Test in GDAL_FORCE_CACHING=YES mode
+
+
+def test_ecrgtoc_force_caching():
+
+    with gdaltest.config_option("GDAL_FORCE_CACHING", "YES"):
+        ds = gdal.Open("/vsimem/TOC.xml")
+
+    cs = ds.GetRasterBand(1).Checksum()
 
     assert cs == 5966, "bad checksum"
 

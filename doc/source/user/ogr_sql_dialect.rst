@@ -191,7 +191,7 @@ rename whole column expression, like these two:
 .. code-block::
 
     SELECT COUNT(areacode) AS "count" FROM polylayer
-    SELECT dollars/100.0 AS cents FROM polylayer
+    SELECT dollars*100.0 AS cents FROM polylayer
 
 Changing the type of the fields
 *******************************

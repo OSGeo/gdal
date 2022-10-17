@@ -2040,6 +2040,55 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
 }
 
 /************************************************************************/
+/*                          FeatureIDExists()                           */
+/************************************************************************/
+
+bool OGRGeoPackageTableLayer::FeatureIDExists( GIntBig nFID )
+{
+   CPLString soSQL;
+   soSQL.Printf("SELECT 1 FROM \"%s\" "
+                "WHERE \"%s\" = " CPL_FRMT_GIB,
+                SQLEscapeName(m_pszTableName).c_str(),
+                SQLEscapeName(m_pszFidColumn).c_str(),
+                nFID);
+
+   sqlite3_stmt* poStmt = nullptr;
+   int err = sqlite3_prepare_v2(
+      m_poDS->GetDB(), soSQL.c_str(), -1, &poStmt, nullptr);
+   if ( err != SQLITE_OK )
+   {
+      sqlite3_finalize(poStmt);
+      CPLError(CE_Failure, CPLE_AppDefined,
+               "failed to prepare SQL: %s", soSQL.c_str());
+      return false;
+   }
+
+   err = sqlite3_step(poStmt);
+   sqlite3_finalize(poStmt);
+   return (err == SQLITE_ROW);
+}
+
+/************************************************************************/
+/*                           IUpsertFeature()                           */
+/************************************************************************/
+
+OGRErr OGRGeoPackageTableLayer::IUpsertFeature( OGRFeature* poFeature )
+
+{
+   if ( !TestCapability(OLCUpsertFeature) )
+      return OGRERR_FAILURE;
+
+   if ( FeatureIDExists(poFeature->GetFID()) )
+   {
+      return SetFeature(poFeature);
+   }
+   else
+   {
+      return CreateFeature(poFeature);
+   }
+}
+
+/************************************************************************/
 /*                         SetAttributeFilter()                         */
 /************************************************************************/
 
@@ -2831,6 +2880,7 @@ int OGRGeoPackageTableLayer::TestCapability ( const char * pszCap )
         return m_poDS->GetUpdate() && m_bIsTable;
     }
     else if ( EQUAL(pszCap, OLCDeleteFeature) ||
+              EQUAL(pszCap, OLCUpsertFeature) ||
               EQUAL(pszCap, OLCRandomWrite) )
     {
         return m_poDS->GetUpdate() && m_pszFidColumn != nullptr;

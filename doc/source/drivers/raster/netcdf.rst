@@ -575,6 +575,12 @@ The :cpp:func:`GDALGroup::GetMDArrayNames` method supports the following options
   will not be listed.
 - GROUP_BY=SAME_DIMENSION. If set, single-dimensional variables will not be listed
 
+The :cpp:func:`GDALGroup::OpenMDArray` method supports the following options:
+
+- USE_DEFAULT_FILL_AS_NODATA=YES/NO. (GDAL >= 3.6) Defaults to NO. If set to YES, the default
+  fill value will be used as nodata when there is no _FillValue or missing_value
+  attribute (except on variables of type Byte, UByte, Char)
+
 The :cpp:func:`GDALGroup::CreateMDArray` method supports the following options:
 
 - NC_TYPE=NC_CHAR/NC_BYTE/NC_INT64/NC_UINT64: to overload the netCDF data type

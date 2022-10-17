@@ -32,7 +32,11 @@ Description
 
 This utility will retile a set of input tile(s). All the input tile(s) must
 be georeferenced in the same coordinate system and have a matching number of bands.
-Optionally pyramid levels are generated. It  is  possible to generate  shape file(s) for the tiled output.
+
+Optionally pyramid levels are generated. All pyramid levels are generated from the
+input tiles (not from previous levels).
+
+It is possible to generate shape file(s) for the tiled output.
 
 If your number of input tiles exhausts the command line buffer, use the general
 :ref:`--optfile <raster_common_options_optfile>` option

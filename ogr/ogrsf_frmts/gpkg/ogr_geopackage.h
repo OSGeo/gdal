@@ -122,6 +122,9 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
     int                 m_nSRID = -1; // Unknown Cartesain
     double              m_dfTMSMinX = 0.0;
     double              m_dfTMSMaxY = 0.0;
+    int                 m_nBandCountFromMetadata = 0;
+    std::unique_ptr<GDALColorTable> m_poCTFromMetadata{};
+    std::string         m_osTFFromMetadata{};
 
     int                 m_nOverviewCount = 0;
     GDALGeoPackageDataset** m_papoOverviewDS = nullptr;
@@ -254,8 +257,11 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
         virtual CPLErr      SetGeoTransform( double* padfGeoTransform ) override;
 
         virtual void        FlushCache(bool bAtClosing) override;
-        virtual CPLErr      IBuildOverviews( const char *, int, int *,
-                                             int, int *, GDALProgressFunc, void * ) override;
+        virtual CPLErr      IBuildOverviews( const char *,
+                                             int, const int *,
+                                             int, const int *,
+                                             GDALProgressFunc, void *,
+                                             CSLConstList papszOptions ) override;
 
         virtual int         GetLayerCount() override { return m_nLayers; }
         int                 Open( GDALOpenInfo* poOpenInfo );
@@ -528,6 +534,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     OGRErr              RenameFieldInAuxiliaryTables(
                             const char* pszOldName, const char* pszNewName);
 
+    bool                FeatureIDExists( GIntBig nFID );
+
     CPL_DISALLOW_COPY_ASSIGN(OGRGeoPackageTableLayer)
 
     public:
@@ -556,6 +564,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     void                ResetReading() override;
     OGRErr              ICreateFeature( OGRFeature *poFeater ) override;
     OGRErr              ISetFeature( OGRFeature *poFeature ) override;
+    OGRErr              IUpsertFeature( OGRFeature* poFeature ) override;
     OGRErr              DeleteFeature(GIntBig nFID) override;
     virtual void        SetSpatialFilter( OGRGeometry * ) override;
     virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override

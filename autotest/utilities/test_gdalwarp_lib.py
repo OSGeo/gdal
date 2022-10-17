@@ -2901,6 +2901,35 @@ def test_gdalwarp_lib_epsg_4326_to_esri_53037():
 
 
 ###############################################################################
+
+
+@pytest.mark.parametrize(
+    "resampleAlg", ["average", "mode", "min", "max", "med", "q1", "q3", "sum", "rms"]
+)
+def test_gdalwarp_lib_epsg_4326_to_esri_102020(resampleAlg):
+
+    # 6.3.1 might not be the lowest bound, but 6.0.0 definitely doesn't work for that test
+    if (
+        osr.GetPROJVersionMajor() * 10000
+        + osr.GetPROJVersionMinor() * 100
+        + osr.GetPROJVersionMicro()
+        < 60301
+    ):
+        pytest.skip("requires PROJ 6.3.1 or later")
+
+    # Scenario of https://github.com/OSGeo/gdal/issues/6155
+    out_ds = gdal.Warp(
+        "",
+        "../gdrivers/data/small_world.tif",
+        options="-f MEM -t_srs ESRI:102020 -te -3000000 -3000000 3000000 0 -ts 300 150 -r "
+        + resampleAlg,
+    )
+    # Test we don't have a weird spike at the antimeridian, "below" south pole
+    if resampleAlg != "sum":
+        assert struct.unpack("B" * 3, out_ds.ReadRaster(149, 100, 1, 1)) == (11, 10, 50)
+
+
+###############################################################################
 # Cleanup
 
 

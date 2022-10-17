@@ -1367,7 +1367,7 @@ int DIMAPDataset::ReadImageInformation2()
             iLvl*=2;
             ovrLevels[i]=iLvl;
         }
-        poVRTDS->IBuildOverviews("average",nSrcOverviews,ovrLevels.get(),0,nullptr,nullptr,nullptr);
+        poVRTDS->IBuildOverviews("average",nSrcOverviews,ovrLevels.get(),0,nullptr,nullptr,nullptr, nullptr);
     }
 
 #ifdef DEBUG_VERBOSE
@@ -1727,7 +1727,7 @@ void DIMAPDataset::SetMetadataFromXML(
             }
             continue;
         }
-        
+
         // Logic to support a parent element with many name/values.
         CPLXMLNode *psTarget = psParent->psChild;
         for( ; psTarget != nullptr && psTarget != psParent;

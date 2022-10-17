@@ -29,7 +29,7 @@ The driver also supports reading and writing the
 following non-linear geometry types: CIRCULARSTRING, COMPOUNDCURVE,
 CURVEPOLYGON, MULTICURVE and MULTISURFACE
 
-GeoPackage raster/tiles are supported. See the 
+GeoPackage raster/tiles are supported. See the
 :ref:`GeoPackage raster <raster.gpkg>` documentation page.
 
 Driver capabilities
@@ -183,6 +183,15 @@ The following open options are available:
    This corresponds to the nolock=1 query parameter described at
    https://www.sqlite.org/uri.html
 
+-  **IMMUTABLE**\= YES/NO (GDAL >= 3.5.3).
+   Whether the database should be opened by assuming that the file cannot be
+   modified by another process. This will skip any checks for change detection.
+   This can be useful for WAL enabled files on read-only storage.
+   GDAL will automatically try to turn it on when not being able to open
+   in read-only mode a WAL enabled file.
+   This corresponds to the immutable=1 query parameter described at
+   https://www.sqlite.org/uri.html
+
 Note: open options are typically specified with "-oo name=value" syntax
 in most OGR utilities, or with the ``GDALOpenEx()`` API call.
 
@@ -279,17 +288,17 @@ The following layer creation options are available:
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are 
+The following :ref:`configuration options <configoptions>` are
 available:
 
-- :decl_configoption:`OGR_SQLITE_JOURNAL` can be used to set the journal mode 
-  of the GeoPackage (and thus SQLite) file, see also 
+- :decl_configoption:`OGR_SQLITE_JOURNAL` can be used to set the journal mode
+  of the GeoPackage (and thus SQLite) file, see also
   https://www.sqlite.org/pragma.html#pragma_journal_mode.
 
-- :decl_configoption:`OGR_SQLITE_CACHE`: see 
+- :decl_configoption:`OGR_SQLITE_CACHE`: see
   :ref:`Performance hints <target_drivers_vector_gpkg_performance_hints>`.
-  
-- :decl_configoption:`OGR_SQLITE_SYNCHRONOUS`: see 
+
+- :decl_configoption:`OGR_SQLITE_SYNCHRONOUS`: see
   :ref:`Performance hints <target_drivers_vector_gpkg_performance_hints>`.
 
 - :decl_configoption:`OGR_SQLITE_LOAD_EXTENSIONS` =extension1,...,extensionN,ENABLE_SQL_LOAD_EXTENSION:
@@ -308,18 +317,18 @@ available:
   `pragma <http://www.sqlite.org/pragma.html>`__ . The syntax is
   ``OGR_SQLITE_PRAGMA = "pragma_name=pragma_value[,pragma_name2=pragma_value2]*"``.
 
-- :decl_configoption:`OGR_CURRENT_DATE`: the driver updates the GeoPackage 
-  ``last_change`` timestamp when the file is created or modified. If consistent 
-  binary output is required for reproducibility, the timestamp can be forced to 
+- :decl_configoption:`OGR_CURRENT_DATE`: the driver updates the GeoPackage
+  ``last_change`` timestamp when the file is created or modified. If consistent
+  binary output is required for reproducibility, the timestamp can be forced to
   a specific value by setting this global configuration option.
   When setting the option, take care to meet the specific time format
   requirement of the GeoPackage standard,
   e.g. `for version 1.2 <https://www.geopackage.org/spec120/#r15>`__.
 
-- :decl_configoption:`SQLITE_USE_OGR_VFS` =YES enables extra buffering/caching 
-  by the GDAL/OGR I/O layer and can speed up I/O. More information 
+- :decl_configoption:`SQLITE_USE_OGR_VFS` =YES enables extra buffering/caching
+  by the GDAL/OGR I/O layer and can speed up I/O. More information
   :ref:`here <target_user_virtual_file_systems_file_caching>`.
-  Be aware that no file locking will occur if this option is activated, so 
+  Be aware that no file locking will occur if this option is activated, so
   concurrent edits may lead to database corruption.
 
 Metadata
@@ -446,7 +455,7 @@ Level of support of GeoPackage Extensions
 Performance hints
 -----------------
 
-The same performance hints apply as those mentioned for the 
+The same performance hints apply as those mentioned for the
 :ref:`SQLite driver <target_drivers_vector_sqlite_performance_hints>`.
 
 Examples
@@ -462,9 +471,9 @@ Examples
 
       ogr2ogr -f GPKG filename.gpkg abc.shp
 
--  Update of an existing GeoPackage file – e.g. a GeoPackage template – 
-   by adding features to it from another GeoPackage file containing 
-   features according to the same or a backwards compatible database 
+-  Update of an existing GeoPackage file – e.g. a GeoPackage template –
+   by adding features to it from another GeoPackage file containing
+   features according to the same or a backwards compatible database
    schema.
 
    ::

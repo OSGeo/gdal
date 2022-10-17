@@ -91,7 +91,7 @@ def test_vrt_read_non_existing_source(filename):
     if ds is None:
         return
 
-    assert cs == 0
+    assert cs == -1
 
     ds.GetMetadata()
     ds.GetRasterBand(1).GetMetadata()
@@ -278,7 +278,7 @@ def test_vrt_read_7():
     gdal.FileFromMemBuffer(filename, content)
     ds = gdal.Open(filename)
     with gdaltest.error_handler():
-        assert ds.GetRasterBand(1).Checksum() == 0
+        assert ds.GetRasterBand(1).Checksum() == -1
     gdal.Unlink(filename)
 
 
@@ -606,8 +606,9 @@ def test_vrt_read_17():
 
     # Note: AveragedSource with resampling does not give consistent results
     # depending on the RasterIO() request
-    cs = vrt_ds.GetRasterBand(1).Checksum()
-    assert cs == 847
+    mem_ds = gdal.GetDriverByName("MEM").CreateCopy("", vrt_ds)
+    cs = mem_ds.GetRasterBand(1).Checksum()
+    assert cs == 799
 
 
 ###############################################################################
@@ -1409,7 +1410,7 @@ def test_vrt_invalid_source_band():
 </VRTDataset>"""
     ds = gdal.Open(vrt_text)
     with gdaltest.error_handler():
-        assert ds.GetRasterBand(1).Checksum() == 0
+        assert ds.GetRasterBand(1).Checksum() == -1
 
 
 def test_vrt_protocol():
@@ -1921,30 +1922,31 @@ def test_vrt_read_req_coordinates_almost_integer():
 # Test ComputeStatistics() mosaic optimization
 
 
-@pytest.mark.parametrize("approx_ok", [False, True])
-def test_vrt_read_compute_statistics_mosaic_optimization(approx_ok):
+@pytest.mark.parametrize("approx_ok,use_threads", [(False, True), (True, False)])
+def test_vrt_read_compute_statistics_mosaic_optimization(approx_ok, use_threads):
 
     src_ds = gdal.Translate("", gdal.Open("data/byte.tif"), format="MEM")
     src_ds1 = gdal.Translate("", src_ds, options="-of MEM -srcwin 0 0 8 20")
     src_ds2 = gdal.Translate("", src_ds, options="-of MEM -srcwin 8 0 12 20")
     vrt_ds = gdal.BuildVRT("", [src_ds1, src_ds2])
 
-    assert vrt_ds.GetRasterBand(1).ComputeRasterMinMax(
-        approx_ok
-    ) == src_ds.GetRasterBand(1).ComputeRasterMinMax(approx_ok)
+    with gdaltest.config_options({"GDAL_NUM_THREADS": "2"} if use_threads else {}):
+        assert vrt_ds.GetRasterBand(1).ComputeRasterMinMax(
+            approx_ok
+        ) == src_ds.GetRasterBand(1).ComputeRasterMinMax(approx_ok)
 
-    def callback(pct, message, user_data):
-        user_data[0] = pct
-        return 1  # 1 to continue, 0 to stop
+        def callback(pct, message, user_data):
+            user_data[0] = pct
+            return 1  # 1 to continue, 0 to stop
 
-    user_data = [0]
-    vrt_stats = vrt_ds.GetRasterBand(1).ComputeStatistics(
-        approx_ok, callback=callback, callback_data=user_data
-    )
-    assert user_data[0] == 1.0
-    assert vrt_stats == pytest.approx(
-        src_ds.GetRasterBand(1).ComputeStatistics(approx_ok)
-    )
+        user_data = [0]
+        vrt_stats = vrt_ds.GetRasterBand(1).ComputeStatistics(
+            approx_ok, callback=callback, callback_data=user_data
+        )
+        assert user_data[0] == 1.0
+        assert vrt_stats == pytest.approx(
+            src_ds.GetRasterBand(1).ComputeStatistics(approx_ok)
+        )
     if approx_ok:
         assert (
             vrt_ds.GetRasterBand(1).GetMetadataItem("STATISTICS_APPROXIMATE") == "YES"

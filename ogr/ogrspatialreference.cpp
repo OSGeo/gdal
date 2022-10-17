@@ -803,13 +803,25 @@ OGRSpatialReferenceH CPL_STDCALL OSRNewSpatialReference( const char *pszWKT )
 /*                        OGRSpatialReference()                         */
 /************************************************************************/
 
-/** Simple copy constructor. See also Clone().
+/** Copy constructor. See also Clone().
  * @param oOther other spatial reference
  */
 OGRSpatialReference::OGRSpatialReference(const OGRSpatialReference &oOther) :
     d(new Private())
 {
     *this = oOther;
+}
+
+/************************************************************************/
+/*                        OGRSpatialReference()                         */
+/************************************************************************/
+
+/** Move constructor.
+ * @param oOther other spatial reference
+ */
+OGRSpatialReference::OGRSpatialReference(OGRSpatialReference &&oOther) :
+    d(std::move(oOther.d))
+{
 }
 
 /************************************************************************/
@@ -919,6 +931,26 @@ OGRSpatialReference::operator=(const OGRSpatialReference &oSource)
             SetDataAxisToSRSAxisMapping( oSource.d->m_axisMapping );
 
         d->m_coordinateEpoch = oSource.d->m_coordinateEpoch;
+    }
+
+    return *this;
+}
+
+/************************************************************************/
+/*                             operator=()                              */
+/************************************************************************/
+
+/** Move assignment operator.
+ * @param oSource SRS to assign to *this
+ * @return *this
+ */
+OGRSpatialReference &
+OGRSpatialReference::operator=(OGRSpatialReference &&oSource)
+
+{
+    if( &oSource != this )
+    {
+        d = std::move(oSource.d);
     }
 
     return *this;
@@ -9738,6 +9770,125 @@ void OSRFreeSRSArray(OGRSpatialReferenceH* pahSRS)
 }
 
 /************************************************************************/
+/*                         FindBestMatch()                              */
+/************************************************************************/
+
+/**
+ * \brief Try to identify the best match between the passed SRS and a related SRS
+ * in a catalog.
+ *
+ * This is a wrapper over OGRSpatialReference::FindMatches() that takes care
+ * of filtering its output.
+ * Only matches whose confidence is greater or equal to nMinimumMatchConfidence
+ * will be considered. If there is a single match, it is returned.
+ * If there are several matches, only return the one under the pszPreferredAuthority,
+ * if there is a single one under that authority.
+ *
+ * @param nMinimumMatchConfidence Minimum match confidence (value between 0 and 100). If set to 0, 90 is used.
+ * @param pszPreferredAuthority Preferred CRS authority. If set to nullptr, "EPSG" is used.
+ * @param papszOptions NULL terminated list of options or NULL. No option is defined at time of writing.
+ *
+ * @return a new OGRSpatialReference* object to free with Release(), or nullptr
+ *
+ * @since GDAL 3.6
+ * @see OGRSpatialReference::FindMatches()
+ */
+OGRSpatialReference* OGRSpatialReference::FindBestMatch(
+                                           int nMinimumMatchConfidence,
+                                           const char* pszPreferredAuthority,
+                                           CSLConstList papszOptions) const
+{
+    CPL_IGNORE_RET_VAL(papszOptions); // ignored for now.
+
+    if( nMinimumMatchConfidence == 0 )
+        nMinimumMatchConfidence = 90;
+    if( pszPreferredAuthority == nullptr )
+        pszPreferredAuthority = "EPSG";
+
+    // Try to identify the CRS with the database
+    int nEntries = 0;
+    int* panConfidence = nullptr;
+    OGRSpatialReferenceH* pahSRS =
+        FindMatches(nullptr, &nEntries, &panConfidence);
+    if( nEntries == 1 && panConfidence[0] >= nMinimumMatchConfidence )
+    {
+        std::vector<double> adfTOWGS84(7);
+        if( GetTOWGS84(&adfTOWGS84[0], 7) != OGRERR_NONE )
+        {
+            adfTOWGS84.clear();
+        }
+
+        auto poSRS = OGRSpatialReference::FromHandle(pahSRS[0]);
+
+        auto poBaseGeogCRS = std::unique_ptr<OGRSpatialReference>(
+            poSRS->CloneGeogCS());
+
+        // If the base geographic SRS of the SRS is EPSG:4326
+        // with TOWGS84[0,0,0,0,0,0], then just use the official
+        // SRS code
+        // Same with EPSG:4258 (ETRS89), since it's the only known
+        // TOWGS84[] style transformation to WGS 84, and given the
+        // "fuzzy" nature of both ETRS89 and WGS 84, there's little
+        // chance that a non-NULL TOWGS84[] will emerge.
+        const char* pszAuthorityName = nullptr;
+        const char* pszAuthorityCode = nullptr;
+        const char* pszBaseAuthorityName = nullptr;
+        const char* pszBaseAuthorityCode = nullptr;
+        if( adfTOWGS84 == std::vector<double>(7) &&
+            (pszAuthorityName = poSRS->GetAuthorityName(nullptr)) != nullptr &&
+            EQUAL(pszAuthorityName, "EPSG") &&
+            (pszAuthorityCode = poSRS->GetAuthorityCode(nullptr)) != nullptr &&
+            (pszBaseAuthorityName = poBaseGeogCRS->GetAuthorityName(nullptr)) != nullptr &&
+            EQUAL(pszBaseAuthorityName, "EPSG") &&
+            (pszBaseAuthorityCode = poBaseGeogCRS->GetAuthorityCode(nullptr)) != nullptr &&
+            (EQUAL(pszBaseAuthorityCode, "4326") ||
+             EQUAL(pszBaseAuthorityCode, "4258")) )
+        {
+            poSRS->importFromEPSG(atoi(pszAuthorityCode));
+        }
+
+        CPLFree(pahSRS);
+        CPLFree(panConfidence);
+
+        return poSRS;
+    }
+    else
+    {
+        // If there are several matches >= nMinimumMatchConfidence, take the only one
+        // that is under pszPreferredAuthority
+        int iBestEntry = -1;
+        for(int i = 0; i < nEntries; i++ )
+        {
+            if( panConfidence[i] >= nMinimumMatchConfidence )
+            {
+                const char* pszAuthName =
+                    OGRSpatialReference::FromHandle(pahSRS[i])->GetAuthorityName(nullptr);
+                if( pszAuthName != nullptr && EQUAL(pszAuthName, pszPreferredAuthority) )
+                {
+                    if( iBestEntry < 0 )
+                        iBestEntry = i;
+                    else
+                    {
+                        iBestEntry = -1;
+                        break;
+                    }
+                }
+            }
+        }
+        if( iBestEntry >= 0 )
+        {
+            auto poRet = OGRSpatialReference::FromHandle(pahSRS[0])->Clone();
+            OSRFreeSRSArray(pahSRS);
+            CPLFree(panConfidence);
+            return poRet;
+        }
+    }
+    OSRFreeSRSArray(pahSRS);
+    CPLFree(panConfidence);
+    return nullptr;
+}
+
+/************************************************************************/
 /*                             SetTOWGS84()                             */
 /************************************************************************/
 
@@ -11202,6 +11353,8 @@ OGRErr OSRMorphFromESRI( OGRSpatialReferenceH hSRS )
  * OSRFreeSRSArray()
  *
  * @since GDAL 2.3
+ *
+ * @see OGRSpatialReference::FindBestMatch()
  */
 OGRSpatialReferenceH* OGRSpatialReference::FindMatches(
                                           char** papszOptions,

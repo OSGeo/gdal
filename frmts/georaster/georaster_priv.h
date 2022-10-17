@@ -234,11 +234,12 @@ public:
     CPLErr IBuildOverviews(
                const char* pszResampling,
                int nOverviews,
-               int* panOverviewList,
+               const int* panOverviewList,
                int nListBandsover,
-               int* panBandList,
+               const int* panBandList,
                GDALProgressFunc pfnProgress,
-               void* pProgresoversData ) override;
+               void* pProgresoversData,
+               CSLConstList papszOptions) override;
     CPLErr CreateMaskBand( int nFlags ) override;
     // cppcheck-suppress functionStatic
     OGRErr StartTransaction(int /* bForce */ =FALSE) override

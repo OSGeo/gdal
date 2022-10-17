@@ -302,7 +302,7 @@ def test_ogr_gpkg_6():
 
 
 ###############################################################################
-# Add a feature / read a feature / delete a feature
+# Add a feature / read a feature / set a feature / upsert a feature / delete a feature
 
 
 def test_ogr_gpkg_7():
@@ -367,9 +367,23 @@ def test_ogr_gpkg_7():
         lyr.TestCapability(ogr.OLCDeleteFeature) == 1
     ), "lyr.TestCapability(ogr.OLCDeleteFeature) != 1"
 
+    # Test upserting an existing feature
+    feat.SetField("dummy", "updated")
+    assert lyr.UpsertFeature(feat) == ogr.OGRERR_NONE, "cannot upsert existing feature"
+    upserted_feat = lyr.GetFeature(feat.GetFID())
+    assert (
+        upserted_feat.GetField("dummy") == "updated"
+    ), "upsert failed to update existing feature"
+
     # Delete a feature
     lyr.DeleteFeature(feat.GetFID())
     assert lyr.GetFeatureCount() == 1, "delete feature did not delete"
+
+    # Test upserting a non-existing feature
+    assert (
+        lyr.UpsertFeature(feat) == ogr.OGRERR_NONE
+    ), "cannot upsert non-existing feature"
+    assert lyr.GetFeatureCount() == 2, "upsert failed to add non-existing feature"
 
     # Test updating non-existing feature
     feat.SetFID(-10)
@@ -6725,3 +6739,67 @@ def test_ogr_gpkg_arrow_stream_numpy():
     ds = None
 
     ogr.GetDriverByName("GPKG").DeleteDataSource("/vsimem/test.gpkg")
+
+
+###############################################################################
+# Test opening a file in WAL mode on a read-only storage
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="Incorrect platform")
+def test_ogr_gpkg_immutable():
+
+    if os.getuid() == 0:
+        pytest.skip("running as root... skipping")
+
+    try:
+        os.mkdir("tmp/read_only_test_ogr_gpkg_immutable", 0o755)
+
+        ds = ogr.GetDriverByName("GPKG").CreateDataSource(
+            "tmp/read_only_test_ogr_gpkg_immutable/test.gpkg"
+        )
+        ds.CreateLayer("foo")
+        ds.ExecuteSQL("PRAGMA journal_mode = WAL")
+        ds = None
+
+        # Turn directory in read-only mode
+        os.chmod("tmp/read_only_test_ogr_gpkg_immutable", 0o555)
+
+        with gdaltest.error_handler():
+            assert (
+                gdal.OpenEx(
+                    "tmp/read_only_test_ogr_gpkg_immutable/test.gpkg",
+                    gdal.OF_VECTOR | gdal.OF_UPDATE,
+                )
+                is None
+            )
+            assert (
+                gdal.OpenEx(
+                    "tmp/read_only_test_ogr_gpkg_immutable/test.gpkg",
+                    gdal.OF_VECTOR,
+                    open_options=["IMMUTABLE=NO"],
+                )
+                is None
+            )
+
+        gdal.ErrorReset()
+        assert (
+            gdal.OpenEx(
+                "tmp/read_only_test_ogr_gpkg_immutable/test.gpkg",
+                gdal.OF_VECTOR,
+                open_options=["IMMUTABLE=YES"],
+            )
+            is not None
+        )
+        assert gdal.GetLastErrorMsg() == ""
+
+        gdal.ErrorReset()
+        with gdaltest.error_handler():
+            assert (
+                ogr.Open("tmp/read_only_test_ogr_gpkg_immutable/test.gpkg") is not None
+            )
+        assert gdal.GetLastErrorMsg() != ""
+
+    finally:
+        os.chmod("tmp/read_only_test_ogr_gpkg_immutable", 0o755)
+        os.unlink("tmp/read_only_test_ogr_gpkg_immutable/test.gpkg")
+        os.rmdir("tmp/read_only_test_ogr_gpkg_immutable")

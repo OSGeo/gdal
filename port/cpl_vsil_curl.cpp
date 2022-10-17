@@ -960,7 +960,7 @@ static bool Iso8601ToUnixTime(const char* pszDT, GIntBig* pnUnixTime)
 /*                   ManagePlanetaryComputerSigning()                   */
 /************************************************************************/
 
-void VSICurlHandle::ManagePlanetaryComputerSigning()
+void VSICurlHandle::ManagePlanetaryComputerSigning() const
 {
     if( !m_bPlanetaryComputerURLSigning )
         return;
@@ -1403,14 +1403,17 @@ retry:
                 // Add first bytes to cache
                 if( sWriteFuncData.pBuffer != nullptr )
                 {
-                    for( size_t nOffset = 0;
-                            nOffset + knDOWNLOAD_CHUNK_SIZE <= sWriteFuncData.nSize;
-                            nOffset += knDOWNLOAD_CHUNK_SIZE )
+                    size_t nOffset = 0;
+                    while( nOffset < sWriteFuncData.nSize )
                     {
+                        const size_t nToCache = std::min<size_t>(
+                            sWriteFuncData.nSize - nOffset,
+                            knDOWNLOAD_CHUNK_SIZE);
                         poFS->AddRegion(m_pszURL,
                                         nOffset,
-                                        knDOWNLOAD_CHUNK_SIZE,
+                                        nToCache,
                                         sWriteFuncData.pBuffer + nOffset);
+                        nOffset += nToCache;
                     }
                 }
             }
@@ -1579,7 +1582,7 @@ vsi_l_offset VSICurlHandle::Tell()
 /*                       GetRedirectURLIfValid()                        */
 /************************************************************************/
 
-CPLString VSICurlHandle::GetRedirectURLIfValid(bool& bHasExpired)
+CPLString VSICurlHandle::GetRedirectURLIfValid(bool& bHasExpired) const
 {
     bHasExpired = false;
     poFS->GetCachedFileProp(m_pszURL, oFileProp);
@@ -1773,45 +1776,7 @@ retry:
         return std::string();
     }
 
-    CPLString osEffectiveURL;
-    {
-        char *pszEffectiveURL = nullptr;
-        curl_easy_getinfo(hCurlHandle, CURLINFO_EFFECTIVE_URL, &pszEffectiveURL);
-        if( pszEffectiveURL )
-            osEffectiveURL = pszEffectiveURL;
-    }
-
-    if( !oFileProp.bS3LikeRedirect && !osEffectiveURL.empty() &&
-        strstr(osEffectiveURL, m_pszURL) == nullptr )
-    {
-        CPLDebug(poFS->GetDebugKey(),
-                 "Effective URL: %s", osEffectiveURL.c_str());
-        if( response_code >= 200 && response_code < 300 &&
-            sWriteFuncHeaderData.nTimestampDate > 0 &&
-            VSICurlIsS3LikeSignedURL(osEffectiveURL) &&
-            !VSICurlIsS3LikeSignedURL(m_pszURL) &&
-            CPLTestBool(CPLGetConfigOption("CPL_VSIL_CURL_USE_S3_REDIRECT",
-                                           "TRUE")) )
-        {
-            GIntBig nExpireTimestamp =
-                VSICurlGetExpiresFromS3LikeSignedURL(osEffectiveURL);
-            if( nExpireTimestamp > sWriteFuncHeaderData.nTimestampDate + 10 )
-            {
-                const int nValidity =
-                    static_cast<int>(nExpireTimestamp -
-                                     sWriteFuncHeaderData.nTimestampDate);
-                CPLDebug(poFS->GetDebugKey(),
-                         "Will use redirect URL for the next %d seconds",
-                         nValidity);
-                // As our local clock might not be in sync with server clock,
-                // figure out the expiration timestamp in local time.
-                oFileProp.bS3LikeRedirect = true;
-                oFileProp.nExpireTimestampLocal = time(nullptr) + nValidity;
-                oFileProp.osRedirectURL = osEffectiveURL;
-                poFS->SetCachedFileProp(m_pszURL, oFileProp);
-            }
-        }
-    }
+    UpdateRedirectInfo(hCurlHandle, sWriteFuncHeaderData);
 
     if( (response_code != 200 && response_code != 206 &&
          response_code != 225 && response_code != 226 &&
@@ -1950,6 +1915,57 @@ retry:
     curl_easy_cleanup(hCurlHandle);
 
     return osRet;
+}
+
+/************************************************************************/
+/*                      UpdateRedirectInfo()                            */
+/************************************************************************/
+
+void VSICurlHandle::UpdateRedirectInfo( CURL* hCurlHandle,
+                                        const WriteFuncStruct& sWriteFuncHeaderData )
+{
+    CPLString osEffectiveURL;
+    {
+        char *pszEffectiveURL = nullptr;
+        curl_easy_getinfo(hCurlHandle, CURLINFO_EFFECTIVE_URL, &pszEffectiveURL);
+        if( pszEffectiveURL )
+            osEffectiveURL = pszEffectiveURL;
+    }
+
+    if( !oFileProp.bS3LikeRedirect && !osEffectiveURL.empty() &&
+        strstr(osEffectiveURL, m_pszURL) == nullptr )
+    {
+        CPLDebug(poFS->GetDebugKey(),
+                 "Effective URL: %s", osEffectiveURL.c_str());
+
+        long response_code = 0;
+        curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
+        if( response_code >= 200 && response_code < 300 &&
+            sWriteFuncHeaderData.nTimestampDate > 0 &&
+            VSICurlIsS3LikeSignedURL(osEffectiveURL) &&
+            !VSICurlIsS3LikeSignedURL(m_pszURL) &&
+            CPLTestBool(CPLGetConfigOption("CPL_VSIL_CURL_USE_S3_REDIRECT",
+                                           "TRUE")) )
+        {
+            GIntBig nExpireTimestamp =
+                VSICurlGetExpiresFromS3LikeSignedURL(osEffectiveURL);
+            if( nExpireTimestamp > sWriteFuncHeaderData.nTimestampDate + 10 )
+            {
+                const int nValidity =
+                    static_cast<int>(nExpireTimestamp -
+                                     sWriteFuncHeaderData.nTimestampDate);
+                CPLDebug(poFS->GetDebugKey(),
+                         "Will use redirect URL for the next %d seconds",
+                         nValidity);
+                // As our local clock might not be in sync with server clock,
+                // figure out the expiration timestamp in local time.
+                oFileProp.bS3LikeRedirect = true;
+                oFileProp.nExpireTimestampLocal = time(nullptr) + nValidity;
+                oFileProp.osRedirectURL = osEffectiveURL;
+                poFS->SetCachedFileProp(m_pszURL, oFileProp);
+            }
+        }
+    }
 }
 
 /************************************************************************/
@@ -2777,6 +2793,146 @@ end:
 }
 
 /************************************************************************/
+/*                              PRead()                                 */
+/************************************************************************/
+
+size_t VSICurlHandle::PRead( void* pBuffer, size_t nSize, vsi_l_offset nOffset ) const
+{
+    // poFS has a global mutex
+    poFS->GetCachedFileProp(m_pszURL, oFileProp);
+    if( oFileProp.eExists == EXIST_NO )
+        return static_cast<size_t>(-1);
+
+    NetworkStatisticsFileSystem oContextFS(poFS->GetFSPrefix());
+    NetworkStatisticsFile oContextFile(m_osFilename);
+    NetworkStatisticsAction oContextAction("PRead");
+
+    std::string osURL;
+    {
+        std::lock_guard<std::mutex> oLock(m_oMutex);
+        ManagePlanetaryComputerSigning();
+        bool bHasExpired;
+        osURL = GetRedirectURLIfValid(bHasExpired);
+    }
+
+    CURL* hCurlHandle = curl_easy_init();
+
+    struct curl_slist* headers =
+        VSICurlSetOptions(hCurlHandle, osURL.c_str(), m_papszHTTPOptions);
+
+    WriteFuncStruct sWriteFuncData;
+    VSICURLInitWriteFuncStruct(&sWriteFuncData,
+                               nullptr, nullptr, nullptr);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA,
+                     &sWriteFuncData);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+                    VSICurlHandleWriteFunc);
+
+    WriteFuncStruct sWriteFuncHeaderData;
+    VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData,
+                               nullptr, nullptr, nullptr);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA,
+                     &sWriteFuncHeaderData);
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
+                     VSICurlHandleWriteFunc);
+    sWriteFuncHeaderData.bIsHTTP = STARTS_WITH(m_pszURL, "http");
+    sWriteFuncHeaderData.nStartOffset = nOffset;
+
+    sWriteFuncHeaderData.nEndOffset = nOffset + nSize-1;
+
+    char rangeStr[512] = {};
+    snprintf(rangeStr, sizeof(rangeStr),
+            CPL_FRMT_GUIB "-" CPL_FRMT_GUIB,
+            sWriteFuncHeaderData.nStartOffset,
+            sWriteFuncHeaderData.nEndOffset);
+
+#if 0
+    if( ENABLE_DEBUG )
+        CPLDebug(poFS->GetDebugKey(),
+                 "Downloading %s (%s)...", rangeStr, osURL.c_str());
+#endif
+
+    CPLString osHeaderRange;
+    if( sWriteFuncHeaderData.bIsHTTP )
+    {
+        osHeaderRange.Printf("Range: bytes=%s", rangeStr);
+        // So it gets included in Azure signature
+        headers = curl_slist_append(headers, osHeaderRange.data());
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, nullptr);
+    }
+    else
+    {
+        unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, rangeStr);
+    }
+
+    std::array<char,CURL_ERROR_SIZE+1> szCurlErrBuf;
+    szCurlErrBuf[0] = '\0';
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER,
+                     &szCurlErrBuf[0] );
+
+    {
+        std::lock_guard<std::mutex> oLock(m_oMutex);
+        auto newHeaders = const_cast<VSICurlHandle*>(this)->GetCurlHeaders("GET", headers);
+        headers = VSICurlMergeHeaders(headers, newHeaders);
+    }
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+
+    CURLM * hMultiHandle = poFS->GetCurlMultiHandleFor(osURL);
+    curl_multi_add_handle(hMultiHandle, hCurlHandle);
+    MultiPerform(hMultiHandle);
+
+    {
+        std::lock_guard<std::mutex> oLock(m_oMutex);
+        const_cast<VSICurlHandle*>(this)->UpdateRedirectInfo(hCurlHandle, sWriteFuncHeaderData);
+    }
+
+    long response_code = 0;
+    curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
+
+    if( ENABLE_DEBUG && szCurlErrBuf[0] != '\0' )
+    {
+        const char* pszErrorMsg = &szCurlErrBuf[0];
+        CPLDebug(poFS->GetDebugKey(),
+                 "PRead(%s), %s: response_code=%d, msg=%s",
+                 osURL.c_str(),
+                 rangeStr,
+                 static_cast<int>(response_code),
+                 pszErrorMsg);
+    }
+
+    size_t nRet;
+    if( (response_code != 206 && response_code != 225) ||
+        sWriteFuncData.nSize == 0 )
+    {
+        CPLDebug(poFS->GetDebugKey(),
+                 "Request for %s failed with response_code=%ld", rangeStr, response_code);
+        nRet = static_cast<size_t>(-1);
+    }
+    else
+    {
+        nRet = std::min(sWriteFuncData.nSize, nSize);
+        if( nRet > 0 )
+            memcpy(pBuffer, sWriteFuncData.pBuffer, nRet);
+    }
+
+    curl_multi_remove_handle(hMultiHandle, hCurlHandle);
+    VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
+    curl_easy_cleanup(hCurlHandle);
+    CPLFree(sWriteFuncData.pBuffer);
+    CPLFree(sWriteFuncHeaderData.pBuffer);
+    curl_slist_free_all(headers);
+
+    NetworkStatisticsLogger::LogGET(sWriteFuncData.nSize);
+
+#if 0
+    if( ENABLE_DEBUG )
+        CPLDebug(poFS->GetDebugKey(), "Download completed");
+#endif
+
+    return nRet;
+}
+
+/************************************************************************/
 /*                               Write()                                */
 /************************************************************************/
 
@@ -3371,7 +3527,7 @@ bool VSICurlFilesystemHandlerBase::IsAllowedFilename( const char* pszFilename )
 VSIVirtualHandle* VSICurlFilesystemHandlerBase::Open( const char *pszFilename,
                                                   const char *pszAccess,
                                                   bool bSetError,
-                                                  CSLConstList /* papszOptions */ )
+                                                  CSLConstList papszOptions )
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) &&
         !STARTS_WITH_CI(pszFilename, "/vsicurl?") )
@@ -3395,7 +3551,9 @@ VSIVirtualHandle* VSICurlFilesystemHandlerBase::Open( const char *pszFilename,
                                   nullptr, nullptr));
 
     const char* pszOptionVal =
-        CPLGetConfigOption( "GDAL_DISABLE_READDIR_ON_OPEN", "NO" );
+        CSLFetchNameValueDef(
+            papszOptions, "DISABLE_READDIR_ON_OPEN",
+            VSIGetPathSpecificOption( pszFilename, "GDAL_DISABLE_READDIR_ON_OPEN", "NO" ));
     const bool bSkipReadDir = !bListDir || bEmptyDir ||
         EQUAL(pszOptionVal, "EMPTY_DIR") || CPLTestBool(pszOptionVal) ||
         !AllowCachedDataFor(pszFilename);
@@ -4382,7 +4540,7 @@ int VSICurlFilesystemHandlerBase::Stat( const char *pszFilename,
                                   nullptr, nullptr));
 
     const char* pszOptionVal =
-        CPLGetConfigOption( "GDAL_DISABLE_READDIR_ON_OPEN", "NO" );
+        VSIGetPathSpecificOption( pszFilename, "GDAL_DISABLE_READDIR_ON_OPEN", "NO" );
     const bool bSkipReadDir = !bListDir || bEmptyDir ||
         EQUAL(pszOptionVal, "EMPTY_DIR") || CPLTestBool(pszOptionVal) ||
         !AllowCachedDataFor(pszFilename);

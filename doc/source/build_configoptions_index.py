@@ -2,39 +2,77 @@
 
 import fnmatch
 import os
+import re
 import sys
 
 dirname = sys.argv[1]
-outfile = sys.argv[2]
+build_xml_dirname = sys.argv[2]
+outfile = sys.argv[3]
 
+configoptions = {}
+
+# Parse .rst files
 matches = []
 for root, dirnames, filenames in os.walk(dirname):
     for filename in fnmatch.filter(filenames, "*.rst"):
         matches.append(os.path.join(root, filename))
 
-configoptions = {}
-
 for filename in matches:
     with open(filename, "rt", encoding="utf-8") as f:
         link = None
         for l in f.readlines():
-            l = l.rstrip("\n")
             if not link:
-                if not l.startswith(".. _") and l.endswith(":"):
-                    break
-                link = l[len(".. _") : -1]
+                match = re.search(r".. _(.*):", l)
+                if match:
+                    link = match.group(1)
             else:
-                pos = 0
-                while True:
-                    pos = l.find(":decl_configoption:`", pos)
-                    if pos < 0:
-                        break
-                    endpos = l.find("`", pos + len(":decl_configoption:`"))
-                    configoption = l[pos + len(":decl_configoption:`") : endpos]
+                for configoption in re.findall(r":decl_configoption:`[A-Z_0-9]+`", l):
                     if configoption not in configoptions:
                         configoptions[configoption] = set()
-                    configoptions[configoption].add(link)
-                    pos = endpos
+                    configoptions[configoption].add(":ref:`%s`" % link)
+
+# Parse and edit .xml files
+matches = []
+for root, dirnames, filenames in os.walk(build_xml_dirname):
+    for filename in fnmatch.filter(filenames, "class*.xml"):
+        matches.append(os.path.join(root, filename))
+
+for filename in matches:
+    output = ""
+    with open(filename, "rt", encoding="utf-8") as f:
+        link = None
+        for l in f.readlines():
+            match = re.search(r"<qualifiedname>(.*)</qualifiedname>", l)
+            if match:
+                link = match.group(1)
+            elif link:
+                for configoption in re.findall(r":decl_configoption:`[A-Z_0-9]+`", l):
+                    if configoption not in configoptions:
+                        configoptions[configoption] = set()
+                    configoptions[configoption].add(":cpp:func:`%s`" % link)
+
+                for configoption in re.findall(r"configuration option ([A-Z_0-9]+)", l):
+                    if configoption not in configoptions:
+                        configoptions[configoption] = set()
+                    configoptions[configoption].add(":cpp:func:`%s`" % link)
+                l = re.sub(
+                    r"configuration option ([A-Z_0-9]+)",
+                    r"configuration option <verbatim>embed:rst:inline :decl_configoption:`\1`</verbatim><htmlonly>\1</htmlonly><latexonly>\1</latexonly>",
+                    l,
+                )
+
+                for configoption in re.findall(r"([A-Z_0-9]+) configuration option", l):
+                    if configoption not in configoptions:
+                        configoptions[configoption] = set()
+                    configoptions[configoption].add(":cpp:func:`%s`" % link)
+                l = re.sub(
+                    r"([A-Z_0-9]+) configuration option",
+                    r"<verbatim>embed:rst:inline :decl_configoption:`\1`</verbatim><htmlonly>\1</htmlonly><latexonly>\1</latexonly> configuration option",
+                    l,
+                )
+
+            output += l
+    open(filename, "wt", encoding="utf-8").write(output)
 
 
 with open(outfile, "wt", encoding="utf-8") as f:
@@ -52,7 +90,7 @@ with open(outfile, "wt", encoding="utf-8") as f:
             f.write("\n")
             f.write("\n")
             for link in configoptions[key]:
-                f.write("  - :ref:`%s`\n" % link)
+                f.write("  - %s\n" % link)
         else:
             for link in configoptions[key]:
-                f.write(" :ref:`%s`\n" % link)
+                f.write(" %s\n" % link)
