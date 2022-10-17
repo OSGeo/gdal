@@ -1543,9 +1543,7 @@ OGRErr OGRHanaTableLayer::CreateField(OGRFieldDefn* srsField, int approxOK)
     attrColumns_.push_back(clmDesc);
     featureDefn_->AddFieldDefn(&dstField);
 
-    ClearQueryStatement();
-    ResetReading();
-    ResetPreparedStatements();
+    ColumnsChanged();
 
     return OGRERR_NONE;
 }
@@ -1635,9 +1633,7 @@ OGRErr OGRHanaTableLayer::CreateGeomField(OGRGeomFieldDefn* geomField, int)
          srid, newGeomField->IsNullable() == TRUE});
     featureDefn_->AddGeomFieldDefn(std::move(newGeomField));
 
-    ClearQueryStatement();
-    ResetReading();
-    ResetPreparedStatements();
+    ColumnsChanged();
 
     return OGRERR_NONE;
 }
@@ -1692,9 +1688,7 @@ OGRErr OGRHanaTableLayer::DeleteField(int field)
     attrColumns_.erase(it);
     OGRErr ret = featureDefn_->DeleteFieldDefn(field);
 
-    ClearQueryStatement();
-    ResetReading();
-    ResetPreparedStatements();
+    ColumnsChanged();
 
     return ret;
 }
@@ -1860,9 +1854,7 @@ OGRErr OGRHanaTableLayer::AlterFieldDefn(
         attrClmDesc.name.assign(newFieldDefn->GetDefault());
     }
 
-    ClearQueryStatement();
-    ResetReading();
-    ResetPreparedStatements();
+    ColumnsChanged();
 
     return OGRERR_NONE;
 }
@@ -1879,6 +1871,17 @@ void OGRHanaTableLayer::ClearBatches()
         insertFeatureStmtWithoutFID_->clearBatch();
     if (!updateFeatureStmt_.isNull())
         updateFeatureStmt_->clearBatch();
+}
+
+/************************************************************************/
+/*                          ColumnsChanged()                            */
+/************************************************************************/
+
+void OGRHanaTableLayer::ColumnsChanged()
+{
+    ClearQueryStatement();
+    ResetReading();
+    ResetPreparedStatements();
 }
 
 /************************************************************************/

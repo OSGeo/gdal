@@ -231,6 +231,7 @@ private:
     ColumnTypeInfo GetColumnTypeInfo(const OGRFieldDefn& field) const;
     OGRErr GetGeometryWkb(OGRFeature* feature, int fieldIndex, Binary& binary);
     void ClearBatches();
+    void ColumnsChanged();
 
 public:
     OGRHanaTableLayer(
