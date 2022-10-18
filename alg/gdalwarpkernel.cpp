@@ -6023,6 +6023,9 @@ static void GWKAverageOrModeThread( void* pData)
     const double dfErrorThreshold = CPLAtof(
         CSLFetchNameValueDef(poWK->papszWarpOptions, "ERROR_THRESHOLD", "0"));
 
+    const int nXMargin = 2 * std::max(1, static_cast<int>(std::ceil(1. / poWK->dfXScale)));
+    const int nYMargin = 2 * std::max(1, static_cast<int>(std::ceil(1. / poWK->dfYScale)));
+
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
 /* ==================================================================== */
@@ -6083,14 +6086,16 @@ static void GWKAverageOrModeThread( void* pData)
             if( !pabSuccess[iDstX] || !pabSuccess2[iDstX] )
                 continue;
 
-            if( padfX[iDstX] < poWK->nSrcXOff - 1 ||
-                padfX2[iDstX] < poWK->nSrcXOff - 1 ||
-                padfY[iDstX] < poWK->nSrcYOff - 1 ||
-                padfY2[iDstX] < poWK->nSrcYOff -1 ||
-                padfX[iDstX] > nSrcXSize + poWK->nSrcXOff + 1 ||
-                padfX2[iDstX] > nSrcXSize + poWK->nSrcXOff + 1 ||
-                padfY[iDstX] > nSrcYSize + poWK->nSrcYOff + 1 ||
-                padfY2[iDstX] > nSrcYSize + poWK->nSrcYOff + 1 )
+            // Add some checks so that padfX[iDstX] - poWK->nSrcXOff is in
+            // reasonable range (https://github.com/OSGeo/gdal/issues/2365)
+            if( !(padfX[iDstX] - poWK->nSrcXOff >= -nXMargin &&
+                  padfX2[iDstX] - poWK->nSrcXOff >= -nXMargin &&
+                  padfY[iDstX] - poWK->nSrcYOff >= -nYMargin &&
+                  padfY2[iDstX] - poWK->nSrcYOff >= -nYMargin &&
+                  padfX[iDstX] - poWK->nSrcXOff - nSrcXSize <= nXMargin &&
+                  padfX2[iDstX] - poWK->nSrcXOff - nSrcXSize <= nXMargin &&
+                  padfY[iDstX] - poWK->nSrcYOff - nSrcYSize <= nYMargin &&
+                  padfY2[iDstX] - poWK->nSrcYOff - nSrcYSize <= nYMargin) )
             {
                 continue;
             }
@@ -6107,25 +6112,28 @@ static void GWKAverageOrModeThread( void* pData)
             // [iDstX,iDstY]x[iDstX+1,iDstY+1] square back to source
             // coordinates, and take the bounding box of the got source
             // coordinates.
-            const double dfXMin = std::min(padfX[iDstX],padfX2[iDstX]) -
-                                    poWK->nSrcXOff;
-            int iSrcXMin =
-                std::max(static_cast<int>(floor(dfXMin + 1e-10)), 0);
-            const double dfXMax = std::max(padfX[iDstX],padfX2[iDstX])  -
-                                    poWK->nSrcXOff;
-            int iSrcXMax =
-                std::min(static_cast<int>(ceil(dfXMax - 1e-10)), nSrcXSize);
-            const double dfYMin = std::min(padfY[iDstX],padfY2[iDstX]) -
-                                    poWK->nSrcYOff;
-            int iSrcYMin =
-                std::max(static_cast<int>(floor(dfYMin + 1e-10)), 0);
-            const double dfYMax = std::max(padfY[iDstX],padfY2[iDstX]) -
-                                    poWK->nSrcYOff;
-            int iSrcYMax =
-                std::min(static_cast<int>(ceil(dfYMax - 1e-10)), nSrcYSize);
-
+            if( padfX[iDstX] > padfX2[iDstX] )
+                std::swap(padfX[iDstX], padfX2[iDstX]);
+            const double dfXMin = padfX[iDstX] - poWK->nSrcXOff;
+            int iSrcXMin = static_cast<int>(std::min(std::max(
+                    floor(dfXMin + 1e-10), 0.0),
+                    static_cast<double>(nSrcXSize)));
+            const double dfXMax = padfX2[iDstX] - poWK->nSrcXOff;
+            int iSrcXMax = static_cast<int>(std::min(
+                ceil(dfXMax - 1e-10), static_cast<double>(nSrcXSize)));
             if( iSrcXMin == iSrcXMax && iSrcXMax < nSrcXSize )
                 iSrcXMax++;
+
+            if( padfY[iDstX] > padfY2[iDstX] )
+                std::swap(padfY[iDstX], padfY2[iDstX]);
+            const double dfYMin = padfY[iDstX]- poWK->nSrcYOff;
+            int iSrcYMin = static_cast<int>(std::min(std::max(
+                    floor(dfYMin + 1e-10), 0.0),
+                    static_cast<double>(nSrcYSize)));
+            const double dfYMax = padfY2[iDstX] - poWK->nSrcYOff;
+            int iSrcYMax = static_cast<int>(
+                std::min(ceil(dfYMax - 1e-10),
+                static_cast<double>(nSrcYSize)));
             if( iSrcYMin == iSrcYMax && iSrcYMax < nSrcYSize )
                 iSrcYMax++;
 
