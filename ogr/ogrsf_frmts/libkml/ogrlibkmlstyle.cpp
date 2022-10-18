@@ -36,7 +36,6 @@
 #include "ogrlibkmlstyle.h"
 #include "ogr_libkml.h"
 
-CPL_CVSID("$Id$")
 
 using kmlbase::Color32;
 using kmldom::BalloonStylePtr;

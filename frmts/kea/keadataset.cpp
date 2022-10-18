@@ -32,7 +32,6 @@
 #include "keacopy.h"
 #include "../frmts/hdf5/hdf5vfl.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                     KEADatasetDriverUnload()                        */

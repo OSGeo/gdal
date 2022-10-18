@@ -31,7 +31,6 @@
 #include "gdal_frmts.h"
 #include "rawdataset.h"
 
-CPL_CVSID("$Id$")
 
 // http://www.autopano.net/wiki-en/Format_KRO
 

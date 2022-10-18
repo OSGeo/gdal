@@ -67,7 +67,6 @@
 #include "cpl_string.h"
 #include "cpl_hash_set.h"
 
-CPL_CVSID("$Id$")
 
 static int DEBUG_VSIPRELOAD = 0;
 static int DEBUG_VSIPRELOAD_ONLY_VSIL = 1;

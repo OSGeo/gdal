@@ -34,7 +34,6 @@
 #include <limits>
 #include <set>
 
-CPL_CVSID("$Id$")
 
 //! @cond Doxygen_Suppress
 GNMGraph::GNMGraph() {}

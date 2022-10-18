@@ -32,7 +32,6 @@
 #include "ogr_spatialref.h"
 #include "sdts_al.h"
 
-CPL_CVSID("$Id$")
 
 /**
  \file sdtsdataset.cpp

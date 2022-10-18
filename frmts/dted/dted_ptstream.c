@@ -29,7 +29,6 @@
 
 #include "dted_api.h"
 
-CPL_CVSID("$Id$")
 
 typedef struct {
     char     *pszFilename;

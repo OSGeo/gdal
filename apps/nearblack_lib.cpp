@@ -46,7 +46,6 @@
 #include "cpl_string.h"
 #include "gdal.h"
 
-CPL_CVSID("$Id$")
 
 typedef std::vector<int> Color;
 typedef std::vector< Color > Colors;

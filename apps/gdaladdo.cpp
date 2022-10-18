@@ -32,7 +32,6 @@
 #include "gdal_priv.h"
 #include "commonutils.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                               Usage()                                */

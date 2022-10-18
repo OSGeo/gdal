@@ -46,7 +46,6 @@
 #include "ogrgeojsonutils.h"
 #include "ogrsf_frmts.h"
 
-CPL_CVSID("$Id$")
 
 static CPLMutex* ghMutex = nullptr;
 static char* gpszSource = nullptr;

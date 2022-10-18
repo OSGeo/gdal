@@ -31,7 +31,6 @@
 #include "cpl_string.h"
 #include "ogr_nas.h"
 
-CPL_CVSID("$Id$")
 
 static const char * const apszURNNames[] =
 {

@@ -39,7 +39,6 @@
 #include "cpl_string.h"
 
 
-CPL_CVSID("$Id$")
 
 /* ==================================================================== */
 /*      Values related to OAuth2 authorization to use fusion            */

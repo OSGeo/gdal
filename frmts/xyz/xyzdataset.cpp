@@ -35,7 +35,6 @@
 #include <mutex>
 #include <vector>
 
-CPL_CVSID("$Id$")
 
 constexpr double RELATIVE_ERROR = 1e-3;
 

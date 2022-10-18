@@ -30,7 +30,6 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$")
 
 /**
  * \fn double OGRSurface::get_Area() const;

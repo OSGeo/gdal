@@ -57,7 +57,6 @@
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$")
 
 constexpr int HAS_MIN_FLAG = 0x1;
 constexpr int HAS_MAX_FLAG = 0x2;

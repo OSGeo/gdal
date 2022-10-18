@@ -43,7 +43,6 @@
 #include <limits>
 #include <map>
 
-CPL_CVSID("$Id$")
 
 #ifdef HAVE_XERCES
 

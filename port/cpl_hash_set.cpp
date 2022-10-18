@@ -35,7 +35,6 @@
 #include "cpl_error.h"
 #include "cpl_list.h"
 
-CPL_CVSID("$Id$")
 
 struct _CPLHashSet
 {

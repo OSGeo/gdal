@@ -30,7 +30,6 @@
 #include "gnm.h"
 #include "gnm_priv.h"
 
-CPL_CVSID("$Id$")
 
 /**
  * GNMGenericLayer

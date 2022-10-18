@@ -31,7 +31,6 @@
 #include "cpl_string.h"
 #include "rawdataset.h"
 
-CPL_CVSID("$Id$")
 
 static const char UTM_FORMAT[] =
     "PROJCS[\"%s / UTM zone %dN\",GEOGCS[%s,PRIMEM[\"Greenwich\",0],"

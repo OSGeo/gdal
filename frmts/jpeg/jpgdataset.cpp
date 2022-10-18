@@ -70,7 +70,6 @@ CPL_C_END
 #include "rawdataset.h"
 #include "vsidataio.h"
 
-CPL_CVSID("$Id$")
 
 #if defined(EXPECTED_JPEG_LIB_VERSION) && !defined(LIBJPEG_12_PATH)
 #if EXPECTED_JPEG_LIB_VERSION != JPEG_LIB_VERSION

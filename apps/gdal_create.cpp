@@ -37,7 +37,6 @@
 #include <memory>
 #include <vector>
 
-CPL_CVSID("$Id$")
 
 static void Usage()
 

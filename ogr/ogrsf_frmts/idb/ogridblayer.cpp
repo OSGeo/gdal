@@ -32,7 +32,6 @@
 #include "ogr_idb.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            OGRIDBLayer()                            */

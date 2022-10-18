@@ -32,7 +32,6 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 WMSMiniDriver_AGS::WMSMiniDriver_AGS() {}
 

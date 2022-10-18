@@ -36,7 +36,6 @@
 #include <algorithm>
 #include <set>
 
-CPL_CVSID("$Id$")
 
 namespace OGRODS {
 

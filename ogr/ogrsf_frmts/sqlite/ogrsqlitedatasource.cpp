@@ -101,7 +101,6 @@ void GDALOpenInfoDeclareFileNotToOpen(const char* pszFilename,
 void GDALOpenInfoUnDeclareFileNotToOpen(const char* pszFilename);
 
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                      OGRSQLiteInitOldSpatialite()                    */

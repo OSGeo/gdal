@@ -36,7 +36,6 @@
 
 #include <mutex>
 
-CPL_CVSID("$Id$")
 
 #ifndef SQLColumns_TABLE_CAT
 #define SQLColumns_TABLE_CAT 1

@@ -49,7 +49,6 @@
 #include "ogr_core.h"
 #include "sqlite3.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                     OGRSQLiteDriverIdentify()                        */

@@ -33,7 +33,6 @@
 
 #include "ogrdxf_polyline_smooth.h"
 
-CPL_CVSID("$Id$")
 
 static OGRErr DWGCollectBoundaryLoop( OdDbHatchPtr poHatch, int iLoop,
                                       OGRGeometryCollection *poGC );

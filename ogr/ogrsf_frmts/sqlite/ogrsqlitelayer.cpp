@@ -59,7 +59,6 @@
 #include "ogrsf_frmts.h"
 #include "sqlite3.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           OGRSQLiteLayer()                           */

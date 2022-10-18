@@ -38,7 +38,6 @@
 
 //! @cond Doxygen_Suppress
 
-CPL_CVSID("$Id$")
 
 class OGRGenSQLGeomFieldDefn final: public OGRGeomFieldDefn
 {

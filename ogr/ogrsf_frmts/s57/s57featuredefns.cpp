@@ -32,7 +32,6 @@
 #include "ogr_api.h"
 #include "s57.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                     S57GenerateGeomFeatureDefn()                     */

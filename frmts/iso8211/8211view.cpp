@@ -31,7 +31,6 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 static void ViewRecordField( DDFField * poField );
 static int ViewSubfield( DDFSubfieldDefn *poSFDefn,

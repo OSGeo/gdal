@@ -30,7 +30,6 @@
 #include "cpl_error.h"
 #include "msg_basic_types.h"
 
-CPL_CVSID("$Id$")
 
 #include <stdio.h>
 

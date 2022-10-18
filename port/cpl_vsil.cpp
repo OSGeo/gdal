@@ -61,7 +61,6 @@
 #undef GetDiskFreeSpace
 #endif
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                             VSIReadDir()                             */

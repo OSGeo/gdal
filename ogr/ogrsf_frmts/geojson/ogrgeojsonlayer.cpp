@@ -49,7 +49,6 @@
 #include "ogr_geojson.h"
 #include "ogrgeojsonreader.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                       STATIC MEMBERS DEFINITION                      */

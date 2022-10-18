@@ -45,7 +45,6 @@
 #include "ogr_p.h"
 #include "ogr_geometry.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          GMLFeatureClass()                           */

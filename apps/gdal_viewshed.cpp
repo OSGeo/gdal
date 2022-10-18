@@ -36,7 +36,6 @@
 #include "ogr_spatialref.h"
 #include "commonutils.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                               Usage()                                */

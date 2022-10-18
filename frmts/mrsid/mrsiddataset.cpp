@@ -39,7 +39,6 @@
 #include <geo_normalize.h>
 #include <geovalues.h>
 
-CPL_CVSID("$Id$")
 
 CPL_C_START
 double GTIFAngleToDD( double dfAngle, int nUOMAngle );

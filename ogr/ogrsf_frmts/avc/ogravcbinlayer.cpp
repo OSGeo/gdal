@@ -33,7 +33,6 @@
 
 #include <cstdlib>
 
-CPL_CVSID("$Id$")
 
 constexpr int SERIAL_ACCESS_FID = INT_MIN;
 

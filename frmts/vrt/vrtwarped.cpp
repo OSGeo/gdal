@@ -53,7 +53,6 @@
 #include "gdalwarper.h"
 #include "ogr_geometry.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                      GDALAutoCreateWarpedVRT()                       */

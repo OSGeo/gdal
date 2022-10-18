@@ -53,7 +53,6 @@
 #include "filegdbtable.h"
 #include "ogr_swq.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                      OGROpenFileGDBLayer()                           */

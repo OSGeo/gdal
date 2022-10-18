@@ -32,7 +32,6 @@
 #include "ogr_srs_api.h"
 #include "rawdataset.h"
 
-CPL_CVSID("$Id$")
 
 /**
 

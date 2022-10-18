@@ -47,7 +47,6 @@
 #include "gdal_frmts.h"
 #include "gdal_priv.h"
 
-CPL_CVSID("$Id$")
 
 constexpr size_t MAX_METADATA_LEN = 32768;
 

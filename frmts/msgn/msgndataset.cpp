@@ -39,7 +39,6 @@
 
 using namespace msg_native_format;
 
-CPL_CVSID("$Id$")
 
 typedef enum {
     MODE_VISIR,     // Visible and Infrared bands (1 through 11) in 10-bit raw mode

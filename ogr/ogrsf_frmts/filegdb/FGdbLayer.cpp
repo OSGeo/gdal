@@ -47,7 +47,6 @@
 // and requesting each feature in a separate request.
 #define WORKAROUND_CRASH_ON_CDF_WITH_BINARY_FIELD
 
-CPL_CVSID("$Id$")
 
 using std::string;
 using std::wstring;

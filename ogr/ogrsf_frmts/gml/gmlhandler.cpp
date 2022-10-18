@@ -54,7 +54,6 @@
 #  include "ogr_xerces.h"
 #endif
 
-CPL_CVSID("$Id$")
 
 #ifdef HAVE_XERCES
 

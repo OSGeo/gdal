@@ -99,7 +99,6 @@ void OGRAPISPYCPLSetThreadLocalConfigOption(const char*, const char*);
 // Uncomment to get list of options that have been fetched and set.
 // #define DEBUG_CONFIG_OPTIONS
 
-CPL_CVSID("$Id$")
 
 static CPLMutex *hConfigMutex = nullptr;
 static volatile char **g_papszConfigOptions = nullptr;

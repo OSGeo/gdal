@@ -39,7 +39,6 @@
 
 #include "proj.h"
 
-CPL_CVSID("$Id$")
 
 bool FindSRS( const char *pszInput, OGRSpatialReference &oSRS );
 CPLErr PrintSRS( const OGRSpatialReference &oSRS,

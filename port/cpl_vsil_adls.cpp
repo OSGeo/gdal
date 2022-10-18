@@ -42,7 +42,6 @@
 
 #include "cpl_azure.h"
 
-CPL_CVSID("$Id$")
 
 #ifndef HAVE_CURL
 

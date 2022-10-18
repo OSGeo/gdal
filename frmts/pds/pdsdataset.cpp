@@ -49,7 +49,6 @@ constexpr double NULL3 = -3.4028226550889044521e+38;
 #include "cpl_safemaths.hpp"
 #include "vicardataset.h"
 
-CPL_CVSID("$Id$")
 
 enum PDSLayout
 {

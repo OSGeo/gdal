@@ -33,7 +33,6 @@
 #include "pcrasterdataset.h"
 #include "pcrasterutil.h"
 
-CPL_CVSID("$Id$")
 
 /*!
   \file

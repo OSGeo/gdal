@@ -36,7 +36,6 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
-CPL_CVSID("$Id$")
 
 constexpr int neighbourhood_size_75[4] = { 23, 47, 74, 173 };
 constexpr int bits_per_level_by_busycode_75[4/*busy code*/][4/*level*/] = {

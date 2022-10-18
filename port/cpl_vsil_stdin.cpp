@@ -54,7 +54,6 @@
 #include <fcntl.h>
 #endif
 
-CPL_CVSID("$Id$")
 
 static std::string gosStdinFilename{};
 static FILE* gStdinFile = stdin;

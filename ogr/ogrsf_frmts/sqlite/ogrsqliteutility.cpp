@@ -38,7 +38,6 @@
 #include "cpl_error.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$")
 
 SQLResult::SQLResult(char** result, int nRow, int nCol)
     : papszResult(result), nRowCount(nRow), nColCount(nCol) {

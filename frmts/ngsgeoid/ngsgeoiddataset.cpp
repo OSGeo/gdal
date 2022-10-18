@@ -32,7 +32,6 @@
 #include "gdal_pam.h"
 #include "ogr_srs_api.h"
 
-CPL_CVSID("$Id$")
 
 #define HEADER_SIZE (4 * 8 + 3 * 4)
 

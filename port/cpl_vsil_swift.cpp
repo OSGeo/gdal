@@ -42,7 +42,6 @@
 
 #include "cpl_swift.h"
 
-CPL_CVSID("$Id$")
 
 #ifndef HAVE_CURL
 

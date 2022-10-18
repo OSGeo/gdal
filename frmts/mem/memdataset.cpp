@@ -48,7 +48,6 @@
 #include "gdal.h"
 #include "gdal_frmts.h"
 
-CPL_CVSID("$Id$")
 
 struct MEMDataset::Private
 {

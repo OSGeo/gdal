@@ -38,7 +38,6 @@
 
 #include "../mem/memdataset.h"
 
-CPL_CVSID("$Id$")
 
 #undef NOISY_DEBUG
 

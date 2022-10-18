@@ -52,7 +52,6 @@
 #include "ogr_feature.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$")
 
 /*=====================================================================
  *                      class TABDATFile

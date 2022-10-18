@@ -67,7 +67,6 @@
 #include "ogrlayerdecorator.h"
 #include "ogrsf_frmts.h"
 
-CPL_CVSID("$Id$")
 
 typedef enum
 {

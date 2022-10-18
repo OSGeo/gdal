@@ -56,7 +56,6 @@
 
 #endif
 
-CPL_CVSID("$Id$")
 
 /****************************************************/
 /*      SQLite is absolutely required in order to   */

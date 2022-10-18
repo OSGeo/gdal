@@ -28,7 +28,6 @@
 
 #include "ogr_plscenes.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         OGRPLScenesIdentify()                        */

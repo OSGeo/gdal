@@ -30,7 +30,6 @@
 #include "cpl_string.h"
 #include "ershdrnode.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                             ERSHdrNode()                             */

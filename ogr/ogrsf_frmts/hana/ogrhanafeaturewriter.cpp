@@ -29,7 +29,6 @@
 #include "ogrhanafeaturewriter.h"
 #include <limits>
 
-CPL_CVSID("$Id$")
 
 namespace OGRHANA {
 namespace {

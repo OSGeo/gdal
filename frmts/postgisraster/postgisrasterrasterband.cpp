@@ -35,7 +35,6 @@
  **********************************************************************/
 #include "postgisraster.h"
 
-CPL_CVSID("$Id$")
 
 /**
  * \brief Constructor.

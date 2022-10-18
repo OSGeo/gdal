@@ -38,7 +38,6 @@
 
 #include <cstdlib>
 
-CPL_CVSID("$Id$")
 
 // Specification at
 // https://www.nrcan.gc.ca/sites/www.nrcan.gc.ca/files/earthsciences/pdf/gpshgrid_e.pdf

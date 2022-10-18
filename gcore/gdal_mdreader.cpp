@@ -62,7 +62,6 @@
 #include "mdreader/reader_rdk1.h"
 #include "mdreader/reader_spot.h"
 
-CPL_CVSID("$Id$")
 
 /**
  * The RPC parameters names

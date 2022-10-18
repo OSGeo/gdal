@@ -38,7 +38,6 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 constexpr int DEFAULT_BASE_START_INDEX = 0;
 constexpr int DEFAULT_PAGE_SIZE = 100;

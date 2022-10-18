@@ -39,7 +39,6 @@
 
 /* g++ -DHAVE_EXPAT -fPIC -g -Wall ogr/ogrsf_frmts/osm/ogrosmdriver.cpp ogr/ogrsf_frmts/osm/ogrosmdatasource.cpp ogr/ogrsf_frmts/osm/ogrosmlayer.cpp -Iport -Igcore -Iogr -Iogr/ogrsf_frmts/osm -Iogr/ogrsf_frmts/mitab -Iogr/ogrsf_frmts -shared -o ogr_OSM.so -L. -lgdal */
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                      OGROSMDriverIdentify()                          */

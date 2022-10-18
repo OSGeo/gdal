@@ -31,7 +31,6 @@
 
 #include <cstddef>
 
-CPL_CVSID("$Id$")
 
 #ifdef HAVE_LIBXML2
 

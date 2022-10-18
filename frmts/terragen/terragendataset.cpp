@@ -110,7 +110,6 @@
 
 #include <algorithm>
 
-// CPL_CVSID("$Id$")
 
 const double kdEarthCircumPolar = 40007849;
 const double kdEarthCircumEquat = 40075004;

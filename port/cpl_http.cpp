@@ -74,7 +74,6 @@
 
 #endif // HAVE_CURL
 
-CPL_CVSID("$Id$")
 
 // list of named persistent http sessions
 

@@ -32,7 +32,6 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$")
 
 typedef enum eCalibration_t {
     Sigma0 = 0,

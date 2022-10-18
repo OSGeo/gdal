@@ -38,7 +38,6 @@
 
 #include "gdal_frmts.h"
 
-CPL_CVSID("$Id$")
 
 namespace GDAL
 {

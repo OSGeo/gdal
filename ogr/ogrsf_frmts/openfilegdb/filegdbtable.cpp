@@ -52,7 +52,6 @@
 #include "ogrpgeogeometry.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$")
 
 #define UUID_SIZE_IN_BYTES              16
 

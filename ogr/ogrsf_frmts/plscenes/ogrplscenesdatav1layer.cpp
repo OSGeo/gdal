@@ -30,7 +30,6 @@
 #include "ogrgeojsonreader.h"
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           GetFieldCount()                            */

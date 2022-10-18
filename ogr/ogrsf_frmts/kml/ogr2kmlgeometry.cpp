@@ -42,7 +42,6 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$")
 
 constexpr double EPSILON = 1e-8;
 

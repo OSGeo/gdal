@@ -41,7 +41,6 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 /* used by usgsdemdataset.cpp */
 GDALDataset *USGSDEMCreateCopy( const char *, GDALDataset *, int, char **,
