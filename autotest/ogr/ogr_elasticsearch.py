@@ -342,6 +342,25 @@ def test_ogr_elasticsearch_1():
     ret = lyr.SetFeature(feat)
     assert ret == 0
 
+    # Upsert with non-existing id
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat["_id"] = "upsert_id"
+    feat.SetField("str_field", "original")
+    numFeatures = lyr.GetFeatureCount()
+    assert lyr.UpsertFeature(feat) == ogr.OGRERR_NONE
+    assert lyr.GetFeatureCount() == numFeatures + 1
+
+    # Upsert with existing id
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat["_id"] = "upsert_id"
+    feat.SetField("str_field", "updated")
+    assert lyr.UpsertFeature(feat) == ogr.OGRERR_NONE
+
+    # Verify that we have upserted an existing feature
+    feat = lyr.GetFeature("upsert_id")
+    assert feat is not None
+    assert feat.GetField("str_field") == "updated"
+
     # With explicit GEOM_MAPPING_TYPE=GEO_POINT
     gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch/foo3&CUSTOMREQUEST=PUT", "{}")
     gdal.FileFromMemBuffer(
@@ -1152,6 +1171,10 @@ def test_ogr_elasticsearch_4():
     lyr.ResetReading()
     with gdaltest.error_handler():
         ret = lyr.SetFeature(lyr.GetNextFeature())
+    assert ret != 0
+
+    with gdaltest.error_handler():
+        ret = lyr.UpsertFeature(lyr.GetNextFeature())
     assert ret != 0
 
     with gdaltest.error_handler():
