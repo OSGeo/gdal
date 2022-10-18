@@ -510,6 +510,11 @@ GDALDataset *SENTINEL2Dataset::Open( GDALOpenInfo * poOpenInfo )
         CPLString osBasename(CPLGetBasename(pszJustFilename));
         CPLString osFilename(poOpenInfo->pszFilename);
         CPLString osMTD(osBasename);
+        // Normally given above constraints, osMTD.size() should be >= 16
+        // but if pszJustFilename is too long, CPLGetBasename() will return
+        // an empty string.
+        if( osMTD.size() < 16 )
+            return nullptr;
         osMTD[9] = 'M';
         osMTD[10] = 'T';
         osMTD[11] = 'D';
