@@ -1,7 +1,7 @@
 /**********************************************************************
  * $Id$
  *
- * Name:     cpl_string.h
+ * Name:     cpl_mask.h
  * Project:  CPL - Common Portability Library
  * Purpose:  Bitmask manipulation functions
  * Author:   Daniel Baston, dbaston@gmail.com
