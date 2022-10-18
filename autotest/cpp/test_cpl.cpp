@@ -4086,6 +4086,7 @@ namespace tut
 
         VSIFree(m);
         m = CPLMaskCreate(sz, false);
+        auto m2 = CPLMaskCreate(sz, false);
 
         // Mask is unset by default
         for (std::size_t i = 0; i < sz; i++) {
@@ -4119,7 +4120,6 @@ namespace tut
             }
         }
 
-        auto m2 = CPLMaskCreate(sz, false);
         CPLMaskSet(m2, 36);
         CPLMaskMerge(m2, m, sz);
 
