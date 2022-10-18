@@ -35,7 +35,6 @@
    #include "gnm_frmts.h"
 #endif
 
-CPL_CVSID("$Id$")
 
 #ifdef notdef
 // we may have a use for this some day

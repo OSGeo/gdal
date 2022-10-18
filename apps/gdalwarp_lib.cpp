@@ -79,7 +79,6 @@
 constexpr int OVR_LEVEL_AUTO = -2;
 constexpr int OVR_LEVEL_NONE = -1;
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                        GDALWarpAppOptions                            */

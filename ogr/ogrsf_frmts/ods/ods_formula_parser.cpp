@@ -106,7 +106,6 @@
 #include "cpl_string.h"
 #include "ods_formula.h"
 
-CPL_CVSID("$Id$")
 
 #define YYSTYPE  ods_formula_node*
 
@@ -564,11 +563,11 @@ static const yytype_int8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,    90,    90,    95,    95,    99,   104,   109,   114,   120,
-     127,   135,   142,   149,   155,   162,   170,   177,   182,   189,
-     196,   203,   210,   217,   224,   231,   238,   245,   263,   270,
-     277,   284,   291,   298,   305,   312,   318,   325,   331,   336,
-     342,   349
+       0,    89,    89,    94,    94,    98,   103,   108,   113,   119,
+     126,   134,   141,   148,   154,   161,   169,   176,   181,   188,
+     195,   202,   209,   216,   223,   230,   237,   244,   262,   269,
+     276,   283,   290,   297,   304,   311,   317,   324,   330,   335,
+     341,   348
 };
 #endif
 

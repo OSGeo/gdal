@@ -40,7 +40,6 @@
 
 #include "ogr_geometry.h"
 
-CPL_CVSID("$Id$")
 
 static char *GetDataBlockName(const char *);
 

@@ -34,7 +34,6 @@
 #include "ogr_srs_api.h"
 #include "timedelta.hpp"
 
-CPL_CVSID("$Id$")
 
 CPL_C_START
 #include "EnvisatFile.h"

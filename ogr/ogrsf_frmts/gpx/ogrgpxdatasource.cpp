@@ -47,7 +47,6 @@
 #include "ogrsf_frmts.h"
 
 
-CPL_CVSID("$Id$")
 
 constexpr int SPACE_FOR_METADATA = 160;
 

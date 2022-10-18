@@ -33,7 +33,6 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*               HTTPFetchContentDispositionFilename()                 */

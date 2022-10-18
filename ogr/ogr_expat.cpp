@@ -39,7 +39,6 @@
 #include "cpl_error.h"
 
 
-CPL_CVSID("$Id$")
 
 constexpr size_t OGR_EXPAT_MAX_ALLOWED_ALLOC = 10000000;
 

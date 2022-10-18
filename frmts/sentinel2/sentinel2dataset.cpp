@@ -50,7 +50,6 @@
 
 #define DIGIT_ZERO '0'
 
-CPL_CVSID("$Id$")
 
 CPL_C_START
 // TODO: Leave this declaration while Sentinel2 folks use this as a

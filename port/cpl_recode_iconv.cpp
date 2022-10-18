@@ -27,7 +27,6 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 #ifdef CPL_RECODE_ICONV
 

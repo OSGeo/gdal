@@ -40,7 +40,6 @@ void CPL_DLL VSIInstallCryptFileHandler();
 void CPL_DLL VSISetCryptKey( const GByte* pabyKey, int nKeySize );
 CPL_C_END
 
-CPL_CVSID("$Id$")
 
 constexpr char VSICRYPT_PREFIX[] = "/vsicrypt/";
 

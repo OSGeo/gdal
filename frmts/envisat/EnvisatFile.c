@@ -35,7 +35,6 @@
 #  include "cpl_conv.h"
 #  include "EnvisatFile.h"
 
-CPL_CVSID("$Id$")
 
 #else
 #  include "APP/app.h"

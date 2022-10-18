@@ -41,7 +41,6 @@
 #include <algorithm>
 #include <memory>
 
-CPL_CVSID("$Id$")
 
 #ifdef _WIN32
 #define rint(x) floor((x) + 0.5)

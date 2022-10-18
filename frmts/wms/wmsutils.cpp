@@ -28,7 +28,6 @@
 
 #include "wmsdriver.h"
 
-CPL_CVSID("$Id$")
 
 CPLString ProjToWKT(const CPLString &proj) {
     char* wkt = nullptr;

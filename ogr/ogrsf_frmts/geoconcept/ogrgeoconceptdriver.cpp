@@ -32,7 +32,6 @@
 #include "ogrgeoconceptdatasource.h"
 #include "ogrgeoconceptdriver.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          ~OGRGeoconceptDriver()                      */

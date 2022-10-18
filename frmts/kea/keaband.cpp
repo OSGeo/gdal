@@ -38,7 +38,6 @@
 #include <vector>
 #include <limits>
 
-CPL_CVSID("$Id$")
 
 // constructor
 KEARasterBand::KEARasterBand( KEADataset *pDataset, int nSrcBand, GDALAccess eAccessIn, kealib::KEAImageIO *pImageIO, LockedRefCount *pRefCount ):

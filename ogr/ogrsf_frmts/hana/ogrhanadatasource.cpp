@@ -45,7 +45,6 @@
 #include <sstream>
 #include <vector>
 
-CPL_CVSID("$Id$")
 
 using namespace OGRHANA;
 

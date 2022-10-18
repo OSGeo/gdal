@@ -60,7 +60,6 @@
 
 #include "proj.h"
 
-CPL_CVSID("$Id$")
 
 static int GetMinBitsForPair(
     const bool pabSigned[], const bool pabFloating[], const int panBits[])

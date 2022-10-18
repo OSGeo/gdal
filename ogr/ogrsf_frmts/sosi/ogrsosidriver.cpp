@@ -32,7 +32,6 @@
 
 #include "ogr_sosi.h"
 
-CPL_CVSID("$Id$")
 
 static int bFYBAInit = FALSE;
 static std::mutex oMutex;

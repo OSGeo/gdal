@@ -50,7 +50,6 @@
 #include <utility>
 #include <set>
 
-CPL_CVSID("$Id$")
 
 struct BAGRefinementGrid
 {

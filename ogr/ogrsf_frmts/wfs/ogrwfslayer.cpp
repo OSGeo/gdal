@@ -33,7 +33,6 @@
 #include "cpl_http.h"
 #include "parsexsd.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                      OGRWFSRecursiveUnlink()                         */

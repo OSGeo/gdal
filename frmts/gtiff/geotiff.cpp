@@ -103,7 +103,6 @@
 #include "webp/encode.h"
 #endif
 
-CPL_CVSID("$Id$")
 
 #define STRINGIFY(x) #x
 #define XSTRINGIFY(x) STRINGIFY(x)

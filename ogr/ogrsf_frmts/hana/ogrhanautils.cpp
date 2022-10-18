@@ -30,7 +30,6 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 namespace OGRHANA {
 

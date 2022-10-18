@@ -31,7 +31,6 @@
 
 #include <map>
 
-CPL_CVSID("$Id$")
 
 //! @cond Doxygen_Suppress
 

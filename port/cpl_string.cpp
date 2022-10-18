@@ -65,7 +65,6 @@
 #define va_copy __va_copy
 #endif
 
-CPL_CVSID("$Id$")
 
 /*=====================================================================
                     StringList manipulation functions.

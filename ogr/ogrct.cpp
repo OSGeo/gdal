@@ -49,7 +49,6 @@
 #include "proj.h"
 #include "proj_experimental.h"
 
-CPL_CVSID("$Id$")
 
 #ifdef DEBUG_PERF
 static double g_dfTotalTimeCRStoCRS = 0;

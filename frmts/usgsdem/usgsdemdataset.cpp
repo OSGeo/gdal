@@ -36,7 +36,6 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 typedef struct {
     double      x;

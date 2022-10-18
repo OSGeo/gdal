@@ -42,7 +42,6 @@ static XSModel* getGrammarPool(XMLGrammarPool* pool)
 
 #include <list>
 
-CPL_CVSID("$Id$")
 
 static OGRwkbGeometryType GetOGRGeometryType( XSTypeDefinition* poTypeDef );
 

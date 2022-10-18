@@ -35,7 +35,6 @@
 #include "gdal.h"
 #include "cpl_error.h"
 
-CPL_CVSID("$Id$")
 
 //! @cond Doxygen_Suppress
 /************************************************************************/

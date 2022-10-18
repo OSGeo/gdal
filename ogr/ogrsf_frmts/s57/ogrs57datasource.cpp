@@ -34,7 +34,6 @@
 #include <algorithm>
 #include <set>
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          OGRS57DataSource()                          */

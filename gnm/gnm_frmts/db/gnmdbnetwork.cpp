@@ -31,7 +31,6 @@
 #include "gnmdb.h"
 #include "gnm_priv.h"
 
-CPL_CVSID("$Id$")
 
 GNMDatabaseNetwork::GNMDatabaseNetwork() : GNMGenericNetwork()
 {

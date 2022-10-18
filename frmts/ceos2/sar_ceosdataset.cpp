@@ -34,7 +34,6 @@
 #include "rawdataset.h"
 #include "ogr_srs_api.h"
 
-CPL_CVSID("$Id$")
 
 static GInt16 CastToGInt16(float val)
 {

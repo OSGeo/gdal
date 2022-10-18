@@ -29,7 +29,6 @@
 #include "ogr_edigeo.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$")
 
 extern "C" void RegisterOGREDIGEO();
 

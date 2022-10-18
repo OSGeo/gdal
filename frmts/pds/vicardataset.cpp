@@ -51,7 +51,6 @@ constexpr double NULL3 = -32768.0;
 #include <limits>
 #include <string>
 
-CPL_CVSID("$Id$")
 
 /* GeoTIFF 1.0 geokeys */
 

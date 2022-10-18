@@ -33,7 +33,6 @@
 #define SQUARE(x) ((x)*(x))
 #define EPSILON 1e-5
 
-CPL_CVSID("$Id$")
 
 #ifdef HAVE_PDF_READ_SUPPORT
 

@@ -30,7 +30,6 @@
 #include "cpl_conv.h"
 #include "cpl_multiproc.h"
 
-CPL_CVSID("$Id$")
 
 static CPLMutex* hMutex = nullptr;
 static int   bInitialized = FALSE;

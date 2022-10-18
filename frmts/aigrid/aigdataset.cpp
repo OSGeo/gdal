@@ -37,7 +37,6 @@
 
 #include <vector>
 
-CPL_CVSID("$Id$")
 
 static CPLString OSR_GDS( char **papszNV, const char * pszField,
                           const char *pszDefaultValue );

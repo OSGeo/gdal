@@ -33,7 +33,6 @@
 
 #include "rasterlitedataset.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                  RasterliteGetTileDriverOptions ()                   */

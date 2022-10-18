@@ -35,7 +35,6 @@
 #include <map>
 #include <string>
 
-CPL_CVSID("$Id$")
 
 namespace {
 

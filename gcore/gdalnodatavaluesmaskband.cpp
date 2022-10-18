@@ -40,7 +40,6 @@
 #include "cpl_vsi.h"
 #include "gdal.h"
 
-CPL_CVSID("$Id$")
 
 //! @cond Doxygen_Suppress
 /************************************************************************/

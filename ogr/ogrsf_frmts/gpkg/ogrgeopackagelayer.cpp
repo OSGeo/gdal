@@ -34,7 +34,6 @@
 #include "ogr_recordbatch.h"
 #include "ograrrowarrayhelper.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                      OGRGeoPackageLayer()                            */

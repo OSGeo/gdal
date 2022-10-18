@@ -40,7 +40,6 @@
 #include "cpl_time.h"
 #include "gdal_mdreader.h"
 
-CPL_CVSID("$Id$")
 
 /**
  * GDALMDReaderALOS()

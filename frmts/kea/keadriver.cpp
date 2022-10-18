@@ -30,7 +30,6 @@
 #include "gdal_frmts.h"
 #include "keadataset.h"
 
-CPL_CVSID("$Id$")
 
 // method to register this driver
 void GDALRegister_KEA()

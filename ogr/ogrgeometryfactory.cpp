@@ -65,7 +65,6 @@
 #define UNUSED_IF_NO_GEOS
 #endif
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           createFromWkb()                            */

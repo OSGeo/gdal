@@ -37,7 +37,6 @@ CPL_C_START
 #include "blx.h"
 CPL_C_END
 
-CPL_CVSID("$Id$")
 
 class BLXDataset final: public GDALPamDataset
 {

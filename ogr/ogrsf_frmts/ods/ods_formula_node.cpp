@@ -32,7 +32,6 @@
 #include "ods_formula.h"
 #include "cpl_safemaths.hpp"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          ods_formula_node()                          */

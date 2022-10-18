@@ -37,7 +37,6 @@
 #include <limits>
 #include <new>
 
-CPL_CVSID("$Id$")
 
 namespace {
 

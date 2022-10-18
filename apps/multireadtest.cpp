@@ -32,7 +32,6 @@
 #include "cpl_string.h"
 #include <vector>
 
-CPL_CVSID("$Id$")
 
 static int nIterations = 1;
 static bool bLockOnOpen = false;

@@ -37,7 +37,6 @@
 #include "cpl_vsi.h"
 
 
-CPL_CVSID("$Id$")
 
 struct CPLWorkerThreadJob
 {

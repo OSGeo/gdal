@@ -46,7 +46,6 @@
 #include "../vrt/gdal_vrt.h"
 #include "../vrt/vrtdataset.h"
 
-CPL_CVSID("$Id$")
 
 using namespace std;
 

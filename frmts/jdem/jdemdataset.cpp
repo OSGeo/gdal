@@ -33,7 +33,6 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 constexpr int HEADER_SIZE = 1011;
 

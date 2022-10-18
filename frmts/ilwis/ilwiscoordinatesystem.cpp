@@ -30,7 +30,6 @@
 
 #include <string>
 
-CPL_CVSID("$Id$")
 
 namespace GDAL {
 

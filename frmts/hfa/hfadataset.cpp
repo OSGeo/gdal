@@ -63,7 +63,6 @@
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
 
-CPL_CVSID("$Id$")
 
 constexpr double D2R = M_PI / 180.0;
 

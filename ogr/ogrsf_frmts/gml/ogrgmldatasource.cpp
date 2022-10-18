@@ -51,7 +51,6 @@
 #include "parsexsd.h"
 #include "../mem/ogr_mem.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                   ReplaceSpaceByPct20IfNeeded()                      */

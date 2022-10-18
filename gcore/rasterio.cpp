@@ -56,7 +56,6 @@
 #include "memdataset.h"
 #include "vrtdataset.h"
 
-CPL_CVSID("$Id$")
 
 static void GDALFastCopyByte( const GByte * CPL_RESTRICT pSrcData,
                               int nSrcPixelStride,

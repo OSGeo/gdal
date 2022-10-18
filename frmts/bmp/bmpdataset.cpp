@@ -34,7 +34,6 @@
 
 #include <limits>
 
-CPL_CVSID("$Id$")
 
 // Enable if you want to see lots of BMP debugging output.
 // #define BMP_DEBUG

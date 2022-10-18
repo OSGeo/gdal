@@ -91,7 +91,6 @@
 #include "cpl_string.h"
 #include "cpl_vsi_error.h"
 
-CPL_CVSID("$Id$")
 
 #if defined(UNIX_STDIO_64)
 

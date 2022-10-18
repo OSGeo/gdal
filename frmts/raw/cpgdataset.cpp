@@ -34,7 +34,6 @@
 
 #include <vector>
 
-CPL_CVSID("$Id$")
 
 enum Interleave { BSQ, BIL, BIP };
 

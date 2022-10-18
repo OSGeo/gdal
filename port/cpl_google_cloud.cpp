@@ -35,7 +35,6 @@
 #include "cpl_aws.h"
 #include "cpl_json.h"
 
-CPL_CVSID("$Id$")
 
 #ifdef HAVE_CURL
 

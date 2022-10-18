@@ -45,7 +45,6 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           swq_test_like()                            */

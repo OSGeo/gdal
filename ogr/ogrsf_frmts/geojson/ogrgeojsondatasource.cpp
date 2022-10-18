@@ -57,7 +57,6 @@
 // #include "symbol_renames.h"
 
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           OGRGeoJSONDataSource()                     */

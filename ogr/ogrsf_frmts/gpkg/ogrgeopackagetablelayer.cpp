@@ -36,7 +36,6 @@
 #include <algorithm>
 #include <cmath>
 
-CPL_CVSID("$Id$")
 
 static const char UNSUPPORTED_OP_READ_ONLY[] =
   "%s : unsupported operation on a read-only datasource.";

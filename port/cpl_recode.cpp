@@ -30,7 +30,6 @@
 
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$")
 
 #ifdef CPL_RECODE_ICONV
 extern void CPLClearRecodeIconvWarningFlags();

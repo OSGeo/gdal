@@ -50,7 +50,6 @@ constexpr double DEG_TO_RAD = M_PI / 180.0;
 constexpr double RAD_TO_DEG = 180.0 / M_PI;
 constexpr double CONTIGUITY_TOLERANCE = 1e10; // Arbitrary high value
 
-CPL_CVSID("$Id$")
 
 static CPLString ToUTF8(const OdString& str)
 {

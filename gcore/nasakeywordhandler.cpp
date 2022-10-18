@@ -56,7 +56,6 @@
 #include "ogrgeojsonreader.h"
 #include <vector>
 
-CPL_CVSID("$Id$")
 
 //! @cond Doxygen_Suppress
 

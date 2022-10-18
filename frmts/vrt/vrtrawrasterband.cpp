@@ -45,7 +45,6 @@
 #include "gdal.h"
 #include "gdal_priv.h"
 
-CPL_CVSID("$Id$")
 
 /*! @cond Doxygen_Suppress */
 

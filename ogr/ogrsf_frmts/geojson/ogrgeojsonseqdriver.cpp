@@ -38,7 +38,6 @@
 #include <algorithm>
 #include <memory>
 
-CPL_CVSID("$Id$")
 
 constexpr char RS = '\x1e';
 

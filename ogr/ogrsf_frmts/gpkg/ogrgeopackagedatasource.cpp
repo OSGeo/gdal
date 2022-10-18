@@ -44,7 +44,6 @@
 #include <limits>
 #include <sstream>
 
-CPL_CVSID("$Id$")
 
 // Keep in sync prototype of those 2 functions between gdalopeninfo.cpp,
 // ogrsqlitedatasource.cpp and ogrgeopackagedatasource.cpp

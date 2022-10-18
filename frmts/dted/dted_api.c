@@ -31,7 +31,6 @@
 #include "dted_api.h"
 
 #ifndef AVOID_CPL
-CPL_CVSID("$Id$")
 #endif
 
 static int bWarnedTwoComplement = FALSE;

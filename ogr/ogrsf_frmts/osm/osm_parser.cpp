@@ -52,7 +52,6 @@
 #include "ogr_expat.h"
 #endif
 
-CPL_CVSID("$Id$")
 
 // The buffer that are passed to GPB decoding are extended with 0's
 // to be sure that we will be able to read a single 64bit value without

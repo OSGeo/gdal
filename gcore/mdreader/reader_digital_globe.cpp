@@ -40,7 +40,6 @@
 
 #include "gdal_priv.h"
 
-CPL_CVSID("$Id$")
 
 /**
  * GDALMDReaderDigitalGlobe()

@@ -50,7 +50,6 @@
 #include "sqlite3.h"
 #include "ogr_swq.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                   OGRSQLiteSelectLayerCommonBehaviour()              */
