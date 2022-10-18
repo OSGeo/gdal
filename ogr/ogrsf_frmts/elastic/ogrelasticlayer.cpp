@@ -2825,6 +2825,7 @@ int OGRElasticLayer::TestCapability(const char * pszCap) {
         return TRUE;
 
     else if (EQUAL(pszCap, OLCSequentialWrite) ||
+             EQUAL(pszCap, OLCUpsertFeature) ||
              EQUAL(pszCap, OLCRandomWrite) )
         return m_poDS->GetAccess() == GA_Update;
     else if (EQUAL(pszCap, OLCCreateField) ||
