@@ -69,17 +69,41 @@ public:
 
 %newobject OpenMDArray;
   GDALMDArrayHS* OpenMDArray( const char* name, char** options = 0) {
-    return GDALGroupOpenMDArray(self, name, options);
+#if defined(SWIGPYTHON)
+    CPLErr eLastErrorType = CPLGetLastErrorType();
+#endif
+    GDALMDArrayH hRet = GDALGroupOpenMDArray(self, name, options);
+#if defined(SWIGPYTHON)
+    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+        CPLError(CE_Failure, CPLE_AppDefined, "Array %s does not exist", name);
+#endif
+    return hRet;
   }
 
 %newobject OpenMDArrayFromFullname;
   GDALMDArrayHS* OpenMDArrayFromFullname( const char* name, char** options = 0) {
-    return GDALGroupOpenMDArrayFromFullname(self, name, options);
+#if defined(SWIGPYTHON)
+    CPLErr eLastErrorType = CPLGetLastErrorType();
+#endif
+    GDALMDArrayH hRet = GDALGroupOpenMDArrayFromFullname(self, name, options);
+#if defined(SWIGPYTHON)
+    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+        CPLError(CE_Failure, CPLE_AppDefined, "Array %s does not exist", name);
+#endif
+    return hRet;
   }
 
 %newobject ResolveMDArray;
   GDALMDArrayHS* ResolveMDArray( const char* name, const char* starting_point, char** options = 0) {
-    return GDALGroupResolveMDArray(self, name, starting_point, options);
+#if defined(SWIGPYTHON)
+    CPLErr eLastErrorType = CPLGetLastErrorType();
+#endif
+    GDALMDArrayH hRet = GDALGroupResolveMDArray(self, name, starting_point, options);
+#if defined(SWIGPYTHON)
+    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+        CPLError(CE_Failure, CPLE_AppDefined, "Array %s does not exist", name);
+#endif
+    return hRet;
   }
 
 %apply (char **CSL) {char **};
@@ -90,12 +114,28 @@ public:
 
 %newobject OpenGroup;
   GDALGroupHS* OpenGroup( const char* name, char** options = 0) {
-    return GDALGroupOpenGroup(self, name, options);
+#if defined(SWIGPYTHON)
+    CPLErr eLastErrorType = CPLGetLastErrorType();
+#endif
+    GDALGroupH hRet = GDALGroupOpenGroup(self, name, options);
+#if defined(SWIGPYTHON)
+    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+        CPLError(CE_Failure, CPLE_AppDefined, "Group %s does not exist", name);
+#endif
+    return hRet;
   }
 
 %newobject OpenGroupFromFullname;
   GDALGroupHS* OpenGroupFromFullname( const char* name, char** options = 0) {
-    return GDALGroupOpenGroupFromFullname(self, name, options);
+#if defined(SWIGPYTHON)
+    CPLErr eLastErrorType = CPLGetLastErrorType();
+#endif
+    GDALGroupH hRet = GDALGroupOpenGroupFromFullname(self, name, options);
+#if defined(SWIGPYTHON)
+    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+        CPLError(CE_Failure, CPLE_AppDefined, "Group %s does not exist", name);
+#endif
+    return hRet;
   }
 
 %apply (char **CSL) {char **};
@@ -105,7 +145,15 @@ public:
 %clear char **;
 
   OGRLayerShadow* OpenVectorLayer( const char* name, char** options = 0) {
-    return (OGRLayerShadow*) GDALGroupOpenVectorLayer(self, name, options);
+#if defined(SWIGPYTHON)
+    CPLErr eLastErrorType = CPLGetLastErrorType();
+#endif
+    OGRLayerH hRet = GDALGroupOpenVectorLayer(self, name, options);
+#if defined(SWIGPYTHON)
+    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+        CPLError(CE_Failure, CPLE_AppDefined, "Vector layer %s does not exist", name);
+#endif
+    return (OGRLayerShadow*) hRet;
   }
 
 #if defined(SWIGPYTHON)
@@ -116,7 +164,15 @@ public:
 
 %newobject GetAttribute;
   GDALAttributeHS* GetAttribute( const char* name) {
-    return GDALGroupGetAttribute(self, name);
+#if defined(SWIGPYTHON)
+    CPLErr eLastErrorType = CPLGetLastErrorType();
+#endif
+    GDALAttributeH hRet = GDALGroupGetAttribute(self, name);
+#if defined(SWIGPYTHON)
+    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+        CPLError(CE_Failure, CPLE_AppDefined, "Attribute %s does not exist", name);
+#endif
+    return hRet;
   }
 
 #if defined(SWIGPYTHON)
@@ -749,7 +805,15 @@ public:
 
 %newobject GetAttribute;
   GDALAttributeHS* GetAttribute( const char* name) {
-    return GDALMDArrayGetAttribute(self, name);
+#if defined(SWIGPYTHON)
+    CPLErr eLastErrorType = CPLGetLastErrorType();
+#endif
+    GDALAttributeH hRet = GDALMDArrayGetAttribute(self, name);
+#if defined(SWIGPYTHON)
+    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+        CPLError(CE_Failure, CPLE_AppDefined, "Attribute %s does not exist", name);
+#endif
+    return hRet;
   }
 
 #if defined(SWIGPYTHON)
