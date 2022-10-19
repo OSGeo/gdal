@@ -1134,9 +1134,14 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
     CPLConfigOptionSetter ovrQualityWebpSetter("WEBP_LEVEL_OVERVIEW", pszOverviewQuality, true);
 
     std::unique_ptr<CPLConfigOptionSetter> poWebpLosslessSetter;
-    if( pszOverviewQuality && CPLAtof(pszOverviewQuality) == 100.0 )
+    if( EQUAL(pszOverviewCompress, "WEBP") )
     {
-        poWebpLosslessSetter.reset(new CPLConfigOptionSetter("WEBP_LOSSLESS_OVERVIEW", "TRUE", true));
+        if( pszOverviewQuality )
+        {
+            poWebpLosslessSetter.reset(new CPLConfigOptionSetter(
+                "WEBP_LOSSLESS_OVERVIEW",
+                CPLAtof(pszOverviewQuality) == 100.0 ? "TRUE" : "FALSE", true));
+        }
     }
 
     std::unique_ptr<CPLConfigOptionSetter> poPhotometricSetter;
