@@ -12530,6 +12530,10 @@ bool GTiffDataset::GetOverviewParameters(int& nCompression,
 /*      Determine planar configuration.                                 */
 /* -------------------------------------------------------------------- */
     nPlanarConfig = m_nPlanarConfig;
+    if( nCompression == COMPRESSION_WEBP )
+    {
+        nPlanarConfig = PLANARCONFIG_CONTIG;
+    }
     const char* pszInterleave = GetOptionValue( "INTERLEAVE", "INTERLEAVE_OVERVIEW", &pszOptionKey );
     if( pszInterleave != nullptr && pszInterleave[0] != '\0' )
     {
