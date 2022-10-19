@@ -218,22 +218,26 @@ General creation options
 Reprojection related creation options
 *************************************
 
-- **TILING_SCHEME=CUSTOM/GoogleMapsCompatible/other**: Default value: CUSTOM.
+- **TILING_SCHEME=CUSTOM/GoogleMapsCompatible/...**: Default value: CUSTOM.
   If set to a value different than CUSTOM, the definition of the specified tiling
   scheme will be used to reproject the dataset to its CRS, select the resolution
   corresponding to the closest zoom level and align on tile boundaries at this
   resolution (the actual resolution can be controlled with the ZOOM_LEVEL or
   ZOOM_LEVEL_STRATEGY options).
+
   The tile size indicated in the tiling scheme definition (generally
   256 pixels) will be used, unless the user has specified a value with the
   BLOCKSIZE creation option, in which case the user specified one will be taken
   into account (that is if setting a higher value than 256, the original
   tiling scheme is modified to take into account the size of the HiDPi tiles).
+
   In non-CUSTOM mode, TARGET_SRS, RES and EXTENT options are ignored.
   Starting with GDAL 3.2, the value of TILING_SCHEME can also be the filename
   of a JSON file according to the `OGC Two Dimensional Tile Matrix Set standard`_,
   a URL to such file, the radical of a definition file in the GDAL data directory
   (e.g. ``FOO`` for a file named ``tms_FOO.json``) or the inline JSON definition.
+  The list of available tiling schemes can be obtained by looking at values of
+  the TILING_SCHEME option reported by ``gdalinfo --format COG``.
 
 .. _`OGC Two Dimensional Tile Matrix Set standard`: http://docs.opengeospatial.org/is/17-083r2/17-083r2.html
 
