@@ -1277,10 +1277,19 @@ void GDALCOGDriver::InitializeCreationOptionList()
     }
     if( bHasJPEG || bHasWebP )
     {
+        std::string osJPEG_WEBP;
+        if( bHasJPEG )
+            osJPEG_WEBP = "JPEG";
+        if( bHasWebP )
+        {
+            if( !osJPEG_WEBP.empty() )
+                osJPEG_WEBP += '/';
+            osJPEG_WEBP += "WEBP";
+        }
         osOptions += "   <Option name='QUALITY' type='int' "
-                     "description='JPEG/WEBP quality 1-100' default='75'/>"
+                     "description='" + osJPEG_WEBP + " quality 1-100' default='75'/>"
                      "   <Option name='OVERVIEW_QUALITY' type='int' "
-                     "description='Overview JPEG/WEBP quality 1-100' default='75'/>";
+                     "description='Overview " + osJPEG_WEBP + " quality 1-100' default='75'/>";
     }
     if( bHasLERC )
     {
