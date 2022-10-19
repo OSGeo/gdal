@@ -146,7 +146,8 @@ void OGRSQLiteTableLayer::ClearInsertStmt()
 CPLErr OGRSQLiteTableLayer::Initialize( const char *m_pszTableNameIn,
                                         bool bIsTable,
                                         bool bIsVirtualShapeIn,
-                                        bool bDeferredCreationIn )
+                                        bool bDeferredCreationIn,
+                                        bool bMayEmitError )
 {
     SetDescription( m_pszTableNameIn );
 
@@ -156,7 +157,8 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *m_pszTableNameIn,
     m_bDeferredCreation = bDeferredCreationIn;
     m_pszEscapedTableName = CPLStrdup(SQLEscapeLiteral(m_pszTableName));
 
-    if( strchr(m_pszTableName, '(') != nullptr &&
+    if( !bDeferredCreationIn &&
+        strchr(m_pszTableName, '(') != nullptr &&
         m_pszTableName[strlen(m_pszTableName)-1] == ')' )
     {
         char* pszErrMsg = nullptr;
@@ -179,7 +181,7 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *m_pszTableNameIn,
             *strchr(m_pszTableName, '(') = 0;
             CPLFree(m_pszEscapedTableName);
             m_pszEscapedTableName = CPLStrdup(SQLEscapeLiteral(m_pszTableName));
-            EstablishFeatureDefn(pszGeomCol);
+            EstablishFeatureDefn(pszGeomCol, bMayEmitError);
             CPLFree(pszGeomCol);
             if( m_poFeatureDefn == nullptr || m_poFeatureDefn->GetGeomFieldCount() == 0 )
                 return CE_Failure;
@@ -314,7 +316,8 @@ const char *OGRSQLiteTableLayer::GetMetadataItem( const char * pszName,
 /*                         EstablishFeatureDefn()                       */
 /************************************************************************/
 
-CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
+CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol,
+                                                 bool bMayEmitError)
 {
     sqlite3 *hDB = m_poDS->GetDB();
 
@@ -348,10 +351,12 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
         }
         if( rc != SQLITE_OK )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Unable to query table %s for column definitions : %s.",
-                      m_pszTableName, sqlite3_errmsg(hDB) );
-
+            if( bMayEmitError )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Unable to query table %s for column definitions : %s.",
+                          m_pszTableName, sqlite3_errmsg(hDB) );
+            }
             return CE_Failure;
         }
     }
@@ -791,7 +796,7 @@ OGRFeatureDefn* OGRSQLiteTableLayer::GetLayerDefn()
     if (m_poFeatureDefn)
         return m_poFeatureDefn;
 
-    EstablishFeatureDefn(nullptr);
+    EstablishFeatureDefn(nullptr, /* bMayEmitError = */ true);
 
     if (m_poFeatureDefn == nullptr)
     {
