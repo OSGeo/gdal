@@ -77,6 +77,18 @@ def startup_and_cleanup():
 
 
 ###############################################################################
+
+
+def get_sqlite_version():
+    ds = ogr.Open(":memory:")
+    sql_lyr = ds.ExecuteSQL("SELECT sqlite_version()")
+    f = sql_lyr.GetNextFeature()
+    version = f.GetField(0)
+    ds.ReleaseResultSet(sql_lyr)
+    return tuple([int(x) for x in version.split(".")[0:3]])
+
+
+###############################################################################
 # Validate a geopackage
 
 
@@ -367,9 +379,37 @@ def test_ogr_gpkg_7():
         lyr.TestCapability(ogr.OLCDeleteFeature) == 1
     ), "lyr.TestCapability(ogr.OLCDeleteFeature) != 1"
 
+    assert lyr.GetFeatureCount() == 2
+
+    def get_feature_count_from_gpkg_contents():
+        sql_lyr = gpkg_ds.ExecuteSQL(
+            'SELECT feature_count FROM gpkg_ogr_contents WHERE table_name = "field_test_layer"',
+            dialect="DEBUG",
+        )
+        f = sql_lyr.GetNextFeature()
+        ret = f.GetField(0)
+        gpkg_ds.ReleaseResultSet(sql_lyr)
+        return ret
+
+    assert get_feature_count_from_gpkg_contents() == 2
+
+    assert lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn())) == ogr.OGRERR_NONE
+
+    assert lyr.GetFeatureCount() == 3
+
+    # 2 is expected here since CreateFeature() has temporarily disable triggers
+    assert get_feature_count_from_gpkg_contents() == 2
+
     # Test upserting an existing feature
     feat.SetField("dummy", "updated")
+    fid = feat.GetFID()
     assert lyr.UpsertFeature(feat) == ogr.OGRERR_NONE, "cannot upsert existing feature"
+
+    assert feat.GetFID() == fid
+
+    # UpsertFeature() has serialized value 3 and re-enables triggers
+    assert get_feature_count_from_gpkg_contents() == 3
+
     upserted_feat = lyr.GetFeature(feat.GetFID())
     assert (
         upserted_feat.GetField("dummy") == "updated"
@@ -377,13 +417,30 @@ def test_ogr_gpkg_7():
 
     # Delete a feature
     lyr.DeleteFeature(feat.GetFID())
-    assert lyr.GetFeatureCount() == 1, "delete feature did not delete"
+
+    assert get_feature_count_from_gpkg_contents() is None
+
+    lyr.SyncToDisk()
+
+    assert get_feature_count_from_gpkg_contents() is None
+
+    assert lyr.GetFeatureCount() == 2, "delete feature did not delete"
+
+    assert get_feature_count_from_gpkg_contents() == 2
 
     # Test upserting a non-existing feature
     assert (
         lyr.UpsertFeature(feat) == ogr.OGRERR_NONE
     ), "cannot upsert non-existing feature"
-    assert lyr.GetFeatureCount() == 2, "upsert failed to add non-existing feature"
+    assert feat.GetFID() == fid
+
+    assert get_feature_count_from_gpkg_contents() == 3
+
+    assert lyr.GetFeatureCount() == 3, "upsert failed to add non-existing feature"
+
+    lyr.SyncToDisk()
+
+    assert get_feature_count_from_gpkg_contents() == 3
 
     # Test updating non-existing feature
     feat.SetFID(-10)
@@ -3746,10 +3803,24 @@ def test_ogr_gpkg_42():
 
     assert foo_has_trigger(ds)
 
-    assert get_feature_count_from_gpkg_contents(ds) is None
+    assert get_feature_count_from_gpkg_contents(ds) == 5
 
     fc = lyr.GetFeatureCount()
     assert fc == 5
+
+    assert get_feature_count_from_gpkg_contents(ds) == 5
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    assert get_feature_count_from_gpkg_contents(ds) is None
+    assert lyr.SyncToDisk() == ogr.OGRERR_NONE
+
+    assert get_feature_count_from_gpkg_contents(ds) == 6
+
+    assert lyr.DeleteFeature(f.GetFID()) == ogr.OGRERR_NONE
+    assert get_feature_count_from_gpkg_contents(ds) is None
+
+    ds.ExecuteSQL("INSERT OR REPLACE INTO foo (fid) VALUES (1)")
 
     assert get_feature_count_from_gpkg_contents(ds) == 5
 
@@ -6438,16 +6509,10 @@ def test_ogr_gpkg_alter_geom_field_defn():
     lyr.CreateFeature(f)
     f = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(f)
-
-    sql_lyr = ds.ExecuteSQL("SELECT sqlite_version()")
-    f = sql_lyr.GetNextFeature()
-    version = f.GetField(0)
-    ds.ReleaseResultSet(sql_lyr)
-
     ds = None
 
     # Test renaming column (only supported for SQLite >= 3.26)
-    if tuple([int(x) for x in version.split(".")[0:2]]) >= (3, 26):
+    if get_sqlite_version() >= (3, 26, 0):
         ds = ogr.Open(filename, update=1)
         lyr = ds.GetLayer(0)
         assert lyr.TestCapability(ogr.OLCAlterGeomFieldDefn)
@@ -6803,3 +6868,122 @@ def test_ogr_gpkg_immutable():
         os.chmod("tmp/read_only_test_ogr_gpkg_immutable", 0o755)
         os.unlink("tmp/read_only_test_ogr_gpkg_immutable/test.gpkg")
         os.rmdir("tmp/read_only_test_ogr_gpkg_immutable")
+
+
+###############################################################################
+
+
+@pytest.mark.skipif(
+    get_sqlite_version() < (3, 24, 0),
+    reason="sqlite >= 3.24 needed",
+)
+@pytest.mark.parametrize("with_geom", [True, False])
+def test_ogr_gpkg_upsert_without_fid(with_geom):
+
+    filename = "/vsimem/test_ogr_gpkg_upsert_without_fid.gpkg"
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    lyr = ds.CreateLayer(
+        "foo", geom_type=(ogr.wkbUnknown if with_geom else ogr.wkbNone)
+    )
+    assert lyr.CreateField(ogr.FieldDefn("other", ogr.OFTString)) == ogr.OGRERR_NONE
+    unique_field = ogr.FieldDefn("unique_field", ogr.OFTString)
+    unique_field.SetUnique(True)
+    assert lyr.CreateField(unique_field) == ogr.OGRERR_NONE
+    for i in range(5):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetField("unique_field", i + 1)
+        if i < 4 and with_geom:
+            f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (%d %d)" % (i, i)))
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    ds = None
+
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("unique_field", "2")
+    f.SetField("other", "foo")
+    if with_geom:
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (10 10)"))
+    assert lyr.UpsertFeature(f) == ogr.OGRERR_NONE
+
+    if get_sqlite_version() >= (3, 35, 0):
+        assert f.GetFID() == 2
+
+    if with_geom:
+        sql_lyr = ds.ExecuteSQL(
+            "SELECT 1 FROM sqlite_master WHERE name = 'rtree_foo_geom_update1'",
+            dialect="DEBUG",
+        )
+        assert sql_lyr.GetFeatureCount() == 0
+        ds.ReleaseResultSet(sql_lyr)
+
+        sql_lyr = ds.ExecuteSQL(
+            "SELECT 1 FROM sqlite_master WHERE name = 'rtree_foo_geom_update1_old_geom_null'",
+            dialect="DEBUG",
+        )
+        assert sql_lyr.GetFeatureCount() == 1
+        ds.ReleaseResultSet(sql_lyr)
+
+        sql_lyr = ds.ExecuteSQL(
+            "SELECT 1 FROM sqlite_master WHERE name = 'rtree_foo_geom_update1_old_geom_notnull'",
+            dialect="DEBUG",
+        )
+        assert sql_lyr.GetFeatureCount() == 1
+        ds.ReleaseResultSet(sql_lyr)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("unique_field", "3")
+    assert lyr.UpsertFeature(f) == ogr.OGRERR_NONE
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("unique_field", "4")
+    if with_geom:
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (20 20)"))
+    assert lyr.UpsertFeature(f) == ogr.OGRERR_NONE
+
+    ds = None
+
+    assert validate(filename)
+
+    ds = ogr.Open(filename)
+
+    if with_geom:
+        sql_lyr = ds.ExecuteSQL(
+            "SELECT 1 FROM sqlite_master WHERE name = 'rtree_foo_geom_update1'",
+            dialect="DEBUG",
+        )
+        assert sql_lyr.GetFeatureCount() == 1
+        ds.ReleaseResultSet(sql_lyr)
+
+        sql_lyr = ds.ExecuteSQL(
+            "SELECT 1 FROM sqlite_master WHERE name = 'rtree_foo_geom_update1_old_geom_null'",
+            dialect="DEBUG",
+        )
+        assert sql_lyr.GetFeatureCount() == 0
+        ds.ReleaseResultSet(sql_lyr)
+
+        sql_lyr = ds.ExecuteSQL(
+            "SELECT 1 FROM sqlite_master WHERE name = 'rtree_foo_geom_update1_old_geom_notnull'",
+            dialect="DEBUG",
+        )
+        assert sql_lyr.GetFeatureCount() == 0
+        ds.ReleaseResultSet(sql_lyr)
+
+    lyr = ds.GetLayer(0)
+
+    f = lyr.GetFeature(2)
+    assert f["unique_field"] == "2"
+    assert f["other"] == "foo"
+    if with_geom:
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (10 10)"
+
+    f = lyr.GetFeature(3)
+    assert f.GetGeometryRef() is None
+
+    f = lyr.GetFeature(4)
+    if with_geom:
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (20 20)"
+
+    ds = None
+    gdal.Unlink(filename)

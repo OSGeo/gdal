@@ -821,7 +821,7 @@ def VectorTranslateOptions(options=None, format=None,
     format:
         format ("ESRI Shapefile", etc...)
     accessMode:
-        None for creation, 'update', 'append', 'overwrite'
+        None for creation, 'update', 'append', 'upsert', 'overwrite'
     srcSRS:
         source SRS
     dstSRS:
@@ -839,7 +839,7 @@ def VectorTranslateOptions(options=None, format=None,
     selectFields:
         list of fields to select
     addFields:
-        whether to add new fields found in source layers (to be used with accessMode == 'append')
+        whether to add new fields found in source layers (to be used with accessMode == 'append' or 'upsert')
     forceNullable:
         whether to drop NOT NULL constraints on newly created fields
     emptyStrAsNull:
@@ -907,6 +907,8 @@ def VectorTranslateOptions(options=None, format=None,
                 new_options += ['-append']
             elif accessMode == 'overwrite':
                 new_options += ['-overwrite']
+            elif accessMode == 'upsert':
+                new_options += ['-upsert']
             else:
                 raise Exception('unhandled accessMode')
         if addFields:

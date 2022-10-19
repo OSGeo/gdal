@@ -918,3 +918,79 @@ def test_ogr2ogr_launder_geometry_column_name():
     gdal.Unlink(out_filename)
     assert "SHAPE" not in sql
     assert "shape" in sql
+
+
+###############################################################################
+
+
+def get_sqlite_version():
+
+    if gdal.GetDriverByName("GPKG") is None:
+        return (0, 0, 0)
+
+    ds = ogr.Open(":memory:")
+    sql_lyr = ds.ExecuteSQL("SELECT sqlite_version()")
+    f = sql_lyr.GetNextFeature()
+    version = f.GetField(0)
+    ds.ReleaseResultSet(sql_lyr)
+    return tuple([int(x) for x in version.split(".")[0:3]])
+
+
+###############################################################################
+
+
+@pytest.mark.skipif(
+    get_sqlite_version() < (3, 24, 0),
+    reason="sqlite >= 3.24 needed",
+)
+def test_ogr2ogr_upsert():
+
+    filename = "/vsimem/test_ogr_gpkg_upsert_without_fid.gpkg"
+
+    def create_gpkg_file():
+        ds = gdal.GetDriverByName("GPKG").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+        lyr = ds.CreateLayer("foo")
+        assert lyr.CreateField(ogr.FieldDefn("other", ogr.OFTString)) == ogr.OGRERR_NONE
+        unique_field = ogr.FieldDefn("unique_field", ogr.OFTString)
+        unique_field.SetUnique(True)
+        assert lyr.CreateField(unique_field) == ogr.OGRERR_NONE
+        for i in range(5):
+            f = ogr.Feature(lyr.GetLayerDefn())
+            f.SetField("unique_field", i + 1)
+            f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (%d %d)" % (i, i)))
+            assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+        ds = None
+
+    create_gpkg_file()
+
+    def create_mem_file():
+        srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+        mem_lyr = srcDS.CreateLayer("foo")
+        assert (
+            mem_lyr.CreateField(ogr.FieldDefn("other", ogr.OFTString))
+            == ogr.OGRERR_NONE
+        )
+        unique_field = ogr.FieldDefn("unique_field", ogr.OFTString)
+        unique_field.SetUnique(True)
+        assert mem_lyr.CreateField(unique_field) == ogr.OGRERR_NONE
+
+        f = ogr.Feature(mem_lyr.GetLayerDefn())
+        f.SetField("unique_field", "2")
+        f.SetField("other", "foo")
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (10 10)"))
+        mem_lyr.CreateFeature(f)
+        return srcDS
+
+    assert (
+        gdal.VectorTranslate(filename, create_mem_file(), accessMode="upsert")
+        is not None
+    )
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetFeature(2)
+    assert f["unique_field"] == "2"
+    assert f["other"] == "foo"
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (10 10)"
+    ds = None
+    gdal.Unlink(filename)
