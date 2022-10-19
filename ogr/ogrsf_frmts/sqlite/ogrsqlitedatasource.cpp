@@ -2040,7 +2040,7 @@ bool OGRSQLiteDataSource::Open( GDALOpenInfo* poOpenInfo)
                 continue;
 
             if( GDALDataset::GetLayerByName(pszTableName) == nullptr )
-                OpenTable( pszTableName, true, false );
+                OpenTable( pszTableName, true, false, /* bMayEmitError = */ true );
 
             if (bListAllTables)
                 CPLHashSetInsert(hSet, CPLStrdup(pszTableName));
@@ -2249,7 +2249,7 @@ bool OGRSQLiteDataSource::Open( GDALOpenInfo* poOpenInfo)
             }
 
             if( GDALDataset::GetLayerByName(pszTableName) == nullptr )
-                OpenTable( pszTableName, true, false);
+                OpenTable( pszTableName, true, false, /* bMayEmitError = */ true);
             if (bListAllTables)
                 CPLHashSetInsert(hSet, CPLStrdup(pszTableName));
         }
@@ -2387,7 +2387,7 @@ all_tables:
         if( pszTableName != nullptr && CPLHashSetLookup(hSet, pszTableName) == nullptr )
         {
             const bool bIsTable = pszType != nullptr && strcmp(pszType, "table") == 0;
-            OpenTable( pszTableName, bIsTable, false );
+            OpenTable( pszTableName, bIsTable, false, /* bMayEmitError = */ true );
         }
     }
 
@@ -2428,7 +2428,7 @@ bool OGRSQLiteDataSource::OpenVirtualTable(const char* pszName, const char* pszS
         }
     }
 
-    if (OpenTable(pszName, true, pszVirtualShape != nullptr))
+    if (OpenTable(pszName, true, pszVirtualShape != nullptr, /* bMayEmitError = */ true))
     {
         OGRSQLiteLayer* poLayer = m_papoLayers[m_nLayers-1];
         if( poLayer->GetLayerDefn()->GetGeomFieldCount() == 1 )
@@ -2463,15 +2463,16 @@ bool OGRSQLiteDataSource::OpenVirtualTable(const char* pszName, const char* pszS
 /************************************************************************/
 
 bool OGRSQLiteDataSource::OpenTable( const char *pszTableName,
-                                    bool bIsTable,
-                                    bool bIsVirtualShape )
+                                     bool bIsTable,
+                                     bool bIsVirtualShape,
+                                     bool bMayEmitError )
 
 {
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
     OGRSQLiteTableLayer *poLayer = new OGRSQLiteTableLayer( this );
-    if( poLayer->Initialize( pszTableName, bIsTable, bIsVirtualShape, false) != CE_None )
+    if( poLayer->Initialize( pszTableName, bIsTable, bIsVirtualShape, false, bMayEmitError) != CE_None )
     {
         delete poLayer;
         return false;
@@ -2615,7 +2616,7 @@ OGRLayer *OGRSQLiteDataSource::GetLayerByName( const char* pszLayerName )
         break;
     }
 
-    if( !OpenTable(pszLayerName, bIsTable, false) )
+    if( !OpenTable(pszLayerName, bIsTable, /* bIsVirtualShape = */ false, /* bMayEmitError = */ false) )
         return nullptr;
 
     poLayer = m_papoLayers[m_nLayers-1];
@@ -2717,7 +2718,7 @@ OGRLayer *OGRSQLiteDataSource::GetLayerByNameNotVisible( const char* pszLayerNam
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
     OGRSQLiteTableLayer *poLayer = new OGRSQLiteTableLayer( this );
-    if( poLayer->Initialize( pszLayerName, true, false, false) != CE_None )
+    if( poLayer->Initialize( pszLayerName, true, false, false, /* bMayEmitError = */ true) != CE_None )
     {
         delete poLayer;
         return nullptr;
@@ -3230,7 +3231,8 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
 /* -------------------------------------------------------------------- */
     OGRSQLiteTableLayer *poLayer = new OGRSQLiteTableLayer( this );
 
-    poLayer->Initialize( pszLayerName, true, false, true ) ;
+    poLayer->Initialize( pszLayerName, true, false, true,
+                         /* bMayEmitError = */ false ) ;
     OGRSpatialReference* poSRSClone = poSRS;
     if( poSRSClone )
     {
