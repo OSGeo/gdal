@@ -329,7 +329,8 @@ class OGRSQLiteTableLayer final: public OGRSQLiteLayer
 
     bool                CheckSpatialIndexTable(int iGeomCol);
 
-    CPLErr              EstablishFeatureDefn(const char* pszGeomCol);
+    CPLErr              EstablishFeatureDefn(const char* pszGeomCol,
+                                             bool bMayEmitError);
 
     void                LoadStatistics();
     void                LoadStatisticsSpatialite4DB();
@@ -346,7 +347,8 @@ class OGRSQLiteTableLayer final: public OGRSQLiteLayer
     CPLErr              Initialize( const char *pszTableName,
                                     bool bIsTable,
                                     bool bIsVirtualShapeIn,
-                                    bool bDeferredCreation);
+                                    bool bDeferredCreation,
+                                    bool bMayEmitError );
     void                SetCreationParameters( const char *pszFIDColumnName,
                                                OGRwkbGeometryType eGeomType,
                                                const char *pszGeomFormat,
@@ -611,7 +613,8 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 
     bool                OpenTable( const char *pszTableName,
                                    bool IsTable,
-                                   bool bIsVirtualShape );
+                                   bool bIsVirtualShape,
+                                   bool bMayEmitError );
     bool                OpenView( const char *pszViewName,
                                    const char *pszViewGeometry,
                                    const char *pszViewRowid,
