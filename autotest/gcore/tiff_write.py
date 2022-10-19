@@ -10557,5 +10557,43 @@ def test_tiff_write_jpegxl_band_combinations():
                 gdal.Unlink(tmpfilename)
 
 
+###############################################################################
+# Test turning on lossy WEBP compression if WEBP_LEVEL_OVERVIEW specified
+
+
+def test_tiff_write_webp_overview_turn_on_lossy_if_webp_level():
+
+    tmpfilename = (
+        "/vsimem/test_tiff_write_webp_overview_turn_on_lossy_if_webp_level.tif"
+    )
+    md = gdal.GetDriverByName("GTiff").GetMetadata()
+    if md["DMD_CREATIONOPTIONLIST"].find("WEBP") == -1:
+        pytest.skip()
+    if gdal.GetDriverByName("WEBP") is None:
+        pytest.skip()
+
+    ds = gdal.Translate(
+        tmpfilename,
+        "../gdrivers/data/small_world.tif",
+        options="-outsize 10 10 -co COMPRESS=WEBP -co WEBP_LOSSLESS=YES",
+    )
+    ds.BuildOverviews("NEAR", [2], options=["WEBP_LEVEL=50"])
+    ds = None
+    ds = gdal.Open(tmpfilename)
+    assert (
+        ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == "LOSSLESS"
+    )
+    assert (
+        ds.GetRasterBand(1)
+        .GetOverview(0)
+        .GetDataset()
+        .GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE")
+        == "LOSSY"
+    )
+    ds = None
+
+    gdal.Unlink(tmpfilename)
+
+
 def test_tiff_write_cleanup():
     gdaltest.tiff_drv = None

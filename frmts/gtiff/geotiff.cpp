@@ -12225,19 +12225,26 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
         return CE_Failure;
 
     const auto GetOptionValue = [papszOptions](const char* pszOptionKey,
-                                               const char* pszConfigOptionKey)
+                                               const char* pszConfigOptionKey,
+                                               const char** ppszKeyUsed = nullptr)
     {
         const char* pszVal = CSLFetchNameValue(papszOptions, pszOptionKey);
         if( pszVal )
         {
+            if( ppszKeyUsed )
+                *ppszKeyUsed = pszOptionKey;
             return pszVal;
         }
         pszVal = CSLFetchNameValue(papszOptions, pszConfigOptionKey);
         if( pszVal )
         {
+            if( ppszKeyUsed )
+                *ppszKeyUsed = pszConfigOptionKey;
             return pszVal;
         }
         pszVal = CPLGetConfigOption(pszConfigOptionKey, nullptr);
+        if( pszVal && ppszKeyUsed )
+            *ppszKeyUsed = pszConfigOptionKey;
         return pszVal;
     };
 
@@ -12253,16 +12260,35 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
         nZSTDLevel = atoi(opt);
     }
 
-    int nWebpLevel = m_nWebPLevel;
-    if( const char* opt = GetOptionValue( "WEBP_LEVEL", "WEBP_LEVEL_OVERVIEW" ) )
+    bool bWebpLossless = m_bWebPLossless;
+    const char* pszWebPLosslessOverview = GetOptionValue(
+                            "WEBP_LOSSLESS", "WEBP_LOSSLESS_OVERVIEW" );
+    if( pszWebPLosslessOverview )
     {
-        nWebpLevel = atoi(opt);
+        bWebpLossless = CPLTestBool(pszWebPLosslessOverview);
     }
 
-    bool bWebpLossless = m_bWebPLossless;
-    if( const char* opt = GetOptionValue( "WEBP_LOSSLESS", "WEBP_LOSSLESS_OVERVIEW" ) )
+    int nWebpLevel = m_nWebPLevel;
+    const char* pszKeyWebpLevel = "";
+    if( const char* opt = GetOptionValue( "WEBP_LEVEL", "WEBP_LEVEL_OVERVIEW", &pszKeyWebpLevel ) )
     {
-        bWebpLossless = CPLTestBool(opt);
+        if( pszWebPLosslessOverview == nullptr && m_bWebPLossless )
+        {
+            CPLDebug("GTiff",
+                     "%s specified, but not WEBP_LOSSLESS_OVERVIEW. "
+                     "Assuming WEBP_LOSSLESS_OVERVIEW=NO",
+                     pszKeyWebpLevel);
+            bWebpLossless = false;
+        }
+        else if( bWebpLossless )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "%s is specified, but WEBP_LOSSLESS_OVERVIEW=YES. "
+                     "%s will be ignored.",
+                     pszKeyWebpLevel,
+                     pszKeyWebpLevel);
+        }
+        nWebpLevel = atoi(opt);
     }
 
     double dfMaxZError = m_dfMaxZError;
@@ -19591,6 +19617,13 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->m_nZSTDLevel = GTiffGetZSTDPreset(papszParamList);
     poDS->m_nWebPLevel = GTiffGetWebPLevel(papszParamList);
     poDS->m_bWebPLossless = GTiffGetWebPLossless(papszParamList);
+    if( CSLFetchNameValue( papszParamList, "WEBP_LEVEL" ) &&
+        poDS->m_bWebPLossless )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "WEBP_LEVEL is specified, but WEBP_LOSSLESS=YES. "
+                 "WEBP_LEVEL will be ignored.");
+    }
     poDS->m_nJpegQuality = GTiffGetJpegQuality(papszParamList);
     poDS->m_nJpegTablesMode = GTiffGetJpegTablesMode(papszParamList);
     poDS->m_dfMaxZError = GTiffGetLERCMaxZError(papszParamList);
@@ -20851,6 +20884,13 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     poDS->m_nZSTDLevel = GTiffGetZSTDPreset(papszOptions);
     poDS->m_nWebPLevel = GTiffGetWebPLevel(papszOptions);
     poDS->m_bWebPLossless = GTiffGetWebPLossless(papszOptions);
+    if( CSLFetchNameValue( papszOptions, "WEBP_LEVEL" ) &&
+        poDS->m_bWebPLossless )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "WEBP_LEVEL is specified, but WEBP_LOSSLESS=YES. "
+                 "WEBP_LEVEL will be ignored.");
+    }
     poDS->m_nJpegQuality = GTiffGetJpegQuality(papszOptions);
     poDS->m_nJpegTablesMode = GTiffGetJpegTablesMode(papszOptions);
     poDS->GetDiscardLsbOption(papszOptions);
