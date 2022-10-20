@@ -34,7 +34,6 @@
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
-CPL_CVSID("$Id$")
 
 constexpr size_t LCP_HEADER_SIZE = 7316;
 constexpr int LCP_MAX_BANDS = 10;

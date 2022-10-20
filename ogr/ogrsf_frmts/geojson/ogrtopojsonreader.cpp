@@ -32,7 +32,6 @@
 #include <json.h>  // JSON-C
 #include "ogr_api.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          OGRTopoJSONReader()                         */

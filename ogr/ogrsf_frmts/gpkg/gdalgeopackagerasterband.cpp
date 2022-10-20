@@ -35,7 +35,6 @@
 #include <algorithm>
 #include <limits>
 
-CPL_CVSID("$Id$")
 
 #if !defined(DEBUG_VERBOSE) && defined(DEBUG_VERBOSE_GPKG)
 #define DEBUG_VERBOSE

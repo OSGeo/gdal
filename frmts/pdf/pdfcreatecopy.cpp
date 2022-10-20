@@ -44,7 +44,6 @@
 #include <utility>
 #include <vector>
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                        GDALPDFBaseWriter()                           */

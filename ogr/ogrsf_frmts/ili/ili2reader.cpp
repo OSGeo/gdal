@@ -36,7 +36,6 @@
 
 using namespace std;
 
-CPL_CVSID("$Id$")
 
 //
 // constants

@@ -34,7 +34,6 @@
 
 #include "cpl_vsi.h"
 
-CPL_CVSID("$Id$")
 
 /* Poppler 0.31.0 is the first one that needs to know the file size */
 static vsi_l_offset VSIPDFFileStreamGetSize(VSILFILE* f)

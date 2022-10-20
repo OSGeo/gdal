@@ -31,7 +31,6 @@
 #include "ogrlayerpool.h"
 #include "ogr_recordbatch.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                      OGRAbstractProxiedLayer()                       */

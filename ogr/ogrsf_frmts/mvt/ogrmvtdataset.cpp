@@ -49,7 +49,6 @@
 #include <vector>
 #include <set>
 
-CPL_CVSID("$Id$")
 
 #if GEOS_VERSION_MAJOR > 3 || \
     (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 8)

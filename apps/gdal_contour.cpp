@@ -37,7 +37,6 @@
 #include "ogr_srs_api.h"
 #include "commonutils.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            ArgIsNumeric()                            */

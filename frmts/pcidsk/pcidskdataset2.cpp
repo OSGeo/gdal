@@ -33,7 +33,6 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 const PCIDSK::PCIDSKInterfaces *PCIDSK2GetInterfaces(void);
 

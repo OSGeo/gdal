@@ -30,7 +30,6 @@
 #include "cpl_conv.h"
 #include "ogrteigha.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         OGRDGNV8DriverUnload()                       */

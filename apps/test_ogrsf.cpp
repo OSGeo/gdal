@@ -39,7 +39,6 @@
 #include <algorithm>
 #include <limits>
 
-CPL_CVSID("$Id$")
 
 bool bReadOnly = false;
 bool bVerbose = true;

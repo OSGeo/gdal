@@ -57,7 +57,6 @@
 #include "shapefil.h"
 #include "shp_vsi.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           OGRShapeLayer()                            */

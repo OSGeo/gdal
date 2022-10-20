@@ -61,7 +61,6 @@
 
 //#define DEBUG_IO
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                  JP2OpenJPEGDataset_ErrorCallback()                  */

@@ -49,7 +49,6 @@
 #include "ogrshape.h"
 #include "shapefil.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                        RingStartEnd                                  */

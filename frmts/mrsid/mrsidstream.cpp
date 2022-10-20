@@ -31,7 +31,6 @@
 #include "cpl_error.h"
 #include "mrsidstream.h"
 
-CPL_CVSID("$Id$")
 
 using namespace LizardTech;
 

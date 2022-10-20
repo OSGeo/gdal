@@ -33,7 +33,6 @@
 #include "ogr_p.h"
 #include "gmlutils.h"
 
-CPL_CVSID("$Id$")
 
 extern "C" void RegisterOGRCSW();
 

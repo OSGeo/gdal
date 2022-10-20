@@ -40,7 +40,6 @@
 #include "ogrsf_frmts.h"
 #include "commonutils.h"
 
-CPL_CVSID("$Id$")
 
 typedef enum
 {

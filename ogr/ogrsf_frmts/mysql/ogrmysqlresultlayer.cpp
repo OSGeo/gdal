@@ -31,7 +31,6 @@
 #include "cpl_conv.h"
 #include "ogr_mysql.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                        OGRMySQLResultLayer()                         */

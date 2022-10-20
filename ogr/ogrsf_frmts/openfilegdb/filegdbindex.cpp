@@ -49,7 +49,6 @@
 #include "ogr_core.h"
 #include "filegdbtable.h"
 
-CPL_CVSID("$Id$")
 
 namespace OpenFileGDB
 {

@@ -52,7 +52,6 @@
 #include "ogr_spatialref.h"
 #include "ogrsf_frmts.h"
 
-CPL_CVSID("$Id$")
 
 static const char* const apszAllowedATOMFieldNamesWithSubElements[] =
     { "author", "contributor", nullptr };

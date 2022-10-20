@@ -56,7 +56,6 @@
 #include "osm_parser.h"
 #include "sqlite3.h"
 
-CPL_CVSID("$Id$")
 
 constexpr int SWITCH_THRESHOLD = 10000;
 constexpr int MAX_THRESHOLD = 100000;

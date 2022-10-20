@@ -34,7 +34,6 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
-CPL_CVSID("$Id$")
 
 /*!
   \brief Set VFK property (null)

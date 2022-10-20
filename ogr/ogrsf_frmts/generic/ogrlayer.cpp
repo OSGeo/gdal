@@ -40,7 +40,6 @@
 #include <cassert>
 #include <limits>
 
-CPL_CVSID("$Id$")
 
 struct OGRLayer::Private
 {

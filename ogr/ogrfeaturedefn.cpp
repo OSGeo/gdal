@@ -42,7 +42,6 @@
 #include "ogr_p.h"
 #include "ograpispy.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           OGRFeatureDefn()                           */

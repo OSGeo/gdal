@@ -41,7 +41,6 @@
 #include "cpl_json_streaming_parser.h"
 #include "ogr_api.h"
 
-CPL_CVSID("$Id$")
 
 static
 OGRGeometry* OGRGeoJSONReadGeometry( json_object* poObj,

@@ -33,7 +33,6 @@
 
 #include <limits>
 
-CPL_CVSID("$Id$")
 
 template<typename T> inline double GetSrcVal(const void* pSource, GDALDataType eSrcType, T ii)
 {

@@ -38,7 +38,6 @@
 #include "cpl_sha1.h"
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 // #define DEBUG_VERBOSE 1
 

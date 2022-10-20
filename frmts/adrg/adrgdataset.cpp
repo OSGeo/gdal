@@ -34,7 +34,6 @@
 #include <limits>
 #include <new>
 
-CPL_CVSID("$Id$")
 
 #define N_ELEMENTS(x)  (sizeof(x)/sizeof(x[0]))
 

@@ -1905,3 +1905,13 @@ def test_warp_mode_ties():
     src_ds.GetRasterBand(1).WriteArray(numpy.array([[1, 5, 1], [2, 5, 4], [5, 1, 0]]))
     out_ds = gdal.Warp("", src_ds, format="MEM", resampleAlg="mode", xRes=3, yRes=3)
     assert out_ds.GetRasterBand(1).ReadAsArray()[0, 0] == 5
+
+
+###############################################################################
+# Test bugfix for #6526
+
+
+def test_warp_max_downsampling_missed_edges():
+
+    ds = gdal.Open("data/bug_6526_warped.vrt")
+    assert ds.GetRasterBand(1).ComputeRasterMinMax() == (1, 1)

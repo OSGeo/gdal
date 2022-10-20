@@ -33,7 +33,6 @@
 #include <cctype>
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 #define DIGIT_ZERO '0'
 

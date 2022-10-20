@@ -3895,6 +3895,32 @@ def test_ogr_sqlite_relationships():
 
 
 ###############################################################################
+# Test support for creating "foo(bar)" layer names
+
+
+def test_ogr_sqlite_create_layer_names_with_parenthesis():
+
+    tmpfilename = "/vsimem/test_ogr_sqlite_create_layer_names_with_parenthesis.db"
+    try:
+        src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+        src_ds.CreateLayer("foo(bar)")
+        gdal.ErrorReset()
+        out_ds = gdal.VectorTranslate(tmpfilename, src_ds, format="SQLite")
+        assert out_ds is not None
+        assert gdal.GetLastErrorMsg() == ""
+        out_ds = None
+        ds = ogr.Open(tmpfilename)
+        gdal.ErrorReset()
+        assert ds.GetLayerByName("foo(bar)") is not None
+        assert gdal.GetLastErrorMsg() == ""
+        assert ds.GetLayerByName("bar(baz)") is None
+        assert gdal.GetLastErrorMsg() == ""
+        ds = None
+    finally:
+        gdal.Unlink(tmpfilename)
+
+
+###############################################################################
 #
 
 

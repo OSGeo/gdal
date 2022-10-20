@@ -41,7 +41,6 @@
 
 #include "cpl_alibaba_oss.h"
 
-CPL_CVSID("$Id$")
 
 #ifndef HAVE_CURL
 

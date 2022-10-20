@@ -37,7 +37,6 @@
 // #include "kmlnode.h"
 #include "kmlutility.h"
 
-CPL_CVSID("$Id$")
 
 KMLVector::~KMLVector() {}
 

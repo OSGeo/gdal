@@ -37,7 +37,6 @@
 
 //! @cond Doxygen_Suppress
 
-CPL_CVSID("$Id$")
 
 #ifdef HAVE_CURL
 

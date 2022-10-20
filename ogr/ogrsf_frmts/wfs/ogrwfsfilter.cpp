@@ -29,7 +29,6 @@
 #include "ogr_wfs.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$")
 
 typedef struct
 {

@@ -1,0 +1,41 @@
+<VRTDataset rasterXSize="5" rasterYSize="5" subClass="VRTWarpedDataset">
+  <SRS dataAxisToSRSAxisMapping="1,2">LOCAL_CS["Cartesian (Meter)",UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]</SRS>
+  <GeoTransform>  2.5000000000000001e-02,  2.0000000000000001e-01,  0.0000000000000000e+00,  1.0249999999999999e+00,  0.0000000000000000e+00, -2.0000000000000001e-01</GeoTransform>
+  <Metadata>
+    <MDI key="AREA_OR_POINT">Area</MDI>
+  </Metadata>
+  <VRTRasterBand dataType="Float32" band="1" subClass="VRTWarpedRasterBand">
+    <ColorInterp>Gray</ColorInterp>
+  </VRTRasterBand>
+  <BlockXSize>5</BlockXSize>
+  <BlockYSize>5</BlockYSize>
+  <GDALWarpOptions>
+    <WarpMemoryLimit>6.71089e+07</WarpMemoryLimit>
+    <ResampleAlg>Maximum</ResampleAlg>
+    <WorkingDataType>Float64</WorkingDataType>
+    <Option name="INIT_DEST">NO_DATA</Option>
+    <Option name="ERROR_OUT_IF_EMPTY_SOURCE_WINDOW">FALSE</Option>
+    <SourceDataset relativeToVRT="1">bug_6526_input.tif</SourceDataset>
+    <Transformer>
+      <ApproxTransformer>
+        <MaxError>0.125</MaxError>
+        <BaseTransformer>
+          <GenImgProjTransformer>
+            <SrcGeoTransform>0,0.0200000000000000004,0,1,0,-0.0200000000000000004</SrcGeoTransform>
+            <SrcInvGeoTransform>-0,50,0,50,0,-50</SrcInvGeoTransform>
+            <DstGeoTransform>0.0250000000000000014,0.200000000000000011,0,1.02499999999999991,0,-0.200000000000000011</DstGeoTransform>
+            <DstInvGeoTransform>-0.125,5,0,5.12499999999999911,0,-5</DstInvGeoTransform>
+          </GenImgProjTransformer>
+        </BaseTransformer>
+      </ApproxTransformer>
+    </Transformer>
+    <BandList>
+      <BandMapping src="1" dst="1">
+        <SrcNoDataReal>nan</SrcNoDataReal>
+        <SrcNoDataImag>0</SrcNoDataImag>
+        <DstNoDataReal>0</DstNoDataReal>
+        <DstNoDataImag>0</DstNoDataImag>
+      </BandMapping>
+    </BandList>
+  </GDALWarpOptions>
+</VRTDataset>

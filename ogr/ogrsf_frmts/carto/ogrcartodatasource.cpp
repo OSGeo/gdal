@@ -30,7 +30,6 @@
 #include "ogr_pgdump.h"
 #include "ogrgeojsonreader.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                        OGRCARTODataSource()                        */

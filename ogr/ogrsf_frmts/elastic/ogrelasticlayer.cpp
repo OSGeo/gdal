@@ -77,7 +77,6 @@ static double GetTimestamp()
     return tv.tv_sec + tv.tv_usec * 1e-6;
 }
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           OGRElasticLayer()                          */

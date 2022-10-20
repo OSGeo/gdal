@@ -67,7 +67,6 @@
 #include "ogrlayerdecorator.h"
 #include "ogrsf_frmts.h"
 
-CPL_CVSID("$Id$")
 
 typedef enum
 {
@@ -137,6 +136,9 @@ struct GDALVectorTranslateOptions
 
     /*! access modes */
     GDALVectorTranslateAccessMode eAccessMode;
+
+    /*! whether to use UpsertFeature() instead of CreateFeature() */
+    bool bUpsert;
 
     /*! It has the effect of adding, to existing target layers, the new fields found in source layers.
         This option is useful when merging files that have non-strictly identical structures. This might
@@ -5135,7 +5137,9 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
             }
 
             CPLErrorReset();
-            if( poDstLayer->CreateFeature( poDstFeature.get() ) == OGRERR_NONE )
+            if( (psOptions->bUpsert ?
+                    poDstLayer->UpsertFeature( poDstFeature.get() ) :
+                    poDstLayer->CreateFeature( poDstFeature.get() )) == OGRERR_NONE )
             {
                 nFeaturesWritten ++;
                 if( nDesiredFID != OGRNullFID  && poDstFeature->GetFID() != nDesiredFID )
@@ -5418,6 +5422,11 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
         else if( EQUAL(papszArgv[i],"-append") )
         {
             psOptions->eAccessMode = ACCESS_APPEND;
+        }
+        else if( EQUAL(papszArgv[i],"-upsert") )
+        {
+            psOptions->eAccessMode = ACCESS_APPEND;
+            psOptions->bUpsert = true;
         }
         else if( EQUAL(papszArgv[i],"-overwrite") )
         {

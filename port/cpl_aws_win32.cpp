@@ -43,7 +43,6 @@
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
 
-CPL_CVSID("$Id$")
 
 static CPLString osWindowsProductUUID;
 

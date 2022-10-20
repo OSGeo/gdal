@@ -474,6 +474,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     bool                        m_bContentChanged = false;
     sqlite3_stmt*               m_poUpdateStatement = nullptr;
     bool                        m_bInsertStatementWithFID = false;
+    bool                        m_bInsertStatementWithUpsert = false;
+    std::string                 m_osInsertStatementUpsertUniqueColumnName{};
     sqlite3_stmt*               m_poInsertStatement = nullptr;
     sqlite3_stmt*               m_poGetFeatureStatement = nullptr;
     bool                        m_bDeferredSpatialIndexCreation = false;
@@ -496,6 +498,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     int                         m_nCountInsertInTransactionThreshold = -1;
     GIntBig                     m_nCountInsertInTransaction = 0;
     std::vector<CPLString >     m_aoRTreeTriggersSQL{};
+    bool                        m_bUpdate1TriggerDisabled = false;
+    std::string                 m_osUpdate1Trigger{};
     typedef struct
     {
         GIntBig nId;
@@ -517,8 +521,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     OGRErr              RecreateTable(const CPLString& osColumnsForCreate,
                                       const CPLString& osFieldListForSelect);
 #ifdef ENABLE_GPKG_OGR_CONTENTS
-    void                CreateTriggers(const char* pszTableName = nullptr);
-    void                DisableTriggers(bool bNullifyFeatureCount = true);
+    void                CreateFeatureCountTriggers(const char* pszTableName = nullptr);
+    void                DisableFeatureCountTriggers(bool bNullifyFeatureCount = true);
 #endif
 
     void                CheckGeometryType( OGRFeature *poFeature );
@@ -530,11 +534,13 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
 
     bool                StartDeferredSpatialIndexUpdate();
     bool                FlushPendingSpatialIndexUpdate();
+    void                WorkaroundUpdate1TriggerIssue();
+    void                RevertWorkaroundUpdate1TriggerIssue();
 
     OGRErr              RenameFieldInAuxiliaryTables(
                             const char* pszOldName, const char* pszNewName);
 
-    bool                FeatureIDExists( GIntBig nFID );
+    OGRErr              CreateOrUpsertFeature( OGRFeature *poFeature, bool bUpsert );
 
     CPL_DISALLOW_COPY_ASSIGN(OGRGeoPackageTableLayer)
 
@@ -562,7 +568,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
                                             int nFlagsIn ) override;
     virtual OGRErr      ReorderFields( int* panMap ) override;
     void                ResetReading() override;
-    OGRErr              ICreateFeature( OGRFeature *poFeater ) override;
+    OGRErr              ICreateFeature( OGRFeature *poFeature ) override;
     OGRErr              ISetFeature( OGRFeature *poFeature ) override;
     OGRErr              IUpsertFeature( OGRFeature* poFeature ) override;
     OGRErr              DeleteFeature(GIntBig nFID) override;
@@ -662,7 +668,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     OGRErr              BuildColumns();
     bool                IsGeomFieldSet( OGRFeature *poFeature );
     CPLString           FeatureGenerateUpdateSQL( OGRFeature *poFeature );
-    CPLString           FeatureGenerateInsertSQL( OGRFeature *poFeature, bool bAddFID, bool bBindUnsetFields );
+    CPLString           FeatureGenerateInsertSQL( OGRFeature *poFeature, bool bAddFID, bool bBindUnsetFields, bool bUpsert, const std::string& osUpsertUniqueColumnName );
     OGRErr              FeatureBindUpdateParameters( OGRFeature *poFeature, sqlite3_stmt *poStmt );
     OGRErr              FeatureBindInsertParameters( OGRFeature *poFeature, sqlite3_stmt *poStmt, bool bAddFID, bool bBindUnsetFields );
     OGRErr              FeatureBindParameters( OGRFeature *poFeature, sqlite3_stmt *poStmt, int *pnColCount, bool bAddFID, bool bBindUnsetFields );

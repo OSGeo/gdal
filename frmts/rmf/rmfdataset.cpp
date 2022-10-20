@@ -36,7 +36,6 @@
 
 #include "cpl_safemaths.hpp"
 
-CPL_CVSID("$Id$")
 
 constexpr int RMF_DEFAULT_BLOCKXSIZE = 256;
 constexpr int RMF_DEFAULT_BLOCKYSIZE = 256;

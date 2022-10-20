@@ -41,7 +41,6 @@
 
 #include "cpl_google_cloud.h"
 
-CPL_CVSID("$Id$")
 
 #ifndef HAVE_CURL
 

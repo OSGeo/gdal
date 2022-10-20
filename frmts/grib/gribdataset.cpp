@@ -70,7 +70,6 @@ CPL_C_END
 #include "ogr_spatialref.h"
 #include "memdataset.h"
 
-CPL_CVSID("$Id$")
 
 static CPLMutex *hGRIBMutex = nullptr;
 

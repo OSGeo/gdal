@@ -36,7 +36,6 @@
 #include <limits>
 #include <set>
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                       GDALMultiDimInfoOptions                        */

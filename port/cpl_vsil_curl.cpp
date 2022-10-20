@@ -60,7 +60,6 @@
 #define S_IXOTH     00001
 #endif
 
-CPL_CVSID("$Id$")
 
 #ifndef HAVE_CURL
 

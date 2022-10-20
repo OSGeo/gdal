@@ -84,7 +84,6 @@
 #define NETCDF_USES_UTF8
 #endif
 
-CPL_CVSID("$Id$")
 
 // Internal function declarations.
 

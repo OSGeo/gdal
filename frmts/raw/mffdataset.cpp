@@ -37,7 +37,6 @@
 #include <cmath>
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 enum {
   MFFPRJ_NONE,

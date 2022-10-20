@@ -34,7 +34,6 @@
 #include "ogr_core.h"
 #include "ogr_feature.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                    OGRSQLiteSingleFeatureLayer()                     */

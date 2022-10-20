@@ -1134,9 +1134,14 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
     CPLConfigOptionSetter ovrQualityWebpSetter("WEBP_LEVEL_OVERVIEW", pszOverviewQuality, true);
 
     std::unique_ptr<CPLConfigOptionSetter> poWebpLosslessSetter;
-    if( pszOverviewQuality && CPLAtof(pszOverviewQuality) == 100.0 )
+    if( EQUAL(pszOverviewCompress, "WEBP") )
     {
-        poWebpLosslessSetter.reset(new CPLConfigOptionSetter("WEBP_LOSSLESS_OVERVIEW", "TRUE", true));
+        if( pszOverviewQuality )
+        {
+            poWebpLosslessSetter.reset(new CPLConfigOptionSetter(
+                "WEBP_LOSSLESS_OVERVIEW",
+                CPLAtof(pszOverviewQuality) == 100.0 ? "TRUE" : "FALSE", true));
+        }
     }
 
     std::unique_ptr<CPLConfigOptionSetter> poPhotometricSetter;
@@ -1277,10 +1282,19 @@ void GDALCOGDriver::InitializeCreationOptionList()
     }
     if( bHasJPEG || bHasWebP )
     {
+        std::string osJPEG_WEBP;
+        if( bHasJPEG )
+            osJPEG_WEBP = "JPEG";
+        if( bHasWebP )
+        {
+            if( !osJPEG_WEBP.empty() )
+                osJPEG_WEBP += '/';
+            osJPEG_WEBP += "WEBP";
+        }
         osOptions += "   <Option name='QUALITY' type='int' "
-                     "description='JPEG/WEBP quality 1-100' default='75'/>"
+                     "description='" + osJPEG_WEBP + " quality 1-100' default='75'/>"
                      "   <Option name='OVERVIEW_QUALITY' type='int' "
-                     "description='Overview JPEG/WEBP quality 1-100' default='75'/>";
+                     "description='Overview " + osJPEG_WEBP + " quality 1-100' default='75'/>";
     }
     if( bHasLERC )
     {

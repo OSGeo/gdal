@@ -30,7 +30,6 @@
 #include "dted_api.h"
 #include <assert.h>
 
-CPL_CVSID("$Id$")
 
 #define DTED_ABS_VERT_ACC "NA  "
 #define DTED_SECURITY     "U"

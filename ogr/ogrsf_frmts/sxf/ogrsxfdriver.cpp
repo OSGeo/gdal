@@ -32,7 +32,6 @@
 #include "cpl_conv.h"
 #include "ogr_sxf.h"
 
-CPL_CVSID("$Id$")
 
 extern "C" void RegisterOGRSXF();
 

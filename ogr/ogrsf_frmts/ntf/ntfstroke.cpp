@@ -36,7 +36,6 @@
 #include <algorithm>
 #include <utility>
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                     NTFArcCenterFromEdgePoints()                     */

@@ -36,7 +36,6 @@
 #include <map>
 #include <set>
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                     GDALMultiDimTranslateOptions                     */

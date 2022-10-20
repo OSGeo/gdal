@@ -32,7 +32,6 @@
 #include "mitab/mitab_priv.h"
 #include "cpl_minixml.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            OGRMIAttrIndex                            */

@@ -31,7 +31,6 @@
 #include <algorithm>
 #include <string.h>
 
-CPL_CVSID("$Id$")
 
 /* Various offsets, in bytes */
 // Commented out the unused defines.

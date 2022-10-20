@@ -29,7 +29,6 @@
 #include "ogr_svg.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$")
 
 CPL_C_START
 void RegisterOGRSVG();

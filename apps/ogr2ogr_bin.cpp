@@ -53,7 +53,6 @@
 #include "ogr_p.h"
 #include "ogrsf_frmts.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -67,7 +66,7 @@ static bool StringCISortFunction( const CPLString& a, const CPLString& b )
 static void Usage( const char* pszAdditionalMsg = nullptr, bool bShort = true )
 {
     printf(
-        "Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update]\n"
+        "Usage: ogr2ogr [--help-general] [-skipfailures] [-append | -upsert] [-update]\n"
         "               [-select field_list] [-where restricted_where|@filename]\n"
         "               [-progress] [-sql <sql statement>|@filename] [-dialect dialect]\n"
         "               [-preserve_fid] [-fid FID] [-limit nb_features]\n"

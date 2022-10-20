@@ -30,7 +30,6 @@
 #include "ntf.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$")
 
 static int nFieldBufSize = 0;
 static char *pszFieldBuf = nullptr;

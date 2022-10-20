@@ -44,7 +44,6 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 
-CPL_CVSID("$Id$")
 
 /*! @cond Doxygen_Suppress */
 

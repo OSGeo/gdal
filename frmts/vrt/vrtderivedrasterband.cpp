@@ -41,7 +41,6 @@
 
 /*! @cond Doxygen_Suppress */
 
-CPL_CVSID("$Id$")
 
 using namespace GDALPy;
 

@@ -63,7 +63,6 @@
 #include "ogr_proj_p.h"
 #include "proj.h"
 
-CPL_CVSID("$Id$")
 
 constexpr double R2D = 180.0 / M_PI;
 

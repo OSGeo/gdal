@@ -29,7 +29,6 @@
 #include "ogr_dxf.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         OGRDXFBlocksLayer()                          */

@@ -50,7 +50,6 @@
 #include "ogr_geometry.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$")
 
 /*=====================================================================
  *                      class TABView

@@ -29,7 +29,6 @@
 
 #include "keamaskband.h"
 
-CPL_CVSID("$Id$")
 
 // constructor
 KEAMaskBand::KEAMaskBand(GDALRasterBand *pParent,

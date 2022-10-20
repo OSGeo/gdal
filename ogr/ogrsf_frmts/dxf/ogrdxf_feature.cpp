@@ -29,7 +29,6 @@
 #include "ogr_dxf.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            OGRDXFFeature()                           */

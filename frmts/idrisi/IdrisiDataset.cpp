@@ -47,7 +47,6 @@
 
 #include <cmath>
 
-CPL_CVSID( "$Id$" )
 
 #ifdef WIN32
 #  define PATHDELIM       '\\'

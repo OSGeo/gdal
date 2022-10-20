@@ -1,7 +1,6 @@
 #include <map>
 #include "ogr_sosi.h"
 
-CPL_CVSID("$Id$")
 
 C2F* poTypes = nullptr;
 

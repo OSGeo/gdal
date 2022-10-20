@@ -33,7 +33,6 @@
 #include "cpl_string.h"
 #include "ods_formula.h"
 
-CPL_CVSID("$Id$")
 
 #define YYSTYPE  ods_formula_node*
 

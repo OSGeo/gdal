@@ -31,7 +31,6 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 static void DGNDumpRawElement( DGNHandle hDGN, DGNElemCore *psCore,
                                FILE *fpOut );

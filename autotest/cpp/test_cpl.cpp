@@ -39,6 +39,7 @@
 #include "cpl_error.h"
 #include "cpl_hash_set.h"
 #include "cpl_list.h"
+#include "cpl_mask.h"
 #include "cpl_sha256.h"
 #include "cpl_string.h"
 #include "cpl_safemaths.hpp"
@@ -4085,6 +4086,80 @@ namespace tut
         }
         VSIFCloseL(fp);
         VSIUnlink("temp_test_64.bin");
+    }
+
+    // Test CPLMask implementation
+    template<>
+    template<>
+    void object::test<65>()
+    {
+        constexpr std::size_t sz = 71;
+        auto m = CPLMaskCreate(sz, true);
+
+        // Mask is set by default
+        for (std::size_t i = 0; i < sz; i++) {
+            ensure_equals("bits set by default", CPLMaskGet(m, i), true);
+        }
+
+        VSIFree(m);
+        m = CPLMaskCreate(sz, false);
+        auto m2 = CPLMaskCreate(sz, false);
+
+        // Mask is unset by default
+        for (std::size_t i = 0; i < sz; i++) {
+            ensure_equals("bits unset by default", CPLMaskGet(m, i), false);
+        }
+
+        // Set a few bits
+        CPLMaskSet(m, 10);
+        CPLMaskSet(m, 33);
+        CPLMaskSet(m, 70);
+
+        // Check all bits
+        for (std::size_t i = 0; i < sz; i++) {
+            if (i == 10 || i == 33 || i == 70) {
+                ensure_equals("bit set correctly", CPLMaskGet(m, i), true);
+            } else {
+                ensure_equals("bit remains unset", CPLMaskGet(m, i), false);
+            }
+        }
+
+        // Unset some bits
+        CPLMaskClear(m, 10);
+        CPLMaskClear(m, 70);
+
+        // Check all bits
+        for (std::size_t i = 0; i < sz; i++) {
+            if (i == 33) {
+                ensure_equals("bit remains set", CPLMaskGet(m, i), true);
+            } else {
+                ensure_equals("bit cleared correctly", CPLMaskGet(m, i), false);
+            }
+        }
+
+        CPLMaskSet(m2, 36);
+        CPLMaskMerge(m2, m, sz);
+
+        // Check all bits
+        for (std::size_t i = 0; i < sz; i++) {
+            if (i == 36 || i == 33) {
+                ensure_equals("m2 bit set correctly", CPLMaskGet(m2, i), true);
+            } else {
+                ensure_equals("m2 bit remains clear", CPLMaskGet(m2, i), false);
+            }
+        }
+
+        CPLMaskClearAll(m, sz);
+        CPLMaskSetAll(m2, sz);
+
+        // Check all bits
+        for (std::size_t i = 0; i < sz; i++) {
+            ensure_equals("all bits cleared", CPLMaskGet(m, i), false);
+            ensure_equals("all bits set", CPLMaskGet(m2, i), true);
+        }
+
+        VSIFree(m);
+        VSIFree(m2);
     }
 
     // WARNING: keep that line at bottom and read carefully:

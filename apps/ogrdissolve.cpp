@@ -34,7 +34,6 @@
 #include "commonutils.h"
 #include <map>
 #include <list>
-CPL_CVSID("$Id$")
 
 static void Usage();
 

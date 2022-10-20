@@ -32,7 +32,6 @@
 #include "pcrasterrasterband.h"
 #include "pcrasterutil.h"
 
-CPL_CVSID("$Id$")
 
 /*!
   \file

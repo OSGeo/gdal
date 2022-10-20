@@ -39,7 +39,6 @@
 #include "gdal_priv.h"
 #include "ogrsf_frmts.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                              Identify()                              */

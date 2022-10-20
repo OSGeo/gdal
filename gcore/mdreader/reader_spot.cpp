@@ -40,7 +40,6 @@
 
 #include "gdal_mdreader.h"
 
-CPL_CVSID("$Id$")
 
 /**
  * GDALMDReaderSpot()

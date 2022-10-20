@@ -55,7 +55,6 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 constexpr int HDF4_SDS_MAXNAMELEN = 65;
 

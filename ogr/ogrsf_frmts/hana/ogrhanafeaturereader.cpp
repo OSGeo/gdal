@@ -38,7 +38,6 @@
 
 #include "odbc/Types.h"
 
-CPL_CVSID("$Id$")
 
 namespace OGRHANA {
 namespace {

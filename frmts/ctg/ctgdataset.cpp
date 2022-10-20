@@ -30,7 +30,6 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$")
 
 constexpr int HEADER_LINE_COUNT = 5;
 

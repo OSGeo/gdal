@@ -35,7 +35,6 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
-CPL_CVSID("$Id$")
 
 /*!
   \brief IVFKFeature constructor

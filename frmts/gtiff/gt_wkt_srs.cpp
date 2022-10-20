@@ -63,7 +63,6 @@
 
 #include "proj.h"
 
-CPL_CVSID("$Id$")
 
 static const geokey_t ProjLinearUnitsInterpCorrectGeoKey =
     static_cast<geokey_t>(3059);
