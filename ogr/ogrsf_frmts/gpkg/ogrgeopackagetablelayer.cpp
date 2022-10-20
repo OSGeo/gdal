@@ -149,25 +149,41 @@ OGRErr OGRGeoPackageTableLayer::BuildColumns()
     /* Add a geometry column if there is one (just one) */
     if ( m_poFeatureDefn->GetGeomFieldCount() )
     {
-        if( !soColumns.empty() )
-            soColumns += ", ";
-        soColumns += "m.\"";
-        soColumns += SQLEscapeName(m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef());
-        soColumns += "\"";
-        iGeomCol = iCurCol;
-        iCurCol ++;
+        const auto poFieldDefn = m_poFeatureDefn->GetGeomFieldDefn(0);
+        if( poFieldDefn->IsIgnored() )
+        {
+            iGeomCol = -1;
+        }
+        else
+        {
+            if( !soColumns.empty() )
+                soColumns += ", ";
+            soColumns += "m.\"";
+            soColumns += SQLEscapeName(poFieldDefn->GetNameRef());
+            soColumns += "\"";
+            iGeomCol = iCurCol;
+            iCurCol ++;
+        }
     }
 
     /* Add all the attribute columns */
     for( int i = 0; i < m_poFeatureDefn->GetFieldCount(); i++ )
     {
-        if( !soColumns.empty() )
-            soColumns += ", ";
-        soColumns += "m.\"";
-        soColumns += SQLEscapeName(m_poFeatureDefn->GetFieldDefn(i)->GetNameRef());
-        soColumns += "\"";
-        panFieldOrdinals[i] = iCurCol;
-        iCurCol ++;
+        const auto poFieldDefn = m_poFeatureDefn->GetFieldDefn(i);
+        if( poFieldDefn->IsIgnored() )
+        {
+            panFieldOrdinals[i] = -1;
+        }
+        else
+        {
+            if( !soColumns.empty() )
+                soColumns += ", ";
+            soColumns += "m.\"";
+            soColumns += SQLEscapeName(poFieldDefn->GetNameRef());
+            soColumns += "\"";
+            panFieldOrdinals[i] = iCurCol;
+            iCurCol ++;
+        }
     }
 
     m_soColumns = soColumns;

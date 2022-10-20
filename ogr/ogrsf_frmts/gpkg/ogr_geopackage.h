@@ -438,6 +438,7 @@ class OGRGeoPackageLayer CPL_NON_FINAL: public OGRLayer, public IOGRSQLiteGetSpa
     void                ResetReading() override;
     int                 TestCapability( const char * ) override;
     OGRFeatureDefn*     GetLayerDefn() override { return m_poFeatureDefn; }
+    OGRErr              SetIgnoredFields( const char **papszFields ) override;
 
     virtual bool         HasFastSpatialFilter(int /*iGeomCol*/) override { return false; }
     virtual CPLString    GetSpatialWhere(int /*iGeomCol*/,
