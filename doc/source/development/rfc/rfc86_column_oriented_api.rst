@@ -143,7 +143,7 @@ A potential usage can be:
     if( stream.get_schema(&stream, &schema) == 0 )
     {
         // Do something useful
-        schema.release(schema);
+        schema.release(&schema);
     }
     while( true )
     {
