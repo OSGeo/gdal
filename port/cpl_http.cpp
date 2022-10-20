@@ -1384,7 +1384,8 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
         if( strlen(szCurlErrBuf) > 0 )
         {
             bool bSkipError = false;
-
+            const char* pszContentLength =
+                CSLFetchNameValue(psResult->papszHeaders, "Content-Length");
             // Some servers such as
             // http://115.113.193.14/cgi-bin/world/qgis_mapserv.fcgi?VERSION=1.1.1&SERVICE=WMS&REQUEST=GetCapabilities
             // invalidly return Content-Length as the uncompressed size, with
@@ -1395,8 +1396,6 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
                 strstr(szCurlErrBuf, "transfer closed with") &&
                 strstr(szCurlErrBuf, "bytes remaining to read") )
             {
-                const char* pszContentLength =
-                    CSLFetchNameValue(psResult->papszHeaders, "Content-Length");
                 if( pszContentLength && psResult->nDataLen != 0 &&
                     atoi(pszContentLength) == psResult->nDataLen )
                 {
@@ -1414,11 +1413,33 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
                     bSkipError = true;
                 }
             }
+
+            // Ignore SSL errors about non-properly terminated connection,
+            // often due to HTTP proxies
+            else if (
+                pszContentLength == nullptr &&
+                // Cf https://github.com/curl/curl/pull/3148
+                (strstr(szCurlErrBuf,
+                        "GnuTLS recv error (-110): The TLS connection was non-properly terminated") != nullptr ||
+                // Cf https://github.com/curl/curl/issues/9024
+                 strstr(szCurlErrBuf, "SSL_read: error:0A000126:SSL routines::unexpected eof while reading") != nullptr) )
+            {
+                psResult->nStatus = 0;
+                bSkipError = true;
+            }
+            else if( CPLTestBool(CPLGetConfigOption("CPL_CURL_IGNORE_ERROR", "NO")) )
+            {
+                psResult->nStatus = 0;
+                bSkipError = true;
+            }
+
             if( !bSkipError )
             {
                 psResult->pszErrBuf = CPLStrdup(szCurlErrBuf);
                 CPLError( CE_Failure, CPLE_AppDefined,
-                        "%s", szCurlErrBuf );
+                          "%s. You may set the CPL_CURL_IGNORE_ERROR "
+                          "configuration option to YES to try to ignore it.",
+                          szCurlErrBuf );
             }
         }
         else
