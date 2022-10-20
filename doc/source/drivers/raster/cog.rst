@@ -135,18 +135,18 @@ General creation options
    TIFF, libtiff will fail with an error message like
    "TIFFAppendToStrip:Maximum TIFF file size exceeded".
 
--  **RESAMPLING=[NEAREST/AVERAGE/BILINEAR/CUBIC/CUBICSPLINE/LANCZOS]**:
+-  **RESAMPLING=[NEAREST/AVERAGE/BILINEAR/CUBIC/CUBICSPLINE/LANCZOS/MODE/RMS]**:
    Resampling method used for overview generation or reprojection.
    For paletted images,
    NEAREST is used by default, otherwise it is CUBIC.
 
--  **OVERVIEW_RESAMPLING=[NEAREST/AVERAGE/BILINEAR/CUBIC/CUBICSPLINE/LANCZOS]**:
+-  **OVERVIEW_RESAMPLING=[NEAREST/AVERAGE/BILINEAR/CUBIC/CUBICSPLINE/LANCZOS/MODE/RMS]**:
    (since GDAL 3.2)
    Resampling method used for overview generation.
    For paletted images, NEAREST is used by default, otherwise it is CUBIC.
    This overrides, for overview generation, the value of ``RESAMPLING`` if it specified.
 
--  **WARP_RESAMPLING=[NEAREST/AVERAGE/BILINEAR/CUBIC/CUBICSPLINE/LANCZOS]**:
+-  **WARP_RESAMPLING=[NEAREST/AVERAGE/BILINEAR/CUBIC/CUBICSPLINE/LANCZOS/MODE/RMS/MIN/MAX/MED/Q1/Q3]**:
    (since GDAL 3.2)
    Resampling method used for reprojection.
    For paletted images, NEAREST is used by default, otherwise it is CUBIC.
