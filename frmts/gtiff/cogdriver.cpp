@@ -1053,7 +1053,8 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
     {
         if( pszQuality && atoi(pszQuality) == 100 )
             aosOptions.SetNameValue("WEBP_LOSSLESS", "YES");
-        aosOptions.SetNameValue("WEBP_LEVEL", pszQuality);
+        else
+            aosOptions.SetNameValue("WEBP_LEVEL", pszQuality);
     }
     else if( EQUAL(osCompress, "DEFLATE") || EQUAL(osCompress, "LERC_DEFLATE") )
     {
@@ -1131,16 +1132,22 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
     CPLConfigOptionSetter ovrCompressSetter("COMPRESS_OVERVIEW", pszOverviewCompress, true);
     const char* pszOverviewQuality = CSLFetchNameValue(papszOptions, "OVERVIEW_QUALITY");
     CPLConfigOptionSetter ovrQualityJpegSetter("JPEG_QUALITY_OVERVIEW", pszOverviewQuality, true);
-    CPLConfigOptionSetter ovrQualityWebpSetter("WEBP_LEVEL_OVERVIEW", pszOverviewQuality, true);
 
     std::unique_ptr<CPLConfigOptionSetter> poWebpLosslessSetter;
+    std::unique_ptr<CPLConfigOptionSetter> poWebpLevelSetter;
     if( EQUAL(pszOverviewCompress, "WEBP") )
     {
-        if( pszOverviewQuality )
+        if( pszOverviewQuality && CPLAtof(pszOverviewQuality) == 100.0 )
         {
             poWebpLosslessSetter.reset(new CPLConfigOptionSetter(
-                "WEBP_LOSSLESS_OVERVIEW",
-                CPLAtof(pszOverviewQuality) == 100.0 ? "TRUE" : "FALSE", true));
+                "WEBP_LOSSLESS_OVERVIEW", "TRUE", true));
+        }
+        else
+        {
+            poWebpLosslessSetter.reset(new CPLConfigOptionSetter(
+                "WEBP_LOSSLESS_OVERVIEW", "FALSE", true));
+            poWebpLevelSetter.reset(new CPLConfigOptionSetter(
+                "WEBP_LEVEL_OVERVIEW", pszOverviewQuality, true));
         }
     }
 
