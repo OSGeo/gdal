@@ -6189,6 +6189,12 @@ def test_ogr_gpkg_crs_coordinate_epoch():
 
     filename = "/vsimem/test_ogr_gpkg_crs_coordinate_epoch.gpkg"
     ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("+proj=longlat +ellps=GRS80 +towgs84=0,0,0")
+    srs.SetCoordinateEpoch(2021.3)
+    ds.CreateLayer("lyr_with_coordinate_epoch_unknown_srs", srs=srs)
+
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(7665)  # WGS 84 (G1762) (3D)
     srs.SetCoordinateEpoch(2021.3)
@@ -6211,7 +6217,7 @@ def test_ogr_gpkg_crs_coordinate_epoch():
     ds = ogr.Open(filename)
 
     sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_spatial_ref_sys ORDER BY srs_id")
-    assert sql_lyr.GetFeatureCount() == 6
+    assert sql_lyr.GetFeatureCount() == 7
 
     sql_lyr.GetNextFeature()
     sql_lyr.GetNextFeature()
@@ -6233,8 +6239,8 @@ def test_ogr_gpkg_crs_coordinate_epoch():
     f = sql_lyr.GetNextFeature()
     assert f
     assert f["srs_id"] == 100000
-    assert f["organization"] == "EPSG"
-    assert f["organization_coordsys_id"] == 7665
+    assert f["organization"] == "NONE"
+    assert f["organization_coordsys_id"] == 100000
     assert f["epoch"] == 2021.3
 
     f = sql_lyr.GetNextFeature()
@@ -6242,8 +6248,19 @@ def test_ogr_gpkg_crs_coordinate_epoch():
     assert f["srs_id"] == 100001
     assert f["organization"] == "EPSG"
     assert f["organization_coordsys_id"] == 7665
+    assert f["epoch"] == 2021.3
+
+    f = sql_lyr.GetNextFeature()
+    assert f
+    assert f["srs_id"] == 100002
+    assert f["organization"] == "EPSG"
+    assert f["organization_coordsys_id"] == 7665
     assert f["epoch"] == 2021.2
     ds.ReleaseResultSet(sql_lyr)
+
+    lyr = ds.GetLayerByName("lyr_with_coordinate_epoch_unknown_srs")
+    srs = lyr.GetSpatialRef()
+    assert srs.GetCoordinateEpoch() == 2021.3
 
     lyr = ds.GetLayerByName("lyr_with_coordinate_epoch")
     srs = lyr.GetSpatialRef()

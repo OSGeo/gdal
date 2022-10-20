@@ -857,7 +857,7 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
                 "INSERT INTO gpkg_spatial_ref_sys "
                 "(srs_name,srs_id,organization,organization_coordsys_id,"
                 "definition, definition_12_063%s) VALUES "
-                "('%q', %d, upper('%q'), %d, '%q', '%q')",
+                "('%q', %d, upper('%q'), %d, '%q', '%q'%s)",
                 osEpochColumn.c_str(),
                 GetSrsName(*poSRS), nSRSId, "NONE", nSRSId,
                 pszWKT1 ? pszWKT1.get() : "undefined",
