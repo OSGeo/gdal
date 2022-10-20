@@ -355,20 +355,11 @@ bench_fiona.py                            63
 bench_pyogrio_raw.py                      41
 bench_pyogrio.py                          103
 bench_geopandas.py                        227
-bench_ogr_batch.cpp (driver impl.)        1.0
+bench_ogr_batch.cpp (driver impl.)        4.8
 bench_ogr_batch.cpp (base impl.)          15.5
 bench_ogr_to_geopandas.py (driver impl.)  10
 bench_ogr_to_geopandas.py (base impl.)    21
 ========================================  ============
-
-bench_ogr_batch.cpp is faster on GeoPackage than on FlatGeoBuf, because the
-GeoPackage geometry encoding is already in WKB (with an extra header), while
-FlatGeoBuf uses a different encoding.
-
-Note: it is not fully understood why bench_ogr_batch.cpp is faster with
-GeoPackage compared to GeoParquet while being slower in bench_ogr_to_geopandas.
-It might potentially be due to Parquet batches being slices of larger arrays,
-and pa.RecordBatch.from_arrays() being able to merge them faster.
 
 
 This demonstrates that:
