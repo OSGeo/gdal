@@ -906,7 +906,8 @@ void OGRHanaDataSource::ExecuteSQL(const CPLString& sql)
         sql.c_str(), sql.length());
     odbc::StatementRef stmt = conn_->createStatement();
     stmt->execute(sqlUtf16.c_str());
-    conn_->commit();
+    if (!IsTransactionStarted())
+        conn_->commit();
 }
 
 /************************************************************************/
@@ -1864,6 +1865,16 @@ OGRErr OGRHanaDataSource::CommitTransaction()
 
     try
     {
+        for (size_t i = 0; i < layers_.size(); ++i)
+        {
+            OGRHanaLayer* layer = static_cast<OGRHanaLayer*>(layers_[i].get());
+            if(layer->IsTableLayer())
+            {
+                OGRHanaTableLayer* tableLayer = static_cast<OGRHanaTableLayer*>(layer);
+                tableLayer->FlushPendingBatches(false);
+            }
+        }
+
         conn_->commit();
     }
     catch (const odbc::Exception& ex)
