@@ -3957,12 +3957,12 @@ GDALResampleFunction GDALGetResampleFunction( const char* pszResampling,
         return GDALResampleChunk32R_Near;
     else if( STARTS_WITH_CI(pszResampling, "AVER") || EQUAL(pszResampling, "RMS") )
         return GDALResampleChunk32R_Average;
-    else if( STARTS_WITH_CI(pszResampling, "GAUSS") )
+    else if( EQUAL(pszResampling, "GAUSS") )
     {
         if( pnRadius ) *pnRadius = 1;
         return GDALResampleChunk32R_Gauss;
     }
-    else if( STARTS_WITH_CI(pszResampling, "MODE") )
+    else if( EQUAL(pszResampling, "MODE") )
         return GDALResampleChunk32R_Mode;
     else if( EQUAL(pszResampling,"CUBIC") )
     {
@@ -4157,8 +4157,8 @@ GDALRegenerateOverviewsEx( GDALRasterBandH hSrcBand,
 
     if( (STARTS_WITH_CI(pszResampling, "AVER")
          || EQUAL(pszResampling, "RMS")
-         || STARTS_WITH_CI(pszResampling, "MODE")
-         || STARTS_WITH_CI(pszResampling, "GAUSS")) &&
+         || EQUAL(pszResampling, "MODE")
+         || EQUAL(pszResampling, "GAUSS")) &&
         poSrcBand->GetColorInterpretation() == GCI_PaletteIndex )
     {
         poColorTable = poSrcBand->GetColorTable();
@@ -4235,7 +4235,7 @@ GDALRegenerateOverviewsEx( GDALRasterBandH hSrcBand,
     // we can't use cascaded generation, as the computation of the overviews
     // of the band used for the mask band may not have yet occurred (#3033).
     if( (STARTS_WITH_CI(pszResampling, "AVER") ||
-         STARTS_WITH_CI(pszResampling, "GAUSS") ||
+         EQUAL(pszResampling, "GAUSS") ||
          EQUAL(pszResampling, "RMS") ||
          EQUAL(pszResampling, "CUBIC") ||
          EQUAL(pszResampling, "CUBICSPLINE") ||
