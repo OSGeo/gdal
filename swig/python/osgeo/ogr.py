@@ -1062,6 +1062,52 @@ class DataSource(MajorObject):
 # Register DataSource in _ogr:
 _ogr.DataSource_swigregister(DataSource)
 
+class ArrowArray(object):
+    r"""Proxy of C++ ArrowArray class."""
+
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+
+    def __init__(self, *args, **kwargs):
+        raise AttributeError("No constructor defined")
+    __repr__ = _swig_repr
+    __swig_destroy__ = _ogr.delete_ArrowArray
+
+    def _getPtr(self, *args) -> "VoidPtrAsLong":
+        r"""_getPtr(ArrowArray self) -> VoidPtrAsLong"""
+        return _ogr.ArrowArray__getPtr(self, *args)
+
+    def GetChildrenCount(self, *args) -> "GIntBig":
+        r"""GetChildrenCount(ArrowArray self) -> GIntBig"""
+        return _ogr.ArrowArray_GetChildrenCount(self, *args)
+
+    def GetLength(self, *args) -> "GIntBig":
+        r"""GetLength(ArrowArray self) -> GIntBig"""
+        return _ogr.ArrowArray_GetLength(self, *args)
+
+# Register ArrowArray in _ogr:
+_ogr.ArrowArray_swigregister(ArrowArray)
+
+class ArrowSchema(object):
+    r"""Proxy of C++ ArrowSchema class."""
+
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+
+    def __init__(self, *args, **kwargs):
+        raise AttributeError("No constructor defined")
+    __repr__ = _swig_repr
+    __swig_destroy__ = _ogr.delete_ArrowSchema
+
+    def _getPtr(self, *args) -> "VoidPtrAsLong":
+        r"""_getPtr(ArrowSchema self) -> VoidPtrAsLong"""
+        return _ogr.ArrowSchema__getPtr(self, *args)
+
+    def GetChildrenCount(self, *args) -> "GIntBig":
+        r"""GetChildrenCount(ArrowSchema self) -> GIntBig"""
+        return _ogr.ArrowSchema_GetChildrenCount(self, *args)
+
+# Register ArrowSchema in _ogr:
+_ogr.ArrowSchema_swigregister(ArrowSchema)
+
 class ArrowArrayStream(object):
     r"""Proxy of C++ ArrowArrayStream class."""
 
@@ -1072,34 +1118,16 @@ class ArrowArrayStream(object):
     __repr__ = _swig_repr
     __swig_destroy__ = _ogr.delete_ArrowArrayStream
 
-    def _GetSchemaPtr(self, *args) -> "VoidPtrAsLong":
-        r"""_GetSchemaPtr(ArrowArrayStream self) -> VoidPtrAsLong"""
-        return _ogr.ArrowArrayStream__GetSchemaPtr(self, *args)
+    def GetSchema(self, *args) -> "ArrowSchema *":
+        r"""GetSchema(ArrowArrayStream self) -> ArrowSchema"""
+        return _ogr.ArrowArrayStream_GetSchema(self, *args)
 
-    @staticmethod
-    def _FreeSchemaPtr(*args) -> "void":
-        r"""_FreeSchemaPtr(VoidPtrAsLong ptr)"""
-        return _ogr.ArrowArrayStream__FreeSchemaPtr(*args)
-
-    def _GetNextRecordBatchPtr(self, *args) -> "VoidPtrAsLong":
-        r"""_GetNextRecordBatchPtr(ArrowArrayStream self, char ** options=None) -> VoidPtrAsLong"""
-        return _ogr.ArrowArrayStream__GetNextRecordBatchPtr(self, *args)
-
-    @staticmethod
-    def _FreeRecordBatchPtr(*args) -> "void":
-        r"""_FreeRecordBatchPtr(VoidPtrAsLong ptr)"""
-        return _ogr.ArrowArrayStream__FreeRecordBatchPtr(*args)
+    def GetNextRecordBatch(self, *args) -> "ArrowArray *":
+        r"""GetNextRecordBatch(ArrowArrayStream self, char ** options=None) -> ArrowArray"""
+        return _ogr.ArrowArrayStream_GetNextRecordBatch(self, *args)
 
 # Register ArrowArrayStream in _ogr:
 _ogr.ArrowArrayStream_swigregister(ArrowArrayStream)
-
-def ArrowArrayStream__FreeSchemaPtr(*args) -> "void":
-    r"""ArrowArrayStream__FreeSchemaPtr(VoidPtrAsLong ptr)"""
-    return _ogr.ArrowArrayStream__FreeSchemaPtr(*args)
-
-def ArrowArrayStream__FreeRecordBatchPtr(*args) -> "void":
-    r"""ArrowArrayStream__FreeRecordBatchPtr(VoidPtrAsLong ptr)"""
-    return _ogr.ArrowArrayStream__FreeRecordBatchPtr(*args)
 
 class Layer(MajorObject):
     r"""Proxy of C++ OGRLayerShadow class."""
@@ -2168,13 +2196,10 @@ class Layer(MajorObject):
             def schema(self):
                 """ Return the schema as a PyArrow DataType """
 
-                schema_ptr = self.stream._GetSchemaPtr()
-                if schema_ptr == 0:
+                schema = self.stream.GetSchema()
+                if schema is None:
                     raise Exception("cannot get schema")
-                try:
-                    return pa.DataType._import_from_c(schema_ptr)
-                finally:
-                    self.stream._FreeSchemaPtr(schema_ptr)
+                return pa.DataType._import_from_c(schema._getPtr())
 
             schema = property(schema)
 
@@ -2182,14 +2207,10 @@ class Layer(MajorObject):
             def _GetNextRecordBatchAsPyArrow(self, l_schema):
                 """ Return the next RecordBatch as a PyArrow StructArray, or None at end of iteration """
 
-                array_ptr = self.stream._GetNextRecordBatchPtr()
-                if array_ptr == 0:
+                array = self.stream.GetNextRecordBatch()
+                if array is None:
                     return None
-                try:
-                    return pa.Array._import_from_c(array_ptr, l_schema)
-                finally:
-                    self.stream._FreeRecordBatchPtr(array_ptr)
-
+                return pa.Array._import_from_c(array._getPtr(), l_schema)
 
             def __iter__(self):
                 """ Return an iterator over record batches as a PyArrow StructArray """
@@ -2224,23 +2245,16 @@ class Layer(MajorObject):
                 self.end_of_stream = False
                 self.use_masked_arrays = use_masked_arrays
 
-            def _GetNextRecordBatchAsNumpy(self, schema_ptr):
+            def _GetNextRecordBatchAsNumpy(self, schema):
                 """ Return the next RecordBatch as a dictionary of Numpy arrays, or None at end of iteration """
 
-                array_ptr = self.stream._GetNextRecordBatchPtr()
-                if array_ptr == 0:
+                array = self.stream.GetNextRecordBatch()
+                if array is None:
                     return None
 
-                class ArrayPointerKeeper:
-                    def __init__(self, array_ptr):
-                        self.array_ptr = array_ptr
-
-                    def __del__(self):
-                        ArrowArrayStream._FreeRecordBatchPtr(self.array_ptr)
-
-                ret = gdal_array._RecordBatchAsNumpy(array_ptr,
-                                                     schema_ptr,
-                                                     ArrayPointerKeeper(array_ptr))
+                ret = gdal_array._RecordBatchAsNumpy(array._getPtr(),
+                                                     schema._getPtr(),
+                                                     array)
                 if ret is None:
                     gdal_array._RaiseException()
                     return ret
@@ -2259,15 +2273,14 @@ class Layer(MajorObject):
                 if self.end_of_stream:
                     raise Exception("Stream has already been iterated over")
 
-                schema_ptr = self.stream._GetSchemaPtr()
+                schema = self.stream.GetSchema()
                 try:
                     while True:
-                        batch = self._GetNextRecordBatchAsNumpy(schema_ptr)
+                        batch = self._GetNextRecordBatchAsNumpy(schema)
                         if not batch:
                             break
                         yield batch
                 finally:
-                    self.stream._FreeSchemaPtr(schema_ptr)
                     self.end_of_stream = True
                     self.stream = None
 
