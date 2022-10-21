@@ -444,6 +444,48 @@ def test_rasterize_6():
 
     gdal.RasterizeLayer(mask_ds, [1], layer, burn_values=[1], options=["ALL_TOUCHED"])
 
+###############################################################################
+# Test rasterization with ALL_TOUCHED.
+
+
+def test_rasterize_7():
+
+    # Setup working spatial reference
+    sr_wkt = 'LOCAL_CS["arbitrary"]'
+
+    # Create a memory raster to rasterize into.
+    print(gdal)
+    target_ds = gdal.GetDriverByName("MEM").Create("", 12, 12, 1, gdal.GDT_Byte)
+    target_ds.SetGeoTransform((0, 1, 0, 12, 0, -1))
+    target_ds.SetProjection(sr_wkt)
+
+    # Create a memory layer to rasterize from.
+
+    snapped_square_ds = ogr.Open("data/square.csv")
+
+    # Run the algorithm.
+
+    gdal.PushErrorHandler("CPLQuietErrorHandler")
+    err = gdal.RasterizeLayer(
+        target_ds,
+        [1],
+        snapped_square_ds.GetLayer(0),
+        burn_values=[1],
+        options=["ALL_TOUCHED=TRUE"],
+    )
+    gdal.PopErrorHandler()
+
+    assert err == 0, "got non-zero result code from RasterizeLayer"
+
+    # Check results.
+
+    expected = 1
+    checksum = target_ds.GetRasterBand(1).Checksum()
+    if checksum != expected:
+        print(checksum)
+        gdal.GetDriverByName("GTiff").CreateCopy("tmp/rasterize_7.tif", target_ds)
+        pytest.fail("Did not get expected image checksum")
+
 
 ###############################################################################
 # Test rasterizing linestring with multiple segments and MERGE_ALG=ADD
