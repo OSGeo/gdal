@@ -1173,6 +1173,7 @@ def test_ogr_elasticsearch_4():
         ret = lyr.SetFeature(lyr.GetNextFeature())
     assert ret != 0
 
+    lyr.ResetReading()
     with gdaltest.error_handler():
         ret = lyr.UpsertFeature(lyr.GetNextFeature())
     assert ret != 0
