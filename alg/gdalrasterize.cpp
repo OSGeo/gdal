@@ -472,7 +472,6 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nXOff, int nYOff,
                         int nBands, GDALDataType eType,
                         int nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
                         int bAllTouched,
-                        int bAllIntersected,
                         const OGRGeometry *poShape,
                         GDALDataType eBurnValueType,
                         const double *padfBurnValues,
@@ -502,7 +501,6 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nXOff, int nYOff,
                                    nBands, eType,
                                    nPixelSpace, nLineSpace, nBandSpace,
                                    bAllTouched,
-                                   bAllIntersected,
                                    poPart,
                                    eBurnValueType,
                                    padfBurnValues,
@@ -611,16 +609,8 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nXOff, int nYOff,
                                           (eBurnValueSrc == GBV_UserBurnValue)?
                                           nullptr : aPointVariant.data(),
                                           gvBurnPoint, &sInfo,
-                                          eMergeAlg == GRMA_Add );
-          else if( bAllIntersected )
-              GDALdllImageLineAllIntersected(sInfo.nXSize, nYSize,
-                                          static_cast<int>(aPartSize.size()),
-                                          aPartSize.data(),
-                                          aPointX.data(), aPointY.data(),
-                                          (eBurnValueSrc == GBV_UserBurnValue)?
-                                          nullptr : aPointVariant.data(),
-                                          gvBurnPoint, &sInfo,
-                                          eMergeAlg == GRMA_Add );
+                                          eMergeAlg == GRMA_Add,
+                                          false);
           else
               GDALdllImageLine( sInfo.nXSize, nYSize,
                                 static_cast<int>(aPartSize.size()),
@@ -655,7 +645,8 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nXOff, int nYOff,
                       aPointX.data(), aPointY.data(),
                       nullptr,
                       gvBurnPoint, &sInfo,
-                      eMergeAlg == GRMA_Add );
+                      eMergeAlg == GRMA_Add,
+                      true );
               }
               else
               {
@@ -673,42 +664,8 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nXOff, int nYOff,
                       aPointX.data(), aPointY.data(),
                       aPointVariant.data(),
                       gvBurnPoint, &sInfo,
-                      eMergeAlg == GRMA_Add );
-              }
-          }
-          else if( bAllIntersected )
-          {
-              // Reverting the variants to the first value because the
-              // polygon is filled using the variant from the first point of
-              // the first segment. Should be removed when the code to full
-              // polygons more appropriately is added.
-              if( eBurnValueSrc == GBV_UserBurnValue )
-              {
-                  GDALdllImageLineAllIntersected(
-                      sInfo.nXSize, nYSize,
-                      static_cast<int>(aPartSize.size()), aPartSize.data(),
-                      aPointX.data(), aPointY.data(),
-                      nullptr,
-                      gvBurnPoint, &sInfo,
-                      eMergeAlg == GRMA_Add );
-              }
-              else
-              {
-                  for( unsigned int i = 0, n = 0;
-                       i < static_cast<unsigned int>(aPartSize.size());
-                       i++ )
-                  {
-                      for( int j = 0; j < aPartSize[i]; j++ )
-                          aPointVariant[n++] = aPointVariant[0];
-                  }
-
-                  GDALdllImageLineAllIntersected(
-                      sInfo.nXSize, nYSize,
-                      static_cast<int>(aPartSize.size()), aPartSize.data(),
-                      aPointX.data(), aPointY.data(),
-                      aPointVariant.data(),
-                      gvBurnPoint, &sInfo,
-                      eMergeAlg == GRMA_Add );
+                      eMergeAlg == GRMA_Add,
+                      true );
               }
           }
       }
@@ -725,13 +682,11 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nXOff, int nYOff,
 
 static CPLErr GDALRasterizeOptions( CSLConstList papszOptions,
                                     int *pbAllTouched,
-                                    int *pbAllIntersected,
                                     GDALBurnValueSrc *peBurnValueSource,
                                     GDALRasterMergeAlg *peMergeAlg,
                                     GDALRasterizeOptim *peOptim)
 {
     *pbAllTouched = CPLFetchBool( papszOptions, "ALL_TOUCHED", false );
-    *pbAllIntersected = CPLFetchBool( papszOptions, "ALL_INTERSECTED", false );
 
     const char *pszOpt = CSLFetchNameValue( papszOptions, "BURN_VALUE_FROM" );
     *peBurnValueSource = GBV_UserBurnValue;
@@ -1034,11 +989,10 @@ CPLErr GDALRasterizeGeometriesInternal( GDALDatasetH hDS,
 /*      Options                                                         */
 /* -------------------------------------------------------------------- */
     int bAllTouched = FALSE;
-    int bAllIntersected = FALSE;
     GDALBurnValueSrc eBurnValueSource = GBV_UserBurnValue;
     GDALRasterMergeAlg eMergeAlg = GRMA_Replace;
     GDALRasterizeOptim eOptim = GRO_Auto;
-    if( GDALRasterizeOptions(papszOptions, &bAllTouched, &bAllIntersected,
+    if( GDALRasterizeOptions(papszOptions, &bAllTouched,
                              &eBurnValueSource, &eMergeAlg,
                              &eOptim) == CE_Failure )
     {
@@ -1180,7 +1134,6 @@ CPLErr GDALRasterizeGeometriesInternal( GDALDatasetH hDS,
                                         nBandCount, eType,
                                         0, 0, 0,
                                         bAllTouched,
-                                        bAllIntersected,
                                         OGRGeometry::FromHandle(pahGeometries[iShape]),
                                         eBurnValueType,
                                         padfGeomBurnValues ? padfGeomBurnValues + iShape*nBandCount : nullptr,
@@ -1321,7 +1274,6 @@ CPLErr GDALRasterizeGeometriesInternal( GDALDatasetH hDS,
                                             nBandCount, eType,
                                             0, 0, 0,
                                             bAllTouched,
-                                            bAllIntersected,
                                             OGRGeometry::FromHandle(pahGeometries[iShape]),
                                             eBurnValueType,
                                             padfGeomBurnValues ? padfGeomBurnValues + iShape*nBandCount : nullptr,
@@ -1460,11 +1412,10 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
 /*      Options                                                         */
 /* -------------------------------------------------------------------- */
     int bAllTouched = FALSE;
-    int bAllIntersected = FALSE;
     GDALBurnValueSrc eBurnValueSource = GBV_UserBurnValue;
     GDALRasterMergeAlg eMergeAlg = GRMA_Replace;
     GDALRasterizeOptim eOptim = GRO_Auto;
-    if( GDALRasterizeOptions(papszOptions, &bAllTouched, &bAllIntersected,
+    if( GDALRasterizeOptions(papszOptions, &bAllTouched,
                              &eBurnValueSource, &eMergeAlg,
                              &eOptim) == CE_Failure )
     {
@@ -1680,7 +1631,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
                                         poDS->GetRasterXSize(),
                                         nThisYChunkSize,
                                         nBandCount, eType, 0, 0, 0,
-                                        bAllTouched, bAllIntersected, poGeom,
+                                        bAllTouched, poGeom,
                                         GDT_Float64,
                                         padfBurnValues,
                                         nullptr,
@@ -1886,11 +1837,10 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
 /*      Options                                                         */
 /* -------------------------------------------------------------------- */
     int bAllTouched = FALSE;
-    int bAllIntersected = FALSE;
     GDALBurnValueSrc eBurnValueSource = GBV_UserBurnValue;
     GDALRasterMergeAlg eMergeAlg = GRMA_Replace;
     GDALRasterizeOptim eOptim = GRO_Auto;
-    if( GDALRasterizeOptions(papszOptions, &bAllTouched, &bAllIntersected,
+    if( GDALRasterizeOptions(papszOptions, &bAllTouched,
                              &eBurnValueSource, &eMergeAlg,
                              &eOptim) == CE_Failure )
     {
@@ -1987,7 +1937,7 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
                                     nBufXSize, nBufYSize,
                                     1, eBufType,
                                     nPixelSpace, nLineSpace, 0,
-                                    bAllTouched, bAllIntersected, poGeom,
+                                    bAllTouched, poGeom,
                                     GDT_Float64,
                                     &dfBurnValue,
                                     nullptr,

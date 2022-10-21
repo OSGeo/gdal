@@ -379,7 +379,7 @@ GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
                             const double *padfX, const double *padfY,
                             const double *padfVariant,
                             llPointFunc pfnPointFunc, void *pCBData,
-                            int bAvoidBurningSamePoints )
+                            int bAvoidBurningSamePoints, int bIntersectOnly)
 
 {
     if( !nPartCount )
@@ -429,6 +429,11 @@ GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
             // Special case for vertical lines.
             if( floor(dfX) == floor(dfXEnd) || fabs(dfX - dfXEnd) < .01 )
             {
+                double dXOffset = std::abs(std::fmod(dfX, 1.));
+                double dXEndOffset = std::abs(std::fmod(dfXEnd, 1.));
+                if ( bIntersectOnly && std::abs(dXOffset - .5) > .49 &&  std::abs(dXEndOffset - .5) > .49)
+                    continue;
+
                 if( dfYEnd < dfY )
                 {
                     std::swap(dfY, dfYEnd );
@@ -498,6 +503,11 @@ GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
             // Special case for horizontal lines.
             if( floor(dfY) == floor(dfYEnd) || fabs(dfY - dfYEnd) < .01 )
             {
+                double dYOffset = std::abs(std::fmod(dfY, 1.));
+                double dYEndOffset = std::abs(std::fmod(dfYEnd, 1.));
+                if ( bIntersectOnly && abs(dYOffset - .5) > .49 &&  abs(dYEndOffset - .5) > .49)
+                    continue;
+
                 if( dfXEnd < dfX )
                 {
                     std::swap(dfX, dfXEnd);
@@ -509,318 +519,6 @@ GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
                 int iXEnd = static_cast<int>(floor(dfXEnd));
 
                 if( iY < 0 || iY >= nRasterYSize )
-                    continue;
-
-                // Clip to the borders of the target region.
-                if( iX < 0 )
-                    iX = 0;
-                if( iXEnd >= nRasterXSize )
-                    iXEnd = nRasterXSize - 1;
-                dfVariant += dfDeltaVariant * (iX - dfX);
-
-                if( padfVariant == nullptr )
-                {
-                    for( ; iX <= iXEnd; iX++ )
-                    {
-                        if( bAvoidBurningSamePoints )
-                        {
-                            auto yx = std::pair<int,int>(iY,iX);
-                            if( lastBurntPoints.find( yx ) != lastBurntPoints.end() )
-                            {
-                                continue;
-                            }
-                            newBurntPoints.insert(yx);
-                        }
-                        pfnPointFunc( pCBData, iY, iX, 0.0 );
-                    }
-                }
-                else
-                {
-                    for( ; iX <= iXEnd; iX++, dfVariant +=  dfDeltaVariant )
-                    {
-                        if( bAvoidBurningSamePoints )
-                        {
-                            auto yx = std::pair<int,int>(iY,iX);
-                            if( lastBurntPoints.find( yx ) != lastBurntPoints.end() )
-                            {
-                                continue;
-                            }
-                            newBurntPoints.insert(yx);
-                        }
-                        pfnPointFunc( pCBData, iY, iX, dfVariant );
-                    }
-                }
-
-                continue;  // Next segment.
-            }
-
-/* -------------------------------------------------------------------- */
-/*      General case - left to right sloped.                            */
-/* -------------------------------------------------------------------- */
-            const double dfSlope = (dfYEnd - dfY) / (dfXEnd - dfX);
-
-            // Clip segment in X.
-            if( dfXEnd > nRasterXSize )
-            {
-                dfYEnd -= (dfXEnd - nRasterXSize) * dfSlope;
-                dfXEnd = nRasterXSize;
-            }
-            if( dfX < 0.0 )
-            {
-                dfY += (0.0 - dfX) * dfSlope;
-                dfVariant += dfDeltaVariant * (0.0 - dfX);
-                dfX = 0.0;
-            }
-
-            // Clip segment in Y.
-            if( dfYEnd > dfY )
-            {
-                if( dfY < 0.0 )
-                {
-                    const double dfDiffX = (0.0 - dfY) / dfSlope;
-                    dfX += dfDiffX;
-                    dfVariant += dfDeltaVariant * dfDiffX;
-                    dfY = 0.0;
-                }
-                if( dfYEnd >= nRasterYSize )
-                {
-                    dfXEnd += (dfYEnd - nRasterYSize) / dfSlope;
-                    // dfYEnd is no longer used afterwards, but for
-                    // consistency it should be:
-                    // dfYEnd = nRasterXSize;
-                }
-            }
-            else
-            {
-                if( dfY >= nRasterYSize )
-                {
-                    const double dfDiffX = (nRasterYSize - dfY) / dfSlope;
-                    dfX += dfDiffX;
-                    dfVariant += dfDeltaVariant * dfDiffX;
-                    dfY = nRasterYSize;
-                }
-                if( dfYEnd < 0.0 )
-                {
-                    dfXEnd -= ( dfYEnd - 0 ) / dfSlope;
-                    // dfYEnd is no longer used afterwards, but for
-                    // consistency it should be:
-                    // dfYEnd = 0.0;
-                }
-            }
-
-            // Step from pixel to pixel.
-            while( dfX >= 0.0 && dfX < dfXEnd )
-            {
-                const int iX = static_cast<int>(floor(dfX));
-                const int iY = static_cast<int>(floor(dfY));
-
-                // Burn in the current point.
-                // We should be able to drop the Y check because we clipped
-                // in Y, but there may be some error with all the small steps.
-                if( iY >= 0 && iY < nRasterYSize )
-                {
-                    if( bAvoidBurningSamePoints )
-                    {
-                        auto yx = std::pair<int,int>(iY,iX);
-                        if( lastBurntPoints.find( yx ) == lastBurntPoints.end() &&
-                            newBurntPoints.find( yx ) == newBurntPoints.end() )
-                        {
-                            newBurntPoints.insert(yx);
-                            pfnPointFunc( pCBData, iY, iX, dfVariant );
-                        }
-                    }
-                    else
-                    {
-                        pfnPointFunc( pCBData, iY, iX, dfVariant );
-                    }
-                }
-
-                double dfStepX = floor(dfX+1.0) - dfX;
-                double dfStepY = dfStepX * dfSlope;
-
-                // Step to right pixel without changing scanline?
-                if( static_cast<int>(floor(dfY + dfStepY)) == iY )
-                {
-                    dfX += dfStepX;
-                    dfY += dfStepY;
-                    dfVariant += dfDeltaVariant * dfStepX;
-                }
-                else if( dfSlope < 0 )
-                {
-                    dfStepY = iY - dfY;
-                    if( dfStepY > -0.000000001 )
-                        dfStepY = -0.000000001;
-
-                    dfStepX = dfStepY / dfSlope;
-                    dfX += dfStepX;
-                    dfY += dfStepY;
-                    dfVariant += dfDeltaVariant * dfStepX;
-                }
-                else
-                {
-                    dfStepY = (iY + 1) - dfY;
-                    if( dfStepY < 0.000000001 )
-                        dfStepY = 0.000000001;
-
-                    dfStepX = dfStepY / dfSlope;
-                    dfX += dfStepX;
-                    dfY += dfStepY;
-                    dfVariant += dfDeltaVariant * dfStepX;
-                }
-            }  // Next step along segment.
-        }  // Next segment.
-    }  // Next part.
-}
-
-/************************************************************************/
-/*                   GDALdllImageLineAllIntersected()                   */
-/*                                                                      */
-/*      This alternate line drawing algorithm attempts to ensure        */
-/*      that every pixel intersected by the line will get set.          */
-/*      @param padfVariant should contain the values that are to be     */
-/*      added to the burn value.  The values along the line between the */
-/*      points will be linearly interpolated. These values are used     */
-/*      only if pCBData->eBurnValueSource is set to something other     */
-/*      than GBV_UserBurnValue. If NULL is passed, a monotonous line    */
-/*      will be drawn with the burn value.                              */
-/************************************************************************/
-
-void
-GDALdllImageLineAllIntersected( int nRasterXSize, int nRasterYSize,
-                            int nPartCount, const int *panPartSize,
-                            const double *padfX, const double *padfY,
-                            const double *padfVariant,
-                            llPointFunc pfnPointFunc, void *pCBData,
-                            int bAvoidBurningSamePoints )
-
-{
-    if( !nPartCount )
-        return;
-
-    for( int i = 0, n = 0; i < nPartCount; n += panPartSize[i++] )
-    {
-        std::set<std::pair<int,int>> lastBurntPoints;
-        std::set<std::pair<int,int>> newBurntPoints;
-
-        for( int j = 1; j < panPartSize[i]; j++ )
-        {
-            lastBurntPoints = std::move(newBurntPoints);
-            newBurntPoints.clear();
-
-            double dfX = padfX[n + j - 1];
-            double dfY = padfY[n + j - 1];
-
-            double dfXEnd = padfX[n + j];
-            double dfYEnd = padfY[n + j];
-
-            double dfVariant = 0.0;
-            double dfVariantEnd = 0.0;
-            if( padfVariant != nullptr &&
-                static_cast<GDALRasterizeInfo *>(pCBData)->eBurnValueSource !=
-                    GBV_UserBurnValue )
-            {
-                dfVariant = padfVariant[n + j - 1];
-                dfVariantEnd = padfVariant[n + j];
-            }
-
-            // Skip segments that are off the target region.
-            if( (dfY < 0.0 && dfYEnd < 0.0)
-                || (dfY > nRasterYSize && dfYEnd > nRasterYSize)
-                || (dfX < 0.0 && dfXEnd < 0.0)
-                || (dfX > nRasterXSize && dfXEnd > nRasterXSize) )
-                continue;
-
-            // Swap if needed so we can proceed from left2right (X increasing)
-            if( dfX > dfXEnd )
-            {
-                std::swap(dfX, dfXEnd);
-                std::swap(dfY, dfYEnd );
-                std::swap(dfVariant, dfVariantEnd);
-            }
-
-            // Special case for vertical lines.
-            if( floor(dfX) == floor(dfXEnd) || fabs(dfX - dfXEnd) < .01 )
-            {
-                if( dfYEnd < dfY )
-                {
-                    std::swap(dfY, dfYEnd );
-                    std::swap(dfVariant, dfVariantEnd);
-                }
-
-                const int iX = static_cast<int>(floor(dfXEnd));
-                int iY = static_cast<int>(floor(dfY));
-                int iYEnd = static_cast<int>(floor(dfYEnd));
-
-                if (( iX < 0 || iX >= nRasterXSize ) || (std::fmod(dfX, 1.) == 0. && std::fmod(dfXEnd, 1.) == 0.))
-                    continue;
-
-                double dfDeltaVariant = 0.0;
-                if( dfYEnd - dfY > 0.0 )
-                    dfDeltaVariant =
-                        ( dfVariantEnd - dfVariant ) /
-                        ( dfYEnd - dfY );  // Per unit change in iY.
-
-                // Clip to the borders of the target region.
-                if( iY < 0 )
-                    iY = 0;
-                if( iYEnd >= nRasterYSize )
-                    iYEnd = nRasterYSize - 1;
-                dfVariant += dfDeltaVariant * (iY - dfY);
-
-                if( padfVariant == nullptr )
-                {
-                    for( ; iY <= iYEnd; iY++ )
-                    {
-                        if( bAvoidBurningSamePoints )
-                        {
-                            auto yx = std::pair<int,int>(iY,iX);
-                            if( lastBurntPoints.find( yx ) != lastBurntPoints.end() )
-                            {
-                                continue;
-                            }
-                            newBurntPoints.insert(yx);
-                        }
-                        pfnPointFunc( pCBData, iY, iX, 0.0 );
-                    }
-                }
-                else
-                {
-                    for( ; iY <= iYEnd; iY++, dfVariant +=  dfDeltaVariant )
-                    {
-                        if( bAvoidBurningSamePoints )
-                        {
-                            auto yx = std::pair<int,int>(iY,iX);
-                            if( lastBurntPoints.find( yx ) != lastBurntPoints.end() )
-                            {
-                                continue;
-                            }
-                            newBurntPoints.insert(yx);
-                        }
-                        pfnPointFunc( pCBData, iY, iX, dfVariant );
-                    }
-                }
-
-                continue;  // Next segment.
-            }
-
-            const double dfDeltaVariant =
-                ( dfVariantEnd - dfVariant ) /
-                ( dfXEnd - dfX );  // Per unit change in iX.
-
-            // Special case for horizontal lines.
-            if( floor(dfY) == floor(dfYEnd) || fabs(dfY - dfYEnd) < .01 )
-            {
-                if( dfXEnd < dfX )
-                {
-                    std::swap(dfX, dfXEnd);
-                    std::swap(dfVariant, dfVariantEnd);
-                }
-
-                int iX = static_cast<int>(floor(dfX));
-                const int iY = static_cast<int>(floor(dfY));
-                int iXEnd = static_cast<int>(floor(dfXEnd));
-
-                if(( iY < 0 || iY >= nRasterYSize )  || (std::fmod(dfY, 1.) == 0. && std::fmod(dfYEnd, 1) == 0.))
                     continue;
 
                 // Clip to the borders of the target region.

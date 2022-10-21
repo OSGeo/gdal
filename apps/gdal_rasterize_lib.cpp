@@ -1033,11 +1033,6 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
             psOptions->papszRasterizeOptions =
                 CSLSetNameValue( psOptions->papszRasterizeOptions, "ALL_TOUCHED", "TRUE" );
         }
-        else if( EQUAL(papszArgv[i],"-ai")  )
-        {
-            psOptions->papszRasterizeOptions =
-                CSLSetNameValue( psOptions->papszRasterizeOptions, "ALL_INTERSECTED", "TRUE" );
-        }
         else if( i < argc-1 && EQUAL(papszArgv[i],"-optim") )
         {
             psOptions->papszRasterizeOptions =
