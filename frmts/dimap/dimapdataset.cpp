@@ -57,9 +57,9 @@ class DIMAPDataset final: public GDALPamDataset
 
     int           nGCPCount;
     GDAL_GCP      *pasGCPList;
-    char          *pszGCPProjection;
 
-    CPLString     osProjection;
+    OGRSpatialReference m_oSRS{};
+    OGRSpatialReference m_oGCPSRS{};
 
     int           bHaveGeoTransform;
     double        adfGeoTransform[6];
@@ -85,16 +85,10 @@ class DIMAPDataset final: public GDALPamDataset
     DIMAPDataset();
     ~DIMAPDataset() override;
 
-    const char *_GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
     CPLErr GetGeoTransform( double * ) override;
     int GetGCPCount() override;
-    const char *_GetGCPProjection() override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override {
-        return GetGCPSpatialRefFromOldGetGCPProjection();
-    }
+    const OGRSpatialReference* GetGCPSpatialRef() const override;
     const GDAL_GCP *GetGCPs() override;
     char **GetMetadataDomainList() override;
     char **GetMetadata( const char *pszDomain ) override;
@@ -123,11 +117,12 @@ DIMAPDataset::DIMAPDataset() :
     poVRTDS(nullptr),
     nGCPCount(0),
     pasGCPList(nullptr),
-    pszGCPProjection(CPLStrdup("")),
     bHaveGeoTransform(FALSE),
     nProductVersion(1),
     papszXMLDimapMetadata(nullptr)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -151,7 +146,6 @@ DIMAPDataset::~DIMAPDataset()
         CPLDestroyXMLNode( psProductDim );
     if( psProductStrip != nullptr )
         CPLDestroyXMLNode( psProductStrip );
-    CPLFree( pszGCPProjection );
     if( nGCPCount > 0 )
     {
         GDALDeinitGCPs( nGCPCount, pasGCPList );
@@ -217,16 +211,16 @@ char **DIMAPDataset::GetMetadata( const char *pszDomain )
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *DIMAPDataset::_GetProjectionRef()
+const OGRSpatialReference *DIMAPDataset::GetSpatialRef() const
 
 {
-    if( !osProjection.empty() && bHaveGeoTransform )
-        return osProjection;
+    if( !m_oSRS.IsEmpty() )
+        return &m_oSRS;
 
-    return GDALPamDataset::_GetProjectionRef();
+    return GDALPamDataset::GetSpatialRef();
 }
 
 /************************************************************************/
@@ -949,31 +943,18 @@ int DIMAPDataset::ReadImageInformation()
 
     if( pszSRS != nullptr )
     {
-        OGRSpatialReference oSRS;
-        if( oSRS.SetFromUserInput( pszSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE )
-        {
-            if( nGCPCount > 0 )
-            {
-                CPLFree(pszGCPProjection);
-                oSRS.exportToWkt( &(pszGCPProjection) );
-            }
-            else
-            {
-                char *pszProjection = nullptr;
-                oSRS.exportToWkt( &pszProjection );
-                osProjection = pszProjection;
-                CPLFree( pszProjection );
-            }
-        }
+        OGRSpatialReference& oSRS = nGCPCount > 0 ? m_oGCPSRS : m_oSRS;
+        oSRS.SetFromUserInput( pszSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
     }
     else
     {
         // Check underlying raster for SRS. We have cases where
         // HORIZONTAL_CS_CODE is empty and the underlying raster
         // is georeferenced (rprinceley).
-        if( poImageDS->GetProjectionRef() )
+        const auto poSRS = poImageDS->GetSpatialRef();
+        if( poSRS )
         {
-            osProjection = poImageDS->GetProjectionRef();
+            m_oSRS = *poSRS;
         }
     }
 
@@ -1477,31 +1458,18 @@ int DIMAPDataset::ReadImageInformation2()
 
     if( pszSRS != nullptr )
     {
-        OGRSpatialReference oSRS;
-        if( oSRS.SetFromUserInput( pszSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE )
-        {
-            if( nGCPCount > 0 )
-            {
-                CPLFree(pszGCPProjection);
-                oSRS.exportToWkt( &(pszGCPProjection) );
-            }
-            else
-            {
-                char *pszProjection = nullptr;
-                oSRS.exportToWkt( &pszProjection );
-                osProjection = pszProjection;
-                CPLFree( pszProjection );
-            }
-        }
+        OGRSpatialReference& oSRS = nGCPCount > 0 ? m_oGCPSRS : m_oSRS;
+        oSRS.SetFromUserInput( pszSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
     }
     else
     {
         // Check underlying raster for SRS. We have cases where
         // HORIZONTAL_CS_CODE is empty and the underlying raster
         // is georeferenced (rprinceley).
-        if( poImageDS->GetProjectionRef() )
+        const auto poSRS = poImageDS->GetSpatialRef();
+        if( poSRS )
         {
-            osProjection = poImageDS->GetProjectionRef();
+            m_oSRS = *poSRS;
         }
     }
 
@@ -1790,13 +1758,13 @@ int DIMAPDataset::GetGCPCount()
 }
 
 /************************************************************************/
-/*                          GetGCPProjection()                          */
+/*                          GetGCPSpatialRef()                          */
 /************************************************************************/
 
-const char *DIMAPDataset::_GetGCPProjection()
+const OGRSpatialReference *DIMAPDataset::GetGCPSpatialRef() const
 
 {
-    return pszGCPProjection;
+    return m_oGCPSRS.IsEmpty() ? nullptr : & m_oGCPSRS;
 }
 
 /************************************************************************/

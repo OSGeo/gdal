@@ -423,7 +423,9 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
         const char *global_base_url = CPLGetXMLValue(tileServiceConfig, "TiledPatterns.OnlineResource.xlink:href", "");
         CPLXMLNode *global_latlonbbox = CPLGetXMLNode(tileServiceConfig, "TiledPatterns.LatLonBoundingBox");
         CPLXMLNode *global_bbox = CPLGetXMLNode(tileServiceConfig, "TiledPatterns.BoundingBox");
-        m_projection_wkt = CPLGetXMLValue(tileServiceConfig, "TiledPatterns.Projection", "");
+        const char* pszProjection = CPLGetXMLValue(tileServiceConfig, "TiledPatterns.Projection", "");
+        if( pszProjection[0] != 0 )
+            m_oSRS.SetFromUserInput(pszProjection,OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
 
         if (nullptr == (TG = SearchLeafGroupName(TG->psChild, tiledGroupName)))
             throw CPLOPrintf("%s No TiledGroup ""%s"" in server response.", SIG, tiledGroupName.c_str());
@@ -468,8 +470,9 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
         if (dt != GDT_Byte)
             m_parent_dataset->SetTileOO("@DATATYPE", GDALGetDataTypeName(dt));
         // Let the TiledGroup override the projection
-        if (strlen(CPLGetXMLValue(TG, "Projection", "")) != 0)
-            m_projection_wkt = ProjToWKT(CPLGetXMLValue(TG, "Projection", ""));
+        pszProjection = CPLGetXMLValue(TG, "Projection", "");
+        if (pszProjection[0] != 0)
+            m_oSRS = ProjToSRS(pszProjection);
 
         m_base_url = CPLGetXMLValue(TG, "OnlineResource.xlink:href", global_base_url);
         if (m_base_url[0] == '\0')
@@ -608,8 +611,12 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
                 mbsx = atoi(pszWIDTH);
                 mbsy = atoi(pszHEIGHT);
                 // If unset until now, try to get the projection from the pattern
-                if (m_projection_wkt.empty())
-                    m_projection_wkt = ProjToWKT(CSLFetchNameValueDef(papszTokens, "SRS", ""));
+                if (m_oSRS.IsEmpty())
+                {
+                    const char* pszSRS = CSLFetchNameValueDef(papszTokens, "SRS", "");
+                    if( pszSRS[0] != 0 )
+                        m_oSRS = ProjToSRS(pszSRS);
+                }
 
                 if (-1 == m_bsx) m_bsx = mbsx;
                 if (-1 == m_bsy) m_bsy = mbsy;
