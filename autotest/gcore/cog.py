@@ -1529,3 +1529,54 @@ def test_cog_webp_overview_turn_on_lossy_if_webp_level():
     ds = None
 
     gdal.Unlink(tmpfilename)
+
+
+###############################################################################
+# Test OVERVIEW_COUNT option
+
+
+@pytest.mark.parametrize(
+    "options,expected_count",
+    [
+        ("", 1),
+        ("-co OVERVIEW_COUNT=1", 1),
+        ("-co OVERVIEW_COUNT=2", 2),
+        ("-co OVERVIEW_COUNT=10", 8),
+        ("-co TILING_SCHEME=GoogleMapsCompatible -co OVERVIEW_COUNT=1", 1),
+        ("-co TILING_SCHEME=GoogleMapsCompatible -co OVERVIEW_COUNT=2", 2),
+        ("-co TILING_SCHEME=GoogleMapsCompatible -co OVERVIEW_COUNT=10", 8),
+    ],
+)
+def test_cog_overview_count(options, expected_count):
+
+    tmpfilename = "/vsimem/test_cog_overview_count.tif"
+
+    with gdaltest.error_handler():
+        gdal.Translate(
+            tmpfilename,
+            "../gdrivers/data/small_world.tif",
+            options="-of COG -co BLOCKSIZE=256 " + options,
+        )
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetRasterBand(1).GetOverviewCount() == expected_count
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+
+###############################################################################
+# Test OVERVIEW_COUNT option with dataset with existing overviews
+
+
+def test_cog_overview_count_existing():
+
+    tmpfilename = "/vsimem/test_cog_overview_count_existing.tif"
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 512, 512)
+    src_ds.GetRasterBand(1).Fill(255)
+    src_ds.BuildOverviews("NONE", [2, 4, 8, 16])
+    gdal.Translate(tmpfilename, src_ds, options="-of COG -co OVERVIEW_COUNT=3")
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetRasterBand(1).GetOverviewCount() == 3
+    assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 0
+    ds = None
+    gdal.Unlink(tmpfilename)
