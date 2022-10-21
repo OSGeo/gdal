@@ -1436,10 +1436,17 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
             if( !bSkipError )
             {
                 psResult->pszErrBuf = CPLStrdup(szCurlErrBuf);
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "%s. You may set the CPL_CURL_IGNORE_ERROR "
-                          "configuration option to YES to try to ignore it.",
-                          szCurlErrBuf );
+                if( psResult->nDataLen > 0 )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                              "%s. You may set the CPL_CURL_IGNORE_ERROR "
+                              "configuration option to YES to try to ignore it.",
+                              szCurlErrBuf );
+                }
+                else
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined, "%s", szCurlErrBuf );
+                }
             }
         }
         else
