@@ -228,13 +228,10 @@
             def schema(self):
                 """ Return the schema as a PyArrow DataType """
 
-                schema_ptr = self.stream._GetSchemaPtr()
-                if schema_ptr == 0:
+                schema = self.stream.GetSchema()
+                if schema is None:
                     raise Exception("cannot get schema")
-                try:
-                    return pa.DataType._import_from_c(schema_ptr)
-                finally:
-                    self.stream._FreeSchemaPtr(schema_ptr)
+                return pa.DataType._import_from_c(schema._getPtr())
 
             schema = property(schema)
 
@@ -242,14 +239,10 @@
             def _GetNextRecordBatchAsPyArrow(self, l_schema):
                 """ Return the next RecordBatch as a PyArrow StructArray, or None at end of iteration """
 
-                array_ptr = self.stream._GetNextRecordBatchPtr()
-                if array_ptr == 0:
+                array = self.stream.GetNextRecordBatch()
+                if array is None:
                     return None
-                try:
-                    return pa.Array._import_from_c(array_ptr, l_schema)
-                finally:
-                    self.stream._FreeRecordBatchPtr(array_ptr)
-
+                return pa.Array._import_from_c(array._getPtr(), l_schema)
 
             def __iter__(self):
                 """ Return an iterator over record batches as a PyArrow StructArray """
@@ -284,23 +277,16 @@
                 self.end_of_stream = False
                 self.use_masked_arrays = use_masked_arrays
 
-            def _GetNextRecordBatchAsNumpy(self, schema_ptr):
+            def _GetNextRecordBatchAsNumpy(self, schema):
                 """ Return the next RecordBatch as a dictionary of Numpy arrays, or None at end of iteration """
 
-                array_ptr = self.stream._GetNextRecordBatchPtr()
-                if array_ptr == 0:
+                array = self.stream.GetNextRecordBatch()
+                if array is None:
                     return None
 
-                class ArrayPointerKeeper:
-                    def __init__(self, array_ptr):
-                        self.array_ptr = array_ptr
-
-                    def __del__(self):
-                        ArrowArrayStream._FreeRecordBatchPtr(self.array_ptr)
-
-                ret = gdal_array._RecordBatchAsNumpy(array_ptr,
-                                                     schema_ptr,
-                                                     ArrayPointerKeeper(array_ptr))
+                ret = gdal_array._RecordBatchAsNumpy(array._getPtr(),
+                                                     schema._getPtr(),
+                                                     array)
                 if ret is None:
                     gdal_array._RaiseException()
                     return ret
@@ -319,15 +305,14 @@
                 if self.end_of_stream:
                     raise Exception("Stream has already been iterated over")
 
-                schema_ptr = self.stream._GetSchemaPtr()
+                schema = self.stream.GetSchema()
                 try:
                     while True:
-                        batch = self._GetNextRecordBatchAsNumpy(schema_ptr)
+                        batch = self._GetNextRecordBatchAsNumpy(schema)
                         if not batch:
                             break
                         yield batch
                 finally:
-                    self.stream._FreeSchemaPtr(schema_ptr)
                     self.end_of_stream = True
                     self.stream = None
 

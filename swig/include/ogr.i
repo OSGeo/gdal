@@ -994,6 +994,57 @@ public:
 #endif /* FROM_GDAL_I */
 
 #ifdef SWIGPYTHON
+
+class ArrowArray {
+  ArrowArray();
+public:
+%extend {
+
+  ~ArrowArray() {
+    if( self->release )
+      self->release(self);
+    free(self);
+  }
+
+  VoidPtrAsLong _getPtr() {
+    return self;
+  }
+
+  GIntBig GetChildrenCount() {
+    return self->n_children;
+  }
+
+  GIntBig GetLength() {
+    return self->length;
+  }
+
+} /* %extend */
+
+}; /* class ArrowArray */
+
+class ArrowSchema {
+  ArrowSchema();
+public:
+%extend {
+
+  ~ArrowSchema() {
+    if( self->release )
+      self->release(self);
+    free(self);
+  }
+
+  VoidPtrAsLong _getPtr() {
+    return self;
+  }
+
+  GIntBig GetChildrenCount() {
+    return self->n_children;
+  }
+
+} /* %extend */
+
+}; /* class ArrowSchema */
+
 class ArrowArrayStream {
   ArrowArrayStream();
 public:
@@ -1005,7 +1056,8 @@ public:
     free(self);
   }
 
-  VoidPtrAsLong _GetSchemaPtr()
+%newobject GetSchema;
+  ArrowSchema* GetSchema()
   {
       struct ArrowSchema* schema = (struct ArrowSchema* )malloc(sizeof(struct ArrowSchema));
       if( self->get_schema(self, schema) == 0 )
@@ -1015,19 +1067,12 @@ public:
       else
       {
           free(schema);
-          return 0;
+          return NULL;
       }
   }
 
-  static void _FreeSchemaPtr(VoidPtrAsLong ptr)
-  {
-      struct ArrowSchema* schema = (struct ArrowSchema* )ptr;
-      if( schema && schema->release )
-          schema->release(schema);
-      free(schema);
-  }
-
-  VoidPtrAsLong _GetNextRecordBatchPtr(char** options = NULL)
+%newobject GetNextRecordBatch;
+  ArrowArray* GetNextRecordBatch(char** options = NULL)
   {
       struct ArrowArray* array = (struct ArrowArray* )malloc(sizeof(struct ArrowArray));
       if( self->get_next(self, array) == 0 && array->release != NULL )
@@ -1037,18 +1082,9 @@ public:
       else
       {
           free(array);
-          return 0;
+          return NULL;
       }
   }
-
-  static void _FreeRecordBatchPtr(VoidPtrAsLong ptr)
-  {
-      struct ArrowArray* array = (struct ArrowArray* )ptr;
-      if( array && array->release )
-          array->release(array);
-      free(array);
-  }
-
 } /* %extend */
 
 

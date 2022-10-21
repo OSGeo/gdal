@@ -6711,6 +6711,16 @@ def test_ogr_gpkg_arrow_stream_numpy():
     lyr.CreateFeature(f3)
 
     ds = None
+
+    ds = ogr.Open("/vsimem/test.gpkg")
+    lyr = ds.GetLayer(0)
+    stream = lyr.GetArrowStream()
+    array = stream.GetNextRecordBatch()
+    assert array.GetChildrenCount() == 12
+    del array
+    del stream
+    ds = None
+
     ds = ogr.Open("/vsimem/test.gpkg")
     lyr = ds.GetLayer(0)
 

@@ -488,6 +488,7 @@ int OGRGeoPackageLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
 
     if( m_poQueryStatement == nullptr )
     {
+        GetLayerDefn();
         ResetStatement();
         if (m_poQueryStatement == nullptr)
             return 0;
