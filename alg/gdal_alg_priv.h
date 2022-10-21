@@ -103,7 +103,7 @@ void GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
                                  const double *padfX, const double *padfY,
                                  const double *padfVariant,
                                  llPointFunc pfnPointFunc, void *pCBData,
-                                 int bAvoidBurningSamePoints, int bIntersectOnly );
+                                 int bAvoidBurningSamePoints, bool bIntersectOnly );
 
 void GDALdllImageFilledPolygon( int nRasterXSize, int nRasterYSize,
                                 int nPartCount, const int *panPartSize,
