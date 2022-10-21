@@ -342,25 +342,6 @@ def test_ogr_elasticsearch_1():
     ret = lyr.SetFeature(feat)
     assert ret == 0
 
-    # Upsert with non-existing id
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    feat["_id"] = "upsert_id"
-    feat.SetField("str_field", "original")
-    numFeatures = lyr.GetFeatureCount()
-    assert lyr.UpsertFeature(feat) == ogr.OGRERR_NONE
-    assert lyr.GetFeatureCount() == numFeatures + 1
-
-    # Upsert with existing id
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    feat["_id"] = "upsert_id"
-    feat.SetField("str_field", "updated")
-    assert lyr.UpsertFeature(feat) == ogr.OGRERR_NONE
-
-    # Verify that we have upserted an existing feature
-    feat = lyr.GetFeature("upsert_id")
-    assert feat is not None
-    assert feat.GetField("str_field") == "updated"
-
     # With explicit GEOM_MAPPING_TYPE=GEO_POINT
     gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch/foo3&CUSTOMREQUEST=PUT", "{}")
     gdal.FileFromMemBuffer(
@@ -3423,3 +3404,39 @@ def test_ogr_elasticsearch_wildcard_layer_name():
     assert f["str_field"] == "foo2"
     assert f["str_field2"] == "bar2"
     assert f.GetGeometryRef().ExportToWkt() == "POINT (3 50)"
+
+
+###############################################################################
+# Test upserting a feature.
+
+
+def test_ogr_elasticsearch_upsert_feature():
+
+    ds = ogrtest.elasticsearch_drv.CreateDataSource("/vsimem/fakeelasticsearch")
+    assert ds is not None
+
+    gdal.FileFromMemBuffer(
+        "/vsimem/fakeelasticsearch/test_upsert&CUSTOMREQUEST=PUT", "{}"
+    )
+
+    gdal.FileFromMemBuffer(
+        '/vsimem/fakeelasticsearch/test_upsert/_mapping/FeatureCollection&POSTFIELDS={ "FeatureCollection": { "properties": {} }}',
+        "{}",
+    )
+    lyr = ds.CreateLayer(
+        "test_upsert",
+        srs=ogrtest.srs_wgs84,
+        options=['MAPPING={ "FeatureCollection": { "properties": {} }}'],
+    )
+    assert lyr is not None
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["_id"] = "upsert_id"
+
+    # Upsert new feature
+    assert lyr.UpsertFeature(f) == ogr.OGRERR_NONE
+
+    # Upsert existing feature
+    assert lyr.UpsertFeature(f) == ogr.OGRERR_NONE
+
+    ds = None
