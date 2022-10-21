@@ -429,10 +429,11 @@ GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
             // Special case for vertical lines.
             if( floor(dfX) == floor(dfXEnd) || fabs(dfX - dfXEnd) < .01 )
             {
-                double dXOffset = std::abs(std::fmod(dfX, 1.));
-                double dXEndOffset = std::abs(std::fmod(dfXEnd, 1.));
-                if ( bIntersectOnly && std::abs(dXOffset - .5) > .49 &&  std::abs(dXEndOffset - .5) > .49)
-                    continue;
+                if ( bIntersectOnly )
+                {
+                    if( std::abs(dfX - std::round(dfX)) < 0.01 && std::abs(dfXEnd - std::round(dfXEnd)) < 0.01 )
+                        continue;
+                }
 
                 if( dfYEnd < dfY )
                 {
