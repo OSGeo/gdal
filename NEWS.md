@@ -1,3 +1,107 @@
+# GDAL/OGR 3.5.3 Release Notes
+
+## Build
+
+* Fix compiler warnings with clang 15
+* CMake: fix build with Ubuntu 18
+* CMake: fix issue with gdal_target_interafaces
+
+## GDAL 3.5.3
+
+### Port
+
+* CPLODBCStatement::Fetch(): do not emit error message when fetching backwards or with offset > 0 when there is no more rows (#6368)
+* CPLHTTPFetch(): ignore SSL/TLS errors about non-properly terminated connections
+
+### Algorithms
+
+* Geoloc: optimize backmap generation time when using temporary GTiff dataset backing
+* Waper: fix issue with min/max/med/etc. down sampling on edges (#6526)
+
+### Utilities
+
+* gdal2tiles: remove likely useless Python 2.x era code related to UTF-8 support (#6338)
+* GDALScript.main(): properly output backtrace when an exception occurs (#6417)
+* gdal_calc.py: add missing data types (64 bit integer, complex ones) in DefaultNDVLookup map (#6417)
+
+### Raster drivers
+
+DIMAP driver:
+ * Parse and emit geometric metadatas (#6343)
+
+NITF driver:
+ * RPFTOC use fixed values for frame size in case of CADRG and CIB (as specified)
+ * RPF use more robust way to detect legends/overviews
+
+GTiff driver:
+ * be robust to leading <?xml version=1.0 encoding=UTF-8?> marker before the root GDALMetadata element
+ * CreateCopy: fix marking alpha channels that are not the last one (#6399)
+
+MAP driver:
+ * fix nullptr dereference on invalid files (ossfuzz #52359)
+
+NITF driver:
+ * writing: avoid CLEVEL to go down when writing several images of different sizes
+
+SENTINEL2 driver:
+ * avoid potential stack-buffer-overflow (ossfuzz #52499)
+
+VRT driver:
+ * serialization: do not (generally) open source band when serialization of a ComplexSource with NODATA (qgis/QGIS#48052)
+
+ZARR driver:
+ * do not open non-existant dataset when prefixing with ZARR:, and add more informative error messages for quoting errors and/or lack of /vsicurl/ prefix
+
+## OGR 3.5.3
+
+### Utilities
+
+* ogr2ogr: fix -makevalid on geometry collections (#6340)
+
+### Vector drivers
+
+CAD driver:
+ * libopencad: avoid use of invalid memory/crash on corrupted files (ossfuzz #51091)
+ * libopencad: avoid casting an invalid value as ResolutionUnit (ossfuzz #51826)
+
+CSV driver:
+ * fix reading point of coord 0,0 with X/Y_POSSIBLE_NAMES open options (#6366)
+ * push the maximum size of a line to 10 million by default, and make it configurable with a MAX_LINE_SIZE open option
+
+GeoJSON driver:
+ * reader/OGRParseDate(): do not recognize 'YYYY/MM/DD sometext' as a valid date (#6351)
+
+GeoJSONSeq driver:
+ * fix opening of files starting with a large 'properties' (#3892)
+
+GML driver:
+ * geometry type detection: handle case where first feature(s) have no geometry (refs qgis/QGIS#50215)
+ * geometry parser: fix issue with ring ending with a ArcByCenterPoint being detected as non-closed (#6492)
+
+GPKG driver:
+ * add a IMMUTABLE=YES/NO open option and automatically turn it on (with warning) when not being able to open a WAL file in read-only mode
+ * allow 'GPKG:filename' connection string
+ * fix writing a CRS with a unknown ID and a coordinate epoch
+
+HANA driver:
+ * inform about missing mandatory connection parameters
+
+MITAB driver:
+ * AddField(): fix nullptr dereference in error code path (ossfuzz #52339)
+
+OGR_GMT driver:
+ * writer: make sure region/extent is written in header (fixes regression of 3.5.0) (#6370)
+
+SQLite driver:
+ * allow NOLOCK option on a /vsicurl/http file
+ * remove use of std::regex (#6358)
+ * open: avoid potential double creation of OGRVFS
+ * allow creating layers named like 'foo(bar)' (#6548)
+
+## Python bindings
+
+* emit exceptions in UseExceptions() mode on failed OpenMDArray(), OpenGroup(), GetAttribute()
+
 # GDAL/OGR 3.5.2 Release Notes
 
 ## Build
