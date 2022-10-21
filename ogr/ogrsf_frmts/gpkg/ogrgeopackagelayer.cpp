@@ -1073,3 +1073,18 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
         panFieldOrdinals[m_poFeatureDefn->GetFieldCount() - 1] = iCol;
     }
 }
+
+/************************************************************************/
+/*                          SetIgnoredFields()                          */
+/************************************************************************/
+
+OGRErr OGRGeoPackageLayer::SetIgnoredFields( const char **papszFields )
+{
+    OGRErr eErr = OGRLayer::SetIgnoredFields(papszFields);
+    if( eErr == OGRERR_NONE )
+    {
+        // So that OGRGeoPackageTableLayer::BuildColumns() is called
+        ResetReading();
+    }
+    return eErr;
+}
