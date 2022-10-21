@@ -203,7 +203,7 @@ zip -qr "../gdal${COMPRESSED_VERSION}${RC}.zip" "gdal-${GDAL_VERSION}"
 
 rm -f "../gdalautotest-${GDAL_VERSION}${RC}.tar.gz"
 rm -f "../gdalautotest-${GDAL_VERSION}${RC}.zip"
-tar cf "../gdalautotest-${GDAL_VERSION}${RC}.tar.gz" "gdalautotest-${GDAL_VERSION}"
+tar czf "../gdalautotest-${GDAL_VERSION}${RC}.tar.gz" "gdalautotest-${GDAL_VERSION}"
 zip -qr "../gdalautotest-${GDAL_VERSION}${RC}.zip" "gdalautotest-${GDAL_VERSION}"
 
 echo "* Generating MD5 sums ..."
