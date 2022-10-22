@@ -36,6 +36,11 @@
 #include <algorithm>
 #include <cmath>
 
+#undef SQLITE_STATIC
+#define SQLITE_STATIC      static_cast<sqlite3_destructor_type>(nullptr)
+#undef SQLITE_TRANSIENT
+#define SQLITE_TRANSIENT   reinterpret_cast<sqlite3_destructor_type>(-1)
+
 
 static const char UNSUPPORTED_OP_READ_ONLY[] =
   "%s : unsupported operation on a read-only datasource.";
@@ -282,15 +287,15 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
                 {
                     int szBlob = 0;
                     GByte *pabyBlob = poFeature->GetFieldAsBinary(i, &szBlob);
-                    err = sqlite3_bind_blob(poStmt, nColCount++, pabyBlob, szBlob, nullptr);
+                    err = sqlite3_bind_blob(poStmt, nColCount++, pabyBlob, szBlob, SQLITE_STATIC);
                     break;
                 }
                 default:
                 {
-                    const char *pszVal = poFeature->GetFieldAsString(i);
+                    const char *pszVal = "";
                     int nValLengthBytes = -1;
                     char szVal[32];
-                    CPLString osTemp;
+                    sqlite3_destructor_type destructorType = SQLITE_TRANSIENT;
                     if( poFieldDefn->GetType() == OFTDate )
                     {
                         int nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZFlag;
@@ -300,85 +305,100 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
                     }
                     else if( poFieldDefn->GetType() == OFTDateTime )
                     {
-                        OGRField sField(*(poFeature->GetRawFieldRef(i)));
-
-                        if( !m_poDS->m_bDateTimeWithTZ &&
-                                (sField.Date.TZFlag == 0 || sField.Date.TZFlag == 1) )
-                        {
-                            sField.Date.TZFlag = 100;
-                        }
-                        else if( !m_poDS->m_bDateTimeWithTZ && sField.Date.TZFlag != 100 )
-                        {
-                            struct tm brokendowntime;
-                            brokendowntime.tm_year = sField.Date.Year - 1900;
-                            brokendowntime.tm_mon = sField.Date.Month -1;
-                            brokendowntime.tm_mday = sField.Date.Day;
-                            brokendowntime.tm_hour = sField.Date.Hour;
-                            brokendowntime.tm_min = sField.Date.Minute;
-                            brokendowntime.tm_sec = 0;
-                            GIntBig nDT = CPLYMDHMSToUnixTime(&brokendowntime);
-                            const int TZOffset = std::abs(sField.Date.TZFlag - 100) * 15;
-                            nDT -= TZOffset * 60;
-                            CPLUnixTimeToYMDHMS(nDT, &brokendowntime);
-                            sField.Date.Year = static_cast<GInt16>(brokendowntime.tm_year + 1900);
-                            sField.Date.Month = static_cast<GByte>(brokendowntime.tm_mon + 1);
-                            sField.Date.Day = static_cast<GByte>(brokendowntime.tm_mday);
-                            sField.Date.Hour = static_cast<GByte>(brokendowntime.tm_hour);
-                            sField.Date.Minute = static_cast<GByte>(brokendowntime.tm_min);
-                            sField.Date.TZFlag = 100;
-                        }
-
                         constexpr bool bAlwaysMillisecond = true;
-                        char* pszXMLDateTime = OGRGetXMLDateTime(&sField, bAlwaysMillisecond);
-                        osTemp = pszXMLDateTime;
-                        pszVal = osTemp.c_str();
-                        CPLFree(pszXMLDateTime);
-                    }
-                    else if( poFieldDefn->GetType() == OFTString &&
-                             poFieldDefn->GetWidth() > 0 )
-                    {
-                        if( !CPLIsUTF8(pszVal, -1) )
+                        destructorType = CPLFree;
+                        const auto psFieldRaw = poFeature->GetRawFieldRef(i);
+                        if( m_poDS->m_bDateTimeWithTZ || psFieldRaw->Date.TZFlag == 100 )
                         {
-                            CPLError(CE_Warning, CPLE_AppDefined,
-                                     "Value of field '%s' is not a valid UTF-8 string.%s",
-                                     poFeatureDefn->GetFieldDefn(i)->GetNameRef(),
-                                     m_bTruncateFields ? " Value will be laundered." : "");
-                            if( m_bTruncateFields )
+                            pszVal = OGRGetXMLDateTime(psFieldRaw, bAlwaysMillisecond);
+                        }
+                        else
+                        {
+                            OGRField sField(*psFieldRaw);
+                            if( sField.Date.TZFlag == 0 || sField.Date.TZFlag == 1 )
                             {
-                                char* pszTemp = CPLForceToASCII(pszVal, -1, '_');
-                                osTemp = pszTemp;
-                                pszVal = osTemp.c_str();
-                                CPLFree(pszTemp);
+                                sField.Date.TZFlag = 100;
                             }
+                            else
+                            {
+                                struct tm brokendowntime;
+                                brokendowntime.tm_year = sField.Date.Year - 1900;
+                                brokendowntime.tm_mon = sField.Date.Month -1;
+                                brokendowntime.tm_mday = sField.Date.Day;
+                                brokendowntime.tm_hour = sField.Date.Hour;
+                                brokendowntime.tm_min = sField.Date.Minute;
+                                brokendowntime.tm_sec = 0;
+                                GIntBig nDT = CPLYMDHMSToUnixTime(&brokendowntime);
+                                const int TZOffset = std::abs(sField.Date.TZFlag - 100) * 15;
+                                nDT -= TZOffset * 60;
+                                CPLUnixTimeToYMDHMS(nDT, &brokendowntime);
+                                sField.Date.Year = static_cast<GInt16>(brokendowntime.tm_year + 1900);
+                                sField.Date.Month = static_cast<GByte>(brokendowntime.tm_mon + 1);
+                                sField.Date.Day = static_cast<GByte>(brokendowntime.tm_mday);
+                                sField.Date.Hour = static_cast<GByte>(brokendowntime.tm_hour);
+                                sField.Date.Minute = static_cast<GByte>(brokendowntime.tm_min);
+                                sField.Date.TZFlag = 100;
+                            }
+
+                            pszVal = OGRGetXMLDateTime(&sField, bAlwaysMillisecond);
                         }
 
-                        if( CPLStrlenUTF8(pszVal) > poFieldDefn->GetWidth() )
+                    }
+                    else if( poFieldDefn->GetType() == OFTString )
+                    {
+                        pszVal = poFeature->GetFieldAsString(i);
+                        if( poFieldDefn->GetWidth() > 0 )
                         {
-                            CPLError(CE_Warning, CPLE_AppDefined,
-                                     "Value of field '%s' has %d characters, whereas maximum allowed is %d.%s",
-                                     poFeatureDefn->GetFieldDefn(i)->GetNameRef(),
-                                     CPLStrlenUTF8(pszVal),
-                                     poFieldDefn->GetWidth(),
-                                     m_bTruncateFields ? " Value will be truncated." : "");
-                            if( m_bTruncateFields )
+                            if( !CPLIsUTF8(pszVal, -1) )
                             {
-                                int countUTF8Chars = 0;
-                                nValLengthBytes = 0;
-                                while (pszVal[nValLengthBytes])
+                                CPLError(CE_Warning, CPLE_AppDefined,
+                                         "Value of field '%s' is not a valid UTF-8 string.%s",
+                                         poFeatureDefn->GetFieldDefn(i)->GetNameRef(),
+                                         m_bTruncateFields ? " Value will be laundered." : "");
+                                if( m_bTruncateFields )
                                 {
-                                    if ((pszVal[nValLengthBytes] & 0xc0) != 0x80)
+                                    pszVal = CPLForceToASCII(pszVal, -1, '_');
+                                    destructorType = CPLFree;
+                                }
+                            }
+
+                            if( CPLStrlenUTF8(pszVal) > poFieldDefn->GetWidth() )
+                            {
+                                CPLError(CE_Warning, CPLE_AppDefined,
+                                         "Value of field '%s' has %d characters, whereas maximum allowed is %d.%s",
+                                         poFeatureDefn->GetFieldDefn(i)->GetNameRef(),
+                                         CPLStrlenUTF8(pszVal),
+                                         poFieldDefn->GetWidth(),
+                                         m_bTruncateFields ? " Value will be truncated." : "");
+                                if( m_bTruncateFields )
+                                {
+                                    int countUTF8Chars = 0;
+                                    nValLengthBytes = 0;
+                                    while (pszVal[nValLengthBytes])
                                     {
-                                        // Stop at the start of the character just beyond the maximum accepted
-                                        if( countUTF8Chars == poFieldDefn->GetWidth() )
-                                            break;
-                                        countUTF8Chars++;
+                                        if ((pszVal[nValLengthBytes] & 0xc0) != 0x80)
+                                        {
+                                            // Stop at the start of the character just beyond the maximum accepted
+                                            if( countUTF8Chars == poFieldDefn->GetWidth() )
+                                                break;
+                                            countUTF8Chars++;
+                                        }
+                                        nValLengthBytes++;
                                     }
-                                    nValLengthBytes++;
                                 }
                             }
                         }
+                        else
+                        {
+                            destructorType = SQLITE_STATIC;
+                        }
                     }
-                    err = sqlite3_bind_text(poStmt, nColCount++, pszVal, nValLengthBytes, SQLITE_TRANSIENT);
+                    else
+                    {
+                        pszVal = poFeature->GetFieldAsString(i);
+                    }
+
+                    err = sqlite3_bind_text(poStmt, nColCount++, pszVal, nValLengthBytes, destructorType);
                     break;
                 }
             }
