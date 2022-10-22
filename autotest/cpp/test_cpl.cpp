@@ -54,6 +54,7 @@
 #include "cpl_quad_tree.h"
 #include "cpl_worker_thread_pool.h"
 #include "cpl_vsi_virtual.h"
+#include "cpl_threadsafe_queue.hpp"
 
 #include <atomic>
 #include <fstream>
@@ -4162,8 +4163,26 @@ namespace tut
         VSIFree(m2);
     }
 
-    // WARNING: keep that line at bottom and read carefully:
-    // If the number of tests reaches 100, increase the MAX_NUMBER_OF_TESTS
-    // define at top of this file (and update this comment!)
+    // Test cpl::ThreadSafeQueue
+    template<>
+    template<>
+    void object::test<66>()
+    {
+        cpl::ThreadSafeQueue<int> queue;
+        ensure(queue.empty());
+        ensure_equals(queue.size(), 0U);
+        queue.push(1);
+        ensure(!queue.empty());
+        ensure_equals(queue.size(), 1U);
+        queue.clear();
+        ensure(queue.empty());
+        ensure_equals(queue.size(), 0U);
+        int val = 10;
+        queue.push(std::move(val));
+        ensure(!queue.empty());
+        ensure_equals(queue.size(), 1U);
+        ensure_equals(queue.get_and_pop_front(), 10);
+        ensure(queue.empty());
+    }
 
 } // namespace tut
