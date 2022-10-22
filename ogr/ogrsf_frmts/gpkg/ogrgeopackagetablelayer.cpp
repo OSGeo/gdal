@@ -3603,7 +3603,10 @@ void OGRGeoPackageTableLayer::CheckUnknownExtensions()
                          "Some data may be missing while reading that layer, and updates are strongly discouraged.",
                          GetName(), pszExtName, pszDefinition);
             }
-            else if( EQUAL(pszScope, "read-write") )
+            else if( EQUAL(pszScope, "read-write")  &&
+                     // None of the NGA extensions at http://ngageoint.github.io/GeoPackage/docs/extensions/
+                     // affect read-only scenarios
+                     !STARTS_WITH(pszExtName, "nga_") )
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "Layer %s relies on the '%s' (%s) extension that should "
