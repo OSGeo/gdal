@@ -7133,3 +7133,101 @@ def test_ogr_gpkg_get_geometry_types():
 
     ds = None
     gdal.Unlink(filename)
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "/vsimem/test_ogr_gpkg_background_rtree_build.gpkg",
+        "tmp/test_ogr_gpkg_background_rtree_build.gpkg",
+    ],
+)
+def test_ogr_gpkg_background_rtree_build(filename):
+
+    # Batch insertion only
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    with gdaltest.config_option("OGR_GPKG_THREADED_RTREE_AT_FIRST_FEATURE", "YES"):
+        lyr = ds.CreateLayer("foo")
+    for i in range(1000):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(%d %d)" % (i, i)))
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    ds = None
+    assert gdal.VSIStatL(filename + ".tmp_rtree_foo.db") is None
+
+    ds = ogr.Open(filename)
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM rtree_foo_geom")
+    assert sql_lyr.GetFeatureCount() == 1000
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
+    gdal.Unlink(filename)
+
+    # Test SetFeature() after batch insertion
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    with gdaltest.config_option("OGR_GPKG_THREADED_RTREE_AT_FIRST_FEATURE", "YES"):
+        lyr = ds.CreateLayer("footoooooooooooooooooooooooooooooooooooooooooolong")
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(0 0)"))
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(1 1)"))
+    assert lyr.SetFeature(f) == ogr.OGRERR_NONE
+    ds = None
+
+    ds = ogr.Open(filename)
+    sql_lyr = ds.ExecuteSQL(
+        "SELECT * FROM rtree_footoooooooooooooooooooooooooooooooooooooooooolong_geom"
+    )
+    assert sql_lyr.GetFeatureCount() == 1
+    ds.ReleaseResultSet(sql_lyr)
+    lyr = ds.GetLayer(0)
+    lyr.SetSpatialFilterRect(0.5, 0.5, 1.5, 1.5)
+    assert lyr.GetFeatureCount() == 1
+    ds = None
+
+    gdal.Unlink(filename)
+
+    # Test DeleteFeature() after batch insertion
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    with gdaltest.config_option("OGR_GPKG_THREADED_RTREE_AT_FIRST_FEATURE", "YES"):
+        lyr = ds.CreateLayer("foo with space")
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(0 0)"))
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(1 1)"))
+    assert lyr.DeleteFeature(f.GetFID()) == ogr.OGRERR_NONE
+    ds = None
+
+    ds = ogr.Open(filename)
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM "rtree_foo with space_geom"')
+    assert sql_lyr.GetFeatureCount() == 0
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
+    # Test RollbackTransaction() after batch insertion
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    with gdaltest.config_option("OGR_GPKG_THREADED_RTREE_AT_FIRST_FEATURE", "YES"):
+        lyr = ds.CreateLayer("foo")
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(0 0)"))
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    lyr.StartTransaction()
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(1 1)"))
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    lyr.RollbackTransaction()
+    ds = None
+
+    ds = ogr.Open(filename)
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM rtree_foo_geom")
+    assert sql_lyr.GetFeatureCount() == 1
+    ds.ReleaseResultSet(sql_lyr)
+    lyr = ds.GetLayer(0)
+    lyr.SetSpatialFilterRect(-0.5, -0.5, 0.5, 0.5)
+    assert lyr.GetFeatureCount() == 1
+    ds = None
+
+    gdal.Unlink(filename)

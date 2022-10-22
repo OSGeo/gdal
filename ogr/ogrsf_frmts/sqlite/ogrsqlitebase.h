@@ -164,6 +164,7 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL: public GDALPamDataset
                         virtual ~OGRSQLiteBaseDataSource();
 
     sqlite3            *GetDB() { return hDB; }
+    sqlite3_vfs        *GetVFS() { return pMyVFS; }
     inline bool         GetUpdate() const { return eAccess == GA_Update; }
     VSILFILE*           GetVSILFILE() const { return fpMainFile; }
 
