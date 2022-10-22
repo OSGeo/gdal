@@ -745,7 +745,11 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
 
     passport.stMapDescription.dfScale = passport.nScale;
 
-    const double dfCoeff = passport.stMapDescription.nResolution == 0 ? 0 :
+    if( passport.stMapDescription.nResolution == 0 )
+    {
+        return OGRERR_FAILURE;
+    }
+    const double dfCoeff =
         double(passport.stMapDescription.dfScale) / passport.stMapDescription.nResolution;
     passport.stMapDescription.bIsRealCoordinates = passport.informationFlags.bRealCoordinatesCompliance;
     passport.stMapDescription.stCoordAcc = passport.informationFlags.stCoordAcc;
