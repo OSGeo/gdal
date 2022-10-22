@@ -306,6 +306,9 @@ int OGRParquetLayerBase::TestCapability(const char* pszCap)
     if( EQUAL(pszCap, OLCMeasuredGeometries) )
         return true;
 
+    if( EQUAL(pszCap, OLCFastSetNextByIndex) )
+        return true;
+
     return OGRArrowLayer::TestCapability(pszCap);
 }
 
