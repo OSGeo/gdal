@@ -74,22 +74,15 @@ class MSGDataset final: public GDALDataset
     virtual ~MSGDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
-    virtual const char *_GetProjectionRef() override;
-    virtual CPLErr _SetProjection( const char * ) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+
+    const OGRSpatialReference* GetSpatialRef() const override { return &m_oSRS; }
 
     virtual CPLErr GetGeoTransform( double * padfTransform ) override;
 
   private:
     MSGCommand command;
     double adfGeoTransform[6]; // Calculate and store once as GetGeoTransform may be called multiple times
-    char   *pszProjection = nullptr;
-    OGRSpatialReference oSRS;
+    OGRSpatialReference m_oSRS{};
     OGRSpatialReference oLL;
     OGRCoordinateTransformation *poTransform = nullptr;
     double rCalibrationOffset[12];

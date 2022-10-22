@@ -64,7 +64,7 @@ const char *MSGDataset::metadataDomain = "msg"; // the metadata domain
 MSGDataset::MSGDataset()
 
 {
-  pszProjection = CPLStrdup("");
+  m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
   adfGeoTransform[0] = 0.0;
   adfGeoTransform[1] = 1.0;
   adfGeoTransform[2] = 0.0;
@@ -81,30 +81,6 @@ MSGDataset::~MSGDataset()
 
 {
   delete poTransform;
-
-  CPLFree( pszProjection );
-}
-
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char *MSGDataset::_GetProjectionRef()
-
-{
-  return pszProjection;
-}
-
-/************************************************************************/
-/*                          SetProjection()                             */
-/************************************************************************/
-
-CPLErr MSGDataset::_SetProjection( const char * pszNewProjection )
-{
-    CPLFree( pszProjection );
-    pszProjection = CPLStrdup( pszNewProjection );
-
-    return CE_None;
 }
 
 /************************************************************************/
@@ -246,10 +222,8 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Set Projection Information                                      */
 /* -------------------------------------------------------------------- */
 
-    poDS->oSRS.SetGEOS(  0, 35785831, 0, 0 );
-    poDS->oSRS.SetWellKnownGeogCS( "WGS84" ); // Temporary line to satisfy ERDAS (otherwise the ellips is "unnamed"). Eventually this should become the custom a and b ellips (CGMS).
-    CPLFree( poDS->pszProjection );
-    poDS->oSRS.exportToWkt( &(poDS->pszProjection) );
+    poDS->m_oSRS.SetGEOS(  0, 35785831, 0, 0 );
+    poDS->m_oSRS.SetWellKnownGeogCS( "WGS84" ); // Temporary line to satisfy ERDAS (otherwise the ellips is "unnamed"). Eventually this should become the custom a and b ellips (CGMS).
 
     // The following are 3 different try-outs for also setting the ellips a and b parameters.
     // We leave them out for now however because this does not work. In gdalwarp, when choosing some
@@ -262,25 +236,22 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
     // I can't explain the reason for the message at this time (could be a problem in the way the SRS is set here,
     // but also a bug in Proj.4 or GDAL.
     /*
-    oSRS.SetGeogCS( NULL, NULL, NULL, 6378169, 295.488065897, NULL, 0, NULL, 0 );
+    poDS->m_oSRS.SetGeogCS( NULL, NULL, NULL, 6378169, 295.488065897, NULL, 0, NULL, 0 );
 
-    oSRS.SetGeogCS( "unnamed ellipse", "unknown", "unnamed", 6378169, 295.488065897, "Greenwich", 0.0);
+    poDS->m_oSRS.SetGeogCS( "unnamed ellipse", "unknown", "unnamed", 6378169, 295.488065897, "Greenwich", 0.0);
 
-    if( oSRS.importFromProj4("+proj=geos +h=35785831 +a=6378169 +b=6356583.8") == OGRERR_NONE )
-    {
-        oSRS.exportToWkt( &(poDS->pszProjection) );
-    }
+    poDS->m_oSRS.importFromProj4("+proj=geos +h=35785831 +a=6378169 +b=6356583.8");
     */
 
 /* -------------------------------------------------------------------- */
 /*   Create a transformer to LatLon (only for Reflectance calculation)  */
 /* -------------------------------------------------------------------- */
 
-    OGRSpatialReference* poSRSLongLat = poDS->oSRS.CloneGeogCS();
+    OGRSpatialReference* poSRSLongLat = poDS->m_oSRS.CloneGeogCS();
     if( poSRSLongLat )
     {
         poSRSLongLat->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        poDS->poTransform = OGRCreateCoordinateTransformation( &(poDS->oSRS),poSRSLongLat );
+        poDS->poTransform = OGRCreateCoordinateTransformation( &(poDS->m_oSRS),poSRSLongLat );
         delete poSRSLongLat;
     }
 /* -------------------------------------------------------------------- */

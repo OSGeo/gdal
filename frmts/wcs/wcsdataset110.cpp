@@ -497,18 +497,13 @@ bool WCSDataset110::ExtractGridInfo()
 
     if( pszProjOverride )
     {
-        OGRSpatialReference oSRS;
-
-        if( oSRS.SetFromUserInput( pszProjOverride, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) != OGRERR_NONE )
+        if( m_oSRS.SetFromUserInput( pszProjOverride, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) != OGRERR_NONE )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "<SRS> element contents not parsable:\n%s",
                       pszProjOverride );
             return false;
         }
-
-        CPLFree( pszProjection );
-        oSRS.exportToWkt( &pszProjection );
     }
 
 /* -------------------------------------------------------------------- */

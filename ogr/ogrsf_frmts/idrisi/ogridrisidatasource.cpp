@@ -134,8 +134,15 @@ int OGRIdrisiDataSource::Open( const char * pszFilename )
         const char *pszRefUnits = CSLFetchNameValue( papszVDC, "ref. units" );
 
         if (pszRefSystem != nullptr && pszRefUnits != nullptr)
+        {
+            OGRSpatialReference oSRS;
             IdrisiGeoReference2Wkt( pszFilename, pszRefSystem, pszRefUnits,
-                                    &pszWTKString);
+                                    oSRS);
+            if( !oSRS.IsEmpty() )
+            {
+                oSRS.exportToWkt(&pszWTKString);
+            }
+        }
     }
 
     GByte chType = 0;
