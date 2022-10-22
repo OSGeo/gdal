@@ -3876,7 +3876,7 @@ OGRErr OGRGeoPackageTableLayer::Rename(const char* pszDstTableName)
 
     pszSQL = sqlite3_mprintf(
         "UPDATE gpkg_geometry_columns SET table_name = '%q' WHERE "
-        "lower(table_name )= lower('%q')",
+        "lower(table_name )= lower('%q');",
         pszDstTableName, m_pszTableName);
     osSQL += pszSQL;
     sqlite3_free(pszSQL);
@@ -3884,17 +3884,15 @@ OGRErr OGRGeoPackageTableLayer::Rename(const char* pszDstTableName)
     // Rename the identifier if it defaulted to the table name
     pszSQL = sqlite3_mprintf(
             "UPDATE gpkg_contents SET identifier = '%q' WHERE "
-            "lower(table_name) = lower('%q') AND identifier = '%q'",
+            "lower(table_name) = lower('%q') AND identifier = '%q';",
             pszDstTableName, m_pszTableName, m_pszTableName);
-    osSQL += ";";
     osSQL += pszSQL;
     sqlite3_free(pszSQL);
 
     pszSQL = sqlite3_mprintf(
             "UPDATE gpkg_contents SET table_name = '%q' WHERE "
-            "lower(table_name )= lower('%q')",
+            "lower(table_name )= lower('%q');",
             pszDstTableName, m_pszTableName);
-    osSQL += ";";
     osSQL += pszSQL;
     sqlite3_free(pszSQL);
 
@@ -3902,9 +3900,8 @@ OGRErr OGRGeoPackageTableLayer::Rename(const char* pszDstTableName)
     {
         pszSQL = sqlite3_mprintf(
             "UPDATE gpkg_extensions SET table_name = '%q' WHERE "
-            "lower(table_name )= lower('%q')",
+            "lower(table_name )= lower('%q');",
             pszDstTableName, m_pszTableName);
-        osSQL += ";";
         osSQL += pszSQL;
         sqlite3_free(pszSQL);
     }
@@ -3913,9 +3910,8 @@ OGRErr OGRGeoPackageTableLayer::Rename(const char* pszDstTableName)
     {
         pszSQL = sqlite3_mprintf(
             "UPDATE gpkg_metadata_reference SET table_name = '%q' WHERE "
-            "lower(table_name )= lower('%q')",
+            "lower(table_name )= lower('%q');",
             pszDstTableName, m_pszTableName);
-        osSQL += ";";
         osSQL += pszSQL;
         sqlite3_free(pszSQL);
     }
@@ -3924,9 +3920,8 @@ OGRErr OGRGeoPackageTableLayer::Rename(const char* pszDstTableName)
     {
         pszSQL = sqlite3_mprintf(
             "UPDATE gpkg_data_columns SET table_name = '%q' WHERE "
-            "lower(table_name )= lower('%q')",
+            "lower(table_name )= lower('%q');",
             pszDstTableName, m_pszTableName);
-        osSQL += ";";
         osSQL += pszSQL;
         sqlite3_free(pszSQL);
     }
@@ -3936,9 +3931,8 @@ OGRErr OGRGeoPackageTableLayer::Rename(const char* pszDstTableName)
     {
         pszSQL = sqlite3_mprintf(
             "UPDATE gpkg_ogr_contents SET table_name = '%q' WHERE "
-            "lower(table_name )= lower('%q')",
+            "lower(table_name )= lower('%q');",
             pszDstTableName, m_pszTableName);
-        osSQL += ";";
         osSQL += pszSQL;
         sqlite3_free(pszSQL);
     }
@@ -3948,33 +3942,39 @@ OGRErr OGRGeoPackageTableLayer::Rename(const char* pszDstTableName)
     {
         pszSQL = sqlite3_mprintf(
             "UPDATE gpkgext_relations SET base_table_name = '%q' WHERE "
-            "lower(base_table_name )= lower('%q')",
+            "lower(base_table_name )= lower('%q');",
             pszDstTableName, m_pszTableName);
-        osSQL += ";";
         osSQL += pszSQL;
         sqlite3_free(pszSQL);
 
         pszSQL = sqlite3_mprintf(
             "UPDATE gpkgext_relations SET related_table_name = '%q' WHERE "
-            "lower(related_table_name )= lower('%q')",
+            "lower(related_table_name )= lower('%q');",
             pszDstTableName, m_pszTableName);
-        osSQL += ";";
-        osSQL += pszSQL;
+        osSQL += pszSQL;;
         sqlite3_free(pszSQL);
 
         pszSQL = sqlite3_mprintf(
             "UPDATE gpkgext_relations SET mapping_table_name = '%q' WHERE "
-            "lower(mapping_table_name )= lower('%q')",
+            "lower(mapping_table_name )= lower('%q');",
             pszDstTableName, m_pszTableName);
-        osSQL += ";";
+        osSQL += pszSQL;
+        sqlite3_free(pszSQL);
+    }
+
+    if( m_poDS->HasQGISLayerStyles() )
+    {
+        pszSQL = sqlite3_mprintf(
+            "UPDATE layer_styles SET f_table_name = '%q' WHERE "
+            "f_table_name = '%q';",
+            pszDstTableName, m_pszTableName);
         osSQL += pszSQL;
         sqlite3_free(pszSQL);
     }
 
     pszSQL = sqlite3_mprintf(
-            "ALTER TABLE \"%w\" RENAME TO \"%w\"",
+            "ALTER TABLE \"%w\" RENAME TO \"%w\";",
             m_pszTableName, pszDstTableName );
-    osSQL += ";";
     osSQL += pszSQL;
     sqlite3_free(pszSQL);
 
@@ -3987,17 +3987,15 @@ OGRErr OGRGeoPackageTableLayer::Rename(const char* pszDstTableName)
         osRTreeNameNew += "_";
         osRTreeNameNew += m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
 
-        osSQL += ";";
         osSQL += ReturnSQLDropSpatialIndexTriggers();
+        osSQL += ';';
 
         pszSQL = sqlite3_mprintf(
-                "ALTER TABLE \"%w\" RENAME TO \"%w\"",
+                "ALTER TABLE \"%w\" RENAME TO \"%w\";",
                 m_osRTreeName.c_str(), osRTreeNameNew.c_str());
-        osSQL += ";";
         osSQL += pszSQL;
         sqlite3_free(pszSQL);
 
-        osSQL += ";";
         osSQL += ReturnSQLCreateSpatialIndexTriggers(pszDstTableName, nullptr);
     }
 

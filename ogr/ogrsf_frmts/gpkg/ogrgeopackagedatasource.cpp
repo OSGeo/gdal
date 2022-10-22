@@ -3589,6 +3589,32 @@ bool GDALGeoPackageDataset::HasGpkgextRelationsTable() const
 }
 
 /************************************************************************/
+/*                        HasQGISLayerStyles()                          */
+/************************************************************************/
+
+bool GDALGeoPackageDataset::HasQGISLayerStyles() const
+{
+    // QGIS layer_styles extension: https://github.com/pka/qgpkg/blob/master/qgis_geopackage_extension.md
+    bool bRet = false;
+    const int nCount = SQLGetInteger(hDB,
+                "SELECT 1 FROM sqlite_master WHERE name = 'layer_styles'"
+                "AND type = 'table'", nullptr);
+    if( nCount == 1 )
+    {
+        sqlite3_stmt* hSQLStmt = nullptr;
+        int rc = sqlite3_prepare_v2( hDB,
+            "SELECT f_table_name, f_geometry_column FROM layer_styles", -1,
+            &hSQLStmt, nullptr );
+        if( rc == SQLITE_OK )
+        {
+            bRet = true;
+            sqlite3_finalize(hSQLStmt);
+        }
+    }
+    return bRet;
+}
+
+/************************************************************************/
 /*                            GetMetadata()                             */
 /************************************************************************/
 
