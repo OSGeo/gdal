@@ -3141,6 +3141,8 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                 else
                 {
                     anLayerCountFeatures[iLayer] = poLayer->GetFeatureCount();
+                    if( psOptions->nLimit >= 0 )
+                        anLayerCountFeatures[iLayer] = std::min(anLayerCountFeatures[iLayer], psOptions->nLimit);
                     nCountLayersFeatures += anLayerCountFeatures[iLayer];
                 }
             }
