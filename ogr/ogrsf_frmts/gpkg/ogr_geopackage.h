@@ -421,12 +421,20 @@ class OGRGeoPackageLayer CPL_NON_FINAL: public OGRLayer, public IOGRSQLiteGetSpa
                                            sqlite3_stmt *hStmt );
 
     OGRFeature*         TranslateFeature(sqlite3_stmt* hStmt);
+    bool                ParseDateField(const char* pszTxt,
+                                       OGRField* psField,
+                                       const OGRFieldDefn* poFieldDefn,
+                                       GIntBig nFID);
     bool                ParseDateField(sqlite3_stmt* hStmt,
                                         int iRawField,
                                         int nSqlite3ColType,
                                         OGRField* psField,
                                         const OGRFieldDefn* poFieldDefn,
                                         GIntBig nFID);
+    bool                ParseDateTimeField(const char* pszTxt,
+                                       OGRField* psField,
+                                       const OGRFieldDefn* poFieldDefn,
+                                       GIntBig nFID);
     bool                ParseDateTimeField(sqlite3_stmt* hStmt,
                                         int iRawField,
                                         int nSqlite3ColType,
