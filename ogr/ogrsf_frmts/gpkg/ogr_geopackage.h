@@ -37,6 +37,7 @@
 
 #include <vector>
 #include <set>
+#include <thread>
 
 #define UNKNOWN_SRID   -2
 #define DEFAULT_SRID    0
@@ -573,8 +574,12 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
 
     CPL_DISALLOW_COPY_ASSIGN(OGRGeoPackageTableLayer)
 
+    std::thread         m_oThreadNextArrowArray{};
+    std::unique_ptr<GDALGeoPackageDataset> m_poOtherDS{};
+    struct ArrowArray*  m_psNextArrayArray = nullptr;
     virtual int GetNextArrowArray(struct ArrowArrayStream*,
                                    struct ArrowArray* out_array) override;
+    int                 GetNextArrowArrayInternal(struct ArrowArray* out_array);
 
     public:
                         OGRGeoPackageTableLayer( GDALGeoPackageDataset *poDS,

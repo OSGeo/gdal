@@ -1199,6 +1199,18 @@ OGRGeoPackageTableLayer::~OGRGeoPackageTableLayer()
 
     if ( m_poGetFeatureStatement )
         sqlite3_finalize(m_poGetFeatureStatement);
+
+    if( m_oThreadNextArrowArray.joinable() )
+    {
+        m_oThreadNextArrowArray.join();
+    }
+
+    if( m_psNextArrayArray )
+    {
+        if( m_psNextArrayArray->release )
+            m_psNextArrayArray->release(m_psNextArrayArray);
+        delete m_psNextArrayArray;
+    }
 }
 
 /************************************************************************/
@@ -2271,6 +2283,17 @@ void OGRGeoPackageTableLayer::ResetReading()
     {
         sqlite3_finalize(m_poGetFeatureStatement);
         m_poGetFeatureStatement = nullptr;
+    }
+
+    if( m_oThreadNextArrowArray.joinable() )
+    {
+        m_oThreadNextArrowArray.join();
+    }
+
+    if( m_psNextArrayArray )
+    {
+        if( m_psNextArrayArray->release )
+            m_psNextArrayArray->release(m_psNextArrayArray);
     }
 
     BuildColumns();
@@ -6302,10 +6325,110 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
         m_nIsCompatOfOptimizedGetNextArrowArray = TRUE;
     }
 
+    // CPLDebug("GPKG", "iNextShapeId = " CPL_FRMT_GIB, iNextShapeId);
+
+    if( m_oThreadNextArrowArray.joinable() )
+    {
+        m_oThreadNextArrowArray.join();
+        if( m_psNextArrayArray->release )
+        {
+            iNextShapeId += m_psNextArrayArray->length;
+            memcpy(out_array, m_psNextArrayArray, sizeof(*m_psNextArrayArray));
+
+            memset(m_psNextArrayArray, 0, sizeof(*m_psNextArrayArray));
+
+            return 0;
+        }
+    }
+
+    // Try to fetch the next ArrowArray in another thread
+    const int nMaxBatchSize = OGRArrowArrayHelper::GetMaxFeaturesInBatch(
+                                                m_aosArrowArrayStreamOptions);
+
+    const auto GetThreadsAvailable = []()
+    {
+        const char* pszMaxThreads = CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
+        if( pszMaxThreads == nullptr || EQUAL(pszMaxThreads, "ALL_CPUS") )
+            return CPLGetNumCPUs();
+        return atoi(pszMaxThreads);
+    };
+
+    if( m_poDS->GetAccess() == GA_ReadOnly &&
+        iNextShapeId + 2 * static_cast<GIntBig>(nMaxBatchSize) <= m_nTotalFeatureCount &&
+        (m_poOtherDS != nullptr ||
+         (sqlite3_threadsafe() != 0 && GetThreadsAvailable() >= 2)) )
+    {
+        if( m_poOtherDS == nullptr )
+        {
+            m_poOtherDS = cpl::make_unique<GDALGeoPackageDataset>();
+            GDALOpenInfo oOpenInfo(m_poDS->GetDescription(), GA_ReadOnly);
+            oOpenInfo.papszOpenOptions = m_poDS->GetOpenOptions();
+            oOpenInfo.nOpenFlags = GDAL_OF_VECTOR;
+            if( !m_poOtherDS->Open(&oOpenInfo) )
+            {
+                m_poOtherDS.reset();
+            }
+        }
+        if( m_poOtherDS != nullptr )
+        {
+            auto poOtherLayer = dynamic_cast<OGRGeoPackageTableLayer*>(
+                                        m_poOtherDS->GetLayerByName(GetName()));
+            if( poOtherLayer &&
+                poOtherLayer->GetLayerDefn()->GetFieldCount() == m_poFeatureDefn->GetFieldCount() )
+            {
+                if( m_psNextArrayArray == nullptr )
+                {
+                    m_psNextArrayArray = new struct ArrowArray;
+                    memset(m_psNextArrayArray, 0, sizeof(*m_psNextArrayArray));
+
+                    poOtherLayer->m_nTotalFeatureCount = m_nTotalFeatureCount;
+                    poOtherLayer->m_aosArrowArrayStreamOptions = m_aosArrowArrayStreamOptions;
+                    auto poOtherFDefn = poOtherLayer->GetLayerDefn();
+                    for( int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i )
+                    {
+                        poOtherFDefn->GetGeomFieldDefn(i)->SetIgnored(
+                            m_poFeatureDefn->GetGeomFieldDefn(i)->IsIgnored());
+                    }
+                    for( int i = 0; i < m_poFeatureDefn->GetFieldCount(); ++i )
+                    {
+                        poOtherFDefn->GetFieldDefn(i)->SetIgnored(
+                            m_poFeatureDefn->GetFieldDefn(i)->IsIgnored());
+                    }
+                }
+
+                CPLAssert( m_psNextArrayArray->release == nullptr );
+                poOtherLayer->iNextShapeId = iNextShapeId + nMaxBatchSize;
+                try
+                {
+                    m_oThreadNextArrowArray = std::thread([this, poOtherLayer]()
+                    {
+                        poOtherLayer->GetNextArrowArrayInternal(m_psNextArrayArray);
+                    });
+                }
+                catch( const std::exception &e )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Cannot start worker thread: %s", e.what());
+                }
+            }
+        }
+    }
+
+    return GetNextArrowArrayInternal(out_array);
+}
+
+/************************************************************************/
+/*                      GetNextArrowArrayInternal()                     */
+/************************************************************************/
+
+int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(struct ArrowArray* out_array)
+{
     memset(out_array, 0, sizeof(*out_array));
 
-    if( m_bEOF )
+    if( iNextShapeId >= m_nTotalFeatureCount )
+    {
         return 0;
+    }
 
     OGRArrowArrayHelper sHelper(m_poDS, m_poFeatureDefn,
                                 m_aosArrowArrayStreamOptions,
@@ -6365,6 +6488,8 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
     osSQL += " AND ";
     osSQL += std::to_string(iNextShapeId+sHelper.nMaxBatchSize);
 
+    // CPLDebug("GPKG", "%s", osSQL.c_str());
+
     char* pszErrMsg = nullptr;
     if( sqlite3_exec(m_poDS->GetDB(), osSQL.c_str(), nullptr, nullptr, &pszErrMsg) != SQLITE_OK )
     {
@@ -6391,8 +6516,6 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
     sHelper.Shrink(sFillArrowArray.nCountRows);
 
     iNextShapeId += sFillArrowArray.nCountRows;
-    if( iNextShapeId >= m_nTotalFeatureCount )
-        m_bEOF = true;
 
     return 0;
 }
