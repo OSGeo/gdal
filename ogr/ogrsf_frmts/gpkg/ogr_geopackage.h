@@ -404,7 +404,7 @@ class OGRGeoPackageLayer CPL_NON_FINAL: public OGRLayer, public IOGRSQLiteGetSpa
     GDALGeoPackageDataset *m_poDS;
 
     OGRFeatureDefn*      m_poFeatureDefn;
-    int                  iNextShapeId;
+    GIntBig              iNextShapeId;
 
     sqlite3_stmt        *m_poQueryStatement;
     bool                 bDoStep;
