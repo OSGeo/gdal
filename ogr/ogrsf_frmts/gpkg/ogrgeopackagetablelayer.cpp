@@ -32,6 +32,7 @@
 #include "ogrsqliteutility.h"
 #include "cpl_time.h"
 #include "ogr_p.h"
+#include "ograrrowarrayhelper.h"
 
 #include <algorithm>
 #include <cmath>
@@ -2720,6 +2721,36 @@ OGRErr OGRGeoPackageTableLayer::RollbackTransaction()
 }
 
 /************************************************************************/
+/*                      GetTotalFeatureCount()                          */
+/************************************************************************/
+
+GIntBig OGRGeoPackageTableLayer::GetTotalFeatureCount()
+{
+#ifdef ENABLE_GPKG_OGR_CONTENTS
+    if( m_nTotalFeatureCount < 0 && m_poDS->m_bHasGPKGOGRContents )
+    {
+        char* pszSQL = sqlite3_mprintf(
+            "SELECT feature_count FROM gpkg_ogr_contents WHERE "
+            "lower(table_name) = lower('%q') LIMIT 2",
+            m_pszTableName);
+        auto oResult = SQLQuery( m_poDS->GetDB(), pszSQL);
+        sqlite3_free(pszSQL);
+        if( oResult && oResult->RowCount() == 1 )
+        {
+            const char* pszFeatureCount = oResult->GetValue(0, 0);
+            if( pszFeatureCount )
+            {
+                m_nTotalFeatureCount = CPLAtoGIntBig(pszFeatureCount);
+            }
+        }
+    }
+    return m_nTotalFeatureCount;
+#else
+    return 0;
+#endif
+}
+
+/************************************************************************/
 /*                        GetFeatureCount()                             */
 /************************************************************************/
 
@@ -2730,32 +2761,9 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount( int /*bForce*/ )
 #ifdef ENABLE_GPKG_OGR_CONTENTS
     if( m_poFilterGeom == nullptr && m_pszAttrQueryString == nullptr )
     {
-        if( m_nTotalFeatureCount >= 0 )
-        {
-            return m_nTotalFeatureCount;
-        }
-
-        if( m_poDS->m_bHasGPKGOGRContents )
-        {
-            char* pszSQL = sqlite3_mprintf(
-                "SELECT feature_count FROM gpkg_ogr_contents WHERE "
-                "lower(table_name) = lower('%q') LIMIT 2",
-                m_pszTableName);
-            auto oResult = SQLQuery( m_poDS->GetDB(), pszSQL);
-            sqlite3_free(pszSQL);
-            if( oResult && oResult->RowCount() == 1 )
-            {
-                const char* pszFeatureCount = oResult->GetValue(0, 0);
-                if( pszFeatureCount )
-                {
-                    m_nTotalFeatureCount = CPLAtoGIntBig(pszFeatureCount);
-                }
-            }
-            if( m_nTotalFeatureCount >= 0 )
-            {
-                return m_nTotalFeatureCount;
-            }
-        }
+        const auto nCount = GetTotalFeatureCount();
+        if( nCount >= 0 )
+            return nCount;
     }
 #endif
 
@@ -5984,4 +5992,407 @@ OGRGeometryTypeCounter* OGRGeoPackageTableLayer::GetGeometryTypes(
         }
     }
     return pasRet;
+}
+
+/************************************************************************/
+/*                    OGR_GPKG_FillArrowArray_Step()                    */
+/************************************************************************/
+
+namespace {
+struct GPKGTableLayerFillArrowArray
+{
+    OGRArrowArrayHelper *psHelper = nullptr;
+    int                  nCountRows = 0;
+    bool                 bErrorOccured = false;
+    OGRFeatureDefn      *poFeatureDefn = nullptr;
+    OGRGeoPackageLayer  *poLayer = nullptr;
+    struct tm            brokenDown{};
+    sqlite3*             hDB = nullptr;
+};
+} // namespace
+
+void
+OGR_GPKG_FillArrowArray_Step(sqlite3_context* pContext, int /*argc*/, sqlite3_value** argv);
+
+void
+OGR_GPKG_FillArrowArray_Step(sqlite3_context* pContext, int /*argc*/, sqlite3_value** argv)
+{
+    auto psFillArrowArray = static_cast<GPKGTableLayerFillArrowArray*>(sqlite3_user_data(pContext));
+    if( psFillArrowArray == nullptr )
+        return;
+    auto psHelper = psFillArrowArray->psHelper;
+
+    const int iFeat = psFillArrowArray->nCountRows;
+    if( iFeat >= psHelper->nMaxBatchSize )
+    {
+        // should not happen !
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGR_GPKG_FillArrowArray_Step() got more rows than expected!");
+        sqlite3_interrupt(psFillArrowArray->hDB);
+        psFillArrowArray->bErrorOccured = true;
+        return;
+    }
+
+    int iCol = 0;
+
+    GIntBig nFID = sqlite3_value_int64(argv[iCol]);
+    if( psHelper->panFIDValues )
+    {
+        psHelper->panFIDValues[iFeat] = nFID;
+    }
+    iCol ++;
+
+    if( !psHelper->mapOGRGeomFieldToArrowField.empty() &&
+        psHelper->mapOGRGeomFieldToArrowField[0] > 0 )
+    {
+        const int iArrowField = psHelper->mapOGRGeomFieldToArrowField[0];
+        auto psArray = psHelper->m_out_array->children[iArrowField];
+        size_t nWKBSize = 0;
+        const int nSqlite3ColType = sqlite3_value_type(argv[iCol]);
+        if( nSqlite3ColType == SQLITE_BLOB )
+        {
+            const GByte *pabyWkb = nullptr;
+            const int iGpkgSize = sqlite3_value_bytes(argv[iCol]);
+            // coverity[tainted_data_return]
+            const GByte *pabyGpkg = static_cast<const GByte *>(sqlite3_value_blob(argv[iCol]));
+            if( iGpkgSize >= 8 && pabyGpkg && pabyGpkg[0] == 'G' && pabyGpkg[1] == 'P' )
+            {
+                GPkgHeader oHeader;
+
+                /* Read header */
+                OGRErr err = GPkgHeaderFromWKB(pabyGpkg, iGpkgSize, &oHeader);
+                if ( err == OGRERR_NONE )
+                {
+                    /* WKB pointer */
+                    pabyWkb = pabyGpkg + oHeader.nHeaderLen;
+                    nWKBSize = iGpkgSize - oHeader.nHeaderLen;
+                }
+            }
+
+            if( nWKBSize != 0 )
+            {
+                GByte* outPtr = psHelper->GetPtrForStringOrBinary(iArrowField, iFeat, nWKBSize);
+                if( outPtr == nullptr )
+                {
+                     goto error;
+                }
+                memcpy(outPtr, pabyWkb, nWKBSize);
+            }
+            else
+            {
+                psHelper->SetEmptyStringOrBinary(psArray, iFeat);
+            }
+        }
+
+        if( nWKBSize == 0 )
+        {
+            if( !psHelper->SetNull(iArrowField, iFeat) )
+            {
+                goto error;
+            }
+        }
+        iCol ++;
+    }
+
+    for( int iField = 0; iField < psHelper->nFieldCount; iField++ )
+    {
+        const int iArrowField = psHelper->mapOGRFieldToArrowField[iField];
+        if( iArrowField < 0 )
+            continue;
+
+        const OGRFieldDefn *poFieldDefn = psFillArrowArray->poFeatureDefn->GetFieldDefnUnsafe( iField );
+
+        auto psArray = psHelper->m_out_array->children[iArrowField];
+
+        const int nSqlite3ColType = sqlite3_value_type(argv[iCol]);
+        if( nSqlite3ColType == SQLITE_NULL )
+        {
+            if( !psHelper->SetNull(iArrowField, iFeat) )
+            {
+                goto error;
+            }
+            iCol ++;
+            continue;
+        }
+
+        switch( poFieldDefn->GetType() )
+        {
+            case OFTInteger:
+            {
+                const int nVal = sqlite3_value_int(argv[iCol]);
+                if( poFieldDefn->GetSubType() == OFSTBoolean )
+                {
+                    if( nVal != 0 )
+                    {
+                        psHelper->SetBoolOn(psArray, iFeat);
+                    }
+                }
+                else if( poFieldDefn->GetSubType() == OFSTInt16 )
+                {
+                    psHelper->SetInt16(psArray, iFeat,
+                                     static_cast<int16_t>(nVal));
+                }
+                else
+                {
+                    psHelper->SetInt32(psArray, iFeat, nVal);
+                }
+                break;
+            }
+
+            case OFTInteger64:
+            {
+                psHelper->SetInt64(psArray, iFeat,
+                                 sqlite3_value_int64(argv[iCol]));
+                break;
+            }
+
+            case OFTReal:
+            {
+                const double dfVal = sqlite3_value_double(argv[iCol]);
+                if( poFieldDefn->GetSubType() == OFSTFloat32 )
+                {
+                    psHelper->SetFloat(psArray, iFeat, static_cast<float>(dfVal));
+                }
+                else
+                {
+                    psHelper->SetDouble(psArray, iFeat, dfVal);
+                }
+                break;
+            }
+
+            case OFTBinary:
+            {
+                const uint32_t nBytes = static_cast<uint32_t>(sqlite3_value_bytes(argv[iCol]));
+                // coverity[tainted_data_return]
+                const void* pabyData = sqlite3_value_blob(argv[iCol]);
+                if( pabyData != nullptr || nBytes == 0 )
+                {
+                    GByte* outPtr = psHelper->GetPtrForStringOrBinary(iArrowField, iFeat, nBytes);
+                    if( outPtr == nullptr )
+                    {
+                        goto error;
+                    }
+                    if( nBytes )
+                        memcpy(outPtr, pabyData, nBytes);
+                }
+                else
+                {
+                    psHelper->SetEmptyStringOrBinary(psArray, iFeat);
+                }
+                break;
+            }
+
+            case OFTDate:
+            {
+                OGRField ogrField;
+                const auto pszTxt = reinterpret_cast<const char*>(sqlite3_value_text(argv[iCol]));
+                if( pszTxt != nullptr &&
+                    psFillArrowArray->poLayer->ParseDateField(pszTxt, &ogrField,
+                                                              poFieldDefn, nFID) )
+                {
+                    psHelper->SetDate(psArray, iFeat, psFillArrowArray->brokenDown, ogrField);
+                }
+                break;
+            }
+
+            case OFTDateTime:
+            {
+                OGRField ogrField;
+                const auto pszTxt = reinterpret_cast<const char*>(sqlite3_value_text(argv[iCol]));
+                if( pszTxt != nullptr &&
+                    psFillArrowArray->poLayer->ParseDateTimeField(pszTxt, &ogrField,
+                                                                  poFieldDefn, nFID) )
+                {
+                    psHelper->SetDateTime(psArray, iFeat, psFillArrowArray->brokenDown, ogrField);
+                }
+                break;
+            }
+
+            case OFTString:
+            {
+                const auto pszTxt = reinterpret_cast<const char*>(sqlite3_value_text(argv[iCol]));
+                if( pszTxt != nullptr )
+                {
+                    const size_t nBytes = strlen(pszTxt);
+                    GByte* outPtr = psHelper->GetPtrForStringOrBinary(iArrowField, iFeat, nBytes);
+                    if( outPtr == nullptr )
+                    {
+                        goto error;
+                    }
+                    if( nBytes )
+                        memcpy(outPtr, pszTxt, nBytes);
+                }
+                else
+                {
+                    psHelper->SetEmptyStringOrBinary(psArray, iFeat);
+                }
+                break;
+            }
+
+            default:
+                break;
+        }
+
+        iCol ++;
+    }
+
+    psFillArrowArray->nCountRows ++;
+    return;
+
+error:
+    sqlite3_interrupt(psFillArrowArray->hDB);
+    psFillArrowArray->bErrorOccured = true;
+}
+
+/************************************************************************/
+/*                   OGR_GPKG_FillArrowArray_Finalize()                 */
+/************************************************************************/
+
+static
+void
+OGR_GPKG_FillArrowArray_Finalize(sqlite3_context* /*pContext*/)
+{
+
+}
+
+/************************************************************************/
+/*                      GetNextArrowArray()                             */
+/************************************************************************/
+
+int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
+                                               struct ArrowArray* out_array)
+{
+    GetLayerDefn();
+
+    if( m_nIsCompatOfOptimizedGetNextArrowArray == FALSE ||
+        m_pszFidColumn == nullptr ||
+        m_poFilterGeom != nullptr ||
+        m_pszAttrQueryString != nullptr ||
+        CPLTestBool(CPLGetConfigOption("OGR_GPKG_STREAM_BASE_IMPL", "NO")) )
+    {
+        return OGRGeoPackageLayer::GetNextArrowArray(stream, out_array);
+    }
+
+    // We can use this optimized version only if there is no hole in FID
+    // numbering. That is min(fid) == 1 and max(fid) == m_nTotalFeatureCount
+    if( m_nIsCompatOfOptimizedGetNextArrowArray < 0 )
+    {
+        m_nIsCompatOfOptimizedGetNextArrowArray = FALSE;
+        const auto nTotalFeatureCount = GetTotalFeatureCount();
+        if( nTotalFeatureCount < 0 )
+            return OGRGeoPackageLayer::GetNextArrowArray(stream, out_array);
+        {
+            char* pszSQL = sqlite3_mprintf("SELECT MAX(\"%w\") FROM \"%w\"",
+                                           m_pszFidColumn, m_pszTableName);
+            OGRErr err;
+            const auto nMaxFID = SQLGetInteger64(m_poDS->GetDB(), pszSQL, &err);
+            sqlite3_free(pszSQL);
+            if( nMaxFID != nTotalFeatureCount )
+                return OGRGeoPackageLayer::GetNextArrowArray(stream, out_array);
+        }
+        {
+            char* pszSQL = sqlite3_mprintf("SELECT MIN(\"%w\") FROM \"%w\"",
+                                           m_pszFidColumn, m_pszTableName);
+            OGRErr err;
+            const auto nMinFID = SQLGetInteger64(m_poDS->GetDB(), pszSQL, &err);
+            sqlite3_free(pszSQL);
+            if( nMinFID != 1 )
+                return OGRGeoPackageLayer::GetNextArrowArray(stream, out_array);
+        }
+        m_nIsCompatOfOptimizedGetNextArrowArray = TRUE;
+    }
+
+    memset(out_array, 0, sizeof(*out_array));
+
+    if( m_bEOF )
+        return 0;
+
+    OGRArrowArrayHelper sHelper(m_poDS, m_poFeatureDefn,
+                                m_aosArrowArrayStreamOptions,
+                                out_array);
+    if( out_array->release == nullptr )
+    {
+        return ENOMEM;
+    }
+
+    GPKGTableLayerFillArrowArray sFillArrowArray;
+    sFillArrowArray.psHelper = &sHelper;
+    sFillArrowArray.nCountRows = 0;
+    sFillArrowArray.bErrorOccured = false;
+    sFillArrowArray.poFeatureDefn = m_poFeatureDefn;
+    sFillArrowArray.poLayer = this;
+    sFillArrowArray.hDB = m_poDS->GetDB();
+    memset(&sFillArrowArray.brokenDown, 0, sizeof(sFillArrowArray.brokenDown));
+
+    sqlite3_create_function(m_poDS->GetDB(), "OGR_GPKG_FillArrowArray_INTERNAL", -1,
+                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, &sFillArrowArray,
+                            nullptr, OGR_GPKG_FillArrowArray_Step,
+                            OGR_GPKG_FillArrowArray_Finalize);
+
+    std::string osSQL;
+    osSQL = "SELECT OGR_GPKG_FillArrowArray_INTERNAL(";
+
+    osSQL += '"';
+    osSQL += SQLEscapeName(m_pszFidColumn);
+    osSQL += '"';
+
+    if( !sHelper.mapOGRGeomFieldToArrowField.empty() &&
+        sHelper.mapOGRGeomFieldToArrowField[0] > 0 )
+    {
+        osSQL += ',';
+        osSQL += '"';
+        osSQL += SQLEscapeName(GetGeometryColumn());
+        osSQL += '"';
+    }
+    for( int iField = 0; iField < sHelper.nFieldCount; iField++ )
+    {
+        const int iArrowField = sHelper.mapOGRFieldToArrowField[iField];
+        if( iArrowField >= 0 )
+        {
+            const OGRFieldDefn *poFieldDefn = m_poFeatureDefn->GetFieldDefnUnsafe( iField );
+            osSQL += ',';
+            osSQL += '"';
+            osSQL += SQLEscapeName(poFieldDefn->GetNameRef());
+            osSQL += '"';
+        }
+    }
+    osSQL += ") FROM \"";
+    osSQL += SQLEscapeName(m_pszTableName);
+    osSQL += "\" WHERE \"";
+    osSQL += SQLEscapeName(m_pszFidColumn);
+    osSQL += "\" BETWEEN ";
+    osSQL += std::to_string(iNextShapeId+1);
+    osSQL += " AND ";
+    osSQL += std::to_string(iNextShapeId+sHelper.nMaxBatchSize);
+
+    char* pszErrMsg = nullptr;
+    if( sqlite3_exec(m_poDS->GetDB(), osSQL.c_str(), nullptr, nullptr, &pszErrMsg) != SQLITE_OK )
+    {
+        if( !sFillArrowArray.bErrorOccured )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "%s", pszErrMsg ? pszErrMsg : "unknown error");
+        }
+    }
+    sqlite3_free(pszErrMsg);
+
+    // "Unregister" function by setting its user data pointer to nullptr
+    sqlite3_create_function(m_poDS->GetDB(), "OGR_GPKG_FillArrowArray_INTERNAL", -1,
+                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+                            nullptr, OGR_GPKG_FillArrowArray_Step,
+                            OGR_GPKG_FillArrowArray_Finalize);
+
+    if( sFillArrowArray.bErrorOccured )
+    {
+        sHelper.ClearArray();
+        return ENOMEM;
+    }
+
+    sHelper.Shrink(sFillArrowArray.nCountRows);
+
+    iNextShapeId += sFillArrowArray.nCountRows;
+    if( iNextShapeId >= m_nTotalFeatureCount )
+        m_bEOF = true;
+
+    return 0;
 }

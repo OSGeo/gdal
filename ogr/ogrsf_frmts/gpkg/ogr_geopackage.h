@@ -399,6 +399,8 @@ class GDALGeoPackageRasterBand final: public GDALGPKGMBTilesLikeRasterBand
 class OGRGeoPackageLayer CPL_NON_FINAL: public OGRLayer, public IOGRSQLiteGetSpatialWhere
 {
   protected:
+    friend void OGR_GPKG_FillArrowArray_Step(sqlite3_context* pContext, int /*argc*/, sqlite3_value** argv);
+
     GDALGeoPackageDataset *m_poDS;
 
     OGRFeatureDefn*      m_poFeatureDefn;
@@ -518,6 +520,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     GPKGASpatialVariant         m_eASpatialVariant = GPKG_ATTRIBUTES;
     std::set<OGRwkbGeometryType> m_eSetBadGeomTypeWarned{};
 
+    int                         m_nIsCompatOfOptimizedGetNextArrowArray = -1;
+
     int                         m_nCountInsertInTransactionThreshold = -1;
     GIntBig                     m_nCountInsertInTransaction = 0;
     std::vector<CPLString >     m_aoRTreeTriggersSQL{};
@@ -565,7 +569,12 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
 
     OGRErr              CreateOrUpsertFeature( OGRFeature *poFeature, bool bUpsert );
 
+    GIntBig             GetTotalFeatureCount();
+
     CPL_DISALLOW_COPY_ASSIGN(OGRGeoPackageTableLayer)
+
+    virtual int GetNextArrowArray(struct ArrowArrayStream*,
+                                   struct ArrowArray* out_array) override;
 
     public:
                         OGRGeoPackageTableLayer( GDALGeoPackageDataset *poDS,
