@@ -7048,6 +7048,127 @@ void OGRGeoPackageSTGeometryType(sqlite3_context* pContext,
 }
 
 /************************************************************************/
+/*                   OGR_GPKG_GeometryTypeAggregate()                   */
+/************************************************************************/
+
+namespace {
+struct GeometryTypeAggregateStruct
+{
+    int nFlags = 0;
+    // must be a pointer as the struct is allocated by sqlite3_aggregate_context()
+    // as just calloc(1, sizeof(GeometryTypeAggregateStruct))
+    std::map<OGRwkbGeometryType, int64_t>* apoMapCount = nullptr;
+    std::set<OGRwkbGeometryType>* apoSetNotNull = nullptr;
+};
+}
+
+static
+void
+OGR_GPKG_GeometryTypeAggregate_Step(sqlite3_context* pContext,
+                                    int /*argc*/, sqlite3_value** argv)
+{
+    const GByte* pabyBLOB = reinterpret_cast<const GByte *>(sqlite3_value_blob (argv[0]));
+
+    auto p = static_cast<GeometryTypeAggregateStruct*>(
+        sqlite3_aggregate_context(pContext, sizeof(GeometryTypeAggregateStruct)));
+    if( p == nullptr )
+        return;
+    if( p->apoMapCount == nullptr )
+    {
+        auto poDS = static_cast<GDALGeoPackageDataset*>(sqlite3_user_data(pContext));
+        poDS->SetGeometryTypeAggregateInterrupted(false);
+        poDS->SetGeometryTypeAggregateResult(std::string());
+        p->nFlags = sqlite3_value_int(argv[1]);
+        p->apoMapCount = new std::map<OGRwkbGeometryType, int64_t>();
+        if( (p->nFlags & OGR_GGT_STOP_IF_MIXED) != 0 )
+            p->apoSetNotNull = new std::set<OGRwkbGeometryType>();
+    }
+
+    OGRwkbGeometryType eGeometryType = wkbNone;
+    OGRErr err = OGRERR_FAILURE;
+    if( pabyBLOB != nullptr )
+    {
+        GPkgHeader sHeader;
+        const int nBLOBLen = sqlite3_value_bytes (argv[0]);
+        if( GPkgHeaderFromWKB(pabyBLOB, nBLOBLen, &sHeader) == OGRERR_NONE &&
+            static_cast<size_t>(nBLOBLen) >= sHeader.nHeaderLen + 5 )
+        {
+            err = OGRReadWKBGeometryType( pabyBLOB + sHeader.nHeaderLen,
+                                          wkbVariantIso, &eGeometryType );
+            if( eGeometryType == wkbGeometryCollection25D &&
+                (p->nFlags & OGR_GGT_GEOMCOLLECTIONZ_TINZ) != 0 )
+            {
+                auto poGeom = std::unique_ptr<OGRGeometry>(
+                    GPkgGeometryToOGR(pabyBLOB, nBLOBLen, nullptr));
+                if( poGeom )
+                {
+                    const auto poGC = poGeom->toGeometryCollection();
+                    if( poGC->getNumGeometries() > 0 )
+                    {
+                        auto eSubGeomType = poGC->getGeometryRef(0)->getGeometryType();
+                        if( eSubGeomType == wkbTINZ )
+                            eGeometryType = wkbTINZ;
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        // NULL geometry
+        err = OGRERR_NONE;
+    }
+    if( err == OGRERR_NONE )
+    {
+       ++(*p->apoMapCount)[eGeometryType];
+       if( eGeometryType != wkbNone &&
+           p->apoSetNotNull != nullptr )
+       {
+            p->apoSetNotNull->insert(eGeometryType);
+            if( p->apoSetNotNull->size() == 2 )
+            {
+                auto poDS = static_cast<GDALGeoPackageDataset*>(sqlite3_user_data(pContext));
+                poDS->SetGeometryTypeAggregateInterrupted(true);
+            }
+       }
+    }
+}
+
+static
+void
+OGR_GPKG_GeometryTypeAggregate_Finalize(sqlite3_context* pContext)
+{
+    auto p = static_cast<GeometryTypeAggregateStruct*>(
+                            sqlite3_aggregate_context(pContext, 0));
+    auto poDS = static_cast<GDALGeoPackageDataset*>(sqlite3_user_data(pContext));
+    if( p == nullptr )
+    {
+        poDS->SetGeometryTypeAggregateInterrupted(false);
+        poDS->SetGeometryTypeAggregateResult(std::string());
+        sqlite3_result_null( pContext );
+        return;
+    }
+    std::string s;
+    for( const auto& iter: *(p->apoMapCount) )
+    {
+        if( !s.empty() )
+            s += ',';
+        s += std::to_string(static_cast<int>(iter.first));
+        s += ':';
+        s += std::to_string(iter.second);
+    }
+    delete p->apoMapCount;
+    p->apoMapCount = nullptr;
+    delete p->apoSetNotNull;
+    p->apoSetNotNull = nullptr;
+    if( poDS->IsGeometryTypeAggregateInterrupted() )
+    {
+        poDS->SetGeometryTypeAggregateResult(s);
+    }
+    sqlite3_result_text( pContext, s.c_str(), -1, SQLITE_TRANSIENT );
+}
+
+/************************************************************************/
 /*                    OGRGeoPackageGPKGIsAssignable()                   */
 /************************************************************************/
 
@@ -7604,6 +7725,12 @@ void GDALGeoPackageDataset::InstallSQLFunctions()
     sqlite3_create_function(hDB, "ImportFromEPSG", 1,
                             SQLITE_UTF8, this,
                             OGRGeoPackageImportFromEPSG, nullptr, nullptr);
+
+    // For internal use only (by OGRGeoPackageTableLayer::GetGeometryTypes())
+    sqlite3_create_function(hDB, "OGR_GPKG_GeometryTypeAggregate_INTERNAL", 2,
+                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, this,
+                            nullptr, OGR_GPKG_GeometryTypeAggregate_Step,
+                            OGR_GPKG_GeometryTypeAggregate_Finalize);
 
     // Check that OGRGeometry::MakeValid() is functional before registering
     // ST_MakeValid()

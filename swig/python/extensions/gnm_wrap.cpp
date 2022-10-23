@@ -3099,7 +3099,7 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
     PyObject *psArgs, *psResult;
     int      bContinue = TRUE;
 
-    if( psInfo->nLastReported == (int) (100.0 * dfComplete) )
+    if( dfComplete > 0 && psInfo->nLastReported == (int) (100.0 * dfComplete) )
         return TRUE;
 
     if( psInfo->psPyCallback == NULL || psInfo->psPyCallback == Py_None )

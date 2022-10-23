@@ -394,6 +394,9 @@ public:
 
     virtual OGRErr      Rename(const char* pszNewName) override;
 
+    OGRGeometryTypeCounter* GetGeometryTypes(int iGeomField, int nFlagsGGT, int& nEntryCountOut,
+                                             GDALProgressFunc pfnProgress, void* pProgressData) override;
+
     // follow methods are not base class overrides
     void                SetLaunderFlag( int bFlag )
                                 { bLaunderColumnNames = bFlag; }

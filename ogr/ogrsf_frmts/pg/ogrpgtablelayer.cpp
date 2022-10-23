@@ -34,6 +34,11 @@
 #include "cpl_error.h"
 #include "ogr_p.h"
 
+#include <chrono>
+#include <condition_variable>
+#include <mutex>
+#include <thread>
+
 #define PQexec this_is_an_error
 
 
@@ -3605,4 +3610,196 @@ OGRErr OGRPGTableLayer::RunDeferredCreationIfNecessary()
         SetMetadata( papszMD );
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                         GetGeometryTypes()                           */
+/************************************************************************/
+
+OGRGeometryTypeCounter* OGRPGTableLayer::GetGeometryTypes(
+                        int iGeomField, int nFlagsGGT, int& nEntryCountOut,
+                        GDALProgressFunc pfnProgress, void* pProgressData)
+{
+    if( iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid geometry field index : %d", iGeomField);
+        nEntryCountOut = 0;
+        return nullptr;
+    }
+
+    if( bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
+    {
+        nEntryCountOut = 0;
+        return nullptr;
+    }
+    poDS->EndCopy();
+
+    const OGRPGGeomFieldDefn* poGeomFieldDefn =
+        GetLayerDefn()->GetGeomFieldDefn(iGeomField);
+    const auto osEscapedGeom = OGRPGEscapeColumnName(poGeomFieldDefn->GetNameRef());
+    CPLString osSQL;
+    if( (nFlagsGGT & OGR_GGT_GEOMCOLLECTIONZ_TINZ) != 0 )
+    {
+        CPLString osFilter;
+        osFilter.Printf(
+            "(ST_Zmflag(%s) = 2 AND "
+            "((GeometryType(%s) = 'GEOMETRYCOLLECTION' AND "
+            "ST_NumGeometries(%s) >= 1 AND "
+            "geometrytype(ST_GeometryN(%s, 1)) = 'TIN') OR "
+            "GeometryType(%s) = 'TIN'))",
+            osEscapedGeom.c_str(),
+            osEscapedGeom.c_str(),
+            osEscapedGeom.c_str(),
+            osEscapedGeom.c_str(),
+            osEscapedGeom.c_str());
+
+        std::string l_osWHERE(osWHERE);
+        if( l_osWHERE.empty() )
+            l_osWHERE = " WHERE ";
+        else
+            l_osWHERE += " AND ";
+        l_osWHERE += "(NOT (";
+        l_osWHERE += osFilter;
+        l_osWHERE += ") OR ";
+        l_osWHERE += osEscapedGeom;
+        l_osWHERE += " IS NULL)";
+
+        std::string l_osWHEREFilter(osWHERE);
+        if( l_osWHEREFilter.empty() )
+            l_osWHEREFilter = " WHERE ";
+        else
+            l_osWHEREFilter += " AND ";
+        l_osWHEREFilter += osFilter;
+
+        osSQL.Printf(
+                 "(SELECT GeometryType(%s), ST_Zmflag(%s), COUNT(*) FROM %s %s "
+                 "GROUP BY GeometryType(%s), ST_Zmflag(%s)) UNION ALL "
+                 "(SELECT * FROM (SELECT 'TIN', 2, COUNT(*) AS count FROM %s %s) "
+                 "tinsubselect WHERE tinsubselect.count != 0)",
+                 osEscapedGeom.c_str(),
+                 osEscapedGeom.c_str(),
+                 pszSqlTableName,
+                 l_osWHERE.c_str(),
+                 osEscapedGeom.c_str(),
+                 osEscapedGeom.c_str(),
+                 pszSqlTableName,
+                 l_osWHEREFilter.c_str());
+    }
+    else if( (nFlagsGGT & OGR_GGT_STOP_IF_MIXED) != 0 )
+    {
+        std::string l_osWHERE(osWHERE);
+        if( l_osWHERE.empty() )
+            l_osWHERE = " WHERE ";
+        else
+            l_osWHERE += " AND ";
+        l_osWHERE += osEscapedGeom;
+        l_osWHERE += " IS NOT NULL";
+
+        std::string l_osWHERE_NULL(osWHERE);
+        if( l_osWHERE_NULL.empty() )
+            l_osWHERE_NULL = " WHERE ";
+        else
+            l_osWHERE_NULL += " AND ";
+        l_osWHERE_NULL += osEscapedGeom;
+        l_osWHERE_NULL += " IS NULL";
+
+        osSQL.Printf(
+                 "(SELECT DISTINCT GeometryType(%s), ST_Zmflag(%s), 0 FROM %s %s LIMIT 2) "
+                 "UNION ALL (SELECT NULL, NULL, 0 FROM %s %s LIMIT 1)",
+                 osEscapedGeom.c_str(),
+                 osEscapedGeom.c_str(),
+                 pszSqlTableName,
+                 l_osWHERE.c_str(),
+                 pszSqlTableName,
+                 l_osWHERE_NULL.c_str());
+    }
+    else
+    {
+        const bool bDebug = CPLTestBool(CPLGetConfigOption("OGR_PG_DEBUG_GGT_CANCEL", "NO"));
+        osSQL.Printf(
+                 "SELECT GeometryType(%s), ST_Zmflag(%s), COUNT(*)%s FROM %s %s "
+                 "GROUP BY GeometryType(%s), ST_Zmflag(%s)",
+                 osEscapedGeom.c_str(),
+                 osEscapedGeom.c_str(),
+                 bDebug ? ", pg_sleep(1)" : "",
+                 pszSqlTableName,
+                 osWHERE.c_str(),
+                 osEscapedGeom.c_str(),
+                 osEscapedGeom.c_str());
+    }
+
+    std::thread thread;
+    std::mutex mutex;
+    std::condition_variable cv;
+    bool stopThread = false;
+    if( pfnProgress && pfnProgress != GDALDummyProgress )
+    {
+        thread = std::thread([&]() {
+            std::unique_lock<std::mutex> lock(mutex);
+            while(!stopThread)
+            {
+                if( !pfnProgress(0.0, "", pProgressData) )
+                    poDS->AbortSQL();
+                cv.wait_for(lock, std::chrono::milliseconds(100));
+            }
+        });
+    }
+
+    PGconn      *hPGConn = poDS->GetPGConn();
+    PGresult* hResult = OGRPG_PQexec(hPGConn, osSQL.c_str() );
+
+    if( pfnProgress && pfnProgress != GDALDummyProgress )
+    {
+        {
+            std::unique_lock<std::mutex> lock(mutex);
+            stopThread = true;
+            cv.notify_one();
+        }
+        thread.join();
+    }
+
+    nEntryCountOut = 0;
+    OGRGeometryTypeCounter* pasRet = nullptr;
+    if( hResult
+        && PQresultStatus(hResult) == PGRES_TUPLES_OK  )
+    {
+        const int nTuples = PQntuples( hResult );
+        nEntryCountOut = nTuples;
+        pasRet = static_cast<OGRGeometryTypeCounter*>(
+            CPLCalloc(1 + nEntryCountOut, sizeof(OGRGeometryTypeCounter)));
+        for( int i = 0; i < nTuples; ++i )
+        {
+            const char* pszGeomType = PQgetvalue(hResult,i,0);
+            const char* pszZMFlag = PQgetvalue(hResult,i,1);
+            const char* pszCount = PQgetvalue(hResult,i,2);
+            if( pszCount )
+            {
+                if( pszGeomType == nullptr || pszGeomType[0] == '\0' )
+                {
+                    pasRet[i].eGeomType = wkbNone;
+                }
+                else if( pszZMFlag != nullptr )
+                {
+                    const int nZMFlag = atoi(pszZMFlag);
+                    pasRet[i].eGeomType = OGRFromOGCGeomType(pszGeomType);
+                    int nModifier = 0;
+                    if( nZMFlag == 1 )
+                        nModifier = OGRGeometry::OGR_G_MEASURED;
+                    else if( nZMFlag == 2 )
+                        nModifier = OGRGeometry::OGR_G_3D;
+                    else if( nZMFlag == 3 )
+                        nModifier = OGRGeometry::OGR_G_MEASURED | OGRGeometry::OGR_G_3D;
+                    pasRet[i].eGeomType = OGR_GT_SetModifier(pasRet[i].eGeomType,
+                                                             nModifier & OGRGeometry::OGR_G_3D,
+                                                             nModifier & OGRGeometry::OGR_G_MEASURED);
+                }
+                pasRet[i].nCount = static_cast<int64_t>(std::strtoll(pszCount, nullptr, 10));
+            }
+        }
+    }
+
+    OGRPGClearResult( hResult );
+
+    return pasRet;
 }

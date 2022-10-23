@@ -234,6 +234,9 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
         void                LoadRelationships() const;
         void                LoadRelationshipsUsingRelatedTablesExtension() const;
 
+        bool                m_bIsGeometryTypeAggregateInterrupted = false;
+        std::string         m_osGeometryTypeAggregateResult{};
+
         CPL_DISALLOW_COPY_ASSIGN(GDALGeoPackageDataset)
 
     public:
@@ -327,6 +330,16 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
                                                    void * pProgressData );
 
         static std::string GetCurrentDateEscapedSQL();
+
+        bool                IsGeometryTypeAggregateInterrupted() const { return m_bIsGeometryTypeAggregateInterrupted; }
+        void                SetGeometryTypeAggregateInterrupted(bool b)
+        {
+            m_bIsGeometryTypeAggregateInterrupted = b;
+            if( b )
+                sqlite3_interrupt(hDB);
+        }
+        void                SetGeometryTypeAggregateResult(const std::string& s) { m_osGeometryTypeAggregateResult = s; }
+        const std::string&  GetGeometryTypeAggregateResult() const { return m_osGeometryTypeAggregateResult; }
 
     protected:
 
@@ -589,6 +602,9 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     OGRErr              GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
     virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRGeoPackageLayer::GetExtent(iGeomField, psExtent, bForce); }
+
+    OGRGeometryTypeCounter* GetGeometryTypes(int iGeomField, int nFlagsGGT, int& nEntryCountOut,
+                                             GDALProgressFunc pfnProgress, void* pProgressData) override;
 
     void                RecomputeExtent();
 

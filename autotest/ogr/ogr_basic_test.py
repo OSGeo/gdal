@@ -793,6 +793,101 @@ def test_ogr_basic_float32_formatting():
 
 
 ###############################################################################
+
+
+def test_ogr_basic_get_geometry_types():
+    """Test Layer.GetGeometryTypes()"""
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("layer")
+    lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("str2", ogr.OFTString))
+    lyr.CreateGeomField(ogr.GeomFieldDefn("geom2", ogr.wkbUnknown))
+
+    assert lyr.GetGeometryTypes() == {}
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+
+    lyr.SetIgnoredFields(["str2", ""])
+    assert lyr.GetGeometryTypes() == {ogr.wkbNone: 1}
+
+    # Test that ignored column status is properly reset
+    assert lyr.GetLayerDefn().GetFieldDefn(0).IsIgnored() == 0
+    assert lyr.GetLayerDefn().GetFieldDefn(1).IsIgnored() == 1
+    assert lyr.GetLayerDefn().GetGeomFieldDefn(0).IsIgnored() == 1
+    assert lyr.GetLayerDefn().GetGeomFieldDefn(1).IsIgnored() == 0
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    assert lyr.GetGeometryTypes(callback=lambda x, y, z: 1) == {ogr.wkbNone: 2}
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT EMPTY"))
+    lyr.CreateFeature(f)
+    assert lyr.GetGeometryTypes() == {ogr.wkbNone: 2, ogr.wkbPoint: 1}
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON EMPTY"))
+    lyr.CreateFeature(f)
+    assert lyr.GetGeometryTypes() == {
+        ogr.wkbNone: 2,
+        ogr.wkbPoint: 1,
+        ogr.wkbPolygon: 1,
+    }
+    assert lyr.GetGeometryTypes(flags=ogr.GGT_STOP_IF_MIXED) == {
+        ogr.wkbNone: 2,
+        ogr.wkbPoint: 1,
+        ogr.wkbPolygon: 1,
+    }
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING EMPTY"))
+    lyr.CreateFeature(f)
+    assert lyr.GetGeometryTypes() == {
+        ogr.wkbNone: 2,
+        ogr.wkbPoint: 1,
+        ogr.wkbPolygon: 1,
+        ogr.wkbLineString: 1,
+    }
+    assert lyr.GetGeometryTypes(geom_field=0, flags=ogr.GGT_STOP_IF_MIXED) == {
+        ogr.wkbNone: 2,
+        ogr.wkbPoint: 1,
+        ogr.wkbPolygon: 1,
+    }
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "GEOMETRYCOLLECTION Z(TIN Z(((0 0 0,0 1 0,1 1 0,0 0 0))))"
+        )
+    )
+    lyr.CreateFeature(f)
+    assert lyr.GetGeometryTypes() == {
+        ogr.wkbNone: 2,
+        ogr.wkbPoint: 1,
+        ogr.wkbPolygon: 1,
+        ogr.wkbLineString: 1,
+        ogr.wkbGeometryCollection25D: 1,
+    }
+    assert lyr.GetGeometryTypes(flags=ogr.GGT_GEOMCOLLECTIONZ_TINZ) == {
+        ogr.wkbNone: 2,
+        ogr.wkbPoint: 1,
+        ogr.wkbPolygon: 1,
+        ogr.wkbLineString: 1,
+        ogr.wkbTINZ: 1,
+    }
+
+    with gdaltest.error_handler():
+        with pytest.raises(Exception):
+            lyr.GetGeometryTypes(callback=lambda x, y, z: 0)
+
+    with gdaltest.error_handler():
+        with pytest.raises(Exception):
+            lyr.GetGeometryTypes(geom_field=2)
+
+
+###############################################################################
 # cleanup
 
 

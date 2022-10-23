@@ -5864,3 +5864,124 @@ OGRErr OGRGeoPackageTableLayer::ReorderFields( int* panMap )
 
     return eErr;
 }
+
+/************************************************************************/
+/*                         GetGeometryTypes()                           */
+/************************************************************************/
+
+OGRGeometryTypeCounter* OGRGeoPackageTableLayer::GetGeometryTypes(
+                        int iGeomField, int nFlagsGGT, int& nEntryCountOut,
+                        GDALProgressFunc pfnProgress, void* pProgressData)
+{
+    OGRFeatureDefn *poDefn = GetLayerDefn();
+
+/* -------------------------------------------------------------------- */
+/*      Deferred actions, reset state.                                   */
+/* -------------------------------------------------------------------- */
+    RunDeferredCreationIfNecessary();
+    if( !RunDeferredSpatialIndexUpdate() )
+    {
+        nEntryCountOut = 0;
+        return nullptr;
+    }
+
+    const int nGeomFieldCount = poDefn->GetGeomFieldCount();
+    if( iGeomField < 0 || iGeomField >= nGeomFieldCount )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid value for iGeomField");
+        nEntryCountOut = 0;
+        return nullptr;
+    }
+
+    struct CancelCallback
+    {
+        sqlite3*         m_hDB = nullptr;
+        GDALProgressFunc m_pfnProgress = nullptr;
+        void*            m_pProgressData = nullptr;
+
+        CancelCallback(sqlite3* hDB, GDALProgressFunc pfnProgressIn, void* pProgressDataIn):
+            m_hDB(hDB),
+            m_pfnProgress(pfnProgressIn != GDALDummyProgress ? pfnProgressIn : nullptr),
+            m_pProgressData(pProgressDataIn)
+        {
+            if( m_pfnProgress )
+            {
+                // If changing that value, update ogr_gpkg.py::test_ogr_gpkg_get_geometry_types
+                constexpr int COUNT_VM_INSTRUCTIONS = 1000;
+                sqlite3_progress_handler(m_hDB, COUNT_VM_INSTRUCTIONS,
+                                         ProgressHandler, this );
+            }
+        }
+
+        ~CancelCallback()
+        {
+            if( m_pfnProgress )
+            {
+                sqlite3_progress_handler(m_hDB, 0, nullptr, nullptr);
+            }
+        }
+
+        CancelCallback(const CancelCallback&) = delete;
+        CancelCallback& operator=(const CancelCallback&) = delete;
+
+        static int ProgressHandler(void* pData)
+        {
+            CancelCallback* psCancelCallback = static_cast<CancelCallback*>(pData);
+            return psCancelCallback->m_pfnProgress(0.0, "", psCancelCallback->m_pProgressData) ? 0 : 1;
+        }
+    };
+
+    CancelCallback oCancelCallback(m_poDS->hDB, pfnProgress, pProgressData);
+
+    char** papszResult = nullptr;
+    char* pszErrMsg = nullptr;
+    int nRowCount = 0;
+    int nColCount = 0;
+    // Using this aggregate function is slightly faster than using sqlite3_step()
+    // to loop over each geometry blob
+    // (650 ms vs 750ms on a 1.6 GB db with 3.3 million features)
+    char* pszSQL = sqlite3_mprintf(
+        "SELECT OGR_GPKG_GeometryTypeAggregate_INTERNAL(\"%w\", %d) FROM \"%w\"%s",
+        poDefn->GetGeomFieldDefn(iGeomField)->GetNameRef(),
+        nFlagsGGT,
+        m_pszTableName,
+        m_soFilter.empty() ? "" : (" WHERE " + m_soFilter).c_str());
+    const int rc = sqlite3_get_table(
+        m_poDS->hDB, pszSQL, &(papszResult), &(nRowCount), &(nColCount),
+        &(pszErrMsg) );
+    if( rc != SQLITE_OK && !m_poDS->IsGeometryTypeAggregateInterrupted() )
+    {
+        if( rc != SQLITE_INTERRUPT )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "sqlite3_get_table(%s) failed: %s", pszSQL, pszErrMsg );
+        }
+        sqlite3_free(pszErrMsg);
+        sqlite3_free(pszSQL);
+        nEntryCountOut = 0;
+        return nullptr;
+    }
+    sqlite3_free(pszErrMsg);
+    sqlite3_free(pszSQL);
+
+    const char* pszRes = m_poDS->IsGeometryTypeAggregateInterrupted() ?
+        m_poDS->GetGeometryTypeAggregateResult().c_str() :
+        nRowCount == 1 && nColCount == 1 ? papszResult[1] : nullptr;
+    const CPLStringList aosList( pszRes ? CSLTokenizeString2(pszRes, ",", 0) : nullptr );
+    sqlite3_free_table(papszResult);
+
+    // Format result
+    nEntryCountOut = static_cast<int>(aosList.size());
+    OGRGeometryTypeCounter* pasRet = static_cast<OGRGeometryTypeCounter*>(
+        CPLCalloc(1 + nEntryCountOut, sizeof(OGRGeometryTypeCounter)));
+    for( int i = 0; i < nEntryCountOut; ++i )
+    {
+        const CPLStringList aosTokens(CSLTokenizeString2(aosList[i], ":", 0));
+        if( aosTokens.size() == 2 )
+        {
+            pasRet[i].eGeomType = static_cast<OGRwkbGeometryType>(atoi(aosTokens[0]));
+            pasRet[i].nCount = static_cast<int64_t>(std::strtoll(aosTokens[1], nullptr, 0));
+        }
+    }
+    return pasRet;
+}

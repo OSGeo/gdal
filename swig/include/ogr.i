@@ -465,6 +465,18 @@ typedef void retGetPoints;
 %constant F_VAL_ALLOW_NULL_WHEN_DEFAULT = 0x00000008; /***<Allow fields that are null when there's an associated default value. */
 %constant F_VAL_ALL = 0xFFFFFFFF; /**< Enable all validation tests */
 
+/** Flag for OGR_L_GetGeometryTypes() indicating that
+ * OGRGeometryTypeCounter::nCount value is not needed */
+%constant GGT_COUNT_NOT_NEEDED = 0x1;
+
+/** Flag for OGR_L_GetGeometryTypes() indicating that iteration might stop as
+ * sooon as 2 distinct geometry types are found. */
+%constant GGT_STOP_IF_MIXED = 0x2;
+
+/** Flag for OGR_L_GetGeometryTypes() indicating that a GeometryCollectionZ
+ * whose first subgeometry is a TinZ should be reported as TinZ */
+%constant GGT_GEOMCOLLECTIONZ_TINZ = 0x4;
+
 %constant char *OLCRandomRead          = "RandomRead";
 %constant char *OLCSequentialWrite     = "SequentialWrite";
 %constant char *OLCRandomWrite         = "RandomWrite";
@@ -1435,6 +1447,17 @@ public:
           return NULL;
       }
   }
+#endif
+
+#ifdef SWIGPYTHON
+    %feature( "kwargs" ) GetGeometryTypes;
+    void GetGeometryTypes(OGRGeometryTypeCounter** ppRet, int* pnEntryCount,
+                          int geom_field = 0, int flags = 0,
+                          GDALProgressFunc callback=NULL,
+                          void* callback_data=NULL)
+    {
+        *ppRet = OGR_L_GetGeometryTypes(self, geom_field, flags, pnEntryCount, callback, callback_data);
+    }
 #endif
 
 } /* %extend */
