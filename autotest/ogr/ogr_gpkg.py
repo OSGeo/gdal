@@ -3023,6 +3023,14 @@ def test_ogr_gpkg_34():
     ds.ExecuteSQL(
         "INSERT INTO gpkg_data_columns VALUES('weird''layer\"name', 'foo', 'foo_constraints', NULL, NULL, NULL, NULL)"
     )
+
+    # QGIS layer_styles extension: https://github.com/pka/qgpkg/blob/master/qgis_geopackage_extension.md
+    ds.ExecuteSQL(
+        """CREATE TABLE "layer_styles" ( "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "f_table_catalog" TEXT(256), "f_table_schema" TEXT(256), "f_table_name" TEXT(256), "f_geometry_column" TEXT(256), "styleName" TEXT(30), "styleQML" TEXT, "styleSLD" TEXT, "useAsDefault" BOOLEAN, "description" TEXT, "owner" TEXT(30), "ui" TEXT(30), "update_time" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')))"""
+    )
+    ds.ExecuteSQL(
+        "INSERT INTO layer_styles VALUES(1, NULL, NULL, 'weird''layer\"name', 'geom', 'styleName', 'styleQML', 'styleSLD', 0, 'description', 'owner', 'ui', NULL)"
+    )
     ds = None
 
     # Check that there are reference to the layer
@@ -3066,6 +3074,8 @@ def test_ogr_gpkg_34():
     layer_name = new_layer_name
 
     ds = ogr.Open(dbname, update=1)
+    # currently we don't suppress rows from layer_styles
+    ds.ExecuteSQL("DELETE FROM layer_styles")
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds.ExecuteSQL("DELLAYER:does_not_exist")
