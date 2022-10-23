@@ -1144,6 +1144,119 @@ int OGRParseDate( const char *pszInput,
 }
 
 /************************************************************************/
+/*               OGRParseDateTimeYYYYMMDDTHHMMSSZ()                     */
+/************************************************************************/
+
+bool OGRParseDateTimeYYYYMMDDTHHMMSSZ( const char *pszInput, size_t nLen, OGRField *psField )
+{
+    // Detect "YYYY-MM-DDTHH:MM:SS[Z]" (19 or 20 characters)
+    if( (nLen == 19 || (nLen == 20 && pszInput[19] == 'Z')) &&
+        pszInput[4] == '-' && pszInput[7] == '-' &&
+        pszInput[10] == 'T' && pszInput[13] == ':' && pszInput[16] == ':' &&
+        static_cast<unsigned>(pszInput[0] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[1] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[2] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[3] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[5] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[6] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[8] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[9] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[11] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[12] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[14] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[15] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[17] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[18] - '0') <= 9 )
+    {
+        psField->Date.Year = static_cast<GInt16>(
+            ((((pszInput[0] - '0') * 10 + (pszInput[1] - '0')) * 10) +
+                             (pszInput[2] - '0')) * 10 + (pszInput[3] - '0'));
+        psField->Date.Month = static_cast<GByte>(
+            (pszInput[5] - '0') * 10 + (pszInput[6] - '0'));
+        psField->Date.Day = static_cast<GByte>(
+            (pszInput[8] - '0') * 10 + (pszInput[9] - '0'));
+        psField->Date.Hour = static_cast<GByte>(
+            (pszInput[11] - '0') * 10 + (pszInput[12] - '0'));
+        psField->Date.Minute = static_cast<GByte>(
+            (pszInput[14] - '0') * 10 + (pszInput[15] - '0'));
+        psField->Date.Second = static_cast<float>(
+            ((pszInput[17] - '0') * 10 + (pszInput[18] - '0')));
+        psField->Date.TZFlag = nLen == 19 ? 0 : 100;
+        psField->Date.Reserved = 0;
+        if( psField->Date.Month == 0 || psField->Date.Month > 12 ||
+            psField->Date.Day == 0 ||   psField->Date.Day > 31 ||
+            psField->Date.Hour > 23 ||
+            psField->Date.Minute > 59 ||
+            psField->Date.Second >= 61.0f )
+        {
+            return false;
+        }
+        return true;
+    }
+
+    return false;
+}
+
+/************************************************************************/
+/*              OGRParseDateTimeYYYYMMDDTHHMMSSsssZ()                   */
+/************************************************************************/
+
+bool OGRParseDateTimeYYYYMMDDTHHMMSSsssZ( const char *pszInput, size_t nLen, OGRField *psField )
+{
+    // Detect "YYYY-MM-DDTHH:MM:SS.SSS[Z]" (23 or 24 characters)
+    if( (nLen == 23 || (nLen == 24 && pszInput[23] == 'Z')) &&
+        pszInput[4] == '-' && pszInput[7] == '-' &&
+        pszInput[10] == 'T' && pszInput[13] == ':' && pszInput[16] == ':' &&
+        pszInput[19] == '.' &&
+        static_cast<unsigned>(pszInput[0] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[1] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[2] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[3] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[5] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[6] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[8] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[9] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[11] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[12] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[14] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[15] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[17] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[18] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[20] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[21] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[22] - '0') <= 9 )
+    {
+        psField->Date.Year = static_cast<GInt16>(
+            ((((pszInput[0] - '0') * 10 + (pszInput[1] - '0')) * 10) +
+                             (pszInput[2] - '0')) * 10 + (pszInput[3] - '0'));
+        psField->Date.Month = static_cast<GByte>(
+            (pszInput[5] - '0') * 10 + (pszInput[6] - '0'));
+        psField->Date.Day = static_cast<GByte>(
+            (pszInput[8] - '0') * 10 + (pszInput[9] - '0'));
+        psField->Date.Hour = static_cast<GByte>(
+            (pszInput[11] - '0') * 10 + (pszInput[12] - '0'));
+        psField->Date.Minute = static_cast<GByte>(
+            (pszInput[14] - '0') * 10 + (pszInput[15] - '0'));
+        psField->Date.Second = static_cast<float>(
+            ((pszInput[17] - '0') * 10 + (pszInput[18] - '0')) +
+            ((pszInput[20] - '0') * 100 + (pszInput[21] - '0') * 10 + (pszInput[22] - '0')) / 1000.0);
+        psField->Date.TZFlag = nLen == 23 ? 0 : 100;
+        psField->Date.Reserved = 0;
+        if( psField->Date.Month == 0 || psField->Date.Month > 12 ||
+            psField->Date.Day == 0 ||   psField->Date.Day > 31 ||
+            psField->Date.Hour > 23 ||
+            psField->Date.Minute > 59 ||
+            psField->Date.Second >= 61.0f )
+        {
+            return false;
+        }
+        return true;
+    }
+
+    return false;
+}
+
+/************************************************************************/
 /*                           OGRParseXMLDateTime()                      */
 /************************************************************************/
 
