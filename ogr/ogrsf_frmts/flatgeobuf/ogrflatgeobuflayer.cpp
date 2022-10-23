@@ -749,6 +749,16 @@ GIntBig OGRFlatGeobufLayer::GetFeatureCount(int bForce)
         return m_featuresCount;
 }
 
+/************************************************************************/
+/*                     ParseDateTime()                                  */
+/************************************************************************/
+
+static inline bool ParseDateTime( const char *pszInput, size_t nLen, OGRField *psField )
+{
+    return OGRParseDateTimeYYYYMMDDTHHMMSSZ(pszInput, nLen, psField ) ||
+           OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(pszInput, nLen, psField );
+}
+
 OGRFeature *OGRFlatGeobufLayer::GetNextFeature()
 {
     if (m_create)
@@ -1110,12 +1120,15 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
                         return CPLErrorInvalidSize("datetime value");
                     if (!isIgnored)
                     {
-                        char str[32+1];
-                        memcpy(str, data + offset, len);
-                        str[len] = '\0';
-                        if( !OGRParseDate(str, ogrField, 0) )
+                        if( !ParseDateTime(reinterpret_cast<const char*>(data + offset), len, ogrField) )
                         {
-                            OGR_RawField_SetUnset(ogrField);
+                            char str[32+1];
+                            memcpy(str, data + offset, len);
+                            str[len] = '\0';
+                            if( !OGRParseDate(str, ogrField, 0) )
+                            {
+                                OGR_RawField_SetUnset(ogrField);
+                            }
                         }
                     }
                     offset += len;
@@ -1148,7 +1161,6 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature) {
     }
     return OGRERR_NONE;
 }
-
 
 /************************************************************************/
 /*                      GetNextArrowArray()                             */
@@ -1574,13 +1586,20 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
                         }
                         if (!isIgnored)
                         {
-                            char str[32+1];
-                            memcpy(str, data + offset, len);
-                            str[len] = '\0';
                             OGRField ogrField;
-                            if( OGRParseDate(str, &ogrField, 0) )
+                            if( ParseDateTime(reinterpret_cast<const char*>(data + offset), len, &ogrField) )
                             {
                                 sHelper.SetDateTime(psArray, iFeat, brokenDown, ogrField);
+                            }
+                            else
+                            {
+                                char str[32+1];
+                                memcpy(str, data + offset, len);
+                                str[len] = '\0';
+                                if( OGRParseDate(str, &ogrField, 0) )
+                                {
+                                    sHelper.SetDateTime(psArray, iFeat, brokenDown, ogrField);
+                                }
                             }
                         }
                         offset += len;
