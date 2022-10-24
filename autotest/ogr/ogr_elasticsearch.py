@@ -3416,13 +3416,40 @@ def test_ogr_elasticsearch_upsert_feature():
     assert ds is not None
 
     gdal.FileFromMemBuffer(
-        "/vsimem/fakeelasticsearch/test_upsert&CUSTOMREQUEST=PUT", "{}"
+        "/vsimem/fakeelasticsearch/test_upsert",
+        "{}",
     )
-
     gdal.FileFromMemBuffer(
         '/vsimem/fakeelasticsearch/test_upsert/_mapping/FeatureCollection&POSTFIELDS={ "FeatureCollection": { "properties": {} }}',
         "{}",
     )
+
+    # Create a layer that will not bulk upsert.
+    lyr = ds.CreateLayer(
+        "test_upsert",
+        srs=ogrtest.srs_wgs84,
+        options=[
+            'MAPPING={ "FeatureCollection": { "properties": {} }}',
+            "BULK_INSERT=NO",
+        ],
+    )
+    assert lyr is not None
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["_id"] = "upsert_id"
+
+    gdal.FileFromMemBuffer(
+        '/vsimem/fakeelasticsearch/test_upsert/FeatureCollection/upsert_id/_update&CUSTOMREQUEST=POST&POSTFIELDS={"doc":{ "ogc_fid": 1, "properties": { } },"doc_as_upsert":true}',
+        "{}",
+    )
+
+    # Upsert new feature
+    assert lyr.UpsertFeature(f) == ogr.OGRERR_NONE
+
+    # Upsert existing feature
+    assert lyr.UpsertFeature(f) == ogr.OGRERR_NONE
+
+    # Create a layer that will bulk upsert.
     lyr = ds.CreateLayer(
         "test_upsert",
         srs=ogrtest.srs_wgs84,
@@ -3430,13 +3457,23 @@ def test_ogr_elasticsearch_upsert_feature():
     )
     assert lyr is not None
 
-    f = ogr.Feature(lyr.GetLayerDefn())
-    f["_id"] = "upsert_id"
-
     # Upsert new feature
     assert lyr.UpsertFeature(f) == ogr.OGRERR_NONE
 
     # Upsert existing feature
     assert lyr.UpsertFeature(f) == ogr.OGRERR_NONE
+
+    gdal.FileFromMemBuffer(
+        """/vsimem/fakeelasticsearch/_bulk&POSTFIELDS={"update":{"_index":"test_upsert","_id":"upsert_id", "_type":"FeatureCollection"}}
+{"doc":{ "ogc_fid": 1, "properties": { } },"doc_as_upsert":true}
+
+{"update":{"_index":"test_upsert","_id":"upsert_id", "_type":"FeatureCollection"}}
+{"doc":{ "ogc_fid": 1, "properties": { } },"doc_as_upsert":true}
+
+""",
+        "{}",
+    )
+    assert lyr.SyncToDisk() == ogr.OGRERR_NONE
+    assert gdal.GetLastErrorMsg() == ""
 
     ds = None
