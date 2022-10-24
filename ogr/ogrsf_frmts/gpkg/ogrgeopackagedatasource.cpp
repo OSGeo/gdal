@@ -34,6 +34,7 @@
 #include "gdal_utils.h"
 #include "ogrgeopackageutility.h"
 #include "ogrsqliteutility.h"
+#include "ogr_wkb.h"
 #include "vrt/vrtdataset.h"
 
 #include "tilematrixset.hpp"
@@ -7232,8 +7233,15 @@ void OGRGeoPackageSTMakeValid(sqlite3_context* pContext,
                         GPkgGeometryToOGR(pabyBLOB, nBLOBLen, nullptr));
     if( poGeom == nullptr )
     {
-        sqlite3_result_null(pContext);
-        return;
+        // Try also spatialite geometry blobs
+        OGRGeometry* poGeomPtr = nullptr;
+        if( OGRSQLiteImportSpatiaLiteGeometry( pabyBLOB, nBLOBLen,
+                                               &poGeomPtr ) != OGRERR_NONE )
+        {
+            sqlite3_result_null(pContext);
+            return;
+        }
+        poGeom.reset(poGeomPtr);
     }
     auto poValid = std::unique_ptr<OGRGeometry>(poGeom->MakeValid());
     if( poValid == nullptr )
@@ -7247,6 +7255,99 @@ void OGRGeoPackageSTMakeValid(sqlite3_context* pContext,
                     GPkgGeometryFromOGR(poValid.get(), sHeader.iSrsId, &nBLOBDestLen);
     sqlite3_result_blob(pContext, pabyDestBLOB,
                         static_cast<int>(nBLOBDestLen), VSIFree);
+}
+
+/************************************************************************/
+/*                   OGRGeoPackageSTArea()                              */
+/************************************************************************/
+
+static
+void OGRGeoPackageSTArea(sqlite3_context* pContext,
+                        int /*argc*/, sqlite3_value** argv)
+{
+    if( sqlite3_value_type (argv[0]) != SQLITE_BLOB )
+    {
+        sqlite3_result_null(pContext);
+        return;
+    }
+    const int nBLOBLen = sqlite3_value_bytes (argv[0]);
+    const GByte* pabyBLOB = reinterpret_cast<const GByte *>(sqlite3_value_blob (argv[0]));
+
+    GPkgHeader sHeader;
+    std::unique_ptr<OGRGeometry> poGeom;
+    if( GPkgHeaderFromWKB(pabyBLOB, nBLOBLen, &sHeader) == OGRERR_NONE )
+    {
+        if( sHeader.bEmpty )
+        {
+            sqlite3_result_double(pContext, 0);
+            return;
+        }
+        const GByte* pabyWkb = pabyBLOB + sHeader.nHeaderLen;
+        size_t nWKBSize = nBLOBLen - sHeader.nHeaderLen;
+        bool bNeedSwap;
+        uint32_t nType;
+        if( OGRWKBGetGeomType(pabyWkb, nWKBSize, bNeedSwap, nType) )
+        {
+            if( nType == wkbPolygon ||
+                nType == wkbPolygon25D ||
+                nType == wkbPolygon + 1000 || // wkbPolygonZ
+                nType == wkbPolygonM ||
+                nType == wkbPolygonZM )
+            {
+                double dfArea;
+                if( OGRWKBPolygonGetArea(pabyWkb, nWKBSize, dfArea) )
+                {
+                    sqlite3_result_double(pContext, dfArea);
+                    return;
+                }
+            }
+            else if( nType == wkbMultiPolygon ||
+                     nType == wkbMultiPolygon25D ||
+                     nType == wkbMultiPolygon + 1000 || // wkbMultiPolygonZ
+                     nType == wkbMultiPolygonM ||
+                     nType == wkbMultiPolygonZM )
+            {
+                double dfArea;
+                if( OGRWKBMultiPolygonGetArea(pabyWkb, nWKBSize, dfArea) )
+                {
+                    sqlite3_result_double(pContext, dfArea);
+                    return;
+                }
+            }
+        }
+
+        // For curve geometries, fallback to OGRGeometry methods
+        poGeom.reset(GPkgGeometryToOGR(pabyBLOB, nBLOBLen, nullptr));
+    }
+    else
+    {
+        // Try also spatialite geometry blobs
+        OGRGeometry* poGeomPtr = nullptr;
+        if( OGRSQLiteImportSpatiaLiteGeometry( pabyBLOB, nBLOBLen,
+                                               &poGeomPtr ) != OGRERR_NONE )
+        {
+            sqlite3_result_null(pContext);
+            return;
+        }
+        poGeom.reset(poGeomPtr);
+    }
+    auto poSurface = dynamic_cast<OGRSurface*>(poGeom.get());
+    if( poSurface == nullptr )
+    {
+        auto poMultiSurface = dynamic_cast<OGRMultiSurface*>(poGeom.get());
+        if( poMultiSurface == nullptr )
+        {
+            sqlite3_result_double(pContext, 0);
+        }
+        else
+        {
+            sqlite3_result_double(pContext, poMultiSurface->get_Area());
+        }
+    }
+    else
+    {
+        sqlite3_result_double(pContext, poSurface->get_Area());
+    }
 }
 
 /************************************************************************/
@@ -7747,6 +7848,10 @@ void GDALGeoPackageDataset::InstallSQLFunctions()
                                 SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
                                 OGRGeoPackageSTMakeValid, nullptr, nullptr);
     }
+
+    sqlite3_create_function(hDB, "ST_Area", 1,
+                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+                            OGRGeoPackageSTArea, nullptr, nullptr);
 
     // Debug functions
     if( CPLTestBool(CPLGetConfigOption("GPKG_DEBUG", "FALSE")) )
