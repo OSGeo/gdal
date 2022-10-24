@@ -2240,23 +2240,28 @@ class Layer(MajorObject):
 
             schema = property(schema)
 
+            def __enter__(self):
+                return self
 
-            def _GetNextRecordBatchAsPyArrow(self, l_schema):
+            def __exit__(self, type, value, tb):
+                self.end_of_stream = True
+                self.stream = None
+
+            def GetNextRecordBatch(self):
                 """ Return the next RecordBatch as a PyArrow StructArray, or None at end of iteration """
 
                 array = self.stream.GetNextRecordBatch()
                 if array is None:
                     return None
-                return pa.Array._import_from_c(array._getPtr(), l_schema)
+                return pa.Array._import_from_c(array._getPtr(), self.schema)
 
             def __iter__(self):
                 """ Return an iterator over record batches as a PyArrow StructArray """
                 if self.end_of_stream:
                     raise Exception("Stream has already been iterated over")
 
-                l_schema = self.schema
                 while True:
-                    batch = self._GetNextRecordBatchAsPyArrow(l_schema)
+                    batch = self.GetNextRecordBatch()
                     if not batch:
                         break
                     yield batch
@@ -2279,10 +2284,19 @@ class Layer(MajorObject):
         class Stream:
             def __init__(self, stream, use_masked_arrays):
                 self.stream = stream
+                self.schema = stream.GetSchema()
                 self.end_of_stream = False
                 self.use_masked_arrays = use_masked_arrays
 
-            def _GetNextRecordBatchAsNumpy(self, schema):
+            def __enter__(self):
+                return self
+
+            def __exit__(self, type, value, tb):
+                self.end_of_stream = True
+                self.schema = None
+                self.stream = None
+
+            def GetNextRecordBatch(self):
                 """ Return the next RecordBatch as a dictionary of Numpy arrays, or None at end of iteration """
 
                 array = self.stream.GetNextRecordBatch()
@@ -2290,7 +2304,7 @@ class Layer(MajorObject):
                     return None
 
                 ret = gdal_array._RecordBatchAsNumpy(array._getPtr(),
-                                                     schema._getPtr(),
+                                                     self.schema._getPtr(),
                                                      array)
                 if ret is None:
                     gdal_array._RaiseException()
@@ -2310,10 +2324,9 @@ class Layer(MajorObject):
                 if self.end_of_stream:
                     raise Exception("Stream has already been iterated over")
 
-                schema = self.stream.GetSchema()
                 try:
                     while True:
-                        batch = self._GetNextRecordBatchAsNumpy(schema)
+                        batch = self.GetNextRecordBatch()
                         if not batch:
                             break
                         yield batch

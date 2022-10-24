@@ -401,10 +401,12 @@ class GDALGeoPackageRasterBand final: public GDALGPKGMBTilesLikeRasterBand
 class OGRGeoPackageLayer CPL_NON_FINAL: public OGRLayer, public IOGRSQLiteGetSpatialWhere
 {
   protected:
+    friend void OGR_GPKG_FillArrowArray_Step(sqlite3_context* pContext, int /*argc*/, sqlite3_value** argv);
+
     GDALGeoPackageDataset *m_poDS;
 
     OGRFeatureDefn*      m_poFeatureDefn;
-    int                  iNextShapeId;
+    GIntBig              iNextShapeId;
 
     sqlite3_stmt        *m_poQueryStatement;
     bool                 bDoStep;
@@ -423,12 +425,20 @@ class OGRGeoPackageLayer CPL_NON_FINAL: public OGRLayer, public IOGRSQLiteGetSpa
                                            sqlite3_stmt *hStmt );
 
     OGRFeature*         TranslateFeature(sqlite3_stmt* hStmt);
+    bool                ParseDateField(const char* pszTxt,
+                                       OGRField* psField,
+                                       const OGRFieldDefn* poFieldDefn,
+                                       GIntBig nFID);
     bool                ParseDateField(sqlite3_stmt* hStmt,
                                         int iRawField,
                                         int nSqlite3ColType,
                                         OGRField* psField,
                                         const OGRFieldDefn* poFieldDefn,
                                         GIntBig nFID);
+    bool                ParseDateTimeField(const char* pszTxt,
+                                       OGRField* psField,
+                                       const OGRFieldDefn* poFieldDefn,
+                                       GIntBig nFID);
     bool                ParseDateTimeField(sqlite3_stmt* hStmt,
                                         int iRawField,
                                         int nSqlite3ColType,
@@ -512,6 +522,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     GPKGASpatialVariant         m_eASpatialVariant = GPKG_ATTRIBUTES;
     std::set<OGRwkbGeometryType> m_eSetBadGeomTypeWarned{};
 
+    int                         m_nIsCompatOfOptimizedGetNextArrowArray = -1;
+
     int                         m_nCountInsertInTransactionThreshold = -1;
     GIntBig                     m_nCountInsertInTransaction = 0;
     std::vector<CPLString >     m_aoRTreeTriggersSQL{};
@@ -573,7 +585,16 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
 
     OGRErr              CreateOrUpsertFeature( OGRFeature *poFeature, bool bUpsert );
 
+    GIntBig             GetTotalFeatureCount();
+
     CPL_DISALLOW_COPY_ASSIGN(OGRGeoPackageTableLayer)
+
+    std::thread         m_oThreadNextArrowArray{};
+    std::unique_ptr<GDALGeoPackageDataset> m_poOtherDS{};
+    struct ArrowArray*  m_psNextArrayArray = nullptr;
+    virtual int GetNextArrowArray(struct ArrowArrayStream*,
+                                   struct ArrowArray* out_array) override;
+    int                 GetNextArrowArrayInternal(struct ArrowArray* out_array);
 
     public:
                         OGRGeoPackageTableLayer( GDALGeoPackageDataset *poDS,

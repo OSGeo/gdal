@@ -6802,6 +6802,22 @@ def test_ogr_gpkg_arrow_stream_numpy():
     assert batch["int16"][0] == 123
     assert len(batch["fid"]) == 1
 
+    with lyr.GetArrowStreamAsNumPy(options=["MAX_FEATURES_IN_BATCH=1"]) as stream:
+        batches = [batch for batch in stream]
+        assert len(batches) == 3
+        assert len(batches[0]["fid"]) == 1
+        assert batches[0]["fid"][0] == 1
+        assert len(batches[1]["fid"]) == 1
+        assert batches[1]["fid"][0] == 2
+        assert len(batches[2]["fid"]) == 1
+        assert batches[2]["fid"][0] == 3
+
+    for i in range(2):
+        with lyr.GetArrowStreamAsNumPy(options=["MAX_FEATURES_IN_BATCH=1"]) as stream:
+            batch = stream.GetNextRecordBatch()
+            assert len(batch["fid"]) == 1, i
+            assert batch["fid"][0] == 1, i
+
     # Test attribute filter
     lyr.SetAttributeFilter("int16 = 123")
     stream = lyr.GetArrowStreamAsNumPy()

@@ -55,6 +55,8 @@ public:
     int64_t* panFIDValues = nullptr;
     struct ArrowArray* m_out_array = nullptr;
 
+    static int GetMaxFeaturesInBatch(const CPLStringList& aosArrowArrayStreamOptions);
+
     OGRArrowArrayHelper(GDALDataset* poDS,
                         OGRFeatureDefn* poFeatureDefn,
                         const CPLStringList& aosArrowArrayStreamOptions,
