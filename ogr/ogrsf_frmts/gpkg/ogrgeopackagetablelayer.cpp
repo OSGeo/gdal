@@ -30,6 +30,7 @@
 #include "ogr_geopackage.h"
 #include "ogrgeopackageutility.h"
 #include "ogrsqliteutility.h"
+#include "cpl_md5.h"
 #include "cpl_time.h"
 #include "ogr_p.h"
 
@@ -1851,6 +1852,8 @@ OGRErr OGRGeoPackageTableLayer::CreateOrUpsertFeature( OGRFeature *poFeature, bo
 
     if( bUpsert )
     {
+        if( m_bThreadRTreeStarted )
+            CancelAsyncRTree();
         if( !RunDeferredSpatialIndexUpdate() )
             return OGRERR_FAILURE;
         if( !m_bUpdate1TriggerDisabled && HasSpatialIndex() )
@@ -2085,6 +2088,26 @@ OGRErr OGRGeoPackageTableLayer::CreateOrUpsertFeature( OGRFeature *poFeature, bo
                     m_aoRTreeEntries.push_back(sEntry);
                 }
             }
+            else if( !bUpsert && m_bAllowedRTreeThread && !m_bErrorDuringRTreeThread )
+            {
+                GPKGRTreeEntry sEntry;
+                sEntry.nId = nFID;
+                sEntry.fMinX = rtreeValueDown(oEnv.MinX);
+                sEntry.fMaxX = rtreeValueUp(oEnv.MaxX);
+                sEntry.fMinY = rtreeValueDown(oEnv.MinY);
+                sEntry.fMaxY = rtreeValueUp(oEnv.MaxY);
+                m_aoRTreeEntries.push_back(sEntry);
+                if( m_aoRTreeEntries.size() == m_nRTreeBatchSize )
+                {
+                    m_oQueueRTreeEntries.push(std::move(m_aoRTreeEntries));
+                    m_aoRTreeEntries = std::vector<GPKGRTreeEntry>();
+                }
+                if( !m_bThreadRTreeStarted &&
+                    m_oQueueRTreeEntries.size() == m_nRTreeBatchesBeforeStart )
+                {
+                    StartAsyncRTree();
+                }
+            }
         }
     }
 
@@ -2102,6 +2125,217 @@ OGRErr OGRGeoPackageTableLayer::CreateOrUpsertFeature( OGRFeature *poFeature, bo
 OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
 {
     return CreateOrUpsertFeature(poFeature, /* bUpsert=*/ false);
+}
+
+/************************************************************************/
+/*                  SetDeferredSpatialIndexCreation()                   */
+/************************************************************************/
+
+void OGRGeoPackageTableLayer::SetDeferredSpatialIndexCreation( bool bFlag )
+{
+    m_bDeferredSpatialIndexCreation = bFlag;
+    if( bFlag )
+    {
+        m_bAllowedRTreeThread =
+            sqlite3_threadsafe() != 0 &&
+            CPLGetNumCPUs() >= 2 &&
+            CPLTestBool(CPLGetConfigOption("OGR_GPKG_ALLOW_THREADED_RTREE", "YES"));
+
+        // For unit tests
+        if( CPLTestBool(CPLGetConfigOption("OGR_GPKG_THREADED_RTREE_AT_FIRST_FEATURE", "NO")) )
+        {
+            m_nRTreeBatchSize = 1;
+            m_nRTreeBatchesBeforeStart = 1;
+        }
+    }
+}
+
+/************************************************************************/
+/*                          StartAsyncRTree()                           */
+/************************************************************************/
+
+// We create a temporary database with only the RTree, and we insert
+// records into it in a dedicated thread, in parallel of the main thread
+// that inserts rows in the user table. When the layer is finalized, we
+// just use bulk copy statements of the form
+// INSERT INTO rtree_xxxx_rowid/node/parent SELECT * FROM temp_rtree.my_rtree_rowid/node/parent
+// to copy the RTree auxiliary tables into the main database, which is a
+// very fast operation.
+
+void OGRGeoPackageTableLayer::StartAsyncRTree()
+{
+    m_osAsyncDBName = m_poDS->GetDescription();
+    m_osAsyncDBName += ".tmp_rtree_";
+    bool bCanUseTableName = false;
+    if( strlen(m_pszTableName) <= 32 )
+    {
+        bCanUseTableName = true;
+        constexpr char DIGIT_ZERO = '0';
+        for( int i = 0; m_pszTableName[i] != '\0'; ++i )
+        {
+            const char ch = m_pszTableName[i];
+            if( !((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
+                  (ch >= DIGIT_ZERO && ch <= '9') || ch == '.' || ch == '_') )
+            {
+                bCanUseTableName = false;
+                break;
+            }
+        }
+    }
+    if( bCanUseTableName )
+        m_osAsyncDBName += m_pszTableName;
+    else
+    {
+        m_osAsyncDBName += CPLMD5String(m_pszTableName);
+    }
+    m_osAsyncDBName += ".db";
+    VSIUnlink(m_osAsyncDBName.c_str());
+    CPLDebug("GPKG", "Creating background RTree DB %s",
+             m_osAsyncDBName.c_str());
+    sqlite3_open_v2( m_osAsyncDBName.c_str(), &m_hAsyncDBHandle,
+                     SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE,
+                     m_poDS->GetVFS() ? m_poDS->GetVFS()->zName : nullptr );
+    if( m_hAsyncDBHandle != nullptr )
+    {
+        if( SQLCommand(m_hAsyncDBHandle,
+            "PRAGMA journal_mode = OFF;\n"
+            "PRAGMA synchronous = OFF;\n"
+            "CREATE VIRTUAL TABLE my_rtree USING rtree(id, minx, maxx, miny, maxy)") == OGRERR_NONE )
+        {
+            char* pszSQL = sqlite3_mprintf(
+                "ATTACH DATABASE '%q' AS temp_rtree",
+                m_osAsyncDBName.c_str());
+            OGRErr eErr = SQLCommand(m_poDS->GetDB(), pszSQL);
+            sqlite3_free(pszSQL);
+
+            VSIUnlink(m_osAsyncDBName.c_str());
+
+            if( eErr == OGRERR_NONE )
+            {
+                try
+                {
+                    m_oThreadRTree = std::thread(
+                        [this]() { AsyncRTreeThreadFunction(); });
+                    m_bThreadRTreeStarted = true;
+                }
+                catch( const std::exception& e )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "RTree thread cannot be created: %s", e.what());
+                }
+            }
+        }
+
+        if( !m_bThreadRTreeStarted )
+        {
+            m_oQueueRTreeEntries.clear();
+            m_bErrorDuringRTreeThread = true;
+            sqlite3_close(m_hAsyncDBHandle);
+            m_hAsyncDBHandle = nullptr;
+            VSIUnlink(m_osAsyncDBName.c_str());
+        }
+    }
+    else
+    {
+        m_oQueueRTreeEntries.clear();
+        m_bErrorDuringRTreeThread = true;
+    }
+}
+
+/************************************************************************/
+/*                          CancelAsyncRTree()                          */
+/************************************************************************/
+
+void OGRGeoPackageTableLayer::CancelAsyncRTree()
+{
+    CPLDebug("GPKG", "Cancel background RTree creation");
+    m_oQueueRTreeEntries.push({});
+    m_oThreadRTree.join();
+    m_bThreadRTreeStarted = false;
+    if( m_hAsyncDBHandle )
+    {
+        sqlite3_close(m_hAsyncDBHandle);
+        m_hAsyncDBHandle = nullptr;
+    }
+    VSIUnlink(m_osAsyncDBName.c_str());
+    m_bErrorDuringRTreeThread = true;
+    SQLCommand(m_poDS->GetDB(), "DETACH DATABASE temp_rtree");
+}
+
+/************************************************************************/
+/*                      AsyncRTreeThreadFunction()                      */
+/************************************************************************/
+
+void OGRGeoPackageTableLayer::AsyncRTreeThreadFunction()
+{
+    sqlite3_stmt* hStmt = nullptr;
+    const char* pszInsertSQL = "INSERT INTO my_rtree VALUES (?,?,?,?,?)";
+    if ( sqlite3_prepare_v2(m_hAsyncDBHandle, pszInsertSQL, -1,
+                            &hStmt, nullptr) != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                    "failed to prepare SQL: %s", pszInsertSQL);
+        m_oQueueRTreeEntries.clear();
+        m_bErrorDuringRTreeThread = true;
+        return;
+    }
+
+    SQLCommand(m_hAsyncDBHandle, "BEGIN");
+    while( true )
+    {
+        const auto aoEntries = m_oQueueRTreeEntries.get_and_pop_front();
+        if( aoEntries.empty() )
+            break;
+        for( const auto& entry: aoEntries )
+        {
+            if( (entry.nId % 500000) == 0 )
+            {
+                CPLDebug("GPKG", CPL_FRMT_GIB " rows indexed in rtree", entry.nId);
+                if( SQLCommand(m_hAsyncDBHandle, "COMMIT") != OGRERR_NONE )
+                {
+                    m_bErrorDuringRTreeThread = true;
+                    break;
+                }
+                SQLCommand(m_hAsyncDBHandle, "BEGIN");
+            }
+            sqlite3_reset(hStmt);
+
+            sqlite3_bind_int64(hStmt,1,entry.nId);
+            sqlite3_bind_double(hStmt,2,entry.fMinX);
+            sqlite3_bind_double(hStmt,3,entry.fMaxX);
+            sqlite3_bind_double(hStmt,4,entry.fMinY);
+            sqlite3_bind_double(hStmt,5,entry.fMaxY);
+            int sqlite_err = sqlite3_step(hStmt);
+            if ( sqlite_err != SQLITE_OK && sqlite_err != SQLITE_DONE )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                        "failed to execute insertion in RTree : %s",
+                        sqlite3_errmsg(m_hAsyncDBHandle) );
+                m_bErrorDuringRTreeThread = true;
+                break;
+            }
+        }
+    }
+    if( m_bErrorDuringRTreeThread )
+    {
+        SQLCommand(m_hAsyncDBHandle, "ROLLBACK");
+    }
+    else if( SQLCommand(m_hAsyncDBHandle, "COMMIT") != OGRERR_NONE )
+    {
+        m_bErrorDuringRTreeThread = true;
+    }
+
+    sqlite3_finalize(hStmt);
+
+    if( m_bErrorDuringRTreeThread )
+    {
+        sqlite3_close(m_hAsyncDBHandle);
+        m_hAsyncDBHandle = nullptr;
+
+        VSIUnlink(m_osAsyncDBName.c_str());
+
+        m_oQueueRTreeEntries.clear();
+    }
 }
 
 /************************************************************************/
@@ -2138,6 +2372,8 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
 
+    if( m_bThreadRTreeStarted )
+        CancelAsyncRTree();
     if( !RunDeferredSpatialIndexUpdate() )
         return OGRERR_FAILURE;
 
@@ -2463,6 +2699,8 @@ OGRErr OGRGeoPackageTableLayer::DeleteFeature(GIntBig nFID)
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
 
+    if( m_bThreadRTreeStarted )
+        CancelAsyncRTree();
     if( !RunDeferredSpatialIndexUpdate() )
         return OGRERR_FAILURE;
 
@@ -2520,10 +2758,15 @@ bool OGRGeoPackageTableLayer::DoJobAtTransactionCommit()
 
 bool OGRGeoPackageTableLayer::DoJobAtTransactionRollback()
 {
+    if( m_bThreadRTreeStarted )
+        CancelAsyncRTree();
     m_nCountInsertInTransaction = 0;
     m_aoRTreeTriggersSQL.clear();
     m_aoRTreeEntries.clear();
+    bool bDeferredSpatialIndexCreationBackup = m_bDeferredSpatialIndexCreation;
+    m_bDeferredSpatialIndexCreation = false;
     SyncToDisk();
+    m_bDeferredSpatialIndexCreation = bDeferredSpatialIndexCreationBackup;
     ResetReading();
     return true;
 }
@@ -3121,6 +3364,33 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
     m_osRTreeName += pszC;
     m_osFIDForRTree = m_pszFidColumn;
 
+    bool bPopulateFromThreadRTree = false;
+    if( m_bThreadRTreeStarted )
+    {
+        const bool bThreadHasFinished = m_oQueueRTreeEntries.empty();
+        if( !m_aoRTreeEntries.empty() )
+            m_oQueueRTreeEntries.push(std::move(m_aoRTreeEntries));
+        m_aoRTreeEntries = std::vector<GPKGRTreeEntry>();
+        m_oQueueRTreeEntries.push(m_aoRTreeEntries);
+        if( !bThreadHasFinished )
+            CPLDebug("GPKG", "Waiting for background RTree building to finish");
+        m_oThreadRTree.join();
+        if( !bThreadHasFinished )
+            CPLDebug("GPKG", "Background RTree building finished");
+        m_bAllowedRTreeThread = false;
+        m_bThreadRTreeStarted = false;
+
+        if( m_hAsyncDBHandle )
+        {
+            sqlite3_close(m_hAsyncDBHandle);
+            m_hAsyncDBHandle = nullptr;
+        }
+        if( !m_bErrorDuringRTreeThread )
+        {
+            bPopulateFromThreadRTree = true;
+        }
+    }
+
     m_poDS->SoftStartTransaction();
 
     /* Create virtual table */
@@ -3135,133 +3405,157 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
         return false;
     }
 
-    /* Populate the RTree */
+    if( bPopulateFromThreadRTree )
+    {
+        pszSQL = sqlite3_mprintf(
+            "DELETE FROM \"%w_node\";\n"
+            "INSERT INTO \"%w_node\" SELECT * FROM temp_rtree.my_rtree_node;\n"
+            "INSERT INTO \"%w_rowid\" SELECT * FROM temp_rtree.my_rtree_rowid;\n"
+            "INSERT INTO \"%w_parent\" SELECT * FROM temp_rtree.my_rtree_parent;\n",
+            m_osRTreeName.c_str(),
+            m_osRTreeName.c_str(),
+            m_osRTreeName.c_str(),
+            m_osRTreeName.c_str());
+        err = SQLCommand(m_poDS->GetDB(), pszSQL);
+        sqlite3_free(pszSQL);
+        if( err != OGRERR_NONE )
+        {
+            m_poDS->SoftRollbackTransaction();
+            SQLCommand(m_poDS->GetDB(), "DETACH DATABASE temp_rtree");
+            VSIUnlink(m_osAsyncDBName.c_str());
+            return false;
+        }
+    }
+    else
+    {
+        /* Populate the RTree */
 #ifdef NO_PROGRESSIVE_RTREE_INSERTION
-    pszSQL = sqlite3_mprintf(
-        "INSERT INTO \"%w\" "
-        "SELECT \"%w\", ST_MinX(\"%w\"), ST_MaxX(\"%w\"), "
-        "ST_MinY(\"%w\"), ST_MaxY(\"%w\") FROM \"%w\" "
-        "WHERE \"%w\" NOT NULL AND NOT ST_IsEmpty(\"%w\")",
-        m_osRTreeName.c_str(), pszI, pszC, pszC, pszC, pszC, pszT, pszC, pszC );
-    err = SQLCommand(m_poDS->GetDB(), pszSQL);
-    sqlite3_free(pszSQL);
-    if( err != OGRERR_NONE )
-    {
-        m_poDS->SoftRollbackTransaction();
-        return false;
-    }
-#else
-    pszSQL = sqlite3_mprintf(
-        "SELECT \"%w\", ST_MinX(\"%w\"), ST_MaxX(\"%w\"), "
-        "ST_MinY(\"%w\"), ST_MaxY(\"%w\") FROM \"%w\" "
-        "WHERE \"%w\" NOT NULL AND NOT ST_IsEmpty(\"%w\")",
-            pszI, pszC, pszC, pszC, pszC, pszT, pszC, pszC );
-    sqlite3_stmt* hIterStmt = nullptr;
-    if ( sqlite3_prepare_v2(m_poDS->GetDB(), pszSQL, -1, &hIterStmt, nullptr)
-                                                            != SQLITE_OK )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                    "failed to prepare SQL: %s", pszSQL);
+        pszSQL = sqlite3_mprintf(
+            "INSERT INTO \"%w\" "
+            "SELECT \"%w\", ST_MinX(\"%w\"), ST_MaxX(\"%w\"), "
+            "ST_MinY(\"%w\"), ST_MaxY(\"%w\") FROM \"%w\" "
+            "WHERE \"%w\" NOT NULL AND NOT ST_IsEmpty(\"%w\")",
+            m_osRTreeName.c_str(), pszI, pszC, pszC, pszC, pszC, pszT, pszC, pszC );
+        err = SQLCommand(m_poDS->GetDB(), pszSQL);
         sqlite3_free(pszSQL);
-        m_poDS->SoftRollbackTransaction();
-        return false;
-    }
-    sqlite3_free(pszSQL);
-
-    pszSQL = sqlite3_mprintf(
-        "INSERT INTO \"%w\" VALUES (?,?,?,?,?)",
-        m_osRTreeName.c_str());
-    sqlite3_stmt* hInsertStmt = nullptr;
-    if ( sqlite3_prepare_v2(m_poDS->GetDB(), pszSQL, -1, &hInsertStmt, nullptr)
-                                                            != SQLITE_OK )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                    "failed to prepare SQL: %s", pszSQL);
-        sqlite3_free(pszSQL);
-        sqlite3_finalize(hIterStmt);
-        m_poDS->SoftRollbackTransaction();
-        return false;
-    }
-    sqlite3_free(pszSQL);
-
-    // Insert entries in RTree by chunks of 500K features
-    std::vector<GPKGRTreeEntry> aoEntries;
-    GUIntBig nEntryCount = 0;
-    constexpr size_t nChunkSize = 500 * 1000;
-#ifdef ENABLE_GPKG_OGR_CONTENTS
-    if( m_nTotalFeatureCount > 0 )
-    {
-        aoEntries.reserve(static_cast<size_t>(
-            std::min(m_nTotalFeatureCount, static_cast<GIntBig>(nChunkSize))));
-    }
-#endif
-    while( true )
-    {
-        int sqlite_err = sqlite3_step(hIterStmt);
-        bool bFinished = false;
-        if( sqlite_err == SQLITE_ROW )
+        if( err != OGRERR_NONE )
         {
-            GPKGRTreeEntry sEntry;
-            sEntry.nId = sqlite3_column_int64(hIterStmt, 0);
-            sEntry.fMinX = rtreeValueDown(sqlite3_column_double(hIterStmt, 1));
-            sEntry.fMaxX = rtreeValueUp(sqlite3_column_double(hIterStmt, 2));
-            sEntry.fMinY = rtreeValueDown(sqlite3_column_double(hIterStmt, 3));
-            sEntry.fMaxY = rtreeValueUp(sqlite3_column_double(hIterStmt, 4));
-            aoEntries.push_back(sEntry);
-        }
-        else if( sqlite_err == SQLITE_DONE )
-        {
-            bFinished = true;
-        }
-        else
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "failed to iterate over features while inserting in "
-                      "RTree: %s",
-                      sqlite3_errmsg( m_poDS->GetDB() ) );
-            sqlite3_finalize(hIterStmt);
-            sqlite3_finalize(hInsertStmt);
             m_poDS->SoftRollbackTransaction();
             return false;
         }
-
-        if( aoEntries.size() == nChunkSize || bFinished )
+#else
+        pszSQL = sqlite3_mprintf(
+            "SELECT \"%w\", ST_MinX(\"%w\"), ST_MaxX(\"%w\"), "
+            "ST_MinY(\"%w\"), ST_MaxY(\"%w\") FROM \"%w\" "
+            "WHERE \"%w\" NOT NULL AND NOT ST_IsEmpty(\"%w\")",
+                pszI, pszC, pszC, pszC, pszC, pszT, pszC, pszC );
+        sqlite3_stmt* hIterStmt = nullptr;
+        if ( sqlite3_prepare_v2(m_poDS->GetDB(), pszSQL, -1, &hIterStmt, nullptr)
+                                                                != SQLITE_OK )
         {
-            for( size_t i = 0; i < aoEntries.size(); ++i )
-            {
-                sqlite3_reset(hInsertStmt);
+            CPLError( CE_Failure, CPLE_AppDefined,
+                        "failed to prepare SQL: %s", pszSQL);
+            sqlite3_free(pszSQL);
+            m_poDS->SoftRollbackTransaction();
+            return false;
+        }
+        sqlite3_free(pszSQL);
 
-                sqlite3_bind_int64(hInsertStmt,1,aoEntries[i].nId);
-                sqlite3_bind_double(hInsertStmt,2,aoEntries[i].fMinX);
-                sqlite3_bind_double(hInsertStmt,3,aoEntries[i].fMaxX);
-                sqlite3_bind_double(hInsertStmt,4,aoEntries[i].fMinY);
-                sqlite3_bind_double(hInsertStmt,5,aoEntries[i].fMaxY);
-                sqlite_err = sqlite3_step(hInsertStmt);
-                if ( sqlite_err != SQLITE_OK && sqlite_err != SQLITE_DONE )
-                {
-                    CPLError( CE_Failure, CPLE_AppDefined,
-                              "failed to execute insertion in RTree : %s",
-                              sqlite3_errmsg( m_poDS->GetDB() ) );
-                    sqlite3_finalize(hIterStmt);
-                    sqlite3_finalize(hInsertStmt);
-                    m_poDS->SoftRollbackTransaction();
-                    return false;
-                }
+        pszSQL = sqlite3_mprintf(
+            "INSERT INTO \"%w\" VALUES (?,?,?,?,?)",
+            m_osRTreeName.c_str());
+        sqlite3_stmt* hInsertStmt = nullptr;
+        if ( sqlite3_prepare_v2(m_poDS->GetDB(), pszSQL, -1, &hInsertStmt, nullptr)
+                                                                != SQLITE_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                        "failed to prepare SQL: %s", pszSQL);
+            sqlite3_free(pszSQL);
+            sqlite3_finalize(hIterStmt);
+            m_poDS->SoftRollbackTransaction();
+            return false;
+        }
+        sqlite3_free(pszSQL);
+
+        // Insert entries in RTree by chunks of 500K features
+        std::vector<GPKGRTreeEntry> aoEntries;
+        GUIntBig nEntryCount = 0;
+        constexpr size_t nChunkSize = 500 * 1000;
+#ifdef ENABLE_GPKG_OGR_CONTENTS
+        if( m_nTotalFeatureCount > 0 )
+        {
+            aoEntries.reserve(static_cast<size_t>(
+                std::min(m_nTotalFeatureCount, static_cast<GIntBig>(nChunkSize))));
+        }
+#endif
+        while( true )
+        {
+            int sqlite_err = sqlite3_step(hIterStmt);
+            bool bFinished = false;
+            if( sqlite_err == SQLITE_ROW )
+            {
+                GPKGRTreeEntry sEntry;
+                sEntry.nId = sqlite3_column_int64(hIterStmt, 0);
+                sEntry.fMinX = rtreeValueDown(sqlite3_column_double(hIterStmt, 1));
+                sEntry.fMaxX = rtreeValueUp(sqlite3_column_double(hIterStmt, 2));
+                sEntry.fMinY = rtreeValueDown(sqlite3_column_double(hIterStmt, 3));
+                sEntry.fMaxY = rtreeValueUp(sqlite3_column_double(hIterStmt, 4));
+                aoEntries.push_back(sEntry);
+            }
+            else if( sqlite_err == SQLITE_DONE )
+            {
+                bFinished = true;
+            }
+            else
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "failed to iterate over features while inserting in "
+                          "RTree: %s",
+                          sqlite3_errmsg( m_poDS->GetDB() ) );
+                sqlite3_finalize(hIterStmt);
+                sqlite3_finalize(hInsertStmt);
+                m_poDS->SoftRollbackTransaction();
+                return false;
             }
 
-            nEntryCount += aoEntries.size();
-            CPLDebug("GPKG", CPL_FRMT_GUIB " rows inserted into %s",
-                     nEntryCount, m_osRTreeName.c_str());
+            if( aoEntries.size() == nChunkSize || bFinished )
+            {
+                for( size_t i = 0; i < aoEntries.size(); ++i )
+                {
+                    sqlite3_reset(hInsertStmt);
 
-            aoEntries.clear();
-            if( bFinished )
-                break;
+                    sqlite3_bind_int64(hInsertStmt,1,aoEntries[i].nId);
+                    sqlite3_bind_double(hInsertStmt,2,aoEntries[i].fMinX);
+                    sqlite3_bind_double(hInsertStmt,3,aoEntries[i].fMaxX);
+                    sqlite3_bind_double(hInsertStmt,4,aoEntries[i].fMinY);
+                    sqlite3_bind_double(hInsertStmt,5,aoEntries[i].fMaxY);
+                    sqlite_err = sqlite3_step(hInsertStmt);
+                    if ( sqlite_err != SQLITE_OK && sqlite_err != SQLITE_DONE )
+                    {
+                        CPLError( CE_Failure, CPLE_AppDefined,
+                                  "failed to execute insertion in RTree : %s",
+                                  sqlite3_errmsg( m_poDS->GetDB() ) );
+                        sqlite3_finalize(hIterStmt);
+                        sqlite3_finalize(hInsertStmt);
+                        m_poDS->SoftRollbackTransaction();
+                        return false;
+                    }
+                }
+
+                nEntryCount += aoEntries.size();
+                CPLDebug("GPKG", CPL_FRMT_GUIB " rows inserted into %s",
+                         nEntryCount, m_osRTreeName.c_str());
+
+                aoEntries.clear();
+                if( bFinished )
+                    break;
+            }
         }
-    }
 
-    sqlite3_finalize(hIterStmt);
-    sqlite3_finalize(hInsertStmt);
+        sqlite3_finalize(hIterStmt);
+        sqlite3_finalize(hInsertStmt);
 #endif
+    }
 
     CPLString osSQL;
 
@@ -3282,10 +3576,21 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
     if( err != OGRERR_NONE )
     {
         m_poDS->SoftRollbackTransaction();
+        if( bPopulateFromThreadRTree )
+        {
+            SQLCommand(m_poDS->GetDB(), "DETACH DATABASE temp_rtree");
+            VSIUnlink(m_osAsyncDBName.c_str());
+        }
         return false;
     }
 
     m_poDS->SoftCommitTransaction();
+
+    if( bPopulateFromThreadRTree )
+    {
+        SQLCommand(m_poDS->GetDB(), "DETACH DATABASE temp_rtree");
+        VSIUnlink(m_osAsyncDBName.c_str());
+    }
 
     m_bHasSpatialIndex = true;
 
@@ -5070,6 +5375,8 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
 /* -------------------------------------------------------------------- */
     ResetReading();
     RunDeferredCreationIfNecessary();
+    if( m_bThreadRTreeStarted )
+        CancelAsyncRTree();
     if( !RunDeferredSpatialIndexUpdate() )
         return OGRERR_FAILURE;
 
@@ -5532,6 +5839,8 @@ OGRErr OGRGeoPackageTableLayer::AlterGeomFieldDefn( int iGeomFieldToAlter,
 /* -------------------------------------------------------------------- */
     ResetReading();
     RunDeferredCreationIfNecessary();
+    if( m_bThreadRTreeStarted )
+        CancelAsyncRTree();
     if( !RunDeferredSpatialIndexUpdate() )
         return OGRERR_FAILURE;
     RevertWorkaroundUpdate1TriggerIssue();
@@ -5816,6 +6125,8 @@ OGRErr OGRGeoPackageTableLayer::ReorderFields( int* panMap )
 /* -------------------------------------------------------------------- */
     ResetReading();
     RunDeferredCreationIfNecessary();
+    if( m_bThreadRTreeStarted )
+        CancelAsyncRTree();
     if( !RunDeferredSpatialIndexUpdate() )
         return OGRERR_FAILURE;
 
