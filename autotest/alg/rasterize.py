@@ -444,6 +444,7 @@ def test_rasterize_6():
 
     gdal.RasterizeLayer(mask_ds, [1], layer, burn_values=[1], options=["ALL_TOUCHED"])
 
+
 ###############################################################################
 # Test rasterization with ALL_TOUCHED.
 
