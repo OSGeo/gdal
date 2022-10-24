@@ -609,7 +609,8 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nXOff, int nYOff,
                                           (eBurnValueSrc == GBV_UserBurnValue)?
                                           nullptr : aPointVariant.data(),
                                           gvBurnPoint, &sInfo,
-                                          eMergeAlg == GRMA_Add );
+                                          eMergeAlg == GRMA_Add,
+                                          false);
           else
               GDALdllImageLine( sInfo.nXSize, nYSize,
                                 static_cast<int>(aPartSize.size()),
@@ -644,7 +645,8 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nXOff, int nYOff,
                       aPointX.data(), aPointY.data(),
                       nullptr,
                       gvBurnPoint, &sInfo,
-                      eMergeAlg == GRMA_Add );
+                      eMergeAlg == GRMA_Add,
+                      true );
               }
               else
               {
@@ -662,7 +664,8 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nXOff, int nYOff,
                       aPointX.data(), aPointY.data(),
                       aPointVariant.data(),
                       gvBurnPoint, &sInfo,
-                      eMergeAlg == GRMA_Add );
+                      eMergeAlg == GRMA_Add,
+                      true );
               }
           }
       }
@@ -952,7 +955,6 @@ CPLErr GDALRasterizeGeometriesInternal( GDALDatasetH hDS,
         pfnProgress = GDALDummyProgress;
 
     GDALDataset *poDS = GDALDataset::FromHandle(hDS);
-
 /* -------------------------------------------------------------------- */
 /*      Do some rudimentary arg checking.                               */
 /* -------------------------------------------------------------------- */
@@ -996,6 +998,7 @@ CPLErr GDALRasterizeGeometriesInternal( GDALDatasetH hDS,
     {
         return CE_Failure;
     }
+
 
 /* -------------------------------------------------------------------- */
 /*      If we have no transformer, assume the geometries are in file    */
@@ -1627,7 +1630,8 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
                 gv_rasterize_one_shape( pabyChunkBuf, 0, iY,
                                         poDS->GetRasterXSize(),
                                         nThisYChunkSize,
-                                        nBandCount, eType, 0, 0, 0, bAllTouched, poGeom,
+                                        nBandCount, eType, 0, 0, 0,
+                                        bAllTouched, poGeom,
                                         GDT_Float64,
                                         padfBurnValues,
                                         nullptr,
@@ -1932,7 +1936,8 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
             gv_rasterize_one_shape( static_cast<unsigned char *>(pData), 0, 0,
                                     nBufXSize, nBufYSize,
                                     1, eBufType,
-                                    nPixelSpace, nLineSpace, 0, bAllTouched, poGeom,
+                                    nPixelSpace, nLineSpace, 0,
+                                    bAllTouched, poGeom,
                                     GDT_Float64,
                                     &dfBurnValue,
                                     nullptr,
