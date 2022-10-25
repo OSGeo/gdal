@@ -2787,10 +2787,17 @@ bool OGRGeoPackageTableLayer::DoJobAtTransactionRollback()
     m_nCountInsertInTransaction = 0;
     m_aoRTreeTriggersSQL.clear();
     m_aoRTreeEntries.clear();
-    bool bDeferredSpatialIndexCreationBackup = m_bDeferredSpatialIndexCreation;
-    m_bDeferredSpatialIndexCreation = false;
-    SyncToDisk();
-    m_bDeferredSpatialIndexCreation = bDeferredSpatialIndexCreationBackup;
+    if( m_bTableCreatedInTransaction )
+    {
+        SyncToDisk();
+    }
+    else
+    {
+        bool bDeferredSpatialIndexCreationBackup = m_bDeferredSpatialIndexCreation;
+        m_bDeferredSpatialIndexCreation = false;
+        SyncToDisk();
+        m_bDeferredSpatialIndexCreation = bDeferredSpatialIndexCreationBackup;
+    }
     ResetReading();
     return true;
 }
@@ -3485,7 +3492,7 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
                                                                 != SQLITE_OK )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                        "failed to prepare SQL: %s", pszSQL);
+                        "failed to prepare SQL: %s: %s", pszSQL, sqlite3_errmsg(m_poDS->GetDB()));
             sqlite3_free(pszSQL);
             m_poDS->SoftRollbackTransaction();
             return false;
@@ -4554,6 +4561,7 @@ void OGRGeoPackageTableLayer::SetCreationParameters( OGRwkbGeometryType eGType,
     m_bIsInGpkgContents = true;
     m_bFeatureDefnCompleted = true;
     m_bDeferredCreation = true;
+    m_bTableCreatedInTransaction = m_poDS->IsInTransaction();
     m_bHasTriedDetectingFID64 = true;
     m_pszFidColumn = CPLStrdup(pszFIDColumnName);
 

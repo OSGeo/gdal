@@ -513,6 +513,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     bool                        m_bPreservePrecision = true;
     bool                        m_bTruncateFields = false;
     bool                        m_bDeferredCreation = false;
+    bool                        m_bTableCreatedInTransaction = false;
     int                         m_iFIDAsRegularColumnIndex = -1;
 
     CPLString                   m_osIdentifierLCO{};
