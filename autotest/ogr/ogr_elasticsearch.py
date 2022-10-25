@@ -1154,6 +1154,11 @@ def test_ogr_elasticsearch_4():
         ret = lyr.SetFeature(lyr.GetNextFeature())
     assert ret != 0
 
+    lyr.ResetReading()
+    with gdaltest.error_handler():
+        ret = lyr.UpsertFeature(lyr.GetNextFeature())
+    assert ret != 0
+
     with gdaltest.error_handler():
         lyr = ds.CreateLayer("will_not_work")
     assert lyr is None
@@ -3399,3 +3404,76 @@ def test_ogr_elasticsearch_wildcard_layer_name():
     assert f["str_field"] == "foo2"
     assert f["str_field2"] == "bar2"
     assert f.GetGeometryRef().ExportToWkt() == "POINT (3 50)"
+
+
+###############################################################################
+# Test upserting a feature.
+
+
+def test_ogr_elasticsearch_upsert_feature():
+
+    ds = ogrtest.elasticsearch_drv.CreateDataSource("/vsimem/fakeelasticsearch")
+    assert ds is not None
+
+    gdal.FileFromMemBuffer(
+        "/vsimem/fakeelasticsearch/test_upsert",
+        "{}",
+    )
+    gdal.FileFromMemBuffer(
+        '/vsimem/fakeelasticsearch/test_upsert/_mapping/FeatureCollection&POSTFIELDS={ "FeatureCollection": { "properties": {} }}',
+        "{}",
+    )
+
+    # Create a layer that will not bulk upsert.
+    lyr = ds.CreateLayer(
+        "test_upsert",
+        srs=ogrtest.srs_wgs84,
+        options=[
+            'MAPPING={ "FeatureCollection": { "properties": {} }}',
+            "BULK_INSERT=NO",
+        ],
+    )
+    assert lyr is not None
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["_id"] = "upsert_id"
+
+    gdal.FileFromMemBuffer(
+        '/vsimem/fakeelasticsearch/test_upsert/FeatureCollection/upsert_id/_update&CUSTOMREQUEST=POST&POSTFIELDS={"doc":{ "ogc_fid": 1, "properties": { } },"doc_as_upsert":true}',
+        "{}",
+    )
+
+    # Upsert new feature
+    assert lyr.UpsertFeature(f) == ogr.OGRERR_NONE
+
+    # Upsert existing feature
+    assert lyr.UpsertFeature(f) == ogr.OGRERR_NONE
+
+    # Create a layer that will bulk upsert.
+    lyr = ds.CreateLayer(
+        "test_upsert",
+        srs=ogrtest.srs_wgs84,
+        options=['MAPPING={ "FeatureCollection": { "properties": {} }}'],
+    )
+    assert lyr is not None
+
+    # Upsert new feature
+    assert lyr.UpsertFeature(f) == ogr.OGRERR_NONE
+
+    # Upsert existing feature
+    assert lyr.UpsertFeature(f) == ogr.OGRERR_NONE
+
+    gdal.FileFromMemBuffer(
+        """/vsimem/fakeelasticsearch/_bulk&POSTFIELDS={"update":{"_index":"test_upsert","_id":"upsert_id", "_type":"FeatureCollection"}}
+{"doc":{ "ogc_fid": 1, "properties": { } },"doc_as_upsert":true}
+
+{"update":{"_index":"test_upsert","_id":"upsert_id", "_type":"FeatureCollection"}}
+{"doc":{ "ogc_fid": 1, "properties": { } },"doc_as_upsert":true}
+
+""",
+        "{}",
+    )
+    assert lyr.SyncToDisk() == ogr.OGRERR_NONE
+    assert gdal.GetLastErrorMsg() == ""
+
+    ds = None
