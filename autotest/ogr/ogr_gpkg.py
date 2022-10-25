@@ -7247,3 +7247,59 @@ def test_ogr_gpkg_background_rtree_build(filename):
     ds = None
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test ST_Area()
+
+
+@pytest.mark.parametrize(
+    "wkt_or_binary,area",
+    [
+        (None, None),
+        ("X'0001'", None),
+        ("POINT EMPTY", 0),
+        ("LINESTRING(1 2,3 4)", 0),
+        ("POLYGON EMPTY", 0),
+        ("POLYGON ((0 0,0 1,1 1,0 0))", 0.5),
+        ("POLYGON Z ((0 0 100,0 1 100,1 1 100,0 0 100))", 0.5),
+        ("POLYGON M ((0 0 100,0 1 100,1 1 100,0 0 100))", 0.5),
+        ("POLYGON ZM ((0 0 100 200,0 1 100 200,1 1 100 200,0 0 100 200))", 0.5),
+        (
+            "POLYGON ((0 0,0 1,1 1,1 0,0 0),(0.25 0.25,0.25 0.75,0.75 0.75,0.75 0.25,0.25 0.25))",
+            0.75,
+        ),
+        ("MULTIPOLYGON EMPTY", 0),
+        ("MULTIPOLYGON (((0 0,0 1,1 1,0 0)))", 0.5),
+        ("MULTIPOLYGON (((0 0,0 1,1 1,0 0)),((10 0,10 1,11 1,10 0)))", 1),
+        ("MULTIPOLYGON Z (((0 0 100,0 1 100,1 1 100,0 0 100)))", 0.5),
+        ("MULTIPOLYGON M (((0 0 100,0 1 100,1 1 100,0 0 100)))", 0.5),
+        ("MULTIPOLYGON ZM (((0 0 100 200,0 1 100 200,1 1 100 200,0 0 100 200)))", 0.5),
+        ("CURVEPOLYGON ((0 0,0 1,1 1,0 0))", 0.5),
+        ("MULTISURFACE (((0 0,0 1,1 1,0 0)))", 0.5),
+        # Below is Spatialite encoding of POLYGON((0 0,0 1,1 1,0 0))
+        (
+            "X'00010000000000000000000000000000000000000000000000000000f03f000000000000f03f7c030000000100000004000000000000000000000000000000000000000000000000000000000000000000f03f000000000000f03f000000000000f03f00000000000000000000000000000000fe'",
+            0.5,
+        ),
+    ],
+)
+def test_ogr_gpkg_st_area(wkt_or_binary, area):
+
+    filename = "/vsimem/test_ogr_gpkg_st_area.gpkg"
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
+    lyr = ds.CreateLayer("test")
+    if wkt_or_binary and wkt_or_binary.startswith("X'"):
+        sql = "INSERT INTO test(geom) VALUES (" + wkt_or_binary + ")"
+        ds.ExecuteSQL(sql)
+    else:
+        f = ogr.Feature(lyr.GetLayerDefn())
+        if wkt_or_binary:
+            f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt_or_binary))
+        lyr.CreateFeature(f)
+    sql_lyr = ds.ExecuteSQL("SELECT ST_Area(geom) FROM test")
+    f = sql_lyr.GetNextFeature()
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+    gdal.Unlink(filename)
+    assert f.GetField(0) == area

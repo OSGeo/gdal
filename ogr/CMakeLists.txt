@@ -58,7 +58,8 @@ add_library(
   ograpispy.cpp
   ogr_xerces.cpp
   ogr_geo_utils.cpp
-  ogr_proj_p.cpp)
+  ogr_proj_p.cpp
+  ogr_wkb.cpp)
 add_dependencies(ogr generate_gdal_version_h)
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
   set_property(
