@@ -399,7 +399,8 @@ static int GDALSuggestedWarpOutput2_MustAdjustForBottomBorder(
  * @param pnLines int in which the suggest pixel height of output is returned.
  * @param padfExtent Four entry array to return extents as (xmin, ymin, xmax,
  * ymax).
- * @param nOptions Options, currently always zero.
+ * @param nOptions Options. Zero or GDAL_SWO_ROUND_UP_SIZE to ask *pnPixels
+ * and *pnLines to be rounded up instead of being rounded to the closes integer.
  *
  * @return CE_None if successful or CE_Failure otherwise.
  */
@@ -411,7 +412,7 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
                           double *padfGeoTransformOut,
                           int *pnPixels, int *pnLines,
                           double *padfExtent,
-                          CPL_UNUSED int nOptions )
+                          int nOptions )
 {
     VALIDATE_POINTER1( hSrcDS, "GDALSuggestedWarpOutput2", CE_Failure );
 
@@ -1080,8 +1081,17 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
         return CE_Failure;
     }
 
-    *pnPixels = static_cast<int>(dfPixels + 0.5);
-    *pnLines = static_cast<int>(dfLines + 0.5);
+    if( (nOptions & GDAL_SWO_ROUND_UP_SIZE) != 0 )
+    {
+        constexpr double EPS = 1e-5;
+        *pnPixels = static_cast<int>(std::ceil(dfPixels - EPS));
+        *pnLines = static_cast<int>(std::ceil(dfLines - EPS));
+    }
+    else
+    {
+        *pnPixels = static_cast<int>(dfPixels + 0.5);
+        *pnLines = static_cast<int>(dfLines + 0.5);
+    }
 
     double dfPixelSizeX = dfPixelSize;
     double dfPixelSizeY = dfPixelSize;
@@ -4765,7 +4775,7 @@ bool GDALTransformIsTranslationOnPixelBoundaries(
             return std::fabs(dfVal - std::round(dfVal)) <= 1e-6;
         };
         return pGenImgpProjInfo->pSrcTransformArg == nullptr &&
-               pGenImgpProjInfo->pDstTransformer == nullptr &&
+               pGenImgpProjInfo->pDstTransformArg == nullptr &&
                pGenImgpProjInfo->pReproject == nullptr &&
                pGenImgpProjInfo->adfSrcGeoTransform[1] == pGenImgpProjInfo->adfDstGeoTransform[1] &&
                pGenImgpProjInfo->adfSrcGeoTransform[5] == pGenImgpProjInfo->adfDstGeoTransform[5] &&
@@ -4783,6 +4793,34 @@ bool GDALTransformIsTranslationOnPixelBoundaries(
                         pGenImgpProjInfo->adfSrcInvGeoTransform[4]  +
                         pGenImgpProjInfo->adfDstGeoTransform[3] *
                         pGenImgpProjInfo->adfSrcInvGeoTransform[5]);
+    }
+    return false;
+}
+
+/************************************************************************/
+/*                   GDALTransformIsAffineNoRotation()                  */
+/************************************************************************/
+
+bool GDALTransformIsAffineNoRotation(
+                                GDALTransformerFunc pfnTransformer,
+                                void                *pTransformerArg)
+{
+    if( pfnTransformer == GDALApproxTransform )
+    {
+        const auto* pApproxInfo = static_cast<const ApproxTransformInfo*>(pTransformerArg);
+        pfnTransformer = pApproxInfo->pfnBaseTransformer;
+        pTransformerArg = pApproxInfo->pBaseCBData;
+    }
+    if( pfnTransformer == GDALGenImgProjTransform )
+    {
+        const auto* pGenImgpProjInfo = static_cast<GDALGenImgProjTransformInfo*>(pTransformerArg);
+        return pGenImgpProjInfo->pSrcTransformArg == nullptr &&
+               pGenImgpProjInfo->pDstTransformArg == nullptr &&
+               pGenImgpProjInfo->pReproject == nullptr &&
+               pGenImgpProjInfo->adfSrcGeoTransform[2] == 0 &&
+               pGenImgpProjInfo->adfSrcGeoTransform[4] == 0 &&
+               pGenImgpProjInfo->adfDstGeoTransform[2] == 0 &&
+               pGenImgpProjInfo->adfDstGeoTransform[4] == 0;
     }
     return false;
 }

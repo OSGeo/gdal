@@ -187,6 +187,9 @@ int GDALTransformLonLatToDestApproxTransformer(void* hTransformArg,
 bool GDALTransformIsTranslationOnPixelBoundaries(GDALTransformerFunc pfnTransformer,
                                                  void                *pTransformerArg);
 
+bool GDALTransformIsAffineNoRotation(GDALTransformerFunc pfnTransformer,
+                                     void                *pTransformerArg);
+
 typedef struct _CPLQuadTree CPLQuadTree;
 
 typedef struct {

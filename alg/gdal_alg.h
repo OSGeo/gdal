@@ -285,6 +285,10 @@ GDALSuggestedWarpOutput( GDALDatasetH hSrcDS,
                          void *pTransformArg,
                          double *padfGeoTransformOut,
                          int *pnPixels, int *pnLines );
+
+/** Flag for GDALSuggestedWarpOutput2() to ask to round-up output size */
+#define GDAL_SWO_ROUND_UP_SIZE 0x1
+
 CPLErr CPL_DLL CPL_STDCALL
 GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
                           GDALTransformerFunc pfnTransformer,
