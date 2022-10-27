@@ -249,7 +249,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && wget https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y -V ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
     && apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-dev${APT_ARCH_SUFFIX} libparquet-dev${APT_ARCH_SUFFIX} \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-dev${APT_ARCH_SUFFIX}=9.0.0-1 libparquet-dev${APT_ARCH_SUFFIX}=9.0.0-1 \
     && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update -y \
