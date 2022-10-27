@@ -155,16 +155,15 @@ General creation options
 - **OVERVIEWS=[AUTO/IGNORE_EXISTING/FORCE_USE_EXISTING/NONE]**: Describe the behavior
   regarding overview generation and use of source overviews.
 
-  - ``AUTO`` (default): source overviews will be
-    used if present (even if the dimension of the smallest level is not < 512 pixels),
-    and, if not present, overviews will be automatically generated in the
+  - ``AUTO`` (default): source overviews will be used if present.
+    If not present, overviews will be automatically generated in the
     output file.
 
   - ``IGNORE_EXISTING``: potential existing overviews on the source dataset will
     be ignored and new overviews will be automatically generated.
 
   - ``FORCE_USE_EXISTING``: potential existing overviews on the source will
-    be used (even if the dimension of the smallest level is not < 512 pixels).
+    be used.
     If there is no source overview, this is equivalent to specifying ``NONE``.
 
   - ``NONE``: potential source overviews will be ignored, and no overview will be
@@ -175,6 +174,19 @@ General creation options
         When using the gdal_translate utility, source overviews will not be
         available if general options (i.e. options which are not creation options,
         like subsetting, etc.) are used.
+
+- **OVERVIEW_COUNT=integer_value**: (since GDAL 3.6)
+  Number of overview levels to generate. This can be used to increase or decrease
+  the number of levels in the COG file (when GDAL computes overviews from the
+  full resolution dataset, that is when there are no source overviews or the user
+  specifies OVERVIEWS=IGNORE_EXISTING), or decrease the number of levels copied
+  from the source dataset (in OVERVIEWS=AUTO or FORCE_USE_EXISTING modes when
+  there are such overviews in the source dataset).
+
+  If not specified, the driver will use all the overviews available in the source raster,
+  in OVERVIEW=AUTO or FORCE_USE_EXISTING modes. In situations where GDAL generates
+  overviews, the default number of overview levels is such that the dimensions of
+  the smallest overview are smaller or equal to the BLOCKSIZE value.
 
 - **OVERVIEW_COMPRESS=[AUTO/NONE/LZW/JPEG/DEFLATE/ZSTD/WEBP/LERC/LERC_DEFLATE/LERC_ZSTD/LZMA]**:
   Set the compression method (see ``COMPRESS``) to use when storing the overviews in the COG.

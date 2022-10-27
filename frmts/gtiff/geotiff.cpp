@@ -584,7 +584,8 @@ private:
                                               int l_nJpegQuality,
                                               CSLConstList papszOptions );
     CPLErr        CreateOverviewsFromSrcOverviews( GDALDataset* poSrcDS,
-                                                   GDALDataset* poOvrDS );
+                                                   GDALDataset* poOvrDS,
+                                                   int nOverviews );
     CPLErr        CreateInternalMaskOverviews( int nOvrBlockXSize,
                                                int nOvrBlockYSize );
     int           Finalize();
@@ -12657,7 +12658,8 @@ bool GTiffDataset::GetOverviewParameters(int& nCompression,
 // If poOvrDS is not null, it is used and poSrcDS is ignored.
 
 CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS,
-                                                     GDALDataset* poOvrDS)
+                                                     GDALDataset* poOvrDS,
+                                                     int nOverviews)
 {
     CPLAssert(poSrcDS->GetRasterCount() != 0);
     CPLAssert(m_nOverviewCount == 0);
@@ -12714,12 +12716,9 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS,
     GTIFFGetOverviewBlockSize(GDALRasterBand::ToHandle(GetRasterBand(1)),
                               &nOvrBlockXSize, &nOvrBlockYSize);
 
-    int nSrcOverviews = poOvrDS ?
-        poOvrDS->GetRasterBand(1)->GetOverviewCount() + 1:
-        poSrcDS->GetRasterBand(1)->GetOverviewCount();
     CPLErr eErr = CE_None;
 
-    for( int i = 0; i < nSrcOverviews && eErr == CE_None; ++i )
+    for( int i = 0; i < nOverviews && eErr == CE_None; ++i )
     {
         GDALRasterBand* poOvrBand = poOvrDS ?
             ((i == 0) ? poOvrDS->GetRasterBand(1) :
@@ -19995,6 +19994,12 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             nSrcOverviews = poSrcDS->GetRasterBand(1)->GetOverviewCount();
         }
+
+        // Limit number of overviews if specified
+        const char* pszOverviewCount = CSLFetchNameValue(papszCreateOptions, "@OVERVIEW_COUNT");
+        if( pszOverviewCount )
+            nSrcOverviews = std::max(0, std::min(nSrcOverviews, atoi(pszOverviewCount)));
+
         if( nSrcOverviews )
         {
             for( int j = 1; j <= l_nBands; ++j )
@@ -20002,7 +20007,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 const int nOtherBandOverviewCount = poOvrDS ?
                     poOvrDS->GetRasterBand(j)->GetOverviewCount() + 1:
                     poSrcDS->GetRasterBand(j)->GetOverviewCount();
-                if( nOtherBandOverviewCount != nSrcOverviews )
+                if( nOtherBandOverviewCount < nSrcOverviews )
                 {
                     ReportError( pszFilename, CE_Failure, CPLE_NotSupported,
                         "COPY_SRC_OVERVIEWS cannot be used when the bands have "
@@ -21032,7 +21037,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
         if( nSrcOverviews )
         {
-            eErr = poDS->CreateOverviewsFromSrcOverviews(poSrcDS, poOvrDS.get());
+            eErr = poDS->CreateOverviewsFromSrcOverviews(poSrcDS, poOvrDS.get(), nSrcOverviews);
 
             if( eErr == CE_None &&
                 (poMaskOvrDS != nullptr ||

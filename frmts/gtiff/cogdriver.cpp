@@ -627,12 +627,12 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
     const int nBands = poSrcDS->GetRasterCount();
     const char* pszOverviews = CSLFetchNameValueDef(
         papszOptions, "OVERVIEWS", "AUTO");
-    const bool bRecreateOvr = EQUAL(pszOverviews, "FORCE_USE_EXISTING") ||
+    const bool bUseExistingOrNone = EQUAL(pszOverviews, "FORCE_USE_EXISTING") ||
                               EQUAL(pszOverviews, "NONE");
     dfTotalPixelsToProcess =
         double(nXSize) * nYSize * (nBands + (bHasMask ? 1 : 0)) +
-        ((bHasMask && !bRecreateOvr) ? double(nXSize) * nYSize / 3 : 0) +
-        (!bRecreateOvr ? double(nXSize) * nYSize * nBands / 3: 0) +
+        ((bHasMask && !bUseExistingOrNone) ? double(nXSize) * nYSize / 3 : 0) +
+        (!bUseExistingOrNone ? double(nXSize) * nYSize * nBands / 3: 0) +
         double(nXSize) * nYSize * (nBands + (bHasMask ? 1 : 0)) * 4. / 3;
 
     auto psOptions = GDALWarpAppOptionsNew(papszArg, nullptr);
@@ -877,17 +877,21 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
 
     CPLString osOverviews = CSLFetchNameValueDef(
         papszOptions, "OVERVIEWS", "AUTO");
-    const bool bRecreateOvr = EQUAL(osOverviews, "FORCE_USE_EXISTING") ||
+    const bool bUseExistingOrNone = EQUAL(osOverviews, "FORCE_USE_EXISTING") ||
                               EQUAL(osOverviews, "NONE");
+
+    const int nOverviewCount = atoi(
+        CSLFetchNameValueDef(papszOptions, "OVERVIEW_COUNT", "-1"));
+
     const bool bGenerateMskOvr =
-        !bRecreateOvr &&
+        !bUseExistingOrNone &&
         bHasMask &&
-        (nXSize > nOvrThresholdSize || nYSize > nOvrThresholdSize) &&
+        (nXSize > nOvrThresholdSize || nYSize > nOvrThresholdSize || nOverviewCount > 0) &&
         (EQUAL(osOverviews, "IGNORE_EXISTING") ||
          poFirstBand->GetMaskBand()->GetOverviewCount() == 0);
     const bool bGenerateOvr =
-        !bRecreateOvr &&
-        (nXSize > nOvrThresholdSize || nYSize > nOvrThresholdSize) &&
+        !bUseExistingOrNone &&
+        (nXSize > nOvrThresholdSize || nYSize > nOvrThresholdSize || nOverviewCount > 0) &&
         (EQUAL(osOverviews, "IGNORE_EXISTING") ||
          poFirstBand->GetOverviewCount() == 0);
 
@@ -898,12 +902,26 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
     {
         const auto& tmList = poTM->tileMatrixList();
         int nCurLevel = nZoomLevel;
-        while( nTmpXSize > nOvrThresholdSize || nTmpYSize > nOvrThresholdSize )
+        while( true )
         {
+            if( nOverviewCount < 0 )
+            {
+                if( nTmpXSize <= nOvrThresholdSize && nTmpYSize <= nOvrThresholdSize )
+                    break;
+            }
+            else if( static_cast<int>(asOverviewDims.size()) == nOverviewCount ||
+                     (nTmpXSize == 1 && nTmpYSize == 1) )
+            {
+                break;
+            }
             const double dfResRatio = (nCurLevel >= 1) ?
                 tmList[nCurLevel-1].mResX / tmList[nCurLevel].mResX : 2;
             nTmpXSize = static_cast<int>(nTmpXSize / dfResRatio + 0.5);
             nTmpYSize = static_cast<int>(nTmpYSize / dfResRatio + 0.5);
+            if( nTmpXSize == 0 )
+                nTmpXSize = 1;
+            if( nTmpYSize == 0 )
+                nTmpYSize = 1;
             asOverviewDims.push_back(std::pair<int,int>(nTmpXSize, nTmpYSize));
             nCurLevel --;
         }
@@ -914,7 +932,10 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
         {
             // If generating only .msk.ovr, use the exact overview size as
             // the overviews of the imagery.
-            for(int i = 0; i < poFirstBand->GetOverviewCount(); i++ )
+            int nIters = poFirstBand->GetOverviewCount();
+            if( nOverviewCount >= 0 && nOverviewCount < nIters )
+                nIters = nOverviewCount;
+            for(int i = 0; i < nIters; i++ )
             {
                 auto poOvrBand = poFirstBand->GetOverview(i);
                 asOverviewDims.push_back(std::pair<int,int>(
@@ -923,11 +944,24 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
         }
         else
         {
-            while( nTmpXSize > nOvrThresholdSize ||
-                   nTmpYSize > nOvrThresholdSize )
+            while( true )
             {
+                if( nOverviewCount < 0 )
+                {
+                    if( nTmpXSize <= nOvrThresholdSize && nTmpYSize <= nOvrThresholdSize )
+                        break;
+                }
+                else if( static_cast<int>(asOverviewDims.size()) == nOverviewCount ||
+                         (nTmpXSize == 1 && nTmpYSize == 1) )
+                {
+                    break;
+                }
                 nTmpXSize /= 2;
                 nTmpYSize /= 2;
+                if( nTmpXSize == 0 )
+                    nTmpXSize = 1;
+                if( nTmpYSize == 0 )
+                    nTmpYSize = 1;
                 asOverviewDims.push_back(std::pair<int,int>(nTmpXSize, nTmpYSize));
             }
         }
@@ -1111,6 +1145,9 @@ GDALDataset* GDALCOGCreator::Create(const char * pszFilename,
         {
             aosOptions.SetNameValue("@MASK_OVERVIEW_DATASET", m_osTmpMskOverviewFilename);
         }
+        aosOptions.SetNameValue("@OVERVIEW_COUNT",
+                                CSLFetchNameValue(papszOptions, "OVERVIEW_COUNT"));
+
     }
 
     const CPLString osTilingScheme(CSLFetchNameValueDef(papszOptions,
@@ -1340,6 +1377,7 @@ void GDALCOGDriver::InitializeCreationOptionList()
 "     <Value>FORCE_USE_EXISTING</Value>"
 "     <Value>NONE</Value>"
 "   </Option>"
+"  <Option name='OVERVIEW_COUNT' type='int' min='0' description='Number of overviews'/>"
 "  <Option name='TILING_SCHEME' type='string' description='"
         "Which tiling scheme to use pre-defined value or custom inline/outline "
         "JSON definition' default='CUSTOM'>"
