@@ -4433,12 +4433,19 @@ CPLString OGRGeoPackageTableLayer::GetSpatialWhere(int iGeomColIn,
 
         poFilterGeom->getEnvelope( &sEnvelope );
 
+        const char* pszC =
+            m_poFeatureDefn->GetGeomFieldDefn(iGeomColIn)->GetNameRef();
+
         if( CPLIsInf(sEnvelope.MinX) && sEnvelope.MinX < 0 &&
             CPLIsInf(sEnvelope.MinY) && sEnvelope.MinY < 0 &&
             CPLIsInf(sEnvelope.MaxX) && sEnvelope.MaxX > 0 &&
             CPLIsInf(sEnvelope.MaxY) && sEnvelope.MaxY > 0 )
         {
-            return CPLString();
+            osSpatialWHERE.Printf(
+                "(\"%s\" IS NOT NULL AND NOT ST_IsEmpty(\"%s\"))",
+                SQLEscapeName(pszC).c_str(),
+                SQLEscapeName(pszC).c_str());
+            return osSpatialWHERE;
         }
 
         bool bUseSpatialIndex = true;
@@ -4468,8 +4475,34 @@ CPLString OGRGeoPackageTableLayer::GetSpatialWhere(int iGeomColIn,
         }
         else
         {
-            const char* pszC =
-                m_poFeatureDefn->GetGeomFieldDefn(iGeomColIn)->GetNameRef();
+            if( HasSpatialIndex() )
+            {
+                // If we do have a spatial index, and our filter contains the
+                // bounding box of the RTree, then just filter on non-null
+                // non-empty geometries.
+                CPLString osSQL = "SELECT 1 FROM ";
+                osSQL += "\"" + SQLEscapeName(m_osRTreeName) + "\"";
+                osSQL += " LIMIT 1";
+
+                double minx, miny, maxx, maxy;
+                if ( SQLGetInteger(m_poDS->GetDB(), osSQL, nullptr) != 0 &&
+                     findMinOrMax( m_poDS, m_osRTreeName, "MINX", true, minx ) &&
+                     findMinOrMax( m_poDS, m_osRTreeName, "MINY", true, miny ) &&
+                     findMinOrMax( m_poDS, m_osRTreeName, "MAXX", false, maxx ) &&
+                     findMinOrMax( m_poDS, m_osRTreeName, "MAXY", false, maxy ) &&
+                     sEnvelope.MinX <= minx &&
+                     sEnvelope.MinY <= miny &&
+                     sEnvelope.MaxX >= maxx &&
+                     sEnvelope.MaxY >= maxy )
+                {
+                    osSpatialWHERE.Printf(
+                        "(\"%s\" IS NOT NULL AND NOT ST_IsEmpty(\"%s\"))",
+                        SQLEscapeName(pszC).c_str(),
+                        SQLEscapeName(pszC).c_str());
+                    return osSpatialWHERE;
+                }
+            }
+
             /* A bit inefficient but still faster than OGR filtering */
             osSpatialWHERE.Printf(
                 "(ST_MaxX(\"%s\") >= %.12f AND ST_MinX(\"%s\") <= %.12f AND "
