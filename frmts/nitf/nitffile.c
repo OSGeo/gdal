@@ -621,7 +621,12 @@ int NITFCreateEx( const char *pszFilename,
             return FALSE;
         }
         nIM = atoi(pszNUMI);
-        if (nIM < 1 || nIM > 999)
+        if (nIM == 0 )
+        {
+            if( pnIndex )
+                *pnIndex = -1;
+        }
+        else if (nIM < 0 || nIM > 999)
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                     "Invalid NUMI value : %s", pszNUMI);
