@@ -4240,7 +4240,8 @@ GDALRegenerateOverviewsEx( GDALRasterBandH hSrcBand,
          EQUAL(pszResampling, "CUBIC") ||
          EQUAL(pszResampling, "CUBICSPLINE") ||
          EQUAL(pszResampling, "LANCZOS") ||
-         EQUAL(pszResampling, "BILINEAR")) && nOverviewCount > 1
+         EQUAL(pszResampling, "BILINEAR") ||
+         EQUAL(pszResampling, "MODE")) && nOverviewCount > 1
          && bCanUseCascaded )
         return GDALRegenerateCascadingOverviews( poSrcBand,
                                                  nOverviewCount, papoOvrBands,
@@ -4866,7 +4867,8 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand* const* papoSrcBand
         !EQUAL(pszResampling, "CUBIC") &&
         !EQUAL(pszResampling, "CUBICSPLINE") &&
         !EQUAL(pszResampling, "LANCZOS") &&
-        !EQUAL(pszResampling, "BILINEAR") )
+        !EQUAL(pszResampling, "BILINEAR") &&
+        !EQUAL(pszResampling, "MODE") )
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,

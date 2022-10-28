@@ -1062,7 +1062,8 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
           EQUAL(pszResampling, "CUBIC") ||
           EQUAL(pszResampling, "CUBICSPLINE") ||
           EQUAL(pszResampling, "LANCZOS") ||
-          EQUAL(pszResampling, "BILINEAR")) )
+          EQUAL(pszResampling, "BILINEAR") ||
+          EQUAL(pszResampling, "MODE")) )
     {
         // In the case of pixel interleaved compressed overviews, we want to
         // generate the overviews for all the bands block by block, and not

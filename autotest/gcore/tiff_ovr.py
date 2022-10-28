@@ -682,6 +682,41 @@ def test_tiff_ovr_18(both_endian):
 
 
 ###############################################################################
+# Check mode resampling with multiband logic
+
+
+@pytest.mark.parametrize("multiband", [True, False])
+@pytest.mark.parametrize("read_only", [True, False])
+def test_tiff_ovr_mode_multiband(multiband, read_only):
+
+    ds = gdal.Translate(
+        "/vsimem/test.tif",
+        "data/stefan_full_rgba.tif",
+        creationOptions=["COMPRESS=LZW"] if multiband else [],
+    )
+    if read_only:
+        ds = None
+        ds = gdal.Open("/vsimem/test.tif")
+    ds.BuildOverviews("MODE", [2, 4])
+    ds = None
+    ds = gdal.Open("/vsimem/test.tif")
+    assert [ds.GetRasterBand(i + 1).GetOverview(0).Checksum() for i in range(4)] == [
+        18926,
+        14090,
+        8398,
+        36045,
+    ]
+    assert [ds.GetRasterBand(i + 1).GetOverview(1).Checksum() for i in range(4)] == [
+        3501,
+        2448,
+        1344,
+        8583,
+    ]
+    ds = None
+    gdal.GetDriverByName("GTiff").Delete("/vsimem/test.tif")
+
+
+###############################################################################
 # Check that we can create overviews on a newly create file (#2621)
 
 

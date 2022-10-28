@@ -13188,11 +13188,20 @@ CPLErr GTiffDataset::IBuildOverviews(
         CPLFree(papoOverviewBands);
     }
 
+    // If we have an alpha band, we want it to be generated before downsampling
+    // other bands
+    bool bHasAlphaBand = false;
+    for( int iBand = 0; iBand < nBands; iBand++ )
+    {
+        if( papoBands[iBand]->GetColorInterpretation() == GCI_AlphaBand )
+            bHasAlphaBand = true;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Refresh old overviews that were listed.                         */
 /* -------------------------------------------------------------------- */
     const auto poColorTable = GetRasterBand( panBandList[0] )->GetColorTable();
-    if( m_nPlanarConfig == PLANARCONFIG_CONTIG &&
+    if( (m_nPlanarConfig == PLANARCONFIG_CONTIG || bHasAlphaBand ) &&
         GDALDataTypeIsComplex(GetRasterBand( panBandList[0] )->
                               GetRasterDataType()) == FALSE &&
         (poColorTable == nullptr ||
@@ -13205,7 +13214,8 @@ CPLErr GTiffDataset::IBuildOverviews(
          EQUAL(pszResampling, "CUBIC") ||
          EQUAL(pszResampling, "CUBICSPLINE") ||
          EQUAL(pszResampling, "LANCZOS") ||
-         EQUAL(pszResampling, "BILINEAR")) )
+         EQUAL(pszResampling, "BILINEAR") ||
+         EQUAL(pszResampling, "MODE")) )
     {
         // In the case of pixel interleaved compressed overviews, we want to
         // generate the overviews for all the bands block by block, and not
