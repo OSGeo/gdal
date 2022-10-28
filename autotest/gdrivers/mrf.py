@@ -324,6 +324,15 @@ def test_mrf_overview_avg_fact_2():
         ds = gdal.Open("/vsimem/out.mrf")
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
         assert cs == expected_cs, gdal.GetDataTypeName(dt)
+
+        # Check that it is not crashing (https://github.com/OSGeo/gdal/issues/6581)
+        assert (
+            ds.GetRasterBand(1).ReadRaster(
+                0, 0, 20, 20, 5, 5, resample_alg=gdal.GRIORA_Average
+            )
+            is not None
+        )
+
         ds = None
         cleanup()
 

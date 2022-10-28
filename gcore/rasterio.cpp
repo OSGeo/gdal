@@ -1088,7 +1088,7 @@ CPLErr GDALRasterBand::RasterIOResampled(
     GByte* pabyData = static_cast<GByte*>(pDataMem)
                         - nPSMem * nDestXOffVirtual
                         - nLSMem * nDestYOffVirtual;
-    GDALRasterBandH hMEMBand = MEMCreateRasterBandEx( poDS, 1, pabyData,
+    GDALRasterBandH hMEMBand = MEMCreateRasterBandEx( poMEMDS, 1, pabyData,
                                                       eDTMem,
                                                       nPSMem, nLSMem,
                                                       false );
