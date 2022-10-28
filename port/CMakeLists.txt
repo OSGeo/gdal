@@ -198,7 +198,7 @@ if (GDAL_USE_ICONV)
   add_library(cpl_iconv OBJECT cpl_recode_iconv.cpp)
   target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:cpl_iconv>)
   target_compile_options(cpl_iconv PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})
-  set_property(TARGET cpl_iconv PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
+  set_property(TARGET cpl_iconv PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
   target_compile_definitions(cpl_iconv PRIVATE -DHAVE_ICONV)
   # include path to generated cpl_config.h
   target_include_directories(cpl_iconv PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
