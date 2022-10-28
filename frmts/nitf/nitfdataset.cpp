@@ -2153,7 +2153,8 @@ CPLErr NITFDataset::SetGeoTransform( double *padfGeoTransform )
     double dfIGEOLOLLX = dfIGEOLOULX + padfGeoTransform[2] * (nRasterYSize - 1);
     double dfIGEOLOLLY = dfIGEOLOULY + padfGeoTransform[5] * (nRasterYSize - 1);
 
-    if( NITFWriteIGEOLO( psImage, psImage->chICORDS,
+    if( psImage != nullptr &&
+        NITFWriteIGEOLO( psImage, psImage->chICORDS,
                          psImage->nZone,
                          dfIGEOLOULX, dfIGEOLOULY, dfIGEOLOURX, dfIGEOLOURY,
                          dfIGEOLOLRX, dfIGEOLOLRY, dfIGEOLOLLX, dfIGEOLOLLY ) )
@@ -2627,7 +2628,8 @@ void NITFDataset::InitializeNITFMetadata()
 
     int nImageSubheaderLen = 0;
 
-    if (STARTS_WITH(psFile->pasSegmentInfo[psImage->iSegment].szSegmentType, "IM"))
+    if (psImage != nullptr &&
+        STARTS_WITH(psFile->pasSegmentInfo[psImage->iSegment].szSegmentType, "IM"))
     {
         nImageSubheaderLen = psFile->pasSegmentInfo[psImage->iSegment].nSegmentHeaderSize;
     }
@@ -5283,7 +5285,7 @@ NITFDataset::NITFCreateCopy(
 
         CPLErr eErr = CE_None;
 
-        for( int iBand = 0; eErr == CE_None && iBand < poSrcDS->GetRasterCount(); iBand++ )
+        for( int iBand = 0; nIMIndex >= 0 && eErr == CE_None && iBand < poSrcDS->GetRasterCount(); iBand++ )
         {
             GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
             GDALRasterBand *poDstBand = poDstDS->GetRasterBand( iBand+1 );
@@ -5338,7 +5340,11 @@ NITFDataset::NITFCreateCopy(
 /* -------------------------------------------------------------------- */
 /*      Set the georeferencing.                                         */
 /* -------------------------------------------------------------------- */
-    if( bManualWriteOfIGEOLO )
+    if( poDstDS->psImage == nullptr )
+    {
+        // do nothing
+    }
+    else if( bManualWriteOfIGEOLO )
     {
         if( !NITFWriteIGEOLO(poDstDS->psImage,
                              poDstDS->psImage->chICORDS,

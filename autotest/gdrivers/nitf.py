@@ -5149,6 +5149,33 @@ def test_nitf_pam_metadata_several_images():
 
 
 ###############################################################################
+# Test writing/reading a file without image segment
+
+
+def test_nitf_no_image_segment():
+
+    src_ds = gdal.Open("data/byte.tif")
+    out_filename = "/vsimem/test_nitf_no_image_segment.ntf"
+    with gdaltest.error_handler():
+        assert (
+            gdal.GetDriverByName("NITF").CreateCopy(
+                out_filename, src_ds, strict=False, options=["NUMI=0"]
+            )
+            is not None
+        )
+    gdal.Unlink(out_filename + ".aux.xml")
+    with gdaltest.error_handler():
+        ds = gdal.Open(out_filename)
+    assert ds is not None
+    for domain in ds.GetMetadataDomainList():
+        ds.GetMetadata(domain)
+    ds = None
+
+    with gdaltest.error_handler():
+        gdal.GetDriverByName("NITF").Delete(out_filename)
+
+
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 
