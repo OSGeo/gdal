@@ -40,7 +40,10 @@ Process :
      (*NOT* gdal_version.h which is a generated file)
      Note: the format of GDAL_RELEASE_DATE should be YYYYMMDD.
 
-2.2) Update two instances of year in ../CITATION file to the current year.
+2.2) Update two instances of year in CITATION file to the current year.
+
+2.3) Update "version" and "date-released" in CITATION.cff (Note: the DOI does
+     *not* need to be updated as it is a generic one)
 
 3) Update the VERSION file (if not already done)
 

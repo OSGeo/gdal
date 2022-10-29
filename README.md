@@ -73,5 +73,5 @@ See [SECURITY.md](SECURITY.md)
 
 ### Citing GDAL/OGR in publications
 
-See [CITATION](CITATION)
+See [CITATION](CITATION) and [CITATION.cff](CITATION.cff)
 

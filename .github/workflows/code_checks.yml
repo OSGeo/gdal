@@ -96,9 +96,10 @@ jobs:
       - name: Install Requirements
         run: |
             sudo apt install python3-pip wget
-            sudo pip3 install jsonschema
+            sudo pip3 install cffconvert
 
-      - name: Check json files
+      - name: Validate citation file
         run: |
-            wget https://raw.githubusercontent.com/rouault/zenodo_json_schema/master/zenodo-json-schema.json
-            jsonschema -i .zenodo.json zenodo-json-schema.json
+            cffconvert --validate
+            cffconvert -f bibtex
+            cffconvert -f apalike
