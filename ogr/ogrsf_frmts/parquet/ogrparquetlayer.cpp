@@ -28,10 +28,12 @@
 
 #include "cpl_json.h"
 #include "cpl_time.h"
+#include "cpl_multiproc.h"
 #include "gdal_pam.h"
 #include "ogrsf_frmts.h"
 #include "ogr_p.h"
 
+#include <algorithm>
 #include <cinttypes>
 #include <limits>
 #include <map>
@@ -325,6 +327,18 @@ OGRParquetLayer::OGRParquetLayer(OGRParquetDataset* poDS,
     const char* pszParquetBatchSize = CPLGetConfigOption("OGR_PARQUET_BATCH_SIZE", nullptr);
     if( pszParquetBatchSize )
         m_poArrowReader->set_batch_size(CPLAtoGIntBig(pszParquetBatchSize));
+
+    const char* pszNumThreads = CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
+    int nNumThreads = 0;
+    if( pszNumThreads == nullptr )
+        nNumThreads = std::min(4, CPLGetNumCPUs());
+    else
+        nNumThreads = EQUAL(pszNumThreads, "ALL_CPUS") ? CPLGetNumCPUs() : atoi(pszNumThreads);
+    if( nNumThreads > 1 )
+    {
+        CPL_IGNORE_RET_VAL(arrow::SetCpuThreadPoolCapacity(nNumThreads));
+        m_poArrowReader->set_use_threads(true);
+    }
 
     EstablishFeatureDefn();
     CPLAssert( static_cast<int>(m_aeGeomEncoding.size()) == m_poFeatureDefn->GetGeomFieldCount() );
