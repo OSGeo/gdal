@@ -85,6 +85,15 @@ if the driver is built against the ``arrowdataset`` C++ library.
 
 Note that no optimization is currently done regarding filtering.
 
+Multithreading
+--------------
+
+Starting with GDAL 3.6.0, the driver will use up to 4 threads for reading (or the
+maximum number of available CPUs returned by :cpp:func:`CPLGetNumCPUs()` if
+it is lower by 4). This number can be configured with the configuration option
+:decl_configoption:`GDAL_NUM_THREADS`, which can be set to an integer value or
+``ALL_CPUS``.
+
 Links
 -----
 
