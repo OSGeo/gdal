@@ -62,28 +62,28 @@ typedef unsigned char Guchar;
 #endif
 
 /* begin of poppler xpdf includes */
-#include <poppler/Object.h>
-#include <poppler/Stream.h>
+#include <Object.h>
+#include <Stream.h>
 
 #define private public /* Ugly! Page::pageObj is private but we need it... */
-#include <poppler/Page.h>
+#include <Page.h>
 #undef private
 
-#include <poppler/Dict.h>
+#include <Dict.h>
 
 #define private public /* Ugly! Catalog::optContent is private but we need it... */
-#include <poppler/Catalog.h>
+#include <Catalog.h>
 #undef private
 
 #define private public  /* Ugly! PDFDoc::str is private but we need it... */
-#include <poppler/PDFDoc.h>
+#include <PDFDoc.h>
 #undef private
 
-#include <poppler/splash/SplashBitmap.h>
-#include <poppler/splash/Splash.h>
-#include <poppler/SplashOutputDev.h>
-#include <poppler/GlobalParams.h>
-#include <poppler/ErrorCodes.h>
+#include <splash/SplashBitmap.h>
+#include <splash/Splash.h>
+#include <SplashOutputDev.h>
+#include <GlobalParams.h>
+#include <ErrorCodes.h>
 
 /* end of poppler xpdf includes */
 
