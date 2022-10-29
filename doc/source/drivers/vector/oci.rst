@@ -22,7 +22,7 @@ for more information about the OCI driver.
 If the list of tables is not provided, then all tables appearing in
 ALL_SDO_GEOM_METADATA will be treated by OGR as layers with the table
 names as the layer names. Non-spatial tables or spatial tables not
-listed in the ALL_SDO_GEOM_METADATA view are not accessible unless
+listed in the ALL_SDO_GEOM_METADATA view [#]_ are not accessible unless
 explicitly listed in the datasource name. Even in databases where all
 desired layers are in the ALL_SDO_GEOM_METADATA view, it may be
 desirable to list only the tables to be used as this can substantially
@@ -35,9 +35,14 @@ field.
 
 When reading data from one or more views, the view names should be 
 specified in the form
-"OCI:userid/password@database_instance:view,view", as views are not
-listed in ALL_SDO_GEOM_METADATA. In databases with many tables, this
-can substantially reduce initalization time, as described above.
+"OCI:userid/password@database_instance:view,view". What is written 
+above regarding tables, applies to views as well.
+
+.. [#] It is the database user that is responsible for updating the
+   ALL_SDO_GEOM_METADATA view, by inserting an appropriate row into the 
+   USER_SDO_GEOM_METADATA view. This is why it is possible that the 
+   table you want to read from is not listed in the 
+   ALL_SDO_GEOM_METADATA. 
 
 Driver capabilities
 -------------------
