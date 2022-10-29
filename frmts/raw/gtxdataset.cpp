@@ -32,6 +32,8 @@
 #include "ogr_srs_api.h"
 #include "rawdataset.h"
 
+#include <limits>
+
 
 /**
 
@@ -262,7 +264,9 @@ GDALDataset *GTXDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->adfGeoTransform[0] -= 360.0;
     }
 
-    if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
+    if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
+        static_cast<vsi_l_offset>(poDS->nRasterXSize) *
+            poDS->nRasterYSize > std::numeric_limits<vsi_l_offset>::max() / sizeof(double) )
     {
         delete poDS;
         return nullptr;
@@ -276,7 +280,7 @@ GDALDataset *GTXDataset::Open( GDALOpenInfo * poOpenInfo )
     const vsi_l_offset nSize = VSIFTellL(poDS->fpImage);
 
     GDALDataType eDT = GDT_Float32;
-    if( nSize == 40 + 8 * static_cast<vsi_l_offset>(poDS->nRasterXSize) *
+    if( nSize - 40 == sizeof(double) * static_cast<vsi_l_offset>(poDS->nRasterXSize) *
         poDS->nRasterYSize )
         eDT = GDT_Float64;
     const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
