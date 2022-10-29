@@ -793,7 +793,16 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
                 if (passport.stMapDescription.Env.MaxX < 500000)
                     adfPrjParams[5] = 500000;
                 else
-                    adfPrjParams[5] = nZoneEnv * 1000000 + 500000;
+                {
+                    if( nZoneEnv >= -60 && nZoneEnv <= 60 )
+                        adfPrjParams[5] = nZoneEnv * 1000000 + 500000;
+                    else
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Wrong nZoneEnv = %d value", nZoneEnv);
+                        return OGRERR_FAILURE;
+                    }
+                }
             }
         }
     }
