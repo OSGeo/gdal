@@ -178,7 +178,7 @@ CPLString BuildConnectionString(char** openOptions)
             return;
 
         CPLString value(paramValue);
-        if (value.find_first_of(specialChars))
+        if (value.find_first_of(specialChars) != std::string::npos)
         {
             value.replaceAll("}", "}}");
             params.push_back( CPLString(paramName) + "={" + value + "}" );
