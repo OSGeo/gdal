@@ -36,6 +36,7 @@
 #include "ograrrowarrayhelper.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 
 #undef SQLITE_STATIC
@@ -6716,6 +6717,8 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
             GDALOpenInfo oOpenInfo(m_poDS->GetDescription(), GA_ReadOnly);
             oOpenInfo.papszOpenOptions = m_poDS->GetOpenOptions();
             oOpenInfo.nOpenFlags = GDAL_OF_VECTOR;
+            // avoid coverity scan false positive about nullptr dereference
+            assert(m_poOtherDS);
             if( !m_poOtherDS->Open(&oOpenInfo) )
             {
                 m_poOtherDS.reset();
