@@ -53,7 +53,7 @@ OGRSXFLayer::OGRSXFLayer(
     m_nSXFFormatVer(nVer),
     sFIDColumn_("ogc_fid"),
     m_hIOMutex(hIOMutex),
-    m_dfCoeff(sxfMapDesc.dfScale / sxfMapDesc.nResolution)
+    m_dfCoeff(sxfMapDesc.nResolution == 0 ? 0.0 : sxfMapDesc.dfScale / sxfMapDesc.nResolution)
 {
     stSXFMapDescription.pSpatRef->Reference();
     oNextIt = mnRecordDesc.begin();
@@ -411,7 +411,7 @@ int OGRSXFLayer::TestCapability( const char * pszCap )
     else if (EQUAL(pszCap, OLCFastGetExtent))
         return TRUE;
     else if (EQUAL(pszCap, OLCFastSetNextByIndex))
-        return TRUE;    
+        return TRUE;
     else if (EQUAL(pszCap, OLCZGeometries))
         return TRUE;
 
