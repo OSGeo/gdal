@@ -29,9 +29,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import array
 import struct
 
 import ogrtest
+import pytest
 
 from osgeo import gdal, ogr
 
@@ -171,6 +173,744 @@ def test_gdal_grid_lib_3():
         format="MEM",
         algorithm="linear",
     )
+
+
+###############################################################################
+# Test invdistnn per quadrant
+
+
+def _compare_arrays(ds, expected_array):
+
+    got_data = ds.ReadRaster(buf_type=gdal.GDT_Float32)
+    got_array = []
+    for j in range(ds.RasterYSize):
+        ar = array.array("f")
+        sizeof_float = 4
+        ar.frombytes(
+            got_data[
+                j
+                * ds.RasterXSize
+                * sizeof_float : (j + 1)
+                * ds.RasterXSize
+                * sizeof_float
+            ]
+        )
+        got_array.append(ar.tolist())
+    assert got_array == expected_array
+
+
+def _shift_by(geom, dx, dy):
+    for i in range(geom.GetGeometryCount()):
+        subgeom = geom.GetGeometryRef(i)
+        subgeom.SetPoint(0, subgeom.GetX(0) + dx, subgeom.GetY(0) + dy, subgeom.GetZ(0))
+
+
+@pytest.mark.parametrize("alg", ["invdist", "invdistnn"])
+def test_gdal_grid_lib_invdistnn_quadrant_all_params(alg):
+
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 10,1 0 100000000)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm=alg
+        + ":power=1.5:smoothing=0.000000000000001:radius=2:max_points=10:min_points=4:min_points_per_quadrant=1:max_points_per_quadrant=2",
+    )
+    power = 1.5
+    dist1 = (0.5**2 + 0.5**2) ** (power / 2.0)
+    dist2 = (1**2 + 0**2) ** (power / 2.0)
+    expected_val = (4 * 10 / dist1 + 100000000 / dist2) / (4 / dist1 + 1 / dist2)
+    expected_val = struct.unpack("f", struct.pack("f", expected_val))[0]
+    _compare_arrays(ds, [[expected_val]])
+
+
+@pytest.mark.parametrize("alg", ["invdist", "invdistnn"])
+def test_gdal_grid_lib_invdistnn_quadrant_insufficient_radius(alg):
+
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 10)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm=alg + ":radius=0.7:min_points_per_quadrant=1",
+    )
+    _compare_arrays(ds, [[0.0]])  # insufficient radius. should be > sqrt(2)
+
+
+def test_gdal_grid_lib_invdistnn_quadrant_min_points_not_reached():
+
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 10)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="invdistnn:radius=1:min_points_per_quadrant=1:min_points=5",
+    )
+    _compare_arrays(ds, [[0.0]])
+
+
+def test_gdal_grid_lib_invdistnn_quadrant_missing_point_in_one_quadrant():
+
+    # Missing point in 0.5 -0.5 quadrant
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="invdistnn:radius=0.8:min_points_per_quadrant=1",
+    )
+    _compare_arrays(ds, [[0.0]])
+
+
+def test_gdal_grid_lib_invdistnn_quadrant_ignore_extra_points():
+
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 10,1 0 100000000)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="invdistnn:radius=2:min_points_per_quadrant=1:max_points=0:max_points_per_quadrant=1",
+    )
+    _compare_arrays(ds, [[10.0]])
+
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="invdistnn:radius=2:min_points_per_quadrant=1:max_points=4",
+    )
+    _compare_arrays(ds, [[10.0]])
+
+
+def test_gdal_grid_lib_average_quadrant_all_params():
+
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 10,1 0 100)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="average:radius=2:max_points=10:min_points=4:min_points_per_quadrant=1:max_points_per_quadrant=2",
+    )
+    expected_val = (4 * 10 + 100.0) / 5
+    expected_val = struct.unpack("f", struct.pack("f", expected_val))[0]
+    _compare_arrays(ds, [[expected_val]])
+
+
+def test_gdal_grid_lib_average_quadrant_insufficient_radius():
+
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 10)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="average:radius=0.7:min_points_per_quadrant=1",
+    )
+    _compare_arrays(ds, [[0.0]])  # insufficient radius. should be > sqrt(2)
+
+
+def test_gdal_grid_lib_average_quadrant_min_points_not_reached():
+
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 10)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="average:radius=1:min_points_per_quadrant=1:min_points=5",
+    )
+    _compare_arrays(ds, [[0.0]])
+
+
+def test_gdal_grid_lib_average_quadrant_missing_point_in_one_quadrant():
+
+    # Missing point in 0.5 -0.5 quadrant
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="average:radius=0.8:min_points_per_quadrant=1",
+    )
+    _compare_arrays(ds, [[0.0]])
+
+
+def test_gdal_grid_lib_average_quadrant_ignore_extra_points():
+
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 10,1 0 100000000)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="average:radius=2:min_points_per_quadrant=1:max_points=0:max_points_per_quadrant=1",
+    )
+    _compare_arrays(ds, [[10.0]])
+
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="average:radius=2:min_points_per_quadrant=1:max_points=4",
+    )
+    _compare_arrays(ds, [[10.0]])
+
+
+def test_gdal_grid_lib_minimum_quadrant_all_params():
+
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 9,1 0 5)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="minimum:radius=2:min_points=4:min_points_per_quadrant=1:max_points_per_quadrant=2",
+    )
+    _compare_arrays(ds, [[5.0]])
+
+
+def test_gdal_grid_lib_minimum_quadrant_insufficient_radius():
+
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 10)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="minimum:radius=0.7:min_points_per_quadrant=1",
+    )
+    _compare_arrays(ds, [[0.0]])  # insufficient radius. should be > sqrt(2)
+
+
+def test_gdal_grid_lib_minimum_quadrant_min_points_not_reached():
+
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 10)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="minimum:radius=1:min_points_per_quadrant=1:min_points=5",
+    )
+    _compare_arrays(ds, [[0.0]])
+
+
+def test_gdal_grid_lib_minimum_quadrant_missing_point_in_one_quadrant():
+
+    # Missing point in 0.5 -0.5 quadrant
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="minimum:radius=0.8:min_points_per_quadrant=1",
+    )
+    _compare_arrays(ds, [[0.0]])
+
+
+def test_gdal_grid_lib_minimum_quadrant_ignore_extra_points():
+
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 10,1 0 1)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="minimum:radius=2:min_points_per_quadrant=1:max_points_per_quadrant=1",
+    )
+    _compare_arrays(ds, [[10.0]])
+
+
+def test_gdal_grid_lib_maximum_quadrant_all_params():
+
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 11,1 0 50)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="maximum:radius=2:min_points=4:min_points_per_quadrant=1:max_points_per_quadrant=2",
+    )
+    _compare_arrays(ds, [[50.0]])
+
+
+def test_gdal_grid_lib_maximum_quadrant_insufficient_radius():
+
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 10)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="maximum:radius=0.7:min_points_per_quadrant=1",
+    )
+    _compare_arrays(ds, [[0.0]])  # insufficient radius. should be > sqrt(2)
+
+
+def test_gdal_grid_lib_maximum_quadrant_min_points_not_reached():
+
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 10)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="maximum:radius=1:min_points_per_quadrant=1:min_points=5",
+    )
+    _compare_arrays(ds, [[0.0]])
+
+
+def test_gdal_grid_lib_maximum_quadrant_missing_point_in_one_quadrant():
+
+    # Missing point in 0.5 -0.5 quadrant
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="maximum:radius=0.8:min_points_per_quadrant=1",
+    )
+    _compare_arrays(ds, [[0.0]])
+
+
+def test_gdal_grid_lib_maximum_quadrant_ignore_extra_points():
+
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 10,1 0 100)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="maximum:radius=2:min_points_per_quadrant=1:max_points_per_quadrant=1",
+    )
+    _compare_arrays(ds, [[10.0]])
+
+
+def test_gdal_grid_lib_range_quadrant_all_params():
+
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 1,1 0 50)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="range:radius=2:min_points=4:min_points_per_quadrant=1:max_points_per_quadrant=2",
+    )
+    _compare_arrays(ds, [[50.0 - 1.0]])
+
+
+def test_gdal_grid_lib_range_quadrant_insufficient_radius():
+
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 0)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="range:radius=0.7:min_points_per_quadrant=1",
+    )
+    _compare_arrays(ds, [[0.0]])  # insufficient radius. should be > sqrt(2)
+
+
+def test_gdal_grid_lib_range_quadrant_min_points_not_reached():
+
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 0)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="range:radius=1:min_points_per_quadrant=1:min_points=5",
+    )
+    _compare_arrays(ds, [[0.0]])
+
+
+def test_gdal_grid_lib_range_quadrant_missing_point_in_one_quadrant():
+
+    # Missing point in 0.5 -0.5 quadrant
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 0)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="range:radius=0.8:min_points_per_quadrant=1",
+    )
+    _compare_arrays(ds, [[0.0]])
+
+
+def test_gdal_grid_lib_range_quadrant_ignore_extra_points():
+
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 1,1 0 100)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="range:radius=2:min_points_per_quadrant=1:max_points_per_quadrant=1",
+    )
+    _compare_arrays(ds, [[9.0]])
+
+
+def test_gdal_grid_lib_count_quadrant_all_params():
+
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 1,1 0 50)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="count:radius=2:min_points=4:min_points_per_quadrant=1:max_points_per_quadrant=2",
+    )
+    _compare_arrays(ds, [[5]])
+
+
+def test_gdal_grid_lib_count_quadrant_insufficient_radius():
+
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 0)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="count:radius=0.7:min_points_per_quadrant=1",
+    )
+    _compare_arrays(ds, [[0.0]])  # insufficient radius. should be > sqrt(2)
+
+
+def test_gdal_grid_lib_count_quadrant_min_points_not_reached():
+
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 0)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="count:radius=1:min_points_per_quadrant=1:min_points=5",
+    )
+    _compare_arrays(ds, [[0.0]])
+
+
+def test_gdal_grid_lib_count_quadrant_missing_point_in_one_quadrant():
+
+    # Missing point in 0.5 -0.5 quadrant
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 0)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="count:radius=0.8:min_points_per_quadrant=1",
+    )
+    _compare_arrays(ds, [[0.0]])
+
+
+def test_gdal_grid_lib_count_quadrant_ignore_extra_points():
+
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 1,1 0 100)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="count:radius=2:min_points_per_quadrant=1:max_points_per_quadrant=1",
+    )
+    _compare_arrays(ds, [[4.0]])
+
+
+def test_gdal_grid_lib_average_distance_quadrant_all_params():
+
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 1,1 0 50)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="average_distance:radius=2:min_points=4:min_points_per_quadrant=1:max_points_per_quadrant=2",
+    )
+    expected_val = (4 * (2 * 0.5**2) ** 0.5 + 1) / 5
+    expected_val = struct.unpack("f", struct.pack("f", expected_val))[0]
+    _compare_arrays(ds, [[expected_val]])
+
+
+def test_gdal_grid_lib_average_distance_quadrant_insufficient_radius():
+
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 0)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="average_distance:radius=0.7:min_points_per_quadrant=1",
+    )
+    _compare_arrays(ds, [[0.0]])  # insufficient radius. should be > sqrt(2)
+
+
+def test_gdal_grid_lib_average_distance_quadrant_min_points_not_reached():
+
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 0)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="average_distance:radius=1:min_points_per_quadrant=1:min_points=5",
+    )
+    _compare_arrays(ds, [[0.0]])
+
+
+def test_gdal_grid_lib_average_distance_quadrant_missing_point_in_one_quadrant():
+
+    # Missing point in 0.5 -0.5 quadrant
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 0)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="average_distance:radius=0.8:min_points_per_quadrant=1",
+    )
+    _compare_arrays(ds, [[0.0]])
+
+
+def test_gdal_grid_lib_average_distance_quadrant_ignore_extra_points():
+
+    wkt = "MULTIPOINT(0.5 0.5 10,-0.5 0.5 10,-0.5 -0.5 10,0.5 -0.5 1,1 0 100)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    SHIFT_X = 10
+    SHIFT_Y = 100
+    _shift_by(geom, SHIFT_X, SHIFT_Y)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5 + SHIFT_X, -0.5 + SHIFT_Y, 0.5 + SHIFT_X, 0.5 + SHIFT_Y],
+        format="MEM",
+        algorithm="average_distance:radius=2:min_points_per_quadrant=1:max_points_per_quadrant=1",
+    )
+    expected_val = (4 * (2 * 0.5**2) ** 0.5) / 4
+    expected_val = struct.unpack("f", struct.pack("f", expected_val))[0]
+    _compare_arrays(ds, [[expected_val]])
 
 
 ###############################################################################
