@@ -19,6 +19,9 @@ concurrency:
 env:
   CMAKE_UNITY_BUILD: OFF
 
+permissions:
+  contents: read  #  to fetch code (actions/checkout)
+
 jobs:
 
   build-linux-ubuntu-focal:
