@@ -35,7 +35,10 @@
 #include "gpkgmbtilescommon.h"
 #include "ogrsqliteutility.h"
 #include "cpl_threadsafe_queue.hpp"
+#include "ograrrowarrayhelper.h"
 
+#include <condition_variable>
+#include <mutex>
 #include <vector>
 #include <set>
 #include <thread>
@@ -83,6 +86,24 @@ struct GPKGContentsDesc
     CPLString osMinY{};
     CPLString osMaxX{};
     CPLString osMaxY{};
+};
+
+class OGRGeoPackageLayer;
+
+struct OGRGPKGTableLayerFillArrowArray
+{
+    std::unique_ptr<OGRArrowArrayHelper> psHelper{};
+    int                  nCountRows = 0;
+    bool                 bErrorOccured = false;
+    OGRFeatureDefn      *poFeatureDefn = nullptr;
+    OGRGeoPackageLayer  *poLayer = nullptr;
+    struct tm            brokenDown{};
+    sqlite3*             hDB = nullptr;
+    int                  nMaxBatchSize = 0;
+    bool                 bAsynchronousMode = false;
+    std::mutex           oMutex{};
+    std::condition_variable oCV{};
+    bool                 bIsFinished = false;
 };
 
 /************************************************************************/
@@ -475,6 +496,8 @@ class OGRGeoPackageLayer CPL_NON_FINAL: public OGRLayer, public IOGRSQLiteGetSpa
 /*                        OGRGeoPackageTableLayer                       */
 /************************************************************************/
 
+struct OGRGPKGTableLayerFillArrowArray;
+
 class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
 {
     char*                       m_pszTableName = nullptr;
@@ -591,11 +614,15 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     CPL_DISALLOW_COPY_ASSIGN(OGRGeoPackageTableLayer)
 
     std::thread         m_oThreadNextArrowArray{};
+    std::unique_ptr<OGRGPKGTableLayerFillArrowArray> m_poFillArrowArray{};
     std::unique_ptr<GDALGeoPackageDataset> m_poOtherDS{};
     struct ArrowArray*  m_psNextArrayArray = nullptr;
     virtual int GetNextArrowArray(struct ArrowArrayStream*,
                                    struct ArrowArray* out_array) override;
     int                 GetNextArrowArrayInternal(struct ArrowArray* out_array);
+    int                 GetNextArrowArrayAsynchronous(struct ArrowArray* out_array);
+    void                GetNextArrowArrayAsynchronousWorker();
+    void                CancelAsyncNextArrowArray();
 
     public:
                         OGRGeoPackageTableLayer( GDALGeoPackageDataset *poDS,
