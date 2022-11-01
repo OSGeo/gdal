@@ -2,6 +2,7 @@
 
 set -e
 
+dnf upgrade -y
 dnf install -y --setopt=install_weak_deps=False proj-devel
 dnf install -y clang make diffutils ccache cmake \
               libxml2-devel libxslt-devel expat-devel xerces-c-devel \
@@ -53,8 +54,8 @@ ccache -M 1G
 ccache -s
 
 # Configure GDAL
-mkdir build
-cd build
+mkdir build_fedora_rawhide
+cd build_fedora_rawhide
 CC=clang CXX=clang++ LDFLAGS='-lstdc++' cmake .. \
   -DCMAKE_BUILD_TYPE=Release -DUSE_CCACHE=ON -DCMAKE_INSTALL_PREFIX=/usr \
   -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS="-std=c++20 -Werror" -DWERROR_DEV_FLAG="-Werror=dev"
@@ -77,7 +78,7 @@ projsync --system-directory --file ca_nrc_ntv1_can.tif
 
 # SKIP_TESTVIRTUALMEM because it crashes on testvirtualmem on CI
 # with "ERROR 1: CPLVirtualMemManagerThread: trying to write into read-only mapping"
-(cd build && SKIP_TESTVIRTUALMEM=YES make quicktest)
+(cd build_fedora_rawhide && SKIP_TESTVIRTUALMEM=YES make quicktest)
 
 # install pip and use it to install test dependencies
 #pip3 install -U -r autotest/requirements.txt
