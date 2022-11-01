@@ -58,7 +58,9 @@ mkdir build_fedora_rawhide
 cd build_fedora_rawhide
 CC=clang CXX=clang++ LDFLAGS='-lstdc++' cmake .. \
   -DCMAKE_BUILD_TYPE=Release -DUSE_CCACHE=ON -DCMAKE_INSTALL_PREFIX=/usr \
-  -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS="-std=c++20 -Werror" -DWERROR_DEV_FLAG="-Werror=dev"
+  -DCMAKE_C_FLAGS="-Werror -O1 -D_FORTIFY_SOURCE=2" \
+  -DCMAKE_CXX_FLAGS="-std=c++20 -Werror -O1 -D_FORTIFY_SOURCE=2" \
+  -DWERROR_DEV_FLAG="-Werror=dev"
 make -j$(nproc)
 make install
 ldconfig
