@@ -195,6 +195,9 @@ typedef struct {
     int     nTREBytes;
     char    *pachTRE;
 
+    int        nIXSOFL;
+    int        nIXSOFLOffsetInSubfileHeader;
+
     /* Internal information not for application use. */
 
     int        nWordSize;
