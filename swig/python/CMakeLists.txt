@@ -270,6 +270,11 @@ if (Python_Interpreter_FOUND)
   endif ()
 
   # Generate extension
+  if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.20 )
+    cmake_path(CONVERT "${Python_EXECUTABLE}" TO_CMAKE_PATH_LIST Python_EXECUTABLE_CMAKE)
+  else()
+    set(Python_EXECUTABLE_CMAKE "${Python_EXECUTABLE}")
+  endif()
   if (ONLY_GENERATE_FOR_NON_DEBUG)
     set(BUILD_EXT_FILENAME ${CMAKE_CURRENT_BINARY_DIR}/build_ext_$<CONFIG>.cmake)
     file(
@@ -277,7 +282,7 @@ if (Python_Interpreter_FOUND)
       OUTPUT ${BUILD_EXT_FILENAME}
       CONTENT
         "file(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/build)\n
-         execute_process(COMMAND $<IF:$<NOT:$<CONFIG:Debug>>,${Python_EXECUTABLE} ${SETUP_PY_FILENAME} build_ext --inplace,${CMAKE_COMMAND} -E echo \"setup.py build_ext only run in configuration != Debug\">)\n"
+         execute_process(COMMAND $<IF:$<NOT:$<CONFIG:Debug>>,${Python_EXECUTABLE_CMAKE} ${SETUP_PY_FILENAME} build_ext --inplace,${CMAKE_COMMAND} -E echo \"setup.py build_ext only run in configuration != Debug\">)\n"
       )
   else ()
     set(BUILD_EXT_FILENAME ${CMAKE_CURRENT_BINARY_DIR}/build_ext.cmake)
@@ -286,7 +291,7 @@ if (Python_Interpreter_FOUND)
       OUTPUT ${BUILD_EXT_FILENAME}
       CONTENT
          "file(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/build)\n
-          execute_process(COMMAND ${Python_EXECUTABLE} ${SETUP_PY_FILENAME} build_ext --inplace)\n")
+          execute_process(COMMAND ${Python_EXECUTABLE_CMAKE} ${SETUP_PY_FILENAME} build_ext --inplace)\n")
   endif ()
 
   if((CMAKE_VERSION VERSION_GREATER_EQUAL 3.12) AND CMAKE_NM AND BUILD_SHARED_LIBS AND NOT _isMultiConfig)
@@ -374,7 +379,7 @@ if (Python_Interpreter_FOUND)
         string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "  file(COPY \"\${_file}\" DESTINATION \"${INSTALL_WORKING_DIRECTORY}/osgeo\")\n")
         string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "endforeach()\n")
         string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "file(REMOVE_RECURSE ${INSTALL_WORKING_DIRECTORY}/build)\n")
-        string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "execute_process(COMMAND ${Python_EXECUTABLE} ${SETUP_PY_FILENAME} build_ext --rpath=${CMAKE_INSTALL_RPATH} --inplace WORKING_DIRECTORY ${INSTALL_WORKING_DIRECTORY})\n")
+        string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "execute_process(COMMAND ${Python_EXECUTABLE_CMAKE} ${SETUP_PY_FILENAME} build_ext --rpath=${CMAKE_INSTALL_RPATH} --inplace WORKING_DIRECTORY ${INSTALL_WORKING_DIRECTORY})\n")
 
         foreach (f IN LISTS PY_SO_LIST)
           list(APPEND PY_SO_LIST_WITH_RPATH "${INSTALL_WORKING_DIRECTORY}/${f}")
@@ -404,11 +409,11 @@ if (Python_Interpreter_FOUND)
       GENERATE
       OUTPUT ${BUILD_BDIST_WHEEL_FILENAME}
       CONTENT
-        "execute_process(COMMAND $<IF:$<NOT:$<CONFIG:Debug>>,${Python_EXECUTABLE} ${SETUP_PY_FILENAME} bdist_wheel,${CMAKE_COMMAND} -E echo \"setup.py bdist_wheel only run in configuration != Debug\">)"
+        "execute_process(COMMAND $<IF:$<NOT:$<CONFIG:Debug>>,${Python_EXECUTABLE_CMAKE} ${SETUP_PY_FILENAME} bdist_wheel,${CMAKE_COMMAND} -E echo \"setup.py bdist_wheel only run in configuration != Debug\">)"
       )
   else ()
     set(BUILD_BDIST_WHEEL_FILENAME ${CMAKE_CURRENT_BINARY_DIR}/build_bdist_wheel.cmake)
-    file(WRITE ${BUILD_BDIST_WHEEL_FILENAME} "execute_process(COMMAND ${Python_EXECUTABLE} ${SETUP_PY_FILENAME} bdist_wheel)\n")
+    file(WRITE ${BUILD_BDIST_WHEEL_FILENAME} "execute_process(COMMAND ${Python_EXECUTABLE_CMAKE} ${SETUP_PY_FILENAME} bdist_wheel)\n")
   endif ()
   add_custom_target(
     python_wheel
@@ -421,7 +426,7 @@ if (Python_Interpreter_FOUND)
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/get_python_lib.py
        "from trimmedsysconfig import get_python_lib;print(get_python_lib(prefix=\"${GDAL_PYTHON_INSTALL_PREFIX}\"))\n")
   execute_process(
-    COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/get_python_lib.py
+    COMMAND ${Python_EXECUTABLE_CMAKE} ${CMAKE_CURRENT_BINARY_DIR}/get_python_lib.py
     OUTPUT_VARIABLE SITE_PACKAGE_DIR
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
@@ -441,7 +446,7 @@ if (Python_Interpreter_FOUND)
       file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/is_std_unix_layout.py
            "import sys;print(\"FALSE\" if \"framework\" in sys.prefix.lower() else \"TRUE\")\n")
       execute_process(
-        COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/is_std_unix_layout.py
+        COMMAND ${Python_EXECUTABLE_CMAKE} ${CMAKE_CURRENT_BINARY_DIR}/is_std_unix_layout.py
         OUTPUT_VARIABLE STD_UNIX_LAYOUT
         OUTPUT_STRIP_TRAILING_WHITESPACE)
       if ("${STD_UNIX_LAYOUT}" STREQUAL "TRUE")
