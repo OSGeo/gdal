@@ -157,8 +157,8 @@ elseif (NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
       ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gnm.py
       ${CMAKE_CURRENT_BINARY_DIR}/osgeo/ogr.py
       ${CMAKE_CURRENT_BINARY_DIR}/osgeo/osr.py)
-  file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/osgeo" OSGEO_BINARY_DIR)
-  file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/osgeo/" OSGEO_SOURCE_DIR)
+  set(OSGEO_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/osgeo")
+  set(OSGEO_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/osgeo/")
   if (Python_NumPy_FOUND)
     list(APPEND GDAL_PYTHON_CSOURCES "${GDAL_PYTHON_CSOURCE_DIR}/gdal_array_wrap.cpp")
     list(APPEND GDAL_PYTHON_CSOURCES_SRC "${CMAKE_CURRENT_SOURCE_DIR}/extensions/gdal_array_wrap.cpp")
@@ -169,7 +169,7 @@ elseif (NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
     COMMAND
       ${CMAKE_COMMAND} -E copy ${OSGEO_SOURCE_DIR}__init__.py ${OSGEO_SOURCE_DIR}gdal.py
       ${OSGEO_SOURCE_DIR}gdalconst.py ${OSGEO_SOURCE_DIR}gdalnumeric.py ${OSGEO_SOURCE_DIR}ogr.py
-      ${OSGEO_SOURCE_DIR}osr.py ${OSGEO_SOURCE_DIR}gnm.py ${OSGEO_SOURCE_DIR}gdal_array.py ${OSGEO_BINARY_DIR})
+      ${OSGEO_SOURCE_DIR}osr.py ${OSGEO_SOURCE_DIR}gnm.py ${OSGEO_SOURCE_DIR}gdal_array.py "${OSGEO_BINARY_DIR}")
   set(GDAL_PYTHON_CSOURCE_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/extensions/")
   add_custom_command(
     OUTPUT ${GDAL_PYTHON_CSOURCES}
@@ -276,22 +276,22 @@ if (Python_Interpreter_FOUND)
     set(Python_EXECUTABLE_CMAKE "${Python_EXECUTABLE}")
   endif()
   if (ONLY_GENERATE_FOR_NON_DEBUG)
-    set(BUILD_EXT_FILENAME ${CMAKE_CURRENT_BINARY_DIR}/build_ext_$<CONFIG>.cmake)
+    set(BUILD_EXT_FILENAME "${CMAKE_CURRENT_BINARY_DIR}/build_ext_$<CONFIG>.cmake")
     file(
       GENERATE
-      OUTPUT ${BUILD_EXT_FILENAME}
+      OUTPUT "${BUILD_EXT_FILENAME}"
       CONTENT
         "file(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/build)\n
-         execute_process(COMMAND $<IF:$<NOT:$<CONFIG:Debug>>,${Python_EXECUTABLE_CMAKE} ${SETUP_PY_FILENAME} build_ext --inplace,${CMAKE_COMMAND} -E echo \"setup.py build_ext only run in configuration != Debug\">)\n"
+         execute_process(COMMAND $<IF:$<NOT:$<CONFIG:Debug>>,\"${Python_EXECUTABLE_CMAKE}\" \"${SETUP_PY_FILENAME}\" build_ext --inplace,${CMAKE_COMMAND} -E echo \"setup.py build_ext only run in configuration != Debug\">)\n"
       )
   else ()
-    set(BUILD_EXT_FILENAME ${CMAKE_CURRENT_BINARY_DIR}/build_ext.cmake)
+    set(BUILD_EXT_FILENAME "${CMAKE_CURRENT_BINARY_DIR}/build_ext.cmake")
     file(
       GENERATE
-      OUTPUT ${BUILD_EXT_FILENAME}
+      OUTPUT "${BUILD_EXT_FILENAME}"
       CONTENT
          "file(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/build)\n
-          execute_process(COMMAND ${Python_EXECUTABLE_CMAKE} ${SETUP_PY_FILENAME} build_ext --inplace)\n")
+          execute_process(COMMAND \"${Python_EXECUTABLE_CMAKE}\" \"${SETUP_PY_FILENAME}\" build_ext --inplace)\n")
   endif ()
 
   if((CMAKE_VERSION VERSION_GREATER_EQUAL 3.12) AND CMAKE_NM AND BUILD_SHARED_LIBS AND NOT _isMultiConfig)
@@ -339,9 +339,9 @@ if (Python_Interpreter_FOUND)
 
   add_custom_command(
     OUTPUT ${PY_SO_LIST}
-    COMMAND ${CMAKE_COMMAND} ${WERROR_DEV_FLAG} -P ${BUILD_EXT_FILENAME}
+    COMMAND ${CMAKE_COMMAND} ${WERROR_DEV_FLAG} -P "${BUILD_EXT_FILENAME}"
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    DEPENDS ${GDAL_LIB_DEP_FOR_PY_SO} ${GDAL_PYTHON_PYSOURCES} ${GDAL_PYTHON_CSOURCES} ${BUILD_EXT_FILENAME}
+    DEPENDS ${GDAL_LIB_DEP_FOR_PY_SO} ${GDAL_PYTHON_PYSOURCES} ${GDAL_PYTHON_CSOURCES} "${BUILD_EXT_FILENAME}"
             ${PROJECT_SOURCE_DIR}/gcore/gdal_priv.h)
 
   set(INSTALL_WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
@@ -491,11 +491,11 @@ if (Python_Interpreter_FOUND)
       message(WARNING "Installing Python bindings with a multi generator requires CMake >= 3.14")
     endif ()
   else ()
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/install_python.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/install_python.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake"
                    @ONLY)
     install(
-      CODE "execute_process(COMMAND ${CMAKE_COMMAND} ${WERROR_DEV_FLAG} -P ${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake
-                                  WORKING_DIRECTORY ${INSTALL_WORKING_DIRECTORY})")
+      CODE "execute_process(COMMAND ${CMAKE_COMMAND} ${WERROR_DEV_FLAG} -P \"${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake\"
+                                  WORKING_DIRECTORY \"${INSTALL_WORKING_DIRECTORY}\")")
 
   endif ()
 
