@@ -18,3 +18,7 @@ add_gdal_driver(
           PLUGIN_CAPABLE)
 gdal_standard_includes(ogr_LIBKML)
 gdal_target_link_libraries(ogr_LIBKML PRIVATE LIBKML::LibKML LIBKML::DOM LIBKML::ENGINE)
+if (TARGET LIBKML::MINIZIP AND TARGET LIBKML::URIPARSER AND TARGET ZLIB::ZLIB AND GDAL_USE_EXPAT)
+  # Fedora Rawhide doesn't have LIBKML::MINIZIP
+  gdal_target_link_libraries(ogr_LIBKML PRIVATE LIBKML::MINIZIP LIBKML::URIPARSER ZLIB::ZLIB ${EXPAT_TARGET})
+endif()
