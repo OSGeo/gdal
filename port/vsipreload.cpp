@@ -46,6 +46,15 @@
 // LD_PRELOAD=./vsipreload.so ls -al /vsicurl/http://download.osgeo.org/gdal/data/sqlite3
 // LD_PRELOAD=./vsipreload.so find /vsicurl/http://download.osgeo.org/gdal/data/sqlite3
 
+/*
+ * We need to export open* etc., but _FORTIFY_SOURCE defines conflicting
+ * always_inline versions. Disable _FORTIFY_SOURCE for this file, so we
+ * can define our overrides.
+ */
+#ifdef _FORTIFY_SOURCE
+#undef _FORTIFY_SOURCE
+#endif
+
 #define _GNU_SOURCE 1
 #define _LARGEFILE64_SOURCE 1
 #include <stdio.h>
