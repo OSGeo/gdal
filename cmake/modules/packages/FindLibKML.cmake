@@ -67,6 +67,15 @@ foreach(_comp IN LISTS libkml_known_components)
   endif()
 endforeach()
 
+set(libkml_helpers MINIZIP URIPARSER)
+foreach(_helper IN LISTS libkml_helpers)
+  string(TOLOWER ${_helper} _name)
+  find_library(LIBKML_${_helper}_LIBRARY
+               NAMES ${_name} lib${_name}
+               HINTS ${PC_LIBKML_LIBRARY_DIRS} )
+  mark_as_advanced(LIBKML_${_helper}_LIBRARY)
+endforeach()
+
 if(LIBKML_INCLUDE_DIR AND NOT LIBKML_VERSION)
   file(STRINGS ${LIBKML_INCLUDE_DIR}/kml/base/version.h libkml_version_h_string
        REGEX "^#define[\t ]+LIBKML_(MAJOR|MINOR|MICRO)_VERSION[\t ]+[0-9]+")
@@ -105,6 +114,17 @@ if(LIBKML_FOUND)
         set_target_properties(LIBKML::${_comp} PROPERTIES
                               IMPORTED_LINK_INTERFACE_LANGUAGES "C++"
                               IMPORTED_LOCATION "${LIBKML_${_comp}_LIBRARY}")
+      endif()
+    endif()
+  endforeach()
+  foreach(_helper IN LISTS libkml_helpers)
+    if(LIBKML_${_helper}_LIBRARY)
+      list(APPEND LIBKML_LIBRARIES "${LIBKML_${_helper}_LIBRARY}")
+      if(NOT TARGET LIBKML::${_helper})
+        add_library(LIBKML::${_helper} UNKNOWN IMPORTED)
+        set_target_properties(LIBKML::${_helper} PROPERTIES
+                              IMPORTED_LINK_INTERFACE_LANGUAGES "C++"
+                              IMPORTED_LOCATION "${LIBKML_${_helper}_LIBRARY}")
       endif()
     endif()
   endforeach()
