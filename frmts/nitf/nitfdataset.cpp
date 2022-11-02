@@ -6002,29 +6002,155 @@ static bool NITFWriteTextSegments( const char* pszFilename,
 /*                            NITFWriteDES()                            */
 /************************************************************************/
 
-static bool NITFWriteDES( VSILFILE* fp, vsi_l_offset nOffsetLDSH,
+static bool NITFWriteDES( VSILFILE*& fp, const char* pszFilename,
+                          vsi_l_offset nOffsetLDSH,
                          int  iDES, const char *pszDESName,
                          const GByte* pabyDESData, int nArrayLen)
 {
-    const int nTotalLen = nArrayLen + 27;  // DE(2) + DESID(25) + other data
+    constexpr int LEN_DE = 2;
+    constexpr int LEN_DESID = 25;
+    constexpr int LEN_DESOFLW = 6;
+    constexpr int LEN_DESITEM = 3;
+    const int nTotalLen = LEN_DE + LEN_DESID + nArrayLen;
 
-    if (nTotalLen < 200)
+    const bool bIsTRE_OVERFLOW = (strcmp(pszDESName, "TRE_OVERFLOW") == 0);
+    const int MIN_LEN_DES_SUBHEADER = 200 + (bIsTRE_OVERFLOW ? LEN_DESOFLW + LEN_DESITEM : 0);
+
+    if (nTotalLen < MIN_LEN_DES_SUBHEADER)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "DES does not contain enough data");
         return false;
     }
 
-    if (strcmp(pszDESName, "TRE_OVERFLOW") == 0)
+    int nDESITEM = 0;
+    GUIntBig nIXSOFLOffset = 0;
+    if( bIsTRE_OVERFLOW )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "TRE_OVERFLOW DES not supported");
-        return false;
+        char szDESITEM[LEN_DESITEM + 1];
+        memcpy(szDESITEM, pabyDESData + 169 + LEN_DESOFLW, LEN_DESITEM);
+        szDESITEM[LEN_DESITEM] = '\0';
+        if( !isdigit(static_cast<int>(szDESITEM[0])) ||
+            !isdigit(static_cast<int>(szDESITEM[1])) ||
+            !isdigit(static_cast<int>(szDESITEM[2])) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid value for DESITEM: '%s'", szDESITEM);
+            return false;
+        }
+        nDESITEM = atoi(szDESITEM);
+
+        char szDESOFLW[LEN_DESOFLW + 1];
+        memcpy(szDESOFLW, pabyDESData + 169, LEN_DESOFLW);
+        szDESOFLW[LEN_DESOFLW] = '\0';
+        if( strcmp(szDESOFLW, "IXSHD ") == 0 )
+        {
+            auto psFile = NITFOpenEx(fp, pszFilename);
+            if( psFile == nullptr )
+            {
+                fp = nullptr;
+                return false;
+            }
+
+            int nImageIdx = 1;
+            for( int iSegment = 0; iSegment < psFile->nSegmentCount; ++iSegment )
+            {
+                const auto psSegInfo = psFile->pasSegmentInfo + iSegment;
+                if( !EQUAL(psSegInfo->szSegmentType,"IM") )
+                    continue;
+                if( nImageIdx == nDESITEM )
+                {
+                    auto psImage = NITFImageAccess( psFile, iSegment );
+                    if( psImage == nullptr )
+                    {
+                        nImageIdx = -1;
+                        break;
+                    }
+
+                    if( psImage->nIXSOFL == -1 )
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Missing IXSOFL field in image %d. "
+                                 "RESERVE_SPACE_FOR_TRE_OVERFLOW=YES creation "
+                                 "option likely missing.",
+                                 nImageIdx);
+                    }
+                    else if( psImage->nIXSOFL != 0 )
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Expected IXSOFL of image %d to be 0. Got %d",
+                                 nImageIdx, psImage->nIXSOFL);
+                    }
+                    else
+                    {
+                        nIXSOFLOffset = psSegInfo->nSegmentHeaderStart +
+                                        psImage->nIXSOFLOffsetInSubfileHeader;
+                    }
+
+                    NITFImageDeaccess(psImage);
+                    break;
+                }
+                ++ nImageIdx;
+            }
+
+            psFile->fp = nullptr;
+            NITFClose(psFile);
+
+            if( nImageIdx != nDESITEM )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot find image matching DESITEM = %d value", nDESITEM);
+                return false;
+            }
+            if( nIXSOFLOffset == 0)
+            {
+                return false;
+            }
+        }
+        else if( strcmp(szDESOFLW, "UDHD  ") == 0 ||
+                 strcmp(szDESOFLW, "UDID  ") == 0 ||
+                 strcmp(szDESOFLW, "XHD   ") == 0 ||
+                 strcmp(szDESOFLW, "SXSHD ") == 0 ||
+                 strcmp(szDESOFLW, "TXSHD ") == 0 )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Unhandled value for DESOFLW: '%s'. "
+                     "Segment subheader fields will not be updated.",
+                    szDESOFLW);
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid value for DESOFLW: '%s'", szDESOFLW);
+            return false;
+        }
+
     }
 
-    char pszTemp[5];
-    memcpy(pszTemp, pabyDESData + 169, 4);
-    pszTemp[4] = '\0';
-    const int nSubHeadLen = atoi(pszTemp) + 200;
+    // Extract DESSHL value
+    constexpr int LEN_DESSHL = 4;
+    char szDESSHL[LEN_DESSHL + 1];
+    const int OFFSET_DESSHL = 169 + (bIsTRE_OVERFLOW ? LEN_DESOFLW + LEN_DESITEM : 0);
+    memcpy(szDESSHL, pabyDESData + OFFSET_DESSHL, LEN_DESSHL);
+    szDESSHL[LEN_DESSHL] = '\0';
+    if( !isdigit(static_cast<int>(szDESSHL[0])) ||
+        !isdigit(static_cast<int>(szDESSHL[1])) ||
+        !isdigit(static_cast<int>(szDESSHL[2])) ||
+        !isdigit(static_cast<int>(szDESSHL[3])) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid value for DESSHL: '%s'", szDESSHL);
+        return false;
+    }
+    const int nDESSHL = atoi(szDESSHL);
+    const int nSubHeadLen = nDESSHL + MIN_LEN_DES_SUBHEADER;
     const int nDataLen = nTotalLen - nSubHeadLen;     // Length of DESDATA field only
+    if( nDataLen < 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Value of DESSHL = '%s' is not consitent with provided DESData",
+                 szDESSHL);
+        return false;
+    }
 
     if (nSubHeadLen > 9998 || nDataLen > 999999998)
     {
@@ -6041,6 +6167,14 @@ static bool NITFWriteDES( VSILFILE* fp, vsi_l_offset nOffsetLDSH,
     bOK &= VSIFSeekL(fp, nOffsetLDSH + iDES * 13, SEEK_SET) == 0;
     bOK &= VSIFWriteL(CPLSPrintf("%04d", nSubHeadLen), 1, 4, fp) == 4;
     bOK &= VSIFWriteL(CPLSPrintf("%09d", nDataLen), 1, 9, fp) == 9;
+
+    if( nIXSOFLOffset > 0 )
+    {
+        CPLDebug("NITF", "Patching IXSOFL of image %d to %d",
+                 iDES + 1, nDESITEM);
+        bOK &= VSIFSeekL(fp, nIXSOFLOffset, SEEK_SET) == 0;
+        bOK &= VSIFWriteL(CPLSPrintf("%03d", nDESITEM), 1, 3, fp) == 3;
+    }
 
     return bOK;
 }
@@ -6159,7 +6293,8 @@ static bool NITFWriteDES(const char* pszFilename,
             (GByte*)CPLUnescapeString( pszEscapedContents, &nContentLength,
                                        CPLES_BackslashQuotable );
 
-        if(!NITFWriteDES(fpVSIL, nNumDESOffset + 3, iDES, pszDESName,
+        if(!NITFWriteDES(fpVSIL, pszFilename,
+                         nNumDESOffset + 3, iDES, pszDESName,
                          pabyUnescapedContents, nContentLength))
         {
             CPLFree( pszDESName );
@@ -6764,6 +6899,7 @@ void NITFDriver::InitCreationOptionList()
     osCreationOptions +=
 "   <Option name='TRE' type='string' description='Under the format TRE=tre-name,tre-contents'/>"
 "   <Option name='FILE_TRE' type='string' description='Under the format FILE_TRE=tre-name,tre-contents'/>"
+"   <Option name='RESERVE_SPACE_FOR_TRE_OVERFLOW' type='boolean' description='Set to true to reserve space for IXSOFL when writing a TRE_OVERFLOW DES'/>"
 "   <Option name='BLOCKA_BLOCK_COUNT' type='int'/>"
 "   <Option name='DES' type='string' description='Under the format DES=des-name=des-contents'/>"
 "   <Option name='NUMDES' type='int' default='0' description='Number of DES segments. Only to be used on first image segment'/>";

@@ -370,7 +370,7 @@
         <field name="SOFTWARE_VERSION_NUMBER" length="10"/>
     </tre>
 
-    <tre name="CSEPHA" minlength="257" maxlength="36005" location="des">
+    <tre name="CSEPHA" minlength="77" maxlength="36005" location="des">
         <field name="EPHEM_FLAG" length="12"/>
         <field name="DT_EPHEM" length="5"/>
         <field name="DATE_EPHEM" length="8"/>

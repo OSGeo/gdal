@@ -1255,7 +1255,8 @@ int NITFCreateEx( const char *pszFilename,
                          papszOptions );
     }
 
-    if( CSLFetchNameValue(papszOptions,"TRE") != NULL )
+    if( CSLFetchNameValue(papszOptions,"TRE") != NULL ||
+        CSLFetchNameValue(papszOptions,"RESERVE_SPACE_FOR_TRE_OVERFLOW") != NULL )
     {
         bOK &= NITFWriteTREsFromOptions(
             fp,
@@ -1457,6 +1458,8 @@ static int NITFWriteTREsFromOptions(
         CSLFetchNameValue(papszOptions,"BLOCKA_BLOCK_COUNT") != NULL;
     int iOption;
     int nTREPrefixLen = (int)strlen(pszTREPrefix);
+    const bool bReserveSpaceForTREOverflow =
+        CSLFetchNameValue(papszOptions,"RESERVE_SPACE_FOR_TRE_OVERFLOW") != NULL;
 
     if( papszOptions == NULL )
         return TRUE;
@@ -1538,6 +1541,29 @@ static int NITFWriteTREsFromOptions(
         CPLFree( pszTREName );
         CPLFree( pszUnescapedContents );
 
+    }
+
+    if( bReserveSpaceForTREOverflow )
+    {
+/* -------------------------------------------------------------------- */
+/*      Update IXSHDL.                                                  */
+/* -------------------------------------------------------------------- */
+        int nOldOffset;
+        char szTemp[6];
+        bool bOK = VSIFSeekL(fp, nOffsetUDIDL + 5, SEEK_SET) == 0;
+        bOK &= VSIFReadL(szTemp, 1, 5, fp) == 5;
+        szTemp[5] = 0;
+        nOldOffset = atoi(szTemp);
+
+        if( nOldOffset == 0 )
+        {
+            PLACE( nOffsetUDIDL + 5, IXSHDL, "00003" );
+
+            PLACE(nOffsetUDIDL+10, IXSOFL, "000" );
+            *pnOffset += 3;
+        }
+
+        return bOK;
     }
 
     return TRUE;
@@ -2995,11 +3021,19 @@ char **NITFGenericMetadataReadTRE(char **papszMD,
     int nTreMinLength = atoi(CPLGetXMLValue(psTreNode, "minlength", "-1"));
     /* int nTreMaxLength = atoi(CPLGetXMLValue(psTreNode, "maxlength", "-1")); */
 
-    if( (nTreLength > 0 && nTRESize != nTreLength) ||
-        (nTreMinLength > 0 && nTRESize < nTreMinLength) )
+    if( nTreLength > 0 && nTRESize != nTreLength )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
-                  "%s TRE wrong size, ignoring.", pszTREName );
+                  "%s TRE wrong size (%d). Expected %d. ignoring.",
+                  pszTREName, nTRESize, nTreLength );
+        return papszMD;
+    }
+
+    if( nTreMinLength > 0 && nTRESize < nTreMinLength )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "%s TRE wrong size (%d). Expected >= %d. ignoring.",
+                  pszTREName, nTRESize, nTreMinLength );
         return papszMD;
     }
 
@@ -3132,11 +3166,19 @@ CPLXMLNode* NITFCreateXMLTre(NITFFile* psFile,
     nTreMinLength = atoi(CPLGetXMLValue(psTreNode, "minlength", "-1"));
     /* nTreMaxLength = atoi(CPLGetXMLValue(psTreNode, "maxlength", "-1")); */
 
-    if( (nTreLength > 0 && nTRESize != nTreLength) ||
-        (nTreMinLength > 0 && nTRESize < nTreMinLength) )
+    if( nTreLength > 0 && nTRESize != nTreLength )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
-                  "%s TRE wrong size, ignoring.", pszTREName );
+                  "%s TRE wrong size (%d). Expected %d. ignoring.",
+                  pszTREName, nTRESize, nTreLength );
+        return NULL;
+    }
+
+    if( nTreMinLength > 0 && nTRESize < nTreMinLength )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "%s TRE wrong size (%d). Expected >= %d. ignoring.",
+                  pszTREName, nTRESize, nTreMinLength );
         return NULL;
     }
 

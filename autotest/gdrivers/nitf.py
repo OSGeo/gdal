@@ -4699,6 +4699,156 @@ def test_nitf_des_CSSHPA():
 
 
 ###############################################################################
+# Test creation and reading of a TRE_OVERFLOW DES
+
+
+def test_nitf_tre_overflow_des():
+
+    DESOFLW = "IXSHD "
+    DESITEM = "001"  # index (starting at 1) of the image to which this TRE_OVERFLOW applies too
+    DESSHL = "0000"
+    des_header = "02U" + " " * 166 + DESOFLW + DESITEM + DESSHL
+
+    # Totally dummy content for CSEPHA data
+    EPHEM_FLAG = " " * 12
+    DT_EPHEM = " " * 5
+    DATE_EPHEM = " " * 8
+    T0_EPHEM = " " * 13
+    NUM_EPHEM = "001"
+    EPHEM_DATA = " " * (1 * (3 * 12))
+    CSEPHA_DATA = EPHEM_FLAG + DT_EPHEM + DATE_EPHEM + T0_EPHEM + NUM_EPHEM + EPHEM_DATA
+
+    des_data = "CSEPHA" + ("%05d" % len(CSEPHA_DATA)) + CSEPHA_DATA
+    des = des_header + des_data
+
+    ds = gdal.GetDriverByName("NITF").Create(
+        "/vsimem/nitf_DES.ntf",
+        1,
+        1,
+        options=["RESERVE_SPACE_FOR_TRE_OVERFLOW=YES", "DES=TRE_OVERFLOW=" + des],
+    )
+    ds = None
+
+    # DESDATA portion will be Base64 encoded on output
+    ds = gdal.Open("/vsimem/nitf_DES.ntf")
+    data = ds.GetMetadata("xml:DES")[0]
+
+    md = ds.GetMetadata("TRE")
+    assert "CSEPHA" in md
+    assert md["CSEPHA"] == CSEPHA_DATA
+
+    assert ds.GetMetadataItem("NITF_IXSOFL") == "001"
+
+    ds = None
+
+    gdal.GetDriverByName("NITF").Delete("/vsimem/nitf_DES.ntf")
+
+    expected_des_data_b64_encoded = base64.b64encode(bytes(des_data, "ascii")).decode(
+        "ascii"
+    )
+    expected_data = (
+        """<des_list>
+  <des name="TRE_OVERFLOW">
+    <field name="DESVER" value="02" />
+    <field name="DECLAS" value="U" />
+    <field name="DESCLSY" value="" />
+    <field name="DESCODE" value="" />
+    <field name="DESCTLH" value="" />
+    <field name="DESREL" value="" />
+    <field name="DESDCTP" value="" />
+    <field name="DESDCDT" value="" />
+    <field name="DESDCXM" value="" />
+    <field name="DESDG" value="" />
+    <field name="DESDGDT" value="" />
+    <field name="DESCLTX" value="" />
+    <field name="DESCATP" value="" />
+    <field name="DESCAUT" value="" />
+    <field name="DESCRSN" value="" />
+    <field name="DESSRDT" value="" />
+    <field name="DESCTLN" value="" />
+    <field name="DESOFLW" value="IXSHD" />
+    <field name="DESITEM" value="001" />
+    <field name="DESSHL" value="0000" />
+    <field name="DESDATA" value="%s" />
+  </des>
+</des_list>
+"""
+        % expected_des_data_b64_encoded
+    )
+
+    assert data == expected_data
+
+
+###############################################################################
+# Test creation and reading of a TRE_OVERFLOW DES with missing RESERVE_SPACE_FOR_TRE_OVERFLOW
+
+
+def test_nitf_tre_overflow_des_error_missing_RESERVE_SPACE_FOR_TRE_OVERFLOW():
+
+    DESOFLW = "IXSHD "
+    DESITEM = "001"  # index (starting at 1) of the image to which this TRE_OVERFLOW applies too
+    DESSHL = "0000"
+    des_header = "02U" + " " * 166 + DESOFLW + DESITEM + DESSHL
+
+    # Totally dummy content for CSEPHA data
+    EPHEM_FLAG = " " * 12
+    DT_EPHEM = " " * 5
+    DATE_EPHEM = " " * 8
+    T0_EPHEM = " " * 13
+    NUM_EPHEM = "001"
+    EPHEM_DATA = " " * (1 * (3 * 12))
+    CSEPHA_DATA = EPHEM_FLAG + DT_EPHEM + DATE_EPHEM + T0_EPHEM + NUM_EPHEM + EPHEM_DATA
+
+    des_data = "CSEPHA" + ("%05d" % len(CSEPHA_DATA)) + CSEPHA_DATA
+    des = des_header + des_data
+
+    with gdaltest.error_handler():
+        gdal.ErrorReset()
+        gdal.GetDriverByName("NITF").Create(
+            "/vsimem/nitf_DES.ntf", 1, 1, options=["DES=TRE_OVERFLOW=" + des]
+        )
+        assert gdal.GetLastErrorMsg() != ""
+
+    gdal.GetDriverByName("NITF").Delete("/vsimem/nitf_DES.ntf")
+
+
+###############################################################################
+# Test creation and reading of a TRE_OVERFLOW DES with missing RESERVE_SPACE_FOR_TRE_OVERFLOW
+
+
+def test_nitf_tre_overflow_des_errorinvalid_DESITEM():
+
+    DESOFLW = "IXSHD "
+    DESITEM = "002"  # invalid image index!
+    DESSHL = "0000"
+    des_header = "02U" + " " * 166 + DESOFLW + DESITEM + DESSHL
+
+    # Totally dummy content for CSEPHA data
+    EPHEM_FLAG = " " * 12
+    DT_EPHEM = " " * 5
+    DATE_EPHEM = " " * 8
+    T0_EPHEM = " " * 13
+    NUM_EPHEM = "001"
+    EPHEM_DATA = " " * (1 * (3 * 12))
+    CSEPHA_DATA = EPHEM_FLAG + DT_EPHEM + DATE_EPHEM + T0_EPHEM + NUM_EPHEM + EPHEM_DATA
+
+    des_data = "CSEPHA" + ("%05d" % len(CSEPHA_DATA)) + CSEPHA_DATA
+    des = des_header + des_data
+
+    with gdaltest.error_handler():
+        gdal.ErrorReset()
+        gdal.GetDriverByName("NITF").Create(
+            "/vsimem/nitf_DES.ntf",
+            1,
+            1,
+            options=["RESERVE_SPACE_FOR_TRE_OVERFLOW=YES", "DES=TRE_OVERFLOW=" + des],
+        )
+        assert gdal.GetLastErrorMsg() != ""
+
+    gdal.GetDriverByName("NITF").Delete("/vsimem/nitf_DES.ntf")
+
+
+###############################################################################
 # Test reading/writing headers in ISO-8859-1 encoding
 def test_nitf_header_encoding():
     # mu character encoded in UTF-8

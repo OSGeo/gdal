@@ -129,6 +129,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     psImage->psFile = psFile;
     psImage->iSegment = iSegment;
     psImage->pachHeader = pachHeader;
+    psImage->nIXSOFL = -1;
 
     psSegInfo->hAccess = psImage;
 
@@ -702,20 +703,31 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         nExtendedTREBytes = atoi(NITFGetField(szTemp,pachHeader,nOffset,5));
         nOffset += 5;
 
-        if( nExtendedTREBytes > 3 )
+        if( nExtendedTREBytes >= 3 )
         {
-            if( (int)psSegInfo->nSegmentHeaderSize <
-                            nOffset + nExtendedTREBytes )
-                GOTO_header_too_small();
+            psImage->nIXSOFLOffsetInSubfileHeader = nOffset;
+            char szIXSOFL[4];
+            memcpy(szIXSOFL, pachHeader + nOffset, 3);
+            szIXSOFL[3] = 0;
+            psImage->nIXSOFL = atoi(szIXSOFL);
+            if( psImage->nIXSOFL != 0 )
+                psImage->papszMetadata = CSLSetNameValue(psImage->papszMetadata, "NITF_IXSOFL", szIXSOFL);
 
-            psImage->pachTRE = (char *)
-                CPLRealloc( psImage->pachTRE,
-                            psImage->nTREBytes + nExtendedTREBytes - 3 );
-            memcpy( psImage->pachTRE + psImage->nTREBytes,
-                    pachHeader + nOffset + 3,
-                    nExtendedTREBytes - 3 );
+            if( nExtendedTREBytes > 3 )
+            {
+                if( (int)psSegInfo->nSegmentHeaderSize <
+                                nOffset + nExtendedTREBytes )
+                    GOTO_header_too_small();
 
-            psImage->nTREBytes += (nExtendedTREBytes - 3);
+                psImage->pachTRE = (char *)
+                    CPLRealloc( psImage->pachTRE,
+                                psImage->nTREBytes + nExtendedTREBytes - 3 );
+                memcpy( psImage->pachTRE + psImage->nTREBytes,
+                        pachHeader + nOffset + 3,
+                        nExtendedTREBytes - 3 );
+
+                psImage->nTREBytes += (nExtendedTREBytes - 3);
+            }
             /*nOffset += nExtendedTREBytes;*/
         }
     }
