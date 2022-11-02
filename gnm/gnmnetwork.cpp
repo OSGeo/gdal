@@ -41,12 +41,10 @@ const char *GNMNetwork::GetName() const
     return m_soName;
 }
 
-//! @cond Doxygen_Suppress
-const char *GNMNetwork::_GetProjectionRef()
+const OGRSpatialReference* GNMNetwork::GetSpatialRef() const
 {
-    return m_soSRS;
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
-//! @endcond
 
 char **GNMNetwork::GetFileList()
 {

@@ -864,13 +864,7 @@ int CPL_STDCALL GDALGetRasterCount( GDALDatasetH hDS )
 
 const char *GDALDataset::GetProjectionRef() const
 {
-    return GetProjectionRefFromSpatialRef(GetSpatialRef());
-
-}
-
-//! @cond Doxygen_Suppress
-const char *GDALDataset::GetProjectionRefFromSpatialRef(const OGRSpatialReference* poSRS) const
-{
+    const auto poSRS = GetSpatialRef();
     if( !poSRS || !m_poPrivate )
     {
         return "";
@@ -891,16 +885,6 @@ const char *GDALDataset::GetProjectionRefFromSpatialRef(const OGRSpatialReferenc
     m_poPrivate->m_pszWKTCached = pszWKT;
     return m_poPrivate->m_pszWKTCached;
 }
-//! @endcond
-
-/************************************************************************/
-/*                         _GetProjectionRef()                          */
-/************************************************************************/
-
-//! @cond Doxygen_Suppress
-/** Pre GDAL-2.5 way */
-const char *GDALDataset::_GetProjectionRef() { return (""); }
-//! @endcond
 
 /************************************************************************/
 /*                           GetSpatialRef()                            */
@@ -950,31 +934,6 @@ OGRSpatialReferenceH GDALGetSpatialRef( GDALDatasetH hDS )
             const_cast<OGRSpatialReference*>(
                 GDALDataset::FromHandle(hDS)->GetSpatialRef()));
 }
-
-/************************************************************************/
-/*                 GetSpatialRefFromOldGetProjectionRef()               */
-/************************************************************************/
-
-//! @cond Doxygen_Suppress
-const OGRSpatialReference* GDALDataset::GetSpatialRefFromOldGetProjectionRef() const
-{
-    const char* pszWKT = const_cast<GDALDataset*>(this)->_GetProjectionRef();
-    if( !pszWKT || pszWKT[0] == '\0' || !m_poPrivate )
-    {
-        return nullptr;
-    }
-    if( !m_poPrivate->m_poSRSCached )
-    {
-        m_poPrivate->m_poSRSCached = new OGRSpatialReference();
-        m_poPrivate->m_poSRSCached->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    }
-    if( m_poPrivate->m_poSRSCached->importFromWkt(pszWKT) != OGRERR_NONE )
-    {
-        return nullptr;
-    }
-    return m_poPrivate->m_poSRSCached;
-}
-//! @endcond
 
 /************************************************************************/
 /*                        GDALGetProjectionRef()                        */
@@ -1083,45 +1042,6 @@ CPLErr GDALSetSpatialRef( GDALDatasetH hDS, OGRSpatialReferenceH hSRS )
     return GDALDataset::FromHandle(hDS)->SetSpatialRef(
         OGRSpatialReference::FromHandle(hSRS));
 }
-
-/************************************************************************/
-/*                          _SetProjection()                            */
-/************************************************************************/
-
-//! @cond Doxygen_Suppress
-/** Pre GDAL-2.5 way */
-CPLErr GDALDataset::_SetProjection( const char * )
-{
-    if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
-        ReportError(CE_Failure, CPLE_NotSupported,
-                    "Dataset does not support the SetProjection() method.");
-    return CE_Failure;
-}
-//! @endcond
-
-/************************************************************************/
-/*                   OldSetProjectionFromSetSpatialRef()                */
-/************************************************************************/
-
-//! @cond Doxygen_Suppress
-CPLErr GDALDataset::OldSetProjectionFromSetSpatialRef(
-                            const OGRSpatialReference* poSRS)
-{
-    if( !poSRS || poSRS->IsEmpty() )
-    {
-        return _SetProjection("");
-    }
-    char* pszWKT = nullptr;
-    if( poSRS->exportToWkt(&pszWKT) != OGRERR_NONE )
-    {
-        CPLFree(pszWKT);
-        return CE_Failure;
-    }
-    auto ret = _SetProjection(pszWKT);
-    CPLFree(pszWKT);
-    return ret;
-}
-//! @endcond
 
 /************************************************************************/
 /*                         GDALSetProjection()                          */
@@ -1585,12 +1505,7 @@ int CPL_STDCALL GDALGetGCPCount( GDALDatasetH hDS )
 
 const char *GDALDataset::GetGCPProjection()
 {
-    return GetGCPProjectionFromSpatialRef(GetGCPSpatialRef());
-}
-
-//! @cond Doxygen_Suppress
-const char *GDALDataset::GetGCPProjectionFromSpatialRef(const OGRSpatialReference* poSRS) const
-{
+    const auto poSRS = GetGCPSpatialRef();
     if( !poSRS || !m_poPrivate )
     {
         return "";
@@ -1611,15 +1526,6 @@ const char *GDALDataset::GetGCPProjectionFromSpatialRef(const OGRSpatialReferenc
     m_poPrivate->m_pszWKTGCPCached = pszWKT;
     return m_poPrivate->m_pszWKTGCPCached;
 }
-//! @endcond
-
-/************************************************************************/
-/*                         _GetGCPProjection()                          */
-/************************************************************************/
-
-//! @cond Doxygen_Suppress
-/** Pre GDAL-2.5 way */
-const char *GDALDataset::_GetGCPProjection() { return ""; }
 //! @endcond
 
 /************************************************************************/
@@ -1668,31 +1574,6 @@ OGRSpatialReferenceH GDALGetGCPSpatialRef( GDALDatasetH hDS )
             const_cast<OGRSpatialReference*>(
                 GDALDataset::FromHandle(hDS)->GetGCPSpatialRef()));
 }
-
-/************************************************************************/
-/*                GetGCPSpatialRefFromOldGetGCPProjection()             */
-/************************************************************************/
-
-//! @cond Doxygen_Suppress
-const OGRSpatialReference* GDALDataset::GetGCPSpatialRefFromOldGetGCPProjection() const
-{
-    const char* pszWKT = const_cast<GDALDataset*>(this)->_GetGCPProjection();
-    if( !pszWKT || pszWKT[0] == '\0' || !m_poPrivate )
-    {
-        return nullptr;
-    }
-    if( !m_poPrivate->m_poSRSGCPCached)
-    {
-        m_poPrivate->m_poSRSGCPCached = new OGRSpatialReference();
-        m_poPrivate->m_poSRSGCPCached->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    }
-    if( m_poPrivate->m_poSRSGCPCached->importFromWkt(pszWKT) != OGRERR_NONE )
-    {
-        return nullptr;
-    }
-    return m_poPrivate->m_poSRSGCPCached;
-}
-//! @endcond
 
 /************************************************************************/
 /*                        GDALGetGCPProjection()                        */
@@ -1841,50 +1722,6 @@ CPLErr GDALDataset::SetGCPs( CPL_UNUSED int nGCPCount,
 
     return CE_Failure;
 }
-
-/************************************************************************/
-/*                            _SetGCPs()                                */
-/************************************************************************/
-
-//! @cond Doxygen_Suppress
-/** Pre GDAL-2.5 way */
-CPLErr GDALDataset::_SetGCPs( int,
-                              const GDAL_GCP*,
-                              const char * )
-
-{
-    if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
-        ReportError(CE_Failure, CPLE_NotSupported,
-                    "Dataset does not support the SetGCPs() method.");
-
-    return CE_Failure;
-}
-//! @endcond
-
-/************************************************************************/
-/*                           OldSetGCPsFromNew()                        */
-/************************************************************************/
-
-//! @cond Doxygen_Suppress
-CPLErr GDALDataset::OldSetGCPsFromNew(
-                              int nGCPCount, const GDAL_GCP *pasGCPList,
-                              const OGRSpatialReference * poGCP_SRS )
-{
-    if( !poGCP_SRS || poGCP_SRS->IsEmpty() )
-    {
-        return _SetGCPs(nGCPCount, pasGCPList, "");
-    }
-    char* pszWKT = nullptr;
-    if( poGCP_SRS->exportToWkt(&pszWKT) != OGRERR_NONE )
-    {
-        CPLFree(pszWKT);
-        return CE_Failure;
-    }
-    auto ret = _SetGCPs(nGCPCount, pasGCPList, pszWKT);
-    CPLFree(pszWKT);
-    return ret;
-}
-//! @endcond
 
 /************************************************************************/
 /*                            GDALSetGCPs()                             */
@@ -5258,7 +5095,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
     OGRCoordinateTransformation *poCT = nullptr;
     OGRSpatialReference *sourceSRS = poSrcLayer->GetSpatialRef();
     if (sourceSRS != nullptr && pszSRSWKT != nullptr &&
-            sourceSRS->IsSame(&oDstSpaRef) == FALSE)
+        !oDstSpaRef.IsEmpty() && sourceSRS->IsSame(&oDstSpaRef) == FALSE)
     {
         poCT = OGRCreateCoordinateTransformation(sourceSRS, &oDstSpaRef);
         if(nullptr == poCT)

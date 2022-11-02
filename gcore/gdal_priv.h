@@ -896,21 +896,7 @@ private:
 
     OGRStyleTable      *m_poStyleTable = nullptr;
 
-    // Compatibility layers
-    const OGRSpatialReference* GetSpatialRefFromOldGetProjectionRef() const;
-    CPLErr OldSetProjectionFromSetSpatialRef(const OGRSpatialReference* poSRS);
-    const OGRSpatialReference* GetGCPSpatialRefFromOldGetGCPProjection() const;
-    CPLErr OldSetGCPsFromNew( int nGCPCount, const GDAL_GCP *pasGCPList,
-                              const OGRSpatialReference * poGCP_SRS );
-
     friend class GDALProxyPoolDataset;
-    virtual const char *_GetProjectionRef();
-    const char *GetProjectionRefFromSpatialRef(const OGRSpatialReference*) const;
-    virtual const char *_GetGCPProjection();
-    const char *GetGCPProjectionFromSpatialRef(const OGRSpatialReference* poSRS) const;
-    virtual CPLErr _SetProjection( const char * pszProjection );
-    virtual CPLErr _SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                    const char *pszGCPProjection );
 //! @endcond
 
   private:

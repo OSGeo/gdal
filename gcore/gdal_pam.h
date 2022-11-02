@@ -131,12 +131,6 @@ class CPL_DLL GDALPamDataset : public GDALDataset
     int         nPamFlags = 0;
     GDALDatasetPamInfo *psPam = nullptr;
 
-    virtual const char *_GetProjectionRef() override;
-    virtual const char *_GetGCPProjection() override;
-    virtual CPLErr _SetProjection( const char * pszProjection ) override;
-    virtual CPLErr _SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                    const char *pszGCPProjection ) override;
-
     virtual CPLXMLNode *SerializeToXML( const char *);
     virtual CPLErr      XMLInit( CPLXMLNode *, const char * );
 
