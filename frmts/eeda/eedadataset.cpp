@@ -1241,4 +1241,8 @@ void GDALRegister_EEDA()
     poDriver->pfnIdentify = GDALEEDAdentify;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
+
+#ifdef GDAL_ENABLE_DRIVER_EEDA_PLUGIN
+    GDALRegister_EEDAI();
+#endif
 }
