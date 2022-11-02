@@ -592,7 +592,6 @@ jobs:
         curl http://download.osgeo.org/proj/proj-datumgrid-1.8.tar.gz > proj-datumgrid-1.8.tar.gz
         tar xvzf proj-datumgrid-1.8.tar.gz
         cd $OLDPWD
-        /usr/local/bin/python3.10 -m pip install --user -r $GITHUB_WORKSPACE/autotest/requirements.txt
     - name: Configure ccache
       run: |
           echo CCACHE_BASEDIR=$PWD >> ${GITHUB_ENV}
@@ -605,6 +604,7 @@ jobs:
         mkdir -p $GITHUB_WORKSPACE/build
         export PKG_CONFIG_PATH=/usr/local/opt/libxml2/lib/pkgconfig
         cmake -Werror=dev -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal ${CMAKE_OPTIONS} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DUSE_CCACHE=ON -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DWERROR_DEV_FLAG="-Werror=dev"
+        $(cat $GITHUB_WORKSPACE/build/python_executable.txt) -m pip install --user -r $GITHUB_WORKSPACE/autotest/requirements.txt
     - name: Build
       run: |
         cmake --build $GITHUB_WORKSPACE/build -j 3
