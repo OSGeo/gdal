@@ -216,7 +216,7 @@ jobs:
         export PATH=$CMAKE_DIR:/usr/local/bin:/usr/bin:/bin # Avoid CMake config from brew etc.
         (cd $GITHUB_WORKSPACE/superbuild/build; cmake .. "-DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal-with-rpath" "-DCMAKE_INSTALL_RPATH=$GITHUB_WORKSPACE/install-gdal-with-rpath/lib")
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -- -j$(nproc)
-        # For some reason, during the install phase of above invokation, the Python bindings are rebuilt after the build phase, and without the rpath... Can't reproduce that locally
+        # For some reason, during the install phase of above invocation, the Python bindings are rebuilt after the build phase, and without the rpath... Can't reproduce that locally
         # PYTHONPATH=$GITHUB_WORKSPACE/install-gdal-with-rpath/lib/python3/dist-packages python -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
     - name: Rerun using Mono
       run: |

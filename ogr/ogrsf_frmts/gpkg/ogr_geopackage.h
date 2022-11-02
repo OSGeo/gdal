@@ -94,7 +94,7 @@ struct OGRGPKGTableLayerFillArrowArray
 {
     std::unique_ptr<OGRArrowArrayHelper> psHelper{};
     int                  nCountRows = 0;
-    bool                 bErrorOccured = false;
+    bool                 bErrorOccurred = false;
     OGRFeatureDefn      *poFeatureDefn = nullptr;
     OGRGeoPackageLayer  *poLayer = nullptr;
     struct tm            brokenDown{};

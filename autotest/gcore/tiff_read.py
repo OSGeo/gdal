@@ -4578,7 +4578,7 @@ def test_tiff_read_unhandled_codec_unknown_name():
 
 ###############################################################################
 # Test reading a 4 band jxl tiff created before 3.6 where alpha vs undefined
-# channel handling was not explicitely handled (#6393)
+# channel handling was not explicitly handled (#6393)
 
 
 def test_tiff_jxl_read_for_files_created_before_6393():

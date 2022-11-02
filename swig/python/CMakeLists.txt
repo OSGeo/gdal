@@ -362,7 +362,7 @@ if (Python_Interpreter_FOUND)
         # and install that one when the "install" target is run
         # We cannot set this install rpath to regular build artifacts, to avoid
         # inconsistencies.
-        # This is admitedly quite convoluted because CMake cannot do the usual
+        # This is admittedly quite convoluted because CMake cannot do the usual
         # magic of setting/unsetting RPATH on binaries it is not aware of.
 
         set(INSTALL_WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/for_install")

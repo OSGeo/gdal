@@ -2736,7 +2736,7 @@ static std::map<std::string, std::map<std::string, std::string>> oMapPathSpecifi
 /**
  * \brief Set a credential (or more generally an option related to a
  *        virtual file system) for a given path prefix.
- * @deprecated in GDAL 3.6 for the bettern named VSISetPathSpecificOption()
+ * @deprecated in GDAL 3.6 for the better named VSISetPathSpecificOption()
  * @see VSISetPathSpecificOption()
  */
 void VSISetCredential( const char* pszPathPrefix, const char* pszKey, const char* pszValue )
@@ -2796,7 +2796,7 @@ void VSISetPathSpecificOption( const char* pszPathPrefix, const char* pszKey, co
 
 /**
  * \brief Clear path specific options set with VSISetPathSpecificOption()
- * @deprecated in GDAL 3.6 for the bettern named VSIClearPathSpecificOptions()
+ * @deprecated in GDAL 3.6 for the better named VSIClearPathSpecificOptions()
  * @see VSIClearPathSpecificOptions()
  */
 void VSIClearCredentials(const char* pszPathPrefix)
@@ -2835,7 +2835,7 @@ void VSIClearPathSpecificOptions(const char* pszPathPrefix)
 /**
  * \brief Get the value of a credential (or more generally an option related to a
  *        virtual file system) for a given path.
- * @deprecated in GDAL 3.6 for the bettern named VSIGetPathSpecificOption()
+ * @deprecated in GDAL 3.6 for the better named VSIGetPathSpecificOption()
  * @see VSIGetPathSpecificOption()
  */
 const char* VSIGetCredential( const char* pszPath, const char* pszKey, const char* pszDefault )

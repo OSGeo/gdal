@@ -4373,7 +4373,7 @@ void GDALRegister_JP2OpenJPEG()
 #if IS_OPENJPEG_OR_LATER(2,5,0)
 "   <Option name='TLM' type='boolean' description='True to insert TLM marker segments' default='false'/>"
 #endif
-"   <Option name='COMMENT' type='string' description='Content of the COM(ment) marker'/>"
+"   <Option name='COMMENT' type='string' description='Content of the comment (COM) marker'/>"
 "</CreationOptionList>"  );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

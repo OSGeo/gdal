@@ -124,6 +124,7 @@ AUTHORIZED_LIST="$AUTHORIZED_LIST,FileCreatPropList,H5F_ACC_CREAT,H5F_ACC_TRUNC"
 AUTHORIZED_LIST="$AUTHORIZED_LIST,cJP2_Colorspace_RGBa,cJP2_Colorspace_Palette_RGBa,cJP2_Colorspace_Palette_CIE_LABa" # JP2Lura
 AUTHORIZED_LIST="$AUTHORIZED_LIST,CURLE_FILE_COULDNT_READ_FILE"
 AUTHORIZED_LIST="$AUTHORIZED_LIST,nParms,ProjParm,ProjParmId,GTIFFetchProjParms,gdal_GTIFFetchProjParms" # API of libgeotiff
+AUTHORIZED_LIST="$AUTHORIZED_LIST,lon,Lon,LON"
 
 python3 fix_typos/codespell/codespell.py -w -i 3 -q 2 -S "$EXCLUDED_FILES,./autotest/*,./build*/*" \
     -x scripts/typos_allowlist.txt --words-white-list=$AUTHORIZED_LIST \

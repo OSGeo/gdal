@@ -5013,7 +5013,7 @@ MissingRequired(TIFF* tif, const char* tagname)
  * and its IFD number against that list. However, the offset of an IFD number
  * can change - e.g. when writing updates to file.
  * Returns 1 if all is ok; 0 if last directory or IFD loop is encountered,
- * or an error has occured.
+ * or an error has occurred.
  */
 int
 _TIFFCheckDirNumberAndOffset(TIFF *tif, uint16_t dirn, uint64_t diroff)
@@ -5092,7 +5092,7 @@ _TIFFCheckDirNumberAndOffset(TIFF *tif, uint16_t dirn, uint64_t diroff)
  * from the list of directories already seen.
  * Returns 1 if the offset was in the list and the directory number
  * can be returned.
- * Otherwise returns 0 or if an error occured.
+ * Otherwise returns 0 or if an error occurred.
  */
 int
 _TIFFGetDirNumberFromOffset(TIFF *tif, uint64_t diroff, uint16_t* dirn)

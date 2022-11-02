@@ -99,7 +99,7 @@ input source , a method source and generates the output of the operation in the 
 
 .. option:: -overwrite
 
-    Indicates wether the ``output_ds`` have to be overwritten with the generated result of ogr_layer_algebra
+    Indicates whether the ``output_ds`` have to be overwritten with the generated result of ogr_layer_algebra
 
 .. option:: -opt <NAME=VALUE>
 

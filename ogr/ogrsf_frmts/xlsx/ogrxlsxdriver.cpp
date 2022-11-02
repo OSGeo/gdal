@@ -82,7 +82,7 @@ static int OGRXLSXDriverIdentify( GDALOpenInfo* poOpenInfo )
         {
             CPLDebug("XLSX",
                      "Identify() failed to recognize first filename in zip (%s), "
-                     "but fallback to extension maching",
+                     "but fallback to extension matching",
                      osFilename.c_str());
             return TRUE;
         }

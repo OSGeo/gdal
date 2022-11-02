@@ -117,7 +117,7 @@ the configuration file starts with a ``[directives]`` section that contains a
 .. code-block::
 
     [directives]
-    # ignore environent variables. Take only into account the content of the
+    # ignore environment variables. Take only into account the content of the
     # [configoptions] section, or ones defined programmatically with
     # CPLSetConfigOption / CPLSetThreadLocalConfigOption.
     ignore-env-variables=yes

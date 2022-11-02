@@ -6115,7 +6115,7 @@ static void GWKAverageOrModeThread( void* pData)
             // close to the left-most and right-most columns of the source
             // raster. The 2 value below was experimentally determined to
             // avoid false-positives and false-negatives.
-            // Adresses https://github.com/OSGeo/gdal/issues/6478
+            // Addresses https://github.com/OSGeo/gdal/issues/6478
             bool bWrapOverX = false;
             const int nThresholdWrapOverX = std::min(2, nSrcXSize / 10);
             if( poWK->nSrcXOff == 0 &&

@@ -2104,7 +2104,7 @@ namespace tut
 
         {
             // Check that MyObj copy constructor and copy-assignment operator
-            // are not neede
+            // are not needed
             struct MyObj
             {
                 int m_v;

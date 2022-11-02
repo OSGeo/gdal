@@ -2425,7 +2425,7 @@ All:
 
 ## Utilities
 
-* GDALInfo(): fix axis order issue in lon,lat corner coordinates, in particular when reading from a .aux.xml with a ProjectedCRS (#2195)
+* GDALInfo(): fix axis order issue in long,lat corner coordinates, in particular when reading from a .aux.xml with a ProjectedCRS (#2195)
 * gdal_translate: Make 'gdal_translate foo.tif foo.tif.ovr -outsize 50% 50% -of GTiff' work
 * gdal_translate: clamp/round source nodata value when not compatible of the target data type. Was already done when using -a_nodata, but not with implicit copy (#2105)
 * gdalwarp: accept output drivers with only CreateCopy() capabilities
@@ -4296,7 +4296,7 @@ GRIB driver:
  * add support for GRIB2 template 4.40 (Analysis or forecast at a horizontal level or in a horizontal layer at a point in time for atmospheric chemical constituents)
  * update table 4.2-0-7 current (github #274)
  * add support for GRIB1 products with non-zero NV (number of vertical coordinate parameters) field in GDS (NV is just ignored) (#7104)
- * add support for Rotated pole LatLon projections (#7104)
+ * add support for Rotated pole LatLong projections (#7104)
  * adjust the longitude range to be close to [-180,180] when possible for products whose left origin is close to 180deg. Can be controlled with the GRIB_ADJUST_LONGITUDE_RANGE=YES/NO config option, that defaults to YES  (#7103)
  * advertise .grb2 and .grib2 extensions in metadata
  * expose product discipline of GRIB2 products in GRIB_DISCIPLINE (#5108)
@@ -4677,7 +4677,7 @@ GeoRSS driver:
 GML driver:
  * CreateGeometryFromGML(): accept gml:Arc with odd number of points > 3, even if they are invalid
  * decode gml:Solid as PolyhedralSurface (#6978)
- * JPGIS FGD v4: fix logic so that coordinate order reported is lon/lat (github #241)
+ * JPGIS FGD v4: fix logic so that coordinate order reported is long/lat (github #241)
  * a GML_FEATURE_COLLECTION=YES/NO dataset creation option
  * fix FORCE_SRS_DETECTION=YES effect on feature count and SRS reporting on gml files with .gfs (#7046)
  * do not try to open some kml files (#7061)
@@ -5529,7 +5529,7 @@ GPKG driver:
  * do not warn if gpkg_metadata extension declared
 
 GPX driver:
- * ignore wpt/rtept/trkpt with empty content for lat or lon
+ * ignore wpt/rtept/trkpt with empty content for lat or long
 
 ILI driver:
  * ILI1: fix crash in JoinSurfaceLayer() when the multicurve of the feature of the poSurfaceLineLayer layer is empty (#6688)
@@ -8467,7 +8467,7 @@ NetCDF driver:
  * Add longitude_of_prime_meridian value to PRIMEM
  * Fix SetNoDataValue() - do not update when already set to new value (#4484)
  * Convert longitude values in [180,360] interval to [-180,180] (#4512) - override with config option GDAL_NETCDF_CENTERLONG_180=0
- * Support 2D GEOLOCATION arrays when a projected variable has coordinates attribute and supporting lon/at arrays (#4513)
+ * Support 2D GEOLOCATION arrays when a projected variable has coordinates attribute and supporting long/lat arrays (#4513)
  * Ignore coordinate and bounds variables (CF sections 5.2, 5.6 and 7.1) as raster bands, but expose them as subdatasets - this allows opening files with projected SRS (or dimension bounds) directly, without specifying the variable as a subdataset
  * Better support for Gaussian grids - store original latitude values in special Y_VALUES geolocation metadata item and use it for netcdf export (#4514)
  * Write multi-dimensional variables to a single variable (not one for each unrolled band) in CreateCopy() (#2581)
@@ -9334,7 +9334,7 @@ NetCDF driver:
  * Fix netcdf metadata import (float and double precision) (#4211)
  * Improve import of CF projection
  * Add netcdf history metadata (#4297)
- * CF-1.5 compatible export of projected grids (optional lon/lat export)
+ * CF-1.5 compatible export of projected grids (optional long/lat export)
  * Fix LCC-1SP import and export (#3324)
  * Fix handling of UNITS import and export (#4402 and #3324)
  * Fix upside-down export and import of grids without projection and geotransform (#2129, #4284)
@@ -10199,7 +10199,7 @@ HDF4 driver:
 
 HDF5 driver:
  * Avoid setting bogus projection if we don't get georeferencing from
-   CreateProjections().  Avoid trying to operate if DeltaLat/Lon is zero.
+   CreateProjections().  Avoid trying to operate if DeltaLat/Long is zero.
    Avoid crashing on NULL poH5Object->pszPath in CreateMetadata().  (#3534)
  * Ensure backslashes are preserved in paths for UNC on win32 (#3851)
 
@@ -12015,7 +12015,7 @@ Terralib driver:
 TSX driver:
  * Added support to extract GCPs from XML metadata for TerraSAR-X SSC products.
  * Provide an error message if the sceneInfo tag cannot be found in the TerraSAR-X image metadata.
- * Fix lat/lon inversion (whoops, #2565); expose additional metadata items
+ * Fix lat/long inversion (whoops, #2565); expose additional metadata items
 
 USGSDEM driver:
  * mark NTS and INTERNALNAME as legal options

@@ -6430,7 +6430,7 @@ OGR_GPKG_FillArrowArray_Step(sqlite3_context* pContext, int /*argc*/, sqlite3_va
             CPLError(CE_Failure, CPLE_AppDefined,
                      "OGR_GPKG_FillArrowArray_Step() got more rows than expected!");
             sqlite3_interrupt(psFillArrowArray->hDB);
-            psFillArrowArray->bErrorOccured = true;
+            psFillArrowArray->bErrorOccurred = true;
             return;
         }
     }
@@ -6647,7 +6647,7 @@ OGR_GPKG_FillArrowArray_Step(sqlite3_context* pContext, int /*argc*/, sqlite3_va
 
 error:
     sqlite3_interrupt(psFillArrowArray->hDB);
-    psFillArrowArray->bErrorOccured = true;
+    psFillArrowArray->bErrorOccurred = true;
 }
 
 /************************************************************************/
@@ -6688,7 +6688,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(struct ArrowArray* ou
         m_poFillArrowArray = cpl::make_unique<OGRGPKGTableLayerFillArrowArray>();
         m_poFillArrowArray->psHelper = std::move(psHelper);
         m_poFillArrowArray->nCountRows = 0;
-        m_poFillArrowArray->bErrorOccured = false;
+        m_poFillArrowArray->bErrorOccurred = false;
         m_poFillArrowArray->poFeatureDefn = m_poFeatureDefn;
         m_poFillArrowArray->poLayer = this;
         m_poFillArrowArray->hDB = m_poDS->GetDB();
@@ -6714,7 +6714,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(struct ArrowArray* ou
     }
     else
     {
-        if( m_poFillArrowArray->bErrorOccured )
+        if( m_poFillArrowArray->bErrorOccurred )
         {
             return EIO;
         }
@@ -6737,7 +6737,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(struct ArrowArray* ou
         }
     }
 
-    if( m_poFillArrowArray->bErrorOccured )
+    if( m_poFillArrowArray->bErrorOccurred )
     {
         m_oThreadNextArrowArray.join();
         m_poFillArrowArray->psHelper->ClearArray();
@@ -6846,7 +6846,7 @@ void OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronousWorker()
     char* pszErrMsg = nullptr;
     if( sqlite3_exec(m_poDS->GetDB(), osSQL.c_str(), nullptr, nullptr, &pszErrMsg) != SQLITE_OK )
     {
-        m_poFillArrowArray->bErrorOccured = true;
+        m_poFillArrowArray->bErrorOccurred = true;
         CPLError(CE_Failure, CPLE_AppDefined,
                  "%s", pszErrMsg ? pszErrMsg : "unknown error");
     }
@@ -7034,7 +7034,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(struct ArrowArray* out_ar
     OGRGPKGTableLayerFillArrowArray sFillArrowArray;
     sFillArrowArray.psHelper = std::move(psHelper);
     sFillArrowArray.nCountRows = 0;
-    sFillArrowArray.bErrorOccured = false;
+    sFillArrowArray.bErrorOccurred = false;
     sFillArrowArray.poFeatureDefn = m_poFeatureDefn;
     sFillArrowArray.poLayer = this;
     sFillArrowArray.hDB = m_poDS->GetDB();
@@ -7086,7 +7086,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(struct ArrowArray* out_ar
     char* pszErrMsg = nullptr;
     if( sqlite3_exec(m_poDS->GetDB(), osSQL.c_str(), nullptr, nullptr, &pszErrMsg) != SQLITE_OK )
     {
-        if( !sFillArrowArray.bErrorOccured )
+        if( !sFillArrowArray.bErrorOccurred )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "%s", pszErrMsg ? pszErrMsg : "unknown error");
@@ -7100,7 +7100,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(struct ArrowArray* out_ar
                             nullptr, OGR_GPKG_FillArrowArray_Step,
                             OGR_GPKG_FillArrowArray_Finalize);
 
-    if( sFillArrowArray.bErrorOccured )
+    if( sFillArrowArray.bErrorOccurred )
     {
         sFillArrowArray.psHelper->ClearArray();
         return ENOMEM;

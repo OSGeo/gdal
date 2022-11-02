@@ -10502,7 +10502,7 @@ def test_tiff_write_jpegxl_band_combinations():
                         idx,
                     )
 
-                # Check that color interpreation inside JXL data is properly encoded
+                # Check that color interpretation inside JXL data is properly encoded
                 if jpegxl_drv and "INTERLEAVE=PIXEL" in copts:
                     jxl_offset = ds.GetRasterBand(1).GetMetadataItem(
                         "BLOCK_OFFSET_0_0", "TIFF"
