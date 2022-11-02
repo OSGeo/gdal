@@ -5038,8 +5038,8 @@ _TIFFCheckDirNumberAndOffset(TIFF *tif, uint16_t dirn, uint64_t diroff)
 				return 1;
 			} else {
 				TIFFWarningExt(tif->tif_clientdata, "_TIFFCheckDirNumberAndOffset",
-					"TIFF directory %"PRIu16" has IFD looping to directory %"PRIu16" at offset 0x%"PRIx64" (%"PRIu64")",
-					dirn-1, tif->tif_dirlistdirn[n], diroff, diroff);
+					"TIFF directory %d has IFD looping to directory %"PRIu16" at offset 0x%"PRIx64" (%"PRIu64")",
+					(int)dirn-1, tif->tif_dirlistdirn[n], diroff, diroff);
 				return 0;
 			}
 		}
@@ -5092,7 +5092,7 @@ _TIFFCheckDirNumberAndOffset(TIFF *tif, uint16_t dirn, uint64_t diroff)
  * from the list of directories already seen.
  * Returns 1 if the offset was in the list and the directory number
  * can be returned.
- * Otherwise returns 0 or if an error occurred.
+ * Otherwise returns 0 or if an error occured.
  */
 int
 _TIFFGetDirNumberFromOffset(TIFF *tif, uint64_t diroff, uint16_t* dirn)
@@ -5440,6 +5440,9 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp, int recover)
 	switch (fip->set_field_type)
 	{
 		case TIFF_SETGET_UNDEFINED:
+				TIFFErrorExt(tif->tif_clientdata, "TIFFFetchNormalTag",
+					"Defined set_field_type of custom tag %u (%s) is TIFF_SETGET_UNDEFINED and thus tag is not read from file",
+					fip->field_tag, fip->field_name);
 			break;
 		case TIFF_SETGET_ASCII:
 			{
