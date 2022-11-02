@@ -2859,7 +2859,6 @@ netCDFDataset::netCDFDataset() :
     bufManager(CPLGetUsablePhysicalRAM() / 5),
 
     // projection/GT.
-    m_pszProjection(CPLStrdup("")),
     nXDimID(-1),
     nYDimID(-1),
     bIsProjected(false),
@@ -2879,6 +2878,8 @@ netCDFDataset::netCDFDataset() :
     nCreateMode(NC_CLOBBER),
     bSignedData(true)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
     // Projection/GT.
     m_adfGeoTransform[0] = 0.0;
     m_adfGeoTransform[1] = 1.0;
@@ -2934,7 +2935,6 @@ netCDFDataset::~netCDFDataset()
     CSLDestroy(papszSubDatasets);
     CSLDestroy(papszCreationOptions);
 
-    CPLFree(m_pszProjection);
     CPLFree(pszCFProjection);
 
     if( cdfid > 0 )
@@ -3073,15 +3073,15 @@ CPLErr netCDFDataset::SetMetadata( char** papszMD, const char* pszDomain )
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *netCDFDataset::_GetProjectionRef()
+const OGRSpatialReference *netCDFDataset::GetSpatialRef() const
 {
     if( m_bHasProjection )
-        return m_pszProjection;
+        return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 
-    return GDALPamDataset::_GetProjectionRef();
+    return GDALPamDataset::GetSpatialRef();
 }
 
 /************************************************************************/
@@ -3249,6 +3249,7 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
 
     // These values from CF metadata.
     OGRSpatialReference oSRS;
+    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     char szDimNameX[NC_MAX_NAME + 1];
     // char szDimNameY[NC_MAX_NAME + 1];
     size_t xdim = nRasterXSize;
@@ -3341,7 +3342,10 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                     {
                         m_bAddedProjectionVarsDefs = true;
                         m_bAddedProjectionVarsData = true;
-                        SetProjectionNoUpdate(pszWKT);
+                        OGRSpatialReference oSRSTmp;
+                        oSRSTmp.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                        oSRSTmp.importFromWkt(pszWKT);
+                        SetSpatialRefNoUpdate(&oSRSTmp);
                     }
                     pszGeoTransform = FetchAttr(pszGridMappingValue,
                                                 NCDF_GEOTRANSFORM);
@@ -4240,7 +4244,7 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
             {
                 m_bAddedProjectionVarsDefs = true;
                 m_bAddedProjectionVarsData = true;
-                SetProjectionNoUpdate(pszTempProjection);
+                SetSpatialRefNoUpdate(&oSRS);
             }
         }
         CPLFree(pszTempProjection);
@@ -4709,7 +4713,7 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
                 {
                     m_bAddedProjectionVarsDefs = true;
                     m_bAddedProjectionVarsData = true;
-                    SetProjectionNoUpdate(pszWKTExport);
+                    SetSpatialRefNoUpdate(&oSRS);
                 }
                 CPLFree(pszWKTExport);
             }
@@ -4988,21 +4992,22 @@ double *netCDFDataset::Get1DGeolocation( CPL_UNUSED const char *szDimName,
 }
 
 /************************************************************************/
-/*                        SetProjectionNoUpdate()                       */
+/*                        SetSpatialRefNoUpdate()                       */
 /************************************************************************/
 
-void netCDFDataset::SetProjectionNoUpdate( const char * pszNewProjection )
+void netCDFDataset::SetSpatialRefNoUpdate( const OGRSpatialReference* poSRS )
 {
-    CPLFree(m_pszProjection);
-    m_pszProjection = CPLStrdup(pszNewProjection);
+    m_oSRS.Clear();
+    if( poSRS )
+        m_oSRS = *poSRS;
     m_bHasProjection = true;
 }
 
 /************************************************************************/
-/*                          _SetProjection()                            */
+/*                          SetSpatialRef()                             */
 /************************************************************************/
 
-CPLErr netCDFDataset::_SetProjection( const char * pszNewProjection )
+CPLErr netCDFDataset::SetSpatialRef( const OGRSpatialReference* poSRS )
 {
     CPLMutexHolderD(&hNCMutex);
 
@@ -5010,30 +5015,13 @@ CPLErr netCDFDataset::_SetProjection( const char * pszNewProjection )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                   "netCDFDataset::_SetProjection() should only be called once "
-                  "in update mode!\npszNewProjection=\n%s",
-                  pszNewProjection);
-        return CE_Failure;
-    }
-
-    CPLDebug("GDAL_netCDF", "SetProjection, WKT = %s", pszNewProjection);
-
-    if( !STARTS_WITH_CI(pszNewProjection, "GEOGCS")
-        && !STARTS_WITH_CI(pszNewProjection, "PROJCS")
-        && !STARTS_WITH_CI(pszNewProjection, "GEOGCRS")
-        && !EQUAL(pszNewProjection, "") )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                  "Only OGC WKT GEOGCS and PROJCS Projections supported "
-                  "for writing to NetCDF.  "
-                  "%s not supported.",
-                  pszNewProjection);
-
+                  "in update mode!");
         return CE_Failure;
     }
 
     if( m_bHasGeoTransform )
     {
-        SetProjectionNoUpdate(pszNewProjection);
+        SetSpatialRefNoUpdate(poSRS);
 
         // For NC4/NC4C, writing both projection variables and data,
         // followed by redefining nodata value, cancels the projection
@@ -5043,7 +5031,7 @@ CPLErr netCDFDataset::_SetProjection( const char * pszNewProjection )
         return AddProjectionVars(true, nullptr, nullptr);
     }
 
-    SetProjectionNoUpdate(pszNewProjection);
+    SetSpatialRefNoUpdate(poSRS);
 
     return CE_None;
 }
@@ -5582,11 +5570,9 @@ CPLErr netCDFDataset::AddProjectionVars( bool bDefsOnly,
     GDALDatasetH hDS_Y = nullptr;
     GDALRasterBandH hBand_Y = nullptr;
 
-    OGRSpatialReference oSRS;
-    if( m_pszProjection )
+    OGRSpatialReference oSRS(m_oSRS);
+    if( !m_oSRS.IsEmpty() )
     {
-        oSRS.importFromWkt(m_pszProjection);
-
         if( oSRS.IsProjected() )
             bIsProjected = true;
         else if( oSRS.IsGeographic() )
@@ -5595,11 +5581,14 @@ CPLErr netCDFDataset::AddProjectionVars( bool bDefsOnly,
 
     if( bDefsOnly )
     {
+        char* pszProjection = nullptr;
+        m_oSRS.exportToWkt(&pszProjection);
         CPLDebug("GDAL_netCDF",
                 "SetProjection, WKT now = [%s]\nprojected: %d geographic: %d",
-                m_pszProjection,
+                pszProjection ? pszProjection : "(null)",
                 static_cast<int>(bIsProjected),
                 static_cast<int>(bIsGeographic));
+        CPLFree(pszProjection);
 
         if( !m_bHasGeoTransform )
             CPLDebug("GDAL_netCDF", "netCDFDataset::AddProjectionVars() called, "
@@ -6039,10 +6028,6 @@ CPLErr netCDFDataset::AddProjectionVars( bool bDefsOnly,
             OGRSpatialReference *poLatLonSRS = nullptr;
             OGRCoordinateTransformation *poTransform = nullptr;
 
-            OGRSpatialReference oSRS2;
-            oSRS2.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-            oSRS2.importFromWkt(m_pszProjection);
-
             size_t startX[1];
             size_t countX[1];
             size_t startY[1];
@@ -6107,12 +6092,12 @@ CPLErr netCDFDataset::AddProjectionVars( bool bDefsOnly,
             // Get OGR transform if GEOLOCATION is not available.
             if( bWriteLonLat && !bHasGeoloc )
             {
-                poLatLonSRS = oSRS2.CloneGeogCS();
+                poLatLonSRS = m_oSRS.CloneGeogCS();
                 if( poLatLonSRS != nullptr )
                 {
                     poLatLonSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                     poTransform =
-                        OGRCreateCoordinateTransformation(&oSRS2, poLatLonSRS);
+                        OGRCreateCoordinateTransformation(&m_oSRS, poLatLonSRS);
                 }
                 // If no OGR transform, then don't write CF lon/lat.
                 if( poTransform == nullptr )
@@ -13184,17 +13169,9 @@ CPLErr netCDFDataset::CreateGrpVectorLayers( int nCdfId,
     papszMetadata = papszMetadataBackup;
 
     OGRSpatialReference *poSRS = nullptr;
-    if( m_pszProjection[0] )
+    if( !m_oSRS.IsEmpty() )
     {
-        poSRS = new OGRSpatialReference();
-        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        if( poSRS->importFromWkt(m_pszProjection) != OGRERR_NONE )
-        {
-            delete poSRS;
-            poSRS = nullptr;
-        }
-        CPLFree(m_pszProjection);
-        m_pszProjection = CPLStrdup("");
+        poSRS = m_oSRS.Clone();
     }
     // Reset if there's a 2D raster
     m_bHasProjection = false;

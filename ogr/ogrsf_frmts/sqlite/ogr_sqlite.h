@@ -591,7 +591,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
     CPLStringList       m_aosSubDatasets{};
     bool                m_bGeoTransformValid = false;
     double              m_adfGeoTransform[6];
-    CPLString           m_osProjection{};
+    OGRSpatialReference m_oSRS{};
     bool                m_bPromote1BitAs8Bit = false;
     bool                OpenRaster();
     bool                OpenRasterSubDataset(const char* pszConnectionId);
@@ -649,10 +649,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
     virtual char**      GetMetadata(const char* pszDomain = "") override;
 
     virtual CPLErr      GetGeoTransform( double* padfGeoTransform ) override;
-    virtual const char* _GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
 
     static char        *LaunderName( const char * );
     int                 FetchSRSId( const OGRSpatialReference * poSRS );

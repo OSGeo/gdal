@@ -135,7 +135,7 @@ class ILWISDataset final: public GDALPamDataset
     friend class ILWISRasterBand;
     CPLString osFileName;
     std::string pszIlwFileName;
-    char         *pszProjection;
+    OGRSpatialReference m_oSRS{};
     double adfGeoTransform[6];
     int    bGeoDirty;
     int    bNewDataset;            /* product of Create() */
@@ -165,14 +165,8 @@ public:
     virtual CPLErr  GetGeoTransform( double * padfTransform ) override;
     virtual CPLErr  SetGeoTransform( double * ) override;
 
-    virtual const char *_GetProjectionRef() override;
-    virtual CPLErr _SetProjection( const char * ) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     virtual void   FlushCache(bool bAtClosing) override;
 };

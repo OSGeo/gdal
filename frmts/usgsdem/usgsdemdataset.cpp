@@ -292,7 +292,7 @@ class USGSDEMDataset final: public GDALPamDataset
     GDALDataType eNaturalDataFormat;
 
     double      adfGeoTransform[6];
-    char        *pszProjection;
+    OGRSpatialReference m_oSRS{};
 
     double      fVRes;
 
@@ -309,10 +309,7 @@ class USGSDEMDataset final: public GDALPamDataset
     static int  Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
     CPLErr GetGeoTransform( double * padfTransform ) override;
-    const char *_GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
 };
 
 /************************************************************************/
@@ -437,7 +434,7 @@ CPLErr USGSDEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
             return CE_Failure;
         }
 
-        if( STARTS_WITH_CI(poGDS->pszProjection, "GEOGCS") )
+        if( poGDS->m_oSRS.IsGeographic() )
             dyStart = dyStart / 3600.0;
 
         double dygap = (dfYMin - dyStart)/poGDS->adfGeoTransform[5]+ 0.5;
@@ -550,11 +547,11 @@ const char *USGSDEMRasterBand::GetUnitType()
 USGSDEMDataset::USGSDEMDataset() :
     nDataStartOffset(0),
     eNaturalDataFormat(GDT_Unknown),
-    pszProjection(nullptr),
     fVRes(0.0),
     pszUnits(nullptr),
     fp(nullptr)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
 }
 
@@ -567,7 +564,6 @@ USGSDEMDataset::~USGSDEMDataset()
 {
     FlushCache(true);
 
-    CPLFree( pszProjection );
     if( fp != nullptr )
         CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
 }
@@ -694,6 +690,7 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
 /*      Collect the spatial reference system.                           */
 /* -------------------------------------------------------------------- */
     OGRSpatialReference sr;
+    sr.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     bool bNAD83 = true;
 
     // OLD format header ends at byte 864
@@ -774,7 +771,7 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
             sr.SetStatePlane( iUTMZone, bNAD83 );
     }
 
-    sr.exportToWkt( &pszProjection );
+    m_oSRS = sr;
 
 /* -------------------------------------------------------------------- */
 /*      For UTM we use the extents (really the UTM coordinates of       */
@@ -850,13 +847,13 @@ CPLErr USGSDEMDataset::GetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *USGSDEMDataset::_GetProjectionRef()
+const OGRSpatialReference *USGSDEMDataset::GetSpatialRef() const
 
 {
-    return pszProjection;
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /************************************************************************/

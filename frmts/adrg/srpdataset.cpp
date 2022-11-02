@@ -50,7 +50,7 @@ class SRPDataset final: public GDALPamDataset
     int*         TILEINDEX;
     int          offsetInIMG;
     CPLString    osProduct;
-    CPLString    osSRS;
+    OGRSpatialReference m_oSRS{};
     CPLString    osGENFileName;
     CPLString    osQALFileName;
     CPLString    osIMGFileName;
@@ -80,10 +80,7 @@ class SRPDataset final: public GDALPamDataset
     SRPDataset();
     ~SRPDataset() override;
 
-    const char *_GetProjectionRef(void) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
     CPLErr GetGeoTransform( double * padfGeoTransform ) override;
 
     char **GetMetadata( const char * pszDomain = "" ) override;
@@ -349,7 +346,9 @@ SRPDataset::SRPDataset() :
     PCB(0),
     PVB(0),
     papszSubDatasets(nullptr)
-{}
+{
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+}
 
 /************************************************************************/
 /*                          ~SRPDataset()                              */
@@ -386,12 +385,12 @@ CPLString SRPDataset::ResetTo01( const char* str )
 }
 
 /************************************************************************/
-/*                        GetProjectionRef()                            */
+/*                        GetSpatialRef()                               */
 /************************************************************************/
 
-const char* SRPDataset::_GetProjectionRef()
+const OGRSpatialReference* SRPDataset::GetSpatialRef() const
 {
-    return osSRS;
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /************************************************************************/
@@ -800,11 +799,11 @@ bool SRPDataset::GetFromRecord( const char* pszFileName, DDFRecord * record )
 /* -------------------------------------------------------------------- */
     if( EQUAL(osProduct,"ASRP") )
     {
-        osSRS = SRS_WKT_WGS84_LAT_LONG;
+        m_oSRS.importFromWkt(SRS_WKT_WGS84_LAT_LONG);
 
         if( ZNA == 9 )
         {
-            osSRS =
+            m_oSRS.importFromWkt(
                 "PROJCS[\"ARC_System_Zone_09\",GEOGCS[\"GCS_Sphere\","
                 "DATUM[\"D_Sphere\",SPHEROID[\"Sphere\",6378137.0,0.0]],"
                 "PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],"
@@ -813,12 +812,12 @@ bool SRPDataset::GetFromRecord( const char* pszFileName, DDFRecord * record )
                 "PARAMETER[\"longitude_of_center\",0],"
                 "PARAMETER[\"false_easting\",0],"
                 "PARAMETER[\"false_northing\",0],"
-                "UNIT[\"metre\",1]]";
+                "UNIT[\"metre\",1]]");
         }
 
         if (ZNA == 18)
         {
-            osSRS =
+            m_oSRS.importFromWkt(
                 "PROJCS[\"ARC_System_Zone_18\",GEOGCS[\"GCS_Sphere\","
                 "DATUM[\"D_Sphere\",SPHEROID[\"Sphere\",6378137.0,0.0]],"
                 "PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],"
@@ -827,31 +826,24 @@ bool SRPDataset::GetFromRecord( const char* pszFileName, DDFRecord * record )
                 "PARAMETER[\"longitude_of_center\",0],"
                 "PARAMETER[\"false_easting\",0],"
                 "PARAMETER[\"false_northing\",0],"
-                "UNIT[\"metre\",1]]";
+                "UNIT[\"metre\",1]]");
         }
     }
     else
     {
-        OGRSpatialReference oSRS;
-
         if( std::abs(ZNA) >= 1 && std::abs(ZNA) <= 60 )
         {
-            oSRS.SetUTM(std::abs(ZNA), ZNA > 0);
-            oSRS.SetWellKnownGeogCS( "WGS84" );
+            m_oSRS.SetUTM(std::abs(ZNA), ZNA > 0);
+            m_oSRS.SetWellKnownGeogCS( "WGS84" );
         }
         else if( ZNA == 61 )
         {
-            oSRS.importFromEPSG( 32661 ); // WGS84 UPS North
+            m_oSRS.importFromEPSG( 32661 ); // WGS84 UPS North
         }
         else if( ZNA == -61 )
         {
-            oSRS.importFromEPSG( 32761 ); // WGS84 UPS South
+            m_oSRS.importFromEPSG( 32761 ); // WGS84 UPS South
         }
-
-        char *pszWKT = nullptr;
-        oSRS.exportToWkt( &pszWKT );
-        osSRS = pszWKT;
-        CPLFree( pszWKT );
     }
 
     snprintf(szValue, sizeof(szValue), "%d", ZNA);

@@ -1474,7 +1474,6 @@ JPGDatasetCommon::JPGDatasetCommon() :
     nInternalOverviewsCurrent(0),
     nInternalOverviewsToFree(0),
     papoInternalOverviews(nullptr),
-    pszProjection(nullptr),
     bGeoTransformValid(false),
     nGCPCount(0),
     pasGCPList(nullptr),
@@ -1526,9 +1525,6 @@ JPGDatasetCommon::~JPGDatasetCommon()
         CPLFree(m_pabyScanline);
     if( papszMetadata != nullptr )
         CSLDestroy(papszMetadata);
-
-    if ( pszProjection )
-        CPLFree(pszProjection);
 
     if ( nGCPCount > 0 )
     {
@@ -2373,22 +2369,22 @@ int JPGDatasetCommon::GetGCPCount()
 }
 
 /************************************************************************/
-/*                          GetGCPProjection()                          */
+/*                          GetGCPSpatialRef()                          */
 /************************************************************************/
 
-const char *JPGDatasetCommon::_GetGCPProjection()
+const OGRSpatialReference *JPGDatasetCommon::GetGCPSpatialRef() const
 
 {
-    const int nPAMGCPCount = GDALPamDataset::GetGCPCount();
+    const int nPAMGCPCount = const_cast<JPGDatasetCommon*>(this)->GDALPamDataset::GetGCPCount();
     if( nPAMGCPCount != 0 )
-        return GDALPamDataset::_GetGCPProjection();
+        return GDALPamDataset::GetGCPSpatialRef();
 
-    LoadWorldFileOrTab();
+    const_cast<JPGDatasetCommon*>(this)->LoadWorldFileOrTab();
 
-    if( pszProjection && nGCPCount > 0 )
-        return pszProjection;
+    if( !m_oSRS.IsEmpty() && nGCPCount > 0 )
+        return &m_oSRS;
 
-    return "";
+    return nullptr;
 }
 
 /************************************************************************/
@@ -3074,9 +3070,13 @@ void JPGDatasetCommon::LoadWorldFileOrTab()
 
     if( !bGeoTransformValid )
     {
+        char* pszProjection = nullptr;
         const bool bTabFileOK = CPL_TO_BOOL(GDALReadTabFile2(
             GetDescription(), adfGeoTransform, &pszProjection, &nGCPCount,
             &pasGCPList, oOvManager.GetSiblingFiles(), &pszWldFilename));
+        if( pszProjection )
+            m_oSRS.importFromWkt(pszProjection);
+        CPLFree(pszProjection);
 
         if( bTabFileOK && nGCPCount == 0 )
             bGeoTransformValid = true;

@@ -101,7 +101,6 @@ NITFDataset::NITFDataset() :
     bGotGeoTransform(FALSE),
     nGCPCount(0),
     pasGCPList(nullptr),
-    pszGCPProjection(nullptr),
     panJPEGBlockOffset(nullptr),
     pabyJPEGBlock(nullptr),
     nQLevel(0),
@@ -111,7 +110,8 @@ NITFDataset::NITFDataset() :
     bInLoadXML(FALSE),
     bExposeUnderlyingJPEGDatasetOverviews(FALSE)
 {
-    pszProjection = CPLStrdup("");
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -135,11 +135,9 @@ NITFDataset::~NITFDataset()
 /* -------------------------------------------------------------------- */
 /*      Free datastructures.                                            */
 /* -------------------------------------------------------------------- */
-    CPLFree( pszProjection );
 
     GDALDeinitGCPs( nGCPCount, pasGCPList );
     CPLFree( pasGCPList );
-    CPLFree( pszGCPProjection );
 
     CPLFree( panJPEGBlockOffset );
     CPLFree( pabyJPEGBlock );
@@ -864,27 +862,17 @@ NITFDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
 /* -------------------------------------------------------------------- */
 /*      Process the projection from the ICORDS.                         */
 /* -------------------------------------------------------------------- */
-    OGRSpatialReference oSRSWork;
-
     if( psImage == nullptr )
     {
         /* nothing */
     }
     else if( psImage->chICORDS == 'G' || psImage->chICORDS == 'D' )
     {
-        CPLFree( poDS->pszProjection );
-        poDS->pszProjection = nullptr;
-
-        oSRSWork.SetWellKnownGeogCS( "WGS84" );
-        oSRSWork.exportToWkt( &(poDS->pszProjection) );
+        poDS->m_oSRS.SetWellKnownGeogCS( "WGS84" );
     }
     else if( psImage->chICORDS == 'C' )
     {
-        CPLFree( poDS->pszProjection );
-        poDS->pszProjection = nullptr;
-
-        oSRSWork.SetWellKnownGeogCS( "WGS84" );
-        oSRSWork.exportToWkt( &(poDS->pszProjection) );
+        poDS->m_oSRS.SetWellKnownGeogCS( "WGS84" );
 
         /* convert latitudes from geocentric to geodetic form. */
 
@@ -907,22 +895,14 @@ NITFDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
         // would make PROJ unhappy
         if( !bOpenForCreate )
         {
-            CPLFree( poDS->pszProjection );
-            poDS->pszProjection = nullptr;
-
-            oSRSWork.SetUTM( psImage->nZone, psImage->chICORDS == 'N' );
-            oSRSWork.SetWellKnownGeogCS( "WGS84" );
-            oSRSWork.exportToWkt( &(poDS->pszProjection) );
+            poDS->m_oSRS.SetUTM( psImage->nZone, psImage->chICORDS == 'N' );
+            poDS->m_oSRS.SetWellKnownGeogCS( "WGS84" );
         }
     }
     else if( psImage->chICORDS == 'U' && psImage->nZone != 0 )
     {
-        CPLFree( poDS->pszProjection );
-        poDS->pszProjection = nullptr;
-
-        oSRSWork.SetUTM( std::abs(psImage->nZone), psImage->nZone > 0 );
-        oSRSWork.SetWellKnownGeogCS( "WGS84" );
-        oSRSWork.exportToWkt( &(poDS->pszProjection) );
+        poDS->m_oSRS.SetUTM( std::abs(psImage->nZone), psImage->nZone > 0 );
+        poDS->m_oSRS.SetWellKnownGeogCS( "WGS84" );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1001,13 +981,10 @@ NITFDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
                     (STARTS_WITH_CI(papszLines[8], "Zone: ")) &&
                     (strlen(papszLines[8]) >= 7))
                 {
-                    CPLFree( poDS->pszProjection );
-                    poDS->pszProjection = nullptr;
                     zone=atoi(&(papszLines[8][6]));
-                    oSRSWork.Clear();
-                    oSRSWork.SetUTM( zone, isNorth );
-                    oSRSWork.SetWellKnownGeogCS( "WGS84" );
-                    oSRSWork.exportToWkt( &(poDS->pszProjection) );
+                    poDS->m_oSRS.Clear();
+                    poDS->m_oSRS.SetUTM( zone, isNorth );
+                    poDS->m_oSRS.SetWellKnownGeogCS( "WGS84" );
                 }
                 else
                 {
@@ -1097,8 +1074,7 @@ NITFDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
                     fabs(dfULY_AEQD - dfURY_AEQD) < 1e-6 * fabs(dfURY_AEQD) &&
                     fabs(dfLLY_AEQD - dfLRY_AEQD) < 1e-6 * fabs(dfLRY_AEQD))
                 {
-                    CPLFree(poDS->pszProjection);
-                    oSRS_AEQD.exportToWkt( &(poDS->pszProjection) );
+                    poDS->m_oSRS = oSRS_AEQD;
 
                     poDS->bGotGeoTransform = TRUE;
                     poDS->adfGeoTransform[0] = dfULX_AEQD;
@@ -1254,7 +1230,7 @@ NITFDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
         CPLFree( poDS->pasGCPList[3].pszId );
         poDS->pasGCPList[3].pszId = CPLStrdup( "LowerLeft" );
 
-        poDS->pszGCPProjection = CPLStrdup( poDS->pszProjection );
+        poDS->m_oGCPSRS = poDS->m_oSRS;
     }
 
     // This cleans up the original copy of the GCPs used to test if
@@ -1908,6 +1884,8 @@ void NITFDataset::CheckGeoSDEInfo()
 /*      Try to handle the projection.                                   */
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRS;
+    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
     if( STARTS_WITH_CI(pszPRJPSB+80, "AC") )
         oSRS.SetACEA( adfParam[1], adfParam[2], adfParam[3], adfParam[0],
                       dfFE, dfFN );
@@ -2044,10 +2022,7 @@ void NITFDataset::CheckGeoSDEInfo()
 /* -------------------------------------------------------------------- */
 /*      Apply back to dataset.                                          */
 /* -------------------------------------------------------------------- */
-    CPLFree( pszProjection );
-    pszProjection = nullptr;
-
-    oSRS.exportToWkt( &pszProjection );
+    m_oSRS = oSRS;
 
     memcpy( adfGeoTransform, adfGT, sizeof(double)*6 );
     bGotGeoTransform = TRUE;
@@ -2167,8 +2142,8 @@ CPLErr NITFDataset::SetGeoTransform( double *padfGeoTransform )
 /*                               SetGCPs()                              */
 /************************************************************************/
 
-CPLErr NITFDataset::_SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
-                              const char *pszGCPProjectionIn )
+CPLErr NITFDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
+                              const OGRSpatialReference *poGCPSRSIn )
 {
     if( nGCPCountIn != 4 )
     {
@@ -2185,8 +2160,9 @@ CPLErr NITFDataset::_SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
     nGCPCount = nGCPCountIn;
     pasGCPList = GDALDuplicateGCPs(nGCPCount, pasGCPListIn);
 
-    CPLFree(pszGCPProjection);
-    pszGCPProjection = CPLStrdup(pszGCPProjectionIn);
+    m_oGCPSRS.Clear();
+    if( poGCPSRSIn )
+        m_oGCPSRS = *poGCPSRSIn;
 
     int iUL = -1;
     int iUR = -1;
@@ -2236,10 +2212,9 @@ CPLErr NITFDataset::_SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
     double dfIGEOLOLLY = pasGCPList[iLL].dfGCPY;
 
     /* To recompute the zone */
-    char* pszProjectionBack = pszProjection ? CPLStrdup(pszProjection) : nullptr;
-    CPLErr eErr = SetProjection(pszGCPProjection);
-    CPLFree(pszProjection);
-    pszProjection = pszProjectionBack;
+    OGRSpatialReference oSRSBackup = m_oSRS;
+    CPLErr eErr = SetSpatialRef(&m_oGCPSRS);
+    m_oSRS = oSRSBackup;
 
     if (eErr != CE_None)
         return eErr;
@@ -2254,42 +2229,40 @@ CPLErr NITFDataset::_SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *NITFDataset::_GetProjectionRef()
+const OGRSpatialReference *NITFDataset::GetSpatialRef() const
 
 {
     if( bGotGeoTransform )
-        return pszProjection;
+        return &m_oSRS;
 
-    return GDALPamDataset::_GetProjectionRef();
+    return GDALPamDataset::GetSpatialRef();
 }
 
 /************************************************************************/
-/*                            SetProjection()                           */
+/*                            SetSpatialRef()                           */
 /************************************************************************/
 
-CPLErr NITFDataset::_SetProjection(const char* _pszProjection)
+CPLErr NITFDataset::SetSpatialRef(const OGRSpatialReference* poSRS )
 
 {
     int    bNorth;
     OGRSpatialReference oSRS, oSRS_WGS84;
 
-    if( _pszProjection != nullptr )
-        oSRS.importFromWkt( _pszProjection );
-    else
+    if( poSRS == nullptr )
         return CE_Failure;
 
     oSRS_WGS84.SetWellKnownGeogCS( "WGS84" );
-    if ( oSRS.IsSameGeogCS(&oSRS_WGS84) == FALSE)
+    if ( poSRS->IsSameGeogCS(&oSRS_WGS84) == FALSE)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "NITF only supports WGS84 geographic and UTM projections.\n");
         return CE_Failure;
     }
 
-    if( oSRS.IsGeographic() && oSRS.GetPrimeMeridian() == 0.0)
+    if( poSRS->IsGeographic() && poSRS->GetPrimeMeridian() == 0.0)
     {
         if (psImage->chICORDS != 'G' && psImage->chICORDS != 'D')
         {
@@ -2298,7 +2271,7 @@ CPLErr NITFDataset::_SetProjection(const char* _pszProjection)
             return CE_Failure;
         }
     }
-    else if( oSRS.GetUTMZone( &bNorth ) > 0)
+    else if( poSRS->GetUTMZone( &bNorth ) > 0)
     {
         if (bNorth && psImage->chICORDS != 'N')
         {
@@ -2313,7 +2286,7 @@ CPLErr NITFDataset::_SetProjection(const char* _pszProjection)
             return CE_Failure;
         }
 
-        psImage->nZone = oSRS.GetUTMZone( nullptr );
+        psImage->nZone = poSRS->GetUTMZone( nullptr );
     }
     else
     {
@@ -2322,8 +2295,7 @@ CPLErr NITFDataset::_SetProjection(const char* _pszProjection)
         return CE_Failure;
     }
 
-    CPLFree(pszProjection);
-    pszProjection = CPLStrdup(_pszProjection);
+    m_oSRS = *poSRS;
 
     if (bGotGeoTransform)
         SetGeoTransform(adfGeoTransform);
@@ -3263,16 +3235,16 @@ int NITFDataset::GetGCPCount()
 }
 
 /************************************************************************/
-/*                          GetGCPProjection()                          */
+/*                      GetGCPSpatialRef()                              */
 /************************************************************************/
 
-const char *NITFDataset::_GetGCPProjection()
+const OGRSpatialReference* NITFDataset::GetGCPSpatialRef() const
 
 {
-    if( nGCPCount > 0 && pszGCPProjection != nullptr )
-        return pszGCPProjection;
+    if( nGCPCount > 0 && !m_oGCPSRS.IsEmpty() )
+        return &m_oGCPSRS;
 
-    return "";
+    return nullptr;
 }
 
 /************************************************************************/
@@ -5369,7 +5341,7 @@ NITFDataset::NITFCreateCopy(
         poDstDS->psImage->nZone = nZone;
         poDstDS->SetGCPs( poSrcDS->GetGCPCount(),
                           poSrcDS->GetGCPs(),
-                          poSrcDS->GetGCPProjection() );
+                          poSrcDS->GetGCPSpatialRef() );
     }
 
     poDstDS->CloneInfo( poSrcDS, nGCIFFlags );

@@ -54,10 +54,7 @@ class GDALNullDataset final: public GDALDataset
 
             virtual int         TestCapability( const char * ) override;
 
-            virtual CPLErr      _SetProjection(const char*) override;
-            CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-                return OldSetProjectionFromSetSpatialRef(poSRS);
-            }
+            CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
             virtual CPLErr      SetGeoTransform(double*) override;
 
@@ -256,10 +253,10 @@ OGRLayer *GDALNullDataset::GetLayer( int iLayer )
 }
 
 /************************************************************************/
-/*                           SetProjection()                            */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
-CPLErr GDALNullDataset::_SetProjection(const char*)
+CPLErr GDALNullDataset::SetSpatialRef(const OGRSpatialReference*)
 
 {
     return CE_None;

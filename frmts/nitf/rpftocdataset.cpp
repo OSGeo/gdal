@@ -73,7 +73,7 @@ constexpr int GEOTRSFRM_NS_RES = 5;
 class RPFTOCDataset final: public GDALPamDataset
 {
   char      **papszSubDatasets;
-  char       *pszProjection;
+  OGRSpatialReference m_oSRS{};
   int         bGotGeoTransform;
   double      adfGeoTransform[6];
 
@@ -82,17 +82,16 @@ class RPFTOCDataset final: public GDALPamDataset
   public:
     RPFTOCDataset() :
         papszSubDatasets(nullptr),
-        pszProjection(nullptr),
         bGotGeoTransform(FALSE),
         papszFileList(nullptr)
     {
+        m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
     }
 
     virtual ~RPFTOCDataset()
     {
         CSLDestroy( papszSubDatasets );
-        CPLFree( pszProjection );
         CSLDestroy( papszFileList );
     }
 
@@ -125,22 +124,15 @@ class RPFTOCDataset final: public GDALPamDataset
         return CE_None;
     }
 
-    virtual CPLErr _SetProjection( const char * projectionRef ) override
-    {
-        CPLFree(pszProjection);
-        pszProjection = CPLStrdup(projectionRef);
-        return CE_None;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return m_oSRS.IsEmpty() ? nullptr: &m_oSRS;
     }
 
-    virtual const char *_GetProjectionRef(void) override
-    {
-        return (pszProjection) ? pszProjection : "";
-    }
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
     CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
+        m_oSRS.Clear();
+        if( poSRS )
+            m_oSRS = *poSRS;
+        return CE_None;
     }
 
     static int IsNITFFileTOC(NITFFile *psFile);

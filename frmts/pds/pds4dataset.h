@@ -314,7 +314,7 @@ class PDS4Dataset final: public RawDataset
     VSILFILE       *m_fpImage = nullptr;
     vsi_l_offset    m_nBaseOffset = 0;
     GDALDataset    *m_poExternalDS = nullptr; // external dataset (GeoTIFF)
-    CPLString       m_osWKT{};
+    OGRSpatialReference m_oSRS{};
     bool            m_bGotTransform = false;
     double          m_adfGeoTransform[6];
     CPLString       m_osXMLFilename{};
@@ -346,7 +346,6 @@ class PDS4Dataset final: public RawDataset
                                const char* pszLocalIdentifier,
                                CPLXMLNode* psTemplateSpecialConstants);
     void            WriteGeoreferencing(CPLXMLNode* psCart,
-                                        const char* pszWKT,
                                         const char* pszCARTVersion);
     void            ReadGeoreferencing(CPLXMLNode* psProduct);
     bool            InitImageFile();
@@ -376,14 +375,8 @@ public:
     virtual int CloseDependentDatasets() override;
 
 
-    virtual const char *_GetProjectionRef() override;
-    virtual CPLErr _SetProjection(const char*) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
     virtual CPLErr GetGeoTransform(double *) override;
     virtual CPLErr SetGeoTransform(double *) override;
     virtual char** GetFileList() override;

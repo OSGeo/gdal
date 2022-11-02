@@ -78,6 +78,7 @@ typedef struct
 
 class ECRGTOCDataset final: public GDALPamDataset
 {
+  OGRSpatialReference m_oSRS{};
   char      **papszSubDatasets;
   double      adfGeoTransform[6];
 
@@ -86,6 +87,8 @@ class ECRGTOCDataset final: public GDALPamDataset
   public:
     ECRGTOCDataset()
     {
+        m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        m_oSRS.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
         papszSubDatasets = nullptr;
         papszFileList = nullptr;
         memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
@@ -112,12 +115,8 @@ class ECRGTOCDataset final: public GDALPamDataset
         return CE_None;
     }
 
-    virtual const char *_GetProjectionRef(void) override
-    {
-        return SRS_WKT_WGS84_LAT_LONG;
-    }
     const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
+        return &m_oSRS;
     }
 
     static GDALDataset* Build(  const char* pszTOCFilename,

@@ -78,7 +78,7 @@ class SIGDEMDataset final: public GDALPamDataset {
     VSILFILE *fpImage;  // image data file.
 
     double adfGeoTransform[6] { 0, 1, 0, 0, 0, 1 };
-    char *pszProjection { };
+    OGRSpatialReference m_oSRS{};
 
     SIGDEMHeader sHeader;
 
@@ -91,10 +91,7 @@ public:
     ~SIGDEMDataset() override;
 
     CPLErr GetGeoTransform(double *padfTransform) override;
-    const char* _GetProjectionRef(void) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
 
     static GDALDataset *CreateCopy(
         const char *pszFilename,

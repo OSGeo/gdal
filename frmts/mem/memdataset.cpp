@@ -722,13 +722,13 @@ int MEMDataset::GetGCPCount()
 }
 
 /************************************************************************/
-/*                          GetGCPProjection()                          */
+/*                          GetGCPSpatialRef()                          */
 /************************************************************************/
 
-const char *MEMDataset::_GetGCPProjection()
+const OGRSpatialReference *MEMDataset::GetGCPSpatialRef() const
 
 {
-    return osGCPProjection;
+    return m_oGCPSRS.IsEmpty() ? nullptr : &m_oGCPSRS;
 }
 
 /************************************************************************/
@@ -745,17 +745,16 @@ const GDAL_GCP *MEMDataset::GetGCPs()
 /*                              SetGCPs()                               */
 /************************************************************************/
 
-CPLErr MEMDataset::_SetGCPs( int nNewCount, const GDAL_GCP *pasNewGCPList,
-                            const char *pszGCPProjection )
+CPLErr MEMDataset::SetGCPs( int nNewCount, const GDAL_GCP *pasNewGCPList,
+                            const OGRSpatialReference* poSRS )
 
 {
     GDALDeinitGCPs( m_nGCPCount, m_pasGCPs );
     CPLFree( m_pasGCPs );
 
-    if( pszGCPProjection == nullptr )
-        osGCPProjection = "";
-    else
-        osGCPProjection = pszGCPProjection;
+    m_oGCPSRS.Clear();
+    if( poSRS )
+        m_oGCPSRS = *poSRS;
 
     m_nGCPCount = nNewCount;
     m_pasGCPs = GDALDuplicateGCPs( m_nGCPCount, pasNewGCPList );
