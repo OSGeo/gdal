@@ -670,6 +670,27 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  */
 #define GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS "DMD_ALTER_GEOM_FIELD_DEFN_FLAGS"
 
+/** List of (space separated) SQL dialects supported by the driver.
+ *
+ * The default SQL dialect for the driver will always be the first listed value.
+ *
+ * Standard values are:
+ *
+ * - "OGRSQL": the OGR SQL dialect, see https://gdal.org/user/ogr_sql_dialect.html
+ * - "SQLITE": the SQLite dialect, see https://gdal.org/user/sql_sqlite_dialect.html
+ * - "NATIVE": for drivers with an RDBMS backend this value indicates that the SQL
+ *   will be passed directly to that database backend, and therefore the RDBMS' native
+ *   dialect will be used
+ *
+ * Other dialect values may also be present for some drivers (for some of them,
+ * the query string to use might not even by SQL but a dedicated query
+ * language). For further details on their interpretation, see the documentation
+ * for the respective driver.
+ *
+ * @since GDAL 3.6
+ */
+#define GDAL_DMD_SUPPORTED_SQL_DIALECTS "DMD_SUPPORTED_SQL_DIALECTS"
+
 /** Value for GDALDimension::GetType() specifying the X axis of a horizontal CRS.
  * @since GDAL 3.1
  */

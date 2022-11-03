@@ -399,6 +399,8 @@ void GDALRegister_NULL()
                                "Binary IntegerList Integer64List "
                                "RealList StringList" );
 
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
+
     poDriver->pfnOpen = GDALNullDataset::Open;
     poDriver->pfnCreate = GDALNullDataset::Create;
 

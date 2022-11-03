@@ -109,6 +109,7 @@ void RegisterOGRDGN()
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "dgn" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/dgn.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"

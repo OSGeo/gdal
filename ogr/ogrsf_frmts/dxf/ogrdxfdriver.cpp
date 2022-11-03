@@ -136,6 +136,7 @@ void RegisterOGRDXF()
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "dxf" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/dxf.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"

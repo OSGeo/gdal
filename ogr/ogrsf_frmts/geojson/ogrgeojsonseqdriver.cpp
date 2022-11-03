@@ -951,6 +951,7 @@ void RegisterOGRGeoJSONSeq()
                                "Integer Integer64 Real String IntegerList "
                                "Integer64List RealList StringList" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATASUBTYPES, "Boolean" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->pfnOpen = OGRGeoJSONSeqDriverOpen;
     poDriver->pfnIdentify = OGRGeoJSONSeqDriverIdentify;

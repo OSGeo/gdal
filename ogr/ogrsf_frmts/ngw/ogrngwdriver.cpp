@@ -455,6 +455,7 @@ void RegisterOGRNGW()
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/ngw.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "NGW:" );
     poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "NATIVE OGRSQL SQLITE" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
     poDriver->SetMetadataItem( GDAL_DMD_ALTER_FIELD_DEFN_FLAGS, "Name" );
