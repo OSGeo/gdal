@@ -32,7 +32,7 @@ Process :
 1) a) Regenerate swig generated files for python bindings and commit if changed.
       Currently SWIG 4.0.2 is used.
 
-   b) "cd scripts; make completion" to regenerate scripts/gdal-bash-completion.sh
+   b) "make completion" to regenerate scripts/gdal-bash-completion.sh
       if new command line switches have been added. scripts/completionFinder.py
       must also be edited before if new utilities/scripts are added/removed.
 
@@ -48,23 +48,20 @@ Process :
 3) Update the VERSION file (if not already done)
 
 3.1) Update the version information in the following files:
-     - ./swig/python/setup.py (gdal python package)
      - ./swig/python/gdal-utils/osgeo_utils/__init__.py (gdal-utils python package)
      - ./swig/python/README.rst (libgdal)
-
-3.2) For major releases update the VERSION macro in nmake.opt (for 1.6, 1.7etc)
 
 4) Update the GDAL_SOVERSION number at top of gdal.cmake according to the
    directions given in the comment preceding it.
 
-5) Prepare release overview in the NEWS file. For example, to get all changes
+5) Prepare release overview in the NEWS.md file. For example, to get all changes
    from v3.4.0 to current HEAD
      git log --reverse -v v3.4.0..HEAD . ":(exclude)autotest" ":(exclude)doc" ":(exclude).github"
 
-  - commit new version to NEWS file.
+   For a feature release, e.g 3.6.0, you can use scripts/generate_log_feature_release.py to generate a log without commit that went in the previous 3.5.x bugfix releases with:
+     python scripts/generate_log_feature_release.py
 
-  Create a News page in Trac for the release, like
-    http://trac.osgeo.org/gdal/wiki/Release/3.1.0-News
+  - commit new version to NEWS.md file.
 
 6) If this is a feature release (e.g 3.1), prepare a branch.
 

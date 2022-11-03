@@ -254,7 +254,14 @@ def main(argv):
         "gdal_create",
     ]
 
-    ogrtools = ["ogr2ogr", "ogrinfo", "ogrlineref", "ogrtindex", "ogrmerge.py"]
+    ogrtools = [
+        "ogr2ogr",
+        "ogrinfo",
+        "ogrlineref",
+        "ogrtindex",
+        "ogrmerge.py",
+        "ogr_layer_algebra.py",
+    ]
 
     # parse general options
     generalOptions = parseGDALGeneralOptions()
