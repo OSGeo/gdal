@@ -3663,7 +3663,8 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
     else
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "Unsupported resampling method %s for GDALResampleChunkC32R",
+                 "Resampling method %s is not supported for complex data types. "
+                 "Only NEAREST, AVERAGE, AVERAGE_MAGPHASE and RMS are supported",
                  pszResampling);
         return CE_Failure;
     }
