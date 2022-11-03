@@ -151,6 +151,8 @@ Creation Options:
 -  **FILE_TRE=tre-name=tre-contents**: Similar to above
    options, except that the TREs are written in the file header, instead
    of the image header.
+-  **RESERVE_SPACE_FOR_TRE_OVERFLOW=YES/NO**: (GDAL >= 3.6)
+   Set to true to reserve space for IXSOFL when writing a TRE_OVERFLOW DES.
 -  **DES=des-name=des-contents**: One or more DES creation options may
    be provided to write arbitrary user defined DESs to the NITF file.
    The des-name should be at most 25 characters, and the des-contents

@@ -31,7 +31,6 @@
 #include "gdal_frmts.h"
 #include "rawdataset.h"
 
-CPL_CVSID("$Id$")
 
 static const char UTM_FORMAT[] =
     "PROJCS[\"%s / UTM zone %dN\",GEOGCS[%s,PRIMEM[\"Greenwich\",0],"
@@ -62,14 +61,14 @@ static const char NAD83_DATUM[] =
 
 class DOQ2Dataset final: public RawDataset
 {
-    VSILFILE    *fpImage;  // Image data file.
+    VSILFILE    *fpImage = nullptr;  // Image data file.
 
-    double      dfULX;
-    double      dfULY;
-    double      dfXPixelSize;
-    double      dfYPixelSize;
+    double      dfULX = 0;
+    double      dfULY = 0;
+    double      dfXPixelSize = 0;
+    double      dfYPixelSize = 0;
 
-    char        *pszProjection;
+    OGRSpatialReference m_oSRS{};
 
     CPL_DISALLOW_COPY_ASSIGN(DOQ2Dataset)
 
@@ -78,10 +77,7 @@ class DOQ2Dataset final: public RawDataset
                 ~DOQ2Dataset();
 
     CPLErr      GetGeoTransform( double * padfTransform ) override;
-    const char  *_GetProjectionRef( void ) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override { return m_oSRS.IsEmpty() ? nullptr : &m_oSRS; }
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -90,14 +86,10 @@ class DOQ2Dataset final: public RawDataset
 /*                            DOQ2Dataset()                             */
 /************************************************************************/
 
-DOQ2Dataset::DOQ2Dataset() :
-    fpImage(nullptr),
-    dfULX(0.0),
-    dfULY(0.0),
-    dfXPixelSize(0.0),
-    dfYPixelSize(0.0),
-    pszProjection(nullptr)
-{ }
+DOQ2Dataset::DOQ2Dataset()
+{
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+}
 
 /************************************************************************/
 /*                            ~DOQ2Dataset()                            */
@@ -108,7 +100,6 @@ DOQ2Dataset::~DOQ2Dataset()
 {
     FlushCache(true);
 
-    CPLFree( pszProjection );
     if( fpImage != nullptr )
         CPL_IGNORE_RET_VAL(VSIFCloseL( fpImage ));
 }
@@ -128,16 +119,6 @@ CPLErr DOQ2Dataset::GetGeoTransform( double * padfTransform )
     padfTransform[5] = -1 * dfYPixelSize;
 
     return CE_None;
-}
-
-/************************************************************************/
-/*                        GetProjectionString()                         */
-/************************************************************************/
-
-const char *DOQ2Dataset::_GetProjectionRef()
-
-{
-    return pszProjection;
 }
 
 /************************************************************************/
@@ -168,7 +149,6 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
-    int nLineCount = 0;
     int nBytesPerPixel = 0;
     int nWidth = 0;
     int nHeight = 0;
@@ -193,8 +173,6 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
     const char *pszLine = nullptr;
     while( (pszLine = CPLReadLineL( poOpenInfo->fpL )) != nullptr )
     {
-        nLineCount++;
-
         if( EQUAL(pszLine,"END_USGS_DOQ_HEADER") )
             break;
 
@@ -431,16 +409,11 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     if (nProjType == 1)
     {
-        poDS->pszProjection =
-            CPLStrdup( CPLSPrintf(
+        poDS->m_oSRS.importFromWkt( CPLSPrintf(
                 UTM_FORMAT, pszDatumShort ? pszDatumShort : "", nZone,
                 pszDatumLong ? pszDatumLong : "",
                 nZone >= 1 && nZone <= 60 ? nZone * 6 - 183 : 0,
                 pszUnits ? pszUnits : "" ) );
-    }
-    else
-    {
-        poDS->pszProjection = CPLStrdup("");
     }
 
     poDS->dfULX = dfULXMap;

@@ -28,7 +28,6 @@
 
 #include "ogr_plscenes.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         OGRPLScenesIdentify()                        */
@@ -106,6 +105,7 @@ void RegisterOGRPLSCENES()
 "  <Option name='FILTER' type='string' description='Custom filter'/>"
 "  <Option name='METADATA' type='boolean' description='(Raster only) Whether scene metadata should be fetched from the API and attached to the raster dataset' default='YES'/>"
 "</OpenOptionList>");
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->pfnOpen = OGRPLScenesOpen;
     poDriver->pfnIdentify = OGRPLScenesIdentify;

@@ -29,7 +29,6 @@
 #include "cpl_conv.h"
 #include "ogr_mssqlspatial.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                   OGRMSSQLGeometryValidator()                        */

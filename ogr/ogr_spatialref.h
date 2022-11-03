@@ -170,14 +170,16 @@ class CPL_DLL OGRSpatialReference
                                      const char *pszCode );
 
   public:
-                OGRSpatialReference(const OGRSpatialReference&);
     explicit    OGRSpatialReference(const char * = nullptr);
+                OGRSpatialReference(const OGRSpatialReference&);
+                OGRSpatialReference(OGRSpatialReference&&);
 
     virtual    ~OGRSpatialReference();
 
     static void DestroySpatialReference(OGRSpatialReference* poSRS);
 
     OGRSpatialReference &operator=(const OGRSpatialReference&);
+    OGRSpatialReference &operator=(OGRSpatialReference&&);
 
     int         Reference();
     int         Dereference();
@@ -420,6 +422,9 @@ class CPL_DLL OGRSpatialReference
     OGRSpatialReferenceH* FindMatches( char** papszOptions,
                                        int* pnEntries,
                                        int** ppanMatchConfidence ) const;
+    OGRSpatialReference*  FindBestMatch(int nMinimumMatchConfidence = 90,
+                                        const char* pszPreferredAuthority = "EPSG",
+                                        CSLConstList papszOptions = nullptr) const;
 
     int         GetEPSGGeogCS() const;
 

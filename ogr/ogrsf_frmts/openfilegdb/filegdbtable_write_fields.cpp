@@ -589,7 +589,7 @@ bool FileGDBTable::WriteFieldDescriptors(VSILFILE* fpTable)
                              m_nGeomFieldSpatialIndexGridResSubOffset);
     }
 
-    // Just to immitate the behavior of the FileGDB SDK !
+    // Just to imitate the behavior of the FileGDB SDK !
     abyBuffer.push_back(0xDE);
     abyBuffer.push_back(0xAD);
     abyBuffer.push_back(0xBE);

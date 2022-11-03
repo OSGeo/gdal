@@ -28,7 +28,6 @@
 
 #include "gifabstractdataset.h"
 
-CPL_CVSID("$Id$")
 
 constexpr int InterlacedOffset[] = { 0, 4, 2, 1 };
 constexpr int InterlacedJumps[] = { 8, 8, 4, 2 };
@@ -46,7 +45,6 @@ constexpr int InterlacedJumps[] = { 8, 8, 4, 2 };
 GIFAbstractDataset::GIFAbstractDataset() :
     fp(nullptr),
     hGifFile(nullptr),
-    pszProjection(nullptr),
     bGeoTransformValid(FALSE),
     nGCPCount(0),
     pasGCPList(nullptr),
@@ -68,9 +66,6 @@ GIFAbstractDataset::~GIFAbstractDataset()
 
 {
     FlushCache(true);
-
-    if ( pszProjection )
-        CPLFree( pszProjection );
 
     if ( nGCPCount > 0 )
     {
@@ -231,19 +226,6 @@ char  **GIFAbstractDataset::GetMetadata( const char * pszDomain )
 }
 
 /************************************************************************/
-/*                        GetProjectionRef()                            */
-/************************************************************************/
-
-const char *GIFAbstractDataset::_GetProjectionRef()
-
-{
-    if ( pszProjection && bGeoTransformValid )
-        return pszProjection;
-
-    return GDALPamDataset::_GetProjectionRef();
-}
-
-/************************************************************************/
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
@@ -270,19 +252,6 @@ int GIFAbstractDataset::GetGCPCount()
         return nGCPCount;
 
     return GDALPamDataset::GetGCPCount();
-}
-
-/************************************************************************/
-/*                          GetGCPProjection()                          */
-/************************************************************************/
-
-const char *GIFAbstractDataset::_GetGCPProjection()
-
-{
-    if ( pszProjection && nGCPCount > 0 )
-        return pszProjection;
-
-    return GDALPamDataset::_GetGCPProjection();
 }
 
 /************************************************************************/

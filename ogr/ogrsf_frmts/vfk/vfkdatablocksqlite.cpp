@@ -40,7 +40,6 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
-CPL_CVSID("$Id$")
 
 /*!
   \brief VFKDataBlockSQLite constructor
@@ -683,7 +682,6 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
         /* build rings */
         poLinearRingList.clear();
         OGRLinearRing *poOgrRing = nullptr;
-        int i = 1;
         for( PointListArray::const_iterator iRing = poRingList.begin(),
                  eRing = poRingList.end();
              iRing != eRing;
@@ -703,7 +701,6 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
                 OGRPoint *poPoint = &(*iPoint);
                 poOgrRing->addPoint(poPoint);
             }
-            i++;
         }
 
         /* find exterior ring */

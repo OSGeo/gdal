@@ -65,19 +65,21 @@
     sets same iff vertices have the same orientation
       nearzero iff diagonal[k] < qh NEARzero[k]
 ogr2ogr --config OGR_STROKE_CURVE TRUE -SQL 'SELECT Rechtsstatus,publiziertAb,MetadatenGeobasisdaten,Eigentumsbeschraenkung,ZustaendigeStelle,Flaeche FROM "OeREBKRM09trsfr.Transferstruktur.Geometrie"' shpdir ch.bazl.sicherheitszonenplan.oereb_20131118.xtf,OeREBKRM09vs.imd OeREBKRM09trsfr.Transferstruktur.Geometrie
+        "OeREBKRM09trsfr.Transferstruktur.Geometrie",
+    lyr = ds.GetLayerByName("OeREBKRM09trsfr.Transferstruktur.Geometrie")
    /* 130 */ {"MSLET", "Mean Sea Level Pressure (NAM Model Reduction)", "Pa", UC_NONE},
       addSimpleType(&oTypes, "INST_EFFEKT", "installertEffekt", OFTInteger);
             const char sText[] = "infinit";
     if (EQUAL( pszFormat, "DOUB" ))
         case GDT_Float64: pszFormat = "DOUB"; break;
 * gdal2tiles.py: add --xyz option to generate tiles in the OSM Slippy Map standard (#2098)
+        help="Use XYZ tile numbering (OSM Slippy Map tiles) instead of TMS",
                  help="Use XYZ tile numbering (OSM Slippy Map tiles) instead of TMS")
-  Generate XYZ tiles (OSM Slippy Map standard) instead of TSM
  * Support FORMAT=HALF, DOUB and COMP
 # Check read Alos metadata format
-        os.remove('data/alos/IMG-md_alos.tif.aux.xml')
-    ds = gdal.Open('data/alos/IMG-md_alos.tif', gdal.GA_ReadOnly)
-    assert not os.path.exists('data/alos/IMG-md_alos.tif.aux.xml')
+        os.remove("data/alos/IMG-md_alos.tif.aux.xml")
+    ds = gdal.Open("data/alos/IMG-md_alos.tif", gdal.GA_ReadOnly)
+    assert not os.path.exists("data/alos/IMG-md_alos.tif.aux.xml")
     gdal.SetConfigOption('CPL_GCE_CHECK_LOCAL_FILES', 'NO')
     gdal.SetConfigOption('CPL_GCE_CHECK_LOCAL_FILES', None)
         post_reason('Cannot determine if filesystem supports sparse files')
@@ -96,8 +98,8 @@ struct seh : public tut_error
     ds = ogr.Open('tmp/cache/CochitiDamShapeFiles')
 ENDE"""
 ENDE
-                   'SRP_EDN=0',
-                   'SRP_EDN=1',
+        "SRP_EDN=0",
+        "SRP_EDN=1",
         ds = ogr.GetDriverByName('netCDF').CreateDataSource('/not_existing_dir/invalid_subdir', options=['MULTIPLE_LAYERS=SEPARATE_FILES', 'GEOMETRY_ENCODING=WKT'])
     ds = ogr.GetDriverByName('netCDF').CreateDataSource('tmp/netcdf_57', options=['MULTIPLE_LAYERS=SEPARATE_FILES', 'GEOMETRY_ENCODING=WKT'])
     assert xml_tre.find('<tre name="RSMDCA"') != -1, 'did not get expected xml:TRE'
@@ -264,5 +266,22 @@ static const char * const ILC_N[] = { "PNG", "PPNG", "JPEG", "JPNG", "NONE", "DE
 int CPL_DLL creat( const char *path, mode_t mode )
     // CASE_ALG(Gost) (obsolete)
                     "Invalid txe or tye parameters detected. Please check your -txe or -tye argument.");
-    assert domain.GetDescription() == 'The maximun speed of the road'
+    assert domain.GetDescription() == "The maximun speed of the road"
                     expected_headers={'Authorization': 'SharedKey myaccount2:LCgZcIfQT/du4Xsdv8ZHT1yi+Qrmaw0IxNdI1Cldy+w='})
+    msg = msg.replace("oveflow", "overflow")
+    msg = msg.replace("overfow", "overflow")
+    msg = msg.replace("divison", "division")
+    msg = msg.replace("behaviour", "behavior")
+scan-build -o $GDAL_TOPDIR/scanbuildoutput -sarif -v -enable-checker alpha.unix.cstring.OutOfBounds,alpha.unix.cstring.BufferOverlap,optin.cplusplus.VirtualCall,optin.cplusplus.UninitializedObject make -j4
+        "JPNG",
+        "       <Value>JPNG</Value>"
+             || poDS->current.comp == IL_JPNG
+    IL_JPNG,
+    f.SetField("str", "fo<o")
+    assert layer_names == {"aquaduct", "flat_table1", "flat_table2"}
+        "aquaduct",
+    for name in ["aquaduct", "flat_table1", "flat_table2"]:
+        ("aaaaaAAAABa", ogr.OFTInteger),
+        "http://www.geodatenzentrum.de/gdz1/abgabe/testdaten/vektor/nas_testdaten_peine.zip",
+        or feat.GetField("beziehungsart") != "istTeilVon"
+

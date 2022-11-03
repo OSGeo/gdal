@@ -49,7 +49,6 @@
 #include "proj.h"
 #include "proj_experimental.h"
 
-CPL_CVSID("$Id$")
 
 #ifdef DEBUG_PERF
 static double g_dfTotalTimeCRStoCRS = 0;
@@ -89,12 +88,8 @@ static void CPLGettimeofday(struct CPLTimeVal* tp, void* /* timezonep*/ )
 // Cache of OGRProjCT objects
 static std::mutex g_oCTCacheMutex;
 class OGRProjCT;
-// We wrap a OGRProjCT in a shared_ptr<unique_ptr>, because we need a copyable
-// type to be inserted in the cache (shared_ptr), and we need to be able to
-// alter the content of the value to release() the unique_ptr value when we
-// find a value in it.
 typedef std::string CTCacheKey;
-typedef std::shared_ptr<std::unique_ptr<OGRProjCT>> CTCacheValue;
+typedef std::unique_ptr<OGRProjCT> CTCacheValue;
 static lru11::Cache<CTCacheKey, CTCacheValue>* g_poCTCache = nullptr;
 
 /************************************************************************/
@@ -3385,8 +3380,7 @@ void OGRProjCT::InsertIntoCache( OGRProjCT* poCT )
         delete poCT;
         return;
     }
-    g_poCTCache->insert(key, std::make_shared<std::unique_ptr<OGRProjCT>>(
-                                            std::unique_ptr<OGRProjCT>(poCT)));
+    g_poCTCache->insert(key, std::unique_ptr<OGRProjCT>(poCT));
 }
 
 /************************************************************************/
@@ -3407,11 +3401,11 @@ OGRProjCT* OGRProjCT::FindFromCache( const OGRSpatialReference *poSource,
 
     const auto key = MakeCacheKey(poSource, pszSrcSRS, poTarget, pszTargetSRS, options);
     // Get value from cache and remove it
-    CTCacheValue holder;
     std::lock_guard<std::mutex> oGuard(g_oCTCacheMutex);
-    if( g_poCTCache->tryGet(key, holder) )
+    CTCacheValue* cachedValue = g_poCTCache->getPtr(key);
+    if( cachedValue )
     {
-        auto poCT = holder->release();
+        auto poCT = cachedValue->release();
         g_poCTCache->remove(key);
         return poCT;
     }

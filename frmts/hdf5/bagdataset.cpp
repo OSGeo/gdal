@@ -50,7 +50,6 @@
 #include <utility>
 #include <set>
 
-CPL_CVSID("$Id$")
 
 struct BAGRefinementGrid
 {
@@ -119,7 +118,7 @@ class BAGDataset final: public GDALPamDataset
 
     std::unique_ptr<OGRLayer> m_poTrackingListLayer{};
 
-    char        *pszProjection = nullptr;
+    OGRSpatialReference m_oSRS{};
     double       adfGeoTransform[6] = {0,1,0,0,0,1};
 
     int          m_nLowResWidth = 0;
@@ -198,10 +197,8 @@ public:
     virtual ~BAGDataset();
 
     virtual CPLErr GetGeoTransform( double * ) override;
-    virtual const char *_GetProjectionRef(void) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
+
     CPLErr              SetGeoTransform( double* padfGeoTransform ) override;
     CPLErr              SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
@@ -255,7 +252,7 @@ class BAGCreator
         static CPLString GenerateMetadata(int nXSize,
                                           int nYSize,
                                           const double* padfGeoTransform,
-                                          const char* pszProjection,
+                                          const OGRSpatialReference* poSRS,
                                           char ** papszOptions);
         static bool CreateAndWriteMetadata(hid_t hdf5,
                                            const CPLString& osXMLMetadata);
@@ -1808,7 +1805,10 @@ CPLErr BAGGeorefMDSuperGridBand::IReadBlock( int nBlockXOff, int nBlockYOff, voi
 /*                             BAGDataset()                             */
 /************************************************************************/
 
-BAGDataset::BAGDataset() = default;
+BAGDataset::BAGDataset()
+{
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+}
 
 BAGDataset::BAGDataset(BAGDataset* poParentDS, int nOvrFactor)
 {
@@ -1823,7 +1823,7 @@ void BAGDataset::InitOverviewDS(BAGDataset* poParentDS, int nOvrFactor)
     // m_apoOverviewDS
     m_poSharedResources = poParentDS->m_poSharedResources;
     m_poRootGroup = poParentDS->m_poRootGroup;
-    pszProjection = poParentDS->pszProjection;
+    m_oSRS = poParentDS->m_oSRS;
     nRasterXSize = poParentDS->nRasterXSize / nOvrFactor;
     nRasterYSize = poParentDS->nRasterYSize / nOvrFactor;
     adfGeoTransform[0] = poParentDS->adfGeoTransform[0];
@@ -1925,7 +1925,6 @@ BAGDataset::~BAGDataset()
         if( m_hVarresRefinements >= 0 )
             H5Dclose(m_hVarresRefinements);
 
-        CPLFree(pszProjection);
         CPLFree(pszXMLMetadata);
     }
 }
@@ -3957,13 +3956,7 @@ void BAGDataset::LoadMetadata()
     }
 
     // Try to get the coordinate system.
-    OGRSpatialReference oSRS;
-
-    if( OGR_SRS_ImportFromISO19115(&oSRS, pszXMLMetadata) == OGRERR_NONE )
-    {
-        oSRS.exportToWkt(&pszProjection);
-    }
-    else
+    if( OGR_SRS_ImportFromISO19115(&m_oSRS, pszXMLMetadata) != OGRERR_NONE )
     {
         ParseWKTFromXML(pszXMLMetadata);
     }
@@ -4005,9 +3998,6 @@ OGRErr BAGDataset::ParseWKTFromXML( const char *pszISOXML )
         return OGRERR_FAILURE;
     }
 
-    OGRSpatialReference oSRS;
-    oSRS.Clear();
-
     const char *pszSRCodeString =
         CPLGetXMLValue(psRSI, "MD_ReferenceSystem.referenceSystemIdentifier."
                        "RS_Identifier.code.CharacterString", nullptr);
@@ -4032,15 +4022,13 @@ OGRErr BAGDataset::ParseWKTFromXML( const char *pszISOXML )
         return OGRERR_FAILURE;
     }
 
-    if( oSRS.importFromWkt(pszSRCodeString) != OGRERR_NONE )
+    if( m_oSRS.importFromWkt(pszSRCodeString) != OGRERR_NONE )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Failed parsing WKT string \"%s\".", pszSRCodeString);
         CPLDestroyXMLNode(psRoot);
         return OGRERR_FAILURE;
     }
-
-    oSRS.exportToWkt(&pszProjection);
 
     psRSI = CPLSearchXMLNode(psRSI->psNext, "=referenceSystemInfo");
     if( psRSI == nullptr )
@@ -4114,11 +4102,12 @@ OGRErr BAGDataset::ParseWKTFromXML( const char *pszISOXML )
 
                 OGRSpatialReference oCompoundCRS;
                 oCompoundCRS.SetCompoundCS(
-                    (CPLString(oSRS.GetName()) + " + " + oVertCRS.GetName()).c_str(),
-                    &oSRS,
+                    (CPLString(m_oSRS.GetName()) + " + " + oVertCRS.GetName()).c_str(),
+                    &m_oSRS,
                     &oVertCRS);
-                CPLFree(pszProjection);
-                oCompoundCRS.exportToWkt(&pszProjection);
+                oCompoundCRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
+                m_oSRS = oCompoundCRS;
             }
 
             CPLFree(pszVertCRSWKT);
@@ -4148,16 +4137,14 @@ CPLErr BAGDataset::GetGeoTransform( double *padfGeoTransform )
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                         GetSpatialRef()                              */
 /************************************************************************/
 
-const char *BAGDataset::_GetProjectionRef()
-
+const OGRSpatialReference* BAGDataset::GetSpatialRef() const
 {
-    if( pszProjection )
-        return pszProjection;
-
-    return GDALPamDataset::_GetProjectionRef();
+    if( !m_oSRS.IsEmpty() )
+        return &m_oSRS;
+    return GDALPamDataset::GetSpatialRef();
 }
 
 /************************************************************************/
@@ -4195,9 +4182,7 @@ CPLErr BAGDataset::SetSpatialRef(const OGRSpatialReference* poSRS)
         return CE_Failure;
     }
 
-    CPLFree(pszProjection);
-    pszProjection = nullptr;
-    poSRS->exportToWkt(&pszProjection);
+    m_oSRS = *poSRS;
     return WriteMetadataIfNeeded() ? CE_None : CE_Failure;
 }
 
@@ -4215,7 +4200,7 @@ bool BAGDataset::WriteMetadataIfNeeded()
          adfGeoTransform[1] == 1.0 &&
          adfGeoTransform[3] == 0.0 &&
          adfGeoTransform[5] == 1.0) ||
-        pszProjection == nullptr )
+        m_oSRS.IsEmpty() )
     {
         return true;
     }
@@ -4224,7 +4209,7 @@ bool BAGDataset::WriteMetadataIfNeeded()
     CPLString osXMLMetadata = BAGCreator::GenerateMetadata(nRasterXSize,
                                                nRasterYSize,
                                                adfGeoTransform,
-                                               pszProjection,
+                                               m_oSRS.IsEmpty() ? nullptr : &m_oSRS,
                                                m_aosCreationOptions.List());
     if( osXMLMetadata.empty() )
     {
@@ -4442,7 +4427,7 @@ bool BAGCreator::SubstituteVariables(CPLXMLNode* psNode, char** papszDict)
 CPLString BAGCreator::GenerateMetadata(int nXSize,
                                        int nYSize,
                                        const double* padfGeoTransform,
-                                       const char* pszProjection,
+                                       const OGRSpatialReference* poSRS,
                                        char ** papszOptions)
 {
     CPLXMLNode* psRoot;
@@ -4523,15 +4508,20 @@ CPLString BAGCreator::GenerateMetadata(int nXSize,
     osOptions.SetNameValue("VAR_RES", CPLSPrintf("%.18g",
                     std::max(padfGeoTransform[1], fabs(padfGeoTransform[5]))));
 
+    char* pszProjection = nullptr;
+    if( poSRS )
+        poSRS->exportToWkt(&pszProjection);
     if( pszProjection == nullptr || EQUAL(pszProjection, "")  )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "BAG driver requires a source dataset with a projection");
     }
-    OGRSpatialReference oSRS;
-    oSRS.importFromWkt(pszProjection);
     osOptions.SetNameValue("VAR_HORIZ_WKT", pszProjection);
+    CPLFree(pszProjection);
 
+    OGRSpatialReference oSRS;
+    if( poSRS )
+        oSRS = *poSRS;
     if( oSRS.IsCompound() )
     {
         auto node = oSRS.GetRoot();
@@ -5084,7 +5074,7 @@ bool BAGCreator::Create( const char *pszFilename, GDALDataset *poSrcDS,
     CPLString osXMLMetadata = GenerateMetadata(poSrcDS->GetRasterXSize(),
                                                poSrcDS->GetRasterYSize(),
                                                adfGeoTransform,
-                                               poSrcDS->GetProjectionRef(),
+                                               poSrcDS->GetSpatialRef(),
                                                papszOptions);
     if( osXMLMetadata.empty() )
     {

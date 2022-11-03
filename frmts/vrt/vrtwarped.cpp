@@ -53,7 +53,6 @@
 #include "gdalwarper.h"
 #include "ogr_geometry.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                      GDALAutoCreateWarpedVRT()                       */
@@ -1085,11 +1084,12 @@ int VRTWarpedOverviewTransform( void *pTransformArg, int bDstToSrc,
 CPLErr
 VRTWarpedDataset::IBuildOverviews( const char * /* pszResampling */,
                                    int nOverviews,
-                                   int *panOverviewList,
+                                   const int *panOverviewList,
                                    int /* nListBands */,
-                                   int * /* panBandList */,
+                                   const int * /* panBandList */,
                                    GDALProgressFunc pfnProgress,
-                                   void * pProgressData )
+                                   void * pProgressData,
+                                   CSLConstList /*papszOptions*/ )
 {
     if( m_poWarper == nullptr )
         return CE_Failure;
@@ -1110,6 +1110,7 @@ VRTWarpedDataset::IBuildOverviews( const char * /* pszResampling */,
     int nNewOverviews = 0;
     int *panNewOverviewList = static_cast<int *>(
         CPLCalloc( sizeof(int), nOverviews ) );
+    std::vector<bool> abFoundOverviewFactor(nOverviews);
     for( int i = 0; i < nOverviews; i++ )
     {
         for( int j = 0; j < m_nOverviewCount; j++ )
@@ -1126,10 +1127,10 @@ VRTWarpedDataset::IBuildOverviews( const char * /* pszResampling */,
                 || nOvFactor == GDALOvLevelAdjust2( panOverviewList[i],
                                                    GetRasterXSize(),
                                                    GetRasterYSize() ) )
-                panOverviewList[i] *= -1;
+                abFoundOverviewFactor[i] = true;
         }
 
-        if( panOverviewList[i] > 0 )
+        if( !abFoundOverviewFactor[i] )
             panNewOverviewList[nNewOverviews++] = panOverviewList[i];
     }
 
@@ -1511,7 +1512,8 @@ CPLErr VRTWarpedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
         int nOvFactor = atoi(papszTokens[iOverview]);
 
         if (nOvFactor > 0)
-            BuildOverviews( "NEAREST", 1, &nOvFactor, 0, nullptr, nullptr, nullptr );
+            BuildOverviews( "NEAREST", 1, &nOvFactor, 0, nullptr, nullptr, nullptr,
+                            /*papszOptions=*/ nullptr );
         else
             CPLError(
                 CE_Failure, CPLE_AppDefined,

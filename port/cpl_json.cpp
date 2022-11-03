@@ -473,6 +473,13 @@ CPLJSONObject::CPLJSONObject(const CPLJSONObject &other) :
 {
 }
 
+CPLJSONObject::CPLJSONObject(CPLJSONObject &&other) :
+    m_poJsonObject(other.m_poJsonObject),
+    m_osKey(std::move(other.m_osKey))
+{
+    other.m_poJsonObject = nullptr;
+}
+
 CPLJSONObject &CPLJSONObject::operator=(const CPLJSONObject &other)
 {
     if( this == &other )

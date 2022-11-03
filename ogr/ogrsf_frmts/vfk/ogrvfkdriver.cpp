@@ -32,7 +32,6 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$")
 
 static int OGRVFKDriverIdentify(GDALOpenInfo* poOpenInfo)
 {
@@ -105,6 +104,7 @@ void RegisterOGRVFK()
                                "Czech Cadastral Exchange Data Format" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "vfk" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/vfk.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"

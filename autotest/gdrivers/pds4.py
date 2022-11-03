@@ -1804,7 +1804,7 @@ def check_pds4_oblique_cylindrical(filename):
         ds.GetSpatialRef()
         .ExportToProj4()
         .startswith(
-            "+proj=ob_tran +R=2575000 +o_proj=eqc +o_lon_p=-158.352054 +o_lat_p=191.769776 +lon_0=-163.331591 "
+            "+proj=ob_tran +o_proj=eqc +o_lon_p=-158.352054 +o_lat_p=191.769776 +lon_0=-163.331591 +R=2575000 "
         )
     )
     assert ds.GetGeoTransform() == pytest.approx(

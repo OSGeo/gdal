@@ -49,7 +49,6 @@ constexpr double NULL3 = -3.4028226550889044521e+38;
 #include "cpl_safemaths.hpp"
 #include "vicardataset.h"
 
-CPL_CVSID("$Id$")
 
 enum PDSLayout
 {
@@ -74,7 +73,7 @@ class PDSDataset final: public RawDataset
     int         bGotTransform;
     double      adfGeoTransform[6];
 
-    CPLString   osProjection;
+    OGRSpatialReference m_oSRS{};
 
     CPLString   osTempResult;
 
@@ -105,15 +104,15 @@ public:
     virtual ~PDSDataset();
 
     virtual CPLErr GetGeoTransform( double * padfTransform ) override;
-    virtual const char *_GetProjectionRef(void) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
 
     virtual char      **GetFileList(void) override;
 
-    virtual CPLErr IBuildOverviews( const char *, int, int *,
-                                    int, int *, GDALProgressFunc, void * ) override;
+    virtual CPLErr IBuildOverviews( const char *,
+                                    int, const int *,
+                                    int, const int *,
+                                    GDALProgressFunc, void *,
+                                    CSLConstList papszOptions ) override;
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
@@ -143,6 +142,7 @@ PDSDataset::PDSDataset() :
     poCompressedDS(nullptr),
     bGotTransform(FALSE)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -220,21 +220,24 @@ char **PDSDataset::GetFileList()
 /************************************************************************/
 
 CPLErr PDSDataset::IBuildOverviews( const char *pszResampling,
-                                    int nOverviews, int *panOverviewList,
-                                    int nListBands, int *panBandList,
+                                    int nOverviews, const int *panOverviewList,
+                                    int nListBands, const int *panBandList,
                                     GDALProgressFunc pfnProgress,
-                                    void * pProgressData )
+                                    void * pProgressData,
+                                    CSLConstList papszOptions )
 {
     if( poCompressedDS != nullptr )
         return poCompressedDS->BuildOverviews( pszResampling,
                                                nOverviews, panOverviewList,
                                                nListBands, panBandList,
-                                               pfnProgress, pProgressData );
+                                               pfnProgress, pProgressData,
+                                               papszOptions );
 
     return RawDataset::IBuildOverviews( pszResampling,
                                         nOverviews, panOverviewList,
                                         nListBands, panBandList,
-                                        pfnProgress, pProgressData );
+                                        pfnProgress, pProgressData,
+                                        papszOptions );
 }
 
 /************************************************************************/
@@ -267,16 +270,14 @@ CPLErr PDSDataset::IRasterIO( GDALRWFlag eRWFlag,
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                         GetSpatialRef()                              */
 /************************************************************************/
 
-const char *PDSDataset::_GetProjectionRef()
-
+const OGRSpatialReference* PDSDataset::GetSpatialRef() const
 {
-    if( !osProjection.empty() )
-        return osProjection;
-
-    return GDALPamDataset::_GetProjectionRef();
+    if( !m_oSRS.IsEmpty() )
+        return &m_oSRS;
+    return GDALPamDataset::GetSpatialRef();
 }
 
 /************************************************************************/
@@ -469,6 +470,7 @@ void PDSDataset::ParseSRS()
 
     bool bProjectionSet = true;
     OGRSpatialReference oSRS;
+    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     if ((EQUAL( map_proj_name, "EQUIRECTANGULAR" )) ||
         (EQUAL( map_proj_name, "SIMPLE_CYLINDRICAL" )) ||
@@ -614,10 +616,7 @@ void PDSDataset::ParseSRS()
         }
 
         // translate back into a projection string.
-        char *pszResult = nullptr;
-        oSRS.exportToWkt( &pszResult );
-        osProjection = pszResult;
-        CPLFree( pszResult );
+        m_oSRS = oSRS;
     }
 
 /* ==================================================================== */
@@ -631,20 +630,11 @@ void PDSDataset::ParseSRS()
         VSILFILE *fp = VSIFOpenL( pszPrjFile, "r" );
         if( fp != nullptr )
         {
-            OGRSpatialReference oSRS2;
-
             VSIFCloseL( fp );
 
             char **papszLines = CSLLoad( pszPrjFile );
 
-            if( oSRS2.importFromESRI( papszLines ) == OGRERR_NONE )
-            {
-                char *pszResult = nullptr;
-                oSRS2.exportToWkt( &pszResult );
-                osProjection = pszResult;
-                CPLFree( pszResult );
-            }
-
+            m_oSRS.importFromESRI( papszLines );
             CSLDestroy( papszLines );
         }
     }

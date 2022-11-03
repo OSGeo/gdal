@@ -48,6 +48,31 @@ ZarrDataset::ZarrDataset(const std::shared_ptr<GDALGroup>& poRootGroup):
 }
 
 /************************************************************************/
+/*                    CheckExistenceOfOneZarrFile()                     */
+/************************************************************************/
+
+static bool CheckExistenceOfOneZarrFile(const char* pszFilename)
+{
+
+    CPLString osMDFilename = CPLFormFilename( pszFilename, ".zarray", nullptr );
+
+    VSIStatBufL sStat;
+    if( VSIStatL( osMDFilename, &sStat ) == 0 )
+        return true;
+
+    osMDFilename = CPLFormFilename( pszFilename, ".zgroup", nullptr );
+    if( VSIStatL( osMDFilename, &sStat ) == 0 )
+        return true;
+
+    // Zarr V3
+    osMDFilename = CPLFormFilename( pszFilename, "zarr.json", nullptr );
+    if( VSIStatL( osMDFilename, &sStat ) == 0 )
+        return true;
+
+    return false;
+}
+
+/************************************************************************/
 /*                              Identify()                              */
 /************************************************************************/
 
@@ -64,25 +89,7 @@ int ZarrDataset::Identify( GDALOpenInfo *poOpenInfo )
         return FALSE;
     }
 
-    CPLString osMDFilename = CPLFormFilename( poOpenInfo->pszFilename,
-                                              ".zarray", nullptr );
-
-    VSIStatBufL sStat;
-    if( VSIStatL( osMDFilename, &sStat ) == 0 )
-        return TRUE;
-
-    osMDFilename = CPLFormFilename( poOpenInfo->pszFilename,
-                                    ".zgroup", nullptr );
-    if( VSIStatL( osMDFilename, &sStat ) == 0 )
-        return TRUE;
-
-    // Zarr V3
-    osMDFilename = CPLFormFilename( poOpenInfo->pszFilename,
-                                    "zarr.json", nullptr );
-    if( VSIStatL( osMDFilename, &sStat ) == 0 )
-        return TRUE;
-
-    return FALSE;
+    return CheckExistenceOfOneZarrFile(poOpenInfo->pszFilename);
 }
 
 /************************************************************************/
@@ -270,6 +277,35 @@ GDALDataset* ZarrDataset::Open(GDALOpenInfo* poOpenInfo)
         if( aosTokens.size() < 2 )
             return nullptr;
         osFilename = aosTokens[1];
+        std::string osErrorMsgSuffix;
+        if( osFilename == "http" || osFilename == "https" )
+        {
+            osErrorMsgSuffix = "\nThere is likely a quoting error of the whole "
+                               "connection string, and the filename should "
+                               "likely be prefixed with /vsicurl/";
+        }
+        else if( osFilename == "/vsicurl/http" || osFilename == "/vsicurl/https" )
+        {
+            osErrorMsgSuffix = "\nThere is likely a quoting error of the whole "
+                               "connection string.";
+        }
+        if( !osErrorMsgSuffix.empty() || !CheckExistenceOfOneZarrFile(osFilename.c_str()) )
+        {
+            std::string osErrorMsg("Cannot find any of Zarr metadata files in '");
+            osErrorMsg += osFilename;
+            osErrorMsg += "'.";
+            if( !osErrorMsgSuffix.empty() )
+            {
+                osErrorMsg += osErrorMsgSuffix;
+            }
+            else if( STARTS_WITH(osFilename.c_str(), "http://") ||
+                     STARTS_WITH(osFilename.c_str(), "https://") )
+            {
+                osErrorMsg += "\nThe filename should likely be prefixed with /vsicurl/";
+            }
+            CPLError(CE_Failure, CPLE_AppDefined, "%s", osErrorMsg.c_str());
+            return nullptr;
+        }
         if( aosTokens.size() >= 3 )
         {
             osArrayOfInterest = aosTokens[2];

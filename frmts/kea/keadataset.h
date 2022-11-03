@@ -64,16 +64,10 @@ public:
 
     // virtual methods for dealing with transform and projection
     CPLErr      GetGeoTransform( double * padfTransform ) override;
-    const char *_GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
 
     CPLErr  SetGeoTransform (double *padfTransform ) override;
-    CPLErr _SetProjection( const char *pszWKT ) override;
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     // method to get a pointer to the imageio class
     void *GetInternalHandle (const char *) override;
@@ -90,23 +84,19 @@ public:
 
     // GCPs
     int GetGCPCount() override;
-    const char* _GetGCPProjection() override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override {
-        return GetGCPSpatialRefFromOldGetGCPProjection();
-    }
+    const OGRSpatialReference* GetGCPSpatialRef() const override;
     const GDAL_GCP* GetGCPs() override;
-    CPLErr _SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList, const char *pszGCPProjection) override;
-    using GDALPamDataset::SetGCPs;
     CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                    const OGRSpatialReference* poSRS ) override {
-        return OldSetGCPsFromNew(nGCPCount, pasGCPList, poSRS);
-    }
+                    const OGRSpatialReference* poSRS ) override;
 
 protected:
     // this method builds overviews for the specified bands.
-    virtual CPLErr IBuildOverviews(const char *pszResampling, int nOverviews, int *panOverviewList,
-                                    int nListBands, int *panBandList, GDALProgressFunc pfnProgress,
-                                    void *pProgressData) override;
+    virtual CPLErr IBuildOverviews(const char *pszResampling,
+                                   int nOverviews, const int *panOverviewList,
+                                   int nListBands, const int *panBandList,
+                                   GDALProgressFunc pfnProgress,
+                                   void *pProgressData,
+                                   CSLConstList papszOptions) override;
 
     // internal method to update m_papszMetadataList
     void UpdateMetadataList();
@@ -119,8 +109,9 @@ private:
     LockedRefCount      *m_pRefcount;
     char               **m_papszMetadataList; // CSLStringList for metadata
     GDAL_GCP            *m_pGCPs;
-    char                *m_pszGCPProjection;
-    CPLMutex            *m_hMutex;
+    mutable OGRSpatialReference  m_oGCPSRS{};
+    mutable CPLMutex            *m_hMutex;
+    mutable OGRSpatialReference  m_oSRS{};
 };
 
 // conversion functions

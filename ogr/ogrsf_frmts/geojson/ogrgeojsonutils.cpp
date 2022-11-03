@@ -37,7 +37,6 @@
 #include <algorithm>
 #include <memory>
 
-CPL_CVSID("$Id$")
 
 const char szESRIJSonPotentialStart1[] =
     "{\"features\":[{\"geometry\":{\"rings\":[";
@@ -453,7 +452,7 @@ bool GeoJSONSeqFileIsObject( GDALOpenInfo* poOpenInfo )
     {
         if( !(bReadMoreBytes && poOpenInfo->nHeaderBytes >= 6000 &&
               poOpenInfo->TryToIngest(1000 * 1000) &&
-             !IsGeoJSONLikeObject(reinterpret_cast<const char*>(poOpenInfo->pabyHeader),
+              IsGeoJSONLikeObject(reinterpret_cast<const char*>(poOpenInfo->pabyHeader),
                                   bMightBeSequence, bReadMoreBytes)) )
         {
             return false;

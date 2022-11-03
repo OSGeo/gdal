@@ -47,7 +47,6 @@
 
 #include <cmath>
 
-CPL_CVSID( "$Id$" )
 
 #ifdef WIN32
 #  define PATHDELIM       '\\'
@@ -508,11 +507,11 @@ private:
     char **papszRDC;
     double adfGeoTransform[6];
 
-    char *pszProjection;
+    mutable OGRSpatialReference m_oSRS{};
     char **papszCategories;
     char *pszUnitType;
     // Move GeoReference2Wkt() into header file.
-    CPLErr Wkt2GeoReference( const char *pszProjString,
+    CPLErr Wkt2GeoReference( const OGRSpatialReference& oSRS,
         char **pszRefSystem,
         char **pszRefUnit );
 
@@ -539,14 +538,9 @@ public:
     virtual char **GetFileList(void) override;
     virtual CPLErr GetGeoTransform( double *padfTransform ) override;
     virtual CPLErr SetGeoTransform( double *padfTransform ) override;
-    virtual const char *_GetProjectionRef( void ) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
-    virtual CPLErr _SetProjection( const char *pszProjString ) override;
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override ;
 };
 
 //  ----------------------------------------------------------------------------
@@ -607,12 +601,11 @@ IdrisiDataset::IdrisiDataset() :
     pszFilename(nullptr),
     pszDocFilename(nullptr),
     papszRDC(nullptr),
-    pszProjection(nullptr),
     papszCategories(nullptr),
     pszUnitType(nullptr),
     poColorTable(new GDALColorTable())
 {
-
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -666,7 +659,6 @@ IdrisiDataset::~IdrisiDataset()
     }
     CPLFree( pszFilename );
     CPLFree( pszDocFilename );
-    CPLFree( pszProjection );
     CSLDestroy( papszCategories );
     CPLFree( pszUnitType );
 
@@ -1464,42 +1456,39 @@ CPLErr  IdrisiDataset::SetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *IdrisiDataset::_GetProjectionRef( void )
+const OGRSpatialReference* IdrisiDataset::GetSpatialRef() const
 {
-    const char *pszPamSRS = GDALPamDataset::_GetProjectionRef();
+    const auto poSRS = GDALPamDataset::GetSpatialRef();
+    if( poSRS )
+        return poSRS;
 
-    if( pszPamSRS != nullptr && strlen( pszPamSRS ) > 0 )
-        return pszPamSRS;
-
-    if( pszProjection == nullptr )
+    if( m_oSRS.IsEmpty() )
     {
         const char *pszRefSystem = myCSLFetchNameValue( papszRDC, rdcREF_SYSTEM );
         const char *pszRefUnit = myCSLFetchNameValue( papszRDC, rdcREF_UNITS );
-
         if (pszRefSystem != nullptr && pszRefUnit != nullptr)
-            IdrisiGeoReference2Wkt( pszFilename, pszRefSystem, pszRefUnit, &pszProjection );
-        else
-            pszProjection = CPLStrdup("");
+            IdrisiGeoReference2Wkt( pszFilename, pszRefSystem, pszRefUnit, m_oSRS );
     }
-    return pszProjection;
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /************************************************************************/
 /*                           SetProjection()                            */
 /************************************************************************/
 
-CPLErr IdrisiDataset::_SetProjection( const char *pszProjString )
+CPLErr IdrisiDataset::SetSpatialRef(const OGRSpatialReference* poSRS)
 {
-    CPLFree( pszProjection );
-    pszProjection = CPLStrdup( pszProjString );
+    m_oSRS.Clear();
+    if( poSRS )
+        m_oSRS = *poSRS;
 
     char *pszRefSystem = nullptr;
     char *pszRefUnit = nullptr;
 
-    CPLErr eResult = Wkt2GeoReference( pszProjString, &pszRefSystem, &pszRefUnit );
+    CPLErr eResult = Wkt2GeoReference( m_oSRS, &pszRefSystem, &pszRefUnit );
 
     papszRDC = CSLSetNameValue( papszRDC, rdcREF_SYSTEM, pszRefSystem );
     papszRDC = CSLSetNameValue( papszRDC, rdcREF_UNITS,  pszRefUnit );
@@ -2408,12 +2397,8 @@ GDALRasterAttributeTable *IdrisiRasterBand::GetDefaultRAT()
 CPLErr IdrisiGeoReference2Wkt( const char* pszFilename,
                                const char *pszRefSystem,
                                const char *pszRefUnits,
-                               char **ppszProjString )
+                               OGRSpatialReference& oSRS )
 {
-    OGRSpatialReference oSRS;
-
-    *ppszProjString = nullptr;
-
     // ---------------------------------------------------------
     //  Plane
     // ---------------------------------------------------------
@@ -2428,7 +2413,6 @@ CPLErr IdrisiGeoReference2Wkt( const char* pszFilename,
             oSRS.SetLinearUnits( aoLinearUnitsConv[nDeft].pszName,
                 aoLinearUnitsConv[nDeft].dfConv );
         }
-        oSRS.exportToWkt( ppszProjString );
         return CE_None;
     }
 
@@ -2440,7 +2424,6 @@ CPLErr IdrisiGeoReference2Wkt( const char* pszFilename,
         EQUAL( pszRefSystem, rstLATLONG2 ) )
     {
         oSRS.SetWellKnownGeogCS( "WGS84" );
-        oSRS.exportToWkt( ppszProjString );
         return CE_None;
     }
 
@@ -2462,7 +2445,6 @@ CPLErr IdrisiGeoReference2Wkt( const char* pszFilename,
         sscanf( pszRefSystemLower, rstUTM, &nZone, &cNorth );
         oSRS.SetWellKnownGeogCS( "WGS84" );
         oSRS.SetUTM( nZone,( cNorth == 'n' ) );
-        oSRS.exportToWkt( ppszProjString );
         CPLFree( pszRefSystemLower );
         return CE_None;
     }
@@ -2484,7 +2466,6 @@ CPLErr IdrisiGeoReference2Wkt( const char* pszFilename,
 
             if( oSRS.SetStatePlane( nZone, ( nNAD == 83 ) ) != OGRERR_FAILURE )
             {
-                oSRS.exportToWkt( ppszProjString );
                 CPLFree( pszRefSystemLower );
                 return CE_None;
             }
@@ -2543,7 +2524,6 @@ CPLErr IdrisiGeoReference2Wkt( const char* pszFilename,
                     aoLinearUnitsConv[nDeft].dfConv );
             }
         }
-        oSRS.exportToWkt( ppszProjString );
         return CE_Failure;
     }
 
@@ -2724,8 +2704,6 @@ CPLErr IdrisiGeoReference2Wkt( const char* pszFilename,
 
     if( EQUAL( pszProjName, "none" ) )
     {
-        oSRS.exportToWkt( ppszProjString );
-
         CPLFree( pszGeorefName );
         CPLFree( pszProjName );
         CPLFree( pszDatum );
@@ -2826,7 +2804,6 @@ CPLErr IdrisiGeoReference2Wkt( const char* pszFilename,
             "[\"%s\" in georeference file \"%s\"]",
             pszProjName, pszFName );
         oSRS.Clear();
-        oSRS.exportToWkt( ppszProjString );
 
         CPLFree( pszGeorefName );
         CPLFree( pszProjName );
@@ -2858,8 +2835,6 @@ CPLErr IdrisiGeoReference2Wkt( const char* pszFilename,
 
     oSRS.SetProjCS( pszGeorefName );
 
-    oSRS.exportToWkt( ppszProjString );
-
     CPLFree( pszGeorefName );
     CPLFree( pszProjName );
     CPLFree( pszDatum );
@@ -2885,7 +2860,7 @@ CPLErr IdrisiGeoReference2Wkt( const char* pszFilename,
 * it will create a accompanying georeference files.
 ***/
 
-CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
+CPLErr IdrisiDataset::Wkt2GeoReference( const OGRSpatialReference& oSRS,
                                         char **pszRefSystem,
                                         char **pszRefUnit )
 {
@@ -2893,15 +2868,12 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
     //  Plane with default "Meters"
     // -----------------------------------------------------
 
-    if( EQUAL( pszProjString, "" ) )
-            {
-                *pszRefSystem = CPLStrdup( rstPLANE );
-                *pszRefUnit   = CPLStrdup( rstMETER );
-                return CE_None;
-            }
-
-    OGRSpatialReference oSRS;
-    oSRS.importFromWkt( pszProjString );
+    if( oSRS.IsEmpty() )
+    {
+        *pszRefSystem = CPLStrdup( rstPLANE );
+        *pszRefUnit   = CPLStrdup( rstMETER );
+        return CE_None;
+    }
 
     // -----------------------------------------------------
     //  Local => Plane + Linear Unit

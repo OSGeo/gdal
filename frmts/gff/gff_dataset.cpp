@@ -36,7 +36,6 @@
 #include "gdal_pam.h"
 #include "gdal_priv.h"
 
-CPL_CVSID("$Id$")
 
 /*******************************************************************
  * Declaration of the GFFDataset class                             *

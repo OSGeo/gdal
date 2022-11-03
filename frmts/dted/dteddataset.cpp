@@ -35,7 +35,6 @@
 #include <cstdlib>
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -52,16 +51,13 @@ class DTEDDataset final: public GDALPamDataset
     char        *pszFilename;
     DTEDInfo    *psDTED;
     int         bVerifyChecksum;
-    char       *pszProjection;
+    mutable OGRSpatialReference m_oSRS{};
 
   public:
     DTEDDataset();
     ~DTEDDataset() override;
 
-    const char *_GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
     CPLErr GetGeoTransform( double * ) override;
 
     const char* GetFileName() const { return pszFilename; }
@@ -246,9 +242,10 @@ DTEDDataset::DTEDDataset() :
     pszFilename(CPLStrdup("unknown")),
     psDTED(nullptr),
     bVerifyChecksum(CPLTestBool(
-        CPLGetConfigOption("DTED_VERIFY_CHECKSUM", "NO"))),
-    pszProjection(CPLStrdup(""))
-{}
+        CPLGetConfigOption("DTED_VERIFY_CHECKSUM", "NO")))
+{
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+}
 
 /************************************************************************/
 /*                            ~DTEDDataset()                            */
@@ -259,7 +256,6 @@ DTEDDataset::~DTEDDataset()
 {
     FlushCache(true);
     CPLFree(pszFilename);
-    CPLFree( pszProjection );
     if( psDTED != nullptr )
         DTEDClose( psDTED );
 }
@@ -466,8 +462,7 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->TryLoadXML( poOpenInfo->GetSiblingFiles() );
 
     // if no SR in xml, try aux
-    const char* pszPrj = poDS->GDALPamDataset::_GetProjectionRef();
-    if( !pszPrj || strlen(pszPrj) == 0 )
+    if( poDS->GDALPamDataset::GetSpatialRef() == nullptr )
     {
         int bTryAux = TRUE;
         if( poOpenInfo->GetSiblingFiles() != nullptr &&
@@ -479,11 +474,10 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
             GDALDataset* poAuxDS = GDALFindAssociatedAuxFile( poOpenInfo->pszFilename, GA_ReadOnly, poDS );
             if( poAuxDS )
             {
-                pszPrj = poAuxDS->GetProjectionRef();
-                if( pszPrj && strlen(pszPrj) > 0 )
+                const auto poSRS = poAuxDS->GetSpatialRef();
+                if( poSRS )
                 {
-                    CPLFree( poDS->pszProjection );
-                    poDS->pszProjection = CPLStrdup(pszPrj);
+                    poDS->m_oSRS = *poSRS;
                 }
 
                 GDALClose( poAuxDS );
@@ -535,41 +529,44 @@ CPLErr DTEDDataset::GetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *DTEDDataset::_GetProjectionRef()
+const OGRSpatialReference *DTEDDataset::GetSpatialRef() const
 
 {
+    if( !m_oSRS.IsEmpty() )
+        return &m_oSRS;
+
     // get xml and aux SR first
-    const char* pszPrj = GDALPamDataset::_GetProjectionRef();
+    const auto poSRS = GDALPamDataset::GetSpatialRef();
+    if( poSRS )
+    {
+        m_oSRS = *poSRS;
+        return &m_oSRS;
+    }
+
     const char* pszVertDatum;
-    if(pszPrj && strlen(pszPrj) > 0)
-        return pszPrj;
-
-    if (pszProjection && strlen(pszProjection) > 0)
-        return pszProjection;
-
-    pszPrj = GetMetadataItem( "DTED_HorizontalDatum");
+    const char* pszPrj = const_cast<DTEDDataset*>(this)->GetMetadataItem( "DTED_HorizontalDatum");
     if (EQUAL(pszPrj, "WGS84"))
     {
 
-        pszVertDatum = GetMetadataItem("DTED_VerticalDatum");
+        pszVertDatum = const_cast<DTEDDataset*>(this)->GetMetadataItem("DTED_VerticalDatum");
         if ( (EQUAL(pszVertDatum, "MSL") || EQUAL(pszVertDatum, "E96") ) &&
             CPLTestBool( CPLGetConfigOption("REPORT_COMPD_CS", "NO") ) )
         {
-                return "COMPD_CS[\"WGS 84 + EGM96 geoid height\", GEOGCS[\"WGS 84\", DATUM[\"WGS_1984\", SPHEROID[\"WGS 84\",6378137,298.257223563, AUTHORITY[\"EPSG\",\"7030\"]], AUTHORITY[\"EPSG\",\"6326\"]], PRIMEM[\"Greenwich\",0, AUTHORITY[\"EPSG\",\"8901\"]], UNIT[\"degree\",0.0174532925199433, AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST], AUTHORITY[\"EPSG\",\"4326\"]], VERT_CS[\"EGM96 geoid height\", VERT_DATUM[\"EGM96 geoid\",2005, AUTHORITY[\"EPSG\",\"5171\"]], UNIT[\"metre\",1, AUTHORITY[\"EPSG\",\"9001\"]], AXIS[\"Up\",UP], AUTHORITY[\"EPSG\",\"5773\"]]]";
+                m_oSRS.importFromWkt("COMPD_CS[\"WGS 84 + EGM96 geoid height\", GEOGCS[\"WGS 84\", DATUM[\"WGS_1984\", SPHEROID[\"WGS 84\",6378137,298.257223563, AUTHORITY[\"EPSG\",\"7030\"]], AUTHORITY[\"EPSG\",\"6326\"]], PRIMEM[\"Greenwich\",0, AUTHORITY[\"EPSG\",\"8901\"]], UNIT[\"degree\",0.0174532925199433, AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST], AUTHORITY[\"EPSG\",\"4326\"]], VERT_CS[\"EGM96 geoid height\", VERT_DATUM[\"EGM96 geoid\",2005, AUTHORITY[\"EPSG\",\"5171\"]], UNIT[\"metre\",1, AUTHORITY[\"EPSG\",\"9001\"]], AXIS[\"Up\",UP], AUTHORITY[\"EPSG\",\"5773\"]]]");
 
         }
-        // Support DTED with EGM08 vertical datum reference 
+        // Support DTED with EGM08 vertical datum reference
         else if ( (EQUAL(pszVertDatum, "E08"))  &&   CPLTestBool( CPLGetConfigOption("REPORT_COMPD_CS", "NO") ))
         {
-                return "COMPD_CS[\"WGS 84 + EGM2008 height\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],VERT_CS[\"EGM2008 height\",VERT_DATUM[\"EGM2008 geoid\",2005,AUTHORITY[\"EPSG\",\"1027\"]],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Gravity-related height\",UP],AUTHORITY[\"EPSG\",\"3855\"]]]";
+                m_oSRS.importFromWkt("COMPD_CS[\"WGS 84 + EGM2008 height\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],VERT_CS[\"EGM2008 height\",VERT_DATUM[\"EGM2008 geoid\",2005,AUTHORITY[\"EPSG\",\"1027\"]],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Gravity-related height\",UP],AUTHORITY[\"EPSG\",\"3855\"]]]");
 
         }
         else
         {
-            return SRS_WKT_WGS84_LAT_LONG;
+            m_oSRS.importFromWkt(SRS_WKT_WGS84_LAT_LONG);
         }
 
     }
@@ -587,7 +584,7 @@ const char *DTEDDataset::_GetProjectionRef()
                       "fix the DTED file.\n"
                       "No more warnings will be issued in this session about this operation.", GetFileName() );
         }
-        return "GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\",SPHEROID[\"WGS 72\",6378135,298.26]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST],AUTHORITY[\"EPSG\",\"4322\"]]";
+        m_oSRS.importFromWkt("GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\",SPHEROID[\"WGS 72\",6378135,298.26]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST],AUTHORITY[\"EPSG\",\"4322\"]]");
     }
     else
     {
@@ -600,8 +597,9 @@ const char *DTEDDataset::_GetProjectionRef()
                       "The DTED driver is going to consider it as WGS84.\n"
                       "No more warnings will be issued in this session about this operation.", GetFileName(), pszPrj );
         }
-        return SRS_WKT_WGS84_LAT_LONG;
+        m_oSRS.importFromWkt(SRS_WKT_WGS84_LAT_LONG);
     }
+    return &m_oSRS;
 }
 
 /************************************************************************/

@@ -56,7 +56,6 @@
 #include "memdataset.h"
 #include "vrtdataset.h"
 
-CPL_CVSID("$Id$")
 
 static void GDALFastCopyByte( const GByte * CPL_RESTRICT pSrcData,
                               int nSrcPixelStride,
@@ -1089,7 +1088,7 @@ CPLErr GDALRasterBand::RasterIOResampled(
     GByte* pabyData = static_cast<GByte*>(pDataMem)
                         - nPSMem * nDestXOffVirtual
                         - nLSMem * nDestYOffVirtual;
-    GDALRasterBandH hMEMBand = MEMCreateRasterBandEx( poDS, 1, pabyData,
+    GDALRasterBandH hMEMBand = MEMCreateRasterBandEx( poMEMDS, 1, pabyData,
                                                       eDTMem,
                                                       nPSMem, nLSMem,
                                                       false );
@@ -4412,7 +4411,7 @@ static void GDALCopyWholeRasterGetSwathSize(
 
     // aim for one row of blocks.  Do not settle for less.
     int nSwathCols  = nXSize;
-    int nSwathLines = nBlockYSize;
+    int nSwathLines = nMaxBlockYSize;
 
     const char* pszSrcCompression =
         poSrcPrototypeBand->GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE");

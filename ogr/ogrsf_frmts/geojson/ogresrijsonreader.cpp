@@ -50,7 +50,6 @@
 #include "ogrgeojsonutils.h"
 // #include "symbol_renames.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          OGRESRIJSONReader()                         */
@@ -1047,18 +1046,13 @@ OGRSpatialReference* OGRESRIJSONReadSpatialReference( json_object* poObj )
             }
             else
             {
-                int nEntries = 0;
-                int* panMatchConfidence = nullptr;
-                OGRSpatialReferenceH* pahSRS = poSRS->FindMatches(
-                    nullptr, &nEntries, &panMatchConfidence);
-                if( nEntries == 1 && panMatchConfidence[0] >= 70 )
+                auto poSRSMatch = poSRS->FindBestMatch(70);
+                if( poSRSMatch )
                 {
-                    delete poSRS;
-                    poSRS = OGRSpatialReference::FromHandle(pahSRS[0])->Clone();
+                    poSRS->Release();
+                    poSRS = poSRSMatch;
                     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                 }
-                OSRFreeSRSArray(pahSRS);
-                CPLFree(panMatchConfidence);
             }
 
             return poSRS;

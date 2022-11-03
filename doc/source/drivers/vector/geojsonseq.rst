@@ -19,6 +19,8 @@ Sequences)
 Such files are equivalent to a GeoJSON FeatureCollection, but are more
 friendly for incremental parsing.
 
+Appending to an existing file is supported since GDAL 3.6
+
 Driver capabilities
 -------------------
 

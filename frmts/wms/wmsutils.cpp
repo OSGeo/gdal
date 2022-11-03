@@ -28,31 +28,27 @@
 
 #include "wmsdriver.h"
 
-CPL_CVSID("$Id$")
 
-CPLString ProjToWKT(const CPLString &proj) {
-    char* wkt = nullptr;
+OGRSpatialReference ProjToSRS(const CPLString &proj) {
     OGRSpatialReference sr;
+    sr.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     CPLString srs;
 
     /* We could of course recognize OSGEO:41001 to SetFromUserInput(), but this hackish SRS */
     /* is almost only used in the context of WMS */
     if (strcmp(proj.c_str(),"OSGEO:41001") == 0)
     {
-        if (sr.SetFromUserInput("EPSG:3857") != OGRERR_NONE) return srs;
+        sr.importFromEPSG(3857);
     }
     else if (EQUAL(proj.c_str(),"EPSG:NONE"))
     {
-        return srs;
+        // do nothing
     }
     else
     {
-        if (sr.SetFromUserInput(proj.c_str(), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) != OGRERR_NONE) return srs;
+        sr.SetFromUserInput(proj.c_str(), OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
     }
-    sr.exportToWkt(&wkt);
-    srs = wkt;
-    CPLFree(wkt);
-    return srs;
+    return sr;
 }
 
 // Terminates an URL base with either ? or &, so extra args can be appended

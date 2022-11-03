@@ -33,7 +33,6 @@
 #include "cpl_error.h"
 #include "cpl_multiproc.h"
 
-CPL_CVSID("$Id$")
 
 using kmldom::KmlFactory;
 
@@ -220,6 +219,7 @@ void RegisterOGRLIBKML()
                                "Keyhole Markup Language (LIBKML)" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "kml kmz" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/libkml.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"

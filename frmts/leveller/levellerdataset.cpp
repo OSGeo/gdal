@@ -35,7 +35,6 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$")
 
 static bool str_equal(const char *_s1, const char *_s2) {
     return 0 == strcmp(_s1, _s2);
@@ -245,7 +244,7 @@ class LevellerDataset final: public GDALPamDataset
     int                 m_version;
 
     char*               m_pszFilename;
-    char*               m_pszProjection;
+    OGRSpatialReference m_oSRS{};
 
     //char              m_szUnits[8];
     char                m_szElevUnits[8];
@@ -261,11 +260,11 @@ class LevellerDataset final: public GDALPamDataset
     bool load_from_file(VSILFILE*, const char*);
 
     static bool locate_data(vsi_l_offset&, size_t&, VSILFILE*, const char*);
-    bool get(int&, VSILFILE*, const char*);
-    bool get(size_t& n, VSILFILE* fp, const char* psz)
-        { return this->get((int&)n, fp, psz); }
-    bool get(double&, VSILFILE*, const char*);
-    bool get(char*, size_t, VSILFILE*, const char*);
+    static bool get(int&, VSILFILE*, const char*);
+    static bool get(size_t& n, VSILFILE* fp, const char* psz)
+        { return get((int&)n, fp, psz); }
+    static bool get(double&, VSILFILE*, const char*);
+    static bool get(char*, size_t, VSILFILE*, const char*);
 
     bool write_header();
     bool write_tag(const char*, int);
@@ -302,17 +301,11 @@ public:
                                 GDALDataType eType, char** papszOptions );
 
     virtual CPLErr      GetGeoTransform( double* ) override;
-    virtual const char* _GetProjectionRef(void) override;
 
     virtual CPLErr      SetGeoTransform( double* ) override;
-    virtual CPLErr      _SetProjection(const char*) override;
 
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 };
 
 class digital_axis
@@ -640,12 +633,12 @@ double LevellerRasterBand::GetOffset(int* pbSuccess)
 LevellerDataset::LevellerDataset() :
     m_version(0),
     m_pszFilename(nullptr),
-    m_pszProjection(nullptr),
     m_dElevScale(),
     m_dElevBase(),
     m_fp(nullptr),
     m_nDataOffset()
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     memset( m_szElevUnits, 0, sizeof(m_szElevUnits) );
     memset( m_adfTransform, 0, sizeof(m_adfTransform) );
     memset( m_dLogSpan, 0, sizeof(m_dLogSpan) );
@@ -659,7 +652,6 @@ LevellerDataset::~LevellerDataset()
 {
     FlushCache(true);
 
-    CPLFree(m_pszProjection);
     CPLFree(m_pszFilename);
 
     if( m_fp != nullptr )
@@ -761,13 +753,17 @@ bool LevellerDataset::write_header()
     m_dElevBase = 0.0;
     m_dElevScale = 1.0;
 
-    if(m_pszProjection == nullptr || m_pszProjection[0] == 0)
+    if( m_oSRS.IsEmpty() )
     {
         write_tag("csclass", LEV_COORDSYS_RASTER);
     }
     else
     {
-        write_tag("coordsys_wkt", m_pszProjection);
+        char* pszWkt = nullptr;
+        m_oSRS.exportToWkt(&pszWkt);
+        if( pszWkt )
+            write_tag("coordsys_wkt", pszWkt);
+        CPLFree(pszWkt);
         const UNITLABEL units_elev = this->id_to_code(m_szElevUnits);
 
         const int bHasECS =
@@ -775,11 +771,9 @@ bool LevellerDataset::write_header()
 
         write_tag("coordsys_haselevm", bHasECS);
 
-        OGRSpatialReference sr(m_pszProjection);
-
         if(bHasECS)
         {
-            if(!this->compute_elev_scaling(sr))
+            if(!this->compute_elev_scaling(m_oSRS))
                 return false;
 
             // Raw-to-real units scaling.
@@ -790,11 +784,11 @@ bool LevellerDataset::write_header()
             write_tag("coordsys_em_units", units_elev);
         }
 
-        if(sr.IsLocal())
+        if(m_oSRS.IsLocal())
         {
             write_tag("csclass", LEV_COORDSYS_LOCAL);
 
-            const double dfLinear = sr.GetLinearUnits();
+            const double dfLinear = m_oSRS.GetLinearUnits();
             const int n = this->meter_measure_to_code(dfLinear);
             write_tag("coordsys_units", n);
         }
@@ -845,14 +839,14 @@ CPLErr LevellerDataset::SetGeoTransform( double *padfGeoTransform )
 }
 
 /************************************************************************/
-/*                           SetProjection()                            */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
-CPLErr LevellerDataset::_SetProjection( const char * pszNewProjection )
+CPLErr LevellerDataset::SetSpatialRef( const OGRSpatialReference* poSRS )
 {
-    CPLFree(m_pszProjection);
-
-    m_pszProjection = CPLStrdup(pszNewProjection);
+    m_oSRS.Clear();
+    if( poSRS )
+        m_oSRS = *poSRS;
 
     return CE_None;
 }
@@ -1073,7 +1067,7 @@ bool LevellerDataset::get(int& n, VSILFILE* fp, const char* psz)
     vsi_l_offset offset;
     size_t len;
 
-    if(this->locate_data(offset, len, fp, psz))
+    if(locate_data(offset, len, fp, psz))
     {
         GInt32 value;
         if(1 == VSIFReadL(&value, sizeof(value), 1, fp))
@@ -1095,7 +1089,7 @@ bool LevellerDataset::get(double& d, VSILFILE* fp, const char* pszTag)
     vsi_l_offset offset;
     size_t len;
 
-    if(this->locate_data(offset, len, fp, pszTag))
+    if(locate_data(offset, len, fp, pszTag))
     {
         if(1 == VSIFReadL(&d, sizeof(d), 1, fp))
         {
@@ -1120,7 +1114,7 @@ bool LevellerDataset::get(char* pszValue, size_t maxchars, VSILFILE* fp, const c
     vsi_l_offset offset;
     size_t len;
 
-    if(this->locate_data(offset, len, fp, szTag))
+    if(locate_data(offset, len, fp, szTag))
     {
         if(len > maxchars)
             return false;
@@ -1230,13 +1224,10 @@ bool LevellerDataset::convert_measure
 
 bool LevellerDataset::make_local_coordsys(const char* pszName, const char* pszUnits)
 {
-    OGRSpatialReference sr;
-
-    sr.SetLocalCS(pszName);
+    m_oSRS.SetLocalCS(pszName);
     double d;
     return ( convert_measure(1.0, d, pszUnits)
-             && OGRERR_NONE == sr.SetLinearUnits(pszUnits, d)
-             && OGRERR_NONE == sr.exportToWkt(&m_pszProjection) );
+             && OGRERR_NONE == m_oSRS.SetLinearUnits(pszUnits, d) );
 }
 
 bool LevellerDataset::make_local_coordsys(const char* pszName, UNITLABEL code)
@@ -1311,8 +1302,6 @@ bool LevellerDataset::load_from_file(VSILFILE* file, const char* pszFilename)
         if(csclass != LEV_COORDSYS_RASTER)
         {
             // Get projection details and units.
-            CPLAssert(m_pszProjection == nullptr);
-
             if(csclass == LEV_COORDSYS_LOCAL)
             {
                 UNITLABEL unitcode;
@@ -1335,8 +1324,7 @@ bool LevellerDataset::load_from_file(VSILFILE* file, const char* pszFilename)
                 if(!get(szWKT, 1023, file, "coordsys_wkt"))
                     return false;
 
-                m_pszProjection = reinterpret_cast<char *>( CPLMalloc(strlen(szWKT) + 1) );
-                strcpy(m_pszProjection, szWKT);
+                m_oSRS.importFromWkt(szWKT);
             }
             else
             {
@@ -1364,7 +1352,7 @@ bool LevellerDataset::load_from_file(VSILFILE* file, const char* pszFilename)
 
         // Get vertical (elev) coordsys.
         int bHasVertCS = FALSE;
-        if(this->get(bHasVertCS, file, "coordsys_haselevm") && bHasVertCS)
+        if(get(bHasVertCS, file, "coordsys_haselevm") && bHasVertCS)
         {
             get(m_dElevScale, file, "coordsys_em_scale");
             get(m_dElevBase, file, "coordsys_em_base");
@@ -1447,12 +1435,12 @@ bool LevellerDataset::load_from_file(VSILFILE* file, const char* pszFilename)
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char* LevellerDataset::_GetProjectionRef(void)
+const OGRSpatialReference* LevellerDataset::GetSpatialRef() const
 {
-    return m_pszProjection == nullptr ? "" : m_pszProjection;
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /************************************************************************/

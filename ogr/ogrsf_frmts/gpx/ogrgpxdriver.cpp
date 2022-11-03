@@ -38,7 +38,6 @@
 #include "gdal_priv.h"
 #include "ogr_core.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                                Open()                                */
@@ -123,6 +122,7 @@ void RegisterOGRGPX()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GPX" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gpx" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/gpx.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"

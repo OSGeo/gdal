@@ -96,7 +96,7 @@ if (GDAL_USE_JPEG AND NOT GDAL_USE_JPEG_INTERNAL)
     # Suppress '<unnamed-tag>': structure was padded due to alignment specifier in tif_jpeg.c
     target_compile_options(libtiff_jpeg PRIVATE /wd4324)
   endif ()
-  set_property(TARGET libtiff_jpeg PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS})
+  set_property(TARGET libtiff_jpeg PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
   target_compile_definitions(libtiff_jpeg PRIVATE -DJPEG_SUPPORT -DOJPEG_SUPPORT)
   target_include_directories(libtiff_jpeg PRIVATE $<TARGET_PROPERTY:cpl,SOURCE_DIR> $<TARGET_PROPERTY:cpl,BINARY_DIR>)
   gdal_target_link_libraries(libtiff_jpeg PRIVATE JPEG::JPEG)

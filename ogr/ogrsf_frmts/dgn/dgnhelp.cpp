@@ -28,7 +28,6 @@
 
 #include "dgnlibp.h"
 
-CPL_CVSID("$Id$")
 
 static const unsigned char abyDefaultPCT[256][3] =
 {

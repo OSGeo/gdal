@@ -415,7 +415,7 @@ bool OGROpenFileGDBLayer::Create(const OGRSpatialReference* poSRS)
                     else
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
-                                 "Feature dataset found, but no defininition");
+                                 "Feature dataset found, but no definition");
                         return false;
                     }
 
@@ -731,7 +731,7 @@ bool OGROpenFileGDBLayer::Create(const OGRSpatialReference* poSRS)
 
     m_poLyrTable->CreateIndex("FDO_OBJECTID", osFIDName);
 
-    // Just to immitate the FileGDB SDK which register the index on the
+    // Just to imitate the FileGDB SDK which register the index on the
     // geometry column after the OBJECTID one, but the OBJECTID column is the
     // first one in .gdbtable
     if( m_iGeomFieldIdx >= 0 )
@@ -2129,6 +2129,7 @@ void OGROpenFileGDBLayer::RefreshXMLDefinitionInMemory()
 
     CPLAddXMLAttributeAndValue(psRoot, "xmlns:typens", "http://www.esri.com/schemas/ArcGIS/10.3");
     CPLAddXMLAttributeAndValue(psRoot, "xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
+    CPLAddXMLAttributeAndValue(psRoot, "xmlns:xs", "http://www.w3.org/2001/XMLSchema");
     CPLAddXMLAttributeAndValue(psRoot, "xsi:type",
        m_eGeomType == wkbNone ? "typens:DETableInfo" : "typens:DEFeatureClassInfo");
     CPLCreateXMLElementAndValue(psRoot, "CatalogPath", m_osPath.c_str());

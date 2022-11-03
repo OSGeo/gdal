@@ -68,6 +68,7 @@ def test_srp_1(filename="srp/USRP_PCB0/FKUSRP01.IMG"):
         "SRP_REVISIONDATE=20120505",
         "SRP_SCA=50000",
         "SRP_ZNA=17",
+        "SRP_PSP=100.0",
     ]
 
     got_md = ds.GetMetadata()

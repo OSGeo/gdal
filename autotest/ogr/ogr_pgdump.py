@@ -315,7 +315,7 @@ def test_ogr_pgdump_3():
         or sql.find("""DELETE FROM geometry_columns""") != -1
         or sql.find("""BEGIN;""") == -1
         or sql.find(
-            """CREATE TABLE "another_schema"."tpoly" (    "ogc_fid" SERIAL,    CONSTRAINT "tpoly_pk" PRIMARY KEY ("ogc_fid") );"""
+            """CREATE TABLE "another_schema"."tpoly" ( "ogc_fid" SERIAL, CONSTRAINT "tpoly_pk" PRIMARY KEY ("ogc_fid") );"""
         )
         == -1
         or sql.find("""SELECT AddGeometryColumn""") != -1
@@ -391,7 +391,7 @@ def test_ogr_pgdump_4():
 
     assert not (
         sql.find(
-            """CREATE TABLE "public"."test" (    "ogc_fid" SERIAL,    CONSTRAINT "test_pk" PRIMARY KEY ("ogc_fid") )"""
+            """CREATE TABLE "public"."test" ( "ogc_fid" SERIAL, CONSTRAINT "test_pk" PRIMARY KEY ("ogc_fid") )"""
         )
         == -1
         or sql.find(
@@ -693,7 +693,7 @@ def test_ogr_pgdump_7():
     gdal.Unlink("/vsimem/ogr_pgdump_7.sql")
 
     assert not (
-        """CREATE TABLE "public"."test" (    "myfid" SERIAL,    CONSTRAINT "test_pk" PRIMARY KEY ("myfid") )"""
+        """CREATE TABLE "public"."test" ( "myfid" SERIAL, CONSTRAINT "test_pk" PRIMARY KEY ("myfid") )"""
         not in sql
         or """ALTER TABLE "public"."test" ADD COLUMN "myfid" """ in sql
         or sql.find(
@@ -805,7 +805,7 @@ def test_ogr_pgdump_8():
     gdal.Unlink("/vsimem/ogr_pgdump_8.sql")
 
     assert not (
-        """CREATE TABLE "public"."test" (    "myfid" SERIAL,    CONSTRAINT "test_pk" PRIMARY KEY ("myfid") )"""
+        """CREATE TABLE "public"."test" ( "myfid" SERIAL, CONSTRAINT "test_pk" PRIMARY KEY ("myfid") )"""
         not in sql
         or """ALTER TABLE "public"."test" ADD COLUMN "myfid" """ in sql
         or sql.find("""10\tfirst string\tsecond string""") == -1

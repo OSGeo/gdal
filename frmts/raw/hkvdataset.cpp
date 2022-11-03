@@ -39,7 +39,6 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -171,14 +170,12 @@ class HKVDataset final: public RawDataset
 
     float       MFF2version;
 
-    CPLErr      SetGCPProjection(const char *); // For use in CreateCopy.
-
     GDALDataType eRasterType;
 
     void SetNoDataValue( double );
 
-    char        *pszProjection;
-    char        *pszGCPProjection;
+    OGRSpatialReference m_oSRS{};
+    OGRSpatialReference m_oGCPSRS{};
     double      adfGeoTransform[6];
 
     char        **papszAttrib;
@@ -202,24 +199,16 @@ class HKVDataset final: public RawDataset
     ~HKVDataset() override;
 
     int GetGCPCount() override /* const */ { return nGCPCount; }
-    const char *_GetGCPProjection() override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override {
-        return GetGCPSpatialRefFromOldGetGCPProjection();
-    }
+    const OGRSpatialReference* GetGCPSpatialRef() const override
+        { return m_oGCPSRS.IsEmpty() ? nullptr : &m_oGCPSRS; }
     const GDAL_GCP *GetGCPs() override;
 
-    const char *_GetProjectionRef(void) override;
+    const OGRSpatialReference* GetSpatialRef() const override
+        { return m_oSRS.IsEmpty() ? nullptr : &m_oSRS; }
     CPLErr GetGeoTransform( double * ) override;
 
     CPLErr SetGeoTransform( double * ) override;
-    CPLErr _SetProjection( const char * ) override;
-
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -292,8 +281,6 @@ HKVDataset::HKVDataset() :
     // Initialize datasets to new version; change if necessary.
     MFF2version(1.1f),
     eRasterType(GDT_Unknown),
-    pszProjection(CPLStrdup("")),
-    pszGCPProjection(CPLStrdup("")),
     papszAttrib(nullptr),
     bGeorefChanged(false),
     papszGeoref(nullptr),
@@ -301,6 +288,8 @@ HKVDataset::HKVDataset() :
     bNoDataChanged(false),
     dfNoDataValue(0.0)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -348,8 +337,6 @@ HKVDataset::~HKVDataset()
         CPLFree( pasGCPList );
     }
 
-    CPLFree( pszProjection );
-    CPLFree( pszGCPProjection );
     CPLFree( pszPath );
     CSLDestroy( papszGeoref );
     CSLDestroy( papszAttrib );
@@ -444,16 +431,6 @@ CPLErr SaveHKVAttribFile( const char *pszFilenameIn,
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char *HKVDataset::_GetProjectionRef()
-
-{
-    return pszProjection;
-}
-
-/************************************************************************/
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
@@ -505,17 +482,11 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
     if(( CSLFetchNameValue( papszGeoref, "projection.name" ) != nullptr ) &&
        ( EQUAL(CSLFetchNameValue( papszGeoref, "projection.name" ),"UTM" )))
     {
-        // Pass copies of projection info, not originals (pointers get updated
-        // by importFromWkt).
-        OGRSpatialReference oUTM;
-        oUTM.importFromWkt(pszProjection);
-        oUTM.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-
-        auto poLLSRS = oUTM.CloneGeogCS();
+        auto poLLSRS = m_oSRS.CloneGeogCS();
         if( poLLSRS )
         {
             poLLSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-            poTransform = OGRCreateCoordinateTransformation( &oUTM, poLLSRS );
+            poTransform = OGRCreateCoordinateTransformation( &m_oSRS, poLLSRS );
             delete poLLSRS;
             if( poTransform == nullptr )
             {
@@ -784,54 +755,25 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
     return CE_None;
 }
 
-CPLErr HKVDataset::SetGCPProjection( const char *pszNewProjection )
-{
-    CPLFree( pszGCPProjection );
-    pszGCPProjection = CPLStrdup(pszNewProjection);
-
-    return CE_None;
-}
-
 /************************************************************************/
-/*                           SetProjection()                            */
+/*                           SetSpatialRef()                            */
 /*                                                                      */
 /*      We provide very limited support for setting the projection.     */
 /************************************************************************/
 
-CPLErr HKVDataset::_SetProjection( const char * pszNewProjection )
+CPLErr HKVDataset::SetSpatialRef( const OGRSpatialReference* poSRS )
 
 {
     // Update a georef file.
-
-#ifdef DEBUG_VERBOSE
-    printf( "HKVDataset::_SetProjection(%s)\n", pszNewProjection );/*ok*/
-#endif
-
-    if( !STARTS_WITH_CI(pszNewProjection, "GEOGCS")
-        && !STARTS_WITH_CI(pszNewProjection, "PROJCS")
-        && !EQUAL(pszNewProjection,"") )
+    if( poSRS == nullptr )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Only OGC WKT Projections supported for writing to HKV.  "
-                  "%s not supported.",
-                  pszNewProjection );
-
-        return CE_Failure;
+        m_oSRS.Clear();
+        return CE_None;
     }
-    else if( EQUAL(pszNewProjection,"") )
-    {
-      CPLFree( pszProjection );
-      pszProjection = reinterpret_cast<char *>( CPLStrdup( pszNewProjection ) );
+    m_oSRS = *poSRS;
 
-      return CE_None;
-    }
-    CPLFree( pszProjection );
-    pszProjection = reinterpret_cast<char *>( CPLStrdup( pszNewProjection ) );
-
-    OGRSpatialReference oSRS(pszNewProjection);
-
-    if ((oSRS.GetAttrValue("PROJECTION") != nullptr) &&
-        (EQUAL(oSRS.GetAttrValue("PROJECTION"),SRS_PT_TRANSVERSE_MERCATOR)))
+    if ((m_oSRS.GetAttrValue("PROJECTION") != nullptr) &&
+        (EQUAL(m_oSRS.GetAttrValue("PROJECTION"),SRS_PT_TRANSVERSE_MERCATOR)))
     {
         papszGeoref = CSLSetNameValue( papszGeoref, "projection.name", "utm" );
         OGRErr ogrerrorOl = OGRERR_NONE;
@@ -839,9 +781,9 @@ CPLErr HKVDataset::_SetProjection( const char * pszNewProjection )
             papszGeoref, "projection.origin_longitude",
             CPLSPrintf(
                 "%f",
-                oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0, &ogrerrorOl) ) );
+                m_oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0, &ogrerrorOl) ) );
     }
-    else if( oSRS.GetAttrValue("PROJECTION") == nullptr && oSRS.IsGeographic() )
+    else if( m_oSRS.GetAttrValue("PROJECTION") == nullptr && m_oSRS.IsGeographic() )
     {
         papszGeoref = CSLSetNameValue( papszGeoref, "projection.name", "LL" );
     }
@@ -853,10 +795,10 @@ CPLErr HKVDataset::_SetProjection( const char * pszNewProjection )
     }
 
     OGRErr ogrerrorEq = OGRERR_NONE;
-    const double eq_radius = oSRS.GetSemiMajor(&ogrerrorEq);
+    const double eq_radius = m_oSRS.GetSemiMajor(&ogrerrorEq);
 
     OGRErr ogrerrorInvf = OGRERR_NONE;
-    const double inv_flattening = oSRS.GetInvFlattening(&ogrerrorInvf);
+    const double inv_flattening = m_oSRS.GetInvFlattening(&ogrerrorInvf);
 
     if ((ogrerrorEq == OGRERR_NONE) && (ogrerrorInvf == OGRERR_NONE))
     {
@@ -876,7 +818,9 @@ CPLErr HKVDataset::_SetProjection( const char * pszNewProjection )
     {
         // Default to previous behavior if spheroid not found by radius and
         // inverse flattening.
-        if( strstr(pszNewProjection,"Bessel") != nullptr )
+        char* pszProjection = nullptr;
+        m_oSRS.exportToWkt(&pszProjection);
+        if( pszProjection && strstr(pszProjection, "Bessel") != nullptr )
         {
             papszGeoref = CSLSetNameValue( papszGeoref, "spheroid.name",
                                        "ev-bessel" );
@@ -886,19 +830,10 @@ CPLErr HKVDataset::_SetProjection( const char * pszNewProjection )
             papszGeoref = CSLSetNameValue( papszGeoref, "spheroid.name",
                                        "ev-wgs-84" );
         }
+        CPLFree(pszProjection);
     }
     bGeorefChanged = true;
     return CE_None;
-}
-
-/************************************************************************/
-/*                          GetGCPProjection()                          */
-/************************************************************************/
-
-const char *HKVDataset::_GetGCPProjection()
-
-{
-  return pszGCPProjection;
 }
 
 /************************************************************************/
@@ -1164,16 +1099,12 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
                 pasGCPList[gcp_index].dfGCPY = dfUtmY[gcp_index];
             }
 
-            CPLFree( pszGCPProjection );
-            pszGCPProjection = nullptr;
-            oUTM.exportToWkt( &pszGCPProjection );
+            m_oGCPSRS = oUTM;
 
             bool transform_ok =
                 CPL_TO_BOOL(
                     GDALGCPsToGeoTransform(5, pasGCPList, adfGeoTransform, 0) );
 
-            CPLFree( pszProjection );
-            pszProjection = nullptr;
             if( !transform_ok )
             {
                 // Transform may not be sufficient in all cases (slant range
@@ -1184,11 +1115,11 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
                 adfGeoTransform[3] = 0.0;
                 adfGeoTransform[4] = 0.0;
                 adfGeoTransform[5] = 1.0;
-                pszProjection = CPLStrdup("");
+                m_oGCPSRS.Clear();
             }
             else
             {
-                oUTM.exportToWkt( &pszProjection );
+                m_oSRS = oUTM;
             }
         }
 
@@ -1235,8 +1166,7 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
             = CPL_TO_BOOL(
                 GDALGCPsToGeoTransform( 5, pasGCPList, adfGeoTransform, 0 ) );
 
-        CPLFree( pszProjection );
-        pszProjection = nullptr;
+        m_oSRS.Clear();
 
         if( !transform_ok )
         {
@@ -1249,12 +1179,10 @@ void HKVDataset::ProcessGeoref( const char * pszFilename )
         }
         else
         {
-            oLL.exportToWkt( &pszProjection );
+            m_oSRS = oLL;
         }
 
-        CPLFree( pszGCPProjection );
-        pszGCPProjection = nullptr;
-        oLL.exportToWkt( &pszGCPProjection );
+        m_oGCPSRS = oLL;
     }
 
     delete hkvEllipsoids;
@@ -1824,9 +1752,12 @@ HKVDataset::CreateCopy( const char * pszFilename,
             || tempGeoTransform[4] != 0.0
             || std::abs(tempGeoTransform[5]) != 1.0 ))
     {
-
-          poDS->SetGCPProjection(poSrcDS->GetProjectionRef());
-          poDS->SetProjection(poSrcDS->GetProjectionRef());
+          auto poSrcSRS = poSrcDS->GetSpatialRef();
+          if( poSrcSRS )
+          {
+              poDS->SetSpatialRef(poSrcSRS);
+              poDS->m_oGCPSRS = *poSrcSRS;
+          }
           poDS->SetGeoTransform(tempGeoTransform);
 
           CPLFree(tempGeoTransform);

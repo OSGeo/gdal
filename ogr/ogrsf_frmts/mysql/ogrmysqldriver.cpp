@@ -30,7 +30,6 @@
 #include "cpl_conv.h"
 #include "cpl_multiproc.h"
 
-CPL_CVSID("$Id$")
 
 static CPLMutex* hMutex = nullptr;
 static int   bInitialized = FALSE;
@@ -185,6 +184,7 @@ void RegisterOGRMySQL()
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "NATIVE OGRSQL SQLITE" );
 
     poDriver->pfnOpen = OGRMySQLDriverOpen;
     poDriver->pfnIdentify = OGRMySQLDriverIdentify;

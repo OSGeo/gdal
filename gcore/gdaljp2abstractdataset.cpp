@@ -663,4 +663,43 @@ OGRLayer* GDALJP2AbstractDataset::GetLayer( int i )
     return poMemDS != nullptr ? poMemDS->GetLayer(i) : nullptr;
 }
 
+/************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+
+char** GDALJP2AbstractDataset::GetMetadata( const char * pszDomain )
+{
+    if( pszDomain && EQUAL(pszDomain, "IMAGE_STRUCTURE") )
+    {
+        if( m_aosImageStructureMetadata.empty() )
+        {
+            VSILFILE* fp = GetFileHandle();
+            m_aosImageStructureMetadata.Assign(
+                CSLDuplicate(GDALGeorefPamDataset::GetMetadata(pszDomain)), true);
+            CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+            CPLErrorStateBackuper oErrorStateBackuper;
+            const char* pszReversibility = GDALGetJPEG2000Reversibility(GetDescription(), fp);
+            if( pszReversibility )
+                m_aosImageStructureMetadata.SetNameValue("COMPRESSION_REVERSIBILITY", pszReversibility);
+        }
+        return m_aosImageStructureMetadata.List();
+    }
+    return GDALGeorefPamDataset::GetMetadata(pszDomain);
+}
+
+/************************************************************************/
+/*                        GetMetadataItem()                             */
+/************************************************************************/
+
+const char* GDALJP2AbstractDataset::GetMetadataItem( const char* pszName, const char * pszDomain )
+{
+    if( pszDomain && EQUAL(pszDomain, "IMAGE_STRUCTURE") &&
+        EQUAL(pszName, "COMPRESSION_REVERSIBILITY") )
+    {
+        char** papszMD = GetMetadata(pszDomain);
+        return CSLFetchNameValue(papszMD, pszName);
+    }
+    return GDALGeorefPamDataset::GetMetadataItem(pszName, pszDomain);
+}
+
 /*! @endcond */

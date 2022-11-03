@@ -19,6 +19,9 @@ concurrency:
 env:
   CMAKE_UNITY_BUILD: OFF
 
+permissions:
+  contents: read  #  to fetch code (actions/checkout)
+
 jobs:
 
   build-linux-ubuntu-focal:
@@ -102,7 +105,7 @@ jobs:
         python3 -m pip install -U pip wheel setuptools numpy
         python3 -m pip install -r $GITHUB_WORKSPACE/autotest/requirements.txt
 
-    - name: Buid libjxl
+    - name: Build libjxl
       run: |
         # Build libjxl
         # libjxl being still unstable, if the main branch fails to compile/test
@@ -120,7 +123,7 @@ jobs:
             && cd ../.. \
             && rm -rf libjxl
 
-    - name: Buid libQB3
+    - name: Build libQB3
       run: |
         # Build libQB3
         # Used by the MRF driver
@@ -133,7 +136,7 @@ jobs:
             && cd ../../.. \
             && rm -rf QB3
 
-    - name: Buid libbasisu
+    - name: Build libbasisu
       run: |
         # Used by the BASISU and KTX2 drivers
         git clone -b cmake https://github.com/rouault/basis_universal.git \
@@ -198,6 +201,7 @@ jobs:
         find $GITHUB_WORKSPACE/install-gdal || /bin/true
     - name: install
       run: |
+        export PATH=$CMAKE_DIR:/usr/local/bin:/usr/bin:/bin # Avoid CMake config from brew etc.
         touch $GITHUB_WORKSPACE/man/man1/gdalinfo.1
         touch $GITHUB_WORKSPACE/man/man1/gdaladdo.1
         (cd $GITHUB_WORKSPACE/superbuild/build; cmake ..)
@@ -207,12 +211,19 @@ jobs:
         export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib
         $GITHUB_WORKSPACE/install-gdal/bin/gdalinfo --version
         PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/python3/dist-packages python3 -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
+    - name: CMake with rpath
+      run: |
+        export PATH=$CMAKE_DIR:/usr/local/bin:/usr/bin:/bin # Avoid CMake config from brew etc.
+        (cd $GITHUB_WORKSPACE/superbuild/build; cmake .. "-DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal-with-rpath" "-DCMAKE_INSTALL_RPATH=$GITHUB_WORKSPACE/install-gdal-with-rpath/lib")
+        cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -- -j$(nproc)
+        # For some reason, during the install phase of above invocation, the Python bindings are rebuilt after the build phase, and without the rpath... Can't reproduce that locally
+        # PYTHONPATH=$GITHUB_WORKSPACE/install-gdal-with-rpath/lib/python3/dist-packages python -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
     - name: Rerun using Mono
       run: |
         export PATH=$CMAKE_DIR:/usr/local/bin:/usr/bin:/bin # Avoid CMake config from brew etc.
         cd $GITHUB_WORKSPACE/superbuild/build
         rm -rf swig/csharp
-        cmake  ${CMAKE_OPTIONS} -DCSHARP_MONO=ON -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror ..
+        cmake  ${CMAKE_OPTIONS} -DCSHARP_MONO=ON -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal -UCMAKE_INSTALL_RPATH -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror ..
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -- -j$(nproc)
         # Below fails with errors like 'System.InvalidProgramException: Invalid IL code in CreateData:Main (string[]): IL_00c4: callvirt  0x0a00000c'
         # ctest -V -R "^csharp.*"
@@ -449,14 +460,13 @@ jobs:
     - name: Configure
       shell: bash -l {0}
       # Disable MySQL because of "error LNK2038: mismatch detected for '_MSC_VER': value '1800' doesn't match value '1900' in ogrmysqldatasource.obj" and other errors
-      # Disable LIBKML because of issue at linking time with kmlXXXX.lib being debug libraries
       # Note that the leading space in CMAKE_C/CXX_FLAGS=" /WX" is due to using Bash on Windows that would
       # otherwise interpret /bla has a file relative to the Bash root directory and would replace it by a path like c:\Program Files\git\WX
       # BUILD_JAVA_BINDINGS=OFF because we get "Error occurred during initialization of VM.   Corrupted ZIP library: C:\Miniconda\envs\gdalenv\Library\bin\zip.dll" when running java. Not reproducible on a standard VM
       # Build PDF driver as plugin due to the PDFium build including libopenjp2 symbols which would conflict with external libopenjp2
       run: |
         mkdir -p $GITHUB_WORKSPACE/build
-        cmake -G "${generator}" -Werror=dev "-DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal" "-DUSE_CCACHE=ON" "-DCMAKE_PREFIX_PATH=${CONDA_PREFIX}" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DLIBKML_BASE_LIBRARY:FILEPATH= -DGDAL_ENABLE_PLUGINS:BOOL=ON -DGDAL_ENABLE_PLUGINS_NO_DEPS:BOOL=ON -DGDAL_USE_PUBLICDECOMPWT:BOOL=ON -DPUBLICDECOMPWT_URL=https://github.com/rouault/PublicDecompWT -DBUILD_JAVA_BINDINGS=OFF -DBUILD_CSHARP_BINDINGS=ON -DGDAL_USE_MYSQL:BOOL=OFF -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DWERROR_DEV_FLAG="-Werror=dev" -DCMAKE_BUILD_TYPE=Release -DPDFIUM_ROOT=$GITHUB_WORKSPACE/install-pdfium -DGDAL_ENABLE_DRIVER_PDF_PLUGIN:BOOL=ON
+        cmake -G "${generator}" -Werror=dev "-DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal" "-DUSE_CCACHE=ON" "-DCMAKE_PREFIX_PATH=${CONDA_PREFIX}" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DGDAL_ENABLE_PLUGINS:BOOL=ON -DGDAL_ENABLE_PLUGINS_NO_DEPS:BOOL=ON -DGDAL_USE_PUBLICDECOMPWT:BOOL=ON -DPUBLICDECOMPWT_URL=https://github.com/rouault/PublicDecompWT -DBUILD_JAVA_BINDINGS=OFF -DBUILD_CSHARP_BINDINGS=ON -DGDAL_USE_MYSQL:BOOL=OFF -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DWERROR_DEV_FLAG="-Werror=dev" -DCMAKE_BUILD_TYPE=Release -DPDFIUM_ROOT=$GITHUB_WORKSPACE/install-pdfium -DGDAL_ENABLE_DRIVER_PDF_PLUGIN:BOOL=ON
     - name: Build
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config Release -j 2
@@ -474,6 +484,7 @@ jobs:
         SKIP_OGR_GMLAS_HUGE_PROCESSING_TIME: YES
         SKIP_OGR_GMLAS_HTTP_RELATED: YES
         SKIP_GDAL_HTTP_SSL_VERIFYSTATUS: YES
+        BUILD_NAME: "build-windows-conda"
     - name: Install
       shell: bash -l {0}
       run: |
@@ -573,7 +584,7 @@ jobs:
         brew update
         brew outdated
         brew install postgresql || brew link postgresql
-        brew install pkg-config freexl libxml2 libspatialite geos proj libgeotiff openjpeg giflib libaec postgis poppler doxygen unixodbc jpeg-turbo
+        brew install pkg-config freexl libxml2 libspatialite geos proj libgeotiff openjpeg giflib libaec postgis poppler doxygen unixodbc jpeg-turbo aom jpeg-xl libheif
         brew install ccache swig
         # gdal is automatically installed as a dependency for postgis
         brew uninstall --ignore-dependencies gdal
@@ -581,7 +592,6 @@ jobs:
         curl http://download.osgeo.org/proj/proj-datumgrid-1.8.tar.gz > proj-datumgrid-1.8.tar.gz
         tar xvzf proj-datumgrid-1.8.tar.gz
         cd $OLDPWD
-        /usr/local/bin/python3.10 -m pip install --user -r $GITHUB_WORKSPACE/autotest/requirements.txt
     - name: Configure ccache
       run: |
           echo CCACHE_BASEDIR=$PWD >> ${GITHUB_ENV}
@@ -594,6 +604,7 @@ jobs:
         mkdir -p $GITHUB_WORKSPACE/build
         export PKG_CONFIG_PATH=/usr/local/opt/libxml2/lib/pkgconfig
         cmake -Werror=dev -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal ${CMAKE_OPTIONS} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DUSE_CCACHE=ON -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DWERROR_DEV_FLAG="-Werror=dev"
+        $(cat $GITHUB_WORKSPACE/build/python_executable.txt) -m pip install --user -r $GITHUB_WORKSPACE/autotest/requirements.txt
     - name: Build
       run: |
         cmake --build $GITHUB_WORKSPACE/build -j 3
@@ -604,7 +615,7 @@ jobs:
       run: |
         ctest --test-dir $GITHUB_WORKSPACE/build -V -j 3
       env:
-        GITHUB_WORKFLOW: "MacOS build"
+        BUILD_NAME: "MacOS build"
     - name: Install
       run: cmake --build $GITHUB_WORKSPACE/build --target install -j 3
     - name: Test post-install usage (with pkg-config)

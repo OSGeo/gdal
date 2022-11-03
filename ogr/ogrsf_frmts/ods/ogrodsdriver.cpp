@@ -30,7 +30,6 @@
 #include "ogr_ods.h"
 #include "ogrsf_frmts.h"
 
-CPL_CVSID("$Id$")
 
 using namespace OGRODS;
 
@@ -44,8 +43,11 @@ using namespace OGRODS;
 
 static int OGRODSDriverIdentify( GDALOpenInfo* poOpenInfo )
 {
-    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "ODS:") )
+    if( poOpenInfo->fpL == nullptr &&
+        STARTS_WITH_CI(poOpenInfo->pszFilename, "ODS:") )
+    {
         return TRUE;
+    }
 
     if( EQUAL(CPLGetFilename(poOpenInfo->pszFilename), "content.xml"))
     {
@@ -54,16 +56,16 @@ static int OGRODSDriverIdentify( GDALOpenInfo* poOpenInfo )
                       "<office:document-content") != nullptr;
     }
 
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "ODS") &&
-        !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "ODS}"))
+    const char* pszExt = CPLGetExtension(poOpenInfo->pszFilename);
+    if (!EQUAL(pszExt, "ODS") && !EQUAL(pszExt, "ODS}"))
         return FALSE;
 
     if( STARTS_WITH(poOpenInfo->pszFilename, "/vsizip/") ||
         STARTS_WITH(poOpenInfo->pszFilename, "/vsitar/") )
-        return poOpenInfo->eAccess == GA_ReadOnly;
+        return TRUE;
 
-    return poOpenInfo->nHeaderBytes > 2 &&
-           memcmp(poOpenInfo->pabyHeader, "PK", 2) == 0;
+    return poOpenInfo->nHeaderBytes > 4 &&
+           memcmp(poOpenInfo->pabyHeader, "PK\x03\x04", 4) == 0;
 }
 
 /************************************************************************/
@@ -77,21 +79,53 @@ static GDALDataset *OGRODSDriverOpen( GDALOpenInfo* poOpenInfo )
         return nullptr;
 
     const char* pszFilename = poOpenInfo->pszFilename;
-    CPLString osExt(CPLGetExtension(pszFilename));
-    CPLString osContentFilename(pszFilename);
-
-    VSILFILE* fpContent = nullptr;
-    VSILFILE* fpSettings = nullptr;
-
-    CPLString osPrefixedFilename("/vsizip/");
-    osPrefixedFilename += poOpenInfo->pszFilename;
-    if( STARTS_WITH(poOpenInfo->pszFilename, "/vsizip/") ||
-        STARTS_WITH(poOpenInfo->pszFilename, "/vsitar/") )
+    const bool bIsODSPrefixed = poOpenInfo->fpL == nullptr &&
+                                STARTS_WITH_CI(pszFilename, "ODS:");
+    const bool bIsVsiZipOrTarPrefixed = STARTS_WITH(pszFilename, "/vsizip/") ||
+                                        STARTS_WITH(pszFilename, "/vsitar/");
+    if( bIsVsiZipOrTarPrefixed )
     {
-        osPrefixedFilename = poOpenInfo->pszFilename;
+        if( poOpenInfo->eAccess != GA_ReadOnly )
+            return nullptr;
     }
 
-    if (EQUAL(osExt, "ODS") || EQUAL(osExt, "ODS}"))
+    bool bIsZIP = false;
+    if( bIsODSPrefixed )
+    {
+        pszFilename += strlen("ODS:");
+        if( !bIsVsiZipOrTarPrefixed )
+        {
+            VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
+            if( fp == nullptr )
+                return nullptr;
+            GByte abyHeader[4] = {0};
+            VSIFReadL(abyHeader, 1, 4, fp);
+            VSIFCloseL(fp);
+            bIsZIP = memcmp(abyHeader, "PK\x03\x04", 4) == 0;
+        }
+    }
+    else
+    {
+        bIsZIP = true;
+    }
+
+    std::string osPrefixedFilename;
+    if( bIsZIP )
+    {
+        if( !bIsVsiZipOrTarPrefixed )
+        {
+            osPrefixedFilename = "/vsizip/{";
+            osPrefixedFilename += pszFilename;
+            osPrefixedFilename += "}";
+        }
+        else
+        {
+            osPrefixedFilename = pszFilename;
+        }
+    }
+
+    CPLString osContentFilename(pszFilename);
+    if( bIsZIP )
     {
         osContentFilename.Printf("%s/content.xml", osPrefixedFilename.c_str());
     }
@@ -100,35 +134,25 @@ static GDALDataset *OGRODSDriverOpen( GDALOpenInfo* poOpenInfo )
         return nullptr;
     }
 
-    if (STARTS_WITH_CI(osContentFilename, "ODS:") ||
-        EQUAL(CPLGetFilename(osContentFilename), "content.xml"))
+    VSILFILE* fpContent = VSIFOpenL(osContentFilename, "rb");
+    if (fpContent == nullptr)
+        return nullptr;
+
+    char szBuffer[1024];
+    int nRead = (int)VSIFReadL(szBuffer, 1, sizeof(szBuffer) - 1, fpContent);
+    szBuffer[nRead] = 0;
+
+    if (strstr(szBuffer, "<office:document-content") == nullptr)
     {
-        if (STARTS_WITH_CI(osContentFilename, "ODS:"))
-            osContentFilename = osContentFilename.substr(4);
-
-        fpContent = VSIFOpenL(osContentFilename, "rb");
-        if (fpContent == nullptr)
-            return nullptr;
-
-        char szBuffer[1024];
-        int nRead = (int)VSIFReadL(szBuffer, 1, sizeof(szBuffer) - 1, fpContent);
-        szBuffer[nRead] = 0;
-
-        if (strstr(szBuffer, "<office:document-content") == nullptr)
-        {
-            VSIFCloseL(fpContent);
-            return nullptr;
-        }
-
-        /* We could also check that there's a <office:spreadsheet>, but it might be further */
-        /* in the XML due to styles, etc... */
-    }
-    else
-    {
+        VSIFCloseL(fpContent);
         return nullptr;
     }
 
-    if (EQUAL(osExt, "ODS") || EQUAL(osExt, "ODS)"))
+    /* We could also check that there's a <office:spreadsheet>, but it might be further */
+    /* in the XML due to styles, etc... */
+
+    VSILFILE* fpSettings = nullptr;
+    if( bIsZIP )
     {
         CPLString osTmpFilename(CPLSPrintf("%s/settings.xml", osPrefixedFilename.c_str()));
         fpSettings = VSIFOpenL(osTmpFilename, "rb");
@@ -140,6 +164,10 @@ static GDALDataset *OGRODSDriverOpen( GDALOpenInfo* poOpenInfo )
     {
         delete poDS;
         poDS = nullptr;
+    }
+    else
+    {
+        poDS->SetDescription(poOpenInfo->pszFilename);
     }
 
     return poDS;
@@ -224,6 +252,7 @@ void RegisterOGRODS()
     poDriver->SetMetadataItem( GDAL_DCAP_CURVE_GEOMETRIES, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->pfnIdentify = OGRODSDriverIdentify;
     poDriver->pfnOpen = OGRODSDriverOpen;

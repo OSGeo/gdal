@@ -85,7 +85,7 @@
         band::GetUnitType() returns meters.
         band::GetScale() returns SCAL * (scale/65536)
         band::GetOffset() returns SCAL * offset
-        ds::_GetProjectionRef() returns a local CS
+        ds::GetSpatialRef() returns a local CS
                 using meters.
         ds::GetGeoTransform() returns a scale matrix
                 having SCAL sx,sy members.
@@ -110,7 +110,6 @@
 
 #include <algorithm>
 
-// CPL_CVSID("$Id$")
 
 const double kdEarthCircumPolar = 40007849;
 const double kdEarthCircumEquat = 40075004;
@@ -161,7 +160,7 @@ class TerragenDataset final: public GDALPamDataset
     GInt16              m_nBaseHeight;
 
     char*               m_pszFilename;
-    char*               m_pszProjection;
+    OGRSpatialReference m_oSRS{};
     char                m_szUnits[32];
 
     bool                m_bIsGeo;
@@ -178,15 +177,9 @@ class TerragenDataset final: public GDALPamDataset
                                 GDALDataType eType, char** papszOptions );
 
     virtual CPLErr      GetGeoTransform( double* ) override;
-    virtual const char* _GetProjectionRef(void) override;
-    virtual CPLErr _SetProjection( const char * ) override;
     virtual CPLErr SetGeoTransform( double * ) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
  protected:
     bool get(GInt16&);
@@ -440,9 +433,10 @@ TerragenDataset::TerragenDataset() :
     m_nHeightScale(0),
     m_nBaseHeight(0),
     m_pszFilename(nullptr),
-    m_pszProjection(nullptr),
     m_bIsGeo(false)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
     m_dLogSpan[0] = 0.0;
     m_dLogSpan[1] = 0.0;
 
@@ -468,7 +462,6 @@ TerragenDataset::~TerragenDataset()
 {
     FlushCache(true);
 
-    CPLFree(m_pszProjection);
     CPLFree(m_pszFilename);
 
     if( m_fp != nullptr )
@@ -829,23 +822,17 @@ int TerragenDataset::LoadFromFile()
 /* -------------------------------------------------------------------- */
     // Terragen files as of Apr 2006 are partially georeferenced,
     // we can declare a local coordsys that uses meters.
-    OGRSpatialReference sr;
-
-    sr.SetLocalCS("Terragen world space");
-    if(OGRERR_NONE != sr.SetLinearUnits("m", 1.0))
-        return FALSE;
-
-    if(OGRERR_NONE != sr.exportToWkt(&m_pszProjection))
-        return FALSE;
+    m_oSRS.SetLocalCS("Terragen world space");
+    m_oSRS.SetLinearUnits("m", 1.0);
 
     return TRUE;
 }
 
 /************************************************************************/
-/*                           SetProjection()                            */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
-CPLErr TerragenDataset::_SetProjection( const char * pszNewProjection )
+CPLErr TerragenDataset::SetSpatialRef( const OGRSpatialReference* poSRS )
 {
     // Terragen files aren't really georeferenced, but
     // we should get the projection's linear units so
@@ -853,12 +840,14 @@ CPLErr TerragenDataset::_SetProjection( const char * pszNewProjection )
 
     //m_dSCAL = 30.0; // default
 
-    OGRSpatialReference oSRS( pszNewProjection );
+    m_oSRS.Clear();
+    if( poSRS )
+        m_oSRS = *poSRS;
 
 /* -------------------------------------------------------------------- */
 /*      Linear units.                                                   */
 /* -------------------------------------------------------------------- */
-    m_bIsGeo = oSRS.IsGeographic() != FALSE;
+    m_bIsGeo = poSRS != nullptr && m_oSRS.IsGeographic() != FALSE;
     if(m_bIsGeo)
     {
         // The caller is using degrees. We need to convert
@@ -868,7 +857,7 @@ CPLErr TerragenDataset::_SetProjection( const char * pszNewProjection )
     }
     else
     {
-        const double dfLinear = oSRS.GetLinearUnits();
+        const double dfLinear = m_oSRS.GetLinearUnits();
 
         if( approx_equal(dfLinear, 0.3048))
             m_dMetersPerGroundUnit = 0.3048;
@@ -882,15 +871,12 @@ CPLErr TerragenDataset::_SetProjection( const char * pszNewProjection )
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char* TerragenDataset::_GetProjectionRef(void)
+const OGRSpatialReference* TerragenDataset::GetSpatialRef() const
 {
-    if(m_pszProjection == nullptr )
-        return "";
-
-    return m_pszProjection;
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /************************************************************************/

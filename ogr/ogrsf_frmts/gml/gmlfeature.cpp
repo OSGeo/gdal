@@ -37,7 +37,6 @@
 #include "cpl_minixml.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                             GMLFeature()                             */

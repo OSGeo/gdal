@@ -78,6 +78,33 @@ def test_gdal_viewshed():
     assert nodata is None
 
 
+@pytest.mark.parametrize("cc_option", ["", " -cc 1.0"])
+def test_gdal_viewshed_non_earth_crs(cc_option):
+    make_viewshed_input()
+    viewshed_tmp = "tmp/test_gdal_viewshed_tmp.tif"
+    gdal.Translate(
+        viewshed_tmp, viewshed_in, outputSRS="+proj=utm +zone=17 +a=1000000 +rf=300"
+    )
+    _, err = gdaltest.runexternal_out_and_err(
+        test_cli_utilities.get_gdal_viewshed_path()
+        + cc_option
+        + " -oz {} -ox {} -oy {} {} {}".format(
+            oz[0], ox[0], oy[0], viewshed_tmp, viewshed_out
+        )
+    )
+    assert err is None or err == ""
+    ds = gdal.Open(viewshed_out)
+    assert ds
+    cs = ds.GetRasterBand(1).Checksum()
+    nodata = ds.GetRasterBand(1).GetNoDataValue()
+    ds = None
+    gdal.Unlink(viewshed_in)
+    gdal.Unlink(viewshed_tmp)
+    gdal.Unlink(viewshed_out)
+    assert cs == 14609
+    assert nodata is None
+
+
 ###############################################################################
 
 

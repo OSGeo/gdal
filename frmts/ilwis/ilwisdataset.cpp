@@ -38,7 +38,6 @@
 
 #include "gdal_frmts.h"
 
-CPL_CVSID("$Id$")
 
 namespace GDAL
 {
@@ -446,10 +445,10 @@ static CPLErr GetStoreType(const std::string& pszFileName, ilwisStoreType &stSto
 }
 
 ILWISDataset::ILWISDataset() :
-    pszProjection(CPLStrdup("")),
     bGeoDirty(FALSE),
     bNewDataset(FALSE)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -466,7 +465,6 @@ ILWISDataset::~ILWISDataset()
 
 {
     ILWISDataset::FlushCache(true);
-    CPLFree( pszProjection );
 }
 
 /************************************************************************/
@@ -600,24 +598,25 @@ CPLErr ILWISDataset::WriteGeoReference()
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *ILWISDataset::_GetProjectionRef()
+const OGRSpatialReference *ILWISDataset::GetSpatialRef() const
 
 {
-   return pszProjection;
+   return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /************************************************************************/
-/*                           SetProjection()                            */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
-CPLErr ILWISDataset::_SetProjection( const char * pszNewProjection )
+CPLErr ILWISDataset::SetSpatialRef( const OGRSpatialReference* poSRS )
 
 {
-    CPLFree( pszProjection );
-    pszProjection = CPLStrdup( pszNewProjection );
+    m_oSRS.Clear();
+    if( poSRS )
+        m_oSRS = *poSRS;
     bGeoDirty = TRUE;
 
     return CE_None;
@@ -1071,9 +1070,9 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             georef = pszBaseName + ".grf";
     }
 
-    const char *pszProj = poSrcDS->GetProjectionRef();
-    if( pszProj != nullptr && strlen(pszProj) > 0 )
-        poDS->SetProjection( pszProj );
+    const OGRSpatialReference *poSrcSRS = poSrcDS->GetSpatialRef();
+    if( poSrcSRS )
+        poDS->SetSpatialRef( poSrcSRS );
 
 /* -------------------------------------------------------------------- */
 /*      Create the output raster files for each band                    */

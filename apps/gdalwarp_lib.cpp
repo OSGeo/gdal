@@ -79,7 +79,6 @@
 constexpr int OVR_LEVEL_AUTO = -2;
 constexpr int OVR_LEVEL_NONE = -1;
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                        GDALWarpAppOptions                            */
@@ -3519,11 +3518,15 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
             double adfExtent[4];
             int    nThisPixels, nThisLines;
 
+            // For sum, round-up dimension, to be sure that the output extent
+            // includes all source pixels, to have the sum preserving property.
+            const int nOptions =
+                (psOptions->eResampleAlg == GRA_Sum) ? GDAL_SWO_ROUND_UP_SIZE : 0;
             if ( GDALSuggestedWarpOutput2( hSrcDS,
                                         psInfo->pfnTransform, hTransformArg,
                                         adfThisGeoTransform,
                                         &nThisPixels, &nThisLines,
-                                        adfExtent, 0 ) != CE_None )
+                                        adfExtent, nOptions ) != CE_None )
             {
                 if( hCT != nullptr )
                     GDALDestroyColorTable( hCT );

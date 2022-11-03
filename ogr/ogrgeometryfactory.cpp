@@ -65,7 +65,6 @@
 #define UNUSED_IF_NO_GEOS
 #endif
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           createFromWkb()                            */
@@ -1400,8 +1399,9 @@ OGRGeometry* OGRGeometryFactory::removeLowerDimensionSubGeoms( const OGRGeometry
     }
     OGRGeometryCollection* poRet =
         (nMaxDim == 0) ?               static_cast<OGRGeometryCollection*>(new OGRMultiPoint()) :
-        (nMaxDim == 1 && !bHasCurve) ? static_cast<OGRGeometryCollection*>(new OGRMultiLineString()) :
-        (nMaxDim == 1 && bHasCurve) ?  static_cast<OGRGeometryCollection*>(new OGRMultiCurve()) :
+        (nMaxDim == 1) ?
+             (!bHasCurve ? static_cast<OGRGeometryCollection*>(new OGRMultiLineString()) :
+                           static_cast<OGRGeometryCollection*>(new OGRMultiCurve())) :
         (nMaxDim == 2 && !bHasCurve) ? static_cast<OGRGeometryCollection*>(new OGRMultiPolygon()) :
                                        static_cast<OGRGeometryCollection*>(new OGRMultiSurface());
     for( const auto poSubGeom: *poGC )

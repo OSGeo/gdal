@@ -1,0 +1,68 @@
+cff-version: 1.2.0
+message: Please cite this software using these metadata or in the CITATION file.
+type: software
+title: GDAL
+version: 3.6.0
+date-released: 2022-11-03
+doi: 10.5281/zenodo.5884351
+abstract: GDAL is a translator library for raster and vector geospatial data
+  formats that is released under an MIT style Open Source License by the Open
+  Source Geospatial Foundation. As a library, it presents a single raster
+  abstract data model and single vector abstract data model to the calling
+  application for all supported formats. It also comes with a variety of useful
+  command line utilities for data translation and processing.
+url: https://gdal.org
+repository-code: https://github.com/OSGeo/gdal/
+license: MIT
+authors:
+  - given-names: Even
+    family-names: Rouault
+    affiliation: Spatialys
+    orcid: https://orcid.org/0000-0002-5068-0476
+  - given-names: Frank
+    family-names: Warmerdam
+    affiliation: Planet Labs Inc
+  - given-names: Kurt
+    family-names: Schwehr
+    affiliation: Google Inc
+    orcid: https://orcid.org/0000-0002-5624-8190
+  - given-names: Andrey
+    family-names: Kiselev
+  - given-names: Howard
+    family-names: Butler
+    affiliation: Hobu Inc
+    orcid: https://orcid.org/0000-0002-5340-1380
+  - given-names: Mateusz
+    family-names: Łoskot
+    affiliation: Cadcorp
+  - given-names: Tamas
+    family-names: Szekeres
+  - given-names: Etienne
+    family-names: Tourigny
+  - given-names: Martin
+    family-names: Landa
+  - given-names: Idan
+    family-names: Miara
+  - given-names: Ben
+    family-names: Elliston
+  - given-names: Kumar
+    family-names: Chaitanya
+  - given-names: Lucian
+    family-names: Plesea
+    affiliation: Esri
+  - given-names: Daniel
+    family-names: Morissette
+    affiliation: Mapgears Inc
+  - given-names: Ari
+    family-names: Jolma
+  - given-names: Nyall
+    family-names: Dawson
+    affiliation: North Road
+    orcid: https://orcid.org/0000-0001-9812-7584
+keywords:
+  - GDAL
+  - geospatial
+  - raster
+  - vector
+  - conversion
+  - processing

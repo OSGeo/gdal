@@ -152,12 +152,12 @@ Cloud storage services require setting credentials. For some of them, they can
 be provided through configuration files (~/.aws/config, ~/.boto, ..) or through
 environment variables / configuration options.
 
-Starting with GDAL 3.5, :cpp:func:`VSISetCredential` can be used to set configuration
+Starting with GDAL 3.6, :cpp:func:`VSISetPathSpecificOption` can be used to set configuration
 options with a granularity at the level of a file path, which makes it easier if using
 the same virtual file system but with different credentials (e.g. different
 credentials for bucket "/vsis3/foo" and "/vsis3/bar")
 
-Starting with GDAL 3.5, credentials can be specified in a
+Starting with GDAL 3.5, credentials (or path specific options) can be specified in a
 :ref:`GDAL configuration file <gdal_configuration_file>`, either in a specific one
 explicitly loaded with :cpp:func:`CPLLoadConfigOptionsFromFile`, or
 one of the default automatically loaded by :cpp:func:`CPLLoadConfigOptionsFromPredefinedFiles`.
@@ -233,6 +233,12 @@ e.g GDAL_HTTP_HEADERS=Foo: Bar,"Baz: escaped backslash \\, escaped double-quote 
 :decl_configoption:`CPL_CURL_VERBOSE` set to ``YES`` allows one to see them and more, when combined with ``--debug``.
 
 Starting with GDAL 2.3, the :decl_configoption:`GDAL_HTTP_MAX_RETRY` (number of attempts) and :decl_configoption:`GDAL_HTTP_RETRY_DELAY` (in seconds) configuration option can be set, so that request retries are done in case of HTTP errors 429, 502, 503 or 504.
+
+Starting with GDAL 3.6, the following configuration options control the TCP keep-alive functionality (cf https://daniel.haxx.se/blog/2020/02/10/curl-ootw-keepalive-time/ for a detailed explanation):
+
+- :decl_configoption:`GDAL_HTTP_TCP_KEEPALIVE` = YES/NO. whether to enable TCP keep-alive. Defaults to NO
+- :decl_configoption:`GDAL_HTTP_TCP_KEEPIDLE` = integer, in seconds. Keep-alive idle time. Defaults to 60. Only taken into account if GDAL_HTTP_TCP_KEEPALIVE=YES.
+- :decl_configoption:`GDAL_HTTP_TCP_KEEPINTVL` = integer, in seconds. Interval time between keep-alive probes. Defaults to 60. Only taken into account if GDAL_HTTP_TCP_KEEPALIVE=YES.
 
 More generally options of :cpp:func:`CPLHTTPFetch` available through configuration options are available.
 
@@ -313,7 +319,7 @@ accept a comma-separated list of storage class names and defaults to ``GLACIER,D
 
 Since GDAL 3.1, the :cpp:func:`VSIRename` operation is supported (first doing a copy of the original file and then deleting it)
 
-Since GDAL 3.1, the :cpp:func:`VSIRmdirRecursive` operation is supported (using batch deletion method). The :decl_configoption:`CPL_VSIS3_USE_BASE_RMDIR_RECURSIVE` configuration option can be set to YES if using a S3-like API that doesn't support batch deletion (GDAL >= 3.2)
+Since GDAL 3.1, the :cpp:func:`VSIRmdirRecursive` operation is supported (using batch deletion method). The :decl_configoption:`CPL_VSIS3_USE_BASE_RMDIR_RECURSIVE` configuration option can be set to YES if using a S3-like API that doesn't support batch deletion (GDAL >= 3.2). Starting with GDAL 3.6, this can be set as a path-specific option in the :ref:`GDAL configuration file <gdal_configuration_file>`
 
 Starting with GDAL 3.5, profiles that use IAM role assumption (see https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-role.html) are handled. The ``role_arn`` and ``source_profile`` keywords are required in such profiles. The optional ``external_id``, ``mfa_serial`` and ``role_session_name`` can be specified. ``credential_source`` is not supported currently.
 

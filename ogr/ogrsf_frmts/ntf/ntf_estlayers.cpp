@@ -32,7 +32,6 @@
 #include "ntf.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$")
 
 constexpr int MAX_LINK = 5000;
 

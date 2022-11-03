@@ -33,7 +33,6 @@
 #include "commonutils.h"
 #include "gdal_utils_priv.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -44,36 +43,12 @@ static void Usage(const char* pszErrorMsg = nullptr)
 {
     printf( "Usage: gdalmdiminfo [--help-general] [-oo NAME=VALUE]* [-arrayoption NAME=VALUE]*\n"
             "                    [-detailed] [-nopretty] [-array {array_name}] [-limit {number}]\n"
-            "                    [-stats] datasetname\n" );
+            "                    [-stats] [-if format]* datasetname\n" );
 
     if( pszErrorMsg != nullptr )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
     exit( 1 );
-}
-
-/************************************************************************/
-/*                    GDALMultiDimInfoOptionsForBinary()                */
-/************************************************************************/
-
-static GDALMultiDimInfoOptionsForBinary *GDALMultiDimInfoOptionsForBinaryNew(void)
-{
-    return static_cast<GDALMultiDimInfoOptionsForBinary *>(
-        CPLCalloc(1, sizeof(GDALMultiDimInfoOptionsForBinary)));
-}
-
-/************************************************************************/
-/*                   GDALMultiDimInfoOptionsForBinaryFree()             */
-/************************************************************************/
-
-static void GDALMultiDimInfoOptionsForBinaryFree( GDALMultiDimInfoOptionsForBinary* psOptionsForBinary )
-{
-    if( psOptionsForBinary )
-    {
-        CPLFree(psOptionsForBinary->pszFilename);
-        CSLDestroy(psOptionsForBinary->papszOpenOptions);
-        CPLFree(psOptionsForBinary);
-    }
 }
 
 /************************************************************************/
@@ -107,26 +82,27 @@ MAIN_START(argc, argv)
     }
     argv = CSLAddString(argv, "-stdout");
 
-    GDALMultiDimInfoOptionsForBinary* psOptionsForBinary = GDALMultiDimInfoOptionsForBinaryNew();
+    GDALMultiDimInfoOptionsForBinary sOptionsForBinary;
 
     GDALMultiDimInfoOptions *psOptions
-        = GDALMultiDimInfoOptionsNew(argv + 1, psOptionsForBinary);
+        = GDALMultiDimInfoOptionsNew(argv + 1, &sOptionsForBinary);
     if( psOptions == nullptr )
         Usage();
 
-    if( psOptionsForBinary->pszFilename == nullptr )
+    if( sOptionsForBinary.osFilename.empty() )
         Usage("No datasource specified.");
 
     GDALDatasetH hDataset
-        = GDALOpenEx( psOptionsForBinary->pszFilename, GDAL_OF_MULTIDIM_RASTER | GDAL_OF_VERBOSE_ERROR, nullptr,
-                      psOptionsForBinary->papszOpenOptions, nullptr );
+        = GDALOpenEx( sOptionsForBinary.osFilename.c_str(),
+                      GDAL_OF_MULTIDIM_RASTER | GDAL_OF_VERBOSE_ERROR,
+                      sOptionsForBinary.aosAllowInputDrivers.List(),
+                      sOptionsForBinary.aosOpenOptions.List(),
+                      nullptr );
     if( !hDataset )
     {
         fprintf( stderr,
                  "gdalmdiminfo failed - unable to open '%s'.\n",
-                 psOptionsForBinary->pszFilename );
-
-        GDALMultiDimInfoOptionsForBinaryFree(psOptionsForBinary);
+                 sOptionsForBinary.osFilename.c_str() );
 
         GDALMultiDimInfoOptionsFree( psOptions );
 
@@ -149,8 +125,6 @@ MAIN_START(argc, argv)
     CPLFree( pszGDALInfoOutput );
 
     GDALClose(hDataset);
-
-    GDALMultiDimInfoOptionsForBinaryFree(psOptionsForBinary);
 
     GDALMultiDimInfoOptionsFree( psOptions );
 

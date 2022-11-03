@@ -63,10 +63,10 @@ def test_rasterio_1():
         buf_xsize=1,
         buf_ysize=1,
     )
-    assert checksum == ds.GetRasterBand(1).Checksum(), "Didnt get expected checksum "
+    assert checksum == ds.GetRasterBand(1).Checksum(), "Didn't get expected checksum "
 
     data2 = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, 1, 1)
-    assert data2 == data, "Didnt get expected buffer "
+    assert data2 == data, "Didn't get expected buffer "
 
     ds = None
     drv.Delete("tmp/rasterio1.tif")
@@ -97,10 +97,10 @@ def test_rasterio_2():
         buf_xsize=5,
         buf_ysize=4,
     )
-    assert checksum == ds.GetRasterBand(1).Checksum(), "Didnt get expected checksum "
+    assert checksum == ds.GetRasterBand(1).Checksum(), "Didn't get expected checksum "
 
     data2 = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, 5, 4)
-    assert data2 == data, "Didnt get expected buffer "
+    assert data2 == data, "Didn't get expected buffer "
 
     ds = None
     drv.Delete("tmp/rasterio2.tif")
@@ -148,7 +148,7 @@ def test_rasterio_3():
                             )
                             assert (
                                 data2 == data[xsize][ysize]
-                            ), "Didnt get expected buffer "
+                            ), "Didn't get expected buffer "
                     m = m + 1
                 k = k + 1
             j = j + 1
@@ -205,7 +205,7 @@ def test_rasterio_4():
                             )
                             if data2 != data[(xsize + 1) * (ysize + 1) - 1]:
                                 print(i, j, k, m, xsize, ysize)
-                                pytest.fail("Didnt get expected buffer ")
+                                pytest.fail("Didn't get expected buffer ")
                     m = m + 1
                 k = k + 1
             if j >= 15:

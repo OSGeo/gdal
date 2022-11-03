@@ -57,7 +57,6 @@
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$")
 
 constexpr int HAS_MIN_FLAG = 0x1;
 constexpr int HAS_MAX_FLAG = 0x2;
@@ -382,11 +381,11 @@ EHdrDataset::EHdrDataset() :
     fpImage(nullptr),
     osHeaderExt("hdr"),
     bGotTransform(false),
-    pszProjection(CPLStrdup("")),
     bHDRDirty(false),
     papszHDR(nullptr),
     bCLRDirty(false)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -431,7 +430,6 @@ EHdrDataset::~EHdrDataset()
         }
     }
 
-    CPLFree(pszProjection);
     CSLDestroy(papszHDR);
 }
 
@@ -581,54 +579,41 @@ void EHdrDataset::RewriteCLR( GDALRasterBand* poBand ) const
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
-const char *EHdrDataset::_GetProjectionRef()
-
-{
-    if (pszProjection && strlen(pszProjection) > 0)
-        return pszProjection;
-
-    return GDALPamDataset::_GetProjectionRef();
-}
-
-/************************************************************************/
-/*                           SetProjection()                            */
-/************************************************************************/
-
-CPLErr EHdrDataset::_SetProjection( const char *pszSRS )
+CPLErr EHdrDataset::SetSpatialRef( const OGRSpatialReference *poSRS )
 
 {
     // Reset coordinate system on the dataset.
-    CPLFree(pszProjection);
-    pszProjection = CPLStrdup(pszSRS);
-
-    if( strlen(pszSRS) == 0 )
+    m_oSRS.Clear();
+    if( poSRS == nullptr )
         return CE_None;
 
+    m_oSRS = *poSRS;
     // Convert to ESRI WKT.
-    OGRSpatialReference oSRS(pszSRS);
-    oSRS.morphToESRI();
-
     char *pszESRI_SRS = nullptr;
-    oSRS.exportToWkt(&pszESRI_SRS);
+    const char* const apszOptions[] = { "FORMAT=WKT1_ESRI", nullptr };
+    m_oSRS.exportToWkt(&pszESRI_SRS, apszOptions);
 
-    // Write to .prj file.
-    CPLString osPrjFilename = CPLResetExtension(GetDescription(), "prj");
-    VSILFILE *fp = VSIFOpenL(osPrjFilename.c_str(), "wt");
-    if( fp != nullptr )
+    if( pszESRI_SRS )
     {
-        size_t nCount = VSIFWriteL(pszESRI_SRS, strlen(pszESRI_SRS), 1, fp);
-        nCount += VSIFWriteL("\n", 1, 1, fp);
-        if( VSIFCloseL(fp) != 0 || nCount != 2 )
+        // Write to .prj file.
+        CPLString osPrjFilename = CPLResetExtension(GetDescription(), "prj");
+        VSILFILE *fp = VSIFOpenL(osPrjFilename.c_str(), "wt");
+        if( fp != nullptr )
         {
-            CPLFree(pszESRI_SRS);
-            return CE_Failure;
+            size_t nCount = VSIFWriteL(pszESRI_SRS, strlen(pszESRI_SRS), 1, fp);
+            nCount += VSIFWriteL("\n", 1, 1, fp);
+            if( VSIFCloseL(fp) != 0 || nCount != 2 )
+            {
+                CPLFree(pszESRI_SRS);
+                return CE_Failure;
+            }
         }
-    }
 
-    CPLFree(pszESRI_SRS);
+        CPLFree(pszESRI_SRS);
+    }
 
     return CE_None;
 }
@@ -1431,13 +1416,12 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo, bool bFileSizeCheck )
 
         char **papszLines = CSLLoad(pszPrjFilename);
 
-        OGRSpatialReference oSRS;
-        if( oSRS.importFromESRI(papszLines) == OGRERR_NONE )
+        if( poDS->m_oSRS.importFromESRI(papszLines) == OGRERR_NONE )
         {
             // If geographic values are in seconds, we must transform.
             // Is there a code for minutes too?
             char szResult[80] = { '\0' };
-            if( oSRS.IsGeographic()
+            if( poDS->m_oSRS.IsGeographic()
                 && EQUAL(OSR_GDS(szResult, sizeof(szResult),
                                  papszLines, "Units", ""), "DS") )
             {
@@ -1448,9 +1432,10 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo, bool bFileSizeCheck )
                 poDS->adfGeoTransform[4] /= 3600.0;
                 poDS->adfGeoTransform[5] /= 3600.0;
             }
-
-            CPLFree(poDS->pszProjection);
-            oSRS.exportToWkt(&(poDS->pszProjection));
+        }
+        else
+        {
+            poDS->m_oSRS.Clear();
         }
 
         CSLDestroy(papszLines);
@@ -1573,16 +1558,12 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo, bool bFileSizeCheck )
                 snprintf(projCSStr, sizeof(projCSStr), "WGS 84 / UTM zone %d%c",
                          utmZone, (bNorth) ? 'N' : 'S');
 
-                OGRSpatialReference oSRS;
-                oSRS.SetProjCS(projCSStr);
-                oSRS.SetWellKnownGeogCS("WGS84");
-                oSRS.SetUTM(utmZone, bNorth);
-                oSRS.SetAuthority("PROJCS", "EPSG",
+                poDS->m_oSRS.SetProjCS(projCSStr);
+                poDS->m_oSRS.SetWellKnownGeogCS("WGS84");
+                poDS->m_oSRS.SetUTM(utmZone, bNorth);
+                poDS->m_oSRS.SetAuthority("PROJCS", "EPSG",
                                   (bNorth ? 32600 : 32700) + utmZone);
-                oSRS.AutoIdentifyEPSG();
-
-                CPLFree(poDS->pszProjection);
-                oSRS.exportToWkt(&(poDS->pszProjection));
+                poDS->m_oSRS.AutoIdentifyEPSG();
             }
             else
             {

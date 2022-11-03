@@ -22,7 +22,11 @@ if (Python_Interpreter_FOUND)
   # Set TEST_ENV that goes into pytest.ini
 
   # Set GDAL_DATA
-  file(TO_NATIVE_PATH "${PROJECT_SOURCE_DIR}/data" GDAL_DATA)
+  if(WIN32)
+      file(TO_NATIVE_PATH "${PROJECT_SOURCE_DIR}/data" GDAL_DATA)
+  else()
+      set(GDAL_DATA "${PROJECT_SOURCE_DIR}/data")
+  endif()
   set(_TEST_ENV GDAL_DATA=${GDAL_DATA})
 
   if (GDAL_DOWNLOAD_TEST_DATA)

@@ -35,7 +35,7 @@ Creation Options
 General creation options
 ************************
 
--  **BLOCKSIZE=n**: Sets the tile width and height in pixels. Defaults to 512.
+-  **BLOCKSIZE=n**: Sets the tile width and height in pixels. Defaults to 512. Must be divisible by 16.
 
 -  **COMPRESS=[NONE/LZW/JPEG/DEFLATE/ZSTD/WEBP/LERC/LERC_DEFLATE/LERC_ZSTD/LZMA]**: Set the compression to use.
    Defaults to ``LZW`` starting with GDAL 3.4 (default in previous version is ``NONE``).
@@ -135,18 +135,18 @@ General creation options
    TIFF, libtiff will fail with an error message like
    "TIFFAppendToStrip:Maximum TIFF file size exceeded".
 
--  **RESAMPLING=[NEAREST/AVERAGE/BILINEAR/CUBIC/CUBICSPLINE/LANCZOS]**:
+-  **RESAMPLING=[NEAREST/AVERAGE/BILINEAR/CUBIC/CUBICSPLINE/LANCZOS/MODE/RMS]**:
    Resampling method used for overview generation or reprojection.
    For paletted images,
    NEAREST is used by default, otherwise it is CUBIC.
 
--  **OVERVIEW_RESAMPLING=[NEAREST/AVERAGE/BILINEAR/CUBIC/CUBICSPLINE/LANCZOS]**:
+-  **OVERVIEW_RESAMPLING=[NEAREST/AVERAGE/BILINEAR/CUBIC/CUBICSPLINE/LANCZOS/MODE/RMS]**:
    (since GDAL 3.2)
    Resampling method used for overview generation.
    For paletted images, NEAREST is used by default, otherwise it is CUBIC.
    This overrides, for overview generation, the value of ``RESAMPLING`` if it specified.
 
--  **WARP_RESAMPLING=[NEAREST/AVERAGE/BILINEAR/CUBIC/CUBICSPLINE/LANCZOS]**:
+-  **WARP_RESAMPLING=[NEAREST/AVERAGE/BILINEAR/CUBIC/CUBICSPLINE/LANCZOS/MODE/RMS/MIN/MAX/MED/Q1/Q3]**:
    (since GDAL 3.2)
    Resampling method used for reprojection.
    For paletted images, NEAREST is used by default, otherwise it is CUBIC.
@@ -155,16 +155,15 @@ General creation options
 - **OVERVIEWS=[AUTO/IGNORE_EXISTING/FORCE_USE_EXISTING/NONE]**: Describe the behavior
   regarding overview generation and use of source overviews.
 
-  - ``AUTO`` (default): source overviews will be
-    used if present (even if the dimension of the smallest level is not < 512 pixels),
-    and, if not present, overviews will be automatically generated in the
+  - ``AUTO`` (default): source overviews will be used if present.
+    If not present, overviews will be automatically generated in the
     output file.
 
   - ``IGNORE_EXISTING``: potential existing overviews on the source dataset will
     be ignored and new overviews will be automatically generated.
 
   - ``FORCE_USE_EXISTING``: potential existing overviews on the source will
-    be used (even if the dimension of the smallest level is not < 512 pixels).
+    be used.
     If there is no source overview, this is equivalent to specifying ``NONE``.
 
   - ``NONE``: potential source overviews will be ignored, and no overview will be
@@ -175,6 +174,19 @@ General creation options
         When using the gdal_translate utility, source overviews will not be
         available if general options (i.e. options which are not creation options,
         like subsetting, etc.) are used.
+
+- **OVERVIEW_COUNT=integer_value**: (since GDAL 3.6)
+  Number of overview levels to generate. This can be used to increase or decrease
+  the number of levels in the COG file (when GDAL computes overviews from the
+  full resolution dataset, that is when there are no source overviews or the user
+  specifies OVERVIEWS=IGNORE_EXISTING), or decrease the number of levels copied
+  from the source dataset (in OVERVIEWS=AUTO or FORCE_USE_EXISTING modes when
+  there are such overviews in the source dataset).
+
+  If not specified, the driver will use all the overviews available in the source raster,
+  in OVERVIEW=AUTO or FORCE_USE_EXISTING modes. In situations where GDAL generates
+  overviews, the default number of overview levels is such that the dimensions of
+  the smallest overview are smaller or equal to the BLOCKSIZE value.
 
 - **OVERVIEW_COMPRESS=[AUTO/NONE/LZW/JPEG/DEFLATE/ZSTD/WEBP/LERC/LERC_DEFLATE/LERC_ZSTD/LZMA]**:
   Set the compression method (see ``COMPRESS``) to use when storing the overviews in the COG.
@@ -218,22 +230,26 @@ General creation options
 Reprojection related creation options
 *************************************
 
-- **TILING_SCHEME=CUSTOM/GoogleMapsCompatible/other**: Default value: CUSTOM.
+- **TILING_SCHEME=CUSTOM/GoogleMapsCompatible/...**: Default value: CUSTOM.
   If set to a value different than CUSTOM, the definition of the specified tiling
   scheme will be used to reproject the dataset to its CRS, select the resolution
   corresponding to the closest zoom level and align on tile boundaries at this
   resolution (the actual resolution can be controlled with the ZOOM_LEVEL or
   ZOOM_LEVEL_STRATEGY options).
+
   The tile size indicated in the tiling scheme definition (generally
   256 pixels) will be used, unless the user has specified a value with the
   BLOCKSIZE creation option, in which case the user specified one will be taken
   into account (that is if setting a higher value than 256, the original
   tiling scheme is modified to take into account the size of the HiDPi tiles).
+
   In non-CUSTOM mode, TARGET_SRS, RES and EXTENT options are ignored.
   Starting with GDAL 3.2, the value of TILING_SCHEME can also be the filename
   of a JSON file according to the `OGC Two Dimensional Tile Matrix Set standard`_,
   a URL to such file, the radical of a definition file in the GDAL data directory
   (e.g. ``FOO`` for a file named ``tms_FOO.json``) or the inline JSON definition.
+  The list of available tiling schemes can be obtained by looking at values of
+  the TILING_SCHEME option reported by ``gdalinfo --format COG``.
 
 .. _`OGC Two Dimensional Tile Matrix Set standard`: http://docs.opengeospatial.org/is/17-083r2/17-083r2.html
 

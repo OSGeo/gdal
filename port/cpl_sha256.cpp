@@ -37,7 +37,6 @@
 #include "cpl_sha256.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$")
 
 #define ROTL(x, n) (((x) << (n)) | ((x) >> (32 - (n))))
 #define ROTR(x, n) (((x) >> (n)) | ((x) << (32 - (n))))

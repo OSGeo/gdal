@@ -28,7 +28,6 @@
 
 #include "cpl_error.h"
 
-CPL_CVSID("$Id$")
 
 constexpr int SECSPERMIN = 60;
 constexpr int MINSPERHOUR = 60;

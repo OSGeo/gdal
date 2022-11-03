@@ -40,7 +40,6 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 typedef enum {                  // File formats
     L1B_NONE,           // Not a L1B format
@@ -286,7 +285,7 @@ class L1BDataset final: public GDALPamDataset
     GUInt32     iInstrumentStatus;
     GUInt32     iChannelsMask;
 
-    char        *pszGCPProjection;
+    OGRSpatialReference m_oGCPSRS{};
 
     VSILFILE   *fp;
 
@@ -324,10 +323,7 @@ class L1BDataset final: public GDALPamDataset
     virtual ~L1BDataset();
 
     virtual int GetGCPCount() override;
-    virtual const char *_GetGCPProjection() override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override {
-        return GetGCPSpatialRefFromOldGetGCPProjection();
-    }
+    const OGRSpatialReference* GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
 
     static int  Identify( GDALOpenInfo * );
@@ -584,20 +580,21 @@ L1BDataset::L1BDataset( L1BFileFormat eL1BFormatIn ) :
     nRecordSizeFromHeader(0),
     iInstrumentStatus(0),
     iChannelsMask(0),
-    pszGCPProjection(CPLStrdup(
-        "GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\","
-        "SPHEROID[\"WGS 72\",6378135,298.26,AUTHORITY[\"EPSG\",7043]],"
-        "TOWGS84[0,0,4.5,0,0,0.554,0.2263],AUTHORITY[\"EPSG\",6322]],"
-        "PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],"
-        "UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],"
-        "AUTHORITY[\"EPSG\",4322]]" )),
     fp(nullptr),
     bGuessDataFormat(FALSE),
     // L1B is normally big-endian ordered, so byte-swap on little-endian CPU.
     bByteSwap(CPL_IS_LSB),
     bExposeMaskBand(FALSE),
     poMaskBand(nullptr)
-{}
+{
+    m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    m_oGCPSRS.importFromWkt("GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\","
+        "SPHEROID[\"WGS 72\",6378135,298.26,AUTHORITY[\"EPSG\",7043]],"
+        "TOWGS84[0,0,4.5,0,0,0.554,0.2263],AUTHORITY[\"EPSG\",6322]],"
+        "PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],"
+        "UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],"
+        "AUTHORITY[\"EPSG\",4322]]" );
+}
 
 /************************************************************************/
 /*                            ~L1BDataset()                             */
@@ -613,8 +610,6 @@ L1BDataset::~L1BDataset()
         GDALDeinitGCPs( nGCPCount, pasGCPList );
         CPLFree( pasGCPList );
     }
-    if ( pszGCPProjection )
-        CPLFree( pszGCPProjection );
     if( fp != nullptr )
         CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
     delete poMaskBand;
@@ -643,16 +638,16 @@ int L1BDataset::GetGCPCount()
 }
 
 /************************************************************************/
-/*                          GetGCPProjection()                          */
+/*                          GetGCPSpatialRef()                          */
 /************************************************************************/
 
-const char *L1BDataset::_GetGCPProjection()
+const OGRSpatialReference *L1BDataset::GetGCPSpatialRef() const
 
 {
-    if( nGCPCount > 0 )
-        return pszGCPProjection;
+    if( nGCPCount > 0 && !m_oGCPSRS.IsEmpty() )
+        return &m_oGCPSRS;
     else
-        return "";
+        return nullptr;
 }
 
 /************************************************************************/
@@ -1699,13 +1694,11 @@ CPLErr L1BDataset::ProcessDatasetHeader(const char* pszFilename)
         CPLDebug("L1B", "Reference Ellipsoid Model ID = '%s'", szEllipsoid);
         if( EQUAL(szEllipsoid, "WGS-84  ") )
         {
-            CPLFree(pszGCPProjection);
-            pszGCPProjection = CPLStrdup(SRS_WKT_WGS84_LAT_LONG);
+            m_oGCPSRS.importFromWkt(SRS_WKT_WGS84_LAT_LONG);
         }
         else if( EQUAL(szEllipsoid, "  GRS 80") )
         {
-            CPLFree(pszGCPProjection);
-            pszGCPProjection = CPLStrdup("GEOGCS[\"GRS 1980(IUGG, 1980)\",DATUM[\"unknown\",SPHEROID[\"GRS80\",6378137,298.257222101],TOWGS84[0,0,0,0,0,0,0]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]]");
+            m_oGCPSRS.importFromWkt("GEOGCS[\"GRS 1980(IUGG, 1980)\",DATUM[\"unknown\",SPHEROID[\"GRS80\",6378137,298.257222101],TOWGS84[0,0,0,0,0,0,0]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]]");
         }
 
         // Determine the spacecraft name
@@ -3385,7 +3378,10 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLString  osTMP;
         int bInterpol = CPLTestBool(CPLGetConfigOption("L1B_INTERPOL_GCPS", "TRUE"));
 
-        poOutDS->SetMetadataItem( "SRS", poDS->pszGCPProjection, "GEOLOCATION" ); /* unused by gdalgeoloc.cpp */
+        char* pszWKT = nullptr;
+        poDS->m_oGCPSRS.exportToWkt(&pszWKT);
+        poOutDS->SetMetadataItem( "SRS", pszWKT, "GEOLOCATION" ); /* unused by gdalgeoloc.cpp */
+        CPLFree(pszWKT);
 
         if( bInterpol )
             osTMP.Printf( "L1BGCPS_INTERPOL:\"%s\"", osFilename.c_str() );

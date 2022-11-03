@@ -32,7 +32,6 @@
 
 #include <cstddef>
 
-CPL_CVSID("$Id$")
 
 CPL_C_START
 #include "jerror.h"

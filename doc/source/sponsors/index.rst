@@ -100,6 +100,13 @@ the health of the project:
 
     .. container:: horizontal-logo
 
+        .. image:: ../../images/sponsors/logo-geoczech.png
+           :class: img-logos
+           :width: 150 px
+           :target: https://geoczech.org
+
+    .. container:: horizontal-logo
+
         .. image:: ../../images/sponsors/logo-koordinates.png
            :class: img-logos
            :width: 150 px
@@ -139,6 +146,14 @@ the health of the project:
     .. container:: horizontal-logo
 
         `Kaplan Open Source Consulting <https://kaplanopensource.co.il/>`__
+
+    .. container:: horizontal-logo
+
+        `PIX4D <https://www.pix4d.com/>`__
+
+    .. container:: horizontal-logo
+
+        `Regrid <https://regrid.com>`__
 
     .. container:: horizontal-logo
 

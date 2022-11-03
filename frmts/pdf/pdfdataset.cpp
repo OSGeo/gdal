@@ -66,7 +66,6 @@
 
 /* g++ -fPIC -g -Wall frmts/pdf/pdfdataset.cpp -shared -o gdal_PDF.so -Iport -Igcore -Iogr -L. -lgdal -lpoppler -I/usr/include/poppler */
 
-CPL_CVSID("$Id$")
 
 #ifdef HAVE_PDF_READ_SUPPORT
 
@@ -2294,7 +2293,6 @@ CPLErr PDFImageRasterBand::IReadBlock( int CPL_UNUSED nBlockXOff, int nBlockYOff
 
 PDFDataset::PDFDataset( PDFDataset* poParentDSIn, int nXSize, int nYSize ) :
     poParentDS(poParentDSIn),
-    pszWKT(nullptr),
     dfDPI(GDAL_DEFAULT_DPI),
     bHasCTM(FALSE),
     bGeoTransformValid(FALSE),
@@ -2336,6 +2334,7 @@ PDFDataset::PDFDataset( PDFDataset* poParentDSIn, int nXSize, int nYSize ) :
     dfPageHeight(0),
     bSetStyle(CPLTestBool(CPLGetConfigOption("OGR_PDF_SET_STYLE", "YES")))
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
     bUseLib.reset();
@@ -2360,10 +2359,11 @@ PDFDataset::PDFDataset( PDFDataset* poParentDSIn, int nXSize, int nYSize ) :
 /************************************************************************/
 
 CPLErr PDFDataset::IBuildOverviews( const char *pszResampling,
-                                       int nOverviews, int *panOverviewList,
-                                       int nListBands, int *panBandList,
-                                       GDALProgressFunc pfnProgress,
-                                       void *pProgressData )
+                                    int nOverviews, const int *panOverviewList,
+                                    int nListBands, const int *panBandList,
+                                    GDALProgressFunc pfnProgress,
+                                    void *pProgressData,
+                                    CSLConstList papszOptions )
 
 {
 /* -------------------------------------------------------------------- */
@@ -2380,7 +2380,8 @@ CPLErr PDFDataset::IBuildOverviews( const char *pszResampling,
     return GDALPamDataset::IBuildOverviews( pszResampling,
                                             nOverviews, panOverviewList,
                                             nListBands, panBandList,
-                                            pfnProgress, pProgressData );
+                                            pfnProgress, pProgressData,
+                                            papszOptions );
 }
 
 #endif  // ~ HAVE_PDFIUM
@@ -2581,8 +2582,6 @@ PDFDataset::~PDFDataset()
         pasGCPList = nullptr;
         nGCPCount = 0;
     }
-    CPLFree(pszWKT);
-    pszWKT = nullptr;
 
     CleanupIntermediateResources();
 
@@ -5633,6 +5632,7 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
     if (poProjDict == nullptr)
         return FALSE;
     OGRSpatialReference oSRS;
+    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
 /* -------------------------------------------------------------------- */
 /*      Extract WKT attribute (GDAL extension)                          */
@@ -5644,8 +5644,8 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
     {
         CPLDebug("PDF", "Found WKT attribute (GDAL extension). Using it");
         const char* pszWKTRead = poWKT->GetString().c_str();
-        CPLFree(pszWKT);
-        pszWKT = CPLStrdup(pszWKTRead);
+        if( pszWKTRead[0] != 0 )
+            m_oSRS.importFromWkt(pszWKTRead);
         return TRUE;
     }
 
@@ -6246,13 +6246,7 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
 /* -------------------------------------------------------------------- */
 /*      Export SpatialRef                                               */
 /* -------------------------------------------------------------------- */
-    CPLFree(pszWKT);
-    pszWKT = nullptr;
-    if (oSRS.exportToWkt(&pszWKT) != OGRERR_NONE)
-    {
-        CPLFree(pszWKT);
-        pszWKT = nullptr;
-    }
+    m_oSRS = oSRS;
 
     return TRUE;
 }
@@ -6613,18 +6607,51 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
         return FALSE;
     }
 
-    OGRSpatialReference oSRS;
-    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    int bSRSOK = FALSE;
-    if (nEPSGCode != 0 &&
-        oSRS.importFromEPSG(nEPSGCode) == OGRERR_NONE)
+    if( poGCSWKT != nullptr )
     {
-        bSRSOK = TRUE;
-        CPLFree(pszWKT);
-        pszWKT = nullptr;
-        oSRS.exportToWkt(&pszWKT);
+        m_oSRS.importFromWkt(poGCSWKT->GetString().c_str());
     }
-    else
+
+    bool bSRSOK = false;
+    if (nEPSGCode != 0 )
+    {
+        // At time of writing EPSG CRS codes are <= 32767.
+        // The usual practice is that codes >= 100000 are in the ESRI namespace
+        // instead
+        if( nEPSGCode >= 100000 )
+        {
+            CPLErrorHandlerPusher oHandler(CPLQuietErrorHandler);
+            OGRSpatialReference oSRS_ESRI;
+            oSRS_ESRI.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            if( oSRS_ESRI.SetFromUserInput(CPLSPrintf("ESRI:%d", nEPSGCode)) == OGRERR_NONE )
+            {
+                bSRSOK = true;
+
+                // Check consistency of ESRI:xxxx and WKT definitions
+                if( poGCSWKT != nullptr )
+                {
+                    if( !EQUAL(oSRS_ESRI.GetName(), m_oSRS.GetName()) &&
+                        !oSRS_ESRI.IsSame(&m_oSRS) )
+                    {
+                        CPLDebug("PDF",
+                                 "Definition from ESRI:%d and WKT=%s do not match. Using WKT string",
+                                 nEPSGCode, poGCSWKT->GetString().c_str());
+                        bSRSOK = false;
+                    }
+                }
+                if( bSRSOK )
+                {
+                    m_oSRS = oSRS_ESRI;
+                }
+            }
+        }
+        else if( m_oSRS.importFromEPSG(nEPSGCode) == OGRERR_NONE)
+        {
+            bSRSOK = true;
+        }
+    }
+
+    if( !bSRSOK )
     {
         if (poGCSWKT == nullptr)
         {
@@ -6633,44 +6660,17 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
             return FALSE;
         }
 
-        CPLFree(pszWKT);
-        pszWKT = CPLStrdup(poGCSWKT->GetString().c_str());
-    }
-
-    if (!bSRSOK)
-    {
-        if (oSRS.importFromWkt(pszWKT) != OGRERR_NONE)
+        if (m_oSRS.importFromWkt(poGCSWKT->GetString().c_str()) != OGRERR_NONE)
         {
-            CPLFree(pszWKT);
-            pszWKT = nullptr;
+            m_oSRS.Clear();
             return FALSE;
-        }
-    }
-
-    /* For http://www.avenza.com/sites/default/files/spatialpdf/US_County_Populations.pdf */
-    /* or http://www.agmkt.state.ny.us/soilwater/aem/gis_mapping_tools/HUC12_Albany.pdf */
-    const char* pszDatum = oSRS.GetAttrValue("Datum");
-    if (pszDatum && STARTS_WITH(pszDatum, "D_"))
-    {
-        oSRS.morphFromESRI();
-
-        CPLFree(pszWKT);
-        pszWKT = nullptr;
-        if (oSRS.exportToWkt(&pszWKT) != OGRERR_NONE)
-        {
-            CPLFree(pszWKT);
-            pszWKT = nullptr;
-        }
-        else
-        {
-            CPLDebug("PDF", "WKT after morphFromESRI() = %s", pszWKT);
         }
     }
 
 /* -------------------------------------------------------------------- */
 /*      Compute geotransform                                            */
 /* -------------------------------------------------------------------- */
-    OGRSpatialReference* poSRSGeog = oSRS.CloneGeogCS();
+    OGRSpatialReference* poSRSGeog = m_oSRS.CloneGeogCS();
 
     /* Files found at http://carto.iict.ch/blog/publications-cartographiques-au-format-geospatial-pdf/ */
     /* are in a PROJCS. However the coordinates in GPTS array are not in (lat, long) as required by the */
@@ -6678,7 +6678,7 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
     /* so let's also try to do it with a heuristics. */
 
     bool bReproject = true;
-    if (oSRS.IsProjected() )
+    if (m_oSRS.IsProjected() )
     {
         for( int i = 0; i < nGPTSLength / 2; i++ )
         {
@@ -6694,12 +6694,11 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
     OGRCoordinateTransformation* poCT = nullptr;
     if (bReproject)
     {
-        poCT = OGRCreateCoordinateTransformation( poSRSGeog, &oSRS);
+        poCT = OGRCreateCoordinateTransformation( poSRSGeog, &m_oSRS);
         if (poCT == nullptr)
         {
             delete poSRSGeog;
-            CPLFree(pszWKT);
-            pszWKT = nullptr;
+            m_oSRS.Clear();
             return FALSE;
         }
     }
@@ -6733,8 +6732,7 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
                         "Cannot reproject (%f, %f)", lon, lat);
                 delete poSRSGeog;
                 delete poCT;
-                CPLFree(pszWKT);
-                pszWKT = nullptr;
+                m_oSRS.Clear();
                 return FALSE;
             }
         }
@@ -6789,18 +6787,18 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                            */
 /************************************************************************/
 
-const char* PDFDataset::_GetProjectionRef()
+const OGRSpatialReference* PDFDataset::GetSpatialRef() const
 {
-    const char* pszPAMProjection = GDALPamDataset::_GetProjectionRef();
-    if( pszPAMProjection != nullptr && pszPAMProjection[0] != '\0' )
-        return pszPAMProjection;
+    const auto poSRS = GDALPamDataset::GetSpatialRef();
+    if( poSRS )
+        return poSRS;
 
-    if (pszWKT && bGeoTransformValid)
-        return pszWKT;
-    return "";
+    if (!m_oSRS.IsEmpty() && bGeoTransformValid)
+        return &m_oSRS;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -6821,16 +6819,17 @@ CPLErr PDFDataset::GetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
-/*                            SetProjection()                           */
+/*                            SetSpatialRef()                           */
 /************************************************************************/
 
-CPLErr PDFDataset::_SetProjection(const char* pszWKTIn)
+CPLErr PDFDataset::SetSpatialRef(const OGRSpatialReference* poSRS )
 {
     if( eAccess == GA_ReadOnly )
-        GDALPamDataset::_SetProjection(pszWKTIn);
+        GDALPamDataset::SetSpatialRef(poSRS);
 
-    CPLFree(pszWKT);
-    pszWKT = pszWKTIn ? CPLStrdup(pszWKTIn) : CPLStrdup("");
+    m_oSRS.Clear();
+    if( poSRS )
+        m_oSRS = *poSRS;
     bProjDirty = TRUE;
     return CE_None;
 }
@@ -7066,14 +7065,14 @@ int PDFDataset::GetGCPCount()
 }
 
 /************************************************************************/
-/*                          GetGCPProjection()                          */
+/*                          GetGCPSpatialRef()                          */
 /************************************************************************/
 
-const char * PDFDataset::_GetGCPProjection()
+const OGRSpatialReference * PDFDataset::GetGCPSpatialRef() const
 {
-    if (pszWKT != nullptr && nGCPCount != 0)
-        return pszWKT;
-    return "";
+    if (!m_oSRS.IsEmpty() && nGCPCount != 0)
+        return &m_oSRS;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -7089,8 +7088,8 @@ const GDAL_GCP * PDFDataset::GetGCPs()
 /*                               SetGCPs()                              */
 /************************************************************************/
 
-CPLErr PDFDataset::_SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
-                            const char *pszGCPProjectionIn )
+CPLErr PDFDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
+                            const OGRSpatialReference* poSRS )
 {
     const char* pszGEO_ENCODING =
         CPLGetConfigOption("GDAL_PDF_GEO_ENCODING", "ISO32000");
@@ -7110,8 +7109,9 @@ CPLErr PDFDataset::_SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
     nGCPCount = nGCPCountIn;
     pasGCPList = GDALDuplicateGCPs(nGCPCount, pasGCPListIn);
 
-    CPLFree(pszWKT);
-    pszWKT = CPLStrdup(pszGCPProjectionIn);
+    m_oSRS.Clear();
+    if( poSRS )
+        m_oSRS = *poSRS;
 
     bProjDirty = TRUE;
 
@@ -7249,6 +7249,7 @@ void GDALRegister_PDF()
 
     poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
 #ifdef HAVE_POPPLER
     poDriver->SetMetadataItem( "HAVE_POPPLER", "YES" );

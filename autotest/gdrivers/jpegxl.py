@@ -76,16 +76,27 @@ def test_jpegxl_rgba():
     return tst.testCreateCopy(vsimem=1)
 
 
-def test_jpegxl_rgba_lossless_no():
+@pytest.mark.parametrize("lossless", ["YES", "NO", None])
+def test_jpegxl_rgba_lossless_param(lossless):
 
     src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")
     outfilename = "/vsimem/out.jxl"
-    gdal.GetDriverByName("JPEGXL").CreateCopy(
-        outfilename, src_ds, options=["LOSSLESS=NO"]
-    )
+    options = []
+    if lossless:
+        options += ["LOSSLESS=" + lossless]
+    gdal.GetDriverByName("JPEGXL").CreateCopy(outfilename, src_ds, options=options)
     ds = gdal.Open(outfilename)
+    assert (
+        ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == "LOSSY"
+        if lossless == "NO"
+        else "LOSSLESS (possibly)"
+    )
     cs = ds.GetRasterBand(1).Checksum()
-    assert cs != 0 and cs != src_ds.GetRasterBand(1).Checksum()
+    assert cs != 0
+    if lossless == "NO":
+        assert cs != src_ds.GetRasterBand(1).Checksum()
+    else:
+        assert cs == src_ds.GetRasterBand(1).Checksum()
 
     ds = None
     gdal.GetDriverByName("JPEGXL").Delete(outfilename)
@@ -99,6 +110,7 @@ def test_jpegxl_rgba_distance():
         outfilename, src_ds, options=["DISTANCE=2"]
     )
     ds = gdal.Open(outfilename)
+    assert ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == "LOSSY"
     cs = ds.GetRasterBand(1).Checksum()
     assert cs != 0 and cs != src_ds.GetRasterBand(1).Checksum()
 
@@ -118,6 +130,7 @@ def test_jpegxl_rgba_quality(quality, equivalent_distance):
         outfilename, src_ds, options=["QUALITY=" + str(quality)]
     )
     ds = gdal.Open(outfilename)
+    assert ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == "LOSSY"
     cs = ds.GetRasterBand(1).Checksum()
     assert cs != 0 and cs != src_ds.GetRasterBand(1).Checksum()
 
@@ -144,7 +157,9 @@ def test_jpegxl_xmp():
     gdal.GetDriverByName("JPEGXL").CreateCopy(outfilename, src_ds)
     assert gdal.VSIStatL(outfilename + ".aux.xml") is None
     ds = gdal.Open(outfilename)
-    assert set(ds.GetMetadataDomainList()) == set(["DERIVED_SUBDATASETS", "xml:XMP"])
+    assert set(ds.GetMetadataDomainList()) == set(
+        ["DERIVED_SUBDATASETS", "xml:XMP", "IMAGE_STRUCTURE"]
+    )
     assert ds.GetMetadata("xml:XMP")[0].startswith("<?xpacket")
 
     ds = None
@@ -519,3 +534,106 @@ def test_jpegxl_createcopy_errors():
             is None
         )
         assert gdal.GetLastErrorMsg() != ""
+
+
+###############################################################################
+def test_jpegxl_band_combinations():
+
+    drv = gdal.GetDriverByName("JPEGXL")
+    if drv.GetMetadataItem("JXL_ENCODER_SUPPORT_EXTRA_CHANNELS") is None:
+        pytest.skip()
+
+    tmpfilename = "/vsimem/test_jpegxl_band_combinations.jxl"
+    src_ds = gdal.GetDriverByName("MEM").Create("", 64, 64, 6)
+    for b in range(6):
+        bnd = src_ds.GetRasterBand(b + 1)
+        bnd.Fill(b + 1)
+        bnd.FlushCache()
+        assert bnd.Checksum() != 0, "bnd.Fill failed"
+
+    cilists = [
+        [gdal.GCI_RedBand],
+        [gdal.GCI_RedBand, gdal.GCI_Undefined],
+        [gdal.GCI_RedBand, gdal.GCI_AlphaBand],
+        [gdal.GCI_Undefined, gdal.GCI_AlphaBand],
+        [gdal.GCI_RedBand, gdal.GCI_GreenBand, gdal.GCI_BlueBand],
+        [gdal.GCI_RedBand, gdal.GCI_GreenBand, gdal.GCI_BlueBand, gdal.GCI_AlphaBand],
+        [
+            gdal.GCI_RedBand,
+            gdal.GCI_GreenBand,
+            gdal.GCI_BlueBand,
+            gdal.GCI_AlphaBand,
+            gdal.GCI_Undefined,
+        ],
+        [
+            gdal.GCI_RedBand,
+            gdal.GCI_GreenBand,
+            gdal.GCI_BlueBand,
+            gdal.GCI_Undefined,
+            gdal.GCI_Undefined,
+        ],
+        [
+            gdal.GCI_RedBand,
+            gdal.GCI_GreenBand,
+            gdal.GCI_BlueBand,
+            gdal.GCI_Undefined,
+            gdal.GCI_AlphaBand,
+        ],
+        [
+            gdal.GCI_RedBand,
+            gdal.GCI_GreenBand,
+            gdal.GCI_AlphaBand,
+            gdal.GCI_Undefined,
+            gdal.GCI_BlueBand,
+        ],
+    ]
+
+    types = [
+        gdal.GDT_Byte,
+        gdal.GDT_UInt16,
+    ]
+
+    for dtype in types:
+        for cilist in cilists:
+            bandlist = [idx + 1 for idx in range(len(cilist))]
+            vrtds = gdal.Translate(
+                "", src_ds, format="vrt", bandList=bandlist, outputType=dtype
+            )
+            for idx, ci in enumerate(cilist):
+                vrtds.GetRasterBand(idx + 1).SetColorInterpretation(ci)
+
+            ds = gdal.Translate(tmpfilename, vrtds)
+            ds = None
+            gdal.Unlink(tmpfilename + ".aux.xml")
+            # print(dtype, cilist)
+            ds = gdal.Open(tmpfilename)
+            for idx in range(len(cilist)):
+                assert (
+                    ds.GetRasterBand(idx + 1).Checksum()
+                    == src_ds.GetRasterBand(idx + 1).Checksum()
+                ), (dtype, cilist, idx)
+            if (
+                vrtds.RasterCount >= 3
+                and vrtds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
+                and vrtds.GetRasterBand(2).GetColorInterpretation()
+                == gdal.GCI_GreenBand
+                and vrtds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
+            ):
+                assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
+                assert (
+                    ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GreenBand
+                )
+                assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
+            # Check that alpha band is preserved
+            for idx in range(len(cilist)):
+                if (
+                    vrtds.GetRasterBand(idx + 1).GetColorInterpretation()
+                    == gdal.GCI_AlphaBand
+                ):
+                    assert (
+                        ds.GetRasterBand(idx + 1).GetColorInterpretation()
+                        == gdal.GCI_AlphaBand
+                    )
+            vrtds = None
+            ds = None
+            gdal.Unlink(tmpfilename)

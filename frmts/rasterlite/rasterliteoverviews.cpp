@@ -33,7 +33,6 @@
 
 #include "rasterlitedataset.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         ReloadOverviews()                            */
@@ -274,7 +273,7 @@ CPLErr RasterliteDataset::CleanOverviewLevel(int nOvrFactor)
 
 CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
                                               int nOvrFactor,
-                                              char** papszOptions,
+                                              CSLConstList papszOptions,
                                               GDALProgressFunc pfnProgress,
                                               void * pProgressData)
 {
@@ -705,10 +704,11 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
 /************************************************************************/
 
 CPLErr RasterliteDataset::IBuildOverviews( const char * pszResampling,
-                                           int nOverviews, int * panOverviewList,
-                                           int nBandsIn, int * panBandList,
+                                           int nOverviews, const int * panOverviewList,
+                                           int nBandsIn, const int * panBandList,
                                            GDALProgressFunc pfnProgress,
-                                           void * pProgressData )
+                                           void * pProgressData,
+                                           CSLConstList papszOptions )
 {
     if (nLevel != 0)
     {
@@ -741,7 +741,8 @@ CPLErr RasterliteDataset::IBuildOverviews( const char * pszResampling,
         bCheckForExistingOverview = FALSE;
         CPLErr eErr = GDALDataset::IBuildOverviews(
                             pszResampling, nOverviews, panOverviewList,
-                            nBandsIn, panBandList, pfnProgress, pProgressData );
+                            nBandsIn, panBandList, pfnProgress, pProgressData,
+                            papszOptions);
         bCheckForExistingOverview = TRUE;
         return eErr;
     }
@@ -765,8 +766,8 @@ CPLErr RasterliteDataset::IBuildOverviews( const char * pszResampling,
     }
 
     const char* pszOvrOptions = CPLGetConfigOption("RASTERLITE_OVR_OPTIONS", nullptr);
-    char** papszOptions = (pszOvrOptions) ? CSLTokenizeString2( pszOvrOptions, ",", 0) : nullptr;
-    GDALValidateCreationOptions( GetDriver(), papszOptions);
+    const CPLStringList aosCreationOptions(pszOvrOptions ? CSLTokenizeString2( pszOvrOptions, ",", 0) : nullptr);
+    GDALValidateCreationOptions( GetDriver(), aosCreationOptions.List());
 
     CPLErr eErr = CE_None;
     for( int i = 0; i < nOverviews && eErr == CE_None; i++)
@@ -776,12 +777,10 @@ CPLErr RasterliteDataset::IBuildOverviews( const char * pszResampling,
 
         eErr = CleanOverviewLevel(panOverviewList[i]);
         if (eErr == CE_None)
-            eErr = CreateOverviewLevel(pszResampling, panOverviewList[i], papszOptions, pfnProgress, pProgressData);
+            eErr = CreateOverviewLevel(pszResampling, panOverviewList[i], aosCreationOptions.List(), pfnProgress, pProgressData);
 
         ReloadOverviews();
     }
-
-    CSLDestroy(papszOptions);
 
     return eErr;
 }

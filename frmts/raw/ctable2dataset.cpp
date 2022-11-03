@@ -32,7 +32,6 @@
 #include "ogr_srs_api.h"
 #include "rawdataset.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -45,6 +44,7 @@ class CTable2Dataset final: public RawDataset
     VSILFILE    *fpImage;  // image data file.
 
     double      adfGeoTransform[6];
+    OGRSpatialReference m_oSRS{};
 
     CPL_DISALLOW_COPY_ASSIGN(CTable2Dataset)
 
@@ -54,10 +54,9 @@ class CTable2Dataset final: public RawDataset
 
     CPLErr SetGeoTransform( double * padfTransform ) override;
     CPLErr GetGeoTransform( double * padfTransform ) override;
-    const char *_GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+
+    const OGRSpatialReference* GetSpatialRef() const override { return &m_oSRS; }
+
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -78,6 +77,9 @@ class CTable2Dataset final: public RawDataset
 CTable2Dataset::CTable2Dataset() :
     fpImage(nullptr)
 {
+    m_oSRS.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
     memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
 }
 
@@ -316,16 +318,6 @@ CPLErr CTable2Dataset::SetGeoTransform( double * padfTransform )
     CPL_IGNORE_RET_VAL(VSIFWriteL( achHeader, 1, sizeof(achHeader), fpImage ));
 
     return CE_None;
-}
-
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char *CTable2Dataset::_GetProjectionRef()
-
-{
-    return SRS_WKT_WGS84_LAT_LONG;
 }
 
 /************************************************************************/

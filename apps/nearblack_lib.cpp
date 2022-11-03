@@ -46,7 +46,6 @@
 #include "cpl_string.h"
 #include "gdal.h"
 
-CPL_CVSID("$Id$")
 
 typedef std::vector<int> Color;
 typedef std::vector< Color > Colors;
@@ -75,9 +74,9 @@ struct GDALNearblackOptions
 
 static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
                          int iEnd, int nSrcBands, int nDstBands, int nNearDist,
-                         int nMaxNonBlack, bool bNearWhite, Colors *poColors,
+                         int nMaxNonBlack, bool bNearWhite, const Colors *poColors,
                          int *panLastLineCounts, bool bDoHorizontalCheck,
-                         bool bDoVerticalCheck, bool bBottomUp );
+                         bool bDoVerticalCheck, bool bBottomUp, int iLineFromTopOrBottom );
 
 /************************************************************************/
 /*                            GDALNearblack()                           */
@@ -389,14 +388,16 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hDstDS,
                     panLastLineCounts,
                     true, // bDoHorizontalCheck
                     true, // bDoVerticalCheck
-                    false // bBottomUp
+                    false, // bBottomUp
+                    iLine
                     );
         ProcessLine(pabyLine, pabyMask, nXSize-1, 0, nBands, nDstBands,
                     nNearDist, nMaxNonBlack, bNearWhite, &oColors,
                     panLastLineCounts,
                     true,  // bDoHorizontalCheck
                     false, // bDoVerticalCheck
-                    false  // bBottomUp
+                    false,  // bBottomUp
+                    iLine
                     );
 
         eErr = GDALDatasetRasterIO(hDstDS, GF_Write, 0, iLine, nXSize, 1,
@@ -482,14 +483,16 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hDstDS,
                     panLastLineCounts,
                     true, // bDoHorizontalCheck
                     true, // bDoVerticalCheck
-                    true  // bBottomUp
+                    true,  // bBottomUp
+                    nYSize-1-iLine
                     );
         ProcessLine(pabyLine, pabyMask, nXSize-1, 0, nBands, nDstBands,
                     nNearDist, nMaxNonBlack, bNearWhite, &oColors,
                     panLastLineCounts,
                     true,  // bDoHorizontalCheck
                     false, // bDoVerticalCheck
-                    true   // bBottomUp
+                    true,   // bBottomUp
+                    nYSize-1-iLine
                     );
 
         eErr = GDALDatasetRasterIO(hDstDS, GF_Write, 0, iLine, nXSize, 1,
@@ -548,9 +551,10 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hDstDS,
 
 static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
                          int iEnd, int nSrcBands, int nDstBands, int nNearDist,
-                         int nMaxNonBlack, bool bNearWhite, Colors *poColors,
+                         int nMaxNonBlack, bool bNearWhite, const Colors *poColors,
                          int *panLastLineCounts, bool bDoHorizontalCheck,
-                         bool bDoVerticalCheck, bool bBottomUp )
+                         bool bDoVerticalCheck, bool bBottomUp,
+                         int iLineFromTopOrBottom )
 {
     const GByte nReplacevalue = bNearWhite ? 255 : 0;
 
@@ -605,6 +609,14 @@ static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
 
                 if( panLastLineCounts[i] > nMaxNonBlack )
                     continue;
+
+                if( iLineFromTopOrBottom == 0 && nMaxNonBlack > 0 )
+                {
+                    // if there's a valid value just at the top or bottom
+                    // of the raster, then ignore the nMaxNonBlack setting
+                    panLastLineCounts[i] = nMaxNonBlack + 1;
+                    continue;
+                }
             }
             //else
             //  panLastLineCounts[i] = 0; // not sure this even makes sense
@@ -689,6 +701,14 @@ static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
                 }
 
                 if( nNonBlackPixels > nMaxNonBlack ) {
+                    bDoTest = false;
+                    continue;
+                }
+
+                if( bIsNonBlack && nMaxNonBlack > 0 && i == iStart )
+                {
+                    // if there's a valid value just at the left or right
+                    // of the raster, then ignore the nMaxNonBlack setting
                     bDoTest = false;
                     continue;
                 }

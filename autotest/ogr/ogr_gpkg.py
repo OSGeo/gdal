@@ -77,6 +77,18 @@ def startup_and_cleanup():
 
 
 ###############################################################################
+
+
+def get_sqlite_version():
+    ds = ogr.Open(":memory:")
+    sql_lyr = ds.ExecuteSQL("SELECT sqlite_version()")
+    f = sql_lyr.GetNextFeature()
+    version = f.GetField(0)
+    ds.ReleaseResultSet(sql_lyr)
+    return tuple([int(x) for x in version.split(".")[0:3]])
+
+
+###############################################################################
 # Validate a geopackage
 
 
@@ -302,7 +314,7 @@ def test_ogr_gpkg_6():
 
 
 ###############################################################################
-# Add a feature / read a feature / delete a feature
+# Add a feature / read a feature / set a feature / upsert a feature / delete a feature
 
 
 def test_ogr_gpkg_7():
@@ -367,9 +379,68 @@ def test_ogr_gpkg_7():
         lyr.TestCapability(ogr.OLCDeleteFeature) == 1
     ), "lyr.TestCapability(ogr.OLCDeleteFeature) != 1"
 
+    assert lyr.GetFeatureCount() == 2
+
+    def get_feature_count_from_gpkg_contents():
+        sql_lyr = gpkg_ds.ExecuteSQL(
+            'SELECT feature_count FROM gpkg_ogr_contents WHERE table_name = "field_test_layer"',
+            dialect="DEBUG",
+        )
+        f = sql_lyr.GetNextFeature()
+        ret = f.GetField(0)
+        gpkg_ds.ReleaseResultSet(sql_lyr)
+        return ret
+
+    assert get_feature_count_from_gpkg_contents() == 2
+
+    assert lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn())) == ogr.OGRERR_NONE
+
+    assert lyr.GetFeatureCount() == 3
+
+    # 2 is expected here since CreateFeature() has temporarily disable triggers
+    assert get_feature_count_from_gpkg_contents() == 2
+
+    # Test upserting an existing feature
+    feat.SetField("dummy", "updated")
+    fid = feat.GetFID()
+    assert lyr.UpsertFeature(feat) == ogr.OGRERR_NONE, "cannot upsert existing feature"
+
+    assert feat.GetFID() == fid
+
+    # UpsertFeature() has serialized value 3 and re-enables triggers
+    assert get_feature_count_from_gpkg_contents() == 3
+
+    upserted_feat = lyr.GetFeature(feat.GetFID())
+    assert (
+        upserted_feat.GetField("dummy") == "updated"
+    ), "upsert failed to update existing feature"
+
     # Delete a feature
     lyr.DeleteFeature(feat.GetFID())
-    assert lyr.GetFeatureCount() == 1, "delete feature did not delete"
+
+    assert get_feature_count_from_gpkg_contents() is None
+
+    lyr.SyncToDisk()
+
+    assert get_feature_count_from_gpkg_contents() is None
+
+    assert lyr.GetFeatureCount() == 2, "delete feature did not delete"
+
+    assert get_feature_count_from_gpkg_contents() == 2
+
+    # Test upserting a non-existing feature
+    assert (
+        lyr.UpsertFeature(feat) == ogr.OGRERR_NONE
+    ), "cannot upsert non-existing feature"
+    assert feat.GetFID() == fid
+
+    assert get_feature_count_from_gpkg_contents() == 3
+
+    assert lyr.GetFeatureCount() == 3, "upsert failed to add non-existing feature"
+
+    lyr.SyncToDisk()
+
+    assert get_feature_count_from_gpkg_contents() == 3
 
     # Test updating non-existing feature
     feat.SetFID(-10)
@@ -2952,6 +3023,14 @@ def test_ogr_gpkg_34():
     ds.ExecuteSQL(
         "INSERT INTO gpkg_data_columns VALUES('weird''layer\"name', 'foo', 'foo_constraints', NULL, NULL, NULL, NULL)"
     )
+
+    # QGIS layer_styles extension: https://github.com/pka/qgpkg/blob/master/qgis_geopackage_extension.md
+    ds.ExecuteSQL(
+        """CREATE TABLE "layer_styles" ( "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "f_table_catalog" TEXT(256), "f_table_schema" TEXT(256), "f_table_name" TEXT(256), "f_geometry_column" TEXT(256), "styleName" TEXT(30), "styleQML" TEXT, "styleSLD" TEXT, "useAsDefault" BOOLEAN, "description" TEXT, "owner" TEXT(30), "ui" TEXT(30), "update_time" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')))"""
+    )
+    ds.ExecuteSQL(
+        "INSERT INTO layer_styles VALUES(1, NULL, NULL, 'weird''layer\"name', 'geom', 'styleName', 'styleQML', 'styleSLD', 0, 'description', 'owner', 'ui', NULL)"
+    )
     ds = None
 
     # Check that there are reference to the layer
@@ -2995,6 +3074,8 @@ def test_ogr_gpkg_34():
     layer_name = new_layer_name
 
     ds = ogr.Open(dbname, update=1)
+    # currently we don't suppress rows from layer_styles
+    ds.ExecuteSQL("DELETE FROM layer_styles")
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds.ExecuteSQL("DELLAYER:does_not_exist")
@@ -3732,10 +3813,24 @@ def test_ogr_gpkg_42():
 
     assert foo_has_trigger(ds)
 
-    assert get_feature_count_from_gpkg_contents(ds) is None
+    assert get_feature_count_from_gpkg_contents(ds) == 5
 
     fc = lyr.GetFeatureCount()
     assert fc == 5
+
+    assert get_feature_count_from_gpkg_contents(ds) == 5
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    assert get_feature_count_from_gpkg_contents(ds) is None
+    assert lyr.SyncToDisk() == ogr.OGRERR_NONE
+
+    assert get_feature_count_from_gpkg_contents(ds) == 6
+
+    assert lyr.DeleteFeature(f.GetFID()) == ogr.OGRERR_NONE
+    assert get_feature_count_from_gpkg_contents(ds) is None
+
+    ds.ExecuteSQL("INSERT OR REPLACE INTO foo (fid) VALUES (1)")
 
     assert get_feature_count_from_gpkg_contents(ds) == 5
 
@@ -6104,6 +6199,12 @@ def test_ogr_gpkg_crs_coordinate_epoch():
 
     filename = "/vsimem/test_ogr_gpkg_crs_coordinate_epoch.gpkg"
     ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("+proj=longlat +ellps=GRS80 +towgs84=0,0,0")
+    srs.SetCoordinateEpoch(2021.3)
+    ds.CreateLayer("lyr_with_coordinate_epoch_unknown_srs", srs=srs)
+
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(7665)  # WGS 84 (G1762) (3D)
     srs.SetCoordinateEpoch(2021.3)
@@ -6126,7 +6227,7 @@ def test_ogr_gpkg_crs_coordinate_epoch():
     ds = ogr.Open(filename)
 
     sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_spatial_ref_sys ORDER BY srs_id")
-    assert sql_lyr.GetFeatureCount() == 6
+    assert sql_lyr.GetFeatureCount() == 7
 
     sql_lyr.GetNextFeature()
     sql_lyr.GetNextFeature()
@@ -6148,8 +6249,8 @@ def test_ogr_gpkg_crs_coordinate_epoch():
     f = sql_lyr.GetNextFeature()
     assert f
     assert f["srs_id"] == 100000
-    assert f["organization"] == "EPSG"
-    assert f["organization_coordsys_id"] == 7665
+    assert f["organization"] == "NONE"
+    assert f["organization_coordsys_id"] == 100000
     assert f["epoch"] == 2021.3
 
     f = sql_lyr.GetNextFeature()
@@ -6157,8 +6258,19 @@ def test_ogr_gpkg_crs_coordinate_epoch():
     assert f["srs_id"] == 100001
     assert f["organization"] == "EPSG"
     assert f["organization_coordsys_id"] == 7665
+    assert f["epoch"] == 2021.3
+
+    f = sql_lyr.GetNextFeature()
+    assert f
+    assert f["srs_id"] == 100002
+    assert f["organization"] == "EPSG"
+    assert f["organization_coordsys_id"] == 7665
     assert f["epoch"] == 2021.2
     ds.ReleaseResultSet(sql_lyr)
+
+    lyr = ds.GetLayerByName("lyr_with_coordinate_epoch_unknown_srs")
+    srs = lyr.GetSpatialRef()
+    assert srs.GetCoordinateEpoch() == 2021.3
 
     lyr = ds.GetLayerByName("lyr_with_coordinate_epoch")
     srs = lyr.GetSpatialRef()
@@ -6424,16 +6536,10 @@ def test_ogr_gpkg_alter_geom_field_defn():
     lyr.CreateFeature(f)
     f = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(f)
-
-    sql_lyr = ds.ExecuteSQL("SELECT sqlite_version()")
-    f = sql_lyr.GetNextFeature()
-    version = f.GetField(0)
-    ds.ReleaseResultSet(sql_lyr)
-
     ds = None
 
     # Test renaming column (only supported for SQLite >= 3.26)
-    if tuple([int(x) for x in version.split(".")[0:2]]) >= (3, 26):
+    if get_sqlite_version() >= (3, 26, 0):
         ds = ogr.Open(filename, update=1)
         lyr = ds.GetLayer(0)
         assert lyr.TestCapability(ogr.OLCAlterGeomFieldDefn)
@@ -6615,6 +6721,16 @@ def test_ogr_gpkg_arrow_stream_numpy():
     lyr.CreateFeature(f3)
 
     ds = None
+
+    ds = ogr.Open("/vsimem/test.gpkg")
+    lyr = ds.GetLayer(0)
+    stream = lyr.GetArrowStream()
+    array = stream.GetNextRecordBatch()
+    assert array.GetChildrenCount() == 12
+    del array
+    del stream
+    ds = None
+
     ds = ogr.Open("/vsimem/test.gpkg")
     lyr = ds.GetLayer(0)
 
@@ -6630,61 +6746,81 @@ def test_ogr_gpkg_arrow_stream_numpy():
         batches = [batch for batch in stream]
         # print(batches)
 
-    stream = lyr.GetArrowStreamAsNumPy(
-        options=["USE_MASKED_ARRAYS=NO", "MAX_FEATURES_IN_BATCH=2"]
-    )
-    batches = [batch for batch in stream]
-    assert len(batches) == 2
-    batch = batches[0]
+    for i in range(2):
+        with gdaltest.config_options(
+            {"OGR_GPKG_STREAM_BASE_IMPL": "YES"} if i == 1 else {}
+        ):
+            stream = lyr.GetArrowStreamAsNumPy(
+                options=["USE_MASKED_ARRAYS=NO", "MAX_FEATURES_IN_BATCH=2"]
+            )
+            batches = [batch for batch in stream]
+            assert len(batches) == 2
+            batch = batches[0]
 
-    assert batch.keys() == {
-        "fid",
-        "str",
-        "bool",
-        "int16",
-        "int32",
-        "int64",
-        "float32",
-        "float64",
-        "date",
-        "datetime",
-        "binary",
-        "geom",
-    }
+            assert batch.keys() == {
+                "fid",
+                "str",
+                "bool",
+                "int16",
+                "int32",
+                "int64",
+                "float32",
+                "float64",
+                "date",
+                "datetime",
+                "binary",
+                "geom",
+            }
 
-    assert batch["fid"][0] == 1
-    assert len(batch["fid"]) == 2
-    for fieldname in ("bool", "int16", "int32", "int64", "float32", "float64"):
-        assert batch[fieldname][0] == f.GetField(fieldname)
-    assert batch["str"][0] == f.GetField("str").encode("utf-8")
-    assert batch["date"][0] == numpy.datetime64("2022-05-31")
-    assert batch["datetime"][0] == numpy.datetime64("2022-05-31T12:34:56.789")
-    assert bytes(batch["binary"][0]) == b"\xDE\xAD"
-    assert len(bytes(batch["geom"][0])) == 21
+            assert batch["fid"][0] == 1
+            assert len(batch["fid"]) == 2
+            for fieldname in ("bool", "int16", "int32", "int64", "float32", "float64"):
+                assert batch[fieldname][0] == f.GetField(fieldname)
+            assert batch["str"][0] == f.GetField("str").encode("utf-8")
+            assert batch["date"][0] == numpy.datetime64("2022-05-31")
+            assert batch["datetime"][0] == numpy.datetime64("2022-05-31T12:34:56.789")
+            assert bytes(batch["binary"][0]) == b"\xDE\xAD"
+            assert len(bytes(batch["geom"][0])) == 21
 
-    assert batch["fid"][1] == 2
-    assert batch["bool"][1] == False
-    assert batch["geom"][1] is None
+            assert batch["fid"][1] == 2
+            assert batch["bool"][1] == False
+            assert batch["geom"][1] is None
 
-    batch = batches[1]
-    assert batch.keys() == {
-        "fid",
-        "str",
-        "bool",
-        "int16",
-        "int32",
-        "int64",
-        "float32",
-        "float64",
-        "date",
-        "datetime",
-        "binary",
-        "geom",
-    }
+            batch = batches[1]
+            assert batch.keys() == {
+                "fid",
+                "str",
+                "bool",
+                "int16",
+                "int32",
+                "int64",
+                "float32",
+                "float64",
+                "date",
+                "datetime",
+                "binary",
+                "geom",
+            }
 
-    assert batch["fid"][0] == 3
-    assert batch["int16"][0] == 123
-    assert len(batch["fid"]) == 1
+            assert batch["fid"][0] == 3
+            assert batch["int16"][0] == 123
+            assert len(batch["fid"]) == 1
+
+    with lyr.GetArrowStreamAsNumPy(options=["MAX_FEATURES_IN_BATCH=1"]) as stream:
+        batches = [batch for batch in stream]
+        assert len(batches) == 3
+        assert len(batches[0]["fid"]) == 1
+        assert batches[0]["fid"][0] == 1
+        assert len(batches[1]["fid"]) == 1
+        assert batches[1]["fid"][0] == 2
+        assert len(batches[2]["fid"]) == 1
+        assert batches[2]["fid"][0] == 3
+
+    for i in range(2):
+        with lyr.GetArrowStreamAsNumPy(options=["MAX_FEATURES_IN_BATCH=1"]) as stream:
+            batch = stream.GetNextRecordBatch()
+            assert len(batch["fid"]) == 1, i
+            assert batch["fid"][0] == 1, i
 
     # Test attribute filter
     lyr.SetAttributeFilter("int16 = 123")
@@ -6694,6 +6830,17 @@ def test_ogr_gpkg_arrow_stream_numpy():
     assert len(batches) == 1
     assert len(batches[0]["fid"]) == 1
     assert batches[0]["fid"][0] == 3
+
+    for i in range(2):
+        lyr.SetAttributeFilter("1 = 1")
+        with lyr.GetArrowStreamAsNumPy(options=["MAX_FEATURES_IN_BATCH=1"]) as stream:
+            batch = stream.GetNextRecordBatch()
+            assert len(batch["fid"]) == 1, i
+            assert batch["fid"][0] == 1, i
+            batch = stream.GetNextRecordBatch()
+            assert len(batch["fid"]) == 1, i
+            assert batch["fid"][0] == 2, i
+        lyr.SetAttributeFilter(None)
 
     # Test spatial filter
     lyr.SetSpatialFilterRect(0, 0, 10, 10)
@@ -6725,3 +6872,449 @@ def test_ogr_gpkg_arrow_stream_numpy():
     ds = None
 
     ogr.GetDriverByName("GPKG").DeleteDataSource("/vsimem/test.gpkg")
+
+
+###############################################################################
+# Test opening a file in WAL mode on a read-only storage
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="Incorrect platform")
+def test_ogr_gpkg_immutable():
+
+    if os.getuid() == 0:
+        pytest.skip("running as root... skipping")
+
+    try:
+        os.mkdir("tmp/read_only_test_ogr_gpkg_immutable", 0o755)
+
+        ds = ogr.GetDriverByName("GPKG").CreateDataSource(
+            "tmp/read_only_test_ogr_gpkg_immutable/test.gpkg"
+        )
+        ds.CreateLayer("foo")
+        ds.ExecuteSQL("PRAGMA journal_mode = WAL")
+        ds = None
+
+        # Turn directory in read-only mode
+        os.chmod("tmp/read_only_test_ogr_gpkg_immutable", 0o555)
+
+        with gdaltest.error_handler():
+            assert (
+                gdal.OpenEx(
+                    "tmp/read_only_test_ogr_gpkg_immutable/test.gpkg",
+                    gdal.OF_VECTOR | gdal.OF_UPDATE,
+                )
+                is None
+            )
+            assert (
+                gdal.OpenEx(
+                    "tmp/read_only_test_ogr_gpkg_immutable/test.gpkg",
+                    gdal.OF_VECTOR,
+                    open_options=["IMMUTABLE=NO"],
+                )
+                is None
+            )
+
+        gdal.ErrorReset()
+        assert (
+            gdal.OpenEx(
+                "tmp/read_only_test_ogr_gpkg_immutable/test.gpkg",
+                gdal.OF_VECTOR,
+                open_options=["IMMUTABLE=YES"],
+            )
+            is not None
+        )
+        assert gdal.GetLastErrorMsg() == ""
+
+        gdal.ErrorReset()
+        with gdaltest.error_handler():
+            assert (
+                ogr.Open("tmp/read_only_test_ogr_gpkg_immutable/test.gpkg") is not None
+            )
+        assert gdal.GetLastErrorMsg() != ""
+
+    finally:
+        os.chmod("tmp/read_only_test_ogr_gpkg_immutable", 0o755)
+        os.unlink("tmp/read_only_test_ogr_gpkg_immutable/test.gpkg")
+        os.rmdir("tmp/read_only_test_ogr_gpkg_immutable")
+
+
+###############################################################################
+
+
+@pytest.mark.skipif(
+    get_sqlite_version() < (3, 24, 0),
+    reason="sqlite >= 3.24 needed",
+)
+@pytest.mark.parametrize("with_geom", [True, False])
+def test_ogr_gpkg_upsert_without_fid(with_geom):
+
+    filename = "/vsimem/test_ogr_gpkg_upsert_without_fid.gpkg"
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    lyr = ds.CreateLayer(
+        "foo", geom_type=(ogr.wkbUnknown if with_geom else ogr.wkbNone)
+    )
+    assert lyr.CreateField(ogr.FieldDefn("other", ogr.OFTString)) == ogr.OGRERR_NONE
+    unique_field = ogr.FieldDefn("unique_field", ogr.OFTString)
+    unique_field.SetUnique(True)
+    assert lyr.CreateField(unique_field) == ogr.OGRERR_NONE
+    for i in range(5):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetField("unique_field", i + 1)
+        if i < 4 and with_geom:
+            f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (%d %d)" % (i, i)))
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    ds = None
+
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("unique_field", "2")
+    f.SetField("other", "foo")
+    if with_geom:
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (10 10)"))
+    assert lyr.UpsertFeature(f) == ogr.OGRERR_NONE
+
+    if get_sqlite_version() >= (3, 35, 0):
+        assert f.GetFID() == 2
+
+    if with_geom:
+        sql_lyr = ds.ExecuteSQL(
+            "SELECT 1 FROM sqlite_master WHERE name = 'rtree_foo_geom_update1'",
+            dialect="DEBUG",
+        )
+        assert sql_lyr.GetFeatureCount() == 0
+        ds.ReleaseResultSet(sql_lyr)
+
+        sql_lyr = ds.ExecuteSQL(
+            "SELECT 1 FROM sqlite_master WHERE name = 'rtree_foo_geom_update1_old_geom_null'",
+            dialect="DEBUG",
+        )
+        assert sql_lyr.GetFeatureCount() == 1
+        ds.ReleaseResultSet(sql_lyr)
+
+        sql_lyr = ds.ExecuteSQL(
+            "SELECT 1 FROM sqlite_master WHERE name = 'rtree_foo_geom_update1_old_geom_notnull'",
+            dialect="DEBUG",
+        )
+        assert sql_lyr.GetFeatureCount() == 1
+        ds.ReleaseResultSet(sql_lyr)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("unique_field", "3")
+    assert lyr.UpsertFeature(f) == ogr.OGRERR_NONE
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("unique_field", "4")
+    if with_geom:
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (20 20)"))
+    assert lyr.UpsertFeature(f) == ogr.OGRERR_NONE
+
+    ds = None
+
+    assert validate(filename)
+
+    ds = ogr.Open(filename)
+
+    if with_geom:
+        sql_lyr = ds.ExecuteSQL(
+            "SELECT 1 FROM sqlite_master WHERE name = 'rtree_foo_geom_update1'",
+            dialect="DEBUG",
+        )
+        assert sql_lyr.GetFeatureCount() == 1
+        ds.ReleaseResultSet(sql_lyr)
+
+        sql_lyr = ds.ExecuteSQL(
+            "SELECT 1 FROM sqlite_master WHERE name = 'rtree_foo_geom_update1_old_geom_null'",
+            dialect="DEBUG",
+        )
+        assert sql_lyr.GetFeatureCount() == 0
+        ds.ReleaseResultSet(sql_lyr)
+
+        sql_lyr = ds.ExecuteSQL(
+            "SELECT 1 FROM sqlite_master WHERE name = 'rtree_foo_geom_update1_old_geom_notnull'",
+            dialect="DEBUG",
+        )
+        assert sql_lyr.GetFeatureCount() == 0
+        ds.ReleaseResultSet(sql_lyr)
+
+    lyr = ds.GetLayer(0)
+
+    f = lyr.GetFeature(2)
+    assert f["unique_field"] == "2"
+    assert f["other"] == "foo"
+    if with_geom:
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (10 10)"
+
+    f = lyr.GetFeature(3)
+    assert f.GetGeometryRef() is None
+
+    f = lyr.GetFeature(4)
+    if with_geom:
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (20 20)"
+
+    ds = None
+    gdal.Unlink(filename)
+
+
+###############################################################################
+
+
+def test_ogr_gpkg_get_geometry_types():
+    """Test Layer.GetGeometryTypes()"""
+
+    filename = "/vsimem/test_ogr_gpkg_get_geometry_types.gpkg"
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
+    lyr = ds.CreateLayer("layer")
+
+    assert lyr.GetGeometryTypes() == {}
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    assert lyr.GetGeometryTypes() == {ogr.wkbNone: 1}
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    assert lyr.GetGeometryTypes(callback=lambda x, y, z: 1) == {ogr.wkbNone: 2}
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT EMPTY"))
+    lyr.CreateFeature(f)
+    assert lyr.GetGeometryTypes() == {ogr.wkbNone: 2, ogr.wkbPoint: 1}
+    lyr.SetAttributeFilter("1")
+    assert lyr.GetGeometryTypes() == {ogr.wkbNone: 2, ogr.wkbPoint: 1}
+    lyr.SetAttributeFilter("0")
+    assert lyr.GetGeometryTypes() == {}
+    lyr.SetAttributeFilter(None)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON EMPTY"))
+    lyr.CreateFeature(f)
+    assert lyr.GetGeometryTypes() == {
+        ogr.wkbNone: 2,
+        ogr.wkbPoint: 1,
+        ogr.wkbPolygon: 1,
+    }
+    assert lyr.GetGeometryTypes(flags=ogr.GGT_STOP_IF_MIXED) == {
+        ogr.wkbNone: 2,
+        ogr.wkbPoint: 1,
+        ogr.wkbPolygon: 1,
+    }
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING (0 0,1 1)"))
+    lyr.CreateFeature(f)
+    assert lyr.GetGeometryTypes() == {
+        ogr.wkbNone: 2,
+        ogr.wkbPoint: 1,
+        ogr.wkbPolygon: 1,
+        ogr.wkbLineString: 1,
+    }
+    assert lyr.GetGeometryTypes(geom_field=0, flags=ogr.GGT_STOP_IF_MIXED) == {
+        ogr.wkbNone: 2,
+        ogr.wkbPoint: 1,
+        ogr.wkbPolygon: 1,
+    }
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "GEOMETRYCOLLECTION Z(TIN Z(((0 0 0,0 1 0,1 1 0,0 0 0))))"
+        )
+    )
+    lyr.CreateFeature(f)
+    assert lyr.GetGeometryTypes() == {
+        ogr.wkbNone: 2,
+        ogr.wkbPoint: 1,
+        ogr.wkbPolygon: 1,
+        ogr.wkbLineString: 1,
+        ogr.wkbGeometryCollection25D: 1,
+    }
+    assert lyr.GetGeometryTypes(flags=ogr.GGT_GEOMCOLLECTIONZ_TINZ) == {
+        ogr.wkbNone: 2,
+        ogr.wkbPoint: 1,
+        ogr.wkbPolygon: 1,
+        ogr.wkbLineString: 1,
+        ogr.wkbTINZ: 1,
+    }
+
+    with gdaltest.error_handler():
+        with pytest.raises(Exception):
+            lyr.GetGeometryTypes(geom_field=1)
+
+    lyr.StartTransaction()
+    for _ in range(
+        1000
+    ):  # 1000 because COUNT_VM_INSTRUCTIONS = 1000 in OGRGeoPackageTableLayer::GetGeometryTypes()
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT EMPTY"))
+        lyr.CreateFeature(f)
+    lyr.CommitTransaction()
+    with gdaltest.error_handler():
+        with pytest.raises(Exception):
+            lyr.GetGeometryTypes(callback=lambda x, y, z: 0)
+
+    assert lyr.GetGeometryTypes() == {
+        ogr.wkbNone: 2,
+        ogr.wkbPoint: 1001,
+        ogr.wkbPolygon: 1,
+        ogr.wkbLineString: 1,
+        ogr.wkbGeometryCollection25D: 1,
+    }
+
+    ds = None
+    gdal.Unlink(filename)
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "/vsimem/test_ogr_gpkg_background_rtree_build.gpkg",
+        "tmp/test_ogr_gpkg_background_rtree_build.gpkg",
+    ],
+)
+def test_ogr_gpkg_background_rtree_build(filename):
+
+    # Batch insertion only
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    with gdaltest.config_option("OGR_GPKG_THREADED_RTREE_AT_FIRST_FEATURE", "YES"):
+        lyr = ds.CreateLayer("foo")
+    for i in range(1000):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(%d %d)" % (i, i)))
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    ds = None
+    assert gdal.VSIStatL(filename + ".tmp_rtree_foo.db") is None
+
+    ds = ogr.Open(filename)
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM rtree_foo_geom")
+    assert sql_lyr.GetFeatureCount() == 1000
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
+    gdal.Unlink(filename)
+
+    # Test SetFeature() after batch insertion
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    with gdaltest.config_option("OGR_GPKG_THREADED_RTREE_AT_FIRST_FEATURE", "YES"):
+        lyr = ds.CreateLayer("footoooooooooooooooooooooooooooooooooooooooooolong")
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(0 0)"))
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(1 1)"))
+    assert lyr.SetFeature(f) == ogr.OGRERR_NONE
+    ds = None
+
+    ds = ogr.Open(filename)
+    sql_lyr = ds.ExecuteSQL(
+        "SELECT * FROM rtree_footoooooooooooooooooooooooooooooooooooooooooolong_geom"
+    )
+    assert sql_lyr.GetFeatureCount() == 1
+    ds.ReleaseResultSet(sql_lyr)
+    lyr = ds.GetLayer(0)
+    lyr.SetSpatialFilterRect(0.5, 0.5, 1.5, 1.5)
+    assert lyr.GetFeatureCount() == 1
+    ds = None
+
+    gdal.Unlink(filename)
+
+    # Test DeleteFeature() after batch insertion
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    with gdaltest.config_option("OGR_GPKG_THREADED_RTREE_AT_FIRST_FEATURE", "YES"):
+        lyr = ds.CreateLayer("foo with space")
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(0 0)"))
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(1 1)"))
+    assert lyr.DeleteFeature(f.GetFID()) == ogr.OGRERR_NONE
+    ds = None
+
+    ds = ogr.Open(filename)
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM "rtree_foo with space_geom"')
+    assert sql_lyr.GetFeatureCount() == 0
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
+    # Test RollbackTransaction() after batch insertion
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    with gdaltest.config_option("OGR_GPKG_THREADED_RTREE_AT_FIRST_FEATURE", "YES"):
+        lyr = ds.CreateLayer("foo")
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(0 0)"))
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    lyr.StartTransaction()
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(1 1)"))
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    lyr.RollbackTransaction()
+    ds = None
+
+    ds = ogr.Open(filename)
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM rtree_foo_geom")
+    assert sql_lyr.GetFeatureCount() == 1
+    ds.ReleaseResultSet(sql_lyr)
+    lyr = ds.GetLayer(0)
+    lyr.SetSpatialFilterRect(-0.5, -0.5, 0.5, 0.5)
+    assert lyr.GetFeatureCount() == 1
+    ds = None
+
+    gdal.Unlink(filename)
+
+
+###############################################################################
+# Test ST_Area()
+
+
+@pytest.mark.parametrize(
+    "wkt_or_binary,area",
+    [
+        (None, None),
+        ("X'0001'", None),
+        ("POINT EMPTY", 0),
+        ("LINESTRING(1 2,3 4)", 0),
+        ("POLYGON EMPTY", 0),
+        ("POLYGON ((0 0,0 1,1 1,0 0))", 0.5),
+        ("POLYGON Z ((0 0 100,0 1 100,1 1 100,0 0 100))", 0.5),
+        ("POLYGON M ((0 0 100,0 1 100,1 1 100,0 0 100))", 0.5),
+        ("POLYGON ZM ((0 0 100 200,0 1 100 200,1 1 100 200,0 0 100 200))", 0.5),
+        (
+            "POLYGON ((0 0,0 1,1 1,1 0,0 0),(0.25 0.25,0.25 0.75,0.75 0.75,0.75 0.25,0.25 0.25))",
+            0.75,
+        ),
+        ("MULTIPOLYGON EMPTY", 0),
+        ("MULTIPOLYGON (((0 0,0 1,1 1,0 0)))", 0.5),
+        ("MULTIPOLYGON (((0 0,0 1,1 1,0 0)),((10 0,10 1,11 1,10 0)))", 1),
+        ("MULTIPOLYGON Z (((0 0 100,0 1 100,1 1 100,0 0 100)))", 0.5),
+        ("MULTIPOLYGON M (((0 0 100,0 1 100,1 1 100,0 0 100)))", 0.5),
+        ("MULTIPOLYGON ZM (((0 0 100 200,0 1 100 200,1 1 100 200,0 0 100 200)))", 0.5),
+        ("CURVEPOLYGON ((0 0,0 1,1 1,0 0))", 0.5),
+        ("MULTISURFACE (((0 0,0 1,1 1,0 0)))", 0.5),
+        # Below is Spatialite encoding of POLYGON((0 0,0 1,1 1,0 0))
+        (
+            "X'00010000000000000000000000000000000000000000000000000000f03f000000000000f03f7c030000000100000004000000000000000000000000000000000000000000000000000000000000000000f03f000000000000f03f000000000000f03f00000000000000000000000000000000fe'",
+            0.5,
+        ),
+    ],
+)
+def test_ogr_gpkg_st_area(wkt_or_binary, area):
+
+    filename = "/vsimem/test_ogr_gpkg_st_area.gpkg"
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
+    lyr = ds.CreateLayer("test")
+    if wkt_or_binary and wkt_or_binary.startswith("X'"):
+        sql = "INSERT INTO test(geom) VALUES (" + wkt_or_binary + ")"
+        ds.ExecuteSQL(sql)
+    else:
+        f = ogr.Feature(lyr.GetLayerDefn())
+        if wkt_or_binary:
+            f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt_or_binary))
+        lyr.CreateFeature(f)
+    sql_lyr = ds.ExecuteSQL("SELECT ST_Area(geom) FROM test")
+    f = sql_lyr.GetNextFeature()
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+    gdal.Unlink(filename)
+    assert f.GetField(0) == area

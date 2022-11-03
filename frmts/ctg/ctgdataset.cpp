@@ -30,7 +30,6 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$")
 
 constexpr int HEADER_LINE_COUNT = 5;
 
@@ -115,7 +114,7 @@ class CTGDataset final: public GDALPamDataset
     VSILFILE   *fp;
 
     int         nNWEasting, nNWNorthing, nCellSize, nUTMZone;
-    char       *pszProjection;
+    OGRSpatialReference m_oSRS{};
 
     int         bHasReadImagery;
     GByte      *pabyImage;
@@ -130,10 +129,7 @@ class CTGDataset final: public GDALPamDataset
     ~CTGDataset() override;
 
     CPLErr GetGeoTransform( double * ) override;
-    const char* _GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override { return &m_oSRS; }
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -255,10 +251,11 @@ CTGDataset::CTGDataset() :
     nNWNorthing(0),
     nCellSize(0),
     nUTMZone(0),
-    pszProjection(nullptr),
     bHasReadImagery(FALSE),
     pabyImage(nullptr)
-{}
+{
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+}
 
 /************************************************************************/
 /*                            ~CTGDataset()                            */
@@ -267,7 +264,6 @@ CTGDataset::CTGDataset() :
 CTGDataset::~CTGDataset()
 
 {
-    CPLFree(pszProjection);
     CPLFree(pabyImage);
     if( fp != nullptr )
         VSIFCloseL(fp);
@@ -497,9 +493,7 @@ GDALDataset *CTGDataset::Open( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
-    OGRSpatialReference oSRS;
-    oSRS.importFromEPSG(32600 + poDS->nUTMZone);
-    oSRS.exportToWkt(&poDS->pszProjection);
+    poDS->m_oSRS.importFromEPSG(32600 + poDS->nUTMZone);
 
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
     {
@@ -557,16 +551,6 @@ CPLErr CTGDataset::GetGeoTransform( double * padfTransform )
     padfTransform[5] = -nCellSize;
 
     return CE_None;
-}
-
-/************************************************************************/
-/*                         GetProjectionRef()                           */
-/************************************************************************/
-
-const char* CTGDataset::_GetProjectionRef()
-
-{
-    return pszProjection;
 }
 
 /************************************************************************/

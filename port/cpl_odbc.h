@@ -174,11 +174,14 @@ class CPL_DLL CPLODBCSession {
 
     CPL_DISALLOW_COPY_ASSIGN(CPLODBCSession)
 
+/*! @cond Doxygen_Suppress */
+  protected:
     CPLString m_osLastError{};
     HENV      m_hEnv = nullptr;
     HDBC      m_hDBC = nullptr;
     int       m_bInTransaction = false;
     int       m_bAutoCommit = true;
+/*! @endcond */
 
   public:
     CPLODBCSession();
@@ -225,6 +228,8 @@ class CPL_DLL CPLODBCStatement {
 
     CPL_DISALLOW_COPY_ASSIGN(CPLODBCStatement)
 
+/*! @cond Doxygen_Suppress */
+  protected:
     int m_nFlags = 0;
 
     CPLODBCSession     *m_poSession = nullptr;
@@ -248,6 +253,7 @@ class CPL_DLL CPLODBCStatement {
     char          *m_pszStatement = nullptr;
     size_t         m_nStatementMax = 0;
     size_t         m_nStatementLen = 0;
+/*! @endcond */
 
   public:
 

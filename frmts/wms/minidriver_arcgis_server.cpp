@@ -32,7 +32,6 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 WMSMiniDriver_AGS::WMSMiniDriver_AGS() {}
 
@@ -81,13 +80,13 @@ CPLErr WMSMiniDriver_AGS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papsz
     {
         if( STARTS_WITH_CI(irs, "EPSG:") ) // If we have EPSG code just convert it to WKT.
         {
-            m_projection_wkt = ProjToWKT(irs);
+            m_oSRS = ProjToSRS(irs);
             m_irs = irs + 5;
         }
         else // If we have AGS code - try if it's EPSG.
         {
             m_irs = irs;
-            m_projection_wkt = ProjToWKT("EPSG:" + m_irs);
+            m_oSRS = ProjToSRS("EPSG:" + m_irs);
         }
         // TODO: If we have AGS JSON.
     }

@@ -150,7 +150,7 @@ class GeoRasterDataset final: public GDALDataset
     GeoRasterWrapper*   poGeoRaster;
     bool                bGeoTransform;
     bool                bForcedSRID;
-    char*               pszProjection;
+    mutable OGRSpatialReference m_oSRS{};
     char**              papszSubdatasets;
     double              adfGeoTransform[6];
     GeoRasterRasterBand*
@@ -193,14 +193,8 @@ public:
                                     void* pProgressData );
     CPLErr GetGeoTransform( double* padfTransform ) override;
     CPLErr SetGeoTransform( double* padfTransform ) override;
-    const char *_GetProjectionRef() override;
-    CPLErr _SetProjection( const char* pszProjString ) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     char **GetMetadataDomainList() override;
     char **GetMetadata( const char* pszDomain ) override;
@@ -214,31 +208,22 @@ public:
                       GSpacing nBandSpace,
                       GDALRasterIOExtraArg* psExtraArg ) override;
     int GetGCPCount() override;
-    const char* _GetGCPProjection() override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override {
-        return GetGCPSpatialRefFromOldGetGCPProjection();
-    }
+    const OGRSpatialReference* GetGCPSpatialRef() const override;
     const GDAL_GCP*
                 GetGCPs() override;
-    CPLErr _SetGCPs(
-               int nGCPCount,
-               const GDAL_GCP *pasGCPList,
-               const char *pszGCPProjection ) override;
-    using GDALDataset::SetGCPs;
     CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                    const OGRSpatialReference* poSRS ) override {
-        return OldSetGCPsFromNew(nGCPCount, pasGCPList, poSRS);
-    }
+                    const OGRSpatialReference* poSRS ) override;
 
 
     CPLErr IBuildOverviews(
                const char* pszResampling,
                int nOverviews,
-               int* panOverviewList,
+               const int* panOverviewList,
                int nListBandsover,
-               int* panBandList,
+               const int* panBandList,
                GDALProgressFunc pfnProgress,
-               void* pProgresoversData ) override;
+               void* pProgresoversData,
+               CSLConstList papszOptions) override;
     CPLErr CreateMaskBand( int nFlags ) override;
     // cppcheck-suppress functionStatic
     OGRErr StartTransaction(int /* bForce */ =FALSE) override

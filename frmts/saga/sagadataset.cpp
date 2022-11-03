@@ -37,7 +37,6 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$")
 
 #ifndef INT_MAX
 # define INT_MAX 2147483647
@@ -71,7 +70,7 @@ class SAGADataset final: public GDALPamDataset
                                double dfCellsize, double dfNoData,
                                double dfZFactor, bool bTopToBottom );
     VSILFILE *fp;
-    char     *pszProjection;
+    OGRSpatialReference m_oSRS{};
     bool headerDirty = false;
 
   public:
@@ -89,14 +88,8 @@ class SAGADataset final: public GDALPamDataset
                                     GDALProgressFunc pfnProgress,
                                     void *pProgressData );
 
-    virtual const char *_GetProjectionRef(void) override;
-    virtual CPLErr _SetProjection( const char * ) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     virtual char **GetFileList() override;
 
@@ -328,9 +321,10 @@ CPLErr SAGARasterBand::SetNoDataValue(double dfNoData)
 /************************************************************************/
 
 SAGADataset::SAGADataset() :
-    fp(nullptr),
-    pszProjection(CPLStrdup(""))
-{}
+    fp(nullptr)
+{
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+}
 
 SAGADataset::~SAGADataset()
 {
@@ -345,7 +339,6 @@ SAGADataset::~SAGADataset()
                      poGRB->m_Xmin, poGRB->m_Ymin, poGRB->m_Cellsize,
                      poGRB->m_NoData, 1.0, false );
     }
-    CPLFree( pszProjection );
     FlushCache(true);
     if( fp != nullptr )
         VSIFCloseL( fp );
@@ -380,42 +373,39 @@ char** SAGADataset::GetFileList()
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *SAGADataset::_GetProjectionRef()
+const OGRSpatialReference *SAGADataset::GetSpatialRef() const
 
 {
-    if (pszProjection && strlen(pszProjection) > 0)
-        return pszProjection;
+    if (!m_oSRS.IsEmpty() )
+        return &m_oSRS;
 
-    return GDALPamDataset::_GetProjectionRef();
+    return GDALPamDataset::GetSpatialRef();
 }
 
 /************************************************************************/
-/*                           SetProjection()                            */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
-CPLErr SAGADataset::_SetProjection( const char *pszSRS )
+CPLErr SAGADataset::SetSpatialRef( const OGRSpatialReference* poSRS )
 
 {
 /* -------------------------------------------------------------------- */
 /*      Reset coordinate system on the dataset.                         */
 /* -------------------------------------------------------------------- */
-    CPLFree( pszProjection );
-    pszProjection = CPLStrdup( pszSRS );
-
-    if( strlen(pszSRS) == 0 )
+    m_oSRS.Clear();
+    if( poSRS == nullptr )
         return CE_None;
+    m_oSRS = *poSRS;
 
 /* -------------------------------------------------------------------- */
 /*      Convert to ESRI WKT.                                            */
 /* -------------------------------------------------------------------- */
-    OGRSpatialReference oSRS( pszSRS );
     char *pszESRI_SRS = nullptr;
-
-    oSRS.morphToESRI();
-    oSRS.exportToWkt( &pszESRI_SRS );
+    const char* const apszOptions[] = { "FORMAT=WKT1_ESRI", nullptr };
+    m_oSRS.exportToWkt( &pszESRI_SRS, apszOptions );
 
 /* -------------------------------------------------------------------- */
 /*      Write to .prj file.                                             */
@@ -707,12 +697,7 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
 
         char **papszLines = CSLLoad( pszPrjFilename );
 
-        OGRSpatialReference oSRS;
-        if( oSRS.importFromESRI( papszLines ) == OGRERR_NONE )
-        {
-            CPLFree( poDS->pszProjection );
-            oSRS.exportToWkt( &(poDS->pszProjection) );
-        }
+        poDS->m_oSRS.importFromESRI( papszLines );
 
         CSLDestroy( papszLines );
     }
@@ -803,7 +788,7 @@ CPLErr SAGADataset::SetGeoTransform( double *padfGeoTransform )
     poGRB->m_Ymin = dfMinY;
     poGRB->m_Cellsize = padfGeoTransform[1];
     headerDirty = true;
-    
+
     return CE_None;
 }
 

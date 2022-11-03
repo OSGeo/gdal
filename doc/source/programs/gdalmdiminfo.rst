@@ -19,7 +19,7 @@ Synopsis
 
     gdalmdiminfo [--help-general] [-oo NAME=VALUE]* [-arrayoption NAME=VALUE]*
                  [-detailed] [-nopretty] [-array {array_name}] [-limit {number}]
-                 [-stats] <datasetname>
+                 [-stats] [-if format]* <datasetname>
 
 Description
 -----------
@@ -68,6 +68,9 @@ The following command line parameters can appear in any order
 
     .. versionadded:: 3.2
 
+.. include:: options/if.rst
+
+
 C API
 -----
 
@@ -80,7 +83,7 @@ Examples
 
 .. code-block::
 
-    $ gdalmdiminfo netcdf-4d.nc 
+    $ gdalmdiminfo netcdf-4d.nc
 
 
 .. code-block:: json

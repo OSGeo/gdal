@@ -37,18 +37,15 @@ CPL_C_START
 #include "blx.h"
 CPL_C_END
 
-CPL_CVSID("$Id$")
 
 class BLXDataset final: public GDALPamDataset
 {
     friend class BLXRasterBand;
 
     CPLErr      GetGeoTransform( double * padfTransform ) override;
-    const char *_GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
 
+    OGRSpatialReference m_oSRS{};
     blxcontext_t *blxcontext = nullptr;
 
     bool bIsOverview = false;
@@ -157,7 +154,11 @@ GDALDataset *BLXDataset::Open( GDALOpenInfo * poOpenInfo )
     return poDS;
 }
 
-BLXDataset::BLXDataset() = default;
+BLXDataset::BLXDataset()
+{
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    m_oSRS.importFromWkt(SRS_WKT_WGS84_LAT_LONG);
+}
 
 BLXDataset::~BLXDataset()
 {
@@ -183,13 +184,9 @@ CPLErr BLXDataset::GetGeoTransform( double * padfTransform )
     return CE_None;
 }
 
-const char *BLXDataset::_GetProjectionRef()
+const OGRSpatialReference *BLXDataset::GetSpatialRef() const
 {
-    return
-        "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\","
-        "SPHEROID[\"WGS 84\",6378137,298.257223563]],"
-        "PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],"
-        "AUTHORITY[\"EPSG\",\"4326\"]]";
+    return &m_oSRS;
 }
 
 BLXRasterBand::BLXRasterBand( BLXDataset *poDSIn, int nBandIn,

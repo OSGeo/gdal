@@ -44,7 +44,6 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 
-CPL_CVSID("$Id$")
 
 /*! @cond Doxygen_Suppress */
 
@@ -197,7 +196,7 @@ int GDALJP2Box::ReadBox()
         nDataOffset = nBoxOffset + 16;
     }
 
-    if( nBoxLength == 0 )
+    if( nBoxLength == 0 && m_bAllowGetFileSize )
     {
         if( VSIFSeekL( fpVSIL, 0, SEEK_END ) != 0 )
             return FALSE;
@@ -213,7 +212,7 @@ int GDALJP2Box::ReadBox()
         nDataOffset += 16;
     }
 
-    if( GetDataLength() < 0 )
+    if( m_bAllowGetFileSize && GetDataLength() < 0 )
     {
         CPLDebug("GDALJP2", "Invalid length for box %s", szBoxType);
         return FALSE;

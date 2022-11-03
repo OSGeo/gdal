@@ -3281,41 +3281,27 @@ class NUMPYDataset : public GDALDataset
 
     int           bValidGeoTransform;
     double	  adfGeoTransform[6];
-    char	  *pszProjection;
+    OGRSpatialReference m_oSRS{};
 
     int           nGCPCount;
     GDAL_GCP      *pasGCPList;
-    char          *pszGCPProjection;
+    OGRSpatialReference m_oGCPSRS{};;
 
   public:
                  NUMPYDataset();
                  ~NUMPYDataset();
 
-    virtual const char *_GetProjectionRef(void) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
-    virtual CPLErr _SetProjection( const char * ) override;
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     virtual CPLErr GetGeoTransform( double * ) override;
     virtual CPLErr SetGeoTransform( double * ) override;
 
     virtual int    GetGCPCount() override;
-    virtual const char *_GetGCPProjection() override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override {
-        return GetGCPSpatialRefFromOldGetGCPProjection();
-    }
+    const OGRSpatialReference* GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
-    virtual CPLErr _SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                            const char *pszGCPProjection ) override;
-    using GDALDataset::SetGCPs;
     CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                    const OGRSpatialReference* poSRS ) override {
-        return OldSetGCPsFromNew(nGCPCount, pasGCPList, poSRS);
-    }
+                    const OGRSpatialReference* poSRS ) override;
 
     static GDALDataset *Open( PyArrayObject *psArray, bool binterleave = true );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -3356,7 +3342,6 @@ NUMPYDataset::NUMPYDataset()
 
 {
     psArray = NULL;
-    pszProjection = CPLStrdup("");
     bValidGeoTransform = FALSE;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -3367,7 +3352,6 @@ NUMPYDataset::NUMPYDataset()
 
     nGCPCount = 0;
     pasGCPList = NULL;
-    pszGCPProjection = CPLStrdup("");
 }
 
 /************************************************************************/
@@ -3377,9 +3361,6 @@ NUMPYDataset::NUMPYDataset()
 NUMPYDataset::~NUMPYDataset()
 
 {
-    CPLFree( pszProjection );
-
-    CPLFree( pszGCPProjection );
     if( nGCPCount > 0 )
     {
         GDALDeinitGCPs( nGCPCount, pasGCPList );
@@ -3397,24 +3378,25 @@ NUMPYDataset::~NUMPYDataset()
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *NUMPYDataset::_GetProjectionRef()
+const OGRSpatialReference *NUMPYDataset::GetSpatialRef() const
 
 {
-    return( pszProjection );
+    return m_oSRS.IsEmpty() ? nullptr:  &m_oSRS;
 }
 
 /************************************************************************/
-/*                           SetProjection()                            */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
-CPLErr NUMPYDataset::_SetProjection( const char * pszNewProjection )
+CPLErr NUMPYDataset::SetSpatialRef( const OGRSpatialReference* poSRS )
 
 {
-    CPLFree( pszProjection );
-    pszProjection = CPLStrdup( pszNewProjection );
+    m_oSRS.Clear();
+    if( poSRS )
+        m_oSRS = *poSRS;
 
     return CE_None;
 }
@@ -3456,13 +3438,13 @@ int NUMPYDataset::GetGCPCount()
 }
 
 /************************************************************************/
-/*                          GetGCPProjection()                          */
+/*                          GetGCPSpatialRef()                          */
 /************************************************************************/
 
-const char *NUMPYDataset::_GetGCPProjection()
+const OGRSpatialReference *NUMPYDataset::GetGCPSpatialRef() const
 
 {
-    return pszGCPProjection;
+    return m_oGCPSRS.IsEmpty() ? nullptr:  &m_oGCPSRS;
 }
 
 /************************************************************************/
@@ -3479,18 +3461,19 @@ const GDAL_GCP *NUMPYDataset::GetGCPs()
 /*                              SetGCPs()                               */
 /************************************************************************/
 
-CPLErr NUMPYDataset::_SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                              const char *pszGCPProjection )
+CPLErr NUMPYDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                              const OGRSpatialReference* poSRS )
 
 {
-    CPLFree( this->pszGCPProjection );
+    m_oGCPSRS.Clear();
+    if( poSRS )
+        m_oGCPSRS = *poSRS;
+
     if( this->nGCPCount > 0 )
     {
         GDALDeinitGCPs( this->nGCPCount, this->pasGCPList );
         CPLFree( this->pasGCPList );
     }
-
-    this->pszGCPProjection = CPLStrdup(pszGCPProjection);
 
     this->nGCPCount = nGCPCount;
 
@@ -3962,7 +3945,7 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
     PyObject *psArgs, *psResult;
     int      bContinue = TRUE;
 
-    if( psInfo->nLastReported == (int) (100.0 * dfComplete) )
+    if( dfComplete > 0 && psInfo->nLastReported == (int) (100.0 * dfComplete) )
         return TRUE;
 
     if( psInfo->psPyCallback == NULL || psInfo->psPyCallback == Py_None )

@@ -1153,3 +1153,28 @@ def test_tiff_srs_read_esri_pcs_gcs_ellipsoid_names():
     assert 'BASEGEOGCRS["RT90"' in wkt
     assert 'DATUM["Rikets koordinatsystem 1990"' in wkt
     assert 'ELLIPSOID["Bessel 1841"' in wkt
+
+
+def test_tiff_srs_write_projected_3d():
+
+    if osr.GetPROJVersionMajor() < 9:
+        pytest.skip()
+
+    filename = "/vsimem/test_tiff_srs_write_projected_3d.tif"
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput(
+        'BOUNDCRS[SOURCECRS[PROJCRS["unknown",BASEGEOGCRS["unknown",DATUM["Unknown based on Bessel 1841 ellipsoid",ELLIPSOID["Bessel 1841",6377397.155,299.1528128,LENGTHUNIT["metre",1,ID["EPSG",9001]]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8901]]],CONVERSION["unknown",METHOD["Oblique Stereographic",ID["EPSG",9809]],PARAMETER["Latitude of natural origin",52.1561605555556,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8801]],PARAMETER["Longitude of natural origin",5.38763888888889,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8802]],PARAMETER["Scale factor at natural origin",0.9999079,SCALEUNIT["unity",1],ID["EPSG",8805]],PARAMETER["False easting",155000,LENGTHUNIT["metre",1],ID["EPSG",8806]],PARAMETER["False northing",463000,LENGTHUNIT["metre",1],ID["EPSG",8807]]],CS[Cartesian,3],AXIS["(E)",east,ORDER[1],LENGTHUNIT["metre",1,ID["EPSG",9001]]],AXIS["(N)",north,ORDER[2],LENGTHUNIT["metre",1,ID["EPSG",9001]]],AXIS["ellipsoidal height (h)",up,ORDER[3],LENGTHUNIT["metre",1,ID["EPSG",9001]]]]],TARGETCRS[GEOGCRS["WGS 84",DATUM["World Geodetic System 1984",ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433]],CS[ellipsoidal,2],AXIS["latitude",north,ORDER[1],ANGLEUNIT["degree",0.0174532925199433]],AXIS["longitude",east,ORDER[2],ANGLEUNIT["degree",0.0174532925199433]],ID["EPSG",4326]]],ABRIDGEDTRANSFORMATION["Transformation from unknown to WGS84",METHOD["Position Vector transformation (geog3D domain)",ID["EPSG",1037]],PARAMETER["X-axis translation",565.2369,ID["EPSG",8605]],PARAMETER["Y-axis translation",50.0087,ID["EPSG",8606]],PARAMETER["Z-axis translation",465.658,ID["EPSG",8607]],PARAMETER["X-axis rotation",-0.406857330322,ID["EPSG",8608]],PARAMETER["Y-axis rotation",0.350732676543,ID["EPSG",8609]],PARAMETER["Z-axis rotation",-1.87034738361,ID["EPSG",8610]],PARAMETER["Scale difference",1.0000040812,ID["EPSG",8611]]]]'
+    )
+    ds = gdal.GetDriverByName("GTiff").Create(filename, 1, 1)
+    ds.SetSpatialRef(srs)
+    gdal.ErrorReset()
+    ds = None
+    assert gdal.GetLastErrorMsg() == ""
+
+    ds = gdal.Open(filename)
+    gdal.ErrorReset()
+    got_srs = ds.GetSpatialRef()
+    assert got_srs.IsSame(srs)
+    ds = None
+
+    gdal.Unlink(filename)

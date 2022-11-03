@@ -49,7 +49,6 @@
 #include "cpl_error.h"
 #include "cpl_vsi_virtual.h"
 
-CPL_CVSID("$Id$")
 
 #ifdef HDFS_ENABLED
 

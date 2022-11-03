@@ -32,7 +32,6 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$")
 
 typedef enum eCalibration_t {
     Sigma0 = 0,
@@ -68,9 +67,9 @@ class RS2Dataset final: public GDALPamDataset
 
     int           nGCPCount;
     GDAL_GCP      *pasGCPList;
-    char          *pszGCPProjection;
+    OGRSpatialReference m_oSRS{};
+    OGRSpatialReference m_oGCPSRS{};
     char        **papszSubDatasets;
-    char          *pszProjection;
     double      adfGeoTransform[6];
     bool        bHaveGeoTransform;
 
@@ -84,16 +83,10 @@ class RS2Dataset final: public GDALPamDataset
     virtual ~RS2Dataset();
 
     virtual int    GetGCPCount() override;
-    virtual const char *_GetGCPProjection() override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override {
-        return GetGCPSpatialRefFromOldGetGCPProjection();
-    }
+    const OGRSpatialReference* GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
 
-    virtual const char *_GetProjectionRef(void) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
     virtual CPLErr GetGeoTransform( double * ) override;
 
     virtual char      **GetMetadataDomainList() override;
@@ -514,12 +507,12 @@ RS2Dataset::RS2Dataset() :
     psProduct(nullptr),
     nGCPCount(0),
     pasGCPList(nullptr),
-    pszGCPProjection(CPLStrdup("")),
     papszSubDatasets(nullptr),
-    pszProjection(CPLStrdup("")),
     bHaveGeoTransform(FALSE),
     papszExtraFiles(nullptr)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -538,9 +531,7 @@ RS2Dataset::~RS2Dataset()
     RS2Dataset::FlushCache(true);
 
     CPLDestroyXMLNode( psProduct );
-    CPLFree( pszProjection );
 
-    CPLFree( pszGCPProjection );
     if( nGCPCount > 0 )
     {
         GDALDeinitGCPs( nGCPCount, pasGCPList );
@@ -1156,6 +1147,8 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     if ( psEllipsoid != nullptr ) {
         OGRSpatialReference oLL, oPrj;
+        oLL.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        oPrj.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
         const char *pszEllipsoidName
             = CPLGetXMLValue( psEllipsoid, "ellipsoidName", "" );
@@ -1259,9 +1252,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
             }
 
             if (bUseProjInfo) {
-                CPLFree( poDS->pszProjection );
-                poDS->pszProjection = nullptr;
-                oPrj.exportToWkt( &(poDS->pszProjection) );
+                poDS->m_oSRS = oPrj;
             }
             else {
                 CPLError(CE_Warning,CPLE_AppDefined,"Unable to interpret "
@@ -1270,9 +1261,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
             }
         }
 
-        CPLFree( poDS->pszGCPProjection );
-        poDS->pszGCPProjection = nullptr;
-        oLL.exportToWkt( &(poDS->pszGCPProjection) );
+        poDS->m_oGCPSRS = oLL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1425,13 +1414,13 @@ int RS2Dataset::GetGCPCount()
 }
 
 /************************************************************************/
-/*                          GetGCPProjection()                          */
+/*                          GetGCPSpatialRef()                          */
 /************************************************************************/
 
-const char *RS2Dataset::_GetGCPProjection()
+const OGRSpatialReference *RS2Dataset::GetGCPSpatialRef() const
 
 {
-    return pszGCPProjection;
+    return m_oGCPSRS.IsEmpty() ? nullptr : &m_oGCPSRS;
 }
 
 /************************************************************************/
@@ -1445,13 +1434,13 @@ const GDAL_GCP *RS2Dataset::GetGCPs()
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *RS2Dataset::_GetProjectionRef()
+const OGRSpatialReference *RS2Dataset::GetSpatialRef() const
 
 {
-    return pszProjection;
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /************************************************************************/

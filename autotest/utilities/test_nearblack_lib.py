@@ -30,6 +30,8 @@
 ###############################################################################
 
 
+import array
+
 import pytest
 
 from osgeo import gdal
@@ -179,3 +181,220 @@ def test_nearblack_lib_8():
     assert ds.GetRasterBand(2).Checksum() == 20736, "Bad checksum band 2"
 
     assert ds.GetRasterBand(3).Checksum() == 21309, "Bad checksum band 3"
+
+
+def _test_nearblack(in_array, expected_mask_array, maxNonBlack=0):
+
+    ds = gdal.GetDriverByName("MEM").Create("", len(in_array[0]), len(in_array))
+    ds.WriteRaster(
+        0,
+        0,
+        ds.RasterXSize,
+        ds.RasterYSize,
+        b"".join([array.array("B", x).tobytes() for x in in_array]),
+    )
+    ret_ds = gdal.Nearblack("", ds, maxNonBlack=maxNonBlack, format="MEM", setMask=True)
+    mask_data = ret_ds.GetRasterBand(1).GetMaskBand().ReadRaster()
+    mask_array = []
+    for j in range(ds.RasterYSize):
+        ar = array.array("B")
+        ar.frombytes(mask_data[j * ds.RasterXSize : (j + 1) * ds.RasterXSize])
+        mask_array.append(ar.tolist())
+    assert mask_array == expected_mask_array
+
+
+def test_nearblack_lib_9():
+
+    # all valid -> no erosion
+    _test_nearblack(
+        [
+            [255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255],
+        ],
+        [
+            [255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255],
+        ],
+        maxNonBlack=1,
+    )
+
+    # all invalid
+    _test_nearblack(
+        [
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+        ],
+        [
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+        ],
+        maxNonBlack=1,
+    )
+
+    # single pixel valid -> eroded
+    _test_nearblack(
+        [
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 255, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+        ],
+        [
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+        ],
+        maxNonBlack=1,
+    )
+
+    # all contour is valid -> no erosion
+    _test_nearblack(
+        [
+            [255, 255, 255, 255, 255],
+            [255, 0, 0, 0, 255],
+            [255, 0, 0, 0, 255],
+            [255, 0, 0, 0, 255],
+            [255, 255, 255, 255, 255],
+        ],
+        [
+            [255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255],
+        ],
+        maxNonBlack=1,
+    )
+
+    # erosion from the left
+    _test_nearblack(
+        [
+            [255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255],
+            [0, 0, 255, 255, 255],
+            [255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255],
+        ],
+        [
+            [255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255],
+            [0, 0, 0, 255, 255],
+            [255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255],
+        ],
+        maxNonBlack=1,
+    )
+
+    # erosion from the right
+    _test_nearblack(
+        [
+            [255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255],
+            [255, 255, 255, 0, 0],
+            [255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255],
+        ],
+        [
+            [255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255],
+            [255, 255, 0, 0, 0],
+            [255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255],
+        ],
+        maxNonBlack=1,
+    )
+
+    # erosion from the top
+    _test_nearblack(
+        [
+            [255, 0, 0, 0, 255],
+            [255, 255, 0, 255, 255],
+            [255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255],
+        ],
+        [
+            [255, 0, 0, 0, 255],
+            [255, 0, 0, 0, 255],
+            [255, 255, 0, 255, 255],
+            [255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255],
+        ],
+        maxNonBlack=1,
+    )
+
+    # erosion from the bottom
+    _test_nearblack(
+        [
+            [255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255],
+            [255, 255, 0, 255, 255],
+            [255, 0, 0, 0, 255],
+        ],
+        [
+            [255, 255, 255, 255, 255],
+            [255, 255, 255, 255, 255],
+            [255, 255, 0, 255, 255],
+            [255, 0, 0, 0, 255],
+            [255, 0, 0, 0, 255],
+        ],
+        maxNonBlack=1,
+    )
+
+    # Maybe erosion is a bit too greedy due to top-bottom + bottom-top passes
+    _test_nearblack(
+        [
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 255, 255, 255, 0, 0],
+            [0, 0, 255, 255, 255, 0, 0],
+            [0, 255, 255, 255, 255, 255, 0],
+            [0, 0, 255, 255, 255, 0, 0],
+            [0, 0, 255, 255, 255, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+        ],
+        [
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 255, 0, 0, 0],
+            [0, 0, 0, 255, 0, 0, 0],
+            [0, 0, 0, 255, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+        ],
+        maxNonBlack=1,
+    )
+
+    # Maybe erosion is a bit too greedy due to top-bottom + bottom-top passes
+    _test_nearblack(
+        [
+            [0, 0, 0, 0, 255],
+            [0, 255, 255, 0, 0],
+            [255, 255, 255, 255, 255],
+            [255, 0, 255, 255, 0],
+            [0, 0, 0, 255, 0],
+        ],
+        [
+            [0, 0, 0, 0, 255],
+            [0, 0, 0, 0, 0],
+            [0, 0, 255, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+        ],
+        maxNonBlack=1,
+    )

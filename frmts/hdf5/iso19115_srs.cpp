@@ -40,7 +40,6 @@
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                     OGR_SRS_ImportFromISO19115()                     */
@@ -70,6 +69,7 @@ OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
         return OGRERR_FAILURE;
     }
 
+    poThis->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     poThis->Clear();
 
     // First, set the datum.

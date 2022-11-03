@@ -38,7 +38,6 @@
 #include "cpl_sha1.h"
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 // #define DEBUG_VERBOSE 1
 
@@ -204,13 +203,13 @@ bool VSIOSSHandleHelper::GetConfiguration(const std::string& osPathForOption,
 {
     osSecretAccessKey = CSLFetchNameValueDef(papszOptions,
         "OSS_SECRET_ACCESS_KEY",
-        VSIGetCredential(osPathForOption.c_str(), "OSS_SECRET_ACCESS_KEY", ""));
+        VSIGetPathSpecificOption(osPathForOption.c_str(), "OSS_SECRET_ACCESS_KEY", ""));
 
     if( !osSecretAccessKey.empty() )
     {
         osAccessKeyId = CSLFetchNameValueDef(papszOptions,
             "OSS_ACCESS_KEY_ID",
-            VSIGetCredential(osPathForOption.c_str(), "OSS_ACCESS_KEY_ID", ""));
+            VSIGetPathSpecificOption(osPathForOption.c_str(), "OSS_ACCESS_KEY_ID", ""));
         if( osAccessKeyId.empty() )
         {
             VSIError(VSIE_AWSInvalidCredentials,
@@ -248,7 +247,7 @@ VSIOSSHandleHelper* VSIOSSHandleHelper::BuildFromURI( const char* pszURI,
 
     const CPLString osEndpoint = CSLFetchNameValueDef(papszOptions,
         "OSS_ENDPOINT",
-        VSIGetCredential(osPathForOption.c_str(), "OSS_ENDPOINT", "oss-us-east-1.aliyuncs.com"));
+        VSIGetPathSpecificOption(osPathForOption.c_str(), "OSS_ENDPOINT", "oss-us-east-1.aliyuncs.com"));
     CPLString osBucket;
     CPLString osObjectKey;
     if( pszURI != nullptr && pszURI[0] != '\0' &&
@@ -257,11 +256,11 @@ VSIOSSHandleHelper* VSIOSSHandleHelper::BuildFromURI( const char* pszURI,
     {
         return nullptr;
     }
-    const bool bUseHTTPS = CPLTestBool(VSIGetCredential(osPathForOption.c_str(), "OSS_HTTPS", "YES"));
+    const bool bUseHTTPS = CPLTestBool(VSIGetPathSpecificOption(osPathForOption.c_str(), "OSS_HTTPS", "YES"));
     const bool bIsValidNameForVirtualHosting =
         osBucket.find('.') == std::string::npos;
     const bool bUseVirtualHosting = CPLTestBool(
-        VSIGetCredential(osPathForOption.c_str(), "OSS_VIRTUAL_HOSTING",
+        VSIGetPathSpecificOption(osPathForOption.c_str(), "OSS_VIRTUAL_HOSTING",
                            bIsValidNameForVirtualHosting ? "TRUE" : "FALSE"));
     return new VSIOSSHandleHelper(osSecretAccessKey, osAccessKeyId,
                                  osEndpoint,

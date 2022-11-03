@@ -33,7 +33,6 @@
 
 #include "georaster_priv.h"
 
-CPL_CVSID("$Id: cpl_vsil_ocilob.cpp $")
 
 // *****************************************************************************
 //                                                             WSIOCILobFSHandle

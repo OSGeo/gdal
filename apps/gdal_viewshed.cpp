@@ -30,11 +30,12 @@
 #include "gdal_version.h"
 #include "gdal.h"
 #include "gdal_alg.h"
+#include "gdal_priv.h"
 #include "ogr_api.h"
 #include "ogr_srs_api.h"
+#include "ogr_spatialref.h"
 #include "commonutils.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -91,6 +92,7 @@ MAIN_START(argc, argv)
     double dfOutOfRangeVal = 0.0;
     double dfNoDataVal = -1.0;
     // Value for standard atmospheric refraction. See doc/source/programs/gdal_viewshed.rst
+    bool bCurvCoeffSpecified = false;
     double dfCurvCoeff = 0.85714;
     const char *pszDriverName = nullptr;
     const char *pszSrcFilename = nullptr;
@@ -179,6 +181,7 @@ MAIN_START(argc, argv)
         else if (EQUAL(argv[i], "-cc"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            bCurvCoeffSpecified = true;
             dfCurvCoeff = CPLAtofTaintedSuppressed(argv[++i]);
         }
         else if( EQUAL(argv[i],"-b") )
@@ -274,6 +277,23 @@ MAIN_START(argc, argv)
                   "Band %d does not exist on dataset.",
                   nBandIn );
         exit(2);
+    }
+
+    if( !bCurvCoeffSpecified )
+    {
+        const OGRSpatialReference* poSRS = GDALDataset::FromHandle(hSrcDS)->GetSpatialRef();
+        if (poSRS)
+        {
+            OGRErr eSRSerr;
+            const double dfSemiMajor = poSRS->GetSemiMajor(&eSRSerr);
+            if (eSRSerr != OGRERR_FAILURE &&
+                fabs(dfSemiMajor - SRS_WGS84_SEMIMAJOR) > 0.05 * SRS_WGS84_SEMIMAJOR)
+            {
+                dfCurvCoeff = 1.0;
+                CPLDebug("gdal_viewshed",
+                         "Using -cc=1.0 as a non-Earth CRS has been detected");
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */

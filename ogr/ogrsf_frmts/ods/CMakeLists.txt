@@ -19,11 +19,34 @@ if (GDAL_USE_EXPAT)
   target_compile_definitions(ogr_ODS PRIVATE -DHAVE_EXPAT=1)
 endif ()
 
+###########################################################
+# Targets to refresh ods_formula_parser.cpp
+###########################################################
+
+# Those targets need to be run manually each time ods_formula_parser.y
+# is modified.
+# We could of course run them automatically, but that would make building
+# GDAL harder.
+
+# This target checks that ods_formula_parser.y md5sum has not changed
+# If it has, then it should be updated and the generate_ods_formula_parser target
+# should be manually run
+add_custom_target(check_ods_formula_parser_md5 ALL
+                  COMMAND ${CMAKE_COMMAND}
+                      "-DIN_FILE=ods_formula_parser.y"
+                      "-DTARGET=generate_ods_formula_parser"
+                      "-DEXPECTED_MD5SUM=acf825ac2d574098a64c74c864aee15e"
+                      "-DFILENAME_CMAKE=${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
+                      -P "${PROJECT_SOURCE_DIR}/cmake/helpers/check_md5sum.cmake"
+                  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+                  DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/ods_formula_parser.y"
+                  VERBATIM)
+
 find_package(BISON)
-if (BISON_FOUND)
-  add_custom_command(
-    OUTPUT ods_formula_parser.cpp
-    COMMAND ${BISON_EXECUTABLE} -p ods_formula -d -o${CMAKE_CURRENT_BINARY_DIR}/ods_formula_parser.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/ods_formula_parser.y
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/ods_formula_parser.y)
-endif ()
+add_custom_target(generate_ods_formula_parser
+                  COMMAND ${CMAKE_COMMAND}
+                      "-DBISON_FOUND=${BISON_FOUND}"
+                      "-DBISON_EXECUTABLE=${BISON_EXECUTABLE}"
+                      -P "${CMAKE_CURRENT_SOURCE_DIR}/generate_ods_formula_parser.cmake"
+                  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+                  VERBATIM)

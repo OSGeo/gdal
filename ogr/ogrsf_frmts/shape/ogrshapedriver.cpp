@@ -39,7 +39,6 @@
 #include "gdal_priv.h"
 #include "ogrsf_frmts.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                              Identify()                              */
@@ -343,6 +342,7 @@ void RegisterOGRShape()
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "shp" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "shp dbf shz shp.zip" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/shapefile.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"

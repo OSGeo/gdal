@@ -34,7 +34,6 @@
 
 #include <set>
 
-CPL_CVSID("$Id$")
 
 //! @cond Doxygen_Suppress
 GNMGenericNetwork::GNMGenericNetwork() :
@@ -1116,9 +1115,13 @@ CPLErr GNMGenericNetwork::CreateMetadataLayer(GDALDataset * const pDS, int nVers
     }
 
     // write srs if < 254 or create file
-    if(!m_soSRS.empty())
+    if(!m_oSRS.IsEmpty())
     {
-        if(m_soSRS.size() >= nFieldSize)
+        char* pszWKT = nullptr;
+        m_oSRS.exportToWkt(&pszWKT);
+        const std::string soSRS = pszWKT ? pszWKT : "";
+        CPLFree(pszWKT);
+        if(soSRS.size() >= nFieldSize)
         {
             // cppcheck-suppress knownConditionTrueFalse
             if(StoreNetworkSrs() != CE_None)
@@ -1128,7 +1131,7 @@ CPLErr GNMGenericNetwork::CreateMetadataLayer(GDALDataset * const pDS, int nVers
         {
             poFeature = OGRFeature::CreateFeature(pMetadataLayer->GetLayerDefn());
             poFeature->SetField(GNM_SYSFIELD_PARAMNAME, GNM_MD_SRS);
-            poFeature->SetField(GNM_SYSFIELD_PARAMVALUE, m_soSRS);
+            poFeature->SetField(GNM_SYSFIELD_PARAMVALUE, soSRS.c_str());
             if(pMetadataLayer->CreateFeature(poFeature) != OGRERR_NONE)
             {
                 OGRFeature::DestroyFeature( poFeature );
@@ -1248,7 +1251,7 @@ CPLErr GNMGenericNetwork::LoadMetadataLayer(GDALDataset * const pDS)
         }
         else if(EQUAL(pKey, GNM_MD_SRS))
         {
-            m_soSRS = pValue;
+            m_oSRS.importFromWkt(pValue);
         }
         else if(EQUAL(pKey, GNM_MD_VERSION))
         {
@@ -1269,7 +1272,7 @@ CPLErr GNMGenericNetwork::LoadMetadataLayer(GDALDataset * const pDS)
             m_asRules.push_back(it->second);
     }
 
-    if(m_soSRS.empty())
+    if(!m_oSRS.IsEmpty())
     {
         // cppcheck-suppress knownConditionTrueFalse
         if(LoadNetworkSrs() != CE_None)

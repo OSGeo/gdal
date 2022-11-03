@@ -407,7 +407,7 @@ _gdalmove.py()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list=""
+      key_list="-s_srs -t_srs -et "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -444,9 +444,20 @@ _gdal_proximity.py()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list=""
+      key_list="-srcband -dstband -of -co -ot -values -distunits -maxdist -nodata -use_input_nodata -fixed-buf-val -q "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
+      ;;
+  esac
+  tool=${COMP_WORDS[0]}
+  case "$prev" in
+    -ot)
+      key_list="Byte Int16 UInt16 UInt32 Int32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64"
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
+      ;;
+    -of)
+      key_list="$( $tool --formats | tail -n +2 | cut -f 3 -d ' ')"
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       ;;
   esac
   return 0
@@ -578,7 +589,7 @@ _gdal_translate()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help-general --long-usage -ot -strict -if -of -b -mask -expand -outsize -tr -r -unscale -scale -exponent -srcwin -epo -eco -projwin -projwin_srs -a_srs -a_coord_epoch -a_ullr -a_nodata -a_scale -a_offset -nogcp -gcp -colorinterp{_bn} -colorinterp -mo -q -sds -co -stats -norat -noxmp -oo --version --build --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help-general --long-usage -ot -strict -if -of -b -mask -expand -outsize -tr -ovr -r -unscale -scale -exponent -srcwin -epo -eco -projwin -projwin_srs -a_srs -a_coord_epoch -a_ullr -a_nodata -a_scale -a_offset -nogcp -gcp -colorinterp{_bn} -colorinterp -mo -q -sds -co -stats -norat -noxmp -oo --version --build --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -683,7 +694,7 @@ _ogr2ogr()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help-general -skipfailures -append -update -select -where -progress -sql -dialect -preserve_fid -fid -limit -spat -spat_srs -geomfield -a_srs -t_srs -s_srs -ct -f -overwrite -dsco -lco -nln -nlt -dim --version --build --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help-general -skipfailures -append -upsert -update -select -where -progress -sql -dialect -preserve_fid -fid -limit -spat -spat_srs -geomfield -a_srs -t_srs -s_srs -ct -f -overwrite -dsco -lco -nln -nlt -dim --version --build --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -784,11 +795,48 @@ _ogrmerge.py()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list=""
+      key_list="-o -f -single -nln -update -overwrite_ds -append -overwrite_layer -src_geom_type -dsco -lco -s_srs -t_srs -a_srs -progress -skipfailures --help-general --version --build --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
+      ;;
+  esac
+  tool=${COMP_WORDS[0]/ogrtindex/ogr2ogr}
+  case "$prev" in
+    -f)
+      key_list="$( $tool --formats | tail -n +2 | grep -o -E '"[^"]+"' | sed 's/\ /__/')"
+      for iter in $key_list; do
+        if [[ $iter =~ ^$cur ]]; then
+          COMPREPLY+=( "${iter//__/ }" )
+        fi
+      done
       ;;
   esac
   return 0
 }
 complete -o default -F _ogrmerge.py ogrmerge.py
+_ogr_layer_algebra.py()
+{
+  local cur prev
+  COMPREPLY=()
+  _get_comp_words_by_ref cur prev
+  case "$cur" in
+    -*)
+      key_list="-input_ds -input_lyr -method_ds -method_lyr -output_ds -output_lyr -overwrite -opt -f -dsco -lco -input_fields -method_fields -nlt -a_srs "
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
+      return 0
+      ;;
+  esac
+  tool=${COMP_WORDS[0]/ogrtindex/ogr2ogr}
+  case "$prev" in
+    -f)
+      key_list="$( $tool --formats | tail -n +2 | grep -o -E '"[^"]+"' | sed 's/\ /__/')"
+      for iter in $key_list; do
+        if [[ $iter =~ ^$cur ]]; then
+          COMPREPLY+=( "${iter//__/ }" )
+        fi
+      done
+      ;;
+  esac
+  return 0
+}
+complete -o default -F _ogr_layer_algebra.py ogr_layer_algebra.py

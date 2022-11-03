@@ -379,7 +379,7 @@ GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
                             const double *padfX, const double *padfY,
                             const double *padfVariant,
                             llPointFunc pfnPointFunc, void *pCBData,
-                            int bAvoidBurningSamePoints )
+                            int bAvoidBurningSamePoints, bool bIntersectOnly)
 
 {
     if( !nPartCount )
@@ -429,6 +429,12 @@ GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
             // Special case for vertical lines.
             if( floor(dfX) == floor(dfXEnd) || fabs(dfX - dfXEnd) < .01 )
             {
+                if ( bIntersectOnly )
+                {
+                    if( std::abs(dfX - std::round(dfX)) < 0.01 && std::abs(dfXEnd - std::round(dfXEnd)) < 0.01 )
+                        continue;
+                }
+
                 if( dfYEnd < dfY )
                 {
                     std::swap(dfY, dfYEnd );
@@ -498,6 +504,12 @@ GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
             // Special case for horizontal lines.
             if( floor(dfY) == floor(dfYEnd) || fabs(dfY - dfYEnd) < .01 )
             {
+                if ( bIntersectOnly )
+                {
+                    if( std::abs(dfY - std::round(dfY)) < 0.01 && std::abs(dfYEnd - std::round(dfYEnd)) < 0.01 )
+                        continue;
+                }
+
                 if( dfXEnd < dfX )
                 {
                     std::swap(dfX, dfXEnd);

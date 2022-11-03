@@ -50,7 +50,6 @@ extern "C" void GDALRegister_WMTS();
 
 #define WMTS_WGS84_DEG_PER_METER    (180 / M_PI / SRS_WGS84_SEMIMAJOR)
 
-CPL_CVSID("$Id$")
 
 typedef enum
 {
@@ -138,7 +137,7 @@ class WMTSDataset final: public GDALPamDataset
     char                    **papszHTTPOptions;
 
     std::vector<GDALDataset*> apoDatasets;
-    CPLString                 osProjection;
+    OGRSpatialReference       m_oSRS{};
     double                    adfGT[6];
 
     CPLString                 osLastGetFeatureInfoURL;
@@ -164,10 +163,7 @@ class WMTSDataset final: public GDALPamDataset
     virtual     ~WMTSDataset();
 
     virtual CPLErr GetGeoTransform(double* padfGT) override;
-    const char* _GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
     virtual const char* GetMetadataItem(const char* pszName,
                                         const char* pszDomain) override;
 
@@ -433,6 +429,7 @@ const char *WMTSBand::GetMetadataItem( const char * pszName,
 WMTSDataset::WMTSDataset() :
     papszHTTPOptions(nullptr)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGT[0] = 0;
     adfGT[1] = 1;
     adfGT[2] = 0;
@@ -516,12 +513,12 @@ CPLErr WMTSDataset::GetGeoTransform(double* padfGT)
 }
 
 /************************************************************************/
-/*                         GetProjectionRef()                           */
+/*                         GetSpatialRef()                              */
 /************************************************************************/
 
-const char* WMTSDataset::_GetProjectionRef()
+const OGRSpatialReference* WMTSDataset::GetSpatialRef() const
 {
-    return osProjection.c_str();
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /************************************************************************/
@@ -1911,21 +1908,11 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
 
         if( !osProjection.empty() )
         {
-            OGRSpatialReference oSRS;
-            if( oSRS.SetFromUserInput(osProjection, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE )
-            {
-                char* pszWKT = nullptr;
-                oSRS.exportToWkt(&pszWKT);
-                poDS->osProjection = pszWKT;
-                CPLFree(pszWKT);
-            }
+            poDS->m_oSRS.SetFromUserInput(osProjection, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
         }
-        if( poDS->osProjection.empty() )
+        if( poDS->m_oSRS.IsEmpty() )
         {
-            char* pszWKT = nullptr;
-            oTMS.oSRS.exportToWkt(&pszWKT);
-            poDS->osProjection = pszWKT;
-            CPLFree(pszWKT);
+            poDS->m_oSRS = oTMS.oSRS;
         }
 
         if( osURLTileTemplate.empty() )

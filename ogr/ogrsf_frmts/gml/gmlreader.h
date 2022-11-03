@@ -132,6 +132,7 @@ class CPL_DLL GMLGeometryPropertyDefn
     int         m_nGeometryType;
     int         m_nAttributeIndex;
     bool        m_bNullable;
+    bool        m_bSRSNameConsistent = true;
     std::string m_osSRSName{};
 
 public:
@@ -150,7 +151,8 @@ public:
 
         bool IsNullable() const { return m_bNullable; }
 
-        void SetSRSName(const std::string& srsName) { m_osSRSName = srsName; }
+        void SetSRSName(const std::string& srsName) { m_bSRSNameConsistent = true; m_osSRSName = srsName; }
+        void MergeSRSName(const std::string& osSRSName);
         const std::string& GetSRSName() const { return m_osSRSName; }
 };
 
@@ -211,7 +213,7 @@ class CPL_DLL GMLFeatureClass
 
     bool        HasFeatureProperties();
 
-    int         AddProperty( GMLPropertyDefn * );
+    int         AddProperty( GMLPropertyDefn *, int iPos = -1 );
     int         AddGeometryProperty( GMLGeometryPropertyDefn * );
     void        ClearGeometryProperties();
 

@@ -41,7 +41,6 @@
 #include <algorithm>
 #include <memory>
 
-CPL_CVSID("$Id$")
 
 #ifdef _WIN32
 #define rint(x) floor((x) + 0.5)
@@ -115,7 +114,6 @@ PostGISRasterDataset::PostGISRasterDataset() :
     pszPrimaryKeyName(nullptr),
     bIsFastPK(false),
     bHasTriedFetchingPrimaryKeyName(false),
-    pszProjection(nullptr),
     // Default
     resolutionStrategy(AVERAGE_APPROX_RESOLUTION),
     nMode(NO_MODE),
@@ -143,6 +141,7 @@ PostGISRasterDataset::PostGISRasterDataset() :
     nTileWidth(0),
     nTileHeight(0)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     adfGeoTransform[GEOTRSFRM_TOPLEFT_X] = 0.0;
     adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1] = 0.0;
@@ -229,11 +228,6 @@ PostGISRasterDataset::~PostGISRasterDataset() {
     if (pszWhere) {
         CPLFree(pszWhere);
         pszWhere = nullptr;
-    }
-
-    if (pszProjection) {
-        CPLFree(pszProjection);
-        pszProjection = nullptr;
     }
 
     if (pszPrimaryKeyName) {
@@ -3283,38 +3277,42 @@ char** PostGISRasterDataset::GetMetadata(const char *pszDomain) {
  * be suitable for use with the OGRSpatialReference
  * class.
  *****************************************************/
-const char* PostGISRasterDataset::_GetProjectionRef() {
-    CPLString osCommand;
+const OGRSpatialReference* PostGISRasterDataset::GetSpatialRef() const {
 
     if (nSrid == -1)
-        return "";
+        return nullptr;
 
-    if (pszProjection)
-        return pszProjection;
+    if( !m_oSRS.IsEmpty() )
+        return &m_oSRS;
 
     /********************************************************
      *          Reading proj from database
      ********************************************************/
+    CPLString osCommand;
     osCommand.Printf("SELECT srtext FROM spatial_ref_sys where SRID=%d",
             nSrid);
     PGresult* poResult = PQexec(this->poConn, osCommand.c_str());
     if (poResult && PQresultStatus(poResult) == PGRES_TUPLES_OK
             && PQntuples(poResult) > 0) {
-        pszProjection = CPLStrdup(PQgetvalue(poResult, 0, 0));
+        const char* pszProjection = PQgetvalue(poResult, 0, 0);
+        if( pszProjection && pszProjection[0] )
+            m_oSRS.importFromWkt(pszProjection);
     }
 
     if (poResult)
         PQclear(poResult);
 
-    return pszProjection;
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /**********************************************************
  * \brief Set projection definition. The input string must
  * be in OGC WKT or PROJ.4 format
  **********************************************************/
-CPLErr PostGISRasterDataset::_SetProjection(const char * pszProjectionRef) {
-    VALIDATE_POINTER1(pszProjectionRef, "SetProjection", CE_Failure);
+CPLErr PostGISRasterDataset::SetSpatialRef(const OGRSpatialReference* poSRS) {
+
+    if( poSRS == nullptr )
+        return CE_None;
 
     CPLString osCommand;
 
@@ -3331,9 +3329,14 @@ CPLErr PostGISRasterDataset::_SetProjection(const char * pszProjectionRef) {
      * Look for projection with this text
      *****************************************************************/
 
-    // First, WKT text
+    char* pszWKT = nullptr;
+    poSRS->exportToWkt(&pszWKT);
+    if( pszWKT == nullptr )
+        return CE_Failure;
+
     osCommand.Printf("SELECT srid FROM spatial_ref_sys where srtext='%s'",
-            pszProjectionRef);
+            pszWKT);
+    CPLFree(pszWKT);
     PGresult * poResult = PQexec(poConn, osCommand.c_str());
 
     if (poResult && PQresultStatus(poResult) == PGRES_TUPLES_OK
@@ -3360,44 +3363,10 @@ CPLErr PostGISRasterDataset::_SetProjection(const char * pszProjectionRef) {
 
         return CE_None;
     }
-        // If not, proj4 text
-    else {
-        osCommand.Printf(
-                "SELECT srid FROM spatial_ref_sys where proj4text='%s'",
-                pszProjectionRef);
-        poResult = PQexec(poConn, osCommand.c_str());
-
-        if (poResult && PQresultStatus(poResult) == PGRES_TUPLES_OK
-                && PQntuples(poResult) > 0) {
-
-            const int nFetchedSrid = atoi(PQgetvalue(poResult, 0, 0));
-
-            // update class attribute
-            nSrid = nFetchedSrid;
-
-            // update raster_columns table
-            osCommand.Printf("UPDATE raster_columns SET srid=%d WHERE \
-                    r_table_name = '%s' AND r_column = '%s'",
-                    nSrid, pszTable, pszColumn);
-
-            poResult = PQexec(poConn, osCommand.c_str());
-            if (poResult == nullptr ||
-                    PQresultStatus(poResult) != PGRES_COMMAND_OK) {
-                ReportError(CE_Failure, CPLE_AppDefined,
-                        "Couldn't update raster_columns table: %s",
-                        PQerrorMessage(poConn));
-                return CE_Failure;
-            }
-
-            // TODO: Update ALL blocks with the new srid...
-
-            return CE_None;
-        }
-        else {
-            ReportError(CE_Failure, CPLE_WrongFormat,
-                    "Couldn't find WKT neither proj4 definition");
-            return CE_Failure;
-        }
+   else {
+        ReportError(CE_Failure, CPLE_WrongFormat,
+                "Couldn't find WKT definition");
+        return CE_Failure;
     }
 }
 

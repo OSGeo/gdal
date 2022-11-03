@@ -32,7 +32,6 @@
 #include "keacopy.h"
 #include "../frmts/hdf5/hdf5vfl.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                     KEADatasetDriverUnload()                        */
@@ -449,7 +448,6 @@ KEADataset::KEADataset( H5::H5File *keaImgH5File, GDALAccess eAccessIn )
         // NULL until we read them in.
         m_papszMetadataList = nullptr;
         m_pGCPs = nullptr;
-        m_pszGCPProjection = nullptr;
 
         // open the file
         m_pImageIO->openKEAImageHeader( keaImgH5File );
@@ -492,7 +490,6 @@ KEADataset::~KEADataset()
         // destroy the metadata
         CSLDestroy(m_papszMetadataList);
         this->DestroyGCPs();
-        CPLFree( m_pszGCPProjection );
     }
     if( m_pRefcount->DecRef() )
     {
@@ -549,13 +546,17 @@ CPLErr KEADataset::GetGeoTransform( double * padfTransform )
 }
 
 // read in the projection ref
-const char *KEADataset::_GetProjectionRef()
+const OGRSpatialReference *KEADataset::GetSpatialRef() const
 {
+    if( !m_oSRS.IsEmpty() )
+        return &m_oSRS;
+
     try
     {
         kealib::KEAImageSpatialInfo *pSpatialInfo = m_pImageIO->getSpatialInfo();
-        // should be safe since pSpatialInfo should be around a while...
-        return pSpatialInfo->wktString.c_str();
+        m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        m_oSRS.importFromWkt(pSpatialInfo->wktString.c_str());
+        return m_oSRS.IsEmpty() ? nullptr: &m_oSRS;
     }
     catch (const kealib::KEAIOException &)
     {
@@ -590,14 +591,26 @@ CPLErr KEADataset::SetGeoTransform (double *padfTransform )
 }
 
 // set the projection
-CPLErr KEADataset::_SetProjection( const char *pszWKT )
+CPLErr KEADataset::SetSpatialRef( const OGRSpatialReference* poSRS )
 {
     try
     {
         // get the spatial info and update it
         kealib::KEAImageSpatialInfo *pSpatialInfo = m_pImageIO->getSpatialInfo();
 
-        pSpatialInfo->wktString = pszWKT;
+        m_oSRS.Clear();
+        if( poSRS )
+        {
+            m_oSRS = *poSRS;
+            char* pszWKT = nullptr;
+            m_oSRS.exportToWkt(&pszWKT);
+            pSpatialInfo->wktString = pszWKT ? pszWKT : "";
+            CPLFree(pszWKT);
+        }
+        else
+        {
+            pSpatialInfo->wktString.clear();
+        }
 
         m_pImageIO->setSpatialInfo( pSpatialInfo );
         return CE_None;
@@ -618,9 +631,12 @@ void * KEADataset::GetInternalHandle(const char *)
 
 // this is called by GDALDataset::BuildOverviews. we implement this function to support
 // building of overviews
-CPLErr KEADataset::IBuildOverviews(const char *pszResampling, int nOverviews, int *panOverviewList,
-                                    int nListBands, int *panBandList, GDALProgressFunc pfnProgress,
-                                    void *pProgressData)
+CPLErr KEADataset::IBuildOverviews(const char *pszResampling,
+                                   int nOverviews, const int *panOverviewList,
+                                   int nListBands, const int *panBandList,
+                                   GDALProgressFunc pfnProgress,
+                                   void *pProgressData,
+                                   CSLConstList papszOptions)
 {
     // go through the list of bands that have been passed in
     int nCurrentBand, nOK = 1;
@@ -635,8 +651,8 @@ CPLErr KEADataset::IBuildOverviews(const char *pszResampling, int nOverviews, in
 
         // get GDAL to do the hard work. It will calculate the overviews and write them
         // back into the objects
-        if( GDALRegenerateOverviews( (GDALRasterBandH)pBand, nOverviews, (GDALRasterBandH*)pBand->GetOverviewList(),
-                                    pszResampling, pfnProgress, pProgressData ) != CE_None )
+        if( GDALRegenerateOverviewsEx( (GDALRasterBandH)pBand, nOverviews, (GDALRasterBandH*)pBand->GetOverviewList(),
+                                    pszResampling, pfnProgress, pProgressData, papszOptions ) != CE_None )
         {
             nOK = 0;
         }
@@ -799,22 +815,25 @@ int KEADataset::GetGCPCount()
     }
 }
 
-const char* KEADataset::_GetGCPProjection()
+const OGRSpatialReference* KEADataset::GetGCPSpatialRef() const
 {
     CPLMutexHolderD( &m_hMutex );
-    if( m_pszGCPProjection == nullptr )
+    if( m_oGCPSRS.IsEmpty() )
     {
         try
         {
             std::string sProj = m_pImageIO->getGCPProjection();
-            m_pszGCPProjection = CPLStrdup( sProj.c_str() );
+            m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            m_oGCPSRS.Clear();
+            if( !sProj.empty() )
+                m_oGCPSRS.importFromWkt( sProj.c_str() );
         }
         catch (const kealib::KEAIOException &)
         {
             return nullptr;
         }
     }
-    return m_pszGCPProjection;
+    return m_oGCPSRS.IsEmpty() ? nullptr : &m_oGCPSRS;
 }
 
 const GDAL_GCP* KEADataset::GetGCPs()
@@ -854,12 +873,11 @@ const GDAL_GCP* KEADataset::GetGCPs()
     return m_pGCPs;
 }
 
-CPLErr KEADataset::_SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList, const char *pszGCPProjection)
+CPLErr KEADataset::SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList, const OGRSpatialReference* poSRS)
 {
     CPLMutexHolderD( &m_hMutex );
     this->DestroyGCPs();
-    CPLFree( m_pszGCPProjection );
-    m_pszGCPProjection = nullptr;
+    m_oGCPSRS.Clear();
     CPLErr result = CE_None;
 
     std::vector<kealib::KEAImageGCP*> *pKEAGCPs = new std::vector<kealib::KEAImageGCP*>(nGCPCount);
@@ -878,7 +896,18 @@ CPLErr KEADataset::_SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList, const cha
     }
     try
     {
-        m_pImageIO->setGCPs(pKEAGCPs, pszGCPProjection);
+        char* pszGCPProjection = nullptr;
+        if( poSRS )
+        {
+            m_oGCPSRS = *poSRS;
+            poSRS->exportToWkt(&pszGCPProjection);
+            m_pImageIO->setGCPs(pKEAGCPs, pszGCPProjection ? pszGCPProjection : "");
+            CPLFree(pszGCPProjection);
+        }
+        else
+        {
+            m_pImageIO->setGCPs(pKEAGCPs, "");
+        }
     }
     catch (const kealib::KEAIOException &e)
     {

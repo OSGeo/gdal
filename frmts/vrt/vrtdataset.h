@@ -120,14 +120,6 @@ public:
 
     virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess ) = 0;
     virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess ) = 0;
-    virtual CPLErr ComputeRasterMinMax( int nXSize, int nYSize, int bApproxOK,
-                                        double* adfMinMax ) = 0;
-    virtual CPLErr ComputeStatistics( int nXSize, int nYSize,
-                                      int bApproxOK,
-                                      double *pdfMin, double *pdfMax,
-                                      double *pdfMean, double *pdfStdDev,
-                                      GDALProgressFunc pfnProgress,
-                                      void *pProgressData ) = 0;
     virtual CPLErr  GetHistogram( int nXSize, int nYSize,
                                   double dfMin, double dfMax,
                                   int nBuckets, GUIntBig * panHistogram,
@@ -276,8 +268,11 @@ class CPL_DLL VRTDataset CPL_NON_FINAL: public GDALDataset
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath);
     virtual CPLErr      XMLInit( CPLXMLNode *, const char * );
 
-    virtual CPLErr IBuildOverviews( const char *, int, int *,
-                                    int, int *, GDALProgressFunc, void * ) override;
+    virtual CPLErr IBuildOverviews( const char *,
+                                    int, const int *,
+                                    int, const int *,
+                                    GDALProgressFunc, void *,
+                                    CSLConstList papszOptions ) override;
 
     std::shared_ptr<GDALGroup> GetRootGroup() const override;
 
@@ -334,8 +329,11 @@ public:
 
     CPLErr            Initialize( /* GDALWarpOptions */ void * );
 
-    virtual CPLErr IBuildOverviews( const char *, int, int *,
-                                    int, int *, GDALProgressFunc, void * ) override;
+    virtual CPLErr IBuildOverviews( const char *,
+                                    int, const int *,
+                                    int, const int *,
+                                    GDALProgressFunc, void *,
+                                    CSLConstList papszOptions ) override;
 
     virtual CPLErr SetMetadataItem( const char *pszName, const char *pszValue,
                                     const char *pszDomain = "" ) override;
@@ -484,6 +482,8 @@ class CPL_DLL VRTRasterBand CPL_NON_FINAL: public GDALRasterBand
 
     CPL_DISALLOW_COPY_ASSIGN(VRTRasterBand)
 
+    bool            IsNoDataValueInDataTypeRange() const;
+
   public:
 
                     VRTRasterBand();
@@ -581,6 +581,8 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL: public VRTRasterBand
     int            m_nSkipBufferInitialization = -1;
 
     bool           CanUseSourcesMinMaxImplementations();
+
+    bool           IsMosaicOfNonOverlappingSimpleSourcesOfFullRasterNoResAndTypeChange(bool bAllowMaxValAdjustment) const;
 
     CPL_DISALLOW_COPY_ASSIGN(VRTSourcedRasterBand)
 
@@ -955,11 +957,6 @@ protected:
     double              m_dfDstXSize = 0;
     double              m_dfDstYSize = 0;
 
-    // should really be a member of VRTComplexSource as only taken into account by it
-    int                 m_bNoDataSet = false;
-
-    // same as above. adjusted value should be read with GetAdjustedNoDataValue()
-    double              m_dfNoDataValue = VRT_NODATA_UNSET;
     CPLString           m_osResampling{};
 
     int                 m_nMaxValue = 0;
@@ -973,7 +970,9 @@ protected:
 
     int                 NeedMaxValAdjustment() const;
 
-    double              GetAdjustedNoDataValue() const;
+    GDALRasterBand*     GetRasterBandNoOpen() const { return m_poRasterBand; }
+
+    virtual bool        ValidateOpenedBand(GDALRasterBand* /*poBand*/) const { return true; }
 
 public:
             VRTSimpleSource();
@@ -990,7 +989,6 @@ public:
     void           SetSrcMaskBand( GDALRasterBand * );
     void           SetSrcWindow( double, double, double, double );
     void           SetDstWindow( double, double, double, double );
-    void           SetNoDataValue( double dfNoDataValue );  // should really be a member of VRTComplexSource
     const CPLString& GetResampling() const { return m_osResampling; }
     void           SetResampling( const char* pszResampling );
 
@@ -1011,14 +1009,6 @@ public:
 
     virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess ) override;
     virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess ) override;
-    virtual CPLErr ComputeRasterMinMax( int nXSize, int nYSize, int bApproxOK,
-                                        double* adfMinMax ) override;
-    virtual CPLErr ComputeStatistics( int nXSize, int nYSize,
-                                      int bApproxOK,
-                                      double *pdfMin, double *pdfMax,
-                                      double *pdfMean, double *pdfStdDev,
-                                      GDALProgressFunc pfnProgress,
-                                      void *pProgressData ) override;
     virtual CPLErr  GetHistogram( int nXSize, int nYSize,
                                   double dfMin, double dfMax,
                                   int nBuckets, GUIntBig * panHistogram,
@@ -1064,6 +1054,9 @@ class VRTAveragedSource final: public VRTSimpleSource
 {
     CPL_DISALLOW_COPY_ASSIGN(VRTAveragedSource)
 
+    int                 m_bNoDataSet = false;
+    double              m_dfNoDataValue = VRT_NODATA_UNSET;
+
 public:
                     VRTAveragedSource();
     virtual CPLErr  RasterIO( GDALDataType eBandDataType,
@@ -1075,20 +1068,14 @@ public:
 
     virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess ) override;
     virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess ) override;
-    virtual CPLErr ComputeRasterMinMax( int nXSize, int nYSize, int bApproxOK,
-                                        double* adfMinMax ) override;
-    virtual CPLErr ComputeStatistics( int nXSize, int nYSize,
-                                      int bApproxOK,
-                                      double *pdfMin, double *pdfMax,
-                                      double *pdfMean, double *pdfStdDev,
-                                      GDALProgressFunc pfnProgress,
-                                      void *pProgressData ) override;
     virtual CPLErr  GetHistogram( int nXSize, int nYSize,
                                   double dfMin, double dfMax,
                                   int nBuckets, GUIntBig * panHistogram,
                                   int bIncludeOutOfRange, int bApproxOK,
                                   GDALProgressFunc pfnProgress,
                                   void *pProgressData ) override;
+
+    void    SetNoDataValue( double dfNoDataValue );
 
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath ) override;
     virtual const char* GetType() override { return "AveragedSource"; }
@@ -1108,24 +1095,35 @@ typedef enum
 class CPL_DLL VRTComplexSource CPL_NON_FINAL: public VRTSimpleSource
 {
     CPL_DISALLOW_COPY_ASSIGN(VRTComplexSource)
-    bool           AreValuesUnchanged() const;
 
 protected:
-    VRTComplexSourceScaling m_eScalingType;
-    double         m_dfScaleOff;  // For linear scaling.
-    double         m_dfScaleRatio;  // For linear scaling.
+
+    int                 m_bNoDataSet = false;
+    // adjusted value should be read with GetAdjustedNoDataValue()
+    double              m_dfNoDataValue = VRT_NODATA_UNSET;
+    std::string         m_osNoDataValueOri{}; // string value read in XML deserialization
+
+    VRTComplexSourceScaling m_eScalingType = VRT_SCALING_NONE;
+    double         m_dfScaleOff = 0;  // For linear scaling.
+    double         m_dfScaleRatio = 1;  // For linear scaling.
 
     // For non-linear scaling with a power function.
-    int            m_bSrcMinMaxDefined;
-    double         m_dfSrcMin;
-    double         m_dfSrcMax;
-    double         m_dfDstMin;
-    double         m_dfDstMax;
-    double         m_dfExponent;
+    int            m_bSrcMinMaxDefined = FALSE;
+    double         m_dfSrcMin = 0;
+    double         m_dfSrcMax = 0;
+    double         m_dfDstMin = 0;
+    double         m_dfDstMax = 0;
+    double         m_dfExponent = 1;
 
-    int            m_nColorTableComponent;
+    int            m_nColorTableComponent = 0;
 
     bool           m_bUseMaskBand = false;
+
+    double         *m_padfLUTInputs = nullptr;
+    double         *m_padfLUTOutputs = nullptr;
+    int            m_nLUTItemCount = 0;
+
+    double              GetAdjustedNoDataValue() const;
 
     template <class WorkingDT>
     CPLErr          RasterIOInternal( int nReqXOff, int nReqYOff,
@@ -1151,14 +1149,6 @@ public:
 
     virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess ) override;
     virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess ) override;
-    virtual CPLErr ComputeRasterMinMax( int nXSize, int nYSize, int bApproxOK,
-                                        double* adfMinMax ) override;
-    virtual CPLErr ComputeStatistics( int nXSize, int nYSize,
-                                      int bApproxOK,
-                                      double *pdfMin, double *pdfMax,
-                                      double *pdfMean, double *pdfStdDev,
-                                      GDALProgressFunc pfnProgress,
-                                      void *pProgressData ) override;
     virtual CPLErr  GetHistogram( int nXSize, int nYSize,
                                   double dfMin, double dfMax,
                                   int nBuckets, GUIntBig * panHistogram,
@@ -1171,7 +1161,11 @@ public:
                             std::map<CPLString, GDALDataset*>& ) override;
     virtual const char* GetType() override { return "ComplexSource"; }
 
+    bool           AreValuesUnchanged() const;
+
     double  LookupValue( double dfInput );
+
+    void    SetNoDataValue( double dfNoDataValue );
 
     void    SetUseMaskBand(bool bUseMaskBand) { m_bUseMaskBand = bUseMaskBand; }
 
@@ -1182,10 +1176,6 @@ public:
                              double dfDstMin,
                              double dfDstMax );
     void    SetColorTableComponent( int nComponent );
-
-    double         *m_padfLUTInputs;
-    double         *m_padfLUTOutputs;
-    int            m_nLUTItemCount;
 };
 
 /************************************************************************/
@@ -1296,14 +1286,6 @@ public:
 
     virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess ) override;
     virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess ) override;
-    virtual CPLErr ComputeRasterMinMax( int nXSize, int nYSize, int bApproxOK,
-                                        double* adfMinMax ) override;
-    virtual CPLErr ComputeStatistics( int nXSize, int nYSize,
-                                      int bApproxOK,
-                                      double *pdfMin, double *pdfMax,
-                                      double *pdfMean, double *pdfStdDev,
-                                      GDALProgressFunc pfnProgress,
-                                      void *pProgressData ) override;
     virtual CPLErr  GetHistogram( int nXSize, int nYSize,
                                   double dfMin, double dfMax,
                                   int nBuckets, GUIntBig * panHistogram,

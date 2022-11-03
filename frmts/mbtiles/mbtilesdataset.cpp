@@ -51,7 +51,6 @@
 #include <memory>
 #include <vector>
 
-CPL_CVSID("$Id$")
 
 static const char * const apszAllowedDrivers[] = {"JPEG", "PNG", nullptr};
 
@@ -106,14 +105,8 @@ class MBTilesDataset final: public GDALPamDataset, public GDALGPKGMBTilesLikePse
 
     virtual CPLErr GetGeoTransform(double* padfGeoTransform) override;
     virtual CPLErr SetGeoTransform( double* padfGeoTransform ) override;
-    virtual const char* _GetProjectionRef() override;
-    virtual CPLErr _SetProjection( const char* pszProjection ) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     virtual char      **GetMetadataDomainList() override;
     virtual char      **GetMetadata( const char * pszDomain = "" ) override;
@@ -121,9 +114,10 @@ class MBTilesDataset final: public GDALPamDataset, public GDALGPKGMBTilesLikePse
 
     virtual CPLErr    IBuildOverviews(
                         const char * pszResampling,
-                        int nOverviews, int * panOverviewList,
-                        int nBandsIn, CPL_UNUSED int * panBandList,
-                        GDALProgressFunc pfnProgress, void * pProgressData ) override;
+                        int nOverviews, const int * panOverviewList,
+                        int nBandsIn, const int * /* panBandList */,
+                        GDALProgressFunc pfnProgress, void * pProgressData,
+                        CSLConstList papszOptions ) override;
 
     virtual int                 GetLayerCount() override
                         { return static_cast<int>(m_apoLayers.size()); }
@@ -158,6 +152,7 @@ class MBTilesDataset final: public GDALPamDataset, public GDALGPKGMBTilesLikePse
     bool m_bGeoTransformValid;
     double m_adfGeoTransform[6];
     int m_nMinZoomLevel = 0;
+    OGRSpatialReference m_oSRS{};
 
     int m_nOverviewCount;
     MBTilesDataset** m_papoOverviewDS;
@@ -842,6 +837,9 @@ MBTilesDataset::MBTilesDataset()
 
     m_osRasterTable = "tiles";
     m_eTF = GPKG_TF_PNG;
+
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    m_oSRS.importFromEPSG(3857);
 }
 
 /************************************************************************/
@@ -1257,34 +1255,32 @@ bool MBTilesDataset::InitRaster ( MBTilesDataset* poParentDS,
 }
 
 /************************************************************************/
-/*                         GetProjectionRef()                           */
+/*                         GetSpatialRef()                              */
 /************************************************************************/
 
-const char* MBTilesDataset::_GetProjectionRef()
+const OGRSpatialReference* MBTilesDataset::GetSpatialRef() const
 {
-    return SRS_EPSG_3857;
+    return &m_oSRS;
 }
 
 /************************************************************************/
-/*                           SetProjection()                            */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
-CPLErr MBTilesDataset::_SetProjection( const char* pszProjection )
+CPLErr MBTilesDataset::SetSpatialRef( const OGRSpatialReference* poSRS )
 {
     if( eAccess != GA_Update )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "SetProjection() not supported on read-only dataset");
+                 "SetSpatialRef() not supported on read-only dataset");
         return CE_Failure;
     }
 
-    OGRSpatialReference oSRS;
-    if( oSRS.SetFromUserInput(pszProjection) != OGRERR_NONE )
-        return CE_Failure;
-    if( oSRS.GetAuthorityName(nullptr) == nullptr ||
-        !EQUAL(oSRS.GetAuthorityName(nullptr), "EPSG") ||
-        oSRS.GetAuthorityCode(nullptr) == nullptr ||
-        !EQUAL(oSRS.GetAuthorityCode(nullptr), "3857") )
+    if( poSRS == nullptr ||
+        poSRS->GetAuthorityName(nullptr) == nullptr ||
+        !EQUAL(poSRS->GetAuthorityName(nullptr), "EPSG") ||
+        poSRS->GetAuthorityCode(nullptr) == nullptr ||
+        !EQUAL(poSRS->GetAuthorityCode(nullptr), "3857") )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Only EPSG:3857 supported on MBTiles dataset");
@@ -3413,9 +3409,10 @@ static int GetFloorPowerOfTwo(int n)
 
 CPLErr MBTilesDataset::IBuildOverviews(
                         const char * pszResampling,
-                        int nOverviews, int * panOverviewList,
-                        int nBandsIn, int * /*panBandList*/,
-                        GDALProgressFunc pfnProgress, void * pProgressData )
+                        int nOverviews, const int * panOverviewList,
+                        int nBandsIn, const int * /*panBandList*/,
+                        GDALProgressFunc pfnProgress, void * pProgressData,
+                        CSLConstList papszOptions )
 {
     if( GetAccess() != GA_Update )
     {
@@ -3530,7 +3527,8 @@ CPLErr MBTilesDataset::IBuildOverviews(
 
     CPLErr eErr = GDALRegenerateOverviewsMultiBand(nBands, papoBands,
                                      iCurOverview, papapoOverviewBands,
-                                     pszResampling, pfnProgress, pProgressData );
+                                     pszResampling, pfnProgress, pProgressData,
+                                     papszOptions);
 
     for( int iBand = 0; iBand < nBands; iBand++ )
     {
@@ -3665,6 +3663,7 @@ MVT_MBTILES_COMMON_DSCO
 #ifdef ENABLE_SQL_SQLITE_FORMAT
     poDriver->SetMetadataItem("ENABLE_SQL_SQLITE_FORMAT", "YES");
 #endif
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "SQLITE OGRSQL" );
 
     poDriver->pfnOpen = MBTilesDataset::Open;
     poDriver->pfnIdentify = MBTilesDataset::Identify;

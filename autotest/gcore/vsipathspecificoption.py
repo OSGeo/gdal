@@ -3,7 +3,7 @@
 # $Id$
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  Test VSI credentials
+# Purpose:  Test VSI path specific options
 # Author:   Even Rouault <even dot rouault at spatialys dot com>
 #
 ###############################################################################
@@ -33,39 +33,39 @@ import pytest
 from osgeo import gdal
 
 
-def test_vsicredential():
+def test_vsi_path_specific_options():
 
     with pytest.raises(Exception):
-        assert gdal.GetCredential(None, "key")
+        assert gdal.GetPathSpecificOption(None, "key")
 
     with pytest.raises(Exception):
-        assert gdal.GetCredential("prefix", None)
+        assert gdal.GetPathSpecificOption("prefix", None)
 
-    assert gdal.GetCredential("prefix", "key") is None
+    assert gdal.GetPathSpecificOption("prefix", "key") is None
 
-    assert gdal.GetCredential("prefix", "key", "default") == "default"
-
-    with pytest.raises(Exception):
-        gdal.SetCredential(None, "key", "value")
+    assert gdal.GetPathSpecificOption("prefix", "key", "default") == "default"
 
     with pytest.raises(Exception):
-        gdal.SetCredential("prefix", None, "value")
+        gdal.SetPathSpecificOption(None, "key", "value")
 
-    gdal.SetCredential("prefix", "key", "value")
-    assert gdal.GetCredential("prefix", "key") == "value"
-    assert gdal.GetCredential("prefix/object", "key") == "value"
-    assert gdal.GetCredential("prefix", "key", "default") == "value"
-    assert gdal.GetCredential("another_prefix", "key") is None
+    with pytest.raises(Exception):
+        gdal.SetPathSpecificOption("prefix", None, "value")
 
-    gdal.SetCredential("prefix", "key", None)
-    assert gdal.GetCredential("prefix", "key") is None
+    gdal.SetPathSpecificOption("prefix", "key", "value")
+    assert gdal.GetPathSpecificOption("prefix", "key") == "value"
+    assert gdal.GetPathSpecificOption("prefix/object", "key") == "value"
+    assert gdal.GetPathSpecificOption("prefix", "key", "default") == "value"
+    assert gdal.GetPathSpecificOption("another_prefix", "key") is None
 
-    gdal.SetCredential("prefix", "key", "value")
-    gdal.ClearCredentials("prefix")
-    assert gdal.GetCredential("prefix", "key") is None
+    gdal.SetPathSpecificOption("prefix", "key", None)
+    assert gdal.GetPathSpecificOption("prefix", "key") is None
 
-    gdal.SetCredential("prefix", "key", "value")
-    gdal.ClearCredentials("another_prefix")
-    assert gdal.GetCredential("prefix", "key") == "value"
-    gdal.ClearCredentials()
-    assert gdal.GetCredential("prefix", "key") is None
+    gdal.SetPathSpecificOption("prefix", "key", "value")
+    gdal.ClearPathSpecificOptions("prefix")
+    assert gdal.GetPathSpecificOption("prefix", "key") is None
+
+    gdal.SetPathSpecificOption("prefix", "key", "value")
+    gdal.ClearPathSpecificOptions("another_prefix")
+    assert gdal.GetPathSpecificOption("prefix", "key") == "value"
+    gdal.ClearPathSpecificOptions()
+    assert gdal.GetPathSpecificOption("prefix", "key") is None

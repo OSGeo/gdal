@@ -279,6 +279,60 @@
          </Instrument_Calibration>
       </Radiometric_Calibration>
   </Radiometric_Data>
+  <Geometric_Data>
+      <Use_Area>
+          <Located_Geometric_Values>
+              <LOCATION_TYPE>BottomCenter</LOCATION_TYPE>
+              <COL>7503</COL>
+              <ROW>6542</ROW>
+              <TIME>2022-05-19T05:55:43.122330Z</TIME>
+              <SATELLITE_ALTITUDE>BOTTOM_SATELITTE_ALTITUDE</SATELLITE_ALTITUDE>
+              <Acquisition_Angles>
+                  <IMAGE_ORIENTATION unit="deg">BOTTOM_IMAGE_ORIENTATION</IMAGE_ORIENTATION>
+                  <AZIMUTH_ANGLE unit="deg">BOTTOM_AZIMUTH_ANGLE</AZIMUTH_ANGLE>
+                  <VIEWING_ANGLE_ACROSS_TRACK unit="deg">BOTTOM_VIEWING_ANGLE_ACROSS_TRACK</VIEWING_ANGLE_ACROSS_TRACK>
+                  <VIEWING_ANGLE_ALONG_TRACK unit="deg">BOTTOM_VIEWING_ANGLE_ALONG_TRACK</VIEWING_ANGLE_ALONG_TRACK>
+                  <VIEWING_ANGLE unit="deg">BOTTOM_VIEWING_ANGLE</VIEWING_ANGLE>
+                  <INCIDENCE_ANGLE_ALONG_TRACK unit="deg">BOTTOM_INCIDENCE_ANGLE_ALONG_TRACK</INCIDENCE_ANGLE_ALONG_TRACK>
+                  <INCIDENCE_ANGLE_ACROSS_TRACK unit="deg">BOTTOM_INCIDENCE_ANGLE_ACROSS_TRACK</INCIDENCE_ANGLE_ACROSS_TRACK>
+                  <INCIDENCE_ANGLE unit="deg">BOTTOM_INCIDENCE_ANGLE</INCIDENCE_ANGLE>
+              </Acquisition_Angles>
+              <Solar_Incidences>
+                  <SUN_AZIMUTH unit="deg">BOTTOM_SUN_AZIMUTH</SUN_AZIMUTH>
+                  <SUN_ELEVATION unit="deg">BOTTOM_SUN_ELEVATION</SUN_ELEVATION>
+              </Solar_Incidences>
+              <Ground_Sample_Distance>
+                  <GSD_ACROSS_TRACK unit="m">BOTTOM_GSD_ACROSS_TRACK</GSD_ACROSS_TRACK>
+                  <GSD_ALONG_TRACK unit="m">BOTTOM_GSD_ALONG_TRACK</GSD_ALONG_TRACK>
+              </Ground_Sample_Distance>
+          </Located_Geometric_Values>
+          <Located_Geometric_Values>
+              <LOCATION_TYPE>Center</LOCATION_TYPE>
+              <COL>7503</COL>
+              <ROW>6542</ROW>
+              <TIME>2022-05-19T05:55:43.122330Z</TIME>
+              <SATELLITE_ALTITUDE>CENTER_SATELLITE_ALTITUDE</SATELLITE_ALTITUDE>
+              <Acquisition_Angles>
+                  <IMAGE_ORIENTATION unit="deg">CENTER_IMAGE_ORIENTATION</IMAGE_ORIENTATION>
+                  <AZIMUTH_ANGLE unit="deg">CENTER_AZIMUTH_ANGLE</AZIMUTH_ANGLE>
+                  <VIEWING_ANGLE_ACROSS_TRACK unit="deg">CENTER_VIEWING_ANGLE_ACROSS_TRACK</VIEWING_ANGLE_ACROSS_TRACK>
+                  <VIEWING_ANGLE_ALONG_TRACK unit="deg">CENTER_VIEWING_ANGLE_ALONG_TRACK</VIEWING_ANGLE_ALONG_TRACK>
+                  <VIEWING_ANGLE unit="deg">CENTER_VIEWING_ANGLE</VIEWING_ANGLE>
+                  <INCIDENCE_ANGLE_ALONG_TRACK unit="deg">CENTER_INCIDENCE_ANGLE_ALONG_TRACK</INCIDENCE_ANGLE_ALONG_TRACK>
+                  <INCIDENCE_ANGLE_ACROSS_TRACK unit="deg">CENTER_INCIDENCE_ANGLE_ACROSS_TRACK</INCIDENCE_ANGLE_ACROSS_TRACK>
+                  <INCIDENCE_ANGLE unit="deg">CENTER_INCIDENCE_ANGLE</INCIDENCE_ANGLE>
+              </Acquisition_Angles>
+              <Solar_Incidences>
+                  <SUN_AZIMUTH unit="deg">CENTER_SUN_AZIMUTH</SUN_AZIMUTH>
+                  <SUN_ELEVATION unit="deg">CENTER_SUN_ELEVATION</SUN_ELEVATION>
+              </Solar_Incidences>
+              <Ground_Sample_Distance>
+                  <GSD_ACROSS_TRACK unit="m">CENTER_GSD_ACROSS_TRACK</GSD_ACROSS_TRACK>
+                  <GSD_ALONG_TRACK unit="m">CENTER_GSD_ALONG_TRACK</GSD_ALONG_TRACK>
+              </Ground_Sample_Distance>
+          </Located_Geometric_Values>
+      </Use_Area>
+  </Geometric_Data>
   <Quality_Assessment>
       <Imaging_Quality_Measurement>
          <QUALITY_TABLES>PHR</QUALITY_TABLES>

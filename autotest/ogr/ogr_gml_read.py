@@ -4421,3 +4421,73 @@ def test_ogr_gml_too_nested():
         assert lyr.GetNextFeature() is not None
 
     gdal.Unlink("data/gml/too_nested.gfs")
+
+
+###############################################################################
+
+
+def test_ogr_gml_first_feature_without_geometry():
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
+    tmpfilename = "/vsimem/first_feature_without_geometry.gml"
+    with gdaltest.tempfile(
+        tmpfilename, open("data/gml/first_feature_without_geometry.gml", "rb").read()
+    ):
+        ds = ogr.Open(tmpfilename)
+        assert ds.GetLayer(0).GetGeomType() == ogr.wkbPoint
+    gdal.Unlink(tmpfilename[0:-3] + "gfs")
+
+
+###############################################################################
+# Test FORCE_SRS_DETECTION open option on dataset with multiple geometry fields
+
+
+def test_ogr_gml_force_srs_detection_multiple_geom_fields():
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
+    # With .xsd
+    ds = gdal.OpenEx(
+        "data/gml/multiple_geometry_fields_srs_detection.gml",
+        open_options=["FORCE_SRS_DETECTION=YES"],
+    )
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef() is None
+    assert (
+        lyr.GetLayerDefn().GetGeomFieldDefn(1).GetSpatialRef().GetAuthorityCode(None)
+        == "32631"
+    )
+    assert (
+        lyr.GetLayerDefn().GetGeomFieldDefn(2).GetSpatialRef().GetAuthorityCode(None)
+        == "32632"
+    )
+    assert lyr.GetLayerDefn().GetGeomFieldDefn(3).GetSpatialRef() is None
+
+
+###############################################################################
+# Test reading a file with a .xsd schema, but whose features use
+# gml:description, gml:identifier and gml:name
+
+
+def test_ogr_gml_read_feature_with_gml_description():
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
+    ds = gdal.OpenEx("data/gml/feature_with_gml_description.gml")
+    assert ds.GetMetadataItem("DESCRIPTION") == "toplevel description"
+    assert ds.GetMetadataItem("NAME") == "toplevel name"
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    assert [
+        lyr_defn.GetFieldDefn(i).GetName() for i in range(lyr_defn.GetFieldCount())
+    ] == ["gml_id", "description", "identifier", "name", "bar", "not_found_in_gml"]
+    f = lyr.GetNextFeature()
+    assert f["gml_id"] == "foo.0"
+    assert f["description"] == "gml_description"
+    assert f["identifier"] == "gml_identifier"
+    assert f["name"] == "gml_name"
+    assert f["bar"] == 1

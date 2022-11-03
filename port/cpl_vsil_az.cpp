@@ -42,7 +42,6 @@
 
 #include "cpl_azure.h"
 
-CPL_CVSID("$Id$")
 
 // #define DEBUG_VERBOSE 1
 

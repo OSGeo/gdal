@@ -1161,16 +1161,16 @@ def test_gdalwarp_lib_125():
         src_ds_1 = gdal.GetDriverByName("MEM").Create("", 2, 2)
         src_ds_1.SetGeoTransform([10, 1, 0, 10, 0, -1])
         if i == 1 or i == 3:
-            src_ds_1.GetRasterBand(1).SetMetadataItem("STATISTICS_MINIUM", "5")
+            src_ds_1.GetRasterBand(1).SetMetadataItem("STATISTICS_MINIMUM", "5")
 
         src_ds_2 = gdal.GetDriverByName("MEM").Create("", 2, 2)
         src_ds_2.SetGeoTransform([10, 1, 0, 10, 0, -1])
         if i == 2 or i == 3:
-            src_ds_2.GetRasterBand(1).SetMetadataItem("STATISTICS_MINIUM", "5")
+            src_ds_2.GetRasterBand(1).SetMetadataItem("STATISTICS_MINIMUM", "5")
 
         out_ds = gdal.Warp("", [src_ds_1, src_ds_2], format="MEM")
 
-        assert out_ds.GetRasterBand(1).GetMetadataItem("STATISTICS_MINIUM") is None, i
+        assert out_ds.GetRasterBand(1).GetMetadataItem("STATISTICS_MINIMUM") is None, i
 
 
 ###############################################################################
@@ -2898,6 +2898,134 @@ def test_gdalwarp_lib_epsg_4326_to_esri_53037():
             -3176.540597910281,
         )
     )
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "resampleAlg", ["average", "mode", "min", "max", "med", "q1", "q3", "sum", "rms"]
+)
+def test_gdalwarp_lib_epsg_4326_to_esri_102020(resampleAlg):
+
+    # 6.3.1 might not be the lowest bound, but 6.0.0 definitely doesn't work for that test
+    if (
+        osr.GetPROJVersionMajor() * 10000
+        + osr.GetPROJVersionMinor() * 100
+        + osr.GetPROJVersionMicro()
+        < 60301
+    ):
+        pytest.skip("requires PROJ 6.3.1 or later")
+
+    # Scenario of https://github.com/OSGeo/gdal/issues/6155
+    out_ds = gdal.Warp(
+        "",
+        "../gdrivers/data/small_world.tif",
+        options="-f MEM -t_srs ESRI:102020 -te -3000000 -3000000 3000000 0 -ts 300 150 -r "
+        + resampleAlg,
+    )
+    # Test we don't have a weird spike at the antimeridian, "below" south pole
+    if resampleAlg != "sum":
+        assert struct.unpack("B" * 3, out_ds.ReadRaster(149, 100, 1, 1)) == (11, 10, 50)
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "options",
+    [
+        "",
+        "-ts 1 1",
+        "-ts 10 10",
+        "-ts 40 40",
+        "-t_srs EPSG:4326",
+        "-t_srs EPSG:4326 -ts 11 9",
+        "-t_srs EPSG:4326 -ts 100 100",
+    ],
+)
+def test_gdalwarp_lib_sum_preserving(options):
+
+    src_ds = gdal.Open("../gdrivers/data/byte.tif")
+    out_ds = gdal.Warp("", src_ds, options="-f MEM -ot Float32 -r sum " + options)
+    source_values = struct.unpack(
+        "B" * (src_ds.RasterXSize * src_ds.RasterYSize), src_ds.ReadRaster()
+    )
+    values = struct.unpack(
+        "f" * (out_ds.RasterXSize * out_ds.RasterYSize), out_ds.ReadRaster()
+    )
+    assert sum(source_values) == pytest.approx(sum(values), rel=1e-5)
+
+    # Check nodata handling
+    minval = src_ds.GetRasterBand(1).ComputeRasterMinMax()[0]
+    out_ds = gdal.Warp(
+        "",
+        src_ds,
+        options="-f MEM -ot Float32 -srcnodata "
+        + str(minval)
+        + " -dstnodata -12345 -r sum "
+        + options,
+    )
+    source_values = struct.unpack(
+        "B" * (src_ds.RasterXSize * src_ds.RasterYSize), src_ds.ReadRaster()
+    )
+    source_values = [x if x != minval else 0 for x in source_values]
+    values = struct.unpack(
+        "f" * (out_ds.RasterXSize * out_ds.RasterYSize), out_ds.ReadRaster()
+    )
+    values = [x if x != -12345 else 0 for x in values]
+    assert sum(source_values) == pytest.approx(sum(values), rel=1e-5)
+
+
+###############################################################################
+
+
+def test_gdalwarp_lib_sum_preserving_multiband():
+
+    src_ds = gdal.Open("../gdrivers/data/small_world.tif")
+    out_ds = gdal.Warp("", src_ds, options="-f MEM -ot Float32 -r sum -ts 500 300")
+    for i in range(src_ds.RasterCount):
+        source_values = struct.unpack(
+            "B" * (src_ds.RasterXSize * src_ds.RasterYSize),
+            src_ds.GetRasterBand(i + 1).ReadRaster(),
+        )
+        values = struct.unpack(
+            "f" * (out_ds.RasterXSize * out_ds.RasterYSize),
+            out_ds.GetRasterBand(i + 1).ReadRaster(),
+        )
+        assert sum(source_values) == pytest.approx(sum(values), rel=1e-5)
+
+
+###############################################################################
+
+
+def test_gdalwarp_lib_sum_preserving_accross_antimeridian():
+
+    src_ds = gdal.Translate(
+        "",
+        "../gcore/data/byte.tif",
+        options="-f MEM -a_srs EPSG:32601 -a_ullr 165000 5000 170000 -5000",
+    )
+    out1_ds = gdal.Warp(
+        "",
+        src_ds,
+        options="-f MEM -r sum -t_srs EPSG:4326 -overwrite -te 179.97 -0.05 180 0.05 -ot Float32",
+    )
+    out2_ds = gdal.Warp(
+        "",
+        src_ds,
+        options="-f MEM -r sum -t_srs EPSG:4326 -overwrite -te -180 -0.05 -179.95 0.05 -ot Float32",
+    )
+    source_values = struct.unpack(
+        "B" * (src_ds.RasterXSize * src_ds.RasterYSize), src_ds.ReadRaster()
+    )
+    values1 = struct.unpack(
+        "f" * (out1_ds.RasterXSize * out1_ds.RasterYSize), out1_ds.ReadRaster()
+    )
+    values2 = struct.unpack(
+        "f" * (out2_ds.RasterXSize * out2_ds.RasterYSize), out2_ds.ReadRaster()
+    )
+    assert sum(source_values) == pytest.approx(sum(values1) + sum(values2), rel=1e-5)
 
 
 ###############################################################################

@@ -1493,7 +1493,7 @@ bool ZarrArray::IAdviseRead(const GUInt64* arrayStartIdx,
         return false;
     }
 
-    const int nThreads = [papszOptions, nReqTiles]()
+    const int nThreadsMax = [papszOptions]()
     {
         int nThreadsTmp;
         const char* pszNumThreads = CSLFetchNameValueDef(
@@ -1503,14 +1503,15 @@ bool ZarrArray::IAdviseRead(const GUInt64* arrayStartIdx,
             nThreadsTmp = CPLGetNumCPUs();
         else
             nThreadsTmp = std::max(1, atoi(pszNumThreads));
-        nThreadsTmp = static_cast<int>(
-                        std::min(static_cast<uint64_t>(nThreadsTmp), nReqTiles));
-        nThreadsTmp = std::min(nThreadsTmp, 10 * CPLGetNumCPUs());
+        if( nThreadsTmp > 1024 )
+            nThreadsTmp = 1024;
         return nThreadsTmp;
     }();
-    if( nThreads <= 1 )
+    if( nThreadsMax <= 1 )
         return true;
-    CPLDebug(ZARR_DEBUG_KEY, "IAdviseRead(): Using %d threads", nThreads);
+    CPLDebug(ZARR_DEBUG_KEY, "IAdviseRead(): Using up to %d threads", nThreadsMax);
+    const int nThreads = static_cast<int>(std::min(
+        static_cast<uint64_t>(nThreadsMax), nReqTiles));
 
     m_oMapTileIndexToCachedTile.clear();
 
@@ -1570,7 +1571,7 @@ lbl_return_to_caller:
         goto lbl_return_to_caller;
     assert( nTileIter == nReqTiles );
 
-    CPLWorkerThreadPool* wtp = GDALGetGlobalThreadPool(nThreads);
+    CPLWorkerThreadPool* wtp = GDALGetGlobalThreadPool(nThreadsMax);
     if( wtp == nullptr )
         return false;
 

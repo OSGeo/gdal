@@ -18,7 +18,8 @@ Synopsis
 .. code-block::
 
     gdalmdimtranslate [--help-general] [-co "NAME=VALUE"]*
-                      [-of format] [-array <array_spec>]*
+                      [-if format]* [-of format]
+                      [-array <array_spec>]*
                       [-group <group_spec>]*
                       [-subset <subset_spec>]*
                       [-scaleaxes <scaleaxes_spec>]*
@@ -36,6 +37,8 @@ and groups, and/or subsetting operations.
 The following command line parameters can appear in any order.
 
 .. program:: gdalmdimtranslate
+
+.. include:: options/if.rst
 
 .. option:: -of <format>
 

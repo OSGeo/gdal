@@ -57,7 +57,7 @@ def test_hfa_write_desc():
 
     new_ds = gdal.Open("tmp/test_desc.img")
     bnd = new_ds.GetRasterBand(1)
-    assert bnd.GetDescription() == "CustomBandName", "Didnt get custom band name."
+    assert bnd.GetDescription() == "CustomBandName", "Didn't get custom band name."
 
     bnd = None
     new_ds = None

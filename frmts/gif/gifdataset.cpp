@@ -33,7 +33,6 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
-CPL_CVSID("$Id$")
 
 CPL_C_START
 #if !(defined(GIFLIB_MAJOR) && GIFLIB_MAJOR >= 5)
@@ -590,17 +589,6 @@ GIFDataset::CreateCopy(
     }
     else
     {
-        int nLinesToRead = 0;
-        for( int i = 0; i < 4; i++)
-        {
-            for( int j = InterlacedOffset[i];
-                 j < nYSize;
-                 j += InterlacedJumps[i] )
-            {
-                nLinesToRead++;
-            }
-        }
-
         int nLinesRead = 0;
         // Need to perform 4 passes on the images:
         for( int i = 0; i < 4; i++)

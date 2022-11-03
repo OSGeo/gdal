@@ -14,6 +14,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read  #  to fetch code (actions/checkout)
+
 jobs:
 
   macos_build:
@@ -46,3 +49,4 @@ jobs:
             # Emulate a few Travis-CI env variable so that some tests get properly skipped
             TRAVIS: true
             TRAVIS_OS_NAME: osx
+            BUILD_NAME: macos_build

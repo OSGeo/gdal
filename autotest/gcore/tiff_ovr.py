@@ -261,23 +261,26 @@ def test_tiff_ovr_6(both_endian):
 
     shutil.copyfile("data/nodata_byte.tif", "tmp/ovr6.tif")
 
-    with gdaltest.config_option("USE_RRD", "YES"):
-        wrk_ds = gdal.Open("tmp/ovr6.tif", gdal.GA_Update)
+    wrk_ds = gdal.Open("tmp/ovr6.tif", gdal.GA_Update)
 
-        assert wrk_ds is not None, "Failed to open test dataset."
+    assert wrk_ds is not None, "Failed to open test dataset."
 
-        def cbk(pct, _, user_data):
-            if user_data[0] < 0:
-                assert pct == 0
-            assert pct >= user_data[0]
-            user_data[0] = pct
-            return 1
+    def cbk(pct, _, user_data):
+        if user_data[0] < 0:
+            assert pct == 0
+        assert pct >= user_data[0]
+        user_data[0] = pct
+        return 1
 
-        tab = [-1]
-        wrk_ds.BuildOverviews(
-            "AVERAGE", overviewlist=[2], callback=cbk, callback_data=tab
-        )
-        assert tab[0] == 1.0
+    tab = [-1]
+    wrk_ds.BuildOverviews(
+        "AVERAGE",
+        overviewlist=[2],
+        callback=cbk,
+        callback_data=tab,
+        options=["USE_RRD=YES"],
+    )
+    assert tab[0] == 1.0
 
     try:
         os.stat("tmp/ovr6.aux")
@@ -367,39 +370,58 @@ def test_tiff_ovr_rms_palette(both_endian):
 # Will also check that pixel interleaving is automatically selected (#3064)
 
 
-def test_tiff_ovr_9(both_endian):
-    gdaltest.tiff_drv.Delete("tmp/ovr9.tif")
+@pytest.mark.parametrize("option_name_suffix", ["", "_OVERVIEW"])
+@pytest.mark.parametrize("read_only", [True, False])
+def test_tiff_ovr_9(both_endian, option_name_suffix, read_only):
+    tiff_drv = gdal.GetDriverByName("GTiff")
+    tiff_drv.Delete("tmp/ovr9.tif")
 
     shutil.copyfile("data/rgbsmall.tif", "tmp/ovr9.tif")
 
-    with gdaltest.config_options(
-        {"COMPRESS_OVERVIEW": "JPEG", "PHOTOMETRIC_OVERVIEW": "YCBCR"}
-    ):
-        ds = gdal.Open("tmp/ovr9.tif", gdal.GA_ReadOnly)
+    ds = gdal.Open("tmp/ovr9.tif", gdal.GA_ReadOnly if read_only else gdal.GA_Update)
 
-        assert ds is not None, "Failed to open test dataset."
+    assert ds is not None, "Failed to open test dataset."
 
-        ds.BuildOverviews("AVERAGE", overviewlist=[2])
-
-    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    exp_cs_list = (
-        5562,
-        5635,
-        5601,  # libjpeg 9e
+    ds.BuildOverviews(
+        "AVERAGE",
+        overviewlist=[2],
+        options=[
+            "COMPRESS" + option_name_suffix + "=JPEG",
+            "PHOTOMETRIC" + option_name_suffix + "=YCBCR",
+        ],
     )
 
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     ds = None
 
-    assert cs in exp_cs_list
+    if read_only:
+        exp_cs_list = (
+            5562,
+            5635,
+            5601,  # libjpeg 9e
+        )
+        assert cs in exp_cs_list
+    else:
+        assert cs != 0
 
     # Re-check after dataset reopening
     ds = gdal.Open("tmp/ovr9.tif", gdal.GA_ReadOnly)
 
+    assert (
+        ds.GetRasterBand(1)
+        .GetOverview(0)
+        .GetDataset()
+        .GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE")
+        == "YCbCr JPEG"
+    )
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
 
     ds = None
 
-    assert cs in exp_cs_list
+    if read_only:
+        assert cs in exp_cs_list
+    else:
+        assert cs != 0
 
 
 ###############################################################################
@@ -660,6 +682,41 @@ def test_tiff_ovr_18(both_endian):
 
 
 ###############################################################################
+# Check mode resampling with multiband logic
+
+
+@pytest.mark.parametrize("multiband", [True, False])
+@pytest.mark.parametrize("read_only", [True, False])
+def test_tiff_ovr_mode_multiband(multiband, read_only):
+
+    ds = gdal.Translate(
+        "/vsimem/test.tif",
+        "data/stefan_full_rgba.tif",
+        creationOptions=["COMPRESS=LZW"] if multiband else [],
+    )
+    if read_only:
+        ds = None
+        ds = gdal.Open("/vsimem/test.tif")
+    ds.BuildOverviews("MODE", [2, 4])
+    ds = None
+    ds = gdal.Open("/vsimem/test.tif")
+    assert [ds.GetRasterBand(i + 1).GetOverview(0).Checksum() for i in range(4)] == [
+        18926,
+        14090,
+        8398,
+        36045,
+    ]
+    assert [ds.GetRasterBand(i + 1).GetOverview(1).Checksum() for i in range(4)] == [
+        3501,
+        2448,
+        1344,
+        8583,
+    ]
+    ds = None
+    gdal.GetDriverByName("GTiff").Delete("/vsimem/test.tif")
+
+
+###############################################################################
 # Check that we can create overviews on a newly create file (#2621)
 
 
@@ -794,9 +851,9 @@ def test_tiff_ovr_23(both_endian):
 
     assert ds is not None, "Failed to open test dataset."
 
-    with gdaltest.config_option("BIGTIFF_OVERVIEW", "NO"):
-        with gdaltest.config_option("COMPRESS_OVERVIEW", "DEFLATE"):
-            ds.BuildOverviews("NONE", overviewlist=[2])
+    ds.BuildOverviews(
+        "NONE", overviewlist=[2], options=["BIGTIFF=NO", "COMPRESS=DEFLATE"]
+    )
 
     ds = None
 
@@ -2562,6 +2619,116 @@ def test_tiff_ovr_uint64():
     assert struct.unpack("Q", ds.GetRasterBand(1).GetOverview(0).ReadRaster()) == (
         10000000000,
     )
+    del ds
+    gdal.GetDriverByName("GTiff").Delete(temp_path)
+
+
+###############################################################################
+
+
+def test_tiff_ovr_internal_overview_different_method():
+
+    temp_path = "/vsimem/test.tif"
+    gdal.GetDriverByName("GTiff").Create(
+        temp_path, 2, 1, 1, gdal.GDT_Byte, options=["COMPRESS=LZW"]
+    )
+    ds = gdal.OpenEx(temp_path, gdal.GA_Update)
+    with gdaltest.config_options(
+        {"COMPRESS_OVERVIEW": "DEFLATE", "PREDICTOR_OVERVIEW": "2"}
+    ):
+        assert ds.BuildOverviews("nearest", overviewlist=[2]) == 0
+    del ds
+    ds = gdal.Open(temp_path)
+    assert ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "LZW"
+    ovr_ds = ds.GetRasterBand(1).GetOverview(0).GetDataset()
+    assert ovr_ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "DEFLATE"
+    assert ovr_ds.GetMetadataItem("PREDICTOR", "IMAGE_STRUCTURE") == "2"
+    del ds
+    gdal.GetDriverByName("GTiff").Delete(temp_path)
+
+
+###############################################################################
+
+
+def test_tiff_ovr_internal_overview_different_method_propagate_predictor():
+
+    temp_path = "/vsimem/test.tif"
+    gdal.GetDriverByName("GTiff").Create(
+        temp_path, 2, 1, 1, gdal.GDT_Byte, options=["COMPRESS=LZW", "PREDICTOR=2"]
+    )
+    ds = gdal.OpenEx(temp_path, gdal.GA_Update)
+    with gdaltest.config_options({"COMPRESS_OVERVIEW": "DEFLATE"}):
+        assert ds.BuildOverviews("nearest", overviewlist=[2]) == 0
+    del ds
+    ds = gdal.Open(temp_path)
+    assert ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "LZW"
+    ovr_ds = ds.GetRasterBand(1).GetOverview(0).GetDataset()
+    assert ovr_ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "DEFLATE"
+    assert ovr_ds.GetMetadataItem("PREDICTOR", "IMAGE_STRUCTURE") == "2"
+    del ds
+    gdal.GetDriverByName("GTiff").Delete(temp_path)
+
+
+###############################################################################
+
+
+def test_tiff_ovr_internal_overview_different_method_do_not_propagate_predictor():
+
+    temp_path = "/vsimem/test.tif"
+    gdal.GetDriverByName("GTiff").Create(
+        temp_path, 2, 1, 1, gdal.GDT_Byte, options=["COMPRESS=LZW", "PREDICTOR=2"]
+    )
+    ds = gdal.OpenEx(temp_path, gdal.GA_Update)
+    with gdaltest.config_options({"COMPRESS_OVERVIEW": "PACKBITS"}):
+        assert ds.BuildOverviews("nearest", overviewlist=[2]) == 0
+    del ds
+    ds = gdal.Open(temp_path)
+    assert ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "LZW"
+    ovr_ds = ds.GetRasterBand(1).GetOverview(0).GetDataset()
+    assert ovr_ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "PACKBITS"
+    assert ovr_ds.GetMetadataItem("PREDICTOR", "IMAGE_STRUCTURE") is None
+    del ds
+    gdal.GetDriverByName("GTiff").Delete(temp_path)
+
+
+###############################################################################
+
+
+def test_tiff_ovr_internal_overview_different_planar_config_to_pixel():
+
+    temp_path = "/vsimem/test.tif"
+    gdal.GetDriverByName("GTiff").Create(
+        temp_path, 2, 1, 3, gdal.GDT_Byte, options=["INTERLEAVE=BAND"]
+    )
+    ds = gdal.OpenEx(temp_path, gdal.GA_Update)
+    with gdaltest.config_options({"INTERLEAVE_OVERVIEW": "PIXEL"}):
+        assert ds.BuildOverviews("nearest", overviewlist=[2]) == 0
+    del ds
+    ds = gdal.Open(temp_path)
+    assert ds.GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE") == "BAND"
+    ovr_ds = ds.GetRasterBand(1).GetOverview(0).GetDataset()
+    assert ovr_ds.GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE") == "PIXEL"
+    del ds
+    gdal.GetDriverByName("GTiff").Delete(temp_path)
+
+
+###############################################################################
+
+
+def test_tiff_ovr_internal_overview_different_planar_config_to_band():
+
+    temp_path = "/vsimem/test.tif"
+    gdal.GetDriverByName("GTiff").Create(
+        temp_path, 2, 1, 3, gdal.GDT_Byte, options=["INTERLEAVE=PIXEL"]
+    )
+    ds = gdal.OpenEx(temp_path, gdal.GA_Update)
+    with gdaltest.config_options({"INTERLEAVE_OVERVIEW": "BAND"}):
+        assert ds.BuildOverviews("nearest", overviewlist=[2]) == 0
+    del ds
+    ds = gdal.Open(temp_path)
+    assert ds.GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE") == "PIXEL"
+    ovr_ds = ds.GetRasterBand(1).GetOverview(0).GetDataset()
+    assert ovr_ds.GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE") == "BAND"
     del ds
     gdal.GetDriverByName("GTiff").Delete(temp_path)
 

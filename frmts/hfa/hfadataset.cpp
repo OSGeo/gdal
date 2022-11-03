@@ -63,7 +63,6 @@
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
 
-CPL_CVSID("$Id$")
 
 constexpr double D2R = M_PI / 180.0;
 
@@ -2682,9 +2681,11 @@ CPLErr HFARasterBand::CleanOverviews()
 /************************************************************************/
 
 CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
-                                      int nReqOverviews, int *panOverviewList,
+                                      int nReqOverviews,
+                                      const int *panOverviewList,
                                       GDALProgressFunc pfnProgress,
-                                      void *pProgressData )
+                                      void *pProgressData,
+                                      CSLConstList papszOptions )
 
 {
     EstablishOverviews();
@@ -2703,12 +2704,8 @@ CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
     GDALRasterBand **papoOvBands = static_cast<GDALRasterBand **>(
         CPLCalloc(sizeof(void*), nReqOverviews));
 
-    bool bNoRegen = false;
-    if( STARTS_WITH_CI(pszResampling, "NO_REGEN:") )
-    {
-        pszResampling += 9;
-        bNoRegen = true;
-    }
+    const bool bRegenerate = CPLTestBool(
+        CSLFetchNameValueDef(papszOptions, "REGENERATE", "YES"));
 
     // Loop over overview levels requested.
     for( int iOverview = 0; iOverview < nReqOverviews; iOverview++ )
@@ -2767,12 +2764,13 @@ CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
 
     CPLErr eErr = CE_None;
 
-    if( !bNoRegen )
-        eErr = GDALRegenerateOverviews((GDALRasterBandH) this,
+    if( bRegenerate )
+        eErr = GDALRegenerateOverviewsEx((GDALRasterBandH) this,
                                        nReqOverviews,
                                        (GDALRasterBandH *) papoOvBands,
                                        pszResampling,
-                                       pfnProgress, pProgressData);
+                                       pfnProgress, pProgressData,
+                                       papszOptions);
 
     CPLFree(papoOvBands);
 
@@ -4222,10 +4220,11 @@ CPLErr HFADataset::ReadProjection()
 /************************************************************************/
 
 CPLErr HFADataset::IBuildOverviews( const char *pszResampling,
-                                    int nOverviews, int *panOverviewList,
-                                    int nListBands, int *panBandList,
+                                    int nOverviews, const int *panOverviewList,
+                                    int nListBands, const int *panBandList,
                                     GDALProgressFunc pfnProgress,
-                                    void *pProgressData )
+                                    void *pProgressData,
+                                    CSLConstList papszOptions )
 
 {
     if( GetAccess() == GA_ReadOnly )
@@ -4243,7 +4242,7 @@ CPLErr HFADataset::IBuildOverviews( const char *pszResampling,
 
         return GDALDataset::IBuildOverviews(
             pszResampling, nOverviews, panOverviewList, nListBands, panBandList,
-            pfnProgress, pProgressData);
+            pfnProgress, pProgressData, papszOptions);
     }
 
     for( int i = 0; i < nListBands; i++ )
@@ -4264,7 +4263,8 @@ CPLErr HFADataset::IBuildOverviews( const char *pszResampling,
 
         const CPLErr eErr =
             poBand->BuildOverviews(pszResampling, nOverviews, panOverviewList,
-                                   GDALScaledProgress, pScaledProgressData);
+                                   GDALScaledProgress, pScaledProgressData,
+                                   papszOptions);
 
         GDALDestroyScaledProgress(pScaledProgressData);
 

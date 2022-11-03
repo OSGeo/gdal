@@ -330,6 +330,8 @@ class OGRPGTableLayer final: public OGRPGLayer
 
     std::vector<bool>   m_abGeneratedColumns{};
 
+    std::string         m_osLCOGeomType{};
+
     virtual CPLString   GetFromClauseForGetExtent() override { return pszSqlTableName; }
 
     OGRErr              RunAddGeometryColumn( const OGRPGGeomFieldDefn *poGeomField );
@@ -391,6 +393,9 @@ public:
     virtual CPLErr      SetMetadataItem(const char* pszName, const char* pszValue, const char* pszDomain = "") override;
 
     virtual OGRErr      Rename(const char* pszNewName) override;
+
+    OGRGeometryTypeCounter* GetGeometryTypes(int iGeomField, int nFlagsGGT, int& nEntryCountOut,
+                                             GDALProgressFunc pfnProgress, void* pProgressData) override;
 
     // follow methods are not base class overrides
     void                SetLaunderFlag( int bFlag )

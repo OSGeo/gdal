@@ -36,7 +36,6 @@
 
 #define MAX_GCPS 5000    //this should be more than enough ground control points
 
-CPL_CVSID("$Id$")
 
 namespace {
 enum ePolarization {
@@ -84,9 +83,9 @@ class TSXDataset final: public GDALPamDataset {
     int nGCPCount;
     GDAL_GCP *pasGCPList;
 
-    char *pszGCPProjection;
+    OGRSpatialReference m_oGCPSRS{};
 
-    char *pszProjection;
+    OGRSpatialReference m_oSRS{};
     double adfGeoTransform[6];
     bool bHaveGeoTransform;
 
@@ -96,17 +95,11 @@ public:
     virtual ~TSXDataset();
 
     virtual int GetGCPCount() override;
-    virtual const char *_GetGCPProjection() override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override {
-        return GetGCPSpatialRefFromOldGetGCPProjection();
-    }
+    const OGRSpatialReference* GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
 
     CPLErr GetGeoTransform( double* padfTransform) override;
-    const char* _GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
 
     static GDALDataset *Open( GDALOpenInfo *poOpenInfo );
     static int Identify( GDALOpenInfo *poOpenInfo );
@@ -221,11 +214,11 @@ CPLErr TSXRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 TSXDataset::TSXDataset() :
     nGCPCount(0),
     pasGCPList(nullptr),
-    pszGCPProjection(CPLStrdup("")),
-    pszProjection(CPLStrdup("")),
     bHaveGeoTransform(false),
     nProduct(eUnknown)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -241,9 +234,6 @@ TSXDataset::TSXDataset() :
 TSXDataset::~TSXDataset() {
     FlushCache(true);
 
-    CPLFree( pszProjection );
-
-    CPLFree( pszGCPProjection );
     if( nGCPCount > 0 )
     {
         GDALDeinitGCPs( nGCPCount, pasGCPList );
@@ -414,8 +404,7 @@ bool TSXDataset::getGCPsFromGEOREF_XML(char *pszGeorefFilename)
              //CPLAtof(CPLGetXMLValue(psNode,"height",""));
     }
 
-    CPLFree(pszGCPProjection);
-    osr.exportToWkt( &(pszGCPProjection) );
+    m_oGCPSRS = osr;
 
     CPLDestroyXMLNode( psGeorefData );
 
@@ -606,23 +595,24 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
                 //copy georeferencing info from the band
                 //need error checking??
                 //it will just save the info from the last band
-                CPLFree( poDS->pszProjection );
-                poDS->pszProjection = CPLStrdup(poBandData->GetProjectionRef());
+                const auto poSrcSRS = poBandData->GetSpatialRef();
+                if( poSrcSRS )
+                    poDS->m_oSRS = *poSrcSRS;
+
                 geoTransformErr = poBandData->GetGeoTransform(poDS->adfGeoTransform);
             }
         }
     }
 
     //now check if there is a geotransform
-    if ( strcmp(poDS->pszProjection, "") && geoTransformErr==CE_None)
+    if ( !poDS->m_oSRS.IsEmpty() && geoTransformErr==CE_None)
     {
         poDS->bHaveGeoTransform = TRUE;
     }
     else
     {
         poDS->bHaveGeoTransform = FALSE;
-        CPLFree( poDS->pszProjection );
-        poDS->pszProjection = CPLStrdup("");
+        poDS->m_oSRS.Clear();
         poDS->adfGeoTransform[0] = 0.0;
         poDS->adfGeoTransform[1] = 1.0;
         poDS->adfGeoTransform[2] = 0.0;
@@ -699,10 +689,7 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
                 }
 
                 //set the projection string - the fields are lat/long - seems to be WGS84 datum
-                OGRSpatialReference osr;
-                osr.SetWellKnownGeogCS( "WGS84" );
-                CPLFree(poDS->pszGCPProjection);
-                osr.exportToWkt( &(poDS->pszGCPProjection) );
+                poDS->m_oGCPSRS.SetWellKnownGeogCS( "WGS84" );
             }
         }
 
@@ -710,8 +697,7 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
         if (poDS->nGCPCount>0)
         {
             poDS->bHaveGeoTransform = FALSE;
-            CPLFree( poDS->pszProjection );
-            poDS->pszProjection = CPLStrdup("");
+            poDS->m_oSRS.Clear();
             poDS->adfGeoTransform[0] = 0.0;
             poDS->adfGeoTransform[1] = 1.0;
             poDS->adfGeoTransform[2] = 0.0;
@@ -754,11 +740,11 @@ int TSXDataset::GetGCPCount() {
 }
 
 /************************************************************************/
-/*                          GetGCPProjection()                          */
+/*                          GetGCPSpatialRef()                          */
 /************************************************************************/
 
-const char *TSXDataset::_GetGCPProjection() {
-    return pszGCPProjection;
+const OGRSpatialReference *TSXDataset::GetGCPSpatialRef() const {
+   return m_oGCPSRS.IsEmpty() ? nullptr : &m_oGCPSRS;
 }
 
 /************************************************************************/
@@ -769,12 +755,15 @@ const GDAL_GCP *TSXDataset::GetGCPs() {
     return pasGCPList;
 }
 
+
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
-const char *TSXDataset::_GetProjectionRef()
+
+const OGRSpatialReference *TSXDataset::GetSpatialRef() const
+
 {
-    return pszProjection;
+   return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /************************************************************************/

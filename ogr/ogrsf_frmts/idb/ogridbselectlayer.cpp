@@ -31,7 +31,6 @@
 #include "cpl_conv.h"
 #include "ogr_idb.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          OGRIDBSelectLayer()                         */

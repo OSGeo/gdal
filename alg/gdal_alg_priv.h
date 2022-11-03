@@ -103,7 +103,7 @@ void GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
                                  const double *padfX, const double *padfY,
                                  const double *padfVariant,
                                  llPointFunc pfnPointFunc, void *pCBData,
-                                 int bAvoidBurningSamePoints );
+                                 int bAvoidBurningSamePoints, bool bIntersectOnly );
 
 void GDALdllImageFilledPolygon( int nRasterXSize, int nRasterYSize,
                                 int nPartCount, const int *panPartSize,
@@ -186,6 +186,9 @@ int GDALTransformLonLatToDestApproxTransformer(void* hTransformArg,
 
 bool GDALTransformIsTranslationOnPixelBoundaries(GDALTransformerFunc pfnTransformer,
                                                  void                *pTransformerArg);
+
+bool GDALTransformIsAffineNoRotation(GDALTransformerFunc pfnTransformer,
+                                     void                *pTransformerArg);
 
 typedef struct _CPLQuadTree CPLQuadTree;
 

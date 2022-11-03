@@ -37,7 +37,6 @@
 
 #include <vector>
 
-CPL_CVSID("$Id$")
 
 static CPLString OSR_GDS( char **papszNV, const char * pszField,
                           const char *pszDefaultValue );
@@ -57,7 +56,7 @@ class AIGDataset final: public GDALPamDataset
     AIGInfo_t   *psInfo;
 
     char        **papszPrj;
-    char        *pszProjection;
+    OGRSpatialReference m_oSRS{};
 
     GDALColorTable *poCT;
     bool        bHasReadRat;
@@ -74,10 +73,7 @@ class AIGDataset final: public GDALPamDataset
     static GDALDataset *Open( GDALOpenInfo * );
 
     CPLErr GetGeoTransform( double * ) override;
-    const char *_GetProjectionRef(void) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
     char **GetFileList(void) override;
 };
 
@@ -316,11 +312,12 @@ GDALColorTable *AIGRasterBand::GetColorTable()
 AIGDataset::AIGDataset() :
     psInfo(nullptr),
     papszPrj(nullptr),
-    pszProjection(CPLStrdup("")),
     poCT(nullptr),
     bHasReadRat(false),
     poRAT(nullptr)
-{}
+{
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+}
 
 /************************************************************************/
 /*                           ~AIGDataset()                            */
@@ -330,7 +327,6 @@ AIGDataset::~AIGDataset()
 
 {
     FlushCache(true);
-    CPLFree( pszProjection );
     CSLDestroy( papszPrj );
     if( psInfo != nullptr )
         AIGClose( psInfo );
@@ -736,6 +732,7 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
     if( VSIStatL( pszPrjFilename, &sStatBuf ) == 0 )
     {
         OGRSpatialReference oSRS;
+        oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
         poDS->papszPrj = CSLLoad( pszPrjFilename );
 
@@ -752,8 +749,7 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
                 psInfo->dfCellSizeY /= 3600.0;
             }
 
-            CPLFree( poDS->pszProjection );
-            oSRS.exportToWkt( &(poDS->pszProjection) );
+            poDS->m_oSRS = oSRS;
         }
     }
 
@@ -790,13 +786,13 @@ CPLErr AIGDataset::GetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *AIGDataset::_GetProjectionRef()
+const OGRSpatialReference *AIGDataset::GetSpatialRef() const
 
 {
-    return pszProjection;
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /************************************************************************/

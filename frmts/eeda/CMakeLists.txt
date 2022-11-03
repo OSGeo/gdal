@@ -15,3 +15,7 @@ if (GDAL_USE_JSONC_INTERNAL)
 else ()
   gdal_target_link_libraries(gdal_EEDA PRIVATE ${JSONC_TARGET})
 endif ()
+
+if (GDAL_ENABLE_DRIVER_EEDA_PLUGIN)
+    target_compile_definitions(gdal_EEDA PRIVATE -DGDAL_ENABLE_DRIVER_EEDA_PLUGIN)
+endif()

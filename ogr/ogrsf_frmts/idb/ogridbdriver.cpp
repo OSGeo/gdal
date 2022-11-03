@@ -30,7 +30,6 @@
 #include "ogr_idb.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            ~OGRIDBDriver()                            */

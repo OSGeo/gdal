@@ -877,7 +877,17 @@ def test_nitf_jp2openjpeg_npje_numerically_lossless():
         ds.GetMetadataItem("J2KLRA", "TRE")
         == "0050000102000000.03125000100.06250000200.12500000300.25000000400.50000000500.60000000600.70000000700.80000000800.90000000901.00000001001.10000001101.20000001201.30000001301.50000001401.70000001502.00000001602.30000001703.50000001803.90000001912.000000"
     )
-    assert ds.GetMetadataItem("COMRAT", "DEBUG") in ("N141", "N142", "N143", "N169")
+    assert ds.GetMetadataItem("COMRAT", "DEBUG") in (
+        "N141",
+        "N142",
+        "N143",
+        "N147",
+        "N169",
+        "N174",
+    )
+    assert (
+        ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == "LOSSLESS"
+    )
 
     # Get the JPEG2000 code stream subfile
     jpeg2000_ds_name = ds.GetMetadataItem("JPEG2000_DATASET_NAME", "DEBUG")
@@ -965,6 +975,7 @@ def test_nitf_jp2openjpeg_npje_visually_lossless():
     finally:
         gdaltest.reregister_all_jpeg2000_drivers()
     assert ds.GetMetadataItem("COMRAT", "DEBUG").startswith("V")
+    assert ds.GetMetadata("IMAGE_STRUCTURE")["COMPRESSION_REVERSIBILITY"] == "LOSSY"
 
     # Get the JPEG2000 code stream subfile
     jpeg2000_ds_name = ds.GetMetadataItem("JPEG2000_DATASET_NAME", "DEBUG")
@@ -1225,7 +1236,7 @@ def test_nitf_30():
     gdal.GetDriverByName("NITF").Delete("/vsimem/nitf30_no_src_md.ntf")
     assert (
         "NITF_BLOCKA_BLOCK_INSTANCE_01" not in md
-    ), "unexpectdly found BLOCKA metadata."
+    ), "unexpectedly found BLOCKA metadata."
 
     # Test USE_SRC_NITF_METADATA=NO
     gdal.GetDriverByName("NITF").CreateCopy(
@@ -1237,7 +1248,7 @@ def test_nitf_30():
     gdal.GetDriverByName("NITF").Delete("/vsimem/nitf30_no_src_md.ntf")
     assert (
         "NITF_BLOCKA_BLOCK_INSTANCE_01" not in md
-    ), "unexpectdly found BLOCKA metadata."
+    ), "unexpectedly found BLOCKA metadata."
 
 
 ###############################################################################
@@ -4688,6 +4699,156 @@ def test_nitf_des_CSSHPA():
 
 
 ###############################################################################
+# Test creation and reading of a TRE_OVERFLOW DES
+
+
+def test_nitf_tre_overflow_des():
+
+    DESOFLW = "IXSHD "
+    DESITEM = "001"  # index (starting at 1) of the image to which this TRE_OVERFLOW applies too
+    DESSHL = "0000"
+    des_header = "02U" + " " * 166 + DESOFLW + DESITEM + DESSHL
+
+    # Totally dummy content for CSEPHA data
+    EPHEM_FLAG = " " * 12
+    DT_EPHEM = " " * 5
+    DATE_EPHEM = " " * 8
+    T0_EPHEM = " " * 13
+    NUM_EPHEM = "001"
+    EPHEM_DATA = " " * (1 * (3 * 12))
+    CSEPHA_DATA = EPHEM_FLAG + DT_EPHEM + DATE_EPHEM + T0_EPHEM + NUM_EPHEM + EPHEM_DATA
+
+    des_data = "CSEPHA" + ("%05d" % len(CSEPHA_DATA)) + CSEPHA_DATA
+    des = des_header + des_data
+
+    ds = gdal.GetDriverByName("NITF").Create(
+        "/vsimem/nitf_DES.ntf",
+        1,
+        1,
+        options=["RESERVE_SPACE_FOR_TRE_OVERFLOW=YES", "DES=TRE_OVERFLOW=" + des],
+    )
+    ds = None
+
+    # DESDATA portion will be Base64 encoded on output
+    ds = gdal.Open("/vsimem/nitf_DES.ntf")
+    data = ds.GetMetadata("xml:DES")[0]
+
+    md = ds.GetMetadata("TRE")
+    assert "CSEPHA" in md
+    assert md["CSEPHA"] == CSEPHA_DATA
+
+    assert ds.GetMetadataItem("NITF_IXSOFL") == "001"
+
+    ds = None
+
+    gdal.GetDriverByName("NITF").Delete("/vsimem/nitf_DES.ntf")
+
+    expected_des_data_b64_encoded = base64.b64encode(bytes(des_data, "ascii")).decode(
+        "ascii"
+    )
+    expected_data = (
+        """<des_list>
+  <des name="TRE_OVERFLOW">
+    <field name="DESVER" value="02" />
+    <field name="DECLAS" value="U" />
+    <field name="DESCLSY" value="" />
+    <field name="DESCODE" value="" />
+    <field name="DESCTLH" value="" />
+    <field name="DESREL" value="" />
+    <field name="DESDCTP" value="" />
+    <field name="DESDCDT" value="" />
+    <field name="DESDCXM" value="" />
+    <field name="DESDG" value="" />
+    <field name="DESDGDT" value="" />
+    <field name="DESCLTX" value="" />
+    <field name="DESCATP" value="" />
+    <field name="DESCAUT" value="" />
+    <field name="DESCRSN" value="" />
+    <field name="DESSRDT" value="" />
+    <field name="DESCTLN" value="" />
+    <field name="DESOFLW" value="IXSHD" />
+    <field name="DESITEM" value="001" />
+    <field name="DESSHL" value="0000" />
+    <field name="DESDATA" value="%s" />
+  </des>
+</des_list>
+"""
+        % expected_des_data_b64_encoded
+    )
+
+    assert data == expected_data
+
+
+###############################################################################
+# Test creation and reading of a TRE_OVERFLOW DES with missing RESERVE_SPACE_FOR_TRE_OVERFLOW
+
+
+def test_nitf_tre_overflow_des_error_missing_RESERVE_SPACE_FOR_TRE_OVERFLOW():
+
+    DESOFLW = "IXSHD "
+    DESITEM = "001"  # index (starting at 1) of the image to which this TRE_OVERFLOW applies too
+    DESSHL = "0000"
+    des_header = "02U" + " " * 166 + DESOFLW + DESITEM + DESSHL
+
+    # Totally dummy content for CSEPHA data
+    EPHEM_FLAG = " " * 12
+    DT_EPHEM = " " * 5
+    DATE_EPHEM = " " * 8
+    T0_EPHEM = " " * 13
+    NUM_EPHEM = "001"
+    EPHEM_DATA = " " * (1 * (3 * 12))
+    CSEPHA_DATA = EPHEM_FLAG + DT_EPHEM + DATE_EPHEM + T0_EPHEM + NUM_EPHEM + EPHEM_DATA
+
+    des_data = "CSEPHA" + ("%05d" % len(CSEPHA_DATA)) + CSEPHA_DATA
+    des = des_header + des_data
+
+    with gdaltest.error_handler():
+        gdal.ErrorReset()
+        gdal.GetDriverByName("NITF").Create(
+            "/vsimem/nitf_DES.ntf", 1, 1, options=["DES=TRE_OVERFLOW=" + des]
+        )
+        assert gdal.GetLastErrorMsg() != ""
+
+    gdal.GetDriverByName("NITF").Delete("/vsimem/nitf_DES.ntf")
+
+
+###############################################################################
+# Test creation and reading of a TRE_OVERFLOW DES with missing RESERVE_SPACE_FOR_TRE_OVERFLOW
+
+
+def test_nitf_tre_overflow_des_errorinvalid_DESITEM():
+
+    DESOFLW = "IXSHD "
+    DESITEM = "002"  # invalid image index!
+    DESSHL = "0000"
+    des_header = "02U" + " " * 166 + DESOFLW + DESITEM + DESSHL
+
+    # Totally dummy content for CSEPHA data
+    EPHEM_FLAG = " " * 12
+    DT_EPHEM = " " * 5
+    DATE_EPHEM = " " * 8
+    T0_EPHEM = " " * 13
+    NUM_EPHEM = "001"
+    EPHEM_DATA = " " * (1 * (3 * 12))
+    CSEPHA_DATA = EPHEM_FLAG + DT_EPHEM + DATE_EPHEM + T0_EPHEM + NUM_EPHEM + EPHEM_DATA
+
+    des_data = "CSEPHA" + ("%05d" % len(CSEPHA_DATA)) + CSEPHA_DATA
+    des = des_header + des_data
+
+    with gdaltest.error_handler():
+        gdal.ErrorReset()
+        gdal.GetDriverByName("NITF").Create(
+            "/vsimem/nitf_DES.ntf",
+            1,
+            1,
+            options=["RESERVE_SPACE_FOR_TRE_OVERFLOW=YES", "DES=TRE_OVERFLOW=" + des],
+        )
+        assert gdal.GetLastErrorMsg() != ""
+
+    gdal.GetDriverByName("NITF").Delete("/vsimem/nitf_DES.ntf")
+
+
+###############################################################################
 # Test reading/writing headers in ISO-8859-1 encoding
 def test_nitf_header_encoding():
     # mu character encoded in UTF-8
@@ -4989,29 +5150,47 @@ def test_nitf_create_three_images_final_uncompressed():
 
     gdal.Unlink("/vsimem/out.ntf")
 
-    src_ds = gdal.Open("data/rgbsmall.tif")
+    src_ds_2049 = gdal.GetDriverByName("MEM").Create("", 2049, 1)
+    src_ds_2049.GetRasterBand(1).Fill(1)
+
+    src_ds_8193 = gdal.GetDriverByName("MEM").Create("", 8193, 1)
+    src_ds_8193.GetRasterBand(1).Fill(2)
 
     # Write first image segment, reserve space for two other ones and a DES
     ds = gdal.GetDriverByName("NITF").CreateCopy(
-        "/vsimem/out.ntf", src_ds, options=["NUMI=3", "NUMDES=1"]
+        "/vsimem/out.ntf", src_ds_2049, options=["NUMI=3", "NUMDES=1"]
     )
     assert ds is not None
     assert gdal.GetLastErrorMsg() == ""
     ds = None
 
-    # Write second image segment
+    # Check CLEVEL value
+    f = gdal.VSIFOpenL("/vsimem/out.ntf", "rb")
+    gdal.VSIFSeekL(f, 9, 0)
+    assert gdal.VSIFReadL(1, 2, f) == b"05"
+    gdal.VSIFCloseL(f)
+
+    # Write second image segment. Will bump CLEVEL to 06
     ds = gdal.GetDriverByName("NITF").CreateCopy(
-        "/vsimem/out.ntf", src_ds, options=["APPEND_SUBDATASET=YES", "IC=C3", "IDLVL=2"]
+        "/vsimem/out.ntf",
+        src_ds_8193,
+        options=["APPEND_SUBDATASET=YES", "IC=C3", "IDLVL=2"],
     )
     assert ds is not None
     assert gdal.GetLastErrorMsg() == ""
     ds = None
+
+    # Check CLEVEL value
+    f = gdal.VSIFOpenL("/vsimem/out.ntf", "rb")
+    gdal.VSIFSeekL(f, 9, 0)
+    assert gdal.VSIFReadL(1, 2, f) == b"06"
+    gdal.VSIFCloseL(f)
 
     # Write third and final image segment and DES
     des_data = "02U" + " " * 166 + r"0004ABCD1234567\0890"
     ds = gdal.GetDriverByName("NITF").CreateCopy(
         "/vsimem/out.ntf",
-        src_ds,
+        src_ds_2049,
         options=["APPEND_SUBDATASET=YES", "IDLVL=3", "DES=DES1=" + des_data],
     )
     assert ds is not None
@@ -5019,19 +5198,15 @@ def test_nitf_create_three_images_final_uncompressed():
     ds = None
 
     ds = gdal.Open("/vsimem/out.ntf")
+    assert ds.GetMetadataItem("NITF_CLEVEL") == "06"
     assert ds.GetMetadata("xml:DES") is not None
-    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+    assert ds.GetRasterBand(1).ComputeBandStats() == pytest.approx((1.0, 0.0))
 
     ds = gdal.Open("NITF_IM:1:/vsimem/out.ntf")
-    (exp_mean, exp_stddev) = (65.9532, 46.9026375565)
-    (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
-
-    assert exp_mean == pytest.approx(mean, abs=0.1) and exp_stddev == pytest.approx(
-        stddev, abs=0.1
-    ), "did not get expected mean or standard dev."
+    assert ds.GetRasterBand(1).ComputeBandStats() == pytest.approx((2.0, 0.0))
 
     ds = gdal.Open("NITF_IM:2:/vsimem/out.ntf")
-    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+    assert ds.GetRasterBand(1).ComputeBandStats() == pytest.approx((1.0, 0.0))
     ds = None
 
     gdal.GetDriverByName("NITF").Delete("/vsimem/out.ntf")
@@ -5121,6 +5296,33 @@ def test_nitf_pam_metadata_several_images():
     ds = None
 
     gdal.GetDriverByName("NITF").Delete(out_filename)
+
+
+###############################################################################
+# Test writing/reading a file without image segment
+
+
+def test_nitf_no_image_segment():
+
+    src_ds = gdal.Open("data/byte.tif")
+    out_filename = "/vsimem/test_nitf_no_image_segment.ntf"
+    with gdaltest.error_handler():
+        assert (
+            gdal.GetDriverByName("NITF").CreateCopy(
+                out_filename, src_ds, strict=False, options=["NUMI=0"]
+            )
+            is not None
+        )
+    gdal.Unlink(out_filename + ".aux.xml")
+    with gdaltest.error_handler():
+        ds = gdal.Open(out_filename)
+    assert ds is not None
+    for domain in ds.GetMetadataDomainList():
+        ds.GetMetadata(domain)
+    ds = None
+
+    with gdaltest.error_handler():
+        gdal.GetDriverByName("NITF").Delete(out_filename)
 
 
 ###############################################################################

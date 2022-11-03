@@ -41,22 +41,19 @@ def _ogr_geojsonseq_create(filename, lco, expect_rs):
     sr = osr.SpatialReference()
     sr.SetFromUserInput("WGS84")
     lyr = ds.CreateLayer("test", srs=sr, options=lco)
-    lyr.CreateField(ogr.FieldDefn("foo"))
+    assert lyr.CreateField(ogr.FieldDefn("foo")) == ogr.OGRERR_NONE
 
     f = ogr.Feature(lyr.GetLayerDefn())
     f["foo"] = 'bar"d'
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
-    lyr.CreateFeature(f)
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
     f = ogr.Feature(lyr.GetLayerDefn())
     f["foo"] = "baz"
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(3 4)"))
-    lyr.CreateFeature(f)
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-    assert not ds.TestCapability(ogr.ODsCCreateLayer)
-
-    with gdaltest.error_handler():
-        assert ds.CreateLayer("foo") is None
+    assert lyr.GetFeatureCount() == 2
 
     ds = None
 
@@ -70,16 +67,103 @@ def _ogr_geojsonseq_create(filename, lco, expect_rs):
 
     ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)
+    assert not ds.TestCapability(ogr.ODsCCreateLayer)
+    assert ds.CreateLayer("foo") is None
+    assert not lyr.TestCapability(ogr.OLCCreateField)
+    assert lyr.CreateField(ogr.FieldDefn("bar")) == ogr.OGRERR_FAILURE
+    assert not lyr.TestCapability(ogr.OLCSequentialWrite)
+    assert lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn())) == ogr.OGRERR_FAILURE
+
     f = lyr.GetNextFeature()
-    if f["foo"] != 'bar"d' or f.GetGeometryRef().ExportToWkt() != "POINT (1 2)":
-        f.DumpReadable()
-        pytest.fail()
+    assert f["foo"] == 'bar"d'
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
     f = lyr.GetNextFeature()
-    if f["foo"] != "baz" or f.GetGeometryRef().ExportToWkt() != "POINT (3 4)":
-        f.DumpReadable()
-        pytest.fail()
+    assert f["foo"] == "baz"
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (3 4)"
     assert lyr.GetNextFeature() is None
     ds = None
+
+    # Test update mode on existing layer
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    assert lyr.TestCapability(ogr.OLCCreateField)
+    assert lyr.CreateField(ogr.FieldDefn("bar")) == ogr.OGRERR_NONE
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["bar"] = "baz"
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(5 6)"))
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    assert lyr.GetFeatureCount() == 3
+    assert len([f for f in lyr]) == 3
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    assert f["foo"] == 'bar"d'
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(7 8)"))
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    assert lyr.GetFeatureCount() == 4
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["foo"] == 'bar"d'
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
+    f = lyr.GetNextFeature()
+    assert f["foo"] == "baz"
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (3 4)"
+    f = lyr.GetNextFeature()
+    assert f["bar"] == "baz"
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (5 6)"
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (7 8)"
+    assert lyr.GetNextFeature() is None
+    ds = None
+
+    # Test update mode with a new layer
+    ds = ogr.Open(filename, update=1)
+    assert ds.TestCapability(ogr.ODsCCreateLayer)
+    lyr = ds.CreateLayer("new", srs=sr)
+    assert lyr.TestCapability(ogr.OLCCreateField)
+    assert lyr.CreateField(ogr.FieldDefn("foo")) == ogr.OGRERR_NONE
+    assert lyr.CreateField(ogr.FieldDefn("baz")) == ogr.OGRERR_NONE
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["foo"] = "foo"
+    f["baz"] = "baw"
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(9 10)"))
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    assert lyr.GetFeatureCount() == 1
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["foo"] == 'bar"d'
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
+    f = lyr.GetNextFeature()
+    assert f["foo"] == "baz"
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (3 4)"
+    f = lyr.GetNextFeature()
+    assert f["bar"] == "baz"
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (5 6)"
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (7 8)"
+    f = lyr.GetNextFeature()
+    assert f["foo"] == "foo"
+    assert f["baz"] == "baw"
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (9 10)"
+    assert lyr.GetNextFeature() is None
+    ds = None
+
+    f = gdal.VSIFOpenL(filename, "rb")
+    content = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+    if expect_rs:
+        assert b"\x1e" in content
+        assert b"}\n{" not in content
+    else:
+        assert b"\x1e" not in content
+        assert b"\n" in content
 
     ogr.GetDriverByName("GeoJSONSeq").DeleteDataSource(filename)
 
@@ -227,4 +311,57 @@ def test_ogr_geojsonseq_feature_large():
     with gdaltest.config_option("OGR_GEOJSON_MAX_OBJ_SIZE", "0.1"):
         with gdaltest.error_handler():
             assert ogr.Open(filename) is None
+    gdal.Unlink(filename)
+
+
+###############################################################################
+# Test bugfix for #3892
+
+
+def test_ogr_geojsonseq_feature_starting_with_big_properties():
+
+    filename = "/vsimem/test_ogr_geojsonseq_feature_starting_with_big_properties"
+    s = "\n".join(
+        [
+            '{"properties":{"foo":"%s"},"type":"Feature","geometry":null}'
+            % ("x" * 10000)
+            for i in range(2)
+        ]
+    )
+    gdal.FileFromMemBuffer(
+        filename,
+        s,
+    )
+    ds = ogr.Open(filename)
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 2
+    gdal.Unlink(filename)
+
+
+###############################################################################
+# Test output on /vsistdout/
+
+
+def test_ogr_geojsonseq_vsistdout():
+
+    filename = "/vsimem/test_ogr_geojsonseq_vsistdout.geojsonl"
+    gdal.ErrorReset()
+    ds = ogr.GetDriverByName("GeoJSONSeq").CreateDataSource(
+        "/vsistdout_redirect/" + filename
+    )
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    lyr = ds.CreateLayer("test", srs=sr)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2 49)"))
+    lyr.CreateFeature(f)
+    ds = None
+    assert gdal.GetLastErrorMsg() == ""
+
+    ds = ogr.Open(filename)
+    assert ds.GetLayer(0).GetFeatureCount() == 1
+    ds = None
+
     gdal.Unlink(filename)

@@ -31,7 +31,6 @@
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
-CPL_CVSID("$Id$")
 
 static const char * const apszCategorySource[] =
 {
@@ -95,16 +94,13 @@ class ACE2Dataset final: public GDALPamDataset
 {
     friend class ACE2RasterBand;
 
+    OGRSpatialReference m_oSRS{};
     double       adfGeoTransform[6];
 
   public:
     ACE2Dataset();
-    ~ACE2Dataset() override {}
 
-    const char *_GetProjectionRef(void) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override { return &m_oSRS; }
     CPLErr GetGeoTransform( double * ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
@@ -123,7 +119,6 @@ class ACE2RasterBand final: public RawRasterBand
     ACE2RasterBand( VSILFILE* fpRaw,
                     GDALDataType eDataType,
                     int nXSize, int nYSize );
-    ~ACE2RasterBand() override {}
 
     const char *GetUnitType() override;
     char **GetCategoryNames() override;
@@ -141,6 +136,9 @@ class ACE2RasterBand final: public RawRasterBand
 
 ACE2Dataset::ACE2Dataset()
 {
+    m_oSRS.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -158,16 +156,6 @@ CPLErr ACE2Dataset::GetGeoTransform( double * padfTransform )
 {
     memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
     return CE_None;
-}
-
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char *ACE2Dataset::_GetProjectionRef()
-
-{
-    return SRS_WKT_WGS84_LAT_LONG;
 }
 
 /************************************************************************/

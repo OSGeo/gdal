@@ -34,7 +34,6 @@
 #include <cmath>
 #include <cstdlib>
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -51,7 +50,7 @@ class BTDataset final: public GDALPamDataset
     int         bGeoTransformValid;
     double      adfGeoTransform[6];
 
-    char        *pszProjection;
+    OGRSpatialReference m_oSRS{};
 
     int         nVersionCode;  // version times 10.
 
@@ -66,14 +65,9 @@ class BTDataset final: public GDALPamDataset
     BTDataset();
     ~BTDataset() override;
 
-    const char *_GetProjectionRef(void) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
-    CPLErr _SetProjection( const char * ) override;
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+    const OGRSpatialReference* GetSpatialRef() const override
+        { return m_oSRS.IsEmpty() ? nullptr : &m_oSRS; }
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
     CPLErr GetGeoTransform( double * ) override;
     CPLErr SetGeoTransform( double * ) override;
 
@@ -369,11 +363,12 @@ CPLErr BTRasterBand::SetUnitType(const char* psz)
 BTDataset::BTDataset() :
     fpImage(nullptr),
     bGeoTransformValid(FALSE),
-    pszProjection(nullptr),
     nVersionCode(0),
     bHeaderModified(FALSE),
     m_fVscale(0.0)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -398,7 +393,6 @@ BTDataset::~BTDataset()
             CPLError(CE_Failure, CPLE_FileIO, "I/O error");
         }
     }
-    CPLFree( pszProjection );
 }
 
 /************************************************************************/
@@ -478,48 +472,36 @@ CPLErr BTDataset::SetGeoTransform( double *padfTransform )
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
-const char *BTDataset::_GetProjectionRef()
-
-{
-    if( pszProjection == nullptr )
-        return "";
-    else
-        return pszProjection;
-}
-
-/************************************************************************/
-/*                           SetProjection()                            */
-/************************************************************************/
-
-CPLErr BTDataset::_SetProjection( const char *pszNewProjection )
+CPLErr BTDataset::SetSpatialRef(const OGRSpatialReference* poSRS)
 
 {
     CPLErr eErr = CE_None;
 
-    CPLFree( pszProjection );
-    pszProjection = CPLStrdup( pszNewProjection );
+    if( poSRS )
+        m_oSRS = *poSRS;
+    else
+        m_oSRS.Clear();
 
     bHeaderModified = TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      Parse projection.                                               */
 /* -------------------------------------------------------------------- */
-    OGRSpatialReference oSRS( pszProjection );
 
 /* -------------------------------------------------------------------- */
 /*      Linear units.                                                   */
 /* -------------------------------------------------------------------- */
 #if 0
-    if( oSRS.IsGeographic() )
+    if( m_oSRS.IsGeographic() )
     {
         // nShortTemp = 0;
     }
     else
     {
-        const double dfLinear = oSRS.GetLinearUnits();
+        const double dfLinear = m_oSRS.GetLinearUnits();
 
         if( std::abs(dfLinear - 0.3048) < 0.0000001 )
             nShortTemp = 2;
@@ -538,7 +520,7 @@ CPLErr BTDataset::_SetProjection( const char *pszNewProjection )
 /* -------------------------------------------------------------------- */
     int bNorth = FALSE;
 
-    nShortTemp = static_cast<GInt16>(oSRS.GetUTMZone( &bNorth ));
+    nShortTemp = static_cast<GInt16>(m_oSRS.GetUTMZone( &bNorth ));
     if( bNorth )
         nShortTemp = -nShortTemp;
 
@@ -548,10 +530,10 @@ CPLErr BTDataset::_SetProjection( const char *pszNewProjection )
 /* -------------------------------------------------------------------- */
 /*      Datum                                                           */
 /* -------------------------------------------------------------------- */
-    if( oSRS.GetAuthorityName( "GEOGCS|DATUM" ) != nullptr
-        && EQUAL(oSRS.GetAuthorityName( "GEOGCS|DATUM" ),"EPSG") )
+    if( m_oSRS.GetAuthorityName( "GEOGCS|DATUM" ) != nullptr
+        && EQUAL(m_oSRS.GetAuthorityName( "GEOGCS|DATUM" ),"EPSG") )
         nShortTemp = static_cast<GInt16>(
-            atoi(oSRS.GetAuthorityCode( "GEOGCS|DATUM" )) + 2000);
+            atoi(m_oSRS.GetAuthorityCode( "GEOGCS|DATUM" )) + 2000);
     else
         nShortTemp = -2;
     CPL_LSBPTR16(&nShortTemp); /* datum unknown */
@@ -560,19 +542,26 @@ CPLErr BTDataset::_SetProjection( const char *pszNewProjection )
 /* -------------------------------------------------------------------- */
 /*      Write out the projection to a .prj file.                        */
 /* -------------------------------------------------------------------- */
-    const char  *pszPrjFile = CPLResetExtension( GetDescription(), "prj" );
-    VSILFILE * fp = VSIFOpenL( pszPrjFile, "wt" );
-    if( fp != nullptr )
+    char* pszProjection = nullptr;
+    const char* const apszOptions[] = { "FORMAT=WKT1", nullptr };
+    m_oSRS.exportToWkt(&pszProjection, apszOptions);
+    if( pszProjection )
     {
-        CPL_IGNORE_RET_VAL(VSIFPrintfL( fp, "%s\n", pszProjection ));
-        CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
-        abyHeader[60] = 1;
-    }
-    else
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to write out .prj file." );
-        eErr = CE_Failure;
+        const char  *pszPrjFile = CPLResetExtension( GetDescription(), "prj" );
+        VSILFILE * fp = VSIFOpenL( pszPrjFile, "wt" );
+        if( fp != nullptr )
+        {
+            CPL_IGNORE_RET_VAL(VSIFPrintfL( fp, "%s\n", pszProjection ));
+            CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
+            abyHeader[60] = 1;
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Unable to write out .prj file." );
+            eErr = CE_Failure;
+        }
+        CPLFree(pszProjection);
     }
 
     return eErr;
@@ -662,6 +651,7 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Try to read a .prj file if it is indicated.                     */
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRS;
+    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     if( poDS->nVersionCode >= 12 && poDS->abyHeader[60] != 0 )
     {
@@ -765,7 +755,7 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Convert coordinate system back to WKT.                          */
 /* -------------------------------------------------------------------- */
     if( oSRS.GetRoot() != nullptr )
-        oSRS.exportToWkt( &poDS->pszProjection );
+        poDS->m_oSRS = oSRS;
 
 /* -------------------------------------------------------------------- */
 /*      Get georeferencing bounds.                                      */

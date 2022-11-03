@@ -34,7 +34,6 @@
 #include "commonutils.h"
 #include "gdal_utils_priv.h"
 
-CPL_CVSID("$Id$")
 
 /*  ******************************************************************* */
 /*                               Usage()                                */
@@ -51,6 +50,7 @@ static void Usage(const char* pszErrorMsg, int bShort)
             "       [-if format]* [-of format]\n"
             "       [-b band] [-mask band] [-expand {gray|rgb|rgba}]\n"
             "       [-outsize xsize[%%]|0 ysize[%%]|0] [-tr xres yres]\n"
+            "       [-ovr level|AUTO|AUTO-n|NONE]\n"
             "       [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]\n"
             "       [-unscale] [-scale[_bn] [src_min src_max [dst_min dst_max]]]* [-exponent[_bn] exp_val]*\n"
             "       [-srcwin xoff yoff xsize ysize] [-epo] [-eco]\n"

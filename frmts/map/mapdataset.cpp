@@ -33,7 +33,6 @@
 #include "ogr_geometry.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -45,7 +44,7 @@ class MAPDataset final: public GDALDataset
 {
     GDALDataset *poImageDS;
 
-    char        *pszWKT;
+    OGRSpatialReference m_oSRS{};
     int         bGeoTransformValid;
     double      adfGeoTransform[6];
     int         nGCPCount;
@@ -57,16 +56,10 @@ class MAPDataset final: public GDALDataset
     MAPDataset();
     virtual ~MAPDataset();
 
-    virtual const char* _GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
     virtual CPLErr      GetGeoTransform( double * ) override;
     virtual int GetGCPCount() override;
-    virtual const char *_GetGCPProjection() override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override {
-        return GetGCPSpatialRefFromOldGetGCPProjection();
-    }
+    const OGRSpatialReference* GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
     virtual char **GetFileList() override;
 
@@ -106,12 +99,12 @@ class MAPWrapperRasterBand final: public GDALProxyRasterBand
 
 MAPDataset::MAPDataset() :
     poImageDS(nullptr),
-    pszWKT(nullptr),
     bGeoTransformValid(false),
     nGCPCount(0),
     pasGCPList(nullptr),
     poNeatLine(nullptr)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -132,8 +125,6 @@ MAPDataset::~MAPDataset()
         GDALClose( poImageDS );
         poImageDS = nullptr;
     }
-
-    CPLFree(pszWKT);
 
     if (nGCPCount)
     {
@@ -212,11 +203,17 @@ GDALDataset *MAPDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Try to load and parse the .MAP file.                            */
 /* -------------------------------------------------------------------- */
 
+    char* pszWKT = nullptr;
     bool bOziFileOK =
          CPL_TO_BOOL(GDALLoadOziMapFile( poOpenInfo->pszFilename,
                              poDS->adfGeoTransform,
-                             &poDS->pszWKT,
+                             &pszWKT,
                              &poDS->nGCPCount, &poDS->pasGCPList ));
+    if( pszWKT )
+    {
+        poDS->m_oSRS.importFromWkt(pszWKT);
+        CPLFree(pszWKT);
+    }
 
     if ( bOziFileOK && poDS->nGCPCount == 0 )
          poDS->bGeoTransformValid = TRUE;
@@ -233,7 +230,7 @@ GDALDataset *MAPDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     const int nLines = CSLCount( papszLines );
-    if( nLines < 2 )
+    if( nLines < 3 )
     {
         delete poDS;
         CSLDestroy(papszLines);
@@ -360,19 +357,13 @@ GDALDataset *MAPDataset::Open( GDALOpenInfo * poOpenInfo )
         else /* Convert the geographic coordinates to projected coordinates */
         {
             OGRCoordinateTransformation *poTransform = nullptr;
-            const char *pszWKT = poDS->pszWKT;
-
-            if ( pszWKT != nullptr )
+            if ( !poDS->m_oSRS.IsEmpty() )
             {
-                OGRSpatialReference oSRS;
-                OGRSpatialReference *poLongLat = nullptr;
-                if ( OGRERR_NONE == oSRS.importFromWkt ( pszWKT ))
-                    poLongLat = oSRS.CloneGeogCS();
+                OGRSpatialReference *poLongLat = poDS->m_oSRS.CloneGeogCS();
                 if ( poLongLat )
                 {
-                    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                     poLongLat->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                    poTransform = OGRCreateCoordinateTransformation( poLongLat, &oSRS );
+                    poTransform = OGRCreateCoordinateTransformation( poLongLat, &poDS->m_oSRS );
                     delete poLongLat;
                 }
             }
@@ -423,12 +414,12 @@ GDALDataset *MAPDataset::Open( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char* MAPDataset::_GetProjectionRef()
+const OGRSpatialReference* MAPDataset::GetSpatialRef() const
 {
-    return (pszWKT && nGCPCount == 0) ? pszWKT : "";
+    return (!m_oSRS.IsEmpty() && nGCPCount == 0) ? &m_oSRS : nullptr;
 }
 
 /************************************************************************/
@@ -453,12 +444,12 @@ int MAPDataset::GetGCPCount()
 }
 
 /************************************************************************/
-/*                          GetGCPProjection()                          */
+/*                          GetGCPSpatialRef()                          */
 /************************************************************************/
 
-const char * MAPDataset::_GetGCPProjection()
+const OGRSpatialReference* MAPDataset::GetGCPSpatialRef() const
 {
-    return (pszWKT && nGCPCount != 0) ? pszWKT : "";
+    return (!m_oSRS.IsEmpty() && nGCPCount != 0) ? &m_oSRS : nullptr;
 }
 
 /************************************************************************/

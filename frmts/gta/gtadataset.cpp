@@ -91,7 +91,6 @@
 #include "gdal_pam.h"
 #include "gta_headers.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* Helper functions                                                     */
@@ -244,7 +243,8 @@ class GTADataset final: public GDALPamDataset
     bool        bHaveGeoTransform = false;
     double      adfGeoTransform[6];
     int         nGCPs = 0;
-    char        *pszGCPProjection = nullptr;
+    mutable OGRSpatialReference m_oSRS{};
+    OGRSpatialReference m_oGCPSRS{};
     GDAL_GCP    *pasGCPs = nullptr;
     // Cached data block for block-based input/output
     int         nLastBlockXOff = -1;
@@ -265,28 +265,15 @@ class GTADataset final: public GDALPamDataset
     CPLErr      GetGeoTransform( double * padfTransform ) override;
     CPLErr      SetGeoTransform( double * padfTransform ) override;
 
-    const char *_GetProjectionRef( ) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
-    CPLErr      _SetProjection( const char *pszProjection ) override;
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     int         GetGCPCount( ) override;
-    const char *_GetGCPProjection( ) override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override {
-        return GetGCPSpatialRefFromOldGetGCPProjection();
-    }
+    const OGRSpatialReference* GetGCPSpatialRef() const override;
     const GDAL_GCP *GetGCPs( ) override;
-    CPLErr      _SetGCPs( int, const GDAL_GCP *, const char * ) override;
     using GDALPamDataset::SetGCPs;
     CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                    const OGRSpatialReference* poSRS ) override {
-        return OldSetGCPsFromNew(nGCPCount, pasGCPList, poSRS);
-    }
-
+                    const OGRSpatialReference* poSRS ) override;
 };
 
 /************************************************************************/
@@ -796,6 +783,8 @@ CPLErr GTARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 GTADataset::GTADataset()
 
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
 }
 
@@ -807,7 +796,6 @@ GTADataset::~GTADataset()
 
 {
     FlushCache(true);
-    VSIFree( pszGCPProjection );
     for( int i = 0; i < nGCPs; i++ )
     {
         VSIFree( pasGCPs[i].pszId );
@@ -946,21 +934,25 @@ CPLErr GTADataset::SetGeoTransform( double * )
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
-const char *GTADataset::_GetProjectionRef()
+const OGRSpatialReference *GTADataset::GetSpatialRef() const
 
 {
+    if( !m_oSRS.IsEmpty() )
+        return &m_oSRS;
     const char *p = oHeader.global_taglist().get("GDAL/PROJECTION");
-    return p ? p : "";
+    if( p )
+        m_oSRS.importFromWkt(p);
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /************************************************************************/
-/*                          SetProjection()                             */
+/*                          SetSpatialRef()                             */
 /************************************************************************/
 
-CPLErr GTADataset::_SetProjection( const char * )
+CPLErr GTADataset::SetSpatialRef( const OGRSpatialReference * )
 
 {
     CPLError( CE_Warning, CPLE_NotSupported,
@@ -979,13 +971,13 @@ int GTADataset::GetGCPCount( )
 }
 
 /************************************************************************/
-/*                          GetGCPProjection()                          */
+/*                          GetGCPSpatialRef()                          */
 /************************************************************************/
 
-const char * GTADataset::_GetGCPProjection( )
+const OGRSpatialReference * GTADataset::GetGCPSpatialRef( ) const
 
 {
-    return pszGCPProjection ? pszGCPProjection : "";
+    return m_oGCPSRS.IsEmpty() ? nullptr : &m_oGCPSRS;
 }
 
 /************************************************************************/
@@ -1002,7 +994,7 @@ const GDAL_GCP * GTADataset::GetGCPs( )
 /*                          SetGCPs()                                   */
 /************************************************************************/
 
-CPLErr GTADataset::_SetGCPs( int, const GDAL_GCP *, const char * )
+CPLErr GTADataset::SetGCPs( int, const GDAL_GCP *, const OGRSpatialReference * )
 
 {
     CPLError( CE_Warning, CPLE_NotSupported,
@@ -1137,7 +1129,7 @@ GDALDataset *GTADataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( poDS->oHeader.global_taglist().get("GDAL/GCP_PROJECTION") )
     {
-        poDS->pszGCPProjection = VSIStrdup( poDS->oHeader.global_taglist().get("GDAL/GCP_PROJECTION") );
+        poDS->m_oGCPSRS.importFromWkt( poDS->oHeader.global_taglist().get("GDAL/GCP_PROJECTION") );
     }
     if( poDS->oHeader.global_taglist().get("GDAL/GCP_COUNT") )
     {

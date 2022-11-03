@@ -97,7 +97,7 @@ class GDALDAASDataset final: public GDALDataset
         GDALDAASDataset* m_poParentDS = nullptr;
         //int         m_iOvrLevel = 0;
 
-        CPLString m_osWKT;
+        OGRSpatialReference m_oSRS{};
         CPLString m_osSRSType;
         CPLString m_osSRSValue;
         bool      m_bGotGeoTransform = false;
@@ -151,10 +151,7 @@ class GDALDAASDataset final: public GDALDataset
         static GDALDataset* OpenStatic( GDALOpenInfo* poOpenInfo );
 
         CPLErr          GetGeoTransform(double *padfTransform) override;
-        const OGRSpatialReference* GetSpatialRef() const override {
-            return GetSpatialRefFromOldGetProjectionRef();
-        }
-        const char*     _GetProjectionRef() override;
+        const OGRSpatialReference* GetSpatialRef() const override;
         CPLErr          IRasterIO(GDALRWFlag eRWFlag,
                                       int nXOff, int nYOff,
                                       int nXSize, int nYSize,
@@ -234,6 +231,7 @@ GDALDAASDataset::GDALDAASDataset() :
     m_osAuthURL(CPLGetConfigOption("GDAL_DAAS_AUTH_URL",
         "https://authenticate.geoapi-airbusds.com/auth/realms/IDP/protocol/openid-connect/token"))
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 }
 
 /************************************************************************/
@@ -249,7 +247,7 @@ GDALDAASDataset::GDALDAASDataset(GDALDAASDataset* poParentDS,
     m_osXForwardUser(CPLString()), // only used by parent
     m_poParentDS(poParentDS),
     //m_iOvrLevel(iOvrLevel),
-    m_osWKT(poParentDS->m_osWKT),
+    m_oSRS(poParentDS->m_oSRS),
     m_osSRSType(poParentDS->m_osSRSType),
     m_osSRSValue(poParentDS->m_osSRSValue),
     m_bGotGeoTransform(poParentDS->m_bGotGeoTransform),
@@ -354,12 +352,12 @@ CPLErr GDALDAASDataset::GetGeoTransform(double *padfTransform)
 }
 
 /************************************************************************/
-/*                        GetProjectionRef()                            */
+/*                          GetSpatialRef()                            */
 /************************************************************************/
 
-const char* GDALDAASDataset::_GetProjectionRef()
+const OGRSpatialReference* GDALDAASDataset::GetSpatialRef() const
 {
-    return m_osWKT.c_str();
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /********************-****************************************************/
@@ -1074,23 +1072,7 @@ void GDALDAASDataset::ReadSRS(const CPLJSONObject& oProperties)
 
     if( m_osSRSType == "urn" || m_osSRSType == "proj4" )
     {
-        OGRSpatialReference oSRS;
-        if( oSRS.SetFromUserInput(m_osSRSValue, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE )
-        {
-            OGR_SRSNode *poGEOGCS = oSRS.GetAttrNode("GEOGCS");
-            if( poGEOGCS != nullptr )
-                poGEOGCS->StripNodes("AXIS");
-
-            OGR_SRSNode *poPROJCS = oSRS.GetAttrNode("PROJCS");
-            if (poPROJCS != nullptr && oSRS.EPSGTreatsAsNorthingEasting())
-                poPROJCS->StripNodes("AXIS");
-
-            char* pszWKT = nullptr;
-            oSRS.exportToWkt(&pszWKT);
-            if( pszWKT )
-                m_osWKT = pszWKT;
-            CPLFree(pszWKT);
-        }
+        m_oSRS.SetFromUserInput(m_osSRSValue, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
     }
 }
 
@@ -1184,7 +1166,7 @@ void GDALDAASDataset::ReadRPCs(const CPLJSONObject& oProperties)
 
 bool GDALDAASDataset::SetupServerSideReprojection(const char* pszTargetSRS)
 {
-    if( m_osWKT.empty() || !m_bGotGeoTransform )
+    if( m_oSRS.IsEmpty() || !m_bGotGeoTransform )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                     "TARGET_SRS is specified, but projection and/or "
@@ -1217,7 +1199,6 @@ bool GDALDAASDataset::SetupServerSideReprojection(const char* pszTargetSRS)
     char* pszWKT = nullptr;
     oSRS.exportToWkt(&pszWKT);
     char** papszTO = CSLSetNameValue( nullptr, "DST_SRS", pszWKT );
-    CPLString osTargetWKT = pszWKT;
     CPLFree(pszWKT);
 
     void* hTransformArg =
@@ -1252,7 +1233,7 @@ bool GDALDAASDataset::SetupServerSideReprojection(const char* pszTargetSRS)
     m_bRequestInGeoreferencedCoordinates = true;
     m_osSRSType = "epsg";
     m_osSRSValue = osTargetEPSGCode;
-    m_osWKT = osTargetWKT;
+    m_oSRS = oSRS;
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
     return true;

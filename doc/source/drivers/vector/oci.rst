@@ -15,14 +15,16 @@ Oracle client libraries are available.
 When opening a database, its name should be specified in the form
 "OCI:userid/password@database_instance:table,table". The list of tables
 is optional. The database_instance portion may be omitted when accessing
-the default local database instance.
+the default local database instance. See the 
+`Oracle Help Center <https://docs.oracle.com/search/?q=oci%20driver>`_ 
+for more information about the OCI driver.
 
 If the list of tables is not provided, then all tables appearing in
 ALL_SDO_GEOM_METADATA will be treated by OGR as layers with the table
 names as the layer names. Non-spatial tables or spatial tables not
-listed in the ALL_SDO_GEOM_METADATA table are not accessible unless
+listed in the ALL_SDO_GEOM_METADATA view [#]_ are not accessible unless
 explicitly listed in the datasource name. Even in databases where all
-desired layers are in the ALL_SDO_GEOM_METADATA table, it may be
+desired layers are in the ALL_SDO_GEOM_METADATA view, it may be
 desirable to list only the tables to be used as this can substantially
 reduce initialization time in databases with many tables.
 
@@ -30,6 +32,17 @@ If the table has an integer column called OGR_FID it will be used as the
 feature id by OGR (and it will not appear as a regular attribute). When
 loading data into Oracle Spatial OGR will always create the OGR_FID
 field.
+
+When reading data from one or more views, the view names should be 
+specified in the form
+"OCI:userid/password@database_instance:view,view". What is written 
+above regarding tables, applies to views as well.
+
+.. [#] It is the database user that is responsible for updating the
+   ALL_SDO_GEOM_METADATA view, by inserting an appropriate row into the 
+   USER_SDO_GEOM_METADATA view. This is why it is possible that the 
+   table you want to read from is not listed in the 
+   ALL_SDO_GEOM_METADATA. 
 
 Driver capabilities
 -------------------
@@ -85,6 +98,12 @@ Caveats
    to localhost, or with the TWO_TASK environment variable seems to be
    compulsory, otherwise "TNS:permission denied" errors will be
    reported)
+-  The logic for finding the specified table or view first checks 
+   whether a table with the given name exists, then a view, and then 
+   tries again with quoted names. This may result in one or more errors 
+   of the following type written to the output: "ORA-04043: object 
+   <object_name> does not exist", even if the object actually is found 
+   later on.
 
 Creation Issues
 ---------------
@@ -224,6 +243,20 @@ also be used via the -sql commandline switch to ogrinfo.
 ::
 
    ogrinfo -ro OCI:warmerda/password -sql "SELECT pop_1994 from canada where province_name = 'Alberta'"
+   
+This example shows hows to list information about an Oracle view.
+
+::
+
+   ogrinfo -ro -so OCI:username/password@host_name:port_number/service_name:MY_SCHEMA.MY_VIEW MY_SCHEMA.MY_VIEW
+
+This example shows hows to convert certain columns from an Oracle view 
+to a GeoPackage file, explicitly assigning the layer name and the 
+coordinate reference system, and converting timestamps to UTC.
+
+::
+
+   ogr2ogr -f GPKG output.gpkg -nln new_layer_name -nlt POLYGON -s_srs EPSG:25832 -t_srs EPSG:25832 -dsco DATETIME_FORMAT=UTC OCI:username/password@host_name:port_number/service_name:MY_SCHEMA.MY_VIEW -sql "SELECT COLUMN_A, COLUMN_B, GEOMETRY FROM MY_SCHEMA.MY_VIEW"
 
 Credits
 ~~~~~~~

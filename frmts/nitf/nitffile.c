@@ -35,7 +35,6 @@
 #include "cpl_string.h"
 #include <stdbool.h>
 
-CPL_CVSID("$Id$")
 
 CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
 
@@ -622,7 +621,12 @@ int NITFCreateEx( const char *pszFilename,
             return FALSE;
         }
         nIM = atoi(pszNUMI);
-        if (nIM < 1 || nIM > 999)
+        if (nIM == 0 )
+        {
+            if( pnIndex )
+                *pnIndex = -1;
+        }
+        else if (nIM < 0 || nIM > 999)
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                     "Invalid NUMI value : %s", pszNUMI);
@@ -1251,7 +1255,8 @@ int NITFCreateEx( const char *pszFilename,
                          papszOptions );
     }
 
-    if( CSLFetchNameValue(papszOptions,"TRE") != NULL )
+    if( CSLFetchNameValue(papszOptions,"TRE") != NULL ||
+        CSLFetchNameValue(papszOptions,"RESERVE_SPACE_FOR_TRE_OVERFLOW") != NULL )
     {
         bOK &= NITFWriteTREsFromOptions(
             fp,
@@ -1318,17 +1323,17 @@ int NITFCreateEx( const char *pszFilename,
     if (nBands > 9 || nIM > 20 || nPixels > 2048 || nLines > 2048 ||
         nNPPBH > 2048 || nNPPBV > 2048 || nCur > 52428799 )
     {
-        nCLevel = 5;
+        nCLevel = MAX(nCLevel, 5);
     }
     if (nPixels > 8192 || nLines > 8192 ||
         nNPPBH > 8192 || nNPPBV > 8192 || nCur > 1073741833 || nDES > 10)
     {
-        nCLevel = 6;
+        nCLevel = MAX(nCLevel, 6);
     }
     if (nBands > 256 || nPixels > 65536 || nLines > 65536 ||
         nCur > 2147483647 || nDES > 50)
     {
-        nCLevel = 7;
+        nCLevel = MAX(nCLevel, 7);
     }
     OVR( 2,  9, CLEVEL,       CPLSPrintf("%02d", nCLevel)     );
 
@@ -1453,6 +1458,8 @@ static int NITFWriteTREsFromOptions(
         CSLFetchNameValue(papszOptions,"BLOCKA_BLOCK_COUNT") != NULL;
     int iOption;
     int nTREPrefixLen = (int)strlen(pszTREPrefix);
+    const bool bReserveSpaceForTREOverflow =
+        CSLFetchNameValue(papszOptions,"RESERVE_SPACE_FOR_TRE_OVERFLOW") != NULL;
 
     if( papszOptions == NULL )
         return TRUE;
@@ -1534,6 +1541,29 @@ static int NITFWriteTREsFromOptions(
         CPLFree( pszTREName );
         CPLFree( pszUnescapedContents );
 
+    }
+
+    if( bReserveSpaceForTREOverflow )
+    {
+/* -------------------------------------------------------------------- */
+/*      Update IXSHDL.                                                  */
+/* -------------------------------------------------------------------- */
+        int nOldOffset;
+        char szTemp[6];
+        bool bOK = VSIFSeekL(fp, nOffsetUDIDL + 5, SEEK_SET) == 0;
+        bOK &= VSIFReadL(szTemp, 1, 5, fp) == 5;
+        szTemp[5] = 0;
+        nOldOffset = atoi(szTemp);
+
+        if( nOldOffset == 0 )
+        {
+            PLACE( nOffsetUDIDL + 5, IXSHDL, "00003" );
+
+            PLACE(nOffsetUDIDL+10, IXSOFL, "000" );
+            *pnOffset += 3;
+        }
+
+        return bOK;
     }
 
     return TRUE;
@@ -2991,11 +3021,19 @@ char **NITFGenericMetadataReadTRE(char **papszMD,
     int nTreMinLength = atoi(CPLGetXMLValue(psTreNode, "minlength", "-1"));
     /* int nTreMaxLength = atoi(CPLGetXMLValue(psTreNode, "maxlength", "-1")); */
 
-    if( (nTreLength > 0 && nTRESize != nTreLength) ||
-        (nTreMinLength > 0 && nTRESize < nTreMinLength) )
+    if( nTreLength > 0 && nTRESize != nTreLength )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
-                  "%s TRE wrong size, ignoring.", pszTREName );
+                  "%s TRE wrong size (%d). Expected %d. ignoring.",
+                  pszTREName, nTRESize, nTreLength );
+        return papszMD;
+    }
+
+    if( nTreMinLength > 0 && nTRESize < nTreMinLength )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "%s TRE wrong size (%d). Expected >= %d. ignoring.",
+                  pszTREName, nTRESize, nTreMinLength );
         return papszMD;
     }
 
@@ -3128,11 +3166,19 @@ CPLXMLNode* NITFCreateXMLTre(NITFFile* psFile,
     nTreMinLength = atoi(CPLGetXMLValue(psTreNode, "minlength", "-1"));
     /* nTreMaxLength = atoi(CPLGetXMLValue(psTreNode, "maxlength", "-1")); */
 
-    if( (nTreLength > 0 && nTRESize != nTreLength) ||
-        (nTreMinLength > 0 && nTRESize < nTreMinLength) )
+    if( nTreLength > 0 && nTRESize != nTreLength )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
-                  "%s TRE wrong size, ignoring.", pszTREName );
+                  "%s TRE wrong size (%d). Expected %d. ignoring.",
+                  pszTREName, nTRESize, nTreLength );
+        return NULL;
+    }
+
+    if( nTreMinLength > 0 && nTRESize < nTreMinLength )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "%s TRE wrong size (%d). Expected >= %d. ignoring.",
+                  pszTREName, nTRESize, nTreMinLength );
         return NULL;
     }
 

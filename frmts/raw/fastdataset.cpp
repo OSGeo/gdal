@@ -32,7 +32,6 @@
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
-CPL_CVSID("$Id$")
 
 // constexpr int ADM_STD_HEADER_SIZE = 4608;  // Format specification says it
 constexpr int ADM_HEADER_SIZE = 5000;  // Should be 4608, but some vendors
@@ -105,7 +104,7 @@ class FASTDataset final: public GDALPamDataset
     friend class FASTRasterBand;
 
     double       adfGeoTransform[6];
-    char        *pszProjection;
+    OGRSpatialReference m_oSRS{};
 
     VSILFILE    *fpHeader;
     CPLString    apoChannelFilenames[7];
@@ -126,10 +125,8 @@ class FASTDataset final: public GDALPamDataset
     static GDALDataset *Open( GDALOpenInfo * );
 
     CPLErr      GetGeoTransform( double * ) override;
-    const char  *_GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override
+        { return m_oSRS.IsEmpty() ? nullptr : &m_oSRS; }
     VSILFILE    *FOpenChannel( const char *, int iBand, int iFASTBand );
     void        TryEuromap_IRS_1C_1D_ChannelNameConvention();
 
@@ -177,13 +174,13 @@ FASTRasterBand::FASTRasterBand( FASTDataset *poDSIn, int nBandIn, VSILFILE * fpR
 /************************************************************************/
 
 FASTDataset::FASTDataset() :
-    pszProjection(CPLStrdup("")),
     fpHeader(nullptr),
     pszFilename(nullptr),
     pszDirname(nullptr),
     eDataType(GDT_Unknown),
     iSatellite(FAST_UNKNOWN)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -207,7 +204,6 @@ FASTDataset::~FASTDataset()
     FlushCache(true);
 
     CPLFree( pszDirname );
-    CPLFree( pszProjection );
     for ( int i = 0; i < nBands; i++ )
         if ( fpChannels[i] )
             CPL_IGNORE_RET_VAL(VSIFCloseL( fpChannels[i] ));
@@ -224,19 +220,6 @@ CPLErr FASTDataset::GetGeoTransform( double * padfTransform )
 {
     memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
     return CE_None;
-}
-
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char *FASTDataset::_GetProjectionRef()
-
-{
-    if( pszProjection )
-        return pszProjection;
-
-    return "";
 }
 
 /************************************************************************/
@@ -1063,36 +1046,32 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
             strstr( pszHeader, "REV            C" ) == nullptr;
 
         // Create projection definition
-        OGRSpatialReference oSRS;
         OGRErr eErr =
-            oSRS.importFromUSGS( iProjSys, iZone, adfProjParams, iDatum, bAnglesInPackedDMSFormat );
+            poDS->m_oSRS.importFromUSGS( iProjSys, iZone, adfProjParams, iDatum, bAnglesInPackedDMSFormat );
         if ( eErr != OGRERR_NONE )
             CPLDebug( "FAST", "Import projection from USGS failed: %d", eErr );
-        oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
-
-        // Read datum name
-        pszTemp = GetValue( pszHeader, DATUM_NAME, DATUM_NAME_SIZE, FALSE );
-        if ( pszTemp )
-        {
-            if ( EQUAL( pszTemp, "WGS84" ) )
-                oSRS.SetWellKnownGeogCS( "WGS84" );
-            else if ( EQUAL( pszTemp, "NAD27" ) )
-                oSRS.SetWellKnownGeogCS( "NAD27" );
-            else if ( EQUAL( pszTemp, "NAD83" ) )
-                oSRS.SetWellKnownGeogCS( "NAD83" );
-            CPLFree( pszTemp );
-        }
         else
         {
-            // Reasonable fallback
-            oSRS.SetWellKnownGeogCS( "WGS84" );
-        }
+            poDS->m_oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
 
-        if ( poDS->pszProjection )
-            CPLFree( poDS->pszProjection );
-        eErr = oSRS.exportToWkt( &poDS->pszProjection );
-        if ( eErr != OGRERR_NONE )
-            CPLDebug("FAST", "Export projection to WKT USGS failed: %d", eErr);
+            // Read datum name
+            pszTemp = GetValue( pszHeader, DATUM_NAME, DATUM_NAME_SIZE, FALSE );
+            if ( pszTemp )
+            {
+                if ( EQUAL( pszTemp, "WGS84" ) )
+                    poDS->m_oSRS.SetWellKnownGeogCS( "WGS84" );
+                else if ( EQUAL( pszTemp, "NAD27" ) )
+                    poDS->m_oSRS.SetWellKnownGeogCS( "NAD27" );
+                else if ( EQUAL( pszTemp, "NAD83" ) )
+                    poDS->m_oSRS.SetWellKnownGeogCS( "NAD83" );
+                CPLFree( pszTemp );
+            }
+            else
+            {
+                // Reasonable fallback
+                poDS->m_oSRS.SetWellKnownGeogCS( "WGS84" );
+            }
+        }
 
         // Generate GCPs
         GDAL_GCP *pasGCPList
@@ -1143,9 +1122,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->adfGeoTransform[3] = 0.0;
             poDS->adfGeoTransform[4] = 0.0;
             poDS->adfGeoTransform[5] = 1.0;
-            if ( poDS->pszProjection )
-                CPLFree( poDS->pszProjection );
-            poDS->pszProjection = CPLStrdup("");
+            poDS->m_oSRS.Clear();
         }
 
         GDALDeinitGCPs(4, pasGCPList);

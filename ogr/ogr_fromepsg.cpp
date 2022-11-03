@@ -56,7 +56,6 @@
 
 #include "proj.h"
 
-CPL_CVSID("$Id$")
 
 extern void OGRsnPrintDouble( char * pszStrBuf, size_t size, double dfValue );
 
@@ -312,6 +311,8 @@ OGRErr OSRSetStatePlaneWithUnits( OGRSpatialReferenceH hSRS,
  * matching by researching the EPSG catalog.
  *
  * @return OGRERR_NONE or OGRERR_UNSUPPORTED_SRS.
+ *
+ * @see OGRSpatialReference::FindBestMatch()
  */
 
 OGRErr OGRSpatialReference::AutoIdentifyEPSG()

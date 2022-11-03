@@ -29,7 +29,6 @@
 #include "cpl_conv.h"
 #include "ogr_pds.h"
 
-CPL_CVSID("$Id$")
 
 extern "C" void RegisterOGRPDS();
 
@@ -78,6 +77,7 @@ void RegisterOGRPDS()
                                "Planetary Data Systems TABLE" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/pds.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->pfnOpen = OGRPDSDriverOpen;
 

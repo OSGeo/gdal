@@ -38,7 +38,6 @@
 
 #include "../mem/memdataset.h"
 
-CPL_CVSID("$Id$")
 
 #undef NOISY_DEBUG
 
@@ -2835,7 +2834,8 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
         }
     }
 
-    poDS->GDALDataset::SetMetadataItem("COMPRESSION_RATE_TARGET", CPLString().Printf("%d", poDS->psFileInfo->nCompressionRate));
+    if( poDS->psFileInfo->nCompressionRate > 0 )
+        poDS->GDALDataset::SetMetadataItem("COMPRESSION_RATE_TARGET", CPLString().Printf("%d", poDS->psFileInfo->nCompressionRate));
     poDS->GDALDataset::SetMetadataItem("COLORSPACE", ECWGetColorSpaceName(poDS->psFileInfo->eColorSpace));
 #if ECWSDK_VERSION>=50
     if( !bIsJPEG2000 )
@@ -2847,7 +2847,41 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
         char *csComments = nullptr;
         poDS->poFileView->GetParameter((char*)"JPC:DECOMPRESS:COMMENTS", &csComments);
         if (csComments) {
-            poDS->GDALDataset::SetMetadataItem("ALL_COMMENTS", CPLString().Printf("%s", csComments));
+            std::string osComments(csComments);
+
+            // Strip off boring Kakadu COM content
+            if( STARTS_WITH(osComments.c_str(), "Kakadu-") )
+            {
+                const auto nEOLPos = osComments.find('\n');
+                if( nEOLPos == std::string::npos )
+                    osComments.clear();
+                osComments = osComments.substr(nEOLPos + 1);
+            }
+            if( STARTS_WITH(osComments.c_str(), "Kdu-Layer-Info: log_2{Delta-D(squared-error)/Delta-L(bytes)}, L(bytes)\n") )
+            {
+                while( true )
+                {
+                    const auto nEOLPos = osComments.find('\n');
+                    if( nEOLPos == std::string::npos )
+                    {
+                        osComments.clear();
+                        break;
+                    }
+                    osComments = osComments.substr(nEOLPos + 1);
+                    if( osComments.find(",  ") == std::string::npos )
+                        break;
+                }
+            }
+
+            // Strip off boring OpenJPEG COM content
+            if( STARTS_WITH(osComments.c_str(), "Created by OpenJPEG version ") &&
+                osComments.find('\n') == std::string::npos )
+            {
+                osComments.clear();
+            }
+
+            if( !osComments.empty() )
+                poDS->GDALDataset::SetMetadataItem("ALL_COMMENTS", osComments.c_str());
             NCSFree(csComments);
         }
 
@@ -3006,7 +3040,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 
 char **ECWDataset::GetMetadataDomainList()
 {
-    return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
+    return BuildMetadataDomainList(GDALJP2AbstractDataset::GetMetadataDomainList(),
                                    TRUE,
                                    "ECW", "GML", nullptr);
 }
@@ -3027,7 +3061,7 @@ const char *ECWDataset::GetMetadataItem( const char * pszName,
         if (EQUAL(pszName, "UNITS"))
             return m_osUnitsCode.size() ? m_osUnitsCode.c_str() : "METERS";
     }
-    return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
+    return GDALJP2AbstractDataset::GetMetadataItem(pszName, pszDomain);
 }
 
 /************************************************************************/
@@ -3046,7 +3080,7 @@ char **ECWDataset::GetMetadata( const char *pszDomain )
         return oECWMetadataList.List();
     }
     else if( pszDomain == nullptr || !EQUAL(pszDomain,"GML") )
-        return GDALPamDataset::GetMetadata( pszDomain );
+        return GDALJP2AbstractDataset::GetMetadata( pszDomain );
     else
         return papszGMLMetadata;
 }

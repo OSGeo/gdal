@@ -55,7 +55,6 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 constexpr int HDF4_SDS_MAXNAMELEN = 65;
 
@@ -126,11 +125,10 @@ class HDF4ImageDataset final: public HDF4Dataset
 
     GDALColorTable *poColorTable;
 
-    OGRSpatialReference oSRS;
+    OGRSpatialReference m_oSRS{};
+    OGRSpatialReference m_oGCPSRS{};
     bool        bHasGeoTransform;
     double      adfGeoTransform[6];
-    char        *pszProjection;
-    char        *pszGCPProjection;
     GDAL_GCP    *pasGCPList;
     int         nGCPCount;
 
@@ -166,19 +164,10 @@ class HDF4ImageDataset final: public HDF4Dataset
     virtual void        FlushCache( bool bAtClosing ) override;
     CPLErr              GetGeoTransform( double * padfTransform ) override;
     virtual CPLErr      SetGeoTransform( double * ) override;
-    const char          *_GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
-    virtual CPLErr      _SetProjection( const char * ) override;
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override ;
     virtual int         GetGCPCount() override;
-    virtual const char  *_GetGCPProjection() override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override {
-        return GetGCPSpatialRefFromOldGetGCPProjection();
-    }
+    const OGRSpatialReference* GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
 };
 
@@ -794,10 +783,7 @@ HDF4ImageDataset::HDF4ImageDataset() :
     pszSubdatasetName(nullptr),
     pszFieldName(nullptr),
     poColorTable(nullptr),
-    oSRS( OGRSpatialReference() ),
     bHasGeoTransform(false),
-    pszProjection(CPLStrdup( "" )),
-    pszGCPProjection(CPLStrdup( "" )),
     pasGCPList(nullptr),
     nGCPCount(0),
     iDatasetType(HDF4_UNKNOWN),
@@ -806,7 +792,8 @@ HDF4ImageDataset::HDF4ImageDataset() :
     nBlockPreferredYSize(-1),
     bReadTile(false)
 {
-    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     memset(aiDimSizes, 0, sizeof(aiDimSizes));
     papszLocalMetadata = nullptr;
     memset(aiPaletteData, 0, sizeof(aiPaletteData));
@@ -847,8 +834,6 @@ HDF4ImageDataset::~HDF4ImageDataset()
     if( poColorTable != nullptr )
         delete poColorTable;
 
-    CPLFree( pszProjection );
-    CPLFree( pszGCPProjection );
     if( nGCPCount > 0 )
     {
         for( int i = 0; i < nGCPCount; i++ )
@@ -914,24 +899,25 @@ CPLErr HDF4ImageDataset::SetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *HDF4ImageDataset::_GetProjectionRef()
+const OGRSpatialReference *HDF4ImageDataset::GetSpatialRef() const
 
 {
-    return pszProjection;
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /************************************************************************/
-/*                          SetProjection()                             */
+/*                          SetSpatialRef()                             */
 /************************************************************************/
 
-CPLErr HDF4ImageDataset::_SetProjection( const char *pszNewProjection )
+CPLErr HDF4ImageDataset::SetSpatialRef( const OGRSpatialReference* poSRS )
 
 {
-    CPLFree( pszProjection );
-    pszProjection = CPLStrdup( pszNewProjection );
+    m_oSRS.Clear();
+    if( poSRS )
+        m_oSRS = *poSRS;
 
     return CE_None;
 }
@@ -947,16 +933,13 @@ int HDF4ImageDataset::GetGCPCount()
 }
 
 /************************************************************************/
-/*                          GetGCPProjection()                          */
+/*                          GetGCPSpatialRef()                          */
 /************************************************************************/
 
-const char *HDF4ImageDataset::_GetGCPProjection()
+const OGRSpatialReference *HDF4ImageDataset::GetGCPSpatialRef() const
 
 {
-    if( nGCPCount > 0 )
-        return pszGCPProjection;
-
-    return "";
+    return m_oSRS.IsEmpty() || nGCPCount == 0 ? nullptr : &m_oGCPSRS;
 }
 
 /************************************************************************/
@@ -996,15 +979,21 @@ void HDF4ImageDataset::FlushCache(bool bAtClosing)
     }
 
     // Write out projection
-    if( pszProjection != nullptr && !EQUAL( pszProjection, "" ) )
+    if( !m_oSRS.IsEmpty() )
     {
-        if( (SDsetattr( hSD, "Projection", DFNT_CHAR8,
-                        static_cast<int>(strlen(pszProjection)) + 1,
-                        pszProjection )) < 0 )
+        char* pszWKT = nullptr;
+        m_oSRS.exportToWkt(&pszWKT);
+        if( pszWKT )
+        {
+            if( (SDsetattr( hSD, "Projection", DFNT_CHAR8,
+                        static_cast<int>(strlen(pszWKT)) + 1,
+                        pszWKT )) < 0 )
             {
                 CPLDebug("HDF4Image",
                          "Cannot write projection information to output file");
             }
+            CPLFree(pszWKT);
+        }
     }
 
     // Store all metadata from source dataset as HDF attributes
@@ -1108,13 +1097,13 @@ long HDF4ImageDataset::USGSMnemonicToCode( const char* pszMnemonic )
 
 void HDF4ImageDataset::ToGeoref( double *pdfGeoX, double *pdfGeoY )
 {
-    OGRSpatialReference* poLatLong = oSRS.CloneGeogCS();
+    OGRSpatialReference* poLatLong = m_oSRS.CloneGeogCS();
     OGRCoordinateTransformation* poTransform = nullptr;
     if( poLatLong )
     {
         poLatLong->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         poTransform =
-            OGRCreateCoordinateTransformation( poLatLong, &oSRS );
+            OGRCreateCoordinateTransformation( poLatLong, &m_oSRS );
     }
 
     if( poTransform != nullptr )
@@ -1274,8 +1263,7 @@ void HDF4ImageDataset::CaptureL1GMTLInfo()
     const double dfURY
         = CPLAtof( oMTL.GetKeyword( (osPrefix+"UR_CORNER_LAT").c_str(), "0" ) );
 
-    CPLFree( pszGCPProjection );
-    pszGCPProjection = CPLStrdup(
+    m_oGCPSRS.importFromWkt(
         "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,"
         "298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],"
         "AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,"
@@ -1417,9 +1405,7 @@ void HDF4ImageDataset::CaptureNRLGeoTransform()
         adfGeoTransform[4] = 0.0;
         adfGeoTransform[5] = (adfXY[2*2+1] - adfXY[0*2+1]) / nRasterYSize;
 
-        oSRS.SetWellKnownGeogCS( "WGS84" );
-        CPLFree( pszProjection );
-        oSRS.exportToWkt( &pszProjection );
+        m_oSRS.SetWellKnownGeogCS( "WGS84" );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1458,7 +1444,7 @@ void HDF4ImageDataset::CaptureNRLGeoTransform()
             && l_iRank == 1
             && l_aiDimSizes[0] >= 29
             && SDreaddata( l_iSDS, aiStart, nullptr, aiEdges, adfGCTP ) == 0
-            && oSRS.importFromUSGS( static_cast<long>( adfGCTP[1] ),
+            && m_oSRS.importFromUSGS( static_cast<long>( adfGCTP[1] ),
                                     static_cast<long>( adfGCTP[2] ),
                                     adfGCTP+4,
                                     static_cast<long>( adfGCTP[3] ) )
@@ -1497,8 +1483,6 @@ void HDF4ImageDataset::CaptureNRLGeoTransform()
                       adfGCTP[27],
                       adfGCTP[28] );
 
-            CPLFree( pszProjection );
-            oSRS.exportToWkt( &pszProjection );
             bGotGCTPProjection = true;
         }
 
@@ -1518,7 +1502,7 @@ void HDF4ImageDataset::CaptureNRLGeoTransform()
         oWGS84.SetAxisMappingStrategy( OAMS_TRADITIONAL_GIS_ORDER );
 
         OGRCoordinateTransformation *poCT =
-            OGRCreateCoordinateTransformation( &oWGS84, &oSRS );
+            OGRCreateCoordinateTransformation( &oWGS84, &m_oSRS );
 
         double dfULX = adfXY[0*2+0];
         double dfULY = adfXY[0*2+1];
@@ -1623,11 +1607,8 @@ void HDF4ImageDataset::CaptureCoastwatchGCTPInfo()
 /*      Convert into an SRS.                                            */
 /* -------------------------------------------------------------------- */
 
-    if( oSRS.importFromUSGS( nSys, nZone, adfParams, nDatum ) != OGRERR_NONE )
+    if( m_oSRS.importFromUSGS( nSys, nZone, adfParams, nDatum ) != OGRERR_NONE )
         return;
-
-    CPLFree( pszProjection );
-    oSRS.exportToWkt( &pszProjection );
 
 /* -------------------------------------------------------------------- */
 /*      Capture the affine transform info.                              */
@@ -2473,13 +2454,10 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
     if( nLatCount && nLongCount && nLatCount == nLongCount
         && pLat && pLong )
     {
-        CPLFree( pszGCPProjection );
-        pszGCPProjection = nullptr;
-
         // ASTER Level 1A
         if( eProduct == PROD_ASTER_L1A )
         {
-            pszGCPProjection = CPLStrdup(
+            m_oGCPSRS.importFromWkt(
                 "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\","
                 "6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],"
                 "TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],"
@@ -2566,10 +2544,9 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
             }
 
             // Create projection definition
-            oSRS.importFromUSGS( iProjSys, iZone,
+            m_oSRS.importFromUSGS( iProjSys, iZone,
                                  adfProjParams.data(), iEllipsoid );
-            oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
-            oSRS.exportToWkt( &pszGCPProjection );
+            m_oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
 
             CSLDestroy( papszParams );
             CPLFree( pszEllipsoidLine );
@@ -2593,19 +2570,18 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
 
             // Create projection definition
             if( dfCenterY > 0 )
-                oSRS.SetUTM( iZone, TRUE );
+                m_oSRS.SetUTM( iZone, TRUE );
             else
-                oSRS.SetUTM( - iZone, FALSE );
-            oSRS.SetWellKnownGeogCS( "WGS84" );
-            oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
-            oSRS.exportToWkt( &pszGCPProjection );
+                m_oSRS.SetUTM( - iZone, FALSE );
+            m_oSRS.SetWellKnownGeogCS( "WGS84" );
+            m_oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
         }
 
         // MODIS L1B
         else if( eProduct == PROD_MODIS_L1B
                  || eProduct == PROD_MODIS_L2 )
         {
-            pszGCPProjection = CPLStrdup( SRS_WKT_WGS84_LAT_LONG );
+            m_oGCPSRS.importFromWkt( SRS_WKT_WGS84_LAT_LONG );
         }
 
 /* -------------------------------------------------------------------- */
@@ -2697,7 +2673,11 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
             && iLatDim != -1 && iLongDim != -1
             && iPixelDim != -1 && iLineDim != -1 )
         {
-            SetMetadataItem( "SRS", pszGCPProjection, "GEOLOCATION" );
+            char* pszWKT = nullptr;
+            m_oGCPSRS.exportToWkt(&pszWKT);
+            if( pszWKT )
+                SetMetadataItem( "SRS", pszWKT, "GEOLOCATION" );
+            CPLFree(pszWKT);
 
             CPLString  osWrk;
             osWrk.Printf( "HDF4_EOS:EOS_SWATH_GEOL:\"%s\":%s:%s",
@@ -2739,8 +2719,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
 
         if( iGCPStepX == 0 )
         {
-            CPLFree( pszGCPProjection );
-            pszGCPProjection = nullptr;
+            m_oGCPSRS.Clear();
         }
     }
 
@@ -3201,12 +3180,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                               static_cast<long>( iZoneCode ),
                               static_cast<long>( iSphereCode ) );
 #endif
-                    poDS->oSRS.importFromUSGS( iProjCode, iZoneCode,
+                    poDS->m_oSRS.importFromUSGS( iProjCode, iZoneCode,
                                                adfProjParams, iSphereCode,
                                                USGS_ANGLE_RADIANS );
-
-                    CPLFree( poDS->pszProjection );
-                    poDS->oSRS.exportToWkt( &poDS->pszProjection );
                 }
 
 /* -------------------------------------------------------------------- */
@@ -3690,8 +3666,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
             CSLFetchNameValue( poDS->papszGlobalMetadata, "Projection" );
           if( pszValue != nullptr )
           {
-              CPLFree( poDS->pszProjection );
-              poDS->pszProjection = CPLStrdup( pszValue );
+              poDS->m_oSRS.importFromWkt(pszValue);
           }
           if( (pszValue = CSLFetchNameValue(poDS->papszGlobalMetadata,
                                             "TransformationMatrix")) != nullptr )
@@ -3738,16 +3713,14 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
           }
 
           // Read coordinate system and geotransform matrix.
-          poDS->oSRS.SetWellKnownGeogCS( "WGS84" );
+          poDS->m_oSRS.SetWellKnownGeogCS( "WGS84" );
 
           if( EQUAL(CSLFetchNameValue(poDS->papszGlobalMetadata,
                                       "Map Projection"),
                     "Equidistant Cylindrical") )
           {
-              poDS->oSRS.SetEquirectangular( 0.0, 0.0, 0.0, 0.0 );
-              poDS->oSRS.SetLinearUnits( SRS_UL_METER, 1 );
-              CPLFree( poDS->pszProjection );
-              poDS->oSRS.exportToWkt( &poDS->pszProjection );
+              poDS->m_oSRS.SetEquirectangular( 0.0, 0.0, 0.0, 0.0 );
+              poDS->m_oSRS.SetLinearUnits( SRS_UL_METER, 1 );
           }
 
           double dfULX = CPLAtof( CSLFetchNameValue(poDS->papszGlobalMetadata,

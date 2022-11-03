@@ -36,7 +36,6 @@
 #include <cstdlib>
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 //Disabled as people may worry about the BSB patent
 //#define BSB_CREATE
@@ -53,7 +52,7 @@ class BSBDataset final: public GDALPamDataset
 {
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
-    CPLString   osGCPProjection;
+    OGRSpatialReference m_oGCPSRS{};
 
     double      adfGeoTransform[6];
     int         bGeoTransformSet;
@@ -76,17 +75,11 @@ class BSBDataset final: public GDALPamDataset
     static int Identify( GDALOpenInfo * );
 
     int GetGCPCount() override;
-    const char *_GetGCPProjection() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
     const GDAL_GCP *GetGCPs() override;
 
     CPLErr GetGeoTransform( double * padfTransform ) override;
-    const char *_GetProjectionRef() override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override {
-        return GetGCPSpatialRefFromOldGetGCPProjection();
-    }
+    const OGRSpatialReference* GetGCPSpatialRef() const override;
 };
 
 /************************************************************************/
@@ -198,10 +191,12 @@ GDALColorInterp BSBRasterBand::GetColorInterpretation()
 BSBDataset::BSBDataset() :
     nGCPCount(0),
     pasGCPList(nullptr),
-    osGCPProjection(SRS_WKT_WGS84_LAT_LONG),
     bGeoTransformSet(FALSE),
     psInfo(nullptr)
 {
+    m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    m_oGCPSRS.importFromWkt(SRS_WKT_WGS84_LAT_LONG);
+
     adfGeoTransform[0] = 0.0;     /* X Origin (top left corner) */
     adfGeoTransform[1] = 1.0;     /* X Pixel size */
     adfGeoTransform[2] = 0.0;
@@ -242,16 +237,16 @@ CPLErr BSBDataset::GetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *BSBDataset::_GetProjectionRef()
+const OGRSpatialReference *BSBDataset::GetSpatialRef() const
 
 {
     if( bGeoTransformSet )
-        return osGCPProjection;
+        return &m_oGCPSRS;
 
-    return "";
+    return nullptr;
 }
 
 /************************************************************************/
@@ -539,7 +534,7 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
                                  &(pasGCPList[i].dfGCPZ) );
             }
 
-            osGCPProjection = osUnderlyingSRS;
+            m_oGCPSRS.importFromWkt(osUnderlyingSRS.c_str());
 
             delete poCT;
         }
@@ -698,11 +693,11 @@ void BSBDataset::ScanForGCPsBSB()
 
 void BSBDataset::ScanForCutline()
 {
-    /* PLY: Border Polygon Record - coordinates of the panel within the 
+    /* PLY: Border Polygon Record - coordinates of the panel within the
     * raster image, given in chart datum lat/long. Any shape polygon.
     * They look like:
-    *      PLY/1,32.346666666667,-60.881666666667 
-    *      PLY/n,lat,long 
+    *      PLY/1,32.346666666667,-60.881666666667
+    *      PLY/n,lat,long
     *
     * If found then we return it via a BSB_CUTLINE metadata item as a WKT POLYGON.
     */
@@ -840,7 +835,7 @@ GDALDataset *BSBDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetBand( 1, new BSBRasterBand( poDS ));
 
     poDS->ScanForGCPs( isNos, poOpenInfo->pszFilename );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Set CUTLINE metadata if a bounding polygon is available         */
 /* -------------------------------------------------------------------- */
@@ -868,13 +863,13 @@ int BSBDataset::GetGCPCount()
 }
 
 /************************************************************************/
-/*                          GetGCPProjection()                          */
+/*                          GetGCPSpatialRef()                          */
 /************************************************************************/
 
-const char *BSBDataset::_GetGCPProjection()
+const OGRSpatialReference *BSBDataset::GetGCPSpatialRef() const
 
 {
-    return osGCPProjection;
+    return m_oGCPSRS.IsEmpty() ? nullptr : &m_oGCPSRS;
 }
 
 /************************************************************************/

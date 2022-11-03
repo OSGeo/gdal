@@ -59,7 +59,6 @@
 
 #define DIGIT_ZERO '0'
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            OGRCSVLayer()                             */
@@ -69,11 +68,13 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
-                          VSILFILE  *fp, const char *pszFilenameIn,
+                          VSILFILE  *fp, int nMaxLineSize,
+                          const char *pszFilenameIn,
                           int bNewIn, int bInWriteModeIn,
                           char chDelimiterIn ) :
     poFeatureDefn(nullptr),
     fpCSV(fp),
+    m_nMaxLineSize(nMaxLineSize),
     nNextFID(1),
     bHasFieldNames(false),
     bNew(CPL_TO_BOOL(bNewIn)),
@@ -383,7 +384,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
             {
                 VSIRewindL(fpCSVT);
                 papszFieldTypes = CSVReadParseLine3L(fpCSVT,
-                                                     OGR_CSV_MAX_LINE_SIZE, // nMaxLineSize
+                                                     m_nMaxLineSize,
                                                      ",",
                                                      true, // bHonourStrings
                                                      false, // bKeepLeadingAndClosingQuotes
@@ -748,6 +749,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
                         "_LATITUDE")) &&
                  poFeatureDefn->GetGeomFieldCount() == 0 )
         {
+            m_bIsGNIS = true;
             oField.SetType(OFTReal);
             iLatitudeField = iField;
             osYField = oField.GetNameRef();
@@ -768,6 +770,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
                         "_LONGITUDE")) &&
                  poFeatureDefn->GetGeomFieldCount() == 0 )
         {
+            m_bIsGNIS = true;
             oField.SetType(OFTReal);
             iLongitudeField = iField;
             osXField = oField.GetNameRef();
@@ -984,7 +987,7 @@ char **OGRCSVLayer::AutodetectFieldTypes(char **papszOpenOptions,
     {
         char **papszTokens =
             CSVReadParseLine3L(fp,
-                               OGR_CSV_MAX_LINE_SIZE,
+                               m_nMaxLineSize,
                                szDelimiter,
                                true, // bHonourStrings
                                bQuotedFieldAsString,
@@ -1304,7 +1307,7 @@ void OGRCSVLayer::ResetReading()
     if( bHasFieldNames )
         CSLDestroy(
             CSVReadParseLine3L( fpCSV,
-                                OGR_CSV_MAX_LINE_SIZE,
+                                m_nMaxLineSize,
                                 szDelimiter,
                                 bHonourStrings,
                                 false, // bKeepLeadingAndClosingQuotes
@@ -1327,7 +1330,7 @@ char **OGRCSVLayer::GetNextLineTokens()
     {
         // Read the CSV record.
         char **papszTokens = CSVReadParseLine3L( fpCSV,
-                                OGR_CSV_MAX_LINE_SIZE,
+                                m_nMaxLineSize,
                                 szDelimiter,
                                 bHonourStrings,
                                 false, // bKeepLeadingAndClosingQuotes
@@ -1644,6 +1647,11 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
         }
     }
 
+    const auto IsNumericValueType = [](CPLValueType l_eType)
+    {
+        return l_eType == CPL_VALUE_INTEGER || l_eType == CPL_VALUE_REAL;
+    };
+
     // http://www.faa.gov/airports/airport_safety/airportdata_5010/menu/index.cfm
     // specific
 
@@ -1664,19 +1672,21 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
             poFeature->SetGeometryDirectly(new OGRPoint(dfLon, dfLat));
     }
 
-    // GNIS specific.
     else if( iLatitudeField != -1 &&
              iLongitudeField != -1 &&
              nAttrCount > iLatitudeField &&
              nAttrCount > iLongitudeField  &&
              papszTokens[iLongitudeField][0] != 0 &&
-             papszTokens[iLatitudeField][0] != 0 )
+             papszTokens[iLatitudeField][0] != 0 &&
+             IsNumericValueType(CPLGetValueType(papszTokens[iLongitudeField])) &&
+             IsNumericValueType(CPLGetValueType(papszTokens[iLatitudeField])) )
     {
-        // Some records have dummy 0,0 value.
-        if( papszTokens[iLongitudeField][0] != DIGIT_ZERO ||
-            papszTokens[iLongitudeField][1] != '\0' ||
-            papszTokens[iLatitudeField][0] != DIGIT_ZERO ||
-            papszTokens[iLatitudeField][1] != '\0' )
+        if( !m_bIsGNIS ||
+            // GNIS specific: some records have dummy 0,0 value.
+            (papszTokens[iLongitudeField][0] != DIGIT_ZERO ||
+             papszTokens[iLongitudeField][1] != '\0' ||
+             papszTokens[iLatitudeField][0] != DIGIT_ZERO ||
+             papszTokens[iLatitudeField][1] != '\0') )
         {
             const double dfLon = CPLAtof(papszTokens[iLongitudeField]);
             const double dfLat = CPLAtof(papszTokens[iLatitudeField]);

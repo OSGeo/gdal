@@ -34,7 +34,6 @@
 #include "ogr_srs_api.h"
 #include "timedelta.hpp"
 
-CPL_CVSID("$Id$")
 
 CPL_C_START
 #include "EnvisatFile.h"
@@ -160,6 +159,7 @@ class EnvisatDataset final: public RawDataset
     EnvisatFile *hEnvisatFile;
     VSILFILE    *fpImage;
 
+    OGRSpatialReference m_oGCPSRS{};
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
 
@@ -179,10 +179,7 @@ class EnvisatDataset final: public RawDataset
     virtual ~EnvisatDataset();
 
     virtual int    GetGCPCount() override;
-    virtual const char *_GetGCPProjection() override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override {
-        return GetGCPSpatialRefFromOldGetGCPProjection();
-    }
+    const OGRSpatialReference* GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
     virtual char      **GetMetadataDomainList() override;
     virtual char **GetMetadata( const char * pszDomain ) override;
@@ -206,7 +203,10 @@ EnvisatDataset::EnvisatDataset() :
     nGCPCount(0),
     pasGCPList(nullptr),
     papszTempMD(nullptr)
-{}
+{
+    m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    m_oGCPSRS.importFromWkt(SRS_WKT_WGS84_LAT_LONG);
+}
 
 /************************************************************************/
 /*                            ~EnvisatDataset()                         */
@@ -243,16 +243,16 @@ int EnvisatDataset::GetGCPCount()
 }
 
 /************************************************************************/
-/*                          GetGCPProjection()                          */
+/*                          GetGCPSpatialRef()                          */
 /************************************************************************/
 
-const char *EnvisatDataset::_GetGCPProjection()
+const OGRSpatialReference *EnvisatDataset::GetGCPSpatialRef() const
 
 {
     if( nGCPCount > 0 )
-        return SRS_WKT_WGS84_LAT_LONG;
+        return &m_oGCPSRS;
 
-    return "";
+    return nullptr;
 }
 
 /************************************************************************/

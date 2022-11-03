@@ -209,7 +209,7 @@ private:
     GByte           *pabyColorTable;
     GDALColorTable  *poColorTable;
     double          adfGeoTransform[6];
-    char            *pszProjection;
+    OGRSpatialReference m_oSRS{};
 
     char            *pszUnitType;
 
@@ -285,20 +285,15 @@ private:
 
     virtual CPLErr      GetGeoTransform( double * padfTransform ) override;
     virtual CPLErr      SetGeoTransform( double * ) override;
-    virtual const char  *_GetProjectionRef() override;
-    virtual CPLErr      _SetProjection( const char * ) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     virtual CPLErr      IBuildOverviews( const char * pszResampling,
-                                         int nOverviews, int * panOverviewList,
-                                         int nBandsIn, int * panBandList,
+                                         int nOverviews, const int * panOverviewList,
+                                         int nBandsIn, const int * panBandList,
                                          GDALProgressFunc pfnProgress,
-                                         void * pProgressData ) override;
+                                         void * pProgressData,
+                                         CSLConstList papszOptions ) override;
     virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
                               int nXOff, int nYOff, int nXSize, int nYSize,
                               void * pData, int nBufXSize, int nBufYSize,

@@ -72,7 +72,6 @@
 #include "../sqlite/ogrsqliteexecutesql.h"
 #endif
 
-CPL_CVSID("$Id$")
 
 CPL_C_START
 GDALAsyncReader *
@@ -865,13 +864,7 @@ int CPL_STDCALL GDALGetRasterCount( GDALDatasetH hDS )
 
 const char *GDALDataset::GetProjectionRef() const
 {
-    return GetProjectionRefFromSpatialRef(GetSpatialRef());
-
-}
-
-//! @cond Doxygen_Suppress
-const char *GDALDataset::GetProjectionRefFromSpatialRef(const OGRSpatialReference* poSRS) const
-{
+    const auto poSRS = GetSpatialRef();
     if( !poSRS || !m_poPrivate )
     {
         return "";
@@ -892,16 +885,6 @@ const char *GDALDataset::GetProjectionRefFromSpatialRef(const OGRSpatialReferenc
     m_poPrivate->m_pszWKTCached = pszWKT;
     return m_poPrivate->m_pszWKTCached;
 }
-//! @endcond
-
-/************************************************************************/
-/*                         _GetProjectionRef()                          */
-/************************************************************************/
-
-//! @cond Doxygen_Suppress
-/** Pre GDAL-2.5 way */
-const char *GDALDataset::_GetProjectionRef() { return (""); }
-//! @endcond
 
 /************************************************************************/
 /*                           GetSpatialRef()                            */
@@ -951,31 +934,6 @@ OGRSpatialReferenceH GDALGetSpatialRef( GDALDatasetH hDS )
             const_cast<OGRSpatialReference*>(
                 GDALDataset::FromHandle(hDS)->GetSpatialRef()));
 }
-
-/************************************************************************/
-/*                 GetSpatialRefFromOldGetProjectionRef()               */
-/************************************************************************/
-
-//! @cond Doxygen_Suppress
-const OGRSpatialReference* GDALDataset::GetSpatialRefFromOldGetProjectionRef() const
-{
-    const char* pszWKT = const_cast<GDALDataset*>(this)->_GetProjectionRef();
-    if( !pszWKT || pszWKT[0] == '\0' || !m_poPrivate )
-    {
-        return nullptr;
-    }
-    if( !m_poPrivate->m_poSRSCached )
-    {
-        m_poPrivate->m_poSRSCached = new OGRSpatialReference();
-        m_poPrivate->m_poSRSCached->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    }
-    if( m_poPrivate->m_poSRSCached->importFromWkt(pszWKT) != OGRERR_NONE )
-    {
-        return nullptr;
-    }
-    return m_poPrivate->m_poSRSCached;
-}
-//! @endcond
 
 /************************************************************************/
 /*                        GDALGetProjectionRef()                        */
@@ -1084,45 +1042,6 @@ CPLErr GDALSetSpatialRef( GDALDatasetH hDS, OGRSpatialReferenceH hSRS )
     return GDALDataset::FromHandle(hDS)->SetSpatialRef(
         OGRSpatialReference::FromHandle(hSRS));
 }
-
-/************************************************************************/
-/*                          _SetProjection()                            */
-/************************************************************************/
-
-//! @cond Doxygen_Suppress
-/** Pre GDAL-2.5 way */
-CPLErr GDALDataset::_SetProjection( const char * )
-{
-    if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
-        ReportError(CE_Failure, CPLE_NotSupported,
-                    "Dataset does not support the SetProjection() method.");
-    return CE_Failure;
-}
-//! @endcond
-
-/************************************************************************/
-/*                   OldSetProjectionFromSetSpatialRef()                */
-/************************************************************************/
-
-//! @cond Doxygen_Suppress
-CPLErr GDALDataset::OldSetProjectionFromSetSpatialRef(
-                            const OGRSpatialReference* poSRS)
-{
-    if( !poSRS || poSRS->IsEmpty() )
-    {
-        return _SetProjection("");
-    }
-    char* pszWKT = nullptr;
-    if( poSRS->exportToWkt(&pszWKT) != OGRERR_NONE )
-    {
-        CPLFree(pszWKT);
-        return CE_Failure;
-    }
-    auto ret = _SetProjection(pszWKT);
-    CPLFree(pszWKT);
-    return ret;
-}
-//! @endcond
 
 /************************************************************************/
 /*                         GDALSetProjection()                          */
@@ -1586,12 +1505,7 @@ int CPL_STDCALL GDALGetGCPCount( GDALDatasetH hDS )
 
 const char *GDALDataset::GetGCPProjection()
 {
-    return GetGCPProjectionFromSpatialRef(GetGCPSpatialRef());
-}
-
-//! @cond Doxygen_Suppress
-const char *GDALDataset::GetGCPProjectionFromSpatialRef(const OGRSpatialReference* poSRS) const
-{
+    const auto poSRS = GetGCPSpatialRef();
     if( !poSRS || !m_poPrivate )
     {
         return "";
@@ -1612,15 +1526,6 @@ const char *GDALDataset::GetGCPProjectionFromSpatialRef(const OGRSpatialReferenc
     m_poPrivate->m_pszWKTGCPCached = pszWKT;
     return m_poPrivate->m_pszWKTGCPCached;
 }
-//! @endcond
-
-/************************************************************************/
-/*                         _GetGCPProjection()                          */
-/************************************************************************/
-
-//! @cond Doxygen_Suppress
-/** Pre GDAL-2.5 way */
-const char *GDALDataset::_GetGCPProjection() { return ""; }
 //! @endcond
 
 /************************************************************************/
@@ -1669,31 +1574,6 @@ OGRSpatialReferenceH GDALGetGCPSpatialRef( GDALDatasetH hDS )
             const_cast<OGRSpatialReference*>(
                 GDALDataset::FromHandle(hDS)->GetGCPSpatialRef()));
 }
-
-/************************************************************************/
-/*                GetGCPSpatialRefFromOldGetGCPProjection()             */
-/************************************************************************/
-
-//! @cond Doxygen_Suppress
-const OGRSpatialReference* GDALDataset::GetGCPSpatialRefFromOldGetGCPProjection() const
-{
-    const char* pszWKT = const_cast<GDALDataset*>(this)->_GetGCPProjection();
-    if( !pszWKT || pszWKT[0] == '\0' || !m_poPrivate )
-    {
-        return nullptr;
-    }
-    if( !m_poPrivate->m_poSRSGCPCached)
-    {
-        m_poPrivate->m_poSRSGCPCached = new OGRSpatialReference();
-        m_poPrivate->m_poSRSGCPCached->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    }
-    if( m_poPrivate->m_poSRSGCPCached->importFromWkt(pszWKT) != OGRERR_NONE )
-    {
-        return nullptr;
-    }
-    return m_poPrivate->m_poSRSGCPCached;
-}
-//! @endcond
 
 /************************************************************************/
 /*                        GDALGetGCPProjection()                        */
@@ -1844,50 +1724,6 @@ CPLErr GDALDataset::SetGCPs( CPL_UNUSED int nGCPCount,
 }
 
 /************************************************************************/
-/*                            _SetGCPs()                                */
-/************************************************************************/
-
-//! @cond Doxygen_Suppress
-/** Pre GDAL-2.5 way */
-CPLErr GDALDataset::_SetGCPs( int,
-                              const GDAL_GCP*,
-                              const char * )
-
-{
-    if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
-        ReportError(CE_Failure, CPLE_NotSupported,
-                    "Dataset does not support the SetGCPs() method.");
-
-    return CE_Failure;
-}
-//! @endcond
-
-/************************************************************************/
-/*                           OldSetGCPsFromNew()                        */
-/************************************************************************/
-
-//! @cond Doxygen_Suppress
-CPLErr GDALDataset::OldSetGCPsFromNew(
-                              int nGCPCount, const GDAL_GCP *pasGCPList,
-                              const OGRSpatialReference * poGCP_SRS )
-{
-    if( !poGCP_SRS || poGCP_SRS->IsEmpty() )
-    {
-        return _SetGCPs(nGCPCount, pasGCPList, "");
-    }
-    char* pszWKT = nullptr;
-    if( poGCP_SRS->exportToWkt(&pszWKT) != OGRERR_NONE )
-    {
-        CPLFree(pszWKT);
-        return CE_Failure;
-    }
-    auto ret = _SetGCPs(nGCPCount, pasGCPList, pszWKT);
-    CPLFree(pszWKT);
-    return ret;
-}
-//! @endcond
-
-/************************************************************************/
 /*                            GDALSetGCPs()                             */
 /************************************************************************/
 
@@ -1949,7 +1785,7 @@ CPLErr GDALSetGCPs2( GDALDatasetH hDS, int nGCPCount,
  * to "ALL_CPUS" or a integer value to specify the number of threads to use for
  * overview computation.
  *
- * This method is the same as the C function GDALBuildOverviews().
+ * This method is the same as the C function GDALBuildOverviewsEx().
  *
  * @param pszResampling one of "AVERAGE", "AVERAGE_MAGPHASE", "RMS",
  * "BILINEAR", "CUBIC", "CUBICSPLINE", "GAUSS", "LANCZOS", "MODE", "NEAREST",
@@ -1962,6 +1798,8 @@ CPLErr GDALSetGCPs2( GDALDatasetH hDS, int nGCPCount,
  * @param panBandList list of band numbers.
  * @param pfnProgress a function to call to report progress, or NULL.
  * @param pProgressData application data to pass to the progress function.
+ * @param papszOptions (GDAL >= 3.6) NULL terminated list of options as
+ *                     key=value pairs, or NULL
  *
  * @return CE_None on success or CE_Failure if the operation doesn't work.
  *
@@ -1974,15 +1812,15 @@ CPLErr GDALSetGCPs2( GDALDatasetH hDS, int nGCPCount,
  *                              GDALDummyProgress, nullptr );
  * \endcode
  *
- * @see GDALRegenerateOverviews()
+ * @see GDALRegenerateOverviewsEx()
  */
 
 CPLErr GDALDataset::BuildOverviews( const char *pszResampling,
-                                    int nOverviews, int *panOverviewList,
-                                    int nListBands, int *panBandList,
+                                    int nOverviews, const int *panOverviewList,
+                                    int nListBands, const int *panBandList,
                                     GDALProgressFunc pfnProgress,
-                                    void * pProgressData )
-
+                                    void * pProgressData,
+                                    CSLConstList papszOptions )
 {
     int *panAllBandList = nullptr;
 
@@ -2000,9 +1838,24 @@ CPLErr GDALDataset::BuildOverviews( const char *pszResampling,
     if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
 
+    // At time of writing, all overview generation options are actually
+    // expected to be passed as configuration options.
+    std::vector<std::unique_ptr<CPLConfigOptionSetter>> apoConfigOptionSetter;
+    for( CSLConstList papszIter = papszOptions; papszIter && *papszIter; ++papszIter )
+    {
+        char* pszKey = nullptr;
+        const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
+        if( pszKey && pszValue )
+        {
+            apoConfigOptionSetter.emplace_back(
+                cpl::make_unique<CPLConfigOptionSetter>(pszKey, pszValue, false));
+        }
+        CPLFree(pszKey);
+    }
+
     const CPLErr eErr =
         IBuildOverviews(pszResampling, nOverviews, panOverviewList, nListBands,
-                        panBandList, pfnProgress, pProgressData);
+                        panBandList, pfnProgress, pProgressData, papszOptions);
 
     if( panAllBandList != nullptr )
         CPLFree(panAllBandList);
@@ -2017,13 +1870,13 @@ CPLErr GDALDataset::BuildOverviews( const char *pszResampling,
 /**
  * \brief Build raster overview(s)
  *
- * @see GDALDataset::BuildOverviews()
+ * @see GDALDataset::BuildOverviews() and GDALBuildOverviews()
  */
 
 CPLErr CPL_STDCALL GDALBuildOverviews( GDALDatasetH hDataset,
                                        const char *pszResampling,
-                                       int nOverviews, int *panOverviewList,
-                                       int nListBands, int *panBandList,
+                                       int nOverviews, const int *panOverviewList,
+                                       int nListBands, const int *panBandList,
                                        GDALProgressFunc pfnProgress,
                                        void * pProgressData )
 
@@ -2032,7 +1885,34 @@ CPLErr CPL_STDCALL GDALBuildOverviews( GDALDatasetH hDataset,
 
     return GDALDataset::FromHandle(hDataset)
         ->BuildOverviews(pszResampling, nOverviews, panOverviewList, nListBands,
-                         panBandList, pfnProgress, pProgressData);
+                         panBandList, pfnProgress, pProgressData, nullptr);
+}
+
+/************************************************************************/
+/*                         GDALBuildOverviews()                         */
+/************************************************************************/
+
+/**
+ * \brief Build raster overview(s)
+ *
+ * @see GDALDataset::BuildOverviews()
+ * @since GDAL 3.6
+ */
+
+CPLErr CPL_STDCALL GDALBuildOverviewsEx( GDALDatasetH hDataset,
+                                         const char *pszResampling,
+                                         int nOverviews, const int *panOverviewList,
+                                         int nListBands, const int *panBandList,
+                                         GDALProgressFunc pfnProgress,
+                                         void * pProgressData,
+                                         CSLConstList papszOptions )
+
+{
+    VALIDATE_POINTER1(hDataset, "GDALBuildOverviews", CE_Failure);
+
+    return GDALDataset::FromHandle(hDataset)
+        ->BuildOverviews(pszResampling, nOverviews, panOverviewList, nListBands,
+                         panBandList, pfnProgress, pProgressData, papszOptions);
 }
 
 /************************************************************************/
@@ -2043,16 +1923,17 @@ CPLErr CPL_STDCALL GDALBuildOverviews( GDALDatasetH hDataset,
 
 //! @cond Doxygen_Suppress
 CPLErr GDALDataset::IBuildOverviews( const char *pszResampling,
-                                     int nOverviews, int *panOverviewList,
-                                     int nListBands, int *panBandList,
+                                     int nOverviews, const int *panOverviewList,
+                                     int nListBands, const int *panBandList,
                                      GDALProgressFunc pfnProgress,
-                                     void * pProgressData )
+                                     void * pProgressData,
+                                     CSLConstList papszOptions )
 
 {
     if( oOvManager.IsInitialized() )
         return oOvManager.BuildOverviews(
             nullptr, pszResampling, nOverviews, panOverviewList, nListBands,
-            panBandList, pfnProgress, pProgressData);
+            panBandList, pfnProgress, pProgressData, papszOptions);
     else
     {
         ReportError(CE_Failure, CPLE_NotSupported,
@@ -4559,15 +4440,16 @@ indicated name, coordinate system, geometry type.
 The papszOptions argument
 can be used to control driver specific creation options.  These options are
 normally documented in the format specific documentation.
+That function will try to validate the creation option list passed to the
+driver with the GDALValidateCreationOptions() method. This check can be
+disabled by defining the configuration option GDAL_VALIDATE_CREATION_OPTIONS set to NO.
 
-In GDAL 2.0, drivers should extend the ICreateLayer() method and not
-CreateLayer().  CreateLayer() adds validation of layer creation options, before
+Drivers should extend the ICreateLayer() method and not
+CreateLayer(). CreateLayer() adds validation of layer creation options, before
 delegating the actual work to ICreateLayer().
 
 This method is the same as the C function GDALDatasetCreateLayer() and the
 deprecated OGR_DS_CreateLayer().
-
-In GDAL 1.X, this method used to be in the OGRDataSource class.
 
 Example:
 
@@ -4618,7 +4500,11 @@ OGRLayer *GDALDataset::CreateLayer( const char * pszName,
                                       char **papszOptions )
 
 {
-    ValidateLayerCreationOptions(papszOptions);
+    if( CPLTestBool(CPLGetConfigOption("GDAL_VALIDATE_CREATION_OPTIONS",
+                                       "YES")) )
+    {
+        ValidateLayerCreationOptions(papszOptions);
+    }
 
     if( OGR_GT_IsNonLinear(eGType) && !TestCapability(ODsCCurveGeometries) )
     {
@@ -5209,7 +5095,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
     OGRCoordinateTransformation *poCT = nullptr;
     OGRSpatialReference *sourceSRS = poSrcLayer->GetSpatialRef();
     if (sourceSRS != nullptr && pszSRSWKT != nullptr &&
-            sourceSRS->IsSame(&oDstSpaRef) == FALSE)
+        !oDstSpaRef.IsEmpty() && sourceSRS->IsSame(&oDstSpaRef) == FALSE)
     {
         poCT = OGRCreateCoordinateTransformation(sourceSRS, &oDstSpaRef);
         if(nullptr == poCT)
@@ -8865,6 +8751,238 @@ GDALRelationshipH GDALDatasetGetRelationship(GDALDatasetH hDS,
         const_cast<GDALRelationship*>(
             GDALDataset::FromHandle(hDS)->GetRelationship(pszName)));
 }
+
+
+/************************************************************************/
+/*                         AddRelationship()                            */
+/************************************************************************/
+
+/** Add a relationship to the dataset.
+ *
+ * Only a few drivers will support this operation, and some of them might only
+ * support it only for some types of relationships.
+ *
+ * A dataset having at least some support for this
+ * operation should report the GDsCAddRelationship dataset capability.
+ *
+ * Anticipated failures will not be emitted through the CPLError()
+ * infrastructure, but will be reported in the failureReason output parameter.
+ *
+ * When adding a many-to-many relationship (GDALRelationshipCardinality::GRC_MANY_TO_MANY),
+ * it is possible to omit the mapping table name (see GDALRelationship::GetMappingTableName)
+ * to instruct the driver to create an appropriately named and structured mapping table.
+ * Some dataset formats require particular naming conventions and field structures
+ * for the mapping table, and delegating the construction of the mapping table
+ * to the driver will avoid these pitfalls.
+ *
+ * @param relationship The relationship definition.
+ * @param failureReason      Output parameter. Will contain an error message if
+ *                           an error occurs.
+ * @return true in case of success.
+ * @since GDAL 3.6
+ */
+bool GDALDataset::AddRelationship(CPL_UNUSED std::unique_ptr<GDALRelationship>&& relationship,
+                                  std::string& failureReason)
+{
+    failureReason = "AddRelationship not supported by this driver";
+    return false;
+}
+
+/************************************************************************/
+/*                     GDALDatasetAddRelationship()                     */
+/************************************************************************/
+
+/** Add a relationship to the dataset.
+ *
+ * Only a few drivers will support this operation, and some of them might only
+ * support it only for some types of relationships.
+ *
+ * A dataset having at least some support for this
+ * operation should report the GDsCAddRelationship dataset capability.
+ *
+ * Anticipated failures will not be emitted through the CPLError()
+ * infrastructure, but will be reported in the failureReason output parameter.
+ *
+ * When adding a many-to-many relationship (GDALRelationshipCardinality::GRC_MANY_TO_MANY),
+ * it is possible to omit the mapping table name (see GDALRelationshipGetMappingTableName)
+ * to instruct the driver to create an appropriately named and structured mapping table.
+ * Some dataset formats require particular naming conventions and field structures
+ * for the mapping table, and delegating the construction of the mapping table
+ * to the driver will avoid these pitfalls.
+ *
+ * @param hDS                Dataset handle.
+ * @param hRelationship      The relationship definition. Contrary to the C++ version,
+ *                           the passed object is copied.
+ * @param ppszFailureReason  Output parameter. Will contain an error message if
+ *                           an error occurs (*ppszFailureReason to be freed
+ *                           with CPLFree). May be NULL.
+ * @return true in case of success.
+ * @since GDAL 3.6
+ */
+bool GDALDatasetAddRelationship(GDALDatasetH hDS,
+                                GDALRelationshipH hRelationship,
+                                char** ppszFailureReason)
+{
+    VALIDATE_POINTER1(hDS, __func__, false);
+    VALIDATE_POINTER1(hRelationship, __func__, false);
+    std::unique_ptr<GDALRelationship> poRelationship(
+                 new GDALRelationship( *GDALRelationship::FromHandle(hRelationship) ) );
+    std::string failureReason;
+    const bool bRet =
+        GDALDataset::FromHandle(hDS)->AddRelationship(
+             std::move(poRelationship), failureReason);
+    if( ppszFailureReason )
+    {
+        *ppszFailureReason = failureReason.empty() ?
+                                nullptr : CPLStrdup(failureReason.c_str());
+    }
+    return bRet;
+}
+
+
+/************************************************************************/
+/*                        DeleteRelationship()                          */
+/************************************************************************/
+
+/** Removes a relationship from the dataset.
+ *
+ * Only a few drivers will support this operation.
+ *
+ * A dataset having at least some support for this
+ * operation should report the GDsCDeleteRelationship dataset capability.
+ *
+ * Anticipated failures will not be emitted through the CPLError()
+ * infrastructure, but will be reported in the failureReason output parameter.
+ *
+ * @param name The relationship name.
+ * @param failureReason      Output parameter. Will contain an error message if
+ *                           an error occurs.
+ * @return true in case of success.
+ * @since GDAL 3.6
+ */
+bool GDALDataset::DeleteRelationship(CPL_UNUSED const std::string& name,
+                                     std::string& failureReason)
+{
+    failureReason = "DeleteRelationship not supported by this driver";
+    return false;
+}
+
+/************************************************************************/
+/*                  GDALDatasetDeleteRelationship()                     */
+/************************************************************************/
+
+/** Removes a relationship from the dataset.
+ *
+ * Only a few drivers will support this operation.
+ *
+ * A dataset having at least some support for this
+ * operation should report the GDsCDeleteRelationship dataset capability.
+ *
+ * Anticipated failures will not be emitted through the CPLError()
+ * infrastructure, but will be reported in the ppszFailureReason output parameter.
+ *
+ * @param hDS                Dataset handle.
+ * @param pszName            The relationship name.
+ * @param ppszFailureReason  Output parameter. Will contain an error message if
+ *                           an error occurs (*ppszFailureReason to be freed
+ *                           with CPLFree). May be NULL.
+ * @return true in case of success.
+ * @since GDAL 3.6
+ */
+bool GDALDatasetDeleteRelationship(GDALDatasetH hDS,
+                                   const char* pszName,
+                                   char** ppszFailureReason)
+{
+    VALIDATE_POINTER1(hDS, __func__, false);
+    VALIDATE_POINTER1(pszName, __func__, false);
+    std::string failureReason;
+    const bool bRet =
+        GDALDataset::FromHandle(hDS)->DeleteRelationship(
+             pszName, failureReason);
+    if( ppszFailureReason )
+    {
+        *ppszFailureReason = failureReason.empty() ?
+                                nullptr : CPLStrdup(failureReason.c_str());
+    }
+    return bRet;
+}
+
+
+/************************************************************************/
+/*                       UpdateRelationship()                           */
+/************************************************************************/
+
+
+/** Updates an existing relationship by replacing its definition.
+ *
+ * The existing relationship with matching name will be replaced.
+ *
+ * Only a few drivers will support this operation, and some of them might only
+ * support it only for some types of relationships.
+ * A dataset having at least some support for this
+ * operation should report the GDsCUpdateRelationship dataset capability.
+ *
+ * Anticipated failures will not be emitted through the CPLError()
+ * infrastructure, but will be reported in the failureReason output parameter.
+ *
+ * @param relationship   The relationship definition.
+ * @param failureReason  Output parameter. Will contain an error message if
+ *                       an error occurs.
+ * @return true in case of success.
+ * @since GDAL 3.6
+ */
+bool GDALDataset::UpdateRelationship(CPL_UNUSED std::unique_ptr<GDALRelationship> &&relationship, std::string &failureReason)
+{
+    failureReason = "UpdateRelationship not supported by this driver";
+    return false;
+}
+
+
+/************************************************************************/
+/*                  GDALDatasetUpdateRelationship()                     */
+/************************************************************************/
+
+/** Updates an existing relationship by replacing its definition.
+ *
+ * The existing relationship with matching name will be replaced.
+ *
+ * Only a few drivers will support this operation, and some of them might only
+ * support it only for some types of relationships.
+ * A dataset having at least some support for this
+ * operation should report the GDsCUpdateRelationship dataset capability.
+ *
+ * Anticipated failures will not be emitted through the CPLError()
+ * infrastructure, but will be reported in the failureReason output parameter.
+ *
+ * @param hDS                Dataset handle.
+ * @param hRelationship      The relationship definition. Contrary to the C++ version,
+ *                           the passed object is copied.
+ * @param ppszFailureReason  Output parameter. Will contain an error message if
+ *                           an error occurs (*ppszFailureReason to be freed
+ *                           with CPLFree). May be NULL.
+ * @return true in case of success.
+ * @since GDAL 3.5
+ */
+bool GDALDatasetUpdateRelationship(GDALDatasetH hDS,
+                                   GDALRelationshipH hRelationship,
+                                   char** ppszFailureReason)
+{
+    VALIDATE_POINTER1(hDS, __func__, false);
+    VALIDATE_POINTER1(hRelationship, __func__, false);
+    std::unique_ptr< GDALRelationship> poRelationship(
+                 new GDALRelationship( *GDALRelationship::FromHandle(hRelationship) ) );
+    std::string failureReason;
+    const bool bRet =
+        GDALDataset::FromHandle(hDS)->UpdateRelationship(
+             std::move(poRelationship), failureReason);
+    if( ppszFailureReason )
+    {
+        *ppszFailureReason = failureReason.empty() ?
+                                nullptr : CPLStrdup(failureReason.c_str());
+    }
+    return bRet;
+}
+
 
 //! @cond Doxygen_Suppress
 

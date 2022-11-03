@@ -30,7 +30,6 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                    OGRGMTDriverIdentify()                            */
@@ -113,6 +112,7 @@ void RegisterOGRGMT()
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/gmt.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->pfnOpen = OGRGMTDriverOpen;
     poDriver->pfnIdentify = OGRGMTDriverIdentify;

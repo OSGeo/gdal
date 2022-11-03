@@ -37,7 +37,6 @@
 
 using std::fill;
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -72,7 +71,7 @@ class DIPExDataset final: public GDALPamDataset
     };
 
     VSILFILE    *fp;
-    CPLString    osSRS{};
+    OGRSpatialReference m_oSRS{};
 
     DIPExHeader  sHeader{};
 
@@ -88,10 +87,8 @@ class DIPExDataset final: public GDALPamDataset
 
     CPLErr GetGeoTransform( double * ) override;
 
-    const char *_GetProjectionRef( void ) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override { return m_oSRS.IsEmpty() ? nullptr : &m_oSRS; }
+
     static GDALDataset *Open( GDALOpenInfo * );
 };
 
@@ -109,6 +106,7 @@ DIPExDataset::DIPExDataset() :
     fp(nullptr),
     eRasterDataType(GDT_Unknown)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -305,13 +303,10 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poDS->sHeader.SRID > 0 && poDS->sHeader.SRID < 33000 )
     {
         OGRSpatialReference oSR;
-
+        oSR.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if( oSR.importFromEPSG( poDS->sHeader.SRID ) == OGRERR_NONE )
         {
-            char *pszWKT = nullptr;
-            oSR.exportToWkt( &pszWKT );
-            poDS->osSRS = pszWKT;
-            CPLFree( pszWKT );
+            poDS->m_oSRS = oSR;
         }
     }
 
@@ -328,16 +323,6 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
                                  poOpenInfo->GetSiblingFiles() );
 
     return poDS;
-}
-
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char *DIPExDataset::_GetProjectionRef()
-
-{
-    return osSRS.c_str();
 }
 
 /************************************************************************/

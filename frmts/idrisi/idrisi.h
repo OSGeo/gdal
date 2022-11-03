@@ -32,10 +32,11 @@
 #define IDRISI_H_INCLUDED
 
 #include "cpl_error.h"
+#include "ogr_spatialref.h"
 
 CPLErr IdrisiGeoReference2Wkt( const char* pszFilename,
                                const char *pszRefSystem,
                                const char *pszRefUnits,
-                               char **ppszProjString );
+                               OGRSpatialReference& oSRS );
 
 #endif /*  IDRISI_H_INCLUDED */

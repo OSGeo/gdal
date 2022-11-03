@@ -151,6 +151,7 @@ void RegisterOGRFlatGeobuf()
 "</OpenOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DCAP_COORDINATE_EPOCH, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->pfnOpen = OGRFlatGeobufDataset::Open;
     poDriver->pfnCreate = OGRFlatGeobufDataset::Create;

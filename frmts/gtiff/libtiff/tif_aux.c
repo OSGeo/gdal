@@ -237,8 +237,23 @@ TIFFVGetFieldDefaulted(TIFF* tif, uint32_t tag, va_list ap)
 		*va_arg(ap, uint16_t *) = td->td_minsamplevalue;
 		return (1);
 	case TIFFTAG_MAXSAMPLEVALUE:
-		*va_arg(ap, uint16_t *) = td->td_maxsamplevalue;
+	{
+		uint16_t maxsamplevalue;
+		/* td_bitspersample=1 is always set in TIFFDefaultDirectory().
+		 * Therefore, td_maxsamplevalue has to be re-calculated in TIFFGetFieldDefaulted(). */
+		if (td->td_bitspersample > 0) {
+			/* This shift operation into a uint16_t limits the value to 65535 even if td_bitspersamle is > 16 */
+			if (td->td_bitspersample <= 16) {
+				maxsamplevalue = (1 << td->td_bitspersample) - 1;  /* 2**(BitsPerSample) - 1 */
+			} else {
+				maxsamplevalue = 65535;
+			}
+		} else {
+			maxsamplevalue = 0;
+		}
+		*va_arg(ap, uint16_t *) = maxsamplevalue;
 		return (1);
+	}
 	case TIFFTAG_PLANARCONFIG:
 		*va_arg(ap, uint16_t *) = td->td_planarconfig;
 		return (1);

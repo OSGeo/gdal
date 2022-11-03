@@ -40,7 +40,6 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 
-CPL_CVSID("$Id$")
 
 static const char * const apszDefDefn[] = {
     "Edsc_Table",

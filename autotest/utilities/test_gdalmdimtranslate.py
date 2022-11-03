@@ -51,3 +51,27 @@ def test_gdalmdimtranslate_1():
     assert err is None or err == "", "got error/warning"
     assert os.path.exists("tmp/out.vrt")
     gdal.Unlink("tmp/out.vrt")
+
+
+###############################################################################
+# Test -if option
+
+
+def test_gdalmdimtranslate_if():
+    if test_cli_utilities.get_gdalmdimtranslate_path() is None:
+        pytest.skip()
+
+    (ret, err) = gdaltest.runexternal_out_and_err(
+        test_cli_utilities.get_gdalmdimtranslate_path()
+        + " -if VRT data/mdim.vrt tmp/out.vrt"
+    )
+    assert err is None or err == "", "got error/warning"
+    assert os.path.exists("tmp/out.vrt")
+    gdal.Unlink("tmp/out.vrt")
+
+    (ret, err) = gdaltest.runexternal_out_and_err(
+        test_cli_utilities.get_gdalmdimtranslate_path()
+        + " -if i_do_not_exist data/mdim.vrt tmp/out.vrt"
+    )
+    assert "i_do_not_exist is not a recognized driver" in err
+    assert not os.path.exists("tmp/out.vrt")

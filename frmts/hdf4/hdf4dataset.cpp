@@ -42,7 +42,6 @@
 #include "hdf4compat.h"
 #include "hdf4dataset.h"
 
-CPL_CVSID("$Id$")
 
 extern const char * const pszGDALSignature;
 

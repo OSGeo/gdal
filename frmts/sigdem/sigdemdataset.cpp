@@ -31,7 +31,6 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 #ifdef CPL_IS_LSB
 #define SWAP_SIGDEM_HEADER(abyHeader) { \
@@ -69,24 +68,19 @@ constexpr int32_t NO_DATA = 0x80000000;
 constexpr char SIGDEM_FILE_TYPE[6] = { 'S', 'I', 'G', 'D', 'E', 'M' };
 
 static OGRSpatialReference* BuildSRS(const char* pszWKT) {
-    OGRSpatialReference* poSRS = new OGRSpatialReference(pszWKT);
-    if (poSRS->morphFromESRI() != OGRERR_NONE) {
+    OGRSpatialReference* poSRS = new OGRSpatialReference();
+    if (poSRS->importFromWkt(pszWKT) != OGRERR_NONE) {
         delete poSRS;
         return nullptr;
     } else {
         if (poSRS->AutoIdentifyEPSG() != OGRERR_NONE) {
-            int nEntries = 0;
-            int* panConfidence = nullptr;
-            OGRSpatialReferenceH* pahSRS = poSRS->FindMatches(nullptr,
-                    &nEntries, &panConfidence);
-            if (nEntries == 1 && panConfidence[0] == 100) {
+            auto poSRSMatch = poSRS->FindBestMatch(100);
+            if( poSRSMatch )
+            {
                 poSRS->Release();
-                poSRS = reinterpret_cast<OGRSpatialReference*>(pahSRS[0]);
-                CPLFree(pahSRS);
-            } else {
-                OSRFreeSRSArray(pahSRS);
+                poSRS = poSRSMatch;
+                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             }
-            CPLFree(panConfidence);
         }
         return poSRS;
     }
@@ -136,8 +130,8 @@ static int32_t GetCoordinateSystemId(const char* pszProjection) {
 
 SIGDEMDataset::SIGDEMDataset(const SIGDEMHeader& sHeaderIn) :
         fpImage(nullptr),
-        pszProjection(CPLStrdup("")),
         sHeader(sHeaderIn) {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     this->nRasterXSize = sHeader.nCols;
     this->nRasterYSize = sHeader.nRows;
 
@@ -157,8 +151,6 @@ SIGDEMDataset::~SIGDEMDataset() {
             CPLError(CE_Failure, CPLE_FileIO, "I/O error");
         }
     }
-
-    CPLFree(pszProjection);
 }
 
 GDALDataset* SIGDEMDataset::CreateCopy(
@@ -292,8 +284,8 @@ CPLErr SIGDEMDataset::GetGeoTransform(double * padfTransform) {
     return CE_None;
 }
 
-const char* SIGDEMDataset::_GetProjectionRef() {
-    return pszProjection;
+const OGRSpatialReference* SIGDEMDataset::GetSpatialRef() const {
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 int SIGDEMDataset::Identify(GDALOpenInfo* poOpenInfo) {
@@ -319,6 +311,7 @@ GDALDataset *SIGDEMDataset::Open(GDALOpenInfo * poOpenInfo) {
     }
 
     OGRSpatialReference oSRS;
+    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     if (sHeader.nCoordinateSystemId > 0) {
         if (oSRS.importFromEPSG(sHeader.nCoordinateSystemId) != OGRERR_NONE) {
@@ -366,8 +359,7 @@ GDALDataset *SIGDEMDataset::Open(GDALOpenInfo * poOpenInfo) {
     }
     SIGDEMDataset *poDS = new SIGDEMDataset(sHeader);
 
-    CPLFree(poDS->pszProjection);
-    oSRS.exportToWkt(&(poDS->pszProjection));
+    poDS->m_oSRS = oSRS;
 
     poDS->fpImage = poOpenInfo->fpL;
     poOpenInfo->fpL = nullptr;

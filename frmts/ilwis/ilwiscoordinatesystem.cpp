@@ -30,7 +30,6 @@
 
 #include <string>
 
-CPL_CVSID("$Id$")
 
 namespace GDAL {
 
@@ -418,7 +417,7 @@ CPLErr ILWISDataset::ReadProjection( const std::string& csyFileName )
     double     padfPrjParams[13];
     fetchParams(csyFileName, padfPrjParams);
 
-    OGRSpatialReference oSRS;
+    m_oSRS.Clear();
 /* -------------------------------------------------------------------- */
 /*      Operate on the basis of the projection name.                    */
 /* -------------------------------------------------------------------- */
@@ -428,44 +427,44 @@ CPLErr ILWISDataset::ReadProjection( const std::string& csyFileName )
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Albers EqualArea Conic") )
     {
-        oSRS.SetProjCS("Albers EqualArea Conic");
-        oSRS.SetACEA( padfPrjParams[7], padfPrjParams[8],
+        m_oSRS.SetProjCS("Albers EqualArea Conic");
+        m_oSRS.SetACEA( padfPrjParams[7], padfPrjParams[8],
                       padfPrjParams[5], padfPrjParams[6],
                       padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Azimuthal Equidistant") )
     {
-        oSRS.SetProjCS("Azimuthal Equidistant");
-        oSRS.SetAE( padfPrjParams[5], padfPrjParams[6],
+        m_oSRS.SetProjCS("Azimuthal Equidistant");
+        m_oSRS.SetAE( padfPrjParams[5], padfPrjParams[6],
                     padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Central Cylindrical") )
     {
         //Use Central Parallel for dfStdP1
         //padfPrjParams[5] is always to zero
-        oSRS.SetProjCS("Central Cylindrical");
-        oSRS.SetCEA( padfPrjParams[5], padfPrjParams[6],
+        m_oSRS.SetProjCS("Central Cylindrical");
+        m_oSRS.SetCEA( padfPrjParams[5], padfPrjParams[6],
                      padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Cassini") )
     {
         //Use Latitude_Of_True_Scale for dfCenterLat
         //Scale Factor 1.0 should always be defined
-        oSRS.SetProjCS("Cassini");
-        oSRS.SetCS(  padfPrjParams[10], padfPrjParams[6],
+        m_oSRS.SetProjCS("Cassini");
+        m_oSRS.SetCS(  padfPrjParams[10], padfPrjParams[6],
                      padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "DutchRD") )
     {
-        oSRS.SetProjCS("DutchRD");
-        oSRS.SetStereographic  (  52.156160556,  5.387638889,
+        m_oSRS.SetProjCS("DutchRD");
+        m_oSRS.SetStereographic  (  52.156160556,  5.387638889,
                                   0.9999079,
                                   155000,  463000);
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Equidistant Conic") )
     {
-        oSRS.SetProjCS("Equidistant Conic");
-        oSRS.SetEC(  padfPrjParams[7], padfPrjParams[8],
+        m_oSRS.SetProjCS("Equidistant Conic");
+        m_oSRS.SetEC(  padfPrjParams[7], padfPrjParams[8],
                      padfPrjParams[5], padfPrjParams[6],
                      padfPrjParams[3], padfPrjParams[4] );
     }
@@ -476,8 +475,8 @@ CPLErr ILWISDataset::ReadProjection( const std::string& csyFileName )
         //FalseEasting and CentralMeridian are defined by the selected zone
         mapTMParams("Gauss-Krueger Germany", padfPrjParams[11],
                    padfPrjParams[3], padfPrjParams[6]);
-        oSRS.SetProjCS("Gauss-Krueger Germany");
-        oSRS.SetTM(  0, padfPrjParams[6],
+        m_oSRS.SetProjCS("Gauss-Krueger Germany");
+        m_oSRS.SetTM(  0, padfPrjParams[6],
                      1.0,
                      padfPrjParams[3], 0 );
     }
@@ -488,8 +487,8 @@ CPLErr ILWISDataset::ReadProjection( const std::string& csyFileName )
         //FalseEasting and CentralMeridian are defined by the selected zone
         mapTMParams("Gauss-Boaga Italy", padfPrjParams[11],
                    padfPrjParams[3], padfPrjParams[6]);
-        oSRS.SetProjCS("Gauss-Boaga Italy");
-        oSRS.SetTM(  0, padfPrjParams[6],
+        m_oSRS.SetProjCS("Gauss-Boaga Italy");
+        m_oSRS.SetTM(  0, padfPrjParams[6],
                      0.9996,
                      padfPrjParams[3], 0 );
     }
@@ -501,30 +500,30 @@ CPLErr ILWISDataset::ReadProjection( const std::string& csyFileName )
         // CentralMeridian is defined by the selected zone
         mapTMParams("Gauss Colombia", padfPrjParams[11],
                    padfPrjParams[3], padfPrjParams[6]);
-        oSRS.SetProjCS("Gauss Colombia");
-        oSRS.SetTM(  45.1609259259259, padfPrjParams[6],
+        m_oSRS.SetProjCS("Gauss Colombia");
+        m_oSRS.SetTM(  45.1609259259259, padfPrjParams[6],
                      1.0,
                      1000000, 1000000 );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Gnomonic") )
     {
-        oSRS.SetProjCS("Gnomonic");
-        oSRS.SetGnomonic( padfPrjParams[5], padfPrjParams[6],
+        m_oSRS.SetProjCS("Gnomonic");
+        m_oSRS.SetGnomonic( padfPrjParams[5], padfPrjParams[6],
                           padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Lambert Conformal Conic") )
     {
         // should use 1.0 for scale factor in Ilwis definition
-        oSRS.SetProjCS("Lambert Conformal Conic");
-        oSRS.SetLCC( padfPrjParams[7], padfPrjParams[8],
+        m_oSRS.SetProjCS("Lambert Conformal Conic");
+        m_oSRS.SetLCC( padfPrjParams[7], padfPrjParams[8],
                      padfPrjParams[5], padfPrjParams[6],
                      padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Lambert Cylind EqualArea") )
     {
         // Latitude_Of_True_Scale used for dfStdP1 ?
-        oSRS.SetProjCS("Lambert Conformal Conic");
-        oSRS.SetCEA( padfPrjParams[10],
+        m_oSRS.SetProjCS("Lambert Conformal Conic");
+        m_oSRS.SetCEA( padfPrjParams[10],
                      padfPrjParams[6],
                      padfPrjParams[3], padfPrjParams[4] );
     }
@@ -533,28 +532,28 @@ CPLErr ILWISDataset::ReadProjection( const std::string& csyFileName )
         // use 0 for CenterLat, scale is computed from the
         // Latitude_Of_True_Scale
         scaleFromLATTS( pszEllips, padfPrjParams[10], padfPrjParams[9] );
-        oSRS.SetProjCS("Mercator");
-        oSRS.SetMercator( 0, padfPrjParams[6],
+        m_oSRS.SetProjCS("Mercator");
+        m_oSRS.SetMercator( 0, padfPrjParams[6],
                           padfPrjParams[9],
                           padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Miller") )
     {
         // use 0 for CenterLat
-        oSRS.SetProjCS("Miller");
-        oSRS.SetMC( 0, padfPrjParams[6],
+        m_oSRS.SetProjCS("Miller");
+        m_oSRS.SetMC( 0, padfPrjParams[6],
                     padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Mollweide") )
     {
-        oSRS.SetProjCS("Mollweide");
-        oSRS.SetMollweide( padfPrjParams[6],
+        m_oSRS.SetProjCS("Mollweide");
+        m_oSRS.SetMollweide( padfPrjParams[6],
                            padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Orthographic") )
     {
-        oSRS.SetProjCS("Orthographic");
-        oSRS.SetOrthographic( padfPrjParams[5], padfPrjParams[6],
+        m_oSRS.SetProjCS("Orthographic");
+        m_oSRS.SetOrthographic( padfPrjParams[5], padfPrjParams[6],
                               padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Plate Carree") ||
@@ -562,80 +561,80 @@ CPLErr ILWISDataset::ReadProjection( const std::string& csyFileName )
     {
         // set 0.0 for CenterLat for Plate Carree projection
         // skip Latitude_Of_True_Scale for Plate Rectangle projection definition
-        oSRS.SetProjCS(pszProj.c_str());
-        oSRS.SetEquirectangular( padfPrjParams[5], padfPrjParams[6],
+        m_oSRS.SetProjCS(pszProj.c_str());
+        m_oSRS.SetEquirectangular( padfPrjParams[5], padfPrjParams[6],
                                  padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "PolyConic") )
     {
         // skip scale factor
-        oSRS.SetProjCS("PolyConic");
-        oSRS.SetPolyconic( padfPrjParams[5], padfPrjParams[6],
+        m_oSRS.SetProjCS("PolyConic");
+        m_oSRS.SetPolyconic( padfPrjParams[5], padfPrjParams[6],
                            padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Robinson") )
     {
-        oSRS.SetProjCS("Robinson");
-        oSRS.SetRobinson( padfPrjParams[6],
+        m_oSRS.SetProjCS("Robinson");
+        m_oSRS.SetRobinson( padfPrjParams[6],
                           padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Sinusoidal") )
     {
-        oSRS.SetProjCS("Sinusoidal");
-        oSRS.SetSinusoidal( padfPrjParams[6],
+        m_oSRS.SetProjCS("Sinusoidal");
+        m_oSRS.SetSinusoidal( padfPrjParams[6],
                             padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Stereographic") )
     {
-        oSRS.SetProjCS("Stereographic");
-        oSRS.SetStereographic( padfPrjParams[5], padfPrjParams[6],
+        m_oSRS.SetProjCS("Stereographic");
+        m_oSRS.SetStereographic( padfPrjParams[5], padfPrjParams[6],
                                padfPrjParams[9],
                                 padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "Transverse Mercator") )
     {
-        oSRS.SetProjCS("Transverse Mercator");
-        oSRS.SetStereographic( padfPrjParams[5], padfPrjParams[6],
+        m_oSRS.SetProjCS("Transverse Mercator");
+        m_oSRS.SetStereographic( padfPrjParams[5], padfPrjParams[6],
                                padfPrjParams[9],
                                padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "UTM") )
     {
         std::string pszNH = ReadElement("Projection", "Northern Hemisphere", csyFileName);
-        oSRS.SetProjCS("UTM");
+        m_oSRS.SetProjCS("UTM");
         if( STARTS_WITH_CI(pszNH.c_str(), "Yes") )
-            oSRS.SetUTM( (int) padfPrjParams[11], 1);
+            m_oSRS.SetUTM( (int) padfPrjParams[11], 1);
         else
-            oSRS.SetUTM( (int) padfPrjParams[11], 0);
+            m_oSRS.SetUTM( (int) padfPrjParams[11], 0);
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "VanderGrinten") )
     {
-        oSRS.SetVDG( padfPrjParams[6],
+        m_oSRS.SetVDG( padfPrjParams[6],
                      padfPrjParams[3], padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "GeoStationary Satellite") )
     {
-        oSRS.SetGEOS( padfPrjParams[6],
+        m_oSRS.SetGEOS( padfPrjParams[6],
                       padfPrjParams[12],
                       padfPrjParams[3],
                       padfPrjParams[4] );
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "MSG Perspective") )
     {
-        oSRS.SetGEOS( padfPrjParams[6],
+        m_oSRS.SetGEOS( padfPrjParams[6],
                       padfPrjParams[12],
                       padfPrjParams[3],
                       padfPrjParams[4] );
     }
     else
     {
-        oSRS.SetLocalCS( pszProj.c_str() );
+        m_oSRS.SetLocalCS( pszProj.c_str() );
     }
 /* -------------------------------------------------------------------- */
 /*      Try to translate the datum/spheroid.                            */
 /* -------------------------------------------------------------------- */
 
-    if ( !oSRS.IsLocal() )
+    if ( !m_oSRS.IsLocal() )
     {
         const IlwisDatums   *piwDatum = iwDatums;
 
@@ -646,7 +645,7 @@ CPLErr ILWISDataset::ReadProjection( const std::string& csyFileName )
             {
                 OGRSpatialReference oOGR;
                 oOGR.importFromEPSG( piwDatum->nEPSGCode );
-                oSRS.CopyGeogCSFrom( &oOGR );
+                m_oSRS.CopyGeogCSFrom( &oOGR );
                 break;
             }
             piwDatum++;
@@ -670,7 +669,7 @@ CPLErr ILWISDataset::ReadProjection( const std::string& csyFileName )
                     {
                         dfSemiMajor = padfPrjParams[0];
                     }
-                    oSRS.SetGeogCS( CPLSPrintf(
+                    m_oSRS.SetGeogCS( CPLSPrintf(
                                         "Unknown datum based upon the %s ellipsoid",
                                         piwEllips->pszIlwisEllips ),
                                     CPLSPrintf(
@@ -680,7 +679,7 @@ CPLErr ILWISDataset::ReadProjection( const std::string& csyFileName )
                                     dfSemiMajor,
                                     piwEllips->invFlattening,
                                     nullptr, 0.0, nullptr, 0.0 );
-                    oSRS.SetAuthority( "SPHEROID", "EPSG", piwEllips->nEPSGCode );
+                    m_oSRS.SetAuthority( "SPHEROID", "EPSG", piwEllips->nEPSGCode );
 
                     break;
                 }
@@ -697,7 +696,7 @@ CPLErr ILWISDataset::ReadProjection( const std::string& csyFileName )
 
             if( STARTS_WITH_CI(pszEllips.c_str(), "User Defined") )
             {
-                oSRS.SetGeogCS( "Unknown datum based upon the custom ellipsoid",
+                m_oSRS.SetGeogCS( "Unknown datum based upon the custom ellipsoid",
                                 "Not specified (based on custom ellipsoid)",
                                 "Custom ellipsoid",
                                 padfPrjParams[0], padfPrjParams[2],
@@ -706,7 +705,7 @@ CPLErr ILWISDataset::ReadProjection( const std::string& csyFileName )
             else
             {
                 //if cannot find the user defined ellips, default to WGS84
-                oSRS.SetWellKnownGeogCS( "WGS84" );
+                m_oSRS.SetWellKnownGeogCS( "WGS84" );
             }
         }
     } // end of if ( !IsLocal() )
@@ -714,13 +713,10 @@ CPLErr ILWISDataset::ReadProjection( const std::string& csyFileName )
 /* -------------------------------------------------------------------- */
 /*      Units translation                                          */
 /* -------------------------------------------------------------------- */
-    if( oSRS.IsLocal() || oSRS.IsProjected() )
+    if( m_oSRS.IsLocal() || m_oSRS.IsProjected() )
     {
-        oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
+        m_oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
     }
-
-    CPLFree(pszProjection);
-    oSRS.exportToWkt( &pszProjection );
 
     return CE_None;
 }
@@ -986,20 +982,12 @@ static void WriteGeoStatSat(const std::string& csFileName, const OGRSpatialRefer
 CPLErr ILWISDataset::WriteProjection()
 
 {
-    OGRSpatialReference oSRS;
     OGRSpatialReference *poGeogSRS = nullptr;
 
     std::string csFileName = CPLResetExtension(osFileName, "csy" );
     std::string pszBaseName = std::string(CPLGetBasename( osFileName ));
     //std::string pszPath = std::string(CPLGetPath( osFileName ));
-    bool bProjection = ((pszProjection != nullptr) && (strlen(pszProjection)>0));
-    bool bHaveSRS;
-    if( bProjection && (oSRS.importFromWkt( pszProjection ) == OGRERR_NONE) )
-    {
-        bHaveSRS = true;
-    }
-    else
-        bHaveSRS = false;
+    const bool bHaveSRS = !m_oSRS.IsEmpty();
 
     const IlwisDatums   *piwDatum = iwDatums;
     //std::string pszEllips;
@@ -1011,7 +999,7 @@ CPLErr ILWISDataset::WriteProjection()
 /* -------------------------------------------------------------------- */
     if( bHaveSRS )
     {
-        poGeogSRS = oSRS.CloneGeogCS();
+        poGeogSRS = m_oSRS.CloneGeogCS();
     }
 
     std::string grFileName = CPLResetExtension(osFileName, "grf" );
@@ -1061,106 +1049,106 @@ CPLErr ILWISDataset::WriteProjection()
     const char * pszProjName = nullptr;
 
     if( bHaveSRS )
-        pszProjName = oSRS.GetAttrValue( "PROJCS|PROJECTION" );
+        pszProjName = m_oSRS.GetAttrValue( "PROJCS|PROJECTION" );
 
     if( pszProjName == nullptr )
     {
-        if( bHaveSRS && oSRS.IsGeographic() )
+        if( bHaveSRS && m_oSRS.IsGeographic() )
         {
             WriteElement("CoordSystem", "Type", csFileName, "LatLon");
         }
     }
-    else if( oSRS.GetUTMZone( nullptr ) != 0 )
+    else if( m_oSRS.GetUTMZone( nullptr ) != 0 )
     {
-        WriteUTM(csFileName, oSRS);
+        WriteUTM(csFileName, m_oSRS);
     }
     else if( EQUAL(pszProjName,SRS_PT_ALBERS_CONIC_EQUAL_AREA) )
     {
-        WriteAlbersConicEqualArea(csFileName, oSRS);
+        WriteAlbersConicEqualArea(csFileName, m_oSRS);
     }
     else if( EQUAL(pszProjName,SRS_PT_AZIMUTHAL_EQUIDISTANT) )
     {
-        WriteAzimuthalEquidistant(csFileName, oSRS);
+        WriteAzimuthalEquidistant(csFileName, m_oSRS);
     }
     else if( EQUAL(pszProjName,SRS_PT_CYLINDRICAL_EQUAL_AREA) )
     {
-        WriteCylindricalEqualArea(csFileName, oSRS);
+        WriteCylindricalEqualArea(csFileName, m_oSRS);
     }
     else if( EQUAL(pszProjName,SRS_PT_CASSINI_SOLDNER) )
     {
-        WriteCassiniSoldner(csFileName, oSRS);
+        WriteCassiniSoldner(csFileName, m_oSRS);
     }
     else if( EQUAL(pszProjName,SRS_PT_STEREOGRAPHIC) )
     {
-        WriteStereographic(csFileName, oSRS);
+        WriteStereographic(csFileName, m_oSRS);
     }
     else if( EQUAL(pszProjName,SRS_PT_EQUIDISTANT_CONIC) )
     {
-        WriteEquidistantConic(csFileName, oSRS);
+        WriteEquidistantConic(csFileName, m_oSRS);
     }
     else if( EQUAL(pszProjName,SRS_PT_TRANSVERSE_MERCATOR) )
     {
-        WriteTransverseMercator(csFileName, oSRS);
+        WriteTransverseMercator(csFileName, m_oSRS);
     }
     else if( EQUAL(pszProjName,SRS_PT_GNOMONIC) )
     {
-        WriteGnomonic(csFileName, oSRS);
+        WriteGnomonic(csFileName, m_oSRS);
     }
     else if( EQUAL(pszProjName,"Lambert_Conformal_Conic") )
     {
-        WriteLambertConformalConic(csFileName, oSRS);
+        WriteLambertConformalConic(csFileName, m_oSRS);
     }
     else if( EQUAL(pszProjName,SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP) )
     {
-        WriteLambertConformalConic(csFileName, oSRS);
+        WriteLambertConformalConic(csFileName, m_oSRS);
     }
     else if( EQUAL(pszProjName,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) )
     {
-        WriteLambertConformalConic2SP(csFileName, oSRS);
+        WriteLambertConformalConic2SP(csFileName, m_oSRS);
     }
     else if( EQUAL(pszProjName,SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA) )
     {
-        WriteLambertAzimuthalEqualArea(csFileName, oSRS);
+        WriteLambertAzimuthalEqualArea(csFileName, m_oSRS);
     }
     else if( EQUAL(pszProjName,SRS_PT_MERCATOR_1SP) )
     {
-        WriteMercator_1SP(csFileName, oSRS);
+        WriteMercator_1SP(csFileName, m_oSRS);
     }
     else if( EQUAL(pszProjName,SRS_PT_MILLER_CYLINDRICAL) )
     {
-        WriteMillerCylindrical(csFileName, oSRS);
+        WriteMillerCylindrical(csFileName, m_oSRS);
     }
     else if( EQUAL(pszProjName,SRS_PT_MOLLWEIDE) )
     {
-        WriteMolleweide(csFileName, oSRS);
+        WriteMolleweide(csFileName, m_oSRS);
     }
     else if( EQUAL(pszProjName,SRS_PT_ORTHOGRAPHIC) )
     {
-        WriteOrthographic(csFileName, oSRS);
+        WriteOrthographic(csFileName, m_oSRS);
     }
     else if( EQUAL(pszProjName,SRS_PT_EQUIRECTANGULAR) )
     {
-        WritePlateRectangle(csFileName, oSRS);
+        WritePlateRectangle(csFileName, m_oSRS);
     }
     else if( EQUAL(pszProjName,SRS_PT_POLYCONIC) )
     {
-        WritePolyConic(csFileName, oSRS);
+        WritePolyConic(csFileName, m_oSRS);
     }
     else if( EQUAL(pszProjName,SRS_PT_ROBINSON) )
     {
-        WriteRobinson(csFileName, oSRS);
+        WriteRobinson(csFileName, m_oSRS);
     }
     else if( EQUAL(pszProjName,SRS_PT_SINUSOIDAL) )
     {
-        WriteSinusoidal(csFileName, oSRS);
+        WriteSinusoidal(csFileName, m_oSRS);
     }
     else if( EQUAL(pszProjName,SRS_PT_VANDERGRINTEN) )
     {
-        WriteVanderGrinten(csFileName, oSRS);
+        WriteVanderGrinten(csFileName, m_oSRS);
     }
     else if( EQUAL(pszProjName,SRS_PT_GEOSTATIONARY_SATELLITE) )
     {
-        WriteGeoStatSat(csFileName, oSRS);
+        WriteGeoStatSat(csFileName, m_oSRS);
     }
     else
     {

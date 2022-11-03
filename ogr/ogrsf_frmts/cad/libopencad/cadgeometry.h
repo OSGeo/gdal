@@ -430,6 +430,13 @@ public:
         NONE = 0, CENTIMETER = 2, INCH = 5
     };
 
+    static bool IsValidResolutionUnit(int nVal)
+    {
+        return nVal == ResolutionUnit::NONE ||
+               nVal == ResolutionUnit::CENTIMETER ||
+               nVal == ResolutionUnit::INCH;
+    }
+
     CADImage();
     virtual ~CADImage(){}
 

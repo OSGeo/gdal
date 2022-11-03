@@ -41,7 +41,6 @@
 #include "cpl_error.h"
 #include "cpl_vsi.h"
 
-CPL_CVSID("$Id$")
 
 constexpr int nLeaderSize = 24;
 

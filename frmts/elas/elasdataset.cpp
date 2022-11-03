@@ -36,7 +36,6 @@
 
 using std::fill;
 
-CPL_CVSID("$Id$")
 
 typedef struct ELASHeader {
     ELASHeader();

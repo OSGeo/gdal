@@ -31,7 +31,6 @@
 #include "gdal_pam.h"
 #include "gxfopen.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -47,7 +46,7 @@ class GXFDataset final: public GDALPamDataset
 
     GXFHandle   hGXF;
 
-    char        *pszProjection;
+    OGRSpatialReference m_oSRS{};
     double      dfNoDataValue;
     GDALDataType eDataType;
 
@@ -58,10 +57,7 @@ class GXFDataset final: public GDALPamDataset
     static GDALDataset *Open( GDALOpenInfo * );
 
     CPLErr      GetGeoTransform( double * padfTransform ) override;
-    const char *_GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
 };
 
 /************************************************************************/
@@ -161,10 +157,11 @@ CPLErr GXFRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
 GXFDataset::GXFDataset() :
     hGXF(nullptr),
-    pszProjection(nullptr),
     dfNoDataValue(0),
     eDataType(GDT_Float32)
-{}
+{
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+}
 
 /************************************************************************/
 /*                            ~GXFDataset()                             */
@@ -176,7 +173,6 @@ GXFDataset::~GXFDataset()
     FlushCache(true);
     if( hGXF != nullptr )
         GXFClose( hGXF );
-    CPLFree( pszProjection );
 }
 
 /************************************************************************/
@@ -215,13 +211,12 @@ CPLErr GXFDataset::GetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                         GetSpatialRef()                              */
 /************************************************************************/
 
-const char *GXFDataset::_GetProjectionRef()
-
+const OGRSpatialReference* GXFDataset::GetSpatialRef() const
 {
-    return pszProjection;
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /************************************************************************/
@@ -330,7 +325,10 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Establish the projection.                                       */
 /* -------------------------------------------------------------------- */
-    poDS->pszProjection = GXFGetMapProjectionAsOGCWKT( l_hGXF );
+    char* pszProjection = GXFGetMapProjectionAsOGCWKT( l_hGXF );
+    if( pszProjection && pszProjection[0] != '\0' )
+        poDS->m_oSRS.importFromWkt(pszProjection);
+    CPLFree(pszProjection);
 
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */

@@ -30,7 +30,6 @@
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -51,7 +50,8 @@ class ROIPACDataset final: public RawDataset
 
     double      adfGeoTransform[6];
     bool        bValidGeoTransform;
-    char        *pszProjection;
+
+    OGRSpatialReference m_oSRS{};
 
     CPL_DISALLOW_COPY_ASSIGN(ROIPACDataset)
 
@@ -68,14 +68,10 @@ class ROIPACDataset final: public RawDataset
     void        FlushCache(bool bAtClosing) override;
     CPLErr              GetGeoTransform( double *padfTransform ) override;
     CPLErr      SetGeoTransform( double *padfTransform ) override;
-    const char *_GetProjectionRef( void ) override;
-    CPLErr      _SetProjection( const char *pszNewProjection ) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+
+    const OGRSpatialReference* GetSpatialRef() const override
+        { return m_oSRS.IsEmpty() ? nullptr : &m_oSRS; }
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     char      **GetFileList() override;
 };
@@ -144,9 +140,9 @@ ROIPACDataset::ROIPACDataset() :
     fpImage(nullptr),
     fpRsc(nullptr),
     pszRscFilename(nullptr),
-    bValidGeoTransform(false),
-    pszProjection(nullptr)
+    bValidGeoTransform(false)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGeoTransform[0] =  0.0;
     adfGeoTransform[1] =  1.0;
     adfGeoTransform[2] =  0.0;
@@ -171,7 +167,6 @@ ROIPACDataset::~ROIPACDataset()
         CPLError( CE_Failure, CPLE_FileIO, "I/O error" );
     }
     CPLFree( pszRscFilename );
-    CPLFree( pszProjection );
 }
 
 /************************************************************************/
@@ -466,7 +461,8 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
                 oSRS.SetWellKnownGeogCS( "NAD27" );
             }
         }
-        oSRS.exportToWkt( &poDS->pszProjection );
+        poDS->m_oSRS = oSRS;
+        poDS->m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
     if ( CSLFetchNameValue( papszRsc, "Z_OFFSET" ) != nullptr )
     {
@@ -737,20 +733,17 @@ void ROIPACDataset::FlushCache(bool bAtClosing)
 /* -------------------------------------------------------------------- */
 /*      Georeferencing.                                                 */
 /* -------------------------------------------------------------------- */
-    if ( pszProjection != nullptr )
+    if ( !m_oSRS.IsEmpty() )
     {
-        OGRSpatialReference oSRS;
-        if( oSRS.importFromWkt( pszProjection ) == OGRERR_NONE )
-        {
             int bNorth = FALSE;
-            int iUTMZone = oSRS.GetUTMZone( &bNorth );
+            int iUTMZone = m_oSRS.GetUTMZone( &bNorth );
             if ( iUTMZone != 0 )
             {
                 CPL_IGNORE_RET_VAL(
                     VSIFPrintfL( fpRsc, "%-40s %s%d\n", "PROJECTION", "UTM",
                                  iUTMZone ) );
             }
-            else if ( oSRS.IsGeographic() )
+            else if ( m_oSRS.IsGeographic() )
             {
                 CPL_IGNORE_RET_VAL(
                     VSIFPrintfL( fpRsc, "%-40s %s\n", "PROJECTION", "LL" ) );
@@ -762,9 +755,9 @@ void ROIPACDataset::FlushCache(bool bAtClosing)
                           "UTM projections, discarding projection.");
             }
 
-            if ( oSRS.GetAttrValue( "DATUM" ) != nullptr )
+            if ( m_oSRS.GetAttrValue( "DATUM" ) != nullptr )
             {
-                if ( strcmp( oSRS.GetAttrValue( "DATUM" ), "WGS_1984" ) == 0 )
+                if ( strcmp( m_oSRS.GetAttrValue( "DATUM" ), "WGS_1984" ) == 0 )
                 {
                     CPL_IGNORE_RET_VAL(
                         VSIFPrintfL( fpRsc, "%-40s %s\n", "DATUM", "WGS84" ) );
@@ -774,22 +767,21 @@ void ROIPACDataset::FlushCache(bool bAtClosing)
                     CPLError( CE_Warning, CPLE_AppDefined,
                               "Datum \"%s\" probably not supported in the "
                               "ROI_PAC format, saving it anyway",
-                                  oSRS.GetAttrValue( "DATUM" ) );
+                                  m_oSRS.GetAttrValue( "DATUM" ) );
                     CPL_IGNORE_RET_VAL(
                         VSIFPrintfL( fpRsc, "%-40s %s\n", "DATUM",
-                                     oSRS.GetAttrValue( "DATUM" ) ) );
+                                     m_oSRS.GetAttrValue( "DATUM" ) ) );
                 }
             }
-            if ( oSRS.GetAttrValue( "UNIT" ) != nullptr )
+            if ( m_oSRS.GetAttrValue( "UNIT" ) != nullptr )
             {
                 CPL_IGNORE_RET_VAL(
                     VSIFPrintfL( fpRsc, "%-40s %s\n", "X_UNIT",
-                                 oSRS.GetAttrValue( "UNIT" ) ));
+                                 m_oSRS.GetAttrValue( "UNIT" ) ));
                 CPL_IGNORE_RET_VAL(
                     VSIFPrintfL( fpRsc, "%-40s %s\n", "Y_UNIT",
-                                 oSRS.GetAttrValue( "UNIT" ) ));
+                                 m_oSRS.GetAttrValue( "UNIT" ) ));
             }
-        }
     }
     if( bValidGeoTransform )
     {
@@ -879,23 +871,16 @@ CPLErr ROIPACDataset::SetGeoTransform( double *padfTransform )
 }
 
 /************************************************************************/
-/*                         GetProjectionRef()                           */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
-const char *ROIPACDataset::_GetProjectionRef( void )
-{
-    return pszProjection != nullptr ? pszProjection : "";
-}
-
-/************************************************************************/
-/*                          SetProjection()                             */
-/************************************************************************/
-
-CPLErr ROIPACDataset::_SetProjection( const char *pszNewProjection )
+CPLErr ROIPACDataset::SetSpatialRef(const OGRSpatialReference* poSRS)
 
 {
-    CPLFree( pszProjection );
-    pszProjection = (pszNewProjection) ? CPLStrdup( pszNewProjection ) : nullptr;
+    if( poSRS )
+        m_oSRS = *poSRS;
+    else
+        m_oSRS.Clear();
     return CE_None;
 }
 

@@ -40,7 +40,6 @@
 #include "cpl_vsi.h"
 #include "ogrsqlitevfs.h"
 
-CPL_CVSID("$Id$")
 
 #ifdef DEBUG_IO
 # define DEBUG_ONLY
@@ -255,7 +254,13 @@ static int OGRSQLiteVFSOpen(sqlite3_vfs* pVFS,
     if ( flags & SQLITE_OPEN_READONLY )
         pMyFile->fp = VSIFOpenL(zName, "rb");
     else if ( flags & SQLITE_OPEN_CREATE )
-        pMyFile->fp = VSIFOpenL(zName, "wb+");
+    {
+        VSIStatBufL sStatBufL;
+        if( VSIStatExL(zName, &sStatBufL, VSI_STAT_EXISTS_FLAG) == 0 )
+            pMyFile->fp = VSIFOpenL(zName, "rb+");
+        else
+            pMyFile->fp = VSIFOpenL(zName, "wb+");
+    }
     else if ( flags & SQLITE_OPEN_READWRITE )
         pMyFile->fp = VSIFOpenL(zName, "rb+");
     else

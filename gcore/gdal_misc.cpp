@@ -60,7 +60,6 @@
 
 #include "proj.h"
 
-CPL_CVSID("$Id$")
 
 static int GetMinBitsForPair(
     const bool pabSigned[], const bool pabFloating[], const int panBits[])
@@ -3340,12 +3339,16 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             if( CSLFetchNameValue( papszMD, GDAL_DMD_CREATION_FIELD_DOMAIN_TYPES ) )
               printf( "  Creation field domain types: %s\n",/*ok*/
                       CSLFetchNameValue( papszMD, GDAL_DMD_CREATION_FIELD_DOMAIN_TYPES ) );
+            if( CSLFetchNameValue( papszMD, GDAL_DMD_SUPPORTED_SQL_DIALECTS ) )
+              printf( "  Supported SQL dialects: %s\n",/*ok*/
+                      CSLFetchNameValue( papszMD, GDAL_DMD_SUPPORTED_SQL_DIALECTS ) );
 
             for( const char* key: { GDAL_DMD_CREATIONOPTIONLIST,
                                     GDAL_DMD_MULTIDIM_DATASET_CREATIONOPTIONLIST,
                                     GDAL_DMD_MULTIDIM_GROUP_CREATIONOPTIONLIST,
                                     GDAL_DMD_MULTIDIM_DIMENSION_CREATIONOPTIONLIST,
                                     GDAL_DMD_MULTIDIM_ARRAY_CREATIONOPTIONLIST,
+                                    GDAL_DMD_MULTIDIM_ARRAY_OPENOPTIONLIST,
                                     GDAL_DMD_MULTIDIM_ATTRIBUTE_CREATIONOPTIONLIST,
                                     GDAL_DS_LAYER_CREATIONOPTIONLIST } )
             {

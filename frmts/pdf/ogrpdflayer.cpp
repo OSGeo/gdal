@@ -28,7 +28,6 @@
 
 #include "gdal_pdf.h"
 
-CPL_CVSID("$Id$")
 
 #ifdef HAVE_PDF_READ_SUPPORT
 

@@ -72,6 +72,7 @@ Run command line utilities (without installing):
 . ../scripts/setdevenv.sh
 gdalinfo --version
 ```
+This will set the PATH, LD_LIBRARY_PATH/DY_LD_LIBRARY_PATH, GDAL_DATA and PYTHONPATH environment variables to point to the build artifacts.
 
 Run autotest suite:
 ```bash
@@ -83,7 +84,7 @@ pytest autotest
 
 Make sure the Vagrant binary is installed on your system.
 
-Perform inital setup of the Vagrant GDAL virtual machine:
+Perform initial setup of the Vagrant GDAL virtual machine:
 ```bash
 # VAGRANT_VM_CPU=number_of_cpus
 vagrant up

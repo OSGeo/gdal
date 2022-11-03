@@ -111,7 +111,7 @@ public:
     // internal methods for overviews
     void readExistingOverviews();
     void deleteOverviewObjects();
-    void CreateOverviews(int nOverviews, int *panOverviewList);
+    void CreateOverviews(int nOverviews, const int *panOverviewList);
     KEAOverview** GetOverviewList() { return m_panOverviewBands; }
 
     kealib::KEALayerType getLayerType() const;

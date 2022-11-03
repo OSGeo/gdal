@@ -32,7 +32,6 @@
 #include "ogr_pgdump.h"
 #include "cpl_minixml.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            OGRGMLASLayer()                           */

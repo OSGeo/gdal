@@ -117,6 +117,7 @@ typedef struct {
 	/* CMYK parameters */
 	int     td_inknameslen;
 	char*   td_inknames;
+	uint16_t td_numberofinks;                 /* number of inks in InkNames string */
 
 	int     td_customValueCount;
         TIFFTagValue *td_customValues;
@@ -174,6 +175,7 @@ typedef struct {
 #define FIELD_TRANSFERFUNCTION         44
 #define FIELD_INKNAMES                 46
 #define FIELD_SUBIFD                   49
+#define FIELD_NUMBEROFINKS             50
 /*      FIELD_CUSTOM (see tiffio.h)    65 */
 /* end of support for well-known tags; codec-private tags follow */
 #define FIELD_CODEC                    66  /* base of codec-private tags */
@@ -300,6 +302,8 @@ extern int _TIFFMergeFields(TIFF*, const TIFFField[], uint32_t);
 extern const TIFFField* _TIFFFindOrRegisterField(TIFF *, uint32_t, TIFFDataType);
 extern  TIFFField* _TIFFCreateAnonField(TIFF *, uint32_t, TIFFDataType);
 extern int _TIFFCheckFieldIsValidForCodec(TIFF *tif, ttag_t tag);
+extern int _TIFFCheckDirNumberAndOffset(TIFF *tif, uint16_t dirn, uint64_t diroff);
+extern int _TIFFGetDirNumberFromOffset(TIFF *tif, uint64_t diroff, uint16_t *dirn);
 
 #if defined(__cplusplus)
 }

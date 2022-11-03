@@ -31,7 +31,6 @@
 #include "cpl_multiproc.h"
 #include "gmlreaderp.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         OGRGMLDriverIdentify()                       */
@@ -147,6 +146,7 @@ void RegisterOGRGML()
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gml" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "gml xml" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/gml.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"

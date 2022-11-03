@@ -30,7 +30,6 @@
 #include "ogrogdi.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           ~OGROGDIDriver()                           */
@@ -125,6 +124,7 @@ void RegisterOGROGDI()
                                "OGDI Vectors (VPF, VMAP, DCW)" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/ogdi.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }

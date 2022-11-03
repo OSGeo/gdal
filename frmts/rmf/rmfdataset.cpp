@@ -36,7 +36,6 @@
 
 #include "cpl_safemaths.hpp"
 
-CPL_CVSID("$Id$")
 
 constexpr int RMF_DEFAULT_BLOCKXSIZE = 256;
 constexpr int RMF_DEFAULT_BLOCKYSIZE = 256;
@@ -736,7 +735,6 @@ RMFDataset::RMFDataset() :
     nColorTableSize(0),
     pabyColorTable(nullptr),
     poColorTable(nullptr),
-    pszProjection(CPLStrdup( "" )),
     pszUnitType(CPLStrdup( RMF_UnitsEmpty )),
     bBigEndian(false),
     bHeaderDirty(false),
@@ -746,6 +744,7 @@ RMFDataset::RMFDataset() :
     nHeaderOffset(0),
     poParentDS(nullptr)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     nBands = 0;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -772,7 +771,6 @@ RMFDataset::~RMFDataset()
     VSIFree( paiTiles );
     VSIFree( pabyDecompressBuffer );
     VSIFree( pabyCurrentTile );
-    CPLFree( pszProjection );
     CPLFree( pszUnitType );
     CPLFree( pabyColorTable );
     if( poColorTable != nullptr )
@@ -823,26 +821,25 @@ CPLErr RMFDataset::SetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *RMFDataset::_GetProjectionRef()
-{
-    if( pszProjection )
-        return pszProjection;
+const OGRSpatialReference *RMFDataset::GetSpatialRef() const
 
-    return "";
+{
+   return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /************************************************************************/
-/*                           SetProjection()                            */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
-CPLErr RMFDataset::_SetProjection( const char * pszNewProjection )
+CPLErr RMFDataset::SetSpatialRef( const OGRSpatialReference* poSRS )
 
 {
-    CPLFree( pszProjection );
-    pszProjection = CPLStrdup( (pszNewProjection) ? pszNewProjection : "" );
+    m_oSRS.Clear();
+    if( poSRS )
+        m_oSRS = *poSRS;
 
     bHeaderDirty = true;
 
@@ -858,35 +855,31 @@ CPLErr RMFDataset::WriteHeader()
 /* -------------------------------------------------------------------- */
 /*  Setup projection.                                                   */
 /* -------------------------------------------------------------------- */
-    if( pszProjection && !EQUAL( pszProjection, "" ) )
+    if( !m_oSRS.IsEmpty() )
     {
-        OGRSpatialReference oSRS;
-        if( oSRS.importFromWkt( pszProjection ) == OGRERR_NONE )
+        long iProjection = 0;
+        long iDatum = 0;
+        long iEllips = 0;
+        long iZone = 0;
+        double adfPrjParams[7] = {};
+
+        m_oSRS.exportToPanorama( &iProjection, &iDatum, &iEllips, &iZone,
+                               adfPrjParams );
+        sHeader.iProjection = static_cast<int>(iProjection);
+        sHeader.dfStdP1 = adfPrjParams[0];
+        sHeader.dfStdP2 = adfPrjParams[1];
+        sHeader.dfCenterLat = adfPrjParams[2];
+        sHeader.dfCenterLong = adfPrjParams[3];
+        if( m_oSRS.GetAuthorityName(nullptr) != nullptr &&
+            m_oSRS.GetAuthorityCode(nullptr) != nullptr &&
+            EQUAL(m_oSRS.GetAuthorityName(nullptr), "EPSG") )
         {
-            long iProjection = 0;
-            long iDatum = 0;
-            long iEllips = 0;
-            long iZone = 0;
-            double adfPrjParams[7] = {};
-
-            oSRS.exportToPanorama( &iProjection, &iDatum, &iEllips, &iZone,
-                                   adfPrjParams );
-            sHeader.iProjection = static_cast<int>(iProjection);
-            sHeader.dfStdP1 = adfPrjParams[0];
-            sHeader.dfStdP2 = adfPrjParams[1];
-            sHeader.dfCenterLat = adfPrjParams[2];
-            sHeader.dfCenterLong = adfPrjParams[3];
-            if( oSRS.GetAuthorityName(nullptr) != nullptr &&
-                oSRS.GetAuthorityCode(nullptr) != nullptr &&
-                EQUAL(oSRS.GetAuthorityName(nullptr), "EPSG") )
-            {
-                sHeader.iEPSGCode = atoi(oSRS.GetAuthorityCode(nullptr));
-            }
-
-            sExtHeader.nEllipsoid = static_cast<int>(iEllips);
-            sExtHeader.nDatum = static_cast<int>(iDatum);
-            sExtHeader.nZone = static_cast<int>(iZone);
+            sHeader.iEPSGCode = atoi(m_oSRS.GetAuthorityCode(nullptr));
         }
+
+        sExtHeader.nEllipsoid = static_cast<int>(iEllips);
+        sExtHeader.nDatum = static_cast<int>(iDatum);
+        sExtHeader.nZone = static_cast<int>(iZone);
     }
 
 #define RMF_WRITE_LONG( ptr, value, offset )            \
@@ -1701,7 +1694,6 @@ do {                                                                    \
         poDS->sHeader.dfLLX != 0.0 &&
         poDS->sHeader.dfLLY != 0.0))
     {
-        OGRSpatialReference oSRS;
         GInt32 nProj =
             (poDS->sHeader.iProjection) ? poDS->sHeader.iProjection : 1;
         double padfPrjParams[8] = {
@@ -1736,14 +1728,14 @@ do {                                                                    \
         if(nProj >= 0 &&
            (poDS->sExtHeader.nDatum >= 0 || poDS->sExtHeader.nEllipsoid >= 0))
         {
-            res = oSRS.importFromPanorama( nProj, poDS->sExtHeader.nDatum,
+            res = poDS->m_oSRS.importFromPanorama( nProj, poDS->sExtHeader.nDatum,
                                  poDS->sExtHeader.nEllipsoid, padfPrjParams );
         }
 
         if(poDS->sHeader.iEPSGCode > RMF_EPSG_MIN_CODE &&
-           (OGRERR_NONE != res || oSRS.IsLocal()))
+           (OGRERR_NONE != res || poDS->m_oSRS.IsLocal()))
         {
-            res = oSRS.importFromEPSG(poDS->sHeader.iEPSGCode);
+            res = poDS->m_oSRS.importFromEPSG(poDS->sHeader.iEPSGCode);
         }
 
         const char* pszSetVertCS =
@@ -1753,12 +1745,8 @@ do {                                                                    \
         if(CPLTestBool(pszSetVertCS) && res == OGRERR_NONE &&
            poDS->sExtHeader.nVertDatum > 0)
         {
-            oSRS.importVertCSFromPanorama(poDS->sExtHeader.nVertDatum);
+            poDS->m_oSRS.importVertCSFromPanorama(poDS->sExtHeader.nVertDatum);
         }
-
-        if( poDS->pszProjection )
-            CPLFree( poDS->pszProjection );
-        oSRS.exportToWkt( &poDS->pszProjection );
     }
 
 /* -------------------------------------------------------------------- */
@@ -2272,10 +2260,11 @@ RMFDataset* RMFDataset::OpenOverview(RMFDataset* poParent, GDALOpenInfo* poOpenI
 }
 
 CPLErr RMFDataset::IBuildOverviews( const char* pszResampling,
-                                    int nOverviews, int* panOverviewList,
-                                    int nBandsIn, int* panBandList,
+                                    int nOverviews, const int* panOverviewList,
+                                    int nBandsIn, const int* panBandList,
                                     GDALProgressFunc pfnProgress,
-                                    void* pProgressData )
+                                    void* pProgressData,
+                                    CSLConstList papszOptions )
 {
     bool bUseGenericHandling = false;
 
@@ -2301,7 +2290,8 @@ CPLErr RMFDataset::IBuildOverviews( const char* pszResampling,
 
         return GDALDataset::IBuildOverviews(
             pszResampling, nOverviews, panOverviewList,
-            nBandsIn, panBandList, pfnProgress, pProgressData );
+            nBandsIn, panBandList, pfnProgress, pProgressData,
+            papszOptions);
     }
 
     if( nBandsIn != GetRasterCount() )
@@ -2319,7 +2309,8 @@ CPLErr RMFDataset::IBuildOverviews( const char* pszResampling,
         {
             return GDALDataset::IBuildOverviews(
                 pszResampling, nOverviews, panOverviewList,
-                nBandsIn, panBandList, pfnProgress, pProgressData );
+                nBandsIn, panBandList, pfnProgress, pProgressData,
+                papszOptions);
         }
         return CleanOverviews();
     }
@@ -2403,7 +2394,7 @@ CPLErr RMFDataset::IBuildOverviews( const char* pszResampling,
     res = GDALRegenerateOverviewsMultiBand( nBandsIn, papoBandList,
                                             nOverviews, papapoOverviewBands,
                                             pszResampling, pfnProgress,
-                                            pProgressData );
+                                            pProgressData, papszOptions );
 
     for( int iBand = 0; iBand < nBandsIn; ++iBand )
     {

@@ -31,6 +31,22 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
+/*                       GetMaxFeaturesInBatch()                          */
+/************************************************************************/
+
+int OGRArrowArrayHelper::GetMaxFeaturesInBatch(const CPLStringList& aosArrowArrayStreamOptions)
+{
+    int l_nMaxBatchSize = atoi(aosArrowArrayStreamOptions.FetchNameValueDef(
+                                        "MAX_FEATURES_IN_BATCH", "65536"));
+    if( l_nMaxBatchSize <= 0 )
+        l_nMaxBatchSize = 1;
+    if( l_nMaxBatchSize > INT_MAX - 1 )
+        l_nMaxBatchSize = INT_MAX - 1;
+
+    return l_nMaxBatchSize;
+}
+
+/************************************************************************/
 /*                       OGRArrowArrayHelper()                          */
 /************************************************************************/
 
@@ -40,16 +56,10 @@ OGRArrowArrayHelper::OGRArrowArrayHelper(GDALDataset* poDS,
                     struct ArrowArray* out_array):
     bIncludeFID(CPLTestBool(
         aosArrowArrayStreamOptions.FetchNameValueDef("INCLUDE_FID", "YES"))),
-    nMaxBatchSize(atoi(
-        aosArrowArrayStreamOptions.FetchNameValueDef("MAX_FEATURES_IN_BATCH", "65536"))),
+    nMaxBatchSize(GetMaxFeaturesInBatch(aosArrowArrayStreamOptions)),
     m_out_array(out_array)
 {
     memset(out_array, 0, sizeof(*out_array));
-
-    if( nMaxBatchSize <= 0 )
-        nMaxBatchSize = 1;
-    if( nMaxBatchSize > INT_MAX - 1 )
-        nMaxBatchSize = INT_MAX - 1;
 
     nFieldCount = poFeatureDefn->GetFieldCount();
     nGeomFieldCount = poFeatureDefn->GetGeomFieldCount();

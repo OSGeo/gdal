@@ -123,7 +123,6 @@
 #include "emmintrin.h"
 #endif
 
-CPL_CVSID("$Id$")
 
 static const double kdfDegreesToRadians = M_PI / 180.0;
 static const double kdfRadiansToDegrees = 180.0 / M_PI;

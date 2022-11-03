@@ -348,6 +348,7 @@ class netCDFVariable final: public GDALPamMDArray
     mutable std::vector<GByte> m_abyNoData{};
     mutable bool m_bGetRawNoDataValueHasRun = false;
     bool m_bHasWrittenData = true;
+    bool m_bUseDefaultFillAsNoData = false;
     std::string m_osUnit{};
     CPLStringList m_aosStructuralInfo{};
     mutable bool m_bSRSRead = false;
@@ -439,6 +440,8 @@ public:
         return var;
     }
 
+    void SetUseDefaultFillAsNoData(bool b) { m_bUseDefaultFillAsNoData = b; }
+
     bool IsWritable() const override { return !m_poShared->IsReadOnly(); }
 
     const std::string& GetFilename() const override { return m_poShared->GetFilename(); }
@@ -508,7 +511,7 @@ netCDFSharedResources::~netCDFSharedResources()
 #ifdef NCDF_DEBUG
         CPLDebug("GDAL_netCDF", "calling nc_close( %d)", m_cdfid);
 #endif
-        int status = nc_close(m_cdfid);
+        int status = GDAL_nc_close(m_cdfid);
         NCDF_ERR(status);
     }
 
@@ -1131,15 +1134,21 @@ std::vector<std::string> netCDFGroup::GetMDArrayNames(CSLConstList papszOptions)
 /************************************************************************/
 
 std::shared_ptr<GDALMDArray> netCDFGroup::OpenMDArray(
-                                const std::string& osName, CSLConstList) const
+                                const std::string& osName, CSLConstList papszOptions) const
 {
     CPLMutexHolderD(&hNCMutex);
     int nVarId = 0;
     if( nc_inq_varid(m_gid, osName.c_str(), &nVarId) != NC_NOERR )
         return nullptr;
-    return netCDFVariable::Create(m_poShared, m_gid, nVarId,
+    auto poVar = netCDFVariable::Create(m_poShared, m_gid, nVarId,
                                   std::vector<std::shared_ptr<GDALDimension>>(),
                                   nullptr, false);
+    if( poVar )
+    {
+        poVar->SetUseDefaultFillAsNoData(
+            CPLTestBool(CSLFetchNameValueDef(papszOptions, "USE_DEFAULT_FILL_AS_NODATA", "NO")));
+    }
+    return poVar;
 }
 
 /************************************************************************/
@@ -1884,7 +1893,24 @@ static bool BuildDataType(int gid, int varid, int nVarType,
         else if( nVarType == NC_SHORT )
         {
             bPerfectDataTypeMatch = true;
-            eDataType = GDT_Int16;
+            char *pszTemp = nullptr;
+            bool bSignedData = true;
+            if( varid >= 0 && NCDFGetAttr(gid, varid, "_Unsigned", &pszTemp) == CE_None )
+            {
+                if( EQUAL(pszTemp, "true") )
+                    bSignedData = false;
+                else if( EQUAL(pszTemp, "false") )
+                    bSignedData = true;
+                CPLFree(pszTemp);
+            }
+            if( !bSignedData )
+            {
+                eDataType = GDT_UInt16;
+            }
+            else
+            {
+                eDataType = GDT_Int16;
+            }
         }
         else if( nVarType == NC_INT )
         {
@@ -3102,7 +3128,78 @@ const void* netCDFVariable::GetRawNoDataValue() const
     if( ret != NC_NOERR )
     {
         m_abyNoData.clear();
-        return nullptr;
+        char* pszValue = nullptr;
+        if( dt.GetClass() == GEDTC_NUMERIC &&
+            NCDFGetAttr( m_gid, m_varid, "missing_value", &pszValue ) == CE_None &&
+            CPLGetValueType(pszValue) != CPL_VALUE_STRING )
+        {
+            m_abyNoData.resize(dt.GetSize());
+            const auto eDT = dt.GetNumericDataType();
+            if( eDT == GDT_Int64 )
+            {
+                int64_t nVal = static_cast<int64_t>(std::strtoll(pszValue, nullptr, 10));
+                memcpy(&m_abyNoData[0], &nVal, sizeof(nVal));
+            }
+            else if( eDT == GDT_UInt64 )
+            {
+                uint64_t nVal = static_cast<uint64_t>(std::strtoull(pszValue, nullptr, 10));
+                memcpy(&m_abyNoData[0], &nVal, sizeof(nVal));
+            }
+            else
+            {
+                double dfVal = CPLAtof(pszValue);
+                GDALCopyWords(&dfVal, GDT_Float64, 0,
+                              &m_abyNoData[0], eDT, 0,
+                              1);
+                if( eDT != GDT_Float32 && eDT != GDT_Float64 )
+                {
+                    // Check the value is in the range of the data type
+                    double dfValCheck = 0;
+                    GDALCopyWords(&m_abyNoData[0], eDT, 0,
+                                  &dfValCheck, GDT_Float64, 0,
+                                  1);
+                    if( !(dfVal == dfValCheck) )
+                    {
+                        m_abyNoData.clear();
+                    }
+                }
+            }
+        }
+        CPLFree(pszValue);
+
+        if( m_bUseDefaultFillAsNoData && m_abyNoData.empty() &&
+            (m_nVarType == NC_SHORT || m_nVarType == NC_USHORT ||
+             m_nVarType == NC_INT   || m_nVarType == NC_UINT ||
+             m_nVarType == NC_FLOAT || m_nVarType == NC_DOUBLE) )
+        {
+            bool bGotNoData = false;
+            double dfNoData = NCDFGetDefaultNoDataValue(
+                                m_gid, m_varid, m_nVarType, bGotNoData );
+            m_abyNoData.resize(dt.GetSize());
+            GDALCopyWords(&dfNoData, GDT_Float64, 0,
+                          &m_abyNoData[0], dt.GetNumericDataType(), 0,
+                          1);
+        }
+        else if( m_bUseDefaultFillAsNoData && m_abyNoData.empty() &&
+                 m_nVarType == NC_INT64 )
+        {
+            bool bGotNoData = false;
+            const auto nNoData = NCDFGetDefaultNoDataValueAsInt64(
+                m_gid, m_varid, bGotNoData );
+            m_abyNoData.resize(dt.GetSize());
+            memcpy(&m_abyNoData[0], &nNoData, sizeof(nNoData));
+        }
+        else if( m_bUseDefaultFillAsNoData && m_abyNoData.empty() &&
+                 m_nVarType == NC_UINT64 )
+        {
+            bool bGotNoData = false;
+            const auto nNoData = NCDFGetDefaultNoDataValueAsUInt64(
+                m_gid, m_varid, bGotNoData );
+            m_abyNoData.resize(dt.GetSize());
+            memcpy(&m_abyNoData[0], &nNoData, sizeof(nNoData));
+        }
+
+        return m_abyNoData.empty() ? nullptr : m_abyNoData.data();
     }
     ConvertNCToGDAL(&abyTmp[0]);
     m_abyNoData.resize(dt.GetSize());
@@ -3127,7 +3224,18 @@ bool netCDFVariable::SetRawNoDataValue(const void* pNoData)
     if( pNoData == nullptr )
     {
         m_abyNoData.clear();
-        ret = nc_del_att(m_gid, m_varid, _FillValue);
+        nc_type atttype = NC_NAT;
+        size_t attlen = 0;
+        if( nc_inq_att(m_gid, m_varid, _FillValue, &atttype, &attlen) == NC_NOERR )
+            ret = nc_del_att(m_gid, m_varid, _FillValue);
+        else
+            ret = NC_NOERR;
+        if( nc_inq_att(m_gid, m_varid, "missing_value", &atttype, &attlen) == NC_NOERR )
+        {
+            int ret2 = nc_del_att(m_gid, m_varid, "missing_value");
+            if( ret2 != NC_NOERR )
+                ret = ret2;
+        }
     }
     else
     {
@@ -3145,7 +3253,22 @@ bool netCDFVariable::SetRawNoDataValue(const void* pNoData)
             NCDF_ERR(ret);
         }
 
-        ret = nc_put_att(m_gid, m_varid, _FillValue, m_nVarType, 1, &abyTmp[0]);
+        nc_type atttype = NC_NAT;
+        size_t attlen = 0;
+        if( nc_inq_att(m_gid, m_varid, "missing_value", &atttype, &attlen) == NC_NOERR )
+        {
+            if( nc_inq_att(m_gid, m_varid, _FillValue, &atttype, &attlen) == NC_NOERR )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Cannot change nodata when missing_value and _FillValue both exist");
+                return false;
+            }
+            ret = nc_put_att(m_gid, m_varid, "missing_value", m_nVarType, 1, &abyTmp[0]);
+        }
+        else
+        {
+            ret = nc_put_att(m_gid, m_varid, _FillValue, m_nVarType, 1, &abyTmp[0]);
+        }
     }
     NCDF_ERR(ret);
     if( ret == NC_NOERR )
@@ -3245,6 +3368,7 @@ std::vector<GUInt64> netCDFVariable::GetBlockSize() const
     // We add 1 to the dimension count, for 2D char variables that we
     // expose as a 1D variable.
     std::vector<size_t> anTemp(1 + nDimCount);
+    CPLMutexHolderD(&hNCMutex);
     nc_inq_var_chunking(m_gid, m_varid, &nStorageType, &anTemp[0]);
     if( nStorageType == NC_CHUNKED )
     {
@@ -3287,11 +3411,13 @@ std::vector<std::shared_ptr<GDALAttribute>> netCDFVariable::GetAttributes(CSLCon
         NCDF_ERR(nc_inq_attname(m_gid, m_varid, i, szAttrName));
         if( bShowAll ||
             (!EQUAL(szAttrName, _FillValue) &&
+             !EQUAL(szAttrName, "missing_value") &&
              !EQUAL(szAttrName, CF_UNITS) &&
              !EQUAL(szAttrName, CF_SCALE_FACTOR) &&
              !EQUAL(szAttrName, CF_ADD_OFFSET) &&
              !EQUAL(szAttrName, CF_GRD_MAPPING) &&
-             !(EQUAL(szAttrName, "_Unsigned") && m_nVarType == NC_BYTE)) )
+             !(EQUAL(szAttrName, "_Unsigned") &&
+               (m_nVarType == NC_BYTE || m_nVarType == NC_SHORT))) )
         {
             res.emplace_back(netCDFAttribute::Create(
                 m_poShared, m_gid, m_varid, szAttrName));
@@ -3946,7 +4072,7 @@ GDALDataset *netCDFDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
     // Try opening the dataset.
 #if defined(NCDF_DEBUG) && defined(ENABLE_UFFD)
     CPLDebug("GDAL_netCDF", "calling nc_open_mem(%s)", osFilename.c_str());
-#elseif defined(NCDF_DEBUG) && !defined(ENABLE_UFFD)
+#elif defined(NCDF_DEBUG) && !defined(ENABLE_UFFD)
     CPLDebug("GDAL_netCDF", "calling nc_open(%s)", osFilename.c_str());
 #endif
     int cdfid = -1;
@@ -4007,10 +4133,10 @@ GDALDataset *netCDFDataset::OpenMultiDim( GDALOpenInfo *poOpenInfo )
             status2 = nc_open_mem(CPLGetFilename(osFilenameForNCOpen), nMode, static_cast<size_t>(nVmaSize), pVma, &cdfid);
         }
         else
-          status2 = nc_open(osFilenameForNCOpen, nMode, &cdfid);
+          status2 = GDAL_nc_open(osFilenameForNCOpen, nMode, &cdfid);
         poSharedResources->m_pUffdCtx = pCtx;
 #else
-        status2 = nc_open(osFilenameForNCOpen, nMode, &cdfid);
+        status2 = GDAL_nc_open(osFilenameForNCOpen, nMode, &cdfid);
 #endif
     }
     if( status2 != NC_NOERR )

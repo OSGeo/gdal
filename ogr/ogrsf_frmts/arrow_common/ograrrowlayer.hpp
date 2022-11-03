@@ -3299,7 +3299,7 @@ int OGRArrowLayer::GetArrowSchema(struct ArrowArrayStream* stream,
 
         struct FieldDesc
         {
-            bool bIsRegularField = false; // true = attribute field, false = geometyr field
+            bool bIsRegularField = false; // true = attribute field, false = geometry field
             int  nIdx = -1;
         };
         // cppcheck-suppress unreadVariable

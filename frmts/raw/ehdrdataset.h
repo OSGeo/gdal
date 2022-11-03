@@ -79,7 +79,7 @@ class EHdrDataset final: public RawDataset
 
     bool        bGotTransform{};
     double      adfGeoTransform[6]{0,1,0,0,0,1};
-    char       *pszProjection{};
+    OGRSpatialReference m_oSRS{};
 
     bool        bHDRDirty{};
     char      **papszHDR{};
@@ -104,14 +104,10 @@ class EHdrDataset final: public RawDataset
 
     CPLErr GetGeoTransform( double *padfTransform ) override;
     CPLErr SetGeoTransform( double *padfTransform ) override;
-    const char *_GetProjectionRef() override;
-    CPLErr _SetProjection( const char * ) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+
+    const OGRSpatialReference* GetSpatialRef() const override
+        { return m_oSRS.IsEmpty() ? RawDataset::GetSpatialRef() : &m_oSRS; }
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     char **GetFileList() override;
 

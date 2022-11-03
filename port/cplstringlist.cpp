@@ -42,7 +42,6 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           CPLStringList()                            */
@@ -98,6 +97,18 @@ CPLStringList::CPLStringList( const CPLStringList &oOther ):
 
 {
     operator=(oOther);
+}
+
+/************************************************************************/
+/*                           CPLStringList()                            */
+/************************************************************************/
+
+//! Move constructor
+CPLStringList::CPLStringList( CPLStringList&& oOther ):
+    CPLStringList()
+
+{
+    operator=(std::move(oOther));
 }
 
 /************************************************************************/

@@ -39,7 +39,6 @@
 #include "ogrgeojsonutils.h"
 #include "ogrsf_frmts.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                       OGRESRIJSONDriverIdentify()                    */
@@ -100,6 +99,7 @@ void RegisterOGRESRIJSON()
                                "<CreationOptionList/>");
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->pfnOpen = OGRESRIJSONDriverOpen;
     poDriver->pfnIdentify = OGRESRIJSONDriverIdentify;

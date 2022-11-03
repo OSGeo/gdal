@@ -1155,6 +1155,9 @@ def test_gdalinfo_stac_json():
     assert "histogram" in raster_band
 
     assert len(stac["eo:bands"]) == 1
+    band = stac["eo:bands"][0]
+    assert band["name"] == "b1"
+    assert band["description"] == "Gray"
 
     # Test eo:bands cloud_cover
     # https://github.com/OSGeo/gdal/pull/6265#issuecomment-1232229669

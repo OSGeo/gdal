@@ -234,9 +234,16 @@ bool WCSDataset100::ExtractGridInfo()
 /*      Extract size, geotransform and coordinate system.               */
 /*      Projection is, if it is, from Point.srsName                     */
 /* -------------------------------------------------------------------- */
+    char* pszProjection = nullptr;
     if( WCSParseGMLCoverage( psRG, &nRasterXSize, &nRasterYSize,
                              adfGeoTransform, &pszProjection ) != CE_None )
+    {
+        CPLFree(pszProjection);
         return FALSE;
+    }
+    if( pszProjection )
+        m_oSRS.SetFromUserInput(pszProjection, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
+    CPLFree(pszProjection);
 
     // MapServer have origin at pixel boundary
     if (CPLGetXMLBoolean(psService, "OriginAtBoundary")) {
@@ -264,20 +271,14 @@ bool WCSDataset100::ExtractGridInfo()
         pszNativeCRSs =
             CPLGetXMLValue( psCO, "supportedCRSs.responseCRSs", nullptr );
 
-    if( pszNativeCRSs != nullptr
-        && (pszProjection == nullptr || strlen(pszProjection) == 0) )
+    if( pszNativeCRSs != nullptr && m_oSRS.IsEmpty() )
     {
-        OGRSpatialReference oSRS;
-
-        if( oSRS.SetFromUserInput( pszNativeCRSs, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE )
+        if( m_oSRS.SetFromUserInput( pszNativeCRSs, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE )
         {
-            CPLFree( pszProjection );
-            oSRS.exportToWkt( &pszProjection );
-        }
-        else
             CPLDebug( "WCS",
                       "<nativeCRSs> element contents not parsable:\n%s",
                       pszNativeCRSs );
+        }
     }
 
     // We should try to use the services name for the CRS if possible.
@@ -303,18 +304,13 @@ bool WCSDataset100::ExtractGridInfo()
 
     if( pszProjOverride )
     {
-        OGRSpatialReference oSRS;
-
-        if( oSRS.SetFromUserInput( pszProjOverride, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) != OGRERR_NONE )
+        if( m_oSRS.SetFromUserInput( pszProjOverride, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) != OGRERR_NONE )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "<SRS> element contents not parsable:\n%s",
                       pszProjOverride );
             return FALSE;
         }
-
-        CPLFree( pszProjection );
-        oSRS.exportToWkt( &pszProjection );
 
         if( STARTS_WITH_CI(pszProjOverride, "EPSG:")
             || STARTS_WITH_CI(pszProjOverride, "AUTO:")
@@ -327,16 +323,12 @@ bool WCSDataset100::ExtractGridInfo()
 /* -------------------------------------------------------------------- */
 /*      Build CRS name to use.                                          */
 /* -------------------------------------------------------------------- */
-    OGRSpatialReference oSRS;
-
-    if( pszProjection && strlen(pszProjection) > 0 && osCRS == "" )
+    if( !m_oSRS.IsEmpty() && osCRS == "" )
     {
-        oSRS.SetFromUserInput( pszProjection, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
-        const char *pszAuth = oSRS.GetAuthorityName(nullptr);
-
+        const char *pszAuth = m_oSRS.GetAuthorityName(nullptr);
         if( pszAuth != nullptr && EQUAL(pszAuth,"EPSG") )
         {
-            pszAuth = oSRS.GetAuthorityCode(nullptr);
+            pszAuth = m_oSRS.GetAuthorityCode(nullptr);
             if( pszAuth )
             {
                 osCRS = "EPSG:";

@@ -34,7 +34,6 @@
 #include "cpl_vsi_error.h"
 #include <limits.h>
 
-CPL_CVSID("$Id$")
 
 typedef struct
 {

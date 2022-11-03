@@ -99,7 +99,10 @@ Byte. With the -mode flag can also return a minimum visible height raster of typ
      {SphereDiameterFactor}=1/{CurvCoeff}=1/(1-{RefractionCoeff})
 
    For visible light, the standard atmospheric refraction coefficient that is generally used is 1/7.
-   Thus the default value (since GDAL 3.4) for CurvCoeff that gdal_viewshed uses is 0.85714 (=~ 1-1/7).
+   Thus the default value (since GDAL 3.4) for CurvCoeff that gdal_viewshed uses is 0.85714 (=~ 1-1/7)
+   for Earth CRS. Starting with GDAL 3.6, for non-Earth CRS (those whole semi-major axis differs
+   by more than 5% with the one of WGS 84), CurvCoeff default value is 1.0, to account for
+   the no refraction use case.
 
    The height of the DEM is corrected according to the following formula:
 

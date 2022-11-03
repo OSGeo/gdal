@@ -74,7 +74,6 @@
 
 #endif // HAVE_CURL
 
-CPL_CVSID("$Id$")
 
 // list of named persistent http sessions
 
@@ -961,20 +960,28 @@ int CPLHTTPPopFetchCallback(void)
  *     Default to NO.</li>
  * <li>USE_CAPI_STORE=YES/NO (GDAL >= 2.3, Windows only): whether CA certificates from
  *     the Windows certificate store. Defaults to NO.</li>
+ * <li>TCP_KEEPALIVE=YES/NO (GDAL >= 3.6): whether to enable TCP keep-alive.
+ *     Defaults to NO</li>
+ * <li>TCP_KEEPIDLE=integer, in seconds (GDAL >= 3.6): keep-alive idle time.
+ *     Defaults to 60. Only taken into account if TCP_KEEPALIVE=YES.</li>
+ * <li>TCP_KEEPINTVL=integer, in seconds (GDAL >= 3.6): interval time between
+ *     keep-alive probes.
+ *     Defaults to 60. Only taken into account if TCP_KEEPALIVE=YES.</li>
  * </ul>
  *
  * Alternatively, if not defined in the papszOptions arguments, the
  * CONNECTTIMEOUT, TIMEOUT,
  * LOW_SPEED_TIME, LOW_SPEED_LIMIT, USERPWD, PROXY, HTTPS_PROXY, PROXYUSERPWD, PROXYAUTH, NETRC,
  * MAX_RETRY and RETRY_DELAY, HEADER_FILE, HTTP_VERSION, SSL_VERIFYSTATUS, USE_CAPI_STORE,
- * GSSAPI_DELEGATION
+ * GSSAPI_DELEGATION, TCP_KEEPALIVE, TCP_KEEPIDLE, TCP_KEEPINTVL
  * values are searched in the configuration
  * options respectively named GDAL_HTTP_CONNECTTIMEOUT, GDAL_HTTP_TIMEOUT,
  * GDAL_HTTP_LOW_SPEED_TIME, GDAL_HTTP_LOW_SPEED_LIMIT, GDAL_HTTP_USERPWD,
  * GDAL_HTTP_PROXY, GDAL_HTTPS_PROXY, GDAL_HTTP_PROXYUSERPWD, GDAL_PROXY_AUTH,
  * GDAL_HTTP_NETRC, GDAL_HTTP_MAX_RETRY, GDAL_HTTP_RETRY_DELAY,
  * GDAL_HTTP_HEADER_FILE, GDAL_HTTP_VERSION, GDAL_HTTP_SSL_VERIFYSTATUS,
- * GDAL_HTTP_USE_CAPI_STORE, GDAL_GSSAPI_DELEGATION
+ * GDAL_HTTP_USE_CAPI_STORE, GDAL_GSSAPI_DELEGATION,
+ * GDAL_HTTP_TCP_KEEPALIVE, GDAL_HTTP_TCP_KEEPIDLE, GDAL_HTTP_TCP_KEEPINTVL.
  *
  * Starting with GDAL 3.6, the GDAL_HTTP_HEADERS configuration option can also be
  * used to specify a comma separated list of key: value pairs. This is an
@@ -1377,7 +1384,8 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
         if( strlen(szCurlErrBuf) > 0 )
         {
             bool bSkipError = false;
-
+            const char* pszContentLength =
+                CSLFetchNameValue(psResult->papszHeaders, "Content-Length");
             // Some servers such as
             // http://115.113.193.14/cgi-bin/world/qgis_mapserv.fcgi?VERSION=1.1.1&SERVICE=WMS&REQUEST=GetCapabilities
             // invalidly return Content-Length as the uncompressed size, with
@@ -1388,8 +1396,6 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
                 strstr(szCurlErrBuf, "transfer closed with") &&
                 strstr(szCurlErrBuf, "bytes remaining to read") )
             {
-                const char* pszContentLength =
-                    CSLFetchNameValue(psResult->papszHeaders, "Content-Length");
                 if( pszContentLength && psResult->nDataLen != 0 &&
                     atoi(pszContentLength) == psResult->nDataLen )
                 {
@@ -1407,11 +1413,40 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
                     bSkipError = true;
                 }
             }
+
+            // Ignore SSL errors about non-properly terminated connection,
+            // often due to HTTP proxies
+            else if (
+                pszContentLength == nullptr &&
+                // Cf https://github.com/curl/curl/pull/3148
+                (strstr(szCurlErrBuf,
+                        "GnuTLS recv error (-110): The TLS connection was non-properly terminated") != nullptr ||
+                // Cf https://github.com/curl/curl/issues/9024
+                 strstr(szCurlErrBuf, "SSL_read: error:0A000126:SSL routines::unexpected eof while reading") != nullptr) )
+            {
+                psResult->nStatus = 0;
+                bSkipError = true;
+            }
+            else if( CPLTestBool(CPLGetConfigOption("CPL_CURL_IGNORE_ERROR", "NO")) )
+            {
+                psResult->nStatus = 0;
+                bSkipError = true;
+            }
+
             if( !bSkipError )
             {
                 psResult->pszErrBuf = CPLStrdup(szCurlErrBuf);
-                CPLError( CE_Failure, CPLE_AppDefined,
-                        "%s", szCurlErrBuf );
+                if( psResult->nDataLen > 0 )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                              "%s. You may set the CPL_CURL_IGNORE_ERROR "
+                              "configuration option to YES to try to ignore it.",
+                              szCurlErrBuf );
+                }
+                else
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined, "%s", szCurlErrBuf );
+                }
             }
         }
         else
@@ -2289,6 +2324,32 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
     if( pszCookieJar != nullptr )
         unchecked_curl_easy_setopt(http_handle, CURLOPT_COOKIEJAR, pszCookieJar);
 
+    // TCP keep-alive
+    const char *pszTCPKeepAlive = CSLFetchNameValue(papszOptions, "TCP_KEEPALIVE");
+    if( pszTCPKeepAlive == nullptr )
+        pszTCPKeepAlive = CPLGetConfigOption("GDAL_HTTP_TCP_KEEPALIVE", "YES");
+    if( pszTCPKeepAlive != nullptr && CPLTestBool(pszTCPKeepAlive) )
+    {
+        // Set keep-alive interval.
+        int nKeepAliveInterval = 60;
+        const char *pszKeepAliveInterval = CSLFetchNameValue(papszOptions, "TCP_KEEPINTVL");
+        if( pszKeepAliveInterval == nullptr )
+            pszKeepAliveInterval = CPLGetConfigOption("GDAL_HTTP_TCP_KEEPINTVL", nullptr);
+        if( pszKeepAliveInterval != nullptr )
+            nKeepAliveInterval = atoi(pszKeepAliveInterval);
+
+        // Set keep-alive idle wait time.
+        int nKeepAliveIdle = 60;
+        const char *pszKeepAliveIdle = CSLFetchNameValue(papszOptions, "TCP_KEEPIDLE");
+        if( pszKeepAliveIdle == nullptr )
+            pszKeepAliveIdle = CPLGetConfigOption("GDAL_HTTP_TCP_KEEPIDLE", nullptr);
+        if( pszKeepAliveIdle != nullptr )
+            nKeepAliveIdle = atoi(pszKeepAliveIdle);
+
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_TCP_KEEPALIVE, 1L);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_TCP_KEEPINTVL, nKeepAliveInterval);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_TCP_KEEPIDLE, nKeepAliveIdle);
+    }
 
     struct curl_slist* headers = nullptr;
     const char *pszHeaderFile = CSLFetchNameValue( papszOptions, "HEADER_FILE" );

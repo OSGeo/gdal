@@ -12,6 +12,9 @@ available at:
 
   http://www.nar-associates.com/nurbs/
 
+David F. Rogers agreed explicitly that the subset of his code in this file to
+be used under the following license (cf https://github.com/OSGeo/gdal/issues/6524)
+
 Copyright (c) 2009, David F. Rogers
 All rights reserved.
 
@@ -44,7 +47,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 #include "cpl_port.h"
 
-CPL_CVSID("$Id$")
 
 /* used by ogrdxflayer.cpp */
 void rbspline2( int npts,int k,int p1,double b[],double h[],

@@ -39,7 +39,6 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 #define SPHERICAL_RADIUS        6378137.0
 #define GM_ORIGIN  -20037508.340
@@ -75,7 +74,7 @@ class PLMosaicDataset final: public GDALPamDataset
         CPLString               osBaseURL;
         CPLString               osAPIKey;
         CPLString               osMosaic;
-        char                   *pszWKT;
+        OGRSpatialReference     m_oSRS{};
         int                     nQuadSize;
         CPLString               osQuadsURL;
         int                     bHasGeoTransform;
@@ -132,10 +131,7 @@ class PLMosaicDataset final: public GDALPamDataset
 
     virtual void FlushCache(bool bAtClosing) override;
 
-    virtual const char *_GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
     virtual CPLErr      GetGeoTransform(double* padfGeoTransform) override;
 
     GDALDataset        *GetMetaTile(int tile_x, int tile_y);
@@ -344,7 +340,6 @@ GDALColorInterp PLMosaicRasterBand::GetColorInterpretation()
 PLMosaicDataset::PLMosaicDataset() :
     bMustCleanPersistent(FALSE),
     bTrustCache(FALSE),
-    pszWKT(nullptr),
     nQuadSize(0),
     bHasGeoTransform(FALSE),
     nZoomLevelMax(0),
@@ -355,6 +350,7 @@ PLMosaicDataset::PLMosaicDataset() :
     nLastMetaTileX(-1),
     nLastMetaTileY(-1)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGeoTransform[0] = 0;
     adfGeoTransform[1] = 1;
     adfGeoTransform[2] = 0;
@@ -374,7 +370,6 @@ PLMosaicDataset::~PLMosaicDataset()
 
 {
     PLMosaicDataset::FlushCache(true);
-    CPLFree(pszWKT);
     for( auto& poDS: apoTMSDS )
         delete poDS;
     if( poLastItemsInformation )
@@ -826,9 +821,7 @@ int PLMosaicDataset::OpenMosaic()
         return FALSE;
     }
 
-    OGRSpatialReference oSRS;
-    oSRS.SetFromUserInput(pszSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
-    oSRS.exportToWkt(&pszWKT);
+    m_oSRS.SetFromUserInput(pszSRS, OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
 
     json_object* poQuadDownload = CPL_json_object_object_get(
                                         poMosaic, "quad_download");
@@ -1161,12 +1154,13 @@ std::vector<CPLString> PLMosaicDataset::ListSubdatasets()
 }
 
 /************************************************************************/
-/*                            GetProjectionRef()                       */
+/*                            GetSpatialRef()                           */
 /************************************************************************/
 
-const char* PLMosaicDataset::_GetProjectionRef()
+const OGRSpatialReference *PLMosaicDataset::GetSpatialRef() const
+
 {
-    return (pszWKT) ? pszWKT : "";
+   return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /************************************************************************/

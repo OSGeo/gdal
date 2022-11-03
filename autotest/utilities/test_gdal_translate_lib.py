@@ -870,6 +870,145 @@ def test_gdal_translate_lib_coord_epoch_is_dynamic():
 
 
 ###############################################################################
+# Test overviewLevel option
+
+
+def test_gdal_translate_lib_overview_level():
+
+    src_filename = "/vsimem/test_gdal_translate_lib_overview_level.tif"
+    try:
+        src_ds = gdal.Translate(src_filename, "../gcore/data/byte.tif")
+        src_ds.BuildOverviews("AVERAGE", [2])
+        src_ds.BuildOverviews("NONE", [4])
+
+        with gdaltest.error_handler():
+            with pytest.raises(Exception):
+                assert gdal.Translate("", src_ds, format="MEM", overviewLevel="invalid")
+
+        out_ds = gdal.Translate("", src_ds, format="MEM", overviewLevel="NONE")
+        assert out_ds.RasterXSize == 20
+        assert out_ds.RasterYSize == 20
+        assert out_ds.ReadRaster() == src_ds.ReadRaster()
+
+        out_ds = gdal.Translate("", src_ds, format="MEM", overviewLevel=0)
+        assert out_ds.RasterXSize == 10
+        assert out_ds.RasterYSize == 10
+        assert (
+            out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster()
+        )
+
+        out_ds = gdal.Translate("", src_ds, format="MEM", overviewLevel=1)
+        assert out_ds.RasterXSize == 5
+        assert out_ds.RasterYSize == 5
+        assert (
+            out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(1).ReadRaster()
+        )
+
+        out_ds = gdal.Translate("", src_ds, format="MEM", overviewLevel=2)
+        assert out_ds.RasterXSize == 5
+        assert out_ds.RasterYSize == 5
+        assert (
+            out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(1).ReadRaster()
+        )
+
+        out_ds = gdal.Translate(
+            "", src_ds, format="MEM", overviewLevel="AUTO", widthPct=50, heightPct=50
+        )
+        assert out_ds.RasterXSize == 10
+        assert out_ds.RasterYSize == 10
+        assert (
+            out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster()
+        )
+
+        out_ds = gdal.Translate("", src_ds, format="MEM", widthPct=40, heightPct=40)
+        assert out_ds.RasterXSize == 8
+        assert out_ds.RasterYSize == 8
+        assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(
+            0, 0, 10, 10, 8, 8
+        )
+
+        out_ds = gdal.Translate(
+            "", src_ds, format="MEM", overviewLevel=0, widthPct=25, heightPct=25
+        )
+        assert out_ds.RasterXSize == 5
+        assert out_ds.RasterYSize == 5
+        assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(
+            0, 0, 10, 10, 5, 5
+        )
+
+        out_ds = gdal.Translate(
+            "", src_ds, format="MEM", overviewLevel=0, xRes=240, yRes=240
+        )
+        assert out_ds.RasterXSize == 5
+        assert out_ds.RasterYSize == 5
+        assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(
+            0, 0, 10, 10, 5, 5
+        )
+
+        out_ds = gdal.Translate(
+            "", src_ds, format="MEM", overviewLevel=0, srcWin=[2, 2, 16, 16]
+        )
+        assert out_ds.RasterXSize == 8
+        assert out_ds.RasterYSize == 8
+        assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(
+            1, 1, 8, 8
+        )
+
+        out_ds = gdal.Translate(
+            "", src_ds, format="MEM", overviewLevel="AUTO-1", widthPct=60, heightPct=60
+        )
+        assert out_ds.RasterXSize == 12
+        assert out_ds.RasterYSize == 12
+        assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).ReadRaster(
+            0, 0, 20, 20, 12, 12
+        )
+
+        out_ds = gdal.Translate(
+            "", src_ds, format="MEM", overviewLevel="AUTO-1", widthPct=40, heightPct=40
+        )
+        assert out_ds.RasterXSize == 8
+        assert out_ds.RasterYSize == 8
+        assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(
+            0, 0, 10, 10, 8, 8
+        )
+
+        out_ds = gdal.Translate(
+            "", src_ds, format="MEM", overviewLevel="AUTO-1", widthPct=25, heightPct=25
+        )
+        assert out_ds.RasterXSize == 5
+        assert out_ds.RasterYSize == 5
+        assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(
+            0, 0, 10, 10, 5, 5
+        )
+
+        out_ds = gdal.Translate(
+            "", src_ds, format="MEM", overviewLevel="AUTO-1", widthPct=10, heightPct=10
+        )
+        assert out_ds.RasterXSize == 2
+        assert out_ds.RasterYSize == 2
+        assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(
+            0, 0, 10, 10, 2, 2
+        )
+
+    finally:
+        src_ds = None
+        gdal.Unlink(src_filename)
+
+
+###############################################################################
+# Test copying a raster with no input band
+
+
+def test_gdal_translate_lib_no_input_band():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 0)
+    with gdaltest.error_handler():
+        gdal.Translate("", src_ds, format="MEM")
+    with gdaltest.error_handler():
+        gdal.Translate("", src_ds, format="MEM", outputType=gdal.GDT_Int16)
+
+
+###############################################################################
 # Cleanup
 
 

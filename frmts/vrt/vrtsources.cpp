@@ -66,7 +66,6 @@
 #define isnan std::isnan
 #endif
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -118,8 +117,6 @@ VRTSimpleSource::VRTSimpleSource( const VRTSimpleSource* poSrcSource,
     m_dfDstYOff(poSrcSource->m_dfDstYOff * dfYDstRatio),
     m_dfDstXSize(poSrcSource->m_dfDstXSize * dfXDstRatio),
     m_dfDstYSize(poSrcSource->m_dfDstYSize * dfYDstRatio),
-    m_bNoDataSet(poSrcSource->m_bNoDataSet),
-    m_dfNoDataValue(poSrcSource->m_dfNoDataValue),
     m_nMaxValue(poSrcSource->m_nMaxValue),
     m_bRelativeToVRTOri(-1),
     m_nExplicitSharedStatus(poSrcSource->m_nExplicitSharedStatus),
@@ -263,24 +260,6 @@ void VRTSimpleSource::SetDstWindow( double dfNewXOff, double dfNewYOff,
     m_dfDstYOff = RoundIfCloseToInt(dfNewYOff);
     m_dfDstXSize = RoundIfCloseToInt(dfNewXSize);
     m_dfDstYSize = RoundIfCloseToInt(dfNewYSize);
-}
-
-/************************************************************************/
-/*                           SetNoDataValue()                           */
-/************************************************************************/
-
-void VRTSimpleSource::SetNoDataValue( double dfNewNoDataValue )
-
-{
-    if( dfNewNoDataValue == VRT_NODATA_UNSET )
-    {
-        m_bNoDataSet = FALSE;
-        m_dfNoDataValue = VRT_NODATA_UNSET;
-        return;
-    }
-
-    m_bNoDataSet = TRUE;
-    m_dfNoDataValue = dfNewNoDataValue;
 }
 
 /************************************************************************/
@@ -808,7 +787,7 @@ void VRTSimpleSource::OpenSource() const
 /* -------------------------------------------------------------------- */
 
     m_poRasterBand = proxyDS->GetRasterBand(m_nBand);
-    if( m_poRasterBand == nullptr )
+    if( m_poRasterBand == nullptr || !ValidateOpenedBand(m_poRasterBand) )
     {
         proxyDS->ReleaseRef();
         return;
@@ -867,8 +846,6 @@ int VRTSimpleSource::IsSameExceptBandNumber( VRTSimpleSource* poOtherSource )
            m_dfDstYOff == poOtherSource->m_dfDstYOff &&
            m_dfDstXSize == poOtherSource->m_dfDstXSize &&
            m_dfDstYSize == poOtherSource->m_dfDstYSize &&
-           m_bNoDataSet == poOtherSource->m_bNoDataSet &&
-           m_dfNoDataValue == poOtherSource->m_dfNoDataValue &&
            !m_osSrcDSName.empty() &&
            m_osSrcDSName == poOtherSource->m_osSrcDSName;
 }
@@ -1515,106 +1492,6 @@ double VRTSimpleSource::GetMaximum( int nXSize, int nYSize, int *pbSuccess )
 }
 
 /************************************************************************/
-/*                       ComputeRasterMinMax()                          */
-/************************************************************************/
-
-CPLErr VRTSimpleSource::ComputeRasterMinMax( int nXSize, int nYSize,
-                                             int bApproxOK, double* adfMinMax )
-{
-    // The window we will actually request from the source raster band.
-    double dfReqXOff = 0.0;
-    double dfReqYOff = 0.0;
-    double dfReqXSize = 0.0;
-    double dfReqYSize = 0.0;
-    int nReqXOff = 0;
-    int nReqYOff = 0;
-    int nReqXSize = 0;
-    int nReqYSize = 0;
-
-    // The window we will actual set _within_ the pData buffer.
-    int nOutXOff = 0;
-    int nOutYOff = 0;
-    int nOutXSize = 0;
-    int nOutYSize = 0;
-
-    bool bError = false;
-    auto l_band = GetRasterBand();
-    if( !l_band ||
-        !GetSrcDstWindow( 0, 0, nXSize, nYSize,
-                          nXSize, nYSize,
-                          &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
-                          &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
-                          &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize,
-                          bError ) ||
-        nReqXOff != 0 || nReqYOff != 0 ||
-        nReqXSize != l_band->GetXSize() ||
-        nReqYSize != l_band->GetYSize())
-    {
-        return CE_Failure;
-    }
-
-    const CPLErr eErr =
-        l_band->ComputeRasterMinMax( bApproxOK, adfMinMax );
-    if( NeedMaxValAdjustment() )
-    {
-        if( adfMinMax[0] > m_nMaxValue )
-            adfMinMax[0] = m_nMaxValue;
-        if( adfMinMax[1] > m_nMaxValue )
-            adfMinMax[1] = m_nMaxValue;
-    }
-    return eErr;
-}
-
-/************************************************************************/
-/*                         ComputeStatistics()                          */
-/************************************************************************/
-
-CPLErr VRTSimpleSource::ComputeStatistics(
-    int nXSize, int nYSize,
-    int bApproxOK,
-    double *pdfMin, double *pdfMax,
-    double *pdfMean, double *pdfStdDev,
-    GDALProgressFunc pfnProgress, void *pProgressData )
-{
-    // The window we will actually request from the source raster band.
-    double dfReqXOff = 0.0;
-    double dfReqYOff = 0.0;
-    double dfReqXSize = 0.0;
-    double dfReqYSize = 0.0;
-    int nReqXOff = 0;
-    int nReqYOff = 0;
-    int nReqXSize = 0;
-    int nReqYSize = 0;
-
-    // The window we will actual set _within_ the pData buffer.
-    int nOutXOff = 0;
-    int nOutYOff = 0;
-    int nOutXSize = 0;
-    int nOutYSize = 0;
-
-    bool bError = false;
-    auto l_band = GetRasterBand();
-    if( !l_band ||
-        NeedMaxValAdjustment() ||
-        !GetSrcDstWindow( 0, 0, nXSize, nYSize,
-                          nXSize, nYSize,
-                          &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
-                          &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
-                          &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize,
-                          bError ) ||
-        nReqXOff != 0 || nReqYOff != 0 ||
-        nReqXSize != l_band->GetXSize() ||
-        nReqYSize != l_band->GetYSize())
-    {
-        return CE_Failure;
-    }
-
-    return l_band->ComputeStatistics( bApproxOK, pdfMin, pdfMax,
-                                      pdfMean, pdfStdDev,
-                                      pfnProgress, pProgressData );
-}
-
-/************************************************************************/
 /*                            GetHistogram()                            */
 /************************************************************************/
 
@@ -1849,23 +1726,6 @@ void VRTSimpleSource::SetResampling( const char* pszResampling )
 }
 
 /************************************************************************/
-/*                      GetAdjustedNoDataValue()                        */
-/************************************************************************/
-
-double VRTSimpleSource::GetAdjustedNoDataValue() const
-{
-    if( m_bNoDataSet )
-    {
-        auto l_band = GetRasterBand();
-        if( l_band && l_band->GetRasterDataType() == GDT_Float32 )
-        {
-            return GDALAdjustNoDataCloseToFloatMax(m_dfNoDataValue);
-        }
-    }
-    return m_dfNoDataValue;
-}
-
-/************************************************************************/
 /* ==================================================================== */
 /*                         VRTAveragedSource                            */
 /* ==================================================================== */
@@ -1893,6 +1753,24 @@ CPLXMLNode *VRTAveragedSource::SerializeToXML( const char *pszVRTPath )
     psSrc->pszValue = CPLStrdup( "AveragedSource" );
 
     return psSrc;
+}
+
+/************************************************************************/
+/*                           SetNoDataValue()                           */
+/************************************************************************/
+
+void VRTAveragedSource::SetNoDataValue( double dfNewNoDataValue )
+
+{
+    if( dfNewNoDataValue == VRT_NODATA_UNSET )
+    {
+        m_bNoDataSet = FALSE;
+        m_dfNoDataValue = VRT_NODATA_UNSET;
+        return;
+    }
+
+    m_bNoDataSet = TRUE;
+    m_dfNoDataValue = dfNewNoDataValue;
 }
 
 /************************************************************************/
@@ -1956,8 +1834,6 @@ VRTAveragedSource::RasterIO( GDALDataType /*eBandDataType*/,
     auto l_band = GetRasterBand();
     if( !l_band )
         return CE_Failure;
-
-    const double dfNoDataValue = GetAdjustedNoDataValue();
 
 /* -------------------------------------------------------------------- */
 /*      Allocate a temporary buffer to whole the full resolution        */
@@ -2072,9 +1948,9 @@ VRTAveragedSource::RasterIO( GDALDataType /*eBandDataType*/,
                         continue;
 
                     if( m_bNoDataSet &&
-                        GDALIsValueInRange<float>(dfNoDataValue) &&
+                        GDALIsValueInRange<float>(m_dfNoDataValue) &&
                         ARE_REAL_EQUAL(fSampledValue,
-                                       static_cast<float>(dfNoDataValue)))
+                                       static_cast<float>(m_dfNoDataValue)))
                         continue;
 
                     nPixelCount++;
@@ -2134,35 +2010,6 @@ double VRTAveragedSource::GetMaximum( int /* nXSize */,
 }
 
 /************************************************************************/
-/*                       ComputeRasterMinMax()                          */
-/************************************************************************/
-
-CPLErr VRTAveragedSource::ComputeRasterMinMax( int /* nXSize */,
-                                               int /* nYSize */,
-                                               int /* bApproxOK */,
-                                               double* /* adfMinMax */)
-{
-    return CE_Failure;
-}
-
-/************************************************************************/
-/*                         ComputeStatistics()                          */
-/************************************************************************/
-
-CPLErr VRTAveragedSource::ComputeStatistics( int /* nXSize */,
-                                             int /* nYSize */,
-                                             int /* bApproxOK */,
-                                             double * /* pdfMin */,
-                                             double * /* pdfMax */,
-                                             double * /* pdfMean */,
-                                             double * /* pdfStdDev */,
-                                             GDALProgressFunc /* pfnProgress */,
-                                             void * /* pProgressData */ )
-{
-    return CE_Failure;
-}
-
-/************************************************************************/
 /*                            GetHistogram()                            */
 /************************************************************************/
 
@@ -2190,25 +2037,14 @@ CPLErr VRTAveragedSource::GetHistogram( int /* nXSize */,
 /*                          VRTComplexSource()                          */
 /************************************************************************/
 
-VRTComplexSource::VRTComplexSource() :
-    m_eScalingType(VRT_SCALING_NONE),
-    m_dfScaleOff(0.0),
-    m_dfScaleRatio(1.0),
-    m_bSrcMinMaxDefined(FALSE),
-    m_dfSrcMin(0.0),
-    m_dfSrcMax(0.0),
-    m_dfDstMin(0.0),
-    m_dfDstMax(0.0),
-    m_dfExponent(1.0),
-    m_nColorTableComponent(0),
-    m_padfLUTInputs(nullptr),
-    m_padfLUTOutputs(nullptr),
-    m_nLUTItemCount(0)
-{}
+VRTComplexSource::VRTComplexSource() = default;
 
 VRTComplexSource::VRTComplexSource( const VRTComplexSource* poSrcSource,
                                     double dfXDstRatio, double dfYDstRatio ) :
     VRTSimpleSource(poSrcSource, dfXDstRatio, dfYDstRatio),
+    m_bNoDataSet(poSrcSource->m_bNoDataSet),
+    m_dfNoDataValue(poSrcSource->m_dfNoDataValue),
+    m_osNoDataValueOri(poSrcSource->m_osNoDataValueOri),
     m_eScalingType(poSrcSource->m_eScalingType),
     m_dfScaleOff(poSrcSource->m_dfScaleOff),
     m_dfScaleRatio(poSrcSource->m_dfScaleRatio),
@@ -2244,6 +2080,41 @@ VRTComplexSource::~VRTComplexSource()
 }
 
 /************************************************************************/
+/*                           SetNoDataValue()                           */
+/************************************************************************/
+
+void VRTComplexSource::SetNoDataValue( double dfNewNoDataValue )
+
+{
+    if( dfNewNoDataValue == VRT_NODATA_UNSET )
+    {
+        m_bNoDataSet = FALSE;
+        m_dfNoDataValue = VRT_NODATA_UNSET;
+        return;
+    }
+
+    m_bNoDataSet = TRUE;
+    m_dfNoDataValue = dfNewNoDataValue;
+}
+
+/************************************************************************/
+/*                      GetAdjustedNoDataValue()                        */
+/************************************************************************/
+
+double VRTComplexSource::GetAdjustedNoDataValue() const
+{
+    if( m_bNoDataSet )
+    {
+        auto l_band = GetRasterBand();
+        if( l_band && l_band->GetRasterDataType() == GDT_Float32 )
+        {
+            return GDALAdjustNoDataCloseToFloatMax(m_dfNoDataValue);
+        }
+    }
+    return m_dfNoDataValue;
+}
+
+/************************************************************************/
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
@@ -2265,12 +2136,26 @@ CPLXMLNode *VRTComplexSource::SerializeToXML( const char *pszVRTPath )
 
     if( m_bNoDataSet )
     {
-        auto l_band = GetRasterBand();
-        if( l_band )
+        if( !m_osNoDataValueOri.empty() && GetRasterBandNoOpen() == nullptr )
         {
-            const double dfNoDataValue = GetAdjustedNoDataValue();
+            CPLSetXMLValue( psSrc, "NODATA", m_osNoDataValueOri.c_str() );
+        }
+        else
+        {
+            GDALDataType eBandDT = GDT_Unknown;
+            double dfNoDataValue = m_dfNoDataValue;
+            const auto kMaxFloat = std::numeric_limits<float>::max();
+            if( std::fabs(std::fabs(m_dfNoDataValue) - kMaxFloat) < 1e-10 * kMaxFloat )
+            {
+                auto l_band = GetRasterBand();
+                if( l_band )
+                {
+                    dfNoDataValue = GetAdjustedNoDataValue();
+                    eBandDT = l_band->GetRasterDataType();
+                }
+            }
             CPLSetXMLValue( psSrc, "NODATA", VRTSerializeNoData(
-                dfNoDataValue, l_band->GetRasterDataType(), 16).c_str());
+                dfNoDataValue, eBandDT, 16).c_str());
         }
     }
 
@@ -2406,7 +2291,8 @@ CPLErr VRTComplexSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
     if( CPLGetXMLValue(psSrc, "NODATA", nullptr) != nullptr )
     {
         m_bNoDataSet = TRUE;
-        m_dfNoDataValue = CPLAtofM( CPLGetXMLValue(psSrc, "NODATA", "0") );
+        m_osNoDataValueOri = CPLGetXMLValue(psSrc, "NODATA", "0");
+        m_dfNoDataValue = CPLAtofM( m_osNoDataValueOri.c_str() );
     }
 
     const char* pszUseMaskBand = CPLGetXMLValue(psSrc, "UseMaskBand", nullptr);
@@ -3036,21 +2922,6 @@ double VRTComplexSource::GetMaximum( int nXSize, int nYSize, int *pbSuccess )
 }
 
 /************************************************************************/
-/*                       ComputeRasterMinMax()                          */
-/************************************************************************/
-
-CPLErr VRTComplexSource::ComputeRasterMinMax( int nXSize, int nYSize, int bApproxOK, double* adfMinMax )
-{
-    if( AreValuesUnchanged() )
-    {
-        return VRTSimpleSource::ComputeRasterMinMax( nXSize, nYSize, bApproxOK,
-                                                     adfMinMax);
-    }
-
-    return CE_Failure;
-}
-
-/************************************************************************/
 /*                            GetHistogram()                            */
 /************************************************************************/
 
@@ -3068,28 +2939,6 @@ CPLErr VRTComplexSource::GetHistogram( int nXSize, int nYSize,
                                               panHistogram,
                                               bIncludeOutOfRange, bApproxOK,
                                               pfnProgress, pProgressData );
-    }
-
-    return CE_Failure;
-}
-
-/************************************************************************/
-/*                         ComputeStatistics()                          */
-/************************************************************************/
-
-CPLErr VRTComplexSource::ComputeStatistics( int nXSize, int nYSize,
-                                            int bApproxOK,
-                                            double *pdfMin, double *pdfMax,
-                                            double *pdfMean, double *pdfStdDev,
-                                            GDALProgressFunc pfnProgress,
-                                            void *pProgressData )
-{
-    if( AreValuesUnchanged() )
-    {
-        return VRTSimpleSource::ComputeStatistics( nXSize, nYSize, bApproxOK,
-                                                   pdfMin, pdfMax,
-                                                   pdfMean, pdfStdDev,
-                                                   pfnProgress, pProgressData );
     }
 
     return CE_Failure;
@@ -3189,35 +3038,6 @@ double VRTFuncSource::GetMaximum( int /* nXSize */,
 {
     *pbSuccess = FALSE;
     return 0;
-}
-
-/************************************************************************/
-/*                       ComputeRasterMinMax()                          */
-/************************************************************************/
-
-CPLErr VRTFuncSource::ComputeRasterMinMax( int /* nXSize */,
-                                           int /* nYSize */,
-                                           int /* bApproxOK */,
-                                           double* /* adfMinMax */ )
-{
-    return CE_Failure;
-}
-
-/************************************************************************/
-/*                         ComputeStatistics()                          */
-/************************************************************************/
-
-CPLErr VRTFuncSource::ComputeStatistics( int /* nXSize */,
-                                         int /* nYSize */,
-                                         int /* bApproxOK */,
-                                         double * /* pdfMin */,
-                                         double * /* pdfMax */,
-                                         double * /* pdfMean */,
-                                         double * /* pdfStdDev */,
-                                         GDALProgressFunc /* pfnProgress */,
-                                         void * /* pProgressData */ )
-{
-    return CE_Failure;
 }
 
 /************************************************************************/

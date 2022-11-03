@@ -747,7 +747,7 @@ class netCDFDataset final: public GDALPamDataset
 
     /* projection/GT */
     double       m_adfGeoTransform[6];
-    char         *m_pszProjection = nullptr;
+    OGRSpatialReference m_oSRS{};
     int          nXDimID;
     int          nYDimID;
     bool         bIsProjected;
@@ -882,7 +882,7 @@ class netCDFDataset final: public GDALPamDataset
 #endif
 
     void SetGeoTransformNoUpdate( double * );
-    void SetProjectionNoUpdate( const char* );
+    void SetSpatialRefNoUpdate( const OGRSpatialReference* );
 
   protected:
 
@@ -904,14 +904,8 @@ class netCDFDataset final: public GDALPamDataset
     /* Projection/GT */
     CPLErr      GetGeoTransform( double * ) override;
     CPLErr      SetGeoTransform (double *) override;
-    const char * _GetProjectionRef() override;
-    CPLErr      _SetProjection (const char *) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     virtual char      **GetMetadataDomainList() override;
     char ** GetMetadata( const char * ) override;
@@ -1089,6 +1083,13 @@ void NCDFWriteXYVarsAttributes(nccfdriver::netCDFVID& vcdf, int nVarXID, int nVa
                                       OGRSpatialReference* poSRS);
 int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference* poSRS,
                          char** ppszCFProjection, bool bWriteGDALTags, const std::string& = std::string());
+
+double NCDFGetDefaultNoDataValue( int nCdfId, int nVarId, int nVarType, bool& bGotNoData );
+#ifdef NETCDF_HAS_NC4
+int64_t NCDFGetDefaultNoDataValueAsInt64( int nCdfId, int nVarId, bool& bGotNoData );
+uint64_t NCDFGetDefaultNoDataValueAsUInt64( int nCdfId, int nVarId, bool& bGotNoData );
+#endif
+
 CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName,
                     double *pdfValue );
 CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName,
@@ -1125,5 +1126,8 @@ bool netCDFDatasetCreateTempFile( NetCDFFormatEnum eFormat,
                                          const char* pszTmpFilename,
                                          VSILFILE* fpSrc );
 #endif
+
+int GDAL_nc_open(const char* pszFilename, int nMode, int* pID);
+int GDAL_nc_close(int cdfid);
 
 #endif

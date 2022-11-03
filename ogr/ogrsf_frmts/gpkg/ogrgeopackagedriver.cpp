@@ -30,7 +30,6 @@
 
 #include "tilematrixset.hpp"
 
-CPL_CVSID("$Id$")
 
 // g++ -g -Wall -fPIC -shared -o ogr_geopackage.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/gpkg ogr/ogrsf_frmts/gpkg/*.c* -L. -lgdal
 
@@ -435,6 +434,7 @@ void RegisterOGRGeoPackage()
     poDriver->SetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "NATIVE OGRSQL SQLITE" );
 
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GeoPackage" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gpkg" );
@@ -449,7 +449,13 @@ void RegisterOGRGeoPackage()
 "  </Option>"
 "  <Option name='TABLE' type='string' scope='raster' description='Name of tile user-table'/>"
 "  <Option name='ZOOM_LEVEL' type='integer' scope='raster' description='Zoom level of full resolution. If not specified, maximum non-empty zoom level'/>"
-"  <Option name='BAND_COUNT' type='int' min='1' max='4' scope='raster' description='Number of raster bands' default='4'/>"
+"  <Option name='BAND_COUNT' type='string-select' scope='raster' description='Number of raster bands (only for Byte data type)' default='AUTO'>"
+"    <Value>AUTO</Value>"
+"    <Value>1</Value>"
+"    <Value>2</Value>"
+"    <Value>3</Value>"
+"    <Value>4</Value>"
+"  </Option>"
 "  <Option name='MINX' type='float' scope='raster' description='Minimum X of area of interest'/>"
 "  <Option name='MINY' type='float' scope='raster' description='Minimum Y of area of interest'/>"
 "  <Option name='MAXX' type='float' scope='raster' description='Maximum X of area of interest'/>"
@@ -459,6 +465,7 @@ void RegisterOGRGeoPackage()
 COMPRESSION_OPTIONS
 "  <Option name='PRELUDE_STATEMENTS' type='string' scope='raster,vector' description='SQL statement(s) to send on the SQLite connection before any other ones'/>"
 "  <Option name='NOLOCK' type='boolean' description='Whether the database should be opened in nolock mode'/>"
+"  <Option name='IMMUTABLE' type='boolean' description='Whether the database should be opened in immutable mode'/>"
 "</OpenOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,

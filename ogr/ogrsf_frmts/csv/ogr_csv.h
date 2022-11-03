@@ -63,7 +63,9 @@ typedef enum
 
 void OGRCSVDriverRemoveFromMap(const char *pszName, GDALDataset *poDS);
 
-constexpr size_t OGR_CSV_MAX_LINE_SIZE = 1024 * 1024;
+// Must be kept as a macro with the value fully resolved, as it is used
+// by STRINGIFY(x) to generate open option description.
+#define OGR_CSV_DEFAULT_MAX_LINE_SIZE 10000000
 
 /************************************************************************/
 /*                             OGRCSVLayer                              */
@@ -85,6 +87,7 @@ class OGRCSVLayer final: public OGRLayer
     std::set<CPLString> m_oSetFields;
 
     VSILFILE           *fpCSV;
+    const int           m_nMaxLineSize = -1;
 
     int                 nNextFID;
 
@@ -114,6 +117,7 @@ class OGRCSVLayer final: public OGRLayer
     int                 iNfdcLatitudeS;
     bool                bHonourStrings;
 
+    bool                m_bIsGNIS = false; // https://www.usgs.gov/u.s.-board-on-geographic-names/download-gnis-data
     int                 iLongitudeField;
     int                 iLatitudeField;
     int                 iZField;
@@ -146,7 +150,8 @@ class OGRCSVLayer final: public OGRLayer
 
   public:
 
-    OGRCSVLayer( const char *pszName, VSILFILE *fp, const char *pszFilename,
+    OGRCSVLayer( const char *pszName, VSILFILE *fp, int nMaxLineSize,
+                 const char *pszFilename,
                  int bNew, int bInWriteMode, char chDelimiter );
     virtual ~OGRCSVLayer() GDAL_OVERRIDE;
 

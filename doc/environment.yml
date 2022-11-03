@@ -50,7 +50,6 @@ dependencies:
     - sphinxcontrib-jsmath==1.0.1
     - sphinxcontrib-qthelp==1.0.2
     - sphinxcontrib-serializinghtml==1.1.3
-    - sphinxcontrib-apidoc==0.3.0
     - urllib3==1.24.3
 prefix: /Users/hobu/miniconda3/envs/gdal-docs
 

@@ -37,7 +37,7 @@
 #include "cpl_error.h"
 #include "cpl_vsi.h"
 #include "gdal.h"
-
+#include "gdal_priv.h"
 
 CPL_CVSID("$Id$")
 
@@ -59,7 +59,7 @@ CPL_CVSID("$Id$")
  * @param nXSize pixel size of window to read.
  * @param nYSize line size of window to read.
  *
- * @return Checksum value.
+ * @return Checksum value, or -1 in case of error (starting with GDAL 3.6)
  */
 
 int CPL_STDCALL
@@ -87,7 +87,7 @@ GDALChecksumImage( GDALRasterBandH hBand,
                                 GDALGetDataTypeSizeBytes(eDstDataType)));
         if( padfLineData == nullptr )
         {
-            return 0;
+            return -1;
         }
 
         for( int iLine = nYOff; iLine < nYOff + nYSize; iLine++ )
@@ -99,6 +99,7 @@ GDALChecksumImage( GDALRasterBandH hBand,
                 CPLError(CE_Failure, CPLE_FileIO,
                          "Checksum value couldn't be computed due to "
                          "I/O read error.");
+                nChecksum = -1;
                 break;
             }
             const int nCount = bComplex ? nXSize * 2 : nXSize;
@@ -138,6 +139,91 @@ GDALChecksumImage( GDALRasterBandH hBand,
 
         CPLFree(padfLineData);
     }
+    else if( nXOff == 0 && nYOff == 0 )
+    {
+        const GDALDataType eDstDataType = bComplex ? GDT_CInt32 : GDT_Int32;
+        int nBlockXSize = 0;
+        int nBlockYSize = 0;
+        GDALGetBlockSize(hBand, &nBlockXSize, &nBlockYSize);
+        const int nDstDataTypeSize = GDALGetDataTypeSizeBytes(eDstDataType);
+        int nChunkXSize = nBlockXSize;
+        const int nChunkYSize = nBlockYSize;
+        if( nBlockXSize < nXSize )
+        {
+            const GIntBig nMaxChunkSize = std::max(
+                static_cast<GIntBig>(10 * 1000 * 1000), GDALGetCacheMax64() / 10 );
+            if( static_cast<GIntBig>(nXSize) * nChunkYSize < nMaxChunkSize / nDstDataTypeSize )
+            {
+                // A full line of height nChunkYSize can fit in the maximum
+                // allowed memory
+                nChunkXSize = nXSize;
+            }
+            else
+            {
+                // Otherwise compute a size that is a multiple of nBlockXSize
+                nChunkXSize = static_cast<int>(std::min(
+                    static_cast<GIntBig>(nXSize),
+                    nBlockXSize * std::max(
+                    static_cast<GIntBig>(1),
+                    nMaxChunkSize / (
+                        static_cast<GIntBig>(nBlockXSize) * nChunkYSize * nDstDataTypeSize))));
+            }
+        }
+
+        int *panChunkData = static_cast<GInt32 *>(
+            VSI_MALLOC3_VERBOSE(nChunkXSize, nChunkYSize, nDstDataTypeSize));
+        if( panChunkData == nullptr )
+        {
+            return -1;
+        }
+        const int nValsPerIter = bComplex ? 2 : 1;
+
+        const int nYBlocks = DIV_ROUND_UP(nYSize, nChunkYSize);
+        const int nXBlocks = DIV_ROUND_UP(nXSize, nChunkXSize);
+        for( int iYBlock = 0; iYBlock < nYBlocks; ++iYBlock )
+        {
+            const int iYStart = iYBlock * nChunkYSize;
+            const int iYEnd = iYBlock == nYBlocks - 1 ? nYSize : iYStart + nChunkYSize;
+            const int nChunkActualHeight = iYEnd - iYStart;
+            for( int iXBlock = 0; iXBlock < nXBlocks; ++iXBlock )
+            {
+                const int iXStart = iXBlock * nChunkXSize;
+                const int iXEnd = iXBlock == nXBlocks - 1 ? nXSize : iXStart + nChunkXSize;
+                const int nChunkActualXSize = iXEnd - iXStart;
+                if( GDALRasterIO( hBand, GF_Read, iXStart, iYStart,
+                                  nChunkActualXSize, nChunkActualHeight,
+                                  panChunkData,
+                                  nChunkActualXSize, nChunkActualHeight,
+                                  eDstDataType,
+                                  0, 0 ) != CE_None )
+                {
+                    CPLError(CE_Failure, CPLE_FileIO,
+                             "Checksum value could not be computed due to I/O "
+                             "read error.");
+                    nChecksum = -1;
+                    iYBlock = nYBlocks;
+                    break;
+                }
+                const int xIters = nValsPerIter * nChunkActualXSize;
+                for( int iY = iYStart; iY < iYEnd; ++iY)
+                {
+                    // Initialize iPrime so that it is consistent with a
+                    // per full line iteration strategy
+                    iPrime = (nValsPerIter * (iY * nXSize + iXStart)) % 11;
+                    const int nOffset = nValsPerIter * (iY - iYStart) * nChunkActualXSize;
+                    for( int i = 0; i < xIters; ++i )
+                    {
+                        nChecksum += panChunkData[nOffset + i] % anPrimes[iPrime++];
+                        if( iPrime > 10 )
+                            iPrime = 0;
+                    }
+                    nChecksum &= 0xffff;
+                }
+            }
+        }
+
+        CPLFree( panChunkData );
+    }
     else
     {
         const GDALDataType eDstDataType = bComplex ? GDT_CInt32 : GDT_Int32;
@@ -147,7 +233,7 @@ GDALChecksumImage( GDALRasterBandH hBand,
                                 GDALGetDataTypeSizeBytes(eDstDataType)));
         if( panLineData == nullptr )
         {
-            return 0;
+            return -1;
         }
 
         for( int iLine = nYOff; iLine < nYOff + nYSize; iLine++ )
@@ -159,6 +245,7 @@ GDALChecksumImage( GDALRasterBandH hBand,
                 CPLError(CE_Failure, CPLE_FileIO,
                          "Checksum value could not be computed due to I/O "
                          "read error.");
+                nChecksum = -1;
                 break;
             }
             const int nCount = bComplex ? nXSize * 2 : nXSize;

@@ -67,7 +67,6 @@
 #include "ogrlayerdecorator.h"
 #include "ogrsf_frmts.h"
 
-CPL_CVSID("$Id$")
 
 typedef enum
 {
@@ -137,6 +136,9 @@ struct GDALVectorTranslateOptions
 
     /*! access modes */
     GDALVectorTranslateAccessMode eAccessMode;
+
+    /*! whether to use UpsertFeature() instead of CreateFeature() */
+    bool bUpsert;
 
     /*! It has the effect of adding, to existing target layers, the new fields found in source layers.
         This option is useful when merging files that have non-strictly identical structures. This might
@@ -3139,6 +3141,8 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                 else
                 {
                     anLayerCountFeatures[iLayer] = poLayer->GetFeatureCount();
+                    if( psOptions->nLimit >= 0 )
+                        anLayerCountFeatures[iLayer] = std::min(anLayerCountFeatures[iLayer], psOptions->nLimit);
                     nCountLayersFeatures += anLayerCountFeatures[iLayer];
                 }
             }
@@ -3724,7 +3728,7 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         CPLErrorReset();
 
         char** papszLCOTemp = CSLDuplicate(m_papszLCO);
-        const auto papszDestCreationOptions =
+        const char* pszDestCreationOptions =
             m_poDstDS->GetDriver()->GetMetadataItem(
                 GDAL_DS_LAYER_CREATIONOPTIONLIST);
 
@@ -3738,22 +3742,26 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         // If the source layer has a single geometry column that is not nullable
         // and that ODsCCreateGeomFieldAfterCreateLayer is available, use it
         // so as to be able to set the not null constraint (if the driver supports it)
+        // and that the output driver has no GEOMETRY_NULLABLE layer creation option.
         // Same if the source geometry column has a non empty name that is not
-        // overridden
+        // overridden, and that the output driver has no GEOMETRY_NAME layer creation
+        // option, but no LAUNDER option (if laundering is available, then we
+        // might want to launder the geometry column name as well)
         else if( eGType != wkbNone &&
                  anRequestedGeomFields.empty() &&
                  nSrcGeomFieldCount == 1 &&
                  m_poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer) &&
                  ((!poSrcFDefn->GetGeomFieldDefn(0)->IsNullable() &&
                    CSLFetchNameValue(m_papszLCO, "GEOMETRY_NULLABLE") == nullptr &&
-                   (papszDestCreationOptions == nullptr ||
-                    strstr(papszDestCreationOptions, "GEOMETRY_NULLABLE") != nullptr) &&
+                   (pszDestCreationOptions == nullptr ||
+                    strstr(pszDestCreationOptions, "GEOMETRY_NULLABLE") != nullptr) &&
                    !m_bForceNullable) ||
                   (poSrcLayer->GetGeometryColumn() != nullptr &&
                    CSLFetchNameValue(m_papszLCO, "GEOMETRY_NAME") == nullptr &&
                    !EQUAL(poSrcLayer->GetGeometryColumn(), "") &&
-                   (papszDestCreationOptions == nullptr ||
-                    strstr(papszDestCreationOptions, "GEOMETRY_NAME") == nullptr) &&
+                   (pszDestCreationOptions == nullptr ||
+                    strstr(pszDestCreationOptions, "GEOMETRY_NAME") == nullptr ||
+                    strstr(pszDestCreationOptions, "LAUNDER") != nullptr) &&
                    poSrcFDefn->GetFieldIndex(poSrcLayer->GetGeometryColumn()) < 0)) )
         {
             anRequestedGeomFields.push_back(0);
@@ -3772,8 +3780,8 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
             anRequestedGeomFields.empty() &&
             nSrcGeomFieldCount >= 1 &&
             !poSrcFDefn->GetGeomFieldDefn(0)->IsNullable() &&
-            papszDestCreationOptions != nullptr &&
-            strstr(papszDestCreationOptions, "GEOMETRY_NULLABLE") != nullptr &&
+            pszDestCreationOptions != nullptr &&
+            strstr(pszDestCreationOptions, "GEOMETRY_NULLABLE") != nullptr &&
             CSLFetchNameValue(m_papszLCO, "GEOMETRY_NULLABLE") == nullptr &&
             !m_bForceNullable )
         {
@@ -3783,8 +3791,8 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
 
         // Use source geometry field name as much as possible
         if( eGType != wkbNone &&
-            papszDestCreationOptions &&
-            strstr(papszDestCreationOptions, "GEOMETRY_NAME") != nullptr &&
+            pszDestCreationOptions &&
+            strstr(pszDestCreationOptions, "GEOMETRY_NAME") != nullptr &&
             CSLFetchNameValue(m_papszLCO, "GEOMETRY_NAME") == nullptr )
         {
             int iSrcGeomField = -1;
@@ -3818,8 +3826,8 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         // manually.
         if( poSrcLayer->GetMetadataItem(OLMD_FID64) != nullptr &&
             EQUAL(poSrcLayer->GetMetadataItem(OLMD_FID64), "YES") &&
-            papszDestCreationOptions &&
-            strstr(papszDestCreationOptions, "FID64") != nullptr &&
+            pszDestCreationOptions &&
+            strstr(pszDestCreationOptions, "FID64") != nullptr &&
             CSLFetchNameValue(m_papszLCO, "FID64") == nullptr )
         {
             papszLCOTemp = CSLSetNameValue(papszLCOTemp, "FID64", "YES");
@@ -3831,9 +3839,9 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         if( !m_bUnsetFid && !bAppend &&
             poSrcLayer->GetFIDColumn() != nullptr &&
             !EQUAL(poSrcLayer->GetFIDColumn(), "") &&
-            papszDestCreationOptions != nullptr &&
-            (strstr(papszDestCreationOptions, "='FID'") != nullptr ||
-             strstr(papszDestCreationOptions, "=\"FID\"") != nullptr) &&
+            pszDestCreationOptions != nullptr &&
+            (strstr(pszDestCreationOptions, "='FID'") != nullptr ||
+             strstr(pszDestCreationOptions, "=\"FID\"") != nullptr) &&
             CSLFetchNameValue(m_papszLCO, "FID") == nullptr )
         {
             papszLCOTemp = CSLSetNameValue(papszLCOTemp, "FID", poSrcLayer->GetFIDColumn());
@@ -3852,9 +3860,9 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         if( m_bNativeData &&
             poSrcLayer->GetMetadataItem("NATIVE_DATA", "NATIVE_DATA") != nullptr &&
             poSrcLayer->GetMetadataItem("NATIVE_MEDIA_TYPE", "NATIVE_DATA") != nullptr &&
-            papszDestCreationOptions != nullptr &&
-            strstr(papszDestCreationOptions, "NATIVE_DATA") != nullptr &&
-            strstr(papszDestCreationOptions, "NATIVE_MEDIA_TYPE") != nullptr )
+            pszDestCreationOptions != nullptr &&
+            strstr(pszDestCreationOptions, "NATIVE_DATA") != nullptr &&
+            strstr(pszDestCreationOptions, "NATIVE_MEDIA_TYPE") != nullptr )
         {
             papszLCOTemp = CSLSetNameValue(papszLCOTemp, "NATIVE_DATA",
                     poSrcLayer->GetMetadataItem("NATIVE_DATA", "NATIVE_DATA"));
@@ -3865,8 +3873,8 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
 
         // For FileGeodatabase, automatically set CREATE_SHAPE_AREA_AND_LENGTH_FIELDS=YES
         // creation option if the source layer has a Shape_Area/Shape_Length field
-        if( papszDestCreationOptions &&
-            strstr(papszDestCreationOptions, "CREATE_SHAPE_AREA_AND_LENGTH_FIELDS") != nullptr &&
+        if( pszDestCreationOptions &&
+            strstr(pszDestCreationOptions, "CREATE_SHAPE_AREA_AND_LENGTH_FIELDS") != nullptr &&
             CSLFetchNameValue(m_papszLCO, "CREATE_SHAPE_AREA_AND_LENGTH_FIELDS") == nullptr )
         {
             const auto poSrcLayerDefn = poSrcLayer->GetLayerDefn();
@@ -5095,15 +5103,20 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
 
                     if( m_bMakeValid )
                     {
+                        const bool bIsGeomCollection =
+                            wkbFlatten(poDstGeometry->getGeometryType()) == wkbGeometryCollection;
                         OGRGeometry* poValidGeom = poDstGeometry->MakeValid();
                         delete poDstGeometry;
                         poDstGeometry = poValidGeom;
                         if( poDstGeometry == nullptr )
                             goto end_loop;
-                        OGRGeometry* poCleanedGeom =
-                            OGRGeometryFactory::removeLowerDimensionSubGeoms(poDstGeometry);
-                        delete poDstGeometry;
-                        poDstGeometry = poCleanedGeom;
+                        if( !bIsGeomCollection )
+                        {
+                            OGRGeometry* poCleanedGeom =
+                                OGRGeometryFactory::removeLowerDimensionSubGeoms(poDstGeometry);
+                            delete poDstGeometry;
+                            poDstGeometry = poCleanedGeom;
+                        }
                     }
 
                     if( eGType != GEOMTYPE_UNCHANGED )
@@ -5126,7 +5139,9 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
             }
 
             CPLErrorReset();
-            if( poDstLayer->CreateFeature( poDstFeature.get() ) == OGRERR_NONE )
+            if( (psOptions->bUpsert ?
+                    poDstLayer->UpsertFeature( poDstFeature.get() ) :
+                    poDstLayer->CreateFeature( poDstFeature.get() )) == OGRERR_NONE )
             {
                 nFeaturesWritten ++;
                 if( nDesiredFID != OGRNullFID  && poDstFeature->GetFID() != nDesiredFID )
@@ -5409,6 +5424,11 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
         else if( EQUAL(papszArgv[i],"-append") )
         {
             psOptions->eAccessMode = ACCESS_APPEND;
+        }
+        else if( EQUAL(papszArgv[i],"-upsert") )
+        {
+            psOptions->eAccessMode = ACCESS_APPEND;
+            psOptions->bUpsert = true;
         }
         else if( EQUAL(papszArgv[i],"-overwrite") )
         {

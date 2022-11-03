@@ -2225,3 +2225,31 @@ def test_ogr_libkml_read_non_conformant_multi_geometries():
     feat = lyr.GetNextFeature()
     wkt = "MULTIPOINT ((0 0))"
     assert not ogrtest.check_feature_geometry(feat, wkt)
+
+
+###############################################################################
+# Test reprojection while writing
+
+
+def test_ogr_libkml_write_reproject():
+
+    if not ogrtest.have_read_libkml:
+        pytest.skip()
+
+    outfilename = "/vsimem/test_ogr_libkml_write_reproject.kml"
+    ds = ogr.GetDriverByName("LIBKML").CreateDataSource(outfilename)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    lyr = ds.CreateLayer("test", srs=srs)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(500000 0 0)"))
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(outfilename)
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    assert not ogrtest.check_feature_geometry(feat, "POINT Z (3 0 0)")
+    ds = None
+
+    gdal.Unlink(outfilename)

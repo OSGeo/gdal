@@ -32,7 +32,6 @@
 #include "ogr_srs_api.h"
 #include "rawdataset.h"
 
-CPL_CVSID("$Id$")
 
 /**
 
@@ -81,6 +80,7 @@ class LOSLASDataset final: public RawDataset
 
     int         nRecordLength;
 
+    OGRSpatialReference m_oSRS{};
     double      adfGeoTransform[6];
 
     CPL_DISALLOW_COPY_ASSIGN(LOSLASDataset)
@@ -90,10 +90,7 @@ class LOSLASDataset final: public RawDataset
     ~LOSLASDataset() override;
 
     CPLErr GetGeoTransform( double * padfTransform ) override;
-    const char *_GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override { return &m_oSRS; }
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -111,6 +108,9 @@ class LOSLASDataset final: public RawDataset
 
 LOSLASDataset::LOSLASDataset() : fpImage(nullptr), nRecordLength(0)
 {
+    m_oSRS.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
     memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
 }
 
@@ -275,16 +275,6 @@ CPLErr LOSLASDataset::GetGeoTransform( double * padfTransform )
 {
     memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
     return CE_None;
-}
-
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char *LOSLASDataset::_GetProjectionRef()
-
-{
-    return SRS_WKT_WGS84_LAT_LONG;
 }
 
 /************************************************************************/

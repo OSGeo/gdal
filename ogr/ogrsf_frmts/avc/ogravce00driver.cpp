@@ -28,7 +28,6 @@
 
 #include "ogr_avc.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                             Identify()                               */
@@ -96,6 +95,7 @@ void RegisterOGRAVCE00()
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "e00" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/avce00.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->pfnIdentify = OGRAVCE00DriverIdentify;
     poDriver->pfnOpen = OGRAVCE00DriverOpen;

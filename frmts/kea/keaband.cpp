@@ -38,7 +38,6 @@
 #include <vector>
 #include <limits>
 
-CPL_CVSID("$Id$")
 
 // constructor
 KEARasterBand::KEARasterBand( KEADataset *pDataset, int nSrcBand, GDALAccess eAccessIn, kealib::KEAImageIO *pImageIO, LockedRefCount *pRefCount ):
@@ -279,7 +278,7 @@ char *KEARasterBand::GetHistogramAsString()
 }
 
 // internal method to create the overviews
-void KEARasterBand::CreateOverviews(int nOverviews, int *panOverviewList)
+void KEARasterBand::CreateOverviews(int nOverviews, const int *panOverviewList)
 {
     CPLMutexHolderD( &m_hMutex );
     // delete any existing overview bands

@@ -54,7 +54,6 @@ WCSDataset::WCSDataset(int version, const char *cache_dir) :
     psService(nullptr),
     papszSDSModifiers(nullptr),
     m_Version(version),
-    pszProjection(nullptr),
     native_crs(true),
     axis_order_swap(false),
     pabySavedDataBuffer(nullptr),
@@ -62,6 +61,7 @@ WCSDataset::WCSDataset(int version, const char *cache_dir) :
     nMaxCols(-1),
     nMaxRows(-1)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -89,9 +89,6 @@ WCSDataset::~WCSDataset()
 
     CPLDestroyXMLNode( psService );
 
-    CPLFree( pszProjection );
-    pszProjection = nullptr;
-
     CSLDestroy( papszHttpOptions );
     CSLDestroy( papszSDSModifiers );
 
@@ -111,9 +108,12 @@ WCSDataset::~WCSDataset()
 bool WCSDataset::SetCRS(const CPLString &crs, bool native)
 {
     osCRS = crs;
+    char* pszProjection = nullptr;
     if (!CRSImpliesAxisOrderSwap(osCRS, axis_order_swap, &pszProjection)) {
         return false;
     }
+    m_oSRS.importFromWkt(pszProjection);
+    CPLFree(pszProjection);
     native_crs = native;
     return true;
 }
@@ -390,7 +390,7 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
     {
         *ppsResult = CPLHTTPFetch( osRequest, papszHttpOptions );
     }
-    
+
     if( ProcessError( *ppsResult ) )
         return CE_Failure;
     else
@@ -609,14 +609,10 @@ int WCSDataset::EstablishRasterDetails()
     if( poDS == nullptr )
         return false;
 
-    const char* pszPrj = poDS->GetProjectionRef();
-    if( pszPrj && strlen(pszPrj) > 0 )
-    {
-        if( pszProjection )
-            CPLFree( pszProjection );
-
-        pszProjection = CPLStrdup( pszPrj );
-    }
+    const auto poSRS = poDS->GetSpatialRef();
+    m_oSRS.Clear();
+    if( poSRS )
+        m_oSRS = *poSRS;
 
 /* -------------------------------------------------------------------- */
 /*      Record details.                                                 */
@@ -1593,20 +1589,17 @@ CPLErr WCSDataset::GetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *WCSDataset::_GetProjectionRef()
+const OGRSpatialReference *WCSDataset::GetSpatialRef() const
 
 {
-    const char* pszPrj = GDALPamDataset::_GetProjectionRef();
-    if( pszPrj && strlen(pszPrj) > 0 )
-        return pszPrj;
+    const auto poSRS = GDALPamDataset::GetSpatialRef();
+    if( poSRS )
+        return poSRS;
 
-    if ( pszProjection && strlen(pszProjection) > 0 )
-        return pszProjection;
-
-    return "";
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /************************************************************************/

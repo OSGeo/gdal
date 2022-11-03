@@ -36,7 +36,6 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                        GMLASBinInputStream                           */
@@ -230,11 +229,28 @@ void GMLASErrorHandler::handle (const SAXParseException& e, CPLErr eErr)
                       CPLString(szHANDLE_MULTIPLE_IMPORTS_OPTION) +
                       "=YES open option";
     }
-    CPLError(eErr, CPLE_AppDefined, "%s:%d:%d %s",
+
+    CPLString osFullErrorMsg;
+    osFullErrorMsg.Printf("%s:%d:%d %s",
              transcode(resourceId).c_str(),
              static_cast<int>(e.getLineNumber()),
              static_cast<int>(e.getColumnNumber()),
              osErrorMsg.c_str());
+
+    if( m_bHideGMLTypeNotFound &&
+        m_osGMLTypeNotFoundError.empty() &&
+        osErrorMsg.find("http://www.opengis.net/gml/3.2:AbstractCRS' not found") != std::string::npos )
+    {
+        m_osGMLTypeNotFoundError = osFullErrorMsg;
+    }
+    else if( m_bHideGMLTypeNotFound && !m_osGMLTypeNotFoundError.empty() )
+    {
+        // do nothing
+    }
+    else
+    {
+        CPLError(eErr, CPLE_AppDefined, "%s", osFullErrorMsg.c_str());
+    }
 }
 
 /************************************************************************/
@@ -313,6 +329,17 @@ InputSource* GMLASBaseEntityResolver::resolveEntity(
         m_osGMLVersionFound = "3.1.1";
     else if( osSystemId.find("/gml/3.2.1/") != std::string::npos )
         m_osGMLVersionFound = "3.2.1";
+
+    constexpr const char* GML_321_LOC_SUFFIX = "/gml/3.2.1/gml.xsd";
+    constexpr const char* GML_321_OGC_SCHEMA_LOC = "http://schemas.opengis.net/gml/3.2.1/gml.xsd";
+    if( osSystemId.size() > strlen(GML_321_LOC_SUFFIX) &&
+        strcmp(osSystemId.c_str() + osSystemId.size() - strlen(GML_321_LOC_SUFFIX), GML_321_LOC_SUFFIX) == 0 &&
+        osSystemId != GML_321_OGC_SCHEMA_LOC )
+    {
+        m_bFoundNonOfficialGMLSchemaLocation = true;
+        if( m_bSubstituteWithOGCSchemaLocation )
+            osSystemId = GML_321_OGC_SCHEMA_LOC;
+    }
 
     CPLString osNewPath;
     VSILFILE* fp = m_oCache.Open(osSystemId,
@@ -504,117 +531,143 @@ bool GMLASReader::LoadXSDInParser( SAX2XMLReader* poParser,
         CPLIsFilenameRelative(osXSDFilename)) ?
             CPLString(CPLFormFilename(osBaseDirname, osXSDFilename, nullptr)) :
             osXSDFilename );
-    CPLString osResolvedFilename;
-    VSILFILE* fpXSD = oCache.Open( osModifXSDFilename, CPLString(),
-                                   osResolvedFilename );
-    if( fpXSD == nullptr )
-    {
-        return false;
-    }
 
-    poParser->setFeature (XMLUni::fgXercesSchemaFullChecking,
-                            bSchemaFullChecking);
-    poParser->setFeature( XMLUni::fgXercesHandleMultipleImports,
-                            bHandleMultipleImports );
-
-    // Install a temporary entity resolved based on the current XSD
-    CPLString osXSDDirname( CPLGetDirname(osModifXSDFilename) );
-    if( osXSDFilename.find("http://") == 0 ||
-        osXSDFilename.find("https://") == 0 )
+    for( int iPass = 0; iPass <= 1; ++iPass )
     {
-        osXSDDirname = CPLGetDirname(("/vsicurl_streaming/" +
-                                     osModifXSDFilename).c_str());
-    }
-    oXSDEntityResolver.SetBasePath(osXSDDirname);
-    oXSDEntityResolver.DoExtraSchemaProcessing( osResolvedFilename, fpXSD );
+        CPLString osResolvedFilename;
+        VSILFILE* fpXSD = oCache.Open( osModifXSDFilename, CPLString(),
+                                       osResolvedFilename );
+        if( fpXSD == nullptr )
+        {
+            return false;
+        }
 
-    EntityResolver* poOldEntityResolver = poParser->getEntityResolver();
-    poParser->setEntityResolver( &oXSDEntityResolver );
+        poParser->setFeature (XMLUni::fgXercesSchemaFullChecking,
+                                bSchemaFullChecking);
+        poParser->setFeature( XMLUni::fgXercesHandleMultipleImports,
+                                bHandleMultipleImports );
 
-    // Install a temporary error handler
-    GMLASErrorHandler oErrorHandler;
-    oErrorHandler.SetSchemaFullCheckingEnabled( bSchemaFullChecking );
-    oErrorHandler.SetHandleMultipleImportsEnabled( bHandleMultipleImports );
-    ErrorHandler* poOldErrorHandler = poParser->getErrorHandler();
-    poParser->setErrorHandler( &oErrorHandler);
+        // Install a temporary entity resolved based on the current XSD
+        CPLString osXSDDirname( CPLGetDirname(osModifXSDFilename) );
+        if( osXSDFilename.find("http://") == 0 ||
+            osXSDFilename.find("https://") == 0 )
+        {
+            osXSDDirname = CPLGetDirname(("/vsicurl_streaming/" +
+                                         osModifXSDFilename).c_str());
+        }
+        oXSDEntityResolver.SetBasePath(osXSDDirname);
+        oXSDEntityResolver.DoExtraSchemaProcessing( osResolvedFilename, fpXSD );
+        if( iPass == 1 )
+            oXSDEntityResolver.SetSubstituteWithOGCSchemaLocation(true);
 
-    GMLASInputSource oSource(osResolvedFilename, fpXSD, false);
-    const bool bCacheGrammar = true;
-    Grammar* poGrammar = nullptr;
-    std::string osLoadGrammarErrorMsg("loadGrammar failed");
+        EntityResolver* poOldEntityResolver = poParser->getEntityResolver();
+        poParser->setEntityResolver( &oXSDEntityResolver );
 
-    const int nMaxMem = std::min(2048, std::max(0, atoi(
-        CPLGetConfigOption("OGR_GMLAS_XERCES_MAX_MEMORY", "500"))));
-    const std::string osMsgMaxMem = CPLSPrintf(
-        "Xerces-C memory allocation exceeds %d MB. "
-        "This can happen on schemas with a big value for maxOccurs. "
-        "Define the OGR_GMLAS_XERCES_MAX_MEMORY configuration option to a "
-        "bigger value (in MB) to increase that limitation, "
-        "or 0 to remove it completely.",
-        nMaxMem);
-    const double dfTimeout = CPLAtof(
-        CPLGetConfigOption("OGR_GMLAS_XERCES_MAX_TIME", "2"));
-    const std::string osMsgTimeout = CPLSPrintf(
-        "Processing in Xerces exceeded maximum allowed of %.3f s. "
-        "This can happen on schemas with a big value for maxOccurs. "
-        "Define the OGR_GMLAS_XERCES_MAX_TIME configuration option to a "
-        "bigger value (in second) to increase that limitation, "
-        "or 0 to remove it completely.",
-        dfTimeout);
-    OGRStartXercesLimitsForThisThread(static_cast<size_t>(nMaxMem) * 1024 * 1024,
-                                      osMsgMaxMem.c_str(),
-                                      dfTimeout,
-                                      osMsgTimeout.c_str());
-    try
-    {
-        poGrammar = poParser->loadGrammar(oSource,
-                                            Grammar::SchemaGrammarType,
-                                            bCacheGrammar);
-    }
-    catch( const SAXException& e )
-    {
-        osLoadGrammarErrorMsg += ": "+ transcode(e.getMessage());
-    }
-    catch( const XMLException& e )
-    {
-        osLoadGrammarErrorMsg += ": "+ transcode(e.getMessage());
-    }
-    catch( const OutOfMemoryException& e )
-    {
-        if( strstr(CPLGetLastErrorMsg(), "configuration option") == nullptr )
+        // Install a temporary error handler
+        GMLASErrorHandler oErrorHandler;
+        oErrorHandler.SetSchemaFullCheckingEnabled( bSchemaFullChecking );
+        oErrorHandler.SetHandleMultipleImportsEnabled( bHandleMultipleImports );
+        if( iPass == 0 )
+            oErrorHandler.SetHideGMLTypeNotFound(true);
+        ErrorHandler* poOldErrorHandler = poParser->getErrorHandler();
+        poParser->setErrorHandler( &oErrorHandler);
+
+        GMLASInputSource oSource(osResolvedFilename, fpXSD, false);
+        const bool bCacheGrammar = true;
+        Grammar* poGrammar = nullptr;
+        std::string osLoadGrammarErrorMsg("loadGrammar failed");
+
+        const int nMaxMem = std::min(2048, std::max(0, atoi(
+            CPLGetConfigOption("OGR_GMLAS_XERCES_MAX_MEMORY", "500"))));
+        const std::string osMsgMaxMem = CPLSPrintf(
+            "Xerces-C memory allocation exceeds %d MB. "
+            "This can happen on schemas with a big value for maxOccurs. "
+            "Define the OGR_GMLAS_XERCES_MAX_MEMORY configuration option to a "
+            "bigger value (in MB) to increase that limitation, "
+            "or 0 to remove it completely.",
+            nMaxMem);
+        const double dfTimeout = CPLAtof(
+            CPLGetConfigOption("OGR_GMLAS_XERCES_MAX_TIME", "2"));
+        const std::string osMsgTimeout = CPLSPrintf(
+            "Processing in Xerces exceeded maximum allowed of %.3f s. "
+            "This can happen on schemas with a big value for maxOccurs. "
+            "Define the OGR_GMLAS_XERCES_MAX_TIME configuration option to a "
+            "bigger value (in second) to increase that limitation, "
+            "or 0 to remove it completely.",
+            dfTimeout);
+        OGRStartXercesLimitsForThisThread(static_cast<size_t>(nMaxMem) * 1024 * 1024,
+                                          osMsgMaxMem.c_str(),
+                                          dfTimeout,
+                                          osMsgTimeout.c_str());
+        try
+        {
+            poGrammar = poParser->loadGrammar(oSource,
+                                                Grammar::SchemaGrammarType,
+                                                bCacheGrammar);
+        }
+        catch( const SAXException& e )
         {
             osLoadGrammarErrorMsg += ": "+ transcode(e.getMessage());
         }
-    }
-    catch( const DOMException& e )
-    {
-        // Can happen with a .xsd that has a bad <?xml version="
-        // declaration.
-        osLoadGrammarErrorMsg += ": "+ transcode(e.getMessage());
-    }
-    OGRStopXercesLimitsForThisThread();
-
-    // Restore previous handlers
-    poParser->setEntityResolver( poOldEntityResolver );
-    poParser->setErrorHandler( poOldErrorHandler );
-    VSIFCloseL(fpXSD);
-
-    if( poGrammar == nullptr )
-    {
-        if( !osLoadGrammarErrorMsg.empty() )
+        catch( const XMLException& e )
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "%s",
-                     osLoadGrammarErrorMsg.c_str());
+            osLoadGrammarErrorMsg += ": "+ transcode(e.getMessage());
         }
-        return false;
-    }
-    if( oErrorHandler.hasFailed() )
-    {
-        return false;
-    }
+        catch( const OutOfMemoryException& e )
+        {
+            if( strstr(CPLGetLastErrorMsg(), "configuration option") == nullptr )
+            {
+                osLoadGrammarErrorMsg += ": "+ transcode(e.getMessage());
+            }
+        }
+        catch( const DOMException& e )
+        {
+            // Can happen with a .xsd that has a bad <?xml version="
+            // declaration.
+            osLoadGrammarErrorMsg += ": "+ transcode(e.getMessage());
+        }
+        OGRStopXercesLimitsForThisThread();
 
-    if( ppoGrammar != nullptr )
-        *ppoGrammar = poGrammar;
+        // Restore previous handlers
+        poParser->setEntityResolver( poOldEntityResolver );
+        poParser->setErrorHandler( poOldErrorHandler );
+        VSIFCloseL(fpXSD);
+
+        if( poGrammar == nullptr )
+        {
+            if( !osLoadGrammarErrorMsg.empty() )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                         osLoadGrammarErrorMsg.c_str());
+            }
+            return false;
+        }
+        if( oErrorHandler.hasFailed() )
+        {
+            if( iPass == 0 && !oErrorHandler.GetGMLTypeNotFoundError().empty() )
+            {
+                if( oXSDEntityResolver.GetFoundNonOfficialGMLSchemaLocation() )
+                {
+                    CPLDebug("GMLAS",
+                             "Error '%s' encountered, but non-official GML schema "
+                             "location has been imported. Retry with official one",
+                             oErrorHandler.GetGMLTypeNotFoundError().c_str());
+                    continue;
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                             oErrorHandler.GetGMLTypeNotFoundError().c_str());
+                }
+            }
+            return false;
+        }
+
+        if( ppoGrammar != nullptr )
+            *ppoGrammar = poGrammar;
+
+        break;
+    }
 
     return true;
 }

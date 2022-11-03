@@ -43,7 +43,6 @@
 #define ENABLE_SQL_SQLITE_FORMAT
 #endif
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                        RasterliteOpenSQLiteDB()                      */
@@ -198,8 +197,9 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
         }
         const int nTileXSize = OGR_F_GetFieldAsInteger(hFeat, 2);
         const int nTileYSize = OGR_F_GetFieldAsInteger(hFeat, 3);
-        if( nTileXSize <= 0 || nTileXSize >= std::numeric_limits<int>::max() / 2 ||
-            nTileYSize <= 0 || nTileYSize >= std::numeric_limits<int>::max() / 2 )
+        constexpr int MAX_INT_DIV_2 = std::numeric_limits<int>::max() / 2;
+        if( nTileXSize <= 0 || nTileXSize >= MAX_INT_DIV_2 ||
+            nTileYSize <= 0 || nTileYSize >= MAX_INT_DIV_2 )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "invalid tile size");
             OGR_F_Destroy(hFeat);
@@ -210,10 +210,11 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
 
         const double dfDstXOff = ( oEnvelope.MinX - minx ) / poGDS->adfGeoTransform[1];
         const double dfDstYOff = ( maxy - oEnvelope.MaxY ) / ( -poGDS->adfGeoTransform[5] );
-        if( !(dfDstXOff >= std::numeric_limits<int>::min() / 2 &&
-              dfDstXOff <= std::numeric_limits<int>::max() / 2) ||
-            !(dfDstYOff >= std::numeric_limits<int>::min() / 2 &&
-              dfDstYOff <= std::numeric_limits<int>::max() / 2) )
+        constexpr int MIN_INT_DIV_2 = std::numeric_limits<int>::min() / 2;
+        if( !(dfDstXOff >= MIN_INT_DIV_2 &&
+              dfDstXOff <= MAX_INT_DIV_2) ||
+            !(dfDstYOff >= MIN_INT_DIV_2 &&
+              dfDstYOff <= MAX_INT_DIV_2) )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "invalid geometry");
             OGR_F_Destroy(hFeat);
@@ -636,11 +637,11 @@ RasterliteDataset::RasterliteDataset() :
     papoOverviews(nullptr),
     nLimitOvrCount(-1),
     bValidGeoTransform(FALSE),
-    pszSRS(nullptr),
     poCT(nullptr),
     bCheckForExistingOverview(TRUE),
     hDS(nullptr)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
 }
 
@@ -662,7 +663,7 @@ RasterliteDataset::RasterliteDataset( RasterliteDataset* poMainDSIn,
     papoOverviews(poMainDSIn->papoOverviews + nLevelIn),
     nLimitOvrCount(-1),
     bValidGeoTransform(TRUE),
-    pszSRS(poMainDSIn->pszSRS),
+    m_oSRS(poMainDSIn->m_oSRS),
     poCT(poMainDSIn->poCT),
     osTableName(poMainDSIn->osTableName),
     osFileName(poMainDSIn->osFileName),
@@ -705,8 +706,6 @@ int RasterliteDataset::CloseDependentDatasets()
         papszSubDatasets = nullptr;
         CSLDestroy(papszImageStructure);
         papszImageStructure = nullptr;
-        CPLFree(pszSRS);
-        pszSRS = nullptr;
 
         if (papoOverviews)
         {
@@ -836,15 +835,12 @@ CPLErr RasterliteDataset::GetGeoTransform( double* padfGeoTransform )
 }
 
 /************************************************************************/
-/*                         GetProjectionRef()                           */
+/*                         GetSpatialRef()                              */
 /************************************************************************/
 
-const char* RasterliteDataset::_GetProjectionRef()
+const OGRSpatialReference* RasterliteDataset::GetSpatialRef() const
 {
-    if (pszSRS)
-        return pszSRS;
-
-    return "";
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /************************************************************************/
@@ -1351,7 +1347,7 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
         OGRSpatialReferenceH hSRS = OGR_L_GetSpatialRef(hMetadataLyr);
         if (hSRS)
         {
-            OSRExportToWkt(hSRS, &poDS->pszSRS);
+            poDS->m_oSRS = *(OGRSpatialReference::FromHandle(hSRS));
         }
 
 /* -------------------------------------------------------------------- */

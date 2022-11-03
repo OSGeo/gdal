@@ -57,7 +57,6 @@
 #include "shapefil.h"
 #include "shp_vsi.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           OGRShapeLayer()                            */
@@ -2306,82 +2305,13 @@ OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef() const
         {
             if( CPLTestBool(CPLGetConfigOption("USE_OSR_FIND_MATCHES", "YES")) )
             {
-                int nEntries = 0;
-                int* panConfidence = nullptr;
-                OGRSpatialReferenceH* pahSRS =
-                    poSRS->FindMatches(nullptr, &nEntries, &panConfidence);
-                if( nEntries == 1 && panConfidence[0] >= 90 )
+                auto poSRSMatch = poSRS->FindBestMatch();
+                if( poSRSMatch )
                 {
-                    std::vector<double> adfTOWGS84(7);
-                    if( poSRS->GetTOWGS84(&adfTOWGS84[0], 7) != OGRERR_NONE )
-                    {
-                        adfTOWGS84.clear();
-                    }
-
                     poSRS->Release();
-                    poSRS = reinterpret_cast<OGRSpatialReference*>(pahSRS[0]);
+                    poSRS = poSRSMatch;
                     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                    CPLFree(pahSRS);
-
-                    auto poBaseGeogCRS = std::unique_ptr<OGRSpatialReference>(
-                        poSRS->CloneGeogCS());
-
-                    // If the base geographic SRS of the SRS is EPSG:4326
-                    // with TOWGS84[0,0,0,0,0,0], then just use the official
-                    // SRS code
-                    // Same with EPSG:4258 (ETRS89), since it's the only known
-                    // TOWGS84[] style transformation to WGS 84, and given the
-                    // "fuzzy" nature of both ETRS89 and WGS 84, there's little
-                    // chance that a non-NULL TOWGS84[] will emerge.
-                    const char* pszAuthorityName = nullptr;
-                    const char* pszAuthorityCode = nullptr;
-                    const char* pszBaseAuthorityName = nullptr;
-                    const char* pszBaseAuthorityCode = nullptr;
-                    if( adfTOWGS84 == std::vector<double>(7) &&
-                        (pszAuthorityName = poSRS->GetAuthorityName(nullptr)) != nullptr &&
-                        EQUAL(pszAuthorityName, "EPSG") &&
-                        (pszAuthorityCode = poSRS->GetAuthorityCode(nullptr)) != nullptr &&
-                        (pszBaseAuthorityName = poBaseGeogCRS->GetAuthorityName(nullptr)) != nullptr &&
-                        EQUAL(pszBaseAuthorityName, "EPSG") &&
-                        (pszBaseAuthorityCode = poBaseGeogCRS->GetAuthorityCode(nullptr)) != nullptr &&
-                        (EQUAL(pszBaseAuthorityCode, "4326") ||
-                         EQUAL(pszBaseAuthorityCode, "4258")) )
-                    {
-                        poSRS->importFromEPSG(atoi(pszAuthorityCode));
-                    }
                 }
-                else
-                {
-                    // If there are several matches >= 90%, take the only one
-                    // that is EPSG
-                    int iEPSG = -1;
-                    for(int i = 0; i < nEntries; i++ )
-                    {
-                        if( panConfidence[i] >= 90 )
-                        {
-                            const char* pszAuthName =
-                                reinterpret_cast<OGRSpatialReference*>(pahSRS[i])->GetAuthorityName(nullptr);
-                            if( pszAuthName != nullptr && EQUAL(pszAuthName, "EPSG") )
-                            {
-                                if( iEPSG < 0 )
-                                    iEPSG = i;
-                                else
-                                {
-                                    iEPSG = -1;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    if( iEPSG >= 0 )
-                    {
-                        poSRS->Release();
-                        poSRS = reinterpret_cast<OGRSpatialReference*>(pahSRS[iEPSG])->Clone();
-                        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                    }
-                    OSRFreeSRSArray(pahSRS);
-                }
-                CPLFree(panConfidence);
             }
             else
             {

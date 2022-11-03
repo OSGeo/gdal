@@ -46,7 +46,6 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           GDALWMSDataset()                           */
@@ -75,6 +74,7 @@ GDALWMSDataset::GDALWMSDataset() :
     m_default_overview_count(-1),
     m_bNeedsDataWindow(true)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     m_hint.m_valid = false;
     m_data_window.m_sx = -1;
     nBands = 0;
@@ -552,8 +552,8 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
     if (ret == CE_None) {
         const char *proj = CPLGetXMLValue(config, "Projection", "");
         if (proj[0] != '\0') {
-            m_projection = ProjToWKT(proj);
-            if (m_projection.empty()) {
+            m_oSRS = ProjToSRS(proj);
+            if (m_oSRS.IsEmpty()) {
                 CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Bad projection specified.");
                 ret = CE_Failure;
             }
@@ -578,10 +578,10 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
     }
 
     if (ret == CE_None) {
-        if (!m_projection.size()) {
-            const char *proj = m_mini_driver->GetProjectionInWKT();
-            if (proj != nullptr) {
-                m_projection = proj;
+        if (m_oSRS.IsEmpty()) {
+            const auto oSRS = m_mini_driver->GetSpatialRef();
+            if (!oSRS.IsEmpty()) {
+                m_oSRS = oSRS;
             }
         }
     }
@@ -623,16 +623,16 @@ CPLErr GDALWMSDataset::IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy,
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
-const char *GDALWMSDataset::_GetProjectionRef() {
-    return m_projection.c_str();
+const OGRSpatialReference *GDALWMSDataset::GetSpatialRef() const {
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /************************************************************************/
-/*                           SetProjection()                            */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
-CPLErr GDALWMSDataset::_SetProjection(const char*) {
+CPLErr GDALWMSDataset::SetSpatialRef(const OGRSpatialReference*) {
     return CE_Failure;
 }
 

@@ -32,7 +32,6 @@
 
 #include <set>
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                       OGRElasticAggregationLayer()                   */

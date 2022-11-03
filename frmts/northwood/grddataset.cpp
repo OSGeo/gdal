@@ -41,7 +41,6 @@
 #include "../../ogr/ogrsf_frmts/mitab/mitab.h"
 #endif
 
-CPL_CVSID("$Id$")
 
 constexpr float NODATA = -1.e37f;
 constexpr double SCALE16BIT = 65534.0;

@@ -30,7 +30,6 @@
 
 // g++ -g -Wall -fPIC -shared -o ogr_CARTO.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/carto ogr/ogrsf_frmts/carto/*.c* -L. -lgdal -Iogr/ogrsf_frmts/geojson/libjson
 
-CPL_CVSID("$Id$")
 
 extern "C" void RegisterOGRCarto();
 
@@ -112,6 +111,7 @@ void RegisterOGRCarto()
     poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_DELETE_FIELD, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/carto.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "NATIVE OGRSQL SQLITE" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "CARTO:" );
 

@@ -41,7 +41,6 @@
 #  include "expat.h"
 #endif
 
-CPL_CVSID("$Id$")
 
 KML::KML() :
     poTrunk_(nullptr),

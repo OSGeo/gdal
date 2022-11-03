@@ -34,7 +34,6 @@
 
 #include <vector>
 
-CPL_CVSID("$Id$")
 
 enum Interleave { BSQ, BIL, BIP };
 
@@ -57,10 +56,10 @@ class CPGDataset final: public RawDataset
 
     int nGCPCount;
     GDAL_GCP *pasGCPList;
-    char *pszGCPProjection{};
+    OGRSpatialReference m_oGCPSRS{};
 
     double adfGeoTransform[6];
-    char *pszProjection{};
+    OGRSpatialReference m_oSRS{};
 
     int nLoadedStokesLine;
     float *padfStokesMatrix;
@@ -85,16 +84,12 @@ class CPGDataset final: public RawDataset
     ~CPGDataset() override;
 
     int GetGCPCount() override;
-    const char *_GetGCPProjection() override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override {
-        return GetGCPSpatialRefFromOldGetGCPProjection();
-    }
+    const OGRSpatialReference* GetGCPSpatialRef() const override
+        { return m_oGCPSRS.IsEmpty() ? nullptr : &m_oGCPSRS; }
     const GDAL_GCP *GetGCPs() override;
 
-    const char *_GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override
+        { return m_oSRS.IsEmpty() ? nullptr : &m_oSRS; }
     CPLErr GetGeoTransform( double * ) override;
 
     char **GetFileList() override;
@@ -113,8 +108,8 @@ CPGDataset::CPGDataset() :
     padfStokesMatrix(nullptr),
     nInterleave(0)
 {
-    pszProjection = CPLStrdup("");
-    pszGCPProjection = CPLStrdup("");
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -147,8 +142,6 @@ CPGDataset::~CPGDataset()
         CPLFree( pasGCPList );
     }
 
-    CPLFree( pszProjection );
-    CPLFree( pszGCPProjection );
     CPLFree( padfStokesMatrix );
 }
 
@@ -710,17 +703,13 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
             poDS->adfGeoTransform[5] = -1*dfsample_size;
         }
 
-        OGRSpatialReference oUTM;
         if (dfnorth_center < 0)
-            oUTM.SetUTM(iUTMZone, 0);
+            poDS->m_oSRS.SetUTM(iUTMZone, 0);
         else
-            oUTM.SetUTM(iUTMZone, 1);
+            poDS->m_oSRS.SetUTM(iUTMZone, 1);
 
         /* Assuming WGS84 */
-        oUTM.SetWellKnownGeogCS( "WGS84" );
-        CPLFree( poDS->pszProjection );
-        poDS->pszProjection = nullptr;
-        oUTM.exportToWkt( &(poDS->pszProjection) );
+        poDS->m_oSRS.SetWellKnownGeogCS( "WGS84" );
     }
     else if (iGeoParamsFound == 5)
     {
@@ -782,8 +771,7 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
             poDS->pasGCPList[ngcp].pszId = CPLStrdup( szID );
         }
 
-        CPLFree(poDS->pszGCPProjection);
-        poDS->pszGCPProjection = CPLStrdup(
+        poDS->m_oGCPSRS.importFromWkt(
             "LOCAL_CS[\"Ground range view / unreferenced meters\","
             "UNIT[\"Meter\",1.0]]");
     }
@@ -1175,16 +1163,6 @@ int CPGDataset::GetGCPCount()
 }
 
 /************************************************************************/
-/*                          GetGCPProjection()                          */
-/************************************************************************/
-
-const char *CPGDataset::_GetGCPProjection()
-
-{
-  return pszGCPProjection;
-}
-
-/************************************************************************/
 /*                               GetGCPs()                               */
 /************************************************************************/
 
@@ -1192,16 +1170,6 @@ const GDAL_GCP *CPGDataset::GetGCPs()
 
 {
     return pasGCPList;
-}
-
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char *CPGDataset::_GetProjectionRef()
-
-{
-    return pszProjection;
 }
 
 /************************************************************************/

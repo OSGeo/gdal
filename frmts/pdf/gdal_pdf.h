@@ -194,7 +194,7 @@ class PDFDataset final: public GDALPamDataset
 
     CPLString    osFilename;
     CPLString    osUserPwd;
-    char        *pszWKT;
+    OGRSpatialReference m_oSRS{};
     double       dfDPI;
     int          bHasCTM;
     double       adfCTM[6];
@@ -372,18 +372,12 @@ private:
                  PDFDataset(PDFDataset* poParentDS = nullptr, int nXSize = 0, int nYSize = 0);
     virtual     ~PDFDataset();
 
-    virtual const char* _GetProjectionRef() override;
     virtual CPLErr GetGeoTransform( double * ) override;
 
-    virtual CPLErr      _SetProjection(const char* pszWKTIn) override;
     virtual CPLErr      SetGeoTransform(double* padfGeoTransform) override;
 
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     virtual char      **GetMetadataDomainList() override;
     virtual char      **GetMetadata( const char * pszDomain = "" ) override;
@@ -403,18 +397,10 @@ private:
                               GDALRasterIOExtraArg* psExtraArg) override;
 
     virtual int    GetGCPCount() override;
-    virtual const char *_GetGCPProjection() override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override {
-        return GetGCPSpatialRefFromOldGetGCPProjection();
-    }
+    const OGRSpatialReference* GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
-    virtual CPLErr _SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                            const char *pszGCPProjection ) override;
-    using GDALPamDataset::SetGCPs;
     CPLErr SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
-                    const OGRSpatialReference* poSRS ) override {
-        return OldSetGCPsFromNew(nGCPCountIn, pasGCPListIn, poSRS);
-    }
+                    const OGRSpatialReference* poSRS ) override;
 
     CPLErr ReadPixels( int nReqXOff, int nReqYOff,
                        int nReqXSize, int nReqYSize,
@@ -439,8 +425,11 @@ private:
     static int          Identify( GDALOpenInfo * );
 
 #ifdef HAVE_PDFIUM
-    virtual CPLErr IBuildOverviews( const char *, int, int *,
-                                    int, int *, GDALProgressFunc, void * ) override;
+    virtual CPLErr IBuildOverviews( const char *,
+                                    int, const int *,
+                                    int, const int *,
+                                    GDALProgressFunc, void *,
+                                    CSLConstList papszOptions ) override;
 
     static int bPdfiumInit;
 #endif

@@ -33,6 +33,7 @@
 #ifndef DOXYGEN_SKIP
 
 #include "cpl_port.h"
+#include "cpl_string.h"
 #include "gdal_utils.h"
 
 /* This file is only meant at being used by the XXXX_bin.cpp and XXXX_lib.cpp files */
@@ -147,28 +148,34 @@ struct GDALBuildVRTOptionsForBinary
     int bOverwrite;
 };
 
+CPL_C_END
+
 struct GDALMultiDimInfoOptionsForBinary
 {
     /* Filename to open. */
-    char* pszFilename;
+    std::string osFilename{};
+
+    /* Allowed input drivers. */
+    CPLStringList aosAllowInputDrivers{};
 
     /* Open options. */
-    char** papszOpenOptions;
+    CPLStringList aosOpenOptions{};
 };
 
 struct GDALMultiDimTranslateOptionsForBinary
 {
-    char* pszSource;
-    char* pszDest;
-    char* pszFormat;
-    int   bQuiet;
-    int   bUpdate;
+    std::string osSource{};
+    std::string osDest{};
+    std::string osFormat{};
+    bool        bQuiet = false;
+    bool        bUpdate = false;
+
+    /* Allowed input drivers. */
+    CPLStringList aosAllowInputDrivers{};
 
     /* Open options. */
-    char** papszOpenOptions;
+    CPLStringList aosOpenOptions{};
 };
-
-CPL_C_END
 
 #endif /* #ifndef DOXYGEN_SKIP */
 

@@ -85,6 +85,7 @@ class OGRParquetLayer final: public OGRParquetLayerBase
         CPLStringList                               m_aosFeatherMetadata{};
 
         void               EstablishFeatureDefn();
+        bool               CreateRecordBatchReader(int iStartingRowGroup);
         bool               ReadNextBatch() override;
         OGRwkbGeometryType ComputeGeometryColumnType(int iGeomCol, int iParquetCol) const;
         void               CreateFieldFromSchema(
@@ -114,6 +115,7 @@ public:
         const char*     GetMetadataItem( const char* pszName,
                                          const char* pszDomain = "" ) override;
         char**          GetMetadata( const char* pszDomain = "" ) override;
+        OGRErr          SetNextByIndex( GIntBig nIndex ) override;
 
         GDALDataset*    GetDataset() override;
         bool            GetArrowStream(struct ArrowArrayStream* out_stream,

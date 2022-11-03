@@ -47,7 +47,6 @@
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           GDALPamDataset()                           */
@@ -1214,10 +1213,11 @@ char **GDALPamDataset::GetFileList()
 
 //! @cond Doxygen_Suppress
 CPLErr GDALPamDataset::IBuildOverviews( const char *pszResampling,
-                                        int nOverviews, int *panOverviewList,
-                                        int nListBands, int *panBandList,
+                                        int nOverviews, const int *panOverviewList,
+                                        int nListBands, const int *panBandList,
                                         GDALProgressFunc pfnProgress,
-                                        void * pProgressData )
+                                        void * pProgressData,
+                                        CSLConstList papszOptions )
 
 {
 /* -------------------------------------------------------------------- */
@@ -1228,7 +1228,8 @@ CPLErr GDALPamDataset::IBuildOverviews( const char *pszResampling,
         return GDALDataset::IBuildOverviews( pszResampling,
                                              nOverviews, panOverviewList,
                                              nListBands, panBandList,
-                                             pfnProgress, pProgressData );
+                                             pfnProgress, pProgressData,
+                                             papszOptions );
 
 /* -------------------------------------------------------------------- */
 /*      If we appear to have subdatasets and to have a physical         */
@@ -1241,13 +1242,15 @@ CPLErr GDALPamDataset::IBuildOverviews( const char *pszResampling,
             psPam->osPhysicalFilename, pszResampling,
             nOverviews, panOverviewList,
             nListBands, panBandList,
-            pfnProgress, pProgressData );
+            pfnProgress, pProgressData,
+            papszOptions);
     }
 
     return GDALDataset::IBuildOverviews( pszResampling,
                                          nOverviews, panOverviewList,
                                          nListBands, panBandList,
-                                         pfnProgress, pProgressData );
+                                         pfnProgress, pProgressData,
+                                         papszOptions );
 }
 //! @endcond
 
@@ -1688,74 +1691,6 @@ CPLErr GDALPamDataset::TryLoadAux(char **papszSiblingFiles)
     nPamFlags &= ~GPF_DIRTY;
 
     return CE_Failure;
-}
-//! @endcond
-
-/************************************************************************/
-/*                        _GetProjectionRef()                           */
-/************************************************************************/
-
-//! @cond Doxygen_Suppress
-const char *GDALPamDataset::_GetProjectionRef()
-{
-    return GetProjectionRefFromSpatialRef(GDALPamDataset::GetSpatialRef());
-}
-
-/************************************************************************/
-/*                          _SetProjection()                            */
-/************************************************************************/
-
-CPLErr GDALPamDataset::_SetProjection( const char *pszProjection )
-{
-    if( pszProjection && pszProjection[0] != '\0' )
-    {
-        OGRSpatialReference oSRS;
-        oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        if( oSRS.importFromWkt(pszProjection) != OGRERR_NONE )
-        {
-            return CE_Failure;
-        }
-        return GDALPamDataset::SetSpatialRef(&oSRS);
-    }
-    else
-    {
-        return GDALPamDataset::SetSpatialRef(nullptr);
-    }
-}
-
-/************************************************************************/
-/*                        _GetGCPProjection()                           */
-/************************************************************************/
-
-const char *GDALPamDataset::_GetGCPProjection()
-{
-    return GetGCPProjectionFromSpatialRef(GDALPamDataset::GetGCPSpatialRef());
-}
-
-/************************************************************************/
-/*                            _SetGCPs()                                */
-/************************************************************************/
-
-CPLErr GDALPamDataset::_SetGCPs( int nGCPCount,
-                             const GDAL_GCP *pasGCPList,
-                             const char *pszGCPProjection )
-
-{
-    if( pszGCPProjection && pszGCPProjection[0] != '\0' )
-    {
-        OGRSpatialReference oSRS;
-        oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        if( oSRS.importFromWkt(pszGCPProjection) != OGRERR_NONE )
-        {
-            return CE_Failure;
-        }
-        return GDALPamDataset::SetGCPs(nGCPCount, pasGCPList, &oSRS);
-    }
-    else
-    {
-        return GDALPamDataset::SetGCPs(nGCPCount, pasGCPList,
-                       static_cast<const OGRSpatialReference*>(nullptr));
-    }
 }
 //! @endcond
 

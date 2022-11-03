@@ -825,3 +825,42 @@ def test_vrtmisc_alpha_ismaskband():
     ds = gdal.GetDriverByName("VRT").CreateCopy("", src_ds)
     assert not ds.GetRasterBand(1).IsMaskBand()
     assert ds.GetRasterBand(2).IsMaskBand()
+
+
+###############################################################################
+# Check that serialization of a ComplexSource with NODATA (generally) doesn't
+# require opening the source band.
+
+
+def test_vrtmisc_serialize_complexsource_with_NODATA():
+
+    tmpfilename = "/vsimem/test_vrtmisc_serialize_complexsource_with_NODATA.vrt"
+    gdal.FileFromMemBuffer(
+        tmpfilename,
+        """<VRTDataset rasterXSize="1" rasterYSize="1">
+  <VRTRasterBand dataType="Byte" band="1">
+    <NoDataValue>0</NoDataValue>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="1">i_do_not_exist.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="1" ySize="1" />
+      <DstRect xOff="0" yOff="0" xSize="1" ySize="1" />
+      <NODATA>1</NODATA>
+    </ComplexSource>
+  </VRTRasterBand>
+</VRTDataset>""",
+    )
+
+    ds = gdal.Open(tmpfilename)
+    ds.GetRasterBand(1).SetDescription("foo")
+    gdal.ErrorReset()
+    ds = None
+    assert gdal.GetLastErrorMsg() == ""
+
+    fp = gdal.VSIFOpenL(tmpfilename, "rb")
+    content = gdal.VSIFReadL(1, 10000, fp).decode("latin1")
+    gdal.VSIFCloseL(fp)
+    gdal.Unlink(tmpfilename)
+
+    print(content)
+    assert "<NODATA>1</NODATA>" in content

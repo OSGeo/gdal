@@ -34,7 +34,6 @@
 
 #include <cmath>
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -52,12 +51,12 @@ class PAuxDataset final: public RawDataset
 
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
-    char        *pszGCPProjection;
+    OGRSpatialReference m_oGCPSRS{};
 
     void        ScanForGCPs();
-    char       *PCI2WKT( const char *pszGeosys, const char *pszProjParams );
+    static OGRSpatialReference PCI2SRS( const char *pszGeosys, const char *pszProjParams );
 
-    char       *pszProjection;
+    OGRSpatialReference m_oSRS{};
 
     CPL_DISALLOW_COPY_ASSIGN(PAuxDataset)
 
@@ -70,18 +69,15 @@ class PAuxDataset final: public RawDataset
     char        **papszAuxLines;
     int         bAuxUpdated;
 
-    const char *_GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+
+    const OGRSpatialReference* GetSpatialRef() const override
+        { return m_oSRS.IsEmpty() ? nullptr : &m_oSRS; }
     CPLErr GetGeoTransform( double * ) override;
     CPLErr SetGeoTransform( double * ) override;
 
     int    GetGCPCount() override;
-    const char *_GetGCPProjection() override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override {
-        return GetGCPSpatialRefFromOldGetGCPProjection();
-    }
+    const OGRSpatialReference* GetGCPSpatialRef() const override
+        { return m_oGCPSRS.IsEmpty() ? nullptr : &m_oGCPSRS; }
     const GDAL_GCP *GetGCPs() override;
 
     char **GetFileList() override;
@@ -310,12 +306,13 @@ PAuxDataset::PAuxDataset() :
     fpImage(nullptr),
     nGCPCount(0),
     pasGCPList(nullptr),
-    pszGCPProjection(nullptr),
-    pszProjection(nullptr),
     pszAuxFilename(nullptr),
     papszAuxLines(nullptr),
     bAuxUpdated(FALSE)
-{}
+{
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+}
 
 /************************************************************************/
 /*                            ~PAuxDataset()                            */
@@ -336,9 +333,6 @@ PAuxDataset::~PAuxDataset()
         CSLSave( papszAuxLines, pszAuxFilename );
     }
 
-    CPLFree( pszProjection );
-
-    CPLFree( pszGCPProjection );
     GDALDeinitGCPs( nGCPCount, pasGCPList );
     CPLFree( pasGCPList );
 
@@ -359,13 +353,13 @@ char **PAuxDataset::GetFileList()
 }
 
 /************************************************************************/
-/*                              PCI2WKT()                               */
+/*                              PCI2SRS()                               */
 /*                                                                      */
 /*      Convert PCI coordinate system to WKT.  For now this is very     */
 /*      incomplete, but can be filled out in the future.                */
 /************************************************************************/
 
-char *PAuxDataset::PCI2WKT( const char *pszGeosys,
+OGRSpatialReference PAuxDataset::PCI2SRS( const char *pszGeosys,
                             const char *pszProjParams )
 
 {
@@ -393,16 +387,13 @@ char *PAuxDataset::PCI2WKT( const char *pszGeosys,
 /*      Convert to SRS.                                                 */
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRS;
-    if( oSRS.importFromPCI( pszGeosys, nullptr, adfProjParams ) == OGRERR_NONE )
+    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    if( oSRS.importFromPCI( pszGeosys, nullptr, adfProjParams ) != OGRERR_NONE )
     {
-        char *pszResult = nullptr;
-
-        oSRS.exportToWkt( &pszResult );
-
-        return pszResult;
+        oSRS.Clear();
     }
 
-    return nullptr;
+    return oSRS;
 }
 
 /************************************************************************/
@@ -428,7 +419,7 @@ void PAuxDataset::ScanForGCPs()
         CSLFetchNameValue( papszAuxLines, "GCP_1_ProjParms" );
 
     if( pszMapUnits != nullptr )
-        pszGCPProjection = PCI2WKT( pszMapUnits, pszProjParams );
+        m_oGCPSRS = PCI2SRS( pszMapUnits, pszProjParams );
 
 /* -------------------------------------------------------------------- */
 /*      Collect standalone GCPs.  They look like:                       */
@@ -493,19 +484,6 @@ int PAuxDataset::GetGCPCount()
 }
 
 /************************************************************************/
-/*                          GetGCPProjection()                          */
-/************************************************************************/
-
-const char *PAuxDataset::_GetGCPProjection()
-
-{
-    if( nGCPCount > 0 && pszGCPProjection != nullptr )
-        return pszGCPProjection;
-
-    return "";
-}
-
-/************************************************************************/
 /*                               GetGCP()                               */
 /************************************************************************/
 
@@ -513,19 +491,6 @@ const GDAL_GCP *PAuxDataset::GetGCPs()
 
 {
     return pasGCPList;
-}
-
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char *PAuxDataset::_GetProjectionRef()
-
-{
-    if( pszProjection )
-        return pszProjection;
-
-    return GDALPamDataset::_GetProjectionRef();
 }
 
 /************************************************************************/
@@ -864,7 +829,9 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
         CSLFetchNameValue( poDS->papszAuxLines, "ProjParams" );
 
     if( pszMapUnits != nullptr )
-        poDS->pszProjection = poDS->PCI2WKT( pszMapUnits, pszProjParams );
+    {
+        poDS->m_oSRS = PCI2SRS( pszMapUnits, pszProjParams );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */

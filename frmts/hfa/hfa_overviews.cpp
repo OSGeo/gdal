@@ -40,16 +40,16 @@
 #include "gdal_pam.h"
 #include "gdal_priv.h"
 
-CPL_CVSID("$Id$")
 
 CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename,
                              GDALDataset *poParentDS,
                              GDALDataset **ppoODS,
-                             int nBands, int *panBandList,
-                             int nNewOverviews, int *panNewOverviewList,
+                             int nBands, const int *panBandList,
+                             int nNewOverviews, const int *panNewOverviewList,
                              const char *pszResampling,
                              GDALProgressFunc pfnProgress,
-                             void *pProgressData )
+                             void *pProgressData,
+                             CSLConstList papszOptions )
 
 {
     // If the .aux file doesn't exist yet then create it now.
@@ -92,7 +92,7 @@ CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename,
         CPLString osDepFileOpt = "DEPENDENT_FILE=";
         osDepFileOpt += CPLGetFilename(poParentDS->GetDescription());
 
-        const char *apszOptions[4] =
+        const char * const apszOptions[4] =
             { "COMPRESSED=YES", "AUX=YES", osDepFileOpt.c_str(), nullptr };
 
         *ppoODS =
@@ -100,7 +100,7 @@ CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename,
                                 poParentDS->GetRasterXSize(),
                                 poParentDS->GetRasterYSize(),
                                 poParentDS->GetRasterCount(),
-                                eDT, const_cast<char **>(apszOptions));
+                                eDT, apszOptions);
 
         if( *ppoODS == nullptr )
             return CE_Failure;
@@ -113,14 +113,15 @@ CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename,
     // We avoid regenerating the new layers here, because if we did
     // it would use the base layer from the .aux file as the source
     // data, and that is fake (all invalid tiles).
-    CPLString oAdjustedResampling = "NO_REGEN:";
-    oAdjustedResampling += pszResampling;
+    CPLStringList aosOptions(papszOptions);
+    aosOptions.SetNameValue("REGENERATE", "NO");
 
     CPLErr eErr =
-        (*ppoODS)->BuildOverviews(oAdjustedResampling,
+        (*ppoODS)->BuildOverviews(pszResampling,
                                   nNewOverviews, panNewOverviewList,
                                   nBands, panBandList,
-                                  pfnProgress, pProgressData);
+                                  pfnProgress, pProgressData,
+                                  aosOptions.List());
 
     return eErr;
 }

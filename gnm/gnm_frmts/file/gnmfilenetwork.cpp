@@ -31,7 +31,6 @@
 #include "gnmfile.h"
 #include "gnm_priv.h"
 
-CPL_CVSID("$Id$")
 
 GNMFileNetwork::GNMFileNetwork() : GNMGenericNetwork()
 {
@@ -265,17 +264,23 @@ CPLErr GNMFileNetwork::CreateMetadataLayerFromFile( const char* pszFilename, int
 
 CPLErr GNMFileNetwork::StoreNetworkSrs()
 {
+    if( m_oSRS.IsEmpty() )
+        return CE_None;
     const char* pszSrsFileName = CPLFormFilename(m_soNetworkFullName,
                                                  GNM_SRSFILENAME, nullptr);
     VSILFILE *fpSrsPrj = VSIFOpenL(pszSrsFileName, "w");
     if (fpSrsPrj != nullptr)
     {
-        if(VSIFWriteL(m_soSRS, (int)m_soSRS.size(), 1, fpSrsPrj) != 1)
+        char* pszWKT = nullptr;
+        m_oSRS.exportToWkt(&pszWKT);
+        if(pszWKT && VSIFWriteL(pszWKT, (int)strlen(pszWKT), 1, fpSrsPrj) != 1)
         {
+            CPLFree(pszWKT);
             CPLError( CE_Failure, CPLE_AppDefined, "Write SRS failed, disk full?" );
             VSIFCloseL(fpSrsPrj);
             return CE_Failure;
         }
+        CPLFree(pszWKT);
         VSIFCloseL(fpSrsPrj);
     }
     return CE_None;
@@ -293,7 +298,8 @@ CPLErr GNMFileNetwork::LoadNetworkSrs()
         return CE_Failure;
     }
 
-    m_soSRS = papszLines[0];
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    m_oSRS.importFromWkt(papszLines[0]);
 
     CSLDestroy( papszLines );
 
@@ -538,7 +544,7 @@ OGRLayer *GNMFileNetwork::ICreateLayer(const char *pszName,
         return nullptr;
     }
 
-    OGRSpatialReference oSpaRef(m_soSRS);
+    OGRSpatialReference oSpaRef(m_oSRS);
 
     OGRLayer *poLayer = poDS->CreateLayer( pszName, &oSpaRef, eGType, papszOptions );
     if( poLayer == nullptr )
@@ -604,6 +610,7 @@ CPLErr GNMFileNetwork::Create( const char* pszFilename, char** papszOptions )
     else
     {
         OGRSpatialReference spatialRef;
+        spatialRef.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if (spatialRef.SetFromUserInput(pszSRS) != OGRERR_NONE)
         {
             CPLError( CE_Failure, CPLE_IllegalArg,
@@ -611,17 +618,7 @@ CPLErr GNMFileNetwork::Create( const char* pszFilename, char** papszOptions )
             return CE_Failure;
         }
 
-        char *wktSrs = nullptr;
-        if (spatialRef.exportToWkt(&wktSrs) != OGRERR_NONE)
-        {
-            CPLError( CE_Failure, CPLE_IllegalArg,
-                      "The network spatial reference should be present" );
-            CPLFree(wktSrs);
-            return CE_Failure;
-        }
-        m_soSRS = wktSrs;
-
-        CPLFree(wktSrs);
+        m_oSRS = spatialRef;
     }
 
     int nResult = CheckNetworkExist(pszFilename, papszOptions);

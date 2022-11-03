@@ -706,9 +706,6 @@ set_package_properties(
 
 # finding python in top of project because of common for autotest and bindings
 
-find_package(Perl)
-set_package_properties(Perl PROPERTIES PURPOSE "SWIG_PERL: Perl binding")
-
 find_package(JNI)
 find_package(Java COMPONENTS Runtime Development)
 find_program(

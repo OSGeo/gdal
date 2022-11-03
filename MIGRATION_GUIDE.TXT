@@ -1,3 +1,16 @@
+MIGRATION GUIDE FROM GDAL 3.5 to GDAL 3.6
+-----------------------------------------
+
+- Out-of-tree vector drivers:
+  * GDALDataset::IBuildOverviews(): parameters panOverviewList and panBandList
+    are now of type 'const int*' (previously 'int*')
+    Added a CSLConstList papszOptions member.
+  * GDALRasterBand::BuildOverviews(): parameter panOverviewList is now of
+    type 'const int*' (previously 'int*')
+    Added a CSLConstList papszOptions member.
+  * Compatibility layers of GDAL 3.0 _GetProjectionRef(), _GetGCPProjectionRef(),
+    _SetProjection(), _SetGCPs() have been removed
+
 MIGRATION GUIDE FROM GDAL 3.4 to GDAL 3.5
 -----------------------------------------
 

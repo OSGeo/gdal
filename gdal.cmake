@@ -6,8 +6,8 @@
 # a new member or virtual function in a public C++ class, etc.
 # This will typically happen for each GDAL feature release (change of X or Y in
 # a X.Y.Z numbering scheme), but should not happen for a bugfix release (change of Z)
-# Previous value: 31 for GDAL 3.5
-set(GDAL_SOVERSION 31)
+# Previous value: 32 for GDAL 3.6
+set(GDAL_SOVERSION 32)
 
 # Switches to control build targets(cached)
 option(ENABLE_GNM "Build GNM (Geography Network Model) component" ON)
@@ -318,7 +318,8 @@ macro(set_alternate_linker linker)
   endif()
 endmacro()
 
-if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" )
+# CMake >= 3.13 needed for add_link_options()
+if( (CMAKE_VERSION VERSION_GREATER_EQUAL 3.13) AND ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU") )
   set(USE_ALTERNATE_LINKER "" CACHE STRING "Use alternate linker. Leave empty for system default; potential alternatives are 'gold', 'lld', 'bfd', 'mold'")
   if(NOT "${USE_ALTERNATE_LINKER}" STREQUAL "")
     set_alternate_linker(${USE_ALTERNATE_LINKER})
@@ -458,6 +459,9 @@ else ()
         ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}
         ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}
       )
+      if( NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "" )
+          message(WARNING "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} will be ignored and replaced with ${base};${base}/${relDir} due to GDAL_SET_INSTALL_RELATIVE_RPATH being set")
+      endif()
       set(CMAKE_INSTALL_RPATH ${base} ${base}/${relDir})
   endif()
 endif ()

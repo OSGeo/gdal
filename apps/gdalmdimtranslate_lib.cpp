@@ -36,7 +36,6 @@
 #include <map>
 #include <set>
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                     GDALMultiDimTranslateOptions                     */
@@ -1800,10 +1799,7 @@ GDALDatasetH GDALMultiDimTranslate( const char* pszDest,
  *
  * @param papszArgv NULL terminated list of options (potentially including filename and open options too), or NULL.
  *                  The accepted options are the ones of the <a href="/programs/gdalmdimtranslate.html">gdalmdimtranslate</a> utility.
- * @param psOptionsForBinary (output) may be NULL (and should generally be NULL),
- *                           otherwise (gdalmultidimtranslate_bin.cpp use case) must be allocated with
- *                           GDALTranslateOptionsForBinaryNew() prior to this function. Will be
- *                           filled with potentially present filename, open options,...
+ * @param psOptionsForBinary should be nullptr, unless called from gdalmultidimtranslate_bin.cpp
  * @return pointer to the allocated GDALMultiDimTranslateOptions struct. Must be freed with GDALMultiDimTranslateOptionsFree().
  *
  * @since GDAL 3.1
@@ -1873,11 +1869,27 @@ GDALMultiDimTranslateOptions *GDALMultiDimTranslateOptionsNew(
 
         else if( EQUAL(papszArgv[i], "-oo") && i+1 < argc )
         {
+            ++i;
             if( psOptionsForBinary )
-                psOptionsForBinary->papszOpenOptions = CSLAddString(
-                                                psOptionsForBinary->papszOpenOptions,
-                                                papszArgv[++i] );
+            {
+                psOptionsForBinary->aosOpenOptions.AddString( papszArgv[i] );
+            }
         }
+
+        else if( i+1 < argc && EQUAL(papszArgv[i], "-if") )
+        {
+            i++;
+            if( psOptionsForBinary )
+            {
+                if( GDALGetDriverByName(papszArgv[i]) == nullptr )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "%s is not a recognized driver", papszArgv[i]);
+                }
+                psOptionsForBinary->aosAllowInputDrivers.AddString( papszArgv[i] );
+            }
+        }
+
         else if( papszArgv[i][0] == '-' )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
@@ -1885,13 +1897,13 @@ GDALMultiDimTranslateOptions *GDALMultiDimTranslateOptionsNew(
             GDALMultiDimTranslateOptionsFree(psOptions);
             return nullptr;
         }
-        else if( psOptionsForBinary && psOptionsForBinary->pszSource == nullptr )
+        else if( psOptionsForBinary && psOptionsForBinary->osSource.empty() )
         {
-            psOptionsForBinary->pszSource = CPLStrdup(papszArgv[i]);
+            psOptionsForBinary->osSource = papszArgv[i];
         }
-        else if( psOptionsForBinary && psOptionsForBinary->pszDest == nullptr )
+        else if( psOptionsForBinary && psOptionsForBinary->osDest.empty() )
         {
-            psOptionsForBinary->pszDest = CPLStrdup(papszArgv[i]);
+            psOptionsForBinary->osDest = papszArgv[i];
         }
         else
         {
@@ -1914,7 +1926,7 @@ GDALMultiDimTranslateOptions *GDALMultiDimTranslateOptionsNew(
     {
         psOptionsForBinary->bUpdate = psOptions->bUpdate;
         if( !psOptions->osFormat.empty() )
-            psOptionsForBinary->pszFormat = CPLStrdup(psOptions->osFormat.c_str());
+            psOptionsForBinary->osFormat = psOptions->osFormat;
     }
 
     return psOptions;

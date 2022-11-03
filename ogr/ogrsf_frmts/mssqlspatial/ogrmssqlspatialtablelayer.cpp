@@ -33,7 +33,6 @@
 
 #include <memory>
 
-CPL_CVSID("$Id$")
 
 #define UNSUPPORTED_OP_READ_ONLY "%s : unsupported operation on a read-only datasource."
 

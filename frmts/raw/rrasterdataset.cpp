@@ -39,7 +39,6 @@
 #include <limits>
 #include <memory>
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -547,9 +546,8 @@ void RRASTERDataset::RewriteHeader()
     const char* pszPixelType =
         GetRasterBand(1)->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
     VSIFPrintfL(fp, "datatype=%s\n",
-        (eDT == GDT_Byte && pszPixelType && EQUAL(pszPixelType, "SIGNEDBYTE"))
-                          ?        "INT1S" :
-        (eDT == GDT_Byte) ?        "INT1U" :
+        (eDT == GDT_Byte) ?
+            ((pszPixelType && EQUAL(pszPixelType, "SIGNEDBYTE")) ? "INT1S" : "INT1U") :
         (eDT == GDT_UInt16) ?      "INT2U" :
         (eDT == GDT_UInt32) ?      "INT4U" :
         (eDT == GDT_Int16) ?       "INT2S" :

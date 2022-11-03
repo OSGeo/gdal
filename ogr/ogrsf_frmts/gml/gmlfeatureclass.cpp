@@ -45,7 +45,6 @@
 #include "ogr_p.h"
 #include "ogr_geometry.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          GMLFeatureClass()                           */
@@ -171,7 +170,7 @@ int GMLFeatureClass::GetPropertyIndexBySrcElement( const char *pszElement,
 /*                            AddProperty()                             */
 /************************************************************************/
 
-int GMLFeatureClass::AddProperty( GMLPropertyDefn *poDefn )
+int GMLFeatureClass::AddProperty( GMLPropertyDefn *poDefn, int iPos )
 
 {
     if( GetProperty(poDefn->GetName()) != nullptr )
@@ -187,17 +186,38 @@ int GMLFeatureClass::AddProperty( GMLPropertyDefn *poDefn )
     m_papoProperty = static_cast<GMLPropertyDefn **>(
         CPLRealloc(m_papoProperty, sizeof(void *) * m_nPropertyCount));
 
-    m_papoProperty[m_nPropertyCount - 1] = poDefn;
+    if( iPos < 0 )
+    {
+        iPos = m_nPropertyCount - 1;
+    }
+    else if( iPos < m_nPropertyCount - 1 )
+    {
+        memmove(m_papoProperty + iPos + 1,
+                m_papoProperty + iPos,
+                (m_nPropertyCount - 1 - iPos) * sizeof(GMLPropertyDefn*));
+        for( auto& iter: m_oMapPropertyNameToIndex )
+        {
+            if( iter.second >= iPos )
+                iter.second ++;
+        }
+        for( auto& iter: m_oMapPropertySrcElementToIndex )
+        {
+            if( iter.second >= iPos )
+                iter.second ++;
+        }
+    }
+
+    m_papoProperty[iPos] = poDefn;
     m_oMapPropertyNameToIndex[ CPLString(poDefn->GetName()).toupper() ] =
-        m_nPropertyCount - 1;
+        iPos;
     if( m_oMapPropertySrcElementToIndex.find(poDefn->GetSrcElement()) ==
             m_oMapPropertySrcElementToIndex.end() )
     {
         m_oMapPropertySrcElementToIndex[ poDefn->GetSrcElement() ] =
-            m_nPropertyCount - 1;
+            iPos;
     }
 
-    return m_nPropertyCount - 1;
+    return iPos;
 }
 
 /************************************************************************/

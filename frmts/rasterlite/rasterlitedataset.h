@@ -33,7 +33,7 @@
 #include "gdal_pam.h"
 #include "ogr_api.h"
 
-char** RasterliteGetTileDriverOptions(char** papszOptions);
+char** RasterliteGetTileDriverOptions(CSLConstList papszOptions);
 
 OGRDataSourceH RasterliteOpenSQLiteDB(const char* pszFilename,
                                       GDALAccess eAccess);
@@ -66,17 +66,16 @@ class RasterliteDataset final: public GDALPamDataset
     virtual const char *GetMetadataItem( const char *pszName,
                                          const char *pszDomain ) override;
     virtual CPLErr GetGeoTransform( double* padfGeoTransform ) override;
-    virtual const char* _GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+
+    const OGRSpatialReference* GetSpatialRef() const override;
 
     virtual char** GetFileList() override;
 
     virtual CPLErr IBuildOverviews( const char * pszResampling,
-                                    int nOverviews, int * panOverviewList,
-                                    int nBands, int * panBandList,
-                                    GDALProgressFunc pfnProgress, void * pProgressData ) override;
+                                    int nOverviews, const int * panOverviewList,
+                                    int nBands, const int * panBandList,
+                                    GDALProgressFunc pfnProgress, void * pProgressData,
+                                    CSLConstList papszOptions ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -101,7 +100,7 @@ class RasterliteDataset final: public GDALPamDataset
 
     int bValidGeoTransform;
     double adfGeoTransform[6];
-    char* pszSRS;
+    OGRSpatialReference m_oSRS{};
 
     GDALColorTable* poCT;
 
@@ -124,7 +123,7 @@ class RasterliteDataset final: public GDALPamDataset
     CPLErr ReloadOverviews();
     CPLErr CreateOverviewLevel(const char * pszResampling,
                                int nOvrFactor,
-                               char** papszOptions,
+                               CSLConstList papszOptions,
                                GDALProgressFunc pfnProgress,
                                void * pProgressData);
 };

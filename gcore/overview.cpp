@@ -70,7 +70,6 @@
 
 #endif
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                     GDALResampleChunk32R_Near()                      */
@@ -3664,7 +3663,8 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
     else
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "Unsupported resampling method %s for GDALResampleChunkC32R",
+                 "Resampling method %s is not supported for complex data types. "
+                 "Only NEAREST, AVERAGE, AVERAGE_MAGPHASE and RMS are supported",
                  pszResampling);
         return CE_Failure;
     }
@@ -3864,7 +3864,8 @@ static CPLErr
 GDALRegenerateCascadingOverviews(
     GDALRasterBand *poSrcBand, int nOverviews, GDALRasterBand **papoOvrBands,
     const char * pszResampling,
-    GDALProgressFunc pfnProgress, void * pProgressData )
+    GDALProgressFunc pfnProgress, void * pProgressData,
+    CSLConstList papszOptions)
 
 {
 /* -------------------------------------------------------------------- */
@@ -3921,13 +3922,14 @@ GDALRegenerateCascadingOverviews(
             pfnProgress, pProgressData );
 
         const CPLErr eErr =
-            GDALRegenerateOverviews(
+            GDALRegenerateOverviewsEx(
                 poBaseBand,
                 1,
                 reinterpret_cast<GDALRasterBandH *>( papoOvrBands ) + i,
                 pszResampling,
                 GDALScaledProgress,
-                pScaledProgressData );
+                pScaledProgressData,
+                papszOptions);
         GDALDestroyScaledProgress( pScaledProgressData );
 
         if( eErr != CE_None )
@@ -3956,12 +3958,12 @@ GDALResampleFunction GDALGetResampleFunction( const char* pszResampling,
         return GDALResampleChunk32R_Near;
     else if( STARTS_WITH_CI(pszResampling, "AVER") || EQUAL(pszResampling, "RMS") )
         return GDALResampleChunk32R_Average;
-    else if( STARTS_WITH_CI(pszResampling, "GAUSS") )
+    else if( EQUAL(pszResampling, "GAUSS") )
     {
         if( pnRadius ) *pnRadius = 1;
         return GDALResampleChunk32R_Gauss;
     }
-    else if( STARTS_WITH_CI(pszResampling, "MODE") )
+    else if( EQUAL(pszResampling, "MODE") )
         return GDALResampleChunk32R_Mode;
     else if( EQUAL(pszResampling,"CUBIC") )
     {
@@ -4082,6 +4084,56 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
                          GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
+    return GDALRegenerateOverviewsEx(hSrcBand, nOverviewCount, pahOvrBands,
+                                     pszResampling, pfnProgress, pProgressData,
+                                     nullptr);
+}
+
+/************************************************************************/
+/*                     GDALRegenerateOverviewsEx()                      */
+/************************************************************************/
+
+/**
+ * \brief Generate downsampled overviews.
+ *
+ * This function will generate one or more overview images from a base image
+ * using the requested downsampling algorithm.  Its primary use is for
+ * generating overviews via GDALDataset::BuildOverviews(), but it can also be
+ * used to generate downsampled images in one file from another outside the
+ * overview architecture.
+ *
+ * The output bands need to exist in advance.
+ *
+ * The full set of resampling algorithms is documented in
+ * GDALDataset::BuildOverviews().
+ *
+ * This function will honour properly NODATA_VALUES tuples (special dataset
+ * metadata) so that only a given RGB triplet (in case of a RGB image) will be
+ * considered as the nodata value and not each value of the triplet
+ * independently per band.
+ *
+ * Starting with GDAL 3.2, the GDAL_NUM_THREADS configuration option can be set
+ * to "ALL_CPUS" or a integer value to specify the number of threads to use for
+ * overview computation.
+ *
+ * @param hSrcBand the source (base level) band.
+ * @param nOverviewCount the number of downsampled bands being generated.
+ * @param pahOvrBands the list of downsampled bands to be generated.
+ * @param pszResampling Resampling algorithm (e.g. "AVERAGE").
+ * @param pfnProgress progress report function.
+ * @param pProgressData progress function callback data.
+ * @param papszOptions NULL terminated list of options as key=value pairs, or NULL
+ * @return CE_None on success or CE_Failure on failure.
+ * @since GDAL 3.6
+ */
+CPLErr
+GDALRegenerateOverviewsEx( GDALRasterBandH hSrcBand,
+                         int nOverviewCount, GDALRasterBandH *pahOvrBands,
+                         const char * pszResampling,
+                         GDALProgressFunc pfnProgress, void * pProgressData,
+                         CSLConstList papszOptions )
+
+{
     GDALRasterBand *poSrcBand = GDALRasterBand::FromHandle( hSrcBand );
     GDALRasterBand **papoOvrBands =
         reinterpret_cast<GDALRasterBand **>( pahOvrBands );
@@ -4106,8 +4158,8 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 
     if( (STARTS_WITH_CI(pszResampling, "AVER")
          || EQUAL(pszResampling, "RMS")
-         || STARTS_WITH_CI(pszResampling, "MODE")
-         || STARTS_WITH_CI(pszResampling, "GAUSS")) &&
+         || EQUAL(pszResampling, "MODE")
+         || EQUAL(pszResampling, "GAUSS")) &&
         poSrcBand->GetColorInterpretation() == GCI_PaletteIndex )
     {
         poColorTable = poSrcBand->GetColorTable();
@@ -4184,18 +4236,20 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     // we can't use cascaded generation, as the computation of the overviews
     // of the band used for the mask band may not have yet occurred (#3033).
     if( (STARTS_WITH_CI(pszResampling, "AVER") ||
-         STARTS_WITH_CI(pszResampling, "GAUSS") ||
+         EQUAL(pszResampling, "GAUSS") ||
          EQUAL(pszResampling, "RMS") ||
          EQUAL(pszResampling, "CUBIC") ||
          EQUAL(pszResampling, "CUBICSPLINE") ||
          EQUAL(pszResampling, "LANCZOS") ||
-         EQUAL(pszResampling, "BILINEAR")) && nOverviewCount > 1
+         EQUAL(pszResampling, "BILINEAR") ||
+         EQUAL(pszResampling, "MODE")) && nOverviewCount > 1
          && bCanUseCascaded )
         return GDALRegenerateCascadingOverviews( poSrcBand,
                                                  nOverviewCount, papoOvrBands,
                                                  pszResampling,
                                                  pfnProgress,
-                                                 pProgressData );
+                                                 pProgressData,
+                                                 papszOptions );
 
 /* -------------------------------------------------------------------- */
 /*      Setup one horizontal swath to read from the raw buffer.         */
@@ -4267,7 +4321,8 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
                                                     &papoOvrBands,
                                                     pszResampling,
                                                     pfnProgress,
-                                                    pProgressData);
+                                                    pProgressData,
+                                                    papszOptions);
         }
         else if( nOverviewCount > 1 && STARTS_WITH_CI(pszResampling, "NEAR") )
         {
@@ -4276,7 +4331,8 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
                                                     papoOvrBands,
                                                     pszResampling,
                                                     pfnProgress,
-                                                    pProgressData );
+                                                    pProgressData,
+                                                    papszOptions);
         }
     }
     else if( pszChunkYSize == nullptr )
@@ -4782,17 +4838,22 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
  * "GAUSS", "CUBIC", "CUBICSPLINE", "LANCZOS" or "BILINEAR").
  * @param pfnProgress progress report function.
  * @param pProgressData progress function callback data.
+ * @param papszOptions (GDAL >= 3.6) NULL terminated list of options as
+ *                     key=value pairs, or NULL
  * @return CE_None on success or CE_Failure on failure.
  */
 
 CPLErr
-GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
+GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand* const* papoSrcBands,
                                   int nOverviews,
-                                  GDALRasterBand*** papapoOverviewBands,
+                                  GDALRasterBand* const * const * papapoOverviewBands,
                                   const char * pszResampling,
                                   GDALProgressFunc pfnProgress,
-                                  void * pProgressData )
+                                  void * pProgressData,
+                                  CSLConstList papszOptions )
 {
+    CPL_IGNORE_RET_VAL(papszOptions);
+
     if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
 
@@ -4807,7 +4868,8 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
         !EQUAL(pszResampling, "CUBIC") &&
         !EQUAL(pszResampling, "CUBICSPLINE") &&
         !EQUAL(pszResampling, "LANCZOS") &&
-        !EQUAL(pszResampling, "BILINEAR") )
+        !EQUAL(pszResampling, "BILINEAR") &&
+        !EQUAL(pszResampling, "MODE") )
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,

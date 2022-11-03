@@ -45,7 +45,6 @@
 #include "gmlutils.h"
 #include "ogr_geometry.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            ~IGMLReader()                             */
@@ -1372,6 +1371,7 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
             poClass->SetFeatureCount(poClass->GetFeatureCount() + 1);
 
         const CPLXMLNode* const * papsGeometry = poFeature->GetGeometryList();
+        bool bGeometryColumnJustCreated = false;
         if( !bOnlyDetectSRS && papsGeometry != nullptr && papsGeometry[0] != nullptr )
         {
             if( poClass->GetGeometryPropertyCount() == 0 )
@@ -1380,6 +1380,7 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
                 const auto nPos = osGeomName.rfind('|');
                 if( nPos != std::string::npos )
                     osGeomName = osGeomName.substr(nPos + 1);
+                bGeometryColumnJustCreated = true;
                 poClass->AddGeometryProperty(
                     new GMLGeometryPropertyDefn(osGeomName.c_str(),
                                                 m_osSingleGeomElemPath.c_str(),
@@ -1389,20 +1390,29 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
 
         if( bGetExtents && papsGeometry != nullptr )
         {
-            OGRGeometry *poGeometry = GML_BuildOGRGeometryFromList(
-                papsGeometry, true, m_bInvertAxisOrderIfLatLong,
-                nullptr, m_bConsiderEPSGAsURN,
-                m_eSwapCoordinates,
-                m_bGetSecondaryGeometryOption,
-                hCacheSRS, m_bFaceHoleNegative );
-
-            if( poGeometry != nullptr && poClass->GetGeometryPropertyCount() > 0 )
+            const int nIters = std::min(poFeature->GetGeometryCount(),
+                                        poClass->GetGeometryPropertyCount());
+            for(int i = 0; i < nIters; ++i )
             {
+                if( papsGeometry[i] == nullptr )
+                    continue;
+
+                const CPLXMLNode *myGeometryList[2] = {papsGeometry[i], nullptr};
+                OGRGeometry *poGeometry = GML_BuildOGRGeometryFromList(
+                    myGeometryList, true, m_bInvertAxisOrderIfLatLong,
+                    nullptr, m_bConsiderEPSGAsURN,
+                    m_eSwapCoordinates,
+                    m_bGetSecondaryGeometryOption,
+                    hCacheSRS, m_bFaceHoleNegative );
+                if( poGeometry == nullptr )
+                    continue;
+
+                auto poGeomProperty = poClass->GetGeometryProperty(i);
                 OGRwkbGeometryType eGType = static_cast<OGRwkbGeometryType>(
-                    poClass->GetGeometryProperty(0)->GetType());
+                    poGeomProperty->GetType());
 
                 const char* pszSRSName =
-                    GML_ExtractSrsNameFromGeometry(papsGeometry,
+                    GML_ExtractSrsNameFromGeometry(myGeometryList,
                                                     osWork,
                                                     m_bConsiderEPSGAsURN);
                 if( pszSRSName != nullptr )
@@ -1415,16 +1425,23 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
                 }
                 if( m_pszGlobalSRSName == nullptr || pszSRSName != nullptr)
                 {
-                    poClass->MergeSRSName(pszSRSName);
+                    if( poClass->GetGeometryPropertyCount() == 1 )
+                        poClass->MergeSRSName(pszSRSName);
+                    else
+                        poGeomProperty->MergeSRSName(pszSRSName ? pszSRSName : "");
                 }
 
                 // Merge geometry type into layer.
-                if( poClass->GetFeatureCount() == 1 && eGType == wkbUnknown )
-                    eGType = wkbNone;
-
-                poClass->GetGeometryProperty(0)->SetType(
-                    static_cast<int>(OGRMergeGeometryTypesEx(
-                        eGType, poGeometry->getGeometryType(), true)));
+                if( bGeometryColumnJustCreated )
+                {
+                    poGeomProperty->SetType(poGeometry->getGeometryType());
+                }
+                else
+                {
+                    poGeomProperty->SetType(
+                        static_cast<int>(OGRMergeGeometryTypesEx(
+                            eGType, poGeometry->getGeometryType(), true)));
+                }
 
                 // Merge extents.
                 if (!poGeometry->IsEmpty())

@@ -30,7 +30,6 @@
 #include "cpl_conv.h"
 #include "ogrteigha.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            OGRDWGDriver()                            */
@@ -119,6 +118,7 @@ void RegisterOGRDWG()
     poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }

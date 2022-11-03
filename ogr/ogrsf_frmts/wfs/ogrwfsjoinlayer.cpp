@@ -29,7 +29,6 @@
 #include "ogr_wfs.h"
 #include "cpl_md5.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          OGRWFSJoinLayer()                           */

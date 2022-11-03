@@ -61,7 +61,6 @@
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$")
 
 namespace {
 
@@ -270,13 +269,13 @@ CPLErr AAIGRasterBand::SetNoDataValue( double dfNoData )
 AAIGDataset::AAIGDataset() :
     fp(nullptr),
     papszPrj(nullptr),
-    pszProjection(CPLStrdup("")),
     nBufferOffset(0),
     nOffsetInBuffer(256),
     eDataType(GDT_Int32),
     bNoDataSet(false),
     dfNoDataValue(-9999.0)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -303,7 +302,6 @@ AAIGDataset::~AAIGDataset()
         }
     }
 
-    CPLFree(pszProjection);
     CSLDestroy(papszPrj);
 }
 
@@ -1011,8 +1009,7 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo *poOpenInfo,
             nStartOfData ++;
         }
 
-        CPLFree(poDS->pszProjection);
-        poDS->pszProjection = CPLStrdup(SRS_WKT_WGS84_LAT_LONG);
+        poDS->m_oSRS.importFromWkt(SRS_WKT_WGS84_LAT_LONG);
     }
     else
     {
@@ -1132,6 +1129,7 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo *poOpenInfo,
         CPLDebug("AAIGrid", "Loaded SRS from %s", poDS->osPrjFilename.c_str());
 
         OGRSpatialReference oSRS;
+        oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if( oSRS.importFromESRI(poDS->papszPrj) == OGRERR_NONE )
         {
             // If geographic values are in seconds, we must transform.
@@ -1147,8 +1145,7 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo *poOpenInfo,
                 poDS->adfGeoTransform[5] /= 3600.0;
             }
 
-            CPLFree(poDS->pszProjection);
-            oSRS.exportToWkt(&(poDS->pszProjection));
+            poDS->m_oSRS = oSRS;
         }
     }
 
@@ -1178,10 +1175,13 @@ CPLErr AAIGDataset::GetGeoTransform( double *padfTransform )
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *AAIGDataset::_GetProjectionRef() { return pszProjection; }
+const OGRSpatialReference *AAIGDataset::GetSpatialRef() const
+{
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
+}
 
 /************************************************************************/
 /*                          CreateCopy()                                */

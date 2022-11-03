@@ -22,6 +22,7 @@ Synopsis
         [-if format]* [-of format]
         [-b band]* [-mask band] [-expand {gray|rgb|rgba}]
         [-outsize xsize[%]|0 ysize[%]|0] [-tr xres yres]
+        [-ovr level|AUTO|AUTO-n|NONE]
         [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,rms,mode}]
         [-unscale] [-scale[_bn] [src_min src_max [dst_min dst_max]]]* [-exponent[_bn] exp_val]*
         [-srcwin xoff yoff xsize ysize] [-epo] [-eco]
@@ -96,6 +97,28 @@ resampling, and rescaling pixels in the process.
     Both must be positive values. This is mutually exclusive with
     :option:`-outsize` and :option:`-a_ullr`.
 
+.. option:: -ovr <level|AUTO|AUTO-n|NONE>
+
+    .. versionadded:: 3.6
+
+    To specify which overview level of source file must be used. The default choice,
+    AUTO, will select the overview level whose resolution is the closest to the
+    target resolution. Specify an integer value (0-based, i.e. 0=1st overview level)
+    to select a particular level. Specify AUTO-n where n is an integer greater or
+    equal to 1, to select an overview level below the AUTO one. Or specify NONE to
+    force the base resolution to be used (can be useful if overviews have been
+    generated with a low quality resampling method, and a higher quality resampling method
+    is specified with :option:`-r`.
+
+    When :option:`-ovr` is specified to an integer value,
+    and none of :option:`-outsize` and :option:`-tr` is specified, the size of
+    the overview will be used as the output size.
+
+    When :option:`-ovr` is specified, values of :option:`-srcwin`, when specified,
+    should be expressed as pixel offset and size of the full resolution source dataset.
+    Similarly when using :option:`-outsize` with percentage values, they refer to the size
+    of the full resolution source dataset.
+
 .. option:: -r {nearest (default),bilinear,cubic,cubicspline,lanczos,average,rms,mode}
 
     Select a resampling algorithm.
@@ -119,12 +142,19 @@ resampling, and rescaling pixels in the process.
 .. option:: -scale [src_min src_max [dst_min dst_max]]
 
     Rescale the input pixels values from the range **src_min** to **src_max**
-    to the range **dst_min** to **dst_max**. If omitted the output range is 0
-    to 255.  If omitted the input range is automatically computed from the
-    source data. Note that these values are only used to compute a scale and
-    offset to apply to the input raster values. In particular, src_min and
-    src_max are not used to clip input values.
-    -scale can be repeated several times (if specified only once,
+    to the range **dst_min** to **dst_max**.
+    If omitted the output range is 0 to 255.
+    If omitted the input range is automatically computed from the
+    source dataset, in its whole (not just the window of interest potentially
+    specified with :option:`-srcwin` or :option:`-projwin`). This may be a
+    slow operation on a large source dataset, and if using it multiple times
+    for several gdal_translate invocation, it might be beneficial to call
+    ``gdalinfo -stats {source_dataset}`` priorly to precompute statistics, for
+    formats that support serializing statistics computations (GeoTIFF, VRT...)
+    Note that the values specified after :option:`-scale` are only used to compute a scale and
+    offset to apply to the input raster values. In particular, ``src_min`` and
+    ``src_max`` are not used to clip input values.
+    :option:`-scale` can be repeated several times (if specified only once,
     it also applies to all bands of the output dataset), so as to specify per
     band parameters. It is also possible to use the "-scale_bn" syntax where bn
     is a band number (e.g. "-scale_2" for the 2nd band of the output dataset)
@@ -145,6 +175,11 @@ resampling, and rescaling pixels in the process.
     Apply the scale/offset metadata for the bands to convert scaled values to
     unscaled values.  It is also often necessary to reset the output datatype
     with the :option:`-ot` switch.
+    The unscaled value is computed from the scaled raw value with the following
+    formula:
+
+    .. math::
+        {unscaled\_value} = {scaled\_value} * {scale} + {offset}
 
 .. option:: -srcwin <xoff> <yoff> <xsize> <ysize>
 

@@ -34,7 +34,6 @@
 #include "rawdataset.h"
 #include "ogr_srs_api.h"
 
-CPL_CVSID("$Id$")
 
 static GInt16 CastToGInt16(float val)
 {
@@ -143,6 +142,7 @@ class SAR_CEOSDataset final: public GDALPamDataset
 
     char        **papszTempMD;
 
+    OGRSpatialReference m_oSRS{};
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
 
@@ -156,10 +156,7 @@ class SAR_CEOSDataset final: public GDALPamDataset
     ~SAR_CEOSDataset() override;
 
     int GetGCPCount() override;
-    const char *_GetGCPProjection() override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override {
-        return GetGCPSpatialRefFromOldGetGCPProjection();
-    }
+    const OGRSpatialReference* GetGCPSpatialRef() const override;
     const GDAL_GCP *GetGCPs() override;
 
     char **GetMetadataDomainList() override;
@@ -644,6 +641,9 @@ SAR_CEOSDataset::SAR_CEOSDataset() :
     pasGCPList(nullptr),
     papszExtraFiles(nullptr)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    m_oSRS.importFromWkt(SRS_WKT_WGS84_LAT_LONG);
+
     sVolume.Flavor = 0;
     sVolume.Sensor = 0;
     sVolume.ProductType = 0;
@@ -728,16 +728,16 @@ int SAR_CEOSDataset::GetGCPCount()
 }
 
 /************************************************************************/
-/*                          GetGCPProjection()                          */
+/*                          GetGCPSpatialRef()                          */
 /************************************************************************/
 
-const char *SAR_CEOSDataset::_GetGCPProjection()
+const OGRSpatialReference *SAR_CEOSDataset::GetGCPSpatialRef() const
 
 {
     if( nGCPCount > 0 )
-        return SRS_WKT_WGS84_LAT_LONG;
+        return &m_oSRS;
 
-    return "";
+    return nullptr;
 }
 
 /************************************************************************/

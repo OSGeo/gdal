@@ -36,7 +36,6 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$")
 
 CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
 
@@ -130,6 +129,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     psImage->psFile = psFile;
     psImage->iSegment = iSegment;
     psImage->pachHeader = pachHeader;
+    psImage->nIXSOFL = -1;
 
     psSegInfo->hAccess = psImage;
 
@@ -626,6 +626,22 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         return NULL;
     }
 
+    if( psImage->nBlocksPerRow * psImage->nBlocksPerColumn * psImage->nBands > 1000 * 1000 )
+    {
+        // Sanity check to avoid allocating too much memory
+        VSIFSeekL( psFile->fp, 0, SEEK_END );
+        // This is really a very safe bound. A smarter check would taken
+        // into account the block size as well and/or the size of an entry
+        // in the offset table.
+        if( VSIFTellL(psFile->fp) < (unsigned)(psImage->nBlocksPerRow) * psImage->nBlocksPerColumn )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "File is too small compared to the number of blocks");
+            NITFImageDeaccess(psImage);
+            return NULL;
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Override nCols and nRows for NITF 1.1 (not sure why!)           */
 /* -------------------------------------------------------------------- */
@@ -687,20 +703,31 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         nExtendedTREBytes = atoi(NITFGetField(szTemp,pachHeader,nOffset,5));
         nOffset += 5;
 
-        if( nExtendedTREBytes > 3 )
+        if( nExtendedTREBytes >= 3 )
         {
-            if( (int)psSegInfo->nSegmentHeaderSize <
-                            nOffset + nExtendedTREBytes )
-                GOTO_header_too_small();
+            psImage->nIXSOFLOffsetInSubfileHeader = nOffset;
+            char szIXSOFL[4];
+            memcpy(szIXSOFL, pachHeader + nOffset, 3);
+            szIXSOFL[3] = 0;
+            psImage->nIXSOFL = atoi(szIXSOFL);
+            if( psImage->nIXSOFL != 0 )
+                psImage->papszMetadata = CSLSetNameValue(psImage->papszMetadata, "NITF_IXSOFL", szIXSOFL);
 
-            psImage->pachTRE = (char *)
-                CPLRealloc( psImage->pachTRE,
-                            psImage->nTREBytes + nExtendedTREBytes - 3 );
-            memcpy( psImage->pachTRE + psImage->nTREBytes,
-                    pachHeader + nOffset + 3,
-                    nExtendedTREBytes - 3 );
+            if( nExtendedTREBytes > 3 )
+            {
+                if( (int)psSegInfo->nSegmentHeaderSize <
+                                nOffset + nExtendedTREBytes )
+                    GOTO_header_too_small();
 
-            psImage->nTREBytes += (nExtendedTREBytes - 3);
+                psImage->pachTRE = (char *)
+                    CPLRealloc( psImage->pachTRE,
+                                psImage->nTREBytes + nExtendedTREBytes - 3 );
+                memcpy( psImage->pachTRE + psImage->nTREBytes,
+                        pachHeader + nOffset + 3,
+                        nExtendedTREBytes - 3 );
+
+                psImage->nTREBytes += (nExtendedTREBytes - 3);
+            }
             /*nOffset += nExtendedTREBytes;*/
         }
     }

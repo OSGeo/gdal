@@ -29,7 +29,6 @@
 #include "gdal_pam.h"
 #include "derivedlist.h"
 
-CPL_CVSID("$Id$")
 
 class DerivedDataset final: public VRTDataset
 {

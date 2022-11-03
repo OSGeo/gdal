@@ -115,6 +115,8 @@ char CPL_DLL * OGRGetRFC822DateTime(const OGRField* psField);
 char CPL_DLL * OGRGetXMLDateTime(const OGRField* psField);
 char CPL_DLL * OGRGetXMLDateTime(const OGRField* psField, bool bAlwaysMillisecond);
 char CPL_DLL * OGRGetXML_UTF8_EscapedString(const char* pszString);
+bool CPL_DLL OGRParseDateTimeYYYYMMDDTHHMMSSZ( const char *pszInput, size_t nLen, OGRField *psField );
+bool CPL_DLL OGRParseDateTimeYYYYMMDDTHHMMSSsssZ( const char *pszInput, size_t nLen, OGRField *psField );
 
 int OGRCompareDate(const OGRField *psFirstTuple,
                    const OGRField *psSecondTuple ); /* used by ogr_gensql.cpp and ogrfeaturequery.cpp */

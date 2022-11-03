@@ -57,6 +57,7 @@ class KmlSuperOverlayReadDataset final: public GDALDataset
 {
     friend class        KmlSuperOverlayRasterBand;
 
+    OGRSpatialReference m_oSRS{};
     int                 nFactor;
     CPLString           osFilename;
     CPLXMLNode         *psRoot;
@@ -84,7 +85,7 @@ class KmlSuperOverlayReadDataset final: public GDALDataset
     static int          Identify(GDALOpenInfo *);
     static GDALDataset *Open(const char* pszFilename, KmlSuperOverlayReadDataset* poParent = nullptr, int nRec = 0);
     static GDALDataset *Open(GDALOpenInfo *);
- 
+
     static const int KMLSO_ContainsOpaquePixels = 0x1;
     static const int KMLSO_ContainsTransparentPixels = 0x2;
     static const int KMLSO_ContainsPartiallyTransparentPixels = 0x4;
@@ -92,10 +93,7 @@ class KmlSuperOverlayReadDataset final: public GDALDataset
     static int DetectTransparency( int rxsize, int rysize, int rx, int ry, int dxsize, int dysize, GDALDataset* poSrcDs );
 
     virtual CPLErr GetGeoTransform( double * ) override;
-    virtual const char *_GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
 
     virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,

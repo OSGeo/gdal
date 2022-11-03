@@ -2484,6 +2484,7 @@ void RegisterOGROAPIF()
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/oapif.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "OAPIF:" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"

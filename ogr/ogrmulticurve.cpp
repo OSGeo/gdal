@@ -36,7 +36,6 @@
 #include "ogr_core.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            OGRMultiCurve()                           */

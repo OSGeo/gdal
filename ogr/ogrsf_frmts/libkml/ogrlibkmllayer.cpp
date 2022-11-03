@@ -40,7 +40,6 @@
 #include <algorithm>
 #include <set>
 
-CPL_CVSID("$Id$")
 
 using kmldom::CameraPtr;
 using kmldom::ChangePtr;
@@ -114,6 +113,7 @@ CPLString OGRLIBKMLGetSanitizedNCName( const char* pszName )
 
 OGRLIBKMLLayer::OGRLIBKMLLayer( const char *pszLayerName,
                                 OGRwkbGeometryType eGType,
+                                const OGRSpatialReference *poSRSIn,
                                 OGRLIBKMLDataSource * poOgrDS,
                                 ElementPtr poKmlRoot,
                                 ContainerPtr poKmlContainer,
@@ -151,8 +151,39 @@ OGRLIBKMLLayer::OGRLIBKMLLayer( const char *pszLayerName,
     m_bUpdateIsFolder(false)
 {
     m_poStyleTable = nullptr;
+
     m_poOgrSRS->SetWellKnownGeogCS( "WGS84" );
     m_poOgrSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
+    // KML should be created as WGS84.
+    if( poSRSIn != nullptr )
+    {
+        if( !m_poOgrSRS->IsSame(poSRSIn) )
+        {
+            m_poCT.reset(OGRCreateCoordinateTransformation( poSRSIn, m_poOgrSRS ));
+            if( m_poCT == nullptr && poOgrDS->IsFirstCTError() )
+            {
+                // If we can't create a transformation, issue a warning - but
+                // continue the transformation.
+                char *pszWKT = nullptr;
+
+                poSRSIn->exportToPrettyWkt( &pszWKT, FALSE );
+
+                CPLError(
+                    CE_Warning, CPLE_AppDefined,
+                    "Failed to create coordinate transformation between the "
+                    "input coordinate system and WGS84.  This may be because "
+                    "they are not transformable.  "
+                    "KML geometries may not render correctly.  "
+                    "This message will not be issued any more."
+                    "\nSource:\n%s\n",
+                    pszWKT );
+
+                CPLFree( pszWKT );
+                poOgrDS->IssuedFirstCTError();
+            }
+        }
+    }
 
     SetDescription( m_poOgrFeatureDefn->GetName() );
     m_poOgrFeatureDefn->Reference();
@@ -459,6 +490,19 @@ OGRErr OGRLIBKMLLayer::ICreateFeature( OGRFeature * poOgrFeat )
     if( !bUpdate )
         return OGRERR_UNSUPPORTED_OPERATION;
 
+    OGRGeometry *poGeomBackup = nullptr;
+    if (nullptr != m_poCT)
+    {
+        poGeomBackup = poOgrFeat->StealGeometry();
+        if( poGeomBackup )
+        {
+            auto poWGS84Geom = poGeomBackup->clone();
+            poWGS84Geom->transform( m_poCT.get() );
+            poOgrFeat->SetGeometryDirectly(poWGS84Geom);
+        }
+    }
+
+
     if( m_bRegionBoundsAuto && poOgrFeat->GetGeometryRef() != nullptr &&
         !(poOgrFeat->GetGeometryRef()->IsEmpty()) )
     {
@@ -473,6 +517,9 @@ OGRErr OGRLIBKMLLayer::ICreateFeature( OGRFeature * poOgrFeat )
     FeaturePtr poKmlFeature =
         feat2kml( m_poOgrDS, this, poOgrFeat, m_poOgrDS->GetKmlFactory(),
                   m_bUseSimpleField );
+
+    if( poGeomBackup )
+        poOgrFeat->SetGeometryDirectly(poGeomBackup);
 
     if( m_poKmlLayer )
     {

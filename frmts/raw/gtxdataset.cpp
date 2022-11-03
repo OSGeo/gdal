@@ -32,7 +32,8 @@
 #include "ogr_srs_api.h"
 #include "rawdataset.h"
 
-CPL_CVSID("$Id$")
+#include <limits>
+
 
 /**
 
@@ -67,14 +68,18 @@ Values are an offset in meters between two vertical datums.
 
 class GTXDataset final: public RawDataset
 {
-    VSILFILE    *fpImage;  // image data file.
+    VSILFILE    *fpImage = nullptr;  // image data file.
 
+    OGRSpatialReference m_oSRS{};
     double      adfGeoTransform[6];
 
     CPL_DISALLOW_COPY_ASSIGN(GTXDataset)
 
   public:
-    GTXDataset() : fpImage(nullptr) {
+    GTXDataset() {
+        m_oSRS.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
+        m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
         adfGeoTransform[0] = 0.0;
         adfGeoTransform[1] = 1.0;
         adfGeoTransform[2] = 0.0;
@@ -86,10 +91,8 @@ class GTXDataset final: public RawDataset
 
     CPLErr GetGeoTransform( double * padfTransform ) override;
     CPLErr SetGeoTransform( double * padfTransform ) override;
-    const char *_GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+
+    const OGRSpatialReference* GetSpatialRef() const override { return &m_oSRS; }
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -261,7 +264,9 @@ GDALDataset *GTXDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->adfGeoTransform[0] -= 360.0;
     }
 
-    if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
+    if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
+        static_cast<vsi_l_offset>(poDS->nRasterXSize) *
+            poDS->nRasterYSize > std::numeric_limits<vsi_l_offset>::max() / sizeof(double) )
     {
         delete poDS;
         return nullptr;
@@ -275,7 +280,7 @@ GDALDataset *GTXDataset::Open( GDALOpenInfo * poOpenInfo )
     const vsi_l_offset nSize = VSIFTellL(poDS->fpImage);
 
     GDALDataType eDT = GDT_Float32;
-    if( nSize == 40 + 8 * static_cast<vsi_l_offset>(poDS->nRasterXSize) *
+    if( nSize - 40 == sizeof(double) * static_cast<vsi_l_offset>(poDS->nRasterXSize) *
         poDS->nRasterYSize )
         eDT = GDT_Float64;
     const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
@@ -365,16 +370,6 @@ CPLErr GTXDataset::SetGeoTransform( double * padfTransform )
     }
 
     return CE_None;
-}
-
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char *GTXDataset::_GetProjectionRef()
-
-{
-    return SRS_WKT_WGS84_LAT_LONG;
 }
 
 /************************************************************************/

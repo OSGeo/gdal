@@ -54,7 +54,6 @@
 #include "gdal_rat.h"
 #include "gdal_priv_templates.hpp"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           GDALRasterBand()                           */
@@ -2679,7 +2678,7 @@ GDALGetRasterSampleOverviewEx( GDALRasterBandH hBand, GUIntBig nDesiredSamples )
 /************************************************************************/
 
 /**
- * \fn GDALRasterBand::BuildOverviews(const char*, int, int*, GDALProgressFunc, void*)
+ * \fn GDALRasterBand::BuildOverviews(const char*, int, const int*, GDALProgressFunc, void*)
  * \brief Build raster overview(s)
  *
  * If the operation is unsupported for the indicated dataset, then
@@ -2699,6 +2698,8 @@ GDALGetRasterSampleOverviewEx( GDALRasterBandH hBand, GUIntBig nDesiredSamples )
  * @param panOverviewList the list of overview decimation factors to build.
  * @param pfnProgress a function to call to report progress, or NULL.
  * @param pProgressData application data to pass to the progress function.
+ * @param papszOptions (GDAL >= 3.6) NULL terminated list of options as
+ *                     key=value pairs, or NULL
  *
  * @return CE_None on success or CE_Failure if the operation doesn't work.
  */
@@ -2708,9 +2709,10 @@ GDALGetRasterSampleOverviewEx( GDALRasterBandH hBand, GUIntBig nDesiredSamples )
 
 CPLErr GDALRasterBand::BuildOverviews( const char* /*pszResampling*/,
                                        int /*nOverviews*/,
-                                       int* /*panOverviewList*/,
+                                       const int* /*panOverviewList*/,
                                        GDALProgressFunc /*pfnProgress*/,
-                                       void * /*pProgressData*/ )
+                                       void * /*pProgressData*/,
+                                       CSLConstList /* papszOptions */ )
 
 {
     ReportError( CE_Failure, CPLE_NotSupported,
@@ -5301,6 +5303,7 @@ inline double GetPixelValue( GDALDataType eDataType,
 /*                         SetValidPercent()                            */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 /**
  * \brief Set percentage of valid (not nodata) pixels.
  *
@@ -5342,6 +5345,7 @@ void GDALRasterBand::SetValidPercent(GUIntBig nSampleCount, GUIntBig nValidCount
         }
     }
 }
+//! @endcond
 
 /************************************************************************/
 /*                         ComputeStatistics()                          */
@@ -6455,17 +6459,19 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
  * \brief Compute the min/max values for a band.
  *
  * @see GDALRasterBand::ComputeRasterMinMax()
+ *
+ * @note Prior to GDAL 3.6, this function returned void
  */
 
-void CPL_STDCALL
+CPLErr CPL_STDCALL
 GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
                          double adfMinMax[2] )
 
 {
-    VALIDATE_POINTER0( hBand, "GDALComputeRasterMinMax" );
+    VALIDATE_POINTER1( hBand, "GDALComputeRasterMinMax", CE_Failure );
 
     GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
-    poBand->ComputeRasterMinMax( bApproxOK, adfMinMax );
+    return poBand->ComputeRasterMinMax( bApproxOK, adfMinMax );
 }
 
 /************************************************************************/

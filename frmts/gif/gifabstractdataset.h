@@ -51,7 +51,6 @@ class GIFAbstractDataset CPL_NON_FINAL: public GDALPamDataset
 
     GifFileType *hGifFile;
 
-    char        *pszProjection;
     int         bGeoTransformValid;
     double      adfGeoTransform[6];
 
@@ -69,16 +68,8 @@ class GIFAbstractDataset CPL_NON_FINAL: public GDALPamDataset
     GIFAbstractDataset();
     ~GIFAbstractDataset() override;
 
-    const char *_GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
     CPLErr GetGeoTransform( double * ) override;
     int GetGCPCount() override;
-    const char *_GetGCPProjection() override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override {
-        return GetGCPSpatialRefFromOldGetGCPProjection();
-    }
     const GDAL_GCP *GetGCPs() override;
 
     char **GetMetadataDomainList() override;

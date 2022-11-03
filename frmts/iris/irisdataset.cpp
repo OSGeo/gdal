@@ -37,7 +37,6 @@
 #include <algorithm>
 #include <sstream>
 
-CPL_CVSID("$Id$")
 
 static double DEG2RAD = M_PI / 180.0;
 static double RAD2DEG = 180.0 / M_PI;
@@ -66,10 +65,10 @@ class IRISDataset final: public GDALPamDataset
     unsigned short        nDataTypeCode;
     unsigned char         nProjectionCode;
     float                 fNyquistVelocity;
-    char*                 pszSRS_WKT;
-    double                adfGeoTransform[6];
-    bool                  bHasLoadedProjection;
-    void                  LoadProjection();
+    mutable OGRSpatialReference   m_oSRS{};
+    mutable double                adfGeoTransform[6];
+    mutable bool                  bHasLoadedProjection;
+    void                  LoadProjection() const;
     static bool GeodesicCalculation(
         float fLat, float fLon, float fAngle, float fDist,
         float fEquatorialRadius, float fPolarRadius, float fFlattening,
@@ -83,10 +82,7 @@ public:
     static int Identify( GDALOpenInfo * );
 
     CPLErr GetGeoTransform( double * padfTransform ) override;
-    const char *_GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
 };
 
 const char* const IRISDataset::aszProductNames[] = {
@@ -402,9 +398,9 @@ IRISDataset::IRISDataset() :
     nDataTypeCode(0),
     nProjectionCode(0),
     fNyquistVelocity(0.0),
-    pszSRS_WKT(nullptr),
     bHasLoadedProjection(false)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     std::fill_n(abyHeader, CPL_ARRAYSIZE(abyHeader), static_cast<GByte>(0));
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -424,13 +420,12 @@ IRISDataset::~IRISDataset()
     FlushCache(true);
     if( fp != nullptr )
         VSIFCloseL( fp );
-    CPLFree( pszSRS_WKT );
 }
 
 /************************************************************************/
 /*           Calculates the projection and Geotransform                 */
 /************************************************************************/
-void IRISDataset::LoadProjection()
+void IRISDataset::LoadProjection() const
 {
     bHasLoadedProjection = true;
     // They give the radius in cm.
@@ -484,9 +479,6 @@ void IRISDataset::LoadProjection()
         fScaleX >= fPolarRadius || fScaleY >= fPolarRadius )
         return;
 
-    OGRSpatialReference oSRSOut;
-    oSRSOut.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-
     // Mercator projection.
     if( EQUAL(aszProjections[nProjectionCode],"Mercator") )
     {
@@ -503,7 +495,7 @@ void IRISDataset::LoadProjection()
                 oPositionY2) )
             return;
 
-        oSRSOut.SetGeogCS(
+        m_oSRS.SetGeogCS(
             "unnamed ellipse",
             "unknown",
             "unnamed",
@@ -511,9 +503,8 @@ void IRISDataset::LoadProjection()
             "Greenwich", 0.0,
             "degree", 0.0174532925199433);
 
-        oSRSOut.SetMercator(fProjRefLat, fProjRefLon, 1.0, 0.0, 0.0);
-        oSRSOut.SetLinearUnits("Metre", 1.0);
-        oSRSOut.exportToWkt(&pszSRS_WKT);
+        m_oSRS.SetMercator(fProjRefLat, fProjRefLon, 1.0, 0.0, 0.0);
+        m_oSRS.SetLinearUnits("Metre", 1.0);
 
         // The center coordinates are given in LatLon on the defined
         // ellipsoid. Necessary to calculate geotransform.
@@ -529,7 +520,7 @@ void IRISDataset::LoadProjection()
             "degree", 0.0174532925199433);
 
         OGRCoordinateTransformation *poTransform =
-            OGRCreateCoordinateTransformation( &oSRSLatLon, &oSRSOut );
+            OGRCreateCoordinateTransformation( &oSRSLatLon, &m_oSRS );
 
         const double dfLon2 = oPositionX2.first;
         const double dfLat2 = oPositionY2.second;
@@ -555,15 +546,15 @@ void IRISDataset::LoadProjection()
     }
     else if( EQUAL(aszProjections[nProjectionCode],"Azimutal equidistant") )
     {
-        oSRSOut.SetGeogCS(
+        m_oSRS.SetGeogCS(
             "unnamed ellipse",
             "unknown",
             "unnamed",
             fEquatorialRadius, fInvFlattening,
             "Greenwich", 0.0,
             "degree", 0.0174532925199433);
-        oSRSOut.SetAE(fProjRefLat, fProjRefLon, 0.0, 0.0);
-        oSRSOut.exportToWkt(&pszSRS_WKT) ;
+        m_oSRS.SetAE(fProjRefLat, fProjRefLon, 0.0, 0.0);
+
         adfGeoTransform[0] = -1*(fRadarLocX*fScaleX);
         adfGeoTransform[1] = fScaleX;
         adfGeoTransform[2] = 0.0;
@@ -689,14 +680,14 @@ CPLErr IRISDataset::GetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *IRISDataset::_GetProjectionRef()
+const OGRSpatialReference *IRISDataset::GetSpatialRef() const
 {
     if( !bHasLoadedProjection )
         LoadProjection();
-    return pszSRS_WKT;
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /************************************************************************/

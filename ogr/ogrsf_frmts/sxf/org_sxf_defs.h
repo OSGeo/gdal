@@ -162,6 +162,7 @@ enum SXFTextEncoding /* Flag of text encoding (Note 6) */
     SXF_ENC_DOS = 0,
     SXF_ENC_WIN = 1,
     SXF_ENC_KOI_8 = 2
+#define SXF_ENC_LAST SXF_ENC_KOI_8
 };
 
 enum SXFCoordinatesAccuracy /* Flag of coordinate storing accuracy (Note 7) */
@@ -171,6 +172,7 @@ enum SXFCoordinatesAccuracy /* Flag of coordinate storing accuracy (Note 7) */
     SXF_COORD_ACC_CM = 2,   //cantimeters
     SXF_COORD_ACC_MM = 3,   //millimeters
     SXF_COORD_ACC_DM = 4    //decimeters
+#define SXF_COORD_ACC_LAST SXF_COORD_ACC_DM
 };
 
 typedef struct
@@ -195,24 +197,31 @@ enum SXFCoordinateMeasUnit
     SXF_COORD_MU_RADIAN
 } ;
 
-typedef struct
+struct SXFMapDescription
 {
     double stProjCoords[8]; //X(0) & Y(1) South West, X(2) & Y(3) North West, X(4) & Y(5) North East, X(6) & Y(7) South East
     double stGeoCoords[8];
     double stFrameCoords[8];
-    OGREnvelope Env;
-    OGRSpatialReference *pSpatRef;
-    SXFCoordinateMeasUnit eUnitInPlan;
-    double dfXOr;
-    double dfYOr;
-    double dfFalseNorthing;
-    double dfFalseEasting;
-    GUInt32 nResolution;
-    double dfScale;
-    bool bIsRealCoordinates;
-    SXFCoordinatesAccuracy stCoordAcc;
+    OGREnvelope Env{};
+    OGRSpatialReference *pSpatRef = nullptr;
+    SXFCoordinateMeasUnit eUnitInPlan = SXF_COORD_MU_METRE;
+    double dfXOr = 0;
+    double dfYOr = 0;
+    double dfFalseNorthing = 0;
+    double dfFalseEasting = 0;
+    GUInt32 nResolution = 0;
+    double dfScale = 0;
+    bool bIsRealCoordinates = false;
+    SXFCoordinatesAccuracy stCoordAcc = SXF_COORD_ACC_UNDEFINED;
 
-} SXFMapDescription;
+    SXFMapDescription()
+    {
+        memset(stProjCoords, 0, sizeof(stProjCoords));
+        memset(stGeoCoords, 0, sizeof(stProjCoords));
+        memset(stFrameCoords, 0, sizeof(stFrameCoords));
+    }
+
+};
 
 enum SXFCoordinateType
 {
@@ -292,19 +301,19 @@ enum SXFRecordAttributeType
 /*                         SXFPassport                                  */
 /************************************************************************/
 
-typedef struct{
-    GUInt16 nYear, nMonth, nDay;
-} SXFDate;
+struct SXFDate{
+    GUInt16 nYear = 0, nMonth = 0, nDay = 0;
+};
 
 struct SXFPassport
 {
-    GUInt32 version;
-    SXFDate dtCrateDate;
-    CPLString sMapSheet;
-    GUInt32 nScale;
-    CPLString sMapSheetName;
+    GUInt32 version = 0;
+    SXFDate dtCrateDate{};
+    CPLString sMapSheet{};
+    GUInt32 nScale = 0;
+    CPLString sMapSheetName{};
     SXFInformationFlags informationFlags;
-    SXFMapDescription stMapDescription;
+    SXFMapDescription stMapDescription{};
 };
 
 typedef struct

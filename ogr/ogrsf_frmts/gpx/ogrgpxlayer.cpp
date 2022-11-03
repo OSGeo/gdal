@@ -48,7 +48,6 @@
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$")
 
 constexpr int FLD_TRACK_FID = 0;
 constexpr int FLD_TRACK_SEG_ID = 1;

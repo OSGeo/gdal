@@ -29,7 +29,6 @@
 #include "dgnlibp.h"
 #include <cmath>
 
-CPL_CVSID("$Id$")
 
 constexpr double DEG_TO_RAD = M_PI / 180.0;
 

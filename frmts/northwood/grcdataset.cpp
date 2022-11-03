@@ -37,7 +37,6 @@
 #include "../../ogr/ogrsf_frmts/mitab/mitab.h"
 #endif
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -55,7 +54,7 @@ class NWT_GRCDataset final : public GDALPamDataset
     GByte abyHeader[1024];
     NWT_GRID *pGrd;
     char **papszCategories;
-    char *pszProjection;
+    mutable OGRSpatialReference m_oSRS{};
 
     NWT_GRCDataset(const NWT_GRCDataset&) = delete;
     NWT_GRCDataset& operator= (const NWT_GRCDataset&) = delete;
@@ -71,10 +70,7 @@ class NWT_GRCDataset final : public GDALPamDataset
     static int Identify( GDALOpenInfo * poOpenInfo );
 
     CPLErr GetGeoTransform( double *padfTransform ) override;
-    const char *_GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
 };
 
 /************************************************************************/
@@ -251,9 +247,9 @@ NWT_GRCDataset::NWT_GRCDataset() :
     fp(nullptr),
     pGrd(nullptr),
     papszCategories(nullptr),
-    pszProjection(nullptr),
     poColorTable(nullptr)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     memset(abyHeader, 0, sizeof(abyHeader) );
 }
 
@@ -271,8 +267,6 @@ NWT_GRCDataset::~NWT_GRCDataset()
 
     if( fp != nullptr )
         VSIFCloseL( fp );
-
-    CPLFree( pszProjection );
 }
 
 /************************************************************************/
@@ -292,21 +286,22 @@ CPLErr NWT_GRCDataset::GetGeoTransform( double *padfTransform )
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
-const char *NWT_GRCDataset::_GetProjectionRef()
+const OGRSpatialReference *NWT_GRCDataset::GetSpatialRef() const
 {
-    if (pszProjection == nullptr)
+    if (m_oSRS.IsEmpty() )
     {
         OGRSpatialReference *poSpatialRef
           = MITABCoordSys2SpatialRef( pGrd->cMICoordSys );
         if (poSpatialRef)
         {
-            poSpatialRef->exportToWkt( &pszProjection );
+            m_oSRS = *poSpatialRef;
+            m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             poSpatialRef->Release();
         }
     }
-    return pszProjection;
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /************************************************************************/

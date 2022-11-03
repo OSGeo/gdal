@@ -37,7 +37,6 @@
 #include <algorithm>
 #include <string>
 
-CPL_CVSID("$Id$")
 
 /**
 * Recode the given string from a source encoding to UTF-8 encoding.  The source
@@ -1520,7 +1519,7 @@ OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
         int iField = 0;
         int iSubField = 1;
 
-        if( poVRPT != nullptr && poVRPT->GetRepeatCount() == 1 )
+        if( poVRPT->GetRepeatCount() == 1 )
         {
             // Only one row, need a second VRPT field
             iField = 1;

@@ -32,7 +32,6 @@
 #include "ogr_ili2.h"
 #include "ogrsf_frmts.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                                Open()                                */
@@ -109,6 +108,7 @@ void RegisterOGRILI2() {
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Interlis 2" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/ili.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "xtf xml ili" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='MODEL' type='string' description='Filename of the model in IlisMeta format (.imd)'/>"

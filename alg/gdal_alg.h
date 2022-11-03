@@ -285,6 +285,10 @@ GDALSuggestedWarpOutput( GDALDatasetH hSrcDS,
                          void *pTransformArg,
                          double *padfGeoTransformOut,
                          int *pnPixels, int *pnLines );
+
+/** Flag for GDALSuggestedWarpOutput2() to ask to round-up output size */
+#define GDAL_SWO_ROUND_UP_SIZE 0x1
+
 CPLErr CPL_DLL CPL_STDCALL
 GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
                           GDALTransformerFunc pfnTransformer,
@@ -467,6 +471,8 @@ typedef enum {
 /** Inverse distance to a power method control options */
 typedef struct
 {
+    /*! Added in GDAL 3.6 to detect potential ABI issues. Should be set to sizeof(GDALGridInverseDistanceToAPowerOptions) */
+    size_t  nSizeOfStructure;
     /*! Weighting power. */
     double  dfPower;
     /*! Smoothing parameter. */
@@ -487,8 +493,6 @@ typedef struct
     /*! Maximum number of data points to use.
      *
      * Do not search for more points than this number.
-     * If less amount of points found the grid node considered empty and will
-     * be filled with NODATA marker.
      */
     GUInt32 nMaxPoints;
     /*! Minimum number of data points to use.
@@ -504,6 +508,8 @@ typedef struct
 /** Inverse distance to a power, with nearest neighbour search, control options */
 typedef struct
 {
+    /*! Added in GDAL 3.6 to detect potential ABI issues. Should be set to sizeof(GDALGridInverseDistanceToAPowerNearestNeighborOptions) */
+    size_t  nSizeOfStructure;
     /*! Weighting power. */
     double  dfPower;
     /*! The radius of search circle. */
@@ -514,8 +520,6 @@ typedef struct
     /*! Maximum number of data points to use.
      *
      * Do not search for more points than this number.
-     * If less amount of points found the grid node considered empty and will
-     * be filled with NODATA marker.
      */
     GUInt32 nMaxPoints;
     /*! Minimum number of data points to use.
@@ -526,11 +530,24 @@ typedef struct
     GUInt32 nMinPoints;
     /*! No data marker to fill empty points. */
     double  dfNoDataValue;
+    /*! Maximum number of data points to use for each of the 4 quadrants.
+     *
+     * Do not search for more points than this number.
+     */
+    GUInt32 nMaxPointsPerQuadrant;
+    /*! Minimum number of data points to use for each of the 4 quadrants.
+     *
+     * If less amount of points found the grid node considered empty and will
+     * be filled with NODATA marker.
+     */
+    GUInt32 nMinPointsPerQuadrant;
 } GDALGridInverseDistanceToAPowerNearestNeighborOptions;
 
 /** Moving average method control options */
 typedef struct
 {
+    /*! Added in GDAL 3.6 to detect potential ABI issues. Should be set to sizeof(GDALGridMovingAverageOptions) */
+    size_t  nSizeOfStructure;
     /*! The first radius (X axis if rotation angle is 0) of search ellipse. */
     double  dfRadius1;
     /*! The second radius (Y axis if rotation angle is 0) of search ellipse. */
@@ -540,6 +557,11 @@ typedef struct
      * Ellipse rotated counter clockwise.
      */
     double  dfAngle;
+    /*! Maximum number of data points to use.
+     *
+     * Do not search for more points than this number.
+     */
+    GUInt32 nMaxPoints;
     /*! Minimum number of data points to average.
      *
      * If less amount of points found the grid node considered empty and will
@@ -548,11 +570,24 @@ typedef struct
     GUInt32 nMinPoints;
     /*! No data marker to fill empty points. */
     double  dfNoDataValue;
+    /*! Maximum number of data points to use for each of the 4 quadrants.
+     *
+     * Do not search for more points than this number.
+     */
+    GUInt32 nMaxPointsPerQuadrant;
+    /*! Minimum number of data points to use for each of the 4 quadrants.
+     *
+     * If less amount of points found the grid node considered empty and will
+     * be filled with NODATA marker.
+     */
+    GUInt32 nMinPointsPerQuadrant;
 } GDALGridMovingAverageOptions;
 
 /** Nearest neighbor method control options */
 typedef struct
 {
+    /*! Added in GDAL 3.6 to detect potential ABI issues. Should be set to sizeof(GDALGridNearestNeighborOptions) */
+    size_t  nSizeOfStructure;
     /*! The first radius (X axis if rotation angle is 0) of search ellipse. */
     double  dfRadius1;
     /*! The second radius (Y axis if rotation angle is 0) of search ellipse. */
@@ -569,6 +604,8 @@ typedef struct
 /** Data metrics method control options */
 typedef struct
 {
+    /*! Added in GDAL 3.6 to detect potential ABI issues. Should be set to sizeof(GDALGridDataMetricsOptions) */
+    size_t  nSizeOfStructure;
     /*! The first radius (X axis if rotation angle is 0) of search ellipse. */
     double  dfRadius1;
     /*! The second radius (Y axis if rotation angle is 0) of search ellipse. */
@@ -586,11 +623,24 @@ typedef struct
     GUInt32 nMinPoints;
     /*! No data marker to fill empty points. */
     double  dfNoDataValue;
+    /*! Maximum number of data points to use for each of the 4 quadrants.
+     *
+     * Do not search for more points than this number.
+     */
+    GUInt32 nMaxPointsPerQuadrant;
+    /*! Minimum number of data points to use for each of the 4 quadrants.
+     *
+     * If less amount of points found the grid node considered empty and will
+     * be filled with NODATA marker.
+     */
+    GUInt32 nMinPointsPerQuadrant;
 } GDALGridDataMetricsOptions;
 
 /** Linear method control options */
 typedef struct
 {
+    /*! Added in GDAL 3.6 to detect potential ABI issues. Should be set to sizeof(GDALGridLinearOptions) */
+    size_t  nSizeOfStructure;
     /*! In case the point to be interpolated does not fit into a triangle of
      * the Delaunay triangulation, use that maximum distance to search a nearest
      * neighbour, or use nodata otherwise. If set to -1, the search distance is infinite.

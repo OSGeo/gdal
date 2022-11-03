@@ -39,7 +39,6 @@
 #include <geo_normalize.h>
 #include <geovalues.h>
 
-CPL_CVSID("$Id$")
 
 CPL_C_START
 double GTIFAngleToDD( double dfAngle, int nUOMAngle );
@@ -221,8 +220,10 @@ class MrSIDDataset final: public GDALJP2AbstractDataset
   protected:
     virtual int         CloseDependentDatasets() override;
 
-    virtual CPLErr      IBuildOverviews( const char *, int, int *,
-                                         int, int *, GDALProgressFunc, void * ) override;
+    virtual CPLErr      IBuildOverviews( const char *,
+                                         int, const int *,
+                                         int, const int *, GDALProgressFunc, void *,
+                                         CSLConstList papszOptions ) override;
 
   public:
     explicit    MrSIDDataset(int bIsJPEG2000);
@@ -1002,9 +1003,12 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
 /*                          IBuildOverviews()                           */
 /************************************************************************/
 
-CPLErr MrSIDDataset::IBuildOverviews( const char *, int, int *,
-                                      int, int *, GDALProgressFunc,
-                                      void * )
+CPLErr MrSIDDataset::IBuildOverviews( const char *,
+                                      int, const int *,
+                                      int, const int *,
+                                      GDALProgressFunc,
+                                      void *,
+                                      CSLConstList )
 {
         CPLError( CE_Warning, CPLE_AppDefined,
                           "MrSID overviews are built-in, so building external "

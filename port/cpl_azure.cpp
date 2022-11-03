@@ -36,7 +36,6 @@
 
 //! @cond Doxygen_Suppress
 
-CPL_CVSID("$Id$")
 
 #ifdef HAVE_CURL
 
@@ -528,14 +527,14 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(const std::string& osPathForOpti
     bFromManagedIdentities = false;
 
     const CPLString osServicePrefix ( eService == Service::SERVICE_BLOB ? "blob" : "dfs" );
-    bUseHTTPS = CPLTestBool(VSIGetCredential(
+    bUseHTTPS = CPLTestBool(VSIGetPathSpecificOption(
         osPathForOption.c_str(), "CPL_AZURE_USE_HTTPS", "YES"));
-    osEndpoint = VSIGetCredential(
+    osEndpoint = VSIGetPathSpecificOption(
         osPathForOption.c_str(), "CPL_AZURE_ENDPOINT", "");
 
     const CPLString osStorageConnectionString(
         CSLFetchNameValueDef(papszOptions, "AZURE_STORAGE_CONNECTION_STRING",
-        VSIGetCredential(osPathForOption.c_str(), "AZURE_STORAGE_CONNECTION_STRING", "")));
+        VSIGetPathSpecificOption(osPathForOption.c_str(), "AZURE_STORAGE_CONNECTION_STRING", "")));
     if( !osStorageConnectionString.empty() )
     {
         return ParseStorageConnectionString(osStorageConnectionString,
@@ -549,7 +548,7 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(const std::string& osPathForOpti
     {
         osStorageAccount = CSLFetchNameValueDef(papszOptions,
             "AZURE_STORAGE_ACCOUNT",
-            VSIGetCredential(osPathForOption.c_str(), "AZURE_STORAGE_ACCOUNT", ""));
+            VSIGetPathSpecificOption(osPathForOption.c_str(), "AZURE_STORAGE_ACCOUNT", ""));
         if( !osStorageAccount.empty() )
         {
             if( osEndpoint.empty() )
@@ -557,21 +556,21 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(const std::string& osPathForOpti
 
             osAccessToken = CSLFetchNameValueDef(papszOptions,
                 "AZURE_STORAGE_ACCESS_TOKEN",
-                VSIGetCredential(osPathForOption.c_str(), "AZURE_STORAGE_ACCESS_TOKEN", ""));
+                VSIGetPathSpecificOption(osPathForOption.c_str(), "AZURE_STORAGE_ACCESS_TOKEN", ""));
             if( !osAccessToken.empty() )
                 return true;
 
             osStorageKey = CSLFetchNameValueDef(papszOptions,
                 "AZURE_STORAGE_ACCESS_KEY",
-                VSIGetCredential(osPathForOption.c_str(), "AZURE_STORAGE_ACCESS_KEY", ""));
+                VSIGetPathSpecificOption(osPathForOption.c_str(), "AZURE_STORAGE_ACCESS_KEY", ""));
             if( osStorageKey.empty() )
             {
-                osSAS = VSIGetCredential(osPathForOption.c_str(),
+                osSAS = VSIGetPathSpecificOption(osPathForOption.c_str(),
                                          "AZURE_STORAGE_SAS_TOKEN",
                                          CPLGetConfigOption("AZURE_SAS", "")); // AZURE_SAS for GDAL < 3.5
                 if( osSAS.empty() )
                 {
-                    if( CPLTestBool(VSIGetCredential(
+                    if( CPLTestBool(VSIGetPathSpecificOption(
                             osPathForOption.c_str(), "AZURE_NO_SIGN_REQUEST", "NO")) )
                     {
                         return true;
@@ -659,7 +658,7 @@ VSIAzureBlobHandleHelper* VSIAzureBlobHandleHelper::BuildFromURI( const char* ps
         return nullptr;
     }
 
-    if( CPLTestBool(VSIGetCredential(
+    if( CPLTestBool(VSIGetPathSpecificOption(
             osPathForOption.c_str(), "AZURE_NO_SIGN_REQUEST", "NO")) )
     {
         osStorageKey.clear();

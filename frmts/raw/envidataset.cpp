@@ -55,7 +55,6 @@
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
 
-CPL_CVSID("$Id$")
 
 // TODO(schwehr): This really should be defined in port/somewhere.h.
 constexpr double kdfDegToRad = M_PI / 180.0;
@@ -467,8 +466,110 @@ void ENVIDataset::FlushCache(bool bAtClosing)
         bOK &= VSIFPrintfL(fp, "data ignore value = %.18g\n", dfNoDataValue) >= 0;
     }
 
+    // Write "data offset values", if needed
+    {
+        bool bHasOffset = false;
+        for ( int i = 1; i <= nBands; i++ )
+        {
+            int bHasValue = FALSE;
+            CPL_IGNORE_RET_VAL(GetRasterBand(i)->GetOffset(&bHasValue));
+            if( bHasValue )
+                bHasOffset = true;
+        }
+        if( bHasOffset )
+        {
+            bOK &= VSIFPrintfL(fp, "data offset values = {") >= 0;
+            for ( int i = 1; i <= nBands; i++ )
+            {
+                int bHasValue = FALSE;
+                double dfValue = GetRasterBand(i)->GetOffset(&bHasValue);
+                if( !bHasValue )
+                    dfValue = 0;
+                bOK &= VSIFPrintfL(fp, "%.18g", dfValue) >= 0;
+                if ( i != nBands )
+                    bOK &= VSIFPrintfL(fp, ", ") >= 0;
+            }
+            bOK &= VSIFPrintfL(fp, "}\n") >= 0;
+        }
+    }
+
+    // Write "data gain values", if needed
+    {
+        bool bHasScale = false;
+        for ( int i = 1; i <= nBands; i++ )
+        {
+            int bHasValue = FALSE;
+            CPL_IGNORE_RET_VAL(GetRasterBand(i)->GetScale(&bHasValue));
+            if( bHasValue )
+                bHasScale = true;
+        }
+        if( bHasScale )
+        {
+            bOK &= VSIFPrintfL(fp, "data gain values = {") >= 0;
+            for ( int i = 1; i <= nBands; i++ )
+            {
+                int bHasValue = FALSE;
+                double dfValue = GetRasterBand(i)->GetScale(&bHasValue);
+                if( !bHasValue )
+                    dfValue = 1;
+                bOK &= VSIFPrintfL(fp, "%.18g", dfValue) >= 0;
+                if ( i != nBands )
+                    bOK &= VSIFPrintfL(fp, ", ") >= 0;
+            }
+            bOK &= VSIFPrintfL(fp, "}\n") >= 0;
+        }
+    }
+
     // Write the metadata that was read into the ENVI domain.
     char **papszENVIMetadata = GetMetadata("ENVI");
+    if( CSLFetchNameValue(papszENVIMetadata, "default bands") == nullptr &&
+        CSLFetchNameValue(papszENVIMetadata, "default_bands") == nullptr )
+    {
+        int nGrayBand = 0;
+        int nRBand = 0;
+        int nGBand = 0;
+        int nBBand = 0;
+        for ( int i = 1; i <= nBands; i++ )
+        {
+            const auto eInterp = GetRasterBand(i)->GetColorInterpretation();
+            if( eInterp == GCI_GrayIndex )
+            {
+                if( nGrayBand == 0 )
+                    nGrayBand = i;
+                else
+                    nGrayBand = -1;
+            }
+            else if( eInterp == GCI_RedBand )
+            {
+                if( nRBand == 0 )
+                    nRBand = i;
+                else
+                    nRBand = -1;
+            }
+            else if( eInterp == GCI_GreenBand )
+            {
+                if( nGBand == 0 )
+                    nGBand = i;
+                else
+                    nGBand = -1;
+            }
+            else if( eInterp == GCI_BlueBand )
+            {
+                if( nBBand == 0 )
+                    nBBand = i;
+                else
+                    nBBand = -1;
+            }
+        }
+        if( nRBand > 0 && nGBand > 0 && nBBand > 0 )
+        {
+            bOK &= VSIFPrintfL(fp, "default bands = {%d, %d, %d}\n", nRBand, nGBand, nBBand) >= 0;
+        }
+        else if( nGrayBand > 0 && nRBand == 0 && nGBand == 0 && nBBand == 0 )
+        {
+            bOK &= VSIFPrintfL(fp, "default bands = {%d}\n", nGrayBand) >= 0;
+        }
+    }
 
     const int count = CSLCount(papszENVIMetadata);
 
@@ -508,6 +609,8 @@ void ENVIDataset::FlushCache(bool bAtClosing)
              poKey == "map info" ||
              poKey == "projection info" ||
              poKey == "data ignore value" ||
+             poKey == "data offset values" ||
+             poKey == "data gain values" ||
              poKey == "coordinate system string" )
         {
             CSLDestroy(papszTokens);
@@ -1640,7 +1743,17 @@ bool ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
         }
     }
 
-    m_oSRS = oSRS;
+    // Try to identify the CRS with the database
+    auto poBestCRSMatch = oSRS.FindBestMatch();
+    if( poBestCRSMatch )
+    {
+        m_oSRS = *poBestCRSMatch;
+        poBestCRSMatch->Release();
+    }
+    else
+    {
+        m_oSRS = oSRS;
+    }
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     CSLDestroy(papszFields);
@@ -2531,6 +2644,60 @@ ENVIDataset *ENVIDataset::Open( GDALOpenInfo *poOpenInfo, bool bFileSizeCheck )
         CSLDestroy(papszBandNames);
     }
 
+    // Apply "default bands" if we have it to set RGB color interpretation.
+    const char* pszDefaultBands = poDS->m_aosHeader["default_bands"];
+    if( pszDefaultBands != nullptr)
+    {
+        const CPLStringList aosDefaultBands(poDS->SplitList(pszDefaultBands));
+        if( aosDefaultBands.size() == 3 )
+        {
+            const int nRBand = atoi(aosDefaultBands[0]);
+            const int nGBand = atoi(aosDefaultBands[1]);
+            const int nBBand = atoi(aosDefaultBands[2]);
+            if( nRBand >= 1 && nRBand <= poDS->nBands &&
+                nGBand >= 1 && nGBand <= poDS->nBands &&
+                nBBand >= 1 && nBBand <= poDS->nBands &&
+                nRBand != nGBand && nRBand != nBBand && nGBand != nBBand )
+            {
+                poDS->GetRasterBand(nRBand)->SetColorInterpretation(GCI_RedBand);
+                poDS->GetRasterBand(nGBand)->SetColorInterpretation(GCI_GreenBand);
+                poDS->GetRasterBand(nBBand)->SetColorInterpretation(GCI_BlueBand);
+            }
+        }
+        else if( aosDefaultBands.size() == 1 )
+        {
+            const int nGrayBand = atoi(aosDefaultBands[0]);
+            if( nGrayBand >= 1 && nGrayBand <= poDS->nBands )
+            {
+                poDS->GetRasterBand(nGrayBand)->SetColorInterpretation(GCI_GrayIndex);
+            }
+        }
+    }
+
+    // Apply data offset values
+    if( const char* pszDataOffsetValues = poDS->m_aosHeader["data_offset_values"] )
+    {
+        const CPLStringList aosValues(poDS->SplitList(pszDataOffsetValues));
+        if( aosValues.size() == poDS->nBands )
+        {
+            for( int i = 0; i < poDS->nBands; ++i )
+                poDS->GetRasterBand(i+1)->SetOffset(CPLAtof(aosValues[i]));
+        }
+    }
+
+    // Apply data gain values
+    if( const char* pszDataGainValues = poDS->m_aosHeader["data_gain_values"] )
+    {
+        const CPLStringList aosValues(poDS->SplitList(pszDataGainValues));
+        if( aosValues.size() == poDS->nBands )
+        {
+            for( int i = 0; i < poDS->nBands; ++i )
+            {
+                poDS->GetRasterBand(i+1)->SetScale(CPLAtof(aosValues[i]));
+            }
+        }
+    }
+
     // Apply class names if we have them.
     const char* pszClassNames = poDS->m_aosHeader["class_names"];
     if( pszClassNames != nullptr )
@@ -2571,7 +2738,7 @@ ENVIDataset *ENVIDataset::Open( GDALOpenInfo *poOpenInfo, bool bFileSizeCheck )
     if( pszDataIgnoreValue != nullptr )
     {
         for( int i = 0; i < poDS->nBands; i++ )
-            reinterpret_cast<RawRasterBand *>(poDS->GetRasterBand(i + 1))
+            cpl::down_cast<RawRasterBand *>(poDS->GetRasterBand(i + 1))
                 ->SetNoDataValue(CPLAtof(pszDataIgnoreValue));
     }
 
@@ -2789,7 +2956,7 @@ ENVIRasterBand::ENVIRasterBand( GDALDataset *poDSIn, int nBandIn,
 
 void ENVIRasterBand::SetDescription( const char *pszDescription )
 {
-    reinterpret_cast<ENVIDataset *>(poDS)->bHeaderDirty = true;
+    cpl::down_cast<ENVIDataset *>(poDS)->bHeaderDirty = true;
     RawRasterBand::SetDescription(pszDescription);
 }
 
@@ -2799,7 +2966,7 @@ void ENVIRasterBand::SetDescription( const char *pszDescription )
 
 CPLErr ENVIRasterBand::SetCategoryNames( char **papszCategoryNamesIn )
 {
-    reinterpret_cast<ENVIDataset *>(poDS)->bHeaderDirty = true;
+    cpl::down_cast<ENVIDataset *>(poDS)->bHeaderDirty = true;
     return RawRasterBand::SetCategoryNames(papszCategoryNamesIn);
 }
 
@@ -2809,8 +2976,38 @@ CPLErr ENVIRasterBand::SetCategoryNames( char **papszCategoryNamesIn )
 
 CPLErr ENVIRasterBand::SetNoDataValue( double dfNoDataValue )
 {
-    reinterpret_cast<ENVIDataset *>(poDS)->bHeaderDirty = true;
+    cpl::down_cast<ENVIDataset *>(poDS)->bHeaderDirty = true;
     return RawRasterBand::SetNoDataValue(dfNoDataValue);
+}
+
+/************************************************************************/
+/*                         SetColorInterpretation()                     */
+/************************************************************************/
+
+CPLErr ENVIRasterBand::SetColorInterpretation( GDALColorInterp eColorInterp )
+{
+    cpl::down_cast<ENVIDataset *>(poDS)->bHeaderDirty = true;
+    return RawRasterBand::SetColorInterpretation(eColorInterp);
+}
+
+/************************************************************************/
+/*                             SetOffset()                              */
+/************************************************************************/
+
+CPLErr ENVIRasterBand::SetOffset( double dfValue )
+{
+    cpl::down_cast<ENVIDataset *>(poDS)->bHeaderDirty = true;
+    return RawRasterBand::SetOffset(dfValue);
+}
+
+/************************************************************************/
+/*                             SetScale()                               */
+/************************************************************************/
+
+CPLErr ENVIRasterBand::SetScale( double dfValue )
+{
+    cpl::down_cast<ENVIDataset *>(poDS)->bHeaderDirty = true;
+    return RawRasterBand::SetScale(dfValue);
 }
 
 /************************************************************************/

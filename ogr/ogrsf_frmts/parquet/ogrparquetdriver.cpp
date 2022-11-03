@@ -303,7 +303,7 @@ static GDALDataset* OpenFromDatasetFactory(const std::string& osBasePath,
 static  std::shared_ptr<arrow::fs::FileSystem> GetFileSystem(std::string& osBasePathInOut,
                                                              const std::string& osQueryParameters)
 {
-    // Instanciate file system:
+    // Instantiate file system:
     // - VSIArrowFileSystem implementation for /vsi files
     // - base implementation for local files
     std::shared_ptr<arrow::fs::FileSystem> fs;
@@ -779,6 +779,7 @@ void RegisterOGRParquet()
                                "Binary IntegerList Integer64List RealList StringList" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATASUBTYPES,
                                "Boolean Int16 Float32 JSON UUID" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->pfnOpen = OGRParquetDriverOpen;
     poDriver->pfnIdentify = OGRParquetDriverIdentify;

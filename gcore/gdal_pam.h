@@ -131,12 +131,6 @@ class CPL_DLL GDALPamDataset : public GDALDataset
     int         nPamFlags = 0;
     GDALDatasetPamInfo *psPam = nullptr;
 
-    virtual const char *_GetProjectionRef() override;
-    virtual const char *_GetGCPProjection() override;
-    virtual CPLErr _SetProjection( const char * pszProjection ) override;
-    virtual CPLErr _SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                    const char *pszGCPProjection ) override;
-
     virtual CPLXMLNode *SerializeToXML( const char *);
     virtual CPLErr      XMLInit( CPLXMLNode *, const char * );
 
@@ -193,10 +187,11 @@ class CPL_DLL GDALPamDataset : public GDALDataset
     virtual CPLErr CloneInfo( GDALDataset *poSrcDS, int nCloneInfoFlags );
 
     CPLErr IBuildOverviews( const char *pszResampling,
-                            int nOverviews, int *panOverviewList,
-                            int nListBands, int *panBandList,
+                            int nOverviews, const int *panOverviewList,
+                            int nListBands, const int *panBandList,
                             GDALProgressFunc pfnProgress,
-                            void * pProgressData ) override;
+                            void * pProgressData,
+                            CSLConstList papszOptions ) override;
 
     // "semi private" methods.
     void   MarkPamDirty() { nPamFlags |= GPF_DIRTY; }

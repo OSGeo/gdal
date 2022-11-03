@@ -6075,6 +6075,98 @@ def test_netcdf_stats():
     gdal.GetDriverByName("netCDF").Delete(filename)
 
 
+###############################################################################
+
+
+def test_netcdf_short_as_unsigned():
+    """Test https://github.com/OSGeo/gdal/issues/6352"""
+
+    ds = gdal.Open("data/netcdf/short_as_unsigned.nc")
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
+    assert ds.GetRasterBand(1).GetMetadata() == {
+        "NETCDF_VARNAME": "Band1",
+        "_FillValue": "65535",
+        "_Unsigned": "true",
+        "valid_range": "{1,65533}",
+    }
+    # Values not in valid_range=[1,65533] are set to _FillValue=65535
+    assert struct.unpack("H" * 7, ds.GetRasterBand(1).ReadRaster()) == (
+        65532,
+        65533,
+        65535,
+        65535,
+        65535,
+        1,
+        2,
+    )
+    ds = None
+
+    ds = gdal.OpenEx(
+        "data/netcdf/short_as_unsigned.nc", open_options=["HONOUR_VALID_RANGE=NO"]
+    )
+    assert struct.unpack("H" * 7, ds.GetRasterBand(1).ReadRaster()) == (
+        65532,
+        65533,
+        65534,
+        65535,
+        0,
+        1,
+        2,
+    )
+    ds = None
+
+    shutil.copy("data/netcdf/short_as_unsigned.nc", "tmp/short_as_unsigned.nc")
+
+    ds = gdal.Open("tmp/short_as_unsigned.nc", gdal.GA_Update)
+    ds.GetRasterBand(1).WriteRaster(
+        0, 0, 7, 1, struct.pack("H" * 7, 2, 1, 0, 65535, 65534, 65533, 65532)
+    )
+    ds = None
+
+    ds = gdal.OpenEx("tmp/short_as_unsigned.nc", open_options=["HONOUR_VALID_RANGE=NO"])
+    assert struct.unpack("H" * 7, ds.GetRasterBand(1).ReadRaster()) == (
+        2,
+        1,
+        0,
+        65535,
+        65534,
+        65533,
+        65532,
+    )
+    ds = None
+
+    gdal.GetDriverByName("netCDF").Delete("tmp/short_as_unsigned.nc")
+
+
+###############################################################################
+
+
+def test_netcdf_read_unrelated_dim():
+    """Test https://github.com/OSGeo/gdal/issues/6367"""
+
+    ds = gdal.Open("data/netcdf/test_not_report_unrelated_dim.nc")
+    # Test that "unrelated_dim" metadata is not reported
+    assert ds.GetMetadata() == {"Band1#foo": "bar"}
+
+
+###############################################################################
+
+
+def test_netcdf_read_missing_value_text_numeric():
+
+    ds = gdal.Open("data/netcdf/missing_value_text_numeric.nc")
+    assert ds.GetRasterBand(1).GetNoDataValue() == 12
+
+
+###############################################################################
+
+
+def test_netcdf_read_missing_value_text_non_numeric():
+
+    ds = gdal.Open("data/netcdf/missing_value_text_non_numeric.nc")
+    assert ds.GetRasterBand(1).GetNoDataValue() is None
+
+
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.

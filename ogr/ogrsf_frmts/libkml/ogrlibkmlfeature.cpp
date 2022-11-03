@@ -38,7 +38,6 @@
 #include "ogrlibkmlgeometry.h"
 #include "ogrsf_frmts.h"
 
-CPL_CVSID("$Id$")
 
 using kmldom::AliasPtr;
 using kmldom::CameraPtr;

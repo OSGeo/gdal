@@ -30,7 +30,6 @@
 #include "wmsdriver.h"
 #include "minidriver_worldwind.h"
 
-CPL_CVSID("$Id$")
 
 WMSMiniDriver_WorldWind::WMSMiniDriver_WorldWind() {}
 
@@ -53,7 +52,7 @@ CPLErr WMSMiniDriver_WorldWind::Initialize(CPLXMLNode *config, CPL_UNUSED char *
         m_base_url += CPLOPrintf("T=%s", dataset);
     }
 
-    m_projection_wkt = ProjToWKT("EPSG:4326");
+    m_oSRS.importFromEPSG(4326);
     return ret;
 }
 

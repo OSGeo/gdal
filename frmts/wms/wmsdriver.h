@@ -57,7 +57,7 @@ class GDALWMSRasterBand;
 /* -------------------------------------------------------------------- */
 /*      Helper functions.                                               */
 /* -------------------------------------------------------------------- */
-CPLString ProjToWKT(const CPLString &proj);
+OGRSpatialReference ProjToSRS(const CPLString &proj);
 
 // Decode s from encoding "base64" or "XMLencoded".
 // If encoding is "file", s is the file name on input and file content on output
@@ -154,7 +154,7 @@ public:
 class WMSMiniDriver {
 friend class GDALWMSDataset;
 public:
-    WMSMiniDriver() : m_parent_dataset(nullptr) {}
+    WMSMiniDriver() : m_parent_dataset(nullptr) { m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER); }
     virtual ~WMSMiniDriver() {}
 
 public:
@@ -182,10 +182,8 @@ public:
         CPL_UNUSED int nXInBlock,
         CPL_UNUSED int nYInBlock) {}
 
-    virtual const char *GetProjectionInWKT() {
-        if (!m_projection_wkt.empty())
-            return m_projection_wkt.c_str();
-        return nullptr;
+    virtual OGRSpatialReference GetSpatialRef() {
+        return m_oSRS;
     }
 
     virtual char **GetMetadataDomainList() {
@@ -194,7 +192,7 @@ public:
 
 protected:
     CPLString m_base_url;
-    CPLString m_projection_wkt;
+    OGRSpatialReference m_oSRS;
     GDALWMSDataset *m_parent_dataset;
 };
 
@@ -279,14 +277,8 @@ public:
     GDALWMSDataset();
     virtual ~GDALWMSDataset();
 
-    virtual const char *_GetProjectionRef() override;
-    virtual CPLErr _SetProjection(const char *proj) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     virtual CPLErr GetGeoTransform(double *gt) override;
     virtual CPLErr SetGeoTransform(double *gt) override;
@@ -420,7 +412,7 @@ protected:
     WMSMiniDriver *m_mini_driver;
     WMSMiniDriverCapabilities m_mini_driver_caps;
     GDALWMSCache *m_cache;
-    CPLString m_projection;
+    OGRSpatialReference m_oSRS{};
     GDALColorTable *m_poColorTable;
     std::vector<double> vNoData;
     std::vector<double> vMin;

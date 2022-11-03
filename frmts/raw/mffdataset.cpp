@@ -37,7 +37,6 @@
 #include <cmath>
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 enum {
   MFFPRJ_NONE,
@@ -46,7 +45,7 @@ enum {
   MFFPRJ_UNRECOGNIZED
 };
 
-static int GetMFFProjectionType(const char * pszNewProjection);
+static int GetMFFProjectionType(const OGRSpatialReference* poSRS);
 
 /************************************************************************/
 /* ==================================================================== */
@@ -59,8 +58,8 @@ class MFFDataset final : public RawDataset
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
 
-    char *pszProjection;
-    char *pszGCPProjection;
+    OGRSpatialReference m_oSRS{};
+    OGRSpatialReference m_oGCPSRS{};
     double adfGeoTransform[6];
     char**      m_papszFileList;
 
@@ -80,16 +79,12 @@ class MFFDataset final : public RawDataset
     char** GetFileList() override;
 
     int GetGCPCount() override;
-    const char *_GetGCPProjection() override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override {
-        return GetGCPSpatialRefFromOldGetGCPProjection();
-    }
+    const OGRSpatialReference* GetGCPSpatialRef() const override
+        { return m_oGCPSRS.IsEmpty() ? nullptr : &m_oGCPSRS; }
     const GDAL_GCP *GetGCPs() override;
 
-    const char *_GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override
+        { return m_oSRS.IsEmpty() ? nullptr : &m_oSRS; }
     CPLErr GetGeoTransform( double * ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
@@ -250,12 +245,12 @@ MFFSpheroidList :: MFFSpheroidList()
 MFFDataset::MFFDataset() :
     nGCPCount(0),
     pasGCPList(nullptr),
-    pszProjection(CPLStrdup("")),
-    pszGCPProjection(CPLStrdup("")),
     m_papszFileList(nullptr),
     papszHdrLines(nullptr),
     pafpBandFiles(nullptr)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -293,8 +288,6 @@ MFFDataset::~MFFDataset()
         GDALDeinitGCPs( nGCPCount, pasGCPList );
     }
     CPLFree( pasGCPList );
-    CPLFree( pszProjection );
-    CPLFree( pszGCPProjection );
     CSLDestroy( m_papszFileList );
 }
 
@@ -317,29 +310,6 @@ int MFFDataset::GetGCPCount()
 
 {
     return nGCPCount;
-}
-
-/************************************************************************/
-/*                          GetGCPProjection()                          */
-/************************************************************************/
-
-const char *MFFDataset::_GetGCPProjection()
-
-{
-    if( nGCPCount > 0 )
-        return pszGCPProjection;
-
-    return "";
-}
-
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char *MFFDataset::_GetProjectionRef()
-
-{
-   return pszProjection;
 }
 
 /************************************************************************/
@@ -498,10 +468,8 @@ void MFFDataset::ScanForProjectionInfo()
 
     if (pszProjName == nullptr)
     {
-        CPLFree( pszProjection );
-        CPLFree( pszGCPProjection );
-        pszProjection=CPLStrdup("");
-        pszGCPProjection=CPLStrdup("");
+        m_oSRS.Clear();
+        m_oGCPSRS.Clear();
         return;
     }
     else if ((!EQUAL(pszProjName,"utm")) && (!EQUAL(pszProjName,"ll")))
@@ -509,15 +477,14 @@ void MFFDataset::ScanForProjectionInfo()
         CPLError(
             CE_Warning,CPLE_AppDefined,
             "Only utm and lat/long projections are currently supported." );
-        CPLFree( pszProjection );
-        CPLFree( pszGCPProjection );
-        pszProjection=CPLStrdup("");
-        pszGCPProjection=CPLStrdup("");
+        m_oSRS.Clear();
+        m_oGCPSRS.Clear();
         return;
     }
     MFFSpheroidList *mffEllipsoids = new MFFSpheroidList;
 
     OGRSpatialReference oProj;
+    oProj.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     if( EQUAL(pszProjName,"utm") )
     {
         int nZone;
@@ -666,12 +633,8 @@ void MFFDataset::ScanForProjectionInfo()
         CPLFree(dfPrjY);
     }
 
-    CPLFree( pszProjection );
-    CPLFree( pszGCPProjection );
-    pszProjection = nullptr;
-    pszGCPProjection = nullptr;
-    oProj.exportToWkt( &pszProjection );
-    oProj.exportToWkt( &pszGCPProjection );
+    m_oSRS = oProj;
+    m_oGCPSRS = oProj;
 
     if( !transform_ok )
     {
@@ -682,8 +645,7 @@ void MFFDataset::ScanForProjectionInfo()
         adfGeoTransform[3] = 0.0;
         adfGeoTransform[4] = 0.0;
         adfGeoTransform[5] = 1.0;
-        CPLFree( pszProjection );
-        pszProjection = CPLStrdup("");
+        m_oSRS.Clear();
     }
 
     delete mffEllipsoids;
@@ -1051,6 +1013,8 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->ScanForGCPs();
     poDS->ScanForProjectionInfo();
+    if( poDS->nGCPCount == 0 )
+        poDS->m_oGCPSRS.Clear();
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
@@ -1066,38 +1030,26 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
     return poDS;
 }
 
-int GetMFFProjectionType(const char *pszNewProjection)
+int GetMFFProjectionType(const OGRSpatialReference* poSRS)
 {
-    OGRSpatialReference oSRS(pszNewProjection);
-
-    if( !STARTS_WITH_CI(pszNewProjection, "GEOGCS")
-       && !STARTS_WITH_CI(pszNewProjection, "PROJCS")
-       && !EQUAL(pszNewProjection,"") )
-      {
-          return MFFPRJ_UNRECOGNIZED;
-      }
-      else if( EQUAL(pszNewProjection,"") )
-      {
-          return MFFPRJ_NONE;
-      }
-      else
-      {
-          if( oSRS.GetAttrValue("PROJECTION") != nullptr &&
-              EQUAL(oSRS.GetAttrValue("PROJECTION"),
-                    SRS_PT_TRANSVERSE_MERCATOR) )
-          {
-              return MFFPRJ_UTM;
-          }
-          else if( oSRS.GetAttrValue("PROJECTION") == nullptr &&
-                   oSRS.IsGeographic() )
-          {
-              return MFFPRJ_LL;
-          }
-          else
-          {
-              return MFFPRJ_UNRECOGNIZED;
-          }
-      }
+    if( poSRS == nullptr )
+    {
+        return MFFPRJ_NONE;
+    }
+    if( poSRS->IsProjected() &&
+        poSRS->GetAttrValue("PROJECTION") &&
+        EQUAL(poSRS->GetAttrValue("PROJECTION"), SRS_PT_TRANSVERSE_MERCATOR) )
+    {
+        return MFFPRJ_UTM;
+    }
+    else if( poSRS->IsGeographic() )
+    {
+         return MFFPRJ_LL;
+    }
+    else
+    {
+         return MFFPRJ_UNRECOGNIZED;
+    }
 }
 
 /************************************************************************/
@@ -1392,7 +1344,7 @@ MFFDataset::CreateCopy( const char * pszFilename,
     double *padfTiepoints = static_cast<double *>(
         CPLMalloc( 2 * sizeof(double) * 5 ) );
 
-    const int src_prj = GetMFFProjectionType(poSrcDS->GetProjectionRef());
+    const int src_prj = GetMFFProjectionType(poSrcDS->GetSpatialRef());
 
     if ((src_prj != MFFPRJ_NONE) && (src_prj != MFFPRJ_UNRECOGNIZED))
     {
@@ -1449,7 +1401,10 @@ MFFDataset::CreateCopy( const char * pszFilename,
               tempGeoTransform[4]*(poSrcDS->GetRasterXSize())/2.0+
               tempGeoTransform[5]*(poSrcDS->GetRasterYSize())/2.0;
 
-          OGRSpatialReference oUTMorLL(poSrcDS->GetProjectionRef());
+          OGRSpatialReference oUTMorLL;
+          const auto poSrcSRS = poSrcDS->GetSpatialRef();
+          if( poSrcSRS )
+              oUTMorLL = *poSrcSRS;
           auto poLLSRS = oUTMorLL.CloneGeogCS();
           if( poLLSRS && oUTMorLL.IsProjected() )
           {
@@ -1524,35 +1479,23 @@ MFFDataset::CreateCopy( const char * pszFilename,
     /*     Ellipsoid/projection                                            */
     /* --------------------------------------------------------------------*/
 
-          const char *pszSrcProjection = poSrcDS->GetProjectionRef();
+          const auto poSrcSRS = poSrcDS->GetSpatialRef();
           char *spheroid_name = nullptr;
 
-          if( !STARTS_WITH_CI(pszSrcProjection, "GEOGCS")
-           && !STARTS_WITH_CI(pszSrcProjection, "PROJCS")
-           && !EQUAL(pszSrcProjection,"") )
+          if( poSrcSRS != nullptr )
           {
-            CPLError(
-                CE_Warning, CPLE_AppDefined,
-                "Only OGC WKT Projections supported for writing to MFF. "
-                "%s not supported.",
-                pszSrcProjection );
-          }
-          else if (!EQUAL(pszSrcProjection,""))
-          {
-             OGRSpatialReference oSRS(pszSrcProjection);
-
-             if( oSRS.GetAttrValue("PROJECTION") != nullptr &&
-                 EQUAL(oSRS.GetAttrValue("PROJECTION"),
+             if( poSrcSRS->IsProjected() &&
+                 poSrcSRS->GetAttrValue("PROJECTION") != nullptr &&
+                 EQUAL(poSrcSRS->GetAttrValue("PROJECTION"),
                        SRS_PT_TRANSVERSE_MERCATOR) )
              {
                  bOK &= VSIFPrintfL(fp, "PROJECTION_NAME = UTM\n") >= 0;
                  OGRErr ogrerrorOl = OGRERR_NONE;
                  bOK &= VSIFPrintfL(fp, "PROJECTION_ORIGIN_LONGITUDE = %f\n",
-                         oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0,
+                         poSrcSRS->GetProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0,
                                           &ogrerrorOl)) >= 0;
              }
-             else if (oSRS.GetAttrValue("PROJECTION") == nullptr &&
-                      oSRS.IsGeographic())
+             else if (poSrcSRS->IsGeographic())
              {
                   bOK &= VSIFPrintfL(fp,"PROJECTION_NAME = LL\n") >= 0;
              }
@@ -1564,9 +1507,9 @@ MFFDataset::CreateCopy( const char * pszFilename,
                   bOK &= VSIFPrintfL(fp, "PROJECTION_NAME = LL\n") >= 0;
              }
              OGRErr ogrerrorEq = OGRERR_NONE;
-             const double eq_radius = oSRS.GetSemiMajor(&ogrerrorEq);
+             const double eq_radius = poSrcSRS->GetSemiMajor(&ogrerrorEq);
              OGRErr ogrerrorInvf = OGRERR_NONE;
-             const double inv_flattening = oSRS.GetInvFlattening(&ogrerrorInvf);
+             const double inv_flattening = poSrcSRS->GetInvFlattening(&ogrerrorInvf);
              if( ogrerrorEq == OGRERR_NONE && ogrerrorInvf == OGRERR_NONE )
              {
                  MFFSpheroidList *mffEllipsoids = new MFFSpheroidList;

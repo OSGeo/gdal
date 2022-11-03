@@ -32,7 +32,6 @@
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -44,7 +43,7 @@ class NDFDataset final: public RawDataset
 {
     double      adfGeoTransform[6];
 
-    char        *pszProjection;
+    OGRSpatialReference m_oSRS{};
     char       **papszExtraFiles;
 
     char        **papszHeader;
@@ -57,10 +56,8 @@ class NDFDataset final: public RawDataset
     ~NDFDataset() override;
 
     CPLErr  GetGeoTransform( double * padfTransform ) override;
-    const char *_GetProjectionRef(void) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override
+        { return m_oSRS.IsEmpty() ? nullptr : &m_oSRS; }
     char **GetFileList(void) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
@@ -72,10 +69,10 @@ class NDFDataset final: public RawDataset
 /************************************************************************/
 
 NDFDataset::NDFDataset() :
-    pszProjection(CPLStrdup("")),
     papszExtraFiles(nullptr),
     papszHeader(nullptr)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -92,19 +89,8 @@ NDFDataset::~NDFDataset()
 
 {
     FlushCache(true);
-    CPLFree( pszProjection );
     CSLDestroy( papszHeader );
     CSLDestroy( papszExtraFiles );
-}
-
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char *NDFDataset::_GetProjectionRef()
-
-{
-    return pszProjection;
 }
 
 /************************************************************************/
@@ -355,6 +341,7 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
     const int nZone = atoi(poDS->Get("USGS_MAP_ZONE","0"));
 
     OGRSpatialReference oSRS;
+    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     oSRS.importFromUSGS( nUSGSProjection, nZone, adfUSGSParams, 12 );
 
     const CPLString osDatum = poDS->Get( "HORIZONTAL_DATUM", "" );
@@ -378,9 +365,7 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( oSRS.GetRoot() != nullptr )
     {
-        CPLFree( poDS->pszProjection );
-        poDS->pszProjection = nullptr;
-        oSRS.exportToWkt( &(poDS->pszProjection) );
+        poDS->m_oSRS = oSRS;
     }
 
 /* -------------------------------------------------------------------- */

@@ -38,7 +38,6 @@
 #include "gdal_priv.h"
 #include "ogr_core.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                                Open()                                */
@@ -150,6 +149,7 @@ void RegisterOGRGeoRSS()
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
                               "<LayerCreationOptionList/>" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->pfnOpen = OGRGeoRSSDriverOpen;
     poDriver->pfnCreate = OGRGeoRSSDriverCreate;

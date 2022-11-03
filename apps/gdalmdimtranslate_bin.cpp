@@ -32,7 +32,6 @@
 #include "gdal_utils_priv.h"
 #include "gdal_priv.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -43,7 +42,8 @@ static void Usage(const char* pszErrorMsg = nullptr)
 {
     printf(
         "Usage: gdalmultidimtranslate [--help-general] [-co \"NAME=VALUE\"]*\n"
-        "                             [-of format] [-array <array_spec>]*\n"
+        "                             [-if format]* [-of format]\n"
+        "                             [-array <array_spec>]*\n"
         "                             [-group <group_spec>]* \n"
         "                             [-subset <subset_spec>]* \n"
         "                             [-scaleaxes <scaleaxes_spec>] \n"
@@ -53,33 +53,6 @@ static void Usage(const char* pszErrorMsg = nullptr)
     if( pszErrorMsg != nullptr )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
     exit(1);
-}
-
-/************************************************************************/
-/*               GDALMultiDimTranslateOptionsForBinaryNew()             */
-/************************************************************************/
-
-static GDALMultiDimTranslateOptionsForBinary *GDALMultiDimTranslateOptionsForBinaryNew(void)
-{
-    return static_cast<GDALMultiDimTranslateOptionsForBinary *>(
-        CPLCalloc(1, sizeof(GDALMultiDimTranslateOptionsForBinary)));
-}
-
-/************************************************************************/
-/*               GDALMultiDimTranslateOptionsForBinaryFree()            */
-/************************************************************************/
-
-static void GDALMultiDimTranslateOptionsForBinaryFree(
-    GDALMultiDimTranslateOptionsForBinary* psOptionsForBinary )
-{
-    if( psOptionsForBinary == nullptr )
-        return;
-
-    CPLFree(psOptionsForBinary->pszSource);
-    CPLFree(psOptionsForBinary->pszDest);
-    CPLFree(psOptionsForBinary->pszFormat);
-    CSLDestroy(psOptionsForBinary->papszOpenOptions);
-    CPLFree(psOptionsForBinary);
 }
 
 /************************************************************************/
@@ -118,11 +91,10 @@ MAIN_START(argc, argv)
         }
     }
 
-    GDALMultiDimTranslateOptionsForBinary* psOptionsForBinary =
-        GDALMultiDimTranslateOptionsForBinaryNew();
+    GDALMultiDimTranslateOptionsForBinary sOptionsForBinary;
     // coverity[tainted_data]
     GDALMultiDimTranslateOptions *psOptions =
-        GDALMultiDimTranslateOptionsNew(argv + 1, psOptionsForBinary);
+        GDALMultiDimTranslateOptionsNew(argv + 1, &sOptionsForBinary);
     CSLDestroy(argv);
 
     if( psOptions == nullptr )
@@ -130,24 +102,26 @@ MAIN_START(argc, argv)
         Usage();
     }
 
-    if( !(psOptionsForBinary->bQuiet) )
+    if( !(sOptionsForBinary.bQuiet) )
     {
         GDALMultiDimTranslateOptionsSetProgress(psOptions, GDALTermProgress, nullptr);
     }
 
-    if( psOptionsForBinary->pszSource == nullptr )
+    if( sOptionsForBinary.osSource.empty() )
         Usage("No input file specified.");
 
-    if( psOptionsForBinary->pszDest == nullptr )
+    if( sOptionsForBinary.osDest.empty() )
         Usage("No output file specified.");
 
 /* -------------------------------------------------------------------- */
 /*      Open input file.                                                */
 /* -------------------------------------------------------------------- */
     GDALDatasetH hInDS = GDALOpenEx(
-        psOptionsForBinary->pszSource,
+        sOptionsForBinary.osSource.c_str(),
         GDAL_OF_RASTER | GDAL_OF_MULTIDIM_RASTER | GDAL_OF_VERBOSE_ERROR,
-        nullptr, nullptr, nullptr);
+        sOptionsForBinary.aosAllowInputDrivers.List(),
+        sOptionsForBinary.aosOpenOptions.List(),
+        nullptr);
 
     if( hInDS == nullptr )
         exit(1);
@@ -156,21 +130,21 @@ MAIN_START(argc, argv)
 /*      Open output file if in update mode.                             */
 /* -------------------------------------------------------------------- */
     GDALDatasetH hDstDS = nullptr;
-    if( psOptionsForBinary->bUpdate )
+    if( sOptionsForBinary.bUpdate )
     {
         CPLPushErrorHandler(CPLQuietErrorHandler);
         hDstDS = GDALOpenEx(
-            psOptionsForBinary->pszDest,
+            sOptionsForBinary.osDest.c_str(),
             GDAL_OF_RASTER | GDAL_OF_MULTIDIM_RASTER | GDAL_OF_VERBOSE_ERROR | GDAL_OF_UPDATE,
             nullptr,
-            psOptionsForBinary->papszOpenOptions,
+            nullptr,
             nullptr );
         CPLPopErrorHandler();
     }
 
     int bUsageError = FALSE;
     GDALDatasetH hRetDS = GDALMultiDimTranslate(
-                                        psOptionsForBinary->pszDest,
+                                        sOptionsForBinary.osDest.c_str(),
                                         hDstDS,
                                         1, &hInDS,
                                         psOptions, &bUsageError);
@@ -181,7 +155,6 @@ MAIN_START(argc, argv)
     GDALClose(hRetDS);
     GDALClose(hInDS);
     GDALMultiDimTranslateOptionsFree(psOptions);
-    GDALMultiDimTranslateOptionsForBinaryFree(psOptionsForBinary);
 
     GDALDestroyDriverManager();
 

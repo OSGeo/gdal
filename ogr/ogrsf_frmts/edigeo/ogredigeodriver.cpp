@@ -29,7 +29,6 @@
 #include "ogr_edigeo.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$")
 
 extern "C" void RegisterOGREDIGEO();
 
@@ -90,6 +89,7 @@ void RegisterOGREDIGEO()
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->pfnOpen = OGREDIGEODriverOpen;
     poDriver->pfnIdentify = OGREDIGEODriverIdentify;

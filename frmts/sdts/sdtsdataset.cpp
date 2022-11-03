@@ -32,7 +32,6 @@
 #include "ogr_spatialref.h"
 #include "sdts_al.h"
 
-CPL_CVSID("$Id$")
 
 /**
  \file sdtsdataset.cpp
@@ -55,7 +54,7 @@ class SDTSDataset final: public GDALPamDataset
     SDTSTransfer *poTransfer;
     SDTSRasterReader *poRL;
 
-    char        *pszProjection;
+    OGRSpatialReference m_oSRS{};
 
   public:
                  SDTSDataset();
@@ -63,10 +62,7 @@ class SDTSDataset final: public GDALPamDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
 
-    virtual const char *_GetProjectionRef(void) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override { return &m_oSRS; }
     virtual CPLErr GetGeoTransform( double * ) override;
 };
 
@@ -93,10 +89,9 @@ class SDTSRasterBand final: public GDALPamRasterBand
 
 SDTSDataset::SDTSDataset() :
     poTransfer( nullptr ),
-    poRL( nullptr ),
-    pszProjection( nullptr )
-
+    poRL( nullptr )
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 }
 
 /************************************************************************/
@@ -113,8 +108,6 @@ SDTSDataset::~SDTSDataset()
 
     if( poRL != nullptr )
         delete poRL;
-
-    CPLFree( pszProjection );
 }
 
 /************************************************************************/
@@ -218,34 +211,29 @@ GDALDataset *SDTSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Try to establish the projection string.  For now we only        */
 /*      support UTM and GEO.                                            */
 /* -------------------------------------------------------------------- */
-    OGRSpatialReference   oSRS;
     SDTS_XREF   *poXREF = poTransfer->GetXREF();
 
     if( EQUAL(poXREF->pszSystemName,"UTM") )
     {
-        oSRS.SetUTM( poXREF->nZone );
+        poDS->m_oSRS.SetUTM( poXREF->nZone );
     }
     else if( EQUAL(poXREF->pszSystemName,"GEO") )
     {
         /* we set datum later */
     }
     else
-        oSRS.SetLocalCS( poXREF->pszSystemName );
+        poDS->m_oSRS.SetLocalCS( poXREF->pszSystemName );
 
-    if( oSRS.IsLocal() )
+    if( poDS->m_oSRS.IsLocal() )
         /* don't try to set datum. */;
     else if( EQUAL(poXREF->pszDatum,"NAS") )
-        oSRS.SetWellKnownGeogCS( "NAD27" );
+        poDS->m_oSRS.SetWellKnownGeogCS( "NAD27" );
     else if( EQUAL(poXREF->pszDatum, "NAX") )
-        oSRS.SetWellKnownGeogCS( "NAD83" );
+        poDS->m_oSRS.SetWellKnownGeogCS( "NAD83" );
     else if( EQUAL(poXREF->pszDatum, "WGC") )
-        oSRS.SetWellKnownGeogCS( "WGS72" );
+        poDS->m_oSRS.SetWellKnownGeogCS( "WGS72" );
     else /* if( EQUAL(poXREF->pszDatum, "WGE") ) or default */
-        oSRS.SetWellKnownGeogCS( "WGS84" );
-
-    poDS->pszProjection = nullptr;
-    if( oSRS.exportToWkt( &poDS->pszProjection ) != OGRERR_NONE )
-        poDS->pszProjection = CPLStrdup("");
+        poDS->m_oSRS.SetWellKnownGeogCS( "WGS84" );
 
 /* -------------------------------------------------------------------- */
 /*      Get metadata from the IDEN file.                                */
@@ -311,16 +299,6 @@ CPLErr SDTSDataset::GetGeoTransform( double * padfTransform )
         return CE_None;
 
     return CE_Failure;
-}
-
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char *SDTSDataset::_GetProjectionRef()
-
-{
-    return pszProjection;
 }
 
 /************************************************************************/

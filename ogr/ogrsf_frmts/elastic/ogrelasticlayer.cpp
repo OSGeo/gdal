@@ -77,7 +77,6 @@ static double GetTimestamp()
     return tv.tv_sec + tv.tv_usec * 1e-6;
 }
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           OGRElasticLayer()                          */
@@ -2568,6 +2567,88 @@ OGRErr OGRElasticLayer::ISetFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
+/*                          IUpsertFeature()                            */
+/************************************************************************/
+
+OGRErr OGRElasticLayer::IUpsertFeature(OGRFeature *poFeature)
+{
+    if( m_poDS->GetAccess() != GA_Update )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Dataset opened in read-only mode");
+        return OGRERR_FAILURE;
+    }
+
+    FinalizeFeatureDefn();
+
+    if( WriteMapIfNecessary() != OGRERR_NONE )
+        return OGRERR_FAILURE;
+
+    if (!m_osWriteMapFilename.empty() )
+        return OGRERR_NONE;
+
+    if( poFeature->GetFID() < 0 )
+    {
+        if( m_nNextFID < 0 )
+            m_nNextFID = GetFeatureCount(FALSE);
+        poFeature->SetFID(++m_nNextFID);
+    }
+
+    CPLString osFields(BuildJSonFromFeature(poFeature));
+
+    const char* pszId = nullptr;
+    if( poFeature->IsFieldSetAndNotNull(0) )
+    {
+        pszId = poFeature->GetFieldAsString(0);
+    }
+    else
+    {
+        return OGRERR_FAILURE;
+    }
+
+    // Check to see if we're using bulk uploading
+    if (m_nBulkUpload > 0)
+    {
+        m_osBulkContent += CPLSPrintf("{\"update\":{\"_index\":\"%s\",\"_id\":\"%s\"", m_osIndexName.c_str(), pszId);
+        if(m_poDS->m_nMajorVersion < 7)
+        {
+            m_osBulkContent += CPLSPrintf(", \"_type\":\"%s\"", m_osMappingName.c_str());
+        }
+        m_osBulkContent += "}}\n{\"doc\":" + osFields + ",\"doc_as_upsert\":true}\n\n";
+
+        // Only push the data if we are over our bulk upload limit
+        if (m_osBulkContent.length() > static_cast<size_t>(m_nBulkUpload))
+        {
+            if( !PushIndex() )
+            {
+                return OGRERR_FAILURE;
+            }
+        }
+    }
+    else
+    {
+        // Fall back to using single item upload for every feature.
+        CPLString osURL(BuildMappingURL(false));
+        if (m_poDS->m_nMajorVersion < 7)
+        {
+           osURL += CPLSPrintf("/%s/_update", pszId);
+        }
+        else
+        {
+           osURL += CPLSPrintf("/_update/%s", pszId);
+        }
+
+        const CPLString osUpdate = CPLSPrintf("{\"doc\":%s,\"doc_as_upsert\":true}", osFields.c_str());
+        const CPLString osMethod = "POST";
+        if (!m_poDS->UploadFile(osURL, osUpdate, osMethod))
+        {
+           return OGRERR_FAILURE;
+        }
+    }
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                             PushIndex()                              */
 /************************************************************************/
 
@@ -2744,6 +2825,7 @@ int OGRElasticLayer::TestCapability(const char * pszCap) {
         return TRUE;
 
     else if (EQUAL(pszCap, OLCSequentialWrite) ||
+             EQUAL(pszCap, OLCUpsertFeature) ||
              EQUAL(pszCap, OLCRandomWrite) )
         return m_poDS->GetAccess() == GA_Update;
     else if (EQUAL(pszCap, OLCCreateField) ||

@@ -34,7 +34,6 @@
 
 #include <cstdlib>
 
-CPL_CVSID("$Id$")
 
 /* ==================================================================== */
 /*      Table relating USGS and ESRI state plane zones.                 */
@@ -197,7 +196,7 @@ class GenBinDataset final: public RawDataset
 
     bool        bGotTransform;
     double      adfGeoTransform[6];
-    char       *pszProjection;
+    OGRSpatialReference m_oSRS{};
 
     char      **papszHDR;
 
@@ -210,10 +209,8 @@ class GenBinDataset final: public RawDataset
     ~GenBinDataset() override;
 
     CPLErr GetGeoTransform( double * padfTransform ) override;
-    const char *_GetProjectionRef(void) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+
+    const OGRSpatialReference* GetSpatialRef() const override { return m_oSRS.IsEmpty() ? RawDataset::GetSpatialRef() : &m_oSRS; }
 
     char **GetFileList() override;
 
@@ -351,9 +348,9 @@ CPLErr GenBinBitRasterBand::IReadBlock( int /* nBlockXOff */,
 GenBinDataset::GenBinDataset() :
     fpImage(nullptr),
     bGotTransform(false),
-    pszProjection(CPLStrdup("")),
     papszHDR(nullptr)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -374,21 +371,7 @@ GenBinDataset::~GenBinDataset()
     if( fpImage != nullptr )
         CPL_IGNORE_RET_VAL(VSIFCloseL( fpImage ));
 
-    CPLFree( pszProjection );
     CSLDestroy( papszHDR );
-}
-
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char *GenBinDataset::_GetProjectionRef()
-
-{
-    if (pszProjection && strlen(pszProjection) > 0)
-        return pszProjection;
-
-    return GDALPamDataset::_GetProjectionRef();
 }
 
 /************************************************************************/
@@ -464,12 +447,11 @@ void GenBinDataset::ParseCoordinateSystem( char **papszHdr )
 /*      Handle projections.                                             */
 /* -------------------------------------------------------------------- */
     const char *pszDatumName = CSLFetchNameValue( papszHdr, "DATUM_NAME" );
-    OGRSpatialReference oSRS;
 
     if( EQUAL(pszProjName,"UTM") && nZone != 0 )
     {
         // Just getting that the negative zone for southern hemisphere is used.
-        oSRS.SetUTM( std::abs(nZone), nZone > 0 );
+        m_oSRS.SetUTM( std::abs(nZone), nZone > 0 );
     }
 
     else if( EQUAL(pszProjName,"State Plane") && nZone != 0 )
@@ -494,7 +476,7 @@ void GenBinDataset::ParseCoordinateSystem( char **papszHdr )
         else
             pszUnits = nullptr;
 
-        oSRS.SetStatePlane( std::abs(nZone),
+        m_oSRS.SetStatePlane( std::abs(nZone),
                             pszDatumName==nullptr || !EQUAL(pszDatumName,"NAD27"),
                             pszUnits, dfUnits );
     }
@@ -502,7 +484,7 @@ void GenBinDataset::ParseCoordinateSystem( char **papszHdr )
 /* -------------------------------------------------------------------- */
 /*      Setup the geographic coordinate system.                         */
 /* -------------------------------------------------------------------- */
-    if( oSRS.GetAttrNode( "GEOGCS" ) == nullptr )
+    if( m_oSRS.GetAttrNode( "GEOGCS" ) == nullptr )
     {
         const char* pszSpheroidName =
             CSLFetchNameValue( papszHdr, "SPHEROID_NAME" );
@@ -511,7 +493,7 @@ void GenBinDataset::ParseCoordinateSystem( char **papszHdr )
         const char* pszSemiMinor =
             CSLFetchNameValue( papszHdr, "SEMI_MINOR_AXIS");
         if( pszDatumName != nullptr
-            && oSRS.SetWellKnownGeogCS( pszDatumName ) == OGRERR_NONE )
+            && m_oSRS.SetWellKnownGeogCS( pszDatumName ) == OGRERR_NONE )
         {
             // good
         }
@@ -520,7 +502,7 @@ void GenBinDataset::ParseCoordinateSystem( char **papszHdr )
             const double dfSemiMajor = CPLAtofM(pszSemiMajor);
             const double dfSemiMinor = CPLAtofM(pszSemiMinor);
 
-            oSRS.SetGeogCS( pszSpheroidName,
+            m_oSRS.SetGeogCS( pszSpheroidName,
                             pszSpheroidName,
                             pszSpheroidName,
                             dfSemiMajor,
@@ -529,16 +511,8 @@ void GenBinDataset::ParseCoordinateSystem( char **papszHdr )
                                 1.0 / (1.0 - dfSemiMinor/dfSemiMajor) );
         }
         else // fallback default.
-            oSRS.SetWellKnownGeogCS( "WGS84" );
+            m_oSRS.SetWellKnownGeogCS( "WGS84" );
     }
-
-/* -------------------------------------------------------------------- */
-/*      Convert to WKT.                                                 */
-/* -------------------------------------------------------------------- */
-    CPLFree( pszProjection );
-    pszProjection = nullptr;
-
-    oSRS.exportToWkt( &pszProjection );
 }
 
 /************************************************************************/

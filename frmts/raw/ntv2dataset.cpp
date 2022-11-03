@@ -39,7 +39,6 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 // Format documentation: https://github.com/Esri/ntv2-file-routines
 // Original archived specification: https://web.archive.org/web/20091227232322/http://www.mgs.gov.on.ca/stdprodconsume/groups/content/@mgs/@iandit/documents/resourcelist/stel02_047447.pdf
@@ -103,6 +102,7 @@ class NTv2Dataset final: public RawDataset
     size_t       nRecordSize = 0;
     vsi_l_offset nGridOffset;
 
+    OGRSpatialReference m_oSRS{};
     double      adfGeoTransform[6];
 
     void        CaptureMetadataItem( const char *pszItem );
@@ -117,10 +117,8 @@ class NTv2Dataset final: public RawDataset
 
     CPLErr SetGeoTransform( double * padfTransform ) override;
     CPLErr GetGeoTransform( double * padfTransform ) override;
-    const char *_GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+
+    const OGRSpatialReference* GetSpatialRef() const override { return &m_oSRS; }
 
     void FlushCache(bool bAtClosing) override;
 
@@ -146,6 +144,9 @@ NTv2Dataset::NTv2Dataset() :
     fpImage(nullptr),
     nGridOffset(0)
 {
+    m_oSRS.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
     adfGeoTransform[0] =  0.0;
     adfGeoTransform[1] =  0.0;  // TODO(schwehr): Should this be 1.0?
     adfGeoTransform[2] =  0.0;
@@ -782,16 +783,6 @@ CPLErr NTv2Dataset::SetGeoTransform( double * padfTransform )
     CPL_IGNORE_RET_VAL(VSIFWriteL( achHeader, 11, nRecordSize, fpImage ));
 
     return CE_None;
-}
-
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char *NTv2Dataset::_GetProjectionRef()
-
-{
-    return SRS_WKT_WGS84_LAT_LONG;
 }
 
 /************************************************************************/

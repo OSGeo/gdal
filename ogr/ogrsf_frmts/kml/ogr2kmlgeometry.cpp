@@ -42,7 +42,6 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$")
 
 constexpr double EPSILON = 1e-8;
 
@@ -130,6 +129,8 @@ static void MakeKMLCoordinate( char *pszTarget, size_t nTargetLen,
         pszTarget++;
         nTargetLen --;
     }
+
+    CPL_IGNORE_RET_VAL(nTargetLen);
 
 #if 0
     if( !b3D )

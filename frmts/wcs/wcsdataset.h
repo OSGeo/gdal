@@ -59,7 +59,7 @@ class WCSDataset CPL_NON_FINAL: public GDALPamDataset
     const char *Version() const;
 
     CPLString   osCRS; // name of the CRS
-    char        *pszProjection; // (usually the) WKT of the CRS, from OGRSpatialReference.exportToWkt
+    OGRSpatialReference m_oSRS{};
     bool        native_crs; // the CRS is the native CRS of the server
     bool        axis_order_swap; // the CRS requires x and y coordinates to be swapped for requests
     double      adfGeoTransform[6];
@@ -140,10 +140,7 @@ class WCSDataset CPL_NON_FINAL: public GDALPamDataset
     static int Identify( GDALOpenInfo * );
 
     virtual CPLErr GetGeoTransform( double * ) override;
-    virtual const char *_GetProjectionRef(void) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
     virtual char **GetFileList(void) override;
 
     virtual char      **GetMetadataDomainList() override;
@@ -223,7 +220,7 @@ class WCSDataset201 final: public WCSDataset110
 
 #define DIGIT_ZERO '0'
 
-// The WCS URL parameters that can be set 
+// The WCS URL parameters that can be set
 // - through options to the service file
 // - to the URL
 // These are also inherited from template service file.

@@ -54,7 +54,6 @@
 #include "filegdb_fielddomain.h"
 #include "filegdb_relationship.h"
 
-CPL_CVSID("$Id$")
 
 
 /***********************************************************************/

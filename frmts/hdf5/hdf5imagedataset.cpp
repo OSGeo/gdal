@@ -39,7 +39,6 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 class HDF5ImageDataset final: public HDF5Dataset
 {
@@ -57,11 +56,10 @@ class HDF5ImageDataset final: public HDF5Dataset
 
     friend class HDF5ImageRasterBand;
 
-    char        *pszProjection;
-    char        *pszGCPProjection;
+    OGRSpatialReference m_oSRS{};
+    OGRSpatialReference m_oGCPSRS{};
     GDAL_GCP    *pasGCPList;
     int         nGCPCount;
-    OGRSpatialReference oSRS;
 
     hsize_t      *dims;
     hsize_t      *maxdims;
@@ -88,15 +86,9 @@ public:
     static GDALDataset  *Open( GDALOpenInfo * );
     static int           Identify( GDALOpenInfo * );
 
-    const char          *_GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override ;
     virtual int         GetGCPCount() override;
-    virtual const char  *_GetGCPProjection() override;
-        const OGRSpatialReference* GetGCPSpatialRef() const override {
-        return GetGCPSpatialRefFromOldGetGCPProjection();
-    }
+        const OGRSpatialReference* GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
     virtual CPLErr GetGeoTransform( double *padfTransform ) override;
 
@@ -154,11 +146,8 @@ public:
 /*                           HDF5ImageDataset()                         */
 /************************************************************************/
 HDF5ImageDataset::HDF5ImageDataset() :
-    pszProjection(nullptr),
-    pszGCPProjection(nullptr),
     pasGCPList(nullptr),
     nGCPCount(0),
-    oSRS(OGRSpatialReference()),
     dims(nullptr),
     maxdims(nullptr),
     poH5Objects(nullptr),
@@ -173,6 +162,8 @@ HDF5ImageDataset::HDF5ImageDataset() :
     iCSKProductType(PROD_UNKNOWN),
     bHasGeoTransform(false)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -196,9 +187,6 @@ HDF5ImageDataset::~HDF5ImageDataset()
         H5Tclose(datatype);
     if( native > 0 )
         H5Tclose(native);
-
-    CPLFree(pszProjection);
-    CPLFree(pszGCPProjection);
 
     CPLFree(dims);
     CPLFree(maxdims);
@@ -635,8 +623,8 @@ CPLErr HDF5ImageDataset::CreateODIMH5Projection()
         pszUR_lon == nullptr || pszUR_lat == nullptr )
         return CE_Failure;
 
-    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    if( oSRS.importFromProj4(pszProj4String) != OGRERR_NONE )
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    if( m_oSRS.importFromProj4(pszProj4String) != OGRERR_NONE )
         return CE_Failure;
 
     OGRSpatialReference oSRSWGS84;
@@ -644,7 +632,7 @@ CPLErr HDF5ImageDataset::CreateODIMH5Projection()
     oSRSWGS84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     OGRCoordinateTransformation *poCT =
-        OGRCreateCoordinateTransformation(&oSRSWGS84, &oSRS);
+        OGRCreateCoordinateTransformation(&oSRSWGS84, &m_oSRS);
     if( poCT == nullptr )
         return CE_Failure;
 
@@ -672,9 +660,6 @@ CPLErr HDF5ImageDataset::CreateODIMH5Projection()
     adfGeoTransform[3] = dfURY;
     adfGeoTransform[4] = 0;
     adfGeoTransform[5] = -dfPixelY;
-
-    CPLFree(pszProjection);
-    oSRS.exportToWkt(&pszProjection);
 
     return CE_None;
 }
@@ -790,11 +775,8 @@ CPLErr HDF5ImageDataset::CreateProjections()
             H5Dread(LongitudeDatasetID, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL,
                     H5P_DEFAULT, Longitude);
 
-            oSRS.SetWellKnownGeogCS("WGS84");
-            CPLFree(pszProjection);
-            pszProjection = nullptr;
-            CPLFree(pszGCPProjection);
-            oSRS.exportToWkt(&pszGCPProjection);
+            m_oSRS.Clear();
+            m_oGCPSRS.SetWellKnownGeogCS("WGS84");
 
             const int nYLimit =
                 (static_cast<int>(nRasterYSize) / nDeltaLat) * nDeltaLat;
@@ -878,16 +860,14 @@ CPLErr HDF5ImageDataset::CreateProjections()
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                         GetSpatialRef()                              */
 /************************************************************************/
 
-const char *HDF5ImageDataset::_GetProjectionRef()
-
+const OGRSpatialReference* HDF5ImageDataset::GetSpatialRef() const
 {
-    if( pszProjection )
-        return pszProjection;
-
-    return GDALPamDataset::_GetProjectionRef();
+    if( !m_oSRS.IsEmpty() )
+        return &m_oSRS;
+    return GDALPamDataset::GetSpatialRef();
 }
 
 /************************************************************************/
@@ -904,16 +884,16 @@ int HDF5ImageDataset::GetGCPCount()
 }
 
 /************************************************************************/
-/*                          GetGCPProjection()                          */
+/*                        GetGCPSpatialRef()                            */
 /************************************************************************/
 
-const char *HDF5ImageDataset::_GetGCPProjection()
+const OGRSpatialReference* HDF5ImageDataset::GetGCPSpatialRef() const
 
 {
-    if( nGCPCount > 0 )
-        return pszGCPProjection;
+    if( nGCPCount > 0 && !m_oGCPSRS.IsEmpty() )
+        return &m_oGCPSRS;
 
-    return GDALPamDataset::_GetGCPProjection();
+    return GDALPamDataset::GetGCPSpatialRef();
 }
 
 /************************************************************************/
@@ -1012,7 +992,7 @@ void HDF5ImageDataset::IdentifyProductType()
 void HDF5ImageDataset::CaptureCSKGeolocation(int iProductType)
 {
     // Set the ellipsoid to WGS84.
-    oSRS.SetWellKnownGeogCS("WGS84");
+    m_oSRS.SetWellKnownGeogCS("WGS84");
 
     if(iProductType == PROD_CSK_L1C || iProductType == PROD_CSK_L1D)
     {
@@ -1029,8 +1009,8 @@ void HDF5ImageDataset::CaptureCSKGeolocation(int iProductType)
                CE_Failure ||
            GetMetadataItem("Projection_ID") == nullptr)
         {
-            pszProjection = CPLStrdup("");
-            pszGCPProjection = CPLStrdup("");
+            m_oSRS.Clear();
+            m_oGCPSRS.Clear();
             CPLError(CE_Failure, CPLE_OpenFailed,
                      "The CSK hdf5 file geolocation information is "
                      "malformed");
@@ -1044,8 +1024,8 @@ void HDF5ImageDataset::CaptureCSKGeolocation(int iProductType)
             if(EQUAL(osProjectionID, "UTM"))
             {
                 // @TODO: use SetUTM
-                oSRS.SetProjCS(SRS_PT_TRANSVERSE_MERCATOR);
-                oSRS.SetTM(dfCenterCoord[0],
+                m_oSRS.SetProjCS(SRS_PT_TRANSVERSE_MERCATOR);
+                m_oSRS.SetTM(dfCenterCoord[0],
                            dfCenterCoord[1],
                            dfProjScaleFactor[0],
                            dfProjFalseEastNorth[0],
@@ -1057,19 +1037,14 @@ void HDF5ImageDataset::CaptureCSKGeolocation(int iProductType)
                 // If the projection is UPS.
                 if(EQUAL(osProjectionID, "UPS"))
                 {
-                    oSRS.SetProjCS(SRS_PT_POLAR_STEREOGRAPHIC);
-                    oSRS.SetPS(dfCenterCoord[0],
+                    m_oSRS.SetProjCS(SRS_PT_POLAR_STEREOGRAPHIC);
+                    m_oSRS.SetPS(dfCenterCoord[0],
                                dfCenterCoord[1],
                                dfProjScaleFactor[0],
                                dfProjFalseEastNorth[0],
                                dfProjFalseEastNorth[1]);
                 }
             }
-
-            // Export Projection to Wkt.
-            // In case of error then clean the projection.
-            if(oSRS.exportToWkt(&pszProjection) != OGRERR_NONE)
-                pszProjection = CPLStrdup("");
 
             CPLFree(dfCenterCoord);
             CPLFree(dfProjScaleFactor);
@@ -1078,10 +1053,7 @@ void HDF5ImageDataset::CaptureCSKGeolocation(int iProductType)
     }
     else
     {
-        // Export GCPProjection to Wkt.
-        // In case of error then clean the projection
-        if(oSRS.exportToWkt(&pszGCPProjection) != OGRERR_NONE)
-            pszGCPProjection = CPLStrdup("");
+        m_oGCPSRS = m_oSRS;
     }
 }
 

@@ -32,7 +32,6 @@
 #include "ogrgeoconceptdatasource.h"
 #include "ogrgeoconceptdriver.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          ~OGRGeoconceptDriver()                      */
@@ -248,6 +247,7 @@ void RegisterOGRGeoconcept()
 "type section'/>"
 "</LayerCreationOptionList>" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }

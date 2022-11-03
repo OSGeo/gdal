@@ -69,7 +69,7 @@ computer.
 .. option:: -a_srs <srs_def>
 
     Override the projection for the
-    output file.  The <i>srs_def> may be any of the usual GDAL/OGR forms,
+    output file.  The *srs_def* may be any of the usual GDAL/OGR forms,
     complete WKT, PROJ.4, EPSG:n or a file containing the WKT.
     No reprojection is done.
 
@@ -183,6 +183,8 @@ parameters:
 - ``radius2``: The second radius (Y axis if rotation angle is 0)
   of search ellipse. Set this parameter to zero to use whole point array.
   Default is 0.0.
+- ``radius``: Set first and second radius (mutually exclusive with radius1 and radius2).
+  Default is 0.0. Added in GDAL 3.6
 - ``angle``: Angle of search ellipse rotation in degrees
   (counter clockwise, default 0.0).
 - ``max_points``: Maximum number of data points to use. Do not
@@ -193,6 +195,12 @@ parameters:
   amount of points found the grid node considered empty and will be filled with
   NODATA marker. This is only used if search ellipse is set (both radii are
   non-zero). Default is 0.
+- ``max_points_per_quadrant``: Maximum number of data points to use per quadrant.
+  Default is 0. Added in GDAL 3.6.
+  When specified, this actually uses invdistnn implementation.
+- ``min_points_per_quadrant``: Minimum number of data points to use per quadrant.
+  Default is 0. Added in GDAL 3.6.
+  When specified, this actually uses invdistnn implementation.
 - ``nodata``: NODATA marker to fill empty points (default
   0.0).
 
@@ -214,9 +222,27 @@ max_points is used. It has following parameters:
 - ``min_points``: Minimum number of data points to use. If less
   amount of points found the grid node is considered empty and will be filled
   with NODATA marker. Default is 0.
+- ``max_points_per_quadrant``: Maximum number of data points to use per quadrant.
+  Default is 0. Added in GDAL 3.6.
+  When specified, the algorithm will only take into account up to max_points_per_quadrant
+  points for each of the right-top, left-top, right-bottom and right-top quadrant
+  relative to the point being interpolated.
+- ``min_points_per_quadrant``: Minimum number of data points to use per quadrant.
+  Default is 0. Added in GDAL 3.6.
+  If that number is not reached, the point being interpolated will be set with
+  the NODATA marker.
+  When specified, the algorithm will collect at least min_points_per_quadrant
+  points for each of the right-top, left-top, right-bottom and right-top quadrant
+  relative to the point being interpolated.
 - ``nodata``: NODATA marker to fill empty points (default
   0.0).
 
+When ``min_points_per_quadrant`` or ``max_points_per_quadrant`` is specified, the
+search will start with the closest point to the point being interpolated
+from the first quadrant, then the closest point to the point being interpolated
+from the second quadrant, etc. up to the 4th quadrant, and will continue with
+the next closest point in the first quadrant, etc. until ``max_points`` and/or
+``max_points_per_quadrant`` thresholds are reached.
 
 .. _gdal_grid_average:
 
@@ -231,16 +257,42 @@ Moving average algorithm. It has following parameters:
 - ``radius2``: The second radius (Y axis if rotation angle is 0)
   of search ellipse. Set this parameter to zero to use whole point array.
   Default is 0.0.
+- ``radius``: Set first and second radius (mutually exclusive with radius1 and radius2).
+  Default is 0.0. Added in GDAL 3.6
 - ``angle``: Angle of search ellipse rotation in degrees
   (counter clockwise, default 0.0).
+- ``max_points``: Maximum number of data points to use. Do not
+  search for more points than this number. Found points will be ranked from
+  nearest to furthest distance when weighting. Default is 0. Added in GDAL 3.6
+  Only taken into account if one or both of ``min_points_per_quadrant`` or ``max_points_per_quadrant``
+  is specified
 - ``min_points``: Minimum number of data points to use. If less
   amount of points found the grid node considered empty and will be filled with
   NODATA marker. Default is 0.
+- ``max_points_per_quadrant``: Maximum number of data points to use per quadrant.
+  Default is 0. Added in GDAL 3.6.
+  When specified, the algorithm will only take into account up to max_points_per_quadrant
+  points for each of the right-top, left-top, right-bottom and right-top quadrant
+  relative to the point being interpolated.
+- ``min_points_per_quadrant``: Minimum number of data points to use per quadrant.
+  Default is 0. Added in GDAL 3.6.
+  If that number is not reached, the point being interpolated will be set with
+  the NODATA marker.
+  When specified, the algorithm will collect at least min_points_per_quadrant
+  points for each of the right-top, left-top, right-bottom and right-top quadrant
+  relative to the point being interpolated.
 - ``nodata``: NODATA marker to fill empty points (default
   0.0).
 
 Note, that it is essential to set search ellipse for moving average method. It
 is a window that will be averaged when computing grid nodes values.
+
+When ``min_points_per_quadrant`` or ``max_points_per_quadrant`` is specified, the
+search will start with the closest point to the point being interpolated
+from the first quadrant, then the closest point to the point being interpolated
+from the second quadrant, etc. up to the 4th quadrant, and will continue with
+the next closest point in the first quadrant, etc. until ``max_points`` and/or
+``max_points_per_quadrant`` thresholds are reached.
 
 .. _gdal_grid_nearest:
 
@@ -255,6 +307,8 @@ Nearest neighbor algorithm. It has following parameters:
 - ``radius2``: The second radius (Y axis if rotation angle is 0)
   of search ellipse. Set this parameter to zero to use whole point array.
   Default is 0.0.
+- ``radius``: Set first and second radius (mutually exclusive with radius1 and radius2).
+  Default is 0.0. Added in GDAL 3.6
 - ``angle``: Angle of search ellipse rotation in degrees
   (counter clockwise, default 0.0).
 - ``nodata``: NODATA marker to fill empty points (default
@@ -316,14 +370,35 @@ All the metrics have the same set of options:
 - ``radius2``: The second radius (Y axis if rotation angle is 0)
   of search ellipse. Set this parameter to zero to use whole point array.
   Default is 0.0.
+- ``radius``: Set first and second radius (mutually exclusive with radius1 and radius2).
+  Default is 0.0. Added in GDAL 3.6
 - ``angle``: Angle of search ellipse rotation in degrees
   (counter clockwise, default 0.0).
 - ``min_points``: Minimum number of data points to use. If less
   amount of points found the grid node considered empty and will be filled with
   NODATA marker. This is only used if search ellipse is set (both radii are
   non-zero). Default is 0.
+- ``max_points_per_quadrant``: Maximum number of data points to use per quadrant.
+  Default is 0. Added in GDAL 3.6.
+  When specified, the algorithm will only take into account up to max_points_per_quadrant
+  points for each of the right-top, left-top, right-bottom and right-top quadrant
+  relative to the point being interpolated.
+- ``min_points_per_quadrant``: Minimum number of data points to use per quadrant.
+  Default is 0. Added in GDAL 3.6.
+  If that number is not reached, the point being interpolated will be set with
+  the NODATA marker.
+  When specified, the algorithm will collect at least min_points_per_quadrant
+  points for each of the right-top, left-top, right-bottom and right-top quadrant
+  relative to the point being interpolated.
 - ``nodata``: NODATA marker to fill empty points (default
   0.0).
+
+When ``min_points_per_quadrant`` or ``max_points_per_quadrant`` is specified, the
+search will start with the closest point to the point being interpolated
+from the first quadrant, then the closest point to the point being interpolated
+from the second quadrant, etc. up to the 4th quadrant, and will continue with
+the next closest point in the first quadrant, etc. until ``max_points`` and/or
+``max_points_per_quadrant`` thresholds are reached.
 
 Reading comma separated values
 ------------------------------
@@ -334,7 +409,7 @@ gdal_grid. All you need is create a virtual dataset header (VRT) for you CSV
 file and use it as input datasource for \ref gdal_grid. You can find details
 on VRT format at :ref:`vector.vrt` description page.
 
-Here is a small example. Let we have a CSV file called <i>dem.csv>
+Here is a small example. Let we have a CSV file called *dem.csv*
 containing
 
 ::
@@ -346,7 +421,7 @@ containing
     87077.6,891995,135.01
     ...
 
-For above data we will create <i>dem.vrt> header with the following
+For above data we will create *dem.vrt* header with the following
 content:
 
 .. code-block:: xml
@@ -360,9 +435,9 @@ content:
     </OGRVRTDataSource>
 
 This description specifies so called 2.5D geometry with three coordinates X, Y
-and Z. Z value will be used for interpolation. Now you can use <i>dem.vrt>
+and Z. Z value will be used for interpolation. Now you can use *dem.vrt*
 with all OGR programs (start with \ref ogrinfo to test that everything works
-fine). The datasource will contain single layer called <i>"dem"> filled
+fine). The datasource will contain single layer called *"dem"* filled
 with point features constructed from values in CSV file. Using this technique
 you can handle CSV files with more than three columns, switch columns, etc.
 
@@ -393,9 +468,9 @@ Values to interpolate will be read from Z value of geometry record.
     gdal_grid -a invdist:power=2.0:smoothing=1.0 -txe 85000 89000 -tye 894000 890000 -outsize 400 400 -of GTiff -ot Float64 -l dem dem.vrt dem.tiff
 
 The next command does the same thing as the previous one, but reads values to
-interpolate from the attribute field specified with <b>-zfield</b> option
+interpolate from the attribute field specified with **-zfield** option
 instead of geometry record. So in this case X and Y coordinates are being
-taken from geometry and Z is being taken from the <i>"Elevation"> field.
+taken from geometry and Z is being taken from the *"Elevation"* field.
 The GDAL_NUM_THREADS is also set to parallelize the computation.
 
 ::

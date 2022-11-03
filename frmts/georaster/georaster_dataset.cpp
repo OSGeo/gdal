@@ -42,7 +42,6 @@
 
 #include <memory>
 
-CPL_CVSID("$Id$")
 
 //  ---------------------------------------------------------------------------
 //                                                           GeoRasterDataset()
@@ -60,7 +59,7 @@ GeoRasterDataset::GeoRasterDataset()
     adfGeoTransform[3]  = 0.0;
     adfGeoTransform[4]  = 0.0;
     adfGeoTransform[5]  = 1.0;
-    pszProjection       = nullptr;
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     poMaskBand          = nullptr;
     bApplyNoDataArray   = false;
     poJP2Dataset        = nullptr;
@@ -88,7 +87,6 @@ GeoRasterDataset::~GeoRasterDataset()
         delete poJP2Dataset;
     }
 
-    CPLFree( pszProjection );
     CSLDestroy( papszSubdatasets );
 }
 
@@ -1820,32 +1818,33 @@ CPLErr GeoRasterDataset::GetGeoTransform( double *padfTransform )
 }
 
 //  ---------------------------------------------------------------------------
-//                                                           GetProjectionRef()
+//                                                              GetSpatialRef()
 //  ---------------------------------------------------------------------------
 
-const char* GeoRasterDataset::_GetProjectionRef( void )
+const OGRSpatialReference* GeoRasterDataset::GetSpatialRef() const
 {
     if( poGeoRaster->phRPC )
     {
-        return "";
+        return nullptr;
     }
 
     if( ! poGeoRaster->bIsReferenced )
     {
-        return "";
+        return nullptr;
     }
 
     if( poGeoRaster->nSRID == UNKNOWN_CRS || poGeoRaster->nSRID == 0 )
     {
-        return "";
+        return nullptr;
     }
 
-    if( pszProjection )
+    if( !m_oSRS.IsEmpty() )
     {
-        return pszProjection;
+        return &m_oSRS;
     }
 
     OGRSpatialReference oSRS;
+    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     // --------------------------------------------------------------------
     // Check if the SRID is a valid EPSG code
@@ -1855,20 +1854,15 @@ const char* GeoRasterDataset::_GetProjectionRef( void )
 
     if( oSRS.importFromEPSG( static_cast<int>(poGeoRaster->nSRID) ) == OGRERR_NONE )
     {
+        CPLPopErrorHandler();
+
         /*
          * Ignores the WKT from Oracle and use the one from GDAL's
          * EPSG tables. That would ensure that other drivers/software
          * will recognize the parameters.
          */
-
-        if( oSRS.exportToWkt( &pszProjection ) == OGRERR_NONE )
-        {
-            CPLPopErrorHandler();
-
-            return pszProjection;
-        }
-        CPLFree(pszProjection);
-        pszProjection = nullptr;
+        m_oSRS = oSRS;
+        return &m_oSRS;
     }
 
     CPLPopErrorHandler();
@@ -1881,7 +1875,8 @@ const char* GeoRasterDataset::_GetProjectionRef( void )
 
     if( ! ( oSRS.importFromWkt( poGeoRaster->sWKText ) == OGRERR_NONE && oSRS.GetRoot() ) )
     {
-        return poGeoRaster->sWKText;
+        m_oSRS = oSRS;
+        return &m_oSRS;
     }
 
     // ----------------------------------------------------------------
@@ -1998,9 +1993,8 @@ const char* GeoRasterDataset::_GetProjectionRef( void )
         }
     }
 
-    oSRS.exportToWkt( &pszProjection );
-
-    return pszProjection;
+    m_oSRS = oSRS;
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 //  ---------------------------------------------------------------------------
@@ -2024,16 +2018,13 @@ CPLErr GeoRasterDataset::SetGeoTransform( double *padfTransform )
 }
 
 //  ---------------------------------------------------------------------------
-//                                                              SetProjection()
+//                                                              SetSpatialRef()
 //  ---------------------------------------------------------------------------
 
-CPLErr GeoRasterDataset::_SetProjection( const char *pszProjString )
+CPLErr GeoRasterDataset::SetSpatialRef( const OGRSpatialReference* poSRS )
 {
-    OGRSpatialReference oSRS;
-
-    OGRErr eOGRErr = oSRS.importFromWkt( pszProjString );
-
-    if( eOGRErr != OGRERR_NONE )
+    m_oSRS.Clear();
+    if( poSRS == nullptr )
     {
         poGeoRaster->SetGeoReference( UNKNOWN_CRS );
 
@@ -2047,15 +2038,15 @@ CPLErr GeoRasterDataset::_SetProjection( const char *pszProjString )
     const char *pszAuthName = nullptr;
     const char *pszAuthCode = nullptr;
 
-    if( oSRS.IsGeographic() )
+    if( poSRS->IsGeographic() )
     {
-        pszAuthName = oSRS.GetAuthorityName( "GEOGCS" );
-        pszAuthCode = oSRS.GetAuthorityCode( "GEOGCS" );
+        pszAuthName = poSRS->GetAuthorityName( "GEOGCS" );
+        pszAuthCode = poSRS->GetAuthorityCode( "GEOGCS" );
     }
-    else if( oSRS.IsProjected() )
+    else if( poSRS->IsProjected() )
     {
-        pszAuthName = oSRS.GetAuthorityName( "PROJCS" );
-        pszAuthCode = oSRS.GetAuthorityCode( "PROJCS" );
+        pszAuthName = poSRS->GetAuthorityName( "PROJCS" );
+        pszAuthCode = poSRS->GetAuthorityCode( "PROJCS" );
     }
 
     if( pszAuthName != nullptr && pszAuthCode != nullptr )
@@ -2064,6 +2055,7 @@ CPLErr GeoRasterDataset::_SetProjection( const char *pszProjString )
             EQUAL( pszAuthName, "EPSG" ) )
         {
             poGeoRaster->SetGeoReference( atoi( pszAuthCode ) );
+            m_oSRS = *poSRS;
             return CE_None;
         }
     }
@@ -2072,7 +2064,7 @@ CPLErr GeoRasterDataset::_SetProjection( const char *pszProjString )
     // Convert SRS into old style format (SF-SQL 1.0)
     // ----------------------------------------------------------------
 
-    std::unique_ptr<OGRSpatialReference> poSRS2(oSRS.Clone());
+    std::unique_ptr<OGRSpatialReference> poSRS2(poSRS->Clone());
 
     double dfAngularUnits = poSRS2->GetAngularUnits( nullptr );
 
@@ -2303,6 +2295,7 @@ CPLErr GeoRasterDataset::_SetProjection( const char *pszProjString )
             poGeoRaster->SetGeoReference( nNewSRID );
             CPLFree( pszCloneWKT );
             delete poStmt;
+            m_oSRS = *poSRS;
             return CE_None;
         }
     }
@@ -2337,6 +2330,7 @@ CPLErr GeoRasterDataset::_SetProjection( const char *pszProjString )
             poGeoRaster->SetGeoReference( nNewSRID );
             CPLFree( pszCloneWKT );
             delete poStmt;
+            m_oSRS = *poSRS;
             return CE_None;
         }
     }
@@ -2356,7 +2350,7 @@ CPLErr GeoRasterDataset::_SetProjection( const char *pszProjString )
         "  SELECT MAX_SRID INTO :out FROM DUAL;\n"
         "END;",
             pszCloneWKT,
-            oSRS.GetRoot()->GetChild(0)->GetValue() ) );
+            poSRS->GetRoot()->GetChild(0)->GetValue() ) );
 
     poStmt->BindName( ":out", &nNewSRID );
 
@@ -2386,6 +2380,9 @@ CPLErr GeoRasterDataset::_SetProjection( const char *pszProjString )
     CPLFree( pszCloneWKT );
 
     delete poStmt;
+
+    if( eError == CE_None )
+        m_oSRS = *poSRS;
 
     return eError;
 }
@@ -2636,13 +2633,13 @@ int GeoRasterDataset::GetGCPCount()
 //                                                                    SetGCPs()
 //  ---------------------------------------------------------------------------
 
-CPLErr GeoRasterDataset::_SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
-                                  const char *pszGCPProjection )
+CPLErr GeoRasterDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
+                                  const OGRSpatialReference* poSRS )
 {
     if( GetAccess() == GA_Update )
     {
         poGeoRaster->SetGCP( nGCPCountIn, pasGCPListIn );
-        SetProjection( pszGCPProjection );
+        SetSpatialRef( poSRS );
     }
     else
     {
@@ -2665,15 +2662,15 @@ const GDAL_GCP* GeoRasterDataset::GetGCPs()
 }
 
 //  ---------------------------------------------------------------------------
-//                                                           GetGCPProjection()
+//                                                           GetGCPSpatialRef()
 //  ---------------------------------------------------------------------------
 
-const char* GeoRasterDataset::_GetGCPProjection()
+const OGRSpatialReference* GeoRasterDataset::GetGCPSpatialRef() const
 {
-    if( poGeoRaster && poGeoRaster->nGCPCount > 0 )
-        return pszProjection;
+    if( !m_oSRS.IsEmpty() && poGeoRaster && poGeoRaster->nGCPCount > 0 )
+        return &m_oSRS;
     else
-        return "";
+        return nullptr;
 }
 
 //  ---------------------------------------------------------------------------
@@ -2682,11 +2679,12 @@ const char* GeoRasterDataset::_GetGCPProjection()
 
 CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
                                           int nOverviews,
-                                          int* panOverviewList,
+                                          const int* panOverviewList,
                                           int nListBands,
-                                          int* panBandList,
+                                          const int* panBandList,
                                           GDALProgressFunc pfnProgress,
-                                          void* pProgressData )
+                                          void* pProgressData,
+                                          CSLConstList papszOptions )
 {
     (void) panBandList;
     (void) nListBands;
@@ -2870,13 +2868,14 @@ CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
             i / (double) nBands, ( i + 1) / (double) nBands,
             pfnProgress, pProgressData );
 
-        eErr = GDALRegenerateOverviews(
+        eErr = GDALRegenerateOverviewsEx(
             (GDALRasterBandH) poBand,
             poBand->nOverviewCount,
             (GDALRasterBandH*) poBand->papoOverviews,
             pszResampling,
             GDALScaledProgress,
-            pScaledProgressData );
+            pScaledProgressData,
+            papszOptions);
 
         GDALDestroyScaledProgress( pScaledProgressData );
     }

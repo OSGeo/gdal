@@ -37,7 +37,6 @@
 #include <algorithm>
 #include <limits>
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -53,7 +52,7 @@ class HF2Dataset final: public GDALPamDataset
 
     VSILFILE   *fp;
     double      adfGeoTransform[6];
-    char       *pszWKT;
+    OGRSpatialReference m_oSRS{};
     vsi_l_offset    *panBlockOffset; // tile 0 is a the bottom left
 
     int         nTileSize;
@@ -65,10 +64,7 @@ class HF2Dataset final: public GDALPamDataset
     virtual     ~HF2Dataset();
 
     virtual CPLErr GetGeoTransform( double * ) override;
-    virtual const char* _GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -267,11 +263,11 @@ CPLErr HF2RasterBand::IReadBlock( int nBlockXOff, int nLineYOff,
 
 HF2Dataset::HF2Dataset() :
     fp(nullptr),
-    pszWKT(nullptr),
     panBlockOffset(nullptr),
     nTileSize(0),
     bHasLoaderBlockMap(FALSE)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGeoTransform[0] = 0;
     adfGeoTransform[1] = 1;
     adfGeoTransform[2] = 0;
@@ -288,7 +284,6 @@ HF2Dataset::~HF2Dataset()
 
 {
     FlushCache(true);
-    CPLFree(pszWKT);
     CPLFree(panBlockOffset);
     if (fp)
         VSIFCloseL(fp);
@@ -370,14 +365,15 @@ int HF2Dataset::LoadBlockMap()
 }
 
 /************************************************************************/
-/*                     GetProjectionRef()                               */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char* HF2Dataset::_GetProjectionRef()
+const OGRSpatialReference *HF2Dataset::GetSpatialRef() const
+
 {
-    if (pszWKT)
-        return pszWKT;
-    return GDALPamDataset::_GetProjectionRef();
+   if( !m_oSRS.IsEmpty() )
+       return &m_oSRS;
+   return GDALPamDataset::GetSpatialRef();
 }
 
 /************************************************************************/
@@ -625,14 +621,13 @@ GDALDataset *HF2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     if (bHasEPSGCode)
     {
-        OGRSpatialReference oSRS;
-        if (oSRS.importFromEPSG(nEPSGCode) == OGRERR_NONE)
-            oSRS.exportToWkt(&poDS->pszWKT);
+        poDS->m_oSRS.importFromEPSG(nEPSGCode);
     }
     else
     {
         bool bHasSRS = false;
         OGRSpatialReference oSRS;
+        oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         oSRS.SetGeogCS("unknown", "unknown", "unknown", SRS_WGS84_SEMIMAJOR, SRS_WGS84_INVFLATTENING);
         if (bHasEPSGDatumCode)
         {
@@ -656,7 +651,7 @@ GDALDataset *HF2Dataset::Open( GDALOpenInfo * poOpenInfo )
             oSRS.SetUTM(std::abs(static_cast<int>(nUTMZone)), nUTMZone > 0);
         }
         if (bHasSRS)
-            oSRS.exportToWkt(&poDS->pszWKT);
+            poDS->m_oSRS = oSRS;
     }
 
 /* -------------------------------------------------------------------- */

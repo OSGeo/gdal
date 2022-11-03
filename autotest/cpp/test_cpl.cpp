@@ -39,6 +39,7 @@
 #include "cpl_error.h"
 #include "cpl_hash_set.h"
 #include "cpl_list.h"
+#include "cpl_mask.h"
 #include "cpl_sha256.h"
 #include "cpl_string.h"
 #include "cpl_safemaths.hpp"
@@ -52,7 +53,10 @@
 #include "cpl_minixml.h"
 #include "cpl_quad_tree.h"
 #include "cpl_worker_thread_pool.h"
+#include "cpl_vsi_virtual.h"
+#include "cpl_threadsafe_queue.hpp"
 
+#include <atomic>
 #include <fstream>
 #include <string>
 
@@ -629,6 +633,15 @@ namespace tut
         CPLStringList oCopy2(oCopy);
         oCopy.Clear();
         ensure( "c3", EQUAL(oCopy2[0],"test") );
+
+        // Test move constructor
+        CPLStringList oMoved(std::move(oCopy2));
+        ensure( "c_move_constructor", EQUAL(oMoved[0],"test") );
+
+        // Test move assignment operator
+        CPLStringList oMoved2;
+        oMoved2 = std::move(oMoved);
+        ensure( "c_move_assignment", EQUAL(oMoved2[0],"test") );
 
         // Test sorting
         CPLStringList oTestSort;
@@ -2043,10 +2056,16 @@ namespace tut
         ensure_equals( cache.getMaxSize(), 2U );
         ensure_equals( cache.getElasticity(), 1U );
         ensure_equals( cache.getMaxAllowedSize(), 3U );
+        int out;
+        ensure( !cache.removeAndRecycleOldestEntry(out) );
 
         cache.insert(0, 1);
         val = 0;
         ensure( cache.tryGet(0, val) );
+        int* ptr = cache.getPtr(0);
+        ensure( ptr );
+        ensure_equals( *ptr, 1 );
+        ensure( cache.getPtr(-1) == nullptr );
         ensure_equals( val, 1 );
         ensure_equals( cache.get(0), 1 );
         ensure_equals( cache.getCopy(0), 1);
@@ -2061,6 +2080,12 @@ namespace tut
         };
         cache.cwalk( lambda );
         ensure( visited) ;
+
+        out = -1;
+        ensure( cache.removeAndRecycleOldestEntry(out) );
+        ensure_equals( out, 1 );
+
+        cache.insert(0, 1);
         cache.insert(0, 2);
         ensure_equals( cache.get(0), 2 );
         ensure_equals( cache.size(), 1U );
@@ -2076,6 +2101,48 @@ namespace tut
         ensure( cache.remove(2) );
         ensure( !cache.contains(2) );
         ensure_equals( cache.size(), 1U );
+
+        {
+            // Check that MyObj copy constructor and copy-assignment operator
+            // are not needed
+            struct MyObj
+            {
+                int m_v;
+                MyObj(int v): m_v(v) {}
+                MyObj(const MyObj&) = delete;
+                MyObj& operator=(const MyObj&) = delete;
+                MyObj(MyObj&&) = default;
+                MyObj& operator=(MyObj&&) = default;
+            };
+            lru11::Cache<int,MyObj> cacheMyObj(2,0);
+            ensure_equals( cacheMyObj.insert(0, MyObj(0)).m_v, 0 );
+            cacheMyObj.getPtr(0);
+            ensure_equals( cacheMyObj.insert(1, MyObj(1)).m_v, 1 );
+            ensure_equals( cacheMyObj.insert(2, MyObj(2)).m_v, 2 );
+            MyObj outObj(-1);
+            cacheMyObj.removeAndRecycleOldestEntry(outObj);
+        }
+
+        {
+            // Check that MyObj copy constructor and copy-assignment operator
+            // are not triggered
+            struct MyObj
+            {
+                int m_v;
+                MyObj(int v): m_v(v) {}
+                MyObj(const MyObj&): m_v(-1) { ensure(0); }
+                MyObj& operator=(const MyObj&) { ensure(0); return *this; }
+                MyObj(MyObj&&) = default;
+                MyObj& operator=(MyObj&&) = default;
+            };
+            lru11::Cache<int,MyObj> cacheMyObj(2,0);
+            ensure_equals( cacheMyObj.insert(0, MyObj(0)).m_v, 0 );
+            cacheMyObj.getPtr(0);
+            ensure_equals( cacheMyObj.insert(1, MyObj(1)).m_v, 1 );
+            ensure_equals( cacheMyObj.insert(2, MyObj(2)).m_v, 2 );
+            MyObj outObj(-1);
+            cacheMyObj.removeAndRecycleOldestEntry(outObj);
+        }
     }
 
     // Test CPLJSONDocument
@@ -2168,10 +2235,13 @@ namespace tut
         {
             // Copy constructor
             CPLJSONDocument oDocument;
+            ensure( oDocument.LoadMemory(std::string("true")) );
             oDocument.GetRoot();
             CPLJSONDocument oDocument2(oDocument);
-            CPLJSONObject oObj;
+            CPLJSONObject oObj(oDocument.GetRoot());
+            ensure( oObj.ToBool() );
             CPLJSONObject oObj2(oObj);
+            ensure( oObj2.ToBool() );
             // Assignment operator
             oDocument2 = oDocument;
             auto& oDocument2Ref(oDocument2);
@@ -2179,6 +2249,11 @@ namespace tut
             oObj2 = oObj;
             auto& oObj2Ref(oObj2);
             oObj2 = oObj2Ref;
+            CPLJSONObject oObj3(std::move(oObj2));
+            ensure( oObj3.ToBool() );
+            CPLJSONObject oObj4;
+            oObj4 = std::move(oObj3);
+            ensure( oObj4.ToBool() );
         }
         {
             // Move constructor
@@ -2862,7 +2937,7 @@ namespace tut
     void object::test<40>()
     {
         CPLWorkerThreadPool oPool;
-        ensure(oPool.Setup(2, nullptr, nullptr));
+        ensure(oPool.Setup(2, nullptr, nullptr, false));
 
         const auto myJob = [](void* pData)
         {
@@ -2889,7 +2964,7 @@ namespace tut
             for( int i = 0; i < 1000; i++ )
             {
                 res[i] = i;
-                resPtr[i] = &res[i];
+                resPtr[i] = res.data() + i;
             }
             oPool.SubmitJobs(myJob, resPtr);
             oPool.WaitEvent();
@@ -3563,19 +3638,19 @@ namespace tut
         ensure_equals(CPLGetLastErrorType(), CE_None);
 
         {
-            const char* pszVal = VSIGetCredential("/vsi_test/foo/bar", "FOO", nullptr);
+            const char* pszVal = VSIGetPathSpecificOption("/vsi_test/foo/bar", "FOO", nullptr);
             ensure(pszVal != nullptr);
             ensure_equals(std::string(pszVal), std::string("BAR"));
         }
 
         {
-            const char* pszVal = VSIGetCredential("/vsi_test/foo/bar", "FOO2", nullptr);
+            const char* pszVal = VSIGetPathSpecificOption("/vsi_test/foo/bar", "FOO2", nullptr);
             ensure(pszVal != nullptr);
             ensure_equals(std::string(pszVal), std::string("BAR2"));
         }
 
         {
-            const char* pszVal = VSIGetCredential("/vsi_test/bar/baz", "BAR", nullptr);
+            const char* pszVal = VSIGetPathSpecificOption("/vsi_test/bar/baz", "BAR", nullptr);
             ensure(pszVal != nullptr);
             ensure_equals(std::string(pszVal), std::string("BAZ"));
         }
@@ -3586,11 +3661,11 @@ namespace tut
             ensure_equals(std::string(pszVal), std::string("BAR"));
         }
 
-        VSIClearCredentials("/vsi_test/bar/baz");
+        VSIClearPathSpecificOptions("/vsi_test/bar/baz");
         CPLSetConfigOption("configoptions_FOO", nullptr);
 
         {
-            const char* pszVal = VSIGetCredential("/vsi_test/bar/baz", "BAR", nullptr);
+            const char* pszVal = VSIGetPathSpecificOption("/vsi_test/bar/baz", "BAR", nullptr);
             ensure(pszVal == nullptr);
         }
 
@@ -3661,12 +3736,12 @@ namespace tut
         ensure_equals(CPLGetLastErrorType(), CE_Warning);
 
         {
-            const char* pszVal = VSIGetCredential("/vsi_test/foo", "FOO", nullptr);
+            const char* pszVal = VSIGetPathSpecificOption("/vsi_test/foo", "FOO", nullptr);
             ensure(pszVal != nullptr);
         }
 
         {
-            const char* pszVal = VSIGetCredential("/vsi_test/foo", "BAR", nullptr);
+            const char* pszVal = VSIGetPathSpecificOption("/vsi_test/foo", "BAR", nullptr);
             ensure(pszVal == nullptr);
         }
 
@@ -3810,8 +3885,304 @@ namespace tut
 #endif
     }
 
-    // WARNING: keep that line at bottom and read carefully:
-    // If the number of tests reaches 100, increase the MAX_NUMBER_OF_TESTS
-    // define at top of this file (and update this comment!)
+    // Test ignore-env-vars = yes of configuration file
+    template<>
+    template<>
+    void object::test<61>()
+    {
+        char szEnvVar[] = "SOME_ENV_VAR_FOR_TEST_CPL_61=FOO";
+        putenv(szEnvVar);
+        ensure( CPLGetConfigOption("SOME_ENV_VAR_FOR_TEST_CPL_61", nullptr) != nullptr );
+
+        VSILFILE* fp = VSIFOpenL("/vsimem/.gdal/gdalrc", "wb");
+        VSIFPrintfL(fp, "[directives]\n");
+        VSIFPrintfL(fp, "ignore-env-vars=yes\n");
+        VSIFPrintfL(fp, "[configoptions]\n");
+        VSIFPrintfL(fp, "CONFIG_OPTION_FOR_TEST_CPL_61=BAR\n");
+        VSIFCloseL(fp);
+
+        // Load configuration file
+        CPLLoadConfigOptionsFromFile("/vsimem/.gdal/gdalrc", false);
+
+        // Check that reading configuration option works
+        ensure( EQUAL(CPLGetConfigOption("CONFIG_OPTION_FOR_TEST_CPL_61", ""), "BAR") );
+
+        // Check that environment variables are not read as configuration options
+        ensure( CPLGetConfigOption("SOME_ENV_VAR_FOR_TEST_CPL_61", nullptr) == nullptr );
+
+        // Reset ignore-env-vars=no
+        fp = VSIFOpenL("/vsimem/.gdal/gdalrc", "wb");
+        VSIFPrintfL(fp, "[directives]\n");
+        VSIFPrintfL(fp, "ignore-env-vars=no\n");
+        VSIFPrintfL(fp, "[configoptions]\n");
+        VSIFPrintfL(fp, "SOME_ENV_VAR_FOR_TEST_CPL_61=BAR\n");
+        VSIFCloseL(fp);
+
+        // Reload configuration file
+        CPLLoadConfigOptionsFromFile("/vsimem/.gdal/gdalrc", false);
+
+        // Check that environment variables are read as configuration options
+        // and override configuration options
+        ensure( CPLGetConfigOption("SOME_ENV_VAR_FOR_TEST_CPL_61", nullptr) != nullptr );
+        ensure_equals( std::string(CPLGetConfigOption("SOME_ENV_VAR_FOR_TEST_CPL_61", "")), std::string("FOO") );
+
+        VSIUnlink("/vsimem/.gdal/gdalrc");
+    }
+
+    // Test CPLWorkerThreadPool recursion
+    template<>
+    template<>
+    void object::test<62>()
+    {
+        struct Context
+        {
+            CPLWorkerThreadPool oThreadPool{};
+            std::atomic<int> nCounter{0};
+            std::mutex mutex{};
+            std::condition_variable cv{};
+            bool you_can_leave = false;
+            int threadStarted = 0;
+        };
+        Context ctxt;
+        ctxt.oThreadPool.Setup(2, nullptr, nullptr, /* waitAllStarted = */ true);
+
+        struct Data
+        {
+            Context* psCtxt;
+            int iJob;
+            GIntBig nThreadLambda = 0;
+
+            Data(Context* psCtxtIn, int iJobIn):
+                psCtxt(psCtxtIn), iJob(iJobIn) {}
+            Data(const Data&) = default;
+        };
+        const auto lambda = [](void* pData)
+        {
+            auto psData = static_cast<Data*>(pData);
+            if( psData->iJob > 0 )
+            {
+                // wait for both threads to be started
+                std::unique_lock<std::mutex> guard(psData->psCtxt->mutex);
+                psData->psCtxt->threadStarted ++;
+                psData->psCtxt->cv.notify_one();
+                while( psData->psCtxt->threadStarted < 2 )
+                {
+                    psData->psCtxt->cv.wait(guard);
+                }
+            }
+
+            psData->nThreadLambda = CPLGetPID();
+            //fprintf(stderr, "lambda %d: " CPL_FRMT_GIB "\n",
+            //        psData->iJob, psData->nThreadLambda);
+            const auto lambda2 = [](void* pData2)
+            {
+                const auto psData2 = static_cast<Data*>(pData2);
+                const int iJob = psData2->iJob;
+                const int nCounter = psData2->psCtxt->nCounter ++;
+                CPL_IGNORE_RET_VAL(nCounter);
+                const auto nThreadLambda2 = CPLGetPID();
+                // fprintf(stderr, "lambda2 job=%d, counter(before)=%d, thread=" CPL_FRMT_GIB "\n", iJob, nCounter, nThreadLambda2);
+                if( iJob == 100 + 0 )
+                {
+                    ensure(nThreadLambda2 != psData2->nThreadLambda);
+                    // make sure that job 0 run in the other thread
+                    // takes sufficiently long that job 2 has been submitted
+                    // before it completes
+                    std::unique_lock<std::mutex> guard(psData2->psCtxt->mutex);
+                    while( !psData2->psCtxt->you_can_leave )
+                    {
+                        psData2->psCtxt->cv.wait(guard);
+                    }
+                }
+                else if( iJob == 100 + 1 || iJob == 100 + 2 )
+                    ensure(nThreadLambda2 == psData2->nThreadLambda);
+            };
+            auto poQueue = psData->psCtxt->oThreadPool.CreateJobQueue();
+            Data d0(*psData);
+            d0.iJob = 100 + d0.iJob * 3 + 0;
+            Data d1(*psData);
+            d1.iJob = 100 + d1.iJob * 3 + 1;
+            Data d2(*psData);
+            d2.iJob = 100 + d2.iJob * 3 + 2;
+            poQueue->SubmitJob(lambda2, &d0);
+            poQueue->SubmitJob(lambda2, &d1);
+            poQueue->SubmitJob(lambda2, &d2);
+            if( psData->iJob == 0 )
+            {
+                std::lock_guard<std::mutex> guard(psData->psCtxt->mutex);
+                psData->psCtxt->you_can_leave = true;
+                psData->psCtxt->cv.notify_one();
+            }
+        };
+        {
+            auto poQueue = ctxt.oThreadPool.CreateJobQueue();
+            Data data0(&ctxt, 0);
+            poQueue->SubmitJob(lambda, &data0);
+        }
+        {
+            auto poQueue = ctxt.oThreadPool.CreateJobQueue();
+            Data data1(&ctxt, 1);
+            Data data2(&ctxt, 2);
+            poQueue->SubmitJob(lambda, &data1);
+            poQueue->SubmitJob(lambda, &data2);
+        }
+        ensure_equals(ctxt.nCounter, 3 * 3);
+    }
+
+    // Test /vsimem/ PRead() implementation
+    template<>
+    template<>
+    void object::test<63>()
+    {
+        char szContent[] = "abcd";
+        VSILFILE* fp = VSIFileFromMemBuffer( "", reinterpret_cast<GByte*>(szContent), 4, FALSE );
+        VSIVirtualHandle* poHandle = reinterpret_cast<VSIVirtualHandle*>(fp);
+        ensure(poHandle->HasPRead());
+        {
+            char szBuffer[5] = {0};
+            ensure_equals(poHandle->PRead(szBuffer, 2, 1), 2U);
+            ensure_equals(std::string(szBuffer), std::string("bc"));
+        }
+        {
+            char szBuffer[5] = {0};
+            ensure_equals(poHandle->PRead(szBuffer, 4, 1), 3U);
+            ensure_equals(std::string(szBuffer), std::string("bcd"));
+        }
+        {
+            char szBuffer[5] = {0};
+            ensure_equals(poHandle->PRead(szBuffer, 1, 4), 0U);
+            ensure_equals(std::string(szBuffer), std::string());
+        }
+        VSIFCloseL(fp);
+    }
+
+    // Test regular file system PRead() implementation
+    template<>
+    template<>
+    void object::test<64>()
+    {
+        VSILFILE* fp = VSIFOpenL("temp_test_64.bin", "wb+");
+        if( fp == nullptr )
+            return;
+        VSIVirtualHandle* poHandle = reinterpret_cast<VSIVirtualHandle*>(fp);
+        poHandle->Write( "abcd", 4, 1 );
+        if( poHandle->HasPRead() )
+        {
+            poHandle->Flush();
+            {
+                char szBuffer[5] = {0};
+                ensure_equals(poHandle->PRead(szBuffer, 2, 1), 2U);
+                ensure_equals(std::string(szBuffer), std::string("bc"));
+            }
+            {
+                char szBuffer[5] = {0};
+                ensure_equals(poHandle->PRead(szBuffer, 4, 1), 3U);
+                ensure_equals(std::string(szBuffer), std::string("bcd"));
+            }
+            {
+                char szBuffer[5] = {0};
+                ensure_equals(poHandle->PRead(szBuffer, 1, 4), 0U);
+                ensure_equals(std::string(szBuffer), std::string());
+            }
+        }
+        VSIFCloseL(fp);
+        VSIUnlink("temp_test_64.bin");
+    }
+
+    // Test CPLMask implementation
+    template<>
+    template<>
+    void object::test<65>()
+    {
+        constexpr std::size_t sz = 71;
+        auto m = CPLMaskCreate(sz, true);
+
+        // Mask is set by default
+        for (std::size_t i = 0; i < sz; i++) {
+            ensure_equals("bits set by default", CPLMaskGet(m, i), true);
+        }
+
+        VSIFree(m);
+        m = CPLMaskCreate(sz, false);
+        auto m2 = CPLMaskCreate(sz, false);
+
+        // Mask is unset by default
+        for (std::size_t i = 0; i < sz; i++) {
+            ensure_equals("bits unset by default", CPLMaskGet(m, i), false);
+        }
+
+        // Set a few bits
+        CPLMaskSet(m, 10);
+        CPLMaskSet(m, 33);
+        CPLMaskSet(m, 70);
+
+        // Check all bits
+        for (std::size_t i = 0; i < sz; i++) {
+            if (i == 10 || i == 33 || i == 70) {
+                ensure_equals("bit set correctly", CPLMaskGet(m, i), true);
+            } else {
+                ensure_equals("bit remains unset", CPLMaskGet(m, i), false);
+            }
+        }
+
+        // Unset some bits
+        CPLMaskClear(m, 10);
+        CPLMaskClear(m, 70);
+
+        // Check all bits
+        for (std::size_t i = 0; i < sz; i++) {
+            if (i == 33) {
+                ensure_equals("bit remains set", CPLMaskGet(m, i), true);
+            } else {
+                ensure_equals("bit cleared correctly", CPLMaskGet(m, i), false);
+            }
+        }
+
+        CPLMaskSet(m2, 36);
+        CPLMaskMerge(m2, m, sz);
+
+        // Check all bits
+        for (std::size_t i = 0; i < sz; i++) {
+            if (i == 36 || i == 33) {
+                ensure_equals("m2 bit set correctly", CPLMaskGet(m2, i), true);
+            } else {
+                ensure_equals("m2 bit remains clear", CPLMaskGet(m2, i), false);
+            }
+        }
+
+        CPLMaskClearAll(m, sz);
+        CPLMaskSetAll(m2, sz);
+
+        // Check all bits
+        for (std::size_t i = 0; i < sz; i++) {
+            ensure_equals("all bits cleared", CPLMaskGet(m, i), false);
+            ensure_equals("all bits set", CPLMaskGet(m2, i), true);
+        }
+
+        VSIFree(m);
+        VSIFree(m2);
+    }
+
+    // Test cpl::ThreadSafeQueue
+    template<>
+    template<>
+    void object::test<66>()
+    {
+        cpl::ThreadSafeQueue<int> queue;
+        ensure(queue.empty());
+        ensure_equals(queue.size(), 0U);
+        queue.push(1);
+        ensure(!queue.empty());
+        ensure_equals(queue.size(), 1U);
+        queue.clear();
+        ensure(queue.empty());
+        ensure_equals(queue.size(), 0U);
+        int val = 10;
+        queue.push(std::move(val));
+        ensure(!queue.empty());
+        ensure_equals(queue.size(), 1U);
+        ensure_equals(queue.get_and_pop_front(), 10);
+        ensure(queue.empty());
+    }
 
 } // namespace tut

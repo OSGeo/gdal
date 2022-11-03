@@ -464,3 +464,16 @@ def test_ogr_ods_multiple_text_p_elements():
     f = lyr.GetNextFeature()
     f = lyr.GetNextFeature()
     assert f["value"] == "First line\nSecond line"
+
+
+###############################################################################
+# Test reading a ODS file with ODS: prefix
+
+
+def test_ogr_ods_read_ods_prefix():
+
+    tmpfilename = "/vsimem/temp"
+    with gdaltest.tempfile(
+        tmpfilename, open("data/ods/multiple_text_p_elements.ods", "rb").read()
+    ):
+        assert ogr.Open("ODS:" + tmpfilename) is not None

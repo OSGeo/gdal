@@ -33,7 +33,6 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$")
 
 WMSMiniDriver_WMS::WMSMiniDriver_WMS() : m_iversion(0) {}
 
@@ -111,9 +110,9 @@ CPLErr WMSMiniDriver_WMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papsz
 
     if (ret == CE_None) {
         if (!m_srs.empty() ) {
-            m_projection_wkt = ProjToWKT(m_srs);
+            m_oSRS = ProjToSRS(m_srs);
         } else if (!m_crs.empty() ) {
-            m_projection_wkt = ProjToWKT(m_crs);
+            m_oSRS = ProjToSRS(m_crs);
         }
     }
 

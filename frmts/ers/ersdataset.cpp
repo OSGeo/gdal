@@ -36,7 +36,6 @@
 
 #include <limits>
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -55,7 +54,7 @@ class ERSDataset final: public RawDataset
 
     int         bGotTransform;
     double      adfGeoTransform[6];
-    char       *pszProjection;
+    OGRSpatialReference m_oSRS{};
 
     CPLString   osRawFilename;
 
@@ -66,7 +65,7 @@ class ERSDataset final: public RawDataset
 
     int           nGCPCount;
     GDAL_GCP      *pasGCPList;
-    char          *pszGCPProjection;
+    OGRSpatialReference m_oGCPSRS{};
 
     void          ReadGCPs();
 
@@ -92,29 +91,15 @@ class ERSDataset final: public RawDataset
     void FlushCache(bool bAtClosing) override;
     CPLErr GetGeoTransform( double * padfTransform ) override;
     CPLErr SetGeoTransform( double *padfTransform ) override;
-    const char *_GetProjectionRef(void) override;
-    CPLErr _SetProjection( const char * ) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
     char **GetFileList(void) override;
 
     int GetGCPCount() override;
-    const char *_GetGCPProjection() override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override {
-        return GetGCPSpatialRefFromOldGetGCPProjection();
-    }
+    const OGRSpatialReference* GetGCPSpatialRef() const override;
     const GDAL_GCP *GetGCPs() override;
-    CPLErr _SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                    const char *pszGCPProjection ) override;
-    using RawDataset::SetGCPs;
     CPLErr SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
-                    const OGRSpatialReference* poSRS ) override {
-        return OldSetGCPsFromNew(nGCPCountIn, pasGCPListIn, poSRS);
-    }
+                    const OGRSpatialReference* poSRS ) override;
 
     char **GetMetadataDomainList() override;
     const char *GetMetadataItem( const char * pszName,
@@ -136,15 +121,15 @@ ERSDataset::ERSDataset() :
     fpImage(nullptr),
     poDepFile(nullptr),
     bGotTransform(FALSE),
-    pszProjection(CPLStrdup("")),
     bHDRDirty(FALSE),
     poHeader(nullptr),
     nGCPCount(0),
     pasGCPList(nullptr),
-    pszGCPProjection(CPLStrdup("")),
     bHasNoDataValue(FALSE),
     dfNoDataValue(0.0)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -169,9 +154,6 @@ ERSDataset::~ERSDataset()
 
     ERSDataset::CloseDependentDatasets();
 
-    CPLFree( pszProjection );
-
-    CPLFree( pszGCPProjection );
     if( nGCPCount > 0 )
     {
         GDALDeinitGCPs( nGCPCount, pasGCPList );
@@ -299,13 +281,13 @@ int ERSDataset::GetGCPCount()
 }
 
 /************************************************************************/
-/*                          GetGCPProjection()                          */
+/*                          GetGCPSpatialRef()                          */
 /************************************************************************/
 
-const char *ERSDataset::_GetGCPProjection()
+const OGRSpatialReference *ERSDataset::GetGCPSpatialRef() const
 
 {
-    return pszGCPProjection;
+    return m_oGCPSRS.IsEmpty() ? nullptr : &m_oGCPSRS;
 }
 
 /************************************************************************/
@@ -322,15 +304,14 @@ const GDAL_GCP *ERSDataset::GetGCPs()
 /*                              SetGCPs()                               */
 /************************************************************************/
 
-CPLErr ERSDataset::_SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
-                            const char *pszGCPProjectionIn )
+CPLErr ERSDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
+                            const OGRSpatialReference *poSRS )
 
 {
 /* -------------------------------------------------------------------- */
 /*      Clean old gcps.                                                 */
 /* -------------------------------------------------------------------- */
-    CPLFree( pszGCPProjection );
-    pszGCPProjection = nullptr;
+    m_oGCPSRS.Clear();
 
     if( nGCPCount > 0 )
     {
@@ -346,7 +327,8 @@ CPLErr ERSDataset::_SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
 /* -------------------------------------------------------------------- */
     nGCPCount = nGCPCountIn;
     pasGCPList = GDALDuplicateGCPs( nGCPCount, pasGCPListIn );
-    pszGCPProjection = CPLStrdup( pszGCPProjectionIn );
+    if( poSRS )
+        m_oGCPSRS = *poSRS;
 
 /* -------------------------------------------------------------------- */
 /*      Setup the header contents corresponding to these GCPs.          */
@@ -363,10 +345,9 @@ CPLErr ERSDataset::_SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
 /* -------------------------------------------------------------------- */
 /*      Translate the projection.                                       */
 /* -------------------------------------------------------------------- */
-    OGRSpatialReference oSRS( pszGCPProjection );
     char szERSProj[32], szERSDatum[32], szERSUnits[32];
 
-    oSRS.exportToERM( szERSProj, szERSDatum, szERSUnits );
+    m_oGCPSRS.exportToERM( szERSProj, szERSDatum, szERSUnits );
 
     /* Write the above computed values, unless they have been overridden by */
     /* the creation options PROJ, DATUM or UNITS */
@@ -415,40 +396,39 @@ CPLErr ERSDataset::_SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *ERSDataset::_GetProjectionRef()
+const OGRSpatialReference *ERSDataset::GetSpatialRef() const
 
 {
     // try xml first
-    const char* pszPrj = GDALPamDataset::_GetProjectionRef();
-    if(pszPrj && strlen(pszPrj) > 0)
-        return pszPrj;
+    const auto poSRS = GDALPamDataset::GetSpatialRef();
+    if( poSRS )
+        return poSRS;
 
-    return pszProjection;
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /************************************************************************/
-/*                           SetProjection()                            */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
-CPLErr ERSDataset::_SetProjection( const char *pszSRS )
+CPLErr ERSDataset::SetSpatialRef( const OGRSpatialReference* poSRS )
 
 {
-    if( pszProjection && EQUAL(pszSRS,pszProjection) )
+    if( poSRS == nullptr && m_oSRS.IsEmpty() )
+        return CE_None;
+    if( poSRS != nullptr && poSRS->IsSame(&m_oSRS) )
         return CE_None;
 
-    if( pszSRS == nullptr )
-        pszSRS = "";
+    m_oSRS.Clear();
+    if( poSRS )
+        m_oSRS = *poSRS;
 
-    CPLFree( pszProjection );
-    pszProjection = CPLStrdup(pszSRS);
-
-    OGRSpatialReference oSRS( pszSRS );
     char szERSProj[32], szERSDatum[32], szERSUnits[32];
 
-    oSRS.exportToERM( szERSProj, szERSDatum, szERSUnits );
+    m_oSRS.exportToERM( szERSProj, szERSDatum, szERSUnits );
 
     /* Write the above computed values, unless they have been overridden by */
     /* the creation options PROJ, DATUM or UNITS */
@@ -725,18 +705,13 @@ void ERSDataset::ReadGCPs()
 /* -------------------------------------------------------------------- */
 /*      Parse the GCP projection.                                       */
 /* -------------------------------------------------------------------- */
-    OGRSpatialReference oSRS;
-
     osProj = poHeader->Find( "RasterInfo.WarpControl.CoordinateSpace.Projection", "" );
     osDatum = poHeader->Find( "RasterInfo.WarpControl.CoordinateSpace.Datum", "" );
     osUnits = poHeader->Find( "RasterInfo.WarpControl.CoordinateSpace.Units", "" );
 
-    oSRS.importFromERM( !osProj.empty() ? osProj.c_str() : "RAW",
+    m_oGCPSRS.importFromERM( !osProj.empty() ? osProj.c_str() : "RAW",
                         !osDatum.empty() ? osDatum.c_str() : "WGS84",
                         !osUnits.empty() ? osUnits.c_str() : "METERS" );
-
-    CPLFree( pszGCPProjection );
-    oSRS.exportToWkt( &pszGCPProjection );
 }
 
 /************************************************************************/
@@ -1143,18 +1118,13 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Look for projection.                                            */
 /* -------------------------------------------------------------------- */
-    OGRSpatialReference oSRS;
-
     poDS->osProj = poHeader->Find( "CoordinateSpace.Projection", "" );
     poDS->osDatum = poHeader->Find( "CoordinateSpace.Datum", "" );
     poDS->osUnits = poHeader->Find( "CoordinateSpace.Units", "" );
 
-    oSRS.importFromERM( !poDS->osProj.empty() ? poDS->osProj.c_str() : "RAW",
+    poDS->m_oSRS.importFromERM( !poDS->osProj.empty() ? poDS->osProj.c_str() : "RAW",
                         !poDS->osDatum.empty() ? poDS->osDatum.c_str() : "WGS84",
                         !poDS->osUnits.empty() ? poDS->osUnits.c_str() : "METERS" );
-
-    CPLFree( poDS->pszProjection );
-    oSRS.exportToWkt( &(poDS->pszProjection) );
 
 /* -------------------------------------------------------------------- */
 /*      Look for the geotransform.                                      */
@@ -1304,18 +1274,17 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->TryLoadXML();
 
     // if no SR in xml, try aux
-    const char* pszPrj = poDS->GDALPamDataset::_GetProjectionRef();
-    if( !pszPrj || strlen(pszPrj) == 0 )
+    const OGRSpatialReference* poSRS = poDS->GDALPamDataset::GetSpatialRef();
+    if( poSRS == nullptr )
     {
         // try aux
         GDALDataset* poAuxDS = GDALFindAssociatedAuxFile( poOpenInfo->pszFilename, GA_ReadOnly, poDS );
         if( poAuxDS )
         {
-            pszPrj = poAuxDS->GetProjectionRef();
-            if( pszPrj && strlen(pszPrj) > 0 )
+            poSRS = poAuxDS->GetSpatialRef();
+            if( poSRS )
             {
-                CPLFree( poDS->pszProjection );
-                poDS->pszProjection = CPLStrdup(pszPrj);
+                poDS->m_oSRS = *poSRS;
             }
 
             GDALClose( poAuxDS );

@@ -29,7 +29,6 @@
 #include "ogr_sdts.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                                Open()                                */
@@ -86,6 +85,7 @@ void RegisterOGRSDTS()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "SDTS" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/sdts.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->pfnOpen = OGRSDTSDriverOpen;
 

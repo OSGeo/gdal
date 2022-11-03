@@ -43,7 +43,6 @@
 #include <set>
 #include <vector>
 
-CPL_CVSID("$Id$")
 
 #define FIELD_START "beg"
 #define FIELD_FINISH "end"

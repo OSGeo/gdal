@@ -34,7 +34,6 @@
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
-CPL_CVSID("$Id$")
 
 constexpr size_t LCP_HEADER_SIZE = 7316;
 constexpr int LCP_MAX_BANDS = 10;
@@ -54,9 +53,7 @@ class LCPDataset final: public RawDataset
     char        pachHeader[LCP_HEADER_SIZE];
 
     CPLString   osPrjFilename{};
-    char        *pszProjection;
-
-    int bHaveProjection{};
+    OGRSpatialReference m_oSRS{};
 
     static CPLErr ClassifyBandData( GDALRasterBand *poBand,
                                     GInt32 *pnNumClasses,
@@ -79,10 +76,8 @@ class LCPDataset final: public RawDataset
                                     int bStrict, char ** papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData );
-    const char *_GetProjectionRef(void) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+
+    const OGRSpatialReference* GetSpatialRef() const override { return &m_oSRS; }
 };
 
 /************************************************************************/
@@ -90,11 +85,9 @@ class LCPDataset final: public RawDataset
 /************************************************************************/
 
 LCPDataset::LCPDataset() :
-    fpImage(nullptr),
-    pszProjection(CPLStrdup( "" ))
+    fpImage(nullptr)
 {
     memset( pachHeader, 0, sizeof(pachHeader) );
-    bHaveProjection = FALSE;
 }
 
 /************************************************************************/
@@ -112,7 +105,6 @@ LCPDataset::~LCPDataset()
             CPLError( CE_Failure, CPLE_FileIO, "I/O error" );
         }
     }
-    CPLFree(pszProjection);
 }
 
 /************************************************************************/
@@ -199,7 +191,7 @@ char **LCPDataset::GetFileList()
 {
     char **papszFileList = GDALPamDataset::GetFileList();
 
-    if( bHaveProjection )
+    if( !m_oSRS.IsEmpty() )
     {
         papszFileList = CSLAddString( papszFileList, osPrjFilename );
     }
@@ -751,12 +743,10 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
 
         CPLDebug( "LCP", "Loaded SRS from %s", poDS->osPrjFilename.c_str() );
 
-        OGRSpatialReference oSRS;
-        if( oSRS.importFromESRI( papszPrj ) == OGRERR_NONE )
+        poDS->m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        if( poDS->m_oSRS.importFromESRI( papszPrj ) != OGRERR_NONE )
         {
-            CPLFree( poDS->pszProjection );
-            oSRS.exportToWkt( &(poDS->pszProjection) );
-            poDS->bHaveProjection = TRUE;
+            poDS->m_oSRS.Clear();
         }
 
         CSLDestroy(papszPrj);
@@ -1627,50 +1617,37 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
 
     // Try to write projection file.  *Most* landfire data follows ESRI
     // style projection files, so we use the same code as the AAIGrid driver.
-    const char *pszOriginalProjection = poSrcDS->GetProjectionRef();
-    if( !EQUAL( pszOriginalProjection, "" ) )
+    if( poSrcSRS )
     {
-        OGRSpatialReference oSRS;
-
-        char * const pszDirname = CPLStrdup( CPLGetPath(pszFilename) );
-        char * const pszBasename = CPLStrdup( CPLGetBasename(pszFilename) );
-
-        char *pszPrjFilename =
-            CPLStrdup( CPLFormFilename( pszDirname, pszBasename, "prj" ) );
-        fp = VSIFOpenL( pszPrjFilename, "wt" );
-        if (fp != nullptr)
+        char *pszESRIProjection = nullptr;
+        const char* const apszOptions[] = { "FORMAT=WKT1_ESRI", nullptr };
+        poSrcSRS->exportToWkt( &pszESRIProjection, apszOptions );
+        if( pszESRIProjection )
         {
-            oSRS.importFromWkt( pszOriginalProjection );
-            oSRS.morphToESRI();
-            char *pszESRIProjection = nullptr;
-            oSRS.exportToWkt( &pszESRIProjection );
-            CPL_IGNORE_RET_VAL(
-                VSIFWriteL( pszESRIProjection, 1,
-                            strlen(pszESRIProjection), fp ) );
-
-            CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
-            CPLFree( pszESRIProjection );
+            char * const pszDirname = CPLStrdup( CPLGetPath(pszFilename) );
+            char * const pszBasename = CPLStrdup( CPLGetBasename(pszFilename) );
+            char *pszPrjFilename =
+                CPLStrdup( CPLFormFilename( pszDirname, pszBasename, "prj" ) );
+            fp = VSIFOpenL( pszPrjFilename, "wt" );
+            if (fp != nullptr)
+            {
+                CPL_IGNORE_RET_VAL(
+                    VSIFWriteL( pszESRIProjection, 1,
+                                strlen(pszESRIProjection), fp ) );
+                CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
+            }
+            else
+            {
+                CPLError( CE_Failure, CPLE_FileIO,
+                          "Unable to create file %s.", pszPrjFilename );
+            }
+            CPLFree( pszDirname );
+            CPLFree( pszBasename );
+            CPLFree( pszPrjFilename );
         }
-        else
-        {
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Unable to create file %s.", pszPrjFilename );
-        }
-        CPLFree( pszDirname );
-        CPLFree( pszBasename );
-        CPLFree( pszPrjFilename );
+        CPLFree( pszESRIProjection );
     }
     return static_cast<GDALDataset *>( GDALOpen( pszFilename, GA_ReadOnly ) );
-}
-
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char *LCPDataset::_GetProjectionRef()
-
-{
-    return pszProjection;
 }
 
 /************************************************************************/

@@ -31,7 +31,6 @@
 
 // g++ -fPIC -g -Wall ogr/ogrsf_frmts/wfs/*.cpp -shared -o ogr_WFS.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/gml -Iogr/ogrsf_frmts/wfs -L. -lgdal
 
-CPL_CVSID("$Id$")
 
 extern "C" void RegisterOGRWFS();
 
@@ -114,6 +113,7 @@ void RegisterOGRWFS()
 "</OpenOptionList>" );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->pfnIdentify = OGRWFSDriverIdentify;
     poDriver->pfnOpen = OGRWFSDriverOpen;

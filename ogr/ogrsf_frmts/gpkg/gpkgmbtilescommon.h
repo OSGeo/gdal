@@ -183,6 +183,8 @@ class GDALGPKGMBTilesLikeRasterBand: public GDALPamRasterBand
         virtual GDALColorTable* GetColorTable() override;
         virtual CPLErr          SetColorTable(GDALColorTable* poCT) override;
 
+        void                    AssignColorTable(const GDALColorTable* poCT);
+
         virtual GDALColorInterp GetColorInterpretation() override;
         virtual CPLErr          SetColorInterpretation( GDALColorInterp ) override;
 

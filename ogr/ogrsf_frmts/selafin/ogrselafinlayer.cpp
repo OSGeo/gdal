@@ -34,7 +34,6 @@
 #include "cpl_error.h"
 #include "cpl_quad_tree.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           Utilities functions                        */

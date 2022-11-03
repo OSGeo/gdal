@@ -33,7 +33,6 @@
 #include "odbc/PreparedStatement.h"
 #include "odbc/ResultSetMetaData.h"
 
-CPL_CVSID("$Id$")
 
 namespace OGRHANA {
 

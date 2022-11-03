@@ -31,7 +31,6 @@
 
 #include <memory>
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         OGRHanaDriverIdentify()                      */
@@ -124,6 +123,7 @@ void RegisterOGRHANA()
 
     driver->SetMetadataItem(GDAL_DCAP_NOTNULL_FIELDS, "YES");
     driver->SetMetadataItem(GDAL_DCAP_DEFAULT_FIELDS, "YES");
+    driver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "NATIVE OGRSQL SQLITE" );
 
     driver->pfnOpen = OGRHanaDriverOpen;
     driver->pfnIdentify = OGRHanaDriverIdentify;

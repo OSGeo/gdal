@@ -48,7 +48,6 @@
 #include "ogr_spatialref.h"
 #include "ogrsf_frmts.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                      IOGRMemLayerFeatureIterator                     */
@@ -202,16 +201,16 @@ OGRErr OGRMemLayer::SetNextByIndex( GIntBig nIndex )
 }
 
 /************************************************************************/
-/*                             GetFeature()                             */
+/*                         GetFeatureRef()                              */
 /************************************************************************/
 
-OGRFeature *OGRMemLayer::GetFeature( GIntBig nFeatureId )
+const OGRFeature *OGRMemLayer::GetFeatureRef( GIntBig nFeatureId )
 
 {
     if( nFeatureId < 0 )
         return nullptr;
 
-    OGRFeature *poFeature = nullptr;
+    const OGRFeature *poFeature = nullptr;
     if( m_papoFeatures != nullptr )
     {
         if( nFeatureId >= m_nMaxFeatureCount )
@@ -224,10 +223,19 @@ OGRFeature *OGRMemLayer::GetFeature( GIntBig nFeatureId )
         if( oIter != m_oMapFeatures.end() )
             poFeature = oIter->second;
     }
-    if( poFeature == nullptr )
-        return nullptr;
 
-    return poFeature->Clone();
+    return poFeature;
+}
+
+/************************************************************************/
+/*                             GetFeature()                             */
+/************************************************************************/
+
+OGRFeature *OGRMemLayer::GetFeature( GIntBig nFeatureId )
+
+{
+    const OGRFeature* poFeature = GetFeatureRef(nFeatureId);
+    return poFeature ? poFeature->Clone() : nullptr;
 }
 
 /************************************************************************/
@@ -465,7 +473,7 @@ OGRErr OGRMemLayer::IUpsertFeature(OGRFeature* poFeature)
    if( !TestCapability(OLCUpsertFeature) )
       return OGRERR_FAILURE;
 
-   if( GetFeature(poFeature->GetFID()) )
+   if( GetFeatureRef(poFeature->GetFID()) )
    {
       return SetFeature(poFeature);
    }

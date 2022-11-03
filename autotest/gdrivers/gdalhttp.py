@@ -75,9 +75,12 @@ def skip_if_unreachable(url, try_read=False):
 def test_http_1():
     url = "http://gdal.org/gdalicon.png"
     tst = gdaltest.GDALTest("PNG", url, 1, 7617, filename_absolute=1)
-    ret = tst.testOpen()
-    if ret == "fail":
+    try:
+        tst.testOpen()
+    except Exception:
         skip_if_unreachable(url)
+        if gdaltest.is_travis_branch("build-windows-conda"):
+            pytest.xfail("randomly fail on that configuration for unknown reason")
         pytest.fail()
 
 
@@ -191,6 +194,26 @@ def test_http_use_capi_store():
 def test_http_use_capi_store_sub():
 
     with gdaltest.config_option("GDAL_HTTP_USE_CAPI_STORE", "YES"):
+        gdal.OpenEx("https://google.com", allowed_drivers=["HTTP"])
+
+
+###############################################################################
+
+
+def test_http_keep_alive():
+
+    # Rather dummy test. Just trigger the code path
+
+    with gdaltest.config_option("GDAL_HTTP_TCP_KEEPALIVE", "YES"):
+        gdal.OpenEx("https://google.com", allowed_drivers=["HTTP"])
+
+    with gdaltest.config_options(
+        {
+            "GDAL_HTTP_TCP_KEEPALIVE": "YES",
+            "GDAL_HTTP_TCP_KEEPINTVL": "1",
+            "GDAL_HTTP_TCP_KEEPIDLE": "1",
+        }
+    ):
         gdal.OpenEx("https://google.com", allowed_drivers=["HTTP"])
 
 

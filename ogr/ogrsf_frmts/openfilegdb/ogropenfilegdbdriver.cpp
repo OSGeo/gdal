@@ -38,7 +38,6 @@
 #include "gdal_priv.h"
 #include "ogr_core.h"
 
-CPL_CVSID("$Id$")
 
 // g++ -O2 -Wall -Wextra -g -shared -fPIC ogr/ogrsf_frmts/openfilegdb/*.cpp
 // -o ogr_OpenFileGDB.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts
@@ -281,7 +280,14 @@ void RegisterOGROpenFileGDB()
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_FIELD_DOMAINS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_RENAME_LAYERS, "YES" );
+
     poDriver->SetMetadataItem( GDAL_DCAP_RELATIONSHIPS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_RELATIONSHIP, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DELETE_RELATIONSHIP, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_UPDATE_RELATIONSHIP, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_RELATIONSHIP_FLAGS, "OneToOne OneToMany ManyToMany Composite Association ForwardPathLabel BackwardPathLabel" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATION_FIELD_DOMAIN_TYPES, "Coded Range" );
 

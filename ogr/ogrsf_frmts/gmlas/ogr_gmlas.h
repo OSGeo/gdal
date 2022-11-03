@@ -128,6 +128,8 @@ class GMLASBaseEntityResolver: public EntityResolver,
         GMLASXSDCache& m_oCache;
         CPLString m_osGMLVersionFound;
         std::set<CPLString> m_oSetSchemaURLs;
+        bool m_bFoundNonOfficialGMLSchemaLocation = false;
+        bool m_bSubstituteWithOGCSchemaLocation = false;
 
   public:
         GMLASBaseEntityResolver(const CPLString& osBasePath,
@@ -139,6 +141,9 @@ class GMLASBaseEntityResolver: public EntityResolver,
                                         { return m_osGMLVersionFound; }
         const std::set<CPLString>& GetSchemaURLS() const
                                         { return m_oSetSchemaURLs; }
+
+        void SetSubstituteWithOGCSchemaLocation(bool b) { m_bSubstituteWithOGCSchemaLocation = b; }
+        bool GetFoundNonOfficialGMLSchemaLocation() const { return m_bFoundNonOfficialGMLSchemaLocation; }
 
         virtual void notifyClosing(const CPLString& osFilename ) override;
         virtual InputSource* resolveEntity( const XMLCh* const publicId,
@@ -181,15 +186,17 @@ public:
 class GMLASErrorHandler : public ErrorHandler
 {
     public:
-        GMLASErrorHandler () : m_bFailed (false),
-                               m_bSchemaFullChecking (false),
-                               m_bHandleMultipleImports (false)   {}
+        GMLASErrorHandler () = default;
 
         void SetSchemaFullCheckingEnabled(bool b)
                                             { m_bSchemaFullChecking = b; }
 
         void SetHandleMultipleImportsEnabled(bool b)
                                             { m_bHandleMultipleImports = b; }
+
+        void SetHideGMLTypeNotFound(bool b) { m_bHideGMLTypeNotFound = b; }
+
+        const std::string& GetGMLTypeNotFoundError() const { return m_osGMLTypeNotFoundError; }
 
         bool hasFailed () const { return m_bFailed; }
 
@@ -200,9 +207,11 @@ class GMLASErrorHandler : public ErrorHandler
         virtual void resetErrors () override { m_bFailed = false; }
 
     private:
-        bool m_bFailed;
-        bool m_bSchemaFullChecking;
-        bool m_bHandleMultipleImports;
+        bool m_bFailed = false;
+        bool m_bSchemaFullChecking = false;
+        bool m_bHandleMultipleImports = false;
+        bool m_bHideGMLTypeNotFound = false;
+        std::string m_osGMLTypeNotFoundError{};
 
         void handle (const SAXParseException& e, CPLErr eErr);
 };

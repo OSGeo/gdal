@@ -46,7 +46,6 @@ constexpr int RECORD_SIZE = 512;
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -64,7 +63,7 @@ class ISIS2Dataset final: public RawDataset
     int         bGotTransform;
     double      adfGeoTransform[6];
 
-    CPLString   osProjection;
+    OGRSpatialReference m_oSRS{};
 
     int parse_label(const char *file, char *keyword, char *value);
     int strstrip(char instr[], char outstr[], int position);
@@ -84,10 +83,7 @@ public:
     virtual ~ISIS2Dataset();
 
     virtual CPLErr GetGeoTransform( double * padfTransform ) override;
-    virtual const char *_GetProjectionRef(void) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
 
     virtual char **GetFileList() override;
 
@@ -118,6 +114,7 @@ ISIS2Dataset::ISIS2Dataset() :
     fpImage(nullptr),
     bGotTransform(FALSE)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -154,16 +151,14 @@ char **ISIS2Dataset::GetFileList()
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                         GetSpatialRef()                              */
 /************************************************************************/
 
-const char *ISIS2Dataset::_GetProjectionRef()
-
+const OGRSpatialReference* ISIS2Dataset::GetSpatialRef() const
 {
-    if( !osProjection.empty() )
-        return osProjection;
-
-    return GDALPamDataset::_GetProjectionRef();
+    if( !m_oSRS.IsEmpty() )
+        return &m_oSRS;
+    return GDALPamDataset::GetSpatialRef();
 }
 
 /************************************************************************/
@@ -449,6 +444,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     CPLDebug("ISIS2","using projection %s", map_proj_name.c_str() );
 
     OGRSpatialReference oSRS;
+    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     bool bProjectionSet = true;
 
     //Set oSRS projection and parameters
@@ -567,10 +563,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
         // translate back into a projection string.
-        char *pszResult = nullptr;
-        oSRS.exportToWkt( &pszResult );
-        poDS->osProjection = pszResult;
-        CPLFree( pszResult );
+        poDS->m_oSRS = oSRS;
     }
 
 /* END ISIS2 Label Read */
@@ -694,14 +687,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
         char **papszLines = CSLLoad( pszPrjFile );
 
-        OGRSpatialReference oSRS2;
-        if( oSRS2.importFromESRI( papszLines ) == OGRERR_NONE )
-        {
-            char *pszResult = nullptr;
-            oSRS2.exportToWkt( &pszResult );
-            poDS->osProjection = pszResult;
-            CPLFree( pszResult );
-        }
+        poDS->m_oSRS.importFromESRI( papszLines );
 
         CSLDestroy( papszLines );
     }

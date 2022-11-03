@@ -46,7 +46,6 @@
 #include "../vrt/gdal_vrt.h"
 #include "../vrt/vrtdataset.h"
 
-CPL_CVSID("$Id$")
 
 using namespace std;
 
@@ -1012,6 +1011,8 @@ KmlSuperOverlayReadDataset::KmlSuperOverlayReadDataset() :
     psFirstLink(nullptr),
     psLastLink(nullptr)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    m_oSRS.importFromWkt(SRS_WKT_WGS84_LAT_LONG);
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -1079,13 +1080,13 @@ int KmlSuperOverlayReadDataset::CloseDependentDatasets()
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *KmlSuperOverlayReadDataset::_GetProjectionRef()
+const OGRSpatialReference *KmlSuperOverlayReadDataset::GetSpatialRef() const
 
 {
-    return SRS_WKT_WGS84_LAT_LONG;
+    return &m_oSRS;
 }
 
 /************************************************************************/
@@ -1878,6 +1879,7 @@ struct KmlSingleDocRasterTilesDesc
 class KmlSingleDocRasterDataset final: public GDALDataset
 {
         friend class KmlSingleDocRasterRasterBand;
+        OGRSpatialReference m_oSRS{};
         CPLString osDirname;
         CPLString osNominalExt;
         GDALDataset* poCurTileDS;
@@ -1903,10 +1905,7 @@ class KmlSingleDocRasterDataset final: public GDALDataset
             return CE_None;
         }
 
-        virtual const char *_GetProjectionRef() override { return SRS_WKT_WGS84_LAT_LONG; }
-        const OGRSpatialReference* GetSpatialRef() const override {
-            return GetSpatialRefFromOldGetProjectionRef();
-        }
+        const OGRSpatialReference* GetSpatialRef() const override { return &m_oSRS; }
 
         void BuildOverviews();
 
@@ -1938,6 +1937,8 @@ class KmlSingleDocRasterRasterBand final: public GDALRasterBand
 
 KmlSingleDocRasterDataset::KmlSingleDocRasterDataset()
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    m_oSRS.importFromWkt(SRS_WKT_WGS84_LAT_LONG);
     poCurTileDS = nullptr;
     nLevel = 0;
     nTileSize = 0;

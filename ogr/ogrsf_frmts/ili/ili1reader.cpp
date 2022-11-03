@@ -48,7 +48,6 @@
 #  endif
 #endif
 
-CPL_CVSID("$Id$")
 
 //
 // ILI1Reader

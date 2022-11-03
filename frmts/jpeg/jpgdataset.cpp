@@ -70,7 +70,6 @@ CPL_C_END
 #include "rawdataset.h"
 #include "vsidataio.h"
 
-CPL_CVSID("$Id$")
 
 #if defined(EXPECTED_JPEG_LIB_VERSION) && !defined(LIBJPEG_12_PATH)
 #if EXPECTED_JPEG_LIB_VERSION != JPEG_LIB_VERSION
@@ -1475,7 +1474,6 @@ JPGDatasetCommon::JPGDatasetCommon() :
     nInternalOverviewsCurrent(0),
     nInternalOverviewsToFree(0),
     papoInternalOverviews(nullptr),
-    pszProjection(nullptr),
     bGeoTransformValid(false),
     nGCPCount(0),
     pasGCPList(nullptr),
@@ -1527,9 +1525,6 @@ JPGDatasetCommon::~JPGDatasetCommon()
         CPLFree(m_pabyScanline);
     if( papszMetadata != nullptr )
         CSLDestroy(papszMetadata);
-
-    if ( pszProjection )
-        CPLFree(pszProjection);
 
     if ( nGCPCount > 0 )
     {
@@ -1827,10 +1822,12 @@ void JPGDatasetCommon::InitInternalOverviews()
 
 CPLErr JPGDatasetCommon::IBuildOverviews( const char *pszResampling,
                                           int nOverviewsListCount,
-                                          int *panOverviewList,
-                                          int nListBands, int *panBandList,
+                                          const int *panOverviewList,
+                                          int nListBands,
+                                          const int *panBandList,
                                           GDALProgressFunc pfnProgress,
-                                          void * pProgressData )
+                                          void * pProgressData,
+                                          CSLConstList papszOptions )
 {
     bHasInitInternalOverviews = true;
     nInternalOverviewsCurrent = 0;
@@ -1839,7 +1836,8 @@ CPLErr JPGDatasetCommon::IBuildOverviews( const char *pszResampling,
                                            nOverviewsListCount,
                                            panOverviewList,
                                            nListBands, panBandList,
-                                           pfnProgress, pProgressData);
+                                           pfnProgress, pProgressData,
+                                           papszOptions);
 }
 
 /************************************************************************/
@@ -2371,22 +2369,22 @@ int JPGDatasetCommon::GetGCPCount()
 }
 
 /************************************************************************/
-/*                          GetGCPProjection()                          */
+/*                          GetGCPSpatialRef()                          */
 /************************************************************************/
 
-const char *JPGDatasetCommon::_GetGCPProjection()
+const OGRSpatialReference *JPGDatasetCommon::GetGCPSpatialRef() const
 
 {
-    const int nPAMGCPCount = GDALPamDataset::GetGCPCount();
+    const int nPAMGCPCount = const_cast<JPGDatasetCommon*>(this)->GDALPamDataset::GetGCPCount();
     if( nPAMGCPCount != 0 )
-        return GDALPamDataset::_GetGCPProjection();
+        return GDALPamDataset::GetGCPSpatialRef();
 
-    LoadWorldFileOrTab();
+    const_cast<JPGDatasetCommon*>(this)->LoadWorldFileOrTab();
 
-    if( pszProjection && nGCPCount > 0 )
-        return pszProjection;
+    if( !m_oSRS.IsEmpty() && nGCPCount > 0 )
+        return &m_oSRS;
 
-    return "";
+    return nullptr;
 }
 
 /************************************************************************/
@@ -3072,9 +3070,13 @@ void JPGDatasetCommon::LoadWorldFileOrTab()
 
     if( !bGeoTransformValid )
     {
+        char* pszProjection = nullptr;
         const bool bTabFileOK = CPL_TO_BOOL(GDALReadTabFile2(
             GetDescription(), adfGeoTransform, &pszProjection, &nGCPCount,
             &pasGCPList, oOvManager.GetSiblingFiles(), &pszWldFilename));
+        if( pszProjection )
+            m_oSRS.importFromWkt(pszProjection);
+        CPLFree(pszProjection);
 
         if( bTabFileOK && nGCPCount == 0 )
             bGeoTransformValid = true;
@@ -3656,7 +3658,8 @@ void   JPGAddEXIF        ( GDALDataType eWorkDT,
         }
         CPLErr eErr = GDALRegenerateOverviewsMultiBand(nBands, papoSrcBands,
                                                        1, papapoOverviewBands,
-                                                       "AVERAGE", nullptr, nullptr);
+                                                       "AVERAGE", nullptr, nullptr,
+                                                       /* papszOptions = */ nullptr);
         CPLFree(papoSrcBands);
         for(int i = 0; i < nBands; i++)
         {

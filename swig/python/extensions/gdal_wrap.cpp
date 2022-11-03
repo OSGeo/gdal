@@ -3644,7 +3644,7 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
     PyObject *psArgs, *psResult;
     int      bContinue = TRUE;
 
-    if( psInfo->nLastReported == (int) (100.0 * dfComplete) )
+    if( dfComplete > 0 && psInfo->nLastReported == (int) (100.0 * dfComplete) )
         return TRUE;
 
     if( psInfo->psPyCallback == NULL || psInfo->psPyCallback == Py_None )
@@ -4015,15 +4015,29 @@ const char *wrapper_CPLGetThreadLocalConfigOption( const char * pszKey, const ch
 }
 
 
+void wrapper_VSISetCredential( const char* pszPathPrefix, const char * pszKey, const char * pszValue )
+{
+    VSISetPathSpecificOption(pszPathPrefix, pszKey, pszValue);
+}
+
 const char *wrapper_VSIGetCredential( const char* pszPathPrefix, const char * pszKey, const char * pszDefault = NULL )
 {
-    return VSIGetCredential( pszPathPrefix, pszKey, pszDefault );
+    return VSIGetPathSpecificOption( pszPathPrefix, pszKey, pszDefault );
+}
+
+const char *wrapper_VSIGetPathSpecificOption( const char* pszPathPrefix, const char * pszKey, const char * pszDefault = NULL )
+{
+    return VSIGetPathSpecificOption( pszPathPrefix, pszKey, pszDefault );
 }
 
 
 void wrapper_VSIClearCredentials(const char * pszPathPrefix = NULL)
 {
-    VSIClearCredentials( pszPathPrefix );
+    VSIClearPathSpecificOptions( pszPathPrefix );
+}
+void wrapper_VSIClearPathSpecificOptions(const char * pszPathPrefix = NULL)
+{
+    VSIClearPathSpecificOptions( pszPathPrefix );
 }
 
 
@@ -4699,16 +4713,17 @@ CreateCIntListFromSequence( PyObject* pySeq, int* pnSize ) {
   return ret;
 }
 
-SWIGINTERN int GDALDatasetShadow_BuildOverviews(GDALDatasetShadow *self,char const *resampling="NEAREST",int overviewlist=0,int *pOverviews=0,GDALProgressFunc callback=NULL,void *callback_data=NULL){
+SWIGINTERN int GDALDatasetShadow_BuildOverviews(GDALDatasetShadow *self,char const *resampling="NEAREST",int overviewlist=0,int *pOverviews=0,GDALProgressFunc callback=NULL,void *callback_data=NULL,char **options=NULL){
 
-    return GDALBuildOverviews(  self,
+    return GDALBuildOverviewsEx(  self,
                                 resampling ? resampling : "NEAREST",
                                 overviewlist,
                                 pOverviews,
                                 0,
                                 0,
                                 callback,
-                                callback_data);
+                                callback_data,
+                                options);
   }
 SWIGINTERN int GDALDatasetShadow_GetGCPCount(GDALDatasetShadow *self){
     return GDALGetGCPCount( self );
@@ -5098,6 +5113,15 @@ SWIGINTERN char **GDALDatasetShadow_GetRelationshipNames(GDALDatasetShadow *self
 SWIGINTERN GDALRelationshipShadow *GDALDatasetShadow_GetRelationship(GDALDatasetShadow *self,char const *name){
     return (GDALRelationshipShadow*) GDALDatasetGetRelationship(self, name);
   }
+SWIGINTERN bool GDALDatasetShadow_AddRelationship(GDALDatasetShadow *self,GDALRelationshipShadow *relationship){
+      return GDALDatasetAddRelationship(self, (GDALRelationshipH)relationship, NULL);
+  }
+SWIGINTERN bool GDALDatasetShadow_DeleteRelationship(GDALDatasetShadow *self,char const *name){
+      return GDALDatasetDeleteRelationship(self, name, NULL);
+  }
+SWIGINTERN bool GDALDatasetShadow_UpdateRelationship(GDALDatasetShadow *self,GDALRelationshipShadow *relationship){
+      return GDALDatasetUpdateRelationship(self, (GDALRelationshipH)relationship, NULL);
+  }
 SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,double xoff,double yoff,double xsize,double ysize,void **buf,int *buf_xsize=0,int *buf_ysize=0,GDALDataType *buf_type=0,int band_list=0,int *pband_list=0,GIntBig *buf_pixel_space=0,GIntBig *buf_line_space=0,GIntBig *buf_band_space=0,GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour,GDALProgressFunc callback=NULL,void *callback_data=NULL,void *inputOutputBuf=NULL){
     *buf = NULL;
 
@@ -5211,34 +5235,90 @@ SWIGINTERN char **GDALGroupHS_GetMDArrayNames(GDALGroupHS *self,char **options=0
     return GDALGroupGetMDArrayNames( self, options );
   }
 SWIGINTERN GDALMDArrayHS *GDALGroupHS_OpenMDArray(GDALGroupHS *self,char const *name,char **options=0){
-    return GDALGroupOpenMDArray(self, name, options);
+
+    CPLErr eLastErrorType = CPLGetLastErrorType();
+
+    GDALMDArrayH hRet = GDALGroupOpenMDArray(self, name, options);
+
+    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+        CPLError(CE_Failure, CPLE_AppDefined, "Array %s does not exist", name);
+
+    return hRet;
   }
 SWIGINTERN GDALMDArrayHS *GDALGroupHS_OpenMDArrayFromFullname(GDALGroupHS *self,char const *name,char **options=0){
-    return GDALGroupOpenMDArrayFromFullname(self, name, options);
+
+    CPLErr eLastErrorType = CPLGetLastErrorType();
+
+    GDALMDArrayH hRet = GDALGroupOpenMDArrayFromFullname(self, name, options);
+
+    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+        CPLError(CE_Failure, CPLE_AppDefined, "Array %s does not exist", name);
+
+    return hRet;
   }
 SWIGINTERN GDALMDArrayHS *GDALGroupHS_ResolveMDArray(GDALGroupHS *self,char const *name,char const *starting_point,char **options=0){
-    return GDALGroupResolveMDArray(self, name, starting_point, options);
+
+    CPLErr eLastErrorType = CPLGetLastErrorType();
+
+    GDALMDArrayH hRet = GDALGroupResolveMDArray(self, name, starting_point, options);
+
+    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+        CPLError(CE_Failure, CPLE_AppDefined, "Array %s does not exist", name);
+
+    return hRet;
   }
 SWIGINTERN char **GDALGroupHS_GetGroupNames(GDALGroupHS *self,char **options=0){
     return GDALGroupGetGroupNames( self, options );
   }
 SWIGINTERN GDALGroupHS *GDALGroupHS_OpenGroup(GDALGroupHS *self,char const *name,char **options=0){
-    return GDALGroupOpenGroup(self, name, options);
+
+    CPLErr eLastErrorType = CPLGetLastErrorType();
+
+    GDALGroupH hRet = GDALGroupOpenGroup(self, name, options);
+
+    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+        CPLError(CE_Failure, CPLE_AppDefined, "Group %s does not exist", name);
+
+    return hRet;
   }
 SWIGINTERN GDALGroupHS *GDALGroupHS_OpenGroupFromFullname(GDALGroupHS *self,char const *name,char **options=0){
-    return GDALGroupOpenGroupFromFullname(self, name, options);
+
+    CPLErr eLastErrorType = CPLGetLastErrorType();
+
+    GDALGroupH hRet = GDALGroupOpenGroupFromFullname(self, name, options);
+
+    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+        CPLError(CE_Failure, CPLE_AppDefined, "Group %s does not exist", name);
+
+    return hRet;
   }
 SWIGINTERN char **GDALGroupHS_GetVectorLayerNames(GDALGroupHS *self,char **options=0){
     return GDALGroupGetVectorLayerNames( self, options );
   }
 SWIGINTERN OGRLayerShadow *GDALGroupHS_OpenVectorLayer(GDALGroupHS *self,char const *name,char **options=0){
-    return (OGRLayerShadow*) GDALGroupOpenVectorLayer(self, name, options);
+
+    CPLErr eLastErrorType = CPLGetLastErrorType();
+
+    OGRLayerH hRet = GDALGroupOpenVectorLayer(self, name, options);
+
+    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+        CPLError(CE_Failure, CPLE_AppDefined, "Vector layer %s does not exist", name);
+
+    return (OGRLayerShadow*) hRet;
   }
 SWIGINTERN void GDALGroupHS_GetDimensions(GDALGroupHS *self,GDALDimensionHS ***pdims,size_t *pnCount,char **options=0){
     *pdims = GDALGroupGetDimensions(self, pnCount, options);
   }
 SWIGINTERN GDALAttributeHS *GDALGroupHS_GetAttribute(GDALGroupHS *self,char const *name){
-    return GDALGroupGetAttribute(self, name);
+
+    CPLErr eLastErrorType = CPLGetLastErrorType();
+
+    GDALAttributeH hRet = GDALGroupGetAttribute(self, name);
+
+    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+        CPLError(CE_Failure, CPLE_AppDefined, "Attribute %s does not exist", name);
+
+    return hRet;
   }
 SWIGINTERN void GDALGroupHS_GetAttributes(GDALGroupHS *self,GDALAttributeHS ***pattrs,size_t *pnCount,char **options=0){
     *pattrs = GDALGroupGetAttributes(self, pnCount, options);
@@ -5761,7 +5841,15 @@ SWIGINTERN CPLErr GDALMDArrayHS_AdviseRead(GDALMDArrayHS *self,int nDims1,GUIntB
     return CE_None;
   }
 SWIGINTERN GDALAttributeHS *GDALMDArrayHS_GetAttribute(GDALMDArrayHS *self,char const *name){
-    return GDALMDArrayGetAttribute(self, name);
+
+    CPLErr eLastErrorType = CPLGetLastErrorType();
+
+    GDALAttributeH hRet = GDALMDArrayGetAttribute(self, name);
+
+    if( bUseExceptions && hRet == NULL && eLastErrorType == CE_None && CPLGetLastErrorType() == CE_None )
+        CPLError(CE_Failure, CPLE_AppDefined, "Attribute %s does not exist", name);
+
+    return hRet;
   }
 SWIGINTERN void GDALMDArrayHS_GetAttributes(GDALMDArrayHS *self,GDALAttributeHS ***pattrs,size_t *pnCount,char **options=0){
     *pattrs = GDALMDArrayGetAttributes(self, pnCount, options);
@@ -6303,7 +6391,7 @@ SWIGINTERN CPLErr GDALRasterBandShadow_GetStatistics(GDALRasterBandShadow *self,
     return GDALGetRasterStatistics( self, approx_ok, force,
 				    min, max, mean, stddev );
   }
-SWIGINTERN CPLErr GDALRasterBandShadow_ComputeStatistics(GDALRasterBandShadow *self,bool approx_ok,double *min=NULL,double *max=NULL,double *mean=NULL,double *stddev=NULL,GDALProgressFunc callback=NULL,void *callback_data=NULL){
+SWIGINTERN CPLErr GDALRasterBandShadow_ComputeStatistics(GDALRasterBandShadow *self,bool approx_ok,double *min,double *max,double *mean,double *stddev,GDALProgressFunc callback=NULL,void *callback_data=NULL){
     return GDALComputeRasterStatistics( self, approx_ok, min, max, mean, stddev, callback, callback_data );
   }
 SWIGINTERN CPLErr GDALRasterBandShadow_SetStatistics(GDALRasterBandShadow *self,double min,double max,double mean,double stddev){
@@ -6320,8 +6408,14 @@ SWIGINTERN int GDALRasterBandShadow_Checksum(GDALRasterBandShadow *self,int xoff
     int nysize = (ysize!=0) ? *ysize : GDALGetRasterBandYSize( self );
     return GDALChecksumImage( self, xoff, yoff, nxsize, nysize );
   }
-SWIGINTERN void GDALRasterBandShadow_ComputeRasterMinMax(GDALRasterBandShadow *self,double argout[2],int approx_ok=0){
-    GDALComputeRasterMinMax( self, approx_ok, argout );
+SWIGINTERN void GDALRasterBandShadow_ComputeRasterMinMax(GDALRasterBandShadow *self,double argout[2],int *isvalid,bool approx_ok=false,bool can_return_none=false){
+    *isvalid = GDALComputeRasterMinMax( self, approx_ok, argout ) == CE_None;
+    if( !can_return_none && !*isvalid )
+    {
+        *isvalid = true;
+        argout[0] = CPLAtof("nan");
+        argout[1] = CPLAtof("nan");
+    }
   }
 SWIGINTERN void GDALRasterBandShadow_ComputeBandStats(GDALRasterBandShadow *self,double argout[2],int samplestep=1){
     GDALComputeBandStats( self, samplestep, argout+0, argout+1,
@@ -10524,6 +10618,80 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_SetPathSpecificOption(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  char *arg1 = (char *) 0 ;
+  char *arg2 = (char *) 0 ;
+  char *arg3 = (char *) 0 ;
+  int res1 ;
+  char *buf1 = 0 ;
+  int alloc1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  int res3 ;
+  char *buf3 = 0 ;
+  int alloc3 = 0 ;
+  PyObject *swig_obj[3] ;
+  
+  if (!SWIG_Python_UnpackTuple(args, "SetPathSpecificOption", 3, 3, swig_obj)) SWIG_fail;
+  res1 = SWIG_AsCharPtrAndSize(swig_obj[0], &buf1, NULL, &alloc1);
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SetPathSpecificOption" "', argument " "1"" of type '" "char const *""'");
+  }
+  arg1 = reinterpret_cast< char * >(buf1);
+  res2 = SWIG_AsCharPtrAndSize(swig_obj[1], &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "SetPathSpecificOption" "', argument " "2"" of type '" "char const *""'");
+  }
+  arg2 = reinterpret_cast< char * >(buf2);
+  res3 = SWIG_AsCharPtrAndSize(swig_obj[2], &buf3, NULL, &alloc3);
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "SetPathSpecificOption" "', argument " "3"" of type '" "char const *""'");
+  }
+  arg3 = reinterpret_cast< char * >(buf3);
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      VSISetPathSpecificOption((char const *)arg1,(char const *)arg2,(char const *)arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_SetCredential(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   char *arg1 = (char *) 0 ;
@@ -10572,7 +10740,7 @@ SWIGINTERN PyObject *_wrap_SetCredential(PyObject *SWIGUNUSEDPARM(self), PyObjec
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      VSISetCredential((char const *)arg1,(char const *)arg2,(char const *)arg3);
+      wrapper_VSISetCredential((char const *)arg1,(char const *)arg2,(char const *)arg3);
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -10675,6 +10843,83 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_GetPathSpecificOption(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  char *arg1 = (char *) 0 ;
+  char *arg2 = (char *) 0 ;
+  char *arg3 = (char *) NULL ;
+  int res1 ;
+  char *buf1 = 0 ;
+  int alloc1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  int res3 ;
+  char *buf3 = 0 ;
+  int alloc3 = 0 ;
+  PyObject *swig_obj[3] ;
+  char *result = 0 ;
+  
+  if (!SWIG_Python_UnpackTuple(args, "GetPathSpecificOption", 2, 3, swig_obj)) SWIG_fail;
+  res1 = SWIG_AsCharPtrAndSize(swig_obj[0], &buf1, NULL, &alloc1);
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "GetPathSpecificOption" "', argument " "1"" of type '" "char const *""'");
+  }
+  arg1 = reinterpret_cast< char * >(buf1);
+  res2 = SWIG_AsCharPtrAndSize(swig_obj[1], &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "GetPathSpecificOption" "', argument " "2"" of type '" "char const *""'");
+  }
+  arg2 = reinterpret_cast< char * >(buf2);
+  if (swig_obj[2]) {
+    res3 = SWIG_AsCharPtrAndSize(swig_obj[2], &buf3, NULL, &alloc3);
+    if (!SWIG_IsOK(res3)) {
+      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "GetPathSpecificOption" "', argument " "3"" of type '" "char const *""'");
+    }
+    arg3 = reinterpret_cast< char * >(buf3);
+  }
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)wrapper_VSIGetPathSpecificOption((char const *)arg1,(char const *)arg2,(char const *)arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_FromCharPtr((const char *)result);
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_ClearCredentials(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   char *arg1 = (char *) NULL ;
@@ -10698,6 +10943,50 @@ SWIGINTERN PyObject *_wrap_ClearCredentials(PyObject *SWIGUNUSEDPARM(self), PyOb
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
       wrapper_VSIClearCredentials((char const *)arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_ClearPathSpecificOptions(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  char *arg1 = (char *) NULL ;
+  int res1 ;
+  char *buf1 = 0 ;
+  int alloc1 = 0 ;
+  PyObject *swig_obj[1] ;
+  
+  if (!SWIG_Python_UnpackTuple(args, "ClearPathSpecificOptions", 0, 1, swig_obj)) SWIG_fail;
+  if (swig_obj[0]) {
+    res1 = SWIG_AsCharPtrAndSize(swig_obj[0], &buf1, NULL, &alloc1);
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ClearPathSpecificOptions" "', argument " "1"" of type '" "char const *""'");
+    }
+    arg1 = reinterpret_cast< char * >(buf1);
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      wrapper_VSIClearPathSpecificOptions((char const *)arg1);
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -18329,6 +18618,7 @@ SWIGINTERN PyObject *_wrap_Dataset_BuildOverviews(PyObject *SWIGUNUSEDPARM(self)
   int *arg4 = (int *) 0 ;
   GDALProgressFunc arg5 = (GDALProgressFunc) NULL ;
   void *arg6 = (void *) NULL ;
+  char **arg7 = (char **) NULL ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   int res2 ;
@@ -18339,8 +18629,9 @@ SWIGINTERN PyObject *_wrap_Dataset_BuildOverviews(PyObject *SWIGUNUSEDPARM(self)
   PyObject * obj2 = 0 ;
   PyObject * obj3 = 0 ;
   PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
   char * kwnames[] = {
-    (char *)"self",  (char *)"resampling",  (char *)"overviewlist",  (char *)"callback",  (char *)"callback_data",  NULL 
+    (char *)"self",  (char *)"resampling",  (char *)"overviewlist",  (char *)"callback",  (char *)"callback_data",  (char *)"options",  NULL 
   };
   int result;
   
@@ -18351,7 +18642,7 @@ SWIGINTERN PyObject *_wrap_Dataset_BuildOverviews(PyObject *SWIGUNUSEDPARM(self)
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
   arg6 = psProgressInfo;
-  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOO:Dataset_BuildOverviews", kwnames, &obj0, &obj1, &obj2, &obj3, &obj4)) SWIG_fail;
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOOO:Dataset_BuildOverviews", kwnames, &obj0, &obj1, &obj2, &obj3, &obj4, &obj5)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_BuildOverviews" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
@@ -18417,13 +18708,24 @@ SWIGINTERN PyObject *_wrap_Dataset_BuildOverviews(PyObject *SWIGUNUSEDPARM(self)
       psProgressInfo->psPyCallbackData = obj4 ;
     }
   }
+  if (obj5) {
+    {
+      /* %typemap(in) char **options */
+      int bErr = FALSE;
+      arg7 = CSLFromPySequence(obj5, &bErr);
+      if( bErr )
+      {
+        SWIG_fail;
+      }
+    }
+  }
   {
     if ( bUseExceptions ) {
       ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      result = (int)GDALDatasetShadow_BuildOverviews(arg1,(char const *)arg2,arg3,arg4,arg5,arg6);
+      result = (int)GDALDatasetShadow_BuildOverviews(arg1,(char const *)arg2,arg3,arg4,arg5,arg6,arg7);
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -18447,6 +18749,10 @@ SWIGINTERN PyObject *_wrap_Dataset_BuildOverviews(PyObject *SWIGUNUSEDPARM(self)
     CPLFree(psProgressInfo);
     
   }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg7 );
+  }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
 fail:
@@ -18460,6 +18766,10 @@ fail:
     
     CPLFree(psProgressInfo);
     
+  }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg7 );
   }
   return NULL;
 }
@@ -21742,6 +22052,168 @@ SWIGINTERN PyObject *_wrap_Dataset_GetRelationship(PyObject *SWIGUNUSEDPARM(self
   return resultobj;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Dataset_AddRelationship(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
+  GDALRelationshipShadow *arg2 = (GDALRelationshipShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject *swig_obj[2] ;
+  bool result;
+  
+  if (!SWIG_Python_UnpackTuple(args, "Dataset_AddRelationship", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_AddRelationship" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
+  res2 = SWIG_ConvertPtr(swig_obj[1], &argp2,SWIGTYPE_p_GDALRelationshipShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Dataset_AddRelationship" "', argument " "2"" of type '" "GDALRelationshipShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< GDALRelationshipShadow * >(argp2);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)GDALDatasetShadow_AddRelationship(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Dataset_DeleteRelationship(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
+  char *arg2 = (char *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  PyObject *swig_obj[2] ;
+  bool result;
+  
+  if (!SWIG_Python_UnpackTuple(args, "Dataset_DeleteRelationship", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_DeleteRelationship" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
+  res2 = SWIG_AsCharPtrAndSize(swig_obj[1], &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Dataset_DeleteRelationship" "', argument " "2"" of type '" "char const *""'");
+  }
+  arg2 = reinterpret_cast< char * >(buf2);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)GDALDatasetShadow_DeleteRelationship(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Dataset_UpdateRelationship(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
+  GDALRelationshipShadow *arg2 = (GDALRelationshipShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject *swig_obj[2] ;
+  bool result;
+  
+  if (!SWIG_Python_UnpackTuple(args, "Dataset_UpdateRelationship", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_UpdateRelationship" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
+  res2 = SWIG_ConvertPtr(swig_obj[1], &argp2,SWIGTYPE_p_GDALRelationshipShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Dataset_UpdateRelationship" "', argument " "2"" of type '" "GDALRelationshipShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< GDALRelationshipShadow * >(argp2);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)GDALDatasetShadow_UpdateRelationship(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_bool(static_cast< bool >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
   return NULL;
 }
 
@@ -31304,14 +31776,14 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_Band_ComputeStatistics(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_Band_ComputeStatistics(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   bool arg2 ;
-  double *arg3 = (double *) NULL ;
-  double *arg4 = (double *) NULL ;
-  double *arg5 = (double *) NULL ;
-  double *arg6 = (double *) NULL ;
+  double *arg3 = (double *) 0 ;
+  double *arg4 = (double *) 0 ;
+  double *arg5 = (double *) 0 ;
+  double *arg6 = (double *) 0 ;
   GDALProgressFunc arg7 = (GDALProgressFunc) NULL ;
   void *arg8 = (void *) NULL ;
   void *argp1 = 0 ;
@@ -31326,7 +31798,13 @@ SWIGINTERN PyObject *_wrap_Band_ComputeStatistics(PyObject *SWIGUNUSEDPARM(self)
   int res5 = SWIG_TMPOBJ ;
   double temp6 ;
   int res6 = SWIG_TMPOBJ ;
-  PyObject *swig_obj[4] ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  char * kwnames[] = {
+    (char *)"self",  (char *)"approx_ok",  (char *)"callback",  (char *)"callback_data",  NULL 
+  };
   CPLErr result;
   
   /* %typemap(arginit) ( const char* callback_data=NULL)  */
@@ -31340,35 +31818,35 @@ SWIGINTERN PyObject *_wrap_Band_ComputeStatistics(PyObject *SWIGUNUSEDPARM(self)
   arg4 = &temp4;
   arg5 = &temp5;
   arg6 = &temp6;
-  if (!SWIG_Python_UnpackTuple(args, "Band_ComputeStatistics", 2, 4, swig_obj)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO|OO:Band_ComputeStatistics", kwnames, &obj0, &obj1, &obj2, &obj3)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_ComputeStatistics" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
-  ecode2 = SWIG_AsVal_bool(swig_obj[1], &val2);
+  ecode2 = SWIG_AsVal_bool(obj1, &val2);
   if (!SWIG_IsOK(ecode2)) {
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Band_ComputeStatistics" "', argument " "2"" of type '" "bool""'");
   } 
   arg2 = static_cast< bool >(val2);
-  if (swig_obj[2]) {
+  if (obj2) {
     {
       /* %typemap(in) (GDALProgressFunc callback = NULL) */
       /* callback_func typemap */
       
       /* In some cases 0 is passed instead of None. */
       /* See https://github.com/OSGeo/gdal/pull/219 */
-      if ( PyLong_Check(swig_obj[2]) || PyInt_Check(swig_obj[2]) )
+      if ( PyLong_Check(obj2) || PyInt_Check(obj2) )
       {
-        if( PyLong_AsLong(swig_obj[2]) == 0 )
+        if( PyLong_AsLong(obj2) == 0 )
         {
-          swig_obj[2] = Py_None;
+          obj2 = Py_None;
         }
       }
       
-      if (swig_obj[2] && swig_obj[2] != Py_None ) {
+      if (obj2 && obj2 != Py_None ) {
         void* cbfunction = NULL;
-        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( swig_obj[2],
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj2,
             (void**)&cbfunction,
             SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
             SWIG_POINTER_EXCEPTION | 0 ));
@@ -31376,12 +31854,12 @@ SWIGINTERN PyObject *_wrap_Band_ComputeStatistics(PyObject *SWIGUNUSEDPARM(self)
         if ( cbfunction == GDALTermProgress ) {
           arg7 = GDALTermProgress;
         } else {
-          if (!PyCallable_Check(swig_obj[2])) {
+          if (!PyCallable_Check(obj2)) {
             PyErr_SetString( PyExc_RuntimeError,
               "Object given is not a Python function" );
             SWIG_fail;
           }
-          psProgressInfo->psPyCallback = swig_obj[2];
+          psProgressInfo->psPyCallback = obj2;
           arg7 = PyProgressProxy;
         }
         
@@ -31389,10 +31867,10 @@ SWIGINTERN PyObject *_wrap_Band_ComputeStatistics(PyObject *SWIGUNUSEDPARM(self)
       
     }
   }
-  if (swig_obj[3]) {
+  if (obj3) {
     {
       /* %typemap(in) ( void* callback_data=NULL)  */
-      psProgressInfo->psPyCallbackData = swig_obj[3] ;
+      psProgressInfo->psPyCallbackData = obj3 ;
     }
   }
   {
@@ -31721,35 +32199,52 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_Band_ComputeRasterMinMax(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_Band_ComputeRasterMinMax(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   double *arg2 ;
-  int arg3 = (int) 0 ;
+  int *arg3 = (int *) 0 ;
+  bool arg4 = (bool) false ;
+  bool arg5 = (bool) false ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   double argout2[2] ;
-  int val3 ;
-  int ecode3 = 0 ;
-  PyObject *swig_obj[2] ;
+  int isvalid2 ;
+  bool val4 ;
+  int ecode4 = 0 ;
+  bool val5 ;
+  int ecode5 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  char * kwnames[] = {
+    (char *)"self",  (char *)"approx_ok",  (char *)"can_return_none",  NULL 
+  };
   
   {
-    /* %typemap(in,numinputs=0) (double argout2[ANY]) */
-    memset(argout2, 0, sizeof(argout2));
+    /* %typemap(in,numinputs=0) (double argout2[2], int* isvalid2) */
     arg2 = argout2;
+    arg3 = &isvalid2;
   }
-  if (!SWIG_Python_UnpackTuple(args, "Band_ComputeRasterMinMax", 1, 2, swig_obj)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OO:Band_ComputeRasterMinMax", kwnames, &obj0, &obj1, &obj2)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_ComputeRasterMinMax" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
-  if (swig_obj[1]) {
-    ecode3 = SWIG_AsVal_int(swig_obj[1], &val3);
-    if (!SWIG_IsOK(ecode3)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Band_ComputeRasterMinMax" "', argument " "3"" of type '" "int""'");
+  if (obj1) {
+    ecode4 = SWIG_AsVal_bool(obj1, &val4);
+    if (!SWIG_IsOK(ecode4)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "Band_ComputeRasterMinMax" "', argument " "4"" of type '" "bool""'");
     } 
-    arg3 = static_cast< int >(val3);
+    arg4 = static_cast< bool >(val4);
+  }
+  if (obj2) {
+    ecode5 = SWIG_AsVal_bool(obj2, &val5);
+    if (!SWIG_IsOK(ecode5)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "Band_ComputeRasterMinMax" "', argument " "5"" of type '" "bool""'");
+    } 
+    arg5 = static_cast< bool >(val5);
   }
   {
     if ( bUseExceptions ) {
@@ -31757,7 +32252,7 @@ SWIGINTERN PyObject *_wrap_Band_ComputeRasterMinMax(PyObject *SWIGUNUSEDPARM(sel
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      GDALRasterBandShadow_ComputeRasterMinMax(arg1,arg2,arg3);
+      GDALRasterBandShadow_ComputeRasterMinMax(arg1,arg2,arg3,arg4,arg5);
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -31771,9 +32266,16 @@ SWIGINTERN PyObject *_wrap_Band_ComputeRasterMinMax(PyObject *SWIGUNUSEDPARM(sel
   }
   resultobj = SWIG_Py_Void();
   {
-    /* %typemap(argout) (double argout[ANY]) */
-    PyObject *out = CreateTupleFromDoubleArray( arg2, 2 );
-    resultobj = t_output_helper(resultobj,out);
+    /* %typemap(argout) (double argout[2], int* isvalid)  */
+    PyObject *r;
+    if ( !*arg3 ) {
+      Py_INCREF(Py_None);
+      r = Py_None;
+    }
+    else {
+      r = CreateTupleFromDoubleArray(arg2, 2);
+    }
+    resultobj = t_output_helper(resultobj,r);
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -46046,9 +46548,12 @@ static PyMethodDef SwigMethods[] = {
 	 { "SetThreadLocalConfigOption", _wrap_SetThreadLocalConfigOption, METH_VARARGS, "SetThreadLocalConfigOption(char const * pszKey, char const * pszValue)"},
 	 { "GetConfigOption", _wrap_GetConfigOption, METH_VARARGS, "GetConfigOption(char const * pszKey, char const * pszDefault=None) -> char const *"},
 	 { "GetThreadLocalConfigOption", _wrap_GetThreadLocalConfigOption, METH_VARARGS, "GetThreadLocalConfigOption(char const * pszKey, char const * pszDefault=None) -> char const *"},
+	 { "SetPathSpecificOption", _wrap_SetPathSpecificOption, METH_VARARGS, "SetPathSpecificOption(char const * pszPathPrefix, char const * pszKey, char const * pszValue)"},
 	 { "SetCredential", _wrap_SetCredential, METH_VARARGS, "SetCredential(char const * pszPathPrefix, char const * pszKey, char const * pszValue)"},
 	 { "GetCredential", _wrap_GetCredential, METH_VARARGS, "GetCredential(char const * pszPathPrefix, char const * pszKey, char const * pszDefault=None) -> char const *"},
+	 { "GetPathSpecificOption", _wrap_GetPathSpecificOption, METH_VARARGS, "GetPathSpecificOption(char const * pszPathPrefix, char const * pszKey, char const * pszDefault=None) -> char const *"},
 	 { "ClearCredentials", _wrap_ClearCredentials, METH_VARARGS, "ClearCredentials(char const * pszPathPrefix=None)"},
+	 { "ClearPathSpecificOptions", _wrap_ClearPathSpecificOptions, METH_VARARGS, "ClearPathSpecificOptions(char const * pszPathPrefix=None)"},
 	 { "CPLBinaryToHex", _wrap_CPLBinaryToHex, METH_O, "CPLBinaryToHex(int nBytes) -> retStringAndCPLFree *"},
 	 { "CPLHexToBinary", _wrap_CPLHexToBinary, METH_VARARGS, "CPLHexToBinary(char const * pszHex, int * pnBytes) -> GByte *"},
 	 { "FileFromMemBuffer", _wrap_FileFromMemBuffer, METH_VARARGS, "FileFromMemBuffer(char const * utf8_path, GIntBig nBytes)"},
@@ -46184,7 +46689,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "Dataset_SetSpatialRef", _wrap_Dataset_SetSpatialRef, METH_VARARGS, "Dataset_SetSpatialRef(Dataset self, SpatialReference srs) -> CPLErr"},
 	 { "Dataset_GetGeoTransform", (PyCFunction)(void(*)(void))_wrap_Dataset_GetGeoTransform, METH_VARARGS|METH_KEYWORDS, "Dataset_GetGeoTransform(Dataset self, int * can_return_null=None)"},
 	 { "Dataset_SetGeoTransform", _wrap_Dataset_SetGeoTransform, METH_VARARGS, "Dataset_SetGeoTransform(Dataset self, double [6] argin) -> CPLErr"},
-	 { "Dataset_BuildOverviews", (PyCFunction)(void(*)(void))_wrap_Dataset_BuildOverviews, METH_VARARGS|METH_KEYWORDS, "Dataset_BuildOverviews(Dataset self, char const * resampling=\"NEAREST\", int overviewlist=0, GDALProgressFunc callback=0, void * callback_data=None) -> int"},
+	 { "Dataset_BuildOverviews", (PyCFunction)(void(*)(void))_wrap_Dataset_BuildOverviews, METH_VARARGS|METH_KEYWORDS, "Dataset_BuildOverviews(Dataset self, char const * resampling=\"NEAREST\", int overviewlist=0, GDALProgressFunc callback=0, void * callback_data=None, char ** options=None) -> int"},
 	 { "Dataset_GetGCPCount", _wrap_Dataset_GetGCPCount, METH_O, "Dataset_GetGCPCount(Dataset self) -> int"},
 	 { "Dataset_GetGCPProjection", _wrap_Dataset_GetGCPProjection, METH_O, "Dataset_GetGCPProjection(Dataset self) -> char const *"},
 	 { "Dataset_GetGCPSpatialRef", _wrap_Dataset_GetGCPSpatialRef, METH_O, "Dataset_GetGCPSpatialRef(Dataset self) -> SpatialReference"},
@@ -46227,6 +46732,9 @@ static PyMethodDef SwigMethods[] = {
 	 { "Dataset_UpdateFieldDomain", _wrap_Dataset_UpdateFieldDomain, METH_VARARGS, "Dataset_UpdateFieldDomain(Dataset self, FieldDomain fieldDomain) -> bool"},
 	 { "Dataset_GetRelationshipNames", _wrap_Dataset_GetRelationshipNames, METH_VARARGS, "Dataset_GetRelationshipNames(Dataset self, char ** options=None) -> char **"},
 	 { "Dataset_GetRelationship", _wrap_Dataset_GetRelationship, METH_VARARGS, "Dataset_GetRelationship(Dataset self, char const * name) -> Relationship"},
+	 { "Dataset_AddRelationship", _wrap_Dataset_AddRelationship, METH_VARARGS, "Dataset_AddRelationship(Dataset self, Relationship relationship) -> bool"},
+	 { "Dataset_DeleteRelationship", _wrap_Dataset_DeleteRelationship, METH_VARARGS, "Dataset_DeleteRelationship(Dataset self, char const * name) -> bool"},
+	 { "Dataset_UpdateRelationship", _wrap_Dataset_UpdateRelationship, METH_VARARGS, "Dataset_UpdateRelationship(Dataset self, Relationship relationship) -> bool"},
 	 { "Dataset_ReadRaster1", (PyCFunction)(void(*)(void))_wrap_Dataset_ReadRaster1, METH_VARARGS|METH_KEYWORDS, "Dataset_ReadRaster1(Dataset self, double xoff, double yoff, double xsize, double ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, int band_list=0, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, GIntBig * buf_band_space=None, GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour, GDALProgressFunc callback=0, void * callback_data=None, void * inputOutputBuf=None) -> CPLErr"},
 	 { "Dataset_swigregister", Dataset_swigregister, METH_O, NULL},
 	 { "delete_Group", _wrap_delete_Group, METH_O, "delete_Group(Group self)"},
@@ -46387,12 +46895,12 @@ static PyMethodDef SwigMethods[] = {
 	 { "Band_SetOffset", _wrap_Band_SetOffset, METH_VARARGS, "Band_SetOffset(Band self, double val) -> CPLErr"},
 	 { "Band_SetScale", _wrap_Band_SetScale, METH_VARARGS, "Band_SetScale(Band self, double val) -> CPLErr"},
 	 { "Band_GetStatistics", _wrap_Band_GetStatistics, METH_VARARGS, "Band_GetStatistics(Band self, int approx_ok, int force) -> CPLErr"},
-	 { "Band_ComputeStatistics", _wrap_Band_ComputeStatistics, METH_VARARGS, "Band_ComputeStatistics(Band self, bool approx_ok, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"},
+	 { "Band_ComputeStatistics", (PyCFunction)(void(*)(void))_wrap_Band_ComputeStatistics, METH_VARARGS|METH_KEYWORDS, "Band_ComputeStatistics(Band self, bool approx_ok, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"},
 	 { "Band_SetStatistics", _wrap_Band_SetStatistics, METH_VARARGS, "Band_SetStatistics(Band self, double min, double max, double mean, double stddev) -> CPLErr"},
 	 { "Band_GetOverviewCount", _wrap_Band_GetOverviewCount, METH_O, "Band_GetOverviewCount(Band self) -> int"},
 	 { "Band_GetOverview", _wrap_Band_GetOverview, METH_VARARGS, "Band_GetOverview(Band self, int i) -> Band"},
 	 { "Band_Checksum", (PyCFunction)(void(*)(void))_wrap_Band_Checksum, METH_VARARGS|METH_KEYWORDS, "Band_Checksum(Band self, int xoff=0, int yoff=0, int * xsize=None, int * ysize=None) -> int"},
-	 { "Band_ComputeRasterMinMax", _wrap_Band_ComputeRasterMinMax, METH_VARARGS, "Band_ComputeRasterMinMax(Band self, int approx_ok=0)"},
+	 { "Band_ComputeRasterMinMax", (PyCFunction)(void(*)(void))_wrap_Band_ComputeRasterMinMax, METH_VARARGS|METH_KEYWORDS, "Band_ComputeRasterMinMax(Band self, bool approx_ok=False, bool can_return_none=False)"},
 	 { "Band_ComputeBandStats", _wrap_Band_ComputeBandStats, METH_VARARGS, "Band_ComputeBandStats(Band self, int samplestep=1)"},
 	 { "Band_Fill", _wrap_Band_Fill, METH_VARARGS, "Band_Fill(Band self, double real_fill, double imag_fill=0.0) -> CPLErr"},
 	 { "Band_WriteRaster", (PyCFunction)(void(*)(void))_wrap_Band_WriteRaster, METH_VARARGS|METH_KEYWORDS, "Band_WriteRaster(Band self, int xoff, int yoff, int xsize, int ysize, GIntBig buf_len, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None) -> CPLErr"},

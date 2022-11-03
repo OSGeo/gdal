@@ -1351,6 +1351,7 @@ void RegisterOGRMapML()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "MapML" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/mapml.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->pfnIdentify = OGRMapMLReaderDataset::Identify;
     poDriver->pfnOpen = OGRMapMLReaderDataset::Open;

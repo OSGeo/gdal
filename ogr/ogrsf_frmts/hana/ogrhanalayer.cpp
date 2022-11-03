@@ -40,7 +40,6 @@
 #include "odbc/Statement.h"
 #include "odbc/Types.h"
 
-CPL_CVSID("$Id$")
 
 namespace OGRHANA {
 namespace {
@@ -374,7 +373,7 @@ void OGRHanaLayer::EnsureBufferCapacity(std::size_t size)
 
 OGRFeature* OGRHanaLayer::GetNextFeatureInternal()
 {
-    if (nextFeatureId_ == 0)
+    if (resultSet_.isNull())
     {
         const CPLString& queryStatement = GetQueryStatement();
         CPLAssert(!queryStatement.empty());
@@ -392,10 +391,7 @@ OGRFeature* OGRHanaLayer::GetNextFeatureInternal()
         }
     }
 
-    OGRFeature* feature = ReadFeature();
-    ++nextFeatureId_;
-
-    return feature;
+    return ReadFeature();
 }
 
 /************************************************************************/
@@ -420,7 +416,7 @@ OGRFeature* OGRHanaLayer::ReadFeature()
         return nullptr;
 
     auto feature = cpl::make_unique<OGRFeature>(featureDefn_);
-    feature->SetFID(nextFeatureId_);
+    feature->SetFID(nextFeatureId_++);
 
     unsigned short paramIndex = 0;
 
@@ -807,6 +803,7 @@ void OGRHanaLayer::ReadGeometryExtent(int geomField, OGREnvelope* extent)
 void OGRHanaLayer::ResetReading()
 {
     nextFeatureId_ = 0;
+    resultSet_.reset();
 }
 
 /************************************************************************/
@@ -855,7 +852,7 @@ OGRErr OGRHanaLayer::GetExtent(int iGeomField, OGREnvelope* extent, int force)
 }
 
 /************************************************************************/
-/*                            GetFeatureCount()                          */
+/*                            GetFeatureCount()                         */
 /************************************************************************/
 
 GIntBig OGRHanaLayer::GetFeatureCount(CPL_UNUSED int force)

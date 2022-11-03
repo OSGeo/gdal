@@ -103,20 +103,41 @@
             return self.GetLayerByIndex(iLayer)
         else:
             raise TypeError("Input %s is not of String or Int type" % type(iLayer))
+  }
 
-    def DeleteLayer(self, value):
-        """Deletes the layer given an index or layer name"""
+%feature("shadow") DeleteLayer %{
+    def DeleteLayer(self, value) -> "OGRErr":
+        """
+        DeleteLayer(DataSource self, value) -> OGRErr
+
+        Delete the indicated layer from the datasource.
+
+        For more details: :c:func:`OGR_DS_DeleteLayer`
+
+        Parameters
+        -----------
+        value: str | int
+            index or name of the layer to delete.
+
+        Returns
+        -------
+        int:
+            :py:const:`osgeo.ogr.OGRERR_NONE` on success, or :py:const:`osgeo.ogr.OGRERR_UNSUPPORTED_OPERATION` if deleting
+            layers is not supported for this datasource.
+        """
+
         if isinstance(value, str):
             for i in range(self.GetLayerCount()):
                 name = self.GetLayer(i).GetName()
                 if name == value:
-                    return _ogr.DataSource_DeleteLayer(self, i)
+                    return $action(self, i)
             raise ValueError("Layer %s not found to delete" % value)
         elif isinstance(value, int):
-            return _ogr.DataSource_DeleteLayer(self, value)
+            return $action(self, value)
         else:
             raise TypeError("Input %s is not of String or Int type" % type(value))
-  }
+%}
+
 }
 
 #endif
@@ -207,37 +228,35 @@
             def schema(self):
                 """ Return the schema as a PyArrow DataType """
 
-                schema_ptr = self.stream._GetSchemaPtr()
-                if schema_ptr == 0:
+                schema = self.stream.GetSchema()
+                if schema is None:
                     raise Exception("cannot get schema")
-                try:
-                    return pa.DataType._import_from_c(schema_ptr)
-                finally:
-                    self.stream._FreeSchemaPtr(schema_ptr)
+                return pa.DataType._import_from_c(schema._getPtr())
 
             schema = property(schema)
 
+            def __enter__(self):
+                return self
 
-            def _GetNextRecordBatchAsPyArrow(self, l_schema):
+            def __exit__(self, type, value, tb):
+                self.end_of_stream = True
+                self.stream = None
+
+            def GetNextRecordBatch(self):
                 """ Return the next RecordBatch as a PyArrow StructArray, or None at end of iteration """
 
-                array_ptr = self.stream._GetNextRecordBatchPtr()
-                if array_ptr == 0:
+                array = self.stream.GetNextRecordBatch()
+                if array is None:
                     return None
-                try:
-                    return pa.Array._import_from_c(array_ptr, l_schema)
-                finally:
-                    self.stream._FreeRecordBatchPtr(array_ptr)
-
+                return pa.Array._import_from_c(array._getPtr(), self.schema)
 
             def __iter__(self):
                 """ Return an iterator over record batches as a PyArrow StructArray """
                 if self.end_of_stream:
                     raise Exception("Stream has already been iterated over")
 
-                l_schema = self.schema
                 while True:
-                    batch = self._GetNextRecordBatchAsPyArrow(l_schema)
+                    batch = self.GetNextRecordBatch()
                     if not batch:
                         break
                     yield batch
@@ -260,26 +279,28 @@
         class Stream:
             def __init__(self, stream, use_masked_arrays):
                 self.stream = stream
+                self.schema = stream.GetSchema()
                 self.end_of_stream = False
                 self.use_masked_arrays = use_masked_arrays
 
-            def _GetNextRecordBatchAsNumpy(self, schema_ptr):
+            def __enter__(self):
+                return self
+
+            def __exit__(self, type, value, tb):
+                self.end_of_stream = True
+                self.schema = None
+                self.stream = None
+
+            def GetNextRecordBatch(self):
                 """ Return the next RecordBatch as a dictionary of Numpy arrays, or None at end of iteration """
 
-                array_ptr = self.stream._GetNextRecordBatchPtr()
-                if array_ptr == 0:
+                array = self.stream.GetNextRecordBatch()
+                if array is None:
                     return None
 
-                class ArrayPointerKeeper:
-                    def __init__(self, array_ptr):
-                        self.array_ptr = array_ptr
-
-                    def __del__(self):
-                        ArrowArrayStream._FreeRecordBatchPtr(self.array_ptr)
-
-                ret = gdal_array._RecordBatchAsNumpy(array_ptr,
-                                                     schema_ptr,
-                                                     ArrayPointerKeeper(array_ptr))
+                ret = gdal_array._RecordBatchAsNumpy(array._getPtr(),
+                                                     self.schema._getPtr(),
+                                                     array)
                 if ret is None:
                     gdal_array._RaiseException()
                     return ret
@@ -298,15 +319,13 @@
                 if self.end_of_stream:
                     raise Exception("Stream has already been iterated over")
 
-                schema_ptr = self.stream._GetSchemaPtr()
                 try:
                     while True:
-                        batch = self._GetNextRecordBatchAsNumpy(schema_ptr)
+                        batch = self.GetNextRecordBatch()
                         if not batch:
                             break
                         yield batch
                 finally:
-                    self.stream._FreeSchemaPtr(schema_ptr)
                     self.end_of_stream = True
                     self.stream = None
 
@@ -390,7 +409,7 @@
         else:
             idx = self._getfieldindex(key)
             if idx != -1:
-                self.SetField2(idx, value)
+                self._SetField2(idx, value)
             else:
                 idx = self.GetGeomFieldIndex(key)
                 if idx != -1:
@@ -434,7 +453,7 @@
             else:
                 return self.SetGeomField(fld_index, value)
         else:
-            return self.SetField2(fld_index, value)
+            return self._SetField2(fld_index, value)
 
     def GetField(self, fld_index):
         if isinstance(fld_index, str):
@@ -472,45 +491,11 @@
             # For Python3 on non-UTF8 strings
             return self.GetFieldAsBinary(fld_index)
 
-    # With several override, SWIG cannot dispatch automatically unicode strings
-    # to the right implementation, so we have to do it at hand
-    def SetField(self, *args):
-        """
-        SetField(self, int id, char value)
-        SetField(self, char name, char value)
-        SetField(self, int id, int value)
-        SetField(self, char name, int value)
-        SetField(self, int id, double value)
-        SetField(self, char name, double value)
-        SetField(self, int id, int year, int month, int day, int hour, int minute,
-            int second, int tzflag)
-        SetField(self, char name, int year, int month, int day, int hour,
-            int minute, int second, int tzflag)
-        """
-
-        if len(args) == 2 and args[1] is None:
-            return _ogr.Feature_SetFieldNull(self, args[0])
-
-        if len(args) == 2 and (type(args[1]) == type(1) or type(args[1]) == type(12345678901234)):
-            fld_index = args[0]
-            if isinstance(fld_index, str):
-                fld_index = self._getfieldindex(fld_index)
-            return _ogr.Feature_SetFieldInteger64(self, fld_index, args[1])
-
-
-        if len(args) == 2 and isinstance(args[1], str):
-            fld_index = args[0]
-            if isinstance(fld_index, str):
-                fld_index = self._getfieldindex(fld_index)
-            return _ogr.Feature_SetFieldString(self, fld_index, args[1])
-
-        return _ogr.Feature_SetField(self, *args)
-
-    def SetField2(self, fld_index, value):
+    def _SetField2(self, fld_index, value):
         if isinstance(fld_index, str):
             fld_index = self._getfieldindex(fld_index)
         if (fld_index < 0) or (fld_index > self.GetFieldCount()):
-            raise KeyError("Illegal field requested in SetField2()")
+            raise KeyError("Illegal field requested in _SetField2()")
 
         if value is None:
             self.SetFieldNull(fld_index)
@@ -530,7 +515,7 @@
                 self.SetFieldStringList(fld_index, value)
                 return
             else:
-                raise TypeError('Unsupported type of list in SetField2(). Type of element is %s' % str(type(value[0])))
+                raise TypeError('Unsupported type of list in _SetField2(). Type of element is %s' % str(type(value[0])))
 
         try:
             self.SetField(fld_index, value)
@@ -539,6 +524,7 @@
         return
 
     def keys(self):
+        """Return the list of field names (of the layer definition)"""
         names = []
         for i in range(self.GetFieldCount()):
             fieldname = self.GetFieldDefnRef(i).GetName()
@@ -546,12 +532,29 @@
         return names
 
     def items(self):
+        """Return a dictionary with the field names as key, and their value in the feature"""
         keys = self.keys()
         output = {}
         for key in keys:
             output[key] = self.GetField(key)
         return output
+
     def geometry(self):
+        """ Return the feature geometry
+
+            The lifetime of the returned geometry is bound to the one of its belonging
+            feature.
+
+            For more details: :cpp:func:`OGR_F_GetGeometryRef`
+
+            The GetGeometryRef() method is also available as an alias of geometry()
+
+            Returns
+            --------
+            Geometry:
+                the geometry, or None.
+        """
+
         return self.GetGeometryRef()
 
     def ExportToJson(self, as_object=False, options=None):
@@ -599,6 +602,42 @@
         return output
 
 
+%}
+
+%feature("shadow") SetField %{
+    # With several override, SWIG cannot dispatch automatically unicode strings
+    # to the right implementation, so we have to do it at hand
+    def SetField(self, *args) -> "OGRErr":
+        """
+        SetField(self, int id, char value)
+        SetField(self, char name, char value)
+        SetField(self, int id, int value)
+        SetField(self, char name, int value)
+        SetField(self, int id, double value)
+        SetField(self, char name, double value)
+        SetField(self, int id, int year, int month, int day, int hour, int minute,
+            int second, int tzflag)
+        SetField(self, char name, int year, int month, int day, int hour,
+            int minute, int second, int tzflag)
+        """
+
+        if len(args) == 2 and args[1] is None:
+            return _ogr.Feature_SetFieldNull(self, args[0])
+
+        if len(args) == 2 and (type(args[1]) == type(1) or type(args[1]) == type(12345678901234)):
+            fld_index = args[0]
+            if isinstance(fld_index, str):
+                fld_index = self._getfieldindex(fld_index)
+            return _ogr.Feature_SetFieldInteger64(self, fld_index, args[1])
+
+
+        if len(args) == 2 and isinstance(args[1], str):
+            fld_index = args[0]
+            if isinstance(fld_index, str):
+                fld_index = self._getfieldindex(fld_index)
+            return _ogr.Feature_SetFieldString(self, fld_index, args[1])
+
+        return $action(self, *args)
 %}
 
 }

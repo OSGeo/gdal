@@ -53,7 +53,6 @@
 #include "filegdbtable.h"
 #include "ogr_swq.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                      OGROpenFileGDBLayer()                           */
@@ -161,22 +160,13 @@ static OGRSpatialReference* BuildSRS(const char* pszWKT)
     {
         if( CPLTestBool(CPLGetConfigOption("USE_OSR_FIND_MATCHES", "YES")) )
         {
-            int nEntries = 0;
-            int* panConfidence = nullptr;
-            OGRSpatialReferenceH* pahSRS =
-                poSRS->FindMatches(nullptr, &nEntries, &panConfidence);
-            if( nEntries == 1 && panConfidence[0] == 100 )
+            auto poSRSMatch = poSRS->FindBestMatch(100);
+            if( poSRSMatch )
             {
                 poSRS->Release();
-                poSRS = reinterpret_cast<OGRSpatialReference*>(pahSRS[0]);
+                poSRS = poSRSMatch;
                 poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                CPLFree(pahSRS);
             }
-            else
-            {
-                OSRFreeSRSArray(pahSRS);
-            }
-            CPLFree(panConfidence);
         }
         else
         {
@@ -499,7 +489,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
                 {
                     CPLDebug("OpenFileGDB",
                              "Table %s declare a CRS '%s' in its XML "
-                             "defininition (or in its parent's one), "
+                             "definition (or in its parent's one), "
                              "but its .gdbtable declares '%s'. "
                              "Using the former",
                              GetDescription(),

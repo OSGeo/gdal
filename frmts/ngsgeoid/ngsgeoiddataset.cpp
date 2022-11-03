@@ -32,7 +32,6 @@
 #include "gdal_pam.h"
 #include "ogr_srs_api.h"
 
-CPL_CVSID("$Id$")
 
 #define HEADER_SIZE (4 * 8 + 3 * 4)
 
@@ -51,7 +50,7 @@ class NGSGEOIDDataset final: public GDALPamDataset
     VSILFILE   *fp;
     double      adfGeoTransform[6];
     int         bIsLittleEndian;
-    CPLString   osProjection{};
+    mutable OGRSpatialReference m_oSRS{};
 
     static int   GetHeaderInfo( const GByte* pBuffer,
                                 double* padfGeoTransform,
@@ -64,10 +63,7 @@ class NGSGEOIDDataset final: public GDALPamDataset
     virtual     ~NGSGEOIDDataset();
 
     virtual CPLErr GetGeoTransform( double * ) override;
-    virtual const char* _GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -151,6 +147,7 @@ NGSGEOIDDataset::NGSGEOIDDataset() :
     fp(nullptr),
     bIsLittleEndian(TRUE)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGeoTransform[0] = 0;
     adfGeoTransform[1] = 1;
     adfGeoTransform[2] = 0;
@@ -387,14 +384,14 @@ CPLErr NGSGEOIDDataset::GetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
-/*                         GetProjectionRef()                           */
+/*                         GetSpatialRef()                              */
 /************************************************************************/
 
-const char* NGSGEOIDDataset::_GetProjectionRef()
+const OGRSpatialReference* NGSGEOIDDataset::GetSpatialRef() const
 {
-    if( !osProjection.empty() )
+    if( !m_oSRS.IsEmpty() )
     {
-        return osProjection.c_str();
+        return &m_oSRS;
     }
 
     CPLString osFilename(CPLGetBasename(GetDescription()));
@@ -405,37 +402,31 @@ const char* NGSGEOIDDataset::_GetProjectionRef()
     // GEOID2012 files ?
     if( STARTS_WITH(osFilename, "g2012") && osFilename.size() >= 7 )
     {
-        OGRSpatialReference oSRS;
         if( osFilename[6] == 'h' /* Hawai */ ||
             osFilename[6] == 's' /* Samoa */ )
         {
             // NAD83 (PA11)
-            oSRS.importFromEPSG(6322);
+            m_oSRS.importFromEPSG(6322);
         }
         else if( osFilename[6] == 'g' /* Guam */ )
         {
             // NAD83 (MA11)
-            oSRS.importFromEPSG(6325);
+            m_oSRS.importFromEPSG(6325);
         }
         else
         {
             // NAD83 (2011)
-            oSRS.importFromEPSG(6318);
+            m_oSRS.importFromEPSG(6318);
         }
 
-        char* pszProjection = nullptr;
-        oSRS.exportToWkt(&pszProjection);
-        if( pszProjection )
-            osProjection = pszProjection;
-        CPLFree(pszProjection);
-        return osProjection.c_str();
+        return &m_oSRS;
     }
 
     // USGG2012 files ? We should return IGS08, but there is only a
     // geocentric CRS in EPSG, so manually forge a geographic one from it
     if(  STARTS_WITH(osFilename, "s2012") )
     {
-        osProjection =
+        m_oSRS.importFromWkt(
 "GEOGCS[\"IGS08\",\n"
 "    DATUM[\"IGS08\",\n"
 "        SPHEROID[\"GRS 1980\",6378137,298.257222101,\n"
@@ -444,11 +435,12 @@ const char* NGSGEOIDDataset::_GetProjectionRef()
 "    PRIMEM[\"Greenwich\",0,\n"
 "        AUTHORITY[\"EPSG\",\"8901\"]],\n"
 "    UNIT[\"degree\",0.0174532925199433,\n"
-"        AUTHORITY[\"EPSG\",\"9122\"]]]";
-        return osProjection.c_str();
+"        AUTHORITY[\"EPSG\",\"9122\"]]]");
+        return &m_oSRS;
     }
 
-    return SRS_WKT_WGS84_LAT_LONG;
+    m_oSRS.importFromWkt(SRS_WKT_WGS84_LAT_LONG);
+    return &m_oSRS;
 }
 
 /************************************************************************/

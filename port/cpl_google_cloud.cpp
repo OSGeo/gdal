@@ -35,7 +35,6 @@
 #include "cpl_aws.h"
 #include "cpl_json.h"
 
-CPL_CVSID("$Id$")
 
 #ifdef HAVE_CURL
 
@@ -151,7 +150,7 @@ struct curl_slist* GetGSHeaders( const std::string& osPathForOption,
         return nullptr;
     }
 
-    CPLString osDate = VSIGetCredential(osPathForOption.c_str(), "CPL_GS_TIMESTAMP", "");
+    CPLString osDate = VSIGetPathSpecificOption(osPathForOption.c_str(), "CPL_GS_TIMESTAMP", "");
     if( osDate.empty() )
     {
         osDate = IVSIS3LikeHandleHelper::GetRFC822DateTime();
@@ -339,18 +338,18 @@ bool VSIGSHandleHelper::GetConfiguration(const std::string& osPathForOption,
     osAccessKeyId.clear();
     osHeaderFile.clear();
 
-    if( CPLTestBool(VSIGetCredential(
+    if( CPLTestBool(VSIGetPathSpecificOption(
             osPathForOption.c_str(), "GS_NO_SIGN_REQUEST", "NO")) )
     {
         return true;
     }
 
     osSecretAccessKey =
-        VSIGetCredential(osPathForOption.c_str(), "GS_SECRET_ACCESS_KEY", "");
+        VSIGetPathSpecificOption(osPathForOption.c_str(), "GS_SECRET_ACCESS_KEY", "");
     if( !osSecretAccessKey.empty() )
     {
         osAccessKeyId =
-            VSIGetCredential(osPathForOption.c_str(), "GS_ACCESS_KEY_ID", "");
+            VSIGetPathSpecificOption(osPathForOption.c_str(), "GS_ACCESS_KEY_ID", "");
         if( osAccessKeyId.empty() )
         {
             VSIError(VSIE_AWSInvalidCredentials,
@@ -370,7 +369,7 @@ bool VSIGSHandleHelper::GetConfiguration(const std::string& osPathForOption,
     }
 
     osHeaderFile =
-        VSIGetCredential(osPathForOption.c_str(), "GDAL_HTTP_HEADER_FILE", "");
+        VSIGetPathSpecificOption(osPathForOption.c_str(), "GDAL_HTTP_HEADER_FILE", "");
     bool bMayWarnDidNotFindAuth = false;
     if( !osHeaderFile.empty() )
     {
@@ -425,7 +424,7 @@ bool VSIGSHandleHelper::GetConfiguration(const std::string& osPathForOption,
         }
     }
 
-    CPLString osRefreshToken( VSIGetCredential(
+    CPLString osRefreshToken( VSIGetPathSpecificOption(
         osPathForOption.c_str(), "GS_OAUTH2_REFRESH_TOKEN", "") );
     if( !osRefreshToken.empty() )
     {
@@ -438,9 +437,9 @@ bool VSIGSHandleHelper::GetConfiguration(const std::string& osPathForOption,
         }
 
         CPLString osClientId =
-            VSIGetCredential(osPathForOption.c_str(), "GS_OAUTH2_CLIENT_ID", "");
+            VSIGetPathSpecificOption(osPathForOption.c_str(), "GS_OAUTH2_CLIENT_ID", "");
         CPLString osClientSecret =
-            VSIGetCredential(osPathForOption.c_str(), "GS_OAUTH2_CLIENT_SECRET", "");
+            VSIGetPathSpecificOption(osPathForOption.c_str(), "GS_OAUTH2_CLIENT_SECRET", "");
 
         int nCount = (!osClientId.empty() ? 1 : 0) +
                      (!osClientSecret.empty() ? 1 : 0);
@@ -470,7 +469,7 @@ bool VSIGSHandleHelper::GetConfiguration(const std::string& osPathForOption,
 
     CPLString osJsonFile( CSLFetchNameValueDef(papszOptions,
         "GOOGLE_APPLICATION_CREDENTIALS",
-        VSIGetCredential(osPathForOption.c_str(), "GOOGLE_APPLICATION_CREDENTIALS", "")));
+        VSIGetPathSpecificOption(osPathForOption.c_str(), "GOOGLE_APPLICATION_CREDENTIALS", "")));
     if( !osJsonFile.empty() )
     {
         CPLJSONDocument oDoc;
@@ -489,7 +488,7 @@ bool VSIGSHandleHelper::GetConfiguration(const std::string& osPathForOption,
             CPLString osClientEmail = oDoc.GetRoot().GetString("client_email");
             const char* pszScope =
                 CSLFetchNameValueDef( papszOptions, "GS_OAUTH2_SCOPE",
-                VSIGetCredential(osPathForOption.c_str(), "GS_OAUTH2_SCOPE",
+                VSIGetPathSpecificOption(osPathForOption.c_str(), "GS_OAUTH2_SCOPE",
                     "https://www.googleapis.com/auth/devstorage.read_write"));
 
             return oManager.SetAuthFromServiceAccount(
@@ -516,10 +515,10 @@ bool VSIGSHandleHelper::GetConfiguration(const std::string& osPathForOption,
 
     CPLString osPrivateKey = CSLFetchNameValueDef(papszOptions,
         "GS_OAUTH2_PRIVATE_KEY",
-        VSIGetCredential(osPathForOption.c_str(), "GS_OAUTH2_PRIVATE_KEY", ""));
+        VSIGetPathSpecificOption(osPathForOption.c_str(), "GS_OAUTH2_PRIVATE_KEY", ""));
     CPLString osPrivateKeyFile = CSLFetchNameValueDef(papszOptions,
         "GS_OAUTH2_PRIVATE_KEY_FILE",
-        VSIGetCredential(osPathForOption.c_str(), "GS_OAUTH2_PRIVATE_KEY_FILE", ""));
+        VSIGetPathSpecificOption(osPathForOption.c_str(), "GS_OAUTH2_PRIVATE_KEY_FILE", ""));
     if( !osPrivateKey.empty() || !osPrivateKeyFile.empty() )
     {
         if( !osPrivateKeyFile.empty() )
@@ -545,7 +544,7 @@ bool VSIGSHandleHelper::GetConfiguration(const std::string& osPathForOption,
 
         CPLString osClientEmail = CSLFetchNameValueDef(papszOptions,
             "GS_OAUTH2_CLIENT_EMAIL",
-            VSIGetCredential(osPathForOption.c_str(), "GS_OAUTH2_CLIENT_EMAIL", ""));
+            VSIGetPathSpecificOption(osPathForOption.c_str(), "GS_OAUTH2_CLIENT_EMAIL", ""));
         if( osClientEmail.empty() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -555,7 +554,7 @@ bool VSIGSHandleHelper::GetConfiguration(const std::string& osPathForOption,
         }
         const char* pszScope =
             CSLFetchNameValueDef( papszOptions, "GS_OAUTH2_SCOPE",
-            VSIGetCredential(osPathForOption.c_str(), "GS_OAUTH2_SCOPE",
+            VSIGetPathSpecificOption(osPathForOption.c_str(), "GS_OAUTH2_SCOPE",
                 "https://www.googleapis.com/auth/devstorage.read_write"));
 
         if( bFirstTimeForDebugMessage )
@@ -732,7 +731,7 @@ VSIGSHandleHelper* VSIGSHandleHelper::BuildFromURI( const char* pszURI,
 
     // pszURI == bucket/object
     const CPLString osBucketObject( pszURI );
-    CPLString osEndpoint( VSIGetCredential(
+    CPLString osEndpoint( VSIGetPathSpecificOption(
         osPathForOption.c_str(), "CPL_GS_ENDPOINT", ""));
     if( osEndpoint.empty() )
         osEndpoint = "https://storage.googleapis.com/";
@@ -752,7 +751,7 @@ VSIGSHandleHelper* VSIGSHandleHelper::BuildFromURI( const char* pszURI,
     // https://cloud.google.com/storage/docs/xml-api/reference-headers#xgooguserproject
     // The Project ID for an existing Google Cloud project to bill for access
     // charges associated with the request.
-    const std::string osUserProject = VSIGetCredential(
+    const std::string osUserProject = VSIGetPathSpecificOption(
         osPathForOption.c_str(), "GS_USER_PROJECT", "");
 
     return new VSIGSHandleHelper( osEndpoint,

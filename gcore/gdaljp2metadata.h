@@ -59,11 +59,15 @@ class CPL_DLL GDALJP2Box
 
     GByte      *pabyData = nullptr;
 
+    bool        m_bAllowGetFileSize = true;
+
     CPL_DISALLOW_COPY_ASSIGN(GDALJP2Box)
 
 public:
     explicit    GDALJP2Box( VSILFILE * = nullptr );
                 ~GDALJP2Box();
+
+    void        SetAllowGetFileSize(bool b) { m_bAllowGetFileSize = b; }
 
     int         SetOffset( GIntBig nNewOffset );
     int         ReadBox();
@@ -215,6 +219,12 @@ public:
     static int   IsUUID_XMP(const GByte *abyUUID);
 };
 
+CPLXMLNode* GDALGetJPEG2000Structure(const char* pszFilename,
+                                     VSILFILE* fp,
+                                     CSLConstList papszOptions);
+
+const char CPL_DLL *GDALGetJPEG2000Reversibility(const char* pszFilename,
+                                                 VSILFILE* fp);
 #endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* ndef GDAL_JP2READER_H_INCLUDED */

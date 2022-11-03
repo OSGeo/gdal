@@ -29,7 +29,6 @@
 #include "ogr_xlsx.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$")
 
 extern "C" void RegisterOGRXLSX();
 
@@ -46,17 +45,49 @@ static const char XLSX_MIMETYPE[] =
 
 static int OGRXLSXDriverIdentify( GDALOpenInfo* poOpenInfo )
 {
-    const char* pszExt = CPLGetExtension(poOpenInfo->pszFilename);
-    if (!EQUAL(pszExt, "XLSX") && !EQUAL(pszExt, "XLSM") &&
-        !EQUAL(pszExt, "XLSX}") && !EQUAL(pszExt, "XLSM}"))
-        return FALSE;
+    if( poOpenInfo->fpL == nullptr &&
+        STARTS_WITH_CI(poOpenInfo->pszFilename, "XLSX:") )
+    {
+        return TRUE;
+    }
 
     if( STARTS_WITH(poOpenInfo->pszFilename, "/vsizip/") ||
         STARTS_WITH(poOpenInfo->pszFilename, "/vsitar/") )
-        return poOpenInfo->eAccess == GA_ReadOnly;
+    {
+        const char* pszExt = CPLGetExtension(poOpenInfo->pszFilename);
+        return EQUAL(pszExt, "XLSX") || EQUAL(pszExt, "XLSM") ||
+               EQUAL(pszExt, "XLSX}") || EQUAL(pszExt, "XLSM}");
+    }
 
-    return poOpenInfo->nHeaderBytes > 2 &&
-           memcmp(poOpenInfo->pabyHeader, "PK", 2) == 0;
+    if( poOpenInfo->nHeaderBytes > 30 &&
+        memcmp(poOpenInfo->pabyHeader, "PK\x03\x04", 4) == 0 )
+    {
+        // Fetch the first filename in the zip
+        const int nFilenameLength =
+            CPL_LSBUINT16PTR(poOpenInfo->pabyHeader + 26);
+        if( 30 + nFilenameLength > poOpenInfo->nHeaderBytes )
+            return FALSE;
+        const std::string osFilename(
+            reinterpret_cast<const char*>(poOpenInfo->pabyHeader) + 30,
+            nFilenameLength);
+        if( STARTS_WITH(osFilename.c_str(), "xl/") ||
+            STARTS_WITH(osFilename.c_str(), "_rels/") ||
+            STARTS_WITH(osFilename.c_str(), "docProps/") ||
+            osFilename == "[Content_Types].xml" )
+        {
+            return TRUE;
+        }
+        const char* pszExt = CPLGetExtension(poOpenInfo->pszFilename);
+        if( EQUAL(pszExt, "XLSX") || EQUAL(pszExt, "XLSM") )
+        {
+            CPLDebug("XLSX",
+                     "Identify() failed to recognize first filename in zip (%s), "
+                     "but fallback to extension matching",
+                     osFilename.c_str());
+            return TRUE;
+        }
+    }
+    return FALSE;
 }
 
 /************************************************************************/
@@ -66,15 +97,33 @@ static int OGRXLSXDriverIdentify( GDALOpenInfo* poOpenInfo )
 static GDALDataset* OGRXLSXDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    if (!OGRXLSXDriverIdentify(poOpenInfo) )
+    if (!OGRXLSXDriverIdentify(poOpenInfo))
         return nullptr;
 
-    CPLString osPrefixedFilename("/vsizip/");
-    osPrefixedFilename += poOpenInfo->pszFilename;
-    if( STARTS_WITH(poOpenInfo->pszFilename, "/vsizip/") ||
-        STARTS_WITH(poOpenInfo->pszFilename, "/vsitar/") )
+    const char* pszFilename = poOpenInfo->pszFilename;
+    if( poOpenInfo->fpL == nullptr &&
+        STARTS_WITH_CI(pszFilename, "XLSX:") )
     {
-        osPrefixedFilename = poOpenInfo->pszFilename;
+        pszFilename += strlen("XLSX:");
+    }
+    const bool bIsVsiZipOrTarPrefixed = STARTS_WITH(pszFilename, "/vsizip/") ||
+                                        STARTS_WITH(pszFilename, "/vsitar/");
+    if( bIsVsiZipOrTarPrefixed )
+    {
+        if( poOpenInfo->eAccess != GA_ReadOnly )
+            return nullptr;
+    }
+
+    std::string osPrefixedFilename;
+    if( !bIsVsiZipOrTarPrefixed )
+    {
+        osPrefixedFilename = "/vsizip/{";
+        osPrefixedFilename += pszFilename;
+        osPrefixedFilename += "}";
+    }
+    else
+    {
+        osPrefixedFilename = pszFilename;
     }
 
     CPLString osTmpFilename;
@@ -112,12 +161,16 @@ static GDALDataset* OGRXLSXDriverOpen( GDALOpenInfo* poOpenInfo )
 
     OGRXLSXDataSource   *poDS = new OGRXLSXDataSource();
 
-    if( !poDS->Open( poOpenInfo->pszFilename, osPrefixedFilename,
+    if( !poDS->Open( pszFilename, osPrefixedFilename.c_str(),
                      fpWorkbook, fpWorkbookRels, fpSharedStrings, fpStyles,
                      poOpenInfo->eAccess == GA_Update ) )
     {
         delete poDS;
         poDS = nullptr;
+    }
+    else
+    {
+        poDS->SetDescription(poOpenInfo->pszFilename);
     }
 
     return poDS;
@@ -202,6 +255,7 @@ void RegisterOGRXLSX()
     poDriver->SetMetadataItem( GDAL_DCAP_MEASURED_GEOMETRIES, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_CURVE_GEOMETRIES, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->pfnIdentify = OGRXLSXDriverIdentify;
     poDriver->pfnOpen = OGRXLSXDriverOpen;

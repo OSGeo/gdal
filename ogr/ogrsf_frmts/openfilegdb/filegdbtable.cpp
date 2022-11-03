@@ -52,7 +52,6 @@
 #include "ogrpgeogeometry.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$")
 
 #define UUID_SIZE_IN_BYTES              16
 
@@ -2099,7 +2098,7 @@ void FileGDBTable::InstallFilterEnvelope(const OGREnvelope* psFilterEnvelope)
 /*                  GetMinMaxProjYForSpatialIndex()                     */
 /************************************************************************/
 
-// ESRI software seems to have an extremely weird behaviour regarding spatial
+// ESRI software seems to have an extremely weird behavior regarding spatial
 // indexing of geometries.
 // When a projected CRS is associated with a layer, the northing of geometries
 // is clamped, using the returned (dfYMin,dfYMax) values of this method.

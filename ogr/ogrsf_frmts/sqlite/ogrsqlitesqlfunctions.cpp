@@ -40,7 +40,6 @@
 
 #include <limits>
 
-CPL_CVSID("$Id$")
 
 #undef SQLITE_STATIC
 #define SQLITE_STATIC      ((sqlite3_destructor_type)nullptr)

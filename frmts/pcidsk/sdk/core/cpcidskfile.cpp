@@ -1763,7 +1763,7 @@ void CPCIDSKFile::MoveSegmentToEOF( int segment )
              method.
 */
 
-void CPCIDSKFile::CreateOverviews( int chan_count, int *chan_list,
+void CPCIDSKFile::CreateOverviews( int chan_count, const int *chan_list,
                                    int factor, std::string resampling )
 
 {

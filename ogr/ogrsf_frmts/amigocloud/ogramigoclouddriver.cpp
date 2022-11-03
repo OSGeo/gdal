@@ -28,7 +28,6 @@
 
 #include "ogr_amigocloud.h"
 
-CPL_CVSID("$Id$")
 
 extern "C" void RegisterOGRAmigoCloud();
 
@@ -125,6 +124,7 @@ void RegisterOGRAmigoCloud()
     poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "NATIVE OGRSQL SQLITE" );
 
     poDriver->pfnOpen = OGRAmigoCloudDriverOpen;
     poDriver->pfnIdentify = OGRAmigoCloudDriverIdentify;

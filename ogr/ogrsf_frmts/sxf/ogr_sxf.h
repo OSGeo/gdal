@@ -109,13 +109,12 @@ class OGRSXFDataSource final: public OGRDataSource
 {
     SXFPassport oSXFPassport;
 
-    CPLString               pszName;
+    CPLString               pszName{};
 
-    OGRLayer**          papoLayers;
-    size_t              nLayers;
+    std::vector<std::unique_ptr<OGRSXFLayer>> m_apoLayers{};
 
-    VSILFILE* fpSXF;
-    CPLMutex  *hIOMutex;
+    VSILFILE* fpSXF = nullptr;
+    CPLMutex  *hIOMutex = nullptr;
     void FillLayers();
     void CreateLayers();
     void CreateLayers(VSILFILE* fpRSC, const char* const* papszOpenOpts);
@@ -135,7 +134,7 @@ public:
 
     virtual const char*     GetName() override { return pszName; }
 
-    virtual int             GetLayerCount() override { return static_cast<int>(nLayers); }
+    virtual int             GetLayerCount() override { return static_cast<int>(m_apoLayers.size()); }
     virtual OGRLayer*       GetLayer( int ) override;
 
     virtual int             TestCapability( const char * ) override;

@@ -31,7 +31,6 @@
 #include "ogrlayerdecorator.h"
 #include "ogr_recordbatch.h"
 
-CPL_CVSID("$Id$")
 
 OGRLayerDecorator::OGRLayerDecorator( OGRLayer* poDecoratedLayer,
                                       int bTakeOwnership ) :

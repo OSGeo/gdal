@@ -31,7 +31,6 @@
 #include "gnmdb.h"
 #include "gnm_priv.h"
 
-CPL_CVSID("$Id$")
 
 GNMDatabaseNetwork::GNMDatabaseNetwork() : GNMGenericNetwork()
 {
@@ -136,6 +135,7 @@ CPLErr GNMDatabaseNetwork::Create( const char* pszFilename, char** papszOptions 
     else
     {
         OGRSpatialReference spatialRef;
+        spatialRef.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if (spatialRef.SetFromUserInput(pszSRS) != OGRERR_NONE)
         {
             CPLError( CE_Failure, CPLE_IllegalArg,
@@ -143,17 +143,7 @@ CPLErr GNMDatabaseNetwork::Create( const char* pszFilename, char** papszOptions 
             return CE_Failure;
         }
 
-        char *wktSrs = nullptr;
-        if (spatialRef.exportToWkt(&wktSrs) != OGRERR_NONE)
-        {
-            CPLError( CE_Failure, CPLE_IllegalArg,
-                      "The network spatial reference should be present" );
-            CPLFree(wktSrs);
-            return CE_Failure;
-        }
-        m_soSRS = wktSrs;
-
-        CPLFree(wktSrs);
+        m_oSRS = spatialRef;
     }
 
     int nResult = CheckNetworkExist(pszFilename, papszOptions);
@@ -431,7 +421,7 @@ OGRLayer *GNMDatabaseNetwork::ICreateLayer(const char *pszName,
         }
     }
 
-    OGRSpatialReference oSpaRef(m_soSRS);
+    OGRSpatialReference oSpaRef(m_oSRS);
 
     OGRLayer *poLayer = m_poDS->CreateLayer( pszName, &oSpaRef, eGType, papszOptions );
     if( poLayer == nullptr )

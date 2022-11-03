@@ -28,7 +28,6 @@
 
 #include "ogr_avc.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                                Open()                                */
@@ -90,6 +89,7 @@ void RegisterOGRAVCBin()
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/avcbin.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->pfnOpen = OGRAVCBinDriverOpen;
 

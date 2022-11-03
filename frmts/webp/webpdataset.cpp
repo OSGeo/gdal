@@ -32,7 +32,6 @@
 
 #include "webp_headers.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -433,6 +432,8 @@ GDALDataset *WEBPDataset::Open( GDALOpenInfo * poOpenInfo )
 
     int nBands = 3;
 
+    auto poDS = cpl::make_unique<WEBPDataset>();
+
 #if WEBP_DECODER_ABI_VERSION >= 0x0002
     WebPDecoderConfig config;
     if( !WebPInitDecoderConfig(&config) )
@@ -442,6 +443,10 @@ GDALDataset *WEBPDataset::Open( GDALOpenInfo * poOpenInfo )
         = WebPGetFeatures(poOpenInfo->pabyHeader,
                           poOpenInfo->nHeaderBytes, &config.input)
         == VP8_STATUS_OK;
+
+    poDS->GDALDataset::SetMetadataItem("COMPRESSION_REVERSIBILITY",
+                                       config.input.format == 2 ? "LOSSLESS" : "LOSSY",
+                                       "IMAGE_STRUCTURE");
 
     if (config.input.has_alpha)
         nBands = 4;
@@ -464,7 +469,6 @@ GDALDataset *WEBPDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    WEBPDataset *poDS = new WEBPDataset();
     poDS->nRasterXSize = nWidth;
     poDS->nRasterYSize = nHeight;
     poDS->fpImage = poOpenInfo->fpL;
@@ -474,7 +478,7 @@ GDALDataset *WEBPDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     for( int iBand = 0; iBand < nBands; iBand++ )
-        poDS->SetBand( iBand+1, new WEBPRasterBand( poDS, iBand+1 ) );
+        poDS->SetBand( iBand+1, new WEBPRasterBand( poDS.get(), iBand+1 ) );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
@@ -487,9 +491,9 @@ GDALDataset *WEBPDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Open overviews.                                                 */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize(
-        poDS, poOpenInfo->pszFilename, poOpenInfo->GetSiblingFiles() );
+        poDS.get(), poOpenInfo->pszFilename, poOpenInfo->GetSiblingFiles() );
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
@@ -836,6 +840,9 @@ WEBPDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     VSIFCloseL( fpImage );
 
+    if( pfnProgress )
+        pfnProgress(1.0, "", pProgressData);
+
     if( eErr != CE_None )
     {
         VSIUnlink( pszFilename );
@@ -850,8 +857,7 @@ WEBPDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     /* If writing to stdout, we can't reopen it, so return */
     /* a fake dataset to make the caller happy */
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    WEBPDataset *poDS
-        = reinterpret_cast<WEBPDataset*>( WEBPDataset::Open( &oOpenInfo ) );
+    auto poDS = cpl::down_cast<GDALPamDataset*>(WEBPDataset::Open( &oOpenInfo ));
     CPLPopErrorHandler();
     if( poDS )
     {

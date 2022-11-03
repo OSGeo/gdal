@@ -33,7 +33,8 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$")
+
+constexpr int HEADER_SIZE = 1011;
 
 /************************************************************************/
 /*                            JDEMGetField()                            */
@@ -83,8 +84,9 @@ class JDEMDataset final: public GDALPamDataset
 {
     friend class JDEMRasterBand;
 
-    VSILFILE    *fp;
-    GByte       abyHeader[1012];
+    VSILFILE           *m_fp = nullptr;
+    GByte               m_abyHeader[HEADER_SIZE];
+    OGRSpatialReference m_oSRS{};
 
   public:
                      JDEMDataset();
@@ -94,10 +96,7 @@ class JDEMDataset final: public GDALPamDataset
     static int Identify( GDALOpenInfo * );
 
     CPLErr GetGeoTransform( double * padfTransform ) override;
-    const char *_GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
 };
 
 /************************************************************************/
@@ -110,13 +109,13 @@ class JDEMRasterBand final: public GDALPamRasterBand
 {
     friend class JDEMDataset;
 
-    int          nRecordSize;
-    char        *pszRecord;
-    bool         bBufferAllocFailed;
+    int          m_nRecordSize = 0;
+    char        *m_pszRecord = nullptr;
+    bool         m_bBufferAllocFailed = false;
 
   public:
                 JDEMRasterBand( JDEMDataset *, int );
-    virtual ~JDEMRasterBand();
+               ~JDEMRasterBand();
 
     virtual CPLErr IReadBlock( int, int, void * ) override;
 };
@@ -127,9 +126,7 @@ class JDEMRasterBand final: public GDALPamRasterBand
 
 JDEMRasterBand::JDEMRasterBand( JDEMDataset *poDSIn, int nBandIn ) :
     // Cannot overflow as nBlockXSize <= 999.
-    nRecordSize(poDSIn->GetRasterXSize() * 5 + 9 + 2),
-    pszRecord(nullptr),
-    bBufferAllocFailed(false)
+    m_nRecordSize(poDSIn->GetRasterXSize() * 5 + 9 + 2)
 {
     poDS = poDSIn;
     nBand = nBandIn;
@@ -144,38 +141,43 @@ JDEMRasterBand::JDEMRasterBand( JDEMDataset *poDSIn, int nBandIn ) :
 /*                          ~JDEMRasterBand()                            */
 /************************************************************************/
 
-JDEMRasterBand::~JDEMRasterBand() { VSIFree(pszRecord); }
+JDEMRasterBand::~JDEMRasterBand() { VSIFree(m_pszRecord); }
 
 /************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr JDEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+CPLErr JDEMRasterBand::IReadBlock( int /* nBlockXOff */,
                                    int nBlockYOff,
                                    void * pImage )
 
 {
-    JDEMDataset *poGDS = static_cast<JDEMDataset *>(poDS);
+    JDEMDataset *poGDS = cpl::down_cast<JDEMDataset *>(poDS);
 
-    if (pszRecord == nullptr)
+    if (m_pszRecord == nullptr)
     {
-        if (bBufferAllocFailed)
+        if (m_bBufferAllocFailed)
             return CE_Failure;
 
-        pszRecord = static_cast<char *>(VSI_MALLOC_VERBOSE(nRecordSize));
-        if (pszRecord == nullptr)
+        m_pszRecord = static_cast<char *>(VSI_MALLOC_VERBOSE(m_nRecordSize));
+        if (m_pszRecord == nullptr)
         {
-            bBufferAllocFailed = true;
+            m_bBufferAllocFailed = true;
             return CE_Failure;
         }
     }
 
     CPL_IGNORE_RET_VAL(
-        VSIFSeekL(poGDS->fp, 1011 + nRecordSize * nBlockYOff, SEEK_SET));
+        VSIFSeekL(poGDS->m_fp, 1011 + m_nRecordSize * nBlockYOff, SEEK_SET));
 
-    CPL_IGNORE_RET_VAL(VSIFReadL(pszRecord, 1, nRecordSize, poGDS->fp));
+    if( VSIFReadL(m_pszRecord, m_nRecordSize, 1, poGDS->m_fp) != 1 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot read scanline %d", nBlockYOff);
+        return CE_Failure;
+    }
 
-    if( !EQUALN(reinterpret_cast<char *>(poGDS->abyHeader), pszRecord, 6) )
+    if( !EQUALN(reinterpret_cast<char *>(poGDS->m_abyHeader), m_pszRecord, 6) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "JDEM Scanline corrupt.  Perhaps file was not transferred "
@@ -183,7 +185,7 @@ CPLErr JDEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         return CE_Failure;
     }
 
-    if( JDEMGetField(pszRecord + 6, 3) != nBlockYOff + 1 )
+    if( JDEMGetField(m_pszRecord + 6, 3) != nBlockYOff + 1 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "JDEM scanline out of order, JDEM driver does not "
@@ -193,7 +195,7 @@ CPLErr JDEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
     for( int i = 0; i < nBlockXSize; i++ )
         static_cast<float *>(pImage)[i] =
-            JDEMGetField(pszRecord + 9 + 5 * i, 5) * 0.1f;
+            JDEMGetField(m_pszRecord + 9 + 5 * i, 5) * 0.1f;
 
     return CE_None;
 }
@@ -208,10 +210,11 @@ CPLErr JDEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /*                            JDEMDataset()                             */
 /************************************************************************/
 
-JDEMDataset::JDEMDataset() :
-    fp(nullptr)
+JDEMDataset::JDEMDataset()
 {
-    std::fill_n(abyHeader, CPL_ARRAYSIZE(abyHeader), static_cast<GByte>(0));
+    std::fill_n(m_abyHeader, CPL_ARRAYSIZE(m_abyHeader), static_cast<GByte>(0));
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    m_oSRS.importFromEPSG(4301); // Tokyo geographic CRS
 }
 
 /************************************************************************/
@@ -222,8 +225,8 @@ JDEMDataset::~JDEMDataset()
 
 {
     FlushCache(true);
-    if( fp != nullptr )
-        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
+    if( m_fp != nullptr )
+        CPL_IGNORE_RET_VAL(VSIFCloseL(m_fp));
 }
 
 /************************************************************************/
@@ -233,7 +236,7 @@ JDEMDataset::~JDEMDataset()
 CPLErr JDEMDataset::GetGeoTransform( double *padfTransform )
 
 {
-    const char *psHeader = reinterpret_cast<char *>(abyHeader);
+    const char *psHeader = reinterpret_cast<const char *>(m_abyHeader);
 
     const double dfLLLat = JDEMGetAngle(psHeader + 29);
     const double dfLLLong = JDEMGetAngle(psHeader + 36);
@@ -252,19 +255,13 @@ CPLErr JDEMDataset::GetGeoTransform( double *padfTransform )
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *JDEMDataset::_GetProjectionRef()
+const OGRSpatialReference *JDEMDataset::GetSpatialRef() const
 
 {
-    return
-        "GEOGCS[\"Tokyo\",DATUM[\"Tokyo\","
-        "SPHEROID[\"Bessel 1841\",6377397.155,299.1528128,"
-        "AUTHORITY[\"EPSG\",7004]],TOWGS84[-148,507,685,0,0,0,0],"
-        "AUTHORITY[\"EPSG\",6301]],PRIMEM[\"Greenwich\",0,"
-        "AUTHORITY[\"EPSG\",8901]],UNIT[\"DMSH\",0.0174532925199433,"
-        "AUTHORITY[\"EPSG\",9108]],AUTHORITY[\"EPSG\",4301]]";
+    return &m_oSRS;
 }
 
 /************************************************************************/
@@ -274,11 +271,11 @@ const char *JDEMDataset::_GetProjectionRef()
 int JDEMDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 {
-    // Confirm that the header has what appears to be dates in the
-    // expected locations.  Sadly this is a relatively weak test.
-    if( poOpenInfo->nHeaderBytes < 50 )
+    if( poOpenInfo->nHeaderBytes < HEADER_SIZE )
         return FALSE;
 
+    // Confirm that the header has what appears to be dates in the
+    // expected locations.
     // Check if century values seem reasonable.
     const char *psHeader = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
     if( (!STARTS_WITH_CI(psHeader + 11, "19") &&
@@ -287,6 +284,22 @@ int JDEMDataset::Identify( GDALOpenInfo *poOpenInfo )
          !STARTS_WITH_CI(psHeader + 15, "20")) ||
         (!STARTS_WITH_CI(psHeader + 19, "19") &&
          !STARTS_WITH_CI(psHeader + 19, "20")) )
+    {
+        return FALSE;
+    }
+
+    // Check the extent too. In particular, that we are in the first quadrant,
+    // as this is only for Japan.
+    const double dfLLLat = JDEMGetAngle(psHeader + 29);
+    const double dfLLLong = JDEMGetAngle(psHeader + 36);
+    const double dfURLat = JDEMGetAngle(psHeader + 43);
+    const double dfURLong = JDEMGetAngle(psHeader + 50);
+    if( dfLLLat > 90 || dfLLLat < 0 ||
+        dfLLLong > 180 ||dfLLLong < 0 ||
+        dfURLat > 90 || dfURLat < 0 ||
+        dfURLong > 180 || dfURLong < 0 ||
+        dfLLLat > dfURLat ||
+        dfLLLong > dfURLong )
     {
         return FALSE;
     }
@@ -321,38 +334,34 @@ GDALDataset *JDEMDataset::Open( GDALOpenInfo *poOpenInfo )
     }
 
     // Create a corresponding GDALDataset.
-    JDEMDataset *poDS = new JDEMDataset();
+    auto poDS = cpl::make_unique<JDEMDataset>();
 
     // Borrow the file pointer from GDALOpenInfo*.
-    poDS->fp = poOpenInfo->fpL;
-    poOpenInfo->fpL = nullptr;
+    std::swap(poDS->m_fp, poOpenInfo->fpL);
 
-    // Read the header.
-    CPL_IGNORE_RET_VAL(VSIFReadL(poDS->abyHeader, 1, 1012, poDS->fp));
+    // Store the header (we have already checked it is at least HEADER_SIZE
+    // byte large).
+    memcpy(poDS->m_abyHeader, poOpenInfo->pabyHeader, HEADER_SIZE);
 
-    const char *psHeader = reinterpret_cast<char *>(poDS->abyHeader);
+    const char *psHeader = reinterpret_cast<const char *>(poDS->m_abyHeader);
     poDS->nRasterXSize = JDEMGetField(psHeader + 23, 3);
     poDS->nRasterYSize = JDEMGetField(psHeader + 26, 3);
-    if( poDS->nRasterXSize <= 0 || poDS->nRasterYSize <= 0 )
+    if( !GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Invalid dimensions : %d x %d",
-                 poDS->nRasterXSize, poDS->nRasterYSize);
-        delete poDS;
         return nullptr;
     }
 
     // Create band information objects.
-    poDS->SetBand(1, new JDEMRasterBand(poDS, 1));
+    poDS->SetBand(1, new JDEMRasterBand(poDS.get(), 1));
 
     // Initialize any PAM information.
     poDS->SetDescription(poOpenInfo->pszFilename);
     poDS->TryLoadXML();
 
     // Check for overviews.
-    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
+    poDS->oOvManager.Initialize(poDS.get(), poOpenInfo->pszFilename);
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/

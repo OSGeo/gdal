@@ -225,6 +225,44 @@ supplied as "TRE=HEX/<tre_name>=<hex_tre_data>" or "FILE_TRE=HEX/<tre_name>=<hex
     # Encode "ABC" as 3 bytes of hex data, "414243"
     ds = gdal.GetDriverByName('NITF').Create('/vsimem/file.ntf', 1, 1, options=["TRE=HEX/TSTTRE=414243"])
 
+TRE creation as TRE_OVERFLOW DES
+--------------------------------
+
+The following example shows how to create a CSEPHA TRE as a TRE_OVERFLOW DES:
+
+.. code-block:: python
+
+    DESOFLW = "IXSHD "
+    DESITEM = "001" # index (starting at 1) of the image to which this TRE_OVERFLOW applies too
+    DESSHL = "0000"
+    des_header = "02U" + " " * 166 + DESOFLW + DESITEM + DESSHL
+
+    # Totally dummy content for CSEPHA data
+    EPHEM_FLAG = " " * 12
+    DT_EPHEM = " " * 5
+    DATE_EPHEM = " " * 8
+    T0_EPHEM = " " * 13
+    NUM_EPHEM = "001"
+    EPHEM_DATA = " " * (1 * (3 * 12))
+    CSEPHA_DATA = EPHEM_FLAG + DT_EPHEM + DATE_EPHEM + T0_EPHEM + NUM_EPHEM + EPHEM_DATA
+
+    des_data = "CSEPHA" + ("%05d" % len(CSEPHA_DATA)) + CSEPHA_DATA
+    des = des_header + des_data
+
+    ds = gdal.GetDriverByName("NITF").Create(
+        "/vsimem/nitf_DES.ntf",
+        1,
+        1,
+        options=["RESERVE_SPACE_FOR_TRE_OVERFLOW=YES",
+                 "DES=TRE_OVERFLOW=" + des],
+    )
+    ds = None
+
+
+Note the use of the RESERVE_SPACE_FOR_TRE_OVERFLOW=YES creation option to reserve
+space for the IXSOFL field in the image subheader pointed by DESITEM.
+
+
 Data Extension Segments (xml:DES)
 ---------------------------------
 Data Extension Segments (DESs) are user-defined metadata extensions to the NITF format.

@@ -52,16 +52,15 @@
 #include "ogr_srs_api.h"
 #include "vrtdataset.h"
 
-CPL_CVSID("$Id$")
 
 /** Overview of used classes :
    - ECRGTOCDataset : lists the different subdatasets, listed in the .xml,
                       as subdatasets
    - ECRGTOCSubDataset : one of these subdatasets, implemented as a VRT, of
                          the relevant NITF tiles
-   - ECRGTOCProxyRasterDataSet : a "proxy" dataset that maps to a NITF tile
 */
 
+namespace {
 typedef struct
 {
     const char* pszName;
@@ -69,6 +68,7 @@ typedef struct
     int         nScale;
     int         nZone;
 } FrameDesc;
+}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -78,6 +78,7 @@ typedef struct
 
 class ECRGTOCDataset final: public GDALPamDataset
 {
+  OGRSpatialReference m_oSRS{};
   char      **papszSubDatasets;
   double      adfGeoTransform[6];
 
@@ -86,6 +87,8 @@ class ECRGTOCDataset final: public GDALPamDataset
   public:
     ECRGTOCDataset()
     {
+        m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        m_oSRS.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
         papszSubDatasets = nullptr;
         papszFileList = nullptr;
         memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
@@ -112,12 +115,8 @@ class ECRGTOCDataset final: public GDALPamDataset
         return CE_None;
     }
 
-    virtual const char *_GetProjectionRef(void) override
-    {
-        return SRS_WKT_WGS84_LAT_LONG;
-    }
     const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
+        return &m_oSRS;
     }
 
     static GDALDataset* Build(  const char* pszTOCFilename,
@@ -415,122 +414,73 @@ int GetExtent(const char* pszFrameName, int nScale, int nZone,
 }
 
 /************************************************************************/
-/* ==================================================================== */
-/*                        ECRGTOCProxyRasterDataSet                       */
-/* ==================================================================== */
+/*                          ECRGTOCSource                               */
 /************************************************************************/
 
-class ECRGTOCProxyRasterDataSet final: public GDALProxyPoolDataset
+class ECRGTOCSource final: public VRTSimpleSource
 {
-    /* The following parameters are only for sanity checking */
-    mutable int checkDone;
-    mutable int checkOK;
-    double dfMinX;
-    double dfMaxY;
-    double dfPixelXSize;
-    double dfPixelYSize;
+    int     m_nRasterXSize = 0;
+    int     m_nRasterYSize = 0;
+    double  m_dfMinX = 0;
+    double  m_dfMaxY = 0;
+    double  m_dfPixelXSize = 0;
+    double  m_dfPixelYSize = 0;
+
+    bool        ValidateOpenedBand(GDALRasterBand*) const override;
 
     public:
-        ECRGTOCProxyRasterDataSet( ECRGTOCSubDataset* /* poSubDataset */,
-                                   const char* fileName,
-                                   int nXSize, int nYSize,
-                                   double dfMinX, double dfMaxY,
-                                   double dfPixelXSize, double dfPixelYSize );
-
-        GDALDataset* RefUnderlyingDataset() const override
+        ECRGTOCSource(const char* pszFilename,
+                      int nBandIn,
+                      int nRasterXSize, int nRasterYSize,
+                      double dfDstXOff, double dfDstYOff,
+                      double dfDstXSize, double dfDstYSize,
+                      double dfMinX,
+                      double dfMaxY,
+                      double dfPixelXSize,
+                      double dfPixelYSize):
+            m_nRasterXSize(nRasterXSize),
+            m_nRasterYSize(nRasterYSize),
+            m_dfMinX(dfMinX),
+            m_dfMaxY(dfMaxY),
+            m_dfPixelXSize(dfPixelXSize),
+            m_dfPixelYSize(dfPixelYSize)
         {
-            GDALDataset* poSourceDS = GDALProxyPoolDataset::RefUnderlyingDataset();
-            if (poSourceDS)
-            {
-                if (!checkDone)
-                    SanityCheckOK(poSourceDS);
-                if (!checkOK)
-                {
-                    GDALProxyPoolDataset::UnrefUnderlyingDataset(poSourceDS);
-                    poSourceDS = nullptr;
-                }
-            }
-            return poSourceDS;
+            SetSrcBand( pszFilename, nBandIn );
+            SetSrcWindow( 0, 0, nRasterXSize, nRasterYSize );
+            SetDstWindow( dfDstXOff, dfDstYOff,
+                          dfDstXSize, dfDstYSize );
         }
-
-        void UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset) const override
-        {
-            GDALProxyPoolDataset::UnrefUnderlyingDataset(poUnderlyingDataset);
-        }
-
-        int SanityCheckOK(GDALDataset* poSourceDS) const;
 };
 
 /************************************************************************/
-/*                    ECRGTOCProxyRasterDataSet()                       */
-/************************************************************************/
-
-ECRGTOCProxyRasterDataSet::ECRGTOCProxyRasterDataSet(
-    ECRGTOCSubDataset* /* poSubDatasetIn */,
-    const char* fileNameIn,
-    int nXSizeIn, int nYSizeIn,
-    double dfMinXIn, double dfMaxYIn,
-    double dfPixelXSizeIn, double dfPixelYSizeIn ) :
-    // Mark as shared since the VRT will take several references if we are in
-    // RGBA mode (4 bands for this dataset).
-    GDALProxyPoolDataset(fileNameIn, nXSizeIn, nYSizeIn, GA_ReadOnly,
-                         TRUE, SRS_WKT_WGS84_LAT_LONG),
-    checkDone(FALSE),
-    checkOK(FALSE),
-    dfMinX(dfMinXIn),
-    dfMaxY(dfMaxYIn),
-    dfPixelXSize(dfPixelXSizeIn),
-    dfPixelYSize(dfPixelYSizeIn)
-{
-
-    for( int i = 0; i < 3; i++ )
-    {
-        SetBand(i + 1,
-                new GDALProxyPoolRasterBand(this, i+1, GDT_Byte, nXSizeIn, 1));
-    }
-}
-
-/************************************************************************/
-/*                    SanityCheckOK()                                   */
+/*                       ValidateOpenedBand()                           */
 /************************************************************************/
 
 #define WARN_CHECK_DS(x) do { if (!(x)) { \
     CPLError(CE_Warning, CPLE_AppDefined,                             \
              "For %s, assert '" #x "' failed",                        \
-             GetDescription()); checkOK = FALSE; } } while( false )
+             poSourceDS->GetDescription()); checkOK = false; } } while( false )
 
-int ECRGTOCProxyRasterDataSet::SanityCheckOK( GDALDataset* poSourceDS ) const
+bool ECRGTOCSource::ValidateOpenedBand(GDALRasterBand* poBand) const
 {
-    // int nSrcBlockXSize;
-    // int nSrcBlockYSize;
-    // int nBlockXSize;
-    // int nBlockYSize;
+    bool checkOK = true;
+    auto poSourceDS = poBand->GetDataset();
+    CPLAssert(poSourceDS);
+
     double l_adfGeoTransform[6] = {};
-    if( checkDone )
-        return checkOK;
-
-    checkOK = TRUE;
-    checkDone = TRUE;
-
     poSourceDS->GetGeoTransform(l_adfGeoTransform);
-    WARN_CHECK_DS(fabs(l_adfGeoTransform[0] - dfMinX) < 1e-10);
-    WARN_CHECK_DS(fabs(l_adfGeoTransform[3] - dfMaxY) < 1e-10);
-    WARN_CHECK_DS(fabs(l_adfGeoTransform[1] - dfPixelXSize) < 1e-10);
-    WARN_CHECK_DS(fabs(l_adfGeoTransform[5] - (-dfPixelYSize)) < 1e-10);
+    WARN_CHECK_DS(fabs(l_adfGeoTransform[0] - m_dfMinX) < 1e-10);
+    WARN_CHECK_DS(fabs(l_adfGeoTransform[3] - m_dfMaxY) < 1e-10);
+    WARN_CHECK_DS(fabs(l_adfGeoTransform[1] - m_dfPixelXSize) < 1e-10);
+    WARN_CHECK_DS(fabs(l_adfGeoTransform[5] - (-m_dfPixelYSize)) < 1e-10);
     WARN_CHECK_DS(l_adfGeoTransform[2] == 0 &&
                   l_adfGeoTransform[4] == 0);  // No rotation.
     WARN_CHECK_DS(poSourceDS->GetRasterCount() == 3);
-    WARN_CHECK_DS(poSourceDS->GetRasterXSize() == nRasterXSize);
-    WARN_CHECK_DS(poSourceDS->GetRasterYSize() == nRasterYSize);
+    WARN_CHECK_DS(poSourceDS->GetRasterXSize() == m_nRasterXSize);
+    WARN_CHECK_DS(poSourceDS->GetRasterYSize() == m_nRasterYSize);
     WARN_CHECK_DS(EQUAL(poSourceDS->GetProjectionRef(), SRS_WKT_WGS84_LAT_LONG));
-    // poSourceDS->GetRasterBand(1)->GetBlockSize(&nSrcBlockXSize,
-    //                                            &nSrcBlockYSize);
-    // GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
-    // WARN_CHECK_DS(nSrcBlockXSize == nBlockXSize);
-    // WARN_CHECK_DS(nSrcBlockYSize == nBlockYSize);
     WARN_CHECK_DS(
         poSourceDS->GetRasterBand(1)->GetRasterDataType() == GDT_Byte);
-
     return checkOK;
 }
 
@@ -639,6 +589,12 @@ GDALDataset* ECRGTOCSubDataset::Build(  const char* pszProductTitle,
 
     poVirtualDS->papszFileList = poVirtualDS->GDALDataset::GetFileList();
 
+    // Rather hacky... Force GDAL_FORCE_CACHING=NO so that the GDALProxyPoolRasterBand
+    // do not use the GDALRasterBand::IRasterIO() default implementation,
+    // which would rely on the block size of GDALProxyPoolRasterBand, which
+    // we don't know...
+    CPLConfigOptionSetter oSetter("GDAL_FORCE_CACHING", "NO", false);
+
     for( int i=0; i < static_cast<int>( aosFrameDesc.size() ); i++)
     {
         const char* pszName = BuildFullName(pszTOCFilename,
@@ -662,35 +618,21 @@ GDALDataset* ECRGTOCSubDataset::Build(  const char* pszProductTitle,
 
         poVirtualDS->papszFileList = CSLAddString(poVirtualDS->papszFileList, pszName);
 
-        /* We create proxy datasets and raster bands */
-        /* Using real datasets and raster bands is possible in theory */
-        /* However for large datasets, a TOC entry can include several hundreds of files */
-        /* and we finally reach the limit of maximum file descriptors open at the same time ! */
-        /* So the idea is to warp the datasets into a proxy and open the underlying dataset only when it is */
-        /* needed (IRasterIO operation). To improve a bit efficiency, we have a cache of opened */
-        /* underlying datasets */
-        ECRGTOCProxyRasterDataSet* poDS = new ECRGTOCProxyRasterDataSet(
-            reinterpret_cast<ECRGTOCSubDataset *>( poVirtualDS), pszName,
-            nFrameXSize, nFrameYSize,
-            dfMinX, dfMaxY, dfPixelXSize, dfPixelYSize);
-
         for( int j=0; j<3; j++)
         {
-            VRTSourcedRasterBand *poBand = reinterpret_cast<VRTSourcedRasterBand *>(
+            VRTSourcedRasterBand *poBand = cpl::down_cast<VRTSourcedRasterBand *>(
                 poVirtualDS->GetRasterBand( j + 1 ) );
             /* Place the raster band at the right position in the VRT */
-            poBand->AddSimpleSource(
-                poDS->GetRasterBand(j + 1),
-                0, 0, nFrameXSize, nFrameYSize,
+            auto poSource = new ECRGTOCSource(
+                pszName, j+1,
+                nFrameXSize, nFrameYSize,
                 static_cast<int>((dfMinX - dfGlobalMinX) / dfGlobalPixelXSize + 0.5),
                 static_cast<int>((dfGlobalMaxY - dfMaxY) / dfGlobalPixelYSize + 0.5),
                 static_cast<int>((dfMaxX - dfMinX) / dfGlobalPixelXSize + 0.5),
-                static_cast<int>((dfMaxY - dfMinY) / dfGlobalPixelYSize + 0.5));
+                static_cast<int>((dfMaxY - dfMinY) / dfGlobalPixelYSize + 0.5),
+                dfMinX, dfMaxY, dfPixelXSize, dfPixelYSize);
+            poBand->AddSource(poSource);
         }
-
-        /* The ECRGTOCProxyRasterDataSet will be destroyed when its last raster band will be */
-        /* destroyed */
-        poDS->Dereference();
     }
 
     poVirtualDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");

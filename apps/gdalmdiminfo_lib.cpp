@@ -36,7 +36,6 @@
 #include <limits>
 #include <set>
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                       GDALMultiDimInfoOptions                        */
@@ -1133,10 +1132,7 @@ char *GDALMultiDimInfo( GDALDatasetH hDataset,
  *
  * @param papszArgv NULL terminated list of options (potentially including filename and open options too), or NULL.
  *                  The accepted options are the ones of the <a href="/programs/gdalmdiminfo.html">gdalmdiminfo</a> utility.
- * @param psOptionsForBinary (output) may be NULL (and should generally be NULL),
- *                           otherwise (gdalmultidiminfo_bin.cpp use case) must be allocated with
- *                           GDALMultiDimInfoOptionsForBinaryNew() prior to this function. Will be
- *                           filled with potentially present filename, open options, subdataset number...
+ * @param psOptionsForBinary should be nullptr, unless called from gdalmultidiminfo_bin.cpp
  * @return pointer to the allocated GDALMultiDimInfoOptions struct. Must be freed with GDALMultiDimInfoOptionsFree().
  *
  * @since GDAL 3.1
@@ -1159,8 +1155,7 @@ GDALMultiDimInfoOptions *GDALMultiDimInfoOptionsNew(
             i++;
             if( psOptionsForBinary )
             {
-                psOptionsForBinary->papszOpenOptions = CSLAddString(
-                     psOptionsForBinary->papszOpenOptions, papszArgv[i] );
+                psOptionsForBinary->aosOpenOptions.AddString( papszArgv[i] );
             }
         }
         /* Not documented: used by gdalinfo_bin.cpp only */
@@ -1189,6 +1184,21 @@ GDALMultiDimInfoOptions *GDALMultiDimInfoOptionsNew(
         {
             psOptions->bStats = true;
         }
+
+        else if( EQUAL(papszArgv[i], "-if") && papszArgv[i+1] != nullptr )
+        {
+            i++;
+            if( psOptionsForBinary )
+            {
+                if( GDALGetDriverByName(papszArgv[i]) == nullptr )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "%s is not a recognized driver", papszArgv[i]);
+                }
+                psOptionsForBinary->aosAllowInputDrivers.AddString( papszArgv[i] );
+            }
+        }
+
         else if( papszArgv[i][0] == '-' )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
@@ -1200,7 +1210,7 @@ GDALMultiDimInfoOptions *GDALMultiDimInfoOptionsNew(
         {
             bGotFilename = true;
             if( psOptionsForBinary )
-                psOptionsForBinary->pszFilename = CPLStrdup(papszArgv[i]);
+                psOptionsForBinary->osFilename = papszArgv[i];
         }
         else
         {

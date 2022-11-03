@@ -43,7 +43,6 @@
 
 extern "C" void GDALRegister_STACTA();
 
-CPL_CVSID("$Id$")
 
 // Implements a driver for
 // https://github.com/stac-extensions/tiled-assets
@@ -437,11 +436,11 @@ CPLErr STACTARawDataset::IRasterIO( GDALRWFlag eRWFlag,
             const int nBufYSizeEffective =
                 bRequestFitsInSingleMetaTile ? nBufYSize : nTileYSize;
 
-            std::shared_ptr<GDALDataset> poTileDS;
             bool bMissingTile = false;
             do
             {
-                if( !m_poMasterDS->m_oCacheTileDS.tryGet(osURL, poTileDS) )
+                std::unique_ptr<GDALDataset>* ppoTileDS = m_poMasterDS->m_oCacheTileDS.getPtr(osURL);
+                if( ppoTileDS == nullptr )
                 {
                     CPLStringList aosAllowedDrivers;
                     aosAllowedDrivers.AddString("GTiff");
@@ -451,6 +450,7 @@ CPLErr STACTARawDataset::IRasterIO( GDALRWFlag eRWFlag,
                     aosAllowedDrivers.AddString("JP2ECW");
                     aosAllowedDrivers.AddString("JP2MrSID");
                     aosAllowedDrivers.AddString("JP2OpenJPEG");
+                    std::unique_ptr<GDALDataset> poTileDS;
                     if( bDownloadWholeMetaTile &&
                         !VSIIsLocal(osURL.c_str()) )
                     {
@@ -481,7 +481,7 @@ CPLErr STACTARawDataset::IRasterIO( GDALRWFlag eRWFlag,
                         VSIFCloseL(fp);
                         const CPLString osMEMFilename("/vsimem/stacta/" + osURL);
                         VSIFCloseL(VSIFileFromMemBuffer(osMEMFilename, pabyBuf, nSize, TRUE));
-                        poTileDS = std::shared_ptr<GDALDataset>(
+                        poTileDS = std::unique_ptr<GDALDataset>(
                             GDALDataset::Open(osMEMFilename,
                                             GDAL_OF_INTERNAL | GDAL_OF_RASTER,
                                             aosAllowedDrivers.List()));
@@ -498,7 +498,7 @@ CPLErr STACTARawDataset::IRasterIO( GDALRWFlag eRWFlag,
                         aosAllowedDrivers.AddString("HTTP");
                         if( m_poMasterDS->m_bSkipMissingMetaTile )
                             CPLPushErrorHandler(CPLQuietErrorHandler);
-                        poTileDS = std::shared_ptr<GDALDataset>(
+                        poTileDS = std::unique_ptr<GDALDataset>(
                             GDALDataset::Open(osURL,
                                             GDAL_OF_INTERNAL | GDAL_OF_RASTER,
                                             aosAllowedDrivers.List()));
@@ -509,7 +509,7 @@ CPLErr STACTARawDataset::IRasterIO( GDALRWFlag eRWFlag,
                     {
                         if( m_poMasterDS->m_bSkipMissingMetaTile )
                             CPLPushErrorHandler(CPLQuietErrorHandler);
-                        poTileDS = std::shared_ptr<GDALDataset>(
+                        poTileDS = std::unique_ptr<GDALDataset>(
                             GDALDataset::Open(("/vsicurl/" + osURL).c_str(),
                                             GDAL_OF_INTERNAL | GDAL_OF_RASTER,
                                             aosAllowedDrivers.List()));
@@ -520,7 +520,7 @@ CPLErr STACTARawDataset::IRasterIO( GDALRWFlag eRWFlag,
                     {
                         if( m_poMasterDS->m_bSkipMissingMetaTile )
                         {
-                            m_poMasterDS->m_oCacheTileDS.insert(osURL, nullptr);
+                            m_poMasterDS->m_oCacheTileDS.insert(osURL, std::move(poTileDS));
                             bMissingTile = true;
                             break;
                         }
@@ -528,8 +528,9 @@ CPLErr STACTARawDataset::IRasterIO( GDALRWFlag eRWFlag,
                                 "Cannot open %s", osURL.c_str());
                         return CE_Failure;
                     }
-                    m_poMasterDS->m_oCacheTileDS.insert(osURL, poTileDS);
+                    ppoTileDS = &m_poMasterDS->m_oCacheTileDS.insert(osURL, std::move(poTileDS));
                 }
+                std::unique_ptr<GDALDataset>& poTileDS = *ppoTileDS;
                 if( poTileDS == nullptr )
                 {
                     bMissingTile = true;

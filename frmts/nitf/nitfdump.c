@@ -35,31 +35,9 @@
 
 #include "ogr_api.h"
 
-CPL_CVSID("$Id$")
 
 static void DumpRPC( NITFImage *psImage, NITFRPC00BInfo *psRPC );
 static void DumpMetadata( const char *, const char *, char ** );
-
-/* Below a few internal functions from nitffile.c and nitfimage.c */
-/* To be used by nitfdump.c, they should be CPL_DLL exported, but */
-/* they are mostly internal beasts so we copy&paste them here... */
-
-/************************************************************************/
-/*                            NITFGetField()                            */
-/*                                                                      */
-/*      Copy a field from a passed in header buffer into a temporary    */
-/*      buffer and zero terminate it.                                   */
-/************************************************************************/
-
-char *NITFGetField( char *pszTarget, const char *pszSource,
-                    int nStart, int nLength )
-
-{
-    memcpy( pszTarget, pszSource + nStart, nLength );
-    pszTarget[nLength] = '\0';
-
-    return pszTarget;
-}
 
 
 static GUInt16 NITFReadMSBGUInt16(VSILFILE* fp, int* pbSuccess)
@@ -84,80 +62,6 @@ static GUInt32 NITFReadMSBGUInt32(VSILFILE* fp, int* pbSuccess)
     }
     CPL_MSBPTR32( &nVal );
     return nVal;
-}
-
-/************************************************************************/
-/*                     NITFReadRPFLocationTable()                       */
-/************************************************************************/
-
-NITFLocation* NITFReadRPFLocationTable(VSILFILE* fp, int* pnLocCount)
-{
-    GUInt32 nLocSectionOffset;
-    GUInt16 iLoc;
-    GUInt16 nLocCount;
-    GUInt16 nLocRecordLength;
-    NITFLocation* pasLocations = NULL;
-    int bSuccess;
-    GUIntBig nCurOffset;
-
-    if (fp == NULL || pnLocCount == NULL)
-        return NULL;
-
-    *pnLocCount = 0;
-
-    nCurOffset = VSIFTellL(fp);
-
-    bSuccess = TRUE;
-    /*nLocSectionLength = */ NITFReadMSBGUInt16(fp, &bSuccess);
-    nLocSectionOffset = NITFReadMSBGUInt32(fp, &bSuccess);
-    if (nLocSectionOffset != 14)
-    {
-        CPLDebug("NITF", "Unusual location section offset : %d", nLocSectionOffset);
-    }
-
-    nLocCount = NITFReadMSBGUInt16(fp, &bSuccess);
-
-    if (!bSuccess || nLocCount == 0)
-    {
-        return NULL;
-    }
-
-    nLocRecordLength = NITFReadMSBGUInt16(fp, &bSuccess);
-    if (nLocRecordLength != 10)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Did not get expected record length : %d", nLocRecordLength);
-        return NULL;
-    }
-
-    /*nLocComponentAggregateLength = */ NITFReadMSBGUInt32(fp, &bSuccess);
-
-    VSIFSeekL(fp, nCurOffset + nLocSectionOffset, SEEK_SET);
-
-    pasLocations = (NITFLocation *)  VSI_CALLOC_VERBOSE(sizeof(NITFLocation), nLocCount);
-    if (pasLocations == NULL)
-    {
-        return NULL;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Process the locations.                                          */
-/* -------------------------------------------------------------------- */
-    for( iLoc = 0; iLoc < nLocCount; iLoc++ )
-    {
-        pasLocations[iLoc].nLocId = NITFReadMSBGUInt16(fp, &bSuccess);
-        pasLocations[iLoc].nLocSize = NITFReadMSBGUInt32(fp, &bSuccess);
-        pasLocations[iLoc].nLocOffset = NITFReadMSBGUInt32(fp, &bSuccess);
-    }
-
-    if (!bSuccess)
-    {
-        CPLFree(pasLocations);
-        return NULL;
-    }
-
-    *pnLocCount = nLocCount;
-    return pasLocations;
 }
 
 typedef struct
@@ -692,7 +596,7 @@ int main( int nArgc, char ** papszArgv )
 
             if ( bExtractSHP && EQUAL(CSLFetchNameValueDef(psDES->papszMetadata, "DESID", ""), "CSSHPA DES") )
             {
-                char szFilename[32];
+                char szFilename[40];
                 char szRadix[32];
                 if (bExtractSHPInMem)
                     snprintf(szRadix, sizeof(szRadix), "/vsimem/nitf_segment_%d", iSegment + 1);

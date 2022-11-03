@@ -40,7 +40,6 @@
 
 constexpr GInt16 SRTMHG_NODATA_VALUE = -32768;
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -57,15 +56,13 @@ class SRTMHGTDataset final: public GDALPamDataset
     VSILFILE*  fpImage = nullptr;
     double adfGeoTransform[6];
     GByte* pabyBuffer = nullptr;
+    OGRSpatialReference m_oSRS{};
 
   public:
     SRTMHGTDataset();
     virtual ~SRTMHGTDataset();
 
-    virtual const char *_GetProjectionRef(void) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
     virtual CPLErr GetGeoTransform(double*) override;
 
     static int Identify( GDALOpenInfo * poOpenInfo );
@@ -223,12 +220,22 @@ GDALColorInterp SRTMHGTRasterBand::GetColorInterpretation()
 
 SRTMHGTDataset::SRTMHGTDataset()
 {
-  adfGeoTransform[0] = 0.0;
-  adfGeoTransform[1] = 1.0;
-  adfGeoTransform[2] = 0.0;
-  adfGeoTransform[3] = 0.0;
-  adfGeoTransform[4] = 0.0;
-  adfGeoTransform[5] = 1.0;
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    if (CPLTestBool( CPLGetConfigOption("REPORT_COMPD_CS", "NO") ) )
+    {
+        m_oSRS.importFromWkt("COMPD_CS[\"WGS 84 + EGM96 geoid height\", GEOGCS[\"WGS 84\", DATUM[\"WGS_1984\", SPHEROID[\"WGS 84\",6378137,298.257223563, AUTHORITY[\"EPSG\",\"7030\"]], AUTHORITY[\"EPSG\",\"6326\"]], PRIMEM[\"Greenwich\",0, AUTHORITY[\"EPSG\",\"8901\"]], UNIT[\"degree\",0.0174532925199433, AUTHORITY[\"EPSG\",\"9122\"]], AUTHORITY[\"EPSG\",\"4326\"]], VERT_CS[\"EGM96 geoid height\", VERT_DATUM[\"EGM96 geoid\",2005, AUTHORITY[\"EPSG\",\"5171\"]], UNIT[\"metre\",1, AUTHORITY[\"EPSG\",\"9001\"]], AXIS[\"Up\",UP], AUTHORITY[\"EPSG\",\"5773\"]]]");
+
+    }
+    else
+    {
+        m_oSRS.importFromWkt(SRS_WKT_WGS84_LAT_LONG);
+    }
+    adfGeoTransform[0] = 0.0;
+    adfGeoTransform[1] = 1.0;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = 0.0;
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -254,21 +261,13 @@ CPLErr SRTMHGTDataset::GetGeoTransform(double * padfTransform)
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char *SRTMHGTDataset::_GetProjectionRef()
+const OGRSpatialReference *SRTMHGTDataset::GetSpatialRef() const
 
 {
-        if (CPLTestBool( CPLGetConfigOption("REPORT_COMPD_CS", "NO") ) )
-        {
-                return "COMPD_CS[\"WGS 84 + EGM96 geoid height\", GEOGCS[\"WGS 84\", DATUM[\"WGS_1984\", SPHEROID[\"WGS 84\",6378137,298.257223563, AUTHORITY[\"EPSG\",\"7030\"]], AUTHORITY[\"EPSG\",\"6326\"]], PRIMEM[\"Greenwich\",0, AUTHORITY[\"EPSG\",\"8901\"]], UNIT[\"degree\",0.0174532925199433, AUTHORITY[\"EPSG\",\"9122\"]], AUTHORITY[\"EPSG\",\"4326\"]], VERT_CS[\"EGM96 geoid height\", VERT_DATUM[\"EGM96 geoid\",2005, AUTHORITY[\"EPSG\",\"5171\"]], UNIT[\"metre\",1, AUTHORITY[\"EPSG\",\"9001\"]], AXIS[\"Up\",UP], AUTHORITY[\"EPSG\",\"5773\"]]]";
-
-        }
-        else
-        {
-            return SRS_WKT_WGS84_LAT_LONG;
-        }
+    return &m_oSRS;
 }
 
 /************************************************************************/

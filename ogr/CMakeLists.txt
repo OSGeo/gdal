@@ -58,7 +58,8 @@ add_library(
   ograpispy.cpp
   ogr_xerces.cpp
   ogr_geo_utils.cpp
-  ogr_proj_p.cpp)
+  ogr_proj_p.cpp
+  ogr_wkb.cpp)
 add_dependencies(ogr generate_gdal_version_h)
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
   set_property(
@@ -152,3 +153,35 @@ target_public_header(
   ogr_swq.h
   ogr_srs_api.h
   ogrsf_frmts/ogrsf_frmts.h)
+
+###########################################################
+# Targets to refresh swq_parser.cpp
+###########################################################
+
+# Those targets need to be run manually each time swq_parser.y
+# is modified.
+# We could of course run them automatically, but that would make building
+# GDAL harder.
+
+# This target checks that swq_parser.y md5sum has not changed
+# If it has, then it should be updated and the generate_swq_parser target
+# should be manually run
+add_custom_target(check_swq_parser_md5 ALL
+                  COMMAND ${CMAKE_COMMAND}
+                      "-DIN_FILE=swq_parser.y"
+                      "-DTARGET=generate_swq_parser"
+                      "-DEXPECTED_MD5SUM=6213b394532642ebbe6cb3304f2860fc"
+                      "-DFILENAME_CMAKE=${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
+                      -P "${PROJECT_SOURCE_DIR}/cmake/helpers/check_md5sum.cmake"
+                  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+                  DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/swq_parser.y"
+                  VERBATIM)
+
+find_package(BISON)
+add_custom_target(generate_swq_parser
+                  COMMAND ${CMAKE_COMMAND}
+                      "-DBISON_FOUND=${BISON_FOUND}"
+                      "-DBISON_EXECUTABLE=${BISON_EXECUTABLE}"
+                      -P "${CMAKE_CURRENT_SOURCE_DIR}/generate_swq_parser.cmake"
+                  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+                  VERBATIM)

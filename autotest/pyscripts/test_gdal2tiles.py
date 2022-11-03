@@ -317,7 +317,7 @@ def test_does_not_error_when_nothing_to_put_in_the_low_zoom_tile():
         )
 
 
-def test_python3_handle_utf8_by_default():
+def test_handle_utf8_filename():
     input_file = "data/test_utf8_漢字.vrt"
     script_path = test_py_scripts.get_py_script("gdal2tiles")
     if script_path is None:
@@ -332,15 +332,12 @@ def test_python3_handle_utf8_by_default():
 
     args = f"-q -z 21 {input_file} {out_folder}"
 
-    try:
-        ret = test_py_scripts.run_py_script(script_path, "gdal2tiles", args)
-        print(ret)
-    except UnicodeEncodeError:
-        pytest.fail("Should be handling filenames with utf8 characters in this context")
+    test_py_scripts.run_py_script(script_path, "gdal2tiles", args)
 
-    assert not (
-        "WARNING" in ret and "LC_CTYPE" in ret
-    ), "Should not display a warning message about LC_CTYPE variable"
+    openlayers_html = open(
+        os.path.join(out_folder, "openlayers.html"), "rt", encoding="utf-8"
+    ).read()
+    assert "<title>test_utf8_漢字.vrt</title>" in openlayers_html
 
     try:
         shutil.rmtree(out_folder)

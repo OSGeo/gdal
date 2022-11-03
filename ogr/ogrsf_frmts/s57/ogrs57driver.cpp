@@ -31,7 +31,6 @@
 #include "cpl_conv.h"
 #include "cpl_multiproc.h"
 
-CPL_CVSID("$Id$")
 
 S57ClassRegistrar *OGRS57Driver::poRegistrar = nullptr;
 static CPLMutex* hS57RegistrarMutex = nullptr;
@@ -173,6 +172,7 @@ void RegisterOGRS57()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "IHO S-57 (ENC)" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "000" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/s57.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,

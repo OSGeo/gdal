@@ -321,6 +321,8 @@ The following open options can be specified
    values are strictly numeric.
 -  **EMPTY_STRING_AS_NULL**\ =YES/NO (default NO) (GDAL >= 2.1) Whether
    to consider empty strings as null fields on reading'.
+-  **MAX_LINE_SIZE**\ =integer (default 10000000) (GDAL >= 3.5.3) Maximum number
+   of bytes for a line (-1=unlimited).
 
 Creation Issues
 ---------------

@@ -5928,6 +5928,190 @@ def test_ogr_pg_alter_geom_field_defn():
 
 
 ###############################################################################
+
+
+def test_ogr_pg_get_geometry_types():
+    """Test Layer.GetGeometryTypes()"""
+
+    if gdaltest.pg_ds is None:
+        pytest.skip()
+
+    if not gdaltest.pg_has_postgis:
+        pytest.skip()
+
+    try:
+        lyr = gdaltest.pg_ds.CreateLayer(
+            "ogr_pg_get_geometry_types_XY", geom_type=ogr.wkbUnknown
+        )
+
+        assert lyr.GetGeometryTypes() == {}
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        lyr.CreateFeature(f)
+        assert lyr.GetGeometryTypes() == {ogr.wkbNone: 1}
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        lyr.CreateFeature(f)
+        assert lyr.GetGeometryTypes(callback=lambda x, y, z: 1) == {ogr.wkbNone: 2}
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT EMPTY"))
+        lyr.CreateFeature(f)
+        assert lyr.GetGeometryTypes() == {ogr.wkbNone: 2, ogr.wkbPoint: 1}
+        assert lyr.GetGeometryTypes(flags=ogr.GGT_GEOMCOLLECTIONZ_TINZ) == {
+            ogr.wkbNone: 2,
+            ogr.wkbPoint: 1,
+        }
+        lyr.SetAttributeFilter("TRUE")
+        assert lyr.GetGeometryTypes() == {ogr.wkbNone: 2, ogr.wkbPoint: 1}
+        assert lyr.GetGeometryTypes(flags=ogr.GGT_GEOMCOLLECTIONZ_TINZ) == {
+            ogr.wkbNone: 2,
+            ogr.wkbPoint: 1,
+        }
+        lyr.SetAttributeFilter(None)
+        lyr.SetAttributeFilter("FALSE")
+        assert lyr.GetGeometryTypes() == {}
+        assert lyr.GetGeometryTypes(flags=ogr.GGT_GEOMCOLLECTIONZ_TINZ) == {}
+        lyr.SetAttributeFilter(None)
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON EMPTY"))
+        lyr.CreateFeature(f)
+        assert lyr.GetGeometryTypes() == {
+            ogr.wkbNone: 2,
+            ogr.wkbPoint: 1,
+            ogr.wkbPolygon: 1,
+        }
+        assert lyr.GetGeometryTypes(flags=ogr.GGT_STOP_IF_MIXED) == {
+            ogr.wkbNone: 0,
+            ogr.wkbPoint: 0,
+            ogr.wkbPolygon: 0,
+        }
+        lyr.SetAttributeFilter("TRUE")
+        assert lyr.GetGeometryTypes() == {
+            ogr.wkbNone: 2,
+            ogr.wkbPoint: 1,
+            ogr.wkbPolygon: 1,
+        }
+        assert lyr.GetGeometryTypes(flags=ogr.GGT_STOP_IF_MIXED) == {
+            ogr.wkbNone: 0,
+            ogr.wkbPoint: 0,
+            ogr.wkbPolygon: 0,
+        }
+        lyr.SetAttributeFilter(None)
+        lyr.SetAttributeFilter("FALSE")
+        assert lyr.GetGeometryTypes(flags=ogr.GGT_STOP_IF_MIXED) == {}
+        lyr.SetAttributeFilter(None)
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING (0 0,1 1)"))
+        lyr.CreateFeature(f)
+        assert lyr.GetGeometryTypes() == {
+            ogr.wkbNone: 2,
+            ogr.wkbPoint: 1,
+            ogr.wkbPolygon: 1,
+            ogr.wkbLineString: 1,
+        }
+        res = lyr.GetGeometryTypes(geom_field=0, flags=ogr.GGT_STOP_IF_MIXED)
+        assert ogr.wkbNone in res
+        assert len(res) == 3
+
+        with gdaltest.error_handler():
+            with gdaltest.config_option("OGR_PG_DEBUG_GGT_CANCEL", "YES"):
+                with pytest.raises(Exception):
+                    lyr.GetGeometryTypes(callback=lambda x, y, z: 0)
+
+        with gdaltest.error_handler():
+            with pytest.raises(Exception):
+                lyr.GetGeometryTypes(geom_field=2)
+
+        lyr = gdaltest.pg_ds.CreateLayer(
+            "ogr_pg_get_geometry_types_XYZ",
+            geom_type=ogr.wkbUnknown,
+            options=["DIM=XYZ"],
+        )
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT Z(0 0 0)"))
+        lyr.CreateFeature(f)
+        assert lyr.GetGeometryTypes() == {ogr.wkbPoint25D: 1}
+
+        lyr = gdaltest.pg_ds.CreateLayer(
+            "ogr_pg_get_geometry_types_XYM",
+            geom_type=ogr.wkbUnknown,
+            options=["DIM=XYM"],
+        )
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT M(0 0 0)"))
+        lyr.CreateFeature(f)
+        assert lyr.GetGeometryTypes() == {ogr.wkbPointM: 1}
+
+        lyr = gdaltest.pg_ds.CreateLayer(
+            "ogr_pg_get_geometry_types_XYZM",
+            geom_type=ogr.wkbUnknown,
+            options=["DIM=XYZM"],
+        )
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT ZM(0 0 0 0)"))
+        lyr.CreateFeature(f)
+        assert lyr.GetGeometryTypes() == {ogr.wkbPointZM: 1}
+
+        lyr = gdaltest.pg_ds.CreateLayer(
+            "ogr_pg_get_geometry_types_geomcollectionz_as_tinz",
+            geom_type=ogr.wkbUnknown,
+            options=["DIM=XYZ"],
+        )
+        assert lyr.GetGeometryTypes(flags=ogr.GGT_GEOMCOLLECTIONZ_TINZ) == {}
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(
+            ogr.CreateGeometryFromWkt(
+                "GEOMETRYCOLLECTION Z (TIN Z(((0 0 0,0 1 0,1 1 0,0 0 0))))"
+            )
+        )
+        lyr.CreateFeature(f)
+        assert lyr.GetGeometryTypes(flags=ogr.GGT_GEOMCOLLECTIONZ_TINZ) == {
+            ogr.wkbTINZ: 1
+        }
+        f = ogr.Feature(lyr.GetLayerDefn())
+        lyr.CreateFeature(f)
+        assert lyr.GetGeometryTypes(flags=ogr.GGT_GEOMCOLLECTIONZ_TINZ) == {
+            ogr.wkbNone: 1,
+            ogr.wkbTINZ: 1,
+        }
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT Z(0 0 0)"))
+        lyr.CreateFeature(f)
+        assert lyr.GetGeometryTypes(flags=ogr.GGT_GEOMCOLLECTIONZ_TINZ) == {
+            ogr.wkbNone: 1,
+            ogr.wkbPoint25D: 1,
+            ogr.wkbTINZ: 1,
+        }
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("TIN Z(((0 0 0,0 1 0,1 1 0,0 0 0)))"))
+        lyr.CreateFeature(f)
+        assert lyr.GetGeometryTypes(flags=ogr.GGT_GEOMCOLLECTIONZ_TINZ) == {
+            ogr.wkbNone: 1,
+            ogr.wkbPoint25D: 1,
+            ogr.wkbTINZ: 2,
+        }
+        lyr.SetAttributeFilter("TRUE")
+        assert lyr.GetGeometryTypes(flags=ogr.GGT_GEOMCOLLECTIONZ_TINZ) == {
+            ogr.wkbNone: 1,
+            ogr.wkbPoint25D: 1,
+            ogr.wkbTINZ: 2,
+        }
+        lyr.SetAttributeFilter(None)
+
+    finally:
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_get_geometry_types_XY")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_get_geometry_types_XYZ")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_get_geometry_types_XYM")
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_get_geometry_types_XYZM")
+        gdaltest.pg_ds.ExecuteSQL(
+            "DELLAYER:ogr_pg_get_geometry_types_geomcollectionz_as_tinz"
+        )
+
+
+###############################################################################
 #
 
 

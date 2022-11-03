@@ -29,7 +29,6 @@
 #include "ogr_elastic.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                   OGRElasticsearchDriverIdentify()                   */
@@ -103,6 +102,7 @@ void RegisterOGRElastic() {
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "ES:" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
                                "<CreationOptionList/>");
+    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE ES" );
 
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
     "<LayerCreationOptionList>"
