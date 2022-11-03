@@ -70,10 +70,9 @@ class GDALCADDataset final: public GDALDataset
     OGRCADLayer  **papoLayers;
     int            nLayers;
     // raster
-    CPLString      soWKT;
     double         adfGeoTransform[6];
     GDALDataset   *poRasterDS;
-    OGRSpatialReference *poSpatialReference;
+    mutable OGRSpatialReference *poSpatialReference;
 
 public:
     GDALCADDataset();
@@ -85,10 +84,7 @@ public:
     OGRLayer      *GetLayer( int ) override;
     int            TestCapability( const char * ) override;
     virtual char **GetFileList() override;
-    virtual const char  *_GetProjectionRef(void) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
     virtual CPLErr GetGeoTransform( double * ) override;
     virtual int    GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
@@ -96,8 +92,7 @@ public:
     virtual int CloseDependentDatasets() override;
 
 protected:
-    OGRSpatialReference *GetSpatialReference();
-    const char* GetPrjFilePath();
+    const char* GetPrjFilePath() const;
     void FillTransform(CADImage* pImage, double dfUnits);
     int GetCadEncoding() const;
 private:

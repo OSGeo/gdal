@@ -649,8 +649,7 @@ GDALProxyPoolDataset::GDALProxyPoolDataset(const char* pszSourceDatasetDescripti
                                    double * padfGeoTransform,
                                    const char* pszOwner):
     responsiblePID(GDALGetResponsiblePIDForCurrentThread()),
-    pszProjectionRef(pszProjectionRefIn ? CPLStrdup(pszProjectionRefIn): nullptr),
-    bHasSrcProjection(pszProjectionRefIn != nullptr)
+    pszProjectionRef(pszProjectionRefIn ? CPLStrdup(pszProjectionRefIn): nullptr)
 {
     GDALDatasetPool::Ref();
 
@@ -914,32 +913,6 @@ const OGRSpatialReference* GDALProxyPoolDataset::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                        SetProjection()                               */
-/************************************************************************/
-
-CPLErr GDALProxyPoolDataset::_SetProjection(const char* pszProjectionRefIn)
-{
-    bHasSrcProjection = false;
-    return GDALProxyDataset::_SetProjection(pszProjectionRefIn);
-}
-
-/************************************************************************/
-/*                        GetProjectionRef()                            */
-/************************************************************************/
-
-const char *GDALProxyPoolDataset::_GetProjectionRef()
-{
-    if (bHasSrcProjection)
-        return pszProjectionRef;
-    else
-    {
-        CPLFree(pszProjectionRef);
-        pszProjectionRef = CPLStrdup( GDALProxyDataset::_GetProjectionRef() );
-        return pszProjectionRef;
-    }
-}
-
-/************************************************************************/
 /*                        SetGeoTransform()                             */
 /************************************************************************/
 
@@ -1055,28 +1028,6 @@ const OGRSpatialReference *GDALProxyPoolDataset::GetGCPSpatialRef() const
     UnrefUnderlyingDataset(poUnderlyingDataset);
 
     return m_poGCPSRS;
-}
-
-/************************************************************************/
-/*                     GetGCPProjection()                               */
-/************************************************************************/
-
-const char *GDALProxyPoolDataset::_GetGCPProjection()
-{
-    GDALDataset* poUnderlyingDataset = RefUnderlyingDataset();
-    if (poUnderlyingDataset == nullptr)
-        return nullptr;
-
-    CPLFree(pszGCPProjection);
-    pszGCPProjection = nullptr;
-
-    const char* pszUnderlyingGCPProjection = poUnderlyingDataset->_GetGCPProjection();
-    if (pszUnderlyingGCPProjection)
-        pszGCPProjection = CPLStrdup(pszUnderlyingGCPProjection);
-
-    UnrefUnderlyingDataset(poUnderlyingDataset);
-
-    return pszGCPProjection;
 }
 
 /************************************************************************/

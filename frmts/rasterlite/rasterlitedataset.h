@@ -66,10 +66,8 @@ class RasterliteDataset final: public GDALPamDataset
     virtual const char *GetMetadataItem( const char *pszName,
                                          const char *pszDomain ) override;
     virtual CPLErr GetGeoTransform( double* padfGeoTransform ) override;
-    virtual const char* _GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+
+    const OGRSpatialReference* GetSpatialRef() const override;
 
     virtual char** GetFileList() override;
 
@@ -102,7 +100,7 @@ class RasterliteDataset final: public GDALPamDataset
 
     int bValidGeoTransform;
     double adfGeoTransform[6];
-    char* pszSRS;
+    OGRSpatialReference m_oSRS{};
 
     GDALColorTable* poCT;
 

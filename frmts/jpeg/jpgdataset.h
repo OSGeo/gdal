@@ -174,7 +174,7 @@ class JPGDatasetCommon CPL_NON_FINAL: public GDALPamDataset
     void          InitInternalOverviews();
     GDALDataset  *InitEXIFOverview();
 
-    char   *pszProjection;
+    OGRSpatialReference m_oSRS{};
     bool   bGeoTransformValid;
     double adfGeoTransform[6];
     int    nGCPCount;
@@ -267,10 +267,7 @@ class JPGDatasetCommon CPL_NON_FINAL: public GDALPamDataset
     virtual CPLErr GetGeoTransform( double * ) override;
 
     virtual int    GetGCPCount() override;
-    virtual const char *_GetGCPProjection() override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override {
-        return GetGCPSpatialRefFromOldGetGCPProjection();
-    }
+    const OGRSpatialReference* GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
 
     virtual char  **GetMetadataDomainList() override;

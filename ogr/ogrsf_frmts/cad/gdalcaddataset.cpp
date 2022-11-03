@@ -161,7 +161,7 @@ int GDALCADDataset::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO,
         return FALSE;
     }
 
-    OGRSpatialReference *poSpatialRef = GetSpatialReference();
+    const OGRSpatialReference *poSpatialRef = GetSpatialRef();
     int nRasters = 1;
 
     if( nSubRasterLayer != -1 && nSubRasterFID != -1 )
@@ -195,8 +195,11 @@ int GDALCADDataset::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO,
             if( poOpenInfo->nOpenFlags & GDAL_OF_VECTOR &&
                 oLayer.getGeometryCount() > 0 )
             {
-                papoLayers[nLayers++] = new OGRCADLayer( oLayer, poSpatialRef,
+                OGRSpatialReference* poSRS = poSpatialRef ? poSpatialRef->Clone() : nullptr;
+                papoLayers[nLayers++] = new OGRCADLayer( oLayer, poSRS,
                                                          nEncoding);
+                if( poSRS )
+                    poSRS->Release();
             }
 
             if( poOpenInfo->nOpenFlags & GDAL_OF_RASTER )
@@ -359,7 +362,7 @@ int GDALCADDataset::GetCadEncoding() const
                                         CADHeader::DWGCODEPAGE, 0 ).getDecimal() );
 }
 
-OGRSpatialReference *GDALCADDataset::GetSpatialReference()
+const OGRSpatialReference *GDALCADDataset::GetSpatialRef() const
 {
     if( poSpatialReference )
         return poSpatialReference;
@@ -414,17 +417,10 @@ OGRSpatialReference *GDALCADDataset::GetSpatialReference()
         }
     }
 
-    if( poSpatialReference )
-    {
-        char *pszProjection = nullptr;
-        poSpatialReference->exportToWkt( &pszProjection );
-        soWKT = pszProjection;
-        CPLFree( pszProjection );
-    }
     return poSpatialReference;
 }
 
-const char* GDALCADDataset::GetPrjFilePath()
+const char* GDALCADDataset::GetPrjFilePath() const
 {
     const char * pszPRJFilename = CPLResetExtension( osCADFilename, "prj" );
     if ( CPLCheckForFile( (char*)pszPRJFilename, nullptr ) == TRUE )
@@ -435,11 +431,6 @@ const char* GDALCADDataset::GetPrjFilePath()
         return pszPRJFilename;
 
     return "";
-}
-
-const char *GDALCADDataset::_GetProjectionRef(void)
-{
-    return soWKT;
 }
 
 CPLErr GDALCADDataset::GetGeoTransform( double* padfGeoTransform )

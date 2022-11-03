@@ -356,18 +356,8 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(CPL_UNUSED
         OGRSpatialReference* poSRS = FetchSRS( nSRID );
         if( poSRS != nullptr )
         {
-            OGRSpatialReference oSRS(*poSRS);
-            char* pszWKT = nullptr;
-            if( oSRS.EPSGTreatsAsLatLong() ||
-                oSRS.EPSGTreatsAsNorthingEasting() )
-            {
-                oSRS.GetRoot()->StripNodes( "AXIS" );
-            }
-            if( oSRS.exportToWkt( &pszWKT ) == OGRERR_NONE )
-            {
-                m_osProjection = pszWKT;
-            }
-            CPLFree(pszWKT);
+            m_oSRS = *poSRS;
+            m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         }
     }
 
@@ -2443,12 +2433,12 @@ CPLErr OGRSQLiteDataSource::GetGeoTransform( double* padfGeoTransform )
 }
 
 /************************************************************************/
-/*                           GetProjectionRef()                         */
+/*                            GetSpatialRef()                           */
 /************************************************************************/
 
-const char* OGRSQLiteDataSource::_GetProjectionRef()
+const OGRSpatialReference* OGRSQLiteDataSource::GetSpatialRef() const
 {
-    if( !m_osProjection.empty() )
-        return m_osProjection.c_str();
-    return GDALPamDataset::_GetProjectionRef();
+    if( !m_oSRS.IsEmpty() )
+        return &m_oSRS;
+    return GDALPamDataset::GetSpatialRef();
 }

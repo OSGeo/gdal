@@ -309,10 +309,7 @@ namespace tut
                 GDALDataset::FlushCache(bAtClosing);
                 bHasFlushCache = true;
             }
-            virtual CPLErr _SetProjection(const char*) override { return CE_None; }
-            CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-                return OldSetProjectionFromSetSpatialRef(poSRS);
-            }
+            CPLErr SetSpatialRef(const OGRSpatialReference* ) override { return CE_None; }
             virtual CPLErr SetGeoTransform(double*) override { return CE_None; }
 
             static GDALDataset* CreateCopy(const char*, GDALDataset*,

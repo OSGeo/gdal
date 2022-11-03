@@ -45,7 +45,7 @@ class ADRGDataset final: public GDALPamDataset
 
     CPLString    osGENFileName;
     CPLString    osIMGFileName;
-    CPLString    osSRS;
+    OGRSpatialReference m_oSRS{};
 
     VSILFILE*        fdIMG;
     int*         TILEINDEX;
@@ -80,10 +80,7 @@ class ADRGDataset final: public GDALPamDataset
     ADRGDataset();
     ~ADRGDataset() override;
 
-    const char *_GetProjectionRef(void) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
     CPLErr GetGeoTransform( double * padfGeoTransform ) override;
     CPLErr SetGeoTransform( double * padfGeoTransform ) override;
 
@@ -550,6 +547,7 @@ ADRGDataset::ADRGDataset() :
     bGeoTransformValid(0),
     nNextAvailableBlock(0)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
 }
 
@@ -733,12 +731,12 @@ char **ADRGDataset::GetMetadata( const char *pszDomain )
 }
 
 /************************************************************************/
-/*                        GetProjectionRef()                            */
+/*                        GetSpatialRef()                               */
 /************************************************************************/
 
-const char* ADRGDataset::_GetProjectionRef()
+const OGRSpatialReference* ADRGDataset::GetSpatialRef() const
 {
-    return osSRS;
+    return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /************************************************************************/
@@ -1208,7 +1206,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
         poDS->adfGeoTransform[3] = -111319.4907933 * (90.0 - PSO) * cos(LSO * M_PI / 180.0);
         poDS->adfGeoTransform[4] = 0.0;
         poDS->adfGeoTransform[5] = -40075016.68558 / ARV;
-        poDS->osSRS =
+        poDS->m_oSRS.importFromWkt(
                 "PROJCS[\"ARC_System_Zone_09\",GEOGCS[\"GCS_Sphere\","
                 "DATUM[\"D_Sphere\",SPHEROID[\"Sphere\",6378137.0,0.0]],"
                 "PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],"
@@ -1217,7 +1215,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
                 "PARAMETER[\"longitude_of_center\",0],"
                 "PARAMETER[\"false_easting\",0],"
                 "PARAMETER[\"false_northing\",0],"
-                "UNIT[\"metre\",1]]";
+                "UNIT[\"metre\",1]]");
     }
     else if (ZNA == 18)
     {
@@ -1228,7 +1226,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
         poDS->adfGeoTransform[3] = 111319.4907933 * (90.0 + PSO) * cos(LSO * M_PI / 180.0);
         poDS->adfGeoTransform[4] = 0.0;
         poDS->adfGeoTransform[5] = -40075016.68558 / ARV;
-        poDS->osSRS = "PROJCS[\"ARC_System_Zone_18\",GEOGCS[\"GCS_Sphere\","
+        poDS->m_oSRS.importFromWkt("PROJCS[\"ARC_System_Zone_18\",GEOGCS[\"GCS_Sphere\","
                 "DATUM[\"D_Sphere\",SPHEROID[\"Sphere\",6378137.0,0.0]],"
                 "PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],"
                 "PROJECTION[\"Azimuthal_Equidistant\"],"
@@ -1236,7 +1234,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
                 "PARAMETER[\"longitude_of_center\",0],"
                 "PARAMETER[\"false_easting\",0],"
                 "PARAMETER[\"false_northing\",0],"
-                "UNIT[\"metre\",1]]";
+                "UNIT[\"metre\",1]]");
     }
     else
     {
@@ -1246,7 +1244,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
         poDS->adfGeoTransform[3] = PSO;
         poDS->adfGeoTransform[4] = 0.0;
         poDS->adfGeoTransform[5] = - 360. / BRV;
-        poDS->osSRS = SRS_WKT_WGS84_LAT_LONG;
+        poDS->m_oSRS.importFromWkt(SRS_WKT_WGS84_LAT_LONG);
     }
 
     // if( isGIN )

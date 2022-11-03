@@ -82,11 +82,11 @@ class NITFDataset final: public GDALPamDataset
     int         bGotGeoTransform;
     double      adfGeoTransform[6];
 
-    char        *pszProjection;
+    OGRSpatialReference m_oSRS{};
 
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
-    char        *pszGCPProjection;
+    OGRSpatialReference m_oGCPSRS{};
 
     GDALMultiDomainMetadata oSpecialMD;
 
@@ -148,30 +148,16 @@ class NITFDataset final: public GDALPamDataset
                               GSpacing nBandSpace,
                               GDALRasterIOExtraArg* psExtraArg ) override;
 
-    virtual const char *_GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
-    virtual CPLErr _SetProjection( const char * ) override;
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
-        return OldSetProjectionFromSetSpatialRef(poSRS);
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     virtual CPLErr GetGeoTransform( double * ) override;
     virtual CPLErr SetGeoTransform( double * ) override;
-    virtual CPLErr _SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                            const char *pszGCPProjection ) override;
-    using GDALPamDataset::SetGCPs;
     CPLErr SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
-                    const OGRSpatialReference* poSRS ) override {
-        return OldSetGCPsFromNew(nGCPCountIn, pasGCPListIn, poSRS);
-    }
+                    const OGRSpatialReference* poSRS ) override;
 
     virtual int    GetGCPCount() override;
-    virtual const char *_GetGCPProjection() override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override {
-        return GetGCPSpatialRefFromOldGetGCPProjection();
-    }
+    const OGRSpatialReference* GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
     virtual char **GetFileList() override;
 

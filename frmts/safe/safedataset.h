@@ -54,9 +54,8 @@ class SAFEDataset final: public GDALPamDataset
 
     int           nGCPCount = 0;
     GDAL_GCP     *pasGCPList = nullptr;
-    char         *pszGCPProjection = nullptr;
+    OGRSpatialReference m_oGCPSRS{};
     char        **papszSubDatasets = nullptr;
-    char         *pszProjection = nullptr;
     double        adfGeoTransform[6] = { 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
     bool          bHaveGeoTransform = false;
     char        **papszExtraFiles = nullptr;
@@ -73,20 +72,13 @@ class SAFEDataset final: public GDALPamDataset
                               const CPLString &osName, const CPLString &osDesc);
 
   public:
-    SAFEDataset() = default;
+    SAFEDataset();
     virtual ~SAFEDataset();
 
     virtual int    GetGCPCount() override;
-    virtual const char *_GetGCPProjection() override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override {
-        return GetGCPSpatialRefFromOldGetGCPProjection();
-    }
+    const OGRSpatialReference* GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
 
-    virtual const char *_GetProjectionRef(void) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
     virtual CPLErr GetGeoTransform( double * ) override;
 
     virtual char **GetMetadataDomainList() override;

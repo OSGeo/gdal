@@ -614,6 +614,14 @@ CPLErr SAFECalibratedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 /* ==================================================================== */
 /************************************************************************/
 
+/************************************************************************/
+/*                             SAFEDataset()                            */
+/************************************************************************/
+
+SAFEDataset::SAFEDataset()
+{
+    m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+}
 
 /************************************************************************/
 /*                            ~SAFEDataset()                            */
@@ -625,9 +633,6 @@ SAFEDataset::~SAFEDataset()
     SAFEDataset::FlushCache(true);
 
     CPLDestroyXMLNode( psManifest );
-    CPLFree( pszProjection );
-
-    CPLFree( pszGCPProjection );
     if( nGCPCount > 0 )
     {
         GDALDeinitGCPs( nGCPCount, pasGCPList );
@@ -1339,9 +1344,8 @@ GDALDataset *SAFEDataset::Open( GDALOpenInfo * poOpenInfo )
                             inv_flattening);
                     }
 
-                    CPLFree(poDS->pszGCPProjection);
-                    poDS->pszGCPProjection = nullptr;
-                    oLL.exportToWkt(&(poDS->pszGCPProjection));
+                    oLL.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                    poDS->m_oGCPSRS = oLL;
                 }
 
                 /* -------------------------------------------------------------------- */
@@ -1850,12 +1854,13 @@ int SAFEDataset::GetGCPCount()
 }
 
 /************************************************************************/
-/*                          GetGCPProjection()                          */
+/*                          GetGCPSpatialRef()                          */
 /************************************************************************/
 
-const char *SAFEDataset::_GetGCPProjection()
+const OGRSpatialReference *SAFEDataset::GetGCPSpatialRef() const
+
 {
-    return pszGCPProjection;
+    return m_oGCPSRS.IsEmpty() ? nullptr : &m_oGCPSRS;
 }
 
 /************************************************************************/
@@ -1866,15 +1871,6 @@ const GDAL_GCP *SAFEDataset::GetGCPs()
 
 {
     return pasGCPList;
-}
-
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char *SAFEDataset::_GetProjectionRef()
-{
-    return pszProjection;
 }
 
 /************************************************************************/

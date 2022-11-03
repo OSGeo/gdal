@@ -69,6 +69,7 @@ OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
         return OGRERR_FAILURE;
     }
 
+    poThis->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     poThis->Clear();
 
     // First, set the datum.

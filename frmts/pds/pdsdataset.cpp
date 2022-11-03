@@ -73,7 +73,7 @@ class PDSDataset final: public RawDataset
     int         bGotTransform;
     double      adfGeoTransform[6];
 
-    CPLString   osProjection;
+    OGRSpatialReference m_oSRS{};
 
     CPLString   osTempResult;
 
@@ -104,10 +104,7 @@ public:
     virtual ~PDSDataset();
 
     virtual CPLErr GetGeoTransform( double * padfTransform ) override;
-    virtual const char *_GetProjectionRef(void) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
 
     virtual char      **GetFileList(void) override;
 
@@ -145,6 +142,7 @@ PDSDataset::PDSDataset() :
     poCompressedDS(nullptr),
     bGotTransform(FALSE)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -272,16 +270,14 @@ CPLErr PDSDataset::IRasterIO( GDALRWFlag eRWFlag,
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                         GetSpatialRef()                              */
 /************************************************************************/
 
-const char *PDSDataset::_GetProjectionRef()
-
+const OGRSpatialReference* PDSDataset::GetSpatialRef() const
 {
-    if( !osProjection.empty() )
-        return osProjection;
-
-    return GDALPamDataset::_GetProjectionRef();
+    if( !m_oSRS.IsEmpty() )
+        return &m_oSRS;
+    return GDALPamDataset::GetSpatialRef();
 }
 
 /************************************************************************/
@@ -474,6 +470,7 @@ void PDSDataset::ParseSRS()
 
     bool bProjectionSet = true;
     OGRSpatialReference oSRS;
+    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     if ((EQUAL( map_proj_name, "EQUIRECTANGULAR" )) ||
         (EQUAL( map_proj_name, "SIMPLE_CYLINDRICAL" )) ||
@@ -619,10 +616,7 @@ void PDSDataset::ParseSRS()
         }
 
         // translate back into a projection string.
-        char *pszResult = nullptr;
-        oSRS.exportToWkt( &pszResult );
-        osProjection = pszResult;
-        CPLFree( pszResult );
+        m_oSRS = oSRS;
     }
 
 /* ==================================================================== */
@@ -636,20 +630,11 @@ void PDSDataset::ParseSRS()
         VSILFILE *fp = VSIFOpenL( pszPrjFile, "r" );
         if( fp != nullptr )
         {
-            OGRSpatialReference oSRS2;
-
             VSIFCloseL( fp );
 
             char **papszLines = CSLLoad( pszPrjFile );
 
-            if( oSRS2.importFromESRI( papszLines ) == OGRERR_NONE )
-            {
-                char *pszResult = nullptr;
-                oSRS2.exportToWkt( &pszResult );
-                osProjection = pszResult;
-                CPLFree( pszResult );
-            }
-
+            m_oSRS.importFromESRI( papszLines );
             CSLDestroy( papszLines );
         }
     }

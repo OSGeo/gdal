@@ -86,7 +86,7 @@ class AAIGDataset CPL_NON_FINAL: public GDALPamDataset
 
     char        **papszPrj;
     CPLString   osPrjFilename;
-    char        *pszProjection;
+    OGRSpatialReference m_oSRS{};
 
     unsigned char achReadBuf[256];
     GUIntBig    nBufferOffset;
@@ -125,10 +125,7 @@ class AAIGDataset CPL_NON_FINAL: public GDALPamDataset
                                     void * pProgressData );
 
     CPLErr GetGeoTransform( double * ) override;
-    const char *_GetProjectionRef(void) override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    const OGRSpatialReference* GetSpatialRef() const override;
 };
 
 /************************************************************************/
