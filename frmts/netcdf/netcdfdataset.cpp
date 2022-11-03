@@ -8485,7 +8485,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
                  EQUAL(papszName[1], "http") ||
                  EQUAL(papszName[1], "https") ||
                  EQUAL(papszName[1], "/vsicurl/http") ||
-                 EQUAL(papszName[1], "/vsicurl/https")) )
+                 EQUAL(papszName[1], "/vsicurl/https") ||
+                 EQUAL(papszName[1], "/vsicurl_streaming/http") ||
+                 EQUAL(papszName[1], "/vsicurl_streaming/https")) )
         {
             const int nCountBefore = CSLCount(papszName);
             CPLString osTmp = papszName[1];
