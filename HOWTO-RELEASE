@@ -339,6 +339,8 @@ or your message manually approved, with an administrator of the list.
 
 21) For a feature release: after it has been done, in the master branch, update
     the VERSION to the next one and in gcore/gdal_version.h.in, update
-    GDAL_VERSION_MAJOR/_MINOR, GDAL_RELEASE_NAME (with a dev suffix, like "3.5.0dev"),
+    GDAL_VERSION_MAJOR/_MINOR, GDAL_RELEASE_NAME (with a dev suffix, like "3.7.0dev"),
     and set GDAL_RELEASE_DATE to a date like {YEAR}9999.
+    Update swig/python/gdal-utils/osgeo_utils/__init__.py to something like (3, 6, 99, 0)
+    if master is 3.7.0dev
 
