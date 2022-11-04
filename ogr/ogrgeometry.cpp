@@ -2828,13 +2828,6 @@ OGRMergeGeometryTypesEx( OGRwkbGeometryType eMain,
             return OGR_GT_SetModifier(eFMain, bHasZ, bHasM);
     }
 
-    // Both are geometry collections.
-    if( OGR_GT_IsSubClassOf(eFMain, wkbGeometryCollection) &&
-        OGR_GT_IsSubClassOf(eFExtra, wkbGeometryCollection) )
-    {
-        return OGR_GT_SetModifier(wkbGeometryCollection, bHasZ, bHasM);
-    }
-
     // One is subclass of the other one
     if( OGR_GT_IsSubClassOf(eFMain, eFExtra) )
     {
