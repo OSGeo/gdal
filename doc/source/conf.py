@@ -391,6 +391,13 @@ man_pages = [
         [author_mikhailg, author_dmitryb],
         1,
     ),
+    (
+        "programs/ogr_layer_algebra",
+        "ogr_layer_algebra",
+        "Performs various Vector layer algebraic operations",
+        [],
+        1,
+    ),
 ]
 
 
