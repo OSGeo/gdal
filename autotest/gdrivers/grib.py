@@ -1894,19 +1894,47 @@ def test_grib_grib2_scan_flag_not_64():
 # Test reading message with subgrids
 
 
-def test_grib_grib2_read_subgrids():
+@pytest.mark.parametrize("use_idx", [True, False])
+def test_grib_grib2_read_subgrids(use_idx):
 
     # data/grib/subgrids.grib2 generated with:
     # gdal_translate ../autotest/gcore/data/byte.tif band1.tif
     # gdal_translate ../autotest/gcore/data/byte.tif band2.tif -scale 0 255 255 0
     # gdalbuildvrt -separate tmp.vrt band1.tif band2.tif
     # gdal_translate tmp.vrt ../autotest/gdrivers/data/grib/subgrids.grib2 -co "BAND_1_PDS_TEMPLATE_ASSEMBLED_VALUES=2 2 2 0 84 0 0 1 0 220 0 0 255 0 0" -co "BAND_2_PDS_TEMPLATE_ASSEMBLED_VALUES=2 3 2 0 84 0 0 1 0 220 0 0 255 0 0" -co "IDS=CENTER=7(US-NCEP) SUBCENTER=0 MASTER_TABLE=2 LOCAL_TABLE=1 SIGNF_REF_TIME=1(Start_of_Forecast) REF_TIME=2020-09-26T00:00:00Z PROD_STATUS=0(Operational) TYPE=1(Forecast)" -co WRITE_SUBGRIDS=YES
-    ds = gdal.Open("data/grib/subgrids.grib2")
+    ds = gdal.OpenEx(
+        "data/grib/subgrids.grib2",
+        open_options=(["USE_IDX=YES"] if use_idx else ["USE_IDX=NO"]),
+    )
     assert ds.GetRasterBand(1).Checksum() == 4672
     assert ds.GetRasterBand(2).Checksum() == 4563
     expected_ids = "CENTER=7(US-NCEP) SUBCENTER=0 MASTER_TABLE=2 LOCAL_TABLE=0 SIGNF_REF_TIME=1(Start_of_Forecast) REF_TIME=2020-09-26T00:00:00Z PROD_STATUS=0(Operational) TYPE=1(Forecast)"
     assert ds.GetRasterBand(1).GetMetadataItem("GRIB_IDS") == expected_ids
+    assert (
+        ds.GetRasterBand(1).GetMetadataItem("GRIB_COMMENT")
+        == "u-component of wind [m/s]"
+    )
+    if use_idx:
+        assert (
+            ds.GetRasterBand(1).GetDescription() == "UGRD:planetary boundary layer:anl"
+        )
+        assert (
+            ds.GetRasterBand(2).GetDescription() == "VGRD:planetary boundary layer:anl"
+        )
+    else:
+        assert (
+            ds.GetRasterBand(1).GetDescription()
+            == "0[-] RESERVED(220) (Reserved for local use)"
+        )
+        assert (
+            ds.GetRasterBand(2).GetDescription()
+            == "0[-] RESERVED(220) (Reserved for local use)"
+        )
     assert ds.GetRasterBand(2).GetMetadataItem("GRIB_IDS") == expected_ids
+    assert (
+        ds.GetRasterBand(2).GetMetadataItem("GRIB_COMMENT")
+        == "v-component of wind [m/s]"
+    )
     assert (
         ds.GetRasterBand(1).GetMetadataItem("GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES")
         == "2 2 2 0 84 0 0 1 0 220 0 0 255 0 0"
