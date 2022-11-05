@@ -145,7 +145,6 @@ enum class OutDBResolution
 typedef struct {
     GDALDataType eDataType;
     int nBitsDepth;
-    GBool bSignedByte;
     GBool bHasNoDataValue;
     GBool bIsOffline;
     char * path;
@@ -163,7 +162,7 @@ typedef struct {
 char * ReplaceQuotes(const char *, int);
 char * ReplaceSingleQuotes(const char *, int);
 char ** ParseConnectionString(const char *);
-GBool TranslateDataType(const char *, GDALDataType *, int *, GBool *);
+GBool TranslateDataType(const char *, GDALDataType *, int *);
 
 class PostGISRasterRasterBand;
 class PostGISRasterTileDataset;

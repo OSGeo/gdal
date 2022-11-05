@@ -141,6 +141,7 @@ from osgeo import gdal
 gdal.AllRegister()
 
 codes = {gdalconst.GDT_Byte: numpy.uint8,
+         gdalconst.GDT_Int8: numpy.int8,
          gdalconst.GDT_UInt16: numpy.uint16,
          gdalconst.GDT_Int16: numpy.int16,
          gdalconst.GDT_UInt32: numpy.uint32,
@@ -180,8 +181,6 @@ def flip_code(code):
     if isinstance(code, (numpy.dtype, type)):
 # since several things map to complex64 we must carefully select
 # the opposite that is an exact match (ticket 1518)
-        if code == numpy.int8:
-            return gdalconst.GDT_Byte
         if code == numpy.complex64:
             return gdalconst.GDT_CFloat32
 

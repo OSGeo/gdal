@@ -22,6 +22,7 @@ static int getAlignment(GDALDataType ntype)
         case GDT_Unknown:
             break; // shouldn't happen
         case GDT_Byte:
+        case GDT_Int8:
             return 1;
         case GDT_Int16:
         case GDT_UInt16:
@@ -1178,6 +1179,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
          count is None and buffer_stride is None and buffer_datatype is None:
           map_typecode_itemsize_to_gdal = {
              ('B', 1): GDT_Byte,
+             ('b', 1): GDT_Int8,
              ('h', 2): GDT_Int16,
              ('H', 2): GDT_UInt16,
              ('i', 4): GDT_Int32,
@@ -1324,7 +1326,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
             return s
         return self.ReadAsStringArray()
     if dt_class == GEDTC_NUMERIC:
-        if dt.GetNumericDataType() in (GDT_Byte, GDT_Int16, GDT_UInt16, GDT_Int32):
+        if dt.GetNumericDataType() in (GDT_Byte, GDT_Int8, GDT_Int16, GDT_UInt16, GDT_Int32):
             if self.GetTotalElementsCount() == 1:
                 return self.ReadAsInt()
             else:

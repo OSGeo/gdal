@@ -236,6 +236,24 @@ template<> struct sGDALCopyWord<float, short>
     }
 };
 
+template<> struct sGDALCopyWord<float, signed char>
+{
+    static inline void f(const float fValueIn, signed char &nValueOut)
+    {
+        if( CPLIsNan(fValueIn) )
+        {
+            nValueOut = 0;
+            return;
+        }
+        float fMaxVal, fMinVal;
+        GDALGetDataLimits<float, signed char>(fMaxVal, fMinVal);
+        float fValue = fValueIn >= 0.0f ? fValueIn + 0.5f :
+            fValueIn - 0.5f;
+        nValueOut = static_cast<signed char>(
+            GDALClampValue(fValue, fMaxVal, fMinVal));
+    }
+};
+
 template<class Tout> struct sGDALCopyWord<double, Tout>
 {
     static inline void f(const double dfValueIn, Tout &tValueOut)
@@ -302,6 +320,24 @@ template<> struct sGDALCopyWord<double, short>
         double dfValue = dfValueIn > 0.0 ? dfValueIn + 0.5 :
             dfValueIn - 0.5;
         nValueOut = static_cast<short>(
+            GDALClampValue(dfValue, dfMaxVal, dfMinVal));
+    }
+};
+
+template<> struct sGDALCopyWord<double, signed char>
+{
+    static inline void f(const double dfValueIn, signed char &nValueOut)
+    {
+        if( CPLIsNan(dfValueIn) )
+        {
+            nValueOut = 0;
+            return;
+        }
+        double dfMaxVal, dfMinVal;
+        GDALGetDataLimits<double, signed char>(dfMaxVal, dfMinVal);
+        double dfValue = dfValueIn > 0.0 ? dfValueIn + 0.5 :
+            dfValueIn - 0.5;
+        nValueOut = static_cast<signed char>(
             GDALClampValue(dfValue, dfMaxVal, dfMinVal));
     }
 };

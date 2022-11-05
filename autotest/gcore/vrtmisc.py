@@ -391,24 +391,6 @@ def test_vrtmisc_14():
 
 
 ###############################################################################
-# Test CreateCopy() preserve SIGNEDBYTE
-
-
-def test_vrtmisc_15():
-
-    ds = gdal.GetDriverByName("GTiff").Create(
-        "/vsimem/vrtmisc_15.tif", 1, 1, options=["PIXELTYPE=SIGNEDBYTE"]
-    )
-    out_ds = gdal.GetDriverByName("VRT").CreateCopy("", ds)
-    assert (
-        out_ds.GetRasterBand(1).GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE")
-        == "SIGNEDBYTE"
-    )
-    ds = None
-    gdal.Unlink("/vsimem/vrtmisc_15.tif")
-
-
-###############################################################################
 # Test rounding to closest int for coordinates
 
 

@@ -216,7 +216,7 @@ GDALDataType GH5_GetDataType(hid_t TypeID)
     if( H5Tequal(H5T_NATIVE_CHAR,        TypeID) )
         return GDT_Byte;
     else if( H5Tequal(H5T_NATIVE_SCHAR,  TypeID) )
-        return GDT_Byte;
+        return GDT_Int8;
     else if( H5Tequal(H5T_NATIVE_UCHAR,  TypeID) )
         return GDT_Byte;
     else if( H5Tequal(H5T_NATIVE_SHORT,  TypeID) )

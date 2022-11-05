@@ -554,6 +554,8 @@ Creation Options
 
 -  **PIXELTYPE=[DEFAULT/SIGNEDBYTE]**: By setting this to SIGNEDBYTE, a
    new Byte file can be forced to be written as signed byte.
+   Starting with GDAL 3.7, this option is deprecated and Int8 should rather
+   be used.
 
 -  **COPY_SRC_OVERVIEWS=[YES/NO]**: (CreateCopy() only)
    By setting this to YES (default is NO), the potential existing

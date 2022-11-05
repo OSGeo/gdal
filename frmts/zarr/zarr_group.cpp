@@ -888,6 +888,12 @@ static CPLJSONObject FillDTypeElts(const GDALExtendedDataType& oDataType,
                     dtype.Set(dummy, bZarrV2 ? "|u1" : "u1");
                     break;
                 }
+                case GDT_Int8:
+                {
+                    elt.nativeType = DtypeElt::NativeType::SIGNED_INT;
+                    dtype.Set(dummy, bZarrV2 ? "|i1" : "i1");
+                    break;
+                }
                 case GDT_UInt16:
                 {
                     elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
@@ -967,7 +973,7 @@ static CPLJSONObject FillDTypeElts(const GDALExtendedDataType& oDataType,
                 }
                 case GDT_TypeCount:
                 {
-                    static_assert(GDT_TypeCount == GDT_Int64 + 1, "GDT_TypeCount == GDT_Int64 + 1");
+                    static_assert(GDT_TypeCount == GDT_Int8 + 1, "GDT_TypeCount == GDT_Int8 + 1");
                     break;
                 }
             }
@@ -1250,6 +1256,7 @@ std::shared_ptr<GDALMDArray> ZarrGroupV2::CreateMDArray(
             {
                 case GDT_Unknown: break;
                 case GDT_Byte: oFilter.Add("dtype", "u1"); break;
+                case GDT_Int8: oFilter.Add("dtype", "i1"); break;
                 case GDT_UInt16: oFilter.Add("dtype", "<u2"); break;
                 case GDT_Int16: oFilter.Add("dtype", "<i2"); break;
                 case GDT_UInt32: oFilter.Add("dtype", "<u4"); break;

@@ -139,6 +139,7 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
         eWrkDT = GDT_UInt32;
         break;
 
+      case GDT_Int8:
       case GDT_Int16:
       case GDT_Int32:
       case GDT_CInt16:

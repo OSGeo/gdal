@@ -17,7 +17,7 @@ Synopsis
 
     gdal_retile.py [-v] [-co NAME=VALUE]* [-of out_format] [-ps pixelWidth pixelHeight]
                    [-overlap val_in_pixel]
-                   [-ot  {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/
+                   [-ot  {Byte/Int8/Int16/UInt16/UInt32/Int32/Float32/Float64/
                            CInt16/CInt32/CFloat32/CFloat64}]'
                    [ -tileIndex tileIndexName [-tileIndexField tileIndexFieldName]]
                    [ -csv fileName [-csvDelim delimiter]]
