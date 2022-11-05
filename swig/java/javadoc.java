@@ -5816,6 +5816,16 @@ public interface gdalconstConstants:public final static int GDT_UInt32
 public interface gdalconstConstants:public final static int GDT_Int32
 
 /**
+ * GDT_UInt64(12) : 64 bit unsigned integer (data type)
+ */
+public interface gdalconstConstants:public final static int GDT_UInt64
+
+/**
+ * GDT_Int64(13) : 64 bit signed integer (data type)
+ */
+public interface gdalconstConstants:public final static int GDT_Int64
+
+/**
  * GDT_Float32(6) : Thirty two bit floating point (data type)
  */
 public interface gdalconstConstants:public final static int GDT_Float32
@@ -5846,7 +5856,7 @@ public interface gdalconstConstants:public final static int GDT_CFloat32
 public interface gdalconstConstants:public final static int GDT_CFloat64
 
 /**
- * GDT_TypeCount(12) : Maximum type  (data type)
+ * GDT_TypeCount(14) : Maximum type  (data type)
  */
 public interface gdalconstConstants:public final static int GDT_TypeCount
 
