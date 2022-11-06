@@ -40,6 +40,7 @@
 #include <limits>
 #include <map>
 #include <utility>
+#include <algorithm>
 
 #include "cpl_conv.h"
 #include "cpl_cpu_features.h"
