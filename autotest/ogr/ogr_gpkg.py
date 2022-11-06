@@ -6064,6 +6064,54 @@ def test_ogr_gpkg_field_domains_errors():
 
 
 ###############################################################################
+# Test gpkg_data_column_constraints of GPKG 1.0
+
+
+def test_ogr_gpkg_field_domain_gpkg_1_0():
+
+    filename = "/vsimem/test.gpkg"
+
+    ds = gdal.GetDriverByName("GPKG").Create(
+        filename, 0, 0, 0, gdal.GDT_Unknown, options=["VERSION=1.0"]
+    )
+    ds.CreateLayer("test")
+    assert ds.AddFieldDomain(
+        ogr.CreateRangeFieldDomain(
+            "range_domain_int",
+            "my desc",
+            ogr.OFTReal,
+            ogr.OFSTNone,
+            1.5,
+            True,
+            2.5,
+            False,
+        )
+    )
+    ds = None
+
+    assert validate(filename)
+
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR)
+
+    gdal.ErrorReset()
+    domain = ds.GetFieldDomain("range_domain_int")
+    assert gdal.GetLastErrorMsg() == ""
+    assert domain is not None
+    assert domain.GetName() == "range_domain_int"
+    assert domain.GetDescription() == "my desc"
+    assert domain.GetDomainType() == ogr.OFDT_RANGE
+    assert domain.GetFieldType() == ogr.OFTReal
+    assert domain.GetMinAsDouble() == 1.5
+    assert domain.IsMinInclusive()
+    assert domain.GetMaxAsDouble() == 2.5
+    assert not domain.IsMaxInclusive()
+
+    ds = None
+
+    gdal.Unlink(filename)
+
+
+###############################################################################
 # Test attribute and spatial views
 
 
