@@ -32,6 +32,7 @@
 
 #include <cmath>
 #include <cstddef>
+#include <algorithm>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
