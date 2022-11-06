@@ -3498,6 +3498,29 @@ bool GDALGeoPackageDataset::HasDataColumnConstraintsTable() const
 }
 
 /************************************************************************/
+/*                  HasDataColumnConstraintsTableGPKG_1_0()             */
+/************************************************************************/
+
+bool GDALGeoPackageDataset::HasDataColumnConstraintsTableGPKG_1_0() const
+{
+    if( m_nApplicationId != GP10_APPLICATION_ID )
+        return false;
+    // In GPKG 1.0, the columns were named minIsInclusive, maxIsInclusive
+    // They were changed in 1.1 to min_is_inclusive, max_is_inclusive
+    bool bRet = false;
+    sqlite3_stmt* hSQLStmt = nullptr;
+    int rc = sqlite3_prepare_v2( hDB,
+        "SELECT minIsInclusive, maxIsInclusive FROM gpkg_data_column_constraints", -1,
+        &hSQLStmt, nullptr );
+    if( rc == SQLITE_OK )
+    {
+        bRet = true;
+        sqlite3_finalize(hSQLStmt);
+    }
+    return bRet;
+}
+
+/************************************************************************/
 /*      CreateColumnsTableAndColumnConstraintsTablesIfNecessary()       */
 /************************************************************************/
 
@@ -3525,18 +3548,21 @@ bool GDALGeoPackageDataset::CreateColumnsTableAndColumnConstraintsTablesIfNecess
     }
     if( !HasDataColumnConstraintsTable() )
     {
-        if( OGRERR_NONE != SQLCommand(GetDB(),
-            "CREATE TABLE gpkg_data_column_constraints ("
+        const char* min_is_inclusive = m_nApplicationId != GP10_APPLICATION_ID ? "min_is_inclusive": "minIsInclusive";
+        const char* max_is_inclusive = m_nApplicationId != GP10_APPLICATION_ID ? "max_is_inclusive": "maxIsInclusive";
+
+        const std::string osSQL(CPLSPrintf("CREATE TABLE gpkg_data_column_constraints ("
             "constraint_name TEXT NOT NULL,"
             "constraint_type TEXT NOT NULL,"
             "value TEXT,"
             "min NUMERIC,"
-            "min_is_inclusive BOOLEAN,"
+            "%s BOOLEAN,"
             "max NUMERIC,"
-            "max_is_inclusive BOOLEAN,"
+            "%s BOOLEAN,"
             "description TEXT,"
             "CONSTRAINT gdcc_ntv UNIQUE (constraint_name, "
-            "constraint_type, value));") )
+            "constraint_type, value));", min_is_inclusive, max_is_inclusive));
+        if( OGRERR_NONE != SQLCommand(GetDB(), osSQL.c_str()) )
         {
             return false;
         }
@@ -8045,14 +8071,18 @@ const OGRFieldDomain* GDALGeoPackageDataset::GetFieldDomain(const std::string& n
     if( !HasDataColumnConstraintsTable() )
         return nullptr;
 
+    const bool bIsGPKG10 = HasDataColumnConstraintsTableGPKG_1_0();
+    const char* min_is_inclusive = bIsGPKG10 ? "minIsInclusive" : "min_is_inclusive";
+    const char* max_is_inclusive = bIsGPKG10 ? "maxIsInclusive" : "max_is_inclusive";
+
     std::unique_ptr<SQLResult> oResultTable;
     // Note: for coded domains, we use a little trick by using a dummy
     // _{domainname}_domain_description enum that has a single entry whose
     // description is the description of the main domain.
     {
         char* pszSQL = sqlite3_mprintf(
-            "SELECT constraint_type, value, min, min_is_inclusive, "
-            "max, max_is_inclusive, description, constraint_name "
+            "SELECT constraint_type, value, min, %s, "
+            "max, %s, description, constraint_name "
             "FROM gpkg_data_column_constraints "
             "WHERE constraint_name IN ('%q', '_%q_domain_description') "
             "AND length(constraint_type) < 100 " // to avoid denial of service
@@ -8060,6 +8090,7 @@ const OGRFieldDomain* GDALGeoPackageDataset::GetFieldDomain(const std::string& n
             "AND (description IS NULL OR length(description) < 10000) " // to avoid denial of service
             "ORDER BY value "
             "LIMIT 10000", // to avoid denial of service
+            min_is_inclusive, max_is_inclusive,
             name.c_str(), name.c_str());
         oResultTable = SQLQuery(hDB, pszSQL);
         sqlite3_free(pszSQL);
@@ -8347,6 +8378,10 @@ bool GDALGeoPackageDataset::AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& dom
     if( !CreateColumnsTableAndColumnConstraintsTablesIfNecessary() )
         return false;
 
+    const bool bIsGPKG10 = HasDataColumnConstraintsTableGPKG_1_0();
+    const char* min_is_inclusive = bIsGPKG10 ? "minIsInclusive" : "min_is_inclusive";
+    const char* max_is_inclusive = bIsGPKG10 ? "maxIsInclusive" : "max_is_inclusive";
+
     const auto& osDescription = domain->GetDescription();
     switch( domain->GetDomainType() )
     {
@@ -8363,10 +8398,12 @@ bool GDALGeoPackageDataset::AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& dom
                 char* pszSQL = sqlite3_mprintf(
                     "INSERT INTO gpkg_data_column_constraints ("
                     "constraint_name, constraint_type, value, "
-                    "min, min_is_inclusive, max, max_is_inclusive, "
+                    "min, %s, max, %s, "
                     "description) VALUES ("
                     "'_%q_domain_description', 'enum', '', NULL, NULL, NULL, "
                     "NULL, %Q)",
+                    min_is_inclusive,
+                    max_is_inclusive,
                     domainName.c_str(),
                     osDescription.c_str());
                 CPL_IGNORE_RET_VAL(SQLCommand(hDB, pszSQL));
@@ -8378,9 +8415,11 @@ bool GDALGeoPackageDataset::AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& dom
                 char* pszSQL = sqlite3_mprintf(
                     "INSERT INTO gpkg_data_column_constraints ("
                     "constraint_name, constraint_type, value, "
-                    "min, min_is_inclusive, max, max_is_inclusive, "
+                    "min, %s, max, %s, "
                     "description) VALUES ("
                     "'%q', 'enum', '%q', NULL, NULL, NULL, NULL, %Q)",
+                    min_is_inclusive,
+                    max_is_inclusive,
                     domainName.c_str(),
                     enumeration[i].pszCode,
                     enumeration[i].pszValue);
@@ -8435,11 +8474,11 @@ bool GDALGeoPackageDataset::AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& dom
             }
 
             sqlite3_stmt* hInsertStmt = nullptr;
-            const char* pszSQL = "INSERT INTO gpkg_data_column_constraints ("
+            const char* pszSQL = CPLSPrintf("INSERT INTO gpkg_data_column_constraints ("
                 "constraint_name, constraint_type, value, "
-                "min, min_is_inclusive, max, max_is_inclusive, "
+                "min, %s, max, %s, "
                 "description) VALUES ("
-                "?, 'range', NULL, ?, ?, ?, ?, ?)";
+                "?, 'range', NULL, ?, ?, ?, ?, ?)", min_is_inclusive, max_is_inclusive);
             if ( sqlite3_prepare_v2(hDB, pszSQL, -1, &hInsertStmt, nullptr)
                                                                     != SQLITE_OK )
             {
@@ -8482,9 +8521,11 @@ bool GDALGeoPackageDataset::AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& dom
             char* pszSQL = sqlite3_mprintf(
                 "INSERT INTO gpkg_data_column_constraints ("
                 "constraint_name, constraint_type, value, "
-                "min, min_is_inclusive, max, max_is_inclusive, "
+                "min, %s, max, %s, "
                 "description) VALUES ("
                 "'%q', 'glob', '%q', NULL, NULL, NULL, NULL, %Q)",
+                min_is_inclusive,
+                max_is_inclusive,
                 domainName.c_str(),
                 poGlobDomain->GetGlob().c_str(),
                 osDescription.empty() ? nullptr : osDescription.c_str());
