@@ -30,6 +30,7 @@
 #include "gdal_pdf.h"
 #include "pdfcreatecopy.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdlib>
 

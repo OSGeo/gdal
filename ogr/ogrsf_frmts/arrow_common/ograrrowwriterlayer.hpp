@@ -33,6 +33,7 @@
 #include "cpl_time.h"
 
 #include <cinttypes>
+#include <limits>
 
 static constexpr int                        TZFLAG_UNINITIALIZED = -1;
 static constexpr int                        TZFLAG_MIXED = -2;

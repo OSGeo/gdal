@@ -37,6 +37,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <limits>
 
 #undef SQLITE_STATIC
 #define SQLITE_STATIC      static_cast<sqlite3_destructor_type>(nullptr)

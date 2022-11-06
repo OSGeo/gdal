@@ -31,6 +31,7 @@
 #include "cpl_conv.h"
 #include "ogr_cad.h"
 
+#include <algorithm>
 #include <iomanip>
 #include <sstream>
 

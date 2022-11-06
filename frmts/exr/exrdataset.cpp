@@ -29,6 +29,7 @@
 #include "ogr_spatialref.h"
 
 #include <algorithm>
+#include <limits>
 #include <mutex>
 
 #include "openexr_headers.h"

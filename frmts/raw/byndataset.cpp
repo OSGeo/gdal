@@ -37,7 +37,7 @@
 #include "ogr_srs_api.h"
 
 #include <cstdlib>
-
+#include <limits>
 
 // Specification at
 // https://www.nrcan.gc.ca/sites/www.nrcan.gc.ca/files/earthsciences/pdf/gpshgrid_e.pdf

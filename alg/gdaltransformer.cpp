@@ -41,6 +41,7 @@
 #include <cstring>
 
 #include <algorithm>
+#include <limits>
 #include <utility>
 
 #include "cpl_conv.h"

@@ -31,6 +31,8 @@
 
 #include "cpl_http.h"
 
+#include <limits>
+
 namespace NGWAPI {
 
 std::string GetPermissions(const std::string &osUrl, const std::string &osResourceId)

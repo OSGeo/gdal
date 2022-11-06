@@ -43,6 +43,7 @@
 #if HAVE_FCNTL_H
 #  include <fcntl.h>
 #endif
+#include <limits>
 #include <setjmp.h>
 
 #include <algorithm>

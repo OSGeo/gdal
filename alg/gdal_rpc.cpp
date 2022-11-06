@@ -36,6 +36,7 @@
 #include <cstring>
 
 #include <algorithm>
+#include <limits>
 #include <string>
 
 #include "cpl_conv.h"

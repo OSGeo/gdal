@@ -31,6 +31,8 @@
 
 #include "rdbdataset.hpp"
 
+#include <algorithm>
+#include <limits>
 #include <cmath>
 #include <sstream>
 

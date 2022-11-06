@@ -31,6 +31,7 @@
 
 #include "rmfdataset.h"
 
+#include <limits>
 
 /*
  * The encoded data stream is a series of records.
