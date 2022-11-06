@@ -35,7 +35,7 @@
 #include "cpl_safemaths.hpp"
 
 #include <algorithm>
-
+#include <limits>
 
 constexpr size_t FIT_PAGE_SIZE = 128;
 

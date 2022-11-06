@@ -28,6 +28,8 @@
 
 #include "ograrrowarrayhelper.h"
 
+#include <limits>
+
 //! @cond Doxygen_Suppress
 
 /************************************************************************/

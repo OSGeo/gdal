@@ -57,6 +57,7 @@
 #include "cpl_threadsafe_queue.hpp"
 
 #include <atomic>
+#include <limits>
 #include <fstream>
 #include <string>
 

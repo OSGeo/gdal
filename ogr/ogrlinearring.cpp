@@ -33,6 +33,7 @@
 #include <climits>
 #include <cmath>
 #include <cstring>
+#include <limits>
 
 #include "cpl_error.h"
 #include "ogr_core.h"

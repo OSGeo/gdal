@@ -32,6 +32,8 @@
 #include "cpl_http.h"
 #include "gdal_proxy.h"
 
+#include <limits>
+
 class NGWWrapperRasterBand : public GDALProxyRasterBand
 {
     GDALRasterBand *poBaseBand;

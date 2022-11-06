@@ -36,6 +36,7 @@
 #include "gdal_priv_templates.hpp"
 #include "memdataset.h"
 
+#include <algorithm>
 #include <limits>
 
 #include "degrib/degrib/meta.h"

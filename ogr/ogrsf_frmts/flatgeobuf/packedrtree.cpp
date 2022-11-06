@@ -36,6 +36,8 @@
 
 #include "packedrtree.h"
 
+#include <algorithm>
+#include <limits>
 #include <map>
 #include <unordered_map>
 #include <iostream>

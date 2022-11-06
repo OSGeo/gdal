@@ -34,6 +34,7 @@
 #include <algorithm>
 #include <cstring>
 #include <ctime>
+#include <limits>
 #include <sstream>
 
 #include "odbc/Types.h"
