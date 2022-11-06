@@ -6119,7 +6119,7 @@ static bool NITFWriteDES( VSILFILE*& fp, const char* pszFilename,
     if( nDataLen < 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Value of DESSHL = '%s' is not consitent with provided DESData",
+                 "Value of DESSHL = '%s' is not consistent with provided DESData",
                  szDESSHL);
         return false;
     }
