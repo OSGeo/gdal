@@ -30,6 +30,7 @@
 #include "common.h"
 #include "include_basisu_sdk.h"
 
+#include <algorithm>
 #include <mutex>
 
 /************************************************************************/

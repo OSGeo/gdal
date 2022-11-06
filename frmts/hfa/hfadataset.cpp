@@ -43,6 +43,7 @@
 #  include <fcntl.h>
 #endif
 #include <algorithm>
+#include <limits>
 #include <memory>
 #include <string>
 #include <vector>

@@ -30,6 +30,7 @@
 #include "ogrgeojsonreader.h"
 #include "cpl_json.h"
 
+#include <algorithm>
 #include <set>
 
 

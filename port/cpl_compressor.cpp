@@ -60,6 +60,7 @@
 #include <lz4.h>
 #endif
 
+#include <limits>
 #include <mutex>
 #include <type_traits>
 #include <vector>

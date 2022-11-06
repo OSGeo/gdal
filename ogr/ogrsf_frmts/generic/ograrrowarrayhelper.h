@@ -31,6 +31,7 @@
 //! @cond Doxygen_Suppress
 
 #include <algorithm>
+#include <limits>
 
 #include "cpl_time.h"
 

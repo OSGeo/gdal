@@ -37,6 +37,7 @@
 #include "cpl_port.h"
 #include "cpl_vsi.h"
 
+#include <algorithm>
 #include <cerrno>
 #include <cstdarg>
 #include <cstddef>

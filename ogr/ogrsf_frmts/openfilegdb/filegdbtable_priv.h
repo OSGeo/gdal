@@ -37,6 +37,7 @@
 #include <algorithm>
 #include <cwchar>
 #include <vector>
+#include <limits>
 
 #define DIV_ROUND_UP(a, b) ( ((a) % (b)) == 0 ? ((a) / (b)) : (((a) / (b)) + 1) )
 

@@ -41,6 +41,7 @@
 
 #include "cpl_curl_priv.h"
 
+#include <algorithm>
 #include <set>
 #include <map>
 #include <memory>

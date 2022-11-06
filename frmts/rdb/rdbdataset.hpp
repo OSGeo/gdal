@@ -36,6 +36,7 @@
 #include <riegl/rdb.hpp>
 
 #include <algorithm>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <string>

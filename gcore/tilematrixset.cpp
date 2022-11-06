@@ -31,6 +31,7 @@
 
 #include <cmath>
 #include <cfloat>
+#include <limits>
 
 #include "tilematrixset.hpp"
 

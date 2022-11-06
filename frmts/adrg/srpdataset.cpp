@@ -35,6 +35,7 @@
 
 #include <cstdlib>
 #include <algorithm>
+#include <limits>
 
 // Uncomment to recognize also .gen files in addition to .img files
 // #define OPEN_GEN
