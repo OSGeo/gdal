@@ -58,6 +58,7 @@ Fixes:
  * Fix issues when building/installing in directories with spaces, at least on Unix.
  * fix LIBKML linking on Windows Conda
  * make sure to register EEDAI driver when built as a plugin
+ * fix Win32 csharp build (#6620)
 
 ## Internal libraries
 
@@ -222,6 +223,9 @@ GTiff driver:
  * honour COMPRESS_OVERVIEW and INTERLEAVE_OVERVIEW for internal overviews (#6344)
  * CreateCopy(): fix marking alpha channels that are not the last one (#6395)
 
+HDF5 driver:
+ * multidim: fix crash on 'gdalmdiminfo HDF5:autotest/gdrivers/data/netcdf/alldatatypes.nc'
+
 JP2KAK driver:
  * use kdu_multi_analysis class for tile encoding, instead of very low level kdu_analysis
  * use kdu_stripe_compressor whenever the required buffer size is < CACHE_MAX / 4, otherwise fallback to kdu_multi_analysis
@@ -385,6 +389,7 @@ GeoJSONSeq driver:
 GML driver:
  * make FORCE_SRS_DETECTION=YES open option work with multiple geometry columns (#6392)
  * read <gml:description>, <gml:identifier>, <gml:name> fields in a feature (qgis/QGIS#42660)
+ * OGRMergeGeometryTypesEx(): do not consider different type of MultiGeometries (ie MultiPoint, MultiLineString, MultiPolygon) as being mergeable as GeometryCollections (#6616)
 
 GMLAS driver:
  * be robust to GML schemas being pointed to a location different from http://schemas.ogc.net/
@@ -406,6 +411,10 @@ GPKG driver:
  * properly update gpkg_ogr_contents on INSERT OR REPLACE statements
  * do not warn about http://ngageoint.github.io/GeoPackage/docs/extensions extensions in read-only mode
  * Rename layer: take into account QGIS layer_styles extension
+ * add compatibility with GPKG 1.0 gpkg_data_column_constraints table
+
+GRIB driver:
+ * fix crash and invalid metadata when processing index .idx file with sub-messages (#6613)
 
 HANA driver:
  * pending batches are not flushed when layer is destroyed
@@ -470,6 +479,7 @@ All bindings:
  * add inverseCT optional parameter to CoordinateOperation.SetOperation(), and add CoordinateOperation.GetInverse()
  * make Band.ComputeStatistics() kwargs
  * add options argument to Dataset.BuildOverviews()
+ * fix GDT_TypeCount value (affects C# and Java bindings)
 
 Python bindings:
  * bindings for Arrow Batch functionality
