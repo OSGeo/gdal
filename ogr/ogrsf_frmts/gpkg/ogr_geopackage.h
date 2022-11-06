@@ -335,6 +335,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
 
         bool                    HasDataColumnsTable() const;
         bool                    HasDataColumnConstraintsTable() const;
+        bool                    HasDataColumnConstraintsTableGPKG_1_0() const;
         bool                CreateColumnsTableAndColumnConstraintsTablesIfNecessary();
         bool                HasGpkgextRelationsTable() const;
         bool                HasQGISLayerStyles() const;
