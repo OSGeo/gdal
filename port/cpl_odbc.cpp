@@ -34,6 +34,7 @@
 #include "cpl_string.h"
 #include "cpl_error.h"
 
+#include <limits>
 #include <mutex>
 
 

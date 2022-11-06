@@ -40,6 +40,7 @@
 #include "ogr_sqlite.h"
 #include "ogrsqliteutility.h"
 
+#include <algorithm>
 #include <cassert>
 #include <climits>
 #include <cstddef>

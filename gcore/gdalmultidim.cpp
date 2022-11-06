@@ -30,6 +30,7 @@
 
 #include <assert.h>
 #include <algorithm>
+#include <limits>
 #include <queue>
 #include <set>
 

@@ -30,7 +30,7 @@
 #include "rawdataset.h"
 
 #include <algorithm>
-
+#include <limits>
 
 #ifdef CPL_IS_LSB
 #define SWAP_SIGDEM_HEADER(abyHeader) { \

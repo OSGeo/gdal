@@ -33,6 +33,7 @@
 #include <cstring>
 
 #include <algorithm>
+#include <limits>
 #include <vector>
 
 #include "cpl_error.h"

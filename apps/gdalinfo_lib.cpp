@@ -33,6 +33,7 @@
 #include "gdal_utils_priv.h"
 
 #include <cmath>
+#include <limits>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>

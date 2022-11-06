@@ -33,7 +33,9 @@
 #include "ogr_p.h"
 #include "ogr_swq.h"
 
+#include <algorithm>
 #include <cinttypes>
+#include <limits>
 
 #define SWQ_ISNOTNULL (-SWQ_ISNULL)
 

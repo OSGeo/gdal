@@ -28,6 +28,7 @@
 #ifndef MARCHING_SQUARE_SQUARE_H
 #define MARCHING_SQUARE_SQUARE_H
 
+#include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <math.h>
@@ -39,15 +40,15 @@ namespace marching_squares {
 struct Square
 {
     // Bit flags to determine borders around pixel
-    static const uint8_t NO_BORDER    = 0;      // 0000 0000 
-    static const uint8_t LEFT_BORDER  = 1 << 0; // 0000 0001 
+    static const uint8_t NO_BORDER    = 0;      // 0000 0000
+    static const uint8_t LEFT_BORDER  = 1 << 0; // 0000 0001
     static const uint8_t LOWER_BORDER = 1 << 1; // 0000 0010
     static const uint8_t RIGHT_BORDER = 1 << 2; // 0000 0100
     static const uint8_t UPPER_BORDER = 1 << 3; // 0000 1000
 
     // Bit flags for marching square case
-    static const uint8_t ALL_LOW     = 0;      // 0000 0000 
-    static const uint8_t UPPER_LEFT  = 1 << 0; // 0000 0001 
+    static const uint8_t ALL_LOW     = 0;      // 0000 0000
+    static const uint8_t UPPER_LEFT  = 1 << 0; // 0000 0001
     static const uint8_t LOWER_LEFT  = 1 << 1; // 0000 0010
     static const uint8_t LOWER_RIGHT = 1 << 2; // 0000 0100
     static const uint8_t UPPER_RIGHT = 1 << 3; // 0000 1000
@@ -107,27 +108,27 @@ struct Square
         assert(lowerLeft.y == lowerRight.y);
         assert(lowerLeft.x == upperLeft.x);
         assert(lowerRight.x == upperRight.x);
-        assert(!split || nanCount == 0); 
+        assert(!split || nanCount == 0);
     }
 
-    Square upperLeftSquare() const 
-    { 
+    Square upperLeftSquare() const
+    {
         assert(!std::isnan(upperLeft.value));
         return Square(
-                    upperLeft, upperCenter(), 
+                    upperLeft, upperCenter(),
                     leftCenter(), center(),
-                    (std::isnan(upperRight.value) ? RIGHT_BORDER: NO_BORDER) 
-                    | (std::isnan(lowerLeft.value) ? LOWER_BORDER : NO_BORDER), true); 
+                    (std::isnan(upperRight.value) ? RIGHT_BORDER: NO_BORDER)
+                    | (std::isnan(lowerLeft.value) ? LOWER_BORDER : NO_BORDER), true);
     }
 
     Square lowerLeftSquare() const
-    { 
+    {
         assert(!std::isnan(lowerLeft.value));
         return Square(
-                    leftCenter(), center(), 
+                    leftCenter(), center(),
                     lowerLeft, lowerCenter(),
-                    (std::isnan(lowerRight.value) ? RIGHT_BORDER: NO_BORDER) 
-                    | (std::isnan(upperLeft.value) ? UPPER_BORDER : NO_BORDER), true); 
+                    (std::isnan(lowerRight.value) ? RIGHT_BORDER: NO_BORDER)
+                    | (std::isnan(upperLeft.value) ? UPPER_BORDER : NO_BORDER), true);
     }
 
     Square lowerRightSquare() const
@@ -137,7 +138,7 @@ struct Square
                     center(), rightCenter(),
                     lowerCenter(), lowerRight,
                     (std::isnan(lowerLeft.value) ? LEFT_BORDER: NO_BORDER)
-                    | (std::isnan(upperRight.value) ? UPPER_BORDER : NO_BORDER), true); 
+                    | (std::isnan(upperRight.value) ? UPPER_BORDER : NO_BORDER), true);
     }
 
     Square upperRightSquare() const
@@ -147,20 +148,20 @@ struct Square
                     upperCenter(), upperRight,
                     center(), rightCenter(),
                     (std::isnan(lowerRight.value) ? LOWER_BORDER: NO_BORDER)
-                    | (std::isnan(upperLeft.value) ? LEFT_BORDER : NO_BORDER), true); 
-    } 
+                    | (std::isnan(upperLeft.value) ? LEFT_BORDER : NO_BORDER), true);
+    }
 
     double maxValue() const
     {
         assert(nanCount==0);
-        return std::max(std::max(upperLeft.value, upperRight.value), 
+        return std::max(std::max(upperLeft.value, upperRight.value),
                         std::max(lowerLeft.value, lowerRight.value));
     }
-        
+
     double minValue() const
     {
         assert(nanCount==0);
-        return std::min(std::min(upperLeft.value, upperRight.value), 
+        return std::min(std::min(upperLeft.value, upperRight.value),
                         std::min(lowerLeft.value, lowerRight.value));
     }
 
@@ -277,7 +278,7 @@ struct Square
                 // bitwise AND to test which borders we have on the square
                 if ( ( border & borders ) == 0 )
                     continue;
-                
+
                 // convention: for a level = L, store borders for the previous level up to
                 // (and including) L in the border of level "L".
                 // For fixed sets of level, this means there is an "Inf" slot for borders of the highest level
@@ -353,7 +354,7 @@ private:
 
     ValuedPoint center() const
     {
-        return ValuedPoint( 
+        return ValuedPoint(
                 .5*(upperLeft.x + lowerRight.x),
                 .5*(upperLeft.y + lowerRight.y),
                 (  (std::isnan(lowerLeft.value) ? 0 : lowerLeft.value)
@@ -365,9 +366,9 @@ private:
 
     ValuedPoint leftCenter() const
     {
-        return ValuedPoint( 
+        return ValuedPoint(
                 upperLeft.x,
-                .5*(upperLeft.y + lowerLeft.y), 
+                .5*(upperLeft.y + lowerLeft.y),
                 std::isnan(upperLeft.value)
                 ?  lowerLeft.value
                 : (std::isnan(lowerLeft.value) ? upperLeft.value : .5*(upperLeft.value + lowerLeft.value)));
@@ -375,9 +376,9 @@ private:
 
     ValuedPoint lowerCenter() const
     {
-        return ValuedPoint( 
+        return ValuedPoint(
                 .5*(lowerLeft.x + lowerRight.x),
-                lowerLeft.y, 
+                lowerLeft.y,
                 std::isnan(lowerRight.value)
                 ? lowerLeft.value
                 : (std::isnan(lowerLeft.value) ? lowerRight.value : .5*(lowerRight.value + lowerLeft.value)));
@@ -385,9 +386,9 @@ private:
 
     ValuedPoint rightCenter() const
     {
-        return ValuedPoint( 
+        return ValuedPoint(
                 upperRight.x,
-                .5*(upperRight.y + lowerRight.y), 
+                .5*(upperRight.y + lowerRight.y),
                 std::isnan(lowerRight.value)
                 ? upperRight.value
                 : (std::isnan(upperRight.value) ? lowerRight.value : .5*(lowerRight.value + upperRight.value)));
@@ -395,9 +396,9 @@ private:
 
     ValuedPoint upperCenter() const
     {
-        return ValuedPoint( 
+        return ValuedPoint(
                 .5*(upperLeft.x + upperRight.x),
-                upperLeft.y, 
+                upperLeft.y,
                 std::isnan(upperLeft.value)
                 ? upperRight.value
                 : (std::isnan(upperRight.value) ? upperLeft.value : .5*(upperLeft.value + upperRight.value)));
@@ -446,16 +447,16 @@ private:
         switch (border)
         {
             case LEFT_BORDER:
-                return Point(upperLeft.x, interpolate_(level, lowerLeft.y, upperLeft.y, 
+                return Point(upperLeft.x, interpolate_(level, lowerLeft.y, upperLeft.y,
                             lowerLeft.value, upperLeft.value, !split));
             case LOWER_BORDER:
-                return Point(interpolate_(level, lowerLeft.x, lowerRight.x, 
+                return Point(interpolate_(level, lowerLeft.x, lowerRight.x,
                             lowerLeft.value, lowerRight.value, !split), lowerLeft.y);
             case RIGHT_BORDER:
-                return Point(upperRight.x, interpolate_(level, lowerRight.y, upperRight.y, 
+                return Point(upperRight.x, interpolate_(level, lowerRight.y, upperRight.y,
                             lowerRight.value, upperRight.value, !split));
             case UPPER_BORDER:
-                return Point(interpolate_(level, upperLeft.x, upperRight.x, 
+                return Point(interpolate_(level, upperLeft.x, upperRight.x,
                             upperLeft.value, upperRight.value, !split), upperLeft.y);
         }
         assert(false);

@@ -31,6 +31,7 @@
 
 #include "wmsdriver.h"
 
+#include <algorithm>
 
 GDALWMSRasterBand::GDALWMSRasterBand(GDALWMSDataset *parent_dataset, int band,
                                         double scale):

@@ -27,6 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 #include <algorithm>
+#include <limits>
 
 #include "cpl_string.h"
 #include "gdal_frmts.h"
