@@ -187,6 +187,7 @@ class VSIWebHDFSWriteHandle final : public VSIAppendWriteHandle
     CPLString           m_osDataNodeHost{};
     CPLString           m_osUsernameParam{};
     CPLString           m_osDelegationParam{};
+    CPLStringList       m_aosHTTPOptions{};
 
     bool                Send(bool bIsLastBlock) override;
     bool                CreateFile();
@@ -232,7 +233,8 @@ VSIWebHDFSWriteHandle::VSIWebHDFSWriteHandle( VSIWebHDFSFSHandler* poFS,
         VSIAppendWriteHandle(poFS, poFS->GetFSPrefix(), pszFilename,
                              GetWebHDFSBufferSize()),
         m_osURL( pszFilename + poFS->GetFSPrefix().size() ),
-        m_osDataNodeHost( GetWebHDFSDataNodeHost(pszFilename) )
+        m_osDataNodeHost( GetWebHDFSDataNodeHost(pszFilename) ),
+        m_aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename))
 {
     // cppcheck-suppress useInitializationList
     m_osUsernameParam = VSIGetPathSpecificOption(pszFilename, "WEBHDFS_USERNAME", "");
@@ -318,7 +320,7 @@ retry:
     CURL* hCurlHandle = curl_easy_init();
 
     struct curl_slist* headers = static_cast<struct curl_slist*>(
-        CPLHTTPSetOptions(hCurlHandle, osURL.c_str(), nullptr));
+        CPLHTTPSetOptions(hCurlHandle, osURL.c_str(), m_aosHTTPOptions.List()));
 
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, 0);
@@ -406,7 +408,7 @@ bool VSIWebHDFSWriteHandle::Append()
     CURL* hCurlHandle = curl_easy_init();
 
     struct curl_slist* headers = static_cast<struct curl_slist*>(
-        CPLHTTPSetOptions(hCurlHandle, osURL.c_str(), nullptr));
+        CPLHTTPSetOptions(hCurlHandle, osURL.c_str(), m_aosHTTPOptions.List()));
 
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "POST");
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
@@ -467,7 +469,7 @@ bool VSIWebHDFSWriteHandle::Append()
     hCurlHandle = curl_easy_init();
 
     headers = static_cast<struct curl_slist*>(
-        CPLHTTPSetOptions(hCurlHandle, osURL.c_str(), nullptr));
+        CPLHTTPSetOptions(hCurlHandle, osURL.c_str(), m_aosHTTPOptions.List()));
     headers = curl_slist_append(headers, "Content-Type: application/octet-stream");
 
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_POSTFIELDS, m_pabyBuffer);

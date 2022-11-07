@@ -1078,16 +1078,19 @@ def test_vsicurl_GDAL_HTTP_HEADERS():
         },
     )
 
+    filename = (
+        "/vsicurl/http://localhost:%d/test_vsicurl_GDAL_HTTP_HEADERS.bin"
+        % gdaltest.webserver_port
+    )
+    gdal.SetPathSpecificOption(
+        filename,
+        "GDAL_HTTP_HEADERS",
+        r'Foo: Bar,"Baz: escaped backslash \\, escaped double-quote \", end of value",Another: Header',
+    )
     with webserver.install_http_handler(handler):
-        with gdaltest.config_option(
-            "GDAL_HTTP_HEADERS",
-            r'Foo: Bar,"Baz: escaped backslash \\, escaped double-quote \", end of value",Another: Header',
-        ):
-            statres = gdal.VSIStatL(
-                "/vsicurl/http://localhost:%d/test_vsicurl_GDAL_HTTP_HEADERS.bin"
-                % gdaltest.webserver_port
-            )
-            assert statres.size == 3
+        statres = gdal.VSIStatL(filename)
+    gdal.SetPathSpecificOption(filename, "GDAL_HTTP_HEADERS", None)
+    assert statres.size == 3
 
 
 ###############################################################################

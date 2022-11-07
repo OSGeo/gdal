@@ -518,15 +518,29 @@ constexpr TupleEnvVarOptionName asAssocEnvVarOptionName[] =
     { "GDAL_HTTP_CAPATH", "CAPATH" },
     { "GDAL_HTTP_SSL_VERIFYSTATUS", "SSL_VERIFYSTATUS" },
     { "GDAL_HTTP_USE_CAPI_STORE", "USE_CAPI_STORE" },
+    { "GDAL_HTTP_HEADERS", "HEADERS" },
+    { "GDAL_HTTP_HEADER_FILE", "HEADER_FILE" },
+    { "GDAL_HTTP_AUTH", "HTTPAUTH" },
+    { "GDAL_GSSAPI_DELEGATION", "GSSAPI_DELEGATION" },
+    { "GDAL_HTTP_COOKIE", "COOKIE" },
+    { "GDAL_HTTP_COOKIEFILE", "COOKIEFILE" },
+    { "GDAL_HTTP_COOKIEJAR", "COOKIEJAR" },
+    { "GDAL_HTTP_MAX_RETRY", "MAX_RETRY" },
+    { "GDAL_HTTP_RETRY_DELAY", "RETRY_DELAY" },
+    { "GDAL_HTTP_TCP_KEEPALIVE", "TCP_KEEPALIVE" },
+    { "GDAL_HTTP_TCP_KEEPIDLE", "TCP_KEEPIDLE" },
+    { "GDAL_HTTP_TCP_KEEPINTVL", "TCP_KEEPINTVL" },
 };
 
-char** CPLHTTPGetOptionsFromEnv()
+char** CPLHTTPGetOptionsFromEnv(const char* pszFilename)
 {
     char** papszOptions = nullptr;
     for( size_t i = 0; i < CPL_ARRAYSIZE(asAssocEnvVarOptionName); ++i )
     {
-        const char* pszVal = CPLGetConfigOption(
-            asAssocEnvVarOptionName[i].pszEnvVar, nullptr);
+        const char* pszVal = pszFilename ?
+            VSIGetPathSpecificOption(
+                pszFilename, asAssocEnvVarOptionName[i].pszEnvVar, nullptr) :
+            CPLGetConfigOption(asAssocEnvVarOptionName[i].pszEnvVar, nullptr);
         if( pszVal != nullptr )
         {
             papszOptions = CSLSetNameValue(papszOptions,
@@ -890,6 +904,8 @@ int CPLHTTPPopFetchCallback(void)
 /*                           CPLHTTPFetch()                             */
 /************************************************************************/
 
+// NOTE: when adding an option below, add it in asAssocEnvVarOptionName[]
+
 /**
  * \brief Fetch a document from an url and return in a string.
  *
@@ -990,6 +1006,9 @@ int CPLHTTPPopFetchCallback(void)
  * enclosed in double-quote characters. In that situation, backslash and double
  * quote character must be backslash-escaped.
  * e.g GDAL_HTTP_HEADERS=Foo: Bar,"Baz: escaped backslash \\, escaped double-quote \", end of value",Another: Header
+ *
+ * Starting with GDAL 3.7, the above configuration options can also be specified
+ * as path-specific options with VSISetPathSpecificOption().
  *
  * @return a CPLHTTPResult* structure that must be freed by
  * CPLHTTPDestroyResult(), or NULL if libcurl support is disabled
@@ -1221,17 +1240,6 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
 
     struct curl_slist* headers= reinterpret_cast<struct curl_slist*>(
                             CPLHTTPSetOptions(http_handle, pszURL, papszOptions));
-
-    // Set Headers.
-    const char *pszHeaders = CSLFetchNameValue( papszOptions, "HEADERS" );
-    if( pszHeaders != nullptr ) {
-        CPLDebug ("HTTP", "These HTTP headers were set: %s", pszHeaders);
-        char** papszTokensHeaders = CSLTokenizeString2(pszHeaders, "\r\n", 0);
-        for( int i=0; papszTokensHeaders[i] != nullptr; ++i )
-            headers = curl_slist_append(headers, papszTokensHeaders[i]);
-        CSLDestroy(papszTokensHeaders);
-    }
-
     if( headers != nullptr )
         unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER, headers);
 
@@ -2382,11 +2390,17 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
         }
     }
 
-    const char* pszHeaders = CPLGetConfigOption("GDAL_HTTP_HEADERS", nullptr);
+    const char* pszHeaders = CSLFetchNameValue( papszOptions, "HEADERS" );
+    if( pszHeaders == nullptr )
+        pszHeaders = CPLGetConfigOption("GDAL_HTTP_HEADERS", nullptr);
     if( pszHeaders )
     {
+         // We accept both raw headers with \r\n as a separator, or as
+         // a comma separated list of foo: bar values.
          const CPLStringList aosTokens(
-             CSLTokenizeString2( pszHeaders, ",", CSLT_HONOURSTRINGS ));
+             strstr(pszHeaders, "\r\n") ?
+                 CSLTokenizeString2(pszHeaders, "\r\n", 0) :
+                 CSLTokenizeString2( pszHeaders, ",", CSLT_HONOURSTRINGS ));
          for( int i = 0; i < aosTokens.size(); ++i )
          {
              headers = curl_slist_append(headers, aosTokens[i]);
