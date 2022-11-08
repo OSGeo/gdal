@@ -33,6 +33,8 @@ import pytest
 
 from osgeo import gdal, ogr, osr
 
+pytestmark = pytest.mark.require_driver("MapML")
+
 
 def test_ogr_mapml_basic():
 

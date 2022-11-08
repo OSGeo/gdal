@@ -35,6 +35,8 @@ import pytest
 
 from osgeo import gdal, ogr, osr
 
+pytestmark = pytest.mark.require_driver("GML")
+
 ###############################################################################
 # Test reading Japanese FGD GML (v4) files
 ###############################################################################

@@ -40,6 +40,9 @@ from osgeo import gdal
 
 def test_sieve_1():
 
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver missing")
+
     drv = gdal.GetDriverByName("GTiff")
     src_ds = gdal.Open("data/sieve_src.grd")
     src_band = src_ds.GetRasterBand(1)
@@ -69,6 +72,9 @@ def test_sieve_1():
 
 def test_sieve_2():
 
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver missing")
+
     drv = gdal.GetDriverByName("GTiff")
     src_ds = gdal.Open("data/sieve_src.grd")
     src_band = src_ds.GetRasterBand(1)
@@ -97,6 +103,9 @@ def test_sieve_2():
 
 
 def test_sieve_3():
+
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver missing")
 
     drv = gdal.GetDriverByName("GTiff")
     src_ds = gdal.Open("data/unmergable.grd")
@@ -128,6 +137,9 @@ def test_sieve_3():
 
 def test_sieve_4():
 
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver missing")
+
     drv = gdal.GetDriverByName("GTiff")
     src_ds = gdal.Open("data/sieve_2634.grd")
     src_band = src_ds.GetRasterBand(1)
@@ -157,6 +169,9 @@ def test_sieve_4():
 
 
 def test_sieve_5():
+
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver missing")
 
     drv = gdal.GetDriverByName("GTiff")
     src_ds = gdal.Open("data/sieve_src.grd")
@@ -225,6 +240,9 @@ def test_sieve_6():
 
 def test_sieve_7():
 
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver missing")
+
     gdal.FileFromMemBuffer(
         "/vsimem/sieve_7.asc",
         """ncols        7
@@ -282,6 +300,9 @@ NODATA_value 0
 
 
 def test_sieve_8():
+
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver missing")
 
     gdal.FileFromMemBuffer(
         "/vsimem/sieve_8.asc",

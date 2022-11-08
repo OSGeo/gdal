@@ -348,6 +348,9 @@ def test_histogram_2():
 
 def test_histogram_3():
 
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver missing")
+
     ds = gdal.Open("data/int32_withneg.grd")
     hist = ds.GetRasterBand(1).GetHistogram(
         buckets=21, max=100, min=-100, include_out_of_range=1, approx_ok=0
@@ -363,6 +366,9 @@ def test_histogram_3():
 
 
 def test_histogram_4():
+
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver missing")
 
     ds = gdal.Open("data/int32_withneg.grd")
     hist = ds.GetRasterBand(1).GetHistogram(
@@ -663,6 +669,9 @@ def test_histogram_5():
 
 
 def test_histogram_6():
+
+    if gdal.GetDriverByName("JPEG") is None:
+        pytest.skip("JPEG driver missing")
 
     shutil.copy("../gdrivers/data/jpeg/albania.jpg", "tmp/albania.jpg")
     ds = gdal.Open("tmp/albania.jpg")

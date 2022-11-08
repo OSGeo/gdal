@@ -33,8 +33,11 @@ import os
 import shutil
 
 import gdaltest
+import pytest
 
 from osgeo import gdal
+
+pytestmark = pytest.mark.require_driver("ADRG")
 
 ###############################################################################
 # Read test of simple byte reference data.

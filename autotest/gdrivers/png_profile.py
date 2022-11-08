@@ -37,6 +37,8 @@ import pytest
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.require_driver("PNG")
+
 ###############################################################################
 # Test writing and reading of ICC profile in CreateCopy()
 

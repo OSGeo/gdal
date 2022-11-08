@@ -34,6 +34,11 @@ import pytest
 
 from osgeo import gdal, ogr
 
+pytestmark = [
+    pytest.mark.require_driver("AVCE00"),
+    pytest.mark.require_driver("AVCBIN"),
+]
+
 ###############################################################################
 #
 

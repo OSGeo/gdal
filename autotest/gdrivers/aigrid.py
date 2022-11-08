@@ -37,6 +37,8 @@ import pytest
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.require_driver("AIG")
+
 ###############################################################################
 # Read test of simple byte reference data.
 

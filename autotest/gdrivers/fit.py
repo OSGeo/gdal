@@ -32,6 +32,8 @@ import pytest
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.require_driver("FIT")
+
 
 @pytest.mark.parametrize(
     "filename", ["byte", "int16", "uint16", "int32", "uint32", "float32", "float64"]

@@ -235,6 +235,9 @@ def test_ogr_sql_9():
 
 def test_ogr_sql_ilike():
 
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
+
     ds = ogr.Open("data/prime_meridian.csv")
     sql_lyr = ds.ExecuteSQL(
         "select * from prime_meridian where PRIME_MERIDIAN_NAME ilike 'GREEN%'"
@@ -267,6 +270,9 @@ def test_ogr_sql_ilike():
 
 
 def test_ogr_sql_like():
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
 
     ds = ogr.Open("data/prime_meridian.csv")
     sql_lyr = ds.ExecuteSQL(
@@ -587,6 +593,9 @@ def test_ogr_sql_23():
 
 def test_ogr_sql_24():
 
+    if gdal.GetDriverByName("DGN") is None:
+        pytest.skip("DGN driver missing")
+
     result = "success"
 
     ds = ogr.Open("data/dgn/smalltest.dgn")
@@ -674,6 +683,9 @@ def test_ogr_sql_26():
 
 
 def test_ogr_sql_27():
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
 
     ds = ogr.Open("data/csv/testdatetime.csv")
 

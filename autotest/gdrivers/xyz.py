@@ -36,6 +36,8 @@ import pytest
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.require_driver("XYZ")
+
 ###############################################################################
 # Test CreateCopy() of byte.tif
 

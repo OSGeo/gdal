@@ -42558,6 +42558,37 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_HasTriangulation(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  int result;
+  
+  if (!SWIG_Python_UnpackTuple(args, "HasTriangulation", 0, 0, 0)) SWIG_fail;
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)GDALHasTriangulation();
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_GetDriverCount(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   int result;
@@ -47042,6 +47073,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "SerializeXMLTree", _wrap_SerializeXMLTree, METH_O, "SerializeXMLTree(CPLXMLNode * xmlnode) -> retStringAndCPLFree *"},
 	 { "GetJPEG2000Structure", _wrap_GetJPEG2000Structure, METH_VARARGS, "GetJPEG2000Structure(char const * pszFilename, char ** options=None) -> CPLXMLNode *"},
 	 { "GetJPEG2000StructureAsString", _wrap_GetJPEG2000StructureAsString, METH_VARARGS, "GetJPEG2000StructureAsString(char const * pszFilename, char ** options=None) -> retStringAndCPLFree *"},
+	 { "HasTriangulation", _wrap_HasTriangulation, METH_NOARGS, "HasTriangulation() -> int"},
 	 { "GetDriverCount", _wrap_GetDriverCount, METH_NOARGS, "GetDriverCount() -> int"},
 	 { "GetDriverByName", _wrap_GetDriverByName, METH_O, "GetDriverByName(char const * name) -> Driver"},
 	 { "GetDriver", _wrap_GetDriver, METH_O, "GetDriver(int i) -> Driver"},

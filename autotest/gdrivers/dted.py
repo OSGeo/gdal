@@ -37,6 +37,8 @@ import pytest
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.require_driver("DTED")
+
 ###############################################################################
 # Perform simple read test.
 

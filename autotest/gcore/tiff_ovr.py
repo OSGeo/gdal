@@ -373,6 +373,12 @@ def test_tiff_ovr_rms_palette(both_endian):
 @pytest.mark.parametrize("option_name_suffix", ["", "_OVERVIEW"])
 @pytest.mark.parametrize("read_only", [True, False])
 def test_tiff_ovr_9(both_endian, option_name_suffix, read_only):
+
+    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
+        "DMD_CREATIONOPTIONLIST"
+    ):
+        pytest.skip("JPEG support missing")
+
     tiff_drv = gdal.GetDriverByName("GTiff")
     tiff_drv.Delete("tmp/ovr9.tif")
 
@@ -429,6 +435,11 @@ def test_tiff_ovr_9(both_endian, option_name_suffix, read_only):
 
 
 def test_tiff_ovr_10(both_endian):
+
+    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
+        "DMD_CREATIONOPTIONLIST"
+    ):
+        pytest.skip("JPEG support missing")
 
     src_ds = gdal.Open("data/rgbsmall.tif", gdal.GA_ReadOnly)
 
@@ -1006,6 +1017,9 @@ def test_tiff_ovr_28(both_endian):
 
 def test_tiff_ovr_29(both_endian):
 
+    if gdal.GetDriverByName("PNG") is None:
+        pytest.skip("PNG driver missing")
+
     src_ds = gdal.Open("data/byte.tif")
     png_ds = gdal.GetDriverByName("PNG").CreateCopy("tmp/ovr29.png", src_ds)
     src_ds = None
@@ -1365,6 +1379,9 @@ def test_tiff_ovr_36(both_endian):
 
 def test_tiff_ovr_37(both_endian):
 
+    if gdal.GetDriverByName("DTED") is None:
+        pytest.skip("DTED driver missing")
+
     shutil.copy("../gdrivers/data/n43.dt0", "tmp/ovr37.dt0")
 
     ds = gdal.Open("tmp/ovr37.dt0")
@@ -1393,6 +1410,9 @@ def test_tiff_ovr_37(both_endian):
 
 
 def test_tiff_ovr_38(both_endian):
+
+    if gdal.GetDriverByName("DTED") is None:
+        pytest.skip("DTED driver missing")
 
     src_ds = gdal.Open("../gdrivers/data/n43.dt0")
     ds = gdaltest.tiff_drv.CreateCopy(

@@ -448,6 +448,9 @@ def test_gdalwarp_lib_19():
 
 def test_gdalwarp_lib_21():
 
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
+
     ds = gdal.Warp(
         "",
         "../gcore/data/utmsmall.tif",
@@ -467,6 +470,9 @@ def test_gdalwarp_lib_21():
 
 
 def test_gdalwarp_lib_23():
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
 
     ds = gdal.Warp(
         "",
@@ -567,6 +573,9 @@ def test_gdalwarp_lib_45():
 
 
 def test_gdalwarp_lib_46():
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
 
     ds = gdal.Warp(
         "",
@@ -875,6 +884,9 @@ def test_gdalwarp_lib_110():
 
 
 def test_gdalwarp_lib_111():
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
 
     ds = gdal.Warp(
         "",
@@ -1600,6 +1612,9 @@ def test_gdalwarp_lib_134():
 
 
 def test_gdalwarp_lib_135():
+
+    if gdal.GetDriverByName("GTX") is None:
+        pytest.skip("GTX driver is missing")
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     src_ds.SetGeoTransform([500000, 1, 0, 4000000, 0, -1])

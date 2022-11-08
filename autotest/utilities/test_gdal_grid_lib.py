@@ -37,14 +37,11 @@ import pytest
 
 from osgeo import gdal, ogr
 
-###############################################################################
-#
 
+def create_source_dataset():
 
-def test_gdal_grid_lib_1():
-
-    # Create an OGR grid from the values of n43.dt0
-    ds = gdal.Open("../gdrivers/data/n43.dt0")
+    # Create an OGR grid from the values of n43.tif
+    ds = gdal.Open("../gdrivers/data/n43.tif")
     geotransform = ds.GetGeoTransform()
 
     shape_drv = ogr.GetDriverByName("ESRI Shapefile")
@@ -68,6 +65,17 @@ def test_gdal_grid_lib_1():
 
     shape_ds = None
 
+    return ds
+
+
+###############################################################################
+#
+
+
+def test_gdal_grid_lib_1():
+
+    ds = create_source_dataset()
+
     spatFilter = None
     if ogrtest.have_geos():
         spatFilter = [-180, -90, 180, 90]
@@ -84,6 +92,7 @@ def test_gdal_grid_lib_1():
         algorithm="nearest:radius1=0.0:radius2=0.0:angle=0.0",
         spatFilter=spatFilter,
     )
+
     # We should get the same values as in n43.td0
     assert (
         ds.GetRasterBand(1).Checksum() == ds2.GetRasterBand(1).Checksum()
@@ -96,12 +105,16 @@ def test_gdal_grid_lib_1():
     ds = None
     ds2 = None
 
+    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("/vsimem/tmp")
+
 
 ###############################################################################
 # Test with a point number not multiple of 8 or 16
 
 
 def test_gdal_grid_lib_2():
+
+    create_source_dataset()
 
     shape_ds = ogr.Open("/vsimem/tmp", update=1)
     shape_lyr = shape_ds.CreateLayer("test_gdal_grid_lib_2")
@@ -148,6 +161,8 @@ def test_gdal_grid_lib_2():
 
         cs = ds2.GetRasterBand(1).Checksum()
         assert cs == 1064
+
+    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("/vsimem/tmp")
 
 
 ###############################################################################
@@ -911,12 +926,3 @@ def test_gdal_grid_lib_average_distance_quadrant_ignore_extra_points():
     expected_val = (4 * (2 * 0.5**2) ** 0.5) / 4
     expected_val = struct.unpack("f", struct.pack("f", expected_val))[0]
     _compare_arrays(ds, [[expected_val]])
-
-
-###############################################################################
-# Cleanup
-
-
-def test_gdal_grid_lib_cleanup():
-
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("/vsimem/tmp")

@@ -709,20 +709,21 @@ def test_rasterio_9():
     assert tab[0] == pytest.approx(1.0, abs=1e-5)
     ds = None
 
-    # Test Band.ReadRaster on a RGBA with parts fully opaque, and fully transparent and with huge upscaling
-    ds = gdal.Open("data/stefan_full_rgba.png")
-    tab = [0, None]
-    data = ds.GetRasterBand(1).ReadRaster(
-        buf_xsize=162 * 16,
-        buf_ysize=150 * 16,
-        resample_alg=gdal.GRIORA_Cubic,
-        callback=rasterio_9_progress_callback,
-        callback_data=tab,
-    )
-    assert data is not None
-    cs = rasterio_9_checksum(data, 162 * 16, 150 * 16)
-    assert cs == 18981
-    assert tab[0] == pytest.approx(1.0, abs=1e-5)
+    if gdal.GetDriverByName("PNG") is not None:
+        # Test Band.ReadRaster on a RGBA with parts fully opaque, and fully transparent and with huge upscaling
+        ds = gdal.Open("data/stefan_full_rgba.png")
+        tab = [0, None]
+        data = ds.GetRasterBand(1).ReadRaster(
+            buf_xsize=162 * 16,
+            buf_ysize=150 * 16,
+            resample_alg=gdal.GRIORA_Cubic,
+            callback=rasterio_9_progress_callback,
+            callback_data=tab,
+        )
+        assert data is not None
+        cs = rasterio_9_checksum(data, 162 * 16, 150 * 16)
+        assert cs == 18981
+        assert tab[0] == pytest.approx(1.0, abs=1e-5)
 
 
 ###############################################################################
@@ -874,6 +875,9 @@ def test_rasterio_13():
 
 def test_rasterio_14():
 
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver missing")
+
     gdal.FileFromMemBuffer(
         "/vsimem/rasterio_14.asc",
         """ncols        6
@@ -951,6 +955,9 @@ cellsize     0
 
 def test_rasterio_average_4by4_to_3by3():
 
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver missing")
+
     gdal.FileFromMemBuffer(
         "/vsimem/test_rasterio_average_4by4_to_3by3.asc",
         """ncols        4
@@ -991,6 +998,9 @@ cellsize     1
 
 def test_rasterio_15():
 
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver missing")
+
     gdal.FileFromMemBuffer(
         "/vsimem/rasterio_15.asc",
         """ncols        2
@@ -1027,6 +1037,9 @@ cellsize     0
 
 
 def test_rasterio_16():
+
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver missing")
 
     gdal.FileFromMemBuffer(
         "/vsimem/rasterio_16.asc",
@@ -1198,6 +1211,9 @@ def test_rasterio_lanczos_nodata():
 
 
 def test_rasterio_resampled_value_is_nodata():
+
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver missing")
 
     gdal.FileFromMemBuffer(
         "/vsimem/in.asc",

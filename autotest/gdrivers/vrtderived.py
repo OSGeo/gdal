@@ -723,7 +723,7 @@ def test_vrtderived_11():
         .replace("../", "")
         .encode("UTF-8"),
     )
-    gdal.FileFromMemBuffer("/vsimem/n43.dt0", open("data/n43.dt0", "rb").read())
+    gdal.FileFromMemBuffer("/vsimem/n43.tif", open("data/n43.tif", "rb").read())
     ds = gdal.Open("/vsimem/n43_hillshade.vrt", gdal.GA_Update)
     ds.SetMetadataItem("foo", "bar")
     ds = None
@@ -734,7 +734,7 @@ def test_vrtderived_11():
     ds = None
 
     gdal.Unlink("/vsimem/n43_hillshade.vrt")
-    gdal.Unlink("/vsimem/n43.dt0")
+    gdal.Unlink("/vsimem/n43.tif")
 
     assert cs == 50577, "invalid checksum"
 

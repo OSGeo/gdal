@@ -384,6 +384,9 @@ def test_ogrinfo_22():
     if test_cli_utilities.get_ogrinfo_path() is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
+
     f = open("tmp/test_ogrinfo_22.csv", "wt")
     f.write("_WKTgeom1_EPSG_4326,_WKTgeom2_EPSG_32631\n")
     f.write('"POINT(1 2)","POINT(3 4)"\n')
@@ -472,6 +475,9 @@ OGRFeature(test_ogrinfo_22):1
 def test_ogrinfo_23():
     if test_cli_utilities.get_ogrinfo_path() is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
 
     f = open("tmp/test_ogrinfo_23.csv", "wt")
     f.write("_WKTgeom1_EPSG_4326,_WKTgeom2_EPSG_32631\n")
@@ -759,6 +765,9 @@ def test_ogrinfo_fielddomains():
 def test_ogrinfo_hiearchical():
     if test_cli_utilities.get_ogrinfo_path() is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("OpenFileGDB") is None:
+        pytest.skip("OpenFileGDB driver is missing")
 
     (ret, err) = gdaltest.runexternal_out_and_err(
         test_cli_utilities.get_ogrinfo_path()

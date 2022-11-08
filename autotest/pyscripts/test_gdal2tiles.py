@@ -61,6 +61,9 @@ def test_gdal2tiles_py_simple():
     if script_path is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("PNG") is None:
+        pytest.skip("PNG driver is missing")
+
     shutil.copy(
         test_py_scripts.get_data_path("gdrivers") + "small_world.tif",
         "tmp/out_gdal2tiles_smallworld.tif",
@@ -96,6 +99,9 @@ def test_gdal2tiles_py_zoom_option():
     if script_path is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("PNG") is None:
+        pytest.skip("PNG driver is missing")
+
     shutil.rmtree("tmp/out_gdal2tiles_smallworld", ignore_errors=True)
 
     # Because of multiprocessing, run as external process, to avoid issues with
@@ -126,6 +132,9 @@ def test_gdal2tiles_py_resampling_option():
     script_path = test_py_scripts.get_py_script("gdal2tiles")
     if script_path is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("PNG") is None:
+        pytest.skip("PNG driver is missing")
 
     resampling_list = [
         "average",
@@ -183,6 +192,9 @@ def test_gdal2tiles_py_xyz():
     if script_path is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("PNG") is None:
+        pytest.skip("PNG driver is missing")
+
     try:
         shutil.copy(
             test_py_scripts.get_data_path("gdrivers") + "small_world.tif",
@@ -229,6 +241,9 @@ def test_gdal2tiles_py_invalid_srs():
     script_path = test_py_scripts.get_py_script("gdal2tiles")
     if script_path is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("PNG") is None:
+        pytest.skip("PNG driver is missing")
 
     shutil.copy(
         test_py_scripts.get_data_path("gdrivers") + "test_nosrs.vrt",
@@ -323,6 +338,9 @@ def test_handle_utf8_filename():
     if script_path is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("PNG") is None:
+        pytest.skip("PNG driver is missing")
+
     out_folder = "tmp/utf8_test"
 
     try:
@@ -359,6 +377,9 @@ def test_exclude_transparent_tiles():
     script_path = test_py_scripts.get_py_script("gdal2tiles")
     if script_path is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("PNG") is None:
+        pytest.skip("PNG driver is missing")
 
     output_folder = "tmp/test_exclude_transparent_tiles"
     os.makedirs(output_folder)
@@ -400,6 +421,9 @@ def test_gdal2tiles_py_profile_raster():
     if script_path is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("PNG") is None:
+        pytest.skip("PNG driver is missing")
+
     shutil.rmtree("tmp/out_gdal2tiles_smallworld", ignore_errors=True)
 
     test_py_scripts.run_py_script_as_external_script(
@@ -434,6 +458,9 @@ def test_gdal2tiles_py_profile_raster_oversample():
     if script_path is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("PNG") is None:
+        pytest.skip("PNG driver is missing")
+
     shutil.rmtree("tmp/out_gdal2tiles_smallworld", ignore_errors=True)
 
     test_py_scripts.run_py_script_as_external_script(
@@ -462,6 +489,9 @@ def test_gdal2tiles_py_profile_raster_xyz():
     script_path = test_py_scripts.get_py_script("gdal2tiles")
     if script_path is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("PNG") is None:
+        pytest.skip("PNG driver is missing")
 
     shutil.rmtree("tmp/out_gdal2tiles_smallworld", ignore_errors=True)
 
@@ -497,6 +527,9 @@ def test_gdal2tiles_py_profile_geodetic_tmscompatible_xyz():
     if script_path is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("PNG") is None:
+        pytest.skip("PNG driver is missing")
+
     shutil.rmtree("tmp/out_gdal2tiles_smallworld", ignore_errors=True)
 
     test_py_scripts.run_py_script_as_external_script(
@@ -528,6 +561,9 @@ def test_gdal2tiles_py_mapml():
     script_path = test_py_scripts.get_py_script("gdal2tiles")
     if script_path is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("PNG") is None:
+        pytest.skip("PNG driver is missing")
 
     shutil.rmtree("tmp/out_gdal2tiles_mapml", ignore_errors=True)
 

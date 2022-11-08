@@ -36,6 +36,8 @@ import pytest
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.require_driver("PNG")
+
 ###############################################################################
 # Read test of simple byte reference data.
 

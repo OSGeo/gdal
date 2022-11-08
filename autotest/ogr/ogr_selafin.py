@@ -36,8 +36,10 @@ import pytest
 
 from osgeo import ogr, osr
 
+pytestmark = pytest.mark.require_driver("Selafin")
+
 ###############################################################################
-# Create wasp datasource
+# Create Selafin datasource
 
 
 def test_ogr_selafin_create_ds():

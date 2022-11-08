@@ -36,6 +36,8 @@ import pytest
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.require_driver("SRTMHGT")
+
 ###############################################################################
 # Test a SRTMHGT Level 1 (made from a DTED Level 0)
 

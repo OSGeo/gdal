@@ -503,6 +503,9 @@ def test_gdalwarp_21():
     if test_cli_utilities.get_gdalwarp_path() is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
+
     gdaltest.runexternal(
         test_cli_utilities.get_gdalwarp_path()
         + " ../gcore/data/utmsmall.tif tmp/testgdalwarp21.tif -cutline data/cutline.vrt -cl cutline"
@@ -524,6 +527,9 @@ def test_gdalwarp_22():
     if test_cli_utilities.get_gdalwarp_path() is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
+
     gdaltest.runexternal(
         test_cli_utilities.get_gdalwarp_path()
         + " ../gcore/data/utmsmall.tif tmp/testgdalwarp22.tif -cutline data/cutline.vrt -cl cutline -tr 30 30"
@@ -544,6 +550,9 @@ def test_gdalwarp_22():
 def test_gdalwarp_23():
     if test_cli_utilities.get_gdalwarp_path() is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdalwarp_path()
@@ -595,6 +604,11 @@ def test_gdalwarp_25():
     if test_cli_utilities.get_gdalwarp_path() is None:
         pytest.skip()
 
+    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
+        "DMD_CREATIONOPTIONLIST"
+    ):
+        pytest.skip("JPEG support missing")
+
     gdaltest.runexternal(
         test_cli_utilities.get_gdalwarp_path()
         + ' -t_srs "+proj=sinu" data/w_jpeg.tiff tmp/testgdalwarp25.tif'
@@ -628,6 +642,11 @@ def test_gdalwarp_25():
 def test_gdalwarp_26():
     if test_cli_utilities.get_gdalwarp_path() is None:
         pytest.skip()
+
+    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
+        "DMD_CREATIONOPTIONLIST"
+    ):
+        pytest.skip("JPEG support missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdalwarp_path()
@@ -663,6 +682,11 @@ def test_gdalwarp_27():
     if test_cli_utilities.get_gdalwarp_path() is None:
         pytest.skip()
 
+    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
+        "DMD_CREATIONOPTIONLIST"
+    ):
+        pytest.skip("JPEG support missing")
+
     gdaltest.runexternal(
         test_cli_utilities.get_gdalwarp_path()
         + ' -t_srs "+proj=vandg" data/w_jpeg.tiff tmp/testgdalwarp27.tif -overwrite'
@@ -697,6 +721,11 @@ def test_gdalwarp_27():
 def test_gdalwarp_28():
     if test_cli_utilities.get_gdalwarp_path() is None:
         pytest.skip()
+
+    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
+        "DMD_CREATIONOPTIONLIST"
+    ):
+        pytest.skip("JPEG support missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdalwarp_path()
@@ -738,6 +767,11 @@ def DISABLED_test_gdalwarp_29():
     if test_cli_utilities.get_gdalwarp_path() is None:
         pytest.skip()
 
+    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
+        "DMD_CREATIONOPTIONLIST"
+    ):
+        pytest.skip("JPEG support missing")
+
     gdaltest.runexternal(
         test_cli_utilities.get_gdalwarp_path()
         + " -t_srs EPSG:3785 data/w_jpeg.tiff tmp/testgdalwarp29.tif"
@@ -771,6 +805,11 @@ def DISABLED_test_gdalwarp_29():
 def test_gdalwarp_30():
     if test_cli_utilities.get_gdalwarp_path() is None:
         pytest.skip()
+
+    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
+        "DMD_CREATIONOPTIONLIST"
+    ):
+        pytest.skip("JPEG support missing")
 
     te = " -te -20037508.343 -16206629.152 20036845.112 16213801.068"
 
@@ -915,6 +954,11 @@ def test_gdalwarp_33():
         pytest.skip()
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
+
+    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
+        "DMD_CREATIONOPTIONLIST"
+    ):
+        pytest.skip("JPEG support missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdalwarp_path()
@@ -1085,6 +1129,9 @@ def test_gdalwarp_38():
     if test_cli_utilities.get_gdalwarp_path() is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver is missing")
+
     gdaltest.runexternal(
         test_cli_utilities.get_gdalwarp_path()
         + " data/withnodata.asc tmp/testgdalwarp38.tif"
@@ -1103,6 +1150,9 @@ def test_gdalwarp_38():
 def test_gdalwarp_39():
     if test_cli_utilities.get_gdalwarp_path() is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver is missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdalwarp_path()
@@ -1557,6 +1607,9 @@ def test_gdalwarp_46():
         pytest.skip()
     if test_cli_utilities.get_ogr2ogr_path() is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdalwarp_path()

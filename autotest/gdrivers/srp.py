@@ -32,8 +32,11 @@
 import os
 
 import gdaltest
+import pytest
 
 from osgeo import gdal, osr
+
+pytestmark = pytest.mark.require_driver("SRP")
 
 ###############################################################################
 # Read USRP dataset with PCB=0

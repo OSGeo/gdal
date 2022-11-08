@@ -45,6 +45,9 @@ def test_gdal_sieve_1():
     if script_path is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver is missing")
+
     drv = gdal.GetDriverByName("GTiff")
     dst_ds = drv.Create("tmp/sieve_1.tif", 5, 7, 1, gdal.GDT_Byte)
     dst_ds = None

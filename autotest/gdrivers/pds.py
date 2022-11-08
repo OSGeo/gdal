@@ -36,6 +36,8 @@ import pytest
 
 from osgeo import gdal, osr
 
+pytestmark = pytest.mark.require_driver("PDS")
+
 ###############################################################################
 # Read a truncated and modified version of http://download.osgeo.org/gdal/data/pds/mc02.img
 

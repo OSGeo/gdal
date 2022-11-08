@@ -38,6 +38,8 @@ import pytest
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.require_driver("LCP")
+
 ###############################################################################
 #  Test test_FARSITE_UTM12.LCP
 

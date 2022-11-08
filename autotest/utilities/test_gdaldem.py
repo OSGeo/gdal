@@ -47,11 +47,11 @@ def test_gdaldem_hillshade():
 
     (_, err) = gdaltest.runexternal_out_and_err(
         test_cli_utilities.get_gdaldem_path()
-        + " hillshade -s 111120 -z 30 ../gdrivers/data/n43.dt0 tmp/n43_hillshade.tif"
+        + " hillshade -s 111120 -z 30 ../gdrivers/data/n43.tif tmp/n43_hillshade.tif"
     )
     assert err is None or err == "", "got error/warning"
 
-    src_ds = gdal.Open("../gdrivers/data/n43.dt0")
+    src_ds = gdal.Open("../gdrivers/data/n43.tif")
     ds = gdal.Open("tmp/n43_hillshade.tif")
     assert ds is not None
 
@@ -82,7 +82,7 @@ def test_gdaldem_hillshade_compressed_tiled_output():
 
     (_, err) = gdaltest.runexternal_out_and_err(
         test_cli_utilities.get_gdaldem_path()
-        + " hillshade -s 111120 -z 30 ../gdrivers/data/n43.dt0 tmp/n43_hillshade_compressed_tiled.tif -co TILED=YES -co COMPRESS=DEFLATE --config GDAL_CACHEMAX 0"
+        + " hillshade -s 111120 -z 30 ../gdrivers/data/n43.tif tmp/n43_hillshade_compressed_tiled.tif -co TILED=YES -co COMPRESS=DEFLATE --config GDAL_CACHEMAX 0"
     )
     assert err is None or err == "", "got error/warning"
 
@@ -111,10 +111,10 @@ def test_gdaldem_hillshade_combined():
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdaldem_path()
-        + " hillshade -s 111120 -z 30 -combined ../gdrivers/data/n43.dt0 tmp/n43_hillshade_combined.tif"
+        + " hillshade -s 111120 -z 30 -combined ../gdrivers/data/n43.tif tmp/n43_hillshade_combined.tif"
     )
 
-    src_ds = gdal.Open("../gdrivers/data/n43.dt0")
+    src_ds = gdal.Open("../gdrivers/data/n43.tif")
     ds = gdal.Open("tmp/n43_hillshade_combined.tif")
     assert ds is not None
 
@@ -145,7 +145,7 @@ def test_gdaldem_hillshade_compute_edges():
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdaldem_path()
-        + " hillshade -compute_edges -s 111120 -z 30 ../gdrivers/data/n43.dt0 tmp/n43_hillshade_compute_edges.tif"
+        + " hillshade -compute_edges -s 111120 -z 30 ../gdrivers/data/n43.tif tmp/n43_hillshade_compute_edges.tif"
     )
 
     ds = gdal.Open("tmp/n43_hillshade_compute_edges.tif")
@@ -201,9 +201,12 @@ def test_gdaldem_hillshade_png():
     if test_cli_utilities.get_gdaldem_path() is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("PNG") is None:
+        pytest.skip("PNG driver is missing")
+
     gdaltest.runexternal(
         test_cli_utilities.get_gdaldem_path()
-        + " hillshade -of PNG  -s 111120 -z 30 ../gdrivers/data/n43.dt0 tmp/n43_hillshade.png"
+        + " hillshade -of PNG  -s 111120 -z 30 ../gdrivers/data/n43.tif tmp/n43_hillshade.png"
     )
 
     ds = gdal.Open("tmp/n43_hillshade.png")
@@ -223,9 +226,12 @@ def test_gdaldem_hillshade_png_compute_edges():
     if test_cli_utilities.get_gdaldem_path() is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("PNG") is None:
+        pytest.skip("PNG driver is missing")
+
     gdaltest.runexternal(
         test_cli_utilities.get_gdaldem_path()
-        + " hillshade -compute_edges -of PNG  -s 111120 -z 30 ../gdrivers/data/n43.dt0 tmp/n43_hillshade_compute_edges.png"
+        + " hillshade -compute_edges -of PNG  -s 111120 -z 30 ../gdrivers/data/n43.tif tmp/n43_hillshade_compute_edges.png"
     )
 
     ds = gdal.Open("tmp/n43_hillshade_compute_edges.png")
@@ -247,10 +253,10 @@ def test_gdaldem_slope():
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdaldem_path()
-        + " slope -s 111120 ../gdrivers/data/n43.dt0 tmp/n43_slope.tif"
+        + " slope -s 111120 ../gdrivers/data/n43.tif tmp/n43_slope.tif"
     )
 
-    src_ds = gdal.Open("../gdrivers/data/n43.dt0")
+    src_ds = gdal.Open("../gdrivers/data/n43.tif")
     ds = gdal.Open("tmp/n43_slope.tif")
     assert ds is not None
 
@@ -280,10 +286,10 @@ def test_gdaldem_aspect():
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdaldem_path()
-        + " aspect ../gdrivers/data/n43.dt0 tmp/n43_aspect.tif"
+        + " aspect ../gdrivers/data/n43.tif tmp/n43_aspect.tif"
     )
 
-    src_ds = gdal.Open("../gdrivers/data/n43.dt0")
+    src_ds = gdal.Open("../gdrivers/data/n43.tif")
     ds = gdal.Open("tmp/n43_aspect.tif")
     assert ds is not None
 
@@ -313,9 +319,9 @@ def test_gdaldem_color_relief():
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdaldem_path()
-        + " color-relief ../gdrivers/data/n43.dt0 data/color_file.txt tmp/n43_colorrelief.tif"
+        + " color-relief ../gdrivers/data/n43.tif data/color_file.txt tmp/n43_colorrelief.tif"
     )
-    src_ds = gdal.Open("../gdrivers/data/n43.dt0")
+    src_ds = gdal.Open("../gdrivers/data/n43.tif")
     ds = gdal.Open("tmp/n43_colorrelief.tif")
     assert ds is not None
 
@@ -347,9 +353,9 @@ def test_gdaldem_color_relief_cpt():
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdaldem_path()
-        + " color-relief ../gdrivers/data/n43.dt0 data/color_file.cpt tmp/n43_colorrelief_cpt.tif"
+        + " color-relief ../gdrivers/data/n43.tif data/color_file.cpt tmp/n43_colorrelief_cpt.tif"
     )
-    src_ds = gdal.Open("../gdrivers/data/n43.dt0")
+    src_ds = gdal.Open("../gdrivers/data/n43.tif")
     ds = gdal.Open("tmp/n43_colorrelief_cpt.tif")
     assert ds is not None
 
@@ -381,9 +387,9 @@ def test_gdaldem_color_relief_vrt():
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdaldem_path()
-        + " color-relief -of VRT ../gdrivers/data/n43.dt0 data/color_file.txt tmp/n43_colorrelief.vrt"
+        + " color-relief -of VRT ../gdrivers/data/n43.tif data/color_file.txt tmp/n43_colorrelief.vrt"
     )
-    src_ds = gdal.Open("../gdrivers/data/n43.dt0")
+    src_ds = gdal.Open("../gdrivers/data/n43.tif")
     ds = gdal.Open("tmp/n43_colorrelief.vrt")
     assert ds is not None
 
@@ -415,7 +421,7 @@ def test_gdaldem_color_relief_from_float32():
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdal_translate_path()
-        + " -ot Float32 ../gdrivers/data/n43.dt0 tmp/n43_float32.tif"
+        + " -ot Float32 ../gdrivers/data/n43.tif tmp/n43_float32.tif"
     )
     gdaltest.runexternal(
         test_cli_utilities.get_gdaldem_path()
@@ -441,9 +447,12 @@ def test_gdaldem_color_relief_png():
     if test_cli_utilities.get_gdaldem_path() is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("PNG") is None:
+        pytest.skip("PNG driver is missing")
+
     gdaltest.runexternal(
         test_cli_utilities.get_gdaldem_path()
-        + " color-relief -of PNG ../gdrivers/data/n43.dt0 data/color_file.txt tmp/n43_colorrelief.png"
+        + " color-relief -of PNG ../gdrivers/data/n43.tif data/color_file.txt tmp/n43_colorrelief.png"
     )
     ds = gdal.Open("tmp/n43_colorrelief.png")
     assert ds is not None
@@ -466,6 +475,9 @@ def test_gdaldem_color_relief_from_float32_to_png():
         pytest.skip()
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("PNG") is None:
+        pytest.skip("PNG driver is missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdaldem_path()
@@ -493,7 +505,7 @@ def test_gdaldem_color_relief_nearest_color_entry():
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdaldem_path()
-        + " color-relief -nearest_color_entry ../gdrivers/data/n43.dt0 data/color_file.txt tmp/n43_colorrelief_nearest.tif"
+        + " color-relief -nearest_color_entry ../gdrivers/data/n43.tif data/color_file.txt tmp/n43_colorrelief_nearest.tif"
     )
     ds = gdal.Open("tmp/n43_colorrelief_nearest.tif")
     assert ds is not None
@@ -517,7 +529,7 @@ def test_gdaldem_color_relief_nearest_color_entry_vrt():
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdaldem_path()
-        + " color-relief -of VRT -nearest_color_entry ../gdrivers/data/n43.dt0 data/color_file.txt tmp/n43_colorrelief_nearest.vrt"
+        + " color-relief -of VRT -nearest_color_entry ../gdrivers/data/n43.tif data/color_file.txt tmp/n43_colorrelief_nearest.vrt"
     )
     ds = gdal.Open("tmp/n43_colorrelief_nearest.vrt")
     assert ds is not None
@@ -538,6 +550,9 @@ def test_gdaldem_color_relief_nearest_color_entry_vrt():
 def test_gdaldem_color_relief_nodata_nan():
     if test_cli_utilities.get_gdaldem_path() is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver is missing")
 
     f = open("tmp/nodata_nan_src.asc", "wt")
     f.write(
@@ -583,6 +598,9 @@ NODATA_value nan
 def test_gdaldem_color_relief_repeated_entry():
     if test_cli_utilities.get_gdaldem_path() is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver is missing")
 
     f = open("tmp/test_gdaldem_color_relief_repeated_entry.asc", "wt")
     f.write(

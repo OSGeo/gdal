@@ -32,6 +32,7 @@ import pytest
 
 from osgeo import ogr
 
+pytestmark = pytest.mark.require_driver("DGN")
 
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
