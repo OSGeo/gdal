@@ -241,7 +241,7 @@ static const char* StateNames[] = {
  */
 #define SETVALUE(x) do {							\
     if (pa >= thisrun + sp->nruns) {					\
-        TIFFErrorExt(tif->tif_clientdata, module, "Buffer overflow at line %u of %s %u",	\
+        TIFFErrorExtR(tif, module, "Buffer overflow at line %u of %s %u",	\
                     sp->line, isTiled(tif) ? "tile" : "strip", isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip);	\
         return (-1);							\
     }									\
@@ -383,7 +383,7 @@ done1d:									\
 #define CHECK_b1 do {							\
     if (pa != thisrun) while (b1 <= a0 && b1 < lastx) {			\
 	if( pb + 1 >= sp->refruns + sp->nruns) { 			\
-	    TIFFErrorExt(tif->tif_clientdata, module, "Buffer overflow at line %u of %s %u",	\
+	    TIFFErrorExtR(tif, module, "Buffer overflow at line %u of %s %u",	\
 	                sp->line, isTiled(tif) ? "tile" : "strip", isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip);	\
 	    return (-1);						\
 	}								\
@@ -398,7 +398,7 @@ done1d:									\
 #define EXPAND2D(eoflab) do {						\
     while (a0 < lastx) {						\
 	if (pa >= thisrun + sp->nruns) {				\
-		TIFFErrorExt(tif->tif_clientdata, module, "Buffer overflow at line %u of %s %u",	\
+		TIFFErrorExtR(tif, module, "Buffer overflow at line %u of %s %u",	\
 		             sp->line, isTiled(tif) ? "tile" : "strip", isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip);	\
 		return (-1);						\
 	}								\
@@ -407,7 +407,7 @@ done1d:									\
 	case S_Pass:							\
 	    CHECK_b1;							\
 	    if( pb + 1 >= sp->refruns + sp->nruns) { 			\
-	        TIFFErrorExt(tif->tif_clientdata, module, "Buffer overflow at line %u of %s %u",	\
+	        TIFFErrorExtR(tif, module, "Buffer overflow at line %u of %s %u",	\
 	                sp->line, isTiled(tif) ? "tile" : "strip", isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip);	\
 	        return (-1);						\
 	    }								\
@@ -490,7 +490,7 @@ done1d:									\
 	    CHECK_b1;							\
 	    SETVALUE(b1 - a0);						\
 	    if( pb >= sp->refruns + sp->nruns) { 			\
-	        TIFFErrorExt(tif->tif_clientdata, module, "Buffer overflow at line %u of %s %u",	\
+	        TIFFErrorExtR(tif, module, "Buffer overflow at line %u of %s %u",	\
 	                sp->line, isTiled(tif) ? "tile" : "strip", isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip);	\
 	        return (-1);						\
 	    }								\
@@ -500,7 +500,7 @@ done1d:									\
 	    CHECK_b1;							\
 	    SETVALUE(b1 - a0 + TabEnt->Param);				\
 	    if( pb >= sp->refruns + sp->nruns) { 			\
-	        TIFFErrorExt(tif->tif_clientdata, module, "Buffer overflow at line %u of %s %u",	\
+	        TIFFErrorExtR(tif, module, "Buffer overflow at line %u of %s %u",	\
 	                sp->line, isTiled(tif) ? "tile" : "strip", isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip);	\
 	        return (-1);						\
 	    }								\

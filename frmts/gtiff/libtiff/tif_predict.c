@@ -70,7 +70,7 @@ PredictorSetup(TIFF* tif)
 			    && td->td_bitspersample != 16
 			    && td->td_bitspersample != 32
 			    && td->td_bitspersample != 64) {
-				TIFFErrorExt(tif->tif_clientdata, module,
+				TIFFErrorExtR(tif, module,
 				    "Horizontal differencing \"Predictor\" not supported with %"PRIu16"-bit samples",
 				    td->td_bitspersample);
 				return 0;
@@ -78,7 +78,7 @@ PredictorSetup(TIFF* tif)
 			break;
 		case PREDICTOR_FLOATINGPOINT:
 			if (td->td_sampleformat != SAMPLEFORMAT_IEEEFP) {
-				TIFFErrorExt(tif->tif_clientdata, module,
+				TIFFErrorExtR(tif, module,
 				    "Floating point \"Predictor\" not supported with %"PRIu16" data format",
 				    td->td_sampleformat);
 				return 0;
@@ -87,14 +87,14 @@ PredictorSetup(TIFF* tif)
                             && td->td_bitspersample != 24
                             && td->td_bitspersample != 32
                             && td->td_bitspersample != 64) { /* Should 64 be allowed? */
-                                TIFFErrorExt(tif->tif_clientdata, module,
+                                TIFFErrorExtR(tif, module,
                                              "Floating point \"Predictor\" not supported with %"PRIu16"-bit samples",
                                              td->td_bitspersample);
 				return 0;
                             }
 			break;
 		default:
-			TIFFErrorExt(tif->tif_clientdata, module,
+			TIFFErrorExtR(tif, module,
 			    "\"Predictor\" value %d not supported",
 			    sp->predictor);
 			return 0;
@@ -297,7 +297,7 @@ horAcc8(TIFF* tif, uint8_t* cp0, tmsize_t cc)
 	unsigned char* cp = (unsigned char*) cp0;
     if((cc%stride)!=0)
     {
-        TIFFErrorExt(tif->tif_clientdata, "horAcc8",
+        TIFFErrorExtR(tif, "horAcc8",
                      "%s", "(cc%stride)!=0");
         return 0;
     }
@@ -360,7 +360,7 @@ horAcc16(TIFF* tif, uint8_t* cp0, tmsize_t cc)
 
     if((cc%(2*stride))!=0)
     {
-        TIFFErrorExt(tif->tif_clientdata, "horAcc16",
+        TIFFErrorExtR(tif, "horAcc16",
                      "%s", "cc%(2*stride))!=0");
         return 0;
     }
@@ -395,7 +395,7 @@ horAcc32(TIFF* tif, uint8_t* cp0, tmsize_t cc)
 
     if((cc%(4*stride))!=0)
     {
-        TIFFErrorExt(tif->tif_clientdata, "horAcc32",
+        TIFFErrorExtR(tif, "horAcc32",
                      "%s", "cc%(4*stride))!=0");
         return 0;
     }
@@ -430,7 +430,7 @@ horAcc64(TIFF* tif, uint8_t* cp0, tmsize_t cc)
 
 	if ((cc % (8 * stride)) != 0)
 	{
-		TIFFErrorExt(tif->tif_clientdata, "horAcc64",
+		TIFFErrorExtR(tif, "horAcc64",
 		             "%s", "cc%(8*stride))!=0");
 		return 0;
 	}
@@ -460,7 +460,7 @@ fpAcc(TIFF* tif, uint8_t* cp0, tmsize_t cc)
 
     if(cc%(bps*stride)!=0)
     {
-        TIFFErrorExt(tif->tif_clientdata, "fpAcc",
+        TIFFErrorExtR(tif, "fpAcc",
                      "%s", "cc%(bps*stride))!=0");
         return 0;
     }
@@ -530,7 +530,7 @@ PredictorDecodeTile(TIFF* tif, uint8_t* op0, tmsize_t occ0, uint16_t s)
 		assert(rowsize > 0);
 		if((occ0%rowsize) !=0)
         {
-            TIFFErrorExt(tif->tif_clientdata, "PredictorDecodeTile",
+            TIFFErrorExtR(tif, "PredictorDecodeTile",
                          "%s", "occ0%rowsize != 0");
             return 0;
         }
@@ -556,7 +556,7 @@ horDiff8(TIFF* tif, uint8_t* cp0, tmsize_t cc)
 
     if((cc%stride)!=0)
     {
-        TIFFErrorExt(tif->tif_clientdata, "horDiff8",
+        TIFFErrorExtR(tif, "horDiff8",
                      "%s", "(cc%stride)!=0");
         return 0;
     }
@@ -611,7 +611,7 @@ horDiff16(TIFF* tif, uint8_t* cp0, tmsize_t cc)
 
     if((cc%(2*stride))!=0)
     {
-        TIFFErrorExt(tif->tif_clientdata, "horDiff8",
+        TIFFErrorExtR(tif, "horDiff8",
                      "%s", "(cc%(2*stride))!=0");
         return 0;
     }
@@ -651,7 +651,7 @@ horDiff32(TIFF* tif, uint8_t* cp0, tmsize_t cc)
 
     if((cc%(4*stride))!=0)
     {
-        TIFFErrorExt(tif->tif_clientdata, "horDiff32",
+        TIFFErrorExtR(tif, "horDiff32",
                      "%s", "(cc%(4*stride))!=0");
         return 0;
     }
@@ -691,7 +691,7 @@ horDiff64(TIFF* tif, uint8_t* cp0, tmsize_t cc)
 
 	if ((cc % (8 * stride)) != 0)
 	{
-		TIFFErrorExt(tif->tif_clientdata, "horDiff64",
+		TIFFErrorExtR(tif, "horDiff64",
 		             "%s", "(cc%(8*stride))!=0");
 		return 0;
 	}
@@ -736,7 +736,7 @@ fpDiff(TIFF* tif, uint8_t* cp0, tmsize_t cc)
 
     if((cc%(bps*stride))!=0)
     {
-        TIFFErrorExt(tif->tif_clientdata, "fpDiff",
+        TIFFErrorExtR(tif, "fpDiff",
                      "%s", "(cc%(bps*stride))!=0");
         return 0;
     }
@@ -802,7 +802,7 @@ PredictorEncodeTile(TIFF* tif, uint8_t* bp0, tmsize_t cc0, uint16_t s)
         working_copy = (uint8_t*) _TIFFmalloc(cc0);
         if( working_copy == NULL )
         {
-            TIFFErrorExt(tif->tif_clientdata, module, 
+            TIFFErrorExtR(tif, module, 
                          "Out of memory allocating %" PRId64 " byte temp buffer.",
                          (int64_t) cc0 );
             return 0;
@@ -814,7 +814,7 @@ PredictorEncodeTile(TIFF* tif, uint8_t* bp0, tmsize_t cc0, uint16_t s)
 	assert(rowsize > 0);
 	if((cc0%rowsize)!=0)
     {
-        TIFFErrorExt(tif->tif_clientdata, "PredictorEncodeTile",
+        TIFFErrorExtR(tif, "PredictorEncodeTile",
                      "%s", "(cc0%rowsize)!=0");
         _TIFFfree( working_copy );
         return 0;
@@ -906,7 +906,7 @@ TIFFPredictorInit(TIFF* tif)
 	 */
 	if (!_TIFFMergeFields(tif, predictFields,
 			      TIFFArrayCount(predictFields))) {
-		TIFFErrorExt(tif->tif_clientdata, "TIFFPredictorInit",
+		TIFFErrorExtR(tif, "TIFFPredictorInit",
 		    "Merging Predictor codec-specific tags failed");
 		return 0;
 	}

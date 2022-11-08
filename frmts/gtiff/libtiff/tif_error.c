@@ -77,6 +77,31 @@ TIFFErrorExt(thandle_t fd, const char* module, const char* fmt, ...)
 	}
 }
 
+void TIFFSetErrorHandlerExtR(TIFF* tif, TIFFErrorHandlerExtR handler) {
+  if (tif) tif->tif_errorhandler = handler;
+}
+
+void TIFFErrorExtR(TIFF* tif, const char* module, const char* fmt, ...)
+{
+	va_list ap;
+	if (tif && tif->tif_errorhandler) {
+		va_start(ap, fmt);
+		int stop = (*tif->tif_errorhandler)(tif->tif_clientdata, module, fmt, ap);
+		va_end(ap);
+		if (stop) return;
+	}
+	if (_TIFFerrorHandler) {
+		va_start(ap, fmt);	
+		(*_TIFFerrorHandler)(module, fmt, ap);
+		va_end(ap);
+	}
+	if (_TIFFerrorHandlerExt) {
+		va_start(ap, fmt);
+		(*_TIFFerrorHandlerExt)(tif ? tif->tif_clientdata : NULL, module, fmt, ap);
+		va_end(ap);
+	}
+}
+
 /*
  * Local Variables:
  * mode: c

@@ -140,7 +140,7 @@ LZMAPreDecode(TIFF* tif, uint16_t s)
 	sp->stream.next_in = tif->tif_rawdata;
 	sp->stream.avail_in = (size_t) tif->tif_rawcc;
 	if ((tmsize_t)sp->stream.avail_in != tif->tif_rawcc) {
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 			     "Liblzma cannot deal with buffers this size");
 		return 0;
 	}
@@ -151,7 +151,7 @@ LZMAPreDecode(TIFF* tif, uint16_t s)
 	 */
 	ret = lzma_stream_decoder(&sp->stream, (uint64_t)-1, 0);
 	if (ret != LZMA_OK) {
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 			     "Error initializing the stream decoder, %s",
 			     LZMAStrerror(ret));
 		return 0;
@@ -175,7 +175,7 @@ LZMADecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
 	sp->stream.next_out = op;
 	sp->stream.avail_out = (size_t) occ;
 	if ((tmsize_t)sp->stream.avail_out != occ) {
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 			     "Liblzma cannot deal with buffers this size");
 		return 0;
 	}
@@ -195,7 +195,7 @@ LZMADecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
 			lzma_ret r = lzma_stream_decoder(&sp->stream,
 							 lzma_memusage(&sp->stream), 0);
 			if (r != LZMA_OK) {
-				TIFFErrorExt(tif->tif_clientdata, module,
+				TIFFErrorExtR(tif, module,
 					     "Error initializing the stream decoder, %s",
 					     LZMAStrerror(r));
 				break;
@@ -205,14 +205,14 @@ LZMADecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
 			continue;
 		}
 		if (ret != LZMA_OK) {
-			TIFFErrorExt(tif->tif_clientdata, module,
+			TIFFErrorExtR(tif, module,
 			    "Decoding error at scanline %"PRIu32", %s",
 			    tif->tif_row, LZMAStrerror(ret));
 			break;
 		}
 	} while (sp->stream.avail_out > 0);
 	if (sp->stream.avail_out != 0) {
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 		    "Not enough data at scanline %"PRIu32" (short %"TIFF_SIZE_FORMAT" bytes)",
 		    tif->tif_row, sp->stream.avail_out);
 		return 0;
@@ -257,13 +257,13 @@ LZMAPreEncode(TIFF* tif, uint16_t s)
 	sp->stream.next_out = tif->tif_rawdata;
 	sp->stream.avail_out = (size_t)tif->tif_rawdatasize;
 	if ((tmsize_t)sp->stream.avail_out != tif->tif_rawdatasize) {
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 			     "Liblzma cannot deal with buffers this size");
 		return 0;
 	}
 	ret = lzma_stream_encoder(&sp->stream, sp->filters, sp->check);
 	if (ret != LZMA_OK) {
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 			"Error in lzma_stream_encoder(): %s", LZMAStrerror(ret));
 		return 0;
 	}
@@ -286,14 +286,14 @@ LZMAEncode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
 	sp->stream.next_in = bp;
 	sp->stream.avail_in = (size_t) cc;
 	if ((tmsize_t)sp->stream.avail_in != cc) {
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 			     "Liblzma cannot deal with buffers this size");
 		return 0;
 	}
 	do {
 		lzma_ret ret = lzma_code(&sp->stream, LZMA_RUN);
 		if (ret != LZMA_OK) {
-			TIFFErrorExt(tif->tif_clientdata, module,
+			TIFFErrorExtR(tif, module,
 				"Encoding error at scanline %"PRIu32", %s",
 				tif->tif_row, LZMAStrerror(ret));
 			return 0;
@@ -336,7 +336,7 @@ LZMAPostEncode(TIFF* tif)
 			}
 			break;
 		default:
-			TIFFErrorExt(tif->tif_clientdata, module, "Liblzma error: %s",
+			TIFFErrorExtR(tif, module, "Liblzma error: %s",
 				     LZMAStrerror(ret));
 			return 0;
 		}
@@ -381,7 +381,7 @@ LZMAVSetField(TIFF* tif, uint32_t tag, va_list ap)
 							   sp->filters,
 							   sp->check);
 			if (ret != LZMA_OK) {
-				TIFFErrorExt(tif->tif_clientdata, module,
+				TIFFErrorExtR(tif, module,
 					     "Liblzma error: %s",
 					     LZMAStrerror(ret));
 			}
@@ -427,7 +427,7 @@ TIFFInitLZMA(TIFF* tif, int scheme)
 	 * Merge codec-specific tag information.
 	 */
 	if (!_TIFFMergeFields(tif, lzmaFields, TIFFArrayCount(lzmaFields))) {
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 			     "Merging LZMA2 codec-specific tags failed");
 		return 0;
 	}
@@ -494,7 +494,7 @@ TIFFInitLZMA(TIFF* tif, int scheme)
 	(void) TIFFPredictorInit(tif);
 	return 1;
 bad:
-	TIFFErrorExt(tif->tif_clientdata, module,
+	TIFFErrorExtR(tif, module,
 		     "No space for LZMA2 state block");
 	return 0;
 }

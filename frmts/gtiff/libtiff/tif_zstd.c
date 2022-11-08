@@ -105,7 +105,7 @@ ZSTDPreDecode(TIFF* tif, uint16_t s)
         {
             sp->dstream = ZSTD_createDStream();
             if( sp->dstream == NULL ) {
-                TIFFErrorExt(tif->tif_clientdata, module,
+                TIFFErrorExtR(tif, module,
                              "Cannot allocate decompression stream");
                 return 0;
             }
@@ -113,7 +113,7 @@ ZSTDPreDecode(TIFF* tif, uint16_t s)
 
         zstd_ret = ZSTD_initDStream(sp->dstream);
         if( ZSTD_isError(zstd_ret) ) {
-            TIFFErrorExt(tif->tif_clientdata, module,
+            TIFFErrorExtR(tif, module,
                          "Error in ZSTD_initDStream(): %s",
                          ZSTD_getErrorName(zstd_ret));
             return 0;
@@ -147,7 +147,7 @@ ZSTDDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
                 zstd_ret = ZSTD_decompressStream(sp->dstream, &out_buffer,
                                                  &in_buffer);
                 if( ZSTD_isError(zstd_ret) ) {
-                    TIFFErrorExt(tif->tif_clientdata, module,
+                    TIFFErrorExtR(tif, module,
                                 "Error in ZSTD_decompressStream(): %s",
                                 ZSTD_getErrorName(zstd_ret));
                     return 0;
@@ -157,7 +157,7 @@ ZSTDDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
                  out_buffer.pos < out_buffer.size );
 
         if (out_buffer.pos < (size_t)occ) {
-                TIFFErrorExt(tif->tif_clientdata, module,
+                TIFFErrorExtR(tif, module,
                     "Not enough data at scanline %lu (short %lu bytes)",
                     (unsigned long) tif->tif_row,
                     (unsigned long) ((size_t)occ - out_buffer.pos));
@@ -204,7 +204,7 @@ ZSTDPreEncode(TIFF* tif, uint16_t s)
         if (sp->cstream == NULL) {
             sp->cstream = ZSTD_createCStream();
             if( sp->cstream == NULL ) {
-                TIFFErrorExt(tif->tif_clientdata, module,
+                TIFFErrorExtR(tif, module,
                              "Cannot allocate compression stream");
                 return 0;
             }
@@ -212,7 +212,7 @@ ZSTDPreEncode(TIFF* tif, uint16_t s)
 
         zstd_ret = ZSTD_initCStream(sp->cstream, sp->compression_level);
         if( ZSTD_isError(zstd_ret) ) {
-            TIFFErrorExt(tif->tif_clientdata, module,
+            TIFFErrorExtR(tif, module,
                          "Error in ZSTD_initCStream(): %s",
                          ZSTD_getErrorName(zstd_ret));
             return 0;
@@ -249,7 +249,7 @@ ZSTDEncode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
                 zstd_ret = ZSTD_compressStream(sp->cstream, &sp->out_buffer,
                                                &in_buffer);
                 if( ZSTD_isError(zstd_ret) ) {
-                    TIFFErrorExt(tif->tif_clientdata, module,
+                    TIFFErrorExtR(tif, module,
                                 "Error in ZSTD_compressStream(): %s",
                                 ZSTD_getErrorName(zstd_ret));
                     return 0;
@@ -279,7 +279,7 @@ ZSTDPostEncode(TIFF* tif)
         do {
                 zstd_ret = ZSTD_endStream(sp->cstream, &sp->out_buffer);
                 if( ZSTD_isError(zstd_ret) ) {
-                    TIFFErrorExt(tif->tif_clientdata, module,
+                    TIFFErrorExtR(tif, module,
                                 "Error in ZSTD_endStream(): %s",
                                 ZSTD_getErrorName(zstd_ret));
                     return 0;
@@ -333,7 +333,7 @@ ZSTDVSetField(TIFF* tif, uint32_t tag, va_list ap)
                 if( sp->compression_level <= 0 ||
                     sp->compression_level > ZSTD_maxCLevel() )
                 {
-                    TIFFWarningExt(tif->tif_clientdata, module,
+                    TIFFWarningExtR(tif, module,
                                    "ZSTD_LEVEL should be between 1 and %d",
                                    ZSTD_maxCLevel());
                 }
@@ -378,7 +378,7 @@ TIFFInitZSTD(TIFF* tif, int scheme)
         * Merge codec-specific tag information.
         */
         if (!_TIFFMergeFields(tif, ZSTDFields, TIFFArrayCount(ZSTDFields))) {
-                TIFFErrorExt(tif->tif_clientdata, module,
+                TIFFErrorExtR(tif, module,
                             "Merging ZSTD codec-specific tags failed");
                 return 0;
         }
@@ -430,7 +430,7 @@ TIFFInitZSTD(TIFF* tif, int scheme)
         (void) TIFFPredictorInit(tif);
         return 1;
 bad:
-        TIFFErrorExt(tif->tif_clientdata, module,
+        TIFFErrorExtR(tif, module,
                     "No space for ZSTD state block");
         return 0;
 }

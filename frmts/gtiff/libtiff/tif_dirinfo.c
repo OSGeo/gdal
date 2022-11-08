@@ -436,7 +436,7 @@ _TIFFSetupFields(TIFF* tif, const TIFFFieldArray* fieldarray)
 		tif->tif_nfields = 0;
 	}
 	if (!_TIFFMergeFields(tif, fieldarray->fields, fieldarray->count)) {
-		TIFFErrorExt(tif->tif_clientdata, "_TIFFSetupFields",
+		TIFFErrorExtR(tif, "_TIFFSetupFields",
 			     "Setting up field info failed");
 	}
 }
@@ -489,7 +489,7 @@ _TIFFMergeFields(TIFF* tif, const TIFFField info[], uint32_t n)
 					 reason);
 	}
 	if (!tif->tif_fields) {
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 			     "Failed to allocate fields array");
 		return 0;
 	}
@@ -753,7 +753,7 @@ TIFFFieldWithTag(TIFF* tif, uint32_t tag)
 {
 	const TIFFField* fip = TIFFFindField(tif, tag, TIFF_ANY);
 	if (!fip) {
-		TIFFErrorExt(tif->tif_clientdata, "TIFFFieldWithTag",
+		TIFFErrorExtR(tif, "TIFFFieldWithTag",
 			     "Internal error, unknown tag 0x%x",
 			     (unsigned int) tag);
 	}
@@ -766,7 +766,7 @@ TIFFFieldWithName(TIFF* tif, const char *field_name)
 	const TIFFField* fip =
 		_TIFFFindFieldByName(tif, field_name, TIFF_ANY);
 	if (!fip) {
-		TIFFErrorExt(tif->tif_clientdata, "TIFFFieldWithName",
+		TIFFErrorExtR(tif, "TIFFFieldWithName",
 			     "Internal error, unknown tag %s", field_name);
 	}
 	return (fip);
@@ -1106,7 +1106,7 @@ TIFFMergeFieldInfo(TIFF* tif, const TIFFFieldInfo info[], uint32_t n)
 					 reason);
 	}
 	if (!tif->tif_fieldscompat) {
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 			     "Failed to allocate fields array");
 		return -1;
 	}
@@ -1119,7 +1119,7 @@ TIFFMergeFieldInfo(TIFF* tif, const TIFFFieldInfo info[], uint32_t n)
 		(TIFFField *)_TIFFCheckMalloc(tif, n, sizeof(TIFFField),
 					      reason);
 	if (!tif->tif_fieldscompat[nfields].fields) {
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 			     "Failed to allocate fields array");
 		return -1;
 	}
@@ -1143,7 +1143,7 @@ TIFFMergeFieldInfo(TIFF* tif, const TIFFFieldInfo info[], uint32_t n)
 		tp->field_oktochange = info[i].field_oktochange;
 		tp->field_passcount = info[i].field_passcount;
 		if (info[i].field_name == NULL) {
-			TIFFErrorExt(tif->tif_clientdata, module,
+			TIFFErrorExtR(tif, module,
 				"Field_name of %d.th allocation tag %d is NULL", i, info[i].field_tag);
 			return -1;
 		}
@@ -1153,7 +1153,7 @@ TIFFMergeFieldInfo(TIFF* tif, const TIFFFieldInfo info[], uint32_t n)
 	}
 
 	if (!_TIFFMergeFields(tif, tif->tif_fieldscompat[nfields].fields, n)) {
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 			     "Setting up field info failed");
 		return -1;
 	}

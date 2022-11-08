@@ -36,7 +36,7 @@ uint32_t
 _TIFFMultiply32(TIFF* tif, uint32_t first, uint32_t second, const char* where)
 {
 	if (second && first > UINT32_MAX / second) {
-		TIFFErrorExt(tif->tif_clientdata, where, "Integer overflow in %s", where);
+		TIFFErrorExtR(tif, where, "Integer overflow in %s", where);
 		return 0;
 	}
 
@@ -47,7 +47,7 @@ uint64_t
 _TIFFMultiply64(TIFF* tif, uint64_t first, uint64_t second, const char* where)
 {
 	if (second && first > UINT64_MAX / second) {
-		TIFFErrorExt(tif->tif_clientdata, where, "Integer overflow in %s", where);
+		TIFFErrorExtR(tif, where, "Integer overflow in %s", where);
 		return 0;
 	}
 
@@ -61,7 +61,7 @@ _TIFFMultiplySSize(TIFF* tif, tmsize_t first, tmsize_t second, const char* where
     {
         if( tif != NULL && where != NULL )
         {
-            TIFFErrorExt(tif->tif_clientdata, where,
+            TIFFErrorExtR(tif, where,
                         "Invalid argument to _TIFFMultiplySSize() in %s", where);
         }
         return 0;
@@ -71,7 +71,7 @@ _TIFFMultiplySSize(TIFF* tif, tmsize_t first, tmsize_t second, const char* where
     {
         if( tif != NULL && where != NULL )
         {
-            TIFFErrorExt(tif->tif_clientdata, where,
+            TIFFErrorExtR(tif, where,
                         "Integer overflow in %s", where);
         }
         return 0;
@@ -85,7 +85,7 @@ tmsize_t _TIFFCastUInt64ToSSize(TIFF* tif, uint64_t val, const char* module)
     {
         if( tif != NULL && module != NULL )
         {
-            TIFFErrorExt(tif->tif_clientdata,module,"Integer overflow");
+            TIFFErrorExtR(tif,module,"Integer overflow");
         }
         return 0;
     }
@@ -107,7 +107,7 @@ _TIFFCheckRealloc(TIFF* tif, void* buffer,
 	}
 
 	if (cp == NULL) {
-		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+		TIFFErrorExtR(tif, tif->tif_name,
 			     "Failed to allocate memory for %s "
 			     "(%"TIFF_SSIZE_FORMAT" elements of %"TIFF_SSIZE_FORMAT" bytes each)",
 			     what, nmemb, elem_size);
@@ -265,7 +265,7 @@ TIFFVGetFieldDefaulted(TIFF* tif, uint32_t tag, va_list ap)
         TIFFPredictorState* sp = (TIFFPredictorState*) tif->tif_data;
         if( sp == NULL )
         {
-            TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+            TIFFErrorExtR(tif, tif->tif_name,
                          "Cannot get \"Predictor\" tag as plugin is not configured");
             *va_arg(ap, uint16_t*) = 0;
             return 0;
@@ -333,7 +333,7 @@ TIFFVGetFieldDefaulted(TIFF* tif, uint32_t tag, va_list ap)
 	case TIFFTAG_TRANSFERFUNCTION:
 		if (!td->td_transferfunction[0] &&
 		    !TIFFDefaultTransferFunction(td)) {
-			TIFFErrorExt(tif->tif_clientdata, tif->tif_name, "No space for \"TransferFunction\" tag");
+			TIFFErrorExtR(tif, tif->tif_name, "No space for \"TransferFunction\" tag");
 			return (0);
 		}
 		*va_arg(ap, const uint16_t **) = td->td_transferfunction[0];

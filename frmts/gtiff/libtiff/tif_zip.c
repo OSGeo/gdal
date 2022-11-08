@@ -114,7 +114,7 @@ ZIPSetupDecode(TIFF* tif)
 	/* PredictorSetup() fails */
 	if ((sp->state & ZSTATE_INIT_DECODE) == 0 &&
 	    inflateInit(&sp->stream) != Z_OK) {
-		TIFFErrorExt(tif->tif_clientdata, module, "%s", SAFE_MSG(sp));
+		TIFFErrorExtR(tif, module, "%s", SAFE_MSG(sp));
 		return (0);
 	} else {
 		sp->state |= ZSTATE_INIT_DECODE;
@@ -217,7 +217,7 @@ ZIPDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
                 if( res != LIBDEFLATE_SUCCESS &&
                     res != LIBDEFLATE_INSUFFICIENT_SPACE )
                 {
-                    TIFFErrorExt(tif->tif_clientdata, module,
+                    TIFFErrorExtR(tif, module,
                                  "Decoding error at scanline %lu",
                                  (unsigned long) tif->tif_row);
                     return 0;
@@ -249,19 +249,19 @@ ZIPDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
 		if (state == Z_STREAM_END)
 			break;
 		if (state == Z_DATA_ERROR) {
-			TIFFErrorExt(tif->tif_clientdata, module,
+			TIFFErrorExtR(tif, module,
 			    "Decoding error at scanline %lu, %s",
 			     (unsigned long) tif->tif_row, SAFE_MSG(sp));
 			return (0);
 		}
 		if (state != Z_OK) {
-			TIFFErrorExt(tif->tif_clientdata, module, 
+			TIFFErrorExtR(tif, module, 
 				     "ZLib error: %s", SAFE_MSG(sp));
 			return (0);
 		}
 	} while (occ > 0);
 	if (occ != 0) {
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 		    "Not enough data at scanline %lu (short %" PRIu64 " bytes)",
 		    (unsigned long) tif->tif_row, (uint64_t) occ);
 		return (0);
@@ -290,7 +290,7 @@ ZIPSetupEncode(TIFF* tif)
             cappedQuality = Z_BEST_COMPRESSION;
 
 	if (deflateInit(&sp->stream, cappedQuality) != Z_OK) {
-		TIFFErrorExt(tif->tif_clientdata, module, "%s", SAFE_MSG(sp));
+		TIFFErrorExtR(tif, module, "%s", SAFE_MSG(sp));
 		return (0);
 	} else {
 		sp->state |= ZSTATE_INIT_ENCODE;
@@ -386,7 +386,7 @@ ZIPEncode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
                         sp->zipquality);
                     if( sp->libdeflate_enc == NULL )
                     {
-                        TIFFErrorExt(tif->tif_clientdata, module,
+                        TIFFErrorExtR(tif, module,
                                     "Cannot allocate compressor");
                         break;
                     }
@@ -408,7 +408,7 @@ ZIPEncode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
 
                 if( nCompressedBytes == 0 )
                 {
-                    TIFFErrorExt(tif->tif_clientdata, module,
+                    TIFFErrorExtR(tif, module,
                                  "Encoder error at scanline %lu",
                                  (unsigned long) tif->tif_row);
                     return 0;
@@ -435,7 +435,7 @@ ZIPEncode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
                 sp->stream.avail_in = avail_in_before;
 		/* coverity[overrun-buffer-arg] */
 		if (deflate(&sp->stream, Z_NO_FLUSH) != Z_OK) {
-			TIFFErrorExt(tif->tif_clientdata, module, 
+			TIFFErrorExtR(tif, module, 
 				     "Encoder error: %s",
 				     SAFE_MSG(sp));
 			return (0);
@@ -484,7 +484,7 @@ ZIPPostEncode(TIFF* tif)
 			}
 			break;
 		default:
-			TIFFErrorExt(tif->tif_clientdata, module, 
+			TIFFErrorExtR(tif, module, 
 				     "ZLib error: %s", SAFE_MSG(sp));
 			return (0);
 		}
@@ -536,7 +536,7 @@ ZIPVSetField(TIFF* tif, uint32_t tag, va_list ap)
 		sp->zipquality = (int) va_arg(ap, int);
                 if( sp->zipquality < Z_DEFAULT_COMPRESSION ||
                     sp->zipquality > LIBDEFLATE_MAX_COMPRESSION_LEVEL ) {
-                    TIFFErrorExt(tif->tif_clientdata, module,
+                    TIFFErrorExtR(tif, module,
                                  "Invalid ZipQuality value. Should be in [-1,%d] range",
                                  LIBDEFLATE_MAX_COMPRESSION_LEVEL);
                     return 0;
@@ -548,7 +548,7 @@ ZIPVSetField(TIFF* tif, uint32_t tag, va_list ap)
                             cappedQuality = Z_BEST_COMPRESSION;
 			if (deflateParams(&sp->stream,
 			    cappedQuality, Z_DEFAULT_STRATEGY) != Z_OK) {
-				TIFFErrorExt(tif->tif_clientdata, module, "ZLib error: %s",
+				TIFFErrorExtR(tif, module, "ZLib error: %s",
 					     SAFE_MSG(sp));
 				return (0);
 			}
@@ -569,14 +569,14 @@ ZIPVSetField(TIFF* tif, uint32_t tag, va_list ap)
                 if( sp->subcodec != DEFLATE_SUBCODEC_ZLIB &&
                     sp->subcodec != DEFLATE_SUBCODEC_LIBDEFLATE )
                 {
-                    TIFFErrorExt(tif->tif_clientdata, module,
+                    TIFFErrorExtR(tif, module,
                                  "Invalid DeflateCodec value.");
                     return 0;
                 }
 #if !LIBDEFLATE_SUPPORT
                 if( sp->subcodec == DEFLATE_SUBCODEC_LIBDEFLATE )
                 {
-                    TIFFErrorExt(tif->tif_clientdata, module,
+                    TIFFErrorExtR(tif, module,
                                  "DeflateCodec = DEFLATE_SUBCODEC_LIBDEFLATE unsupported in this build");
                     return 0;
                 }
@@ -630,7 +630,7 @@ TIFFInitZIP(TIFF* tif, int scheme)
 	 * Merge codec-specific tag information.
 	 */
 	if (!_TIFFMergeFields(tif, zipFields, TIFFArrayCount(zipFields))) {
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 			     "Merging Deflate codec-specific tags failed");
 		return 0;
 	}
@@ -686,7 +686,7 @@ TIFFInitZIP(TIFF* tif, int scheme)
 	(void) TIFFPredictorInit(tif);
 	return (1);
 bad:
-	TIFFErrorExt(tif->tif_clientdata, module,
+	TIFFErrorExtR(tif, module,
 		     "No space for ZIP state block");
 	return (0);
 }

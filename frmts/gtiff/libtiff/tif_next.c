@@ -66,7 +66,7 @@ NeXTDecode(TIFF* tif, uint8_t* buf, tmsize_t occ, uint16_t s)
 	scanline = tif->tif_scanlinesize;
 	if (occ % scanline)
 	{
-		TIFFErrorExt(tif->tif_clientdata, module, "Fractional scanlines cannot be read");
+		TIFFErrorExtR(tif, module, "Fractional scanlines cannot be read");
 		return (0);
 	}
 	for (row = buf; cc > 0 && occ > 0; occ -= scanline, row += scanline) {
@@ -127,7 +127,7 @@ NeXTDecode(TIFF* tif, uint8_t* buf, tmsize_t occ, uint16_t s)
 				if (npixels >= imagewidth)
 					break;
                 if (op_offset >= scanline ) {
-                    TIFFErrorExt(tif->tif_clientdata, module, "Invalid data for scanline %"PRIu32,
+                    TIFFErrorExtR(tif, module, "Invalid data for scanline %"PRIu32,
                         tif->tif_row);
                     return (0);
                 }
@@ -144,7 +144,7 @@ NeXTDecode(TIFF* tif, uint8_t* buf, tmsize_t occ, uint16_t s)
 	tif->tif_rawcc = cc;
 	return (1);
 bad:
-	TIFFErrorExt(tif->tif_clientdata, module, "Not enough data for scanline %"PRIu32,
+	TIFFErrorExtR(tif, module, "Not enough data for scanline %"PRIu32,
 	    tif->tif_row);
 	return (0);
 }
@@ -158,7 +158,7 @@ NeXTPreDecode(TIFF* tif, uint16_t s)
 
 	if( td->td_bitspersample != 2 )
 	{
-		TIFFErrorExt(tif->tif_clientdata, module, "Unsupported BitsPerSample = %"PRIu16,
+		TIFFErrorExtR(tif, module, "Unsupported BitsPerSample = %"PRIu16,
 					 td->td_bitspersample);
 		return (0);
 	}

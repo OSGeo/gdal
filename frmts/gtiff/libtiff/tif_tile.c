@@ -75,21 +75,21 @@ TIFFCheckTile(TIFF* tif, uint32_t x, uint32_t y, uint32_t z, uint16_t s)
 	TIFFDirectory *td = &tif->tif_dir;
 
 	if (x >= td->td_imagewidth) {
-		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+		TIFFErrorExtR(tif, tif->tif_name,
 			     "%lu: Col out of range, max %lu",
 			     (unsigned long) x,
 			     (unsigned long) (td->td_imagewidth - 1));
 		return (0);
 	}
 	if (y >= td->td_imagelength) {
-		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+		TIFFErrorExtR(tif, tif->tif_name,
 			     "%lu: Row out of range, max %lu",
 			     (unsigned long) y,
 			     (unsigned long) (td->td_imagelength - 1));
 		return (0);
 	}
 	if (z >= td->td_imagedepth) {
-		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+		TIFFErrorExtR(tif, tif->tif_name,
 			     "%lu: Depth out of range, max %lu",
 			     (unsigned long) z,
 			     (unsigned long) (td->td_imagedepth - 1));
@@ -97,7 +97,7 @@ TIFFCheckTile(TIFF* tif, uint32_t x, uint32_t y, uint32_t z, uint16_t s)
 	}
 	if (td->td_planarconfig == PLANARCONFIG_SEPARATE &&
 	    s >= td->td_samplesperpixel) {
-		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+		TIFFErrorExtR(tif, tif->tif_name,
 			     "%lu: Sample out of range, max %lu",
 			     (unsigned long) s,
 			     (unsigned long) (td->td_samplesperpixel - 1));
@@ -148,12 +148,12 @@ TIFFTileRowSize64(TIFF* tif)
 
 	if (td->td_tilelength == 0)
         {
-                TIFFErrorExt(tif->tif_clientdata,module,"Tile length is zero");
+                TIFFErrorExtR(tif,module,"Tile length is zero");
                 return 0;
         }
         if (td->td_tilewidth == 0)
         {
-                TIFFErrorExt(tif->tif_clientdata,module,"Tile width is zero");
+                TIFFErrorExtR(tif,module,"Tile width is zero");
 		return (0);
         }
 	rowsize = _TIFFMultiply64(tif, td->td_bitspersample, td->td_tilewidth,
@@ -162,7 +162,7 @@ TIFFTileRowSize64(TIFF* tif)
         {
                 if (td->td_samplesperpixel == 0)
                 {
-                        TIFFErrorExt(tif->tif_clientdata,module,"Samples per pixel is zero");
+                        TIFFErrorExtR(tif,module,"Samples per pixel is zero");
                         return 0;
                 }
 		rowsize = _TIFFMultiply64(tif, rowsize, td->td_samplesperpixel,
@@ -171,7 +171,7 @@ TIFFTileRowSize64(TIFF* tif)
         tilerowsize=TIFFhowmany8_64(rowsize);
         if (tilerowsize == 0)
         {
-                TIFFErrorExt(tif->tif_clientdata,module,"Computed tile row size is zero");
+                TIFFErrorExtR(tif,module,"Computed tile row size is zero");
                 return 0;
         }
 	return (tilerowsize);
@@ -220,7 +220,7 @@ TIFFVTileSize64(TIFF* tif, uint32_t nrows)
 		if ((ycbcrsubsampling[0] != 1 && ycbcrsubsampling[0] != 2 && ycbcrsubsampling[0] != 4)
 		    ||(ycbcrsubsampling[1] != 1 && ycbcrsubsampling[1] != 2 && ycbcrsubsampling[1] != 4))
 		{
-			TIFFErrorExt(tif->tif_clientdata,module,
+			TIFFErrorExtR(tif,module,
 				     "Invalid YCbCr subsampling (%dx%d)", 
 				     ycbcrsubsampling[0], 
 				     ycbcrsubsampling[1] );

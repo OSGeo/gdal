@@ -78,7 +78,7 @@ DumpModeDecode(TIFF* tif, uint8_t* buf, tmsize_t cc, uint16_t s)
 	static const char module[] = "DumpModeDecode";
 	(void) s;
 	if (tif->tif_rawcc < cc) {
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 "Not enough data for scanline %"PRIu32", expected a request for at most %"TIFF_SSIZE_FORMAT" bytes, got a request for %"TIFF_SSIZE_FORMAT" bytes",
 		             tif->tif_row,
 		             tif->tif_rawcc,

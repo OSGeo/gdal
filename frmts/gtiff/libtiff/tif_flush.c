@@ -82,19 +82,19 @@ int TIFFForceStrileArrayWriting(TIFF* tif)
 
     if (tif->tif_mode == O_RDONLY)
     {
-        TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+        TIFFErrorExtR(tif, tif->tif_name,
                      "File opened in read-only mode");
         return 0;
     }
     if( tif->tif_diroff == 0 )
     {
-        TIFFErrorExt(tif->tif_clientdata, module,
+        TIFFErrorExtR(tif, module,
                      "Directory has not yet been written");
         return 0;
     }
     if( (tif->tif_flags & TIFF_DIRTYDIRECT) != 0 )
     {
-        TIFFErrorExt(tif->tif_clientdata, module,
+        TIFFErrorExtR(tif, module,
                      "Directory has changes other than the strile arrays. "
                      "TIFFRewriteDirectory() should be called instead");
         return 0;
@@ -111,7 +111,7 @@ int TIFFForceStrileArrayWriting(TIFF* tif)
              tif->tif_dir.td_stripbytecount_entry.tdir_type == 0 &&
              tif->tif_dir.td_stripbytecount_entry.tdir_offset.toff_long8 == 0) )
         {
-            TIFFErrorExt(tif->tif_clientdata, module,
+            TIFFErrorExtR(tif, module,
                         "Function not called together with "
                         "TIFFDeferStrileArrayWriting()");
             return 0;
