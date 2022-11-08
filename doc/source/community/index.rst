@@ -66,7 +66,10 @@ communication channels in most situations.
 Social media
 ------------
 
-You can follow GDAL official news on Twitter: https://twitter.com/GdalOrg
+You can follow GDAL official news on:
+
+- Twitter: https://twitter.com/GdalOrg
+- Mastodon: https://mastodon.social/@gdal / @gdal@mastodon.social
 
 
 Conference
