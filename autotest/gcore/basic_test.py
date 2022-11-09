@@ -752,6 +752,7 @@ def test_gdal_DataTypeUnion():
 
     assert gdal.DataTypeUnion(gdal.GDT_Byte, gdal.GDT_UInt16) == gdal.GDT_UInt16
 
+
 def test_exceptionmanager():
     currentExceptionsFlag = gdal.GetUseExceptions()
     usingExceptions = currentExceptionsFlag == 1
