@@ -49,6 +49,8 @@ static const char photoTag[] = "PhotometricInterpretation";
 #define FLIP_VERTICALLY 0x01
 #define FLIP_HORIZONTALLY 0x02
 
+#define EMSG_BUF_SIZE 1024
+
 /*
  * Color conversion constants. We will define display types here.
  */
@@ -72,14 +74,14 @@ static const TIFFDisplay display_sRGB = {
  * why it is being rejected.
  */
 int
-TIFFRGBAImageOK(TIFF* tif, char emsg[1024])
+TIFFRGBAImageOK(TIFF* tif, char emsg[EMSG_BUF_SIZE])
 {
 	TIFFDirectory* td = &tif->tif_dir;
 	uint16_t photometric;
 	int colorchannels;
 
 	if (!tif->tif_decodestatus) {
-		sprintf(emsg, "Sorry, requested compression method is not configured");
+		snprintf(emsg, EMSG_BUF_SIZE, "Sorry, requested compression method is not configured");
 		return (0);
 	}
 	switch (td->td_bitspersample) {
@@ -90,12 +92,12 @@ TIFFRGBAImageOK(TIFF* tif, char emsg[1024])
 		case 16:
 			break;
 		default:
-			sprintf(emsg, "Sorry, can not handle images with %"PRIu16"-bit samples",
+			snprintf(emsg, EMSG_BUF_SIZE, "Sorry, can not handle images with %"PRIu16"-bit samples",
 			    td->td_bitspersample);
 			return (0);
 	}
         if (td->td_sampleformat == SAMPLEFORMAT_IEEEFP) {
-                sprintf(emsg, "Sorry, can not handle images with IEEE floating-point samples");
+                snprintf(emsg, EMSG_BUF_SIZE, "Sorry, can not handle images with IEEE floating-point samples");
                 return (0);
         }
 	colorchannels = td->td_samplesperpixel - td->td_extrasamples;
@@ -108,7 +110,7 @@ TIFFRGBAImageOK(TIFF* tif, char emsg[1024])
 				photometric = PHOTOMETRIC_RGB;
 				break;
 			default:
-				sprintf(emsg, "Missing needed %s tag", photoTag);
+				snprintf(emsg, EMSG_BUF_SIZE, "Missing needed %s tag", photoTag);
 				return (0);
 		}
 	}
@@ -119,7 +121,7 @@ TIFFRGBAImageOK(TIFF* tif, char emsg[1024])
 			if (td->td_planarconfig == PLANARCONFIG_CONTIG
 			    && td->td_samplesperpixel != 1
 			    && td->td_bitspersample < 8 ) {
-				sprintf(emsg,
+				snprintf(emsg, EMSG_BUF_SIZE,
 				    "Sorry, can not handle contiguous data with %s=%"PRIu16", "
 				    "and %s=%"PRIu16" and Bits/Sample=%"PRIu16"",
 				    photoTag, photometric,
@@ -143,7 +145,7 @@ TIFFRGBAImageOK(TIFF* tif, char emsg[1024])
 			break;
 		case PHOTOMETRIC_RGB:
 			if (colorchannels < 3) {
-				sprintf(emsg, "Sorry, can not handle RGB image with %s=%d",
+				snprintf(emsg, EMSG_BUF_SIZE, "Sorry, can not handle RGB image with %s=%d",
 				    "Color channels", colorchannels);
 				return (0);
 			}
@@ -153,13 +155,13 @@ TIFFRGBAImageOK(TIFF* tif, char emsg[1024])
 				uint16_t inkset;
 				TIFFGetFieldDefaulted(tif, TIFFTAG_INKSET, &inkset);
 				if (inkset != INKSET_CMYK) {
-					sprintf(emsg,
+					snprintf(emsg, EMSG_BUF_SIZE,
 					    "Sorry, can not handle separated image with %s=%d",
 					    "InkSet", inkset);
 					return 0;
 				}
 				if (td->td_samplesperpixel < 4) {
-					sprintf(emsg,
+					snprintf(emsg, EMSG_BUF_SIZE,
 					    "Sorry, can not handle separated image with %s=%"PRIu16,
 					    "Samples/pixel", td->td_samplesperpixel);
 					return 0;
@@ -168,7 +170,7 @@ TIFFRGBAImageOK(TIFF* tif, char emsg[1024])
 			}
 		case PHOTOMETRIC_LOGL:
 			if (td->td_compression != COMPRESSION_SGILOG) {
-				sprintf(emsg, "Sorry, LogL data must have %s=%d",
+				snprintf(emsg, EMSG_BUF_SIZE, "Sorry, LogL data must have %s=%d",
 				    "Compression", COMPRESSION_SGILOG);
 				return (0);
 			}
@@ -176,17 +178,17 @@ TIFFRGBAImageOK(TIFF* tif, char emsg[1024])
 		case PHOTOMETRIC_LOGLUV:
 			if (td->td_compression != COMPRESSION_SGILOG &&
 			    td->td_compression != COMPRESSION_SGILOG24) {
-				sprintf(emsg, "Sorry, LogLuv data must have %s=%d or %d",
+				snprintf(emsg, EMSG_BUF_SIZE, "Sorry, LogLuv data must have %s=%d or %d",
 				    "Compression", COMPRESSION_SGILOG, COMPRESSION_SGILOG24);
 				return (0);
 			}
 			if (td->td_planarconfig != PLANARCONFIG_CONTIG) {
-				sprintf(emsg, "Sorry, can not handle LogLuv images with %s=%"PRIu16,
+				snprintf(emsg, EMSG_BUF_SIZE, "Sorry, can not handle LogLuv images with %s=%"PRIu16,
 				    "Planarconfiguration", td->td_planarconfig);
 				return (0);
 			}
 			if ( td->td_samplesperpixel != 3 || colorchannels != 3 ) {
-                                sprintf(emsg,
+                                snprintf(emsg, EMSG_BUF_SIZE,
                                         "Sorry, can not handle image with %s=%"PRIu16", %s=%d",
                                         "Samples/pixel", td->td_samplesperpixel,
                                         "colorchannels", colorchannels);
@@ -195,7 +197,7 @@ TIFFRGBAImageOK(TIFF* tif, char emsg[1024])
 			break;
 		case PHOTOMETRIC_CIELAB:
                         if ( td->td_samplesperpixel != 3 || colorchannels != 3 || (td->td_bitspersample != 8 && td->td_bitspersample != 16) ) {
-                                sprintf(emsg,
+                                snprintf(emsg, EMSG_BUF_SIZE,
                                         "Sorry, can not handle image with %s=%"PRIu16", %s=%d and %s=%"PRIu16,
                                         "Samples/pixel", td->td_samplesperpixel,
                                         "colorchannels", colorchannels,
@@ -204,7 +206,7 @@ TIFFRGBAImageOK(TIFF* tif, char emsg[1024])
                         }
 			break;
                 default:
-			sprintf(emsg, "Sorry, can not handle image with %s=%"PRIu16,
+			snprintf(emsg, EMSG_BUF_SIZE, "Sorry, can not handle image with %s=%"PRIu16,
 			    photoTag, photometric);
 			return (0);
 	}
@@ -263,7 +265,7 @@ isCCITTCompression(TIFF* tif)
 }
 
 int
-TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
+TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[EMSG_BUF_SIZE])
 {
 	uint16_t* sampleinfo;
 	uint16_t extrasamples;
@@ -302,7 +304,7 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 		case 16:
 			break;
 		default:
-			sprintf(emsg, "Sorry, can not handle images with %"PRIu16"-bit samples",
+			snprintf(emsg, EMSG_BUF_SIZE, "Sorry, can not handle images with %"PRIu16"-bit samples",
 			    img->bitspersample);
 			goto fail_return;
 	}
@@ -352,7 +354,7 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 				img->photometric = PHOTOMETRIC_RGB;
 				break;
 			default:
-				sprintf(emsg, "Missing needed %s tag", photoTag);
+				snprintf(emsg, EMSG_BUF_SIZE, "Missing needed %s tag", photoTag);
                                 goto fail_return;
 		}
 	}
@@ -360,7 +362,7 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 		case PHOTOMETRIC_PALETTE:
 			if (!TIFFGetField(tif, TIFFTAG_COLORMAP,
 			    &red_orig, &green_orig, &blue_orig)) {
-				sprintf(emsg, "Missing required \"Colormap\" tag");
+				snprintf(emsg, EMSG_BUF_SIZE, "Missing required \"Colormap\" tag");
                                 goto fail_return;
 			}
 
@@ -370,7 +372,7 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 			img->greencmap = (uint16_t *) _TIFFmalloc(sizeof(uint16_t) * n_color);
 			img->bluecmap = (uint16_t *) _TIFFmalloc(sizeof(uint16_t) * n_color);
 			if( !img->redcmap || !img->greencmap || !img->bluecmap ) {
-				sprintf(emsg, "Out of memory for colormap copy");
+				snprintf(emsg, EMSG_BUF_SIZE, "Out of memory for colormap copy");
                                 goto fail_return;
 			}
 
@@ -384,7 +386,7 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 			if (planarconfig == PLANARCONFIG_CONTIG
 			    && img->samplesperpixel != 1
 			    && img->bitspersample < 8 ) {
-				sprintf(emsg,
+				snprintf(emsg, EMSG_BUF_SIZE,
 				    "Sorry, can not handle contiguous data with %s=%"PRIu16", "
 				    "and %s=%"PRIu16" and Bits/Sample=%"PRIu16,
 				    photoTag, img->photometric,
@@ -421,7 +423,7 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 			break;
 		case PHOTOMETRIC_RGB:
 			if (colorchannels < 3) {
-				sprintf(emsg, "Sorry, can not handle RGB image with %s=%d",
+				snprintf(emsg, EMSG_BUF_SIZE, "Sorry, can not handle RGB image with %s=%d",
 				    "Color channels", colorchannels);
                                 goto fail_return;
 			}
@@ -431,12 +433,12 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 				uint16_t inkset;
 				TIFFGetFieldDefaulted(tif, TIFFTAG_INKSET, &inkset);
 				if (inkset != INKSET_CMYK) {
-					sprintf(emsg, "Sorry, can not handle separated image with %s=%"PRIu16,
+					snprintf(emsg, EMSG_BUF_SIZE, "Sorry, can not handle separated image with %s=%"PRIu16,
 					    "InkSet", inkset);
                                         goto fail_return;
 				}
 				if (img->samplesperpixel < 4) {
-					sprintf(emsg, "Sorry, can not handle separated image with %s=%"PRIu16,
+					snprintf(emsg, EMSG_BUF_SIZE, "Sorry, can not handle separated image with %s=%"PRIu16,
 					    "Samples/pixel", img->samplesperpixel);
                                         goto fail_return;
 				}
@@ -444,7 +446,7 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 			break;
 		case PHOTOMETRIC_LOGL:
 			if (compress != COMPRESSION_SGILOG) {
-				sprintf(emsg, "Sorry, LogL data must have %s=%d",
+				snprintf(emsg, EMSG_BUF_SIZE, "Sorry, LogL data must have %s=%d",
 				    "Compression", COMPRESSION_SGILOG);
                                 goto fail_return;
 			}
@@ -454,12 +456,12 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 			break;
 		case PHOTOMETRIC_LOGLUV:
 			if (compress != COMPRESSION_SGILOG && compress != COMPRESSION_SGILOG24) {
-				sprintf(emsg, "Sorry, LogLuv data must have %s=%d or %d",
+				snprintf(emsg, EMSG_BUF_SIZE, "Sorry, LogLuv data must have %s=%d or %d",
 				    "Compression", COMPRESSION_SGILOG, COMPRESSION_SGILOG24);
                                 goto fail_return;
 			}
 			if (planarconfig != PLANARCONFIG_CONTIG) {
-				sprintf(emsg, "Sorry, can not handle LogLuv images with %s=%"PRIu16,
+				snprintf(emsg, EMSG_BUF_SIZE, "Sorry, can not handle LogLuv images with %s=%"PRIu16,
 				    "Planarconfiguration", planarconfig);
 				return (0);
 			}
@@ -470,7 +472,7 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 		case PHOTOMETRIC_CIELAB:
 			break;
 		default:
-			sprintf(emsg, "Sorry, can not handle image with %s=%"PRIu16,
+			snprintf(emsg, EMSG_BUF_SIZE, "Sorry, can not handle image with %s=%"PRIu16,
 			    photoTag, img->photometric);
                         goto fail_return;
 	}
@@ -481,12 +483,12 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 	    !(planarconfig == PLANARCONFIG_SEPARATE && img->samplesperpixel > 1);
 	if (img->isContig) {
 		if (!PickContigCase(img)) {
-			sprintf(emsg, "Sorry, can not handle image");
+			snprintf(emsg, EMSG_BUF_SIZE, "Sorry, can not handle image");
 			goto fail_return;
 		}
 	} else {
 		if (!PickSeparateCase(img)) {
-			sprintf(emsg, "Sorry, can not handle image");
+			snprintf(emsg, EMSG_BUF_SIZE, "Sorry, can not handle image");
 			goto fail_return;
 		}
 	}
@@ -501,11 +503,11 @@ int
 TIFFRGBAImageGet(TIFFRGBAImage* img, uint32_t* raster, uint32_t w, uint32_t h)
 {
     if (img->get == NULL) {
-		TIFFErrorExt(img->tif->tif_clientdata, TIFFFileName(img->tif), "No \"get\" routine setup");
+		TIFFErrorExtR(img->tif, TIFFFileName(img->tif), "No \"get\" routine setup");
 		return (0);
 	}
 	if (img->put.any == NULL) {
-		TIFFErrorExt(img->tif->tif_clientdata, TIFFFileName(img->tif),
+		TIFFErrorExtR(img->tif, TIFFFileName(img->tif),
 		"No \"put\" routine setupl; probably can not handle image format");
 		return (0);
     }
@@ -521,7 +523,7 @@ TIFFReadRGBAImageOriented(TIFF* tif,
                           uint32_t rwidth, uint32_t rheight, uint32_t* raster,
                           int orientation, int stop)
 {
-    char emsg[1024] = "";
+    char emsg[EMSG_BUF_SIZE] = "";
     TIFFRGBAImage img;
     int ok;
 
@@ -532,7 +534,7 @@ TIFFReadRGBAImageOriented(TIFF* tif,
 			rwidth, img.height);
 		TIFFRGBAImageEnd(&img);
 	} else {
-		TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "%s", emsg);
+		TIFFErrorExtR(tif, TIFFFileName(tif), "%s", emsg);
 		ok = 0;
     }
     return (ok);
@@ -637,7 +639,7 @@ gtTileContig(TIFFRGBAImage* img, uint32_t* raster, uint32_t w, uint32_t h)
 
     bufsize = TIFFTileSize(tif);
     if (bufsize == 0) {
-        TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "%s", "No space for tile buffer");
+        TIFFErrorExtR(tif, TIFFFileName(tif), "%s", "No space for tile buffer");
         return (0);
     }
 
@@ -647,7 +649,7 @@ gtTileContig(TIFFRGBAImage* img, uint32_t* raster, uint32_t w, uint32_t h)
     flip = setorientation(img);
     if (flip & FLIP_VERTICALLY) {
         if ((tw + w) > INT_MAX) {
-            TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "%s", "unsupported tile size (too wide)");
+            TIFFErrorExtR(tif, TIFFFileName(tif), "%s", "unsupported tile size (too wide)");
             return (0);
         }
         y = h - 1;
@@ -655,7 +657,7 @@ gtTileContig(TIFFRGBAImage* img, uint32_t* raster, uint32_t w, uint32_t h)
     }
     else {
         if (tw > (INT_MAX + w)) {
-            TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "%s", "unsupported tile size (too wide)");
+            TIFFErrorExtR(tif, TIFFFileName(tif), "%s", "unsupported tile size (too wide)");
             return (0);
         }
         y = 0;
@@ -776,7 +778,7 @@ gtTileSeparate(TIFFRGBAImage* img, uint32_t* raster, uint32_t w, uint32_t h)
 	flip = setorientation(img);
 	if (flip & FLIP_VERTICALLY) {
 		if ((tw + w) > INT_MAX) {
-            TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "%s", "unsupported tile size (too wide)");
+            TIFFErrorExtR(tif, TIFFFileName(tif), "%s", "unsupported tile size (too wide)");
             return (0);
         }
 		y = h - 1;
@@ -784,7 +786,7 @@ gtTileSeparate(TIFFRGBAImage* img, uint32_t* raster, uint32_t w, uint32_t h)
 	}
 	else {
 		if (tw > (INT_MAX + w)) {
-            TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "%s", "unsupported tile size (too wide)");
+            TIFFErrorExtR(tif, TIFFFileName(tif), "%s", "unsupported tile size (too wide)");
             return (0);
         }
 		y = 0;
@@ -947,7 +949,7 @@ gtStripContig(TIFFRGBAImage* img, uint32_t* raster, uint32_t w, uint32_t h)
 
 	TIFFGetFieldDefaulted(tif, TIFFTAG_YCBCRSUBSAMPLING, &subsamplinghor, &subsamplingver);
 	if( subsamplingver == 0 ) {
-		TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "Invalid vertical YCbCr subsampling");
+		TIFFErrorExtR(tif, TIFFFileName(tif), "Invalid vertical YCbCr subsampling");
 		return (0);
 	}
 	
@@ -956,7 +958,7 @@ gtStripContig(TIFFRGBAImage* img, uint32_t* raster, uint32_t w, uint32_t h)
 	flip = setorientation(img);
 	if (flip & FLIP_VERTICALLY) {
 		if ( w > INT_MAX ) {
-        	TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "Width overflow");
+        	TIFFErrorExtR(tif, TIFFFileName(tif), "Width overflow");
 			return (0);
 		}
 		y = h - 1;
@@ -981,7 +983,7 @@ gtStripContig(TIFFRGBAImage* img, uint32_t* raster, uint32_t w, uint32_t h)
 		temp = (row + img->row_offset)%rowsperstrip + nrowsub;
 		if( scanline > 0 && temp > (size_t)(TIFF_TMSIZE_T_MAX / scanline) )
 		{
-			TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "Integer overflow in gtStripContig");
+			TIFFErrorExtR(tif, TIFFFileName(tif), "Integer overflow in gtStripContig");
 			return 0;
 		}
 		if (_TIFFReadEncodedStripAndAllocBuffer(tif,
@@ -1057,7 +1059,7 @@ gtStripSeparate(TIFFRGBAImage* img, uint32_t* raster, uint32_t w, uint32_t h)
 	flip = setorientation(img);
 	if (flip & FLIP_VERTICALLY) {
 		if ( w > INT_MAX ) {
-        	TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "Width overflow");
+        	TIFFErrorExtR(tif, TIFFFileName(tif), "Width overflow");
 			return (0);
 		}
 		y = h - 1;
@@ -1093,7 +1095,7 @@ gtStripSeparate(TIFFRGBAImage* img, uint32_t* raster, uint32_t w, uint32_t h)
                 temp = (row + img->row_offset)%rowsperstrip + nrow;
                 if( scanline > 0 && temp > (size_t)(TIFF_TMSIZE_T_MAX / scanline) )
                 {
-                        TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "Integer overflow in gtStripSeparate");
+                        TIFFErrorExtR(tif, TIFFFileName(tif), "Integer overflow in gtStripSeparate");
                         return 0;
                 }
                 if( buf == NULL )
@@ -2274,7 +2276,7 @@ initYCbCrConversion(TIFFRGBAImage* img)
 		    + 3*256*sizeof (int32_t)
 		    );
 		if (img->ycbcr == NULL) {
-			TIFFErrorExt(img->tif->tif_clientdata, module,
+			TIFFErrorExtR(img->tif, module,
 			    "No space for YCbCr->RGB conversion state");
 			return (0);
 		}
@@ -2291,7 +2293,7 @@ initYCbCrConversion(TIFFRGBAImage* img)
             luma[1] == 0.0 ||
             luma[2] != luma[2] )
         {
-            TIFFErrorExt(img->tif->tif_clientdata, module,
+            TIFFErrorExtR(img->tif, module,
                 "Invalid values for YCbCrCoefficients tag");
             return (0);
         }
@@ -2303,7 +2305,7 @@ initYCbCrConversion(TIFFRGBAImage* img)
             !isInRefBlackWhiteRange(refBlackWhite[4]) ||
             !isInRefBlackWhiteRange(refBlackWhite[5]) )
         {
-            TIFFErrorExt(img->tif->tif_clientdata, module,
+            TIFFErrorExtR(img->tif, module,
                 "Invalid values for ReferenceBlackWhite tag");
             return (0);
         }
@@ -2323,7 +2325,7 @@ initCIELabConversion(TIFFRGBAImage* img)
 
 	TIFFGetFieldDefaulted(img->tif, TIFFTAG_WHITEPOINT, &whitePoint);
 	if (whitePoint[1] == 0.0f ) {
-		TIFFErrorExt(img->tif->tif_clientdata, module,
+		TIFFErrorExtR(img->tif, module,
 		    "Invalid value for WhitePoint tag.");
 		return NULL;
         }
@@ -2332,7 +2334,7 @@ initCIELabConversion(TIFFRGBAImage* img)
 		img->cielab = (TIFFCIELabToRGB *)
 			_TIFFmalloc(sizeof(TIFFCIELabToRGB));
 		if (!img->cielab) {
-			TIFFErrorExt(img->tif->tif_clientdata, module,
+			TIFFErrorExtR(img->tif, module,
 			    "No space for CIE L*a*b*->RGB conversion state.");
 			return NULL;
 		}
@@ -2343,7 +2345,7 @@ initCIELabConversion(TIFFRGBAImage* img)
 	refWhite[2] = (1.0F - whitePoint[0] - whitePoint[1])
 		      / whitePoint[1] * refWhite[1];
 	if (TIFFCIELabToRGBInit(img->cielab, &display_sRGB, refWhite) < 0) {
-		TIFFErrorExt(img->tif->tif_clientdata, module,
+		TIFFErrorExtR(img->tif, module,
 		    "Failed to initialize CIE L*a*b*->RGB conversion state.");
 		_TIFFfree(img->cielab);
 		return NULL;
@@ -2378,7 +2380,7 @@ makebwmap(TIFFRGBAImage* img)
     img->BWmap = (uint32_t**) _TIFFmalloc(
 	256*sizeof (uint32_t *) + (256 * nsamples * sizeof(uint32_t)));
     if (img->BWmap == NULL) {
-		TIFFErrorExt(img->tif->tif_clientdata, TIFFFileName(img->tif), "No space for B&W mapping table");
+		TIFFErrorExtR(img->tif, TIFFFileName(img->tif), "No space for B&W mapping table");
 		return (0);
     }
     p = (uint32_t*)(img->BWmap + 256);
@@ -2435,7 +2437,7 @@ setupMap(TIFFRGBAImage* img)
 
     img->Map = (TIFFRGBValue*) _TIFFmalloc((range+1) * sizeof (TIFFRGBValue));
     if (img->Map == NULL) {
-		TIFFErrorExt(img->tif->tif_clientdata, TIFFFileName(img->tif),
+		TIFFErrorExtR(img->tif, TIFFFileName(img->tif),
 			"No space for photometric conversion table");
 		return (0);
     }
@@ -2514,7 +2516,7 @@ makecmap(TIFFRGBAImage* img)
     img->PALmap = (uint32_t**) _TIFFmalloc(
 	256*sizeof (uint32_t *) + (256 * nsamples * sizeof(uint32_t)));
     if (img->PALmap == NULL) {
-		TIFFErrorExt(img->tif->tif_clientdata, TIFFFileName(img->tif), "No space for Palette mapping table");
+		TIFFErrorExtR(img->tif, TIFFFileName(img->tif), "No space for Palette mapping table");
 		return (0);
 	}
     p = (uint32_t*)(img->PALmap + 256);
@@ -2579,7 +2581,7 @@ buildMap(TIFFRGBAImage* img)
 	if (checkcmap(img) == 16)
 	    cvtcmap(img);
 	else
-	    TIFFWarningExt(img->tif->tif_clientdata, TIFFFileName(img->tif), "Assuming 8-bit colormap");
+	    TIFFWarningExtR(img->tif, TIFFFileName(img->tif), "Assuming 8-bit colormap");
 	/*
 	 * Use mapping table and colormap to construct
 	 * unpacking tables for samples < 8 bits.
@@ -2828,7 +2830,7 @@ BuildMapUaToAa(TIFFRGBAImage* img)
 	img->UaToAa=_TIFFmalloc(65536);
 	if (img->UaToAa==NULL)
 	{
-		TIFFErrorExt(img->tif->tif_clientdata,module,"Out of memory");
+		TIFFErrorExtR(img->tif,module,"Out of memory");
 		return(0);
 	}
 	m=img->UaToAa;
@@ -2850,7 +2852,7 @@ BuildMapBitdepth16To8(TIFFRGBAImage* img)
 	img->Bitdepth16To8=_TIFFmalloc(65536);
 	if (img->Bitdepth16To8==NULL)
 	{
-		TIFFErrorExt(img->tif->tif_clientdata,module,"Out of memory");
+		TIFFErrorExtR(img->tif,module,"Out of memory");
 		return(0);
 	}
 	m=img->Bitdepth16To8;
@@ -2879,14 +2881,14 @@ int
 TIFFReadRGBAStripExt(TIFF* tif, uint32_t row, uint32_t * raster, int stop_on_error)
 
 {
-    char 	emsg[1024] = "";
+    char 	emsg[EMSG_BUF_SIZE] = "";
     TIFFRGBAImage img;
     int 	ok;
     uint32_t	rowsperstrip, rows_to_read;
 
     if( TIFFIsTiled( tif ) )
     {
-		TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif),
+		TIFFErrorExtR(tif, TIFFFileName(tif),
                   "Can't use TIFFReadRGBAStrip() with tiled file.");
 	return (0);
     }
@@ -2894,7 +2896,7 @@ TIFFReadRGBAStripExt(TIFF* tif, uint32_t row, uint32_t * raster, int stop_on_err
     TIFFGetFieldDefaulted(tif, TIFFTAG_ROWSPERSTRIP, &rowsperstrip);
     if( (row % rowsperstrip) != 0 )
     {
-		TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif),
+		TIFFErrorExtR(tif, TIFFFileName(tif),
 				"Row passed to TIFFReadRGBAStrip() must be first in a strip.");
 		return (0);
     }
@@ -2913,7 +2915,7 @@ TIFFReadRGBAStripExt(TIFF* tif, uint32_t row, uint32_t * raster, int stop_on_err
         
 	TIFFRGBAImageEnd(&img);
     } else {
-		TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "%s", emsg);
+		TIFFErrorExtR(tif, TIFFFileName(tif), "%s", emsg);
 		ok = 0;
     }
     
@@ -2937,7 +2939,7 @@ TIFFReadRGBATile(TIFF* tif, uint32_t col, uint32_t row, uint32_t * raster)
 int
 TIFFReadRGBATileExt(TIFF* tif, uint32_t col, uint32_t row, uint32_t * raster, int stop_on_error )
 {
-    char 	emsg[1024] = "";
+    char 	emsg[EMSG_BUF_SIZE] = "";
     TIFFRGBAImage img;
     int 	ok;
     uint32_t	tile_xsize, tile_ysize;
@@ -2951,7 +2953,7 @@ TIFFReadRGBATileExt(TIFF* tif, uint32_t col, uint32_t row, uint32_t * raster, in
     
     if( !TIFFIsTiled( tif ) )
     {
-		TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif),
+		TIFFErrorExtR(tif, TIFFFileName(tif),
 				  "Can't use TIFFReadRGBATile() with striped file.");
 		return (0);
     }
@@ -2960,7 +2962,7 @@ TIFFReadRGBATileExt(TIFF* tif, uint32_t col, uint32_t row, uint32_t * raster, in
     TIFFGetFieldDefaulted(tif, TIFFTAG_TILELENGTH, &tile_ysize);
     if( (col % tile_xsize) != 0 || (row % tile_ysize) != 0 )
     {
-		TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif),
+		TIFFErrorExtR(tif, TIFFFileName(tif),
                   "Row/col passed to TIFFReadRGBATile() must be top"
                   "left corner of a tile.");
 	return (0);
@@ -2972,7 +2974,7 @@ TIFFReadRGBATileExt(TIFF* tif, uint32_t col, uint32_t row, uint32_t * raster, in
     
     if (!TIFFRGBAImageOK(tif, emsg) 
 	|| !TIFFRGBAImageBegin(&img, tif, stop_on_error, emsg)) {
-	    TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "%s", emsg);
+	    TIFFErrorExtR(tif, TIFFFileName(tif), "%s", emsg);
 	    return( 0 );
     }
 
@@ -3016,15 +3018,15 @@ TIFFReadRGBATileExt(TIFF* tif, uint32_t col, uint32_t row, uint32_t * raster, in
         return( ok );
 
     for( i_row = 0; i_row < read_ysize; i_row++ ) {
-        memmove( raster + (tile_ysize - i_row - 1) * tile_xsize,
-                 raster + (read_ysize - i_row - 1) * read_xsize,
+        memmove( raster + (size_t)(tile_ysize - i_row - 1) * tile_xsize,
+                 raster + (size_t)(read_ysize - i_row - 1) * read_xsize,
                  read_xsize * sizeof(uint32_t) );
-        _TIFFmemset( raster + (tile_ysize - i_row - 1) * tile_xsize+read_xsize,
+        _TIFFmemset( raster + (size_t)(tile_ysize - i_row - 1) * tile_xsize+read_xsize,
                      0, sizeof(uint32_t) * (tile_xsize - read_xsize) );
     }
 
     for( i_row = read_ysize; i_row < tile_ysize; i_row++ ) {
-        _TIFFmemset( raster + (tile_ysize - i_row - 1) * tile_xsize,
+        _TIFFmemset( raster + (size_t)(tile_ysize - i_row - 1) * tile_xsize,
                      0, sizeof(uint32_t) * tile_xsize );
     }
 

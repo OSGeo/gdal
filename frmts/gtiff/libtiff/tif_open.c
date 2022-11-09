@@ -78,9 +78,26 @@ TIFFClientOpen(
 	TIFFSizeProc sizeproc,
 	TIFFMapFileProc mapproc,
 	TIFFUnmapFileProc unmapproc
-)
+) {
+  return TIFFClientOpenEx(name, mode, clientdata, readproc, writeproc, seekproc, closeproc,
+                          sizeproc, mapproc, unmapproc, NULL, NULL);
+}
+
+TIFF*
+TIFFClientOpenEx(
+	const char* name, const char* mode,
+	thandle_t clientdata,
+	TIFFReadWriteProc readproc,
+	TIFFReadWriteProc writeproc,
+	TIFFSeekProc seekproc,
+	TIFFCloseProc closeproc,
+	TIFFSizeProc sizeproc,
+	TIFFMapFileProc mapproc,
+	TIFFUnmapFileProc unmapproc,
+	TIFFErrorHandlerExtR errorhandler,
+	TIFFErrorHandlerExtR warnhandler)
 {
-	static const char module[] = "TIFFClientOpen";
+	static const char module[] = "TIFFClientOpenEx";
 	TIFF *tif;
 	int m;
 	const char* cp;
@@ -128,25 +145,23 @@ TIFFClientOpen(
 	tif->tif_curstrip = (uint32_t) -1;	/* invalid strip */
 	tif->tif_row = (uint32_t) -1;		/* read/write pre-increment */
 	tif->tif_clientdata = clientdata;
-	if (!readproc || !writeproc || !seekproc || !closeproc || !sizeproc) {
-		TIFFErrorExt(clientdata, module,
-		    "One of the client procedures is NULL pointer.");
-		_TIFFfree(tif);
-		goto bad2;
-	}
 	tif->tif_readproc = readproc;
 	tif->tif_writeproc = writeproc;
 	tif->tif_seekproc = seekproc;
 	tif->tif_closeproc = closeproc;
 	tif->tif_sizeproc = sizeproc;
-	if (mapproc)
-		tif->tif_mapproc = mapproc;
-	else
-		tif->tif_mapproc = _tiffDummyMapProc;
-	if (unmapproc)
-		tif->tif_unmapproc = unmapproc;
-	else
-		tif->tif_unmapproc = _tiffDummyUnmapProc;
+	tif->tif_mapproc = mapproc ? mapproc : _tiffDummyMapProc;
+	tif->tif_unmapproc = unmapproc ? unmapproc : _tiffDummyUnmapProc;
+    tif->tif_errorhandler = errorhandler;
+    tif->tif_warnhandler = warnhandler;
+
+	if (!readproc || !writeproc || !seekproc || !closeproc || !sizeproc) {
+		TIFFErrorExtR(tif, module,
+		    "One of the client procedures is NULL pointer.");
+		_TIFFfree(tif);
+		goto bad2;
+	}
+
 	_TIFFSetDefaultCompressionState(tif);    /* setup default state */
 	/*
 	 * Default is to return data MSB2LSB and enable the
@@ -287,7 +302,7 @@ TIFFClientOpen(
 	if ((m & O_TRUNC) ||
 	    !ReadOK(tif, &tif->tif_header, sizeof (TIFFHeaderClassic))) {
 		if (tif->tif_mode == O_RDONLY) {
-			TIFFErrorExt(tif->tif_clientdata, name,
+			TIFFErrorExtR(tif, name,
 			    "Cannot read TIFF header");
 			goto bad;
 		}
@@ -331,7 +346,7 @@ TIFFClientOpen(
 		 */
 		TIFFSeekFile( tif, 0, SEEK_SET );
 		if (!WriteOK(tif, &tif->tif_header, (tmsize_t)(tif->tif_header_size))) {
-			TIFFErrorExt(tif->tif_clientdata, name,
+			TIFFErrorExtR(tif, name,
 			    "Error writing TIFF header");
 			goto bad;
 		}
@@ -373,11 +388,11 @@ TIFFClientOpen(
 	    tif->tif_header.common.tiff_magic != MDI_LITTLEENDIAN
 	    #endif
 	    ) {
-		TIFFErrorExt(tif->tif_clientdata, name,
+		TIFFErrorExtR(tif, name,
 		    "Not a TIFF or MDI file, bad magic number %"PRIu16" (0x%"PRIx16")",
 	    #else
 	    ) {
-		TIFFErrorExt(tif->tif_clientdata, name,
+		TIFFErrorExtR(tif, name,
 		    "Not a TIFF file, bad magic number %"PRIu16" (0x%"PRIx16")",
 	    #endif
 		    tif->tif_header.common.tiff_magic,
@@ -397,7 +412,7 @@ TIFFClientOpen(
 		TIFFSwabShort(&tif->tif_header.common.tiff_version);
 	if ((tif->tif_header.common.tiff_version != TIFF_VERSION_CLASSIC)&&
 	    (tif->tif_header.common.tiff_version != TIFF_VERSION_BIG)) {
-		TIFFErrorExt(tif->tif_clientdata, name,
+		TIFFErrorExtR(tif, name,
 		    "Not a TIFF file, bad version number %"PRIu16" (0x%"PRIx16")",
 		    tif->tif_header.common.tiff_version,
 		    tif->tif_header.common.tiff_version);
@@ -413,7 +428,7 @@ TIFFClientOpen(
 	{
 		if (!ReadOK(tif, ((uint8_t*)(&tif->tif_header) + sizeof(TIFFHeaderClassic)), (sizeof(TIFFHeaderBig) - sizeof(TIFFHeaderClassic))))
 		{
-			TIFFErrorExt(tif->tif_clientdata, name,
+			TIFFErrorExtR(tif, name,
 			    "Cannot read TIFF header");
 			goto bad;
 		}
@@ -424,7 +439,7 @@ TIFFClientOpen(
 		}
 		if (tif->tif_header.big.tiff_offsetsize != 8)
 		{
-			TIFFErrorExt(tif->tif_clientdata, name,
+			TIFFErrorExtR(tif, name,
 			    "Not a TIFF file, bad BigTIFF offsetsize %"PRIu16" (0x%"PRIx16")",
 			    tif->tif_header.big.tiff_offsetsize,
 			    tif->tif_header.big.tiff_offsetsize);
@@ -432,7 +447,7 @@ TIFFClientOpen(
 		}
 		if (tif->tif_header.big.tiff_unused != 0)
 		{
-			TIFFErrorExt(tif->tif_clientdata, name,
+			TIFFErrorExtR(tif, name,
 			    "Not a TIFF file, bad BigTIFF unused %"PRIu16" (0x%"PRIx16")",
 			    tif->tif_header.big.tiff_unused,
 			    tif->tif_header.big.tiff_unused);

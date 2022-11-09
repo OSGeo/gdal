@@ -66,7 +66,7 @@ TIFFWarningExt(thandle_t fd, const char* module, const char* fmt, ...)
 {
 	va_list ap;
 	if (_TIFFwarningHandler) {
-		va_start(ap, fmt);	
+		va_start(ap, fmt);
 		(*_TIFFwarningHandler)(module, fmt, ap);
 		va_end(ap);
 	}
@@ -77,6 +77,30 @@ TIFFWarningExt(thandle_t fd, const char* module, const char* fmt, ...)
 	}
 }
 
+void TIFFSetWarningHandlerExtR(TIFF* tif, TIFFErrorHandlerExtR handler) {
+  if (tif) tif->tif_warnhandler = handler;
+}
+
+void TIFFWarningExtR(TIFF* tif, const char* module, const char* fmt, ...)
+{
+	va_list ap;
+	if (tif && tif->tif_warnhandler) {
+		va_start(ap, fmt);
+		int stop = (*tif->tif_warnhandler)(tif->tif_clientdata, module, fmt, ap);
+		va_end(ap);
+		if (stop) return;
+	}
+	if (_TIFFwarningHandler) {
+		va_start(ap, fmt);
+		(*_TIFFwarningHandler)(module, fmt, ap);
+		va_end(ap);
+	}
+	if (_TIFFwarningHandlerExt) {
+		va_start(ap, fmt);
+		(*_TIFFwarningHandlerExt)(tif ? tif->tif_clientdata : 0, module, fmt, ap);
+		va_end(ap);
+	}
+}
 
 /*
  * Local Variables:

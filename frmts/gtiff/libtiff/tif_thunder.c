@@ -72,7 +72,7 @@ ThunderSetupDecode(TIFF* tif)
 
         if( tif->tif_dir.td_bitspersample != 4 )
         {
-                TIFFErrorExt(tif->tif_clientdata, module,
+                TIFFErrorExtR(tif, module,
                              "Wrong bitspersample value (%d), Thunder decoder only supports 4bits per sample.",
                              (int) tif->tif_dir.td_bitspersample );
                 return 0;
@@ -142,7 +142,7 @@ ThunderDecode(TIFF* tif, uint8_t* op, tmsize_t maxpixels)
 	tif->tif_rawcp = (uint8_t*) bp;
 	tif->tif_rawcc = cc;
 	if (npixels != maxpixels) {
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 			     "%s data at scanline %lu (%"PRIu64" != %"PRIu64")",
 			     npixels < maxpixels ? "Not enough" : "Too much",
 			     (unsigned long) tif->tif_row,
@@ -163,7 +163,7 @@ ThunderDecodeRow(TIFF* tif, uint8_t* buf, tmsize_t occ, uint16_t s)
 	(void) s;
 	if (occ % tif->tif_scanlinesize)
 	{
-		TIFFErrorExt(tif->tif_clientdata, module, "Fractional scanlines cannot be read");
+		TIFFErrorExtR(tif, module, "Fractional scanlines cannot be read");
 		return (0);
 	}
 	while (occ > 0) {

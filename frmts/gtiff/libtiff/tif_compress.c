@@ -35,11 +35,11 @@ TIFFNoEncode(TIFF* tif, const char* method)
 	const TIFFCodec* c = TIFFFindCODEC(tif->tif_dir.td_compression);
 
 	if (c) {
-		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+		TIFFErrorExtR(tif, tif->tif_name,
 			     "%s %s encoding is not implemented",
 			     c->name, method);
 	} else {
-		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+		TIFFErrorExtR(tif, tif->tif_name,
 			"Compression scheme %"PRIu16" %s encoding is not implemented",
 			     tif->tif_dir.td_compression, method);
 	}
@@ -73,11 +73,11 @@ TIFFNoDecode(TIFF* tif, const char* method)
 	const TIFFCodec* c = TIFFFindCODEC(tif->tif_dir.td_compression);
 
 	if (c)
-		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+		TIFFErrorExtR(tif, tif->tif_name,
 			     "%s %s decoding is not implemented",
 			     c->name, method);
 	else
-		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+		TIFFErrorExtR(tif, tif->tif_name,
 			     "Compression scheme %"PRIu16" %s decoding is not implemented",
 			     tif->tif_dir.td_compression, method);
 	return (0);
@@ -115,7 +115,7 @@ int
 _TIFFNoSeek(TIFF* tif, uint32_t off)
 {
 	(void) off;
-	TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+	TIFFErrorExtR(tif, tif->tif_name,
 		     "Compression algorithm does not support random access");
 	return (0);
 }

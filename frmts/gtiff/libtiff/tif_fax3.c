@@ -180,7 +180,7 @@ Fax3PreDecode(TIFF* tif, uint16_t s)
 static void
 Fax3Unexpected(const char* module, TIFF* tif, uint32_t line, uint32_t a0)
 {
-	TIFFErrorExt(tif->tif_clientdata, module, "Bad code word at line %"PRIu32" of %s %"PRIu32" (x %"PRIu32")",
+	TIFFErrorExtR(tif, module, "Bad code word at line %"PRIu32" of %s %"PRIu32" (x %"PRIu32")",
 	    line, isTiled(tif) ? "tile" : "strip",
 	    (isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip),
 	    a0);
@@ -190,7 +190,7 @@ Fax3Unexpected(const char* module, TIFF* tif, uint32_t line, uint32_t a0)
 static void
 Fax3Extension(const char* module, TIFF* tif, uint32_t line, uint32_t a0)
 {
-	TIFFErrorExt(tif->tif_clientdata, module,
+	TIFFErrorExtR(tif, module,
 	    "Uncompressed data (not supported) at line %"PRIu32" of %s %"PRIu32" (x %"PRIu32")",
 	    line, isTiled(tif) ? "tile" : "strip",
 	    (isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip),
@@ -201,7 +201,7 @@ Fax3Extension(const char* module, TIFF* tif, uint32_t line, uint32_t a0)
 static void
 Fax3BadLength(const char* module, TIFF* tif, uint32_t line, uint32_t a0, uint32_t lastx)
 {
-	TIFFWarningExt(tif->tif_clientdata, module, "%s at line %"PRIu32" of %s %"PRIu32" (got %"PRIu32", expected %"PRIu32")",
+	TIFFWarningExtR(tif, module, "%s at line %"PRIu32" of %s %"PRIu32" (got %"PRIu32", expected %"PRIu32")",
 	    a0 < lastx ? "Premature EOL" : "Line length mismatch",
 	    line, isTiled(tif) ? "tile" : "strip",
 	    (isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip),
@@ -212,7 +212,7 @@ Fax3BadLength(const char* module, TIFF* tif, uint32_t line, uint32_t a0, uint32_
 static void
 Fax3PrematureEOF(const char* module, TIFF* tif, uint32_t line, uint32_t a0)
 {
-	TIFFWarningExt(tif->tif_clientdata, module, "Premature EOF at line %"PRIu32" of %s %"PRIu32" (x %"PRIu32")",
+	TIFFWarningExtR(tif, module, "Premature EOF at line %"PRIu32" of %s %"PRIu32" (x %"PRIu32")",
 	    line, isTiled(tif) ? "tile" : "strip",
 	    (isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip),
 	    a0);
@@ -235,7 +235,7 @@ Fax3Decode1D(TIFF* tif, uint8_t* buf, tmsize_t occ, uint16_t s)
 	(void) s;
 	if (occ % sp->b.rowbytes)
 	{
-		TIFFErrorExt(tif->tif_clientdata, module, "Fractional scanlines cannot be read");
+		TIFFErrorExtR(tif, module, "Fractional scanlines cannot be read");
 		return (-1);
 	}
 	CACHE_STATE(tif, sp);
@@ -279,7 +279,7 @@ Fax3Decode2D(TIFF* tif, uint8_t* buf, tmsize_t occ, uint16_t s)
 	(void) s;
 	if (occ % sp->b.rowbytes)
 	{
-		TIFFErrorExt(tif->tif_clientdata, module, "Fractional scanlines cannot be read");
+		TIFFErrorExtR(tif, module, "Fractional scanlines cannot be read");
 		return (-1);
 	}
 	CACHE_STATE(tif, sp);
@@ -462,7 +462,7 @@ Fax3SetupState(TIFF* tif)
 	uint32_t rowpixels;
 
 	if (td->td_bitspersample != 1) {
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 		    "Bits/sample must be 1 for Group 3/4 encoding/decoding");
 		return (0);
 	}
@@ -478,7 +478,7 @@ Fax3SetupState(TIFF* tif)
 	}
 	if ((int64_t)rowbytes < ((int64_t)rowpixels + 7) / 8)
 	{
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 			"Inconsistent number of bytes per row : rowbytes=%" PRId64 " rowpixels=%" PRIu32,
                      (int64_t) rowbytes, rowpixels);
 		return (0);
@@ -504,7 +504,7 @@ Fax3SetupState(TIFF* tif)
 		dsp->nruns = TIFFSafeMultiply(uint32_t, dsp->nruns, 2);
 	}
 	if ((dsp->nruns == 0) || (TIFFSafeMultiply(uint32_t, dsp->nruns, 2) == 0)) {
-		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+		TIFFErrorExtR(tif, tif->tif_name,
 			     "Row pixels integer overflow (rowpixels %"PRIu32")",
 			     rowpixels);
 		return (0);
@@ -539,7 +539,7 @@ Fax3SetupState(TIFF* tif)
 		 */
 		esp->refline = (unsigned char*) _TIFFmalloc(rowbytes);
 		if (esp->refline == NULL) {
-			TIFFErrorExt(tif->tif_clientdata, module,
+			TIFFErrorExtR(tif, module,
 			    "No space for Group 3/4 reference line");
 			return (0);
 		}
@@ -1054,7 +1054,7 @@ Fax3Encode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
 	(void) s;
 	if (cc % sp->b.rowbytes)
 	{
-		TIFFErrorExt(tif->tif_clientdata, module, "Fractional scanlines cannot be written");
+		TIFFErrorExtR(tif, module, "Fractional scanlines cannot be written");
 		return (0);
 	}
 	while (cc > 0) {
@@ -1315,7 +1315,7 @@ InitCCITTFax3(TIFF* tif)
 	 * Merge codec-specific tag information.
 	 */
 	if (!_TIFFMergeFields(tif, faxFields, TIFFArrayCount(faxFields))) {
-		TIFFErrorExt(tif->tif_clientdata, "InitCCITTFax3",
+		TIFFErrorExtR(tif, "InitCCITTFax3",
 			"Merging common CCITT Fax codec-specific tags failed");
 		return 0;
 	}
@@ -1327,7 +1327,7 @@ InitCCITTFax3(TIFF* tif)
 		_TIFFmalloc(sizeof (Fax3CodecState));
 
 	if (tif->tif_data == NULL) {
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 		    "No space for state block");
 		return (0);
 	}
@@ -1384,7 +1384,7 @@ TIFFInitCCITTFax3(TIFF* tif, int scheme)
 		 */
 		if (!_TIFFMergeFields(tif, fax3Fields,
 				      TIFFArrayCount(fax3Fields))) {
-			TIFFErrorExt(tif->tif_clientdata, "TIFFInitCCITTFax3",
+			TIFFErrorExtR(tif, "TIFFInitCCITTFax3",
 			"Merging CCITT Fax 3 codec-specific tags failed");
 			return 0;
 		}
@@ -1413,7 +1413,7 @@ Fax4Decode(TIFF* tif, uint8_t* buf, tmsize_t occ, uint16_t s)
 	(void) s;
 	if (occ % sp->b.rowbytes)
 	{
-		TIFFErrorExt(tif->tif_clientdata, module, "Fractional scanlines cannot be read");
+		TIFFErrorExtR(tif, module, "Fractional scanlines cannot be read");
 		return (-1);
 	}
 	CACHE_STATE(tif, sp);
@@ -1433,7 +1433,7 @@ Fax4Decode(TIFF* tif, uint8_t* buf, tmsize_t occ, uint16_t s)
                     goto EOFG4;
 		if (((lastx + 7) >> 3) > (int)occ)	/* check for buffer overrun */
 		{
-			TIFFErrorExt(tif->tif_clientdata, module,
+			TIFFErrorExtR(tif, module,
 			             "Buffer overrun detected : %"TIFF_SSIZE_FORMAT" bytes available, %d bits needed",
 			             occ, lastx);
 			return -1;
@@ -1455,7 +1455,7 @@ Fax4Decode(TIFF* tif, uint8_t* buf, tmsize_t occ, uint16_t s)
                 ClrBits( 13 );
 		if (((lastx + 7) >> 3) > (int)occ)	/* check for buffer overrun */
 		{
-			TIFFErrorExt(tif->tif_clientdata, module,
+			TIFFErrorExtR(tif, module,
 			             "Buffer overrun detected : %"TIFF_SSIZE_FORMAT" bytes available, %d bits needed",
 			             occ, lastx);
 			return -1;
@@ -1480,7 +1480,7 @@ Fax4Encode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
 	(void) s;
 	if (cc % sp->b.rowbytes)
 	{
-		TIFFErrorExt(tif->tif_clientdata, module, "Fractional scanlines cannot be written");
+		TIFFErrorExtR(tif, module, "Fractional scanlines cannot be written");
 		return (0);
 	}
 	while (cc > 0) {
@@ -1516,7 +1516,7 @@ TIFFInitCCITTFax4(TIFF* tif, int scheme)
 		 */
 		if (!_TIFFMergeFields(tif, fax4Fields,
 				      TIFFArrayCount(fax4Fields))) {
-			TIFFErrorExt(tif->tif_clientdata, "TIFFInitCCITTFax4",
+			TIFFErrorExtR(tif, "TIFFInitCCITTFax4",
 			"Merging CCITT Fax 4 codec-specific tags failed");
 			return 0;
 		}
@@ -1552,7 +1552,7 @@ Fax3DecodeRLE(TIFF* tif, uint8_t* buf, tmsize_t occ, uint16_t s)
 	(void) s;
 	if (occ % sp->b.rowbytes)
 	{
-		TIFFErrorExt(tif->tif_clientdata, module, "Fractional scanlines cannot be read");
+		TIFFErrorExtR(tif, module, "Fractional scanlines cannot be read");
 		return (-1);
 	}
 	CACHE_STATE(tif, sp);

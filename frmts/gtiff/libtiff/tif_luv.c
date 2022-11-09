@@ -203,7 +203,7 @@ LogL16Decode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
 		tp = (int16_t*) op;
 	else {
 		if(sp->tbuflen < npixels) {
-			TIFFErrorExt(tif->tif_clientdata, module,
+			TIFFErrorExtR(tif, module,
 						 "Translation buffer too short");
 			return (0);
 		}
@@ -231,7 +231,7 @@ LogL16Decode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
 			}
 		}
 		if (i != npixels) {
-			TIFFErrorExt(tif->tif_clientdata, module,
+			TIFFErrorExtR(tif, module,
 			    "Not enough data at row %"PRIu32" (short %"TIFF_SSIZE_FORMAT" pixels)",
 				     tif->tif_row,
 				     npixels - i);
@@ -270,7 +270,7 @@ LogLuvDecode24(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
 		tp = (uint32_t *)op;
 	else {
 		if(sp->tbuflen < npixels) {
-			TIFFErrorExt(tif->tif_clientdata, module,
+			TIFFErrorExtR(tif, module,
 						 "Translation buffer too short");
 			return (0);
 		}
@@ -287,7 +287,7 @@ LogLuvDecode24(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
 	tif->tif_rawcp = (uint8_t*) bp;
 	tif->tif_rawcc = cc;
 	if (i != npixels) {
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 			"Not enough data at row %"PRIu32" (short %"TIFF_SSIZE_FORMAT" pixels)",
 			     tif->tif_row,
 			     npixels - i);
@@ -325,7 +325,7 @@ LogLuvDecode32(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
 		tp = (uint32_t*) op;
 	else {
 		if(sp->tbuflen < npixels) {
-			TIFFErrorExt(tif->tif_clientdata, module,
+			TIFFErrorExtR(tif, module,
 						 "Translation buffer too short");
 			return (0);
 		}
@@ -353,7 +353,7 @@ LogLuvDecode32(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
 			}
 		}
 		if (i != npixels) {
-			TIFFErrorExt(tif->tif_clientdata, module,
+			TIFFErrorExtR(tif, module,
 			"Not enough data at row %"PRIu32" (short %"TIFF_SSIZE_FORMAT" pixels)",
 				     tif->tif_row,
 				     npixels - i);
@@ -439,7 +439,7 @@ LogL16Encode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
 	else {
 		tp = (int16_t*) sp->tbuf;
 		if(sp->tbuflen < npixels) {
-			TIFFErrorExt(tif->tif_clientdata, module,
+			TIFFErrorExtR(tif, module,
 						 "Translation buffer too short");
 			return (0);
 		}
@@ -534,7 +534,7 @@ LogLuvEncode24(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
 	else {
 		tp = (uint32_t*) sp->tbuf;
 		if(sp->tbuflen < npixels) {
-			TIFFErrorExt(tif->tif_clientdata, module,
+			TIFFErrorExtR(tif, module,
 						 "Translation buffer too short");
 			return (0);
 		}
@@ -593,7 +593,7 @@ LogLuvEncode32(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
 	else {
 		tp = (uint32_t*) sp->tbuf;
 		if(sp->tbuflen < npixels) {
-			TIFFErrorExt(tif->tif_clientdata, module,
+			TIFFErrorExtR(tif, module,
 						 "Translation buffer too short");
 			return (0);
 		}
@@ -1272,7 +1272,7 @@ LogL16InitState(TIFF* tif)
 
 	if( td->td_samplesperpixel != 1 )
 	{
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 		             "Sorry, can not handle LogL image with %s=%"PRIu16,
 			     "Samples/pixel", td->td_samplesperpixel);
 		return 0;
@@ -1292,7 +1292,7 @@ LogL16InitState(TIFF* tif)
 		sp->pixel_size = sizeof (uint8_t);
 		break;
 	default:
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 		    "No support for converting user data format to LogL");
 		return (0);
 	}
@@ -1304,7 +1304,7 @@ LogL16InitState(TIFF* tif)
             sp->tbuflen = multiply_ms(td->td_imagewidth, td->td_imagelength);
 	if (multiply_ms(sp->tbuflen, sizeof (int16_t)) == 0 ||
         (sp->tbuf = (uint8_t*) _TIFFmalloc(sp->tbuflen * sizeof (int16_t))) == NULL) {
-		TIFFErrorExt(tif->tif_clientdata, module, "No space for SGILog translation buffer");
+		TIFFErrorExtR(tif, module, "No space for SGILog translation buffer");
 		return (0);
 	}
 	return (1);
@@ -1374,7 +1374,7 @@ LogLuvInitState(TIFF* tif)
 
 	/* for some reason, we can't do this in TIFFInitLogLuv */
 	if (td->td_planarconfig != PLANARCONFIG_CONTIG) {
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 		    "SGILog compression cannot handle non-contiguous data");
 		return (0);
 	}
@@ -1394,7 +1394,7 @@ LogLuvInitState(TIFF* tif)
 		sp->pixel_size = 3*sizeof (uint8_t);
 		break;
 	default:
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 		    "No support for converting user data format to LogLuv");
 		return (0);
 	}
@@ -1406,7 +1406,7 @@ LogLuvInitState(TIFF* tif)
             sp->tbuflen = multiply_ms(td->td_imagewidth, td->td_imagelength);
 	if (multiply_ms(sp->tbuflen, sizeof (uint32_t)) == 0 ||
         (sp->tbuf = (uint8_t*) _TIFFmalloc(sp->tbuflen * sizeof (uint32_t))) == NULL) {
-		TIFFErrorExt(tif->tif_clientdata, module, "No space for SGILog translation buffer");
+		TIFFErrorExtR(tif, module, "No space for SGILog translation buffer");
 		return (0);
 	}
 	return (1);
@@ -1473,7 +1473,7 @@ LogLuvSetupDecode(TIFF* tif)
 		}
 		return (1);
 	default:
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 		    "Inappropriate photometric interpretation %"PRIu16" for SGILog compression; %s",
 		    td->td_photometric, "must be either LogLUV or LogL");
 		break;
@@ -1537,7 +1537,7 @@ LogLuvSetupEncode(TIFF* tif)
 		}
 		break;
 	default:
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 		    "Inappropriate photometric interpretation %"PRIu16" for SGILog compression; %s",
 		    td->td_photometric, "must be either LogLUV or LogL");
 		return (0);
@@ -1545,7 +1545,7 @@ LogLuvSetupEncode(TIFF* tif)
 	sp->encoder_state = 1;
 	return (1);
 notsupported:
-	TIFFErrorExt(tif->tif_clientdata, module,
+	TIFFErrorExtR(tif, module,
 	    "SGILog compression supported only for %s, or raw data",
 	    td->td_photometric == PHOTOMETRIC_LOGL ? "Y, L" : "XYZ, Luv");
 	return (0);
@@ -1630,7 +1630,7 @@ LogLuvVSetField(TIFF* tif, uint32_t tag, va_list ap)
 			fmt = SAMPLEFORMAT_UINT;
 			break;
 		default:
-			TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+			TIFFErrorExtR(tif, tif->tif_name,
 			    "Unknown data format %d for LogLuv compression",
 			    sp->user_datafmt);
 			return (0);
@@ -1647,7 +1647,7 @@ LogLuvVSetField(TIFF* tif, uint32_t tag, va_list ap)
 		sp->encode_meth = (int) va_arg(ap, int);
 		if (sp->encode_meth != SGILOGENCODE_NODITHER &&
 		    sp->encode_meth != SGILOGENCODE_RANDITHER) {
-			TIFFErrorExt(tif->tif_clientdata, module,
+			TIFFErrorExtR(tif, module,
 			    "Unknown encoding %d for LogLuv compression",
 			    sp->encode_meth);
 			return (0);
@@ -1690,7 +1690,7 @@ TIFFInitSGILog(TIFF* tif, int scheme)
 	 */
 	if (!_TIFFMergeFields(tif, LogLuvFields,
 			      TIFFArrayCount(LogLuvFields))) {
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 		    "Merging SGILog codec-specific tags failed");
 		return 0;
 	}
@@ -1733,7 +1733,7 @@ TIFFInitSGILog(TIFF* tif, int scheme)
 
 	return (1);
 bad:
-	TIFFErrorExt(tif->tif_clientdata, module,
+	TIFFErrorExtR(tif, module,
 		     "%s: No space for LogLuv state block", tif->tif_name);
 	return (0);
 }

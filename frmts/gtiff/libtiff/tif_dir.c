@@ -120,7 +120,7 @@ setExtraSamples(TIFF* tif, va_list ap, uint32_t* v)
         if ( td->td_transferfunction[0] != NULL && (td->td_samplesperpixel - *v > 1) &&
                 !(td->td_samplesperpixel - td->td_extrasamples > 1))
         {
-                TIFFWarningExt(tif->tif_clientdata,module,
+                TIFFWarningExtR(tif,module,
                     "ExtraSamples tag value is changing, "
                     "but TransferFunction was read with a different value. Canceling it");
                 TIFFClrFieldBit(tif,FIELD_TRANSFERFUNCTION);
@@ -157,7 +157,7 @@ countInkNamesString(TIFF *tif, uint32_t slen, const char *s)
 		return (i);
 	}
 bad:
-	TIFFErrorExt(tif->tif_clientdata, "TIFFSetField",
+	TIFFErrorExtR(tif, "TIFFSetField",
 		"%s: Invalid InkNames value; no NUL at given buffer end location %"PRIu32", after %"PRIu16" ink",
 		tif->tif_name, slen, i);
 	return (0);
@@ -270,7 +270,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
             /* See http://bugzilla.maptools.org/show_bug.cgi?id=2500 */
             if( td->td_sminsamplevalue != NULL )
             {
-                TIFFWarningExt(tif->tif_clientdata,module,
+                TIFFWarningExtR(tif,module,
                     "SamplesPerPixel tag value is changing, "
                     "but SMinSampleValue tag was read with a different value. Canceling it");
                 TIFFClrFieldBit(tif,FIELD_SMINSAMPLEVALUE);
@@ -279,7 +279,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
             }
             if( td->td_smaxsamplevalue != NULL )
             {
-                TIFFWarningExt(tif->tif_clientdata,module,
+                TIFFWarningExtR(tif,module,
                     "SamplesPerPixel tag value is changing, "
                     "but SMaxSampleValue tag was read with a different value. Canceling it");
                 TIFFClrFieldBit(tif,FIELD_SMAXSAMPLEVALUE);
@@ -291,7 +291,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
             if( td->td_transferfunction[0] != NULL && (v - td->td_extrasamples > 1) &&
                 !(td->td_samplesperpixel - td->td_extrasamples > 1))
             {
-                    TIFFWarningExt(tif->tif_clientdata,module,
+                    TIFFWarningExtR(tif,module,
                         "SamplesPerPixel tag value is changing, "
                         "but TransferFunction was read with a different value. Canceling it");
                     TIFFClrFieldBit(tif,FIELD_TRANSFERFUNCTION);
@@ -389,7 +389,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 		if (v32 % 16) {
 			if (tif->tif_mode != O_RDONLY)
 				goto badvalue32;
-			TIFFWarningExt(tif->tif_clientdata, tif->tif_name,
+			TIFFWarningExtR(tif, tif->tif_name,
 				"Nonstandard tile width %"PRIu32", convert file", v32);
 		}
 		td->td_tilewidth = v32;
@@ -400,7 +400,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 		if (v32 % 16) {
 			if (tif->tif_mode != O_RDONLY)
 				goto badvalue32;
-			TIFFWarningExt(tif->tif_clientdata, tif->tif_name,
+			TIFFWarningExtR(tif, tif->tif_name,
 			    "Nonstandard tile length %"PRIu32", convert file", v32);
 		}
 		td->td_tilelength = v32;
@@ -449,7 +449,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 			_TIFFsetLong8Array(&td->td_subifd, (uint64_t*) va_arg(ap, uint64_t*),
 			    (uint32_t) td->td_nsubifd);
 		} else {
-			TIFFErrorExt(tif->tif_clientdata, module,
+			TIFFErrorExtR(tif, module,
 				     "%s: Sorry, cannot nest SubIFDs",
 				     tif->tif_name);
 			status = 0;
@@ -489,7 +489,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 				if (TIFFFieldSet(tif, FIELD_NUMBEROFINKS))
 				{
 					if (td->td_numberofinks != ninksinstring) {
-						TIFFErrorExt(tif->tif_clientdata, module,
+						TIFFErrorExtR(tif, module,
 							"Warning %s; Tag %s:\n  Value %"PRIu16" of NumberOfInks is different from the number of inks %"PRIu16".\n  -> NumberOfInks value adapted to %"PRIu16"",
 							tif->tif_name, fip->field_name, td->td_numberofinks, ninksinstring, ninksinstring);
 						td->td_numberofinks = ninksinstring;
@@ -501,7 +501,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 				if (TIFFFieldSet(tif, FIELD_SAMPLESPERPIXEL))
 				{
 					if (td->td_numberofinks != td->td_samplesperpixel) {
-						TIFFErrorExt(tif->tif_clientdata, module,
+						TIFFErrorExtR(tif, module,
 							"Warning %s; Tag %s:\n  Value %"PRIu16" of NumberOfInks is different from the SamplesPerPixel value %"PRIu16"",
 							tif->tif_name, fip->field_name, td->td_numberofinks, td->td_samplesperpixel);
 					}
@@ -515,7 +515,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 		if (TIFFFieldSet(tif, FIELD_INKNAMES))
 		{
 			if (v != td->td_numberofinks) {
-				TIFFErrorExt(tif->tif_clientdata, module,
+				TIFFErrorExtR(tif, module,
 					"Error %s; Tag %s:\n  It is not possible to set the value %"PRIu32" for NumberOfInks\n  which is different from the number of inks in the InkNames tag (%"PRIu16")",
 					tif->tif_name, fip->field_name, v, td->td_numberofinks);
 				/* Do not set / overwrite number of inks already set by InkNames case accordingly. */
@@ -526,7 +526,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 			if (TIFFFieldSet(tif, FIELD_SAMPLESPERPIXEL))
 			{
 				if (td->td_numberofinks != td->td_samplesperpixel) {
-					TIFFErrorExt(tif->tif_clientdata, module,
+					TIFFErrorExtR(tif, module,
 						"Warning %s; Tag %s:\n  Value %"PRIu32" of NumberOfInks is different from the SamplesPerPixel value %"PRIu16"",
 						tif->tif_name, fip->field_name, v, td->td_samplesperpixel);
 				}
@@ -556,7 +556,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 		 * This also happens when a FIELD_IGNORE tag is written.
 		 */
 		if (fip->field_bit == FIELD_IGNORE) {
-			TIFFErrorExt(tif->tif_clientdata, module,
+			TIFFErrorExtR(tif, module,
 				"%s: Ignored %stag \"%s\" (not supported by libtiff)",
 				tif->tif_name, isPseudoTag(tag) ? "pseudo-" : "",
 				fip->field_name);
@@ -564,7 +564,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 			break;
 		}
 		if(fip->field_bit != FIELD_CUSTOM) {
-			TIFFErrorExt(tif->tif_clientdata, module,
+			TIFFErrorExtR(tif, module,
 			    "%s: Invalid %stag \"%s\" (not supported by codec)",
 			    tif->tif_name, isPseudoTag(tag) ? "pseudo-" : "",
 			    fip->field_name);
@@ -598,7 +598,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 			    _TIFFrealloc(td->td_customValues,
 			    sizeof(TIFFTagValue) * td->td_customValueCount);
 			if (!new_customValues) {
-				TIFFErrorExt(tif->tif_clientdata, module,
+				TIFFErrorExtR(tif, module,
 				    "%s: Failed to allocate space for list of custom values",
 				    tif->tif_name);
 				status = 0;
@@ -620,7 +620,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 		tv_size = TIFFFieldSetGetSize(fip);
 		if (tv_size == 0) {
 			status = 0;
-			TIFFErrorExt(tif->tif_clientdata, module,
+			TIFFErrorExtR(tif, module,
 			    "%s: Bad field type %d for \"%s\"",
 			    tif->tif_name, fip->field_type,
 			    fip->field_name);
@@ -644,7 +644,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 				if( len >= 0x80000000U )
 				{
 					status = 0;
-					TIFFErrorExt(tif->tif_clientdata, module,
+					TIFFErrorExtR(tif, module,
 					    "%s: Too long string value for \"%s\". "
 					    "Maximum supported is 2147483647 bytes",
 					    tif->tif_name,
@@ -673,7 +673,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 
 			if (tv->count == 0) {
 				status = 0;
-				TIFFErrorExt(tif->tif_clientdata, module,
+				TIFFErrorExtR(tif, module,
 					     "%s: Null count for \"%s\" (type "
 					     "%d, writecount %d, passcount %d)",
 					     tif->tif_name,
@@ -717,7 +717,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 						uint64_t *pui64 = (uint64_t *)tv->value;
 						for (int i = 0; i < tv->count; i++) {
 							if (pui64[i] > 0xffffffffu) {
-								TIFFErrorExt(tif->tif_clientdata, module,
+								TIFFErrorExtR(tif, module,
 									"%s: Bad LONG8 value %"PRIu64" at %d. array position for \"%s\" tag %d in ClassicTIFF. Tag won't be written to file",
 									tif->tif_name, pui64[i], i, fip->field_name, tag);
 								goto badvalueifd8long8;
@@ -727,7 +727,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 						int64_t *pi64 = (int64_t *)tv->value;
 						for (int i = 0; i < tv->count; i++) {
 							if (pi64[i] > 2147483647 || pi64[i] < (-2147483647 - 1)) {
-								TIFFErrorExt(tif->tif_clientdata, module,
+								TIFFErrorExtR(tif, module,
 									"%s: Bad SLONG8 value %"PRIi64" at %d. array position for \"%s\" tag %d in ClassicTIFF. Tag won't be written to file",
 									tif->tif_name, pi64[i], i, fip->field_name, tag);
 								goto badvalueifd8long8;
@@ -785,7 +785,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 						_TIFFmemcpy(val, &v2, tv_size);
 						/* Test here for too big values for ClassicTIFF and delete custom field from custom list */
 						if (!(tif->tif_flags & TIFF_BIGTIFF) && (v2 > 0xffffffffu)) {
-							TIFFErrorExt(tif->tif_clientdata, module,
+							TIFFErrorExtR(tif, module,
 								"%s: Bad LONG8 or IFD8 value %"PRIu64" for \"%s\" tag %d in ClassicTIFF. Tag won't be written to file",
 								tif->tif_name, v2, fip->field_name, tag);
 							goto badvalueifd8long8;
@@ -798,7 +798,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 						_TIFFmemcpy(val, &v2, tv_size);
 						/* Test here for too big values for ClassicTIFF and delete custom field from custom list */
 						if (!(tif->tif_flags & TIFF_BIGTIFF) && ((v2 > 2147483647) || (v2 < (-2147483647 - 1)))) {
-							TIFFErrorExt(tif->tif_clientdata, module,
+							TIFFErrorExtR(tif, module,
 								"%s: Bad SLONG8 value %"PRIi64" for \"%s\" tag %d in ClassicTIFF. Tag won't be written to file",
 								tif->tif_name, v2, fip->field_name, tag);
 								goto badvalueifd8long8;
@@ -818,7 +818,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 							_TIFFmemcpy(val, &v3, tv_size);
 							/*-- ToDo: After Testing, this should be removed and tv_size==4 should be set as default. */
 							if (tv_size != 4) {
-								TIFFErrorExt(0,"TIFFLib: _TIFFVSetField()", "Rational2Double: .set_field_type in not 4 but %d", tv_size); 
+								TIFFErrorExtR(tif, module, "Rational2Double: .set_field_type in not 4 but %d", tv_size); 
 							}
 						}
 					}
@@ -857,7 +857,7 @@ end:
 badvalue:
         {
 		const TIFFField* fip2=TIFFFieldWithTag(tif,tag);
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 		     "%s: Bad value %"PRIu32" for \"%s\" tag",
 		     tif->tif_name, v,
 		     fip2 ? fip2->field_name : "Unknown");
@@ -867,7 +867,7 @@ badvalue:
 badvalue32:
         {
 		const TIFFField* fip2=TIFFFieldWithTag(tif,tag);
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 		     "%s: Bad value %"PRIu32" for \"%s\" tag",
 		     tif->tif_name, v32,
 		     fip2 ? fip2->field_name : "Unknown");
@@ -877,7 +877,7 @@ badvalue32:
 badvaluedouble:
         {
         const TIFFField* fip2=TIFFFieldWithTag(tif,tag);
-        TIFFErrorExt(tif->tif_clientdata, module,
+        TIFFErrorExtR(tif, module,
              "%s: Bad value %f for \"%s\" tag",
              tif->tif_name, dblval,
              fip2 ? fip2->field_name : "Unknown");
@@ -930,7 +930,7 @@ OkToChangeTag(TIFF* tif, uint32_t tag)
 {
 	const TIFFField* fip = TIFFFindField(tif, tag, TIFF_ANY);
 	if (!fip) {			/* unknown tag */
-		TIFFErrorExt(tif->tif_clientdata, "TIFFSetField", "%s: Unknown %stag %"PRIu32,
+		TIFFErrorExtR(tif, "TIFFSetField", "%s: Unknown %stag %"PRIu32,
 		    tif->tif_name, isPseudoTag(tag) ? "pseudo-" : "", tag);
 		return (0);
 	}
@@ -942,7 +942,7 @@ OkToChangeTag(TIFF* tif, uint32_t tag)
 		 * to those tags that don't/shouldn't affect the
 		 * compression and/or format of the data.
 		 */
-		TIFFErrorExt(tif->tif_clientdata, "TIFFSetField",
+		TIFFErrorExtR(tif, "TIFFSetField",
 		    "%s: Cannot modify tag \"%s\" while writing",
 		    tif->tif_name, fip->field_name);
 		return (0);
@@ -1241,7 +1241,7 @@ _TIFFVGetField(TIFF* tif, uint32_t tag, va_list ap)
 				 */
 				if( fip->field_bit != FIELD_CUSTOM )
 				{
-					TIFFErrorExt(tif->tif_clientdata, "_TIFFVGetField",
+					TIFFErrorExtR(tif, "_TIFFVGetField",
 					    "%s: Invalid %stag \"%s\" "
 					    "(not supported by codec)",
 					    tif->tif_name,
@@ -1346,7 +1346,7 @@ _TIFFVGetField(TIFF* tif, uint32_t tag, va_list ap)
 										ret_val = 1;
 										/*-- ToDo: After Testing, this should be removed and tv_size==4 should be set as default. */
 										if (tv_size != 4) {
-											TIFFErrorExt(0,"TIFFLib: _TIFFVGetField()", "Rational2Double: .set_field_type in not 4 but %d", tv_size); 
+											TIFFErrorExtR(tif, "_TIFFVGetField", "Rational2Double: .set_field_type in not 4 but %d", tv_size); 
 										}
 									}
 								}
@@ -1619,7 +1619,7 @@ TIFFAdvanceDirectory(TIFF* tif, uint64_t* nextdiroff, uint64_t* off, uint16_t* n
 
 	/* Add this directory to the directory list, if not already in. */
 	if (!_TIFFCheckDirNumberAndOffset(tif, *nextdirnum, *nextdiroff)) {
-		TIFFErrorExt(tif->tif_clientdata, module, "Starting directory %"PRIu16" at offset 0x%"PRIx64" (%"PRIu64") might cause an IFD loop",
+		TIFFErrorExtR(tif, module, "Starting directory %"PRIu16" at offset 0x%"PRIx64" (%"PRIu64") might cause an IFD loop",
 			*nextdirnum, *nextdiroff, *nextdiroff);
 		*nextdiroff = 0;
 		*nextdirnum = 0;
@@ -1638,8 +1638,8 @@ TIFFAdvanceDirectory(TIFF* tif, uint64_t* nextdiroff, uint64_t* off, uint16_t* n
 			poffb=poffa+sizeof(uint16_t);
 			if (((uint64_t)poffa != poff) || (poffb < poffa) || (poffb < (tmsize_t)sizeof(uint16_t)) || (poffb > tif->tif_size))
 			{
-				TIFFErrorExt(tif->tif_clientdata,module,"Error fetching directory count");
-                                  *nextdiroff=0;
+				TIFFErrorExtR(tif,module,"Error fetching directory count");
+                *nextdiroff=0;
 				return(0);
 			}
 			_TIFFmemcpy(&dircount,tif->tif_base+poffa,sizeof(uint16_t));
@@ -1649,7 +1649,7 @@ TIFFAdvanceDirectory(TIFF* tif, uint64_t* nextdiroff, uint64_t* off, uint16_t* n
 			poffd=poffc+sizeof(uint32_t);
 			if ((poffc<poffb) || (poffc<dircount*12) || (poffd<poffc) || (poffd<(tmsize_t)sizeof(uint32_t)) || (poffd > tif->tif_size))
 			{
-				TIFFErrorExt(tif->tif_clientdata,module,"Error fetching directory link");
+				TIFFErrorExtR(tif,module,"Error fetching directory link");
 				return(0);
 			}
 			if (off!=NULL)
@@ -1666,14 +1666,14 @@ TIFFAdvanceDirectory(TIFF* tif, uint64_t* nextdiroff, uint64_t* off, uint16_t* n
 			uint16_t dircount16;
 			if( poff > (uint64_t)TIFF_TMSIZE_T_MAX - sizeof(uint64_t) )
 			{
-				TIFFErrorExt(tif->tif_clientdata,module,"Error fetching directory count");
+				TIFFErrorExtR(tif,module,"Error fetching directory count");
 				return(0);
 			}
 			poffa=(tmsize_t)poff;
 			poffb=poffa+sizeof(uint64_t);
 			if (poffb > tif->tif_size)
 			{
-				TIFFErrorExt(tif->tif_clientdata,module,"Error fetching directory count");
+				TIFFErrorExtR(tif,module,"Error fetching directory count");
 				return(0);
 			}
 			_TIFFmemcpy(&dircount64,tif->tif_base+poffa,sizeof(uint64_t));
@@ -1681,20 +1681,20 @@ TIFFAdvanceDirectory(TIFF* tif, uint64_t* nextdiroff, uint64_t* off, uint16_t* n
 				TIFFSwabLong8(&dircount64);
 			if (dircount64>0xFFFF)
 			{
-				TIFFErrorExt(tif->tif_clientdata,module,"Sanity check on directory count failed");
+				TIFFErrorExtR(tif,module,"Sanity check on directory count failed");
 				return(0);
 			}
 			dircount16=(uint16_t)dircount64;
 			if( poffb > TIFF_TMSIZE_T_MAX - (tmsize_t)(dircount16*20) - (tmsize_t)sizeof(uint64_t) )
 			{
-				TIFFErrorExt(tif->tif_clientdata,module,"Error fetching directory link");
+				TIFFErrorExtR(tif,module,"Error fetching directory link");
 				return(0);
 			}
 			poffc=poffb+dircount16*20;
 			poffd=poffc+sizeof(uint64_t);
 			if (poffd > tif->tif_size)
 			{
-				TIFFErrorExt(tif->tif_clientdata,module,"Error fetching directory link");
+				TIFFErrorExtR(tif,module,"Error fetching directory link");
 				return(0);
 			}
 			if (off!=NULL)
@@ -1712,7 +1712,7 @@ TIFFAdvanceDirectory(TIFF* tif, uint64_t* nextdiroff, uint64_t* off, uint16_t* n
 			uint32_t nextdir32;
 			if (!SeekOK(tif, *nextdiroff) ||
 			    !ReadOK(tif, &dircount, sizeof (uint16_t))) {
-				TIFFErrorExt(tif->tif_clientdata, module, "%s: Error fetching directory count",
+				TIFFErrorExtR(tif, module, "%s: Error fetching directory count",
 				    tif->tif_name);
 				return (0);
 			}
@@ -1725,7 +1725,7 @@ TIFFAdvanceDirectory(TIFF* tif, uint64_t* nextdiroff, uint64_t* off, uint16_t* n
 				(void) TIFFSeekFile(tif,
 				    dircount*12, SEEK_CUR);
 			if (!ReadOK(tif, &nextdir32, sizeof (uint32_t))) {
-				TIFFErrorExt(tif->tif_clientdata, module, "%s: Error fetching directory link",
+				TIFFErrorExtR(tif, module, "%s: Error fetching directory link",
 				    tif->tif_name);
 				return (0);
 			}
@@ -1739,7 +1739,7 @@ TIFFAdvanceDirectory(TIFF* tif, uint64_t* nextdiroff, uint64_t* off, uint16_t* n
 			uint16_t dircount16;
 			if (!SeekOK(tif, *nextdiroff) ||
 			    !ReadOK(tif, &dircount64, sizeof (uint64_t))) {
-				TIFFErrorExt(tif->tif_clientdata, module, "%s: Error fetching directory count",
+				TIFFErrorExtR(tif, module, "%s: Error fetching directory count",
 				    tif->tif_name);
 				return (0);
 			}
@@ -1747,7 +1747,7 @@ TIFFAdvanceDirectory(TIFF* tif, uint64_t* nextdiroff, uint64_t* off, uint16_t* n
 				TIFFSwabLong8(&dircount64);
 			if (dircount64>0xFFFF)
 			{
-				TIFFErrorExt(tif->tif_clientdata, module, "Error fetching directory count");
+				TIFFErrorExtR(tif, module, "Error fetching directory count");
 				return(0);
 			}
 			dircount16 = (uint16_t)dircount64;
@@ -1758,8 +1758,7 @@ TIFFAdvanceDirectory(TIFF* tif, uint64_t* nextdiroff, uint64_t* off, uint16_t* n
 				(void) TIFFSeekFile(tif,
 				    dircount16*20, SEEK_CUR);
 			if (!ReadOK(tif, nextdiroff, sizeof (uint64_t))) {
-				TIFFErrorExt(tif->tif_clientdata, module,
-                                             "%s: Error fetching directory link",
+				TIFFErrorExtR(tif, module, "%s: Error fetching directory link",
 				    tif->tif_name);
 				return (0);
 			}
@@ -1771,7 +1770,7 @@ TIFFAdvanceDirectory(TIFF* tif, uint64_t* nextdiroff, uint64_t* off, uint16_t* n
 		(*nextdirnum)++;
 		/* Check next directory for IFD looping and if so, set it as last directory. */
 		if (!_TIFFCheckDirNumberAndOffset(tif, *nextdirnum, *nextdiroff)) {
-			TIFFWarningExt(tif->tif_clientdata, module, "the next directory %"PRIu16" at offset 0x%"PRIx64" (%"PRIu64") might be an IFD loop. Treating directory %d as last directory",
+			TIFFWarningExtR(tif, module, "the next directory %"PRIu16" at offset 0x%"PRIx64" (%"PRIu64") might be an IFD loop. Treating directory %d as last directory",
 				*nextdirnum, *nextdiroff, *nextdiroff, (int)(*nextdirnum) - 1);
 			*nextdiroff = 0;
 			(*nextdirnum)--;
@@ -1803,7 +1802,7 @@ TIFFNumberOfDirectories(TIFF* tif)
                 }
 		else
                 {
-                        TIFFErrorExt(tif->tif_clientdata, module,
+                        TIFFErrorExtR(tif, module,
                                      "Directory count exceeded 65535 limit,"
                                      " giving up on counting.");
                         return (65535);
@@ -1927,7 +1926,7 @@ TIFFUnlinkDirectory(TIFF* tif, uint16_t dirn)
 	uint16_t n;
 
 	if (tif->tif_mode == O_RDONLY) {
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
                              "Can not unlink directory in read-only file");
 		return (0);
 	}
@@ -1950,7 +1949,7 @@ TIFFUnlinkDirectory(TIFF* tif, uint16_t dirn)
 
 	for (n = dirn-1; n > 0; n--) {
 		if (nextdir == 0) {
-			TIFFErrorExt(tif->tif_clientdata, module, "Directory %"PRIu16" does not exist", dirn);
+			TIFFErrorExtR(tif, module, "Directory %"PRIu16" does not exist", dirn);
 			return (0);
 		}
 		if (!TIFFAdvanceDirectory(tif, &nextdir, &off, &nextdirnum))
@@ -1976,7 +1975,7 @@ TIFFUnlinkDirectory(TIFF* tif, uint16_t dirn)
 		if (tif->tif_flags & TIFF_SWAB)
 			TIFFSwabLong(&nextdir32);
 		if (!WriteOK(tif, &nextdir32, sizeof (uint32_t))) {
-			TIFFErrorExt(tif->tif_clientdata, module, "Error writing directory link");
+			TIFFErrorExtR(tif, module, "Error writing directory link");
 			return (0);
 		}
 	}
@@ -1985,7 +1984,7 @@ TIFFUnlinkDirectory(TIFF* tif, uint16_t dirn)
 		if (tif->tif_flags & TIFF_SWAB)
 			TIFFSwabLong8(&nextdir);
 		if (!WriteOK(tif, &nextdir, sizeof (uint64_t))) {
-			TIFFErrorExt(tif->tif_clientdata, module, "Error writing directory link");
+			TIFFErrorExtR(tif, module, "Error writing directory link");
 			return (0);
 		}
 	}

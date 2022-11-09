@@ -42,7 +42,7 @@ TIFFComputeStrip(TIFF* tif, uint32_t row, uint16_t sample)
 	strip = row / td->td_rowsperstrip;
 	if (td->td_planarconfig == PLANARCONFIG_SEPARATE) {
 		if (sample >= td->td_samplesperpixel) {
-			TIFFErrorExt(tif->tif_clientdata, module,
+			TIFFErrorExtR(tif, module,
 			    "%lu: Sample out of range, max %lu",
 			    (unsigned long) sample, (unsigned long) td->td_samplesperpixel);
 			return (0);
@@ -99,7 +99,7 @@ TIFFVStripSize64(TIFF* tif, uint32_t nrows)
 		uint64_t samplingrow_size;
 		if(td->td_samplesperpixel!=3)
 		{
-			TIFFErrorExt(tif->tif_clientdata,module,
+			TIFFErrorExtR(tif,module,
 			    "Invalid td_samplesperpixel value");
 			return 0;
 		}
@@ -108,7 +108,7 @@ TIFFVStripSize64(TIFF* tif, uint32_t nrows)
 		if ((ycbcrsubsampling[0] != 1 && ycbcrsubsampling[0] != 2 && ycbcrsubsampling[0] != 4)
 		    ||(ycbcrsubsampling[1] != 1 && ycbcrsubsampling[1] != 2 && ycbcrsubsampling[1] != 4))
 		{
-			TIFFErrorExt(tif->tif_clientdata,module,
+			TIFFErrorExtR(tif,module,
 				     "Invalid YCbCr subsampling (%dx%d)", 
 				     ycbcrsubsampling[0], 
 				     ycbcrsubsampling[1] );
@@ -144,7 +144,7 @@ TIFFRawStripSize64(TIFF* tif, uint32_t strip)
 
 	if (bytecount == 0)
 	{
-		TIFFErrorExt(tif->tif_clientdata, module,
+		TIFFErrorExtR(tif, module,
 			     "%"PRIu64": Invalid strip byte count, strip %lu",
 			     (uint64_t) bytecount,
 			     (unsigned long) strip);
@@ -167,7 +167,7 @@ TIFFRawStripSize(TIFF* tif, uint32_t strip)
 		n=(tmsize_t)m;
 		if ((uint64_t)n != m)
 		{
-			TIFFErrorExt(tif->tif_clientdata,module,"Integer overflow");
+			TIFFErrorExtR(tif,module,"Integer overflow");
 			n=0;
 		}
 	}
@@ -265,7 +265,7 @@ TIFFScanlineSize64(TIFF* tif)
 			uint64_t samplingrow_size;
 			if(td->td_samplesperpixel!=3)
 			{
-                            TIFFErrorExt(tif->tif_clientdata,module,
+                            TIFFErrorExtR(tif,module,
                                          "Invalid td_samplesperpixel value");
                             return 0;
 			}
@@ -275,7 +275,7 @@ TIFFScanlineSize64(TIFF* tif)
 			if (((ycbcrsubsampling[0]!=1)&&(ycbcrsubsampling[0]!=2)&&(ycbcrsubsampling[0]!=4)) ||
 			    ((ycbcrsubsampling[1]!=1)&&(ycbcrsubsampling[1]!=2)&&(ycbcrsubsampling[1]!=4)))
 			{
-                            TIFFErrorExt(tif->tif_clientdata,module,
+                            TIFFErrorExtR(tif,module,
                                          "Invalid YCbCr subsampling");
                             return 0;
 			}
@@ -298,7 +298,7 @@ TIFFScanlineSize64(TIFF* tif)
         }
         if (scanline_size == 0)
         {
-                TIFFErrorExt(tif->tif_clientdata,module,"Computed scanline size is zero");
+                TIFFErrorExtR(tif,module,"Computed scanline size is zero");
                 return 0;
         }
 	return(scanline_size);
