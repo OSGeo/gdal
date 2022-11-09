@@ -431,6 +431,8 @@ public:
     unsigned long       WriteBlob( OCILobLocator* phLocator,
                             void* pBuffer, unsigned long nOffset, 
                                            unsigned long nSize );
+    bool                TrimLob (OCILobLocator* phLocator, 
+                                 unsigned long newLen);
     int                 GetElement( OCIArray** ppoData,
                             int nIndex, int* pnResult );
     double              GetElement( OCIArray** ppoData,
