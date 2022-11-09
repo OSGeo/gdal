@@ -881,6 +881,9 @@ def test_hfa_delete_colortable():
 
 def test_hfa_delete_colortable2():
 
+    if gdal.GetDriverByName("BMP") is None:
+        pytest.skip("BMP driver is missing")
+
     # copy a file to tmp dir to modify.
     src_ds = gdal.Open("../gcore/data/8bit_pal.bmp")
     ds = gdal.GetDriverByName("HFA").CreateCopy(
@@ -934,6 +937,9 @@ def test_hfa_excluded_values():
 
 
 def test_hfa_ov_nodata():
+
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver is missing")
 
     drv = gdal.GetDriverByName("HFA")
     src_ds = gdal.Open("data/aaigrid/nodata_int.asc")

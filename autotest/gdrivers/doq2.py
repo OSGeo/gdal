@@ -28,7 +28,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import pytest
+
 from osgeo import gdal
+
+pytestmark = pytest.mark.require_driver("DOQ2")
 
 ###############################################################################
 # Read a truncated and modified version of C3607614.NWS

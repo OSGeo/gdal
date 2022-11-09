@@ -1109,6 +1109,9 @@ def test_tiff_srs_datum_name_with_space():
 
 def test_tiff_srs_compound_crs_with_local_cs():
 
+    if int(gdal.GetDriverByName("GTiff").GetMetadataItem("LIBGEOTIFF")) < 1600:
+        pytest.skip("libgeotiff >= 1.6 required")
+
     filename = "/vsimem/test_tiff_srs_compound_crs_with_local_cs.tif"
     srs = osr.SpatialReference()
     srs.SetFromUserInput(

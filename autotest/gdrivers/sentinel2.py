@@ -40,6 +40,8 @@ import pytest
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.require_driver("Sentinel2")
+
 
 def _zip_a_dir(tfile, sdir):
     zf = zipfile.ZipFile(tfile, "w", zipfile.ZIP_DEFLATED)

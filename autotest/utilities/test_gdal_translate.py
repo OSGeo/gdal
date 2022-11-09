@@ -136,6 +136,9 @@ def test_gdal_translate_5():
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("GIF") is None:
+        pytest.skip("GIF driver is missing")
+
     gdaltest.runexternal(
         test_cli_utilities.get_gdal_translate_path()
         + " -expand rgb ../gdrivers/data/gif/bug407.gif tmp/test5.tif"
@@ -381,6 +384,9 @@ def test_gdal_translate_15():
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("RPFCTOC") is None:
+        pytest.skip("RPFTOC driver is missing")
+
     gdaltest.runexternal(
         test_cli_utilities.get_gdal_translate_path()
         + " -sds ../gdrivers/data/nitf/A.TOC tmp/test15.tif"
@@ -420,6 +426,9 @@ def test_gdal_translate_16():
 def test_gdal_translate_17():
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("GIF") is None:
+        pytest.skip("GIF driver is missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdal_translate_path()
@@ -463,6 +472,9 @@ def test_gdal_translate_17():
 def test_gdal_translate_18():
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("BMP") is None:
+        pytest.skip("BMP driver is missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdal_translate_path()
@@ -674,6 +686,9 @@ def test_gdal_translate_26():
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("XYZ") is None:
+        pytest.skip("XYZ driver is missing")
+
     f = open("tmp/test_gdal_translate_26.xyz", "wb")
     f.write(
         """X Y Z
@@ -706,6 +721,9 @@ def test_gdal_translate_27():
         pytest.skip()
     if test_cli_utilities.get_gdalinfo_path() is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver is missing")
 
     f = open("tmp/test_gdal_translate_27.asc", "wb")
     f.write(
@@ -764,6 +782,9 @@ cellsize     60.000000000000
 def test_gdal_translate_28():
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver is missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdal_translate_path()

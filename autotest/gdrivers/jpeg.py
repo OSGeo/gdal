@@ -40,6 +40,8 @@ import pytest
 
 from osgeo import gdal, gdalconst
 
+pytestmark = pytest.mark.require_driver("JPEG")
+
 ###############################################################################
 # Perform simple read test.
 

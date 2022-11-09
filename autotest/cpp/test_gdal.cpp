@@ -1239,6 +1239,7 @@ namespace tut
     template<> template<> void object::test<19>()
     {
         // ENVI
+        if( GDALGetDriverByName("ENVI") != nullptr )
         {
             GDALDatasetUniquePtr poDS(
                 GDALDataset::Open(GDRIVERS_DATA_DIR "envi/envi_rgbsmall_bip.img"));
@@ -1255,6 +1256,8 @@ namespace tut
             ensure_equals( sLayout.nLineOffset, 3 * 50 );
             ensure_equals( sLayout.nBandOffset, 1 );
         }
+
+        if( GDALGetDriverByName("ENVI") != nullptr )
         {
             GDALDatasetUniquePtr poDS(
                 GDALDataset::Open(GDRIVERS_DATA_DIR "envi/envi_rgbsmall_bil.img"));
@@ -1271,6 +1274,8 @@ namespace tut
             ensure_equals( sLayout.nLineOffset, 3 * 50 );
             ensure_equals( sLayout.nBandOffset, 50 );
         }
+
+        if( GDALGetDriverByName("ENVI") != nullptr )
         {
             GDALDatasetUniquePtr poDS(
                 GDALDataset::Open(GDRIVERS_DATA_DIR "envi/envi_rgbsmall_bsq.img"));
@@ -1289,6 +1294,7 @@ namespace tut
         }
 
         // GTiff
+        if( GDALGetDriverByName("GTiff") != nullptr )
         {
             GDALDatasetUniquePtr poDS(
                 GDALDataset::Open(GCORE_DATA_DIR "byte.tif"));
@@ -1305,6 +1311,8 @@ namespace tut
             ensure_equals( sLayout.nLineOffset, 20 );
             ensure_equals( sLayout.nBandOffset, 0 );
         }
+
+        if( GDALGetDriverByName("GTiff") != nullptr )
         {
             GDALDatasetUniquePtr poDS(
                 GDALDataset::Open(GCORE_DATA_DIR "rgbsmall.tif"));
@@ -1313,6 +1321,8 @@ namespace tut
             // Compressed
             ensure( !poDS->GetRawBinaryLayout(sLayout) );
         }
+
+        if( GDALGetDriverByName("GTiff") != nullptr )
         {
             GDALDatasetUniquePtr poDS(
                 GDALDataset::Open(GCORE_DATA_DIR "stefan_full_rgba.tif"));
@@ -1329,6 +1339,8 @@ namespace tut
             ensure_equals( sLayout.nLineOffset, 162 * 4 );
             ensure_equals( sLayout.nBandOffset, 1 );
         }
+
+        if( GDALGetDriverByName("GTiff") != nullptr )
         {
             GDALDatasetUniquePtr poSrcDS(
                 GDALDataset::Open(GCORE_DATA_DIR "rgbsmall.tif"));
@@ -1353,6 +1365,8 @@ namespace tut
             poDS.reset();
             VSIUnlink(tmpFilename);
         }
+
+        if( GDALGetDriverByName("GTiff") != nullptr )
         {
             GDALDatasetUniquePtr poSrcDS(
                 GDALDataset::Open(GCORE_DATA_DIR "rgbsmall.tif"));
@@ -1382,6 +1396,8 @@ namespace tut
             poDS.reset();
             VSIUnlink(tmpFilename);
         }
+
+        if( GDALGetDriverByName("GTiff") != nullptr )
         {
             GDALDatasetUniquePtr poSrcDS(
                 GDALDataset::Open(GCORE_DATA_DIR "rgbsmall.tif"));
@@ -1413,6 +1429,7 @@ namespace tut
         }
 
         // ISIS3
+        if( GDALGetDriverByName("ISIS3") != nullptr )
         {
             GDALDatasetUniquePtr poDS(
                 GDALDataset::Open(GDRIVERS_DATA_DIR "isis3/isis3_detached.lbl"));
@@ -1431,6 +1448,7 @@ namespace tut
         }
 
         // VICAR
+        if( GDALGetDriverByName("VICAR") != nullptr )
         {
             GDALDatasetUniquePtr poDS(
                 GDALDataset::Open(GDRIVERS_DATA_DIR "vicar/test_vicar_truncated.bin"));
@@ -1449,6 +1467,7 @@ namespace tut
         }
 
         // FITS
+        if( GDALGetDriverByName("FITS") != nullptr )
         {
             GDALDatasetUniquePtr poSrcDS(
                 GDALDataset::Open(GCORE_DATA_DIR "int16.tif"));
@@ -1481,6 +1500,7 @@ namespace tut
         }
 
         // PDS 3
+        if( GDALGetDriverByName("PDS") != nullptr )
         {
             GDALDatasetUniquePtr poDS(
                 GDALDataset::Open(GDRIVERS_DATA_DIR "pds/mc02_truncated.img"));
@@ -1499,6 +1519,7 @@ namespace tut
         }
 
         // PDS 4
+        if( GDALGetDriverByName("PDS4") != nullptr )
         {
             GDALDatasetUniquePtr poDS(
                 GDALDataset::Open(GDRIVERS_DATA_DIR "pds4/byte_pds4_cart_1700.xml"));

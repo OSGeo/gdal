@@ -81,6 +81,8 @@ def startup_and_cleanup():
 
 def get_sqlite_version():
     ds = ogr.Open(":memory:")
+    if ds is None:
+        return (0, 0, 0)
     sql_lyr = ds.ExecuteSQL("SELECT sqlite_version()")
     f = sql_lyr.GetNextFeature()
     version = f.GetField(0)

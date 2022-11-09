@@ -204,6 +204,10 @@ def test_ogr_rfc28_8_good_quoting():
 
 
 def test_ogr_rfc28_9():
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
+
     ds = ogr.Open("data/csv/oddname.csv")
     lyr = ds.GetLayer(0)
     lyr.SetAttributeFilter("\"Funky @Name\" = '32'")
@@ -224,6 +228,10 @@ def test_ogr_rfc28_9():
 
 
 def test_ogr_rfc28_10():
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
+
     ds = ogr.Open("data/csv/oddname.csv")
     lyr = ds.ExecuteSQL("SELECT * from oddname where \"Funky @Name\" = '32'")
 
@@ -244,6 +252,10 @@ def test_ogr_rfc28_10():
 
 
 def test_ogr_rfc28_11():
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
+
     ds = ogr.Open("data/csv/oddname.csv")
     lyr = ds.ExecuteSQL(
         "SELECT \"Funky @Name\" from oddname where prime_meridian_code = '8902'"

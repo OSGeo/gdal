@@ -104,6 +104,9 @@ def test_rasterize_1():
 
 def test_rasterize_2():
 
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
+
     # Setup working spatial reference
     sr_wkt = 'LOCAL_CS["arbitrary"]'
 
@@ -450,6 +453,9 @@ def test_rasterize_6():
 
 
 def test_rasterize_7():
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
 
     # Setup working spatial reference
     sr_wkt = 'LOCAL_CS["arbitrary"]'

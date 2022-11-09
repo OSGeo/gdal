@@ -1968,6 +1968,9 @@ def test_ogr_mitab_38():
 
 def test_ogr_mitab_39():
 
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
+
     ds = ogr.Open("data/mitab/all_geoms.mif")
     lyr = ds.GetLayer(0)
     ds_ref = ogr.Open("data/mitab/all_geoms.mif.golden.csv")
@@ -2014,6 +2017,9 @@ def test_ogr_mitab_40():
 
 def test_ogr_mitab_41():
 
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
+
     ds = ogr.Open("data/mitab/all_geoms.tab")
     lyr = ds.GetLayer(0)
     ds_ref = ogr.Open("data/mitab/all_geoms.mif.golden.csv")
@@ -2039,6 +2045,9 @@ def test_ogr_mitab_41():
 
 
 def test_ogr_mitab_42():
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
 
     ds = ogr.Open("/vsizip/data/mitab/all_geoms_block_32256.zip")
     lyr = ds.GetLayer(0)

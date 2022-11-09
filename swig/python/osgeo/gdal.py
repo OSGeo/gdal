@@ -4691,6 +4691,10 @@ def GetJPEG2000StructureAsString(*args) -> "retStringAndCPLFree *":
     r"""GetJPEG2000StructureAsString(char const * pszFilename, char ** options=None) -> retStringAndCPLFree *"""
     return _gdal.GetJPEG2000StructureAsString(*args)
 
+def HasTriangulation(*args) -> "int":
+    r"""HasTriangulation() -> int"""
+    return _gdal.HasTriangulation(*args)
+
 def GetDriverCount(*args) -> "int":
     r"""GetDriverCount() -> int"""
     return _gdal.GetDriverCount(*args)

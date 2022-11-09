@@ -494,6 +494,9 @@ def test_ogr2ogr_clipsrc_no_dst_geom():
     if not ogrtest.have_geos():
         pytest.skip()
 
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
+
     tmpfilename = "/vsimem/out.csv"
     wkt = "POLYGON ((479461 4764494,479461 4764196,480012 4764196,480012 4764494,479461 4764494))"
     ds = gdal.VectorTranslate(
@@ -652,6 +655,9 @@ def test_ogr2ogr_lib_convert_to_linear_promote_to_multi(geometryType):
 
 
 def test_ogr2ogr_lib_makevalid():
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
 
     # Check if MakeValid() is available
     g = ogr.CreateGeometryFromWkt("POLYGON ((0 0,10 10,0 10,10 0,0 0))")

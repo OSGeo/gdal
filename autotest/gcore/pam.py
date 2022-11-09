@@ -63,6 +63,9 @@ def startup_and_cleanup():
 
 def test_pam_1():
 
+    if gdal.GetDriverByName("PNM") is None:
+        pytest.skip("PNM driver missing")
+
     ds = gdal.Open("data/byte.pnm")
 
     base_md = ds.GetMetadata()
@@ -89,6 +92,9 @@ def test_pam_1():
 
 def test_pam_2():
 
+    if gdal.GetDriverByName("PNM") is None:
+        pytest.skip("PNM driver missing")
+
     driver = gdal.GetDriverByName("PNM")
     ds = driver.Create("tmp/pam.pgm", 10, 10)
     band = ds.GetRasterBand(1)
@@ -111,6 +117,9 @@ def test_pam_2():
 
 
 def test_pam_3():
+
+    if gdal.GetDriverByName("PNM") is None:
+        pytest.skip("PNM driver missing")
 
     ds = gdal.Open("tmp/pam.pgm")
 
@@ -152,6 +161,9 @@ def test_pam_3():
 
 def test_pam_4():
 
+    if gdal.GetDriverByName("MFF") is None:
+        pytest.skip("MFF driver missing")
+
     # Copy test dataset to tmp directory so that the .aux.xml file
     # won't be rewritten with the statistics in the master dataset.
     shutil.copyfile("data/mfftest.hdr.aux.xml", "tmp/mfftest.hdr.aux.xml")
@@ -173,6 +185,11 @@ def test_pam_4():
 
 
 def test_pam_5():
+
+    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
+        "DMD_CREATIONOPTIONLIST"
+    ):
+        pytest.skip("JPEG support missing")
 
     ds = gdal.Open("data/sasha.tif")
     filelist = ds.GetFileList()
@@ -205,6 +222,9 @@ def test_pam_6():
 
 
 def test_pam_7():
+
+    if gdal.GetDriverByName("PNG") is None:
+        pytest.skip("PNG driver missing")
 
     with gdaltest.config_option("GDAL_PAM_ENABLED", "NO"):
 
@@ -285,6 +305,9 @@ def test_pam_9():
 
 
 def test_pam_10():
+
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver missing")
 
     src_ds = gdal.Open("data/testserialization.asc")
     ds = gdal.GetDriverByName("AAIGRID").CreateCopy("/vsimem/pam_10.asc", src_ds)
@@ -452,6 +475,9 @@ def test_pam_12():
 
 def test_pam_13():
 
+    if gdal.GetDriverByName("PNM") is None:
+        pytest.skip("PNM driver missing")
+
     with gdaltest.config_option("GDAL_PAM_ENABLED", "NO"):
 
         tmpfilename = "/vsimem/tmp.pgm"
@@ -470,6 +496,9 @@ def test_pam_13():
 
 
 def test_pam_metadata_preserved():
+
+    if gdal.GetDriverByName("PNM") is None:
+        pytest.skip("PNM driver missing")
 
     tmpfilename = "/vsimem/tmp.pgm"
     ds = gdal.GetDriverByName("PNM").Create(tmpfilename, 1, 1)
@@ -566,6 +595,9 @@ def test_pam_esri_GeodataXform_gcp():
 
 
 def test_pam_metadata_coordinate_epoch():
+
+    if gdal.GetDriverByName("PNM") is None:
+        pytest.skip("PNM driver missing")
 
     tmpfilename = "/vsimem/tmp.pgm"
     ds = gdal.GetDriverByName("PNM").Create(tmpfilename, 1, 1)

@@ -39,6 +39,8 @@ import pytest
 
 from osgeo import gdal, osr
 
+pytestmark = pytest.mark.require_driver("ENVI")
+
 ###############################################################################
 # Perform simple read test.
 

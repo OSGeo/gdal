@@ -32,8 +32,11 @@ import os
 import shutil
 
 import gdaltest
+import pytest
 
 from osgeo import gdal
+
+pytestmark = pytest.mark.require_driver("RPFTOC")
 
 ###############################################################################
 # Read a simple and hand-made RPFTOC dataset, made of one single CADRG frame

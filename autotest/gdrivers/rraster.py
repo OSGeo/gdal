@@ -32,8 +32,11 @@
 import pprint
 
 import gdaltest
+import pytest
 
 from osgeo import gdal, osr
+
+pytestmark = pytest.mark.require_driver("RRASTER")
 
 ###############################################################################
 # Perform simple read test.

@@ -34,6 +34,7 @@ import struct
 from collections import defaultdict
 
 import ogrtest
+import pytest
 
 from osgeo import gdal, ogr
 
@@ -42,6 +43,9 @@ from osgeo import gdal, ogr
 
 
 def test_polygonize_1(is_int_polygonize=True):
+
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver missing")
 
     src_ds = gdal.Open("data/polygonize_in.grd")
     src_band = src_ds.GetRasterBand(1)
@@ -98,6 +102,9 @@ def test_polygonize_1_float():
 
 def test_polygonize_2():
 
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver missing")
+
     src_ds = gdal.Open("data/polygonize_in.grd")
     src_band = src_ds.GetRasterBand(1)
 
@@ -150,6 +157,9 @@ def test_polygonize_2():
 
 def test_polygonize_3():
 
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver missing")
+
     src_ds = gdal.Open("data/polygonize_in_2.grd")
     src_band = src_ds.GetRasterBand(1)
 
@@ -195,6 +205,9 @@ def test_polygonize_3():
 
 
 def test_polygonize_4():
+
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver missing")
 
     src_ds = gdal.Open("data/polygonize_in.grd")
     src_band = src_ds.GetRasterBand(1)
@@ -247,6 +260,9 @@ def test_polygonize_4():
 
 def test_polygonize_5():
 
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver missing")
+
     src_ds = gdal.Open("data/polygonize_in_3.grd")
     src_band = src_ds.GetRasterBand(1)
 
@@ -292,6 +308,9 @@ def test_polygonize_5():
 
 
 def test_polygonize_6():
+
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver missing")
 
     src_ds = gdal.Open("data/polygonize_in_4.grd")
     src_band = src_ds.GetRasterBand(1)

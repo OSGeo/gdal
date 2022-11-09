@@ -85,6 +85,9 @@ def test_rat_1():
 
 def test_rat_2():
 
+    if gdal.GetDriverByName("PNM") is None:
+        pytest.skip("PNM driver missing")
+
     if gdaltest.saved_rat is None:
         pytest.skip()
 

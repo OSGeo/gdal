@@ -761,6 +761,8 @@ retStringAndCPLFree *GetJPEG2000StructureAsString( const char* pszFilename, char
 }
 }
 
+%rename (HasTriangulation) GDALHasTriangulation;
+int GDALHasTriangulation();
 
 //************************************************************************
 //

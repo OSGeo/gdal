@@ -32,8 +32,11 @@
 import os
 
 import gdaltest
+import pytest
 
 from osgeo import gdal, gdalconst
+
+pytestmark = pytest.mark.require_driver("SAGA")
 
 ###############################################################################
 # Test opening

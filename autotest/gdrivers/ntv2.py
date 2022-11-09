@@ -35,6 +35,8 @@ import pytest
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.require_driver("NTV2")
+
 ###############################################################################
 # Open a little-endian NTv2 grid
 

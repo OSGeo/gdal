@@ -40,6 +40,8 @@ import pytest
 
 from osgeo import gdal, osr
 
+pytestmark = pytest.mark.require_driver("ZARR")
+
 
 @pytest.mark.parametrize(
     "dtype,structtype,gdaltype,fill_value,nodata_value",

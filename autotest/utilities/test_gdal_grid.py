@@ -78,8 +78,8 @@ def test_gdal_grid_1():
     except OSError:
         pass
 
-    # Create an OGR grid from the values of n43.dt0
-    ds = gdal.Open("../gdrivers/data/n43.dt0")
+    # Create an OGR grid from the values of n43.tif
+    ds = gdal.Open("../gdrivers/data/n43.tif")
     geotransform = ds.GetGeoTransform()
 
     shape_drv = ogr.GetDriverByName("ESRI Shapefile")
@@ -132,6 +132,9 @@ def test_gdal_grid_1():
 def test_gdal_grid_2():
     if gdal_grid is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
 
     # Open reference dataset
     ds_ref = gdal.Open("../gcore/data/byte.tif")
@@ -194,6 +197,9 @@ def test_gdal_grid_2():
 def test_gdal_grid_3(use_quadtree):
     if gdal_grid is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
 
     # Open reference dataset
     ds_ref = gdal.Open("../gcore/data/byte.tif")
@@ -308,6 +314,9 @@ def test_gdal_grid_3(use_quadtree):
 def test_gdal_grid_4():
     if gdal_grid is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
 
     #################
     # Test generic implementation (no AVX, no SSE)
@@ -488,6 +497,9 @@ def test_gdal_grid_5():
     if gdal_grid is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
+
     #################
     outfiles.append("tmp/grid_average.tif")
     try:
@@ -544,6 +556,9 @@ def test_gdal_grid_5():
 def test_gdal_grid_6(use_quadtree):
     if gdal_grid is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
 
     #################
     outfiles.append("tmp/grid_average_190_190.tif")
@@ -607,6 +622,9 @@ def test_gdal_grid_7():
     if gdal_grid is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
+
     #################
     outfiles.append("tmp/grid_minimum.tif")
     try:
@@ -666,6 +684,9 @@ def test_gdal_grid_7():
 def test_gdal_grid_8(use_quadtree):
     if gdal_grid is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
 
     #################
     outfiles.append("tmp/grid_minimum_180_180.tif")
@@ -733,6 +754,9 @@ def test_gdal_grid_9():
     if gdal_grid is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
+
     #################
     outfiles.append("tmp/grid_maximum.tif")
     try:
@@ -792,6 +816,9 @@ def test_gdal_grid_9():
 def test_gdal_grid_10(use_quadtree):
     if gdal_grid is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
 
     #################
     outfiles.append("tmp/grid_maximum_180_180.tif")
@@ -859,6 +886,9 @@ def test_gdal_grid_11():
     if gdal_grid is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
+
     #################
     outfiles.append("tmp/grid_range.tif")
     try:
@@ -891,6 +921,9 @@ def test_gdal_grid_11():
 def test_gdal_grid_12(use_quadtree):
     if gdal_grid is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
 
     #################
     outfiles.append("tmp/grid_range_90_90_8p.tif")
@@ -932,6 +965,9 @@ def test_gdal_grid_12(use_quadtree):
 def test_gdal_grid_13(use_quadtree):
     if gdal_grid is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
 
     #################
     outfiles.append("tmp/grid_count_70_70.tif")
@@ -997,6 +1033,9 @@ def test_gdal_grid_14():
     if gdal_grid is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
+
     #################
     outfiles.append("tmp/grid_avdist.tif")
     try:
@@ -1028,6 +1067,9 @@ def test_gdal_grid_14():
 def test_gdal_grid_15(use_quadtree):
     if gdal_grid is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
 
     #################
     outfiles.append("tmp/grid_avdist_150_150.tif")
@@ -1067,6 +1109,9 @@ def test_gdal_grid_16():
     if gdal_grid is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
+
     #################
     outfiles.append("tmp/grid_avdistpts_150_50_-15.tif")
     try:
@@ -1098,6 +1143,9 @@ def test_gdal_grid_16():
 def test_gdal_grid_17(use_quadtree):
     if gdal_grid is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
 
     #################
     outfiles.append("tmp/grid_avdistpts_150_150.tif")
@@ -1137,6 +1185,9 @@ def test_gdal_grid_18():
     if gdal_grid is None:
         pytest.skip()
 
+    if not gdal.HasTriangulation():
+        pytest.skip("qhull missing")
+
     outfiles.append("tmp/n43_linear.tif")
 
     # Create a GDAL dataset from the previous generated OGR grid
@@ -1147,8 +1198,8 @@ def test_gdal_grid_18():
     )
     assert err is None or err == "", "got error/warning"
 
-    # We should get the same values as in n43.td0
-    ds = gdal.Open("../gdrivers/data/n43.dt0")
+    # We should get the same values as in n43.tif
+    ds = gdal.Open("../gdrivers/data/n43.tif")
     ds2 = gdal.Open(outfiles[-1])
     assert (
         ds.GetRasterBand(1).Checksum() == ds2.GetRasterBand(1).Checksum()
@@ -1168,6 +1219,9 @@ def test_gdal_grid_18():
 def test_gdal_grid_19():
     if gdal_grid is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
 
     #################
     # Test generic implementation (no AVX, no SSE)
@@ -1253,6 +1307,9 @@ def test_gdal_grid_clipsrc():
     if gdal_grid is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
+
     if not ogrtest.have_geos():
         pytest.skip()
 
@@ -1291,6 +1348,9 @@ def test_gdal_grid_clipsrc():
 def test_gdal_grid_tr():
     if gdal_grid is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
 
     #################
     outfiles.append("tmp/grid_count_70_70.tif")

@@ -1770,6 +1770,10 @@ def test_warp_54(use_optim):
 
 def test_warp_55():
 
+    # data/warpedvrt_with_ovr.vrt uses a PNG
+    if gdal.GetDriverByName("PNG") is None:
+        pytest.skip("PNG driver missing")
+
     ds = gdal.Open("data/warpedvrt_with_ovr.vrt")
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     assert cs == 25128

@@ -47,6 +47,9 @@ def test_gdal_polygonize_1():
     if script_path is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver is missing")
+
     outfilename = "tmp/poly.shp"
     # Create a OGR datasource to put results in.
     shp_drv = ogr.GetDriverByName("ESRI Shapefile")
@@ -112,6 +115,9 @@ def test_gdal_polygonize_2():
     script_path = test_py_scripts.get_py_script("gdal_polygonize")
     if script_path is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver is missing")
 
     outfilename = "tmp/out.geojson"
     gdal.Unlink(outfilename)
@@ -214,6 +220,9 @@ def test_gdal_polygonize_4():
     script_path = test_py_scripts.get_py_script("gdal_polygonize")
     if script_path is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("GML") is None:
+        pytest.skip("GML driver is missing")
 
     outfilename = "tmp/out.gml"
     # Test mask syntax

@@ -85,19 +85,12 @@ namespace tut
     typedef group::object object;
     group test_aaigrid_group("GDAL::AAIGrid");
 
-    // Test driver availability
-    template<>
-    template<>
-    void object::test<1>()
-    {
-        ensure("GDAL::AAIGrid driver not available", nullptr != drv_);
-    }
-
     // Test open dataset
     template<>
     template<>
     void object::test<2>()
     {
+        if( drv_ == nullptr ) return;
         rasters_t::const_iterator it;
         for (it = grids_.begin(); it != grids_.end(); ++it)
         {
@@ -114,6 +107,7 @@ namespace tut
     template<>
     void object::test<3>()
     {
+        if( drv_ == nullptr ) return;
         rasters_t::const_iterator it;
         for (it = grids_.begin(); it != grids_.end(); ++it)
         {
@@ -143,6 +137,7 @@ namespace tut
     template<>
     void object::test<4>()
     {
+        if( drv_ == nullptr ) return;
         // Index of test file being tested
         const std::size_t fileIdx = 1;
 
@@ -175,6 +170,7 @@ namespace tut
     template<>
     void object::test<5>()
     {
+        if( drv_ == nullptr ) return;
         // Index of test file being tested
         const std::size_t fileIdx = 1;
 
@@ -215,6 +211,7 @@ namespace tut
     template<>
     void object::test<6>()
     {
+        if( drv_ == nullptr ) return;
         // Index of test file being tested
         const std::size_t fileIdx = 1;
 
@@ -240,6 +237,7 @@ namespace tut
     template<>
     void object::test<7>()
     {
+        if( drv_ == nullptr ) return;
         // Index of test file being tested
         const std::size_t fileIdx = 0;
 
@@ -298,6 +296,7 @@ namespace tut
     template<>
     void object::test<8>()
     {
+        if( drv_ == nullptr ) return;
         // Index of test file being tested
         const std::size_t fileIdx = 1;
 

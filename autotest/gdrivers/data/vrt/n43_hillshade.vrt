@@ -4,7 +4,7 @@
   <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
     <ColorInterp>Gray</ColorInterp>
     <SimpleSource>
-      <SourceFilename relativeToVRT="1">../n43.dt0</SourceFilename>
+      <SourceFilename relativeToVRT="1">../n43.tif</SourceFilename>
       <SourceBand>1</SourceBand>
       <SourceProperties RasterXSize="121" RasterYSize="121" DataType="Int16" BlockXSize="121" BlockYSize="33" />
       <SrcRect xOff="0" yOff="0" xSize="121" ySize="121" />
@@ -48,7 +48,7 @@ def hillshade_int(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
         for i in range(radius, out_ar.shape[1]-radius):
             win = win_line[:,i-radius:i+radius+1].tolist()
             x = inv_ewres * ((win[0][0] + win[1][0] + win[1][0] + win[2][0]) - \
-                             (win[0][2] + win[1][2] + win[1][2] + win[2][2])) 
+                             (win[0][2] + win[1][2] + win[1][2] + win[2][2]))
             y = inv_nsres * ((win[2][0] + win[2][1] + win[2][1] + win[2][2]) - \
                              (win[0][0] + win[0][1] + win[0][1] + win[0][2]))
             xx_plus_yy = x * x + y * y
@@ -61,7 +61,7 @@ def hillshade_int(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
             else:
                 out_ar[j,i] = 1 + round(cang_mul_254)
 
-def hillshade(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, 
+def hillshade(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
               raster_ysize, radius, gt, **kwargs):
     z = float(kwargs['z_factor'])
     scale= float(kwargs['scale'])

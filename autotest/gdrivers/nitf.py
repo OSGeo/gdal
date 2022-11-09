@@ -42,6 +42,8 @@ import pytest
 
 from osgeo import gdal, ogr, osr
 
+pytestmark = pytest.mark.require_driver("NITF")
+
 
 @pytest.fixture(scope="module")
 def not_jpeg_9b():

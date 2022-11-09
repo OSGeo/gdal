@@ -42,7 +42,7 @@ from osgeo import gdal, osr
 
 def test_gdaldem_lib_hillshade():
 
-    src_ds = gdal.Open("../gdrivers/data/n43.dt0")
+    src_ds = gdal.Open("../gdrivers/data/n43.tif")
     ds = gdal.DEMProcessing(
         "", src_ds, "hillshade", format="MEM", scale=111120, zFactor=30
     )
@@ -73,7 +73,7 @@ def test_gdaldem_lib_hillshade_float():
 
     src_ds = gdal.Translate(
         "",
-        gdal.Open("../gdrivers/data/n43.dt0"),
+        gdal.Open("../gdrivers/data/n43.tif"),
         format="MEM",
         outputType=gdal.GDT_Float32,
     )
@@ -105,9 +105,12 @@ def test_gdaldem_lib_hillshade_float():
 
 def test_gdaldem_lib_hillshade_float_png():
 
+    if gdal.GetDriverByName("PNG") is None:
+        pytest.skip("PNG driver is missing")
+
     src_ds = gdal.Translate(
         "",
-        gdal.Open("../gdrivers/data/n43.dt0"),
+        gdal.Open("../gdrivers/data/n43.tif"),
         format="MEM",
         outputType=gdal.GDT_Float32,
     )
@@ -148,7 +151,7 @@ def test_gdaldem_lib_hillshade_float_png():
 
 def test_gdaldem_lib_hillshade_combined():
 
-    src_ds = gdal.Open("../gdrivers/data/n43.dt0")
+    src_ds = gdal.Open("../gdrivers/data/n43.tif")
     ds = gdal.DEMProcessing(
         "", src_ds, "hillshade", format="MEM", combined=True, scale=111120, zFactor=30
     )
@@ -177,7 +180,7 @@ def test_gdaldem_lib_hillshade_combined():
 
 def test_gdaldem_lib_hillshade_ZevenbergenThorne():
 
-    src_ds = gdal.Open("../gdrivers/data/n43.dt0")
+    src_ds = gdal.Open("../gdrivers/data/n43.tif")
     ds = gdal.DEMProcessing(
         "",
         src_ds,
@@ -212,7 +215,7 @@ def test_gdaldem_lib_hillshade_ZevenbergenThorne():
 
 def test_gdaldem_lib_hillshade_ZevenbergenThorne_combined():
 
-    src_ds = gdal.Open("../gdrivers/data/n43.dt0")
+    src_ds = gdal.Open("../gdrivers/data/n43.tif")
     ds = gdal.DEMProcessing(
         "",
         src_ds,
@@ -248,7 +251,7 @@ def test_gdaldem_lib_hillshade_ZevenbergenThorne_combined():
 
 def test_gdaldem_lib_hillshade_compute_edges():
 
-    src_ds = gdal.Open("../gdrivers/data/n43.dt0")
+    src_ds = gdal.Open("../gdrivers/data/n43.tif")
     ds = gdal.DEMProcessing(
         "",
         src_ds,
@@ -274,7 +277,7 @@ def test_gdaldem_lib_hillshade_compute_edges_float():
 
     src_ds = gdal.Translate(
         "",
-        gdal.Open("../gdrivers/data/n43.dt0"),
+        gdal.Open("../gdrivers/data/n43.tif"),
         format="MEM",
         outputType=gdal.GDT_Float32,
     )
@@ -331,7 +334,7 @@ def test_gdaldem_lib_hillshade_azimuth():
 
 def test_gdaldem_lib_hillshade_multidirectional():
 
-    src_ds = gdal.Open("../gdrivers/data/n43.dt0")
+    src_ds = gdal.Open("../gdrivers/data/n43.tif")
     ds = gdal.DEMProcessing(
         "",
         src_ds,
@@ -356,7 +359,7 @@ def test_gdaldem_lib_hillshade_multidirectional():
 
 def test_gdaldem_lib_hillshade_multidirectional_ZevenbergenThorne():
 
-    src_ds = gdal.Open("../gdrivers/data/n43.dt0")
+    src_ds = gdal.Open("../gdrivers/data/n43.tif")
     ds = gdal.DEMProcessing(
         "",
         src_ds,
@@ -382,7 +385,7 @@ def test_gdaldem_lib_hillshade_multidirectional_ZevenbergenThorne():
 
 def test_gdaldem_lib_hillshade_igor():
 
-    src_ds = gdal.Open("../gdrivers/data/n43.dt0")
+    src_ds = gdal.Open("../gdrivers/data/n43.tif")
     ds = gdal.DEMProcessing(
         "",
         src_ds,
@@ -407,7 +410,7 @@ def test_gdaldem_lib_hillshade_igor():
 
 def test_gdaldem_lib_hillshade_igor_ZevenbergenThorne():
 
-    src_ds = gdal.Open("../gdrivers/data/n43.dt0")
+    src_ds = gdal.Open("../gdrivers/data/n43.tif")
     ds = gdal.DEMProcessing(
         "",
         src_ds,
@@ -433,7 +436,7 @@ def test_gdaldem_lib_hillshade_igor_ZevenbergenThorne():
 
 def test_gdaldem_lib_color_relief():
 
-    src_ds = gdal.Open("../gdrivers/data/n43.dt0")
+    src_ds = gdal.Open("../gdrivers/data/n43.tif")
     ds = gdal.DEMProcessing(
         "", src_ds, "color-relief", format="MEM", colorFilename="data/color_file.txt"
     )
@@ -534,7 +537,7 @@ def test_gdaldem_lib_color_relief_nodata_value():
 
 def test_gdaldem_lib_tpi():
 
-    src_ds = gdal.Open("../gdrivers/data/n43.dt0")
+    src_ds = gdal.Open("../gdrivers/data/n43.tif")
     ds = gdal.DEMProcessing("", src_ds, "tpi", format="MEM")
     assert ds is not None
 
@@ -550,7 +553,7 @@ def test_gdaldem_lib_tpi():
 
 def test_gdaldem_lib_tri_wilson():
 
-    src_ds = gdal.Open("../gdrivers/data/n43.dt0")
+    src_ds = gdal.Open("../gdrivers/data/n43.tif")
     ds = gdal.DEMProcessing("", src_ds, "tri", format="MEM", alg="Wilson")
     assert ds is not None
 
@@ -566,7 +569,7 @@ def test_gdaldem_lib_tri_wilson():
 
 def test_gdaldem_lib_tri_riley():
 
-    src_ds = gdal.Open("../gdrivers/data/n43.dt0")
+    src_ds = gdal.Open("../gdrivers/data/n43.tif")
     ds = gdal.DEMProcessing("", src_ds, "tri", format="MEM")
     assert ds is not None
 
@@ -582,7 +585,7 @@ def test_gdaldem_lib_tri_riley():
 
 def test_gdaldem_lib_roughness():
 
-    src_ds = gdal.Open("../gdrivers/data/n43.dt0")
+    src_ds = gdal.Open("../gdrivers/data/n43.tif")
     ds = gdal.DEMProcessing("", src_ds, "roughness", format="MEM")
     assert ds is not None
 
@@ -598,7 +601,7 @@ def test_gdaldem_lib_roughness():
 
 def test_gdaldem_lib_slope_ZevenbergenThorne():
 
-    src_ds = gdal.Open("../gdrivers/data/n43.dt0")
+    src_ds = gdal.Open("../gdrivers/data/n43.tif")
     ds = gdal.DEMProcessing(
         "",
         src_ds,
@@ -620,7 +623,7 @@ def test_gdaldem_lib_slope_ZevenbergenThorne():
 
 def test_gdaldem_lib_aspect_ZevenbergenThorne():
 
-    src_ds = gdal.Open("../gdrivers/data/n43.dt0")
+    src_ds = gdal.Open("../gdrivers/data/n43.tif")
     ds = gdal.DEMProcessing(
         "",
         src_ds,

@@ -38,6 +38,8 @@ import pytest
 
 from osgeo import gdal, ogr, osr
 
+pytestmark = pytest.mark.require_driver("OpenFileGDB")
+
 ogrtest.openfilegdb_datalist = [
     ["none", ogr.wkbNone, None],
     ["point", ogr.wkbPoint, "POINT (1 2)"],

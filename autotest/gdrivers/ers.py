@@ -35,6 +35,8 @@ import pytest
 
 from osgeo import gdal, osr
 
+pytestmark = pytest.mark.require_driver("ERS")
+
 ###############################################################################
 # Perform simple read test.
 

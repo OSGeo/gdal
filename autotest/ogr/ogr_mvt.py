@@ -37,6 +37,8 @@ import webserver
 
 from osgeo import gdal, ogr, osr
 
+pytestmark = pytest.mark.require_driver("MVT")
+
 ###############################################################################
 
 

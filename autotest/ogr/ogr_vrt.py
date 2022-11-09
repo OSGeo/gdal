@@ -346,6 +346,9 @@ def test_ogr_vrt_11():
     if gdaltest.vrt_ds is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
+
     f = open("tmp/test.csv", "wb")
     f.write("x,val1,y,val2,style\n".encode("ascii"))
     f.write(
@@ -436,6 +439,9 @@ def test_ogr_vrt_12():
     if gdaltest.vrt_ds is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
+
     f = open("tmp/test.csv", "wb")
     f.write("wkt_geom,val1,val2\n".encode("ascii"))
     f.write('POINT (2 49),"val11","val12"\n'.encode("ascii"))
@@ -476,6 +482,9 @@ def test_ogr_vrt_12():
 def test_ogr_vrt_13():
     if gdaltest.vrt_ds is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
 
     f = open("tmp/test.csv", "wb")
     f.write("wkb_geom,val1,val2\n".encode("ascii"))
@@ -605,6 +614,9 @@ def test_ogr_vrt_15():
     if gdaltest.vrt_ds is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
+
     f = open("tmp/test.csv", "wb")
     f.write("wkt_geom,val1,val2\n".encode("ascii"))
     f.write("POINT (-10 49),,\n".encode("ascii"))
@@ -656,6 +668,9 @@ def test_ogr_vrt_15():
 def test_ogr_vrt_16():
     if gdaltest.vrt_ds is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
 
     f = open("tmp/test.csvt", "wb")
     f.write("Real,Real,String,String\n".encode("ascii"))
@@ -720,6 +735,9 @@ def test_ogr_vrt_17():
 
     if gdaltest.vrt_ds is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
 
     vrt_xml = """
 <OGRVRTDataSource>
@@ -787,6 +805,9 @@ def test_ogr_vrt_18():
 
     if gdaltest.vrt_ds is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
 
     vrt_xml = """
 <OGRVRTDataSource>
@@ -2354,6 +2375,9 @@ def test_ogr_vrt_32():
 
 def test_ogr_vrt_33():
 
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
+
     try:
         import shutil
 
@@ -3099,6 +3123,9 @@ def test_ogr_vrt_34():
     if gdaltest.vrt_ds is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
+
     f = open("tmp/test.csv", "wb")
     f.write("x,y\n".encode("ascii"))
     f.write("2,49\n".encode("ascii"))
@@ -3139,6 +3166,9 @@ def test_ogr_vrt_34():
 def test_ogr_vrt_35():
     if gdaltest.vrt_ds is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
 
     f = open("tmp/test.csv", "wb")
     f.write("c1,c2,WKT,WKT2\n".encode("ascii"))
@@ -3338,6 +3368,9 @@ def test_ogr_vrt_39():
     if gdaltest.vrt_ds is None:
         pytest.skip()
 
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
+
     gdal.FileFromMemBuffer(
         "/vsimem/ogr_vrt_39.csv",
         """my_fid,val
@@ -3385,6 +3418,9 @@ def test_ogr_vrt_39():
 def test_ogr_vrt_40():
     if gdaltest.vrt_ds is None:
         pytest.skip()
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver missing")
 
     gdal.FileFromMemBuffer(
         "/vsimem/ogr_vrt_40.csv",
