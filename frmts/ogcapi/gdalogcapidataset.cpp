@@ -33,7 +33,10 @@
 #include "tilematrixset.hpp"
 #include "gdal_utils.h"
 #include "ogrsf_frmts.h"
+
+#ifdef OGR_ENABLE_DRIVER_GML
 #include "parsexsd.h"
+#endif
 
 #include <algorithm>
 #include <memory>
@@ -1398,6 +1401,7 @@ GDALColorInterp OGCAPIMapWrapperBand::GetColorInterpretation()
 /*                           ParseXMLSchema()                           */
 /************************************************************************/
 
+#ifdef OGR_ENABLE_DRIVER_GML
 static bool ParseXMLSchema(
     const std::string& osURL,
     std::vector<std::unique_ptr<OGRFieldDefn>>& apoFields,
@@ -1442,6 +1446,7 @@ static bool ParseXMLSchema(
 
     return false;
 }
+#endif
 
 /************************************************************************/
 /*                         InitWithTilesAPI()                           */
@@ -1648,6 +1653,7 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     bool bFoundSomething = false;
+#ifdef OGR_ENABLE_DRIVER_GML
     if( !osVectorURL.empty() && (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 )
     {
         const auto osVectorType = oJsonCollection.GetString("vectorType");
@@ -1721,6 +1727,9 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
 
         bFoundSomething = true;
     }
+#else
+    CPL_IGNORE_RET_VAL(oJsonCollection);
+#endif
 
     if( !osRasterURL.empty() && (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 )
     {

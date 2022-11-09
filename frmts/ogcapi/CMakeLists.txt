@@ -1,3 +1,6 @@
 add_gdal_driver(TARGET gdal_OGCAPI SOURCES gdalogcapidataset.cpp PLUGIN_CAPABLE NO_DEPS)
 gdal_standard_includes(gdal_OGCAPI)
-target_include_directories(gdal_OGCAPI PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/gml)
+if(OGR_ENABLE_DRIVER_GML)
+    target_include_directories(gdal_OGCAPI PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/gml)
+    target_compile_definitions(gdal_OGCAPI PRIVATE -DOGR_ENABLE_DRIVER_GML)
+endif()
