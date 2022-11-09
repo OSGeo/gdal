@@ -754,11 +754,11 @@ def test_gdal_DataTypeUnion():
 
 def test_exceptionmanager():
     currentExceptionsFlag = gdal.GetUseExceptions()
-    usingExceptions = (currentExceptionsFlag == 1)
+    usingExceptions = currentExceptionsFlag == 1
 
     # Run in context with opposite state
     with gdal.ExceptionMgr(useExceptions=(not usingExceptions)):
-        assert (gdal.GetUseExceptions() != currentExceptionsFlag)
+        assert gdal.GetUseExceptions() != currentExceptionsFlag
 
     # Check we are back to original state
-    assert (gdal.GetUseExceptions() == currentExceptionsFlag)
+    assert gdal.GetUseExceptions() == currentExceptionsFlag
