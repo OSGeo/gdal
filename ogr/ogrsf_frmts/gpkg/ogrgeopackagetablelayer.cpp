@@ -258,7 +258,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
          err == SQLITE_OK && i < nFieldCount;
          i++ )
     {
-        if( i == m_iFIDAsRegularColumnIndex )
+        if( i == m_iFIDAsRegularColumnIndex || m_abGeneratedColumns[i] )
             continue;
         if( !poFeature->IsFieldSet(i) )
         {
@@ -532,7 +532,7 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL( OGRFeature *poFeatu
     /* Add attribute column names (except FID) to the SQL */
     for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
-        if( i == m_iFIDAsRegularColumnIndex )
+        if( i == m_iFIDAsRegularColumnIndex || m_abGeneratedColumns[i] )
             continue;
         if( !bBindUnsetFields && !poFeature->IsFieldSet(i) )
             continue;
@@ -641,7 +641,7 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateUpdateSQL( OGRFeature *poFeatu
     /* Add attribute column names (except FID) to the SQL */
     for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
-        if( i == m_iFIDAsRegularColumnIndex )
+        if( i == m_iFIDAsRegularColumnIndex || m_abGeneratedColumns[i] )
             continue;
         if( !poFeature->IsFieldSet(i) )
             continue;
@@ -905,7 +905,12 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
     /*  #|name|type|notnull|default|pk */
     /*  0|id|integer|0||1 */
     /*  1|name|varchar|0||0 */
+#if SQLITE_VERSION_NUMBER >= 3026000L
+    // SQLite 3.26 or later has table_xinfo() with an extra column to indicate hidden layers
+    char* pszSQL = sqlite3_mprintf("pragma table_xinfo('%q')", m_pszTableName);
+#else
     char* pszSQL = sqlite3_mprintf("pragma table_info('%q')", m_pszTableName);
+#endif
     auto oResultTable = SQLQuery(poDb, pszSQL);
     sqlite3_free(pszSQL);
 
@@ -934,31 +939,57 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
     }
 
     bool bHasPreexistingSingleGeomColumn = m_poFeatureDefn->GetGeomFieldCount() ==  1;
+    m_abGeneratedColumns.resize(oResultTable->RowCount());
     for ( int iRecord = 0; iRecord < oResultTable->RowCount(); iRecord++ )
     {
         const char *pszName = oResultTable->GetValue(1, iRecord);
-        const char *pszType = oResultTable->GetValue(2, iRecord);
+        std::string osType = oResultTable->GetValue(2, iRecord);
         int bNotNull = oResultTable->GetValueAsInteger(3, iRecord);
         const char* pszDefault = oResultTable->GetValue(4, iRecord);
         int nPKIDIndex = oResultTable->GetValueAsInteger(5, iRecord);
+#if SQLITE_VERSION_NUMBER >= 3026000L
+        int nHiddenValue = oResultTable->GetValueAsInteger(6, iRecord);
+#endif
+
         OGRFieldSubType eSubType = OFSTNone;
         int nMaxWidth = 0;
         OGRFieldType oType = static_cast<OGRFieldType>(OFTMaxType + 1);
 
-        if ( !EQUAL(pszType, "") || m_bIsTable )
+        // SQLite 3.31 has a " GENERATED ALWAYS" suffix in the type column,
+        // but more recent versions no longer have it.
+        bool bIsGenerated = false;
+        constexpr const char* GENERATED_ALWAYS_SUFFIX = " GENERATED ALWAYS";
+        if( osType.size() > strlen(GENERATED_ALWAYS_SUFFIX) &&
+            CPLString(osType).toupper().compare(
+                osType.size() - strlen(GENERATED_ALWAYS_SUFFIX),
+                strlen(GENERATED_ALWAYS_SUFFIX), GENERATED_ALWAYS_SUFFIX) == 0 )
         {
-            oType = GPkgFieldToOGR(pszType, eSubType, nMaxWidth);
+            bIsGenerated = true;
+            osType.resize(osType.size() - strlen(GENERATED_ALWAYS_SUFFIX));
+        }
+#if SQLITE_VERSION_NUMBER >= 3026000L
+        constexpr int GENERATED_VIRTUAL = 2;
+        constexpr int GENERATED_STORED = 3;
+        if( nHiddenValue == GENERATED_VIRTUAL || nHiddenValue == GENERATED_STORED )
+        {
+            bIsGenerated = true;
+        }
+#endif
+
+        if ( !osType.empty() || m_bIsTable )
+        {
+            oType = GPkgFieldToOGR(osType.c_str(), eSubType, nMaxWidth);
         }
 
         /* Not a standard field type... */
-        if ( !EQUAL(pszType, "") && !EQUAL(pszName, "OGC_FID") &&
+        if ( !osType.empty() && !EQUAL(pszName, "OGC_FID") &&
             ((oType > OFTMaxType && !osGeomColsType.empty() ) ||
              EQUAL(osGeomColumnName, pszName)) )
         {
             /* Maybe it is a geometry type? */
             OGRwkbGeometryType oGeomType;
             if( oType > OFTMaxType )
-                oGeomType = GPkgGeometryTypeToWKB(pszType, bHasZ, bHasM);
+                oGeomType = GPkgGeometryTypeToWKB(osType.c_str(), bHasZ, bHasM);
             else
                 oGeomType = wkbUnknown;
             if ( oGeomType != wkbNone )
@@ -1003,9 +1034,9 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
             }
             else
             {
-                // CPLError( CE_Failure, CPLE_AppDefined, "invalid field type '%s'", pszType );
+                // CPLError( CE_Failure, CPLE_AppDefined, "invalid field type '%s'", osType.c_str() );
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "geometry column '%s' of type '%s' ignored", pszName, pszType);
+                         "geometry column '%s' of type '%s' ignored", pszName, osType.c_str());
             }
         }
         else
@@ -1015,7 +1046,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                 CPLDebug("GPKG",
                          "For table %s, unrecognized type name %s for "
                          "column %s. Using string type",
-                         m_pszTableName, pszType, pszName);
+                         m_pszTableName, osType.c_str(), pszName);
                 oType = OFTString;
             }
 
@@ -1092,10 +1123,13 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                         oField.SetDefault(pszDefault);
                     }
                 }
+                m_abGeneratedColumns[m_poFeatureDefn->GetFieldCount()] = bIsGenerated;
                 m_poFeatureDefn->AddFieldDefn(&oField);
             }
         }
     }
+
+    m_abGeneratedColumns.resize(m_poFeatureDefn->GetFieldCount());
 
     /* Wait, we didn't find a FID? Some operations will not be possible */
     if ( m_bIsTable && m_pszFidColumn == nullptr )
@@ -1470,6 +1504,7 @@ OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField,
     }
 
     m_poFeatureDefn->AddFieldDefn( &oFieldDefn );
+    m_abGeneratedColumns.resize(m_poFeatureDefn->GetFieldCount());
 
     if( m_pszFidColumn != nullptr &&
         EQUAL( oFieldDefn.GetNameRef(), m_pszFidColumn ) )
@@ -5380,6 +5415,18 @@ OGRErr OGRGeoPackageTableLayer::DeleteField( int iFieldToDelete )
         if( eErr == OGRERR_NONE)
         {
             eErr = m_poFeatureDefn->DeleteFieldDefn( iFieldToDelete );
+            if( eErr == OGRERR_NONE )
+            {
+#if SQLITE_VERSION_NUMBER >= 3035005L
+                m_abGeneratedColumns.erase(m_abGeneratedColumns.begin() + iFieldToDelete);
+#else
+                // We have recreated the table from scratch, and lost the
+                // generated column property
+                std::fill(m_abGeneratedColumns.begin(),
+                          m_abGeneratedColumns.end(),
+                          false);
+#endif
+            }
 
             ResetReading();
         }
@@ -6265,6 +6312,15 @@ OGRErr OGRGeoPackageTableLayer::ReorderFields( int* panMap )
 
         if( eErr == OGRERR_NONE )
             eErr = m_poFeatureDefn->ReorderFieldDefns( panMap );
+
+        if( eErr == OGRERR_NONE )
+        {
+            // We have recreated the table from scratch, and lost the
+            // generated column property
+            std::fill(m_abGeneratedColumns.begin(),
+                      m_abGeneratedColumns.end(),
+                      false);
+        }
 
         ResetReading();
     }
