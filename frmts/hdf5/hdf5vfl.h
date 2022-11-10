@@ -46,6 +46,13 @@
 #define HDF5_1_13_OR_LATER
 #endif
 
+// HDF5 >= 1.13.2
+#ifdef H5FD_CLASS_VERSION
+# if H5FD_CLASS_VERSION != 1
+#  error "HDF5_vsil_g needs to be adapted to the new layout of H5FD_class_t. Look at ${hdf5_prefix}/include/H5FDdevelop.h"
+# endif
+#endif
+
 static std::mutex gMutex;
 static hid_t hFileDriver = -1;
 
@@ -73,6 +80,9 @@ static void HDF5VFLUnloadFileDriver();
 
 /* See https://support.hdfgroup.org/HDF5/doc/TechNotes/VFL.html */
 static const H5FD_class_t HDF5_vsil_g = {
+#ifdef H5FD_CLASS_VERSION
+    H5FD_CLASS_VERSION,
+#endif
 #ifdef HDF5_1_13_OR_LATER
 /* value: 513 has been reserved with hdfgroup and is registered at:
      * https://portal.hdfgroup.org/pages/viewpage.action?pageId=74188097 */
@@ -107,6 +117,12 @@ static const H5FD_class_t HDF5_vsil_g = {
     nullptr,                    /* get_handle */
     HDF5_vsil_read,             /* read */
     HDF5_vsil_write,            /* write */
+#if H5FD_CLASS_VERSION == 1
+    nullptr,                    /* read_vector */
+    nullptr,                    /* write_vector */
+    nullptr,                    /* read_selection */
+    nullptr,                    /* write_selection */
+#endif
     nullptr,                    /* flush */
     HDF5_vsil_truncate,         /* truncate */
     nullptr,                    /* lock */
