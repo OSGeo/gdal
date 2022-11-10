@@ -52,8 +52,8 @@ class WSIOCILobFSHandle : public VSIFilesystemHandler
   private:
     char**            ParseIdentificator( const char* pszFilename );
     OWConnection*     GetConnection(char** papszParam);
-    OWStatement*      GetStatement(char *tableName, 
-                                   char *rasterid, 
+    OWStatement*      GetStatement(const char *tableName, 
+                                   const char *rasterid, 
                                    boolean bUpdate,
                                    OWConnection *pConnection);
 };
@@ -162,8 +162,10 @@ OWConnection* WSIOCILobFSHandle::GetConnection(char** papszParam)
                                          papszParam[2] );
     }
 
-    if( ! poConnection->Succeeded() )
+    if( poConnection && ! poConnection->Succeeded() )
     {
+        delete poConnection;
+
         return nullptr;
     }
 
@@ -174,8 +176,8 @@ OWConnection* WSIOCILobFSHandle::GetConnection(char** papszParam)
 // -----------------------------------------------------------------------------
 //                                                                        GetStatment()
 // -----------------------------------------------------------------------------
-OWStatement* WSIOCILobFSHandle::GetStatement(char *tableName, 
-                                     char *rasterid, 
+OWStatement* WSIOCILobFSHandle::GetStatement(const char *tableName, 
+                                     const char *rasterid, 
                                      boolean bUpdate,
                                      OWConnection *pConnection)
 {
@@ -250,6 +252,7 @@ VSIVirtualHandle* WSIOCILobFSHandle::Open( const char* pszFilename,
 
     
     CPLDebug("GEOR","VSIOCILOB open successfully");
+    CSLDestroy( papszParam );
 
     return new VSIOCILobHandle( poConnection, poStatement, phLocator, bUpdate );
 }
