@@ -2,9 +2,9 @@
   <GMLFeatureClass>
     <Name>RdSgmtA</Name>
     <ElementPath>RdSgmtA</ElementPath>
-    <SRSName>urn:ogc:def:crs:EPSG::6668</SRSName>
     <GeometryElementPath>area</GeometryElementPath>
     <GeometryType>Polygon</GeometryType>
+    <SRSName>urn:ogc:def:crs:EPSG::6668</SRSName>
     <PropertyDefn>
       <Name>fid</Name>
       <ElementPath>fid</ElementPath>

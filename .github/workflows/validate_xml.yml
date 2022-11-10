@@ -35,3 +35,4 @@ jobs:
           xmllint --schema ./data/nitf_spec.xsd ./data/nitf_spec.xml --noout
           xmllint --schema ./data/vdv452.xsd ./data/vdv452.xml --noout
           xmllint --schema ./data/gmlasconf.xsd ./data/gmlasconf.xml --noout
+          for i in data/*.gfs autotest/ogr/data/gml/*.gfs; do xmllint -noout -schema data/gfs.xsd $i; done
