@@ -1538,6 +1538,22 @@ unsigned long OWStatement::WriteBlob( OCILobLocator* phLocator,
     return static_cast<unsigned long>(nAmont);
 }
 
+
+bool OWStatement::TrimLob( OCILobLocator* phLocator,
+                           unsigned long newLen )
+{
+    if( CheckError( OCILobTrim2(
+        poConnection->hSvcCtx,
+        hError,
+        phLocator,
+        (ub8) newLen), hError ) )
+    {
+        return 0;
+    }
+
+    return 1; 
+}
+
 char* OWStatement::ReadCLob( OCILobLocator* phLocator )
 {
     ub4 nSize  = 0;
