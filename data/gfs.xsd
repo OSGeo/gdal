@@ -4,9 +4,9 @@
   <xs:element name="GMLFeatureClassList">
     <xs:complexType>
       <xs:sequence>
-        <xs:element minOccurs="0" name="SequentialLayers" type="xs:boolean">
+        <xs:element minOccurs="0" name="SequentialLayers" type="xs:boolean" default="false">
           <xs:annotation>
-            <xs:documentation>TODO: Provide definition. Does this element serve the same purpose as SEQUENTIAL_LAYERS describe on https://gdal.org/drivers/vector/gml.html#performance-issues-with-large-multi-layer-gml-files? ... Can we define any default value in the XML schema, for example 'false'?</xs:documentation>
+            <xs:documentation>Set this element to true if all features belonging to the same layer are written sequentially in the file. The reader will then avoid unnecessary resets when layers are read completely one after the other. To get the best performance, the layers must be read in the order they appear in the file. Cf https://gdal.org/drivers/vector/gml.html#performance-issues-with-large-multi-layer-gml-files</xs:documentation>
           </xs:annotation>
         </xs:element>
         <xs:element maxOccurs="unbounded" minOccurs="0" name="GMLFeatureClass">
@@ -14,77 +14,80 @@
             <xs:sequence>
               <xs:element name="Name" type="xs:string">
                 <xs:annotation>
-                  <xs:documentation>Name of the feature type; essentially used as layer name. Can be different than the name of the XML element that represents such a feature in XML data. Examples: case can change, a prefix can be added to the name, and the name can be more human readable (e.g. the full name, rather than an abbreviation).</xs:documentation>
+                  <xs:documentation>Name of the feature type; essentially used as layer name. Can be different than the name of the XML element that represents such a feature in XML data. Examples: case can change, a prefix can be added to the name, and the name can be more human readable (e.g. the full name, rather than an abbreviation).
+                  Different GMLFeatureClass elements should have a different name.
+                  </xs:documentation>
                 </xs:annotation>
               </xs:element>
               <xs:element name="ElementPath" type="xs:string">
                 <xs:annotation>
-                  <xs:documentation>Defines the path in a given XML document to the elements that represent the GML feature. Can use '|' as element separator. Namespace prefixes of path elements are insignificant. 
-
-TBD: Since multiple ElementPath-elements are not allowed per GMLFeatureClass, that would mean that if a feature type was encoded in different places in an XML document (e.g. on collection member level, as well as inline in some other feature), that the gfs file would have to contain multiple GMLFeatureClass entries, with different ElementPaths. Is that correct? Are multiple GMLFeatureClass elements with same name even supported right now? Not sure if this is a relevant use case, but at least in theory it can occur. That's why I would like to clarify what is allowed and supported by gfs.</xs:documentation>
-                </xs:annotation>
-              </xs:element>
-              <xs:element minOccurs="0" name="SRSName" type="xs:string">
-                <xs:annotation>
-                  <xs:documentation>TBD: What is the purpose of the SRSName element? It is rarely used in the gfs examples I found.</xs:documentation>
+                  <xs:documentation>Defines the path in a given XML document to the elements that represent the GML feature. Can use '|' as element separator. Namespace prefixes of path elements are insignificant.
+                  As multiple ElementPath-elements are not allowed per GMLFeatureClass, if a feature type was encoded in different places in an XML document (e.g. on collection member level, as well as inline in some other feature), the gfs file would have to contain multiple GMLFeatureClass entries, with different ElementPaths.</xs:documentation>
                 </xs:annotation>
               </xs:element>
               <xs:element maxOccurs="unbounded" minOccurs="0" ref="GeomPropertyDefn">
                 <xs:annotation>
-                  <xs:documentation>TBD: Only use if geom property count is > 1? ... or can we use it in all cases, i.e. also if the count = 1?</xs:documentation>
+                  <xs:documentation>Defines a geometry column. This element may be repeated if there are several geometry columns. For backward compatibility with older GDAL versions, the GDAL .gfs writer will only write this element if there are several geometry columns, but it is allowed to use it if there is just a single geometry column. GeomPropertyDefn is mutually exclusive with GeometryName, GeometryElementPath and GeometryType</xs:documentation>
                 </xs:annotation>
               </xs:element>
               <xs:element minOccurs="0" name="GeometryName" type="xs:string">
                 <xs:annotation>
-                  <xs:documentation>TBD: Only used if geom property count = 1; may be deprecated, in favor of GeomPropertyDefn, but not sure. Please clarify.</xs:documentation>
-                </xs:annotation>
+                  <xs:documentation>Name of a geometric property of the feature. Can be different than the name of the XML element that represents that property. Examples: case can change, a prefix can be added to the name, and the name can be more human readable (e.g. the full name, rather than an abbreviation, or a combination of names in the element path). Mutually exclusive with GeomPropertyDefn</xs:documentation>
+               </xs:annotation>
               </xs:element>
               <xs:element minOccurs="0" name="GeometryElementPath" type="xs:string">
                 <xs:annotation>
-                  <xs:documentation>TBD: Used in combination with the GeometryName element. Same purpose and syntax as in GeomPropertyDefn/ElementPath, I suppose.</xs:documentation>
+                  <xs:documentation>Defines the path to the XML element that represents the geometry property within the XML element of the GML feature. Can use '|' as element separator. Namespace prefixes of path elements are insignificant. NOTE: The path should not include the actual GML geometry element itself. Used in combination with the GeometryName. Mutually exclusive with GeomPropertyDef.</xs:documentation>
                 </xs:annotation>
               </xs:element>
               <xs:element minOccurs="0" name="GeometryType" type="SupportedGeometryTypes">
                 <xs:annotation>
-                  <xs:documentation>TBD: Used in combination with the GeometryName element. Same purpose and syntax as in GeomPropertyDefn/Type, I suppose.</xs:documentation>
+                  <xs:documentation>Used in combination with the GeometryName. Mutually exclusive with GeomPropertyDef.</xs:documentation>
+                </xs:annotation>
+              </xs:element>
+              <xs:element minOccurs="0" name="SRSName" type="xs:string">
+                <xs:annotation>
+                  <xs:documentation>Defines the SRS of all geometry columns of the layer. Typically a string of the form urn:ogc:def:crs:EPSG::XXXX</xs:documentation>
                 </xs:annotation>
               </xs:element>
               <xs:element minOccurs="0" name="DatasetSpecificInfo">
                 <xs:annotation>
-                  <xs:documentation>TBD: What is the purpose of this element? To define additional information about the dataset (the one that the gfs file is used for)?</xs:documentation>
+                  <xs:documentation>Contains optional information about the feature count of the layer and its extent. This should not be used in .gfs templates, but for specific instantiation of a .gfs on a given .gml file</xs:documentation>
                 </xs:annotation>
                 <xs:complexType>
                   <xs:all>
                     <xs:element minOccurs="0" name="FeatureCount" type="xs:nonNegativeInteger">
                       <xs:annotation>
-                        <xs:documentation>TBD: What is the purpose of this element? To identify the number of features within a particular dataset (the one that the gfs file is used for)?</xs:documentation>
+                        <xs:documentation>Number of features in the layer</xs:documentation>
                       </xs:annotation>
                     </xs:element>
-                    <xs:element default="0.0" minOccurs="0" name="ExtentXMin" type="xs:double">
+                    <xs:element minOccurs="0" name="ExtentXMin" type="xs:double">
                       <xs:annotation>
-                        <xs:documentation>TBD: What is the purpose of this element? Define the extent (here: XMin) of a particular dataset (the one that the gfs file is used for)?</xs:documentation>
+                        <xs:documentation>Minimum X value of the layer extent.</xs:documentation>
                       </xs:annotation>
                     </xs:element>
                     <xs:element default="0.0" minOccurs="0" name="ExtentXMax" type="xs:double">
                       <xs:annotation>
-                        <xs:documentation>TBD: What is the purpose of this element? Define the extent (here: XMax) of a particular dataset (the one that the gfs file is used for)?</xs:documentation>
+                        <xs:documentation>Maximum X value of the layer extent.</xs:documentation>
                       </xs:annotation>
                     </xs:element>
                     <xs:element default="0.0" minOccurs="0" name="ExtentYMin" type="xs:double">
                       <xs:annotation>
-                        <xs:documentation>TBD: What is the purpose of this element? Define the extent (here: YMin) of a particular dataset (the one that the gfs file is used for)?</xs:documentation>
+                        <xs:documentation>Minimum Y value of the layer extent.</xs:documentation>
                       </xs:annotation>
                     </xs:element>
                     <xs:element default="0.0" minOccurs="0" name="ExtentYMax" type="xs:double">
                       <xs:annotation>
-                        <xs:documentation>TBD: What is the purpose of this element? Define the extent (here: YMax) of a particular dataset (the one that the gfs file is used for)?</xs:documentation>
+                        <xs:documentation>Maximum X value of the layer extent.</xs:documentation>
                       </xs:annotation>
                     </xs:element>
+                    <!-- To remove ultimately when support for that in the code is removed
                     <xs:element minOccurs="0" name="ExtraInfo" type="xs:string">
                       <xs:annotation>
-                        <xs:documentation>TBD: What is the purpose of this element? Provide a human readable information about a particular dataset (the one that the gfs file is used for)?</xs:documentation>
+                        <xs:documentation>Unused</xs:documentation>
                       </xs:annotation>
                     </xs:element>
+                    -->
                   </xs:all>
                 </xs:complexType>
               </xs:element>
@@ -97,27 +100,26 @@ TBD: Since multiple ElementPath-elements are not allowed per GMLFeatureClass, th
   </xs:element>
   <xs:simpleType name="SupportedGeometryTypes">
     <xs:annotation>
-      <xs:documentation>TBD: Which of all the values of OGRwkbGeometryType, listed on https://gdal.org/doxygen/ogr__core_8h.html, are actually allowed and relevant? Based upon the code, either an int value of 1 &lt;= value &lt;= 16 is allowed, or a string value that is mapped by OGRFromOGCGeomType to an OGRwkbGeometryType (OGRFromOGCGeomType is implemented in ogrgeometry.cpp, see valid values there [including a possible Z, M, or ZM suffix; MZ is NOT supported, it looks like]).</xs:documentation>
+      <xs:documentation>Geometry type, expressed either as a numeric value matching the OGRwkbGeometryType enumeration (except abstract types such as wkbCurve or wkbSurface) or a string ([Multi]?Point|[Multi]?LineString|[Multi]?Polygon|GeometryCollection|CircularString|CurvePolygon|MultiCurve|MultiSurface|Triangle|PolyhedralSurface|TIN)Z?M? or None to indicate a layer without geometry field.</xs:documentation>
     </xs:annotation>
     <xs:restriction base="xs:string">
-      <xs:pattern value="[0-9]|1[0-6]"/>
-      <xs:pattern value="[pP][oO][iI][nN][tT]"/>
-      <xs:pattern value="[lL][iI][nN][eE][sS][tT][rR][iI][nN][gG]"/>
-      <xs:pattern value="[pP][oO][lL][yY][gG][oO][nN]"/>
-      <xs:pattern value="[mM][uU][lL][tT][iI][pP][oO][iI][nN][tT]"/>
-      <xs:pattern value="[mM][uU][lL][tT][iI][lL][iI][nN][eE][sS][tT][rR][iI][nN][gG]"/>
-      <xs:pattern value="[mM][uU][lL][tT][iI][pP][oO][lL][yY][gG][oO][nN]"/>
-      <xs:pattern value="[gG][eE][oO][mM][eE][tT][rR][yY][cC][oO][lL][lL][eE][cC][tT][iI][oO][nN]"/>
-      <xs:pattern value="[cC][iI][rR][cC][uU][lL][aA][rR][sS][tT][rR][iI][nN][gG]"/>
-      <xs:pattern value="[cC][oO][mM][pP][oO][uU][nN][dD][cC][uU][rR][vV][eE]"/>
-      <xs:pattern value="[cC][uU][rR][vV][eE][pP][oO][lL][yY][gG][oO][nN]"/>
-      <xs:pattern value="[mM][uU][lL][tT][iI][cC][uU][rR][vV][eE]"/>
-      <xs:pattern value="[mM][uU][lL][tT][iI][sS][uU][rR][fF][aA][cC][eE]"/>
-      <xs:pattern value="[tT][rR][iI][aA][nN][gG][lL][eE]"/>
-      <xs:pattern value="[pP][oO][lL][yY][hH][eE][dD][rR][aA][lL][sS][uU][rR][fF][aA][cC][eE]"/>
-      <xs:pattern value="[tT][iI][nN]"/>
-      <xs:pattern value="[cC][uU][rR][vV][eE]"/>
-      <xs:pattern value="[sS][uU][rR][fF][aA][cC][eE]"/>
+      <xs:pattern value="-?[0-9]+"/> <!-- value from OGRwkbGeometryType enumeration -->
+      <xs:pattern value="[pP][oO][iI][nN][tT]Z?M?"/>
+      <xs:pattern value="[lL][iI][nN][eE][sS][tT][rR][iI][nN][gG]Z?M?"/>
+      <xs:pattern value="[pP][oO][lL][yY][gG][oO][nN]Z?M?"/>
+      <xs:pattern value="[mM][uU][lL][tT][iI][pP][oO][iI][nN][tT]Z?M?"/>
+      <xs:pattern value="[mM][uU][lL][tT][iI][lL][iI][nN][eE][sS][tT][rR][iI][nN][gG]Z?M?"/>
+      <xs:pattern value="[mM][uU][lL][tT][iI][pP][oO][lL][yY][gG][oO][nN]Z?M?"/>
+      <xs:pattern value="[gG][eE][oO][mM][eE][tT][rR][yY][cC][oO][lL][lL][eE][cC][tT][iI][oO][nN]Z?M?"/>
+      <xs:pattern value="[cC][iI][rR][cC][uU][lL][aA][rR][sS][tT][rR][iI][nN][gG]Z?M?"/>
+      <xs:pattern value="[cC][oO][mM][pP][oO][uU][nN][dD][cC][uU][rR][vV][eE]Z?M?"/>
+      <xs:pattern value="[cC][uU][rR][vV][eE][pP][oO][lL][yY][gG][oO][nN]Z?M?"/>
+      <xs:pattern value="[mM][uU][lL][tT][iI][cC][uU][rR][vV][eE]Z?M?"/>
+      <xs:pattern value="[mM][uU][lL][tT][iI][sS][uU][rR][fF][aA][cC][eE]Z?M?"/>
+      <xs:pattern value="[tT][rR][iI][aA][nN][gG][lL][eE]Z?M?"/>
+      <xs:pattern value="[pP][oO][lL][yY][hH][eE][dD][rR][aA][lL][sS][uU][rR][fF][aA][cC][eE]Z?M?"/>
+      <xs:pattern value="[tT][iI][nN]Z?M?"/>
+      <xs:pattern value="[nN][oO][nN][eE]"/>
     </xs:restriction>
   </xs:simpleType>
   <xs:element name="GeomPropertyDefn">
@@ -140,7 +142,7 @@ TBD: Since multiple ElementPath-elements are not allowed per GMLFeatureClass, th
         </xs:element>
         <xs:element default="true" minOccurs="0" name="Nullable" type="xs:boolean">
           <xs:annotation>
-            <xs:documentation>TBD: What is the purpose of the Nullable element?</xs:documentation>
+            <xs:documentation>Can be set to false to indicate that null/missing geometries are forbidden.</xs:documentation>
           </xs:annotation>
         </xs:element>
       </xs:all>
@@ -165,10 +167,11 @@ Examples: case can change, a prefix can be added to the name, and the name can b
         </xs:element>
         <xs:element name="Type">
           <xs:annotation>
-            <xs:documentation>TBD: Is 'Untyped' a valid value? What are the values 'Complex', 'FeatureProperty', and 'FeaturePropertyList' actually used for?</xs:documentation>
+            <xs:documentation>Field type. Complex may be used to indicate that the value of the element is not a simple type.</xs:documentation>
           </xs:annotation>
           <xs:simpleType>
             <xs:restriction base="xs:string">
+               <!-- Untyped, FeatureProperty and FeaturePropertyList are referenced in the code but not used in practice -->
               <xs:enumeration value="String"/>
               <xs:enumeration value="Integer"/>
               <xs:enumeration value="Real"/>
@@ -176,14 +179,12 @@ Examples: case can change, a prefix can be added to the name, and the name can b
               <xs:enumeration value="IntegerList"/>
               <xs:enumeration value="RealList"/>
               <xs:enumeration value="Complex"/>
-              <xs:enumeration value="FeatureProperty"/>
-              <xs:enumeration value="FeaturePropertyList"/>
             </xs:restriction>
           </xs:simpleType>
         </xs:element>
         <xs:element default="true" minOccurs="0" name="Nullable" type="xs:boolean">
           <xs:annotation>
-            <xs:documentation>TBD: What is the purpose of this element?</xs:documentation>
+            <xs:documentation>Can be set to false to indicate that null/missing values are forbidden.</xs:documentation>
           </xs:annotation>
         </xs:element>
         <xs:element minOccurs="0" name="Subtype">
@@ -209,21 +210,17 @@ Examples: case can change, a prefix can be added to the name, and the name can b
         </xs:element>
         <xs:element default="false" minOccurs="0" name="Unique" type="xs:boolean">
           <xs:annotation>
-            <xs:documentation>TBD: What is the purpose of this element?</xs:documentation>
+            <xs:documentation>When set to true, indicates that values of that field are unique through all the features of the layer</xs:documentation>
           </xs:annotation>
         </xs:element>
         <xs:element default="0" minOccurs="0" name="Width" type="xs:nonNegativeInteger">
           <xs:annotation>
-            <xs:documentation>TBD: Can we provide a general description of this element? Are there further restrictions on the value range, for example a maximum integer value?
-
-Supported use cases: (Type: String, Subtype is NOT Boolean, Date, Time, or Datetime), (Type: Integer), (Type: Real)</xs:documentation>
+            <xs:documentation>Maximum width of the string representation of the values of the field. Supported use cases: (Type: String, Subtype is NOT Boolean, Date, Time, or Datetime), (Type: Integer), (Type: Real)</xs:documentation>
           </xs:annotation>
         </xs:element>
         <xs:element default="0" minOccurs="0" name="Precision" type="xs:nonNegativeInteger">
           <xs:annotation>
-            <xs:documentation>TBD: Can we provide a general description of this element? Are there further restrictions on the value range, for example a maximum integer value?
-
-Supported use cases: (Type: Real)</xs:documentation>
+            <xs:documentation>Only applies to Real. Maximum decimal precision (i.e. number of digits after the decimal point) of the values of the field.</xs:documentation>
           </xs:annotation>
         </xs:element>
       </xs:all>

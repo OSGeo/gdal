@@ -2,9 +2,9 @@
   <GMLFeatureClass>
     <Name>SBBdry</Name>
     <ElementPath>SBBdry</ElementPath>
-    <SRSName>urn:ogc:def:crs:EPSG::6668</SRSName>
     <GeometryElementPath>loc</GeometryElementPath>
     <GeometryType>LineString</GeometryType>
+    <SRSName>urn:ogc:def:crs:EPSG::6668</SRSName>
     <PropertyDefn>
       <Name>fid</Name>
       <ElementPath>fid</ElementPath>
