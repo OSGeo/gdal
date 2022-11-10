@@ -2381,4 +2381,27 @@ namespace tut
         VSIFree(panDest3);
     }
 
+    // Test GDALDataset::ReportError()
+    template<> template<> void object::test<34>()
+    {
+        GDALDatasetUniquePtr poSrcDS(
+            GDALDriver::FromHandle(
+                GDALGetDriverByName("MEM"))->Create("", 1, 1, 1, GDT_Byte, nullptr));
+
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        poSrcDS->ReportError("foo", CE_Warning, CPLE_AppDefined, "bar");
+        CPLPopErrorHandler();
+        ensure_equals(std::string(CPLGetLastErrorMsg()), "foo: bar");
+
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        poSrcDS->ReportError("%foo", CE_Warning, CPLE_AppDefined, "bar");
+        CPLPopErrorHandler();
+        ensure_equals(std::string(CPLGetLastErrorMsg()), "bar");
+
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        poSrcDS->ReportError("this_is_wayyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy_too_long/foo", CE_Warning, CPLE_AppDefined, "bar");
+        CPLPopErrorHandler();
+        ensure_equals(std::string(CPLGetLastErrorMsg()), "foo: bar");
+    }
+
 } // namespace tut

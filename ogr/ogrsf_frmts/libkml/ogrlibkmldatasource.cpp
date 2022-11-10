@@ -429,13 +429,16 @@ void OGRLIBKMLDataSource::WriteKmz()
             m_poKmlDocKmlRoot =
                 OGRLIBKMLCreateOGCKml22(m_poKmlFactory, m_papszOptions);
 
+            auto kml = AsKml( m_poKmlDocKmlRoot );
             if( m_poKmlDocKml )
             {
-                AsKml( m_poKmlDocKmlRoot )->set_feature( m_poKmlDocKml );
+                if( kml )
+                {
+                    kml->set_feature( m_poKmlDocKml );
+                }
             }
 
-            ParseDocumentOptions(
-                AsKml( m_poKmlDocKmlRoot ), AsDocument(m_poKmlDocKml));
+            ParseDocumentOptions(kml, AsDocument(m_poKmlDocKml));
         }
 
         std::string oKmlOut = kmldom::SerializePretty( m_poKmlDocKmlRoot );
@@ -549,11 +552,14 @@ void OGRLIBKMLDataSource::WriteDir()
         {
             m_poKmlDocKmlRoot =
                 OGRLIBKMLCreateOGCKml22(m_poKmlFactory, m_papszOptions);
-            if( m_poKmlDocKml )
-                AsKml( m_poKmlDocKmlRoot )->set_feature( m_poKmlDocKml );
+            auto kml = AsKml( m_poKmlDocKmlRoot );
+            if( kml )
+            {
+                if( m_poKmlDocKml )
+                    kml->set_feature( m_poKmlDocKml );
+            }
 
-            ParseDocumentOptions(
-                AsKml( m_poKmlDocKmlRoot ), AsDocument(m_poKmlDocKml));
+            ParseDocumentOptions(kml, AsDocument(m_poKmlDocKml));
         }
 
         std::string oKmlOut = kmldom::SerializePretty( m_poKmlDocKmlRoot );
@@ -977,7 +983,7 @@ static ContainerPtr GetContainerFromRoot(
         {
             KmlPtr poKmlKml = AsKml( poKmlRoot );
 
-            if( poKmlKml->has_feature() )
+            if( poKmlKml && poKmlKml->has_feature() )
             {
                 FeaturePtr poKmlFeat = poKmlKml->get_feature();
 
