@@ -2,9 +2,9 @@
   <GMLFeatureClass>
     <Name>CommPt</Name>
     <ElementPath>CommPt</ElementPath>
-    <SRSName>urn:ogc:def:crs:EPSG::6668</SRSName>
     <GeometryElementPath>pos</GeometryElementPath>
     <GeometryType>Point</GeometryType>
+    <SRSName>urn:ogc:def:crs:EPSG::6668</SRSName>
     <PropertyDefn>
       <Name>fid</Name>
       <ElementPath>fid</ElementPath>
