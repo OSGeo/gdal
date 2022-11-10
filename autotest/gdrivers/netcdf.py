@@ -6167,6 +6167,16 @@ def test_netcdf_read_missing_value_text_non_numeric():
     assert ds.GetRasterBand(1).GetNoDataValue() is None
 
 
+###############################################################################
+
+
+def test_netcdf_read_cf_xy_latlon_crs_wkt():
+
+    # note: contains dummy values in lat and lon variables
+    ds = gdal.Open("data/netcdf/cf_xy_latlon_crs_wkt.nc")
+    assert ds.GetGeoTransform() == (3500000.0, 1000.0, 0.0, 2102000.0, 0.0, -1000.0)
+
+
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.
