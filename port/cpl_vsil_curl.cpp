@@ -423,7 +423,7 @@ VSICurlHandle::VSICurlHandle( VSICurlFilesystemHandlerBase* poFSIn,
     m_bUseHead(CPLTestBool(CPLGetConfigOption("CPL_VSIL_CURL_USE_HEAD",
                                              "YES")))
 {
-    m_papszHTTPOptions = CPLHTTPGetOptionsFromEnv();
+    m_papszHTTPOptions = CPLHTTPGetOptionsFromEnv(pszFilename);
     if( pszURLIn )
     {
         m_pszURL = CPLStrdup(pszURLIn);

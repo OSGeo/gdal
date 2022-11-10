@@ -220,10 +220,10 @@ VSIVirtualHandle* VSIGSFSHandler::Open( const char *pszFilename,
 /*                        SupportsRandomWrite()                         */
 /************************************************************************/
 
-bool VSIGSFSHandler::SupportsRandomWrite( const char* /* pszPath */, bool bAllowLocalTempFile )
+bool VSIGSFSHandler::SupportsRandomWrite( const char* pszPath, bool bAllowLocalTempFile )
 {
     return bAllowLocalTempFile &&
-           CPLTestBool(CPLGetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "NO"));
+           CPLTestBool(VSIGetPathSpecificOption(pszPath, "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "NO"));
 }
 
 /************************************************************************/
@@ -352,12 +352,16 @@ char** VSIGSFSHandler::GetFileMetadata( const char* pszFilename,
     NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
     NetworkStatisticsAction oContextAction("GetFileMetadata");
 
+    const CPLStringList aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename));
+
     bool bRetry;
     // coverity[tainted_data]
-    double dfRetryDelay = CPLAtof(CPLGetConfigOption("GDAL_HTTP_RETRY_DELAY",
-                                CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
-    const int nMaxRetry = atoi(CPLGetConfigOption("GDAL_HTTP_MAX_RETRY",
-                                   CPLSPrintf("%d",CPL_HTTP_MAX_RETRY)));
+    double dfRetryDelay = CPLAtof(VSIGetPathSpecificOption(
+        pszFilename, "GDAL_HTTP_RETRY_DELAY",
+        CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
+    const int nMaxRetry = atoi(VSIGetPathSpecificOption(
+        pszFilename, "GDAL_HTTP_MAX_RETRY",
+        CPLSPrintf("%d",CPL_HTTP_MAX_RETRY)));
     int nRetryCount = 0;
 
     CPLStringList aosResult;
@@ -370,7 +374,7 @@ char** VSIGSFSHandler::GetFileMetadata( const char* pszFilename,
         struct curl_slist* headers = static_cast<struct curl_slist*>(
             CPLHTTPSetOptions(hCurlHandle,
                               poHandleHelper->GetURL().c_str(),
-                              nullptr));
+                              aosHTTPOptions.List()));
         headers = VSICurlMergeHeaders(headers,
                         poHandleHelper->GetCurlHeaders("GET", headers));
 
@@ -464,13 +468,17 @@ bool VSIGSFSHandler::SetFileMetadata( const char * pszFilename,
 
     bool bRetry;
     // coverity[tainted_data]
-    double dfRetryDelay = CPLAtof(CPLGetConfigOption("GDAL_HTTP_RETRY_DELAY",
-                                CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
-    const int nMaxRetry = atoi(CPLGetConfigOption("GDAL_HTTP_MAX_RETRY",
-                                   CPLSPrintf("%d",CPL_HTTP_MAX_RETRY)));
+    double dfRetryDelay = CPLAtof(VSIGetPathSpecificOption(
+        pszFilename, "GDAL_HTTP_RETRY_DELAY",
+        CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
+    const int nMaxRetry = atoi(VSIGetPathSpecificOption(
+        pszFilename, "GDAL_HTTP_MAX_RETRY",
+        CPLSPrintf("%d",CPL_HTTP_MAX_RETRY)));
     int nRetryCount = 0;
 
     bool bRet = false;
+
+    const CPLStringList aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename));
 
     do
     {
@@ -483,7 +491,7 @@ bool VSIGSFSHandler::SetFileMetadata( const char * pszFilename,
         struct curl_slist* headers = static_cast<struct curl_slist*>(
             CPLHTTPSetOptions(hCurlHandle,
                               poHandleHelper->GetURL().c_str(),
-                              nullptr));
+                              aosHTTPOptions.List()));
         headers = curl_slist_append(headers, "Content-Type: application/xml");
         headers = VSICurlMergeHeaders(headers,
                         poHandleHelper->GetCurlHeaders("PUT", headers,
@@ -566,16 +574,23 @@ int* VSIGSFSHandler::UnlinkBatch( CSLConstList papszFiles )
     NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
     NetworkStatisticsAction oContextAction("UnlinkBatch");
 
+    const char* pszFirstFilename = papszFiles && papszFiles[0] ? papszFiles[0] : nullptr;
+
     // coverity[tainted_data]
-    double dfRetryDelay = CPLAtof(CPLGetConfigOption("GDAL_HTTP_RETRY_DELAY",
-                                CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
-    const int nMaxRetry = atoi(CPLGetConfigOption("GDAL_HTTP_MAX_RETRY",
-                                   CPLSPrintf("%d",CPL_HTTP_MAX_RETRY)));
+    double dfRetryDelay = CPLAtof(VSIGetPathSpecificOption(
+        pszFirstFilename, "GDAL_HTTP_RETRY_DELAY",
+        CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
+    const int nMaxRetry = atoi(VSIGetPathSpecificOption(
+        pszFirstFilename, "GDAL_HTTP_MAX_RETRY",
+        CPLSPrintf("%d",CPL_HTTP_MAX_RETRY)));
 
     // For debug / testing only
     const int nBatchSize = std::max(1, std::min(100,
         atoi(CPLGetConfigOption("CPL_VSIGS_UNLINK_BATCH_SIZE", "100"))));
     CPLString osPOSTContent;
+
+    const CPLStringList aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFirstFilename));
+
     for( int i = 0; papszFiles && papszFiles[i]; i++ )
     {
         CPLAssert( STARTS_WITH_CI(papszFiles[i], GetFSPrefix()) );
@@ -602,7 +617,7 @@ int* VSIGSFSHandler::UnlinkBatch( CSLConstList papszFiles )
             struct curl_slist* subrequest_headers = static_cast<struct curl_slist*>(
                         CPLHTTPSetOptions(hCurlHandle,
                                           poTmpHandleHelper->GetURL().c_str(),
-                                          nullptr));
+                                          aosHTTPOptions.List()));
             subrequest_headers = poTmpHandleHelper->GetCurlHeaders(
                 "DELETE", subrequest_headers, nullptr, 0);
             for( struct curl_slist *iter = subrequest_headers; iter; iter = iter->next )
@@ -665,7 +680,7 @@ int* VSIGSFSHandler::UnlinkBatch( CSLConstList papszFiles )
                 struct curl_slist* headers = static_cast<struct curl_slist*>(
                     CPLHTTPSetOptions(hCurlHandle,
                                       poHandleHelper->GetURL().c_str(),
-                                      nullptr));
+                                      aosHTTPOptions.List()));
                 headers = curl_slist_append(headers,
                     "Content-Type: multipart/mixed; boundary=\"===============7330845974216740156==\"");
                 headers = VSICurlMergeHeaders(headers,

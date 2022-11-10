@@ -175,7 +175,7 @@ CPL_C_END
 /*! @cond Doxygen_Suppress */
 // Not sure if this belong here, used in cpl_http.cpp, cpl_vsil_curl.cpp and frmts/wms/gdalhttp.cpp
 void CPL_DLL* CPLHTTPSetOptions(void *pcurl, const char *pszURL, const char * const* papszOptions);
-char** CPLHTTPGetOptionsFromEnv();
+char** CPLHTTPGetOptionsFromEnv(const char* pszFilename);
 double CPLHTTPGetNewRetryDelay(int response_code, double dfOldDelay,
                                const char* pszErrBuf, const char* pszCurlError);
 void CPL_DLL* CPLHTTPIgnoreSigPipe();

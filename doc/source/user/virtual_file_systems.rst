@@ -241,6 +241,8 @@ Starting with GDAL 3.6, the following configuration options control the TCP keep
 - :decl_configoption:`GDAL_HTTP_TCP_KEEPINTVL` = integer, in seconds. Interval time between keep-alive probes. Defaults to 60. Only taken into account if GDAL_HTTP_TCP_KEEPALIVE=YES.
 
 More generally options of :cpp:func:`CPLHTTPFetch` available through configuration options are available.
+Starting with GDAL 3.7, the above configuration options can also be specified
+as path-specific options with :cpp:func:`VSISetPathSpecificOption`.
 
 The file can be cached in RAM by setting the configuration option :decl_configoption:`VSI_CACHE` to ``TRUE``. The cache size defaults to 25 MB, but can be modified by setting the configuration option :decl_configoption:`VSI_CACHE_SIZE` (in bytes). Content in that cache is discarded when the file handle is closed.
 
