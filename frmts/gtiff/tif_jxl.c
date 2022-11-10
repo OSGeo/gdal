@@ -98,7 +98,7 @@ static int GetJXLDataType(TIFF* tif)
         return JXL_TYPE_FLOAT;
     }
 
-    TIFFErrorExt(tif->tif_clientdata, module,
+    TIFFErrorExtR(tif, module,
         "Unsupported combination of SampleFormat and BitsPerSample");
     return -1;
 }
@@ -182,7 +182,7 @@ static int SetupUncompressedBuffer(TIFF* tif, JXLState* sp,
     new_alloc = (unsigned int)new_alloc_64;
     if( new_alloc != new_alloc_64 )
     {
-        TIFFErrorExt(tif->tif_clientdata, module,
+        TIFFErrorExtR(tif, module,
                         "Too large uncompressed strip/tile");
         _TIFFfree(sp->uncompressed_buffer);
         sp->uncompressed_buffer = 0;
@@ -196,7 +196,7 @@ static int SetupUncompressedBuffer(TIFF* tif, JXLState* sp,
         sp->uncompressed_buffer = _TIFFmalloc(new_alloc);
         if( !sp->uncompressed_buffer )
         {
-            TIFFErrorExt(tif->tif_clientdata, module,
+            TIFFErrorExtR(tif, module,
                             "Cannot allocate buffer");
             _TIFFfree(sp->uncompressed_buffer);
             sp->uncompressed_buffer = 0;
@@ -236,7 +236,7 @@ JXLPreDecode(TIFF* tif, uint16_t s)
             sp->decoder = JxlDecoderCreate(NULL);
             if( sp->decoder == NULL )
             {
-                TIFFErrorExt(tif->tif_clientdata, module,
+                TIFFErrorExtR(tif, module,
                             "JxlDecoderCreate() failed");
                 return 0;
             }
@@ -251,7 +251,7 @@ JXLPreDecode(TIFF* tif, uint16_t s)
                             sp->decoder, JXL_DEC_BASIC_INFO | JXL_DEC_FULL_IMAGE);
         if( status != JXL_DEC_SUCCESS )
         {
-            TIFFErrorExt(tif->tif_clientdata, module,
+            TIFFErrorExtR(tif, module,
                          "JxlDecoderSubscribeEvents() failed");
             return 0;
         }
@@ -261,7 +261,7 @@ JXLPreDecode(TIFF* tif, uint16_t s)
                                     (size_t)tif->tif_rawcc);
         if( status != JXL_DEC_SUCCESS )
         {
-            TIFFErrorExt(tif->tif_clientdata, module,
+            TIFFErrorExtR(tif, module,
                          "JxlDecoderSetInput() failed with %d", status);
             return 0;
         }
@@ -269,7 +269,7 @@ JXLPreDecode(TIFF* tif, uint16_t s)
         status = JxlDecoderProcessInput(sp->decoder);
         if( status != JXL_DEC_BASIC_INFO )
         {
-            TIFFErrorExt(tif->tif_clientdata, module,
+            TIFFErrorExtR(tif, module,
                          "JxlDecoderProcessInput() failed with %d", status);
             JxlDecoderReleaseInput(sp->decoder);
             return 0;
@@ -279,7 +279,7 @@ JXLPreDecode(TIFF* tif, uint16_t s)
         status = JxlDecoderGetBasicInfo(sp->decoder, &info);
         if( status != JXL_DEC_SUCCESS )
         {
-            TIFFErrorExt(tif->tif_clientdata, module,
+            TIFFErrorExtR(tif, module,
                          "JxlDecoderGetBasicInfo() failed with %d", status);
             JxlDecoderReleaseInput(sp->decoder);
             return 0;
@@ -287,7 +287,7 @@ JXLPreDecode(TIFF* tif, uint16_t s)
 
         if( sp->segment_width != info.xsize )
         {
-            TIFFErrorExt(tif->tif_clientdata, module,
+            TIFFErrorExtR(tif, module,
                          "JXL basic info xsize = %d, whereas %u was expected",
                          info.xsize, sp->segment_width);
             JxlDecoderReleaseInput(sp->decoder);
@@ -296,7 +296,7 @@ JXLPreDecode(TIFF* tif, uint16_t s)
 
         if( sp->segment_height != info.ysize )
         {
-            TIFFErrorExt(tif->tif_clientdata, module,
+            TIFFErrorExtR(tif, module,
                          "JXL basic info ysize = %d, whereas %u was expected",
                          info.ysize, sp->segment_height);
             JxlDecoderReleaseInput(sp->decoder);
@@ -305,7 +305,7 @@ JXLPreDecode(TIFF* tif, uint16_t s)
 
         if( td->td_bitspersample != info.bits_per_sample )
         {
-            TIFFErrorExt(tif->tif_clientdata, module,
+            TIFFErrorExtR(tif, module,
                          "JXL basic info bits_per_sample = %d, whereas %d was expected",
                          info.bits_per_sample, td->td_bitspersample);
             JxlDecoderReleaseInput(sp->decoder);
@@ -315,7 +315,7 @@ JXLPreDecode(TIFF* tif, uint16_t s)
         if (td->td_planarconfig == PLANARCONFIG_CONTIG)
         {
             if( info.num_color_channels + info.num_extra_channels != td->td_samplesperpixel ) {
-                TIFFErrorExt(tif->tif_clientdata, module,
+                TIFFErrorExtR(tif, module,
                              "JXL basic info invalid number of channels");
                 JxlDecoderReleaseInput(sp->decoder);
                 return 0;
@@ -323,7 +323,7 @@ JXLPreDecode(TIFF* tif, uint16_t s)
         } else
         {
             if( info.num_color_channels!=1 || info.alpha_bits>0 || info.num_extra_channels>0) {
-                TIFFErrorExt(tif->tif_clientdata, module,
+                TIFFErrorExtR(tif, module,
                              "JXL basic info invalid number of channels");
                 JxlDecoderReleaseInput(sp->decoder);
                 return 0;
@@ -385,14 +385,14 @@ JXLPreDecode(TIFF* tif, uint16_t s)
                 if( JxlDecoderExtraChannelBufferSize(sp->decoder, &format, &buffer_size, iCorrectedIdx)
                         != JXL_DEC_SUCCESS  )
                 {
-                    TIFFErrorExt(tif->tif_clientdata, module,
+                    TIFFErrorExtR(tif, module,
                              "JxlDecoderExtraChannelBufferSize failed()");
                     _TIFFfree(extra_channel_buffer);
                     return 0;
                 }
                 if( buffer_size != channel_size )
                 {
-                    TIFFErrorExt(tif->tif_clientdata, module,
+                    TIFFErrorExtR(tif, module,
                              "JxlDecoderExtraChannelBufferSize returned %ld, expecting %ld",
                              buffer_size,channel_size);
                     _TIFFfree(extra_channel_buffer);
@@ -416,7 +416,7 @@ JXLPreDecode(TIFF* tif, uint16_t s)
                         }
                         else
                         {
-                            TIFFWarningExt(tif->tif_clientdata, module,
+                            TIFFWarningExtR(tif, module,
                                            "Unpremultiplied alpha channel expected from JXL codestream "
                                            "in extra channel %d, but other value found in ExtraSamples tag", iCorrectedIdx);
                         }
@@ -431,7 +431,7 @@ JXLPreDecode(TIFF* tif, uint16_t s)
                         }
                         else
                         {
-                            TIFFWarningExt(tif->tif_clientdata, module,
+                            TIFFWarningExtR(tif, module,
                                            "Premultiplied alpha channel expected from JXL codestream "
                                            "in extra channel %d, but other value found in ExtraSamples tag", iCorrectedIdx);
                         }
@@ -439,14 +439,14 @@ JXLPreDecode(TIFF* tif, uint16_t s)
                     else if( iCorrectedIdx < td->td_extrasamples &&
                              td->td_sampleinfo[iCorrectedIdx] == EXTRASAMPLE_UNASSALPHA )
                     {
-                        TIFFWarningExt(tif->tif_clientdata, module,
+                        TIFFWarningExtR(tif, module,
                                        "Unpremultiplied alpha channel expected from ExtraSamples tag "
                                        "in extra channel %d, but other value found in JXL codestream", iCorrectedIdx);
                     }
                     else if( iCorrectedIdx < td->td_extrasamples &&
                              td->td_sampleinfo[iCorrectedIdx] == EXTRASAMPLE_ASSOCALPHA )
                     {
-                        TIFFWarningExt(tif->tif_clientdata, module,
+                        TIFFWarningExtR(tif, module,
                                        "Premultiplied alpha channel expected from ExtraSamples tag "
                                        "in extra channel %d, but other value found in JXL codestream", iCorrectedIdx);
                     }
@@ -458,7 +458,7 @@ JXLPreDecode(TIFF* tif, uint16_t s)
                         channel_size, i+nFirstExtraChannel)
                         != JXL_DEC_SUCCESS )
                 {
-                    TIFFErrorExt(tif->tif_clientdata, module,
+                    TIFFErrorExtR(tif, module,
                              "JxlDecoderSetExtraChannelBuffer failed()");
                     _TIFFfree(extra_channel_buffer);
                     return 0;
@@ -472,7 +472,7 @@ JXLPreDecode(TIFF* tif, uint16_t s)
         status = JxlDecoderProcessInput(sp->decoder);
         if( status != JXL_DEC_NEED_IMAGE_OUT_BUFFER )
         {
-            TIFFErrorExt(tif->tif_clientdata, module,
+            TIFFErrorExtR(tif, module,
                          "JxlDecoderProcessInput() (second call) failed with %d", status);
             JxlDecoderReleaseInput(sp->decoder);
             _TIFFfree(extra_channel_buffer);
@@ -483,7 +483,7 @@ JXLPreDecode(TIFF* tif, uint16_t s)
                                              sp->uncompressed_buffer, main_buffer_size);
         if( status != JXL_DEC_SUCCESS )
         {
-            TIFFErrorExt(tif->tif_clientdata, module,
+            TIFFErrorExtR(tif, module,
                          "JxlDecoderSetImageOutBuffer() failed with %d", status);
             JxlDecoderReleaseInput(sp->decoder);
             _TIFFfree(extra_channel_buffer);
@@ -493,7 +493,7 @@ JXLPreDecode(TIFF* tif, uint16_t s)
         status = JxlDecoderProcessInput(sp->decoder);
         if( status != JXL_DEC_FULL_IMAGE )
         {
-            TIFFErrorExt(tif->tif_clientdata, module,
+            TIFFErrorExtR(tif, module,
                          "JxlDecoderProcessInput() (third call) failed with %d", status);
             JxlDecoderReleaseInput(sp->decoder);
             _TIFFfree(extra_channel_buffer);
@@ -528,7 +528,7 @@ JXLPreDecode(TIFF* tif, uint16_t s)
         /*const size_t nRemaining = */ JxlDecoderReleaseInput(sp->decoder);
         /*if( nRemaining != 0 )
         {
-            TIFFErrorExt(tif->tif_clientdata, module,
+            TIFFErrorExtR(tif, module,
                          "JxlDecoderReleaseInput(): %u input bytes remaining",
                          (unsigned)nRemaining);
         }*/
@@ -551,7 +551,7 @@ JXLDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
 
         if( sp->uncompressed_buffer == 0 )
         {
-            TIFFErrorExt(tif->tif_clientdata, module,
+            TIFFErrorExtR(tif, module,
                          "Uncompressed buffer not allocated");
             return 0;
         }
@@ -559,7 +559,7 @@ JXLDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
         if( (uint64_t)sp->uncompressed_offset +
                                         (uint64_t)occ > sp->uncompressed_size )
         {
-            TIFFErrorExt(tif->tif_clientdata, module,
+            TIFFErrorExtR(tif, module,
                          "Too many bytes read");
             return 0;
         }
@@ -627,7 +627,7 @@ JXLEncode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
         if( (uint64_t)sp->uncompressed_offset +
                                     (uint64_t)cc > sp->uncompressed_size )
         {
-            TIFFErrorExt(tif->tif_clientdata, module,
+            TIFFErrorExtR(tif, module,
                          "Too many bytes written");
             return 0;
         }
@@ -651,7 +651,7 @@ JXLPostEncode(TIFF* tif)
 
         if( sp->uncompressed_offset != sp->uncompressed_size )
         {
-            TIFFErrorExt(tif->tif_clientdata, module,
+            TIFFErrorExtR(tif, module,
                          "Unexpected number of bytes in the buffer");
             return 0;
         }
@@ -659,7 +659,7 @@ JXLPostEncode(TIFF* tif)
         JxlEncoder *enc = JxlEncoderCreate(NULL);
         if( enc == NULL )
         {
-            TIFFErrorExt(tif->tif_clientdata, module,
+            TIFFErrorExtR(tif, module,
                          "JxlEncoderCreate() failed");
             return 0;
         }
@@ -672,7 +672,7 @@ JXLPostEncode(TIFF* tif)
 #endif
         if( opts == NULL )
         {
-            TIFFErrorExt(tif->tif_clientdata, module,
+            TIFFErrorExtR(tif, module,
                          "JxlEncoderFrameSettingsCreate() failed");
             JxlEncoderDestroy(enc);
             return 0;
@@ -753,7 +753,7 @@ JXLPostEncode(TIFF* tif)
             if (basic_info.num_extra_channels > 1 ||
                 (basic_info.num_extra_channels == 1 && !bAlphaEmbedded))
             {
-                TIFFErrorExt(tif->tif_clientdata, module,
+                TIFFErrorExtR(tif, module,
                              "JXL: INTERLEAVE=PIXEL does not support this combination of bands. Please upgrade libjxl to 0.8+");
                 return 0;
             }
@@ -779,7 +779,7 @@ JXLPostEncode(TIFF* tif)
             if( JxlEncoderOptionsSetDistance(opts, sp->distance) != JXL_ENC_SUCCESS )
 #endif
             {
-                TIFFErrorExt(tif->tif_clientdata, module,
+                TIFFErrorExtR(tif, module,
                             "JxlEncoderSetFrameDistance() failed");
                 JxlEncoderDestroy(enc);
                 return 0;
@@ -791,7 +791,7 @@ JXLPostEncode(TIFF* tif)
         if( JxlEncoderOptionsSetEffort(opts, sp->effort) != JXL_ENC_SUCCESS )
 #endif
         {
-            TIFFErrorExt(tif->tif_clientdata, module,
+            TIFFErrorExtR(tif, module,
                          "JxlEncoderFrameSettingsSetOption() failed");
             JxlEncoderDestroy(enc);
             return 0;
@@ -800,7 +800,7 @@ JXLPostEncode(TIFF* tif)
 
         if (JXL_ENC_SUCCESS != JxlEncoderSetBasicInfo(enc, &basic_info))
         {
-            TIFFErrorExt(tif->tif_clientdata, module,
+            TIFFErrorExtR(tif, module,
                          "JxlEncoderSetBasicInfo() failed");
             JxlEncoderDestroy(enc);
             return 0;
@@ -812,7 +812,7 @@ JXLPostEncode(TIFF* tif)
             basic_info.num_color_channels == 1));
         if (JXL_ENC_SUCCESS != JxlEncoderSetColorEncoding(enc, &color_encoding))
         {
-            TIFFErrorExt(tif->tif_clientdata, module,
+            TIFFErrorExtR(tif, module,
                         "JxlEncoderSetColorEncoding() failed");
             JxlEncoderDestroy(enc);
             return 0;
@@ -866,7 +866,7 @@ JXLPostEncode(TIFF* tif)
                     enc,
                     iExtraChannel, &extra_channel_info))
                 {
-                    TIFFErrorExt(tif->tif_clientdata, module,
+                    TIFFErrorExtR(tif, module,
                                  "JxlEncoderSetExtraChannelInfo(%d) failed",iChannel);
                     JxlEncoderDestroy(enc);
                     _TIFFfree(main_buffer);
@@ -884,7 +884,7 @@ JXLPostEncode(TIFF* tif)
         }
         if( retCode != JXL_ENC_SUCCESS )
         {
-            TIFFErrorExt(tif->tif_clientdata, module,
+            TIFFErrorExtR(tif, module,
                          "JxlEncoderAddImageFrame() failed");
             JxlEncoderDestroy(enc);
             return 0;
@@ -915,7 +915,7 @@ JXLPostEncode(TIFF* tif)
                         opts, &format, extra_channel_buffer, extra_channel_size,
                         (bAlphaEmbedded)?iChannel-nMainChannels+1:iChannel-nMainChannels) != JXL_ENC_SUCCESS)
                 {
-                    TIFFErrorExt(tif->tif_clientdata, module,
+                    TIFFErrorExtR(tif, module,
                                  "JxlEncoderSetExtraChannelBuffer() failed");
                     _TIFFfree(extra_channel_buffer);
                     JxlEncoderDestroy(enc);
@@ -936,7 +936,7 @@ JXLPostEncode(TIFF* tif)
             JxlEncoderStatus process_result = JxlEncoderProcessOutput(enc, &buf, &len);
             if( process_result == JXL_ENC_ERROR )
             {
-                TIFFErrorExt(tif->tif_clientdata, module,
+                TIFFErrorExtR(tif, module,
                          "JxlEncoderProcessOutput() failed");
                 JxlEncoderDestroy(enc);
                 return 0;
@@ -1004,7 +1004,7 @@ JXLVSetField(TIFF* tif, uint32_t tag, va_list ap)
                     sp->lossless = FALSE;
                 else
                 {
-                    TIFFErrorExt(tif->tif_clientdata, module,
+                    TIFFErrorExtR(tif, module,
                             "Invalid value for Lossyness: %u", lossyness);
                     return 0;
                 }
@@ -1016,7 +1016,7 @@ JXLVSetField(TIFF* tif, uint32_t tag, va_list ap)
                 uint32_t effort = va_arg(ap, uint32_t);
                 if( effort < 1 || effort > 9)
                 {
-                    TIFFErrorExt(tif->tif_clientdata, module,
+                    TIFFErrorExtR(tif, module,
                             "Invalid value for Effort: %u", effort);
                     return 0;
                 }
@@ -1029,7 +1029,7 @@ JXLVSetField(TIFF* tif, uint32_t tag, va_list ap)
                 float distance = (float)va_arg(ap, double);
                 if( distance < 0 || distance > 15)
                 {
-                    TIFFErrorExt(tif->tif_clientdata, module,
+                    TIFFErrorExtR(tif, module,
                             "Invalid value for Distance: %f", distance);
                     return 0;
                 }
@@ -1078,7 +1078,7 @@ int TIFFInitJXL(TIFF* tif, int scheme)
         * Merge codec-specific tag information.
         */
         if (!_TIFFMergeFields(tif, JXLFields, TIFFArrayCount(JXLFields))) {
-                TIFFErrorExt(tif->tif_clientdata, module,
+                TIFFErrorExtR(tif, module,
                             "Merging JXL codec-specific tags failed");
                 return 0;
         }
@@ -1126,7 +1126,7 @@ int TIFFInitJXL(TIFF* tif, int scheme)
 
         return 1;
 bad:
-        TIFFErrorExt(tif->tif_clientdata, module,
+        TIFFErrorExtR(tif, module,
                     "No space for JXL state block");
         return 0;
 }
