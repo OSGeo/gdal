@@ -70,14 +70,14 @@ There also situations where the srsName is of the form "EPSG:XXXX"
 the intent) and the coordinates in the file are in (latitude, longitude)
 order. By default, OGR will not consider the EPSG axis order and will
 report the coordinates in (latitude,longitude) order. However, if you
-set the configuration option :decl_configoption:`GML_CONSIDER_EPSG_AS_URN` 
+set the configuration option :decl_configoption:`GML_CONSIDER_EPSG_AS_URN`
 to **YES**, the rules explained in the previous paragraph will be applied.
 
 The above also applied for projected coordinate systems
 whose EPSG preferred axis order is (northing, easting).
 
 Starting with GDAL 2.1.2, the SWAP_COORDINATES open option (or
-:decl_configoption:`GML_SWAP_COORDINATES` configuration option) can 
+:decl_configoption:`GML_SWAP_COORDINATES` configuration option) can
 be set to AUTO/YES/NO. It
 controls whether the order of the x/y or long/lat coordinates should be
 swapped. In AUTO mode, the driver will determine if swapping must be
@@ -127,14 +127,14 @@ The :decl_configoption:`GML_ATTRIBUTES_TO_OGR_FIELDS`
 configuration option can be set to **YES** so that attributes of GML
 elements are also taken into account to create OGR fields.
 
-The following :ref:`configuration options <configoptions>` are 
+The following :ref:`configuration options <configoptions>` are
 available:
 
-:ref:`configuration options <configoptions>` can e.g. be set via 
+:ref:`configuration options <configoptions>` can e.g. be set via
 the CPLSetConfigOption() function or as environment variables.
 
-You can use :decl_configoption:`GML_GFS_TEMPLATE` configuration option 
-(or **GFS_TEMPLATE** open option) set to a **path_to_template.gfs** in 
+You can use :decl_configoption:`GML_GFS_TEMPLATE` configuration option
+(or **GFS_TEMPLATE** open option) set to a **path_to_template.gfs** in
 order to unconditionally use a predefined GFS file. This option is
 really useful when you are planning to import many distinct GML
 files in subsequent steps [**-append**] and you absolutely want to
@@ -202,7 +202,7 @@ interpreted as either of two types of geometries. The Edge elements in
 it contain curves and their corresponding nodes. By default only the
 curves, the main geometries, are reported as OGRMultiLineString. To
 retrieve the nodes, as OGRMultiPoint, the configuration option
-:decl_configoption:`GML_GET_SECONDARY_GEOM` should be set to the value 
+:decl_configoption:`GML_GET_SECONDARY_GEOM` should be set to the value
 **YES**. When this is set only the secondary geometries are reported.
 
 Arc, ArcString, ArcByBulge, ArcByCenterPoint,
@@ -242,13 +242,13 @@ CPLDebug() for every 256 links. It can be seen by setting the
 environment variable CPL_DEBUG. The resolution time can be reduced if
 you know any elements that will not be needed. Mention a comma separated
 list of names of such elements with the configuration option
-:decl_configoption:`GML_SKIP_RESOLVE_ELEMS`. Set it to **ALL** to skip 
-resolving altogether (default action). Set it to **NONE** to resolve all 
+:decl_configoption:`GML_SKIP_RESOLVE_ELEMS`. Set it to **ALL** to skip
+resolving altogether (default action). Set it to **NONE** to resolve all
 the xlinks.
 
 An alternative resolution method is available.
 This alternative method will be activated using the configuration option
-:decl_configoption:`GML_SKIP_RESOLVE_ELEMS HUGE`. In this case any 
+:decl_configoption:`GML_SKIP_RESOLVE_ELEMS HUGE`. In this case any
 gml:xlink will be resolved using a temporary SQLite DB so to identify any corresponding
 gml:id relation. At the end of this SQL-based process, a resolved file
 will be generated exactly as in the **NONE** case but without their
@@ -305,13 +305,13 @@ interpretation supported by OGR.
 **NOTE** : Using the newest interpretation requires GDAL/OGR to be built
 against the GEOS library.
 
-Using the :decl_configoption:`GML_FACE_HOLE_NEGATIVE` configuration option 
-you can anyway select the actual interpretation to be applied when 
+Using the :decl_configoption:`GML_FACE_HOLE_NEGATIVE` configuration option
+you can anyway select the actual interpretation to be applied when
 parsing GML 3 topologies:
 
--  setting :decl_configoption:`GML_FACE_HOLE_NEGATIVE` =NO (*default* 
+-  setting :decl_configoption:`GML_FACE_HOLE_NEGATIVE` =NO (*default*
    option) will activate the newest interpretation rule
--  but explicitly setting :decl_configoption:`GML_FACE_HOLE_NEGATIVE` =YES 
+-  but explicitly setting :decl_configoption:`GML_FACE_HOLE_NEGATIVE` =YES
    still enables to activate the old interpretation rule
 
 Encoding issues
@@ -355,9 +355,9 @@ attribute of the created feature.
 The driver autodetects the presence of a fid
 (GML2) (resp. gml:id (GML3)) attribute at the beginning of the file,
 and, if found, exposes it by default as a *fid* (resp. *gml_id*) field.
-The autodetection can be overridden by specifying the 
-:decl_configoption:`GML_EXPOSE_FID` or 
-:decl_configoption:`GML_EXPOSE_GML_ID` configuration option to 
+The autodetection can be overridden by specifying the
+:decl_configoption:`GML_EXPOSE_FID` or
+:decl_configoption:`GML_EXPOSE_GML_ID` configuration option to
 **YES** or **NO**.
 
 When creating a GML2 document, if a field is
@@ -382,8 +382,8 @@ appear in the file.
 If no .xsd and .gfs files are found, the parser will detect the layout
 of layers when building the .gfs file. If the layers are found to be
 sequential, a *<SequentialLayers>true</SequentialLayers>* element will
-be written in the .gfs file, so that the :decl_configoption:`GML_READ_MODE` 
-will be automatically initialized to SEQUENTIAL_LAYERS if not explicitly 
+be written in the .gfs file, so that the :decl_configoption:`GML_READ_MODE`
+will be automatically initialized to SEQUENTIAL_LAYERS if not explicitly
 set by the user.
 
 The :decl_configoption:`GML_READ_MODE` configuration option can be
@@ -581,8 +581,11 @@ that case, only the content of the GML file will be written to the
 standard output (and not the .xsd). The <boundedBy> element will not be
 written. This is also the case if writing in /vsigzip/
 
-Syntax of .gfs file by example
-------------------------------
+Syntax of .gfs files
+--------------------
+
+A XML Schema for .gfs files can be found at
+https://raw.githubusercontent.com/OSGeo/gdal/master/data/gfs.xsd .
 
 Let's consider the following test.gml file :
 
