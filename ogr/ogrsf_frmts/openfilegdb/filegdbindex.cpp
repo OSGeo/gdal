@@ -2132,6 +2132,31 @@ bool FileGDBSpatialIndexIteratorImpl::Init()
 
     returnErrorIf(m_nValueSize != sizeof(uint64_t));
 
+    const auto IsPositiveInt = [](double x)
+    {
+        return x >= 0 && x <= INT_MAX;
+    };
+
+    const auto& gridRes = poParent->GetSpatialIndexGridResolution();
+    const FileGDBGeomField* poGDBGeomField = poParent->GetGeomField();
+    if( gridRes.empty() || !(gridRes[0] > 0) ||
+        // Check if the center of the layer extent results in valid scaled coords
+        !(!std::isnan(poGDBGeomField->GetXMin()) &&
+          IsPositiveInt(GetScaledCoord(0.5 *
+              (poGDBGeomField->GetXMin() + poGDBGeomField->GetXMax()))) &&
+          IsPositiveInt(GetScaledCoord(0.5 *
+              (poGDBGeomField->GetYMin() + poGDBGeomField->GetYMax())))) )
+    {
+        // gridRes[0] == 1.61271680278378622e-312 happens on layer Zone18_2014_01_Broadcast
+        // of https://coast.noaa.gov/htdata/CMSP/AISDataHandler/2014/01/Zone18_2014_01.zip
+        // The FileGDB driver does not use the .spx file in that situation,
+        // so do we.
+        CPLDebug("OpenFileGDB",
+                 "Cannot use %s as the grid resolution is invalid",
+                 pszSpxName);
+        return false;
+    }
+
     return ResetInternal();
 }
 
