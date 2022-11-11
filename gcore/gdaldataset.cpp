@@ -4092,12 +4092,18 @@ void GDALDataset::ReportErrorV(const char* pszDSName,
                                const char *fmt, va_list args)
 {
     char szNewFmt[256] = {};
-    if (strlen(fmt) + strlen(pszDSName) + 3 >= sizeof(szNewFmt) - 1)
+    const size_t strlen_fmt = strlen(fmt);
+    constexpr const char* sep = ": ";
+    const size_t strlen_sep = strlen(sep);
+    if (strlen_fmt + strlen(pszDSName) + strlen_sep + 1 >= sizeof(szNewFmt) - 1)
         pszDSName = CPLGetFilename(pszDSName);
+    const size_t strlen_dsname = strlen(pszDSName);
     if (pszDSName[0] != '\0' && strchr(pszDSName, '%') == nullptr &&
-        strlen(fmt) + strlen(pszDSName) + 3 < sizeof(szNewFmt) - 1)
+        strlen_fmt + strlen_dsname + strlen_sep + 1 < sizeof(szNewFmt) - 1)
     {
-        snprintf(szNewFmt, sizeof(szNewFmt), "%s: %s", pszDSName, fmt);
+        memcpy(szNewFmt, pszDSName, strlen_dsname);
+        memcpy(szNewFmt + strlen_dsname, sep, strlen_sep);
+        memcpy(szNewFmt + strlen_dsname + strlen_sep, fmt, strlen_fmt + 1);
         CPLErrorV(eErrClass, err_no, szNewFmt, args);
     }
     else

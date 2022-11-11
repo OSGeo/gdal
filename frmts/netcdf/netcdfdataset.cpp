@@ -4739,7 +4739,7 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
             bCanCancelGT = !(osGeolocXName == szVarNameX &&
                              osGeolocYName == szVarNameY);
         }
-        if( bCanCancelGT && !oSRS.IsGeographic() && !oSRS.IsProjected() && !bSwitchedXY )
+        if( bCanCancelGT && !m_oSRS.IsGeographic() && !m_oSRS.IsProjected() && !bSwitchedXY )
         {
             bGotCfGT = false;
         }
