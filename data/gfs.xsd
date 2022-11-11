@@ -100,7 +100,7 @@
   </xs:element>
   <xs:simpleType name="SupportedGeometryTypes">
     <xs:annotation>
-      <xs:documentation>Geometry type, expressed either as a numeric value matching the OGRwkbGeometryType enumeration (except abstract types such as wkbCurve or wkbSurface) or a string ([Multi]?Point|[Multi]?LineString|[Multi]?Polygon|GeometryCollection|CircularString|CurvePolygon|MultiCurve|MultiSurface|Triangle|PolyhedralSurface|TIN)Z?M? or None to indicate a layer without geometry field.</xs:documentation>
+      <xs:documentation>Geometry type, expressed either as a numeric value matching the OGRwkbGeometryType enumeration or a string ([Multi]?Point|[Multi]?LineString|[Multi]?Polygon|GeometryCollection|CircularString|CurvePolygon|[Multi]Curve|[Multi]Surface|Triangle|PolyhedralSurface|TIN)Z?M? or None to indicate a layer without geometry field.</xs:documentation>
     </xs:annotation>
     <xs:restriction base="xs:string">
       <xs:pattern value="-?[0-9]+"/> <!-- value from OGRwkbGeometryType enumeration -->
@@ -116,6 +116,8 @@
       <xs:pattern value="[cC][uU][rR][vV][eE][pP][oO][lL][yY][gG][oO][nN]Z?M?"/>
       <xs:pattern value="[mM][uU][lL][tT][iI][cC][uU][rR][vV][eE]Z?M?"/>
       <xs:pattern value="[mM][uU][lL][tT][iI][sS][uU][rR][fF][aA][cC][eE]Z?M?"/>
+      <xs:pattern value="[cC][uU][rR][vV][eE]Z?M?"/>
+      <xs:pattern value="[sS][uU][rR][fF][aA][cC][eE]Z?M?"/>
       <xs:pattern value="[tT][rR][iI][aA][nN][gG][lL][eE]Z?M?"/>
       <xs:pattern value="[pP][oO][lL][yY][hH][eE][dD][rR][aA][lL][sS][uU][rR][fF][aA][cC][eE]Z?M?"/>
       <xs:pattern value="[tT][iI][nN]Z?M?"/>
