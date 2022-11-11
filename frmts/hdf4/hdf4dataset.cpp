@@ -1370,6 +1370,10 @@ void GDALRegister_HDF4()
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 
+#ifdef HDF4_HAS_MAXOPENFILES
+    poDriver->SetMetadataItem("HDF4_HAS_MAXOPENFILES", "YES");
+#endif
+
 #ifdef HDF4_PLUGIN
     GDALRegister_HDF4Image();
 #endif
