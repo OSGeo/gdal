@@ -4044,6 +4044,9 @@ void GDALRegister_HDF4Image()
         "   <Option name='RANK' type='int' description='Rank of output SDS'/>"
         "</CreationOptionList>" );
 
+#ifdef HDF4_HAS_MAXOPENFILES
+    poDriver->SetMetadataItem("HDF4_HAS_MAXOPENFILES", "YES");
+#endif
     poDriver->pfnOpen = HDF4ImageDataset::Open;
     poDriver->pfnCreate = HDF4ImageDataset::Create;
 
