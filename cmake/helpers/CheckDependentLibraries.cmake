@@ -260,7 +260,7 @@ gdal_check_package(MSSQL_ODBC "MSSQL ODBC driver to enable bulk copy" CAN_DISABL
 gdal_check_package(MySQL "MySQL" CAN_DISABLE)
 
 # basic libraries
-gdal_check_package(CURL "Enable drivers to use web API" CAN_DISABLE)
+gdal_check_package(CURL "Enable drivers to use web API" CAN_DISABLE RECOMMENDED)
 
 gdal_check_package(Iconv "Character set recoding (used in GDAL portability library)" CAN_DISABLE)
 if (Iconv_FOUND)
@@ -445,9 +445,9 @@ if( NOT WORDS_BIGENDIAN )
   gdal_internal_library(LERC)
 endif()
 
-gdal_check_package(BRUNSLI "Enable BRUNSLI for JPEG packing in MRF" CAN_DISABLE RECOMMENDED)
+gdal_check_package(BRUNSLI "Enable BRUNSLI for JPEG packing in MRF" CAN_DISABLE)
 
-gdal_check_package(libQB3 "Enable QB3 compression in MRF" CONFIG CAN_DISABLE RECOMMENDED)
+gdal_check_package(libQB3 "Enable QB3 compression in MRF" CONFIG CAN_DISABLE)
 
 # Disable by default the use of external shapelib, as currently the SAOffset member that holds file offsets in it is a
 # 'unsigned long', hence 32 bit on 32 bit platforms, whereas we can handle DBFs file > 4 GB. Internal shapelib has not
