@@ -187,6 +187,18 @@ jobs:
         ar r libFuzzingEngine.a fuzzingengine.o
         CXX=g++ CXXFLAGS="${CXXFLAGS} -I$PWD/gdal/port -I$PWD/gdal/gcore -L$PWD" LIBGDAL="-L$PWD/gdal -lgdal" SRC=/tmp OUT=/tmp $GITHUB_WORKSPACE/fuzzers/build_google_oss_fuzzers.sh
         OUT=/tmp $GITHUB_WORKSPACE/fuzzers/build_seed_corpus.sh
+    - name: test autotest/cpp/gdallimits
+      run: |
+        sudo apt-get install -y numactl
+        #
+        echo "Limits without restrictions:"
+        LD_LIBRARY_PATH=$GITHUB_WORKSPACE/superbuild/build $GITHUB_WORKSPACE/superbuild/build/gdal/autotest/cpp/gdallimits
+        #
+        echo "Limits with ulimit -m 100000; numactl -C 0"
+        (ulimit -m 100000; LD_LIBRARY_PATH=$GITHUB_WORKSPACE/superbuild/build numactl -C 0 $GITHUB_WORKSPACE/superbuild/build/gdal/autotest/cpp/gdallimits) > out.txt
+        cat out.txt
+        grep "CPLGetNumCPUs = 1" out.txt >/dev/null
+        grep "CPLGetUsablePhysicalRAM = 97 MB" out.txt >/dev/null
     - name: test (with command targets)
       run: |
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target quicktest -- -j$(nproc)
