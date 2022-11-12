@@ -49,7 +49,8 @@ typedef enum
 /*                          OGRVDVParseAtrFrm()                         */
 /************************************************************************/
 
-static void OGRVDVParseAtrFrm(OGRFeatureDefn* poFeatureDefn,
+static void OGRVDVParseAtrFrm(OGRLayer* poLayer,
+                              OGRFeatureDefn* poFeatureDefn,
                               char** papszAtr,
                               char** papszFrm)
 {
@@ -126,7 +127,10 @@ static void OGRVDVParseAtrFrm(OGRFeatureDefn* poFeatureDefn,
         OGRFieldDefn oFieldDefn(papszAtr[i], eType);
         oFieldDefn.SetSubType(eSubType);
         oFieldDefn.SetWidth(nWidth);
-        poFeatureDefn->AddFieldDefn(&oFieldDefn);
+        if( poLayer )
+            poLayer->CreateField(&oFieldDefn);
+        else
+            poFeatureDefn->AddFieldDefn(&oFieldDefn);
     }
 }
 
@@ -365,10 +369,7 @@ void OGRIDFDataSource::Parse()
 
                 if( !osAtr.empty() && CSLCount(papszAtr) == CSLCount(papszFrm) )
                 {
-                    /* Note: we use AddFieldDefn() directly on the layer defn */
-                    /* This works with the current implementation of the MEM driver */
-                    /* but beware of future changes... */
-                    OGRVDVParseAtrFrm(poCurLayer->GetLayerDefn(), papszAtr, papszFrm);
+                    OGRVDVParseAtrFrm(poCurLayer, nullptr, papszAtr, papszFrm);
                 }
                 CSLDestroy(papszAtr);
                 CSLDestroy(papszFrm);
@@ -908,7 +909,7 @@ OGRVDVLayer::OGRVDVLayer(const CPLString& osTableName,
                     CSLT_ALLOWEMPTYTOKENS|CSLT_STRIPLEADSPACES|CSLT_STRIPENDSPACES);
         if( CSLCount(papszAtr) == CSLCount(papszFrm) )
         {
-            OGRVDVParseAtrFrm(m_poFeatureDefn, papszAtr, papszFrm);
+            OGRVDVParseAtrFrm(nullptr, m_poFeatureDefn, papszAtr, papszFrm);
         }
         CSLDestroy(papszAtr);
         CSLDestroy(papszFrm);
