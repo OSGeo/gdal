@@ -131,6 +131,10 @@ if(SQLite3_INCLUDE_DIR AND SQLite3_LIBRARY)
     check_symbol_exists(sqlite3_column_table_name sqlite3.h SQLite3_HAS_COLUMN_METADATA)
     check_symbol_exists(sqlite3_rtree_query_callback sqlite3.h SQLite3_HAS_RTREE)
     check_symbol_exists(sqlite3_load_extension sqlite3.h SQLite3_HAS_LOAD_EXTENSION)
+    # https://www.sqlite.org/compile.html recommends to build with -DSQLITE_OMIT_PROGRESS_CALLBACK
+    # "for applications that are able to use them"... This is sometimes wrongly
+    # understood as recommended in all situations.
+    check_symbol_exists(sqlite3_progress_handler sqlite3.h SQLite3_HAS_PROGRESS_HANDLER)
 
     if (MSVC)
         set(CMAKE_REQUIRED_FLAGS "/WX")
