@@ -437,6 +437,15 @@ bool GDALGeoPackageDataset::ConvertGpkgSpatialRefSysToExtensionWkt2()
             const char* pszOrganization = oResultTable->GetValue(2, i);
             const char* pszOrganizationCoordsysID = oResultTable->GetValue(3, i);
             const char* pszDefinition = oResultTable->GetValue(4, i);
+            if( pszSrsName == nullptr ||
+                pszSrsId == nullptr ||
+                pszOrganization == nullptr ||
+                pszOrganizationCoordsysID == nullptr )
+            {
+                // should not happen as there are NOT NULL constraints
+                // But a database could lack such NOT NULL constraints or have
+                // large values that would cause a memory allocation failure.
+            }
             const char* pszDescription = oResultTable->GetValue(5, i);
             char* pszSQL;
 
@@ -3783,6 +3792,16 @@ char **GDALGeoPackageDataset::GetMetadata( const char *pszDomain )
         const char* pszMDStandardURI = oResult->GetValue(1, i);
         const char* pszMimeType = oResult->GetValue(2, i);
         const char* pszReferenceScope = oResult->GetValue(3, i);
+        if( pszMetadata == nullptr ||
+            pszMDStandardURI == nullptr ||
+            pszMimeType == nullptr ||
+            pszReferenceScope == nullptr )
+        {
+            // should not happen as there are NOT NULL constraints
+            // But a database could lack such NOT NULL constraints or have
+            // large values that would cause a memory allocation failure.
+            continue;
+        }
         int bIsGPKGScope = EQUAL(pszReferenceScope, "geopackage");
         if( EQUAL(pszMDStandardURI, "http://gdal.org") &&
             EQUAL(pszMimeType, "text/xml") )
