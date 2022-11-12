@@ -117,6 +117,9 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
     friend class GDALGeoPackageRasterBand;
     friend class OGRGeoPackageLayer;
     friend class OGRGeoPackageTableLayer;
+    friend void OGRGeoPackageTransform(sqlite3_context* pContext,
+                                       int argc,
+                                       sqlite3_value** argv);
 
     GUInt32             m_nApplicationId = GPKG_APPLICATION_ID;
     GUInt32             m_nUserVersion = GPKG_1_2_VERSION;
@@ -149,6 +152,11 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
     std::unique_ptr<GDALColorTable> m_poCTFromMetadata{};
     std::string         m_osTFFromMetadata{};
     std::string         m_osNodataValueFromMetadata{};
+
+    // Used by OGRGeoPackageTransform
+    int                 m_nLastCachedCTSrcSRId = -1;
+    int                 m_nLastCachedCTDstSRId = -1;
+    std::unique_ptr<OGRCoordinateTransformation> m_poLastCachedCT{};
 
     int                 m_nOverviewCount = 0;
     GDALGeoPackageDataset** m_papoOverviewDS = nullptr;

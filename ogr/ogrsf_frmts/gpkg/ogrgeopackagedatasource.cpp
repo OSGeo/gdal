@@ -7423,7 +7423,10 @@ void OGRGeoPackageSTArea(sqlite3_context* pContext,
 /*                      OGRGeoPackageTransform()                        */
 /************************************************************************/
 
-static
+void OGRGeoPackageTransform(sqlite3_context* pContext,
+                            int argc,
+                            sqlite3_value** argv);
+
 void OGRGeoPackageTransform(sqlite3_context* pContext,
                             int argc,
                             sqlite3_value** argv)
@@ -7446,27 +7449,59 @@ void OGRGeoPackageTransform(sqlite3_context* pContext,
         return;
     }
 
-    GDALGeoPackageDataset* poDS = static_cast<GDALGeoPackageDataset*>(
-                                                sqlite3_user_data(pContext));
-
-    OGRSpatialReference* poSrcSRS = poDS->GetSpatialRef(sHeader.iSrsId, true);
-    if( poSrcSRS == nullptr )
+    const int nDestSRID = sqlite3_value_int (argv[1]);
+    if( sHeader.iSrsId == nDestSRID )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "SRID set on geometry (%d) is invalid", sHeader.iSrsId);
-        sqlite3_result_blob(pContext, nullptr, 0, nullptr);
+        // Return blob unmodified
+        sqlite3_result_blob(pContext, pabyBLOB, nBLOBLen, SQLITE_TRANSIENT);
         return;
     }
 
-    int nDestSRID = sqlite3_value_int (argv[1]);
-    OGRSpatialReference* poDstSRS = poDS->GetSpatialRef(nDestSRID, true);
-    if( poDstSRS == nullptr )
+    GDALGeoPackageDataset* poDS = static_cast<GDALGeoPackageDataset*>(
+                                                sqlite3_user_data(pContext));
+
+    // Try to get the cached coordinate transformation
+    OGRCoordinateTransformation* poCT;
+    if( poDS->m_nLastCachedCTSrcSRId == sHeader.iSrsId &&
+        poDS->m_nLastCachedCTDstSRId == nDestSRID )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Target SRID (%d) is invalid", nDestSRID);
-        sqlite3_result_blob(pContext, nullptr, 0, nullptr);
+        poCT = poDS->m_poLastCachedCT.get();
+    }
+    else
+    {
+        OGRSpatialReference* poSrcSRS = poDS->GetSpatialRef(sHeader.iSrsId, true);
+        if( poSrcSRS == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "SRID set on geometry (%d) is invalid", sHeader.iSrsId);
+            sqlite3_result_blob(pContext, nullptr, 0, nullptr);
+            return;
+        }
+
+        OGRSpatialReference* poDstSRS = poDS->GetSpatialRef(nDestSRID, true);
+        if( poDstSRS == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Target SRID (%d) is invalid", nDestSRID);
+            sqlite3_result_blob(pContext, nullptr, 0, nullptr);
+            poSrcSRS->Release();
+            return;
+        }
+        poCT = OGRCreateCoordinateTransformation(poSrcSRS, poDstSRS);
         poSrcSRS->Release();
-        return;
+        poDstSRS->Release();
+
+        if( poCT == nullptr )
+        {
+            sqlite3_result_blob(pContext, nullptr, 0, nullptr);
+            return;
+        }
+
+        // Cache coordinate transformation for potential later reuse
+        poDS->m_nLastCachedCTSrcSRId = sHeader.iSrsId;
+        poDS->m_nLastCachedCTDstSRId = nDestSRID;
+        poDS->m_poLastCachedCT.reset(poCT);
+        poCT = poDS->m_poLastCachedCT.get();
     }
 
     OGRGeometry* poGeom = GPkgGeometryToOGR(pabyBLOB, nBLOBLen, nullptr);
@@ -7478,18 +7513,13 @@ void OGRGeoPackageTransform(sqlite3_context* pContext,
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid geometry");
             sqlite3_result_blob(pContext, nullptr, 0, nullptr);
-            poSrcSRS->Release();
-            poDstSRS->Release();
             return;
         }
     }
 
-    poGeom->assignSpatialReference(poSrcSRS);
-    if( poGeom->transformTo(poDstSRS) != OGRERR_NONE )
+    if( poGeom->transform(poCT) != OGRERR_NONE )
     {
         sqlite3_result_blob(pContext, nullptr, 0, nullptr);
-        poSrcSRS->Release();
-        poDstSRS->Release();
         return;
     }
 
@@ -7499,8 +7529,6 @@ void OGRGeoPackageTransform(sqlite3_context* pContext,
     sqlite3_result_blob(pContext, pabyDestBLOB,
                         static_cast<int>(nBLOBDestLen), VSIFree);
 
-    poSrcSRS->Release();
-    poDstSRS->Release();
     delete poGeom;
 }
 
