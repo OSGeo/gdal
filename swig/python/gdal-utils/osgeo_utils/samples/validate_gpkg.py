@@ -2774,6 +2774,8 @@ class GPKGChecker(object):
                     (expected_version % 10000) // 100,
                     expected_version % 100,
                 )
+            else:
+                self.version = (99, 99)
 
         conn = sqlite3.connect(":memory:")
         c = conn.cursor()
