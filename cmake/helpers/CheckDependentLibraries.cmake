@@ -491,10 +491,23 @@ if (SQLite3_FOUND)
     if (NOT ACCEPT_MISSING_SQLITE3_RTREE)
       message(
         FATAL_ERROR
-          "${SQLite3_LIBRARIES} lacks the RTree extension! Spatialite and GPKG will not behave properly. Define ACCEPT_MISSING_SQLITE3_RTREE:BOOL=ON option if you want to build despite this limitation."
+          "${SQLite3_LIBRARIES} lacks the RTree extension! Spatialite and GPKG will not behave properly. Define the ACCEPT_MISSING_SQLITE3_RTREE:BOOL=ON CMake variable if you want to build despite this limitation."
         )
     else ()
       message(WARNING "${SQLite3_LIBRARIES} lacks the RTree extension! Spatialite and GPKG will not behave properly.")
+    endif ()
+  endif ()
+  if (NOT DEFINED SQLite3_HAS_MUTEX_ALLOC)
+    message(FATAL_ERROR "missing SQLite3_HAS_MUTEX_ALLOC")
+  endif ()
+  if (GDAL_USE_SQLITE3 AND NOT SQLite3_HAS_MUTEX_ALLOC)
+    if (NOT ACCEPT_MISSING_SQLITE3_MUTEX_ALLOC)
+      message(
+        FATAL_ERROR
+          "${SQLite3_LIBRARIES} lacks mutex support! Access to SQLite3 databases from multiple threads will be unsafe. Define the ACCEPT_MISSING_SQLITE3_MUTEX_ALLOC:BOOL=ON CMake variable if you want to build despite this limitation."
+        )
+    else ()
+      message(WARNING "${SQLite3_LIBRARIES} lacks the mutex extension! Access to SQLite3 databases from multiple threads will be unsafe")
     endif ()
   endif ()
 endif ()

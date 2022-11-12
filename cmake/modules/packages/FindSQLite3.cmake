@@ -127,6 +127,7 @@ if(SQLite3_INCLUDE_DIR AND SQLite3_LIBRARY)
     endif()
     set(SQLite3_LIBRARY_TIMESTAMP_OLD_VAL "${SQLite3_LIBRARY_TIMESTAMP}" CACHE INTERNAL "Old value of option SQLite3_LIBRARY_TIMESTAMP")
 
+    check_symbol_exists(sqlite3_mutex_alloc sqlite3.h SQLite3_HAS_MUTEX_ALLOC)
     check_symbol_exists(sqlite3_column_table_name sqlite3.h SQLite3_HAS_COLUMN_METADATA)
     check_symbol_exists(sqlite3_rtree_query_callback sqlite3.h SQLite3_HAS_RTREE)
     check_symbol_exists(sqlite3_load_extension sqlite3.h SQLite3_HAS_LOAD_EXTENSION)
