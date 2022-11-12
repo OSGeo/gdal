@@ -540,6 +540,8 @@ define_find_package2(GTA gta/gta.h gta PKGCONFIG_NAME gta)
 gdal_check_package(GTA "Enable GTA driver" CAN_DISABLE)
 
 gdal_check_package(MRSID "MrSID raster SDK" CAN_DISABLE)
+
+set(GDAL_USE_ARMADILLO_OLD ${GDAL_USE_ARMADILLO})
 gdal_check_package(Armadillo "C++ library for linear algebra (used for TPS transformation)" CAN_DISABLE)
 if (ARMADILLO_FOUND)
   # On Conda, the armadillo package has no dependency on lapack, but the later is required for successful linking. So
@@ -586,16 +588,43 @@ if (ARMADILLO_FOUND)
       cmake_pop_check_state()
     endif ()
   endif ()
-  if (NOT ARMADILLO_TEST_PROGRAM_WITHOUT_LAPACK_COMPILES AND NOT ARMADILLO_TEST_PROGRAM_WITH_LAPACK_COMPILES)
-    message(WARNING "Armadillo found, but test program does not build. Disabling it.")
+
+  if (GDAL_USE_ARMADILLO AND
+      NOT ARMADILLO_TEST_PROGRAM_WITHOUT_LAPACK_COMPILES AND
+      NOT ARMADILLO_TEST_PROGRAM_WITH_LAPACK_COMPILES)
     if (DEFINED ENV{CONDA_PREFIX})
-      message(
-        WARNING
-          "To enable Armadillo, you may need to install the following Conda-Forge packages: blas blas-devel libblas libcblas liblapack liblapacke"
-        )
+        if (GDAL_USE_ARMADILLO_OLD)
+          message(FATAL_ERROR
+              "Armadillo found, but test program does not build. To enable Armadillo, you may need to install the following Conda-Forge packages: blas blas-devel libblas libcblas liblapack liblapacke")
+        else()
+          message(WARNING
+              "Armadillo found, but test program does not build. Disabling it. To enable Armadillo, you may need to install the following Conda-Forge packages: blas blas-devel libblas libcblas liblapack liblapacke")
+        endif()
+    else ()
+        if (GDAL_USE_ARMADILLO_OLD)
+          message(FATAL_ERROR "Armadillo found, but test program does not build.")
+        else()
+          message(WARNING
+              "Armadillo found, but test program does not build. Disabling it.")
+        endif()
     endif ()
-    set(GDAL_USE_ARMADILLO CACHE BOOL OFF FORCE)
+    unset(GDAL_USE_ARMADILLO CACHE)
+    unset(GDAL_USE_ARMADILLO)
   endif ()
+
+  # LAPACK support required for arma::solve()
+  if (GDAL_USE_ARMADILLO AND EXISTS "${ARMADILLO_INCLUDE_DIRS}/armadillo_bits/config.hpp")
+      file(READ "${ARMADILLO_INCLUDE_DIRS}/armadillo_bits/config.hpp" armadillo_config)
+      if ("${armadillo_config}" MATCHES "/\\* #undef ARMA_USE_LAPACK")
+          if (GDAL_USE_ARMADILLO_OLD)
+              message(FATAL_ERROR "Armadillo build lacks LAPACK support")
+          else()
+              message(WARNING "Armadillo build lacks LAPACK support. Disabling it as it cannot be used by GDAL")
+          endif()
+          unset(GDAL_USE_ARMADILLO CACHE)
+          unset(GDAL_USE_ARMADILLO)
+      endif()
+  endif()
 
 endif ()
 
