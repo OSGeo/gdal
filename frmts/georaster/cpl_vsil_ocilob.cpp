@@ -174,7 +174,7 @@ OWConnection* WSIOCILobFSHandle::GetConnection(char** papszParam)
 }
 
 // -----------------------------------------------------------------------------
-//                                                                        GetStatment()
+//                                                                        GetStatement()
 // -----------------------------------------------------------------------------
 OWStatement* WSIOCILobFSHandle::GetStatement(const char *tableName, 
                                      const char *rasterid, 
