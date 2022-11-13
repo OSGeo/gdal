@@ -568,13 +568,12 @@ int* VSIGSFSHandler::UnlinkBatch( CSLConstList papszFiles )
     int* panRet = static_cast<int*>(
         CPLCalloc(sizeof(int), CSLCount(papszFiles)));
 
-    if( !poHandleHelper )
+    const char* pszFirstFilename = papszFiles && papszFiles[0] ? papszFiles[0] : nullptr;
+    if( !poHandleHelper || pszFirstFilename == nullptr )
         return panRet;
 
     NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
     NetworkStatisticsAction oContextAction("UnlinkBatch");
-
-    const char* pszFirstFilename = papszFiles && papszFiles[0] ? papszFiles[0] : nullptr;
 
     // coverity[tainted_data]
     double dfRetryDelay = CPLAtof(VSIGetPathSpecificOption(
