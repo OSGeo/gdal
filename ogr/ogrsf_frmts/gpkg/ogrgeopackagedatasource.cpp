@@ -2311,6 +2311,11 @@ bool GDALGeoPackageDataset::InitRaster( GDALGeoPackageDataset* poParentDS,
         {
             poNewBand->AssignColorTable(m_poCTFromMetadata.get());
         }
+        if( !m_osNodataValueFromMetadata.empty() )
+        {
+            poNewBand->SetNoDataValueInternal(
+                CPLAtof(m_osNodataValueFromMetadata.c_str()));
+        }
     }
 
     if( !ComputeTileAndPixelShifts() )
@@ -3758,6 +3763,13 @@ char **GDALGeoPackageDataset::GetMetadata( const char *pszDomain )
                                 m_osTFFromMetadata = pszTILE_FORMAT;
                                 oMDMD.SetMetadataItem("TILE_FORMAT", pszTILE_FORMAT, "IMAGE_STRUCTURE");
                             }
+
+                            const char* pszNodataValue = CSLFetchNameValue(
+                                papszMD, "NODATA_VALUE");
+                            if( pszNodataValue )
+                            {
+                                m_osNodataValueFromMetadata = pszNodataValue;
+                            }
                         }
 
                         else if( !EQUAL(*papszIter, "") )
@@ -4259,6 +4271,18 @@ CPLErr GDALGeoPackageDataset::FlushMetadata()
                 }
                 if( pszTILE_FORMAT )
                     oLocalMDMD.SetMetadataItem("TILE_FORMAT", pszTILE_FORMAT, "IMAGE_STRUCTURE");
+            }
+        }
+        if( GetRasterCount() > 0 &&
+            GetRasterBand(1)->GetRasterDataType() == GDT_Byte )
+        {
+            int bHasNoData = FALSE;
+            const double dfNoDataValue = GetRasterBand(1)->GetNoDataValue(&bHasNoData);
+            if( bHasNoData )
+            {
+                oLocalMDMD.SetMetadataItem("NODATA_VALUE",
+                                           CPLSPrintf("%.18g", dfNoDataValue),
+                                           "IMAGE_STRUCTURE");
             }
         }
         psXMLNode = oLocalMDMD.Serialize();

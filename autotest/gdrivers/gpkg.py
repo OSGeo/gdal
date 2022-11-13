@@ -4181,6 +4181,41 @@ def test_gpkg_uint16_tiling_scheme_nodata_overview():
 
 
 ###############################################################################
+# Test GDAL storage of nodata value for Byte raster in metadata
+
+
+@pytest.mark.parametrize("band_count", [1, 2])
+def test_gpkg_byte_nodata_value(band_count):
+
+    if gdaltest.gpkg_dr is None:
+        pytest.skip()
+    if gdaltest.png_dr is None:
+        pytest.skip()
+
+    filename = "/vsimem/tmp.gpkg"
+    gdal.Unlink(filename)
+
+    ds = gdaltest.gpkg_dr.Create(
+        filename, 1, 1, band_count, gdal.GDT_Byte, options=["TILE_FORMAT=PNG"]
+    )
+    ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    with gdaltest.error_handler():
+        assert ds.GetRasterBand(1).SetNoDataValue(-32768) == gdal.CE_Failure
+    assert ds.GetRasterBand(1).SetNoDataValue(255) == gdal.CE_None
+    if band_count == 2:
+        with gdaltest.error_handler():
+            assert ds.GetRasterBand(2).SetNoDataValue(254) == gdal.CE_Failure
+    ds = None
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetNoDataValue() == 255
+    if band_count == 2:
+        assert ds.GetRasterBand(2).GetNoDataValue() == 255
+    ds = None
+
+    gdal.Unlink(filename)
+
+
+###############################################################################
 #
 
 
