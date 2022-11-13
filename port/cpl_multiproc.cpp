@@ -1392,6 +1392,10 @@ void CPLCleanupTLS()
 #include <unistd.h>
 #include <sys/time.h>
 
+#ifdef HAVE_SCHED_GETAFFINITY
+#include <sched.h>
+#endif
+
   /************************************************************************/
   /* ==================================================================== */
   /*                        CPL_MULTIPROC_PTHREAD                         */
@@ -1413,45 +1417,22 @@ int CPLGetNumCPUs()
     nCPUs = 1;
 #endif
 
-    // In a Docker/LXC containers the number of CPUs might be limited
-    FILE* f = fopen("/sys/fs/cgroup/cpuset/cpuset.cpus", "rb");
-    if(f)
+#ifdef HAVE_SCHED_GETAFFINITY
+    if( nCPUs > 1 )
     {
-        constexpr size_t nMaxCPUs = 8*64; // 8 Sockets * 64 threads = 512
-        constexpr size_t nBuffSize(nMaxCPUs*4); // 3 digits + delimiter per CPU
-        char*            pszBuffer =
-                            reinterpret_cast<char*>(CPLMalloc(nBuffSize));
-        const size_t     nRead = fread(pszBuffer, 1, nBuffSize - 1, f);
-        pszBuffer[nRead] = 0;
-        fclose(f);
-        char **papszCPUsList =
-            CSLTokenizeStringComplex(pszBuffer, ",", FALSE, FALSE);
-
-        CPLFree(pszBuffer);
-
-        int nCpusetCpus = 0;
-        for(int i = 0; papszCPUsList[i] != nullptr; ++i)
+        cpu_set_t* set = CPU_ALLOC(nCPUs);
+        if( set )
         {
-            if(strchr(papszCPUsList[i], '-'))
-            {
-                char **papszCPUsRange =
-                  CSLTokenizeStringComplex(papszCPUsList[i], "-", FALSE, FALSE);
-                if(CSLCount(papszCPUsRange) == 2)
-                {
-                    int iBegin(atoi(papszCPUsRange[0]));
-                    int iEnd(atoi(papszCPUsRange[1]));
-                    nCpusetCpus += (iEnd - iBegin + 1);
-                }
-                CSLDestroy(papszCPUsRange);
-            }
+            size_t sizeof_set = CPU_ALLOC_SIZE(nCPUs);
+            CPU_ZERO_S(sizeof_set, set);
+            if( sched_getaffinity(getpid(), sizeof_set, set) == 0 )
+                nCPUs = CPU_COUNT_S(sizeof_set, set);
             else
-            {
-                ++nCpusetCpus;
-            }
+                CPLDebug("CPL", "sched_getaffinity() failed");
+            CPU_FREE(set);
         }
-        CSLDestroy(papszCPUsList);
-        nCPUs = std::min(nCPUs, std::max(1, nCpusetCpus));
     }
+#endif
 
     return nCPUs;
 }

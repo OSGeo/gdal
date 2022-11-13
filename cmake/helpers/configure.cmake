@@ -335,6 +335,14 @@ else ()
     "
     HAVE_SC_PHYS_PAGES)
 
+  check_c_source_compiles(
+    "
+        #define _GNU_SOURCE
+        #include <sched.h>
+        int main () { return sched_getaffinity(0,0,0); }
+    "
+    HAVE_SCHED_GETAFFINITY)
+
   include(FindInt128)
   if (INT128_FOUND)
     set(HAVE_UINT128_T TRUE)
