@@ -73,7 +73,7 @@ if(HDF4_INCLUDE_DIR)
           set(_names_release ${tgt}alt ${tgt} hdf libhdf)
         else()
           set(_names_debug  ${tgt}altd ${tgt}d)
-          set(_names_release ${tgt}alt ${tgt})
+          set(_names_release ${tgt}alt ${tgt} lib${tgt})
         endif()
         find_library(HDF4_${tgt}_LIBRARY_DEBUG
                      NAMES ${_names_debug}
