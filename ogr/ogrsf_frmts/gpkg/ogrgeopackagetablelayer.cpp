@@ -6370,6 +6370,7 @@ OGRGeometryTypeCounter* OGRGeoPackageTableLayer::GetGeometryTypes(
         return nullptr;
     }
 
+#ifdef SQLITE_HAS_PROGRESS_HANDLER
     struct CancelCallback
     {
         sqlite3*         m_hDB = nullptr;
@@ -6410,6 +6411,10 @@ OGRGeometryTypeCounter* OGRGeoPackageTableLayer::GetGeometryTypes(
     };
 
     CancelCallback oCancelCallback(m_poDS->hDB, pfnProgress, pProgressData);
+#else
+    CPL_IGNORE_RET_VAL(pfnProgress);
+    CPL_IGNORE_RET_VAL(pProgressData);
+#endif
 
     char** papszResult = nullptr;
     char* pszErrMsg = nullptr;
