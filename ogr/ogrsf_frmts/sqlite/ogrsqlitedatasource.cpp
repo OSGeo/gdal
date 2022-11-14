@@ -1177,6 +1177,14 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, bool bRegisterOGR2SQLit
         }
 #endif
 
+        const char* pszPreludeStatements = CSLFetchNameValue(
+            papszOpenOptions, "PRELUDE_STATEMENTS");
+        if( pszPreludeStatements )
+        {
+            if( SQLCommand(hDB, pszPreludeStatements) != OGRERR_NONE )
+                return FALSE;
+        }
+
         if (pszSqlitePragma != nullptr)
         {
             char** papszTokens = CSLTokenizeString2( pszSqlitePragma, ",",
@@ -1987,13 +1995,6 @@ bool OGRSQLiteDataSource::Open( GDALOpenInfo* poOpenInfo)
         return OpenRasterSubDataset( pszNewName );
     }
 #endif
-
-    const char* pszPreludeStatements = CSLFetchNameValue(papszOpenOptions, "PRELUDE_STATEMENTS");
-    if( pszPreludeStatements )
-    {
-        if( SQLCommand(hDB, pszPreludeStatements) != OGRERR_NONE )
-            return false;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      If we have a GEOMETRY_COLUMNS tables, initialize on the basis   */
