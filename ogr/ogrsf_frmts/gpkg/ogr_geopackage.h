@@ -750,6 +750,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     void                DisableFeatureCount();
 #endif
 
+    bool                CreateGeometryExtensionIfNecessary(OGRwkbGeometryType eGType);
+
     /************************************************************************/
     /* GPKG methods */
 
@@ -769,7 +771,6 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
 
     void                CheckUnknownExtensions();
     bool                CreateGeometryExtensionIfNecessary(const OGRGeometry* poGeom);
-    bool                CreateGeometryExtensionIfNecessary(OGRwkbGeometryType eGType);
 };
 
 /************************************************************************/

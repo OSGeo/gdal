@@ -755,6 +755,32 @@ def _gpkg_ogrmerge(
 
             dst_ds.ExecuteSQL("DETACH DATABASE source_db")
 
+            # Manually register gpkg_geom_* extensions, if not already done
+            # at layer creation time.
+            sql_lyr = src_ds.ExecuteSQL(
+                "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'gpkg_extensions'"
+            )
+            has_gpkg_extensions = sql_lyr.GetFeatureCount() == 1
+            src_ds.ReleaseResultSet(sql_lyr)
+            if has_geom and has_gpkg_extensions:
+                sql = (
+                    "SELECT extension_name FROM gpkg_extensions WHERE table_name = '%s' AND column_name = '%s' AND extension_name LIKE 'gpkg_geom_%%'"
+                    % (
+                        _quote_literal(src_lyr.GetName()),
+                        _quote_literal(src_lyr.GetGeometryColumn()),
+                    )
+                )
+                sql_lyr = src_ds.ExecuteSQL(sql)
+                for f in sql_lyr:
+                    geom_type = f.GetField(0)[len("gpkg_geom_") :]
+                    dst_ds.ReleaseResultSet(
+                        dst_ds.ExecuteSQL(
+                            "SELECT RegisterGeometryExtension('%s', '%s', '%s')"
+                            % (lyr.GetName(), lyr.GetGeometryColumn(), geom_type)
+                        )
+                    )
+                src_ds.ReleaseResultSet(sql_lyr)
+
             # Update extent
             if has_geom:
                 res = src_lyr.GetExtent(force=1, can_return_null=True)
