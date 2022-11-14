@@ -1030,18 +1030,14 @@ def test_ogr_fgdb_16(openfilegdb_drv, fgdb_drv):
     fgdb_drv.Register()
     openfilegdb_drv.Register()
 
-    ds = ogr.Open("tmp/cache/ESSENCE_NAIPF_ORI_PROV_sub93.gdb")
-    if ds is None:
-        ret = "fail"
-    else:
-        ret = "success"
+    try:
+        ds = ogr.Open("tmp/cache/ESSENCE_NAIPF_ORI_PROV_sub93.gdb")
+        assert ds is not None
+    finally:
+        # Deregister OpenFileGDB again
+        openfilegdb_drv.Deregister()
 
-    # Deregister OpenFileGDB again
-    openfilegdb_drv.Deregister()
-
-    shutil.rmtree("tmp/cache/ESSENCE_NAIPF_ORI_PROV_sub93.gdb")
-
-    return ret
+        shutil.rmtree("tmp/cache/ESSENCE_NAIPF_ORI_PROV_sub93.gdb")
 
 
 ###############################################################################

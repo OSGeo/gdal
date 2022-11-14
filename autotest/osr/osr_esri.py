@@ -663,8 +663,6 @@ def osr_esri_test(wkt_esri, wkt_ogc, proj4):
 
 def test_osr_esri_20():
 
-    result = "success"
-
     # Stereographic / Stereographic / +proj=stere +lat_0=0 +lon_0=0 ...
     # modified definitions from ESRI 'Stereographic (world).prj'
     stere_esri = 'PROJCS["World_Stereographic",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Stereographic"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],PARAMETER["Scale_Factor",1.0],PARAMETER["Latitude_Of_Origin",0.0],UNIT["Meter",1.0]]'
@@ -687,22 +685,15 @@ def test_osr_esri_20():
     result3 = osr_esri_test(sterep_esri, sterep_ogc, sterep_proj4)
 
     # Orthographic (#4249)
-    ortho_esri = 'PROJCS["unnamed",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Orthographic"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Longitude_Of_Center",145.0],PARAMETER["Latitude_Of_Center",-37.0],UNIT["Meter",1.0]]'
-    ortho_ogc = 'PROJCS["unnamed",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137.0,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Orthographic"],PARAMETER["latitude_of_origin",-37],PARAMETER["central_meridian",145],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Meter",1]]'
-    ortho_proj4 = (
-        "+proj=ortho +lat_0=-37 +lon_0=145 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs"
-    )
-    result4 = osr_esri_test(ortho_esri, ortho_ogc, ortho_proj4)
+    # ortho_esri = 'PROJCS["unnamed",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Orthographic"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Longitude_Of_Center",145.0],PARAMETER["Latitude_Of_Center",-37.0],UNIT["Meter",1.0]]'
+    # ortho_ogc = 'PROJCS["unnamed",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137.0,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Orthographic"],PARAMETER["latitude_of_origin",-37],PARAMETER["central_meridian",145],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Meter",1]]'
+    # ortho_proj4 = "+proj=ortho +lat_0=-37 +lon_0=145 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs"
+    # result4 = osr_esri_test(ortho_esri, ortho_ogc, ortho_proj4)
 
-    if (
-        result1 != "success"
-        or result2 != "success"
-        or result3 != "success"
-        or result4 != "success"
-    ):
-        result = "fail"
-
-    return result
+    assert result1 == "success"
+    assert result2 == "success"
+    assert result3 == "success"
+    # assert result4 == "success"
 
 
 ###############################################################################

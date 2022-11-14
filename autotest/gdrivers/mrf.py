@@ -196,7 +196,7 @@ def cleanup(base="/vsimem/out."):
 
 
 def test_mrf_zen_test():
-    result = "success"
+
     expectedCS = 770
     testvrt = """
 <VRTDataset rasterXSize="512" rasterYSize="512">
@@ -220,20 +220,9 @@ def test_mrf_zen_test():
         )
         ds = gdal.Open(testvrt)
         cs = ds.GetRasterBand(1).Checksum()
-        if cs != expectedCS:
-            gdaltest.post_reason(
-                "Interleave="
-                + interleave
-                + " expected checksum "
-                + str(expectedCS)
-                + " got "
-                + str(cs)
-            )
-            result = "fail"
+        assert cs == expectedCS, (interleave, expectedCS, cs)
         for f in glob.glob("tmp/masked.*"):
             gdal.Unlink(f)
-
-    return result
 
 
 def test_mrf_overview_nnb_fact_2():
