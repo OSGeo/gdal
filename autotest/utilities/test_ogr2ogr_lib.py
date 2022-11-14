@@ -164,17 +164,8 @@ def test_ogr2ogr_lib_6():
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetFieldCount() == 2
     feat = lyr.GetNextFeature()
-    ret = "success"
-    if feat.GetFieldAsDouble("EAS_ID") != 168:
-        gdaltest.post_reason("did not get expected value for EAS_ID")
-        print(feat.GetFieldAsDouble("EAS_ID"))
-        ret = "fail"
-    elif feat.GetFieldAsString("PRFEDEA") != "35043411":
-        gdaltest.post_reason("did not get expected value for PRFEDEA")
-        print(feat.GetFieldAsString("PRFEDEA"))
-        ret = "fail"
-
-    return ret
+    assert feat.GetFieldAsDouble("EAS_ID") == 168
+    assert feat.GetFieldAsString("PRFEDEA") == "35043411"
 
 
 ###############################################################################

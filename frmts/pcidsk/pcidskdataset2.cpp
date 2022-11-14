@@ -2114,6 +2114,8 @@ int PCIDSK2Dataset::TestCapability( const char * pszCap )
         return eAccess == GA_Update;
     if( EQUAL(pszCap,ODsCRandomLayerWrite) )
         return eAccess == GA_Update;
+    if( EQUAL(pszCap,ODsCZGeometries) )
+        return TRUE;
 
     return FALSE;
 }
@@ -2303,6 +2305,8 @@ void GDALRegister_PCIDSK()
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
                                "<LayerCreationOptionList/>" );
     poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Real String IntegerList");
+    poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
 
     poDriver->pfnIdentify = PCIDSK2Dataset::Identify;
     poDriver->pfnOpen = PCIDSK2Dataset::Open;

@@ -44,7 +44,13 @@ gdal_array = pytest.importorskip("osgeo.gdal_array")
 
 def test_numpy_rw_1():
 
-    from osgeo import gdalnumeric
+    # Suppress the DeprecationWarning emitted when importing gdalnumeric
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=DeprecationWarning)
+
+        from osgeo import gdalnumeric
 
     gdalnumeric.zeros
 
