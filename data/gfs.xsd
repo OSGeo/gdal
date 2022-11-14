@@ -33,7 +33,7 @@
               <xs:element minOccurs="0" name="GeometryName" type="xs:string">
                 <xs:annotation>
                   <xs:documentation>Name of a geometric property of the feature. Can be different than the name of the XML element that represents that property. Examples: case can change, a prefix can be added to the name, and the name can be more human readable (e.g. the full name, rather than an abbreviation, or a combination of names in the element path). Mutually exclusive with GeomPropertyDefn</xs:documentation>
-               </xs:annotation>
+                </xs:annotation>
               </xs:element>
               <xs:element minOccurs="0" name="GeometryElementPath" type="xs:string">
                 <xs:annotation>
@@ -97,13 +97,21 @@
         </xs:element>
       </xs:sequence>
     </xs:complexType>
+    <xs:unique name="uniqueGMLFeatureClassNames">
+      <xs:annotation>
+        <xs:documentation>The names of all GMLFeatureClasses within the GMLFeatureClassList must be unique.</xs:documentation>
+      </xs:annotation>
+      <xs:selector xpath="GMLFeatureClass"/>
+      <xs:field xpath="Name"/>
+    </xs:unique>
   </xs:element>
   <xs:simpleType name="SupportedGeometryTypes">
     <xs:annotation>
       <xs:documentation>Geometry type, expressed either as a numeric value matching the OGRwkbGeometryType enumeration or a string ([Multi]?Point|[Multi]?LineString|[Multi]?Polygon|GeometryCollection|CircularString|CurvePolygon|[Multi]Curve|[Multi]Surface|Triangle|PolyhedralSurface|TIN)Z?M? or None to indicate a layer without geometry field.</xs:documentation>
     </xs:annotation>
     <xs:restriction base="xs:string">
-      <xs:pattern value="-?[0-9]+"/> <!-- value from OGRwkbGeometryType enumeration -->
+      <xs:pattern value="-?[0-9]+"/>
+      <!-- value from OGRwkbGeometryType enumeration -->
       <xs:pattern value="[pP][oO][iI][nN][tT]Z?M?"/>
       <xs:pattern value="[lL][iI][nN][eE][sS][tT][rR][iI][nN][gG]Z?M?"/>
       <xs:pattern value="[pP][oO][lL][yY][gG][oO][nN]Z?M?"/>
@@ -173,7 +181,7 @@ Examples: case can change, a prefix can be added to the name, and the name can b
           </xs:annotation>
           <xs:simpleType>
             <xs:restriction base="xs:string">
-               <!-- Untyped, FeatureProperty and FeaturePropertyList are referenced in the code but not used in practice -->
+              <!-- Untyped is referenced in the code but not used in practice; Complex does not appear to have any effect (furthermore, its use is unclear) -->
               <xs:enumeration value="String"/>
               <xs:enumeration value="Integer"/>
               <xs:enumeration value="Real"/>
@@ -181,6 +189,8 @@ Examples: case can change, a prefix can be added to the name, and the name can b
               <xs:enumeration value="IntegerList"/>
               <xs:enumeration value="RealList"/>
               <xs:enumeration value="Complex"/>
+              <xs:enumeration value="FeatureProperty"/>
+              <xs:enumeration value="FeaturePropertyList"/>
             </xs:restriction>
           </xs:simpleType>
         </xs:element>
