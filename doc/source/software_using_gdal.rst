@@ -16,6 +16,7 @@ Free and open source
 - `exactextract <https://github.com/isciences/exactextract>`_ Fast and accurate raster/vector zonal statistics (Apache 2.0)
 - `Feature Data Objects (FDO)  <http://fdo.osgeo.org>`_  Open source spatial data access libraries (LGPL)
 - `Fiona  <http://pypi.python.org/pypi/Fiona>`_  Fiona is OGR's neater Python API – sleek and elegant on the outside, indomitable power on the inside.
+- `gdal3.js.org <https://gdal3.js.org>`_  Convert raster and vector geospatial data to various formats and coordinate systems entirely in the browser.
 - `GdalToTiles  <http://www.codeplex.com/gdal2tilescsharp>`_  C# Program (open source) for making image tiles for Google Earth with KML Superoverlay.
 - `GeoDa  <http://geodacenter.github.io/index.html>`_  Introduction to Spatial Data Analysis (spatial autocorrelation and spatial regression) (GPL)
 - `GeoDjango  <https://docs.djangoproject.com/en/dev/ref/contrib/gis/>`_  A framework for building geographic web applications.
