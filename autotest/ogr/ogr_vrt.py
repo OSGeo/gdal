@@ -36,6 +36,8 @@ import test_cli_utilities
 
 from osgeo import gdal, ogr, osr
 
+pytestmark = pytest.mark.require_driver("OGR_VRT")
+
 ###############################################################################
 # Open VRT datasource.
 
@@ -1078,9 +1080,6 @@ def test_ogr_vrt_21():
 
 def ogr_vrt_22_internal():
 
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
-
     ds = ogr.Open("data/vrt/vrt_test.vrt")
     lyr = ds.GetLayerByName("test5")
     assert lyr.GetName() == "test5"
@@ -1093,7 +1092,7 @@ def ogr_vrt_22_internal():
 
     ds = ogr.Open("data/vrt/vrt_test.vrt")
     lyr = ds.GetLayerByName("test5")
-    assert lyr.GetSpatialRef().ExportToWkt().find("84") != -1
+    assert lyr.GetSpatialRef() is None
     ds = None
 
     ds = ogr.Open("data/vrt/vrt_test.vrt")
@@ -1190,13 +1189,8 @@ def ogr_vrt_22_internal():
 
 
 def test_ogr_vrt_22():
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    try:
-        ret = ogr_vrt_22_internal()
-    except Exception:
-        ret = "fail"
-    gdal.PopErrorHandler()
-    return ret
+    with gdaltest.error_handler():
+        ogr_vrt_22_internal()
 
 
 ###############################################################################

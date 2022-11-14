@@ -587,24 +587,20 @@ def test_ogr_sql_23():
 
 def test_ogr_sql_24():
 
-    result = "success"
+    if gdal.GetDriverByName("DGN") is None:
+        pytest.skip("DGN driver missing")
 
     ds = ogr.Open("data/dgn/smalltest.dgn")
 
     sql_layer = ds.ExecuteSQL("SELECT * from elements where colorindex=83 and type=3")
 
     feat = sql_layer.GetNextFeature()
-    if len(feat.GetStyleString()) < 10:
-        print(feat.GetStyleString())
-        gdaltest.post_reason(
-            "style string apparently not propagated to OGR SQL results."
-        )
-        result = "fail"
-    feat = None
-    ds.ReleaseResultSet(sql_layer)
+    try:
+        assert len(feat.GetStyleString()) >= 10
+        feat = None
+    finally:
+        ds.ReleaseResultSet(sql_layer)
     ds = None
-
-    return result
 
 
 ###############################################################################
@@ -1304,17 +1300,16 @@ def test_ogr_sql_42():
 
 def test_ogr_sql_43():
 
-    ret = "success"
     sql = "SELECT '\"' as a, '\\'' as b, '''' as c FROM poly"
     sql_lyr = gdaltest.ds.ExecuteSQL(sql)
 
     feat = sql_lyr.GetNextFeature()
-    if feat["a"] != '"' or feat["b"] != "'" or feat["c"] != "'":
-        ret = "fail"
-
-    gdaltest.ds.ReleaseResultSet(sql_lyr)
-
-    return ret
+    try:
+        assert feat["a"] == '"'
+        assert feat["b"] == "'"
+        assert feat["c"] == "'"
+    finally:
+        gdaltest.ds.ReleaseResultSet(sql_lyr)
 
 
 ###############################################################################

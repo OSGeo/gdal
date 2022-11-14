@@ -177,22 +177,20 @@ def test_ogr_pcidsk_3():
         test_cli_utilities.get_test_ogrsf_path() + " tmp/ogr_pcidsk_1.pix"
     )
 
-    ret_str = "success"
-
     if ret.find("ERROR: The feature was not deleted") != -1:
         # Expected fail for now
         print("ERROR: The feature was not deleted")
         ret = ret.replace(
             "ERROR: The feature was not deleted", "ARGHH: The feature was not deleted"
         )
-        ret_str = "expected_fail"
+        ret = ret.replace(
+            "ERROR: Attempt to restore feature failed",
+            "ARGHH: Attempt to restore feature failed",
+        )
     if ret.find("ERROR") == ret.find("ERROR ret code = 1"):
         ret = ret.replace("ERROR ret code = 1", "")
-    if ret.find("INFO") == -1 or ret.find("ERROR") != -1:
-        print(ret)
-        ret_str = "fail"
-
-    return ret_str
+    assert "INFO" in ret
+    assert "ERROR" not in ret
 
 
 ###############################################################################

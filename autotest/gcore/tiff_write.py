@@ -2053,8 +2053,6 @@ def test_tiff_write_58():
 
 def test_tiff_write_59():
 
-    ret = "success"
-
     for nbands in (1, 2):
         for nbits in (1, 8, 9, 12, 16, 17, 24, 32):
 
@@ -2092,16 +2090,9 @@ def test_tiff_write_59():
             # We expect zeros
             got = struct.unpack(ctype * 10, data)
             for g in got:
-                if g != 0:
-                    print(("nbands=%d, NBITS=%d" % (nbands, nbits)))
-                    print(got)
-                    ret = "fail"
-                    break
-
+                assert g == 0, (nbands, nbits)
             ds = None
             gdaltest.tiff_drv.Delete("tmp/tiff_write_59.tif")
-
-    return ret
 
 
 ###############################################################################

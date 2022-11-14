@@ -2676,11 +2676,6 @@ def test_ogr_elasticsearch_http_headers_from_env():
     ogr_elasticsearch_delete_files()
 
     gdal.FileFromMemBuffer(
-        "/vsimem/fakeelasticsearch&HEADERS=Bar: value_of_bar\nFoo: value_of_foo\n",
-        """{"version":{"number":"5.0.0"}}""",
-    )
-
-    gdal.FileFromMemBuffer(
         """/vsimem/fakeelasticsearch/_cat/indices?h=i&HEADERS=Bar: value_of_bar\nFoo: value_of_foo\n""",
         "",
     )
@@ -2731,17 +2726,21 @@ def test_ogr_elasticsearch_http_headers_from_env():
             "BAR": "value_of_bar",
         }
     ):
-        ds = gdal.OpenEx(
-            "ES:/vsimem/fakeelasticsearch",
-            open_options=[
-                "FORWARD_HTTP_HEADERS_FROM_ENV=Foo=FOO,Bar=BAR,Baz=I_AM_NOT_SET"
-            ],
-        )
-        assert ds is not None
-        sql_lyr = ds.ExecuteSQL("{ 'FOO' : 'BAR' }", dialect="ES")
-        f = sql_lyr.GetNextFeature()
-        assert f["some_field"] == "5"
-        ds.ReleaseResultSet(sql_lyr)
+        with gdaltest.tempfile(
+            "/vsimem/fakeelasticsearch&HEADERS=Bar: value_of_bar\nFoo: value_of_foo\n",
+            """{"version":{"number":"5.0.0"}}""",
+        ):
+            ds = gdal.OpenEx(
+                "ES:/vsimem/fakeelasticsearch",
+                open_options=[
+                    "FORWARD_HTTP_HEADERS_FROM_ENV=Foo=FOO,Bar=BAR,Baz=I_AM_NOT_SET"
+                ],
+            )
+            assert ds is not None
+            sql_lyr = ds.ExecuteSQL("{ 'FOO' : 'BAR' }", dialect="ES")
+            f = sql_lyr.GetNextFeature()
+            assert f["some_field"] == "5"
+            ds.ReleaseResultSet(sql_lyr)
 
 
 ###############################################################################
