@@ -788,7 +788,7 @@ class GPKGChecker(object):
                 env_ind <= 4, 19, "Invalid geometry: invalid envelope indicator code"
             )
             endian_prefix = ">" if big_endian else "<"
-            geom_srs_id = struct.unpack((endian_prefix + "I") * 1, blob[4:8])[0]
+            geom_srs_id = struct.unpack((endian_prefix + "i") * 1, blob[4:8])[0]
             if srs_id != geom_srs_id:
                 warning_msg = (
                     "table %s has geometries with SRID %d, "
@@ -2774,6 +2774,8 @@ class GPKGChecker(object):
                     (expected_version % 10000) // 100,
                     expected_version % 100,
                 )
+            else:
+                self.version = (99, 99)
 
         conn = sqlite3.connect(":memory:")
         c = conn.cursor()

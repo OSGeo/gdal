@@ -73,7 +73,7 @@ if(HDF4_INCLUDE_DIR)
           set(_names_release ${tgt}alt ${tgt} hdf libhdf)
         else()
           set(_names_debug  ${tgt}altd ${tgt}d)
-          set(_names_release ${tgt}alt ${tgt})
+          set(_names_release ${tgt}alt ${tgt} lib${tgt})
         endif()
         find_library(HDF4_${tgt}_LIBRARY_DEBUG
                      NAMES ${_names_debug}
@@ -110,6 +110,7 @@ find_package_handle_standard_args(HDF4
 
 # set output variables
 if(HDF4_FOUND)
+  set(HDF4_INCLUDE_DIRS "${HDF4_INCLUDE_DIR}")
   if(NOT TARGET HDF4::HDF4)
       set(INCR 1)
       set(HDF4_TARGETS)
@@ -124,7 +125,7 @@ if(HDF4_FOUND)
 
       add_library(HDF4::HDF4 INTERFACE IMPORTED)
       set_target_properties(HDF4::HDF4 PROPERTIES
-                            INTERFACE_INCLUDE_DIRECTORIES ${HDF4_INCLUDE_DIR}
+                            INTERFACE_INCLUDE_DIRECTORIES ${HDF4_INCLUDE_DIRS}
                             INTERFACE_LINK_LIBRARIES "${HDF4_TARGETS}")
   endif()
 endif()

@@ -2395,15 +2395,29 @@ void *CPLHTTPSetOptions(void *pcurl, const char* pszURL,
         pszHeaders = CPLGetConfigOption("GDAL_HTTP_HEADERS", nullptr);
     if( pszHeaders )
     {
-         // We accept both raw headers with \r\n as a separator, or as
-         // a comma separated list of foo: bar values.
-         const CPLStringList aosTokens(
-             strstr(pszHeaders, "\r\n") ?
-                 CSLTokenizeString2(pszHeaders, "\r\n", 0) :
-                 CSLTokenizeString2( pszHeaders, ",", CSLT_HONOURSTRINGS ));
-         for( int i = 0; i < aosTokens.size(); ++i )
+         bool bHeadersDone = false;
+         // Compatibility hack for "HEADERS=Accept: text/plain, application/json"
+         if( strstr(pszHeaders, "\r\n") == nullptr )
          {
-             headers = curl_slist_append(headers, aosTokens[i]);
+             const char* pszComma = strchr(pszHeaders, ',');
+             if( pszComma != nullptr && strchr(pszComma, ':') == nullptr )
+             {
+                 headers = curl_slist_append(headers, pszHeaders);
+                 bHeadersDone = true;
+             }
+         }
+         if( !bHeadersDone )
+         {
+             // We accept both raw headers with \r\n as a separator, or as
+             // a comma separated list of foo: bar values.
+             const CPLStringList aosTokens(
+                 strstr(pszHeaders, "\r\n") ?
+                     CSLTokenizeString2(pszHeaders, "\r\n", 0) :
+                     CSLTokenizeString2( pszHeaders, ",", CSLT_HONOURSTRINGS ));
+             for( int i = 0; i < aosTokens.size(); ++i )
+             {
+                 headers = curl_slist_append(headers, aosTokens[i]);
+             }
          }
     }
 

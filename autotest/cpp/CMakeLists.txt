@@ -44,6 +44,10 @@ target_include_directories(
                          $<TARGET_PROPERTY:appslib,SOURCE_DIR> $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR>)
 target_compile_definitions(gdal_unit_test PRIVATE -DGDAL_TEST_ROOT_DIR="${GDAL_ROOT_TEST_DIR}")
 
+add_executable(gdallimits gdallimits.c)
+gdal_standard_includes(gdallimits)
+target_link_libraries(gdallimits PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
+
 include(GdalSetRuntimeEnv)
 gdal_set_runtime_env(TEST_ENV)
 

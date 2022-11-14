@@ -437,6 +437,15 @@ bool GDALGeoPackageDataset::ConvertGpkgSpatialRefSysToExtensionWkt2()
             const char* pszOrganization = oResultTable->GetValue(2, i);
             const char* pszOrganizationCoordsysID = oResultTable->GetValue(3, i);
             const char* pszDefinition = oResultTable->GetValue(4, i);
+            if( pszSrsName == nullptr ||
+                pszSrsId == nullptr ||
+                pszOrganization == nullptr ||
+                pszOrganizationCoordsysID == nullptr )
+            {
+                // should not happen as there are NOT NULL constraints
+                // But a database could lack such NOT NULL constraints or have
+                // large values that would cause a memory allocation failure.
+            }
             const char* pszDescription = oResultTable->GetValue(5, i);
             char* pszSQL;
 
@@ -2311,6 +2320,11 @@ bool GDALGeoPackageDataset::InitRaster( GDALGeoPackageDataset* poParentDS,
         {
             poNewBand->AssignColorTable(m_poCTFromMetadata.get());
         }
+        if( !m_osNodataValueFromMetadata.empty() )
+        {
+            poNewBand->SetNoDataValueInternal(
+                CPLAtof(m_osNodataValueFromMetadata.c_str()));
+        }
     }
 
     if( !ComputeTileAndPixelShifts() )
@@ -3758,6 +3772,13 @@ char **GDALGeoPackageDataset::GetMetadata( const char *pszDomain )
                                 m_osTFFromMetadata = pszTILE_FORMAT;
                                 oMDMD.SetMetadataItem("TILE_FORMAT", pszTILE_FORMAT, "IMAGE_STRUCTURE");
                             }
+
+                            const char* pszNodataValue = CSLFetchNameValue(
+                                papszMD, "NODATA_VALUE");
+                            if( pszNodataValue )
+                            {
+                                m_osNodataValueFromMetadata = pszNodataValue;
+                            }
                         }
 
                         else if( !EQUAL(*papszIter, "") )
@@ -3783,6 +3804,16 @@ char **GDALGeoPackageDataset::GetMetadata( const char *pszDomain )
         const char* pszMDStandardURI = oResult->GetValue(1, i);
         const char* pszMimeType = oResult->GetValue(2, i);
         const char* pszReferenceScope = oResult->GetValue(3, i);
+        if( pszMetadata == nullptr ||
+            pszMDStandardURI == nullptr ||
+            pszMimeType == nullptr ||
+            pszReferenceScope == nullptr )
+        {
+            // should not happen as there are NOT NULL constraints
+            // But a database could lack such NOT NULL constraints or have
+            // large values that would cause a memory allocation failure.
+            continue;
+        }
         int bIsGPKGScope = EQUAL(pszReferenceScope, "geopackage");
         if( EQUAL(pszMDStandardURI, "http://gdal.org") &&
             EQUAL(pszMimeType, "text/xml") )
@@ -4259,6 +4290,18 @@ CPLErr GDALGeoPackageDataset::FlushMetadata()
                 }
                 if( pszTILE_FORMAT )
                     oLocalMDMD.SetMetadataItem("TILE_FORMAT", pszTILE_FORMAT, "IMAGE_STRUCTURE");
+            }
+        }
+        if( GetRasterCount() > 0 &&
+            GetRasterBand(1)->GetRasterDataType() == GDT_Byte )
+        {
+            int bHasNoData = FALSE;
+            const double dfNoDataValue = GetRasterBand(1)->GetNoDataValue(&bHasNoData);
+            if( bHasNoData )
+            {
+                oLocalMDMD.SetMetadataItem("NODATA_VALUE",
+                                           CPLSPrintf("%.18g", dfNoDataValue),
+                                           "IMAGE_STRUCTURE");
             }
         }
         psXMLNode = oLocalMDMD.Serialize();
@@ -7380,7 +7423,10 @@ void OGRGeoPackageSTArea(sqlite3_context* pContext,
 /*                      OGRGeoPackageTransform()                        */
 /************************************************************************/
 
-static
+void OGRGeoPackageTransform(sqlite3_context* pContext,
+                            int argc,
+                            sqlite3_value** argv);
+
 void OGRGeoPackageTransform(sqlite3_context* pContext,
                             int argc,
                             sqlite3_value** argv)
@@ -7403,27 +7449,59 @@ void OGRGeoPackageTransform(sqlite3_context* pContext,
         return;
     }
 
-    GDALGeoPackageDataset* poDS = static_cast<GDALGeoPackageDataset*>(
-                                                sqlite3_user_data(pContext));
-
-    OGRSpatialReference* poSrcSRS = poDS->GetSpatialRef(sHeader.iSrsId, true);
-    if( poSrcSRS == nullptr )
+    const int nDestSRID = sqlite3_value_int (argv[1]);
+    if( sHeader.iSrsId == nDestSRID )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "SRID set on geometry (%d) is invalid", sHeader.iSrsId);
-        sqlite3_result_blob(pContext, nullptr, 0, nullptr);
+        // Return blob unmodified
+        sqlite3_result_blob(pContext, pabyBLOB, nBLOBLen, SQLITE_TRANSIENT);
         return;
     }
 
-    int nDestSRID = sqlite3_value_int (argv[1]);
-    OGRSpatialReference* poDstSRS = poDS->GetSpatialRef(nDestSRID, true);
-    if( poDstSRS == nullptr )
+    GDALGeoPackageDataset* poDS = static_cast<GDALGeoPackageDataset*>(
+                                                sqlite3_user_data(pContext));
+
+    // Try to get the cached coordinate transformation
+    OGRCoordinateTransformation* poCT;
+    if( poDS->m_nLastCachedCTSrcSRId == sHeader.iSrsId &&
+        poDS->m_nLastCachedCTDstSRId == nDestSRID )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Target SRID (%d) is invalid", nDestSRID);
-        sqlite3_result_blob(pContext, nullptr, 0, nullptr);
+        poCT = poDS->m_poLastCachedCT.get();
+    }
+    else
+    {
+        OGRSpatialReference* poSrcSRS = poDS->GetSpatialRef(sHeader.iSrsId, true);
+        if( poSrcSRS == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "SRID set on geometry (%d) is invalid", sHeader.iSrsId);
+            sqlite3_result_blob(pContext, nullptr, 0, nullptr);
+            return;
+        }
+
+        OGRSpatialReference* poDstSRS = poDS->GetSpatialRef(nDestSRID, true);
+        if( poDstSRS == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Target SRID (%d) is invalid", nDestSRID);
+            sqlite3_result_blob(pContext, nullptr, 0, nullptr);
+            poSrcSRS->Release();
+            return;
+        }
+        poCT = OGRCreateCoordinateTransformation(poSrcSRS, poDstSRS);
         poSrcSRS->Release();
-        return;
+        poDstSRS->Release();
+
+        if( poCT == nullptr )
+        {
+            sqlite3_result_blob(pContext, nullptr, 0, nullptr);
+            return;
+        }
+
+        // Cache coordinate transformation for potential later reuse
+        poDS->m_nLastCachedCTSrcSRId = sHeader.iSrsId;
+        poDS->m_nLastCachedCTDstSRId = nDestSRID;
+        poDS->m_poLastCachedCT.reset(poCT);
+        poCT = poDS->m_poLastCachedCT.get();
     }
 
     OGRGeometry* poGeom = GPkgGeometryToOGR(pabyBLOB, nBLOBLen, nullptr);
@@ -7435,18 +7513,13 @@ void OGRGeoPackageTransform(sqlite3_context* pContext,
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid geometry");
             sqlite3_result_blob(pContext, nullptr, 0, nullptr);
-            poSrcSRS->Release();
-            poDstSRS->Release();
             return;
         }
     }
 
-    poGeom->assignSpatialReference(poSrcSRS);
-    if( poGeom->transformTo(poDstSRS) != OGRERR_NONE )
+    if( poGeom->transform(poCT) != OGRERR_NONE )
     {
         sqlite3_result_blob(pContext, nullptr, 0, nullptr);
-        poSrcSRS->Release();
-        poDstSRS->Release();
         return;
     }
 
@@ -7456,8 +7529,6 @@ void OGRGeoPackageTransform(sqlite3_context* pContext,
     sqlite3_result_blob(pContext, pabyDestBLOB,
                         static_cast<int>(nBLOBDestLen), VSIFree);
 
-    poSrcSRS->Release();
-    poDstSRS->Release();
     delete poGeom;
 }
 
