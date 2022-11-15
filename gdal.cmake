@@ -217,8 +217,9 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM" OR CMAKE_CXX_COMPILER_ID STREQUAL
     }")
   check_cxx_source_compiles("${TEST_LINK_STDCPP_SOURCE_CODE}" _TEST_LINK_STDCPP)
   if( NOT _TEST_LINK_STDCPP )
-      message(WARNING "Cannot link code using standard C++ library. Automatically adding -lstdc++ to CMAKE_EXE_LINKER_FLAGS AND CMAKE_MODULE_LINKER_FLAGS")
+      message(WARNING "Cannot link code using standard C++ library. Automatically adding -lstdc++ to CMAKE_EXE_LINKER_FLAGS, CMAKE_SHARED_LINKER_FLAGS and CMAKE_MODULE_LINKER_FLAGS")
       set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lstdc++")
+      set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lstdc++")
       set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -lstdc++")
 
       check_cxx_source_compiles("${TEST_LINK_STDCPP_SOURCE_CODE}" _TEST_LINK_STDCPP_AGAIN)

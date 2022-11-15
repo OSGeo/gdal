@@ -39,30 +39,112 @@
 #include "ogrsf_frmts.h"
 #include "test_data.h"
 
-#include <tut_reporter.hpp>
-
+#include <algorithm>
 #include <iostream>
 #include <string>
 
+#include "gtest_include.h"
+
 namespace tut
 {
-    test_runner_singleton runner;
-
     // Common test data path
     std::string const common::data_basedir(TUT_ROOT_DATA_DIR);
     std::string const common::tmp_basedir(TUT_ROOT_TMP_DIR);
 
-    static void check_test_group(char const* name)
+    ::testing::AssertionResult CheckEqualGeometries(OGRGeometryH lhs, OGRGeometryH rhs, double tolerance)
     {
-        std::string grpname(name);
-        if (grpname.empty())
-            throw std::runtime_error("missing test group name");
+        // Test raw pointers
+        if(nullptr == lhs)
+        {
+            return ::testing::AssertionFailure() << "lhs is null";
+        }
+        if(nullptr == rhs)
+        {
+            return ::testing::AssertionFailure() << "rhs is null";
+        }
 
-        tut::groupnames gl = runner.get().list_groups();
-        tut::groupnames::const_iterator found = std::find(gl.begin(), gl.end(), grpname);
-        if (found == gl.end())
-            throw std::runtime_error("test group " + grpname + " not found");
+        // Test basic properties
+        if( strcmp(OGR_G_GetGeometryName(lhs), OGR_G_GetGeometryName(rhs)) != 0 )
+        {
+            return ::testing::AssertionFailure() << "OGR_G_GetGeometryName(lhs) = " << OGR_G_GetGeometryName(lhs) << ". OGR_G_GetGeometryName(rhs) = " << OGR_G_GetGeometryName(rhs);
+        }
+
+        if( OGR_G_GetGeometryCount(lhs) != OGR_G_GetGeometryCount(rhs) )
+        {
+            return ::testing::AssertionFailure() << "OGR_G_GetGeometryCount(lhs) = " << OGR_G_GetGeometryCount(lhs) << ". OGR_G_GetGeometryCount(rhs) = " << OGR_G_GetGeometryCount(rhs);
+        }
+
+        if( OGR_G_GetPointCount(lhs) != OGR_G_GetPointCount(rhs) )
+        {
+            return ::testing::AssertionFailure() << "OGR_G_GetPointCount(lhs) = " << OGR_G_GetPointCount(lhs) << ". OGR_G_GetPointCount(rhs) = " << OGR_G_GetPointCount(rhs);
+        }
+
+        if (OGR_G_GetGeometryCount(lhs) > 0)
+        {
+            // Test sub-geometries recursively
+            const int count = OGR_G_GetGeometryCount(lhs);
+            for (int i = 0; i < count; ++i)
+            {
+                auto res = CheckEqualGeometries(OGR_G_GetGeometryRef(lhs, i),
+                                            OGR_G_GetGeometryRef(rhs, i),
+                                            tolerance);
+                if( !res )
+                    return res;
+            }
+        }
+        else
+        {
+            std::unique_ptr<OGRGeometry> lhs_normalized_cpp;
+            std::unique_ptr<OGRGeometry> rhs_normalized_cpp;
+            if( EQUAL(OGR_G_GetGeometryName(lhs), "LINEARRING") )
+            {
+                // Normalize() doesn't work with LinearRing
+                OGRLineString lhs_as_ls(*OGRGeometry::FromHandle(lhs)->toLineString());
+                lhs_normalized_cpp.reset(lhs_as_ls.Normalize());
+                OGRLineString rhs_as_ls(*OGRGeometry::FromHandle(rhs)->toLineString());
+                rhs_normalized_cpp.reset(rhs_as_ls.Normalize());
+            }
+            else
+            {
+                lhs_normalized_cpp.reset(OGRGeometry::FromHandle(OGR_G_Normalize(lhs)));
+                rhs_normalized_cpp.reset(OGRGeometry::FromHandle(OGR_G_Normalize(rhs)));
+            }
+            auto lhs_normalized = OGRGeometry::ToHandle(lhs_normalized_cpp.get());
+            auto rhs_normalized = OGRGeometry::ToHandle(rhs_normalized_cpp.get());
+
+            // Test geometry points
+            const std::size_t csize = 3;
+            double a[csize] = { 0 };
+            double b[csize] = { 0 };
+            double d[csize] = { 0 };
+            double dmax = 0;
+
+            const int count = OGR_G_GetPointCount(lhs_normalized);
+            for (int i = 0; i < count; ++i)
+            {
+                OGR_G_GetPoint(lhs_normalized, i, &a[0], &a[1], &a[2]);
+                OGR_G_GetPoint(rhs_normalized, i, &b[0], &b[1], &b[2]);
+
+                // Test vertices
+                for (std::size_t c = 0; c < csize; ++c)
+                {
+                    d[c] = std::fabs(a[c] - b[c]);
+                }
+
+                const double* pos = std::max_element(d, d + csize);
+                dmax = *pos;
+
+                if( dmax > tolerance )
+                {
+                    return ::testing::AssertionFailure() <<
+                        "dmax = " << dmax << " is > tolerance = " << tolerance << " on vertex " << i;
+                }
+            }
+        }
+
+        return ::testing::AssertionSuccess();
     }
+
 } // namespace tut
 
 int main(int argc, char* argv[])
@@ -77,63 +159,10 @@ int main(int argc, char* argv[])
         << "\n---------------------------------------------------------\n";
 
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
-    if (argc < 1)
-    {
-        std::cout
-            << "\n---------------------------------------------------------\n"
-            << "No tests to run\n";
-        return EXIT_SUCCESS;
-    }
 
+    testing::InitGoogleTest(&argc, argv);
 
-
-    // Initialize TUT framework
-    int nRetCode = EXIT_FAILURE;
-    {
-        tut::reporter visi;
-        tut::runner.get().set_callback(&visi);
-
-        try
-        {
-            if (argc == 1)
-            {
-                tut::runner.get().run_tests();
-            }
-            else if (argc == 2 && std::string(argv[1]) == "--list")
-            {
-                tut::groupnames gl = tut::runner.get().list_groups();
-                tut::groupnames::const_iterator b = gl.begin();
-                tut::groupnames::const_iterator e = gl.end();
-                tut::groupnames::difference_type d = std::distance(b, e);
-                std::cout << "Registered " << d << " test groups:\n" << std::endl;
-                while (b != e)
-                {
-                    std::cout << "  " << *b << std::endl;
-                    ++b;
-                }
-            }
-            else if (argc == 2 && std::string(argv[1]) != "--list")
-            {
-                tut::check_test_group(argv[1]);
-                tut::runner.get().run_tests(argv[1]);
-            }
-            else if (argc == 3)
-            {
-                tut::check_test_group(argv[1]);
-
-                tut::test_result result;
-                tut::runner.get().run_test(argv[1], std::atoi(argv[2]), result);
-            }
-            nRetCode = EXIT_SUCCESS;
-        }
-        catch (const std::exception& ex)
-        {
-            std::cerr << "GDAL C/C++ API tests error: " << ex.what() << std::endl;
-            nRetCode = EXIT_FAILURE;
-        }
-        if( !visi.all_ok() )
-            nRetCode = EXIT_FAILURE;
-    }
+    int nRetCode = RUN_ALL_TESTS();
 
     CSLDestroy(argv);
     GDALDestroyDriverManager();

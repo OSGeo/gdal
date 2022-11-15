@@ -32,6 +32,13 @@
 #endif
 
 #include "cpl_multiproc.h"
+#include "cpl_string.h"
+
+#include "gtest_include.h"
+
+namespace {
+
+// ---------------------------------------------------------------------------
 
 CPLCond* hCond = nullptr;
 CPLCond* hCondJobFinished = nullptr;
@@ -126,16 +133,12 @@ static void ConsumerThread(void* pIndex)
     }
 }
 
-int main(int argc, char* argv[])
+TEST(testthreadcond, test)
 {
     int i;
     CPLJoinableThread* apThreads[10];
 
-    for(i = 0; i < argc; i++)
-    {
-        if( EQUAL(argv[i], "-verbose") )
-            bVerbose = TRUE;
-    }
+    bVerbose = CPLTestBool(CPLGetConfigOption("VERBOSE", "NO"));
 
     hCond = CPLCreateCond();
     hCondJobFinished = CPLCreateCond();
@@ -160,5 +163,6 @@ int main(int argc, char* argv[])
     CPLDestroyCond(hCond);
     CPLDestroyCond(hCondJobFinished);
     CPLDestroyMutex(hClientMutex);
-    return 0;
 }
+
+} // namespace

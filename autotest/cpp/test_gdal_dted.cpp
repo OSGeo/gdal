@@ -34,15 +34,15 @@
 #include "gdal_priv.h"
 #include "gdal.h"
 
-#include <sstream>
-#include <string>
 #include <vector>
 
-namespace tut
+#include "gtest_include.h"
+
+namespace
 {
 
     // Common fixture with test data
-    struct test_dted_data
+    struct test_gdal_dted : public ::testing::Test
     {
         struct raster_t
         {
@@ -61,7 +61,7 @@ namespace tut
         std::string data_tmp_;
         rasters_t rasters_;
 
-        test_dted_data()
+        test_gdal_dted()
             : drv_(nullptr), drv_name_("DTED")
         {
             drv_ = GDALGetDriverByName(drv_name_.c_str());
@@ -76,66 +76,56 @@ namespace tut
             rasters_.push_back(raster_t("n43.dt0", 1, 49187));
 
         }
+
+        void SetUp() override
+        {
+            if( drv_ == nullptr )
+                GTEST_SKIP() << "DTED driver missing";
+        }
     };
 
-    // Register test group
-    typedef test_group<test_dted_data> group;
-    typedef group::object object;
-    group test_dted_group("GDAL::DTED");
-
     // Test open dataset
-    template<>
-    template<>
-    void object::test<2>()
+    TEST_F(test_gdal_dted, open)
     {
         if( drv_ == nullptr ) return;
-        rasters_t::const_iterator it;
-        for (it = rasters_.begin(); it != rasters_.end(); ++it)
+        for(const auto& raster: rasters_)
         {
             std::string file(data_ + SEP);
-            file += it->file_;
+            file += raster.file_;
             GDALDatasetH ds = GDALOpen(file.c_str(), GA_ReadOnly);
-            ensure("Can't open dataset: " + file, nullptr != ds);
+            ASSERT_TRUE(nullptr != ds);
             GDALClose(ds);
         }
     }
 
     // Test dataset checksums
-    template<>
-    template<>
-    void object::test<3>()
+    TEST_F(test_gdal_dted, checksums)
     {
         if( drv_ == nullptr ) return;
-        rasters_t::const_iterator it;
-        for (it = rasters_.begin(); it != rasters_.end(); ++it)
+        for(const auto& raster: rasters_)
         {
             std::string file(data_ + SEP);
-            file += it->file_;
+            file += raster.file_;
 
             GDALDatasetH ds = GDALOpen(file.c_str(), GA_ReadOnly);
-            ensure("Can't open dataset: " + file, nullptr != ds);
+            ASSERT_TRUE(nullptr != ds);
 
-            GDALRasterBandH band = GDALGetRasterBand(ds, it->band_);
-            ensure("Can't get raster band", nullptr != band);
+            GDALRasterBandH band = GDALGetRasterBand(ds, raster.band_);
+            ASSERT_TRUE(nullptr != band);
 
             const int xsize = GDALGetRasterXSize(ds);
             const int ysize = GDALGetRasterYSize(ds);
             const int checksum = GDALChecksumImage(band, 0, 0, xsize, ysize);
 
-            std::stringstream os;
-            os << "Checksums for '" << file << "' not equal";
-            ensure_equals(os.str().c_str(), checksum, it->checksum_);
+            EXPECT_EQ(checksum, raster.checksum_);
 
             GDALClose(ds);
         }
     }
 
     // Test affine transformation coefficients
-    template<>
-    template<>
-    void object::test<4>()
+    TEST_F(test_gdal_dted, geotransform)
     {
-        if( drv_ == nullptr ) return;
         // Index of test file being tested
         const std::size_t fileIdx = 0;
 
@@ -143,11 +133,11 @@ namespace tut
         file += rasters_.at(fileIdx).file_;
 
         GDALDatasetH ds = GDALOpen(file.c_str(), GA_ReadOnly);
-        ensure("Can't open dataset: " + file, nullptr != ds);
+        ASSERT_TRUE(nullptr != ds);
 
         double geoTransform[6] = { 0 };
         CPLErr err = GDALGetGeoTransform(ds, geoTransform);
-        ensure_equals("Can't fetch affine transformation coefficients", err, CE_None);
+        ASSERT_EQ(err, CE_None);
 
         // Test affine transformation coefficients
         const double maxError = 0.000001;
@@ -155,23 +145,19 @@ namespace tut
             -80.004166666666663, 0.0083333333333333332, 0,
             44.00416666666667, 0, -0.0083333333333333332
         };
-        const std::string msg("Geotransform is incorrect");
-        ensure_distance(msg.c_str(), expect[0], geoTransform[0], maxError);
-        ensure_distance(msg.c_str(), expect[1], geoTransform[1], maxError);
-        ensure_distance(msg.c_str(), expect[2], geoTransform[2], maxError);
-        ensure_distance(msg.c_str(), expect[3], geoTransform[3], maxError);
-        ensure_distance(msg.c_str(), expect[4], geoTransform[4], maxError);
-        ensure_distance(msg.c_str(), expect[5], geoTransform[5], maxError);
+        EXPECT_NEAR(expect[0], geoTransform[0], maxError);
+        EXPECT_NEAR(expect[1], geoTransform[1], maxError);
+        EXPECT_NEAR(expect[2], geoTransform[2], maxError);
+        EXPECT_NEAR(expect[3], geoTransform[3], maxError);
+        EXPECT_NEAR(expect[4], geoTransform[4], maxError);
+        EXPECT_NEAR(expect[5], geoTransform[5], maxError);
 
         GDALClose(ds);
     }
 
     // Test projection definition
-    template<>
-    template<>
-    void object::test<5>()
+    TEST_F(test_gdal_dted, projection)
     {
-        if( drv_ == nullptr ) return;
         // Index of test file being tested
         const std::size_t fileIdx = 0;
 
@@ -179,23 +165,20 @@ namespace tut
         file += rasters_.at(fileIdx).file_;
 
         GDALDatasetH ds = GDALOpen(file.c_str(), GA_ReadOnly);
-        ensure("Can't open dataset: " + file, nullptr != ds);
+        ASSERT_TRUE(nullptr != ds);
 
         std::string proj(GDALGetProjectionRef(ds));
-        ensure_equals("Projection definition is not available", proj.empty(), false);
+        ASSERT_TRUE(!proj.empty());
 
         std::string expect("GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]");
-        ensure_equals("Projection does not match expected", proj, expect);
+        EXPECT_EQ(proj, expect);
 
         GDALClose(ds);
     }
 
     // Test band data type and NODATA value
-    template<>
-    template<>
-    void object::test<6>()
+    TEST_F(test_gdal_dted, nodata)
     {
-        if( drv_ == nullptr ) return;
         // Index of test file being tested
         const std::size_t fileIdx = 0;
 
@@ -203,25 +186,22 @@ namespace tut
         file += rasters_.at(fileIdx).file_;
 
         GDALDatasetH ds = GDALOpen(file.c_str(), GA_ReadOnly);
-        ensure("Can't open dataset: " + file, nullptr != ds);
+        ASSERT_TRUE(nullptr != ds);
 
         GDALRasterBandH band = GDALGetRasterBand(ds, rasters_.at(fileIdx).band_);
-        ensure("Can't get raster band", nullptr != band);
+        ASSERT_TRUE(nullptr != band);
 
         const double noData = GDALGetRasterNoDataValue(band, nullptr);
-        ensure_equals("Grid NODATA value wrong or missing", noData, -32767);
+        EXPECT_EQ(noData, -32767);
 
-        ensure_equals("Data type is not GDT_Int16", GDALGetRasterDataType(band), GDT_Int16);
+        EXPECT_EQ(GDALGetRasterDataType(band), GDT_Int16);
 
         GDALClose(ds);
     }
 
     // Create simple copy and check
-    template<>
-    template<>
-    void object::test<7>()
+    TEST_F(test_gdal_dted, copy)
     {
-        if( drv_ == nullptr ) return;
         // Index of test file being tested
         const std::size_t fileIdx = 0;
 
@@ -229,7 +209,7 @@ namespace tut
         src += rasters_.at(fileIdx).file_;
 
         GDALDatasetH dsSrc = GDALOpen(src.c_str(), GA_ReadOnly);
-        ensure("Can't open source dataset: " + src, nullptr != dsSrc);
+        ASSERT_TRUE(nullptr != dsSrc);
 
         std::string dst(data_tmp_ + SEP);
         dst += rasters_.at(fileIdx).file_;
@@ -237,34 +217,29 @@ namespace tut
         GDALDatasetH dsDst = nullptr;
         dsDst = GDALCreateCopy(drv_, dst.c_str(), dsSrc, FALSE, nullptr, nullptr, nullptr);
         GDALClose(dsSrc);
-        ensure("Can't copy dataset", nullptr != dsDst);
+        ASSERT_TRUE(nullptr != dsDst);
 
         std::string proj(GDALGetProjectionRef(dsDst));
-        ensure_equals("Projection definition is not available", proj.empty(), false);
+        ASSERT_TRUE(!proj.empty());
 
         std::string expect("GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]");
-        ensure_equals("Projection does not match expected", proj, expect);
+        EXPECT_EQ(proj, expect);
 
         GDALRasterBandH band = GDALGetRasterBand(dsDst, rasters_.at(fileIdx).band_);
-        ensure("Can't get raster band", nullptr != band);
+        ASSERT_TRUE(nullptr != band);
 
         const int xsize = GDALGetRasterXSize(dsDst);
         const int ysize = GDALGetRasterYSize(dsDst);
         const int checksum = GDALChecksumImage(band, 0, 0, xsize, ysize);
 
-        std::stringstream os;
-        os << "Checksums for '" << dst << "' not equal";
-        ensure_equals(os.str().c_str(), checksum, rasters_.at(fileIdx).checksum_);
+        EXPECT_EQ(checksum, rasters_.at(fileIdx).checksum_);
 
         GDALClose(dsDst);
     }
 
     // Test subwindow read and the tail recursion problem.
-    template<>
-    template<>
-    void object::test<8>()
+    TEST_F(test_gdal_dted, subwindow_read)
     {
-        if( drv_ == nullptr ) return;
         // Index of test file being tested
         const std::size_t fileIdx = 0;
 
@@ -272,10 +247,10 @@ namespace tut
         file += rasters_.at(fileIdx).file_;
 
         GDALDatasetH ds = GDALOpen(file.c_str(), GA_ReadOnly);
-        ensure("Can't open dataset: " + file, nullptr != ds);
+        ASSERT_TRUE(nullptr != ds);
 
         GDALRasterBandH band = GDALGetRasterBand(ds, rasters_.at(fileIdx).band_);
-        ensure("Can't get raster band", nullptr != band);
+        ASSERT_TRUE(nullptr != band);
 
         // Sub-windows size
         const int win[4] = { 5, 5, 5, 5 };
@@ -283,11 +258,9 @@ namespace tut
         const int winChecksum = 305;
         const int checksum = GDALChecksumImage(band, win[0], win[1], win[2], win[3]);
 
-        std::stringstream os;
-        os << "Checksums for '" << file << "' not equal";
-        ensure_equals(os.str().c_str(), checksum, winChecksum);
+        EXPECT_EQ(checksum, winChecksum);
 
         GDALClose(ds);
     }
 
- } // namespace tut
+} // namespace

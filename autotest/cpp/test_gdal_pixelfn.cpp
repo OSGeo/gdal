@@ -34,9 +34,9 @@
 #include "gdal.h"
 #include "../../frmts/vrt/vrtdataset.h"
 
-#include <sstream>
-#include <string>
 #include <vector>
+
+#include "gtest_include.h"
 
 CPLErr CustomPixelFuncWithMetadata( void **papoSources, int nSources, void *pData,
                             int nXSize, int nYSize,
@@ -136,7 +136,7 @@ CPLErr CustomPixelFuncNoArgs( void **papoSources, int nSources, void *pData,
     return CE_None;
 }
 
-namespace tut
+namespace
 {
     const char pszFuncMetadata[] =
         "<PixelFunctionArgumentsList>"
@@ -146,52 +146,43 @@ namespace tut
         "   </Argument>"
         "</PixelFunctionArgumentsList>";
 
-    struct test_pixelfn_data {
+    struct test_gdal_pixelfn : public ::testing::Test
+    {
         std::string src_;
-        test_pixelfn_data() {
+        test_gdal_pixelfn() {
             src_ = tut::common::data_basedir;
             src_ += SEP;
             src_ += "pixelfn.vrt";
         }
     };
 
-    // Register test group
-    typedef test_group<test_pixelfn_data> group;
-    typedef group::object object;
-    group test_pixelfn_group("GDAL::PixelFunc");
-
     // Test constant parameters in a custom pixel function
-    template<>
-    template<>
-    void object::test<1>()
+    TEST_F(test_gdal_pixelfn, custom_pixel_fn_constant_parameters)
     {
         GDALAddDerivedBandPixelFuncWithArgs("custom", CustomPixelFuncWithMetadata, pszFuncMetadata);
         GDALDatasetH ds = GDALOpen(src_.c_str(), GA_ReadOnly);
-        ensure("Can't open dataset", nullptr != ds);
+        ASSERT_TRUE(nullptr != ds);
 
         GDALRasterBandH band = GDALGetRasterBand(ds, 1);
-        ensure("Can't get raster band", nullptr != band);
+        ASSERT_TRUE(nullptr != band);
 
         float buf[20 * 20];
         CPL_IGNORE_RET_VAL(GDALRasterIO(band, GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Float32, 0, 0));
 
-        ensure_equals("Read wrong data", buf[0], 107 * 2);
+        EXPECT_EQ(buf[0], 107 * 2);
 
         GDALClose(ds);
     }
 
     // Test registering of a custom pixel function without metadata
-    template<>
-    template<>
-    void
-    object::test<2>()
+    TEST_F(test_gdal_pixelfn, custom_pixel_fn_without_metadata)
     {
         GDALAddDerivedBandPixelFuncWithArgs("custom2", CustomPixelFunc, nullptr);
         GDALDatasetH ds = GDALOpen(src_.c_str(), GA_ReadOnly);
-        ensure("Can't open dataset", nullptr != ds);
+        ASSERT_TRUE(nullptr != ds);
 
         GDALRasterBandH band = GDALGetRasterBand(ds, 1);
-        ensure("Can't get raster band", nullptr != band);
+        ASSERT_TRUE(nullptr != band);
 
         VRTDerivedRasterBand *derived = reinterpret_cast<VRTDerivedRasterBand *>(GDALRasterBand::FromHandle(band));
         derived->SetPixelFunctionName("custom2");
@@ -200,23 +191,20 @@ namespace tut
         CPL_IGNORE_RET_VAL(GDALRasterIO(
           band, GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Float32, 0, 0));
 
-        ensure_equals("Read wrong data", buf[0], 107 * 3);
+        EXPECT_EQ(buf[0], 107 * 3);
 
         GDALClose(ds);
     }
 
     // Test the registering of a custom pixel function without args
-    template<>
-    template<>
-    void
-    object::test<3>()
+    TEST_F(test_gdal_pixelfn, custom_pixel_fn_without_args)
     {
         GDALAddDerivedBandPixelFunc("custom3", CustomPixelFuncNoArgs);
         GDALDatasetH ds = GDALOpen(src_.c_str(), GA_ReadOnly);
-        ensure("Can't open dataset", nullptr != ds);
+        ASSERT_TRUE(nullptr != ds);
 
         GDALRasterBandH band = GDALGetRasterBand(ds, 1);
-        ensure("Can't get raster band", nullptr != band);
+        ASSERT_TRUE(nullptr != band);
 
         VRTDerivedRasterBand *derived = reinterpret_cast<VRTDerivedRasterBand *>(GDALRasterBand::FromHandle(band));
         derived->SetPixelFunctionName("custom3");
@@ -225,9 +213,9 @@ namespace tut
         CPL_IGNORE_RET_VAL(GDALRasterIO(
           band, GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Float32, 0, 0));
 
-        ensure_equals("Read wrong data", buf[0], 107 * 4);
+        EXPECT_EQ(buf[0], 107 * 4);
 
         GDALClose(ds);
     }
 
- } // namespace tut
+} // namespace

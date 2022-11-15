@@ -37,17 +37,12 @@
 #include <cstdlib>
 #include <vector>
 
-template<typename T> void check(const T& x, const char* msg)
-{
-    if( !x )
-    {
-        fprintf(stderr, "CHECK(%s) failed\n", msg);
-        exit(1);
-    }
-}
+#include "gtest_include.h"
 
-#define STRINGIFY(x) #x
-#define CHECK(x) check((x), STRINGIFY(x))
+extern int global_argc;
+extern char** global_argv;
+
+namespace {
 
 CPLLock* psLock = nullptr;
 
@@ -118,8 +113,7 @@ static void Check(GByte* pBuffer, int nXSize, int nYSize, int nBands,
             {
                 unsigned long seed = iBand * nXSize * nYSize + (iY + nYOff) * nXSize + iX + nXOff;
                 GByte expected = (GByte)(myrand_r(&seed) & 0xff);
-                CHECK( pBuffer[iBand * nXWin * nYWin + iY * nXWin + iX] == expected );
-                (void)expected;
+                EXPECT_EQ( pBuffer[iBand * nXWin * nYWin + iY * nXWin + iX], expected );
             }
         }
     }
@@ -184,7 +178,7 @@ static Resource* AcquireFirstResource()
     else
         psGlobalResourceLast = nullptr;
     psRet->psNext = nullptr;
-    CHECK(psRet->psPrev == nullptr);
+    CPLAssert(psRet->psPrev == nullptr);
     if( psLock ) CPLReleaseLock(psLock);
     return psRet;
 }
@@ -224,7 +218,7 @@ static void ThreadFuncWithMigration(void* /* _unused */)
     while( (psRequest = GetNextRequest(psGlobalRequestList)) != nullptr )
     {
         Resource* psResource = AcquireFirstResource();
-        CHECK(psResource);
+        ASSERT_TRUE(psResource != nullptr);
         int nXSize = psResource->poDS->GetRasterXSize();
         int nYSize = psResource->poDS->GetRasterYSize();
         ReadRaster(psResource->poDS, nXSize, nYSize, psRequest->nBands,
@@ -325,7 +319,7 @@ static int CreateBlockStrategyRequests(GDALDataset* poDS,
     return nQueriedBands * nMaxXWin * nMaxYWin;
 }
 
-int main(int argc, char* argv[])
+TEST(testblockcache, test)
 {
     int i;
     int nThreads = CPLGetNumCPUs();
@@ -343,10 +337,10 @@ int main(int argc, char* argv[])
     int bMigrate = FALSE;
     int nMaxRequests = -1;
 
-    argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
-
     GDALAllRegister();
 
+    int argc = global_argc;
+    char** argv = global_argv;
     for(i = 1; i < argc; i++)
     {
         if( EQUAL(argv[i], "-threads") && i + 1 < argc)
@@ -585,10 +579,9 @@ int main(int argc, char* argv[])
     if( poMEMDS )
         GDALClose(poMEMDS);
 
-    CHECK( GDALGetCacheUsed64() == 0 );
+    EXPECT_EQ( GDALGetCacheUsed64(), 0 );
 
     GDALDestroyDriverManager();
-    CSLDestroy( argv );
-
-    return 0;
 }
+
+} // namespace

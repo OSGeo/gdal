@@ -1,12 +1,11 @@
 /******************************************************************************
- * $Id$
  *
- * Project:  GDAL
- * Purpose:  Test CPL_LOG
- * Author:   Even Rouault, even.rouault at spatialys.com
+ * Project:  PROJ
+ * Purpose:  Wrapper for gtest/gtest.h
+ * Author:   Even Rouault <even dot rouault at spatialys dot com>
  *
  ******************************************************************************
- * Copyright (c) 2021, Even Rouault <even.rouault at spatialys.com>
+ * Copyright (c) 2018, Even Rouault <even dot rouault at spatialys dot com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,31 +26,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_conv.h"
-#include "cpl_error.h"
-#include "cpl_vsi.h"
+// Disable all warnings for gtest.h, so as to be able to still use them for
+// our own code.
 
-#include "gtest_include.h"
+#if defined(__GNUC__)
+#pragma GCC system_header
+#endif
 
-namespace {
-
-// ---------------------------------------------------------------------------
-
-TEST(testlog, test)
-{
-    const char* logname = "log_with_âccent.txt";
-    CPLSetConfigOption("CPL_LOG", logname);
-    CPLError(CE_Failure, CPLE_AppDefined, "test");
-    VSILFILE* fp = VSIFOpenL(logname, "rb");
-    char szGot[20 + 1];
-    size_t nRead = VSIFReadL(szGot, 1, 20, fp);
-    szGot[nRead] = 0;
-    VSIFCloseL(fp);
-    CPLCleanupErrorMutex();
-    VSIUnlink(logname);
-
-    EXPECT_TRUE(strstr(szGot, "ERROR 1") != nullptr) << szGot;
-    EXPECT_TRUE(strstr(szGot, "test") != nullptr) << szGot;
-}
-
-} // namespace
+#include "gtest/gtest.h"

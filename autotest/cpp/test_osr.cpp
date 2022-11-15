@@ -36,320 +36,260 @@
 #include <cmath>
 #include <string>
 
-namespace tut
+#include "gtest_include.h"
+
+namespace
 {
 
     // Common fixture with test data
-    struct test_osr_data
+    struct test_osr : public ::testing::Test
     {
-        OGRErr err_;
-        OGRSpatialReferenceH srs_;
+        OGRErr err_ = OGRERR_NONE;
+        OGRSpatialReferenceH srs_ = nullptr;
 
-        test_osr_data()
-            : err_(OGRERR_NONE), srs_(nullptr)
+        void SetUp() override
         {
             srs_ = OSRNewSpatialReference(nullptr);
+            ASSERT_TRUE(nullptr != srs_);
         }
 
-        ~test_osr_data()
+        void TearDown() override
         {
             OSRDestroySpatialReference(srs_);
+            srs_ = nullptr;
         }
     };
 
-    // Register test group
-    typedef test_group<test_osr_data> group;
-    typedef group::object object;
-    group test_osr_group("OSR");
-
     // Test UTM WGS84 coordinate system and its various items
-    template<>
-    template<>
-    void object::test<1>()
+    TEST_F(test_osr, UTM_WGS84)
     {
-        ensure("SRS handle is NULL", nullptr != srs_);
-
         err_ = OSRSetUTM(srs_, 11, TRUE);
-        ensure_equals("Can't set UTM zone", err_, OGRERR_NONE);
+        ASSERT_EQ(err_, OGRERR_NONE);
 
         err_ = OSRSetWellKnownGeogCS(srs_, "WGS84");
-        ensure_equals("Can't set GeogCS", err_, OGRERR_NONE);
+        ASSERT_EQ(err_, OGRERR_NONE);
 
         double val = 0;
 
         val = OSRGetProjParm(srs_, SRS_PP_CENTRAL_MERIDIAN, -1111, &err_);
-        ensure("Invalid UTM central meridian",
-            std::fabs(val - (-117.0)) <= .00000000000010);
+        EXPECT_NEAR(val, -117.0,.00000000000010);
 
         val = OSRGetProjParm(srs_, SRS_PP_LATITUDE_OF_ORIGIN, -1111, &err_);
-        ensure("Invalid UTM latitude of origin",
-            std::fabs(val - 0.0) <= .00000000000010);
+        EXPECT_NEAR(val, 0.0,.00000000000010);
 
         val = OSRGetProjParm(srs_, SRS_PP_SCALE_FACTOR, -1111, &err_);
-        ensure("Invalid UTM scale factor",
-            std::fabs(val - 0.9996) <= .00000000000010);
+        EXPECT_NEAR(val, 0.9996,.00000000000010);
 
         val = OSRGetProjParm(srs_, SRS_PP_FALSE_EASTING, -1111, &err_);
-        ensure("Invalid UTM false easting",
-            std::fabs(val - 500000.0) <= .00000000000010);
+        EXPECT_NEAR(val, 500000,.00000000000010);
 
         val = OSRGetProjParm(srs_, SRS_PP_FALSE_NORTHING, -1111, &err_);
-        ensure("Invalid UTM false northing",
-            std::fabs(val - 0.0) <= .00000000000010);
+        EXPECT_NEAR(val, 0.0,.00000000000010);
 
-        ensure_equals("Invalid authority name",
-            std::string(OSRGetAuthorityName(srs_, "GEOGCS")), std::string("EPSG"));
-        ensure_equals("Invalid authority code",
-            std::string(OSRGetAuthorityCode(srs_, "GEOGCS")), std::string("4326"));
+        EXPECT_STREQ(OSRGetAuthorityName(srs_, "GEOGCS"), "EPSG");
+        EXPECT_STREQ(OSRGetAuthorityCode(srs_, "GEOGCS"), "4326");
 
-        ensure_equals("Invalid authority name",
-            std::string(OSRGetAuthorityName(srs_, "DATUM")), std::string("EPSG"));
-        ensure_equals("Invalid authority code",
-            std::string(OSRGetAuthorityCode(srs_, "DATUM")), std::string("6326"));
+        EXPECT_STREQ(OSRGetAuthorityName(srs_, "DATUM"), "EPSG");
+        EXPECT_STREQ(OSRGetAuthorityCode(srs_, "DATUM"), "6326");
     }
 
     // Simple default NAD83 State Plane zone
-    template<>
-    template<>
-    void object::test<2>()
+    TEST_F(test_osr, NAD83_State_Plane)
     {
-        ensure("SRS handle is NULL", nullptr != srs_);
-
         // California III NAD83
         OSRSetStatePlane(srs_, 403, 1);
 
         double val = 0;
 
         val = OSRGetProjParm(srs_, SRS_PP_STANDARD_PARALLEL_1, -1111, &err_);
-        ensure_approx_equals(val, 38.43333333333333);
+        EXPECT_NEAR(val, 38.43333333333333, 1e-12);
 
         val = OSRGetProjParm(srs_, SRS_PP_STANDARD_PARALLEL_2, -1111, &err_);
-        ensure_approx_equals(val, 37.06666666666667);
+        EXPECT_NEAR(val, 37.06666666666667, 1e-12);
 
         val = OSRGetProjParm(srs_, SRS_PP_LATITUDE_OF_ORIGIN, -1111, &err_);
-        ensure_approx_equals(val, 36.5);
+        EXPECT_NEAR(val, 36.5, 1e-12);
 
         val = OSRGetProjParm(srs_, SRS_PP_CENTRAL_MERIDIAN, -1111, &err_);
-        ensure_approx_equals(val, -120.5);
+        EXPECT_NEAR(val, -120.5, 1e-12);
 
         val = OSRGetProjParm(srs_, SRS_PP_FALSE_EASTING, -1111, &err_);
-        ensure_approx_equals(val, 2000000.0);
+        EXPECT_NEAR(val, 2000000.0, 1e-12);
 
         val = OSRGetProjParm(srs_, SRS_PP_FALSE_NORTHING, -1111, &err_);
-        ensure_approx_equals(val, 500000.0);
+        EXPECT_NEAR(val, 500000.0, 1e-12);
 
-        ensure_equals("Invalid authority name",
-            std::string(OSRGetAuthorityName(srs_, "GEOGCS")), std::string("EPSG"));
-        ensure_equals("Invalid authority code",
-            std::string(OSRGetAuthorityCode(srs_, "GEOGCS")), std::string("4269"));
+        EXPECT_STREQ(OSRGetAuthorityName(srs_, "GEOGCS"), "EPSG");
+        EXPECT_STREQ(OSRGetAuthorityCode(srs_, "GEOGCS"), "4269");
 
-        ensure_equals("Invalid authority name",
-            std::string(OSRGetAuthorityName(srs_, "DATUM")), std::string("EPSG"));
-        ensure_equals("Invalid authority code",
-            std::string(OSRGetAuthorityCode(srs_, "DATUM")), std::string("6269"));
+        EXPECT_STREQ(OSRGetAuthorityName(srs_, "DATUM"), "EPSG");
+        EXPECT_STREQ(OSRGetAuthorityCode(srs_, "DATUM"), "6269");
 
-        ensure_equals("Invalid authority name",
-            std::string(OSRGetAuthorityName(srs_, "PROJCS")), std::string("EPSG"));
-        ensure_equals("Invalid authority code",
-            std::string(OSRGetAuthorityCode(srs_, "PROJCS")), std::string("26943"));
+        EXPECT_STREQ(OSRGetAuthorityName(srs_, "PROJCS"), "EPSG");
+        EXPECT_STREQ(OSRGetAuthorityCode(srs_, "PROJCS"), "26943");
 
-        ensure_equals("Invalid authority name",
-            std::string(OSRGetAuthorityName(srs_, "PROJCS|UNIT")), std::string("EPSG"));
-        ensure_equals("Invalid authority code",
-            std::string(OSRGetAuthorityCode(srs_, "PROJCS|UNIT")), std::string("9001"));
+        EXPECT_STREQ(OSRGetAuthorityName(srs_, "PROJCS|UNIT"), "EPSG");
+        EXPECT_STREQ(OSRGetAuthorityCode(srs_, "PROJCS|UNIT"), "9001");
     }
 
     // NAD83 State Plane zone, but overridden to be in Feet
-    template<>
-    template<>
-    void object::test<3>()
+    TEST_F(test_osr, NAD83_State_Plane_Feet)
     {
-        ensure("SRS handle is NULL", nullptr != srs_);
-
         // California III NAD83 (feet)
         OSRSetStatePlaneWithUnits(srs_, 403, 1, "Foot", 0.3048006096012192);
 
         double val = 0;
 
         val = OSRGetProjParm(srs_, SRS_PP_STANDARD_PARALLEL_1, -1111, &err_);
-        ensure_approx_equals(val, 38.43333333333333);
+        EXPECT_NEAR(val, 38.43333333333333, 1e-12);
 
         val = OSRGetProjParm(srs_, SRS_PP_STANDARD_PARALLEL_2, -1111, &err_);
-        ensure_approx_equals(val, 37.06666666666667);
+        EXPECT_NEAR(val, 37.06666666666667, 1e-12);
 
         val = OSRGetProjParm(srs_, SRS_PP_LATITUDE_OF_ORIGIN, -1111, &err_);
-        ensure_approx_equals(val, 36.5);
+        EXPECT_NEAR(val, 36.5, 1e-12);
 
         val = OSRGetProjParm(srs_, SRS_PP_CENTRAL_MERIDIAN, -1111, &err_);
-        ensure_approx_equals(val, -120.5);
+        EXPECT_NEAR(val, -120.5, 1e-12);
 
         val = OSRGetProjParm(srs_, SRS_PP_FALSE_EASTING, -1111, &err_);
-        ensure_approx_equals(val, 6561666.666666667);
+        EXPECT_NEAR(val, 6561666.666666667, 1e-12);
 
         val = OSRGetProjParm(srs_, SRS_PP_FALSE_NORTHING, -1111, &err_);
-        ensure_approx_equals(val, 1640416.666666667);
+        EXPECT_NEAR(val, 1640416.666666667, 1e-12);
 
-        ensure_equals("Invalid authority name",
-            std::string(OSRGetAuthorityName(srs_, "GEOGCS")), std::string("EPSG"));
-        ensure_equals("Invalid authority code",
-            std::string(OSRGetAuthorityCode(srs_, "GEOGCS")), std::string("4269"));
+        EXPECT_STREQ(OSRGetAuthorityName(srs_, "GEOGCS"), "EPSG");
+        EXPECT_STREQ(OSRGetAuthorityCode(srs_, "GEOGCS"), "4269");
 
-        ensure_equals("Invalid authority name",
-            std::string(OSRGetAuthorityName(srs_, "DATUM")), std::string("EPSG"));
-        ensure_equals("Invalid authority code",
-            std::string(OSRGetAuthorityCode(srs_, "DATUM")), std::string("6269"));
+        EXPECT_STREQ(OSRGetAuthorityName(srs_, "DATUM"), "EPSG");
+        EXPECT_STREQ(OSRGetAuthorityCode(srs_, "DATUM"), "6269");
 
-        ensure("Got a PROJCS Authority but we should not",
-            nullptr == OSRGetAuthorityName(srs_, "PROJCS"));
-
-        ensure("Got METER authority code on linear units",
-            nullptr == OSRGetAuthorityCode(srs_, "PROJCS|UNIT"));
+        EXPECT_TRUE(nullptr == OSRGetAuthorityName(srs_, "PROJCS"));
+        EXPECT_TRUE(nullptr == OSRGetAuthorityCode(srs_, "PROJCS|UNIT"));
 
         char* unitsName = nullptr;
         val = OSRGetLinearUnits(srs_, &unitsName);
-        ensure("Units name is NULL", nullptr != unitsName);
-        ensure( "Did not get Foot linear units",
-                std::string("Foot") == unitsName);
+        ASSERT_TRUE(nullptr != unitsName);
+        EXPECT_STREQ(unitsName, "Foot");
     }
 
     // Translate a coordinate system with NAD shift into to PROJ.4 and back.
     // Also, verify that the TOWGS84 parameters are preserved.
-    template<>
-    template<>
-    void object::test<4>()
+    TEST_F(test_osr, NAD_shift)
     {
-        ensure("SRS handle is NULL", nullptr != srs_);
-
         err_ = OSRSetGS(srs_, -117.0, 100000.0, 100000);
-        ensure_equals("OSRSetGS failed", err_, OGRERR_NONE);
+        ASSERT_EQ(err_, OGRERR_NONE);
 
         err_ = OSRSetGeogCS(srs_, "Test GCS", "Test Datum", "WGS84",
             SRS_WGS84_SEMIMAJOR, SRS_WGS84_INVFLATTENING,
             nullptr, 0, nullptr, 0);
-        ensure_equals("OSRSetGeogCS failed", err_, OGRERR_NONE);
+        ASSERT_EQ(err_, OGRERR_NONE);
 
         err_ = OSRSetTOWGS84(srs_, 1, 2, 3, 0, 0, 0, 0);
-        ensure_equals("OSRSetTOWGS84 failed", err_, OGRERR_NONE);
+        ASSERT_EQ(err_, OGRERR_NONE);
 
         const int coeffSize = 7;
         double coeff[coeffSize] = { 0 };
         const double expect[coeffSize] = { 1, 2, 3, 0, 0, 0, 0 };
 
         err_ = OSRGetTOWGS84(srs_, coeff, 7);
-        ensure_equals("OSRSetTOWGS84 failed", err_, OGRERR_NONE);
-        ensure("GetTOWGS84 result is wrong",
-            std::equal(coeff, coeff + coeffSize, expect));
+        ASSERT_EQ(err_, OGRERR_NONE);
+        ASSERT_TRUE(std::equal(coeff, coeff + coeffSize, expect));
         OSRSetLinearUnits(srs_, "Metre", 1);
 
         char* proj4 = nullptr;
         err_ = OSRExportToProj4(srs_, &proj4);
-        ensure_equals("OSRExportToProj4 failed", err_, OGRERR_NONE);
+        ASSERT_EQ(err_, OGRERR_NONE);
 
         OGRSpatialReferenceH srs2 = nullptr;
         srs2 = OSRNewSpatialReference(nullptr);
 
         err_ = OSRImportFromProj4(srs2, proj4);
-        ensure_equals("OSRImportFromProj4 failed", err_, OGRERR_NONE);
+        ASSERT_EQ(err_, OGRERR_NONE);
 
         err_ = OSRGetTOWGS84(srs2, coeff, 7);
-        ensure_equals("OSRSetTOWGS84 failed", err_, OGRERR_NONE);
-        ensure("GetTOWGS84 result is wrong",
-            std::equal(coeff, coeff + coeffSize, expect));
+        ASSERT_EQ(err_, OGRERR_NONE);
+        ASSERT_TRUE(std::equal(coeff, coeff + coeffSize, expect));
 
         OSRDestroySpatialReference(srs2);
         CPLFree(proj4);
     }
 
     // Test URN support for OGC:CRS84
-    template<>
-    template<>
-    void object::test<5>()
+    TEST_F(test_osr, URN_OGC_CRS84)
     {
-        ensure("SRS handle is NULL", nullptr != srs_);
-
         err_ = OSRSetFromUserInput(srs_, "urn:ogc:def:crs:OGC:1.3:CRS84");
-        ensure_equals("OSRSetFromUserInput failed", err_, OGRERR_NONE);
+        ASSERT_EQ(err_, OGRERR_NONE);
 
         char* wkt1 = nullptr;
         err_ = OSRExportToWkt(srs_, &wkt1);
-        ensure_equals("OSRExportToWkt failed", err_, OGRERR_NONE);
-        ensure("OSRExportToWkt returned NULL", nullptr != wkt1);
+        ASSERT_EQ(err_, OGRERR_NONE);
+        ASSERT_TRUE(nullptr != wkt1);
 
         CPLFree(wkt1);
     }
 
     // Test URN support for EPSG
-    template<>
-    template<>
-    void object::test<6>()
+    TEST_F(test_osr, URN_EPSG)
     {
-        ensure("SRS handle is NULL", nullptr != srs_);
-
         err_ = OSRSetFromUserInput(srs_, "urn:ogc:def:crs:EPSG::4326");
-        ensure_equals("OSRSetFromUserInput failed", err_, OGRERR_NONE);
+        ASSERT_EQ(err_, OGRERR_NONE);
 
         char* wkt1 = nullptr;
         err_ = OSRExportToWkt(srs_, &wkt1);
-        ensure_equals("OSRExportToWkt failed", err_, OGRERR_NONE);
-        ensure("OSRExportToWkt returned NULL", nullptr != wkt1);
+        ASSERT_EQ(err_, OGRERR_NONE);
+        ASSERT_TRUE(nullptr != wkt1);
 
         err_ = OSRSetFromUserInput(srs_, "EPSGA:4326");
-        ensure_equals("OSRSetFromUserInput failed", err_, OGRERR_NONE);
+        ASSERT_EQ(err_, OGRERR_NONE);
 
         char* wkt2 = nullptr;
         err_ = OSRExportToWkt(srs_, &wkt2);
-        ensure_equals("OSRExportToWkt failed", err_, OGRERR_NONE);
-        ensure("OSRExportToWkt returned NULL", nullptr != wkt2);
+        ASSERT_EQ(err_, OGRERR_NONE);
+        ASSERT_TRUE(nullptr != wkt2);
 
-        ensure_equals("EPSG:4326 urn lookup not as expected",
-            std::string(wkt1), std::string(wkt2));
+        EXPECT_STREQ(wkt1, wkt2);
         CPLFree(wkt1);
         CPLFree(wkt2);
     }
 
     // Test URN support for auto projection
-    template<>
-    template<>
-    void object::test<7 >()
+    TEST_F(test_osr, URN_AUTO)
     {
-        ensure("SRS handle is NULL", nullptr != srs_);
-
         err_ = OSRSetFromUserInput(srs_, "urn:ogc:def:crs:OGC::AUTO42001:-117:33");
-        ensure_equals("OSRSetFromUserInput failed", err_, OGRERR_NONE);
+        ASSERT_EQ(err_, OGRERR_NONE);
 
         OGRSpatialReference oSRS;
         oSRS.importFromEPSG(32611);
 
-        ensure(oSRS.IsSame(OGRSpatialReference::FromHandle(srs_)));
+        ASSERT_TRUE(oSRS.IsSame(OGRSpatialReference::FromHandle(srs_)));
     }
 
     // Test StripTOWGS84IfKnownDatum
-    template<>
-    template<>
-    void object::test<8 >()
+    TEST_F(test_osr, StripTOWGS84IfKnownDatum)
     {
         // Not a boundCRS
         {
             OGRSpatialReference oSRS;
             oSRS.importFromEPSG(4326);
-            ensure(!oSRS.StripTOWGS84IfKnownDatum());
+            ASSERT_TRUE(!oSRS.StripTOWGS84IfKnownDatum());
         }
         // Custom boundCRS --> do not strip TOWGS84
         {
             OGRSpatialReference oSRS;
             oSRS.SetFromUserInput("+proj=longlat +ellps=GRS80 +towgs84=1,2,3,4,5,6,7");
-            ensure(!oSRS.StripTOWGS84IfKnownDatum());
+            ASSERT_TRUE(!oSRS.StripTOWGS84IfKnownDatum());
             double vals[7] = { 0 };
-            ensure(oSRS.GetTOWGS84(vals, 7) == OGRERR_NONE);
+            ASSERT_TRUE(oSRS.GetTOWGS84(vals, 7) == OGRERR_NONE);
         }
         // BoundCRS whose base CRS has a known code --> strip TOWGS84
         {
             OGRSpatialReference oSRS;
             oSRS.importFromEPSG(4326);
             oSRS.SetTOWGS84(1,2,3,4,5,6,7);
-            ensure(oSRS.StripTOWGS84IfKnownDatum());
+            ASSERT_TRUE(oSRS.StripTOWGS84IfKnownDatum());
             double vals[7] = { 0 };
-            ensure(oSRS.GetTOWGS84(vals, 7) != OGRERR_NONE);
+            ASSERT_TRUE(oSRS.GetTOWGS84(vals, 7) != OGRERR_NONE);
         }
         // BoundCRS whose datum code is known --> strip TOWGS84
         {
@@ -362,9 +302,9 @@ namespace tut
                 "AUTHORITY[\"FOO\",\"1\"]],"
                 "PRIMEM[\"Greenwich\",0],"
                 "UNIT[\"degree\",0.0174532925199433]]");
-            ensure(oSRS.StripTOWGS84IfKnownDatum());
+            ASSERT_TRUE(oSRS.StripTOWGS84IfKnownDatum());
             double vals[7] = { 0 };
-            ensure(oSRS.GetTOWGS84(vals, 7) != OGRERR_NONE);
+            ASSERT_TRUE(oSRS.GetTOWGS84(vals, 7) != OGRERR_NONE);
         }
         // BoundCRS whose datum name is known --> strip TOWGS84
         {
@@ -376,9 +316,9 @@ namespace tut
                 "TOWGS84[1,2,3,4,5,6,7]],"
                 "PRIMEM[\"Greenwich\",0],"
                 "UNIT[\"degree\",0.0174532925199433]]");
-            ensure(oSRS.StripTOWGS84IfKnownDatum());
+            ASSERT_TRUE(oSRS.StripTOWGS84IfKnownDatum());
             double vals[7] = { 0 };
-            ensure(oSRS.GetTOWGS84(vals, 7) != OGRERR_NONE);
+            ASSERT_TRUE(oSRS.GetTOWGS84(vals, 7) != OGRERR_NONE);
         }
         // BoundCRS whose datum name is unknown --> do not strip TOWGS84
         {
@@ -390,16 +330,14 @@ namespace tut
                 "TOWGS84[1,2,3,4,5,6,7]],"
                 "PRIMEM[\"Greenwich\",0],"
                 "UNIT[\"degree\",0.0174532925199433]]");
-            ensure(!oSRS.StripTOWGS84IfKnownDatum());
+            ASSERT_TRUE(!oSRS.StripTOWGS84IfKnownDatum());
             double vals[7] = { 0 };
-            ensure(oSRS.GetTOWGS84(vals, 7) == OGRERR_NONE);
+            ASSERT_TRUE(oSRS.GetTOWGS84(vals, 7) == OGRERR_NONE);
         }
     }
 
     // Test GetEPSGGeogCS
-    template<>
-    template<>
-    void object::test<9 >()
+    TEST_F(test_osr, GetEPSGGeogCS)
     {
         // When export to WKT1 is not possible
         OGRSpatialReference oSRS;
@@ -435,30 +373,28 @@ namespace tut
             "        AREA[\"World.\"],\n"
             "        BBOX[-90,-180,90,180]],\n"
             "    ID[\"ESRI\",54049]]");
-        ensure_equals(oSRS.GetEPSGGeogCS(), 4326);
+        ASSERT_EQ(oSRS.GetEPSGGeogCS(), 4326);
     }
 
     // Test GetOGCURN
-    template<>
-    template<>
-    void object::test<10>()
+    TEST_F(test_osr, GetOGCURN)
     {
         {
             OGRSpatialReference oSRS;
-            ensure(oSRS.GetOGCURN() == nullptr);
+            EXPECT_TRUE(oSRS.GetOGCURN() == nullptr);
         }
         {
             OGRSpatialReference oSRS;
             oSRS.SetFromUserInput("+proj=longlat");
-            ensure(oSRS.GetOGCURN() == nullptr);
+            EXPECT_TRUE(oSRS.GetOGCURN() == nullptr);
         }
 
         {
             OGRSpatialReference oSRS;
             oSRS.importFromEPSG(32631);
             char* pszRet = oSRS.GetOGCURN();
-            ensure(pszRet != nullptr);
-            ensure(strcmp(pszRet, "urn:ogc:def:crs:EPSG::32631") == 0);
+            ASSERT_TRUE(pszRet != nullptr);
+            EXPECT_STREQ(pszRet, "urn:ogc:def:crs:EPSG::32631");
             CPLFree(pszRet);
         }
 
@@ -466,39 +402,37 @@ namespace tut
             OGRSpatialReference oSRS;
             oSRS.SetFromUserInput("EPSG:32631+5773");
             char* pszRet = oSRS.GetOGCURN();
-            ensure(pszRet != nullptr);
-            ensure(strcmp(pszRet, "urn:ogc:def:crs,crs:EPSG::32631,crs:EPSG::5773") == 0);
+            ASSERT_TRUE(pszRet != nullptr);
+            ASSERT_TRUE(strcmp(pszRet, "urn:ogc:def:crs,crs:EPSG::32631,crs:EPSG::5773") == 0);
             CPLFree(pszRet);
         }
     }
 
     // Test constructors and assignment operators
-    template<>
-    template<>
-    void object::test<11>()
+    TEST_F(test_osr, constructors_assignment_operators)
     {
         OGRSpatialReference oSRS;
         oSRS.importFromEPSG(32631);
 
         OGRSpatialReference oSRS2(oSRS);
-        ensure( oSRS2.GetAuthorityCode(nullptr) != nullptr );
+        ASSERT_TRUE( oSRS2.GetAuthorityCode(nullptr) != nullptr );
 
         OGRSpatialReference oSRS3;
         OGRSpatialReference& oSRSRef(oSRS);
         oSRS = oSRSRef;
-        ensure( oSRS.GetAuthorityCode(nullptr) != nullptr );
+        ASSERT_TRUE( oSRS.GetAuthorityCode(nullptr) != nullptr );
         oSRS3 = oSRS;
-        ensure( oSRS3.GetAuthorityCode(nullptr) != nullptr );
+        ASSERT_TRUE( oSRS3.GetAuthorityCode(nullptr) != nullptr );
 
         OGRSpatialReference oSRS4(std::move(oSRS));
-        ensure( oSRS4.GetAuthorityCode(nullptr) != nullptr );
+        ASSERT_TRUE( oSRS4.GetAuthorityCode(nullptr) != nullptr );
 
         OGRSpatialReference oSRS5;
         OGRSpatialReference& oSRS4Ref(oSRS4);
         oSRS4 = std::move(oSRS4Ref);
-        ensure( oSRS4.GetAuthorityCode(nullptr) != nullptr );
+        ASSERT_TRUE( oSRS4.GetAuthorityCode(nullptr) != nullptr );
         oSRS5 = std::move(oSRS4);
-        ensure( oSRS5.GetAuthorityCode(nullptr) != nullptr );
+        ASSERT_TRUE( oSRS5.GetAuthorityCode(nullptr) != nullptr );
 
     }
 

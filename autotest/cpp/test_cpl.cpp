@@ -61,69 +61,60 @@
 #include <fstream>
 #include <string>
 
+#include "gtest_include.h"
+
 static bool gbGotError = false;
 static void CPL_STDCALL myErrorHandler(CPLErr, CPLErrorNum, const char*)
 {
     gbGotError = true;
 }
 
-// The tut framework has a default maximum number of tests per group of 50
-// Increase it as we're over that.
-#define MAX_NUMBER_OF_TESTS 100
-
-namespace tut
+namespace
 {
 
     // Common fixture with test data
-    struct test_cpl_data
+    struct test_cpl: public ::testing::Test
     {
         std::string data_;
 
-        test_cpl_data()
+        test_cpl()
         {
             // Compose data path for test group
             data_ = tut::common::data_basedir;
         }
     };
 
-    // Register test group
-    typedef test_group<test_cpl_data, MAX_NUMBER_OF_TESTS> group;
-    typedef group::object object;
-    group test_cpl_group("CPL");
-
     // Test cpl_list API
-    template<>
-    template<>
-    void object::test<1>()
+    TEST_F(test_cpl, CPLList)
     {
         CPLList* list;
 
         list = CPLListInsert(nullptr, (void*)nullptr, 0);
-        ensure(CPLListCount(list) == 1);
+        ASSERT_TRUE(CPLListCount(list) == 1);
         list = CPLListRemove(list, 2);
-        ensure(CPLListCount(list) == 1);
+        ASSERT_TRUE(CPLListCount(list) == 1);
         list = CPLListRemove(list, 1);
-        ensure(CPLListCount(list) == 1);
+        ASSERT_TRUE(CPLListCount(list) == 1);
         list = CPLListRemove(list, 0);
-        ensure(CPLListCount(list) == 0);
+        ASSERT_TRUE(CPLListCount(list) == 0);
         list = nullptr;
 
         list = CPLListInsert(nullptr, (void*)nullptr, 2);
-        ensure(CPLListCount(list) == 3);
+        ASSERT_TRUE(CPLListCount(list) == 3);
         list = CPLListRemove(list, 2);
-        ensure(CPLListCount(list) == 2);
+        ASSERT_TRUE(CPLListCount(list) == 2);
         list = CPLListRemove(list, 1);
-        ensure(CPLListCount(list) == 1);
+        ASSERT_TRUE(CPLListCount(list) == 1);
         list = CPLListRemove(list, 0);
-        ensure(CPLListCount(list) == 0);
+        ASSERT_TRUE(CPLListCount(list) == 0);
         list = nullptr;
 
         list = CPLListAppend(list, (void*)1);
-        ensure(CPLListGet(list,0) == list);
-        ensure(CPLListGet(list,1) == nullptr);
+        ASSERT_TRUE(CPLListGet(list,0) == list);
+        ASSERT_TRUE(CPLListGet(list,1) == nullptr);
         list = CPLListAppend(list, (void*)2);
         list = CPLListInsert(list, (void*)3, 2);
-        ensure(CPLListCount(list) == 3);
+        ASSERT_TRUE(CPLListCount(list) == 3);
         CPLListDestroy(list);
         list = nullptr;
 
@@ -131,11 +122,11 @@ namespace tut
         list = CPLListAppend(list, (void*)2);
         list = CPLListInsert(list, (void*)4, 3);
         CPLListGet(list,2)->pData = (void*)3;
-        ensure(CPLListCount(list) == 4);
-        ensure(CPLListGet(list,0)->pData == (void*)1);
-        ensure(CPLListGet(list,1)->pData == (void*)2);
-        ensure(CPLListGet(list,2)->pData == (void*)3);
-        ensure(CPLListGet(list,3)->pData == (void*)4);
+        ASSERT_TRUE(CPLListCount(list) == 4);
+        ASSERT_TRUE(CPLListGet(list,0)->pData == (void*)1);
+        ASSERT_TRUE(CPLListGet(list,1)->pData == (void*)2);
+        ASSERT_TRUE(CPLListGet(list,2)->pData == (void*)3);
+        ASSERT_TRUE(CPLListGet(list,3)->pData == (void*)4);
         CPLListDestroy(list);
         list = nullptr;
 
@@ -143,16 +134,16 @@ namespace tut
         CPLListGet(list,0)->pData = (void*)2;
         list = CPLListInsert(list, (void*)1, 0);
         list = CPLListInsert(list, (void*)3, 2);
-        ensure(CPLListCount(list) == 4);
-        ensure(CPLListGet(list,0)->pData == (void*)1);
-        ensure(CPLListGet(list,1)->pData == (void*)2);
-        ensure(CPLListGet(list,2)->pData == (void*)3);
-        ensure(CPLListGet(list,3)->pData == (void*)4);
+        ASSERT_TRUE(CPLListCount(list) == 4);
+        ASSERT_TRUE(CPLListGet(list,0)->pData == (void*)1);
+        ASSERT_TRUE(CPLListGet(list,1)->pData == (void*)2);
+        ASSERT_TRUE(CPLListGet(list,2)->pData == (void*)3);
+        ASSERT_TRUE(CPLListGet(list,3)->pData == (void*)4);
         list = CPLListRemove(list, 1);
         list = CPLListRemove(list, 1);
         list = CPLListRemove(list, 0);
         list = CPLListRemove(list, 0);
-        ensure(list == nullptr);
+        ASSERT_TRUE(list == nullptr);
     }
 
     typedef struct
@@ -162,9 +153,7 @@ namespace tut
     } TestStringStruct;
 
     // Test CPLGetValueType
-    template<>
-    template<>
-    void object::test<2>()
+    TEST_F(test_cpl, CPLGetValueType)
     {
         TestStringStruct apszTestStrings[] =
         {
@@ -193,32 +182,25 @@ namespace tut
         size_t i;
         for(i=0;i < sizeof(apszTestStrings) / sizeof(apszTestStrings[0]); i++)
         {
-            ensure(CPLGetValueType(apszTestStrings[i].testString) == apszTestStrings[i].expectedResult);
-            if (CPLGetValueType(apszTestStrings[i].testString) != apszTestStrings[i].expectedResult)
-                fprintf(stderr, "mismatch on item %d : value=\"%s\", expect_result=%d, result=%d\n", (int)i,
-                        apszTestStrings[i].testString,
-                        apszTestStrings[i].expectedResult,
-                        CPLGetValueType(apszTestStrings[i].testString));
+            EXPECT_EQ(CPLGetValueType(apszTestStrings[i].testString), apszTestStrings[i].expectedResult) << apszTestStrings[i].testString;
         }
     }
 
 
     // Test cpl_hash_set API
-    template<>
-    template<>
-    void object::test<3>()
+   TEST_F(test_cpl, CPLHashSet)
     {
         CPLHashSet* set = CPLHashSetNew(CPLHashSetHashStr, CPLHashSetEqualStr, CPLFree);
-        ensure(CPLHashSetInsert(set, CPLStrdup("hello")) == TRUE);
-        ensure(CPLHashSetInsert(set, CPLStrdup("good morning")) == TRUE);
-        ensure(CPLHashSetInsert(set, CPLStrdup("bye bye")) == TRUE);
-        ensure(CPLHashSetSize(set) == 3);
-        ensure(CPLHashSetInsert(set, CPLStrdup("bye bye")) == FALSE);
-        ensure(CPLHashSetSize(set) == 3);
-        ensure(CPLHashSetRemove(set, "bye bye") == TRUE);
-        ensure(CPLHashSetSize(set) == 2);
-        ensure(CPLHashSetRemove(set, "good afternoon") == FALSE);
-        ensure(CPLHashSetSize(set) == 2);
+        ASSERT_TRUE(CPLHashSetInsert(set, CPLStrdup("hello")) == TRUE);
+        ASSERT_TRUE(CPLHashSetInsert(set, CPLStrdup("good morning")) == TRUE);
+        ASSERT_TRUE(CPLHashSetInsert(set, CPLStrdup("bye bye")) == TRUE);
+        ASSERT_TRUE(CPLHashSetSize(set) == 3);
+        ASSERT_TRUE(CPLHashSetInsert(set, CPLStrdup("bye bye")) == FALSE);
+        ASSERT_TRUE(CPLHashSetSize(set) == 3);
+        ASSERT_TRUE(CPLHashSetRemove(set, "bye bye") == TRUE);
+        ASSERT_TRUE(CPLHashSetSize(set) == 2);
+        ASSERT_TRUE(CPLHashSetRemove(set, "good afternoon") == FALSE);
+        ASSERT_TRUE(CPLHashSetSize(set) == 2);
         CPLHashSetDestroy(set);
     }
 
@@ -230,9 +212,7 @@ namespace tut
     }
 
     // Test cpl_hash_set API
-    template<>
-    template<>
-    void object::test<4>()
+    TEST_F(test_cpl, CPLHashSet2)
     {
         const int HASH_SET_SIZE = 1000;
 
@@ -245,164 +225,162 @@ namespace tut
         CPLHashSet* set = CPLHashSetNew(nullptr, nullptr, nullptr);
         for(int i=0;i<HASH_SET_SIZE;i++)
         {
-            ensure(CPLHashSetInsert(set, (void*)&data[i]) == TRUE);
+            ASSERT_TRUE(CPLHashSetInsert(set, (void*)&data[i]) == TRUE);
         }
-        ensure(CPLHashSetSize(set) == HASH_SET_SIZE);
+        ASSERT_TRUE(CPLHashSetSize(set) == HASH_SET_SIZE);
 
         for(int i=0;i<HASH_SET_SIZE;i++)
         {
-            ensure(CPLHashSetInsert(set, (void*)&data[i]) == FALSE);
+            ASSERT_TRUE(CPLHashSetInsert(set, (void*)&data[i]) == FALSE);
         }
-        ensure(CPLHashSetSize(set) == HASH_SET_SIZE);
+        ASSERT_TRUE(CPLHashSetSize(set) == HASH_SET_SIZE);
 
         for(int i=0;i<HASH_SET_SIZE;i++)
         {
-            ensure(CPLHashSetLookup(set, (const void*)&data[i]) == (const void*)&data[i]);
+            ASSERT_TRUE(CPLHashSetLookup(set, (const void*)&data[i]) == (const void*)&data[i]);
         }
 
         int sum = 0;
         CPLHashSetForeach(set, sumValues, &sum);
-        ensure(sum == (HASH_SET_SIZE-1) * HASH_SET_SIZE / 2);
+        ASSERT_TRUE(sum == (HASH_SET_SIZE-1) * HASH_SET_SIZE / 2);
 
         for(int i=0;i<HASH_SET_SIZE;i++)
         {
-            ensure(CPLHashSetRemove(set, (void*)&data[i]) == TRUE);
+            ASSERT_TRUE(CPLHashSetRemove(set, (void*)&data[i]) == TRUE);
         }
-        ensure(CPLHashSetSize(set) == 0);
+        ASSERT_TRUE(CPLHashSetSize(set) == 0);
 
         CPLHashSetDestroy(set);
     }
 
     // Test cpl_string API
-    template<>
-    template<>
-    void object::test<5>()
+    TEST_F(test_cpl, CSLTokenizeString2)
     {
         // CSLTokenizeString2();
         char    **papszStringList;
 
         papszStringList = CSLTokenizeString2("one two three", " ", 0);
-        ensure(CSLCount(papszStringList) == 3);
-        ensure(EQUAL(papszStringList[0], "one"));
-        ensure(EQUAL(papszStringList[1], "two"));
-        ensure(EQUAL(papszStringList[2], "three"));
+        ASSERT_TRUE(CSLCount(papszStringList) == 3);
+        ASSERT_TRUE(EQUAL(papszStringList[0], "one"));
+        ASSERT_TRUE(EQUAL(papszStringList[1], "two"));
+        ASSERT_TRUE(EQUAL(papszStringList[2], "three"));
         CSLDestroy(papszStringList);
 
         papszStringList = CSLTokenizeString2("one two, three;four,five; six", " ;,", 0);
-        ensure(CSLCount(papszStringList) == 6);
-        ensure(EQUAL(papszStringList[0], "one"));
-        ensure(EQUAL(papszStringList[1], "two"));
-        ensure(EQUAL(papszStringList[2], "three"));
-        ensure(EQUAL(papszStringList[3], "four"));
-        ensure(EQUAL(papszStringList[4], "five"));
-        ensure(EQUAL(papszStringList[5], "six"));
+        ASSERT_TRUE(CSLCount(papszStringList) == 6);
+        ASSERT_TRUE(EQUAL(papszStringList[0], "one"));
+        ASSERT_TRUE(EQUAL(papszStringList[1], "two"));
+        ASSERT_TRUE(EQUAL(papszStringList[2], "three"));
+        ASSERT_TRUE(EQUAL(papszStringList[3], "four"));
+        ASSERT_TRUE(EQUAL(papszStringList[4], "five"));
+        ASSERT_TRUE(EQUAL(papszStringList[5], "six"));
         CSLDestroy(papszStringList);
 
         papszStringList = CSLTokenizeString2("one two,,,five,six", " ,",
                                              CSLT_ALLOWEMPTYTOKENS);
-        ensure(CSLCount(papszStringList) == 6);
-        ensure(EQUAL(papszStringList[0], "one"));
-        ensure(EQUAL(papszStringList[1], "two"));
-        ensure(EQUAL(papszStringList[2], ""));
-        ensure(EQUAL(papszStringList[3], ""));
-        ensure(EQUAL(papszStringList[4], "five"));
-        ensure(EQUAL(papszStringList[5], "six"));
+        ASSERT_TRUE(CSLCount(papszStringList) == 6);
+        ASSERT_TRUE(EQUAL(papszStringList[0], "one"));
+        ASSERT_TRUE(EQUAL(papszStringList[1], "two"));
+        ASSERT_TRUE(EQUAL(papszStringList[2], ""));
+        ASSERT_TRUE(EQUAL(papszStringList[3], ""));
+        ASSERT_TRUE(EQUAL(papszStringList[4], "five"));
+        ASSERT_TRUE(EQUAL(papszStringList[5], "six"));
         CSLDestroy(papszStringList);
 
         papszStringList = CSLTokenizeString2("one two,\"three,four ,\",five,six", " ,",
                                              CSLT_HONOURSTRINGS);
-        ensure(CSLCount(papszStringList) == 5);
-        ensure(EQUAL(papszStringList[0], "one"));
-        ensure(EQUAL(papszStringList[1], "two"));
-        ensure(EQUAL(papszStringList[2], "three,four ,"));
-        ensure(EQUAL(papszStringList[3], "five"));
-        ensure(EQUAL(papszStringList[4], "six"));
+        ASSERT_TRUE(CSLCount(papszStringList) == 5);
+        ASSERT_TRUE(EQUAL(papszStringList[0], "one"));
+        ASSERT_TRUE(EQUAL(papszStringList[1], "two"));
+        ASSERT_TRUE(EQUAL(papszStringList[2], "three,four ,"));
+        ASSERT_TRUE(EQUAL(papszStringList[3], "five"));
+        ASSERT_TRUE(EQUAL(papszStringList[4], "six"));
         CSLDestroy(papszStringList);
 
         papszStringList = CSLTokenizeString2("one two,\"three,four ,\",five,six", " ,",
                                              CSLT_PRESERVEQUOTES);
-        ensure(CSLCount(papszStringList) == 7);
-        ensure(EQUAL(papszStringList[0], "one"));
-        ensure(EQUAL(papszStringList[1], "two"));
-        ensure(EQUAL(papszStringList[2], "\"three"));
-        ensure(EQUAL(papszStringList[3], "four"));
-        ensure(EQUAL(papszStringList[4], "\""));
-        ensure(EQUAL(papszStringList[5], "five"));
-        ensure(EQUAL(papszStringList[6], "six"));
+        ASSERT_TRUE(CSLCount(papszStringList) == 7);
+        ASSERT_TRUE(EQUAL(papszStringList[0], "one"));
+        ASSERT_TRUE(EQUAL(papszStringList[1], "two"));
+        ASSERT_TRUE(EQUAL(papszStringList[2], "\"three"));
+        ASSERT_TRUE(EQUAL(papszStringList[3], "four"));
+        ASSERT_TRUE(EQUAL(papszStringList[4], "\""));
+        ASSERT_TRUE(EQUAL(papszStringList[5], "five"));
+        ASSERT_TRUE(EQUAL(papszStringList[6], "six"));
         CSLDestroy(papszStringList);
 
         papszStringList = CSLTokenizeString2("one two,\"three,four ,\",five,six", " ,",
                                              CSLT_HONOURSTRINGS | CSLT_PRESERVEQUOTES);
-        ensure(CSLCount(papszStringList) == 5);
-        ensure(EQUAL(papszStringList[0], "one"));
-        ensure(EQUAL(papszStringList[1], "two"));
-        ensure(EQUAL(papszStringList[2], "\"three,four ,\""));
-        ensure(EQUAL(papszStringList[3], "five"));
-        ensure(EQUAL(papszStringList[4], "six"));
+        ASSERT_TRUE(CSLCount(papszStringList) == 5);
+        ASSERT_TRUE(EQUAL(papszStringList[0], "one"));
+        ASSERT_TRUE(EQUAL(papszStringList[1], "two"));
+        ASSERT_TRUE(EQUAL(papszStringList[2], "\"three,four ,\""));
+        ASSERT_TRUE(EQUAL(papszStringList[3], "five"));
+        ASSERT_TRUE(EQUAL(papszStringList[4], "six"));
         CSLDestroy(papszStringList);
 
         papszStringList = CSLTokenizeString2("one \\two,\"three,\\four ,\",five,six",
                                              " ,", CSLT_PRESERVEESCAPES);
-        ensure(CSLCount(papszStringList) == 7);
-        ensure(EQUAL(papszStringList[0], "one"));
-        ensure(EQUAL(papszStringList[1], "\\two"));
-        ensure(EQUAL(papszStringList[2], "\"three"));
-        ensure(EQUAL(papszStringList[3], "\\four"));
-        ensure(EQUAL(papszStringList[4], "\""));
-        ensure(EQUAL(papszStringList[5], "five"));
-        ensure(EQUAL(papszStringList[6], "six"));
+        ASSERT_TRUE(CSLCount(papszStringList) == 7);
+        ASSERT_TRUE(EQUAL(papszStringList[0], "one"));
+        ASSERT_TRUE(EQUAL(papszStringList[1], "\\two"));
+        ASSERT_TRUE(EQUAL(papszStringList[2], "\"three"));
+        ASSERT_TRUE(EQUAL(papszStringList[3], "\\four"));
+        ASSERT_TRUE(EQUAL(papszStringList[4], "\""));
+        ASSERT_TRUE(EQUAL(papszStringList[5], "five"));
+        ASSERT_TRUE(EQUAL(papszStringList[6], "six"));
         CSLDestroy(papszStringList);
 
         papszStringList = CSLTokenizeString2("one \\two,\"three,\\four ,\",five,six",
                                              " ,",
                                              CSLT_PRESERVEQUOTES | CSLT_PRESERVEESCAPES);
-        ensure(CSLCount(papszStringList) == 7);
-        ensure(EQUAL(papszStringList[0], "one"));
-        ensure(EQUAL(papszStringList[1], "\\two"));
-        ensure(EQUAL(papszStringList[2], "\"three"));
-        ensure(EQUAL(papszStringList[3], "\\four"));
-        ensure(EQUAL(papszStringList[4], "\""));
-        ensure(EQUAL(papszStringList[5], "five"));
-        ensure(EQUAL(papszStringList[6], "six"));
+        ASSERT_TRUE(CSLCount(papszStringList) == 7);
+        ASSERT_TRUE(EQUAL(papszStringList[0], "one"));
+        ASSERT_TRUE(EQUAL(papszStringList[1], "\\two"));
+        ASSERT_TRUE(EQUAL(papszStringList[2], "\"three"));
+        ASSERT_TRUE(EQUAL(papszStringList[3], "\\four"));
+        ASSERT_TRUE(EQUAL(papszStringList[4], "\""));
+        ASSERT_TRUE(EQUAL(papszStringList[5], "five"));
+        ASSERT_TRUE(EQUAL(papszStringList[6], "six"));
         CSLDestroy(papszStringList);
 
         papszStringList = CSLTokenizeString2("one ,two, three, four ,five  ", ",", 0);
-        ensure(CSLCount(papszStringList) == 5);
-        ensure(EQUAL(papszStringList[0], "one "));
-        ensure(EQUAL(papszStringList[1], "two"));
-        ensure(EQUAL(papszStringList[2], " three"));
-        ensure(EQUAL(papszStringList[3], " four "));
-        ensure(EQUAL(papszStringList[4], "five  "));
+        ASSERT_TRUE(CSLCount(papszStringList) == 5);
+        ASSERT_TRUE(EQUAL(papszStringList[0], "one "));
+        ASSERT_TRUE(EQUAL(papszStringList[1], "two"));
+        ASSERT_TRUE(EQUAL(papszStringList[2], " three"));
+        ASSERT_TRUE(EQUAL(papszStringList[3], " four "));
+        ASSERT_TRUE(EQUAL(papszStringList[4], "five  "));
         CSLDestroy(papszStringList);
 
         papszStringList = CSLTokenizeString2("one ,two, three, four ,five  ", ",",
                                              CSLT_STRIPLEADSPACES);
-        ensure(CSLCount(papszStringList) == 5);
-        ensure(EQUAL(papszStringList[0], "one "));
-        ensure(EQUAL(papszStringList[1], "two"));
-        ensure(EQUAL(papszStringList[2], "three"));
-        ensure(EQUAL(papszStringList[3], "four "));
-        ensure(EQUAL(papszStringList[4], "five  "));
+        ASSERT_TRUE(CSLCount(papszStringList) == 5);
+        ASSERT_TRUE(EQUAL(papszStringList[0], "one "));
+        ASSERT_TRUE(EQUAL(papszStringList[1], "two"));
+        ASSERT_TRUE(EQUAL(papszStringList[2], "three"));
+        ASSERT_TRUE(EQUAL(papszStringList[3], "four "));
+        ASSERT_TRUE(EQUAL(papszStringList[4], "five  "));
         CSLDestroy(papszStringList);
 
         papszStringList = CSLTokenizeString2("one ,two, three, four ,five  ", ",",
                                              CSLT_STRIPENDSPACES);
-        ensure(CSLCount(papszStringList) == 5);
-        ensure(EQUAL(papszStringList[0], "one"));
-        ensure(EQUAL(papszStringList[1], "two"));
-        ensure(EQUAL(papszStringList[2], " three"));
-        ensure(EQUAL(papszStringList[3], " four"));
-        ensure(EQUAL(papszStringList[4], "five"));
+        ASSERT_TRUE(CSLCount(papszStringList) == 5);
+        ASSERT_TRUE(EQUAL(papszStringList[0], "one"));
+        ASSERT_TRUE(EQUAL(papszStringList[1], "two"));
+        ASSERT_TRUE(EQUAL(papszStringList[2], " three"));
+        ASSERT_TRUE(EQUAL(papszStringList[3], " four"));
+        ASSERT_TRUE(EQUAL(papszStringList[4], "five"));
         CSLDestroy(papszStringList);
 
         papszStringList = CSLTokenizeString2("one ,two, three, four ,five  ", ",",
                                              CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES);
-        ensure(CSLCount(papszStringList) == 5);
-        ensure(EQUAL(papszStringList[0], "one"));
-        ensure(EQUAL(papszStringList[1], "two"));
-        ensure(EQUAL(papszStringList[2], "three"));
-        ensure(EQUAL(papszStringList[3], "four"));
-        ensure(EQUAL(papszStringList[4], "five"));
+        ASSERT_TRUE(CSLCount(papszStringList) == 5);
+        ASSERT_TRUE(EQUAL(papszStringList[0], "one"));
+        ASSERT_TRUE(EQUAL(papszStringList[1], "two"));
+        ASSERT_TRUE(EQUAL(papszStringList[2], "three"));
+        ASSERT_TRUE(EQUAL(papszStringList[3], "four"));
+        ASSERT_TRUE(EQUAL(papszStringList[4], "five"));
         CSLDestroy(papszStringList);
     }
 
@@ -413,9 +391,7 @@ namespace tut
     } TestRecodeStruct;
 
     // Test cpl_recode API
-    template<>
-    template<>
-    void object::test<6>()
+    TEST_F(test_cpl, CPLRecode)
     {
         /*
          * NOTE: This test will generally fail if iconv() is not
@@ -518,7 +494,7 @@ namespace tut
             }
             else
             {
-                ensure( std::string("Recode from ") + oTestString.szEncoding, bOK );
+                EXPECT_TRUE( bOK ) << "Recode from " << oTestString.szEncoding;
             }
             CPLFree( pszDecodedString );
         }
@@ -529,27 +505,25 @@ namespace tut
 /************************************************************************/
 /*                         CPLStringList tests                          */
 /************************************************************************/
-    template<>
-    template<>
-    void object::test<7>()
+    TEST_F(test_cpl, CPLStringList_Base)
     {
         CPLStringList  oCSL;
 
-        ensure( "7nil", oCSL.List() == nullptr );
+        ASSERT_TRUE( oCSL.List() == nullptr );
 
         oCSL.AddString( "def" );
         oCSL.AddString( "abc" );
 
-        ensure_equals( "7", oCSL.Count(), 2 );
-        ensure( "70", EQUAL(oCSL[0], "def") );
-        ensure( "71", EQUAL(oCSL[1], "abc") );
-        ensure( "72", oCSL[17] == nullptr );
-        ensure( "73", oCSL[-1] == nullptr );
-        ensure_equals( "74", oCSL.FindString("abc"), 1 );
+        ASSERT_EQ( oCSL.Count(), 2 );
+        ASSERT_TRUE( EQUAL(oCSL[0], "def") );
+        ASSERT_TRUE( EQUAL(oCSL[1], "abc") );
+        ASSERT_TRUE(  oCSL[17] == nullptr );
+        ASSERT_TRUE( oCSL[-1] == nullptr );
+        ASSERT_EQ( oCSL.FindString("abc"), 1 );
 
         CSLDestroy( oCSL.StealList() );
-        ensure_equals( "75", oCSL.Count(), 0 );
-        ensure( "76", oCSL.List() == nullptr );
+        ASSERT_EQ( oCSL.Count(), 0 );
+        ASSERT_TRUE( oCSL.List() == nullptr );
 
         // Test that the list will make an internal copy when needed to
         // modify a read-only list.
@@ -559,62 +533,60 @@ namespace tut
 
         CPLStringList  oCopy( oCSL.List(), FALSE );
 
-        ensure_equals( "77", oCSL.List(), oCopy.List() );
-        ensure_equals( "78", oCSL.Count(), oCopy.Count() );
+        ASSERT_EQ( oCSL.List(), oCopy.List() );
+        ASSERT_EQ( oCSL.Count(), oCopy.Count() );
 
         oCopy.AddString( "xyz" );
-        ensure( "79", oCSL.List() != oCopy.List() );
-        ensure_equals( "7a", oCopy.Count(), 3 );
-        ensure_equals( "7b", oCSL.Count(), 2 );
-        ensure( "7c", EQUAL(oCopy[2], "xyz") );
+        ASSERT_TRUE( oCSL.List() != oCopy.List() );
+        ASSERT_EQ( oCopy.Count(), 3 );
+        ASSERT_EQ( oCSL.Count(), 2 );
+        ASSERT_TRUE( EQUAL(oCopy[2], "xyz") );
     }
 
-    template<>
-    template<>
-    void object::test<8>()
+    TEST_F(test_cpl, CPLStringList_NameValue)
     {
         // Test some name=value handling stuff.
         CPLStringList oNVL;
 
         oNVL.AddNameValue( "KEY1", "VALUE1" );
         oNVL.AddNameValue( "2KEY", "VALUE2" );
-        ensure_equals( oNVL.Count(), 2 );
-        ensure( EQUAL(oNVL.FetchNameValue("2KEY"),"VALUE2") );
-        ensure( oNVL.FetchNameValue("MISSING") == nullptr );
+        ASSERT_EQ( oNVL.Count(), 2 );
+        ASSERT_TRUE( EQUAL(oNVL.FetchNameValue("2KEY"),"VALUE2") );
+        ASSERT_TRUE( oNVL.FetchNameValue("MISSING") == nullptr );
 
         oNVL.AddNameValue( "KEY1", "VALUE3" );
-        ensure( EQUAL(oNVL.FetchNameValue("KEY1"),"VALUE1") );
-        ensure( EQUAL(oNVL[2],"KEY1=VALUE3") );
-        ensure( EQUAL(oNVL.FetchNameValueDef("MISSING","X"),"X") );
+        ASSERT_TRUE( EQUAL(oNVL.FetchNameValue("KEY1"),"VALUE1") );
+        ASSERT_TRUE( EQUAL(oNVL[2],"KEY1=VALUE3") );
+        ASSERT_TRUE( EQUAL(oNVL.FetchNameValueDef("MISSING","X"),"X") );
 
         oNVL.SetNameValue( "2KEY", "VALUE4" );
-        ensure( EQUAL(oNVL.FetchNameValue("2KEY"),"VALUE4") );
-        ensure_equals( oNVL.Count(), 3 );
+        ASSERT_TRUE( EQUAL(oNVL.FetchNameValue("2KEY"),"VALUE4") );
+        ASSERT_EQ( oNVL.Count(), 3 );
 
         // make sure deletion works.
         oNVL.SetNameValue( "2KEY", nullptr );
-        ensure( oNVL.FetchNameValue("2KEY") == nullptr );
-        ensure_equals( oNVL.Count(), 2 );
+        ASSERT_TRUE( oNVL.FetchNameValue("2KEY") == nullptr );
+        ASSERT_EQ( oNVL.Count(), 2 );
 
         // Test boolean support.
-        ensure_equals( "b1", oNVL.FetchBoolean( "BOOL", TRUE ), TRUE );
-        ensure_equals( "b2", oNVL.FetchBoolean( "BOOL", FALSE ), FALSE );
+        ASSERT_EQ( oNVL.FetchBoolean( "BOOL", TRUE ), TRUE );
+        ASSERT_EQ( oNVL.FetchBoolean( "BOOL", FALSE ), FALSE );
 
         oNVL.SetNameValue( "BOOL", "YES" );
-        ensure_equals( "b3", oNVL.FetchBoolean( "BOOL", TRUE ), TRUE );
-        ensure_equals( "b4", oNVL.FetchBoolean( "BOOL", FALSE ), TRUE );
+        ASSERT_EQ( oNVL.FetchBoolean( "BOOL", TRUE ), TRUE );
+        ASSERT_EQ( oNVL.FetchBoolean( "BOOL", FALSE ), TRUE );
 
         oNVL.SetNameValue( "BOOL", "1" );
-        ensure_equals( "b5", oNVL.FetchBoolean( "BOOL", FALSE ), TRUE );
+        ASSERT_EQ( oNVL.FetchBoolean( "BOOL", FALSE ), TRUE );
 
         oNVL.SetNameValue( "BOOL", "0" );
-        ensure_equals( "b6", oNVL.FetchBoolean( "BOOL", TRUE ), FALSE );
+        ASSERT_EQ( oNVL.FetchBoolean( "BOOL", TRUE ), FALSE );
 
         oNVL.SetNameValue( "BOOL", "FALSE" );
-        ensure_equals( "b7", oNVL.FetchBoolean( "BOOL", TRUE ), FALSE );
+        ASSERT_EQ( oNVL.FetchBoolean( "BOOL", TRUE ), FALSE );
 
         oNVL.SetNameValue( "BOOL", "ON" );
-        ensure_equals( "b8", oNVL.FetchBoolean( "BOOL", FALSE ), TRUE );
+        ASSERT_EQ( oNVL.FetchBoolean( "BOOL", FALSE ), TRUE );
 
         // Test assignment operator.
         CPLStringList oCopy;
@@ -624,25 +596,25 @@ namespace tut
             oTemp.AddString("test");
             oCopy = oTemp;
         }
-        ensure( "c1", EQUAL(oCopy[0],"test") );
+        EXPECT_STREQ(oCopy[0],"test");
 
         auto& oCopyRef(oCopy);
         oCopy = oCopyRef;
-        ensure( "c2", EQUAL(oCopy[0],"test") );
+        EXPECT_STREQ(oCopy[0],"test");
 
         // Test copy constructor.
         CPLStringList oCopy2(oCopy);
         oCopy.Clear();
-        ensure( "c3", EQUAL(oCopy2[0],"test") );
+        EXPECT_STREQ(oCopy2[0],"test");
 
         // Test move constructor
         CPLStringList oMoved(std::move(oCopy2));
-        ensure( "c_move_constructor", EQUAL(oMoved[0],"test") );
+        EXPECT_STREQ(oMoved[0],"test");
 
         // Test move assignment operator
         CPLStringList oMoved2;
         oMoved2 = std::move(oMoved);
-        ensure( "c_move_assignment", EQUAL(oMoved2[0],"test") );
+        EXPECT_STREQ(oMoved2[0],"test");
 
         // Test sorting
         CPLStringList oTestSort;
@@ -651,45 +623,43 @@ namespace tut
         oTestSort.AddNameValue("T", "3");
         oTestSort.AddNameValue("A", "4");
         oTestSort.Sort();
-        ensure( "c4", EQUAL(oTestSort[0],"A=4") );
-        ensure( "c5", EQUAL(oTestSort[1],"L=2") );
-        ensure( "c6", EQUAL(oTestSort[2],"T=3") );
-        ensure( "c7", EQUAL(oTestSort[3],"Z=1") );
-        ensure_equals( "c8", oTestSort[4], (const char*)nullptr );
+        EXPECT_STREQ(oTestSort[0],"A=4");
+        EXPECT_STREQ(oTestSort[1],"L=2");
+        EXPECT_STREQ(oTestSort[2],"T=3");
+        EXPECT_STREQ(oTestSort[3],"Z=1");
+        ASSERT_EQ( oTestSort[4], (const char*)nullptr );
 
         // Test FetchNameValue() in a sorted list
-        ensure( "c9", EQUAL(oTestSort.FetchNameValue("A"),"4") );
-        ensure( "c10", EQUAL(oTestSort.FetchNameValue("L"),"2") );
-        ensure( "c11", EQUAL(oTestSort.FetchNameValue("T"),"3") );
-        ensure( "c12", EQUAL(oTestSort.FetchNameValue("Z"),"1") );
+        EXPECT_STREQ(oTestSort.FetchNameValue("A"),"4");
+        EXPECT_STREQ(oTestSort.FetchNameValue("L"),"2");
+        EXPECT_STREQ(oTestSort.FetchNameValue("T"),"3");
+        EXPECT_STREQ(oTestSort.FetchNameValue("Z"),"1");
 
         // Test AddNameValue() in a sorted list
         oTestSort.AddNameValue("B", "5");
-        ensure( "c13", EQUAL(oTestSort[0],"A=4") );
-        ensure( "c14", EQUAL(oTestSort[1],"B=5") );
-        ensure( "c15", EQUAL(oTestSort[2],"L=2") );
-        ensure( "c16", EQUAL(oTestSort[3],"T=3") );
-        ensure( "c17", EQUAL(oTestSort[4],"Z=1") );
-        ensure_equals( "c18", oTestSort[5], (const char*)nullptr );
+        EXPECT_STREQ(oTestSort[0],"A=4");
+        EXPECT_STREQ(oTestSort[1],"B=5");
+        EXPECT_STREQ(oTestSort[2],"L=2");
+        EXPECT_STREQ(oTestSort[3],"T=3");
+        EXPECT_STREQ(oTestSort[4],"Z=1");
+        ASSERT_EQ( oTestSort[5], (const char*)nullptr );
 
         // Test SetNameValue() of an existing item in a sorted list
         oTestSort.SetNameValue("Z", "6");
-        ensure( "c19", EQUAL(oTestSort[4],"Z=6") );
+        EXPECT_STREQ(oTestSort[4],"Z=6");
 
         // Test SetNameValue() of a non-existing item in a sorted list
         oTestSort.SetNameValue("W", "7");
-        ensure( "c20", EQUAL(oTestSort[0],"A=4") );
-        ensure( "c21", EQUAL(oTestSort[1],"B=5") );
-        ensure( "c22", EQUAL(oTestSort[2],"L=2") );
-        ensure( "c23", EQUAL(oTestSort[3],"T=3") );
-        ensure( "c24", EQUAL(oTestSort[4],"W=7") );
-        ensure( "c25", EQUAL(oTestSort[5],"Z=6") );
-        ensure_equals( "c26", oTestSort[6], (const char*)nullptr );
+        EXPECT_STREQ(oTestSort[0],"A=4");
+        EXPECT_STREQ(oTestSort[1],"B=5");
+        EXPECT_STREQ(oTestSort[2],"L=2");
+        EXPECT_STREQ(oTestSort[3],"T=3");
+        EXPECT_STREQ(oTestSort[4],"W=7");
+        EXPECT_STREQ(oTestSort[5],"Z=6");
+        ASSERT_EQ( oTestSort[6], (const char*)nullptr );
     }
 
-    template<>
-    template<>
-    void object::test<9>()
+    TEST_F(test_cpl, CPLStringList_Sort)
     {
         // Test some name=value handling stuff *with* sorting active.
         CPLStringList oNVL;
@@ -698,28 +668,28 @@ namespace tut
 
         oNVL.AddNameValue( "KEY1", "VALUE1" );
         oNVL.AddNameValue( "2KEY", "VALUE2" );
-        ensure_equals( "91", oNVL.Count(), 2 );
-        ensure( "92", EQUAL(oNVL.FetchNameValue("KEY1"),"VALUE1") );
-        ensure( "93", EQUAL(oNVL.FetchNameValue("2KEY"),"VALUE2") );
-        ensure( "94", oNVL.FetchNameValue("MISSING") == nullptr );
+        ASSERT_EQ( oNVL.Count(), 2 );
+        EXPECT_STREQ(oNVL.FetchNameValue("KEY1"),"VALUE1");
+        EXPECT_STREQ(oNVL.FetchNameValue("2KEY"),"VALUE2");
+        ASSERT_TRUE( oNVL.FetchNameValue("MISSING") == nullptr );
 
         oNVL.AddNameValue( "KEY1", "VALUE3" );
-        ensure_equals( "95", oNVL.Count(), 3 );
-        ensure( "96", EQUAL(oNVL.FetchNameValue("KEY1"),"VALUE1") );
-        ensure( "97", EQUAL(oNVL.FetchNameValueDef("MISSING","X"),"X") );
+        ASSERT_EQ( oNVL.Count(), 3 );
+        EXPECT_STREQ(oNVL.FetchNameValue("KEY1"),"VALUE1");
+        EXPECT_STREQ(oNVL.FetchNameValueDef("MISSING","X"),"X");
 
         oNVL.SetNameValue( "2KEY", "VALUE4" );
-        ensure( "98", EQUAL(oNVL.FetchNameValue("2KEY"),"VALUE4") );
-        ensure_equals( "99", oNVL.Count(), 3 );
+        EXPECT_STREQ(oNVL.FetchNameValue("2KEY"),"VALUE4");
+        ASSERT_EQ( oNVL.Count(), 3 );
 
         // make sure deletion works.
         oNVL.SetNameValue( "2KEY", nullptr );
-        ensure( "9a", oNVL.FetchNameValue("2KEY") == nullptr );
-        ensure_equals( "9b", oNVL.Count(), 2 );
+        ASSERT_TRUE( oNVL.FetchNameValue("2KEY") == nullptr );
+        ASSERT_EQ( oNVL.Count(), 2 );
 
         // Test insertion logic pretty carefully.
         oNVL.Clear();
-        ensure( "9c", oNVL.IsSorted() == TRUE );
+        ASSERT_TRUE( oNVL.IsSorted() == TRUE );
 
         oNVL.SetNameValue( "B", "BB" );
         oNVL.SetNameValue( "A", "AA" );
@@ -727,20 +697,18 @@ namespace tut
         oNVL.SetNameValue( "C", "CC" );
 
         // items should be in sorted order.
-        ensure( "9c1", EQUAL(oNVL[0],"A=AA") );
-        ensure( "9c2", EQUAL(oNVL[1],"B=BB") );
-        ensure( "9c3", EQUAL(oNVL[2],"C=CC") );
-        ensure( "9c4", EQUAL(oNVL[3],"D=DD") );
+        EXPECT_STREQ(oNVL[0],"A=AA");
+        EXPECT_STREQ(oNVL[1],"B=BB");
+        EXPECT_STREQ(oNVL[2],"C=CC");
+        EXPECT_STREQ(oNVL[3],"D=DD");
 
-        ensure( "9d", EQUAL(oNVL.FetchNameValue("A"),"AA") );
-        ensure( "9e", EQUAL(oNVL.FetchNameValue("B"),"BB") );
-        ensure( "9f", EQUAL(oNVL.FetchNameValue("C"),"CC") );
-        ensure( "9g", EQUAL(oNVL.FetchNameValue("D"),"DD") );
+        EXPECT_STREQ(oNVL.FetchNameValue("A"),"AA");
+        EXPECT_STREQ(oNVL.FetchNameValue("B"),"BB");
+        EXPECT_STREQ(oNVL.FetchNameValue("C"),"CC");
+        EXPECT_STREQ(oNVL.FetchNameValue("D"),"DD");
     }
 
-    template<>
-    template<>
-    void object::test<10>()
+    TEST_F(test_cpl, CPL_HMAC_SHA256)
     {
         GByte abyDigest[CPL_SHA256_HASH_SIZE];
         char szDigest[2*CPL_SHA256_HASH_SIZE+1];
@@ -751,7 +719,7 @@ namespace tut
         for(int i=0;i<CPL_SHA256_HASH_SIZE;i++)
             snprintf(szDigest + 2 * i, sizeof(szDigest)-2*i, "%02x", abyDigest[i]);
         //fprintf(stderr, "%s\n", szDigest);
-        ensure( "10.1", EQUAL(szDigest, "f7bc83f430538424b13298e6aa6fb143ef4d59a14946175997479dbc2d1a3cd8") );
+        EXPECT_STREQ(szDigest, "f7bc83f430538424b13298e6aa6fb143ef4d59a14946175997479dbc2d1a3cd8");
 
 
         CPL_HMAC_SHA256("mysupersupersupersupersupersupersupersupersupersupersupersupersupersupersupersupersupersupersupersuperlongkey",
@@ -761,75 +729,73 @@ namespace tut
         for(int i=0;i<CPL_SHA256_HASH_SIZE;i++)
             snprintf(szDigest + 2 * i, sizeof(szDigest)-2*i, "%02x", abyDigest[i]);
         //fprintf(stderr, "%s\n", szDigest);
-        ensure( "10.2", EQUAL(szDigest, "a3051520761ed3cb43876b35ce2dd93ac5b332dc3bad898bb32086f7ac71ffc1") );
+        EXPECT_STREQ(szDigest, "a3051520761ed3cb43876b35ce2dd93ac5b332dc3bad898bb32086f7ac71ffc1");
     }
 
-    template<>
-    template<>
-    void object::test<11>()
+    TEST_F(test_cpl, VSIMalloc)
     {
         CPLPushErrorHandler(CPLQuietErrorHandler);
 
         // The following tests will fail because of overflows
         CPLErrorReset();
-        ensure( "11.1", VSIMalloc2( ~(size_t)0, ~(size_t)0 ) == nullptr );
-        ensure( "11.1bis", CPLGetLastErrorType() != CE_None );
+        ASSERT_TRUE( VSIMalloc2( ~(size_t)0, ~(size_t)0 ) == nullptr );
+        ASSERT_TRUE( CPLGetLastErrorType() != CE_None );
 
         CPLErrorReset();
-        ensure( "11.2", VSIMalloc3( 1, ~(size_t)0, ~(size_t)0 ) == nullptr );
-        ensure( "11.2bis", CPLGetLastErrorType() != CE_None );
+        ASSERT_TRUE( VSIMalloc3( 1, ~(size_t)0, ~(size_t)0 ) == nullptr );
+        ASSERT_TRUE( CPLGetLastErrorType() != CE_None );
 
         CPLErrorReset();
-        ensure( "11.3", VSIMalloc3( ~(size_t)0, 1, ~(size_t)0 ) == nullptr );
-        ensure( "11.3bis", CPLGetLastErrorType() != CE_None );
+        ASSERT_TRUE( VSIMalloc3( ~(size_t)0, 1, ~(size_t)0 ) == nullptr );
+        ASSERT_TRUE( CPLGetLastErrorType() != CE_None );
 
         CPLErrorReset();
-        ensure( "11.4", VSIMalloc3( ~(size_t)0, ~(size_t)0, 1 ) == nullptr );
-        ensure( "11.4bis", CPLGetLastErrorType() != CE_None );
+        ASSERT_TRUE( VSIMalloc3( ~(size_t)0, ~(size_t)0, 1 ) == nullptr );
+        ASSERT_TRUE( CPLGetLastErrorType() != CE_None );
 
         if( !CSLTestBoolean(CPLGetConfigOption("SKIP_MEM_INTENSIVE_TEST", "NO")) )
         {
             // The following tests will fail because such allocations cannot succeed
 #if SIZEOF_VOIDP == 8
             CPLErrorReset();
-            ensure( "11.6", VSIMalloc( ~(size_t)0 ) == nullptr );
-            ensure( "11.6bis", CPLGetLastErrorType() == CE_None ); /* no error reported */
+            ASSERT_TRUE( VSIMalloc( ~(size_t)0 ) == nullptr );
+            ASSERT_TRUE( CPLGetLastErrorType() == CE_None ); /* no error reported */
 
             CPLErrorReset();
-            ensure( "11.7", VSIMalloc2( ~(size_t)0, 1 ) == nullptr );
-            ensure( "11.7bis", CPLGetLastErrorType() != CE_None );
+            ASSERT_TRUE( VSIMalloc2( ~(size_t)0, 1 ) == nullptr );
+            ASSERT_TRUE( CPLGetLastErrorType() != CE_None );
 
             CPLErrorReset();
-            ensure( "11.8", VSIMalloc3( ~(size_t)0, 1, 1 ) == nullptr );
-            ensure( "11.8bis", CPLGetLastErrorType() != CE_None );
+            ASSERT_TRUE( VSIMalloc3( ~(size_t)0, 1, 1 ) == nullptr );
+            ASSERT_TRUE( CPLGetLastErrorType() != CE_None );
 
             CPLErrorReset();
-            ensure( "11.9", VSICalloc( ~(size_t)0, 1 ) == nullptr );
-            ensure( "11.9bis", CPLGetLastErrorType() == CE_None ); /* no error reported */
+            ASSERT_TRUE( VSICalloc( ~(size_t)0, 1 ) == nullptr );
+            ASSERT_TRUE( CPLGetLastErrorType() == CE_None ); /* no error reported */
 
             CPLErrorReset();
-            ensure( "11.10", VSIRealloc( nullptr, ~(size_t)0 ) == nullptr );
-            ensure( "11.10bis", CPLGetLastErrorType() == CE_None ); /* no error reported */
+            ASSERT_TRUE( VSIRealloc( nullptr, ~(size_t)0 ) == nullptr );
+            ASSERT_TRUE( CPLGetLastErrorType() == CE_None ); /* no error reported */
 
             CPLErrorReset();
-            ensure( "11.11", VSI_MALLOC_VERBOSE( ~(size_t)0 ) == nullptr );
-            ensure( "11.11bis", CPLGetLastErrorType() != CE_None );
+            ASSERT_TRUE( VSI_MALLOC_VERBOSE( ~(size_t)0 ) == nullptr );
+            ASSERT_TRUE( CPLGetLastErrorType() != CE_None );
 
             CPLErrorReset();
-            ensure( "11.12", VSI_MALLOC2_VERBOSE( ~(size_t)0, 1 ) == nullptr );
-            ensure( "11.12bis", CPLGetLastErrorType() != CE_None );
+            ASSERT_TRUE( VSI_MALLOC2_VERBOSE( ~(size_t)0, 1 ) == nullptr );
+            ASSERT_TRUE( CPLGetLastErrorType() != CE_None );
 
             CPLErrorReset();
-            ensure( "11.13", VSI_MALLOC3_VERBOSE( ~(size_t)0, 1, 1 ) == nullptr );
-            ensure( "11.13bis", CPLGetLastErrorType() != CE_None );
+            ASSERT_TRUE( VSI_MALLOC3_VERBOSE( ~(size_t)0, 1, 1 ) == nullptr );
+            ASSERT_TRUE( CPLGetLastErrorType() != CE_None );
 
             CPLErrorReset();
-            ensure( "11.14", VSI_CALLOC_VERBOSE( ~(size_t)0, 1 ) == nullptr );
-            ensure( "11.14bis", CPLGetLastErrorType() != CE_None );
+            ASSERT_TRUE( VSI_CALLOC_VERBOSE( ~(size_t)0, 1 ) == nullptr );
+            ASSERT_TRUE( CPLGetLastErrorType() != CE_None );
 
             CPLErrorReset();
-            ensure( "11.15", VSI_REALLOC_VERBOSE( nullptr, ~(size_t)0 ) == nullptr );
-            ensure( "11.15bis", CPLGetLastErrorType() != CE_None );
+            ASSERT_TRUE( VSI_REALLOC_VERBOSE( nullptr, ~(size_t)0 ) == nullptr );
+            ASSERT_TRUE( CPLGetLastErrorType() != CE_None );
 #endif
         }
 
@@ -837,93 +803,85 @@ namespace tut
 
         // The following allocs will return NULL because of 0 byte alloc
         CPLErrorReset();
-        ensure( "11.16", VSIMalloc2( 0, 1 ) == nullptr );
-        ensure( "11.16bis", CPLGetLastErrorType() == CE_None );
-        ensure( "11.17", VSIMalloc2( 1, 0 ) == nullptr );
+        ASSERT_TRUE( VSIMalloc2( 0, 1 ) == nullptr );
+        ASSERT_TRUE( CPLGetLastErrorType() == CE_None );
+        ASSERT_TRUE( VSIMalloc2( 1, 0 ) == nullptr );
 
         CPLErrorReset();
-        ensure( "11.18", VSIMalloc3( 0, 1, 1 ) == nullptr );
-        ensure( "11.18bis", CPLGetLastErrorType() == CE_None );
-        ensure( "11.19", VSIMalloc3( 1, 0, 1 ) == nullptr );
-        ensure( "11.20", VSIMalloc3( 1, 1, 0 ) == nullptr );
+        ASSERT_TRUE( VSIMalloc3( 0, 1, 1 ) == nullptr );
+        ASSERT_TRUE( CPLGetLastErrorType() == CE_None );
+        ASSERT_TRUE( VSIMalloc3( 1, 0, 1 ) == nullptr );
+        ASSERT_TRUE( VSIMalloc3( 1, 1, 0 ) == nullptr );
     }
 
-    template<>
-    template<>
-    void object::test<12>()
+    TEST_F(test_cpl, CPLFormFilename)
     {
-        ensure( strcmp(CPLFormFilename("a", "b", nullptr), "a/b") == 0 ||
+        EXPECT_TRUE( strcmp(CPLFormFilename("a", "b", nullptr), "a/b") == 0 ||
                 strcmp(CPLFormFilename("a", "b", nullptr), "a\\b") == 0 );
-        ensure( strcmp(CPLFormFilename("a/", "b", nullptr), "a/b") == 0 ||
+        EXPECT_TRUE( strcmp(CPLFormFilename("a/", "b", nullptr), "a/b") == 0 ||
                 strcmp(CPLFormFilename("a/", "b", nullptr), "a\\b") == 0 );
-        ensure( strcmp(CPLFormFilename("a\\", "b", nullptr), "a/b") == 0 ||
+        EXPECT_TRUE( strcmp(CPLFormFilename("a\\", "b", nullptr), "a/b") == 0 ||
                 strcmp(CPLFormFilename("a\\", "b", nullptr), "a\\b") == 0 );
-        ensure_equals( CPLFormFilename(nullptr, "a", "b"), "a.b");
-        ensure_equals( CPLFormFilename(nullptr, "a", ".b"), "a.b");
-        ensure_equals( CPLFormFilename("/a", "..", nullptr), "/");
-        ensure_equals( CPLFormFilename("/a/", "..", nullptr), "/");
-        ensure_equals( CPLFormFilename("/a/b", "..", nullptr), "/a");
-        ensure_equals( CPLFormFilename("/a/b/", "..", nullptr), "/a");
-        ensure( EQUAL(CPLFormFilename("c:", "..", nullptr), "c:/..") ||
+        EXPECT_STREQ( CPLFormFilename(nullptr, "a", "b"), "a.b");
+        EXPECT_STREQ( CPLFormFilename(nullptr, "a", ".b"), "a.b");
+        EXPECT_STREQ( CPLFormFilename("/a", "..", nullptr), "/");
+        EXPECT_STREQ( CPLFormFilename("/a/", "..", nullptr), "/");
+        EXPECT_STREQ( CPLFormFilename("/a/b", "..", nullptr), "/a");
+        EXPECT_STREQ( CPLFormFilename("/a/b/", "..", nullptr), "/a");
+        EXPECT_TRUE( EQUAL(CPLFormFilename("c:", "..", nullptr), "c:/..") ||
                 EQUAL(CPLFormFilename("c:", "..", nullptr), "c:\\..") );
-        ensure( EQUAL(CPLFormFilename("c:\\", "..", nullptr), "c:/..") ||
+        EXPECT_TRUE( EQUAL(CPLFormFilename("c:\\", "..", nullptr), "c:/..") ||
                 EQUAL(CPLFormFilename("c:\\", "..", nullptr), "c:\\..") );
-        ensure_equals( CPLFormFilename("c:\\a", "..", nullptr), "c:");
-        ensure_equals( CPLFormFilename("c:\\a\\", "..", nullptr), "c:");
-        ensure_equals( CPLFormFilename("c:\\a\\b", "..", nullptr), "c:\\a");
-        ensure_equals( CPLFormFilename("\\\\$\\c:\\a", "..", nullptr), "\\\\$\\c:");
-        ensure( EQUAL(CPLFormFilename("\\\\$\\c:", "..", nullptr), "\\\\$\\c:/..") ||
+        EXPECT_STREQ( CPLFormFilename("c:\\a", "..", nullptr), "c:");
+        EXPECT_STREQ( CPLFormFilename("c:\\a\\", "..", nullptr), "c:");
+        EXPECT_STREQ( CPLFormFilename("c:\\a\\b", "..", nullptr), "c:\\a");
+        EXPECT_STREQ( CPLFormFilename("\\\\$\\c:\\a", "..", nullptr), "\\\\$\\c:");
+        EXPECT_TRUE( EQUAL(CPLFormFilename("\\\\$\\c:", "..", nullptr), "\\\\$\\c:/..") ||
                 EQUAL(CPLFormFilename("\\\\$\\c:", "..", nullptr), "\\\\$\\c:\\..") );
     }
 
-    template<>
-    template<>
-    void object::test<13>()
+    TEST_F(test_cpl, VSIGetDiskFreeSpace)
     {
-        ensure( VSIGetDiskFreeSpace("/vsimem/") > 0 );
-        ensure( VSIGetDiskFreeSpace(".") == -1 || VSIGetDiskFreeSpace(".") >= 0 );
+        ASSERT_TRUE( VSIGetDiskFreeSpace("/vsimem/") > 0 );
+        ASSERT_TRUE( VSIGetDiskFreeSpace(".") == -1 || VSIGetDiskFreeSpace(".") >= 0 );
     }
 
-    template<>
-    template<>
-    void object::test<14>()
+    TEST_F(test_cpl, CPLsscanf)
     {
         double a, b, c;
 
         a = b = 0;
-        ensure_equals( CPLsscanf("1 2", "%lf %lf", &a, &b), 2 );
-        ensure_equals( a, 1.0 );
-        ensure_equals( b, 2.0 );
+        ASSERT_EQ( CPLsscanf("1 2", "%lf %lf", &a, &b), 2 );
+        ASSERT_EQ( a, 1.0 );
+        ASSERT_EQ( b, 2.0 );
 
         a = b = 0;
-        ensure_equals( CPLsscanf("1\t2", "%lf %lf", &a, &b), 2 );
-        ensure_equals( a, 1.0 );
-        ensure_equals( b, 2.0 );
+        ASSERT_EQ( CPLsscanf("1\t2", "%lf %lf", &a, &b), 2 );
+        ASSERT_EQ( a, 1.0 );
+        ASSERT_EQ( b, 2.0 );
 
         a = b = 0;
-        ensure_equals( CPLsscanf("1 2", "%lf\t%lf", &a, &b), 2 );
-        ensure_equals( a, 1.0 );
-        ensure_equals( b, 2.0 );
+        ASSERT_EQ( CPLsscanf("1 2", "%lf\t%lf", &a, &b), 2 );
+        ASSERT_EQ( a, 1.0 );
+        ASSERT_EQ( b, 2.0 );
 
         a = b = 0;
-        ensure_equals( CPLsscanf("1  2", "%lf %lf", &a, &b), 2 );
-        ensure_equals( a, 1.0 );
-        ensure_equals( b, 2.0 );
+        ASSERT_EQ( CPLsscanf("1  2", "%lf %lf", &a, &b), 2 );
+        ASSERT_EQ( a, 1.0 );
+        ASSERT_EQ( b, 2.0 );
 
         a = b = 0;
-        ensure_equals( CPLsscanf("1 2", "%lf  %lf", &a, &b), 2 );
-        ensure_equals( a, 1.0 );
-        ensure_equals( b, 2.0 );
+        ASSERT_EQ( CPLsscanf("1 2", "%lf  %lf", &a, &b), 2 );
+        ASSERT_EQ( a, 1.0 );
+        ASSERT_EQ( b, 2.0 );
 
         a = b = c = 0;
-        ensure_equals( CPLsscanf("1 2", "%lf %lf %lf", &a, &b, &c), 2 );
-        ensure_equals( a, 1.0 );
-        ensure_equals( b, 2.0 );
+        ASSERT_EQ( CPLsscanf("1 2", "%lf %lf %lf", &a, &b, &c), 2 );
+        ASSERT_EQ( a, 1.0 );
+        ASSERT_EQ( b, 2.0 );
     }
 
-    template<>
-    template<>
-    void object::test<15>()
+    TEST_F(test_cpl, CPLSetErrorHandler)
     {
         CPLString oldVal = CPLGetConfigOption("CPL_DEBUG", "");
         CPLSetConfigOption("CPL_DEBUG", "TEST");
@@ -931,14 +889,14 @@ namespace tut
         CPLErrorHandler oldHandler = CPLSetErrorHandler(myErrorHandler);
         gbGotError = false;
         CPLDebug("TEST", "Test");
-        ensure_equals( gbGotError, true );
+        ASSERT_EQ( gbGotError, true );
         gbGotError = false;
         CPLSetErrorHandler(oldHandler);
 
         CPLPushErrorHandler(myErrorHandler);
         gbGotError = false;
         CPLDebug("TEST", "Test");
-        ensure_equals( gbGotError, true );
+        ASSERT_EQ( gbGotError, true );
         gbGotError = false;
         CPLPopErrorHandler();
 
@@ -946,7 +904,7 @@ namespace tut
         CPLSetCurrentErrorHandlerCatchDebug( FALSE );
         gbGotError = false;
         CPLDebug("TEST", "Test");
-        ensure_equals( gbGotError, false );
+        ASSERT_EQ( gbGotError, false );
         gbGotError = false;
         CPLSetErrorHandler(oldHandler);
 
@@ -954,7 +912,7 @@ namespace tut
         CPLSetCurrentErrorHandlerCatchDebug( FALSE );
         gbGotError = false;
         CPLDebug("TEST", "Test");
-        ensure_equals( gbGotError, false );
+        ASSERT_EQ( gbGotError, false );
         gbGotError = false;
         CPLPopErrorHandler();
 
@@ -964,7 +922,7 @@ namespace tut
         CPLDebug("TEST", "Test");
         CPLError(CE_Failure, CPLE_AppDefined, "test");
         CPLErrorHandler newOldHandler = CPLSetErrorHandler(nullptr);
-        ensure_equals(newOldHandler, static_cast<CPLErrorHandler>(nullptr));
+        ASSERT_EQ(newOldHandler, static_cast<CPLErrorHandler>(nullptr));
         CPLDebug("TEST", "Test");
         CPLError(CE_Failure, CPLE_AppDefined, "test");
         CPLSetErrorHandler(oldHandler);
@@ -973,56 +931,53 @@ namespace tut
 /************************************************************************/
 /*                         CPLString::replaceAll()                      */
 /************************************************************************/
-    template<>
-    template<>
-    void object::test<16>()
+
+    TEST_F(test_cpl, CPLString_replaceAll)
     {
         CPLString osTest;
         osTest = "foobarbarfoo";
         osTest.replaceAll("bar", "was_bar");
-        ensure_equals( osTest, "foowas_barwas_barfoo" );
+        ASSERT_EQ( osTest, "foowas_barwas_barfoo" );
 
         osTest = "foobarbarfoo";
         osTest.replaceAll("X", "was_bar");
-        ensure_equals( osTest, "foobarbarfoo" );
+        ASSERT_EQ( osTest, "foobarbarfoo" );
 
         osTest = "foobarbarfoo";
         osTest.replaceAll("", "was_bar");
-        ensure_equals( osTest, "foobarbarfoo" );
+        ASSERT_EQ( osTest, "foobarbarfoo" );
 
         osTest = "foobarbarfoo";
         osTest.replaceAll("bar", "");
-        ensure_equals( osTest, "foofoo" );
+        ASSERT_EQ( osTest, "foofoo" );
 
         osTest = "foobarbarfoo";
         osTest.replaceAll('b', 'B');
-        ensure_equals( osTest, "fooBarBarfoo" );
+        ASSERT_EQ( osTest, "fooBarBarfoo" );
 
         osTest = "foobarbarfoo";
         osTest.replaceAll('b', "B");
-        ensure_equals( osTest, "fooBarBarfoo" );
+        ASSERT_EQ( osTest, "fooBarBarfoo" );
 
         osTest = "foobarbarfoo";
         osTest.replaceAll("b", 'B');
-        ensure_equals( osTest, "fooBarBarfoo" );
+        ASSERT_EQ( osTest, "fooBarBarfoo" );
     }
 
 /************************************************************************/
 /*                        VSIMallocAligned()                            */
 /************************************************************************/
-    template<>
-    template<>
-    void object::test<17>()
+    TEST_F(test_cpl, VSIMallocAligned)
     {
         GByte* ptr = static_cast<GByte*>(VSIMallocAligned(sizeof(void*), 1));
-        ensure( ptr != nullptr );
-        ensure( ((size_t)ptr % sizeof(void*)) == 0 );
+        ASSERT_TRUE( ptr != nullptr );
+        ASSERT_TRUE( ((size_t)ptr % sizeof(void*)) == 0 );
         *ptr = 1;
         VSIFreeAligned(ptr);
 
         ptr = static_cast<GByte*>(VSIMallocAligned(16, 1));
-        ensure( ptr != nullptr );
-        ensure( ((size_t)ptr % 16) == 0 );
+        ASSERT_TRUE( ptr != nullptr );
+        ASSERT_TRUE( ((size_t)ptr % 16) == 0 );
         *ptr = 1;
         VSIFreeAligned(ptr);
 
@@ -1031,11 +986,11 @@ namespace tut
 #ifndef WIN32
         // Illegal use of API. Returns non NULL on Windows
         ptr = static_cast<GByte*>(VSIMallocAligned(2, 1));
-        ensure( ptr == nullptr );
+        ASSERT_TRUE( ptr == nullptr );
 
         // Illegal use of API. Crashes on Windows
         ptr = static_cast<GByte*>(VSIMallocAligned(5, 1));
-        ensure( ptr == nullptr );
+        ASSERT_TRUE( ptr == nullptr );
 #endif
 
         if( !CSLTestBoolean(CPLGetConfigOption("SKIP_MEM_INTENSIVE_TEST", "NO")) )
@@ -1043,10 +998,10 @@ namespace tut
             // The following tests will fail because such allocations cannot succeed
 #if SIZEOF_VOIDP == 8
             ptr = static_cast<GByte*>(VSIMallocAligned(sizeof(void*), ~((size_t)0)));
-            ensure( ptr == nullptr );
+            ASSERT_TRUE( ptr == nullptr );
 
             ptr = static_cast<GByte*>(VSIMallocAligned(sizeof(void*), (~((size_t)0)) - sizeof(void*)));
-            ensure( ptr == nullptr );
+            ASSERT_TRUE( ptr == nullptr );
 #endif
         }
     }
@@ -1054,65 +1009,55 @@ namespace tut
 /************************************************************************/
 /*             CPLGetConfigOptions() / CPLSetConfigOptions()            */
 /************************************************************************/
-    template<>
-    template<>
-    void object::test<18>()
+    TEST_F(test_cpl, CPLGetConfigOptions)
     {
         CPLSetConfigOption("FOOFOO", "BAR");
         char** options = CPLGetConfigOptions();
-        ensure_equals (CSLFetchNameValue(options, "FOOFOO"), "BAR");
+        EXPECT_STREQ(CSLFetchNameValue(options, "FOOFOO"), "BAR");
         CPLSetConfigOptions(nullptr);
-        ensure_equals (CPLGetConfigOption("FOOFOO", "i_dont_exist"), "i_dont_exist");
+        EXPECT_STREQ(CPLGetConfigOption("FOOFOO", "i_dont_exist"), "i_dont_exist");
         CPLSetConfigOptions(options);
-        ensure_equals (CPLGetConfigOption("FOOFOO", "i_dont_exist"), "BAR");
+        EXPECT_STREQ(CPLGetConfigOption("FOOFOO", "i_dont_exist"), "BAR");
         CSLDestroy(options);
     }
 
 /************************************************************************/
 /*  CPLGetThreadLocalConfigOptions() / CPLSetThreadLocalConfigOptions() */
 /************************************************************************/
-    template<>
-    template<>
-    void object::test<19>()
+    TEST_F(test_cpl, CPLGetThreadLocalConfigOptions)
     {
         CPLSetThreadLocalConfigOption("FOOFOO", "BAR");
         char** options = CPLGetThreadLocalConfigOptions();
-        ensure_equals (CSLFetchNameValue(options, "FOOFOO"), "BAR");
+        EXPECT_STREQ(CSLFetchNameValue(options, "FOOFOO"), "BAR");
         CPLSetThreadLocalConfigOptions(nullptr);
-        ensure_equals (CPLGetThreadLocalConfigOption("FOOFOO", "i_dont_exist"), "i_dont_exist");
+        EXPECT_STREQ(CPLGetThreadLocalConfigOption("FOOFOO", "i_dont_exist"), "i_dont_exist");
         CPLSetThreadLocalConfigOptions(options);
-        ensure_equals (CPLGetThreadLocalConfigOption("FOOFOO", "i_dont_exist"), "BAR");
+        EXPECT_STREQ(CPLGetThreadLocalConfigOption("FOOFOO", "i_dont_exist"), "BAR");
         CSLDestroy(options);
     }
 
-    template<>
-    template<>
-    void object::test<20>()
+    TEST_F(test_cpl, CPLExpandTilde)
     {
-        ensure_equals ( CPLExpandTilde("/foo/bar"), "/foo/bar" );
+        EXPECT_STREQ( CPLExpandTilde("/foo/bar"), "/foo/bar" );
 
         CPLSetConfigOption("HOME", "/foo");
-        ensure ( EQUAL(CPLExpandTilde("~/bar"), "/foo/bar") || EQUAL(CPLExpandTilde("~/bar"), "/foo\\bar") );
+        ASSERT_TRUE ( EQUAL(CPLExpandTilde("~/bar"), "/foo/bar") || EQUAL(CPLExpandTilde("~/bar"), "/foo\\bar") );
         CPLSetConfigOption("HOME", nullptr);
     }
 
-    template<>
-    template<>
-    void object::test<21>()
+    TEST_F(test_cpl, CPLString_constructors)
     {
         // CPLString(std::string) constructor
-        ensure_equals ( CPLString(std::string("abc")).c_str(), "abc" );
+        ASSERT_STREQ( CPLString(std::string("abc")).c_str(), "abc" );
 
         // CPLString(const char*) constructor
-        ensure_equals ( CPLString("abc").c_str(), "abc" );
+        ASSERT_STREQ( CPLString("abc").c_str(), "abc" );
 
         // CPLString(const char*, n) constructor
-        ensure_equals ( CPLString("abc",1).c_str(), "a" );
+        ASSERT_STREQ( CPLString("abc",1).c_str(), "a" );
     }
 
-    template<>
-    template<>
-    void object::test<22>()
+    TEST_F(test_cpl, CPLErrorSetState)
     {
         // NOTE: Assumes cpl_error.cpp defines DEFAULT_LAST_ERR_MSG_SIZE=500
         char pszMsg[] =
@@ -1131,16 +1076,14 @@ namespace tut
 
         CPLErrorReset();
         CPLErrorSetState(CE_Warning, 1, pszMsg);
-        ensure_equals(strlen(pszMsg) - 50 - 1,       // length - 50 - 1 (null-terminator)
+        ASSERT_EQ(strlen(pszMsg) - 50 - 1,       // length - 50 - 1 (null-terminator)
                       strlen(CPLGetLastErrorMsg())); // DEFAULT_LAST_ERR_MSG_SIZE - 1
     }
 
-    template<>
-    template<>
-    void object::test<23>()
+    TEST_F(test_cpl, CPLUnescapeString)
     {
         char* pszText = CPLUnescapeString("&lt;&gt;&amp;&apos;&quot;&#x3f;&#x3F;&#63;", nullptr, CPLES_XML);
-        ensure_equals( CPLString(pszText), "<>&'\"???");
+        ASSERT_EQ( CPLString(pszText), "<>&'\"???");
         CPLFree(pszText);
 
         // Integer overflow
@@ -1155,138 +1098,126 @@ namespace tut
 
         // Error case
         pszText = CPLUnescapeString("&foo", nullptr, CPLES_XML);
-        ensure_equals( CPLString(pszText), "");
+        ASSERT_EQ( CPLString(pszText), "");
         CPLFree(pszText);
 
         // Error case
         pszText = CPLUnescapeString("&#x", nullptr, CPLES_XML);
-        ensure_equals( CPLString(pszText), "");
+        ASSERT_EQ( CPLString(pszText), "");
         CPLFree(pszText);
 
         // Error case
         pszText = CPLUnescapeString("&#", nullptr, CPLES_XML);
-        ensure_equals( CPLString(pszText), "");
+        ASSERT_EQ( CPLString(pszText), "");
         CPLFree(pszText);
     }
 
-    template<>
-    template<>
-    void object::test<24>()
-    {
-        // No longer used
-    }
-
-
     // Test signed int safe maths
-    template<>
-    template<>
-    void object::test<25>()
+    TEST_F(test_cpl, CPLSM_signed)
     {
-        ensure_equals( (CPLSM(-2) + CPLSM(3)).v(), 1 );
-        ensure_equals( (CPLSM(-2) + CPLSM(1)).v(), -1 );
-        ensure_equals( (CPLSM(-2) + CPLSM(-1)).v(), -3 );
-        ensure_equals( (CPLSM(2) + CPLSM(-3)).v(), -1 );
-        ensure_equals( (CPLSM(2) + CPLSM(-1)).v(), 1 );
-        ensure_equals( (CPLSM(2) + CPLSM(1)).v(), 3 );
-        ensure_equals( (CPLSM(INT_MAX-1) + CPLSM(1)).v(), INT_MAX );
-        ensure_equals( (CPLSM(1) + CPLSM(INT_MAX-1)).v(), INT_MAX );
-        ensure_equals( (CPLSM(INT_MAX) + CPLSM(-1)).v(), INT_MAX - 1 );
-        ensure_equals( (CPLSM(-1) + CPLSM(INT_MAX)).v(), INT_MAX - 1 );
-        ensure_equals( (CPLSM(INT_MIN+1) + CPLSM(-1)).v(), INT_MIN );
-        ensure_equals( (CPLSM(-1) + CPLSM(INT_MIN+1)).v(), INT_MIN );
-        try { (CPLSM(INT_MAX) + CPLSM(1)).v(); ensure(false); } catch (...) {}
-        try { (CPLSM(1) + CPLSM(INT_MAX)).v(); ensure(false); } catch (...) {}
-        try { (CPLSM(INT_MIN) + CPLSM(-1)).v(); ensure(false); } catch (...) {}
-        try { (CPLSM(-1) + CPLSM(INT_MIN)).v(); ensure(false); } catch (...) {}
+        ASSERT_EQ( (CPLSM(-2) + CPLSM(3)).v(), 1 );
+        ASSERT_EQ( (CPLSM(-2) + CPLSM(1)).v(), -1 );
+        ASSERT_EQ( (CPLSM(-2) + CPLSM(-1)).v(), -3 );
+        ASSERT_EQ( (CPLSM(2) + CPLSM(-3)).v(), -1 );
+        ASSERT_EQ( (CPLSM(2) + CPLSM(-1)).v(), 1 );
+        ASSERT_EQ( (CPLSM(2) + CPLSM(1)).v(), 3 );
+        ASSERT_EQ( (CPLSM(INT_MAX-1) + CPLSM(1)).v(), INT_MAX );
+        ASSERT_EQ( (CPLSM(1) + CPLSM(INT_MAX-1)).v(), INT_MAX );
+        ASSERT_EQ( (CPLSM(INT_MAX) + CPLSM(-1)).v(), INT_MAX - 1 );
+        ASSERT_EQ( (CPLSM(-1) + CPLSM(INT_MAX)).v(), INT_MAX - 1 );
+        ASSERT_EQ( (CPLSM(INT_MIN+1) + CPLSM(-1)).v(), INT_MIN );
+        ASSERT_EQ( (CPLSM(-1) + CPLSM(INT_MIN+1)).v(), INT_MIN );
+        try { (CPLSM(INT_MAX) + CPLSM(1)).v(); ASSERT_TRUE(false); } catch (...) {}
+        try { (CPLSM(1) + CPLSM(INT_MAX)).v(); ASSERT_TRUE(false); } catch (...) {}
+        try { (CPLSM(INT_MIN) + CPLSM(-1)).v(); ASSERT_TRUE(false); } catch (...) {}
+        try { (CPLSM(-1) + CPLSM(INT_MIN)).v(); ASSERT_TRUE(false); } catch (...) {}
 
-        ensure_equals( (CPLSM(-2) - CPLSM(1)).v(), -3 );
-        ensure_equals( (CPLSM(-2) - CPLSM(-1)).v(), -1 );
-        ensure_equals( (CPLSM(-2) - CPLSM(-3)).v(), 1 );
-        ensure_equals( (CPLSM(2) - CPLSM(-1)).v(), 3 );
-        ensure_equals( (CPLSM(2) - CPLSM(1)).v(), 1 );
-        ensure_equals( (CPLSM(2) - CPLSM(3)).v(), -1 );
-        ensure_equals( (CPLSM(INT_MAX) - CPLSM(1)).v(), INT_MAX - 1 );
-        ensure_equals( (CPLSM(INT_MIN+1) - CPLSM(1)).v(), INT_MIN );
-        ensure_equals( (CPLSM(0) - CPLSM(INT_MIN+1)).v(), INT_MAX );
-        ensure_equals( (CPLSM(0) - CPLSM(INT_MAX)).v(), -INT_MAX );
-        try { (CPLSM(INT_MIN) - CPLSM(1)).v(); ensure(false); } catch (...) {}
-        try { (CPLSM(0) - CPLSM(INT_MIN)).v(); ensure(false); } catch (...) {}
-        try { (CPLSM(INT_MIN) - CPLSM(1)).v(); ensure(false); } catch (...) {}
+        ASSERT_EQ( (CPLSM(-2) - CPLSM(1)).v(), -3 );
+        ASSERT_EQ( (CPLSM(-2) - CPLSM(-1)).v(), -1 );
+        ASSERT_EQ( (CPLSM(-2) - CPLSM(-3)).v(), 1 );
+        ASSERT_EQ( (CPLSM(2) - CPLSM(-1)).v(), 3 );
+        ASSERT_EQ( (CPLSM(2) - CPLSM(1)).v(), 1 );
+        ASSERT_EQ( (CPLSM(2) - CPLSM(3)).v(), -1 );
+        ASSERT_EQ( (CPLSM(INT_MAX) - CPLSM(1)).v(), INT_MAX - 1 );
+        ASSERT_EQ( (CPLSM(INT_MIN+1) - CPLSM(1)).v(), INT_MIN );
+        ASSERT_EQ( (CPLSM(0) - CPLSM(INT_MIN+1)).v(), INT_MAX );
+        ASSERT_EQ( (CPLSM(0) - CPLSM(INT_MAX)).v(), -INT_MAX );
+        try { (CPLSM(INT_MIN) - CPLSM(1)).v(); ASSERT_TRUE(false); } catch (...) {}
+        try { (CPLSM(0) - CPLSM(INT_MIN)).v(); ASSERT_TRUE(false); } catch (...) {}
+        try { (CPLSM(INT_MIN) - CPLSM(1)).v(); ASSERT_TRUE(false); } catch (...) {}
 
-        ensure_equals( (CPLSM(INT_MIN+1) * CPLSM(-1)).v(), INT_MAX );
-        ensure_equals( (CPLSM(-1) * CPLSM(INT_MIN+1)).v(), INT_MAX );
-        ensure_equals( (CPLSM(INT_MIN) * CPLSM(1)).v(), INT_MIN );
-        ensure_equals( (CPLSM(1) * CPLSM(INT_MIN)).v(), INT_MIN );
-        ensure_equals( (CPLSM(1) * CPLSM(INT_MAX)).v(), INT_MAX );
-        ensure_equals( (CPLSM(INT_MIN/2) * CPLSM(2)).v(), INT_MIN );
-        ensure_equals( (CPLSM(INT_MAX/2) * CPLSM(2)).v(), INT_MAX-1 );
-        ensure_equals( (CPLSM(INT_MAX/2+1) * CPLSM(-2)).v(), INT_MIN );
-        ensure_equals( (CPLSM(0) * CPLSM(INT_MIN)).v(), 0 );
-        ensure_equals( (CPLSM(INT_MIN) * CPLSM(0)).v(), 0 );
-        ensure_equals( (CPLSM(0) * CPLSM(INT_MAX)).v(), 0 );
-        ensure_equals( (CPLSM(INT_MAX) * CPLSM(0)).v(), 0 );
-        try { (CPLSM(INT_MAX/2+1) * CPLSM(2)).v(); ensure(false); } catch (...) {}
-        try { (CPLSM(2) * CPLSM(INT_MAX/2+1)).v(); ensure(false); } catch (...) {}
-        try { (CPLSM(INT_MIN) * CPLSM(-1)).v(); ensure(false); } catch (...) {}
-        try { (CPLSM(INT_MIN) * CPLSM(2)).v(); ensure(false); } catch (...) {}
-        try { (CPLSM(2) * CPLSM(INT_MIN)).v(); ensure(false); } catch (...) {}
+        ASSERT_EQ( (CPLSM(INT_MIN+1) * CPLSM(-1)).v(), INT_MAX );
+        ASSERT_EQ( (CPLSM(-1) * CPLSM(INT_MIN+1)).v(), INT_MAX );
+        ASSERT_EQ( (CPLSM(INT_MIN) * CPLSM(1)).v(), INT_MIN );
+        ASSERT_EQ( (CPLSM(1) * CPLSM(INT_MIN)).v(), INT_MIN );
+        ASSERT_EQ( (CPLSM(1) * CPLSM(INT_MAX)).v(), INT_MAX );
+        ASSERT_EQ( (CPLSM(INT_MIN/2) * CPLSM(2)).v(), INT_MIN );
+        ASSERT_EQ( (CPLSM(INT_MAX/2) * CPLSM(2)).v(), INT_MAX-1 );
+        ASSERT_EQ( (CPLSM(INT_MAX/2+1) * CPLSM(-2)).v(), INT_MIN );
+        ASSERT_EQ( (CPLSM(0) * CPLSM(INT_MIN)).v(), 0 );
+        ASSERT_EQ( (CPLSM(INT_MIN) * CPLSM(0)).v(), 0 );
+        ASSERT_EQ( (CPLSM(0) * CPLSM(INT_MAX)).v(), 0 );
+        ASSERT_EQ( (CPLSM(INT_MAX) * CPLSM(0)).v(), 0 );
+        try { (CPLSM(INT_MAX/2+1) * CPLSM(2)).v(); ASSERT_TRUE(false); } catch (...) {}
+        try { (CPLSM(2) * CPLSM(INT_MAX/2+1)).v(); ASSERT_TRUE(false); } catch (...) {}
+        try { (CPLSM(INT_MIN) * CPLSM(-1)).v(); ASSERT_TRUE(false); } catch (...) {}
+        try { (CPLSM(INT_MIN) * CPLSM(2)).v(); ASSERT_TRUE(false); } catch (...) {}
+        try { (CPLSM(2) * CPLSM(INT_MIN)).v(); ASSERT_TRUE(false); } catch (...) {}
 
-        ensure_equals( (CPLSM(4) / CPLSM(2)).v(), 2 );
-        ensure_equals( (CPLSM(4) / CPLSM(-2)).v(), -2 );
-        ensure_equals( (CPLSM(-4) / CPLSM(2)).v(), -2 );
-        ensure_equals( (CPLSM(-4) / CPLSM(-2)).v(), 2 );
-        ensure_equals( (CPLSM(0) / CPLSM(2)).v(), 0 );
-        ensure_equals( (CPLSM(0) / CPLSM(-2)).v(), 0 );
-        ensure_equals( (CPLSM(INT_MAX) / CPLSM(1)).v(), INT_MAX );
-        ensure_equals( (CPLSM(INT_MAX) / CPLSM(-1)).v(), -INT_MAX );
-        ensure_equals( (CPLSM(INT_MIN) / CPLSM(1)).v(), INT_MIN );
-        try { (CPLSM(-1) * CPLSM(INT_MIN)).v(); ensure(false); } catch (...) {}
-        try { (CPLSM(INT_MIN) / CPLSM(-1)).v(); ensure(false); } catch (...) {}
-        try { (CPLSM(1) / CPLSM(0)).v(); ensure(false); } catch (...) {}
+        ASSERT_EQ( (CPLSM(4) / CPLSM(2)).v(), 2 );
+        ASSERT_EQ( (CPLSM(4) / CPLSM(-2)).v(), -2 );
+        ASSERT_EQ( (CPLSM(-4) / CPLSM(2)).v(), -2 );
+        ASSERT_EQ( (CPLSM(-4) / CPLSM(-2)).v(), 2 );
+        ASSERT_EQ( (CPLSM(0) / CPLSM(2)).v(), 0 );
+        ASSERT_EQ( (CPLSM(0) / CPLSM(-2)).v(), 0 );
+        ASSERT_EQ( (CPLSM(INT_MAX) / CPLSM(1)).v(), INT_MAX );
+        ASSERT_EQ( (CPLSM(INT_MAX) / CPLSM(-1)).v(), -INT_MAX );
+        ASSERT_EQ( (CPLSM(INT_MIN) / CPLSM(1)).v(), INT_MIN );
+        try { (CPLSM(-1) * CPLSM(INT_MIN)).v(); ASSERT_TRUE(false); } catch (...) {}
+        try { (CPLSM(INT_MIN) / CPLSM(-1)).v(); ASSERT_TRUE(false); } catch (...) {}
+        try { (CPLSM(1) / CPLSM(0)).v(); ASSERT_TRUE(false); } catch (...) {}
 
-        ensure_equals( CPLSM_TO_UNSIGNED(1).v(), 1U );
-        try { CPLSM_TO_UNSIGNED(-1); ensure(false); } catch (...) {}
+        ASSERT_EQ( CPLSM_TO_UNSIGNED(1).v(), 1U );
+        try { CPLSM_TO_UNSIGNED(-1); ASSERT_TRUE(false); } catch (...) {}
     }
 
 
     // Test unsigned int safe maths
-    template<>
-    template<>
-    void object::test<26>()
+    TEST_F(test_cpl, CPLSM_unsigned)
     {
-        ensure_equals( (CPLSM(2U) + CPLSM(3U)).v(), 5U );
-        ensure_equals( (CPLSM(UINT_MAX-1) + CPLSM(1U)).v(), UINT_MAX );
-        try { (CPLSM(UINT_MAX) + CPLSM(1U)).v(); ensure(false); } catch (...) {}
+        ASSERT_EQ( (CPLSM(2U) + CPLSM(3U)).v(), 5U );
+        ASSERT_EQ( (CPLSM(UINT_MAX-1) + CPLSM(1U)).v(), UINT_MAX );
+        try { (CPLSM(UINT_MAX) + CPLSM(1U)).v(); ASSERT_TRUE(false); } catch (...) {}
 
-        ensure_equals( (CPLSM(4U) - CPLSM(3U)).v(), 1U );
-        ensure_equals( (CPLSM(4U) - CPLSM(4U)).v(), 0U );
-        ensure_equals( (CPLSM(UINT_MAX) - CPLSM(1U)).v(), UINT_MAX-1 );
-        try { (CPLSM(4U) - CPLSM(5U)).v(); ensure(false); } catch (...) {}
+        ASSERT_EQ( (CPLSM(4U) - CPLSM(3U)).v(), 1U );
+        ASSERT_EQ( (CPLSM(4U) - CPLSM(4U)).v(), 0U );
+        ASSERT_EQ( (CPLSM(UINT_MAX) - CPLSM(1U)).v(), UINT_MAX-1 );
+        try { (CPLSM(4U) - CPLSM(5U)).v(); ASSERT_TRUE(false); } catch (...) {}
 
-        ensure_equals( (CPLSM(0U) * CPLSM(UINT_MAX)).v(), 0U );
-        ensure_equals( (CPLSM(UINT_MAX) * CPLSM(0U)).v(), 0U );
-        ensure_equals( (CPLSM(UINT_MAX) * CPLSM(1U)).v(), UINT_MAX );
-        ensure_equals( (CPLSM(1U) * CPLSM(UINT_MAX)).v(), UINT_MAX );
-        try { (CPLSM(UINT_MAX) * CPLSM(2U)).v(); ensure(false); } catch (...) {}
-        try { (CPLSM(2U) * CPLSM(UINT_MAX)).v(); ensure(false); } catch (...) {}
+        ASSERT_EQ( (CPLSM(0U) * CPLSM(UINT_MAX)).v(), 0U );
+        ASSERT_EQ( (CPLSM(UINT_MAX) * CPLSM(0U)).v(), 0U );
+        ASSERT_EQ( (CPLSM(UINT_MAX) * CPLSM(1U)).v(), UINT_MAX );
+        ASSERT_EQ( (CPLSM(1U) * CPLSM(UINT_MAX)).v(), UINT_MAX );
+        try { (CPLSM(UINT_MAX) * CPLSM(2U)).v(); ASSERT_TRUE(false); } catch (...) {}
+        try { (CPLSM(2U) * CPLSM(UINT_MAX)).v(); ASSERT_TRUE(false); } catch (...) {}
 
-        ensure_equals( (CPLSM(4U) / CPLSM(2U)).v(), 2U );
-        ensure_equals( (CPLSM(UINT_MAX) / CPLSM(1U)).v(), UINT_MAX );
-        try { (CPLSM(1U) / CPLSM(0U)).v(); ensure(false); } catch (...) {}
+        ASSERT_EQ( (CPLSM(4U) / CPLSM(2U)).v(), 2U );
+        ASSERT_EQ( (CPLSM(UINT_MAX) / CPLSM(1U)).v(), UINT_MAX );
+        try { (CPLSM(1U) / CPLSM(0U)).v(); ASSERT_TRUE(false); } catch (...) {}
 
-        ensure_equals( (CPLSM(static_cast<GUInt64>(2)*1000*1000*1000) +
+        ASSERT_EQ( (CPLSM(static_cast<GUInt64>(2)*1000*1000*1000) +
                         CPLSM(static_cast<GUInt64>(3)*1000*1000*1000)).v(),
                        static_cast<GUInt64>(5)*1000*1000*1000 );
-        ensure_equals( (CPLSM(std::numeric_limits<GUInt64>::max() - 1) +
+        ASSERT_EQ( (CPLSM(std::numeric_limits<GUInt64>::max() - 1) +
                         CPLSM(static_cast<GUInt64>(1))).v(),
                        std::numeric_limits<GUInt64>::max() );
         try { (CPLSM(std::numeric_limits<GUInt64>::max()) +
                         CPLSM(static_cast<GUInt64>(1))); } catch (...) {}
 
-        ensure_equals( (CPLSM(static_cast<GUInt64>(2)*1000*1000*1000) *
+        ASSERT_EQ( (CPLSM(static_cast<GUInt64>(2)*1000*1000*1000) *
                         CPLSM(static_cast<GUInt64>(3)*1000*1000*1000)).v(),
                        static_cast<GUInt64>(6)*1000*1000*1000*1000*1000*1000 );
-        ensure_equals( (CPLSM(std::numeric_limits<GUInt64>::max()) *
+        ASSERT_EQ( (CPLSM(std::numeric_limits<GUInt64>::max()) *
                         CPLSM(static_cast<GUInt64>(1))).v(),
                        std::numeric_limits<GUInt64>::max() );
         try { (CPLSM(std::numeric_limits<GUInt64>::max()) *
@@ -1294,102 +1225,98 @@ namespace tut
     }
 
     // Test CPLParseRFC822DateTime()
-    template<>
-    template<>
-    void object::test<27>()
+    TEST_F(test_cpl, CPLParseRFC822DateTime)
     {
         int year, month, day, hour, min, sec, tz, weekday;
-        ensure( !CPLParseRFC822DateTime("", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ASSERT_TRUE( !CPLParseRFC822DateTime("", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
 
-        ensure_equals( CPLParseRFC822DateTime("Thu, 15 Jan 2017 12:34:56 +0015", nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr), TRUE );
+        ASSERT_EQ( CPLParseRFC822DateTime("Thu, 15 Jan 2017 12:34:56 +0015", nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr), TRUE );
 
-        ensure_equals( CPLParseRFC822DateTime("Thu, 15 Jan 2017 12:34:56 +0015", &year, &month, &day, &hour, &min, &sec, &tz, &weekday), TRUE );
-        ensure_equals( year, 2017 );
-        ensure_equals( month, 1 );
-        ensure_equals( day, 15 );
-        ensure_equals( hour, 12 );
-        ensure_equals( min, 34 );
-        ensure_equals( sec, 56 );
-        ensure_equals( tz, 101 );
-        ensure_equals( weekday, 4 );
+        ASSERT_EQ( CPLParseRFC822DateTime("Thu, 15 Jan 2017 12:34:56 +0015", &year, &month, &day, &hour, &min, &sec, &tz, &weekday), TRUE );
+        ASSERT_EQ( year, 2017 );
+        ASSERT_EQ( month, 1 );
+        ASSERT_EQ( day, 15 );
+        ASSERT_EQ( hour, 12 );
+        ASSERT_EQ( min, 34 );
+        ASSERT_EQ( sec, 56 );
+        ASSERT_EQ( tz, 101 );
+        ASSERT_EQ( weekday, 4 );
 
-        ensure_equals( CPLParseRFC822DateTime("Thu, 15 Jan 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday), TRUE );
-        ensure_equals( year, 2017 );
-        ensure_equals( month, 1 );
-        ensure_equals( day, 15 );
-        ensure_equals( hour, 12 );
-        ensure_equals( min, 34 );
-        ensure_equals( sec, 56 );
-        ensure_equals( tz, 100 );
-        ensure_equals( weekday, 4 );
+        ASSERT_EQ( CPLParseRFC822DateTime("Thu, 15 Jan 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday), TRUE );
+        ASSERT_EQ( year, 2017 );
+        ASSERT_EQ( month, 1 );
+        ASSERT_EQ( day, 15 );
+        ASSERT_EQ( hour, 12 );
+        ASSERT_EQ( min, 34 );
+        ASSERT_EQ( sec, 56 );
+        ASSERT_EQ( tz, 100 );
+        ASSERT_EQ( weekday, 4 );
 
         // Without day of week, second and timezone
-        ensure_equals( CPLParseRFC822DateTime("15 Jan 2017 12:34", &year, &month, &day, &hour, &min, &sec, &tz, &weekday), TRUE );
-        ensure_equals( year, 2017 );
-        ensure_equals( month, 1 );
-        ensure_equals( day, 15 );
-        ensure_equals( hour, 12 );
-        ensure_equals( min, 34 );
-        ensure_equals( sec, -1 );
-        ensure_equals( tz, 0 );
-        ensure_equals( weekday, 0 );
+        ASSERT_EQ( CPLParseRFC822DateTime("15 Jan 2017 12:34", &year, &month, &day, &hour, &min, &sec, &tz, &weekday), TRUE );
+        ASSERT_EQ( year, 2017 );
+        ASSERT_EQ( month, 1 );
+        ASSERT_EQ( day, 15 );
+        ASSERT_EQ( hour, 12 );
+        ASSERT_EQ( min, 34 );
+        ASSERT_EQ( sec, -1 );
+        ASSERT_EQ( tz, 0 );
+        ASSERT_EQ( weekday, 0 );
 
-        ensure_equals( CPLParseRFC822DateTime("XXX, 15 Jan 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday), TRUE );
-        ensure_equals( weekday, 0 );
+        ASSERT_EQ( CPLParseRFC822DateTime("XXX, 15 Jan 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday), TRUE );
+        ASSERT_EQ( weekday, 0 );
 
-        ensure( !CPLParseRFC822DateTime("Sun, 01 Jan 2017 12", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ASSERT_TRUE( !CPLParseRFC822DateTime("Sun, 01 Jan 2017 12", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
 
-        ensure( !CPLParseRFC822DateTime("00 Jan 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ASSERT_TRUE( !CPLParseRFC822DateTime("00 Jan 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
 
-        ensure( !CPLParseRFC822DateTime("32 Jan 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ASSERT_TRUE( !CPLParseRFC822DateTime("32 Jan 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
 
-        ensure( !CPLParseRFC822DateTime("01 XXX 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ASSERT_TRUE( !CPLParseRFC822DateTime("01 XXX 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
 
-        ensure( !CPLParseRFC822DateTime("01 Jan 2017 -1:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ASSERT_TRUE( !CPLParseRFC822DateTime("01 Jan 2017 -1:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
 
-        ensure( !CPLParseRFC822DateTime("01 Jan 2017 24:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ASSERT_TRUE( !CPLParseRFC822DateTime("01 Jan 2017 24:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
 
-        ensure( !CPLParseRFC822DateTime("01 Jan 2017 12:-1:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ASSERT_TRUE( !CPLParseRFC822DateTime("01 Jan 2017 12:-1:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
 
-        ensure( !CPLParseRFC822DateTime("01 Jan 2017 12:60:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ASSERT_TRUE( !CPLParseRFC822DateTime("01 Jan 2017 12:60:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
 
-        ensure( !CPLParseRFC822DateTime("01 Jan 2017 12:34:-1 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ASSERT_TRUE( !CPLParseRFC822DateTime("01 Jan 2017 12:34:-1 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
 
-        ensure( !CPLParseRFC822DateTime("01 Jan 2017 12:34:61 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ASSERT_TRUE( !CPLParseRFC822DateTime("01 Jan 2017 12:34:61 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
 
-        ensure( !CPLParseRFC822DateTime("15 Jan 2017 12:34:56 XXX", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ASSERT_TRUE( !CPLParseRFC822DateTime("15 Jan 2017 12:34:56 XXX", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
 
-        ensure( !CPLParseRFC822DateTime("15 Jan 2017 12:34:56 +-100", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ASSERT_TRUE( !CPLParseRFC822DateTime("15 Jan 2017 12:34:56 +-100", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
 
-        ensure( !CPLParseRFC822DateTime("15 Jan 2017 12:34:56 +9900", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ASSERT_TRUE( !CPLParseRFC822DateTime("15 Jan 2017 12:34:56 +9900", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
 
     }
 
     // Test CPLCopyTree()
-    template<>
-    template<>
-    void object::test<28>()
+    TEST_F(test_cpl, CPLCopyTree)
     {
         CPLString osTmpPath(CPLGetDirname(CPLGenerateTempFilename(nullptr)));
         CPLString osSrcDir(CPLFormFilename(osTmpPath, "src_dir", nullptr));
         CPLString osNewDir(CPLFormFilename(osTmpPath, "new_dir", nullptr));
-        ensure( VSIMkdir(osSrcDir, 0755) == 0 );
+        ASSERT_TRUE( VSIMkdir(osSrcDir, 0755) == 0 );
         CPLString osSrcFile(CPLFormFilename(osSrcDir, "my.bin", nullptr));
         VSILFILE* fp = VSIFOpenL(osSrcFile, "wb");
-        ensure( fp != nullptr );
+        ASSERT_TRUE( fp != nullptr );
         VSIFCloseL(fp);
 
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        ensure( CPLCopyTree(osNewDir, "/i/do_not/exist") < 0 );
+        ASSERT_TRUE( CPLCopyTree(osNewDir, "/i/do_not/exist") < 0 );
         CPLPopErrorHandler();
 
-        ensure( CPLCopyTree(osNewDir, osSrcDir) == 0 );
+        ASSERT_TRUE( CPLCopyTree(osNewDir, osSrcDir) == 0 );
         VSIStatBufL sStat;
         CPLString osNewFile(CPLFormFilename(osNewDir, "my.bin", nullptr));
-        ensure( VSIStatL(osNewFile, &sStat) == 0 );
+        ASSERT_TRUE( VSIStatL(osNewFile, &sStat) == 0 );
 
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        ensure( CPLCopyTree(osNewDir, osSrcDir) < 0 );
+        ASSERT_TRUE( CPLCopyTree(osNewDir, osSrcDir) < 0 );
         CPLPopErrorHandler();
 
         VSIUnlink( osNewFile );
@@ -1498,581 +1425,577 @@ namespace tut
     }
 
     // Test CPLJSonStreamingParser()
-    template<>
-    template<>
-    void object::test<29>()
+    TEST_F(test_cpl, CPLJSonStreamingParser)
     {
         // nominal cases
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "true";
-            ensure( oParser.Parse( sText, strlen(sText), true ) );
-            ensure_equals( oParser.GetSerialized(), sText );
+            ASSERT_TRUE( oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_EQ( oParser.GetSerialized(), sText );
 
             oParser.Reset();
             for( size_t i = 0; sText[i]; i++ )
-                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
-            ensure_equals( oParser.GetSerialized(), sText );
+                ASSERT_TRUE( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ASSERT_EQ( oParser.GetSerialized(), sText );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "false";
-            ensure( oParser.Parse( sText, strlen(sText), true ) );
-            ensure_equals( oParser.GetSerialized(), sText );
+            ASSERT_TRUE( oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_EQ( oParser.GetSerialized(), sText );
 
             oParser.Reset();
             for( size_t i = 0; sText[i]; i++ )
-                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
-            ensure_equals( oParser.GetSerialized(), sText );
+                ASSERT_TRUE( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ASSERT_EQ( oParser.GetSerialized(), sText );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "null";
-            ensure( oParser.Parse( sText, strlen(sText), true ) );
-            ensure_equals( oParser.GetSerialized(), sText );
+            ASSERT_TRUE( oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_EQ( oParser.GetSerialized(), sText );
 
             oParser.Reset();
             for( size_t i = 0; sText[i]; i++ )
-                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
-            ensure_equals( oParser.GetSerialized(), sText );
+                ASSERT_TRUE( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ASSERT_EQ( oParser.GetSerialized(), sText );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "10";
-            ensure( oParser.Parse( sText, strlen(sText), true ) );
-            ensure_equals( oParser.GetSerialized(), sText );
+            ASSERT_TRUE( oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_EQ( oParser.GetSerialized(), sText );
 
             oParser.Reset();
             for( size_t i = 0; sText[i]; i++ )
-                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
-            ensure_equals( oParser.GetSerialized(), sText );
+                ASSERT_TRUE( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ASSERT_EQ( oParser.GetSerialized(), sText );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "123eE-34";
-            ensure( oParser.Parse( sText, strlen(sText), true ) );
-            ensure_equals( oParser.GetSerialized(), sText );
+            ASSERT_TRUE( oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_EQ( oParser.GetSerialized(), sText );
 
             oParser.Reset();
             for( size_t i = 0; sText[i]; i++ )
-                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
-            ensure_equals( oParser.GetSerialized(), sText );
+                ASSERT_TRUE( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ASSERT_EQ( oParser.GetSerialized(), sText );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "\"\"";
-            ensure( oParser.Parse( sText, strlen(sText), true ) );
-            ensure_equals( oParser.GetSerialized(), sText );
+            ASSERT_TRUE( oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_EQ( oParser.GetSerialized(), sText );
 
             oParser.Reset();
             for( size_t i = 0; sText[i]; i++ )
-                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
-            ensure_equals( oParser.GetSerialized(), sText );
+                ASSERT_TRUE( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ASSERT_EQ( oParser.GetSerialized(), sText );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "\"\\\\a\\b\\f\\n\\r\\t\\u0020\\u0001\\\"\"";
-            ensure( oParser.Parse( sText, strlen(sText), true ) );
-            ensure_equals( oParser.GetSerialized(), "\"\\\\a\\b\\f\\n\\r\\t \\u0001\\\"\"" );
+            ASSERT_TRUE( oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_EQ( oParser.GetSerialized(), "\"\\\\a\\b\\f\\n\\r\\t \\u0001\\\"\"" );
 
             oParser.Reset();
             for( size_t i = 0; sText[i]; i++ )
-                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
-            ensure_equals( oParser.GetSerialized(), "\"\\\\a\\b\\f\\n\\r\\t \\u0001\\\"\"" );
+                ASSERT_TRUE( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ASSERT_EQ( oParser.GetSerialized(), "\"\\\\a\\b\\f\\n\\r\\t \\u0001\\\"\"" );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "\"\\u0001\\u0020\\ud834\\uDD1E\\uDD1E\\uD834\\uD834\\uD834\"";
-            ensure( oParser.Parse( sText, strlen(sText), true ) );
-            ensure_equals( oParser.GetSerialized(), "\"\\u0001 \xf0\x9d\x84\x9e\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\"" );
+            ASSERT_TRUE( oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_EQ( oParser.GetSerialized(), "\"\\u0001 \xf0\x9d\x84\x9e\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\"" );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "\"\\ud834\"";
-            ensure( oParser.Parse( sText, strlen(sText), true ) );
-            ensure_equals( oParser.GetSerialized(), "\"\xef\xbf\xbd\"" );
+            ASSERT_TRUE( oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_EQ( oParser.GetSerialized(), "\"\xef\xbf\xbd\"" );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "\"\\ud834\\t\"";
-            ensure( oParser.Parse( sText, strlen(sText), true ) );
-            ensure_equals( oParser.GetSerialized(), "\"\xef\xbf\xbd\\t\"" );
+            ASSERT_TRUE( oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_EQ( oParser.GetSerialized(), "\"\xef\xbf\xbd\\t\"" );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "\"\\u00e9\"";
-            ensure( oParser.Parse( sText, strlen(sText), true ) );
-            ensure_equals( oParser.GetSerialized(), "\"\xc3\xa9\"" );
+            ASSERT_TRUE( oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_EQ( oParser.GetSerialized(), "\"\xc3\xa9\"" );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "{}";
-            ensure( oParser.Parse( sText, strlen(sText), true ) );
-            ensure_equals( oParser.GetSerialized(), sText );
+            ASSERT_TRUE( oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_EQ( oParser.GetSerialized(), sText );
 
             oParser.Reset();
             for( size_t i = 0; sText[i]; i++ )
-                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
-            ensure_equals( oParser.GetSerialized(), sText );
+                ASSERT_TRUE( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ASSERT_EQ( oParser.GetSerialized(), sText );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "[]";
-            ensure( oParser.Parse( sText, strlen(sText), true ) );
-            ensure_equals( oParser.GetSerialized(), sText );
+            ASSERT_TRUE( oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_EQ( oParser.GetSerialized(), sText );
 
             oParser.Reset();
             for( size_t i = 0; sText[i]; i++ )
-                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
-            ensure_equals( oParser.GetSerialized(), sText );
+                ASSERT_TRUE( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ASSERT_EQ( oParser.GetSerialized(), sText );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "[[]]";
-            ensure( oParser.Parse( sText, strlen(sText), true ) );
-            ensure_equals( oParser.GetSerialized(), sText );
+            ASSERT_TRUE( oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_EQ( oParser.GetSerialized(), sText );
 
             oParser.Reset();
             for( size_t i = 0; sText[i]; i++ )
-                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
-            ensure_equals( oParser.GetSerialized(), sText );
+                ASSERT_TRUE( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ASSERT_EQ( oParser.GetSerialized(), sText );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "[1]";
-            ensure( oParser.Parse( sText, strlen(sText), true ) );
-            ensure_equals( oParser.GetSerialized(), sText );
+            ASSERT_TRUE( oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_EQ( oParser.GetSerialized(), sText );
 
             oParser.Reset();
             for( size_t i = 0; sText[i]; i++ )
-                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
-            ensure_equals( oParser.GetSerialized(), sText );
+                ASSERT_TRUE( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ASSERT_EQ( oParser.GetSerialized(), sText );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "[1,2]";
-            ensure( oParser.Parse( sText, strlen(sText), true ) );
-            ensure_equals( oParser.GetSerialized(), "[1, 2]" );
+            ASSERT_TRUE( oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_EQ( oParser.GetSerialized(), "[1, 2]" );
 
             oParser.Reset();
             for( size_t i = 0; sText[i]; i++ )
-                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
-            ensure_equals( oParser.GetSerialized(), "[1, 2]" );
+                ASSERT_TRUE( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ASSERT_EQ( oParser.GetSerialized(), "[1, 2]" );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "{\"a\":null}";
-            ensure( oParser.Parse( sText, strlen(sText), true ) );
-            ensure_equals( oParser.GetSerialized(), "{\"a\": null}" );
+            ASSERT_TRUE( oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_EQ( oParser.GetSerialized(), "{\"a\": null}" );
 
             oParser.Reset();
             for( size_t i = 0; sText[i]; i++ )
-                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
-            ensure_equals( oParser.GetSerialized(), "{\"a\": null}" );
+                ASSERT_TRUE( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ASSERT_EQ( oParser.GetSerialized(), "{\"a\": null}" );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = " { \"a\" : null ,\r\n\t\"b\": {\"c\": 1}, \"d\": [1] }";
-            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( oParser.Parse( sText, strlen(sText), true ) );
             const char sExpected[] = "{\"a\": null, \"b\": {\"c\": 1}, \"d\": [1]}";
-            ensure_equals( oParser.GetSerialized(), sExpected );
+            ASSERT_EQ( oParser.GetSerialized(), sExpected );
 
             oParser.Reset();
-            ensure( oParser.Parse( sText, strlen(sText), true ) );
-            ensure_equals( oParser.GetSerialized(), sExpected );
+            ASSERT_TRUE( oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_EQ( oParser.GetSerialized(), sExpected );
 
             oParser.Reset();
             for( size_t i = 0; sText[i]; i++ )
-                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
-            ensure_equals( oParser.GetSerialized(), sExpected );
+                ASSERT_TRUE( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ASSERT_EQ( oParser.GetSerialized(), sExpected );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "infinity";
-            ensure( oParser.Parse( sText, strlen(sText), true ) );
-            ensure_equals( oParser.GetSerialized(), sText );
+            ASSERT_TRUE( oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_EQ( oParser.GetSerialized(), sText );
 
             oParser.Reset();
             for( size_t i = 0; sText[i]; i++ )
-                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
-            ensure_equals( oParser.GetSerialized(), sText );
+                ASSERT_TRUE( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ASSERT_EQ( oParser.GetSerialized(), sText );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "-infinity";
-            ensure( oParser.Parse( sText, strlen(sText), true ) );
-            ensure_equals( oParser.GetSerialized(), sText );
+            ASSERT_TRUE( oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_EQ( oParser.GetSerialized(), sText );
 
             oParser.Reset();
             for( size_t i = 0; sText[i]; i++ )
-                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
-            ensure_equals( oParser.GetSerialized(), sText );
+                ASSERT_TRUE( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ASSERT_EQ( oParser.GetSerialized(), sText );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "nan";
-            ensure( oParser.Parse( sText, strlen(sText), true ) );
-            ensure_equals( oParser.GetSerialized(), sText );
+            ASSERT_TRUE( oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_EQ( oParser.GetSerialized(), sText );
 
             oParser.Reset();
             for( size_t i = 0; sText[i]; i++ )
-                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
-            ensure_equals( oParser.GetSerialized(), sText );
+                ASSERT_TRUE( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ASSERT_EQ( oParser.GetSerialized(), sText );
         }
 
         // errors
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "tru";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "tru1";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "truxe";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "truex";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "fals";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "falsxe";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "falsex";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "nul";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "nulxl";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "nullx";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "na";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "nanx";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "infinit";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "infinityx";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "-infinit";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "-infinityx";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "true false";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "x";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "{";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "}";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "[";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "[1";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "[,";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "[|";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "]";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "{ :";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "{ ,";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "{ |";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "{ 1";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "{ \"x\"";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "{ \"x\": ";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "{ \"x\": 1 2";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "{ \"x\", ";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "{ \"x\" }";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "{\"a\" x}";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "1x";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "\"";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "\"\\";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "\"\\x\"";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "\"\\u";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "\"\\ux";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "\"\\u000";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "\"\\uD834\\ux\"";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "\"\\\"";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "\"too long\"";
             oParser.SetMaxStringSize(2);
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "[[]]";
             oParser.SetMaxDepth(1);
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "{ \"x\": {} }";
             oParser.SetMaxDepth(1);
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "[,]";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "[true,]";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "[true,,true]";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "[true true]";
-            ensure( !oParser.Parse( sText, strlen(sText), true ) );
-            ensure( !oParser.GetException().empty() );
+            ASSERT_TRUE( !oParser.Parse( sText, strlen(sText), true ) );
+            ASSERT_TRUE( !oParser.GetException().empty() );
         }
     }
 
     // Test cpl_mem_cache
-    template<>
-    template<>
-    void object::test<30>()
+    TEST_F(test_cpl, cpl_mem_cache)
     {
         lru11::Cache<int,int> cache(2,1);
-        ensure_equals( cache.size(), 0U );
-        ensure( cache.empty() );
+        ASSERT_EQ( cache.size(), 0U );
+        ASSERT_TRUE( cache.empty() );
         cache.clear();
         int val;
-        ensure( !cache.tryGet(0, val) );
+        ASSERT_TRUE( !cache.tryGet(0, val) );
         try
         {
             cache.get(0);
-            ensure( false );
+            ASSERT_TRUE( false );
         }
         catch( const lru11::KeyNotFound& )
         {
-            ensure( true );
+            ASSERT_TRUE( true );
         }
-        ensure( !cache.remove(0) );
-        ensure( !cache.contains(0) );
-        ensure_equals( cache.getMaxSize(), 2U );
-        ensure_equals( cache.getElasticity(), 1U );
-        ensure_equals( cache.getMaxAllowedSize(), 3U );
+        ASSERT_TRUE( !cache.remove(0) );
+        ASSERT_TRUE( !cache.contains(0) );
+        ASSERT_EQ( cache.getMaxSize(), 2U );
+        ASSERT_EQ( cache.getElasticity(), 1U );
+        ASSERT_EQ( cache.getMaxAllowedSize(), 3U );
         int out;
-        ensure( !cache.removeAndRecycleOldestEntry(out) );
+        ASSERT_TRUE( !cache.removeAndRecycleOldestEntry(out) );
 
         cache.insert(0, 1);
         val = 0;
-        ensure( cache.tryGet(0, val) );
+        ASSERT_TRUE( cache.tryGet(0, val) );
         int* ptr = cache.getPtr(0);
-        ensure( ptr );
-        ensure_equals( *ptr, 1 );
-        ensure( cache.getPtr(-1) == nullptr );
-        ensure_equals( val, 1 );
-        ensure_equals( cache.get(0), 1 );
-        ensure_equals( cache.getCopy(0), 1);
-        ensure_equals( cache.size(), 1U );
-        ensure( !cache.empty() );
-        ensure( cache.contains(0) );
+        ASSERT_TRUE( ptr );
+        ASSERT_EQ( *ptr, 1 );
+        ASSERT_TRUE( cache.getPtr(-1) == nullptr );
+        ASSERT_EQ( val, 1 );
+        ASSERT_EQ( cache.get(0), 1 );
+        ASSERT_EQ( cache.getCopy(0), 1);
+        ASSERT_EQ( cache.size(), 1U );
+        ASSERT_TRUE( !cache.empty() );
+        ASSERT_TRUE( cache.contains(0) );
         bool visited = false;
         auto lambda = [&visited] (const lru11::KeyValuePair<int, int>& kv)
         {
@@ -2080,28 +2003,28 @@ namespace tut
                 visited = true;
         };
         cache.cwalk( lambda );
-        ensure( visited) ;
+        ASSERT_TRUE( visited) ;
 
         out = -1;
-        ensure( cache.removeAndRecycleOldestEntry(out) );
-        ensure_equals( out, 1 );
+        ASSERT_TRUE( cache.removeAndRecycleOldestEntry(out) );
+        ASSERT_EQ( out, 1 );
 
         cache.insert(0, 1);
         cache.insert(0, 2);
-        ensure_equals( cache.get(0), 2 );
-        ensure_equals( cache.size(), 1U );
+        ASSERT_EQ( cache.get(0), 2 );
+        ASSERT_EQ( cache.size(), 1U );
         cache.insert(1, 3);
         cache.insert(2, 4);
-        ensure_equals( cache.size(), 3U );
+        ASSERT_EQ( cache.size(), 3U );
         cache.insert(3, 5);
-        ensure_equals( cache.size(), 2U );
-        ensure( cache.contains(2) );
-        ensure( cache.contains(3) );
-        ensure( !cache.contains(0) );
-        ensure( !cache.contains(1) );
-        ensure( cache.remove(2) );
-        ensure( !cache.contains(2) );
-        ensure_equals( cache.size(), 1U );
+        ASSERT_EQ( cache.size(), 2U );
+        ASSERT_TRUE( cache.contains(2) );
+        ASSERT_TRUE( cache.contains(3) );
+        ASSERT_TRUE( !cache.contains(0) );
+        ASSERT_TRUE( !cache.contains(1) );
+        ASSERT_TRUE( cache.remove(2) );
+        ASSERT_TRUE( !cache.contains(2) );
+        ASSERT_EQ( cache.size(), 1U );
 
         {
             // Check that MyObj copy constructor and copy-assignment operator
@@ -2116,10 +2039,10 @@ namespace tut
                 MyObj& operator=(MyObj&&) = default;
             };
             lru11::Cache<int,MyObj> cacheMyObj(2,0);
-            ensure_equals( cacheMyObj.insert(0, MyObj(0)).m_v, 0 );
+            ASSERT_EQ( cacheMyObj.insert(0, MyObj(0)).m_v, 0 );
             cacheMyObj.getPtr(0);
-            ensure_equals( cacheMyObj.insert(1, MyObj(1)).m_v, 1 );
-            ensure_equals( cacheMyObj.insert(2, MyObj(2)).m_v, 2 );
+            ASSERT_EQ( cacheMyObj.insert(1, MyObj(1)).m_v, 1 );
+            ASSERT_EQ( cacheMyObj.insert(2, MyObj(2)).m_v, 2 );
             MyObj outObj(-1);
             cacheMyObj.removeAndRecycleOldestEntry(outObj);
         }
@@ -2131,25 +2054,24 @@ namespace tut
             {
                 int m_v;
                 MyObj(int v): m_v(v) {}
-                MyObj(const MyObj&): m_v(-1) { ensure(0); }
-                MyObj& operator=(const MyObj&) { ensure(0); return *this; }
+                static void should_not_happen() { ASSERT_TRUE(false); }
+                MyObj(const MyObj&): m_v(-1) { should_not_happen(); }
+                MyObj& operator=(const MyObj&) { should_not_happen(); return *this; }
                 MyObj(MyObj&&) = default;
                 MyObj& operator=(MyObj&&) = default;
             };
             lru11::Cache<int,MyObj> cacheMyObj(2,0);
-            ensure_equals( cacheMyObj.insert(0, MyObj(0)).m_v, 0 );
+            ASSERT_EQ( cacheMyObj.insert(0, MyObj(0)).m_v, 0 );
             cacheMyObj.getPtr(0);
-            ensure_equals( cacheMyObj.insert(1, MyObj(1)).m_v, 1 );
-            ensure_equals( cacheMyObj.insert(2, MyObj(2)).m_v, 2 );
+            ASSERT_EQ( cacheMyObj.insert(1, MyObj(1)).m_v, 1 );
+            ASSERT_EQ( cacheMyObj.insert(2, MyObj(2)).m_v, 2 );
             MyObj outObj(-1);
             cacheMyObj.removeAndRecycleOldestEntry(outObj);
         }
     }
 
     // Test CPLJSONDocument
-    template<>
-    template<>
-    void object::test<31>()
+    TEST_F(test_cpl, CPLJSONDocument)
     {
         {
             // Test Json document LoadUrl
@@ -2171,17 +2093,17 @@ namespace tut
                 const char* pszContent = "{ \"foo\": \"bar\" }";
                 VSIFWriteL(pszContent, 1, strlen(pszContent), fpTmp);
                 VSIFCloseL(fpTmp);
-                ensure( oDocument.LoadUrl(
+                ASSERT_TRUE( oDocument.LoadUrl(
                     "/vsimem/test.json",
                     const_cast<char**>(options) ) );
                 CPLSetConfigOption("CPL_CURL_ENABLE_VSIMEM", nullptr);
                 VSIUnlink("/vsimem/test.json");
 
                 CPLJSONObject oJsonRoot = oDocument.GetRoot();
-                ensure( oJsonRoot.IsValid() );
+                ASSERT_TRUE( oJsonRoot.IsValid() );
 
                 CPLString value = oJsonRoot.GetString("foo", "");
-                ensure_not( EQUAL(value, "bar") );
+                ASSERT_STRNE( value, "bar") ; // not equal
             }
         }
         {
@@ -2189,60 +2111,60 @@ namespace tut
             CPLJSONDocument oDocument;
 
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            ensure( !oDocument.LoadChunks("/i_do/not/exist", 512) );
+            ASSERT_TRUE( !oDocument.LoadChunks("/i_do/not/exist", 512) );
             CPLPopErrorHandler();
 
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            ensure( !oDocument.LoadChunks("test_cpl.cpp", 512) );
+            ASSERT_TRUE( !oDocument.LoadChunks("test_cpl.cpp", 512) );
             CPLPopErrorHandler();
 
             oDocument.GetRoot().Add("foo", "bar");
 
-            ensure( oDocument.LoadChunks((data_ + SEP + "test.json").c_str(), 512) );
+            ASSERT_TRUE( oDocument.LoadChunks((data_ + SEP + "test.json").c_str(), 512) );
 
             CPLJSONObject oJsonRoot = oDocument.GetRoot();
-            ensure( oJsonRoot.IsValid() );
-            ensure_equals( oJsonRoot.GetInteger("resource/id", 10), 0 );
+            ASSERT_TRUE( oJsonRoot.IsValid() );
+            ASSERT_EQ( oJsonRoot.GetInteger("resource/id", 10), 0 );
 
             CPLJSONObject oJsonResource = oJsonRoot.GetObj("resource");
-            ensure( oJsonResource.IsValid() );
+            ASSERT_TRUE( oJsonResource.IsValid() );
             std::vector<CPLJSONObject> children = oJsonResource.GetChildren();
-            ensure(children.size() == 11);
+            ASSERT_TRUE(children.size() == 11);
 
             CPLJSONArray oaScopes = oJsonRoot.GetArray("resource/scopes");
-            ensure( oaScopes.IsValid() );
-            ensure_equals( oaScopes.Size(), 2);
+            ASSERT_TRUE( oaScopes.IsValid() );
+            ASSERT_EQ( oaScopes.Size(), 2);
 
             CPLJSONObject oHasChildren = oJsonRoot.GetObj("resource/children");
-            ensure( oHasChildren.IsValid() );
-            ensure_equals( oHasChildren.ToBool(), true );
+            ASSERT_TRUE( oHasChildren.IsValid() );
+            ASSERT_EQ( oHasChildren.ToBool(), true );
 
-            ensure_equals( oJsonResource.GetBool( "children", false ), true );
+            ASSERT_EQ( oJsonResource.GetBool( "children", false ), true );
 
             CPLJSONObject oJsonId = oJsonRoot["resource/owner_user/id"];
-            ensure( oJsonId.IsValid() );
+            ASSERT_TRUE( oJsonId.IsValid() );
         }
         {
             CPLJSONDocument oDocument;
-            ensure( !oDocument.LoadMemory(nullptr, 0) );
-            ensure( !oDocument.LoadMemory(CPLString()) );
-            ensure( oDocument.LoadMemory(std::string("true")) );
-            ensure( oDocument.GetRoot().GetType() == CPLJSONObject::Type::Boolean );
-            ensure( oDocument.GetRoot().ToBool() );
-            ensure( oDocument.LoadMemory(std::string("false")) );
-            ensure( oDocument.GetRoot().GetType() == CPLJSONObject::Type::Boolean );
-            ensure( !oDocument.GetRoot().ToBool() );
+            ASSERT_TRUE( !oDocument.LoadMemory(nullptr, 0) );
+            ASSERT_TRUE( !oDocument.LoadMemory(CPLString()) );
+            ASSERT_TRUE( oDocument.LoadMemory(std::string("true")) );
+            ASSERT_TRUE( oDocument.GetRoot().GetType() == CPLJSONObject::Type::Boolean );
+            ASSERT_TRUE( oDocument.GetRoot().ToBool() );
+            ASSERT_TRUE( oDocument.LoadMemory(std::string("false")) );
+            ASSERT_TRUE( oDocument.GetRoot().GetType() == CPLJSONObject::Type::Boolean );
+            ASSERT_TRUE( !oDocument.GetRoot().ToBool() );
         }
         {
             // Copy constructor
             CPLJSONDocument oDocument;
-            ensure( oDocument.LoadMemory(std::string("true")) );
+            ASSERT_TRUE( oDocument.LoadMemory(std::string("true")) );
             oDocument.GetRoot();
             CPLJSONDocument oDocument2(oDocument);
             CPLJSONObject oObj(oDocument.GetRoot());
-            ensure( oObj.ToBool() );
+            ASSERT_TRUE( oObj.ToBool() );
             CPLJSONObject oObj2(oObj);
-            ensure( oObj2.ToBool() );
+            ASSERT_TRUE( oObj2.ToBool() );
             // Assignment operator
             oDocument2 = oDocument;
             auto& oDocument2Ref(oDocument2);
@@ -2251,10 +2173,10 @@ namespace tut
             auto& oObj2Ref(oObj2);
             oObj2 = oObj2Ref;
             CPLJSONObject oObj3(std::move(oObj2));
-            ensure( oObj3.ToBool() );
+            ASSERT_TRUE( oObj3.ToBool() );
             CPLJSONObject oObj4;
             oObj4 = std::move(oObj3);
-            ensure( oObj4.ToBool() );
+            ASSERT_TRUE( oObj4.ToBool() );
         }
         {
             // Move constructor
@@ -2273,41 +2195,41 @@ namespace tut
             // Save
             CPLJSONDocument oDocument;
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            ensure( !oDocument.Save("/i_do/not/exist") );
+            ASSERT_TRUE( !oDocument.Save("/i_do/not/exist") );
             CPLPopErrorHandler();
         }
         {
             CPLJSONObject oObj;
             oObj.Add("string", std::string("my_string"));
-            ensure_equals( oObj.GetString("string"), std::string("my_string"));
-            ensure_equals( oObj.GetString("inexisting_string", "default"),
+            ASSERT_EQ( oObj.GetString("string"), std::string("my_string"));
+            ASSERT_EQ( oObj.GetString("inexisting_string", "default"),
                            std::string("default"));
             oObj.Add("const_char_star", nullptr);
             oObj.Add("const_char_star", "my_const_char_star");
-            ensure( oObj.GetObj("const_char_star").GetType() == CPLJSONObject::Type::String );
+            ASSERT_TRUE( oObj.GetObj("const_char_star").GetType() == CPLJSONObject::Type::String );
             oObj.Add("int", 1);
-            ensure_equals( oObj.GetInteger("int"), 1 );
-            ensure_equals( oObj.GetInteger("inexisting_int", -987), -987 );
-            ensure( oObj.GetObj("int").GetType() == CPLJSONObject::Type::Integer );
+            ASSERT_EQ( oObj.GetInteger("int"), 1 );
+            ASSERT_EQ( oObj.GetInteger("inexisting_int", -987), -987 );
+            ASSERT_TRUE( oObj.GetObj("int").GetType() == CPLJSONObject::Type::Integer );
             oObj.Add("int64", GINT64_MAX);
-            ensure_equals( oObj.GetLong("int64"), GINT64_MAX );
-            ensure_equals( oObj.GetLong("inexisting_int64", GINT64_MIN), GINT64_MIN );
-            ensure( oObj.GetObj("int64").GetType() == CPLJSONObject::Type::Long );
+            ASSERT_EQ( oObj.GetLong("int64"), GINT64_MAX );
+            ASSERT_EQ( oObj.GetLong("inexisting_int64", GINT64_MIN), GINT64_MIN );
+            ASSERT_TRUE( oObj.GetObj("int64").GetType() == CPLJSONObject::Type::Long );
             oObj.Add("double", 1.25);
-            ensure_equals( oObj.GetDouble("double"), 1.25 );
-            ensure_equals( oObj.GetDouble("inexisting_double", -987.0), -987.0 );
-            ensure( oObj.GetObj("double").GetType() == CPLJSONObject::Type::Double );
+            ASSERT_EQ( oObj.GetDouble("double"), 1.25 );
+            ASSERT_EQ( oObj.GetDouble("inexisting_double", -987.0), -987.0 );
+            ASSERT_TRUE( oObj.GetObj("double").GetType() == CPLJSONObject::Type::Double );
             oObj.Add("array", CPLJSONArray());
-            ensure( oObj.GetObj("array").GetType() == CPLJSONObject::Type::Array );
+            ASSERT_TRUE( oObj.GetObj("array").GetType() == CPLJSONObject::Type::Array );
             oObj.Add("obj", CPLJSONObject());
-            ensure( oObj.GetObj("obj").GetType() == CPLJSONObject::Type::Object );
+            ASSERT_TRUE( oObj.GetObj("obj").GetType() == CPLJSONObject::Type::Object );
             oObj.Add("bool", true);
-            ensure_equals( oObj.GetBool("bool"), true );
-            ensure_equals( oObj.GetBool("inexisting_bool", false), false );
-            ensure( oObj.GetObj("bool").GetType() == CPLJSONObject::Type::Boolean );
+            ASSERT_EQ( oObj.GetBool("bool"), true );
+            ASSERT_EQ( oObj.GetBool("inexisting_bool", false), false );
+            ASSERT_TRUE( oObj.GetObj("bool").GetType() == CPLJSONObject::Type::Boolean );
             oObj.AddNull("null_field");
-            ensure( oObj.GetObj("null_field").GetType() == CPLJSONObject::Type::Null );
-            ensure( oObj.GetObj("inexisting").GetType() == CPLJSONObject::Type::Unknown );
+            ASSERT_TRUE( oObj.GetObj("null_field").GetType() == CPLJSONObject::Type::Null );
+            ASSERT_TRUE( oObj.GetObj("inexisting").GetType() == CPLJSONObject::Type::Unknown );
             oObj.Set("string", std::string("my_string"));
             oObj.Set("const_char_star", nullptr);
             oObj.Set("const_char_star", "my_const_char_star");
@@ -2318,11 +2240,11 @@ namespace tut
             //oObj.Set("obj", CPLJSONObject());
             oObj.Set("bool", true);
             oObj.SetNull("null_field");
-            ensure( CPLJSONArray().GetChildren().empty() );
+            ASSERT_TRUE( CPLJSONArray().GetChildren().empty() );
             oObj.ToArray();
-            ensure_equals( CPLJSONObject().Format(CPLJSONObject::PrettyFormat::Spaced), std::string("{ }") );
-            ensure_equals( CPLJSONObject().Format(CPLJSONObject::PrettyFormat::Pretty), std::string("{\n}") );
-            ensure_equals( CPLJSONObject().Format(CPLJSONObject::PrettyFormat::Plain), std::string("{}") );
+            ASSERT_EQ( CPLJSONObject().Format(CPLJSONObject::PrettyFormat::Spaced), std::string("{ }") );
+            ASSERT_EQ( CPLJSONObject().Format(CPLJSONObject::PrettyFormat::Pretty), std::string("{\n}") );
+            ASSERT_EQ( CPLJSONObject().Format(CPLJSONObject::PrettyFormat::Plain), std::string("{}") );
         }
         {
             CPLJSONArray oArrayConstructorString(std::string("foo"));
@@ -2334,27 +2256,25 @@ namespace tut
             oArray.Add(1);
             oArray.Add(GINT64_MAX);
             oArray.Add(true);
-            ensure_equals(oArray.Size(), 7);
+            ASSERT_EQ(oArray.Size(), 7);
 
             int nCount = 0;
             for(const auto& obj: oArray)
             {
-                ensure_equals(obj.GetInternalHandle(), oArray[nCount].GetInternalHandle());
+                ASSERT_EQ(obj.GetInternalHandle(), oArray[nCount].GetInternalHandle());
                 nCount++;
             }
-            ensure_equals(nCount, 7);
+            ASSERT_EQ(nCount, 7);
         }
         {
             CPLJSONDocument oDocument;
-            ensure( oDocument.LoadMemory(CPLString("{ \"/foo\" : \"bar\" }")) );
-            ensure_equals( oDocument.GetRoot().GetString("/foo"), std::string("bar") );
+            ASSERT_TRUE( oDocument.LoadMemory(CPLString("{ \"/foo\" : \"bar\" }")) );
+            ASSERT_EQ( oDocument.GetRoot().GetString("/foo"), std::string("bar") );
         }
     }
 
     // Test CPLRecodeIconv() with re-allocation
-    template<>
-    template<>
-    void object::test<32>()
+    TEST_F(test_cpl, CPLRecodeIconv)
     {
 #ifdef CPL_RECODE_ICONV
         int N = 32800;
@@ -2370,24 +2290,24 @@ namespace tut
         }
         pszExpected[N * 2] = 0;
         char* pszRet = CPLRecode(pszIn, "ISO-8859-2", CPL_ENC_UTF8);
-        ensure_equals( memcmp(pszExpected, pszRet, N * 2 + 1), 0 );
+        ASSERT_EQ( memcmp(pszExpected, pszRet, N * 2 + 1), 0 );
         CPLFree(pszIn);
         CPLFree(pszRet);
         CPLFree(pszExpected);
+#else
+        GTEST_SKIP() << "CPL_RECODE_ICONV missing";
 #endif
     }
 
     // Test CPLHTTPParseMultipartMime()
-    template<>
-    template<>
-    void object::test<33>()
+    TEST_F(test_cpl, CPLHTTPParseMultipartMime)
     {
         CPLHTTPResult* psResult;
 
         psResult =
             static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        ensure( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        ASSERT_TRUE( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
         CPLPopErrorHandler();
         CPLHTTPDestroyResult(psResult);
 
@@ -2397,7 +2317,7 @@ namespace tut
         psResult->pszContentType =
             CPLStrdup("multipart/form-data; boundary=");
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        ensure( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        ASSERT_TRUE( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
         CPLPopErrorHandler();
         CPLHTTPDestroyResult(psResult);
 
@@ -2407,7 +2327,7 @@ namespace tut
         psResult->pszContentType =
             CPLStrdup("multipart/form-data; boundary=myboundary");
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        ensure( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        ASSERT_TRUE( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
         CPLPopErrorHandler();
         CPLHTTPDestroyResult(psResult);
 
@@ -2422,7 +2342,7 @@ namespace tut
             psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        ensure( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        ASSERT_TRUE( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
         CPLPopErrorHandler();
         CPLHTTPDestroyResult(psResult);
 
@@ -2439,7 +2359,7 @@ namespace tut
             psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        ensure( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        ASSERT_TRUE( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
         CPLPopErrorHandler();
         CPLHTTPDestroyResult(psResult);
 
@@ -2455,7 +2375,7 @@ namespace tut
             psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        ensure( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        ASSERT_TRUE( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
         CPLPopErrorHandler();
         CPLHTTPDestroyResult(psResult);
 
@@ -2474,7 +2394,7 @@ namespace tut
             psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        ensure( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        ASSERT_TRUE( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
         CPLPopErrorHandler();
         CPLHTTPDestroyResult(psResult);
 
@@ -2493,7 +2413,7 @@ namespace tut
             psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        ensure( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        ASSERT_TRUE( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
         CPLPopErrorHandler();
         CPLHTTPDestroyResult(psResult);
 
@@ -2512,14 +2432,14 @@ namespace tut
             psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
             psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
-        ensure( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
-        ensure_equals( psResult->nMimePartCount, 1 );
-        ensure_equals( psResult->pasMimePart[0].papszHeaders,
+        ASSERT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        ASSERT_EQ( psResult->nMimePartCount, 1 );
+        ASSERT_EQ( psResult->pasMimePart[0].papszHeaders,
                        static_cast<char**>(nullptr) );
-        ensure_equals( psResult->pasMimePart[0].nDataLen, 3 );
-        ensure( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
+        ASSERT_EQ( psResult->pasMimePart[0].nDataLen, 3 );
+        ASSERT_TRUE( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
                        "Bla", 3) == 0 );
-        ensure( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        ASSERT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
         CPLHTTPDestroyResult(psResult);
 
         // Valid single part, with header
@@ -2538,15 +2458,15 @@ namespace tut
             psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
             psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
-        ensure( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
-        ensure_equals( psResult->nMimePartCount, 1 );
-        ensure_equals( CSLCount(psResult->pasMimePart[0].papszHeaders), 1 );
-        ensure_equals( CPLString(psResult->pasMimePart[0].papszHeaders[0]),
+        ASSERT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        ASSERT_EQ( psResult->nMimePartCount, 1 );
+        ASSERT_EQ( CSLCount(psResult->pasMimePart[0].papszHeaders), 1 );
+        ASSERT_EQ( CPLString(psResult->pasMimePart[0].papszHeaders[0]),
                        CPLString("Content-Type=bla") );
-        ensure_equals( psResult->pasMimePart[0].nDataLen, 3 );
-        ensure( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
+        ASSERT_EQ( psResult->pasMimePart[0].nDataLen, 3 );
+        ASSERT_TRUE( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
                        "Bla", 3) == 0 );
-        ensure( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        ASSERT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
         CPLHTTPDestroyResult(psResult);
 
         // Valid single part, 2 headers
@@ -2566,17 +2486,17 @@ namespace tut
             psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
             psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
-        ensure( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
-        ensure_equals( psResult->nMimePartCount, 1 );
-        ensure_equals( CSLCount(psResult->pasMimePart[0].papszHeaders), 2 );
-        ensure_equals( CPLString(psResult->pasMimePart[0].papszHeaders[0]),
+        ASSERT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        ASSERT_EQ( psResult->nMimePartCount, 1 );
+        ASSERT_EQ( CSLCount(psResult->pasMimePart[0].papszHeaders), 2 );
+        ASSERT_EQ( CPLString(psResult->pasMimePart[0].papszHeaders[0]),
                        CPLString("Content-Type=bla") );
-        ensure_equals( CPLString(psResult->pasMimePart[0].papszHeaders[1]),
+        ASSERT_EQ( CPLString(psResult->pasMimePart[0].papszHeaders[1]),
                        CPLString("Content-Disposition=bar") );
-        ensure_equals( psResult->pasMimePart[0].nDataLen, 3 );
-        ensure( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
+        ASSERT_EQ( psResult->pasMimePart[0].nDataLen, 3 );
+        ASSERT_TRUE( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
                        "Bla", 3) == 0 );
-        ensure( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        ASSERT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
         CPLHTTPDestroyResult(psResult);
 
         // Single part, but with header without extra terminating \r\n
@@ -2595,14 +2515,14 @@ namespace tut
             psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
             psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
-        ensure( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
-        ensure_equals( psResult->nMimePartCount, 1 );
-        ensure_equals( CPLString(psResult->pasMimePart[0].papszHeaders[0]),
+        ASSERT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        ASSERT_EQ( psResult->nMimePartCount, 1 );
+        ASSERT_EQ( CPLString(psResult->pasMimePart[0].papszHeaders[0]),
                        CPLString("Content-Type=bla") );
-        ensure_equals( psResult->pasMimePart[0].nDataLen, 3 );
-        ensure( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
+        ASSERT_EQ( psResult->pasMimePart[0].nDataLen, 3 );
+        ASSERT_TRUE( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
                        "Bla", 3) == 0 );
-        ensure( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        ASSERT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
         CPLHTTPDestroyResult(psResult);
 
         // Valid 2 parts, no header
@@ -2624,25 +2544,23 @@ namespace tut
             psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
             psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
-        ensure( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
-        ensure_equals( psResult->nMimePartCount, 2 );
-        ensure_equals( psResult->pasMimePart[0].papszHeaders,
+        ASSERT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        ASSERT_EQ( psResult->nMimePartCount, 2 );
+        ASSERT_EQ( psResult->pasMimePart[0].papszHeaders,
                        static_cast<char**>(nullptr) );
-        ensure_equals( psResult->pasMimePart[0].nDataLen, 3 );
-        ensure( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
+        ASSERT_EQ( psResult->pasMimePart[0].nDataLen, 3 );
+        ASSERT_TRUE( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
                        "Bla", 3) == 0 );
-        ensure_equals( psResult->pasMimePart[1].nDataLen, 11 );
-        ensure( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[1].pabyData),
+        ASSERT_EQ( psResult->pasMimePart[1].nDataLen, 11 );
+        ASSERT_TRUE( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[1].pabyData),
                        "second part", 11) == 0 );
-        ensure( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        ASSERT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
         CPLHTTPDestroyResult(psResult);
 
     }
 
     // Test cpl::down_cast
-    template<>
-    template<>
-    void object::test<34>()
+    TEST_F(test_cpl, down_cast)
     {
         struct Base{
             virtual ~Base() {}
@@ -2655,19 +2573,17 @@ namespace tut
 #ifdef wont_compile
         struct OtherBase {};
         OtherBase ob;
-        ensure_equals(cpl::down_cast<OtherBase*>(p_b_d), &ob);
+        ASSERT_EQ(cpl::down_cast<OtherBase*>(p_b_d), &ob);
 #endif
 #ifdef compile_with_warning
-        ensure_equals(cpl::down_cast<Base*>(p_b_d), p_b_d);
+        ASSERT_EQ(cpl::down_cast<Base*>(p_b_d), p_b_d);
 #endif
-        ensure_equals(cpl::down_cast<Derived*>(p_b_d), &d);
-        ensure_equals(cpl::down_cast<Derived*>(static_cast<Base*>(nullptr)), static_cast<Derived*>(nullptr));
+        ASSERT_EQ(cpl::down_cast<Derived*>(p_b_d), &d);
+        ASSERT_EQ(cpl::down_cast<Derived*>(static_cast<Base*>(nullptr)), static_cast<Derived*>(nullptr));
     }
 
     // Test CPLPrintTime() in particular case of RFC822 formatting in C locale
-    template<>
-    template<>
-    void object::test<35>()
+    TEST_F(test_cpl, CPLPrintTime_RFC822)
     {
         char szDate[64];
         struct tm tm;
@@ -2683,13 +2599,11 @@ namespace tut
         int nRet = CPLPrintTime(szDate, sizeof(szDate)-1,
                      "%a, %d %b %Y %H:%M:%S GMT", &tm, "C");
         szDate[nRet] = 0;
-        ensure_equals( std::string(szDate), std::string("Wed, 20 Jun 2018 12:34:56 GMT") );
+        ASSERT_STREQ( szDate, "Wed, 20 Jun 2018 12:34:56 GMT" );
     }
 
     // Test CPLAutoClose
-    template<>
-    template<>
-    void object::test<36>()
+    TEST_F(test_cpl, CPLAutoClose)
     {
         static int counter = 0;
         class AutoCloseTest{
@@ -2715,13 +2629,11 @@ namespace tut
             CPL_AUTO_CLOSE_WARP(p2,AutoCloseTest::Destroy);
 
         }
-        ensure_equals(counter,400);
+        ASSERT_EQ(counter,400);
     }
 
     // Test cpl_minixml
-    template<>
-    template<>
-    void object::test<37>()
+   TEST_F(test_cpl, cpl_minixml)
     {
         CPLXMLNode* psRoot = CPLCreateXMLNode(nullptr, CXT_Element, "Root");
         CPLXMLNode* psElt = CPLCreateXMLElementAndValue(psRoot, "Elt", "value");
@@ -2729,34 +2641,30 @@ namespace tut
         CPLAddXMLAttributeAndValue(psElt, "attr2", "val2");
         char* str = CPLSerializeXMLTree(psRoot);
         CPLDestroyXMLNode(psRoot);
-        ensure_equals( std::string(str), std::string("<Root>\n  <Elt attr1=\"val1\" attr2=\"val2\">value</Elt>\n</Root>\n") );
+        ASSERT_STREQ( str, "<Root>\n  <Elt attr1=\"val1\" attr2=\"val2\">value</Elt>\n</Root>\n");
         CPLFree(str);
     }
 
     // Test CPLCharUniquePtr
-    template<>
-    template<>
-    void object::test<38>()
+    TEST_F(test_cpl, CPLCharUniquePtr)
     {
         CPLCharUniquePtr x;
-        ensure( x.get() == nullptr );
+        ASSERT_TRUE( x.get() == nullptr );
         x.reset(CPLStrdup("foo"));
-        ensure_equals( std::string(x.get()), "foo");
+        ASSERT_STREQ( x.get(), "foo");
     }
 
     // Test CPLJSonStreamingWriter
-    template<>
-    template<>
-    void object::test<39>()
+    TEST_F(test_cpl, CPLJSonStreamingWriter)
     {
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
-            ensure_equals( x.GetString(), std::string() );
+            ASSERT_EQ( x.GetString(), std::string() );
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
             x.Add(true);
-            ensure_equals( x.GetString(), std::string("true") );
+            ASSERT_EQ( x.GetString(), std::string("true") );
         }
         {
             std::string res;
@@ -2769,88 +2677,88 @@ namespace tut
             };
             CPLJSonStreamingWriter x(&MyCallback::f, &res);
             x.Add(true);
-            ensure_equals( x.GetString(), std::string() );
-            ensure_equals( res, std::string("true") );
+            ASSERT_EQ( x.GetString(), std::string() );
+            ASSERT_EQ( res, std::string("true") );
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
             x.Add(false);
-            ensure_equals( x.GetString(), std::string("false") );
+            ASSERT_EQ( x.GetString(), std::string("false") );
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
             x.AddNull();
-            ensure_equals( x.GetString(), std::string("null") );
+            ASSERT_EQ( x.GetString(), std::string("null") );
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
             x.Add(1);
-            ensure_equals( x.GetString(), std::string("1") );
+            ASSERT_EQ( x.GetString(), std::string("1") );
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
             x.Add(4200000000U);
-            ensure_equals( x.GetString(), std::string("4200000000") );
+            ASSERT_EQ( x.GetString(), std::string("4200000000") );
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
             x.Add(static_cast<std::int64_t>(-10000) * 1000000);
-            ensure_equals( x.GetString(), std::string("-10000000000") );
+            ASSERT_EQ( x.GetString(), std::string("-10000000000") );
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
             x.Add(static_cast<std::uint64_t>(10000) * 1000000);
-            ensure_equals( x.GetString(), std::string("10000000000") );
+            ASSERT_EQ( x.GetString(), std::string("10000000000") );
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
             x.Add(1.5f);
-            ensure_equals( x.GetString(), std::string("1.5") );
+            ASSERT_EQ( x.GetString(), std::string("1.5") );
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
             x.Add(std::numeric_limits<float>::quiet_NaN());
-            ensure_equals( x.GetString(), std::string("\"NaN\"") );
+            ASSERT_EQ( x.GetString(), std::string("\"NaN\"") );
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
             x.Add(std::numeric_limits<float>::infinity());
-            ensure_equals( x.GetString(), std::string("\"Infinity\"") );
+            ASSERT_EQ( x.GetString(), std::string("\"Infinity\"") );
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
             x.Add(-std::numeric_limits<float>::infinity());
-            ensure_equals( x.GetString(), std::string("\"-Infinity\"") );
+            ASSERT_EQ( x.GetString(), std::string("\"-Infinity\"") );
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
             x.Add(1.25);
-            ensure_equals( x.GetString(), std::string("1.25") );
+            ASSERT_EQ( x.GetString(), std::string("1.25") );
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
             x.Add(std::numeric_limits<double>::quiet_NaN());
-            ensure_equals( x.GetString(), std::string("\"NaN\"") );
+            ASSERT_EQ( x.GetString(), std::string("\"NaN\"") );
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
             x.Add(std::numeric_limits<double>::infinity());
-            ensure_equals( x.GetString(), std::string("\"Infinity\"") );
+            ASSERT_EQ( x.GetString(), std::string("\"Infinity\"") );
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
             x.Add(-std::numeric_limits<double>::infinity());
-            ensure_equals( x.GetString(), std::string("\"-Infinity\"") );
+            ASSERT_EQ( x.GetString(), std::string("\"-Infinity\"") );
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
             x.Add(std::string("foo\\bar\"baz\b\f\n\r\t" "\x01" "boo"));
-            ensure_equals( x.GetString(), std::string("\"foo\\\\bar\\\"baz\\b\\f\\n\\r\\t\\u0001boo\"") );
+            ASSERT_EQ( x.GetString(), std::string("\"foo\\\\bar\\\"baz\\b\\f\\n\\r\\t\\u0001boo\"") );
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
             x.Add("foo\\bar\"baz\b\f\n\r\t" "\x01" "boo");
-            ensure_equals( x.GetString(), std::string("\"foo\\\\bar\\\"baz\\b\\f\\n\\r\\t\\u0001boo\"") );
+            ASSERT_EQ( x.GetString(), std::string("\"foo\\\\bar\\\"baz\\b\\f\\n\\r\\t\\u0001boo\"") );
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
@@ -2858,14 +2766,14 @@ namespace tut
             {
                 auto ctxt(x.MakeObjectContext());
             }
-            ensure_equals( x.GetString(), std::string("{}") );
+            ASSERT_EQ( x.GetString(), std::string("{}") );
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
             {
                 auto ctxt(x.MakeObjectContext());
             }
-            ensure_equals( x.GetString(), std::string("{}") );
+            ASSERT_EQ( x.GetString(), std::string("{}") );
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
@@ -2875,7 +2783,7 @@ namespace tut
                 x.AddObjKey("key");
                 x.Add("value");
             }
-            ensure_equals( x.GetString(), std::string("{\"key\":\"value\"}") );
+            ASSERT_EQ( x.GetString(), std::string("{\"key\":\"value\"}") );
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
@@ -2884,7 +2792,7 @@ namespace tut
                 x.AddObjKey("key");
                 x.Add("value");
             }
-            ensure_equals( x.GetString(), std::string("{\n  \"key\": \"value\"\n}") );
+            ASSERT_EQ( x.GetString(), std::string("{\n  \"key\": \"value\"\n}") );
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
@@ -2895,14 +2803,14 @@ namespace tut
                 x.AddObjKey("key2");
                 x.Add("value2");
             }
-            ensure_equals( x.GetString(), std::string("{\n  \"key\": \"value\",\n  \"key2\": \"value2\"\n}") );
+            ASSERT_EQ( x.GetString(), std::string("{\n  \"key\": \"value\",\n  \"key2\": \"value2\"\n}") );
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
             {
                 auto ctxt(x.MakeArrayContext());
             }
-            ensure_equals( x.GetString(), std::string("[]") );
+            ASSERT_EQ( x.GetString(), std::string("[]") );
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
@@ -2910,7 +2818,7 @@ namespace tut
                 auto ctxt(x.MakeArrayContext());
                 x.Add(1);
             }
-            ensure_equals( x.GetString(), std::string("[\n  1\n]") );
+            ASSERT_EQ( x.GetString(), std::string("[\n  1\n]") );
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
@@ -2919,7 +2827,7 @@ namespace tut
                 x.Add(1);
                 x.Add(2);
             }
-            ensure_equals( x.GetString(), std::string("[\n  1,\n  2\n]") );
+            ASSERT_EQ( x.GetString(), std::string("[\n  1,\n  2\n]") );
         }
         {
             CPLJSonStreamingWriter x(nullptr, nullptr);
@@ -2928,17 +2836,15 @@ namespace tut
                 x.Add(1);
                 x.Add(2);
             }
-            ensure_equals( x.GetString(), std::string("[1, 2]") );
+            ASSERT_EQ( x.GetString(), std::string("[1, 2]") );
         }
     }
 
     // Test CPLWorkerThreadPool
-    template<>
-    template<>
-    void object::test<40>()
+    TEST_F(test_cpl, CPLWorkerThreadPool)
     {
         CPLWorkerThreadPool oPool;
-        ensure(oPool.Setup(2, nullptr, nullptr, false));
+        ASSERT_TRUE(oPool.Setup(2, nullptr, nullptr, false));
 
         const auto myJob = [](void* pData)
         {
@@ -2955,7 +2861,7 @@ namespace tut
             oPool.WaitCompletion();
             for( int i = 0; i < 1000; i++ )
             {
-                ensure_equals(res[i], i + 1);
+                ASSERT_EQ(res[i], i + 1);
             }
         }
 
@@ -2972,7 +2878,7 @@ namespace tut
             oPool.WaitCompletion();
             for( int i = 0; i < 1000; i++ )
             {
-                ensure_equals(res[i], i + 1);
+                ASSERT_EQ(res[i], i + 1);
             }
         }
 
@@ -2980,7 +2886,7 @@ namespace tut
             auto jobQueue1 = oPool.CreateJobQueue();
             auto jobQueue2 = oPool.CreateJobQueue();
 
-            ensure_equals(jobQueue1->GetPool(), &oPool);
+            ASSERT_EQ(jobQueue1->GetPool(), &oPool);
 
             std::vector<int> res(1000);
             for( int i = 0; i < 1000; i++ )
@@ -2995,39 +2901,36 @@ namespace tut
             jobQueue2->WaitCompletion();
             for( int i = 0; i < 1000; i++ )
             {
-                ensure_equals(res[i], i + 1);
+                ASSERT_EQ(res[i], i + 1);
             }
         }
     }
 
     // Test CPLHTTPFetch
-    template<>
-    template<>
-    void object::test<41>()
+    TEST_F(test_cpl, CPLHTTPFetch)
     {
 #ifdef HAVE_CURL
         CPLStringList oOptions;
-        oOptions.AddNameVlue("FORM_ITEM_COUNT", "5");
-        oOptions.AddNameVlue("FORM_KEY_0", "qqq");
-        oOptions.AddNameVlue("FORM_VALUE_0", "www");
+        oOptions.AddNameValue("FORM_ITEM_COUNT", "5");
+        oOptions.AddNameValue("FORM_KEY_0", "qqq");
+        oOptions.AddNameValue("FORM_VALUE_0", "www");
         CPLHTTPResult *pResult = CPLHTTPFetch("http://example.com", oOptions);
-        ensure_equals(pResult->nStatus, 34);
+        ASSERT_EQ(pResult->nStatus, 34);
         CPLHTTPDestroyResult(pResult);
         pResult = nullptr;
         oOptions.Clear();
 
-        oOptions.AddNameVlue("FORM_FILE_PATH", "not_existed");
+        oOptions.AddNameValue("FORM_FILE_PATH", "not_existed");
         pResult = CPLHTTPFetch("http://example.com", oOptions);
-        ensure_equals(pResult->nStatus, 34);
+        ASSERT_EQ(pResult->nStatus, 34);
         CPLHTTPDestroyResult(pResult);
-
+#else
+        GTEST_SKIP() << "CURL not available";
 #endif // HAVE_CURL
     }
 
     // Test CPLHTTPPushFetchCallback
-    template<>
-    template<>
-    void object::test<42>()
+    TEST_F(test_cpl, CPLHTTPPushFetchCallback)
     {
         struct myCbkUserDataStruct
         {
@@ -3060,7 +2963,7 @@ namespace tut
         };
 
         myCbkUserDataStruct userData;
-        ensure( CPLHTTPPushFetchCallback(myCbk, &userData) );
+        ASSERT_TRUE( CPLHTTPPushFetchCallback(myCbk, &userData) );
 
         int progressArg = 0;
         const auto myWriteCbk = [](void *, size_t, size_t, void *) -> size_t { return 0; };
@@ -3075,27 +2978,25 @@ namespace tut
                                                 &progressArg,
                                                 pfnWriteCbk,
                                                 &writeCbkArg);
-        ensure(pResult != nullptr);
-        ensure_equals(pResult->nStatus, 123);
+        ASSERT_TRUE(pResult != nullptr);
+        ASSERT_EQ(pResult->nStatus, 123);
         CPLHTTPDestroyResult(pResult);
 
-        ensure( CPLHTTPPopFetchCallback() );
+        ASSERT_TRUE( CPLHTTPPopFetchCallback() );
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        ensure( !CPLHTTPPopFetchCallback() );
+        ASSERT_TRUE( !CPLHTTPPopFetchCallback() );
         CPLPopErrorHandler();
 
-        ensure_equals( userData.osURL, std::string("http://example.com") );
-        ensure_equals( userData.papszOptions, aosOptions.List() );
-        ensure_equals( userData.pfnProgress, pfnProgress );
-        ensure_equals( userData.pProgressArg, &progressArg );
-        ensure_equals( userData.pfnWrite, pfnWriteCbk );
-        ensure_equals( userData.pWriteArg, &writeCbkArg );
+        ASSERT_EQ( userData.osURL, std::string("http://example.com") );
+        ASSERT_EQ( userData.papszOptions, aosOptions.List() );
+        ASSERT_EQ( userData.pfnProgress, pfnProgress );
+        ASSERT_EQ( userData.pProgressArg, &progressArg );
+        ASSERT_EQ( userData.pfnWrite, pfnWriteCbk );
+        ASSERT_EQ( userData.pWriteArg, &writeCbkArg );
     }
 
     // Test CPLHTTPSetFetchCallback
-    template<>
-    template<>
-    void object::test<43>()
+    TEST_F(test_cpl, CPLHTTPSetFetchCallback)
     {
         struct myCbkUserDataStruct
         {
@@ -3142,24 +3043,22 @@ namespace tut
                                                 &progressArg,
                                                 pfnWriteCbk,
                                                 &writeCbkArg);
-        ensure(pResult != nullptr);
-        ensure_equals(pResult->nStatus, 124);
+        ASSERT_TRUE(pResult != nullptr);
+        ASSERT_EQ(pResult->nStatus, 124);
         CPLHTTPDestroyResult(pResult);
 
         CPLHTTPSetFetchCallback(nullptr, nullptr);
 
-        ensure_equals( userData2.osURL, std::string("http://example.com") );
-        ensure_equals( userData2.papszOptions, aosOptions.List() );
-        ensure_equals( userData2.pfnProgress, pfnProgress );
-        ensure_equals( userData2.pProgressArg, &progressArg );
-        ensure_equals( userData2.pfnWrite, pfnWriteCbk );
-        ensure_equals( userData2.pWriteArg, &writeCbkArg );
+        ASSERT_EQ( userData2.osURL, std::string("http://example.com") );
+        ASSERT_EQ( userData2.papszOptions, aosOptions.List() );
+        ASSERT_EQ( userData2.pfnProgress, pfnProgress );
+        ASSERT_EQ( userData2.pProgressArg, &progressArg );
+        ASSERT_EQ( userData2.pfnWrite, pfnWriteCbk );
+        ASSERT_EQ( userData2.pWriteArg, &writeCbkArg );
     }
 
     // Test CPLLoadConfigOptionsFromFile() and CPLLoadConfigOptionsFromPredefinedFiles()
-    template<>
-    template<>
-    void object::test<44>()
+    TEST_F(test_cpl, CPLLoadConfigOptionsFromFile)
     {
         CPLLoadConfigOptionsFromFile("/i/do/not/exist", false);
 
@@ -3174,13 +3073,13 @@ namespace tut
 
         // Try CPLLoadConfigOptionsFromFile()
         CPLLoadConfigOptionsFromFile("/vsimem/.gdal/gdalrc", false);
-        ensure( EQUAL(CPLGetConfigOption("FOO_CONFIGOPTION", ""), "BAR") );
+        ASSERT_TRUE( EQUAL(CPLGetConfigOption("FOO_CONFIGOPTION", ""), "BAR") );
         CPLSetConfigOption("FOO_CONFIGOPTION", nullptr);
 
         // Try CPLLoadConfigOptionsFromPredefinedFiles() with GDAL_CONFIG_FILE set
         CPLSetConfigOption("GDAL_CONFIG_FILE", "/vsimem/.gdal/gdalrc");
         CPLLoadConfigOptionsFromPredefinedFiles();
-        ensure( EQUAL(CPLGetConfigOption("FOO_CONFIGOPTION", ""), "BAR") );
+        ASSERT_TRUE( EQUAL(CPLGetConfigOption("FOO_CONFIGOPTION", ""), "BAR") );
         CPLSetConfigOption("FOO_CONFIGOPTION", nullptr);
 
         // Try CPLLoadConfigOptionsFromPredefinedFiles() with $HOME/.gdal/gdalrc file
@@ -3192,7 +3091,7 @@ namespace tut
         CPLString osOldVal(CPLGetConfigOption(pszHOMEEnvVarName, ""));
         CPLSetConfigOption(pszHOMEEnvVarName, "/vsimem/");
         CPLLoadConfigOptionsFromPredefinedFiles();
-        ensure( EQUAL(CPLGetConfigOption("FOO_CONFIGOPTION", ""), "BAR") );
+        ASSERT_TRUE( EQUAL(CPLGetConfigOption("FOO_CONFIGOPTION", ""), "BAR") );
         CPLSetConfigOption("FOO_CONFIGOPTION", nullptr);
         if( !osOldVal.empty() )
             CPLSetConfigOption(pszHOMEEnvVarName, osOldVal.c_str());
@@ -3203,9 +3102,7 @@ namespace tut
     }
 
     // Test decompressor side of cpl_compressor.h
-    template<>
-    template<>
-    void object::test<45>()
+    TEST_F(test_cpl, decompressor)
     {
         const auto compressionLambda = [](const void* /* input_data */,
                                           size_t /* input_size */,
@@ -3227,24 +3124,24 @@ namespace tut
         sComp.pfnFunc = compressionLambda;
         sComp.user_data = &dummy;
 
-        ensure( CPLRegisterDecompressor(&sComp) );
+        ASSERT_TRUE( CPLRegisterDecompressor(&sComp) );
 
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        ensure( !CPLRegisterDecompressor(&sComp) );
+        ASSERT_TRUE( !CPLRegisterDecompressor(&sComp) );
         CPLPopErrorHandler();
 
         char** decompressors = CPLGetDecompressors();
-        ensure( decompressors != nullptr );
-        ensure( CSLFindString(decompressors, sComp.pszId) >= 0 );
+        ASSERT_TRUE( decompressors != nullptr );
+        ASSERT_TRUE( CSLFindString(decompressors, sComp.pszId) >= 0 );
         for( auto iter = decompressors; *iter; ++iter )
         {
             const auto pCompressor = CPLGetDecompressor(*iter);
-            ensure( pCompressor );
+            ASSERT_TRUE( pCompressor );
             const char* pszOptions = CSLFetchNameValue(pCompressor->papszMetadata, "OPTIONS");
             if( pszOptions )
             {
                 auto psNode = CPLParseXMLString(pszOptions);
-                ensure(psNode);
+                ASSERT_TRUE(psNode);
                 CPLDestroyXMLNode(psNode);
             }
             else
@@ -3254,22 +3151,20 @@ namespace tut
         }
         CSLDestroy( decompressors );
 
-        ensure( CPLGetDecompressor("invalid") == nullptr );
+        ASSERT_TRUE( CPLGetDecompressor("invalid") == nullptr );
         const auto pCompressor = CPLGetDecompressor(sComp.pszId);
-        ensure( pCompressor );
-        ensure_equals( std::string(pCompressor->pszId), std::string(sComp.pszId) );
-        ensure_equals( CSLCount(pCompressor->papszMetadata), CSLCount(sComp.papszMetadata) );
-        ensure( pCompressor->pfnFunc != nullptr );
-        ensure_equals( pCompressor->user_data, sComp.user_data );
+        ASSERT_TRUE( pCompressor );
+        ASSERT_EQ( std::string(pCompressor->pszId), std::string(sComp.pszId) );
+        ASSERT_EQ( CSLCount(pCompressor->papszMetadata), CSLCount(sComp.papszMetadata) );
+        ASSERT_TRUE( pCompressor->pfnFunc != nullptr );
+        ASSERT_EQ( pCompressor->user_data, sComp.user_data );
 
         CPLDestroyCompressorRegistry();
-        ensure( CPLGetDecompressor(sComp.pszId) == nullptr );
+        ASSERT_TRUE( CPLGetDecompressor(sComp.pszId) == nullptr );
     }
 
     // Test compressor side of cpl_compressor.h
-    template<>
-    template<>
-    void object::test<46>()
+    TEST_F(test_cpl, compressor)
     {
         const auto compressionLambda = [](const void* /* input_data */,
                                           size_t /* input_size */,
@@ -3291,24 +3186,24 @@ namespace tut
         sComp.pfnFunc = compressionLambda;
         sComp.user_data = &dummy;
 
-        ensure( CPLRegisterCompressor(&sComp) );
+        ASSERT_TRUE( CPLRegisterCompressor(&sComp) );
 
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        ensure( !CPLRegisterCompressor(&sComp) );
+        ASSERT_TRUE( !CPLRegisterCompressor(&sComp) );
         CPLPopErrorHandler();
 
         char** compressors = CPLGetCompressors();
-        ensure( compressors != nullptr );
-        ensure( CSLFindString(compressors, sComp.pszId) >= 0 );
+        ASSERT_TRUE( compressors != nullptr );
+        ASSERT_TRUE( CSLFindString(compressors, sComp.pszId) >= 0 );
         for( auto iter = compressors; *iter; ++iter )
         {
             const auto pCompressor = CPLGetCompressor(*iter);
-            ensure( pCompressor );
+            ASSERT_TRUE( pCompressor );
             const char* pszOptions = CSLFetchNameValue(pCompressor->papszMetadata, "OPTIONS");
             if( pszOptions )
             {
                 auto psNode = CPLParseXMLString(pszOptions);
-                ensure(psNode);
+                ASSERT_TRUE(psNode);
                 CPLDestroyXMLNode(psNode);
             }
             else
@@ -3318,22 +3213,20 @@ namespace tut
         }
         CSLDestroy( compressors );
 
-        ensure( CPLGetCompressor("invalid") == nullptr );
+        ASSERT_TRUE( CPLGetCompressor("invalid") == nullptr );
         const auto pCompressor = CPLGetCompressor(sComp.pszId);
-        ensure( pCompressor );
-        ensure_equals( std::string(pCompressor->pszId), std::string(sComp.pszId) );
-        ensure_equals( CSLCount(pCompressor->papszMetadata), CSLCount(sComp.papszMetadata) );
-        ensure( pCompressor->pfnFunc != nullptr );
-        ensure_equals( pCompressor->user_data, sComp.user_data );
+        ASSERT_TRUE( pCompressor );
+        ASSERT_EQ( std::string(pCompressor->pszId), std::string(sComp.pszId) );
+        ASSERT_EQ( CSLCount(pCompressor->papszMetadata), CSLCount(sComp.papszMetadata) );
+        ASSERT_TRUE( pCompressor->pfnFunc != nullptr );
+        ASSERT_EQ( pCompressor->user_data, sComp.user_data );
 
         CPLDestroyCompressorRegistry();
-        ensure( CPLGetDecompressor(sComp.pszId) == nullptr );
+        ASSERT_TRUE( CPLGetDecompressor(sComp.pszId) == nullptr );
     }
 
     // Test builtin compressors/decompressor
-    template<>
-    template<>
-    void object::test<47>()
+    TEST_F(test_cpl, builtin_compressors)
     {
         for( const char* id : { "blosc", "zlib", "gzip", "lzma", "zstd", "lz4" } )
         {
@@ -3343,7 +3236,7 @@ namespace tut
                 CPLDebug("TEST", "%s not available", id);
                 if( strcmp(id, "zlib") == 0 || strcmp(id, "gzip") == 0 )
                 {
-                    ensure( false );
+                    ASSERT_TRUE( false );
                 }
                 continue;
             }
@@ -3356,45 +3249,45 @@ namespace tut
 
             // Just get output size
             size_t out_size = 0;
-            ensure( pCompressor->pfnFunc( my_str, strlen(my_str),
+            ASSERT_TRUE( pCompressor->pfnFunc( my_str, strlen(my_str),
                                           nullptr, &out_size,
                                           options, pCompressor->user_data ) );
-            ensure( out_size != 0 );
+            ASSERT_TRUE( out_size != 0 );
 
             // Let it alloc the output buffer
             void* out_buffer2 = nullptr;
             size_t out_size2 = 0;
-            ensure( pCompressor->pfnFunc( my_str, strlen(my_str),
+            ASSERT_TRUE( pCompressor->pfnFunc( my_str, strlen(my_str),
                                           &out_buffer2, &out_size2,
                                           options, pCompressor->user_data ) );
-            ensure( out_buffer2 != nullptr );
-            ensure( out_size2 != 0 );
-            ensure( out_size2 <= out_size );
+            ASSERT_TRUE( out_buffer2 != nullptr );
+            ASSERT_TRUE( out_size2 != 0 );
+            ASSERT_TRUE( out_size2 <= out_size );
 
             std::vector<GByte> out_buffer3(out_size);
 
             // Provide not large enough buffer size
             size_t out_size3 = 1;
             void* out_buffer3_ptr = &out_buffer3[0];
-            ensure( !(pCompressor->pfnFunc( my_str, strlen(my_str),
+            ASSERT_TRUE( !(pCompressor->pfnFunc( my_str, strlen(my_str),
                                           &out_buffer3_ptr, &out_size3,
                                           options, pCompressor->user_data )) );
 
             // Provide the output buffer
             out_size3 = out_buffer3.size();
             out_buffer3_ptr = &out_buffer3[0];
-            ensure( pCompressor->pfnFunc( my_str, strlen(my_str),
+            ASSERT_TRUE( pCompressor->pfnFunc( my_str, strlen(my_str),
                                           &out_buffer3_ptr, &out_size3,
                                           options, pCompressor->user_data ) );
-            ensure( out_buffer3_ptr != nullptr );
-            ensure( out_buffer3_ptr == &out_buffer3[0] );
-            ensure( out_size3 != 0 );
-            ensure_equals( out_size3, out_size2 );
+            ASSERT_TRUE( out_buffer3_ptr != nullptr );
+            ASSERT_TRUE( out_buffer3_ptr == &out_buffer3[0] );
+            ASSERT_TRUE( out_size3 != 0 );
+            ASSERT_EQ( out_size3, out_size2 );
 
             out_buffer3.resize( out_size3 );
             out_buffer3_ptr = &out_buffer3[0];
 
-            ensure( memcmp(out_buffer3_ptr, out_buffer2, out_size2) == 0 );
+            ASSERT_TRUE( memcmp(out_buffer3_ptr, out_buffer2, out_size2) == 0 );
 
             CPLFree(out_buffer2);
 
@@ -3402,37 +3295,37 @@ namespace tut
 
             // Decompressor side
             const auto pDecompressor = CPLGetDecompressor(id);
-            ensure( pDecompressor != nullptr );
+            ASSERT_TRUE( pDecompressor != nullptr );
 
             out_size = 0;
-            ensure( pDecompressor->pfnFunc( compressedData.data(), compressedData.size(),
+            ASSERT_TRUE( pDecompressor->pfnFunc( compressedData.data(), compressedData.size(),
                                             nullptr, &out_size,
                                             nullptr, pDecompressor->user_data ) );
-            ensure( out_size != 0 );
-            ensure( out_size >= strlen(my_str) );
+            ASSERT_TRUE( out_size != 0 );
+            ASSERT_TRUE( out_size >= strlen(my_str) );
 
             out_buffer2 = nullptr;
             out_size2 = 0;
-            ensure( pDecompressor->pfnFunc( compressedData.data(), compressedData.size(),
+            ASSERT_TRUE( pDecompressor->pfnFunc( compressedData.data(), compressedData.size(),
                                             &out_buffer2, &out_size2,
                                             options, pDecompressor->user_data ) );
-            ensure( out_buffer2 != nullptr );
-            ensure( out_size2 != 0 );
-            ensure_equals( out_size2, strlen(my_str) );
-            ensure( memcmp(out_buffer2, my_str, strlen(my_str)) == 0 );
+            ASSERT_TRUE( out_buffer2 != nullptr );
+            ASSERT_TRUE( out_size2 != 0 );
+            ASSERT_EQ( out_size2, strlen(my_str) );
+            ASSERT_TRUE( memcmp(out_buffer2, my_str, strlen(my_str)) == 0 );
             CPLFree(out_buffer2);
 
             out_buffer3.clear();
             out_buffer3.resize(out_size);
             out_size3 = out_buffer3.size();
             out_buffer3_ptr = &out_buffer3[0];
-            ensure( pDecompressor->pfnFunc( compressedData.data(), compressedData.size(),
+            ASSERT_TRUE( pDecompressor->pfnFunc( compressedData.data(), compressedData.size(),
                                             &out_buffer3_ptr, &out_size3,
                                             options, pDecompressor->user_data ) );
-            ensure( out_buffer3_ptr != nullptr );
-            ensure( out_buffer3_ptr == &out_buffer3[0] );
-            ensure_equals( out_size3, strlen(my_str) );
-            ensure( memcmp(out_buffer3.data(), my_str, strlen(my_str)) == 0 );
+            ASSERT_TRUE( out_buffer3_ptr != nullptr );
+            ASSERT_TRUE( out_buffer3_ptr == &out_buffer3[0] );
+            ASSERT_EQ( out_size3, strlen(my_str) );
+            ASSERT_TRUE( memcmp(out_buffer3.data(), my_str, strlen(my_str)) == 0 );
         }
     }
 
@@ -3441,9 +3334,9 @@ namespace tut
         static void test(const char* dtypeOption)
         {
             const auto pCompressor = CPLGetCompressor("delta");
-            ensure(pCompressor);
+            ASSERT_TRUE(pCompressor);
             const auto pDecompressor = CPLGetDecompressor("delta");
-            ensure(pDecompressor);
+            ASSERT_TRUE(pDecompressor);
 
             const T tabIn[] = { static_cast<T>(-2), 3, 1 };
             T tabCompress[3];
@@ -3452,31 +3345,29 @@ namespace tut
 
             void* outPtr = &tabCompress[0];
             size_t outSize = sizeof(tabCompress);
-            ensure( pCompressor->pfnFunc( &tabIn[0], sizeof(tabIn),
+            ASSERT_TRUE( pCompressor->pfnFunc( &tabIn[0], sizeof(tabIn),
                                           &outPtr, &outSize,
                                           apszOptions, pCompressor->user_data) );
-            ensure_equals(outSize, sizeof(tabCompress));
+            ASSERT_EQ(outSize, sizeof(tabCompress));
 
-            // ensure_equals(tabCompress[0], 2);
-            // ensure_equals(tabCompress[1], 1);
-            // ensure_equals(tabCompress[2], -2);
+            // ASSERT_EQ(tabCompress[0], 2);
+            // ASSERT_EQ(tabCompress[1], 1);
+            // ASSERT_EQ(tabCompress[2], -2);
 
             outPtr = &tabOut[0];
             outSize = sizeof(tabOut);
-            ensure( pDecompressor->pfnFunc( &tabCompress[0], sizeof(tabCompress),
+            ASSERT_TRUE( pDecompressor->pfnFunc( &tabCompress[0], sizeof(tabCompress),
                                             &outPtr, &outSize,
                                             apszOptions, pDecompressor->user_data) );
-            ensure_equals(outSize, sizeof(tabOut));
-            ensure_equals(tabOut[0], tabIn[0]);
-            ensure_equals(tabOut[1], tabIn[1]);
-            ensure_equals(tabOut[2], tabIn[2]);
+            ASSERT_EQ(outSize, sizeof(tabOut));
+            ASSERT_EQ(tabOut[0], tabIn[0]);
+            ASSERT_EQ(tabOut[1], tabIn[1]);
+            ASSERT_EQ(tabOut[2], tabIn[2]);
         }
     };
 
-    // Test delta compressors/decompressor
-    template<>
-    template<>
-    void object::test<48>()
+    // Test delta compressor/decompressor
+    TEST_F(test_cpl, delta_compressor)
     {
         TesterDelta<int8_t>::test("DTYPE=i1");
 
@@ -3523,9 +3414,7 @@ namespace tut
     }
 
     // Test CPLQuadTree
-    template<>
-    template<>
-    void object::test<49>()
+    TEST_F(test_cpl, CPLQuadTree)
     {
         unsigned next = 0;
 
@@ -3551,7 +3440,7 @@ namespace tut
         globalbounds.maxy = 1;
 
         auto hTree = CPLQuadTreeCreate(&globalbounds, nullptr);
-        ensure(hTree != nullptr);
+        ASSERT_TRUE(hTree != nullptr);
 
         const auto GenerateRandomRect = [&](CPLRectObj& rect)
         {
@@ -3575,7 +3464,7 @@ namespace tut
             {
                 int nFeatureCount = 0;
                 CPLFree(CPLQuadTreeSearch(hTree, &globalbounds, &nFeatureCount));
-                ensure_equals(nFeatureCount, 1000);
+                ASSERT_EQ(nFeatureCount, 1000);
             }
 
             DummyRandInit(j);
@@ -3590,34 +3479,31 @@ namespace tut
             {
                 int nFeatureCount = 0;
                 CPLFree(CPLQuadTreeSearch(hTree, &globalbounds, &nFeatureCount));
-                ensure_equals(nFeatureCount, 0);
+                ASSERT_EQ(nFeatureCount, 0);
             }
         }
 
         CPLQuadTreeDestroy(hTree);
     }
+
     // Test bUnlinkAndSize on VSIGetMemFileBuffer
-    template<>
-    template<>
-    void object::test<50>()
+    TEST_F(test_cpl, VSIGetMemFileBuffer_unlink_and_size)
     {
         VSILFILE *fp = VSIFOpenL("/vsimem/test_unlink_and_seize.tif", "wb");
         VSIFWriteL("test", 5, 1, fp);
         GByte *pRawData = VSIGetMemFileBuffer("/vsimem/test_unlink_and_seize.tif", nullptr, true);
-        ensure(EQUAL(reinterpret_cast<const char *>(pRawData), "test"));
-        ensure(VSIGetMemFileBuffer("/vsimem/test_unlink_and_seize.tif", nullptr, false) == nullptr);
-        ensure(VSIFOpenL("/vsimem/test_unlink_and_seize.tif", "r") == nullptr);
-        ensure(VSIFReadL(pRawData, 5, 1, fp) == 0);
-        ensure(VSIFWriteL(pRawData, 5, 1, fp) == 0);
-        ensure(VSIFSeekL(fp, 0, SEEK_END) == 0);
+        ASSERT_TRUE(EQUAL(reinterpret_cast<const char *>(pRawData), "test"));
+        ASSERT_TRUE(VSIGetMemFileBuffer("/vsimem/test_unlink_and_seize.tif", nullptr, false) == nullptr);
+        ASSERT_TRUE(VSIFOpenL("/vsimem/test_unlink_and_seize.tif", "r") == nullptr);
+        ASSERT_TRUE(VSIFReadL(pRawData, 5, 1, fp) == 0);
+        ASSERT_TRUE(VSIFWriteL(pRawData, 5, 1, fp) == 0);
+        ASSERT_TRUE(VSIFSeekL(fp, 0, SEEK_END) == 0);
         CPLFree(pRawData);
         VSIFCloseL(fp);
     }
 
     // Test CPLLoadConfigOptionsFromFile() for VSI credentials
-    template<>
-    template<>
-    void object::test<51>()
+    TEST_F(test_cpl, CPLLoadConfigOptionsFromFile_VSI_credentials)
     {
         VSILFILE* fp = VSIFOpenL("/vsimem/credentials.txt", "wb");
         VSIFPrintfL(fp, "[credentials]\n");
@@ -3636,30 +3522,30 @@ namespace tut
 
         CPLErrorReset();
         CPLLoadConfigOptionsFromFile("/vsimem/credentials.txt", false);
-        ensure_equals(CPLGetLastErrorType(), CE_None);
+        ASSERT_EQ(CPLGetLastErrorType(), CE_None);
 
         {
             const char* pszVal = VSIGetPathSpecificOption("/vsi_test/foo/bar", "FOO", nullptr);
-            ensure(pszVal != nullptr);
-            ensure_equals(std::string(pszVal), std::string("BAR"));
+            ASSERT_TRUE(pszVal != nullptr);
+            ASSERT_EQ(std::string(pszVal), std::string("BAR"));
         }
 
         {
             const char* pszVal = VSIGetPathSpecificOption("/vsi_test/foo/bar", "FOO2", nullptr);
-            ensure(pszVal != nullptr);
-            ensure_equals(std::string(pszVal), std::string("BAR2"));
+            ASSERT_TRUE(pszVal != nullptr);
+            ASSERT_EQ(std::string(pszVal), std::string("BAR2"));
         }
 
         {
             const char* pszVal = VSIGetPathSpecificOption("/vsi_test/bar/baz", "BAR", nullptr);
-            ensure(pszVal != nullptr);
-            ensure_equals(std::string(pszVal), std::string("BAZ"));
+            ASSERT_TRUE(pszVal != nullptr);
+            ASSERT_EQ(std::string(pszVal), std::string("BAZ"));
         }
 
         {
             const char* pszVal = CPLGetConfigOption("configoptions_FOO", nullptr);
-            ensure(pszVal != nullptr);
-            ensure_equals(std::string(pszVal), std::string("BAR"));
+            ASSERT_TRUE(pszVal != nullptr);
+            ASSERT_EQ(std::string(pszVal), std::string("BAR"));
         }
 
         VSIClearPathSpecificOptions("/vsi_test/bar/baz");
@@ -3667,16 +3553,14 @@ namespace tut
 
         {
             const char* pszVal = VSIGetPathSpecificOption("/vsi_test/bar/baz", "BAR", nullptr);
-            ensure(pszVal == nullptr);
+            ASSERT_TRUE(pszVal == nullptr);
         }
 
         VSIUnlink("/vsimem/credentials.txt");
     }
 
     // Test CPLLoadConfigOptionsFromFile() for VSI credentials, warning case
-    template<>
-    template<>
-    void object::test<52>()
+    TEST_F(test_cpl, CPLLoadConfigOptionsFromFile_VSI_credentials_warning)
     {
         VSILFILE* fp = VSIFOpenL("/vsimem/credentials.txt", "wb");
         VSIFPrintfL(fp, "[credentials]\n");
@@ -3688,16 +3572,14 @@ namespace tut
         CPLPushErrorHandler(CPLQuietErrorHandler);
         CPLLoadConfigOptionsFromFile("/vsimem/credentials.txt", false);
         CPLPopErrorHandler();
-        ensure_equals(CPLGetLastErrorType(), CE_Warning);
+        ASSERT_EQ(CPLGetLastErrorType(), CE_Warning);
 
 
         VSIUnlink("/vsimem/credentials.txt");
     }
 
     // Test CPLLoadConfigOptionsFromFile() for VSI credentials, warning case
-    template<>
-    template<>
-    void object::test<53>()
+    TEST_F(test_cpl, CPLLoadConfigOptionsFromFile_VSI_credentials_subsection_warning)
     {
         VSILFILE* fp = VSIFOpenL("/vsimem/credentials.txt", "wb");
         VSIFPrintfL(fp, "[credentials]\n");
@@ -3709,16 +3591,14 @@ namespace tut
         CPLPushErrorHandler(CPLQuietErrorHandler);
         CPLLoadConfigOptionsFromFile("/vsimem/credentials.txt", false);
         CPLPopErrorHandler();
-        ensure_equals(CPLGetLastErrorType(), CE_Warning);
+        ASSERT_EQ(CPLGetLastErrorType(), CE_Warning);
 
 
         VSIUnlink("/vsimem/credentials.txt");
     }
 
     // Test CPLLoadConfigOptionsFromFile() for VSI credentials, warning case
-    template<>
-    template<>
-    void object::test<54>()
+    TEST_F(test_cpl, CPLLoadConfigOptionsFromFile_VSI_credentials_warning_path_specific)
     {
         VSILFILE* fp = VSIFOpenL("/vsimem/credentials.txt", "wb");
         VSIFPrintfL(fp, "[credentials]\n");
@@ -3734,25 +3614,23 @@ namespace tut
         CPLPushErrorHandler(CPLQuietErrorHandler);
         CPLLoadConfigOptionsFromFile("/vsimem/credentials.txt", false);
         CPLPopErrorHandler();
-        ensure_equals(CPLGetLastErrorType(), CE_Warning);
+        ASSERT_EQ(CPLGetLastErrorType(), CE_Warning);
 
         {
             const char* pszVal = VSIGetPathSpecificOption("/vsi_test/foo", "FOO", nullptr);
-            ensure(pszVal != nullptr);
+            ASSERT_TRUE(pszVal != nullptr);
         }
 
         {
             const char* pszVal = VSIGetPathSpecificOption("/vsi_test/foo", "BAR", nullptr);
-            ensure(pszVal == nullptr);
+            ASSERT_TRUE(pszVal == nullptr);
         }
 
         VSIUnlink("/vsimem/credentials.txt");
     }
 
     // Test CPLRecodeFromWCharIconv() with 2 bytes/char source encoding
-    template<>
-    template<>
-    void object::test<55>()
+    TEST_F(test_cpl, CPLRecodeFromWCharIconv_2byte_source_encoding)
     {
 #ifdef CPL_RECODE_ICONV
         int N = 2048;
@@ -3775,18 +3653,18 @@ namespace tut
         }
         else
         {
-            ensure( bOK );
+            ASSERT_TRUE( bOK );
         }
         CPLFree(pszIn);
         CPLFree(pszRet);
         CPLFree(pszExpected);
+#else
+        GTEST_SKIP() << "iconv support missing";
 #endif
     }
 
     // VERY MINIMAL testing of VSI plugin functionality
-    template<>
-    template<>
-    void object::test<56>()
+    TEST_F(test_cpl, VSI_plugin_minimal_testing)
     {
         auto psCallbacks = VSIAllocFilesystemPluginCallbacksStruct();
         psCallbacks->open = []( void *pUserData, const char *pszFilename, const char *pszAccess ) -> void*
@@ -3796,104 +3674,106 @@ namespace tut
                 return const_cast<char*>("ok");
             return nullptr;
         };
-        ensure_equals(VSIInstallPluginHandler("/vsimyplugin/", psCallbacks), 0);
+        ASSERT_EQ(VSIInstallPluginHandler("/vsimyplugin/", psCallbacks), 0);
         VSIFreeFilesystemPluginCallbacksStruct(psCallbacks);
         VSILFILE* fp = VSIFOpenL("/vsimyplugin/test", "rb");
-        ensure(fp != nullptr);
+        ASSERT_TRUE(fp != nullptr);
         VSIFCloseL(fp);
-        ensure(VSIFOpenL("/vsimyplugin/i_dont_exist", "rb") == nullptr);
+        ASSERT_TRUE(VSIFOpenL("/vsimyplugin/i_dont_exist", "rb") == nullptr);
     }
 
     // Test CPLIsASCII()
-    template<>
-    template<>
-    void object::test<57>()
+    TEST_F(test_cpl, CPLIsASCII)
     {
-        ensure(CPLIsASCII("foo", 3));
-        ensure(CPLIsASCII("foo", static_cast<size_t>(-1)));
-        ensure(!CPLIsASCII("\xFF", 1));
+        ASSERT_TRUE(CPLIsASCII("foo", 3));
+        ASSERT_TRUE(CPLIsASCII("foo", static_cast<size_t>(-1)));
+        ASSERT_TRUE(!CPLIsASCII("\xFF", 1));
     }
 
     // Test VSIIsLocal()
-    template<>
-    template<>
-    void object::test<58>()
+    TEST_F(test_cpl, VSIIsLocal)
     {
-        ensure(VSIIsLocal("/vsimem/"));
-        ensure(VSIIsLocal("/vsigzip//vsimem/tmp.gz"));
+        ASSERT_TRUE(VSIIsLocal("/vsimem/"));
+        ASSERT_TRUE(VSIIsLocal("/vsigzip//vsimem/tmp.gz"));
 #ifdef HAVE_CURL
-        ensure(!VSIIsLocal("/vsicurl/http://example.com"));
+        ASSERT_TRUE(!VSIIsLocal("/vsicurl/http://example.com"));
 #endif
         VSIStatBufL sStat;
 #ifdef _WIN32
         if( VSIStatL("c:\\", &sStat) == 0 )
-            ensure(VSIIsLocal("c:\\i_do_not_exist"));
+        {
+            ASSERT_TRUE(VSIIsLocal("c:\\i_do_not_exist"));
+        }
 #else
         if( VSIStatL("/tmp", &sStat) == 0 )
-            ensure(VSIIsLocal("/tmp/i_do_not_exist"));
+        {
+            ASSERT_TRUE(VSIIsLocal("/tmp/i_do_not_exist"));
+        }
 #endif
     }
 
     // Test VSISupportsSequentialWrite()
-    template<>
-    template<>
-    void object::test<59>()
+    TEST_F(test_cpl, VSISupportsSequentialWrite)
     {
-        ensure(VSISupportsSequentialWrite("/vsimem/", false));
+        ASSERT_TRUE(VSISupportsSequentialWrite("/vsimem/", false));
 #ifdef HAVE_CURL
-        ensure(!VSISupportsSequentialWrite("/vsicurl/http://example.com", false));
-        ensure(VSISupportsSequentialWrite("/vsis3/test_bucket/", false));
+        ASSERT_TRUE(!VSISupportsSequentialWrite("/vsicurl/http://example.com", false));
+        ASSERT_TRUE(VSISupportsSequentialWrite("/vsis3/test_bucket/", false));
 #endif
-        ensure(VSISupportsSequentialWrite("/vsigzip//vsimem/tmp.gz", false));
+        ASSERT_TRUE(VSISupportsSequentialWrite("/vsigzip//vsimem/tmp.gz", false));
 #ifdef HAVE_CURL
-        ensure(!VSISupportsSequentialWrite("/vsigzip//vsicurl/http://example.com/tmp.gz", false));
+        ASSERT_TRUE(!VSISupportsSequentialWrite("/vsigzip//vsicurl/http://example.com/tmp.gz", false));
 #endif
         VSIStatBufL sStat;
 #ifdef _WIN32
         if( VSIStatL("c:\\", &sStat) == 0 )
-            ensure(VSISupportsSequentialWrite("c:\\", false));
+        {
+            ASSERT_TRUE(VSISupportsSequentialWrite("c:\\", false));
+        }
 #else
         if( VSIStatL("/tmp", &sStat) == 0 )
-            ensure(VSISupportsSequentialWrite("/tmp/i_do_not_exist", false));
+        {
+            ASSERT_TRUE(VSISupportsSequentialWrite("/tmp/i_do_not_exist", false));
+        }
 #endif
     }
 
     // Test VSISupportsRandomWrite()
-    template<>
-    template<>
-    void object::test<60>()
+    TEST_F(test_cpl, VSISupportsRandomWrite)
     {
-        ensure(VSISupportsRandomWrite("/vsimem/", false));
+        ASSERT_TRUE(VSISupportsRandomWrite("/vsimem/", false));
 #ifdef HAVE_CURL
-        ensure(!VSISupportsRandomWrite("/vsicurl/http://example.com", false));
-        ensure(!VSISupportsRandomWrite("/vsis3/test_bucket/", false));
-        ensure(!VSISupportsRandomWrite("/vsis3/test_bucket/", true));
+        ASSERT_TRUE(!VSISupportsRandomWrite("/vsicurl/http://example.com", false));
+        ASSERT_TRUE(!VSISupportsRandomWrite("/vsis3/test_bucket/", false));
+        ASSERT_TRUE(!VSISupportsRandomWrite("/vsis3/test_bucket/", true));
         CPLSetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "YES");
-        ensure(!VSISupportsRandomWrite("/vsis3/test_bucket/", true));
+        ASSERT_TRUE(VSISupportsRandomWrite("/vsis3/test_bucket/", true));
         CPLSetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", nullptr);
 #endif
-        ensure(!VSISupportsRandomWrite("/vsigzip//vsimem/tmp.gz", false));
+        ASSERT_TRUE(!VSISupportsRandomWrite("/vsigzip//vsimem/tmp.gz", false));
 #ifdef HAVE_CURL
-        ensure(!VSISupportsRandomWrite("/vsigzip//vsicurl/http://example.com/tmp.gz", false));
+        ASSERT_TRUE(!VSISupportsRandomWrite("/vsigzip//vsicurl/http://example.com/tmp.gz", false));
 #endif
         VSIStatBufL sStat;
 #ifdef _WIN32
         if( VSIStatL("c:\\", &sStat) == 0 )
-            ensure(VSISupportsRandomWrite("c:\\", false));
+        {
+            ASSERT_TRUE(VSISupportsRandomWrite("c:\\", false));
+        }
 #else
         if( VSIStatL("/tmp", &sStat) == 0 )
-            ensure(VSISupportsRandomWrite("/tmp", false));
+        {
+            ASSERT_TRUE(VSISupportsRandomWrite("/tmp", false));
+        }
 #endif
     }
 
     // Test ignore-env-vars = yes of configuration file
-    template<>
-    template<>
-    void object::test<61>()
+    TEST_F(test_cpl, config_file_ignore_env_vars)
     {
         char szEnvVar[] = "SOME_ENV_VAR_FOR_TEST_CPL_61=FOO";
         putenv(szEnvVar);
-        ensure( CPLGetConfigOption("SOME_ENV_VAR_FOR_TEST_CPL_61", nullptr) != nullptr );
+        ASSERT_TRUE( CPLGetConfigOption("SOME_ENV_VAR_FOR_TEST_CPL_61", nullptr) != nullptr );
 
         VSILFILE* fp = VSIFOpenL("/vsimem/.gdal/gdalrc", "wb");
         VSIFPrintfL(fp, "[directives]\n");
@@ -3906,10 +3786,10 @@ namespace tut
         CPLLoadConfigOptionsFromFile("/vsimem/.gdal/gdalrc", false);
 
         // Check that reading configuration option works
-        ensure( EQUAL(CPLGetConfigOption("CONFIG_OPTION_FOR_TEST_CPL_61", ""), "BAR") );
+        ASSERT_TRUE( EQUAL(CPLGetConfigOption("CONFIG_OPTION_FOR_TEST_CPL_61", ""), "BAR") );
 
         // Check that environment variables are not read as configuration options
-        ensure( CPLGetConfigOption("SOME_ENV_VAR_FOR_TEST_CPL_61", nullptr) == nullptr );
+        ASSERT_TRUE( CPLGetConfigOption("SOME_ENV_VAR_FOR_TEST_CPL_61", nullptr) == nullptr );
 
         // Reset ignore-env-vars=no
         fp = VSIFOpenL("/vsimem/.gdal/gdalrc", "wb");
@@ -3924,16 +3804,14 @@ namespace tut
 
         // Check that environment variables are read as configuration options
         // and override configuration options
-        ensure( CPLGetConfigOption("SOME_ENV_VAR_FOR_TEST_CPL_61", nullptr) != nullptr );
-        ensure_equals( std::string(CPLGetConfigOption("SOME_ENV_VAR_FOR_TEST_CPL_61", "")), std::string("FOO") );
+        ASSERT_TRUE( CPLGetConfigOption("SOME_ENV_VAR_FOR_TEST_CPL_61", nullptr) != nullptr );
+        ASSERT_EQ( std::string(CPLGetConfigOption("SOME_ENV_VAR_FOR_TEST_CPL_61", "")), std::string("FOO") );
 
         VSIUnlink("/vsimem/.gdal/gdalrc");
     }
 
     // Test CPLWorkerThreadPool recursion
-    template<>
-    template<>
-    void object::test<62>()
+    TEST_F(test_cpl, CPLWorkerThreadPool_recursion)
     {
         struct Context
         {
@@ -3985,7 +3863,7 @@ namespace tut
                 // fprintf(stderr, "lambda2 job=%d, counter(before)=%d, thread=" CPL_FRMT_GIB "\n", iJob, nCounter, nThreadLambda2);
                 if( iJob == 100 + 0 )
                 {
-                    ensure(nThreadLambda2 != psData2->nThreadLambda);
+                    ASSERT_TRUE(nThreadLambda2 != psData2->nThreadLambda);
                     // make sure that job 0 run in the other thread
                     // takes sufficiently long that job 2 has been submitted
                     // before it completes
@@ -3996,7 +3874,9 @@ namespace tut
                     }
                 }
                 else if( iJob == 100 + 1 || iJob == 100 + 2 )
-                    ensure(nThreadLambda2 == psData2->nThreadLambda);
+                {
+                    ASSERT_TRUE(nThreadLambda2 == psData2->nThreadLambda);
+                }
             };
             auto poQueue = psData->psCtxt->oThreadPool.CreateJobQueue();
             Data d0(*psData);
@@ -4027,40 +3907,36 @@ namespace tut
             poQueue->SubmitJob(lambda, &data1);
             poQueue->SubmitJob(lambda, &data2);
         }
-        ensure_equals(ctxt.nCounter, 3 * 3);
+        ASSERT_EQ(ctxt.nCounter, 3 * 3);
     }
 
     // Test /vsimem/ PRead() implementation
-    template<>
-    template<>
-    void object::test<63>()
+    TEST_F(test_cpl, vsimem_pread)
     {
         char szContent[] = "abcd";
         VSILFILE* fp = VSIFileFromMemBuffer( "", reinterpret_cast<GByte*>(szContent), 4, FALSE );
         VSIVirtualHandle* poHandle = reinterpret_cast<VSIVirtualHandle*>(fp);
-        ensure(poHandle->HasPRead());
+        ASSERT_TRUE(poHandle->HasPRead());
         {
             char szBuffer[5] = {0};
-            ensure_equals(poHandle->PRead(szBuffer, 2, 1), 2U);
-            ensure_equals(std::string(szBuffer), std::string("bc"));
+            ASSERT_EQ(poHandle->PRead(szBuffer, 2, 1), 2U);
+            ASSERT_EQ(std::string(szBuffer), std::string("bc"));
         }
         {
             char szBuffer[5] = {0};
-            ensure_equals(poHandle->PRead(szBuffer, 4, 1), 3U);
-            ensure_equals(std::string(szBuffer), std::string("bcd"));
+            ASSERT_EQ(poHandle->PRead(szBuffer, 4, 1), 3U);
+            ASSERT_EQ(std::string(szBuffer), std::string("bcd"));
         }
         {
             char szBuffer[5] = {0};
-            ensure_equals(poHandle->PRead(szBuffer, 1, 4), 0U);
-            ensure_equals(std::string(szBuffer), std::string());
+            ASSERT_EQ(poHandle->PRead(szBuffer, 1, 4), 0U);
+            ASSERT_EQ(std::string(szBuffer), std::string());
         }
         VSIFCloseL(fp);
     }
 
     // Test regular file system PRead() implementation
-    template<>
-    template<>
-    void object::test<64>()
+    TEST_F(test_cpl, file_system_pread)
     {
         VSILFILE* fp = VSIFOpenL("temp_test_64.bin", "wb+");
         if( fp == nullptr )
@@ -4072,18 +3948,18 @@ namespace tut
             poHandle->Flush();
             {
                 char szBuffer[5] = {0};
-                ensure_equals(poHandle->PRead(szBuffer, 2, 1), 2U);
-                ensure_equals(std::string(szBuffer), std::string("bc"));
+                ASSERT_EQ(poHandle->PRead(szBuffer, 2, 1), 2U);
+                ASSERT_EQ(std::string(szBuffer), std::string("bc"));
             }
             {
                 char szBuffer[5] = {0};
-                ensure_equals(poHandle->PRead(szBuffer, 4, 1), 3U);
-                ensure_equals(std::string(szBuffer), std::string("bcd"));
+                ASSERT_EQ(poHandle->PRead(szBuffer, 4, 1), 3U);
+                ASSERT_EQ(std::string(szBuffer), std::string("bcd"));
             }
             {
                 char szBuffer[5] = {0};
-                ensure_equals(poHandle->PRead(szBuffer, 1, 4), 0U);
-                ensure_equals(std::string(szBuffer), std::string());
+                ASSERT_EQ(poHandle->PRead(szBuffer, 1, 4), 0U);
+                ASSERT_EQ(std::string(szBuffer), std::string());
             }
         }
         VSIFCloseL(fp);
@@ -4091,16 +3967,14 @@ namespace tut
     }
 
     // Test CPLMask implementation
-    template<>
-    template<>
-    void object::test<65>()
+    TEST_F(test_cpl, CPLMask)
     {
         constexpr std::size_t sz = 71;
         auto m = CPLMaskCreate(sz, true);
 
         // Mask is set by default
         for (std::size_t i = 0; i < sz; i++) {
-            ensure_equals("bits set by default", CPLMaskGet(m, i), true);
+            ASSERT_EQ(CPLMaskGet(m, i), true) << "bit " << i;
         }
 
         VSIFree(m);
@@ -4109,7 +3983,7 @@ namespace tut
 
         // Mask is unset by default
         for (std::size_t i = 0; i < sz; i++) {
-            ensure_equals("bits unset by default", CPLMaskGet(m, i), false);
+            ASSERT_EQ(CPLMaskGet(m, i), false) << "bit " << i;
         }
 
         // Set a few bits
@@ -4120,9 +3994,9 @@ namespace tut
         // Check all bits
         for (std::size_t i = 0; i < sz; i++) {
             if (i == 10 || i == 33 || i == 70) {
-                ensure_equals("bit set correctly", CPLMaskGet(m, i), true);
+                ASSERT_EQ(CPLMaskGet(m, i), true) << "bit " << i;
             } else {
-                ensure_equals("bit remains unset", CPLMaskGet(m, i), false);
+                ASSERT_EQ(CPLMaskGet(m, i), false) << "bit " << i;
             }
         }
 
@@ -4133,9 +4007,9 @@ namespace tut
         // Check all bits
         for (std::size_t i = 0; i < sz; i++) {
             if (i == 33) {
-                ensure_equals("bit remains set", CPLMaskGet(m, i), true);
+                ASSERT_EQ(CPLMaskGet(m, i), true) << "bit " << i;
             } else {
-                ensure_equals("bit cleared correctly", CPLMaskGet(m, i), false);
+                ASSERT_EQ(CPLMaskGet(m, i), false) << "bit " << i;
             }
         }
 
@@ -4145,9 +4019,9 @@ namespace tut
         // Check all bits
         for (std::size_t i = 0; i < sz; i++) {
             if (i == 36 || i == 33) {
-                ensure_equals("m2 bit set correctly", CPLMaskGet(m2, i), true);
+                ASSERT_EQ(CPLMaskGet(m2, i), true) << "bit " << i;
             } else {
-                ensure_equals("m2 bit remains clear", CPLMaskGet(m2, i), false);
+                ASSERT_EQ(CPLMaskGet(m2, i), false) << "bit " << i;
             }
         }
 
@@ -4156,8 +4030,8 @@ namespace tut
 
         // Check all bits
         for (std::size_t i = 0; i < sz; i++) {
-            ensure_equals("all bits cleared", CPLMaskGet(m, i), false);
-            ensure_equals("all bits set", CPLMaskGet(m2, i), true);
+            ASSERT_EQ(CPLMaskGet(m, i), false) << "bit " << i;
+            ASSERT_EQ(CPLMaskGet(m2, i), true) << "bit " << i;
         }
 
         VSIFree(m);
@@ -4165,25 +4039,23 @@ namespace tut
     }
 
     // Test cpl::ThreadSafeQueue
-    template<>
-    template<>
-    void object::test<66>()
+    TEST_F(test_cpl, ThreadSafeQueue)
     {
         cpl::ThreadSafeQueue<int> queue;
-        ensure(queue.empty());
-        ensure_equals(queue.size(), 0U);
+        ASSERT_TRUE(queue.empty());
+        ASSERT_EQ(queue.size(), 0U);
         queue.push(1);
-        ensure(!queue.empty());
-        ensure_equals(queue.size(), 1U);
+        ASSERT_TRUE(!queue.empty());
+        ASSERT_EQ(queue.size(), 1U);
         queue.clear();
-        ensure(queue.empty());
-        ensure_equals(queue.size(), 0U);
+        ASSERT_TRUE(queue.empty());
+        ASSERT_EQ(queue.size(), 0U);
         int val = 10;
         queue.push(std::move(val));
-        ensure(!queue.empty());
-        ensure_equals(queue.size(), 1U);
-        ensure_equals(queue.get_and_pop_front(), 10);
-        ensure(queue.empty());
+        ASSERT_TRUE(!queue.empty());
+        ASSERT_EQ(queue.size(), 1U);
+        ASSERT_EQ(queue.get_and_pop_front(), 10);
+        ASSERT_TRUE(queue.empty());
     }
 
-} // namespace tut
+} // namespace
