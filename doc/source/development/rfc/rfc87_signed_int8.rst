@@ -22,7 +22,7 @@ Motivation
 ----------
 
 :ref:`rfc-14` introduced in GDAL 1.5.0 a way of specifying that a 8-bit integer
-should be interpretated as signed, by (ab)using the GDT_Byte type, with the
+should be interpreted as signed, by (ab)using the GDT_Byte type, with the
 addition of the PIXELTYPE=SIGNEDBYTE metadata item in the IMAGE_STRUCTURE metadata
 domain of bands for which this is desired.
 
@@ -64,7 +64,7 @@ RRaster, Rasterlite2 and Zarr drivers.
 
 Existing drivers that, on writing, accepted the PIXELTYPE=SIGNEDBYTE, are modified
 to accept GDT_Int8 as a valid data type in their Create()/CreateCopy() implementations,
-and advertize "GDT_Int8" in their GDAL_DMD_CREATIONDATATYPES metadata item.
+and advertise "GDT_Int8" in their GDAL_DMD_CREATIONDATATYPES metadata item.
 The PIXELTYPE=SIGNEDBYTE creation option is kept but deprecated and discouraged:
 working with it prior to this RFC was clunky at times, and will remain such.
 
@@ -76,7 +76,7 @@ Bindings
 
 The GDT_Int8 constant is made available in SWIG bindings.
 
-The numpy inteface of the Python bindings is modified to map GDT_Int8 to
+The numpy interface of the Python bindings is modified to map GDT_Int8 to
 ``numpy.int8``.
 
 Backward compatibility
