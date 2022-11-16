@@ -1082,12 +1082,9 @@ def test_ecw_29():
     ds2 = gdal.GetDriverByName("GTiff").Create("/vsimem/ecw_29_2.tif", 800, 800, 1)
     ds2.WriteRaster(0, 0, 800, 800, data_tiff_supersampled_b1)
 
-    ret = "success"
     if gdaltest.ecw_drv.major_version < 5:
         maxdiff = gdaltest.compare_ds(ds1, ds2)
-        if maxdiff != 0:
-            print(maxdiff)
-            ret = "fail"
+        assert maxdiff == 0
     else:
         # Compare the images by comparing their statistics on subwindows
         nvals = 0
@@ -1107,19 +1104,21 @@ def test_ecw_29():
                 nvals = nvals + 1
                 sum_abs_diff_mean = sum_abs_diff_mean + abs(mean1 - mean2)
                 sum_abs_diff_stddev = sum_abs_diff_stddev + abs(stddev1 - stddev2)
-                if mean1 != pytest.approx(
-                    mean2, abs=(stddev1 + stddev2) / 2
-                ) or stddev1 != pytest.approx(stddev2, abs=30):
-                    print(
-                        "%d, %d, %f, %f"
-                        % (j, i, abs(mean1 - mean2), abs(stddev1 - stddev2))
-                    )
-                    ret = "fail"
+                assert mean1 == pytest.approx(mean2, abs=(stddev1 + stddev2) / 2), (
+                    j,
+                    i,
+                    abs(mean1 - mean2),
+                    abs(stddev1 - stddev2),
+                )
+                assert stddev1 == pytest.approx(stddev2, abs=30), (
+                    j,
+                    i,
+                    abs(mean1 - mean2),
+                    abs(stddev1 - stddev2),
+                )
 
-        if sum_abs_diff_mean / nvals > 4 or sum_abs_diff_stddev / nvals > 3:
-            print(sum_abs_diff_mean / nvals)
-            print(sum_abs_diff_stddev / nvals)
-            ret = "fail"
+        assert sum_abs_diff_mean / nvals <= 4
+        assert sum_abs_diff_stddev / nvals <= 3
 
     ds1 = None
     ds2 = None
@@ -1127,8 +1126,6 @@ def test_ecw_29():
     gdal.Unlink("/vsimem/ecw_29_0.tif")
     gdal.Unlink("/vsimem/ecw_29_1.tif")
     gdal.Unlink("/vsimem/ecw_29_2.tif")
-
-    return ret
 
 
 ###############################################################################

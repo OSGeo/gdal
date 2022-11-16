@@ -4014,8 +4014,6 @@ def test_ogr_geom_makevalid():
             == 0
         ), g.ExportToWkt()
 
-    return "success"
-
 
 ###############################################################################
 
@@ -4028,8 +4026,6 @@ def test_ogr_geom_normalize():
     g = ogr.CreateGeometryFromWkt("POLYGON ((0 1,1 1,1 0,0 0,0 1))")
     g = g.Normalize()
     assert g is None or g.ExportToWkt() == "POLYGON ((0 0,0 1,1 1,1 0,0 0))"
-
-    return "success"
 
 
 ###############################################################################

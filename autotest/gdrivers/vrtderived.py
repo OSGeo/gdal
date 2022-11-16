@@ -920,15 +920,15 @@ def test_vrtderived_15():
         threads.append(t)
         t.start()
 
-    ret = "success"
+    ret = True
     for i in range(4):
         threads[i].join()
         if not args_array[i]:
-            ret = "fail"
+            ret = False
 
     gdal.SetConfigOption("GDAL_VRT_ENABLE_PYTHON", None)
 
-    return ret
+    assert ret
 
 
 ###############################################################################

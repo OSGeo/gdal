@@ -830,16 +830,9 @@ def test_warp_23():
     ds.SetGCPs(gcps, sr.ExportToWkt())
     ds = None
 
-    ds = gdal.Warp("", "tmp/test3582.tif", format="MEM")
-    ret = "success"
-    if ds is None:
-        gdaltest.post_reason("could not open output dataset")
-        ret = "fail"
-    ds = None
+    assert gdal.Warp("", "tmp/test3582.tif", format="MEM") is not None
 
     os.remove("tmp/test3582.tif")
-
-    return ret
 
 
 ###############################################################################

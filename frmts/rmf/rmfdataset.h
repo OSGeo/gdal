@@ -348,6 +348,7 @@ class RMFRasterBand final: public GDALRasterBand
 
     virtual CPLErr          IReadBlock( int, int, void * ) override;
     virtual CPLErr          IWriteBlock( int, int, void * ) override;
+    virtual GDALSuggestedBlockAccessPattern GetSuggestedBlockAccessPattern() const override;
     virtual double          GetNoDataValue(int *pbSuccess = nullptr) override;
     virtual CPLErr          SetNoDataValue( double dfNoData ) override;
     virtual const char      *GetUnitType() override;

@@ -35,6 +35,10 @@ import pytest
 
 from osgeo import gdal, osr
 
+# Suppress the DeprecationWarning emitted when using gdal.ApplyVerticalShiftGrid
+pytestmark = pytest.mark.filterwarnings("ignore:ApplyVerticalShiftGrid")
+
+
 ###############################################################################
 # Rather dummy test: grid = DEM
 
