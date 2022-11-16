@@ -334,8 +334,7 @@ GTARasterBand::GTARasterBand( GTADataset *poDSIn, int nBandIn )
     switch( poDSIn->oHeader.component_type( nBand-1 ) )
     {
     case gta::int8:
-        eDataType = GDT_Byte;
-        SetMetadataItem("PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE");
+        eDataType = GDT_Int8;
         break;
     case gta::uint8:
         eDataType = GDT_Byte;
@@ -1346,6 +1345,9 @@ GTACreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 peGTATypes[i] = gta::uint8;
             break;
         }
+        case GDT_Int8:
+            peGTATypes[i] = gta::int8;
+            break;
         case GDT_UInt16:
             peGTATypes[i] = gta::uint16;
             break;
@@ -1706,7 +1708,7 @@ void GDALRegister_GTA()
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/gta.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gta" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                               "Byte UInt16 Int16 UInt32 Int32 Float32 Float64 "
+                               "Byte Int8 UInt16 Int16 UInt32 Int32 Float32 Float64 "
                                "CInt16 CInt32 CFloat32 CFloat64" );
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONOPTIONLIST,

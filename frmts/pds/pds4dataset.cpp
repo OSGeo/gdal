@@ -470,6 +470,11 @@ CPLErr PDS4MaskBand::IReadBlock( int nXBlock, int nYBlock, void *pImage )
         FillMask<GByte>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
                         m_adfConstants);
     }
+    else if( eSrcDT == GDT_Int8 )
+    {
+        FillMask<GInt8>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
+                        m_adfConstants);
+    }
     else if( eSrcDT == GDT_UInt16 )
     {
         FillMask<GUInt16>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
@@ -1736,7 +1741,6 @@ PDS4Dataset* PDS4Dataset::OpenInternal(GDALOpenInfo* poOpenInfo)
             const char* pszDataType = CPLGetXMLValue(psSubIter,
                                         "Element_Array.data_type", "");
             GDALDataType eDT = GDT_Byte;
-            bool bSignedByte = false;
             bool bLSBOrder = strstr(pszDataType, "LSB") != nullptr;
 
             // ComplexLSB16', 'ComplexLSB8', 'ComplexMSB16', 'ComplexMSB8', 'IEEE754LSBDouble', 'IEEE754LSBSingle', 'IEEE754MSBDouble', 'IEEE754MSBSingle', 'SignedBitString', 'SignedByte', 'SignedLSB2', 'SignedLSB4', 'SignedLSB8', 'SignedMSB2', 'SignedMSB4', 'SignedMSB8', 'UnsignedBitString', 'UnsignedByte', 'UnsignedLSB2', 'UnsignedLSB4', 'UnsignedLSB8', 'UnsignedMSB2', 'UnsignedMSB4', 'UnsignedMSB8'
@@ -1763,8 +1767,7 @@ PDS4Dataset* PDS4Dataset::OpenInternal(GDALOpenInfo* poOpenInfo)
             // SignedBitString unhandled
             else if( EQUAL(pszDataType, "SignedByte") )
             {
-                eDT = GDT_Byte;
-                bSignedByte = true;
+                eDT = GDT_Int8;
             }
             else if( EQUAL(pszDataType, "SignedLSB2") ||
                      EQUAL(pszDataType, "SignedMSB2") )
@@ -2059,11 +2062,6 @@ PDS4Dataset* PDS4Dataset::OpenInternal(GDALOpenInfo* poOpenInfo)
                 if( bNoDataSet )
                 {
                     poBand->SetNoDataValue(dfNoData);
-                }
-                if( bSignedByte )
-                {
-                    poBand->GDALRasterBand::SetMetadataItem(
-                        "PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE");
                 }
                 poBand->SetOffset( dfValueOffset );
                 poBand->SetScale( dfValueScale );
@@ -3281,6 +3279,7 @@ void PDS4Dataset::WriteArray(const CPLString& osPrefix,
     GDALDataType eDT = GetRasterBand(1)->GetRasterDataType();
     const char* pszDataType =
         (eDT == GDT_Byte) ? "UnsignedByte" :
+        (eDT == GDT_Int8) ? "SignedByte" :
         (eDT == GDT_UInt16) ? "UnsignedLSB2" :
         (eDT == GDT_Int16) ? (m_bIsLSB ? "SignedLSB2" : "SignedMSB2") :
         (eDT == GDT_UInt32) ? (m_bIsLSB ? "UnsignedLSB4": "UnsignedMSB4") :
@@ -4175,7 +4174,8 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
     if( nXSize == 0 )
         return nullptr;
 
-    if( !(eType == GDT_Byte || eType == GDT_Int16 || eType == GDT_UInt16 ||
+    if( !(eType == GDT_Byte || eType == GDT_Int8 ||
+          eType == GDT_Int16 || eType == GDT_UInt16 ||
           eType == GDT_Int32 || eType == GDT_UInt32 || eType == GDT_Float32 ||
           eType == GDT_Float64 || eType == GDT_CFloat32 ||
           eType == GDT_CFloat64) )
@@ -4823,7 +4823,7 @@ void GDALRegister_PDS4()
                                "drivers/raster/pds4.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "xml" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                               "Byte UInt16 Int16 UInt32 Int32 Float32 "
+                               "Byte Int8 UInt16 Int16 UInt32 Int32 Float32 "
                                "Float64 CFloat32 CFloat64" );
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList/>");
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

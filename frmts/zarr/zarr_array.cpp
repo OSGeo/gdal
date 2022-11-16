@@ -480,15 +480,7 @@ static void EncodeElt(const std::vector<DtypeElt>& elts,
         }
         else if( elt.gdalTypeIsApproxOfNative )
         {
-            if( elt.nativeType == DtypeElt::NativeType::SIGNED_INT &&
-                elt.nativeSize == 1 )
-            {
-                CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Int16 );
-                const int16_t int16Val = *reinterpret_cast<const int16_t*>(pSrc + elt.gdalOffset);
-                const int8_t intVal = static_cast<int8_t>(int16Val);
-                memcpy(pDst + elt.nativeOffset, &intVal, sizeof(intVal));
-            }
-            else if( elt.nativeType == DtypeElt::NativeType::IEEEFP &&
+            if( elt.nativeType == DtypeElt::NativeType::IEEEFP &&
                      elt.nativeSize == 2 )
             {
                 CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float32 );
@@ -1122,14 +1114,7 @@ static void DecodeSourceElt(const std::vector<DtypeElt>& elts,
         }
         else if( elt.gdalTypeIsApproxOfNative )
         {
-            if( elt.nativeType == DtypeElt::NativeType::SIGNED_INT &&
-                elt.nativeSize == 1 )
-            {
-                CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Int16 );
-                int16_t intVal = *reinterpret_cast<const int8_t*>(pSrc + elt.nativeOffset);
-                memcpy(pDst + elt.gdalOffset, &intVal, sizeof(intVal));
-            }
-            else if( elt.nativeType == DtypeElt::NativeType::IEEEFP &&
+            if( elt.nativeType == DtypeElt::NativeType::IEEEFP &&
                      elt.nativeSize == 2 )
             {
                 CPLAssert( elt.gdalType.GetNumericDataType() == GDT_Float32 );
@@ -2939,8 +2924,7 @@ static GDALExtendedDataType ParseDtype(bool isZarrV2,
             else if( chType == 'i' && nBytes == 1 )
             {
                 elt.nativeType = DtypeElt::NativeType::SIGNED_INT;
-                elt.gdalTypeIsApproxOfNative = true;
-                eDT = GDT_Int16;
+                eDT = GDT_Int8;
             }
             else if( chType == 'i' && nBytes == 2 )
             {

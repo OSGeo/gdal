@@ -138,8 +138,7 @@ class GDALEEDAIRasterBand final: public GDALRasterBand
 
     public:
                 GDALEEDAIRasterBand(GDALEEDAIDataset *poDSIn,
-                                    GDALDataType eDT,
-                                    bool bSignedByte);
+                                    GDALDataType eDT);
                 virtual ~GDALEEDAIRasterBand();
 
                 virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
@@ -226,17 +225,12 @@ GDALEEDAIDataset::~GDALEEDAIDataset()
 /************************************************************************/
 
 GDALEEDAIRasterBand::GDALEEDAIRasterBand(GDALEEDAIDataset* poDSIn,
-                                         GDALDataType eDT,
-                                         bool bSignedByte) :
+                                         GDALDataType eDT) :
     m_eInterp(GCI_Undefined)
 {
     eDataType = eDT;
     nBlockXSize = poDSIn->m_nBlockSize;
     nBlockYSize = poDSIn->m_nBlockSize;
-    if( bSignedByte )
-    {
-        SetMetadataItem("PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE");
-    }
 }
 
 /************************************************************************/
@@ -1414,8 +1408,7 @@ bool GDALEEDAIDataset::Open(GDALOpenInfo* poOpenInfo)
             }
 
             GDALRasterBand* poBand =
-                new GDALEEDAIRasterBand(this, aoBandDesc[i].eDT,
-                                        aoBandDesc[i].bSignedByte);
+                new GDALEEDAIRasterBand(this, aoBandDesc[i].eDT);
             const int iBand = nBands + 1;
             SetBand( iBand, poBand );
             poBand->SetDescription( aoBandDesc[i].osName );
@@ -1432,8 +1425,7 @@ bool GDALEEDAIDataset::Open(GDALOpenInfo* poOpenInfo)
             {
                 GDALRasterBand* poOvrBand =
                     new GDALEEDAIRasterBand(m_apoOverviewDS[iOvr],
-                                            aoBandDesc[i].eDT,
-                                            aoBandDesc[i].bSignedByte);
+                                            aoBandDesc[i].eDT);
                 m_apoOverviewDS[iOvr]->SetBand( iBand, poOvrBand );
                 poOvrBand->SetDescription( aoBandDesc[i].osName );
             }

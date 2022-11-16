@@ -309,6 +309,7 @@ void GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::ResetModifiedF
 template<class T> struct GDALCachedPixelAccessorGetDataType {};
 
 template<> struct GDALCachedPixelAccessorGetDataType<GByte>   { static constexpr GDALDataType DataType = GDT_Byte; };
+template<> struct GDALCachedPixelAccessorGetDataType<GInt8>   { static constexpr GDALDataType DataType = GDT_Int8; };
 template<> struct GDALCachedPixelAccessorGetDataType<GUInt16> { static constexpr GDALDataType DataType = GDT_UInt16; };
 template<> struct GDALCachedPixelAccessorGetDataType<GInt16>  { static constexpr GDALDataType DataType = GDT_Int16; };
 template<> struct GDALCachedPixelAccessorGetDataType<GUInt32> { static constexpr GDALDataType DataType = GDT_UInt32; };

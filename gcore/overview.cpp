@@ -276,6 +276,14 @@ static float GetReplacementValueIfNoData(GDALDataType dt, int bHasNoData,
             else
                 fReplacementVal = fNoDataValue + 1;
         }
+        else if( dt == GDT_Int8 )
+        {
+            if( fNoDataValue == std::numeric_limits<GInt8>::max() )
+                fReplacementVal = static_cast<float>(
+                    std::numeric_limits<GInt8>::max() - 1);
+            else
+                fReplacementVal = fNoDataValue + 1;
+        }
         else if( dt == GDT_UInt16 )
         {
             if( fNoDataValue == std::numeric_limits<GUInt16>::max() )
@@ -2953,6 +2961,11 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
     {
         fDstMin = std::numeric_limits<GByte>::min();
         fDstMax = std::numeric_limits<GByte>::max();
+    }
+    else if( dstDataType == GDT_Int8 )
+    {
+        fDstMin = std::numeric_limits<GInt8>::min();
+        fDstMax = std::numeric_limits<GInt8>::max();
     }
     else if( dstDataType == GDT_UInt16 )
     {

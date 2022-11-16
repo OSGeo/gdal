@@ -228,6 +228,7 @@ def test_mem_md_array_single_dim():
     # Test writing a array
     for typecode, in_ar, out_tuple in [
         ("B", [1, 2], (1, 2)),
+        ("b", [-128, 127], (0, 127)),
         ("h", [-32768, 32767], (0, 255)),
         ("H", [0, 65535], (0, 255)),
         ("i", [-(1 << 31), (1 << 31) - 1], (0, 255)),
@@ -237,10 +238,6 @@ def test_mem_md_array_single_dim():
     ]:
         assert myarray.Write(array.array(typecode, in_ar)) == gdal.CE_None
         assert struct.unpack("B" * 2, myarray.Read()) == out_tuple
-
-    # Unsupported array type
-    with pytest.raises(Exception):
-        myarray.Write(array.array("b", [1, 2]))
 
     assert myarray.AdviseRead() == gdal.CE_None
 

@@ -202,7 +202,7 @@ def test_rl2_5():
 
     tests = [
         ("RASTERLITE2:data/rasterlite2/multi_type.rl2:uint8", gdal.GDT_Byte, 4672),
-        ("RASTERLITE2:data/rasterlite2/multi_type.rl2:int8", gdal.GDT_Byte, 4575),
+        ("RASTERLITE2:data/rasterlite2/multi_type.rl2:int8", gdal.GDT_Int8, 4575),
         ("RASTERLITE2:data/rasterlite2/multi_type.rl2:uint16", gdal.GDT_UInt16, 4457),
         ("RASTERLITE2:data/rasterlite2/multi_type.rl2:int16", gdal.GDT_Int16, 4457),
         ("RASTERLITE2:data/rasterlite2/multi_type.rl2:uint32", gdal.GDT_UInt32, 4457),
@@ -216,11 +216,6 @@ def test_rl2_5():
         assert ds.GetRasterBand(1).DataType == dt, subds_name
         cs = ds.GetRasterBand(1).Checksum()
         assert cs == expected_cs
-        if subds_name == "RASTERLITE2:data/rasterlite2/multi_type.rl2:int8":
-            assert (
-                ds.GetRasterBand(1).GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE")
-                == "SIGNEDBYTE"
-            )
 
 
 ###############################################################################

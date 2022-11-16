@@ -1912,6 +1912,10 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
                             nDstMin = std::numeric_limits<std::uint8_t>::min();
                             nDstMax = std::numeric_limits<std::uint8_t>::max();
                             break;
+                        case GDT_Int8:
+                            nDstMin = std::numeric_limits<std::int8_t>::min();
+                            nDstMax = std::numeric_limits<std::int8_t>::max();
+                            break;
                         case GDT_UInt16:
                             nDstMin = std::numeric_limits<std::uint16_t>::min();
                             nDstMax = std::numeric_limits<std::uint16_t>::max();

@@ -1743,8 +1743,11 @@ HFARasterBand::HFARasterBand( HFADataset *poDSIn, int nBandIn, int iOverview ) :
     case EPT_u2:
     case EPT_u4:
     case EPT_u8:
-    case EPT_s8:
         eDataType = GDT_Byte;
+        break;
+
+    case EPT_s8:
+        eDataType = GDT_Int8;
         break;
 
     case EPT_u16:
@@ -1794,12 +1797,6 @@ HFARasterBand::HFARasterBand( HFADataset *poDSIn, int nBandIn, int iOverview ) :
             "NBITS",
             CPLString().Printf("%d", HFAGetDataTypeBits(eHFADataType)),
             "IMAGE_STRUCTURE");
-    }
-
-    if( eHFADataType == EPT_s8 )
-    {
-        GDALMajorObject::SetMetadataItem("PIXELTYPE", "SIGNEDBYTE",
-                                         "IMAGE_STRUCTURE");
     }
 
     // Collect color table if present.
@@ -4773,6 +4770,10 @@ GDALDataset *HFADataset::Create( const char * pszFilenameIn,
             eHfaDataType = EPT_u8;
         break;
 
+    case GDT_Int8:
+        eHfaDataType = EPT_s8;
+        break;
+
     case GDT_UInt16:
         eHfaDataType = EPT_u16;
         break;
@@ -4952,12 +4953,15 @@ HFADataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
     }
 
     const int nBandCount = poSrcDS->GetRasterCount();
-    GDALDataType eType = GDT_Byte;
+    GDALDataType eType = GDT_Unknown;
 
     for( int iBand = 0; iBand < nBandCount; iBand++ )
     {
         GDALRasterBand *poBand = poSrcDS->GetRasterBand(iBand+1);
-        eType = GDALDataTypeUnion(eType, poBand->GetRasterDataType());
+        if( iBand == 0 )
+            eType = poBand->GetRasterDataType();
+        else
+            eType = GDALDataTypeUnion(eType, poBand->GetRasterDataType());
     }
 
     // If we have PIXELTYPE metadata in the source, pass it
@@ -5163,7 +5167,7 @@ void GDALRegister_HFA()
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/hfa.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "img");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
-                              "Byte Int16 UInt16 Int32 UInt32 Float32 Float64 "
+                              "Byte Int8 Int16 UInt16 Int32 UInt32 Float32 Float64 "
                               "CFloat32 CFloat64");
 
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,
@@ -5171,7 +5175,7 @@ void GDALRegister_HFA()
 "   <Option name='BLOCKSIZE' type='integer' description='tile width/height (32-2048)' default='64'/>"
 "   <Option name='USE_SPILL' type='boolean' description='Force use of spill file'/>"
 "   <Option name='COMPRESSED' alias='COMPRESS' type='boolean' description='compress blocks'/>"
-"   <Option name='PIXELTYPE' type='string' description='By setting this to SIGNEDBYTE, a new Byte file can be forced to be written as signed byte'/>"
+"   <Option name='PIXELTYPE' type='string' description='(deprecated, use Int8) By setting this to SIGNEDBYTE, a new Byte file can be forced to be written as signed byte'/>"
 "   <Option name='AUX' type='boolean' description='Create an .aux file'/>"
 "   <Option name='IGNOREUTM' type='boolean' description='Ignore UTM when selecting coordinate system - will use Transverse Mercator. Only used for Create() method'/>"
 "   <Option name='NBITS' type='integer' description='Create file with special sub-byte data type (1/2/4)'/>"

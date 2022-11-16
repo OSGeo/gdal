@@ -8,7 +8,7 @@ Author: Frank Warmerdam
 
 Contact: warmerdam@pobox.com
 
-Status: Adopted
+Status: Adopted, amended per :ref:`rfc-87`
 
 Summary
 -------
@@ -41,6 +41,11 @@ PIXELTYPE:: This may appear on a GDT_Byte band (or the corresponding
 dataset) and have the value SIGNEDBYTE to indicate the unsigned byte
 values between 128 and 255 should be interpreted as being values between
 -128 and -1 for applications that recognise the SIGNEDBYTE type.
+
+.. note::
+
+    Starting with GDAL 3.7, with the implementation of :ref:`rfc-87`,
+    PIXELTYPE is no longer used, as the Int8 data type is used for signed bytes.
 
 Compatibility Issues
 --------------------

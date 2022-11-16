@@ -221,7 +221,7 @@ def test_numpy_rw_9():
 def test_numpy_rw_10():
 
     ds = gdal.GetDriverByName("GTiff").Create(
-        "/vsimem/signed8.tif", 2, 1, options=["PIXELTYPE=SIGNEDBYTE"]
+        "/vsimem/signed8.tif", 2, 1, 1, gdal.GDT_Int8
     )
     ar = numpy.array([[-128, 127]], dtype=numpy.int8)
     ds.GetRasterBand(1).WriteArray(ar)

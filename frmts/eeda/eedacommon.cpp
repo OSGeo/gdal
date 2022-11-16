@@ -64,7 +64,6 @@ std::vector<EEDAIBandDesc> BuildBandDescArray(json_object* poBands,
         if( pszPrecision == nullptr )
             continue;
         GDALDataType eDT = GDT_Byte;
-        bool bSignedByte = false;
         if( EQUAL(pszPrecision, "INT") )
         {
             json_object* poRange = CPL_json_object_object_get(poDataType,
@@ -88,7 +87,7 @@ std::vector<EEDAIBandDesc> BuildBandDescArray(json_object* poBands,
 
                 if( nMin == -128 && nMax == 127 )
                 {
-                    bSignedByte = true;
+                    eDT = GDT_Int8;
                 }
                 else if( nMin < std::numeric_limits<GInt16>::min() )
                 {
@@ -241,7 +240,6 @@ std::vector<EEDAIBandDesc> BuildBandDescArray(json_object* poBands,
         oDesc.osName = pszBandId;
         oDesc.osWKT = osWKT;
         oDesc.eDT = eDT;
-        oDesc.bSignedByte = bSignedByte;
         oDesc.adfGeoTransform = adfGeoTransform;
         oDesc.nWidth = nWidth;
         oDesc.nHeight = nHeight;

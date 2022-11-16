@@ -2818,6 +2818,11 @@ inline void GDALCopyWordsFromT( const T* const CPL_RESTRICT pSrcData,
                         static_cast<unsigned char*>(pDstData), nDstPixelStride,
                         nWordCount );
         break;
+    case GDT_Int8:
+        GDALCopyWordsT( pSrcData, nSrcPixelStride,
+                        static_cast<signed char*>(pDstData), nDstPixelStride,
+                        nWordCount );
+        break;
     case GDT_UInt16:
         GDALCopyWordsT( pSrcData, nSrcPixelStride,
                         static_cast<unsigned short*>(pDstData), nDstPixelStride,
@@ -2923,7 +2928,7 @@ inline void GDALCopyWordsFromT( const T* const CPL_RESTRICT pSrcData,
         }
         break;
     case GDT_Unknown:
-    default:
+    case GDT_TypeCount:
         CPLAssert(false);
     }
 }
@@ -2998,6 +3003,7 @@ void GDALReplicateWord( const void * CPL_RESTRICT pSrcData,
     switch (eDstType)
     {
         case GDT_Byte:
+        case GDT_Int8:
         {
             if (nDstPixelStride == 1)
             {
@@ -3053,7 +3059,8 @@ void GDALReplicateWord( const void * CPL_RESTRICT pSrcData,
         CASE_DUPLICATE_COMPLEX(GDT_CFloat32, float)
         CASE_DUPLICATE_COMPLEX(GDT_CFloat64, double)
 
-        default:
+        case GDT_Unknown:
+        case GDT_TypeCount:
             CPLAssert( false );
     }
 }
@@ -3441,7 +3448,7 @@ GDALCopyWords64( const void * CPL_RESTRICT pSrcData,
 
     if (eSrcType == eDstType)
     {
-        if( eSrcType == GDT_Byte )
+        if( eSrcType == GDT_Byte || eSrcType == GDT_Int8 )
         {
             GDALFastCopy(
                 static_cast<GByte*>(pDstData), nDstPixelStride,
@@ -3495,6 +3502,13 @@ GDALCopyWords64( const void * CPL_RESTRICT pSrcData,
     case GDT_Byte:
         GDALCopyWordsFromT<unsigned char>(
             static_cast<const unsigned char *>(pSrcData),
+            nSrcPixelStride, false,
+            pDstData, eDstType, nDstPixelStride,
+            nWordCount );
+        break;
+    case GDT_Int8:
+        GDALCopyWordsFromT<signed char>(
+            static_cast<const signed char *>(pSrcData),
             nSrcPixelStride, false,
             pDstData, eDstType, nDstPixelStride,
             nWordCount );
@@ -3573,7 +3587,7 @@ GDALCopyWords64( const void * CPL_RESTRICT pSrcData,
             nWordCount );
         break;
     case GDT_Unknown:
-    default:
+    case GDT_TypeCount:
         CPLAssert(false);
     }
 }

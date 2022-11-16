@@ -939,7 +939,7 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
     if( EQUAL(osCellType,"Unsigned8BitInteger") )
         eType = GDT_Byte;
     else if( EQUAL(osCellType,"Signed8BitInteger") )
-        eType = GDT_Byte;
+        eType = GDT_Int8;
     else if( EQUAL(osCellType,"Unsigned16BitInteger") )
         eType = GDT_UInt16;
     else if( EQUAL(osCellType,"Signed16BitInteger") )
@@ -1065,10 +1065,6 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
                                        iWordSize,
                                        iWordSize * nBands * poDS->nRasterXSize,
                                        eType, bNative ));
-                if( EQUAL(osCellType,"Signed8BitInteger") )
-                    poDS->GetRasterBand(iBand+1)->
-                        SetMetadataItem( "PIXELTYPE", "SIGNEDBYTE",
-                                         "IMAGE_STRUCTURE" );
             }
         }
     }
@@ -1317,7 +1313,7 @@ GDALDataset *ERSDataset::Create( const char * pszFilename,
         return nullptr;
     }
 
-    if( eType != GDT_Byte && eType != GDT_Int16 && eType != GDT_UInt16
+    if( eType != GDT_Byte && eType != GDT_Int8 && eType != GDT_Int16 && eType != GDT_UInt16
         && eType != GDT_Int32 && eType != GDT_UInt32
         && eType != GDT_Float32 && eType != GDT_Float64 )
     {
@@ -1351,6 +1347,8 @@ GDALDataset *ERSDataset::Create( const char * pszFilename,
 
     if( eType == GDT_Byte )
         pszCellType = "Unsigned8BitInteger";
+    else if( eType == GDT_Int8 )
+        pszCellType = "Signed8BitInteger";
     else if( eType == GDT_Int16 )
         pszCellType = "Signed16BitInteger";
     else if( eType == GDT_UInt16 )
@@ -1503,12 +1501,12 @@ void GDALRegister_ERS()
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/ers.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ers" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                               "Byte Int16 UInt16 Int32 UInt32 "
+                               "Byte Int8 Int16 UInt16 Int32 UInt32 "
                                "Float32 Float64" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
-"   <Option name='PIXELTYPE' type='string' description='By setting this to SIGNEDBYTE, a new Byte file can be forced to be written as signed byte'/>"
+"   <Option name='PIXELTYPE' type='string' description='(deprecated, use Int8 datatype) By setting this to SIGNEDBYTE, a new Byte file can be forced to be written as signed byte'/>"
 "   <Option name='PROJ' type='string' description='ERS Projection Name'/>"
 "   <Option name='DATUM' type='string' description='ERS Datum Name' />"
 "   <Option name='UNITS' type='string-select' description='ERS Projection Units'>"

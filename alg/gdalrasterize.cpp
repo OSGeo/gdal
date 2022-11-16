@@ -184,6 +184,9 @@ void gvBurnScanline( void *pCBData, int nY, int nXStart, int nXEnd,
         case GDT_Byte:
             gvBurnScanlineBasic<GByte>( psInfo, nY, nXStart, nXEnd, dfVariant );
             break;
+        case GDT_Int8:
+            gvBurnScanlineBasic<GInt8>( psInfo, nY, nXStart, nXEnd, dfVariant );
+            break;
         case GDT_Int16:
             gvBurnScanlineBasic<GInt16>( psInfo, nY, nXStart, nXEnd, dfVariant );
             break;
@@ -208,7 +211,12 @@ void gvBurnScanline( void *pCBData, int nY, int nXStart, int nXEnd,
         case GDT_Float64:
             gvBurnScanlineBasic<double>( psInfo, nY, nXStart, nXEnd, dfVariant );
             break;
-        default:
+        case GDT_CInt16:
+        case GDT_CInt32:
+        case GDT_CFloat32:
+        case GDT_CFloat64:
+        case GDT_Unknown:
+        case GDT_TypeCount:
             CPLAssert(false);
             break;
     }
@@ -290,6 +298,9 @@ void gvBurnPoint( void *pCBData, int nY, int nX, double dfVariant )
         case GDT_Byte:
             gvBurnPointBasic<GByte>( psInfo, nY, nX, dfVariant );
             break;
+        case GDT_Int8:
+            gvBurnPointBasic<GInt8>( psInfo, nY, nX, dfVariant );
+            break;
         case GDT_Int16:
             gvBurnPointBasic<GInt16>( psInfo, nY, nX, dfVariant );
             break;
@@ -314,7 +325,12 @@ void gvBurnPoint( void *pCBData, int nY, int nX, double dfVariant )
         case GDT_Float64:
             gvBurnPointBasic<double>( psInfo, nY, nX, dfVariant );
             break;
-        default:
+        case GDT_CInt16:
+        case GDT_CInt32:
+        case GDT_CFloat32:
+        case GDT_CFloat64:
+        case GDT_Unknown:
+        case GDT_TypeCount:
             CPLAssert(false);
     }
 }

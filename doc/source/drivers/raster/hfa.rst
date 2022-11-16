@@ -56,6 +56,8 @@ Creation Options:
 -  **NBITS=1/2/4**: Create file with special sub-byte data types.
 -  **PIXELTYPE=[DEFAULT/SIGNEDBYTE]**: By setting this to SIGNEDBYTE, a
    new Byte file can be forced to be written as signed byte.
+   Starting with GDAL 3.7, this option is deprecated and Int8 should rather
+   be used.
 -  **AUX=YES**: To create a .aux file. Default=NO
 -  **IGNOREUTM=YES** : Ignore UTM when selecting coordinate system -
    will use Transverse Mercator. Only used for Create() method.

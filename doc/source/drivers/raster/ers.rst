@@ -35,7 +35,9 @@ Creation Issues
 Creation Options:
 
 -  **PIXELTYPE=value**:.By setting this to SIGNEDBYTE, a new Byte file
-   can be forced to be written as signed byte
+   can be forced to be written as signed byte.
+   Starting with GDAL 3.7, this option is deprecated and Int8 should rather
+   be used.
 -  **PROJ=name**: Name of the ERS projection string to
    use. Common examples are NUTM11, or GEODETIC. If defined, this will
    override the value computed by SetProjection() or SetGCPs().
