@@ -8,7 +8,7 @@ RFC 87: Signed int8 data type for raster
 Author:        Even Rouault
 Contact:       even.rouault @ spatialys.com
 Started:       2022-Nov-8
-Status:        Adopted
+Status:        Adopted and implemented
 Target:        GDAL 3.7
 ============== =============================================
 
