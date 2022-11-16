@@ -671,6 +671,12 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
     return GDALRasterBandAsMDArray(self);
   }
 
+  /* Internal use only! To be removed in GDAL 4.0 */
+  void _EnablePixelTypeSignedByteWarning(bool b)
+  {
+      GDALEnablePixelTypeSignedByteWarning(self, b);
+  }
+
 } /* %extend */
 
 };

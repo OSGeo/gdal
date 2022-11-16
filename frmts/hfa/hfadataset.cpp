@@ -4968,14 +4968,18 @@ HFADataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
     // through as a creation option.
     if( CSLFetchNameValue(papszOptions, "PIXELTYPE") == nullptr &&
         nBandCount > 0 &&
-        eType == GDT_Byte &&
-        poSrcDS->GetRasterBand(1)->GetMetadataItem("PIXELTYPE",
-                                                   "IMAGE_STRUCTURE") )
+        eType == GDT_Byte )
     {
-        papszModOptions =
-            CSLSetNameValue(papszModOptions, "PIXELTYPE",
-                            poSrcDS->GetRasterBand(1)->GetMetadataItem(
-                                "PIXELTYPE", "IMAGE_STRUCTURE"));
+        auto poSrcBand = poSrcDS->GetRasterBand(1);
+        poSrcBand->EnablePixelTypeSignedByteWarning(false);
+        const char* pszPixelType = poSrcBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+        poSrcBand->EnablePixelTypeSignedByteWarning(true);
+        if( pszPixelType )
+        {
+            papszModOptions =
+                CSLSetNameValue(papszModOptions, "PIXELTYPE",
+                                pszPixelType);
+        }
     }
 
     HFADataset *poDS =

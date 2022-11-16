@@ -306,9 +306,23 @@ RB_PROXY_METHOD_WITH_RET(char**, nullptr, GetMetadata, (const char * pszDomain),
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetMetadata,
                         (char ** papszMetadata, const char * pszDomain),
                         (papszMetadata, pszDomain))
-RB_PROXY_METHOD_WITH_RET(const char*, nullptr, GetMetadataItem,
-                        (const char * pszName, const char * pszDomain),
-                        (pszName, pszDomain))
+
+const char* GDALProxyRasterBand::GetMetadataItem( const char* pszKey,
+                                                  const char* pszDomain )
+{
+    const char* pszRet = nullptr;
+    GDALRasterBand* poSrcBand = RefUnderlyingRasterBand();
+    if (poSrcBand)
+    {
+        if( !m_bEnablePixelTypeSignedByteWarning )
+            poSrcBand->EnablePixelTypeSignedByteWarning(false);
+        pszRet = poSrcBand->GetMetadataItem(pszKey, pszDomain);
+        poSrcBand->EnablePixelTypeSignedByteWarning(true);
+        UnrefUnderlyingRasterBand(poSrcBand);
+    }
+    return pszRet;
+}
+
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetMetadataItem,
                         (const char * pszName, const char * pszValue, const char * pszDomain),
                         (pszName, pszValue, pszDomain))

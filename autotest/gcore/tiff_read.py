@@ -4928,3 +4928,19 @@ def test_tiff_read_multi_threaded_vsicurl(use_dataset_readraster):
         webserver.server_stop(webserver_process, webserver_port)
 
         gdal.VSICurlClearCache()
+
+
+###############################################################################
+# Test that a user receives a warning when it queries
+# GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE")
+
+
+def test_tiff_warning_get_metadata_item_PIXELTYPE():
+
+    ds = gdal.Open("data/byte.tif")
+    with gdaltest.error_handler():
+        ds.GetRasterBand(1).GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE")
+    assert (
+        gdal.GetLastErrorMsg()
+        == "Starting with GDAL 3.7, PIXELTYPE=SIGNEDBYTE is no longer used to signal signed 8-bit raster. Change your code to test for the new GDT_Int8 data type instead."
+    )

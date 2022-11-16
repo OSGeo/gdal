@@ -71,6 +71,9 @@ using namespace std;
 #include "gdalwarper.h"
 #include "ogr_srs_api.h"
 
+// From gdal_priv.h
+void CPL_DLL GDALEnablePixelTypeSignedByteWarning(GDALRasterBandH hBand, bool b);
+
 typedef void GDALMajorObjectShadow;
 typedef void GDALDriverShadow;
 typedef void GDALDatasetShadow;

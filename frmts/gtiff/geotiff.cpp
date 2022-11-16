@@ -6732,7 +6732,17 @@ const char *GTiffRasterBand::GetMetadataItem( const char * pszName,
             return CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nByteCount));
         }
     }
-    return m_oGTiffMDMD.GetMetadataItem( pszName, pszDomain );
+
+    const char* pszRet = m_oGTiffMDMD.GetMetadataItem( pszName, pszDomain );
+
+    if( pszRet == nullptr && eDataType == GDT_Byte &&
+        pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE") &&
+        EQUAL(pszName, "PIXELTYPE") )
+    {
+        // to get a chance of emitting the warning about this legacy usage
+        pszRet = GDALRasterBand::GetMetadataItem( pszName, pszDomain );
+    }
+    return pszRet;
 }
 
 /************************************************************************/
@@ -19908,13 +19918,17 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
     if( CSLFetchNameValue( papszOptions, "PIXELTYPE" ) == nullptr
-        && eType == GDT_Byte
-        && poPBand->GetMetadataItem( "PIXELTYPE", "IMAGE_STRUCTURE" ) )
+        && eType == GDT_Byte )
     {
-        papszCreateOptions =
-            CSLSetNameValue( papszCreateOptions, "PIXELTYPE",
-                             poPBand->GetMetadataItem(
-                                 "PIXELTYPE", "IMAGE_STRUCTURE" ) );
+        poPBand->EnablePixelTypeSignedByteWarning(false);
+        const char* pszPixelType = poPBand->GetMetadataItem( "PIXELTYPE", "IMAGE_STRUCTURE" );
+        poPBand->EnablePixelTypeSignedByteWarning(true);
+        if( pszPixelType )
+        {
+            papszCreateOptions =
+                CSLSetNameValue( papszCreateOptions, "PIXELTYPE",
+                                 pszPixelType );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -20727,8 +20741,11 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         for(int i = 0; i < poDS->nBands; ++i )
         {
-            static_cast<GTiffRasterBand*>(poDS->papoBands[i])->eDataType = GDT_Byte;
-            poDS->papoBands[i]->SetMetadataItem("PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE");
+            auto poBand = static_cast<GTiffRasterBand*>(poDS->papoBands[i]);
+            poBand->eDataType = GDT_Byte;
+            poBand->EnablePixelTypeSignedByteWarning(false);
+            poBand->SetMetadataItem("PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE");
+            poBand->EnablePixelTypeSignedByteWarning(true);
         }
     }
 

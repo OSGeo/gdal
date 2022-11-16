@@ -2175,8 +2175,12 @@ def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_o
         else:
             buf_type = NumericTypeCodeToGDALTypeCode(typecode)
 
-        if buf_type == gdalconst.GDT_Byte and ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') == 'SIGNEDBYTE':
-            typecode = numpy.int8
+        if buf_type == gdalconst.GDT_Byte:
+            band = ds.GetRasterBand(1)
+            band._EnablePixelTypeSignedByteWarning(False)
+            if band.GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') == 'SIGNEDBYTE':
+                typecode = numpy.int8
+            band._EnablePixelTypeSignedByteWarning(True)
         buf_shape = (nbands, buf_ysize, buf_xsize) if interleave else (buf_ysize, buf_xsize, nbands)
         buf_obj = numpy.empty(buf_shape, dtype=typecode)
 
@@ -2305,8 +2309,11 @@ def BandReadAsArray(band, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
         else:
             buf_type = NumericTypeCodeToGDALTypeCode(typecode)
 
-        if buf_type == gdalconst.GDT_Byte and band.GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') == 'SIGNEDBYTE':
-            typecode = numpy.int8
+        if buf_type == gdalconst.GDT_Byte:
+            band._EnablePixelTypeSignedByteWarning(False)
+            if band.GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') == 'SIGNEDBYTE':
+                typecode = numpy.int8
+            band._EnablePixelTypeSignedByteWarning(True)
         buf_obj = numpy.empty([buf_ysize, buf_xsize], dtype=typecode)
 
     else:

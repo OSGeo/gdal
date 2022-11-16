@@ -1213,6 +1213,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     GDALRasterBand *poMask = nullptr;
     bool        bOwnMask = false;
+    bool        m_bEnablePixelTypeSignedByteWarning = true; // Remove me in GDAL 4.0. See GetMetadataItem() implementation
     int         nMaskFlags = 0;
 
     void        InvalidateMaskBand();
@@ -1228,6 +1229,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     void         LeaveReadWrite();
     void         InitRWLock();
     void         SetValidPercent( GUIntBig nSampleCount, GUIntBig nValidCount );
+
 //! @endcond
 
   protected:
@@ -1345,6 +1347,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                                  const char * pszValue,
                                  const char * pszDomain ) override;
 #endif
+    virtual const char *GetMetadataItem( const char * pszName,
+                                         const char * pszDomain = "" ) override;
 
     virtual int HasArbitraryOverviews();
     virtual int GetOverviewCount();
@@ -1409,6 +1413,17 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
      */
     static inline GDALRasterBand* FromHandle(GDALRasterBandH hBand)
         { return static_cast<GDALRasterBand*>(hBand); }
+
+//! @cond Doxygen_Suppress
+    // Remove me in GDAL 4.0. See GetMetadataItem() implementation
+    // Internal use in GDAL only !
+    void EnablePixelTypeSignedByteWarning(bool b)
+#ifndef GDAL_COMPILATION
+            CPL_WARN_DEPRECATED("Do not use that method outside of GDAL!")
+#endif
+                                                    ;
+
+//! @endcond
 
 private:
     CPL_DISALLOW_COPY_ASSIGN(GDALRasterBand)
@@ -3304,6 +3319,11 @@ void CPL_DLL GDALCopyNoDataValue(GDALRasterBand* poDstBand,
 
 double CPL_DLL GDALGetNoDataValueCastToDouble(int64_t nVal);
 double CPL_DLL GDALGetNoDataValueCastToDouble(uint64_t nVal);
+
+// Remove me in GDAL 4.0. See GetMetadataItem() implementation
+// Internal use in GDAL only !
+// Declaration copied in swig/include/gdal.i
+void CPL_DLL GDALEnablePixelTypeSignedByteWarning(GDALRasterBandH hBand, bool b);
 
 //! @endcond
 

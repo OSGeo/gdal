@@ -987,10 +987,6 @@ RL2RasterBand::RL2RasterBand(const RL2RasterBand* poOther)
         const_cast<RL2RasterBand*>(poOther)->
                     GetMetadataItem("NBITS", "IMAGE_STRUCTURE"),
         "IMAGE_STRUCTURE" );
-    GDALRasterBand::SetMetadataItem( "PIXELTYPE",
-        const_cast<RL2RasterBand*>(poOther)->
-                    GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE"),
-        "IMAGE_STRUCTURE" );
     m_eColorInterp = poOther->m_eColorInterp;
     m_bHasNoData = poOther->m_bHasNoData;
     m_dfNoDataValue = poOther->m_dfNoDataValue;
