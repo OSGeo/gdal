@@ -853,7 +853,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
    * - **div**
      - 2
      - -
-     - divide one rasted band by another (``b1 / b2``)
+     - divide one raster band by another (``b1 / b2``)
    * - **exp**
      - 1
      - ``base`` (optional), ``fact`` (optional)
@@ -1075,8 +1075,8 @@ The signature of the Python pixel function must have the following arguments:
 - **yoff** line offset to the top left corner of the accessed region of the band. Generally not needed.
 - **xsize**: width of the region of the accessed region of the band. Can be used together with out_ar.shape[1] to determine the horizontal resampling ratio of the request.
 - **ysize**: height of the region of the accessed region of the band. Can be used together with out_ar.shape[0] to determine the vertical resampling ratio of the request.
-- **raster_xsize**: total with of the raster band. Generally not needed.
-- **raster_ysize**: total with of the raster band. Generally not needed.
+- **raster_xsize**: total width of the raster band. Generally not needed.
+- **raster_ysize**: total height of the raster band. Generally not needed.
 - **buf_radius**: radius of the buffer (in pixels) added to the left, right, top and bottom of in_ar / out_ar. This is the value of the optional BufferRadius element that can be set so that the original pixel request is extended by a given amount of pixels.
 - **gt**: geotransform. Array of 6 double values.
 - **kwargs**: dictionary with user arguments defined in PixelFunctionArguments
