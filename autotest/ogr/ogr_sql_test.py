@@ -1605,6 +1605,51 @@ def test_ogr_sql_field_names_same_case():
 
 
 ###############################################################################
+# Test no crash when comparing string with integer array
+
+
+def test_ogr_sql_string_int_array_comparison():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("test")
+    lyr.CreateField(ogr.FieldDefn("id"))
+    lyr.CreateField(ogr.FieldDefn("int_array", ogr.OFTIntegerList))
+    f = ogr.Feature(lyr.GetLayerDefn())
+
+    f["id"] = "foo"
+    f.SetFieldIntegerList(1, [1, 2])
+
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+
+    f = lyr.GetNextFeature()
+    assert f is not None
+
+    assert lyr.SetAttributeFilter("id = 'foo'") == ogr.OGRERR_NONE
+    f = lyr.GetNextFeature()
+    assert f is not None
+
+    for op in ("=", "<>", "<", "<=", ">", ">="):
+        assert lyr.SetAttributeFilter("int_array {} 1".format(op)) == ogr.OGRERR_NONE
+        f = lyr.GetNextFeature()
+        assert f is None
+
+    assert lyr.SetAttributeFilter("int_array BETWEEN 0 AND 3") == ogr.OGRERR_NONE
+    f = lyr.GetNextFeature()
+    assert f is None
+
+    assert lyr.SetAttributeFilter("int_array IS NULL") == ogr.OGRERR_NONE
+    f = lyr.GetNextFeature()
+    assert f is None
+
+    assert lyr.SetAttributeFilter("int_array IN (1, 2)") == ogr.OGRERR_NONE
+    f = lyr.GetNextFeature()
+    assert f is None
+
+    del lyr
+    del ds
+
+
+###############################################################################
 
 
 def test_ogr_sql_cleanup():

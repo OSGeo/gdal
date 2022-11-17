@@ -768,6 +768,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
             }
         }
 
+
         switch( node->nOperation )
         {
           case SWQ_EQ:
@@ -783,10 +784,17 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
                 (strcmp(sub_node_values[0]->string_value + strlen(sub_node_values[0]->string_value)-3, "+00") == 0 &&
                  sub_node_values[1]->string_value[strlen(sub_node_values[1]->string_value)-3] == ':') )
             {
-                poRet->int_value =
-                    EQUALN(sub_node_values[0]->string_value,
-                           sub_node_values[1]->string_value,
-                           strlen(sub_node_values[1]->string_value));
+                if ( ! sub_node_values[1]->string_value  )
+                {
+                    poRet->int_value = false;
+                }
+                else
+                {
+                    poRet->int_value =
+                        EQUALN(sub_node_values[0]->string_value,
+                               sub_node_values[1]->string_value,
+                               strlen(sub_node_values[1]->string_value));
+                }
             }
             else if( (sub_node_values[0]->field_type == SWQ_TIMESTAMP ||
                       sub_node_values[0]->field_type == SWQ_STRING) &&
@@ -797,57 +805,117 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
                      (sub_node_values[0]->string_value[strlen(sub_node_values[0]->string_value)-3] == ':') &&
                       strcmp(sub_node_values[1]->string_value + strlen(sub_node_values[1]->string_value)-3, "+00") == 0)
             {
-                poRet->int_value =
-                    EQUALN(sub_node_values[0]->string_value,
-                           sub_node_values[1]->string_value,
-                           strlen(sub_node_values[0]->string_value));
+                if ( ! sub_node_values[1]->string_value  )
+                {
+                    poRet->int_value = false;
+                }
+                else
+                {
+                    poRet->int_value =
+                        EQUALN(sub_node_values[0]->string_value,
+                               sub_node_values[1]->string_value,
+                               strlen(sub_node_values[0]->string_value));
+                }
             }
             else
             {
-                poRet->int_value =
-                    strcasecmp(sub_node_values[0]->string_value,
-                            sub_node_values[1]->string_value) == 0;
+                if ( ! sub_node_values[1]->string_value  )
+                {
+                    poRet->int_value = false;
+                }
+                else
+                {
+                    poRet->int_value =
+                        strcasecmp(sub_node_values[0]->string_value,
+                                sub_node_values[1]->string_value) == 0;
+                }
             }
             break;
           }
 
           case SWQ_NE:
-            poRet->int_value =
-                strcasecmp(sub_node_values[0]->string_value,
-                           sub_node_values[1]->string_value) != 0;
-            break;
+          {
+              if ( ! sub_node_values[1]->string_value  )
+              {
+                  poRet->int_value = false;
+              }
+              else
+              {
+                  poRet->int_value =
+                      strcasecmp(sub_node_values[0]->string_value,
+                                 sub_node_values[1]->string_value) != 0;
+              }
+              break;
+          }
 
           case SWQ_GT:
-            poRet->int_value =
-                strcasecmp(sub_node_values[0]->string_value,
-                           sub_node_values[1]->string_value) > 0;
-            break;
+          {
+              if ( ! sub_node_values[1]->string_value  )
+              {
+                  poRet->int_value = false;
+              }
+              else
+              {
+                  poRet->int_value =
+                      strcasecmp(sub_node_values[0]->string_value,
+                                 sub_node_values[1]->string_value) > 0;
+              }
+              break;
+          }
 
           case SWQ_LT:
-            poRet->int_value =
-                strcasecmp(sub_node_values[0]->string_value,
-                           sub_node_values[1]->string_value) < 0;
+          {
+            if ( ! sub_node_values[1]->string_value  )
+            {
+                poRet->int_value = false;
+            }
+            else
+            {
+                poRet->int_value =
+                    strcasecmp(sub_node_values[0]->string_value,
+                               sub_node_values[1]->string_value) < 0;
+            }
             break;
+          }
 
           case SWQ_GE:
-            poRet->int_value =
-                strcasecmp(sub_node_values[0]->string_value,
-                           sub_node_values[1]->string_value) >= 0;
-            break;
+          {
+              if ( ! sub_node_values[1]->string_value  )
+              {
+                  poRet->int_value = false;
+              }
+              else
+              {
+                  poRet->int_value =
+                        strcasecmp(sub_node_values[0]->string_value,
+                                   sub_node_values[1]->string_value) >= 0;
+              }
+              break;
+          }
 
           case SWQ_LE:
-            poRet->int_value =
-                strcasecmp(sub_node_values[0]->string_value,
-                           sub_node_values[1]->string_value) <= 0;
-            break;
+          {
+              if ( ! sub_node_values[1]->string_value  )
+              {
+                  poRet->int_value = false;
+              }
+              else
+              {
+                   poRet->int_value =
+                        strcasecmp(sub_node_values[0]->string_value,
+                                   sub_node_values[1]->string_value) <= 0;
+              }
+              break;
+          }
 
           case SWQ_IN:
           {
               poRet->int_value = 0;
               for( int i = 1; i < node->nSubExprCount; i++ )
-              {
-                  if( strcasecmp(sub_node_values[0]->string_value,
-                                 sub_node_values[i]->string_value) == 0 )
+              {                  
+                  if( sub_node_values[i]->string_value &&
+                          strcasecmp(sub_node_values[0]->string_value,
+                                     sub_node_values[i]->string_value) == 0 )
                   {
                       poRet->int_value = 1;
                       break;
@@ -857,34 +925,57 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
           break;
 
           case SWQ_BETWEEN:
-            poRet->int_value =
-                strcasecmp(sub_node_values[0]->string_value,
-                           sub_node_values[1]->string_value) >= 0 &&
-                strcasecmp(sub_node_values[0]->string_value,
-                           sub_node_values[2]->string_value) <= 0;
-            break;
+          {
+              if ( ! sub_node_values[1]->string_value  )
+              {
+                  poRet->int_value = false;
+              }
+              else
+              {
+                  poRet->int_value =
+                      strcasecmp(sub_node_values[0]->string_value,
+                                 sub_node_values[1]->string_value) >= 0 &&
+                      strcasecmp(sub_node_values[0]->string_value,
+                                 sub_node_values[2]->string_value) <= 0;
+              }
+              break;
+          }
 
           case SWQ_LIKE:
           {
-            char chEscape = '\0';
-            if( node->nSubExprCount == 3 )
-                chEscape = sub_node_values[2]->string_value[0];
-            const bool bInsensitive =
-                CPLTestBool(CPLGetConfigOption("OGR_SQL_LIKE_AS_ILIKE", "FALSE"));
-            poRet->int_value = swq_test_like(sub_node_values[0]->string_value,
-                                             sub_node_values[1]->string_value,
-                                             chEscape, bInsensitive);
+            if ( ! sub_node_values[1]->string_value  )
+            {
+                poRet->int_value = false;
+            }
+            else
+            {
+                char chEscape = '\0';
+                if( node->nSubExprCount == 3 )
+                    chEscape = sub_node_values[2]->string_value[0];
+                const bool bInsensitive =
+                    CPLTestBool(CPLGetConfigOption("OGR_SQL_LIKE_AS_ILIKE", "FALSE"));
+                poRet->int_value = swq_test_like(sub_node_values[0]->string_value,
+                                                 sub_node_values[1]->string_value,
+                                                 chEscape, bInsensitive);
+            }
             break;
           }
 
           case SWQ_ILIKE:
           {
-            char chEscape = '\0';
-            if( node->nSubExprCount == 3 )
-                chEscape = sub_node_values[2]->string_value[0];
-            poRet->int_value = swq_test_like(sub_node_values[0]->string_value,
-                                             sub_node_values[1]->string_value,
-                                             chEscape, true);
+            if ( ! sub_node_values[1]->string_value  )
+            {
+                poRet->int_value = false;
+            }
+            else
+            {
+                char chEscape = '\0';
+                if( node->nSubExprCount == 3 )
+                    chEscape = sub_node_values[2]->string_value[0];
+                poRet->int_value = swq_test_like(sub_node_values[0]->string_value,
+                                                 sub_node_values[1]->string_value,
+                                                 chEscape, true);
+            }
             break;
           }
 
@@ -962,11 +1053,18 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
 
           case SWQ_HSTORE_GET_VALUE:
           {
-              const char *pszHStore = sub_node_values[0]->string_value;
-              const char *pszSearchedKey = sub_node_values[1]->string_value;
-              char* pszRet = OGRHStoreGetValue(pszHStore, pszSearchedKey);
-              poRet->string_value = pszRet ? pszRet : CPLStrdup("");
-              poRet->is_null = (pszRet == nullptr);
+              if ( ! sub_node_values[1]->string_value  )
+              {
+                  poRet->int_value = false;
+              }
+              else
+              {
+                  const char *pszHStore = sub_node_values[0]->string_value;
+                  const char *pszSearchedKey = sub_node_values[1]->string_value;
+                  char* pszRet = OGRHStoreGetValue(pszHStore, pszSearchedKey);
+                  poRet->string_value = pszRet ? pszRet : CPLStrdup("");
+                  poRet->is_null = (pszRet == nullptr);
+              }
               break;
           }
 
