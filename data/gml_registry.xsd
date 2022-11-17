@@ -3,7 +3,7 @@
 
   <xs:element name="gml_registry">
     <xs:annotation>
-      <xs:documentation>The registry contains namespace definitions, which are used to find a single .gfs or XML schema file with which the GML driver shall process the whole GML data file. The GML driver uses the schema file defined for the first namespace-featureType combination that is found in the GML data. NOTE: The order of the namespaces within the GML registry file is important when loading a GML file that contains features from multiple namespaces. Only the feature types defined in the selected schema will be recognized. In other words, if the GML file contains features from multiple namespaces, then only the ones that match the definitions from the chosen schema will be read.</xs:documentation>
+      <xs:documentation>The registry contains namespace definitions, which are used to find a single .gfs or XML schema file with which the GML driver shall process the whole GML data file. The GML driver uses the schema file defined for the first matching (prefix-)namespace-featureType combination that is found in the GML data. NOTE: The order of the namespaces within the GML registry file is important when loading a GML file that contains features from multiple namespaces. Only the feature types defined in the selected schema will be recognized. In other words, if the GML file contains features from multiple namespaces, then only the ones that match the definitions from the chosen schema will be read.</xs:documentation>
     </xs:annotation>
     <xs:complexType>
       <xs:sequence>
@@ -22,13 +22,12 @@ NOTE: Multiple feature types within the namespace may refer to the same schema (
                 <xs:complexType>
                   <xs:attribute name="elementName" type="xs:string" use="required">
                     <xs:annotation>
-                      <xs:documentation>Name of the XML element that is used to identify the feature type. Typically the XML element name of an XML encoded feature. However, it can also be a different element that can be used in combination with @elementValue to produce a match for this feature type element.</xs:documentation>
+                      <xs:documentation>Name of the XML element that is used to identify the feature type. Typically the local name of an XML element that encodes a feature. However, it can also be the local name of a different element that can be used in combination with @elementValue to produce a match for this feature type definition within the namespace.</xs:documentation>
                     </xs:annotation>
                   </xs:attribute>
                   <xs:attribute name="elementValue" type="xs:string">
                     <xs:annotation>
-                      <xs:documentation/>
-                      <xs:documentation>Used in combination with @elementName. If present, a match for this feature type element is only produced if an XML element whose name equals the value of @elementName and whose value equals the value of @elementValue is found in the GML data. For examle: If namespace/@prefix = 'ex', featureType/@elementName = 'typeOfFeature', and featureType/@elementValue = 'FT', then a match is produced if &lt;ex:typeOfFeature>FT&lt;/ex:typeOfFeature> is present in the GML data.</xs:documentation>
+                      <xs:documentation>Used in combination with @elementName. If present, a match for this feature type element is only produced if an XML element whose local-name (and prefix, if defined in the namespace) equals the value of @elementName and whose value equals the value of @elementValue is found in the GML data. For example: If namespace/@prefix = 'ex', featureType/@elementName = 'typeOfFeature', and featureType/@elementValue = 'FT', then a match is produced if &lt;ex:typeOfFeature>FT&lt;/ex:typeOfFeature> is present in the GML data.</xs:documentation>
                     </xs:annotation>
                   </xs:attribute>
                   <xs:attribute name="gfsSchemaLocation" type="xs:string">
@@ -44,21 +43,21 @@ NOTE: Multiple feature types within the namespace may refer to the same schema (
                 </xs:complexType>
               </xs:element>
             </xs:sequence>
-            <xs:attribute name="prefix" type="xs:string" use="required">
+            <xs:attribute name="prefix" type="xs:string" use="optional">
               <xs:annotation>
-                <xs:documentation>Namespace prefix assigned to the features of this namespace in actual GML data. The prefix will be looked up in the first bytes of the GML file (e.g. xmlns:abc="http://example.org/abc"). NOTE: Case is important - the parser looks for the exact string, i.e., 'ex' is treated differently than 'EX'. If actual data may use different prefixes for the same namespace URI, multiple namespace elements must be added to the gml_registry - one for each applicable prefix.
+                <xs:documentation>Namespace prefix assigned to the features of this namespace in actual GML data. The prefix will be looked up in the first bytes of the GML file (e.g. xmlns:abc="http://example.org/abc"). It is used to confirm the match of the namespace uri (defined by @uri). NOTE-1: Case is important - the parser looks for the exact string, i.e., 'ex' is treated differently than 'EX'. If actual data may use different prefixes for the same namespace URI, multiple namespace elements must be added to the gml_registry - one for each applicable prefix. NOTE-2: The prefix can be omitted in the namespace definition. In that case, a match is only produced if a) the namespace uri is found in any namespace declaration in the GML file (typically as default namespace in the root element, e.g., xmlns="http://example.org/abc") and b) an XML element without XML namespace prefix, and local-name being equal to the @elementName of the feature type (plus a possibly defined @elementValue as textual value), is found.
 
 TBD: Is the prefix actually required? In the gdal/data/gml_registry.xml, the namespace for the japanese schemas does not contain a prefix. Not sure what the exact behavior is when a prefix is defined vs. when it is not. If no prefix is defined, does the parser then automatically resolve namespace prefixes and only match XML elements whose namespace-uri equals the defined uri, and local-name equals featureType/@elementName (plus the test for @elementValue)? Or is the namespace ignored completely, then, and just the local-name matters?</xs:documentation>
               </xs:annotation>
             </xs:attribute>
             <xs:attribute name="uri" type="xs:string" use="required">
               <xs:annotation>
-                <xs:documentation>Namespace URI as found in the first bytes of the GML file. (e.g. xmlns:abc="http://example.org/abc")</xs:documentation>
+                <xs:documentation>Namespace URI as found in the first bytes of the GML file. (e.g. "http://example.org/abc" in the namespace declaration for xmlns:abc="http://example.org/abc").</xs:documentation>
               </xs:annotation>
             </xs:attribute>
             <xs:attribute name="useGlobalSRSName" type="xs:boolean">
               <xs:annotation>
-                <xs:documentation>TBD: what is the purpose of this XML attribute?</xs:documentation>
+                <xs:documentation>When set to true, it means that the SRS defined by a srsName attribute found in the global gml:Envelope element applies to all features of the GML file.</xs:documentation>
               </xs:annotation>
             </xs:attribute>
           </xs:complexType>
