@@ -1537,6 +1537,8 @@ CPLErr RawDataset::IRasterIO( GDALRWFlag eRWFlag,
 {
     const char* pszInterleave = nullptr;
 
+    this->ClearCachedConfigOption();
+
     // The default GDALDataset::IRasterIO() implementation would go to
     // BlockBasedRasterIO if the dataset is interleaved. However if the
     // access pattern is compatible with DirectIO() we don't want to go
