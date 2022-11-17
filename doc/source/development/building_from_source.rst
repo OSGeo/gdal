@@ -1,62 +1,74 @@
-.. _build_hints:
+.. include:: ../substitutions.rst
+
+.. _building_from_source:
 
 ================================================================================
-Build hints (cmake)
+Building GDAL from source
 ================================================================================
 
-Build requirements
+CMake (GDAL versions >= 3.5.0)
 --------------------------------------------------------------------------------
 
-The minimum requirements are:
-
-- CMake >= 3.10, and an associated build system (make, ninja, Visual Studio, etc.)
-- C99 compiler
-- C++11 compiler
-- PROJ >= 6.0
-
-But a number of optional libraries are also strongly recommended for most builds:
-SQLite3, expat, libcurl, zlib, libtiff, libgeotiff, libpng, libjpeg, etc.
-
-CMake
---------------------------------------------------------------------------------
-
+Since version 3.5.0, GDAL can be built using the CMake build system.
 With the CMake build system you can compile and install GDAL on more or less any
-platform. After unpacking the source distribution archive step into the source-
-tree::
+platform. After unpacking the source distribution archive (or cloning the repository)
+step into the source tree:
+
+.. code-block:: bash
 
     cd gdal-{VERSION}
 
-Create a build directory and step into it::
+Create a build directory and step into it:
+
+.. code-block:: bash
 
     mkdir build
     cd build
 
-From the build directory you can now configure CMake, build and install the binaries::
+From the build directory you can now configure CMake, build and install the binaries:
+
+.. code-block:: bash
 
     cmake ..
     cmake --build .
     cmake --build . --target install
 
-On Windows, one may need to specify generator::
+.. note::
+
+    For a minimal build, add these options to the initial ``cmake`` command: ``-DGDAL_BUILD_OPTIONAL_DRIVERS=OFF -DOGR_BUILD_OPTIONAL_DRIVERS=OFF``.
+    To enable specific drivers, add ``-DGDAL_ENABLE_DRIVER_<driver_name>=ON`` or ``-DOGR_ENABLE_DRIVER_<driver_name>=ON``.
+    See :ref:`selection-of-drivers` for more details.
+
+On Windows, one may need to specify generator:
+
+.. code-block:: bash
 
     cmake -G "Visual Studio 15 2017" ..
 
 If a dependency is installed in a custom location, specify the
-paths to the include directory and the library::
+paths to the include directory and the library:
+
+.. code-block:: bash
 
     cmake -DSQLITE3_INCLUDE_DIR=/opt/SQLite/include -DSQLITE3_LIBRARY=/opt/SQLite/lib/libsqlite3.so ..
 
-Alternatively, a custom prefix can be specified::
+Alternatively, a custom prefix can be specified:
+
+.. code-block:: bash
 
     cmake -DCMAKE_PREFIX_PATH=/opt/SQLite ..
 
-You can unset existing cached variables, by using the -U switch of cmake, for example with wildcards::
+You can unset existing cached variables, by using the -U switch of cmake, for example with wildcards:
+
+.. code-block:: bash
 
     cmake .. -UGDAL_USE_*
 
 You can assemble dependency settings in a file ``ConfigUser.cmake`` and use it with the -C option.
 The file contains set() commands that use the CACHE option. You can set for example a different name
-for the shared lib, *e.g.* ``set (GDAL_LIB_OUTPUT_NAME gdal_x64 CACHE STRING "" FORCE)``::
+for the shared lib, *e.g.* ``set (GDAL_LIB_OUTPUT_NAME gdal_x64 CACHE STRING "" FORCE)``:
+
+.. code-block:: bash
 
     cmake .. -C ConfigUser.cmake
 
@@ -1833,6 +1845,8 @@ with it). It is used by the internal libtiff library or the :ref:`raster.zarr` d
     Control whether to use ZSTD. Defaults to ON when ZSTD is found.
 
 
+.. _selection-of-drivers:
+
 Selection of drivers
 ++++++++++++++++++++
 
@@ -2153,81 +2167,15 @@ Driver specific options
     into the build tree and build the needed files from it into the driver.
 
 
-Building on Windows with Conda dependencies and Visual Studio
---------------------------------------------------------------------------------
-
-It is less appropriate for Debug builds of GDAL, than other methods, such as using vcpkg.
-
-Install git
-+++++++++++
-
-Install `git <https://git-scm.com/download/win>`_
-
-Install miniconda
-+++++++++++++++++
-
-Install `miniconda <https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe>`_
-
-Install GDAL dependencies
-+++++++++++++++++++++++++
-
-Start a Conda enabled console and assuming there is a c:\\dev directory
-
-::
-
-    cd c:\dev
-    conda create --name gdal
-    conda activate gdal
-    conda install --yes --quiet curl libiconv icu git python=3.7 swig numpy pytest zlib clcache
-    conda install --yes --quiet -c conda-forge compilers
-    conda install --yes --quiet -c conda-forge \
-        cmake proj geos hdf4 hdf5 \
-        libnetcdf openjpeg poppler libtiff libpng xerces-c expat libxml2 kealib json-c \
-        cfitsio freexl geotiff jpeg libpq libspatialite libwebp-base pcre postgresql \
-        sqlite tiledb zstd charls cryptopp cgal librttopo libkml openssl xz
-
-.. note::
-
-    The ``compilers`` package will install ``vs2017_win-64`` (at time of writing)
-    to set the appropriate environment for cmake to pick up. It is also possible
-    to use the ``vs2019_win-64`` package if Visual Studio 2019 is to be used.
-
-Checkout GDAL sources
-+++++++++++++++++++++
-
-::
-
-    cd c:\dev
-    git clone https://github.com/OSGeo/gdal.git
-
-Build GDAL
-++++++++++
-
-From a Conda enabled console
-
-::
-
-    conda activate gdal
-    cd c:\dev\gdal
-    cmake -S . -B build -DCMAKE_PREFIX_PATH:FILEPATH="%CONDA_PREFIX%" \
-                        -DCMAKE_C_COMPILER_LAUNCHER=clcache
-                        -DCMAKE_CXX_COMPILER_LAUNCHER=clcache
-    cmake --build build --config Release -j 8
-
-.. only:: FIXME
-
-    Run GDAL tests
-    ++++++++++++++
-
-    ::
-
-        cd c:\dev\GDAL
-        cd _build.vs2019
-        ctest -V --build-config Release
-
 Cross-compiling for Android
 +++++++++++++++++++++++++++
 
 First refer to https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html#cross-compiling-for-android
 and to https://github.com/OSGeo/gdal/blob/master/.github/workflows/android_cmake/start.sh for
 an example of a build script to cross-compile from Ubuntu.
+
+Autoconf/nmake (GDAL versions < 3.5.0)
+--------------------------------------------------------------------------------
+
+See https://trac.osgeo.org/gdal/wiki/BuildHints for hints for GDAL < 3.5
+autoconf and nmake build systems.

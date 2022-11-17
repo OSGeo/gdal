@@ -4,7 +4,9 @@
 How to contribute?
 ================================================================================
 
-.. toctree::
+   There are several ways for users to contribute to GDAL:
 
-   developer
-   rst_style
+   * :ref:`contributing code<development>` (bug fixes or enhancements)
+   * filing high-quality `bug reports <https://github.com/osgeo/gdal/issues>`_
+   * improving :ref:`documentation<dev_documentation>`
+   * :ref:`financial sponsorship<sponsors>`

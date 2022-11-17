@@ -198,7 +198,7 @@ Past Releases
 Development Source
 ------------------------------------------------------------------------------
 
-The main repository for GDAL is located on github at
+The main repository for GDAL is located on GitHub at
 https://github.com/OSGeo/GDAL.
 
 You can obtain a copy of the active source code by issuing the following
@@ -209,25 +209,7 @@ command
     git clone https://github.com/OSGeo/GDAL.git
 
 
-Build requirements
-..................
-
-To build GDAL 3 or later, you need *at a minimum* a C++11 compatible compiler, and
-`PROJ 6 or later <https://proj.org>`_.
-This will only give you a minimum build which will lack a lot of drivers.
-Consult :ref:`raster_drivers` and :ref:`vector_drivers` pages for additional optional
-dependencies.
-
-
-Build instructions
-..................
-
-From GDAL 3.5, :ref:`CMake-based build <build_hints>` is available, and required
-since GDAL 3.6
-
-See https://trac.osgeo.org/gdal/wiki/BuildHints for hints for GDAL < 3.5
-autoconf and nmake build systems.
-
+Additional information is available about :ref:`build_requirements` and :ref:`building_from_source`.
 
 Binaries
 ------------------------------------------------------------------------------
@@ -330,8 +312,3 @@ Images with nightly builds of GDAL master and tagged releases are available at
 
 Information on the content of the different configurations can be found at
 `https://github.com/OSGeo/gdal/tree/master/docker <https://github.com/OSGeo/gdal/tree/master/docker>`_
-
-.. toctree::
-   :maxdepth: 0
-
-   build_hints
