@@ -47,6 +47,8 @@
 
 #ifdef NEED_12_BIT_NAMES
 #define jpeg_std_message_table	jpeg_std_message_table_12
+#elif defined(RENAME_INTERNAL_LIBJPEG_SYMBOLS)
+#define jpeg_std_message_table	gdal_jpeg_std_message_table
 #endif
 
 #define JMESSAGE(code,string)	string ,
