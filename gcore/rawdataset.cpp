@@ -984,7 +984,7 @@ int RawRasterBand::CanUseDirectIO(int /* nXOff */,
     }
 
     result = CPLTestBool(pszGDAL_ONE_BIG_READ);
-    cachedCPLOneBigReadOption = std::make_pair(true, !result ? 1 : 0);
+    cachedCPLOneBigReadOption = std::make_pair(true, result ? 1 : 0);
 
     return result;
 }
