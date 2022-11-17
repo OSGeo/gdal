@@ -65,6 +65,7 @@
 #include "ogrsf_frmts.h"
 #include "ogrunionlayer.h"
 #include "ogr_swq.h"
+#include "rawdataset.h"
 
 #include "../frmts/derived/derivedlist.h"
 
@@ -1967,6 +1968,10 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
     const char *pszInterleave = nullptr;
 
     CPLAssert(nullptr != pData);
+
+    RawDataset* rawDataset = dynamic_cast<RawDataset*>(this);
+    if (rawDataset != nullptr)
+        rawDataset->resetCache();
 
     const bool bHasSubpixelShift =
        psExtraArg->bFloatingPointWindowValidity &&

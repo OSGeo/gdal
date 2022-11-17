@@ -61,9 +61,11 @@ class CPL_DLL RawDataset : public GDALPamDataset
          virtual ~RawDataset() = 0;
 
     bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout&) override;
-
+    void resetCache(void) {this->cachedCPLOneBigReadOption = std::make_pair(false, 0);}
   private:
     CPL_DISALLOW_COPY_ASSIGN(RawDataset)
+  protected:
+    std::pair<bool, int> cachedCPLOneBigReadOption;
 };
 
 /************************************************************************/

@@ -945,6 +945,7 @@ int RawRasterBand::CanUseDirectIO(int /* nXOff */,
                                   GDALDataType /* eBufType*/,
                                   GDALRasterIOExtraArg* psExtraArg)
 {
+   bool result = FALSE;
 
     // Use direct IO without caching if:
     //
@@ -962,10 +963,17 @@ int RawRasterBand::CanUseDirectIO(int /* nXOff */,
         return FALSE;
     }
 
+    RawDataset* rawDataset = dynamic_cast<RawDataset*>(this->GetDataset());
+    std::pair<bool, int> dummy;
+    std::pair<bool, int>& cachedCPLOneBigReadOption = !rawDataset ? dummy : rawDataset->cachedCPLOneBigReadOption;
     const char *pszGDAL_ONE_BIG_READ =
-        CPLGetConfigOption("GDAL_ONE_BIG_READ", nullptr);
+      !cachedCPLOneBigReadOption.first ? CPLGetConfigOption("GDAL_ONE_BIG_READ", nullptr) :
+      (cachedCPLOneBigReadOption.second == 0) ? "0" :
+      (cachedCPLOneBigReadOption.second == 1) ? "1" :
+      nullptr;
     if ( pszGDAL_ONE_BIG_READ == nullptr )
     {
+        cachedCPLOneBigReadOption = std::make_pair(true, -1);
         if ( nLineSize < 50000
              || nXSize > nLineSize / nPixelOffset / 5 * 2
              || IsSignificantNumberOfLinesLoaded(nYOff, nYSize) )
@@ -975,7 +983,10 @@ int RawRasterBand::CanUseDirectIO(int /* nXOff */,
         return TRUE;
     }
 
-    return CPLTestBool(pszGDAL_ONE_BIG_READ);
+    result = CPLTestBool(pszGDAL_ONE_BIG_READ);
+    cachedCPLOneBigReadOption = std::make_pair(true, !result ? 1 : 0);
+
+    return result;
 }
 
 /************************************************************************/
@@ -1499,7 +1510,7 @@ CPLVirtualMem  *RawRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
 /*                            RawDataset()                              */
 /************************************************************************/
 
-RawDataset::RawDataset() {}
+RawDataset::RawDataset():cachedCPLOneBigReadOption(std::make_pair(false, 0)) {}
 
 /************************************************************************/
 /*                           ~RawDataset()                              */
