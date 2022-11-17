@@ -863,6 +863,9 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
             case GDT_Byte:
                 stacDataType = "uint8";
                 break;
+            case GDT_Int8:
+                stacDataType = "int8";
+                break;
             case GDT_UInt16:
                 stacDataType = "uint16";
                 break;

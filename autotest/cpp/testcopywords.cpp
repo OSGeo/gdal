@@ -117,6 +117,8 @@ template <class InType, class ConstantType> void FromR_2(GDALDataType intype, Co
 {
     if (outtype == GDT_Byte)
         Test<InType,GByte,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine);
+    else if (outtype == GDT_Int8)
+        Test<InType,GInt8,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine);
     else if (outtype == GDT_Int16)
         Test<InType,GInt16,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine);
     else if (outtype == GDT_UInt16)
@@ -148,6 +150,8 @@ void FromR(GDALDataType intype, ConstantType inval, ConstantType invali, GDALDat
 {
     if (intype == GDT_Byte)
         FromR_2<GByte,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine);
+    else if (intype == GDT_Int8)
+        FromR_2<GInt8,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine);
     else if (intype == GDT_Int16)
         FromR_2<GInt16,ConstantType>(intype, inval, invali, outtype, outval, outvali, numLine);
     else if (intype == GDT_UInt16)
@@ -194,7 +198,8 @@ static void check_GDT_Byte()
     {
         FROM_R(GDT_Byte, 0, outtype, 0);
         FROM_R(GDT_Byte, 127, outtype, 127);
-        FROM_R(GDT_Byte, 255, outtype, 255);
+        if( outtype != GDT_Int8 )
+            FROM_R(GDT_Byte, 255, outtype, 255);
     }
 
     for(int i=0;i<17;i++)
@@ -220,6 +225,44 @@ static void check_GDT_Byte()
         AssertRes(GDT_Byte, i, GDT_Float32, i, ((float*)pOut)[i], __LINE__);
     }
 
+}
+
+static void check_GDT_Int8()
+{
+    /* GDT_Int8 */
+    FROM_R(GDT_Int8, -128, GDT_Byte, 0); /* clamp */
+    FROM_R(GDT_Int8, -128, GDT_Int8, -128); /* clamp */
+    FROM_R(GDT_Int8, -128, GDT_Int16, -128);
+    FROM_R(GDT_Int8, -128, GDT_UInt16, 0); /* clamp */
+    FROM_R(GDT_Int8, -128, GDT_Int32, -128);
+    FROM_R(GDT_Int8, -128, GDT_UInt32, 0); /* clamp */
+    FROM_R(GDT_Int8, -128, GDT_Int64, -128);
+    FROM_R(GDT_Int8, -128, GDT_UInt64, 0); /* clamp */
+    FROM_R(GDT_Int8, -128, GDT_Float32, -128);
+    FROM_R(GDT_Int8, -128, GDT_Float64, -128);
+    FROM_R(GDT_Int8, -128, GDT_CInt16, -128);
+    FROM_R(GDT_Int8, -128, GDT_CInt32, -128);
+    FROM_R(GDT_Int8, -128, GDT_CFloat32, -128);
+    FROM_R(GDT_Int8, -128, GDT_CFloat64, -128);
+    for(GDALDataType outtype=GDT_Byte; outtype< GDT_TypeCount;outtype = (GDALDataType)(outtype + 1))
+    {
+        FROM_R(GDT_Int8, 127, outtype, 127);
+    }
+
+    FROM_R(GDT_Int8, 127, GDT_Byte, 127);
+    FROM_R(GDT_Int8, 127, GDT_Int8, 127);
+    FROM_R(GDT_Int8, 127, GDT_Int16, 127);
+    FROM_R(GDT_Int8, 127, GDT_UInt16, 127);
+    FROM_R(GDT_Int8, 127, GDT_Int32, 127);
+    FROM_R(GDT_Int8, 127, GDT_UInt32, 127);
+    FROM_R(GDT_Int8, 127, GDT_Int64, 127);
+    FROM_R(GDT_Int8, 127, GDT_UInt64, 127);
+    FROM_R(GDT_Int8, 127, GDT_Float32, 127);
+    FROM_R(GDT_Int8, 127, GDT_Float64, 127);
+    FROM_R(GDT_Int8, 127, GDT_CInt16, 127);
+    FROM_R(GDT_Int8, 127, GDT_CInt32, 127);
+    FROM_R(GDT_Int8, 127, GDT_CFloat32, 127);
+    FROM_R(GDT_Int8, 127, GDT_CFloat64, 127);
 }
 
 static void check_GDT_Int16()
@@ -418,13 +461,13 @@ static void check_GDT_Float32and64()
             }
             else
             {
-                FROM_R_F(intype, 127.1, outtype, 127);
-                FROM_R_F(intype, 127.9, outtype, 128);
+                FROM_R_F(intype, 125.1, outtype, 125);
+                FROM_R_F(intype, 125.9, outtype, 126);
 
                 FROM_R_F(intype, 0.4, outtype, 0);
                 FROM_R_F(intype, 0.5, outtype, 1); /* We could argue how to do this rounding */
                 FROM_R_F(intype, 0.6, outtype, 1);
-                FROM_R_F(intype, 127.5, outtype, 128); /* We could argue how to do this rounding */
+                FROM_R_F(intype, 126.5, outtype, 127); /* We could argue how to do this rounding */
 
                 if (!IS_UNSIGNED(outtype))
                 {
@@ -550,8 +593,8 @@ static void check_GDT_CFloat32and64()
             }
             else
             {
-                FROM_C_F(intype, 127.1, 150.9, outtype, 127, 151);
-                FROM_C_F(intype, 127.9, 150.1, outtype, 128, 150);
+                FROM_C_F(intype, 126.1, 150.9, outtype, 126, 151);
+                FROM_C_F(intype, 126.9, 150.1, outtype, 127, 150);
                 if (!IS_UNSIGNED(outtype))
                 {
                     FROM_C_F(intype, -125.9, -127.1, outtype, -126, -127);
@@ -581,7 +624,7 @@ static void check_GDT_CFloat32and64()
     }
 }
 
-template<class Tin, class Tout> 
+template<class Tin, class Tout>
 void CheckPackedGeneric(GDALDataType eIn, GDALDataType eOut)
 {
     const int N = 64+7;
@@ -602,7 +645,7 @@ void CheckPackedGeneric(GDALDataType eIn, GDALDataType eOut)
     }
 }
 
-template<class Tin, class Tout> 
+template<class Tin, class Tout>
 void CheckPacked(GDALDataType eIn, GDALDataType eOut)
 {
     CheckPackedGeneric<Tin,Tout>(eIn, eOut);
@@ -650,12 +693,13 @@ template<> void CheckPacked<GUInt16,GInt16>(GDALDataType eIn, GDALDataType eOut)
     }
 }
 
-template<class Tin> 
+template<class Tin>
 void CheckPacked(GDALDataType eIn, GDALDataType eOut)
 {
     switch(eOut)
     {
         case GDT_Byte: CheckPacked<Tin, GByte>(eIn, eOut); break;
+        case GDT_Int8: CheckPacked<Tin, GInt8>(eIn, eOut); break;
         case GDT_UInt16: CheckPacked<Tin, GUInt16>(eIn, eOut); break;
         case GDT_Int16: CheckPacked<Tin, GInt16>(eIn, eOut); break;
         case GDT_UInt32: CheckPacked<Tin, GUInt32>(eIn, eOut); break;
@@ -676,6 +720,7 @@ static void CheckPacked(GDALDataType eIn, GDALDataType eOut)
     switch(eIn)
     {
         case GDT_Byte: CheckPacked<GByte>(eIn, eOut); break;
+        case GDT_Int8: CheckPacked<GInt8>(eIn, eOut); break;
         case GDT_UInt16: CheckPacked<GUInt16>(eIn, eOut); break;
         case GDT_Int16: CheckPacked<GInt16>(eIn, eOut); break;
         case GDT_UInt32: CheckPacked<GUInt32>(eIn, eOut); break;
@@ -696,6 +741,7 @@ int main(int /* argc */, char* /* argv */ [])
     pOut = (GByte*)malloc(256);
 
     check_GDT_Byte();
+    check_GDT_Int8();
     check_GDT_Int16();
     check_GDT_UInt16();
     check_GDT_Int32();

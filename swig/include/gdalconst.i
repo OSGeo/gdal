@@ -52,6 +52,7 @@
 // GDALDataType
 %constant GDT_Unknown   = GDT_Unknown;
 %constant GDT_Byte      = GDT_Byte;
+%constant GDT_Int8      = GDT_Int8;
 %constant GDT_UInt16    = GDT_UInt16;
 %constant GDT_Int16     = GDT_Int16;
 %constant GDT_UInt32    = GDT_UInt32;

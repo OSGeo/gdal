@@ -3946,6 +3946,8 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
                 return DFNT_INT16;
             case GDT_Byte:
                 return DFNT_UINT8;
+            case GDT_Int8:
+                return DFNT_INT8;
             default:
                 CPLError(CE_Warning, CPLE_NotSupported,
                          "Datatype %s not supported. Defauting to Byte",
@@ -4035,7 +4037,7 @@ void GDALRegister_HDF4Image()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "HDF4 Dataset" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/hdf4.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                               "Byte Int16 UInt16 Int32 UInt32 "
+                               "Byte Int8 Int16 UInt16 Int32 UInt32 "
                                // "Int64 UInt64 "
                                "Float32 Float64" );
     poDriver->SetMetadataItem(

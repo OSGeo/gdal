@@ -816,13 +816,8 @@ bool GDALGroup::CopyFrom( const std::shared_ptr<GDALGroup>& poDstRootGroup,
                         {
                             const char* pszDataType = pszOption + strlen("AUTOSCALE_DATA_TYPE=");
                             eAutoScaleType = GDALGetDataTypeByName(pszDataType);
-                            if( eAutoScaleType != GDT_Byte &&
-                                eAutoScaleType != GDT_UInt16 &&
-                                eAutoScaleType != GDT_Int16 &&
-                                eAutoScaleType != GDT_UInt32 &&
-                                eAutoScaleType != GDT_Int32 &&
-                                eAutoScaleType != GDT_UInt64 &&
-                                eAutoScaleType != GDT_Int64 )
+                            if( GDALDataTypeIsComplex(eAutoScaleType) ||
+                                GDALDataTypeIsFloating(eAutoScaleType) )
                             {
                                 CPLError(CE_Failure, CPLE_NotSupported,
                                          "Unsupported value for AUTOSCALE_DATA_TYPE");
@@ -878,13 +873,21 @@ bool GDALGroup::CopyFrom( const std::shared_ptr<GDALGroup>& poDstRootGroup,
                 switch( eAutoScaleType )
                 {
                     case GDT_Byte:   setDTMinMax(GByte); break;
+                    case GDT_Int8:   setDTMinMax(GInt8); break;
                     case GDT_UInt16: setDTMinMax(GUInt16); break;
                     case GDT_Int16:  setDTMinMax(GInt16); break;
                     case GDT_UInt32: setDTMinMax(GUInt32); break;
                     case GDT_Int32:  setDTMinMax(GInt32); break;
                     case GDT_UInt64: setDTMinMax(std::uint64_t); break;
                     case GDT_Int64:  setDTMinMax(std::int64_t); break;
-                    default:
+                    case GDT_Float32:
+                    case GDT_Float64:
+                    case GDT_Unknown:
+                    case GDT_CInt16:
+                    case GDT_CInt32:
+                    case GDT_CFloat32:
+                    case GDT_CFloat64:
+                    case GDT_TypeCount:
                         CPLAssert(false);
                 }
 
@@ -1333,6 +1336,9 @@ bool GDALExtendedDataType::CopyValue(const void* pSrc,
             case GDT_Unknown: break;
             case GDT_Byte:
                 str = CPLSPrintf("%d", *static_cast<const GByte*>(pSrc));
+                break;
+            case GDT_Int8:
+                str = CPLSPrintf("%d", *static_cast<const GInt8*>(pSrc));
                 break;
             case GDT_UInt16:
                 str = CPLSPrintf("%d", *static_cast<const GUInt16*>(pSrc));
@@ -6118,6 +6124,15 @@ lbl_return_to_caller:
                                 bHasValidMax, dfValidMax);
             break;
 
+        case GDT_Int8:
+            ReadInternal<GInt8>(count, bufferStride, bufferDataType, pDstBuffer,
+                                pTempBuffer, oTmpBufferDT, tmpBufferStrideVector,
+                                bHasMissingValue, dfMissingValue,
+                                bHasFillValue, dfFillValue,
+                                bHasValidMin, dfValidMin,
+                                bHasValidMax, dfValidMax);
+            break;
+
         case GDT_UInt16:
             ReadInternal<GUInt16>(count, bufferStride, bufferDataType, pDstBuffer,
                                 pTempBuffer, oTmpBufferDT, tmpBufferStrideVector,
@@ -6181,8 +6196,7 @@ lbl_return_to_caller:
                                 bHasValidMax, dfValidMax);
             break;
 
-        default:
-            CPLAssert(oTmpBufferDT.GetNumericDataType() == GDT_Float64);
+        case GDT_Float64:
             ReadInternal<double>(count, bufferStride, bufferDataType, pDstBuffer,
                                 pTempBuffer, oTmpBufferDT, tmpBufferStrideVector,
                                 bHasMissingValue, dfMissingValue,
@@ -6190,7 +6204,14 @@ lbl_return_to_caller:
                                 bHasValidMin, dfValidMin,
                                 bHasValidMax, dfValidMax);
             break;
-
+        case GDT_Unknown:
+        case GDT_CInt16:
+        case GDT_CInt32:
+        case GDT_CFloat32:
+        case GDT_CFloat64:
+        case GDT_TypeCount:
+            CPLAssert(false);
+            break;
     }
 
     VSIFree(pTempBuffer);

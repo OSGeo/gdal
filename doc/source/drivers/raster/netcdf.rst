@@ -431,6 +431,8 @@ Creation Options
 
 -  **PIXELTYPE=[DEFAULT/SIGNEDBYTE]**: By setting this to SIGNEDBYTE, a
    new Byte file can be forced to be written as signed byte.
+   Starting with GDAL 3.7, this option is deprecated and Int8 should rather
+   be used.
 
 -  **WRITE_GDAL_VERSION=[YES/NO]**: (GDAL >= 3.5.0)
    Define if a "GDAL" text global attribute should be added on file creation

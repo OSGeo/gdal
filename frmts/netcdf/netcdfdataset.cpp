@@ -703,9 +703,7 @@ netCDFRasterBand::netCDFRasterBand( const netCDFRasterBand::CONSTRUCTOR_OPEN&,
 
         if( bSignedData )
         {
-            // set PIXELTYPE=SIGNEDBYTE
-            // See http://trac.osgeo.org/gdal/wiki/rfc14_imagestructure
-            GDALPamRasterBand::SetMetadataItem("PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE");
+            eDataType = GDT_Int8;
         }
         else if( dfNoData < 0 )
         {
@@ -974,9 +972,12 @@ netCDFRasterBand::netCDFRasterBand( const netCDFRasterBand::CONSTRUCTOR_CREATE&,
             nc_datatype = NC_BYTE;
 #ifdef NETCDF_HAS_NC4
             // NC_UBYTE (unsigned byte) is only available for NC4.
-            if( !bSignedData && (poNCDFDS->eFormat == NCDF_FORMAT_NC4) )
+            if( poNCDFDS->eFormat == NCDF_FORMAT_NC4 )
                 nc_datatype = NC_UBYTE;
 #endif
+            break;
+        case GDT_Int8:
+            nc_datatype = NC_BYTE;
             break;
         case GDT_Int16:
             nc_datatype = NC_SHORT;
@@ -1100,7 +1101,7 @@ netCDFRasterBand::netCDFRasterBand( const netCDFRasterBand::CONSTRUCTOR_CREATE&,
     }
 
     // For Byte data add signed/unsigned info.
-    if( eDataType == GDT_Byte )
+    if( eDataType == GDT_Byte || eDataType == GDT_Int8 )
     {
         if( bDefineVar )
         {
@@ -1114,7 +1115,7 @@ netCDFRasterBand::netCDFRasterBand( const netCDFRasterBand::CONSTRUCTOR_CREATE&,
                          "adding valid_range attributes for Byte Band");
                 short l_adfValidRange[2] = { 0, 0 };
                 int status;
-                if( bSignedData )
+                if( bSignedData || eDataType == GDT_Int8 )
                 {
                     l_adfValidRange[0] = -128;
                     l_adfValidRange[1] = 127;
@@ -1134,10 +1135,6 @@ netCDFRasterBand::netCDFRasterBand( const netCDFRasterBand::CONSTRUCTOR_CREATE&,
                 NCDF_ERR(status);
             }
         }
-        // For unsigned byte set PIXELTYPE=SIGNEDBYTE.
-        // See http://trac.osgeo.org/gdal/wiki/rfc14_imagestructure
-        if( bSignedData )
-            GDALPamRasterBand::SetMetadataItem("PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE");
     }
 
     if( nc_datatype != NC_BYTE &&
@@ -2407,6 +2404,14 @@ bool netCDFRasterBand::FetchNetcdfChunk( size_t xstart,
                                          nYChunkSize, false);
         }
     }
+    else if( eDataType == GDT_Int8 )
+    {
+        status = nc_get_vara_schar(cdfid, nZId, start, edge,
+                                   static_cast<signed char *>(pImageNC));
+        if( status == NC_NOERR )
+            CheckData<signed char>(pImage, pImageNC, edge[nBandXPos],
+                                   nYChunkSize, false);
+    }
     else if( nc_datatype == NC_SHORT )
     {
         status = nc_get_vara_short(cdfid, nZId, start, edge,
@@ -2758,6 +2763,11 @@ CPLErr netCDFRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
         else
             status = nc_put_vara_uchar(cdfid, nZId, start, edge,
                                        static_cast<unsigned char *>(pImage));
+    }
+    else if( eDataType == GDT_Int8 )
+    {
+        status = nc_put_vara_schar(cdfid, nZId, start, edge,
+                                   static_cast<signed char *>(pImage));
     }
     else if( nc_datatype == NC_SHORT )
     {
@@ -10097,6 +10107,12 @@ netCDFDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
             eErr = NCDFCopyBand<GByte>(poSrcBand, poDstBand, nXSize, nYSize,
                                        GDALScaledProgress, pScaledProgress);
         }
+        else if( eDT == GDT_Int8 )
+        {
+            CPLDebug("GDAL_netCDF", "GInt8 Band#%d", iBand);
+            eErr = NCDFCopyBand<GInt8>(poSrcBand, poDstBand, nXSize, nYSize,
+                                       GDALScaledProgress, pScaledProgress);
+        }
         else if( eDT == GDT_UInt16 )
         {
             CPLDebug("GDAL_netCDF", "GUInt16 Band#%d", iBand);
@@ -10455,9 +10471,9 @@ void GDALRegister_netCDF()
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "nc");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
 #ifdef NETCDF_HAS_NC4
-                              "Byte UInt16 Int16 UInt32 Int32 Int64 UInt64 "
+                              "Byte Int8 UInt16 Int16 UInt32 Int32 Int64 UInt64 "
 #else
-                              "Byte Int16 Int32 "
+                              "Byte Int8 Int16 Int32 "
 #endif
                               "Float32 Float64 "
                               "CInt16 CInt32 CFloat32 CFloat64" );
@@ -10493,7 +10509,7 @@ void GDALRegister_netCDF()
 "     <Value>float</Value>"
 "     <Value>double</Value>"
 "   </Option>"
-"   <Option name='PIXELTYPE' type='string-select' scope='raster' description='only used in Create()'>"
+"   <Option name='PIXELTYPE' type='string-select' scope='raster' description='(deprecated, use Int8 datatype) only used in Create()'>"
 "       <Value>DEFAULT</Value>"
 "       <Value>SIGNEDBYTE</Value>"
 "   </Option>"

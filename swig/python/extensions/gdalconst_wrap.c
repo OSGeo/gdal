@@ -3519,6 +3519,7 @@ SWIG_init(void) {
   
   SWIG_Python_SetConstant(d, "GDT_Unknown",SWIG_From_int((int)(GDT_Unknown)));
   SWIG_Python_SetConstant(d, "GDT_Byte",SWIG_From_int((int)(GDT_Byte)));
+  SWIG_Python_SetConstant(d, "GDT_Int8",SWIG_From_int((int)(GDT_Int8)));
   SWIG_Python_SetConstant(d, "GDT_UInt16",SWIG_From_int((int)(GDT_UInt16)));
   SWIG_Python_SetConstant(d, "GDT_Int16",SWIG_From_int((int)(GDT_Int16)));
   SWIG_Python_SetConstant(d, "GDT_UInt32",SWIG_From_int((int)(GDT_UInt32)));

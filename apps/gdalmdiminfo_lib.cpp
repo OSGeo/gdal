@@ -153,6 +153,9 @@ static void DumpValue(CPLJSonStreamingWriter& serializer,
         case GDT_Byte:
             DumpValue<GByte>(serializer, bytes);
             break;
+        case GDT_Int8:
+            DumpValue<GInt8>(serializer, bytes);
+            break;
         case GDT_Int16:
             DumpValue<GInt16>(serializer, bytes);
             break;
@@ -189,7 +192,8 @@ static void DumpValue(CPLJSonStreamingWriter& serializer,
         case GDT_CFloat64:
             DumpComplexValue<double>(serializer, bytes);
             break;
-        default:
+        case GDT_Unknown:
+        case GDT_TypeCount:
             CPLAssert(false);
             break;
     }

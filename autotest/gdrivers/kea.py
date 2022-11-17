@@ -59,12 +59,11 @@ def test_kea_1():
 # Test CreateCopy() for various data types
 
 
-def test_kea_2():
-    if gdaltest.kea_driver is None:
-        pytest.skip()
-
-    src_files = [
+@pytest.mark.parametrize(
+    "src_file",
+    [
         "byte.tif",
+        "gtiff/int8.tif",
         "int16.tif",
         "../../gcore/data/uint16.tif",
         "../../gcore/data/int32.tif",
@@ -73,23 +72,27 @@ def test_kea_2():
         "../../gcore/data/uint64.tif",
         "../../gcore/data/float32.tif",
         "../../gcore/data/float64.tif",
-    ]
+    ],
+)
+def test_kea_2(src_file):
+    if gdaltest.kea_driver is None:
+        pytest.skip()
 
-    for src_file in src_files:
-        tst = gdaltest.GDALTest("KEA", src_file, 1, 4672)
-        tst.testCreateCopy(check_minmax=1)
+    tst = gdaltest.GDALTest(
+        "KEA", src_file, 1, 4672 if src_file != "gtiff/int8.tif" else 1046
+    )
+    tst.testCreateCopy(check_minmax=1, new_filename="tmp/test.kea")
 
 
 ###############################################################################
 # Test Create() for various data types
 
 
-def test_kea_3():
-    if gdaltest.kea_driver is None:
-        pytest.skip()
-
-    src_files = [
+@pytest.mark.parametrize(
+    "src_file",
+    [
         "byte.tif",
+        "gtiff/int8.tif",
         "int16.tif",
         "../../gcore/data/uint16.tif",
         "../../gcore/data/int32.tif",
@@ -98,11 +101,16 @@ def test_kea_3():
         "../../gcore/data/uint64.tif",
         "../../gcore/data/float32.tif",
         "../../gcore/data/float64.tif",
-    ]
+    ],
+)
+def test_kea_3(src_file):
+    if gdaltest.kea_driver is None:
+        pytest.skip()
 
-    for src_file in src_files:
-        tst = gdaltest.GDALTest("KEA", src_file, 1, 4672)
-        tst.testCreate(out_bands=1, check_minmax=1)
+    tst = gdaltest.GDALTest(
+        "KEA", src_file, 1, 4672 if src_file != "gtiff/int8.tif" else 1046
+    )
+    tst.testCreate(out_bands=1, check_minmax=1, new_filename="tmp/test.kea")
 
 
 ###############################################################################

@@ -102,8 +102,6 @@ static void GenerateTiles(const std::string& filename,
             GDALRasterBand* poBand = poSrcDs->GetRasterBand(band);
             int hasNoData = 0;
             const double noDataValue = poBand->GetNoDataValue(&hasNoData);
-            const char* pixelType = poBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
-            const bool isSigned = ( pixelType && (strcmp(pixelType, "SIGNEDBYTE") == 0) );
 
             int yOffset = ry + row * rowOffset;
             CPLErr errTest =
@@ -123,12 +121,7 @@ static void GenerateTiles(const std::string& filename,
                     for (int j = 0; j < dxsize; j++)
                     {
                         double v = pabyScanline[j];
-                        double tmpv = v;
-                        if (isSigned)
-                        {
-                            tmpv -= 128;
-                        }
-                        if (tmpv == noDataValue || bReadFailed)
+                        if (v == noDataValue || bReadFailed)
                         {
                             hadnoData[j] = true;
                         }

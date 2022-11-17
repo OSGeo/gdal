@@ -60,6 +60,7 @@ AlphaList = list(string.ascii_letters)
 # set up some default nodatavalues for each datatype
 DefaultNDVLookup = {
     gdal.GDT_Byte: 255,
+    gdal.GDT_Int8: None,
     gdal.GDT_UInt16: 65535,
     gdal.GDT_Int16: -32768,
     gdal.GDT_UInt32: 4294967293,

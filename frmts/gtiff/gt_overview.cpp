@@ -358,6 +358,11 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
             nBandFormat = SAMPLEFORMAT_UINT;
             break;
 
+          case GDT_Int8:
+            nBandBits = 8;
+            nBandFormat = SAMPLEFORMAT_INT;
+            break;
+
           case GDT_UInt16:
             nBandBits = 16;
             nBandFormat = SAMPLEFORMAT_UINT;
@@ -418,7 +423,8 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
             nBandFormat = SAMPLEFORMAT_COMPLEXIEEEFP;
             break;
 
-          default:
+          case GDT_Unknown:
+          case GDT_TypeCount:
             CPLAssert( false );
             return CE_Failure;
         }

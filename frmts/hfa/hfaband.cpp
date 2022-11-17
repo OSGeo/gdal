@@ -736,8 +736,8 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
             }
             else if( eDataType == EPT_s8 )
             {
-                ((GByte *)pabyDest)[nPixelsOutput] =
-                    static_cast<GByte>(nDataValue);
+                ((GInt8 *)pabyDest)[nPixelsOutput] =
+                    static_cast<GInt8>(nDataValue);
             }
             else if( eDataType == EPT_u16 )
             {

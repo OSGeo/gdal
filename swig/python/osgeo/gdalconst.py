@@ -63,6 +63,7 @@ class _SwigNonDynamicMeta(type):
 
 GDT_Unknown = _gdalconst.GDT_Unknown
 GDT_Byte = _gdalconst.GDT_Byte
+GDT_Int8 = _gdalconst.GDT_Int8
 GDT_UInt16 = _gdalconst.GDT_UInt16
 GDT_Int16 = _gdalconst.GDT_Int16
 GDT_UInt32 = _gdalconst.GDT_UInt32

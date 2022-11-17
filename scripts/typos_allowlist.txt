@@ -284,4 +284,5 @@ scan-build -o $GDAL_TOPDIR/scanbuildoutput -sarif -v -enable-checker alpha.unix.
         ("aaaaaAAAABa", ogr.OFTInteger),
         "http://www.geodatenzentrum.de/gdz1/abgabe/testdaten/vektor/nas_testdaten_peine.zip",
         or feat.GetField("beziehungsart") != "istTeilVon"
+* pairs that differed by one bit, by two bits, in any combination
 

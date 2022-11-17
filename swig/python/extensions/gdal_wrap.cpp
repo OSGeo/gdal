@@ -2940,6 +2940,7 @@ static int getAlignment(GDALDataType ntype)
         case GDT_Unknown:
             break; // shouldn't happen
         case GDT_Byte:
+        case GDT_Int8:
             return 1;
         case GDT_Int16:
         case GDT_UInt16:

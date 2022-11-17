@@ -716,7 +716,6 @@ class RL2RasterBand final: public GDALPamRasterBand
                                            GDALDataType eDT,
                                            int nBits,
                                            bool bPromote1BitAs8Bit,
-                                           bool bSigned,
                                            int nBlockXSizeIn,
                                            int nBlockYSizeIn,
                                            bool bHasNoDataIn,

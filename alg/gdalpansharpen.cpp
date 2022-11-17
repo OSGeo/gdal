@@ -901,6 +901,12 @@ template<class WorkDataType> CPLErr GDALPansharpenOperation::WeightedBrovey(
             break;
 
 #ifndef LIMIT_TYPES
+        case GDT_Int8:
+            WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
+                           static_cast<GInt8 *>(pDataBuf),
+                           nValues, nBandValues, nMaxValue);
+            break;
+
         case GDT_Int16:
             WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
                            static_cast<GInt16 *>(pDataBuf),
@@ -976,6 +982,12 @@ template<class WorkDataType> CPLErr GDALPansharpenOperation::WeightedBrovey(
             break;
 
 #ifndef LIMIT_TYPES
+        case GDT_Int8:
+            WeightedBrovey3<WorkDataType, GInt8, FALSE>(
+                pPanBuffer, pUpsampledSpectralBuffer,
+                static_cast<GInt8 *>(pDataBuf), nValues, nBandValues, 0);
+            break;
+
         case GDT_Int16:
             WeightedBrovey3<WorkDataType, GInt16, FALSE>(
                 pPanBuffer, pUpsampledSpectralBuffer,
@@ -1684,6 +1696,13 @@ GDALPansharpenOperation::PansharpenChunk( GDALDataType eWorkDataType,
             break;
 
 #ifndef LIMIT_TYPES
+        case GDT_Int8:
+            eErr = WeightedBrovey(static_cast<const GInt8*>(pPanBuffer),
+                                  static_cast<const GInt8*>(pUpsampledSpectralBuffer),
+                                  pDataBuf, eBufDataType,
+                                  nValues, nBandValues);
+            break;
+
         case GDT_Int16:
             eErr = WeightedBrovey(static_cast<const GInt16*>(pPanBuffer),
                                   static_cast<const GInt16*>(pUpsampledSpectralBuffer),

@@ -417,6 +417,8 @@ static GDALDataType NumpyTypeToGDALType(PyArrayObject *psArray)
         return GDT_UInt16;
 
       case NPY_BYTE:
+        return GDT_Int8;
+
       case NPY_UBYTE:
         return GDT_Byte;
 
@@ -1682,6 +1684,7 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
     switch(datatype)
     {
         case GDT_Byte: numpytype = NPY_UBYTE; break;
+        case GDT_Int8: numpytype = NPY_INT8; break;
         case GDT_Int16: numpytype = NPY_INT16; break;
         case GDT_UInt16: numpytype = NPY_UINT16; break;
         case GDT_Int32: numpytype = NPY_INT32; break;
@@ -2021,6 +2024,7 @@ from osgeo import gdal
 gdal.AllRegister()
 
 codes = {gdalconst.GDT_Byte: numpy.uint8,
+         gdalconst.GDT_Int8: numpy.int8,
          gdalconst.GDT_UInt16: numpy.uint16,
          gdalconst.GDT_Int16: numpy.int16,
          gdalconst.GDT_UInt32: numpy.uint32,
@@ -2060,8 +2064,6 @@ def flip_code(code):
     if isinstance(code, (numpy.dtype, type)):
         # since several things map to complex64 we must carefully select
         # the opposite that is an exact match (ticket 1518)
-        if code == numpy.int8:
-            return gdalconst.GDT_Byte
         if code == numpy.complex64:
             return gdalconst.GDT_CFloat32
 

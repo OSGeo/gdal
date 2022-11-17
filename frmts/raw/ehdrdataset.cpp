@@ -149,10 +149,6 @@ EHdrRasterBand::EHdrRasterBand( GDALDataset *poDSIn,
         SetMetadataItem("NBITS", CPLString().Printf("%d", nBits),
                         "IMAGE_STRUCTURE");
     }
-
-    if( eDataType == GDT_Byte &&
-        EQUAL(poEDS->GetKeyValue("PIXELTYPE", ""), "SIGNEDINT") )
-        SetMetadataItem("PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE");
 }
 
 
@@ -1233,7 +1229,10 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo, bool bFileSizeCheck )
     }
     else if( nBits >= 1 && nBits <= 8 )
     {
-        eDataType = GDT_Byte;
+        if ( chPixelType == 'S' )
+            eDataType = GDT_Int8;
+        else
+            eDataType = GDT_Byte;
         nBits = 8;
     }
     else if( nBits == -1 )
@@ -1694,7 +1693,8 @@ GDALDataset *EHdrDataset::Create( const char * pszFilename,
         return nullptr;
     }
 
-    if( eType != GDT_Byte && eType != GDT_Float32 && eType != GDT_UInt16 &&
+    if( eType != GDT_Byte && eType != GDT_Int8 &&
+        eType != GDT_Float32 && eType != GDT_UInt16 &&
         eType != GDT_Int16 && eType != GDT_Int32 && eType != GDT_UInt32 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -1766,7 +1766,7 @@ GDALDataset *EHdrDataset::Create( const char * pszFilename,
 
     if( eType == GDT_Float32 )
         bOK &= VSIFPrintfL(fp, "PIXELTYPE      FLOAT\n") >= 0;
-    else if( eType == GDT_Int16 || eType == GDT_Int32 )
+    else if( eType == GDT_Int8 || eType == GDT_Int16 || eType == GDT_Int32 )
         bOK &= VSIFPrintfL(fp, "PIXELTYPE      SIGNEDINT\n") >= 0;
     else if( eType == GDT_Byte && EQUAL(pszPixelType, "SIGNEDBYTE") )
         bOK &= VSIFPrintfL(fp, "PIXELTYPE      SIGNEDINT\n") >= 0;
@@ -2061,7 +2061,7 @@ void GDALRegister_EHdr()
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/ehdr.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "bil");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
-                              "Byte Int16 UInt16 Int32 UInt32 Float32");
+                              "Byte Int8 Int16 UInt16 Int32 UInt32 Float32");
 
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"

@@ -1498,10 +1498,10 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDSIn, int nBandIn ):
 
     if( nBitsPerSample <= 8 )
     {
-        eDataType = GDT_Byte;
         if( nSampleFormat == SAMPLEFORMAT_INT )
-            m_oGTiffMDMD.SetMetadataItem( "PIXELTYPE", "SIGNEDBYTE",
-                                        "IMAGE_STRUCTURE" );
+            eDataType = GDT_Int8;
+        else
+            eDataType = GDT_Byte;
     }
     else if( nBitsPerSample <= 16 )
     {
@@ -1933,6 +1933,8 @@ int GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
     const double dfSrcXInc = nXSize / static_cast<double>( nBufXSize );
     if( eErr == CE_None && pTmpBuffer != nullptr )
     {
+        const bool bOneByteCopy = ( eDataType == eBufType &&
+                            (eDataType == GDT_Byte || eDataType == GDT_Int8) );
         for( int iY=0; iY < nBufYSize; ++iY )
         {
             const int iSrcY =
@@ -1956,7 +1958,7 @@ int GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
             }
             else
             {
-                if( eDataType == GDT_Byte && eBufType == GDT_Byte )
+                if( bOneByteCopy )
                 {
                     double dfSrcX = 0.5 * dfSrcXInc;
                     for( int iX = 0; iX < nBufXSize; ++iX, dfSrcX += dfSrcXInc )
@@ -5144,9 +5146,10 @@ int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
                     static_cast<size_t>(nReqXSize * nPixelSpace) );
             }
             // Other optimization: no resampling, no data type change,
-            // data type is Byte.
+            // data type is Byte/Int8.
             else if( nBufXSize == nXSize &&
-                     eDataType == eBufType && eDataType == GDT_Byte )
+                     eDataType == eBufType &&
+                     (eDataType == GDT_Byte || eDataType == GDT_Int8) )
             {
                 GByte* pabySrcData = static_cast<GByte *>(ppData[iSrcY]);
                 GByte* pabyDstData =
@@ -5181,7 +5184,8 @@ int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
                     GByte* pabyDstData =
                         static_cast<GByte *>(pData) +
                         iBand * nBandSpace + iY * nLineSpace;
-                    if( eDataType == GDT_Byte && eBufType == GDT_Byte )
+                    if( (eDataType == GDT_Byte && eBufType == GDT_Byte) ||
+                        (eDataType == GDT_Int8 && eBufType == GDT_Int8) )
                     {
                         double dfSrcX = 0.5 * dfSrcXInc;
                         for( int iX = 0;
@@ -7692,17 +7696,6 @@ void GTiffRasterBand::NullBlock( void *pData )
         }
         else
         {
-            // Hack for Signed Int8 case. As the data type is GDT_Byte (unsigned),
-            // we have to convert a negative nodata value in the range [-128,-1] in
-            // [128, 255]
-            if( m_poGDS->m_nBitsPerSample == 8 &&
-                m_poGDS->m_nSampleFormat == SAMPLEFORMAT_INT &&
-                dfNoData < 0 && dfNoData >= -128 &&
-                static_cast<int>(dfNoData) == dfNoData )
-            {
-                dfNoData = 256 + dfNoData;
-            }
-
             // Will convert nodata value to the right type and copy efficiently.
             GDALCopyWords64( &dfNoData, GDT_Float64, 0,
                            pData, eDataType, nChunkSize, nWords);
@@ -9837,18 +9830,6 @@ void GTiffDataset::FillEmptyTiles()
             else
             {
                 double dfNoData = m_dfNoDataValue;
-
-                // Hack for Signed Int8 case. As the data type is GDT_Byte (unsigned),
-                // we have to convert a negative nodata value in the range [-128,-1] in
-                // [128, 255]
-                if( m_nBitsPerSample == 8 &&
-                    m_nSampleFormat == SAMPLEFORMAT_INT &&
-                    dfNoData < 0 && dfNoData >= -128 &&
-                    static_cast<int>(dfNoData) == dfNoData )
-                {
-                    dfNoData = 256 + dfNoData;
-                }
-
                 GDALCopyWords64( &dfNoData, GDT_Float64, 0,
                                pabyData, eDataType,
                                nDataTypeSize,
@@ -10096,7 +10077,7 @@ inline bool GTiffDataset::IsFirstPixelEqualToNoData( const void* pBuffer )
         return true; // FIXME: over pessimistic
     if( m_nBitsPerSample == 8 || (m_nBitsPerSample < 8 && dfEffectiveNoData == 0) )
     {
-        if( m_nSampleFormat == SAMPLEFORMAT_INT )
+        if( eDT == GDT_Int8 )
         {
             return GDALIsValueInRange<signed char>(dfEffectiveNoData) &&
                    *(static_cast<const signed char*>(pBuffer)) ==
@@ -18647,6 +18628,12 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     const char *pszPixelType = CSLFetchNameValue( papszParamList, "PIXELTYPE" );
     if( pszPixelType == nullptr )
         pszPixelType = "";
+    if( eType == GDT_Byte && EQUAL(pszPixelType,"SIGNEDBYTE") )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Using PIXELTYPE=SIGNEDBYTE with Byte data type is deprecated (but still works). "
+                 "Using Int8 data type instead is now recommended.");
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Setup some standard flags.                                      */
@@ -18656,8 +18643,8 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     TIFFSetField( l_hTIFF, TIFFTAG_BITSPERSAMPLE, l_nBitsPerSample );
 
     uint16_t l_nSampleFormat = 0;
-    if( (eType == GDT_Byte && EQUAL(pszPixelType,"SIGNEDBYTE"))
-        || eType == GDT_Int16 || eType == GDT_Int32 || eType == GDT_Int64 )
+    if( ( eType == GDT_Byte && EQUAL(pszPixelType,"SIGNEDBYTE") ) ||
+        eType == GDT_Int8 || eType == GDT_Int16 || eType == GDT_Int32 || eType == GDT_Int64 )
         l_nSampleFormat = SAMPLEFORMAT_INT;
     else if( eType == GDT_CInt16 || eType == GDT_CInt32 )
         l_nSampleFormat = SAMPLEFORMAT_COMPLEXINT;
@@ -19869,7 +19856,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
     GDALRasterBand * const poPBand = poSrcDS->GetRasterBand(1);
-    const GDALDataType eType = poPBand->GetRasterDataType();
+    GDALDataType eType = poPBand->GetRasterDataType();
 
 /* -------------------------------------------------------------------- */
 /*      Check, whether all bands in input dataset has the same type.    */
@@ -20730,6 +20717,22 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         if( bStreaming ) VSIUnlink(l_osTmpFilename);
         return nullptr;
     }
+
+    // Legacy... Patch back GDT_Int8 type to GDT_Byte if the user used
+    // PIXELTYPE=SIGNEDBYTE
+    const char *pszPixelType = CSLFetchNameValue( papszOptions, "PIXELTYPE" );
+    if( pszPixelType == nullptr )
+        pszPixelType = "";
+    if( eType == GDT_Byte && EQUAL(pszPixelType,"SIGNEDBYTE") )
+    {
+        for(int i = 0; i < poDS->nBands; ++i )
+        {
+            static_cast<GTiffRasterBand*>(poDS->papoBands[i])->eDataType = GDT_Byte;
+            poDS->papoBands[i]->SetMetadataItem("PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE");
+        }
+    }
+
+
     poDS->oOvManager.Initialize( poDS, pszFilename );
 
     if( bStreaming )
@@ -23083,7 +23086,7 @@ void GDALRegister_GTiff()
 "       <Value>GeoTIFF</Value>"
 "       <Value>BASELINE</Value>"
 "   </Option>"
-"   <Option name='PIXELTYPE' type='string-select'>"
+"   <Option name='PIXELTYPE' type='string-select' description='(deprecated, use Int8 datatype)'>"
 "       <Value>DEFAULT</Value>"
 "       <Value>SIGNEDBYTE</Value>"
 "   </Option>"
@@ -23135,7 +23138,7 @@ void GDALRegister_GTiff()
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "tif" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "tif tiff" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                               "Byte UInt16 Int16 UInt32 Int32 Float32 "
+                               "Byte Int8 UInt16 Int16 UInt32 Int32 Float32 "
                                "Float64 CInt16 CInt32 CFloat32 CFloat64" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, osOptions );
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,

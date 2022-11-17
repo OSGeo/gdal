@@ -3393,6 +3393,7 @@ class MDArray(object):
            count is None and buffer_stride is None and buffer_datatype is None:
             map_typecode_itemsize_to_gdal = {
                ('B', 1): GDT_Byte,
+               ('b', 1): GDT_Int8,
                ('h', 2): GDT_Int16,
                ('H', 2): GDT_UInt16,
                ('i', 4): GDT_Int32,
@@ -3624,7 +3625,7 @@ class Attribute(object):
               return s
           return self.ReadAsStringArray()
       if dt_class == GEDTC_NUMERIC:
-          if dt.GetNumericDataType() in (GDT_Byte, GDT_Int16, GDT_UInt16, GDT_Int32):
+          if dt.GetNumericDataType() in (GDT_Byte, GDT_Int8, GDT_Int16, GDT_UInt16, GDT_Int32):
               if self.GetTotalElementsCount() == 1:
                   return self.ReadAsInt()
               else:
