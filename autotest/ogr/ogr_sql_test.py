@@ -1607,6 +1607,7 @@ def test_ogr_sql_field_names_same_case():
 ###############################################################################
 # Test no crash when comparing string with integer array
 
+
 def test_ogr_sql_string_int_array_comparison():
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("")
@@ -1623,11 +1624,11 @@ def test_ogr_sql_string_int_array_comparison():
     f = lyr.GetNextFeature()
     assert f is not None
 
-    assert lyr.SetAttributeFilter("id = 'foo'")  == ogr.OGRERR_NONE
+    assert lyr.SetAttributeFilter("id = 'foo'") == ogr.OGRERR_NONE
     f = lyr.GetNextFeature()
     assert f is not None
 
-    for op in ('=', '<>', '<', '<=', '>', '>='):
+    for op in ("=", "<>", "<", "<=", ">", ">="):
         assert lyr.SetAttributeFilter("int_array {} 1".format(op)) == ogr.OGRERR_NONE
         f = lyr.GetNextFeature()
         assert f is None
