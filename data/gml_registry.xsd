@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+
+  <xs:element name="gml_registry">
+    <xs:annotation>
+      <xs:documentation>The registry contains namespace definitions, which are used to find a single .gfs or XML schema file with which the GML driver shall process the whole GML data file. The GML driver uses the schema file defined for the first matching (prefix-)namespace-featureType combination that is found in the GML data. NOTE: The order of the namespaces within the GML registry file is important when loading a GML file that contains features from multiple namespaces. Only the feature types defined in the selected schema will be recognized. In other words, if the GML file contains features from multiple namespaces, then only the ones that match the definitions from the chosen schema will be read.</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" minOccurs="0" name="namespace">
+          <xs:annotation>
+            <xs:documentation>Defines a namespace, together with the feature types that belong to it.
+
+NOTE: Multiple feature types within the namespace may refer to the same schema (which should then include definitions for these feature types).</xs:documentation>
+          </xs:annotation>
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element maxOccurs="unbounded" name="featureType">
+                <xs:annotation>
+                  <xs:documentation>Definition of a feature type, with XML attributes to match given GML data and to define a .gfs or XML schema that contains the definition of the feature type. NOTE: The schema may contain definitions for multiple feature types.</xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                  <xs:attribute name="elementName" type="xs:string" use="required">
+                    <xs:annotation>
+                      <xs:documentation>Name of the XML element that is used to identify the feature type. Typically the local name of an XML element that encodes a feature. However, it can also be the local name of a different element that can be used in combination with @elementValue to produce a match for this feature type definition within the namespace.</xs:documentation>
+                    </xs:annotation>
+                  </xs:attribute>
+                  <xs:attribute name="elementValue" type="xs:string">
+                    <xs:annotation>
+                      <xs:documentation>Used in combination with @elementName. If present, a match for this feature type element is only produced if an XML element whose local-name (and prefix, if defined in the namespace) equals the value of @elementName and whose value equals the value of @elementValue is found in the GML data. For example: If namespace/@prefix = 'ex', featureType/@elementName = 'typeOfFeature', and featureType/@elementValue = 'FT', then a match is produced if &lt;ex:typeOfFeature>FT&lt;/ex:typeOfFeature> is present in the GML data.</xs:documentation>
+                    </xs:annotation>
+                  </xs:attribute>
+                  <xs:attribute name="gfsSchemaLocation" type="xs:string">
+                    <xs:annotation>
+                      <xs:documentation>OGR .gfs file in which the feature type is defined (possibly together with other feature types). The GML driver will parse the layer definitions from that file. The schema location can be given as URL (http and https), absolute file path, and relative file path (relative to the location of the registry file).</xs:documentation>
+                    </xs:annotation>
+                  </xs:attribute>
+                  <xs:attribute name="schemaLocation" type="xs:string">
+                    <xs:annotation>
+                      <xs:documentation>XML schema file in which the feature type is defined (possibly together with other feature types). The GML driver will attempt to parse it and create layer definitions. The schema location can be given as URL (http and https), absolute file path, and relative file path (relative to the location of the registry file).</xs:documentation>
+                    </xs:annotation>
+                  </xs:attribute>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+            <xs:attribute name="prefix" type="xs:string" use="optional">
+              <xs:annotation>
+                <xs:documentation>Namespace prefix assigned to the features of this namespace in actual GML data. The prefix will be looked up in the first bytes of the GML file (e.g. xmlns:abc="http://example.org/abc"). It is used to confirm the match of the namespace uri (defined by @uri). NOTE-1: Case is important - the parser looks for the exact string, i.e., 'ex' is treated differently than 'EX'. If actual data may use different prefixes for the same namespace URI, multiple namespace elements must be added to the gml_registry - one for each applicable prefix. NOTE-2: The prefix can be omitted in the namespace definition. In that case, a match is only produced if a) the namespace uri is found in any namespace declaration in the GML file (typically as default namespace in the root element, e.g., xmlns="http://example.org/abc") and b) an XML element without XML namespace prefix, and local-name being equal to the @elementName of the feature type (plus a possibly defined @elementValue as textual value), is found.</xs:documentation>
+              </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="uri" type="xs:string" use="required">
+              <xs:annotation>
+                <xs:documentation>Namespace URI as found in the first bytes of the GML file. (e.g. "http://example.org/abc" in the namespace declaration for xmlns:abc="http://example.org/abc").</xs:documentation>
+              </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="useGlobalSRSName" type="xs:boolean">
+              <xs:annotation>
+                <xs:documentation>When set to true, it means that the SRS defined by a srsName attribute found in the global gml:Envelope element applies to all features of the GML file.</xs:documentation>
+              </xs:annotation>
+            </xs:attribute>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
