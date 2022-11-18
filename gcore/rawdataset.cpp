@@ -964,16 +964,18 @@ int RawRasterBand::CanUseDirectIO(int /* nXOff */,
     }
 
     RawDataset* rawDataset = dynamic_cast<RawDataset*>(this->GetDataset());
-    std::pair<bool, int> dummy;
-    std::pair<bool, int>& cachedCPLOneBigReadOption = !rawDataset ? dummy : rawDataset->cachedCPLOneBigReadOption;
+    RawDataset::cached8_t cachedCPLOneBigReadOption = {0};
+    if (rawDataset != nullptr)
+      cachedCPLOneBigReadOption.all = rawDataset->cachedCPLOneBigReadOption.all;
     const char *pszGDAL_ONE_BIG_READ =
-      !cachedCPLOneBigReadOption.first ? CPLGetConfigOption("GDAL_ONE_BIG_READ", nullptr) :
-      (cachedCPLOneBigReadOption.second == 0) ? "0" :
-      (cachedCPLOneBigReadOption.second == 1) ? "1" :
+      !cachedCPLOneBigReadOption.data.valid ? CPLGetConfigOption("GDAL_ONE_BIG_READ", nullptr) :
+      (cachedCPLOneBigReadOption.data.value == 0) ? "0" :
+      (cachedCPLOneBigReadOption.data.value == 1) ? "1" :
       nullptr;
     if ( pszGDAL_ONE_BIG_READ == nullptr )
     {
-        cachedCPLOneBigReadOption = std::make_pair(true, -1);
+        cachedCPLOneBigReadOption.data.value = -1;
+        cachedCPLOneBigReadOption.data.valid = true;
         if ( nLineSize < 50000
              || nXSize > nLineSize / nPixelOffset / 5 * 2
              || IsSignificantNumberOfLinesLoaded(nYOff, nYSize) )
@@ -984,8 +986,10 @@ int RawRasterBand::CanUseDirectIO(int /* nXOff */,
     }
 
     result = CPLTestBool(pszGDAL_ONE_BIG_READ);
-    cachedCPLOneBigReadOption = std::make_pair(true, !result ? 1 : 0);
-
+    cachedCPLOneBigReadOption.data.value = !result ? 1 : 0;
+    cachedCPLOneBigReadOption.data.valid = true;
+    if (rawDataset != nullptr)
+      rawDataset->cachedCPLOneBigReadOption.all = cachedCPLOneBigReadOption.all;
     return result;
 }
 
@@ -1510,7 +1514,7 @@ CPLVirtualMem  *RawRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
 /*                            RawDataset()                              */
 /************************************************************************/
 
-RawDataset::RawDataset():cachedCPLOneBigReadOption(std::make_pair(false, 0)) {}
+RawDataset::RawDataset() {cachedCPLOneBigReadOption.all = 0;}
 
 /************************************************************************/
 /*                           ~RawDataset()                              */
