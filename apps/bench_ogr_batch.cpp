@@ -136,6 +136,10 @@ int main(int argc, char* argv[])
         schema.release(&schema);
     }
 #endif
+
+#if 0
+    int64_t lastId = 0;
+#endif
     while( true )
     {
         struct ArrowArray array;
@@ -144,6 +148,16 @@ int main(int argc, char* argv[])
         {
             break;
         }
+#if 0
+        const int64_t* fid_col = static_cast<const int64_t*>(array.children[0]->buffers[1]);
+        for(int64_t i = 0; i < array.length; ++i )
+        {
+            int64_t id = fid_col[i];
+            if( id != lastId + 1 )
+                printf(CPL_FRMT_GIB "\n", static_cast<GIntBig>(id));
+            lastId = id;
+        }
+#endif
         array.release(&array);
     }
     stream.release(&stream);
