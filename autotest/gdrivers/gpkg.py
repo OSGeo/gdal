@@ -3507,12 +3507,13 @@ def test_gpkg_40():
 
 def test_gpkg_41():
 
-    if (
-        gdaltest.gpkg_dr is None
-        or gdal.GetConfigOption("TRAVIS") is not None
-        or gdal.GetConfigOption("APPVEYOR") is not None
-    ):
-        pytest.skip()
+    # Causes SIGKILL otherwise in Vagrant or other VM based infrastructure
+    # when trying to allocate huge amount of memory
+    if gdal.GetUsablePhysicalRAM() < 8 * 1000 * 1000 * 1000:
+        pytest.skip(
+            "Only %.1f GB RAM available. At least 8 GB needed"
+            % (gdal.GetUsablePhysicalRAM() / 1e9)
+        )
 
     gdal.SetConfigOption("GPKG_ALLOW_CRAZY_SETTINGS", "YES")
     with gdaltest.error_handler():
