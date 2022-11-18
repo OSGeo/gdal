@@ -27,6 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_atomic_ops.h"
 #include "cpl_port.h"
 #include "cpl_vax.h"
 #include "rawdataset.h"
@@ -1776,4 +1777,13 @@ bool RawDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout& sLayout)
     sLayout.nBandOffset = nBandOffset;
 
     return true;
+}
+
+/************************************************************************/
+/*                        ClearCachedConfigOption()                     */
+/************************************************************************/
+
+void RawDataset::ClearCachedConfigOption(void)
+{
+    CPLAtomicCompareAndExchange(&this->cachedCPLOneBigReadOption.all, this->cachedCPLOneBigReadOption.all, 0);
 }
