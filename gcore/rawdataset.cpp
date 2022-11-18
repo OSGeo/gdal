@@ -1514,7 +1514,7 @@ CPLVirtualMem  *RawRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
 /*                            RawDataset()                              */
 /************************************************************************/
 
-RawDataset::RawDataset() {cachedCPLOneBigReadOption.all = 0;}
+RawDataset::RawDataset():cachedCPLOneBigReadOption({false, 0}) {}
 
 /************************************************************************/
 /*                           ~RawDataset()                              */
