@@ -964,7 +964,7 @@ int RawRasterBand::CanUseDirectIO(int /* nXOff */,
     }
 
     RawDataset* rawDataset = dynamic_cast<RawDataset*>(this->GetDataset());
-    RawDataset::cached8_t cachedCPLOneBigReadOption = {0};
+    RawDataset::cached8_t cachedCPLOneBigReadOption = {false, 0};
     if (rawDataset != nullptr)
       cachedCPLOneBigReadOption.all = rawDataset->cachedCPLOneBigReadOption.all;
     const char *pszGDAL_ONE_BIG_READ =
