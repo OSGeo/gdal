@@ -986,7 +986,7 @@ int RawRasterBand::CanUseDirectIO(int /* nXOff */,
     }
 
     result = CPLTestBool(pszGDAL_ONE_BIG_READ);
-    cachedCPLOneBigReadOption.data.value = !result ? 1 : 0;
+    cachedCPLOneBigReadOption.data.value = result ? 1 : 0;
     cachedCPLOneBigReadOption.data.valid = true;
     if (rawDataset != nullptr)
       rawDataset->cachedCPLOneBigReadOption.all = cachedCPLOneBigReadOption.all;
