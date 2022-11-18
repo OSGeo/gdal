@@ -440,3 +440,26 @@ def test_xyz_floating_point_step_organized_by_columns_float32():
             300.0,
             450.0,
         )
+
+
+###############################################################################
+# Test bug fix for https://github.com/OSGeo/gdal/issues/6736
+
+
+def test_xyz_looks_like_organized_by_columns_but_is_not():
+
+    content = """X Y Z
+371999.50 5806917.50 1
+371999.50 5806918.50 2
+371998.50 5806919.50 3
+371999.50 5806919.50 4
+"""
+
+    with gdaltest.tempfile("/vsimem/grid.xyz", content):
+        ds = gdal.Open("/vsimem/grid.xyz")
+        assert ds.RasterXSize == 2 and ds.RasterYSize == 3
+        assert ds.GetGeoTransform() == pytest.approx(
+            (371998.0, 1.0, 0.0, 5806917.0, 0.0, 1.0)
+        )
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+        assert struct.unpack("b" * (2 * 3), ds.ReadRaster()) == (0, 1, 0, 2, 3, 4)
