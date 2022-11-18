@@ -13896,6 +13896,70 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_GetNumCPUs(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  int result;
+  
+  if (!SWIG_Python_UnpackTuple(args, "GetNumCPUs", 0, 0, 0)) SWIG_fail;
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)CPLGetNumCPUs();
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_GetUsablePhysicalRAM(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GIntBig result;
+  
+  if (!SWIG_Python_UnpackTuple(args, "GetUsablePhysicalRAM", 0, 0, 0)) SWIG_fail;
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = CPLGetUsablePhysicalRAM();
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    resultobj = PyLong_FromLongLong(result);
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_MajorObject_GetDescription(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
@@ -46631,6 +46695,8 @@ static PyMethodDef SwigMethods[] = {
 	 { "NetworkStatsReset", _wrap_NetworkStatsReset, METH_NOARGS, "NetworkStatsReset()"},
 	 { "NetworkStatsGetAsSerializedJSON", _wrap_NetworkStatsGetAsSerializedJSON, METH_VARARGS, "NetworkStatsGetAsSerializedJSON(char ** options=None) -> retStringAndCPLFree *"},
 	 { "ParseCommandLine", _wrap_ParseCommandLine, METH_O, "ParseCommandLine(char const * utf8_path) -> char **"},
+	 { "GetNumCPUs", _wrap_GetNumCPUs, METH_NOARGS, "GetNumCPUs() -> int"},
+	 { "GetUsablePhysicalRAM", _wrap_GetUsablePhysicalRAM, METH_NOARGS, "GetUsablePhysicalRAM() -> GIntBig"},
 	 { "MajorObject_GetDescription", _wrap_MajorObject_GetDescription, METH_O, "MajorObject_GetDescription(MajorObject self) -> char const *"},
 	 { "MajorObject_SetDescription", _wrap_MajorObject_SetDescription, METH_VARARGS, "MajorObject_SetDescription(MajorObject self, char const * pszNewDesc)"},
 	 { "MajorObject_GetMetadataDomainList", _wrap_MajorObject_GetMetadataDomainList, METH_O, "MajorObject_GetMetadataDomainList(MajorObject self) -> char **"},
