@@ -36,7 +36,7 @@ import os.path
 import sys
 from typing import Optional, Sequence
 
-from osgeo import gdal, ogr
+from osgeo import gdal, ogr, osr
 from osgeo_utils.auxiliary.base import PathLikeOrStr
 from osgeo_utils.auxiliary.util import GetOutputDriverFor
 
@@ -183,6 +183,8 @@ def process(argv, progress=None, progress_arg=None):
     t_srs = None
     dsco = []
     lco = []
+    # WARNING: if adding a new option, make sure to update _gpkg_ogrmerge()
+    # optimized code path, or use the general case.
 
     i = 0
     while i < len(argv):
@@ -287,6 +289,540 @@ def process(argv, progress=None, progress_arg=None):
     )
 
 
+#############################################################################
+
+
+def _build_layer_name_non_single_mode(
+    layer_name_template,
+    src_ds_idx,
+    src_dsname,
+    src_lyr_idx,
+    src_lyr_name,
+    skip_failures,
+):
+    layer_name = layer_name_template
+    basename = None
+    if os.path.exists(src_dsname):
+        basename = os.path.basename(src_dsname)
+        if "." in basename:
+            basename = ".".join(basename.split(".")[0:-1])
+
+    if basename == src_lyr_name:
+        layer_name = layer_name.replace("{AUTO_NAME}", basename)
+    elif basename is None:
+        layer_name = layer_name.replace(
+            "{AUTO_NAME}", "Dataset%d_%s" % (src_ds_idx, src_lyr_name)
+        )
+    else:
+        layer_name = layer_name.replace("{AUTO_NAME}", basename + "_" + src_lyr_name)
+
+    if basename is not None:
+        layer_name = layer_name.replace("{DS_BASENAME}", basename)
+    elif "{DS_BASENAME}" in layer_name:
+        if skip_failures:
+            if "{DS_INDEX}" not in layer_name:
+                layer_name = layer_name.replace(
+                    "{DS_BASENAME}", "Dataset%d" % src_ds_idx
+                )
+        else:
+            print(
+                "ERROR: Layer name template %s "
+                "includes {DS_BASENAME} "
+                "but %s is not a file" % (layer_name_template, src_dsname)
+            )
+            return None
+    layer_name = layer_name.replace("{DS_NAME}", "%s" % src_dsname)
+    layer_name = layer_name.replace("{DS_INDEX}", "%d" % src_ds_idx)
+    layer_name = layer_name.replace("{LAYER_NAME}", src_lyr_name)
+    layer_name = layer_name.replace("{LAYER_INDEX}", "%d" % src_lyr_idx)
+    return layer_name
+
+
+#############################################################################
+
+
+def _quote_literal(x):
+    return x.replace("'", "''")
+
+
+#############################################################################
+
+
+def _quote_id(x):
+    return x.replace('"', '""')
+
+
+#############################################################################
+
+
+def _gpkg_get_src_table_size(src_ds, table_name):
+    try:
+        # sqlite >= 3.31
+        sql_lyr = src_ds.ExecuteSQL(
+            "SELECT pgsize FROM temp.stat WHERE name = '%s' AND aggregate = TRUE"
+            % _quote_literal(table_name)
+        )
+    except Exception:
+        sql_lyr = src_ds.ExecuteSQL(
+            "SELECT SUM(pgsize) FROM temp.stat WHERE name = '%s'"
+            % _quote_literal(table_name)
+        )
+    f = sql_lyr.GetNextFeature()
+    src_table_size = f.GetField(0)
+    src_ds.ReleaseResultSet(sql_lyr)
+    return src_table_size
+
+
+#############################################################################
+
+
+def _gpkg_has_spatial_index(ds, lyr):
+    has_spatial_index = False
+    if lyr.GetGeomType() != ogr.wkbNone:
+        sql_lyr = ds.ExecuteSQL(
+            "SELECT HasSpatialIndex('%s', '%s')"
+            % (_quote_literal(lyr.GetName()), _quote_literal(lyr.GetGeometryColumn()))
+        )
+        f = sql_lyr.GetNextFeature()
+        has_spatial_index = f.GetField(0)
+        ds.ReleaseResultSet(sql_lyr)
+    return has_spatial_index
+
+
+#############################################################################
+# Estimate the final .gpkg file size from the contributing source layers
+
+
+def _gpkg_get_estimated_final_size(
+    src_datasets, src_geom_types, can_reuse_spatial_index
+):
+
+    estimated_final_size = 0
+
+    for src_dsname in src_datasets:
+        src_ds = ogr.Open(src_dsname)
+        if src_ds is None:
+            continue
+
+        dbstat_available = False
+        try:
+            src_ds.ExecuteSQL("CREATE VIRTUAL TABLE temp.stat USING dbstat(main)")
+            dbstat_available = True
+        except Exception:
+            pass
+
+        use_src_file_size = True
+        if dbstat_available:
+            for src_lyr in src_ds:
+                if src_geom_types:
+                    gt = ogr.GT_Flatten(src_lyr.GetGeomType())
+                    if gt not in src_geom_types:
+                        use_src_file_size = False
+                        break
+
+                if not can_reuse_spatial_index and _gpkg_has_spatial_index(
+                    src_ds, src_lyr
+                ):
+                    use_src_file_size = False
+                    break
+
+        if use_src_file_size:
+            # Wrong if not all layers are selected...
+            estimated_final_size += gdal.VSIStatL(src_dsname).size
+        else:
+            for src_lyr in src_ds:
+                if src_geom_types:
+                    gt = ogr.GT_Flatten(src_lyr.GetGeomType())
+                    if gt not in src_geom_types:
+                        continue
+
+                estimated_final_size += _gpkg_get_src_table_size(
+                    src_ds, src_lyr.GetName()
+                )
+                if can_reuse_spatial_index and _gpkg_has_spatial_index(src_ds, src_lyr):
+                    src_rtree_prefix = "rtree_%s_%s" % (
+                        src_lyr.GetName(),
+                        src_lyr.GetGeometryColumn(),
+                    )
+                    estimated_final_size += _gpkg_get_src_table_size(
+                        src_ds, src_rtree_prefix + "_node"
+                    )
+                    estimated_final_size += _gpkg_get_src_table_size(
+                        src_ds, src_rtree_prefix + "_rowid"
+                    )
+                    estimated_final_size += _gpkg_get_src_table_size(
+                        src_ds, src_rtree_prefix + "_parent"
+                    )
+
+    return estimated_final_size
+
+
+#############################################################################
+
+
+def _gpkg_get_srs_id(ds, lyr):
+    sql = (
+        "SELECT srs_id FROM gpkg_geometry_columns WHERE table_name = '%s'"
+        % _quote_literal(lyr.GetName())
+    )
+    sql_lyr = ds.ExecuteSQL(sql)
+    f = sql_lyr.GetNextFeature()
+    srs_id = f.GetField(0)
+    ds.ReleaseResultSet(sql_lyr)
+    return srs_id
+
+
+#############################################################################
+# Optimized implementation of general case for geopackage output, that can be used only:
+# - in non-single mode
+# - when all sources are geopackages
+# - for a newly created dataset
+
+
+def _gpkg_ogrmerge(
+    src_datasets: Optional[Sequence[str]] = None,
+    dst_filename: Optional[PathLikeOrStr] = None,
+    driver_name: Optional[str] = None,
+    layer_name_template: Optional[str] = None,
+    skip_failures: bool = False,
+    src_geom_types: Optional[Sequence[int]] = None,
+    a_srs: Optional[str] = None,
+    s_srs: Optional[str] = None,
+    t_srs: Optional[str] = None,
+    dsco: Optional[Sequence[str]] = None,
+    lco: Optional[Sequence[str]] = None,
+    progress_callback: Optional = None,
+    progress_arg: Optional = None,
+):
+
+    driver_name = "GPKG"
+    drv = gdal.GetDriverByName(driver_name)
+    if drv is None:
+        print("ERROR: Invalid driver: %s" % driver_name)
+        return 1
+    dst_ds = drv.Create(dst_filename, 0, 0, 0, gdal.GDT_Unknown, dsco)
+    if dst_ds is None:
+        return 1
+
+    ogr.UseExceptions()
+    gdal.UseExceptions()
+    osr.UseExceptions()
+
+    class ThreadedProgress:
+        def __init__(self, dst_filename, estimated_final_size):
+            self.stop_thread = False
+
+            import time
+            from threading import Thread
+
+            def myfunc():
+                while not self.stop_thread:
+                    dst_file_size = gdal.VSIStatL(dst_filename).size
+                    pct = min(1.0, dst_file_size / estimated_final_size)
+                    progress_callback(pct, "", progress_arg)
+                    time.sleep(0.1)
+
+            t = Thread(target=myfunc)
+            t.start()
+
+        def stop(self):
+            self.stop_thread = True
+
+    create_spatial_index = "SPATIAL_INDEX=NO" not in [x.upper() for x in lco]
+    can_reuse_spatial_index = t_srs is None and create_spatial_index
+
+    estimated_final_size = 0
+    if progress_callback:
+        estimated_final_size = _gpkg_get_estimated_final_size(
+            src_datasets, src_geom_types, can_reuse_spatial_index
+        )
+
+    for src_ds_idx, src_dsname in enumerate(src_datasets):
+        src_ds = ogr.Open(src_dsname)
+        if src_ds is None:
+            print("ERROR: Cannot open %s" % src_dsname)
+            if skip_failures:
+                continue
+            return 1
+
+        for src_lyr_idx, src_lyr in enumerate(src_ds):
+
+            if src_geom_types:
+                gt = ogr.GT_Flatten(src_lyr.GetGeomType())
+                if gt not in src_geom_types:
+                    continue
+
+            has_geom = src_lyr.GetGeomType() != ogr.wkbNone
+            if has_geom and not any(
+                opt.upper().startswith("GEOMETRY_NAME=") for opt in lco
+            ):
+                modified_lco = ["GEOMETRY_NAME=" + src_lyr.GetGeometryColumn()] + lco
+            else:
+                modified_lco = lco
+
+            if t_srs and has_geom:
+                srs = osr.SpatialReference()
+                srs.SetFromUserInput(t_srs)
+            elif a_srs and has_geom:
+                srs = osr.SpatialReference()
+                srs.SetFromUserInput(a_srs)
+            else:
+                srs = src_lyr.GetSpatialRef()
+
+            layer_name = _build_layer_name_non_single_mode(
+                layer_name_template,
+                src_ds_idx,
+                src_dsname,
+                src_lyr_idx,
+                src_lyr.GetName(),
+                skip_failures,
+            )
+            if layer_name is None:
+                return 1
+
+            lyr = dst_ds.CreateLayer(
+                layer_name,
+                geom_type=src_lyr.GetGeomType(),
+                srs=srs,
+                options=modified_lco,
+            )
+            for field_idx in range(src_lyr.GetLayerDefn().GetFieldCount()):
+                lyr.CreateField(src_lyr.GetLayerDefn().GetFieldDefn(field_idx))
+
+            md = src_lyr.GetMetadata()
+            if md:
+                lyr.SetMetadata(md)
+
+            lyr.SyncToDisk()
+
+            if has_geom:
+                src_srs_id = _gpkg_get_srs_id(src_ds, src_lyr)
+                dst_srs_id = _gpkg_get_srs_id(dst_ds, lyr)
+                rtree_prefix = "rtree_%s_%s" % (lyr.GetName(), lyr.GetGeometryColumn())
+            else:
+                rtree_prefix = "__invalid__"
+                src_srs_id = -1
+                dst_srs_id = -1
+
+            # Collect triggers that we can safely temporary disable, and drop them
+            sql = (
+                "SELECT name, sql FROM sqlite_master WHERE type = 'trigger' AND (name LIKE '%s_%%' OR name LIKE 'trigger_insert_feature_count_%s' OR name LIKE 'trigger_delete_feature_count_%s')"
+                % (
+                    _quote_literal(rtree_prefix),
+                    _quote_literal(lyr.GetName()),
+                    _quote_literal(lyr.GetName()),
+                )
+            )
+            triggers = []
+            sql_lyr = dst_ds.ExecuteSQL(sql)
+            for f in sql_lyr:
+                trigger_name = f["name"]
+                dst_ds.ExecuteSQL('DROP TRIGGER "%s"' % _quote_id(trigger_name))
+                triggers.append(f["sql"])
+            dst_ds.ReleaseResultSet(sql_lyr)
+
+            def get_normalized_field_names(ds, lyr):
+                fields = []
+                sql_lyr = ds.ExecuteSQL(
+                    "PRAGMA table_info('%s')" % _quote_literal(lyr.GetName())
+                )
+                for f in sql_lyr:
+                    col_name = f["name"]
+                    if col_name == lyr.GetFIDColumn():
+                        fields.append("__FID__")
+                    elif col_name == lyr.GetGeometryColumn():
+                        fields.append("__GEOMETRY_COLUMN__")
+                    else:
+                        fields.append(col_name)
+                ds.ReleaseResultSet(sql_lyr)
+                return fields
+
+            # Build list of field names to select
+            if (
+                src_srs_id == dst_srs_id
+                and s_srs is None
+                and t_srs is None
+                and get_normalized_field_names(src_ds, src_lyr)
+                == get_normalized_field_names(dst_ds, lyr)
+            ):
+                # If fields in source and target layers are ordered the same, using * is slightly faster
+                # than selecting individual fields
+                fields = "*"
+            else:
+                fields = '"%s"' % _quote_id(src_lyr.GetFIDColumn())
+                if has_geom:
+                    if src_srs_id == dst_srs_id:
+                        fields += ', "%s"' % _quote_id(src_lyr.GetGeometryColumn())
+                    elif t_srs:
+                        # Reproject
+                        if s_srs:
+                            s_srs_obj = osr.SpatialReference()
+                            s_srs_obj.SetFromUserInput(s_srs)
+                            assert s_srs_obj.GetAuthorityName(None) == "EPSG"
+                            src_srs_id = int(s_srs_obj.GetAuthorityCode(None))
+                            fields += ', ST_Transform(SetSRID("%s", %d), %d)' % (
+                                _quote_id(src_lyr.GetGeometryColumn()),
+                                src_srs_id,
+                                dst_srs_id,
+                            )
+                        else:
+                            fields += ', ST_Transform("%s", %d)' % (
+                                _quote_id(src_lyr.GetGeometryColumn()),
+                                dst_srs_id,
+                            )
+                    else:
+                        # Just remap the geometry SRID to the one of the destination dataset
+                        fields += ', SetSRID("%s", %d)' % (
+                            _quote_id(src_lyr.GetGeometryColumn()),
+                            dst_srs_id,
+                        )
+                for field_idx in range(src_lyr.GetLayerDefn().GetFieldCount()):
+                    fields += ', "%s"' % _quote_id(
+                        src_lyr.GetLayerDefn().GetFieldDefn(field_idx).GetName()
+                    )
+
+            dst_ds.ExecuteSQL(
+                "ATTACH DATABASE '%s' AS source_db" % _quote_literal(src_dsname)
+            )
+
+            threaded_progress = None
+            if progress_callback:
+                threaded_progress = ThreadedProgress(dst_filename, estimated_final_size)
+
+            # Copy features
+            try:
+                dst_ds.ExecuteSQL(
+                    'INSERT INTO "%s" SELECT %s FROM source_db."%s"'
+                    % (_quote_id(lyr.GetName()), fields, _quote_id(src_lyr.GetName()))
+                )
+            finally:
+                if threaded_progress:
+                    threaded_progress.stop()
+
+            # Update gpkg_ogr_contents
+            sql_lyr = dst_ds.ExecuteSQL("SELECT changes()")
+            f = sql_lyr.GetNextFeature()
+            num_rows_inserted = f.GetField(0)
+            f = None
+            dst_ds.ReleaseResultSet(sql_lyr)
+            src_feature_count = src_lyr.GetFeatureCount(force=0)
+            if src_feature_count >= 0 and num_rows_inserted != src_feature_count:
+                print(
+                    "Warning: %d rows inserted into %s whereas %d expected"
+                    % (num_rows_inserted, lyr.GetName(), src_feature_count)
+                )
+            dst_ds.ExecuteSQL(
+                "INSERT OR REPLACE INTO gpkg_ogr_contents VALUES('%s',%d)"
+                % (_quote_literal(lyr.GetName()), num_rows_inserted)
+            )
+
+            recreateSpatialIndex = False
+            if has_geom and create_spatial_index:
+                if can_reuse_spatial_index and _gpkg_has_spatial_index(src_ds, src_lyr):
+                    # print("Copying spatial index")
+
+                    src_rtree_prefix = "rtree_%s_%s" % (
+                        src_lyr.GetName(),
+                        src_lyr.GetGeometryColumn(),
+                    )
+
+                    if progress_callback:
+                        threaded_progress = ThreadedProgress(
+                            dst_filename, estimated_final_size
+                        )
+                    try:
+                        dst_ds.ExecuteSQL(
+                            'DELETE FROM "%s_node" ' % _quote_id(rtree_prefix)
+                        )
+                        dst_ds.ExecuteSQL(
+                            'INSERT INTO "%s_node" SELECT * FROM source_db."%s_node"'
+                            % (_quote_id(rtree_prefix), _quote_id(src_rtree_prefix))
+                        )
+                        dst_ds.ExecuteSQL(
+                            'INSERT INTO "%s_rowid" SELECT * FROM source_db."%s_rowid"'
+                            % (_quote_id(rtree_prefix), _quote_id(src_rtree_prefix))
+                        )
+                        dst_ds.ExecuteSQL(
+                            'INSERT INTO "%s_parent" SELECT * FROM source_db."%s_parent"'
+                            % (_quote_id(rtree_prefix), _quote_id(src_rtree_prefix))
+                        )
+                    finally:
+                        if threaded_progress:
+                            threaded_progress.stop()
+
+                else:
+                    recreateSpatialIndex = True
+
+            dst_ds.ExecuteSQL("DETACH DATABASE source_db")
+
+            # Manually register gpkg_geom_* extensions, if not already done
+            # at layer creation time.
+            sql_lyr = src_ds.ExecuteSQL(
+                "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'gpkg_extensions'"
+            )
+            has_gpkg_extensions = sql_lyr.GetFeatureCount() == 1
+            src_ds.ReleaseResultSet(sql_lyr)
+            if has_geom and has_gpkg_extensions:
+                sql = (
+                    "SELECT extension_name FROM gpkg_extensions WHERE table_name = '%s' AND column_name = '%s' AND extension_name LIKE 'gpkg_geom_%%'"
+                    % (
+                        _quote_literal(src_lyr.GetName()),
+                        _quote_literal(src_lyr.GetGeometryColumn()),
+                    )
+                )
+                sql_lyr = src_ds.ExecuteSQL(sql)
+                for f in sql_lyr:
+                    geom_type = f.GetField(0)[len("gpkg_geom_") :]
+                    dst_ds.ReleaseResultSet(
+                        dst_ds.ExecuteSQL(
+                            "SELECT RegisterGeometryExtension('%s', '%s', '%s')"
+                            % (lyr.GetName(), lyr.GetGeometryColumn(), geom_type)
+                        )
+                    )
+                src_ds.ReleaseResultSet(sql_lyr)
+
+            # Update extent
+            if has_geom:
+                res = src_lyr.GetExtent(force=1, can_return_null=True)
+                if res:
+                    minx, maxx, miny, maxy = res
+                    sql = (
+                        "UPDATE gpkg_contents SET min_x=%.18g, min_y=%.18g, max_x=%.18g, max_y=%.18g WHERE table_name = '%s'"
+                        % (minx, miny, maxx, maxy, _quote_literal(lyr.GetName()))
+                    )
+                    dst_ds.ExecuteSQL(sql)
+
+            # Re-install trigers
+            for sql in triggers:
+                dst_ds.ExecuteSQL(sql)
+
+            if recreateSpatialIndex:
+                # print("Recreating spatial index")
+                dst_ds.ReleaseResultSet(
+                    dst_ds.ExecuteSQL(
+                        "SELECT DisableSpatialIndex('%s', '%s')"
+                        % (
+                            _quote_literal(lyr.GetName()),
+                            _quote_literal(lyr.GetGeometryColumn()),
+                        )
+                    )
+                )
+                dst_ds.ReleaseResultSet(
+                    dst_ds.ExecuteSQL(
+                        "SELECT CreateSpatialIndex('%s', '%s')"
+                        % (
+                            _quote_literal(lyr.GetName()),
+                            _quote_literal(lyr.GetGeometryColumn()),
+                        )
+                    )
+                )
+
+    if progress_callback:
+        progress_callback(1.0, "", progress_arg)
+
+    return 0
+
+
 def ogrmerge(
     src_datasets: Optional[Sequence[str]] = None,
     dst_filename: Optional[PathLikeOrStr] = None,
@@ -352,6 +888,53 @@ def ogrmerge(
             layer_name_template = "merged"
         else:
             layer_name_template = "{AUTO_NAME}"
+
+    if (
+        not single_layer
+        and EQUAL(driver_name, "GPKG")
+        and gdal.OpenEx(dst_filename, gdal.OF_VECTOR | gdal.OF_UPDATE) is None
+        and EQUAL(gdal.GetConfigOption("OGR_MERGE_ENABLE_GPKG_OPTIM", "YES"), "YES")
+    ):
+
+        def are_sources_gpkg():
+            for src_dsname in src_datasets:
+                if src_dsname.lower().endswith(".gpkg"):
+                    src_ds = ogr.Open(src_dsname)
+                    if src_ds is None:
+                        return False
+                    for src_lyr in src_ds:
+                        if src_lyr.GetLayerDefn().GetGeomFieldCount() > 1:
+                            # shouldn't happen for now...
+                            print("Code is not ready for multi-geometry column GPKG")
+                            return False
+                else:
+                    return False
+            return True
+
+        compat_of_gpkg_optim = are_sources_gpkg()
+        if compat_of_gpkg_optim:
+            if s_srs:
+                s_srs_obj = osr.SpatialReference()
+                s_srs_obj.SetFromUserInput(s_srs)
+                if s_srs_obj.GetAuthorityName(None) != "EPSG":
+                    compat_of_gpkg_optim = False
+
+        if compat_of_gpkg_optim:
+            return _gpkg_ogrmerge(
+                src_datasets,
+                dst_filename,
+                driver_name,
+                layer_name_template,
+                skip_failures,
+                src_geom_types,
+                a_srs,
+                s_srs,
+                t_srs,
+                dsco,
+                lco,
+                progress_callback,
+                progress_arg,
+            )
 
     vrt_filename = None
     if not EQUAL(driver_name, "VRT"):
@@ -525,46 +1108,18 @@ def ogrmerge(
                 except AttributeError:
                     pass
 
-                layer_name = layer_name_template
-                basename = None
-                if os.path.exists(src_dsname):
-                    basename = os.path.basename(src_dsname)
-                    if "." in basename:
-                        basename = ".".join(basename.split(".")[0:-1])
-
-                if basename == src_lyr_name:
-                    layer_name = layer_name.replace("{AUTO_NAME}", basename)
-                elif basename is None:
-                    layer_name = layer_name.replace(
-                        "{AUTO_NAME}", "Dataset%d_%s" % (src_ds_idx, src_lyr_name)
-                    )
-                else:
-                    layer_name = layer_name.replace(
-                        "{AUTO_NAME}", basename + "_" + src_lyr_name
-                    )
-
-                if basename is not None:
-                    layer_name = layer_name.replace("{DS_BASENAME}", basename)
-                elif "{DS_BASENAME}" in layer_name:
-                    if skip_failures:
-                        if "{DS_INDEX}" not in layer_name:
-                            layer_name = layer_name.replace(
-                                "{DS_BASENAME}", "Dataset%d" % src_ds_idx
-                            )
-                    else:
-                        print(
-                            "ERROR: Layer name template %s "
-                            "includes {DS_BASENAME} "
-                            "but %s is not a file" % (layer_name_template, src_dsname)
-                        )
-
-                        gdal.VSIFCloseL(f)
-                        gdal.Unlink(vrt_filename)
-                        return 1
-                layer_name = layer_name.replace("{DS_NAME}", "%s" % src_dsname)
-                layer_name = layer_name.replace("{DS_INDEX}", "%d" % src_ds_idx)
-                layer_name = layer_name.replace("{LAYER_NAME}", src_lyr_name)
-                layer_name = layer_name.replace("{LAYER_INDEX}", "%d" % src_lyr_idx)
+                layer_name = _build_layer_name_non_single_mode(
+                    layer_name_template,
+                    src_ds_idx,
+                    src_dsname,
+                    src_lyr_idx,
+                    src_lyr.GetName(),
+                    skip_failures,
+                )
+                if layer_name is None:
+                    gdal.VSIFCloseL(f)
+                    gdal.Unlink(vrt_filename)
+                    return 1
 
                 if t_srs is not None:
                     writer.open_element("OGRVRTWarpedLayer")

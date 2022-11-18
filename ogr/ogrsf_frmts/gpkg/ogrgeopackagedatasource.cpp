@@ -6355,6 +6355,7 @@ static const char* const apszFuncsWithSideEffects[] =
     "CreateSpatialIndex",
     "DisableSpatialIndex",
     "HasSpatialIndex",
+    "RegisterGeometryExtension",
 };
 
 OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
@@ -7268,6 +7269,52 @@ void OGRGeoPackageSTSRID(sqlite3_context* pContext,
 }
 
 /************************************************************************/
+/*                     OGRGeoPackageSetSRID()                           */
+/************************************************************************/
+
+static
+void OGRGeoPackageSetSRID(sqlite3_context* pContext,
+                          int /* argc */, sqlite3_value** argv)
+{
+    if( sqlite3_value_type (argv[0]) != SQLITE_BLOB )
+    {
+        sqlite3_result_null(pContext);
+        return;
+    }
+    const int nDestSRID = sqlite3_value_int(argv[1]);
+    GPkgHeader sHeader;
+    int nBLOBLen = sqlite3_value_bytes (argv[0]);
+    const GByte* pabyBLOB = reinterpret_cast<const GByte *>(sqlite3_value_blob (argv[0]));
+
+    if( nBLOBLen < 8 ||
+        GPkgHeaderFromWKB(pabyBLOB, nBLOBLen, &sHeader) != OGRERR_NONE )
+    {
+        // Try also spatialite geometry blobs
+        OGRGeometry* poGeom = nullptr;
+        if( OGRSQLiteImportSpatiaLiteGeometry( pabyBLOB, nBLOBLen,
+                                               &poGeom ) != OGRERR_NONE )
+        {
+            sqlite3_result_null(pContext);
+            return;
+        }
+        size_t nBLOBDestLen = 0;
+        GByte* pabyDestBLOB =
+            GPkgGeometryFromOGR(poGeom, nDestSRID, &nBLOBDestLen);
+        sqlite3_result_blob(pContext, pabyDestBLOB,
+                            static_cast<int>(nBLOBDestLen), VSIFree);
+        return;
+    }
+
+    GByte* pabyDestBLOB = static_cast<GByte*>(CPLMalloc(nBLOBLen));
+    memcpy(pabyDestBLOB, pabyBLOB, nBLOBLen);
+    int32_t nSRIDToSerialize = nDestSRID;
+    if( OGR_SWAP(sHeader.eByteOrder) )
+        nSRIDToSerialize = CPL_SWAP32(nSRIDToSerialize);
+    memcpy(pabyDestBLOB + 4, &nSRIDToSerialize, 4);
+    sqlite3_result_blob(pContext, pabyDestBLOB, nBLOBLen, VSIFree);
+}
+
+/************************************************************************/
 /*                   OGRGeoPackageSTMakeValid()                         */
 /************************************************************************/
 
@@ -7581,6 +7628,55 @@ void OGRGeoPackageImportFromEPSG(sqlite3_context* pContext,
     }
 
     sqlite3_result_int( pContext,poDS->GetSrsId(oSRS) );
+}
+
+/************************************************************************/
+/*               OGRGeoPackageRegisterGeometryExtension()               */
+/************************************************************************/
+
+static
+void OGRGeoPackageRegisterGeometryExtension(sqlite3_context* pContext,
+                                            int /*argc*/,
+                                            sqlite3_value** argv)
+{
+    if( sqlite3_value_type (argv[0]) != SQLITE_TEXT ||
+        sqlite3_value_type (argv[1]) != SQLITE_TEXT ||
+        sqlite3_value_type (argv[2]) != SQLITE_TEXT )
+    {
+        sqlite3_result_int( pContext, 0 );
+        return;
+    }
+
+    const char* pszTableName = reinterpret_cast<const char*>(sqlite3_value_text(argv[0]));
+    const char* pszGeomName = reinterpret_cast<const char*>(sqlite3_value_text(argv[1]));
+    const char* pszGeomType = reinterpret_cast<const char*>(sqlite3_value_text(argv[2]));
+
+    GDALGeoPackageDataset* poDS = static_cast<GDALGeoPackageDataset*>(sqlite3_user_data(pContext));
+
+    OGRGeoPackageTableLayer* poLyr = cpl::down_cast<OGRGeoPackageTableLayer*>(poDS->GetLayerByName(pszTableName));
+    if( poLyr == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Unknown layer name");
+        sqlite3_result_int( pContext, 0 );
+        return;
+    }
+    if( !EQUAL(poLyr->GetGeometryColumn(), pszGeomName) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Unknown geometry column name");
+        sqlite3_result_int( pContext, 0 );
+        return;
+    }
+    const OGRwkbGeometryType eGeomType = OGRFromOGCGeomType(pszGeomType);
+    if( eGeomType == wkbUnknown )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Unknown geometry type name");
+        sqlite3_result_int( pContext, 0 );
+        return;
+    }
+
+    sqlite3_result_int( pContext,
+        static_cast<int>(poLyr->CreateGeometryExtensionIfNecessary(eGeomType))
+    );
 }
 
 /************************************************************************/
@@ -7911,6 +8007,11 @@ void GDALGeoPackageDataset::InstallSQLFunctions()
                             SQLITE_UTF8, this,
                             OGRGeoPackageSridFromAuthCRS, nullptr, nullptr);
 
+    // Implementation that directly hacks the GeoPackage geometry blob header
+    sqlite3_create_function(hDB, "SetSRID", 2,
+                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+                            OGRGeoPackageSetSRID, nullptr, nullptr);
+
     // GDAL specific function
     sqlite3_create_function(hDB, "ImportFromEPSG", 1,
                             SQLITE_UTF8, this,
@@ -7921,6 +8022,11 @@ void GDALGeoPackageDataset::InstallSQLFunctions()
                             SQLITE_UTF8 | SQLITE_DETERMINISTIC, this,
                             nullptr, OGR_GPKG_GeometryTypeAggregate_Step,
                             OGR_GPKG_GeometryTypeAggregate_Finalize);
+
+    // May be used by ogrmerge.py
+    sqlite3_create_function(hDB, "RegisterGeometryExtension", 3,
+                            SQLITE_UTF8, this,
+                            OGRGeoPackageRegisterGeometryExtension, nullptr, nullptr);
 
     // Check that OGRGeometry::MakeValid() is functional before registering
     // ST_MakeValid()

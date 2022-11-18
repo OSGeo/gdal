@@ -1279,6 +1279,38 @@ def test_ogr_gpkg_15():
 
 
 ###############################################################################
+# Test SetSRID() function
+
+
+def test_ogr_gpkg_SetSRID():
+
+    filename = "/vsimem/test_ogr_gpkg_SetSRID.gpkg"
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
+    lyr = ds.CreateLayer("foo")
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 0)"))
+    lyr.CreateFeature(f)
+
+    for srid in (32631, 0, -1, 12345678):
+        sql_lyr = ds.ExecuteSQL("SELECT ST_SRID(SetSRID(geom, %d)) FROM foo" % srid)
+        f = sql_lyr.GetNextFeature()
+        try:
+            assert f.GetField(0) == srid, srid
+        finally:
+            ds.ReleaseResultSet(sql_lyr)
+
+    sql_lyr = ds.ExecuteSQL("SELECT ST_SRID(SetSRID(NULL, 32631)) FROM foo")
+    f = sql_lyr.GetNextFeature()
+    try:
+        assert f.GetField(0) is None
+    finally:
+        ds.ReleaseResultSet(sql_lyr)
+
+    ds = None
+    gdal.Unlink("/vsimem/test_ogr_gpkg_SetSRID.gpkg")
+
+
+###############################################################################
 # Test unknown extensions
 
 
