@@ -27,6 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_atomic_ops.h"
 #include "cpl_port.h"
 #include "cpl_vax.h"
 #include "rawdataset.h"
@@ -964,16 +965,23 @@ int RawRasterBand::CanUseDirectIO(int /* nXOff */,
     }
 
     RawDataset* rawDataset = dynamic_cast<RawDataset*>(this->GetDataset());
-    std::pair<bool, int> dummy;
-    std::pair<bool, int>& cachedCPLOneBigReadOption = !rawDataset ? dummy : rawDataset->cachedCPLOneBigReadOption;
+    RawDataset::CachedValidValue_t oldCachedCPLOneBigReadOption = {{false, 0}};
+    if (rawDataset != nullptr)
+        oldCachedCPLOneBigReadOption.all = CPLAtomicCompareAndExchange(&rawDataset->cachedCPLOneBigReadOption.all, 0, 0);//just query the value
+    RawDataset::CachedValidValue_t newCachedCPLOneBigReadOption = oldCachedCPLOneBigReadOption;
+
     const char *pszGDAL_ONE_BIG_READ =
-      !cachedCPLOneBigReadOption.first ? CPLGetConfigOption("GDAL_ONE_BIG_READ", nullptr) :
-      (cachedCPLOneBigReadOption.second == 0) ? "0" :
-      (cachedCPLOneBigReadOption.second == 1) ? "1" :
+      !oldCachedCPLOneBigReadOption.data.valid ? CPLGetConfigOption("GDAL_ONE_BIG_READ", nullptr) :
+      (oldCachedCPLOneBigReadOption.data.value == 0) ? "0" :
+      (oldCachedCPLOneBigReadOption.data.value == 1) ? "1" :
       nullptr;
     if ( pszGDAL_ONE_BIG_READ == nullptr )
     {
-        cachedCPLOneBigReadOption = std::make_pair(true, -1);
+        newCachedCPLOneBigReadOption.data.value = -1;
+        newCachedCPLOneBigReadOption.data.valid = true;
+        if (rawDataset != nullptr)
+            CPLAtomicCompareAndExchange(&rawDataset->cachedCPLOneBigReadOption.all, oldCachedCPLOneBigReadOption.all, newCachedCPLOneBigReadOption.all);
+
         if ( nLineSize < 50000
              || nXSize > nLineSize / nPixelOffset / 5 * 2
              || IsSignificantNumberOfLinesLoaded(nYOff, nYSize) )
@@ -984,7 +992,11 @@ int RawRasterBand::CanUseDirectIO(int /* nXOff */,
     }
 
     result = CPLTestBool(pszGDAL_ONE_BIG_READ);
-    cachedCPLOneBigReadOption = std::make_pair(true, result ? 1 : 0);
+
+    newCachedCPLOneBigReadOption.data.value = result ? 1 : 0;
+    newCachedCPLOneBigReadOption.data.valid = true;
+    if (rawDataset != nullptr)
+        CPLAtomicCompareAndExchange(&rawDataset->cachedCPLOneBigReadOption.all, oldCachedCPLOneBigReadOption.all, newCachedCPLOneBigReadOption.all);
 
     return result;
 }
@@ -1510,7 +1522,7 @@ CPLVirtualMem  *RawRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
 /*                            RawDataset()                              */
 /************************************************************************/
 
-RawDataset::RawDataset():cachedCPLOneBigReadOption(std::make_pair(false, 0)) {}
+RawDataset::RawDataset():cachedCPLOneBigReadOption({{false, 0}}) {}
 
 /************************************************************************/
 /*                           ~RawDataset()                              */
@@ -1765,4 +1777,13 @@ bool RawDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout& sLayout)
     sLayout.nBandOffset = nBandOffset;
 
     return true;
+}
+
+/************************************************************************/
+/*                        ClearCachedConfigOption()                     */
+/************************************************************************/
+
+void RawDataset::ClearCachedConfigOption(void)
+{
+    CPLAtomicCompareAndExchange(&this->cachedCPLOneBigReadOption.all, this->cachedCPLOneBigReadOption.all, 0);
 }

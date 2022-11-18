@@ -63,11 +63,18 @@ class CPL_DLL RawDataset : public GDALPamDataset
          virtual ~RawDataset() = 0;
 
     bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout&) override;
-    void ClearCachedConfigOption(void) {this->cachedCPLOneBigReadOption = std::make_pair(false, 0);}
+    void ClearCachedConfigOption(void);
   private:
     CPL_DISALLOW_COPY_ASSIGN(RawDataset)
   protected:
-    std::pair<bool, int> cachedCPLOneBigReadOption;
+    typedef union {
+      struct {
+        bool valid;//false if no value is cached
+        char value;
+      } data;
+      int all;//this unioned field can be used to help query/update the cached value with atomic operations
+    } CachedValidValue_t ;
+    CachedValidValue_t  cachedCPLOneBigReadOption;
 };
 
 /************************************************************************/
