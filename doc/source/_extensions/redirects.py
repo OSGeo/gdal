@@ -173,6 +173,10 @@ def gather_redirects(src_dir):
             {utility + ".html": os.path.join("./programs/", utility) + ".html"}
         )
 
+    output.update(
+        {"build_hints.html": os.path.join("./development/building_from_source.html")}
+    )
+
     return output
 
 

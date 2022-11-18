@@ -1,13 +1,37 @@
+.. include:: ../substitutions.rst
+
+.. _dev_documentation:
+
+================================================================================
+Building documentation
+================================================================================
+
+Documentation overview
+###########################
+
+GDAL's documentation includes C and C++ :ref:`API documentation <api>` built
+automatically from source comments using doxygen and reStructuredText (rst)
+files containing manually-edited content.
+
+|Sphinx| is used to combine the above components into a complete set of documentation in HTML, PDF, and other formats.
+
+Building documentation
+######################
+
+HTML documentation can be built by running ``make html`` in the ``doc`` subdirectory of the GDAL source repository.
+ The generated files will be output to ``doc/build`` where they can be viewed using a web browser.
+
+To visualize documentation changes while editing, it may be useful to install the |sphinx-autobuild| python package.
+Once installed, running ``sphinx-autobuild -b html source build`` from the ``doc`` subdirectory will build documentation
+and serve it on a local web server at ``http://127.0.0.1:8000``. The pages served will be automatically refreshed as changes
+are made to underlying ``rst`` documentatio files.
+
 .. _rst_style:
 
-================================================================================
 Sphinx RST Style guide
-================================================================================
+######################
 
-This page contains syntax rules, tips, and tricks for using Sphinx and reStructuredText.  For more information, please see this  `comprehensive guide to reStructuredText <http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html>`_, as well as the `Sphinx reStructuredText Primer <http://sphinx.pocoo.org/rest.html>`_.
-
-Basic markup
-------------
+This section contains syntax rules, tips, and tricks for using Sphinx and reStructuredText.  For more information, please see this  `comprehensive guide to reStructuredText <http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html>`_, as well as the `Sphinx reStructuredText Primer <http://sphinx.pocoo.org/rest.html>`_.
 
 Basic markup
 ------------
@@ -31,7 +55,7 @@ A reStructuredText document is written in plain text.  Without the need for comp
      - `` ``monospace`` `` (double back quote)
      - ``monospace``
 
-.. warning:: Use of basic markup is **not recommend**! Where possible use sphinx inline directives to logically mark commands, parameters, options, input, and files. By using directives consistently these items can be styled appropriately.
+.. warning:: Use of basic markup is **not recommend**! Where possible use sphinx inline directives (described below) to logically mark commands, parameters, options, input, and files. By using directives consistently these items can be styled appropriately.
 
 Lists
 -----

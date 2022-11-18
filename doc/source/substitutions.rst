@@ -11,3 +11,7 @@
 .. |Bash| replace:: `Bash <https://en.wikipedia.org/wiki/Bash_(Unix_shell)>`__
 .. |Python| replace:: `Python <https://python.org/>`__
 .. |Docker| replace:: `Docker <https://www.docker.com/>`__
+.. |gdal-dev| replace:: `gdal-dev <https://lists.osgeo.org/mailman/listinfo/gdal-dev>`__
+.. |OSGeo/gdal| replace:: `OSGeo/gdal <https://github.com/OSGeo/gdal>`__
+.. |Sphinx| replace:: `Sphinx <https://www.sphinx-doc.org/>`__
+.. |sphinx-autobuild| replace:: `sphinx-autobuild <https://pypi.org/project/sphinx-autobuild/>`__
