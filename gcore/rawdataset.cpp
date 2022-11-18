@@ -964,10 +964,10 @@ int RawRasterBand::CanUseDirectIO(int /* nXOff */,
     }
 
     RawDataset* rawDataset = dynamic_cast<RawDataset*>(this->GetDataset());
-    RawDataset::cached8_t oldCachedCPLOneBigReadOption = {{false, 0}};
+    RawDataset::CachedValidValue_t oldCachedCPLOneBigReadOption = {{false, 0}};
     if (rawDataset != nullptr)
         oldCachedCPLOneBigReadOption.all = CPLAtomicCompareAndExchange(&rawDataset->cachedCPLOneBigReadOption.all, 0, 0);//just query the value
-    RawDataset::cached8_t newCachedCPLOneBigReadOption = oldCachedCPLOneBigReadOption;
+    RawDataset::CachedValidValue_t newCachedCPLOneBigReadOption = oldCachedCPLOneBigReadOption;
 
     const char *pszGDAL_ONE_BIG_READ =
       !oldCachedCPLOneBigReadOption.data.valid ? CPLGetConfigOption("GDAL_ONE_BIG_READ", nullptr) :

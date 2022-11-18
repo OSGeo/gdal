@@ -69,12 +69,12 @@ class CPL_DLL RawDataset : public GDALPamDataset
   protected:
     typedef union {
       struct {
-        bool valid;
+        bool valid;//false if no value is cached
         char value;
       } data;
-      int all;
-    } cached8_t;
-    cached8_t cachedCPLOneBigReadOption;
+      int all;//this unioned field can be used to help query/update the cached value with atomic operations
+    } CachedValidValue_t ;
+    CachedValidValue_t  cachedCPLOneBigReadOption;
 };
 
 /************************************************************************/
