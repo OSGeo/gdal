@@ -10033,17 +10033,7 @@ netCDFDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
         else
             szLongName[0] = '\0';
 
-        bool bSignedData = true;
-        if( eDT == GDT_Byte )
-        {
-            // GDAL defaults to unsigned bytes, but check if metadata says its
-            // signed, as NetCDF can support this for certain formats.
-            bSignedData = false;
-            tmpMetadata =
-                poSrcBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
-            if( tmpMetadata && EQUAL(tmpMetadata, "SIGNEDBYTE") )
-                bSignedData = true;
-        }
+        constexpr bool bSignedData = false;
 
         if( nDim > 2 )
             poBand = new netCDFRasterBand(

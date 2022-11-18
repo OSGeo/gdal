@@ -612,9 +612,11 @@ static double AdjustNoDataValue( double dfInputNoDataValue,
 {
     bool bSignedByte = false;
     const char* pszPixelType = CSLFetchNameValue( psOptions->papszCreateOptions, "PIXELTYPE" );
-    if( pszPixelType == nullptr )
+    if( pszPixelType == nullptr && poBand->GetRasterDataType() == GDT_Byte )
     {
+        poBand->EnablePixelTypeSignedByteWarning(false);
         pszPixelType = poBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+        poBand->EnablePixelTypeSignedByteWarning(true);
     }
     if( pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE") )
         bSignedByte = true;
@@ -1998,11 +2000,18 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         }
 
         // Preserve PIXELTYPE if no option change values
-        const char* pszPixelType = poSrcBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
-        if( pszPixelType && psOptions->nRGBExpand == 0 && psOptions->nScaleRepeat == 0 &&
-            !psOptions->bUnscale && psOptions->eOutputType == GDT_Unknown && psOptions->pszResampling == nullptr )
+        if( poSrcBand->GetRasterDataType() == GDT_Byte &&
+            psOptions->nRGBExpand == 0 && psOptions->nScaleRepeat == 0 &&
+            !psOptions->bUnscale && psOptions->eOutputType == GDT_Unknown &&
+            psOptions->pszResampling == nullptr )
         {
-            poVRTBand->SetMetadataItem("PIXELTYPE", pszPixelType, "IMAGE_STRUCTURE");
+            poSrcBand->EnablePixelTypeSignedByteWarning(false);
+            const char* pszPixelType = poSrcBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+            poSrcBand->EnablePixelTypeSignedByteWarning(true);
+            if( pszPixelType )
+            {
+                poVRTBand->SetMetadataItem("PIXELTYPE", pszPixelType, "IMAGE_STRUCTURE");
+            }
         }
 
         const char* pszCompression = poSrcBand->GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE");

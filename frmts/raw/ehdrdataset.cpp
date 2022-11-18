@@ -1808,24 +1808,29 @@ GDALDataset *EHdrDataset::CreateCopy( const char * pszFilename,
     char **papszAdjustedOptions = CSLDuplicate(papszOptions);
 
     // Ensure we pass on NBITS and PIXELTYPE structure information.
-    if( poSrcDS->GetRasterBand(1)->GetMetadataItem("NBITS",
-                                                   "IMAGE_STRUCTURE") != nullptr
+    auto poSrcBand = poSrcDS->GetRasterBand(1);
+    if( poSrcBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE") != nullptr
         && CSLFetchNameValue(papszOptions, "NBITS") == nullptr )
     {
         papszAdjustedOptions =
             CSLSetNameValue(papszAdjustedOptions, "NBITS",
-                            poSrcDS->GetRasterBand(1)->GetMetadataItem(
+                            poSrcBand->GetMetadataItem(
                                 "NBITS", "IMAGE_STRUCTURE"));
     }
 
-    if( poSrcDS->GetRasterBand(1)->GetMetadataItem("PIXELTYPE",
-                                                   "IMAGE_STRUCTURE") != nullptr
-        && CSLFetchNameValue(papszOptions, "PIXELTYPE") == nullptr )
+    if( poSrcBand->GetRasterDataType() == GDT_Byte &&
+        CSLFetchNameValue(papszOptions, "PIXELTYPE") == nullptr )
     {
-        papszAdjustedOptions =
-            CSLSetNameValue(papszAdjustedOptions, "PIXELTYPE",
-                            poSrcDS->GetRasterBand(1)->GetMetadataItem(
-                                "PIXELTYPE", "IMAGE_STRUCTURE"));
+        poSrcBand->EnablePixelTypeSignedByteWarning(false);
+        const char* pszPixelType = poSrcBand->GetMetadataItem("PIXELTYPE",
+                                                              "IMAGE_STRUCTURE");
+        poSrcBand->EnablePixelTypeSignedByteWarning(true);
+        if( pszPixelType != nullptr )
+        {
+            papszAdjustedOptions =
+                CSLSetNameValue(papszAdjustedOptions, "PIXELTYPE",
+                                pszPixelType);
+        }
     }
 
     // Proceed with normal copying using the default createcopy  operators.

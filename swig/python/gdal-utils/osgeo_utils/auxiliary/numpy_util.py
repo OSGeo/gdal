@@ -45,11 +45,14 @@ def GDALTypeCodeToNumericTypeCodeEx(buf_type, signed_byte, default=None):
 
 
 def GDALTypeCodeAndNumericTypeCodeFromDataSet(ds):
-    buf_type = ds.GetRasterBand(1).DataType
-    signed_byte = (
-        ds.GetRasterBand(1).GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE")
-        == "SIGNEDBYTE"
-    )
+    band = ds.GetRasterBand(1)
+    buf_type = band.DataType
+    if buf_type == gdal.GDT_Byte:
+        band._EnablePixelTypeSignedByteWarning(False)
+        signed_byte = (
+            band.GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE") == "SIGNEDBYTE"
+        )
+        band._EnablePixelTypeSignedByteWarning(True)
     np_typecode = GDALTypeCodeToNumericTypeCodeEx(
         buf_type, signed_byte=signed_byte, default=np.float32
     )

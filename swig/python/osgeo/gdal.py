@@ -4131,6 +4131,10 @@ class Band(MajorObject):
         r"""AsMDArray(Band self) -> MDArray"""
         return _gdal.Band_AsMDArray(self, *args)
 
+    def _EnablePixelTypeSignedByteWarning(self, *args) -> "void":
+        r"""_EnablePixelTypeSignedByteWarning(Band self, bool b)"""
+        return _gdal.Band__EnablePixelTypeSignedByteWarning(self, *args)
+
     def ReadRaster1(self, *args, **kwargs) -> "CPLErr":
         r"""ReadRaster1(Band self, double xoff, double yoff, double xsize, double ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour, GDALProgressFunc callback=0, void * callback_data=None, void * inputOutputBuf=None) -> CPLErr"""
         return _gdal.Band_ReadRaster1(self, *args, **kwargs)

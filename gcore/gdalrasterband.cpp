@@ -2119,8 +2119,10 @@ double GDALRasterBand::GetMaximum( int *pbSuccess )
     {
       case GDT_Byte:
       {
+        EnablePixelTypeSignedByteWarning(false);
         const char* pszPixelType =
             GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+        EnablePixelTypeSignedByteWarning(true);
         if (pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE"))
             return 127;
 
@@ -2223,8 +2225,10 @@ double GDALRasterBand::GetMinimum( int *pbSuccess )
     {
       case GDT_Byte:
       {
+        EnablePixelTypeSignedByteWarning(false);
         const char* pszPixelType =
             GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+        EnablePixelTypeSignedByteWarning(true);
         if (pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE"))
             return -128;
 
@@ -3351,9 +3355,15 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
     ComputeFloatNoDataValue( eDataType, dfNoDataValue, bGotNoDataValue,
                             fNoDataValue, bGotFloatNoDataValue );
 
-    const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
-    const bool bSignedByte =
-        pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE");
+    bool bSignedByte = false;
+    if( eDataType == GDT_Byte )
+    {
+        EnablePixelTypeSignedByteWarning(false);
+        const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+        EnablePixelTypeSignedByteWarning(true);
+        bSignedByte =
+            pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE");
+    }
 
     if ( bApproxOK && HasArbitraryOverviews() )
     {
@@ -3878,9 +3888,15 @@ CPLErr
 
     const int nBuckets = 256;
 
-    const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
-    const int bSignedByte =
-        pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE");
+    bool bSignedByte = false;
+    if( eDataType == GDT_Byte )
+    {
+        EnablePixelTypeSignedByteWarning(false);
+        const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+        EnablePixelTypeSignedByteWarning(true);
+        bSignedByte =
+            pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE");
+    }
 
     if( GetRasterDataType() == GDT_Byte && !bSignedByte)
     {
@@ -5499,10 +5515,15 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
     ComputeFloatNoDataValue( eDataType, dfNoDataValue, bGotNoDataValue,
                             fNoDataValue, bGotFloatNoDataValue );
 
-    const char* pszPixelType =
-        GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
-    const bool bSignedByte =
-        pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE");
+    bool bSignedByte = false;
+    if( eDataType == GDT_Byte )
+    {
+        EnablePixelTypeSignedByteWarning(false);
+        const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+        EnablePixelTypeSignedByteWarning(true);
+        bSignedByte =
+            pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE");
+    }
 
     GUIntBig nSampleCount = 0;
     GUIntBig nValidCount = 0;
@@ -6249,9 +6270,15 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
     ComputeFloatNoDataValue( eDataType, dfNoDataValue, bGotNoDataValue,
                             fNoDataValue, bGotFloatNoDataValue );
 
-    const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
-    const bool bSignedByte =
-        pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE");
+    bool bSignedByte = false;
+    if( eDataType == GDT_Byte )
+    {
+        EnablePixelTypeSignedByteWarning(false);
+        const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+        EnablePixelTypeSignedByteWarning(true);
+        bSignedByte =
+            pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE");
+    }
 
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
@@ -8026,6 +8053,44 @@ void GDALRasterBand::InitRWLock()
  *
  * @return CE_None on success, or an error code on failure.
  */
+
+//! @cond Doxygen_Suppress
+/************************************************************************/
+/*                    EnablePixelTypeSignedByteWarning()                */
+/************************************************************************/
+
+void GDALRasterBand::EnablePixelTypeSignedByteWarning(bool b)
+{
+    m_bEnablePixelTypeSignedByteWarning = b;
+}
+
+void GDALEnablePixelTypeSignedByteWarning(GDALRasterBandH hBand, bool b)
+{
+    GDALRasterBand::FromHandle(hBand)->EnablePixelTypeSignedByteWarning(b);
+}
+
+//! @endcond
+
+/************************************************************************/
+/*                           GetMetadataItem()                          */
+/************************************************************************/
+
+const char *GDALRasterBand::GetMetadataItem( const char * pszName,
+                                             const char * pszDomain )
+{
+    // TODO (GDAL 4.0?): remove this when GDAL 3.7 has been widely adopted.
+    if( m_bEnablePixelTypeSignedByteWarning &&
+        eDataType == GDT_Byte &&
+        pszDomain != nullptr && EQUAL(pszDomain, "IMAGE_STRUCTURE") &&
+        EQUAL(pszName, "PIXELTYPE") )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Starting with GDAL 3.7, PIXELTYPE=SIGNEDBYTE is no longer "
+                 "used to signal signed 8-bit raster. Change your code to "
+                 "test for the new GDT_Int8 data type instead.");
+    }
+    return GDALMajorObject::GetMetadataItem(pszName, pszDomain);
+}
 
 /************************************************************************/
 /*                     GDALMDArrayFromRasterBand                        */

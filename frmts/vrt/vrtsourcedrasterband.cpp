@@ -934,9 +934,15 @@ CPLErr VRTSourcedRasterBand::ComputeRasterMinMax( int bApproxOK, double* adfMinM
             return eErr;
         }
 
-        const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
-        const bool bSignedByte =
-            pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE");
+        bool bSignedByte = false;
+        if( eDataType == GDT_Byte )
+        {
+            EnablePixelTypeSignedByteWarning(false);
+            const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+            EnablePixelTypeSignedByteWarning(true);
+            bSignedByte =
+                pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE");
+        }
 
         double dfGlobalMin = std::numeric_limits<double>::max();
         double dfGlobalMax = -std::numeric_limits<double>::max();
