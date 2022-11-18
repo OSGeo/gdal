@@ -991,8 +991,12 @@ int RawRasterBand::CanUseDirectIO(int /* nXOff */,
     }
 
     result = CPLTestBool(pszGDAL_ONE_BIG_READ);
+
+    newCachedCPLOneBigReadOption.data.value = result ? 1 : 0;
+    newCachedCPLOneBigReadOption.data.valid = true;
     if (rawDataset != nullptr)
         CPLAtomicCompareAndExchange(&rawDataset->cachedCPLOneBigReadOption.all, oldCachedCPLOneBigReadOption.all, newCachedCPLOneBigReadOption.all);
+
     return result;
 }
 
