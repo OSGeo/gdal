@@ -1614,8 +1614,7 @@ BandMetadata * PostGISRasterDataset::GetBandsMetadata(int * pnBands)
 
         // If the band doesn't have nodata, NULL is returned as nodata
         TranslateDataType(papszParams[POS_PIXELTYPE],
-            &(poBMD[iBand].eDataType), &(poBMD[iBand].nBitsDepth),
-            &(poBMD[iBand].bSignedByte));
+            &(poBMD[iBand].eDataType), &(poBMD[iBand].nBitsDepth));
 
         if (papszParams[POS_NODATAVALUE] == nullptr ||
             EQUAL(papszParams[POS_NODATAVALUE], "NULL") ||
@@ -1872,12 +1871,6 @@ void PostGISRasterDataset::BuildBands(BandMetadata * poBandMetaData,
 
         // Set some band metadata items
         GDALRasterBand * b = GetRasterBand(iBand + 1);
-
-        if (poBandMetaData[iBand].bSignedByte) {
-            b->SetMetadataItem(
-                "PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE" );
-        }
-
         if (poBandMetaData[iBand].nBitsDepth < 8) {
             b->SetMetadataItem(
             "NBITS", CPLString().Printf( "%d",

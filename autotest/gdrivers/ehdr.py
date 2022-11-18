@@ -37,6 +37,8 @@ import pytest
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.require_driver("EHDR")
+
 ###############################################################################
 # 16bit image.
 
@@ -160,13 +162,9 @@ def test_ehdr_8():
     ds = drv.CreateCopy("tmp/ehdr_8.bil", src_ds)
     src_ds = None
 
-    md = ds.GetRasterBand(1).GetMetadata("IMAGE_STRUCTURE")
-    assert (
-        "PIXELTYPE" in md and md["PIXELTYPE"] == "SIGNEDBYTE"
-    ), "Failed to detect SIGNEDBYTE"
-
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Int8
     cs = ds.GetRasterBand(1).Checksum()
-    expected = 4672
+    expected = 4776
     assert cs == expected, "Did not get expected image checksum."
 
     ds = None

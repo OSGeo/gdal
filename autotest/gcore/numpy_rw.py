@@ -44,7 +44,13 @@ gdal_array = pytest.importorskip("osgeo.gdal_array")
 
 def test_numpy_rw_1():
 
-    from osgeo import gdalnumeric
+    # Suppress the DeprecationWarning emitted when importing gdalnumeric
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=DeprecationWarning)
+
+        from osgeo import gdalnumeric
 
     gdalnumeric.zeros
 
@@ -215,7 +221,7 @@ def test_numpy_rw_9():
 def test_numpy_rw_10():
 
     ds = gdal.GetDriverByName("GTiff").Create(
-        "/vsimem/signed8.tif", 2, 1, options=["PIXELTYPE=SIGNEDBYTE"]
+        "/vsimem/signed8.tif", 2, 1, 1, gdal.GDT_Int8
     )
     ar = numpy.array([[-128, 127]], dtype=numpy.int8)
     ds.GetRasterBand(1).WriteArray(ar)

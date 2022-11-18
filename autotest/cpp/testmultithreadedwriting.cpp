@@ -65,6 +65,11 @@ int main(int argc, char** argv)
     int one = 1;
     int two = 2;
     GDALDriver* poDriver = (GDALDriver*)GDALGetDriverByName("ENVI");
+    if( poDriver == nullptr )
+    {
+        printf("ENVI driver not available. Test skipped\n");
+        return 0;
+    }
     GDALDataset* poDS = poDriver->Create("/vsimem/test_ref", 100, 2000, 1, GDT_Byte, nullptr);
     GDALClose(poDS);
 

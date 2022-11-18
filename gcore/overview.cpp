@@ -276,6 +276,14 @@ static float GetReplacementValueIfNoData(GDALDataType dt, int bHasNoData,
             else
                 fReplacementVal = fNoDataValue + 1;
         }
+        else if( dt == GDT_Int8 )
+        {
+            if( fNoDataValue == std::numeric_limits<GInt8>::max() )
+                fReplacementVal = static_cast<float>(
+                    std::numeric_limits<GInt8>::max() - 1);
+            else
+                fReplacementVal = fNoDataValue + 1;
+        }
         else if( dt == GDT_UInt16 )
         {
             if( fNoDataValue == std::numeric_limits<GUInt16>::max() )
@@ -1131,12 +1139,12 @@ template<class T> static int AverageFloatSSE2(int nDstXWidth,
 #endif
 
 /************************************************************************/
-/*                    GDALResampleChunk32R_Average()                    */
+/*                    GDALResampleChunk32R_AverageOrRMS()               */
 /************************************************************************/
 
 template <class T, class Tsum, GDALDataType eWrkDataType>
 static CPLErr
-GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
+GDALResampleChunk32R_AverageOrRMS_T( double dfXRatioDstToSrc,
                                double dfYRatioDstToSrc,
                                double dfSrcXDelta,
                                double dfSrcYDelta,
@@ -1679,7 +1687,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
 }
 
 static CPLErr
-GDALResampleChunk32R_Average( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
+GDALResampleChunk32R_AverageOrRMS( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                               double dfSrcXDelta,
                               double dfSrcYDelta,
                               GDALDataType eWrkDataType,
@@ -1701,7 +1709,7 @@ GDALResampleChunk32R_Average( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
     if( eWrkDataType == GDT_Byte )
     {
         *peDstBufferDataType = eWrkDataType;
-        return GDALResampleChunk32R_AverageT<GByte, int, GDT_Byte>(
+        return GDALResampleChunk32R_AverageOrRMS_T<GByte, int, GDT_Byte>(
             dfXRatioDstToSrc, dfYRatioDstToSrc,
             dfSrcXDelta, dfSrcYDelta,
             static_cast<const GByte *>( pChunk ),
@@ -1723,7 +1731,7 @@ GDALResampleChunk32R_Average( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
         if( EQUAL(pszResampling, "RMS") )
         {
             // Use double as accumulation type, because UInt32 could overflow
-            return GDALResampleChunk32R_AverageT<GUInt16, double, GDT_UInt16>(
+            return GDALResampleChunk32R_AverageOrRMS_T<GUInt16, double, GDT_UInt16>(
                 dfXRatioDstToSrc, dfYRatioDstToSrc,
                 dfSrcXDelta, dfSrcYDelta,
                 static_cast<const GUInt16 *>( pChunk ),
@@ -1741,7 +1749,7 @@ GDALResampleChunk32R_Average( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
         }
         else
         {
-            return GDALResampleChunk32R_AverageT<GUInt16, GUInt32, GDT_UInt16>(
+            return GDALResampleChunk32R_AverageOrRMS_T<GUInt16, GUInt32, GDT_UInt16>(
                 dfXRatioDstToSrc, dfYRatioDstToSrc,
                 dfSrcXDelta, dfSrcYDelta,
                 static_cast<const GUInt16 *>( pChunk ),
@@ -1761,7 +1769,7 @@ GDALResampleChunk32R_Average( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
     else if( eWrkDataType == GDT_Float32 )
     {
         *peDstBufferDataType = eWrkDataType;
-        return GDALResampleChunk32R_AverageT<float, double, GDT_Float32>(
+        return GDALResampleChunk32R_AverageOrRMS_T<float, double, GDT_Float32>(
             dfXRatioDstToSrc, dfYRatioDstToSrc,
             dfSrcXDelta, dfSrcYDelta,
             static_cast<const float *>( pChunk ),
@@ -2954,6 +2962,11 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
         fDstMin = std::numeric_limits<GByte>::min();
         fDstMax = std::numeric_limits<GByte>::max();
     }
+    else if( dstDataType == GDT_Int8 )
+    {
+        fDstMin = std::numeric_limits<GInt8>::min();
+        fDstMax = std::numeric_limits<GInt8>::max();
+    }
     else if( dstDataType == GDT_UInt16 )
     {
         fDstMin = std::numeric_limits<GUInt16>::min();
@@ -3957,7 +3970,7 @@ GDALResampleFunction GDALGetResampleFunction( const char* pszResampling,
     if( STARTS_WITH_CI(pszResampling, "NEAR") )
         return GDALResampleChunk32R_Near;
     else if( STARTS_WITH_CI(pszResampling, "AVER") || EQUAL(pszResampling, "RMS") )
-        return GDALResampleChunk32R_Average;
+        return GDALResampleChunk32R_AverageOrRMS;
     else if( EQUAL(pszResampling, "GAUSS") )
     {
         if( pnRadius ) *pnRadius = 1;

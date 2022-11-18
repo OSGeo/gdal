@@ -1881,7 +1881,8 @@ static bool BuildDataType(int gid, int varid, int nVarType,
             }
             else
             {
-                eDataType = GDT_Int16;
+                eDataType = GDT_Int8;
+                bPerfectDataTypeMatch = true;
             }
         }
         else if( nVarType == NC_CHAR )

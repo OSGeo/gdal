@@ -1034,11 +1034,14 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Create the basic dataset.                                       */
 /* -------------------------------------------------------------------- */
-    GDALDataType eType = GDT_Byte;
+    GDALDataType eType = GDT_Unknown;
     for( int iBand = 0; iBand < nBands; iBand++ )
     {
         GDALRasterBand *poBand = poSrcDS->GetRasterBand( iBand+1 );
-        eType = GDALDataTypeUnion( eType, poBand->GetRasterDataType() );
+        if( iBand == 0 )
+            eType = poBand->GetRasterDataType();
+        else
+            eType = GDALDataTypeUnion( eType, poBand->GetRasterDataType() );
     }
 
     ILWISDataset *poDS = (ILWISDataset *) Create( pszFilename,

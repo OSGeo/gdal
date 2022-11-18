@@ -578,6 +578,7 @@ class VSIS3WriteHandle final : public VSIVirtualHandle
     IVSIS3LikeHandleHelper  *m_poS3HandleHelper = nullptr;
     bool                m_bUseChunked = false;
     CPLStringList       m_aosOptions{};
+    CPLStringList       m_aosHTTPOptions{};
 
     vsi_l_offset        m_nCurOffset = 0;
     int                 m_nBufferOff = 0;

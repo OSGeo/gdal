@@ -105,9 +105,36 @@ if(SQLite3_INCLUDE_DIR AND SQLite3_LIBRARY)
     else()
         set(CMAKE_REQUIRED_LIBRARIES ${SQLite3_LIBRARY})
     endif()
+
+    # Trick to force CMake to re-run if SQLite3_LIBRARY changes
+    # Useful in development situations when switching/refreshing the library
+    set_property(
+        DIRECTORY
+        APPEND
+        PROPERTY CMAKE_CONFIGURE_DEPENDS "${SQLite3_LIBRARY}"
+    )
+    # Invalidate cached variables if SQLite3_LIBRARY changes
+    file(TIMESTAMP "${SQLite3_LIBRARY}" SQLite3_LIBRARY_TIMESTAMP)
+    if( SQLite3_LIBRARY_TIMESTAMP_OLD_VAL AND
+        NOT "${SQLite3_LIBRARY_TIMESTAMP_OLD_VAL}" STREQUAL "${SQLite3_LIBRARY_TIMESTAMP}")
+        get_cmake_property(_cache_variables CACHE_VARIABLES)
+        foreach(opt IN LISTS _cache_variables)
+            if ("${opt}" MATCHES "SQLite3_HAS_")
+                message(STATUS "Invalidating ${opt}")
+                unset(${opt} CACHE)
+            endif()
+        endforeach()
+    endif()
+    set(SQLite3_LIBRARY_TIMESTAMP_OLD_VAL "${SQLite3_LIBRARY_TIMESTAMP}" CACHE INTERNAL "Old value of option SQLite3_LIBRARY_TIMESTAMP")
+
+    check_symbol_exists(sqlite3_mutex_alloc sqlite3.h SQLite3_HAS_MUTEX_ALLOC)
     check_symbol_exists(sqlite3_column_table_name sqlite3.h SQLite3_HAS_COLUMN_METADATA)
     check_symbol_exists(sqlite3_rtree_query_callback sqlite3.h SQLite3_HAS_RTREE)
     check_symbol_exists(sqlite3_load_extension sqlite3.h SQLite3_HAS_LOAD_EXTENSION)
+    # https://www.sqlite.org/compile.html recommends to build with -DSQLITE_OMIT_PROGRESS_CALLBACK
+    # "for applications that are able to use them"... This is sometimes wrongly
+    # understood as recommended in all situations.
+    check_symbol_exists(sqlite3_progress_handler sqlite3.h SQLite3_HAS_PROGRESS_HANDLER)
 
     if (MSVC)
         set(CMAKE_REQUIRED_FLAGS "/WX")

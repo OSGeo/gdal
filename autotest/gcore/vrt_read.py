@@ -174,6 +174,9 @@ def test_vrt_read_4():
 
 def test_vrt_read_5():
 
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver missing")
+
     src_ds = gdal.Open("data/testserialization.asc")
     ds = gdal.GetDriverByName("VRT").CreateCopy("/vsimem/vrt_read_5.vrt", src_ds)
     src_ds = None
@@ -1196,6 +1199,9 @@ def test_vrt_read_30():
 
 
 def test_vrt_read_31():
+
+    if gdal.GetDriverByName("AAIGRID") is None:
+        pytest.skip("AAIGRID driver missing")
 
     gdal.FileFromMemBuffer(
         "/vsimem/in.asc",

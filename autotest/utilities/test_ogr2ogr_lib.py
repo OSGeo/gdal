@@ -164,17 +164,8 @@ def test_ogr2ogr_lib_6():
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetFieldCount() == 2
     feat = lyr.GetNextFeature()
-    ret = "success"
-    if feat.GetFieldAsDouble("EAS_ID") != 168:
-        gdaltest.post_reason("did not get expected value for EAS_ID")
-        print(feat.GetFieldAsDouble("EAS_ID"))
-        ret = "fail"
-    elif feat.GetFieldAsString("PRFEDEA") != "35043411":
-        gdaltest.post_reason("did not get expected value for PRFEDEA")
-        print(feat.GetFieldAsString("PRFEDEA"))
-        ret = "fail"
-
-    return ret
+    assert feat.GetFieldAsDouble("EAS_ID") == 168
+    assert feat.GetFieldAsString("PRFEDEA") == "35043411"
 
 
 ###############################################################################
@@ -494,6 +485,9 @@ def test_ogr2ogr_clipsrc_no_dst_geom():
     if not ogrtest.have_geos():
         pytest.skip()
 
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
+
     tmpfilename = "/vsimem/out.csv"
     wkt = "POLYGON ((479461 4764494,479461 4764196,480012 4764196,480012 4764494,479461 4764494))"
     ds = gdal.VectorTranslate(
@@ -652,6 +646,9 @@ def test_ogr2ogr_lib_convert_to_linear_promote_to_multi(geometryType):
 
 
 def test_ogr2ogr_lib_makevalid():
+
+    if gdal.GetDriverByName("CSV") is None:
+        pytest.skip("CSV driver is missing")
 
     # Check if MakeValid() is available
     g = ogr.CreateGeometryFromWkt("POLYGON ((0 0,10 10,0 10,10 0,0 0))")

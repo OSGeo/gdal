@@ -41,22 +41,21 @@
 class WSIOCILobFSHandle : public VSIFilesystemHandler
 {
   public:
-    WSIOCILobFSHandle();
-    ~WSIOCILobFSHandle() override;
-
     VSIVirtualHandle *Open( const char *pszFilename,
                             const char *pszAccess,
                             bool bSetError,
                             CSLConstList /* papszOptions */ ) override;
     int               Stat( const char *pszFilename,
                             VSIStatBufL *pStatBuf, int nFlags ) override;
+    int Unlink( const char *pszFilename ) override;
 
   private:
-    OWConnection*     poConnection;
-    OWStatement*      poStatement;
-    OCILobLocator*    phLocator;
-
     char**            ParseIdentificator( const char* pszFilename );
+    OWConnection*     GetConnection(char** papszParam);
+    OWStatement*      GetStatement(const char *tableName, 
+                                   const char *rasterid, 
+                                   boolean bUpdate,
+                                   OWConnection *pConnection);
 };
 
 // *****************************************************************************
@@ -93,39 +92,6 @@ class VSIOCILobHandle : public VSIVirtualHandle
 // Implementation                                             WSIOCILobFSHandle
 // ****************************************************************************
 
-// ----------------------------------------------------------------------------
-//                                                          WSIOCILobFSHandle()
-// ----------------------------------------------------------------------------
-
-WSIOCILobFSHandle::WSIOCILobFSHandle()
-{
-    poStatement  = nullptr;
-    phLocator    = nullptr;
-    poConnection = nullptr;
-}
-
-// -----------------------------------------------------------------------------
-//                                                          ~WSIOCILobFSHandle()
-// -----------------------------------------------------------------------------
-
-WSIOCILobFSHandle::~WSIOCILobFSHandle()
-{
-    if( phLocator )
-    {
-        OWStatement::Free( &phLocator, 1 );
-    }
-
-    if( poStatement )
-    {
-        delete poStatement;
-    }
-
-    if( poConnection )
-    {
-        delete poConnection;
-    }
-}
-
 // -----------------------------------------------------------------------------
 //                                                          ParseIdentificator()
 // -----------------------------------------------------------------------------
@@ -152,6 +118,80 @@ char** WSIOCILobFSHandle::ParseIdentificator( const char* pszFilename )
 }
 
 // -----------------------------------------------------------------------------
+//                                                                        GetConnection()
+// -----------------------------------------------------------------------------
+
+OWConnection* WSIOCILobFSHandle::GetConnection(char** papszParam)
+{
+    OWConnection *poConnection = nullptr;
+
+    if( ! papszParam )
+    {
+        return nullptr;
+    }
+
+    if( strlen( papszParam[0] ) == 0 &&
+        strlen( papszParam[1] ) == 0 &&
+        strlen( papszParam[2] ) == 0 )
+    {
+        /* In an external procedure environment, before opening any
+         * dataset, the caller must pass the with_context as an
+         * string metadata item OCI_CONTEXT_PTR to the driver. */
+
+        OCIExtProcContext* with_context = nullptr;
+
+        const char* pszContext = GDALGetMetadataItem(
+                                           GDALGetDriverByName("GEORASTER"),
+                                          "OCI_CONTEXT_PTR", nullptr );
+
+        if( pszContext )
+        {
+            sscanf( pszContext, "%p", &with_context );
+
+            poConnection = new OWConnection( with_context );
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
+    else
+    {
+        poConnection = new OWConnection( papszParam[0],
+                                         papszParam[1],
+                                         papszParam[2] );
+    }
+
+    if( poConnection && ! poConnection->Succeeded() )
+    {
+        delete poConnection;
+
+        return nullptr;
+    }
+
+    return poConnection;
+
+}
+
+// -----------------------------------------------------------------------------
+//                                                                        GetStatement()
+// -----------------------------------------------------------------------------
+OWStatement* WSIOCILobFSHandle::GetStatement(const char *tableName, 
+                                     const char *rasterid, 
+                                     boolean bUpdate,
+                                     OWConnection *pConnection)
+{
+    OWStatement *pStatement = nullptr;
+    const char *pszUpdate = bUpdate? "for update" : "";
+
+    pStatement = pConnection->CreateStatement( CPLSPrintf(
+          "select rasterblock from %s where rasterid = %s and rownum = 1 %s",
+          tableName, rasterid, pszUpdate ) );
+
+    return pStatement;
+}
+
+// -----------------------------------------------------------------------------
 //                                                                        Open()
 // -----------------------------------------------------------------------------
 
@@ -173,41 +213,119 @@ VSIVirtualHandle* WSIOCILobFSHandle::Open( const char* pszFilename,
         return nullptr;
     }
 
-    poConnection = new OWConnection( papszParam[0],
-                                     papszParam[1],
-                                     papszParam[2] );
-
-    if( ! poConnection->Succeeded() )
+    //Get the connection
+    OWConnection *poConnection = GetConnection(papszParam);
+    if (!poConnection)
     {
         CSLDestroy( papszParam );
         return nullptr;
     }
 
-    const char *pszUpdate = "";
     boolean bUpdate = false;
 
     if( strchr(pszAccess, 'w') != nullptr ||
         strchr(pszAccess, '+') != nullptr )
     {
-        pszUpdate = "for update";
         bUpdate = true;
     }
 
-    poStatement = poConnection->CreateStatement( CPLSPrintf(
-                    "select rasterblock from %s where rasterid = %s and rownum = 1 %s",
-                    papszParam[3], papszParam[4], pszUpdate ) );
-
-    poStatement->Define( &phLocator );
-
-    CSLDestroy( papszParam );
-
-    if( ! poStatement->Execute() )
+    //Get the statement 
+    OWStatement *poStatement = GetStatement(papszParam[3], papszParam[4],
+                                            bUpdate, poConnection);
+    if (!poStatement)
     {
+        CSLDestroy( papszParam );
+        delete poConnection;
         return nullptr;
     }
 
+    //Get the lob locator 
+    OCILobLocator *phLocator = nullptr;
+    poStatement->Define( &phLocator );
+    if( ! poStatement->Execute() || !phLocator )
+    {
+        CSLDestroy( papszParam );
+        delete poConnection;
+        delete poStatement;
+        return nullptr;
+    }
+
+    
+    CPLDebug("GEOR","VSIOCILOB open successfully");
+    CSLDestroy( papszParam );
+
     return new VSIOCILobHandle( poConnection, poStatement, phLocator, bUpdate );
 }
+
+// -----------------------------------------------------------------------------
+//                                                                        Unlink()
+// -----------------------------------------------------------------------------
+int WSIOCILobFSHandle::Unlink( const char *pszFilename ) 
+{
+
+    char** papszParam = ParseIdentificator( pszFilename );
+
+    if( ! papszParam )
+    {
+        return -1;
+    }
+
+    if( ! EQUAL( papszParam[5], "noext" ) )
+    {
+        CSLDestroy( papszParam );
+        return -1;
+    }
+
+    CPLDebug("GEOR","Unlink VSIOCILOB file");
+
+    //Get the connection
+    OWConnection *poConnection = GetConnection(papszParam);
+    if (!poConnection)
+    {
+        CSLDestroy( papszParam );
+        return -1;
+    }
+
+    //Get the statement 
+    OWStatement *poStatement = GetStatement(papszParam[3], papszParam[4],
+                                            true, poConnection);
+    if (!poStatement)
+    {
+        CSLDestroy( papszParam );
+        delete poConnection;
+        return -1;
+    }
+
+    //Get the lob locator 
+    OCILobLocator *phLocator = nullptr;
+    poStatement->Define( &phLocator );
+    if( ! poStatement->Execute() || !phLocator )
+    {
+        CSLDestroy( papszParam );
+        delete poConnection;
+        delete poStatement;
+        return -1;
+    }
+
+    //Trim the lob 
+    if (poStatement->GetBlobLength( phLocator ) > 0)
+    {
+        CPLDebug("GEOR","Trim the LOB");
+        poStatement->TrimLob(phLocator, 0);
+        poConnection->Commit();
+        CPLDebug("GEOR", "LOB trimmed"); 
+    }
+
+
+    //Destroy the objects
+    OWStatement::Free( &phLocator, 1 );
+    delete poStatement;
+    delete poConnection;
+    CSLDestroy( papszParam );
+
+    return 0;
+}
+
 
 // -----------------------------------------------------------------------------
 //                                                                        Stat()
@@ -234,16 +352,48 @@ int WSIOCILobFSHandle::Stat( const char* pszFilename,
         return -1;
     }
 
-    CSLDestroy( papszParam );
-
-    if( poStatement && phLocator )
+    //Get the connection
+    OWConnection *poConnection = GetConnection(papszParam);
+    if (!poConnection)
     {
-        pStatBuf->st_size = poStatement->GetBlobLength( phLocator );
+        CSLDestroy( papszParam );
+        return -1;
     }
 
+    //Get the statement 
+    OWStatement *poStatement = GetStatement(papszParam[3], papszParam[4],
+                                            false, poConnection);
+    if (!poStatement)
+    {
+        CSLDestroy( papszParam );
+        delete poConnection;
+        return -1;
+    }
+
+    //Get the lob locator 
+    OCILobLocator *phLocator = nullptr;
+    poStatement->Define( &phLocator );
+    if( ! poStatement->Execute() || !phLocator )
+    {
+        CSLDestroy( papszParam );
+        delete poConnection;
+        delete poStatement;
+        return -1;
+    }
+
+
+    //Get the lob length
+    pStatBuf->st_size = poStatement->GetBlobLength( phLocator );
     pStatBuf->st_mode = S_IFREG;
 
+    //Destroy the objects
+    OWStatement::Free( &phLocator, 1 );
+    delete poStatement;
+    delete poConnection;
+    CSLDestroy( papszParam );
+
     return 0;
+
 }
 
 // ****************************************************************************
@@ -274,6 +424,21 @@ VSIOCILobHandle::VSIOCILobHandle( OWConnection* poConnectionIn,
 
 VSIOCILobHandle::~VSIOCILobHandle()
 {
+    CPLDebug("GEOR", "Destroy the vsiocilob handle");
+    if( phLocator )
+    {
+        OWStatement::Free( &phLocator, 1 );
+    }
+
+    if( poStatement )
+    {
+        delete poStatement;
+    }
+
+    if( poConnection )
+    {
+        delete poConnection;
+    }
 }
 
 // ----------------------------------------------------------------------------

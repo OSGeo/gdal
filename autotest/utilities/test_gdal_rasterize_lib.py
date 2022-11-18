@@ -117,7 +117,7 @@ def test_gdal_rasterize_lib_3():
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdal_contour_path()
-        + " ../gdrivers/data/n43.dt0 tmp/n43dt0.shp -i 10 -3d"
+        + " ../gdrivers/data/n43.tif tmp/n43dt0.shp -i 10 -3d"
     )
 
     with gdaltest.error_handler():
@@ -138,7 +138,7 @@ def test_gdal_rasterize_lib_3():
 
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/n43dt0.shp")
 
-    ds_ref = gdal.Open("../gdrivers/data/n43.dt0")
+    ds_ref = gdal.Open("../gdrivers/data/n43.tif")
 
     assert (
         ds.GetRasterBand(1).GetNoDataValue() == 0.0

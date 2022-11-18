@@ -90,6 +90,7 @@ static int GetDataTypeElementSizeBits( GDALDataType eDataType )
     switch( eDataType )
     {
       case GDT_Byte:
+      case GDT_Int8:
         return 8;
 
       case GDT_UInt16:
@@ -110,9 +111,11 @@ static int GetDataTypeElementSizeBits( GDALDataType eDataType )
       case GDT_Int64:
         return 64;
 
-      default:
-        return 0;
+      case GDT_Unknown:
+      case GDT_TypeCount:
+        break;
     }
+    return 0;
 }
 
 /************************************************************************/
@@ -196,6 +199,10 @@ static int GetMinBitsForValue(double dValue)
             dValue >= std::numeric_limits<GByte>::min() )
             return 8;
 
+        if( dValue <= std::numeric_limits<GInt8>::max() &&
+            dValue >= std::numeric_limits<GInt8>::min() )
+            return 8;
+
         if( dValue <= std::numeric_limits<GInt16>::max() &&
             dValue >= std::numeric_limits<GInt16>::min() )
             return 16;
@@ -243,11 +250,10 @@ static int GetMinBitsForValue(double dValue)
 GDALDataType CPL_STDCALL GDALFindDataType(
     int nBits, int bSigned, int bFloating, int bComplex )
 {
-    if( bSigned ) { nBits = std::max(nBits, 16); }
     if( bComplex ) { nBits = std::max(nBits, !bSigned ? 32 : 16); } // we don't have complex unsigned data types, so for a complex uint16, promote to complex int32
     if( bFloating ) { nBits = std::max(nBits, 32); }
 
-    if( nBits <= 8 ) { return GDT_Byte; }
+    if( nBits <= 8 ) { return bSigned ? GDT_Int8 : GDT_Byte; }
 
     if( nBits <= 16 )
     {
@@ -321,6 +327,7 @@ int CPL_STDCALL GDALGetDataTypeSizeBytes( GDALDataType eDataType )
     switch( eDataType )
     {
       case GDT_Byte:
+      case GDT_Int8:
         return 1;
 
       case GDT_UInt16:
@@ -343,9 +350,11 @@ int CPL_STDCALL GDALGetDataTypeSizeBytes( GDALDataType eDataType )
       case GDT_CFloat64:
         return 16;
 
-      default:
-        return 0;
+      case GDT_Unknown:
+      case GDT_TypeCount:
+        break;
     }
+    return 0;
 }
 
 /************************************************************************/
@@ -413,9 +422,23 @@ int CPL_STDCALL GDALDataTypeIsComplex( GDALDataType eDataType )
       case GDT_CFloat64:
         return TRUE;
 
-      default:
+      case GDT_Byte:
+      case GDT_Int8:
+      case GDT_Int16:
+      case GDT_UInt16:
+      case GDT_Int32:
+      case GDT_UInt32:
+      case GDT_Int64:
+      case GDT_UInt64:
+      case GDT_Float32:
+      case GDT_Float64:
         return FALSE;
+
+      case GDT_Unknown:
+      case GDT_TypeCount:
+        break;
     }
+    return FALSE;
 }
 
 /************************************************************************/
@@ -440,9 +463,23 @@ int CPL_STDCALL GDALDataTypeIsFloating( GDALDataType eDataType )
       case GDT_CFloat64:
         return TRUE;
 
-      default:
+      case GDT_Byte:
+      case GDT_Int8:
+      case GDT_Int16:
+      case GDT_UInt16:
+      case GDT_Int32:
+      case GDT_UInt32:
+      case GDT_Int64:
+      case GDT_UInt64:
+      case GDT_CInt16:
+      case GDT_CInt32:
         return FALSE;
+
+      case GDT_Unknown:
+      case GDT_TypeCount:
+        break;
     }
+    return FALSE;
 }
 
 /************************************************************************/
@@ -463,6 +500,7 @@ int CPL_STDCALL GDALDataTypeIsInteger( GDALDataType eDataType )
     switch( eDataType )
     {
       case GDT_Byte:
+      case GDT_Int8:
       case GDT_Int16:
       case GDT_UInt16:
       case GDT_Int32:
@@ -473,9 +511,17 @@ int CPL_STDCALL GDALDataTypeIsInteger( GDALDataType eDataType )
       case GDT_Int64:
         return TRUE;
 
-      default:
+      case GDT_Float32:
+      case GDT_Float64:
+      case GDT_CFloat32:
+      case GDT_CFloat64:
         return FALSE;
+
+      case GDT_Unknown:
+      case GDT_TypeCount:
+        break;
     }
+    return FALSE;
 }
 
 /************************************************************************/
@@ -499,9 +545,23 @@ int CPL_STDCALL GDALDataTypeIsSigned( GDALDataType eDataType )
       case GDT_UInt64:
         return FALSE;
 
-      default:
+      case GDT_Int8:
+      case GDT_Int16:
+      case GDT_Int32:
+      case GDT_Int64:
+      case GDT_Float32:
+      case GDT_Float64:
+      case GDT_CInt16:
+      case GDT_CInt32:
+      case GDT_CFloat32:
+      case GDT_CFloat64:
         return TRUE;
+
+      case GDT_Unknown:
+      case GDT_TypeCount:
+        break;
     }
+    return FALSE;
 }
 
 /************************************************************************/
@@ -599,6 +659,9 @@ const char * CPL_STDCALL GDALGetDataTypeName( GDALDataType eDataType )
       case GDT_Byte:
         return "Byte";
 
+      case GDT_Int8:
+        return "Int8";
+
       case GDT_UInt16:
         return "UInt16";
 
@@ -635,9 +698,10 @@ const char * CPL_STDCALL GDALGetDataTypeName( GDALDataType eDataType )
       case GDT_CFloat64:
         return "CFloat64";
 
-      default:
-        return nullptr;
+      case GDT_TypeCount:
+        break;
     }
+    return nullptr;
 }
 
 /************************************************************************/
@@ -724,6 +788,9 @@ double GDALAdjustValueToDataType(
         case GDT_Byte:
             ClampAndRound<GByte>(dfValue, bClamped, bRounded);
             break;
+        case GDT_Int8:
+            ClampAndRound<GInt8>(dfValue, bClamped, bRounded);
+            break;
         case GDT_Int16:
             ClampAndRound<GInt16>(dfValue, bClamped, bRounded);
             break;
@@ -770,7 +837,13 @@ double GDALAdjustValueToDataType(
             }
             break;
         }
-        default:
+        case GDT_Float64:
+        case GDT_CInt16:
+        case GDT_CInt32:
+        case GDT_CFloat32:
+        case GDT_CFloat64:
+        case GDT_Unknown:
+        case GDT_TypeCount:
             break;
     }
     if( pbClamped )
@@ -807,9 +880,24 @@ GDALDataType CPL_STDCALL GDALGetNonComplexDataType( GDALDataType eDataType )
         return GDT_Float32;
       case GDT_CFloat64:
         return GDT_Float64;
-      default:
-        return eDataType;
+
+      case GDT_Byte:
+      case GDT_UInt16:
+      case GDT_UInt32:
+      case GDT_UInt64:
+      case GDT_Int8:
+      case GDT_Int16:
+      case GDT_Int32:
+      case GDT_Int64:
+      case GDT_Float32:
+      case GDT_Float64:
+        break;
+
+      case GDT_Unknown:
+      case GDT_TypeCount:
+        break;
     }
+    return eDataType;
 }
 
 /************************************************************************/
@@ -1145,6 +1233,9 @@ GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
                   case GDT_Byte:
                     dfValue = reinterpret_cast<const GByte*>(pDataRef)[iOffset];
                     break;
+                  case GDT_Int8:
+                    dfValue = reinterpret_cast<const GInt8*>(pDataRef)[iOffset];
+                    break;
                   case GDT_UInt16:
                     dfValue = reinterpret_cast<const GUInt16*>(pDataRef)[iOffset];
                     break;
@@ -1198,7 +1289,8 @@ GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
                     dfValue = sqrt(dfReal*dfReal + dfImag*dfImag);
                     break;
                   }
-                  default:
+                  case GDT_Unknown:
+                  case GDT_TypeCount:
                     CPLAssert( false );
                 }
 

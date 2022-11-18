@@ -86,6 +86,9 @@ def test_mask_2():
 
 def test_mask_3():
 
+    if gdal.GetDriverByName("PNG") is None:
+        pytest.skip("PNG driver missing")
+
     ds = gdal.Open("data/stefan_full_rgba.png")
 
     assert ds is not None, "Failed to open test dataset."
@@ -131,6 +134,11 @@ def test_mask_3():
 
 def test_mask_4():
 
+    if gdal.GetDriverByName("JPEG") is None:
+        pytest.skip("JPEG driver missing")
+    if gdal.GetDriverByName("PNM") is None:
+        pytest.skip("PNM driver missing")
+
     src_ds = gdal.Open("../gdrivers/data/jpeg/masked.jpg")
 
     assert src_ds is not None, "Failed to open test dataset."
@@ -164,6 +172,9 @@ def test_mask_4():
 
 
 def test_mask_5():
+
+    if gdal.GetDriverByName("PNM") is None:
+        pytest.skip("PNM driver missing")
 
     # This crashes with libtiff 3.8.2, so skip it
     md = gdal.GetDriverByName("GTiff").GetMetadata()
@@ -455,6 +466,11 @@ def test_mask_13():
 
 
 def test_mask_14():
+
+    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
+        "DMD_CREATIONOPTIONLIST"
+    ):
+        pytest.skip("JPEG support missing")
 
     src_ds = gdal.Open("data/byte.tif")
 

@@ -94,6 +94,33 @@ def test_hdf4_read_gr_palette():
 
 
 ###############################################################################
+# Test opening more than 32 simultaneous HDF4_EOS files
+
+
+def test_hdf4_more_than_32_files():
+
+    if (
+        gdal.GetDriverByName("HDF4Image").GetMetadataItem("HDF4_HAS_MAXOPENFILES")
+        != "YES"
+    ):
+        pytest.skip("HDF4_HAS_MAXOPENFILES not set")
+
+    if not gdaltest.download_file(
+        "https://gamma.hdfgroup.org/ftp/pub/outgoing/NASAHDFfiles2/eosweb/hdf4/hdfeos2-swath-wo-dimmaps/AMSR_E_L2_Ocean_B01_200206182340_A.hdf",
+        "AMSR_E_L2_Ocean_B01_200206182340_A.hdf",
+    ):
+        pytest.skip()
+
+    tab = []
+    for i in range(33):
+        ds = gdal.Open(
+            'HDF4_EOS:EOS_SWATH:"tmp/cache/AMSR_E_L2_Ocean_B01_200206182340_A.hdf":Swath1:Low_res_sst'
+        )
+        assert ds, i
+        tab.append(ds)
+
+
+###############################################################################
 # Test HDF4_SDS with single subdataset
 
 

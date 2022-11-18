@@ -63,6 +63,7 @@ CPL_C_START
 typedef enum {
     /*! Unknown or unspecified type */          GDT_Unknown = 0,
     /*! Eight bit unsigned integer */           GDT_Byte = 1,
+    /*! 8-bit signed integer (GDAL >= 3.7) */   GDT_Int8 = 14,
     /*! Sixteen bit unsigned integer */         GDT_UInt16 = 2,
     /*! Sixteen bit signed integer */           GDT_Int16 = 3,
     /*! Thirty two bit unsigned integer */      GDT_UInt32 = 4,
@@ -76,7 +77,7 @@ typedef enum {
     /* TODO?(#6879): GDT_CInt64 */
     /*! Complex Float32 */                      GDT_CFloat32 = 10,
     /*! Complex Float64 */                      GDT_CFloat64 = 11,
-    GDT_TypeCount = 14          /* maximum type # + 1 */
+    GDT_TypeCount = 15          /* maximum type # + 1 */
 } GDALDataType;
 
 int CPL_DLL CPL_STDCALL GDALGetDataTypeSize( GDALDataType );  // Deprecated.
@@ -1124,6 +1125,8 @@ bool CPL_DLL GDALDatasetUpdateRelationship(GDALDatasetH hDS,
 #define SRCVAL(papoSource, eSrcType, ii) \
       (eSrcType == GDT_Byte ? \
           CPL_REINTERPRET_CAST(const GByte*,papoSource)[ii] : \
+      (eSrcType == GDT_Int8 ? \
+          CPL_REINTERPRET_CAST(const GInt8*,papoSource)[ii] : \
       (eSrcType == GDT_Float32 ? \
           CPL_REINTERPRET_CAST(const float*,papoSource)[ii] : \
       (eSrcType == GDT_Float64 ? \
@@ -1143,7 +1146,7 @@ bool CPL_DLL GDALDatasetUpdateRelationship(GDALDatasetH hDS,
       (eSrcType == GDT_CFloat32 ? \
           CPL_REINTERPRET_CAST(const float*,papoSource)[(ii) * 2] : \
       (eSrcType == GDT_CFloat64 ? \
-          CPL_REINTERPRET_CAST(const double*,papoSource)[(ii) * 2] : 0)))))))))))
+          CPL_REINTERPRET_CAST(const double*,papoSource)[(ii) * 2] : 0))))))))))))
 
 /** Type of functions to pass to GDALAddDerivedBandPixelFunc.
  * @since GDAL 2.2 */

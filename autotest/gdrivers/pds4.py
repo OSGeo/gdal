@@ -37,6 +37,8 @@ import pytest
 
 from osgeo import gdal, ogr, osr
 
+pytestmark = pytest.mark.require_driver("PDS4")
+
 ###############################################################################
 # Validate XML file against schemas
 
@@ -736,6 +738,7 @@ def test_pds4_11():
     filename = "/vsimem/out.xml"
     for (dt, data) in [
         (gdal.GDT_Byte, struct.pack("B", 255)),
+        (gdal.GDT_Int8, struct.pack("b", -128)),
         (gdal.GDT_UInt16, struct.pack("H", 65535)),
         (gdal.GDT_Int16, struct.pack("h", -32768)),
         (gdal.GDT_UInt32, struct.pack("I", 4000000000)),

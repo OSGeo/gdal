@@ -30,8 +30,11 @@
 
 
 import gdaltest
+import pytest
 
 from osgeo import gdal
+
+pytestmark = pytest.mark.require_driver("RS2")
 
 ###############################################################################
 # Test reading a - fake - RS2 dataset. Note: the XML file was written by studying

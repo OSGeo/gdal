@@ -72,6 +72,9 @@ def test_misc_2():
 
 def test_misc_3():
 
+    if gdal.GetDriverByName("PAUX") is None:
+        pytest.skip("PAUX driver missing")
+
     with gdaltest.error_handler():
         ds = gdal.OpenShared("../gdrivers/data/paux/small16.aux")
     ds.GetRasterBand(1).Checksum()

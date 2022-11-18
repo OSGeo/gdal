@@ -162,6 +162,60 @@ def DontUseExceptions(*args) -> "void":
     r"""DontUseExceptions()"""
     return _gdal.DontUseExceptions(*args)
 
+class ExceptionMgr(object):
+    """
+    Context manager to manage Python Exception state
+    for GDAL/OGR/OSR/GNM.
+
+    Separate exception state is maintained for each
+    module (gdal, ogr, etc), and this class appears independently
+    in all of them. This is built in top of calls to the older
+    UseExceptions()/DontUseExceptions() functions.
+
+    Example::
+
+        >>> print(gdal.GetUseExceptions())
+        0
+        >>> with gdal.ExceptionMgr(useExceptions=True):
+        ...     # Exceptions are now in use
+        ...     print(gdal.GetUseExceptions())
+        1
+        >>>
+        >>> # Exception state has now been restored
+        >>> print(gdal.GetUseExceptions())
+        0
+
+    """
+    def __init__(self, useExceptions):
+        """
+        Save whether or not this context will be using exceptions
+        """
+        self.requestedUseExceptions = useExceptions
+
+    def __enter__(self):
+        """
+        On context entry, save the current GDAL exception state, and
+        set it to the state requested for the context
+
+        """
+        self.currentUseExceptions = (GetUseExceptions() != 0)
+
+        if self.requestedUseExceptions:
+            UseExceptions()
+        else:
+            DontUseExceptions()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        On exit, restore the GDAL/OGR/OSR/GNM exception state which was
+        current on entry to the context
+        """
+        if self.currentUseExceptions:
+            UseExceptions()
+        else:
+            DontUseExceptions()
+
+
 def VSIFReadL(*args) -> "void **":
     r"""VSIFReadL(unsigned int nMembSize, unsigned int nMembCount, VSILFILE fp) -> unsigned int"""
     return _gdal.VSIFReadL(*args)
@@ -3339,6 +3393,7 @@ class MDArray(object):
            count is None and buffer_stride is None and buffer_datatype is None:
             map_typecode_itemsize_to_gdal = {
                ('B', 1): GDT_Byte,
+               ('b', 1): GDT_Int8,
                ('h', 2): GDT_Int16,
                ('H', 2): GDT_UInt16,
                ('i', 4): GDT_Int32,
@@ -3570,7 +3625,7 @@ class Attribute(object):
               return s
           return self.ReadAsStringArray()
       if dt_class == GEDTC_NUMERIC:
-          if dt.GetNumericDataType() in (GDT_Byte, GDT_Int16, GDT_UInt16, GDT_Int32):
+          if dt.GetNumericDataType() in (GDT_Byte, GDT_Int8, GDT_Int16, GDT_UInt16, GDT_Int32):
               if self.GetTotalElementsCount() == 1:
                   return self.ReadAsInt()
               else:
@@ -4690,6 +4745,10 @@ def GetJPEG2000Structure(*args) -> "CPLXMLNode *":
 def GetJPEG2000StructureAsString(*args) -> "retStringAndCPLFree *":
     r"""GetJPEG2000StructureAsString(char const * pszFilename, char ** options=None) -> retStringAndCPLFree *"""
     return _gdal.GetJPEG2000StructureAsString(*args)
+
+def HasTriangulation(*args) -> "int":
+    r"""HasTriangulation() -> int"""
+    return _gdal.HasTriangulation(*args)
 
 def GetDriverCount(*args) -> "int":
     r"""GetDriverCount() -> int"""

@@ -494,6 +494,46 @@ corresponding columns of the gpkg_contents table.
 You can set the CREATE_METADATA_TABLES configuration option to NO to
 avoid creating and filling the metadata tables.
 
+IMAGE_STRUCTURE metadata item
+-----------------------------
+
+.. note::
+
+    Implementation details, normally transparent to GDAL users, but useful
+    for other implementations.
+
+Starting with GDAL 3.6.1, the following optional metadata items can be read and
+write into the ``IMAGE_STRUCTURE`` metadata domain, in the
+``<GDALMultiDomainMetadata>``` XML element:
+
+- BAND_COUNT=1, 2, 3 or 4. Applies only for Byte data. Set when creating a
+  dataset so that GDAL knows the number of bands when reopening it.
+
+- COLOR_TABLE={{r0,g0,b0,a0},...{r255,g255,b255,a255}}.
+  Applies only for Byte data and a single band dataset. Set when creating a
+  dataset from a source dataset that has a color table.
+
+- TILE_FORMAT=PNG/PNG8/PNG_JPEG/JPEG/WEBP. Set when creating a
+  dataset so that GDAL knows the tile format when reopening it, for updates.
+
+- NODATA_VALUE=integer between 0 and 255. Applies only for Byte data.
+
+
+Example:
+
+.. code-block:: sql
+
+    INSERT INTO gpkg_metadata VALUES(
+        1,
+        'dataset',
+        'http://gdal.org',
+        'text/xml',
+        '<GDALMultiDomainMetadata><Metadata domain="IMAGE_STRUCTURE"><MDI key="BAND_COUNT">1</MDI><MDI key="NODATA_VALUE">255</MDI></Metadata></GDALMultiDomainMetadata>')
+    );
+    INSERT INTO gpkg_metadata_reference VALUES(
+        'table','my_raster_table',NULL,NULL,'2022-11-09T18:44:59.723Z',1,NULL);
+
+
 Level of support of GeoPackage Extensions
 -----------------------------------------
 

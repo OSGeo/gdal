@@ -38,6 +38,8 @@ import pytest
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.require_driver("LCP")
+
 ###############################################################################
 #  Test test_FARSITE_UTM12.LCP
 
@@ -406,20 +408,17 @@ def test_lcp_5():
 
 def test_lcp_6():
 
-    retval = "success"
     ds = gdal.Open("data/lcp/test_FARSITE_UTM12.LCP")
     assert ds is not None
     fl = ds.GetFileList()
-    if len(fl) != 2:
-        gdaltest.post_reason("Invalid file list")
-        retval = "fail"
-    ds = None
     try:
-        os.remove("data/lcp/test_FARSITE_UTM12.LCP.aux.xml")
-    except OSError:
-        pass
-
-    return retval
+        assert len(fl) == 2
+    finally:
+        ds = None
+        try:
+            os.remove("data/lcp/test_FARSITE_UTM12.LCP.aux.xml")
+        except OSError:
+            pass
 
 
 ###############################################################################
@@ -433,16 +432,12 @@ def test_lcp_7():
     lcp_drv = gdal.GetDriverByName("LCP")
     assert lcp_drv is not None
     # Make sure all available band counts work.
-    retval = "success"
     co = ["LATITUDE=0", "LINEAR_UNIT=METER"]
     for i in [5, 7, 8, 10]:
         src_ds = mem_drv.Create("/vsimem/lcptest", 10, 20, i, gdal.GDT_Int16)
         assert src_ds is not None
         dst_ds = lcp_drv.CreateCopy("tmp/lcp_7.lcp", src_ds, False, co)
-        if dst_ds is None:
-            gdaltest.post_reason("Failed to create lcp with %d bands" % i)
-            retval = "fail"
-            break
+        assert dst_ds is not None, i
         dst_ds = None
     src_ds = None
     dst_ds = None
@@ -452,8 +447,6 @@ def test_lcp_7():
             os.remove("tmp/lcp_7." + ext)
         except OSError:
             pass
-
-    return retval
 
 
 ###############################################################################
@@ -467,20 +460,13 @@ def test_lcp_8():
     lcp_drv = gdal.GetDriverByName("LCP")
     assert lcp_drv is not None
     gdal.PushErrorHandler("CPLQuietErrorHandler")
-    retval = "success"
     co = ["LATITUDE=0", "LINEAR_UNIT=METER"]
     for i in [0, 1, 2, 3, 4, 6, 9, 11]:
         src_ds = mem_drv.Create("", 10, 10, i, gdal.GDT_Int16)
-        if src_ds is None:
-            retval = "fail"
-            break
+        assert src_ds is not None
         dst_ds = lcp_drv.CreateCopy("tmp/lcp_8.lcp", src_ds, False, co)
         src_ds = None
-        if dst_ds is not None:
-            gdaltest.post_reason("Created invalid lcp")
-            retval = "fail"
-            dst_ds = None
-            break
+        assert dst_ds is None, i
         dst_ds = None
     gdal.PopErrorHandler()
     for ext in ["lcp", "lcp.aux.xml"]:
@@ -488,7 +474,6 @@ def test_lcp_8():
             os.remove("tmp/lcp_8." + ext)
         except OSError:
             pass
-    return retval
 
 
 ###############################################################################
@@ -503,7 +488,6 @@ def test_lcp_9():
     assert lcp_drv is not None
     src_ds = mem_drv.Create("", 10, 20, 10, gdal.GDT_Int16)
     assert src_ds is not None
-    retval = "success"
     co = ["LATITUDE=0", "LINEAR_UNIT=METER"]
     lcp_ds = lcp_drv.CreateCopy("tmp/lcp_9.lcp", src_ds, False, co)
     assert lcp_ds is not None
@@ -513,7 +497,6 @@ def test_lcp_9():
             os.remove("tmp/lcp_9." + ext)
         except OSError:
             pass
-    return retval
 
 
 ###############################################################################
@@ -529,19 +512,12 @@ def test_lcp_10():
     src_ds = mem_drv.Create("/vsimem/", 10, 10, 10, gdal.GDT_Int16)
     assert src_ds is not None
 
-    retval = "success"
     for option in ["METERS", "FEET"]:
         co = ["LATITUDE=0", "LINEAR_UNIT=METER", "ELEVATION_UNIT=%s" % option]
         lcp_ds = drv.CreateCopy("tmp/lcp_10.lcp", src_ds, False, co)
-        if lcp_ds is None:
-            retval = "fail"
-            break
+        assert lcp_ds is not None
         units = lcp_ds.GetRasterBand(1).GetMetadataItem("ELEVATION_UNIT_NAME")
-        if units.lower() != option.lower():
-            gdaltest.post_reason("Could not set ELEVATION_UNIT")
-            retval = "fail"
-            lcp_ds = None
-            break
+        assert units.lower() == option.lower()
         lcp_ds = None
     src_ds = None
 
@@ -550,8 +526,6 @@ def test_lcp_10():
             os.remove("tmp/lcp_10." + ext)
         except OSError:
             pass
-
-    return retval
 
 
 ###############################################################################
@@ -567,19 +541,12 @@ def test_lcp_11():
     src_ds = mem_drv.Create("/vsimem/", 10, 10, 10, gdal.GDT_Int16)
     assert src_ds is not None
 
-    retval = "success"
     for option in ["DEGREES", "PERCENT"]:
         co = ["LATITUDE=0", "LINEAR_UNIT=METER", "SLOPE_UNIT=%s" % option]
         lcp_ds = drv.CreateCopy("tmp/lcp_11.lcp", src_ds, False, co)
-        if lcp_ds is None:
-            retval = "fail"
-            break
+        assert lcp_ds is not None
         units = lcp_ds.GetRasterBand(2).GetMetadataItem("SLOPE_UNIT_NAME")
-        if units.lower() != option.lower():
-            gdaltest.post_reason("Could not set SLOPE_UNIT")
-            retval = "fail"
-            lcp_ds = None
-            break
+        assert units.lower() == option.lower()
         lcp_ds = None
     src_ds = None
 
@@ -588,8 +555,6 @@ def test_lcp_11():
             os.remove("tmp/lcp_11." + ext)
         except OSError:
             pass
-
-    return retval
 
 
 ###############################################################################
@@ -605,19 +570,12 @@ def test_lcp_12():
     src_ds = mem_drv.Create("/vsimem/", 10, 10, 10, gdal.GDT_Int16)
     assert src_ds is not None
 
-    retval = "success"
     for option in ["GRASS_CATEGORIES", "AZIMUTH_DEGREES", "GRASS_DEGREES"]:
         co = ["LATITUDE=0", "LINEAR_UNIT=METER", "ASPECT_UNIT=%s" % option]
         lcp_ds = drv.CreateCopy("tmp/lcp_12.lcp", src_ds, False, co)
-        if lcp_ds is None:
-            retval = "fail"
-            break
+        assert lcp_ds is not None
         units = lcp_ds.GetRasterBand(3).GetMetadataItem("ASPECT_UNIT_NAME")
-        if units.lower() != option.replace("_", " ").lower():
-            gdaltest.post_reason("Could not set ASPECT_UNIT")
-            retval = "fail"
-            lcp_ds = None
-            break
+        assert units.lower() == option.replace("_", " ").lower()
         lcp_ds = None
     src_ds = None
     for ext in ["lcp", "lcp.aux.xml"]:
@@ -625,8 +583,6 @@ def test_lcp_12():
             os.remove("tmp/lcp_12." + ext)
         except OSError:
             pass
-
-    return retval
 
 
 ###############################################################################
@@ -642,19 +598,12 @@ def test_lcp_13():
     src_ds = mem_drv.Create("/vsimem/", 10, 10, 10, gdal.GDT_Int16)
     assert src_ds is not None
 
-    retval = "success"
     for option in ["PERCENT", "CATEGORIES"]:
         co = ["LATITUDE=0", "LINEAR_UNIT=METER", "CANOPY_COV_UNIT=%s" % option]
         lcp_ds = drv.CreateCopy("tmp/lcp_13.lcp", src_ds, False, co)
-        if lcp_ds is None:
-            retval = "fail"
-            break
+        assert lcp_ds is not None
         units = lcp_ds.GetRasterBand(5).GetMetadataItem("CANOPY_COV_UNIT_NAME")
-        if units.lower()[:10] != option.lower()[:10]:
-            gdaltest.post_reason("Could not set CANOPY_COV_UNIT")
-            retval = "fail"
-            lcp_ds = None
-            break
+        assert units.lower()[:10] == option.lower()[:10]
         lcp_ds = None
     src_ds = None
 
@@ -663,8 +612,6 @@ def test_lcp_13():
             os.remove("tmp/lcp_13." + ext)
         except OSError:
             pass
-
-    return retval
 
 
 ###############################################################################
@@ -680,19 +627,12 @@ def test_lcp_14():
     src_ds = mem_drv.Create("/vsimem/", 10, 10, 10, gdal.GDT_Int16)
     assert src_ds is not None
 
-    retval = "success"
     for option in ["METERS", "FEET", "METERS_X_10", "FEET_X_10"]:
         co = ["LATITUDE=0", "LINEAR_UNIT=METER", "CANOPY_HT_UNIT=%s" % option]
         lcp_ds = drv.CreateCopy("tmp/lcp_14.lcp", src_ds, False, co)
-        if lcp_ds is None:
-            retval = "fail"
-            break
+        assert lcp_ds is not None
         units = lcp_ds.GetRasterBand(6).GetMetadataItem("CANOPY_HT_UNIT_NAME")
-        if units.lower() != option.replace("_", " ").lower():
-            gdaltest.post_reason("Could not set CANOPY_HT_UNIT")
-            retval = "fail"
-            lcp_ds = None
-            break
+        assert units.lower() == option.replace("_", " ").lower()
         lcp_ds = None
     src_ds = None
 
@@ -701,8 +641,6 @@ def test_lcp_14():
             os.remove("tmp/lcp_14." + ext)
         except OSError:
             pass
-
-    return retval
 
 
 ###############################################################################
@@ -718,19 +656,12 @@ def test_lcp_15():
     src_ds = mem_drv.Create("/vsimem/", 10, 10, 10, gdal.GDT_Int16)
     assert src_ds is not None
 
-    retval = "success"
     for option in ["METERS", "FEET", "METERS_X_10", "FEET_X_10"]:
         co = ["LATITUDE=0", "LINEAR_UNIT=METER", "CBH_UNIT=%s" % option]
         lcp_ds = drv.CreateCopy("tmp/lcp_15.lcp", src_ds, False, co)
-        if lcp_ds is None:
-            retval = "fail"
-            break
+        assert lcp_ds is not None
         units = lcp_ds.GetRasterBand(7).GetMetadataItem("CBH_UNIT_NAME")
-        if units.lower() != option.replace("_", " ").lower():
-            gdaltest.post_reason("Could not set CBH_UNIT")
-            retval = "fail"
-            lcp_ds = None
-            break
+        assert units.lower() == option.replace("_", " ").lower()
         lcp_ds = None
     src_ds = None
 
@@ -739,8 +670,6 @@ def test_lcp_15():
             os.remove("tmp/lcp_15." + ext)
         except OSError:
             pass
-
-    return retval
 
 
 ###############################################################################
@@ -756,7 +685,6 @@ def test_lcp_16():
     src_ds = mem_drv.Create("/vsimem/", 10, 10, 10, gdal.GDT_Int16)
     assert src_ds is not None
 
-    retval = "success"
     answers = ["kg/m^3", "lb/ft^3", "kg/m^3 x 100", "lb/ft^3 x 1000", "tons/acre x 100"]
     for i, option in enumerate(
         [
@@ -768,15 +696,9 @@ def test_lcp_16():
     ):
         co = ["LATITUDE=0", "LINEAR_UNIT=METER", "CBD_UNIT=%s" % option]
         lcp_ds = drv.CreateCopy("tmp/lcp_16.lcp", src_ds, False, co)
-        if lcp_ds is None:
-            retval = "fail"
-            break
+        assert lcp_ds is not None
         units = lcp_ds.GetRasterBand(8).GetMetadataItem("CBD_UNIT_NAME")
-        if units.lower() != answers[i].lower():
-            gdaltest.post_reason("Could not set CBD_UNIT")
-            retval = "fail"
-            lcp_ds = None
-            break
+        assert units.lower() == answers[i].lower()
         lcp_ds = None
     src_ds = None
 
@@ -785,8 +707,6 @@ def test_lcp_16():
             os.remove("tmp/lcp_16." + ext)
         except OSError:
             pass
-
-    return retval
 
 
 ###############################################################################
@@ -804,20 +724,13 @@ def test_lcp_17():
     src_ds = mem_drv.Create("/vsimem/", 10, 10, 10, gdal.GDT_Int16)
     assert src_ds is not None
 
-    retval = "success"
-    answers = ["mg/ha", "t/ac x 10"]
+    answers = ["mg/ha", "t/ac"]
     for i, option in enumerate(["MG_PER_HECTARE_X_10", "TONS_PER_ACRE_X_10"]):
         co = ["LATITUDE=0", "LINEAR_UNIT=METER", "DUFF_UNIT=%s" % option]
         lcp_ds = drv.CreateCopy("tmp/lcp_17.lcp", src_ds, False, co)
-        if lcp_ds is None:
-            retval = "fail"
-            break
+        assert lcp_ds is not None
         units = lcp_ds.GetRasterBand(9).GetMetadataItem("DUFF_UNIT_NAME")
-        if units.lower() != answers[i].lower():
-            # gdaltest.post_reason('Could not set DUFF_UNIT')
-            retval = "expected_fail"
-            lcp_ds = None
-            break
+        assert units.lower() == answers[i].lower()
         lcp_ds = None
     src_ds = None
 
@@ -826,8 +739,6 @@ def test_lcp_17():
             os.remove("tmp/lcp_17." + ext)
         except OSError:
             pass
-
-    return retval
 
 
 ###############################################################################
@@ -843,14 +754,10 @@ def test_lcp_18():
     src_ds = mem_drv.Create("/vsimem/", 10, 10, 10, gdal.GDT_Int16)
     assert src_ds is not None
 
-    retval = "success"
     co = ["LATITUDE=45", "LINEAR_UNIT=METER"]
     lcp_ds = drv.CreateCopy("tmp/lcp_18.lcp", src_ds, False, co)
-    if lcp_ds is None:
-        retval = "fail"
-    if lcp_ds.GetMetadataItem("LATITUDE") != "45":
-        gdaltest.post_reason("Failed to set LATITUDE creation option")
-        retval = "fail"
+    assert lcp_ds is not None
+    assert lcp_ds.GetMetadataItem("LATITUDE") == "45"
 
     src_ds = None
     lcp_ds = None
@@ -859,7 +766,6 @@ def test_lcp_18():
             os.remove("tmp/lcp_18." + ext)
         except OSError:
             pass
-    return retval
 
 
 ###############################################################################
@@ -875,14 +781,10 @@ def test_lcp_19():
     src_ds = mem_drv.Create("/vsimem/", 10, 10, 10, gdal.GDT_Int16)
     assert src_ds is not None
 
-    retval = "success"
     co = ["LATITUDE=0", "LINEAR_UNIT=FOOT"]
     lcp_ds = drv.CreateCopy("tmp/lcp_19.lcp", src_ds, False, co)
-    if lcp_ds is None:
-        retval = "fail"
-    if lcp_ds.GetMetadataItem("LINEAR_UNIT") != "Feet":
-        gdaltest.post_reason("Failed to set LINEAR_UNIT creation option")
-        retval = "fail"
+    assert lcp_ds is not None
+    assert lcp_ds.GetMetadataItem("LINEAR_UNIT") == "Feet"
 
     src_ds = None
     lcp_ds = None
@@ -891,8 +793,6 @@ def test_lcp_19():
             os.remove("tmp/lcp_19." + ext)
         except OSError:
             pass
-
-    return retval
 
 
 ###############################################################################
@@ -908,15 +808,11 @@ def test_lcp_20():
     src_ds = mem_drv.Create("/vsimem/", 10, 10, 10, gdal.GDT_Int16)
     assert src_ds is not None
 
-    retval = "success"
     desc = "test description"
     co = ["LATITUDE=0", "LINEAR_UNIT=METER", "DESCRIPTION=%s" % desc]
     lcp_ds = drv.CreateCopy("tmp/lcp_20.lcp", src_ds, False, co)
-    if lcp_ds is None:
-        retval = "fail"
-    if lcp_ds.GetMetadataItem("DESCRIPTION") != desc:
-        gdaltest.post_reason("Failed to set DESCRIPTION creation option")
-        retval = "fail"
+    assert lcp_ds is not None
+    assert lcp_ds.GetMetadataItem("DESCRIPTION") == desc
     src_ds = None
     lcp_ds = None
     for ext in ["lcp", "lcp.aux.xml"]:
@@ -924,8 +820,6 @@ def test_lcp_20():
             os.remove("tmp/lcp_20." + ext)
         except OSError:
             pass
-
-    return retval
 
 
 ###############################################################################
@@ -946,16 +840,10 @@ def test_lcp_21():
 
     co = ["LATITUDE=0", "LINEAR_UNIT=METER"]
     lcp_ds = drv.CreateCopy("tmp/lcp_21.lcp", src_ds, False, co)
-    if lcp_ds is None:
-        retval = "fail"
-    retval = "success"
-    for i in range(10):
-        if (
-            src_ds.GetRasterBand(i + 1).Checksum()
-            != lcp_ds.GetRasterBand(i + 1).Checksum()
-        ):
-            gdaltest.post_reason("Did not get expected checksum")
-            retval = "fail"
+    assert lcp_ds is not None
+    assert [
+        src_ds.GetRasterBand(i + 1).Checksum() for i in range(src_ds.RasterCount)
+    ] == [lcp_ds.GetRasterBand(i + 1).Checksum() for i in range(lcp_ds.RasterCount)]
 
     src_ds = None
     lcp_ds = None
@@ -964,8 +852,6 @@ def test_lcp_21():
             os.remove("tmp/lcp_21." + ext)
         except OSError:
             pass
-
-    return retval
 
 
 ###############################################################################
@@ -986,17 +872,13 @@ def test_lcp_22():
         data = [random.randint(0, 100) for i in range(9)]
         src_ds.GetRasterBand(i + 1).WriteRaster(0, 0, 3, 3, struct.pack("h" * 9, *data))
 
-    retval = "success"
     co = ["LATITUDE=0", "LINEAR_UNIT=METER"]
     lcp_ds = drv.CreateCopy("tmp/lcp_22.lcp", src_ds, False, co)
     assert lcp_ds is not None
-    retval = "success"
     for i in range(10):
         src_data = src_ds.GetRasterBand(i + 1).ReadAsArray()
         dst_data = lcp_ds.GetRasterBand(i + 1).ReadAsArray()
-        if not numpy.array_equal(src_data, dst_data):
-            gdaltest.post_reason("Did not copy data correctly")
-            retval = "fail"
+        assert numpy.array_equal(src_data, dst_data), i
     src_ds = None
     lcp_ds = None
     for ext in ["lcp", "lcp.aux.xml"]:
@@ -1004,8 +886,6 @@ def test_lcp_22():
             os.remove("tmp/lcp_22." + ext)
         except OSError:
             pass
-
-    return retval
 
 
 ###############################################################################
@@ -1021,27 +901,24 @@ def test_lcp_23():
     src_ds = mem_drv.Create("/vsimem/", 10, 10, 10, gdal.GDT_Int16)
     assert src_ds is not None
 
-    retval = "success"
     bad = "NOT_A_REAL_OPTION"
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
-    for option in [
-        "ELEVATION_UNIT",
-        "SLOPE_UNIT",
-        "ASPECT_UNIT",
-        "FUEL_MODEL_OPTION",
-        "CANOPY_COV_UNIT",
-        "CANOPY_HT_UNIT",
-        "CBH_UNIT",
-        "CBD_UNIT",
-        "DUFF_UNIT",
-    ]:
-        co = [
-            "%s=%s" % (option, bad),
-        ]
-        lcp_ds = drv.CreateCopy("tmp/lcp_23.lcp", src_ds, False, co)
-        if lcp_ds is not None:
-            retval = "fail"
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        for option in [
+            "ELEVATION_UNIT",
+            "SLOPE_UNIT",
+            "ASPECT_UNIT",
+            "FUEL_MODEL_OPTION",
+            "CANOPY_COV_UNIT",
+            "CANOPY_HT_UNIT",
+            "CBH_UNIT",
+            "CBD_UNIT",
+            "DUFF_UNIT",
+        ]:
+            co = [
+                "%s=%s" % (option, bad),
+            ]
+            lcp_ds = drv.CreateCopy("tmp/lcp_23.lcp", src_ds, False, co)
+            assert lcp_ds is None
 
     src_ds = None
     lcp_ds = None
@@ -1050,5 +927,3 @@ def test_lcp_23():
             os.remove("tmp/lcp_23." + ext)
         except OSError:
             pass
-
-    return retval

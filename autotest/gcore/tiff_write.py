@@ -2053,8 +2053,6 @@ def test_tiff_write_58():
 
 def test_tiff_write_59():
 
-    ret = "success"
-
     for nbands in (1, 2):
         for nbits in (1, 8, 9, 12, 16, 17, 24, 32):
 
@@ -2092,16 +2090,9 @@ def test_tiff_write_59():
             # We expect zeros
             got = struct.unpack(ctype * 10, data)
             for g in got:
-                if g != 0:
-                    print(("nbands=%d, NBITS=%d" % (nbands, nbits)))
-                    print(got)
-                    ret = "fail"
-                    break
-
+                assert g == 0, (nbands, nbits)
             ds = None
             gdaltest.tiff_drv.Delete("tmp/tiff_write_59.tif")
-
-    return ret
 
 
 ###############################################################################
@@ -3042,15 +3033,16 @@ def test_tiff_write_81():
 def test_tiff_write_82():
 
     src_ds = gdal.Open("data/byte.tif")
-    ds = gdaltest.tiff_drv.CreateCopy(
-        "tmp/tiff_write_82.tif", src_ds, options=["PIXELTYPE=SIGNEDBYTE"]
-    )
+    with gdaltest.error_handler():
+        ds = gdaltest.tiff_drv.CreateCopy(
+            "tmp/tiff_write_82.tif", src_ds, options=["PIXELTYPE=SIGNEDBYTE"]
+        )
     src_ds = None
     ds = None
 
     ds = gdal.Open("tmp/tiff_write_82.tif")
-    md = ds.GetRasterBand(1).GetMetadata("IMAGE_STRUCTURE")
-    assert md["PIXELTYPE"] == "SIGNEDBYTE", "did not get SIGNEDBYTE"
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Int8
+    assert ds.GetRasterBand(1).ComputeRasterMinMax() == (-124, 123)
     ds = None
 
     gdaltest.tiff_drv.Delete("tmp/tiff_write_82.tif")
@@ -4322,6 +4314,11 @@ def test_tiff_write_tiepoints_pixelispoint():
 
 def test_tiff_write_99():
 
+    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
+        "DMD_CREATIONOPTIONLIST"
+    ):
+        pytest.skip("JPEG support missing")
+
     src_ds = gdal.Open("data/rgbsmall.tif")
     new_ds = gdaltest.tiff_drv.CreateCopy(
         "tmp/test_99.tif", src_ds, options=["COMPRESS=JPEG"]
@@ -4345,6 +4342,11 @@ def test_tiff_write_99():
 
 
 def test_tiff_write_100():
+
+    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
+        "DMD_CREATIONOPTIONLIST"
+    ):
+        pytest.skip("JPEG support missing")
 
     src_ds = gdaltest.tiff_drv.Create("/vsimem/test_100_src.tif", 16, 16, 2)
     src_ds.GetRasterBand(1).Fill(255)
@@ -4586,6 +4588,9 @@ def test_tiff_write_105():
 def test_tiff_write_106(
     filename="../gdrivers/data/jpeg/byte_with_xmp.jpg", options=None, check_cs=True
 ):
+
+    if filename.endswith(".jpg") and gdal.GetDriverByName("JPEG") is None:
+        pytest.skip("JPEG driver missing")
 
     if options is None:
         options = ["COMPRESS=JPEG"]
@@ -5420,6 +5425,9 @@ def test_tiff_write_125():
 
 def test_tiff_write_126():
 
+    if gdal.GetDriverByName("JPEG") is None:
+        pytest.skip("JPEG driver missing")
+
     md = gdaltest.tiff_drv.GetMetadata()
     if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
         pytest.skip()
@@ -5710,6 +5718,9 @@ def test_tiff_write_127():
 
 
 def test_tiff_write_128():
+
+    if gdal.GetDriverByName("JPEG") is None:
+        pytest.skip("JPEG driver missing")
 
     md = gdaltest.tiff_drv.GetMetadata()
     if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
@@ -7208,6 +7219,9 @@ def test_tiff_write_145():
 
 def test_tiff_write_146():
 
+    if gdal.GetDriverByName("JPEG") is None:
+        pytest.skip("JPEG driver missing")
+
     md = gdaltest.tiff_drv.GetMetadata()
     if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
         pytest.skip()
@@ -7245,6 +7259,9 @@ def test_tiff_write_146():
 
 def test_tiff_write_147():
 
+    if gdal.GetDriverByName("JPEG") is None:
+        pytest.skip("JPEG driver missing")
+
     md = gdaltest.tiff_drv.GetMetadata()
     if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
         pytest.skip()
@@ -7269,6 +7286,9 @@ def test_tiff_write_147():
 
 
 def test_tiff_write_148():
+
+    if gdal.GetDriverByName("JPEG") is None:
+        pytest.skip("JPEG driver missing")
 
     md = gdaltest.tiff_drv.GetMetadata()
     if md["DMD_CREATIONOPTIONLIST"].find("JPEG") == -1:
@@ -8043,6 +8063,11 @@ def test_tiff_write_161():
 
 def test_tiff_write_162():
 
+    if "<Value>JPEG</Value>" not in gdal.GetDriverByName("GTIFF").GetMetadataItem(
+        "DMD_CREATIONOPTIONLIST"
+    ):
+        pytest.skip("JPEG support missing")
+
     src_ds = gdal.GetDriverByName("MEM").Create("", 512, 512, 3)
 
     options = ["TILED=YES", "BLOCKXSIZE=512", "BLOCKYSIZE=512", "COMPRESS=JPEG"]
@@ -8692,16 +8717,17 @@ def test_tiff_write_179_lerc_data_types():
         assert cs == 4672
 
     filename_tmp = filename + ".tmp.tif"
-    gdal.Translate(
-        filename_tmp, "data/byte.tif", creationOptions=["PIXELTYPE=SIGNEDBYTE"]
-    )
+    with gdaltest.error_handler():
+        gdal.Translate(
+            filename_tmp, "data/byte.tif", creationOptions=["PIXELTYPE=SIGNEDBYTE"]
+        )
     gdal.Translate(filename, filename_tmp, creationOptions=["COMPRESS=LERC"])
     gdal.Unlink(filename_tmp)
     ds = gdal.Open(filename)
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
     gdal.Unlink(filename)
-    assert cs == 4672
+    assert cs == 1046
 
     gdal.ErrorReset()
     with gdaltest.error_handler():

@@ -29,13 +29,14 @@
 ###############################################################################
 
 import os
-import shutil
 
 import gdaltest
 import ogrtest
 import pytest
 
 from osgeo import gdal, ogr
+
+pytestmark = pytest.mark.require_driver("Tiger")
 
 ###############################################################################
 
@@ -119,67 +120,6 @@ def test_ogr_tiger_2():
     )
 
     assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
-
-
-###############################################################################
-# Test TIGER writing
-
-
-def test_ogr_tiger_3():
-
-    if ogrtest.tiger_ds is None:
-        pytest.skip()
-
-    import test_cli_utilities
-
-    if test_cli_utilities.get_ogr2ogr_path() is None:
-        pytest.skip()
-
-    try:
-        shutil.rmtree("tmp/outtiger")
-    except OSError:
-        pass
-
-    gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path()
-        + " -f TIGER tmp/outtiger tmp/cache/TGR01001 -dsco VERSION=1006"
-    )
-
-    ret = "success"
-
-    filelist = os.listdir("tmp/cache/TGR01001")
-    exceptions = [
-        "TGR01001.RTA",
-        "TGR01001.RTC",
-        "TGR01001.MET",
-        "TGR01001.RTZ",
-        "TGR01001.RTS",
-    ]
-    for filename in filelist:
-        if filename in exceptions:
-            continue
-        f = open("tmp/cache/TGR01001/" + filename, "rb")
-        data1 = f.read()
-        f.close()
-        try:
-            f = open("tmp/outtiger/" + filename, "rb")
-            data2 = f.read()
-            f.close()
-            if data1 != data2:
-                # gdaltest.post_reason('%s is different' % filename)
-                print("%s is different" % filename)
-                ret = "fail"
-        except Exception:
-            # gdaltest.post_reason('could not find %s' % filename)
-            print("could not find %s" % filename)
-            ret = "fail"
-
-    try:
-        shutil.rmtree("tmp/outtiger")
-    except OSError:
-        pass
-
-    return ret
 
 
 ###############################################################################

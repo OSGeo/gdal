@@ -40,13 +40,15 @@ import pytest
 
 from osgeo import gdal, osr
 
+pytestmark = pytest.mark.require_driver("ZARR")
+
 
 @pytest.mark.parametrize(
     "dtype,structtype,gdaltype,fill_value,nodata_value",
     [
         ["!b1", "B", gdal.GDT_Byte, None, None],
-        ["!i1", "b", gdal.GDT_Int16, None, None],
-        ["!i1", "b", gdal.GDT_Int16, -1, -1],
+        ["!i1", "b", gdal.GDT_Int8, None, None],
+        ["!i1", "b", gdal.GDT_Int8, -1, -1],
         ["!u1", "B", gdal.GDT_Byte, None, None],
         [
             "!u1",
@@ -157,10 +159,7 @@ def test_zarr_basic(
             buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64)
         ) == struct.pack("d" * 1, 7)
 
-        if structtype == "b":
-            structtype_read = "h"
-        else:
-            structtype_read = structtype
+        structtype_read = structtype
 
         # Read block 0,0
         if gdaltype not in (gdal.GDT_CFloat32, gdal.GDT_CFloat64):
@@ -677,7 +676,7 @@ def test_zarr_read_compound_complex():
     assert comps[2].GetType().GetClass() == gdal.GEDTC_STRING
     assert comps[3].GetName() == "d"
     assert comps[3].GetOffset() == 16 if is_64bit else 12
-    assert comps[3].GetType().GetNumericDataType() == gdal.GDT_Int16
+    assert comps[3].GetType().GetNumericDataType() == gdal.GDT_Int8
 
     j = gdal.MultiDimInfo(ds, detailed=True)
     assert j["arrays"]["compound_complex"]["values"] == [

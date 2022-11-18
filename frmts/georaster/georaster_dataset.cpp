@@ -818,7 +818,7 @@ char** GeoRasterDataset::GetFileList()
 GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
                                        int nXSize,
                                        int nYSize,
-                                       int nBands,
+                                       int nBandsIn,
                                        GDALDataType eType,
                                        char **papszOptions )
 {
@@ -865,7 +865,7 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
 
     poGRW->nRasterColumns   = nXSize;
     poGRW->nRasterRows      = nYSize;
-    poGRW->nRasterBands     = nBands;
+    poGRW->nRasterBands     = nBandsIn;
     poGRW->sCellDepth       = pszCellDepth;
     poGRW->nRowBlockSize    = DEFAULT_BLOCK_ROWS;
     poGRW->nColumnBlockSize = DEFAULT_BLOCK_COLUMNS;
@@ -993,9 +993,9 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
     }
     else
     {
-        if( nBands == 3 || nBands == 4 )
+        if( nBandsIn == 3 || nBandsIn == 4 )
         {
-            poGRW->nBandBlockSize = nBands;
+            poGRW->nBandBlockSize = nBandsIn;
         }
     }
 

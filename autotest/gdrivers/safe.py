@@ -30,8 +30,11 @@
 
 
 import gdaltest
+import pytest
 
 from osgeo import gdal
+
+pytestmark = pytest.mark.require_driver("SAFE")
 
 ###############################################################################
 # Test reading a - fake - SAFE dataset. Note: the tiff files are fake,

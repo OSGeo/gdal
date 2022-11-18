@@ -3561,6 +3561,8 @@ static GDALDataType NumpyTypeToGDALType(PyArrayObject *psArray)
         return GDT_UInt16;
 
       case NPY_BYTE:
+        return GDT_Int8;
+
       case NPY_UBYTE:
         return GDT_Byte;
 
@@ -6316,6 +6318,7 @@ SWIGINTERN PyObject *_wrap_VirtualMemGetArray(PyObject *SWIGUNUSEDPARM(self), Py
     switch(datatype)
     {
       case GDT_Byte: numpytype = NPY_UBYTE; break;
+      case GDT_Int8: numpytype = NPY_INT8; break;
       case GDT_Int16: numpytype = NPY_INT16; break;
       case GDT_UInt16: numpytype = NPY_UINT16; break;
       case GDT_Int32: numpytype = NPY_INT32; break;

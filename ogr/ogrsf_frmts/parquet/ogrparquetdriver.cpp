@@ -35,6 +35,7 @@
 #include "../arrow_common/ograrrowrandomaccessfile.h"
 #include "../arrow_common/ograrrowwritablefile.h"
 #include "../arrow_common/ograrrowdataset.hpp"
+#include "../arrow_common/ograrrowlayer.hpp"  // for the destructor
 
 /************************************************************************/
 /*                             Identify()                               */

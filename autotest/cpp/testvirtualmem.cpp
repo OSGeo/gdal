@@ -162,9 +162,14 @@ static int test_two_pages()
 
 static void test_raw_auto(const char* pszFormat, int bFileMapping)
 {
-    printf("test_raw_auto(format=%s, bFileMapping=%d)\n", pszFormat, bFileMapping);
-
     GDALAllRegister();
+
+    printf("test_raw_auto(format=%s, bFileMapping=%d)\n", pszFormat, bFileMapping);
+    if( GDALGetDriverByName(pszFormat) == nullptr )
+    {
+        printf("  -> skipped as driver not available.\n");
+        return;
+    }
 
     CPLString osTmpFile;
 

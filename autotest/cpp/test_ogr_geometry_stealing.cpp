@@ -37,8 +37,8 @@ namespace tut
     // Test data
     struct test_ogr_geometry_stealing_data
     {
-        GDALDatasetH hDS;
-        OGRLayerH hLayer;
+        GDALDatasetH hDS = nullptr;
+        OGRLayerH hLayer = nullptr;
 
         test_ogr_geometry_stealing_data()
         {
@@ -53,13 +53,13 @@ namespace tut
             if (hDS == nullptr)
             {
                 printf("Can't open layer file %s.\n", test_data_file_name.c_str());
-                exit(1);
+                return;
             }
             hLayer = GDALDatasetGetLayer(hDS, 0);
             if (hLayer == nullptr)
             {
                 printf("Can't get layer in file %s.\n", test_data_file_name.c_str());
-                exit(1);
+                return;
             }
         }
 
@@ -79,6 +79,7 @@ namespace tut
     template <>
     void object::test<1>()
     {
+        if( hLayer == nullptr ) return;
         set_test_name("Steal 1st geometry");
         OGRFeatureH hFeature = OGR_L_GetNextFeature(hLayer);
         OGRGeometryH hGeometryOrig = OGR_G_Clone(OGR_F_GetGeometryRef(hFeature));
@@ -95,6 +96,7 @@ namespace tut
     template <>
     void object::test<2>()
     {
+        if( hLayer == nullptr ) return;
         set_test_name("Steal 2nd geometry");
         OGRFeatureH hFeature = OGR_L_GetNextFeature(hLayer);
         OGRGeometryH hGeometryOrig = OGR_G_Clone(OGR_F_GetGeomFieldRef(hFeature, 1));

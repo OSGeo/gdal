@@ -53,7 +53,6 @@ public:
     CPLString osName{};
     CPLString osWKT{};
     GDALDataType eDT{GDT_Unknown};
-    bool      bSignedByte{false};
     std::vector<double> adfGeoTransform{0.0,1.0,0.0,0.0,0.0,1.0};
     int       nWidth{0};
     int       nHeight{0};

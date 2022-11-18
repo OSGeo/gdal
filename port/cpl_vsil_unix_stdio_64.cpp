@@ -547,7 +547,9 @@ int VSIUnixStdioHandle::Truncate( vsi_l_offset nNewSize )
 /************************************************************************/
 
 #ifdef __linux
+#if !defined(MISSING_LINUX_FS_H)
 #include <linux/fs.h>  // FS_IOC_FIEMAP
+#endif
 #ifdef FS_IOC_FIEMAP
 #include <linux/types.h>   // for types used in linux/fiemap.h
 #include <linux/fiemap.h>  // struct fiemap

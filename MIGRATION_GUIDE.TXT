@@ -1,3 +1,13 @@
+MIGRATION GUIDE FROM GDAL 3.6 to GDAL 3.7
+-----------------------------------------
+
+- Following RFC 87, PIXELTYPE=SIGNEDBYTE in IMAGE_STRUCTURE metadata domain is
+  no longer reported by drivers that used to do it. The new GDT_Int8 data type
+  is now reported.
+  On writing, the PIXELTYPE=SIGNEDBYTE creation option is preserved in drivers
+  that used to support it, but is deprecated and external code should rather use
+  the GDT_Int8 data type.
+
 MIGRATION GUIDE FROM GDAL 3.5 to GDAL 3.6
 -----------------------------------------
 

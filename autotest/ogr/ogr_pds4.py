@@ -35,6 +35,8 @@ import pytest
 
 from osgeo import gdal, ogr, osr
 
+pytestmark = pytest.mark.require_driver("PDS4")
+
 ###############################################################################
 # Validate XML file against schemas
 

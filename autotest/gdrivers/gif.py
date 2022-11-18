@@ -30,8 +30,11 @@
 ###############################################################################
 
 import gdaltest
+import pytest
 
 from osgeo import gdal
+
+pytestmark = pytest.mark.require_driver("GIF")
 
 ###############################################################################
 # Get the GIF driver, and verify a few things about it.

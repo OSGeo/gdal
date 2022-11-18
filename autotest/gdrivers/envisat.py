@@ -38,6 +38,8 @@ import pytest
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.require_driver("ENVISAT")
+
 
 def _get_mds_num(filename):
     mph_size = 1247

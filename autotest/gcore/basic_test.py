@@ -751,3 +751,15 @@ def test_gdal_EscapeString_errors():
 def test_gdal_DataTypeUnion():
 
     assert gdal.DataTypeUnion(gdal.GDT_Byte, gdal.GDT_UInt16) == gdal.GDT_UInt16
+
+
+def test_exceptionmanager():
+    currentExceptionsFlag = gdal.GetUseExceptions()
+    usingExceptions = currentExceptionsFlag == 1
+
+    # Run in context with opposite state
+    with gdal.ExceptionMgr(useExceptions=(not usingExceptions)):
+        assert gdal.GetUseExceptions() != currentExceptionsFlag
+
+    # Check we are back to original state
+    assert gdal.GetUseExceptions() == currentExceptionsFlag

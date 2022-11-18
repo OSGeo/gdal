@@ -3624,7 +3624,7 @@ def test_netcdf_expanded_form_of_grid_mapping():
 
 init_list = [
     ("byte.tif", 4672, []),
-    ("gtiff/byte_signed.tif", 4672, ["PIXELTYPE=SIGNEDBYTE"]),
+    ("gtiff/int8.tif", 1046, []),
     ("int16.tif", 4672, []),
     ("int32.tif", 4672, []),
     ("float32.tif", 4672, []),
@@ -6165,6 +6165,16 @@ def test_netcdf_read_missing_value_text_non_numeric():
 
     ds = gdal.Open("data/netcdf/missing_value_text_non_numeric.nc")
     assert ds.GetRasterBand(1).GetNoDataValue() is None
+
+
+###############################################################################
+
+
+def test_netcdf_read_cf_xy_latlon_crs_wkt():
+
+    # note: contains dummy values in lat and lon variables
+    ds = gdal.Open("data/netcdf/cf_xy_latlon_crs_wkt.nc")
+    assert ds.GetGeoTransform() == (3500000.0, 1000.0, 0.0, 2102000.0, 0.0, -1000.0)
 
 
 def test_clean_tmp():

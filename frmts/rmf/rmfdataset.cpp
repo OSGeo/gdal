@@ -3150,3 +3150,8 @@ RMFCompressData::~RMFCompressData()
         CPLDestroyMutex(hReadyJobMutex);
     }
 }
+
+GDALSuggestedBlockAccessPattern RMFRasterBand::GetSuggestedBlockAccessPattern() const
+{
+    return GSBAP_RANDOM;
+}

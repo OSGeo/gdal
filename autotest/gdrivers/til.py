@@ -31,8 +31,11 @@
 import os
 
 import gdaltest
+import pytest
 
 from osgeo import gdal
+
+pytestmark = pytest.mark.require_driver("TIL")
 
 ###############################################################################
 # Test a fake TIL dataset

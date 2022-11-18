@@ -81,6 +81,8 @@ def startup_and_cleanup():
 
 def get_sqlite_version():
     ds = ogr.Open(":memory:")
+    if ds is None:
+        return (0, 0, 0)
     sql_lyr = ds.ExecuteSQL("SELECT sqlite_version()")
     f = sql_lyr.GetNextFeature()
     version = f.GetField(0)
@@ -7366,3 +7368,83 @@ def test_ogr_gpkg_st_area(wkt_or_binary, area):
     ds = None
     gdal.Unlink(filename)
     assert f.GetField(0) == area
+
+
+###############################################################################
+# Test reading a layer with a generated column
+
+
+@pytest.mark.skipif(
+    get_sqlite_version() < (3, 31, 0),
+    reason="sqlite >= 3.31 needed",
+)
+def test_ogr_gpkg_read_generated_column():
+
+    filename = "/vsimem/test_ogr_gpkg_read_generated_column.gpkg"
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
+    ds.ExecuteSQL(
+        "CREATE TABLE test (fid INTEGER PRIMARY KEY NOT NULL,unused TEXT,strfield TEXT,strfield_generated TEXT GENERATED ALWAYS AS (strfield || '_generated'),intfield_generated_stored INTEGER GENERATED ALWAYS AS (5) STORED)"
+    )
+    ds.ExecuteSQL(
+        "INSERT INTO gpkg_contents (table_name,data_type,identifier,description,last_change,srs_id) VALUES ('test','attributes','test','','',0)"
+    )
+    ds = None
+
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldCount() == 4
+    assert lyr.GetLayerDefn().GetFieldDefn(2).GetName() == "strfield_generated"
+    assert lyr.GetLayerDefn().GetFieldDefn(2).GetType() == ogr.OFTString
+    assert lyr.GetLayerDefn().GetFieldDefn(3).GetName() == "intfield_generated_stored"
+    assert lyr.GetLayerDefn().GetFieldDefn(3).GetType() == ogr.OFTInteger64
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("strfield", "foo")
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    assert f["strfield"] == "foo"
+    assert f["strfield_generated"] == "foo_generated"
+    assert f["intfield_generated_stored"] == 5
+
+    assert lyr.SetFeature(f) == ogr.OGRERR_NONE
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    assert f["strfield"] == "foo"
+    assert f["strfield_generated"] == "foo_generated"
+
+    f.SetField("strfield", "bar")
+    assert lyr.SetFeature(f) == ogr.OGRERR_NONE
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    assert f["strfield"] == "bar"
+    assert f["strfield_generated"] == "bar_generated"
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("strfield", "foo2")
+    f.SetField("strfield_generated", "ignored")
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+
+    f = lyr.GetFeature(2)
+    assert f["strfield"] == "foo2"
+    assert f["strfield_generated"] == "foo2_generated"
+    f = None
+
+    assert lyr.DeleteField(0) == ogr.OGRERR_NONE
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("strfield", "foo3")
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+
+    f = lyr.GetFeature(3)
+    assert f["strfield"] == "foo3"
+    # None for sqlite < 3.35.5 that uses table recreation for DeleteField() implementation
+    # and thus for now the generated column expression is lost
+    assert (
+        f["strfield_generated"] == "foo3_generated" or f["strfield_generated"] is None
+    )
+
+    ds = None
+
+    gdal.Unlink(filename)

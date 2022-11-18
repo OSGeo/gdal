@@ -245,7 +245,7 @@ def test_gdal_contour_3():
     # put -3d just after -fl to test #2793
     gdaltest.runexternal(
         test_cli_utilities.get_gdal_contour_path()
-        + " -a elev -i 50 ../gdrivers/data/n43.dt0 tmp/contour.shp"
+        + " -a elev -i 50 ../gdrivers/data/n43.tif tmp/contour.shp"
     )
 
     ds = ogr.Open("tmp/contour.shp")

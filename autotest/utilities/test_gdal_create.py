@@ -77,6 +77,10 @@ def test_gdal_create_pdf_tif():
 
 
 def test_gdal_create_pdf_no_direct_write_capabilities():
+
+    if gdal.GetDriverByName("PNG") is None:
+        pytest.skip("PNG driver missing")
+
     if get_gdal_create_path() is None:
         pytest.skip()
 
@@ -141,6 +145,10 @@ def test_gdal_create_pdf_composition():
 
 
 def test_gdal_create_not_write_driver():
+
+    if gdal.GetDriverByName("TGA") is None:
+        pytest.skip("TGA driver missing")
+
     if get_gdal_create_path() is None:
         pytest.skip()
 

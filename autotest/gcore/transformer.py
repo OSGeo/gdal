@@ -506,6 +506,9 @@ def test_transformer_9():
 
 def test_transformer_10():
 
+    if gdal.GetDriverByName("GTX") is None:
+        pytest.skip("GTX driver missing")
+
     # Create fake vertical shift grid
     out_ds = gdal.GetDriverByName("GTX").Create(
         "tmp/fake.gtx", 10, 10, 1, gdal.GDT_Float32

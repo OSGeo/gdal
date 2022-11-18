@@ -642,7 +642,7 @@ def test_jp2kak_image_origin_not_zero():
 # Test multiple RATE parameters
 
 
-def test_jp2openjpeg_test_multi_rate():
+def test_jp2jp2kak_test_multi_rate():
     src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")
     gdaltest.jp2kak_drv.CreateCopy(
         "/vsimem/jp2kak_22.jp2", src_ds, options=["RATE=1.5,2,3,4", "LAYERS=4"]
@@ -675,7 +675,7 @@ def test_jp2openjpeg_test_multi_rate():
 # Test multiple RATE parameters  using dash as first value
 
 
-def test_jp2openjpeg_test_multi_rate_dash():
+def test_jp2jp2kak_test_multi_rate_dash():
     src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")
     gdaltest.jp2kak_drv.CreateCopy(
         "/vsimem/jp2kak_22.jp2", src_ds, options=["RATE=-,4", "LAYERS=4"]
@@ -707,7 +707,7 @@ def test_jp2openjpeg_test_multi_rate_dash():
 # Test single RATE parameter
 
 
-def test_jp2openjpeg_test_single_rate():
+def test_jp2jp2kak_test_single_rate():
     src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")
     gdaltest.jp2kak_drv.CreateCopy(
         "/vsimem/jp2kak_22.jp2", src_ds, options=["RATE=1.5", "LAYERS=4"]
@@ -736,7 +736,7 @@ def test_jp2openjpeg_test_single_rate():
 # Test single RATE parameter with defined quality < 99.5
 
 
-def test_jp2openjpeg_test_multi_rate_quality_50():
+def test_jp2jp2kak_test_multi_rate_quality_50():
     src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")
     gdaltest.jp2kak_drv.CreateCopy(
         "/vsimem/jp2kak_22.jp2", src_ds, options=["RATE=1.5", "LAYERS=4", "QUALITY=50"]
@@ -764,7 +764,7 @@ def test_jp2openjpeg_test_multi_rate_quality_50():
 # Test single RATE parameter with defined quality > 99.5
 
 
-def test_jp2openjpeg_test_multi_rate_quality_100():
+def test_jp2jp2kak_test_multi_rate_quality_100():
     src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")
     gdaltest.jp2kak_drv.CreateCopy(
         "/vsimem/jp2kak_22.jp2", src_ds, options=["RATE=1.5", "LAYERS=4", "QUALITY=100"]
@@ -792,7 +792,7 @@ def test_jp2openjpeg_test_multi_rate_quality_100():
 # Test single RATE parameter with defined quality > 99.5 and the Creversible option
 
 
-def test_jp2openjpeg_test_multi_rate_quality_100_reversible():
+def test_jp2jp2kak_test_multi_rate_quality_100_reversible():
     src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")
     gdaltest.jp2kak_drv.CreateCopy(
         "/vsimem/jp2kak_22.jp2",
@@ -822,7 +822,7 @@ def test_jp2openjpeg_test_multi_rate_quality_100_reversible():
 # Test single RATE parameter with defined quality > 99.5 and the Creversible option
 
 
-def test_jp2openjpeg_test_multi_rate_quality_100_no_reversible():
+def test_jp2jp2kak_test_multi_rate_quality_100_no_reversible():
     src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")
     gdaltest.jp2kak_drv.CreateCopy(
         "/vsimem/jp2kak_22.jp2",
@@ -852,7 +852,7 @@ def test_jp2openjpeg_test_multi_rate_quality_100_no_reversible():
 # Test quality > 99.5 and the Creversible option
 
 
-def test_jp2openjpeg_test_quality_100_no_reversible():
+def test_jp2jp2kak_test_quality_100_no_reversible():
     src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")
     gdaltest.jp2kak_drv.CreateCopy(
         "/vsimem/jp2kak_22.jp2", src_ds, options=["QUALITY=100", "Creversible=no"]
@@ -874,7 +874,7 @@ def test_jp2openjpeg_test_quality_100_no_reversible():
 # Test quality > 99.5 and the Creversible option
 
 
-def test_jp2openjpeg_test_quality_100_reversible():
+def test_jp2jp2kak_test_quality_100_reversible():
     src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")
     gdaltest.jp2kak_drv.CreateCopy(
         "/vsimem/jp2kak_22.jp2", src_ds, options=["QUALITY=100", "Creversible=yes"]
@@ -889,7 +889,6 @@ def test_jp2openjpeg_test_quality_100_reversible():
     # 12 layers + 2 blocs for extra information
     assert len(split) == 14
     gdal.Unlink("/vsimem/jp2kak_22.jp2")
-    return False
 
 
 XML_TYPE_IDX = 0

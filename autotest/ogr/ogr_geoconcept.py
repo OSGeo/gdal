@@ -36,6 +36,8 @@ import pytest
 
 from osgeo import ogr, osr
 
+pytestmark = pytest.mark.require_driver("Geoconcept")
+
 ###############################################################################
 
 

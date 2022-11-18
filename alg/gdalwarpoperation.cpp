@@ -1175,7 +1175,7 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(
             }
             asThreadData[iThread].bIOMutexTaken = FALSE;
 
-            CPLDebug( "GDAL", "Start chunk %d.", iChunk );
+            CPLDebug( "GDAL", "Start chunk %d / %d.", iChunk, nChunkListCount );
             asThreadData[iThread].hThreadHandle = CPLCreateJoinableThread(
                 ChunkThreadMain,
                 const_cast<ChunkThreadData *>(&asThreadData[iThread]));
@@ -1211,7 +1211,7 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(
             CPLJoinThread(asThreadData[iThread].hThreadHandle);
             asThreadData[iThread].hThreadHandle = nullptr;
 
-            CPLDebug( "GDAL", "Finished chunk %d.", iChunk-1 );
+            CPLDebug( "GDAL", "Finished chunk %d / %d.", iChunk-1, nChunkListCount );
 
             eErr = asThreadData[iThread].eErr;
 

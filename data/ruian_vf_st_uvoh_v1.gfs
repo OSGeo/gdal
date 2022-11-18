@@ -3,19 +3,19 @@
   <GMLFeatureClass>
     <Name>VolebniOkrsek</Name>
     <ElementPath>Data|VolebniOkrsek|VO</ElementPath>
-    <SRSName>urn:ogc:def:crs:EPSG::5514</SRSName>
     <!-- Geometrie definičního bodu volebního okrsku -->
     <GeomPropertyDefn>
-      <Name>DefinicniBod</Name> 
-      <ElementPath>Geometrie|DefinicniBod</ElementPath> 
+      <Name>DefinicniBod</Name>
+      <ElementPath>Geometrie|DefinicniBod</ElementPath>
       <Type>Point</Type>
     </GeomPropertyDefn>
     <!-- Originální geometrie hranice volebního okrsku -->
     <GeomPropertyDefn>
-      <Name>OriginalniHranice</Name> 
-      <ElementPath>Geometrie|OriginalniHranice</ElementPath> 
+      <Name>OriginalniHranice</Name>
+      <ElementPath>Geometrie|OriginalniHranice</ElementPath>
       <Type>MultiPolygon</Type>
     </GeomPropertyDefn>
+    <SRSName>urn:ogc:def:crs:EPSG::5514</SRSName>
     <!-- Kód volebního okrsku -->
     <PropertyDefn>
       <Name>Kod</Name>
@@ -73,14 +73,14 @@
       <Name>IdTransakce</Name>
       <ElementPath>IdTransakce</ElementPath>
       <Type>Integer</Type>
-      <SubType>Integer64</SubType>
+      <Subtype>Integer64</Subtype>
     </PropertyDefn>
     <!-- ID návrhu změny v ISUI -->
     <PropertyDefn>
       <Name>GlobalniIdNavrhuZmeny</Name>
       <ElementPath>GlobalniIdNavrhuZmeny</ElementPath>
       <Type>Integer</Type>
-      <SubType>Integer64</SubType>
+      <Subtype>Integer64</Subtype>
     </PropertyDefn>
   </GMLFeatureClass>
 </GMLFeatureClassList>

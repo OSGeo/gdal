@@ -1448,8 +1448,9 @@ GIntBig CPLGetPhysicalRAM( void )
  * This is the same as CPLGetPhysicalRAM() except it will limit to 2 GB
  * for 32 bit processes.
  *
- * Starting with GDAL 2.4.0, it will also take account resource limits on
- * Posix systems.
+ * Starting with GDAL 2.4.0, it will also take account resource limits (virtual
+ * memory) on Posix systems. Starting with GDAL 3.6.1, it will also take into
+ * account RLIMIT_RSS on Linux.
  *
  * Note: This memory may already be partly used by other processes.
  *
@@ -1478,6 +1479,15 @@ GIntBig CPLGetUsablePhysicalRAM( void )
     {
         nRAM = static_cast<GIntBig>(sLimit.rlim_cur);
     }
+#ifdef RLIMIT_RSS
+    // Helps with RSS limit set by the srun utility. Cf https://github.com/OSGeo/gdal/issues/6669
+    if( getrlimit( RLIMIT_RSS, &sLimit) == 0 &&
+        sLimit.rlim_cur != RLIM_INFINITY &&
+        static_cast<GIntBig>(sLimit.rlim_cur) < nRAM )
+    {
+        nRAM = static_cast<GIntBig>(sLimit.rlim_cur);
+    }
+#endif
 #endif
     return nRAM;
 }

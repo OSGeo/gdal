@@ -31,8 +31,13 @@
 
 
 import gdaltest
+import pytest
 
 from osgeo import gdal, osr
+
+# Suppress the DeprecationWarning emitted when using gdal.ApplyVerticalShiftGrid
+pytestmark = pytest.mark.filterwarnings("ignore:ApplyVerticalShiftGrid")
+
 
 ###############################################################################
 # Rather dummy test: grid = DEM
@@ -303,7 +308,11 @@ def test_applyverticalshiftgrid_5():
 
 def test_applyverticalshiftgrid_6():
 
-    grid_ds = gdal.GetDriverByName("GTX").Create(
+    drv = gdal.GetDriverByName("GTX")
+    if drv is None:
+        pytest.skip("GTX driver missing")
+
+    grid_ds = drv.Create(
         "tmp/applyverticalshiftgrid_6.gtx", 1440, 721, 1, gdal.GDT_Float32
     )
     grid_ds.SetGeoTransform([-180.125, 0.25, 0, 90.125, 0, -0.25])
@@ -329,7 +338,11 @@ def test_applyverticalshiftgrid_6():
 
 def test_applyverticalshiftgrid_7():
 
-    grid_ds = gdal.GetDriverByName("GTX").Create(
+    drv = gdal.GetDriverByName("GTX")
+    if drv is None:
+        pytest.skip("GTX driver missing")
+
+    grid_ds = drv.Create(
         "tmp/applyverticalshiftgrid_7.gtx", 700, 721, 1, gdal.GDT_Float32
     )
     grid_ds.SetGeoTransform([-150 + 360, 0.25, 0, 90.125, 0, -0.25])

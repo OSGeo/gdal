@@ -68,10 +68,10 @@ def test_thread_test_1():
         threads.append(t)
         t.start()
 
-    ret = "success"
+    ret = True
     for i in range(4):
         threads[i].join()
         if not args_array[i]:
-            ret = "fail"
+            ret = False
 
-    return ret
+    assert ret
