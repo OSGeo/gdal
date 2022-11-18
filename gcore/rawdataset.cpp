@@ -964,18 +964,23 @@ int RawRasterBand::CanUseDirectIO(int /* nXOff */,
     }
 
     RawDataset* rawDataset = dynamic_cast<RawDataset*>(this->GetDataset());
-    RawDataset::cached8_t cachedCPLOneBigReadOption = {{false, 0}};
+    RawDataset::cached8_t oldCachedCPLOneBigReadOption = {{false, 0}};
     if (rawDataset != nullptr)
-      cachedCPLOneBigReadOption.all = rawDataset->cachedCPLOneBigReadOption.all;
+        oldCachedCPLOneBigReadOption.all = CPLAtomicCompareAndExchange(&rawDataset->cachedCPLOneBigReadOption.all, 0, 0);//just query the value
+    RawDataset::cached8_t newCachedCPLOneBigReadOption = oldCachedCPLOneBigReadOption;
+
     const char *pszGDAL_ONE_BIG_READ =
-      !cachedCPLOneBigReadOption.data.valid ? CPLGetConfigOption("GDAL_ONE_BIG_READ", nullptr) :
-      (cachedCPLOneBigReadOption.data.value == 0) ? "0" :
-      (cachedCPLOneBigReadOption.data.value == 1) ? "1" :
+      !oldCachedCPLOneBigReadOption.data.valid ? CPLGetConfigOption("GDAL_ONE_BIG_READ", nullptr) :
+      (oldCachedCPLOneBigReadOption.data.value == 0) ? "0" :
+      (oldCachedCPLOneBigReadOption.data.value == 1) ? "1" :
       nullptr;
     if ( pszGDAL_ONE_BIG_READ == nullptr )
     {
-        cachedCPLOneBigReadOption.data.value = -1;
-        cachedCPLOneBigReadOption.data.valid = true;
+        newCachedCPLOneBigReadOption.data.value = -1;
+        newCachedCPLOneBigReadOption.data.valid = true;
+        if (rawDataset != nullptr)
+            CPLAtomicCompareAndExchange(&rawDataset->cachedCPLOneBigReadOption.all, oldCachedCPLOneBigReadOption.all, newCachedCPLOneBigReadOption.all);
+
         if ( nLineSize < 50000
              || nXSize > nLineSize / nPixelOffset / 5 * 2
              || IsSignificantNumberOfLinesLoaded(nYOff, nYSize) )
@@ -986,10 +991,8 @@ int RawRasterBand::CanUseDirectIO(int /* nXOff */,
     }
 
     result = CPLTestBool(pszGDAL_ONE_BIG_READ);
-    cachedCPLOneBigReadOption.data.value = result ? 1 : 0;
-    cachedCPLOneBigReadOption.data.valid = true;
     if (rawDataset != nullptr)
-      rawDataset->cachedCPLOneBigReadOption.all = cachedCPLOneBigReadOption.all;
+        CPLAtomicCompareAndExchange(&rawDataset->cachedCPLOneBigReadOption.all, oldCachedCPLOneBigReadOption.all, newCachedCPLOneBigReadOption.all);
     return result;
 }
 

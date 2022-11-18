@@ -63,7 +63,7 @@ class CPL_DLL RawDataset : public GDALPamDataset
          virtual ~RawDataset() = 0;
 
     bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout&) override;
-    void ClearCachedConfigOption(void) {this->cachedCPLOneBigReadOption.all = 0;}
+    void ClearCachedConfigOption(void) {CPLAtomicCompareAndExchange(&this->cachedCPLOneBigReadOption.all, this->cachedCPLOneBigReadOption.all, 0);}
   private:
     CPL_DISALLOW_COPY_ASSIGN(RawDataset)
   protected:
