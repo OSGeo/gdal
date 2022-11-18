@@ -209,7 +209,7 @@ VSIGSHandleHelper::VSIGSHandleHelper( const CPLString& osEndpoint,
                                       const CPLString& osBucketObjectKey,
                                       const CPLString& osSecretAccessKey,
                                       const CPLString& osAccessKeyId,
-                                      bool bUseHeaderFile,
+                                      bool bUseAuthenticationHeader,
                                       const GOA2Manager& oManager,
                                       const std::string& osUserProject ) :
     m_osURL(osEndpoint + CPLAWSURLEncode(osBucketObjectKey, false)),
@@ -217,7 +217,7 @@ VSIGSHandleHelper::VSIGSHandleHelper( const CPLString& osEndpoint,
     m_osBucketObjectKey(osBucketObjectKey),
     m_osSecretAccessKey(osSecretAccessKey),
     m_osAccessKeyId(osAccessKeyId),
-    m_bUseHeaderFile(bUseHeaderFile),
+    m_bUseAuthenticationHeader(bUseAuthenticationHeader),
     m_oManager(oManager),
     m_osUserProject(osUserProject)
 {
@@ -331,12 +331,12 @@ bool VSIGSHandleHelper::GetConfiguration(const std::string& osPathForOption,
                                          CSLConstList papszOptions,
                                          CPLString& osSecretAccessKey,
                                          CPLString& osAccessKeyId,
-                                         CPLString& osHeaderFile,
+                                         bool& bUseAuthenticationHeader,
                                          GOA2Manager& oManager)
 {
     osSecretAccessKey.clear();
     osAccessKeyId.clear();
-    osHeaderFile.clear();
+    bUseAuthenticationHeader = false;
 
     if( CPLTestBool(VSIGetPathSpecificOption(
             osPathForOption.c_str(), "GS_NO_SIGN_REQUEST", "NO")) )
@@ -368,7 +368,7 @@ bool VSIGSHandleHelper::GetConfiguration(const std::string& osPathForOption,
         return true;
     }
 
-    osHeaderFile =
+    const CPLString osHeaderFile =
         VSIGetPathSpecificOption(osPathForOption.c_str(), "GDAL_HTTP_HEADER_FILE", "");
     bool bMayWarnDidNotFindAuth = false;
     if( !osHeaderFile.empty() )
@@ -416,12 +416,17 @@ bool VSIGSHandleHelper::GetConfiguration(const std::string& osPathForOption,
                         osHeaderFile.c_str());
             }
             bFirstTimeForDebugMessage = false;
+            bUseAuthenticationHeader = true;
             return true;
         }
-        else
-        {
-            osHeaderFile.clear();
-        }
+    }
+
+    const char* pszHeaders = VSIGetPathSpecificOption(
+                        osPathForOption.c_str(), "GDAL_HTTP_HEADERS", nullptr);
+    if( pszHeaders && strstr(pszHeaders, "Authorization:") != nullptr )
+    {
+        bUseAuthenticationHeader = true;
+        return true;
     }
 
     CPLString osRefreshToken( VSIGetPathSpecificOption(
@@ -738,11 +743,11 @@ VSIGSHandleHelper* VSIGSHandleHelper::BuildFromURI( const char* pszURI,
 
     CPLString osSecretAccessKey;
     CPLString osAccessKeyId;
-    CPLString osHeaderFile;
+    bool bUseAuthenticationHeader;
     GOA2Manager oManager;
 
     if( !GetConfiguration(osPathForOption, papszOptions,
-                          osSecretAccessKey, osAccessKeyId, osHeaderFile,
+                          osSecretAccessKey, osAccessKeyId, bUseAuthenticationHeader,
                           oManager) )
     {
         return nullptr;
@@ -758,7 +763,7 @@ VSIGSHandleHelper* VSIGSHandleHelper::BuildFromURI( const char* pszURI,
                                   osBucketObject,
                                   osSecretAccessKey,
                                   osAccessKeyId,
-                                  !osHeaderFile.empty(),
+                                  bUseAuthenticationHeader,
                                   oManager,
                                   osUserProject );
 }
@@ -795,7 +800,7 @@ VSIGSHandleHelper::GetCurlHeaders( const CPLString& osVerb,
                                    const void *,
                                    size_t ) const
 {
-    if( m_bUseHeaderFile )
+    if( m_bUseAuthenticationHeader )
         return nullptr;
 
     if( m_oManager.GetAuthMethod() != GOA2Manager::NONE )

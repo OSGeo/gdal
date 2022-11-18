@@ -50,7 +50,7 @@ class VSIGSHandleHelper final: public IVSIS3LikeHandleHelper
         CPLString m_osBucketObjectKey;
         CPLString m_osSecretAccessKey;
         CPLString m_osAccessKeyId;
-        bool      m_bUseHeaderFile;
+        bool      m_bUseAuthenticationHeader;
         GOA2Manager m_oManager;
         std::string m_osUserProject{};
 
@@ -58,7 +58,7 @@ class VSIGSHandleHelper final: public IVSIS3LikeHandleHelper
                                          CSLConstList papszOptions,
                                          CPLString& osSecretAccessKey,
                                          CPLString& osAccessKeyId,
-                                         CPLString& osHeaderFile,
+                                         bool& bUseAuthenticationHeader,
                                          GOA2Manager& oManager);
 
         static bool     GetConfigurationFromConfigFile(
