@@ -304,10 +304,10 @@ static bool WFS_ExprDumpAsOGCFilter( CPLString& osFilter,
             poExpr->nOperation == SWQ_LIKE &&
                 !CPLTestBool(CPLGetConfigOption("OGR_SQL_LIKE_AS_ILIKE", "FALSE")) ? "true" : "false";
         if (psOptions->nVersion == 100)
-            osFilter += CPLSPrintf("<%sPropertyIsLike wildCard='*' singleChar='_' escape='!' matchCase='%s'>",
+            osFilter += CPLSPrintf("<%sPropertyIsLike wildCard=\"*\" singleChar=\"_\" escape=\"!\" matchCase=\"%s\">",
                                    psOptions->pszNSPrefix, pszMatchCase);
         else
-            osFilter += CPLSPrintf("<%sPropertyIsLike wildCard='*' singleChar='_' escapeChar='!' matchCase='%s'>",
+            osFilter += CPLSPrintf("<%sPropertyIsLike wildCard=\"*\" singleChar=\"_\" escapeChar=\"!\" matchCase=\"%s\">",
                                    psOptions->pszNSPrefix, pszMatchCase);
         if (!WFS_ExprDumpAsOGCFilter(osFilter, poExpr->papoSubExpr[0], FALSE, psOptions))
             return false;
