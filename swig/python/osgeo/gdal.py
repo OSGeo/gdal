@@ -2249,6 +2249,14 @@ def NetworkStatsGetAsSerializedJSON(*args) -> "retStringAndCPLFree *":
 def ParseCommandLine(*args) -> "char **":
     r"""ParseCommandLine(char const * utf8_path) -> char **"""
     return _gdal.ParseCommandLine(*args)
+
+def GetNumCPUs(*args) -> "int":
+    r"""GetNumCPUs() -> int"""
+    return _gdal.GetNumCPUs(*args)
+
+def GetUsablePhysicalRAM(*args) -> "GIntBig":
+    r"""GetUsablePhysicalRAM() -> GIntBig"""
+    return _gdal.GetUsablePhysicalRAM(*args)
 class MajorObject(object):
     r"""Proxy of C++ GDALMajorObjectShadow class."""
 
