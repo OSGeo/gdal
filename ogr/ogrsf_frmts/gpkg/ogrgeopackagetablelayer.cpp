@@ -1263,12 +1263,19 @@ void OGRGeoPackageTableLayer::CancelAsyncNextArrowArray()
     {
         auto task = std::move(m_oQueueArrowArrayPrefetchTasks.front());
         m_oQueueArrowArrayPrefetchTasks.pop();
-        if( task.m_oThread.joinable() )
-            task.m_oThread.join();
-        if( task.m_psArrowArray )
+
         {
-            if( task.m_psArrowArray->release )
-                task.m_psArrowArray->release(task.m_psArrowArray.get());
+            std::lock_guard<std::mutex> oLock(task->m_oMutex);
+            task->m_bStop = true;
+            task->m_oCV.notify_one();
+        }
+        if( task->m_oThread.joinable() )
+            task->m_oThread.join();
+
+        if( task->m_psArrowArray )
+        {
+            if( task->m_psArrowArray->release )
+                task->m_psArrowArray->release(task->m_psArrowArray.get());
         }
     }
 }
@@ -7004,40 +7011,61 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
         const size_t nTasks = m_oQueueArrowArrayPrefetchTasks.size();
         auto task = std::move(m_oQueueArrowArrayPrefetchTasks.front());
         m_oQueueArrowArrayPrefetchTasks.pop();
-        if( task.m_oThread.joinable() )
-            task.m_oThread.join();
 
-        if( task.m_iStartShapeId != iNextShapeId )
+        // Wait for thread to be ready
+        {
+            std::unique_lock<std::mutex> oLock(task->m_oMutex);
+            while( !task->m_bArrayReady )
+            {
+                task->m_oCV.wait(oLock);
+            }
+            task->m_bArrayReady = false;
+        }
+
+        const auto stopThread = [&task]()
+        {
+            {
+                std::lock_guard<std::mutex> oLock(task->m_oMutex);
+                task->m_bStop = true;
+                task->m_oCV.notify_one();
+            }
+            if( task->m_oThread.joinable() )
+                task->m_oThread.join();
+        };
+
+        if( task->m_iStartShapeId != iNextShapeId )
         {
             // Should not normally happen, unless the user messes with
             // GetNextFeature()
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Worker thread task has not expected m_iStartShapeId value");
-            if( task.m_psArrowArray->release )
-                task.m_psArrowArray->release(task.m_psArrowArray.get());
+            if( task->m_psArrowArray->release )
+                task->m_psArrowArray->release(task->m_psArrowArray.get());
+
+            stopThread();
         }
-        else if( task.m_psArrowArray->release )
+        else if( task->m_psArrowArray->release )
         {
-            iNextShapeId += task.m_psArrowArray->length;
+            iNextShapeId += task->m_psArrowArray->length;
 
             // Transfer the task ArrowArray to the client array
-            memcpy(out_array, task.m_psArrowArray.get(), sizeof(struct ArrowArray));
-            memset(task.m_psArrowArray.get(), 0, sizeof(struct ArrowArray));
+            memcpy(out_array, task->m_psArrowArray.get(), sizeof(struct ArrowArray));
+            memset(task->m_psArrowArray.get(), 0, sizeof(struct ArrowArray));
 
             // Are the records still available for reading beyond the current
             // queued tasks ? If so, recycle this task to read them
-            if( task.m_iStartShapeId + static_cast<GIntBig>(nTasks) * nMaxBatchSize <= m_nTotalFeatureCount )
+            if( task->m_iStartShapeId + static_cast<GIntBig>(nTasks) * nMaxBatchSize <= m_nTotalFeatureCount )
             {
-                task.m_iStartShapeId += static_cast<GIntBig>(nTasks) * nMaxBatchSize;
-                task.m_poLayer->iNextShapeId = task.m_iStartShapeId;
+                task->m_iStartShapeId += static_cast<GIntBig>(nTasks) * nMaxBatchSize;
+                task->m_poLayer->iNextShapeId = task->m_iStartShapeId;
                 try
                 {
-                    auto poLayer = task.m_poLayer;
-                    auto psArrowArray = task.m_psArrowArray.get();
-                    task.m_oThread = std::thread([psArrowArray, poLayer]()
+                    // Wake-up thread with new task
                     {
-                        poLayer->GetNextArrowArrayInternal(psArrowArray);
-                    });
+                        std::lock_guard<std::mutex> oLock(task->m_oMutex);
+                        task->m_bFetchRows = true;
+                        task->m_oCV.notify_one();
+                    }
                     m_oQueueArrowArrayPrefetchTasks.push(std::move(task));
                     return 0;
                 }
@@ -7049,9 +7077,12 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
             }
             else
             {
+                stopThread();
                 return 0;
             }
         }
+
+        stopThread();
     }
 
     const auto GetThreadsAvailable = []()
@@ -7080,23 +7111,23 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
         oOpenInfo.nOpenFlags = GDAL_OF_VECTOR;
         for( int iTask = 0; iTask < nMaxTasks; ++iTask )
         {
-            ArrowArrayPrefetchTask task;
-            task.m_iStartShapeId = iNextShapeId + static_cast<GIntBig>(iTask + 1) * nMaxBatchSize;
-            task.m_poDS = cpl::make_unique<GDALGeoPackageDataset>();
-            if( !task.m_poDS->Open(&oOpenInfo) )
+            auto task = cpl::make_unique<ArrowArrayPrefetchTask>();
+            task->m_iStartShapeId = iNextShapeId + static_cast<GIntBig>(iTask + 1) * nMaxBatchSize;
+            task->m_poDS = cpl::make_unique<GDALGeoPackageDataset>();
+            if( !task->m_poDS->Open(&oOpenInfo) )
             {
                 break;
             }
             auto poOtherLayer = dynamic_cast<OGRGeoPackageTableLayer*>(
-                                        task.m_poDS->GetLayerByName(GetName()));
+                                        task->m_poDS->GetLayerByName(GetName()));
             if( poOtherLayer == nullptr ||
                 poOtherLayer->GetLayerDefn()->GetFieldCount() != m_poFeatureDefn->GetFieldCount() )
             {
                 break;
             }
-            task.m_poLayer = poOtherLayer;
-            task.m_psArrowArray = cpl::make_unique<struct ArrowArray>();
-            memset(task.m_psArrowArray.get(), 0, sizeof(struct ArrowArray));
+            task->m_poLayer = poOtherLayer;
+            task->m_psArrowArray = cpl::make_unique<struct ArrowArray>();
+            memset(task->m_psArrowArray.get(), 0, sizeof(struct ArrowArray));
 
             poOtherLayer->m_nTotalFeatureCount = m_nTotalFeatureCount;
             poOtherLayer->m_aosArrowArrayStreamOptions = m_aosArrowArrayStreamOptions;
@@ -7112,14 +7143,31 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
                     m_poFeatureDefn->GetFieldDefn(i)->IsIgnored());
             }
 
-            poOtherLayer->iNextShapeId = task.m_iStartShapeId;
+            poOtherLayer->iNextShapeId = task->m_iStartShapeId;
+
+            auto taskPtr = task.get();
+            auto taskRunner = [taskPtr]()
+            {
+                std::unique_lock<std::mutex> oLock(taskPtr->m_oMutex);
+                do
+                {
+                    taskPtr->m_bFetchRows = false;
+                    taskPtr->m_poLayer->GetNextArrowArrayInternal(taskPtr->m_psArrowArray.get());
+                    taskPtr->m_bArrayReady = true;
+                    taskPtr->m_oCV.notify_one();
+                    // cppcheck-suppress knownConditionTrueFalse
+                    while( !taskPtr->m_bStop && !taskPtr->m_bFetchRows )
+                    {
+                        taskPtr->m_oCV.wait(oLock);
+                    }
+                }
+                while( !taskPtr->m_bStop );
+            };
+
+            task->m_bFetchRows = true;
             try
             {
-                auto psArrowArray = task.m_psArrowArray.get();
-                task.m_oThread = std::thread([psArrowArray, poOtherLayer]()
-                {
-                    poOtherLayer->GetNextArrowArrayInternal(psArrowArray);
-                });
+                task->m_oThread = std::thread(taskRunner);
             }
             catch( const std::exception &e )
             {
