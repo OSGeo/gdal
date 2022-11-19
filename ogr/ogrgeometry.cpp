@@ -51,6 +51,7 @@
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
+#include "ogr_wkb.h"
 
 #ifndef HAVE_GEOS
 #define UNUSED_IF_NO_GEOS CPL_UNUSED
@@ -6313,57 +6314,21 @@ int OGRPreparedGeometryContains(
 /*                       OGRGeometryFromEWKB()                          */
 /************************************************************************/
 
-/* Flags for creating WKB format for PostGIS */
-// #define WKBZOFFSET 0x80000000
-// #define WKBMOFFSET 0x40000000
-#define WKBSRIDFLAG 0x20000000
-// #define WKBBBOXFLAG 0x10000000
-
-OGRGeometry *OGRGeometryFromEWKB( GByte *pabyWKB, int nLength, int* pnSRID,
+OGRGeometry *OGRGeometryFromEWKB( GByte *pabyEWKB, int nLength, int* pnSRID,
                                   int bIsPostGIS1_EWKB )
 
 {
     OGRGeometry *poGeometry = nullptr;
 
-    if( nLength < 5 )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Invalid EWKB content : %d bytes", nLength );
+    size_t nWKBSize = 0;
+    const GByte* pabyWKB = WKBFromEWKB( pabyEWKB, nLength, nWKBSize, pnSRID );
+    if( pabyWKB == nullptr )
         return nullptr;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Detect byte order                                               */
-/* -------------------------------------------------------------------- */
-    OGRwkbByteOrder eByteOrder = (pabyWKB[0] == 0 ? wkbXDR : wkbNDR);
-
-/* -------------------------------------------------------------------- */
-/*      PostGIS EWKB format includes an SRID, but this won't be         */
-/*      understood by OGR, so if the SRID flag is set, we remove the    */
-/*      SRID (bytes at offset 5 to 8).                                  */
-/* -------------------------------------------------------------------- */
-    if( nLength > 9 &&
-        ((pabyWKB[0] == 0 /* big endian */ && (pabyWKB[1] & 0x20) )
-        || (pabyWKB[0] != 0 /* little endian */ && (pabyWKB[4] & 0x20))) )
-    {
-        if( pnSRID )
-        {
-            memcpy(pnSRID, pabyWKB+5, 4);
-            if( OGR_SWAP( eByteOrder ) )
-                *pnSRID = CPL_SWAP32(*pnSRID);
-        }
-        memmove( pabyWKB+5, pabyWKB+9, nLength-9 );
-        nLength -= 4;
-        if( pabyWKB[0] == 0 )
-            pabyWKB[1] &= (~0x20);
-        else
-            pabyWKB[4] &= (~0x20);
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Try to ingest the geometry.                                     */
 /* -------------------------------------------------------------------- */
-    (void) OGRGeometryFactory::createFromWkb( pabyWKB, nullptr, &poGeometry, nLength,
+    (void) OGRGeometryFactory::createFromWkb( pabyWKB, nullptr, &poGeometry, nWKBSize,
                                               (bIsPostGIS1_EWKB) ? wkbVariantPostGIS1 : wkbVariantOldOgc );
 
     return poGeometry;
@@ -6454,6 +6419,7 @@ char* OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
     if( nSRSId > 0 )
     {
         // Change the flag to wkbNDR (little) endianness.
+        constexpr GUInt32 WKBSRIDFLAG = 0x20000000;
         GUInt32 nGSrsFlag = CPL_LSBWORD32( WKBSRIDFLAG );
         // Apply the flag.
         geomType = geomType | nGSrsFlag;

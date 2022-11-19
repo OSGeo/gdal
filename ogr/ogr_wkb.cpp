@@ -26,10 +26,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_error.h"
 #include "ogr_wkb.h"
 #include "ogr_core.h"
+#include "ogr_p.h"
 
 #include <cmath>
+#include <climits>
 
 /************************************************************************/
 /*                          OGRWKBNeedSwap()                            */
@@ -204,4 +207,62 @@ bool OGRWKBMultiPolygonGetArea(const GByte*& pabyWkb, size_t& nWKBSize, double& 
         return true;
     }
     return false;
+}
+
+/************************************************************************/
+/*                            WKBFromEWKB()                             */
+/************************************************************************/
+
+const GByte* WKBFromEWKB( GByte *pabyEWKB, size_t nEWKBSize,
+                          size_t& nWKBSizeOut, int* pnSRIDOut )
+{
+    if( nEWKBSize < 5U )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Invalid EWKB content : %u bytes", static_cast<unsigned>(nEWKBSize) );
+        return nullptr;
+    }
+
+    const GByte* pabyWKB = pabyEWKB;
+
+/* -------------------------------------------------------------------- */
+/*      PostGIS EWKB format includes an SRID, but this won't be         */
+/*      understood by OGR, so if the SRID flag is set, we remove the    */
+/*      SRID (bytes at offset 5 to 8).                                  */
+/* -------------------------------------------------------------------- */
+    if( nEWKBSize > 9 &&
+        ((pabyEWKB[0] == 0 /* big endian */ && (pabyEWKB[1] & 0x20) )
+        || (pabyEWKB[0] != 0 /* little endian */ && (pabyEWKB[4] & 0x20))) )
+    {
+        if( pnSRIDOut )
+        {
+            memcpy(pnSRIDOut, pabyEWKB+5, 4);
+            const OGRwkbByteOrder eByteOrder = (pabyEWKB[0] == 0 ? wkbXDR : wkbNDR);
+            if( OGR_SWAP( eByteOrder ) )
+                *pnSRIDOut = CPL_SWAP32(*pnSRIDOut);
+        }
+
+        // Drop the SRID flag
+        if( pabyEWKB[0] == 0 )
+            pabyEWKB[1] &= (~0x20);
+        else
+            pabyEWKB[4] &= (~0x20);
+
+        // Move 5 first bytes of EWKB 4 bytes later to create regular WKB
+        memmove(pabyEWKB + 4, pabyEWKB, 5);
+        memset(pabyEWKB, 0, 4);
+        // and make pabyWKB point to that
+        pabyWKB += 4;
+        nWKBSizeOut = nEWKBSize - 4;
+    }
+    else
+    {
+        if( pnSRIDOut )
+        {
+            *pnSRIDOut = INT_MIN;
+        }
+        nWKBSizeOut = nEWKBSize;
+    }
+
+    return pabyWKB;
 }
