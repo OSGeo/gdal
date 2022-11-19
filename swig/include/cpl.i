@@ -851,3 +851,9 @@ retStringAndCPLFree* VSINetworkStatsGetAsSerializedJSON( char** options = NULL )
 %rename (ParseCommandLine) CSLParseCommandLine;
 char **CSLParseCommandLine( const char * utf8_path );
 %clear char **;
+
+%rename (GetNumCPUs) CPLGetNumCPUs;
+int CPLGetNumCPUs();
+
+%rename (GetUsablePhysicalRAM) CPLGetUsablePhysicalRAM;
+GIntBig CPLGetUsablePhysicalRAM();
