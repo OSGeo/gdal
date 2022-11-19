@@ -207,12 +207,18 @@ void OGRIDFDataSource::Parse()
                 osTmpFilename += ".gpkg";
             }
             VSIUnlink(osTmpFilename);
-            CPLString osOldVal = CPLGetConfigOption("OGR_SQLITE_JOURNAL", "");
-            CPLSetThreadLocalConfigOption("OGR_SQLITE_JOURNAL", "OFF");
-            m_poTmpDS = poGPKGDriver->Create(
-                osTmpFilename, 0, 0, 0, GDT_Unknown, nullptr);
-            CPLSetThreadLocalConfigOption("OGR_SQLITE_JOURNAL",
-                !osOldVal.empty() ? osOldVal.c_str() : nullptr);
+            {
+                CPLConfigOptionSetter oSetter1("OGR_SQLITE_JOURNAL", "OFF", false);
+                // For use of OGR VSI-based SQLite3 VFS implementation, as
+                // the regular SQLite3 implementation has some issues to deal
+                // with a file that is deleted after having been created.
+                // For example on MacOS Big Sur system's sqlite 3.32.3
+                // when chaining ogr_sqlite.py and ogr_vdv.py, or in Vagrant
+                // Ubuntu 22.04 environment with sqlite 3.37.2
+                CPLConfigOptionSetter oSetter2("SQLITE_USE_OGR_VFS", "YES", false);
+                m_poTmpDS = poGPKGDriver->Create(
+                    osTmpFilename, 0, 0, 0, GDT_Unknown, nullptr);
+            }
             bGPKG = m_poTmpDS != nullptr;
             m_bDestroyTmpDS =
                 CPLTestBool(
