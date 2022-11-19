@@ -36,20 +36,39 @@
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
 
-
-
-#if defined(WIN32)
-
-#define HAVE_IMPLEMENTATION 1
-
+#if defined(_WIN32)
 #include <windows.h>
+#elif defined(__MACH__) && defined(__APPLE__)
+#include <mach-o/dyld.h>
+#elif defined(__FreeBSD__)
+#include <sys/sysctl.h>
+#include <sys/types.h>
+#endif
 
 /************************************************************************/
 /*                           CPLGetExecPath()                           */
 /************************************************************************/
 
-int CPLGetExecPath( char *pszPathBuf, int nMaxLength )
+/**
+ * Fetch path of executable.
+ *
+ * The path to the executable currently running is returned.  This path
+ * includes the name of the executable. Currently this only works on
+ * Windows, Linux, MacOS and FreeBSD platforms.  The returned path is UTF-8 encoded.
+ *
+ * @param pszPathBuf the buffer into which the path is placed.
+ * @param nMaxLength the buffer size, MAX_PATH+1 is suggested.
+ *
+ * @return FALSE on failure or TRUE on success.
+ */
+
+int CPLGetExecPath( char * pszPathBuf, int nMaxLength )
 {
+    if( nMaxLength == 0 )
+        return FALSE;
+    pszPathBuf[0] = '\0';
+
+#if defined(_WIN32)
     if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         wchar_t *pwszPathBuf = static_cast<wchar_t *>(
@@ -65,10 +84,13 @@ int CPLGetExecPath( char *pszPathBuf, int nMaxLength )
             char *pszDecoded =
                 CPLRecodeFromWChar(pwszPathBuf, CPL_ENC_UCS2, CPL_ENC_UTF8);
 
+            const size_t nStrlenDecoded = strlen(pszDecoded);
             strncpy( pszPathBuf, pszDecoded, nMaxLength );
+            if( nStrlenDecoded >= static_cast<size_t>(nMaxLength) )
+                pszPathBuf[nMaxLength - 1] = '\0';
             CPLFree( pszDecoded );
             CPLFree( pwszPathBuf );
-            return TRUE;
+            return nStrlenDecoded < static_cast<size_t>(nMaxLength);
         }
     }
     else
@@ -78,59 +100,38 @@ int CPLGetExecPath( char *pszPathBuf, int nMaxLength )
         else
             return TRUE;
     }
-}
-
-#endif
-
-/************************************************************************/
-/*                           CPLGetExecPath()                           */
-/************************************************************************/
-
-#if !defined(HAVE_IMPLEMENTATION) && defined(__linux)
-
-#include "cpl_multiproc.h"
-
-#define HAVE_IMPLEMENTATION 1
-
-int CPLGetExecPath( char *pszPathBuf, int nMaxLength )
-{
+#elif defined(__linux)
     long nPID = getpid();
     CPLString osExeLink;
 
     osExeLink.Printf( "/proc/%ld/exe", nPID );
     ssize_t nResultLen = readlink( osExeLink, pszPathBuf, nMaxLength );
-    if( nResultLen >= 0 )
+    if( nResultLen == nMaxLength )
+        pszPathBuf[nMaxLength - 1] = '\0';
+    else if( nResultLen >= 0 )
         pszPathBuf[nResultLen] = '\0';
-    else
-        pszPathBuf[0] = '\0';
 
-    return nResultLen > 0;
-}
-
-#endif
-
-/************************************************************************/
-/*                           CPLGetExecPath()                           */
-/************************************************************************/
-
-/**
- * Fetch path of executable.
- *
- * The path to the executable currently running is returned.  This path
- * includes the name of the executable.   Currently this only works on
- * win32 and linux platforms.  The returned path is UTF-8 encoded.
- *
- * @param pszPathBuf the buffer into which the path is placed.
- * @param nMaxLength the buffer size, MAX_PATH+1 is suggested.
- *
- * @return FALSE on failure or TRUE on success.
- */
-
-#ifndef HAVE_IMPLEMENTATION
-
-int CPLGetExecPath( CPL_UNUSED char * pszPathBuf, CPL_UNUSED int nMaxLength )
-{
+    return nResultLen > 0 && nResultLen < nMaxLength;
+#elif defined(__MACH__) && defined(__APPLE__)
+    uint32_t size = static_cast<uint32_t>(nMaxLength);
+    if (_NSGetExecutablePath(pszPathBuf, &size) == 0)
+    {
+        return TRUE;
+    }
     return FALSE;
-}
-
+#elif defined(__FreeBSD__)
+    int mib[4];
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROC;
+    mib[2] = KERN_PROC_PATHNAME;
+    mib[3] = -1;
+    size_t size = static_cast<size_t>(nMaxLength);
+    if (sysctl(mib, 4, pszPathBuf, &size, nullptr, 0) == 0)
+    {
+        return TRUE;
+    }
+    return FALSE;
+#else
+    return FALSE;
 #endif
+}
