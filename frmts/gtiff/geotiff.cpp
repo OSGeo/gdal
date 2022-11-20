@@ -18109,8 +18109,8 @@ static GTiffDataset::MaskOffset* GetDiscardLsbOption(TIFF* hTIFF, char** papszOp
             const int nMaxBits =
                 (nSampleFormat == SAMPLEFORMAT_IEEEFP && nBits == 32) ? 23-1 :
                 (nSampleFormat == SAMPLEFORMAT_IEEEFP && nBits == 64) ? 53-1 :
-                nSampleFormat == SAMPLEFORMAT_INT ? nBitsPerSample - 1:
-                nBitsPerSample;
+                nSampleFormat == SAMPLEFORMAT_INT ? nBitsPerSample - 2:
+                nBitsPerSample - 1;
 
             if( nBits < 0 || nBits > nMaxBits)
             {
