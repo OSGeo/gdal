@@ -29,6 +29,7 @@
 
 import array
 import os
+import platform
 import shutil
 import struct
 import sys
@@ -4848,15 +4849,11 @@ def test_tiff_read_multi_threaded(
 
 
 @pytest.mark.parametrize("use_dataset_readraster", [True, False])
+@pytest.mark.skipif(platform.system() == "Darwin", reason="fails randomly")
 def test_tiff_read_multi_threaded_vsicurl(use_dataset_readraster):
 
     if not check_libtiff_internal_or_at_least(4, 0, 11):
         pytest.skip()
-
-    if gdaltest.is_travis_branch("macos_build") or gdaltest.is_travis_branch(
-        "MacOS build"
-    ):
-        pytest.skip("fails randomly")
 
     if gdal.GetDriverByName("HTTP") is None:
         pytest.skip()
