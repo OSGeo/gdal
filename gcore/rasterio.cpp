@@ -3467,7 +3467,7 @@ GDALCopyWords64( const void * CPL_RESTRICT pSrcData,
 
         if( nWordCount == 1 )
         {
-#ifdef CSA_BUILD
+#if defined(CSA_BUILD) || defined(__COVERITY__)
             // Avoid false positives...
             memcpy(pDstData, pSrcData, nSrcDataTypeSize);
 #else

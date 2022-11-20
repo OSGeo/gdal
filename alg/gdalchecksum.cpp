@@ -153,7 +153,8 @@ GDALChecksumImage( GDALRasterBandH hBand,
         {
             const GIntBig nMaxChunkSize = std::max(
                 static_cast<GIntBig>(10 * 1000 * 1000), GDALGetCacheMax64() / 10 );
-            if( static_cast<GIntBig>(nXSize) * nChunkYSize < nMaxChunkSize / nDstDataTypeSize )
+            if( nDstDataTypeSize > 0 &&
+                static_cast<GIntBig>(nXSize) * nChunkYSize < nMaxChunkSize / nDstDataTypeSize )
             {
                 // A full line of height nChunkYSize can fit in the maximum
                 // allowed memory
