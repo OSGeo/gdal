@@ -939,9 +939,46 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(bool bForceRefresh,
                     // Failure: either we are not running on EC2 (or something emulating it)
                     // or this doesn't implement yet IDMSv2
                     // Go on trying IDMSv1
+
+                    // /latest/api/token doesn't work inside a Docker container that
+                    // has no host networking.
+                    // Cf https://community.grafana.com/t/imdsv2-is-not-working-from-docker/65944
+                    if( psResult->pszErrBuf != nullptr &&
+                        strstr(psResult->pszErrBuf, "Operation timed out after") != nullptr )
+                    {
+                        aosOptions.Clear();
+                        aosOptions.SetNameValue("TIMEOUT", "1");
+                        CPLPushErrorHandler(CPLQuietErrorHandler);
+                        CPLHTTPResult* psResult2 =
+                            CPLHTTPFetch( (osEC2RootURL + "/latest/meta-data").c_str(), aosOptions.List() );
+                        CPLPopErrorHandler();
+                        if( psResult2 )
+                        {
+                            if( psResult2->nStatus == 0 && psResult2->pabyData != nullptr )
+                            {
+                                VSIStatBufL sStat;
+                                if( VSIStatL("/.dockerenv", &sStat) == 0 )
+                                {
+                                    CPLDebug("AWS",
+                                             "/latest/api/token EC2 IDMSv2 request timed out, but /latest/metadata succeeded. "
+                                             "Trying with IDMSv1. "
+                                             "Try running your Docker container with --network=host.");
+                                }
+                                else
+                                {
+                                    CPLDebug("AWS",
+                                             "/latest/api/token EC2 IDMSv2 request timed out, but /latest/metadata succeeded. "
+                                             "Trying with IDMSv1. "
+                                             "Are you running inside a container that has no host networking ?");
+                                }
+                            }
+                            CPLHTTPDestroyResult(psResult2);
+                        }
+                    }
                 }
                 CPLHTTPDestroyResult(psResult);
             }
+            CPLErrorReset();
         }
 
         // If we don't know yet the IAM role, fetch it
@@ -968,6 +1005,7 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(bool bForceRefresh,
                 }
                 CPLHTTPDestroyResult(psResult);
             }
+            CPLErrorReset();
             if( gosIAMRole.empty() )
             {
                 // We didn't get the IAM role. We are definitely not running
@@ -997,6 +1035,7 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(bool bForceRefresh,
         }
         CPLHTTPDestroyResult(psResult);
     }
+    CPLErrorReset();
     osAccessKeyId = oResponse.FetchNameValueDef("AccessKeyId", "");
     osSecretAccessKey =
                 oResponse.FetchNameValueDef("SecretAccessKey", "");
