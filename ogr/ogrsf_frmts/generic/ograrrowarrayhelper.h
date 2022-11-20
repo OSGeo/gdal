@@ -151,12 +151,12 @@ public:
         brokenDown.tm_year = ogrField.Date.Year - 1900;
         brokenDown.tm_mon = ogrField.Date.Month - 1;
         brokenDown.tm_mday = ogrField.Date.Day;
-        brokenDown.tm_hour = ogrField.Date.Hour;
-        brokenDown.tm_min = ogrField.Date.Minute;
-        brokenDown.tm_sec = static_cast<int>(ogrField.Date.Second);
+        brokenDown.tm_hour = 0;
+        brokenDown.tm_min = 0;
+        brokenDown.tm_sec = 0;
         static_cast<int32_t*>(const_cast<void*>(
             psArray->buffers[1]))[iFeat] =
-                static_cast<int>((CPLYMDHMSToUnixTime(&brokenDown) + 36200) / 86400);
+                static_cast<int>(CPLYMDHMSToUnixTime(&brokenDown) / 86400);
     }
 
     static
