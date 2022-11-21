@@ -1390,7 +1390,6 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
     int iOGRField = 0;
     const int nAttrCount = std::min(
         CSLCount(papszTokens), nCSVFieldCount + (bHiddenWKTColumn ? 1 : 0));
-    CPLValueType eType;
 
     for( int iAttr = 0; !bIsEurostatTSV && iAttr < nAttrCount; iAttr++ )
     {
@@ -1482,13 +1481,13 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
         {
             if( papszTokens[iAttr][0] != '\0' && !poFieldDefn->IsIgnored() )
             {
-                if( szDelimiter[0] == ';' && eFieldType == OFTReal )
+                if( eFieldType == OFTReal )
                 {
                     char *chComma = strchr(papszTokens[iAttr], ',');
                     if( chComma )
                         *chComma = '.';
                 }
-                eType = CPLGetValueType(papszTokens[iAttr]);
+                CPLValueType eType = CPLGetValueType(papszTokens[iAttr]);
                 if( eType == CPL_VALUE_INTEGER || eType == CPL_VALUE_REAL )
                 {
                     poFeature->SetField(iOGRField, papszTokens[iAttr]);
@@ -1626,7 +1625,7 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
         else
         {
             char **papszVals = CSLTokenizeString2(papszTokens[iAttr], " ", 0);
-            eType = CPLGetValueType(papszVals[0]);
+            CPLValueType eType = CPLGetValueType(papszVals[0]);
             if( (papszVals[0] && papszVals[0][0] != '\0') &&
                 (eType == CPL_VALUE_INTEGER || eType == CPL_VALUE_REAL) )
             {
@@ -1647,9 +1646,20 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
         }
     }
 
-    const auto IsNumericValueType = [](CPLValueType l_eType)
+    // Is it a numeric value parsable by local-aware CPLAtofM()
+    const auto IsCPLAtofMParsable = [](char* pszVal)
     {
-        return l_eType == CPL_VALUE_INTEGER || l_eType == CPL_VALUE_REAL;
+        auto l_eType = CPLGetValueType(pszVal);
+        if( l_eType == CPL_VALUE_INTEGER || l_eType == CPL_VALUE_REAL )
+            return true;
+        char* pszComma = strchr(pszVal, ',');
+        if( pszComma )
+        {
+            *pszComma = '.';
+            l_eType = CPLGetValueType(pszVal);
+            *pszComma = ',';
+        }
+        return l_eType == CPL_VALUE_REAL;
     };
 
     // http://www.faa.gov/airports/airport_safety/airportdata_5010/menu/index.cfm
@@ -1678,8 +1688,8 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
              nAttrCount > iLongitudeField  &&
              papszTokens[iLongitudeField][0] != 0 &&
              papszTokens[iLatitudeField][0] != 0 &&
-             IsNumericValueType(CPLGetValueType(papszTokens[iLongitudeField])) &&
-             IsNumericValueType(CPLGetValueType(papszTokens[iLatitudeField])) )
+             IsCPLAtofMParsable(papszTokens[iLongitudeField]) &&
+             IsCPLAtofMParsable(papszTokens[iLatitudeField]) )
     {
         if( !m_bIsGNIS ||
             // GNIS specific: some records have dummy 0,0 value.
@@ -1688,14 +1698,15 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
              papszTokens[iLatitudeField][0] != DIGIT_ZERO ||
              papszTokens[iLatitudeField][1] != '\0') )
         {
-            const double dfLon = CPLAtof(papszTokens[iLongitudeField]);
-            const double dfLat = CPLAtof(papszTokens[iLatitudeField]);
+            const double dfLon = CPLAtofM(papszTokens[iLongitudeField]);
+            const double dfLat = CPLAtofM(papszTokens[iLatitudeField]);
             if( !poFeatureDefn->GetGeomFieldDefn(0)->IsIgnored() )
             {
                 if( iZField != -1 && nAttrCount > iZField &&
-                    papszTokens[iZField][0] != 0 )
+                    papszTokens[iZField][0] != 0 &&
+                    IsCPLAtofMParsable(papszTokens[iZField]) )
                     poFeature->SetGeometryDirectly(new OGRPoint(
-                        dfLon, dfLat, CPLAtof(papszTokens[iZField])));
+                        dfLon, dfLat, CPLAtofM(papszTokens[iZField])));
                 else
                     poFeature->SetGeometryDirectly(new OGRPoint(dfLon, dfLat));
             }
