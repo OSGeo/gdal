@@ -13432,6 +13432,35 @@ static GTIF* GTiffDatasetGTIFNew( TIFF* hTIFF )
 }
 
 /************************************************************************/
+/*                    IsSRSCompatibleOfGeoTIFF()                        */
+/************************************************************************/
+
+static bool IsSRSCompatibleOfGeoTIFF( const OGRSpatialReference* poSRS )
+{
+    char* pszWKT = nullptr;
+    OGRErr eErr;
+    {
+        CPLErrorStateBackuper oErrorStateBackuper;
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        if( poSRS->IsDerivedGeographic() )
+            eErr = OGRERR_FAILURE;
+        else
+        {
+            // Geographic3D CRS can't be exported to WKT1, but are
+            // valid GeoTIFF 1.1
+            const char* const apszOptions[] = {
+                poSRS->IsGeographic() ? nullptr : "FORMAT=WKT1", nullptr };
+            eErr = poSRS->exportToWkt(&pszWKT, apszOptions);
+        }
+    }
+    const bool bCompatibleOfGeoTIFF =
+        ( eErr == OGRERR_NONE && pszWKT != nullptr &&
+          strstr(pszWKT, "custom_proj4") == nullptr );
+    CPLFree(pszWKT);
+    return bCompatibleOfGeoTIFF;
+}
+
+/************************************************************************/
 /*                          WriteGeoTIFFInfo()                          */
 /************************************************************************/
 
@@ -13607,18 +13636,7 @@ void GTiffDataset::WriteGeoTIFFInfo()
         // Set according to coordinate system.
         if( bHasProjection )
         {
-            char* pszProjection = nullptr;
-            OGRErr eErr;
-            {
-                CPLErrorStateBackuper oErrorStateBackuper;
-                CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-                if( m_oSRS.IsDerivedGeographic() )
-                    eErr = OGRERR_FAILURE;
-                else
-                    eErr = m_oSRS.exportToWkt(&pszProjection);
-            }
-            if( eErr == OGRERR_NONE && pszProjection && pszProjection[0] &&
-                strstr(pszProjection, "custom_proj4") == nullptr )
+            if( IsSRSCompatibleOfGeoTIFF(&m_oSRS) )
             {
                 GTIFSetFromOGISDefnEx( psGTIF,
                                        OGRSpatialReference::ToHandle(&m_oSRS),
@@ -13629,7 +13647,6 @@ void GTiffDataset::WriteGeoTIFFInfo()
             {
                 GDALPamDataset::SetSpatialRef(&m_oSRS);
             }
-            CPLFree(pszProjection);
         }
 
         if( bPixelIsPoint )
@@ -20582,18 +20599,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         if( bHasProjection )
         {
-            char* pszWKT = nullptr;
-            OGRErr eErr;
-            {
-                CPLErrorStateBackuper oErrorStateBackuper;
-                CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-                if( l_poSRS->IsDerivedGeographic() )
-                    eErr = OGRERR_FAILURE;
-                else
-                    eErr = l_poSRS->exportToWkt(&pszWKT);
-            }
-            if( eErr == OGRERR_NONE && pszWKT != nullptr &&
-                strstr(pszWKT, "custom_proj4") == nullptr )
+            if( IsSRSCompatibleOfGeoTIFF(l_poSRS) )
             {
                 GTIFSetFromOGISDefnEx( psGTIF,
                                        OGRSpatialReference::ToHandle(
@@ -20605,7 +20611,6 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             {
                 bExportSRSToPAM = true;
             }
-            CPLFree(pszWKT);
         }
 
         if( bPixelIsPoint )
