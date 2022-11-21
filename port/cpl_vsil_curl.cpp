@@ -895,39 +895,6 @@ void VSICURLResetHeaderAndWriterFunctions(CURL* hCurlHandle)
 }
 
 /************************************************************************/
-/*                          ParseSimpleJson()                           */
-/*                                                                      */
-/*      Return a string list of name/value pairs extracted from a       */
-/*      JSON doc.  The Planetary Computer returns simple JSON           */
-/*      responses.  The parsing as done currently is very fragile       */
-/*      and depends on JSON documents being in a very very simple       */
-/*      form.                                                           */
-/************************************************************************/
-
-static CPLStringList ParseSimpleJson(const char *pszJson)
-
-{
-/* -------------------------------------------------------------------- */
-/*      We are expecting simple documents like the following with no    */
-/*      hierarchy or complex structure.                                 */
-/* -------------------------------------------------------------------- */
-/*
-    {"msft:expiry":"2022-08-17T17:46:34Z","href":"https://naipeuwest.blob.core.windows.net/naip/v002/ks/2019/ks_60cm_2019/39099/m_3909907_ne_14_060_20190709.tif?..."}
-*/
-
-    CPLStringList oWords(
-        CSLTokenizeString2(pszJson, " \n\t,:{}", CSLT_HONOURSTRINGS ));
-    CPLStringList oNameValue;
-
-    for( int i=0; i < oWords.size(); i += 2 )
-    {
-        oNameValue.SetNameValue(oWords[i], oWords[i+1]);
-    }
-
-    return oNameValue;
-}
-
-/************************************************************************/
 /*                        Iso8601ToUnixTime()                           */
 /************************************************************************/
 
@@ -996,7 +963,7 @@ void VSICurlHandle::ManagePlanetaryComputerSigning() const
                 nullptr);
             if( psResult )
             {
-                const auto aosKeyVals = ParseSimpleJson(reinterpret_cast<const char*>(psResult->pabyData));
+                const auto aosKeyVals = CPLParseKeyValueJson(reinterpret_cast<const char*>(psResult->pabyData));
                 const char* pszToken = aosKeyVals.FetchNameValue("token");
                 if( pszToken )
                 {
@@ -1037,7 +1004,7 @@ void VSICurlHandle::ManagePlanetaryComputerSigning() const
                 nullptr);
             if( psResult )
             {
-                const auto aosKeyVals = ParseSimpleJson(reinterpret_cast<const char*>(psResult->pabyData));
+                const auto aosKeyVals = CPLParseKeyValueJson(reinterpret_cast<const char*>(psResult->pabyData));
                 const char* pszHref = aosKeyVals.FetchNameValue("href");
                 if( pszHref && STARTS_WITH(pszHref, m_pszURL) )
                 {
