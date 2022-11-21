@@ -1181,3 +1181,28 @@ def test_tiff_srs_write_projected_3d():
     ds = None
 
     gdal.Unlink(filename)
+
+
+def test_tiff_srs_try_write_derived_projected():
+
+    tmpfile = "/vsimem/tmp.tif"
+    ds = gdal.GetDriverByName("GTiff").Create(tmpfile, 1, 1)
+    wkt = 'DERIVEDPROJCRS["Site Localization",BASEPROJCRS["Transverse Mercator centered in area of interest",BASEGEOGCRS["ETRS89",ENSEMBLE["European Terrestrial Reference System 1989 ensemble",MEMBER["European Terrestrial Reference Frame 1989"],MEMBER["European Terrestrial Reference Frame 1990"],MEMBER["European Terrestrial Reference Frame 1991"],MEMBER["European Terrestrial Reference Frame 1992"],MEMBER["European Terrestrial Reference Frame 1993"],MEMBER["European Terrestrial Reference Frame 1994"],MEMBER["European Terrestrial Reference Frame 1996"],MEMBER["European Terrestrial Reference Frame 1997"],MEMBER["European Terrestrial Reference Frame 2000"],MEMBER["European Terrestrial Reference Frame 2005"],MEMBER["European Terrestrial Reference Frame 2014"],ELLIPSOID["GRS 1980",6378137,298.257222101,LENGTHUNIT["metre",1]],ENSEMBLEACCURACY[0.1]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433]]],CONVERSION["Transverse Mercator",METHOD["Transverse Mercator",ID["EPSG",9807]],PARAMETER["Latitude of natural origin",46.5289246891571,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8801]],PARAMETER["Longitude of natural origin",6.70096726335249,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8802]],PARAMETER["Scale factor at natural origin",1,SCALEUNIT["unity",1],ID["EPSG",8805]],PARAMETER["False easting",0,LENGTHUNIT["metre",1],ID["EPSG",8806]],PARAMETER["False northing",0,LENGTHUNIT["metre",1],ID["EPSG",8807]]]],DERIVINGCONVERSION["Affine transformation as PROJ-based",METHOD["PROJ-based operation method: +proj=pipeline  +step +proj=affine +xoff=6018.77495 +yoff=614.23698 +zoff=-399.91220 +s11=0.998812215508 +s12=0.0303546283772 +s13=-0.00129655684858 +s21=-0.0303565906348 +s22=0.998811840177 +s23=-0.00152042684237 +s31=0.00124977142441 +s32=0.00155911155192 +s33=0.999272201962"]],CS[Cartesian,3],AXIS["site east (x)",east,ORDER[1],LENGTHUNIT["metre",1,ID["EPSG",9001]]],AXIS["site north (y)",north,ORDER[2],LENGTHUNIT["metre",1,ID["EPSG",9001]]],AXIS["site up (z)",up,ORDER[3],LENGTHUNIT["metre",1,ID["EPSG",9001]]]]'
+    srs_ref = osr.SpatialReference()
+    srs_ref.ImportFromWkt(wkt)
+    ds.SetSpatialRef(srs_ref)
+    ds = None
+
+    assert gdal.VSIStatL(tmpfile + ".aux.xml")
+    ds = gdal.Open(tmpfile)
+    srs = ds.GetSpatialRef()
+    assert srs is not None
+    assert srs.IsSame(srs_ref)
+    ds = None
+
+    gdal.Unlink(tmpfile + ".aux.xml")
+    ds = gdal.Open(tmpfile)
+    assert ds.GetSpatialRef() is None
+    ds = None
+
+    gdal.Unlink(tmpfile)
