@@ -3261,12 +3261,17 @@ void OGRPGTableLayer::UpdateSequenceIfNeeded()
     {
         PGconn *hPGConn = poDS->GetPGConn();
         CPLString osCommand;
+        // setval() only works if the value is in [1,INT_MAX] range
+        // so do not update it if MAX(fid) <= 0
         osCommand.Printf(
-            "SELECT setval(pg_get_serial_sequence(%s, %s), MAX(%s)) FROM %s",
+            "SELECT setval(pg_get_serial_sequence(%s, %s), MAX(%s)) FROM %s "
+            "WHERE EXISTS (SELECT 1 FROM %s WHERE %s > 0 LIMIT 1)",
             OGRPGEscapeString(hPGConn, pszSqlTableName).c_str(),
             OGRPGEscapeString(hPGConn, pszFIDColumn).c_str(),
             OGRPGEscapeColumnName(pszFIDColumn).c_str(),
-            pszSqlTableName);
+            pszSqlTableName,
+            pszSqlTableName,
+            OGRPGEscapeColumnName(pszFIDColumn).c_str());
         PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand);
         OGRPGClearResult( hResult );
         bNeedToUpdateSequence = false;
