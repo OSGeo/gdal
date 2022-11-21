@@ -39,6 +39,7 @@
 
 #include <condition_variable>
 #include <mutex>
+#include <queue>
 #include <vector>
 #include <set>
 #include <thread>
@@ -624,10 +625,27 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
 
     CPL_DISALLOW_COPY_ASSIGN(OGRGeoPackageTableLayer)
 
+    // Used when m_nIsCompatOfOptimizedGetNextArrowArray == TRUE
+    struct ArrowArrayPrefetchTask
+    {
+        std::thread                              m_oThread{};
+        std::condition_variable                  m_oCV{};
+        std::mutex                               m_oMutex{};
+        bool                                     m_bArrayReady = false;
+        bool                                     m_bFetchRows = false;
+        bool                                     m_bStop = false;
+        std::unique_ptr<GDALGeoPackageDataset>   m_poDS{};
+        OGRGeoPackageTableLayer                 *m_poLayer{};
+        GIntBig                                  m_iStartShapeId = 0;
+        std::unique_ptr<struct ArrowArray>       m_psArrowArray = nullptr;
+    };
+    std::queue<std::unique_ptr<ArrowArrayPrefetchTask>> m_oQueueArrowArrayPrefetchTasks{};
+
+    // Used when m_nIsCompatOfOptimizedGetNextArrowArray == FALSE
     std::thread         m_oThreadNextArrowArray{};
     std::unique_ptr<OGRGPKGTableLayerFillArrowArray> m_poFillArrowArray{};
     std::unique_ptr<GDALGeoPackageDataset> m_poOtherDS{};
-    struct ArrowArray*  m_psNextArrayArray = nullptr;
+
     virtual int GetNextArrowArray(struct ArrowArrayStream*,
                                    struct ArrowArray* out_array) override;
     int                 GetNextArrowArrayInternal(struct ArrowArray* out_array);
