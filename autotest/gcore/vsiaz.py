@@ -627,8 +627,8 @@ def test_vsiaz_fake_write():
             or h["Content-Length"] != "10"
             or "x-ms-date" not in h
             or h["x-ms-date"] != "my_timestamp"
-            or "x-ms-blob-type" not in h
-            or h["x-ms-blob-type"] != "AppendBlob"
+            or "x-ms-blob-type"
+            in h  #  specifying x-ms-blob-type here does not work with Azurite
             or "x-ms-blob-condition-appendpos" not in h
             or h["x-ms-blob-condition-appendpos"] != "0"
         ):
