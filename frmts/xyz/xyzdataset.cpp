@@ -32,6 +32,7 @@
 #include "gdal_pam.h"
 
 #include <algorithm>
+#include <cmath>
 #include <mutex>
 #include <vector>
 
@@ -512,12 +513,18 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                     {
                         if( idx < 0 )
                         {
-                            CPLError( CE_Failure, CPLE_AppDefined,
-                                      "At line " CPL_FRMT_GIB", found %f instead of %f "
-                                      "for nBlockYOff = %d",
-                                      poGDS->nLineNum, dfY, dfExpectedY,
-                                      nBlockYOff);
-                            return CE_Failure;
+                            const double dfYDeltaOrigin = dfY + 0.5 * poGDS->adfGeoTransform[5] - poGDS->adfGeoTransform[3];
+                            if( !(fabs(dfYDeltaOrigin) > fabs(poGDS->adfGeoTransform[5]) &&
+                                  fabs(std::round(dfYDeltaOrigin / poGDS->adfGeoTransform[5]) -
+                                       (dfYDeltaOrigin / poGDS->adfGeoTransform[5])) <= RELATIVE_ERROR) )
+                            {
+                                CPLError( CE_Failure, CPLE_AppDefined,
+                                          "At line " CPL_FRMT_GIB", found Y=%f instead of %f "
+                                          "for nBlockYOff = %d",
+                                          poGDS->nLineNum, dfY, dfExpectedY,
+                                          nBlockYOff);
+                                return CE_Failure;
+                            }
                         }
                         VSIFSeekL(poGDS->fp, nOffsetBefore, SEEK_SET);
                         nLastYOff = nBlockYOff;
@@ -1162,7 +1169,8 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else if( bColOrganization )
         {
-            if( dfX == dfLastX )
+            const double dfStepX = dfX - dfLastX;
+            if( dfStepX == 0 )
             {
                 const double dfStepY = dfY - dfLastY;
                 const double dfExpectedStepY = adfStepY.back() * nStepYSign;
@@ -1175,9 +1183,8 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                     return nullptr;
                 }
             }
-            else if( dfX > dfLastX )
+            else if( dfStepX > 0 )
             {
-                const double dfStepX = dfX - dfLastX;
                 if( adfStepX.empty() )
                 {
                     adfStepX.push_back(dfStepX);
@@ -1222,11 +1229,22 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                     return nullptr;
                 }
             }
+            else if( !adfStepX.empty() &&
+                     fabs(std::round(-dfStepX / adfStepX[0]) -
+                            (-dfStepX / adfStepX[0])) <= RELATIVE_ERROR )
+            {
+                bColOrganization = false;
+            }
+            else if( adfStepX.empty() )
+            {
+                adfStepX.push_back(fabs(dfStepX));
+                bColOrganization = false;
+            }
             else
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Ungridded dataset: At line " CPL_FRMT_GIB ", X spacing was %f. Expected >0 value",
-                         nLineNum, dfX - dfLastX);
+                         "Ungridded dataset: At line " CPL_FRMT_GIB ", X spacing was %f. Expected a multiple of %f",
+                         nLineNum, dfStepX, adfStepX[0]);
                 VSIFCloseL(fp);
                 return nullptr;
             }
@@ -1332,11 +1350,20 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                 }
                 else if( fabs( (adfStepY[0] - dfStepY) / dfStepY ) > RELATIVE_ERROR )
                 {
-                    CPLDebug("XYZ", "New stepY=%.15f prev stepY=%.15f", dfStepY, adfStepY[0]);
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                        "Ungridded dataset: At line " CPL_FRMT_GIB ", too many stepY values", nLineNum);
-                    VSIFCloseL(fp);
-                    return nullptr;
+                    if( dfStepY > adfStepY[0] &&
+                        fabs(std::round(dfStepY / adfStepY[0]) - (dfStepY / adfStepY[0])) <= RELATIVE_ERROR )
+                    {
+                        // The new step is a multiple of the previous one,
+                        // which means we have a missing line: OK
+                    }
+                    else
+                    {
+                        CPLDebug("XYZ", "New stepY=%.15f prev stepY=%.15f", dfStepY, adfStepY[0]);
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                            "Ungridded dataset: At line " CPL_FRMT_GIB ", too many stepY values", nLineNum);
+                        VSIFCloseL(fp);
+                        return nullptr;
+                    }
                 }
                 else
                 {
