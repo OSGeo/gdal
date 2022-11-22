@@ -81,7 +81,7 @@ edit data.
 
     SQL dialect. In some cases can be used to use (unoptimized) :ref:`ogr_sql_dialect` instead
     of the native SQL of an RDBMS by passing the ``OGRSQL`` dialect value.
-    The :ref:`sql_sqlite_dialect` dialect can be select with the ``SQLITE``
+    The :ref:`sql_sqlite_dialect` can be selected with the ``SQLITE``
     and ``INDIRECT_SQLITE`` dialect values, and this can be used with any datasource.
 
 .. option:: -spat <xmin> <ymin> <xmax> <ymax>
