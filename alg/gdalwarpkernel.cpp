@@ -4787,53 +4787,102 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
 /*                     GWKCheckAndComputeSrcOffsets()                   */
 /************************************************************************/
 static CPL_INLINE bool GWKCheckAndComputeSrcOffsets(
-    const int* _pabSuccess,
+    GWKJobStruct* psJob,
+    int* _pabSuccess,
     int _iDstX,
-    const double* _padfX,
-    const double* _padfY,
-    const GDALWarpKernel* _poWK,
+    int _iDstY,
+    double* _padfX,
+    double* _padfY,
     int _nSrcXSize,
     int _nSrcYSize,
     GPtrDiff_t& iSrcOffset)
 {
-    if( !_pabSuccess[_iDstX] )
-        return false;
-
-    // If this happens this is likely the symptom of a bug somewhere.
-    if( CPLIsNan(_padfX[_iDstX]) || CPLIsNan(_padfY[_iDstX]) )
+    const GDALWarpKernel* _poWK = psJob->poWK;
+    for( int iTry = 0; iTry < 2; ++iTry )
     {
-        static bool bNanCoordFound = false;
-        if( !bNanCoordFound )
+        if( iTry == 1 )
         {
-            CPLDebug("WARP",
-                     "GWKCheckAndComputeSrcOffsets(): "
-                     "NaN coordinate found on point %d.",
-                     _iDstX);
-            bNanCoordFound = true;
+            // If the source coordinate is slightly outside of the source raster
+            // retry to transform it alone, so that the exact coordinate
+            // transformer is used.
+
+            _padfX[_iDstX] = _iDstX + 0.5 + _poWK->nDstXOff;
+            _padfY[_iDstX] = _iDstY + 0.5 + _poWK->nDstYOff;
+            double dfZ = 0;
+            _poWK->pfnTransformer( psJob->pTransformerArg, TRUE, 1,
+                                   _padfX + _iDstX, _padfY + _iDstX, &dfZ,
+                                   _pabSuccess + _iDstX );
         }
-        return false;
-    }
+        if( !_pabSuccess[_iDstX] )
+            return false;
+
+        // If this happens this is likely the symptom of a bug somewhere.
+        if( CPLIsNan(_padfX[_iDstX]) || CPLIsNan(_padfY[_iDstX]) )
+        {
+            static bool bNanCoordFound = false;
+            if( !bNanCoordFound )
+            {
+                CPLDebug("WARP",
+                         "GWKCheckAndComputeSrcOffsets(): "
+                         "NaN coordinate found on point %d.",
+                         _iDstX);
+                bNanCoordFound = true;
+            }
+            return false;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Figure out what pixel we want in our source raster, and skip    */
 /*      further processing if it is well off the source image.          */
 /* -------------------------------------------------------------------- */
-    /* We test against the value before casting to avoid the */
-    /* problem of asymmetric truncation effects around zero.  That is */
-    /* -0.5 will be 0 when cast to an int. */
-    if( _padfX[_iDstX] < _poWK->nSrcXOff
-        || _padfY[_iDstX] < _poWK->nSrcYOff )
-        return false;
+        /* We test against the value before casting to avoid the */
+        /* problem of asymmetric truncation effects around zero.  That is */
+        /* -0.5 will be 0 when cast to an int. */
+        if( _padfX[_iDstX] < _poWK->nSrcXOff )
+        {
+            // If the source coordinate is slightly outside of the source raster
+            // retry to transform it alone, so that the exact coordinate
+            // transformer is used.
+            if( iTry == 0 && _padfX[_iDstX] > _poWK->nSrcXOff - 1 )
+                continue;
+            return false;
+        }
 
-    // Check for potential overflow when casting from float to int, (if
-    // operating outside natural projection area, padfX/Y can be a very huge
-    // positive number before doing the actual conversion), as such cast is
-    // undefined behavior that can trigger exception with some compilers
-    // (see #6753)
-    if( _padfX[_iDstX] + 1e-10 > _nSrcXSize + _poWK->nSrcXOff ||
-        _padfY[_iDstX] + 1e-10 > _nSrcYSize + _poWK->nSrcYOff )
-    {
-        return false;
+        if( _padfY[_iDstX] < _poWK->nSrcYOff )
+        {
+            // If the source coordinate is slightly outside of the source raster
+            // retry to transform it alone, so that the exact coordinate
+            // transformer is used.
+            if( iTry == 0 && _padfY[_iDstX] > _poWK->nSrcYOff  - 1 )
+                continue;
+            return false;
+        }
+
+        // Check for potential overflow when casting from float to int, (if
+        // operating outside natural projection area, padfX/Y can be a very huge
+        // positive number before doing the actual conversion), as such cast is
+        // undefined behavior that can trigger exception with some compilers
+        // (see #6753)
+        if( _padfX[_iDstX] + 1e-10 > _nSrcXSize + _poWK->nSrcXOff )
+        {
+            // If the source coordinate is slightly outside of the source raster
+            // retry to transform it alone, so that the exact coordinate
+            // transformer is used.
+            if( iTry == 0 && _padfX[_iDstX] < _nSrcXSize + _poWK->nSrcXOff + 1 )
+                continue;
+            return false;
+        }
+        if( _padfY[_iDstX] + 1e-10 > _nSrcYSize + _poWK->nSrcYOff )
+        {
+            // If the source coordinate is slightly outside of the source raster
+            // retry to transform it alone, so that the exact coordinate
+            // transformer is used.
+            if( iTry == 0 && _padfY[_iDstX] < _nSrcYSize + _poWK->nSrcYOff + 1 )
+                continue;
+            return false;
+        }
+
+        break;
     }
 
     int iSrcX =
@@ -4944,8 +4993,9 @@ static void GWKGeneralCaseThread( void* pData)
         for( int iDstX = 0; iDstX < nDstXSize; iDstX++ )
         {
             GPtrDiff_t iSrcOffset = 0;
-            if( !GWKCheckAndComputeSrcOffsets(pabSuccess, iDstX, padfX, padfY,
-                                    poWK, nSrcXSize, nSrcYSize, iSrcOffset) )
+            if( !GWKCheckAndComputeSrcOffsets(psJob, pabSuccess, iDstX, iDstY,
+                                              padfX, padfY,
+                                              nSrcXSize, nSrcYSize, iSrcOffset) )
                 continue;
 
 /* -------------------------------------------------------------------- */
@@ -5175,8 +5225,9 @@ static void GWKRealCaseThread( void* pData)
         for( int iDstX = 0; iDstX < nDstXSize; iDstX++ )
         {
             GPtrDiff_t iSrcOffset = 0;
-            if( !GWKCheckAndComputeSrcOffsets(pabSuccess, iDstX, padfX, padfY,
-                                    poWK, nSrcXSize, nSrcYSize, iSrcOffset) )
+            if(!GWKCheckAndComputeSrcOffsets(psJob, pabSuccess, iDstX, iDstY,
+                                              padfX, padfY,
+                                              nSrcXSize, nSrcYSize, iSrcOffset) )
                 continue;
 
 /* -------------------------------------------------------------------- */
@@ -5429,9 +5480,9 @@ static void GWKResampleNoMasksOrDstDensityOnlyThreadInternal( void* pData )
         for( int iDstX = 0; iDstX < nDstXSize; iDstX++ )
         {
             GPtrDiff_t iSrcOffset = 0;
-            if( !GWKCheckAndComputeSrcOffsets(pabSuccess, iDstX, padfX, padfY,
-                                              poWK, nSrcXSize, nSrcYSize,
-                                              iSrcOffset) )
+            if( !GWKCheckAndComputeSrcOffsets(psJob, pabSuccess, iDstX, iDstY,
+                                              padfX, padfY,
+                                              nSrcXSize, nSrcYSize, iSrcOffset) )
                 continue;
 
 /* ==================================================================== */
@@ -5655,8 +5706,9 @@ static void GWKNearestThread( void* pData )
         for( int iDstX = 0; iDstX < nDstXSize; iDstX++ )
         {
             GPtrDiff_t iSrcOffset = 0;
-            if( !GWKCheckAndComputeSrcOffsets(pabSuccess, iDstX, padfX, padfY,
-                                    poWK, nSrcXSize, nSrcYSize, iSrcOffset) )
+            if( !GWKCheckAndComputeSrcOffsets(psJob, pabSuccess, iDstX, iDstY,
+                                              padfX, padfY,
+                                              nSrcXSize, nSrcYSize, iSrcOffset) )
                 continue;
 
 /* -------------------------------------------------------------------- */
