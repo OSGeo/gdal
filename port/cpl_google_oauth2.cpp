@@ -36,6 +36,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_json.h"
 #include "cpl_string.h"
 
 
@@ -59,43 +60,6 @@
 #define GDAL_CLIENT_SECRET "0IbTUDOYzaL6vnIdWTuQnvLz"
 
 #define GOOGLE_AUTH_URL "https://accounts.google.com/o/oauth2"
-
-/************************************************************************/
-/*                          ParseSimpleJson()                           */
-/*                                                                      */
-/*      Return a string list of name/value pairs extracted from a       */
-/*      JSON doc.  The Google OAuth2 web service returns simple JSON    */
-/*      responses.  The parsing as done currently is very fragile       */
-/*      and depends on JSON documents being in a very very simple       */
-/*      form.                                                           */
-/************************************************************************/
-
-static CPLStringList ParseSimpleJson(const char *pszJson)
-
-{
-/* -------------------------------------------------------------------- */
-/*      We are expecting simple documents like the following with no    */
-/*      hierarchy or complex structure.                                 */
-/* -------------------------------------------------------------------- */
-/*
-    {
-        "access_token":"1/fFBGRNJru1FQd44AzqT3Zg",
-        "expires_in":3920,
-        "token_type":"Bearer"
-    }
-*/
-
-    CPLStringList oWords(
-        CSLTokenizeString2(pszJson, " \n\t,:{}", CSLT_HONOURSTRINGS ));
-    CPLStringList oNameValue;
-
-    for( int i=0; i < oWords.size(); i += 2 )
-    {
-        oNameValue.SetNameValue(oWords[i], oWords[i+1]);
-    }
-
-    return oNameValue;
-}
 
 /************************************************************************/
 /*                      GOA2GetAuthorizationURL()                       */
@@ -251,7 +215,7 @@ char CPL_DLL *GOA2GetRefreshToken( const char *pszAuthToken,
  "refresh_token" : "1/eF88pciwq9Tp_rHEhuiIv9AS44Ufe4GOymGawTVPGYo"
 }
 */
-    CPLStringList oResponse = ParseSimpleJson(
+    CPLStringList oResponse = CPLParseKeyValueJson(
         reinterpret_cast<char *>(psResult->pabyData));
     CPLHTTPDestroyResult(psResult);
 
@@ -312,7 +276,7 @@ static char** GOA2ProcessResponse(CPLHTTPResult *psResult)
 "token_type":"Bearer"
 }
 */
-    CPLStringList oResponse = ParseSimpleJson(
+    CPLStringList oResponse = CPLParseKeyValueJson(
         reinterpret_cast<char *>(psResult->pabyData));
     CPLHTTPDestroyResult(psResult);
 
