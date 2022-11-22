@@ -44,7 +44,7 @@ _tiffDummyUnmapProc(thandle_t fd, void* base, toff_t size)
 }
 
 int
-_TIFFgetMode(const char* mode, const char* module)
+_TIFFgetMode(TIFFOpenOptions* opts, thandle_t clientdata, const char* mode, const char* module)
 {
 	int m = -1;
 
@@ -61,10 +61,33 @@ _TIFFgetMode(const char* mode, const char* module)
 			m |= O_TRUNC;
 		break;
 	default:
-		TIFFErrorExt(0, module, "\"%s\": Bad mode", mode);
+		_TIFFErrorEarly(opts, clientdata, module, "\"%s\": Bad mode", mode);
 		break;
 	}
 	return (m);
+}
+
+TIFFOpenOptions* TIFFOpenOptionsAlloc()
+{
+    TIFFOpenOptions* opts = (TIFFOpenOptions*)_TIFFcalloc(1, sizeof(TIFFOpenOptions));
+    return opts;
+}
+
+void TIFFOpenOptionsFree(TIFFOpenOptions* opts)
+{
+    _TIFFfree(opts);
+}
+
+void TIFFOpenOptionsSetErrorHandlerExtR(TIFFOpenOptions* opts, TIFFErrorHandlerExtR handler, void* errorhandler_user_data)
+{
+    opts->errorhandler = handler;
+    opts->errorhandler_user_data = errorhandler_user_data;
+}
+
+void TIFFOpenOptionsSetWarningHandlerExtR(TIFFOpenOptions* opts, TIFFErrorHandlerExtR handler, void* warnhandler_user_data)
+{
+    opts->warnhandler = handler;
+    opts->warnhandler_user_data = warnhandler_user_data;
 }
 
 TIFF*
@@ -79,12 +102,19 @@ TIFFClientOpen(
 	TIFFMapFileProc mapproc,
 	TIFFUnmapFileProc unmapproc
 ) {
-  return TIFFClientOpenEx(name, mode, clientdata, readproc, writeproc, seekproc, closeproc,
-                          sizeproc, mapproc, unmapproc, NULL, NULL);
+  return TIFFClientOpenExt(name, mode, clientdata,
+                           readproc,
+                           writeproc,
+                           seekproc,
+                           closeproc,
+                           sizeproc,
+                           mapproc,
+                           unmapproc,
+                           NULL);
 }
 
 TIFF*
-TIFFClientOpenEx(
+TIFFClientOpenExt(
 	const char* name, const char* mode,
 	thandle_t clientdata,
 	TIFFReadWriteProc readproc,
@@ -94,10 +124,9 @@ TIFFClientOpenEx(
 	TIFFSizeProc sizeproc,
 	TIFFMapFileProc mapproc,
 	TIFFUnmapFileProc unmapproc,
-	TIFFErrorHandlerExtR errorhandler,
-	TIFFErrorHandlerExtR warnhandler)
+    TIFFOpenOptions* opts)
 {
-	static const char module[] = "TIFFClientOpenEx";
+	static const char module[] = "TIFFClientOpenExt";
 	TIFF *tif;
 	int m;
 	const char* cp;
@@ -128,12 +157,12 @@ TIFFClientOpenEx(
 		#endif
 	}
 
-	m = _TIFFgetMode(mode, module);
+	m = _TIFFgetMode(opts, clientdata, mode, module);
 	if (m == -1)
 		goto bad2;
 	tif = (TIFF *)_TIFFmalloc((tmsize_t)(sizeof (TIFF) + strlen(name) + 1));
 	if (tif == NULL) {
-		TIFFErrorExt(clientdata, module, "%s: Out of memory (TIFF structure)", name);
+		_TIFFErrorEarly(opts, clientdata, module, "%s: Out of memory (TIFF structure)", name);
 		goto bad2;
 	}
 	_TIFFmemset(tif, 0, sizeof (*tif));
@@ -152,8 +181,13 @@ TIFFClientOpenEx(
 	tif->tif_sizeproc = sizeproc;
 	tif->tif_mapproc = mapproc ? mapproc : _tiffDummyMapProc;
 	tif->tif_unmapproc = unmapproc ? unmapproc : _tiffDummyUnmapProc;
-    tif->tif_errorhandler = errorhandler;
-    tif->tif_warnhandler = warnhandler;
+    if( opts )
+    {
+        tif->tif_errorhandler = opts->errorhandler;
+        tif->tif_errorhandler_user_data = opts->errorhandler_user_data;
+        tif->tif_warnhandler = opts->warnhandler;
+        tif->tif_warnhandler_user_data = opts->warnhandler_user_data;
+    }
 
 	if (!readproc || !writeproc || !seekproc || !closeproc || !sizeproc) {
 		TIFFErrorExtR(tif, module,

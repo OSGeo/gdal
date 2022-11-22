@@ -339,7 +339,7 @@
 #define TIFFCleanup gdal_TIFFCleanup
 #define TIFFClientdata gdal_TIFFClientdata
 #define TIFFClientOpen gdal_TIFFClientOpen
-#define TIFFClientOpenEx gdal_TIFFClientOpenEx
+#define TIFFClientOpenExt gdal_TIFFClientOpenExt
 #define TIFFClose gdal_TIFFClose
 #define _tiffCloseProc gdal__tiffCloseProc
 #define TIFFComputeStrip gdal_TIFFComputeStrip
@@ -366,6 +366,7 @@
 #define _tiffDummyMapProc gdal__tiffDummyMapProc
 #define _tiffDummyUnmapProc gdal__tiffDummyUnmapProc
 #define TIFFError gdal_TIFFError
+#define _TIFFErrorEarly gdal__TIFFErrorEarly
 #define TIFFErrorExt gdal_TIFFErrorExt
 #define TIFFErrorExtR gdal_TIFFErrorExtR
 #define _TIFFFax3fillruns gdal__TIFFFax3fillruns
@@ -467,6 +468,10 @@
 #define TIFFNumberOfStrips gdal_TIFFNumberOfStrips
 #define TIFFNumberOfTiles gdal_TIFFNumberOfTiles
 #define TIFFOpen gdal_TIFFOpen
+#define TIFFOpenOptionsAlloc gdal_TIFFOpenOptionsAlloc
+#define TIFFOpenOptionsFree gdal_TIFFOpenOptionsFree
+#define TIFFOpenOptionsSetErrorHandlerExtR gdal_TIFFOpenOptionsSetErrorHandlerExtR
+#define TIFFOpenOptionsSetWarningHandlerExtR gdal_TIFFOpenOptionsSetWarningHandlerExtR
 #define _TIFFPartialReadStripArray gdal__TIFFPartialReadStripArray
 #define TIFFPredictorCleanup gdal_TIFFPredictorCleanup
 #define TIFFPredictorInit gdal_TIFFPredictorInit
@@ -615,7 +620,6 @@
 #define _TIFFsetDoubleArray gdal__TIFFsetDoubleArray
 #define TIFFSetErrorHandler gdal_TIFFSetErrorHandler
 #define TIFFSetErrorHandlerExt gdal_TIFFSetErrorHandlerExt
-#define TIFFSetErrorHandlerExtR gdal_TIFFSetErrorHandlerExtR
 #define TIFFSetField gdal_TIFFSetField
 #define TIFFSetFileName gdal_TIFFSetFileName
 #define TIFFSetFileno gdal_TIFFSetFileno
@@ -632,7 +636,6 @@
 #define TIFFSetupStrips gdal_TIFFSetupStrips
 #define TIFFSetWarningHandler gdal_TIFFSetWarningHandler
 #define TIFFSetWarningHandlerExt gdal_TIFFSetWarningHandlerExt
-#define TIFFSetWarningHandlerExtR gdal_TIFFSetWarningHandlerExtR
 #define TIFFSetWriteOffset gdal_TIFFSetWriteOffset
 #define _tiffSizeProc gdal__tiffSizeProc
 #define TIFFStartStrip gdal_TIFFStartStrip
