@@ -1236,9 +1236,7 @@ OGRGeoPackageTableLayer::~OGRGeoPackageTableLayer()
     if ( m_poGetFeatureStatement )
         sqlite3_finalize(m_poGetFeatureStatement);
 
-   CancelAsyncNextArrowArray();
-
-    delete m_psNextArrayArray;
+    CancelAsyncNextArrowArray();
 }
 
 /************************************************************************/
@@ -1261,10 +1259,24 @@ void OGRGeoPackageTableLayer::CancelAsyncNextArrowArray()
 
     m_poFillArrowArray.reset();
 
-    if( m_psNextArrayArray )
+    while( !m_oQueueArrowArrayPrefetchTasks.empty() )
     {
-        if( m_psNextArrayArray->release )
-            m_psNextArrayArray->release(m_psNextArrayArray);
+        auto task = std::move(m_oQueueArrowArrayPrefetchTasks.front());
+        m_oQueueArrowArrayPrefetchTasks.pop();
+
+        {
+            std::lock_guard<std::mutex> oLock(task->m_oMutex);
+            task->m_bStop = true;
+            task->m_oCV.notify_one();
+        }
+        if( task->m_oThread.joinable() )
+            task->m_oThread.join();
+
+        if( task->m_psArrowArray )
+        {
+            if( task->m_psArrowArray->release )
+                task->m_psArrowArray->release(task->m_psArrowArray.get());
+        }
     }
 }
 
@@ -6990,85 +7002,72 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
 
     // CPLDebug("GPKG", "iNextShapeId = " CPL_FRMT_GIB, iNextShapeId);
 
-    if( m_oThreadNextArrowArray.joinable() )
-    {
-        m_oThreadNextArrowArray.join();
-        if( m_psNextArrayArray->release )
-        {
-            iNextShapeId += m_psNextArrayArray->length;
-            memcpy(out_array, m_psNextArrayArray, sizeof(*m_psNextArrayArray));
-
-            memset(m_psNextArrayArray, 0, sizeof(*m_psNextArrayArray));
-
-            return 0;
-        }
-    }
-
-    // Try to fetch the next ArrowArray in another thread
     const int nMaxBatchSize = OGRArrowArrayHelper::GetMaxFeaturesInBatch(
                                                 m_aosArrowArrayStreamOptions);
 
-    const auto GetThreadsAvailable = []()
+    // Fetch the answer from a potentially queued asynchronous task
+    if( !m_oQueueArrowArrayPrefetchTasks.empty() )
     {
-        const char* pszMaxThreads = CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-        if( pszMaxThreads == nullptr || EQUAL(pszMaxThreads, "ALL_CPUS") )
-            return CPLGetNumCPUs();
-        return atoi(pszMaxThreads);
-    };
+        const size_t nTasks = m_oQueueArrowArrayPrefetchTasks.size();
+        auto task = std::move(m_oQueueArrowArrayPrefetchTasks.front());
+        m_oQueueArrowArrayPrefetchTasks.pop();
 
-    if( m_poDS->GetAccess() == GA_ReadOnly &&
-        iNextShapeId + 2 * static_cast<GIntBig>(nMaxBatchSize) <= m_nTotalFeatureCount &&
-        (m_poOtherDS != nullptr ||
-         (sqlite3_threadsafe() != 0 && GetThreadsAvailable() >= 2)) )
-    {
-        if( m_poOtherDS == nullptr )
+        // Wait for thread to be ready
         {
-            m_poOtherDS = cpl::make_unique<GDALGeoPackageDataset>();
-            GDALOpenInfo oOpenInfo(m_poDS->GetDescription(), GA_ReadOnly);
-            oOpenInfo.papszOpenOptions = m_poDS->GetOpenOptions();
-            oOpenInfo.nOpenFlags = GDAL_OF_VECTOR;
-            // avoid coverity scan false positive about nullptr dereference
-            assert(m_poOtherDS);
-            if( !m_poOtherDS->Open(&oOpenInfo) )
+            std::unique_lock<std::mutex> oLock(task->m_oMutex);
+            while( !task->m_bArrayReady )
             {
-                m_poOtherDS.reset();
+                task->m_oCV.wait(oLock);
             }
+            task->m_bArrayReady = false;
         }
-        if( m_poOtherDS != nullptr )
+
+        const auto stopThread = [&task]()
         {
-            auto poOtherLayer = dynamic_cast<OGRGeoPackageTableLayer*>(
-                                        m_poOtherDS->GetLayerByName(GetName()));
-            if( poOtherLayer &&
-                poOtherLayer->GetLayerDefn()->GetFieldCount() == m_poFeatureDefn->GetFieldCount() )
             {
-                if( m_psNextArrayArray == nullptr )
-                {
-                    m_psNextArrayArray = new struct ArrowArray;
-                    memset(m_psNextArrayArray, 0, sizeof(*m_psNextArrayArray));
+                std::lock_guard<std::mutex> oLock(task->m_oMutex);
+                task->m_bStop = true;
+                task->m_oCV.notify_one();
+            }
+            if( task->m_oThread.joinable() )
+                task->m_oThread.join();
+        };
 
-                    poOtherLayer->m_nTotalFeatureCount = m_nTotalFeatureCount;
-                    poOtherLayer->m_aosArrowArrayStreamOptions = m_aosArrowArrayStreamOptions;
-                    auto poOtherFDefn = poOtherLayer->GetLayerDefn();
-                    for( int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i )
-                    {
-                        poOtherFDefn->GetGeomFieldDefn(i)->SetIgnored(
-                            m_poFeatureDefn->GetGeomFieldDefn(i)->IsIgnored());
-                    }
-                    for( int i = 0; i < m_poFeatureDefn->GetFieldCount(); ++i )
-                    {
-                        poOtherFDefn->GetFieldDefn(i)->SetIgnored(
-                            m_poFeatureDefn->GetFieldDefn(i)->IsIgnored());
-                    }
-                }
+        if( task->m_iStartShapeId != iNextShapeId )
+        {
+            // Should not normally happen, unless the user messes with
+            // GetNextFeature()
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Worker thread task has not expected m_iStartShapeId value");
+            if( task->m_psArrowArray->release )
+                task->m_psArrowArray->release(task->m_psArrowArray.get());
 
-                CPLAssert( m_psNextArrayArray->release == nullptr );
-                poOtherLayer->iNextShapeId = iNextShapeId + nMaxBatchSize;
+            stopThread();
+        }
+        else if( task->m_psArrowArray->release )
+        {
+            iNextShapeId += task->m_psArrowArray->length;
+
+            // Transfer the task ArrowArray to the client array
+            memcpy(out_array, task->m_psArrowArray.get(), sizeof(struct ArrowArray));
+            memset(task->m_psArrowArray.get(), 0, sizeof(struct ArrowArray));
+
+            // Are the records still available for reading beyond the current
+            // queued tasks ? If so, recycle this task to read them
+            if( task->m_iStartShapeId + static_cast<GIntBig>(nTasks) * nMaxBatchSize <= m_nTotalFeatureCount )
+            {
+                task->m_iStartShapeId += static_cast<GIntBig>(nTasks) * nMaxBatchSize;
+                task->m_poLayer->iNextShapeId = task->m_iStartShapeId;
                 try
                 {
-                    m_oThreadNextArrowArray = std::thread([this, poOtherLayer]()
+                    // Wake-up thread with new task
                     {
-                        poOtherLayer->GetNextArrowArrayInternal(m_psNextArrayArray);
-                    });
+                        std::lock_guard<std::mutex> oLock(task->m_oMutex);
+                        task->m_bFetchRows = true;
+                        task->m_oCV.notify_one();
+                    }
+                    m_oQueueArrowArrayPrefetchTasks.push(std::move(task));
+                    return 0;
                 }
                 catch( const std::exception &e )
                 {
@@ -7076,6 +7075,107 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream* stream,
                              "Cannot start worker thread: %s", e.what());
                 }
             }
+            else
+            {
+                stopThread();
+                return 0;
+            }
+        }
+
+        stopThread();
+    }
+
+    const auto GetThreadsAvailable = []()
+    {
+        const char* pszMaxThreads = CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
+        if( pszMaxThreads == nullptr )
+            return std::min(4, CPLGetNumCPUs());
+        else if( EQUAL(pszMaxThreads, "ALL_CPUS") )
+            return CPLGetNumCPUs();
+        else
+            return atoi(pszMaxThreads);
+    };
+
+    // Start asynchronous tasks to prefetch the next ArrowArray
+    if( m_poDS->GetAccess() == GA_ReadOnly &&
+        m_oQueueArrowArrayPrefetchTasks.empty() &&
+        iNextShapeId + 2 * static_cast<GIntBig>(nMaxBatchSize) <= m_nTotalFeatureCount &&
+        sqlite3_threadsafe() != 0 && GetThreadsAvailable() >= 2 )
+    {
+        const int nMaxTasks =
+            static_cast<int>(std::min<GIntBig>(
+                DIV_ROUND_UP(m_nTotalFeatureCount - iNextShapeId, nMaxBatchSize),
+                             GetThreadsAvailable()));
+        GDALOpenInfo oOpenInfo(m_poDS->GetDescription(), GA_ReadOnly);
+        oOpenInfo.papszOpenOptions = m_poDS->GetOpenOptions();
+        oOpenInfo.nOpenFlags = GDAL_OF_VECTOR;
+        for( int iTask = 0; iTask < nMaxTasks; ++iTask )
+        {
+            auto task = cpl::make_unique<ArrowArrayPrefetchTask>();
+            task->m_iStartShapeId = iNextShapeId + static_cast<GIntBig>(iTask + 1) * nMaxBatchSize;
+            task->m_poDS = cpl::make_unique<GDALGeoPackageDataset>();
+            if( !task->m_poDS->Open(&oOpenInfo) )
+            {
+                break;
+            }
+            auto poOtherLayer = dynamic_cast<OGRGeoPackageTableLayer*>(
+                                        task->m_poDS->GetLayerByName(GetName()));
+            if( poOtherLayer == nullptr ||
+                poOtherLayer->GetLayerDefn()->GetFieldCount() != m_poFeatureDefn->GetFieldCount() )
+            {
+                break;
+            }
+            task->m_poLayer = poOtherLayer;
+            task->m_psArrowArray = cpl::make_unique<struct ArrowArray>();
+            memset(task->m_psArrowArray.get(), 0, sizeof(struct ArrowArray));
+
+            poOtherLayer->m_nTotalFeatureCount = m_nTotalFeatureCount;
+            poOtherLayer->m_aosArrowArrayStreamOptions = m_aosArrowArrayStreamOptions;
+            auto poOtherFDefn = poOtherLayer->GetLayerDefn();
+            for( int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i )
+            {
+                poOtherFDefn->GetGeomFieldDefn(i)->SetIgnored(
+                    m_poFeatureDefn->GetGeomFieldDefn(i)->IsIgnored());
+            }
+            for( int i = 0; i < m_poFeatureDefn->GetFieldCount(); ++i )
+            {
+                poOtherFDefn->GetFieldDefn(i)->SetIgnored(
+                    m_poFeatureDefn->GetFieldDefn(i)->IsIgnored());
+            }
+
+            poOtherLayer->iNextShapeId = task->m_iStartShapeId;
+
+            auto taskPtr = task.get();
+            auto taskRunner = [taskPtr]()
+            {
+                std::unique_lock<std::mutex> oLock(taskPtr->m_oMutex);
+                do
+                {
+                    taskPtr->m_bFetchRows = false;
+                    taskPtr->m_poLayer->GetNextArrowArrayInternal(taskPtr->m_psArrowArray.get());
+                    taskPtr->m_bArrayReady = true;
+                    taskPtr->m_oCV.notify_one();
+                    // cppcheck-suppress knownConditionTrueFalse
+                    while( !taskPtr->m_bStop && !taskPtr->m_bFetchRows )
+                    {
+                        taskPtr->m_oCV.wait(oLock);
+                    }
+                }
+                while( !taskPtr->m_bStop );
+            };
+
+            task->m_bFetchRows = true;
+            try
+            {
+                task->m_oThread = std::thread(taskRunner);
+            }
+            catch( const std::exception &e )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot start worker thread: %s", e.what());
+                break;
+            }
+            m_oQueueArrowArrayPrefetchTasks.push(std::move(task));
         }
     }
 
