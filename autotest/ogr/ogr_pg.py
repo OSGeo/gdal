@@ -6112,6 +6112,43 @@ def test_ogr_pg_get_geometry_types():
 
 
 ###############################################################################
+
+
+def test_ogr_pg_insert_single_feature_of_fid_0():
+
+    if gdaltest.pg_ds is None:
+        pytest.skip()
+
+    if not gdaltest.pg_has_postgis:
+        pytest.skip()
+
+    try:
+        lyr = gdaltest.pg_ds.CreateLayer(
+            "ogr_pg_insert_single_feature_of_fid_0", geom_type=ogr.wkbUnknown
+        )
+        lyr.CreateField(ogr.FieldDefn("foo"))
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["foo"] = "0"
+        f.SetFID(0)
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+        assert gdaltest.pg_ds.SyncToDisk() == ogr.OGRERR_NONE
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["foo"] = "1"
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+
+        lyr.ResetReading()
+        f = lyr.GetNextFeature()
+        assert f.GetFID() == 0
+        f = lyr.GetNextFeature()
+        assert f.GetFID() == 1
+
+    finally:
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_insert_single_feature_of_fid_0")
+
+
+###############################################################################
 #
 
 
