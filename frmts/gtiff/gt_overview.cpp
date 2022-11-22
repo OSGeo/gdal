@@ -1039,7 +1039,7 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
         std::sort(panOverviewListSorted, panOverviewListSorted + nOverviews);
     }
 
-    GTIFFSetInExternalOvr(true);
+    GTIFFSetThreadLocalInExternalOvr(true);
 
     CPLErr eErr = CE_None;
 
@@ -1252,7 +1252,7 @@ GTIFFBuildOverviewsEx( const char * pszFilename,
         hODS->FlushCache(true);
     delete hODS;
 
-    GTIFFSetInExternalOvr(false);
+    GTIFFSetThreadLocalInExternalOvr(false);
 
     CPLFree(panOverviewListSorted);
 
