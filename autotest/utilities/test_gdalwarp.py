@@ -591,7 +591,7 @@ def test_gdalwarp_24():
     ds = gdal.Open("tmp/testgdalwarp24dst.tif")
     assert ds is not None
 
-    assert ds.GetRasterBand(1).Checksum() == 50634, "Bad checksum"
+    assert ds.GetRasterBand(1).Checksum() == 50683, "Bad checksum"
 
     ds = None
 
