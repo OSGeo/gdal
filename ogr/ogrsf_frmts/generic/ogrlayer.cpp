@@ -6139,11 +6139,17 @@ const char* OGRLayer::GetLastErrorArrowArrayStream(struct ArrowArrayStream*)
  * advertise the OLCFastGetArrowStream capability.
  *
  * There are extra precautions to take into account in a OGR context. Unless
- * otherwise specified by a particular driver implementation, the ArrowArrayStream
- * structure, and the ArrowSchema or ArrowArray objects its callbacks have returned,
- * should no longer be used (except for potentially being released) after the
- * OGRLayer from which it was initialized has been destroyed (typically at dataset
- * closing). Furthermore, unless otherwise specified by a particular driver
+ * otherwise specified by a particular driver implementation, the get_schema(),
+ * get_next() and get_last_error() function pointers of the ArrowArrayStream
+ * structure should no longer be used after the OGRLayer, from which the
+ * ArrowArrayStream structure was initialized, has been destroyed (typically at
+ * dataset closing). The reason is that those function pointers will typically
+ * point to methods of the OGRLayer instance.
+ * However, the ArrowSchema and ArrowArray structures filled from those callbacks
+ * can be used and must be released independently from the
+ * ArrowArrayStream or the layer.
+ *
+ * Furthermore, unless otherwise specified by a particular driver
  * implementation, only one ArrowArrayStream can be active at a time on
  * a given layer (that is the last active one must be explicitly released before
  * a next one is asked). Changing filter state, ignored columns, modifying the schema
@@ -6259,11 +6265,17 @@ bool OGRLayer::GetArrowStream(struct ArrowArrayStream* out_stream,
  * advertise the OLCFastGetArrowStream capability.
  *
  * There are extra precautions to take into account in a OGR context. Unless
- * otherwise specified by a particular driver implementation, the ArrowArrayStream
- * structure, and the ArrowSchema or ArrowArray objects its callbacks have returned,
- * should no longer be used (except for potentially being released) after the
- * OGRLayer from which it was initialized has been destroyed (typically at dataset
- * closing). Furthermore, unless otherwise specified by a particular driver
+ * otherwise specified by a particular driver implementation, the get_schema(),
+ * get_next() and get_last_error() function pointers of the ArrowArrayStream
+ * structure should no longer be used after the OGRLayer, from which the
+ * ArrowArrayStream structure was initialized, has been destroyed (typically at
+ * dataset closing). The reason is that those function pointers will typically
+ * point to methods of the OGRLayer instance.
+ * However, the ArrowSchema and ArrowArray structures filled from those callbacks
+ * can be used and must be released independently from the
+ * ArrowArrayStream or the layer.
+ *
+ * Furthermore, unless otherwise specified by a particular driver
  * implementation, only one ArrowArrayStream can be active at a time on
  * a given layer (that is the last active one must be explicitly released before
  * a next one is asked). Changing filter state, ignored columns, modifying the schema
