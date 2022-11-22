@@ -1002,6 +1002,46 @@ _TIFFReadEncodedTileAndAllocBuffer(TIFF* tif, uint32_t tile,
     if (!TIFFFillTile(tif,tile))
             return((tmsize_t)(-1));
 
+    /* Sanity checks to avoid excessive memory allocation */
+    /* Cf https://gitlab.com/libtiff/libtiff/-/issues/479 */
+    if (td->td_compression == COMPRESSION_NONE) {
+        if (tif->tif_rawdatasize != tilesize) {
+            TIFFErrorExtR(tif, TIFFFileName(tif),
+                         "Invalid tile byte count for tile %u. "
+                         "Expected %"PRIu64", got %"PRIu64,
+                          tile,
+                          (uint64_t)tilesize,
+                          (uint64_t)tif->tif_rawdatasize);
+            return((tmsize_t)(-1));
+        }
+    }
+    else {
+        /* Max compression ratio experimentally determined. Might be fragile...
+         * Only apply this heuristics to situations where the memory allocation
+         * would be big, to avoid breaking nominal use cases.
+         */
+        const int maxCompressionRatio =
+            td->td_compression == COMPRESSION_ZSTD ?
+                33000 :
+            td->td_compression == COMPRESSION_JXL ?
+                /* Evaluated on a 8000x8000 tile */
+                25000 * (td->td_planarconfig == PLANARCONFIG_CONTIG ? td->td_samplesperpixel : 1) :
+            td->td_compression == COMPRESSION_LZMA ?
+                7000 :
+                1000;
+        if  (bufsizetoalloc > 100 * 1000 * 1000 &&
+             tif->tif_rawdatasize < tilesize / maxCompressionRatio) {
+            TIFFErrorExtR(tif, TIFFFileName(tif),
+                         "Likely invalid tile byte count for tile %u. "
+                         "Uncompressed tile size is %"PRIu64", "
+                         "compressed one is %"PRIu64,
+                          tile,
+                          (uint64_t)tilesize,
+                          (uint64_t)tif->tif_rawdatasize);
+            return((tmsize_t)(-1));
+        }
+    }
+
     *buf = _TIFFmalloc(bufsizetoalloc);
     if (*buf == NULL) {
             TIFFErrorExtR(tif, TIFFFileName(tif),

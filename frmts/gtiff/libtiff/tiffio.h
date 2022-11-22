@@ -274,7 +274,7 @@ extern "C" {
 #endif
 typedef void (*TIFFErrorHandler)(const char*, const char*, va_list);
 typedef void (*TIFFErrorHandlerExt)(thandle_t, const char*, const char*, va_list);
-typedef int (*TIFFErrorHandlerExtR)(thandle_t, const char*, const char*, va_list);
+typedef int (*TIFFErrorHandlerExtR)(TIFF*, void* user_data, const char*, const char*, va_list);
 typedef tmsize_t (*TIFFReadWriteProc)(thandle_t, void*, tmsize_t);
 typedef toff_t (*TIFFSeekProc)(thandle_t, toff_t, int);
 typedef int (*TIFFCloseProc)(thandle_t);
@@ -460,28 +460,36 @@ extern TIFFErrorHandlerExt TIFFSetErrorHandlerExt(TIFFErrorHandlerExt);
 extern TIFFErrorHandler TIFFSetWarningHandler(TIFFErrorHandler);
 extern TIFFErrorHandlerExt TIFFSetWarningHandlerExt(TIFFErrorHandlerExt);
 
-extern void TIFFSetErrorHandlerExtR(TIFF*, TIFFErrorHandlerExtR);
-extern void TIFFSetWarningHandlerExtR(TIFF*, TIFFErrorHandlerExtR);
+extern void TIFFWarningExtR(TIFF*, const char*, const char*, ...) TIFF_ATTRIBUTE((__format__ (__printf__,3,4)));
+extern void TIFFErrorExtR(TIFF*, const char*, const char*, ...) TIFF_ATTRIBUTE((__format__ (__printf__,3,4)));
+
+typedef struct TIFFOpenOptions TIFFOpenOptions;
+extern TIFFOpenOptions* TIFFOpenOptionsAlloc(void);
+extern void TIFFOpenOptionsFree(TIFFOpenOptions*);
+extern void TIFFOpenOptionsSetErrorHandlerExtR(TIFFOpenOptions* opts, TIFFErrorHandlerExtR handler, void* errorhandler_user_data);
+extern void TIFFOpenOptionsSetWarningHandlerExtR(TIFFOpenOptions* opts, TIFFErrorHandlerExtR handler, void* warnhandler_user_data);
 
 extern TIFF* TIFFOpen(const char*, const char*);
+extern TIFF* TIFFOpenExt(const char*, const char*, TIFFOpenOptions* opts);
 # ifdef __WIN32__
 extern TIFF* TIFFOpenW(const wchar_t*, const char*);
+extern TIFF* TIFFOpenWExt(const wchar_t*, const char*, TIFFOpenOptions* opts);
 # endif /* __WIN32__ */
 extern TIFF* TIFFFdOpen(int, const char*, const char*);
+extern TIFF* TIFFFdOpenExt(int, const char*, const char*, TIFFOpenOptions* opts);
 extern TIFF* TIFFClientOpen(const char*, const char*,
 	    thandle_t,
 	    TIFFReadWriteProc, TIFFReadWriteProc,
 	    TIFFSeekProc, TIFFCloseProc,
 	    TIFFSizeProc,
 	    TIFFMapFileProc, TIFFUnmapFileProc);
-extern TIFF* TIFFClientOpenEx(const char*, const char*,
-	    thandle_t,
-	    TIFFReadWriteProc, TIFFReadWriteProc,
-	    TIFFSeekProc, TIFFCloseProc,
-	    TIFFSizeProc,
-	    TIFFMapFileProc, TIFFUnmapFileProc,
-            TIFFErrorHandlerExtR, TIFFErrorHandlerExtR);
-
+extern TIFF* TIFFClientOpenExt(const char*, const char*,
+                               thandle_t,
+                               TIFFReadWriteProc, TIFFReadWriteProc,
+                               TIFFSeekProc, TIFFCloseProc,
+                               TIFFSizeProc,
+                               TIFFMapFileProc, TIFFUnmapFileProc,
+                               TIFFOpenOptions* opts);
 extern TIFFExtendProc TIFFSetTagExtender(TIFFExtendProc);
 extern uint32_t TIFFComputeTile(TIFF* tif, uint32_t x, uint32_t y, uint32_t z, uint16_t s);
 extern int TIFFCheckTile(TIFF* tif, uint32_t x, uint32_t y, uint32_t z, uint16_t s);

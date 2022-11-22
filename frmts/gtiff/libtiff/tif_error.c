@@ -77,16 +77,34 @@ TIFFErrorExt(thandle_t fd, const char* module, const char* fmt, ...)
 	}
 }
 
-void TIFFSetErrorHandlerExtR(TIFF* tif, TIFFErrorHandlerExtR handler) {
-  if (tif) tif->tif_errorhandler = handler;
+void _TIFFErrorEarly(TIFFOpenOptions* opts, thandle_t clientdata, const char* module, const char* fmt, ...)
+{
+    va_list ap;
+    if (opts && opts->errorhandler) {
+        va_start(ap, fmt);
+        int stop = opts->errorhandler(NULL, opts->errorhandler_user_data, module, fmt, ap);
+        va_end(ap);
+        if (stop) return;
+    }
+    if (_TIFFerrorHandler) {
+        va_start(ap, fmt);
+        (*_TIFFerrorHandler)(module, fmt, ap);
+        va_end(ap);
+    }
+    if (_TIFFerrorHandlerExt) {
+        va_start(ap, fmt);
+        (*_TIFFerrorHandlerExt)(clientdata, module, fmt, ap);
+        va_end(ap);
+    }
 }
+
 
 void TIFFErrorExtR(TIFF* tif, const char* module, const char* fmt, ...)
 {
 	va_list ap;
 	if (tif && tif->tif_errorhandler) {
 		va_start(ap, fmt);
-		int stop = (*tif->tif_errorhandler)(tif->tif_clientdata, module, fmt, ap);
+		int stop = (*tif->tif_errorhandler)(tif, tif->tif_errorhandler_user_data, module, fmt, ap);
 		va_end(ap);
 		if (stop) return;
 	}
