@@ -6146,7 +6146,7 @@ const char* OGRLayer::GetLastErrorArrowArrayStream(struct ArrowArrayStream*)
  * dataset closing). The reason is that those function pointers will typically
  * point to methods of the OGRLayer instance.
  * However, the ArrowSchema and ArrowArray structures filled from those callbacks
- * can potentially be used and released after the destruction of the
+ * can be used and must be released independently from the
  * ArrowArrayStream or the layer.
  *
  * Furthermore, unless otherwise specified by a particular driver
@@ -6272,7 +6272,7 @@ bool OGRLayer::GetArrowStream(struct ArrowArrayStream* out_stream,
  * dataset closing). The reason is that those function pointers will typically
  * point to methods of the OGRLayer instance.
  * However, the ArrowSchema and ArrowArray structures filled from those callbacks
- * can potentially be used and released after the destruction of the
+ * can be used and must be released independently from the
  * ArrowArrayStream or the layer.
  *
  * Furthermore, unless otherwise specified by a particular driver
