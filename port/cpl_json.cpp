@@ -1470,7 +1470,7 @@ CPLStringList CPLParseKeyValueJson(const char *pszJson)
 {
     CPLJSONDocument oDoc;
     CPLStringList oNameValue;
-    if( oDoc.LoadMemory(pszJson) )
+    if( pszJson != nullptr && oDoc.LoadMemory(pszJson) )
     {
         for( const auto& obj: oDoc.GetRoot().GetChildren() )
         {
