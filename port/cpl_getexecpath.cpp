@@ -54,10 +54,11 @@
  *
  * The path to the executable currently running is returned.  This path
  * includes the name of the executable. Currently this only works on
- * Windows, Linux, MacOS and FreeBSD platforms.  The returned path is UTF-8 encoded.
+ * Windows, Linux, MacOS and FreeBSD platforms.  The returned path is UTF-8 encoded,
+ * and will be nul-terminated if success is reported.
  *
  * @param pszPathBuf the buffer into which the path is placed.
- * @param nMaxLength the buffer size, MAX_PATH+1 is suggested.
+ * @param nMaxLength the buffer size (including the nul-terminating character). MAX_PATH+1 is suggested.
  *
  * @return FALSE on failure or TRUE on success.
  */
@@ -86,11 +87,18 @@ int CPLGetExecPath( char * pszPathBuf, int nMaxLength )
 
             const size_t nStrlenDecoded = strlen(pszDecoded);
             strncpy( pszPathBuf, pszDecoded, nMaxLength );
-            if( nStrlenDecoded >= static_cast<size_t>(nMaxLength) )
+            int bOK = TRUE;
+            if( nStrlenDecoded >= static_cast<size_t>(nMaxLength) - 1 )
+            {
                 pszPathBuf[nMaxLength - 1] = '\0';
+                // There is no easy way to detect if the string has been
+                // truncated other than testing the existence of the file.
+                VSIStatBufL sStat;
+                bOK = (VSIStatL(pszPathBuf, &sStat) == 0);
+            }
             CPLFree( pszDecoded );
             CPLFree( pwszPathBuf );
-            return nStrlenDecoded < static_cast<size_t>(nMaxLength);
+            return bOK;
         }
     }
     else
@@ -98,7 +106,19 @@ int CPLGetExecPath( char * pszPathBuf, int nMaxLength )
         if( GetModuleFileNameA( nullptr, pszPathBuf, nMaxLength ) == 0 )
             return FALSE;
         else
-            return TRUE;
+        {
+            const size_t nStrlenDecoded = strlen(pszPathBuf);
+            int bOK = TRUE;
+            if( nStrlenDecoded >= static_cast<size_t>(nMaxLength) - 1 )
+            {
+                pszPathBuf[nMaxLength - 1] = '\0';
+                // There is no easy way to detect if the string has been
+                // truncated other than testing the existence of the file.
+                VSIStatBufL sStat;
+                bOK = (VSIStatL(pszPathBuf, &sStat) == 0);
+            }
+            return bOK;
+        }
     }
 #elif defined(__linux)
     long nPID = getpid();
