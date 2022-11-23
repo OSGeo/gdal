@@ -46,6 +46,6 @@ ${CXX} ${CFLAGS} -std=c++11 extensions/osr_wrap.cpp -shared -o ${OUTDIR}/_osr.py
 ${CXX} ${CFLAGS} -std=c++11 extensions/gnm_wrap.cpp -shared -o ${OUTDIR}/_gnm.pyd ${INCFLAGS} ${LINKFLAGS}
 ${CXX} ${CFLAGS} -std=c++11 extensions/gdalconst_wrap.c -shared -o ${OUTDIR}/_gdalconst.pyd ${INCFLAGS} ${LINKFLAGS}
 
-if test x${HAS_NUMPY} = "xyes"; then
+if test "${HAS_NUMPY}" = "yes"; then
     ${CXX} ${CFLAGS} extensions/gdal_array_wrap.cpp -shared -o ${OUTDIR}/_gdal_array.pyd ${INCFLAGS} -I${PYTHONHOME}/Lib/site-packages/numpy/core/include ${LINKFLAGS}
 fi
