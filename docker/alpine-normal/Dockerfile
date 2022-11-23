@@ -5,7 +5,7 @@
 # Public domain
 # or licensed under MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
-ARG ALPINE_VERSION=3.16
+ARG ALPINE_VERSION=3.17
 FROM alpine:${ALPINE_VERSION} as builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
@@ -34,6 +34,12 @@ RUN apk add --no-cache \
     netcdf-dev hdf5-dev freexl-dev \
     lz4-dev blosc-dev libdeflate-dev brotli-dev uriparser-dev \
     kealib-dev libjxl-dev \
+    json-c-dev giflib-dev \
+    mariadb-connector-c-dev \
+    pcre2-dev \
+    qhull-dev \
+    unixodbc-dev \
+    libpq-dev \
     # For spatialite (and GDAL)
     libxml2-dev \
     && mkdir -p /build_thirdparty/usr/lib
@@ -292,11 +298,16 @@ RUN apk add --no-cache \
         zlib zstd-libs xz-libs snappy \
         libjpeg-turbo libpng libwebp expat libkml \
         icu-libs \
-        python3 py3-numpy ${POPPLER} pcre libpq libxml2 portablexdr openjpeg \
+        python3 py3-numpy ${POPPLER} pcre2 libpq libxml2 portablexdr openjpeg \
         netcdf hdf5 freexl \
         openexr libheif xerces-c geos cfitsio minizip \
         lz4-libs blosc libdeflate brotli-libs liburiparser \
         kealib libjxl \
+        json-c giflib \
+        mariadb-connector-c \
+        qhull \
+        unixodbc \
+        libpq \
         re2 utf8proc thrift-libs-cpp \
     # Remove /usr/lib/libopenjp2.so.2.3.0 since we are building v2.3.1 manually
     # && rm -f /usr/lib/libopenjp2.so.2.3.0 \
@@ -305,8 +316,7 @@ RUN apk add --no-cache \
     # libpoppler-cpp.so is not used by GDAL. Only libpoppler.so*
     && rm -f /usr/lib/libpoppler-cpp.so* \
     # Only libwebp.so is used by GDAL
-    && rm -f /usr/lib/libwebpmux.so* /usr/lib/libwebpdemux.so* /usr/lib/libwebpdecoder.so* \
-    && ln -s /usr/bin/python3 /usr/bin/python
+    && rm -f /usr/lib/libwebpmux.so* /usr/lib/libwebpdemux.so* /usr/lib/libwebpdecoder.so*
 
 # Order layers starting with less frequently varying ones
 COPY --from=builder  /build_thirdparty/usr/ /usr/
