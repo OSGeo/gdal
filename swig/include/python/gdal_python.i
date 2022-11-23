@@ -729,8 +729,8 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
 {
     *buf = NULL;
 
-    int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
-    int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
+    int nxsize = (buf_xsize==0) ? static_cast<int>(xsize) : *buf_xsize;
+    int nysize = (buf_ysize==0) ? static_cast<int>(ysize) : *buf_ysize;
     GDALDataType ntype;
     if ( buf_type != 0 ) {
       ntype = *buf_type;

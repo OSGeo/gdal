@@ -5129,8 +5129,8 @@ SWIGINTERN bool GDALDatasetShadow_UpdateRelationship(GDALDatasetShadow *self,GDA
 SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,double xoff,double yoff,double xsize,double ysize,void **buf,int *buf_xsize=0,int *buf_ysize=0,GDALDataType *buf_type=0,int band_list=0,int *pband_list=0,GIntBig *buf_pixel_space=0,GIntBig *buf_line_space=0,GIntBig *buf_band_space=0,GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour,GDALProgressFunc callback=NULL,void *callback_data=NULL,void *inputOutputBuf=NULL){
     *buf = NULL;
 
-    int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
-    int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
+    int nxsize = (buf_xsize==0) ? static_cast<int>(xsize) : *buf_xsize;
+    int nysize = (buf_ysize==0) ? static_cast<int>(ysize) : *buf_ysize;
     GDALDataType ntype;
     if ( buf_type != 0 ) {
       ntype = *buf_type;
