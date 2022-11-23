@@ -140,7 +140,7 @@ def test_gdal_viewshed_alternative_modes():
     ds = None
     gdal.Unlink(viewshed_in)
     gdal.Unlink(viewshed_out)
-    assert cs == 8364
+    assert cs == 8381
     assert nodata is None
 
 
@@ -170,7 +170,7 @@ def test_gdal_viewshed_api():
         options=["UNUSED=YES"],
     )
     gdal.Unlink(viewshed_in)
-    assert ds.GetRasterBand(1).Checksum() == 8364
+    assert ds.GetRasterBand(1).Checksum() == 8381
 
 
 ###############################################################################
