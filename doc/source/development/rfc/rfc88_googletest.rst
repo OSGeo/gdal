@@ -8,7 +8,7 @@ RFC 88: Use GoogleTest framework for C/C++ unit tests
 Author:        Even Rouault
 Contact:       even.rouault @ spatialys.com
 Started:       2022-Nov-16
-Status:        Discussion
+Status:        Adopted, implemented
 Target:        GDAL 3.7
 ============== =============================================
 
@@ -225,10 +225,9 @@ Related tickets and PRs:
 
 Ticket: https://github.com/OSGeo/gdal/issues/3525
 
-Implementation: https://github.com/rouault/gdal/tree/gtest (cf
-https://github.com/OSGeo/gdal/compare/master...rouault:gdal:gtest?expand=1 for the diff)
+Implementation: https://github.com/OSGeo/gdal/pull/6732
 
 Voting history
 --------------
 
-TBD
++1from PSC members MateuszL, HowardB, JukkaR, KurtS , FrankW, DanielM and EvenR
