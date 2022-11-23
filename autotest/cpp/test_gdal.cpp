@@ -1598,6 +1598,9 @@ namespace
     // Test TileMatrixSet
     TEST_F(test_gdal, TileMatrixSet)
     {
+        if( getenv("SKIP_TILEMATRIXSET_TEST") != nullptr )
+            GTEST_SKIP() << "Test skipped due to SKIP_TILEMATRIXSET_TEST being set";
+
         {
             auto l = gdal::TileMatrixSet::listPredefinedTileMatrixSets();
             EXPECT_TRUE( l.find("GoogleMapsCompatible") != l.end() );

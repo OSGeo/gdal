@@ -837,7 +837,7 @@ def test_vsisync():
     gdal.Mkdir("/vsimem/test_sync/subdir", 0)
     gdal.FileFromMemBuffer("/vsimem/test_sync/subdir/bar.txt", "baz")
 
-    if sys.platform != "win32":
+    if sys.platform == "linux":
         with gdaltest.error_handler():
             # even root cannot write into /proc
             assert not gdal.Sync("/vsimem/test_sync/", "/proc/i_do_not/exist")
