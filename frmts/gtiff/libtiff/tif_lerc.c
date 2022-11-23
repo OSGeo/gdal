@@ -220,7 +220,7 @@ static int SetupUncompressedBuffer(TIFF* tif, LERCState* sp,
     {
         TIFFErrorExtR(tif, module,
                         "Too large uncompressed strip/tile");
-        _TIFFfree(sp->uncompressed_buffer);
+        _TIFFfreeExt(tif, sp->uncompressed_buffer);
         sp->uncompressed_buffer = 0;
         sp->uncompressed_alloc = 0;
         return 0;
@@ -228,13 +228,13 @@ static int SetupUncompressedBuffer(TIFF* tif, LERCState* sp,
 
     if( sp->uncompressed_alloc < new_alloc )
     {
-        _TIFFfree(sp->uncompressed_buffer);
-        sp->uncompressed_buffer = _TIFFmalloc(new_alloc);
+        _TIFFfreeExt(tif, sp->uncompressed_buffer);
+        sp->uncompressed_buffer = _TIFFmallocExt(tif, new_alloc);
         if( !sp->uncompressed_buffer )
         {
             TIFFErrorExtR(tif, module,
                             "Cannot allocate buffer");
-            _TIFFfree(sp->uncompressed_buffer);
+            _TIFFfreeExt(tif, sp->uncompressed_buffer);
             sp->uncompressed_buffer = 0;
             sp->uncompressed_alloc = 0;
             return 0;
@@ -254,13 +254,13 @@ static int SetupUncompressedBuffer(TIFF* tif, LERCState* sp,
         unsigned int mask_size = sp->segment_width * sp->segment_height;
         if( sp->mask_size < mask_size )
         {
-            void* mask_buffer = _TIFFrealloc(sp->mask_buffer, mask_size);
+            void* mask_buffer = _TIFFreallocExt(tif, sp->mask_buffer, mask_size);
             if( mask_buffer == NULL )
             {
                 TIFFErrorExtR(tif, module,
                                 "Cannot allocate buffer");
                 sp->mask_size = 0;
-                _TIFFfree(sp->uncompressed_buffer);
+                _TIFFfreeExt(tif, sp->uncompressed_buffer);
                 sp->uncompressed_buffer = 0;
                 sp->uncompressed_alloc = 0;
                 return 0;
@@ -307,8 +307,8 @@ LERCPreDecode(TIFF* tif, uint16_t s)
         {
             if( sp->compressed_size < sp->uncompressed_alloc )
             {
-                _TIFFfree(sp->compressed_buffer);
-                sp->compressed_buffer = _TIFFmalloc(sp->uncompressed_alloc);
+                _TIFFfreeExt(tif, sp->compressed_buffer);
+                sp->compressed_buffer = _TIFFmallocExt(tif, sp->uncompressed_alloc);
                 if( !sp->compressed_buffer )
                 {
                     sp->compressed_size = 0;
@@ -840,8 +840,8 @@ LERCPostEncode(TIFF* tif)
 
         if( sp->compressed_size < numBytes )
         {
-            _TIFFfree(sp->compressed_buffer);
-            sp->compressed_buffer = _TIFFmalloc(numBytes);
+            _TIFFfreeExt(tif, sp->compressed_buffer);
+            sp->compressed_buffer = _TIFFmallocExt(tif, numBytes);
             if( !sp->compressed_buffer )
             {
                 sp->compressed_size = 0;
@@ -1026,9 +1026,9 @@ LERCCleanup(TIFF* tif)
         tif->tif_tagmethods.vgetfield = sp->vgetparent;
         tif->tif_tagmethods.vsetfield = sp->vsetparent;
 
-        _TIFFfree(sp->uncompressed_buffer);
-        _TIFFfree(sp->compressed_buffer);
-        _TIFFfree(sp->mask_buffer);
+        _TIFFfreeExt(tif, sp->uncompressed_buffer);
+        _TIFFfreeExt(tif, sp->compressed_buffer);
+        _TIFFfreeExt(tif, sp->mask_buffer);
 
 #if LIBDEFLATE_SUPPORT
         if( sp->libdeflate_dec )
@@ -1037,7 +1037,7 @@ LERCCleanup(TIFF* tif)
             libdeflate_free_compressor(sp->libdeflate_enc);
 #endif
 
-        _TIFFfree(sp);
+        _TIFFfreeExt(tif, sp);
         tif->tif_data = NULL;
 
         _TIFFSetDefaultCompressionState(tif);
@@ -1230,7 +1230,7 @@ int TIFFInitLERC(TIFF* tif, int scheme)
         /*
         * Allocate state block so tag methods have storage to record values.
         */
-        tif->tif_data = (uint8_t*) _TIFFcalloc(1, sizeof(LERCState));
+        tif->tif_data = (uint8_t*) _TIFFcallocExt(tif, 1, sizeof(LERCState));
         if (tif->tif_data == NULL)
                 goto bad;
         sp = LState(tif);

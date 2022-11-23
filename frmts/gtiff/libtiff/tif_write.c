@@ -647,7 +647,7 @@ TIFFWriteBufferSetup(TIFF* tif, void* bp, tmsize_t size)
 
 	if (tif->tif_rawdata) {
 		if (tif->tif_flags & TIFF_MYBUFFER) {
-			_TIFFfree(tif->tif_rawdata);
+			_TIFFfreeExt(tif, tif->tif_rawdata);
 			tif->tif_flags &= ~TIFF_MYBUFFER;
 		}
 		tif->tif_rawdata = NULL;
@@ -667,7 +667,7 @@ TIFFWriteBufferSetup(TIFF* tif, void* bp, tmsize_t size)
 		bp = NULL;			/* NB: force malloc */
 	}
 	if (bp == NULL) {
-		bp = _TIFFmalloc(size);
+		bp = _TIFFmallocExt(tif, size);
 		if (bp == NULL) {
 			TIFFErrorExtR(tif, module, "No space for output buffer");
 			return (0);
@@ -694,15 +694,15 @@ TIFFGrowStrips(TIFF* tif, uint32_t delta, const char* module)
 	uint64_t* new_stripbytecount;
 
 	assert(td->td_planarconfig == PLANARCONFIG_CONTIG);
-	new_stripoffset = (uint64_t*)_TIFFrealloc(td->td_stripoffset_p,
+	new_stripoffset = (uint64_t*)_TIFFreallocExt(tif, td->td_stripoffset_p,
 		(td->td_nstrips + delta) * sizeof (uint64_t));
-	new_stripbytecount = (uint64_t*)_TIFFrealloc(td->td_stripbytecount_p,
+	new_stripbytecount = (uint64_t*)_TIFFreallocExt(tif, td->td_stripbytecount_p,
 		(td->td_nstrips + delta) * sizeof (uint64_t));
 	if (new_stripoffset == NULL || new_stripbytecount == NULL) {
 		if (new_stripoffset)
-			_TIFFfree(new_stripoffset);
+			_TIFFfreeExt(tif, new_stripoffset);
 		if (new_stripbytecount)
-			_TIFFfree(new_stripbytecount);
+			_TIFFfreeExt(tif, new_stripbytecount);
 		td->td_nstrips = 0;
 		TIFFErrorExtR(tif, module, "No space to expand strip arrays");
 		return (0);
@@ -815,7 +815,7 @@ TIFFAppendToStrip(TIFF* tif, uint32_t strip, uint8_t* data, tmsize_t cc)
             return (0);
         }
 
-        temp = _TIFFmalloc(tempSize);
+        temp = _TIFFmallocExt(tif, tempSize);
         if (temp == NULL) {
             TIFFErrorExtR(tif, module, "No space for output buffer");
             return (0);
@@ -831,22 +831,22 @@ TIFFAppendToStrip(TIFF* tif, uint32_t strip, uint8_t* data, tmsize_t cc)
         {
             if( !SeekOK(tif, offsetRead) ) {
                 TIFFErrorExtR(tif, module, "Seek error");
-                _TIFFfree(temp);
+                _TIFFfreeExt(tif, temp);
                 return (0);
             }
             if( !ReadOK(tif, temp, tempSize) ) {
                 TIFFErrorExtR(tif, module, "Cannot read");
-                _TIFFfree(temp);
+                _TIFFfreeExt(tif, temp);
                 return (0);
             }
             if (!SeekOK(tif, offsetWrite) ) {
                 TIFFErrorExtR(tif, module, "Seek error");
-                _TIFFfree(temp);
+                _TIFFfreeExt(tif, temp);
                 return (0);
             }
             if( !WriteOK(tif, temp, tempSize) ) {
                 TIFFErrorExtR(tif, module, "Cannot write");
-                _TIFFfree(temp);
+                _TIFFfreeExt(tif, temp);
                 return (0);
             }
             offsetRead += tempSize;
@@ -854,7 +854,7 @@ TIFFAppendToStrip(TIFF* tif, uint32_t strip, uint8_t* data, tmsize_t cc)
             td->td_stripbytecount_p[strip] += tempSize;
             toCopy -= tempSize;
         }
-        _TIFFfree(temp);
+        _TIFFfreeExt(tif, temp);
 
         /* Append the data of this call */
         offsetWrite += cc;

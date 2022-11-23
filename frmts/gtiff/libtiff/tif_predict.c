@@ -465,7 +465,7 @@ fpAcc(TIFF* tif, uint8_t* cp0, tmsize_t cc)
         return 0;
     }
 
-    tmp = (uint8_t *)_TIFFmalloc(cc);
+    tmp = (uint8_t *)_TIFFmallocExt(tif, cc);
 	if (!tmp)
 		return 0;
 
@@ -488,7 +488,7 @@ fpAcc(TIFF* tif, uint8_t* cp0, tmsize_t cc)
 			#endif
 		}
 	}
-	_TIFFfree(tmp);
+	_TIFFfreeExt(tif, tmp);
     return 1;
 }
 
@@ -741,7 +741,7 @@ fpDiff(TIFF* tif, uint8_t* cp0, tmsize_t cc)
         return 0;
     }
 
-    tmp = (uint8_t *)_TIFFmalloc(cc);
+    tmp = (uint8_t *)_TIFFmallocExt(tif, cc);
 	if (!tmp)
 		return 0;
 
@@ -757,7 +757,7 @@ fpDiff(TIFF* tif, uint8_t* cp0, tmsize_t cc)
 			#endif
 		}
 	}
-	_TIFFfree(tmp);
+	_TIFFfreeExt(tif, tmp);
 
 	cp = (uint8_t *) cp0;
 	cp += cc - stride - 1;
@@ -799,7 +799,7 @@ PredictorEncodeTile(TIFF* tif, uint8_t* bp0, tmsize_t cc0, uint16_t s)
          * Do predictor manipulation in a working buffer to avoid altering
          * the callers buffer. http://trac.osgeo.org/gdal/ticket/1965
          */
-        working_copy = (uint8_t*) _TIFFmalloc(cc0);
+        working_copy = (uint8_t*) _TIFFmallocExt(tif, cc0);
         if( working_copy == NULL )
         {
             TIFFErrorExtR(tif, module, 
@@ -816,7 +816,7 @@ PredictorEncodeTile(TIFF* tif, uint8_t* bp0, tmsize_t cc0, uint16_t s)
     {
         TIFFErrorExtR(tif, "PredictorEncodeTile",
                      "%s", "(cc0%rowsize)!=0");
-        _TIFFfree( working_copy );
+        _TIFFfreeExt(tif,  working_copy );
         return 0;
     }
 	while (cc > 0) {
@@ -826,7 +826,7 @@ PredictorEncodeTile(TIFF* tif, uint8_t* bp0, tmsize_t cc0, uint16_t s)
 	}
 	result_code = (*sp->encodetile)(tif, working_copy, cc0, s);
 
-        _TIFFfree( working_copy );
+        _TIFFfreeExt(tif,  working_copy );
 
         return result_code;
 }

@@ -36,7 +36,7 @@ PackBitsPreEncode(TIFF* tif, uint16_t s)
 {
 	(void) s;
 
-        tif->tif_data = (uint8_t*)_TIFFmalloc(sizeof(tmsize_t));
+        tif->tif_data = (uint8_t*)_TIFFmallocExt(tif, sizeof(tmsize_t));
 	if (tif->tif_data == NULL)
 		return (0);
 	/*
@@ -53,7 +53,7 @@ static int
 PackBitsPostEncode(TIFF* tif)
 {
         if (tif->tif_data)
-            _TIFFfree(tif->tif_data);
+            _TIFFfreeExt(tif, tif->tif_data);
 	return (1);
 }
 

@@ -202,6 +202,7 @@ struct tiff {
     void*                 tif_errorhandler_user_data;
     TIFFErrorHandlerExtR  tif_warnhandler;
     void*                 tif_warnhandler_user_data;
+    tmsize_t              tif_max_single_mem_alloc; /* in bytes. 0 for unlimited */
 };
 
 struct TIFFOpenOptions
@@ -210,6 +211,7 @@ struct TIFFOpenOptions
     void*                errorhandler_user_data; /* may be NULL */
     TIFFErrorHandlerExtR warnhandler; /* may be NULL */
     void*                warnhandler_user_data; /* may be NULL */
+    tmsize_t             max_single_mem_alloc; /* in bytes. 0 for unlimited */
 };
 
 #define isPseudoTag(t) (t > 0xffff)            /* is tag value normal or pseudo */
@@ -355,10 +357,15 @@ extern uint32_t _TIFFDefaultStripSize(TIFF* tif, uint32_t s);
 extern void _TIFFDefaultTileSize(TIFF* tif, uint32_t* tw, uint32_t* th);
 
 extern void _TIFFsetByteArray(void**, const void*, uint32_t);
+extern void _TIFFsetByteArrayExt(TIFF*, void**, const void*, uint32_t);
 extern void _TIFFsetShortArray(uint16_t**, const uint16_t*, uint32_t);
+extern void _TIFFsetShortArrayExt(TIFF*, uint16_t**, const uint16_t*, uint32_t);
 extern void _TIFFsetLongArray(uint32_t**, const uint32_t*, uint32_t);
+extern void _TIFFsetLongArrayExt(TIFF*, uint32_t**, const uint32_t*, uint32_t);
 extern void _TIFFsetFloatArray(float**, const float*, uint32_t);
+extern void _TIFFsetFloatArrayExt(TIFF*, float**, const float*, uint32_t);
 extern void _TIFFsetDoubleArray(double**, const double*, uint32_t);
+extern void _TIFFsetDoubleArrayExt(TIFF*, double**, const double*, uint32_t);
 
 extern void _TIFFprintAscii(FILE*, const char*);
 extern void _TIFFprintAsciiTag(FILE*, const char*, const char*);
@@ -447,6 +454,11 @@ extern int TIFFInitWebP(TIFF*, int);
 extern const TIFFCodec _TIFFBuiltinCODECS[];
 extern void TIFFCIELab16ToXYZ(TIFFCIELabToRGB *, uint32_t l, int32_t a, int32_t b,
                               float *, float *, float *);
+
+extern void* _TIFFmallocExt(TIFF* tif, tmsize_t s);
+extern void* _TIFFcallocExt(TIFF* tif, tmsize_t nmemb, tmsize_t siz);
+extern void* _TIFFreallocExt(TIFF* tif, void* p, tmsize_t s);
+extern void _TIFFfreeExt(TIFF* tif, void* p);
 
 #if defined(__cplusplus)
 }

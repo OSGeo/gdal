@@ -317,6 +317,7 @@
 #define TIFFAdvanceDirectory gdal_TIFFAdvanceDirectory
 #define TIFFAppendToStrip gdal_TIFFAppendToStrip
 #define _TIFFcalloc gdal__TIFFcalloc
+#define _TIFFcallocExt gdal__TIFFcallocExt
 #define _TIFFCastUInt64ToSSize gdal__TIFFCastUInt64ToSSize
 #define _TIFFCheckDirNumberAndOffset gdal__TIFFCheckDirNumberAndOffset
 #define _TIFFCheckFieldIsValidForCodec gdal__TIFFCheckFieldIsValidForCodec
@@ -365,6 +366,7 @@
 #define TIFFDeferStrileArrayWriting gdal_TIFFDeferStrileArrayWriting
 #define _tiffDummyMapProc gdal__tiffDummyMapProc
 #define _tiffDummyUnmapProc gdal__tiffDummyUnmapProc
+#define _TIFFEmitErrorAboveMaxSingleMemAlloc gdal__TIFFEmitErrorAboveMaxSingleMemAlloc
 #define TIFFError gdal_TIFFError
 #define _TIFFErrorEarly gdal__TIFFErrorEarly
 #define TIFFErrorExt gdal_TIFFErrorExt
@@ -404,6 +406,7 @@
 #define TIFFForceStrileArrayWriting gdal_TIFFForceStrileArrayWriting
 #define _TIFFfree gdal__TIFFfree
 #define TIFFFreeDirectory gdal_TIFFFreeDirectory
+#define _TIFFfreeExt gdal__TIFFfreeExt
 #define TIFFGetBitRevTable gdal_TIFFGetBitRevTable
 #define TIFFGetClientInfo gdal_TIFFGetClientInfo
 #define TIFFGetCloseProc gdal_TIFFGetCloseProc
@@ -443,6 +446,7 @@
 #define TIFFLastDirectory gdal_TIFFLastDirectory
 #define TIFFLinkDirectory gdal_TIFFLinkDirectory
 #define _TIFFmalloc gdal__TIFFmalloc
+#define _TIFFmallocExt gdal__TIFFmallocExt
 #define _tiffMapProc gdal__tiffMapProc
 #define _TIFFmemcmp gdal__TIFFmemcmp
 #define _TIFFmemcpy gdal__TIFFmemcpy
@@ -471,6 +475,7 @@
 #define TIFFOpenOptionsAlloc gdal_TIFFOpenOptionsAlloc
 #define TIFFOpenOptionsFree gdal_TIFFOpenOptionsFree
 #define TIFFOpenOptionsSetErrorHandlerExtR gdal_TIFFOpenOptionsSetErrorHandlerExtR
+#define TIFFOpenOptionsSetMaxSingleMemAlloc gdal_TIFFOpenOptionsSetMaxSingleMemAlloc
 #define TIFFOpenOptionsSetWarningHandlerExtR gdal_TIFFOpenOptionsSetWarningHandlerExtR
 #define _TIFFPartialReadStripArray gdal__TIFFPartialReadStripArray
 #define TIFFPredictorCleanup gdal_TIFFPredictorCleanup
@@ -597,6 +602,7 @@
 #define _TIFFReadTileAndAllocBuffer gdal__TIFFReadTileAndAllocBuffer
 #define TIFFReadUInt64 gdal_TIFFReadUInt64
 #define _TIFFrealloc gdal__TIFFrealloc
+#define _TIFFreallocExt gdal__TIFFreallocExt
 #define TIFFRegisterCODEC gdal_TIFFRegisterCODEC
 #define _TIFFReserveLargeEnoughWriteBuffer gdal__TIFFReserveLargeEnoughWriteBuffer
 #define TIFFReverseBits gdal_TIFFReverseBits
@@ -612,24 +618,29 @@
 #define _TIFFSeekOK gdal__TIFFSeekOK
 #define _tiffSeekProc gdal__tiffSeekProc
 #define _TIFFsetByteArray gdal__TIFFsetByteArray
+#define _TIFFsetByteArrayExt gdal__TIFFsetByteArrayExt
 #define TIFFSetClientdata gdal_TIFFSetClientdata
 #define TIFFSetClientInfo gdal_TIFFSetClientInfo
 #define TIFFSetCompressionScheme gdal_TIFFSetCompressionScheme
 #define _TIFFSetDefaultCompressionState gdal__TIFFSetDefaultCompressionState
 #define TIFFSetDirectory gdal_TIFFSetDirectory
 #define _TIFFsetDoubleArray gdal__TIFFsetDoubleArray
+#define _TIFFsetDoubleArrayExt gdal__TIFFsetDoubleArrayExt
 #define TIFFSetErrorHandler gdal_TIFFSetErrorHandler
 #define TIFFSetErrorHandlerExt gdal_TIFFSetErrorHandlerExt
 #define TIFFSetField gdal_TIFFSetField
 #define TIFFSetFileName gdal_TIFFSetFileName
 #define TIFFSetFileno gdal_TIFFSetFileno
 #define _TIFFsetFloatArray gdal__TIFFsetFloatArray
+#define _TIFFsetFloatArrayExt gdal__TIFFsetFloatArrayExt
 #define _TIFFSetGetType gdal__TIFFSetGetType
 #define _TIFFsetLong8Array gdal__TIFFsetLong8Array
 #define _TIFFsetLongArray gdal__TIFFsetLongArray
+#define _TIFFsetLongArrayExt gdal__TIFFsetLongArrayExt
 #define TIFFSetMode gdal_TIFFSetMode
 #define _TIFFsetNString gdal__TIFFsetNString
 #define _TIFFsetShortArray gdal__TIFFsetShortArray
+#define _TIFFsetShortArrayExt gdal__TIFFsetShortArrayExt
 #define TIFFSetSubDirectory gdal_TIFFSetSubDirectory
 #define TIFFSetTagExtender gdal_TIFFSetTagExtender
 #define _TIFFSetupFields gdal__TIFFSetupFields

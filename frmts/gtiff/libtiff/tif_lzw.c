@@ -188,7 +188,7 @@ LZWSetupDecode(TIFF* tif)
 		 * Allocate state block so tag methods have storage to record
 		 * values.
 		*/
-		tif->tif_data = (uint8_t*) _TIFFmalloc(sizeof(LZWCodecState));
+		tif->tif_data = (uint8_t*) _TIFFmallocExt(tif, sizeof(LZWCodecState));
 		if (tif->tif_data == NULL)
 		{
 			TIFFErrorExtR(tif, module, "No space for LZW state block");
@@ -206,7 +206,7 @@ LZWSetupDecode(TIFF* tif)
 	}
 
 	if (sp->dec_codetab == NULL) {
-		sp->dec_codetab = (code_t*)_TIFFmalloc(CSIZE*sizeof (code_t));
+		sp->dec_codetab = (code_t*)_TIFFmallocExt(tif, CSIZE*sizeof (code_t));
 		if (sp->dec_codetab == NULL) {
 			TIFFErrorExtR(tif, module,
 				     "No space for LZW code table");
@@ -957,7 +957,7 @@ LZWSetupEncode(TIFF* tif)
 	LZWCodecState* sp = EncoderState(tif);
 
 	assert(sp != NULL);
-	sp->enc_hashtab = (hash_t*) _TIFFmalloc(HSIZE*sizeof (hash_t));
+	sp->enc_hashtab = (hash_t*) _TIFFmallocExt(tif, HSIZE*sizeof (hash_t));
 	if (sp->enc_hashtab == NULL) {
 		TIFFErrorExtR(tif, module,
 			     "No space for LZW hash table");
@@ -1285,12 +1285,12 @@ LZWCleanup(TIFF* tif)
 	assert(tif->tif_data != 0);
 
 	if (DecoderState(tif)->dec_codetab)
-		_TIFFfree(DecoderState(tif)->dec_codetab);
+		_TIFFfreeExt(tif, DecoderState(tif)->dec_codetab);
 
 	if (EncoderState(tif)->enc_hashtab)
-		_TIFFfree(EncoderState(tif)->enc_hashtab);
+		_TIFFfreeExt(tif, EncoderState(tif)->enc_hashtab);
 
-	_TIFFfree(tif->tif_data);
+	_TIFFfreeExt(tif, tif->tif_data);
 	tif->tif_data = NULL;
 
 	_TIFFSetDefaultCompressionState(tif);
@@ -1305,7 +1305,7 @@ TIFFInitLZW(TIFF* tif, int scheme)
 	/*
 	 * Allocate state block so tag methods have storage to record values.
 	 */
-	tif->tif_data = (uint8_t*) _TIFFmalloc(sizeof (LZWCodecState));
+	tif->tif_data = (uint8_t*) _TIFFmallocExt(tif, sizeof (LZWCodecState));
 	if (tif->tif_data == NULL)
 		goto bad;
 	DecoderState(tif)->dec_codetab = NULL;

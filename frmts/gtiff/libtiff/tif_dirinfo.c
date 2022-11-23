@@ -422,16 +422,16 @@ _TIFFSetupFields(TIFF* tif, const TIFFFieldArray* fieldarray)
 			if (fld->field_name != NULL) {
 				if (fld->field_bit == FIELD_CUSTOM &&
 					TIFFFieldIsAnonymous(fld)) {
-					_TIFFfree(fld->field_name);
+					_TIFFfreeExt(tif, fld->field_name);
 					/* caution: tif_fields[i] must not be the beginning of a fields-array. 
 					 *          Otherwise the following tags are also freed with the first free().
 					 */
-					_TIFFfree(fld);
+					_TIFFfreeExt(tif, fld);
 				}
 			}
 		}
 
-		_TIFFfree(tif->tif_fields);
+		_TIFFfreeExt(tif, tif->tif_fields);
 		tif->tif_fields = NULL;
 		tif->tif_nfields = 0;
 	}
@@ -836,7 +836,7 @@ _TIFFCreateAnonField(TIFF *tif, uint32_t tag, TIFFDataType field_type)
 	TIFFField *fld;
 	(void) tif;
 
-	fld = (TIFFField *) _TIFFmalloc(sizeof (TIFFField));
+	fld = (TIFFField *) _TIFFmallocExt(tif, sizeof (TIFFField));
 	if (fld == NULL)
 	    return NULL;
 	_TIFFmemset(fld, 0, sizeof(TIFFField));
@@ -908,9 +908,9 @@ _TIFFCreateAnonField(TIFF *tif, uint32_t tag, TIFFDataType field_type)
 	fld->field_bit = FIELD_CUSTOM;
 	fld->field_oktochange = TRUE;
 	fld->field_passcount = TRUE;
-	fld->field_name = (char *) _TIFFmalloc(32);
+	fld->field_name = (char *) _TIFFmallocExt(tif, 32);
 	if (fld->field_name == NULL) {
-	    _TIFFfree(fld);
+	    _TIFFfreeExt(tif, fld);
 	    return NULL;
 	}
 	fld->field_subfields = NULL;

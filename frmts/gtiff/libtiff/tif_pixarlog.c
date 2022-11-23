@@ -478,7 +478,7 @@ typedef	struct {
 } PixarLogState;
 
 static int
-PixarLogMakeTables(PixarLogState *sp)
+PixarLogMakeTables(TIFF* tif, PixarLogState *sp)
 {
 
 /*
@@ -511,20 +511,20 @@ PixarLogMakeTables(PixarLogState *sp)
     LogK1 = (float)(1./c);	/* if (v >= 2)  token = k1*log(v*k2) */
     LogK2 = (float)(1./b);
     lt2size = (int)(2./linstep) + 1;
-    FromLT2 = (uint16_t *)_TIFFmalloc(lt2size * sizeof(uint16_t));
-    From14 = (uint16_t *)_TIFFmalloc(16384 * sizeof(uint16_t));
-    From8 = (uint16_t *)_TIFFmalloc(256 * sizeof(uint16_t));
-    ToLinearF = (float *)_TIFFmalloc(TSIZEP1 * sizeof(float));
-    ToLinear16 = (uint16_t *)_TIFFmalloc(TSIZEP1 * sizeof(uint16_t));
-    ToLinear8 = (unsigned char *)_TIFFmalloc(TSIZEP1 * sizeof(unsigned char));
+    FromLT2 = (uint16_t *)_TIFFmallocExt(tif, lt2size * sizeof(uint16_t));
+    From14 = (uint16_t *)_TIFFmallocExt(tif, 16384 * sizeof(uint16_t));
+    From8 = (uint16_t *)_TIFFmallocExt(tif, 256 * sizeof(uint16_t));
+    ToLinearF = (float *)_TIFFmallocExt(tif, TSIZEP1 * sizeof(float));
+    ToLinear16 = (uint16_t *)_TIFFmallocExt(tif, TSIZEP1 * sizeof(uint16_t));
+    ToLinear8 = (unsigned char *)_TIFFmallocExt(tif, TSIZEP1 * sizeof(unsigned char));
     if (FromLT2 == NULL || From14  == NULL || From8   == NULL ||
 	 ToLinearF == NULL || ToLinear16 == NULL || ToLinear8 == NULL) {
-	if (FromLT2) _TIFFfree(FromLT2);
-	if (From14) _TIFFfree(From14);
-	if (From8) _TIFFfree(From8);
-	if (ToLinearF) _TIFFfree(ToLinearF);
-	if (ToLinear16) _TIFFfree(ToLinear16);
-	if (ToLinear8) _TIFFfree(ToLinear8);
+	if (FromLT2) _TIFFfreeExt(tif, FromLT2);
+	if (From14) _TIFFfreeExt(tif, From14);
+	if (From8) _TIFFfreeExt(tif, From8);
+	if (ToLinearF) _TIFFfreeExt(tif, ToLinearF);
+	if (ToLinear16) _TIFFfreeExt(tif, ToLinear16);
+	if (ToLinear8) _TIFFfreeExt(tif, ToLinear8);
 	sp->FromLT2 = NULL;
 	sp->From14 = NULL;
 	sp->From8 = NULL;
@@ -695,14 +695,14 @@ PixarLogSetupDecode(TIFF* tif)
 	tbuf_size = add_ms(tbuf_size, sizeof(uint16_t) * sp->stride);
 	if (tbuf_size == 0)
 		return (0);   /* TODO: this is an error return without error report through TIFFErrorExt */
-	sp->tbuf = (uint16_t *) _TIFFmalloc(tbuf_size);
+	sp->tbuf = (uint16_t *) _TIFFmallocExt(tif, tbuf_size);
 	if (sp->tbuf == NULL)
 		return (0);
 	sp->tbuf_size = tbuf_size;
 	if (sp->user_datafmt == PIXARLOGDATAFMT_UNKNOWN)
 		sp->user_datafmt = PixarLogGuessDataFmt(td);
 	if (sp->user_datafmt == PIXARLOGDATAFMT_UNKNOWN) {
-                _TIFFfree(sp->tbuf);
+                _TIFFfreeExt(tif, sp->tbuf);
                 sp->tbuf = NULL;
                 sp->tbuf_size = 0;
 		TIFFErrorExtR(tif, module,
@@ -712,7 +712,7 @@ PixarLogSetupDecode(TIFF* tif)
 	}
 
 	if (inflateInit(&sp->stream) != Z_OK) {
-                _TIFFfree(sp->tbuf);
+                _TIFFfreeExt(tif, sp->tbuf);
                 sp->tbuf = NULL;
                 sp->tbuf_size = 0;
 		TIFFErrorExtR(tif, module, "%s", sp->stream.msg ? sp->stream.msg : "(null)");
@@ -911,7 +911,7 @@ PixarLogSetupEncode(TIFF* tif)
 				      td->td_rowsperstrip), sizeof(uint16_t));
 	if (tbuf_size == 0)
 		return (0);  /* TODO: this is an error return without error report through TIFFErrorExt */
-	sp->tbuf = (uint16_t *) _TIFFmalloc(tbuf_size);
+	sp->tbuf = (uint16_t *) _TIFFmallocExt(tif, tbuf_size);
 	if (sp->tbuf == NULL)
 		return (0);
 	if (sp->user_datafmt == PIXARLOGDATAFMT_UNKNOWN)
@@ -1288,12 +1288,12 @@ PixarLogCleanup(TIFF* tif)
 	tif->tif_tagmethods.vgetfield = sp->vgetparent;
 	tif->tif_tagmethods.vsetfield = sp->vsetparent;
 
-	if (sp->FromLT2) _TIFFfree(sp->FromLT2);
-	if (sp->From14) _TIFFfree(sp->From14);
-	if (sp->From8) _TIFFfree(sp->From8);
-	if (sp->ToLinearF) _TIFFfree(sp->ToLinearF);
-	if (sp->ToLinear16) _TIFFfree(sp->ToLinear16);
-	if (sp->ToLinear8) _TIFFfree(sp->ToLinear8);
+	if (sp->FromLT2) _TIFFfreeExt(tif, sp->FromLT2);
+	if (sp->From14) _TIFFfreeExt(tif, sp->From14);
+	if (sp->From8) _TIFFfreeExt(tif, sp->From8);
+	if (sp->ToLinearF) _TIFFfreeExt(tif, sp->ToLinearF);
+	if (sp->ToLinear16) _TIFFfreeExt(tif, sp->ToLinear16);
+	if (sp->ToLinear8) _TIFFfreeExt(tif, sp->ToLinear8);
 	if (sp->state&PLSTATE_INIT) {
 		if (tif->tif_mode == O_RDONLY)
 			inflateEnd(&sp->stream);
@@ -1301,8 +1301,8 @@ PixarLogCleanup(TIFF* tif)
 			deflateEnd(&sp->stream);
 	}
 	if (sp->tbuf)
-		_TIFFfree(sp->tbuf);
-	_TIFFfree(sp);
+		_TIFFfreeExt(tif, sp->tbuf);
+	_TIFFfreeExt(tif, sp);
 	tif->tif_data = NULL;
 
 	_TIFFSetDefaultCompressionState(tif);
@@ -1416,7 +1416,7 @@ TIFFInitPixarLog(TIFF* tif, int scheme)
 	/*
 	 * Allocate state block so tag methods have storage to record values.
 	 */
-	tif->tif_data = (uint8_t*) _TIFFmalloc(sizeof (PixarLogState));
+	tif->tif_data = (uint8_t*) _TIFFmallocExt(tif, sizeof (PixarLogState));
 	if (tif->tif_data == NULL)
 		goto bad;
 	sp = (PixarLogState*) tif->tif_data;
@@ -1460,7 +1460,7 @@ TIFFInitPixarLog(TIFF* tif, int scheme)
 	/*
 	 * build the companding tables 
 	 */
-	PixarLogMakeTables(sp);
+	PixarLogMakeTables(tif, sp);
 
 	return (1);
 bad:
