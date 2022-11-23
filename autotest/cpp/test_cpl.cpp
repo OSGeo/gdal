@@ -4058,4 +4058,41 @@ namespace
         ASSERT_TRUE(queue.empty());
     }
 
+    TEST_F(test_cpl, CPLGetExecPath)
+    {
+        std::vector<char> achBuffer(1024, 'x');
+        if( !CPLGetExecPath(achBuffer.data(), static_cast<int>(achBuffer.size())) )
+        {
+            GTEST_SKIP() << "CPLGetExecPath() not implemented for this platform";
+            return;
+        }
+
+        bool bFoundNulTerminatedChar = false;
+        for( char ch: achBuffer )
+        {
+            if( ch == '\0' )
+            {
+                bFoundNulTerminatedChar = true;
+                break;
+            }
+        }
+        ASSERT_TRUE(bFoundNulTerminatedChar);
+
+        // Check that the file exists
+        VSIStatBufL sStat;
+        EXPECT_EQ( VSIStatL(achBuffer.data(), &sStat), 0 );
+
+        const std::string osStrBefore( achBuffer.data() );
+
+        // Resize the buffer to just the minimum size
+        achBuffer.resize( strlen(achBuffer.data()) + 1 );
+        EXPECT_TRUE( CPLGetExecPath(achBuffer.data(), static_cast<int>(achBuffer.size())) );
+
+        EXPECT_STREQ( osStrBefore.c_str(), achBuffer.data() );
+
+        // Too small buffer
+        achBuffer.resize( achBuffer.size() - 1 );
+        EXPECT_FALSE( CPLGetExecPath(achBuffer.data(), static_cast<int>(achBuffer.size())) );
+    }
+
 } // namespace
