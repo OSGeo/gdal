@@ -8,7 +8,7 @@ fi
 
 # GNU prefix command for mac os support (gsed)
 GP=
-# shellcheck disable=SC2039
+# shellcheck disable=SC2039,SC3028
 case "${OSTYPE:-}" in
   darwin*)
     GP=g
