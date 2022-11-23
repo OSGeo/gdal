@@ -35,6 +35,8 @@
 #include "marching_squares/segment_merger.h"
 #include "marching_squares/contour_generator.h"
 
+#include "gtest_include.h"
+
 namespace marching_squares {
 class TestRingAppender
 {
@@ -140,24 +142,17 @@ private:
 };
 }
 
-namespace tut
+namespace
 {
     using namespace marching_squares;
 
     // Common fixture with test data
-    struct test_ms_contour_data
+    struct test_ms_contour : public ::testing::Test
     {
     };
 
-    // Register test group
-    typedef test_group<test_ms_contour_data> group;
-    typedef group::object object;
-    group test_ms_contour_group("MarchingSquares:Contour");
-
     // Dummy test
-    template<>
-    template<>
-    void object::test<1>()
+    TEST_F(test_ms_contour, dummy)
     {
         // one pixel
         std::vector<double> data = { 2.0 };
@@ -168,12 +163,11 @@ namespace tut
             ContourGenerator<decltype(writer), IntervalLevelRangeIterator> cg( 1, 1, /* hasNoData */ false, NaN, writer, levels );
             cg.feedLine( &data[0] );
 
-            ensure( "Polygon ring", w.hasRing( 10.0, {{0.0, 0.0}, {0.5, 0.0}, {1.0, 0.0}, {1.0, 0.5}, {1.0, 1.0}, {0.5, 1.0}, {0.0, 1.0}, {0.0, 0.5}} ) );
+            // "Polygon ring"
+            EXPECT_TRUE(w.hasRing( 10.0, {{0.0, 0.0}, {0.5, 0.0}, {1.0, 0.0}, {1.0, 0.5}, {1.0, 1.0}, {0.5, 1.0}, {0.0, 1.0}, {0.0, 0.5}} ) );
         }
     }
-    template<>
-    template<>
-    void object::test<2>()
+    TEST_F(test_ms_contour, two_pixels)
     {
         // two pixels
         // 10  7
@@ -187,17 +181,17 @@ namespace tut
             ContourGenerator<decltype(writer), IntervalLevelRangeIterator> cg( 2, 1, /* hasNoData */ false, NaN, writer, levels );
             cg.feedLine( &data[0] );
 
-            ensure( "Polygon #0", w.hasRing( 8.0, {{1.166, 0.0}, {1.5, 0.0}, {2.0, 0.0}, {2.0, 0.5}, {2.0, 1.0}, {1.5, 1.0}, {1.166, 1.0}, {1.166, 0.5}} ) );
-            ensure( "Polygon #1", w.hasRing( 18.0, {{1.166, 0.0}, {1.0, 0.0}, {0.5, 0.0},
+            // "Polygon #0"
+            EXPECT_TRUE(w.hasRing( 8.0, {{1.166, 0.0}, {1.5, 0.0}, {2.0, 0.0}, {2.0, 0.5}, {2.0, 1.0}, {1.5, 1.0}, {1.166, 1.0}, {1.166, 0.5}} ) );
+            // "Polygon #1"
+            EXPECT_TRUE(w.hasRing( 18.0, {{1.166, 0.0}, {1.0, 0.0}, {0.5, 0.0},
                                  {0.0, 0.0}, {0.0, 0.5}, {0.0, 1.0},
                                  {0.5, 1.0}, {1.0, 1.0}, {1.166, 1.0},
                                                          {1.166, 0.5}} ) );
         }
     }
 
-    template<>
-    template<>
-    void object::test<3>()
+    TEST_F(test_ms_contour, four_pixels)
     {
         // four pixels
         // 10  7
@@ -285,17 +279,18 @@ namespace tut
             cg.feedLine( &data[0] );
             cg.feedLine( &data[2] );
 
-            ensure( "Polygon #0", w.hasRing( 8.0, {{2.0, 0.0}, {2.0, 0.5}, {2.0, 1.0}, {2.0, 1.5}, {2.0, 2.0},
+            // "Polygon #0"
+            EXPECT_TRUE(w.hasRing( 8.0, {{2.0, 0.0}, {2.0, 0.5}, {2.0, 1.0}, {2.0, 1.5}, {2.0, 2.0},
                                 {1.5, 2.0}, {1.0, 2.0}, {0.5, 2.0}, {0.0, 2.0}, {0.0, 1.5},
                                 {0.0, 1.0}, {0.0, 0.833}, {0.5, 0.833}, {1.167, 0.5}, {1.167, 0.0},
                                                                                       {1.5, 0.0}} ) );
-            ensure( "Polygon #1", w.hasRing( 18.0, {{0.0, 0.0}, {0.5, 0.0}, {1.0, 0.0}, {1.167, 0.0}, {1.167, 0.5},
+            // "Polygon #1"
+            EXPECT_TRUE(w.hasRing( 18.0, {{0.0, 0.0}, {0.5, 0.0}, {1.0, 0.0}, {1.167, 0.0}, {1.167, 0.5},
                                                                                                     {0.5, 0.833}, {0, 0.833}, {0.0, 0.5}} ) );
         }
     }
-    template<>
-    template<>
-    void object::test<4>()
+
+    TEST_F(test_ms_contour, saddle_point)
     {
         // four pixels
         // two rings
@@ -385,10 +380,13 @@ namespace tut
             cg.feedLine( &data[0] );
             cg.feedLine( &data[2] );
 
-            ensure( "Polygon #0", w.hasRing( 8.0, { {1.5,2}, {2,2}, {2,1.5}, {2,1}, {2,0.9}, {1.5,0.9}, {1.1,0.5}, {1.1,0},
+            // "Polygon #0"
+            EXPECT_TRUE(w.hasRing( 8.0, { {1.5,2}, {2,2}, {2,1.5}, {2,1}, {2,0.9}, {1.5,0.9}, {1.1,0.5}, {1.1,0},
                                                     {1,0}, {0.5,0}, {0,0}, {0,0.5}, {0,1}, {0,1.1}, {0.5,1.1}, {0.9,1.5}, {0.9,2}, {1,2} } ) );
-            ensure( "Polygon #1, Ring #0", w.hasRing( 18.0, { {2,0.9}, {2,0.5}, {2,0}, {1.5,0}, {1.1,0}, {1.1,0.5}, {1.5,0.9} } ) );
-            ensure( "Polygon #1, Ring #1", w.hasRing( 18.0, { {0.9,1.5}, {0.5,1.1}, {0,1.1}, {0,1.5}, {0,2}, {0.5,2}, {0.9,2} } ) );
+            // "Polygon #1, Ring #0"
+            EXPECT_TRUE(w.hasRing( 18.0, { {2,0.9}, {2,0.5}, {2,0}, {1.5,0}, {1.1,0}, {1.1,0.5}, {1.5,0.9} } ) );
+            // "Polygon #1, Ring #1"
+            EXPECT_TRUE(w.hasRing( 18.0, { {0.9,1.5}, {0.5,1.1}, {0,1.1}, {0,1.5}, {0,2}, {0.5,2}, {0.9,2} } ) );
         }
     }
 }

@@ -29,6 +29,12 @@
 #include "gdal_alg.h"
 #include "gdal_priv.h"
 
+#include "gtest_include.h"
+
+namespace {
+
+// ---------------------------------------------------------------------------
+
 static void thread_func(void* ptr)
 {
     int num = *(int*)ptr;
@@ -50,11 +56,9 @@ static void thread_func(void* ptr)
     GDALClose(poDSRef);
 }
 
-int main(int argc, char** argv)
+TEST(testmultithreadedwriting, test)
 {
-    bool bEndlessLoop = false;
-    if( argc == 2 && EQUAL(argv[1], "-endlessloops") )
-        bEndlessLoop = true;
+    bool bEndlessLoop = CPLTestBool(CPLGetConfigOption("ENDLESS_LOOPS", "NO"));
 
     CPLJoinableThread* hThread1;
     CPLJoinableThread* hThread2;
@@ -67,14 +71,13 @@ int main(int argc, char** argv)
     GDALDriver* poDriver = (GDALDriver*)GDALGetDriverByName("ENVI");
     if( poDriver == nullptr )
     {
-        printf("ENVI driver not available. Test skipped\n");
-        return 0;
+        GTEST_SKIP() << "ENVI driver missing";
+        return;
     }
     GDALDataset* poDS = poDriver->Create("/vsimem/test_ref", 100, 2000, 1, GDT_Byte, nullptr);
     GDALClose(poDS);
 
     int counter = 0;
-    int cs = 0;
     do
     {
         ++counter;
@@ -87,12 +90,8 @@ int main(int argc, char** argv)
         CPLJoinThread(hThread2);
 
         GDALDataset* poDSRef = (GDALDataset*)GDALOpen("/vsimem/test1", GA_ReadOnly);
-        cs = GDALChecksumImage(poDSRef->GetRasterBand(1), 0, 0, 100, 2000);
-        if( cs != 29689 )
-        {
-            printf("Got cs=%d, expected=%d\n", cs, 29689);
-            break;
-        }
+        const int cs = GDALChecksumImage(poDSRef->GetRasterBand(1), 0, 0, 100, 2000);
+        EXPECT_EQ(cs, 29689);
         GDALClose(poDSRef);
 
         poDriver->Delete("/vsimem/test1");
@@ -103,6 +102,6 @@ int main(int argc, char** argv)
     poDriver->Delete("/vsimem/test_ref");
 
     GDALDestroyDriverManager();
-
-    return (cs == 29689) ? 0 : 1;
 }
+
+} // namespace

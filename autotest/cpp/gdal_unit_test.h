@@ -30,12 +30,22 @@
 #define GDAL_COMMON_H_INCLUDED
 
 #include "cpl_port.h"
-
-#include <tut_gdal.h>
+#include "ogr_api.h"
 
 #include <string>
 
+#include "gtest_include.h"
+
+#if defined(WIN32)
+#define SEP "\\"
+#else
+#define SEP "/"
+#endif
+
 namespace tut {
+
+::testing::AssertionResult CheckEqualGeometries(OGRGeometryH lhs, OGRGeometryH rhs, double tolerance);
+
 namespace common {
 
 // Data directory path used by GDAL C++ Unit Tests subset

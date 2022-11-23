@@ -35,17 +35,11 @@
 
 #include "test_data.h"
 
-template<typename T> void check(const T& x, const char* msg)
-{
-    if( !x )
-    {
-        fprintf(stderr, "CHECK(%s) failed\n", msg);
-        exit(1);
-    }
-}
+#include "gtest_include.h"
 
-#define STRINGIFY(x) #x
-#define CHECK(x) check((x), STRINGIFY(x))
+namespace {
+
+// ---------------------------------------------------------------------------
 
 static void thread_func(void* /* unused */)
 {
@@ -89,13 +83,15 @@ static void thread_func4(void* /* unused */)
     printf("end of thread\n\n");
 }
 
-int main(int argc, char* argv[])
+// ---------------------------------------------------------------------------
+
+TEST(testblockcachelimits, test)
 {
     CPLJoinableThread* hThread;
 
-    printf("main thread %p\n", (void*)CPLGetPID());
+    //CPLSetConfigOption("CPL_DEBUG", "ON");
 
-    argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
+    printf("main thread %p\n", (void*)CPLGetPID());
 
     CPLSetConfigOption("GDAL_CACHEMAX", "0");
     CPLSetConfigOption("GDAL_DEBUG_BLOCK_CACHE", "ON");
@@ -144,7 +140,7 @@ int main(int argc, char* argv[])
     printf("after GDALFlushRasterCache\n");
 
     CPLJoinThread(hThread);
-    CHECK( GDALGetCacheUsed64() == 0 );
+    ASSERT_EQ( GDALGetCacheUsed64(), 0 );
 
     CPL_IGNORE_RET_VAL(GDALRasterIO(GDALGetRasterBand(hDS, 1), GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Byte, 0, 0));
     hThread = CPLCreateJoinableThread(thread_func2, nullptr);
@@ -160,7 +156,6 @@ int main(int argc, char* argv[])
     CPLJoinThread(hThread);
 
     GDALDestroyDriverManager();
-    CSLDestroy( argv );
-
-    return 0;
 }
+
+} // namespace

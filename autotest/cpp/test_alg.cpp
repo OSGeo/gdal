@@ -35,17 +35,14 @@
 #include "gdalwarper.h"
 #include "gdal_priv.h"
 
-namespace tut
+#include "gtest_include.h"
+
+namespace
 {
     // Common fixture with test data
-    struct test_alg_data
+    struct test_alg : public ::testing::Test
     {
     };
-
-    // Register test group
-    typedef test_group<test_alg_data> group;
-    typedef group::object object;
-    group test_alg_group("ALG");
 
     typedef struct
     {
@@ -70,49 +67,41 @@ namespace tut
     }
 
     // Dummy test
-    template<>
-    template<>
-    void object::test<1>()
+    TEST_F(test_alg, GDAL_CG_FeedLine_dummy)
     {
         writeCbkData data;
         memset(&data, 0, sizeof(data));
         GDALContourGeneratorH hCG = GDAL_CG_Create(1,1,FALSE,0,1,0, writeCbk, &data);
         double scanline[] = { 0 };
-        ensure_equals(GDAL_CG_FeedLine(hCG, scanline), CE_None);
-        ensure_equals(data.dfLevel, 0);
-        ensure_equals(data.nPoints, 0);
-        ensure_approx_equals(data.x, 0.0);
-        ensure_approx_equals(data.y, 0.0);
+        EXPECT_EQ(GDAL_CG_FeedLine(hCG, scanline), CE_None);
+        EXPECT_EQ(data.dfLevel, 0);
+        EXPECT_EQ(data.nPoints, 0);
+        EXPECT_DOUBLE_EQ(data.x, 0.0);
+        EXPECT_DOUBLE_EQ(data.y, 0.0);
         GDAL_CG_Destroy(hCG);
     }
 
     // GDALWarpResolveWorkingDataType: default type
-    template<>
-    template<>
-    void object::test<2>()
+    TEST_F(test_alg, GDALWarpResolveWorkingDataType_default_type)
     {
         GDALWarpOptions* psOptions = GDALCreateWarpOptions();
         GDALWarpResolveWorkingDataType(psOptions);
-        ensure_equals( psOptions->eWorkingDataType, GDT_Byte );
+        EXPECT_EQ( psOptions->eWorkingDataType, GDT_Byte );
         GDALDestroyWarpOptions(psOptions);
     }
 
     // GDALWarpResolveWorkingDataType: do not change user specified type
-    template<>
-    template<>
-    void object::test<3>()
+    TEST_F(test_alg, GDALWarpResolveWorkingDataType_keep_user_type)
     {
         GDALWarpOptions* psOptions = GDALCreateWarpOptions();
         psOptions->eWorkingDataType = GDT_CFloat64;
         GDALWarpResolveWorkingDataType(psOptions);
-        ensure_equals( psOptions->eWorkingDataType, GDT_CFloat64 );
+        EXPECT_EQ( psOptions->eWorkingDataType, GDT_CFloat64 );
         GDALDestroyWarpOptions(psOptions);
     }
 
     // GDALWarpResolveWorkingDataType: effect of padfSrcNoDataReal
-    template<>
-    template<>
-    void object::test<4>()
+    TEST_F(test_alg, GDALWarpResolveWorkingDataType_padfSrcNoDataReal)
     {
         GDALWarpOptions* psOptions = GDALCreateWarpOptions();
         psOptions->nBandCount = 1;
@@ -120,40 +109,38 @@ namespace tut
             static_cast<double*>(CPLMalloc(sizeof(double)));
         psOptions->padfSrcNoDataReal[0] = 0.0;
         GDALWarpResolveWorkingDataType(psOptions);
-        ensure_equals( psOptions->eWorkingDataType, GDT_Byte );
+        EXPECT_EQ( psOptions->eWorkingDataType, GDT_Byte );
 
         psOptions->eWorkingDataType = GDT_Unknown;
         psOptions->padfSrcNoDataReal[0] = -1.0;
         GDALWarpResolveWorkingDataType(psOptions);
-        ensure_equals( psOptions->eWorkingDataType, GDT_Int16 );
+        EXPECT_EQ( psOptions->eWorkingDataType, GDT_Int16 );
 
         psOptions->eWorkingDataType = GDT_Unknown;
         psOptions->padfSrcNoDataReal[0] = 2.0;
         GDALWarpResolveWorkingDataType(psOptions);
-        ensure_equals( psOptions->eWorkingDataType, GDT_Byte );
+        EXPECT_EQ( psOptions->eWorkingDataType, GDT_Byte );
 
         psOptions->eWorkingDataType = GDT_Unknown;
         psOptions->padfSrcNoDataReal[0] = 256.0;
         GDALWarpResolveWorkingDataType(psOptions);
-        ensure_equals( psOptions->eWorkingDataType, GDT_UInt16 );
+        EXPECT_EQ( psOptions->eWorkingDataType, GDT_UInt16 );
 
         psOptions->eWorkingDataType = GDT_Unknown;
         psOptions->padfSrcNoDataReal[0] = 2.5;
         GDALWarpResolveWorkingDataType(psOptions);
-        ensure_equals( psOptions->eWorkingDataType, GDT_Float32 );
+        EXPECT_EQ( psOptions->eWorkingDataType, GDT_Float32 );
 
         psOptions->eWorkingDataType = GDT_Unknown;
         psOptions->padfSrcNoDataReal[0] = 2.12345678;
         GDALWarpResolveWorkingDataType(psOptions);
-        ensure_equals( psOptions->eWorkingDataType, GDT_Float64 );
+        EXPECT_EQ( psOptions->eWorkingDataType, GDT_Float64 );
 
         GDALDestroyWarpOptions(psOptions);
     }
 
     // GDALWarpResolveWorkingDataType: effect of padfSrcNoDataImag
-    template<>
-    template<>
-    void object::test<5>()
+    TEST_F(test_alg, GDALWarpResolveWorkingDataType_padfSrcNoDataImag)
     {
         GDALWarpOptions* psOptions = GDALCreateWarpOptions();
         psOptions->nBandCount = 1;
@@ -164,34 +151,32 @@ namespace tut
         psOptions->padfSrcNoDataReal[0] = 0.0;
         psOptions->padfSrcNoDataImag[0] = 0.0;
         GDALWarpResolveWorkingDataType(psOptions);
-        ensure_equals( psOptions->eWorkingDataType, GDT_Byte );
+        EXPECT_EQ( psOptions->eWorkingDataType, GDT_Byte );
 
         psOptions->eWorkingDataType = GDT_Unknown;
         psOptions->padfSrcNoDataReal[0] = 0.0;
         psOptions->padfSrcNoDataImag[0] = 1.0;
         GDALWarpResolveWorkingDataType(psOptions);
         // Could probably be CInt16
-        ensure_equals( psOptions->eWorkingDataType, GDT_CInt32 );
+        EXPECT_EQ( psOptions->eWorkingDataType, GDT_CInt32 );
 
         psOptions->eWorkingDataType = GDT_Unknown;
         psOptions->padfSrcNoDataReal[0] = 0.0;
         psOptions->padfSrcNoDataImag[0] = 1.5;
         GDALWarpResolveWorkingDataType(psOptions);
-        ensure_equals( psOptions->eWorkingDataType, GDT_CFloat32 );
+        EXPECT_EQ( psOptions->eWorkingDataType, GDT_CFloat32 );
 
         psOptions->eWorkingDataType = GDT_Unknown;
         psOptions->padfSrcNoDataReal[0] = 0.0;
         psOptions->padfSrcNoDataImag[0] = 2.12345678;
         GDALWarpResolveWorkingDataType(psOptions);
-        ensure_equals( psOptions->eWorkingDataType, GDT_CFloat64 );
+        EXPECT_EQ( psOptions->eWorkingDataType, GDT_CFloat64 );
 
         GDALDestroyWarpOptions(psOptions);
     }
 
     // GDALWarpResolveWorkingDataType: effect of padfDstNoDataReal
-    template<>
-    template<>
-    void object::test<6>()
+    TEST_F(test_alg, GDALWarpResolveWorkingDataType_padfDstNoDataReal)
     {
         GDALWarpOptions* psOptions = GDALCreateWarpOptions();
         psOptions->nBandCount = 1;
@@ -199,40 +184,38 @@ namespace tut
             static_cast<double*>(CPLMalloc(sizeof(double)));
         psOptions->padfDstNoDataReal[0] = 0.0;
         GDALWarpResolveWorkingDataType(psOptions);
-        ensure_equals( psOptions->eWorkingDataType, GDT_Byte );
+        EXPECT_EQ( psOptions->eWorkingDataType, GDT_Byte );
 
         psOptions->eWorkingDataType = GDT_Unknown;
         psOptions->padfDstNoDataReal[0] = -1.0;
         GDALWarpResolveWorkingDataType(psOptions);
-        ensure_equals( psOptions->eWorkingDataType, GDT_Int16 );
+        EXPECT_EQ( psOptions->eWorkingDataType, GDT_Int16 );
 
         psOptions->eWorkingDataType = GDT_Unknown;
         psOptions->padfDstNoDataReal[0] = 2.0;
         GDALWarpResolveWorkingDataType(psOptions);
-        ensure_equals( psOptions->eWorkingDataType, GDT_Byte );
+        EXPECT_EQ( psOptions->eWorkingDataType, GDT_Byte );
 
         psOptions->eWorkingDataType = GDT_Unknown;
         psOptions->padfDstNoDataReal[0] = 256.0;
         GDALWarpResolveWorkingDataType(psOptions);
-        ensure_equals( psOptions->eWorkingDataType, GDT_UInt16 );
+        EXPECT_EQ( psOptions->eWorkingDataType, GDT_UInt16 );
 
         psOptions->eWorkingDataType = GDT_Unknown;
         psOptions->padfDstNoDataReal[0] = 2.5;
         GDALWarpResolveWorkingDataType(psOptions);
-        ensure_equals( psOptions->eWorkingDataType, GDT_Float32 );
+        EXPECT_EQ( psOptions->eWorkingDataType, GDT_Float32 );
 
         psOptions->eWorkingDataType = GDT_Unknown;
         psOptions->padfDstNoDataReal[0] = 2.12345678;
         GDALWarpResolveWorkingDataType(psOptions);
-        ensure_equals( psOptions->eWorkingDataType, GDT_Float64 );
+        EXPECT_EQ( psOptions->eWorkingDataType, GDT_Float64 );
 
         GDALDestroyWarpOptions(psOptions);
     }
 
     // GDALWarpResolveWorkingDataType: effect of padfDstNoDataImag
-    template<>
-    template<>
-    void object::test<7>()
+    TEST_F(test_alg, GDALWarpResolveWorkingDataType_padfDstNoDataImag)
     {
         GDALWarpOptions* psOptions = GDALCreateWarpOptions();
         psOptions->nBandCount = 1;
@@ -243,32 +226,32 @@ namespace tut
         psOptions->padfDstNoDataReal[0] = 0.0;
         psOptions->padfDstNoDataImag[0] = 0.0;
         GDALWarpResolveWorkingDataType(psOptions);
-        ensure_equals( psOptions->eWorkingDataType, GDT_Byte );
+        EXPECT_EQ( psOptions->eWorkingDataType, GDT_Byte );
 
         psOptions->eWorkingDataType = GDT_Unknown;
         psOptions->padfDstNoDataReal[0] = 0.0;
         psOptions->padfDstNoDataImag[0] = 1.0;
         GDALWarpResolveWorkingDataType(psOptions);
         // Could probably be CInt16
-        ensure_equals( psOptions->eWorkingDataType, GDT_CInt32 );
+        EXPECT_EQ( psOptions->eWorkingDataType, GDT_CInt32 );
 
         psOptions->eWorkingDataType = GDT_Unknown;
         psOptions->padfDstNoDataImag[0] = 0.0;
         psOptions->padfDstNoDataImag[0] = 1.5;
         GDALWarpResolveWorkingDataType(psOptions);
-        ensure_equals( psOptions->eWorkingDataType, GDT_CFloat32 );
+        EXPECT_EQ( psOptions->eWorkingDataType, GDT_CFloat32 );
 
         psOptions->eWorkingDataType = GDT_Unknown;
         psOptions->padfDstNoDataImag[0] = 0.0;
         psOptions->padfDstNoDataImag[0] = 2.12345678;
         GDALWarpResolveWorkingDataType(psOptions);
-        ensure_equals( psOptions->eWorkingDataType, GDT_CFloat64 );
+        EXPECT_EQ( psOptions->eWorkingDataType, GDT_CFloat64 );
 
         GDALDestroyWarpOptions(psOptions);
     }
 
-    // Test GDALAutoCreateWarpedVRT() with creatino of an alpha band
-    template<> template<> void object::test<8>()
+    // Test GDALAutoCreateWarpedVRT() with creation of an alpha band
+    TEST_F(test_alg, GDALAutoCreateWarpedVRT_alpha_band)
     {
         GDALDatasetUniquePtr poDS(
             GDALDriver::FromHandle(
@@ -282,13 +265,13 @@ namespace tut
             GDALAutoCreateWarpedVRT(GDALDataset::ToHandle(poDS.get()), nullptr, nullptr,
                                 GRA_NearestNeighbour, 0.0,
                                 psOptions);
-        ensure( hWarpedVRT != nullptr );
-        ensure_equals( GDALGetRasterCount(hWarpedVRT), 2 );
-        ensure_equals( GDALGetRasterColorInterpretation(
+        ASSERT_TRUE( hWarpedVRT != nullptr );
+        ASSERT_EQ( GDALGetRasterCount(hWarpedVRT), 2 );
+        EXPECT_EQ( GDALGetRasterColorInterpretation(
             GDALGetRasterBand(hWarpedVRT, 2)), GCI_AlphaBand );
         GDALDestroyWarpOptions(psOptions);
         GDALClose(hWarpedVRT);
     }
 
 
-} // namespace tut
+} // namespace

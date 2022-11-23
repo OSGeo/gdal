@@ -33,17 +33,11 @@
 #include "gdal_priv.h"
 #include "test_data.h"
 
-template<typename T> void check(const T& x, const char* msg)
-{
-    if( !x )
-    {
-        fprintf(stderr, "CHECK(%s) failed\n", msg);
-        exit(1);
-    }
-}
+#include "gtest_include.h"
 
-#define STRINGIFY(x) #x
-#define CHECK(x) check((x), STRINGIFY(x))
+namespace {
+
+// ---------------------------------------------------------------------------
 
 class MyRasterBand: public GDALRasterBand
 {
@@ -61,7 +55,7 @@ class MyRasterBand: public GDALRasterBand
         CPLErr IWriteBlock(int nXBlock, int nYBlock, void*) CPL_OVERRIDE
         {
             printf("Entering IWriteBlock(%d, %d)\n", nXBlock, nYBlock);
-            CHECK(!bBusy);
+            EXPECT_TRUE(!bBusy);
             bBusy = TRUE;
             CPLSleep(0.5);
             bBusy = FALSE;
@@ -153,7 +147,7 @@ static void test2()
     GByte c = 0;
     CPL_IGNORE_RET_VAL(poDS->GetRasterBand(1)->RasterIO(GF_Read,0,0,1,1,&c,1,1,GDT_Byte,0,0,nullptr));
     printf("%d\n", c);
-    CHECK(c == 1);
+    ASSERT_EQ(c, 1);
     CPLJoinThread(hThread);
 
     CPLSetConfigOption("GDAL_RB_INTERNALIZE_SLEEP_AFTER_DETACH_BEFORE_WRITE", nullptr);
@@ -162,11 +156,10 @@ static void test2()
     printf("End test2\n");
 }
 
+// ---------------------------------------------------------------------------
 
-int main(int argc, char* argv[])
+TEST(testblockcachelimits, test)
 {
-    argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
-
     CPLSetConfigOption("GDAL_DEBUG_BLOCK_CACHE", "ON");
     GDALGetCacheMax();
 
@@ -176,7 +169,6 @@ int main(int argc, char* argv[])
     test2();
 
     GDALDestroyDriverManager();
-    CSLDestroy( argv );
-
-    return 0;
 }
+
+} // namespace

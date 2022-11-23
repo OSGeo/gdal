@@ -33,17 +33,11 @@
 
 #include "test_data.h"
 
-template<typename T> void check(const T& x, const char* msg)
-{
-    if( !x )
-    {
-        fprintf(stderr, "CHECK(%s) failed\n", msg);
-        exit(1);
-    }
-}
+#include "gtest_include.h"
 
-#define STRINGIFY(x) #x
-#define CHECK(x) check((x), STRINGIFY(x))
+namespace {
+
+// ---------------------------------------------------------------------------
 
 static GDALDriverH hTIFFDrv = nullptr;
 static volatile int bThread1Finished = FALSE;
@@ -67,7 +61,7 @@ static void CPL_STDCALL myErrorHandler(CPLErr, CPLErrorNum errorNum, const char*
     {
         fprintf(stderr, "An error occurred: %s\n", msg);
         fprintf(stderr, "Likely a threading issue !\n");
-        exit(1);
+        ASSERT_TRUE(false);
     }
 }
 
@@ -75,7 +69,7 @@ static void CPL_STDCALL myErrorHandler(CPLErr, CPLErrorNum errorNum, const char*
 static void worker_thread1(void *) {
 
     GDALDatasetH hDataset = GDALOpen("/vsimem/thread1.tif", GA_Update);
-    CHECK(hDataset);
+    ASSERT_TRUE(hDataset != nullptr);
 
     int levels[1]={2};
     int bands[3]={1,2,3};
@@ -90,7 +84,7 @@ static void worker_thread1(void *) {
 static void worker_thread2(void *) {
 
     GDALDatasetH hSrc = GDALOpen(szSrcDataset, GA_ReadOnly);
-    CHECK(hSrc);
+    ASSERT_TRUE(hSrc != nullptr);
     const char * const tops[] = {"TILED=YES","COMPRESS=WEBP",nullptr};
     GDALDatasetH hDataset = GDALCreateCopy(GDALGetDriverByName("GTiff"),
                                        "/vsimem/thread2.tif",hSrc,TRUE,tops,
@@ -101,22 +95,23 @@ static void worker_thread2(void *) {
     bThread2Finished = TRUE;
 }
 
-int main()
+
+TEST(bug1488, test)
 {
     GDALAllRegister();
 
     hTIFFDrv = GDALGetDriverByName("GTiff");
     if( !hTIFFDrv )
     {
-        printf("GTIFF driver missing. Skipping\n");
-        exit(0);
+        GTEST_SKIP() << "GTIFF driver missing";
+        return;
     }
     const char* pszCO = GDALGetMetadataItem(hTIFFDrv,
                                             GDAL_DMD_CREATIONOPTIONLIST, nullptr);
     if( pszCO == nullptr || strstr(pszCO, "WEBP") == nullptr )
     {
-        printf("WEBP missing. Skipping\n");
-        exit(0);
+        GTEST_SKIP() << "WEBP driver missing";
+        return;
     }
 
     GDALSetCacheMax(30* 1000 * 1000);
@@ -141,6 +136,6 @@ int main()
     }
     CPLJoinThread(t1);
     CPLJoinThread(t2);
-
-    return 0;
 }
+
+} // namespace

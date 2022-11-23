@@ -40,6 +40,8 @@
 #include <fstream>
 #endif
 
+#include "gtest_include.h"
+
 namespace marching_squares {
 class TestPolygonWriter
 {
@@ -135,24 +137,17 @@ static bool equal_linestrings( const LineString& ls1, const LineString& ls2 )
 }
 }
 
-namespace tut
+namespace
 {
     using namespace marching_squares;
 
     // Common fixture with test data
-    struct test_ms_polygon_data
+    struct test_ms_polygon: public ::testing::Test
     {
     };
 
-    // Register test group
-    typedef test_group<test_ms_polygon_data> group;
-    typedef group::object object;
-    group test_ms_polygon_group("MarchingSquares:Polygon");
-
     // Dummy test
-    template<>
-    template<>
-    void object::test<1>()
+    TEST_F(test_ms_polygon, dummy)
     {
         // one pixel
         std::vector<double> data = { 2.0 };
@@ -168,13 +163,12 @@ namespace tut
         {
             std::ostringstream ostr;
             w.out( ostr, 10.0 );
-            ensure_equals( "Polygon #0", ostr.str(), "{ { (0.5,1) (1,1) (1,0.5) (1,0) (0.5,0) (0,0) (0,0.5) (0,1) (0.5,1) } } " );
+            // "Polygon #0",
+            EXPECT_EQ( ostr.str(), "{ { (0.5,1) (1,1) (1,0.5) (1,0) (0.5,0) (0,0) (0,0.5) (0,1) (0.5,1) } } " );
         }
     }
 
-    template<>
-    template<>
-    void object::test<2>()
+    TEST_F(test_ms_polygon, four_pixels)
     {
         // four pixels
         // two rings
@@ -229,18 +223,19 @@ namespace tut
         {
             std::ostringstream ostr;
             w.out( ostr, 10.0 );
-            ensure_equals( "Polygon #1", ostr.str(), "{ { (1.5,2) (2,2) (2,1.5) (2,1) (2,0.5) (1.5,0.5) (1.5,0.5) (1.5,0) (1,0) (0.5,0) (0,0) (0,0.5) (0,1) (0,1.5) (0.5,1.5) (0.5,1.5) (0.5,2) (1,2) (1.5,2) } } ");
+            // "Polygon #1"
+            EXPECT_EQ( ostr.str(), "{ { (1.5,2) (2,2) (2,1.5) (2,1) (2,0.5) (1.5,0.5) (1.5,0.5) (1.5,0) (1,0) (0.5,0) (0,0) (0,0.5) (0,1) (0,1.5) (0.5,1.5) (0.5,1.5) (0.5,2) (1,2) (1.5,2) } } ");
         }
         {
             std::ostringstream ostr;
             w.out( ostr, 20.0 );
-            ensure_equals( "Polygon #2", ostr.str(), "{ { (2,0.5) (2,0.5) (2,0) (1.5,0) (1.5,0) (1.5,0.5) (1.5,0.5) (2,0.5) } } { { (0.5,1.5) (0.5,1.5) (0,1.5) (0,1.5) (0,2) (0.5,2) (0.5,2) (0.5,1.5) } } ");
+            // "Polygon #2"
+            EXPECT_EQ( ostr.str(), "{ { (2,0.5) (2,0.5) (2,0) (1.5,0) (1.5,0) (1.5,0.5) (1.5,0.5) (2,0.5) } } { { (0.5,1.5) (0.5,1.5) (0,1.5) (0,1.5) (0,2) (0.5,2) (0.5,2) (0.5,1.5) } } ");
         }
     }
 
-    template<>
-    template<>
-    void object::test<3>()
+
+    TEST_F(test_ms_polygon, four_pixels_2)
     {
         // four pixels
         // 155    155.01
@@ -289,18 +284,18 @@ namespace tut
         {
             std::ostringstream ostr;
             w.out( ostr, 155.0 );
-            ensure_equals( "Polygon #0", ostr.str(), "{ { (1.4999,2) (1.4999,1.5) (0.5,0.5001) (0,0.5001) (0,1) (0,1.5) (0,2) (0.5,2) (1,2) (1.4999,2) } } " );
+            // "Polygon #0"
+            EXPECT_EQ( ostr.str(), "{ { (1.4999,2) (1.4999,1.5) (0.5,0.5001) (0,0.5001) (0,1) (0,1.5) (0,2) (0.5,2) (1,2) (1.4999,2) } } " );
         }
         {
             std::ostringstream ostr;
             w.out( ostr, Inf );
-            ensure_equals( "Polygon #1", ostr.str(), "{ { (1.5,2) (2,2) (2,1.5) (2,1) (2,0.5) (2,0) (1.5,0) (1,0) (0.5,0) (0,0) (0,0.5) (0,0.5001) (0.5,0.5001) (1.4999,1.5) (1.4999,2) (1.5,2) } } " );
+            // "Polygon #1"
+            EXPECT_EQ( ostr.str(), "{ { (1.5,2) (2,2) (2,1.5) (2,1) (2,0.5) (2,0) (1.5,0) (1,0) (0.5,0) (0,0) (0,0.5) (0,0.5001) (0.5,0.5001) (1.4999,1.5) (1.4999,2) (1.5,2) } } " );
         }
     }
 
-    template<>
-    template<>
-    void object::test<4>()
+    TEST_F(test_ms_polygon, nine_pixels)
     {
         // nine pixels
         // two nested rings
@@ -378,23 +373,24 @@ namespace tut
         {
             std::ostringstream ostr;
             w.out( ostr, 1.0 );
-            ensure_equals( "Polygon #0", ostr.str(), "{ { (0.5,0.75) (0.75,0.5) (0.75,0) (0.5,0) (0,0) (0,0.5) (0,0.75) (0.5,0.75) } } { { (2.5,0.75) (3,0.75) (3,0.5) (3,0) (2.5,0) (2.25,0) (2.25,0.5) (2.5,0.75) } } { { (0.75,3) (0.75,2.5) (0.5,2.25) (0,2.25) (0,2.5) (0,3) (0.5,3) (0.75,3) } } { { (2.5,3) (3,3) (3,2.5) (3,2.25) (2.5,2.25) (2.25,2.5) (2.25,3) (2.5,3) } } " );
+            // "Polygon #0"
+            EXPECT_EQ( ostr.str(), "{ { (0.5,0.75) (0.75,0.5) (0.75,0) (0.5,0) (0,0) (0,0.5) (0,0.75) (0.5,0.75) } } { { (2.5,0.75) (3,0.75) (3,0.5) (3,0) (2.5,0) (2.25,0) (2.25,0.5) (2.5,0.75) } } { { (0.75,3) (0.75,2.5) (0.5,2.25) (0,2.25) (0,2.5) (0,3) (0.5,3) (0.75,3) } } { { (2.5,3) (3,3) (3,2.5) (3,2.25) (2.5,2.25) (2.25,2.5) (2.25,3) (2.5,3) } } " );
         }
         {
             std::ostringstream ostr;
             w.out( ostr, 11.0 );
-            ensure_equals( "Polygon #1", ostr.str(), "{ { (2.25,2.5) (2.5,2.25) (3,2.25) (3,2) (3,1.5) (3,1) (3,0.75) (2.5,0.75) (2.25,0.5) (2.25,0) (2,0) (1.5,0) (1,0) (0.75,0) (0.75,0.5) (0.5,0.75) (0,0.75) (0,1) (0,1.5) (0,2) (0,2.25) (0.5,2.25) (0.75,2.5) (0.75,3) (1,3) (1.5,3) (2,3) (2.25,3) (2.25,2.5) } { (1.625,1.5) (1.5,1.625) (1.375,1.5) (1.5,1.375) (1.625,1.5) } } " );
+            // "Polygon #1"
+            EXPECT_EQ( ostr.str(), "{ { (2.25,2.5) (2.5,2.25) (3,2.25) (3,2) (3,1.5) (3,1) (3,0.75) (2.5,0.75) (2.25,0.5) (2.25,0) (2,0) (1.5,0) (1,0) (0.75,0) (0.75,0.5) (0.5,0.75) (0,0.75) (0,1) (0,1.5) (0,2) (0,2.25) (0.5,2.25) (0.75,2.5) (0.75,3) (1,3) (1.5,3) (2,3) (2.25,3) (2.25,2.5) } { (1.625,1.5) (1.5,1.625) (1.375,1.5) (1.5,1.375) (1.625,1.5) } } " );
         }
         {
             std::ostringstream ostr;
             w.out( ostr, 21.0 );
-            ensure_equals( "Polygon #2", ostr.str(), "{ { (1.625,1.5) (1.5,1.625) (1.375,1.5) (1.5,1.375) (1.625,1.5) } } " );
+            // "Polygon #2"
+            EXPECT_EQ( ostr.str(), "{ { (1.625,1.5) (1.5,1.625) (1.375,1.5) (1.5,1.375) (1.625,1.5) } } " );
         }
     }
 
-    template<>
-    template<>
-    void object::test<5>()
+    TEST_F(test_ms_polygon, three_nested_rings)
     {
         // Three nested rings
         std::vector<double> data = { 2, 2, 2, 2, 2,
@@ -415,28 +411,32 @@ namespace tut
         {
             std::ostringstream ostr;
             w.out( ostr, 1.0 );
-            ensure_equals( "Polygon #0", ostr.str(), "" );
+            // "Polygon #0"
+            EXPECT_EQ( ostr.str(), "" );
         }
         {
             std::ostringstream ostr;
             w.out( ostr, 3.0 );
-            ensure_equals( "Polygon #1", ostr.str(), "{ { (4.5,5) (5,5) (5,4.5) (5,4) (5,3.5) (5,3) (5,2.5) (5,2) (5,1.5) (5,1) (5,0.5) (5,0) (4.5,0) (4,0) (3.5,0) (3,0) (2.5,0) (2,0) (1.5,0) (1,0) (0.5,0) (0,0) (0,0.5) (0,1) (0,1.5) (0,2) (0,2.5) (0,3) (0,3.5) (0,4) (0,4.5) (0,5) (0.5,5) (1,5) (1.5,5) (2,5) (2.5,5) (3,5) (3.5,5) (4,5) (4.5,5) } { (4,3.5) (3.5,4) (2.5,4) (1.5,4) (1,3.5) (1,2.5) (1,1.5) (1.5,1) (2.5,1) (3.5,1) (4,1.5) (4,2.5) (4,3.5) } } " );
+            // "Polygon #1"
+            EXPECT_EQ( ostr.str(), "{ { (4.5,5) (5,5) (5,4.5) (5,4) (5,3.5) (5,3) (5,2.5) (5,2) (5,1.5) (5,1) (5,0.5) (5,0) (4.5,0) (4,0) (3.5,0) (3,0) (2.5,0) (2,0) (1.5,0) (1,0) (0.5,0) (0,0) (0,0.5) (0,1) (0,1.5) (0,2) (0,2.5) (0,3) (0,3.5) (0,4) (0,4.5) (0,5) (0.5,5) (1,5) (1.5,5) (2,5) (2.5,5) (3,5) (3.5,5) (4,5) (4.5,5) } { (4,3.5) (3.5,4) (2.5,4) (1.5,4) (1,3.5) (1,2.5) (1,1.5) (1.5,1) (2.5,1) (3.5,1) (4,1.5) (4,2.5) (4,3.5) } } " );
         }
         {
             std::ostringstream ostr;
             w.out( ostr, 5.0 );
-            ensure_equals( "Polygon #2", ostr.str(), "{ { (4,3.5) (3.5,4) (2.5,4) (1.5,4) (1,3.5) (1,2.5) (1,1.5) (1.5,1) (2.5,1) (3.5,1) (4,1.5) (4,2.5) (4,3.5) } { (3,2.5) (2.5,3) (2,2.5) (2.5,2) (3,2.5) } } " );
+            // "Polygon #2"
+            EXPECT_EQ( ostr.str(), "{ { (4,3.5) (3.5,4) (2.5,4) (1.5,4) (1,3.5) (1,2.5) (1,1.5) (1.5,1) (2.5,1) (3.5,1) (4,1.5) (4,2.5) (4,3.5) } { (3,2.5) (2.5,3) (2,2.5) (2.5,2) (3,2.5) } } " );
         }
         {
             std::ostringstream ostr;
             w.out( ostr, 7.0 );
-            ensure_equals( "Polygon #3", ostr.str(), "{ { (3,2.5) (2.5,3) (2,2.5) (2.5,2) (3,2.5) } } " );
+            // "Polygon #3"
+            EXPECT_EQ( ostr.str(), "{ { (3,2.5) (2.5,3) (2,2.5) (2.5,2) (3,2.5) } } " );
         }
 
-        ensure( "Inner ring of polygon #1 = exterioring ring of polygon #2",
-                equal_linestrings( w.polygons_[3.0][0][1], w.polygons_[5.0][0][0] ) );
-        ensure( "Inner ring of polygon #2 = exterioring ring of polygon #3",
-                equal_linestrings( w.polygons_[5.0][0][1], w.polygons_[7.0][0][0] ) );
+        // "Inner ring of polygon #1 = exterioring ring of polygon #2"
+        EXPECT_TRUE( equal_linestrings( w.polygons_[3.0][0][1], w.polygons_[5.0][0][0] ) );
+        // "Inner ring of polygon #2 = exterioring ring of polygon #3"
+        EXPECT_TRUE( equal_linestrings( w.polygons_[5.0][0][1], w.polygons_[7.0][0][0] ) );
 
     }
 }

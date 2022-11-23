@@ -35,17 +35,11 @@
 
 #include "test_data.h"
 
-template<typename T> void check(const T& x, const char* msg)
-{
-    if( !x )
-    {
-        fprintf(stderr, "CHECK(%s) failed\n", msg);
-        exit(1);
-    }
-}
+#include "gtest_include.h"
 
-#define STRINGIFY(x) #x
-#define CHECK(x) check((x), STRINGIFY(x))
+namespace {
+
+// ---------------------------------------------------------------------------
 
 static void OpenJPEG2000(const char* pszFilename)
 {
@@ -72,7 +66,7 @@ static void OpenJPEG2000(const char* pszFilename)
         hDS = GDALOpen(pszFilename, GA_ReadOnly);
         if( !EQUAL(apszDrivers[i], "JP2Lura") && !EQUAL(apszDrivers[i], "JPEG2000") )
         {
-            CHECK( hDS != nullptr );
+            ASSERT_TRUE( hDS != nullptr );
         }
         for(j=0;j<N_DRIVERS;j++)
         {
@@ -83,7 +77,9 @@ static void OpenJPEG2000(const char* pszFilename)
     }
 }
 
-int main(int /* argc*/ , char* /* argv */[])
+// ---------------------------------------------------------------------------
+
+TEST(testclosedondestroydm, test)
 {
     int nOvrLevel;
     int nBandNum;
@@ -240,6 +236,6 @@ int main(int /* argc*/ , char* /* argv */[])
     unlink("byte3.tif.msk");
     unlink("byte.vrt");
     unlink("byte.vrt.ovr");
-
-    return 0;
 }
+
+} //namespace

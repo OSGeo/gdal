@@ -26,8 +26,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_unit_test.h"
-
 #include "gdal_alg.h"
 #include "gdal_priv.h"
 #include "gdal_utils.h"
@@ -41,255 +39,243 @@
 
 #include "test_data.h"
 
-namespace tut
+#include "gtest_include.h"
+
+namespace
 {
     // Common fixture with test data
-    struct test_gdal_data
+    struct test_gdal : public ::testing::Test
     {
-        // Expected number of drivers
-        int drv_count_;
-
-        test_gdal_data()
-            : drv_count_(0)
-        {
-            // Windows CE port builds with fixed number of drivers
-#ifdef FRMT_aaigrid
-            drv_count_++;
-#endif
-#ifdef FRMT_dted
-            drv_count_++;
-#endif
-#ifdef FRMT_gtiff
-            drv_count_++;
-#endif
-        }
     };
 
-    // Register test group
-    typedef test_group<test_gdal_data> group;
-    typedef group::object object;
-    group test_gdal_group("GDAL");
-
     // Test GDAL driver manager access
-    template<>
-    template<>
-    void object::test<1>()
+    TEST_F(test_gdal, driver_manager)
     {
         GDALDriverManager* drv_mgr = nullptr;
         drv_mgr = GetGDALDriverManager();
-        ensure("GetGDALDriverManager() is NULL", nullptr != drv_mgr);
+        ASSERT_TRUE(nullptr != drv_mgr);
     }
 
     // Test number of registered GDAL drivers
-    template<>
-    template<>
-    void object::test<2>()
+    TEST_F(test_gdal, number_of_registered_drivers)
     {
 #ifdef WIN32CE
-        ensure_equals("GDAL registered drivers count doesn't match",
-            GDALGetDriverCount(), drv_count_);
+        ASSERT_EQ(GDALGetDriverCount(), drv_count_);
 #endif
     }
 
     // Test if AAIGrid driver is registered
-    template<>
-    template<>
-    void object::test<3>()
+    TEST_F(test_gdal, aaigrid_is_registered)
     {
         GDALDriverH drv = GDALGetDriverByName("AAIGrid");
 
 #ifdef FRMT_aaigrid
-        ensure("AAIGrid driver is not registered", NULL != drv);
+        ASSERT_TRUE(NULL != drv);
 #else
         (void)drv;
-        ensure(true); // Skip
 #endif
     }
 
     // Test if DTED driver is registered
-    template<>
-    template<>
-    void object::test<4>()
+    TEST_F(test_gdal, dted_is_registered)
     {
         GDALDriverH drv = GDALGetDriverByName("DTED");
 
 #ifdef FRMT_dted
-        ensure("DTED driver is not registered", NULL != drv);
+        ASSERT_TRUE(NULL != drv);
 #else
         (void)drv;
-        ensure(true); // Skip
 #endif
     }
 
     // Test if GeoTIFF driver is registered
-    template<>
-    template<>
-    void object::test<5>()
+    TEST_F(test_gdal, gtiff_is_registered)
     {
         GDALDriverH drv = GDALGetDriverByName("GTiff");
 
 #ifdef FRMT_gtiff
-        ensure("GTiff driver is not registered", NULL != drv);
+        ASSERT_TRUE(NULL != drv);
 #else
         (void)drv;
-        ensure(true); // Skip
 #endif
     }
 
-#define ENSURE(cond) ensure(#cond, (cond))
-#define ENSURE_EQUALS(a, b) ensure_equals(#a " == " #b, (a), (b))
-
-    // Test GDALDataTypeUnion()
-    template<> template<> void object::test<6>()
+    class DataTypeTupleFixture:
+            public test_gdal,
+            public ::testing::WithParamInterface<std::tuple<GDALDataType, GDALDataType>>
     {
-        for(int i=GDT_Byte;i<GDT_TypeCount;i++)
+    public:
+        static std::vector<std::tuple<GDALDataType, GDALDataType>> GetTupleValues()
         {
-            for(int j=GDT_Byte;j<GDT_TypeCount;j++)
+            std::vector<std::tuple<GDALDataType, GDALDataType>> ret;
+            for( GDALDataType eIn = GDT_Byte; eIn < GDT_TypeCount; eIn = static_cast<GDALDataType>(eIn + 1) )
             {
-                GDALDataType eDT1 = static_cast<GDALDataType>(i);
-                GDALDataType eDT2 = static_cast<GDALDataType>(j);
-                GDALDataType eDT = GDALDataTypeUnion(eDT1,eDT2 );
-                ENSURE( eDT == GDALDataTypeUnion(eDT2,eDT1) );
-                ENSURE( GDALGetDataTypeSize(eDT) >= GDALGetDataTypeSize(eDT1) );
-                ENSURE( GDALGetDataTypeSize(eDT) >= GDALGetDataTypeSize(eDT2) );
-                ENSURE( (GDALDataTypeIsComplex(eDT) && (GDALDataTypeIsComplex(eDT1) || GDALDataTypeIsComplex(eDT2))) ||
-                        (!GDALDataTypeIsComplex(eDT) && !GDALDataTypeIsComplex(eDT1) && !GDALDataTypeIsComplex(eDT2)) );
-
-                ENSURE( !(GDALDataTypeIsFloating(eDT1) || GDALDataTypeIsFloating(eDT2)) || GDALDataTypeIsFloating(eDT));
-                ENSURE( !(GDALDataTypeIsSigned(eDT1) || GDALDataTypeIsSigned(eDT2)) || GDALDataTypeIsSigned(eDT));
+                for( GDALDataType eOut = GDT_Byte; eOut < GDT_TypeCount; eOut = static_cast<GDALDataType>(eOut + 1) )
+                {
+                    ret.emplace_back(std::make_tuple(eIn, eOut));
+                }
             }
+            return ret;
         }
+    };
 
-        ENSURE_EQUALS(GDALDataTypeUnion(GDT_Int16, GDT_UInt16), GDT_Int32);
-        ENSURE_EQUALS(GDALDataTypeUnion(GDT_Int16, GDT_UInt32), GDT_Int64);
-        ENSURE_EQUALS(GDALDataTypeUnion(GDT_UInt32, GDT_Int16), GDT_Int64);
-        ENSURE_EQUALS(GDALDataTypeUnion(GDT_Int64, GDT_UInt64), GDT_Float64);
-        ENSURE_EQUALS(GDALDataTypeUnion(GDT_Int64, GDT_Float32), GDT_Float64);
-        ENSURE_EQUALS(GDALDataTypeUnion(GDT_Int64, GDT_Float64), GDT_Float64);
-        ENSURE_EQUALS(GDALDataTypeUnion(GDT_UInt64, GDT_Float32), GDT_Float64);
-        ENSURE_EQUALS(GDALDataTypeUnion(GDT_UInt64, GDT_Float64), GDT_Float64);
-        ENSURE_EQUALS(GDALDataTypeUnion(GDT_UInt32, GDT_CInt16), GDT_CFloat64);
-        ENSURE_EQUALS(GDALDataTypeUnion(GDT_Float32, GDT_CInt32), GDT_CFloat64);
-        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CInt16, GDT_UInt32), GDT_CFloat64);
-        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CInt16, GDT_CFloat32), GDT_CFloat32);
-        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CInt32, GDT_Byte), GDT_CInt32);
-        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CInt32, GDT_UInt16), GDT_CInt32);
-        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CInt32, GDT_Int16), GDT_CInt32);
-        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CInt32, GDT_UInt32), GDT_CFloat64);
-        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CInt32, GDT_Int32), GDT_CInt32);
-        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CInt32, GDT_Float32), GDT_CFloat64);
-        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CInt32, GDT_CInt16), GDT_CInt32);
-        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CInt32, GDT_CFloat32), GDT_CFloat64);
-        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CFloat32, GDT_Byte), GDT_CFloat32);
-        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CFloat32, GDT_UInt16), GDT_CFloat32);
-        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CFloat32, GDT_Int16), GDT_CFloat32);
-        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CFloat32, GDT_UInt32), GDT_CFloat64);
-        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CFloat32, GDT_Int32), GDT_CFloat64);
-        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CFloat32, GDT_Float32), GDT_CFloat32);
-        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CFloat32, GDT_CInt16), GDT_CFloat32);
-        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CFloat32, GDT_CInt32), GDT_CFloat64);
+    // Test GDALDataTypeUnion() on all (GDALDataType, GDALDataType) combinations
+    TEST_P(DataTypeTupleFixture, GDALDataTypeUnion_generic)
+    {
+        GDALDataType eDT1 = std::get<0>(GetParam());
+        GDALDataType eDT2 = std::get<1>(GetParam());
+        GDALDataType eDT = GDALDataTypeUnion(eDT1,eDT2 );
+        EXPECT_EQ( eDT, GDALDataTypeUnion(eDT2,eDT1) );
+        EXPECT_GE( GDALGetDataTypeSize(eDT), GDALGetDataTypeSize(eDT1) );
+        EXPECT_GE( GDALGetDataTypeSize(eDT), GDALGetDataTypeSize(eDT2) );
+        EXPECT_TRUE( (GDALDataTypeIsComplex(eDT) && (GDALDataTypeIsComplex(eDT1) || GDALDataTypeIsComplex(eDT2))) ||
+                (!GDALDataTypeIsComplex(eDT) && !GDALDataTypeIsComplex(eDT1) && !GDALDataTypeIsComplex(eDT2)) );
 
-        ENSURE_EQUALS(GDALFindDataType(0, false /* signed */, false /* floating */, false /* complex */), GDT_Byte);
-        ENSURE_EQUALS(GDALFindDataType(0, true /* signed */, false /* floating */, false /* complex */), GDT_Int8);
-        ENSURE_EQUALS(GDALFindDataType(0, false /* signed */, false /* floating */, true /* complex */), GDT_CInt32);
-        ENSURE_EQUALS(GDALFindDataType(0, true /* signed */, false /* floating */, true /* complex */), GDT_CInt16);
-        ENSURE_EQUALS(GDALFindDataType(0, false /* signed */, true /* floating */, false /* complex */), GDT_Float32);
-        ENSURE_EQUALS(GDALFindDataType(0, true /* signed */, true /* floating */, false /* complex */), GDT_Float32);
-        ENSURE_EQUALS(GDALFindDataType(0, false /* signed */, true /* floating */, true /* complex */), GDT_CFloat32);
-        ENSURE_EQUALS(GDALFindDataType(0, true /* signed */, true /* floating */, true /* complex */), GDT_CFloat32);
-
-        ENSURE_EQUALS(GDALFindDataType(8, false /* signed */, false /* floating */, false /* complex */), GDT_Byte);
-        ENSURE_EQUALS(GDALFindDataType(8, true /* signed */, false /* floating */, false /* complex */), GDT_Int8);
-
-        ENSURE_EQUALS(GDALFindDataType(16, false /* signed */, false /* floating */, false /* complex */), GDT_UInt16);
-        ENSURE_EQUALS(GDALFindDataType(16, true /* signed */, false /* floating */, false /* complex */), GDT_Int16);
-
-        ENSURE_EQUALS(GDALFindDataType(32, false /* signed */, false /* floating */, false /* complex */), GDT_UInt32);
-        ENSURE_EQUALS(GDALFindDataType(32, true /* signed */, false /* floating */, false /* complex */), GDT_Int32);
-
-        ENSURE_EQUALS(GDALFindDataType(64, false /* signed */, true /* floating */, false /* complex */), GDT_Float64);
-        ENSURE_EQUALS(GDALFindDataType(64, false /* signed */, true /* floating */, true /* complex */), GDT_CFloat64);
-
-        ENSURE_EQUALS(GDALFindDataType(64, false /* signed */, false /* floating */, false /* complex */), GDT_UInt64);
-        ENSURE_EQUALS(GDALFindDataType(64, true /* signed */, false /* floating */, false /* complex */), GDT_Int64);
-
-        ENSURE_EQUALS(GDALDataTypeUnionWithValue(GDT_Byte, -128, 0), GDT_Int16);
-        ENSURE_EQUALS(GDALDataTypeUnionWithValue(GDT_Byte, -32768, 0), GDT_Int16);
-        ENSURE_EQUALS(GDALDataTypeUnionWithValue(GDT_Byte, -32769, 0), GDT_Int32);
-        ENSURE_EQUALS(GDALDataTypeUnionWithValue(GDT_Float32, -99999, 0), GDT_Float32);
-        ENSURE_EQUALS(GDALDataTypeUnionWithValue(GDT_Float32, -99999.9876, 0), GDT_Float64);
+        EXPECT_TRUE( !(GDALDataTypeIsFloating(eDT1) || GDALDataTypeIsFloating(eDT2)) || GDALDataTypeIsFloating(eDT));
+        EXPECT_TRUE( !(GDALDataTypeIsSigned(eDT1) || GDALDataTypeIsSigned(eDT2)) || GDALDataTypeIsSigned(eDT));
     }
 
-#undef ENSURE
-#undef ENSURE_EQUALS
+    INSTANTIATE_TEST_SUITE_P(
+            test_gdal,
+            DataTypeTupleFixture,
+            ::testing::ValuesIn(DataTypeTupleFixture::GetTupleValues()),
+            [](const ::testing::TestParamInfo<DataTypeTupleFixture::ParamType>& l_info) {
+                GDALDataType eDT1 = std::get<0>(l_info.param);
+                GDALDataType eDT2 = std::get<1>(l_info.param);
+                return std::string(GDALGetDataTypeName(eDT1)) + "_" + GDALGetDataTypeName(eDT2);
+            }
+    );
+
+    // Test GDALDataTypeUnion()
+    TEST_F(test_gdal, GDALDataTypeUnion_special_cases)
+    {
+        EXPECT_EQ(GDALDataTypeUnion(GDT_Int16, GDT_UInt16), GDT_Int32);
+        EXPECT_EQ(GDALDataTypeUnion(GDT_Int16, GDT_UInt32), GDT_Int64);
+        EXPECT_EQ(GDALDataTypeUnion(GDT_UInt32, GDT_Int16), GDT_Int64);
+        EXPECT_EQ(GDALDataTypeUnion(GDT_Int64, GDT_UInt64), GDT_Float64);
+        EXPECT_EQ(GDALDataTypeUnion(GDT_Int64, GDT_Float32), GDT_Float64);
+        EXPECT_EQ(GDALDataTypeUnion(GDT_Int64, GDT_Float64), GDT_Float64);
+        EXPECT_EQ(GDALDataTypeUnion(GDT_UInt64, GDT_Float32), GDT_Float64);
+        EXPECT_EQ(GDALDataTypeUnion(GDT_UInt64, GDT_Float64), GDT_Float64);
+        EXPECT_EQ(GDALDataTypeUnion(GDT_UInt32, GDT_CInt16), GDT_CFloat64);
+        EXPECT_EQ(GDALDataTypeUnion(GDT_Float32, GDT_CInt32), GDT_CFloat64);
+        EXPECT_EQ(GDALDataTypeUnion(GDT_CInt16, GDT_UInt32), GDT_CFloat64);
+        EXPECT_EQ(GDALDataTypeUnion(GDT_CInt16, GDT_CFloat32), GDT_CFloat32);
+        EXPECT_EQ(GDALDataTypeUnion(GDT_CInt32, GDT_Byte), GDT_CInt32);
+        EXPECT_EQ(GDALDataTypeUnion(GDT_CInt32, GDT_UInt16), GDT_CInt32);
+        EXPECT_EQ(GDALDataTypeUnion(GDT_CInt32, GDT_Int16), GDT_CInt32);
+        EXPECT_EQ(GDALDataTypeUnion(GDT_CInt32, GDT_UInt32), GDT_CFloat64);
+        EXPECT_EQ(GDALDataTypeUnion(GDT_CInt32, GDT_Int32), GDT_CInt32);
+        EXPECT_EQ(GDALDataTypeUnion(GDT_CInt32, GDT_Float32), GDT_CFloat64);
+        EXPECT_EQ(GDALDataTypeUnion(GDT_CInt32, GDT_CInt16), GDT_CInt32);
+        EXPECT_EQ(GDALDataTypeUnion(GDT_CInt32, GDT_CFloat32), GDT_CFloat64);
+        EXPECT_EQ(GDALDataTypeUnion(GDT_CFloat32, GDT_Byte), GDT_CFloat32);
+        EXPECT_EQ(GDALDataTypeUnion(GDT_CFloat32, GDT_UInt16), GDT_CFloat32);
+        EXPECT_EQ(GDALDataTypeUnion(GDT_CFloat32, GDT_Int16), GDT_CFloat32);
+        EXPECT_EQ(GDALDataTypeUnion(GDT_CFloat32, GDT_UInt32), GDT_CFloat64);
+        EXPECT_EQ(GDALDataTypeUnion(GDT_CFloat32, GDT_Int32), GDT_CFloat64);
+        EXPECT_EQ(GDALDataTypeUnion(GDT_CFloat32, GDT_Float32), GDT_CFloat32);
+        EXPECT_EQ(GDALDataTypeUnion(GDT_CFloat32, GDT_CInt16), GDT_CFloat32);
+        EXPECT_EQ(GDALDataTypeUnion(GDT_CFloat32, GDT_CInt32), GDT_CFloat64);
+
+        EXPECT_EQ(GDALFindDataType(0, false /* signed */, false /* floating */, false /* complex */), GDT_Byte);
+        EXPECT_EQ(GDALFindDataType(0, true /* signed */, false /* floating */, false /* complex */), GDT_Int8);
+        EXPECT_EQ(GDALFindDataType(0, false /* signed */, false /* floating */, true /* complex */), GDT_CInt32);
+        EXPECT_EQ(GDALFindDataType(0, true /* signed */, false /* floating */, true /* complex */), GDT_CInt16);
+        EXPECT_EQ(GDALFindDataType(0, false /* signed */, true /* floating */, false /* complex */), GDT_Float32);
+        EXPECT_EQ(GDALFindDataType(0, true /* signed */, true /* floating */, false /* complex */), GDT_Float32);
+        EXPECT_EQ(GDALFindDataType(0, false /* signed */, true /* floating */, true /* complex */), GDT_CFloat32);
+        EXPECT_EQ(GDALFindDataType(0, true /* signed */, true /* floating */, true /* complex */), GDT_CFloat32);
+
+        EXPECT_EQ(GDALFindDataType(8, false /* signed */, false /* floating */, false /* complex */), GDT_Byte);
+        EXPECT_EQ(GDALFindDataType(8, true /* signed */, false /* floating */, false /* complex */), GDT_Int8);
+
+        EXPECT_EQ(GDALFindDataType(16, false /* signed */, false /* floating */, false /* complex */), GDT_UInt16);
+        EXPECT_EQ(GDALFindDataType(16, true /* signed */, false /* floating */, false /* complex */), GDT_Int16);
+
+        EXPECT_EQ(GDALFindDataType(32, false /* signed */, false /* floating */, false /* complex */), GDT_UInt32);
+        EXPECT_EQ(GDALFindDataType(32, true /* signed */, false /* floating */, false /* complex */), GDT_Int32);
+
+        EXPECT_EQ(GDALFindDataType(64, false /* signed */, true /* floating */, false /* complex */), GDT_Float64);
+        EXPECT_EQ(GDALFindDataType(64, false /* signed */, true /* floating */, true /* complex */), GDT_CFloat64);
+
+        EXPECT_EQ(GDALFindDataType(64, false /* signed */, false /* floating */, false /* complex */), GDT_UInt64);
+        EXPECT_EQ(GDALFindDataType(64, true /* signed */, false /* floating */, false /* complex */), GDT_Int64);
+
+        EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Byte, -128, 0), GDT_Int16);
+        EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Byte, -32768, 0), GDT_Int16);
+        EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Byte, -32769, 0), GDT_Int32);
+        EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Float32, -99999, 0), GDT_Float32);
+        EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Float32, -99999.9876, 0), GDT_Float64);
+    }
 
     // Test GDALAdjustValueToDataType()
-    template<> template<> void object::test<7>()
+    TEST_F(test_gdal, GDALAdjustValueToDataType)
     {
         int bClamped, bRounded;
 
-        ensure( GDALAdjustValueToDataType(GDT_Byte,255.0,nullptr,nullptr) == 255.0);
-        ensure( GDALAdjustValueToDataType(GDT_Byte,255.0,&bClamped,&bRounded) == 255.0 && !bClamped && !bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_Byte,254.4,&bClamped,&bRounded) == 254.0 && !bClamped && bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_Byte,-1,&bClamped,&bRounded) == 0.0 && bClamped && !bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_Byte,256.0,&bClamped,&bRounded) == 255.0 && bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Byte,255.0,nullptr,nullptr) == 255.0);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Byte,255.0,&bClamped,&bRounded) == 255.0 && !bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Byte,254.4,&bClamped,&bRounded) == 254.0 && !bClamped && bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Byte,-1,&bClamped,&bRounded) == 0.0 && bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Byte,256.0,&bClamped,&bRounded) == 255.0 && bClamped && !bRounded);
 
-        ensure( GDALAdjustValueToDataType(GDT_Int8,-128.0,&bClamped,&bRounded) == -128.0 && !bClamped && !bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_Int8,127.0,&bClamped,&bRounded) == 127.0 && !bClamped && !bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_Int8,-127.4,&bClamped,&bRounded) == -127.0 && !bClamped && bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_Int8,126.4,&bClamped,&bRounded) == 126.0 && !bClamped && bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_Int8,-129.0,&bClamped,&bRounded) == -128.0 && bClamped && !bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_Int8,128.0,&bClamped,&bRounded) == 127.0 && bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Int8,-128.0,&bClamped,&bRounded) == -128.0 && !bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Int8,127.0,&bClamped,&bRounded) == 127.0 && !bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Int8,-127.4,&bClamped,&bRounded) == -127.0 && !bClamped && bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Int8,126.4,&bClamped,&bRounded) == 126.0 && !bClamped && bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Int8,-129.0,&bClamped,&bRounded) == -128.0 && bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Int8,128.0,&bClamped,&bRounded) == 127.0 && bClamped && !bRounded);
 
-        ensure( GDALAdjustValueToDataType(GDT_UInt16,65535.0,&bClamped,&bRounded) == 65535.0 && !bClamped && !bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_UInt16,65534.4,&bClamped,&bRounded) == 65534.0 && !bClamped && bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_UInt16,-1,&bClamped,&bRounded) == 0.0 && bClamped && !bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_UInt16,65536.0,&bClamped,&bRounded) == 65535.0 && bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_UInt16,65535.0,&bClamped,&bRounded) == 65535.0 && !bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_UInt16,65534.4,&bClamped,&bRounded) == 65534.0 && !bClamped && bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_UInt16,-1,&bClamped,&bRounded) == 0.0 && bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_UInt16,65536.0,&bClamped,&bRounded) == 65535.0 && bClamped && !bRounded);
 
-        ensure( GDALAdjustValueToDataType(GDT_Int16,-32768.0,&bClamped,&bRounded) == -32768.0 && !bClamped && !bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_Int16,32767.0,&bClamped,&bRounded) == 32767.0 && !bClamped && !bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_Int16,-32767.4,&bClamped,&bRounded) == -32767.0 && !bClamped && bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_Int16,32766.4,&bClamped,&bRounded) == 32766.0 && !bClamped && bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_Int16,-32769.0,&bClamped,&bRounded) == -32768.0 && bClamped && !bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_Int16,32768.0,&bClamped,&bRounded) == 32767.0 && bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Int16,-32768.0,&bClamped,&bRounded) == -32768.0 && !bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Int16,32767.0,&bClamped,&bRounded) == 32767.0 && !bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Int16,-32767.4,&bClamped,&bRounded) == -32767.0 && !bClamped && bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Int16,32766.4,&bClamped,&bRounded) == 32766.0 && !bClamped && bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Int16,-32769.0,&bClamped,&bRounded) == -32768.0 && bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Int16,32768.0,&bClamped,&bRounded) == 32767.0 && bClamped && !bRounded);
 
-        ensure( GDALAdjustValueToDataType(GDT_UInt32,10000000.0,&bClamped,&bRounded) == 10000000.0 && !bClamped && !bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_UInt32,10000000.4,&bClamped,&bRounded) == 10000000.0 && !bClamped && bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_UInt32,-1,&bClamped,&bRounded) == 0.0 && bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_UInt32,10000000.0,&bClamped,&bRounded) == 10000000.0 && !bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_UInt32,10000000.4,&bClamped,&bRounded) == 10000000.0 && !bClamped && bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_UInt32,-1,&bClamped,&bRounded) == 0.0 && bClamped && !bRounded);
 
-        ensure( GDALAdjustValueToDataType(GDT_Int32,-10000000.0,&bClamped,&bRounded) == -10000000.0 && !bClamped && !bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_Int32,10000000.0,&bClamped,&bRounded) == 10000000.0 && !bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Int32,-10000000.0,&bClamped,&bRounded) == -10000000.0 && !bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Int32,10000000.0,&bClamped,&bRounded) == 10000000.0 && !bClamped && !bRounded);
 
-        ensure( GDALAdjustValueToDataType(GDT_UInt64,10000000000.0,&bClamped,&bRounded) == 10000000000.0 && !bClamped && !bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_UInt64,10000000000.4,&bClamped,&bRounded) == 10000000000.0 && !bClamped && bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_UInt64,-1,&bClamped,&bRounded) == 0.0 && bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_UInt64,10000000000.0,&bClamped,&bRounded) == 10000000000.0 && !bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_UInt64,10000000000.4,&bClamped,&bRounded) == 10000000000.0 && !bClamped && bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_UInt64,-1,&bClamped,&bRounded) == 0.0 && bClamped && !bRounded);
 
-        ensure( GDALAdjustValueToDataType(GDT_Int64,-10000000000.0,&bClamped,&bRounded) == -10000000000.0 && !bClamped && !bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_Int64,10000000000.0,&bClamped,&bRounded) == 10000000000.0 && !bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Int64,-10000000000.0,&bClamped,&bRounded) == -10000000000.0 && !bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Int64,10000000000.0,&bClamped,&bRounded) == 10000000000.0 && !bClamped && !bRounded);
 
-        ensure( GDALAdjustValueToDataType(GDT_Float32, 0.0,&bClamped,&bRounded) == 0.0 && !bClamped && !bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_Float32, 1e-50,&bClamped,&bRounded) == 0.0 && !bClamped && !bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_Float32, 1.23,&bClamped,&bRounded) == static_cast<double>(1.23f) && !bClamped && !bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_Float32, -1e300,&bClamped,&bRounded) == -std::numeric_limits<float>::max() && bClamped && !bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_Float32, 1e300,&bClamped,&bRounded) == std::numeric_limits<float>::max() && bClamped && !bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_Float32, std::numeric_limits<float>::infinity(),&bClamped,&bRounded) == std::numeric_limits<float>::infinity() && !bClamped && !bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_Float32, -std::numeric_limits<float>::infinity(),&bClamped,&bRounded) == -std::numeric_limits<float>::infinity() && !bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Float32, 0.0,&bClamped,&bRounded) == 0.0 && !bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Float32, 1e-50,&bClamped,&bRounded) == 0.0 && !bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Float32, 1.23,&bClamped,&bRounded) == static_cast<double>(1.23f) && !bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Float32, -1e300,&bClamped,&bRounded) == -std::numeric_limits<float>::max() && bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Float32, 1e300,&bClamped,&bRounded) == std::numeric_limits<float>::max() && bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Float32, std::numeric_limits<float>::infinity(),&bClamped,&bRounded) == std::numeric_limits<float>::infinity() && !bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Float32, -std::numeric_limits<float>::infinity(),&bClamped,&bRounded) == -std::numeric_limits<float>::infinity() && !bClamped && !bRounded);
         {
             double dfNan = std::numeric_limits<double>::quiet_NaN();
             double dfGot = GDALAdjustValueToDataType(GDT_Float32, dfNan,&bClamped,&bRounded);
-            ensure( memcmp(&dfNan, &dfGot, sizeof(double)) == 0 && !bClamped && !bRounded);
+            EXPECT_TRUE( memcmp(&dfNan, &dfGot, sizeof(double)) == 0 && !bClamped && !bRounded);
         }
 
-        ensure( GDALAdjustValueToDataType(GDT_Float64, 0.0,&bClamped,&bRounded) == 0.0 && !bClamped && !bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_Float64, 1e-50,&bClamped,&bRounded) == 1e-50 && !bClamped && !bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_Float64, -1e40,&bClamped,&bRounded) == -1e40 && !bClamped && !bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_Float64, 1e40,&bClamped,&bRounded) == 1e40 && !bClamped && !bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_Float64, std::numeric_limits<float>::infinity(),&bClamped,&bRounded) == std::numeric_limits<float>::infinity() && !bClamped && !bRounded);
-        ensure( GDALAdjustValueToDataType(GDT_Float64, -std::numeric_limits<float>::infinity(),&bClamped,&bRounded) == -std::numeric_limits<float>::infinity() && !bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Float64, 0.0,&bClamped,&bRounded) == 0.0 && !bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Float64, 1e-50,&bClamped,&bRounded) == 1e-50 && !bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Float64, -1e40,&bClamped,&bRounded) == -1e40 && !bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Float64, 1e40,&bClamped,&bRounded) == 1e40 && !bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Float64, std::numeric_limits<float>::infinity(),&bClamped,&bRounded) == std::numeric_limits<float>::infinity() && !bClamped && !bRounded);
+        EXPECT_TRUE( GDALAdjustValueToDataType(GDT_Float64, -std::numeric_limits<float>::infinity(),&bClamped,&bRounded) == -std::numeric_limits<float>::infinity() && !bClamped && !bRounded);
         {
             double dfNan = std::numeric_limits<double>::quiet_NaN();
             double dfGot = GDALAdjustValueToDataType(GDT_Float64, dfNan,&bClamped,&bRounded);
-            ensure( memcmp(&dfNan, &dfGot, sizeof(double)) == 0 && !bClamped && !bRounded);
+            EXPECT_TRUE( memcmp(&dfNan, &dfGot, sizeof(double)) == 0 && !bClamped && !bRounded);
         }
     }
 
@@ -340,7 +326,7 @@ namespace tut
     };
 
     // Test that GDALTranslate() detects error in flush cache
-    template<> template<> void object::test<8>()
+    TEST_F(test_gdal, GDALTranslate_error_flush_cache)
     {
         GDALDriver* poDriver = new GDALDriver();
         poDriver->SetDescription("DatasetWithErrorInFlushCache");
@@ -355,14 +341,14 @@ namespace tut
         CPLPopErrorHandler();
         GDALClose(hSrcDS);
         GDALTranslateOptionsFree(psOptions);
-        ensure(hOutDS == nullptr);
-        ensure(CPLGetLastErrorType() != CE_None);
+        EXPECT_TRUE(hOutDS == nullptr);
+        EXPECT_TRUE(CPLGetLastErrorType() != CE_None);
         GetGDALDriverManager()->DeregisterDriver( poDriver );
         delete poDriver;
     }
 
     // Test that GDALWarp() detects error in flush cache
-    template<> template<> void object::test<9>()
+    TEST_F(test_gdal, GDALWarp_error_flush_cache)
     {
         GDALDriver* poDriver = new GDALDriver();
         poDriver->SetDescription("DatasetWithErrorInFlushCache");
@@ -377,369 +363,369 @@ namespace tut
         CPLPopErrorHandler();
         GDALClose(hSrcDS);
         GDALWarpAppOptionsFree(psOptions);
-        ensure(hOutDS == nullptr);
-        ensure(CPLGetLastErrorType() != CE_None);
+        EXPECT_TRUE(hOutDS == nullptr);
+        EXPECT_TRUE(CPLGetLastErrorType() != CE_None);
         GetGDALDriverManager()->DeregisterDriver( poDriver );
         delete poDriver;
     }
 
     // Test that GDALSwapWords() with unaligned buffers
-    template<> template<> void object::test<10>()
+    TEST_F(test_gdal, GDALSwapWords_unaligned_buffers)
     {
         GByte abyBuffer[ 8 * 2 + 1 ] = { 0, 1, 2, 3, 4, 5, 6, 7, 255, 7, 6, 5, 4, 3, 2, 1, 0 };
         GDALSwapWords(abyBuffer, 4, 2, 9 );
-        ensure( abyBuffer[0] == 3 );
-        ensure( abyBuffer[1] == 2 );
-        ensure( abyBuffer[2] == 1 );
-        ensure( abyBuffer[3] == 0 );
+        EXPECT_EQ( abyBuffer[0], 3 );
+        EXPECT_EQ( abyBuffer[1], 2 );
+        EXPECT_EQ( abyBuffer[2], 1 );
+        EXPECT_EQ( abyBuffer[3], 0 );
 
-        ensure( abyBuffer[9] == 4 );
-        ensure( abyBuffer[10] == 5 );
-        ensure( abyBuffer[11] == 6 );
-        ensure( abyBuffer[12] == 7 );
+        EXPECT_EQ( abyBuffer[9], 4 );
+        EXPECT_EQ( abyBuffer[10], 5 );
+        EXPECT_EQ( abyBuffer[11], 6 );
+        EXPECT_EQ( abyBuffer[12], 7 );
         GDALSwapWords(abyBuffer, 4, 2, 9 );
 
         GDALSwapWords(abyBuffer, 8, 2, 9 );
-        ensure( abyBuffer[0] == 7 );
-        ensure( abyBuffer[1] == 6 );
-        ensure( abyBuffer[2] == 5 );
-        ensure( abyBuffer[3] == 4 );
-        ensure( abyBuffer[4] == 3 );
-        ensure( abyBuffer[5] == 2 );
-        ensure( abyBuffer[6] == 1 );
-        ensure( abyBuffer[7] == 0 );
+        EXPECT_EQ( abyBuffer[0], 7 );
+        EXPECT_EQ( abyBuffer[1], 6 );
+        EXPECT_EQ( abyBuffer[2], 5 );
+        EXPECT_EQ( abyBuffer[3], 4 );
+        EXPECT_EQ( abyBuffer[4], 3 );
+        EXPECT_EQ( abyBuffer[5], 2 );
+        EXPECT_EQ( abyBuffer[6], 1 );
+        EXPECT_EQ( abyBuffer[7], 0 );
 
-        ensure( abyBuffer[9] == 0 );
-        ensure( abyBuffer[10] == 1 );
-        ensure( abyBuffer[11] == 2 );
-        ensure( abyBuffer[12] == 3 );
-        ensure( abyBuffer[13] == 4 );
-        ensure( abyBuffer[14] == 5 );
-        ensure( abyBuffer[15] == 6 );
-        ensure( abyBuffer[16] == 7 );
+        EXPECT_EQ( abyBuffer[9], 0 );
+        EXPECT_EQ( abyBuffer[10], 1 );
+        EXPECT_EQ( abyBuffer[11], 2 );
+        EXPECT_EQ( abyBuffer[12], 3 );
+        EXPECT_EQ( abyBuffer[13], 4 );
+        EXPECT_EQ( abyBuffer[14], 5 );
+        EXPECT_EQ( abyBuffer[15], 6 );
+        EXPECT_EQ( abyBuffer[16], 7 );
         GDALSwapWords(abyBuffer, 4, 2, 9 );
 
     }
 
     // Test ARE_REAL_EQUAL()
-    template<> template<> void object::test<11>()
+    TEST_F(test_gdal, ARE_REAL_EQUAL)
     {
-        ensure( ARE_REAL_EQUAL(0.0, 0.0) );
-        ensure( !ARE_REAL_EQUAL(0.0, 0.1) );
-        ensure( !ARE_REAL_EQUAL(0.1, 0.0) );
-        ensure( ARE_REAL_EQUAL(1.0, 1.0) );
-        ensure( !ARE_REAL_EQUAL(1.0, 0.99) );
-        ensure( ARE_REAL_EQUAL(-std::numeric_limits<double>::min(), -std::numeric_limits<double>::min()) );
-        ensure( ARE_REAL_EQUAL(std::numeric_limits<double>::min(), std::numeric_limits<double>::min()) );
-        ensure( !ARE_REAL_EQUAL(std::numeric_limits<double>::min(), 0.0) );
-        ensure( ARE_REAL_EQUAL(-std::numeric_limits<double>::max(), -std::numeric_limits<double>::max()) );
-        ensure( ARE_REAL_EQUAL(std::numeric_limits<double>::max(), std::numeric_limits<double>::max()) );
-        ensure( ARE_REAL_EQUAL(-std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity()) );
-        ensure( ARE_REAL_EQUAL(std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity()) );
-        ensure( !ARE_REAL_EQUAL(std::numeric_limits<double>::infinity(), std::numeric_limits<double>::max()) );
-        ensure( ARE_REAL_EQUAL(-std::numeric_limits<double>::min(), -std::numeric_limits<double>::min()) );
+        EXPECT_TRUE( ARE_REAL_EQUAL(0.0, 0.0) );
+        EXPECT_TRUE( !ARE_REAL_EQUAL(0.0, 0.1) );
+        EXPECT_TRUE( !ARE_REAL_EQUAL(0.1, 0.0) );
+        EXPECT_TRUE( ARE_REAL_EQUAL(1.0, 1.0) );
+        EXPECT_TRUE( !ARE_REAL_EQUAL(1.0, 0.99) );
+        EXPECT_TRUE( ARE_REAL_EQUAL(-std::numeric_limits<double>::min(), -std::numeric_limits<double>::min()) );
+        EXPECT_TRUE( ARE_REAL_EQUAL(std::numeric_limits<double>::min(), std::numeric_limits<double>::min()) );
+        EXPECT_TRUE( !ARE_REAL_EQUAL(std::numeric_limits<double>::min(), 0.0) );
+        EXPECT_TRUE( ARE_REAL_EQUAL(-std::numeric_limits<double>::max(), -std::numeric_limits<double>::max()) );
+        EXPECT_TRUE( ARE_REAL_EQUAL(std::numeric_limits<double>::max(), std::numeric_limits<double>::max()) );
+        EXPECT_TRUE( ARE_REAL_EQUAL(-std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity()) );
+        EXPECT_TRUE( ARE_REAL_EQUAL(std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity()) );
+        EXPECT_TRUE( !ARE_REAL_EQUAL(std::numeric_limits<double>::infinity(), std::numeric_limits<double>::max()) );
+        EXPECT_TRUE( ARE_REAL_EQUAL(-std::numeric_limits<double>::min(), -std::numeric_limits<double>::min()) );
 
-        ensure( ARE_REAL_EQUAL(0.0f, 0.0f) );
-        ensure( !ARE_REAL_EQUAL(0.0f, 0.1f) );
-        ensure( !ARE_REAL_EQUAL(0.1f, 0.0f) );
-        ensure( ARE_REAL_EQUAL(1.0f, 1.0f) );
-        ensure( !ARE_REAL_EQUAL(1.0f, 0.99f) );
-        ensure( ARE_REAL_EQUAL(-std::numeric_limits<float>::min(), -std::numeric_limits<float>::min()) );
-        ensure( ARE_REAL_EQUAL(std::numeric_limits<float>::min(), std::numeric_limits<float>::min()) );
-        ensure( !ARE_REAL_EQUAL(std::numeric_limits<float>::min(), 0.0f) );
-        ensure( ARE_REAL_EQUAL(-std::numeric_limits<float>::max(), -std::numeric_limits<float>::max()) );
-        ensure( ARE_REAL_EQUAL(std::numeric_limits<float>::max(), std::numeric_limits<float>::max()) );
-        ensure( ARE_REAL_EQUAL(-std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity()) );
-        ensure( ARE_REAL_EQUAL(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity()) );
-        ensure( !ARE_REAL_EQUAL(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::max()) );
+        EXPECT_TRUE( ARE_REAL_EQUAL(0.0f, 0.0f) );
+        EXPECT_TRUE( !ARE_REAL_EQUAL(0.0f, 0.1f) );
+        EXPECT_TRUE( !ARE_REAL_EQUAL(0.1f, 0.0f) );
+        EXPECT_TRUE( ARE_REAL_EQUAL(1.0f, 1.0f) );
+        EXPECT_TRUE( !ARE_REAL_EQUAL(1.0f, 0.99f) );
+        EXPECT_TRUE( ARE_REAL_EQUAL(-std::numeric_limits<float>::min(), -std::numeric_limits<float>::min()) );
+        EXPECT_TRUE( ARE_REAL_EQUAL(std::numeric_limits<float>::min(), std::numeric_limits<float>::min()) );
+        EXPECT_TRUE( !ARE_REAL_EQUAL(std::numeric_limits<float>::min(), 0.0f) );
+        EXPECT_TRUE( ARE_REAL_EQUAL(-std::numeric_limits<float>::max(), -std::numeric_limits<float>::max()) );
+        EXPECT_TRUE( ARE_REAL_EQUAL(std::numeric_limits<float>::max(), std::numeric_limits<float>::max()) );
+        EXPECT_TRUE( ARE_REAL_EQUAL(-std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity()) );
+        EXPECT_TRUE( ARE_REAL_EQUAL(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity()) );
+        EXPECT_TRUE( !ARE_REAL_EQUAL(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::max()) );
     }
 
     // Test GDALIsValueInRange()
-    template<> template<> void object::test<12>()
+    TEST_F(test_gdal, GDALIsValueInRange)
     {
-        ensure( GDALIsValueInRange<GByte>(0) );
-        ensure( GDALIsValueInRange<GByte>(255) );
-        ensure( !GDALIsValueInRange<GByte>(-1) );
-        ensure( !GDALIsValueInRange<GByte>(256) );
-        ensure( GDALIsValueInRange<GInt8>(-128) );
-        ensure( GDALIsValueInRange<GInt8>(127) );
-        ensure( !GDALIsValueInRange<GInt8>(-129) );
-        ensure( !GDALIsValueInRange<GInt8>(128) );
-        ensure( GDALIsValueInRange<float>(std::numeric_limits<float>::max()) );
-        ensure( GDALIsValueInRange<float>(std::numeric_limits<float>::infinity()) );
-        ensure( !GDALIsValueInRange<float>(std::numeric_limits<double>::max()) );
-        ensure( GDALIsValueInRange<double>(std::numeric_limits<double>::infinity()) );
-        ensure( !GDALIsValueInRange<double>(CPLAtof("nan")) );
-        ensure( !GDALIsValueInRange<float>(CPLAtof("nan")) );
-        ensure( !GDALIsValueInRange<GByte>(CPLAtof("nan")) );
+        EXPECT_TRUE( GDALIsValueInRange<GByte>(0) );
+        EXPECT_TRUE( GDALIsValueInRange<GByte>(255) );
+        EXPECT_TRUE( !GDALIsValueInRange<GByte>(-1) );
+        EXPECT_TRUE( !GDALIsValueInRange<GByte>(256) );
+        EXPECT_TRUE( GDALIsValueInRange<GInt8>(-128) );
+        EXPECT_TRUE( GDALIsValueInRange<GInt8>(127) );
+        EXPECT_TRUE( !GDALIsValueInRange<GInt8>(-129) );
+        EXPECT_TRUE( !GDALIsValueInRange<GInt8>(128) );
+        EXPECT_TRUE( GDALIsValueInRange<float>(std::numeric_limits<float>::max()) );
+        EXPECT_TRUE( GDALIsValueInRange<float>(std::numeric_limits<float>::infinity()) );
+        EXPECT_TRUE( !GDALIsValueInRange<float>(std::numeric_limits<double>::max()) );
+        EXPECT_TRUE( GDALIsValueInRange<double>(std::numeric_limits<double>::infinity()) );
+        EXPECT_TRUE( !GDALIsValueInRange<double>(CPLAtof("nan")) );
+        EXPECT_TRUE( !GDALIsValueInRange<float>(CPLAtof("nan")) );
+        EXPECT_TRUE( !GDALIsValueInRange<GByte>(CPLAtof("nan")) );
     }
 
     // Test GDALDataTypeIsInteger()
-    template<> template<> void object::test<13>()
+    TEST_F(test_gdal, GDALDataTypeIsInteger)
     {
-        ensure( !GDALDataTypeIsInteger(GDT_Unknown) );
-        ensure_equals( GDALDataTypeIsInteger(GDT_Byte), TRUE );
-        ensure_equals( GDALDataTypeIsInteger(GDT_Int8), TRUE );
-        ensure_equals( GDALDataTypeIsInteger(GDT_UInt16), TRUE );
-        ensure_equals( GDALDataTypeIsInteger(GDT_Int16), TRUE );
-        ensure_equals( GDALDataTypeIsInteger(GDT_UInt32), TRUE );
-        ensure_equals( GDALDataTypeIsInteger(GDT_Int32), TRUE );
-        ensure_equals( GDALDataTypeIsInteger(GDT_UInt64), TRUE );
-        ensure_equals( GDALDataTypeIsInteger(GDT_Int64), TRUE );
-        ensure( !GDALDataTypeIsInteger(GDT_Float32) );
-        ensure( !GDALDataTypeIsInteger(GDT_Float64) );
-        ensure_equals( GDALDataTypeIsInteger(GDT_CInt16), TRUE );
-        ensure_equals( GDALDataTypeIsInteger(GDT_CInt32), TRUE );
-        ensure( !GDALDataTypeIsInteger(GDT_CFloat32) );
-        ensure( !GDALDataTypeIsInteger(GDT_CFloat64) );
+        EXPECT_TRUE( !GDALDataTypeIsInteger(GDT_Unknown) );
+        EXPECT_EQ( GDALDataTypeIsInteger(GDT_Byte), TRUE );
+        EXPECT_EQ( GDALDataTypeIsInteger(GDT_Int8), TRUE );
+        EXPECT_EQ( GDALDataTypeIsInteger(GDT_UInt16), TRUE );
+        EXPECT_EQ( GDALDataTypeIsInteger(GDT_Int16), TRUE );
+        EXPECT_EQ( GDALDataTypeIsInteger(GDT_UInt32), TRUE );
+        EXPECT_EQ( GDALDataTypeIsInteger(GDT_Int32), TRUE );
+        EXPECT_EQ( GDALDataTypeIsInteger(GDT_UInt64), TRUE );
+        EXPECT_EQ( GDALDataTypeIsInteger(GDT_Int64), TRUE );
+        EXPECT_TRUE( !GDALDataTypeIsInteger(GDT_Float32) );
+        EXPECT_TRUE( !GDALDataTypeIsInteger(GDT_Float64) );
+        EXPECT_EQ( GDALDataTypeIsInteger(GDT_CInt16), TRUE );
+        EXPECT_EQ( GDALDataTypeIsInteger(GDT_CInt32), TRUE );
+        EXPECT_TRUE( !GDALDataTypeIsInteger(GDT_CFloat32) );
+        EXPECT_TRUE( !GDALDataTypeIsInteger(GDT_CFloat64) );
     }
 
     // Test GDALDataTypeIsFloating()
-    template<> template<> void object::test<14>()
+    TEST_F(test_gdal, GDALDataTypeIsFloating)
     {
-        ensure( !GDALDataTypeIsFloating(GDT_Unknown) );
-        ensure( !GDALDataTypeIsFloating(GDT_Byte) );
-        ensure( !GDALDataTypeIsFloating(GDT_Int8) );
-        ensure( !GDALDataTypeIsFloating(GDT_UInt16) );
-        ensure( !GDALDataTypeIsFloating(GDT_Int16) );
-        ensure( !GDALDataTypeIsFloating(GDT_UInt32) );
-        ensure( !GDALDataTypeIsFloating(GDT_Int32) );
-        ensure( !GDALDataTypeIsFloating(GDT_UInt64) );
-        ensure( !GDALDataTypeIsFloating(GDT_Int64) );
-        ensure_equals( GDALDataTypeIsFloating(GDT_Float32), TRUE );
-        ensure_equals( GDALDataTypeIsFloating(GDT_Float64), TRUE );
-        ensure( !GDALDataTypeIsFloating(GDT_CInt16) );
-        ensure( !GDALDataTypeIsFloating(GDT_CInt32) );
-        ensure_equals( GDALDataTypeIsFloating(GDT_CFloat32), TRUE );
-        ensure_equals( GDALDataTypeIsFloating(GDT_CFloat64), TRUE );
+        EXPECT_TRUE( !GDALDataTypeIsFloating(GDT_Unknown) );
+        EXPECT_TRUE( !GDALDataTypeIsFloating(GDT_Byte) );
+        EXPECT_TRUE( !GDALDataTypeIsFloating(GDT_Int8) );
+        EXPECT_TRUE( !GDALDataTypeIsFloating(GDT_UInt16) );
+        EXPECT_TRUE( !GDALDataTypeIsFloating(GDT_Int16) );
+        EXPECT_TRUE( !GDALDataTypeIsFloating(GDT_UInt32) );
+        EXPECT_TRUE( !GDALDataTypeIsFloating(GDT_Int32) );
+        EXPECT_TRUE( !GDALDataTypeIsFloating(GDT_UInt64) );
+        EXPECT_TRUE( !GDALDataTypeIsFloating(GDT_Int64) );
+        EXPECT_EQ( GDALDataTypeIsFloating(GDT_Float32), TRUE );
+        EXPECT_EQ( GDALDataTypeIsFloating(GDT_Float64), TRUE );
+        EXPECT_TRUE( !GDALDataTypeIsFloating(GDT_CInt16) );
+        EXPECT_TRUE( !GDALDataTypeIsFloating(GDT_CInt32) );
+        EXPECT_EQ( GDALDataTypeIsFloating(GDT_CFloat32), TRUE );
+        EXPECT_EQ( GDALDataTypeIsFloating(GDT_CFloat64), TRUE );
     }
 
     // Test GDALDataTypeIsComplex()
-    template<> template<> void object::test<15>()
+    TEST_F(test_gdal, GDALDataTypeIsComplex)
     {
-        ensure( !GDALDataTypeIsComplex(GDT_Unknown) );
-        ensure( !GDALDataTypeIsComplex(GDT_Byte) );
-        ensure( !GDALDataTypeIsComplex(GDT_Int8) );
-        ensure( !GDALDataTypeIsComplex(GDT_UInt16) );
-        ensure( !GDALDataTypeIsComplex(GDT_Int16) );
-        ensure( !GDALDataTypeIsComplex(GDT_UInt32) );
-        ensure( !GDALDataTypeIsComplex(GDT_Int32) );
-        ensure( !GDALDataTypeIsComplex(GDT_UInt64) );
-        ensure( !GDALDataTypeIsComplex(GDT_Int64) );
-        ensure( !GDALDataTypeIsComplex(GDT_Float32) );
-        ensure( !GDALDataTypeIsComplex(GDT_Float64) );
-        ensure_equals( GDALDataTypeIsComplex(GDT_CInt16), TRUE );
-        ensure_equals( GDALDataTypeIsComplex(GDT_CInt32), TRUE );
-        ensure_equals( GDALDataTypeIsComplex(GDT_CFloat32), TRUE );
-        ensure_equals( GDALDataTypeIsComplex(GDT_CFloat64), TRUE );
+        EXPECT_TRUE( !GDALDataTypeIsComplex(GDT_Unknown) );
+        EXPECT_TRUE( !GDALDataTypeIsComplex(GDT_Byte) );
+        EXPECT_TRUE( !GDALDataTypeIsComplex(GDT_Int8) );
+        EXPECT_TRUE( !GDALDataTypeIsComplex(GDT_UInt16) );
+        EXPECT_TRUE( !GDALDataTypeIsComplex(GDT_Int16) );
+        EXPECT_TRUE( !GDALDataTypeIsComplex(GDT_UInt32) );
+        EXPECT_TRUE( !GDALDataTypeIsComplex(GDT_Int32) );
+        EXPECT_TRUE( !GDALDataTypeIsComplex(GDT_UInt64) );
+        EXPECT_TRUE( !GDALDataTypeIsComplex(GDT_Int64) );
+        EXPECT_TRUE( !GDALDataTypeIsComplex(GDT_Float32) );
+        EXPECT_TRUE( !GDALDataTypeIsComplex(GDT_Float64) );
+        EXPECT_EQ( GDALDataTypeIsComplex(GDT_CInt16), TRUE );
+        EXPECT_EQ( GDALDataTypeIsComplex(GDT_CInt32), TRUE );
+        EXPECT_EQ( GDALDataTypeIsComplex(GDT_CFloat32), TRUE );
+        EXPECT_EQ( GDALDataTypeIsComplex(GDT_CFloat64), TRUE );
     }
 
     // Test GDALDataTypeIsConversionLossy()
-    template<> template<> void object::test<16>()
+    TEST_F(test_gdal, GDALDataTypeIsConversionLossy)
     {
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_Byte) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Byte, GDT_Int8) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_UInt16) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_Int16) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_UInt32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_Int32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_UInt64) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_Int64) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_Float32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_Float64) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_CInt16) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_CInt32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_CFloat32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_CFloat64) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_Byte) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Byte, GDT_Int8) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_UInt16) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_Int16) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_UInt32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_Int32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_UInt64) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_Int64) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_Float32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_Float64) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_CInt16) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_CInt32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_CFloat32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_CFloat64) );
 
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int8, GDT_Byte) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Int8, GDT_Int8) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int8, GDT_UInt16) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Int8, GDT_Int16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int8, GDT_UInt32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Int8, GDT_Int32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int8, GDT_UInt64) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Int8, GDT_Int64) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Int8, GDT_Float32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Int8, GDT_Float64) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Int8, GDT_CInt16) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Int8, GDT_CInt32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Int8, GDT_CFloat32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Int8, GDT_CFloat64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int8, GDT_Byte) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Int8, GDT_Int8) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int8, GDT_UInt16) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Int8, GDT_Int16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int8, GDT_UInt32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Int8, GDT_Int32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int8, GDT_UInt64) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Int8, GDT_Int64) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Int8, GDT_Float32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Int8, GDT_Float64) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Int8, GDT_CInt16) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Int8, GDT_CInt32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Int8, GDT_CFloat32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Int8, GDT_CFloat64) );
 
-        ensure( GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_Byte) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_Int8) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_UInt16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_Int16) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_UInt32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_Int32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_UInt64) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_Int64) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_Float32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_Float64) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_CInt16) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_CInt32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_CFloat32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_CFloat64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_Byte) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_Int8) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_UInt16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_Int16) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_UInt32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_Int32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_UInt64) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_Int64) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_Float32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_Float64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_CInt16) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_CInt32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_CFloat32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_CFloat64) );
 
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int16, GDT_Byte) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int16, GDT_Int8) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int16, GDT_UInt16) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Int16, GDT_Int16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int16, GDT_UInt32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Int16, GDT_Int32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int16, GDT_UInt64) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Int16, GDT_Int64) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Int16, GDT_Float32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Int16, GDT_Float64) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Int16, GDT_CInt16) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Int16, GDT_CInt32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Int16, GDT_CFloat32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Int16, GDT_CFloat64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int16, GDT_Byte) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int16, GDT_Int8) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int16, GDT_UInt16) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Int16, GDT_Int16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int16, GDT_UInt32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Int16, GDT_Int32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int16, GDT_UInt64) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Int16, GDT_Int64) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Int16, GDT_Float32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Int16, GDT_Float64) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Int16, GDT_CInt16) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Int16, GDT_CInt32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Int16, GDT_CFloat32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Int16, GDT_CFloat64) );
 
-        ensure( GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_Byte) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_UInt16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_Int16) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_UInt32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_Int32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_UInt64) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_Int64) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_Float32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_Float64) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_CInt16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_CInt32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_CFloat32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_CFloat64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_Byte) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_UInt16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_Int16) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_UInt32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_Int32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_UInt64) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_Int64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_Float32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_Float64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_CInt16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_CInt32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_CFloat32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_CFloat64) );
 
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int32, GDT_Byte) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int32, GDT_UInt16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int32, GDT_Int16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int32, GDT_UInt32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Int32, GDT_Int32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int32, GDT_UInt64) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Int32, GDT_Int64) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int32, GDT_Float32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Int32, GDT_Float64) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int32, GDT_CInt16) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Int32, GDT_CInt32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int32, GDT_CFloat32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Int32, GDT_CFloat64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int32, GDT_Byte) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int32, GDT_UInt16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int32, GDT_Int16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int32, GDT_UInt32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Int32, GDT_Int32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int32, GDT_UInt64) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Int32, GDT_Int64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int32, GDT_Float32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Int32, GDT_Float64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int32, GDT_CInt16) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Int32, GDT_CInt32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int32, GDT_CFloat32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Int32, GDT_CFloat64) );
 
-        ensure( GDALDataTypeIsConversionLossy(GDT_UInt64, GDT_Byte) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_UInt64, GDT_UInt16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_UInt64, GDT_Int16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_UInt64, GDT_UInt32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_UInt64, GDT_Int32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_UInt64, GDT_UInt64) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_UInt64, GDT_Int64) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_UInt64, GDT_Float32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_UInt64, GDT_Float64) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_UInt64, GDT_CInt16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_UInt64, GDT_CInt32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_UInt64, GDT_CFloat32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_UInt64, GDT_CFloat64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_UInt64, GDT_Byte) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_UInt64, GDT_UInt16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_UInt64, GDT_Int16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_UInt64, GDT_UInt32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_UInt64, GDT_Int32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_UInt64, GDT_UInt64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_UInt64, GDT_Int64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_UInt64, GDT_Float32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_UInt64, GDT_Float64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_UInt64, GDT_CInt16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_UInt64, GDT_CInt32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_UInt64, GDT_CFloat32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_UInt64, GDT_CFloat64) );
 
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int64, GDT_Byte) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int64, GDT_UInt16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int64, GDT_Int16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int64, GDT_UInt32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int64, GDT_Int32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int64, GDT_UInt64) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Int64, GDT_Int64) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int64, GDT_Float32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int64, GDT_Float64) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int64, GDT_CInt16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int64, GDT_CInt32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int64, GDT_CFloat32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Int64, GDT_CFloat64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int64, GDT_Byte) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int64, GDT_UInt16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int64, GDT_Int16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int64, GDT_UInt32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int64, GDT_Int32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int64, GDT_UInt64) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Int64, GDT_Int64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int64, GDT_Float32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int64, GDT_Float64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int64, GDT_CInt16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int64, GDT_CInt32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int64, GDT_CFloat32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Int64, GDT_CFloat64) );
 
-        ensure( GDALDataTypeIsConversionLossy(GDT_Float32, GDT_Byte) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Float32, GDT_UInt16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Float32, GDT_Int16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Float32, GDT_UInt32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Float32, GDT_Int32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Float32, GDT_UInt64) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Float32, GDT_Int64) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Float32, GDT_Float32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Float32, GDT_Float64) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Float32, GDT_CInt16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Float32, GDT_CInt32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Float32, GDT_CFloat32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Float32, GDT_CFloat64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Float32, GDT_Byte) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Float32, GDT_UInt16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Float32, GDT_Int16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Float32, GDT_UInt32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Float32, GDT_Int32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Float32, GDT_UInt64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Float32, GDT_Int64) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Float32, GDT_Float32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Float32, GDT_Float64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Float32, GDT_CInt16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Float32, GDT_CInt32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Float32, GDT_CFloat32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Float32, GDT_CFloat64) );
 
-        ensure( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_Byte) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_UInt16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_Int16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_UInt32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_Int32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_UInt64) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_Int64) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_Float32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Float64, GDT_Float64) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_CInt16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_CInt32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_CFloat32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_Float64, GDT_CFloat64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_Byte) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_UInt16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_Int16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_UInt32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_Int32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_UInt64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_Int64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_Float32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Float64, GDT_Float64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_CInt16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_CInt32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_CFloat32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_Float64, GDT_CFloat64) );
 
-        ensure( GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_Byte) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_UInt16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_Int16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_UInt32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_Int32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_UInt64) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_Int64) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_Float32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_Float64) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_CInt16) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_CInt32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_CFloat32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_CFloat64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_Byte) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_UInt16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_Int16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_UInt32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_Int32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_UInt64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_Int64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_Float32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_Float64) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_CInt16) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_CInt32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_CFloat32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_CFloat64) );
 
-        ensure( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_Byte) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_UInt16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_Int16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_UInt32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_Int32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_UInt64) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_Int64) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_Float32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_Float64) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_CInt16) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_CInt32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_CFloat32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_CFloat64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_Byte) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_UInt16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_Int16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_UInt32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_Int32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_UInt64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_Int64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_Float32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_Float64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_CInt16) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_CInt32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_CFloat32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_CFloat64) );
 
-        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_Byte) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_UInt16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_Int16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_UInt32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_Int32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_UInt64) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_Int64) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_Float32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_Float64) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_CInt16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_CInt32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_CFloat32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_CFloat64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_Byte) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_UInt16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_Int16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_UInt32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_Int32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_UInt64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_Int64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_Float32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_Float64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_CInt16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_CInt32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_CFloat32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_CFloat64) );
 
-        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_Byte) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_UInt16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_Int16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_UInt32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_Int32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_UInt64) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_Int64) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_Float32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_Float64) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_CInt16) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_CInt32) );
-        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_CFloat32) );
-        ensure( !GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_CFloat64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_Byte) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_UInt16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_Int16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_UInt32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_Int32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_UInt64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_Int64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_Float32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_Float64) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_CInt16) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_CInt32) );
+        EXPECT_TRUE( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_CFloat32) );
+        EXPECT_TRUE( !GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_CFloat64) );
     }
 
     // Test GDALDataset::GetBands()
-    template<> template<> void object::test<17>()
+    TEST_F(test_gdal, GDALDataset_GetBands)
     {
         GDALDatasetUniquePtr poDS(
             GDALDriver::FromHandle(
@@ -747,18 +733,18 @@ namespace tut
         int nExpectedNumber = 1;
         for( auto&& poBand: poDS->GetBands() )
         {
-            ensure_equals( poBand->GetBand(), nExpectedNumber );
+            EXPECT_EQ( poBand->GetBand(), nExpectedNumber );
             nExpectedNumber ++;
         }
-        ensure_equals( nExpectedNumber, 3 + 1 );
+        ASSERT_EQ( nExpectedNumber, 3 + 1 );
 
-        ensure_equals( poDS->GetBands().size(), 3U );
-        ensure_equals( poDS->GetBands()[0], poDS->GetRasterBand(1) );
-        ensure_equals( poDS->GetBands()[static_cast<size_t>(0)], poDS->GetRasterBand(1) );
+        ASSERT_EQ( poDS->GetBands().size(), 3U );
+        EXPECT_EQ( poDS->GetBands()[0], poDS->GetRasterBand(1) );
+        EXPECT_EQ( poDS->GetBands()[static_cast<size_t>(0)], poDS->GetRasterBand(1) );
 
     }
 
-    template<> template<> void object::test<18>()
+    TEST_F(test_gdal, GDALExtendedDataType)
     {
         // non-null string to string
         {
@@ -767,12 +753,12 @@ namespace tut
             GDALExtendedDataType::CopyValue(
                 &srcPtr, GDALExtendedDataType::CreateString(),
                 &dstPtr, GDALExtendedDataType::CreateString());
-            ensure(dstPtr != nullptr);
+            EXPECT_TRUE(dstPtr != nullptr);
             // Coverity isn't smart enough to figure out that GetClass() of
             // CreateString() is GEDTC_STRING and then takes the wrong path
             // in CopyValue() and makes wrong assumptions.
             // coverity[string_null]
-            ensure(strcmp(dstPtr, srcPtr) == 0);
+            EXPECT_STREQ(dstPtr, srcPtr);
             // coverity[incorrect_free]
             CPLFree(dstPtr);
         }
@@ -783,7 +769,7 @@ namespace tut
             GDALExtendedDataType::CopyValue(
                 &srcPtr, GDALExtendedDataType::CreateString(),
                 &dstPtr, GDALExtendedDataType::CreateString());
-            ensure(dstPtr == nullptr);
+            EXPECT_TRUE(dstPtr == nullptr);
         }
         // non-null string to Int32
         {
@@ -792,7 +778,7 @@ namespace tut
             GDALExtendedDataType::CopyValue(
                 &srcPtr, GDALExtendedDataType::CreateString(),
                 &nVal, GDALExtendedDataType::Create(GDT_Int32));
-            ensure_equals(nVal, 2);
+            EXPECT_EQ(nVal, 2);
         }
         // null string to Int32
         {
@@ -801,7 +787,7 @@ namespace tut
             GDALExtendedDataType::CopyValue(
                 &srcPtr, GDALExtendedDataType::CreateString(),
                 &nVal, GDALExtendedDataType::Create(GDT_Int32));
-            ensure_equals(nVal, 0);
+            EXPECT_EQ(nVal, 0);
         }
         // non-null string to Int64
         {
@@ -810,7 +796,7 @@ namespace tut
             GDALExtendedDataType::CopyValue(
                 &srcPtr, GDALExtendedDataType::CreateString(),
                 &nVal, GDALExtendedDataType::Create(GDT_Int64));
-            ensure_equals(nVal, 2);
+            EXPECT_EQ(nVal, 2);
         }
         // null string to Int64
         {
@@ -819,7 +805,7 @@ namespace tut
             GDALExtendedDataType::CopyValue(
                 &srcPtr, GDALExtendedDataType::CreateString(),
                 &nVal, GDALExtendedDataType::Create(GDT_Int64));
-            ensure_equals(nVal, 0);
+            EXPECT_EQ(nVal, 0);
         }
         // non-null string to UInt64
         {
@@ -828,7 +814,7 @@ namespace tut
             GDALExtendedDataType::CopyValue(
                 &srcPtr, GDALExtendedDataType::CreateString(),
                 &nVal, GDALExtendedDataType::Create(GDT_UInt64));
-            ensure_equals(nVal, 0U);
+            EXPECT_EQ(nVal, 0U);
         }
         // non-null string to Int64
         {
@@ -837,7 +823,7 @@ namespace tut
             GDALExtendedDataType::CopyValue(
                 &srcPtr, GDALExtendedDataType::CreateString(),
                 &nVal, GDALExtendedDataType::Create(GDT_UInt64));
-            ensure_equals(nVal, 2U);
+            EXPECT_EQ(nVal, 2U);
         }
 
         class myArray: public GDALMDArray
@@ -930,12 +916,12 @@ namespace tut
 
         {
             auto ar(myArray::Create(GDT_UInt16, {3000,1000,2000},{32,64,128}));
-            ensure_equals(ar->at(0)->GetDimensionCount(), 2U);
-            ensure_equals(ar->at(2999,999,1999)->GetDimensionCount(), 0U);
+            EXPECT_EQ(ar->at(0)->GetDimensionCount(), 2U);
+            EXPECT_EQ(ar->at(2999,999,1999)->GetDimensionCount(), 0U);
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            ensure(ar->at(3000,0,0) == nullptr);
-            ensure(ar->at(0,0,0,0) == nullptr);
-            ensure((*ar)["foo"] == nullptr);
+            EXPECT_TRUE(ar->at(3000,0,0) == nullptr);
+            EXPECT_TRUE(ar->at(0,0,0,0) == nullptr);
+            EXPECT_TRUE((*ar)["foo"] == nullptr);
             CPLPopErrorHandler();
         }
 
@@ -945,18 +931,18 @@ namespace tut
                 GDALEDTComponent("f\\o\"o", 0, GDALExtendedDataType::Create(GDT_Int32))));
             auto dt(GDALExtendedDataType::Create("", 4, std::move(comps)));
             auto ar(myArray::Create(dt, {3000,1000,2000},{32,64,128}));
-            ensure((*ar)["f\\o\"o"] != nullptr);
+            EXPECT_TRUE((*ar)["f\\o\"o"] != nullptr);
         }
 
         {
             myArray ar(GDT_UInt16, {}, {});
 
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            ensure(ar.GetView("[...]") == nullptr);
+            EXPECT_TRUE(ar.GetView("[...]") == nullptr);
             CPLPopErrorHandler();
 
             auto cs = ar.GetProcessingChunkSize(0);
-            ensure_equals( cs.size(), 0U );
+            EXPECT_EQ( cs.size(), 0U );
 
             struct TmpStructNoDim
             {
@@ -967,11 +953,11 @@ namespace tut
                                 GUInt64 nChunkCount,
                                 void* user_data)
                 {
-                    ensure( p_ar->GetName() == "array" );
-                    ensure(chunk_array_start_idx == nullptr);
-                    ensure(chunk_count == nullptr);
-                    ensure_equals(iCurChunk, 1U);
-                    ensure_equals(nChunkCount, 1U);
+                    EXPECT_TRUE( p_ar->GetName() == "array" );
+                    EXPECT_TRUE(chunk_array_start_idx == nullptr);
+                    EXPECT_TRUE(chunk_count == nullptr);
+                    EXPECT_EQ(iCurChunk, 1U);
+                    EXPECT_EQ(nChunkCount, 1U);
                     *static_cast<bool*>(user_data) = true;
                     return true;
                 }
@@ -979,7 +965,7 @@ namespace tut
 
             bool b = false;
             ar.ProcessPerChunk(nullptr, nullptr, nullptr, TmpStructNoDim::func, &b);
-            ensure(b);
+            EXPECT_TRUE(b);
         }
 
         struct ChunkDef
@@ -997,7 +983,7 @@ namespace tut
                             GUInt64 nChunkCount,
                             void* user_data)
             {
-                ensure( p_ar->GetName() == "array" );
+                EXPECT_EQ( p_ar->GetName(), "array" );
                 std::vector<ChunkDef>* p_chunkDefs =
                     static_cast<std::vector<ChunkDef>*>(user_data);
                 std::vector<GUInt64> v_chunk_array_start_idx;
@@ -1012,9 +998,9 @@ namespace tut
                 chunkDef.array_start_idx = std::move(v_chunk_array_start_idx);
                 chunkDef.count = std::move(v_chunk_count);
                 p_chunkDefs->emplace_back(std::move(chunkDef));
-                ensure_equals(p_chunkDefs->size(), iCurChunk);
-                ensure( iCurChunk > 0 );
-                ensure( iCurChunk <= nChunkCount );
+                EXPECT_EQ(p_chunkDefs->size(), iCurChunk);
+                EXPECT_TRUE( iCurChunk > 0 );
+                EXPECT_TRUE( iCurChunk <= nChunkCount );
                 return true;
             }
         };
@@ -1024,17 +1010,17 @@ namespace tut
             myArray ar(GDT_UInt16, {3000,1000,2000},{32,64,128});
             {
                 auto cs = ar.GetProcessingChunkSize(0);
-                ensure_equals( cs.size(), 3U );
-                ensure_equals( cs[0], 32U );
-                ensure_equals( cs[1], 64U );
-                ensure_equals( cs[2], 128U );
+                EXPECT_EQ( cs.size(), 3U );
+                EXPECT_EQ( cs[0], 32U );
+                EXPECT_EQ( cs[1], 64U );
+                EXPECT_EQ( cs[2], 128U );
             }
             {
                 auto cs = ar.GetProcessingChunkSize(40*1000*1000);
-                ensure_equals( cs.size(), 3U );
-                ensure_equals( cs[0], 32U );
-                ensure_equals( cs[1], 256U );
-                ensure_equals( cs[2], 2000U );
+                EXPECT_EQ( cs.size(), 3U );
+                EXPECT_EQ( cs[0], 32U );
+                EXPECT_EQ( cs[1], 256U );
+                EXPECT_EQ( cs[2], 2000U );
 
                 std::vector<ChunkDef> chunkDefs;
 
@@ -1044,7 +1030,7 @@ namespace tut
                     std::vector<GUInt64> array_start_idx{ 1, 0, 0 };
                     std::vector<GUInt64> count{ 3000, 1000, 2000 };
                     CPLPushErrorHandler(CPLQuietErrorHandler);
-                    ensure(!ar.ProcessPerChunk(
+                    EXPECT_TRUE(!ar.ProcessPerChunk(
                         array_start_idx.data(), count.data(), cs.data(),
                         TmpStruct::func, &chunkDefs));
                     CPLPopErrorHandler();
@@ -1055,7 +1041,7 @@ namespace tut
                     std::vector<GUInt64> array_start_idx{ 3000, 0, 0 };
                     std::vector<GUInt64> count{ 1, 1000, 2000 };
                     CPLPushErrorHandler(CPLQuietErrorHandler);
-                    ensure(!ar.ProcessPerChunk(
+                    EXPECT_TRUE(!ar.ProcessPerChunk(
                         array_start_idx.data(), count.data(), cs.data(),
                         TmpStruct::func, &chunkDefs));
                     CPLPopErrorHandler();
@@ -1066,7 +1052,7 @@ namespace tut
                     std::vector<GUInt64> array_start_idx{ 0, 0, 0 };
                     std::vector<GUInt64> count{ 3001, 1000, 2000 };
                     CPLPushErrorHandler(CPLQuietErrorHandler);
-                    ensure(!ar.ProcessPerChunk(
+                    EXPECT_TRUE(!ar.ProcessPerChunk(
                         array_start_idx.data(), count.data(), cs.data(),
                         TmpStruct::func, &chunkDefs));
                     CPLPopErrorHandler();
@@ -1077,7 +1063,7 @@ namespace tut
                     std::vector<GUInt64> array_start_idx{ 0, 0, 0 };
                     std::vector<GUInt64> count{ 0, 1000, 2000 };
                     CPLPushErrorHandler(CPLQuietErrorHandler);
-                    ensure(!ar.ProcessPerChunk(
+                    EXPECT_TRUE(!ar.ProcessPerChunk(
                         array_start_idx.data(), count.data(), cs.data(),
                         TmpStruct::func, &chunkDefs));
                     CPLPopErrorHandler();
@@ -1088,7 +1074,7 @@ namespace tut
                     std::vector<GUInt64> count{ 3000, 1000, 2000 };
                     std::vector<size_t> myCustomChunkSize{ 0, 1000, 2000 };
                     CPLPushErrorHandler(CPLQuietErrorHandler);
-                    ensure(!ar.ProcessPerChunk(
+                    EXPECT_TRUE(!ar.ProcessPerChunk(
                         array_start_idx.data(), count.data(),
                         myCustomChunkSize.data(),
                         TmpStruct::func, &chunkDefs));
@@ -1100,7 +1086,7 @@ namespace tut
                     std::vector<GUInt64> count{ 3000, 1000, 2000 };
                     std::vector<size_t> myCustomChunkSize{ 3001, 1000, 2000 };
                     CPLPushErrorHandler(CPLQuietErrorHandler);
-                    ensure(!ar.ProcessPerChunk(
+                    EXPECT_TRUE(!ar.ProcessPerChunk(
                         array_start_idx.data(), count.data(),
                         myCustomChunkSize.data(),
                         TmpStruct::func, &chunkDefs));
@@ -1109,7 +1095,7 @@ namespace tut
 
                 std::vector<GUInt64> array_start_idx{ 1500, 256, 0 };
                 std::vector<GUInt64> count{ 99, 512, 2000 };
-                ensure(ar.ProcessPerChunk(
+                EXPECT_TRUE(ar.ProcessPerChunk(
                     array_start_idx.data(), count.data(), cs.data(),
                     TmpStruct::func, &chunkDefs));
 
@@ -1119,7 +1105,7 @@ namespace tut
                     nExpectedChunks *= static_cast<size_t>(
                         1+((array_start_idx[i]+count[i]-1)/cs[i])-(array_start_idx[i]/cs[i]));
                 }
-                ensure_equals( chunkDefs.size(), nExpectedChunks );
+                EXPECT_EQ( chunkDefs.size(), nExpectedChunks );
 
                 CPLString osChunks;
                 for( const auto& chunkDef: chunkDefs )
@@ -1133,7 +1119,7 @@ namespace tut
                            (unsigned)chunkDef.count[1],
                            (unsigned)chunkDef.count[2]);
                 }
-                ensure_equals(osChunks,
+                EXPECT_EQ(osChunks,
                                 "{1500, 256, 0}, {4, 256, 2000}\n"
                                 "{1500, 512, 0}, {4, 256, 2000}\n"
                                 "{1504, 256, 0}, {32, 256, 2000}\n"
@@ -1157,7 +1143,7 @@ namespace tut
             std::vector<size_t> myCustomChunkSize{ Msize_t, Msize_t, Msize_t };
             std::vector<ChunkDef> chunkDefs;
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            ensure(!ar.ProcessPerChunk(
+            EXPECT_TRUE(!ar.ProcessPerChunk(
                 array_start_idx.data(), count.data(),
                 myCustomChunkSize.data(),
                 TmpStruct::func, &chunkDefs));
@@ -1171,7 +1157,7 @@ namespace tut
             std::vector<GUInt64> count{ 99, 512, 2000 };
             std::vector<ChunkDef> chunkDefs;
             auto cs = ar.GetProcessingChunkSize(40*1000*1000);
-            ensure(ar.ProcessPerChunk(
+            EXPECT_TRUE(ar.ProcessPerChunk(
                 array_start_idx.data(), count.data(), cs.data(),
                 TmpStruct::func, &chunkDefs));
 
@@ -1181,7 +1167,7 @@ namespace tut
                 nExpectedChunks *= static_cast<size_t>(
                     1+((array_start_idx[i]+count[i]-1)/cs[i])-(array_start_idx[i]/cs[i]));
             }
-            ensure_equals( chunkDefs.size(), nExpectedChunks );
+            EXPECT_EQ( chunkDefs.size(), nExpectedChunks );
 
             CPLString osChunks;
             for( const auto& chunkDef: chunkDefs )
@@ -1195,7 +1181,7 @@ namespace tut
                         (unsigned)chunkDef.count[1],
                         (unsigned)chunkDef.count[2]);
             }
-            ensure_equals(osChunks,
+            EXPECT_EQ(osChunks,
                             "{5000001500, 5000000256, 5000000000}, {4, 256, 2000}\n"
                             "{5000001500, 5000000512, 5000000000}, {4, 256, 2000}\n"
                             "{5000001504, 5000000256, 5000000000}, {32, 256, 2000}\n"
@@ -1211,31 +1197,31 @@ namespace tut
             myArray ar(GDT_UInt16, {500,1000,2000},{0,0,128});
             {
                 auto cs = ar.GetProcessingChunkSize(300*2);
-                ensure_equals( cs.size(), 3U );
-                ensure_equals( cs[0], 1U );
-                ensure_equals( cs[1], 1U );
-                ensure_equals( cs[2], 256U );
+                EXPECT_EQ( cs.size(), 3U );
+                EXPECT_EQ( cs[0], 1U );
+                EXPECT_EQ( cs[1], 1U );
+                EXPECT_EQ( cs[2], 256U );
             }
             {
                 auto cs = ar.GetProcessingChunkSize(40*1000*1000);
-                ensure_equals( cs.size(), 3U );
-                ensure_equals( cs[0], 10U );
-                ensure_equals( cs[1], 1000U );
-                ensure_equals( cs[2], 2000U );
+                EXPECT_EQ( cs.size(), 3U );
+                EXPECT_EQ( cs[0], 10U );
+                EXPECT_EQ( cs[1], 1000U );
+                EXPECT_EQ( cs[2], 2000U );
             }
             {
                 auto cs = ar.GetProcessingChunkSize(500U*1000*2000*2);
-                ensure_equals( cs.size(), 3U );
-                ensure_equals( cs[0], 500U );
-                ensure_equals( cs[1], 1000U );
-                ensure_equals( cs[2], 2000U );
+                EXPECT_EQ( cs.size(), 3U );
+                EXPECT_EQ( cs[0], 500U );
+                EXPECT_EQ( cs[1], 1000U );
+                EXPECT_EQ( cs[2], 2000U );
             }
             {
                 auto cs = ar.GetProcessingChunkSize(500U*1000*2000*2 - 1);
-                ensure_equals( cs.size(), 3U );
-                ensure_equals( cs[0], 499U );
-                ensure_equals( cs[1], 1000U );
-                ensure_equals( cs[2], 2000U );
+                EXPECT_EQ( cs.size(), 3U );
+                EXPECT_EQ( cs[0], 499U );
+                EXPECT_EQ( cs[1], 1000U );
+                EXPECT_EQ( cs[2], 2000U );
             }
         }
         {
@@ -1243,13 +1229,13 @@ namespace tut
             myArray ar(GDT_UInt16,{M,M,M},{M,M,M/2});
             {
                 auto cs = ar.GetProcessingChunkSize(0);
-                ensure_equals( cs.size(), 3U );
-                ensure_equals( cs[0], 1U );
-                ensure_equals( cs[1], 1U );
+                EXPECT_EQ( cs.size(), 3U );
+                EXPECT_EQ( cs[0], 1U );
+                EXPECT_EQ( cs[1], 1U );
 #if SIZEOF_VOIDP == 8
-                ensure_equals( cs[2], static_cast<size_t>(M/2) );
+                EXPECT_EQ( cs[2], static_cast<size_t>(M/2) );
 #else
-                ensure_equals( cs[2], 1U );
+                EXPECT_EQ( cs[2], 1U );
 #endif
             }
         }
@@ -1259,151 +1245,155 @@ namespace tut
             myArray ar(GDT_UInt16,{M,M,M},{M,M,M/4});
             {
                 auto cs = ar.GetProcessingChunkSize(std::numeric_limits<size_t>::max());
-                ensure_equals( cs.size(), 3U );
-                ensure_equals( cs[0], 1U );
-                ensure_equals( cs[1], 1U );
-                ensure_equals( cs[2], (std::numeric_limits<size_t>::max() / 4) * 2 );
+                EXPECT_EQ( cs.size(), 3U );
+                EXPECT_EQ( cs[0], 1U );
+                EXPECT_EQ( cs[1], 1U );
+                EXPECT_EQ( cs[2], (std::numeric_limits<size_t>::max() / 4) * 2 );
             }
         }
 #endif
     }
 
     // Test GDALDataset::GetRawBinaryLayout() implementations
-    template<> template<> void object::test<19>()
+    TEST_F(test_gdal, GetRawBinaryLayout_ENVI)
     {
-        // ENVI
-        if( GDALGetDriverByName("ENVI") != nullptr )
+        if( GDALGetDriverByName("ENVI") == nullptr )
+        {
+            GTEST_SKIP() << "ENVI driver missing";
+        }
+
         {
             GDALDatasetUniquePtr poDS(
                 GDALDataset::Open(GDRIVERS_DATA_DIR "envi/envi_rgbsmall_bip.img"));
-            ensure( poDS != nullptr );
+            EXPECT_TRUE( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
-            ensure( poDS->GetRawBinaryLayout(sLayout) );
-            ensure_equals( sLayout.osRawFilename, poDS->GetDescription() );
-            ensure_equals( static_cast<int>(sLayout.eInterleaving),
+            EXPECT_TRUE( poDS->GetRawBinaryLayout(sLayout) );
+            EXPECT_EQ( sLayout.osRawFilename, poDS->GetDescription() );
+            EXPECT_EQ( static_cast<int>(sLayout.eInterleaving),
                            static_cast<int>(GDALDataset::RawBinaryLayout::Interleaving::BIP) );
-            ensure_equals( sLayout.eDataType, GDT_Byte );
-            ensure( sLayout.bLittleEndianOrder );
-            ensure_equals( sLayout.nImageOffset, 0U );
-            ensure_equals( sLayout.nPixelOffset, 3 );
-            ensure_equals( sLayout.nLineOffset, 3 * 50 );
-            ensure_equals( sLayout.nBandOffset, 1 );
+            EXPECT_EQ( sLayout.eDataType, GDT_Byte );
+            EXPECT_TRUE( sLayout.bLittleEndianOrder );
+            EXPECT_EQ( sLayout.nImageOffset, 0U );
+            EXPECT_EQ( sLayout.nPixelOffset, 3 );
+            EXPECT_EQ( sLayout.nLineOffset, 3 * 50 );
+            EXPECT_EQ( sLayout.nBandOffset, 1 );
         }
 
-        if( GDALGetDriverByName("ENVI") != nullptr )
         {
             GDALDatasetUniquePtr poDS(
                 GDALDataset::Open(GDRIVERS_DATA_DIR "envi/envi_rgbsmall_bil.img"));
-            ensure( poDS != nullptr );
+            EXPECT_TRUE( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
-            ensure( poDS->GetRawBinaryLayout(sLayout) );
-            ensure_equals( sLayout.osRawFilename, poDS->GetDescription() );
-            ensure_equals( static_cast<int>(sLayout.eInterleaving),
+            EXPECT_TRUE( poDS->GetRawBinaryLayout(sLayout) );
+            EXPECT_EQ( sLayout.osRawFilename, poDS->GetDescription() );
+            EXPECT_EQ( static_cast<int>(sLayout.eInterleaving),
                            static_cast<int>(GDALDataset::RawBinaryLayout::Interleaving::BIL) );
-            ensure_equals( sLayout.eDataType, GDT_Byte );
-            ensure( sLayout.bLittleEndianOrder );
-            ensure_equals( sLayout.nImageOffset, 0U );
-            ensure_equals( sLayout.nPixelOffset, 1 );
-            ensure_equals( sLayout.nLineOffset, 3 * 50 );
-            ensure_equals( sLayout.nBandOffset, 50 );
+            EXPECT_EQ( sLayout.eDataType, GDT_Byte );
+            EXPECT_TRUE( sLayout.bLittleEndianOrder );
+            EXPECT_EQ( sLayout.nImageOffset, 0U );
+            EXPECT_EQ( sLayout.nPixelOffset, 1 );
+            EXPECT_EQ( sLayout.nLineOffset, 3 * 50 );
+            EXPECT_EQ( sLayout.nBandOffset, 50 );
         }
 
-        if( GDALGetDriverByName("ENVI") != nullptr )
         {
             GDALDatasetUniquePtr poDS(
                 GDALDataset::Open(GDRIVERS_DATA_DIR "envi/envi_rgbsmall_bsq.img"));
-            ensure( poDS != nullptr );
+            EXPECT_TRUE( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
-            ensure( poDS->GetRawBinaryLayout(sLayout) );
-            ensure_equals( sLayout.osRawFilename, poDS->GetDescription() );
-            ensure_equals( static_cast<int>(sLayout.eInterleaving),
+            EXPECT_TRUE( poDS->GetRawBinaryLayout(sLayout) );
+            EXPECT_EQ( sLayout.osRawFilename, poDS->GetDescription() );
+            EXPECT_EQ( static_cast<int>(sLayout.eInterleaving),
                            static_cast<int>(GDALDataset::RawBinaryLayout::Interleaving::BSQ) );
-            ensure_equals( sLayout.eDataType, GDT_Byte );
-            ensure( sLayout.bLittleEndianOrder );
-            ensure_equals( sLayout.nImageOffset, 0U );
-            ensure_equals( sLayout.nPixelOffset, 1 );
-            ensure_equals( sLayout.nLineOffset, 50 );
-            ensure_equals( sLayout.nBandOffset, 50 * 49 );
+            EXPECT_EQ( sLayout.eDataType, GDT_Byte );
+            EXPECT_TRUE( sLayout.bLittleEndianOrder );
+            EXPECT_EQ( sLayout.nImageOffset, 0U );
+            EXPECT_EQ( sLayout.nPixelOffset, 1 );
+            EXPECT_EQ( sLayout.nLineOffset, 50 );
+            EXPECT_EQ( sLayout.nBandOffset, 50 * 49 );
+        }
+    }
+
+    // Test GDALDataset::GetRawBinaryLayout() implementations
+    TEST_F(test_gdal, GetRawBinaryLayout_GTIFF)
+    {
+        if( GDALGetDriverByName("GTIFF") == nullptr )
+        {
+            GTEST_SKIP() << "GTIFF driver missing";
         }
 
-        // GTiff
-        if( GDALGetDriverByName("GTiff") != nullptr )
         {
             GDALDatasetUniquePtr poDS(
                 GDALDataset::Open(GCORE_DATA_DIR "byte.tif"));
-            ensure( poDS != nullptr );
+            EXPECT_TRUE( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
-            ensure( poDS->GetRawBinaryLayout(sLayout) );
-            ensure_equals( sLayout.osRawFilename, poDS->GetDescription() );
-            ensure_equals( static_cast<int>(sLayout.eInterleaving),
+            EXPECT_TRUE( poDS->GetRawBinaryLayout(sLayout) );
+            EXPECT_EQ( sLayout.osRawFilename, poDS->GetDescription() );
+            EXPECT_EQ( static_cast<int>(sLayout.eInterleaving),
                            static_cast<int>(GDALDataset::RawBinaryLayout::Interleaving::UNKNOWN) );
-            ensure_equals( sLayout.eDataType, GDT_Byte );
-            ensure( sLayout.bLittleEndianOrder );
-            ensure_equals( sLayout.nImageOffset, 8U );
-            ensure_equals( sLayout.nPixelOffset, 1 );
-            ensure_equals( sLayout.nLineOffset, 20 );
-            ensure_equals( sLayout.nBandOffset, 0 );
+            EXPECT_EQ( sLayout.eDataType, GDT_Byte );
+            EXPECT_TRUE( sLayout.bLittleEndianOrder );
+            EXPECT_EQ( sLayout.nImageOffset, 8U );
+            EXPECT_EQ( sLayout.nPixelOffset, 1 );
+            EXPECT_EQ( sLayout.nLineOffset, 20 );
+            EXPECT_EQ( sLayout.nBandOffset, 0 );
         }
 
-        if( GDALGetDriverByName("GTiff") != nullptr )
         {
             GDALDatasetUniquePtr poDS(
                 GDALDataset::Open(GCORE_DATA_DIR "rgbsmall.tif"));
-            ensure( poDS != nullptr );
+            EXPECT_TRUE( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
             // Compressed
-            ensure( !poDS->GetRawBinaryLayout(sLayout) );
+            EXPECT_TRUE( !poDS->GetRawBinaryLayout(sLayout) );
         }
 
-        if( GDALGetDriverByName("GTiff") != nullptr )
         {
             GDALDatasetUniquePtr poDS(
                 GDALDataset::Open(GCORE_DATA_DIR "stefan_full_rgba.tif"));
-            ensure( poDS != nullptr );
+            EXPECT_TRUE( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
-            ensure( poDS->GetRawBinaryLayout(sLayout) );
-            ensure_equals( sLayout.osRawFilename, poDS->GetDescription() );
-            ensure_equals( static_cast<int>(sLayout.eInterleaving),
+            EXPECT_TRUE( poDS->GetRawBinaryLayout(sLayout) );
+            EXPECT_EQ( sLayout.osRawFilename, poDS->GetDescription() );
+            EXPECT_EQ( static_cast<int>(sLayout.eInterleaving),
                            static_cast<int>(GDALDataset::RawBinaryLayout::Interleaving::BIP) );
-            ensure_equals( sLayout.eDataType, GDT_Byte );
-            ensure( sLayout.bLittleEndianOrder );
-            ensure_equals( sLayout.nImageOffset, 278U );
-            ensure_equals( sLayout.nPixelOffset, 4 );
-            ensure_equals( sLayout.nLineOffset, 162 * 4 );
-            ensure_equals( sLayout.nBandOffset, 1 );
+            EXPECT_EQ( sLayout.eDataType, GDT_Byte );
+            EXPECT_TRUE( sLayout.bLittleEndianOrder );
+            EXPECT_EQ( sLayout.nImageOffset, 278U );
+            EXPECT_EQ( sLayout.nPixelOffset, 4 );
+            EXPECT_EQ( sLayout.nLineOffset, 162 * 4 );
+            EXPECT_EQ( sLayout.nBandOffset, 1 );
         }
 
-        if( GDALGetDriverByName("GTiff") != nullptr )
         {
             GDALDatasetUniquePtr poSrcDS(
                 GDALDataset::Open(GCORE_DATA_DIR "rgbsmall.tif"));
-            ensure( poSrcDS != nullptr );
+            EXPECT_TRUE( poSrcDS != nullptr );
             auto tmpFilename = "/vsimem/tmp.tif";
             auto poDrv = GDALDriver::FromHandle(GDALGetDriverByName("GTiff"));
             const char* options [] = { "INTERLEAVE=BAND", nullptr };
             auto poDS(GDALDatasetUniquePtr(poDrv->CreateCopy(
                 tmpFilename, poSrcDS.get(), false, const_cast<char**>(options), nullptr, nullptr)));
-            ensure( poDS != nullptr );
+            EXPECT_TRUE( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
-            ensure( poDS->GetRawBinaryLayout(sLayout) );
-            ensure_equals( sLayout.osRawFilename, poDS->GetDescription() );
-            ensure_equals( static_cast<int>(sLayout.eInterleaving),
+            EXPECT_TRUE( poDS->GetRawBinaryLayout(sLayout) );
+            EXPECT_EQ( sLayout.osRawFilename, poDS->GetDescription() );
+            EXPECT_EQ( static_cast<int>(sLayout.eInterleaving),
                            static_cast<int>(GDALDataset::RawBinaryLayout::Interleaving::BSQ) );
-            ensure_equals( sLayout.eDataType, GDT_Byte );
-            ensure( sLayout.bLittleEndianOrder );
-            ensure( sLayout.nImageOffset >= 396U );
-            ensure_equals( sLayout.nPixelOffset, 1 );
-            ensure_equals( sLayout.nLineOffset, 50 );
-            ensure_equals( sLayout.nBandOffset, 50 * 50 );
+            EXPECT_EQ( sLayout.eDataType, GDT_Byte );
+            EXPECT_TRUE( sLayout.bLittleEndianOrder );
+            EXPECT_TRUE( sLayout.nImageOffset >= 396U );
+            EXPECT_EQ( sLayout.nPixelOffset, 1 );
+            EXPECT_EQ( sLayout.nLineOffset, 50 );
+            EXPECT_EQ( sLayout.nBandOffset, 50 * 50 );
             poDS.reset();
             VSIUnlink(tmpFilename);
         }
 
-        if( GDALGetDriverByName("GTiff") != nullptr )
         {
             GDALDatasetUniquePtr poSrcDS(
                 GDALDataset::Open(GCORE_DATA_DIR "rgbsmall.tif"));
-            ensure( poSrcDS != nullptr );
+            EXPECT_TRUE( poSrcDS != nullptr );
             auto tmpFilename = "/vsimem/tmp.tif";
             const char* options [] = { "-srcwin", "0", "0", "48", "32",
                                        "-co", "INTERLEAVE=PIXEL",
@@ -1414,27 +1404,26 @@ namespace tut
             auto poDS(GDALDatasetUniquePtr(GDALDataset::FromHandle(GDALTranslate(
                 tmpFilename, GDALDataset::ToHandle(poSrcDS.get()), psOptions, nullptr))));
             GDALTranslateOptionsFree(psOptions);
-            ensure( poDS != nullptr );
+            EXPECT_TRUE( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
-            ensure( poDS->GetRawBinaryLayout(sLayout) );
-            ensure_equals( sLayout.osRawFilename, poDS->GetDescription() );
-            ensure_equals( static_cast<int>(sLayout.eInterleaving),
+            EXPECT_TRUE( poDS->GetRawBinaryLayout(sLayout) );
+            EXPECT_EQ( sLayout.osRawFilename, poDS->GetDescription() );
+            EXPECT_EQ( static_cast<int>(sLayout.eInterleaving),
                            static_cast<int>(GDALDataset::RawBinaryLayout::Interleaving::BIP) );
-            ensure_equals( sLayout.eDataType, GDT_Byte );
-            ensure( sLayout.bLittleEndianOrder );
-            ensure( sLayout.nImageOffset >= 390U );
-            ensure_equals( sLayout.nPixelOffset, 3 );
-            ensure_equals( sLayout.nLineOffset, 48 * 3);
-            ensure_equals( sLayout.nBandOffset, 1 );
+            EXPECT_EQ( sLayout.eDataType, GDT_Byte );
+            EXPECT_TRUE( sLayout.bLittleEndianOrder );
+            EXPECT_TRUE( sLayout.nImageOffset >= 390U );
+            EXPECT_EQ( sLayout.nPixelOffset, 3 );
+            EXPECT_EQ( sLayout.nLineOffset, 48 * 3);
+            EXPECT_EQ( sLayout.nBandOffset, 1 );
             poDS.reset();
             VSIUnlink(tmpFilename);
         }
 
-        if( GDALGetDriverByName("GTiff") != nullptr )
         {
             GDALDatasetUniquePtr poSrcDS(
                 GDALDataset::Open(GCORE_DATA_DIR "rgbsmall.tif"));
-            ensure( poSrcDS != nullptr );
+            EXPECT_TRUE( poSrcDS != nullptr );
             auto tmpFilename = "/vsimem/tmp.tif";
             const char* options [] = { "-srcwin", "0", "0", "48", "32",
                                        "-co", "TILED=YES",
@@ -1445,66 +1434,87 @@ namespace tut
             auto poDS(GDALDatasetUniquePtr(GDALDataset::FromHandle(GDALTranslate(
                 tmpFilename, GDALDataset::ToHandle(poSrcDS.get()), psOptions, nullptr))));
             GDALTranslateOptionsFree(psOptions);
-            ensure( poDS != nullptr );
+            EXPECT_TRUE( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
-            ensure( poDS->GetRawBinaryLayout(sLayout) );
-            ensure_equals( sLayout.osRawFilename, poDS->GetDescription() );
-            ensure_equals( static_cast<int>(sLayout.eInterleaving),
+            EXPECT_TRUE( poDS->GetRawBinaryLayout(sLayout) );
+            EXPECT_EQ( sLayout.osRawFilename, poDS->GetDescription() );
+            EXPECT_EQ( static_cast<int>(sLayout.eInterleaving),
                            static_cast<int>(GDALDataset::RawBinaryLayout::Interleaving::BSQ) );
-            ensure_equals( sLayout.eDataType, GDT_Byte );
-            ensure( sLayout.bLittleEndianOrder );
-            ensure( sLayout.nImageOffset >= 408U );
-            ensure_equals( sLayout.nPixelOffset, 1 );
-            ensure_equals( sLayout.nLineOffset, 48);
-            ensure_equals( sLayout.nBandOffset, 48 * 32 );
+            EXPECT_EQ( sLayout.eDataType, GDT_Byte );
+            EXPECT_TRUE( sLayout.bLittleEndianOrder );
+            EXPECT_TRUE( sLayout.nImageOffset >= 408U );
+            EXPECT_EQ( sLayout.nPixelOffset, 1 );
+            EXPECT_EQ( sLayout.nLineOffset, 48);
+            EXPECT_EQ( sLayout.nBandOffset, 48 * 32 );
             poDS.reset();
             VSIUnlink(tmpFilename);
         }
+    }
 
-        // ISIS3
-        if( GDALGetDriverByName("ISIS3") != nullptr )
+    // Test GDALDataset::GetRawBinaryLayout() implementations
+    TEST_F(test_gdal, GetRawBinaryLayout_ISIS3)
+    {
+        if( GDALGetDriverByName("ISIS3") == nullptr )
+        {
+            GTEST_SKIP() << "ISIS3 driver missing";
+        }
+
         {
             GDALDatasetUniquePtr poDS(
                 GDALDataset::Open(GDRIVERS_DATA_DIR "isis3/isis3_detached.lbl"));
-            ensure( poDS != nullptr );
+            EXPECT_TRUE( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
-            ensure( poDS->GetRawBinaryLayout(sLayout) );
-            ensure( sLayout.osRawFilename.find("isis3_detached.cub") != std::string::npos );
-            ensure_equals( static_cast<int>(sLayout.eInterleaving),
+            EXPECT_TRUE( poDS->GetRawBinaryLayout(sLayout) );
+            EXPECT_TRUE( sLayout.osRawFilename.find("isis3_detached.cub") != std::string::npos );
+            EXPECT_EQ( static_cast<int>(sLayout.eInterleaving),
                            static_cast<int>(GDALDataset::RawBinaryLayout::Interleaving::UNKNOWN) );
-            ensure_equals( sLayout.eDataType, GDT_Byte );
-            ensure( sLayout.bLittleEndianOrder );
-            ensure_equals( sLayout.nImageOffset, 0U );
-            ensure_equals( sLayout.nPixelOffset, 1 );
-            ensure_equals( sLayout.nLineOffset, 317 );
-            // ensure_equals( sLayout.nBandOffset, 9510 ); // doesn't matter on single band
+            EXPECT_EQ( sLayout.eDataType, GDT_Byte );
+            EXPECT_TRUE( sLayout.bLittleEndianOrder );
+            EXPECT_EQ( sLayout.nImageOffset, 0U );
+            EXPECT_EQ( sLayout.nPixelOffset, 1 );
+            EXPECT_EQ( sLayout.nLineOffset, 317 );
+            // EXPECT_EQ( sLayout.nBandOffset, 9510 ); // doesn't matter on single band
+        }
+    }
+
+    // Test GDALDataset::GetRawBinaryLayout() implementations
+    TEST_F(test_gdal, GetRawBinaryLayout_VICAR)
+    {
+        if( GDALGetDriverByName("VICAR") == nullptr )
+        {
+            GTEST_SKIP() << "VICAR driver missing";
         }
 
-        // VICAR
-        if( GDALGetDriverByName("VICAR") != nullptr )
         {
             GDALDatasetUniquePtr poDS(
                 GDALDataset::Open(GDRIVERS_DATA_DIR "vicar/test_vicar_truncated.bin"));
-            ensure( poDS != nullptr );
+            EXPECT_TRUE( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
-            ensure( poDS->GetRawBinaryLayout(sLayout) );
-            ensure_equals( sLayout.osRawFilename, poDS->GetDescription() );
-            ensure_equals( static_cast<int>(sLayout.eInterleaving),
+            EXPECT_TRUE( poDS->GetRawBinaryLayout(sLayout) );
+            EXPECT_EQ( sLayout.osRawFilename, poDS->GetDescription() );
+            EXPECT_EQ( static_cast<int>(sLayout.eInterleaving),
                            static_cast<int>(GDALDataset::RawBinaryLayout::Interleaving::UNKNOWN) );
-            ensure_equals( sLayout.eDataType, GDT_Byte );
-            ensure( sLayout.bLittleEndianOrder );
-            ensure_equals( sLayout.nImageOffset, 9680U );
-            ensure_equals( sLayout.nPixelOffset, 1 );
-            ensure_equals( sLayout.nLineOffset, 400 );
-            ensure_equals( sLayout.nBandOffset, 0 ); // doesn't matter on single band
+            EXPECT_EQ( sLayout.eDataType, GDT_Byte );
+            EXPECT_TRUE( sLayout.bLittleEndianOrder );
+            EXPECT_EQ( sLayout.nImageOffset, 9680U );
+            EXPECT_EQ( sLayout.nPixelOffset, 1 );
+            EXPECT_EQ( sLayout.nLineOffset, 400 );
+            EXPECT_EQ( sLayout.nBandOffset, 0 ); // doesn't matter on single band
+        }
+    }
+
+    // Test GDALDataset::GetRawBinaryLayout() implementations
+    TEST_F(test_gdal, GetRawBinaryLayout_FITS)
+    {
+        if( GDALGetDriverByName("FITS") == nullptr )
+        {
+            GTEST_SKIP() << "FITS driver missing";
         }
 
-        // FITS
-        if( GDALGetDriverByName("FITS") != nullptr )
         {
             GDALDatasetUniquePtr poSrcDS(
                 GDALDataset::Open(GCORE_DATA_DIR "int16.tif"));
-            ensure( poSrcDS != nullptr );
+            EXPECT_TRUE( poSrcDS != nullptr );
             CPLString tmpFilename(CPLGenerateTempFilename(nullptr));
             tmpFilename += ".fits";
             auto poDrv = GDALDriver::FromHandle(GDALGetDriverByName("FITS"));
@@ -1512,77 +1522,91 @@ namespace tut
             {
                 auto poDS(GDALDatasetUniquePtr(poDrv->CreateCopy(
                     tmpFilename, poSrcDS.get(), false, nullptr, nullptr, nullptr)));
-                ensure( poDS != nullptr );
+                EXPECT_TRUE( poDS != nullptr );
                 poDS.reset();
                 poDS.reset(GDALDataset::Open(tmpFilename));
-                ensure( poDS != nullptr );
+                EXPECT_TRUE( poDS != nullptr );
                 GDALDataset::RawBinaryLayout sLayout;
-                ensure( poDS->GetRawBinaryLayout(sLayout) );
-                ensure_equals( sLayout.osRawFilename, poDS->GetDescription() );
-                ensure_equals( static_cast<int>(sLayout.eInterleaving),
+                EXPECT_TRUE( poDS->GetRawBinaryLayout(sLayout) );
+                EXPECT_EQ( sLayout.osRawFilename, poDS->GetDescription() );
+                EXPECT_EQ( static_cast<int>(sLayout.eInterleaving),
                             static_cast<int>(GDALDataset::RawBinaryLayout::Interleaving::UNKNOWN) );
-                ensure_equals( sLayout.eDataType, GDT_Int16 );
-                ensure( !sLayout.bLittleEndianOrder );
-                ensure_equals( sLayout.nImageOffset, 2880U );
-                ensure_equals( sLayout.nPixelOffset, 2 );
-                ensure_equals( sLayout.nLineOffset, 2 * 20 );
-                ensure_equals( sLayout.nBandOffset, 2 * 20 * 20 );
+                EXPECT_EQ( sLayout.eDataType, GDT_Int16 );
+                EXPECT_TRUE( !sLayout.bLittleEndianOrder );
+                EXPECT_EQ( sLayout.nImageOffset, 2880U );
+                EXPECT_EQ( sLayout.nPixelOffset, 2 );
+                EXPECT_EQ( sLayout.nLineOffset, 2 * 20 );
+                EXPECT_EQ( sLayout.nBandOffset, 2 * 20 * 20 );
                 poDS.reset();
                 VSIUnlink(tmpFilename);
             }
         }
+    }
 
-        // PDS 3
-        if( GDALGetDriverByName("PDS") != nullptr )
+    // Test GDALDataset::GetRawBinaryLayout() implementations
+    TEST_F(test_gdal, GetRawBinaryLayout_PDS)
+    {
+        if( GDALGetDriverByName("PDS") == nullptr )
+        {
+            GTEST_SKIP() << "PDS driver missing";
+        }
+
         {
             GDALDatasetUniquePtr poDS(
                 GDALDataset::Open(GDRIVERS_DATA_DIR "pds/mc02_truncated.img"));
-            ensure( poDS != nullptr );
+            EXPECT_TRUE( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
-            ensure( poDS->GetRawBinaryLayout(sLayout) );
-            ensure_equals( sLayout.osRawFilename, poDS->GetDescription() );
-            ensure_equals( static_cast<int>(sLayout.eInterleaving),
+            EXPECT_TRUE( poDS->GetRawBinaryLayout(sLayout) );
+            EXPECT_EQ( sLayout.osRawFilename, poDS->GetDescription() );
+            EXPECT_EQ( static_cast<int>(sLayout.eInterleaving),
                            static_cast<int>(GDALDataset::RawBinaryLayout::Interleaving::UNKNOWN) );
-            ensure_equals( sLayout.eDataType, GDT_Byte );
-            ensure( sLayout.bLittleEndianOrder );
-            ensure_equals( sLayout.nImageOffset, 3840U );
-            ensure_equals( sLayout.nPixelOffset, 1 );
-            ensure_equals( sLayout.nLineOffset, 3840 );
-            ensure_equals( sLayout.nBandOffset, 0 ); // doesn't matter on single band
+            EXPECT_EQ( sLayout.eDataType, GDT_Byte );
+            EXPECT_TRUE( sLayout.bLittleEndianOrder );
+            EXPECT_EQ( sLayout.nImageOffset, 3840U );
+            EXPECT_EQ( sLayout.nPixelOffset, 1 );
+            EXPECT_EQ( sLayout.nLineOffset, 3840 );
+            EXPECT_EQ( sLayout.nBandOffset, 0 ); // doesn't matter on single band
+        }
+    }
+
+    // Test GDALDataset::GetRawBinaryLayout() implementations
+    TEST_F(test_gdal, GetRawBinaryLayout_PDS4)
+    {
+        if( GDALGetDriverByName("PDS4") == nullptr )
+        {
+            GTEST_SKIP() << "PDS4 driver missing";
         }
 
-        // PDS 4
-        if( GDALGetDriverByName("PDS4") != nullptr )
         {
             GDALDatasetUniquePtr poDS(
                 GDALDataset::Open(GDRIVERS_DATA_DIR "pds4/byte_pds4_cart_1700.xml"));
-            ensure( poDS != nullptr );
+            EXPECT_TRUE( poDS != nullptr );
             GDALDataset::RawBinaryLayout sLayout;
-            ensure( poDS->GetRawBinaryLayout(sLayout) );
-            ensure( sLayout.osRawFilename.find("byte_pds4_cart_1700.img") != std::string::npos );
-            ensure_equals( static_cast<int>(sLayout.eInterleaving),
+            EXPECT_TRUE( poDS->GetRawBinaryLayout(sLayout) );
+            EXPECT_TRUE( sLayout.osRawFilename.find("byte_pds4_cart_1700.img") != std::string::npos );
+            EXPECT_EQ( static_cast<int>(sLayout.eInterleaving),
                            static_cast<int>(GDALDataset::RawBinaryLayout::Interleaving::UNKNOWN) );
-            ensure_equals( sLayout.eDataType, GDT_Byte );
-            ensure( !sLayout.bLittleEndianOrder );
-            ensure_equals( sLayout.nImageOffset, 0U );
-            ensure_equals( sLayout.nPixelOffset, 1 );
-            ensure_equals( sLayout.nLineOffset, 20 );
-            ensure_equals( sLayout.nBandOffset, 0 ); // doesn't matter on single band
+            EXPECT_EQ( sLayout.eDataType, GDT_Byte );
+            EXPECT_TRUE( !sLayout.bLittleEndianOrder );
+            EXPECT_EQ( sLayout.nImageOffset, 0U );
+            EXPECT_EQ( sLayout.nPixelOffset, 1 );
+            EXPECT_EQ( sLayout.nLineOffset, 20 );
+            EXPECT_EQ( sLayout.nBandOffset, 0 ); // doesn't matter on single band
         }
     }
 
     // Test TileMatrixSet
-    template<> template<> void object::test<20>()
+    TEST_F(test_gdal, TileMatrixSet)
     {
         {
             auto l = gdal::TileMatrixSet::listPredefinedTileMatrixSets();
-            ensure( l.find("GoogleMapsCompatible") != l.end() );
-            ensure( l.find("NZTM2000") != l.end() );
+            EXPECT_TRUE( l.find("GoogleMapsCompatible") != l.end() );
+            EXPECT_TRUE( l.find("NZTM2000") != l.end() );
         }
 
         {
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            ensure( gdal::TileMatrixSet::parse("i_dont_exist") == nullptr );
+            EXPECT_TRUE( gdal::TileMatrixSet::parse("i_dont_exist") == nullptr );
             CPLPopErrorHandler();
         }
 
@@ -1590,57 +1614,57 @@ namespace tut
             CPLErrorReset();
             CPLPushErrorHandler(CPLQuietErrorHandler);
             // Invalid JSON
-            ensure( gdal::TileMatrixSet::parse("http://127.0.0.1:32767/example.json") == nullptr );
+            EXPECT_TRUE( gdal::TileMatrixSet::parse("http://127.0.0.1:32767/example.json") == nullptr );
             CPLPopErrorHandler();
-            ensure( CPLGetLastErrorType() != 0 );
+            EXPECT_TRUE( CPLGetLastErrorType() != 0 );
         }
 
         {
             CPLPushErrorHandler(CPLQuietErrorHandler);
             // Invalid JSON
-            ensure( gdal::TileMatrixSet::parse("{\"type\": \"TileMatrixSetType\" invalid") == nullptr );
+            EXPECT_TRUE( gdal::TileMatrixSet::parse("{\"type\": \"TileMatrixSetType\" invalid") == nullptr );
             CPLPopErrorHandler();
         }
 
         {
             CPLPushErrorHandler(CPLQuietErrorHandler);
             // No tileMatrix
-            ensure( gdal::TileMatrixSet::parse("{\"type\": \"TileMatrixSetType\" }") == nullptr );
+            EXPECT_TRUE( gdal::TileMatrixSet::parse("{\"type\": \"TileMatrixSetType\" }") == nullptr );
             CPLPopErrorHandler();
         }
 
         {
             auto poTMS = gdal::TileMatrixSet::parse("LINZAntarticaMapTileGrid");
-            ensure( poTMS != nullptr );
-            ensure( poTMS->haveAllLevelsSameTopLeft() );
-            ensure( poTMS->haveAllLevelsSameTileSize() );
-            ensure( poTMS->hasOnlyPowerOfTwoVaryingScales() );
-            ensure( !poTMS->hasVariableMatrixWidth() );
+            EXPECT_TRUE( poTMS != nullptr );
+            EXPECT_TRUE( poTMS->haveAllLevelsSameTopLeft() );
+            EXPECT_TRUE( poTMS->haveAllLevelsSameTileSize() );
+            EXPECT_TRUE( poTMS->hasOnlyPowerOfTwoVaryingScales() );
+            EXPECT_TRUE( !poTMS->hasVariableMatrixWidth() );
         }
 
         {
             auto poTMS = gdal::TileMatrixSet::parse("NZTM2000");
-            ensure( poTMS != nullptr );
-            ensure( poTMS->haveAllLevelsSameTopLeft() );
-            ensure( poTMS->haveAllLevelsSameTileSize() );
-            ensure( !poTMS->hasOnlyPowerOfTwoVaryingScales() );
-            ensure( !poTMS->hasVariableMatrixWidth() );
+            EXPECT_TRUE( poTMS != nullptr );
+            EXPECT_TRUE( poTMS->haveAllLevelsSameTopLeft() );
+            EXPECT_TRUE( poTMS->haveAllLevelsSameTileSize() );
+            EXPECT_TRUE( !poTMS->hasOnlyPowerOfTwoVaryingScales() );
+            EXPECT_TRUE( !poTMS->hasVariableMatrixWidth() );
         }
 
         // Inline JSON with minimal structure
         {
             auto poTMS = gdal::TileMatrixSet::parse("{\"type\": \"TileMatrixSetType\", \"supportedCRS\": \"http://www.opengis.net/def/crs/OGC/1.3/CRS84\", \"tileMatrix\": [{ \"topLeftCorner\": [-180, 90],\"scaleDenominator\":1.0}] }");
-            ensure( poTMS != nullptr );
-            ensure( poTMS->haveAllLevelsSameTopLeft() );
-            ensure( poTMS->haveAllLevelsSameTileSize() );
-            ensure( poTMS->hasOnlyPowerOfTwoVaryingScales() );
-            ensure( !poTMS->hasVariableMatrixWidth() );
+            EXPECT_TRUE( poTMS != nullptr );
+            EXPECT_TRUE( poTMS->haveAllLevelsSameTopLeft() );
+            EXPECT_TRUE( poTMS->haveAllLevelsSameTileSize() );
+            EXPECT_TRUE( poTMS->hasOnlyPowerOfTwoVaryingScales() );
+            EXPECT_TRUE( !poTMS->hasVariableMatrixWidth() );
         }
 
         // Invalid scaleDenominator
         {
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            ensure( gdal::TileMatrixSet::parse("{\"type\": \"TileMatrixSetType\", \"supportedCRS\": \"http://www.opengis.net/def/crs/OGC/1.3/CRS84\", \"tileMatrix\": [{ \"topLeftCorner\": [-180, 90],\"scaleDenominator\":0.0}] }") == nullptr);
+            EXPECT_TRUE( gdal::TileMatrixSet::parse("{\"type\": \"TileMatrixSetType\", \"supportedCRS\": \"http://www.opengis.net/def/crs/OGC/1.3/CRS84\", \"tileMatrix\": [{ \"topLeftCorner\": [-180, 90],\"scaleDenominator\":0.0}] }") == nullptr);
             CPLPopErrorHandler();
         }
 
@@ -1691,34 +1715,34 @@ namespace tut
             auto poTMS = gdal::TileMatrixSet::parse("/vsimem/tmp.json");
             VSIUnlink("/vsimem/tmp.json");
 
-            ensure( poTMS != nullptr );
-            ensure_equals( poTMS->title(), "CRS84 for the World" );
-            ensure_equals( poTMS->identifier(), "WorldCRS84Quad" );
-            ensure_equals( poTMS->abstract(), "my abstract" );
-            ensure_equals( poTMS->crs(), "http://www.opengis.net/def/crs/OGC/1.3/CRS84" );
-            ensure_equals( poTMS->wellKnownScaleSet(), "http://www.opengis.net/def/wkss/OGC/1.0/GoogleCRS84Quad" );
-            ensure_equals( poTMS->bbox().mCrs, "http://www.opengis.net/def/crs/OGC/1.X/CRS84" );
-            ensure_equals( poTMS->bbox().mLowerCornerX, -180.0 );
-            ensure_equals( poTMS->bbox().mLowerCornerY, -90.0 );
-            ensure_equals( poTMS->bbox().mUpperCornerX, 180.0 );
-            ensure_equals( poTMS->bbox().mUpperCornerY, 90.0 );
-            ensure_equals( poTMS->tileMatrixList().size(), 2U );
-            ensure( poTMS->haveAllLevelsSameTopLeft() );
-            ensure( poTMS->haveAllLevelsSameTileSize() );
-            ensure( poTMS->hasOnlyPowerOfTwoVaryingScales() );
-            ensure( !poTMS->hasVariableMatrixWidth() );
+            EXPECT_TRUE( poTMS != nullptr );
+            EXPECT_EQ( poTMS->title(), "CRS84 for the World" );
+            EXPECT_EQ( poTMS->identifier(), "WorldCRS84Quad" );
+            EXPECT_EQ( poTMS->abstract(), "my abstract" );
+            EXPECT_EQ( poTMS->crs(), "http://www.opengis.net/def/crs/OGC/1.3/CRS84" );
+            EXPECT_EQ( poTMS->wellKnownScaleSet(), "http://www.opengis.net/def/wkss/OGC/1.0/GoogleCRS84Quad" );
+            EXPECT_EQ( poTMS->bbox().mCrs, "http://www.opengis.net/def/crs/OGC/1.X/CRS84" );
+            EXPECT_EQ( poTMS->bbox().mLowerCornerX, -180.0 );
+            EXPECT_EQ( poTMS->bbox().mLowerCornerY, -90.0 );
+            EXPECT_EQ( poTMS->bbox().mUpperCornerX, 180.0 );
+            EXPECT_EQ( poTMS->bbox().mUpperCornerY, 90.0 );
+            ASSERT_EQ( poTMS->tileMatrixList().size(), 2U );
+            EXPECT_TRUE( poTMS->haveAllLevelsSameTopLeft() );
+            EXPECT_TRUE( poTMS->haveAllLevelsSameTileSize() );
+            EXPECT_TRUE( poTMS->hasOnlyPowerOfTwoVaryingScales() );
+            EXPECT_TRUE( !poTMS->hasVariableMatrixWidth() );
             const auto &tm = poTMS->tileMatrixList()[0];
-            ensure_equals( tm.mId, "0" );
-            ensure_equals( tm.mScaleDenominator, 279541132.014358 );
-            ensure( fabs(tm.mResX - tm.mScaleDenominator * 0.28e-3 / (6378137. * M_PI / 180)) < 1e-10 );
-            ensure( fabs(tm.mResX - 180. / 256) < 1e-10 );
-            ensure_equals( tm.mResY, tm.mResX );
-            ensure_equals( tm.mTopLeftX, -180.0 );
-            ensure_equals( tm.mTopLeftY, 90.0 );
-            ensure_equals( tm.mTileWidth, 256 );
-            ensure_equals( tm.mTileHeight, 256 );
-            ensure_equals( tm.mMatrixWidth, 2 );
-            ensure_equals( tm.mMatrixHeight, 1 );
+            EXPECT_EQ( tm.mId, "0" );
+            EXPECT_EQ( tm.mScaleDenominator, 279541132.014358 );
+            EXPECT_TRUE( fabs(tm.mResX - tm.mScaleDenominator * 0.28e-3 / (6378137. * M_PI / 180)) < 1e-10 );
+            EXPECT_TRUE( fabs(tm.mResX - 180. / 256) < 1e-10 );
+            EXPECT_EQ( tm.mResY, tm.mResX );
+            EXPECT_EQ( tm.mTopLeftX, -180.0 );
+            EXPECT_EQ( tm.mTopLeftY, 90.0 );
+            EXPECT_EQ( tm.mTileWidth, 256 );
+            EXPECT_EQ( tm.mTileHeight, 256 );
+            EXPECT_EQ( tm.mMatrixWidth, 2 );
+            EXPECT_EQ( tm.mMatrixHeight, 1 );
         }
 
         {
@@ -1766,18 +1790,18 @@ namespace tut
             "        }"
             "    ]"
             "}");
-            ensure( poTMS != nullptr );
-            ensure_equals( poTMS->tileMatrixList().size(), 2U );
-            ensure( !poTMS->haveAllLevelsSameTopLeft() );
-            ensure( !poTMS->haveAllLevelsSameTileSize() );
-            ensure( !poTMS->hasOnlyPowerOfTwoVaryingScales() );
-            ensure( poTMS->hasVariableMatrixWidth() );
+            EXPECT_TRUE( poTMS != nullptr );
+            ASSERT_EQ( poTMS->tileMatrixList().size(), 2U );
+            EXPECT_TRUE( !poTMS->haveAllLevelsSameTopLeft() );
+            EXPECT_TRUE( !poTMS->haveAllLevelsSameTileSize() );
+            EXPECT_TRUE( !poTMS->hasOnlyPowerOfTwoVaryingScales() );
+            EXPECT_TRUE( poTMS->hasVariableMatrixWidth() );
             const auto &tm = poTMS->tileMatrixList()[1];
-            ensure_equals( tm.mVariableMatrixWidthList.size(), 1U );
+            EXPECT_EQ( tm.mVariableMatrixWidthList.size(), 1U );
             const auto& vmw = tm.mVariableMatrixWidthList[0];
-            ensure_equals( vmw.mCoalesce, 2 );
-            ensure_equals( vmw.mMinTileRow, 0 );
-            ensure_equals( vmw.mMaxTileRow, 1 );
+            EXPECT_EQ( vmw.mCoalesce, 2 );
+            EXPECT_EQ( vmw.mMinTileRow, 0 );
+            EXPECT_EQ( vmw.mMaxTileRow, 1 );
         }
 
         {
@@ -1825,26 +1849,27 @@ namespace tut
                 "        }"
                 "    ]"
                 "}");
-            ensure( poTMS != nullptr );
-            ensure_equals( poTMS->tileMatrixList().size(), 1U );
+            EXPECT_TRUE( poTMS != nullptr );
+            ASSERT_EQ( poTMS->tileMatrixList().size(), 1U );
             const auto &tm = poTMS->tileMatrixList()[0];
-            ensure_equals( tm.mVariableMatrixWidthList.size(), 2U );
+            EXPECT_EQ( tm.mVariableMatrixWidthList.size(), 2U );
             const auto& vmw = tm.mVariableMatrixWidthList[0];
-            ensure_equals( vmw.mCoalesce, 12 );
-            ensure_equals( vmw.mMinTileRow, 0 );
-            ensure_equals( vmw.mMaxTileRow, 0 );
+            EXPECT_EQ( vmw.mCoalesce, 12 );
+            EXPECT_EQ( vmw.mMinTileRow, 0 );
+            EXPECT_EQ( vmw.mMaxTileRow, 0 );
         }
     }
 
     // Test that PCIDSK GetMetadataItem() return is stable
-    template<> template<> void object::test<21>()
+    TEST_F(test_gdal, PCIDSK_GetMetadataItem)
     {
         auto poDrv = GDALDriver::FromHandle(GDALGetDriverByName("PCIDSK"));
         if( poDrv == nullptr )
-            return;
+            GTEST_SKIP() << "PCIDSK driver missing";
+
         GDALDatasetUniquePtr poDS(
             poDrv->Create("/vsimem/tmp.pix", 1, 1, 1, GDT_Byte, nullptr));
-        ensure( poDS != nullptr );
+        EXPECT_TRUE( poDS != nullptr );
         poDS->SetMetadataItem("FOO", "BAR");
         poDS->SetMetadataItem("BAR", "BAZ");
         poDS->GetRasterBand(1)->SetMetadataItem("FOO", "BAR");
@@ -1857,17 +1882,17 @@ namespace tut
             const char* psz3 = poDS->GetMetadataItem("FOO");
             const char* pszNull2 = poDS->GetMetadataItem("I_DONT_EXIST");
             const char* psz4 = poDS->GetMetadataItem("BAR");
-            ensure( psz1 != nullptr );
-            ensure( psz2 != nullptr );
-            ensure( psz3 != nullptr );
-            ensure( psz4 != nullptr );
-            ensure( pszNull == nullptr );
-            ensure( pszNull2 == nullptr );
-            ensure_equals( psz1, psz3 );
-            ensure( psz1 != psz2 );
-            ensure_equals( psz2, psz4 );
-            ensure_equals( std::string(psz1), "BAR" );
-            ensure_equals( std::string(psz2), "BAZ" );
+            EXPECT_TRUE( psz1 != nullptr );
+            EXPECT_TRUE( psz2 != nullptr );
+            EXPECT_TRUE( psz3 != nullptr );
+            EXPECT_TRUE( psz4 != nullptr );
+            EXPECT_TRUE( pszNull == nullptr );
+            EXPECT_TRUE( pszNull2 == nullptr );
+            EXPECT_EQ( psz1, psz3 );
+            EXPECT_TRUE( psz1 != psz2 );
+            EXPECT_EQ( psz2, psz4 );
+            EXPECT_STREQ( psz1, "BAR" );
+            EXPECT_STREQ( psz2, "BAZ" );
         }
 
         {
@@ -1878,17 +1903,17 @@ namespace tut
             const char* psz3 = poBand->GetMetadataItem("FOO");
             const char* pszNull2 = poBand->GetMetadataItem("I_DONT_EXIST");
             const char* psz4 = poBand->GetMetadataItem("BAR");
-            ensure( psz1 != nullptr );
-            ensure( psz2 != nullptr );
-            ensure( psz3 != nullptr );
-            ensure( psz4 != nullptr );
-            ensure( pszNull == nullptr );
-            ensure( pszNull2 == nullptr );
-            ensure_equals( psz1, psz3 );
-            ensure( psz1 != psz2 );
-            ensure_equals( psz2, psz4 );
-            ensure_equals( std::string(psz1), "BAR" );
-            ensure_equals( std::string(psz2), "BAZ" );
+            EXPECT_TRUE( psz1 != nullptr );
+            EXPECT_TRUE( psz2 != nullptr );
+            EXPECT_TRUE( psz3 != nullptr );
+            EXPECT_TRUE( psz4 != nullptr );
+            EXPECT_TRUE( pszNull == nullptr );
+            EXPECT_TRUE( pszNull2 == nullptr );
+            EXPECT_EQ( psz1, psz3 );
+            EXPECT_TRUE( psz1 != psz2 );
+            EXPECT_EQ( psz2, psz4 );
+            EXPECT_STREQ( psz1, "BAR" );
+            EXPECT_STREQ( psz2, "BAZ" );
         }
 
         poDS.reset();
@@ -1896,7 +1921,7 @@ namespace tut
     }
 
     // Test GDALBufferHasOnlyNoData()
-    template<> template<> void object::test<22>()
+    TEST_F(test_gdal, GDALBufferHasOnlyNoData)
     {
         /* bool CPL_DLL GDALBufferHasOnlyNoData(const void* pBuffer,
                                      double dfNoDataValue,
@@ -1906,72 +1931,72 @@ namespace tut
                                      int nBitsPerSample,
                                      GDALBufferSampleFormat nSampleFormat);
          */
-        ensure( GDALBufferHasOnlyNoData("\x00", 0.0, 1, 1, 1, 1, 8, GSF_UNSIGNED_INT) );
-        ensure( !GDALBufferHasOnlyNoData("\x01", 0.0, 1, 1, 1, 1, 8, GSF_UNSIGNED_INT) );
-        ensure( GDALBufferHasOnlyNoData("\x00", 0.0, 1, 1, 1, 1, 1, GSF_UNSIGNED_INT) );
-        ensure( GDALBufferHasOnlyNoData("\x00\x00", 0.0, 1, 1, 1, 1, 16, GSF_UNSIGNED_INT) );
-        ensure( !GDALBufferHasOnlyNoData("\x00\x01", 0.0, 1, 1, 1, 1, 16, GSF_UNSIGNED_INT) );
-        ensure( GDALBufferHasOnlyNoData("\x00\x01", 0.0, 1, 2, 2, 1, 8, GSF_UNSIGNED_INT) );
-        ensure( GDALBufferHasOnlyNoData("\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
+        EXPECT_TRUE( GDALBufferHasOnlyNoData("\x00", 0.0, 1, 1, 1, 1, 8, GSF_UNSIGNED_INT) );
+        EXPECT_TRUE( !GDALBufferHasOnlyNoData("\x01", 0.0, 1, 1, 1, 1, 8, GSF_UNSIGNED_INT) );
+        EXPECT_TRUE( GDALBufferHasOnlyNoData("\x00", 0.0, 1, 1, 1, 1, 1, GSF_UNSIGNED_INT) );
+        EXPECT_TRUE( GDALBufferHasOnlyNoData("\x00\x00", 0.0, 1, 1, 1, 1, 16, GSF_UNSIGNED_INT) );
+        EXPECT_TRUE( !GDALBufferHasOnlyNoData("\x00\x01", 0.0, 1, 1, 1, 1, 16, GSF_UNSIGNED_INT) );
+        EXPECT_TRUE( GDALBufferHasOnlyNoData("\x00\x01", 0.0, 1, 2, 2, 1, 8, GSF_UNSIGNED_INT) );
+        EXPECT_TRUE( GDALBufferHasOnlyNoData("\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
                                         0.0, 14, 1, 14, 1, 8, GSF_UNSIGNED_INT) );
-        ensure( !GDALBufferHasOnlyNoData("\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
+        EXPECT_TRUE( !GDALBufferHasOnlyNoData("\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
                                          0.0, 14, 1, 14, 1, 8, GSF_UNSIGNED_INT) );
-        ensure( !GDALBufferHasOnlyNoData("\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00",
+        EXPECT_TRUE( !GDALBufferHasOnlyNoData("\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00",
                                          0.0, 14, 1, 14, 1, 8, GSF_UNSIGNED_INT) );
-        ensure( !GDALBufferHasOnlyNoData("\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01",
+        EXPECT_TRUE( !GDALBufferHasOnlyNoData("\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01",
                                          0.0, 14, 1, 14, 1, 8, GSF_UNSIGNED_INT) );
 
         uint8_t uint8val = 1;
-        ensure( GDALBufferHasOnlyNoData(&uint8val, 1.0, 1, 1, 1, 1, 8, GSF_UNSIGNED_INT) );
-        ensure( !GDALBufferHasOnlyNoData(&uint8val, 0.0, 1, 1, 1, 1, 8, GSF_UNSIGNED_INT) );
-        ensure( !GDALBufferHasOnlyNoData(&uint8val, 128 + 1, 1, 1, 1, 1, 8, GSF_UNSIGNED_INT) );
+        EXPECT_TRUE( GDALBufferHasOnlyNoData(&uint8val, 1.0, 1, 1, 1, 1, 8, GSF_UNSIGNED_INT) );
+        EXPECT_TRUE( !GDALBufferHasOnlyNoData(&uint8val, 0.0, 1, 1, 1, 1, 8, GSF_UNSIGNED_INT) );
+        EXPECT_TRUE( !GDALBufferHasOnlyNoData(&uint8val, 128 + 1, 1, 1, 1, 1, 8, GSF_UNSIGNED_INT) );
 
         int8_t int8val = -1;
-        ensure( GDALBufferHasOnlyNoData(&int8val, -1.0, 1, 1, 1, 1, 8, GSF_SIGNED_INT) );
-        ensure( !GDALBufferHasOnlyNoData(&int8val, 0.0, 1, 1, 1, 1, 8, GSF_SIGNED_INT) );
-        ensure( !GDALBufferHasOnlyNoData(&int8val, 256, 1, 1, 1, 1, 8, GSF_SIGNED_INT) );
+        EXPECT_TRUE( GDALBufferHasOnlyNoData(&int8val, -1.0, 1, 1, 1, 1, 8, GSF_SIGNED_INT) );
+        EXPECT_TRUE( !GDALBufferHasOnlyNoData(&int8val, 0.0, 1, 1, 1, 1, 8, GSF_SIGNED_INT) );
+        EXPECT_TRUE( !GDALBufferHasOnlyNoData(&int8val, 256, 1, 1, 1, 1, 8, GSF_SIGNED_INT) );
 
         uint16_t uint16val = 1;
-        ensure( GDALBufferHasOnlyNoData(&uint16val, 1.0, 1, 1, 1, 1, 16, GSF_UNSIGNED_INT) );
-        ensure( !GDALBufferHasOnlyNoData(&uint16val, 0.0, 1, 1, 1, 1, 16, GSF_UNSIGNED_INT) );
-        ensure( !GDALBufferHasOnlyNoData(&uint16val, 65536 + 1, 1, 1, 1, 1, 16, GSF_UNSIGNED_INT) );
+        EXPECT_TRUE( GDALBufferHasOnlyNoData(&uint16val, 1.0, 1, 1, 1, 1, 16, GSF_UNSIGNED_INT) );
+        EXPECT_TRUE( !GDALBufferHasOnlyNoData(&uint16val, 0.0, 1, 1, 1, 1, 16, GSF_UNSIGNED_INT) );
+        EXPECT_TRUE( !GDALBufferHasOnlyNoData(&uint16val, 65536 + 1, 1, 1, 1, 1, 16, GSF_UNSIGNED_INT) );
 
         int16_t int16val = -1;
-        ensure( GDALBufferHasOnlyNoData(&int16val, -1.0, 1, 1, 1, 1, 16, GSF_SIGNED_INT) );
-        ensure( !GDALBufferHasOnlyNoData(&int16val, 0.0, 1, 1, 1, 1, 16, GSF_SIGNED_INT) );
-        ensure( !GDALBufferHasOnlyNoData(&int16val, 32768, 1, 1, 1, 1, 16, GSF_SIGNED_INT) );
+        EXPECT_TRUE( GDALBufferHasOnlyNoData(&int16val, -1.0, 1, 1, 1, 1, 16, GSF_SIGNED_INT) );
+        EXPECT_TRUE( !GDALBufferHasOnlyNoData(&int16val, 0.0, 1, 1, 1, 1, 16, GSF_SIGNED_INT) );
+        EXPECT_TRUE( !GDALBufferHasOnlyNoData(&int16val, 32768, 1, 1, 1, 1, 16, GSF_SIGNED_INT) );
 
         uint32_t uint32val = 1;
-        ensure( GDALBufferHasOnlyNoData(&uint32val, 1.0, 1, 1, 1, 1, 32, GSF_UNSIGNED_INT) );
-        ensure( !GDALBufferHasOnlyNoData(&uint32val, 0.0, 1, 1, 1, 1, 32, GSF_UNSIGNED_INT) );
-        ensure( !GDALBufferHasOnlyNoData(&uint32val, static_cast<double>(0x100000000LL + 1),
+        EXPECT_TRUE( GDALBufferHasOnlyNoData(&uint32val, 1.0, 1, 1, 1, 1, 32, GSF_UNSIGNED_INT) );
+        EXPECT_TRUE( !GDALBufferHasOnlyNoData(&uint32val, 0.0, 1, 1, 1, 1, 32, GSF_UNSIGNED_INT) );
+        EXPECT_TRUE( !GDALBufferHasOnlyNoData(&uint32val, static_cast<double>(0x100000000LL + 1),
                                          1, 1, 1, 1, 32, GSF_UNSIGNED_INT) );
 
         int32_t int32val = -1;
-        ensure( GDALBufferHasOnlyNoData(&int32val, -1.0, 1, 1, 1, 1, 32, GSF_SIGNED_INT) );
-        ensure( !GDALBufferHasOnlyNoData(&int32val, 0.0, 1, 1, 1, 1, 32, GSF_SIGNED_INT) );
-        ensure( !GDALBufferHasOnlyNoData(&int32val, 0x80000000, 1, 1, 1, 1, 32, GSF_SIGNED_INT) );
+        EXPECT_TRUE( GDALBufferHasOnlyNoData(&int32val, -1.0, 1, 1, 1, 1, 32, GSF_SIGNED_INT) );
+        EXPECT_TRUE( !GDALBufferHasOnlyNoData(&int32val, 0.0, 1, 1, 1, 1, 32, GSF_SIGNED_INT) );
+        EXPECT_TRUE( !GDALBufferHasOnlyNoData(&int32val, 0x80000000, 1, 1, 1, 1, 32, GSF_SIGNED_INT) );
 
         float float32val = -1;
-        ensure( GDALBufferHasOnlyNoData(&float32val, -1.0, 1, 1, 1, 1, 32, GSF_FLOATING_POINT) );
-        ensure( !GDALBufferHasOnlyNoData(&float32val, 0.0, 1, 1, 1, 1, 32, GSF_FLOATING_POINT) );
-        ensure( !GDALBufferHasOnlyNoData(&float32val, 1e50, 1, 1, 1, 1, 32, GSF_FLOATING_POINT) );
+        EXPECT_TRUE( GDALBufferHasOnlyNoData(&float32val, -1.0, 1, 1, 1, 1, 32, GSF_FLOATING_POINT) );
+        EXPECT_TRUE( !GDALBufferHasOnlyNoData(&float32val, 0.0, 1, 1, 1, 1, 32, GSF_FLOATING_POINT) );
+        EXPECT_TRUE( !GDALBufferHasOnlyNoData(&float32val, 1e50, 1, 1, 1, 1, 32, GSF_FLOATING_POINT) );
 
         float float32nan = std::numeric_limits<float>::quiet_NaN();
-        ensure( GDALBufferHasOnlyNoData(&float32nan, float32nan, 1, 1, 1, 1, 32, GSF_FLOATING_POINT) );
-        ensure( !GDALBufferHasOnlyNoData(&float32nan, 0.0, 1, 1, 1, 1, 32, GSF_FLOATING_POINT) );
+        EXPECT_TRUE( GDALBufferHasOnlyNoData(&float32nan, float32nan, 1, 1, 1, 1, 32, GSF_FLOATING_POINT) );
+        EXPECT_TRUE( !GDALBufferHasOnlyNoData(&float32nan, 0.0, 1, 1, 1, 1, 32, GSF_FLOATING_POINT) );
 
         double float64val = -1;
-        ensure( GDALBufferHasOnlyNoData(&float64val, -1.0, 1, 1, 1, 1, 64, GSF_FLOATING_POINT) );
-        ensure( !GDALBufferHasOnlyNoData(&float64val, 0.0, 1, 1, 1, 1, 64, GSF_FLOATING_POINT) );
+        EXPECT_TRUE( GDALBufferHasOnlyNoData(&float64val, -1.0, 1, 1, 1, 1, 64, GSF_FLOATING_POINT) );
+        EXPECT_TRUE( !GDALBufferHasOnlyNoData(&float64val, 0.0, 1, 1, 1, 1, 64, GSF_FLOATING_POINT) );
 
         double float64nan = std::numeric_limits<double>::quiet_NaN();
-        ensure( GDALBufferHasOnlyNoData(&float64nan, float64nan, 1, 1, 1, 1, 64, GSF_FLOATING_POINT) );
-        ensure( !GDALBufferHasOnlyNoData(&float64nan, 0.0, 1, 1, 1, 1, 64, GSF_FLOATING_POINT) );
+        EXPECT_TRUE( GDALBufferHasOnlyNoData(&float64nan, float64nan, 1, 1, 1, 1, 64, GSF_FLOATING_POINT) );
+        EXPECT_TRUE( !GDALBufferHasOnlyNoData(&float64nan, 0.0, 1, 1, 1, 1, 64, GSF_FLOATING_POINT) );
     }
 
     // Test GDALRasterBand::GetIndexColorTranslationTo()
-    template<> template<> void object::test<23>()
+    TEST_F(test_gdal, GetIndexColorTranslationTo)
     {
         GDALDatasetUniquePtr poSrcDS(
             GDALDriver::FromHandle(
@@ -2048,15 +2073,15 @@ namespace tut
         }
 
         unsigned char* panTranslationTable = poSrcDS->GetRasterBand(1)->GetIndexColorTranslationTo(poDstDS->GetRasterBand(1));
-        ensure_equals(static_cast<int>(panTranslationTable[0]), 1);
-        ensure_equals(static_cast<int>(panTranslationTable[1]), 1);
-        ensure_equals(static_cast<int>(panTranslationTable[2]), 0);
-        ensure_equals(static_cast<int>(panTranslationTable[3]), 2); // special nodata mapping
+        EXPECT_EQ(static_cast<int>(panTranslationTable[0]), 1);
+        EXPECT_EQ(static_cast<int>(panTranslationTable[1]), 1);
+        EXPECT_EQ(static_cast<int>(panTranslationTable[2]), 0);
+        EXPECT_EQ(static_cast<int>(panTranslationTable[3]), 2); // special nodata mapping
         CPLFree(panTranslationTable);
     }
 
     // Test effect of MarkSuppressOnClose() with the final FlushCache() at dataset destruction
-    template<> template<> void object::test<24>()
+    TEST_F(test_gdal, MarkSuppressOnClose)
     {
         const char* pszFilename = "/vsimem/out.tif";
         const char* const apszOptions[] = { "PROFILE=BASELINE", nullptr };
@@ -2070,11 +2095,11 @@ namespace tut
             poDstDS->FlushCache(true);
             // All buffers have been flushed, but our dirty block should not have been written
             // hence the checksum will be 0
-            ensure_equals(GDALChecksumImage(GDALRasterBand::FromHandle(poDstDS->GetRasterBand(1)),0,0,1,1), 0);
+            EXPECT_EQ(GDALChecksumImage(GDALRasterBand::FromHandle(poDstDS->GetRasterBand(1)),0,0,1,1), 0);
         }
         {
             VSIStatBufL sStat;
-            ensure(VSIStatL(CPLSPrintf("%s.aux.xml", pszFilename), &sStat) != 0);
+            EXPECT_TRUE(VSIStatL(CPLSPrintf("%s.aux.xml", pszFilename), &sStat) != 0);
         }
     }
 
@@ -2097,20 +2122,20 @@ namespace tut
         {
             for( int iX = 0; iX < poBand->GetXSize(); iX++ )
             {
-                ensure_equals(accessor.Get(iX, iY), static_cast<T>(iY * poBand->GetXSize() + iX));
+                EXPECT_EQ(accessor.Get(iX, iY), static_cast<T>(iY * poBand->GetXSize() + iX));
             }
         }
 
         std::vector<T> values(poBand->GetYSize() * poBand->GetXSize());
         accessor.FlushCache();
-        ensure_equals(poBand->RasterIO(GF_Read, 0, 0, poBand->GetXSize(), poBand->GetYSize(),
+        EXPECT_EQ(poBand->RasterIO(GF_Read, 0, 0, poBand->GetXSize(), poBand->GetYSize(),
                                        values.data(), poBand->GetXSize(), poBand->GetYSize(),
                                        eType, 0, 0, nullptr), CE_None);
         for( int iY = 0; iY < poBand->GetYSize(); iY++ )
         {
             for( int iX = 0; iX < poBand->GetXSize(); iX++ )
             {
-                ensure_equals(values[iY * poBand->GetXSize() + iX],
+                EXPECT_EQ(values[iY * poBand->GetXSize() + iX],
                               static_cast<T>(iY * poBand->GetXSize() + iX));
             }
         }
@@ -2118,7 +2143,7 @@ namespace tut
     }
 
     // Test GDALCachedPixelAccessor
-    template<> template<> void object::test<25>()
+    TEST_F(test_gdal, GDALCachedPixelAccessor)
     {
         TestCachedPixelAccessor<GByte>();
         TestCachedPixelAccessor<GUInt16>();
@@ -2134,7 +2159,7 @@ namespace tut
     }
 
     // Test VRT and caching of sources w.r.t open options (https://github.com/OSGeo/gdal/issues/5989)
-    template<> template<> void object::test<26>()
+    TEST_F(test_gdal, VRTCachingOpenOptions)
     {
         class TestRasterBand: public GDALRasterBand
         {
@@ -2221,12 +2246,12 @@ namespace tut
         ds.reset();
         GetGDALDriverManager()->DeregisterDriver(driver.get());
 
-        ensure_equals(nCountZeroOpenOptions, 1);
-        ensure_equals(nCountWithOneOpenOptions, 2);
+        EXPECT_EQ(nCountZeroOpenOptions, 1);
+        EXPECT_EQ(nCountWithOneOpenOptions, 2);
     }
 
     // Test GDALDeinterleave 3 components Byte()
-    template<> template<> void object::test<27>()
+    TEST_F(test_gdal, GDALDeinterleave3ComponentsByte)
     {
         GByte* pabySrc = static_cast<GByte*>(CPLMalloc(3 * 4 * 15));
         for( int i = 0; i < 3 * 4 * 15; i++ )
@@ -2240,9 +2265,9 @@ namespace tut
             GDALDeinterleave(pabySrc, GDT_Byte, 3, ppabyDest, GDT_Byte, nIters);
             for( int i = 0; i < nIters; i++ )
             {
-                ensure_equals(pabyDest0[i], 3 * i);
-                ensure_equals(pabyDest1[i], 3 * i + 1);
-                ensure_equals(pabyDest2[i], 3 * i + 2);
+                EXPECT_EQ(pabyDest0[i], 3 * i);
+                EXPECT_EQ(pabyDest1[i], 3 * i + 1);
+                EXPECT_EQ(pabyDest2[i], 3 * i + 2);
             }
         }
         VSIFree(pabySrc);
@@ -2252,7 +2277,7 @@ namespace tut
     }
 
     // Test GDALDeinterleave 3 components Byte() without SSSE3
-    template<> template<> void object::test<28>()
+    TEST_F(test_gdal, GDALDeinterleave3ComponentsByte_NOSSE3)
     {
         GByte* pabySrc = static_cast<GByte*>(CPLMalloc(3 * 4 * 15));
         for( int i = 0; i < 3 * 4 * 15; i++ )
@@ -2268,9 +2293,9 @@ namespace tut
             CPLSetConfigOption("GDAL_USE_SSSE3", nullptr);
             for( int i = 0; i < nIters; i++ )
             {
-                ensure_equals(pabyDest0[i], 3 * i);
-                ensure_equals(pabyDest1[i], 3 * i + 1);
-                ensure_equals(pabyDest2[i], 3 * i + 2);
+                EXPECT_EQ(pabyDest0[i], 3 * i);
+                EXPECT_EQ(pabyDest1[i], 3 * i + 1);
+                EXPECT_EQ(pabyDest2[i], 3 * i + 2);
             }
         }
         VSIFree(pabySrc);
@@ -2280,7 +2305,7 @@ namespace tut
     }
 
     // Test GDALDeinterleave 4 components Byte()
-    template<> template<> void object::test<29>()
+    TEST_F(test_gdal, GDALDeinterleave4ComponentsByte)
     {
         GByte* pabySrc = static_cast<GByte*>(CPLMalloc(3 * 4 * 15));
         for( int i = 0; i < 3 * 4 * 15; i++ )
@@ -2295,10 +2320,10 @@ namespace tut
             GDALDeinterleave(pabySrc, GDT_Byte, 4, ppabyDest, GDT_Byte, nIters);
             for( int i = 0; i < nIters; i++ )
             {
-                ensure_equals(pabyDest0[i], 4 * i);
-                ensure_equals(pabyDest1[i], 4 * i + 1);
-                ensure_equals(pabyDest2[i], 4 * i + 2);
-                ensure_equals(pabyDest3[i], 4 * i + 3);
+                EXPECT_EQ(pabyDest0[i], 4 * i);
+                EXPECT_EQ(pabyDest1[i], 4 * i + 1);
+                EXPECT_EQ(pabyDest2[i], 4 * i + 2);
+                EXPECT_EQ(pabyDest3[i], 4 * i + 3);
             }
         }
         VSIFree(pabySrc);
@@ -2309,7 +2334,7 @@ namespace tut
     }
 
     // Test GDALDeinterleave 4 components Byte without SSSE3
-    template<> template<> void object::test<30>()
+    TEST_F(test_gdal, GDALDeinterleave4ComponentsByte_NOSSE3)
     {
         GByte* pabySrc = static_cast<GByte*>(CPLMalloc(3 * 4 * 15));
         for( int i = 0; i < 3 * 4 * 15; i++ )
@@ -2326,10 +2351,10 @@ namespace tut
             CPLSetConfigOption("GDAL_USE_SSSE3", nullptr);
             for( int i = 0; i < nIters; i++ )
             {
-                ensure_equals(pabyDest0[i], 4 * i);
-                ensure_equals(pabyDest1[i], 4 * i + 1);
-                ensure_equals(pabyDest2[i], 4 * i + 2);
-                ensure_equals(pabyDest3[i], 4 * i + 3);
+                EXPECT_EQ(pabyDest0[i], 4 * i);
+                EXPECT_EQ(pabyDest1[i], 4 * i + 1);
+                EXPECT_EQ(pabyDest2[i], 4 * i + 2);
+                EXPECT_EQ(pabyDest3[i], 4 * i + 3);
             }
         }
         VSIFree(pabySrc);
@@ -2340,7 +2365,7 @@ namespace tut
     }
 
     // Test GDALDeinterleave general case
-    template<> template<> void object::test<31>()
+    TEST_F(test_gdal, GDALDeinterleaveGeneralCase)
     {
         GByte* pabySrc = static_cast<GByte*>(CPLMalloc(3 * 2));
         for( int i = 0; i < 3 * 2; i++ )
@@ -2351,8 +2376,8 @@ namespace tut
         GDALDeinterleave(pabySrc, GDT_Byte, 2, ppanDest, GDT_UInt16, 3);
         for( int i = 0; i < 3; i++ )
         {
-            ensure_equals(panDest0[i], 2 * i);
-            ensure_equals(panDest1[i], 2 * i + 1);
+            EXPECT_EQ(panDest0[i], 2 * i);
+            EXPECT_EQ(panDest1[i], 2 * i + 1);
         }
         VSIFree(pabySrc);
         VSIFree(panDest0);
@@ -2360,7 +2385,7 @@ namespace tut
     }
 
     // Test GDALDeinterleave 3 components UInt16()
-    template<> template<> void object::test<32>()
+    TEST_F(test_gdal, GDALDeinterleave3ComponentsUInt16)
     {
         GUInt16* panSrc = static_cast<GUInt16*>(CPLMalloc(3 * 4 * 15 * sizeof(GUInt16)));
         for( int i = 0; i < 3 * 4 * 15; i++ )
@@ -2374,9 +2399,9 @@ namespace tut
             GDALDeinterleave(panSrc, GDT_UInt16, 3, ppanDest, GDT_UInt16, nIters);
             for( int i = 0; i < nIters; i++ )
             {
-                ensure_equals(panDest0[i], 3 * i + 32767);
-                ensure_equals(panDest1[i], 3 * i + 1 + 32767);
-                ensure_equals(panDest2[i], 3 * i + 2 + 32767);
+                EXPECT_EQ(panDest0[i], 3 * i + 32767);
+                EXPECT_EQ(panDest1[i], 3 * i + 1 + 32767);
+                EXPECT_EQ(panDest2[i], 3 * i + 2 + 32767);
             }
         }
         VSIFree(panSrc);
@@ -2386,7 +2411,7 @@ namespace tut
     }
 
     // Test GDALDeinterleave 4 components UInt16()
-    template<> template<> void object::test<33>()
+    TEST_F(test_gdal, GDALDeinterleave4ComponentsUInt16)
     {
         GUInt16* panSrc = static_cast<GUInt16*>(CPLMalloc(3 * 4 * 15 * sizeof(GUInt16)));
         for( int i = 0; i < 3 * 4 * 15; i++ )
@@ -2401,10 +2426,10 @@ namespace tut
             GDALDeinterleave(panSrc, GDT_UInt16, 4, ppanDest, GDT_UInt16, nIters);
             for( int i = 0; i < nIters; i++ )
             {
-                ensure_equals(panDest0[i], 4 * i + 32767);
-                ensure_equals(panDest1[i], 4 * i + 1 + 32767);
-                ensure_equals(panDest2[i], 4 * i + 2 + 32767);
-                ensure_equals(panDest3[i], 4 * i + 3 + 32767);
+                EXPECT_EQ(panDest0[i], 4 * i + 32767);
+                EXPECT_EQ(panDest1[i], 4 * i + 1 + 32767);
+                EXPECT_EQ(panDest2[i], 4 * i + 2 + 32767);
+                EXPECT_EQ(panDest3[i], 4 * i + 3 + 32767);
             }
         }
         VSIFree(panSrc);
@@ -2415,7 +2440,7 @@ namespace tut
     }
 
     // Test GDALDataset::ReportError()
-    template<> template<> void object::test<34>()
+    TEST_F(test_gdal, GDALDatasetReportError)
     {
         GDALDatasetUniquePtr poSrcDS(
             GDALDriver::FromHandle(
@@ -2424,17 +2449,17 @@ namespace tut
         CPLPushErrorHandler(CPLQuietErrorHandler);
         poSrcDS->ReportError("foo", CE_Warning, CPLE_AppDefined, "bar");
         CPLPopErrorHandler();
-        ensure_equals(std::string(CPLGetLastErrorMsg()), "foo: bar");
+        EXPECT_STREQ(CPLGetLastErrorMsg(), "foo: bar");
 
         CPLPushErrorHandler(CPLQuietErrorHandler);
         poSrcDS->ReportError("%foo", CE_Warning, CPLE_AppDefined, "bar");
         CPLPopErrorHandler();
-        ensure_equals(std::string(CPLGetLastErrorMsg()), "bar");
+        EXPECT_STREQ(CPLGetLastErrorMsg(), "bar");
 
         CPLPushErrorHandler(CPLQuietErrorHandler);
         poSrcDS->ReportError("this_is_wayyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy_too_long/foo", CE_Warning, CPLE_AppDefined, "bar");
         CPLPopErrorHandler();
-        ensure_equals(std::string(CPLGetLastErrorMsg()), "foo: bar");
+        EXPECT_STREQ(CPLGetLastErrorMsg(), "foo: bar");
     }
 
-} // namespace tut
+} // namespace

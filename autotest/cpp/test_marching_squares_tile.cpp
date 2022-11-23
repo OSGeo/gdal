@@ -37,6 +37,8 @@
 #include <map>
 #include <fstream>
 
+#include "gtest_include.h"
+
 namespace marching_squares {
 struct Writer
 {
@@ -94,24 +96,17 @@ struct Writer
 };
 }
 
-namespace tut
+namespace
 {
     using namespace marching_squares;
 
     // Common fixture with test data
-    struct test_ms_tile_data
+    struct test_ms_tile: public ::testing::Test
     {
     };
 
-    // Register test group
-    typedef test_group<test_ms_tile_data> group;
-    typedef group::object object;
-    group test_ms_tile_group("MarchingSquares:Tile");
-
     // Dummy test
-    template<>
-    template<>
-    void object::test<1>()
+    TEST_F(test_ms_tile, dummy)
     {
 
         // only one pixel of value 2.0
@@ -123,21 +118,19 @@ namespace tut
         ContourGenerator<Writer, IntervalLevelRangeIterator> cg( 1, 1, /* hasNoData */ false, NaN, writer, levels );
         cg.feedLine( &data[0] );
 
-        ensure_equals( "There is 1 border", writer.borders.size(), size_t(1) );
-        ensure_equals( "It has 8 segments", writer.borders[1].size(), size_t(8) );
-        ensure( "Check border segment #1", writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 0.0 ), Point( 0.5, 0.0 )) ) );
-        ensure( "Check border segment #2", writer.segmentInBorders( 1, std::make_pair( Point( 0.5, 0.0 ), Point( 1.0, 0.0 )) ) );
-        ensure( "Check border segment #3", writer.segmentInBorders( 1, std::make_pair( Point( 1.0, 0.0 ), Point( 1.0, 0.5 )) ) );
-        ensure( "Check border segment #4", writer.segmentInBorders( 1, std::make_pair( Point( 1.0, 0.5 ), Point( 1.0, 1.0 )) ) );
-        ensure( "Check border segment #5", writer.segmentInBorders( 1, std::make_pair( Point( 1.0, 1.0 ), Point( 0.5, 1.0 )) ) );
-        ensure( "Check border segment #6", writer.segmentInBorders( 1, std::make_pair( Point( 0.5, 1.0 ), Point( 0.0, 1.0 )) ) );
-        ensure( "Check border segment #7", writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 1.0 ), Point( 0.0, 0.5 )) ) );
-        ensure( "Check border segment #8", writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 0.5 ), Point( 0.0, 0.0 )) ) );
+        EXPECT_EQ( writer.borders.size(), size_t(1) );
+        EXPECT_EQ( writer.borders[1].size(), size_t(8) );
+        EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 0.0 ), Point( 0.5, 0.0 )) ) );
+        EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 0.5, 0.0 ), Point( 1.0, 0.0 )) ) );
+        EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 1.0, 0.0 ), Point( 1.0, 0.5 )) ) );
+        EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 1.0, 0.5 ), Point( 1.0, 1.0 )) ) );
+        EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 1.0, 1.0 ), Point( 0.5, 1.0 )) ) );
+        EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 0.5, 1.0 ), Point( 0.0, 1.0 )) ) );
+        EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 1.0 ), Point( 0.0, 0.5 )) ) );
+        EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 0.5 ), Point( 0.0, 0.0 )) ) );
     }
 
-    template<>
-    template<>
-    void object::test<2>()
+    TEST_F(test_ms_tile, tile_one_pixel)
     {
         // Tile with one pixel, value below
         // only one pixel of value 2.0
@@ -150,22 +143,20 @@ namespace tut
         ContourGenerator<Writer, FixedLevelRangeIterator> cg( 1, 1, /* hasNoData */ false, NaN, writer, levelGenerator );
         cg.feedLine( &data[0] );
 
-        ensure_equals( "There is 1 border", writer.borders.size(), size_t(1) );
-        ensure( "Level = inf", levelGenerator.level(1) == Inf );
-        ensure_equals( "It has 8 segments", writer.borders[1].size(), size_t(8) );
-        ensure( "Check border segment #1", writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 0.0 ), Point( 0.5, 0.0 )) ) );
-        ensure( "Check border segment #2", writer.segmentInBorders( 1, std::make_pair( Point( 0.5, 0.0 ), Point( 1.0, 0.0 )) ) );
-        ensure( "Check border segment #3", writer.segmentInBorders( 1, std::make_pair( Point( 1.0, 0.0 ), Point( 1.0, 0.5 )) ) );
-        ensure( "Check border segment #4", writer.segmentInBorders( 1, std::make_pair( Point( 1.0, 0.5 ), Point( 1.0, 1.0 )) ) );
-        ensure( "Check border segment #5", writer.segmentInBorders( 1, std::make_pair( Point( 1.0, 1.0 ), Point( 0.5, 1.0 )) ) );
-        ensure( "Check border segment #6", writer.segmentInBorders( 1, std::make_pair( Point( 0.5, 1.0 ), Point( 0.0, 1.0 )) ) );
-        ensure( "Check border segment #7", writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 1.0 ), Point( 0.0, 0.5 )) ) );
-        ensure( "Check border segment #8", writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 0.5 ), Point( 0.0, 0.0 )) ) );
+        EXPECT_EQ( writer.borders.size(), size_t(1) );
+        EXPECT_TRUE( levelGenerator.level(1) == Inf );
+        EXPECT_EQ( writer.borders[1].size(), size_t(8) );
+        EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 0.0 ), Point( 0.5, 0.0 )) ) );
+        EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 0.5, 0.0 ), Point( 1.0, 0.0 )) ) );
+        EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 1.0, 0.0 ), Point( 1.0, 0.5 )) ) );
+        EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 1.0, 0.5 ), Point( 1.0, 1.0 )) ) );
+        EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 1.0, 1.0 ), Point( 0.5, 1.0 )) ) );
+        EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 0.5, 1.0 ), Point( 0.0, 1.0 )) ) );
+        EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 1.0 ), Point( 0.0, 0.5 )) ) );
+        EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 0.5 ), Point( 0.0, 0.0 )) ) );
     }
 
-    template<>
-    template<>
-    void object::test<3>()
+    TEST_F(test_ms_tile, tile_one_pixel_two)
     {
         // Tile with one pixel (2)
         // only one pixel of value 2.0
@@ -177,21 +168,19 @@ namespace tut
         ContourGenerator<Writer, IntervalLevelRangeIterator> cg( 1, 1, /* hasNoData */ false, NaN, writer, levels );
         cg.feedLine( &data[0] );
 
-        ensure_equals( "1 border", writer.borders.size(), size_t(1));
-        ensure_equals( "It has 8 segments", writer.borders[1].size(), size_t(8) );
-        ensure( "Check border segment #1", writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 0.0 ), Point( 0.5, 0.0 )) ) );
-        ensure( "Check border segment #2", writer.segmentInBorders( 1, std::make_pair( Point( 0.5, 0.0 ), Point( 1.0, 0.0 )) ) );
-        ensure( "Check border segment #3", writer.segmentInBorders( 1, std::make_pair( Point( 1.0, 0.0 ), Point( 1.0, 0.5 )) ) );
-        ensure( "Check border segment #4", writer.segmentInBorders( 1, std::make_pair( Point( 1.0, 0.5 ), Point( 1.0, 1.0 )) ) );
-        ensure( "Check border segment #5", writer.segmentInBorders( 1, std::make_pair( Point( 1.0, 1.0 ), Point( 0.5, 1.0 )) ) );
-        ensure( "Check border segment #6", writer.segmentInBorders( 1, std::make_pair( Point( 0.5, 1.0 ), Point( 0.0, 1.0 )) ) );
-        ensure( "Check border segment #7", writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 1.0 ), Point( 0.0, 0.5 )) ) );
-        ensure( "Check border segment #8", writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 0.5 ), Point( 0.0, 0.0 )) ) );
+        EXPECT_EQ( writer.borders.size(), size_t(1));
+        EXPECT_EQ( writer.borders[1].size(), size_t(8) );
+        EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 0.0 ), Point( 0.5, 0.0 )) ) );
+        EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 0.5, 0.0 ), Point( 1.0, 0.0 )) ) );
+        EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 1.0, 0.0 ), Point( 1.0, 0.5 )) ) );
+        EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 1.0, 0.5 ), Point( 1.0, 1.0 )) ) );
+        EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 1.0, 1.0 ), Point( 0.5, 1.0 )) ) );
+        EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 0.5, 1.0 ), Point( 0.0, 1.0 )) ) );
+        EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 1.0 ), Point( 0.0, 0.5 )) ) );
+        EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 0.5 ), Point( 0.0, 0.0 )) ) );
     }
 
-    template<>
-    template<>
-    void object::test<4>()
+    TEST_F(test_ms_tile, tile_two_pixels)
     {
         // Tile with two pixels
         // two pixels
@@ -253,7 +242,7 @@ namespace tut
         //    |                  |                  |                  |
         //    +------------------+------------------+------------------+
         //  NaN                 NaN                NaN                NaN
-        
+
         std::vector<double> data = { 10.0, 7.0 };
         {
             IntervalLevelRangeIterator levels( 8.0, 10.0 );
@@ -262,31 +251,29 @@ namespace tut
             cg.feedLine( &data[0] );
 
             // check borders
-            ensure_equals( "There are 2 borders", writer.borders.size(), size_t(2) );
-            ensure_equals( "First border has 6 segments", writer.borders[0].size(), size_t(6) );
-            ensure_equals( "Second border has 8 segments", writer.borders[1].size(), size_t(8) );
+            EXPECT_EQ( writer.borders.size(), size_t(2) );
+            EXPECT_EQ( writer.borders[0].size(), size_t(6) );
+            EXPECT_EQ(  writer.borders[1].size(), size_t(8) );
 
-            ensure( "Check border segment #1.1", writer.segmentInBorders( 0, std::make_pair( Point( 1.166, 0.0 ), Point( 1.5, 0.0 )) ) );
-            ensure( "Check border segment #1.2", writer.segmentInBorders( 0, std::make_pair( Point( 1.5, 0.0 ), Point( 2.0, 0.0 )) ) );
-            ensure( "Check border segment #1.3", writer.segmentInBorders( 0, std::make_pair( Point( 2.0, 0.0 ), Point( 2.0, 0.5 )) ) );
-            ensure( "Check border segment #1.4", writer.segmentInBorders( 0, std::make_pair( Point( 2.0, 0.5 ), Point( 2.0, 1.0 )) ) );
-            ensure( "Check border segment #1.5", writer.segmentInBorders( 0, std::make_pair( Point( 2.0, 1.0 ), Point( 1.5, 1.0 )) ) );
-            ensure( "Check border segment #1.6", writer.segmentInBorders( 0, std::make_pair( Point( 1.5, 1.0 ), Point( 1.166, 1.0 )) ) );
-            
-            ensure( "Check border segment #2.1", writer.segmentInBorders( 1, std::make_pair( Point( 1.166, 0.0 ), Point( 1.0, 0.0 )) ) );
-            ensure( "Check border segment #2.2", writer.segmentInBorders( 1, std::make_pair( Point( 1.0, 0.0 ), Point( 0.5, 0.0 )) ) );
-            ensure( "Check border segment #2.3", writer.segmentInBorders( 1, std::make_pair( Point( 0.5, 0.0 ), Point( 0.0, 0.0 )) ) );
-            ensure( "Check border segment #2.4", writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 0.0 ), Point( 0.0, 0.5 )) ) );
-            ensure( "Check border segment #2.5", writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 0.5 ), Point( 0.0, 1.0 )) ) );
-            ensure( "Check border segment #2.6", writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 1.0 ), Point( 0.5, 1.0 )) ) );
-            ensure( "Check border segment #2.7", writer.segmentInBorders( 1, std::make_pair( Point( 0.5, 1.0 ), Point( 1.0, 1.0 )) ) );
-            ensure( "Check border segment #2.8", writer.segmentInBorders( 1, std::make_pair( Point( 1.0, 1.0 ), Point( 1.166, 1.0 )) ) );
+            EXPECT_TRUE( writer.segmentInBorders( 0, std::make_pair( Point( 1.166, 0.0 ), Point( 1.5, 0.0 )) ) );
+            EXPECT_TRUE( writer.segmentInBorders( 0, std::make_pair( Point( 1.5, 0.0 ), Point( 2.0, 0.0 )) ) );
+            EXPECT_TRUE( writer.segmentInBorders( 0, std::make_pair( Point( 2.0, 0.0 ), Point( 2.0, 0.5 )) ) );
+            EXPECT_TRUE( writer.segmentInBorders( 0, std::make_pair( Point( 2.0, 0.5 ), Point( 2.0, 1.0 )) ) );
+            EXPECT_TRUE( writer.segmentInBorders( 0, std::make_pair( Point( 2.0, 1.0 ), Point( 1.5, 1.0 )) ) );
+            EXPECT_TRUE( writer.segmentInBorders( 0, std::make_pair( Point( 1.5, 1.0 ), Point( 1.166, 1.0 )) ) );
+
+            EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 1.166, 0.0 ), Point( 1.0, 0.0 )) ) );
+            EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 1.0, 0.0 ), Point( 0.5, 0.0 )) ) );
+            EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 0.5, 0.0 ), Point( 0.0, 0.0 )) ) );
+            EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 0.0 ), Point( 0.0, 0.5 )) ) );
+            EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 0.5 ), Point( 0.0, 1.0 )) ) );
+            EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 1.0 ), Point( 0.5, 1.0 )) ) );
+            EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 0.5, 1.0 ), Point( 1.0, 1.0 )) ) );
+            EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 1.0, 1.0 ), Point( 1.166, 1.0 )) ) );
         }
     }
 
-    template<>
-    template<>
-    void object::test<5>()
+    TEST_F(test_ms_tile, tile_four_pixels)
     {
         // four pixels
         // 10  7
@@ -372,35 +359,33 @@ namespace tut
             cg.feedLine( &data[2] );
 
             // check borders
-            ensure_equals( "2 borders", writer.borders.size(), size_t(2) );
-            ensure_equals( "13 segments on the first", writer.borders[0].size(), size_t(13) );
-            ensure_equals( "5 segments on the second", writer.borders[1].size(), size_t(5) );
+            EXPECT_EQ( writer.borders.size(), size_t(2) );
+            EXPECT_EQ( writer.borders[0].size(), size_t(13) );
+            EXPECT_EQ( writer.borders[1].size(), size_t(5) );
 
-            ensure( "Check border segment #1", writer.segmentInBorders( 1, std::make_pair( Point( 1.166, 0.0 ), Point( 1.0, 0.0 )) ) );
-            ensure( "Check border segment #2", writer.segmentInBorders( 1, std::make_pair( Point( 1.0, 0.0 ), Point( 0.5, 0.0 )) ) );
-            ensure( "Check border segment #3", writer.segmentInBorders( 1, std::make_pair( Point( 0.5, 0.0 ), Point( 0.0, 0.0 )) ) );
-            ensure( "Check border segment #4", writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 0.0 ), Point( 0.0, 0.5 )) ) );
-            ensure( "Check border segment #5", writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 0.5 ), Point( 0.0, 0.833 )) ) );
+            EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 1.166, 0.0 ), Point( 1.0, 0.0 )) ) );
+            EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 1.0, 0.0 ), Point( 0.5, 0.0 )) ) );
+            EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 0.5, 0.0 ), Point( 0.0, 0.0 )) ) );
+            EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 0.0 ), Point( 0.0, 0.5 )) ) );
+            EXPECT_TRUE( writer.segmentInBorders( 1, std::make_pair( Point( 0.0, 0.5 ), Point( 0.0, 0.833 )) ) );
 
             // check contour
-            ensure_equals( "2 contours", writer.contours.size(), size_t(2) );
-            ensure_equals( "3 segments in the first", writer.contours[0].size(), size_t(3) );
-            ensure( "Check contour segment #1", writer.segmentInContours( 0, std::make_pair( Point( 1.166, 0.0 ), Point( 1.166, 0.5 )) ) );
-            ensure( "Check contour segment #2", writer.segmentInContours( 0, std::make_pair( Point( 1.166, 0.5 ), Point( 0.5, 0.833 )) ) );
-            ensure( "Check contour segment #3", writer.segmentInContours( 0, std::make_pair( Point( 0.5, 0.833 ), Point( 0.0, 0.833 )) ) );
+            EXPECT_EQ( writer.contours.size(), size_t(2) );
+            EXPECT_EQ( writer.contours[0].size(), size_t(3) );
+            EXPECT_TRUE( writer.segmentInContours( 0, std::make_pair( Point( 1.166, 0.0 ), Point( 1.166, 0.5 )) ) );
+            EXPECT_TRUE( writer.segmentInContours( 0, std::make_pair( Point( 1.166, 0.5 ), Point( 0.5, 0.833 )) ) );
+            EXPECT_TRUE( writer.segmentInContours( 0, std::make_pair( Point( 0.5, 0.833 ), Point( 0.0, 0.833 )) ) );
         }
     }
 
 
-    template<>
-    template<>
-    void object::test<6>()
+    TEST_F(test_ms_tile, tile_four_pixels_2)
     {
         // four pixels
         // 155    155.01
         // 154.99 155
         // levels = 155
-        
+
         //   NaN                NaN                NaN
         //    +------------------+------------------+------------------+
         //    |                  |                  |                  |
@@ -439,11 +424,11 @@ namespace tut
             cg.feedLine( &data[2] );
 
             // check borders
-            ensure_equals( "2 borders", writer.borders.size(), size_t(2) );
-            ensure_equals( "1 border @ 155.0", levelGenerator.level(0), 155.0 );
-            ensure( "1 border @ Inf", levelGenerator.level(1) == Inf );
-            ensure_equals( "First border has 6 segments", writer.borders[0].size(), size_t(6) );
-            ensure_equals( "Second border has 12 segments", writer.borders[1].size(), size_t(12) );
+            EXPECT_EQ( writer.borders.size(), size_t(2) );
+            EXPECT_EQ(levelGenerator.level(0), 155.0 );
+            EXPECT_TRUE( levelGenerator.level(1) == Inf );
+            EXPECT_EQ( writer.borders[0].size(), size_t(6) );
+            EXPECT_EQ( writer.borders[1].size(), size_t(12) );
         }
     }
 }

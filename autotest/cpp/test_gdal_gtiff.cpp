@@ -34,15 +34,15 @@
 #include "gdal_priv.h"
 #include "gdal.h"
 
-#include <sstream>
-#include <string>
 #include <vector>
 
-namespace tut
+#include "gtest_include.h"
+
+namespace
 {
 
     // Common fixture with test data
-    struct test_gtiff_data
+    struct test_gdal_gtiff : public ::testing::Test
     {
         struct raster_t
         {
@@ -61,7 +61,7 @@ namespace tut
         std::string data_tmp_;
         rasters_t rasters_;
 
-        test_gtiff_data()
+        test_gdal_gtiff()
             : drv_(nullptr), drv_name_("GTiff")
         {
             drv_ = GDALGetDriverByName(drv_name_.c_str());
@@ -84,82 +84,62 @@ namespace tut
             rasters_.push_back(raster_t("cfloat64.tif", 1, 5028));
             rasters_.push_back(raster_t("utmsmall.tif", 1, 50054));
         }
+
+        void SetUp() override
+        {
+            if( drv_ == nullptr )
+                GTEST_SKIP() << "GTiff driver missing";
+        }
     };
 
-    // Register test group
-    typedef test_group<test_gtiff_data> group;
-    typedef group::object object;
-    group test_gtiff_group("GDAL::GTiff");
-
-    // Test driver availability
-    template<>
-    template<>
-    void object::test<1>()
-    {
-        ensure("GDAL::GTiff driver not available", nullptr != drv_);
-    }
-
     // Test open dataset
-    template<>
-    template<>
-    void object::test<2>()
+    TEST_F(test_gdal_gtiff, open)
     {
-        rasters_t::const_iterator it;
-        for (it = rasters_.begin(); it != rasters_.end(); ++it)
+        for(const auto& raster: rasters_)
         {
             std::string file(data_ + SEP);
-            file += it->file_;
+            file += raster.file_;
             GDALDatasetH ds = GDALOpen(file.c_str(), GA_ReadOnly);
-            ensure("Can't open dataset: " + file, nullptr != ds);
+            ASSERT_TRUE(nullptr != ds);
             GDALClose(ds);
         }
     }
 
     // Test dataset checksums
-    template<>
-    template<>
-    void object::test<3>()
+    TEST_F(test_gdal_gtiff, checksum)
     {
-        rasters_t::const_iterator it;
-        for (it = rasters_.begin(); it != rasters_.end(); ++it)
+        for(const auto& raster: rasters_)
         {
             std::string file(data_ + SEP);
-            file += it->file_;
+            file += raster.file_;
 
             GDALDatasetH ds = GDALOpen(file.c_str(), GA_ReadOnly);
-            ensure("Can't open dataset: " + file, nullptr != ds);
+            ASSERT_TRUE(nullptr != ds);
 
-            GDALRasterBandH band = GDALGetRasterBand(ds, it->band_);
-            ensure("Can't get raster band", nullptr != band);
+            GDALRasterBandH band = GDALGetRasterBand(ds, raster.band_);
+            ASSERT_TRUE(nullptr != band);
 
             const int xsize = GDALGetRasterXSize(ds);
             const int ysize = GDALGetRasterYSize(ds);
             const int checksum = GDALChecksumImage(band, 0, 0, xsize, ysize);
 
-            std::stringstream os;
-            os << "Checksums for '" << file << "' not equal";
-            ensure_equals(os.str().c_str(), it->checksum_, checksum);
+            EXPECT_EQ(raster.checksum_, checksum);
 
             GDALClose(ds);
         }
     }
 
     // Test GeoTIFF driver metadata
-    template<>
-    template<>
-    void object::test<4>()
+    TEST_F(test_gdal_gtiff, driver_metadata)
     {
         const char* mdItem = GDALGetMetadataItem(drv_, "DMD_MIMETYPE", nullptr);
-        ensure("Can't fetch metadata", nullptr != mdItem);
+        ASSERT_TRUE(nullptr != mdItem);
 
-        ensure_equals("Invalid MIME type",
-            std::string(mdItem), std::string("image/tiff"));
+        EXPECT_STREQ(mdItem, "image/tiff");
     }
 
     // Create a simple file by copying from an existing one
-    template<>
-    template<>
-    void object::test<5>()
+    TEST_F(test_gdal_gtiff, copy)
     {
         // Index of test file being copied
         const std::size_t fileIdx = 10;
@@ -167,12 +147,12 @@ namespace tut
         std::string src(data_ + SEP);
         src += rasters_.at(fileIdx).file_;
         GDALDatasetH dsSrc = GDALOpen(src.c_str(), GA_ReadOnly);
-        ensure("Can't open source dataset: " + src, nullptr != dsSrc);
+        ASSERT_TRUE(nullptr != dsSrc);
 
         std::string dst(data_tmp_ + "\\test_2.tif");
         GDALDatasetH dsDst = nullptr;
         dsDst = GDALCreateCopy(drv_, dst.c_str(), dsSrc, FALSE, nullptr, nullptr, nullptr);
-        ensure("Can't copy dataset", nullptr != dsDst);
+        ASSERT_TRUE(nullptr != dsDst);
 
         GDALClose(dsDst);
         GDALClose(dsSrc);
@@ -180,31 +160,27 @@ namespace tut
         // Re-open copied dataset and test it
         dsDst = GDALOpen(dst.c_str(), GA_ReadOnly);
         GDALRasterBandH band = GDALGetRasterBand(dsDst, rasters_.at(fileIdx).band_);
-        ensure("Can't get raster band", nullptr != band);
+        ASSERT_TRUE(nullptr != band);
 
         const int xsize = GDALGetRasterXSize(dsDst);
         const int ysize = GDALGetRasterYSize(dsDst);
         const int checksum = GDALChecksumImage(band, 0, 0, xsize, ysize);
 
-        std::stringstream os;
-        os << "Checksums for '" << dst << "' not equal";
-        ensure_equals(os.str().c_str(), rasters_.at(fileIdx).checksum_, checksum);
+        EXPECT_EQ(rasters_.at(fileIdx).checksum_, checksum);
 
         GDALClose(dsDst);
         GDALDeleteDataset(drv_, dst.c_str());
     }
 
     // Create a simple file by copying from an existing one using creation options
-    template<>
-    template<>
-    void object::test<6>()
+   TEST_F(test_gdal_gtiff, copy_creation_options)
     {
         // Index of test file being copied
         const std::size_t fileIdx = 11;
         std::string src(data_ + SEP);
         src += rasters_.at(fileIdx).file_;
         GDALDatasetH dsSrc = GDALOpen(src.c_str(), GA_ReadOnly);
-        ensure("Can't open source dataset: " + src, nullptr != dsSrc);
+        ASSERT_TRUE(nullptr != dsSrc);
 
         std::string dst(data_tmp_ + "\\test_3.tif");
 
@@ -215,7 +191,7 @@ namespace tut
 
         GDALDatasetH dsDst = nullptr;
         dsDst = GDALCreateCopy(drv_, dst.c_str(), dsSrc, FALSE, options, nullptr, nullptr);
-        ensure("Can't copy dataset", nullptr != dsDst);
+        ASSERT_TRUE(nullptr != dsDst);
 
         GDALClose(dsDst);
         CSLDestroy(options);
@@ -224,44 +200,40 @@ namespace tut
         // Re-open copied dataset and test it
         dsDst = GDALOpen(dst.c_str(), GA_ReadOnly);
         GDALRasterBandH band = GDALGetRasterBand(dsDst, rasters_.at(fileIdx).band_);
-        ensure("Can't get raster band", nullptr != band);
+        ASSERT_TRUE(nullptr != band);
 
         const int xsize = GDALGetRasterXSize(dsDst);
         const int ysize = GDALGetRasterYSize(dsDst);
         const int checksum = GDALChecksumImage(band, 0, 0, xsize, ysize);
 
-        std::stringstream os;
-        os << "Checksums for '" << dst << "' not equal";
-        ensure_equals(os.str().c_str(), rasters_.at(fileIdx).checksum_, checksum);
+        EXPECT_EQ(rasters_.at(fileIdx).checksum_, checksum);
 
         GDALClose(dsDst);
         GDALDeleteDataset(drv_, dst.c_str());
     }
 
     // Test raster min/max calculation
-    template<>
-    template<>
-    void object::test<7>()
+    TEST_F(test_gdal_gtiff, raster_min_max)
     {
-                // Index of test file being copied
+        // Index of test file being copied
         const std::size_t fileIdx = 10;
 
         std::string src(data_ + SEP);
         src += rasters_.at(fileIdx).file_;
         GDALDatasetH ds = GDALOpen(src.c_str(), GA_ReadOnly);
-        ensure("Can't open dataset: " + src, nullptr != ds);
+        ASSERT_TRUE(nullptr != ds);
 
         GDALRasterBandH band = GDALGetRasterBand(ds, rasters_.at(fileIdx).band_);
-        ensure("Can't get raster band", nullptr != band);
+        ASSERT_TRUE(nullptr != band);
 
         double expect[2] = { 74.0, 255.0 };
         double minmax[2] = { 0 };
         GDALComputeRasterMinMax(band, TRUE, minmax);
 
-        ensure_equals("Computed wrong min", expect[0], minmax[0]);
-        ensure_equals("Computed wrong max", expect[1], minmax[1]);
+        EXPECT_EQ(expect[0], minmax[0]);
+        EXPECT_EQ(expect[1], minmax[1]);
 
         GDALClose(ds);
     }
 
- } // namespace tut
+}
