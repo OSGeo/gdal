@@ -5,12 +5,12 @@
 
 set -e
 
-if test "x${SCRIPT_DIR}" = "x"; then
+if test "${SCRIPT_DIR}" = ""; then
     echo "SCRIPT_DIR not defined"
     exit 1
 fi
 
-if test "x${TARGET_IMAGE}" = "x"; then
+if test "${TARGET_IMAGE}" = ""; then
     echo "TARGET_IMAGE not defined"
     exit 1
 fi
@@ -150,7 +150,7 @@ check_image()
     TMP_IMAGE_NAME="$1"
     docker run --rm "${TMP_IMAGE_NAME}" gdalinfo --version
     docker run --rm "${TMP_IMAGE_NAME}" projinfo EPSG:4326
-    if test "x${TEST_PYTHON}" != "x"; then
+    if test "${TEST_PYTHON}" != ""; then
         docker run --rm "${TMP_IMAGE_NAME}" python3 -c "from osgeo import gdal, gdalnumeric; print(gdal.VersionInfo(''))"
     fi
 }
@@ -265,9 +265,9 @@ if test "${RELEASE}" = "yes"; then
         "--build-arg" "WITH_DEBUG_SYMBOLS=${WITH_DEBUG_SYMBOLS}" \
     )
 
-    if test "x${BASE_IMAGE}" != "x"; then
+    if test "${BASE_IMAGE}" != ""; then
         BUILD_ARGS+=("--build-arg" "BASE_IMAGE=${BASE_IMAGE}")
-        if test "x${TARGET_IMAGE}" = "xosgeo/gdal:ubuntu-full" -o "x${TARGET_IMAGE}" = "xosgeo/gdal:ubuntu-small"; then
+        if test "${TARGET_IMAGE}" = "osgeo/gdal:ubuntu-full" -o "${TARGET_IMAGE}" = "osgeo/gdal:ubuntu-small"; then
           BUILD_ARGS+=("--build-arg" "TARGET_BASE_IMAGE=${BASE_IMAGE}")
         fi
     fi
@@ -289,7 +289,7 @@ if test "${RELEASE}" = "yes"; then
         check_image "${IMAGE_NAME}"
     fi
 
-    if test "x${PUSH_GDAL_DOCKER_IMAGE}" = "xyes"; then
+    if test "${PUSH_GDAL_DOCKER_IMAGE}" = "yes"; then
         if test "${DOCKER_BUILDX}" = "buildx"; then
           docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" -t "${IMAGE_NAME}" --push "${SCRIPT_DIR}"
         else
@@ -300,10 +300,10 @@ if test "${RELEASE}" = "yes"; then
 else
 
     IMAGE_NAME_WITH_ARCH="${IMAGE_NAME}"
-    if test "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-full-latest" \
-         -o "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-small-latest" \
-         -o "x${IMAGE_NAME}" = "xosgeo/gdal:alpine-small-latest" \
-         -o "x${IMAGE_NAME}" = "xosgeo/gdal:alpine-normal-latest"; then
+    if test "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-full-latest" \
+         -o "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-small-latest" \
+         -o "${IMAGE_NAME}" = "osgeo/gdal:alpine-small-latest" \
+         -o "${IMAGE_NAME}" = "osgeo/gdal:alpine-normal-latest"; then
         if test "${DOCKER_BUILDX}" != "buildx"; then
           ARCH_PLATFORM_ARCH=$(echo ${ARCH_PLATFORMS} | sed "s/linux\///")
           IMAGE_NAME_WITH_ARCH="${IMAGE_NAME}-${ARCH_PLATFORM_ARCH}"
@@ -379,13 +379,13 @@ EOF
         "--build-arg" "WITH_DEBUG_SYMBOLS=${WITH_DEBUG_SYMBOLS}" \
     )
 
-    if test "x${BASE_IMAGE}" != "x"; then
+    if test "${BASE_IMAGE}" != ""; then
         BUILD_ARGS+=("--build-arg" "BASE_IMAGE=${BASE_IMAGE}")
-        if test "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-full-latest" -o "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-small-latest"; then
+        if test "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-full-latest" -o "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-small-latest"; then
           BUILD_ARGS+=("--build-arg" "TARGET_BASE_IMAGE=${BASE_IMAGE}")
         fi
     else
-      if test "${DOCKER_BUILDX}" != "buildx" -a \( "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-full-latest" -o "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-small-latest" \); then
+      if test "${DOCKER_BUILDX}" != "buildx" -a \( "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-full-latest" -o "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-small-latest" \); then
         if test "${ARCH_PLATFORMS}" = "linux/arm64"; then
           BASE_IMAGE=$(grep "ARG BASE_IMAGE=" ${SCRIPT_DIR}/Dockerfile | sed "s/ARG BASE_IMAGE=//")
           echo "Fetching digest for ${BASE_IMAGE} ${ARCH_PLATFORMS}..."
@@ -396,7 +396,7 @@ EOF
           BUILD_ARGS+=("--build-arg" "TARGET_BASE_IMAGE=${BASE_IMAGE}@${TARGET_BASE_IMAGE_DIGEST}")
           # echo "${BUILD_ARGS[@]}"
         fi
-      elif test "${DOCKER_BUILDX}" != "buildx" -a \( "x${IMAGE_NAME}" = "xosgeo/gdal:alpine-small-latest" -o "x${IMAGE_NAME}" = "xosgeo/gdal:alpine-normal-latest" \); then
+      elif test "${DOCKER_BUILDX}" != "buildx" -a \( "${IMAGE_NAME}" = "osgeo/gdal:alpine-small-latest" -o "${IMAGE_NAME}" = "osgeo/gdal:alpine-normal-latest" \); then
         if test "${ARCH_PLATFORMS}" = "linux/arm64"; then
           ALPINE_VERSION=$(grep "ARG ALPINE_VERSION=" ${SCRIPT_DIR}/Dockerfile | sed "s/ARG ALPINE_VERSION=//")
           BASE_IMAGE="alpine:${ALPINE_VERSION}"
@@ -419,14 +419,14 @@ EOF
         check_image "${IMAGE_NAME_WITH_ARCH}"
     fi
 
-    if test "x${PUSH_GDAL_DOCKER_IMAGE}" = "xyes"; then
+    if test "${PUSH_GDAL_DOCKER_IMAGE}" = "yes"; then
         if test "${DOCKER_BUILDX}" = "buildx"; then
             docker $(build_cmd) "${BUILD_ARGS[@]}" -t "${IMAGE_NAME}" --push "${SCRIPT_DIR}"
         else
             docker push "${IMAGE_NAME_WITH_ARCH}"
         fi
 
-        if test "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-full-latest"; then
+        if test "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-full-latest"; then
             if test "${DOCKER_BUILDX}" = "buildx"; then
                 docker $(build_cmd) "${BUILD_ARGS[@]}" -t "osgeo/gdal:latest" --push "${SCRIPT_DIR}"
             else
@@ -448,10 +448,10 @@ EOF
         docker rmi "${OLD_IMAGE_ID}"
     fi
 
-    if test "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-full-latest" \
-         -o "x${IMAGE_NAME}" = "xosgeo/gdal:ubuntu-small-latest" \
-         -o "x${IMAGE_NAME}" = "xosgeo/gdal:alpine-small-latest" \
-         -o "x${IMAGE_NAME}" = "xosgeo/gdal:alpine-normal-latest"; then
+    if test "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-full-latest" \
+         -o "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-small-latest" \
+         -o "${IMAGE_NAME}" = "osgeo/gdal:alpine-small-latest" \
+         -o "${IMAGE_NAME}" = "osgeo/gdal:alpine-normal-latest"; then
         if test "${DOCKER_BUILDX}" != "buildx" -a "${ARCH_PLATFORMS}" = "linux/amd64"; then
           docker image tag "${IMAGE_NAME_WITH_ARCH}" "${IMAGE_NAME}"
         fi

@@ -2,11 +2,11 @@
 
 set -e
 
-if test "x${PROJ_VERSION}" = "x"; then
+if test "${PROJ_VERSION}" = ""; then
     PROJ_VERSION=master
 fi
 
-if test "x${DESTDIR}" = "x"; then
+if test "${DESTDIR}" = ""; then
     DESTDIR=/build
 fi
 
