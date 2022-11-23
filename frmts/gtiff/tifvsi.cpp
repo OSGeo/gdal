@@ -52,8 +52,18 @@
 #include "gdal_libgeotiff_symbol_rename.h"
 #endif
 
+#if (TIFFLIB_VERSION > 20220520) || defined(INTERNAL_LIBTIFF)  // > 4.4.0
+#define SUPPORTS_LIBTIFF_OPEN_OPTIONS
+
+extern int
+GTiffWarningHandlerExt( TIFF* tif, void* user_data, const char* module, const char* fmt, va_list ap );
+extern int
+GTiffErrorHandlerExt( TIFF* tif, void* user_data, const char* module, const char* fmt, va_list ap );
+
+#endif
 
 CPL_C_START
+extern void CPL_DLL XTIFFInitialize(void);
 extern TIFF CPL_DLL * XTIFFClientOpen( const char* name, const char* mode,
                                        thandle_t thehandle,
                                        TIFFReadWriteProc, TIFFReadWriteProc,
@@ -450,6 +460,25 @@ static TIFF* VSI_TIFFOpen_common(GDALTiffHandle* psGTH, const char* pszMode)
 {
     InitializeWriteBuffer(psGTH, pszMode);
 
+#ifdef SUPPORTS_LIBTIFF_OPEN_OPTIONS
+    XTIFFInitialize();
+    TIFFOpenOptions* opts = TIFFOpenOptionsAlloc();
+    if( opts == nullptr )
+    {
+        FreeGTH(psGTH);
+        return nullptr;
+    }
+    TIFFOpenOptionsSetErrorHandlerExtR(opts, GTiffErrorHandlerExt, nullptr);
+    TIFFOpenOptionsSetWarningHandlerExtR(opts, GTiffWarningHandlerExt, nullptr);
+    TIFF *tif =
+        TIFFClientOpenExt( psGTH->psShared->pszName,
+                         pszMode,
+                         reinterpret_cast<thandle_t>(psGTH),
+                         _tiffReadProc, _tiffWriteProc,
+                         _tiffSeekProc, _tiffCloseProc, _tiffSizeProc,
+                         _tiffMapProc, _tiffUnmapProc, opts );
+    TIFFOpenOptionsFree(opts);
+#else
     TIFF *tif =
         XTIFFClientOpen( psGTH->psShared->pszName,
                          pszMode,
@@ -457,6 +486,7 @@ static TIFF* VSI_TIFFOpen_common(GDALTiffHandle* psGTH, const char* pszMode)
                          _tiffReadProc, _tiffWriteProc,
                          _tiffSeekProc, _tiffCloseProc, _tiffSizeProc,
                          _tiffMapProc, _tiffUnmapProc );
+#endif
     if( tif == nullptr )
         FreeGTH(psGTH);
 
@@ -531,12 +561,30 @@ TIFF* VSI_TIFFReOpen( TIFF* tif )
     VSIFSeekL( psGTH->psShared->fpL, 0, SEEK_SET );
     psGTH->psShared->bAtEndOfFile = false;
 
+#ifdef SUPPORTS_LIBTIFF_OPEN_OPTIONS
+    TIFF *newHandle = nullptr;
+    TIFFOpenOptions* opts = TIFFOpenOptionsAlloc();
+    if( opts != nullptr )
+    {
+        TIFFOpenOptionsSetErrorHandlerExtR(opts, GTiffErrorHandlerExt, nullptr);
+        TIFFOpenOptionsSetWarningHandlerExtR(opts, GTiffWarningHandlerExt, nullptr);
+        newHandle =
+            TIFFClientOpenExt( psGTH->psShared->pszName,
+                               mode,
+                               reinterpret_cast<thandle_t>(psGTH),
+                               _tiffReadProc, _tiffWriteProc,
+                               _tiffSeekProc, _tiffCloseProc, _tiffSizeProc,
+                               _tiffMapProc, _tiffUnmapProc, opts );
+        TIFFOpenOptionsFree(opts);
+    }
+#else
     TIFF* newHandle = XTIFFClientOpen( psGTH->psShared->pszName,
                          mode,
                          reinterpret_cast<thandle_t>(psGTH),
                          _tiffReadProc, _tiffWriteProc,
                          _tiffSeekProc, _tiffCloseProc, _tiffSizeProc,
                          _tiffMapProc, _tiffUnmapProc );
+#endif
     if( newHandle != nullptr )
         XTIFFClose(tif);
 

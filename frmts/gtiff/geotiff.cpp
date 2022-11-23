@@ -110,7 +110,7 @@
 
 #define DEFAULT_WEBP_LEVEL  75
 
-static bool bGlobalInExternalOvr = false;
+static thread_local bool bThreadLocalInExternalOvr = false;
 
 static thread_local int gnThreadLocalLibtiffError = 0;
 
@@ -123,6 +123,10 @@ constexpr double DEFAULT_NODATA_VALUE = -9999.0;
 
 #if TIFFLIB_VERSION > 20181110 // > 4.0.10
 #define SUPPORTS_GET_OFFSET_BYTECOUNT
+#endif
+
+#if (TIFFLIB_VERSION > 20220520) || defined(INTERNAL_LIBTIFF)  // > 4.4.0
+#define SUPPORTS_LIBTIFF_OPEN_OPTIONS
 #endif
 
 const char* const szJPEGGTiffDatasetTmpPrefix = "/vsimem/gtiffdataset_jpg_tmp_";
@@ -241,12 +245,12 @@ bool GTIFFSupportsPredictor(int nCompression)
 }
 
 /************************************************************************/
-/*                          GTIFFSetInExternalOvr()                     */
+/*                     GTIFFSetThreadLocalInExternalOvr()               */
 /************************************************************************/
 
-void GTIFFSetInExternalOvr( bool b )
+void GTIFFSetThreadLocalInExternalOvr( bool b )
 {
-    bGlobalInExternalOvr = b;
+    bThreadLocalInExternalOvr = b;
 }
 
 /************************************************************************/
@@ -22689,6 +22693,8 @@ static char *PrepareTIFFErrorFormat( const char *module, const char *fmt )
     return pszModFmt;
 }
 
+#if !defined(SUPPORTS_LIBTIFF_OPEN_OPTIONS)
+
 /************************************************************************/
 /*                        GTiffWarningHandler()                         */
 /************************************************************************/
@@ -22717,6 +22723,7 @@ GTiffWarningHandler(const char* module, const char* fmt, va_list ap )
         CPLErrorV( CE_Warning, CPLE_AppDefined, pszModFmt, ap );
     }
     CPLFree( pszModFmt );
+    return;
 }
 
 /************************************************************************/
@@ -22734,11 +22741,7 @@ GTiffErrorHandler( const char* module, const char* fmt, va_list ap )
 
     if( strcmp(fmt, "Maximum TIFF file size exceeded") == 0 )
     {
-        // Ideally there would be a thread-safe way of setting this flag,
-        // but we cannot really use the extended error handler, since the
-        // handler is for all TIFF handles, and not necessarily the ones of
-        // this driver.
-        if( bGlobalInExternalOvr )
+        if( bThreadLocalInExternalOvr )
             fmt =
                 "Maximum TIFF file size exceeded. "
                 "Use --config BIGTIFF_OVERVIEW YES configuration option.";
@@ -22751,7 +22754,83 @@ GTiffErrorHandler( const char* module, const char* fmt, va_list ap )
     char* pszModFmt = PrepareTIFFErrorFormat( module, fmt );
     CPLErrorV( CE_Failure, CPLE_AppDefined, pszModFmt, ap );
     CPLFree( pszModFmt );
+    return;
 }
+#else
+
+/************************************************************************/
+/*                      GTiffWarningHandlerExt()                        */
+/************************************************************************/
+extern int
+GTiffWarningHandlerExt( TIFF* tif, void* user_data, const char* module, const char* fmt, va_list ap );
+
+int
+GTiffWarningHandlerExt( TIFF* tif, void* user_data, const char* module, const char* fmt, va_list ap )
+{
+    (void)tif;
+    (void)user_data;
+    if( gnThreadLocalLibtiffError > 0 )
+    {
+        gnThreadLocalLibtiffError ++;
+        if( gnThreadLocalLibtiffError > 10 )
+            return 1;
+    }
+
+    if( strstr(fmt,"nknown field") != nullptr )
+        return 1;
+
+    char *pszModFmt = PrepareTIFFErrorFormat( module, fmt );
+    if( strstr(fmt, "does not end in null byte") != nullptr )
+    {
+        CPLString osMsg;
+        osMsg.vPrintf(pszModFmt, ap);
+        CPLDebug( "GTiff", "%s", osMsg.c_str() );
+    }
+    else
+    {
+        CPLErrorV( CE_Warning, CPLE_AppDefined, pszModFmt, ap );
+    }
+    CPLFree( pszModFmt );
+    return 1;
+}
+
+/************************************************************************/
+/*                       GTiffErrorHandlerExt()                         */
+/************************************************************************/
+extern int
+GTiffErrorHandlerExt( TIFF* tif, void* user_data, const char* module, const char* fmt, va_list ap );
+
+int
+GTiffErrorHandlerExt( TIFF* tif, void* user_data, const char* module, const char* fmt, va_list ap )
+{
+    (void)tif;
+    (void)user_data;
+    if( gnThreadLocalLibtiffError > 0 )
+    {
+        gnThreadLocalLibtiffError ++;
+        if( gnThreadLocalLibtiffError > 10 )
+            return 1;
+    }
+
+    if( strcmp(fmt, "Maximum TIFF file size exceeded") == 0 )
+    {
+        if( bThreadLocalInExternalOvr )
+            fmt =
+                "Maximum TIFF file size exceeded. "
+                "Use --config BIGTIFF_OVERVIEW YES configuration option.";
+        else
+            fmt =
+                "Maximum TIFF file size exceeded. "
+                "Use BIGTIFF=YES creation option.";
+    }
+
+    char* pszModFmt = PrepareTIFFErrorFormat( module, fmt );
+    CPLErrorV( CE_Failure, CPLE_AppDefined, pszModFmt, ap );
+    CPLFree( pszModFmt );
+    return 1;
+}
+
+#endif
 
 /************************************************************************/
 /*                          GTiffTagExtender()                          */
@@ -22819,8 +22898,10 @@ int GTiffOneTimeInit()
 
     _ParentExtender = TIFFSetTagExtender(GTiffTagExtender);
 
+#if !defined(SUPPORTS_LIBTIFF_OPEN_OPTIONS)
     TIFFSetWarningHandler( GTiffWarningHandler );
     TIFFSetErrorHandler( GTiffErrorHandler );
+#endif
 
     LibgeotiffOneTimeInit();
 

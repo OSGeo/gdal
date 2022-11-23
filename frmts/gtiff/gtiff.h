@@ -43,7 +43,7 @@ int    GTiffOneTimeInit();
 void CPL_DLL LibgeotiffOneTimeInit();
 CPL_C_END
 
-void    GTIFFSetInExternalOvr( bool b );
+void    GTIFFSetThreadLocalInExternalOvr( bool b );
 void    GTIFFGetOverviewBlockSize( GDALRasterBandH hBand, int* pnBlockXSize, int* pnBlockYSize );
 void    GTIFFSetJpegQuality( GDALDatasetH hGTIFFDS, int nJpegQuality );
 void    GTIFFSetWebPLevel( GDALDatasetH hGTIFFDS, int nWebPLevel );
