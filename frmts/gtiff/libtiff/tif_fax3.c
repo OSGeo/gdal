@@ -537,7 +537,7 @@ Fax3SetupState(TIFF* tif)
 		 * is referenced.  The reference line must
 		 * be initialized to be ``white'' (done elsewhere).
 		 */
-		esp->refline = (unsigned char*) _TIFFmalloc(rowbytes);
+		esp->refline = (unsigned char*) _TIFFmallocExt(tif, rowbytes);
 		if (esp->refline == NULL) {
 			TIFFErrorExtR(tif, module,
 			    "No space for Group 3/4 reference line");
@@ -1137,11 +1137,11 @@ Fax3Cleanup(TIFF* tif)
 	tif->tif_tagmethods.printdir = sp->b.printdir;
 
 	if (sp->runs)
-		_TIFFfree(sp->runs);
+		_TIFFfreeExt(tif, sp->runs);
 	if (sp->refline)
-		_TIFFfree(sp->refline);
+		_TIFFfreeExt(tif, sp->refline);
 
-	_TIFFfree(tif->tif_data);
+	_TIFFfreeExt(tif, tif->tif_data);
 	tif->tif_data = NULL;
 
 	_TIFFSetDefaultCompressionState(tif);
@@ -1324,7 +1324,7 @@ InitCCITTFax3(TIFF* tif)
 	 * Allocate state block so tag methods have storage to record values.
 	 */
 	tif->tif_data = (uint8_t*)
-		_TIFFmalloc(sizeof (Fax3CodecState));
+		_TIFFmallocExt(tif, sizeof (Fax3CodecState));
 
 	if (tif->tif_data == NULL) {
 		TIFFErrorExtR(tif, module,

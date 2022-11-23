@@ -488,7 +488,7 @@ static boolean tables_empty_output_buffer(j_compress_ptr cinfo) {
   void *newbuf;
 
   /* the entire buffer has been filled; enlarge it by 1000 bytes */
-  newbuf = _TIFFrealloc((void *)sp->otherSettings.jpegtables,
+  newbuf = _TIFFreallocExt(sp->tif, (void *)sp->otherSettings.jpegtables,
                         (tmsize_t)(sp->otherSettings.jpegtables_length + 1000));
   if (newbuf == NULL)
     ERREXIT1(cinfo, JERR_OUT_OF_MEMORY, 100);
@@ -514,10 +514,10 @@ static int TIFFjpeg_tables_dest(JPEGState *sp, TIFF *tif) {
    * Initial size is 1000 bytes, which is usually adequate.
    */
   if (sp->otherSettings.jpegtables)
-    _TIFFfree(sp->otherSettings.jpegtables);
+    _TIFFfreeExt(tif, sp->otherSettings.jpegtables);
   sp->otherSettings.jpegtables_length = 1000;
   sp->otherSettings.jpegtables =
-      (void *)_TIFFmalloc((tmsize_t)sp->otherSettings.jpegtables_length);
+      (void *)_TIFFmallocExt(tif, (tmsize_t)sp->otherSettings.jpegtables_length);
   if (sp->otherSettings.jpegtables == NULL) {
     sp->otherSettings.jpegtables_length = 0;
     TIFFErrorExtR(sp->tif, "TIFFjpeg_tables_dest",
@@ -745,7 +745,7 @@ static void JPEGFixupTagsSubsampling(TIFF *tif) {
 
   m.tif = tif;
   m.buffersize = 2048;
-  m.buffer = _TIFFmalloc(m.buffersize);
+  m.buffer = _TIFFmallocExt(tif, m.buffersize);
   if (m.buffer == NULL) {
     TIFFWarningExtR(tif, module,
                    "Unable to allocate memory for auto-correcting of "
@@ -762,7 +762,7 @@ static void JPEGFixupTagsSubsampling(TIFF *tif) {
         tif, module,
         "Unable to auto-correct subsampling values, likely corrupt JPEG "
         "compressed data in first strip/tile; auto-correcting skipped");
-  _TIFFfree(m.buffer);
+  _TIFFfreeExt(tif, m.buffer);
 }
 
 static int
@@ -1361,7 +1361,7 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
      */
     if (sp->cinfo.d.data_precision == 12) {
       line_work_buf =
-          (JSAMPROW)_TIFFmalloc(sizeof(short) * sp->cinfo.d.output_width *
+          (JSAMPROW)_TIFFmallocExt(tif, sizeof(short) * sp->cinfo.d.output_width *
                                 sp->cinfo.d.num_components);
     }
 
@@ -1407,7 +1407,7 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
     } while (--nrows > 0);
 
     if (line_work_buf != NULL)
-      _TIFFfree(line_work_buf);
+      _TIFFfreeExt(tif, line_work_buf);
   }
 
   /* Update information on consumed data */
@@ -1465,7 +1465,7 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
     int samples_per_clump = sp->samplesperclump;
 
 #if defined(JPEG_LIB_MK1_OR_12BIT)
-    tmpbuf = _TIFFmalloc(sizeof(unsigned short) * sp->cinfo.d.output_width *
+    tmpbuf = _TIFFmallocExt(tif, sizeof(unsigned short) * sp->cinfo.d.output_width *
                          sp->cinfo.d.num_components);
     if (tmpbuf == NULL) {
       TIFFErrorExtR(tif, "JPEGDecodeRaw", "Out of memory");
@@ -1573,7 +1573,7 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
     } while (nrows > 0);
 
 #if defined(JPEG_LIB_MK1_OR_12BIT)
-    _TIFFfree(tmpbuf);
+    _TIFFfreeExt(tif, tmpbuf);
 #endif
   }
 
@@ -1583,7 +1583,7 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
 
 error:
 #if defined(JPEG_LIB_MK1_OR_12BIT)
-  _TIFFfree(tmpbuf);
+  _TIFFfreeExt(tif, tmpbuf);
 #endif
   return 0;
 }
@@ -2037,7 +2037,7 @@ static int JPEGEncode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
 
   if (sp->cinfo.c.data_precision == 12) {
     line16_count = (int)((sp->bytesperline * 2) / 3);
-    line16 = (short *)_TIFFmalloc(sizeof(short) * line16_count);
+    line16 = (short *)_TIFFmallocExt(tif, sizeof(short) * line16_count);
     if (!line16) {
       TIFFErrorExtR(tif, "JPEGEncode",
                    "Failed to allocate memory");
@@ -2073,7 +2073,7 @@ static int JPEGEncode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
   }
 
   if (sp->cinfo.c.data_precision == 12) {
-    _TIFFfree(line16);
+    _TIFFfreeExt(tif, line16);
   }
 
   return (1);
@@ -2209,8 +2209,8 @@ static void JPEGCleanup(TIFF *tif) {
   if (sp->cinfo_initialized)
     TIFFjpeg_destroy(sp);           /* release libjpeg resources */
   if (sp->otherSettings.jpegtables) /* tag value */
-    _TIFFfree(sp->otherSettings.jpegtables);
-  _TIFFfree(tif->tif_data); /* release local state */
+    _TIFFfreeExt(tif, sp->otherSettings.jpegtables);
+  _TIFFfreeExt(tif, tif->tif_data); /* release local state */
   tif->tif_data = NULL;
 
   _TIFFSetDefaultCompressionState(tif);
@@ -2262,7 +2262,7 @@ static int JPEGVSetField(TIFF *tif, uint32_t tag, va_list ap) {
       /* XXX */
       return (0);
     }
-    _TIFFsetByteArray(&sp->otherSettings.jpegtables, va_arg(ap, void *), v32);
+    _TIFFsetByteArrayExt(tif, &sp->otherSettings.jpegtables, va_arg(ap, void *), v32);
     sp->otherSettings.jpegtables_length = v32;
     TIFFSetFieldBit(tif, FIELD_JPEGTABLES);
     break;
@@ -2488,7 +2488,7 @@ int TIFFInitJPEG(TIFF *tif, int scheme) {
   /*
    * Allocate state block so tag methods have storage to record values.
    */
-  tif->tif_data = (uint8_t *)_TIFFmalloc(sizeof(JPEGState));
+  tif->tif_data = (uint8_t *)_TIFFmallocExt(tif, sizeof(JPEGState));
 
   if (tif->tif_data == NULL) {
     TIFFErrorExtR(tif, "TIFFInitJPEG",
@@ -2528,7 +2528,7 @@ int TIFFInitJPEG(TIFF *tif, int scheme) {
     */
     sp->otherSettings.jpegtables_length = SIZE_OF_JPEGTABLES;
     sp->otherSettings.jpegtables =
-        (void *)_TIFFmalloc(sp->otherSettings.jpegtables_length);
+        (void *)_TIFFmallocExt(tif, sp->otherSettings.jpegtables_length);
     if (sp->otherSettings.jpegtables) {
       _TIFFmemset(sp->otherSettings.jpegtables, 0, SIZE_OF_JPEGTABLES);
     } else {

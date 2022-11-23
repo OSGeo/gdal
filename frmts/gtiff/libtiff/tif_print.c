@@ -620,12 +620,12 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 				} else {
 					/*--: Rational2Double: For Rationals evaluate "set_field_type" to determine internal storage size. */
 					int tv_size = TIFFFieldSetGetSize(fip);
-					raw_data = _TIFFmalloc(
+					raw_data = _TIFFmallocExt(tif,
 					    tv_size
 					    * value_count);
 					mem_alloc = 1;
 					if(TIFFGetField(tif, tag, raw_data) != 1) {
-						_TIFFfree(raw_data);
+						_TIFFfreeExt(tif, raw_data);
 						continue;
 					}
 				}
@@ -641,7 +641,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 				_TIFFPrintField(fd, fip, value_count, raw_data);
 
 			if(mem_alloc)
-				_TIFFfree(raw_data);
+				_TIFFfreeExt(tif, raw_data);
 		}
 	}
         

@@ -519,7 +519,7 @@ ZIPCleanup(TIFF* tif)
             libdeflate_free_compressor(sp->libdeflate_enc);
 #endif
 
-	_TIFFfree(sp);
+	_TIFFfreeExt(tif, sp);
 	tif->tif_data = NULL;
 
 	_TIFFSetDefaultCompressionState(tif);
@@ -638,7 +638,7 @@ TIFFInitZIP(TIFF* tif, int scheme)
 	/*
 	 * Allocate state block so tag methods have storage to record values.
 	 */
-	tif->tif_data = (uint8_t*) _TIFFcalloc(sizeof (ZIPState), 1);
+	tif->tif_data = (uint8_t*) _TIFFcallocExt(tif, sizeof (ZIPState), 1);
 	if (tif->tif_data == NULL)
 		goto bad;
 	sp = ZState(tif);

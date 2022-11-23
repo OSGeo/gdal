@@ -315,7 +315,7 @@ ZSTDCleanup(TIFF* tif)
             ZSTD_freeCStream(sp->cstream);
             sp->cstream = NULL;
         }
-        _TIFFfree(sp);
+        _TIFFfreeExt(tif, sp);
         tif->tif_data = NULL;
 
         _TIFFSetDefaultCompressionState(tif);
@@ -386,7 +386,7 @@ TIFFInitZSTD(TIFF* tif, int scheme)
         /*
         * Allocate state block so tag methods have storage to record values.
         */
-        tif->tif_data = (uint8_t*) _TIFFmalloc(sizeof(ZSTDState));
+        tif->tif_data = (uint8_t*) _TIFFmallocExt(tif, sizeof(ZSTDState));
         if (tif->tif_data == NULL)
                 goto bad;
         sp = LState(tif);

@@ -103,7 +103,7 @@ _TIFFCheckRealloc(TIFF* tif, void* buffer,
 	 */
 	if (count != 0)
 	{
-		cp = _TIFFrealloc(buffer, count);
+		cp = _TIFFreallocExt(tif, buffer, count);
 	}
 
 	if (cp == NULL) {
@@ -123,7 +123,7 @@ _TIFFCheckMalloc(TIFF* tif, tmsize_t nmemb, tmsize_t elem_size, const char* what
 }
 
 static int
-TIFFDefaultTransferFunction(TIFFDirectory* td)
+TIFFDefaultTransferFunction(TIFF* tif, TIFFDirectory* td)
 {
 	uint16_t **tf = td->td_transferfunction;
 	tmsize_t i, n, nbytes;
@@ -134,7 +134,7 @@ TIFFDefaultTransferFunction(TIFFDirectory* td)
 
 	n = ((tmsize_t)1)<<td->td_bitspersample;
 	nbytes = n * sizeof (uint16_t);
-        tf[0] = (uint16_t *)_TIFFmalloc(nbytes);
+        tf[0] = (uint16_t *)_TIFFmallocExt(tif, nbytes);
 	if (tf[0] == NULL)
 		return 0;
 	tf[0][0] = 0;
@@ -144,11 +144,11 @@ TIFFDefaultTransferFunction(TIFFDirectory* td)
 	}
 
 	if (td->td_samplesperpixel - td->td_extrasamples > 1) {
-                tf[1] = (uint16_t *)_TIFFmalloc(nbytes);
+                tf[1] = (uint16_t *)_TIFFmallocExt(tif, nbytes);
 		if(tf[1] == NULL)
 			goto bad;
 		_TIFFmemcpy(tf[1], tf[0], nbytes);
-                tf[2] = (uint16_t *)_TIFFmalloc(nbytes);
+                tf[2] = (uint16_t *)_TIFFmallocExt(tif, nbytes);
 		if (tf[2] == NULL)
 			goto bad;
 		_TIFFmemcpy(tf[2], tf[0], nbytes);
@@ -157,21 +157,21 @@ TIFFDefaultTransferFunction(TIFFDirectory* td)
 
 bad:
 	if (tf[0])
-		_TIFFfree(tf[0]);
+		_TIFFfreeExt(tif, tf[0]);
 	if (tf[1])
-		_TIFFfree(tf[1]);
+		_TIFFfreeExt(tif, tf[1]);
 	if (tf[2])
-		_TIFFfree(tf[2]);
+		_TIFFfreeExt(tif, tf[2]);
 	tf[0] = tf[1] = tf[2] = 0;
 	return 0;
 }
 
 static int
-TIFFDefaultRefBlackWhite(TIFFDirectory* td)
+TIFFDefaultRefBlackWhite(TIFF* tif, TIFFDirectory* td)
 {
 	int i;
 
-        td->td_refblackwhite = (float *)_TIFFmalloc(6*sizeof (float));
+        td->td_refblackwhite = (float *)_TIFFmallocExt(tif, 6*sizeof (float));
 	if (td->td_refblackwhite == NULL)
 		return 0;
         if (td->td_photometric == PHOTOMETRIC_YCBCR) {
@@ -332,7 +332,7 @@ TIFFVGetFieldDefaulted(TIFF* tif, uint32_t tag, va_list ap)
 		}
 	case TIFFTAG_TRANSFERFUNCTION:
 		if (!td->td_transferfunction[0] &&
-		    !TIFFDefaultTransferFunction(td)) {
+		    !TIFFDefaultTransferFunction(tif, td)) {
 			TIFFErrorExtR(tif, tif->tif_name, "No space for \"TransferFunction\" tag");
 			return (0);
 		}
@@ -343,7 +343,7 @@ TIFFVGetFieldDefaulted(TIFF* tif, uint32_t tag, va_list ap)
 		}
 		return (1);
 	case TIFFTAG_REFERENCEBLACKWHITE:
-		if (!td->td_refblackwhite && !TIFFDefaultRefBlackWhite(td))
+		if (!td->td_refblackwhite && !TIFFDefaultRefBlackWhite(tif, td))
 			return (0);
 		*va_arg(ap, const float **) = td->td_refblackwhite;
 		return (1);

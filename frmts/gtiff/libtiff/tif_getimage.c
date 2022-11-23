@@ -217,38 +217,38 @@ void
 TIFFRGBAImageEnd(TIFFRGBAImage* img)
 {
 	if (img->Map) {
-		_TIFFfree(img->Map);
+		_TIFFfreeExt(img->tif, img->Map);
 		img->Map = NULL;
 	}
 	if (img->BWmap) {
-		_TIFFfree(img->BWmap);
+		_TIFFfreeExt(img->tif, img->BWmap);
 		img->BWmap = NULL;
 	}
 	if (img->PALmap) {
-		_TIFFfree(img->PALmap);
+		_TIFFfreeExt(img->tif, img->PALmap);
 		img->PALmap = NULL;
 	}
 	if (img->ycbcr) {
-		_TIFFfree(img->ycbcr);
+		_TIFFfreeExt(img->tif, img->ycbcr);
 		img->ycbcr = NULL;
 	}
 	if (img->cielab) {
-		_TIFFfree(img->cielab);
+		_TIFFfreeExt(img->tif, img->cielab);
 		img->cielab = NULL;
 	}
 	if (img->UaToAa) {
-		_TIFFfree(img->UaToAa);
+		_TIFFfreeExt(img->tif, img->UaToAa);
 		img->UaToAa = NULL;
 	}
 	if (img->Bitdepth16To8) {
-		_TIFFfree(img->Bitdepth16To8);
+		_TIFFfreeExt(img->tif, img->Bitdepth16To8);
 		img->Bitdepth16To8 = NULL;
 	}
 
 	if( img->redcmap ) {
-		_TIFFfree( img->redcmap );
-		_TIFFfree( img->greencmap );
-		_TIFFfree( img->bluecmap );
+		_TIFFfreeExt(img->tif,  img->redcmap);
+		_TIFFfreeExt(img->tif,  img->greencmap);
+		_TIFFfreeExt(img->tif,  img->bluecmap);
                 img->redcmap = img->greencmap = img->bluecmap = NULL;
 	}
 }
@@ -368,9 +368,9 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[EMSG_BUF_S
 
 			/* copy the colormaps so we can modify them */
 			n_color = (1U << img->bitspersample);
-			img->redcmap = (uint16_t *) _TIFFmalloc(sizeof(uint16_t) * n_color);
-			img->greencmap = (uint16_t *) _TIFFmalloc(sizeof(uint16_t) * n_color);
-			img->bluecmap = (uint16_t *) _TIFFmalloc(sizeof(uint16_t) * n_color);
+			img->redcmap = (uint16_t *) _TIFFmallocExt(tif, sizeof(uint16_t) * n_color);
+			img->greencmap = (uint16_t *) _TIFFmallocExt(tif, sizeof(uint16_t) * n_color);
+			img->bluecmap = (uint16_t *) _TIFFmallocExt(tif, sizeof(uint16_t) * n_color);
 			if( !img->redcmap || !img->greencmap || !img->bluecmap ) {
 				snprintf(emsg, EMSG_BUF_SIZE, "Out of memory for colormap copy");
                                 goto fail_return;
@@ -713,7 +713,7 @@ gtTileContig(TIFFRGBAImage* img, uint32_t* raster, uint32_t w, uint32_t h)
 
         y += ((flip & FLIP_VERTICALLY) ? -(int32_t) nrow : (int32_t) nrow);
     }
-    _TIFFfree(buf);
+    _TIFFfreeExt(img->tif, buf);
 
     if (flip & FLIP_HORIZONTALLY) {
 	    uint32_t line;
@@ -921,7 +921,7 @@ gtTileSeparate(TIFFRGBAImage* img, uint32_t* raster, uint32_t w, uint32_t h)
 		}
 	}
 
-	_TIFFfree(buf);
+	_TIFFfreeExt(img->tif, buf);
 	return (ret);
 }
 
@@ -1021,7 +1021,7 @@ gtStripContig(TIFFRGBAImage* img, uint32_t* raster, uint32_t w, uint32_t h)
 		}
 	}
 
-	_TIFFfree(buf);
+	_TIFFfreeExt(img->tif, buf);
 	return (ret);
 }
 
@@ -1181,7 +1181,7 @@ gtStripSeparate(TIFFRGBAImage* img, uint32_t* raster, uint32_t w, uint32_t h)
 		}
 	}
 
-	_TIFFfree(buf);
+	_TIFFfreeExt(img->tif, buf);
 	return (ret);
 }
 
@@ -2269,7 +2269,7 @@ initYCbCrConversion(TIFFRGBAImage* img)
 	float *luma, *refBlackWhite;
 
 	if (img->ycbcr == NULL) {
-		img->ycbcr = (TIFFYCbCrToRGB*) _TIFFmalloc(
+		img->ycbcr = (TIFFYCbCrToRGB*) _TIFFmallocExt(img->tif, 
 		    TIFFroundup_32(sizeof (TIFFYCbCrToRGB), sizeof (long))  
 		    + 4*256*sizeof (TIFFRGBValue)
 		    + 2*256*sizeof (int)
@@ -2332,7 +2332,7 @@ initCIELabConversion(TIFFRGBAImage* img)
 
 	if (!img->cielab) {
 		img->cielab = (TIFFCIELabToRGB *)
-			_TIFFmalloc(sizeof(TIFFCIELabToRGB));
+			_TIFFmallocExt(img->tif, sizeof(TIFFCIELabToRGB));
 		if (!img->cielab) {
 			TIFFErrorExtR(img->tif, module,
 			    "No space for CIE L*a*b*->RGB conversion state.");
@@ -2347,7 +2347,7 @@ initCIELabConversion(TIFFRGBAImage* img)
 	if (TIFFCIELabToRGBInit(img->cielab, &display_sRGB, refWhite) < 0) {
 		TIFFErrorExtR(img->tif, module,
 		    "Failed to initialize CIE L*a*b*->RGB conversion state.");
-		_TIFFfree(img->cielab);
+		_TIFFfreeExt(img->tif, img->cielab);
 		return NULL;
 	}
 
@@ -2377,7 +2377,7 @@ makebwmap(TIFFRGBAImage* img)
     if( nsamples == 0 )
         nsamples = 1;
 
-    img->BWmap = (uint32_t**) _TIFFmalloc(
+    img->BWmap = (uint32_t**) _TIFFmallocExt(img->tif, 
 	256*sizeof (uint32_t *) + (256 * nsamples * sizeof(uint32_t)));
     if (img->BWmap == NULL) {
 		TIFFErrorExtR(img->tif, TIFFFileName(img->tif), "No space for B&W mapping table");
@@ -2435,7 +2435,7 @@ setupMap(TIFFRGBAImage* img)
     if( img->bitspersample == 16 )
         range = (int32_t) 255;
 
-    img->Map = (TIFFRGBValue*) _TIFFmalloc((range+1) * sizeof (TIFFRGBValue));
+    img->Map = (TIFFRGBValue*) _TIFFmallocExt(img->tif, (range+1) * sizeof (TIFFRGBValue));
     if (img->Map == NULL) {
 		TIFFErrorExtR(img->tif, TIFFFileName(img->tif),
 			"No space for photometric conversion table");
@@ -2458,7 +2458,7 @@ setupMap(TIFFRGBAImage* img)
 	if (!makebwmap(img))
 	    return (0);
 	/* no longer need Map, free it */
-	_TIFFfree(img->Map);
+	_TIFFfreeExt(img->tif, img->Map);
 	img->Map = NULL;
     }
     return (1);
@@ -2513,7 +2513,7 @@ makecmap(TIFFRGBAImage* img)
     uint32_t *p;
     int i;
 
-    img->PALmap = (uint32_t**) _TIFFmalloc(
+    img->PALmap = (uint32_t**) _TIFFmallocExt(img->tif, 
 	256*sizeof (uint32_t *) + (256 * nsamples * sizeof(uint32_t)));
     if (img->PALmap == NULL) {
 		TIFFErrorExtR(img->tif, TIFFFileName(img->tif), "No space for Palette mapping table");
@@ -2827,7 +2827,7 @@ BuildMapUaToAa(TIFFRGBAImage* img)
 	uint8_t* m;
 	uint16_t na,nv;
 	assert(img->UaToAa==NULL);
-	img->UaToAa=_TIFFmalloc(65536);
+	img->UaToAa=_TIFFmallocExt(img->tif, 65536);
 	if (img->UaToAa==NULL)
 	{
 		TIFFErrorExtR(img->tif,module,"Out of memory");
@@ -2849,7 +2849,7 @@ BuildMapBitdepth16To8(TIFFRGBAImage* img)
 	uint8_t* m;
 	uint32_t n;
 	assert(img->Bitdepth16To8==NULL);
-	img->Bitdepth16To8=_TIFFmalloc(65536);
+	img->Bitdepth16To8=_TIFFmallocExt(img->tif, 65536);
 	if (img->Bitdepth16To8==NULL)
 	{
 		TIFFErrorExtR(img->tif,module,"Out of memory");

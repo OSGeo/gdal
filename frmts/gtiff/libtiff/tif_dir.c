@@ -40,41 +40,57 @@
 #define DATATYPE_IEEEFP		3       /* !IEEE floating point data */
 
 static void
-setByteArray(void** vpp, const void* vp, size_t nmemb, size_t elem_size)
+setByteArray(TIFF* tif, void** vpp, const void* vp, size_t nmemb, size_t elem_size)
 {
 	if (*vpp) {
-		_TIFFfree(*vpp);
+		_TIFFfreeExt(tif, *vpp);
 		*vpp = 0;
 	}
 	if (vp) {
 		tmsize_t bytes = _TIFFMultiplySSize(NULL, nmemb, elem_size, NULL);
 		if (bytes)
-			*vpp = (void*) _TIFFmalloc(bytes);
+			*vpp = (void*) _TIFFmallocExt(tif, bytes);
 		if (*vpp)
 			_TIFFmemcpy(*vpp, vp, bytes);
 	}
 }
 void _TIFFsetByteArray(void** vpp, const void* vp, uint32_t n)
-    { setByteArray(vpp, vp, n, 1); }
-static void _TIFFsetNString(char** cpp, const char* cp, uint32_t n)
-    { setByteArray((void**) cpp, cp, n, 1); }
+    { setByteArray(NULL, vpp, vp, n, 1); }
+void _TIFFsetByteArrayExt(TIFF* tif, void** vpp, const void* vp, uint32_t n)
+    { setByteArray(tif, vpp, vp, n, 1); }
+
+static void _TIFFsetNString(TIFF* tif, char** cpp, const char* cp, uint32_t n)
+    { setByteArray(tif, (void**) cpp, cp, n, 1); }
+
 void _TIFFsetShortArray(uint16_t** wpp, const uint16_t* wp, uint32_t n)
-    { setByteArray((void**) wpp, wp, n, sizeof (uint16_t)); }
+    { setByteArray(NULL, (void**) wpp, wp, n, sizeof (uint16_t)); }
+void _TIFFsetShortArrayExt(TIFF* tif, uint16_t** wpp, const uint16_t* wp, uint32_t n)
+    { setByteArray(tif, (void**) wpp, wp, n, sizeof (uint16_t)); }
+
 void _TIFFsetLongArray(uint32_t** lpp, const uint32_t* lp, uint32_t n)
-    { setByteArray((void**) lpp, lp, n, sizeof (uint32_t)); }
-static void _TIFFsetLong8Array(uint64_t** lpp, const uint64_t* lp, uint32_t n)
-    { setByteArray((void**) lpp, lp, n, sizeof (uint64_t)); }
+    { setByteArray(NULL, (void**) lpp, lp, n, sizeof (uint32_t)); }
+void _TIFFsetLongArrayExt(TIFF* tif, uint32_t** lpp, const uint32_t* lp, uint32_t n)
+    { setByteArray(tif, (void**) lpp, lp, n, sizeof (uint32_t)); }
+
+static void _TIFFsetLong8Array(TIFF* tif, uint64_t** lpp, const uint64_t* lp, uint32_t n)
+    { setByteArray(tif, (void**) lpp, lp, n, sizeof (uint64_t)); }
+
 void _TIFFsetFloatArray(float** fpp, const float* fp, uint32_t n)
-    { setByteArray((void**) fpp, fp, n, sizeof (float)); }
+    { setByteArray(NULL, (void**) fpp, fp, n, sizeof (float)); }
+void _TIFFsetFloatArrayExt(TIFF* tif, float** fpp, const float* fp, uint32_t n)
+    { setByteArray(tif, (void**) fpp, fp, n, sizeof (float)); }
+
 void _TIFFsetDoubleArray(double** dpp, const double* dp, uint32_t n)
-    { setByteArray((void**) dpp, dp, n, sizeof (double)); }
+    { setByteArray(NULL, (void**) dpp, dp, n, sizeof (double)); }
+void _TIFFsetDoubleArrayExt(TIFF* tif, double** dpp, const double* dp, uint32_t n)
+    { setByteArray(tif, (void**) dpp, dp, n, sizeof (double)); }
 
 static void
-setDoubleArrayOneValue(double** vpp, double value, size_t nmemb)
+setDoubleArrayOneValue(TIFF* tif, double** vpp, double value, size_t nmemb)
 {
 	if (*vpp)
-		_TIFFfree(*vpp);
-	*vpp = _TIFFmalloc(nmemb*sizeof(double));
+		_TIFFfreeExt(tif, *vpp);
+	*vpp = _TIFFmallocExt(tif, nmemb*sizeof(double));
 	if (*vpp)
 	{
 		while (nmemb--)
@@ -124,12 +140,12 @@ setExtraSamples(TIFF* tif, va_list ap, uint32_t* v)
                     "ExtraSamples tag value is changing, "
                     "but TransferFunction was read with a different value. Canceling it");
                 TIFFClrFieldBit(tif,FIELD_TRANSFERFUNCTION);
-                _TIFFfree(td->td_transferfunction[0]);
+                _TIFFfreeExt(tif, td->td_transferfunction[0]);
                 td->td_transferfunction[0] = NULL;
         }
 
 	td->td_extrasamples = (uint16_t) *v;
-	_TIFFsetShortArray(&td->td_sampleinfo, va, td->td_extrasamples);
+	_TIFFsetShortArrayExt(tif, &td->td_sampleinfo, va, td->td_extrasamples);
 	return 1;
 
 #undef EXTRASAMPLE_COREL_UNASSALPHA
@@ -274,7 +290,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
                     "SamplesPerPixel tag value is changing, "
                     "but SMinSampleValue tag was read with a different value. Canceling it");
                 TIFFClrFieldBit(tif,FIELD_SMINSAMPLEVALUE);
-                _TIFFfree(td->td_sminsamplevalue);
+                _TIFFfreeExt(tif, td->td_sminsamplevalue);
                 td->td_sminsamplevalue = NULL;
             }
             if( td->td_smaxsamplevalue != NULL )
@@ -283,7 +299,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
                     "SamplesPerPixel tag value is changing, "
                     "but SMaxSampleValue tag was read with a different value. Canceling it");
                 TIFFClrFieldBit(tif,FIELD_SMAXSAMPLEVALUE);
-                _TIFFfree(td->td_smaxsamplevalue);
+                _TIFFfreeExt(tif, td->td_smaxsamplevalue);
                 td->td_smaxsamplevalue = NULL;
             }
             /* Test if 3 transfer functions instead of just one are now needed
@@ -295,7 +311,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
                         "SamplesPerPixel tag value is changing, "
                         "but TransferFunction was read with a different value. Canceling it");
                     TIFFClrFieldBit(tif,FIELD_TRANSFERFUNCTION);
-                    _TIFFfree(td->td_transferfunction[0]);
+                    _TIFFfreeExt(tif, td->td_transferfunction[0]);
                     td->td_transferfunction[0] = NULL;
             }
         }
@@ -319,15 +335,15 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 		break;
 	case TIFFTAG_SMINSAMPLEVALUE:
 		if (tif->tif_flags & TIFF_PERSAMPLE)
-			_TIFFsetDoubleArray(&td->td_sminsamplevalue, va_arg(ap, double*), td->td_samplesperpixel);
+			_TIFFsetDoubleArrayExt(tif, &td->td_sminsamplevalue, va_arg(ap, double*), td->td_samplesperpixel);
 		else
-			setDoubleArrayOneValue(&td->td_sminsamplevalue, va_arg(ap, double), td->td_samplesperpixel);
+			setDoubleArrayOneValue(tif, &td->td_sminsamplevalue, va_arg(ap, double), td->td_samplesperpixel);
 		break;
 	case TIFFTAG_SMAXSAMPLEVALUE:
 		if (tif->tif_flags & TIFF_PERSAMPLE)
-			_TIFFsetDoubleArray(&td->td_smaxsamplevalue, va_arg(ap, double*), td->td_samplesperpixel);
+			_TIFFsetDoubleArrayExt(tif, &td->td_smaxsamplevalue, va_arg(ap, double*), td->td_samplesperpixel);
 		else
-			setDoubleArrayOneValue(&td->td_smaxsamplevalue, va_arg(ap, double), td->td_samplesperpixel);
+			setDoubleArrayOneValue(tif, &td->td_smaxsamplevalue, va_arg(ap, double), td->td_samplesperpixel);
 		break;
 	case TIFFTAG_XRESOLUTION:
         dblval = va_arg(ap, double);
@@ -369,9 +385,9 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 		break;
 	case TIFFTAG_COLORMAP:
 		v32 = (uint32_t)(1L << td->td_bitspersample);
-		_TIFFsetShortArray(&td->td_colormap[0], va_arg(ap, uint16_t*), v32);
-		_TIFFsetShortArray(&td->td_colormap[1], va_arg(ap, uint16_t*), v32);
-		_TIFFsetShortArray(&td->td_colormap[2], va_arg(ap, uint16_t*), v32);
+		_TIFFsetShortArrayExt(tif, &td->td_colormap[0], va_arg(ap, uint16_t*), v32);
+		_TIFFsetShortArrayExt(tif, &td->td_colormap[1], va_arg(ap, uint16_t*), v32);
+		_TIFFsetShortArrayExt(tif, &td->td_colormap[2], va_arg(ap, uint16_t*), v32);
 		break;
 	case TIFFTAG_EXTRASAMPLES:
 		if (!setExtraSamples(tif, ap, &v))
@@ -381,7 +397,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 		td->td_extrasamples =  (((uint16_t) va_arg(ap, uint16_vap)) != 0);
 		if (td->td_extrasamples) {
 			uint16_t sv = EXTRASAMPLE_ASSOCALPHA;
-			_TIFFsetShortArray(&td->td_sampleinfo, &sv, 1);
+			_TIFFsetShortArrayExt(tif, &td->td_sampleinfo, &sv, 1);
 		}
 		break;
 	case TIFFTAG_TILEWIDTH:
@@ -446,7 +462,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 	case TIFFTAG_SUBIFD:
 		if ((tif->tif_flags & TIFF_INSUBIFD) == 0) {
 			td->td_nsubifd = (uint16_t) va_arg(ap, uint16_vap);
-			_TIFFsetLong8Array(&td->td_subifd, (uint64_t*) va_arg(ap, uint64_t*),
+			_TIFFsetLong8Array(tif, &td->td_subifd, (uint64_t*) va_arg(ap, uint64_t*),
 			    (uint32_t) td->td_nsubifd);
 		} else {
 			TIFFErrorExtR(tif, module,
@@ -467,13 +483,13 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 		uint32_t i;
 		v = (td->td_samplesperpixel - td->td_extrasamples) > 1 ? 3 : 1;
 		for (i = 0; i < v; i++)
-			_TIFFsetShortArray(&td->td_transferfunction[i],
+			_TIFFsetShortArrayExt(tif, &td->td_transferfunction[i],
                                va_arg(ap, uint16_t*), 1U << td->td_bitspersample);
 		break;
 	}
 	case TIFFTAG_REFERENCEBLACKWHITE:
 		/* XXX should check for null range */
-		_TIFFsetFloatArray(&td->td_refblackwhite, va_arg(ap, float*), 6);
+		_TIFFsetFloatArrayExt(tif, &td->td_refblackwhite, va_arg(ap, float*), 6);
 		break;
 	case TIFFTAG_INKNAMES:
 		{
@@ -483,7 +499,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 			ninksinstring = countInkNamesString(tif, v, s);
 			status = ninksinstring > 0;
 			if(ninksinstring > 0 ) {
-				_TIFFsetNString(&td->td_inknames, s, v);
+				_TIFFsetNString(tif, &td->td_inknames, s, v);
 				td->td_inknameslen = v;
 				/* Set NumberOfInks to the value ninksinstring */
 				if (TIFFFieldSet(tif, FIELD_NUMBEROFINKS))
@@ -580,7 +596,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 			if (td->td_customValues[iCustom].info->field_tag == tag) {
 				tv = td->td_customValues + iCustom;
 				if (tv->value != NULL) {
-					_TIFFfree(tv->value);
+					_TIFFfreeExt(tif, tv->value);
 					tv->value = NULL;
 				}
 				break;
@@ -595,7 +611,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 
 			td->td_customValueCount++;
 			new_customValues = (TIFFTagValue *)
-			    _TIFFrealloc(td->td_customValues,
+			    _TIFFreallocExt(tif, td->td_customValues,
 			    sizeof(TIFFTagValue) * td->td_customValueCount);
 			if (!new_customValues) {
 				TIFFErrorExtR(tif, module,
@@ -654,7 +670,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 				ma=(uint32_t)len;
 			}
 			tv->count=ma;
-			setByteArray(&tv->value,mb,ma,1);
+			setByteArray(tif, &tv->value,mb,ma,1);
 		}
 		else
 		{
@@ -899,7 +915,7 @@ badvalueifd8long8:
 			if (tv2 != NULL) {
 				/* Remove custom field from custom list */
 				if (tv2->value != NULL) {
-					_TIFFfree(tv2->value);
+					_TIFFfreeExt(tif, tv2->value);
 					tv2->value = NULL;
 				}
 				/* Shorten list and close gap in customValues list.
@@ -997,7 +1013,7 @@ TIFFUnsetField(TIFF* tif, uint32_t tag)
 
         if( i < td->td_customValueCount )
         {
-            _TIFFfree(tv->value);
+            _TIFFfreeExt(tif, tv->value);
             for( ; i < td->td_customValueCount-1; i++) {
                 td->td_customValues[i] = td->td_customValues[i+1];
             }
@@ -1406,7 +1422,7 @@ TIFFVGetField(TIFF* tif, uint32_t tag, va_list ap)
 
 #define	CleanupField(member) {		\
     if (td->member) {			\
-	_TIFFfree(td->member);		\
+	_TIFFfreeExt(tif, td->member);		\
 	td->member = 0;			\
     }					\
 }
@@ -1442,7 +1458,7 @@ TIFFFreeDirectory(TIFF* tif)
 	/* Cleanup custom tag values */
 	for( i = 0; i < td->td_customValueCount; i++ ) {
 		if (td->td_customValues[i].value)
-			_TIFFfree(td->td_customValues[i].value);
+			_TIFFfreeExt(tif, td->td_customValues[i].value);
 	}
 
 	td->td_customValueCount = 0;
@@ -1583,9 +1599,9 @@ TIFFDefaultDirectory(TIFF* tif)
 
 		for (i = 0; i < tif->tif_nfieldscompat; i++) {
 				if (tif->tif_fieldscompat[i].allocated_size)
-						_TIFFfree(tif->tif_fieldscompat[i].fields);
+						_TIFFfreeExt(tif, tif->tif_fieldscompat[i].fields);
 		}
-		_TIFFfree(tif->tif_fieldscompat);
+		_TIFFfreeExt(tif, tif->tif_fieldscompat);
 		tif->tif_nfieldscompat = 0;
 		tif->tif_fieldscompat = NULL;
 	}
@@ -1997,7 +2013,7 @@ TIFFUnlinkDirectory(TIFF* tif, uint16_t dirn)
 	 */
 	(*tif->tif_cleanup)(tif);
 	if ((tif->tif_flags & TIFF_MYBUFFER) && tif->tif_rawdata) {
-		_TIFFfree(tif->tif_rawdata);
+		_TIFFfreeExt(tif, tif->tif_rawdata);
 		tif->tif_rawdata = NULL;
 		tif->tif_rawcc = 0;
                 tif->tif_rawdataoff = 0;

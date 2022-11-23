@@ -159,11 +159,11 @@ TWebPDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
       else if( sp->pBuffer == NULL || buffer_size > sp->buffer_size )
       {
           if (sp->pBuffer != NULL) {
-              _TIFFfree(sp->pBuffer);
+              _TIFFfreeExt(tif, sp->pBuffer);
               sp->pBuffer = NULL;
           }
 
-          sp->pBuffer = _TIFFmalloc(buffer_size);
+          sp->pBuffer = _TIFFmallocExt(tif, buffer_size);
           if( !sp->pBuffer) {
               TIFFErrorExtR(tif, module, "Cannot allocate buffer");
               return 0;
@@ -323,7 +323,7 @@ TWebPSetupDecode(TIFF* tif)
   if (sp->state & LSTATE_INIT_ENCODE) {
       WebPPictureFree(&sp->sPicture);
       if (sp->pBuffer != NULL) {
-        _TIFFfree(sp->pBuffer);
+        _TIFFfreeExt(tif, sp->pBuffer);
         sp->pBuffer = NULL;
       }
       sp->buffer_offset = 0;
@@ -494,11 +494,11 @@ TWebPPreEncode(TIFF* tif, uint16_t s)
   sp->buffer_size = segment_width * segment_height * sp->nSamples;
 
   if (sp->pBuffer != NULL) {
-      _TIFFfree(sp->pBuffer);
+      _TIFFfreeExt(tif, sp->pBuffer);
       sp->pBuffer = NULL;
   }
 
-  sp->pBuffer = _TIFFmalloc(sp->buffer_size);
+  sp->pBuffer = _TIFFmallocExt(tif, sp->buffer_size);
   if( !sp->pBuffer) {
       TIFFErrorExtR(tif, module, "Cannot allocate buffer");
       return 0;
@@ -623,11 +623,11 @@ TWebPCleanup(TIFF* tif)
   }
 
   if (sp->pBuffer != NULL) {
-      _TIFFfree(sp->pBuffer);
+      _TIFFfreeExt(tif, sp->pBuffer);
       sp->pBuffer = NULL;
   }
 
-  _TIFFfree(tif->tif_data);
+  _TIFFfreeExt(tif, tif->tif_data);
   tif->tif_data = NULL;
 
   _TIFFSetDefaultCompressionState(tif);
@@ -716,7 +716,7 @@ TIFFInitWebP(TIFF* tif, int scheme)
   /*
   * Allocate state block so tag methods have storage to record values.
   */
-  tif->tif_data = (uint8_t*) _TIFFmalloc(sizeof(WebPState));
+  tif->tif_data = (uint8_t*) _TIFFmallocExt(tif, sizeof(WebPState));
   if (tif->tif_data == NULL)
     goto bad;
   sp = LState(tif);

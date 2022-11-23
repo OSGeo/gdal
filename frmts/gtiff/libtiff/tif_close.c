@@ -53,9 +53,9 @@ TIFFCleanup(TIFF* tif)
 	TIFFFreeDirectory(tif);
 
 	if (tif->tif_dirlistoff)
-		_TIFFfree(tif->tif_dirlistoff);
+		_TIFFfreeExt(tif, tif->tif_dirlistoff);
 	if (tif->tif_dirlistdirn)
-		_TIFFfree(tif->tif_dirlistdirn);
+		_TIFFfreeExt(tif, tif->tif_dirlistdirn);
 
 	/*
          * Clean up client info links.
@@ -65,12 +65,12 @@ TIFFCleanup(TIFF* tif)
 		TIFFClientInfoLink *psLink = tif->tif_clientinfo;
 
 		tif->tif_clientinfo = psLink->next;
-		_TIFFfree( psLink->name );
-		_TIFFfree( psLink );
+		_TIFFfreeExt(tif, psLink->name );
+		_TIFFfreeExt(tif, psLink );
 	}
 
 	if (tif->tif_rawdata && (tif->tif_flags&TIFF_MYBUFFER))
-		_TIFFfree(tif->tif_rawdata);
+		_TIFFfreeExt(tif, tif->tif_rawdata);
 	if (isMapped(tif))
 		TIFFUnmapFileContents(tif, tif->tif_base, (toff_t)tif->tif_size);
 
@@ -88,13 +88,13 @@ TIFFCleanup(TIFF* tif)
 					 *          Otherwise the following tags are also freed with the first free().
 					 */
 					TIFFFieldIsAnonymous(fld)) {
-					_TIFFfree(fld->field_name);
-					_TIFFfree(fld);
+					_TIFFfreeExt(tif, fld->field_name);
+					_TIFFfreeExt(tif, fld);
 				}
 			}
 		}
 
-		_TIFFfree(tif->tif_fields);
+		_TIFFfreeExt(tif, tif->tif_fields);
 	}
 
         if (tif->tif_nfieldscompat > 0) {
@@ -102,12 +102,12 @@ TIFFCleanup(TIFF* tif)
 
                 for (i = 0; i < tif->tif_nfieldscompat; i++) {
                         if (tif->tif_fieldscompat[i].allocated_size)
-                                _TIFFfree(tif->tif_fieldscompat[i].fields);
+                                _TIFFfreeExt(tif, tif->tif_fieldscompat[i].fields);
                 }
-                _TIFFfree(tif->tif_fieldscompat);
+                _TIFFfreeExt(tif, tif->tif_fieldscompat);
         }
 
-	_TIFFfree(tif);
+	_TIFFfreeExt(NULL, tif);
 }
 
 /************************************************************************/

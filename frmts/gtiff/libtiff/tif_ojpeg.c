@@ -434,7 +434,7 @@ TIFFInitOJPEG(TIFF* tif, int scheme)
 	}
 
 	/* state block */
-	sp=_TIFFmalloc(sizeof(OJPEGState));
+	sp=_TIFFmallocExt(tif, sizeof(OJPEGState));
 	if (sp==NULL)
 	{
 		TIFFErrorExtR(tif,module,"No space for OJPEG state block");
@@ -769,7 +769,7 @@ OJPEGPreDecodeSkipScanlines(TIFF* tif)
 	uint32_t m;
 	if (sp->skip_buffer==NULL)
 	{
-		sp->skip_buffer=_TIFFmalloc(sp->bytes_per_line);
+		sp->skip_buffer=_TIFFmallocExt(tif, sp->bytes_per_line);
 		if (sp->skip_buffer==NULL)
 		{
 			TIFFErrorExtR(tif,module,"Out of memory");
@@ -974,38 +974,38 @@ OJPEGCleanup(TIFF* tif)
 		tif->tif_tagmethods.vsetfield=sp->vsetparent;
 		tif->tif_tagmethods.printdir=sp->printdir;
 		if (sp->qtable[0]!=0)
-			_TIFFfree(sp->qtable[0]);
+			_TIFFfreeExt(tif, sp->qtable[0]);
 		if (sp->qtable[1]!=0)
-			_TIFFfree(sp->qtable[1]);
+			_TIFFfreeExt(tif, sp->qtable[1]);
 		if (sp->qtable[2]!=0)
-			_TIFFfree(sp->qtable[2]);
+			_TIFFfreeExt(tif, sp->qtable[2]);
 		if (sp->qtable[3]!=0)
-			_TIFFfree(sp->qtable[3]);
+			_TIFFfreeExt(tif, sp->qtable[3]);
 		if (sp->dctable[0]!=0)
-			_TIFFfree(sp->dctable[0]);
+			_TIFFfreeExt(tif, sp->dctable[0]);
 		if (sp->dctable[1]!=0)
-			_TIFFfree(sp->dctable[1]);
+			_TIFFfreeExt(tif, sp->dctable[1]);
 		if (sp->dctable[2]!=0)
-			_TIFFfree(sp->dctable[2]);
+			_TIFFfreeExt(tif, sp->dctable[2]);
 		if (sp->dctable[3]!=0)
-			_TIFFfree(sp->dctable[3]);
+			_TIFFfreeExt(tif, sp->dctable[3]);
 		if (sp->actable[0]!=0)
-			_TIFFfree(sp->actable[0]);
+			_TIFFfreeExt(tif, sp->actable[0]);
 		if (sp->actable[1]!=0)
-			_TIFFfree(sp->actable[1]);
+			_TIFFfreeExt(tif, sp->actable[1]);
 		if (sp->actable[2]!=0)
-			_TIFFfree(sp->actable[2]);
+			_TIFFfreeExt(tif, sp->actable[2]);
 		if (sp->actable[3]!=0)
-			_TIFFfree(sp->actable[3]);
+			_TIFFfreeExt(tif, sp->actable[3]);
 		if (sp->libjpeg_session_active!=0)
 			OJPEGLibjpegSessionAbort(tif);
 		if (sp->subsampling_convert_ycbcrbuf!=0)
-			_TIFFfree(sp->subsampling_convert_ycbcrbuf);
+			_TIFFfreeExt(tif, sp->subsampling_convert_ycbcrbuf);
 		if (sp->subsampling_convert_ycbcrimage!=0)
-			_TIFFfree(sp->subsampling_convert_ycbcrimage);
+			_TIFFfreeExt(tif, sp->subsampling_convert_ycbcrimage);
 		if (sp->skip_buffer!=0)
-			_TIFFfree(sp->skip_buffer);
-		_TIFFfree(sp);
+			_TIFFfreeExt(tif, sp->skip_buffer);
+		_TIFFfreeExt(tif, sp);
 		tif->tif_data=NULL;
 		_TIFFSetDefaultCompressionState(tif);
 	}
@@ -1238,7 +1238,7 @@ OJPEGWriteHeaderInfo(TIFF* tif)
                         /* See https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=16844 */
                         /* Even if this case is allowed (?), its handling is broken because OJPEGPreDecode() should also likely */
                         /* reset subsampling_convert_state to 0 when changing tile. */
-			sp->subsampling_convert_ycbcrbuf=_TIFFcalloc(1, sp->subsampling_convert_ycbcrbuflen);
+			sp->subsampling_convert_ycbcrbuf=_TIFFcallocExt(tif, 1, sp->subsampling_convert_ycbcrbuflen);
 			if (sp->subsampling_convert_ycbcrbuf==0)
 			{
 				TIFFErrorExtR(tif,module,"Out of memory");
@@ -1248,7 +1248,7 @@ OJPEGWriteHeaderInfo(TIFF* tif)
 			sp->subsampling_convert_cbbuf=sp->subsampling_convert_ybuf+sp->subsampling_convert_ybuflen;
 			sp->subsampling_convert_crbuf=sp->subsampling_convert_cbbuf+sp->subsampling_convert_cbuflen;
 			sp->subsampling_convert_ycbcrimagelen=3+sp->subsampling_convert_ylines+2*sp->subsampling_convert_clines;
-			sp->subsampling_convert_ycbcrimage=_TIFFmalloc(sp->subsampling_convert_ycbcrimagelen*sizeof(uint8_t*));
+			sp->subsampling_convert_ycbcrimage=_TIFFmallocExt(tif, sp->subsampling_convert_ycbcrimagelen*sizeof(uint8_t*));
 			if (sp->subsampling_convert_ycbcrimage==0)
 			{
 				TIFFErrorExtR(tif,module,"Out of memory");
@@ -1500,7 +1500,7 @@ OJPEGReadHeaderInfoSecStreamDqt(TIFF* tif)
 				return(0);
 			}
 			na= sizeof(uint32_t) + 69;
-			nb=_TIFFmalloc(na);
+			nb=_TIFFmallocExt(tif, na);
 			if (nb==0)
 			{
 				TIFFErrorExtR(tif,module,"Out of memory");
@@ -1512,18 +1512,18 @@ OJPEGReadHeaderInfoSecStreamDqt(TIFF* tif)
 			nb[sizeof(uint32_t) + 2]=0;
 			nb[sizeof(uint32_t) + 3]=67;
 			if (OJPEGReadBlock(sp,65,&nb[sizeof(uint32_t) + 4]) == 0) {
-				_TIFFfree(nb);
+				_TIFFfreeExt(tif, nb);
 				return(0);
 			}
 			o= nb[sizeof(uint32_t) + 4] & 15;
 			if (3<o)
 			{
 				TIFFErrorExtR(tif,module,"Corrupt DQT marker in JPEG data");
-				_TIFFfree(nb);
+				_TIFFfreeExt(tif, nb);
 				return(0);
 			}
 			if (sp->qtable[o]!=0)
-				_TIFFfree(sp->qtable[o]);
+				_TIFFfreeExt(tif, sp->qtable[o]);
 			sp->qtable[o]=nb;
 			m-=65;
 		} while(m>0);
@@ -1557,7 +1557,7 @@ OJPEGReadHeaderInfoSecStreamDht(TIFF* tif)
 	else
 	{
 		na= sizeof(uint32_t) + 2 + m;
-		nb=_TIFFmalloc(na);
+		nb=_TIFFmallocExt(tif, na);
 		if (nb==0)
 		{
 			TIFFErrorExtR(tif,module,"Out of memory");
@@ -1569,7 +1569,7 @@ OJPEGReadHeaderInfoSecStreamDht(TIFF* tif)
 		nb[sizeof(uint32_t) + 2]=(m >> 8);
 		nb[sizeof(uint32_t) + 3]=(m & 255);
 		if (OJPEGReadBlock(sp,m-2,&nb[sizeof(uint32_t) + 4]) == 0) {
-                        _TIFFfree(nb);
+                        _TIFFfreeExt(tif, nb);
 			return(0);
                 }
 		o=nb[sizeof(uint32_t) + 4];
@@ -1578,11 +1578,11 @@ OJPEGReadHeaderInfoSecStreamDht(TIFF* tif)
 			if (3<o)
 			{
 				TIFFErrorExtR(tif,module,"Corrupt DHT marker in JPEG data");
-                                _TIFFfree(nb);
+                                _TIFFfreeExt(tif, nb);
 				return(0);
 			}
 			if (sp->dctable[o]!=0)
-				_TIFFfree(sp->dctable[o]);
+				_TIFFfreeExt(tif, sp->dctable[o]);
 			sp->dctable[o]=nb;
 		}
 		else
@@ -1590,18 +1590,18 @@ OJPEGReadHeaderInfoSecStreamDht(TIFF* tif)
 			if ((o&240)!=16)
 			{
 				TIFFErrorExtR(tif,module,"Corrupt DHT marker in JPEG data");
-                                _TIFFfree(nb);
+                                _TIFFfreeExt(tif, nb);
 				return(0);
 			}
 			o&=15;
 			if (3<o)
 			{
 				TIFFErrorExtR(tif,module,"Corrupt DHT marker in JPEG data");
-                                _TIFFfree(nb);
+                                _TIFFfreeExt(tif, nb);
 				return(0);
 			}
 			if (sp->actable[o]!=0)
-				_TIFFfree(sp->actable[o]);
+				_TIFFfreeExt(tif, sp->actable[o]);
 			sp->actable[o]=nb;
 		}
 	}
@@ -1837,7 +1837,7 @@ OJPEGReadHeaderInfoSecTablesQTable(TIFF* tif)
 				}
 			}
 			oa= sizeof(uint32_t) + 69;
-			ob=_TIFFmalloc(oa);
+			ob=_TIFFmallocExt(tif, oa);
 			if (ob==0)
 			{
 				TIFFErrorExtR(tif,module,"Out of memory");
@@ -1853,11 +1853,11 @@ OJPEGReadHeaderInfoSecTablesQTable(TIFF* tif)
 			p=(uint32_t)TIFFReadFile(tif, &ob[sizeof(uint32_t) + 5], 64);
 			if (p!=64)
                         {
-                                _TIFFfree(ob);
+                                _TIFFfreeExt(tif, ob);
 				return(0);
                         }
 			if (sp->qtable[m]!=0)
-				_TIFFfree(sp->qtable[m]);
+				_TIFFfreeExt(tif, sp->qtable[m]);
 			sp->qtable[m]=ob;
 			sp->sof_tq[m]=m;
 		}
@@ -1905,7 +1905,7 @@ OJPEGReadHeaderInfoSecTablesDcTable(TIFF* tif)
 			for (n=0; n<16; n++)
 				q+=o[n];
 			ra= sizeof(uint32_t) + 21 + q;
-			rb=_TIFFmalloc(ra);
+			rb=_TIFFmallocExt(tif, ra);
 			if (rb==0)
 			{
 				TIFFErrorExtR(tif,module,"Out of memory");
@@ -1922,11 +1922,11 @@ OJPEGReadHeaderInfoSecTablesDcTable(TIFF* tif)
 			p=(uint32_t)TIFFReadFile(tif, &(rb[sizeof(uint32_t) + 21]), q);
 			if (p!=q)
                         {
-                                _TIFFfree(rb);
+                                _TIFFfreeExt(tif, rb);
 				return(0);
                         }
 			if (sp->dctable[m]!=0)
-				_TIFFfree(sp->dctable[m]);
+				_TIFFfreeExt(tif, sp->dctable[m]);
 			sp->dctable[m]=rb;
 			sp->sos_tda[m]=(m<<4);
 		}
@@ -1974,7 +1974,7 @@ OJPEGReadHeaderInfoSecTablesAcTable(TIFF* tif)
 			for (n=0; n<16; n++)
 				q+=o[n];
 			ra= sizeof(uint32_t) + 21 + q;
-			rb=_TIFFmalloc(ra);
+			rb=_TIFFmallocExt(tif, ra);
 			if (rb==0)
 			{
 				TIFFErrorExtR(tif,module,"Out of memory");
@@ -1991,11 +1991,11 @@ OJPEGReadHeaderInfoSecTablesAcTable(TIFF* tif)
 			p=(uint32_t)TIFFReadFile(tif, &(rb[sizeof(uint32_t) + 21]), q);
 			if (p!=q)
                         {
-                                _TIFFfree(rb);
+                                _TIFFfreeExt(tif, rb);
 				return(0);
                         }
 			if (sp->actable[m]!=0)
-				_TIFFfree(sp->actable[m]);
+				_TIFFfreeExt(tif, sp->actable[m]);
 			sp->actable[m]=rb;
 			sp->sos_tda[m]=(sp->sos_tda[m]|m);
 		}

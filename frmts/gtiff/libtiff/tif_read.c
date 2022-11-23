@@ -111,7 +111,7 @@ static int TIFFReadAndRealloc(TIFF* tif, tmsize_t size,
                     TIFFErrorExtR(tif, module,
                         "No space for data buffer at scanline %"PRIu32,
                         tif->tif_row);
-                    _TIFFfree(tif->tif_rawdata);
+                    _TIFFfreeExt(tif, tif->tif_rawdata);
                     tif->tif_rawdata = 0;
                     tif->tif_rawdatasize = 0;
                     return 0;
@@ -540,7 +540,7 @@ TIFFReadEncodedStrip(TIFF* tif, uint32_t strip, void* buf, tmsize_t size)
 }
 
 /* Variant of TIFFReadEncodedStrip() that does 
- * * if *buf == NULL, *buf = _TIFFmalloc(bufsizetoalloc) only after TIFFFillStrip() has
+ * * if *buf == NULL, *buf = _TIFFmallocExt(tif, bufsizetoalloc) only after TIFFFillStrip() has
  *   succeeded. This avoid excessive memory allocation in case of truncated
  *   file.
  * * calls regular TIFFReadEncodedStrip() if *buf != NULL
@@ -567,7 +567,7 @@ _TIFFReadEncodedStripAndAllocBuffer(TIFF* tif, uint32_t strip,
     if (!TIFFFillStrip(tif,strip))
             return((tmsize_t)(-1));
 
-    *buf = _TIFFmalloc(bufsizetoalloc);
+    *buf = _TIFFmallocExt(tif, bufsizetoalloc);
     if (*buf == NULL) {
             TIFFErrorExtR(tif, TIFFFileName(tif), "No space for strip buffer");
             return((tmsize_t)(-1));
@@ -804,7 +804,7 @@ TIFFFillStrip(TIFF* tif, uint32_t strip)
 			 * fault since the file is mapped read-only).
 			 */
 			if ((tif->tif_flags & TIFF_MYBUFFER) && tif->tif_rawdata) {
-				_TIFFfree(tif->tif_rawdata);
+				_TIFFfreeExt(tif, tif->tif_rawdata);
 				tif->tif_rawdata = NULL;
 				tif->tif_rawdatasize = 0;
 			}
@@ -952,7 +952,7 @@ TIFFReadEncodedTile(TIFF* tif, uint32_t tile, void* buf, tmsize_t size)
 }
 
 /* Variant of TIFFReadTile() that does 
- * * if *buf == NULL, *buf = _TIFFmalloc(bufsizetoalloc) only after TIFFFillTile() has
+ * * if *buf == NULL, *buf = _TIFFmallocExt(tif, bufsizetoalloc) only after TIFFFillTile() has
  *   succeeded. This avoid excessive memory allocation in case of truncated
  *   file.
  * * calls regular TIFFReadEncodedTile() if *buf != NULL
@@ -971,7 +971,7 @@ _TIFFReadTileAndAllocBuffer(TIFF* tif,
 }
 
 /* Variant of TIFFReadEncodedTile() that does 
- * * if *buf == NULL, *buf = _TIFFmalloc(bufsizetoalloc) only after TIFFFillTile() has
+ * * if *buf == NULL, *buf = _TIFFmallocExt(tif, bufsizetoalloc) only after TIFFFillTile() has
  *   succeeded. This avoid excessive memory allocation in case of truncated
  *   file.
  * * calls regular TIFFReadEncodedTile() if *buf != NULL
@@ -1042,7 +1042,7 @@ _TIFFReadEncodedTileAndAllocBuffer(TIFF* tif, uint32_t tile,
         }
     }
 
-    *buf = _TIFFmalloc(bufsizetoalloc);
+    *buf = _TIFFmallocExt(tif, bufsizetoalloc);
     if (*buf == NULL) {
             TIFFErrorExtR(tif, TIFFFileName(tif),
                          "No space for tile buffer");
@@ -1223,7 +1223,7 @@ TIFFFillTile(TIFF* tif, uint32_t tile)
 			 * fault since the file is mapped read-only).
 			 */
 			if ((tif->tif_flags & TIFF_MYBUFFER) && tif->tif_rawdata) {
-				_TIFFfree(tif->tif_rawdata);
+				_TIFFfreeExt(tif, tif->tif_rawdata);
 				tif->tif_rawdata = NULL;
 				tif->tif_rawdatasize = 0;
 			}
@@ -1319,7 +1319,7 @@ TIFFReadBufferSetup(TIFF* tif, void* bp, tmsize_t size)
 
 	if (tif->tif_rawdata) {
 		if (tif->tif_flags & TIFF_MYBUFFER)
-			_TIFFfree(tif->tif_rawdata);
+			_TIFFfreeExt(tif, tif->tif_rawdata);
 		tif->tif_rawdata = NULL;
 		tif->tif_rawdatasize = 0;
 	}
@@ -1336,7 +1336,7 @@ TIFFReadBufferSetup(TIFF* tif, void* bp, tmsize_t size)
 		}
 		/* Initialize to zero to avoid uninitialized buffers in case of */
                 /* short reads (http://bugzilla.maptools.org/show_bug.cgi?id=2651) */
-		tif->tif_rawdata = (uint8_t*) _TIFFcalloc(1, tif->tif_rawdatasize);
+		tif->tif_rawdata = (uint8_t*) _TIFFcallocExt(tif, 1, tif->tif_rawdatasize);
 		tif->tif_flags |= TIFF_MYBUFFER;
 	}
 	if (tif->tif_rawdata == NULL) {

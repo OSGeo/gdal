@@ -29,7 +29,7 @@ int TIFFReInitJPEG_12(TIFF *tif, const JPEGOtherSettings *otherSettings,
   (void)scheme;
   assert(scheme == COMPRESSION_JPEG);
 
-  new_tif_data = (uint8_t *)_TIFFrealloc(tif->tif_data, sizeof(JPEGState));
+  new_tif_data = (uint8_t *)_TIFFreallocExt(tif, tif->tif_data, sizeof(JPEGState));
 
   if (new_tif_data == NULL) {
     TIFFErrorExtR(tif, "TIFFReInitJPEG_12",

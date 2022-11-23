@@ -360,7 +360,7 @@ LZMACleanup(TIFF* tif)
 		lzma_end(&sp->stream);
 		sp->state = 0;
 	}
-	_TIFFfree(sp);
+	_TIFFfreeExt(tif, sp);
 	tif->tif_data = NULL;
 
 	_TIFFSetDefaultCompressionState(tif);
@@ -435,7 +435,7 @@ TIFFInitLZMA(TIFF* tif, int scheme)
 	/*
 	 * Allocate state block so tag methods have storage to record values.
 	 */
-	tif->tif_data = (uint8_t*) _TIFFmalloc(sizeof(LZMAState));
+	tif->tif_data = (uint8_t*) _TIFFmallocExt(tif, sizeof(LZMAState));
 	if (tif->tif_data == NULL)
 		goto bad;
 	sp = LState(tif);

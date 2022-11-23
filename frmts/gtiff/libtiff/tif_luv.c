@@ -1303,7 +1303,7 @@ LogL16InitState(TIFF* tif)
         else
             sp->tbuflen = multiply_ms(td->td_imagewidth, td->td_imagelength);
 	if (multiply_ms(sp->tbuflen, sizeof (int16_t)) == 0 ||
-        (sp->tbuf = (uint8_t*) _TIFFmalloc(sp->tbuflen * sizeof (int16_t))) == NULL) {
+        (sp->tbuf = (uint8_t*) _TIFFmallocExt(tif, sp->tbuflen * sizeof (int16_t))) == NULL) {
 		TIFFErrorExtR(tif, module, "No space for SGILog translation buffer");
 		return (0);
 	}
@@ -1405,7 +1405,7 @@ LogLuvInitState(TIFF* tif)
         else
             sp->tbuflen = multiply_ms(td->td_imagewidth, td->td_imagelength);
 	if (multiply_ms(sp->tbuflen, sizeof (uint32_t)) == 0 ||
-        (sp->tbuf = (uint8_t*) _TIFFmalloc(sp->tbuflen * sizeof (uint32_t))) == NULL) {
+        (sp->tbuf = (uint8_t*) _TIFFmallocExt(tif, sp->tbuflen * sizeof (uint32_t))) == NULL) {
 		TIFFErrorExtR(tif, module, "No space for SGILog translation buffer");
 		return (0);
 	}
@@ -1588,8 +1588,8 @@ LogLuvCleanup(TIFF* tif)
 	tif->tif_tagmethods.vsetfield = sp->vsetparent;
 
 	if (sp->tbuf)
-		_TIFFfree(sp->tbuf);
-	_TIFFfree(sp);
+		_TIFFfreeExt(tif, sp->tbuf);
+	_TIFFfreeExt(tif, sp);
 	tif->tif_data = NULL;
 
 	_TIFFSetDefaultCompressionState(tif);
@@ -1698,7 +1698,7 @@ TIFFInitSGILog(TIFF* tif, int scheme)
 	/*
 	 * Allocate state block so tag methods have storage to record values.
 	 */
-	tif->tif_data = (uint8_t*) _TIFFmalloc(sizeof (LogLuvState));
+	tif->tif_data = (uint8_t*) _TIFFmallocExt(tif, sizeof (LogLuvState));
 	if (tif->tif_data == NULL)
 		goto bad;
 	sp = (LogLuvState*) tif->tif_data;
