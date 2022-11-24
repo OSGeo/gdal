@@ -457,6 +457,11 @@ jobs:
         unzip install-win10-vs2019-x64-rev5106.zip
         mv install install-pdfium
 
+    - name: Remove conflicting libraries
+      shell: cmd
+      run: |
+          rd /s /q C:\Strawberry
+
     - name: Configure
       shell: bash -l {0}
       # Disable MySQL because of "error LNK2038: mismatch detected for '_MSC_VER': value '1800' doesn't match value '1900' in ogrmysqldatasource.obj" and other errors
