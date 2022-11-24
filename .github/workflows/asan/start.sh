@@ -101,14 +101,14 @@ rm -f "$WORK_DIR/ccache.tar.gz"
 
 export PRELOAD=$(clang -print-file-name=libclang_rt.asan-x86_64.so)
 
-cd autotest
+# install test dependencies
+sudo python3 -m pip install -U -r autotest/requirements.txt
+sudo python3 -m pip install -U hdbcli
+
+cd build/autotest
 
 # Don't run these
 rm -f ogr/ogr_fgdb.py ogr/ogr_pgeo.py
-
-# install test dependencies
-sudo python3 -m pip install -U -r ./requirements.txt
-sudo python3 -m pip install -U hdbcli
 
 # Run each module in its own pytest process.
 # This makes sure the output from the address sanitizer is relevant
@@ -124,8 +124,8 @@ sudo python3 -m pip install -U hdbcli
 export SKIP_MEM_INTENSIVE_TEST=YES
 export SKIP_VIRTUALMEM=YES
 export LD_PRELOAD=$PRELOAD
-export ASAN_OPTIONS=allocator_may_return_null=1:symbolize=1:suppressions=$PWD/asan_suppressions.txt
-export LSAN_OPTIONS=detect_leaks=1,print_suppressions=0,suppressions=$PWD/lsan_suppressions.txt
+export ASAN_OPTIONS=allocator_may_return_null=1:symbolize=1:suppressions=$PWD/../../autotest/asan_suppressions.txt
+export LSAN_OPTIONS=detect_leaks=1,print_suppressions=0,suppressions=$PWD/../../autotest/lsan_suppressions.txt
 
 gdalinfo gcore/data/byte.tif
 python3 -c "from osgeo import gdal; print('yes')"
