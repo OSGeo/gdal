@@ -10,6 +10,7 @@ export PYTEST="python3 -m pytest -vv -p no:sugar --color=no"
 pip3 install -U -r autotest/requirements.txt
 
 # Run all the Python autotests
+cd build
 
 # Run ogr_fgdb test in isolation due to likely conflict with libxml2
 (cd autotest/ogr && $PYTEST ogr_fgdb.py)

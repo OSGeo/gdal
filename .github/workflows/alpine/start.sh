@@ -85,5 +85,5 @@ projsync --system-directory --file ca_nrc_ntv1_can.tif
 # install pip and use it to install test dependencies
 pip3 install -U -r autotest/requirements.txt
 
-(cd autotest && $PYTEST)
+(cd build_ci_alpine/autotest && $PYTEST)
 

@@ -11,6 +11,7 @@ sudo sh -c "curl -sSL 'https://bootstrap.pypa.io/pip/3.6/get-pip.py' | python3"
 sudo pip3 install -U -r "$PWD/autotest/requirements.txt"
 
 # Run all the Python autotests
+cd build
 
 # Fails with ERROR 1: OGDI DataSource Open Failed: Could not find the dynamic library "vrf"
 rm autotest/ogr/ogr_ogdi.py
