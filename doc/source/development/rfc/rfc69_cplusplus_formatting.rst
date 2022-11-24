@@ -19,7 +19,6 @@ Status:     *Work-In-Progress*
 This RFC is based on `GEOS RFC
 4 <https://trac.osgeo.org/geos/wiki/RFC4>`__ by Mateusz Łoskot.
 
-**TODO:** Give examples of formatting.
 
 Summary
 -------
