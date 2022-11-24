@@ -1903,7 +1903,7 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
     }
     catch( const std::bad_alloc& )
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "ICreateFeature: Too big feature");
+        CPLError(CE_Failure, CPLE_OutOfMemory, "ICreateFeature: Memory allocation failure");
         return OGRERR_FAILURE;
     }
 }
