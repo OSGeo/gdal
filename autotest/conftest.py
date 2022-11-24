@@ -23,6 +23,7 @@ collect_ignore = [
     "gdrivers/generate_bag.py",
     "gdrivers/generate_fits.py",
 ]
+collect_ignore_glob = ["pymod/*.py"]
 
 # we set ECW to not resolve projection and datum strings to get 3.x behavior.
 gdal.SetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION", "YES")
