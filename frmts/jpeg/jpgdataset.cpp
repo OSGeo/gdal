@@ -2919,6 +2919,16 @@ JPGDatasetCommon *JPGDataset::OpenStage2( JPGDatasetOpenArgs *psArgs,
         return nullptr;
     }
 
+#if defined(JPEG_DUAL_MODE_8_12) && !defined(JPGDataset)
+    if (poDS->sDInfo.data_precision == 12 && poDS->m_fpImage != nullptr)
+    {
+        poDS->m_fpImage = nullptr;
+        delete poDS;
+        psArgs->fpLin = fpImage;
+        return JPEGDataset12Open(psArgs);
+    }
+#endif
+
     // Capture some information from the file that is of interest.
 
     poDS->nScaleFactor = nScaleFactor;
