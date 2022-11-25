@@ -281,7 +281,25 @@ CPLErr JPEG_Codec::CompressJPEG(buf_mgr &dst, buf_mgr &src)
     }
 
     for (int i = 0; i < sz.y; i++)
+    {
         rowp[i] = (JSAMPROW)(src.buffer + i*linesize);
+#if defined(JPEG12_ON)
+        for( int x = 0; x< sz.x; ++x )
+        {
+            if(static_cast<unsigned short>(rowp[i][x]) > 4095 )
+            {
+                rowp[i][x] = (JSAMPLE)4095;
+                static bool bClipWarn = false;
+                if( !bClipWarn )
+                {
+                    bClipWarn = true;
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                              "One or more pixels clipped to fit 12bit domain for jpeg output." );
+                }
+            }
+        }
+#endif
+    }
 
     if (setjmp(sJPEGStruct.setjmpBuffer)) {
         CPLError(CE_Failure, CPLE_AppDefined, "MRF: JPEG compression error");
