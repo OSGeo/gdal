@@ -592,3 +592,48 @@ def test_gdalbuildvrt_lib_te_touching_on_edge():
     ds = None
 
     gdal.Unlink(tmp_filename)
+
+
+###############################################################################
+@pytest.mark.parametrize("num_bands_1,num_bands_2", [(3, 3), (3, 4), (4, 3), (4, 4)])
+@pytest.mark.parametrize("drv_name", ["MEM", "GTiff"])
+def test_gdalbuildvrt_lib_addAlpha(num_bands_1, num_bands_2, drv_name):
+    fname1 = "/vsimem/test_gdalbuildvrt_lib_addAlpha_1.tif"
+    fname2 = "/vsimem/test_gdalbuildvrt_lib_addAlpha_2.tif"
+
+    try:
+        src_ds1 = gdal.GetDriverByName(drv_name).Create(fname1, 1, 1, num_bands_1)
+        if num_bands_1 == 4:
+            src_ds1.GetRasterBand(src_ds1.RasterCount).SetColorInterpretation(
+                gdal.GCI_AlphaBand
+            )
+        for i in range(src_ds1.RasterCount):
+            src_ds1.GetRasterBand(i + 1).Fill(i + 1)
+        src_ds1.SetGeoTransform([2, 1, 0, 49, 0, -1])
+
+        src_ds2 = gdal.GetDriverByName(drv_name).Create(fname2, 1, 1, num_bands_2)
+        if num_bands_2 == 4:
+            src_ds2.GetRasterBand(src_ds2.RasterCount).SetColorInterpretation(
+                gdal.GCI_AlphaBand
+            )
+        for i in range(src_ds2.RasterCount):
+            src_ds2.GetRasterBand(i + 1).Fill(i + 1)
+        src_ds2.SetGeoTransform([3, 1, 0, 49, 0, -1])
+
+        if drv_name == "MEM":
+            ds = gdal.BuildVRT("", [src_ds1, src_ds2], addAlpha=True)
+        else:
+            src_ds1 = None
+            src_ds2 = None
+            ds = gdal.BuildVRT("", [fname1, fname2], addAlpha=True)
+        assert ds.RasterCount == 4
+        assert ds.GetRasterBand(4).GetColorInterpretation() == gdal.GCI_AlphaBand
+        assert ds.GetRasterBand(1).ReadRaster() == b"\x01\x01"
+        assert ds.GetRasterBand(2).ReadRaster() == b"\x02\x02"
+        assert ds.GetRasterBand(3).ReadRaster() == b"\x03\x03"
+        assert ds.GetRasterBand(4).ReadRaster() == (
+            b"\xff" if num_bands_1 == 3 else b"\x04"
+        ) + (b"\xff" if num_bands_2 == 3 else b"\x04")
+    finally:
+        gdal.Unlink(fname1)
+        gdal.Unlink(fname2)
