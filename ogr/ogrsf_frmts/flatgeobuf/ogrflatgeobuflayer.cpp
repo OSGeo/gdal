@@ -467,14 +467,13 @@ void OGRFlatGeobufLayer::Create() {
     CPLDebugOnly("FlatGeobuf", "Calc new feature offsets");
     uint64_t featureOffset = 0;
     for (auto& item : m_featureItems) {
-        auto featureItem = std::static_pointer_cast<FeatureItem>(item);
-        featureItem->nodeItem.offset = featureOffset;
-        featureOffset += featureItem->size;
+        item.nodeItem.offset = featureOffset;
+        featureOffset += item.size;
     }
     CPLDebugOnly("FlatGeobuf", "Creating Packed R-tree");
     c = 0;
     try {
-        PackedRTree tree(m_featureItems, extent);
+        PackedRTree tree(static_cast<const void*>(m_featureItems.data()), sizeof(FeatureItem), m_featureItems.size(), extent);
         CPLDebugOnly("FlatGeobuf", "PackedRTree extent %f, %f, %f, %f", extentVector[0], extentVector[1], extentVector[2], extentVector[3]);
         tree.streamWrite([this, &c] (uint8_t *data, size_t size) { c += VSIFWriteL(data, 1, size, m_poFp); });
     } catch (const std::exception& e) {
@@ -515,24 +514,21 @@ void OGRFlatGeobufLayer::Create() {
                 batch.begin(), batch.end(),
                 [this](const BatchItem& a, const BatchItem& b)
                 {
-                    return std::static_pointer_cast<FeatureItem>(
-                                m_featureItems[a.featureIdx])->offset
-                           < std::static_pointer_cast<FeatureItem>(
-                                m_featureItems[b.featureIdx])->offset;
+                    return m_featureItems[a.featureIdx].offset
+                           < m_featureItems[b.featureIdx].offset;
                 }
             );
 
             // Read source features
             for( const auto& batchItem: batch )
             {
-                const auto item = std::static_pointer_cast<FeatureItem>(
-                    m_featureItems[batchItem.featureIdx]);
-                if (VSIFSeekL(m_poFpWrite, item->offset, SEEK_SET) == -1) {
+                const auto& item = m_featureItems[batchItem.featureIdx];
+                if (VSIFSeekL(m_poFpWrite, item.offset, SEEK_SET) == -1) {
                     CPLErrorIO("seeking to temp feature location");
                     return false;
                 }
                 if (VSIFReadL(m_featureBuf + batchItem.offsetInBuffer, 1,
-                              item->size, m_poFpWrite) != item->size) {
+                              item.size, m_poFpWrite) != item.size) {
                     CPLErrorIO("reading temp feature");
                     return false;
                 }
@@ -553,8 +549,8 @@ void OGRFlatGeobufLayer::Create() {
 
         for (size_t i = 0; i < m_featuresCount; i++)
         {
-            const auto featureItem = std::static_pointer_cast<FeatureItem>(m_featureItems[i]);
-            const auto featureSize = featureItem->size;
+            const auto& featureItem = m_featureItems[i];
+            const auto featureSize = featureItem.size;
 
             if( offsetInBuffer + featureSize > m_featureBufSize )
             {
@@ -583,13 +579,12 @@ void OGRFlatGeobufLayer::Create() {
         if (err != OGRERR_NONE)
             return;
 
-        for (const std::shared_ptr<FlatGeobuf::Item>& item: m_featureItems) {
-            const auto featureItem = std::static_pointer_cast<FeatureItem>(item);
-            const auto featureSize = featureItem->size;
+        for (const auto& featureItem: m_featureItems) {
+            const auto featureSize = featureItem.size;
 
-            //CPLDebugOnly("FlatGeobuf", "featureItem->offset: %lu", static_cast<long unsigned int>(featureItem->offset));
+            //CPLDebugOnly("FlatGeobuf", "featureItem.offset: %lu", static_cast<long unsigned int>(featureItem.offset));
             //CPLDebugOnly("FlatGeobuf", "featureSize: %d", featureSize);
-            if (VSIFSeekL(m_poFpWrite, featureItem->offset, SEEK_SET) == -1) {
+            if (VSIFSeekL(m_poFpWrite, featureItem.offset, SEEK_SET) == -1) {
                 CPLErrorIO("seeking to temp feature location");
                 return;
             }
@@ -1876,24 +1871,17 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
         if (c == 0)
             return CPLErrorIO("writing feature");
         if (m_bCreateSpatialIndexAtClose) {
-            const auto item = std::make_shared<FeatureItem>();
-#if defined(__MINGW32__) && __GNUC__ >= 7
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wnull-dereference"
-#endif
-            item->size = static_cast<uint32_t>(fbb.GetSize());
-            item->offset = m_writeOffset;
-            item->nodeItem = {
+            FeatureItem item;
+            item.size = static_cast<uint32_t>(fbb.GetSize());
+            item.offset = m_writeOffset;
+            item.nodeItem = {
                 psEnvelope.MinX,
                 psEnvelope.MinY,
                 psEnvelope.MaxX,
                 psEnvelope.MaxY,
                 0
             };
-#if defined(__MINGW32__) && __GNUC__ >= 7
-#pragma GCC diagnostic pop
-#endif
-            m_featureItems.push_back(item);
+            m_featureItems.emplace_back(std::move(item));
         }
         m_writeOffset += c;
 
