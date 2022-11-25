@@ -124,6 +124,36 @@ typedef unsigned char boolean;
  * 16bit value?
  */
 
+/* HAVE_JPEGTURBO_DUAL_MODE_8_12 is defined for libjpeg-turbo >= 2.2 which
+ * adds a dual-mode 8/12 bit API in the same library.
+ */
+
+#if defined(HAVE_JPEGTURBO_DUAL_MODE_8_12)
+#  define JPEG_DUAL_MODE_8_12
+/* Start by undefining BITS_IN_JSAMPLE which is always set to 8 in libjpeg-turbo >= 2.2
+ * Cf https://github.com/libjpeg-turbo/libjpeg-turbo/commit/8b9bc4b9635a2a047fb23ebe70c9acd728d3f99b */
+#  undef BITS_IN_JSAMPLE
+/* libjpeg-turbo >= 2.2 adds J12xxxx datatypes for the 12-bit mode. */
+# if defined(FROM_TIF_JPEG_12)
+#  define BITS_IN_JSAMPLE 12
+#  define TIFF_JSAMPLE    J12SAMPLE
+#  define TIFF_JSAMPARRAY J12SAMPARRAY
+#  define TIFF_JSAMPIMAGE J12SAMPIMAGE
+#  define TIFF_JSAMPROW   J12SAMPROW
+# else
+#  define BITS_IN_JSAMPLE 8
+#  define TIFF_JSAMPLE    JSAMPLE
+#  define TIFF_JSAMPARRAY JSAMPARRAY
+#  define TIFF_JSAMPIMAGE JSAMPIMAGE
+#  define TIFF_JSAMPROW   JSAMPROW
+# endif
+#else
+# define TIFF_JSAMPLE    JSAMPLE
+# define TIFF_JSAMPARRAY JSAMPARRAY
+# define TIFF_JSAMPIMAGE JSAMPIMAGE
+# define TIFF_JSAMPROW   JSAMPROW
+#endif
+
 #if defined(JPEG_LIB_MK1)
 #define JPEG_LIB_MK1_OR_12BIT 1
 #elif BITS_IN_JSAMPLE == 12
@@ -191,7 +221,7 @@ typedef struct {
   uint16_t v_sampling;
   tmsize_t bytesperline; /* decompressed bytes per scanline */
   /* pointers to intermediate buffers when processing downsampled data */
-  JSAMPARRAY ds_buffer[MAX_COMPONENTS];
+  TIFF_JSAMPARRAY ds_buffer[MAX_COMPONENTS];
   int scancount; /* number of "scanlines" accumulated */
   int samplesperclump;
 
@@ -335,18 +365,30 @@ static int TIFFjpeg_start_compress(JPEGState *sp, boolean write_all_tables) {
   return CALLVJPEG(sp, jpeg_start_compress(&sp->cinfo.c, write_all_tables));
 }
 
-static int TIFFjpeg_write_scanlines(JPEGState *sp, JSAMPARRAY scanlines,
+static int TIFFjpeg_write_scanlines(JPEGState *sp, TIFF_JSAMPARRAY scanlines,
                                     int num_lines) {
+#if defined(HAVE_JPEGTURBO_DUAL_MODE_8_12) && BITS_IN_JSAMPLE == 12
+  return CALLJPEG(sp, -1,
+                  (int)jpeg12_write_scanlines(&sp->cinfo.c, scanlines,
+                                            (JDIMENSION)num_lines));
+#else
   return CALLJPEG(sp, -1,
                   (int)jpeg_write_scanlines(&sp->cinfo.c, scanlines,
                                             (JDIMENSION)num_lines));
+#endif
 }
 
-static int TIFFjpeg_write_raw_data(JPEGState *sp, JSAMPIMAGE data,
+static int TIFFjpeg_write_raw_data(JPEGState *sp, TIFF_JSAMPIMAGE data,
                                    int num_lines) {
+#if defined(HAVE_JPEGTURBO_DUAL_MODE_8_12) && BITS_IN_JSAMPLE == 12
+  return CALLJPEG(
+      sp, -1,
+      (int)jpeg12_write_raw_data(&sp->cinfo.c, data, (JDIMENSION)num_lines));
+#else
   return CALLJPEG(
       sp, -1,
       (int)jpeg_write_raw_data(&sp->cinfo.c, data, (JDIMENSION)num_lines));
+#endif
 }
 
 static int TIFFjpeg_finish_compress(JPEGState *sp) {
@@ -379,18 +421,32 @@ static int TIFFjpeg_start_decompress(JPEGState *sp) {
   return CALLVJPEG(sp, jpeg_start_decompress(&sp->cinfo.d));
 }
 
-static int TIFFjpeg_read_scanlines(JPEGState *sp, JSAMPARRAY scanlines,
+static int TIFFjpeg_read_scanlines(JPEGState *sp,
+                                   TIFF_JSAMPARRAY scanlines,
                                    int max_lines) {
+#if defined(HAVE_JPEGTURBO_DUAL_MODE_8_12) && BITS_IN_JSAMPLE == 12
+  return CALLJPEG(
+      sp, -1,
+      (int)jpeg12_read_scanlines(&sp->cinfo.d, scanlines, (JDIMENSION)max_lines));
+#else
   return CALLJPEG(
       sp, -1,
       (int)jpeg_read_scanlines(&sp->cinfo.d, scanlines, (JDIMENSION)max_lines));
+#endif
 }
 
-static int TIFFjpeg_read_raw_data(JPEGState *sp, JSAMPIMAGE data,
+static int TIFFjpeg_read_raw_data(JPEGState *sp,
+                                  TIFF_JSAMPIMAGE data,
                                   int max_lines) {
+#if defined(HAVE_JPEGTURBO_DUAL_MODE_8_12) && BITS_IN_JSAMPLE == 12
+  return CALLJPEG(
+      sp, -1,
+      (int)jpeg12_read_raw_data(&sp->cinfo.d, data, (JDIMENSION)max_lines));
+#else
   return CALLJPEG(
       sp, -1,
       (int)jpeg_read_raw_data(&sp->cinfo.d, data, (JDIMENSION)max_lines));
+#endif
 }
 
 static int TIFFjpeg_finish_decompress(JPEGState *sp) {
@@ -637,12 +693,12 @@ static int alloc_downsampled_buffers(TIFF *tif, jpeg_component_info *comp_info,
   JPEGState *sp = JState(tif);
   int ci;
   jpeg_component_info *compptr;
-  JSAMPARRAY buf;
+  TIFF_JSAMPARRAY buf;
   int samples_per_clump = 0;
 
   for (ci = 0, compptr = comp_info; ci < num_components; ci++, compptr++) {
     samples_per_clump += compptr->h_samp_factor * compptr->v_samp_factor;
-    buf = TIFFjpeg_alloc_sarray(sp, JPOOL_IMAGE,
+    buf = (TIFF_JSAMPARRAY)TIFFjpeg_alloc_sarray(sp, JPOOL_IMAGE,
                                 compptr->width_in_blocks * DCTSIZE,
                                 (JDIMENSION)(compptr->v_samp_factor * DCTSIZE));
     if (buf == NULL)
@@ -1353,7 +1409,7 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
 
   /* data is expected to be read in multiples of a scanline */
   if (nrows) {
-    JSAMPROW line_work_buf = NULL;
+    TIFF_JSAMPROW line_work_buf = NULL;
 
     /*
      * For 6B, only use temporary buffer for 12 bit imagery.
@@ -1361,8 +1417,9 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
      */
     if (sp->cinfo.d.data_precision == 12) {
       line_work_buf =
-          (JSAMPROW)_TIFFmallocExt(tif, sizeof(short) * sp->cinfo.d.output_width *
-                                sp->cinfo.d.num_components);
+          (TIFF_JSAMPROW)_TIFFmallocExt(
+              tif, sizeof(short) * sp->cinfo.d.output_width *
+                                           sp->cinfo.d.num_components);
     }
 
     do {
@@ -1383,7 +1440,7 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
 
           for (iPair = 0; iPair < value_pairs; iPair++) {
             unsigned char *out_ptr = ((unsigned char *)buf) + iPair * 3;
-            JSAMPLE *in_ptr = line_work_buf + iPair * 2;
+            TIFF_JSAMPLE *in_ptr = line_work_buf + iPair * 2;
 
             out_ptr[0] = (unsigned char)((in_ptr[0] & 0xff0) >> 4);
             out_ptr[1] = (unsigned char)(((in_ptr[0] & 0xf) << 4) |
@@ -1502,12 +1559,12 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
         int ypos;
 
         for (ypos = 0; ypos < vsamp; ypos++) {
-          JSAMPLE *inptr = sp->ds_buffer[ci][sp->scancount * vsamp + ypos];
+          TIFF_JSAMPLE *inptr = sp->ds_buffer[ci][sp->scancount * vsamp + ypos];
           JDIMENSION nclump;
 #if defined(JPEG_LIB_MK1_OR_12BIT)
-          JSAMPLE *outptr = (JSAMPLE *)tmpbuf + clumpoffset;
+          TIFF_JSAMPLE *outptr = (TIFF_JSAMPLE *)tmpbuf + clumpoffset;
 #else
-          JSAMPLE *outptr = (JSAMPLE *)buf + clumpoffset;
+          TIFF_JSAMPLE *outptr = (TIFF_JSAMPLE *)buf + clumpoffset;
           if (cc <
               (tmsize_t)(clumpoffset +
                          (tmsize_t)samples_per_clump * (clumps_per_line - 1) +
@@ -2019,7 +2076,7 @@ static int JPEGPreEncode(TIFF *tif, uint16_t s) {
 static int JPEGEncode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
   JPEGState *sp = JState(tif);
   tmsize_t nrows;
-  JSAMPROW bufptr[1];
+  TIFF_JSAMPROW bufptr[1];
   short *line16 = NULL;
   int line16_count = 0;
 
@@ -2053,17 +2110,17 @@ static int JPEGEncode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
       int value_pairs = line16_count / 2;
       int iPair;
 
-      bufptr[0] = (JSAMPROW)line16;
+      bufptr[0] = (TIFF_JSAMPROW)line16;
 
       for (iPair = 0; iPair < value_pairs; iPair++) {
         unsigned char *in_ptr = ((unsigned char *)buf) + iPair * 3;
-        JSAMPLE *out_ptr = (JSAMPLE *)(line16 + iPair * 2);
+        TIFF_JSAMPLE *out_ptr = (TIFF_JSAMPLE *)(line16 + iPair * 2);
 
         out_ptr[0] = (in_ptr[0] << 4) | ((in_ptr[1] & 0xf0) >> 4);
         out_ptr[1] = ((in_ptr[1] & 0x0f) << 8) | in_ptr[2];
       }
     } else {
-      bufptr[0] = (JSAMPROW)buf;
+      bufptr[0] = (TIFF_JSAMPROW)buf;
     }
     if (TIFFjpeg_write_scanlines(sp, bufptr, 1) != 1)
       return (0);
@@ -2085,8 +2142,8 @@ static int JPEGEncode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
  */
 static int JPEGEncodeRaw(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
   JPEGState *sp = JState(tif);
-  JSAMPLE *inptr;
-  JSAMPLE *outptr;
+  TIFF_JSAMPLE *inptr;
+  TIFF_JSAMPLE *outptr;
   tmsize_t nrows;
   JDIMENSION clumps_per_line, nclump;
   int clumpoffset, ci, xpos, ypos;
@@ -2129,7 +2186,7 @@ static int JPEGEncodeRaw(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
       int padding =
           (int)(compptr->width_in_blocks * DCTSIZE - clumps_per_line * hsamp);
       for (ypos = 0; ypos < vsamp; ypos++) {
-        inptr = ((JSAMPLE *)buf) + clumpoffset;
+        inptr = ((TIFF_JSAMPLE *)buf) + clumpoffset;
         outptr = sp->ds_buffer[ci][sp->scancount * vsamp + ypos];
         if (hsamp == 1) {
           /* fast path for at least Cb and Cr */

@@ -1,6 +1,10 @@
 
 #include "tiffiop.h"
 
+#if defined(HAVE_JPEGTURBO_DUAL_MODE_8_12)
+#define JPEG_DUAL_MODE_8_12
+#endif
+
 #if defined(JPEG_DUAL_MODE_8_12)
 
 #define FROM_TIF_JPEG_12
@@ -17,7 +21,9 @@
 
 int TIFFInitJPEG_12(TIFF *tif, int scheme);
 
+#if !defined(HAVE_JPEGTURBO_DUAL_MODE_8_12)
 #include LIBJPEG_12_PATH
+#endif
 
 #include "tif_jpeg.c"
 

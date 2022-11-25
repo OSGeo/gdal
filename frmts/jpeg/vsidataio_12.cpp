@@ -29,7 +29,9 @@
  ****************************************************************************/
 
 #if defined(JPEG_DUAL_MODE_8_12)
+#if !defined(HAVE_JPEGTURBO_DUAL_MODE_8_12)
 #define LIBJPEG_12_PATH   "libjpeg12/jpeglib.h"
+#endif
 
 #define jpeg_vsiio_src    jpeg_vsiio_src_12
 #define jpeg_vsiio_dest   jpeg_vsiio_dest_12

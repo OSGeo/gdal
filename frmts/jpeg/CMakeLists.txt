@@ -24,6 +24,10 @@ endif()
 # that contains libjpeg 9e
 if (NOT GDAL_USE_JPEG_INTERNAL)
   gdal_target_link_libraries(gdal_JPEG PRIVATE JPEG::JPEG)
+  if (HAVE_JPEGTURBO_DUAL_MODE_8_12 AND NOT GDAL_USE_JPEG12_INTERNAL)
+    target_sources(gdal_JPEG PRIVATE jpgdataset_12.cpp vsidataio_12.cpp)
+    target_compile_definitions(gdal_JPEG PRIVATE JPEG_DUAL_MODE_8_12 HAVE_JPEGTURBO_DUAL_MODE_8_12)
+  endif()
 endif ()
 
 if (NOT GDAL_USE_ZLIB_INTERNAL)

@@ -101,14 +101,6 @@ GDALDataset *JPEGDataset12CreateCopy( const char *pszFilename,
                                       void *pProgressData );
 #endif
 
-// Do we want to do special processing suitable for when JSAMPLE is a
-// 16bit value?
-#if defined(JPEG_LIB_MK1)
-#  define JPEG_LIB_MK1_OR_12BIT 1
-#elif BITS_IN_JSAMPLE == 12
-#  define JPEG_LIB_MK1_OR_12BIT 1
-#endif
-
 GDALRasterBand *JPGCreateBand(JPGDatasetCommon *poDS, int nBand);
 
 typedef void (*my_jpeg_write_m_header)(void *cinfo, int marker,

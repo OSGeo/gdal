@@ -94,10 +94,29 @@ constexpr int JPEG_EXIF_JPEGIFBYTECOUNT = 0x202;
 #  pragma warning(disable:4611)
 #endif
 
-
-
 // Do we want to do special processing suitable for when JSAMPLE is a
 // 16bit value?
+
+/* HAVE_JPEGTURBO_DUAL_MODE_8_12 is defined for libjpeg-turbo >= 2.2 which
+ * adds a dual-mode 8/12 bit API in the same library.
+ */
+
+#if defined(HAVE_JPEGTURBO_DUAL_MODE_8_12)
+/* Start by undefining BITS_IN_JSAMPLE which is always set to 8 in libjpeg-turbo >= 2.2
+ * Cf https://github.com/libjpeg-turbo/libjpeg-turbo/commit/8b9bc4b9635a2a047fb23ebe70c9acd728d3f99b */
+#  undef BITS_IN_JSAMPLE
+/* libjpeg-turbo >= 2.2 adds J12xxxx datatypes for the 12-bit mode. */
+# if defined(JPGDataset)
+#  define BITS_IN_JSAMPLE 12
+#  define GDAL_JSAMPLE    J12SAMPLE
+# else
+#  define BITS_IN_JSAMPLE 8
+#  define GDAL_JSAMPLE    JSAMPLE
+# endif
+#else
+# define GDAL_JSAMPLE    JSAMPLE
+#endif
+
 #if defined(JPEG_LIB_MK1)
 #  define JPEG_LIB_MK1_OR_12BIT 1
 #elif BITS_IN_JSAMPLE == 12
@@ -1222,6 +1241,8 @@ JPGRasterBand::JPGRasterBand( JPGDatasetCommon *poDSIn, int nBandIn ) :
     nBlockYSize = 1;
 
     GDALMajorObject::SetMetadataItem("COMPRESSION", "JPEG", "IMAGE_STRUCTURE");
+    if( eDataType == GDT_UInt16 )
+        GDALMajorObject::SetMetadataItem("NBITS", "12", "IMAGE_STRUCTURE");
 }
 
 /************************************************************************/
@@ -2044,9 +2065,13 @@ CPLErr JPGDataset::LoadScanline( int iLine, GByte* outBuffer )
 
     while( nLoadedScanline < iLine )
     {
-        JSAMPLE *ppSamples = reinterpret_cast<JSAMPLE *>(
+        GDAL_JSAMPLE *ppSamples = reinterpret_cast<GDAL_JSAMPLE *>(
             outBuffer ? outBuffer : m_pabyScanline);
+#if defined(HAVE_JPEGTURBO_DUAL_MODE_8_12) && BITS_IN_JSAMPLE == 12
+        jpeg12_read_scanlines(&sDInfo, &ppSamples, 1);
+#else
         jpeg_read_scanlines(&sDInfo, &ppSamples, 1);
+#endif
         if( ErrorOutOnNonFatalError() )
             return CE_Failure;
         nLoadedScanline++;
@@ -2762,6 +2787,7 @@ JPGDatasetCommon *JPGDataset::OpenStage2( JPGDatasetOpenArgs *psArgs,
     if (setjmp(poDS->sUserData.setjmp_buffer))
     {
 #if defined(JPEG_DUAL_MODE_8_12) && !defined(JPGDataset)
+
         if (poDS->sDInfo.data_precision == 12 && poDS->m_fpImage != nullptr)
         {
             VSILFILE *fpImage = poDS->m_fpImage;
@@ -4062,11 +4088,16 @@ JPGDataset::CreateCopyStage2( const char *pszFilename, GDALDataset *poSrcDS,
             }
         }
 
-        JSAMPLE *ppSamples = reinterpret_cast<JSAMPLE *>(pabyScanline);
+        GDAL_JSAMPLE *ppSamples = reinterpret_cast<GDAL_JSAMPLE *>(pabyScanline);
 
         if( eErr == CE_None )
+        {
+#if defined(HAVE_JPEGTURBO_DUAL_MODE_8_12) && BITS_IN_JSAMPLE == 12
+            jpeg12_write_scanlines(&sCInfo, &ppSamples, 1);
+#else
             jpeg_write_scanlines(&sCInfo, &ppSamples, 1);
-
+#endif
+        }
         if( eErr == CE_None &&
             !pfnProgress(
                 (iLine + 1) / ((bAppendMask ? 2 : 1) *

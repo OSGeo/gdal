@@ -38,7 +38,7 @@
 * JPEG band
 * JPEG page compression and decompression functions, file gets compiled twice
 * once directly and once through inclusion from JPEG12_band.cpp
-* LIBJPEG_12_H is defined if both 8 and 12 bit JPEG will be supported
+* JPEG12_SUPPORTED is defined if both 8 and 12 bit JPEG will be supported
 * JPEG12_ON    is defined only for the 12 bit versions
 *
 * The MRF JPEG codec implements the Zen (Zero ENhanced) JPEG extension
@@ -73,10 +73,39 @@ CPL_C_END
 #include <brunsli/decode.h>
 #endif
 
-#if defined(EXPECTED_JPEG_LIB_VERSION) && !defined(LIBJPEG_12_H)
+#if defined(EXPECTED_JPEG_LIB_VERSION) && !defined(JPEG12_SUPPORTED)
 #if EXPECTED_JPEG_LIB_VERSION != JPEG_LIB_VERSION
 #error EXPECTED_JPEG_LIB_VERSION != JPEG_LIB_VERSION
 #endif
+#endif
+
+/* HAVE_JPEGTURBO_DUAL_MODE_8_12 is defined for libjpeg-turbo >= 2.2 which
+ * adds a dual-mode 8/12 bit API in the same library.
+ */
+
+#if defined(HAVE_JPEGTURBO_DUAL_MODE_8_12)
+/* Start by undefining BITS_IN_JSAMPLE which is always set to 8 in libjpeg-turbo >= 2.2
+ * Cf https://github.com/libjpeg-turbo/libjpeg-turbo/commit/8b9bc4b9635a2a047fb23ebe70c9acd728d3f99b */
+#  undef BITS_IN_JSAMPLE
+/* libjpeg-turbo >= 2.2 adds J12xxxx datatypes for the 12-bit mode. */
+# if defined(JPEG12_ON)
+#  define BITS_IN_JSAMPLE 12
+#  define MRF_JSAMPLE    J12SAMPLE
+#  define MRF_JSAMPARRAY J12SAMPARRAY
+#  define MRF_JSAMPIMAGE J12SAMPIMAGE
+#  define MRF_JSAMPROW   J12SAMPROW
+# else
+#  define BITS_IN_JSAMPLE 8
+#  define MRF_JSAMPLE    JSAMPLE
+#  define MRF_JSAMPARRAY JSAMPARRAY
+#  define MRF_JSAMPIMAGE JSAMPIMAGE
+#  define MRF_JSAMPROW   JSAMPROW
+# endif
+#else
+# define MRF_JSAMPLE    JSAMPLE
+# define MRF_JSAMPARRAY JSAMPARRAY
+# define MRF_JSAMPIMAGE JSAMPIMAGE
+# define MRF_JSAMPROW   JSAMPROW
 #endif
 
 NAMESPACE_MRF_START
@@ -242,6 +271,12 @@ CPLErr JPEG_Codec::CompressJPEG(buf_mgr &dst, buf_mgr &src)
         cinfo.in_color_space = JCS_UNKNOWN; // 2, 4-10 bands
     }
 
+#if defined(JPEG12_ON)
+    cinfo.data_precision = 12;
+#else
+    cinfo.data_precision = 8;
+#endif
+
     // Set all required fields and overwrite the ones we want to change
     jpeg_set_defaults(&cinfo);
 
@@ -273,7 +308,7 @@ CPLErr JPEG_Codec::CompressJPEG(buf_mgr &dst, buf_mgr &src)
     }
 
     int linesize = cinfo.image_width * cinfo.input_components * ((cinfo.data_precision == 8) ? 1 : 2);
-    JSAMPROW *rowp = (JSAMPROW *)CPLMalloc(sizeof(JSAMPROW)*sz.y);
+    MRF_JSAMPROW *rowp = (MRF_JSAMPROW *)CPLMalloc(sizeof(MRF_JSAMPROW)*sz.y);
     if (!rowp) {
         CPLError(CE_Failure, CPLE_AppDefined, "MRF: JPEG compression error");
         jpeg_destroy_compress(&cinfo);
@@ -281,7 +316,25 @@ CPLErr JPEG_Codec::CompressJPEG(buf_mgr &dst, buf_mgr &src)
     }
 
     for (int i = 0; i < sz.y; i++)
-        rowp[i] = (JSAMPROW)(src.buffer + i*linesize);
+    {
+        rowp[i] = (MRF_JSAMPROW)(src.buffer + i*linesize);
+#if defined(JPEG12_ON)
+        for( int x = 0; x< sz.x; ++x )
+        {
+            if(static_cast<unsigned short>(rowp[i][x]) > 4095 )
+            {
+                rowp[i][x] = (MRF_JSAMPLE)4095;
+                static bool bClipWarn = false;
+                if( !bClipWarn )
+                {
+                    bClipWarn = true;
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                              "One or more pixels clipped to fit 12bit domain for jpeg output." );
+                }
+            }
+        }
+#endif
+    }
 
     if (setjmp(sJPEGStruct.setjmpBuffer)) {
         CPLError(CE_Failure, CPLE_AppDefined, "MRF: JPEG compression error");
@@ -347,7 +400,11 @@ CPLErr JPEG_Codec::CompressJPEG(buf_mgr &dst, buf_mgr &src)
       reinterpret_cast<JOCTET *>(mbuffer.buffer),
       static_cast<unsigned int>(mbuffer.size));
 
+#if defined(HAVE_JPEGTURBO_DUAL_MODE_8_12) && defined(JPEG12_ON)
+    jpeg12_write_scanlines(&cinfo, rowp, sz.y);
+#else
     jpeg_write_scanlines(&cinfo, rowp, sz.y);
+#endif
     jpeg_finish_compress(&cinfo);
     jpeg_destroy_compress(&cinfo);
 
@@ -619,7 +676,12 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr& dst, buf_mgr& isrc)
         rp[1] = rp[0] + linesize;
         // if this fails, it calls the error handler
         // which will report an error
-        if (jpeg_read_scanlines(&cinfo, JSAMPARRAY(rp), 2) == 0) {
+#if defined(HAVE_JPEGTURBO_DUAL_MODE_8_12) && defined(JPEG12_ON)
+        if (jpeg12_read_scanlines(&cinfo, MRF_JSAMPARRAY(rp), 2) == 0)
+#else
+        if (jpeg_read_scanlines(&cinfo, MRF_JSAMPARRAY(rp), 2) == 0)
+#endif
+        {
             jpeg_destroy_decompress(&cinfo);
             return CE_Failure;
         }
@@ -676,7 +738,7 @@ static size_t brunsli_fun_callback(void* out, const GByte* data, size_t size) {
 
 // Type dependent dispachers
 CPLErr JPEG_Band::Decompress(buf_mgr &dst, buf_mgr &src) {
-#if defined(LIBJPEG_12_H)
+#if defined(JPEG12_SUPPORTED)
     if (GDT_Byte != img.dt)
         return codec.DecompressJPEG12(dst, src);
 #endif
@@ -703,7 +765,7 @@ CPLErr JPEG_Band::Decompress(buf_mgr &dst, buf_mgr &src) {
 }
 
 CPLErr JPEG_Band::Compress(buf_mgr &dst, buf_mgr &src) {
-#if defined(LIBJPEG_12_H)
+#if defined(JPEG12_SUPPORTED)
     if (GDT_Byte != img.dt)
         return codec.CompressJPEG12(dst, src);
 #endif
@@ -740,7 +802,7 @@ JPEG_Band::JPEG_Band( MRFDataset *pDS, const ILImage &image,
 {
     const int nbands = image.pagesize.c;
     // Check behavior on signed 16bit.  Does the libjpeg sign extend?
-#if defined(LIBJPEG_12_H)
+#if defined(JPEG12_SUPPORTED)
     if (GDT_Byte != image.dt && GDT_UInt16 != image.dt)
 #else
     if (GDT_Byte != image.dt)
