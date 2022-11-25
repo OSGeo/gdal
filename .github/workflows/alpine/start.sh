@@ -12,7 +12,7 @@ apk add \
     py3-numpy-dev python3-dev py3-setuptools py3-numpy py3-pip \
     poppler-dev postgresql-dev \
     openexr-dev libheif-dev xerces-c-dev geos-dev cfitsio-dev \
-    netcdf-dev hdf5-dev freexl-dev \
+    netcdf-dev libaec-dev hdf5-dev freexl-dev \
     lz4-dev blosc-dev libdeflate-dev \
     libxml2-dev
 
