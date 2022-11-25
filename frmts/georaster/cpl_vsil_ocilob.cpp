@@ -52,8 +52,10 @@ class WSIOCILobFSHandle : public VSIFilesystemHandler
   private:
     char**            ParseIdentificator( const char* pszFilename );
     OWConnection*     GetConnection(char** papszParam);
-    OWStatement*      GetStatement(const char *tableName, 
-                                   const char *rasterid, 
+
+    static
+    OWStatement*      GetStatement(const char *tableName,
+                                   const char *rasterid,
                                    boolean bUpdate,
                                    OWConnection *pConnection);
 };
@@ -176,8 +178,8 @@ OWConnection* WSIOCILobFSHandle::GetConnection(char** papszParam)
 // -----------------------------------------------------------------------------
 //                                                                        GetStatement()
 // -----------------------------------------------------------------------------
-OWStatement* WSIOCILobFSHandle::GetStatement(const char *tableName, 
-                                     const char *rasterid, 
+OWStatement* WSIOCILobFSHandle::GetStatement(const char *tableName,
+                                     const char *rasterid,
                                      boolean bUpdate,
                                      OWConnection *pConnection)
 {
@@ -229,7 +231,7 @@ VSIVirtualHandle* WSIOCILobFSHandle::Open( const char* pszFilename,
         bUpdate = true;
     }
 
-    //Get the statement 
+    //Get the statement
     OWStatement *poStatement = GetStatement(papszParam[3], papszParam[4],
                                             bUpdate, poConnection);
     if (!poStatement)
@@ -239,7 +241,7 @@ VSIVirtualHandle* WSIOCILobFSHandle::Open( const char* pszFilename,
         return nullptr;
     }
 
-    //Get the lob locator 
+    //Get the lob locator
     OCILobLocator *phLocator = nullptr;
     poStatement->Define( &phLocator );
     if( ! poStatement->Execute() || !phLocator )
@@ -250,7 +252,7 @@ VSIVirtualHandle* WSIOCILobFSHandle::Open( const char* pszFilename,
         return nullptr;
     }
 
-    
+
     CPLDebug("GEOR","VSIOCILOB open successfully");
     CSLDestroy( papszParam );
 
@@ -260,7 +262,7 @@ VSIVirtualHandle* WSIOCILobFSHandle::Open( const char* pszFilename,
 // -----------------------------------------------------------------------------
 //                                                                        Unlink()
 // -----------------------------------------------------------------------------
-int WSIOCILobFSHandle::Unlink( const char *pszFilename ) 
+int WSIOCILobFSHandle::Unlink( const char *pszFilename )
 {
 
     char** papszParam = ParseIdentificator( pszFilename );
@@ -286,7 +288,7 @@ int WSIOCILobFSHandle::Unlink( const char *pszFilename )
         return -1;
     }
 
-    //Get the statement 
+    //Get the statement
     OWStatement *poStatement = GetStatement(papszParam[3], papszParam[4],
                                             true, poConnection);
     if (!poStatement)
@@ -296,7 +298,7 @@ int WSIOCILobFSHandle::Unlink( const char *pszFilename )
         return -1;
     }
 
-    //Get the lob locator 
+    //Get the lob locator
     OCILobLocator *phLocator = nullptr;
     poStatement->Define( &phLocator );
     if( ! poStatement->Execute() || !phLocator )
@@ -307,13 +309,13 @@ int WSIOCILobFSHandle::Unlink( const char *pszFilename )
         return -1;
     }
 
-    //Trim the lob 
+    //Trim the lob
     if (poStatement->GetBlobLength( phLocator ) > 0)
     {
         CPLDebug("GEOR","Trim the LOB");
         poStatement->TrimLob(phLocator, 0);
         poConnection->Commit();
-        CPLDebug("GEOR", "LOB trimmed"); 
+        CPLDebug("GEOR", "LOB trimmed");
     }
 
 
@@ -360,7 +362,7 @@ int WSIOCILobFSHandle::Stat( const char* pszFilename,
         return -1;
     }
 
-    //Get the statement 
+    //Get the statement
     OWStatement *poStatement = GetStatement(papszParam[3], papszParam[4],
                                             false, poConnection);
     if (!poStatement)
@@ -370,7 +372,7 @@ int WSIOCILobFSHandle::Stat( const char* pszFilename,
         return -1;
     }
 
-    //Get the lob locator 
+    //Get the lob locator
     OCILobLocator *phLocator = nullptr;
     poStatement->Define( &phLocator );
     if( ! poStatement->Execute() || !phLocator )
