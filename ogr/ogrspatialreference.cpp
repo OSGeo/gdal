@@ -1953,18 +1953,7 @@ OGRErr OGRSpatialReference::importFromWkt( const char ** ppszInput,
         return OGRERR_CORRUPT_DATA;
 
     // Only accept CRS objects
-    const auto type = d->m_pjType;
-    if( type != PJ_TYPE_GEODETIC_CRS &&
-        type != PJ_TYPE_GEOCENTRIC_CRS &&
-        type != PJ_TYPE_GEOGRAPHIC_2D_CRS &&
-        type != PJ_TYPE_GEOGRAPHIC_3D_CRS &&
-        type != PJ_TYPE_VERTICAL_CRS &&
-        type != PJ_TYPE_PROJECTED_CRS &&
-        type != PJ_TYPE_COMPOUND_CRS &&
-        type != PJ_TYPE_TEMPORAL_CRS &&
-        type != PJ_TYPE_ENGINEERING_CRS &&
-        type != PJ_TYPE_BOUND_CRS &&
-        type != PJ_TYPE_OTHER_CRS )
+    if( !proj_is_crs(d->m_pj_crs) )
     {
         Clear();
         return OGRERR_CORRUPT_DATA;
