@@ -42,6 +42,8 @@ if (GDAL_ENABLE_DRIVER_JPEG)
   if (GDAL_USE_JPEG12_INTERNAL)
     target_compile_definitions(gdal_NITF PRIVATE -DJPEG_DUAL_MODE_8_12)
     target_include_directories(gdal_NITF PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+  elseif (NOT GDAL_USE_JPEG_INTERNAL AND HAVE_JPEGTURBO_DUAL_MODE_8_12 )
+    target_compile_definitions(gdal_NITF PRIVATE JPEG_DUAL_MODE_8_12 HAVE_JPEGTURBO_DUAL_MODE_8_12)
   endif ()
 endif()
 

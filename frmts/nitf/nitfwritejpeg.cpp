@@ -54,6 +54,27 @@ CPL_C_END
 * Do we want to do special processing suitable for when JSAMPLE is a
 * 16bit value?
 */
+
+/* HAVE_JPEGTURBO_DUAL_MODE_8_12 is defined for libjpeg-turbo >= 2.2 which
+ * adds a dual-mode 8/12 bit API in the same library.
+ */
+
+#if defined(HAVE_JPEGTURBO_DUAL_MODE_8_12)
+/* Start by undefining BITS_IN_JSAMPLE which is always set to 8 in libjpeg-turbo >= 2.2
+ * Cf https://github.com/libjpeg-turbo/libjpeg-turbo/commit/8b9bc4b9635a2a047fb23ebe70c9acd728d3f99b */
+#  undef BITS_IN_JSAMPLE
+/* libjpeg-turbo >= 2.2 adds J12xxxx datatypes for the 12-bit mode. */
+# if defined(NITFWriteJPEGBlock)
+#  define BITS_IN_JSAMPLE 12
+#  define GDAL_JSAMPLE    J12SAMPLE
+# else
+#  define BITS_IN_JSAMPLE 8
+#  define GDAL_JSAMPLE    JSAMPLE
+# endif
+#else
+# define GDAL_JSAMPLE    JSAMPLE
+#endif
+
 #if defined(JPEG_LIB_MK1)
 #  define JPEG_LIB_MK1_OR_12BIT 1
 #elif BITS_IN_JSAMPLE == 12
@@ -262,10 +283,16 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
         }
 #endif
 
-        JSAMPLE *ppSamples = reinterpret_cast<JSAMPLE *>( pabyScanline );
+        GDAL_JSAMPLE *ppSamples = reinterpret_cast<GDAL_JSAMPLE *>( pabyScanline );
 
         if( eErr == CE_None )
+        {
+#if defined(HAVE_JPEGTURBO_DUAL_MODE_8_12) && BITS_IN_JSAMPLE == 12
+            jpeg12_write_scanlines(&sCInfo, &ppSamples, 1);
+#else
             jpeg_write_scanlines( &sCInfo, &ppSamples, 1 );
+#endif
+        }
 
         double nCurPixels =
             static_cast<double>( nBlockYOff ) * nBlockYSize * nXSize +

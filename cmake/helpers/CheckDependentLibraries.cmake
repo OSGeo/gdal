@@ -401,6 +401,29 @@ if (TARGET JPEG::JPEG)
     set_property(TARGET JPEG::JPEG PROPERTY
                  INTERFACE_COMPILE_DEFINITIONS "${_jpeg_old_icd};EXPECTED_JPEG_LIB_VERSION=${EXPECTED_JPEG_LIB_VERSION}")
   endif()
+
+  # Check for jpeg12_read_scanlines() which has been added in libjpeg-turbo 2.2
+  # for dual 8/12 bit mode.
+  include(CheckCSourceCompiles)
+  include(CMakePushCheckState)
+  cmake_push_check_state(RESET)
+  set(CMAKE_REQUIRED_INCLUDES "${JPEG_INCLUDE_DIRS}")
+  set(CMAKE_REQUIRED_LIBRARIES "${JPEG_LIBRARIES}")
+  check_c_source_compiles(
+      "
+      #include <stddef.h>
+      #include <stdio.h>
+      #include \"jpeglib.h\"
+      int main()
+      {
+          jpeg_read_scanlines(0,0,0);
+          jpeg12_read_scanlines(0,0,0);
+          return 0;
+      }
+      "
+      HAVE_JPEGTURBO_DUAL_MODE_8_12)
+  cmake_pop_check_state()
+
 endif()
 gdal_internal_library(JPEG)
 

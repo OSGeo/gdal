@@ -13,17 +13,22 @@
 * limitations under the License.
 *
 * Author: Lucian Plesea
-* 
+*
 */
 
 #include "marfa.h"
 
-#if defined(LIBJPEG_12_H)
+#if defined(JPEG12_SUPPORTED)
+
+#if !defined(HAVE_JPEGTURBO_DUAL_MODE_8_12)
 // Including LIBJPEG_12_H preculdes libjpeg.h from being read again
 CPL_C_START
-#include LIBJPEG_12_H
+#include "../jpeg/libjpeg12/jpeglib.h"
 CPL_C_END
-#define  JPEG12_ON
-#include "JPEG_band.cpp"
 #endif
 
+#define  JPEG12_ON
+
+#include "JPEG_band.cpp"
+
+#endif // JPEG12_SUPPORTED

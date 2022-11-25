@@ -841,6 +841,14 @@ libjpeg is used.
 
     Control whether to use internal libjpeg-12 copy. Defaults to ON.
 
+.. note::
+
+    Starting with GDAL 3.7, if using libjpeg-turbo >= 2.2, which adds native
+    support for dual 8/12-bit, using internal libjpeg-12 is no longer needed to
+    get 12-bit JPEG support in the JPEG, MRF, NITF or GeoTIFF (when built with
+    internal libtiff) drivers. If using external libtiff, libtiff >= 4.5
+    built against libjpeg-turbo >= 2.2 is needed to get 12-bit JPEG support in the
+    GeoTIFF support.
 
 JSON-C
 ******
