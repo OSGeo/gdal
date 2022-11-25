@@ -866,24 +866,24 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, bool bUpdate,
 
     if ( pszUID == nullptr )
     {
-		pszUID = getenv("MSSQLSPATIAL_UID");
-		}
-	if ( pszUID != nullptr )
-	{
-		char* pszConnectionName2 = pszConnectionName;
-		pszConnectionName = CPLStrdup(CPLSPrintf("%s;UID=%s", pszConnectionName2, pszUID));
-		CPLFree(pszConnectionName2);
-	}
-	if ( pszPWD == nullptr )
-	{
-		pszPWD = getenv("MSSQLSPATIAL_PWD");
-	}
-	if ( pszPWD != nullptr)
-	{
-		char* pszConnectionName2 = pszConnectionName;
-		pszConnectionName = CPLStrdup(CPLSPrintf("%s;PWD=%s", pszConnectionName2, pszPWD));
-		CPLFree(pszConnectionName2);
-	}
+        pszUID = getenv("MSSQLSPATIAL_UID");
+        }
+    if ( pszUID != nullptr )
+    {
+        char* pszConnectionName2 = pszConnectionName;
+        pszConnectionName = CPLStrdup(CPLSPrintf("%s;UID=%s", pszConnectionName2, pszUID));
+        CPLFree(pszConnectionName2);
+    }
+    if ( pszPWD == nullptr )
+    {
+        pszPWD = getenv("MSSQLSPATIAL_PWD");
+    }
+    if ( pszPWD != nullptr)
+    {
+        char* pszConnectionName2 = pszConnectionName;
+        pszConnectionName = CPLStrdup(CPLSPrintf("%s;PWD=%s", pszConnectionName2, pszPWD));
+        CPLFree(pszConnectionName2);
+    }
 
     /* Initialize the SQL Server connection. */
     if( !oSession.EstablishSession( pszConnectionName, "", "" ) )
