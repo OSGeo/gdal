@@ -160,7 +160,10 @@ const char *NITFProxyPamRasterBand::GetMetadataItem( const char * pszName,
     GDALRasterBand* _poSrcBand = RefUnderlyingRasterBand();
     if (_poSrcBand)
     {
+        if( !m_bEnablePixelTypeSignedByteWarning )
+            _poSrcBand->EnablePixelTypeSignedByteWarning(false);
         pszRet = _poSrcBand->GetMetadataItem( pszName, pszDomain );
+        _poSrcBand->EnablePixelTypeSignedByteWarning(true);
         UnrefUnderlyingRasterBand(_poSrcBand);
     }
 
