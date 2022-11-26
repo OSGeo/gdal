@@ -2117,4 +2117,50 @@ namespace
         ASSERT_EQ(poClonedCoded->GetMergePolicy(), oCoded.GetMergePolicy());
     }
 
+    // Test OGRFeatureDefn C++ GetFields() iterator
+    TEST_F(test_ogr, feature_defn_fields_iterator)
+    {
+        OGRFeatureDefn oFDefn;
+        {
+            OGRFieldDefn oFieldDefn("field1", OFTString);
+            oFDefn.AddFieldDefn(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("field2", OFTString);
+            oFDefn.AddFieldDefn(&oFieldDefn);
+        }
+        EXPECT_EQ(oFDefn.GetFields().size(), oFDefn.GetFieldCount());
+        int i = 0;
+        for( const auto* poFieldDefn: oFDefn.GetFields() )
+        {
+            EXPECT_EQ(oFDefn.GetFields()[i], oFDefn.GetFieldDefn(i));
+            EXPECT_EQ(poFieldDefn, oFDefn.GetFieldDefn(i));
+            ++i;
+        }
+        EXPECT_EQ(i, oFDefn.GetFieldCount());
+    }
+
+    // Test OGRFeatureDefn C++ GetGeomFields() iterator
+    TEST_F(test_ogr, feature_defn_geomfields_iterator)
+    {
+        OGRFeatureDefn oFDefn;
+        {
+            OGRGeomFieldDefn oGeomFieldDefn("field1", wkbUnknown);
+            oFDefn.AddGeomFieldDefn(&oGeomFieldDefn);
+        }
+        {
+            OGRGeomFieldDefn oGeomFieldDefn("field2", wkbUnknown);
+            oFDefn.AddGeomFieldDefn(&oGeomFieldDefn);
+        }
+        EXPECT_EQ(oFDefn.GetGeomFields().size(), oFDefn.GetGeomFieldCount());
+        int i = 0;
+        for( const auto* poGeomFieldDefn: oFDefn.GetGeomFields() )
+        {
+            EXPECT_EQ(oFDefn.GetGeomFields()[i], oFDefn.GetGeomFieldDefn(i));
+            EXPECT_EQ(poGeomFieldDefn, oFDefn.GetGeomFieldDefn(i));
+            ++i;
+        }
+        EXPECT_EQ(i, oFDefn.GetGeomFieldCount());
+    }
+
 } // namespace

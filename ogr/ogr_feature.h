@@ -305,6 +305,53 @@ class CPL_DLL OGRFeatureDefn
     int                 GetFieldIndexCaseSensitive( const char * ) const;
 
 //! @cond Doxygen_Suppress
+    /** Helper class to iterate over non-geometry fields.
+     *
+     * Note: fields should not be added or removed while iterating over them.
+     */
+    struct CPL_DLL Fields
+    {
+      private:
+        OGRFeatureDefn* m_poFDefn;
+      public:
+        inline explicit Fields(OGRFeatureDefn* poFDefn): m_poFDefn(poFDefn) {}
+
+        struct CPL_DLL ConstIterator
+        {
+          private:
+            OGRFeatureDefn* m_poFDefn;
+            int             m_nIdx;
+          public:
+            inline ConstIterator(OGRFeatureDefn* poFDefn, int nIdx):
+                m_poFDefn(poFDefn), m_nIdx(nIdx) {}
+
+            inline const OGRFieldDefn* operator*() const { return m_poFDefn->GetFieldDefn(m_nIdx); }
+            inline ConstIterator& operator++() { m_nIdx++; return *this; }
+            inline bool operator!=(const ConstIterator& it) const { return m_nIdx != it.m_nIdx; }
+        };
+
+        inline ConstIterator begin() { return ConstIterator(m_poFDefn, 0); }
+        inline ConstIterator end() { return ConstIterator(m_poFDefn, m_poFDefn->GetFieldCount()); }
+
+        inline size_t size() const { return m_poFDefn->GetFieldCount(); }
+        inline OGRFieldDefn* operator[](size_t i) { return m_poFDefn->GetFieldDefn(static_cast<int>(i)); }
+        inline const OGRFieldDefn* operator[](size_t i) const { return m_poFDefn->GetFieldDefn(static_cast<int>(i)); }
+    };
+//! @endcond
+
+    /** Return an object that can be used to iterate over non-geometry fields.
+        \verbatim
+        for( const auto* poFieldDefn: poFeatureDefn->GetFields() )
+        {
+            // do someting
+        }
+        \endverbatim
+
+        @since GDAL 3.7
+     */
+    inline Fields       GetFields() { return Fields(this); }
+
+//! @cond Doxygen_Suppress
     // That method should only be called if there's a guarantee that GetFieldCount() has been called before
     int                 GetFieldCountUnsafe() const { return static_cast<int>(apoFieldDefn.size()); }
 
@@ -321,6 +368,55 @@ class CPL_DLL OGRFeatureDefn
     virtual OGRGeomFieldDefn *GetGeomFieldDefn( int i );
     virtual const OGRGeomFieldDefn *GetGeomFieldDefn( int i ) const;
     virtual int         GetGeomFieldIndex( const char * ) const;
+
+
+//! @cond Doxygen_Suppress
+    /** Helper class to iterate over geometry fields.
+     *
+     * Note: fields should not be added or removed while iterating over them.
+     */
+    struct CPL_DLL GeomFields
+    {
+      private:
+        OGRFeatureDefn* m_poFDefn;
+      public:
+        inline explicit GeomFields(OGRFeatureDefn* poFDefn): m_poFDefn(poFDefn) {}
+
+        struct CPL_DLL ConstIterator
+        {
+          private:
+            OGRFeatureDefn* m_poFDefn;
+            int             m_nIdx;
+
+          public:
+            inline ConstIterator(OGRFeatureDefn* poFDefn, int nIdx):
+                m_poFDefn(poFDefn), m_nIdx(nIdx) {}
+
+            inline const OGRGeomFieldDefn* operator*() const { return m_poFDefn->GetGeomFieldDefn(m_nIdx); }
+            inline ConstIterator& operator++() { m_nIdx++; return *this; }
+            inline bool operator!=(const ConstIterator& it) const { return m_nIdx != it.m_nIdx; }
+        };
+
+        inline ConstIterator begin() { return ConstIterator(m_poFDefn, 0); }
+        inline ConstIterator end() { return ConstIterator(m_poFDefn, m_poFDefn->GetGeomFieldCount()); }
+
+        inline size_t size() const { return m_poFDefn->GetGeomFieldCount(); }
+        inline OGRGeomFieldDefn* operator[](size_t i) { return m_poFDefn->GetGeomFieldDefn(static_cast<int>(i)); }
+        inline const OGRGeomFieldDefn* operator[](size_t i) const { return m_poFDefn->GetGeomFieldDefn(static_cast<int>(i)); }
+    };
+//! @endcond
+
+    /** Return an object that can be used to iterate over geometry fields.
+        \verbatim
+        for( const auto* poGeomFieldDefn: poFeatureDefn->GetGeomFields() )
+        {
+            // do someting
+        }
+        \endverbatim
+
+        @since GDAL 3.7
+     */
+    inline GeomFields   GetGeomFields() { return GeomFields(this); }
 
     virtual void        AddGeomFieldDefn( const OGRGeomFieldDefn * );
     virtual void        AddGeomFieldDefn( std::unique_ptr<OGRGeomFieldDefn>&& );
