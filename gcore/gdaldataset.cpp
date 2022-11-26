@@ -1526,7 +1526,6 @@ const char *GDALDataset::GetGCPProjection()
     m_poPrivate->m_pszWKTGCPCached = pszWKT;
     return m_poPrivate->m_pszWKTGCPCached;
 }
-//! @endcond
 
 /************************************************************************/
 /*                          GetGCPSpatialRef()                          */
