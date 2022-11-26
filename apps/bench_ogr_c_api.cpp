@@ -142,6 +142,7 @@ int main(int argc, char* argv[])
     for( int i = 0; i < nFields; i++ )
         aeTypes.push_back(OGR_Fld_GetType(OGR_FD_GetFieldDefn(hFDefn, i)));
     int nYear, nMonth, nDay, nHour, nMin, nSecond, nTZ;
+    std::vector<GByte> abyWKB;
     while( true )
     {
         OGRFeatureH hFeat = OGR_L_GetNextFeature(hLayer);
@@ -166,9 +167,8 @@ int main(int argc, char* argv[])
         if( hGeom )
         {
             int size = OGR_G_WkbSize(hGeom);
-            GByte* pabyWKB = static_cast<GByte*>(malloc(size));
-            OGR_G_ExportToIsoWkb( hGeom, wkbNDR, pabyWKB);
-            CPLFree(pabyWKB);
+            abyWKB.resize(size);
+            OGR_G_ExportToIsoWkb(hGeom, wkbNDR, abyWKB.data());
         }
         OGR_F_Destroy(hFeat);
     }
