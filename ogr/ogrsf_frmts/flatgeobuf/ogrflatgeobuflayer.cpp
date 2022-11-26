@@ -473,7 +473,16 @@ void OGRFlatGeobufLayer::Create() {
     CPLDebugOnly("FlatGeobuf", "Creating Packed R-tree");
     c = 0;
     try {
-        PackedRTree tree(static_cast<const void*>(m_featureItems.data()), sizeof(FeatureItem), m_featureItems.size(), extent);
+        const auto fillNodeItems = [this](NodeItem* dest)
+        {
+            size_t i = 0;
+            for( const auto& featureItem: m_featureItems )
+            {
+                dest[i] = featureItem.nodeItem;
+                ++i;
+            }
+        };
+        PackedRTree tree(fillNodeItems, m_featureItems.size(), extent);
         CPLDebugOnly("FlatGeobuf", "PackedRTree extent %f, %f, %f, %f", extentVector[0], extentVector[1], extentVector[2], extentVector[3]);
         tree.streamWrite([this, &c] (uint8_t *data, size_t size) { c += VSIFWriteL(data, 1, size, m_poFp); });
     } catch (const std::exception& e) {

@@ -269,17 +269,12 @@ PackedRTree::PackedRTree(const void *data, const uint64_t numItems, const uint16
     fromData(data);
 }
 
-PackedRTree::PackedRTree(const void *itemsWithStride, size_t stride, const uint64_t numItems, const NodeItem &extent, const uint16_t nodeSize) :
+PackedRTree::PackedRTree(std::function<void(NodeItem *)> fillNodeItems, const uint64_t numItems, const NodeItem &extent, const uint16_t nodeSize) :
     _extent(extent),
     _numItems(numItems)
 {
     init(nodeSize);
-    auto buf = static_cast<const uint8_t *>(itemsWithStride);
-    for (uint64_t i = 0; i < _numItems; i++) {
-        const NodeItem& n = *reinterpret_cast<const NodeItem *>(buf);
-        buf += stride;
-        _nodeItems[_numNodes - _numItems + i] = n;
-    }
+    fillNodeItems(_nodeItems + _numNodes - _numItems);
     generateNodes();
 }
 
