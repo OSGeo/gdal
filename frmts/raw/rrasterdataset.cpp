@@ -537,8 +537,8 @@ void RRASTERDataset::RewriteHeader()
     VSIFPrintfL(fp, "[data]\n");
     GDALDataType eDT = GetRasterBand(1)->GetRasterDataType();
     VSIFPrintfL(fp, "datatype=%s\n",
-        (eDT == GDT_Byte && !m_bSignedByte) ? "INT1U" :
         (eDT == GDT_Int8 || m_bSignedByte) ?  "INT1S" :
+        (eDT == GDT_Byte) ?        "INT1U" :
         (eDT == GDT_UInt16) ?      "INT2U" :
         (eDT == GDT_UInt32) ?      "INT4U" :
         (eDT == GDT_Int16) ?       "INT2S" :

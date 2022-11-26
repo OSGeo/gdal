@@ -129,8 +129,12 @@ static void OGRVDVParseAtrFrm(OGRLayer* poLayer,
         oFieldDefn.SetWidth(nWidth);
         if( poLayer )
             poLayer->CreateField(&oFieldDefn);
-        else
+        else if( poFeatureDefn )
             poFeatureDefn->AddFieldDefn(&oFieldDefn);
+        else
+        {
+            CPLAssert(false);
+        }
     }
 }
 
