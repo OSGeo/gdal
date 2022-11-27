@@ -282,7 +282,7 @@ def InfoOptions(options=None, format='text', deserialize=True,
     return (GDALInfoOptions(new_options), format, deserialize)
 
 def Info(ds, **kwargs):
-    """Return information on a dataset.
+    """Return information on a raster dataset.
 
     Parameters
     ----------
@@ -303,6 +303,91 @@ def Info(ds, **kwargs):
     if format == 'json' and deserialize:
         import json
         ret = json.loads(ret)
+    return ret
+
+
+def VectorInfoOptions(options=None,
+                      layers=None,
+                      dumpFeatures=False,
+                      SQLStatement=None,
+                      SQLDialect=None,
+                      where=None,
+                      wktFormat=None):
+    """ Create a VectorInfoOptions() object that can be passed to gdal.VectorInfo()
+        options can be be an array of strings, a string or let empty and filled from other keywords.
+
+        Parameters
+        ----------
+        options:
+            can be be an array of strings, a string or let empty and filled from other keywords.
+        SQLStatement:
+            SQL statement to apply to the source dataset
+        SQLDialect:
+            SQL dialect ('OGRSQL', 'SQLITE', ...)
+        where:
+            WHERE clause to apply to source layer(s)
+        layers:
+            list of layers of interest
+        dumpFeatures:
+            set to True to get the dump of all features
+    """
+
+    options = [] if options is None else options
+    deserialize=True
+
+    if isinstance(options, str):
+        new_options = ParseCommandLine(options)
+#format = 'text'
+#if '-json' in new_options:
+#    format = 'json'
+    else:
+        new_options = options
+#if format == 'json':
+#    new_options += ['-json']
+#if '-json' in new_options:
+#    format = 'json'
+        if SQLStatement:
+            new_options += ['-sql', SQLStatement]
+        if SQLDialect:
+            new_options += ['-dialect', SQLDialect]
+        if where:
+            new_options += ['-where', where]
+        if wktFormat:
+            new_options += ['-wkt_format', wktFormat]
+        if layers:
+            new_options += ["dummy_dataset_name"]
+            for layer in layers:
+                new_options += [layer]
+        else:
+            new_options += ["-al"]
+        if not dumpFeatures:
+            new_options += ["-so"]
+
+    return (GDALVectorInfoOptions(new_options), format, deserialize)
+
+
+def VectorInfo(ds, **kwargs):
+    """Return information on a vector dataset.
+
+    Parameters
+    ----------
+    ds:
+        a Dataset object or a filename
+    kwargs:
+        options: return of gdal.VectorInfoOptions(), string or array of strings
+        other keywords arguments of gdal.VectorInfoOptions().
+        If options is provided as a gdal.VectorInfoOptions() object, other keywords are ignored.
+    """
+    if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
+        (opts, format, deserialize) = VectorInfoOptions(**kwargs)
+    else:
+        (opts, format, deserialize) = kwargs['options']
+    if isinstance(ds, str):
+        ds = OpenEx(ds, OF_VERBOSE_ERROR | OF_VECTOR)
+    ret = VectorInfoInternal(ds, opts)
+#if format == 'json' and deserialize:
+#    import json
+#    ret = json.loads(ret)
     return ret
 
 
@@ -4818,6 +4903,24 @@ _gdal.GDALInfoOptions_swigregister(GDALInfoOptions)
 def InfoInternal(*args) -> "retStringAndCPLFree *":
     r"""InfoInternal(Dataset hDataset, GDALInfoOptions infoOptions) -> retStringAndCPLFree *"""
     return _gdal.InfoInternal(*args)
+class GDALVectorInfoOptions(object):
+    r"""Proxy of C++ GDALVectorInfoOptions class."""
+
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    __repr__ = _swig_repr
+
+    def __init__(self, *args):
+        r"""__init__(GDALVectorInfoOptions self, char ** options) -> GDALVectorInfoOptions"""
+        _gdal.GDALVectorInfoOptions_swiginit(self, _gdal.new_GDALVectorInfoOptions(*args))
+    __swig_destroy__ = _gdal.delete_GDALVectorInfoOptions
+
+# Register GDALVectorInfoOptions in _gdal:
+_gdal.GDALVectorInfoOptions_swigregister(GDALVectorInfoOptions)
+
+
+def VectorInfoInternal(*args) -> "retStringAndCPLFree *":
+    r"""VectorInfoInternal(Dataset hDataset, GDALVectorInfoOptions infoOptions) -> retStringAndCPLFree *"""
+    return _gdal.VectorInfoInternal(*args)
 class GDALMultiDimInfoOptions(object):
     r"""Proxy of C++ GDALMultiDimInfoOptions class."""
 

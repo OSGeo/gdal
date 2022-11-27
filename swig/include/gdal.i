@@ -1134,6 +1134,30 @@ struct GDALInfoOptions {
 retStringAndCPLFree *GDALInfo( GDALDatasetShadow *hDataset, GDALInfoOptions *infoOptions );
 
 //************************************************************************
+// gdal.VectorInfo()
+//************************************************************************
+
+#ifdef SWIGJAVA
+%rename (VectorInfoOptions) GDALVectorInfoOptions;
+#endif
+struct GDALVectorInfoOptions {
+%extend {
+    GDALVectorInfoOptions(char** options) {
+        return GDALVectorInfoOptionsNew(options, NULL);
+    }
+
+    ~GDALVectorInfoOptions() {
+        GDALVectorInfoOptionsFree( self );
+    }
+}
+};
+
+#ifdef SWIGPYTHON
+%rename (VectorInfoInternal) GDALVectorInfo;
+#endif
+retStringAndCPLFree *GDALVectorInfo( GDALDatasetShadow *hDataset, GDALVectorInfoOptions *infoOptions );
+
+//************************************************************************
 // gdal.MultiDimInfo()
 //************************************************************************
 
