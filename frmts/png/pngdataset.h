@@ -65,6 +65,15 @@
 #  pragma warning(disable:4611)
 #endif
 
+#if defined(__SSE2__) || defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP >= 2)
+#define HAVE_SSE2
+#include <emmintrin.h>
+#endif
+
+#ifdef HAVE_SSE2
+#define ENABLE_WHOLE_IMAGE_OPTIMIZATION
+#endif
+
 /************************************************************************/
 /* ==================================================================== */
 /*                              PNGDataset                              */
@@ -152,6 +161,14 @@ class PNGDataset final: public GDALPamDataset
                                    GSpacing,
                                    GDALRasterIOExtraArg* psExtraArg ) override;
 
+#ifdef ENABLE_WHOLE_IMAGE_OPTIMIZATION
+    bool   IsCompatibleOfSingleBlock() const;
+    CPLErr LoadWholeImage(void* pSingleBuffer,
+                          GSpacing nPixelSpace, GSpacing nLineSpace,
+                          GSpacing nBandSpace,
+                          void* apabyBuffers[4]);
+#endif
+
     jmp_buf     sSetJmpContext;  // Semi-private.
 
 #ifdef SUPPORT_CREATE
@@ -205,6 +222,11 @@ class PNGRasterBand final: public GDALPamRasterBand
     virtual GDALColorTable *GetColorTable() override;
     CPLErr SetNoDataValue( double dfNewValue ) override;
     virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
+
+    virtual CPLErr      IRasterIO( GDALRWFlag, int, int, int, int,
+                                   void *, int, int, GDALDataType,
+                                   GSpacing, GSpacing,
+                                   GDALRasterIOExtraArg* psExtraArg ) override;
 
     int         bHaveNoData;
     double      dfNoDataValue;
