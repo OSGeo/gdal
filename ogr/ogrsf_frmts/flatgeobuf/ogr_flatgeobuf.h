@@ -37,6 +37,7 @@
 #include "feature_generated.h"
 #include "packedrtree.h"
 
+#include <deque>
 #include <limits>
 
 class OGRFlatGeobufDataset;
@@ -97,7 +98,7 @@ class OGRFlatGeobufLayer final : public OGRLayer, public OGRFlatGeobufBaseLayerI
 
         // creation
         bool m_create = false;
-        std::vector<std::shared_ptr<FlatGeobuf::Item>> m_featureItems; // feature item description used to create spatial index
+        std::deque<FeatureItem> m_featureItems; // feature item description used to create spatial index
         bool m_bCreateSpatialIndexAtClose = true;
         bool m_bVerifyBuffers = true;
         VSILFILE *m_poFpWrite = nullptr;

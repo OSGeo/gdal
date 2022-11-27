@@ -142,22 +142,6 @@ uint32_t hilbert(const NodeItem &r, uint32_t hilbertMax, const double minX, cons
     return v;
 }
 
-const uint32_t hilbertMax = (1 << 16) - 1;
-
-void hilbertSort(std::vector<std::shared_ptr<Item>> &items)
-{
-    NodeItem extent = calcExtent(items);
-    const double minX = extent.minX;
-    const double minY = extent.minY;
-    const double width = extent.width();
-    const double height = extent.height();
-    std::sort(items.begin(), items.end(), [minX, minY, width, height] (std::shared_ptr<Item> a, std::shared_ptr<Item> b) {
-        uint32_t ha = hilbert(a->nodeItem, hilbertMax, minX, minY, width, height);
-        uint32_t hb = hilbert(b->nodeItem, hilbertMax, minX, minY, width, height);
-        return ha > hb;
-    });
-}
-
 void hilbertSort(std::vector<NodeItem> &items)
 {
     NodeItem extent = calcExtent(items);
@@ -166,8 +150,8 @@ void hilbertSort(std::vector<NodeItem> &items)
     const double width = extent.width();
     const double height = extent.height();
     std::sort(items.begin(), items.end(), [minX, minY, width, height] (const NodeItem &a, const NodeItem &b) {
-        uint32_t ha = hilbert(a, hilbertMax, minX, minY, width, height);
-        uint32_t hb = hilbert(b, hilbertMax, minX, minY, width, height);
+        uint32_t ha = hilbert(a, HILBERT_MAX, minX, minY, width, height);
+        uint32_t hb = hilbert(b, HILBERT_MAX, minX, minY, width, height);
         return ha > hb;
     });
 }
@@ -283,6 +267,15 @@ PackedRTree::PackedRTree(const void *data, const uint64_t numItems, const uint16
 {
     init(nodeSize);
     fromData(data);
+}
+
+PackedRTree::PackedRTree(std::function<void(NodeItem *)> fillNodeItems, const uint64_t numItems, const NodeItem &extent, const uint16_t nodeSize) :
+    _extent(extent),
+    _numItems(numItems)
+{
+    init(nodeSize);
+    fillNodeItems(_nodeItems + _numNodes - _numItems);
+    generateNodes();
 }
 
 std::vector<SearchResultItem> PackedRTree::search(double minX, double minY, double maxX, double maxY) const

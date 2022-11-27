@@ -32,6 +32,7 @@
 #define FLATGEOBUF_PACKEDRTREE_H_
 
 #include <cmath>
+#include <deque>
 #include <numeric>
 
 #include "flatbuffers/flatbuffers.h"
@@ -69,7 +70,32 @@ std::ostream& operator << (std::ostream& os, NodeItem const& value);
 
 uint32_t hilbert(uint32_t x, uint32_t y);
 uint32_t hilbert(const NodeItem &n, uint32_t hilbertMax, const double minX, const double minY, const double width, const double height);
-void hilbertSort(std::vector<std::shared_ptr<Item>> &items);
+
+
+constexpr uint32_t HILBERT_MAX = (1 << 16) - 1;
+
+template<class ITEM_TYPE> NodeItem calcExtent(const std::deque<ITEM_TYPE> &items)
+{
+    return std::accumulate(items.begin(), items.end(), NodeItem::create(0), [] (NodeItem a, const ITEM_TYPE& b) {
+        return a.expand(b.nodeItem);
+    });
+}
+
+template<class ITEM_TYPE> void hilbertSort(std::deque<ITEM_TYPE> &items)
+{
+    NodeItem extent = calcExtent(items);
+    const double minX = extent.minX;
+    const double minY = extent.minY;
+    const double width = extent.width();
+    const double height = extent.height();
+    std::sort(items.begin(), items.end(), [minX, minY, width, height] (ITEM_TYPE& a, ITEM_TYPE& b) {
+        uint32_t ha = hilbert(a.nodeItem, HILBERT_MAX, minX, minY, width, height);
+        uint32_t hb = hilbert(b.nodeItem, HILBERT_MAX, minX, minY, width, height);
+        return ha > hb;
+    });
+}
+
+
 void hilbertSort(std::vector<NodeItem> &items);
 NodeItem calcExtent(const std::vector<std::shared_ptr<Item>> &items);
 NodeItem calcExtent(const std::vector<NodeItem> &rects);
@@ -96,6 +122,7 @@ public:
     PackedRTree(const std::vector<std::shared_ptr<Item>> &items, const NodeItem &extent, const uint16_t nodeSize = 16);
     PackedRTree(const std::vector<NodeItem> &nodes, const NodeItem &extent, const uint16_t nodeSize = 16);
     PackedRTree(const void *data, const uint64_t numItems, const uint16_t nodeSize = 16);
+    PackedRTree(std::function<void(NodeItem *)> fillNodeItems, const uint64_t numItems, const NodeItem &extent, const uint16_t nodeSize = 16);
     std::vector<SearchResultItem> search(double minX, double minY, double maxX, double maxY) const;
     static std::vector<SearchResultItem> streamSearch(
         const uint64_t numItems, const uint16_t nodeSize, const NodeItem &item,
