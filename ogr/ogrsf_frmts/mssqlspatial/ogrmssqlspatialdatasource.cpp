@@ -692,7 +692,6 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, bool bUpdate,
     char* pszDriver = nullptr;
     char* pszUID = nullptr;
     char* pszPWD = nullptr;
-    char* pszTrustedConnection = nullptr;
     int nCurrent, nNext, nTerm;
     nCurrent = nNext = nTerm = static_cast<int>(strlen(pszConnectionName));
 
@@ -725,10 +724,6 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, bool bUpdate,
             nCurrent, nNext, nTerm, FALSE))
             continue;
 
-        if (ParseValue(&pszTrustedConnection, pszConnectionName, "trustedconnection=",
-            nCurrent, nNext, nTerm, FALSE))
-            continue;
-
         if (ParseValue(&pszGeometryFormat, pszConnectionName,
             "geometryformat=", nCurrent, nNext, nTerm, TRUE))
         {
@@ -752,7 +747,6 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, bool bUpdate,
                 CPLFree(pszDriver);
                 CPLFree(pszUID);
                 CPLFree(pszPWD);
-                CPLFree(pszTrustedConnection);
                 return FALSE;
             }
 
@@ -774,7 +768,6 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, bool bUpdate,
         CPLFree(pszDriver);
         CPLFree(pszUID);
         CPLFree(pszPWD);
-        CPLFree(pszTrustedConnection);
         return FALSE;
     }
 
@@ -889,6 +882,9 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, bool bUpdate,
         CPLFree(pszConnectionName2);
     }
 
+    CPLFree(pszUID);
+    CPLFree(pszPWD);
+
     /* Initialize the SQL Server connection. */
     if( !oSession.EstablishSession( pszConnectionName, "", "" ) )
     {
@@ -933,9 +929,6 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, bool bUpdate,
         CSLDestroy( papszSRTexts );
         CPLFree(pszGeometryFormat);
         CPLFree(pszConnectionName);
-        CPLFree(pszUID);
-        CPLFree(pszPWD);
-        CPLFree(pszTrustedConnection);
         return FALSE;
     }
 
