@@ -878,7 +878,9 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, bool bUpdate,
     }
     if ( pszPWD == nullptr )
     {
-        pszPWD = getenv("MSSQLSPATIAL_PWD");
+        const char* pszPWDConst = CPLGetConfigOption("MSSQLSPATIAL_PWD", nullptr);
+        if( pszPWDConst )
+            pszPWD = CPLStrdup(pszPWDConst);
     }
     if ( pszPWD != nullptr)
     {
