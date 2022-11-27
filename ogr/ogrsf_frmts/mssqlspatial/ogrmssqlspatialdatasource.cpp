@@ -866,8 +866,10 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, bool bUpdate,
 
     if ( pszUID == nullptr )
     {
-        pszUID = getenv("MSSQLSPATIAL_UID");
-        }
+        const char* pszUIDConst = CPLGetConfigOption("MSSQLSPATIAL_UID", nullptr);
+        if( pszUIDConst )
+            pszUID = CPLStrdup(pszUIDConst);
+    }
     if ( pszUID != nullptr )
     {
         char* pszConnectionName2 = pszConnectionName;
