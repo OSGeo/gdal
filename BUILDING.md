@@ -2,7 +2,7 @@
 
 This file contains and points to instructions about building GDAL from source.
 
-# Building with cmake (GDAL >= 3.5.0)
+# Building with cmake (GDAL >= 3.6.0)
 
 CMake is the only build system supported since GDAL 3.6.0.
 
