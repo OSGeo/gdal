@@ -181,20 +181,49 @@ OGRGeometry& OGRGeometry::operator=( const OGRGeometry& other )
  */
 
 void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
-                                char** papszOptions ) const
+                                CSLConstList papszOptions ) const
+
+{
+    if( fp == nullptr )
+        fp = stdout;
+
+    const auto osStr = dumpReadable(pszPrefix, papszOptions);
+    fprintf(fp, "%s", osStr.c_str());
+}
+
+/************************************************************************/
+/*                            dumpReadable()                            */
+/************************************************************************/
+
+/**
+ * \brief Dump geometry in well known text format to indicated output file.
+ *
+ * A few options can be defined to change the default dump :
+ * <ul>
+ * <li>DISPLAY_GEOMETRY=NO : to hide the dump of the geometry</li>
+ * <li>DISPLAY_GEOMETRY=WKT or YES (default) : dump the geometry as a WKT</li>
+ * <li>DISPLAY_GEOMETRY=SUMMARY : to get only a summary of the geometry</li>
+ * </ul>
+ *
+ * @param pszPrefix the prefix to put on each line of output.
+ * @param papszOptions NULL terminated list of options (may be NULL)
+ * @return a string with the geometry representation.
+ * @since GDAL 3.7
+ */
+
+std::string OGRGeometry::dumpReadable( const char * pszPrefix,
+                                       CSLConstList papszOptions ) const
 
 {
     if( pszPrefix == nullptr )
         pszPrefix = "";
 
-    if( fp == nullptr )
-        fp = stdout;
-
+    std::string osRet;
     const char* pszDisplayGeometry =
         CSLFetchNameValue(papszOptions, "DISPLAY_GEOMETRY");
     if( pszDisplayGeometry != nullptr && EQUAL(pszDisplayGeometry, "SUMMARY") )
     {
-        fprintf( fp, "%s%s : ", pszPrefix, getGeometryName() );
+        osRet += CPLOPrintf("%s%s : ", pszPrefix, getGeometryName() );
         switch( getGeometryType() )
         {
             case wkbUnknown:
@@ -214,11 +243,11 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
             case wkbTINZM:
             {
                 const OGRPolyhedralSurface* poPS = toPolyhedralSurface();
-                fprintf( fp, "%d geometries:\n", poPS->getNumGeometries() );
+                osRet += CPLOPrintf("%d geometries:\n", poPS->getNumGeometries() );
                 for( auto&& poSubGeom: *poPS)
                 {
-                    fprintf( fp, "%s", pszPrefix);
-                    poSubGeom->dumpReadable( fp, pszPrefix, papszOptions );
+                    osRet += pszPrefix;
+                    osRet += poSubGeom->dumpReadable( pszPrefix, papszOptions );
                 }
                 break;
             }
@@ -232,7 +261,7 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
             case wkbCircularStringZM:
             {
                 const OGRSimpleCurve *poSC = toSimpleCurve();
-                fprintf( fp, "%d points\n", poSC->getNumPoints() );
+                osRet += CPLOPrintf("%d points\n", poSC->getNumPoints() );
                 break;
             }
             case wkbPolygon:
@@ -253,39 +282,39 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
                 const int nRings = poPoly->getNumInteriorRings();
                 if( poRing == nullptr )
                 {
-                    fprintf( fp, "empty");
+                    osRet += "empty";
                 }
                 else
                 {
-                    fprintf( fp, "%d points", poRing->getNumPoints() );
+                    osRet += CPLOPrintf("%d points", poRing->getNumPoints() );
                     if( wkbFlatten(poRing->getGeometryType()) ==
                         wkbCompoundCurve )
                     {
-                        fprintf( fp, " (");
-                        poRing->dumpReadable(fp, nullptr, papszOptions);
-                        fprintf( fp, ")");
+                        osRet += " (";
+                        osRet += poRing->dumpReadable(nullptr, papszOptions);
+                        osRet += ")";
                     }
                     if( nRings )
                     {
-                        fprintf( fp, ", %d inner rings (", nRings);
+                        osRet += CPLOPrintf(", %d inner rings (", nRings);
                         for( int ir = 0; ir < nRings; ir++ )
                         {
                             poRing = poPoly->getInteriorRingCurve(ir);
                             if( ir )
-                                fprintf( fp, ", ");
-                            fprintf( fp, "%d points", poRing->getNumPoints() );
+                                osRet += ", ";
+                            osRet += CPLOPrintf("%d points", poRing->getNumPoints() );
                             if( wkbFlatten(poRing->getGeometryType()) ==
                                 wkbCompoundCurve )
                             {
-                                fprintf( fp, " (");
-                                poRing->dumpReadable(fp, nullptr, papszOptions);
-                                fprintf( fp, ")");
+                                osRet += " (";
+                                osRet += poRing->dumpReadable(nullptr, papszOptions);
+                                osRet += ")";
                             }
                         }
-                        fprintf( fp, ")");
+                        osRet += ")";
                     }
                 }
-                fprintf( fp, "\n");
+                osRet += "\n";
                 break;
             }
             case wkbCompoundCurve:
@@ -296,15 +325,15 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
                 const OGRCompoundCurve* poCC = toCompoundCurve();
                 if( poCC->getNumCurves() == 0 )
                 {
-                    fprintf( fp, "empty");
+                    osRet += "empty";
                 }
                 else
                 {
                     for( int i = 0; i < poCC->getNumCurves(); i++ )
                     {
                         if( i )
-                            fprintf( fp, ", ");
-                        fprintf( fp, "%s (%d points)",
+                            osRet += ", ";
+                        osRet += CPLOPrintf("%s (%d points)",
                                  poCC->getCurve(i)->getGeometryName(),
                                  poCC->getCurve(i)->getNumPoints() );
                     }
@@ -338,11 +367,11 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
             case wkbGeometryCollectionZM:
             {
                 const OGRGeometryCollection *poColl = toGeometryCollection();
-                fprintf( fp, "%d geometries:\n", poColl->getNumGeometries() );
+                osRet += CPLOPrintf("%d geometries:\n", poColl->getNumGeometries() );
                 for( auto&& poSubGeom: *poColl)
                 {
-                    fprintf( fp, "%s", pszPrefix);
-                    poSubGeom->dumpReadable( fp, pszPrefix, papszOptions );
+                    osRet += pszPrefix;
+                    osRet += poSubGeom->dumpReadable( pszPrefix, papszOptions );
                 }
                 break;
             }
@@ -364,7 +393,9 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
         std::string wkt = exportToWkt(OGRWktOptions(), &err);
         if( err == OGRERR_NONE )
         {
-            fprintf( fp, "%s%s\n", pszPrefix, wkt.data() );
+            osRet += pszPrefix;
+            osRet += wkt.data();
+            osRet += '\n';
         }
     }
     else if( pszDisplayGeometry == nullptr ||
@@ -378,9 +409,12 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
         std::string wkt = exportToWkt(opts, &err);
         if( err == OGRERR_NONE )
         {
-            fprintf( fp, "%s%s\n", pszPrefix, wkt.data() );
+            osRet += pszPrefix;
+            osRet += wkt.data();
+            osRet += '\n';
         }
     }
+    return osRet;
 }
 
 /************************************************************************/

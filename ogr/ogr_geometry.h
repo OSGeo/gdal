@@ -450,8 +450,10 @@ class CPL_DLL OGRGeometry
     virtual OGRwkbGeometryType getGeometryType() const = 0;
     OGRwkbGeometryType    getIsoGeometryType() const;
     virtual const char *getGeometryName() const = 0;
-    virtual void   dumpReadable( FILE *, const char * = nullptr
-                                 , char** papszOptions = nullptr ) const;
+    void   dumpReadable( FILE *, const char * = nullptr
+                                 , CSLConstList papszOptions = nullptr ) const;
+    std::string dumpReadable( const char * = nullptr
+                                 , CSLConstList papszOptions = nullptr ) const;
     virtual void   flattenTo2D() = 0;
     virtual char * exportToGML( const char* const * papszOptions = nullptr ) const;
     virtual char * exportToKML() const;
