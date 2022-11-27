@@ -12,6 +12,7 @@ add_library(
   gdal_rasterize_lib.cpp
   gdalwarp_lib.cpp
   commonutils.cpp
+  ogrinfo_lib.cpp
   ogr2ogr_lib.cpp
   gdaldem_lib.cpp
   nearblack_lib.cpp
@@ -62,7 +63,7 @@ if (BUILD_APPS)
   add_executable(gdaltransform gdaltransform.cpp)
   add_executable(gdal_create gdal_create.cpp)
   add_executable(gdal_viewshed gdal_viewshed.cpp)
-  add_executable(ogrinfo commonutils.h ogrinfo.cpp)
+  add_executable(ogrinfo commonutils.h ogrinfo_bin.cpp)
   add_executable(ogr2ogr ogr2ogr_bin.cpp)
 
   add_executable(ogrlineref ogrlineref.cpp)
