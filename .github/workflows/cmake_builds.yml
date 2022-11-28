@@ -281,6 +281,7 @@ jobs:
       run: |
         export PATH=$CMAKE_DIR:/usr/local/bin:/usr/bin:/bin # Avoid CMake config from brew etc.
         cd $GITHUB_WORKSPACE/superbuild/build
+        rm -f CMakeCache.txt
         cmake  ${CMAKE_OPTIONS} .. \
           -DBUILD_SHARED_LIBS=OFF \
           -DBUILD_TESTING=OFF \
@@ -557,6 +558,7 @@ jobs:
     - name: Configure with even less dependencies
       shell: bash -l {0}
       run: |
+        rm -f build/CMakeCache.txt
         cmake -A ${architecture} -G "${generator}" -Werror=dev "-DCMAKE_C_COMPILER_LAUNCHER=clcache" "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DGDAL_USE_EXTERNAL_LIBS:BOOL=OFF -DGDAL_USE_PNG_INTERNAL=OFF -DGDAL_USE_JPEG_INTERNAL=OFF -DGDAL_USE_JPEG12_INTERNAL=OFF -DGDAL_USE_GIF_INTERNAL=OFF -DGDAL_USE_LERC_INTERNAL=OFF -DGDAL_USE_LERCV1_INTERNAL=OFF -DGDAL_USE_QHULL_INTERNAL=OFF -DGDAL_USE_OPENCAD_INTERNAL=OFF -DWERROR_DEV_FLAG="-Werror=dev"
     - name: Configure with even less dependencies, and disabling all optional drivers
       shell: bash -l {0}
