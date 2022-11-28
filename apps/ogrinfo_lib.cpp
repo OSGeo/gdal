@@ -28,6 +28,8 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
+#include "cpl_json.h"
+#include "ogrgeojsonreader.h"
 #include "cpl_string.h"
 #include "gdal_utils.h"
 #include "gdal_utils_priv.h"
@@ -38,8 +40,15 @@
 
 #include <set>
 
+/*! output format */
+typedef enum {
+    /*! output in text format */ FORMAT_TEXT = 0,
+    /*! output in json format */ FORMAT_JSON = 1
+} GDALVectorInfoFormat;
+
 struct GDALVectorInfoOptions
 {
+    GDALVectorInfoFormat eFormat = FORMAT_TEXT;
     std::string osFilename{};
     std::string osWHERE{};
     CPLStringList aosLayers{};
@@ -123,40 +132,85 @@ static void Concat( CPLString& osRet, bool bStdoutOutput,
 /************************************************************************/
 
 static void ReportFieldDomain(CPLString& osRet,
+                              CPLJSONObject& oDomains,
                               const GDALVectorInfoOptions *psOptions,
                               const OGRFieldDomain* poDomain)
 {
+    const bool bJson = psOptions->eFormat == FORMAT_JSON;
+    CPLJSONObject oDomain;
+    oDomains.Add(poDomain->GetName(), oDomain);
     Concat(osRet, psOptions->bStdoutOutput, "Domain %s:\n", poDomain->GetName().c_str());
     const std::string& osDesc = poDomain->GetDescription();
     if( !osDesc.empty() )
     {
-        Concat(osRet, psOptions->bStdoutOutput, "  Description: %s\n", osDesc.c_str());
+        if( bJson )
+            oDomain.Set("description", osDesc);
+        else
+            Concat(osRet, psOptions->bStdoutOutput, "  Description: %s\n", osDesc.c_str());
     }
+    const char* pszType = "";
     switch( poDomain->GetDomainType() )
     {
-        case OFDT_CODED: Concat(osRet, psOptions->bStdoutOutput, "  Type: coded\n"); break;
-        case OFDT_RANGE: Concat(osRet, psOptions->bStdoutOutput, "  Type: range\n"); break;
-        case OFDT_GLOB:  Concat(osRet, psOptions->bStdoutOutput, "  Type: glob\n"); break;
+        case OFDT_CODED: pszType = "coded"; break;
+        case OFDT_RANGE: pszType = "range"; break;
+        case OFDT_GLOB:  pszType = "glob"; break;
     }
-    const char* pszFieldType = (poDomain->GetFieldSubType() != OFSTNone)
-        ? CPLSPrintf(
-              "%s(%s)",
-              OGRFieldDefn::GetFieldTypeName(poDomain->GetFieldType()),
-              OGRFieldDefn::GetFieldSubTypeName(poDomain->GetFieldSubType()))
-        : OGRFieldDefn::GetFieldTypeName(poDomain->GetFieldType());
-    Concat(osRet, psOptions->bStdoutOutput, "  Field type: %s\n", pszFieldType);
+    if( bJson )
+    {
+        oDomain.Set("type", pszType);
+    }
+    else
+    {
+        Concat(osRet, psOptions->bStdoutOutput, "  Type: %s\n", pszType);
+    }
+    const char* pszFieldType = OGRFieldDefn::GetFieldTypeName(poDomain->GetFieldType());
+    const char* pszFieldSubType = OGRFieldDefn::GetFieldSubTypeName(poDomain->GetFieldSubType());
+    if( bJson )
+    {
+        oDomain.Set("fieldType", pszFieldType);
+        if (poDomain->GetFieldSubType() != OFSTNone)
+            oDomain.Set("fieldSubType", pszFieldSubType);
+    }
+    else
+    {
+        const char* pszFieldTypeDisplay = (poDomain->GetFieldSubType() != OFSTNone)
+            ? CPLSPrintf("%s(%s)", pszFieldType, pszFieldSubType)
+            : pszFieldType;
+        Concat(osRet, psOptions->bStdoutOutput, "  Field type: %s\n", pszFieldTypeDisplay);
+    }
+
+    const char* pszSplitPolicy = "";
     switch( poDomain->GetSplitPolicy() )
     {
-        case OFDSP_DEFAULT_VALUE:  Concat(osRet, psOptions->bStdoutOutput, "  Split policy: default value\n"); break;
-        case OFDSP_DUPLICATE:      Concat(osRet, psOptions->bStdoutOutput, "  Split policy: duplicate\n"); break;
-        case OFDSP_GEOMETRY_RATIO: Concat(osRet, psOptions->bStdoutOutput, "  Split policy: geometry ratio\n"); break;
+        case OFDSP_DEFAULT_VALUE:  pszSplitPolicy = "default value"; break;
+        case OFDSP_DUPLICATE:      pszSplitPolicy = "duplicate"; break;
+        case OFDSP_GEOMETRY_RATIO: pszSplitPolicy = "geometry ratio"; break;
     }
+    if( bJson )
+    {
+        oDomain.Set("splitPolicy", pszSplitPolicy);
+    }
+    else
+    {
+        Concat(osRet, psOptions->bStdoutOutput, "  Split policy: %s\n", pszSplitPolicy);
+    }
+
+    const char* pszMergePolicy = "";
     switch( poDomain->GetMergePolicy() )
     {
-        case OFDMP_DEFAULT_VALUE:     Concat(osRet, psOptions->bStdoutOutput, "  Merge policy: default value\n"); break;
-        case OFDMP_SUM:               Concat(osRet, psOptions->bStdoutOutput, "  Merge policy: sum\n"); break;
-        case OFDMP_GEOMETRY_WEIGHTED: Concat(osRet, psOptions->bStdoutOutput, "  Merge policy: geometry weighted\n"); break;
+        case OFDMP_DEFAULT_VALUE:     pszMergePolicy = "default value"; break;
+        case OFDMP_SUM:               pszMergePolicy = "sum"; break;
+        case OFDMP_GEOMETRY_WEIGHTED: pszMergePolicy = "geometry weighted"; break;
     }
+    if( bJson )
+    {
+        oDomain.Set("mergePolicy", pszMergePolicy);
+    }
+    else
+    {
+        Concat(osRet, psOptions->bStdoutOutput, "  Merge policy: %s\n", pszMergePolicy);
+    }
+
     switch( poDomain->GetDomainType() )
     {
         case OFDT_CODED:
@@ -164,18 +218,36 @@ static void ReportFieldDomain(CPLString& osRet,
             const auto poCodedFieldDomain =
                 cpl::down_cast<const OGRCodedFieldDomain*>(poDomain);
             const OGRCodedValue* enumeration = poCodedFieldDomain->GetEnumeration();
-            Concat(osRet, psOptions->bStdoutOutput, "  Coded values:\n");
+            if( !bJson )
+                Concat(osRet, psOptions->bStdoutOutput, "  Coded values:\n");
+            CPLJSONObject oCodedValues;
+            oDomain.Add("codedValues", oCodedValues);
             for( int i = 0; enumeration[i].pszCode != nullptr; ++i )
             {
                 if( enumeration[i].pszValue )
                 {
-                    Concat(osRet, psOptions->bStdoutOutput, "    %s: %s\n",
-                           enumeration[i].pszCode,
-                           enumeration[i].pszValue);
+                    if( bJson )
+                    {
+                        oCodedValues.Set(enumeration[i].pszCode,
+                                         enumeration[i].pszValue);
+                    }
+                    else
+                    {
+                        Concat(osRet, psOptions->bStdoutOutput, "    %s: %s\n",
+                               enumeration[i].pszCode,
+                               enumeration[i].pszValue);
+                    }
                 }
                 else
                 {
-                    Concat(osRet, psOptions->bStdoutOutput, "    %s\n", enumeration[i].pszCode);
+                    if( bJson )
+                    {
+                        oCodedValues.SetNull(enumeration[i].pszCode);
+                    }
+                    else
+                    {
+                        Concat(osRet, psOptions->bStdoutOutput, "    %s\n", enumeration[i].pszCode);
+                    }
                 }
             }
             break;
@@ -193,45 +265,93 @@ static void ReportFieldDomain(CPLString& osRet,
             {
                 if( !OGR_RawField_IsUnset(&sMin) )
                 {
-                    Concat(osRet, psOptions->bStdoutOutput, "  Minimum value: %d%s\n",
-                           sMin.Integer,
-                           bMinIsIncluded ? "" : " (excluded)");
+                    if( bJson )
+                    {
+                        oDomain.Set("minValue", sMin.Integer);
+                        oDomain.Set("minValueIncluded", bMinIsIncluded);
+                    }
+                    else
+                    {
+                        Concat(osRet, psOptions->bStdoutOutput, "  Minimum value: %d%s\n",
+                               sMin.Integer,
+                               bMinIsIncluded ? "" : " (excluded)");
+                    }
                 }
                 if( !OGR_RawField_IsUnset(&sMax) )
                 {
-                    Concat(osRet, psOptions->bStdoutOutput, "  Maximum value: %d%s\n",
-                           sMax.Integer,
-                           bMaxIsIncluded ? "" : " (excluded)");
+                    if( bJson )
+                    {
+                        oDomain.Set("maxValue", sMax.Integer);
+                        oDomain.Set("maxValueIncluded", bMaxIsIncluded);
+                    }
+                    else
+                    {
+                        Concat(osRet, psOptions->bStdoutOutput, "  Maximum value: %d%s\n",
+                               sMax.Integer,
+                               bMaxIsIncluded ? "" : " (excluded)");
+                    }
                 }
             }
             else if( poDomain->GetFieldType() == OFTInteger64 )
             {
                 if( !OGR_RawField_IsUnset(&sMin) )
                 {
-                    Concat(osRet, psOptions->bStdoutOutput, "  Minimum value: " CPL_FRMT_GIB "%s\n",
-                           sMin.Integer64,
-                           bMinIsIncluded ? "" : " (excluded)");
+                    if( bJson )
+                    {
+                        oDomain.Set("minValue", sMin.Integer64);
+                        oDomain.Set("minValueIncluded", bMinIsIncluded);
+                    }
+                    else
+                    {
+                        Concat(osRet, psOptions->bStdoutOutput, "  Minimum value: " CPL_FRMT_GIB "%s\n",
+                               sMin.Integer64,
+                               bMinIsIncluded ? "" : " (excluded)");
+                    }
                 }
                 if( !OGR_RawField_IsUnset(&sMax) )
                 {
-                    Concat(osRet, psOptions->bStdoutOutput, "  Maximum value: " CPL_FRMT_GIB "%s\n",
-                           sMax.Integer64,
-                           bMaxIsIncluded ? "" : " (excluded)");
+                    if( bJson )
+                    {
+                        oDomain.Set("maxValue", sMax.Integer64);
+                        oDomain.Set("maxValueIncluded", bMaxIsIncluded);
+                    }
+                    else
+                    {
+                        Concat(osRet, psOptions->bStdoutOutput, "  Maximum value: " CPL_FRMT_GIB "%s\n",
+                               sMax.Integer64,
+                               bMaxIsIncluded ? "" : " (excluded)");
+                    }
                 }
             }
             else if( poDomain->GetFieldType() == OFTReal )
             {
                 if( !OGR_RawField_IsUnset(&sMin) )
                 {
-                    Concat(osRet, psOptions->bStdoutOutput, "  Minimum value: %g%s\n",
-                           sMin.Real,
-                           bMinIsIncluded ? "" : " (excluded)");
+                    if( bJson )
+                    {
+                        oDomain.Set("minValue", sMin.Real);
+                        oDomain.Set("minValueIncluded", bMinIsIncluded);
+                    }
+                    else
+                    {
+                        Concat(osRet, psOptions->bStdoutOutput, "  Minimum value: %g%s\n",
+                               sMin.Real,
+                               bMinIsIncluded ? "" : " (excluded)");
+                    }
                 }
                 if( !OGR_RawField_IsUnset(&sMax) )
                 {
-                    Concat(osRet, psOptions->bStdoutOutput, "  Maximum value: %g%s\n",
-                           sMax.Real,
-                           bMaxIsIncluded ? "" : " (excluded)");
+                    if( bJson )
+                    {
+                        oDomain.Set("maxValue", sMax.Real);
+                        oDomain.Set("maxValueIncluded", bMaxIsIncluded);
+                    }
+                    else
+                    {
+                        Concat(osRet, psOptions->bStdoutOutput, "  Maximum value: %g%s\n",
+                               sMax.Real,
+                               bMaxIsIncluded ? "" : " (excluded)");
+                    }
                 }
             }
             break;
@@ -241,7 +361,10 @@ static void ReportFieldDomain(CPLString& osRet,
         {
             const auto poGlobFieldDomain =
                 cpl::down_cast<const OGRGlobFieldDomain*>(poDomain);
-            Concat(osRet, psOptions->bStdoutOutput, "  Glob: %s\n", poGlobFieldDomain->GetGlob().c_str());
+            if( bJson )
+                oDomain.Set("glob", poGlobFieldDomain->GetGlob());
+            else
+                Concat(osRet, psOptions->bStdoutOutput, "  Glob: %s\n", poGlobFieldDomain->GetGlob().c_str());
             break;
         }
     }
@@ -252,27 +375,64 @@ static void ReportFieldDomain(CPLString& osRet,
 /************************************************************************/
 
 static void GDALVectorInfoPrintMetadata( CPLString& osRet,
+                                         CPLJSONObject& oMetadata,
                                          const GDALVectorInfoOptions *psOptions,
                                          GDALMajorObjectH hObject,
                                          const char *pszDomain,
                                          const char *pszDisplayedname,
                                          const char *pszIndent )
 {
+    const bool bJsonOutput = psOptions->eFormat == FORMAT_JSON;
     bool bIsxml = false;
+    bool bMDIsJson = false;
 
     if( pszDomain != nullptr && STARTS_WITH_CI(pszDomain, "xml:") )
         bIsxml = true;
+    else if( pszDomain != nullptr && STARTS_WITH_CI(pszDomain, "json:") )
+        bMDIsJson = true;
 
     char **papszMetadata = GDALGetMetadata(hObject, pszDomain);
     if( CSLCount(papszMetadata) > 0 )
     {
-        Concat(osRet, psOptions->bStdoutOutput, "%s%s:\n", pszIndent, pszDisplayedname);
+        CPLJSONObject oMetadataDomain;
+        if( !bJsonOutput )
+            Concat(osRet, psOptions->bStdoutOutput, "%s%s:\n", pszIndent, pszDisplayedname);
         for( int i = 0; papszMetadata[i] != nullptr; i++ )
         {
-            if( bIsxml )
+            if( bJsonOutput )
+            {
+                if( bIsxml )
+                {
+                    oMetadata.Add( pszDomain ? pszDomain : "", papszMetadata[i] );
+                    return;
+                }
+                else if( bMDIsJson )
+                {
+                    CPLJSONDocument oDoc;
+                    if( oDoc.LoadMemory(papszMetadata[i]) )
+                        oMetadata.Add( pszDomain ? pszDomain : "", oDoc.GetRoot() );
+                    return;
+                }
+                else
+                {
+                    char *pszKey = nullptr;
+                    const char *pszValue =
+                        CPLParseNameValue( papszMetadata[i], &pszKey );
+                    if( pszKey )
+                    {
+                        oMetadataDomain.Add(pszKey, pszValue);
+                        CPLFree( pszKey );
+                    }
+                }
+            }
+            else if( bIsxml )
                 Concat(osRet, psOptions->bStdoutOutput, "%s%s\n", pszIndent, papszMetadata[i]);
             else
                 Concat(osRet, psOptions->bStdoutOutput, "%s  %s\n", pszIndent, papszMetadata[i]);
+        }
+        if( bJsonOutput )
+        {
+            oMetadata.Add( pszDomain ? pszDomain : "", oMetadataDomain);
         }
     }
 }
@@ -282,6 +442,7 @@ static void GDALVectorInfoPrintMetadata( CPLString& osRet,
 /************************************************************************/
 
 static void GDALVectorInfoReportMetadata( CPLString& osRet,
+                                          CPLJSONObject& oRoot,
                                           const GDALVectorInfoOptions *psOptions,
                                           GDALMajorObject* poMajorObject,
                                           bool bListMDD,
@@ -291,6 +452,7 @@ static void GDALVectorInfoReportMetadata( CPLString& osRet,
     const char* pszIndent = "";
     auto hObject = GDALMajorObject::ToHandle(poMajorObject);
 
+    const bool bJson = psOptions->eFormat == FORMAT_JSON;
     /* -------------------------------------------------------------------- */
     /*      Report list of Metadata domains                                 */
     /* -------------------------------------------------------------------- */
@@ -299,17 +461,32 @@ static void GDALVectorInfoReportMetadata( CPLString& osRet,
         char** papszMDDList = GDALGetMetadataDomainList(hObject);
         char** papszIter = papszMDDList;
 
-        if( papszMDDList != nullptr )
+        CPLJSONArray metadataDomains;
+
+        if( papszMDDList != nullptr && !bJson )
             Concat(osRet, psOptions->bStdoutOutput, "%sMetadata domains:\n", pszIndent);
         while( papszIter != nullptr && *papszIter != nullptr )
         {
             if( EQUAL(*papszIter, "") )
-                Concat(osRet, psOptions->bStdoutOutput, "%s  (default)\n", pszIndent);
+            {
+                if( bJson )
+                    metadataDomains.Add("");
+                else
+                    Concat(osRet, psOptions->bStdoutOutput, "%s  (default)\n", pszIndent);
+            }
             else
-                Concat(osRet, psOptions->bStdoutOutput, "%s  %s\n", pszIndent, *papszIter);
+            {
+                if( bJson )
+                    metadataDomains.Add(*papszIter);
+                else
+                    Concat(osRet, psOptions->bStdoutOutput, "%s  %s\n", pszIndent, *papszIter);
+            }
             papszIter ++;
         }
         CSLDestroy(papszMDDList);
+
+        if( bJson )
+            oRoot.Add("metadataDomains", metadataDomains);
     }
 
     if( !bShowMetadata )
@@ -318,7 +495,9 @@ static void GDALVectorInfoReportMetadata( CPLString& osRet,
     /* -------------------------------------------------------------------- */
     /*      Report default Metadata domain.                                 */
     /* -------------------------------------------------------------------- */
-    GDALVectorInfoPrintMetadata(osRet, psOptions,
+    CPLJSONObject oMetadata;
+    oRoot.Add("metadata", oMetadata);
+    GDALVectorInfoPrintMetadata(osRet, oMetadata, psOptions,
                                 hObject, nullptr, "Metadata", pszIndent);
 
     /* -------------------------------------------------------------------- */
@@ -357,14 +536,14 @@ static void GDALVectorInfoReportMetadata( CPLString& osRet,
             char pszDisplayedname[256];
             snprintf(pszDisplayedname, 256, "Metadata (%s)",
                      papszExtraMDDomainsExpanded[iMDD]);
-            GDALVectorInfoPrintMetadata(osRet, psOptions,
+            GDALVectorInfoPrintMetadata(osRet, oMetadata, psOptions,
                                         hObject, papszExtraMDDomainsExpanded[iMDD],
                                         pszDisplayedname, pszIndent);
         }
 
         CSLDestroy(papszExtraMDDomainsExpanded);
     }
-    GDALVectorInfoPrintMetadata(osRet, psOptions,
+    GDALVectorInfoPrintMetadata(osRet, oMetadata, psOptions,
                                 hObject, "SUBDATASETS", "Subdatasets", pszIndent);
 }
 
@@ -373,6 +552,7 @@ static void GDALVectorInfoReportMetadata( CPLString& osRet,
 /************************************************************************/
 
 static void ReportOnLayer( CPLString& osRet,
+                           CPLJSONObject oLayer,
                            const GDALVectorInfoOptions *psOptions,
                            OGRLayer * poLayer,
                            bool bForceSummary,
@@ -380,7 +560,10 @@ static void ReportOnLayer( CPLString& osRet,
                            bool bTakeIntoAccountSpatialFilter,
                            bool bTakeIntoAccountGeomField )
 {
+    const bool bJson = psOptions->eFormat == FORMAT_JSON;
     OGRFeatureDefn      *poDefn = poLayer->GetLayerDefn();
+
+    oLayer.Set("name", poLayer->GetName());
 
 /* -------------------------------------------------------------------- */
 /*      Set filters if provided.                                        */
@@ -416,13 +599,14 @@ static void ReportOnLayer( CPLString& osRet,
 /* -------------------------------------------------------------------- */
 /*      Report various overall information.                             */
 /* -------------------------------------------------------------------- */
-    if( !psOptions->bSuperQuiet )
+    if( !bJson && !psOptions->bSuperQuiet )
     {
         Concat(osRet, psOptions->bStdoutOutput, "\n");
         Concat(osRet, psOptions->bStdoutOutput, "Layer name: %s\n", poLayer->GetName());
     }
 
     GDALVectorInfoReportMetadata(osRet,
+                                 oLayer,
                                  psOptions,
                                  poLayer,
                                  psOptions->bListMDD,
@@ -433,14 +617,87 @@ static void ReportOnLayer( CPLString& osRet,
     {
         const int nGeomFieldCount =
             psOptions->bGeomType ? poLayer->GetLayerDefn()->GetGeomFieldCount() : 0;
-        if( nGeomFieldCount > 1 )
+
+        OGREnvelope oExt;
+        if( bJson || nGeomFieldCount > 1 )
         {
+            CPLJSONArray oGeometryFields;
+            if( bJson )
+                oLayer.Add("geometryFields", oGeometryFields);
             for(int iGeom = 0;iGeom < nGeomFieldCount; iGeom ++ )
             {
                 OGRGeomFieldDefn* poGFldDefn =
                     poLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom);
-                Concat(osRet, psOptions->bStdoutOutput, "Geometry (%s): %s\n", poGFldDefn->GetNameRef(),
-                       OGRGeometryTypeToName(poGFldDefn->GetType()));
+                if( bJson )
+                {
+                    CPLJSONObject oGeometryField;
+                    oGeometryFields.Add(oGeometryField);
+                    oGeometryField.Set("name", poGFldDefn->GetNameRef());
+                    oGeometryField.Set("type", OGRGeometryTypeToName(poGFldDefn->GetType()));
+                    oGeometryField.Set("nullable", CPL_TO_BOOL(poGFldDefn->IsNullable()));
+                    if( psOptions->bExtent && poLayer->GetExtent(iGeom, &oExt, TRUE) == OGRERR_NONE )
+                    {
+                        CPLJSONArray oBbox;
+                        oBbox.Add(oExt.MinX);
+                        oBbox.Add(oExt.MinY);
+                        oBbox.Add(oExt.MaxX);
+                        oBbox.Add(oExt.MaxY);
+                        oGeometryField.Add("extent", oBbox);
+                    }
+                    OGRSpatialReference* poSRS = poGFldDefn->GetSpatialRef();
+                    if( poSRS )
+                    {
+                        CPLJSONObject oCRS;
+                        oGeometryField.Add("coordinateSystem", oCRS);
+                        char* pszWKT = nullptr;
+                        CPLString osWKTFormat("FORMAT=");
+                        osWKTFormat += psOptions->osWKTFormat;
+                        const char* const apszWKTOptions[] =
+                            { osWKTFormat.c_str(), nullptr };
+                        poSRS->exportToWkt(&pszWKT, apszWKTOptions);
+                        if( pszWKT )
+                        {
+                            oCRS.Set("wkt", pszWKT);
+                            CPLFree(pszWKT);
+                        }
+
+                        char * pszProjJson = nullptr;
+                        CPLPushErrorHandler(CPLQuietErrorHandler); // PROJJSON requires PROJ >= 6.2
+                        CPL_IGNORE_RET_VAL(poSRS->exportToPROJJSON(&pszProjJson, nullptr));
+                        CPLPopErrorHandler();
+                        if( pszProjJson )
+                        {
+                            CPLJSONDocument oDoc;
+                            if( oDoc.LoadMemory(pszProjJson) )
+                            {
+                                oCRS.Add("projjson", oDoc.GetRoot());
+                            }
+                            CPLFree(pszProjJson);
+                        }
+
+                        const auto& anAxes = poSRS->GetDataAxisToSRSAxisMapping();
+                        CPLJSONArray oAxisMapping;
+                        for( const auto nAxis: anAxes )
+                        {
+                            oAxisMapping.Add(nAxis);
+                        }
+                        oCRS.Add("dataAxisToSRSAxisMapping", oAxisMapping);
+
+                        const double dfCoordinateEpoch = poSRS->GetCoordinateEpoch();
+                        if( dfCoordinateEpoch > 0 )
+                            oCRS.Set("coordinateEpoch", dfCoordinateEpoch);
+                    }
+                    else
+                    {
+                        oGeometryField.SetNull("coordinateSystem");
+                    }
+                }
+                else
+                {
+                    Concat(osRet, psOptions->bStdoutOutput,
+                           "Geometry (%s): %s\n", poGFldDefn->GetNameRef(),
+                           OGRGeometryTypeToName(poGFldDefn->GetType()));
+                }
             }
         }
         else if( psOptions->bGeomType )
@@ -450,11 +707,17 @@ static void ReportOnLayer( CPLString& osRet,
         }
 
         if( psOptions->bFeatureCount )
-            Concat(osRet, psOptions->bStdoutOutput, "Feature Count: " CPL_FRMT_GIB "\n",
-                   poLayer->GetFeatureCount());
+        {
+            if( bJson )
+                oLayer.Set("featureCount", poLayer->GetFeatureCount());
+            else
+            {
+                Concat(osRet, psOptions->bStdoutOutput, "Feature Count: " CPL_FRMT_GIB "\n",
+                       poLayer->GetFeatureCount());
+            }
+        }
 
-        OGREnvelope oExt;
-        if( psOptions->bExtent && nGeomFieldCount > 1 )
+        if( !bJson && psOptions->bExtent && nGeomFieldCount > 1 )
         {
             for( int iGeom = 0;iGeom < nGeomFieldCount; iGeom ++ )
             {
@@ -469,7 +732,7 @@ static void ReportOnLayer( CPLString& osRet,
                 }
             }
         }
-        else if( psOptions->bExtent && poLayer->GetExtent(&oExt, TRUE) == OGRERR_NONE )
+        else if( !bJson && psOptions->bExtent && poLayer->GetExtent(&oExt, TRUE) == OGRERR_NONE )
         {
             Concat(osRet, psOptions->bStdoutOutput,
                    "Extent: (%f, %f) - (%f, %f)\n",
@@ -503,7 +766,7 @@ static void ReportOnLayer( CPLString& osRet,
             Concat(osRet, psOptions->bStdoutOutput, "\n");
         };
 
-        if( nGeomFieldCount > 1 )
+        if( !bJson && nGeomFieldCount > 1 )
         {
             for(int iGeom = 0;iGeom < nGeomFieldCount; iGeom ++ )
             {
@@ -533,7 +796,7 @@ static void ReportOnLayer( CPLString& osRet,
                 }
             }
         }
-        else
+        else if( !bJson )
         {
             char *pszWKT = nullptr;
             auto poSRS = poLayer->GetSpatialRef();
@@ -558,11 +821,19 @@ static void ReportOnLayer( CPLString& osRet,
             }
         }
 
-        if( strlen(poLayer->GetFIDColumn()) > 0 )
-            Concat(osRet, psOptions->bStdoutOutput, "FID Column = %s\n",
-                   poLayer->GetFIDColumn());
+        const char* pszFIDColumn = poLayer->GetFIDColumn();
+        if( pszFIDColumn[0] != '\0' )
+        {
+            if( bJson )
+                oLayer.Set("fidColumnName", pszFIDColumn);
+            else
+            {
+                Concat(osRet, psOptions->bStdoutOutput, "FID Column = %s\n",
+                       pszFIDColumn);
+            }
+        }
 
-        for(int iGeom = 0;iGeom < nGeomFieldCount; iGeom ++ )
+        for(int iGeom = 0; !bJson && iGeom < nGeomFieldCount; iGeom ++ )
         {
             OGRGeomFieldDefn* poGFldDefn =
                 poLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom);
@@ -578,33 +849,60 @@ static void ReportOnLayer( CPLString& osRet,
             Concat(osRet, psOptions->bStdoutOutput, "= %s\n", poGFldDefn->GetNameRef());
         }
 
+        CPLJSONArray oFields;
+        if( bJson )
+            oLayer.Add("fields", oFields);
         for( int iAttr = 0; iAttr < poDefn->GetFieldCount(); iAttr++ )
         {
-            OGRFieldDefn *poField = poDefn->GetFieldDefn(iAttr);
-            const char* pszType = (poField->GetSubType() != OFSTNone)
-                ? CPLSPrintf(
-                      "%s(%s)",
-                      OGRFieldDefn::GetFieldTypeName(poField->GetType()),
-                      OGRFieldDefn::GetFieldSubTypeName(poField->GetSubType()))
-                : OGRFieldDefn::GetFieldTypeName(poField->GetType());
-            Concat(osRet, psOptions->bStdoutOutput, "%s: %s (%d.%d)",
-                   poField->GetNameRef(),
-                   pszType,
-                   poField->GetWidth(),
-                   poField->GetPrecision());
-            if( poField->IsUnique() )
-                Concat(osRet, psOptions->bStdoutOutput, " UNIQUE");
-            if( !poField->IsNullable() )
-                Concat(osRet, psOptions->bStdoutOutput, " NOT NULL");
-            if( poField->GetDefault() != nullptr )
-                Concat(osRet, psOptions->bStdoutOutput, " DEFAULT %s", poField->GetDefault());
+            const OGRFieldDefn *poField = poDefn->GetFieldDefn(iAttr);
             const char* pszAlias = poField->GetAlternativeNameRef();
-            if( pszAlias != nullptr && pszAlias[0])
-                Concat(osRet, psOptions->bStdoutOutput, ", alternative name=\"%s\"", pszAlias);
             const std::string& osDomain = poField->GetDomainName();
-            if( !osDomain.empty() )
-                Concat(osRet, psOptions->bStdoutOutput, ", domain name=%s", osDomain.c_str());
-            Concat(osRet, psOptions->bStdoutOutput, "\n");
+            if( bJson )
+            {
+                CPLJSONObject oField;
+                oFields.Add(oField);
+                oField.Set("name", poField->GetNameRef());
+                oField.Set("type", OGRFieldDefn::GetFieldTypeName(poField->GetType()));
+                if( poField->GetSubType() != OFSTNone )
+                    oField.Set("subType", OGRFieldDefn::GetFieldSubTypeName(poField->GetSubType()));
+                if( poField->GetWidth() > 0 )
+                    oField.Set("width", poField->GetWidth());
+                if( poField->GetPrecision() > 0 )
+                    oField.Set("precision", poField->GetPrecision());
+                oField.Set("nullable", CPL_TO_BOOL(poField->IsNullable()));
+                oField.Set("uniqueConstraint", CPL_TO_BOOL(poField->IsUnique()));
+                if( poField->GetDefault() != nullptr )
+                    oField.Set("defaultValue", poField->GetDefault());
+                if( pszAlias != nullptr && pszAlias[0])
+                    oField.Set("alias", pszAlias);
+                if( !osDomain.empty() )
+                    oField.Set("domainName", osDomain);
+            }
+            else
+            {
+                const char* pszType = (poField->GetSubType() != OFSTNone)
+                    ? CPLSPrintf(
+                          "%s(%s)",
+                          OGRFieldDefn::GetFieldTypeName(poField->GetType()),
+                          OGRFieldDefn::GetFieldSubTypeName(poField->GetSubType()))
+                    : OGRFieldDefn::GetFieldTypeName(poField->GetType());
+                Concat(osRet, psOptions->bStdoutOutput, "%s: %s (%d.%d)",
+                       poField->GetNameRef(),
+                       pszType,
+                       poField->GetWidth(),
+                       poField->GetPrecision());
+                if( poField->IsUnique() )
+                    Concat(osRet, psOptions->bStdoutOutput, " UNIQUE");
+                if( !poField->IsNullable() )
+                    Concat(osRet, psOptions->bStdoutOutput, " NOT NULL");
+                if( poField->GetDefault() != nullptr )
+                    Concat(osRet, psOptions->bStdoutOutput, " DEFAULT %s", poField->GetDefault());
+                if( pszAlias != nullptr && pszAlias[0])
+                    Concat(osRet, psOptions->bStdoutOutput, ", alternative name=\"%s\"", pszAlias);
+                if( !osDomain.empty() )
+                    Concat(osRet, psOptions->bStdoutOutput, ", domain name=%s", osDomain.c_str());
+                Concat(osRet, psOptions->bStdoutOutput, "\n");
+            }
         }
     }
 
@@ -616,15 +914,130 @@ static void ReportOnLayer( CPLString& osRet,
     {
         if( !psOptions->bSuperQuiet )
         {
+            CPLJSONArray oFeatures;
+            const int nFields = poLayer->GetLayerDefn()->GetFieldCount();
+            const int nGeomFields = poLayer->GetLayerDefn()->GetGeomFieldCount();
+            if( bJson )
+                oLayer.Add("features", oFeatures);
             for( auto& poFeature: poLayer )
             {
-                Concat(osRet, psOptions->bStdoutOutput,
-                       "%s",
-                       poFeature->DumpReadableAsString(psOptions->aosOptions.List()).c_str());
+                if( bJson )
+                {
+                    CPLJSONObject oFeature;
+                    CPLJSONObject oProperties;
+                    oFeatures.Add(oFeature);
+                    oFeature.Add("type", "Feature");
+                    oFeature.Add("properties", oProperties);
+                    oFeature.Add("fid", poFeature->GetFID());
+                    for( int i = 0; i < nFields; ++i )
+                    {
+                        const auto poFDefn = poFeature->GetFieldDefnRef(i);
+                        const auto eType = poFDefn->GetType();
+                        if( !poFeature->IsFieldSet(i) )
+                            continue;
+                        if( poFeature->IsFieldNull(i) )
+                        {
+                            oProperties.SetNull(poFDefn->GetNameRef());
+                        }
+                        else if( eType == OFTInteger )
+                        {
+                            if( poFDefn->GetSubType() == OFSTBoolean )
+                                oProperties.Add(poFDefn->GetNameRef(), CPL_TO_BOOL(poFeature->GetFieldAsInteger(i)));
+                            else
+                                oProperties.Add(poFDefn->GetNameRef(), poFeature->GetFieldAsInteger(i));
+                        }
+                        else if( eType == OFTInteger64 )
+                        {
+                             oProperties.Add(poFDefn->GetNameRef(), poFeature->GetFieldAsInteger64(i));
+                        }
+                        else if( eType == OFTReal )
+                        {
+                             oProperties.Add(poFDefn->GetNameRef(), poFeature->GetFieldAsDouble(i));
+                        }
+                        else if( eType == OFTString || eType == OFTDate || eType == OFTTime || eType == OFTDateTime )
+                        {
+                             oProperties.Add(poFDefn->GetNameRef(), poFeature->GetFieldAsString(i));
+                        }
+                        else
+                        {
+                            char* pszSerialized = poFeature->GetFieldAsSerializedJSon(i);
+                            if( pszSerialized )
+                            {
+                                CPLJSONDocument oDoc;
+                                if( oDoc.LoadMemory(pszSerialized) )
+                                    oProperties.Add(poFDefn->GetNameRef(), oDoc.GetRoot());
+                                CPLFree(pszSerialized);
+                            }
+                        }
+                    }
+
+                    if( nGeomFields == 0 )
+                        oFeature.SetNull("geometry");
+                    else
+                    {
+                        if( const auto poGeom = poFeature->GetGeometryRef() )
+                        {
+                            char* pszSerialized =
+                                wkbFlatten(poGeom->getGeometryType()) <= wkbGeometryCollection ?
+                                    poGeom->exportToJson() : nullptr;
+                            if( pszSerialized )
+                            {
+                                CPLJSONDocument oDoc;
+                                if( oDoc.LoadMemory(pszSerialized) )
+                                    oFeature.Add("geometry", oDoc.GetRoot());
+                                CPLFree(pszSerialized);
+                            }
+                            else
+                            {
+                                CPLJSONObject oGeometry;
+                                oFeature.SetNull("geometry");
+                                oFeature.Add("wkt_geometry", poGeom->exportToWkt());
+                            }
+                        }
+                        else
+                            oFeature.SetNull("geometry");
+
+                        if( nGeomFields > 1 )
+                        {
+                            CPLJSONArray oGeometries;
+                            oFeature.Add("geometries", oGeometries);
+                            for( int i = 0; i < nGeomFields; ++i )
+                            {
+                                auto poGeom = poFeature->GetGeomFieldRef(i);
+                                if( poGeom )
+                                {
+                                    char* pszSerialized =
+                                        wkbFlatten(poGeom->getGeometryType()) <= wkbGeometryCollection ?
+                                            poGeom->exportToJson() : nullptr;
+                                    if( pszSerialized )
+                                    {
+                                        CPLJSONDocument oDoc;
+                                        if( oDoc.LoadMemory(pszSerialized) )
+                                            oGeometries.Add(oDoc.GetRoot());
+                                        CPLFree(pszSerialized);
+                                    }
+                                    else
+                                    {
+                                        CPLJSONObject oGeometry;
+                                        oGeometries.Add(poGeom->exportToWkt());
+                                    }
+                                }
+                                else
+                                    oGeometries.AddNull("geometry");
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    Concat(osRet, psOptions->bStdoutOutput,
+                           "%s",
+                           poFeature->DumpReadableAsString(psOptions->aosOptions.List()).c_str());
+                }
             }
         }
     }
-    else if( psOptions->nFetchFID != OGRNullFID )
+    else if( !bJson && psOptions->nFetchFID != OGRNullFID )
     {
         OGRFeature *poFeature = poLayer->GetFeature(psOptions->nFetchFID);
         if( poFeature == nullptr )
@@ -648,36 +1061,53 @@ static void ReportOnLayer( CPLString& osRet,
 /************************************************************************/
 
 static void PrintLayerSummary(CPLString& osRet,
+                              CPLJSONObject& oLayer,
                               const GDALVectorInfoOptions *psOptions,
                               OGRLayer* poLayer,
                               bool bIsPrivate)
 {
-    Concat(osRet, psOptions->bStdoutOutput, "%s", poLayer->GetName());
+    const bool bJson = psOptions->eFormat == FORMAT_JSON;
+    if( bJson )
+        oLayer.Set("name", poLayer->GetName());
+    else
+        Concat(osRet, psOptions->bStdoutOutput, "%s", poLayer->GetName());
 
     const char* pszTitle = poLayer->GetMetadataItem("TITLE");
     if( pszTitle )
     {
-        Concat(osRet, psOptions->bStdoutOutput, " (title: %s)", pszTitle);
+        if( bJson )
+            oLayer.Set("title", pszTitle);
+        else
+            Concat(osRet, psOptions->bStdoutOutput, " (title: %s)", pszTitle);
     }
 
     const int nGeomFieldCount =
         psOptions->bGeomType ? poLayer->GetLayerDefn()->GetGeomFieldCount() : 0;
-    if( nGeomFieldCount > 1 )
+    if( bJson || nGeomFieldCount > 1 )
     {
-        Concat(osRet, psOptions->bStdoutOutput, " (");
+        if( !bJson )
+            Concat(osRet, psOptions->bStdoutOutput, " (");
+        CPLJSONArray oGeometryFields;
+        oLayer.Add("geometryFields", oGeometryFields);
         for( int iGeom = 0; iGeom < nGeomFieldCount; iGeom++ )
         {
-            if( iGeom > 0 )
-                Concat(osRet, psOptions->bStdoutOutput, ", ");
             OGRGeomFieldDefn* poGFldDefn =
-                poLayer->GetLayerDefn()->
-                    GetGeomFieldDefn(iGeom);
-            Concat(osRet, psOptions->bStdoutOutput,
-                "%s",
-                OGRGeometryTypeToName(
-                    poGFldDefn->GetType()));
+                poLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom);
+            if( bJson )
+            {
+                oGeometryFields.Add(OGRGeometryTypeToName(poGFldDefn->GetType()));
+            }
+            else
+            {
+                if( iGeom > 0 )
+                    Concat(osRet, psOptions->bStdoutOutput, ", ");
+                Concat(osRet, psOptions->bStdoutOutput,
+                    "%s",
+                    OGRGeometryTypeToName(poGFldDefn->GetType()));
+            }
         }
-        Concat(osRet, psOptions->bStdoutOutput, ")");
+        if( !bJson )
+            Concat(osRet, psOptions->bStdoutOutput, ")");
     }
     else if( psOptions->bGeomType && poLayer->GetGeomType() != wkbUnknown )
         Concat(osRet, psOptions->bStdoutOutput, " (%s)",
@@ -686,10 +1116,14 @@ static void PrintLayerSummary(CPLString& osRet,
 
     if( bIsPrivate )
     {
-        Concat(osRet, psOptions->bStdoutOutput, " [private]");
+        if( bJson )
+            oLayer.Set("isPrivate", true);
+        else
+            Concat(osRet, psOptions->bStdoutOutput, " [private]");
     }
 
-    Concat(osRet, psOptions->bStdoutOutput, "\n");
+    if( !bJson )
+        Concat(osRet, psOptions->bStdoutOutput, "\n");
 }
 
 /************************************************************************/
@@ -697,32 +1131,55 @@ static void PrintLayerSummary(CPLString& osRet,
 /************************************************************************/
 
 static void ReportHiearchicalLayers(CPLString& osRet,
+                                    CPLJSONObject& oRoot,
                                     const GDALVectorInfoOptions *psOptions,
                                     const GDALGroup* group,
                                     const std::string& indent,
                                     bool bGeomType)
 {
+    const bool bJson = psOptions->eFormat == FORMAT_JSON;
     const auto aosVectorLayerNames = group->GetVectorLayerNames();
+    CPLJSONArray oLayerNames;
+    oRoot.Add("layerNames", oLayerNames);
     for( const auto& osVectorLayerName: aosVectorLayerNames )
     {
         OGRLayer* poLayer = group->OpenVectorLayer(osVectorLayerName);
         if( poLayer )
         {
-            Concat(osRet, psOptions->bStdoutOutput, "%sLayer: ", indent.c_str());
-            PrintLayerSummary(osRet, psOptions, poLayer,/* bIsPrivate=*/ false);
+            CPLJSONObject oLayer;
+            if( !bJson )
+            {
+                Concat(osRet, psOptions->bStdoutOutput, "%sLayer: ", indent.c_str());
+                PrintLayerSummary(osRet, oLayer, psOptions, poLayer,/* bIsPrivate=*/ false);
+            }
+            else
+            {
+                oLayerNames.Add(poLayer->GetName());
+            }
         }
     }
 
     const std::string subIndent(indent + "  ");
     auto aosSubGroupNames = group->GetGroupNames();
+    CPLJSONArray oGroupArray;
+    oRoot.Add("groups", oGroupArray);
     for( const auto& osSubGroupName: aosSubGroupNames )
     {
         auto poSubGroup = group->OpenGroup(osSubGroupName);
         if( poSubGroup )
         {
-            Concat(osRet, psOptions->bStdoutOutput, "Group %s", indent.c_str());
-            Concat(osRet, psOptions->bStdoutOutput, "%s:\n", osSubGroupName.c_str());
-            ReportHiearchicalLayers(osRet, psOptions,
+            CPLJSONObject oGroup;
+            if( !bJson )
+            {
+                Concat(osRet, psOptions->bStdoutOutput, "Group %s", indent.c_str());
+                Concat(osRet, psOptions->bStdoutOutput, "%s:\n", osSubGroupName.c_str());
+            }
+            else
+            {
+                oGroupArray.Add(oGroup);
+                oGroup.Set("name", osSubGroupName);
+            }
+            ReportHiearchicalLayers(osRet, oGroup, psOptions,
                                     poSubGroup.get(), subIndent, bGeomType);
         }
     }
@@ -753,14 +1210,28 @@ char *GDALVectorInfo( GDALDatasetH hDataset, const GDALVectorInfoOptions *psOpti
     GDALDriver *poDriver = poDS->GetDriver();
 
     CPLString osRet;
+    CPLJSONObject oRoot;
     const std::string osFilename(
             !psOptions->osFilename.empty() ? psOptions->osFilename :
             std::string(poDS->GetDescription()) );
 
+    const bool bJson = psOptions->eFormat == FORMAT_JSON;
+    CPLJSONArray oLayerArray;
+    if( bJson )
+    {
+        oRoot.Set("description", poDS->GetDescription());
+        if( poDriver )
+        {
+            oRoot.Set("driverShortName", poDriver->GetDescription());
+            oRoot.Set("driverLongName", poDriver->GetMetadataItem(GDAL_DMD_LONGNAME));
+        }
+        oRoot.Add("layers", oLayerArray);
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Some information messages.                                      */
 /* -------------------------------------------------------------------- */
-    if( psOptions->bVerbose )
+    if( !bJson && psOptions->bVerbose )
     {
         Concat(osRet, psOptions->bStdoutOutput,
                "INFO: Open of `%s'\n"
@@ -768,7 +1239,7 @@ char *GDALVectorInfo( GDALDatasetH hDataset, const GDALVectorInfoOptions *psOpti
                osFilename.c_str(), poDriver ? poDriver->GetDescription() : "(null)");
     }
 
-    if( psOptions->bVerbose && !EQUAL(osFilename.c_str(),poDS->GetDescription()) )
+    if( !bJson && psOptions->bVerbose && !EQUAL(osFilename.c_str(),poDS->GetDescription()) )
     {
         Concat(osRet, psOptions->bStdoutOutput,
                "INFO: Internal data source name `%s'\n"
@@ -776,12 +1247,16 @@ char *GDALVectorInfo( GDALDatasetH hDataset, const GDALVectorInfoOptions *psOpti
                poDS->GetDescription(), osFilename.c_str());
     }
 
-    GDALVectorInfoReportMetadata( osRet, psOptions,
+    GDALVectorInfoReportMetadata( osRet,
+                                  oRoot,
+                                  psOptions,
                                   poDS,
                                   psOptions->bListMDD,
                                   psOptions->bShowMetadata,
                                   psOptions->aosExtraMDDomains.List() );
 
+    CPLJSONObject oDomains;
+    oRoot.Add("domains", oDomains);
     if( !psOptions->osFieldDomain.empty() )
     {
         auto poDomain = poDS->GetFieldDomain(psOptions->osFieldDomain);
@@ -792,9 +1267,22 @@ char *GDALVectorInfo( GDALDatasetH hDataset, const GDALVectorInfoOptions *psOpti
                      psOptions->osFieldDomain.c_str());
             return nullptr;
         }
-        Concat(osRet, psOptions->bStdoutOutput,"\n");
-        ReportFieldDomain(osRet, psOptions, poDomain);
-        Concat(osRet, psOptions->bStdoutOutput,"\n");
+        if( !bJson )
+            Concat(osRet, psOptions->bStdoutOutput,"\n");
+        ReportFieldDomain(osRet, oDomains, psOptions, poDomain);
+        if( !bJson )
+            Concat(osRet, psOptions->bStdoutOutput,"\n");
+    }
+    else if( bJson )
+    {
+        for( const auto& osDomainName: poDS->GetFieldDomainNames() )
+        {
+            auto poDomain = poDS->GetFieldDomain(osDomainName);
+            if( poDomain )
+            {
+                ReportFieldDomain(osRet, oDomains, psOptions, poDomain);
+            }
+        }
     }
 
     int nRepeatCount = psOptions->nRepeatCount;
@@ -867,7 +1355,9 @@ char *GDALVectorInfo( GDALDatasetH hDataset, const GDALVectorInfoOptions *psOpti
                     oSetLayers.find(poLayer) == oSetLayers.end() )
                 {
                     oSetLayers.insert(poLayer);
-                    ReportOnLayer(osRet, psOptions,
+                    CPLJSONObject oLayer;
+                    oLayerArray.Add(oLayer);
+                    ReportOnLayer(osRet, oLayer, psOptions,
                                   poLayer,
                                   /*bForceSummary = */ true,
                                   /*bTakeIntoAccountWHERE = */ false,
@@ -889,7 +1379,7 @@ char *GDALVectorInfo( GDALDatasetH hDataset, const GDALVectorInfoOptions *psOpti
     {
         nRepeatCount = 0;  // skip layer reporting.
 
-        if( !psOptions->aosLayers.empty() )
+        if( !bJson && !psOptions->aosLayers.empty() )
             Concat(osRet, psOptions->bStdoutOutput, "layer names ignored in combination with -sql.\n");
 
         OGRLayer *poResultSet =
@@ -905,21 +1395,23 @@ char *GDALVectorInfo( GDALDatasetH hDataset, const GDALVectorInfoOptions *psOpti
                 if( poResultSet->SetAttributeFilter(psOptions->osWHERE.c_str()) != OGRERR_NONE )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "SetAttributeFilter(%s) failed.\n",
+                             "SetAttributeFilter(%s) failed.",
                              psOptions->osWHERE.c_str());
                     return nullptr;
                 }
             }
 
+            CPLJSONObject oLayer;
+            oLayerArray.Add(oLayer);
             if( !psOptions->osGeomField.empty() )
-                ReportOnLayer(osRet, psOptions,
+                ReportOnLayer(osRet, oLayer, psOptions,
                               poResultSet,
                               /*bForceSummary = */ false,
                               /*bTakeIntoAccountWHERE = */ false,
                               /*bTakeIntoAccountSpatialFilter = */ true,
                               /*bTakeIntoAccountGeomField = */ true);
             else
-                ReportOnLayer(osRet, psOptions,
+                ReportOnLayer(osRet, oLayer, psOptions,
                               poResultSet,
                               /*bForceSummary = */ false,
                               /*bTakeIntoAccountWHERE = */ false,
@@ -943,16 +1435,20 @@ char *GDALVectorInfo( GDALDatasetH hDataset, const GDALVectorInfoOptions *psOpti
 
             bool bDone = false;
             auto poRootGroup = poDS->GetRootGroup();
-            if( !psOptions->bAllLayers && poRootGroup &&
+            if( (bJson || !psOptions->bAllLayers) && poRootGroup &&
                 (!poRootGroup->GetGroupNames().empty() ||
                  !poRootGroup->GetVectorLayerNames().empty()) )
             {
+                CPLJSONObject oGroup;
+                oRoot.Add("rootGroup", oGroup);
                 ReportHiearchicalLayers(osRet,
+                                        oGroup,
                                         psOptions,
                                         poRootGroup.get(),
                                         std::string(),
                                         psOptions->bGeomType);
-                bDone = true;
+                if( !bJson )
+                    bDone = true;
             }
 
 /* -------------------------------------------------------------------- */
@@ -970,10 +1466,13 @@ char *GDALVectorInfo( GDALDatasetH hDataset, const GDALVectorInfoOptions *psOpti
                     return nullptr;
                 }
 
+                CPLJSONObject oLayer;
+                oLayerArray.Add(oLayer);
                 if( !psOptions->bAllLayers )
                 {
-                    Concat(osRet, psOptions->bStdoutOutput, "%d: ", iLayer + 1);
-                    PrintLayerSummary(osRet, psOptions, poLayer,
+                    if( !bJson )
+                        Concat(osRet, psOptions->bStdoutOutput, "%d: ", iLayer + 1);
+                    PrintLayerSummary(osRet, oLayer, psOptions, poLayer,
                                       poDS->IsLayerPrivate(iLayer));
                 }
                 else
@@ -981,7 +1480,7 @@ char *GDALVectorInfo( GDALDatasetH hDataset, const GDALVectorInfoOptions *psOpti
                     if( iRepeat != 0 )
                         poLayer->ResetReading();
 
-                    ReportOnLayer(osRet, psOptions, poLayer,
+                    ReportOnLayer(osRet, oLayer, psOptions, poLayer,
                                   /*bForceSummary = */ false,
                                   /*bTakeIntoAccountWHERE = */ true,
                                   /*bTakeIntoAccountSpatialFilter = */ true,
@@ -1012,13 +1511,27 @@ char *GDALVectorInfo( GDALDatasetH hDataset, const GDALVectorInfoOptions *psOpti
                 if( iRepeat != 0 )
                     poLayer->ResetReading();
 
-                ReportOnLayer(osRet, psOptions, poLayer,
+                CPLJSONObject oLayer;
+                oLayerArray.Add(oLayer);
+                ReportOnLayer(osRet, oLayer, psOptions, poLayer,
                               /*bForceSummary = */ false,
                               /*bTakeIntoAccountWHERE = */ true,
                               /*bTakeIntoAccountSpatialFilter = */ true,
                               /*bTakeIntoAccountGeomField = */ true);
             }
         }
+    }
+
+    if( bJson )
+    {
+        osRet.clear();
+        Concat(osRet, psOptions->bStdoutOutput, "%s",
+               json_object_to_json_string_ext(static_cast<struct json_object *>(oRoot.GetInternalHandle()),
+                                              JSON_C_TO_STRING_PRETTY
+#ifdef JSON_C_TO_STRING_NOSLASHESCAPE
+                                              | JSON_C_TO_STRING_NOSLASHESCAPE
+#endif
+                                             ));
     }
 
     return VSI_STRDUP_VERBOSE(osRet);
@@ -1114,7 +1627,13 @@ GDALVectorInfoOptions *GDALVectorInfoOptionsNew(char** papszArgv, GDALVectorInfo
 /* -------------------------------------------------------------------- */
     for( int iArg = 0; papszArgv != nullptr && papszArgv[iArg] != nullptr; iArg++ )
     {
-        if( EQUAL(papszArgv[iArg], "-ro") )
+        if( EQUAL(papszArgv[iArg],"-json") )
+        {
+            psOptions->eFormat = FORMAT_JSON;
+            psOptions->bAllLayers = true;
+            psOptions->bSummaryOnly = true;
+        }
+        else if( EQUAL(papszArgv[iArg], "-ro") )
         {
             if( psOptionsForBinary )
                 psOptionsForBinary->bReadOnly = true;
@@ -1229,6 +1748,10 @@ GDALVectorInfoOptions *GDALVectorInfoOptionsNew(char** papszArgv, GDALVectorInfo
         {
             psOptions->bSummaryOnly = true;
         }
+        else if( EQUAL(papszArgv[iArg], "-features")  )
+        {
+            psOptions->bSummaryOnly = false;
+        }
         else if( STARTS_WITH_CI(papszArgv[iArg], "-fields=") )
         {
             psOptions->aosOptions.SetNameValue(
@@ -1337,6 +1860,13 @@ GDALVectorInfoOptions *GDALVectorInfoOptionsNew(char** papszArgv, GDALVectorInfo
         CPLError(CE_Failure, CPLE_AppDefined,
                  "-rl is incompatible with -sql");
         return nullptr;
+    }
+
+    if( psOptions->eFormat == FORMAT_JSON )
+    {
+        if( psOptions->aosExtraMDDomains.size() == 0 )
+            psOptions->aosExtraMDDomains.AddString("all");
+        psOptions->bStdoutOutput = false;
     }
 
     return psOptions.release();

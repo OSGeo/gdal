@@ -16,9 +16,10 @@ Synopsis
 
 .. code-block::
 
-    ogrinfo [--help-general] [-ro] [-q] [-where restricted_where|@filename]
+    ogrinfo [--help-general] [-json] [-ro] [-q] [-where restricted_where|@filename]
             [-spat xmin ymin xmax ymax] [-geomfield field] [-fid fid]
-            [-sql statement|@filename] [-dialect dialect] [-al] [-rl] [-so] [-fields={YES/NO}]
+            [-sql statement|@filename] [-dialect dialect] [-al] [-rl]
+            [-so|-features] [-fields={YES/NO}]
             [-geom={YES/NO/SUMMARY/WKT/ISO_WKT}] [--formats] [[-oo NAME=VALUE] ...]
             [-nomd] [-listmdd] [-mdd domain|`all`]*
             [-nocount] [-noextent] [-nogeomtype] [-wkt_format WKT1|WKT2|...]
@@ -34,14 +35,24 @@ edit data.
 
 .. program:: ogrinfo
 
+.. option:: -json
+
+    Display the output in json format.
+
+    .. versionadded:: 3.7
+
 .. option:: -ro
 
     Open the data source in read-only mode.
 
 .. option:: -al
 
-    List all features of all layers (used instead of having to give layer names
+    List all layers (used instead of having to give layer names
     as arguments).
+    In the default text output, this also enables listing
+    all features, which can be disabled with :option:`-so`.
+    In JSON output, -al is implicit, but listing of features must be
+    explicitly enabled with :option:`-features`.
 
 .. option:: -rl
 
@@ -55,6 +66,12 @@ edit data.
 
     Summary Only: suppress listing of individual features and show only
     summary information like projection, schema, feature count and extents.
+
+.. option:: -features
+
+    Enable listing of features. This has the opposite effect of :option:`-so`.
+
+    .. versionadded:: 3.7
 
 .. option:: -q
 
@@ -187,6 +204,13 @@ edit data.
 
 Geometries are reported in OGC WKT format.
 
+C API
+-----
+
+This utility is also callable from C with :cpp:func:`GDALVectorInfo`.
+
+.. versionadded:: 3.7
+
 Examples
 --------
 
@@ -235,6 +259,207 @@ Example of retrieving a summary (``-so``) of a layer without showing details abo
       # type: String (15.0)
       # scalerank: Integer (0.0)
       # featurecla: String (50.0)
+
+Example of retrieving information on a file in JSON format without showing details about every single feature:
+
+.. code-block::
+
+    ogrinfo -json poly.shp
+
+
+.. code-block:: json
+
+    {
+      "description":"autotest/ogr/data/poly.shp",
+      "driverShortName":"ESRI Shapefile",
+      "driverLongName":"ESRI Shapefile",
+      "layers":[
+        {
+          "name":"poly",
+          "metadata":{
+            "":{
+              "DBF_DATE_LAST_UPDATE":"2018-08-02"
+            },
+            "SHAPEFILE":{
+              "SOURCE_ENCODING":""
+            }
+          },
+          "geometryFields":[
+            {
+              "name":"",
+              "type":"Polygon",
+              "nullable":true,
+              "extent":[
+                478315.53125,
+                4762880.5,
+                481645.3125,
+                4765610.5
+              ],
+              "coordinateSystem":{
+                "wkt":"PROJCRS[\"OSGB36 / British National Grid\",BASEGEOGCRS[\"OSGB36\",DATUM[\"Ordnance Survey of Great Britain 1936\",ELLIPSOID[\"Airy 1830\",6377563.396,299.3249646,LENGTHUNIT[\"metre\",1]]],PRIMEM[\"Greenwich\",0,ANGLEUNIT[\"degree\",0.0174532925199433]],ID[\"EPSG\",4277]],CONVERSION[\"British National Grid\",METHOD[\"Transverse Mercator\",ID[\"EPSG\",9807]],PARAMETER[\"Latitude of natural origin\",49,ANGLEUNIT[\"degree\",0.0174532925199433],ID[\"EPSG\",8801]],PARAMETER[\"Longitude of natural origin\",-2,ANGLEUNIT[\"degree\",0.0174532925199433],ID[\"EPSG\",8802]],PARAMETER[\"Scale factor at natural origin\",0.9996012717,SCALEUNIT[\"unity\",1],ID[\"EPSG\",8805]],PARAMETER[\"False easting\",400000,LENGTHUNIT[\"metre\",1],ID[\"EPSG\",8806]],PARAMETER[\"False northing\",-100000,LENGTHUNIT[\"metre\",1],ID[\"EPSG\",8807]]],CS[Cartesian,2],AXIS[\"(E)\",east,ORDER[1],LENGTHUNIT[\"metre\",1]],AXIS[\"(N)\",north,ORDER[2],LENGTHUNIT[\"metre\",1]],USAGE[SCOPE[\"Engineering survey, topographic mapping.\"],AREA[\"United Kingdom (UK) - offshore to boundary of UKCS within 49°45'N to 61°N and 9°W to 2°E; onshore Great Britain (England, Wales and Scotland). Isle of Man onshore.\"],BBOX[49.75,-9,61.01,2.01]],ID[\"EPSG\",27700]]",
+                "projjson":{
+                  "$schema":"https://proj.org/schemas/v0.6/projjson.schema.json",
+                  "type":"ProjectedCRS",
+                  "name":"OSGB36 / British National Grid",
+                  "base_crs":{
+                    "name":"OSGB36",
+                    "datum":{
+                      "type":"GeodeticReferenceFrame",
+                      "name":"Ordnance Survey of Great Britain 1936",
+                      "ellipsoid":{
+                        "name":"Airy 1830",
+                        "semi_major_axis":6377563.396,
+                        "inverse_flattening":299.3249646
+                      }
+                    },
+                    "coordinate_system":{
+                      "subtype":"ellipsoidal",
+                      "axis":[
+                        {
+                          "name":"Geodetic latitude",
+                          "abbreviation":"Lat",
+                          "direction":"north",
+                          "unit":"degree"
+                        },
+                        {
+                          "name":"Geodetic longitude",
+                          "abbreviation":"Lon",
+                          "direction":"east",
+                          "unit":"degree"
+                        }
+                      ]
+                    },
+                    "id":{
+                      "authority":"EPSG",
+                      "code":4277
+                    }
+                  },
+                  "conversion":{
+                    "name":"British National Grid",
+                    "method":{
+                      "name":"Transverse Mercator",
+                      "id":{
+                        "authority":"EPSG",
+                        "code":9807
+                      }
+                    },
+                    "parameters":[
+                      {
+                        "name":"Latitude of natural origin",
+                        "value":49,
+                        "unit":"degree",
+                        "id":{
+                          "authority":"EPSG",
+                          "code":8801
+                        }
+                      },
+                      {
+                        "name":"Longitude of natural origin",
+                        "value":-2,
+                        "unit":"degree",
+                        "id":{
+                          "authority":"EPSG",
+                          "code":8802
+                        }
+                      },
+                      {
+                        "name":"Scale factor at natural origin",
+                        "value":0.9996012717,
+                        "unit":"unity",
+                        "id":{
+                          "authority":"EPSG",
+                          "code":8805
+                        }
+                      },
+                      {
+                        "name":"False easting",
+                        "value":400000,
+                        "unit":"metre",
+                        "id":{
+                          "authority":"EPSG",
+                          "code":8806
+                        }
+                      },
+                      {
+                        "name":"False northing",
+                        "value":-100000,
+                        "unit":"metre",
+                        "id":{
+                          "authority":"EPSG",
+                          "code":8807
+                        }
+                      }
+                    ]
+                  },
+                  "coordinate_system":{
+                    "subtype":"Cartesian",
+                    "axis":[
+                      {
+                        "name":"Easting",
+                        "abbreviation":"E",
+                        "direction":"east",
+                        "unit":"metre"
+                      },
+                      {
+                        "name":"Northing",
+                        "abbreviation":"N",
+                        "direction":"north",
+                        "unit":"metre"
+                      }
+                    ]
+                  },
+                  "scope":"Engineering survey, topographic mapping.",
+                  "area":"United Kingdom (UK) - offshore to boundary of UKCS within 49°45'N to 61°N and 9°W to 2°E; onshore Great Britain (England, Wales and Scotland). Isle of Man onshore.",
+                  "bbox":{
+                    "south_latitude":49.75,
+                    "west_longitude":-9,
+                    "north_latitude":61.01,
+                    "east_longitude":2.01
+                  },
+                  "id":{
+                    "authority":"EPSG",
+                    "code":27700
+                  }
+                },
+                "dataAxisToSRSAxisMapping":[
+                  1,
+                  2
+                ]
+              }
+            }
+          ],
+          "featureCount":10,
+          "fields":[
+            {
+              "name":"AREA",
+              "type":"Real",
+              "width":12,
+              "precision":3,
+              "nullable":true,
+              "uniqueConstraint":false
+            },
+            {
+              "name":"EAS_ID",
+              "type":"Integer64",
+              "width":11,
+              "nullable":true,
+              "uniqueConstraint":false
+            },
+            {
+              "name":"PRFEDEA",
+              "type":"String",
+              "width":16,
+              "nullable":true,
+              "uniqueConstraint":false
+            }
+          ]
+        }
+      ],
+      "metadata":{
+      },
+      "domains":{
+      }
+    }
 
 
 Example of using an attribute query to restrict the output of the features

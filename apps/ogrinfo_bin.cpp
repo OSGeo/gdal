@@ -42,9 +42,10 @@
 
 static void Usage( const char* pszErrorMsg = nullptr )
 {
-    printf("Usage: ogrinfo [--help-general] [-ro] [-q] [-where restricted_where|@filename]\n"
+    printf("Usage: ogrinfo [--help-general] [-json] [-ro] [-q] [-where restricted_where|@filename]\n"
            "               [-spat xmin ymin xmax ymax] [-geomfield field] [-fid fid]\n"
-           "               [-sql statement|@filename] [-dialect sql_dialect] [-al] [-rl] [-so] [-fields={YES/NO}]\n"
+           "               [-sql statement|@filename] [-dialect sql_dialect] [-al] [-rl]\n"
+           "               [-so|-features] [-fields={YES/NO}]]\n"
            "               [-geom={YES/NO/SUMMARY}] [[-oo NAME=VALUE] ...]\n"
            "               [-nomd] [-listmdd] [-mdd domain|`all`]*\n"
            "               [-nocount] [-noextent] [-nogeomtype] [-wkt_format WKT1|WKT2|...]\n"
@@ -150,12 +151,23 @@ MAIN_START(argc, argv)
         }
     }
 
-    char* pszGDALVectorInfoOutput = GDALVectorInfo( GDALDataset::ToHandle(poDS), psOptions );
+    int nRet = 0;
+    if( poDS == nullptr )
+    {
+        nRet = 1;
+        fprintf( stderr,
+                 "ogrinfo failed - unable to open '%s'.\n",
+                 psOptionsForBinary->osFilename.c_str() );
+    }
+    else
+    {
+        char* pszGDALVectorInfoOutput = GDALVectorInfo( GDALDataset::ToHandle(poDS), psOptions );
 
-    if( pszGDALVectorInfoOutput )
-        printf( "%s", pszGDALVectorInfoOutput );
+        if( pszGDALVectorInfoOutput )
+            printf( "%s", pszGDALVectorInfoOutput );
 
-    CPLFree( pszGDALVectorInfoOutput );
+        CPLFree( pszGDALVectorInfoOutput );
+    }
 
     delete poDS;
 #ifdef __AFL_HAVE_MANUAL_CONTROL
@@ -173,6 +185,6 @@ MAIN_START(argc, argv)
     CPLDumpSharedList( nullptr );
     GDALDestroy();
 
-    exit( 0 );
+    exit( nRet );
 }
 MAIN_END
