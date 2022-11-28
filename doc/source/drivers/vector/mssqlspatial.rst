@@ -59,7 +59,7 @@ The connection may contain the optional **Driver** parameter if a custom
 SQL server driver should be loaded (like FreeTDS). The default is **{SQL
 Server}**.
 
-Authentication is supported either through a **TrustedConnection** or
+Authentication is supported either through a **trusted_conection** or
 through username (**UID**) and password (**PWD**). As providing username
 and password on the commandline can be a security issue, login credentials
 can also be more securely stored in user defined environment variables
