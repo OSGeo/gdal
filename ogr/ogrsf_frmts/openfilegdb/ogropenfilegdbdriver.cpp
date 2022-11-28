@@ -274,6 +274,8 @@ void RegisterOGROpenFileGDB()
                                "Integer Real String Date DateTime Binary" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATASUBTYPES, "Int16 Float32" );
     poDriver->SetMetadataItem( GDAL_DMD_ALTER_FIELD_DEFN_FLAGS, "Name Type WidthPrecision Nullable Default Domain" );
+    // see https://support.esri.com/en/technical-article/000010906
+    poDriver->SetMetadataItem( GDAL_DMD_ILLEGAL_FIELD_NAMES, "ADD ALTER AND BETWEEN BY COLUMN CREATE DELETE DROP EXISTS FOR FROM GROUP IN INSERT INTO IS LIKE NOT NULL OR ORDER SELECT SET TABLE UPDATE VALUES WHERE" );
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );

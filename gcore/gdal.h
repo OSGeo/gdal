@@ -518,6 +518,13 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  */
 #define GDAL_DMD_ALTER_FIELD_DEFN_FLAGS "GDAL_DMD_ALTER_FIELD_DEFN_FLAGS"
 
+/** List of (space separated) field names which are considered illegal by the driver and
+ * should not be used when creating/altering fields.
+ *
+ * @since GDAL 3.7
+ */
+#define GDAL_DMD_ILLEGAL_FIELD_NAMES "GDAL_DMD_ILLEGAL_FIELD_NAMES"
+
 /** Capability set by a driver that can create fields with NOT NULL constraint.
  * @since GDAL 2.0
  */
