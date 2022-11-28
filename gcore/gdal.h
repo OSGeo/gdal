@@ -647,6 +647,14 @@ typedef struct GDALDimensionHS* GDALDimensionH;
  */
 #define GDAL_DMD_RELATIONSHIP_FLAGS "GDAL_DMD_RELATIONSHIP_FLAGS"
 
+/** List of (space separated) standard related table types which are recognised by the driver.
+ *
+ * See GDALRelationshipGetRelatedTableType/GDALRelationshipSetRelatedTableType
+ *
+ * @since GDAL 3.7
+ */
+#define GDAL_DMD_RELATIONSHIP_RELATED_TABLE_TYPES "GDAL_DMD_RELATIONSHIP_RELATED_TABLE_TYPES"
+
 /** Capability set by drivers for formats which support renaming vector layers.
  *
  * @since GDAL 3.5
