@@ -1,0 +1,4 @@
+include(GdalTestTarget)
+
+gdal_test_target(testperfcopywords testperfcopywords.cpp)
+gdal_test_target(testperfdeinterleave testperfdeinterleave.cpp)

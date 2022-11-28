@@ -231,6 +231,7 @@ endif ()
 # Google OSS-Fuzz project utilities
 add_subdirectory(fuzzers)
 if (BUILD_TESTING)
+  add_subdirectory(perftests)
   # Google OSS-Fuzz tests
   add_subdirectory(fuzzers/tests)
 endif ()
