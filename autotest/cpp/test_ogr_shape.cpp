@@ -182,7 +182,12 @@ namespace {
         // Create memory Layer
         OGRLayerH lyr = nullptr;
         lyr = OGR_DS_CreateLayer(ds, "tpoly", nullptr, wkbPolygon, nullptr);
-        ASSERT_TRUE(nullptr != lyr);
+        EXPECT_TRUE(nullptr != lyr);
+        if( lyr == nullptr )
+        {
+            OGR_DS_Destroy(ds);
+            return;
+        }
 
         // Create schema
         OGRFieldDefnH fld = nullptr;
@@ -190,51 +195,57 @@ namespace {
         fld = OGR_Fld_Create("AREA", OFTReal);
         err = OGR_L_CreateField(lyr, fld, true);
         OGR_Fld_Destroy(fld);
-        ASSERT_EQ(OGRERR_NONE, err);
+        EXPECT_EQ(OGRERR_NONE, err);
 
         fld = OGR_Fld_Create("EAS_ID", OFTInteger);
         err = OGR_L_CreateField(lyr, fld, true);
         OGR_Fld_Destroy(fld);
-        ASSERT_EQ(OGRERR_NONE, err);
+        EXPECT_EQ(OGRERR_NONE, err);
 
         fld = OGR_Fld_Create("PRFEDEA", OFTString);
         err = OGR_L_CreateField(lyr, fld, true);
         OGR_Fld_Destroy(fld);
-        ASSERT_EQ(OGRERR_NONE, err);
+        EXPECT_EQ(OGRERR_NONE, err);
 
         // Check schema
         OGRFeatureDefnH featDefn = OGR_L_GetLayerDefn(lyr);
         ASSERT_TRUE(nullptr != featDefn);
-        ASSERT_EQ(3, OGR_FD_GetFieldCount(featDefn));
+        EXPECT_EQ(3, OGR_FD_GetFieldCount(featDefn));
 
         // Copy ogr/poly.shp to temporary layer
         OGRFeatureH featDst = OGR_F_Create(featDefn);
-        ASSERT_TRUE(nullptr != featDst);
-
-        std::string source(data_);
-        source += SEP;
-        source += "poly.shp";
-        OGRDataSourceH dsSrc = OGR_Dr_Open(drv_, source.c_str(), false);
-        ASSERT_TRUE(nullptr != dsSrc);
-
-        OGRLayerH lyrSrc = OGR_DS_GetLayer(dsSrc, 0);
-        ASSERT_TRUE(nullptr != lyrSrc);
-
-        OGRFeatureH featSrc = nullptr;
-        while (nullptr != (featSrc = OGR_L_GetNextFeature(lyrSrc)))
+        EXPECT_TRUE(nullptr != featDst);
+        if( featDst )
         {
-            err = OGR_F_SetFrom(featDst, featSrc, true);
-            ASSERT_EQ(OGRERR_NONE, err);
+            std::string source(data_);
+            source += SEP;
+            source += "poly.shp";
+            OGRDataSourceH dsSrc = OGR_Dr_Open(drv_, source.c_str(), false);
+            EXPECT_TRUE(nullptr != dsSrc);
+            if( dsSrc )
+            {
+                OGRLayerH lyrSrc = OGR_DS_GetLayer(dsSrc, 0);
+                EXPECT_TRUE(nullptr != lyrSrc);
+                if( lyrSrc )
+                {
+                    OGRFeatureH featSrc = nullptr;
+                    while (nullptr != (featSrc = OGR_L_GetNextFeature(lyrSrc)))
+                    {
+                        err = OGR_F_SetFrom(featDst, featSrc, true);
+                        EXPECT_EQ(OGRERR_NONE, err);
 
-            err = OGR_L_CreateFeature(lyr, featDst);
-            ASSERT_EQ(OGRERR_NONE, err);
+                        err = OGR_L_CreateFeature(lyr, featDst);
+                        EXPECT_EQ(OGRERR_NONE, err);
 
-            OGR_F_Destroy(featSrc);
+                        OGR_F_Destroy(featSrc);
+                    }
+                }
+                // Release and close resources
+
+                OGR_DS_Destroy(dsSrc);
+            }
+            OGR_F_Destroy(featDst);
         }
-
-        // Release and close resources
-        OGR_F_Destroy(featDst);
-        OGR_DS_Destroy(dsSrc);
         OGR_DS_Destroy(ds);
     }
 
@@ -252,17 +263,18 @@ namespace {
         ASSERT_TRUE(nullptr != ds);
 
         OGRLayerH lyr = OGR_DS_GetLayer(ds, 0);
-        ASSERT_TRUE(nullptr != lyr);
+        EXPECT_TRUE(nullptr != lyr);
+        if( lyr )
+        {
+            err = OGR_L_SetAttributeFilter(lyr, "eas_id < 170");
+            EXPECT_EQ(OGRERR_NONE, err);
 
-        err = OGR_L_SetAttributeFilter(lyr, "eas_id < 170");
-        ASSERT_EQ(OGRERR_NONE, err);
+            // Prepare tester collection
+            std::vector<int> list;
+            std::copy(expect, expect + size, std::back_inserter(list));
 
-        // Prepare tester collection
-        std::vector<int> list;
-        std::copy(expect, expect + size, std::back_inserter(list));
-
-        ASSERT_TRUE(CheckEqualAttributes(lyr, "eas_id", list));
-
+            EXPECT_TRUE(CheckEqualAttributes(lyr, "eas_id", list));
+        }
         OGR_DS_Destroy(ds);
     }
 
@@ -277,41 +289,45 @@ namespace {
         ASSERT_TRUE(nullptr != dsOrig);
 
         OGRLayerH lyrOrig = OGR_DS_GetLayer(dsOrig, 0);
-        ASSERT_TRUE(nullptr != lyrOrig);
-
-        // Copied shapefile
-        std::string tmp(data_tmp_);
-        tmp += SEP;
-        tmp += "tpoly.shp";
-        OGRDataSourceH dsTmp = OGR_Dr_Open(drv_, tmp.c_str(), false);
-        ASSERT_TRUE(nullptr != dsTmp);
-
-        OGRLayerH lyrTmp = OGR_DS_GetLayer(dsTmp, 0);
-        ASSERT_TRUE(nullptr != lyrTmp);
-
-        // Iterate through features and compare geometries
-        OGRFeatureH featOrig = OGR_L_GetNextFeature(lyrOrig);
-        OGRFeatureH featTmp = OGR_L_GetNextFeature(lyrTmp);
-
-        while (nullptr != featOrig && nullptr != featTmp)
+        EXPECT_TRUE(nullptr != lyrOrig);
+        if( lyrOrig )
         {
-            OGRGeometryH lhs = OGR_F_GetGeometryRef(featOrig);
-            OGRGeometryH rhs = OGR_F_GetGeometryRef(featTmp);
+            // Copied shapefile
+            std::string tmp(data_tmp_);
+            tmp += SEP;
+            tmp += "tpoly.shp";
+            OGRDataSourceH dsTmp = OGR_Dr_Open(drv_, tmp.c_str(), false);
+            EXPECT_TRUE(nullptr != dsTmp);
 
-            ASSERT_TRUE(CheckEqualGeometries(lhs, rhs, 0.000000001));
+            OGRLayerH lyrTmp = OGR_DS_GetLayer(dsTmp, 0);
+            EXPECT_TRUE(nullptr != lyrTmp);
+            if( lyrTmp )
+            {
+                // Iterate through features and compare geometries
+                OGRFeatureH featOrig = OGR_L_GetNextFeature(lyrOrig);
+                OGRFeatureH featTmp = OGR_L_GetNextFeature(lyrTmp);
 
-            // TODO: add ensure_equal_attributes()
+                while (nullptr != featOrig && nullptr != featTmp)
+                {
+                    OGRGeometryH lhs = OGR_F_GetGeometryRef(featOrig);
+                    OGRGeometryH rhs = OGR_F_GetGeometryRef(featTmp);
 
-            OGR_F_Destroy(featOrig);
-            OGR_F_Destroy(featTmp);
+                    EXPECT_TRUE(CheckEqualGeometries(lhs, rhs, 0.000000001));
 
-            // Move to next feature
-            featOrig = OGR_L_GetNextFeature(lyrOrig);
-            featTmp = OGR_L_GetNextFeature(lyrTmp);
+                    // TODO: add ensure_equal_attributes()
+
+                    OGR_F_Destroy(featOrig);
+                    OGR_F_Destroy(featTmp);
+
+                    // Move to next feature
+                    featOrig = OGR_L_GetNextFeature(lyrOrig);
+                    featTmp = OGR_L_GetNextFeature(lyrTmp);
+                }
+            }
+            OGR_DS_Destroy(dsTmp);
         }
 
         OGR_DS_Destroy(dsOrig);
-        OGR_DS_Destroy(dsTmp);
     }
 
     // Write a feature without a geometry
@@ -325,23 +341,29 @@ namespace {
         ASSERT_TRUE(nullptr != ds);
 
         OGRLayerH lyr = OGR_DS_GetLayer(ds, 0);
-        ASSERT_TRUE(nullptr != lyr);
+        EXPECT_TRUE(nullptr != lyr);
+        if( lyr != nullptr )
+        {
+            OGRFeatureDefnH featDefn = OGR_L_GetLayerDefn(lyr);
+            EXPECT_TRUE(nullptr != featDefn);
 
-        OGRFeatureDefnH featDefn = OGR_L_GetLayerDefn(lyr);
-        ASSERT_TRUE(nullptr != featDefn);
+            OGRFeatureH featNonSpatial = OGR_F_Create(featDefn);
+            EXPECT_TRUE(nullptr != featNonSpatial);
+            if( featDefn && featNonSpatial )
+            {
+                int fldIndex = OGR_FD_GetFieldIndex(featDefn, "PRFEDEA");
+                EXPECT_TRUE(fldIndex >= 0);
+                if( fldIndex >= 0 )
+                {
+                    OGR_F_SetFieldString(featNonSpatial, fldIndex, "nulled");
 
-        OGRFeatureH featNonSpatial = OGR_F_Create(featDefn);
-        ASSERT_TRUE(nullptr != featNonSpatial);
+                    OGRErr err = OGR_L_CreateFeature(lyr, featNonSpatial);
+                    EXPECT_EQ(OGRERR_NONE, err);
+                }
+            }
 
-        int fldIndex = OGR_FD_GetFieldIndex(featDefn, "PRFEDEA");
-        ASSERT_TRUE(fldIndex >= 0);
-
-        OGR_F_SetFieldString(featNonSpatial, fldIndex, "nulled");
-
-        OGRErr err = OGR_L_CreateFeature(lyr, featNonSpatial);
-        ASSERT_EQ(OGRERR_NONE, err);
-
-        OGR_F_Destroy(featNonSpatial);
+            OGR_F_Destroy(featNonSpatial);
+        }
         OGR_DS_Destroy(ds);
     }
 
@@ -358,20 +380,24 @@ namespace {
         ASSERT_TRUE(nullptr != ds);
 
         OGRLayerH lyr = OGR_DS_GetLayer(ds, 0);
-        ASSERT_TRUE(nullptr != lyr);
+        EXPECT_TRUE(nullptr != lyr);
+        if( lyr != nullptr )
+        {
+            err = OGR_L_SetAttributeFilter(lyr, "PRFEDEA = 'nulled'");
+            EXPECT_EQ(OGRERR_NONE, err);
 
-        err = OGR_L_SetAttributeFilter(lyr, "PRFEDEA = 'nulled'");
-        ASSERT_EQ(OGRERR_NONE, err);
+            // Fetch feature without geometry
+            OGRFeatureH featNonSpatial = OGR_L_GetNextFeature(lyr);
+            EXPECT_TRUE(nullptr != featNonSpatial);
+            if( featNonSpatial != nullptr )
+            {
+                // Null geometry is expected
+                OGRGeometryH nonGeom = OGR_F_GetGeometryRef(featNonSpatial);
+                EXPECT_TRUE(nullptr == nonGeom);
 
-        // Fetch feature without geometry
-        OGRFeatureH featNonSpatial = OGR_L_GetNextFeature(lyr);
-        ASSERT_TRUE(nullptr != featNonSpatial);
-
-        // Null geometry is expected
-        OGRGeometryH nonGeom = OGR_F_GetGeometryRef(featNonSpatial);
-        ASSERT_TRUE(nullptr == nonGeom);
-
-        OGR_F_Destroy(featNonSpatial);
+                OGR_F_Destroy(featNonSpatial);
+            }
+        }
         OGR_DS_Destroy(ds);
     }
 
@@ -387,15 +413,17 @@ namespace {
 
         std::string sql("select distinct eas_id from tpoly order by eas_id desc");
         OGRLayerH lyr = OGR_DS_ExecuteSQL(ds, sql.c_str(), nullptr, nullptr);
-        ASSERT_TRUE(nullptr != lyr);
+        EXPECT_TRUE(nullptr != lyr);
+        if( lyr )
+        {
+            // Prepare tester collection
+            std::vector<int> list;
+            std::copy(expect, expect + size, std::back_inserter(list));
 
-        // Prepare tester collection
-        std::vector<int> list;
-        std::copy(expect, expect + size, std::back_inserter(list));
+            EXPECT_TRUE(CheckEqualAttributes(lyr, "eas_id", list));
 
-        ASSERT_TRUE(CheckEqualAttributes(lyr, "eas_id", list));
-
-        OGR_DS_ReleaseResultSet(ds, lyr);
+            OGR_DS_ReleaseResultSet(ds, lyr);
+        }
         OGR_DS_Destroy(ds);
     }
 
@@ -408,33 +436,38 @@ namespace {
 
         std::string sql("select * from tpoly where prfedea = '35043413'");
         OGRLayerH lyr = OGR_DS_ExecuteSQL(ds, sql.c_str(), nullptr, nullptr);
-        ASSERT_TRUE(nullptr != lyr);
+        EXPECT_TRUE(nullptr != lyr);
+        if( lyr )
+        {
+            // Prepare tester collection
+            std::vector<std::string> list;
+            list.push_back("35043413");
 
-        // Prepare tester collection
-        std::vector<std::string> list;
-        list.push_back("35043413");
+            // Test attributes
+            EXPECT_TRUE(CheckEqualAttributes(lyr, "prfedea", list));
 
-        // Test attributes
-        ASSERT_TRUE(CheckEqualAttributes(lyr, "prfedea", list));
+            // Test geometry
+            const char* wkt = "POLYGON ((479750.688 4764702.000,479658.594 4764670.000,"
+                "479640.094 4764721.000,479735.906 4764752.000,"
+                "479750.688 4764702.000))";
 
-        // Test geometry
-        const char* wkt = "POLYGON ((479750.688 4764702.000,479658.594 4764670.000,"
-            "479640.094 4764721.000,479735.906 4764752.000,"
-            "479750.688 4764702.000))";
-
-        OGRGeometryH testGeom = nullptr;
-        OGRErr err = OGR_G_CreateFromWkt((char**) &wkt, nullptr, &testGeom);
-        ASSERT_EQ(OGRERR_NONE, err);
-
-        OGR_L_ResetReading(lyr);
-        OGRFeatureH feat = OGR_L_GetNextFeature(lyr);
-        ASSERT_TRUE(nullptr != feat);
-
-        ASSERT_TRUE(CheckEqualGeometries(OGR_F_GetGeometryRef(feat), testGeom, 0.001));
-
-        OGR_F_Destroy(feat);
-        OGR_G_DestroyGeometry(testGeom);
-        OGR_DS_ReleaseResultSet(ds, lyr);
+            OGRGeometryH testGeom = nullptr;
+            OGRErr err = OGR_G_CreateFromWkt((char**) &wkt, nullptr, &testGeom);
+            EXPECT_EQ(OGRERR_NONE, err);
+            if( testGeom )
+            {
+                OGR_L_ResetReading(lyr);
+                OGRFeatureH feat = OGR_L_GetNextFeature(lyr);
+                EXPECT_TRUE(nullptr != feat);
+                if( feat )
+                {
+                    EXPECT_TRUE(CheckEqualGeometries(OGR_F_GetGeometryRef(feat), testGeom, 0.001));
+                    OGR_F_Destroy(feat);
+                }
+                OGR_G_DestroyGeometry(testGeom);
+            }
+            OGR_DS_ReleaseResultSet(ds, lyr);
+        }
         OGR_DS_Destroy(ds);
     }
 
@@ -451,28 +484,32 @@ namespace {
         ASSERT_TRUE(nullptr != ds);
 
         OGRLayerH lyr = OGR_DS_GetLayer(ds, 0);
-        ASSERT_TRUE(nullptr != lyr);
+        EXPECT_TRUE(nullptr != lyr);
+        if( lyr )
+        {
+            // Set empty filter for attributes
+            err = OGR_L_SetAttributeFilter(lyr, nullptr);
+            EXPECT_EQ(OGRERR_NONE, err);
 
-        // Set empty filter for attributes
-        err = OGR_L_SetAttributeFilter(lyr, nullptr);
-        ASSERT_EQ(OGRERR_NONE, err);
+            // Set spatial filter
+            const char* wkt = "LINESTRING(479505 4763195,480526 4762819)";
+            OGRGeometryH filterGeom = nullptr;
+            err = OGR_G_CreateFromWkt((char**) &wkt, nullptr, &filterGeom);
+            ASSERT_EQ(OGRERR_NONE, err);
+            if( filterGeom )
+            {
+                OGR_L_SetSpatialFilter(lyr, filterGeom);
 
-        // Set spatial filter
-        const char* wkt = "LINESTRING(479505 4763195,480526 4762819)";
-        OGRGeometryH filterGeom = nullptr;
-        err = OGR_G_CreateFromWkt((char**) &wkt, nullptr, &filterGeom);
-        ASSERT_EQ(OGRERR_NONE, err);
+                // Prepare tester collection
+                std::vector<int> list;
+                list.push_back(158);
 
-        OGR_L_SetSpatialFilter(lyr, filterGeom);
+                // Test attributes
+                EXPECT_TRUE(CheckEqualAttributes(lyr, "eas_id", list));
 
-        // Prepare tester collection
-        std::vector<int> list;
-        list.push_back(158);
-
-        // Test attributes
-        ASSERT_TRUE(CheckEqualAttributes(lyr, "eas_id", list));
-
-        OGR_G_DestroyGeometry(filterGeom);
+                OGR_G_DestroyGeometry(filterGeom);
+            }
+        }
         OGR_DS_Destroy(ds);
     }
 

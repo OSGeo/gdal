@@ -78,10 +78,11 @@ TEST(testmultithreadedwriting, test)
     GDALClose(poDS);
 
     int counter = 0;
-    do
+    const int nloops = bEndlessLoop ? 2 * 1000 * 1000 * 1000 : 1;
+    for(int i = 0; i < nloops; ++i )
     {
-        ++counter;
-        if( (counter % 20) == 0 ) printf("%d\n", counter);
+        ++i;
+        if( (i % 20) == 0 ) printf("%d\n", counter);
 
         hThread1 = CPLCreateJoinableThread(thread_func, &one);
         hThread2 = CPLCreateJoinableThread(thread_func, &two);
@@ -97,7 +98,6 @@ TEST(testmultithreadedwriting, test)
         poDriver->Delete("/vsimem/test1");
         poDriver->Delete("/vsimem/test2");
     }
-    while( bEndlessLoop );
 
     poDriver->Delete("/vsimem/test_ref");
 

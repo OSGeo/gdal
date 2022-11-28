@@ -133,24 +133,27 @@ namespace
         const char* wkt = "POINT(-117.5 32.0)";
         OGRGeometryH geom = nullptr;
         err_ = OGR_G_CreateFromWkt((char**) &wkt, nullptr, &geom);
-        ASSERT_EQ(OGRERR_NONE, err_);
-        ASSERT_TRUE(nullptr != geom);
+        EXPECT_EQ(OGRERR_NONE, err_);
+        EXPECT_TRUE(nullptr != geom);
+        if( geom )
+        {
+            err_ = OGR_G_Transform(geom, ct_);
+            ASSERT_EQ(err_, OGRERR_NONE);
 
-        err_ = OGR_G_Transform(geom, ct_);
-        ASSERT_EQ(err_, OGRERR_NONE);
+            OGRSpatialReferenceH srs = nullptr;
+            srs = OGR_G_GetSpatialReference(geom);
 
-        OGRSpatialReferenceH srs = nullptr;
-        srs = OGR_G_GetSpatialReference(geom);
-
-        char* wktSrs = nullptr;
-        err_ = OSRExportToPrettyWkt(srs, &wktSrs, FALSE);
-        ASSERT_TRUE(nullptr != wktSrs);
-
-        std::string pretty(wktSrs);
-        ASSERT_EQ(pretty.substr(0, 6), std::string("PROJCS"));
-
-        CPLFree(wktSrs);
-        OGR_G_DestroyGeometry(geom);
+            char* wktSrs = nullptr;
+            err_ = OSRExportToPrettyWkt(srs, &wktSrs, FALSE);
+            EXPECT_TRUE(nullptr != wktSrs);
+            if( wktSrs )
+            {
+                std::string pretty(wktSrs);
+                EXPECT_EQ(pretty.substr(0, 6), std::string("PROJCS"));
+            }
+            CPLFree(wktSrs);
+            OGR_G_DestroyGeometry(geom);
+        }
     }
 
     // Test OGRCoordinateTransformation::GetInverse()
@@ -333,32 +336,45 @@ namespace
     {
         OGRSpatialReferenceH hSource = OSRNewSpatialReference(nullptr);
         OGRSpatialReferenceH hTarget = OSRNewSpatialReference(nullptr);
-        ASSERT_TRUE(hSource != nullptr);
-        ASSERT_TRUE(hTarget != nullptr);
-        ASSERT_TRUE(OGRERR_NONE == OSRImportFromEPSG(hSource, 32637));
-        ASSERT_TRUE(OGRERR_NONE == OSRSetWellKnownGeogCS(hTarget, "WGS84"));
-        OGRCoordinateTransformationH hTransform =
-            OCTNewCoordinateTransformation(hSource, hTarget);
-        ASSERT_TRUE(hTransform != nullptr);
+        EXPECT_TRUE(hSource != nullptr);
+        EXPECT_TRUE(hTarget != nullptr);
+        if( hSource && hTarget )
+        {
+            EXPECT_TRUE(OGRERR_NONE == OSRImportFromEPSG(hSource, 32637));
+            EXPECT_TRUE(OGRERR_NONE == OSRSetWellKnownGeogCS(hTarget, "WGS84"));
+            OGRCoordinateTransformationH hTransform =
+                OCTNewCoordinateTransformation(hSource, hTarget);
+            EXPECT_TRUE(hTransform != nullptr);
+            if( hTransform )
+            {
+                OGRCoordinateTransformationH hClone = OCTClone(hTransform);
+                EXPECT_TRUE(hClone != nullptr);
 
-        OGRCoordinateTransformationH hClone = OCTClone(hTransform);
-        ASSERT_TRUE(hClone != nullptr);
+                OGRCoordinateTransformationH hInvTransform =
+                    OCTGetInverse(hTransform);
+                EXPECT_TRUE(hInvTransform != nullptr);
+                if( hClone && hInvTransform )
+                {
+                    OGRSpatialReferenceH hSourceInternal = OCTGetSourceCS(hTransform);
+                    EXPECT_TRUE(hSourceInternal != nullptr);
+                    OGRSpatialReferenceH hTargetInternal = OCTGetTargetCS(hTransform);
+                    EXPECT_TRUE(hTargetInternal != nullptr);
 
-        OGRCoordinateTransformationH hInvTransform =
-            OCTGetInverse(hTransform);
-        ASSERT_TRUE(hInvTransform != nullptr);
+                    if( hSourceInternal )
+                    {
+                        EXPECT_TRUE(OSRIsSame(hSource, hSourceInternal));
+                    }
+                    if( hTargetInternal )
+                    {
+                        EXPECT_TRUE(OSRIsSame(hTarget, hTargetInternal));
+                    }
+                }
 
-        OGRSpatialReferenceH hSourceInternal = OCTGetSourceCS(hTransform);
-        ASSERT_TRUE(hSourceInternal != nullptr);
-        OGRSpatialReferenceH hTargetInternal = OCTGetTargetCS(hTransform);
-        ASSERT_TRUE(hTargetInternal != nullptr);
-
-        ASSERT_TRUE(OSRIsSame(hSource, hSourceInternal));
-        ASSERT_TRUE(OSRIsSame(hTarget, hTargetInternal));
-
-        OCTDestroyCoordinateTransformation(hInvTransform);
-        OCTDestroyCoordinateTransformation(hClone);
-        OCTDestroyCoordinateTransformation(hTransform);
+                OCTDestroyCoordinateTransformation(hInvTransform);
+                OCTDestroyCoordinateTransformation(hClone);
+            }
+            OCTDestroyCoordinateTransformation(hTransform);
+        }
         OSRDestroySpatialReference(hSource);
         OSRDestroySpatialReference(hTarget);
     }
