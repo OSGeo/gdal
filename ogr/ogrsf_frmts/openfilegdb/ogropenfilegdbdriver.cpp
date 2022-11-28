@@ -288,6 +288,7 @@ void RegisterOGROpenFileGDB()
     poDriver->SetMetadataItem( GDAL_DCAP_DELETE_RELATIONSHIP, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_UPDATE_RELATIONSHIP, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_RELATIONSHIP_FLAGS, "OneToOne OneToMany ManyToMany Composite Association ForwardPathLabel BackwardPathLabel" );
+    poDriver->SetMetadataItem( GDAL_DMD_RELATIONSHIP_RELATED_TABLE_TYPES, "features media" );
 
     poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
