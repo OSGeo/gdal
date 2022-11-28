@@ -281,6 +281,7 @@ jobs:
       run: |
         export PATH=$CMAKE_DIR:/usr/local/bin:/usr/bin:/bin # Avoid CMake config from brew etc.
         cd $GITHUB_WORKSPACE/superbuild/build
+        rm -f CMakeCache.txt
         cmake  ${CMAKE_OPTIONS} .. \
           -DBUILD_SHARED_LIBS=OFF \
           -DBUILD_TESTING=OFF \
