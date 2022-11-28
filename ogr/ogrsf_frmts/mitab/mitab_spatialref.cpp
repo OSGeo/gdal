@@ -259,10 +259,13 @@ const MapInfoDatumInfo asDatumInfoList[] =
 { 1052, 1024,"S-JTSK (Krovak) Coordinate system - updated", 10, 570.6934, 85.6936, 462.8393, -4.99825, -1.58663, -5.26114, 3.5430155, 0 },
 { 0,    1025,"JTSK03 (Slovak Republic)",   10, 485.014055, 169.473618, 483.842943, -7.78625453, -4.39770887, -4.10248899, 0, 0 },
 { 1168, 1028,"Geocentric Datum of Australia 2020", 0,-0.06155, 0.01087, 0.04019, 0.0394924, 0.0327221, 0.0328979, 0.009994,0 },
+// For some weird reason, MapInfo uses nEllipsoid=8 "Clarke 1866 (modified for Michigan)"
+// cf https://docs.precisely.com/docs/sftw/mapinfo-pro/v2021.1/en-us/pdf/mapinfo-pro-v2021.1-release-notes.pdf page 8
+// whereas EPSG uses the regular Clarke 1866 ellipsoid.
+{ 6683, 1031,"Philippine Reference System 1992", 8, -127.62,-67.24,-47.04,-3.068,4.903,1.578,-1.06, 0},
 { 0,    9999,"Bosnia-Herzegovina",         10, 472.8677, 187.8769, 544.7084, -5.76198422, -5.3222842, 12.80666941, 1.54517287, 0 },
 { 6181, 9999,"Luxembourg 1930 / Gauss",     4, -192.986, 13.673, -39.309, 0.4099, 2.9332, -2.6881, 0.43, 0 },
 { 1168, 9999,"Geocentric Datum of Australia 2020", 0,-0.06155, 0.01087, 0.04019, 0.0394924, 0.0327221, 0.0328979, 0.009994,0 },
-
 { -1,   -1, nullptr,                          0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
 
@@ -1380,6 +1383,19 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
                 }
             }
         }
+    }
+
+    /*-----------------------------------------------------------------
+     * Special case for Philippine Reference System 1992, to override
+     * the MapInfo ellipsoid=8 "Clarke 1866 (modified for Michigan)"
+     * by the regular Clarke 1866 of EPSG
+     *----------------------------------------------------------------*/
+    if( sTABProj.nDatumId == 1031
+        && sTABProj.nEllipsoidId == 8 )
+    {
+        OGRSpatialReference oSRS_EPSG_4683;
+        if( oSRS_EPSG_4683.importFromEPSG(4683) == OGRERR_NONE )
+            poSpatialRef->CopyGeogCSFrom(&oSRS_EPSG_4683);
     }
 
     return poSpatialRef;
