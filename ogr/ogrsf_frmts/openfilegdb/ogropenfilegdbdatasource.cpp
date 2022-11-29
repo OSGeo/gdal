@@ -858,6 +858,9 @@ int OGROpenFileGDBDataSource::TestCapability( const char * pszCap )
         EQUAL(pszCap, ODsCAddFieldDomain) ||
         EQUAL(pszCap, ODsCDeleteFieldDomain) ||
         EQUAL(pszCap, ODsCUpdateFieldDomain) ||
+        EQUAL(pszCap, GDsCAddRelationship) ||
+        EQUAL(pszCap, GDsCDeleteRelationship) ||
+        EQUAL(pszCap, GDsCUpdateRelationship) ||
         EQUAL(pszCap, ODsCEmulatedTransactions) )
     {
         return eAccess == GA_Update;

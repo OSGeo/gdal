@@ -266,6 +266,8 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
         void                ClearCachedRelationships();
         void                LoadRelationships() const;
         void                LoadRelationshipsUsingRelatedTablesExtension() const;
+        static std::string  GenerateNameForRelationship(const char* pszBaseTableName,  const char* pszRelatedTableName,  const char* pszType );
+        bool                ValidateRelationship(const GDALRelationship * poRelationship, std::string& failureReason );
 
         bool                m_bIsGeometryTypeAggregateInterrupted = false;
         std::string         m_osGeometryTypeAggregateResult{};
@@ -324,6 +326,15 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
 
         const GDALRelationship* GetRelationship(const std::string& name) const override;
 
+        bool        AddRelationship(std::unique_ptr<GDALRelationship>&& relationship,
+                                    std::string& failureReason) override;
+
+        bool        DeleteRelationship(const std::string& name,
+                                       std::string& failureReason) override;
+
+        bool        UpdateRelationship(std::unique_ptr<GDALRelationship>&& relationship,
+                                       std::string& failureReason) override;
+
         virtual std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*> GetLayerWithGetSpatialWhereByName( const char* pszName ) override;
 
         virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
@@ -348,6 +359,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
         bool                    HasDataColumnConstraintsTableGPKG_1_0() const;
         bool                CreateColumnsTableAndColumnConstraintsTablesIfNecessary();
         bool                HasGpkgextRelationsTable() const;
+        bool                CreateRelationsTableIfNecessary();
         bool                HasQGISLayerStyles() const;
 
         const char*         GetGeometryTypeString(OGRwkbGeometryType eType);
