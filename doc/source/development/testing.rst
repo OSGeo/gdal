@@ -6,7 +6,7 @@
 Automated testing
 ================================================================================
 
-GDAL includes a comprehensive test suite, implemented using a combination of Python (via pytest) and C++ (via TUT).
+GDAL includes a comprehensive test suite, implemented using a combination of Python (via pytest) and C++ (via gtest).
 
 After building GDAL using CMake, the complete test suite can be run using ``ctest -v --output-on-failure``. This will automatically set environment variables so that tests are run on the
 the built version of GDAL, rather than an installed system copy.
@@ -19,7 +19,7 @@ The complete set of test suites known to ``ctest`` can be viewed running ``ctest
 A subset of tests can be run using the ``-R`` argument to ``ctest``, which selects tests using a provided regular expression.
 For example, ``ctest -R autotest`` would run the Python-based tests.
 
-The ``-E`` argument can be used to exclude tests using a regular expression. For example, ``ctest -E performance`` would exclude (slow) performance benchmarks.
+The ``-E`` argument can be used to exclude tests using a regular expression. For example, ``ctest -E gdrivers`` would exclude the suite of driver tests.
 
 Running a subset of tests using ``pytest``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

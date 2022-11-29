@@ -162,16 +162,7 @@ endmacro ()
 
 register_test(test-unit gdal_unit_test)
 
-macro (gdal_test_target _target _source)
-  add_executable(${_target} ${_source})
-  target_link_libraries(${_target} PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
-  gdal_standard_includes(${_target})
-  target_compile_options(${_target} PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${GDAL_CXX_WARNING_FLAGS}>
-                                            $<$<COMPILE_LANGUAGE:C>:${GDAL_C_WARNING_FLAGS}>)
-  target_include_directories(${_target} PRIVATE $<TARGET_PROPERTY:appslib,SOURCE_DIR>)
-  target_compile_definitions(${_target} PRIVATE -DGDAL_TEST_ROOT_DIR="${GDAL_ROOT_TEST_DIR}")
-  add_dependencies(${_target} ${GDAL_LIB_TARGET_NAME} gdal_plugins)
-endmacro ()
+include(GdalTestTarget)
 
 gdal_test_target(testblockcache testblockcache.cpp)
 target_sources(testblockcache PRIVATE main_gtest.cpp)
@@ -305,8 +296,6 @@ gdal_gtest_target(testmultithreadedwriting test-multi-threaded-writing testmulti
 gdal_gtest_target(testdestroy test-destroy testdestroy.cpp)
 gdal_autotest_target(test_include_from_c_file test-include-from-C-file test_include_from_c_file.c "")
 gdal_autotest_target(test_c_include_from_cpp_file test-C-include-from-CPP-file test_c_include_from_cpp_file.cpp "")
-gdal_autotest_target(testperfcopywords test-performance-copy-words testperfcopywords.cpp "")
-gdal_autotest_target(testperfdeinterleave test-performance-deinterleave testperfdeinterleave.cpp "")
 gdal_gtest_target(bug1488 test-bug1488 bug1488.cpp)
 gdal_gtest_target(testlog test-log testlog.cpp)
 
