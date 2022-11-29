@@ -184,6 +184,8 @@ void RegisterOGRPG()
     poDriver->SetMetadataItem( GDAL_DCAP_RENAME_LAYERS, "YES" );
 
     poDriver->SetMetadataItem( GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS, "Name Type Nullable SRS" );
+    // see https://www.postgresql.org/docs/current/ddl-system-columns.html
+    poDriver->SetMetadataItem( GDAL_DMD_ILLEGAL_FIELD_NAMES, "tableoid xmin cmin xmax cmax ctid" );
 
     poDriver->pfnOpen = OGRPGDriverOpen;
     poDriver->pfnIdentify = OGRPGDriverIdentify;
