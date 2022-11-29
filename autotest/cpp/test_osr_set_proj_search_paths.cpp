@@ -49,29 +49,29 @@ static void func1(void*)
     CPLPushErrorHandler(CPLQuietErrorHandler);
     auto ret = OSRImportFromEPSG(hSRS, 32631);
     CPLPopErrorHandler();
-    ASSERT_NE(ret, OGRERR_NONE );
+    EXPECT_NE(ret, OGRERR_NONE );
     OSRDestroySpatialReference(hSRS);
 }
 
 static void func2(void*)
 {
     OGRSpatialReferenceH hSRS = OSRNewSpatialReference(nullptr);
-    ASSERT_EQ( OSRImportFromEPSG(hSRS, 32631), OGRERR_NONE );
+    EXPECT_EQ( OSRImportFromEPSG(hSRS, 32631), OGRERR_NONE );
     OSRDestroySpatialReference(hSRS);
 }
 
 static void func3(void*)
 {
     OGRSpatialReferenceH hSRS = OSRNewSpatialReference(nullptr);
-    ASSERT_EQ( OSRImportFromEPSG(hSRS, 32631), OGRERR_NONE );
+    EXPECT_EQ( OSRImportFromEPSG(hSRS, 32631), OGRERR_NONE );
 
     // Test cleanup effect
     OSRCleanup();
 
     for(int epsg = 32601; epsg <= 32661; epsg++ )
     {
-        ASSERT_EQ( OSRImportFromEPSG(hSRS, epsg), OGRERR_NONE );
-        ASSERT_EQ( OSRImportFromEPSG(hSRS, epsg+100), OGRERR_NONE );
+        EXPECT_EQ( OSRImportFromEPSG(hSRS, epsg), OGRERR_NONE );
+        EXPECT_EQ( OSRImportFromEPSG(hSRS, epsg+100), OGRERR_NONE );
     }
     OSRDestroySpatialReference(hSRS);
 }
@@ -86,13 +86,12 @@ static void func4()
     const char* apszAux0[] = {TUT_ROOT_DATA_DIR "/test_aux.db", nullptr};
     OSRSetPROJAuxDbPaths(apszAux0);
 
-    char** papszAux1 = OSRGetPROJAuxDbPaths();
-    ASSERT_TRUE(papszAux1 != nullptr);
-    ASSERT_TRUE(papszAux1[0] != nullptr);
-    ASSERT_STREQ(apszAux0[0], papszAux1[0]);
+    CPLStringList aosAux1(OSRGetPROJAuxDbPaths());
+    ASSERT_EQ(aosAux1.size(), 1);
+    ASSERT_STREQ(apszAux0[0], aosAux1[0]);
     OGRSpatialReferenceH hSRS = OSRNewSpatialReference(nullptr);
-    ASSERT_EQ(OSRImportFromEPSG(hSRS, 4326), OGRERR_NONE);
-    ASSERT_EQ(OSRImportFromEPSG(hSRS, 111111), OGRERR_NONE);
+    EXPECT_EQ(OSRImportFromEPSG(hSRS, 4326), OGRERR_NONE);
+    EXPECT_EQ(OSRImportFromEPSG(hSRS, 111111), OGRERR_NONE);
     OSRDestroySpatialReference(hSRS);
 }
 
@@ -115,7 +114,7 @@ TEST(test_osr_set_proj_search_paths, test)
         const char* const apszDummyPaths[] = { "/i/am/dummy", nullptr };
         OSRSetPROJSearchPaths(apszDummyPaths);
         auto tokens2 = OSRGetPROJSearchPaths();
-        ASSERT_STREQ(tokens2[0], "/i/am/dummy");
+        EXPECT_STREQ(tokens2[0], "/i/am/dummy");
         CSLDestroy(tokens2);
     }
 

@@ -25,8 +25,8 @@ TEST(proj_with_fork,test)
         {
             for(int epsg = 32601; epsg <= 32661; epsg++ )
             {
-                ASSERT_EQ( OSRImportFromEPSG(hSRS, epsg), OGRERR_NONE );
-                ASSERT_EQ( OSRImportFromEPSG(hSRS, epsg + 100), OGRERR_NONE );
+                EXPECT_EQ( OSRImportFromEPSG(hSRS, epsg), OGRERR_NONE );
+                EXPECT_EQ( OSRImportFromEPSG(hSRS, epsg + 100), OGRERR_NONE );
             }
             _exit(0);
         }
@@ -36,7 +36,7 @@ TEST(proj_with_fork,test)
     {
         int status = 0;
         waitpid(children[i], &status, 0);
-        ASSERT_EQ(status, 0);
+        EXPECT_EQ(status, 0);
     }
 }
 

@@ -90,31 +90,31 @@ namespace
         CPLList* list;
 
         list = CPLListInsert(nullptr, (void*)nullptr, 0);
-        ASSERT_TRUE(CPLListCount(list) == 1);
+        EXPECT_TRUE(CPLListCount(list) == 1);
         list = CPLListRemove(list, 2);
-        ASSERT_TRUE(CPLListCount(list) == 1);
+        EXPECT_TRUE(CPLListCount(list) == 1);
         list = CPLListRemove(list, 1);
-        ASSERT_TRUE(CPLListCount(list) == 1);
+        EXPECT_TRUE(CPLListCount(list) == 1);
         list = CPLListRemove(list, 0);
-        ASSERT_TRUE(CPLListCount(list) == 0);
+        EXPECT_TRUE(CPLListCount(list) == 0);
         list = nullptr;
 
         list = CPLListInsert(nullptr, (void*)nullptr, 2);
-        ASSERT_TRUE(CPLListCount(list) == 3);
+        EXPECT_TRUE(CPLListCount(list) == 3);
         list = CPLListRemove(list, 2);
-        ASSERT_TRUE(CPLListCount(list) == 2);
+        EXPECT_TRUE(CPLListCount(list) == 2);
         list = CPLListRemove(list, 1);
-        ASSERT_TRUE(CPLListCount(list) == 1);
+        EXPECT_TRUE(CPLListCount(list) == 1);
         list = CPLListRemove(list, 0);
-        ASSERT_TRUE(CPLListCount(list) == 0);
+        EXPECT_TRUE(CPLListCount(list) == 0);
         list = nullptr;
 
         list = CPLListAppend(list, (void*)1);
-        ASSERT_TRUE(CPLListGet(list,0) == list);
-        ASSERT_TRUE(CPLListGet(list,1) == nullptr);
+        EXPECT_TRUE(CPLListGet(list,0) == list);
+        EXPECT_TRUE(CPLListGet(list,1) == nullptr);
         list = CPLListAppend(list, (void*)2);
         list = CPLListInsert(list, (void*)3, 2);
-        ASSERT_TRUE(CPLListCount(list) == 3);
+        EXPECT_TRUE(CPLListCount(list) == 3);
         CPLListDestroy(list);
         list = nullptr;
 
@@ -122,11 +122,11 @@ namespace
         list = CPLListAppend(list, (void*)2);
         list = CPLListInsert(list, (void*)4, 3);
         CPLListGet(list,2)->pData = (void*)3;
-        ASSERT_TRUE(CPLListCount(list) == 4);
-        ASSERT_TRUE(CPLListGet(list,0)->pData == (void*)1);
-        ASSERT_TRUE(CPLListGet(list,1)->pData == (void*)2);
-        ASSERT_TRUE(CPLListGet(list,2)->pData == (void*)3);
-        ASSERT_TRUE(CPLListGet(list,3)->pData == (void*)4);
+        EXPECT_TRUE(CPLListCount(list) == 4);
+        EXPECT_TRUE(CPLListGet(list,0)->pData == (void*)1);
+        EXPECT_TRUE(CPLListGet(list,1)->pData == (void*)2);
+        EXPECT_TRUE(CPLListGet(list,2)->pData == (void*)3);
+        EXPECT_TRUE(CPLListGet(list,3)->pData == (void*)4);
         CPLListDestroy(list);
         list = nullptr;
 
@@ -134,16 +134,16 @@ namespace
         CPLListGet(list,0)->pData = (void*)2;
         list = CPLListInsert(list, (void*)1, 0);
         list = CPLListInsert(list, (void*)3, 2);
-        ASSERT_TRUE(CPLListCount(list) == 4);
-        ASSERT_TRUE(CPLListGet(list,0)->pData == (void*)1);
-        ASSERT_TRUE(CPLListGet(list,1)->pData == (void*)2);
-        ASSERT_TRUE(CPLListGet(list,2)->pData == (void*)3);
-        ASSERT_TRUE(CPLListGet(list,3)->pData == (void*)4);
+        EXPECT_TRUE(CPLListCount(list) == 4);
+        EXPECT_TRUE(CPLListGet(list,0)->pData == (void*)1);
+        EXPECT_TRUE(CPLListGet(list,1)->pData == (void*)2);
+        EXPECT_TRUE(CPLListGet(list,2)->pData == (void*)3);
+        EXPECT_TRUE(CPLListGet(list,3)->pData == (void*)4);
         list = CPLListRemove(list, 1);
         list = CPLListRemove(list, 1);
         list = CPLListRemove(list, 0);
         list = CPLListRemove(list, 0);
-        ASSERT_TRUE(list == nullptr);
+        EXPECT_TRUE(list == nullptr);
     }
 
     typedef struct
@@ -191,16 +191,16 @@ namespace
    TEST_F(test_cpl, CPLHashSet)
     {
         CPLHashSet* set = CPLHashSetNew(CPLHashSetHashStr, CPLHashSetEqualStr, CPLFree);
-        ASSERT_TRUE(CPLHashSetInsert(set, CPLStrdup("hello")) == TRUE);
-        ASSERT_TRUE(CPLHashSetInsert(set, CPLStrdup("good morning")) == TRUE);
-        ASSERT_TRUE(CPLHashSetInsert(set, CPLStrdup("bye bye")) == TRUE);
-        ASSERT_TRUE(CPLHashSetSize(set) == 3);
-        ASSERT_TRUE(CPLHashSetInsert(set, CPLStrdup("bye bye")) == FALSE);
-        ASSERT_TRUE(CPLHashSetSize(set) == 3);
-        ASSERT_TRUE(CPLHashSetRemove(set, "bye bye") == TRUE);
-        ASSERT_TRUE(CPLHashSetSize(set) == 2);
-        ASSERT_TRUE(CPLHashSetRemove(set, "good afternoon") == FALSE);
-        ASSERT_TRUE(CPLHashSetSize(set) == 2);
+        EXPECT_TRUE(CPLHashSetInsert(set, CPLStrdup("hello")) == TRUE);
+        EXPECT_TRUE(CPLHashSetInsert(set, CPLStrdup("good morning")) == TRUE);
+        EXPECT_TRUE(CPLHashSetInsert(set, CPLStrdup("bye bye")) == TRUE);
+        EXPECT_TRUE(CPLHashSetSize(set) == 3);
+        EXPECT_TRUE(CPLHashSetInsert(set, CPLStrdup("bye bye")) == FALSE);
+        EXPECT_TRUE(CPLHashSetSize(set) == 3);
+        EXPECT_TRUE(CPLHashSetRemove(set, "bye bye") == TRUE);
+        EXPECT_TRUE(CPLHashSetSize(set) == 2);
+        EXPECT_TRUE(CPLHashSetRemove(set, "good afternoon") == FALSE);
+        EXPECT_TRUE(CPLHashSetSize(set) == 2);
         CPLHashSetDestroy(set);
     }
 
@@ -225,30 +225,30 @@ namespace
         CPLHashSet* set = CPLHashSetNew(nullptr, nullptr, nullptr);
         for(int i=0;i<HASH_SET_SIZE;i++)
         {
-            ASSERT_TRUE(CPLHashSetInsert(set, (void*)&data[i]) == TRUE);
+            EXPECT_TRUE(CPLHashSetInsert(set, (void*)&data[i]) == TRUE);
         }
-        ASSERT_TRUE(CPLHashSetSize(set) == HASH_SET_SIZE);
+        EXPECT_EQ(CPLHashSetSize(set), HASH_SET_SIZE);
 
         for(int i=0;i<HASH_SET_SIZE;i++)
         {
-            ASSERT_TRUE(CPLHashSetInsert(set, (void*)&data[i]) == FALSE);
+            EXPECT_TRUE(CPLHashSetInsert(set, (void*)&data[i]) == FALSE);
         }
-        ASSERT_TRUE(CPLHashSetSize(set) == HASH_SET_SIZE);
+        EXPECT_EQ(CPLHashSetSize(set), HASH_SET_SIZE);
 
         for(int i=0;i<HASH_SET_SIZE;i++)
         {
-            ASSERT_TRUE(CPLHashSetLookup(set, (const void*)&data[i]) == (const void*)&data[i]);
+            EXPECT_TRUE(CPLHashSetLookup(set, (const void*)&data[i]) == (const void*)&data[i]);
         }
 
         int sum = 0;
         CPLHashSetForeach(set, sumValues, &sum);
-        ASSERT_TRUE(sum == (HASH_SET_SIZE-1) * HASH_SET_SIZE / 2);
+        EXPECT_EQ(sum, (HASH_SET_SIZE-1) * HASH_SET_SIZE / 2);
 
         for(int i=0;i<HASH_SET_SIZE;i++)
         {
-            ASSERT_TRUE(CPLHashSetRemove(set, (void*)&data[i]) == TRUE);
+            EXPECT_TRUE(CPLHashSetRemove(set, (void*)&data[i]) == TRUE);
         }
-        ASSERT_TRUE(CPLHashSetSize(set) == 0);
+        EXPECT_EQ(CPLHashSetSize(set), 0);
 
         CPLHashSetDestroy(set);
     }
@@ -256,132 +256,141 @@ namespace
     // Test cpl_string API
     TEST_F(test_cpl, CSLTokenizeString2)
     {
-        // CSLTokenizeString2();
-        char    **papszStringList;
+        {
+            CPLStringList aosStringList(CSLTokenizeString2("one two three", " ", 0));
+            ASSERT_EQ(aosStringList.size(), 3);
+            ASSERT_TRUE(EQUAL(aosStringList[0], "one"));
+            ASSERT_TRUE(EQUAL(aosStringList[1], "two"));
+            ASSERT_TRUE(EQUAL(aosStringList[2], "three"));
+        }
 
-        papszStringList = CSLTokenizeString2("one two three", " ", 0);
-        ASSERT_TRUE(CSLCount(papszStringList) == 3);
-        ASSERT_TRUE(EQUAL(papszStringList[0], "one"));
-        ASSERT_TRUE(EQUAL(papszStringList[1], "two"));
-        ASSERT_TRUE(EQUAL(papszStringList[2], "three"));
-        CSLDestroy(papszStringList);
+        {
+            CPLStringList aosStringList(CSLTokenizeString2("one two, three;four,five; six", " ;,", 0));
+            ASSERT_EQ(aosStringList.size(), 6);
+            ASSERT_TRUE(EQUAL(aosStringList[0], "one"));
+            ASSERT_TRUE(EQUAL(aosStringList[1], "two"));
+            ASSERT_TRUE(EQUAL(aosStringList[2], "three"));
+            ASSERT_TRUE(EQUAL(aosStringList[3], "four"));
+            ASSERT_TRUE(EQUAL(aosStringList[4], "five"));
+            ASSERT_TRUE(EQUAL(aosStringList[5], "six"));
+        }
 
-        papszStringList = CSLTokenizeString2("one two, three;four,five; six", " ;,", 0);
-        ASSERT_TRUE(CSLCount(papszStringList) == 6);
-        ASSERT_TRUE(EQUAL(papszStringList[0], "one"));
-        ASSERT_TRUE(EQUAL(papszStringList[1], "two"));
-        ASSERT_TRUE(EQUAL(papszStringList[2], "three"));
-        ASSERT_TRUE(EQUAL(papszStringList[3], "four"));
-        ASSERT_TRUE(EQUAL(papszStringList[4], "five"));
-        ASSERT_TRUE(EQUAL(papszStringList[5], "six"));
-        CSLDestroy(papszStringList);
+        {
+            CPLStringList aosStringList(CSLTokenizeString2("one two,,,five,six", " ,",
+                                             CSLT_ALLOWEMPTYTOKENS));
+            ASSERT_EQ(aosStringList.size(), 6);
+            ASSERT_TRUE(EQUAL(aosStringList[0], "one"));
+            ASSERT_TRUE(EQUAL(aosStringList[1], "two"));
+            ASSERT_TRUE(EQUAL(aosStringList[2], ""));
+            ASSERT_TRUE(EQUAL(aosStringList[3], ""));
+            ASSERT_TRUE(EQUAL(aosStringList[4], "five"));
+            ASSERT_TRUE(EQUAL(aosStringList[5], "six"));
+        }
 
-        papszStringList = CSLTokenizeString2("one two,,,five,six", " ,",
-                                             CSLT_ALLOWEMPTYTOKENS);
-        ASSERT_TRUE(CSLCount(papszStringList) == 6);
-        ASSERT_TRUE(EQUAL(papszStringList[0], "one"));
-        ASSERT_TRUE(EQUAL(papszStringList[1], "two"));
-        ASSERT_TRUE(EQUAL(papszStringList[2], ""));
-        ASSERT_TRUE(EQUAL(papszStringList[3], ""));
-        ASSERT_TRUE(EQUAL(papszStringList[4], "five"));
-        ASSERT_TRUE(EQUAL(papszStringList[5], "six"));
-        CSLDestroy(papszStringList);
+        {
+            CPLStringList aosStringList(CSLTokenizeString2("one two,\"three,four ,\",five,six", " ,",
+                                             CSLT_HONOURSTRINGS));
+            ASSERT_EQ(aosStringList.size(), 5);
+            ASSERT_TRUE(EQUAL(aosStringList[0], "one"));
+            ASSERT_TRUE(EQUAL(aosStringList[1], "two"));
+            ASSERT_TRUE(EQUAL(aosStringList[2], "three,four ,"));
+            ASSERT_TRUE(EQUAL(aosStringList[3], "five"));
+            ASSERT_TRUE(EQUAL(aosStringList[4], "six"));
+        }
 
-        papszStringList = CSLTokenizeString2("one two,\"three,four ,\",five,six", " ,",
-                                             CSLT_HONOURSTRINGS);
-        ASSERT_TRUE(CSLCount(papszStringList) == 5);
-        ASSERT_TRUE(EQUAL(papszStringList[0], "one"));
-        ASSERT_TRUE(EQUAL(papszStringList[1], "two"));
-        ASSERT_TRUE(EQUAL(papszStringList[2], "three,four ,"));
-        ASSERT_TRUE(EQUAL(papszStringList[3], "five"));
-        ASSERT_TRUE(EQUAL(papszStringList[4], "six"));
-        CSLDestroy(papszStringList);
+        {
+            CPLStringList aosStringList(CSLTokenizeString2("one two,\"three,four ,\",five,six", " ,",
+                                             CSLT_PRESERVEQUOTES));
+            ASSERT_EQ(aosStringList.size(), 7);
+            ASSERT_TRUE(EQUAL(aosStringList[0], "one"));
+            ASSERT_TRUE(EQUAL(aosStringList[1], "two"));
+            ASSERT_TRUE(EQUAL(aosStringList[2], "\"three"));
+            ASSERT_TRUE(EQUAL(aosStringList[3], "four"));
+            ASSERT_TRUE(EQUAL(aosStringList[4], "\""));
+            ASSERT_TRUE(EQUAL(aosStringList[5], "five"));
+            ASSERT_TRUE(EQUAL(aosStringList[6], "six"));
+        }
 
-        papszStringList = CSLTokenizeString2("one two,\"three,four ,\",five,six", " ,",
-                                             CSLT_PRESERVEQUOTES);
-        ASSERT_TRUE(CSLCount(papszStringList) == 7);
-        ASSERT_TRUE(EQUAL(papszStringList[0], "one"));
-        ASSERT_TRUE(EQUAL(papszStringList[1], "two"));
-        ASSERT_TRUE(EQUAL(papszStringList[2], "\"three"));
-        ASSERT_TRUE(EQUAL(papszStringList[3], "four"));
-        ASSERT_TRUE(EQUAL(papszStringList[4], "\""));
-        ASSERT_TRUE(EQUAL(papszStringList[5], "five"));
-        ASSERT_TRUE(EQUAL(papszStringList[6], "six"));
-        CSLDestroy(papszStringList);
+        {
+            CPLStringList aosStringList(CSLTokenizeString2("one two,\"three,four ,\",five,six", " ,",
+                                             CSLT_HONOURSTRINGS | CSLT_PRESERVEQUOTES));
+            ASSERT_EQ(aosStringList.size(), 5);
+            ASSERT_TRUE(EQUAL(aosStringList[0], "one"));
+            ASSERT_TRUE(EQUAL(aosStringList[1], "two"));
+            ASSERT_TRUE(EQUAL(aosStringList[2], "\"three,four ,\""));
+            ASSERT_TRUE(EQUAL(aosStringList[3], "five"));
+            ASSERT_TRUE(EQUAL(aosStringList[4], "six"));
+        }
 
-        papszStringList = CSLTokenizeString2("one two,\"three,four ,\",five,six", " ,",
-                                             CSLT_HONOURSTRINGS | CSLT_PRESERVEQUOTES);
-        ASSERT_TRUE(CSLCount(papszStringList) == 5);
-        ASSERT_TRUE(EQUAL(papszStringList[0], "one"));
-        ASSERT_TRUE(EQUAL(papszStringList[1], "two"));
-        ASSERT_TRUE(EQUAL(papszStringList[2], "\"three,four ,\""));
-        ASSERT_TRUE(EQUAL(papszStringList[3], "five"));
-        ASSERT_TRUE(EQUAL(papszStringList[4], "six"));
-        CSLDestroy(papszStringList);
+        {
+            CPLStringList aosStringList(CSLTokenizeString2("one \\two,\"three,\\four ,\",five,six",
+                                             " ,", CSLT_PRESERVEESCAPES));
+            ASSERT_EQ(aosStringList.size(), 7);
+            ASSERT_TRUE(EQUAL(aosStringList[0], "one"));
+            ASSERT_TRUE(EQUAL(aosStringList[1], "\\two"));
+            ASSERT_TRUE(EQUAL(aosStringList[2], "\"three"));
+            ASSERT_TRUE(EQUAL(aosStringList[3], "\\four"));
+            ASSERT_TRUE(EQUAL(aosStringList[4], "\""));
+            ASSERT_TRUE(EQUAL(aosStringList[5], "five"));
+            ASSERT_TRUE(EQUAL(aosStringList[6], "six"));
+        }
 
-        papszStringList = CSLTokenizeString2("one \\two,\"three,\\four ,\",five,six",
-                                             " ,", CSLT_PRESERVEESCAPES);
-        ASSERT_TRUE(CSLCount(papszStringList) == 7);
-        ASSERT_TRUE(EQUAL(papszStringList[0], "one"));
-        ASSERT_TRUE(EQUAL(papszStringList[1], "\\two"));
-        ASSERT_TRUE(EQUAL(papszStringList[2], "\"three"));
-        ASSERT_TRUE(EQUAL(papszStringList[3], "\\four"));
-        ASSERT_TRUE(EQUAL(papszStringList[4], "\""));
-        ASSERT_TRUE(EQUAL(papszStringList[5], "five"));
-        ASSERT_TRUE(EQUAL(papszStringList[6], "six"));
-        CSLDestroy(papszStringList);
-
-        papszStringList = CSLTokenizeString2("one \\two,\"three,\\four ,\",five,six",
+        {
+            CPLStringList aosStringList(CSLTokenizeString2("one \\two,\"three,\\four ,\",five,six",
                                              " ,",
-                                             CSLT_PRESERVEQUOTES | CSLT_PRESERVEESCAPES);
-        ASSERT_TRUE(CSLCount(papszStringList) == 7);
-        ASSERT_TRUE(EQUAL(papszStringList[0], "one"));
-        ASSERT_TRUE(EQUAL(papszStringList[1], "\\two"));
-        ASSERT_TRUE(EQUAL(papszStringList[2], "\"three"));
-        ASSERT_TRUE(EQUAL(papszStringList[3], "\\four"));
-        ASSERT_TRUE(EQUAL(papszStringList[4], "\""));
-        ASSERT_TRUE(EQUAL(papszStringList[5], "five"));
-        ASSERT_TRUE(EQUAL(papszStringList[6], "six"));
-        CSLDestroy(papszStringList);
+                                             CSLT_PRESERVEQUOTES | CSLT_PRESERVEESCAPES));
+            ASSERT_EQ(aosStringList.size(), 7);
+            ASSERT_TRUE(EQUAL(aosStringList[0], "one"));
+            ASSERT_TRUE(EQUAL(aosStringList[1], "\\two"));
+            ASSERT_TRUE(EQUAL(aosStringList[2], "\"three"));
+            ASSERT_TRUE(EQUAL(aosStringList[3], "\\four"));
+            ASSERT_TRUE(EQUAL(aosStringList[4], "\""));
+            ASSERT_TRUE(EQUAL(aosStringList[5], "five"));
+            ASSERT_TRUE(EQUAL(aosStringList[6], "six"));
+        }
 
-        papszStringList = CSLTokenizeString2("one ,two, three, four ,five  ", ",", 0);
-        ASSERT_TRUE(CSLCount(papszStringList) == 5);
-        ASSERT_TRUE(EQUAL(papszStringList[0], "one "));
-        ASSERT_TRUE(EQUAL(papszStringList[1], "two"));
-        ASSERT_TRUE(EQUAL(papszStringList[2], " three"));
-        ASSERT_TRUE(EQUAL(papszStringList[3], " four "));
-        ASSERT_TRUE(EQUAL(papszStringList[4], "five  "));
-        CSLDestroy(papszStringList);
+        {
+            CPLStringList aosStringList(CSLTokenizeString2("one ,two, three, four ,five  ", ",", 0));
+            ASSERT_EQ(aosStringList.size(), 5);
+            ASSERT_TRUE(EQUAL(aosStringList[0], "one "));
+            ASSERT_TRUE(EQUAL(aosStringList[1], "two"));
+            ASSERT_TRUE(EQUAL(aosStringList[2], " three"));
+            ASSERT_TRUE(EQUAL(aosStringList[3], " four "));
+            ASSERT_TRUE(EQUAL(aosStringList[4], "five  "));
+        }
 
-        papszStringList = CSLTokenizeString2("one ,two, three, four ,five  ", ",",
-                                             CSLT_STRIPLEADSPACES);
-        ASSERT_TRUE(CSLCount(papszStringList) == 5);
-        ASSERT_TRUE(EQUAL(papszStringList[0], "one "));
-        ASSERT_TRUE(EQUAL(papszStringList[1], "two"));
-        ASSERT_TRUE(EQUAL(papszStringList[2], "three"));
-        ASSERT_TRUE(EQUAL(papszStringList[3], "four "));
-        ASSERT_TRUE(EQUAL(papszStringList[4], "five  "));
-        CSLDestroy(papszStringList);
+        {
+            CPLStringList aosStringList(CSLTokenizeString2("one ,two, three, four ,five  ", ",",
+                                             CSLT_STRIPLEADSPACES));
+            ASSERT_EQ(aosStringList.size(), 5);
+            ASSERT_TRUE(EQUAL(aosStringList[0], "one "));
+            ASSERT_TRUE(EQUAL(aosStringList[1], "two"));
+            ASSERT_TRUE(EQUAL(aosStringList[2], "three"));
+            ASSERT_TRUE(EQUAL(aosStringList[3], "four "));
+            ASSERT_TRUE(EQUAL(aosStringList[4], "five  "));
+        }
 
-        papszStringList = CSLTokenizeString2("one ,two, three, four ,five  ", ",",
-                                             CSLT_STRIPENDSPACES);
-        ASSERT_TRUE(CSLCount(papszStringList) == 5);
-        ASSERT_TRUE(EQUAL(papszStringList[0], "one"));
-        ASSERT_TRUE(EQUAL(papszStringList[1], "two"));
-        ASSERT_TRUE(EQUAL(papszStringList[2], " three"));
-        ASSERT_TRUE(EQUAL(papszStringList[3], " four"));
-        ASSERT_TRUE(EQUAL(papszStringList[4], "five"));
-        CSLDestroy(papszStringList);
+        {
+            CPLStringList aosStringList(CSLTokenizeString2("one ,two, three, four ,five  ", ",",
+                                             CSLT_STRIPENDSPACES));
+            ASSERT_EQ(aosStringList.size(), 5);
+            ASSERT_TRUE(EQUAL(aosStringList[0], "one"));
+            ASSERT_TRUE(EQUAL(aosStringList[1], "two"));
+            ASSERT_TRUE(EQUAL(aosStringList[2], " three"));
+            ASSERT_TRUE(EQUAL(aosStringList[3], " four"));
+            ASSERT_TRUE(EQUAL(aosStringList[4], "five"));
+        }
 
-        papszStringList = CSLTokenizeString2("one ,two, three, four ,five  ", ",",
-                                             CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES);
-        ASSERT_TRUE(CSLCount(papszStringList) == 5);
-        ASSERT_TRUE(EQUAL(papszStringList[0], "one"));
-        ASSERT_TRUE(EQUAL(papszStringList[1], "two"));
-        ASSERT_TRUE(EQUAL(papszStringList[2], "three"));
-        ASSERT_TRUE(EQUAL(papszStringList[3], "four"));
-        ASSERT_TRUE(EQUAL(papszStringList[4], "five"));
-        CSLDestroy(papszStringList);
+        {
+            CPLStringList aosStringList(CSLTokenizeString2("one ,two, three, four ,five  ", ",",
+                                             CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
+            ASSERT_EQ(aosStringList.size(), 5);
+            ASSERT_TRUE(EQUAL(aosStringList[0], "one"));
+            ASSERT_TRUE(EQUAL(aosStringList[1], "two"));
+            ASSERT_TRUE(EQUAL(aosStringList[2], "three"));
+            ASSERT_TRUE(EQUAL(aosStringList[3], "four"));
+            ASSERT_TRUE(EQUAL(aosStringList[4], "five"));
+        }
     }
 
     typedef struct
@@ -986,11 +995,13 @@ namespace
 #ifndef WIN32
         // Illegal use of API. Returns non NULL on Windows
         ptr = static_cast<GByte*>(VSIMallocAligned(2, 1));
-        ASSERT_TRUE( ptr == nullptr );
+        EXPECT_TRUE( ptr == nullptr );
+        VSIFree(ptr);
 
         // Illegal use of API. Crashes on Windows
         ptr = static_cast<GByte*>(VSIMallocAligned(5, 1));
-        ASSERT_TRUE( ptr == nullptr );
+        EXPECT_TRUE( ptr == nullptr );
+        VSIFree(ptr);
 #endif
 
         if( !CSLTestBoolean(CPLGetConfigOption("SKIP_MEM_INTENSIVE_TEST", "NO")) )
@@ -998,10 +1009,12 @@ namespace
             // The following tests will fail because such allocations cannot succeed
 #if SIZEOF_VOIDP == 8
             ptr = static_cast<GByte*>(VSIMallocAligned(sizeof(void*), ~((size_t)0)));
-            ASSERT_TRUE( ptr == nullptr );
+            EXPECT_TRUE( ptr == nullptr );
+            VSIFree(ptr);
 
             ptr = static_cast<GByte*>(VSIMallocAligned(sizeof(void*), (~((size_t)0)) - sizeof(void*)));
-            ASSERT_TRUE( ptr == nullptr );
+            EXPECT_TRUE( ptr == nullptr );
+            VSIFree(ptr);
 #endif
         }
     }
@@ -1083,7 +1096,7 @@ namespace
     TEST_F(test_cpl, CPLUnescapeString)
     {
         char* pszText = CPLUnescapeString("&lt;&gt;&amp;&apos;&quot;&#x3f;&#x3F;&#63;", nullptr, CPLES_XML);
-        ASSERT_EQ( CPLString(pszText), "<>&'\"???");
+        EXPECT_STREQ( pszText, "<>&'\"???");
         CPLFree(pszText);
 
         // Integer overflow
@@ -1098,17 +1111,17 @@ namespace
 
         // Error case
         pszText = CPLUnescapeString("&foo", nullptr, CPLES_XML);
-        ASSERT_EQ( CPLString(pszText), "");
+        EXPECT_STREQ( pszText, "");
         CPLFree(pszText);
 
         // Error case
         pszText = CPLUnescapeString("&#x", nullptr, CPLES_XML);
-        ASSERT_EQ( CPLString(pszText), "");
+        EXPECT_STREQ( pszText, "");
         CPLFree(pszText);
 
         // Error case
         pszText = CPLUnescapeString("&#", nullptr, CPLES_XML);
-        ASSERT_EQ( CPLString(pszText), "");
+        EXPECT_STREQ( pszText, "");
         CPLFree(pszText);
     }
 
@@ -2290,7 +2303,7 @@ namespace
         }
         pszExpected[N * 2] = 0;
         char* pszRet = CPLRecode(pszIn, "ISO-8859-2", CPL_ENC_UTF8);
-        ASSERT_EQ( memcmp(pszExpected, pszRet, N * 2 + 1), 0 );
+        EXPECT_EQ( memcmp(pszExpected, pszRet, N * 2 + 1), 0 );
         CPLFree(pszIn);
         CPLFree(pszRet);
         CPLFree(pszExpected);
@@ -2307,7 +2320,7 @@ namespace
         psResult =
             static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        ASSERT_TRUE( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        EXPECT_TRUE( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
         CPLPopErrorHandler();
         CPLHTTPDestroyResult(psResult);
 
@@ -2317,7 +2330,7 @@ namespace
         psResult->pszContentType =
             CPLStrdup("multipart/form-data; boundary=");
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        ASSERT_TRUE( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        EXPECT_TRUE( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
         CPLPopErrorHandler();
         CPLHTTPDestroyResult(psResult);
 
@@ -2327,7 +2340,7 @@ namespace
         psResult->pszContentType =
             CPLStrdup("multipart/form-data; boundary=myboundary");
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        ASSERT_TRUE( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        EXPECT_TRUE( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
         CPLPopErrorHandler();
         CPLHTTPDestroyResult(psResult);
 
@@ -2342,7 +2355,7 @@ namespace
             psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        ASSERT_TRUE( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        EXPECT_TRUE( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
         CPLPopErrorHandler();
         CPLHTTPDestroyResult(psResult);
 
@@ -2359,7 +2372,7 @@ namespace
             psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        ASSERT_TRUE( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        EXPECT_TRUE( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
         CPLPopErrorHandler();
         CPLHTTPDestroyResult(psResult);
 
@@ -2375,7 +2388,7 @@ namespace
             psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        ASSERT_TRUE( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        EXPECT_TRUE( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
         CPLPopErrorHandler();
         CPLHTTPDestroyResult(psResult);
 
@@ -2394,7 +2407,7 @@ namespace
             psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        ASSERT_TRUE( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        EXPECT_TRUE( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
         CPLPopErrorHandler();
         CPLHTTPDestroyResult(psResult);
 
@@ -2413,7 +2426,7 @@ namespace
             psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        ASSERT_TRUE( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        EXPECT_TRUE( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
         CPLPopErrorHandler();
         CPLHTTPDestroyResult(psResult);
 
@@ -2432,14 +2445,17 @@ namespace
             psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
             psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
-        ASSERT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
-        ASSERT_EQ( psResult->nMimePartCount, 1 );
-        ASSERT_EQ( psResult->pasMimePart[0].papszHeaders,
-                       static_cast<char**>(nullptr) );
-        ASSERT_EQ( psResult->pasMimePart[0].nDataLen, 3 );
-        ASSERT_TRUE( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
-                       "Bla", 3) == 0 );
-        ASSERT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        EXPECT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        EXPECT_EQ( psResult->nMimePartCount, 1 );
+        if( psResult->nMimePartCount == 1 )
+        {
+            EXPECT_EQ( psResult->pasMimePart[0].papszHeaders,
+                           static_cast<char**>(nullptr) );
+            EXPECT_EQ( psResult->pasMimePart[0].nDataLen, 3 );
+            EXPECT_TRUE( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
+                           "Bla", 3) == 0 );
+        }
+        EXPECT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
         CPLHTTPDestroyResult(psResult);
 
         // Valid single part, with header
@@ -2458,15 +2474,18 @@ namespace
             psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
             psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
-        ASSERT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
-        ASSERT_EQ( psResult->nMimePartCount, 1 );
-        ASSERT_EQ( CSLCount(psResult->pasMimePart[0].papszHeaders), 1 );
-        ASSERT_EQ( CPLString(psResult->pasMimePart[0].papszHeaders[0]),
-                       CPLString("Content-Type=bla") );
-        ASSERT_EQ( psResult->pasMimePart[0].nDataLen, 3 );
-        ASSERT_TRUE( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
-                       "Bla", 3) == 0 );
-        ASSERT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        EXPECT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        EXPECT_EQ( psResult->nMimePartCount, 1 );
+        if( psResult->nMimePartCount == 1 )
+        {
+            EXPECT_EQ( CSLCount(psResult->pasMimePart[0].papszHeaders), 1 );
+            EXPECT_STREQ( psResult->pasMimePart[0].papszHeaders[0],
+                          "Content-Type=bla" );
+            EXPECT_EQ( psResult->pasMimePart[0].nDataLen, 3 );
+            EXPECT_TRUE( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
+                           "Bla", 3) == 0 );
+        }
+        EXPECT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
         CPLHTTPDestroyResult(psResult);
 
         // Valid single part, 2 headers
@@ -2486,17 +2505,20 @@ namespace
             psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
             psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
-        ASSERT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
-        ASSERT_EQ( psResult->nMimePartCount, 1 );
-        ASSERT_EQ( CSLCount(psResult->pasMimePart[0].papszHeaders), 2 );
-        ASSERT_EQ( CPLString(psResult->pasMimePart[0].papszHeaders[0]),
-                       CPLString("Content-Type=bla") );
-        ASSERT_EQ( CPLString(psResult->pasMimePart[0].papszHeaders[1]),
-                       CPLString("Content-Disposition=bar") );
-        ASSERT_EQ( psResult->pasMimePart[0].nDataLen, 3 );
-        ASSERT_TRUE( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
-                       "Bla", 3) == 0 );
-        ASSERT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        EXPECT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        EXPECT_EQ( psResult->nMimePartCount, 1 );
+        if( psResult->nMimePartCount == 1 )
+        {
+            EXPECT_EQ( CSLCount(psResult->pasMimePart[0].papszHeaders), 2 );
+            EXPECT_STREQ( psResult->pasMimePart[0].papszHeaders[0],
+                           "Content-Type=bla" );
+            EXPECT_STREQ( psResult->pasMimePart[0].papszHeaders[1],
+                           "Content-Disposition=bar" );
+            EXPECT_EQ( psResult->pasMimePart[0].nDataLen, 3 );
+            EXPECT_TRUE( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
+                           "Bla", 3) == 0 );
+        }
+        EXPECT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
         CPLHTTPDestroyResult(psResult);
 
         // Single part, but with header without extra terminating \r\n
@@ -2515,14 +2537,17 @@ namespace
             psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
             psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
-        ASSERT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
-        ASSERT_EQ( psResult->nMimePartCount, 1 );
-        ASSERT_EQ( CPLString(psResult->pasMimePart[0].papszHeaders[0]),
-                       CPLString("Content-Type=bla") );
-        ASSERT_EQ( psResult->pasMimePart[0].nDataLen, 3 );
-        ASSERT_TRUE( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
-                       "Bla", 3) == 0 );
-        ASSERT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        EXPECT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        EXPECT_EQ( psResult->nMimePartCount, 1 );
+        if( psResult->nMimePartCount == 1 )
+        {
+            EXPECT_STREQ( psResult->pasMimePart[0].papszHeaders[0],
+                           "Content-Type=bla" );
+            EXPECT_EQ( psResult->pasMimePart[0].nDataLen, 3 );
+            EXPECT_TRUE( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
+                           "Bla", 3) == 0 );
+        }
+        EXPECT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
         CPLHTTPDestroyResult(psResult);
 
         // Valid 2 parts, no header
@@ -2544,17 +2569,20 @@ namespace
             psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
             psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
-        ASSERT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
-        ASSERT_EQ( psResult->nMimePartCount, 2 );
-        ASSERT_EQ( psResult->pasMimePart[0].papszHeaders,
-                       static_cast<char**>(nullptr) );
-        ASSERT_EQ( psResult->pasMimePart[0].nDataLen, 3 );
-        ASSERT_TRUE( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
-                       "Bla", 3) == 0 );
-        ASSERT_EQ( psResult->pasMimePart[1].nDataLen, 11 );
-        ASSERT_TRUE( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[1].pabyData),
-                       "second part", 11) == 0 );
-        ASSERT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        EXPECT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        EXPECT_EQ( psResult->nMimePartCount, 2 );
+        if( psResult->nMimePartCount == 2 )
+        {
+            EXPECT_EQ( psResult->pasMimePart[0].papszHeaders,
+                           static_cast<char**>(nullptr) );
+            EXPECT_EQ( psResult->pasMimePart[0].nDataLen, 3 );
+            EXPECT_TRUE( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
+                           "Bla", 3) == 0 );
+            EXPECT_EQ( psResult->pasMimePart[1].nDataLen, 11 );
+            EXPECT_TRUE( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[1].pabyData),
+                           "second part", 11) == 0 );
+        }
+        EXPECT_TRUE( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
         CPLHTTPDestroyResult(psResult);
 
     }
@@ -2915,14 +2943,14 @@ namespace
         oOptions.AddNameValue("FORM_KEY_0", "qqq");
         oOptions.AddNameValue("FORM_VALUE_0", "www");
         CPLHTTPResult *pResult = CPLHTTPFetch("http://example.com", oOptions);
-        ASSERT_EQ(pResult->nStatus, 34);
+        EXPECT_EQ(pResult->nStatus, 34);
         CPLHTTPDestroyResult(pResult);
         pResult = nullptr;
         oOptions.Clear();
 
         oOptions.AddNameValue("FORM_FILE_PATH", "not_existed");
         pResult = CPLHTTPFetch("http://example.com", oOptions);
-        ASSERT_EQ(pResult->nStatus, 34);
+        EXPECT_EQ(pResult->nStatus, 34);
         CPLHTTPDestroyResult(pResult);
 #else
         GTEST_SKIP() << "CURL not available";
@@ -2963,7 +2991,7 @@ namespace
         };
 
         myCbkUserDataStruct userData;
-        ASSERT_TRUE( CPLHTTPPushFetchCallback(myCbk, &userData) );
+        EXPECT_TRUE( CPLHTTPPushFetchCallback(myCbk, &userData) );
 
         int progressArg = 0;
         const auto myWriteCbk = [](void *, size_t, size_t, void *) -> size_t { return 0; };
@@ -2979,20 +3007,20 @@ namespace
                                                 pfnWriteCbk,
                                                 &writeCbkArg);
         ASSERT_TRUE(pResult != nullptr);
-        ASSERT_EQ(pResult->nStatus, 123);
+        EXPECT_EQ(pResult->nStatus, 123);
         CPLHTTPDestroyResult(pResult);
 
-        ASSERT_TRUE( CPLHTTPPopFetchCallback() );
+        EXPECT_TRUE( CPLHTTPPopFetchCallback() );
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        ASSERT_TRUE( !CPLHTTPPopFetchCallback() );
+        EXPECT_TRUE( !CPLHTTPPopFetchCallback() );
         CPLPopErrorHandler();
 
-        ASSERT_EQ( userData.osURL, std::string("http://example.com") );
-        ASSERT_EQ( userData.papszOptions, aosOptions.List() );
-        ASSERT_EQ( userData.pfnProgress, pfnProgress );
-        ASSERT_EQ( userData.pProgressArg, &progressArg );
-        ASSERT_EQ( userData.pfnWrite, pfnWriteCbk );
-        ASSERT_EQ( userData.pWriteArg, &writeCbkArg );
+        EXPECT_STREQ( userData.osURL, "http://example.com" );
+        EXPECT_EQ( userData.papszOptions, aosOptions.List() );
+        EXPECT_EQ( userData.pfnProgress, pfnProgress );
+        EXPECT_EQ( userData.pProgressArg, &progressArg );
+        EXPECT_EQ( userData.pfnWrite, pfnWriteCbk );
+        EXPECT_EQ( userData.pWriteArg, &writeCbkArg );
     }
 
     // Test CPLHTTPSetFetchCallback
@@ -3044,17 +3072,17 @@ namespace
                                                 pfnWriteCbk,
                                                 &writeCbkArg);
         ASSERT_TRUE(pResult != nullptr);
-        ASSERT_EQ(pResult->nStatus, 124);
+        EXPECT_EQ(pResult->nStatus, 124);
         CPLHTTPDestroyResult(pResult);
 
         CPLHTTPSetFetchCallback(nullptr, nullptr);
 
-        ASSERT_EQ( userData2.osURL, std::string("http://example.com") );
-        ASSERT_EQ( userData2.papszOptions, aosOptions.List() );
-        ASSERT_EQ( userData2.pfnProgress, pfnProgress );
-        ASSERT_EQ( userData2.pProgressArg, &progressArg );
-        ASSERT_EQ( userData2.pfnWrite, pfnWriteCbk );
-        ASSERT_EQ( userData2.pWriteArg, &writeCbkArg );
+        EXPECT_STREQ( userData2.osURL, "http://example.com" );
+        EXPECT_EQ( userData2.papszOptions, aosOptions.List() );
+        EXPECT_EQ( userData2.pfnProgress, pfnProgress );
+        EXPECT_EQ( userData2.pProgressArg, &progressArg );
+        EXPECT_EQ( userData2.pfnWrite, pfnWriteCbk );
+        EXPECT_EQ( userData2.pWriteArg, &writeCbkArg );
     }
 
     // Test CPLLoadConfigOptionsFromFile() and CPLLoadConfigOptionsFromPredefinedFiles()
@@ -3132,16 +3160,21 @@ namespace
 
         char** decompressors = CPLGetDecompressors();
         ASSERT_TRUE( decompressors != nullptr );
-        ASSERT_TRUE( CSLFindString(decompressors, sComp.pszId) >= 0 );
+        EXPECT_TRUE( CSLFindString(decompressors, sComp.pszId) >= 0 );
         for( auto iter = decompressors; *iter; ++iter )
         {
             const auto pCompressor = CPLGetDecompressor(*iter);
+            if( pCompressor == nullptr )
+            {
+                CSLDestroy( decompressors );
+                decompressors = nullptr;
+            }
             ASSERT_TRUE( pCompressor );
             const char* pszOptions = CSLFetchNameValue(pCompressor->papszMetadata, "OPTIONS");
             if( pszOptions )
             {
                 auto psNode = CPLParseXMLString(pszOptions);
-                ASSERT_TRUE(psNode);
+                EXPECT_TRUE(psNode);
                 CPLDestroyXMLNode(psNode);
             }
             else
@@ -3151,16 +3184,16 @@ namespace
         }
         CSLDestroy( decompressors );
 
-        ASSERT_TRUE( CPLGetDecompressor("invalid") == nullptr );
+        EXPECT_TRUE( CPLGetDecompressor("invalid") == nullptr );
         const auto pCompressor = CPLGetDecompressor(sComp.pszId);
         ASSERT_TRUE( pCompressor );
-        ASSERT_EQ( std::string(pCompressor->pszId), std::string(sComp.pszId) );
-        ASSERT_EQ( CSLCount(pCompressor->papszMetadata), CSLCount(sComp.papszMetadata) );
-        ASSERT_TRUE( pCompressor->pfnFunc != nullptr );
-        ASSERT_EQ( pCompressor->user_data, sComp.user_data );
+        EXPECT_STREQ( pCompressor->pszId, sComp.pszId );
+        EXPECT_EQ( CSLCount(pCompressor->papszMetadata), CSLCount(sComp.papszMetadata) );
+        EXPECT_TRUE( pCompressor->pfnFunc != nullptr );
+        EXPECT_EQ( pCompressor->user_data, sComp.user_data );
 
         CPLDestroyCompressorRegistry();
-        ASSERT_TRUE( CPLGetDecompressor(sComp.pszId) == nullptr );
+        EXPECT_TRUE( CPLGetDecompressor(sComp.pszId) == nullptr );
     }
 
     // Test compressor side of cpl_compressor.h
@@ -3194,16 +3227,21 @@ namespace
 
         char** compressors = CPLGetCompressors();
         ASSERT_TRUE( compressors != nullptr );
-        ASSERT_TRUE( CSLFindString(compressors, sComp.pszId) >= 0 );
+        EXPECT_TRUE( CSLFindString(compressors, sComp.pszId) >= 0 );
         for( auto iter = compressors; *iter; ++iter )
         {
             const auto pCompressor = CPLGetCompressor(*iter);
+            if( pCompressor == nullptr )
+            {
+                CSLDestroy( compressors );
+                compressors = nullptr;
+            }
             ASSERT_TRUE( pCompressor );
             const char* pszOptions = CSLFetchNameValue(pCompressor->papszMetadata, "OPTIONS");
             if( pszOptions )
             {
                 auto psNode = CPLParseXMLString(pszOptions);
-                ASSERT_TRUE(psNode);
+                EXPECT_TRUE(psNode);
                 CPLDestroyXMLNode(psNode);
             }
             else
@@ -3213,16 +3251,18 @@ namespace
         }
         CSLDestroy( compressors );
 
-        ASSERT_TRUE( CPLGetCompressor("invalid") == nullptr );
+        EXPECT_TRUE( CPLGetCompressor("invalid") == nullptr );
         const auto pCompressor = CPLGetCompressor(sComp.pszId);
         ASSERT_TRUE( pCompressor );
-        ASSERT_EQ( std::string(pCompressor->pszId), std::string(sComp.pszId) );
-        ASSERT_EQ( CSLCount(pCompressor->papszMetadata), CSLCount(sComp.papszMetadata) );
-        ASSERT_TRUE( pCompressor->pfnFunc != nullptr );
-        ASSERT_EQ( pCompressor->user_data, sComp.user_data );
+        if( pCompressor == nullptr )
+            return;
+        EXPECT_STREQ( pCompressor->pszId, sComp.pszId );
+        EXPECT_EQ( CSLCount(pCompressor->papszMetadata), CSLCount(sComp.papszMetadata) );
+        EXPECT_TRUE( pCompressor->pfnFunc != nullptr );
+        EXPECT_EQ( pCompressor->user_data, sComp.user_data );
 
         CPLDestroyCompressorRegistry();
-        ASSERT_TRUE( CPLGetDecompressor(sComp.pszId) == nullptr );
+        EXPECT_TRUE( CPLGetDecompressor(sComp.pszId) == nullptr );
     }
 
     // Test builtin compressors/decompressor
@@ -3335,8 +3375,12 @@ namespace
         {
             const auto pCompressor = CPLGetCompressor("delta");
             ASSERT_TRUE(pCompressor);
+            if( pCompressor == nullptr )
+                return;
             const auto pDecompressor = CPLGetDecompressor("delta");
             ASSERT_TRUE(pDecompressor);
+            if( pDecompressor == nullptr )
+                return;
 
             const T tabIn[] = { static_cast<T>(-2), 3, 1 };
             T tabCompress[3];
@@ -3653,7 +3697,7 @@ namespace
         }
         else
         {
-            ASSERT_TRUE( bOK );
+            EXPECT_TRUE( bOK );
         }
         CPLFree(pszIn);
         CPLFree(pszRet);
@@ -3674,12 +3718,12 @@ namespace
                 return const_cast<char*>("ok");
             return nullptr;
         };
-        ASSERT_EQ(VSIInstallPluginHandler("/vsimyplugin/", psCallbacks), 0);
+        EXPECT_EQ(VSIInstallPluginHandler("/vsimyplugin/", psCallbacks), 0);
         VSIFreeFilesystemPluginCallbacksStruct(psCallbacks);
         VSILFILE* fp = VSIFOpenL("/vsimyplugin/test", "rb");
-        ASSERT_TRUE(fp != nullptr);
+        EXPECT_TRUE(fp != nullptr);
         VSIFCloseL(fp);
-        ASSERT_TRUE(VSIFOpenL("/vsimyplugin/i_dont_exist", "rb") == nullptr);
+        EXPECT_TRUE(VSIFOpenL("/vsimyplugin/i_dont_exist", "rb") == nullptr);
     }
 
     // Test CPLIsASCII()
@@ -3974,7 +4018,7 @@ namespace
 
         // Mask is set by default
         for (std::size_t i = 0; i < sz; i++) {
-            ASSERT_EQ(CPLMaskGet(m, i), true) << "bit " << i;
+            EXPECT_EQ(CPLMaskGet(m, i), true) << "bit " << i;
         }
 
         VSIFree(m);
@@ -3983,7 +4027,7 @@ namespace
 
         // Mask is unset by default
         for (std::size_t i = 0; i < sz; i++) {
-            ASSERT_EQ(CPLMaskGet(m, i), false) << "bit " << i;
+            EXPECT_EQ(CPLMaskGet(m, i), false) << "bit " << i;
         }
 
         // Set a few bits
@@ -3994,9 +4038,9 @@ namespace
         // Check all bits
         for (std::size_t i = 0; i < sz; i++) {
             if (i == 10 || i == 33 || i == 70) {
-                ASSERT_EQ(CPLMaskGet(m, i), true) << "bit " << i;
+                EXPECT_EQ(CPLMaskGet(m, i), true) << "bit " << i;
             } else {
-                ASSERT_EQ(CPLMaskGet(m, i), false) << "bit " << i;
+                EXPECT_EQ(CPLMaskGet(m, i), false) << "bit " << i;
             }
         }
 
@@ -4007,9 +4051,9 @@ namespace
         // Check all bits
         for (std::size_t i = 0; i < sz; i++) {
             if (i == 33) {
-                ASSERT_EQ(CPLMaskGet(m, i), true) << "bit " << i;
+                EXPECT_EQ(CPLMaskGet(m, i), true) << "bit " << i;
             } else {
-                ASSERT_EQ(CPLMaskGet(m, i), false) << "bit " << i;
+                EXPECT_EQ(CPLMaskGet(m, i), false) << "bit " << i;
             }
         }
 
@@ -4030,8 +4074,8 @@ namespace
 
         // Check all bits
         for (std::size_t i = 0; i < sz; i++) {
-            ASSERT_EQ(CPLMaskGet(m, i), false) << "bit " << i;
-            ASSERT_EQ(CPLMaskGet(m2, i), true) << "bit " << i;
+            EXPECT_EQ(CPLMaskGet(m, i), false) << "bit " << i;
+            EXPECT_EQ(CPLMaskGet(m2, i), true) << "bit " << i;
         }
 
         VSIFree(m);

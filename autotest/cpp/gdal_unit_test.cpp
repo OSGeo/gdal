@@ -160,9 +160,18 @@ int main(int argc, char* argv[])
 
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
 
-    testing::InitGoogleTest(&argc, argv);
+    int nRetCode;
+    try
+    {
+        testing::InitGoogleTest(&argc, argv);
 
-    int nRetCode = RUN_ALL_TESTS();
+        nRetCode = RUN_ALL_TESTS();
+    }
+    catch( const std::exception& e )
+    {
+        nRetCode = 1;
+        fprintf(stderr, "Caught exception %s", e.what());
+    }
 
     CSLDestroy(argv);
     GDALDestroyDriverManager();

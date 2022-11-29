@@ -126,7 +126,7 @@ namespace
         double* params = nullptr;
 
         err_ = OSRExportToPCI(srs_, &proj, &units, &params);
-        ASSERT_EQ(err_, OGRERR_NONE);
+        EXPECT_EQ(err_, OGRERR_NONE);
 
         EXPECT_STREQ(proj, "LCC         D-01");
 

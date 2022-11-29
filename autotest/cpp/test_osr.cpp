@@ -178,38 +178,38 @@ namespace
     TEST_F(test_osr, NAD_shift)
     {
         err_ = OSRSetGS(srs_, -117.0, 100000.0, 100000);
-        ASSERT_EQ(err_, OGRERR_NONE);
+        EXPECT_EQ(err_, OGRERR_NONE);
 
         err_ = OSRSetGeogCS(srs_, "Test GCS", "Test Datum", "WGS84",
             SRS_WGS84_SEMIMAJOR, SRS_WGS84_INVFLATTENING,
             nullptr, 0, nullptr, 0);
-        ASSERT_EQ(err_, OGRERR_NONE);
+        EXPECT_EQ(err_, OGRERR_NONE);
 
         err_ = OSRSetTOWGS84(srs_, 1, 2, 3, 0, 0, 0, 0);
-        ASSERT_EQ(err_, OGRERR_NONE);
+        EXPECT_EQ(err_, OGRERR_NONE);
 
         const int coeffSize = 7;
         double coeff[coeffSize] = { 0 };
         const double expect[coeffSize] = { 1, 2, 3, 0, 0, 0, 0 };
 
         err_ = OSRGetTOWGS84(srs_, coeff, 7);
-        ASSERT_EQ(err_, OGRERR_NONE);
-        ASSERT_TRUE(std::equal(coeff, coeff + coeffSize, expect));
+        EXPECT_EQ(err_, OGRERR_NONE);
+        EXPECT_TRUE(std::equal(coeff, coeff + coeffSize, expect));
         OSRSetLinearUnits(srs_, "Metre", 1);
 
         char* proj4 = nullptr;
         err_ = OSRExportToProj4(srs_, &proj4);
-        ASSERT_EQ(err_, OGRERR_NONE);
+        EXPECT_EQ(err_, OGRERR_NONE);
 
         OGRSpatialReferenceH srs2 = nullptr;
         srs2 = OSRNewSpatialReference(nullptr);
 
         err_ = OSRImportFromProj4(srs2, proj4);
-        ASSERT_EQ(err_, OGRERR_NONE);
+        EXPECT_EQ(err_, OGRERR_NONE);
 
         err_ = OSRGetTOWGS84(srs2, coeff, 7);
-        ASSERT_EQ(err_, OGRERR_NONE);
-        ASSERT_TRUE(std::equal(coeff, coeff + coeffSize, expect));
+        EXPECT_EQ(err_, OGRERR_NONE);
+        EXPECT_TRUE(std::equal(coeff, coeff + coeffSize, expect));
 
         OSRDestroySpatialReference(srs2);
         CPLFree(proj4);
@@ -223,8 +223,8 @@ namespace
 
         char* wkt1 = nullptr;
         err_ = OSRExportToWkt(srs_, &wkt1);
-        ASSERT_EQ(err_, OGRERR_NONE);
-        ASSERT_TRUE(nullptr != wkt1);
+        EXPECT_EQ(err_, OGRERR_NONE);
+        EXPECT_TRUE(nullptr != wkt1);
 
         CPLFree(wkt1);
     }
@@ -237,16 +237,16 @@ namespace
 
         char* wkt1 = nullptr;
         err_ = OSRExportToWkt(srs_, &wkt1);
-        ASSERT_EQ(err_, OGRERR_NONE);
-        ASSERT_TRUE(nullptr != wkt1);
+        EXPECT_EQ(err_, OGRERR_NONE);
+        EXPECT_TRUE(nullptr != wkt1);
 
         err_ = OSRSetFromUserInput(srs_, "EPSGA:4326");
-        ASSERT_EQ(err_, OGRERR_NONE);
+        EXPECT_EQ(err_, OGRERR_NONE);
 
         char* wkt2 = nullptr;
         err_ = OSRExportToWkt(srs_, &wkt2);
-        ASSERT_EQ(err_, OGRERR_NONE);
-        ASSERT_TRUE(nullptr != wkt2);
+        EXPECT_EQ(err_, OGRERR_NONE);
+        EXPECT_TRUE(nullptr != wkt2);
 
         EXPECT_STREQ(wkt1, wkt2);
         CPLFree(wkt1);
@@ -262,7 +262,7 @@ namespace
         OGRSpatialReference oSRS;
         oSRS.importFromEPSG(32611);
 
-        ASSERT_TRUE(oSRS.IsSame(OGRSpatialReference::FromHandle(srs_)));
+        EXPECT_TRUE(oSRS.IsSame(OGRSpatialReference::FromHandle(srs_)));
     }
 
     // Test StripTOWGS84IfKnownDatum
@@ -272,24 +272,24 @@ namespace
         {
             OGRSpatialReference oSRS;
             oSRS.importFromEPSG(4326);
-            ASSERT_TRUE(!oSRS.StripTOWGS84IfKnownDatum());
+            EXPECT_TRUE(!oSRS.StripTOWGS84IfKnownDatum());
         }
         // Custom boundCRS --> do not strip TOWGS84
         {
             OGRSpatialReference oSRS;
             oSRS.SetFromUserInput("+proj=longlat +ellps=GRS80 +towgs84=1,2,3,4,5,6,7");
-            ASSERT_TRUE(!oSRS.StripTOWGS84IfKnownDatum());
+            EXPECT_TRUE(!oSRS.StripTOWGS84IfKnownDatum());
             double vals[7] = { 0 };
-            ASSERT_TRUE(oSRS.GetTOWGS84(vals, 7) == OGRERR_NONE);
+            EXPECT_TRUE(oSRS.GetTOWGS84(vals, 7) == OGRERR_NONE);
         }
         // BoundCRS whose base CRS has a known code --> strip TOWGS84
         {
             OGRSpatialReference oSRS;
             oSRS.importFromEPSG(4326);
             oSRS.SetTOWGS84(1,2,3,4,5,6,7);
-            ASSERT_TRUE(oSRS.StripTOWGS84IfKnownDatum());
+            EXPECT_TRUE(oSRS.StripTOWGS84IfKnownDatum());
             double vals[7] = { 0 };
-            ASSERT_TRUE(oSRS.GetTOWGS84(vals, 7) != OGRERR_NONE);
+            EXPECT_TRUE(oSRS.GetTOWGS84(vals, 7) != OGRERR_NONE);
         }
         // BoundCRS whose datum code is known --> strip TOWGS84
         {
@@ -302,9 +302,9 @@ namespace
                 "AUTHORITY[\"FOO\",\"1\"]],"
                 "PRIMEM[\"Greenwich\",0],"
                 "UNIT[\"degree\",0.0174532925199433]]");
-            ASSERT_TRUE(oSRS.StripTOWGS84IfKnownDatum());
+            EXPECT_TRUE(oSRS.StripTOWGS84IfKnownDatum());
             double vals[7] = { 0 };
-            ASSERT_TRUE(oSRS.GetTOWGS84(vals, 7) != OGRERR_NONE);
+            EXPECT_TRUE(oSRS.GetTOWGS84(vals, 7) != OGRERR_NONE);
         }
         // BoundCRS whose datum name is known --> strip TOWGS84
         {
@@ -316,9 +316,9 @@ namespace
                 "TOWGS84[1,2,3,4,5,6,7]],"
                 "PRIMEM[\"Greenwich\",0],"
                 "UNIT[\"degree\",0.0174532925199433]]");
-            ASSERT_TRUE(oSRS.StripTOWGS84IfKnownDatum());
+            EXPECT_TRUE(oSRS.StripTOWGS84IfKnownDatum());
             double vals[7] = { 0 };
-            ASSERT_TRUE(oSRS.GetTOWGS84(vals, 7) != OGRERR_NONE);
+            EXPECT_TRUE(oSRS.GetTOWGS84(vals, 7) != OGRERR_NONE);
         }
         // BoundCRS whose datum name is unknown --> do not strip TOWGS84
         {
@@ -330,9 +330,9 @@ namespace
                 "TOWGS84[1,2,3,4,5,6,7]],"
                 "PRIMEM[\"Greenwich\",0],"
                 "UNIT[\"degree\",0.0174532925199433]]");
-            ASSERT_TRUE(!oSRS.StripTOWGS84IfKnownDatum());
+            EXPECT_TRUE(!oSRS.StripTOWGS84IfKnownDatum());
             double vals[7] = { 0 };
-            ASSERT_TRUE(oSRS.GetTOWGS84(vals, 7) == OGRERR_NONE);
+            EXPECT_TRUE(oSRS.GetTOWGS84(vals, 7) == OGRERR_NONE);
         }
     }
 
@@ -373,7 +373,7 @@ namespace
             "        AREA[\"World.\"],\n"
             "        BBOX[-90,-180,90,180]],\n"
             "    ID[\"ESRI\",54049]]");
-        ASSERT_EQ(oSRS.GetEPSGGeogCS(), 4326);
+        EXPECT_EQ(oSRS.GetEPSGGeogCS(), 4326);
     }
 
     // Test GetOGCURN
@@ -381,20 +381,27 @@ namespace
     {
         {
             OGRSpatialReference oSRS;
-            EXPECT_TRUE(oSRS.GetOGCURN() == nullptr);
+            char* pszRet = oSRS.GetOGCURN();
+            EXPECT_TRUE(pszRet == nullptr);
+            CPLFree(pszRet);
         }
         {
             OGRSpatialReference oSRS;
             oSRS.SetFromUserInput("+proj=longlat");
-            EXPECT_TRUE(oSRS.GetOGCURN() == nullptr);
+            char* pszRet = oSRS.GetOGCURN();
+            EXPECT_TRUE(pszRet == nullptr);
+            CPLFree(pszRet);
         }
 
         {
             OGRSpatialReference oSRS;
             oSRS.importFromEPSG(32631);
             char* pszRet = oSRS.GetOGCURN();
-            ASSERT_TRUE(pszRet != nullptr);
-            EXPECT_STREQ(pszRet, "urn:ogc:def:crs:EPSG::32631");
+            EXPECT_TRUE(pszRet != nullptr);
+            if( pszRet )
+            {
+                EXPECT_STREQ(pszRet, "urn:ogc:def:crs:EPSG::32631");
+            }
             CPLFree(pszRet);
         }
 
@@ -402,8 +409,11 @@ namespace
             OGRSpatialReference oSRS;
             oSRS.SetFromUserInput("EPSG:32631+5773");
             char* pszRet = oSRS.GetOGCURN();
-            ASSERT_TRUE(pszRet != nullptr);
-            ASSERT_TRUE(strcmp(pszRet, "urn:ogc:def:crs,crs:EPSG::32631,crs:EPSG::5773") == 0);
+            EXPECT_TRUE(pszRet != nullptr);
+            if( pszRet )
+            {
+                EXPECT_STREQ(pszRet, "urn:ogc:def:crs,crs:EPSG::32631,crs:EPSG::5773");
+            }
             CPLFree(pszRet);
         }
     }
