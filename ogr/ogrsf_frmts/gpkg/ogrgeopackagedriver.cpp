@@ -503,6 +503,8 @@ COMPRESSION_OPTIONS
 
     poDriver->SetMetadataItem( GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS, "Name SRS CoordinateEpoch" );
 
+    poDriver->SetMetadataItem( GDAL_DMD_RELATIONSHIP_RELATED_TABLE_TYPES, "features media simple_attributes attributes tiles" );
+
 #ifdef ENABLE_SQL_GPKG_FORMAT
     poDriver->SetMetadataItem("ENABLE_SQL_GPKG_FORMAT", "YES");
 #endif
