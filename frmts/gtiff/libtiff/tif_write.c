@@ -341,10 +341,13 @@ TIFFWriteRawStrip(TIFF* tif, uint32_t strip, void* data, tmsize_t cc)
 			return ((tmsize_t) -1);
 	}
 
-	tif->tif_curstrip = strip;
+    if (tif->tif_curstrip != strip)
+    {
+        tif->tif_curstrip = strip;
 
-	/* this informs TIFFAppendToStrip() we have changed or reset strip */
-	tif->tif_curoff = 0;
+        /* this informs TIFFAppendToStrip() we have changed or reset strip */
+        tif->tif_curoff = 0;
+    }
 
         if (td->td_stripsperimage == 0) {
                 TIFFErrorExtR(tif, module,"Zero strips per image");
