@@ -57,7 +57,13 @@ to select the proper database.
 
 The connection may contain the optional **Driver** parameter if a custom
 SQL server driver should be loaded (like FreeTDS). The default is **{SQL
-Server}**
+Server}**.
+
+Authentication is supported either through a **trusted_conection** or
+through username (**UID**) and password (**PWD**). As providing username
+and password on the commandline can be a security issue, login credentials
+can also be more securely stored in user defined environment variables
+*MSSQLSPATIAL_UID* and *MSSQLSPATIAL_PWD*.
 
 Layers
 ------
@@ -208,3 +214,11 @@ Connecting with username/password
    ::
    
       ogrinfo -al   MSSQL:server=.\MSSQLSERVER2008;database=geodb;trusted_connection=no;UID=user;PWD=pwd
+
+Connecting with username/password stored in environment variables
+
+   ::
+   
+      export MSSQLSPATIAL_UID=user
+      export MSSQLSPATIAL_PWD=pwd
+      ogrinfo -al   MSSQL:server=.\MSSQLSERVER2008;database=geodb;trusted_connection=no

@@ -690,6 +690,8 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, bool bUpdate,
     char* pszGeometryFormat = nullptr;
     char* pszConnectionName = CPLStrdup(pszNewName + 6);
     char* pszDriver = nullptr;
+    char* pszUID = nullptr;
+    char* pszPWD = nullptr;
     int nCurrent, nNext, nTerm;
     nCurrent = nNext = nTerm = static_cast<int>(strlen(pszConnectionName));
 
@@ -714,6 +716,14 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, bool bUpdate,
             nCurrent, nNext, nTerm, FALSE))
             continue;
 
+        if (ParseValue(&pszUID, pszConnectionName, "uid=",
+            nCurrent, nNext, nTerm, FALSE))
+            continue;
+
+        if (ParseValue(&pszPWD, pszConnectionName, "pwd=",
+            nCurrent, nNext, nTerm, FALSE))
+            continue;
+
         if (ParseValue(&pszGeometryFormat, pszConnectionName,
             "geometryformat=", nCurrent, nNext, nTerm, TRUE))
         {
@@ -735,6 +745,8 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, bool bUpdate,
                 CPLFree(pszGeometryFormat);
                 CPLFree(pszConnectionName);
                 CPLFree(pszDriver);
+                CPLFree(pszUID);
+                CPLFree(pszPWD);
                 return FALSE;
             }
 
@@ -754,6 +766,8 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, bool bUpdate,
         CPLFree(pszGeometryFormat);
         CPLFree(pszConnectionName);
         CPLFree(pszDriver);
+        CPLFree(pszUID);
+        CPLFree(pszPWD);
         return FALSE;
     }
 
@@ -832,6 +846,8 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, bool bUpdate,
         pszDriver = CPLStrdup("{ODBC Driver 13 for SQL Server}");
 #elif MSODBCSQL_VERSION == 17
         pszDriver = CPLStrdup("{ODBC Driver 17 for SQL Server}");
+#elif MSODBCSQL_VERSION == 18
+        pszDriver = CPLStrdup("{ODBC Driver 18 for SQL Server}");
 #else
         pszDriver = CPLStrdup("{SQL Server}");
 #endif
@@ -840,6 +856,34 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, bool bUpdate,
     }
 
     CPLFree(pszDriver);
+
+    if ( pszUID == nullptr )
+    {
+        const char* pszUIDConst = CPLGetConfigOption("MSSQLSPATIAL_UID", nullptr);
+        if( pszUIDConst )
+            pszUID = CPLStrdup(pszUIDConst);
+    }
+    if ( pszUID != nullptr )
+    {
+        char* pszConnectionName2 = pszConnectionName;
+        pszConnectionName = CPLStrdup(CPLSPrintf("%s;UID=%s", pszConnectionName2, pszUID));
+        CPLFree(pszConnectionName2);
+    }
+    if ( pszPWD == nullptr )
+    {
+        const char* pszPWDConst = CPLGetConfigOption("MSSQLSPATIAL_PWD", nullptr);
+        if( pszPWDConst )
+            pszPWD = CPLStrdup(pszPWDConst);
+    }
+    if ( pszPWD != nullptr)
+    {
+        char* pszConnectionName2 = pszConnectionName;
+        pszConnectionName = CPLStrdup(CPLSPrintf("%s;PWD=%s", pszConnectionName2, pszPWD));
+        CPLFree(pszConnectionName2);
+    }
+
+    CPLFree(pszUID);
+    CPLFree(pszPWD);
 
     /* Initialize the SQL Server connection. */
     if( !oSession.EstablishSession( pszConnectionName, "", "" ) )
