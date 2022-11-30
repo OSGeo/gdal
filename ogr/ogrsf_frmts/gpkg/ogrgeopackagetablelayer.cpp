@@ -7392,6 +7392,14 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
             {
                 break;
             }
+
+            // Install query logging callback
+            if (m_poDS->pfnQueryLoggerFunc)
+            {
+                task->m_poDS->SetQueryLoggerFunc(m_poDS->pfnQueryLoggerFunc,
+                                                 m_poDS->poQueryLoggerArg);
+            }
+
             task->m_poLayer = poOtherLayer;
             task->m_psArrowArray = cpl::make_unique<struct ArrowArray>();
             memset(task->m_psArrowArray.get(), 0, sizeof(struct ArrowArray));

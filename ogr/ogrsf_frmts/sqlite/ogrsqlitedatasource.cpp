@@ -842,6 +842,24 @@ void OGRSQLiteBaseDataSource::LoadRelationshipsFromForeignKeys() const
 #endif
 }
 
+/***********************************************************************/
+/*                         prepareSql()                                */
+/***********************************************************************/
+
+int OGRSQLiteBaseDataSource::prepareSql(sqlite3 *db, const char *zSql,
+                                        int nByte, sqlite3_stmt **ppStmt,
+                                        const char **pzTail)
+{
+    const int rc{sqlite3_prepare_v2(db, zSql, nByte, ppStmt, pzTail)};
+    if (rc != SQLITE_OK && pfnQueryLoggerFunc)
+    {
+        std::string error{"Error preparing query: "};
+        error.append(sqlite3_errmsg(db));
+        pfnQueryLoggerFunc(zSql, error.c_str(), -1, -1, poQueryLoggerArg);
+    }
+    return rc;
+}
+
 /************************************************************************/
 /*                        OGRSQLiteDataSource()                         */
 /************************************************************************/
@@ -1890,8 +1908,7 @@ bool OGRSQLiteDataSource::InitWithEPSG()
                     }
 
                     sqlite3_stmt *hInsertStmt = nullptr;
-                    rc = sqlite3_prepare_v2(hDB, osCommand, -1, &hInsertStmt,
-                                            nullptr);
+                    rc = prepareSql(hDB, osCommand, -1, &hInsertStmt, nullptr);
 
                     if (pszProjCS)
                     {
@@ -1961,8 +1978,7 @@ bool OGRSQLiteDataSource::InitWithEPSG()
                                      nSRSId, nSRSId);
 
                     sqlite3_stmt *hInsertStmt = nullptr;
-                    rc = sqlite3_prepare_v2(hDB, osCommand, -1, &hInsertStmt,
-                                            nullptr);
+                    rc = prepareSql(hDB, osCommand, -1, &hInsertStmt, nullptr);
 
                     if (rc == SQLITE_OK)
                         rc = sqlite3_bind_text(hInsertStmt, 1, pszWKT, -1,
@@ -3199,9 +3215,9 @@ OGRLayer *OGRSQLiteDataSource::ExecuteSQL(const char *pszSQLCommand,
         }
     }
 
-    int rc = sqlite3_prepare_v2(GetDB(), osSQLCommand.c_str(),
-                                static_cast<int>(osSQLCommand.size()),
-                                &hSQLStmt, nullptr);
+    int rc =
+        prepareSql(GetDB(), osSQLCommand.c_str(),
+                   static_cast<int>(osSQLCommand.size()), &hSQLStmt, nullptr);
 
     if (rc != SQLITE_OK)
     {
@@ -4199,7 +4215,7 @@ int OGRSQLiteDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
     }
 
     sqlite3_stmt *hSelectStmt = nullptr;
-    int rc = sqlite3_prepare_v2(hDB, osCommand, -1, &hSelectStmt, nullptr);
+    int rc = prepareSql(hDB, osCommand, -1, &hSelectStmt, nullptr);
 
     if (rc == SQLITE_OK)
         rc = sqlite3_bind_text(hSelectStmt, 1,
@@ -4427,7 +4443,7 @@ int OGRSQLiteDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
     }
 
     sqlite3_stmt *hInsertStmt = nullptr;
-    rc = sqlite3_prepare_v2(hDB, osCommand, -1, &hInsertStmt, nullptr);
+    rc = prepareSql(hDB, osCommand, -1, &hInsertStmt, nullptr);
 
     for (int i = 0; apszToInsert[i] != nullptr; i++)
     {
@@ -4662,6 +4678,56 @@ void OGRSQLiteBaseDataSource::SetEnvelopeForSQL(const CPLString &osSQL,
                                                 const OGREnvelope &oEnvelope)
 {
     oMapSQLEnvelope[osSQL] = oEnvelope;
+}
+
+/***********************************************************************/
+/*                       SetQueryLoggerFunc()                          */
+/***********************************************************************/
+
+bool OGRSQLiteBaseDataSource::SetQueryLoggerFunc(
+    GDALQueryLoggerFunc pfnQueryLoggerFuncIn, void *poQueryLoggerArgIn)
+{
+
+#if SQLITE_VERSION_NUMBER < 3014000
+    (void)pfnQueryLoggerFuncIn;
+    (void)poQueryLoggerArgIn;
+    return false;
+#else
+
+    pfnQueryLoggerFunc = pfnQueryLoggerFuncIn;
+    poQueryLoggerArg = poQueryLoggerArgIn;
+
+    if (pfnQueryLoggerFunc)
+    {
+        sqlite3_trace_v2(
+            hDB, SQLITE_TRACE_PROFILE,
+            [](unsigned int /* traceProfile */, void *context,
+               void *preparedStatement, void *executionTime) -> int
+            {
+                if (context)
+                {
+                    const std::string sql{sqlite3_expanded_sql(
+                        reinterpret_cast<sqlite3_stmt *>(preparedStatement))};
+                    const uint64_t executionTimeMilliSeconds{
+                        static_cast<uint64_t>(
+                            *reinterpret_cast<uint64_t *>(executionTime) /
+                            1e+6)};
+                    OGRSQLiteBaseDataSource *source{
+                        reinterpret_cast<OGRSQLiteBaseDataSource *>(context)};
+                    if (source->pfnQueryLoggerFunc)
+                    {
+                        source->pfnQueryLoggerFunc(sql.c_str(), nullptr, -1,
+                                                   executionTimeMilliSeconds,
+                                                   source->poQueryLoggerArg);
+                    }
+                }
+                return 0;
+            },
+            reinterpret_cast<void *>(this));
+        return true;
+    }
+    return false;
+#endif
 }
 
 /************************************************************************/

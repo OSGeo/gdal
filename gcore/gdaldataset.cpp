@@ -7525,6 +7525,16 @@ void GDALDataset::ShareLockWithParentDataset(GDALDataset *poParentDataset)
 }
 
 /************************************************************************/
+/*                   SetQueryLoggerFunc()                               */
+/************************************************************************/
+
+bool GDALDataset::SetQueryLoggerFunc(CPL_UNUSED GDALQueryLoggerFunc callback,
+                                     CPL_UNUSED void *context)
+{
+    return false;
+}
+
+/************************************************************************/
 /*                          EnterReadWrite()                            */
 /************************************************************************/
 
@@ -9003,6 +9013,35 @@ bool GDALDatasetUpdateRelationship(GDALDatasetH hDS,
             failureReason.empty() ? nullptr : CPLStrdup(failureReason.c_str());
     }
     return bRet;
+}
+
+/************************************************************************/
+/*                  GDALDatasetSetQueryLoggerFunc()                     */
+/************************************************************************/
+
+/**
+ * Sets the SQL query logger callback.
+ *
+ * When supported by the driver, the callback will be called with
+ * the executed SQL text, the error message, the execution time in milliseconds,
+ * the number of records fetched/affected and the client status data.
+ *
+ * A value of -1 in the execution time or in the number of records indicates
+ * that the values are unknown.
+ *
+ * @param hDS                   Dataset handle.
+ * @param pfnQueryLoggerFunc    Callback function
+ * @param poQueryLoggerArg      Opaque client status data
+ * @return                      true in case of success.
+ * @since                       GDAL 3.7
+ */
+bool GDALDatasetSetQueryLoggerFunc(GDALDatasetH hDS,
+                                   GDALQueryLoggerFunc pfnQueryLoggerFunc,
+                                   void *poQueryLoggerArg)
+{
+    VALIDATE_POINTER1(hDS, __func__, false);
+    return GDALDataset::FromHandle(hDS)->SetQueryLoggerFunc(pfnQueryLoggerFunc,
+                                                            poQueryLoggerArg);
 }
 
 //! @cond Doxygen_Suppress

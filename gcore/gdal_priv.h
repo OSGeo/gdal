@@ -475,6 +475,15 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     int GetRasterCount();
     GDALRasterBand *GetRasterBand(int);
 
+    /**
+     * @brief SetQueryLoggerFunc
+     * @param pfnQueryLoggerFuncIn query logger function callback
+     * @param poQueryLoggerArgIn arguments passed to the query logger function
+     * @return true on succcess
+     */
+    virtual bool SetQueryLoggerFunc(GDALQueryLoggerFunc pfnQueryLoggerFuncIn,
+                                    void *poQueryLoggerArgIn);
+
     /** Class returned by GetBands() that act as a container for raster bands.
      */
     class CPL_DLL Bands
