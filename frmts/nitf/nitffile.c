@@ -1466,7 +1466,6 @@ static int NITFWriteTREsFromOptions(VSILFILE *fp, vsi_l_offset nOffsetUDIDL,
     int bIgnoreBLOCKA =
         CSLFetchNameValue(papszOptions, "BLOCKA_BLOCK_COUNT") != NULL;
     int iOption;
-    int nTREPrefixLen = (int)strlen(pszTREPrefix);
     const bool bReserveSpaceForTREOverflow =
         CSLFetchNameValue(papszOptions, "RESERVE_SPACE_FOR_TRE_OVERFLOW") !=
         NULL;
@@ -1482,6 +1481,7 @@ static int NITFWriteTREsFromOptions(VSILFILE *fp, vsi_l_offset nOffsetUDIDL,
         int nContentLength;
         const char *pszSpace;
         int bIsHex = FALSE;
+        int nTREPrefixLen = (int)strlen(pszTREPrefix);
 
         if (!EQUALN(papszOptions[iOption], pszTREPrefix, nTREPrefixLen))
             continue;
