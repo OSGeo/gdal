@@ -3788,18 +3788,22 @@ def test_nitf_84():
 
 def test_nitf_85():
     ds = gdal.GetDriverByName("NITF").Create(
-        "/vsimem/nitf_85.ntf", 1, 1, options=["TRE=HEX/TSTTRE=414243"]
+        "/vsimem/nitf_85.ntf",
+        1,
+        1,
+        options=["TRE=BEFORE=FOO", "TRE=HEX/TSTTRE=414243", "TRE=AFTERx=BAR"],
     )
     ds = None
 
     ds = gdal.Open("/vsimem/nitf_85.ntf")
-    data = ds.GetMetadata("TRE")["TSTTRE"]
+    data = ds.GetMetadata("TRE")
     ds = None
 
     gdal.GetDriverByName("NITF").Delete("/vsimem/nitf_85.ntf")
 
-    expected_data = "ABC"
-    assert data == expected_data
+    assert data["BEFORE"] == "FOO"
+    assert data["TSTTRE"] == "ABC"
+    assert data["AFTERx"] == "BAR"
 
 
 ###############################################################################
