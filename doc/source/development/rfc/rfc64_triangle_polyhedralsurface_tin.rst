@@ -39,10 +39,10 @@ Reference documents
    1.2.1 <http://portal.opengeospatial.org/files/?artifact_id=25355>`__,
    a.k.a. SFA 1.2.1
 -  `BNF of WKT
-   encoding <https://github.com/postgis/postgis/blob/svn-trunk/doc/bnf-wkt.txt>`__:
+   encoding <https://github.com/postgis/postgis/blob/master/doc/bnf-wkt.txt>`__:
    extracted from SQL/MM Part 3
 -  `BNF of WKB
-   encoding <https://github.com/postgis/postgis/blob/svn-trunk/doc/bnf-wkb.txt>`__:
+   encoding <https://github.com/postgis/postgis/blob/master/doc/bnf-wkb.txt>`__:
    extracted from SQL/MM Part 3
 
 Core changes
