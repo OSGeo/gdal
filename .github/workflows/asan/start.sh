@@ -142,7 +142,7 @@ rm ogr/ogr_ogdi.py
 # new-delete-type-mismatch error in gpsbabel binary that we can't suppress
 rm ogr/ogr_gpsbabel.py
 
-find \
+find -L \
     ogr gcore gdrivers osr alg gnm utilities pyscripts \
     -name '*.py' ! -name netcdf_cfchecks.py ! -name "__init__.py" ! -path 'ogr/data/*' \
     -print \
