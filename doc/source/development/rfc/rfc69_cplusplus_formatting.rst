@@ -157,6 +157,18 @@ Partial application of the code formatting rules would create more work
 without delivering the full benefit [MongoDB] leading to codebase with
 different styles mixed.
 
+To skip the "big reformat" commit from ``git blame``, git offers a mechanism
+to [git_blame_ignore] , a pre-configured ignore file ``.git-blame-ignore-revs``
+will be provided in the source tree with the "big reformat" commit 
+hash in it.
+
+The ignore file can be specified on the command line with 
+``git blame --ignore-revs-file .git-blame-ignore-revs`` or it can be set 
+permanently with ``git config blame.ignoreRevsFile .git-blame-ignore-revs``.
+
+The a.m. instructions will be added to the `developers documentation <https://gdal.org/development/dev_practices.html>`__.
+
+
 Branches
 ^^^^^^^^
 
@@ -210,3 +222,4 @@ References
    ``clang-format`` interactive guide and builder
 -  `https://zed0.co.uk/clang-format-configurator/ <https://zed0.co.uk/clang-format-configurator/>`__
 -  `https://trac.osgeo.org/geos/wiki/RFC4 <https://trac.osgeo.org/geos/wiki/RFC4>`__
+- [git_blame_ignore] `Ignore Commits in Blame View` <Git https://docs.github.com/en/repositories/working-with-files/using-files/viewing-a-file#ignore-commits-in-the-blame-view>`__
