@@ -52,7 +52,7 @@ query:
 - number of affected/retrieved records
 
 Further research is necessary to determine if the following 
-information could be also provideed:
+information could be also provided:
 
 - time taken to execute the query
 
