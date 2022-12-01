@@ -42,7 +42,7 @@ context to be passed back to client code).
 
 The callback function will then be called from the drivers that
 make database calls each time a SQL command is sent to the backend,
-in case of prepared queries the actual SQL after prameter
+in case of prepared queries the actual SQL after parameter
 substitutions should be sent.
 
 The callback may provide additional information about the executed
@@ -51,21 +51,26 @@ query:
 - error string message
 - number of affected/retrieved records
 
+Further research is necessary to determine if the following 
+information could be also provideed:
+
+- time taken to execute the query
+
 Example API:
 
 .. code-block:: c++
 
     // Function signature
-    typedef int (CPL_STDCALL *GDALQueryLoggerFunc)(const char *pszSQL, const char *pszError, long long llNumRecords, void *pQueryLoggerArg);
+    typedef int (*GDALQueryLoggerFunc)(const char *pszSQL, const char *pszError, int64_t llNumRecords, void *pQueryLoggerArg);
 
     // C-API
     bool CPL_DLL GDALDatasetSetQueryLoggerFunc(GDALDatasetH hDS, GDALQueryLoggerFunc pfnQueryLoggerFunc, void* poQueryLoggerArg );
         GDALQueryLoggerFunc GDALDatasetQueryLoggerFunc( GDALDatasetH hDS );
 
     // Function call from the driver
-    if ( m_poDS->QueryLoggerFunc() )
+    if ( m_poDS->pfQueryLoggerFunc )
     {
-        (void)(*m_poDS->QueryLoggerFunc())( soSQL.c_str(), nullptr, -1, m_poDS->QueryLoggerArg() );
+        m_poDS->pfQueryLoggerFunc( soSQL.c_str(), nullptr, -1, m_poDS->QueryLoggerArg() );
     }
 
 
@@ -90,6 +95,15 @@ None.
 The callback would be set from a new method, no changes
 to the class constructor would be needed.
 
+SWIG Bindings
+-------------
+
+This implementation will not be exposed to bindings.
+
+Testing
+-------
+
+A C++ test will be added to the test suite.
 
 Related tickets and PRs:
 ------------------------
