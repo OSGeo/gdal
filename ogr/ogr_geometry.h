@@ -3385,7 +3385,10 @@ class CPL_DLL OGRGeometryFactory
 };
 
 OGRwkbGeometryType CPL_DLL OGRFromOGCGeomType( const char *pszGeomType );
-const char CPL_DLL * OGRToOGCGeomType( OGRwkbGeometryType eGeomType );
+const char CPL_DLL * OGRToOGCGeomType( OGRwkbGeometryType eGeomType,
+                                       bool bCamelCase = false,
+                                       bool bAddZM = false,
+                                       bool bSpaceBeforeZM = false);
 
 //! @cond Doxygen_Suppress
 typedef struct _OGRPreparedGeometry OGRPreparedGeometry;

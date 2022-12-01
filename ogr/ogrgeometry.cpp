@@ -2503,51 +2503,78 @@ OGRwkbGeometryType OGRFromOGCGeomType( const char *pszGeomType )
 
 /** Map OGR geometry format constants to corresponding OGC geometry type.
  * @param eGeomType OGR geometry type
+ * @param bCamelCase Whether the return should be like "MultiPoint"
+ *        (bCamelCase=true) or "MULTIPOINT" (bCamelCase=false, default)
+ * @param bAddZM Whether to include Z, M or ZM suffix for non-2D geometries.
+ *               Default is false.
+ * @param bSpaceBeforeZM Whether to include a space character before the Z/M/ZM
+ *                       suffix. Default is false.
  * @return string with OGC geometry type (without dimensionality)
  */
-const char * OGRToOGCGeomType( OGRwkbGeometryType eGeomType )
+const char * OGRToOGCGeomType( OGRwkbGeometryType eGeomType,
+                               bool bCamelCase,
+                               bool bAddZM,
+                               bool bSpaceBeforeZM )
 {
+    const char* pszRet = "";
     switch( wkbFlatten(eGeomType) )
     {
         case wkbUnknown:
-            return "GEOMETRY";
+            pszRet = "Geometry"; break;
         case wkbPoint:
-            return "POINT";
+            pszRet = "Point"; break;
         case wkbLineString:
-            return "LINESTRING";
+            pszRet = "LineString"; break;
         case wkbPolygon:
-            return "POLYGON";
+            pszRet = "Polygon"; break;
         case wkbMultiPoint:
-            return "MULTIPOINT";
+            pszRet = "MultiPoint"; break;
         case wkbMultiLineString:
-            return "MULTILINESTRING";
+            pszRet = "MultiLineString"; break;
         case wkbMultiPolygon:
-            return "MULTIPOLYGON";
+            pszRet = "MultiPolygon"; break;
         case wkbGeometryCollection:
-            return "GEOMETRYCOLLECTION";
+            pszRet = "GeometryCollection"; break;
         case wkbCircularString:
-            return "CIRCULARSTRING";
+            pszRet = "CircularString"; break;
         case wkbCompoundCurve:
-            return "COMPOUNDCURVE";
+            pszRet = "CompoundCurve"; break;
         case wkbCurvePolygon:
-            return "CURVEPOLYGON";
+            pszRet = "CurvePolygon"; break;
         case wkbMultiCurve:
-            return "MULTICURVE";
+            pszRet = "MultiCurve"; break;
         case wkbMultiSurface:
-            return "MULTISURFACE";
+            pszRet = "MultiSurface"; break;
         case wkbTriangle:
-            return "TRIANGLE";
+            pszRet = "Triangle"; break;
         case wkbPolyhedralSurface:
-            return "POLYHEDRALSURFACE";
+            pszRet = "PolyhedralSurface"; break;
         case wkbTIN:
-            return "TIN";
+            pszRet = "Tin"; break;
         case wkbCurve:
-            return "CURVE";
+            pszRet = "Curve"; break;
         case wkbSurface:
-            return "SURFACE";
+            pszRet = "Surface"; break;
         default:
-            return "";
+            break;
     }
+    if( bAddZM)
+    {
+        const bool bHasZ = CPL_TO_BOOL(OGR_GT_HasZ(eGeomType));
+        const bool bHasM = CPL_TO_BOOL(OGR_GT_HasM(eGeomType));
+        if( bHasZ || bHasM )
+        {
+            if( bSpaceBeforeZM )
+                pszRet = CPLSPrintf("%s ", pszRet);
+            if( bHasZ )
+                pszRet = CPLSPrintf("%sZ", pszRet);
+            if( bHasM )
+                pszRet = CPLSPrintf("%sM", pszRet);
+        }
+    }
+    if( !bCamelCase )
+        pszRet = CPLSPrintf("%s", CPLString(pszRet).toupper().c_str());
+    return pszRet;
 }
 
 /************************************************************************/
