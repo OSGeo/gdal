@@ -71,6 +71,11 @@ edit data.
 
     Enable listing of features. This has the opposite effect of :option:`-so`.
 
+    This option should be used with caution if using the library function
+    :cpp:func:`GDALVectorInfo` and/or :option:`-json`, as the whole output of
+    ogrinfo will be built in memory. Consequently, when used on a large
+    collection of features, RAM may be exhausted.
+
     .. versionadded:: 3.7
 
 .. option:: -q
