@@ -61,8 +61,10 @@ Example API:
 .. code-block:: c++
 
     // Function signature
-    typedef int (*GDALQueryLoggerFunc)(const char *pszSQL, const char *pszError, int64_t llNumRecords, void *pQueryLoggerArg);
+    typedef void (*GDALQueryLoggerFunc)(const char *pszSQL, const char *pszError, int64_t lNumRecords, int64_t lExecutionTimeMilliseconds, void *pQueryLoggerArg);
 
+    bool CPL_DLL GDALDatasetSetQueryLoggerFunc(GDALDatasetH hDS, GDALQueryLoggerFunc pfnQueryLoggerFunc, void* poQueryLoggerArg );
+    
     // C-API
     bool CPL_DLL GDALDatasetSetQueryLoggerFunc(GDALDatasetH hDS, GDALQueryLoggerFunc pfnQueryLoggerFunc, void* poQueryLoggerArg );
         GDALQueryLoggerFunc GDALDatasetQueryLoggerFunc( GDALDatasetH hDS );
@@ -70,7 +72,8 @@ Example API:
     // Function call from the driver
     if ( m_poDS->pfQueryLoggerFunc )
     {
-        m_poDS->pfQueryLoggerFunc( soSQL.c_str(), nullptr, -1, m_poDS->QueryLoggerArg() );
+        // -1 for time and num records means no information available
+        m_poDS->pfQueryLoggerFunc( soSQL.c_str(), nullptr, elapsedTime, numAffectedRecords, m_poDS->QueryLoggerArg() );
     }
 
 
@@ -105,10 +108,6 @@ Testing
 
 A C++ test will be added to the test suite.
 
-Related tickets and PRs:
-------------------------
-
-TBD
 
 Voting history
 --------------
