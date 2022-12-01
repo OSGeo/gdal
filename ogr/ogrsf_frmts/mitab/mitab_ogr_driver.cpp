@@ -235,6 +235,8 @@ void RegisterOGRTAB()
                               "Integer Real String Date DateTime Time");
     poDriver->SetMetadataItem( GDAL_DMD_ALTER_FIELD_DEFN_FLAGS, "Name Type WidthPrecision" );
     poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES_READ, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES_WRITE, "YES" );
 
     poDriver->pfnOpen = OGRTABDriverOpen;
     poDriver->pfnIdentify = OGRTABDriverIdentify;

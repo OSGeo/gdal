@@ -3420,8 +3420,10 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 printf( "  Supports: Creating geometry fields with NOT NULL constraint.\n" );/*ok*/
             if( CPLFetchBool( papszMD, GDAL_DCAP_NONSPATIAL, false ) )
                 printf( "  No support for geometries.\n" );/*ok*/
-            if( CPLFetchBool( papszMD, GDAL_DCAP_FEATURE_STYLES, false ) )
-                printf( "  Supports: Feature styles.\n" );/*ok*/
+            if( CPLFetchBool( papszMD, GDAL_DCAP_FEATURE_STYLES_READ, false ) )
+                printf( "  Supports: Reading feature styles.\n" );/*ok*/
+            if( CPLFetchBool( papszMD, GDAL_DCAP_FEATURE_STYLES_WRITE, false ) )
+                printf( "  Supports: Writing feature styles.\n" );/*ok*/
             if( CPLFetchBool( papszMD, GDAL_DCAP_COORDINATE_EPOCH, false ) )
                 printf( "  Supports: Coordinate epoch.\n" );/*ok*/
             if( CPLFetchBool( papszMD, GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, false ) )
