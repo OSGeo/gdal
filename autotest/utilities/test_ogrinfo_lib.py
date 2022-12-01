@@ -578,3 +578,15 @@ def test_ogrinfo_lib_json_features():
         "domains": {},
     }
     assert ret == expected_ret
+
+
+###############################################################################
+# Test json output with ZM geometry type
+
+
+def test_ogrinfo_lib_json_zm():
+
+    ds = gdal.OpenEx("../ogr/data/shp/testpointzm.shp")
+
+    ret = gdal.VectorInfo(ds, format="json")
+    assert ret["layers"][0]["geometryFields"][0]["type"] == "PointZM"

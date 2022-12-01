@@ -633,7 +633,11 @@ static void ReportOnLayer( CPLString& osRet,
                     CPLJSONObject oGeometryField;
                     oGeometryFields.Add(oGeometryField);
                     oGeometryField.Set("name", poGFldDefn->GetNameRef());
-                    oGeometryField.Set("type", OGRGeometryTypeToName(poGFldDefn->GetType()));
+                    oGeometryField.Set("type", OGRToOGCGeomType(
+                        poGFldDefn->GetType(),
+                        /*bCamelCase=*/ true,
+                        /*bAddZm=*/ true,
+                        /*bSpaceBeforeZM=*/ false));
                     oGeometryField.Set("nullable", CPL_TO_BOOL(poGFldDefn->IsNullable()));
                     if( psOptions->bExtent && poLayer->GetExtent(iGeom, &oExt, TRUE) == OGRERR_NONE )
                     {
@@ -1206,6 +1210,8 @@ static void ReportHiearchicalLayers(CPLString& osRet,
 char *GDALVectorInfo( GDALDatasetH hDataset, const GDALVectorInfoOptions *psOptions )
 {
     auto poDS = GDALDataset::FromHandle(hDataset);
+    if( poDS == nullptr )
+        return nullptr;
 
     GDALDriver *poDriver = poDS->GetDriver();
 
