@@ -37,7 +37,9 @@ edit data.
 
 .. option:: -json
 
-    Display the output in json format.
+    Display the output in json format, conforming to the
+    `ogrinfo.schema.json <https://github.com/OSGeo/gdal/blob/master/data/ogrinfo_output.schema.json>`__
+    schema.
 
     .. versionadded:: 3.7
 

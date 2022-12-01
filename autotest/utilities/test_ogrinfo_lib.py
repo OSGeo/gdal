@@ -27,6 +27,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import pytest
+
 from osgeo import gdal
 
 ###############################################################################
@@ -578,6 +580,35 @@ def test_ogrinfo_lib_json_features():
         "domains": {},
     }
     assert ret == expected_ret
+
+
+###############################################################################
+# Validate json schema output
+
+
+def _validate_json_output(instance):
+
+    try:
+        from jsonschema import validate
+    except ImportError:
+        pytest.skip("jsonschema module not available")
+
+    gdal_data = gdal.GetConfigOption("GDAL_DATA")
+    if gdal_data is None:
+        pytest.skip("GDAL_DATA not defined")
+
+    import json
+
+    schema = json.loads(open(gdal_data + "/ogrinfo_output.schema.json", "rb").read())
+
+    validate(instance=instance, schema=schema)
+
+
+def test_ogrinfo_lib_json_validate():
+
+    ds = gdal.OpenEx("../ogr/data/poly.shp")
+
+    _validate_json_output(gdal.VectorInfo(ds, format="json", dumpFeatures=True))
 
 
 ###############################################################################
