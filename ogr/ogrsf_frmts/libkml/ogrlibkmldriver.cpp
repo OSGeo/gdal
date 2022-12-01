@@ -349,6 +349,8 @@ void RegisterOGRLIBKML()
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
                                "Integer Real String" );
     poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES_READ, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES_WRITE, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
 
     poDriver->pfnOpen = OGRLIBKMLDriverOpen;
