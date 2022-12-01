@@ -1183,7 +1183,23 @@ void ApplySpatialFilter(OGRLayer* poLayer, OGRGeometry* poSpatialFilter,
        poSpatialFilterReprojected->assignSpatialReference(poSpatSRS);
        OGRSpatialReference* poSpatialFilterTargetSRS  = poSourceSRS ? poSourceSRS : poLayer->GetSpatialRef();
        if( poSpatialFilterTargetSRS )
+       {
+           // When transforming the spatial filter from its spat_srs to the
+           // layer SRS, make sure to densify it sufficiently to avoid issues
+           constexpr double SEGMENT_DISTANCE_METRE = 10 * 1000;
+           if( poSpatSRS->IsGeographic() )
+           {
+               const double LENGTH_OF_ONE_DEGREE = poSpatSRS->GetSemiMajor(nullptr) * M_PI / 180.0;
+               poSpatialFilterReprojected->segmentize(
+                   SEGMENT_DISTANCE_METRE / LENGTH_OF_ONE_DEGREE);
+           }
+           else if( poSpatSRS->IsProjected() )
+           {
+               poSpatialFilterReprojected->segmentize(
+                   SEGMENT_DISTANCE_METRE / poSpatSRS->GetLinearUnits(nullptr));
+           }
            poSpatialFilterReprojected->transformTo(poSpatialFilterTargetSRS);
+       }
        else
            CPLError(CE_Warning, CPLE_AppDefined, "cannot determine layer SRS for %s.", poLayer->GetDescription());
    }
