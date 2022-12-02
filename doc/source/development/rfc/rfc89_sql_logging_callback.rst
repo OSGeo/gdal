@@ -45,16 +45,13 @@ make database calls each time a SQL command is sent to the backend,
 in case of prepared queries the actual SQL after parameter
 substitutions should be sent.
 
-The callback may provide additional information about the executed
-query:
+The callback will provide additional information about the executed
+query (if available):
 
 - error string message
 - number of affected/retrieved records
-
-Further research is necessary to determine if the following 
-information could be also provided:
-
 - time taken to execute the query
+
 
 Example API:
 
@@ -77,7 +74,7 @@ Example API:
     }
 
 
-The callback function will be initially used by the GeoPackage driver only.
+The callback function will be initially used by the SQLite-based drivers only (GPKG included).
 
 
 Efficiency considerations
@@ -88,6 +85,10 @@ check if the function pointer is `nullptr` and call the function if it is
 not.
 
 The cost of the a.m. check is probably negligible on most architectures.
+
+In order to catch SQLite prepare errors, a prepare function wrapper will be 
+called instead of the sqlite3 API C function, this implies the cost of
+a function call (which might be inlined if necessary).
 
 
 Backward compatibility
