@@ -145,7 +145,7 @@ EXECUTE_PROCESS(
 )
 
 message(STATUS ${DOTNET_SDKS})
-string(REGEX REPLACE "\\[.+\\]" "" DOTNET_SDKS ${DOTNET_SDKS} )
+string(REGEX REPLACE "\\[.+[^\\[]\\]" "" DOTNET_SDKS ${DOTNET_SDKS} )
 message(STATUS ${DOTNET_SDKS})
 string(REGEX REPLACE "[\\r\\n]+" ";" DOTNET_SDKS ${DOTNET_SDKS} )
 message(STATUS ${DOTNET_SDKS})
