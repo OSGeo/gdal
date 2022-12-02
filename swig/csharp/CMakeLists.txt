@@ -26,9 +26,11 @@ set(CSHARP_CONFIG
     CACHE STRING "Config to be used to compile the C# artifacts > RELEASE|CONFIG")
 
 string(REGEX MATCH "[0-9]+\.*[0-9]+" CSHARP_SDK ${CSHARP_LIBRARY_VERSION} )
-message (STATUS "Requested DotNet SDK Level: " ${CSHARP_SDK})
+message(STATUS "Requested DotNet SDK Level: " ${CSHARP_SDK} )
 
-if ( NOT ( DOTNET_SDKS MATCHES ".*" ${CSHARP_SDK} ".*" ) ) 
+if ( DOTNET_SDKS MATCHES ".*" ${CSHARP_SDK} ".*" ) 
+  message(STATUS "DotNet SDK " ${CSHARP_LIBRARY_VERSION} " found" )
+else ()
   message(STATUS "The Requested DotNet SDK was not found")
   message(STATUS "Available SDKS: " ${DOTNET_SDKS})
   RETURN ()
