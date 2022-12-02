@@ -28,7 +28,7 @@ set(CSHARP_CONFIG
 string(REGEX MATCH "[0-9]+\.*[0-9]+" CSHARP_SDK ${CSHARP_LIBRARY_VERSION} )
 message(STATUS "Requested DotNet SDK Level: " ${CSHARP_SDK} )
 
-if ( DOTNET_SDKS MATCHES ".*" ${CSHARP_SDK} ".*" ) 
+if ( DOTNET_SDKS MATCHES ".*${CSHARP_SDK}.*" ) 
   message(STATUS "DotNet SDK " ${CSHARP_LIBRARY_VERSION} " found" )
 else ()
   message(STATUS "The Requested DotNet SDK was not found")
