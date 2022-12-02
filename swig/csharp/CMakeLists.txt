@@ -32,7 +32,7 @@ if ( DOTNET_SDKS MATCHES ".*${CSHARP_SDK}.*" )
   message(STATUS "DotNet SDK " ${CSHARP_LIBRARY_VERSION} " found" )
 else ()
   message(STATUS "The Requested DotNet SDK was not found")
-  message(STATUS "Available SDKS: " ${DOTNET_SDKS})
+  message(STATUS "Available SDKS: " "${DOTNET_SDKS}")
   RETURN ()
 endif ()
 
