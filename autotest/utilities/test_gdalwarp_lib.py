@@ -1804,6 +1804,23 @@ def test_gdalwarp_lib_135():
     data = struct.unpack("B" * 1, ds.GetRasterBand(1).ReadRaster())[0]
     assert data == 120, "Bad value"
 
+    # Forward transform with explicit US survey foot unit
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_Float32)
+    src_ds.SetGeoTransform([500000, 1, 0, 4000000, 0, -1])
+    sr = osr.SpatialReference()
+    sr.ImportFromProj4(
+        "+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=./tmp/grid.gtx +vunits=m +no_defs"
+    )
+    src_ds.SetProjection(sr.ExportToWkt())
+    src_ds.GetRasterBand(1).Fill(100 / 0.3048006096012192)
+    src_ds.GetRasterBand(1).SetUnitType("US survey foot")
+
+    ds = gdal.Warp(
+        "", src_ds, format="MEM", dstSRS="EPSG:4979", outputType=gdal.GDT_Byte
+    )
+    data = struct.unpack("B" * 1, ds.GetRasterBand(1).ReadRaster())[0]
+    assert data == 120, "Bad value"
+
     # Forward transform with explicit unhandled unit
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     src_ds.SetGeoTransform([500000, 1, 0, 4000000, 0, -1])
@@ -1819,6 +1836,30 @@ def test_gdalwarp_lib_135():
         ds = gdal.Warp("", src_ds, format="MEM", dstSRS="EPSG:4979")
     data = struct.unpack("B" * 1, ds.GetRasterBand(1).ReadRaster())[0]
     assert data == 120, "Bad value"
+
+    # Transform to same CRS (implicit)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src_ds.SetGeoTransform([500000, 1, 0, 4000000, 0, -1])
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("EPSG:6597+6360")
+    src_ds.SetProjection(sr.ExportToWkt())
+    src_ds.GetRasterBand(1).Fill(100)
+
+    ds = gdal.Warp("", src_ds, format="MEM")
+    data = struct.unpack("B" * 1, ds.GetRasterBand(1).ReadRaster())[0]
+    assert data == 100, "Bad value"
+
+    # Transform to same CRS (explicit)
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src_ds.SetGeoTransform([500000, 1, 0, 4000000, 0, -1])
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("EPSG:6597+6360")
+    src_ds.SetProjection(sr.ExportToWkt())
+    src_ds.GetRasterBand(1).Fill(100)
+
+    ds = gdal.Warp("", src_ds, format="MEM", dstSRS="EPSG:6597+6360")
+    data = struct.unpack("B" * 1, ds.GetRasterBand(1).ReadRaster())[0]
+    assert data == 100, "Bad value"
 
     grid_ds = gdal.GetDriverByName("GTX").Create(
         "tmp/empty_grid.gtx", 3, 3, 1, gdal.GDT_Float32
