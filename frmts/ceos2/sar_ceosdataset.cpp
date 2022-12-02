@@ -1570,6 +1570,7 @@ int SAR_CEOSDataset::ScanForMapProjection()
         char         szId[32];
 
         snprintf( szId, sizeof(szId), "%d", i+1 );
+        CPLFree(pasGCPList[i].pszId);
         pasGCPList[i].pszId = CPLStrdup( szId );
 
         GetCeosField( record, GCPOffset+(GCPFieldSize*2)*i, FieldSize, szField );
