@@ -13,6 +13,7 @@
 #   DOTNET_FOUND          - True if dotnet executable is found
 #   DOTNET_EXE            - Dotnet executable
 #   DOTNET_VERSION        - Dotnet version as reported by dotnet executable
+#   DOTNET_SDKS           - Dotnet SDKs loaded as reported by dotnet executable
 #   NUGET_EXE             - Nuget executable (WIN32 only)
 #   NUGET_CACHE_PATH      - Nuget package cache path
 # 
@@ -136,6 +137,14 @@ EXECUTE_PROCESS(
     OUTPUT_VARIABLE DOTNET_VERSION
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
+
+EXECUTE_PROCESS(
+    COMMAND ${DOTNET_EXE} --list-sdks
+    OUTPUT_VARIABLE DOTNET_SDKS
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+string(REGEX REPLACE "\[.+\]" "" DOTNET_SDKS ${DOTNET_SDKS} )
+string(REGEX REPLACE "[\r\n]+" ";" DOTNET_SDKS ${DOTNET_SDKS} )
 
 IF(WIN32)
    FIND_PROGRAM(NUGET_EXE nuget PATHS ${CMAKE_BINARY_DIR}/tools)

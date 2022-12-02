@@ -16,14 +16,23 @@ set(GDAL_CSHARP_INSTALL_DIR
     CACHE PATH "Installation sub-directory for CSharp bindings")
 
 set(CSHARP_LIBRARY_VERSION
-    "net5.0"
+    "net6.0"
     CACHE STRING ".NET version to be used for libraries")
 set(CSHARP_APPLICATION_VERSION
-    "net5.0"
+    "net6.0"
     CACHE STRING ".NET version to be used for the sample Applications")
 set(CSHARP_CONFIG
     "RELEASE"
     CACHE STRING "Config to be used to compile the C# artifacts > RELEASE|CONFIG")
+
+string(REGEX MATCH "[0-9]+\.*[0-9]+" CSHARP_SDK CSHARP_LIBRARY_VERSION )
+message (STATUS "Requested DotNet SDK Level :" ${CSHARP_SDK})
+
+if (NOT DOTNET_SDKS MATCHES CSHARP_SDK) 
+  message(STATUS "The Request DotNet SDK was not found")
+  message(STATUS "Available SDKS" DOTNET_SDKS)
+  RETURN ()
+endif ()
 
 set(_VERSION_STRING ${GDAL_VERSION_NO_DEV_SUFFIX})
 if (GDAL_DEV_SUFFIX)
@@ -55,12 +64,12 @@ if (DOTNET_FOUND)
   dotnet_register_local_repository("local" ${_DN_REPO_PATH})
 endif ()
 
-# Cop[y build files
+# Copy build files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gdal.snk ${CMAKE_CURRENT_BINARY_DIR}/gdal.snk COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Directory.Build.props ${CMAKE_CURRENT_BINARY_DIR}/Directory.Build.props
                COPYONLY)
 
-# Crate some placemarker packages for dependencies
+# Create some placemarker packages for dependencies
 if (DOTNET_FOUND)
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/osgeo.gdal.core.csproj.in"
                  "${CMAKE_CURRENT_BINARY_DIR}/osgeo.gdal.core.csproj")
