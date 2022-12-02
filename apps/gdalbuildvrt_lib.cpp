@@ -1196,7 +1196,8 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
             for(int j=0;j<nMaxSelectedBandNo + (bAddAlpha && psDatasetProperties->bLastBandIsAlpha ? 1 : 0);j++)
             {
                 GDALProxyPoolDatasetAddSrcBandDescription(hProxyDS,
-                                                asBandProperties[j].dataType,
+                                                j < static_cast<int>(asBandProperties.size()) ?
+                                                    asBandProperties[j].dataType : GDT_Byte,
                                                 psDatasetProperties->nBlockXSize,
                                                 psDatasetProperties->nBlockYSize);
             }
