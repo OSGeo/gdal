@@ -1999,8 +1999,9 @@ void GDALGeoPackageDataset::LoadRelationshipsUsingRelatedTablesExtension() const
                 continue;
             }
 
+            const std::string osRelationName = GenerateNameForRelationship(pszBaseTableName, pszRelatedTableName, pszRelationName);
+
             std::string osType{};
-            std::string osRelationName = pszRelationName;
             // defined requirement classes -- for these types the relation name will be specific string
             // value from the related tables extension. In this case we need to construct a unique
             // relationship name based on the related tables
@@ -2011,9 +2012,6 @@ void GDALGeoPackageDataset::LoadRelationshipsUsingRelatedTablesExtension() const
                  || EQUAL(pszRelationName, "tiles" ))
             {
                  osType = pszRelationName;
-                 std::ostringstream stream;
-                 stream << pszBaseTableName << '_' << pszRelatedTableName << '_' << pszRelationName;
-                 osRelationName = stream.str();
             }
             else
             {
@@ -2037,6 +2035,121 @@ void GDALGeoPackageDataset::LoadRelationshipsUsingRelatedTablesExtension() const
         }
     }
 }
+
+/************************************************************************/
+/*                GenerateNameForRelationship()                         */
+/************************************************************************/
+
+std::string GDALGeoPackageDataset::GenerateNameForRelationship(const char *pszBaseTableName, const char *pszRelatedTableName, const char *pszType )
+{
+    // defined requirement classes -- for these types the relation name will be specific string
+    // value from the related tables extension. In this case we need to construct a unique
+    // relationship name based on the related tables
+    if ( EQUAL(pszType, "media" )
+         || EQUAL(pszType, "simple_attributes" )
+         || EQUAL(pszType, "features" )
+         || EQUAL(pszType, "attributes" )
+         || EQUAL(pszType, "tiles" ))
+    {
+         std::ostringstream stream;
+         stream << pszBaseTableName << '_' << pszRelatedTableName << '_' << pszType;
+         return stream.str();
+    }
+    else
+    {
+        // user defined types default to features
+        return pszType;
+    }
+}
+
+/************************************************************************/
+/*                       ValidateRelationship()                         */
+/************************************************************************/
+
+bool GDALGeoPackageDataset::ValidateRelationship(const GDALRelationship * poRelationship, std::string& failureReason )
+{
+
+    if ( poRelationship->GetCardinality() != GDALRelationshipCardinality::GRC_MANY_TO_MANY )
+    {
+        failureReason = "Only many to many relationships are supported";
+        return false;
+    }
+
+    std::string osRelatedTableType = poRelationship->GetRelatedTableType();
+    if ( !osRelatedTableType.empty() &&
+          osRelatedTableType != "features" &&
+          osRelatedTableType != "media" &&
+          osRelatedTableType != "simple_attributes" &&
+          osRelatedTableType != "attributes" &&
+          osRelatedTableType != "tiles" )
+    {
+        failureReason =  ( "Related table type " + osRelatedTableType + " is not a valid value for the GeoPackage specification. "
+                           "Valid values are: features, media, simple_attributes, attributes, tiles.").c_str();
+        return false;
+    }
+
+    const std::string& osLeftTableName = poRelationship->GetLeftTableName();
+    OGRGeoPackageLayer* poLeftTable = cpl::down_cast<OGRGeoPackageLayer*>(GetLayerByName(osLeftTableName.c_str()));
+    if( !poLeftTable )
+    {
+        failureReason = ( "Left table " + osLeftTableName + " is not an existing layer in the dataset" ).c_str();
+        return false;
+    }
+    const std::string &osRightTableName = poRelationship->GetRightTableName();
+    OGRGeoPackageLayer* poRightTable = cpl::down_cast<OGRGeoPackageLayer*>(GetLayerByName(osRightTableName.c_str()));
+    if( !poRightTable )
+    {
+        failureReason = ( "Right table " + osRightTableName + " is not an existing layer in the dataset" ).c_str();
+        return false;
+    }
+
+    const auto& aosLeftTableFields = poRelationship->GetLeftTableFields();
+    if ( aosLeftTableFields.empty() )
+    {
+        failureReason = "No left table fields were specified";
+        return false;
+    }
+    else if ( aosLeftTableFields.size() > 1 )
+    {
+        failureReason = "Only a single left table field is permitted for the GeoPackage specification";
+        return false;
+    }
+    else
+    {
+        // validate left field exists
+        if( poLeftTable->GetLayerDefn()->GetFieldIndex(aosLeftTableFields[0].c_str()) < 0
+                && !EQUAL( poLeftTable->GetFIDColumn(), aosLeftTableFields[0].c_str() ) )
+        {
+            failureReason = ("Left table field " + aosLeftTableFields[0] + " does not exist in " + osLeftTableName ).c_str();
+            return false;
+        }
+    }
+
+    const auto& aosRightTableFields = poRelationship->GetRightTableFields();
+    if ( aosRightTableFields.empty() )
+    {
+        failureReason = "No right table fields were specified";
+        return false;
+    }
+    else if ( aosRightTableFields.size() > 1 )
+    {
+        failureReason = "Only a single right table field is permitted for the GeoPackage specification";
+        return false;
+    }
+    else
+    {
+        // validate right field exists
+        if( poRightTable->GetLayerDefn()->GetFieldIndex(aosRightTableFields[0].c_str()) < 0
+            && !EQUAL( poRightTable->GetFIDColumn(), aosRightTableFields[0].c_str() ) )
+        {
+            failureReason = ("Right table field " + aosRightTableFields[0] + " does not exist in " + osRightTableName ).c_str();
+            return false;
+        }
+    }
+
+    return true;
+}
+
 
 /************************************************************************/
 /*                         InitRaster()                                 */
@@ -3619,6 +3732,33 @@ bool GDALGeoPackageDataset::HasGpkgextRelationsTable() const
                 "SELECT 1 FROM sqlite_master WHERE name = 'gpkgext_relations'"
                 "AND type IN ('table', 'view')", nullptr);
     return nCount == 1;
+}
+
+/************************************************************************/
+/*                    CreateRelationsTableIfNecessary()                 */
+/************************************************************************/
+
+bool GDALGeoPackageDataset::CreateRelationsTableIfNecessary()
+{
+    if ( HasGpkgextRelationsTable() )
+    {
+        return true;
+    }
+
+    if( OGRERR_NONE != SQLCommand(GetDB(),
+        "CREATE TABLE gpkgext_relations ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "base_table_name TEXT NOT NULL,"
+        "base_primary_column TEXT NOT NULL DEFAULT 'id',"
+        "related_table_name TEXT NOT NULL,"
+        "related_primary_column TEXT NOT NULL DEFAULT 'id',"
+        "relation_name TEXT NOT NULL,"
+        "mapping_table_name TEXT NOT NULL UNIQUE);") )
+    {
+        return false;
+    }
+
+    return true;
 }
 
 /************************************************************************/
@@ -6326,9 +6466,11 @@ int GDALGeoPackageDataset::TestCapability( const char * pszCap )
         return TRUE;
     else if( EQUAL(pszCap, ODsCZGeometries) )
         return TRUE;
-    else if( EQUAL(pszCap,ODsCRandomLayerWrite) )
-        return GetUpdate();
-    else if( EQUAL(pszCap, ODsCAddFieldDomain) )
+    else if( EQUAL(pszCap,ODsCRandomLayerWrite) ||
+             EQUAL(pszCap, GDsCAddRelationship) ||
+             EQUAL(pszCap, GDsCDeleteRelationship) ||
+             EQUAL(pszCap, GDsCUpdateRelationship) ||
+             EQUAL(pszCap, ODsCAddFieldDomain) )
         return GetUpdate();
 
     return OGRSQLiteBaseDataSource::TestCapability(pszCap);
@@ -8746,4 +8888,367 @@ const GDALRelationship *GDALGeoPackageDataset::GetRelationship( const std::strin
         return nullptr;
 
     return it->second.get();
+}
+
+
+/************************************************************************/
+/*                          AddRelationship()                           */
+/************************************************************************/
+
+bool GDALGeoPackageDataset::AddRelationship(std::unique_ptr<GDALRelationship>&& relationship,
+                                            std::string& failureReason)
+{
+    if( !GetUpdate() )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "AddRelationship() not supported on read-only dataset");
+        return false;
+    }
+
+    const std::string osRelationshipName = GenerateNameForRelationship(relationship->GetLeftTableName().c_str(),
+                                                                       relationship->GetRightTableName().c_str(),
+                                                                       relationship->GetRelatedTableType().c_str() );
+    // sanity checks
+    if( GetRelationship(osRelationshipName) != nullptr )
+    {
+        failureReason = "A relationship of identical name already exists";
+        return false;
+    }
+
+    if ( !ValidateRelationship(relationship.get(), failureReason ) )
+    {
+        return false;
+    }
+
+    if( CreateExtensionsTableIfNecessary() != OGRERR_NONE )
+    {
+        return false;
+    }
+    if ( !CreateRelationsTableIfNecessary() )
+    {
+        failureReason = "Could not create gpkgext_relations table";
+        return false;
+    }
+    if( SQLGetInteger(GetDB(),
+        "SELECT 1 FROM gpkg_extensions WHERE "
+        "table_name = 'gpkgext_relations'", nullptr) != 1 )
+    {
+        if( OGRERR_NONE != SQLCommand(GetDB(),
+            "INSERT INTO gpkg_extensions "
+            "(table_name,column_name,extension_name,definition,scope) "
+            "VALUES ('gpkgext_relations', NULL, 'gpkg_related_tables', "
+            "'http://www.geopackage.org/18-000.html', "
+            "'read-write')") )
+        {
+            failureReason = "Could not create gpkg_extensions entry for gpkgext_relations";
+            return false;
+        }
+    }
+
+    const std::string &osLeftTableName = relationship->GetLeftTableName();
+    const std::string &osRightTableName = relationship->GetRightTableName();
+    const auto& aosLeftTableFields = relationship->GetLeftTableFields();
+    const auto& aosRightTableFields = relationship->GetRightTableFields();
+
+    std::string osRelatedTableType = relationship->GetRelatedTableType();
+    if ( osRelatedTableType.empty() )
+    {
+        osRelatedTableType = "features";
+    }
+
+    // generate mapping table if not set
+    CPLString osMappingTableName = relationship->GetMappingTableName();
+    if ( osMappingTableName.empty() )
+    {
+        int nIndex = 1;
+        osMappingTableName = osLeftTableName + "_" + osRightTableName;
+        while ( FindLayerIndex( osMappingTableName.c_str() ) >= 0 )
+        {
+            nIndex += 1;
+            osMappingTableName.Printf( "%s_%s_%d", osLeftTableName.c_str(), osRightTableName.c_str(), nIndex );
+        }
+
+        // determine whether base/related keys are unique
+        bool bBaseKeyIsUnique = false;
+        {
+            const std::set<std::string> uniqueBaseFieldsUC = SQLGetUniqueFieldUCConstraints(GetDB(), osLeftTableName.c_str());
+            if ( uniqueBaseFieldsUC.find( CPLString( aosLeftTableFields[0] ).toupper() ) != uniqueBaseFieldsUC.end() )
+            {
+                bBaseKeyIsUnique = true;
+            }
+        }
+        bool bRelatedKeyIsUnique = false;
+        {
+            const std::set<std::string> uniqueRelatedFieldsUC = SQLGetUniqueFieldUCConstraints(GetDB(), osRightTableName.c_str());
+            if ( uniqueRelatedFieldsUC.find( CPLString( aosRightTableFields[0] ).toupper() ) != uniqueRelatedFieldsUC.end() )
+            {
+                bRelatedKeyIsUnique = true;
+            }
+        }
+
+        // create mapping table
+
+        std::string osBaseIdDefinition = "base_id INTEGER";
+        if ( bBaseKeyIsUnique )
+        {
+            char* pszSQL = sqlite3_mprintf(" CONSTRAINT 'fk_base_id_%q' REFERENCES \"%w\"(\"%w\") ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED",
+                                           osMappingTableName.c_str(),
+                                           osLeftTableName.c_str(),
+                                           aosLeftTableFields[0].c_str()
+                                           );
+            osBaseIdDefinition += pszSQL;
+            sqlite3_free(pszSQL);
+        }
+
+        std::string osRelatedIdDefinition = "related_id INTEGER";
+        if ( bRelatedKeyIsUnique )
+        {
+            char* pszSQL = sqlite3_mprintf(" CONSTRAINT 'fk_related_id_%q' REFERENCES \"%w\"(\"%w\") ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED",
+                                           osMappingTableName.c_str(),
+                                           osRightTableName.c_str(),
+                                           aosRightTableFields[0].c_str()
+                                           );
+            osRelatedIdDefinition += pszSQL;
+            sqlite3_free(pszSQL);
+        }
+
+        char* pszSQL = sqlite3_mprintf("CREATE TABLE \"%w\" ("
+                                       "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                                       "%s, %s);",
+                                       osMappingTableName.c_str(),
+                                       osBaseIdDefinition.c_str(),
+                                       osRelatedIdDefinition.c_str()
+                                       );
+        OGRErr eErr = SQLCommand(hDB, pszSQL);
+        sqlite3_free(pszSQL);
+        if ( eErr != OGRERR_NONE )
+        {
+            failureReason = ( "Could not create mapping table " + osMappingTableName ).c_str();
+            return false;
+        }
+
+        pszSQL = sqlite3_mprintf("CREATE INDEX \"idx_%w_base_id\" ON \"%w\" (base_id);",
+                                 osMappingTableName.c_str(),
+                                 osMappingTableName.c_str());
+        eErr = SQLCommand(hDB, pszSQL);
+        sqlite3_free(pszSQL);
+        if ( eErr != OGRERR_NONE )
+        {
+            failureReason = ( "Could not create index for " + osMappingTableName + " (base_id)").c_str();
+            return false;
+        }
+
+        pszSQL = sqlite3_mprintf("CREATE INDEX \"idx_%qw_related_id\" ON \"%w\" (related_id);",
+                                 osMappingTableName.c_str(),
+                                 osMappingTableName.c_str());
+        eErr = SQLCommand(hDB, pszSQL);
+        sqlite3_free(pszSQL);
+        if ( eErr != OGRERR_NONE )
+        {
+            failureReason = ( "Could not create index for " + osMappingTableName + " (related_id)").c_str();
+            return false;
+        }
+    }
+    else
+    {
+        // validate mapping table structure
+        if( OGRGeoPackageTableLayer* poLayer = cpl::down_cast<OGRGeoPackageTableLayer*>(GetLayerByName(osMappingTableName)) )
+        {
+            if( poLayer->GetLayerDefn()->GetFieldIndex("base_id") < 0 )
+            {
+                failureReason = ("Field base_id must exist in " + osMappingTableName ).c_str();
+                return false;
+            }
+            if( poLayer->GetLayerDefn()->GetFieldIndex("related_id") < 0 )
+            {
+                failureReason = ("Field related_id must exist in " + osMappingTableName ).c_str();
+                return false;
+            }
+        }
+        else
+        {
+            failureReason = ("Could not retrieve table " + osMappingTableName ).c_str();
+            return false;
+        }
+    }
+
+    char* pszSQL = sqlite3_mprintf( "INSERT INTO gpkg_extensions "
+                                    "(table_name,column_name,extension_name,definition,scope) "
+                                    "VALUES ('%q', NULL, 'gpkg_related_tables', "
+                                    "'http://www.geopackage.org/18-000.html', "
+                                    "'read-write')",
+                                    osMappingTableName.c_str());
+    OGRErr eErr = SQLCommand(hDB, pszSQL);
+    sqlite3_free(pszSQL);
+    if ( eErr != OGRERR_NONE )
+    {
+        failureReason = ( "Could not insert mapping table " + osMappingTableName + " into gpkg_extensions").c_str();
+        return false;
+    }
+
+    pszSQL = sqlite3_mprintf( "INSERT INTO gpkgext_relations "
+                                    "(base_table_name,base_primary_column,related_table_name,related_primary_column,relation_name,mapping_table_name) "
+                                    "VALUES ('%q', '%q', '%q', '%q', '%q', '%q')",
+                              osLeftTableName.c_str(),
+                              aosLeftTableFields[0].c_str(),
+                              osRightTableName.c_str(),
+                              aosRightTableFields[0].c_str(),
+                              osRelatedTableType.c_str(),
+                              osMappingTableName.c_str()
+                              );
+    eErr = SQLCommand(hDB, pszSQL);
+    sqlite3_free(pszSQL);
+    if ( eErr != OGRERR_NONE )
+    {
+        failureReason = "Could not insert relationship into gpkgext_relations";
+        return false;
+    }
+
+    ClearCachedRelationships();
+    LoadRelationships();
+    return true;
+}
+
+/************************************************************************/
+/*                         DeleteRelationship()                         */
+/************************************************************************/
+
+bool GDALGeoPackageDataset::DeleteRelationship(const std::string& name,
+                                               std::string& failureReason)
+{
+    if( eAccess != GA_Update )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "DeleteRelationship() not supported on read-only dataset");
+        return false;
+    }
+
+    // ensure relationships are up to date before we try to remove one
+    ClearCachedRelationships();
+    LoadRelationships();
+
+    std::string osMappingTableName;
+    {
+        const GDALRelationship * poRelationship = GetRelationship(name);
+        if( poRelationship == nullptr )
+        {
+            failureReason = "Could not find relationship with name " + name;
+            return false;
+        }
+
+        osMappingTableName = poRelationship->GetMappingTableName();
+    }
+
+    // DeleteLayerCommon will delete existing relationship objects, so we can't refer to poRelationship
+    // or any of its members previously obtained here
+    if ( DeleteLayerCommon(osMappingTableName.c_str()) != OGRERR_NONE )
+    {
+        failureReason = "Could not remove mapping layer name " + osMappingTableName;
+
+        // relationships may have been left in an inconsistent state -- reload them now
+        ClearCachedRelationships();
+        LoadRelationships();
+        return false;
+    }
+
+    ClearCachedRelationships();
+    LoadRelationships();
+    return true;
+}
+
+/************************************************************************/
+/*                        UpdateRelationship()                          */
+/************************************************************************/
+
+bool GDALGeoPackageDataset::UpdateRelationship(std::unique_ptr<GDALRelationship>&& relationship,
+                                               std::string& failureReason)
+{
+    if( eAccess != GA_Update )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "UpdateRelationship() not supported on read-only dataset");
+        return false;
+    }
+
+    // ensure relationships are up to date before we try to update one
+    ClearCachedRelationships();
+    LoadRelationships();
+
+    const std::string& osRelationshipName = relationship->GetName();
+    const std::string& osLeftTableName = relationship->GetLeftTableName();
+    const std::string& osRightTableName = relationship->GetRightTableName();
+    const std::string& osMappingTableName = relationship->GetMappingTableName();
+    const auto& aosLeftTableFields = relationship->GetLeftTableFields();
+    const auto& aosRightTableFields = relationship->GetRightTableFields();
+
+    // sanity checks
+    {
+        const GDALRelationship* poExistingRelationship = GetRelationship(osRelationshipName);
+        if( poExistingRelationship == nullptr )
+        {
+            failureReason = "The relationship should already exist to be updated";
+            return false;
+        }
+
+        if ( !ValidateRelationship(relationship.get(), failureReason ) )
+        {
+            return false;
+        }
+
+        // we don't permit changes to the participating tables
+        if ( osLeftTableName != poExistingRelationship->GetLeftTableName() )
+        {
+            failureReason = ("Cannot change base table from " + poExistingRelationship->GetLeftTableName() + " to " + osLeftTableName ).c_str();
+            return false;
+        }
+        if ( osRightTableName != poExistingRelationship->GetRightTableName() )
+        {
+            failureReason = ("Cannot change related table from " + poExistingRelationship->GetRightTableName() + " to " + osRightTableName ).c_str();
+            return false;
+        }
+        if ( osMappingTableName != poExistingRelationship->GetMappingTableName() )
+        {
+            failureReason = ("Cannot change mapping table from " + poExistingRelationship->GetMappingTableName() + " to " + osMappingTableName ).c_str();
+            return false;
+        }
+    }
+
+    std::string osRelatedTableType = relationship->GetRelatedTableType();
+    if ( osRelatedTableType.empty() )
+    {
+        osRelatedTableType = "features";
+    }
+
+    char* pszSQL = sqlite3_mprintf( "DELETE FROM gpkgext_relations WHERE mapping_table_name='%q'",
+                              osMappingTableName.c_str()
+                              );
+    OGRErr eErr = SQLCommand(hDB, pszSQL);
+    sqlite3_free(pszSQL);
+    if ( eErr != OGRERR_NONE )
+    {
+        failureReason = "Could not delete old relationship from gpkgext_relations";
+        return false;
+    }
+
+    pszSQL = sqlite3_mprintf( "INSERT INTO gpkgext_relations "
+                                    "(base_table_name,base_primary_column,related_table_name,related_primary_column,relation_name,mapping_table_name) "
+                                    "VALUES ('%q', '%q', '%q', '%q', '%q', '%q')",
+                              osLeftTableName.c_str(),
+                              aosLeftTableFields[0].c_str(),
+                              osRightTableName.c_str(),
+                              aosRightTableFields[0].c_str(),
+                              osRelatedTableType.c_str(),
+                              osMappingTableName.c_str()
+                              );
+    eErr = SQLCommand(hDB, pszSQL);
+    sqlite3_free(pszSQL);
+    if ( eErr != OGRERR_NONE )
+    {
+        failureReason = "Could not insert updated relationship into gpkgext_relations";
+        return false;
+    }
+
+    ClearCachedRelationships();
+    LoadRelationships();
+    return true;
 }
