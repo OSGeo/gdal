@@ -1391,6 +1391,8 @@ def InfoOptions(options=None, format='text', deserialize=True,
         new_options = options
         if format == 'json':
             new_options += ['-json']
+        elif format != "text":
+            raise Exception("Invalid value for format")
         if '-json' in new_options:
             format = 'json'
         if computeMinMax:
@@ -1428,7 +1430,7 @@ def InfoOptions(options=None, format='text', deserialize=True,
     return (GDALInfoOptions(new_options), format, deserialize)
 
 def Info(ds, **kwargs):
-    """Return information on a dataset.
+    """Return information on a raster dataset.
 
     Parameters
     ----------
@@ -1446,6 +1448,103 @@ def Info(ds, **kwargs):
     if isinstance(ds, str):
         ds = Open(ds)
     ret = InfoInternal(ds, opts)
+    if format == 'json' and deserialize:
+        import json
+        ret = json.loads(ret)
+    return ret
+
+
+def VectorInfoOptions(options=None,
+                      format='text',
+                      deserialize=True,
+                      layers=None,
+                      dumpFeatures=False,
+                      SQLStatement=None,
+                      SQLDialect=None,
+                      where=None,
+                      wktFormat=None):
+    """ Create a VectorInfoOptions() object that can be passed to gdal.VectorInfo()
+        options can be be an array of strings, a string or let empty and filled from other keywords.
+
+        Parameters
+        ----------
+        options:
+            can be be an array of strings, a string or let empty and filled from other keywords.
+        format:
+            "text" or "json"
+        deserialize:
+            if JSON output should be returned as a Python dictionary. Otherwise as a serialized representation.
+        SQLStatement:
+            SQL statement to apply to the source dataset
+        SQLDialect:
+            SQL dialect ('OGRSQL', 'SQLITE', ...)
+        where:
+            WHERE clause to apply to source layer(s)
+        layers:
+            list of layers of interest
+        dumpFeatures:
+            set to True to get the dump of all features
+    """
+
+    options = [] if options is None else options
+    deserialize=True
+
+    if isinstance(options, str):
+        new_options = ParseCommandLine(options)
+        format = 'text'
+        if '-json' in new_options:
+            format = 'json'
+    else:
+        new_options = options
+        if format == 'json':
+            new_options += ['-json']
+        elif format != "text":
+            raise Exception("Invalid value for format")
+        if '-json' in new_options:
+            format = 'json'
+        if SQLStatement:
+            new_options += ['-sql', SQLStatement]
+        if SQLDialect:
+            new_options += ['-dialect', SQLDialect]
+        if where:
+            new_options += ['-where', where]
+        if wktFormat:
+            new_options += ['-wkt_format', wktFormat]
+        if layers:
+            new_options += ["dummy_dataset_name"]
+            for layer in layers:
+                new_options += [layer]
+        else:
+            new_options += ["-al"]
+        if format == 'json':
+            if dumpFeatures:
+                new_options += ["-features"]
+        else:
+            if not dumpFeatures:
+                new_options += ["-so"]
+
+    return (GDALVectorInfoOptions(new_options), format, deserialize)
+
+
+def VectorInfo(ds, **kwargs):
+    """Return information on a vector dataset.
+
+    Parameters
+    ----------
+    ds:
+        a Dataset object or a filename
+    kwargs:
+        options: return of gdal.VectorInfoOptions(), string or array of strings
+        other keywords arguments of gdal.VectorInfoOptions().
+        If options is provided as a gdal.VectorInfoOptions() object, other keywords are ignored.
+    """
+    if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
+        (opts, format, deserialize) = VectorInfoOptions(**kwargs)
+    else:
+        (opts, format, deserialize) = kwargs['options']
+    if isinstance(ds, str):
+        ds = OpenEx(ds, OF_VERBOSE_ERROR | OF_VECTOR)
+    ret = VectorInfoInternal(ds, opts)
     if format == 'json' and deserialize:
         import json
         ret = json.loads(ret)

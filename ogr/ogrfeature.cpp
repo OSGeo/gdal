@@ -5408,16 +5408,46 @@ void OGR_F_SetFieldRaw( OGRFeatureH hFeat, int iField, const OGRField *psValue )
  * @param papszOptions NULL terminated list of options (may be NULL)
  */
 
-void OGRFeature::DumpReadable( FILE * fpOut, char** papszOptions ) const
+void OGRFeature::DumpReadable( FILE * fpOut, CSLConstList papszOptions ) const
 
 {
     if( fpOut == nullptr )
         fpOut = stdout;
 
-    char szFID[32];
-    CPLsnprintf(szFID, sizeof(szFID), CPL_FRMT_GIB, GetFID());
-    fprintf( fpOut,
-             "OGRFeature(%s):%s\n", poDefn->GetName(), szFID );
+    const auto osStr = DumpReadableAsString(papszOptions);
+    fprintf(fpOut, "%s", osStr.c_str());
+}
+
+/************************************************************************/
+/*                       DumpReadableAsString()                         */
+/************************************************************************/
+
+
+/**
+ * \brief Dump this feature in a human readable form.
+ *
+ * This dumps the attributes, and geometry; however, it doesn't definition
+ * information (other than field types and names), nor does it report the
+ * geometry spatial reference system.
+ *
+ * A few options can be defined to change the default dump :
+ * <ul>
+ * <li>DISPLAY_FIELDS=NO : to hide the dump of the attributes</li>
+ * <li>DISPLAY_STYLE=NO : to hide the dump of the style string</li>
+ * <li>DISPLAY_GEOMETRY=NO : to hide the dump of the geometry</li>
+ * <li>DISPLAY_GEOMETRY=SUMMARY : to get only a summary of the geometry</li>
+ * </ul>
+ *
+ * @param papszOptions NULL terminated list of options (may be NULL)
+ * @return a string with the feature representation.
+ * @since GDAL 3.7
+ */
+
+std::string OGRFeature::DumpReadableAsString( CSLConstList papszOptions ) const
+{
+    std::string osRet;
+
+    osRet += CPLOPrintf("OGRFeature(%s):" CPL_FRMT_GIB "\n", poDefn->GetName(), GetFID() );
 
     const char* pszDisplayFields =
         CSLFetchNameValue(papszOptions, "DISPLAY_FIELDS");
@@ -5436,14 +5466,14 @@ void OGRFeature::DumpReadable( FILE * fpOut, char** papszOptions ) const
                     poFDefn->GetFieldSubTypeName(poFDefn->GetSubType())) :
                     poFDefn->GetFieldTypeName( poFDefn->GetType() );
 
-            fprintf( fpOut, "  %s (%s) = ",
+            osRet += CPLOPrintf("  %s (%s) = ",
                     poFDefn->GetNameRef(),
                     pszType );
 
             if( IsFieldNull( iField) )
-                fprintf( fpOut, "(null)\n" );
+                osRet += "(null)\n";
             else
-                fprintf( fpOut, "%s\n", GetFieldAsString( iField ) );
+                osRet += CPLOPrintf("%s\n", GetFieldAsString( iField ) );
         }
     }
 
@@ -5453,7 +5483,7 @@ void OGRFeature::DumpReadable( FILE * fpOut, char** papszOptions ) const
             CSLFetchNameValue(papszOptions, "DISPLAY_STYLE");
         if( pszDisplayStyle == nullptr || CPLTestBool(pszDisplayStyle) )
         {
-            fprintf( fpOut, "  Style = %s\n", GetStyleString() );
+            osRet += CPLOPrintf("  Style = %s\n", GetStyleString() );
         }
     }
 
@@ -5470,18 +5500,19 @@ void OGRFeature::DumpReadable( FILE * fpOut, char** papszOptions ) const
 
                 if( papoGeometries[iField] != nullptr )
                 {
-                    fprintf( fpOut, "  " );
+                    osRet += "  ";
                     if( strlen(poFDefn->GetNameRef()) > 0 &&
                         GetGeomFieldCount() > 1 )
-                        fprintf( fpOut, "%s = ", poFDefn->GetNameRef() );
-                    papoGeometries[iField]->dumpReadable( fpOut, "",
-                                                          papszOptions );
+                        osRet += CPLOPrintf("%s = ", poFDefn->GetNameRef() );
+                    osRet += papoGeometries[iField]->dumpReadable(nullptr,
+                                                                  papszOptions);
                 }
             }
         }
     }
 
-    fprintf( fpOut, "\n" );
+    osRet += "\n";
+    return osRet;
 }
 
 /************************************************************************/

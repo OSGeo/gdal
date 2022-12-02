@@ -667,6 +667,13 @@ void CPLJSONObject::Add(const std::string &osName, const CPLJSONObject &oValue)
     std::string objectName;
     if( m_osKey == INVALID_OBJ_KEY )
         m_osKey.clear();
+    if( osName.empty() )
+    {
+        json_object_object_add( TO_JSONOBJ(GetInternalHandle()),
+                                "",
+                                json_object_get( TO_JSONOBJ(oValue.GetInternalHandle()) ) );
+        return;
+    }
     CPLJSONObject object = GetObjectByPath( osName, objectName );
     if( object.IsValid() &&
         json_object_get_type(TO_JSONOBJ(object.m_poJsonObject)) ==

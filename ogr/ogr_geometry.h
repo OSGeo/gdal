@@ -450,8 +450,10 @@ class CPL_DLL OGRGeometry
     virtual OGRwkbGeometryType getGeometryType() const = 0;
     OGRwkbGeometryType    getIsoGeometryType() const;
     virtual const char *getGeometryName() const = 0;
-    virtual void   dumpReadable( FILE *, const char * = nullptr
-                                 , char** papszOptions = nullptr ) const;
+    void   dumpReadable( FILE *, const char * = nullptr
+                                 , CSLConstList papszOptions = nullptr ) const;
+    std::string dumpReadable( const char * = nullptr
+                                 , CSLConstList papszOptions = nullptr ) const;
     virtual void   flattenTo2D() = 0;
     virtual char * exportToGML( const char* const * papszOptions = nullptr ) const;
     virtual char * exportToKML() const;
@@ -3383,7 +3385,10 @@ class CPL_DLL OGRGeometryFactory
 };
 
 OGRwkbGeometryType CPL_DLL OGRFromOGCGeomType( const char *pszGeomType );
-const char CPL_DLL * OGRToOGCGeomType( OGRwkbGeometryType eGeomType );
+const char CPL_DLL * OGRToOGCGeomType( OGRwkbGeometryType eGeomType,
+                                       bool bCamelCase = false,
+                                       bool bAddZM = false,
+                                       bool bSpaceBeforeZM = false);
 
 //! @cond Doxygen_Suppress
 typedef struct _OGRPreparedGeometry OGRPreparedGeometry;

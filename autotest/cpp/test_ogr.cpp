@@ -1175,6 +1175,19 @@ namespace
         }
     }
 
+    // Test OGRToOGCGeomType()
+    TEST_F(test_ogr, OGRToOGCGeomType)
+    {
+        EXPECT_STREQ(OGRToOGCGeomType(wkbPoint), "POINT");
+        EXPECT_STREQ(OGRToOGCGeomType(wkbPointM), "POINT");
+        EXPECT_STREQ(OGRToOGCGeomType(wkbPoint, /*bCamelCase=*/ true), "Point");
+        EXPECT_STREQ(OGRToOGCGeomType(wkbPoint, /*bCamelCase=*/ true, /*bAddZM=*/true), "Point");
+        EXPECT_STREQ(OGRToOGCGeomType(wkbPoint25D, /*bCamelCase=*/ true, /*bAddZM=*/true), "PointZ");
+        EXPECT_STREQ(OGRToOGCGeomType(wkbPointM, /*bCamelCase=*/ true, /*bAddZM=*/true), "PointM");
+        EXPECT_STREQ(OGRToOGCGeomType(wkbPointZM, /*bCamelCase=*/ true, /*bAddZM=*/true), "PointZM");
+        EXPECT_STREQ(OGRToOGCGeomType(wkbPointZM, /*bCamelCase=*/ true, /*bAddZM=*/true, /*bAddSpaceBeforeZM=*/true), "Point ZM");
+    }
+
     // Test layer, dataset-feature and layer-feature iterators
     TEST_F(test_ogr, DatasetFeature_and_LayerFeature_iterators)
     {
