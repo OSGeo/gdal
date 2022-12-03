@@ -147,11 +147,11 @@ EXECUTE_PROCESS(
 string(REGEX REPLACE "[\r\n]+" ";" DOTNET_SDK_STRING "${DOTNET_SDK_STRING}" )
 
 set(DOTNET_SDKS)
-foreach(ITR ${DOTNET_SDK_STRING})  # ARGN holds all arguments to function after last named one
-    string(REGEX MATCH "[0-9]+\.[0-9]+" SDK "${ITR}")
-    list(APPEND DOTNET_SDKS ${SDK})
+foreach(ITR ${DOTNET_SDK_STRING} )
+    string(REGEX MATCH "^[0-9]+\.[0-9]+" SDK "${ITR}" )
+    list(APPEND DOTNET_SDKS ${SDK} )
 endforeach()
-list(REMOVE_DUPLICATES DOTNET_SDKS)
+list(REMOVE_DUPLICATES DOTNET_SDKS )
 
 IF(WIN32)
    FIND_PROGRAM(NUGET_EXE nuget PATHS ${CMAKE_BINARY_DIR}/tools)
