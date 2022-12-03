@@ -322,7 +322,8 @@ class OGRSQLiteTableLayer final: public OGRSQLiteLayer
                                                   int nExtraSpace = 0);
     OGRErr              RecreateTable(const char* pszFieldListForSelect,
                                       const char* pszNewFieldList,
-                                      const char* pszGenericErrorMessage);
+                                      const char* pszGenericErrorMessage,
+                                      const char* pszAdditionalDef = nullptr);
     OGRErr              BindValues( OGRFeature *poFeature,
                                     sqlite3_stmt* hStmt,
                                     bool bBindUnsetAsNull );
@@ -378,6 +379,7 @@ class OGRSQLiteTableLayer final: public OGRSQLiteLayer
     virtual OGRErr      DeleteField( int iField ) override;
     virtual OGRErr      ReorderFields( int* panMap ) override;
     virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags ) override;
+    OGRErr              AddForeignKeysToTable( const char * pszKeys );
 
     virtual OGRFeature *GetNextFeature() override;
     virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
@@ -676,6 +678,10 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
     std::vector<std::string> GetRelationshipNames(CSLConstList papszOptions = nullptr) const override;
 
     const GDALRelationship* GetRelationship(const std::string& name) const override;
+
+    bool                AddRelationship(std::unique_ptr<GDALRelationship>&& relationship,
+                                        std::string& failureReason) override;
+    bool                ValidateRelationship(const GDALRelationship * poRelationship, std::string& failureReason );
 
     void                ReloadLayers();
 
