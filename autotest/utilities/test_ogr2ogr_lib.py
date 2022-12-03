@@ -985,3 +985,70 @@ def test_ogr2ogr_upsert():
     assert f.GetGeometryRef().ExportToWkt() == "POINT (10 10)"
     ds = None
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test spatSRS
+
+
+def test_ogr2ogr_lib_spat_srs_projected():
+
+    # Check that we densify spatial filter geometry when not expressed in
+    # the layer CRS
+
+    if not ogrtest.have_geos():
+        pytest.skip("GEOS is not available")
+
+    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srcLayer = srcDS.CreateLayer("test", srs=srs)
+    f = ogr.Feature(srcLayer.GetLayerDefn())
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt("POINT(20.56403717640477 60.367519337232835)")
+    )
+    # Reprojection of this point to EPSG:3067 is POINT (145388.398 6709681.065)
+    # and thus falls in the below spatial filter rectangle
+    # But if we don't densify the geometry enough, post processing would
+    # discard the point.
+    srcLayer.CreateFeature(f)
+
+    ds = gdal.VectorTranslate(
+        "",
+        srcDS,
+        format="Memory",
+        spatFilter=[130036.75, 6697405.5, 145400.4, 6756013.0],
+        spatSRS="EPSG:3067",
+    )
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 1
+
+
+###############################################################################
+# Test spatSRS
+
+
+def test_ogr2ogr_lib_spat_srs_geographic():
+
+    # Check that we densify spatial filter geometry when not expressed in
+    # the layer CRS
+
+    if not ogrtest.have_geos():
+        pytest.skip("GEOS is not available")
+
+    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32661)
+    srcLayer = srcDS.CreateLayer("test", srs=srs)
+    f = ogr.Feature(srcLayer.GetLayerDefn())
+    # Reprojects as -90 89.099 in EPSG:4326
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1900000 2000000)"))
+    srcLayer.CreateFeature(f)
+
+    # Naive reprojection of the below bounding box to EPSG:32661 would
+    # be [2000000, 2000000, 2000000, 3112951.14]
+    ds = gdal.VectorTranslate(
+        "", srcDS, format="Memory", spatFilter=[-180, 80, 180, 90], spatSRS="EPSG:4326"
+    )
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 1
