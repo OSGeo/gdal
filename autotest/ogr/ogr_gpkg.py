@@ -6596,7 +6596,7 @@ def test_ogr_gpkg_relations_sqlite_foreign_keys():
         assert rel.GetType() == gdal.GRT_ASSOCIATION
         assert rel.GetLeftTableFields() == ["artistid"]
         assert rel.GetRightTableFields() == ["trackartist"]
-        assert rel.GetRelatedTableType() == "feature"
+        assert rel.GetRelatedTableType() == "features"
 
     finally:
         gdal.Unlink(tmpfilename)

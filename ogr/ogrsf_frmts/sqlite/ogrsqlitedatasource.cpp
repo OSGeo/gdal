@@ -594,7 +594,7 @@ void OGRSQLiteBaseDataSource::LoadRelationshipsFromForeignKeys() const
                                                                                           GRC_ONE_TO_MANY ) );
                 poRelationship->SetLeftTableFields({pszBaseFieldName});
                 poRelationship->SetRightTableFields({pszRelatedFieldName});
-                poRelationship->SetRelatedTableType("feature");
+                poRelationship->SetRelatedTableType("features");
 
                 if ( const char* pszOnDeleteAction = oResult->GetValue(6, iRecord) )
                 {
