@@ -25,7 +25,7 @@ set(CSHARP_CONFIG
     "RELEASE"
     CACHE STRING "Config to be used to compile the C# artifacts > RELEASE|CONFIG")
 
-string(REGEX MATCH "[0-9\.]" CSHARP_SDK ${CSHARP_LIBRARY_VERSION} )
+string(REGEX MATCH "[0-9\.]*" CSHARP_SDK "${CSHARP_LIBRARY_VERSION}" )
 message(STATUS "Requested DotNet SDK Level: " ${CSHARP_SDK} )
 
 if ( "${CSHARP_SDK}" IN_LIST DOTNET_SDKS) 
