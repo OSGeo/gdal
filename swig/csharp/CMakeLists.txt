@@ -242,6 +242,7 @@ function (gdal_csharp_dll)
       ${_CSHARP_SYSTEM_DEPENDS})
 
   else ()
+    list(JOIN CSC_OPTIONS " " CSC_OPTIONS)
     if (true)
       message(STATUS "BUILDING : " ${_CSHARP_TARGET} " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} )
     endif ()

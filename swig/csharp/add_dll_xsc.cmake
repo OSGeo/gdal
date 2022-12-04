@@ -1,6 +1,7 @@
 
 file(GLOB SOURCES "${TARGET_SUBDIR}/*.cs")
 list(APPEND SOURCES ${SOURCE_DIR}/AssemblyInfo.cs)
+list(JOIN CSC_OPTIONS " " CSC_OPTIONS)
 set(NATIVE_SOURCES)
 foreach(_src IN LISTS SOURCES)
     if(WIN32)
