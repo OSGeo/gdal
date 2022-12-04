@@ -184,7 +184,7 @@ function (gdal_csharp_dll)
       set(_CSHARP_PROJ_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}")
       set(_CSHARP_DLL_TARGET "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET}")
   endif()
-  set(CSC_OPTIONS /unsafe "/debug:full " " /target:library" " /sdk:${_CSHARP_LIBRARY_SDK_NUMBER}" " /platform:${CSHARP_RID}" " /out:${_CSHARP_DLL_TARGET}" )
+  set(CSC_OPTIONS " /unsafe" "/debug:full " " /target:library" " /sdk:${_CSHARP_LIBRARY_SDK_NUMBER}" " /platform:${CSHARP_RID}" " /out:${_CSHARP_DLL_TARGET}" )
   if (WIN32)
     list(APPEND CSC_OPTIONS " /define:CLR4")
   endif ()
@@ -440,7 +440,7 @@ function (gdal_build_csharp_sample)
     if (true)
       message(
         STATUS
-          "BUILDING : ${_GBCS_OUTPUT} : ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT_NATIVE} ${SOURCE_NATIVE}")
+          "BUILDING : " ${_GBCS_OUTPUT} " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} " /out:${_GBCS_OUTPUT_NATIVE}  ${SOURCE_NATIVE}" )
     endif ()
     add_custom_command(
       OUTPUT ${OUTPUT_FILENAME}
