@@ -39,11 +39,13 @@ if ( DOTNET_FOUND )
     message(STATUS "The Requested DotNet SDK was not found. C# Bindings will not be built" )
     RETURN ()
   endif ()
-  if ( "${_CSHARP_APPLICATION_SDK_NUMBER}" IN_LIST DOTNET_SDKS ) 
-    message(STATUS "DotNet SDK " ${CSHARP_APPLICATION_VERSION} " found" )
-  else ()
-    message(STATUS "The Requested DotNet SDK was not found. C# Bindings will not be built" )
-    RETURN ()
+  if ( NOT ( _CSHARP_LIBRARY_SDK_NUMBER STREQUAL _CSHARP_APPLICATION_SDK_NUMBER ) )
+    if ( "${_CSHARP_APPLICATION_SDK_NUMBER}" IN_LIST DOTNET_SDKS ) 
+      message(STATUS "DotNet SDK " ${CSHARP_APPLICATION_VERSION} " found" )
+    else ()
+      message(STATUS "The Requested DotNet SDK was not found. C# Bindings will not be built" )
+      RETURN ()
+      endif ()
   endif ()
 else ()
   string( SUBSTRING "${_CSHARP_LIBRARY_SDK_NUMBER}" 0 1 _CSHARP_LIBRARY_SDK_NUMBER )
@@ -182,10 +184,9 @@ function (gdal_csharp_dll)
       set(_CSHARP_PROJ_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}")
       set(_CSHARP_DLL_TARGET "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET}")
   endif()
-  set(CSC_OPTIONS /unsafe /debug:full /target:library /out:${_CSHARP_DLL_TARGET} /sdk:${_CSHARP_LIBRARY_SDK_NUMBER} /platform: "${CSHARP_RID}" )
-  message(${CSC_OPTIONS})
+  set(CSC_OPTIONS /unsafe "/debug:full " " /target:library" " /sdk:${_CSHARP_LIBRARY_SDK_NUMBER}" " /platform:${CSHARP_RID}" " /out:${_CSHARP_DLL_TARGET}" )
   if (WIN32)
-    list(APPEND CSC_OPTIONS /define:CLR4)
+    list(APPEND CSC_OPTIONS " /define:CLR4")
   endif ()
   set(_PACKAGE_NAME ${_CSHARP_PACKAGE_NAME})
 
@@ -201,7 +202,7 @@ function (gdal_csharp_dll)
       endif()
       get_filename_component(_filename ${_dep} NAME)
       list(APPEND _dlls ${_filename}.dll)
-      list(APPEND CSC_OPTIONS /r:${_dep}.dll)
+      list(APPEND CSC_OPTIONS " /r:${_dep}.dll")
     endforeach ()
   endif (_CSHARP_DEPENDS)
   if (_CSHARP_SYSTEM_DEPENDS)
@@ -241,8 +242,8 @@ function (gdal_csharp_dll)
       ${_CSHARP_SYSTEM_DEPENDS})
 
   else ()
-    if (CMAKE_VERBOSE_MAKEFILE)
-      message(STATUS "BUILDING : " ${_CSHARP_TARGET} " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} /sdk:${_CSHARP_APPLICATION_SDK_NUMBER} /platform: "${CSHARP_RID}"  /out:${_CSHARP_TARGET})
+    if (true)
+      message(STATUS "BUILDING : " ${_CSHARP_TARGET} " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} )
     endif ()
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET}
@@ -435,7 +436,8 @@ function (gdal_build_csharp_sample)
       ${_GBCS_SYSTEM_DEPENDS})
 
   else ()
-    if (CMAKE_VERBOSE_MAKEFILE)
+    list(APPEND CSC_OPTIONS " /sdk:${_CSHARP_APPLICATION_SDK_NUMBER} /platform:${CSHARP_RID}")
+    if (true)
       message(
         STATUS
           "BUILDING : ${_GBCS_OUTPUT} : ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT_NATIVE} ${SOURCE_NATIVE}")
@@ -443,7 +445,7 @@ function (gdal_build_csharp_sample)
     add_custom_command(
       OUTPUT ${OUTPUT_FILENAME}
       COMMAND ${CMAKE_COMMAND} -E echo "Building ${_GBCS_OUTPUT_NATIVE}"
-      COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT_NATIVE} /sdk:${_CSHARP_APPLICATION_SDK_NUMBER} /platform: "${CSHARP_RID}" ${SOURCE_NATIVE}
+      COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT_NATIVE} ${SOURCE_NATIVE}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       VERBATIM
       DEPENDS csharp_binding ${_GBCS_SOURCE})
