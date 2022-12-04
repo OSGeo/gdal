@@ -242,7 +242,7 @@ function (gdal_csharp_dll)
       ${_CSHARP_SYSTEM_DEPENDS})
 
   else ()
-    if (true)
+    if (CMAKE_VERBOSE_MAKEFILE)
       message(STATUS "BUILDING : " ${_CSHARP_TARGET} " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} )
     endif ()
     add_custom_command(
@@ -437,7 +437,7 @@ function (gdal_build_csharp_sample)
 
   else ()
     list(APPEND CSC_OPTIONS /sdk:${_CSHARP_APPLICATION_SDK_NUMBER} /platform:${CSHARP_RID} /out:${_GBCS_OUTPUT_NATIVE} ${SOURCE_NATIVE})
-    if (true)
+    if (CMAKE_VERBOSE_MAKEFILE)
       message(
         STATUS
           "BUILDING : " ${_GBCS_OUTPUT} " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} )
@@ -445,7 +445,7 @@ function (gdal_build_csharp_sample)
     add_custom_command(
       OUTPUT ${OUTPUT_FILENAME}
       COMMAND ${CMAKE_COMMAND} -E echo "Building ${_GBCS_OUTPUT_NATIVE}"
-      COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} " /out:${_GBCS_OUTPUT_NATIVE} ${SOURCE_NATIVE}"
+      COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       VERBATIM
       DEPENDS csharp_binding ${_GBCS_SOURCE})
