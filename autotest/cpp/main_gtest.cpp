@@ -56,7 +56,12 @@ GTEST_API_ int main(int argc, char **argv) {
     catch( const std::exception& e )
     {
         nRetCode = 1;
-        fprintf(stderr, "Caught exception %s", e.what());
+        fprintf(stderr, "Caught exception %s\n", e.what());
+    }
+    catch( ... )
+    {
+        nRetCode = 1;
+        fprintf(stderr, "Caught exception of unknown type\n");
     }
 
     CSLDestroy( argv );

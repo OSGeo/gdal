@@ -435,17 +435,21 @@ namespace
     TEST_F(test_ogr, style_manager)
     {
       OGRStyleMgrH hSM = OGR_SM_Create(nullptr);
-      ASSERT_TRUE(OGR_SM_InitStyleString(hSM, "PEN(w:2px,c:#000000,id:\"mapinfo-pen-2,ogr-pen-0\")"));
+      EXPECT_TRUE(OGR_SM_InitStyleString(hSM, "PEN(w:2px,c:#000000,id:\"mapinfo-pen-2,ogr-pen-0\")"));
       OGRStyleToolH hTool = OGR_SM_GetPart(hSM, 0, nullptr);
-      int bValueIsNull;
+      EXPECT_TRUE(hTool != nullptr);
+      if( hTool )
+      {
+          int bValueIsNull;
 
-      EXPECT_NEAR(OGR_ST_GetParamDbl(hTool, OGRSTPenWidth, &bValueIsNull), 2.0 * (1.0 / (72.0 * 39.37)) * 1000, 1e-6);
-      EXPECT_EQ(OGR_ST_GetUnit(hTool), OGRSTUMM);
+          EXPECT_NEAR(OGR_ST_GetParamDbl(hTool, OGRSTPenWidth, &bValueIsNull), 2.0 * (1.0 / (72.0 * 39.37)) * 1000, 1e-6);
+          EXPECT_EQ(OGR_ST_GetUnit(hTool), OGRSTUMM);
 
-      OGR_ST_SetUnit(hTool, OGRSTUPixel, 1.0);
-      EXPECT_EQ(OGR_ST_GetParamDbl(hTool, OGRSTPenWidth, &bValueIsNull), 2.0);
-      EXPECT_EQ(OGR_ST_GetUnit(hTool), OGRSTUPixel);
-      OGR_ST_Destroy(hTool);
+          OGR_ST_SetUnit(hTool, OGRSTUPixel, 1.0);
+          EXPECT_EQ(OGR_ST_GetParamDbl(hTool, OGRSTPenWidth, &bValueIsNull), 2.0);
+          EXPECT_EQ(OGR_ST_GetUnit(hTool), OGRSTUPixel);
+          OGR_ST_Destroy(hTool);
+      }
 
       OGR_SM_Destroy(hSM);
     }

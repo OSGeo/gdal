@@ -3169,17 +3169,20 @@ namespace
                 CSLDestroy( decompressors );
                 decompressors = nullptr;
             }
-            ASSERT_TRUE( pCompressor );
-            const char* pszOptions = CSLFetchNameValue(pCompressor->papszMetadata, "OPTIONS");
-            if( pszOptions )
+            EXPECT_TRUE( pCompressor );
+            if( pCompressor )
             {
-                auto psNode = CPLParseXMLString(pszOptions);
-                EXPECT_TRUE(psNode);
-                CPLDestroyXMLNode(psNode);
-            }
-            else
-            {
-                CPLDebug("TEST", "Decompressor %s has no OPTIONS", *iter);
+                const char* pszOptions = CSLFetchNameValue(pCompressor->papszMetadata, "OPTIONS");
+                if( pszOptions )
+                {
+                    auto psNode = CPLParseXMLString(pszOptions);
+                    EXPECT_TRUE(psNode);
+                    CPLDestroyXMLNode(psNode);
+                }
+                else
+                {
+                    CPLDebug("TEST", "Decompressor %s has no OPTIONS", *iter);
+                }
             }
         }
         CSLDestroy( decompressors );
@@ -3236,17 +3239,20 @@ namespace
                 CSLDestroy( compressors );
                 compressors = nullptr;
             }
-            ASSERT_TRUE( pCompressor );
-            const char* pszOptions = CSLFetchNameValue(pCompressor->papszMetadata, "OPTIONS");
-            if( pszOptions )
+            EXPECT_TRUE( pCompressor );
+            if( pCompressor )
             {
-                auto psNode = CPLParseXMLString(pszOptions);
-                EXPECT_TRUE(psNode);
-                CPLDestroyXMLNode(psNode);
-            }
-            else
-            {
-                CPLDebug("TEST", "Compressor %s has no OPTIONS", *iter);
+                const char* pszOptions = CSLFetchNameValue(pCompressor->papszMetadata, "OPTIONS");
+                if( pszOptions )
+                {
+                    auto psNode = CPLParseXMLString(pszOptions);
+                    EXPECT_TRUE(psNode);
+                    CPLDestroyXMLNode(psNode);
+                }
+                else
+                {
+                    CPLDebug("TEST", "Compressor %s has no OPTIONS", *iter);
+                }
             }
         }
         CSLDestroy( compressors );

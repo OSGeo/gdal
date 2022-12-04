@@ -403,14 +403,14 @@ static void GDALVectorInfoPrintMetadata( CPLString& osRet,
             {
                 if( bIsxml )
                 {
-                    oMetadata.Add( pszDomain ? pszDomain : "", papszMetadata[i] );
+                    oMetadata.Add( pszDomain, papszMetadata[i] );
                     return;
                 }
                 else if( bMDIsJson )
                 {
                     CPLJSONDocument oDoc;
                     if( oDoc.LoadMemory(papszMetadata[i]) )
-                        oMetadata.Add( pszDomain ? pszDomain : "", oDoc.GetRoot() );
+                        oMetadata.Add( pszDomain, oDoc.GetRoot() );
                     return;
                 }
                 else

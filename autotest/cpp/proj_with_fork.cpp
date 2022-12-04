@@ -38,6 +38,8 @@ TEST(proj_with_fork,test)
         waitpid(children[i], &status, 0);
         EXPECT_EQ(status, 0);
     }
+
+    OSRDestroySpatialReference(hSRS);
 }
 
 } // namspace
