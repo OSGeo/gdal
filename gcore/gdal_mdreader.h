@@ -110,9 +110,10 @@ class CPL_DLL GDALMDReaderBase{
 
     CPL_DISALLOW_COPY_ASSIGN(GDALMDReaderBase)
 
-    void ReadXMLToListFirstPass(const CPLXMLNode* psNode,
+    bool ReadXMLToListFirstPass(const CPLXMLNode* psNode,
                                 std::map<std::string, int>& oMapCountKeysFull,
-                                const std::string& osPrefixFull);
+                                const std::string& osPrefixFull,
+                                int nDepth);
 
     char** ReadXMLToList(const CPLXMLNode* psNode,
                          char** papszList,

@@ -303,37 +303,52 @@ char** GDALMDReaderBase::AddXMLNameValueToList(char** papszList,
 /**
  * ReadXMLToListFirstPass()
  */
-void GDALMDReaderBase::ReadXMLToListFirstPass(const CPLXMLNode* psNode,
+bool GDALMDReaderBase::ReadXMLToListFirstPass(const CPLXMLNode* psNode,
                                               std::map<std::string, int>& oMapCountKeysFull,
-                                              const std::string& osPrefixFull)
+                                              const std::string& osPrefixFull,
+                                              int nDepth)
 {
-    if(nullptr == psNode)
-        return;
-    if (psNode->eType == CXT_Element)
+    if( nDepth == 10 )
     {
-        std::string osNewPrefixFull;
-        for(const CPLXMLNode* psChildNode = psNode->psChild;
-            nullptr != psChildNode;
-            psChildNode = psChildNode->psNext)
+        CPLError(CE_Failure, CPLE_AppDefined, "Too much nested XML");
+        return false;
+    }
+    if(nullptr == psNode)
+        return true;
+    while( true )
+    {
+        if (psNode->eType == CXT_Element)
         {
-            if (psChildNode->eType == CXT_Element)
+            std::string osNewPrefixFull;
+            for(const CPLXMLNode* psChildNode = psNode->psChild;
+                nullptr != psChildNode;
+                psChildNode = psChildNode->psNext)
             {
-                osNewPrefixFull = !osPrefixFull.empty() ? osPrefixFull : std::string(psNode->pszValue);
-                osNewPrefixFull += '.';
-                osNewPrefixFull += psChildNode->pszValue;
-                osNewPrefixFull += CPLSPrintf("_%d", ++oMapCountKeysFull[osNewPrefixFull]);
+                if (psChildNode->eType == CXT_Element)
+                {
+                    osNewPrefixFull = !osPrefixFull.empty() ? osPrefixFull : std::string(psNode->pszValue);
+                    osNewPrefixFull += '.';
+                    osNewPrefixFull += psChildNode->pszValue;
+                    osNewPrefixFull += CPLSPrintf("_%d", ++oMapCountKeysFull[osNewPrefixFull]);
 
-                ReadXMLToListFirstPass(psChildNode, oMapCountKeysFull, osNewPrefixFull);
+                    if( !ReadXMLToListFirstPass(psChildNode, oMapCountKeysFull, osNewPrefixFull, nDepth + 1) )
+                        return false;
+                }
             }
         }
-    }
 
-    // proceed next only on top level
+        // proceed next only on top level
 
-    if(nullptr != psNode->psNext && osPrefixFull.empty())
-    {
-         ReadXMLToListFirstPass(psNode->psNext, oMapCountKeysFull, osPrefixFull);
+        if(nullptr != psNode->psNext && osPrefixFull.empty())
+        {
+             psNode = psNode->psNext;
+        }
+        else
+        {
+            break;
+        }
     }
+    return true;
 }
 
 /**
@@ -350,82 +365,85 @@ char** GDALMDReaderBase::ReadXMLToList(const CPLXMLNode* psNode,
     if(nullptr == psNode)
         return papszList;
 
-    if (psNode->eType == CXT_Text)
+    while( true )
     {
-        papszList = AddXMLNameValueToList(papszList, osPrefix.c_str(), psNode->pszValue);
-    }
-
-    if (psNode->eType == CXT_Element)
-    {
-        std::string osNewPrefix;
-        std::string osNewPrefixFull;
-        for(const CPLXMLNode* psChildNode = psNode->psChild;
-            nullptr != psChildNode;
-            psChildNode = psChildNode->psNext)
+        if (psNode->eType == CXT_Text)
         {
-            if (psChildNode->eType == CXT_Element)
-            {
-                osNewPrefixFull = !osPrefixFull.empty() ? osPrefixFull : std::string(psNode->pszValue);
-                osNewPrefixFull += '.';
-                osNewPrefixFull += psChildNode->pszValue;
+            papszList = AddXMLNameValueToList(papszList, osPrefix.c_str(), psNode->pszValue);
+        }
 
-                const auto oIter = oMapCountKeysFullRef.find(osNewPrefixFull);
-                CPLAssert(oIter != oMapCountKeysFullRef.end());
-                osNewPrefixFull += CPLSPrintf("_%d", ++oMapCountKeysFull[osNewPrefixFull]);
+        if (psNode->eType == CXT_Element)
+        {
+            std::string osNewPrefix;
+            std::string osNewPrefixFull;
+            for(const CPLXMLNode* psChildNode = psNode->psChild;
+                nullptr != psChildNode;
+                psChildNode = psChildNode->psNext)
+            {
+                if (psChildNode->eType == CXT_Element)
+                {
+                    osNewPrefixFull = !osPrefixFull.empty() ? osPrefixFull : std::string(psNode->pszValue);
+                    osNewPrefixFull += '.';
+                    osNewPrefixFull += psChildNode->pszValue;
 
-                osNewPrefix = !osPrefix.empty() ? osPrefix : std::string(psNode->pszValue);
-                osNewPrefix += '.';
-                osNewPrefix += psChildNode->pszValue;
-                const int nIndex = ++oMapCountKeys[osNewPrefix];
-                const bool bMultipleInstances = oIter->second >= 2;
-                if( bMultipleInstances )
-                {
-                    osNewPrefix += CPLSPrintf("_%d", nIndex);
-                }
-                papszList = ReadXMLToList(psChildNode, papszList,
-                                          oMapCountKeysFullRef,
-                                          oMapCountKeysFull,
-                                          oMapCountKeys,
-                                          osNewPrefix, osNewPrefixFull);
-            }
-            else if( psChildNode->eType == CXT_Attribute )
-            {
-                papszList = AddXMLNameValueToList(papszList,
-                                                  CPLSPrintf("%s.%s", osPrefix.c_str(), psChildNode->pszValue),
-                                                  psChildNode->psChild->pszValue);
-            }
-            else
-            {
-                // Text nodes should always have name
-                if(osPrefix.empty())
-                {
+                    const auto oIter = oMapCountKeysFullRef.find(osNewPrefixFull);
+                    CPLAssert(oIter != oMapCountKeysFullRef.end());
+                    osNewPrefixFull += CPLSPrintf("_%d", ++oMapCountKeysFull[osNewPrefixFull]);
+
+                    osNewPrefix = !osPrefix.empty() ? osPrefix : std::string(psNode->pszValue);
+                    osNewPrefix += '.';
+                    osNewPrefix += psChildNode->pszValue;
+                    const int nIndex = ++oMapCountKeys[osNewPrefix];
+                    const bool bMultipleInstances = oIter->second >= 2;
+                    if( bMultipleInstances )
+                    {
+                        osNewPrefix += CPLSPrintf("_%d", nIndex);
+                    }
                     papszList = ReadXMLToList(psChildNode, papszList,
                                               oMapCountKeysFullRef,
                                               oMapCountKeysFull,
                                               oMapCountKeys,
-                                              psNode->pszValue, psNode->pszValue);
+                                              osNewPrefix, osNewPrefixFull);
+                }
+                else if( psChildNode->eType == CXT_Attribute )
+                {
+                    papszList = AddXMLNameValueToList(papszList,
+                                                      CPLSPrintf("%s.%s", osPrefix.c_str(), psChildNode->pszValue),
+                                                      psChildNode->psChild->pszValue);
                 }
                 else
                 {
-                    papszList = ReadXMLToList(psChildNode, papszList,
-                                              oMapCountKeysFullRef,
-                                              oMapCountKeysFull,
-                                              oMapCountKeys,
-                                              osPrefix.c_str(), osNewPrefixFull.c_str());
+                    // Text nodes should always have name
+                    if(osPrefix.empty())
+                    {
+                        papszList = ReadXMLToList(psChildNode, papszList,
+                                                  oMapCountKeysFullRef,
+                                                  oMapCountKeysFull,
+                                                  oMapCountKeys,
+                                                  psNode->pszValue, psNode->pszValue);
+                    }
+                    else
+                    {
+                        papszList = ReadXMLToList(psChildNode, papszList,
+                                                  oMapCountKeysFullRef,
+                                                  oMapCountKeysFull,
+                                                  oMapCountKeys,
+                                                  osPrefix.c_str(), osNewPrefixFull.c_str());
+                    }
                 }
             }
         }
-    }
 
-    // proceed next only on top level
+        // proceed next only on top level
 
-    if(nullptr != psNode->psNext && osPrefix.empty())
-    {
-         papszList = ReadXMLToList(psNode->psNext, papszList,
-                                   oMapCountKeysFullRef,
-                                   oMapCountKeysFull,
-                                   oMapCountKeys,
-                                   osPrefix, osPrefixFull);
+        if(nullptr != psNode->psNext && osPrefix.empty())
+        {
+            psNode = psNode->psNext;
+        }
+        else
+        {
+            break;
+        }
     }
 
     return papszList;
@@ -439,7 +457,8 @@ char** GDALMDReaderBase::ReadXMLToList(CPLXMLNode* psNode, char** papszList,
                                        const char* pszName)
 {
     std::map<std::string, int> oMapCountKeysFullRef;
-    ReadXMLToListFirstPass(psNode, oMapCountKeysFullRef, pszName);
+    if( !ReadXMLToListFirstPass(psNode, oMapCountKeysFullRef, pszName, 0) )
+        return papszList;
     std::map<std::string, int> oMapCountKeysFull;
     std::map<std::string, int> oMapCountKeys;
     return ReadXMLToList(psNode, papszList,
