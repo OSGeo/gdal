@@ -595,11 +595,18 @@ static bool MustApplyVerticalShift( GDALDatasetH hWrkSrcDS,
         auto hSRS = GDALGetSpatialRef(hWrkSrcDS);
         if( hSRS )
             oSRSSrc = *(OGRSpatialReference::FromHandle(hSRS));
+        else
+            return false;
     }
 
     const char* pszDstWKT = CSLFetchNameValue( psOptions->papszTO, "DST_SRS" );
     if( pszDstWKT )
         oSRSDst.SetFromUserInput( pszDstWKT );
+    else
+        return false;
+
+    if( oSRSSrc.IsSame(&oSRSDst) )
+        return false;
 
     bSrcHasVertAxis =
         oSRSSrc.IsCompound() ||
@@ -646,16 +653,17 @@ static bool ApplyVerticalShift( GDALDatasetH hWrkSrcDS,
     {
         bApplyVShift = true;
         psWO->papszWarpOptions = CSLSetNameValue(psWO->papszWarpOptions,
-                                                 "APPLY_VERTICAL_SHIFT",
-                                                 "YES");
+                                     "APPLY_VERTICAL_SHIFT",
+                                     "YES");
 
         if( CSLFetchNameValue(psWO->papszWarpOptions,
                               "MULT_FACTOR_VERTICAL_SHIFT") == nullptr )
         {
             // Select how to go from input dataset units to meters
+            double dfToMeterSrc = 1.0;
             const char* pszUnit =
                 GDALGetRasterUnitType( GDALGetRasterBand(hWrkSrcDS, 1) );
-            double dfToMeterSrc = 1.0;
+
             if( pszUnit && (EQUAL(pszUnit, "m") ||
                             EQUAL(pszUnit, "meter")||
                             EQUAL(pszUnit, "metre")) )
@@ -666,14 +674,27 @@ static bool ApplyVerticalShift( GDALDatasetH hWrkSrcDS,
             {
                 dfToMeterSrc = CPLAtof(SRS_UL_FOOT_CONV);
             }
-            else
+            else if( pszUnit && (EQUAL(pszUnit, "US survey foot")) )
             {
-                if( pszUnit && !EQUAL(pszUnit, "") )
+                dfToMeterSrc = CPLAtof(SRS_UL_US_FOOT_CONV);
+            }
+            else if( pszUnit && !EQUAL(pszUnit, "") )
+            {
+                if( bSrcHasVertAxis )
+                {
+                    oSRSSrc.GetAxis(nullptr, 2, nullptr, &dfToMeterSrc);
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Unknown units=%s. Using source vertical units.",
+                             pszUnit);
+                }
+                else
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
-                             "Unknown units=%s", pszUnit);
+                             "Unknown units=%s. Assuming metre.", pszUnit);
                 }
-
+            }
+            else
+            {
                 if( bSrcHasVertAxis )
                     oSRSSrc.GetAxis(nullptr, 2, nullptr, &dfToMeterSrc);
             }
@@ -685,6 +706,8 @@ static bool ApplyVerticalShift( GDALDatasetH hWrkSrcDS,
             if( dfToMeterSrc > 0 && dfToMeterDst > 0 )
             {
                 const double dfMultFactorVerticalShift = dfToMeterSrc / dfToMeterDst;
+                CPLDebug("WARP", "Applying MULT_FACTOR_VERTICAL_SHIFT=%.18g",
+                         dfMultFactorVerticalShift);
                 psWO->papszWarpOptions = CSLSetNameValue(
                     psWO->papszWarpOptions, "MULT_FACTOR_VERTICAL_SHIFT",
                     CPLSPrintf("%.18g", dfMultFactorVerticalShift));
@@ -769,6 +792,10 @@ static GDALDatasetH ApplyVerticalShiftGrid( GDALDatasetH hWrkSrcDS,
                                  EQUAL(pszUnit, "foot")) )
             {
                 dfToMeterSrc = CPLAtof(SRS_UL_FOOT_CONV);
+            }
+            else if( pszUnit && (EQUAL(pszUnit, "US survey foot")) )
+            {
+                dfToMeterSrc = CPLAtof(SRS_UL_US_FOOT_CONV);
             }
             else
             {

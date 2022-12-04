@@ -177,6 +177,26 @@ struct GDALMultiDimTranslateOptionsForBinary
     CPLStringList aosOpenOptions{};
 };
 
+struct GDALVectorInfoOptionsForBinary
+{
+    /* Filename to open. */
+    std::string osFilename{};
+
+    bool bVerbose = true;
+
+    bool bReadOnly = false;
+
+    bool bUpdate = false;
+
+    std::string osSQLStatement{};
+
+    /* Open options. */
+    CPLStringList aosOpenOptions{};
+
+    /* Allowed input drivers. */
+    CPLStringList aosAllowInputDrivers{};
+};
+
 #endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* GDAL_UTILS_PRIV_H_INCLUDED */

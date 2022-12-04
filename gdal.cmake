@@ -757,6 +757,7 @@ set(GDAL_DATA_FILES
     data/nitf_spec.xsd
     data/ogrvrt.xsd
     data/osmconf.ini
+    data/ogrinfo_output.schema.json
     data/ozi_datum.csv
     data/ozi_ellips.csv
     data/pci_datum.txt

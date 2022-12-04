@@ -142,6 +142,20 @@ uint32_t hilbert(const NodeItem &r, uint32_t hilbertMax, const double minX, cons
     return v;
 }
 
+void hilbertSort(std::vector<std::shared_ptr<Item>> &items)
+{
+    NodeItem extent = calcExtent(items);
+    const double minX = extent.minX;
+    const double minY = extent.minY;
+    const double width = extent.width();
+    const double height = extent.height();
+    std::sort(items.begin(), items.end(), [minX, minY, width, height] (std::shared_ptr<Item> a, std::shared_ptr<Item> b) {
+        uint32_t ha = hilbert(a->nodeItem, HILBERT_MAX, minX, minY, width, height);
+        uint32_t hb = hilbert(b->nodeItem, HILBERT_MAX, minX, minY, width, height);
+        return ha > hb;
+    });
+}
+
 void hilbertSort(std::vector<NodeItem> &items)
 {
     NodeItem extent = calcExtent(items);
@@ -206,12 +220,9 @@ std::vector<std::pair<uint64_t, uint64_t>> PackedRTree::generateLevelBounds(cons
     n = numNodes;
     for (auto size : levelNumNodes)
         levelOffsets.push_back(n -= size);
-    std::reverse(levelOffsets.begin(), levelOffsets.end());
-    std::reverse(levelNumNodes.begin(), levelNumNodes.end());
     std::vector<std::pair<uint64_t, uint64_t>> levelBounds;
     for (size_t i = 0; i < levelNumNodes.size(); i++)
         levelBounds.push_back(std::pair<uint64_t, uint64_t>(levelOffsets[i], levelOffsets[i] + levelNumNodes[i]));
-    std::reverse(levelBounds.begin(), levelBounds.end());
     return levelBounds;
 }
 
