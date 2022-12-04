@@ -27,16 +27,27 @@ set(CSHARP_CONFIG
 
 message(STATUS "Available SDKS: " "${DOTNET_SDKS}")
 
-string(REGEX MATCH "[0-9\.]+" _CSHARP_SDK_NUMBER "${CSHARP_LIBRARY_VERSION}" )
-message(STATUS "Requested DotNet SDK Level: " ${_CSHARP_SDK_NUMBER} )
+string(REGEX MATCH "[0-9\.]+" _CSHARP_LIBRARY_SDK_NUMBER "${CSHARP_LIBRARY_VERSION}" )
+message(STATUS "Requested Library DotNet SDK Level: " ${_CSHARP_LIBRARY_SDK_NUMBER} )
+string(REGEX MATCH "[0-9\.]+" _CSHARP_APPLICATION_SDK_NUMBER "${CSHARP_APPLICATION_VERSION}" )
+message(STATUS "Requested Application DotNet SDK Level: " ${_CSHARP_APPLICATION_SDK_NUMBER} )
 
 if ( DOTNET_FOUND )
-  if ( "${_CSHARP_SDK_NUMBER}" IN_LIST DOTNET_SDKS) 
+  if ( "${_CSHARP_LIBRARY_SDK_NUMBER}" IN_LIST DOTNET_SDKS) 
     message(STATUS "DotNet SDK " ${CSHARP_LIBRARY_VERSION} " found" )
   else ()
-    message(STATUS "The Requested DotNet SDK was not found")
+    message(STATUS "The Requested DotNet SDK was not found. C# Bindings will not be built" )
     RETURN ()
   endif ()
+  if ( "${_CSHARP_APPLICATION_SDK_NUMBER}" IN_LIST DOTNET_SDKS ) 
+    message(STATUS "DotNet SDK " ${CSHARP_APPLICATION_VERSION} " found" )
+  else ()
+    message(STATUS "The Requested DotNet SDK was not found. C# Bindings will not be built" )
+    RETURN ()
+  endif ()
+else ()
+  string( SUBSTRING "${_CSHARP_LIBRARY_SDK_NUMBER}" 0 1 _CSHARP_LIBRARY_SDK_NUMBER )
+  string( SUBSTRING "${CSHARP_APPLICATION_VERSION}" 0 1 _CSHARP_APPLICATION_SDK_NUMBER )
 endif()
 
 set(_VERSION_STRING ${GDAL_VERSION_NO_DEV_SUFFIX})
@@ -46,14 +57,26 @@ endif ()
 
 # based on https://stackoverflow.com/questions/39258250/how-to-detect-if-64-bit-msvc-with-cmake TODO - this not going to
 # cope with ARM architectures
-if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-  set(CSHARP_RID "osx-x64")
-elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-  set(CSHARP_RID "linux-x64")
-elseif ("${CMAKE_GENERATOR_PLATFORM}" STREQUAL "x64")
-  set(CSHARP_RID "win-x64")
-elseif ("${CMAKE_GENERATOR_PLATFORM}" STREQUAL "Win32")
-  set(CSHARP_RID "win-x86")
+if (DOTNET_FOUND)
+  if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set(CSHARP_RID "osx-x64")
+  elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(CSHARP_RID "linux-x64")
+  elseif ("${CMAKE_GENERATOR_PLATFORM}" STREQUAL "x64")
+    set(CSHARP_RID "win-x64")
+  elseif ("${CMAKE_GENERATOR_PLATFORM}" STREQUAL "Win32")
+    set(CSHARP_RID "win-x86")
+  endif ()
+else ()
+  if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set(CSHARP_RID "x64")
+  elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(CSHARP_RID "x64")
+  elseif ("${CMAKE_GENERATOR_PLATFORM}" STREQUAL "x64")
+    set(CSHARP_RID "x64")
+  elseif ("${CMAKE_GENERATOR_PLATFORM}" STREQUAL "Win32")
+    set(CSHARP_RID "x86")
+  endif ()
 endif ()
 
 # needed because of differences in the packages
@@ -159,7 +182,8 @@ function (gdal_csharp_dll)
       set(_CSHARP_PROJ_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}")
       set(_CSHARP_DLL_TARGET "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET}")
   endif()
-  set(CSC_OPTIONS /unsafe /debug:full /target:library /out:${_CSHARP_DLL_TARGET})
+  set(CSC_OPTIONS /unsafe /debug:full /target:library /out:${_CSHARP_DLL_TARGET} /sdk:${_CSHARP_LIBRARY_SDK_NUMBER} /platform: "${CSHARP_RID}" )
+  message(${CSC_OPTIONS})
   if (WIN32)
     list(APPEND CSC_OPTIONS /define:CLR4)
   endif ()
@@ -218,7 +242,7 @@ function (gdal_csharp_dll)
 
   else ()
     if (CMAKE_VERBOSE_MAKEFILE)
-      message(STATUS "BUILDING : " ${_CSHARP_TARGET} " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_CSHARP_TARGET})
+      message(STATUS "BUILDING : " ${_CSHARP_TARGET} " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} /sdk:${_CSHARP_APPLICATION_SDK_NUMBER} /platform: "${CSHARP_RID}"  /out:${_CSHARP_TARGET})
     endif ()
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET}
@@ -419,7 +443,7 @@ function (gdal_build_csharp_sample)
     add_custom_command(
       OUTPUT ${OUTPUT_FILENAME}
       COMMAND ${CMAKE_COMMAND} -E echo "Building ${_GBCS_OUTPUT_NATIVE}"
-      COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT_NATIVE} ${SOURCE_NATIVE}
+      COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT_NATIVE} /sdk:${_CSHARP_APPLICATION_SDK_NUMBER} /platform: "${CSHARP_RID}" ${SOURCE_NATIVE}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       VERBATIM
       DEPENDS csharp_binding ${_GBCS_SOURCE})

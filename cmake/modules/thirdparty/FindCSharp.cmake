@@ -53,7 +53,6 @@ elseif( CSHARP_MONO_FOUND )
   set( CSHARP_VERSION ${CSHARP_MONO_VERSION} CACHE STRING "C# Mono compiler version" FORCE )
   set( CSHARP_COMPILER ${CSHARP_MONO_COMPILER_${CSHARP_MONO_VERSION}} CACHE STRING "Full path to Mono compiler" FORCE )
   set( CSHARP_INTERPRETER ${CSHARP_MONO_INTERPRETER_${CSHARP_MONO_VERSION}} CACHE STRING "Full path to Mono interpreter" FORCE )
-  message(STATUS ${CSHARP_COMPILER})
 endif( )
 
 # Handle WIN32 specific issues
