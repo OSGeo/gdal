@@ -242,7 +242,6 @@ function (gdal_csharp_dll)
       ${_CSHARP_SYSTEM_DEPENDS})
 
   else ()
-    list(JOIN CSC_OPTIONS " " CSC_OPTIONS)
     if (true)
       message(STATUS "BUILDING : " ${_CSHARP_TARGET} " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} )
     endif ()
@@ -437,11 +436,11 @@ function (gdal_build_csharp_sample)
       ${_GBCS_SYSTEM_DEPENDS})
 
   else ()
-    list(APPEND CSC_OPTIONS /sdk:${_CSHARP_APPLICATION_SDK_NUMBER} /platform:${CSHARP_RID})
+    list(APPEND CSC_OPTIONS /sdk:${_CSHARP_APPLICATION_SDK_NUMBER} /platform:${CSHARP_RID} /out:${_GBCS_OUTPUT_NATIVE} ${SOURCE_NATIVE})
     if (true)
       message(
         STATUS
-          "BUILDING : " ${_GBCS_OUTPUT} " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} " /out:${_GBCS_OUTPUT_NATIVE}  ${SOURCE_NATIVE}" )
+          "BUILDING : " ${_GBCS_OUTPUT} " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} )
     endif ()
     add_custom_command(
       OUTPUT ${OUTPUT_FILENAME}
