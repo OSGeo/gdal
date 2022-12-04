@@ -6551,18 +6551,18 @@ def test_ogr_gpkg_relations_sqlite_foreign_keys():
         ds = None
 
         ds = gdal.OpenEx(tmpfilename, gdal.OF_VECTOR | gdal.OF_UPDATE)
-        assert ds.GetRelationshipNames() == ["test_relation_b_test_relation_a"]
+        assert ds.GetRelationshipNames() == ["test_relation_a_test_relation_b"]
         assert ds.GetRelationship("xxx") is None
-        rel = ds.GetRelationship("test_relation_b_test_relation_a")
+        rel = ds.GetRelationship("test_relation_a_test_relation_b")
         assert rel is not None
-        assert rel.GetName() == "test_relation_b_test_relation_a"
-        assert rel.GetLeftTableName() == "test_relation_b"
-        assert rel.GetRightTableName() == "test_relation_a"
+        assert rel.GetName() == "test_relation_a_test_relation_b"
+        assert rel.GetLeftTableName() == "test_relation_a"
+        assert rel.GetRightTableName() == "test_relation_b"
         assert rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
         assert rel.GetType() == gdal.GRT_ASSOCIATION
-        assert rel.GetLeftTableFields() == ["trackartist"]
-        assert rel.GetRightTableFields() == ["artistid"]
-        assert rel.GetRelatedTableType() == "feature"
+        assert rel.GetLeftTableFields() == ["artistid"]
+        assert rel.GetRightTableFields() == ["trackartist"]
+        assert rel.GetRelatedTableType() == "features"
 
     finally:
         gdal.Unlink(tmpfilename)
