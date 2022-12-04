@@ -27,15 +27,17 @@ set(CSHARP_CONFIG
 
 message(STATUS "Available SDKS: " "${DOTNET_SDKS}")
 
-string(REGEX MATCH "[0-9\.]+" CSHARP_SDK "${CSHARP_LIBRARY_VERSION}" )
-message(STATUS "Requested DotNet SDK Level: " ${CSHARP_SDK} )
+string(REGEX MATCH "[0-9\.]+" _CSHARP_SDK_NUMBER "${CSHARP_LIBRARY_VERSION}" )
+message(STATUS "Requested DotNet SDK Level: " ${_CSHARP_SDK_NUMBER} )
 
-if ( "${CSHARP_SDK}" IN_LIST DOTNET_SDKS) 
-  message(STATUS "DotNet SDK " ${CSHARP_LIBRARY_VERSION} " found" )
-else ()
-  message(STATUS "The Requested DotNet SDK was not found")
-  RETURN ()
-endif ()
+if ( DOTNET_FOUND )
+  if ( "${_CSHARP_SDK_NUMBER}" IN_LIST DOTNET_SDKS) 
+    message(STATUS "DotNet SDK " ${CSHARP_LIBRARY_VERSION} " found" )
+  else ()
+    message(STATUS "The Requested DotNet SDK was not found")
+    RETURN ()
+  endif ()
+endif()
 
 set(_VERSION_STRING ${GDAL_VERSION_NO_DEV_SUFFIX})
 if (GDAL_DEV_SUFFIX)
