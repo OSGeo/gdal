@@ -540,7 +540,11 @@ void OGRSQLiteBaseDataSource::LoadRelationshipsFromForeignKeys() const
 
         for ( int iRecord = 0; iRecord < oResult->RowCount(); iRecord++ )
         {
-            const char* pszBaseTableName = oResult->GetValue(0, iRecord);
+            const char* pszRelatedTableName = oResult->GetValue(0, iRecord);
+            if ( !pszRelatedTableName )
+                continue;
+
+            const char* pszBaseTableName = oResult->GetValue(3, iRecord);
             if ( !pszBaseTableName )
                 continue;
 
@@ -548,16 +552,12 @@ void OGRSQLiteBaseDataSource::LoadRelationshipsFromForeignKeys() const
             if ( STARTS_WITH(pszBaseTableName, "gpkg_") )
                 continue;
 
-            const char* pszRelatedTableName = oResult->GetValue(3, iRecord);
-            if ( !pszRelatedTableName )
-                continue;
-
-            const char* pszBaseFieldName = oResult->GetValue(4, iRecord);
-            if ( !pszBaseFieldName )
-                continue;
-
-            const char* pszRelatedFieldName = oResult->GetValue(5, iRecord);
+            const char* pszRelatedFieldName = oResult->GetValue(4, iRecord);
             if ( !pszRelatedFieldName )
+                continue;
+
+            const char* pszBaseFieldName = oResult->GetValue(5, iRecord);
+            if ( !pszBaseFieldName )
                 continue;
 
             const int nId = oResult->GetValueAsInteger(1, iRecord);
@@ -594,7 +594,7 @@ void OGRSQLiteBaseDataSource::LoadRelationshipsFromForeignKeys() const
                                                                                           GRC_ONE_TO_MANY ) );
                 poRelationship->SetLeftTableFields({pszBaseFieldName});
                 poRelationship->SetRightTableFields({pszRelatedFieldName});
-                poRelationship->SetRelatedTableType("feature");
+                poRelationship->SetRelatedTableType("features");
 
                 if ( const char* pszOnDeleteAction = oResult->GetValue(6, iRecord) )
                 {

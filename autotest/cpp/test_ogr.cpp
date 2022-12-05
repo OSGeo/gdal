@@ -435,17 +435,21 @@ namespace
     TEST_F(test_ogr, style_manager)
     {
       OGRStyleMgrH hSM = OGR_SM_Create(nullptr);
-      ASSERT_TRUE(OGR_SM_InitStyleString(hSM, "PEN(w:2px,c:#000000,id:\"mapinfo-pen-2,ogr-pen-0\")"));
+      EXPECT_TRUE(OGR_SM_InitStyleString(hSM, "PEN(w:2px,c:#000000,id:\"mapinfo-pen-2,ogr-pen-0\")"));
       OGRStyleToolH hTool = OGR_SM_GetPart(hSM, 0, nullptr);
-      int bValueIsNull;
+      EXPECT_TRUE(hTool != nullptr);
+      if( hTool )
+      {
+          int bValueIsNull;
 
-      EXPECT_NEAR(OGR_ST_GetParamDbl(hTool, OGRSTPenWidth, &bValueIsNull), 2.0 * (1.0 / (72.0 * 39.37)) * 1000, 1e-6);
-      EXPECT_EQ(OGR_ST_GetUnit(hTool), OGRSTUMM);
+          EXPECT_NEAR(OGR_ST_GetParamDbl(hTool, OGRSTPenWidth, &bValueIsNull), 2.0 * (1.0 / (72.0 * 39.37)) * 1000, 1e-6);
+          EXPECT_EQ(OGR_ST_GetUnit(hTool), OGRSTUMM);
 
-      OGR_ST_SetUnit(hTool, OGRSTUPixel, 1.0);
-      EXPECT_EQ(OGR_ST_GetParamDbl(hTool, OGRSTPenWidth, &bValueIsNull), 2.0);
-      EXPECT_EQ(OGR_ST_GetUnit(hTool), OGRSTUPixel);
-      OGR_ST_Destroy(hTool);
+          OGR_ST_SetUnit(hTool, OGRSTUPixel, 1.0);
+          EXPECT_EQ(OGR_ST_GetParamDbl(hTool, OGRSTPenWidth, &bValueIsNull), 2.0);
+          EXPECT_EQ(OGR_ST_GetUnit(hTool), OGRSTUPixel);
+          OGR_ST_Destroy(hTool);
+      }
 
       OGR_SM_Destroy(hSM);
     }
@@ -1173,6 +1177,19 @@ namespace
             ASSERT_EQ( oLS.getM(0), 1000.0 );
             ASSERT_EQ( oLS.getM(1), 1000.0 );
         }
+    }
+
+    // Test OGRToOGCGeomType()
+    TEST_F(test_ogr, OGRToOGCGeomType)
+    {
+        EXPECT_STREQ(OGRToOGCGeomType(wkbPoint), "POINT");
+        EXPECT_STREQ(OGRToOGCGeomType(wkbPointM), "POINT");
+        EXPECT_STREQ(OGRToOGCGeomType(wkbPoint, /*bCamelCase=*/ true), "Point");
+        EXPECT_STREQ(OGRToOGCGeomType(wkbPoint, /*bCamelCase=*/ true, /*bAddZM=*/true), "Point");
+        EXPECT_STREQ(OGRToOGCGeomType(wkbPoint25D, /*bCamelCase=*/ true, /*bAddZM=*/true), "PointZ");
+        EXPECT_STREQ(OGRToOGCGeomType(wkbPointM, /*bCamelCase=*/ true, /*bAddZM=*/true), "PointM");
+        EXPECT_STREQ(OGRToOGCGeomType(wkbPointZM, /*bCamelCase=*/ true, /*bAddZM=*/true), "PointZM");
+        EXPECT_STREQ(OGRToOGCGeomType(wkbPointZM, /*bCamelCase=*/ true, /*bAddZM=*/true, /*bAddSpaceBeforeZM=*/true), "Point ZM");
     }
 
     // Test layer, dataset-feature and layer-feature iterators

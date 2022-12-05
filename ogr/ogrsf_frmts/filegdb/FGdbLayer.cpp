@@ -1382,7 +1382,8 @@ OGRErr FGdbLayer::PopulateRowWithFeature( Row& fgdb_row, OGRFeature *poFeature )
         }
     }
 
-    if ( m_pFeatureDefn->GetGeomType() != wkbNone )
+    const auto eFlatLayerGeomType = wkbFlatten(m_pFeatureDefn->GetGeomType());
+    if ( eFlatLayerGeomType != wkbNone )
     {
         /* Done with attribute fields, now do geometry */
         OGRGeometry *poGeom = poFeature->GetGeometryRef();
@@ -1417,6 +1418,22 @@ OGRErr FGdbLayer::PopulateRowWithFeature( Row& fgdb_row, OGRFeature *poFeature )
             }
             else
             {
+                if( ((eFlatLayerGeomType == wkbLineString ||
+                      eFlatLayerGeomType == wkbMultiLineString) &&
+                     (eType != wkbLineString && eType != wkbMultiLineString)) ||
+                    ((eFlatLayerGeomType == wkbPolygon ||
+                      eFlatLayerGeomType == wkbMultiPolygon) &&
+                     (eType != wkbPolygon && eType != wkbMultiPolygon)) ||
+                    ((eFlatLayerGeomType == wkbPoint || eFlatLayerGeomType == wkbMultiPoint) &&
+                     eType != eFlatLayerGeomType) )
+                {
+                    // Otherwise crash in the SDK...
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "Geometry type %s not supported in layer of type %s",
+                             OGRToOGCGeomType(eType), OGRToOGCGeomType(eFlatLayerGeomType));
+                    return OGRERR_FAILURE;
+                }
+
                 err = OGRWriteToShapeBin( poGeom, &pabyShape, &nShapeSize );
             }
             if ( err != OGRERR_NONE )

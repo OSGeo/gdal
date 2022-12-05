@@ -870,7 +870,8 @@ class CPL_DLL OGRFeature
     GIntBig             GetFID() const { return nFID; }
     virtual OGRErr      SetFID( GIntBig nFIDIn );
 
-    void                DumpReadable( FILE *, char** papszOptions = nullptr ) const;
+    void                DumpReadable( FILE *, CSLConstList papszOptions = nullptr ) const;
+    std::string         DumpReadableAsString( CSLConstList papszOptions = nullptr ) const;
 
     OGRErr              SetFrom( const OGRFeature *, int = TRUE );
     OGRErr              SetFrom( const OGRFeature *, const int *, int = TRUE );

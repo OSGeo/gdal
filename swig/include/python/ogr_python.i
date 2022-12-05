@@ -649,7 +649,7 @@
     self.thisown = 0
 
   def __str__(self):
-    return self.ExportToWkt()
+    return self.ExportToIsoWkt()
 
   def __copy__(self):
     return self.Clone()

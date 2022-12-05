@@ -252,6 +252,18 @@ GDALDatasetH CPL_DLL GDALMultiDimTranslate( const char* pszDest,
                                             const GDALMultiDimTranslateOptions *psOptions,
                                             int *pbUsageError );
 
+/*! Options for GDALVectorInfo(). Opaque type */
+typedef struct GDALVectorInfoOptions GDALVectorInfoOptions;
+
+/** Opaque type */
+typedef struct GDALVectorInfoOptionsForBinary GDALVectorInfoOptionsForBinary;
+
+GDALVectorInfoOptions CPL_DLL *GDALVectorInfoOptionsNew(char** papszArgv, GDALVectorInfoOptionsForBinary* psOptionsForBinary);
+
+void CPL_DLL GDALVectorInfoOptionsFree( GDALVectorInfoOptions *psOptions );
+
+char CPL_DLL *GDALVectorInfo( GDALDatasetH hDataset, const GDALVectorInfoOptions *psOptions );
+
 CPL_C_END
 
 #endif /* GDAL_UTILS_H_INCLUDED */
