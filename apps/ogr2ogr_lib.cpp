@@ -3929,6 +3929,30 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
             return nullptr;
         }
 
+        // Cf https://github.com/OSGeo/gdal/issues/6859
+        // warn if the user requests -t_srs but the driver uses a different SRS.
+        if( m_poOutputSRS != nullptr && !psOptions->bQuiet )
+        {
+            auto poCreatedSRS = poDstLayer->GetSpatialRef();
+            if( poCreatedSRS != nullptr )
+            {
+                const char* const apszOptions[] = {
+                    "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES",
+                    "CRITERION=EQUIVALENT", nullptr };
+                if( !poCreatedSRS->IsSame(m_poOutputSRS, apszOptions) )
+                {
+                    const char* pszTargetSRSName = m_poOutputSRS->GetName();
+                    const char* pszCreatedSRSName = poCreatedSRS->GetName();
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Target SRS %s not taken into account as target "
+                             "driver likely implements on-the-fly reprojection "
+                             "to %s",
+                             pszTargetSRSName ? pszTargetSRSName : "",
+                             pszCreatedSRSName ? pszCreatedSRSName : "");
+                }
+            }
+        }
+
         if( m_bCopyMD )
         {
             char** papszDomains = poSrcLayer->GetMetadataDomainList();
@@ -5398,6 +5422,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
     {
         if( EQUAL(papszArgv[i],"-q") || EQUAL(papszArgv[i],"-quiet") )
         {
+            psOptions->bQuiet = true;
             if( psOptionsForBinary )
                 psOptionsForBinary->bQuiet = TRUE;
         }
