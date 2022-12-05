@@ -15,12 +15,22 @@ set(GDAL_CSHARP_INSTALL_DIR
     "${CMAKE_INSTALL_DATADIR}/csharp"
     CACHE PATH "Installation sub-directory for CSharp bindings")
 
-set(CSHARP_LIBRARY_VERSION
-    "net6.0"
+if (DOTNET_FOUND)
+  set(CSHARP_LIBRARY_VERSION
+      "net6.0"
+      CACHE STRING ".NET version to be used for libraries")
+  set(CSHARP_APPLICATION_VERSION
+      "net6.0"
+      CACHE STRING ".NET version to be used for the sample Applications")
+else ()
+  set(CSHARP_LIBRARY_VERSION
+    "4.5"
     CACHE STRING ".NET version to be used for libraries")
-set(CSHARP_APPLICATION_VERSION
-    "net6.0"
+  set(CSHARP_APPLICATION_VERSION
+    "4.5"
     CACHE STRING ".NET version to be used for the sample Applications")
+endif ()
+
 set(CSHARP_CONFIG
     "RELEASE"
     CACHE STRING "Config to be used to compile the C# artifacts > RELEASE|CONFIG")
@@ -47,9 +57,6 @@ if ( DOTNET_FOUND )
       RETURN ()
       endif ()
   endif ()
-else ()
-  string( SUBSTRING "${_CSHARP_LIBRARY_SDK_NUMBER}" 0 1 _CSHARP_LIBRARY_SDK_NUMBER )
-  string( SUBSTRING "${_CSHARP_APPLICATION_SDK_NUMBER}" 0 1 _CSHARP_APPLICATION_SDK_NUMBER )
 endif()
 
 set(_VERSION_STRING ${GDAL_VERSION_NO_DEV_SUFFIX})
