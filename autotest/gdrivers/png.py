@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import array
 import os
 
 import gdaltest
@@ -355,3 +356,76 @@ def test_png_14():
     nbits = out_ds.GetRasterBand(1).GetMetadataItem("NBITS", "IMAGE_STRUCTURE")
     gdal.Unlink("/vsimem/tmp.png")
     assert nbits is None
+
+
+###############################################################################
+# Test whole image decompression optimization
+
+
+@pytest.mark.parametrize(
+    "options",
+    [{}, {"GDAL_PNG_WHOLE_IMAGE_OPTIM": "NO"}, {"GDAL_PNG_SINGLE_BLOCK": "NO"}],
+)
+@pytest.mark.parametrize("nbands", [1, 2, 3, 4])
+@pytest.mark.parametrize("xsize,ysize", [(7, 8), (513, 5)])
+def test_png_whole_image_optim(options, nbands, xsize, ysize):
+
+    filename = "/vsimem/test.png"
+    src_ds = gdal.GetDriverByName("MEM").Create("", xsize, ysize, nbands)
+    src_ds.WriteRaster(
+        0,
+        0,
+        src_ds.RasterXSize,
+        src_ds.RasterYSize,
+        array.array("B", [i % 256 for i in range(xsize * ysize * nbands)]),
+    )
+    gdal.GetDriverByName("PNG").CreateCopy(filename, src_ds)
+    with gdaltest.config_options(options):
+        ds = gdal.Open(filename)
+        for i in range(nbands):
+            assert (
+                ds.GetRasterBand(i + 1).ReadRaster()
+                == src_ds.GetRasterBand(i + 1).ReadRaster()
+            )
+
+        ds = gdal.Open(filename)
+        assert ds.GetRasterBand(1).ReadRaster() == src_ds.GetRasterBand(1).ReadRaster()
+        assert ds.GetRasterBand(1).ReadRaster() == src_ds.GetRasterBand(1).ReadRaster()
+
+        if nbands >= 2:
+            ds = gdal.Open(filename)
+            assert (
+                ds.GetRasterBand(2).ReadRaster() == src_ds.GetRasterBand(2).ReadRaster()
+            )
+            assert (
+                ds.GetRasterBand(1).ReadRaster() == src_ds.GetRasterBand(1).ReadRaster()
+            )
+
+        ds = gdal.Open(filename)
+        blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
+        assert ds.GetRasterBand(1).ReadBlock(0, 0) == src_ds.GetRasterBand(
+            1
+        ).ReadRaster(0, 0, blockxsize, blockysize)
+
+        ds = gdal.Open(filename)
+        assert ds.GetRasterBand(1).ReadRaster(2, 3, 4, 2) == src_ds.GetRasterBand(
+            1
+        ).ReadRaster(2, 3, 4, 2)
+
+        ds = gdal.Open(filename)
+        assert ds.ReadRaster() == src_ds.ReadRaster()
+
+        ds = gdal.Open(filename)
+        assert ds.ReadRaster(2, 3, 4, 2) == src_ds.ReadRaster(2, 3, 4, 2)
+
+        ds = gdal.Open(filename)
+        assert ds.GetRasterBand(1).ReadRaster(
+            buf_type=gdal.GDT_UInt16
+        ) == src_ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_UInt16)
+
+        ds = gdal.Open(filename)
+        assert ds.ReadRaster(buf_type=gdal.GDT_UInt16) == src_ds.ReadRaster(
+            buf_type=gdal.GDT_UInt16
+        )
+
+    gdal.Unlink(filename)
