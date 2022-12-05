@@ -1,4 +1,3 @@
-
 file(GLOB SOURCES "${TARGET_SUBDIR}/*.cs")
 list(APPEND SOURCES ${SOURCE_DIR}/AssemblyInfo.cs)
 set(NATIVE_SOURCES)
