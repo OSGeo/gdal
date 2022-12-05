@@ -15,6 +15,7 @@ set(GDAL_CSHARP_INSTALL_DIR
     "${CMAKE_INSTALL_DATADIR}/csharp"
     CACHE PATH "Installation sub-directory for CSharp bindings")
 
+
 if (DOTNET_FOUND)
   set(CSHARP_LIBRARY_VERSION
       "net6.0"
@@ -36,6 +37,7 @@ set(CSHARP_CONFIG
     CACHE STRING "Config to be used to compile the C# artifacts > RELEASE|CONFIG")
 
 message(STATUS "Available SDKS: " "${DOTNET_SDKS}")
+
 
 string(REGEX MATCH "[0-9\.]+" _CSHARP_LIBRARY_SDK_NUMBER "${CSHARP_LIBRARY_VERSION}" )
 message(STATUS "Requested Library DotNet SDK Level: " ${_CSHARP_LIBRARY_SDK_NUMBER} )
