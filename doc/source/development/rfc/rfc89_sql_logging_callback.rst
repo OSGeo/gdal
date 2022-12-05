@@ -94,6 +94,20 @@ In order to catch SQLite prepare errors, a prepare function wrapper will be
 called instead of the sqlite3 API C function, this implies the cost of
 a function call (which might be inlined if necessary).
 
+Comparison of current master release build with the proposed implementation
+on a 145665553 feature 15GB GPKG Point layer stored on fast SSD:
+
++------------------+---------+-------------------------+                 
+|  Benchmark       | Master  | Proposed implementation |
++------------------+---------+-------------------------+                 
+| bench_ogr_batch  |   0,13m |                  0,12m  |
++------------------+---------+-------------------------+                 
+| bench_ogr_c_capi |   2,57m |                  2,57m  |
++------------------+---------+-------------------------+
+
+
+
+
 
 Backward compatibility
 ----------------------
