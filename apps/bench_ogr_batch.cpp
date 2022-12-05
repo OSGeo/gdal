@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL Utilities
- * Purpose:  bench_ogr_bach
+ * Purpose:  bench_ogr_batch
  * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -37,7 +37,7 @@
 
 static void Usage()
 {
-    printf("Usage: bench_ogr_bach [-where filter] [-spat xmin ymin xmax ymax]\n");
+    printf("Usage: bench_ogr_batch [-where filter] [-spat xmin ymin xmax ymax]\n");
     printf("                      filename [layer_name]\n");
     exit(1);
 }
