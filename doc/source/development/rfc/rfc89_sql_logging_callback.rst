@@ -100,9 +100,9 @@ on a 145665553 feature 15GB GPKG Point layer stored on fast SSD:
 +------------------+---------+-------------------------+                 
 |  Benchmark       | Master  | Proposed implementation |
 +------------------+---------+-------------------------+                 
-| bench_ogr_batch  |   0,13m |                  0,12m  |
+| bench_ogr_batch  |   0.13m |                  0.12m  |
 +------------------+---------+-------------------------+                 
-| bench_ogr_c_capi |   2,57m |                  2,57m  |
+| bench_ogr_c_capi |   2.57m |                  2.57m  |
 +------------------+---------+-------------------------+
 
 
