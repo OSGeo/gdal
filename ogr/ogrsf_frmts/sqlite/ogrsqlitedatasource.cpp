@@ -347,6 +347,189 @@ const GDALRelationship *OGRSQLiteDataSource::GetRelationship( const std::string 
 
 
 /************************************************************************/
+/*                          AddRelationship()                           */
+/************************************************************************/
+
+bool OGRSQLiteDataSource::AddRelationship(std::unique_ptr<GDALRelationship>&& relationship,
+                                          std::string& failureReason)
+{
+    if( !GetUpdate() )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "AddRelationship() not supported on read-only dataset");
+        return false;
+    }
+
+    if ( !ValidateRelationship(relationship.get(), failureReason ) )
+    {
+        return false;
+    }
+
+
+    const std::string &osLeftTableName = relationship->GetLeftTableName();
+    const std::string &osRightTableName = relationship->GetRightTableName();
+    const auto& aosLeftTableFields = relationship->GetLeftTableFields();
+    const auto& aosRightTableFields = relationship->GetRightTableFields();
+
+    bool bBaseKeyIsUnique = false;
+    {
+        const std::set<std::string> uniqueBaseFieldsUC = SQLGetUniqueFieldUCConstraints(GetDB(), osLeftTableName.c_str());
+        if ( uniqueBaseFieldsUC.find( CPLString( aosLeftTableFields[0] ).toupper() ) != uniqueBaseFieldsUC.end() )
+        {
+            bBaseKeyIsUnique = true;
+        }
+    }
+    if ( !bBaseKeyIsUnique )
+    {
+      failureReason = "Base table field must be a primary key field or have a unique constraint set";
+      return false;
+    }
+
+    OGRSQLiteTableLayer * poRightTable = dynamic_cast< OGRSQLiteTableLayer* >( GetLayerByName(osRightTableName.c_str()) );
+    if( !poRightTable )
+    {
+        failureReason = ( "Right table " + osRightTableName + " is not an existing layer in the dataset" ).c_str();
+        return false;
+    }
+
+    char * pszForeignKeySQL = nullptr;
+    if ( relationship->GetType() == GDALRelationshipType::GRT_ASSOCIATION )
+    {
+        pszForeignKeySQL = sqlite3_mprintf("FOREIGN KEY(\"%w\") REFERENCES \"%w\"(\"%w\") DEFERRABLE INITIALLY DEFERRED",
+                                aosRightTableFields[0].c_str(),
+                                osLeftTableName.c_str(),
+                                aosLeftTableFields[0].c_str() );
+    }
+    else
+    {
+        pszForeignKeySQL = sqlite3_mprintf("FOREIGN KEY(\"%w\") REFERENCES \"%w\"(\"%w\") ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED",
+                                aosRightTableFields[0].c_str(),
+                                osLeftTableName.c_str(),
+                                aosLeftTableFields[0].c_str() );
+    }
+
+    int eErr = poRightTable->AddForeignKeysToTable( pszForeignKeySQL );
+    sqlite3_free(pszForeignKeySQL);
+    if ( eErr != OGRERR_NONE )
+    {
+        failureReason = "Could not add foreign keys to table";
+        return false;
+    }
+
+    char * pszSQL = sqlite3_mprintf("CREATE INDEX \"idx_%qw_related_id\" ON \"%w\" (\"%w\");",
+                                    osRightTableName.c_str(),
+                                    osRightTableName.c_str(),
+                                    aosRightTableFields[0].c_str()
+                                    );
+    eErr = SQLCommand(hDB, pszSQL);
+    sqlite3_free(pszSQL);
+    if ( eErr != OGRERR_NONE )
+    {
+        failureReason = ( "Could not create index for " + osRightTableName + " " + aosRightTableFields[0]).c_str();
+        return false;
+    }
+
+    m_bHasPopulatedRelationships = false;
+    m_osMapRelationships.clear();
+    return true;
+}
+
+
+/************************************************************************/
+/*                       ValidateRelationship()                         */
+/************************************************************************/
+
+bool OGRSQLiteDataSource::ValidateRelationship(const GDALRelationship * poRelationship, std::string& failureReason )
+{
+
+    if ( poRelationship->GetCardinality() != GDALRelationshipCardinality::GRC_ONE_TO_MANY )
+    {
+        failureReason = "Only one to many relationships are supported for SQLITE datasources";
+        return false;
+    }
+
+    if ( poRelationship->GetType() != GDALRelationshipType::GRT_COMPOSITE && poRelationship->GetType() != GDALRelationshipType::GRT_ASSOCIATION )
+    {
+        failureReason = "Only association and composite relationship types are supported for SQLITE datasources";
+        return false;
+    }
+
+    const std::string& osLeftTableName = poRelationship->GetLeftTableName();
+    OGRLayer * poLeftTable = GetLayerByName(osLeftTableName.c_str());
+    if( !poLeftTable )
+    {
+        failureReason = ( "Left table " + osLeftTableName + " is not an existing layer in the dataset" ).c_str();
+        return false;
+    }
+    const std::string &osRightTableName = poRelationship->GetRightTableName();
+    OGRLayer * poRightTable = GetLayerByName(osRightTableName.c_str());
+    if( !poRightTable )
+    {
+        failureReason = ( "Right table " + osRightTableName + " is not an existing layer in the dataset" ).c_str();
+        return false;
+    }
+
+    const auto& aosLeftTableFields = poRelationship->GetLeftTableFields();
+    if ( aosLeftTableFields.empty() )
+    {
+        failureReason = "No left table fields were specified";
+        return false;
+    }
+    else if ( aosLeftTableFields.size() > 1 )
+    {
+        failureReason = "Only a single left table field is permitted for the SQLITE relationships";
+        return false;
+    }
+    else
+    {
+        // validate left field exists
+        if( poLeftTable->GetLayerDefn()->GetFieldIndex(aosLeftTableFields[0].c_str()) < 0
+                && !EQUAL( poLeftTable->GetFIDColumn(), aosLeftTableFields[0].c_str() ) )
+        {
+            failureReason = ("Left table field " + aosLeftTableFields[0] + " does not exist in " + osLeftTableName ).c_str();
+            return false;
+        }
+    }
+
+    const auto& aosRightTableFields = poRelationship->GetRightTableFields();
+    if ( aosRightTableFields.empty() )
+    {
+        failureReason = "No right table fields were specified";
+        return false;
+    }
+    else if ( aosRightTableFields.size() > 1 )
+    {
+        failureReason = "Only a single right table field is permitted for the SQLITE relationships";
+        return false;
+    }
+    else
+    {
+        // validate right field exists
+        if( poRightTable->GetLayerDefn()->GetFieldIndex(aosRightTableFields[0].c_str()) < 0
+            && !EQUAL( poRightTable->GetFIDColumn(), aosRightTableFields[0].c_str() ) )
+        {
+            failureReason = ("Right table field " + aosRightTableFields[0] + " does not exist in " + osRightTableName ).c_str();
+            return false;
+        }
+    }
+
+    // ensure relationship is different from existing relationships
+    for ( auto it = m_osMapRelationships.begin(); it != m_osMapRelationships.end(); ++it )
+    {
+        if ( osLeftTableName == it->second->GetLeftTableName()
+             && osRightTableName == it->second->GetRightTableName()
+             && aosLeftTableFields == it->second->GetLeftTableFields()
+             && aosRightTableFields == it->second->GetRightTableFields() )
+        {
+            failureReason = "A relationship between these tables and fields already exists";
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/************************************************************************/
 /*                       OGRSQLiteBaseDataSource()                      */
 /************************************************************************/
 
@@ -2529,18 +2712,16 @@ bool OGRSQLiteDataSource::OpenView( const char *pszViewName,
 int OGRSQLiteDataSource::TestCapability( const char * pszCap )
 
 {
-    if( EQUAL(pszCap,ODsCCreateLayer) )
-        return GetUpdate();
-    else if( EQUAL(pszCap,ODsCDeleteLayer) )
+    if( EQUAL(pszCap,ODsCCreateLayer)
+        || EQUAL(pszCap,ODsCDeleteLayer)
+        || EQUAL(pszCap,ODsCCreateGeomFieldAfterCreateLayer)
+        || EQUAL(pszCap,ODsCRandomLayerWrite)
+        || EQUAL(pszCap,GDsCAddRelationship) )
         return GetUpdate();
     else if( EQUAL(pszCap,ODsCCurveGeometries) )
         return !m_bIsSpatiaLiteDB;
     else if( EQUAL(pszCap,ODsCMeasuredGeometries) )
         return TRUE;
-    else if( EQUAL(pszCap,ODsCCreateGeomFieldAfterCreateLayer) )
-        return GetUpdate();
-    else if( EQUAL(pszCap,ODsCRandomLayerWrite) )
-        return GetUpdate();
     else
         return OGRSQLiteBaseDataSource::TestCapability(pszCap);
 }

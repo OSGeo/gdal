@@ -235,6 +235,8 @@ Relationships
 Relationship retrieval is supported. Relationships will be reported for tables which utilize FOREIGN KEY
 constraints.
 
+Relationship creation is supported since GDAL 3.7, for one-to-many relationships only.
+
 Dataset open options
 ~~~~~~~~~~~~~~~~~~~~
 
