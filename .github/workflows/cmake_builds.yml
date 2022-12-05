@@ -174,7 +174,7 @@ jobs:
         ln -s .. gdal
         mkdir build
         cd build
-        cmake  ${CMAKE_OPTIONS} -Werror=dev -DCSHARP_MONO=ON BUILD_JAVA_BINDINGS:BOOL=ON/OFF -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DGDAL_USE_PUBLICDECOMPWT:BOOL=ON -DPUBLICDECOMPWT_URL=https://github.com/rouault/PublicDecompWT .. -DWERROR_DEV_FLAG="-Werror=dev"
+        cmake  ${CMAKE_OPTIONS} -Werror=dev -DCSHARP_MONO=ON BUILD_JAVA_BINDINGS:BOOL=OFF -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DGDAL_USE_PUBLICDECOMPWT:BOOL=ON -DPUBLICDECOMPWT_URL=https://github.com/rouault/PublicDecompWT .. -DWERROR_DEV_FLAG="-Werror=dev"
     - name: Build
       run: |
         cmake --build $GITHUB_WORKSPACE/superbuild/build -- -j$(nproc)
