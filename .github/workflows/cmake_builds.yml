@@ -150,12 +150,12 @@ jobs:
 
     - name: Install pdfium
       run: |
-        wget -q https://github.com/rouault/pdfium_build_gdal_3_5/releases/download/v1_pdfium_5106/install-ubuntu2004-rev5106.tar.gz \
-          && tar -xzf install-ubuntu2004-rev5106.tar.gz \
+        wget -q https://github.com/rouault/pdfium_build_gdal_3_7/releases/download/pdfium_5461_v1/install-ubuntu2004-rev5461.tar.gz \
+          && tar -xzf install-ubuntu2004-rev5461.tar.gz \
           && sudo chown -R root:root install \
           && sudo mv install/lib/* /usr/lib/ \
           && sudo mv install/include/* /usr/include/ \
-          && sudo rm -rf install-ubuntu2004-rev5106.tar.gz install \
+          && sudo rm -rf install-ubuntu2004-rev5461.tar.gz install \
           && sudo apt-get update -y \
           && sudo apt-get install -y --fix-missing --no-install-recommends liblcms2-dev
     - name: Configure ccache
@@ -466,8 +466,8 @@ jobs:
     - name: Install pdfium
       shell: bash -l {0}
       run: |
-        curl -LOs https://github.com/rouault/pdfium_build_gdal_3_5/releases/download/v1_pdfium_5106/install-win10-vs2019-x64-rev5106.zip
-        unzip install-win10-vs2019-x64-rev5106.zip
+        curl -LOs https://github.com/rouault/pdfium_build_gdal_3_7/releases/download/pdfium_5461_v1/install-win10-vs2019-x64-rev5461.zip
+        unzip install-win10-vs2019-x64-rev5461.zip
         mv install install-pdfium
 
     - name: Remove conflicting libraries

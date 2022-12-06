@@ -334,19 +334,19 @@ class GDALPDFObjectPodofo : public GDALPDFObject
 class GDALPDFObjectPdfium : public GDALPDFObject
 {
     private:
-        CPDF_Object* m_po;
+        RetainPtr<const CPDF_Object> m_obj;
         GDALPDFDictionary* m_poDict;
         GDALPDFArray* m_poArray;
         GDALPDFStream* m_poStream;
         CPLString osStr;
 
-                GDALPDFObjectPdfium(CPDF_Object *po);
+                GDALPDFObjectPdfium(RetainPtr<const CPDF_Object> obj);
 
     protected:
         virtual const char*       GetTypeNameNative() override;
 
     public:
-        static GDALPDFObjectPdfium* Build(CPDF_Object *po);
+        static GDALPDFObjectPdfium* Build(RetainPtr<const CPDF_Object> obj);
 
         virtual ~GDALPDFObjectPdfium();
 

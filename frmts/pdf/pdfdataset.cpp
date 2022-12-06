@@ -1199,14 +1199,15 @@ int LoadPdfiumDocumentPage(
   TPdfiumPageStruct *poPage = nullptr;
   // Page not loaded
   if(itPage == poDoc->pages.end()) {
-    CPDF_Dictionary* pDict = poDoc->doc->GetPageDictionary(pageNum - 1);
+    auto pDict = poDoc->doc->GetPageDictionary(pageNum - 1);
     if (pDict == nullptr) {
       CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDFium : invalid page");
 
       CPLReleaseMutex(g_oPdfiumLoadDocMutex);
       return FALSE;
     }
-    auto pPage = pdfium::MakeRetain<CPDF_Page>(poDoc->doc, pDict);
+    auto pPage = pdfium::MakeRetain<CPDF_Page>(poDoc->doc,
+                   pdfium::WrapRetain(const_cast<CPDF_Dictionary*>(pDict.Get())));
 
     poPage = new TPdfiumPageStruct;
     if(!poPage) {
@@ -1381,8 +1382,10 @@ public:
     GDALPDFiumOCContext(PDFDataset* poDS, CPDF_Document *pDoc, CPDF_OCContext::UsageType usage) :
                                 m_poDS(poDS), m_DefaultOCContext(pdfium::MakeRetain<CPDF_OCContext>(pDoc, usage)) {}
 
-    virtual bool CheckOCGVisible(const CPDF_Dictionary *pOCGDict) const override
+    virtual bool CheckOCGDictVisible(const CPDF_Dictionary *pOCGDict) const override
     {
+        // CPLDebug("PDF", "CheckOCGDictVisible(%d,%d)",
+        //          pOCGDict->GetObjNum(), pOCGDict->GetGenNum() );
         PDFDataset::VisibilityState eVisibility =
             m_poDS->GetVisibilityStateForOGCPdfium(
                                 pOCGDict->GetObjNum(), pOCGDict->GetGenNum() );
@@ -1390,7 +1393,7 @@ public:
             return true;
         if( eVisibility == PDFDataset::VISIBILITY_OFF )
             return false;
-        return m_DefaultOCContext->CheckOCGVisible(pOCGDict);
+        return m_DefaultOCContext->CheckOCGDictVisible(pOCGDict);
     }
 };
 
@@ -1548,7 +1551,7 @@ public:
         return m_poParent->ContinueDIBits(handle, pPause);
     }
 
-    virtual bool DrawDeviceText(pdfium::span<const TextCharPos> pCharPos,
+    virtual bool DrawDeviceText(const pdfium::span<const TextCharPos>& pCharPos,
                               CFX_Font* pFont,
                               const CFX_Matrix& mtObject2Device,
                               float font_size,
@@ -1601,6 +1604,9 @@ public:
         if( !bEnableBitmap && !bTemporaryEnableVectorForTextStroking )
             return true;
         return m_poParent->SetBitsWithMask(pBitmap, pMask, left, top, bitmap_alpha, blend_type);
+    }
+    virtual void SetGroupKnockout(bool group_knockout) override {
+        m_poParent->SetGroupKnockout(group_knockout);
     }
 #endif
 #if defined _SKIA_SUPPORT_ || defined _SKIA_SUPPORT_PATHS_
@@ -1684,8 +1690,8 @@ void myRenderPageImpl(PDFDataset* poDS,
   pContext->m_pDevice->SetBaseClip(clipping_rect);
   pContext->m_pDevice->SetClip_Rect(clipping_rect);
   pContext->m_pContext = std::make_unique<CPDF_RenderContext>(
-      pPage->GetDocument(), pPage->GetPageResources(),
-      static_cast<CPDF_PageRenderCache*>(pPage->GetRenderCache()));
+      pPage->GetDocument(), pPage->GetMutablePageResources(),
+      pPage->GetPageImageCache());
 
   pContext->m_pContext->AppendLayer(pPage, matrix);
 
@@ -2456,9 +2462,9 @@ GDALPDFObject* PDFDataset::GetCatalog()
 #ifdef HAVE_PDFIUM
     if(bUseLib.test(PDFLIB_PDFIUM))
     {
-        CPDF_Dictionary* catalog = poDocPdfium->doc->GetRoot();
+        const CPDF_Dictionary* catalog = poDocPdfium->doc->GetRoot();
         if(catalog)
-            poCatalogObject = GDALPDFObjectPdfium::Build(catalog);
+            poCatalogObject = GDALPDFObjectPdfium::Build(pdfium::WrapRetain(catalog));
     }
 #endif  // ~ HAVE_PDFIUM
 
@@ -4008,7 +4014,7 @@ void PDFDataset::TurnLayersOnOffPdfium()
             {
                 if (oIter->second.first >= 0 )
                 {
-                    //CPLDebug("PDF", "Turn '%s' off", papszLayersOFF[i]);
+                    //CPLDebug("PDF", "Turn '%s' (%d,%d) off", papszLayersOFF[i], oIter->second.first, oIter->second.second);
                     oMapOCGNumGenToVisibilityStatePdfium[ oIter->second ] = VISIBILITY_OFF;
                 }
 
@@ -4594,7 +4600,7 @@ PDFDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
-    CPDF_Object* pageObj = poPagePdfium->page->GetDict();
+    const auto pageObj = poPagePdfium->page->GetDict();
     if(pageObj == nullptr) {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : invalid page object");
         UnloadPdfiumDocumentPage(&poDocPdfium, &poPagePdfium);
@@ -5105,7 +5111,8 @@ PDFDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 #ifdef HAVE_PDFIUM
     if (bUseLib.test(PDFLIB_PDFIUM))
     {
-        GDALPDFObjectPdfium* poRoot = GDALPDFObjectPdfium::Build(poDocPdfium->doc->GetRoot());
+        GDALPDFObjectPdfium* poRoot = GDALPDFObjectPdfium::Build(
+                            pdfium::WrapRetain(poDocPdfium->doc->GetRoot()));
         if(poRoot->GetType() == PDFObjectType_Dictionary) {
           GDALPDFDictionary* poDict = poRoot->GetDictionary();
           GDALPDFObject* poMetadata(poDict->Get("Metadata"));
