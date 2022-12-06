@@ -254,6 +254,15 @@ GDALDataset *NOAA_B_Dataset::Open( GDALOpenInfo * poOpenInfo )
     {
         return nullptr;
     }
+    if( nDTSize > 0 && nCols >
+            (std::numeric_limits<int>::max() - FORTRAN_HEADER_SIZE - FORTRAN_TRAILER_SIZE) / nDTSize )
+    {
+        return nullptr;
+    }
+    const int nLineSize =
+        FORTRAN_HEADER_SIZE +
+        nCols * nDTSize +
+        FORTRAN_TRAILER_SIZE;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -279,10 +288,6 @@ GDALDataset *NOAA_B_Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information object.                                 */
 /* -------------------------------------------------------------------- */
-    const int nLineSize =
-        FORTRAN_HEADER_SIZE +
-        poDS->nRasterXSize * nDTSize +
-        FORTRAN_TRAILER_SIZE;
 
     // Borrow file handle
     VSILFILE* fpImage = poOpenInfo->fpL;
