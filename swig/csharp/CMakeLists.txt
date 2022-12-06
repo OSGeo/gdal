@@ -15,15 +15,51 @@ set(GDAL_CSHARP_INSTALL_DIR
     "${CMAKE_INSTALL_DATADIR}/csharp"
     CACHE PATH "Installation sub-directory for CSharp bindings")
 
-set(CSHARP_LIBRARY_VERSION
-    "net5.0"
+
+if (DOTNET_FOUND)
+  set(CSHARP_LIBRARY_VERSION
+      "net6.0"
+      CACHE STRING ".NET version to be used for libraries")
+  set(CSHARP_APPLICATION_VERSION
+      "net6.0"
+      CACHE STRING ".NET version to be used for the sample Applications")
+else ()
+  set(CSHARP_LIBRARY_VERSION
+    "4.8"
     CACHE STRING ".NET version to be used for libraries")
-set(CSHARP_APPLICATION_VERSION
-    "net5.0"
+  set(CSHARP_APPLICATION_VERSION
+    "4.8"
     CACHE STRING ".NET version to be used for the sample Applications")
+endif ()
+
 set(CSHARP_CONFIG
     "RELEASE"
     CACHE STRING "Config to be used to compile the C# artifacts > RELEASE|CONFIG")
+
+message(STATUS "Available SDKS: " "${DOTNET_SDKS}")
+
+
+string(REGEX MATCH "[0-9\.]+" _CSHARP_LIBRARY_SDK_NUMBER "${CSHARP_LIBRARY_VERSION}" )
+message(STATUS "Requested Library DotNet SDK Level: " ${_CSHARP_LIBRARY_SDK_NUMBER} )
+string(REGEX MATCH "[0-9\.]+" _CSHARP_APPLICATION_SDK_NUMBER "${CSHARP_APPLICATION_VERSION}" )
+message(STATUS "Requested Application DotNet SDK Level: " ${_CSHARP_APPLICATION_SDK_NUMBER} )
+
+if ( DOTNET_FOUND )
+  if ( "${_CSHARP_LIBRARY_SDK_NUMBER}" IN_LIST DOTNET_SDKS) 
+    message(STATUS "DotNet SDK " ${CSHARP_LIBRARY_VERSION} " found" )
+  else ()
+    message(STATUS "The Requested DotNet SDK was not found. C# Bindings will not be built" )
+    RETURN ()
+  endif ()
+  if ( NOT ( _CSHARP_LIBRARY_SDK_NUMBER STREQUAL _CSHARP_APPLICATION_SDK_NUMBER ) )
+    if ( "${_CSHARP_APPLICATION_SDK_NUMBER}" IN_LIST DOTNET_SDKS ) 
+      message(STATUS "DotNet SDK " ${CSHARP_APPLICATION_VERSION} " found" )
+    else ()
+      message(STATUS "The Requested DotNet SDK was not found. C# Bindings will not be built" )
+      RETURN ()
+      endif ()
+  endif ()
+endif()
 
 set(_VERSION_STRING ${GDAL_VERSION_NO_DEV_SUFFIX})
 if (GDAL_DEV_SUFFIX)
@@ -32,14 +68,26 @@ endif ()
 
 # based on https://stackoverflow.com/questions/39258250/how-to-detect-if-64-bit-msvc-with-cmake TODO - this not going to
 # cope with ARM architectures
-if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-  set(CSHARP_RID "osx-x64")
-elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-  set(CSHARP_RID "linux-x64")
-elseif ("${CMAKE_GENERATOR_PLATFORM}" STREQUAL "x64")
-  set(CSHARP_RID "win-x64")
-elseif ("${CMAKE_GENERATOR_PLATFORM}" STREQUAL "Win32")
-  set(CSHARP_RID "win-x86")
+if (DOTNET_FOUND)
+  if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set(CSHARP_RID "osx-x64")
+  elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(CSHARP_RID "linux-x64")
+  elseif ("${CMAKE_GENERATOR_PLATFORM}" STREQUAL "x64")
+    set(CSHARP_RID "win-x64")
+  elseif ("${CMAKE_GENERATOR_PLATFORM}" STREQUAL "Win32")
+    set(CSHARP_RID "win-x86")
+  endif ()
+else ()
+  if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set(CSHARP_RID "x64")
+  elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(CSHARP_RID "x64")
+  elseif ("${CMAKE_GENERATOR_PLATFORM}" STREQUAL "x64")
+    set(CSHARP_RID "x64")
+  elseif ("${CMAKE_GENERATOR_PLATFORM}" STREQUAL "Win32")
+    set(CSHARP_RID "x86")
+  endif ()
 endif ()
 
 # needed because of differences in the packages
@@ -55,12 +103,12 @@ if (DOTNET_FOUND)
   dotnet_register_local_repository("local" ${_DN_REPO_PATH})
 endif ()
 
-# Cop[y build files
+# Copy build files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gdal.snk ${CMAKE_CURRENT_BINARY_DIR}/gdal.snk COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Directory.Build.props ${CMAKE_CURRENT_BINARY_DIR}/Directory.Build.props
                COPYONLY)
 
-# Crate some placemarker packages for dependencies
+# Create some placemarker packages for dependencies
 if (DOTNET_FOUND)
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/osgeo.gdal.core.csproj.in"
                  "${CMAKE_CURRENT_BINARY_DIR}/osgeo.gdal.core.csproj")
@@ -145,7 +193,7 @@ function (gdal_csharp_dll)
       set(_CSHARP_PROJ_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}")
       set(_CSHARP_DLL_TARGET "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET}")
   endif()
-  set(CSC_OPTIONS /unsafe /debug:full /target:library /out:${_CSHARP_DLL_TARGET})
+  set(CSC_OPTIONS /unsafe /debug:full /target:library /sdk:${_CSHARP_LIBRARY_SDK_NUMBER} /platform:${CSHARP_RID} /out:${_CSHARP_DLL_TARGET} )
   if (WIN32)
     list(APPEND CSC_OPTIONS /define:CLR4)
   endif ()
@@ -204,7 +252,7 @@ function (gdal_csharp_dll)
 
   else ()
     if (CMAKE_VERBOSE_MAKEFILE)
-      message(STATUS "BUILDING : " ${_CSHARP_TARGET} " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_CSHARP_TARGET})
+      message(STATUS "BUILDING : " ${_CSHARP_TARGET} " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} )
     endif ()
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET}
@@ -397,15 +445,16 @@ function (gdal_build_csharp_sample)
       ${_GBCS_SYSTEM_DEPENDS})
 
   else ()
+    list(APPEND CSC_OPTIONS /sdk:${_CSHARP_APPLICATION_SDK_NUMBER} /platform:${CSHARP_RID} /out:${_GBCS_OUTPUT_NATIVE} ${SOURCE_NATIVE})
     if (CMAKE_VERBOSE_MAKEFILE)
       message(
         STATUS
-          "BUILDING : ${_GBCS_OUTPUT} : ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT_NATIVE} ${SOURCE_NATIVE}")
+          "BUILDING : " ${_GBCS_OUTPUT} " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} )
     endif ()
     add_custom_command(
       OUTPUT ${OUTPUT_FILENAME}
       COMMAND ${CMAKE_COMMAND} -E echo "Building ${_GBCS_OUTPUT_NATIVE}"
-      COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT_NATIVE} ${SOURCE_NATIVE}
+      COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       VERBATIM
       DEPENDS csharp_binding ${_GBCS_SOURCE})
