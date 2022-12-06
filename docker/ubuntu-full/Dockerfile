@@ -41,7 +41,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
             build-essential ca-certificates \
             git make cmake wget unzip libtool automake \
-            zlib1g-dev${APT_ARCH_SUFFIX} libsqlite3-dev${APT_ARCH_SUFFIX} pkg-config sqlite3 libcurl4-gnutls-dev${APT_ARCH_SUFFIX} \
+            zlib1g-dev${APT_ARCH_SUFFIX} libsqlite3-dev${APT_ARCH_SUFFIX} pkg-config sqlite3 libcurl4-openssl-dev${APT_ARCH_SUFFIX} \
             libtiff5-dev${APT_ARCH_SUFFIX} \
     && rm -rf /var/lib/apt/lists/*
 
@@ -227,7 +227,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && wget https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y -V ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
     && apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-dev${APT_ARCH_SUFFIX}=10.0.0-1 libparquet-dev${APT_ARCH_SUFFIX}=10.0.0-1 libarrow-dataset-dev${APT_ARCH_SUFFIX}=10.0.0-1 \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-dev${APT_ARCH_SUFFIX}=10.0.1-1 libparquet-dev${APT_ARCH_SUFFIX}=10.0.1-1 libarrow-dataset-dev${APT_ARCH_SUFFIX}=10.0.1-1 \
     && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update -y \
