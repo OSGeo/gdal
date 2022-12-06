@@ -650,6 +650,7 @@ set(GDAL_DATA_FILES
     data/epsg.wkt
     data/esri_StatePlane_extra.wkt
     data/gdalicon.png
+    data/gdalinfo_output.schema.json
     data/gdalmdiminfo_output.schema.json
     data/gdalvrt.xsd
     data/gml_registry.xml
