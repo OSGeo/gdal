@@ -204,6 +204,7 @@ void CPL_DLL GDALRegister_JPEGXL(void);
 void CPL_DLL GDALRegister_BASISU(void);
 void CPL_DLL GDALRegister_KTX2(void);
 void CPL_DLL GDALRegister_BASISU_KTX2(void);
+void CPL_DLL GDALRegister_NOAA_B(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
