@@ -149,8 +149,6 @@ if (BUILD_APPS)
   add_executable(multireadtest EXCLUDE_FROM_ALL multireadtest.cpp)
   add_executable(test_ogrsf test_ogrsf.cpp)
   add_executable(testreprojmulti EXCLUDE_FROM_ALL testreprojmulti.cpp)
-  add_executable(bench_ogr_batch EXCLUDE_FROM_ALL bench_ogr_batch.cpp)
-  add_executable(bench_ogr_c_api EXCLUDE_FROM_ALL bench_ogr_c_api.cpp)
 
   foreach (
     UTILCMD IN
@@ -162,9 +160,7 @@ if (BUILD_APPS)
           gdalwarpsimple
           multireadtest
           test_ogrsf
-          testreprojmulti
-          bench_ogr_batch
-          bench_ogr_c_api)
+          testreprojmulti)
     if (WIN32)
         target_sources(${UTILCMD} PRIVATE longpathaware.manifest)
     endif()
