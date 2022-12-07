@@ -333,7 +333,7 @@ class CPL_DLL OGRFeatureDefn
         inline ConstIterator begin() { return ConstIterator(m_poFDefn, 0); }
         inline ConstIterator end() { return ConstIterator(m_poFDefn, m_poFDefn->GetFieldCount()); }
 
-        inline size_t size() const { return m_poFDefn->GetFieldCount(); }
+        inline size_t size() const { return static_cast<std::size_t>(m_poFDefn->GetFieldCount()); }
         inline OGRFieldDefn* operator[](size_t i) { return m_poFDefn->GetFieldDefn(static_cast<int>(i)); }
         inline const OGRFieldDefn* operator[](size_t i) const { return m_poFDefn->GetFieldDefn(static_cast<int>(i)); }
     };
@@ -400,7 +400,7 @@ class CPL_DLL OGRFeatureDefn
         inline ConstIterator begin() { return ConstIterator(m_poFDefn, 0); }
         inline ConstIterator end() { return ConstIterator(m_poFDefn, m_poFDefn->GetGeomFieldCount()); }
 
-        inline size_t size() const { return m_poFDefn->GetGeomFieldCount(); }
+        inline size_t size() const { return static_cast<std::size_t>(m_poFDefn->GetGeomFieldCount()); }
         inline OGRGeomFieldDefn* operator[](size_t i) { return m_poFDefn->GetGeomFieldDefn(static_cast<int>(i)); }
         inline const OGRGeomFieldDefn* operator[](size_t i) const { return m_poFDefn->GetGeomFieldDefn(static_cast<int>(i)); }
     };
