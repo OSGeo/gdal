@@ -49,6 +49,19 @@ evaluated on client-side.
 
 Rectangular spatial filtering is forward to the server as well.
 
+SRS support
+-----------
+
+Starting with GDAL 3.7, the driver supports the
+`OGC API - Features - Part 2: Coordinate Reference Systems by Reference <https://docs.ogc.org/is/18-058/18-058.html>`__
+extension. If a server reports a storageCRS property, that property will be
+used to set the CRS of the OGR layer. Otherwise the default will be OGC:CRS84
+(WGS84 longitude, latitude).
+As most all OGR drivers, the OAPIF driver will report the SRS and geometries,
+and expect spatial filters, in the "GIS-friendly" order,
+with longitude/easting first (X component), latitude/northing second (Y component),
+potentially overriding the axis order of the authority.
+
 Open options
 ------------
 
@@ -176,4 +189,6 @@ See Also
 
 -  `"OGC API - Features - Part 1: Core" Standard
    <http://docs.opengeospatial.org/is/17-069r3/17-069r3.html>`__
+-  `"OGC API - Features - Part 2: Coordinate Reference Systems by Reference" Standard
+   <https://docs.ogc.org/is/18-058/18-058.html>`__
 -  :ref:`WFS (1.0,1.1,2.0) driver documentation <vector.wfs>`
