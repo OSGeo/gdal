@@ -564,7 +564,11 @@ jobs:
   build-mac:
     runs-on: macOS-latest
     env:
-      CMAKE_OPTIONS: -DCFITSIO_ROOT=/usr/local/opt/cfitsio  -DPoppler_ROOT=/usr/local/opt/poppler -DPROJ_ROOT=/usr/local/opt/proj -DSPATIALITE_ROOT=/usr/local/opt/libspatialite -DPostgreSQL_ROOT=/usr/local/opt/libpq -DEXPAT_ROOT=/usr/local/opt/expat -DXercesC_ROOT=/usr/local/opt/xerces-c -DSQLite3_ROOT=/usr/local/opt/sqlite -DOpenSSL_ROOT=/usr/local/opt/openssl -DPNG_ROOT=/usr/local/opt/libpng -DJPEG_ROOT=/usr/local/opt/jpeg-turbo -DEXPECTED_JPEG_LIB_VERSION=80 -DOpenJPEG_ROOT=/usr/local/opt/openjpeg -DCURL_ROOT=/usr/local/opt/curl
+      # Disable Arrow/Parquet because the VM provides libraries in /usr/local/lib/
+      # that cause Illegal instruction error when running tests. I suspect the
+      # Arrow/Parquet libraries to be built with AVX2 support but the VM worker
+      # doesn't support it.
+      CMAKE_OPTIONS: -DCFITSIO_ROOT=/usr/local/opt/cfitsio  -DPoppler_ROOT=/usr/local/opt/poppler -DPROJ_ROOT=/usr/local/opt/proj -DSPATIALITE_ROOT=/usr/local/opt/libspatialite -DPostgreSQL_ROOT=/usr/local/opt/libpq -DEXPAT_ROOT=/usr/local/opt/expat -DXercesC_ROOT=/usr/local/opt/xerces-c -DSQLite3_ROOT=/usr/local/opt/sqlite -DOpenSSL_ROOT=/usr/local/opt/openssl -DPNG_ROOT=/usr/local/opt/libpng -DJPEG_ROOT=/usr/local/opt/jpeg-turbo -DEXPECTED_JPEG_LIB_VERSION=80 -DOpenJPEG_ROOT=/usr/local/opt/openjpeg -DCURL_ROOT=/usr/local/opt/curl -DGDAL_USE_ARROW=OFF -DGDAL_USE_PARQUET=OFF
       cache-name: cmake-macos
     steps:
     - name: Setup xcode
