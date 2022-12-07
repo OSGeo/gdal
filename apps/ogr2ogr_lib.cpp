@@ -5077,12 +5077,30 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
                 if (m_poClipSrc)
                 {
                     OGRGeometry* poClipped = poDstGeometry->Intersection(m_poClipSrc);
-                    delete poDstGeometry;
                     if (poClipped == nullptr || poClipped->IsEmpty())
                     {
+                        delete poDstGeometry;
                         delete poClipped;
                         goto end_loop;
                     }
+
+                    const int nDim = poDstGeometry->getDimension();
+                    if (poClipped->getDimension() < nDim &&
+                        wkbFlatten(poDstFDefn->GetGeomFieldDefn(iGeom)->GetType()) != wkbUnknown)
+                    {
+                        CPLDebug("OGR2OGR",
+                                 "Discarding feature " CPL_FRMT_GIB " of layer %s, "
+                                 "as its intersection with -clipsrc is a %s "
+                                 "whereas the input is a %s",
+                                 nSrcFID, poSrcLayer->GetName(),
+                                 OGRToOGCGeomType(poClipped->getGeometryType()),
+                                 OGRToOGCGeomType(poDstGeometry->getGeometryType()));
+                        delete poDstGeometry;
+                        delete poClipped;
+                        goto end_loop;
+                    }
+
+                    delete poDstGeometry;
                     poDstGeometry = poClipped;
                 }
 
@@ -5131,13 +5149,30 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
                     if (m_poClipDst)
                     {
                         OGRGeometry* poClipped = poDstGeometry->Intersection(m_poClipDst);
-                        delete poDstGeometry;
                         if (poClipped == nullptr || poClipped->IsEmpty())
                         {
+                            delete poDstGeometry;
                             delete poClipped;
                             goto end_loop;
                         }
 
+                        const int nDim = poDstGeometry->getDimension();
+                        if (poClipped->getDimension() < nDim &&
+                            wkbFlatten(poDstFDefn->GetGeomFieldDefn(iGeom)->GetType()) != wkbUnknown)
+                        {
+                            CPLDebug("OGR2OGR",
+                                     "Discarding feature " CPL_FRMT_GIB " of layer %s, "
+                                     "as its intersection with -clipdst is a %s "
+                                     "whereas the input is a %s",
+                                     nSrcFID, poSrcLayer->GetName(),
+                                     OGRToOGCGeomType(poClipped->getGeometryType()),
+                                     OGRToOGCGeomType(poDstGeometry->getGeometryType()));
+                            delete poDstGeometry;
+                            delete poClipped;
+                            goto end_loop;
+                        }
+
+                        delete poDstGeometry;
                         poDstGeometry = poClipped;
                     }
 
