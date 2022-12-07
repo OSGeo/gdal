@@ -1625,6 +1625,16 @@ def test_ogr_opaif_crs_and_preferred_crs_open_options():
         assert srs
         assert srs.GetAuthorityCode(None) == "32631"
 
+    json_info = gdal.VectorInfo(ds, format="json", featureCount=False)
+    assert "supportedSRSList" in json_info["layers"][0]["geometryFields"][0]
+    assert len(json_info["layers"][0]["geometryFields"][0]["supportedSRSList"]) == 2
+    assert json_info["layers"][0]["geometryFields"][0]["supportedSRSList"][0] == {
+        "id": {"authority": "EPSG", "code": "32631"}
+    }
+
+    text_info = gdal.VectorInfo(ds, featureCount=False)
+    assert "Supported SRS: EPSG:32631, " in text_info
+
     # Test changing active SRS
     assert lyr.SetActiveSRS(0, supported_srs_list[1]) == ogr.OGRERR_NONE
     assert lyr.SetActiveSRS(0, None) != ogr.OGRERR_NONE

@@ -132,7 +132,34 @@
                       "maxItems": 4
                   }
               },
-              "coordinateSystem": { "$ref": "#/definitions/coordinateSystem" }
+              "coordinateSystem": { "$ref": "#/definitions/coordinateSystem" },
+              "supportedSRSList": {
+                  "type": "array",
+                  "items": {
+                      "oneOf": [
+                          {
+                              "type": "object",
+                              "properties": {
+                                  "id": {
+                                      "type": "object",
+                                      "properties": {
+                                          "authority": { "type": "string" },
+                                          "code": { "type": "string" }
+                                      }
+                                  }
+                              },
+                              "additionalProperties": false
+                          },
+                          {
+                              "type": "object",
+                              "properties": {
+                                  "wkt": { "type": "string" }
+                              },
+                              "additionalProperties": false
+                          }
+                      ]
+                  }
+              }
           },
           "required" : [ "name", "type" ],
           "additionalProperties": false
