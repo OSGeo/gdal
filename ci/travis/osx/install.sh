@@ -12,6 +12,10 @@ find ${CONDA_PREFIX}/lib -name '*.la' -delete
 # build GDAL
 mkdir build
 cd build
+# Disable Arrow/Parquet because the VM provides libraries in /usr/local/lib/
+# that cause Illegal instruction error when running tests. I suspect the
+# Arrow/Parquet libraries to be built with AVX2 support but the VM worker
+# doesn't support it.
 CFLAGS="-Wextra -Werror" CXXFLAGS="-Wextra -Werror" cmake .. \
          -DCMAKE_INSTALL_PREFIX=$HOME/install-gdal \
          -DCMAKE_PREFIX_PATH=${CONDA_PREFIX} \
@@ -20,6 +24,8 @@ CFLAGS="-Wextra -Werror" CXXFLAGS="-Wextra -Werror" cmake .. \
          -DGDAL_USE_PNG_INTERNAL=ON \
          -DGDAL_USE_POSTGRESQL=OFF \
          -DGDAL_USE_WEBP=OFF \
+         -DGDAL_USE_ARROW=OFF \
+         -DGDAL_USE_PARQUET=OFF \
          -DBUILD_CSHARP_BINDINGS=OFF
 make -j3
 echo "Show which shared libs got used:"
