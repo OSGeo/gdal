@@ -3339,12 +3339,15 @@ OGRErr OGRSpatialReference::SetWellKnownGeogCS( const char * pszName )
              EQUAL(pszName, "CRS:84") )
     {
         pszWKT =
-            "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\","
-            "SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],"
-            "AUTHORITY[\"EPSG\",\"6326\"]],"
-            "PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],"
-            "UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],"
-            "AXIS[\"Longitude\",EAST],AXIS[\"Latitude\",NORTH]]";
+            "GEOGCRS[\"WGS 84 (CRS84)\",DATUM[\"World Geodetic System 1984\","
+            "ELLIPSOID[\"WGS 84\",6378137,298.257223563,LENGTHUNIT[\"metre\",1]]],"
+            "PRIMEM[\"Greenwich\",0,ANGLEUNIT[\"degree\",0.0174532925199433]],"
+            "CS[ellipsoidal,2],AXIS[\"geodetic longitude (Lon)\",east,ORDER[1],"
+            "ANGLEUNIT[\"degree\",0.0174532925199433]],"
+            "AXIS[\"geodetic latitude (Lat)\",north,ORDER[2],"
+            "ANGLEUNIT[\"degree\",0.0174532925199433]],"
+            "USAGE[SCOPE[\"unknown\"],AREA[\"World\"],BBOX[-90,-180,90,180]],"
+            "ID[\"OGC\",\"CRS84\"]]";
     }
     else if( EQUAL(pszName, "WGS72") )
         pszWKT =
@@ -3800,7 +3803,7 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition,
         return importFromWMSAUTO( pszDefinition );
 
     // WMS/WCS OGC codes like OGC:CRS84.
-    if( STARTS_WITH_CI(pszDefinition, "OGC:") )
+    if( EQUAL(pszDefinition, "OGC:CRS84") )
         return SetWellKnownGeogCS( pszDefinition+4 );
 
     if( STARTS_WITH_CI(pszDefinition, "CRS:") )
