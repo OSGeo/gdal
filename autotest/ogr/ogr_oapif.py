@@ -36,33 +36,30 @@ import webserver
 
 from osgeo import ogr
 
+pytestmark = pytest.mark.require_driver("OAPIF")
+
 ###############################################################################
 # Init
 #
 
 
-def test_ogr_opaif_init():
-
-    gdaltest.opaif_drv = ogr.GetDriverByName("OAPIF")
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
+@pytest.fixture(scope="module", autouse=True)
+def init():
 
     (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if gdaltest.webserver_port == 0:
         pytest.skip()
+    yield
+
+    webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
 
 ###############################################################################
 
 
 def test_ogr_opaif_errors():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add("GET", "/oapif/collections", 404)
@@ -142,11 +139,6 @@ def test_ogr_opaif_errors():
 
 
 def test_ogr_opaif_collections_paging():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -177,11 +169,6 @@ def test_ogr_opaif_collections_paging():
 
 
 def test_ogr_opaif_empty_layer_and_user_query_parameters():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -216,11 +203,6 @@ def test_ogr_opaif_empty_layer_and_user_query_parameters():
 
 
 def test_ogr_opaif_open_by_collection_and_legacy_wfs3_prefix():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -255,11 +237,6 @@ def test_ogr_opaif_open_by_collection_and_legacy_wfs3_prefix():
 
 
 def test_ogr_opaif_fc_links_next_geojson():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -344,11 +321,6 @@ def test_ogr_opaif_fc_links_next_geojson():
 
 
 def test_ogr_opaif_id_is_integer():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -424,11 +396,6 @@ def test_ogr_opaif_id_is_integer():
 
 
 def NO_LONGER_USED_test_ogr_opaif_fc_links_next_headers():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -513,11 +480,6 @@ def NO_LONGER_USED_test_ogr_opaif_fc_links_next_headers():
 
 
 def test_ogr_opaif_spatial_filter():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     # Deprecated API
     handler = webserver.SequentialHandler()
@@ -702,11 +664,6 @@ def test_ogr_opaif_spatial_filter():
 
 
 def test_ogr_opaif_get_feature_count():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -801,11 +758,6 @@ def test_ogr_opaif_get_feature_count():
 
 
 def test_ogr_opaif_get_feature_count_from_numberMatched():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -839,11 +791,6 @@ def test_ogr_opaif_get_feature_count_from_numberMatched():
 
 
 def test_ogr_opaif_attribute_filter():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -1105,11 +1052,6 @@ def test_ogr_opaif_attribute_filter():
 
 
 def test_ogr_opaif_schema_from_xml_schema():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -1189,11 +1131,6 @@ def test_ogr_opaif_schema_from_xml_schema():
 
 
 def test_ogr_opaif_schema_from_json_schema():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -1261,11 +1198,6 @@ def test_ogr_opaif_schema_from_json_schema():
 
 
 def test_ogr_opaif_stac_catalog():
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -1332,15 +1264,3 @@ def test_ogr_opaif_stac_catalog():
         f = lyr.GetNextFeature()
         assert f["foo"] == "bar2"
         assert f["asset_my_asset2_href"] == "my_url2"
-
-
-###############################################################################
-
-
-def test_ogr_opaif_cleanup():
-
-    if gdaltest.opaif_drv is None:
-        pytest.skip()
-
-    if gdaltest.webserver_port != 0:
-        webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
