@@ -1679,3 +1679,31 @@ def test_ogr_opaif_crs_and_preferred_crs_open_options():
         srs = lyr.GetSpatialRef()
         assert srs
         assert srs.GetAuthorityCode(None) == "4326"
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/oapif/collections/foo/items?limit=10&crs=http://www.opengis.net/def/crs/EPSG/0/32631",
+        200,
+        {
+            "Content-Type": "application/geo+json",
+            "Content-Crs": "<http://www.opengis.net/def/crs/EPSG/0/32631>",
+        },
+        """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar"
+                        },
+                        "geometry": { "type": "Point", "coordinates" : [500000, 4500000]}
+                    }
+                ] }""",
+    )
+    with webserver.install_http_handler(handler):
+        out_ds = gdal.VectorTranslate(
+            "", ds, format="Memory", dstSRS="EPSG:32631", reproject=True
+        )
+    out_lyr = out_ds.GetLayer(0)
+    assert out_lyr.GetSpatialRef().GetAuthorityCode(None) == "32631"
+    f = out_lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (500000 4500000)"
