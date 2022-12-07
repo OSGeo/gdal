@@ -85,7 +85,8 @@ class OGRWFSLayer final: public OGRLayer
     GMLFeatureClass*    poGMLFeatureClass;
 
     int                 bAxisOrderAlreadyInverted;
-    OGRSpatialReference *poSRS;
+    OGRSpatialReference *m_poSRS;
+    std::string         m_osSRSName{};
 
     char*               pszBaseURL;
     char*               pszName;
@@ -111,11 +112,8 @@ class OGRWFSLayer final: public OGRLayer
     OGRFeatureDefn*     DescribeFeatureType();
     GIntBig             ExecuteGetFeatureResultTypeHits();
 
-    double              dfMinX;
-    double              dfMinY;
-    double              dfMaxX;
-    double              dfMaxY;
-    bool                bHasExtents;
+    OGREnvelope         m_oWGS84Extents{};
+    OGREnvelope         m_oExtents{};
 
     OGRGeometry        *poFetchedFilterGeom;
 
@@ -145,6 +143,9 @@ class OGRWFSLayer final: public OGRLayer
     char                *pszRequiredOutputFormat;
 
     std::vector<OGRWFSSortDesc> aoSortColumns;
+
+    std::vector<std::string> m_aosSupportedCRSList{};
+    OGRLayer::GetSupportedSRSListRetType m_apoSupportedCRSList{};
 
   public:
                         OGRWFSLayer(OGRWFSDataSource* poDS,
@@ -178,6 +179,7 @@ class OGRWFSLayer final: public OGRLayer
     virtual GIntBig     GetFeatureCount( int bForce = TRUE ) override;
 
     void                SetExtents(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
+    void                SetWGS84Extents(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
     virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
@@ -212,6 +214,18 @@ class OGRWFSLayer final: public OGRLayer
 
     const char*         GetNamespacePrefix() { return pszNS; }
     const char*         GetNamespaceName() { return pszNSVal; }
+
+    void                SetSupportedSRSList(
+                            std::vector<std::string>&& aosSupportedCRSList,
+                            OGRLayer::GetSupportedSRSListRetType&& apoSupportedCRSList)
+    {
+        m_aosSupportedCRSList = std::move(aosSupportedCRSList);
+        m_apoSupportedCRSList = std::move(apoSupportedCRSList);
+    }
+    const OGRLayer::GetSupportedSRSListRetType& GetSupportedSRSList(int /*iGeomField*/) override {
+        return m_apoSupportedCRSList;
+    }
+    OGRErr          SetActiveSRS(int iGeomField, const OGRSpatialReference* poSRS) override;
 };
 
 /************************************************************************/
