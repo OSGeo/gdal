@@ -86,6 +86,13 @@ The following options are available:
    that if a layer does not list the PREFERRED_CRS in its list of supported CRS,
    the default CRS (storageCRS when present, otherwise EPSG:4326) will be used.
    CRS and PREFERRED_CRS option are mutually exclusive.
+-  **SERVER_FEATURE_AXIS_ORDER** = AUTHORITY_COMPLIANT/GIS_FRIENDLY.
+   AUTHORITY_COMPLIANT is the default.
+   This option can be set to GIS_FRIENDLY if axis order issue are noticed in
+   features received from the server, indicating that the server does not return
+   them in the axis order mandated by the CRS authority, but in a more traditional
+   "GIS friendly" order, with longitude/easting first, latitude/northing second.
+   Do not set this option unless actual problems arise.
 
 Examples
 --------

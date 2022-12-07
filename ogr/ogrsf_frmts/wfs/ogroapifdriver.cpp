@@ -70,6 +70,7 @@ class OGROAPIFDataset final: public GDALDataset
         std::string                            m_osAskedCRS{};
         OGRSpatialReference                    m_oAskedCRS{};
         bool                                   m_bAskedCRSIsRequired = false;
+        bool                                   m_bServerFeaturesAxisOrderGISFriendly = false;
 
         bool                                   m_bAPIDocLoaded = false;
         CPLJSONDocument                        m_oAPIDoc;
@@ -917,6 +918,11 @@ bool OGROAPIFDataset::Open(GDALOpenInfo* poOpenInfo)
             return false;
         }
     }
+
+    m_bServerFeaturesAxisOrderGISFriendly = EQUAL(CSLFetchNameValueDef(
+        poOpenInfo->papszOpenOptions, "SERVER_FEATURE_AXIS_ORDER",
+        "AUTHORITY_COMPLIANT"), "GIS_FRIENDLY");
+
     CPLString osResult;
     CPLString osContentType;
 
@@ -1854,7 +1860,7 @@ OGRFeature* OGROAPIFLayer::GetNextRawFeature()
     auto poGeom = poFeature->GetGeometryRef();
     if( poGeom )
     {
-        if( !m_bCRSHasGISFriendlyOrder )
+        if( !m_bCRSHasGISFriendlyOrder && !m_poDS->m_bServerFeaturesAxisOrderGISFriendly )
             poGeom->swapXY();
         poGeom->assignSpatialReference(GetSpatialRef());
     }
@@ -2797,6 +2803,12 @@ void RegisterOGROAPIF()
         "description='CRS identifier to use for layers'/>"
 "  <Option name='PREFERRED_CRS' type='string' "
         "description='Preferred CRS identifier to use for layers'/>"
+"  <Option name='SERVER_FEATURE_AXIS_ORDER' type='string-select' "
+        "description='Coordinate axis order of GeoJSON features returned by the server' "
+        "default='AUTHORITY_COMPLIANT'>"
+"    <Value>AUTHORITY_COMPLIANT</Value>"
+"    <Value>GIS_FRIENDLY</Value>"
+"  </Option>"
 "</OpenOptionList>" );
 
     poDriver->pfnIdentify = OGROAPIFDriverIdentify;

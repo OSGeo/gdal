@@ -1471,6 +1471,83 @@ def test_ogr_opaif_storage_crs_latitude_longitude():
 ###############################################################################
 
 
+def test_ogr_opaif_storage_crs_latitude_longitude_non_compliant_server():
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/oapif/collections",
+        200,
+        {"Content-Type": "application/json"},
+        """{ "collections" : [ {
+                    "name": "foo",
+                    "extent": {
+                        "spatial": [ -10, 40, 15, 50 ]
+                    },
+                    "storageCrs": "http://www.opengis.net/def/crs/EPSG/0/4326",
+                    "storageCrsCoordinateEpoch": 2022.5
+                 }] }""",
+    )
+    with webserver.install_http_handler(handler):
+        ds = gdal.OpenEx(
+            "OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port,
+            open_options=["SERVER_FEATURE_AXIS_ORDER=GIS_FRIENDLY"],
+        )
+    lyr = ds.GetLayer(0)
+    minx, maxx, miny, maxy = lyr.GetExtent()
+    assert (minx, miny, maxx, maxy) == pytest.approx((-10, 40, 15, 50), abs=1e-3)
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/oapif/collections/foo/items?limit=10",
+        200,
+        {"Content-Type": "application/geo+json"},
+        """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar"
+                        },
+                        "geometry": { "type": "Point", "coordinates" : [2, 49]}
+                    }
+                ] }""",
+    )
+    with webserver.install_http_handler(handler):
+        srs = lyr.GetSpatialRef()
+        assert srs
+        assert srs.GetAuthorityCode(None) == "4326"
+        assert srs.GetDataAxisToSRSAxisMapping() == [2, 1]
+        assert srs.GetCoordinateEpoch() == 2022.5
+        assert lyr.GetLayerDefn().GetFieldCount() == 1
+
+    handler = webserver.SequentialHandler()
+    # Coordinates must be in lat, lon order in the GeoJSON answer
+    handler.add(
+        "GET",
+        "/oapif/collections/foo/items?limit=10&crs=http://www.opengis.net/def/crs/EPSG/0/4326",
+        200,
+        {"Content-Type": "application/geo+json"},
+        """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar"
+                        },
+                        "$comment": "Server not compliant here, returning longitude=2, latitude=49 in GIS friendly order",
+                        "geometry": { "type": "Point", "coordinates" : [2, 49]}
+                    }
+                ] }""",
+    )
+    # Check GIS friendly order is preserved.
+    with webserver.install_http_handler(handler):
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (2 49)"
+
+
+###############################################################################
+
+
 def test_ogr_opaif_crs_and_preferred_crs_open_options():
     def get_collections_handler():
         handler = webserver.SequentialHandler()
