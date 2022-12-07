@@ -67,6 +67,9 @@ class OGROAPIFDataset final: public GDALDataset
         CPLString                              m_osUserPwd;
         int                                    m_nPageSize = 10;
         std::vector<std::unique_ptr<OGRLayer>> m_apoLayers;
+        std::string                            m_osAskedCRS{};
+        OGRSpatialReference                    m_oAskedCRS{};
+        bool                                   m_bAskedCRSIsRequired = false;
 
         bool                                   m_bAPIDocLoaded = false;
         CPLJSONDocument                        m_oAPIDoc;
@@ -89,7 +92,8 @@ class OGROAPIFDataset final: public GDALDataset
             const char* pszAccept = MEDIA_TYPE_GEOJSON ", " MEDIA_TYPE_JSON,
             CPLStringList* paosHeaders = nullptr);
 
-        bool LoadJSONCollection(const CPLJSONObject& oCollection);
+        bool LoadJSONCollection(const CPLJSONObject& oCollection,
+                                const CPLJSONArray& oGlobalCRSList);
         bool LoadJSONCollections(const CPLString& osResultIn);
 
     public:
@@ -163,8 +167,9 @@ class OGROAPIFLayer final: public OGRLayer
                      const CPLString& osName,
                      const CPLJSONArray& oBBOX,
                      const std::string& osBBOXCrs,
-                     const std::string& osStorageCRS,
-                     double dfStorageCrsCoordinateEpoch,
+                     const std::vector<std::string>& oCRSList,
+                     const std::string& osActiveCRS,
+                     double dfCoordinateEpoch,
                      const CPLJSONArray& oLinks);
 
        ~OGROAPIFLayer();
@@ -549,7 +554,8 @@ const CPLJSONDocument& OGROAPIFDataset::GetAPIDoc()
 /*                         LoadJSONCollection()                         */
 /************************************************************************/
 
-bool OGROAPIFDataset::LoadJSONCollection(const CPLJSONObject& oCollection)
+bool OGROAPIFDataset::LoadJSONCollection(const CPLJSONObject& oCollection,
+                                         const CPLJSONArray& oGlobalCRSList)
 {
     if( oCollection.GetType() != CPLJSONObject::Type::Object )
         return false;
@@ -581,15 +587,118 @@ bool OGROAPIFDataset::LoadJSONCollection(const CPLJSONObject& oCollection)
         oBBOX = oCollection.GetArray("extent/spatial");
 #endif
     const std::string osBBOXCrs = oCollection.GetString("extent/spatial/crs");
+
+    // Deal with CRS list
+    const CPLJSONArray oCRSListOri = oCollection.GetArray("crs");
+    std::vector<std::string> oCRSList;
+    std::string osActiveCRS;
+    double dfCoordinateEpoch = 0.0;
+    if( oCRSListOri.IsValid() )
+    {
+        std::set<std::string> oSetCRS;
+        for( const auto& oCRS: oCRSListOri )
+        {
+            if( oCRS.ToString() == "#/crs" )
+            {
+                if( !oGlobalCRSList.IsValid() )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Collection %s refer to #/crs global CRS list, "
+                             "which is missing", osTitle.c_str());
+                }
+                else
+                {
+                    for( const auto& oGlobalCRS: oGlobalCRSList )
+                    {
+                        const auto osCRS = oGlobalCRS.ToString();
+                        if( oSetCRS.find(osCRS) == oSetCRS.end() )
+                        {
+                            oSetCRS.insert(osCRS);
+                            oCRSList.push_back(osCRS);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                const auto osCRS = oCRS.ToString();
+                if( oSetCRS.find(osCRS) == oSetCRS.end() )
+                {
+                    oSetCRS.insert(osCRS);
+                    oCRSList.push_back(osCRS);
+                }
+            }
+        }
+
+        if( !m_oAskedCRS.IsEmpty() )
+        {
+            for( const auto& osCRS: oCRSList )
+            {
+                OGRSpatialReference oSRS;
+                if( oSRS.SetFromUserInput(osCRS.c_str(),
+                    OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE )
+                {
+                    if( oSRS.IsSame(&m_oAskedCRS) )
+                    {
+                        osActiveCRS = osCRS;
+                        break;
+                    }
+                }
+            }
+            if( osActiveCRS.empty() )
+            {
+                if( m_bAskedCRSIsRequired )
+                {
+                    std::string osList;
+                    for( const auto& osCRS: oCRSList )
+                    {
+                        if( !osList.empty() )
+                            osList += ", ";
+                        if( osCRS.find("http://www.opengis.net/def/crs/EPSG/0/") == 0 )
+                            osList += "EPSG:" + osCRS.substr(strlen("http://www.opengis.net/def/crs/EPSG/0/"));
+                        else if( osCRS.find("https://www.opengis.net/def/crs/EPSG/0/") == 0 )
+                            osList += "EPSG:" + osCRS.substr(strlen("https://www.opengis.net/def/crs/EPSG/0/"));
+                        else if( osCRS.find("http://www.opengis.net/def/crs/OGC/1.3/") == 0 )
+                            osList += "OGC:" + osCRS.substr(strlen("http://www.opengis.net/def/crs/OGC/1.3/"));
+                        else if( osCRS.find("https://www.opengis.net/def/crs/OGC/1.3/") == 0 )
+                            osList += "OGC:" + osCRS.substr(strlen("https://www.opengis.net/def/crs/OGC/1.3/"));
+                        else
+                            osList += osCRS;
+                    }
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "CRS %s not found in list of CRS valid for "
+                             "collection %s. Available CRS are %s.",
+                             m_osAskedCRS.c_str(), osTitle.c_str(),
+                             osList.c_str());
+                    return false;
+                }
+                else
+                {
+                    CPLDebug("OAPIF",
+                             "CRS %s not found in list of CRS valid for "
+                             "collection %s",
+                             m_osAskedCRS.c_str(), osTitle.c_str());
+                }
+            }
+        }
+    }
+
     // storageCRS is in the "OGC API - Features - Part 2: Coordinate Reference Systems"
     // extension
     const std::string osStorageCRS = oCollection.GetString("storageCrs");
     const double dfStorageCrsCoordinateEpoch = oCollection.GetDouble("storageCrsCoordinateEpoch");
+    if( osActiveCRS.empty() || osActiveCRS == osStorageCRS )
+    {
+        osActiveCRS = osStorageCRS;
+        dfCoordinateEpoch = dfStorageCrsCoordinateEpoch;
+    }
+
     const auto oLinks = oCollection.GetArray("links");
     auto poLayer = cpl::make_unique<OGROAPIFLayer>(this, osName,
                                                    oBBOX, osBBOXCrs,
-                                                   osStorageCRS,
-                                                   dfStorageCrsCoordinateEpoch,
+                                                   oCRSList,
+                                                   osActiveCRS,
+                                                   dfCoordinateEpoch,
                                                    oLinks);
     if( !osTitle.empty() )
         poLayer->SetMetadataItem("TITLE", osTitle.c_str());
@@ -654,9 +763,11 @@ bool OGROAPIFDataset::LoadJSONCollections(const CPLString& osResultIn)
             return false;
         }
 
+        const auto oGlobalCRSList = oRoot.GetArray("crs");
+
         for( int i = 0; i < oCollections.Size(); i++ )
         {
-            LoadJSONCollection(oCollections[i]);
+            LoadJSONCollection(oCollections[i], oGlobalCRSList);
         }
 
         osResult.clear();
@@ -773,6 +884,39 @@ bool OGROAPIFDataset::Open(GDALOpenInfo* poOpenInfo)
                             "PAGE_SIZE",CPLSPrintf("%d", m_nPageSize)) );
     m_osUserPwd =
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "USERPWD", "");
+    std::string osCRS =
+        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "CRS", "");
+    std::string osPreferredCRS =
+        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "PREFERRED_CRS", "");
+    if( !osCRS.empty() )
+    {
+        if( !osPreferredCRS.empty() )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "CRS and PREFERRED_CRS open options are mutually exclusive.");
+            return false;
+        }
+        m_osAskedCRS = osCRS;
+        if( m_oAskedCRS.SetFromUserInput(osCRS.c_str(),
+                OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) != OGRERR_NONE )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid value for CRS");
+            return false;
+        }
+        m_bAskedCRSIsRequired = true;
+    }
+    else if( !osPreferredCRS.empty() )
+    {
+        m_osAskedCRS = osPreferredCRS;
+        if( m_oAskedCRS.SetFromUserInput(osPreferredCRS.c_str(),
+                OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) != OGRERR_NONE )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid value for PREFERRED_CRS");
+            return false;
+        }
+    }
     CPLString osResult;
     CPLString osContentType;
 
@@ -789,7 +933,7 @@ bool OGROAPIFDataset::Open(GDALOpenInfo* poOpenInfo)
             return false;
         }
         const auto& oRoot = oDoc.GetRoot();
-        return LoadJSONCollection(oRoot);
+        return LoadJSONCollection(oRoot, CPLJSONArray());
     }
 
     if( !Download(ConcatenateURLParts(m_osRootURL, "/collections"),
@@ -847,28 +991,30 @@ OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset* poDS,
                              const CPLString& osName,
                              const CPLJSONArray& oBBOX,
                              const std::string& osBBOXCrs,
-                             const std::string& osStorageCRS,
-                             double dfStorageCrsCoordinateEpoch,
+                             const std::vector<std::string>& oCRSList,
+                             const std::string& osActiveCRS,
+                             double dfCoordinateEpoch,
                              const CPLJSONArray& oLinks) :
     m_poDS(poDS)
 {
     m_poFeatureDefn = new OGRFeatureDefn(osName);
     m_poFeatureDefn->Reference();
     SetDescription(osName);
+    (void)oCRSList;
 
     OGRSpatialReference* poSRS = new OGRSpatialReference();
     poSRS->SetFromUserInput(
-        !osStorageCRS.empty() ?
-            osStorageCRS.c_str():
+        !osActiveCRS.empty() ?
+            osActiveCRS.c_str():
             SRS_WKT_WGS84_LAT_LONG,
         OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     m_bIsGeographicCRS = poSRS->IsGeographic();
     m_bCRSHasGISFriendlyOrder =
-        osStorageCRS.empty() || HasGISFriendlyAxisOrder(poSRS);
-    m_osActiveCRS = osStorageCRS;
-    if( dfStorageCrsCoordinateEpoch > 0 )
-        poSRS->SetCoordinateEpoch(dfStorageCrsCoordinateEpoch);
+        osActiveCRS.empty() || HasGISFriendlyAxisOrder(poSRS);
+    m_osActiveCRS = osActiveCRS;
+    if( dfCoordinateEpoch > 0 )
+        poSRS->SetCoordinateEpoch(dfCoordinateEpoch);
     m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
     poSRS->Release();
@@ -2647,6 +2793,10 @@ void RegisterOGROAPIF()
         "description='Basic authentication as username:password'/>"
 "  <Option name='IGNORE_SCHEMA' type='boolean' "
         "description='Whether the XML Schema or JSON Schema should be ignored' default='NO'/>"
+"  <Option name='CRS' type='string' "
+        "description='CRS identifier to use for layers'/>"
+"  <Option name='PREFERRED_CRS' type='string' "
+        "description='Preferred CRS identifier to use for layers'/>"
 "</OpenOptionList>" );
 
     poDriver->pfnIdentify = OGROAPIFDriverIdentify;

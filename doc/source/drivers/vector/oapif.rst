@@ -49,7 +49,7 @@ evaluated on client-side.
 
 Rectangular spatial filtering is forward to the server as well.
 
-SRS support
+CRS support
 -----------
 
 Starting with GDAL 3.7, the driver supports the
@@ -61,6 +61,9 @@ As most all OGR drivers, the OAPIF driver will report the SRS and geometries,
 and expect spatial filters, in the "GIS-friendly" order,
 with longitude/easting first (X component), latitude/northing second (Y component),
 potentially overriding the axis order of the authority.
+
+The CRS of layers can also be controlled with the CRS or PREFERRED_CRS open
+options documented below.
 
 Open options
 ------------
@@ -75,6 +78,14 @@ The following options are available:
    and password to the remote server.
 -  **IGNORE_SCHEMA**\ = YES/NO. (GDAL >= 3.1) Set to YES to ignore the XML
    Schema or JSON schema that may be offered by the server.
+-  **CRS** = string. (GDAL >= 3.7) Set to a CRS identifier, e.g ``EPSG:3067``
+   or ``http://www.opengis.net/def/crs/EPSG/0/3067``, to use as the layer CRS.
+   That CRS must be listed in the lists of CRS supported by the layers of the
+   dataset, otherwise layers not listing it cannot be opened.
+-  **PREFERRED_CRS** = string. (GDAL >= 3.7) Identical to the CRS option, except
+   that if a layer does not list the PREFERRED_CRS in its list of supported CRS,
+   the default CRS (storageCRS when present, otherwise EPSG:4326) will be used.
+   CRS and PREFERRED_CRS option are mutually exclusive.
 
 Examples
 --------
