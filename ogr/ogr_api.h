@@ -695,6 +695,12 @@ OGRErr CPL_DLL OGR_L_DeleteFeature( OGRLayerH, GIntBig ) CPL_WARN_UNUSED_RESULT;
 OGRErr CPL_DLL OGR_L_UpsertFeature( OGRLayerH, OGRFeatureH ) CPL_WARN_UNUSED_RESULT;
 OGRFeatureDefnH CPL_DLL OGR_L_GetLayerDefn( OGRLayerH );
 OGRSpatialReferenceH CPL_DLL OGR_L_GetSpatialRef( OGRLayerH );
+OGRSpatialReferenceH CPL_DLL *OGR_L_GetSupportedSRSList(OGRLayerH hLayer,
+                                                int iGeomField,
+                                                int* pnCount);
+OGRErr CPL_DLL OGR_L_SetActiveSRS(OGRLayerH hLayer,
+                                  int iGeomField,
+                                  OGRSpatialReferenceH hSRS);
 int    CPL_DLL OGR_L_FindFieldIndex( OGRLayerH, const char *, int bExactMatch );
 GIntBig CPL_DLL OGR_L_GetFeatureCount( OGRLayerH, int );
 OGRErr CPL_DLL OGR_L_GetExtent( OGRLayerH, OGREnvelope *, int );

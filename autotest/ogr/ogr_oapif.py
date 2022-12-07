@@ -34,7 +34,7 @@ import gdaltest
 import pytest
 import webserver
 
-from osgeo import gdal, ogr
+from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("OAPIF")
 
@@ -1497,6 +1497,9 @@ def test_ogr_opaif_storage_crs_latitude_longitude_non_compliant_server():
     minx, maxx, miny, maxy = lyr.GetExtent()
     assert (minx, miny, maxx, maxy) == pytest.approx((-10, 40, 15, 50), abs=1e-3)
 
+    supported_srs_list = lyr.GetSupportedSRSList()
+    assert supported_srs_list is None
+
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
@@ -1591,6 +1594,13 @@ def test_ogr_opaif_crs_and_preferred_crs_open_options():
         abs=1e-3,
     )
 
+    supported_srs_list = lyr.GetSupportedSRSList()
+    assert supported_srs_list
+    assert len(supported_srs_list) == 2
+    assert supported_srs_list[0].GetAuthorityCode(None) == "32631"
+    # Below doesn't work with early PROJ 6 versions
+    # assert supported_srs_list[1].GetAuthorityCode(None) == "CRS84"
+
     def get_items_handler():
         handler = webserver.SequentialHandler()
         handler.add(
@@ -1614,6 +1624,27 @@ def test_ogr_opaif_crs_and_preferred_crs_open_options():
         srs = lyr.GetSpatialRef()
         assert srs
         assert srs.GetAuthorityCode(None) == "32631"
+
+    # Test changing active SRS
+    assert lyr.SetActiveSRS(0, supported_srs_list[1]) == ogr.OGRERR_NONE
+    assert lyr.SetActiveSRS(0, None) != ogr.OGRERR_NONE
+    srs_other = osr.SpatialReference()
+    srs_other.ImportFromEPSG(32632)
+    assert lyr.SetActiveSRS(0, srs_other) != ogr.OGRERR_NONE
+    assert lyr.GetSpatialRef().IsGeographic()
+    minx, maxx, miny, maxy = lyr.GetExtent()
+    assert (minx, miny, maxx, maxy) == pytest.approx(
+        (-10.0, 40.0, 15.0, 50.0),
+        abs=1e-3,
+    )
+
+    assert lyr.SetActiveSRS(0, supported_srs_list[0]) == ogr.OGRERR_NONE
+    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "32631"
+    minx, maxx, miny, maxy = lyr.GetExtent()
+    assert (minx, miny, maxx, maxy) == pytest.approx(
+        (-611288.854779237, 4427761.561734099, 1525592.2813932528, 5620112.89047953),
+        abs=1e-3,
+    )
 
     with webserver.install_http_handler(get_collections_handler()):
         ds = gdal.OpenEx(

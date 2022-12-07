@@ -3110,7 +3110,7 @@ OGRErr GetWellKnownGeogCSAsWKT( const char *name, char **argout ) {
   OGRErr rcode = OSRSetWellKnownGeogCS( srs, name );
   if( rcode == OGRERR_NONE )
       rcode = OSRExportToWkt ( srs, argout );
-  OSRDestroySpatialReference( srs );
+  OSRRelease( srs );
   return rcode;
 }
 
@@ -3266,7 +3266,7 @@ OGRErr GetUserInputAsWKT( const char *name, char **argout ) {
   OGRErr rcode = OSRSetFromUserInput( srs, name );
   if( rcode == OGRERR_NONE )
       rcode = OSRExportToWkt ( srs, argout );
-  OSRDestroySpatialReference( srs );
+  OSRRelease( srs );
   return rcode;
 }
 
@@ -3366,9 +3366,7 @@ SWIGINTERN OSRSpatialReferenceShadow *new_OSRSpatialReferenceShadow(char const *
     return (OSRSpatialReferenceShadow*) OSRNewSpatialReference(wkt);
   }
 SWIGINTERN void delete_OSRSpatialReferenceShadow(OSRSpatialReferenceShadow *self){
-    if (OSRDereference( self ) == 0 ) {
-      OSRDestroySpatialReference( self );
-    }
+    OSRRelease( self );
   }
 SWIGINTERN retStringAndCPLFree *OSRSpatialReferenceShadow___str__(OSRSpatialReferenceShadow *self){
     char *buf = 0;

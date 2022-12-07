@@ -128,6 +128,8 @@ class OGROAPIFLayer final: public OGRLayer
         CPLString       m_osURL;
         CPLString       m_osPath;
         OGREnvelope     m_oExtent;
+        OGREnvelope     m_oOriginalExtent;
+        OGRSpatialReference m_oOriginalExtentCRS;
         bool            m_bFeatureDefnEstablished = false;
         std::unique_ptr<GDALDataset> m_poUnderlyingDS;
         OGRLayer*       m_poUnderlyingLayer = nullptr;
@@ -135,6 +137,8 @@ class OGROAPIFLayer final: public OGRLayer
         CPLString       m_osGetURL;
         CPLString       m_osAttributeFilter;
         CPLString       m_osGetID;
+        std::vector<std::string> m_oSupportedCRSList{};
+        OGRLayer::GetSupportedSRSListRetType m_apoSupportedCRSList{};
         bool            m_bFilterMustBeClientSideEvaluated = false;
         bool            m_bGotQueryableAttributes = false;
         std::set<CPLString> m_aoSetQueryableAttributes;
@@ -162,13 +166,14 @@ class OGROAPIFLayer final: public OGRLayer
         bool            SupportsResultTypeHits();
         void            GetQueryableAttributes();
         void            GetSchema();
+        void            ComputeExtent();
 
     public:
         OGROAPIFLayer(OGROAPIFDataset* poDS,
                      const CPLString& osName,
                      const CPLJSONArray& oBBOX,
                      const std::string& osBBOXCrs,
-                     const std::vector<std::string>& oCRSList,
+                     std::vector<std::string>&& oCRSList,
                      const std::string& osActiveCRS,
                      double dfCoordinateEpoch,
                      const CPLJSONArray& oLinks);
@@ -196,6 +201,8 @@ class OGROAPIFLayer final: public OGRLayer
                 { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
        OGRErr          SetAttributeFilter( const char *pszQuery ) override;
 
+       const OGRLayer::GetSupportedSRSListRetType& GetSupportedSRSList(int iGeomField) override;
+       OGRErr          SetActiveSRS(int iGeomField, const OGRSpatialReference* poSRS) override;
 };
 
 /************************************************************************/
@@ -697,7 +704,7 @@ bool OGROAPIFDataset::LoadJSONCollection(const CPLJSONObject& oCollection,
     const auto oLinks = oCollection.GetArray("links");
     auto poLayer = cpl::make_unique<OGROAPIFLayer>(this, osName,
                                                    oBBOX, osBBOXCrs,
-                                                   oCRSList,
+                                                   std::move(oCRSList),
                                                    osActiveCRS,
                                                    dfCoordinateEpoch,
                                                    oLinks);
@@ -997,7 +1004,7 @@ OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset* poDS,
                              const CPLString& osName,
                              const CPLJSONArray& oBBOX,
                              const std::string& osBBOXCrs,
-                             const std::vector<std::string>& oCRSList,
+                             std::vector<std::string>&& oCRSList,
                              const std::string& osActiveCRS,
                              double dfCoordinateEpoch,
                              const CPLJSONArray& oLinks) :
@@ -1006,7 +1013,7 @@ OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset* poDS,
     m_poFeatureDefn = new OGRFeatureDefn(osName);
     m_poFeatureDefn->Reference();
     SetDescription(osName);
-    (void)oCRSList;
+    m_oSupportedCRSList = std::move(oCRSList);
 
     OGRSpatialReference* poSRS = new OGRSpatialReference();
     poSRS->SetFromUserInput(
@@ -1042,13 +1049,12 @@ OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset* poDS,
 #endif
         if( oRealBBOX.Size() == 4 || oRealBBOX.Size() == 6 )
         {
-            m_oExtent.MinX = oRealBBOX[0].ToDouble();
-            m_oExtent.MinY = oRealBBOX[1].ToDouble();
-            m_oExtent.MaxX = oRealBBOX[oRealBBOX.Size() == 6 ? 3 : 2].ToDouble();
-            m_oExtent.MaxY = oRealBBOX[oRealBBOX.Size() == 6 ? 4 : 3].ToDouble();
+            m_oOriginalExtent.MinX = oRealBBOX[0].ToDouble();
+            m_oOriginalExtent.MinY = oRealBBOX[1].ToDouble();
+            m_oOriginalExtent.MaxX = oRealBBOX[oRealBBOX.Size() == 6 ? 3 : 2].ToDouble();
+            m_oOriginalExtent.MaxY = oRealBBOX[oRealBBOX.Size() == 6 ? 4 : 3].ToDouble();
 
-            OGRSpatialReference oExtentCRS;
-            oExtentCRS.SetFromUserInput(
+            m_oOriginalExtentCRS.SetFromUserInput(
                 !osBBOXCrs.empty() ?
                     osBBOXCrs.c_str():
                     OGC_CRS84_WKT,
@@ -1056,45 +1062,27 @@ OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset* poDS,
 
             // Handle bbox over antimeridian, which we do not support properly
             // in OGR
-            if( oExtentCRS.IsGeographic() )
+            if( m_oOriginalExtentCRS.IsGeographic() )
             {
-                const bool bSwitchXY = !HasGISFriendlyAxisOrder(&oExtentCRS);
+                const bool bSwitchXY = !HasGISFriendlyAxisOrder(&m_oOriginalExtentCRS);
                 if( bSwitchXY )
                 {
-                    std::swap(m_oExtent.MinX, m_oExtent.MinY);
-                    std::swap(m_oExtent.MaxX, m_oExtent.MaxY);
+                    std::swap(m_oOriginalExtent.MinX, m_oOriginalExtent.MinY);
+                    std::swap(m_oOriginalExtent.MaxX, m_oOriginalExtent.MaxY);
                 }
 
-                if( m_oExtent.MinX > m_oExtent.MaxX &&
-                    fabs(m_oExtent.MinX) <= 180.0 &&
-                    fabs(m_oExtent.MaxX) <= 180.0 )
+                if( m_oOriginalExtent.MinX > m_oOriginalExtent.MaxX &&
+                    fabs(m_oOriginalExtent.MinX) <= 180.0 &&
+                    fabs(m_oOriginalExtent.MaxX) <= 180.0 )
                 {
-                    m_oExtent.MinX = -180.0;
-                    m_oExtent.MaxX = 180.0;
+                    m_oOriginalExtent.MinX = -180.0;
+                    m_oOriginalExtent.MaxX = 180.0;
                 }
 
                 if( bSwitchXY )
                 {
-                    std::swap(m_oExtent.MinX, m_oExtent.MinY);
-                    std::swap(m_oExtent.MaxX, m_oExtent.MaxY);
-                }
-            }
-
-            if( !poSRS->IsSame(&oExtentCRS) )
-            {
-                auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
-                        OGRCreateCoordinateTransformation(&oExtentCRS, poSRS));
-                if( poCT )
-                {
-                    poCT->TransformBounds(m_oExtent.MinX,
-                                          m_oExtent.MinY,
-                                          m_oExtent.MaxX,
-                                          m_oExtent.MaxY,
-                                          &m_oExtent.MinX,
-                                          &m_oExtent.MinY,
-                                          &m_oExtent.MaxX,
-                                          &m_oExtent.MaxY,
-                                          20);
+                    std::swap(m_oOriginalExtent.MinX, m_oOriginalExtent.MinY);
+                    std::swap(m_oOriginalExtent.MaxX, m_oOriginalExtent.MaxY);
                 }
             }
         }
@@ -1165,6 +1153,94 @@ OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset* poDS,
 OGROAPIFLayer::~OGROAPIFLayer()
 {
     m_poFeatureDefn->Release();
+}
+
+/************************************************************************/
+/*                        GetSupportedSRSList()                         */
+/************************************************************************/
+
+const OGRLayer::GetSupportedSRSListRetType& OGROAPIFLayer::GetSupportedSRSList(int /*iGeomField*/)
+{
+    if( !m_oSupportedCRSList.empty() && m_apoSupportedCRSList.empty() )
+    {
+        for( const auto& osCRS: m_oSupportedCRSList )
+        {
+            auto poSRS = std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>(new OGRSpatialReference());
+            if( poSRS->SetFromUserInput(osCRS.c_str(),
+                                    OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE )
+            {
+                m_apoSupportedCRSList.emplace_back(std::move(poSRS));
+            }
+        }
+    }
+    return m_apoSupportedCRSList;
+}
+
+/************************************************************************/
+/*                          SetActiveSRS()                              */
+/************************************************************************/
+
+OGRErr OGROAPIFLayer::SetActiveSRS(int /*iGeomField*/, const OGRSpatialReference* poSRS)
+{
+    if( poSRS == nullptr )
+        return OGRERR_FAILURE;
+    const char* const apszOptions[] = { "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES", nullptr };
+    for( const auto& osCRS: m_oSupportedCRSList )
+    {
+        OGRSpatialReference oTmpSRS;
+        if( oTmpSRS.SetFromUserInput(osCRS.c_str(),
+                OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE &&
+            oTmpSRS.IsSame(poSRS, apszOptions) )
+        {
+            m_osActiveCRS = osCRS;
+            auto poGeomFieldDefn = m_poFeatureDefn->GetGeomFieldDefn(0);
+            if( poGeomFieldDefn )
+            {
+                OGRSpatialReference* poSRSClone = poSRS->Clone();
+                poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                poGeomFieldDefn->SetSpatialRef(poSRSClone);
+                m_bIsGeographicCRS = poSRSClone->IsGeographic();
+                m_bCRSHasGISFriendlyOrder = HasGISFriendlyAxisOrder(poSRSClone);
+                poSRSClone->Release();
+            }
+            m_oExtent = OGREnvelope();
+            SetSpatialFilter(nullptr);
+            ResetReading();
+            return OGRERR_NONE;
+        }
+    }
+    return OGRERR_FAILURE;
+}
+
+/************************************************************************/
+/*                         ComputeExtent()                              */
+/************************************************************************/
+
+void OGROAPIFLayer::ComputeExtent()
+{
+    m_oExtent = m_oOriginalExtent;
+    const auto poGeomFieldDefn = m_poFeatureDefn->GetGeomFieldDefn(0);
+    if( poGeomFieldDefn )
+    {
+        const OGRSpatialReference* poSRS = poGeomFieldDefn->GetSpatialRef();
+        if( poSRS && !poSRS->IsSame(&m_oOriginalExtentCRS) )
+        {
+            auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
+                OGRCreateCoordinateTransformation(&m_oOriginalExtentCRS, poSRS));
+            if( poCT )
+            {
+                poCT->TransformBounds(m_oOriginalExtent.MinX,
+                                      m_oOriginalExtent.MinY,
+                                      m_oOriginalExtent.MaxX,
+                                      m_oOriginalExtent.MaxY,
+                                      &m_oExtent.MinX,
+                                      &m_oExtent.MinY,
+                                      &m_oExtent.MaxX,
+                                      &m_oExtent.MaxY,
+                                      20);
+            }
+        }
+    }
 }
 
 /************************************************************************/
@@ -2034,8 +2110,10 @@ GIntBig OGROAPIFLayer::GetFeatureCount(int bForce)
 
 OGRErr OGROAPIFLayer::GetExtent(OGREnvelope* psEnvelope, int bForce)
 {
-    if( m_oExtent.IsInit() )
+    if( m_oOriginalExtent.IsInit() )
     {
+        if( !m_oExtent.IsInit() )
+            ComputeExtent();
         *psEnvelope = m_oExtent;
         return OGRERR_NONE;
     }
@@ -2743,7 +2821,7 @@ int OGROAPIFLayer::TestCapability(const char* pszCap)
     }
     if( EQUAL(pszCap, OLCFastGetExtent) )
     {
-        return m_oExtent.IsInit();
+        return m_oOriginalExtent.IsInit();
     }
     if( EQUAL(pszCap, OLCStringsAsUTF8) )
     {

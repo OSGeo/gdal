@@ -2722,12 +2722,13 @@ SWIGINTERN PyObject *SWIG_PyStaticMethod_New(PyObject *SWIGUNUSEDPARM(self), PyO
 #define SWIGTYPE_p_int swig_types[25]
 #define SWIGTYPE_p_p_GIntBig swig_types[26]
 #define SWIGTYPE_p_p_OGRGeometryTypeCounter swig_types[27]
-#define SWIGTYPE_p_p_char swig_types[28]
-#define SWIGTYPE_p_p_double swig_types[29]
-#define SWIGTYPE_p_p_int swig_types[30]
-#define SWIGTYPE_p_size_t swig_types[31]
-static swig_type_info *swig_types[33];
-static swig_module_info swig_module = {swig_types, 32, 0, 0, 0, 0};
+#define SWIGTYPE_p_p_OGRSpatialReferenceH swig_types[28]
+#define SWIGTYPE_p_p_char swig_types[29]
+#define SWIGTYPE_p_p_double swig_types[30]
+#define SWIGTYPE_p_p_int swig_types[31]
+#define SWIGTYPE_p_size_t swig_types[32]
+static swig_type_info *swig_types[34];
+static swig_module_info swig_module = {swig_types, 33, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -4047,6 +4048,12 @@ SWIGINTERN ArrowArrayStream *OGRLayerShadow_GetArrowStream(OGRLayerShadow *self,
   }
 SWIGINTERN void OGRLayerShadow_GetGeometryTypes(OGRLayerShadow *self,OGRGeometryTypeCounter **ppRet,int *pnEntryCount,int geom_field=0,int flags=0,GDALProgressFunc callback=NULL,void *callback_data=NULL){
         *ppRet = OGR_L_GetGeometryTypes(self, geom_field, flags, pnEntryCount, callback, callback_data);
+    }
+SWIGINTERN void OGRLayerShadow_GetSupportedSRSList(OGRLayerShadow *self,OGRSpatialReferenceH **ppRet,int *pnEntryCount,int geom_field=0){
+        *ppRet = OGR_L_GetSupportedSRSList(self, geom_field, pnEntryCount);
+    }
+SWIGINTERN OGRErr OGRLayerShadow_SetActiveSRS(OGRLayerShadow *self,int geom_field,OSRSpatialReferenceShadow *srs){
+        return OGR_L_SetActiveSRS(self, geom_field, srs);
     }
 SWIGINTERN void delete_OGRFeatureShadow(OGRFeatureShadow *self){
     OGR_F_Destroy(self);
@@ -13247,6 +13254,169 @@ fail:
     CPLFree(psProgressInfo);
     
   }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Layer_GetSupportedSRSList(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
+  OGRSpatialReferenceH **arg2 = (OGRSpatialReferenceH **) 0 ;
+  int *arg3 = (int *) 0 ;
+  int arg4 = (int) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  OGRSpatialReferenceH *pRet2 = NULL ;
+  int nEntryCount2 = 0 ;
+  int val4 ;
+  int ecode4 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  char * kwnames[] = {
+    (char *)"self",  (char *)"geom_field",  NULL 
+  };
+  
+  {
+    /* %typemap(in,numinputs=0) (OGRSpatialReferenceH** ppRet, int* pnEntryCount) */
+    arg2 = &pRet2;
+    arg3 = &nEntryCount2;
+  }
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|O:Layer_GetSupportedSRSList", kwnames, &obj0, &obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_GetSupportedSRSList" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
+  if (obj1) {
+    ecode4 = SWIG_AsVal_int(obj1, &val4);
+    if (!SWIG_IsOK(ecode4)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "Layer_GetSupportedSRSList" "', argument " "4"" of type '" "int""'");
+    } 
+    arg4 = static_cast< int >(val4);
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRLayerShadow_GetSupportedSRSList(arg1,arg2,arg3,arg4);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  {
+    /* %typemap(argout)  (OGRSpatialReferenceH** ppRet, int* pnEntryCount) */
+    Py_DECREF(resultobj);
+    int nEntryCount = *(arg3);
+    OGRSpatialReferenceH* pRet = *(arg2);
+    if( nEntryCount == 0)
+    {
+      Py_INCREF(Py_None);
+      resultobj = Py_None;
+    }
+    else
+    {
+      resultobj = PyList_New(nEntryCount);
+      for(int i = 0; i < nEntryCount; ++ i)
+      {
+        OSRReference(pRet[i]);
+        PyList_SetItem(resultobj, i, SWIG_NewPointerObj(
+            SWIG_as_voidptr(pRet[i]),SWIGTYPE_p_OSRSpatialReferenceShadow, SWIG_POINTER_OWN) );
+      }
+    }
+  }
+  {
+    /* %typemap(freearg)  (OGRSpatialReferenceH** ppRet, int* pnEntryCount) */
+    OSRFreeSRSArray(*arg2);
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg)  (OGRSpatialReferenceH** ppRet, int* pnEntryCount) */
+    OSRFreeSRSArray(*arg2);
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Layer_SetActiveSRS(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
+  int arg2 ;
+  OSRSpatialReferenceShadow *arg3 = (OSRSpatialReferenceShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  void *argp3 = 0 ;
+  int res3 = 0 ;
+  PyObject *swig_obj[3] ;
+  OGRErr result;
+  
+  if (!SWIG_Python_UnpackTuple(args, "Layer_SetActiveSRS", 3, 3, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_SetActiveSRS" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
+  ecode2 = SWIG_AsVal_int(swig_obj[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Layer_SetActiveSRS" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  res3 = SWIG_ConvertPtr(swig_obj[2], &argp3,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "Layer_SetActiveSRS" "', argument " "3"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg3 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp3);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_SetActiveSRS(arg1,arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if ( ReturnSame(resultobj == Py_None || resultobj == 0) ) {
+      resultobj = PyInt_FromLong( result );
+    }
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
   return NULL;
 }
 
@@ -32444,6 +32614,8 @@ static PyMethodDef SwigMethods[] = {
 		"    values the corresponding number of geometries of that type in the layer.\n"
 		"\n"
 		""},
+	 { "Layer_GetSupportedSRSList", (PyCFunction)(void(*)(void))_wrap_Layer_GetSupportedSRSList, METH_VARARGS|METH_KEYWORDS, "Layer_GetSupportedSRSList(Layer self, int geom_field=0)"},
+	 { "Layer_SetActiveSRS", _wrap_Layer_SetActiveSRS, METH_VARARGS, "Layer_SetActiveSRS(Layer self, int geom_field, SpatialReference srs) -> OGRErr"},
 	 { "Layer_swigregister", Layer_swigregister, METH_O, NULL},
 	 { "delete_Feature", _wrap_delete_Feature, METH_O, "delete_Feature(Feature self)"},
 	 { "new_Feature", (PyCFunction)(void(*)(void))_wrap_new_Feature, METH_VARARGS|METH_KEYWORDS, "new_Feature(FeatureDefn feature_def) -> Feature"},
@@ -35986,6 +36158,7 @@ static swig_type_info _swigt__p_float = {"_p_float", "float *", 0, 0, (void*)0, 
 static swig_type_info _swigt__p_int = {"_p_int", "OGRFieldSubType *|OSRAxisMappingStrategy *|OGRFieldDomainType *|OGRFieldType *|CPLErr *|int *|OGRwkbGeometryType *|OGRJustification *|OGRAxisOrientation *|OGRFieldDomainSplitPolicy *|OGRFieldDomainMergePolicy *|OGRwkbByteOrder *|OGRErr *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_GIntBig = {"_p_p_GIntBig", "GIntBig **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_OGRGeometryTypeCounter = {"_p_p_OGRGeometryTypeCounter", "OGRGeometryTypeCounter **", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_p_OGRSpatialReferenceH = {"_p_p_OGRSpatialReferenceH", "OGRSpatialReferenceH **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_char = {"_p_p_char", "char **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_double = {"_p_p_double", "double **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_int = {"_p_p_int", "int **", 0, 0, (void*)0, 0};
@@ -36020,6 +36193,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_int,
   &_swigt__p_p_GIntBig,
   &_swigt__p_p_OGRGeometryTypeCounter,
+  &_swigt__p_p_OGRSpatialReferenceH,
   &_swigt__p_p_char,
   &_swigt__p_p_double,
   &_swigt__p_p_int,
@@ -36054,6 +36228,7 @@ static swig_cast_info _swigc__p_float[] = {  {&_swigt__p_float, 0, 0, 0},{0, 0, 
 static swig_cast_info _swigc__p_int[] = {  {&_swigt__p_int, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_GIntBig[] = {  {&_swigt__p_p_GIntBig, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_OGRGeometryTypeCounter[] = {  {&_swigt__p_p_OGRGeometryTypeCounter, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_p_OGRSpatialReferenceH[] = {  {&_swigt__p_p_OGRSpatialReferenceH, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_char[] = {  {&_swigt__p_p_char, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_double[] = {  {&_swigt__p_p_double, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_int[] = {  {&_swigt__p_p_int, 0, 0, 0},{0, 0, 0, 0}};
@@ -36088,6 +36263,7 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_int,
   _swigc__p_p_GIntBig,
   _swigc__p_p_OGRGeometryTypeCounter,
+  _swigc__p_p_OGRSpatialReferenceH,
   _swigc__p_p_char,
   _swigc__p_p_double,
   _swigc__p_p_int,
