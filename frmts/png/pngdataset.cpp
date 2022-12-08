@@ -49,7 +49,7 @@
 #include <csetjmp>
 
 #include <algorithm>
-
+#include <limits>
 
 // Note: Callers must provide blocks in increasing Y order.
 // Disclaimer (E. Rouault): this code is not production ready at all. A lot of
@@ -75,6 +75,20 @@ static void png_vsi_flush(png_structp png_ptr);
 static void png_gdal_error( png_structp png_ptr, const char *error_message );
 static void png_gdal_warning( png_structp png_ptr, const char *error_message );
 
+#ifdef ENABLE_WHOLE_IMAGE_OPTIMIZATION
+
+/************************************************************************/
+/*                      IsCompatibleOfSingleBlock()                     */
+/************************************************************************/
+
+bool PNGDataset::IsCompatibleOfSingleBlock() const
+{
+    return nBitDepth == 8 && !bInterlaced &&
+           nRasterXSize <= 512 && nRasterYSize <= 512 &&
+           CPLTestBool(CPLGetConfigOption("GDAL_PNG_WHOLE_IMAGE_OPTIM", "YES")) &&
+           CPLTestBool(CPLGetConfigOption("GDAL_PNG_SINGLE_BLOCK", "YES"));
+}
+#endif
 
 /************************************************************************/
 /*                           PNGRasterBand()                            */
@@ -93,7 +107,16 @@ PNGRasterBand::PNGRasterBand( PNGDataset *poDSIn, int nBandIn ) :
         eDataType = GDT_Byte;
 
     nBlockXSize = poDSIn->nRasterXSize;
-    nBlockYSize = 1;
+#ifdef ENABLE_WHOLE_IMAGE_OPTIMIZATION
+    if( poDSIn->IsCompatibleOfSingleBlock() )
+    {
+        nBlockYSize = poDSIn->nRasterYSize;
+    }
+    else
+#endif
+    {
+        nBlockYSize = 1;
+    }
 
 #ifdef SUPPORT_CREATE
     reset_band_provision_flags();
@@ -108,9 +131,23 @@ CPLErr PNGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {
-    PNGDataset *poGDS = reinterpret_cast<PNGDataset *>( poDS );
-    int nPixelSize;
+#ifdef ENABLE_WHOLE_IMAGE_OPTIMIZATION
+    if( nBlockYSize > 1 )
+    {
+        GDALRasterIOExtraArg sExtraArg;
+        INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+        const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
+        return IRasterIO(GF_Read, 0, 0, nRasterXSize, nRasterYSize,
+                         pImage, nRasterXSize, nRasterYSize,
+                         eDataType,
+                         nDTSize,
+                         static_cast<GSpacing>(nDTSize) * nRasterXSize,
+                         &sExtraArg);
+    }
+#endif
 
+    PNGDataset *poGDS = cpl::down_cast<PNGDataset *>( poDS );
+    int nPixelSize;
     CPLAssert( nBlockXOff == 0 );
 
     if( poGDS->nBitDepth == 16 )
@@ -307,6 +344,652 @@ PNGDataset::~PNGDataset()
 }
 
 /************************************************************************/
+/*                         LoadWholeImage()                             */
+/************************************************************************/
+
+#ifdef ENABLE_WHOLE_IMAGE_OPTIMIZATION
+
+#ifdef HAVE_SSE2
+#include "filter_sse2_intrinsics.c"
+#endif
+
+#if defined(__GNUC__) && !defined(__SSE2__)
+__attribute__((optimize("tree-vectorize")))
+static inline void AddVectors(const GByte* CPL_RESTRICT pabyInputLine,
+                              GByte* CPL_RESTRICT pabyOutputLine,
+                              int nSize)
+{
+    for( int iX = 0; iX < nSize; ++iX )
+        pabyOutputLine[iX] = static_cast<GByte>(pabyInputLine[iX] + pabyOutputLine[iX]);
+}
+
+__attribute__((optimize("tree-vectorize")))
+static inline void AddVectors(const GByte* CPL_RESTRICT pabyInputLine1,
+                              const GByte* CPL_RESTRICT pabyInputLine2,
+                              GByte* CPL_RESTRICT pabyOutputLine,
+                              int nSize)
+{
+    for( int iX = 0; iX < nSize; ++iX )
+        pabyOutputLine[iX] = static_cast<GByte>(pabyInputLine1[iX] + pabyInputLine2[iX]);
+}
+#endif //  defined(__GNUC__) && !defined(__SSE2__)
+
+CPLErr PNGDataset::LoadWholeImage(void* pSingleBuffer,
+                                  GSpacing nPixelSpace, GSpacing nLineSpace,
+                                  GSpacing nBandSpace,
+                                  void* apabyBuffers[4])
+{
+    if( fpImage == nullptr )
+    {
+        for(int iY = 0; iY < nRasterYSize; ++iY )
+        {
+            if( pSingleBuffer )
+            {
+                GByte* pabyDest = static_cast<GByte *>( pSingleBuffer ) +
+                                                        iY*nLineSpace;
+                for(int x = 0; x < nRasterXSize; ++x)
+                {
+                    for(int iBand=0;iBand<nBands;iBand++)
+                    {
+                        pabyDest[(x*nPixelSpace) + iBand * nBandSpace] = 0;
+                    }
+                }
+            }
+            else
+            {
+                for(int iBand=0;iBand<nBands;iBand++)
+                {
+                    GByte* l_pabyBuffer = static_cast<GByte*>(apabyBuffers[iBand]) + iY * nRasterXSize;
+                    memset(l_pabyBuffer, 0, nRasterXSize);
+                }
+            }
+        }
+        return CE_None;
+    }
+
+    const bool bCanUseDeinterleave =
+        (nBands == 3 || nBands == 4) &&
+        (apabyBuffers != nullptr ||
+         (nPixelSpace == 1 &&
+            nBandSpace == static_cast<GSpacing>(nRasterXSize) * nRasterYSize));
+
+    // Below should work without SSE2, but the lack of optimized
+    // filters can sometimes make it slower than regular optimized libpng,
+    // so restrict to when SSE2 is available.
+
+    // CPLDebug("PNG", "Using libdeflate optimization");
+
+    char szChunkName[5] = {0};
+    bool bError = false;
+
+    // We try to read the zlib compressed data into pData, if there is
+    // enough room for that
+    size_t pDataSize = 0;
+    std::vector<GByte> abyCompressedData; // keep in this scope
+    GByte* pabyCompressedData = static_cast<GByte*>(pSingleBuffer);
+    size_t nCompressedDataSize = 0;
+    if( pSingleBuffer )
+    {
+        if( nPixelSpace == nBands &&
+            nLineSpace == nPixelSpace * nRasterXSize &&
+            (nBands == 1 || nBandSpace == 1) )
+        {
+            pDataSize = static_cast<size_t>(nRasterXSize) * nRasterYSize * nBands;
+        }
+        else if( nPixelSpace == 1 && nLineSpace == nRasterXSize &&
+                 nBandSpace == static_cast<GSpacing>(nRasterXSize) * nRasterYSize )
+        {
+            pDataSize = static_cast<size_t>(nRasterXSize) * nRasterYSize * nBands;
+        }
+    }
+
+    const auto nPosBefore = VSIFTellL(fpImage);
+    VSIFSeekL(fpImage, 8, SEEK_SET);
+    // Iterate over PNG chunks
+    while( true )
+    {
+        uint32_t nChunkSize;
+        if( VSIFReadL(&nChunkSize, sizeof(nChunkSize), 1, fpImage) == 0 )
+        {
+            bError = true;
+            break;
+        }
+        CPL_MSBPTR32(&nChunkSize);
+        if( VSIFReadL(szChunkName, 4, 1, fpImage) == 0 )
+        {
+            bError = true;
+            break;
+        }
+        if( strcmp(szChunkName, "IDAT") == 0 )
+        {
+            // CPLDebug("PNG", "IDAT %u %u", unsigned(nCompressedDataSize), unsigned(nChunkSize));
+
+            // There can be several IDAT chunks: concatenate ZLib stream
+            if( nChunkSize > std::numeric_limits<size_t>::max() - nCompressedDataSize )
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory,
+                         "Out of memory when reading compressed stream");
+                bError = true;
+                break;
+            }
+
+            // Sanity check to avoid allocating too much memory
+            if( nCompressedDataSize + nChunkSize > 100 * 1024 * 1024 )
+            {
+                const auto nCurPos = VSIFTellL(fpImage);
+                VSIFSeekL(fpImage, 0, SEEK_END);
+                const auto nSize = VSIFTellL(fpImage);
+                VSIFSeekL(fpImage, nCurPos, SEEK_SET);
+                if( nSize < 100 * 1024 * 1024 )
+                {
+                    CPLError(CE_Failure, CPLE_OutOfMemory,
+                             "Attempt at reading more data than available in "
+                             "compressed stream");
+                    bError = true;
+                    break;
+                }
+            }
+
+            if( nCompressedDataSize + nChunkSize > pDataSize )
+            {
+                const bool bVectorEmptyBefore = abyCompressedData.empty();
+                // unlikely situation: would mean that the zlib compressed
+                // data is longer than the decompressed image
+                try
+                {
+                    abyCompressedData.resize(nCompressedDataSize + nChunkSize);
+                    pabyCompressedData = abyCompressedData.data();
+                }
+                catch( const std::exception& )
+                {
+                    CPLError(CE_Failure, CPLE_OutOfMemory,
+                             "Out of memory when allocating compressed stream");
+                    bError = true;
+                    break;
+                }
+                if( bVectorEmptyBefore && nCompressedDataSize > 0 )
+                    memcpy(pabyCompressedData, pSingleBuffer, nCompressedDataSize);
+            }
+            VSIFReadL(pabyCompressedData + nCompressedDataSize, nChunkSize, 1, fpImage);
+            nCompressedDataSize += nChunkSize;
+        }
+        else if( strcmp(szChunkName, "IEND") == 0 )
+            break;
+        else
+        {
+            //CPLDebug("PNG", "Skipping chunk %s of size %u", szChunkName, nChunkSize);
+            VSIFSeekL(fpImage, nChunkSize, SEEK_CUR);
+        }
+        VSIFSeekL(fpImage, 4, SEEK_CUR); // CRC
+    }
+    VSIFSeekL(fpImage, nPosBefore, SEEK_SET);
+    if( bError )
+        return CE_Failure;
+
+    const int nSamplesPerLine = nRasterXSize * nBands;
+    size_t nOutBytes;
+    std::vector<GByte> abyZlibDecompressed;
+    constexpr int FILTER_TYPE_BYTE = 1;
+    const size_t nZlibDecompressedSize =
+        static_cast<size_t>(nRasterYSize) * (FILTER_TYPE_BYTE + nSamplesPerLine);
+    try
+    {
+        // A bit dirty: we just reserve() to avoid resize() doing a
+        // useless buffer zeroing. As this is going to be
+        // accessed from C code only in libdeflate_zlib_decompress(),
+        // that is OK.
+        abyZlibDecompressed.reserve(nZlibDecompressedSize);
+    }
+    catch( const std::exception& )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Out of memory when allocating abyZlibDecompressed");
+        return CE_Failure;
+    }
+
+    if( CPLZLibInflate(
+            pabyCompressedData, nCompressedDataSize,
+            abyZlibDecompressed.data(), nZlibDecompressedSize, &nOutBytes ) == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "CPLZLibInflate() failed");
+        return CE_Failure;
+    }
+
+    GByte* pabyOutputBuffer;
+    std::vector<GByte> abyTemp;
+    std::vector<GByte> abyLineUp;
+
+    if( pSingleBuffer != nullptr &&
+        nPixelSpace == nBands &&
+        nLineSpace == nPixelSpace * nRasterXSize &&
+        (nBands == 1 || nBandSpace == 1) )
+    {
+        pabyOutputBuffer = static_cast<GByte*>(pSingleBuffer);
+    }
+    else
+    {
+        abyTemp.resize(nSamplesPerLine);
+        pabyOutputBuffer = abyTemp.data();
+    }
+
+    for( int iY = 0; iY < nRasterYSize; ++iY )
+    {
+        // Cf http://www.libpng.org/pub/png/spec/1.2/PNG-Filters.html
+        //CPLDebug("PNG", "Line %d, filter type = %d", iY, nFilterType);
+        const GByte* const CPL_RESTRICT pabyInputLine =
+            abyZlibDecompressed.data() +
+                static_cast<size_t>(iY) * (FILTER_TYPE_BYTE + nSamplesPerLine) + FILTER_TYPE_BYTE;
+        const GByte nFilterType = pabyInputLine[-1];
+        GByte* const CPL_RESTRICT pabyOutputLine =
+            abyTemp.empty() ?
+                pabyOutputBuffer + static_cast<size_t>(iY) * nSamplesPerLine :
+                abyTemp.data();
+        if( nFilterType == 0 )
+        {
+            // Filter type 0: None
+            memcpy(pabyOutputLine, pabyInputLine, nSamplesPerLine);
+        }
+        else if( nFilterType == 1 )
+        {
+            // Filter type 1: Sub (horizontal differencing)
+#ifdef HAVE_SSE2
+            if( nBands == 3 )
+            {
+                png_row_info row_info;
+                memset(&row_info, 0, sizeof(row_info));
+                row_info.rowbytes = nSamplesPerLine;
+
+                gdal_png_read_filter_row_sub3_sse2(
+                    &row_info,
+                    pabyInputLine,
+                    pabyOutputLine);
+            }
+            else if( nBands == 4 )
+            {
+                png_row_info row_info;
+                memset(&row_info, 0, sizeof(row_info));
+                row_info.rowbytes = nSamplesPerLine;
+
+                gdal_png_read_filter_row_sub4_sse2(
+                    &row_info,
+                    pabyInputLine,
+                    pabyOutputLine);
+            }
+            else
+#endif
+            {
+                int iX;
+                for( iX = 0; iX < nBands; ++iX )
+                    pabyOutputLine[iX] = pabyInputLine[iX];
+#if !defined(HAVE_SSE2)
+                if( nBands == 3 )
+                {
+                    GByte nLast0 = pabyOutputLine[0];
+                    GByte nLast1 = pabyOutputLine[1];
+                    GByte nLast2 = pabyOutputLine[2];
+                    for( ; iX + 5 < nSamplesPerLine; iX += 6 )
+                    {
+                        nLast0 = static_cast<GByte>(nLast0 + pabyInputLine[iX+0]);
+                        nLast1 = static_cast<GByte>(nLast1 + pabyInputLine[iX+1]);
+                        nLast2 = static_cast<GByte>(nLast2 + pabyInputLine[iX+2]);
+                        pabyOutputLine[iX+0] = nLast0;
+                        pabyOutputLine[iX+1] = nLast1;
+                        pabyOutputLine[iX+2] = nLast2;
+                        nLast0 = static_cast<GByte>(nLast0 + pabyInputLine[iX+3]);
+                        nLast1 = static_cast<GByte>(nLast1 + pabyInputLine[iX+4]);
+                        nLast2 = static_cast<GByte>(nLast2 + pabyInputLine[iX+5]);
+                        pabyOutputLine[iX+3] = nLast0;
+                        pabyOutputLine[iX+4] = nLast1;
+                        pabyOutputLine[iX+5] = nLast2;
+                    }
+                }
+                else if( nBands == 4 )
+                {
+                    GByte nLast0 = pabyOutputLine[0];
+                    GByte nLast1 = pabyOutputLine[1];
+                    GByte nLast2 = pabyOutputLine[2];
+                    GByte nLast3 = pabyOutputLine[3];
+                    for( ; iX + 7 < nSamplesPerLine; iX += 8 )
+                    {
+                        nLast0 = static_cast<GByte>(nLast0 + pabyInputLine[iX+0]);
+                        nLast1 = static_cast<GByte>(nLast1 + pabyInputLine[iX+1]);
+                        nLast2 = static_cast<GByte>(nLast2 + pabyInputLine[iX+2]);
+                        nLast3 = static_cast<GByte>(nLast3 + pabyInputLine[iX+3]);
+                        pabyOutputLine[iX+0] = nLast0;
+                        pabyOutputLine[iX+1] = nLast1;
+                        pabyOutputLine[iX+2] = nLast2;
+                        pabyOutputLine[iX+3] = nLast3;
+                        nLast0 = static_cast<GByte>(nLast0 + pabyInputLine[iX+4]);
+                        nLast1 = static_cast<GByte>(nLast1 + pabyInputLine[iX+5]);
+                        nLast2 = static_cast<GByte>(nLast2 + pabyInputLine[iX+6]);
+                        nLast3 = static_cast<GByte>(nLast3 + pabyInputLine[iX+7]);
+                        pabyOutputLine[iX+4] = nLast0;
+                        pabyOutputLine[iX+5] = nLast1;
+                        pabyOutputLine[iX+6] = nLast2;
+                        pabyOutputLine[iX+7] = nLast3;
+                    }
+                }
+#endif
+                for(; iX < nSamplesPerLine; ++iX )
+                    pabyOutputLine[iX] = static_cast<GByte>(pabyInputLine[iX] + pabyOutputLine[iX - nBands]);
+            }
+        }
+        else if( nFilterType == 2 )
+        {
+            // Filter type 2: Up (vertical differencing)
+            if( iY == 0 )
+            {
+                memcpy(pabyOutputLine, pabyInputLine, nSamplesPerLine);
+            }
+            else
+            {
+                if( abyTemp.empty() )
+                {
+                    const GByte* CPL_RESTRICT pabyOutputLineUp =
+                            pabyOutputBuffer + (static_cast<size_t>(iY) - 1) * nSamplesPerLine;
+#if defined(__GNUC__) && !defined(__SSE2__)
+                    AddVectors(pabyInputLine, pabyOutputLineUp, pabyOutputLine, nSamplesPerLine);
+#else
+                    int iX;
+#ifdef HAVE_SSE2
+                    for( iX = 0; iX + 31 < nSamplesPerLine; iX += 32 )
+                    {
+                        auto in = _mm_loadu_si128 ((__m128i const* )(pabyInputLine + iX));
+                        auto in2 = _mm_loadu_si128 ((__m128i const* )(pabyInputLine + iX + 16));
+                        auto up = _mm_loadu_si128 ((__m128i const* )(pabyOutputLineUp + iX));
+                        auto up2 = _mm_loadu_si128 ((__m128i const* )(pabyOutputLineUp + iX + 16));
+                        in = _mm_add_epi8(in, up);
+                        in2 = _mm_add_epi8(in2, up2);
+                        _mm_storeu_si128((__m128i* )(pabyOutputLine + iX), in);
+                        _mm_storeu_si128((__m128i* )(pabyOutputLine + iX + 16), in2);
+                    }
+#endif
+                    for( ; iX < nSamplesPerLine; ++iX )
+                        pabyOutputLine[iX] = static_cast<GByte>(pabyInputLine[iX] + pabyOutputLineUp[iX]);
+#endif
+                }
+                else
+                {
+#if defined(__GNUC__) && !defined(__SSE2__)
+                    AddVectors(pabyInputLine, pabyOutputLine, nSamplesPerLine);
+#else
+                    int iX;
+#ifdef HAVE_SSE2
+                    for( iX = 0; iX + 31 < nSamplesPerLine; iX += 32 )
+                    {
+                        auto in = _mm_loadu_si128 ((__m128i const* )(pabyInputLine + iX));
+                        auto in2 = _mm_loadu_si128 ((__m128i const* )(pabyInputLine + iX + 16));
+                        auto out = _mm_loadu_si128 ((__m128i const* )(pabyOutputLine + iX));
+                        auto out2 = _mm_loadu_si128 ((__m128i const* )(pabyOutputLine + iX + 16));
+                        out = _mm_add_epi8(out, in);
+                        out2 = _mm_add_epi8(out2, in2);
+                        _mm_storeu_si128((__m128i* )(pabyOutputLine + iX), out);
+                        _mm_storeu_si128((__m128i* )(pabyOutputLine + iX + 16), out2);
+                    }
+#endif
+                    for( ; iX < nSamplesPerLine; ++iX )
+                        pabyOutputLine[iX] = static_cast<GByte>(pabyOutputLine[iX] + pabyInputLine[iX]);
+#endif
+                }
+            }
+        }
+        else if( nFilterType == 3 )
+        {
+            // Filter type 3: Average
+            if( iY == 0 )
+            {
+                for( int iX = 0; iX < nBands; ++iX )
+                {
+                    pabyOutputLine[iX] = pabyInputLine[iX];
+                }
+                for( int iX = nBands; iX < nSamplesPerLine; ++iX )
+                {
+                    pabyOutputLine[iX] = static_cast<GByte>(
+                        pabyInputLine[iX] +
+                                     pabyOutputLine[iX - nBands] / 2);
+                }
+            }
+            else
+            {
+#ifdef HAVE_SSE2
+                if( nBands == 3 )
+                {
+                    png_row_info row_info;
+                    memset(&row_info, 0, sizeof(row_info));
+                    row_info.rowbytes = nSamplesPerLine;
+                    if( !abyTemp.empty() )
+                        abyLineUp = abyTemp;
+                    const GByte* const pabyOutputLineUp =
+                        abyTemp.empty() ?
+                            pabyOutputBuffer + (static_cast<size_t>(iY) - 1) * nSamplesPerLine :
+                            abyLineUp.data();
+
+                    gdal_png_read_filter_row_avg3_sse2(
+                        &row_info,
+                        pabyInputLine,
+                        pabyOutputLine,
+                        pabyOutputLineUp);
+                }
+                else if( nBands == 4 )
+                {
+                    png_row_info row_info;
+                    memset(&row_info, 0, sizeof(row_info));
+                    row_info.rowbytes = nSamplesPerLine;
+                    if( !abyTemp.empty() )
+                        abyLineUp = abyTemp;
+                    const GByte* const pabyOutputLineUp =
+                        abyTemp.empty() ?
+                            pabyOutputBuffer + (static_cast<size_t>(iY) - 1) * nSamplesPerLine :
+                            abyLineUp.data();
+
+                    gdal_png_read_filter_row_avg4_sse2(
+                        &row_info,
+                        pabyInputLine,
+                        pabyOutputLine,
+                        pabyOutputLineUp);
+                }
+                else
+#endif
+                if( abyTemp.empty() )
+                {
+                    const GByte* CPL_RESTRICT pabyOutputLineUp =
+                            pabyOutputBuffer + (static_cast<size_t>(iY) - 1) * nSamplesPerLine;
+                    for( int iX = 0; iX < nBands; ++iX )
+                    {
+                        pabyOutputLine[iX] = static_cast<GByte>(
+                            pabyInputLine[iX] + pabyOutputLineUp[iX] / 2);
+                    }
+                    for( int iX = nBands; iX < nSamplesPerLine; ++iX )
+                    {
+                        pabyOutputLine[iX] = static_cast<GByte>(
+                            pabyInputLine[iX] +
+                                 (pabyOutputLine[iX - nBands] +
+                                  pabyOutputLineUp[iX]) / 2);
+                    }
+                }
+                else
+                {
+                    for( int iX = 0; iX < nBands; ++iX )
+                    {
+                        pabyOutputLine[iX] = static_cast<GByte>(
+                            pabyInputLine[iX] + pabyOutputLine[iX] / 2);
+                    }
+                    for( int iX = nBands; iX < nSamplesPerLine; ++iX )
+                    {
+                        pabyOutputLine[iX] = static_cast<GByte>(
+                            pabyInputLine[iX] +
+                                 (pabyOutputLine[iX - nBands] +
+                                  pabyOutputLine[iX]) / 2);
+                    }
+                }
+            }
+        }
+        else if( nFilterType == 4 )
+        {
+            // Filter type 4: Paeth
+            if( iY == 0 )
+            {
+                for( int iX = 0; iX < nSamplesPerLine; ++iX )
+                {
+                    GByte a = iX < nBands ? 0 : pabyOutputLine[iX - nBands];
+                    pabyOutputLine[iX] = static_cast<GByte>(pabyInputLine[iX] + a);
+                }
+            }
+            else
+            {
+                if( !abyTemp.empty() )
+                    abyLineUp = abyTemp;
+                const GByte* const pabyOutputLineUp =
+                    abyTemp.empty() ?
+                        pabyOutputBuffer + (static_cast<size_t>(iY) - 1) * nSamplesPerLine :
+                        abyLineUp.data();
+#ifdef HAVE_SSE2
+                if( nBands == 3 )
+                {
+                    png_row_info row_info;
+                    memset(&row_info, 0, sizeof(row_info));
+                    row_info.rowbytes = nSamplesPerLine;
+                    gdal_png_read_filter_row_paeth3_sse2(
+                        &row_info,
+                        pabyInputLine,
+                        pabyOutputLine,
+                        pabyOutputLineUp);
+                }
+                else if( nBands == 4 )
+                {
+                    png_row_info row_info;
+                    memset(&row_info, 0, sizeof(row_info));
+                    row_info.rowbytes = nSamplesPerLine;
+                    gdal_png_read_filter_row_paeth4_sse2(
+                        &row_info,
+                        pabyInputLine,
+                        pabyOutputLine,
+                        pabyOutputLineUp);
+                }
+                else
+#endif
+                {
+                    int iX = 0;
+                    for( ; iX < nBands; ++iX )
+                    {
+                        GByte b = pabyOutputLineUp[iX];
+                        pabyOutputLine[iX] = static_cast<GByte>(pabyInputLine[iX] + b);
+                    }
+                    for( ; iX < nSamplesPerLine; ++iX )
+                    {
+                        GByte a = pabyOutputLine[iX - nBands];
+                        GByte b = pabyOutputLineUp[iX];
+                        GByte c = pabyOutputLineUp[iX - nBands];
+                        int p_minus_a = b - c;
+                        int p_minus_b = a - c;
+                        int p_minus_c = p_minus_a + p_minus_b;
+                        int pa = std::abs(p_minus_a);
+                        int pb = std::abs(p_minus_b);
+                        int pc = std::abs(p_minus_c);
+                        if( pa <= pb && pa <= pc )
+                            pabyOutputLine[iX] = static_cast<GByte>(pabyInputLine[iX] + a);
+                        else if ( pb <= pc )
+                            pabyOutputLine[iX] = static_cast<GByte>(pabyInputLine[iX] + b);
+                        else
+                            pabyOutputLine[iX] = static_cast<GByte>(pabyInputLine[iX] + c);
+                    }
+                }
+            }
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Invalid filter type %d", nFilterType);
+            return CE_Failure;
+        }
+
+        if( !abyTemp.empty() )
+        {
+            if( pSingleBuffer )
+            {
+                GByte* pabyDest = static_cast<GByte *>( pSingleBuffer ) +
+                                                        iY*nLineSpace;
+                if( bCanUseDeinterleave )
+                {
+                    // Cache friendly way for typical band interleaved case.
+                    void* apDestBuffers[4];
+                    apDestBuffers[0] = pabyDest;
+                    apDestBuffers[1] = pabyDest + nBandSpace;
+                    apDestBuffers[2] = pabyDest + 2 * nBandSpace;
+                    apDestBuffers[3] = pabyDest + 3 * nBandSpace;
+                    GDALDeinterleave(pabyOutputLine,
+                                     GDT_Byte,
+                                     nBands,
+                                     apDestBuffers,
+                                     GDT_Byte,
+                                     nRasterXSize);
+                }
+                else if( nPixelSpace <= nBands && nBandSpace > nBands )
+                {
+                    // Cache friendly way for typical band interleaved case.
+                    for(int iBand=0;iBand<nBands;iBand++)
+                    {
+                        GByte* pabyDest2 = pabyDest + iBand * nBandSpace;
+                        const GByte* pabyScanline2 = pabyOutputLine + iBand;
+                        GDALCopyWords( pabyScanline2, GDT_Byte, nBands,
+                                       pabyDest2, GDT_Byte,
+                                       static_cast<int>(nPixelSpace),
+                                       nRasterXSize );
+                    }
+                }
+                else
+                {
+                    // Generic method
+                    for(int x = 0; x < nRasterXSize; ++x)
+                    {
+                        for(int iBand=0;iBand<nBands;iBand++)
+                        {
+                            pabyDest[(x*nPixelSpace) + iBand * nBandSpace] =
+                                pabyOutputLine[x*nBands+iBand];
+                        }
+                    }
+                }
+            }
+            else
+            {
+                GByte* apabyDestBuffers[4];
+                for(int iBand=0;iBand<nBands;iBand++)
+                {
+                    apabyDestBuffers[iBand] = static_cast<GByte*>(apabyBuffers[iBand]) + iY * nRasterXSize;
+                }
+                if( bCanUseDeinterleave )
+                {
+                    // Cache friendly way for typical band interleaved case.
+                    GDALDeinterleave(pabyOutputLine,
+                                     GDT_Byte,
+                                     nBands,
+                                     reinterpret_cast<void**>(apabyDestBuffers),
+                                     GDT_Byte,
+                                     nRasterXSize);
+                }
+                else
+                {
+                    // Generic method
+                    for(int x = 0; x < nRasterXSize; ++x)
+                    {
+                        for(int iBand=0;iBand<nBands;iBand++)
+                        {
+                            apabyDestBuffers[iBand][x] =
+                                pabyOutputLine[x*nBands+iBand];
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return CE_None;
+}
+
+#endif // ENABLE_WHOLE_IMAGE_OPTIMIZATION
+
+/************************************************************************/
 /*                            IsFullBandMap()                           */
 /************************************************************************/
 
@@ -350,6 +1033,23 @@ CPLErr PNGDataset::IRasterIO( GDALRWFlag eRWFlag,
        (pData != nullptr) &&
        IsFullBandMap(panBandMap, nBands))
     {
+#ifdef ENABLE_WHOLE_IMAGE_OPTIMIZATION
+        // Below should work without SSE2, but the lack of optimized
+        // filters can sometimes make it slower than regular optimized libpng,
+        // so restrict to when SSE2 is available.
+
+        if( !bInterlaced && nBitDepth == 8 &&
+            CPLTestBool(CPLGetConfigOption("GDAL_PNG_WHOLE_IMAGE_OPTIM", "YES")) )
+        {
+            return LoadWholeImage(pData, nPixelSpace, nLineSpace, nBandSpace, nullptr);
+        }
+        else if( cpl::down_cast<PNGRasterBand*>(papoBands[0])->nBlockYSize > 1 )
+        {
+            // Below code requires scanline access in PNGRasterBand::IReadBlock()
+        }
+        else
+#endif // ENABLE_WHOLE_IMAGE_OPTIMIZATION
+
         // Pixel interleaved case.
         if( nBandSpace == 1 )
         {
@@ -373,18 +1073,38 @@ CPLErr PNGDataset::IRasterIO( GDALRWFlag eRWFlag,
                     }
                 }
             }
+            return CE_None;
         }
         else
         {
+            const bool bCanUseDeinterleave =
+                (nBands == 3 || nBands == 4) && nPixelSpace == 1 &&
+                nBandSpace == static_cast<GSpacing>(nRasterXSize) * nRasterYSize;
+
             for(int y = 0; y < nYSize; ++y)
             {
                 CPLErr tmpError = LoadScanline(y);
                 if(tmpError != CE_None) return tmpError;
                 const GByte* pabyScanline = pabyBuffer
                     + (y - nBufferStartLine) * nBands * nXSize;
-                GByte* pabyDest = reinterpret_cast<GByte *>( pData ) +
+                GByte* pabyDest = static_cast<GByte *>( pData ) +
                                                             y*nLineSpace;
-                if( nPixelSpace <= nBands && nBandSpace > nBands )
+                if( bCanUseDeinterleave )
+                {
+                    // Cache friendly way for typical band interleaved case.
+                    void* apDestBuffers[4];
+                    apDestBuffers[0] = pabyDest;
+                    apDestBuffers[1] = pabyDest + nBandSpace;
+                    apDestBuffers[2] = pabyDest + 2 * nBandSpace;
+                    apDestBuffers[3] = pabyDest + 3 * nBandSpace;
+                    GDALDeinterleave(pabyScanline,
+                                     GDT_Byte,
+                                     nBands,
+                                     apDestBuffers,
+                                     GDT_Byte,
+                                     nRasterXSize);
+                }
+                else if( nPixelSpace <= nBands && nBandSpace > nBands )
                 {
                     // Cache friendly way for typical band interleaved case.
                     for(int iBand=0;iBand<nBands;iBand++)
@@ -410,9 +1130,8 @@ CPLErr PNGDataset::IRasterIO( GDALRWFlag eRWFlag,
                     }
                 }
             }
+            return CE_None;
         }
-
-        return CE_None;
     }
 
     return GDALPamDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
@@ -420,6 +1139,92 @@ CPLErr PNGDataset::IRasterIO( GDALRWFlag eRWFlag,
                                      nBandCount, panBandMap,
                                      nPixelSpace, nLineSpace, nBandSpace,
                                      psExtraArg);
+}
+
+/************************************************************************/
+/*                             IRasterIO()                              */
+/************************************************************************/
+
+CPLErr PNGRasterBand::IRasterIO( GDALRWFlag eRWFlag,
+                              int nXOff, int nYOff, int nXSize, int nYSize,
+                              void *pData, int nBufXSize, int nBufYSize,
+                              GDALDataType eBufType,
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GDALRasterIOExtraArg* psExtraArg )
+
+{
+#ifdef ENABLE_WHOLE_IMAGE_OPTIMIZATION
+    auto poGDS = cpl::down_cast<PNGDataset*>(poDS);
+    if((eRWFlag == GF_Read) &&
+       (nXOff == 0) && (nYOff == 0) &&
+       (nXSize == nBufXSize) && (nXSize == nRasterXSize) &&
+       (nYSize == nBufYSize) && (nYSize == nRasterYSize) &&
+       (eBufType == GDT_Byte) &&
+       (eBufType == eDataType))
+    {
+        bool bBlockAlreadyLoaded = false;
+        if( nBlockYSize > 1 )
+        {
+            auto poBlock = TryGetLockedBlockRef(0, 0);
+            if( poBlock != nullptr )
+            {
+                bBlockAlreadyLoaded = poBlock->GetDataRef() != pData;
+                poBlock->DropLock();
+            }
+        }
+
+        if( bBlockAlreadyLoaded )
+        {
+            // will got to general case
+        }
+        else if( poGDS->nBands == 1 &&
+                 !poGDS->bInterlaced && poGDS->nBitDepth == 8 &&
+                 CPLTestBool(CPLGetConfigOption("GDAL_PNG_WHOLE_IMAGE_OPTIM", "YES")) )
+        {
+            return poGDS->LoadWholeImage(pData, nPixelSpace, nLineSpace, 0, nullptr);
+        }
+        else if( nBlockYSize > 1 )
+        {
+            void* apabyBuffers[4];
+            GDALRasterBlock* apoBlocks[4];
+            CPLErr eErr = CE_None;
+            bool bNeedToUseDefaultCase = true;
+            for( int i = 0; i < poGDS->nBands; ++i )
+            {
+                if( i+1 == nBand &&
+                    nPixelSpace == 1 && nLineSpace == nRasterXSize )
+                {
+                    bNeedToUseDefaultCase = false;
+                    apabyBuffers[i] = pData;
+                    apoBlocks[i] = nullptr;
+                }
+                else
+                {
+                    apoBlocks[i] = poGDS->GetRasterBand(i+1)->GetLockedBlockRef(0, 0, TRUE);
+                    apabyBuffers[i] = apoBlocks[i] ? apoBlocks[i]->GetDataRef() : nullptr;
+                    if( apabyBuffers[i] == nullptr )
+                        eErr = CE_Failure;
+                }
+            }
+            if( eErr == CE_None )
+            {
+                eErr = poGDS->LoadWholeImage(nullptr, 0, 0, 0, apabyBuffers);
+            }
+            for( int i = 0; i < poGDS->nBands; ++i )
+            {
+                if( apoBlocks[i] )
+                    apoBlocks[i]->DropLock();
+            }
+            if( eErr != CE_None || !bNeedToUseDefaultCase )
+                return eErr;
+        }
+    }
+#endif
+    return GDALPamRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                        pData, nBufXSize, nBufYSize,
+                                        eBufType,
+                                        nPixelSpace, nLineSpace,
+                                        psExtraArg);
 }
 
 /************************************************************************/

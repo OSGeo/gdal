@@ -33,7 +33,7 @@
 * limitations under the License.
 *
 * Author: Lucian Plesea
-* 
+*
 */
 
 /*
@@ -100,6 +100,7 @@ static void write_png(png_structp pngp, png_bytep data, png_size_t length) {
 
 CPLErr PNG_Codec::DecompressPNG(buf_mgr &dst, buf_mgr &src)
 {
+    const buf_mgr src_ori = src;
     png_bytep* png_rowp = nullptr;
     volatile png_bytep *p_volatile_png_rowp = (volatile png_bytep *)&png_rowp;
 
@@ -128,6 +129,39 @@ CPLErr PNG_Codec::DecompressPNG(buf_mgr &dst, buf_mgr &src)
     png_set_read_fn(pngp, &src, read_png);
     // Ready to read
     png_read_info(pngp, infop);
+
+    if( png_get_bit_depth(pngp, infop) == 8 )
+    {
+        // Use the PNG driver for decompression of 8-bit images, as it
+        // has optimizations for whole image decompression.
+        CPLString osTmpFilename(CPLSPrintf("/vsimem/mrf/%p.png", &dst));
+        VSIFCloseL(VSIFileFromMemBuffer(osTmpFilename.c_str(),
+                                        reinterpret_cast<GByte*>(src_ori.buffer),
+                                        src_ori.size,
+                                        false));
+        const char* const apszAllowedDrivers[] = { "PNG", nullptr };
+        auto poDS = std::unique_ptr<GDALDataset>(
+            GDALDataset::Open(osTmpFilename.c_str(), GDAL_OF_RASTER,
+                              apszAllowedDrivers));
+        if( poDS &&
+            static_cast<GUIntBig>(poDS->GetRasterXSize()) * poDS->GetRasterYSize() * poDS->GetRasterCount() == dst.size)
+        {
+            if( poDS->RasterIO(GF_Read,
+                           0, 0, poDS->GetRasterXSize(), poDS->GetRasterYSize(),
+                           dst.buffer,
+                           poDS->GetRasterXSize(), poDS->GetRasterYSize(),
+                           GDT_Byte,
+                           poDS->GetRasterCount(), nullptr,
+                           poDS->GetRasterCount(), 0, 1, nullptr) == CE_None )
+            {
+                png_destroy_read_struct(&pngp, &infop, nullptr);
+                VSIUnlink(osTmpFilename.c_str());
+                return CE_None;
+            }
+        }
+        VSIUnlink(osTmpFilename.c_str());
+    }
+
     GInt32 height = static_cast<GInt32>(png_get_image_height(pngp, infop));
     // Check the size
     if (dst.size < (png_get_rowbytes(pngp, infop)*height)) {
