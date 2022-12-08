@@ -2614,6 +2614,61 @@
       </subheader_fields>
     </des>
 
+    <!-- Defined in STDI-0002_ver_21.1_Vol_1_and_2/Vol-2-App M - GLAS-GFM.pdf -->
+    <!-- Common Sensor Attitude Data (CSATTB) DES -->
+    <des name="CSATTB">
+      <subheader_fields minlength="46">
+        <field name="UUID" length="36" type="string"/>
+        <field name="NUMAIS" length="3" type="string"/> <!-- 001 to 998, or ALL -->
+        <if cond="NUMAIS!=ALL">
+            <loop counter="NUMAIS">
+                <field name="AISDLVL" length="3" type="integer"/>
+            </loop>
+        </if>
+        <field name="NUM_ASSOC_ELEM" length="3" type="integer"/>
+        <loop counter="NUM_ASSOC_ELEM" name="ASSOC_ELEM">
+          <field name="ASSOC_ELEM_UUID" length="36" type="string"/>
+        </loop>
+        <field name="RESERVEDSUBH_LEN" length="4" type="integer"/>
+      </subheader_fields>
+    </des>
+
+    <!-- Defined in STDI-0002_ver_21.1_Vol_1_and_2/Vol-2-App M - GLAS-GFM.pdf -->
+    <des name="CSEPHB">
+      <subheader_fields minlength="46">
+        <field name="UUID" length="36" type="string"/>
+        <field name="NUMAIS" length="3" type="string"/> <!-- 001 to 998, or ALL -->
+        <if cond="NUMAIS!=ALL">
+            <loop counter="NUMAIS">
+                <field name="AISDLVL" length="3" type="integer"/>
+            </loop>
+        </if>
+        <field name="NUM_ASSOC_ELEM" length="3" type="integer" minval="0" maxval="276"/>
+        <loop counter="NUM_ASSOC_ELEM" name="ASSOC_ELEM">
+          <field name="ASSOC_ELEM_UUID" length="36" type="string"/>
+        </loop>
+        <field name="RESERVEDSUBH_LEN" length="4" type="integer"/>
+      </subheader_fields>
+    </des>
+
+    <!-- Defined in STDI-0002_ver_21.1_Vol_1_and_2/Vol-2-App M - GLAS-GFM.pdf -->
+    <des name="CSSFAB">
+      <subheader_fields minlength="46">
+        <field name="UUID" length="36" type="string"/>
+        <field name="NUMAIS" length="3" type="string"/> <!-- 001 to 998, or ALL -->
+        <if cond="NUMAIS!=ALL">
+            <loop counter="NUMAIS">
+                <field name="AISDLVL" length="3" type="integer"/>
+            </loop>
+        </if>
+        <field name="NUM_ASSOC_ELEM" length="3" type="integer" minval="0" maxval="276"/>
+        <loop counter="NUM_ASSOC_ELEM" name="ASSOC_ELEM">
+          <field name="ASSOC_ELEM_UUID" length="36" type="string"/>
+        </loop>
+        <field name="RESERVEDSUBH_LEN" length="4" type="integer"/>
+      </subheader_fields>
+    </des>
+
     <!-- Defined in STDI-0002_ver_21.1/Vol-2-App D - CSSHPA-CSSHPB.pdf -->
     <des name="CSSHPA DES">
       <subheader_fields minlength="62" maxlength="80">
