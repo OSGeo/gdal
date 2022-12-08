@@ -45,7 +45,7 @@ string(REGEX MATCH "[0-9\.]+" _CSHARP_APPLICATION_SDK_NUMBER "${CSHARP_APPLICATI
 message(STATUS "Requested Application DotNet SDK Level: " ${_CSHARP_APPLICATION_SDK_NUMBER} )
 
 if ( DOTNET_FOUND )
-  if ( "${_CSHARP_LIBRARY_SDK_NUMBER}" IN_LIST DOTNET_SDKS) 
+  if ( "${_CSHARP_LIBRARY_SDK_NUMBER}" IN_LIST DOTNET_SDKS OR "${CSHARP_LIBRARY_VERSION}" MATCHES "netstandard") 
     message(STATUS "DotNet SDK " ${CSHARP_LIBRARY_VERSION} " found" )
   else ()
     message(STATUS "The Requested DotNet SDK was not found. C# Bindings will not be built" )
