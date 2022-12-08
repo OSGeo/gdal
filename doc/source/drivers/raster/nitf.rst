@@ -55,6 +55,24 @@ Driver capabilities
 
 .. supports_virtualio::
 
+Open options
+------------
+
+.. versionadded:: 3.7
+
+- **VALIDATE=YES/NO**: Whether TRE and DES content should be validated upon
+  dataset opening. If errors are found, CE_Failure errors are emitted, but
+  dataset opening does not fail, unless the FAIL_IF_VALIDATION_ERROR=YES
+  open option is set.
+  Note that validation is partial, and limited to the constraints documented in
+  the nitf_spec.xml configuration file.
+  Details of errors are also logged in ``<error>`` elements in the ``xml:TRE``
+  and ``xml:DES`` metadata domains.
+  Default is NO.
+- **FAIL_IF_VALIDATION_ERROR=YES/NO**: Whether validation errors reported by
+  the VALIDATE=YES open option should prevent the dataset from being opened.
+  Default is NO.
+
 Creation Issues
 ---------------
 

@@ -562,7 +562,7 @@ end:
 /*                              NITFDESGetXml()                         */
 /************************************************************************/
 
-CPLXMLNode* NITFDESGetXml(NITFFile* psFile, int iSegment)
+CPLXMLNode* NITFDESGetXml(NITFFile* psFile, int iSegment, bool bValidate, bool* pbGotError)
 {
     CPLXMLNode* psDesNode;
     char** papszTmp;
@@ -618,7 +618,8 @@ CPLXMLNode* NITFDESGetXml(NITFFile* psFile, int iSegment)
             if (strcmp(pszMDname, "DESSHF") == 0)
             {
                 CPLAddXMLAttributeAndValue(psFieldNode, "value", pszMDval);
-                CPLXMLNode* psChild = NITFCreateXMLDesUserDefinedSubHeader(psFile, psDes);
+                CPLXMLNode* psChild = NITFCreateXMLDesUserDefinedSubHeader(
+                    psFile, psDes, bValidate, pbGotError);
                 if( psChild )
                 {
                     CPLAddXMLChild(psFieldNode, psChild);
@@ -642,7 +643,8 @@ CPLXMLNode* NITFDESGetXml(NITFFile* psFile, int iSegment)
                 }
 
                 CPLAddXMLAttributeAndValue(psFieldNode, "value", pszBase64);
-                CPLXMLNode* psChild = NITFCreateXMLDesDataFields(psFile, psDes, (GByte*)pszUnescaped, nLen);
+                CPLXMLNode* psChild = NITFCreateXMLDesDataFields(
+                    psFile, psDes, (GByte*)pszUnescaped, nLen, bValidate, pbGotError);
                 if( psChild )
                 {
                     CPLAddXMLChild(psFieldNode, psChild);
