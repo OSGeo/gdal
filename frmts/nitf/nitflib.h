@@ -284,6 +284,11 @@ int       CPL_DLL  NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixF
 CPLXMLNode* NITFCreateXMLDesUserDefinedSubHeader(NITFFile* psFile,
                                                  const NITFDES* psDES);
 
+CPLXMLNode* NITFCreateXMLDesDataFields(NITFFile* psFile,
+                                       const NITFDES* psDES,
+                                       const GByte* pabyData,
+                                       int nDataLen);
+
 CPLXMLNode CPL_DLL *NITFDESGetXml(NITFFile*, int iSegment);
 
 /* -------------------------------------------------------------------- */

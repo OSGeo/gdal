@@ -2405,6 +2405,151 @@ static const char* NITFFindValRecursive(char** papszMD,
 }
 
 /************************************************************************/
+/*                              CSLSplit()                              */
+/************************************************************************/
+
+static char** CSLSplit(const char* pszStr, const char* pszSplitter)
+{
+    char** papszRet = NULL;
+    const char* pszIter = pszStr;
+    while( TRUE )
+    {
+        const char* pszNextSplitter = strstr(pszIter, pszSplitter);
+        if( pszNextSplitter == NULL )
+        {
+            papszRet = CSLAddString(papszRet, pszIter);
+            break;
+        }
+        size_t nLen = (size_t)(pszNextSplitter - pszIter);
+        char* pszToken = (char*)CPLMalloc(nLen + 1);
+        memcpy(pszToken, pszIter, nLen);
+        pszToken[nLen] = 0;
+        papszRet = CSLAddString(papszRet, pszToken);
+        CPLFree(pszToken);
+        pszIter = pszNextSplitter + strlen(pszSplitter);
+    }
+    return papszRet;
+}
+
+/************************************************************************/
+/*                          NITFEvaluateCond()                          */
+/************************************************************************/
+
+static int NITFEvaluateCond(const char* pszCond,
+                            char **papszMD,
+                            int* pnMDSize,
+                            const char* pszMDPrefix,
+                            const char* pszDESOrTREKind,
+                            const char* pszDESOrTREName)
+{
+    const char* pszAnd = strstr(pszCond, " AND ");
+    const char* pszOr = strstr(pszCond, " OR ");
+    if( pszAnd && pszOr )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Unsupported if condition in %s %s in XML resource: %s. "
+                  "AND and OR conditions cannot be used at the same time",
+                  pszDESOrTREName, pszDESOrTREKind, pszCond );
+        return -1;
+    }
+
+    int nRet = 0;
+    const char* pszOperator;
+    if (pszAnd)
+    {
+        char** papszTokens = CSLSplit(pszCond, " AND ");
+        for( char** papszIter = papszTokens; *papszIter; ++papszIter )
+        {
+            nRet = NITFEvaluateCond(*papszIter, papszMD, pnMDSize, pszMDPrefix,
+                                    pszDESOrTREKind, pszDESOrTREName);
+            // exit early as soon as we have a negative evaluation (or error)
+            if( nRet != 1 )
+                break;
+        }
+        CSLDestroy(papszTokens);
+    }
+    else if (pszOr)
+    {
+        char** papszTokens = CSLSplit(pszCond, " OR ");
+        for( char** papszIter = papszTokens; *papszIter; ++papszIter )
+        {
+            nRet = NITFEvaluateCond(*papszIter, papszMD, pnMDSize, pszMDPrefix,
+                                    pszDESOrTREKind, pszDESOrTREName);
+            // exit early as soon as we have a positive evaluation (or error)
+            if( nRet != 0 )
+                break;
+        }
+        CSLDestroy(papszTokens);
+    }
+    else if ((pszOperator = strchr(pszCond, '=')) != NULL)
+    {
+        char* pszCondVar = (char*)CPLMalloc(pszOperator - pszCond + 1);
+        const char* pszCondExpectedVal = pszOperator + 1;
+        const char* pszCondVal;
+        int bTestEqual = FALSE;
+        int bTestNotEqual = FALSE;
+        int bTestGreaterOrEqual = FALSE;
+        memcpy(pszCondVar, pszCond, pszOperator - pszCond);
+        if (pszOperator - pszCond > 1 && pszCondVar[pszOperator - pszCond - 1] == '!')
+        {
+            bTestNotEqual = TRUE;
+            pszCondVar[pszOperator - pszCond - 1] = '\0';
+        }
+        else if (pszOperator - pszCond > 1 && pszCondVar[pszOperator - pszCond - 1] == '>')
+        {
+            bTestGreaterOrEqual = TRUE;
+            pszCondVar[pszOperator - pszCond - 1] = '\0';
+        }
+        else
+        {
+            bTestEqual = TRUE;
+        }
+        pszCondVar[pszOperator - pszCond] = '\0';
+        pszCondVal = NITFFindValRecursive(papszMD, *pnMDSize, pszMDPrefix, pszCondVar);
+        if( pszCondVal == NULL )
+        {
+            CPLDebug("NITF", "Cannot find if cond variable %s",
+                     pszCondVar);
+        }
+        else if ((bTestEqual && strcmp(pszCondVal, pszCondExpectedVal) == 0) ||
+                 (bTestNotEqual && strcmp(pszCondVal, pszCondExpectedVal) != 0) ||
+                 (bTestGreaterOrEqual && strcmp(pszCondVal, pszCondExpectedVal) >= 0))
+        {
+            nRet = 1;
+        }
+        CPLFree(pszCondVar);
+    }
+    else if ((pszOperator = strchr(pszCond, ':')) != NULL)
+    {
+        char* pszCondVar = (char*)CPLMalloc(pszOperator - pszCond + 1);
+        const char* pszCondTestBit = pszOperator + 1;
+        const char* pszCondVal;
+        memcpy(pszCondVar, pszCond, pszOperator - pszCond);
+        pszCondVar[pszOperator - pszCond] = '\0';
+        pszCondVal = NITFFindValRecursive(papszMD, *pnMDSize, pszMDPrefix, pszCondVar);
+        if( pszCondVal == NULL )
+        {
+            CPLDebug("NITF", "Cannot find if cond variable %s",
+                     pszCondVar);
+        }
+        else if (strtoul(pszCondVal, CPL_NULLPTR, 10) & (1 << atoi(pszCondTestBit)))
+        {
+            nRet = 1;
+        }
+        CPLFree(pszCondVar);
+    }
+    else
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Invalid if construct in %s %s in XML resource: %s. "
+                  "invalid 'cond' attribute",
+                  pszDESOrTREName, pszDESOrTREKind, pszCond );
+        return -1;
+    }
+    return nRet;
+}
+
+/************************************************************************/
 /*                  NITFGenericMetadataReadTREInternal()                */
 /************************************************************************/
 
@@ -2412,7 +2557,8 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                                                  int* pnMDSize,
                                                  int* pnMDAlloc,
                                                  CPLXMLNode* psOutXMLNode,
-                                                 const char* pszTREName,
+                                                 const char* pszDESOrTREKind,
+                                                 const char* pszDESOrTREName,
                                                  const char *pachTRE,
                                                  int nTRESize,
                                                  CPLXMLNode* psTreNode,
@@ -2479,9 +2625,11 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 {
                     *pbError = TRUE;
                     CPLError( CE_Warning, CPLE_AppDefined,
-                              "Not enough bytes when reading %s TRE "
+                              "Not enough bytes when reading %s %s "
                               "(at least %d needed, only %d available)",
-                              pszTREName, *pnTreOffset + nLength, nTRESize );
+                              pszDESOrTREName,
+                              pszDESOrTREKind,
+                              *pnTreOffset + nLength, nTRESize );
                     break;
                 }
 
@@ -2504,7 +2652,9 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                     {
                         *pbError = TRUE;
                         CPLError( CE_Warning, CPLE_AppDefined,
-                                  "IEEE754_Float32_BigEndian field must be 4 bytes in %s TRE ", pszTREName);
+                                  "IEEE754_Float32_BigEndian field must be 4 bytes in %s %s",
+                                  pszDESOrTREName,
+                                  pszDESOrTREKind);
                         break;
                     }
                 }
@@ -2531,7 +2681,9 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                     {
                         *pbError = TRUE;
                         CPLError( CE_Warning, CPLE_AppDefined,
-                                  "UnsignedInt/bitmask field must be <= 8 bytes in %s TRE ", pszTREName);
+                                  "UnsignedInt/bitmask field must be <= 8 bytes in %s %s",
+                                  pszDESOrTREName,
+                                  pszDESOrTREKind);
                         break;
                     }
                 }
@@ -2594,8 +2746,8 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
             {
                 *pbError = TRUE;
                 CPLError( CE_Warning, CPLE_AppDefined,
-                          "Invalid item construct in %s TRE in XML resource",
-                          pszTREName );
+                          "Invalid item construct in %s %s in XML resource",
+                          pszDESOrTREName, pszDESOrTREKind);
                 break;
             }
         }
@@ -2615,9 +2767,9 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 if (pszIterationsVal == NULL || (nIterations = atoi(pszIterationsVal)) < 0)
                 {
                     CPLError( CE_Warning, CPLE_AppDefined,
-                            "Invalid loop construct in %s TRE in XML resource : "
+                            "Invalid loop construct in %s %s in XML resource : "
                             "invalid 'counter' %s",
-                            pszTREName, pszCounter );
+                            pszDESOrTREName, pszDESOrTREKind, pszCounter );
                     *pbError = TRUE;
                     break;
                 }
@@ -2636,9 +2788,9 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 if (NPART < 0)
                 {
                     CPLError( CE_Warning, CPLE_AppDefined,
-                            "Invalid loop construct in %s TRE in XML resource : "
+                            "Invalid loop construct in %s %s in XML resource : "
                             "invalid 'counter' %s",
-                            pszTREName, "NPART" );
+                            pszDESOrTREName, pszDESOrTREKind, "NPART" );
                     *pbError = TRUE;
                     break;
                 }
@@ -2654,9 +2806,9 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 if (NUMOPG < 0)
                 {
                     CPLError( CE_Warning, CPLE_AppDefined,
-                            "Invalid loop construct in %s TRE in XML resource : "
+                            "Invalid loop construct in %s %s in XML resource : "
                             "invalid 'counter' %s",
-                            pszTREName, "NUMOPG" );
+                            pszDESOrTREName, pszDESOrTREKind, "NUMOPG" );
                     *pbError = TRUE;
                     break;
                 }
@@ -2676,18 +2828,18 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 if (NPAR < 0)
                 {
                     CPLError( CE_Warning, CPLE_AppDefined,
-                            "Invalid loop construct in %s TRE in XML resource : "
+                            "Invalid loop construct in %s %s in XML resource : "
                             "invalid 'counter' %s",
-                            pszTREName, "NPAR" );
+                            pszDESOrTREName, pszDESOrTREKind, "NPAR" );
                     *pbError = TRUE;
                     break;
                 }
                 if (NPARO < 0)
                 {
                     CPLError( CE_Warning, CPLE_AppDefined,
-                            "Invalid loop construct in %s TRE in XML resource : "
+                            "Invalid loop construct in %s %s in XML resource : "
                             "invalid 'counter' %s",
-                            pszTREName, "NPAR0" );
+                            pszDESOrTREName, pszDESOrTREKind, "NPAR0" );
                     *pbError = TRUE;
                     break;
                 }
@@ -2703,9 +2855,9 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 if (NPLN < 0)
                 {
                     CPLError( CE_Warning, CPLE_AppDefined,
-                            "Invalid loop construct in %s TRE in XML resource : "
+                            "Invalid loop construct in %s %s in XML resource : "
                             "invalid 'counter' %s",
-                            pszTREName, "NPLN" );
+                            pszDESOrTREName, pszDESOrTREKind, "NPLN" );
                     *pbError = TRUE;
                     break;
                 }
@@ -2725,18 +2877,18 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 if (NXPTS < 0)
                 {
                     CPLError( CE_Warning, CPLE_AppDefined,
-                            "Invalid loop construct in %s TRE in XML resource : "
+                            "Invalid loop construct in %s %s in XML resource : "
                             "invalid 'counter' %s",
-                            pszTREName, "NXPTS" );
+                            pszDESOrTREName, pszDESOrTREKind, "NXPTS" );
                     *pbError = TRUE;
                     break;
                 }
                 if (NYPTS < 0)
                 {
                     CPLError( CE_Warning, CPLE_AppDefined,
-                            "Invalid loop construct in %s TRE in XML resource : "
+                            "Invalid loop construct in %s %s in XML resource : "
                             "invalid 'counter' %s",
-                            pszTREName, "NYPTS" );
+                            pszDESOrTREName, pszDESOrTREKind, "NYPTS" );
                     *pbError = TRUE;
                     break;
                 }
@@ -2745,9 +2897,9 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
             else
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
-                          "Invalid loop construct in %s TRE in XML resource : "
+                          "Invalid loop construct in %s %s in XML resource : "
                           "missing or invalid 'counter' or 'iterations' or 'formula'",
-                          pszTREName );
+                          pszDESOrTREName, pszDESOrTREKind );
                 *pbError = TRUE;
                 break;
             }
@@ -2837,7 +2989,8 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                                                                  pnMDSize,
                                                                  pnMDAlloc,
                                                                  psGroupNode,
-                                                                 pszTREName,
+                                                                 pszDESOrTREKind,
+                                                                 pszDESOrTREName,
                                                                  pachTRE,
                                                                  nTRESize,
                                                                  psIter,
@@ -2853,125 +3006,37 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                  strcmp(psIter->pszValue, "if") == 0)
         {
             const char* pszCond = CPLGetXMLValue(psIter, "cond", NULL);
-            const char* pszOperator = NULL;
-            if (pszCond != NULL && strcmp(pszCond, "QSS!=U AND QOD!=Y") == 0)
-            {
-                char* pszQSSName = CPLStrdup(
-                            CPLSPrintf("%s%s", pszMDPrefix, "QSS"));
-                char* pszQODName = CPLStrdup(
-                            CPLSPrintf("%s%s", pszMDPrefix, "QOD"));
-                const char* pszQSSVal = NITFFindValFromEnd(papszMD, *pnMDSize, pszQSSName, NULL);
-                const char* pszQODVal = NITFFindValFromEnd(papszMD, *pnMDSize, pszQODName, NULL);
-                if (pszQSSVal == NULL)
-                {
-                    CPLDebug("NITF", "Cannot find if cond variable %s", "QSS");
-                }
-                else if (pszQODVal == NULL)
-                {
-                    CPLDebug("NITF", "Cannot find if cond variable %s", "QOD");
-                }
-                else if (strcmp(pszQSSVal, "U") != 0 && strcmp(pszQODVal, "Y") != 0)
-                {
-                    papszMD = NITFGenericMetadataReadTREInternal(papszMD,
-                                                                 pnMDSize,
-                                                                 pnMDAlloc,
-                                                                 psOutXMLNode,
-                                                                 pszTREName,
-                                                                 pachTRE,
-                                                                 nTRESize,
-                                                                 psIter,
-                                                                 pnTreOffset,
-                                                                 pszMDPrefix,
-                                                                 pbError);
-                }
-                CPLFree(pszQSSName);
-                CPLFree(pszQODName);
-            }
-            else if (pszCond != NULL && (pszOperator = strchr(pszCond, '=')) != NULL)
-            {
-                char* pszCondVar = (char*)CPLMalloc(pszOperator - pszCond + 1);
-                const char* pszCondExpectedVal = pszOperator + 1;
-                const char* pszCondVal;
-                int bTestEqual = FALSE;
-                int bTestNotEqual = FALSE;
-                int bTestGreaterOrEqual = FALSE;
-                memcpy(pszCondVar, pszCond, pszOperator - pszCond);
-                if (pszOperator - pszCond > 1 && pszCondVar[pszOperator - pszCond - 1] == '!')
-                {
-                    bTestNotEqual = TRUE;
-                    pszCondVar[pszOperator - pszCond - 1] = '\0';
-                }
-                else if (pszOperator - pszCond > 1 && pszCondVar[pszOperator - pszCond - 1] == '>')
-                {
-                    bTestGreaterOrEqual = TRUE;
-                    pszCondVar[pszOperator - pszCond - 1] = '\0';
-                }
-                else
-                {
-                    bTestEqual = TRUE;
-                }
-                pszCondVar[pszOperator - pszCond] = '\0';
-                pszCondVal = NITFFindValRecursive(papszMD, *pnMDSize, pszMDPrefix, pszCondVar);
-                if( pszCondVal == NULL )
-                {
-                    CPLDebug("NITF", "Cannot find if cond variable %s",
-                            pszCondVar);
-                }
-                else if ((bTestEqual && strcmp(pszCondVal, pszCondExpectedVal) == 0) ||
-                         (bTestNotEqual && strcmp(pszCondVal, pszCondExpectedVal) != 0) ||
-                         (bTestGreaterOrEqual && strcmp(pszCondVal, pszCondExpectedVal) >= 0))
-                {
-                    papszMD = NITFGenericMetadataReadTREInternal(papszMD,
-                                                                 pnMDSize,
-                                                                 pnMDAlloc,
-                                                                 psOutXMLNode,
-                                                                 pszTREName,
-                                                                 pachTRE,
-                                                                 nTRESize,
-                                                                 psIter,
-                                                                 pnTreOffset,
-                                                                 pszMDPrefix,
-                                                                 pbError);
-                }
-                CPLFree(pszCondVar);
-            }
-            else if (pszCond != NULL && (pszOperator = strchr(pszCond, ':')) != NULL)
-            {
-                char* pszCondVar = (char*)CPLMalloc(pszOperator - pszCond + 1);
-                const char* pszCondTestBit = pszOperator + 1;
-                const char* pszCondVal;
-                memcpy(pszCondVar, pszCond, pszOperator - pszCond);
-                pszCondVar[pszOperator - pszCond] = '\0';
-                pszCondVal = NITFFindValRecursive(papszMD, *pnMDSize, pszMDPrefix, pszCondVar);
-                if( pszCondVal == NULL )
-                {
-                    CPLDebug("NITF", "Cannot find if cond variable %s",
-                            pszCondVar);
-                }
-                else if (strtoul(pszCondVal, CPL_NULLPTR, 10) & (1 << atoi(pszCondTestBit)))
-                {
-                    papszMD = NITFGenericMetadataReadTREInternal(papszMD,
-                                                                 pnMDSize,
-                                                                 pnMDAlloc,
-                                                                 psOutXMLNode,
-                                                                 pszTREName,
-                                                                 pachTRE,
-                                                                 nTRESize,
-                                                                 psIter,
-                                                                 pnTreOffset,
-                                                                 pszMDPrefix,
-                                                                 pbError);
-                }
-                CPLFree(pszCondVar);
-            }
-            else
+            if( pszCond == NULL )
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
-                          "Invalid if construct in %s TRE in XML resource : "
-                          "missing or invalid 'cond' attribute",
-                          pszTREName );
+                          "Invalid if construct in %s %s in XML resource : "
+                          "missing 'cond' attribute",
+                          pszDESOrTREName, pszDESOrTREKind );
                 *pbError = TRUE;
                 break;
+            }
+
+            int nRet = NITFEvaluateCond(pszCond, papszMD, pnMDSize, pszMDPrefix,
+                                        pszDESOrTREKind, pszDESOrTREName);
+            if( nRet < 0 )
+            {
+                *pbError = TRUE;
+                break;
+            }
+            if( nRet > 0 )
+            {
+                papszMD = NITFGenericMetadataReadTREInternal(papszMD,
+                                                             pnMDSize,
+                                                             pnMDAlloc,
+                                                             psOutXMLNode,
+                                                             pszDESOrTREKind,
+                                                             pszDESOrTREName,
+                                                             pachTRE,
+                                                             nTRESize,
+                                                             psIter,
+                                                             pnTreOffset,
+                                                             pszMDPrefix,
+                                                             pbError);
             }
         }
         else if (psIter->eType == CXT_Element &&
@@ -2984,7 +3049,8 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                                                              pnMDSize,
                                                              pnMDAlloc,
                                                              psOutXMLNode,
-                                                             pszTREName,
+                                                             pszDESOrTREKind,
+                                                             pszDESOrTREName,
                                                              pachTRE,
                                                              nTRESize,
                                                              psIter,
@@ -3045,6 +3111,7 @@ char **NITFGenericMetadataReadTRE(char **papszMD,
                                                  &nMDSize,
                                                  &nMDAlloc,
                                                  NULL,
+                                                 "TRE",
                                                  pszTREName,
                                                  pachTRE,
                                                  nTRESize,
@@ -3191,6 +3258,7 @@ CPLXMLNode* NITFCreateXMLTre(NITFFile* psFile,
                                                   &nMDSize,
                                                   &nMDAlloc,
                                                   psOutXMLNode,
+                                                  "TRE",
                                                   pszTREName,
                                                   pachTRE,
                                                   nTRESize,
@@ -3276,17 +3344,7 @@ CPLXMLNode* NITFCreateXMLDesUserDefinedSubHeader(NITFFile* psFile,
 
     int bError = FALSE;
     int nOffset = 200;
-    char** papszMD = NULL;
-    for( char** papszIter = psDES->papszMetadata; papszIter && *papszIter; ++papszIter )
-    {
-        char* pszKey = NULL;
-        const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
-        if( pszKey && pszValue )
-        {
-            papszMD = CSLSetNameValue(papszMD, pszKey, pszValue);
-        }
-        CPLFree(pszKey);
-    }
+    char** papszMD = CSLDuplicate(psDES->papszMetadata);
     int nMDSize = CSLCount(papszMD);
     int nMDAlloc = nMDSize;
     const int nDESSize = psFile->pasSegmentInfo[psDES->iSegment].nSegmentHeaderSize;
@@ -3294,6 +3352,7 @@ CPLXMLNode* NITFCreateXMLDesUserDefinedSubHeader(NITFFile* psFile,
                                                   &nMDSize,
                                                   &nMDAlloc,
                                                   psOutXMLNode,
+                                                  "DES",
                                                   pszDESID,
                                                   psDES->pachHeader,
                                                   nDESSize,
@@ -3301,12 +3360,71 @@ CPLXMLNode* NITFCreateXMLDesUserDefinedSubHeader(NITFFile* psFile,
                                                   &nOffset,
                                                   "", /* pszMDPrefix, */
                                                   &bError));
-    if (nOffset < atoi(CSLFetchNameValueDef(psDES->papszMetadata, "DESSHL", "0")))
-        CPLDebug("NITF", "%d remaining bytes at end of %s DES user defined subheader fields",
-                 nDESSize -nOffset, pszDESID);
+    int nDESSHL = atoi(CSLFetchNameValueDef(psDES->papszMetadata, "DESSHL", "0"));
+    if (nOffset < nDESSHL)
+    {
+        CPLCreateXMLElementAndValue(psOutXMLNode,
+            "warning",
+            CPLSPrintf("%d remaining bytes at end of user defined subheader section",
+                       nDESSHL -nOffset));
+    }
 
     return psOutXMLNode;
 }
+
+/************************************************************************/
+/*                   NITFCreateXMLDesDataFields()                       */
+/************************************************************************/
+
+CPLXMLNode* NITFCreateXMLDesDataFields(NITFFile* psFile,
+                                       const NITFDES* psDES,
+                                       const GByte* pabyData,
+                                       int nDataLen)
+{
+    const char* pszDESID = CSLFetchNameValue(psDES->papszMetadata, "DESID");
+    CPLXMLNode* psDESDef = NITFFindDESXMLDescFromName(psFile, pszDESID);
+    if( psDESDef == NULL )
+    {
+        CPLDebug("NITF", "Cannot find definition of DES %s in %s",
+                 pszDESID, NITF_SPEC_FILE);
+        return NULL;
+    }
+    CPLXMLNode* psFields = CPLGetXMLNode(psDESDef, "data_fields");
+    if( psFields == NULL )
+    {
+        return NULL;
+    }
+
+    CPLXMLNode* psOutXMLNode = CPLCreateXMLNode(NULL, CXT_Element, "data_fields");
+
+    int bError = FALSE;
+    int nOffset = 0;
+    char** papszMD = CSLDuplicate(psDES->papszMetadata);
+    int nMDSize = CSLCount(papszMD);
+    int nMDAlloc = nMDSize;
+    CSLDestroy(NITFGenericMetadataReadTREInternal(papszMD,
+                                                  &nMDSize,
+                                                  &nMDAlloc,
+                                                  psOutXMLNode,
+                                                  "DES",
+                                                  pszDESID,
+                                                  (const char*)pabyData,
+                                                  nDataLen,
+                                                  psFields,
+                                                  &nOffset,
+                                                  "", /* pszMDPrefix, */
+                                                  &bError));
+    if (nOffset < nDataLen)
+    {
+        CPLCreateXMLElementAndValue(psOutXMLNode,
+            "warning",
+            CPLSPrintf("%d remaining bytes at end of data section",
+                       nDataLen -nOffset));
+    }
+
+    return psOutXMLNode;
+}
+
 
 /************************************************************************/
 /*                        NITFGenericMetadataRead()                     */
