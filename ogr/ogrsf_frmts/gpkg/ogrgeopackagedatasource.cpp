@@ -45,6 +45,8 @@
 #include <limits>
 #include <sstream>
 
+#define COMPILATION_ALLOWED
+#include "ogrsqlitesqlfunctionscommon.cpp"
 
 // Keep in sync prototype of those 2 functions between gdalopeninfo.cpp,
 // ogrsqlitedatasource.cpp and ogrgeopackagedatasource.cpp
@@ -185,7 +187,6 @@ static std::unique_ptr<TilingSchemeDefinition> GetTilingScheme(const char* pszNa
     return poTilingScheme;
 }
 
-
 static const char* pszCREATE_GPKG_GEOMETRY_COLUMNS =
     "CREATE TABLE gpkg_geometry_columns ("
     "table_name TEXT NOT NULL,"
@@ -257,6 +258,13 @@ OGRErr GDALGeoPackageDataset::SetApplicationAndUserVersionId()
 
     return OGRERR_NONE;
 #endif
+}
+
+void GDALGeoPackageDataset::CloseDB()
+{
+    OGRSQLiteUnregisterSQLFunctions(m_pSQLFunctionData);
+    m_pSQLFunctionData = nullptr;
+    OGRSQLiteBaseDataSource::CloseDB();
 }
 
 bool GDALGeoPackageDataset::ReOpenDB()
@@ -999,6 +1007,8 @@ GDALGeoPackageDataset::~GDALGeoPackageDataset()
         if( poSRS )
             poSRS->Release();
     }
+
+    CloseDB();
 }
 
 /************************************************************************/
@@ -8203,6 +8213,8 @@ void GDALGeoPackageDataset::InstallSQLFunctions()
                                 SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
                                 GPKG_GDAL_HasColorTable, nullptr, nullptr);
     }
+
+    m_pSQLFunctionData = OGRSQLiteRegisterSQLFunctionsCommon(hDB);
 }
 
 /************************************************************************/

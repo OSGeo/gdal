@@ -122,6 +122,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
                                        int argc,
                                        sqlite3_value** argv);
 
+    void               *m_pSQLFunctionData = nullptr;
     GUInt32             m_nApplicationId = GPKG_APPLICATION_ID;
     GUInt32             m_nUserVersion = GPKG_1_2_VERSION;
     OGRGeoPackageTableLayer** m_papoLayers = nullptr;
@@ -271,6 +272,8 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
 
         bool                m_bIsGeometryTypeAggregateInterrupted = false;
         std::string         m_osGeometryTypeAggregateResult{};
+
+        void                CloseDB();
 
         CPL_DISALLOW_COPY_ASSIGN(GDALGeoPackageDataset)
 

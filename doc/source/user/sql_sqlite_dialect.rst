@@ -257,6 +257,31 @@ a value associate to a key from a HSTORE string, formatted like "key=>value,othe
 
     SELECT hstore_get_value('a => b, "key with space"=> "value with space"', 'key with space') --> 'value with space'
 
+.. _sql_sqlite_dialect_raster_functions:
+
+Raster related functions
+++++++++++++++++++++++++
+
+The ``gdal_get_pixel_value()`` function (added in GDAL 3.7) can be used to extract the value
+of a pixel in a GDAL dataset. It requires the configuration option OGR_SQLITE_ALLOW_EXTERNAL_ACCESS
+to be set to YES (for security reasons).
+
+It takes 5 arguments:
+
+* a string with the dataset name
+* a band number (numbering starting at 1)
+* a string being "georef" to indicate that subsequent values will be georeferenced
+  coordinates, or "pixel" to indicate that subsequent values will be in column, line
+  pixel space
+* georeferenced X value or column number
+* georeferenced Y value or line number
+
+.. code-block::
+
+    SELECT gdal_get_pixel_value('../gcore/data/byte.tif', 1, 'georef', 440720, 3751320)
+    SELECT gdal_get_pixel_value('../gcore/data/byte.tif', 1, 'pixel', 0, 0)
+
+
 OGR geocoding functions
 +++++++++++++++++++++++
 
