@@ -143,20 +143,8 @@ typedef GUIntBig vsi_l_offset;
 /** Maximum value for a file offset */
 #define VSI_L_OFFSET_MAX GUINTBIG_MAX
 
-/*! @cond Doxygen_Suppress */
-/* Make VSIL_STRICT_ENFORCE active in DEBUG builds */
-#ifdef DEBUG
-#define VSIL_STRICT_ENFORCE
-#endif
-/*! @endcond */
-
-#ifdef VSIL_STRICT_ENFORCE
 /** Opaque type for a FILE that implements the VSIVirtualHandle API */
 typedef struct _VSILFILE VSILFILE;
-#else
-/** Opaque type for a FILE that implements the VSIVirtualHandle API */
-typedef FILE VSILFILE;
-#endif
 
 VSILFILE CPL_DLL *  VSIFOpenL( const char *, const char * ) CPL_WARN_UNUSED_RESULT;
 VSILFILE CPL_DLL *  VSIFOpenExL( const char *, const char *, int ) CPL_WARN_UNUSED_RESULT;
