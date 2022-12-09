@@ -111,11 +111,12 @@ class OGCAPIDataset final: public GDALDataset
             CPLStringList* paosHeaders = nullptr);
 
         bool InitWithMapAPI(GDALOpenInfo* poOpenInfo,
-                            const CPLString& osMapURL,
+                            const CPLJSONObject& oCollection,
                             double dfXMin, double dfYMin,
                             double dfXMax, double dfYMax);
         bool InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
                               const CPLString& osTilesURL,
+                              bool bIsMap,
                               double dfXMin, double dfYMin,
                               double dfXMax, double dfYMax,
                               const CPLJSONObject& oJsonCollection);
@@ -642,19 +643,20 @@ bool OGCAPIDataset::InitFromFile(GDALOpenInfo* poOpenInfo)
 bool OGCAPIDataset::InitFromCollection(GDALOpenInfo* poOpenInfo,
                                        CPLJSONDocument& oDoc)
 {
-    auto osTitle = oDoc.GetRoot().GetString("title");
+    const CPLJSONObject oRoot = oDoc.GetRoot();
+    auto osTitle = oRoot.GetString("title");
     if( !osTitle.empty() )
     {
         SetMetadataItem("TITLE", osTitle.c_str());
     }
 
-    auto oLinks = oDoc.GetRoot().GetArray("links");
+    auto oLinks = oRoot.GetArray("links");
     if( !oLinks.IsValid() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Missing links");
         return false;
     }
-    auto oBboxes = oDoc.GetRoot()["extent"]["spatial"]["bbox"].ToArray();
+    auto oBboxes = oRoot["extent"]["spatial"]["bbox"].ToArray();
     if( oBboxes.Size() != 1 )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Missing bbox");
@@ -675,7 +677,7 @@ bool OGCAPIDataset::InitFromCollection(GDALOpenInfo* poOpenInfo,
     const double dfYMax = CPLAtof(CSLFetchNameValueDef(
         poOpenInfo->papszOpenOptions, "MAXY", CPLSPrintf("%.18g", oBbox[3].ToDouble())));
 
-    auto oScaleDenominator = oDoc.GetRoot()["scaleDenominator"];
+    auto oScaleDenominator = oRoot["scaleDenominator"];
     double dfRes = 1e-8; // arbitrary
     if( oScaleDenominator.IsValid() )
     {
@@ -699,8 +701,9 @@ bool OGCAPIDataset::InitFromCollection(GDALOpenInfo* poOpenInfo,
     m_adfGeoTransform[3] = dfYMax;
     m_adfGeoTransform[5] = -(dfYMax - dfYMin) / nRasterYSize;
 
-    CPLString osMapURL;
-    CPLString osTilesURL;
+    bool bFoundMap = false;
+    CPLString osTilesetsMapURL;
+    CPLString osTilesetsVectorURL;
     CPLString osCoverageURL;
     bool bCoverageGeotiff = false;
     CPLString osItemsJsonURL;
@@ -709,17 +712,26 @@ bool OGCAPIDataset::InitFromCollection(GDALOpenInfo* poOpenInfo,
     {
         const auto osRel = oLink.GetString("rel");
         const auto osType = oLink.GetString("type");
-        if( osRel == "http://www.opengis.net/def/rel/ogc/1.0/map" &&
-            osType == "application/json" )
+        if( (osRel == "http://www.opengis.net/def/rel/ogc/1.0/map" ||
+             osRel == "[ogc-rel:map]") &&
+            (osType == "image/png" || osType == "image/jpeg") )
         {
-            osMapURL = BuildURL(oLink["href"].ToString());
+            bFoundMap = true;
         }
-        else if( osRel == "http://www.opengis.net/def/rel/ogc/1.0/tilesets" &&
+        else if( (osRel == "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map" ||
+                  osRel == "[ogc-rel:tilesets-map]") &&
                  osType == "application/json" )
         {
-            osTilesURL = BuildURL(oLink["href"].ToString());
+            osTilesetsMapURL = BuildURL(oLink["href"].ToString());
         }
-        else if( osRel == "http://www.opengis.net/def/rel/ogc/1.0/coverage" &&
+        else if( (osRel == "http://www.opengis.net/def/rel/ogc/1.0/tilesets-vector" ||
+                  osRel == "[ogc-rel:tilesets-vector]") &&
+                 osType == "application/json" )
+        {
+            osTilesetsVectorURL = BuildURL(oLink["href"].ToString());
+        }
+        else if( (osRel == "http://www.opengis.net/def/rel/ogc/1.0/coverage" ||
+                  osRel == "[ogc-rel:coverage]") &&
                  (osType == "image/tiff; application=geotiff" ||
                   osType == "application/x-geotiff") )
         {
@@ -729,7 +741,8 @@ bool OGCAPIDataset::InitFromCollection(GDALOpenInfo* poOpenInfo,
                 bCoverageGeotiff = true;
             }
         }
-        else if( osRel == "http://www.opengis.net/def/rel/ogc/1.0/coverage" &&
+        else if( (osRel == "http://www.opengis.net/def/rel/ogc/1.0/coverage" ||
+                  osRel == "[ogc-rel:coverage]") &&
                  osType.empty() )
         {
             osCoverageURL = BuildURL(oLink["href"].ToString());
@@ -746,7 +759,8 @@ bool OGCAPIDataset::InitFromCollection(GDALOpenInfo* poOpenInfo,
         }
     }
 
-    if( osMapURL.empty() && osTilesURL.empty() && osCoverageURL.empty() &&
+    if( !bFoundMap && osTilesetsMapURL.empty() && osTilesetsVectorURL.empty() &&
+        osCoverageURL.empty() &&
         osSelfURL.empty() && osItemsJsonURL.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Missing map, tilesets, coverage or items relation in links");
@@ -759,13 +773,18 @@ bool OGCAPIDataset::InitFromCollection(GDALOpenInfo* poOpenInfo,
     {
         return InitWithCoverageAPI(poOpenInfo, osCoverageURL, dfXMin, dfYMin, dfXMax, dfYMax, oDoc.GetRoot());
     }
-    else if( (EQUAL(pszAPI, "AUTO") || EQUAL(pszAPI, "TILES")) && !osTilesURL.empty() )
+    else if( (EQUAL(pszAPI, "AUTO") || EQUAL(pszAPI, "TILES")) && (!osTilesetsMapURL.empty() || !osTilesetsVectorURL.empty()) )
     {
-        return InitWithTilesAPI(poOpenInfo, osTilesURL, dfXMin, dfYMin, dfXMax, dfYMax, oDoc.GetRoot());
+        bool bRet = false;
+        if( !osTilesetsMapURL.empty() )
+            bRet = InitWithTilesAPI(poOpenInfo, osTilesetsMapURL, true, dfXMin, dfYMin, dfXMax, dfYMax, oDoc.GetRoot());
+        if( !osTilesetsVectorURL.empty() )
+            bRet = InitWithTilesAPI(poOpenInfo, osTilesetsVectorURL, false, dfXMin, dfYMin, dfXMax, dfYMax, oDoc.GetRoot());
+        return bRet;
     }
-    else if( (EQUAL(pszAPI, "AUTO") || EQUAL(pszAPI, "MAP")) && !osMapURL.empty() )
+    else if( (EQUAL(pszAPI, "AUTO") || EQUAL(pszAPI, "MAP")) && bFoundMap )
     {
-        return InitWithMapAPI(poOpenInfo, osMapURL, dfXMin, dfYMin, dfXMax, dfYMax);
+        return InitWithMapAPI(poOpenInfo, oRoot, dfXMin, dfYMin, dfXMax, dfYMax);
     }
     else if( (EQUAL(pszAPI, "AUTO") || EQUAL(pszAPI, "ITEMS")) &&
              !osSelfURL.empty() && !osItemsJsonURL.empty() &&
@@ -931,59 +950,26 @@ static const CPLString SelectVectorFormatURL(const char* const* papszOptionOptio
 /************************************************************************/
 
 bool OGCAPIDataset::InitWithMapAPI(GDALOpenInfo* poOpenInfo,
-                                   const CPLString& osMapURL,
+                                   const CPLJSONObject& oRoot,
                                    double dfXMin, double dfYMin,
                                    double dfXMax, double dfYMax)
 {
-    CPLJSONDocument oDoc;
-    if( !DownloadJSon(osMapURL.c_str(), oDoc) )
-        return false;
-
-    auto oStyles = oDoc.GetRoot()["styles"].ToArray();
-    if( oStyles.Size() == 0 )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find styles");
-        return false;
-    }
-    CPLString osStyleId;
+    auto oLinks = oRoot["links"].ToArray();
     CPLString osPNG_URL;
     CPLString osJPEG_URL;
-    for( const auto& oStyle: oStyles )
+
+    for( const auto& oLink: oLinks )
     {
-        const auto osId = oStyle["id"].ToString();
-        if (osId.empty() )
+        if( oLink["rel"].ToString() == "http://www.opengis.net/def/rel/ogc/1.0/map" &&
+            oLink["type"].ToString() == "image/png" )
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Missing style id");
-            return false;
+            osPNG_URL = BuildURL(oLink["href"].ToString());
         }
-        if( osId == "default" || osStyleId.empty() )
+        else if( oLink["rel"].ToString() == "http://www.opengis.net/def/rel/ogc/1.0/map" &&
+                 oLink["type"].ToString() == "image/jpeg" )
         {
-            osStyleId = osId;
-            auto oLinks = oStyle["links"].ToArray();
-            if( oLinks.Size() == 0 )
-            {
-                CPLError(CE_Failure, CPLE_AppDefined, "Missing links in style");
-                return false;
-            }
-            for( const auto& oLink: oLinks )
-            {
-                if( oLink["rel"].ToString() == "http://www.opengis.net/def/rel/ogc/1.0/map" &&
-                    oLink["type"].ToString() == "image/png" )
-                {
-                    osPNG_URL = BuildURL(oLink["href"].ToString());
-                }
-                else if( oLink["rel"].ToString() == "http://www.opengis.net/def/rel/ogc/1.0/map" &&
-                         oLink["type"].ToString() == "image/jpeg" )
-                {
-                    osJPEG_URL = BuildURL(oLink["href"].ToString());
-                }
-            }
+            osJPEG_URL = BuildURL(oLink["href"].ToString());
         }
-    }
-    if( osStyleId.empty() )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find a style");
-        return false;
     }
 
     CPLString osImageURL = SelectImageURL(poOpenInfo->papszOpenOptions,
@@ -1454,6 +1440,7 @@ static bool ParseXMLSchema(
 
 bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
                                      const CPLString& osTilesURL,
+                                     bool bIsMap,
                                      double dfXMin, double dfYMin,
                                      double dfXMax, double dfYMax,
                                      const CPLJSONObject& oJsonCollection)
@@ -1476,23 +1463,31 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
     for(const auto& oTileset: oTilesets)
     {
         const auto oTileMatrixSetURI = oTileset.GetString("tileMatrixSetURI");
-        const auto oTileMatrixSetDefinition = oTileset.GetString("tileMatrixSetDefinition");
         const auto oLinks = oTileset.GetArray("links");
+        if( bIsMap )
+        {
+            if( oTileset.GetString("dataType") != "map" )
+                continue;
+        }
+        else
+        {
+            if( oTileset.GetString("dataType") != "vector" )
+                continue;
+        }
         if( !oLinks.IsValid() )
         {
             CPLDebug("OGCAPI", "Missing links for a tileset");
             continue;
         }
         if( pszRequiredTileMatrixSet != nullptr &&
-            oTileMatrixSetURI.find(pszRequiredTileMatrixSet) == std::string::npos &&
-            oTileMatrixSetDefinition.find(pszRequiredTileMatrixSet) == std::string::npos )
+            oTileMatrixSetURI.find(pszRequiredTileMatrixSet) == std::string::npos )
         {
             continue;
         }
         CPLString osCandidateTilesetURL;
         for( const auto& oLink: oLinks )
         {
-            if( oLink["rel"].ToString() == "http://www.opengis.net/def/rel/ogc/1.0/tileset" &&
+            if( oLink["rel"].ToString() == "self" &&
                 oLink["type"].ToString() == "application/json" )
             {
                 osCandidateTilesetURL = BuildURL(oLink["href"].ToString());
@@ -1506,15 +1501,13 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
         }
         if( pszPreferredTileMatrixSet != nullptr &&
             !osCandidateTilesetURL.empty() &&
-            (oTileMatrixSetURI.find(pszPreferredTileMatrixSet) != std::string::npos ||
-             oTileMatrixSetDefinition.find(pszPreferredTileMatrixSet) != std::string::npos) )
+            (oTileMatrixSetURI.find(pszPreferredTileMatrixSet) != std::string::npos) )
         {
             osTilesetURL = osCandidateTilesetURL;
             break;
         }
 
-        if( oTileMatrixSetURI.find("WorldCRS84Quad") != std::string::npos ||
-            oTileMatrixSetDefinition.find("WorldCRS84Quad") != std::string::npos )
+        if( oTileMatrixSetURI.find("WorldCRS84Quad") != std::string::npos )
         {
             osTilesetURL = osCandidateTilesetURL;
         }
@@ -1534,12 +1527,6 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
     if( !DownloadJSon(osTilesetURL.c_str(), oDoc) )
         return false;
 
-    const auto oTileMatrixSetDefinition = oDoc.GetRoot().GetString("tileMatrixSetDefinition");
-    if( oTileMatrixSetDefinition.empty() )
-    {
-         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find tileMatrixSetDefinition");
-         return false;
-    }
     const auto oLinks = oDoc.GetRoot().GetArray("links");
     if( !oLinks.IsValid() )
     {
@@ -1550,30 +1537,49 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
     CPLString osJPEG_URL;
     CPLString osMVT_URL;
     CPLString osGEOJSON_URL;
+    CPLString osTilingSchemeURL;
     for( const auto& oLink: oLinks )
     {
         const auto osRel = oLink.GetString("rel");
         const auto osType = oLink.GetString("type");
-        if( osRel == "item" &&
-            osType == "image/png" )
+
+        if( osRel == "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme" &&
+            osType == "application/json" )
         {
-            osPNG_URL = BuildURL(oLink["href"].ToString());
+            osTilingSchemeURL = BuildURL(oLink["href"].ToString());
         }
-        else if( osRel == "item" &&
-                 osType == "image/jpeg" )
+        else if( bIsMap )
         {
-            osJPEG_URL = BuildURL(oLink["href"].ToString());
+            if( osRel == "item" &&
+                osType == "image/png" )
+            {
+                osPNG_URL = BuildURL(oLink["href"].ToString());
+            }
+            else if( osRel == "item" &&
+                     osType == "image/jpeg" )
+            {
+                osJPEG_URL = BuildURL(oLink["href"].ToString());
+            }
         }
-        else if( osRel == "item" &&
-                 osType == "application/vnd.mapbox-vector-tile" )
+        else
         {
-            osMVT_URL = BuildURL(oLink["href"].ToString());
+            if( osRel == "item" &&
+                osType == "application/vnd.mapbox-vector-tile" )
+            {
+                osMVT_URL = BuildURL(oLink["href"].ToString());
+            }
+            else if( osRel == "item" &&
+                     osType == "application/geo+json" )
+            {
+                osGEOJSON_URL = BuildURL(oLink["href"].ToString());
+            }
         }
-        else if( osRel == "item" &&
-                 osType == "application/geo+json" )
-        {
-            osGEOJSON_URL = BuildURL(oLink["href"].ToString());
-        }
+    }
+
+    if( osTilingSchemeURL.empty() )
+    {
+         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme");
+         return false;
     }
 
     // Parse tile matrix set limits.
@@ -1639,7 +1645,7 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo* poOpenInfo,
     }
 
     // Download and parse tile matrix set definition
-    if( !DownloadJSon(oTileMatrixSetDefinition.c_str(), oDoc, nullptr, MEDIA_TYPE_JSON) )
+    if( !DownloadJSon(osTilingSchemeURL.c_str(), oDoc, nullptr, MEDIA_TYPE_JSON) )
         return false;
     auto tms = gdal::TileMatrixSet::parse(oDoc.SaveAsString().c_str());
     if( tms == nullptr )
