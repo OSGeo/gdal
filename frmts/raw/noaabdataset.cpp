@@ -55,6 +55,8 @@ class NOAA_B_Dataset final: public RawDataset
 
     CPL_DISALLOW_COPY_ASSIGN(NOAA_B_Dataset)
 
+    static int IdentifyEx( GDALOpenInfo *poOpenInfo, bool& bBigEndianOut );
+
   public:
     NOAA_B_Dataset() {
         m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
@@ -125,23 +127,30 @@ static void GetHeaderValues(const GDALOpenInfo *poOpenInfo,
                             double &dfDeltaLon,
                             int32_t& nRows,
                             int32_t& nCols,
-                            int32_t& iKind)
+                            int32_t& iKind,
+                            bool bBigEndian)
 {
-    const auto ReadFloat64 = [](const GByte*& ptr)
+    const auto ReadFloat64 = [bBigEndian](const GByte*& ptr)
     {
         double v;
         memcpy(&v, ptr, sizeof(v));
         ptr += sizeof(v);
-        CPL_MSBPTR64(&v);
+        if( bBigEndian)
+            CPL_MSBPTR64(&v);
+        else
+            CPL_LSBPTR64(&v);
         return v;
     };
 
-    const auto ReadInt32 = [](const GByte*& ptr)
+    const auto ReadInt32 = [bBigEndian](const GByte*& ptr)
     {
         int32_t v;
         memcpy(&v, ptr, sizeof(v));
         ptr += sizeof(v);
-        CPL_MSBPTR32(&v);
+        if( bBigEndian)
+            CPL_MSBPTR32(&v);
+        else
+            CPL_LSBPTR32(&v);
         return v;
     };
 
@@ -161,7 +170,7 @@ static void GetHeaderValues(const GDALOpenInfo *poOpenInfo,
 /*                              Identify()                              */
 /************************************************************************/
 
-int NOAA_B_Dataset::Identify( GDALOpenInfo *poOpenInfo )
+int NOAA_B_Dataset::IdentifyEx( GDALOpenInfo *poOpenInfo, bool& bBigEndianOut )
 
 {
     if( poOpenInfo->nHeaderBytes < HEADER_SIZE )
@@ -180,23 +189,43 @@ int NOAA_B_Dataset::Identify( GDALOpenInfo *poOpenInfo )
     int32_t nRows;
     int32_t nCols;
     int32_t iKind;
-    GetHeaderValues(poOpenInfo, dfSWLat, dfSWLon, dfDeltaLat, dfDeltaLon, nRows, nCols, iKind);
-    if( !(fabs(dfSWLat) <= 90) )
-        return FALSE;
-    if( !(fabs(dfSWLon) <= 360) ) // NADCON5 grids typically have SWLon > 180
-        return FALSE;
-    if( !(dfDeltaLat > 0 && dfDeltaLat <= 1) )
-        return FALSE;
-    if( !(dfDeltaLon > 0 && dfDeltaLon <= 1) )
-        return FALSE;
-    if( !(nRows > 0 && dfSWLat + (nRows - 1) * dfDeltaLat <= 90) )
-        return FALSE;
-    if( !(nCols > 0 && (nCols - 1) * dfDeltaLon <= 360) )
-        return FALSE;
-    if( !(iKind >= -1 && iKind <= 2) )
-        return FALSE;
 
-    return TRUE;
+    // Fun... nadcon5 files are encoded in big-endian, but vertcon3 files...
+    // in little-endian. We could probably figure that out directly from the
+    // 4 bytes which are 0x00 0x00 0x00 0x2C for nadcon5, and the reverse for
+    // vertcon3, but the semantics of those 4 bytes is undocumented.
+    // So try both possibilities and rely on sanity checks.
+    for( int i = 0; i < 2; ++i)
+    {
+        const bool bBigEndian = i == 0 ? true : false;
+        GetHeaderValues(poOpenInfo, dfSWLat, dfSWLon, dfDeltaLat, dfDeltaLon,
+                        nRows, nCols, iKind, bBigEndian);
+        if( !(fabs(dfSWLat) <= 90) )
+            continue;
+        if( !(fabs(dfSWLon) <= 360) ) // NADCON5 grids typically have SWLon > 180
+            continue;
+        if( !(dfDeltaLat > 0 && dfDeltaLat <= 1) )
+            continue;
+        if( !(dfDeltaLon > 0 && dfDeltaLon <= 1) )
+            continue;
+        if( !(nRows > 0 && dfSWLat + (nRows - 1) * dfDeltaLat <= 90) )
+            continue;
+        if( !(nCols > 0 && (nCols - 1) * dfDeltaLon <= 360) )
+            continue;
+        if( !(iKind >= -1 && iKind <= 2) )
+            continue;
+
+        bBigEndianOut = bBigEndian;
+        return TRUE;
+    }
+    return FALSE;
+}
+
+int NOAA_B_Dataset::Identify( GDALOpenInfo *poOpenInfo )
+
+{
+    bool bBigEndian = false;
+    return IdentifyEx(poOpenInfo, bBigEndian);
 }
 
 /************************************************************************/
@@ -217,7 +246,8 @@ CPLErr NOAA_B_Dataset::GetGeoTransform( double * padfTransform )
 GDALDataset *NOAA_B_Dataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    if( !Identify( poOpenInfo ) || poOpenInfo->fpL == nullptr ||
+    bool bBigEndian = false;
+    if( !IdentifyEx( poOpenInfo, bBigEndian ) || poOpenInfo->fpL == nullptr ||
         poOpenInfo->eAccess == GA_Update )
     {
         return nullptr;
@@ -233,7 +263,8 @@ GDALDataset *NOAA_B_Dataset::Open( GDALOpenInfo * poOpenInfo )
     int32_t nRows;
     int32_t nCols;
     int32_t iKind;
-    GetHeaderValues(poOpenInfo, dfSWLat, dfSWLon, dfDeltaLat, dfDeltaLon, nRows, nCols, iKind);
+    GetHeaderValues(poOpenInfo, dfSWLat, dfSWLon, dfDeltaLat, dfDeltaLon,
+                    nRows, nCols, iKind, bBigEndian);
 
     if( iKind == -1 )
     {
@@ -303,7 +334,7 @@ GDALDataset *NOAA_B_Dataset::Open( GDALOpenInfo * poOpenInfo )
         nDTSize,
         -nLineSize,
         eDT,
-        !CPL_IS_LSB );
+        bBigEndian ? !CPL_IS_LSB : CPL_IS_LSB);
     poDS->SetBand( 1, poBand );
 
 /* -------------------------------------------------------------------- */
