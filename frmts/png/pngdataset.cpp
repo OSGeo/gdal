@@ -577,10 +577,11 @@ CPLErr PNGDataset::LoadWholeImage(void* pSingleBuffer,
     {
         // Cf http://www.libpng.org/pub/png/spec/1.2/PNG-Filters.html
         //CPLDebug("PNG", "Line %d, filter type = %d", iY, nFilterType);
-        const GByte* const CPL_RESTRICT pabyInputLine =
+        const GByte* CPL_RESTRICT pabyInputLine =
             abyZlibDecompressed.data() +
-                static_cast<size_t>(iY) * (FILTER_TYPE_BYTE + nSamplesPerLine) + FILTER_TYPE_BYTE;
-        const GByte nFilterType = pabyInputLine[-1];
+                static_cast<size_t>(iY) * (FILTER_TYPE_BYTE + nSamplesPerLine);
+        const GByte nFilterType = pabyInputLine[0];
+        pabyInputLine ++;
         GByte* const CPL_RESTRICT pabyOutputLine =
             abyTemp.empty() ?
                 pabyOutputBuffer + static_cast<size_t>(iY) * nSamplesPerLine :
