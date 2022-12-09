@@ -36,6 +36,8 @@
 #include "cpl_vsi.h"
 #include "cpl_minixml.h"
 
+#include <stdbool.h>
+
 CPL_C_START
 
 /* 1e-12 - 1 */
@@ -282,9 +284,18 @@ void      CPL_DLL  NITFDESFreeTREData( char* pabyTREData );
 int       CPL_DLL  NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName);
 
 CPLXMLNode* NITFCreateXMLDesUserDefinedSubHeader(NITFFile* psFile,
-                                                 const NITFDES* psDES);
+                                                 const NITFDES* psDES,
+                                                 bool bValidate,
+                                                 bool* pbGotError);
 
-CPLXMLNode CPL_DLL *NITFDESGetXml(NITFFile*, int iSegment);
+CPLXMLNode* NITFCreateXMLDesDataFields(NITFFile* psFile,
+                                       const NITFDES* psDES,
+                                       const GByte* pabyData,
+                                       int nDataLen,
+                                       bool bValidate,
+                                       bool* pbGotError);
+
+CPLXMLNode CPL_DLL *NITFDESGetXml(NITFFile*, int iSegment, bool bValidate, bool* pbGotError);
 
 /* -------------------------------------------------------------------- */
 /*      These are really intended to be private helper stuff for the    */
@@ -429,7 +440,9 @@ char **NITFGenericMetadataRead(char **papszMD,
 CPLXMLNode* NITFCreateXMLTre(NITFFile* psFile,
                              const char* pszTREName,
                              const char *pachTRE,
-                             int nTRESize);
+                             int nTRESize,
+                             bool bValidate,
+                             bool* pbGotError);
 
 CPL_C_END
 

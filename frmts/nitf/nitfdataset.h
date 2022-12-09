@@ -94,11 +94,11 @@ class NITFDataset final: public GDALPamDataset
     void         InitializeNITFDESMetadata();
     void         InitializeNITFTREs();
 #endif
-    void         InitializeNITFDESs();
+    bool         InitializeNITFDESs(bool bValidate);
     void         InitializeNITFMetadata();
     void         InitializeCGMMetadata();
     void         InitializeTextMetadata();
-    void         InitializeTREMetadata();
+    bool         InitializeTREMetadata(bool bValidate);
     void         InitializeImageStructureMetadata();
 
     GIntBig     *panJPEGBlockOffset;
@@ -127,6 +127,8 @@ class NITFDataset final: public GDALPamDataset
 
     int          bExposeUnderlyingJPEGDatasetOverviews;
     int          ExposeUnderlyingJPEGDatasetOverviews() const { return bExposeUnderlyingJPEGDatasetOverviews; }
+
+    bool         Validate();
 
   protected:
     virtual int         CloseDependentDatasets() override;

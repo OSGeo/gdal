@@ -3613,7 +3613,7 @@ def test_nitf_80():
 
 
 def test_nitf_81():
-    tre_data = "TRE=MSTGTA=012340123456789AB0123456789ABCDE0120123456789AB0123456789AB000123401234560123450TGT_LOC=             "
+    tre_data = "TRE=MSTGTA=012340123456789AB0123456789ABCDE0120123456789AB0123456789AB001234501234560123450TGT_LOC=             "
     ds = gdal.GetDriverByName("NITF").Create(
         "/vsimem/nitf_81.ntf", 1, 1, options=[tre_data]
     )
@@ -3635,7 +3635,7 @@ def test_nitf_81():
     <field name="TGT_LTIOV" value="0123456789AB" />
     <field name="TGT_TYPE" value="0" />
     <field name="TGT_COLL" value="0" />
-    <field name="TGT_CAT" value="01234" />
+    <field name="TGT_CAT" value="12345" />
     <field name="TGT_UTC" value="0123456" />
     <field name="TGT_ELEV" value="012345" />
     <field name="TGT_ELEV_UNIT" value="0" />
@@ -4004,7 +4004,7 @@ def test_nitf_87():
 def test_nitf_88():
     tre_data = (
         "TRE=CSWRPB=1F199.9999999900000010000002000000300000040000005000000600000070000008"
-        "1111-9.99999999999999E-99+9.99999999999999E+9900000"
+        "1111-9.99999999999999E-99+0.50000000000000E+0000000"
     )
 
     ds = gdal.GetDriverByName("NITF").Create(
@@ -4051,7 +4051,7 @@ def test_nitf_88():
           <group index="0">
             <repeated number="1">
               <group index="0">
-                <field name="B" value="+9.99999999999999E+99" />
+                <field name="B" value="+0.50000000000000E+00" />
               </group>
             </repeated>
           </group>
@@ -4233,9 +4233,9 @@ def test_nitf_RSMAPB():
 
     tre_data = (
         "TRE=RSMAPB=iid                                                                             "
-        + "edition                                 tid                                     01IG+9.99999999999999E+99"
-        + "+9.99999999999999E+99+9.99999999999999E+99+9.99999999999999E+99+9.99999999999999E+99+9.99999999999999E+99"
-        + "Y01011230001+9.99999999999999E+99+9.99999999999999E+99"
+        + "edition                                 tid                                     01IG+0.50000000000000E+00"
+        + "+0.50000000000000E+00+0.50000000000000E+00+0.50000000000000E+00+0.50000000000000E+00+0.50000000000000E+00"
+        + "Y01011230001+0.50000000000000E+00+0.50000000000000E+00"
     )
 
     ds = gdal.GetDriverByName("NITF").Create(
@@ -4257,12 +4257,12 @@ def test_nitf_RSMAPB():
     <field name="NPAR" value="01" />
     <field name="APTYP" value="I" />
     <field name="LOCTYP" value="G" />
-    <field name="NSFX" value="+9.99999999999999E+99" />
-    <field name="NSFY" value="+9.99999999999999E+99" />
-    <field name="NSFZ" value="+9.99999999999999E+99" />
-    <field name="NOFFX" value="+9.99999999999999E+99" />
-    <field name="NOFFY" value="+9.99999999999999E+99" />
-    <field name="NOFFZ" value="+9.99999999999999E+99" />
+    <field name="NSFX" value="+0.50000000000000E+00" />
+    <field name="NSFY" value="+0.50000000000000E+00" />
+    <field name="NSFZ" value="+0.50000000000000E+00" />
+    <field name="NOFFX" value="+0.50000000000000E+00" />
+    <field name="NOFFY" value="+0.50000000000000E+00" />
+    <field name="NOFFZ" value="+0.50000000000000E+00" />
     <field name="APBASE" value="Y" />
     <field name="NISAP" value="01" />
     <field name="NISAPR" value="01" />
@@ -4279,14 +4279,14 @@ def test_nitf_RSMAPB():
       <group index="0">
         <repeated number="1">
           <group index="0">
-            <field name="AEL" value="+9.99999999999999E+99" />
+            <field name="AEL" value="+0.50000000000000E+00" />
           </group>
         </repeated>
       </group>
     </repeated>
     <repeated number="1">
       <group index="0">
-        <field name="PARVAL" value="+9.99999999999999E+99" />
+        <field name="PARVAL" value="+0.50000000000000E+00" />
       </group>
     </repeated>
   </tre>
@@ -4307,8 +4307,8 @@ def test_nitf_RSMDCB():
         + "edition                                 tid                                     01001iidi"
         + " " * 76
         + "01Y01GN"
-        + "+9.99999999999999E+99" * 6
-        + "N01ABCD+9.99999999999999E+99"
+        + "+0.50000000000000E+00" * 6
+        + "N01ABCD+0.50000000000000E+00"
     )
 
     ds = gdal.GetDriverByName("NITF").Create(
@@ -4339,12 +4339,12 @@ def test_nitf_RSMDCB():
     <field name="NPAR" value="01" />
     <field name="APTYP" value="G" />
     <field name="LOCTYP" value="N" />
-    <field name="NSFX" value="+9.99999999999999E+99" />
-    <field name="NSFY" value="+9.99999999999999E+99" />
-    <field name="NSFZ" value="+9.99999999999999E+99" />
-    <field name="NOFFX" value="+9.99999999999999E+99" />
-    <field name="NOFFY" value="+9.99999999999999E+99" />
-    <field name="NOFFZ" value="+9.99999999999999E+99" />
+    <field name="NSFX" value="+0.50000000000000E+00" />
+    <field name="NSFY" value="+0.50000000000000E+00" />
+    <field name="NSFZ" value="+0.50000000000000E+00" />
+    <field name="NOFFX" value="+0.50000000000000E+00" />
+    <field name="NOFFY" value="+0.50000000000000E+00" />
+    <field name="NOFFZ" value="+0.50000000000000E+00" />
     <field name="APBASE" value="N" />
     <field name="NGSAP" value="01" />
     <repeated number="1">
@@ -4358,7 +4358,7 @@ def test_nitf_RSMDCB():
           <group index="0">
             <repeated number="1">
               <group index="0">
-                <field name="CRSCOV" value="+9.99999999999999E+99" />
+                <field name="CRSCOV" value="+0.50000000000000E+00" />
               </group>
             </repeated>
           </group>
@@ -4382,15 +4382,15 @@ def test_nitf_RSMECB():
         "TRE=RSMECB=iid                                                                             "
         + "edition                                 tid                                     "
         + "YY01012020110201GN"
-        + "+9.99999999999999E+99" * 6
+        + "+0.50000000000000E+00" * 6
         + "N01ABCD02"
-        + "+9.99999999999999E+99" * 3
+        + "+0.50000000000000E+00" * 3
         + "1N2"
-        + "+9.99999999999999E+99" * 8
+        + "+0.50000000000000E+00" * 8
         + "N2"
-        + "+9.99999999999999E+99" * 4
+        + "+0.50000000000000E+00" * 4
         + "2"
-        + "+9.99999999999999E+99" * 4
+        + "+0.50000000000000E+00" * 4
     )
 
     ds = gdal.GetDriverByName("NITF").Create(
@@ -4417,12 +4417,12 @@ def test_nitf_RSMECB():
     <field name="NPAR" value="01" />
     <field name="APTYP" value="G" />
     <field name="LOCTYP" value="N" />
-    <field name="NSFX" value="+9.99999999999999E+99" />
-    <field name="NSFY" value="+9.99999999999999E+99" />
-    <field name="NSFZ" value="+9.99999999999999E+99" />
-    <field name="NOFFX" value="+9.99999999999999E+99" />
-    <field name="NOFFY" value="+9.99999999999999E+99" />
-    <field name="NOFFZ" value="+9.99999999999999E+99" />
+    <field name="NSFX" value="+0.50000000000000E+00" />
+    <field name="NSFY" value="+0.50000000000000E+00" />
+    <field name="NSFZ" value="+0.50000000000000E+00" />
+    <field name="NOFFX" value="+0.50000000000000E+00" />
+    <field name="NOFFY" value="+0.50000000000000E+00" />
+    <field name="NOFFZ" value="+0.50000000000000E+00" />
     <field name="APBASE" value="N" />
     <field name="NGSAP" value="01" />
     <repeated number="1">
@@ -4435,13 +4435,13 @@ def test_nitf_RSMECB():
         <field name="NUMOPG" value="02" />
         <repeated number="3">
           <group index="0">
-            <field name="ERRCVG" value="+9.99999999999999E+99" />
+            <field name="ERRCVG" value="+0.50000000000000E+00" />
           </group>
           <group index="1">
-            <field name="ERRCVG" value="+9.99999999999999E+99" />
+            <field name="ERRCVG" value="+0.50000000000000E+00" />
           </group>
           <group index="2">
-            <field name="ERRCVG" value="+9.99999999999999E+99" />
+            <field name="ERRCVG" value="+0.50000000000000E+00" />
           </group>
         </repeated>
         <field name="TCDF" value="1" />
@@ -4449,12 +4449,12 @@ def test_nitf_RSMECB():
         <field name="NCSEG" value="2" />
         <repeated number="2">
           <group index="0">
-            <field name="CORSEG" value="+9.99999999999999E+99" />
-            <field name="TAUSEG" value="+9.99999999999999E+99" />
+            <field name="CORSEG" value="+0.50000000000000E+00" />
+            <field name="TAUSEG" value="+0.50000000000000E+00" />
           </group>
           <group index="1">
-            <field name="CORSEG" value="+9.99999999999999E+99" />
-            <field name="TAUSEG" value="+9.99999999999999E+99" />
+            <field name="CORSEG" value="+0.50000000000000E+00" />
+            <field name="TAUSEG" value="+0.50000000000000E+00" />
           </group>
         </repeated>
       </group>
@@ -4463,35 +4463,35 @@ def test_nitf_RSMECB():
       <group index="0">
         <repeated number="1">
           <group index="0">
-            <field name="MAP" value="+9.99999999999999E+99" />
+            <field name="MAP" value="+0.50000000000000E+00" />
           </group>
         </repeated>
       </group>
     </repeated>
-    <field name="URR" value="+9.99999999999999E+99" />
-    <field name="URC" value="+9.99999999999999E+99" />
-    <field name="UCC" value="+9.99999999999999E+99" />
+    <field name="URR" value="+0.50000000000000E+00" />
+    <field name="URC" value="+0.50000000000000E+00" />
+    <field name="UCC" value="+0.50000000000000E+00" />
     <field name="UACSMC" value="N" />
     <field name="UNCSR" value="2" />
     <repeated number="2">
       <group index="0">
-        <field name="UCORSR" value="+9.99999999999999E+99" />
-        <field name="UTAUSR" value="+9.99999999999999E+99" />
+        <field name="UCORSR" value="+0.50000000000000E+00" />
+        <field name="UTAUSR" value="+0.50000000000000E+00" />
       </group>
       <group index="1">
-        <field name="UCORSR" value="+9.99999999999999E+99" />
-        <field name="UTAUSR" value="+9.99999999999999E+99" />
+        <field name="UCORSR" value="+0.50000000000000E+00" />
+        <field name="UTAUSR" value="+0.50000000000000E+00" />
       </group>
     </repeated>
     <field name="UNCSC" value="2" />
     <repeated number="2">
       <group index="0">
-        <field name="UCORSC" value="+9.99999999999999E+99" />
-        <field name="UTAUSC" value="+9.99999999999999E+99" />
+        <field name="UCORSC" value="+0.50000000000000E+00" />
+        <field name="UTAUSC" value="+0.50000000000000E+00" />
       </group>
       <group index="1">
-        <field name="UCORSC" value="+9.99999999999999E+99" />
-        <field name="UTAUSC" value="+9.99999999999999E+99" />
+        <field name="UCORSC" value="+0.50000000000000E+00" />
+        <field name="UTAUSC" value="+0.50000000000000E+00" />
       </group>
     </repeated>
   </tre>
@@ -4914,8 +4914,12 @@ def test_nitf_SENSRB():
     <field name="IMAGE_FORMATION_DATA" value="Y" />
     <field name="METHOD" value="" />
     <field name="MODE" value="" />
-    <field name="ROW_COUNT" value="00000000" />
-    <field name="COLUMN_COUNT" value="00000000" />
+    <field name="ROW_COUNT" value="00000000">
+      <warning>Minimum value constraint of 1 not met</warning>
+    </field>
+    <field name="COLUMN_COUNT" value="00000000">
+      <warning>Minimum value constraint of 1 not met</warning>
+    </field>
     <field name="ROW_SET" value="00000000" />
     <field name="COLUMN_SET" value="00000000" />
     <field name="ROW_RATE" value="0000000000" />
@@ -5299,6 +5303,119 @@ def test_nitf_no_image_segment():
 
     with gdaltest.error_handler():
         gdal.GetDriverByName("NITF").Delete(out_filename)
+
+
+###############################################################################
+# Test TRE metadata validation
+
+
+def test_nitf_metadata_validation_tre():
+
+    filename = "/vsimem/test_nitf_metadata_validation_tre.ntf"
+    with gdaltest.error_handler():
+        gdal.GetDriverByName("NITF").Create(
+            filename,
+            1,
+            1,
+            options=[
+                "TRE=BLOCKA=010000001000360-10                +42.319331+020.078400+42.317083+020.126072+42.281634+020.122570+42.283881+020.074924"
+            ],
+        )
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx(filename, open_options=["VALIDATE=YES"])
+    assert gdal.GetLastErrorMsg() != ""
+    md = ds.GetMetadata("xml:TRE")[0]
+    assert (
+        md
+        == """<tres>
+  <tre name="BLOCKA" location="image">
+    <error>BLOCKA TRE wrong size (118). Expected 123.</error>
+    <field name="BLOCK_INSTANCE" value="01" />
+    <field name="N_GRAY" value="00000" />
+    <field name="L_LINES" value="01000" />
+    <field name="LAYOVER_ANGLE" value="360">
+      <error>Maximum value constraint of 359 not met</error>
+    </field>
+    <field name="SHADOW_ANGLE" value="-10">
+      <error>Minimum value constraint of 0 not met</error>
+    </field>
+    <field name="FRLC_LOC" value="+42.319331+020.078400" />
+    <field name="LRLC_LOC" value="+42.317083+020.126072" />
+    <field name="LRFC_LOC" value="+42.281634+020.122570" />
+    <field name="FRFC_LOC" value="+42.283881+020.074924" />
+  </tre>
+</tres>
+"""
+    )
+
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx(
+            filename, open_options=["VALIDATE=YES", "FAIL_IF_VALIDATION_ERROR=YES"]
+        )
+    assert ds is None
+
+    gdal.Unlink(filename)
+
+
+###############################################################################
+# Test DES metadata validation
+
+
+def test_nitf_metadata_validation_des():
+
+    filename = "/vsimem/test_nitf_metadata_validation_des.ntf"
+    des_data = b"02U" + b" " * 166 + b"0004ABCD"
+    escaped_data = gdal.EscapeString(des_data, gdal.CPLES_BackslashQuotable)
+    with gdaltest.error_handler():
+        gdal.GetDriverByName("NITF").Create(
+            filename, 1, 1, options=[b"DES=CSATTA DES=" + escaped_data]
+        )
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx(filename, open_options=["VALIDATE=YES"])
+    assert gdal.GetLastErrorMsg() != ""
+    md = ds.GetMetadata("xml:DES")[0]
+    assert (
+        md
+        == """<des_list>
+  <des name="CSATTA DES">
+    <field name="DESVER" value="02" />
+    <field name="DECLAS" value="U" />
+    <field name="DESCLSY" value="" />
+    <field name="DESCODE" value="" />
+    <field name="DESCTLH" value="" />
+    <field name="DESREL" value="" />
+    <field name="DESDCTP" value="" />
+    <field name="DESDCDT" value="" />
+    <field name="DESDCXM" value="" />
+    <field name="DESDG" value="" />
+    <field name="DESDGDT" value="" />
+    <field name="DESCLTX" value="" />
+    <field name="DESCATP" value="" />
+    <field name="DESCAUT" value="" />
+    <field name="DESCRSN" value="" />
+    <field name="DESSRDT" value="" />
+    <field name="DESCTLN" value="" />
+    <field name="DESSHL" value="0004" />
+    <field name="DESSHF" value="ABCD">
+      <user_defined_fields>
+        <error>CSATTA DES DES wrong size (4). Expected 52.</error>
+      </user_defined_fields>
+    </field>
+    <field name="DESDATA" value="" />
+  </des>
+</des_list>
+"""
+    )
+
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx(
+            filename, open_options=["VALIDATE=YES", "FAIL_IF_VALIDATION_ERROR=YES"]
+        )
+    assert ds is None
+
+    gdal.Unlink(filename)
 
 
 ###############################################################################

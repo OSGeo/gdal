@@ -73,6 +73,17 @@
                     <xs:attribute name="maxlength" type="xs:integer" use="optional"/>
                 </xs:complexType>
             </xs:element>
+
+            <!-- definition of fields in data section of DES -->
+            <xs:element name="data_fields" minOccurs="0">
+                <xs:complexType>
+                    <xs:group ref="itemType"/>
+                    <xs:attribute name="name" type="xs:string"/>
+                    <xs:attribute name="length" type="positiveInteger" use="optional"/>
+                    <xs:attribute name="minlength" type="xs:integer" use="optional"/>
+                    <xs:attribute name="maxlength" type="xs:integer" use="optional"/>
+                </xs:complexType>
+            </xs:element>
         </xs:sequence>
         <xs:attribute name="name" type="xs:string"/>
     </xs:complexType>
