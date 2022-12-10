@@ -424,7 +424,15 @@ MAIN_START( nArgc, papszArgv )
     if( hDS )
         GDALClose(hDS);
     if( bCloseODS )
+    {
+        if( nRetCode == 0 )
+            CPLErrorReset();
         GDALClose(hDstDS);
+        // Works around https://github.com/Toblerity/Fiona/issues/1169
+        // Ideally GDALClose() should return an error code to avoid this hack
+        if( nRetCode == 0 && CPLGetLastErrorType() == CE_Failure )
+            nRetCode = 1;
+    }
 
 exit:
     CSLDestroy(papszArgv);
