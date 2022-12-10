@@ -1869,7 +1869,7 @@ void GDALGeoPackageDataset::FixupWrongRTreeTrigger()
             if( *pszPtr == ' ' )
             {
                 SQLCommand(hDB,
-                    ("DROP TRIGGER " + SQLEscapeName(pszName)).c_str());
+                    ("DROP TRIGGER \"" + SQLEscapeName(pszName) + "\"").c_str());
                 CPLString newSQL;
                 newSQL.assign(pszSQL, pszPtr1 - pszSQL);
                 newSQL += " AFTER UPDATE";

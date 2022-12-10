@@ -5154,14 +5154,14 @@ def test_ogr_gpkg_fixup_wrong_rtree_trigger():
 
     filename = "/vsimem/test_ogr_gpkg_fixup_wrong_rtree_trigger.gpkg"
     ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
-    ds.CreateLayer("test")
+    ds.CreateLayer("test-with-dash")
     ds.CreateLayer("test2")
     ds = None
     with gdaltest.error_handler():
         ds = ogr.Open(filename, update=1)
         # inject wrong trigger on purpose with the wrong 'OF "geometry" ' part
-        ds.ExecuteSQL("DROP TRIGGER rtree_test_geometry_update3")
-        wrong_trigger = 'CREATE TRIGGER "rtree_test_geometry_update3" AFTER UPDATE OF "geometry" ON "test" WHEN OLD."fid" != NEW."fid" AND (NEW."geometry" NOTNULL AND NOT ST_IsEmpty(NEW."geometry")) BEGIN DELETE FROM "rtree_test_geometry" WHERE id = OLD."fid"; INSERT OR REPLACE INTO "rtree_test_geometry" VALUES (NEW."fid",ST_MinX(NEW."geometry"), ST_MaxX(NEW."geometry"),ST_MinY(NEW."geometry"), ST_MaxY(NEW."geometry")); END'
+        ds.ExecuteSQL('DROP TRIGGER "rtree_test-with-dash_geometry_update3"')
+        wrong_trigger = 'CREATE TRIGGER "rtree_test-with-dash_geometry_update3" AFTER UPDATE OF "geometry" ON "test-with-dash" WHEN OLD."fid" != NEW."fid" AND (NEW."geometry" NOTNULL AND NOT ST_IsEmpty(NEW."geometry")) BEGIN DELETE FROM "rtree_test_geometry" WHERE id = OLD."fid"; INSERT OR REPLACE INTO "rtree_test_geometry" VALUES (NEW."fid",ST_MinX(NEW."geometry"), ST_MaxX(NEW."geometry"),ST_MinY(NEW."geometry"), ST_MaxY(NEW."geometry")); END'
         ds.ExecuteSQL(wrong_trigger)
 
         ds.ExecuteSQL("DROP TRIGGER rtree_test2_geometry_update3")
@@ -5174,7 +5174,7 @@ def test_ogr_gpkg_fixup_wrong_rtree_trigger():
     # Open in read-only mode
     ds = ogr.Open(filename)
     sql_lyr = ds.ExecuteSQL(
-        "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'rtree_test_geometry_update3'"
+        "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'rtree_test-with-dash_geometry_update3'"
     )
     f = sql_lyr.GetNextFeature()
     sql = f["sql"]
@@ -5185,7 +5185,7 @@ def test_ogr_gpkg_fixup_wrong_rtree_trigger():
     # Open in update mode
     ds = ogr.Open(filename, update=1)
     sql_lyr = ds.ExecuteSQL(
-        "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'rtree_test_geometry_update3'"
+        "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'rtree_test-with-dash_geometry_update3'"
     )
     f = sql_lyr.GetNextFeature()
     sql = f["sql"]
@@ -5201,7 +5201,7 @@ def test_ogr_gpkg_fixup_wrong_rtree_trigger():
     gdal.Unlink(filename)
     assert (
         sql
-        == 'CREATE TRIGGER "rtree_test_geometry_update3" AFTER UPDATE ON "test" WHEN OLD."fid" != NEW."fid" AND (NEW."geometry" NOTNULL AND NOT ST_IsEmpty(NEW."geometry")) BEGIN DELETE FROM "rtree_test_geometry" WHERE id = OLD."fid"; INSERT OR REPLACE INTO "rtree_test_geometry" VALUES (NEW."fid",ST_MinX(NEW."geometry"), ST_MaxX(NEW."geometry"),ST_MinY(NEW."geometry"), ST_MaxY(NEW."geometry")); END'
+        == 'CREATE TRIGGER "rtree_test-with-dash_geometry_update3" AFTER UPDATE ON "test-with-dash" WHEN OLD."fid" != NEW."fid" AND (NEW."geometry" NOTNULL AND NOT ST_IsEmpty(NEW."geometry")) BEGIN DELETE FROM "rtree_test_geometry" WHERE id = OLD."fid"; INSERT OR REPLACE INTO "rtree_test_geometry" VALUES (NEW."fid",ST_MinX(NEW."geometry"), ST_MaxX(NEW."geometry"),ST_MinY(NEW."geometry"), ST_MaxY(NEW."geometry")); END'
     )
     assert (
         sql2
