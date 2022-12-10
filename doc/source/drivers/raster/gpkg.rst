@@ -610,6 +610,33 @@ Examples
 
       gdalinfo my.gpkg -oo TABLE=a_table
 
+.. _raster.gpkg.raster:
+
+Raster SQL functions
+~~~~~~~~~~~~~~~~~~~~
+
+The raster SQL functions mentioned at :ref:`sql_sqlite_dialect_raster_functions`
+are also available.
+
+The ``gdal_get_layer_pixel_value()`` function (added in GDAL 3.7), variant of the
+generic ``gdal_get_pixel_value()``, can be used to extract the value of a pixel
+in a raster layer of the current dataset.
+
+It takes 5 arguments:
+
+* a string with the layer/table name
+* a band number (numbering starting at 1)
+* a string being "georef" to indicate that subsequent values will be georeferenced
+  coordinates, or "pixel" to indicate that subsequent values will be in column, line
+  pixel space
+* georeferenced X value or column number
+* georeferenced Y value or line number
+
+.. code-block::
+
+    SELECT gdal_get_layer_pixel_value('my_raster_table', 1, 'georef', 440720, 3751320)
+    SELECT gdal_get_layer_pixel_value('my_raster_table', 1, 'pixel', 0, 0)
+
 See Also
 --------
 

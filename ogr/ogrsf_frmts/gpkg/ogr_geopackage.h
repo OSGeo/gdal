@@ -122,6 +122,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
                                        int argc,
                                        sqlite3_value** argv);
 
+    void               *m_pSQLFunctionData = nullptr;
     GUInt32             m_nApplicationId = GPKG_APPLICATION_ID;
     GUInt32             m_nUserVersion = GPKG_1_2_VERSION;
     OGRGeoPackageTableLayer** m_papoLayers = nullptr;
@@ -272,6 +273,11 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
         bool                m_bIsGeometryTypeAggregateInterrupted = false;
         std::string         m_osGeometryTypeAggregateResult{};
 
+        // Used by GDALGeoPackageDataset::GetRasterLayerDataset()
+        std::map< std::string, std::unique_ptr<GDALDataset> > m_oCachedRasterDS{};
+
+        void                CloseDB();
+
         CPL_DISALLOW_COPY_ASSIGN(GDALGeoPackageDataset)
 
     public:
@@ -386,6 +392,8 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALG
         }
         void                SetGeometryTypeAggregateResult(const std::string& s) { m_osGeometryTypeAggregateResult = s; }
         const std::string&  GetGeometryTypeAggregateResult() const { return m_osGeometryTypeAggregateResult; }
+
+        GDALDataset*        GetRasterLayerDataset(const char* pszLayerName);
 
     protected:
 

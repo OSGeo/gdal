@@ -124,6 +124,9 @@ Spatialite, are also available :
    in gpkg_spatial_ref_sys, starting with GDAL 3.2, it will be interpreted as
    a EPSG code.
 
+The raster SQL functions mentioned at :ref:`raster.gpkg.raster`
+are also available.
+
 Link with Spatialite
 ~~~~~~~~~~~~~~~~~~~~
 

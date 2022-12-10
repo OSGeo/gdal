@@ -8055,3 +8055,127 @@ def test_ogr_gpkg_read_generated_column():
     ds = None
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test gdal_get_pixel_value() function
+
+
+def test_ogr_gpkg_sql_gdal_get_pixel_value():
+
+    filename = "/vsimem/test_ogr_gpkg_sql_gdal_get_pixel_value.gpkg"
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
+
+    with gdaltest.config_option("OGR_SQLITE_ALLOW_EXTERNAL_ACCESS", "YES"):
+        sql_lyr = ds.ExecuteSQL(
+            "select gdal_get_pixel_value('../gcore/data/byte.tif', 1, 'georef', 440780, 3751080)"
+        )
+    f = sql_lyr.GetNextFeature()
+    ds.ReleaseResultSet(sql_lyr)
+    assert f[0] == 156
+
+    with gdaltest.config_option("OGR_SQLITE_ALLOW_EXTERNAL_ACCESS", "YES"):
+        sql_lyr = ds.ExecuteSQL(
+            "select gdal_get_pixel_value('../gcore/data/byte.tif', 1, 'pixel', 1, 4)"
+        )
+    f = sql_lyr.GetNextFeature()
+    ds.ReleaseResultSet(sql_lyr)
+    assert f[0] == 156
+
+    with gdaltest.config_option("OGR_SQLITE_ALLOW_EXTERNAL_ACCESS", "YES"):
+        sql_lyr = ds.ExecuteSQL(
+            "select gdal_get_pixel_value('../gcore/data/float64.tif', 1, 'pixel', 0, 1)"
+        )
+    f = sql_lyr.GetNextFeature()
+    ds.ReleaseResultSet(sql_lyr)
+    assert f[0] == 115.0
+
+    # Invalid column
+    with gdaltest.config_option("OGR_SQLITE_ALLOW_EXTERNAL_ACCESS", "YES"):
+        sql_lyr = ds.ExecuteSQL(
+            "select gdal_get_pixel_value('../gcore/data/byte.tif', 1, 'pixel', -1, 0)"
+        )
+    f = sql_lyr.GetNextFeature()
+    ds.ReleaseResultSet(sql_lyr)
+    assert f[0] is None
+
+    # Missing OGR_SQLITE_ALLOW_EXTERNAL_ACCESS
+    with gdaltest.error_handler():
+        sql_lyr = ds.ExecuteSQL(
+            "select gdal_get_pixel_value('../gcore/data/byte.tif', 1, 'georef', 440720, 3751320)"
+        )
+        f = sql_lyr.GetNextFeature()
+        ds.ReleaseResultSet(sql_lyr)
+        assert f[0] is None
+
+    # NULL as 1st arg
+    with gdaltest.error_handler():
+        with gdaltest.config_option("OGR_SQLITE_ALLOW_EXTERNAL_ACCESS", "YES"):
+            sql_lyr = ds.ExecuteSQL(
+                "select gdal_get_pixel_value(NULL, 1, 'pixel', 0, 0)"
+            )
+        f = sql_lyr.GetNextFeature()
+        ds.ReleaseResultSet(sql_lyr)
+        assert f[0] is None
+
+    # NULL as 2nd arg
+    with gdaltest.error_handler():
+        with gdaltest.config_option("OGR_SQLITE_ALLOW_EXTERNAL_ACCESS", "YES"):
+            sql_lyr = ds.ExecuteSQL(
+                "select gdal_get_pixel_value('../gcore/data/byte.tif', NULL, 'pixel', 0, 0)"
+            )
+        f = sql_lyr.GetNextFeature()
+        ds.ReleaseResultSet(sql_lyr)
+        assert f[0] is None
+
+    # NULL as 3rd arg
+    with gdaltest.error_handler():
+        with gdaltest.config_option("OGR_SQLITE_ALLOW_EXTERNAL_ACCESS", "YES"):
+            sql_lyr = ds.ExecuteSQL(
+                "select gdal_get_pixel_value('../gcore/data/byte.tif', 1, NULL, 0, 0)"
+            )
+        f = sql_lyr.GetNextFeature()
+        ds.ReleaseResultSet(sql_lyr)
+        assert f[0] is None
+
+    # NULL as 4th arg
+    with gdaltest.error_handler():
+        with gdaltest.config_option("OGR_SQLITE_ALLOW_EXTERNAL_ACCESS", "YES"):
+            sql_lyr = ds.ExecuteSQL(
+                "select gdal_get_pixel_value('../gcore/data/byte.tif', 1, 'pixel', NULL, 0)"
+            )
+        f = sql_lyr.GetNextFeature()
+        ds.ReleaseResultSet(sql_lyr)
+        assert f[0] is None
+
+    # NULL as 5th arg
+    with gdaltest.error_handler():
+        with gdaltest.config_option("OGR_SQLITE_ALLOW_EXTERNAL_ACCESS", "YES"):
+            sql_lyr = ds.ExecuteSQL(
+                "select gdal_get_pixel_value('../gcore/data/byte.tif', 1, 'pixel', 0, NULL)"
+            )
+        f = sql_lyr.GetNextFeature()
+        ds.ReleaseResultSet(sql_lyr)
+        assert f[0] is None
+
+    # Invalid band number
+    with gdaltest.error_handler():
+        with gdaltest.config_option("OGR_SQLITE_ALLOW_EXTERNAL_ACCESS", "YES"):
+            sql_lyr = ds.ExecuteSQL(
+                "select gdal_get_pixel_value('../gcore/data/byte.tif', 0, 'pixel', 0, 0)"
+            )
+        f = sql_lyr.GetNextFeature()
+        ds.ReleaseResultSet(sql_lyr)
+        assert f[0] is None
+
+    # Invalid value for 3rd argument
+    with gdaltest.error_handler():
+        with gdaltest.config_option("OGR_SQLITE_ALLOW_EXTERNAL_ACCESS", "YES"):
+            sql_lyr = ds.ExecuteSQL(
+                "select gdal_get_pixel_value('../gcore/data/byte.tif', 1, 'invalid', 0, 0)"
+            )
+        f = sql_lyr.GetNextFeature()
+        ds.ReleaseResultSet(sql_lyr)
+        assert f[0] is None
+
+    gdal.Unlink(filename)
