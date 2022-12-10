@@ -528,31 +528,23 @@ CPLErr PNGDataset::LoadWholeImage(void* pSingleBuffer,
 
     const int nSamplesPerLine = nRasterXSize * nBands;
     size_t nOutBytes;
-    std::vector<GByte> abyZlibDecompressed;
     constexpr int FILTER_TYPE_BYTE = 1;
     const size_t nZlibDecompressedSize =
         static_cast<size_t>(nRasterYSize) * (FILTER_TYPE_BYTE + nSamplesPerLine);
-    try
+    GByte* pabyZlibDecompressed = static_cast<GByte*>(
+                            VSI_MALLOC_VERBOSE(nZlibDecompressedSize));
+    if( pabyZlibDecompressed == nullptr )
     {
-        // A bit dirty: we just reserve() to avoid resize() doing a
-        // useless buffer zeroing. As this is going to be
-        // accessed from C code only in libdeflate_zlib_decompress(),
-        // that is OK.
-        abyZlibDecompressed.reserve(nZlibDecompressedSize);
-    }
-    catch( const std::exception& )
-    {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Out of memory when allocating abyZlibDecompressed");
         return CE_Failure;
     }
 
     if( CPLZLibInflate(
             pabyCompressedData, nCompressedDataSize,
-            abyZlibDecompressed.data(), nZlibDecompressedSize, &nOutBytes ) == nullptr )
+            pabyZlibDecompressed, nZlibDecompressedSize, &nOutBytes ) == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "CPLZLibInflate() failed");
+        CPLFree(pabyZlibDecompressed);
         return CE_Failure;
     }
 
@@ -578,7 +570,7 @@ CPLErr PNGDataset::LoadWholeImage(void* pSingleBuffer,
         // Cf http://www.libpng.org/pub/png/spec/1.2/PNG-Filters.html
         //CPLDebug("PNG", "Line %d, filter type = %d", iY, nFilterType);
         const GByte* CPL_RESTRICT pabyInputLine =
-            abyZlibDecompressed.data() +
+            pabyZlibDecompressed +
                 static_cast<size_t>(iY) * (FILTER_TYPE_BYTE + nSamplesPerLine);
         const GByte nFilterType = pabyInputLine[0];
         pabyInputLine ++;
@@ -902,6 +894,7 @@ CPLErr PNGDataset::LoadWholeImage(void* pSingleBuffer,
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Invalid filter type %d", nFilterType);
+            CPLFree(pabyZlibDecompressed);
             return CE_Failure;
         }
 
@@ -984,6 +977,8 @@ CPLErr PNGDataset::LoadWholeImage(void* pSingleBuffer,
             }
         }
     }
+
+    CPLFree(pabyZlibDecompressed);
 
     return CE_None;
 }
