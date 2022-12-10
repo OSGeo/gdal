@@ -101,9 +101,11 @@ def test_algebra_setup():
 
     A = ds.CreateLayer("A")
     A.CreateField(ogr.FieldDefn("A", ogr.OFTInteger))
+    A.CreateField(ogr.FieldDefn("same_in_both_layers", ogr.OFTInteger))
 
     B = ds.CreateLayer("B")
     B.CreateField(ogr.FieldDefn("B", ogr.OFTString))
+    B.CreateField(ogr.FieldDefn("same_in_both_layers", ogr.OFTInteger))
 
     pointInB = ds.CreateLayer("pointInB")
 
@@ -173,11 +175,15 @@ def test_algebra_intersection():
 
     C_defn = C.GetLayerDefn()
     assert (
-        C_defn.GetFieldCount() == 2
+        C_defn.GetFieldCount() == 4
         and C_defn.GetFieldDefn(0).GetName() == "A"
         and C_defn.GetFieldDefn(0).GetType() == ogr.OFTInteger
-        and C_defn.GetFieldDefn(1).GetName() == "B"
-        and C_defn.GetFieldDefn(1).GetType() == ogr.OFTString
+        and C_defn.GetFieldDefn(1).GetName() == "input_same_in_both_layers"
+        and C_defn.GetFieldDefn(1).GetType() == ogr.OFTInteger
+        and C_defn.GetFieldDefn(2).GetName() == "B"
+        and C_defn.GetFieldDefn(2).GetType() == ogr.OFTString
+        and C_defn.GetFieldDefn(3).GetName() == "method_same_in_both_layers"
+        and C_defn.GetFieldDefn(3).GetType() == ogr.OFTInteger
     ), "Did not get expected output schema."
 
     assert C.GetFeatureCount() == 2, (

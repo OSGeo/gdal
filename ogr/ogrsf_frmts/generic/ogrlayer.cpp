@@ -39,6 +39,7 @@
 #include "cpl_time.h"
 #include <cassert>
 #include <limits>
+#include <set>
 
 
 struct OGRLayer::Private
@@ -2061,10 +2062,34 @@ OGRErr set_result_schema(OGRLayer *pLayerResult,
     } else {
         // use schema from the input layer or from input and method layers
         int nFieldsInput = poDefnInput->GetFieldCount();
+
+        // If no prefix is specified and we have input+method layers, make
+        // sure we will generate unique field names
+        std::set<std::string> oSetInputFieldNames;
+        std::set<std::string> oSetMethodFieldNames;
+        if( poDefnMethod != nullptr &&
+            pszInputPrefix == nullptr &&
+            pszMethodPrefix == nullptr )
+        {
+            for( int iField = 0; iField < nFieldsInput; iField++ ) {
+                oSetInputFieldNames.insert(poDefnInput->GetFieldDefn(iField)->GetNameRef());
+            }
+            const int nFieldsMethod = poDefnMethod->GetFieldCount();
+            for( int iField = 0; iField < nFieldsMethod; iField++ ) {
+                oSetMethodFieldNames.insert(poDefnMethod->GetFieldDefn(iField)->GetNameRef());
+            }
+        }
+
         for( int iField = 0; iField < nFieldsInput; iField++ ) {
             OGRFieldDefn oFieldDefn(poDefnInput->GetFieldDefn(iField));
             if( pszInputPrefix != nullptr )
                 oFieldDefn.SetName(CPLSPrintf("%s%s", pszInputPrefix, oFieldDefn.GetNameRef()));
+            else if( !oSetMethodFieldNames.empty() &&
+                     oSetMethodFieldNames.find(oFieldDefn.GetNameRef()) != oSetMethodFieldNames.end() )
+            {
+                // Field of same name present in method layer
+                oFieldDefn.SetName(CPLSPrintf("input_%s", oFieldDefn.GetNameRef()));
+            }
             ret = pLayerResult->CreateField(&oFieldDefn);
             if (ret != OGRERR_NONE) {
                 if (!bSkipFailures)
@@ -2080,10 +2105,17 @@ OGRErr set_result_schema(OGRLayer *pLayerResult,
         if (!combined) return ret;
         if (!mapMethod) return ret;
         if (!poDefnMethod) return ret;
-        for( int iField = 0; iField < poDefnMethod->GetFieldCount(); iField++ ) {
+        const int nFieldsMethod = poDefnMethod->GetFieldCount();
+        for( int iField = 0; iField < nFieldsMethod; iField++ ) {
             OGRFieldDefn oFieldDefn(poDefnMethod->GetFieldDefn(iField));
             if( pszMethodPrefix != nullptr )
                 oFieldDefn.SetName(CPLSPrintf("%s%s", pszMethodPrefix, oFieldDefn.GetNameRef()));
+            else if( !oSetInputFieldNames.empty() &&
+                     oSetInputFieldNames.find(oFieldDefn.GetNameRef()) != oSetInputFieldNames.end() )
+            {
+                // Field of same name present in method layer
+                oFieldDefn.SetName(CPLSPrintf("method_%s", oFieldDefn.GetNameRef()));
+            }
             ret = pLayerResult->CreateField(&oFieldDefn);
             if (ret != OGRERR_NONE) {
                 if (!bSkipFailures)
