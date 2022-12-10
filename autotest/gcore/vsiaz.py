@@ -1128,6 +1128,57 @@ def test_vsiaz_fake_test_BlobEndpointInConnectionString():
 
 
 ###############################################################################
+
+
+def test_vsiaz_fake_test_SharedAccessSignatureInConnectionString():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    with gdaltest.config_option(
+        "AZURE_STORAGE_CONNECTION_STRING",
+        "BlobEndpoint=http://127.0.0.1:%d/myaccount;SharedAccessSignature=sp=rl&st=2022-12-06T20:41:17Z&se=2022-12-07T04:41:17Z&spr=https&sv=2021-06-08&sr=c&sig=xxxxxxxx"
+        % gdaltest.webserver_port,
+    ):
+
+        signed_url = gdal.GetSignedURL("/vsiaz/az_fake_bucket/resource")
+        assert (
+            signed_url
+            == "http://127.0.0.1:%d/myaccount/az_fake_bucket/resource?sp=rl&st=2022-12-06T20:41:17Z&se=2022-12-07T04:41:17Z&spr=https&sv=2021-06-08&sr=c&sig=xxxxxxxx"
+            % gdaltest.webserver_port
+        )
+
+        def method(request):
+
+            request.protocol_version = "HTTP/1.1"
+            h = request.headers
+            if "Authorization" in h:
+                sys.stderr.write("Bad headers: %s\n" % str(h))
+                request.send_response(403)
+                return
+            request.send_response(200)
+            request.send_header("Content-type", "text/plain")
+            request.send_header("Content-Length", 3)
+            request.send_header("Connection", "close")
+            request.end_headers()
+            request.wfile.write("""foo""".encode("ascii"))
+
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "GET",
+            "/myaccount/az_fake_bucket/resource?sp=rl&st=2022-12-06T20:41:17Z&se=2022-12-07T04:41:17Z&spr=https&sv=2021-06-08&sr=c&sig=xxxxxxxx",
+            custom_method=method,
+        )
+        with webserver.install_http_handler(handler):
+            f = open_for_read("/vsiaz_streaming/az_fake_bucket/resource")
+            assert f is not None
+            data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+            gdal.VSIFCloseL(f)
+
+            assert data == "foo"
+
+
+###############################################################################
 # Test rename
 
 

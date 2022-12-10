@@ -306,20 +306,37 @@ static bool ParseStorageConnectionString(const std::string& osStorageConnectionS
                                          bool& bUseHTTPS,
                                          CPLString& osEndpoint,
                                          CPLString& osStorageAccount,
-                                         CPLString& osStorageKey)
+                                         CPLString& osStorageKey,
+                                         CPLString& osSAS)
 {
     osStorageAccount = AzureCSGetParameter(osStorageConnectionString,
-                                           "AccountName", true);
+                                           "AccountName", false);
     osStorageKey = AzureCSGetParameter(osStorageConnectionString,
-                                           "AccountKey", true);
-    if( osStorageAccount.empty() || osStorageKey.empty() )
-        return false;
+                                           "AccountKey", false);
 
-    CPLString osProtocol(AzureCSGetParameter(
+    const CPLString osProtocol(AzureCSGetParameter(
         osStorageConnectionString, "DefaultEndpointsProtocol", false));
     bUseHTTPS = (osProtocol != "http");
 
-    CPLString osBlobEndpoint = AzureCSGetParameter(
+    if( osStorageAccount.empty() || osStorageKey.empty() )
+    {
+        osStorageAccount.clear();
+        osStorageKey.clear();
+
+        const CPLString osBlobEndpoint = AzureCSGetParameter(
+            osStorageConnectionString, "BlobEndpoint", false);
+        osSAS = AzureCSGetParameter(
+            osStorageConnectionString, "SharedAccessSignature", false);
+        if( !osBlobEndpoint.empty() && !osSAS.empty() )
+        {
+            osEndpoint = osBlobEndpoint;
+            return true;
+        }
+
+        return false;
+    }
+
+    const CPLString osBlobEndpoint = AzureCSGetParameter(
         osStorageConnectionString, "BlobEndpoint", false);
     if( !osBlobEndpoint.empty() )
     {
@@ -327,7 +344,7 @@ static bool ParseStorageConnectionString(const std::string& osStorageConnectionS
     }
     else
     {
-        CPLString osEndpointSuffix(AzureCSGetParameter(
+        const CPLString osEndpointSuffix(AzureCSGetParameter(
             osStorageConnectionString, "EndpointSuffix", false));
         if( !osEndpointSuffix.empty() )
             osEndpoint = (bUseHTTPS ? "https://" : "http://") + osStorageAccount + "." + osServicePrefix + "." + osEndpointSuffix;
@@ -430,7 +447,8 @@ static bool GetConfigurationFromCLIConfigFile(const std::string& osServicePrefix
                                             bUseHTTPS,
                                             osEndpoint,
                                             osStorageAccount,
-                                            osStorageKey);
+                                            osStorageKey,
+                                            osSAS);
     }
 
     if( osStorageAccount.empty() )
@@ -502,7 +520,8 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(const std::string& osPathForOpti
                                             bUseHTTPS,
                                             osEndpoint,
                                             osStorageAccount,
-                                            osStorageKey);
+                                            osStorageKey,
+                                            osSAS);
     }
     else
     {
