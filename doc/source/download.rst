@@ -261,6 +261,14 @@ available at https://anaconda.org/conda-forge/gdal.
 
     conda install -c conda-forge gdal
 
+
+To install the Arrow and Parquet drivers as plugins:
+
+::
+
+    conda install -c conda-forge libgdal-arrow-parquet
+
+
 Vcpkg
 ................................................................................
 
