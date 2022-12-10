@@ -94,6 +94,16 @@ it is lower by 4). This number can be configured with the configuration option
 :decl_configoption:`GDAL_NUM_THREADS`, which can be set to an integer value or
 ``ALL_CPUS``.
 
+Conda-forge package
+-------------------
+
+The driver can be installed as a plugin for the ``libgdal`` conda-forge package with:
+
+::
+
+    conda install -c conda-forge libgdal-arrow-parquet
+
+
 Links
 -----
 
