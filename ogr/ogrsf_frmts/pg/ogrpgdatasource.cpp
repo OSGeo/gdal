@@ -1697,6 +1697,12 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
         pszSchemaName = CPLStrdup(CSLFetchNameValue( papszOptions, "SCHEMA" ));
     }
 
+    const bool bTemporary = CPLFetchBool( papszOptions, "TEMPORARY", false );
+    if( bTemporary )
+    {
+        CPLFree(pszSchemaName);
+        pszSchemaName = CPLStrdup("pg_temp");
+    }
     if ( pszSchemaName == nullptr )
     {
         pszSchemaName = CPLStrdup(osCurrentSchema);
@@ -1862,11 +1868,8 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     const char* pszSerialType = bFID64 ? "BIGSERIAL": "SERIAL";
 
     CPLString osCreateTable;
-    const bool bTemporary = CPLFetchBool( papszOptions, "TEMPORARY", false );
     if( bTemporary )
     {
-        CPLFree(pszSchemaName);
-        pszSchemaName = CPLStrdup("pg_temp_1");
         osCreateTable.Printf("CREATE TEMPORARY TABLE %s",
                              OGRPGEscapeColumnName(pszTableName).c_str());
     }
