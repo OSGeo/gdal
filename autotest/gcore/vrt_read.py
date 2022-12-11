@@ -1443,8 +1443,8 @@ def test_vrt_protocol():
     assert ds.GetRasterBand(3).Checksum() == 4672
 
     ds = gdal.Open("vrt://data/byte.tif?bands=1&a_srs=EPSG:3031")
-    crs = osr.SpatialReference(wkt=ds.GetProjection())
-    assert crs.GetAttrValue("AUTHORITY", 1) == "3031"
+    crs = ds.GetSpatialRef()
+    assert crs.GetAuthorityCode(None) == "3031"
 
 
 def test_vrt_source_no_dstrect():

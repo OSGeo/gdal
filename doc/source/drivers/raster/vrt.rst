@@ -1623,14 +1623,14 @@ For example:
     vrt://my.tif?a_srs=OGC:CRS84
     
     
-The only supported options currently is bands and a_srs. Other may be added in the future.
+The only supported options currently is ``bands`` and ``a_srs``. Other may be added in the future.
 
-The effect of the bands option is to change the band composition. The values specified
+The effect of the ``bands`` option is to change the band composition. The values specified
 are the source band numbers (between 1 and N), possibly out-of-order or with repetitions.
 The ``mask`` value can be used to specify the global mask band. This can also
 be seen as an equivalent of running `gdal_translate -of VRT -b num1 ... -b numN`.
 
-The effect of the a_srs option is to assign the coordinate reference system of the source 
+The effect of the ``a_srs`` option (added in GDAL 3.7) is to assign the coordinate reference system of the source 
 in the same way as (:ref:`gdal_translate`), it may be missing, or incorrect. The value provided
 for 'a_srs' may be be a string or a file containing a srs definition.
 
