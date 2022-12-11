@@ -4945,6 +4945,20 @@ def test_ogr_gpkg_nolock():
     gdal.Unlink(filename + "-wal")
     gdal.Unlink(filename + "-shm")
 
+    ds = gdal.OpenEx(
+        "/vsizip/data/gpkg/poly.gpkg.zip/poly.gpkg",
+        gdal.OF_VECTOR,
+        open_options=["NOLOCK=YES"],
+    )
+    assert ds
+
+    ds = gdal.OpenEx(
+        "/vsizip/" + os.getcwd() + "/data/gpkg/poly.gpkg.zip/poly.gpkg",
+        gdal.OF_VECTOR,
+        open_options=["NOLOCK=YES"],
+    )
+    assert ds
+
 
 ###############################################################################
 # Run test_ogrsf
