@@ -2994,7 +2994,6 @@ bool NITFDataset::InitializeTREMetadata(bool bValidate)
             if (pszEscapedData == nullptr)
             {
                 NITFDESFreeTREData(pabyTREData);
-                NITFDESDeaccess(psDES);
                 bGotError = true;
                 break;
             }
