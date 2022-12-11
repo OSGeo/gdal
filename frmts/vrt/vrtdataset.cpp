@@ -972,18 +972,18 @@ GDALDataset *VRTDataset::OpenVRTProtocol( const char* pszSpec )
     CPLStringList argv;
     argv.AddString("-of");
     argv.AddString("VRT");
-    
+   
     for( int i = 0; i < aosTokens.size(); i++ )
     {
-    	  bTokenKnown = false; 
-    	
+        bTokenKnown = false; 
+      
         char* pszKey = nullptr;
         const char* pszValue = CPLParseNameValue(aosTokens[i], &pszKey);
         if( pszKey && pszValue )
         {
             if( EQUAL(pszKey, "bands") )
             {
-              	bTokenKnown = true;
+                bTokenKnown = true;
                 CPLStringList aosBands(CSLTokenizeString2(pszValue, ",", 0));
                 for( int j = 0; j < aosBands.size(); j++ )
                 {
@@ -1008,16 +1008,16 @@ GDALDataset *VRTDataset::OpenVRTProtocol( const char* pszSpec )
                 
                 for( const int nBand: anBands )
                 {
-                	argv.AddString("-b");
-                	argv.AddString(nBand == 0 ? "mask" : CPLSPrintf("%d", nBand));
+                  argv.AddString("-b");
+                  argv.AddString(nBand == 0 ? "mask" : CPLSPrintf("%d", nBand));
                 }
             }
             
             if ( EQUAL(pszKey, "a_srs")) {
-            	bTokenKnown = true;
-            	osA_SRS = CPLStrdup(pszValue);
-            	argv.AddString("-a_srs");
-            	argv.AddString(osA_SRS);
+              bTokenKnown = true;
+              osA_SRS = CPLStrdup(pszValue);
+              argv.AddString("-a_srs");
+              argv.AddString(osA_SRS);
             }
             
             if (!bTokenKnown)
