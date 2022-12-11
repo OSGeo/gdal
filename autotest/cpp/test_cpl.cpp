@@ -3164,11 +3164,6 @@ namespace
         for( auto iter = decompressors; *iter; ++iter )
         {
             const auto pCompressor = CPLGetDecompressor(*iter);
-            if( pCompressor == nullptr )
-            {
-                CSLDestroy( decompressors );
-                decompressors = nullptr;
-            }
             EXPECT_TRUE( pCompressor );
             if( pCompressor )
             {
@@ -3234,11 +3229,6 @@ namespace
         for( auto iter = compressors; *iter; ++iter )
         {
             const auto pCompressor = CPLGetCompressor(*iter);
-            if( pCompressor == nullptr )
-            {
-                CSLDestroy( compressors );
-                compressors = nullptr;
-            }
             EXPECT_TRUE( pCompressor );
             if( pCompressor )
             {
