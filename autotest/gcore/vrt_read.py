@@ -40,7 +40,7 @@ import gdaltest
 import pytest
 import test_cli_utilities
 
-from osgeo import gdal, osr
+from osgeo import gdal
 
 ###############################################################################
 # When imported build a list of units based on the files available.
