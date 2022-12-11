@@ -37,6 +37,7 @@
 #include <cstring>
 
 #include <algorithm>
+#include <array>
 #include <limits>
 #include <set>
 
@@ -58,7 +59,7 @@
 
 
 static int ArgIsNumeric( const char * );
-static void AttachMetadata( GDALDatasetH, char ** );
+static void AttachMetadata( GDALDatasetH, const CPLStringList& );
 static void CopyBandInfo( GDALRasterBand * poSrcBand, GDALRasterBand * poDstBand,
                           int bCanCopyStatsMetadata, int bCopyScale, int bCopyNoData, bool bCopyRAT,
                           const GDALTranslateOptions* psOptions );
@@ -82,26 +83,26 @@ constexpr int OVR_LEVEL_NONE = -1;
 
 /** scaling parameters for use in GDALTranslateOptions.
  */
-typedef struct
+struct GDALTranslateScaleParams
 {
     /*! scaling is done only if it is set to TRUE. This is helpful when there is a need to
         scale only certain bands. */
-    int     bScale;
+    bool    bScale = false;
 
     /*! set it to TRUE if dfScaleSrcMin and dfScaleSrcMax is set. When it is FALSE, the
         input range is automatically computed from the source data. */
-    bool    bHaveScaleSrc;
+    bool    bHaveScaleSrc = false;
 
     /*! the range of input pixel values which need to be scaled */
-    double dfScaleSrcMin;
-    double dfScaleSrcMax;
+    double dfScaleSrcMin = 0;
+    double dfScaleSrcMax = 0;
 
     /*! the range of output pixel values. If GDALTranslateScaleParams::dfScaleDstMin
         and GDALTranslateScaleParams::dfScaleDstMax are not set, then the output
         range is 0 to 255. */
-    double dfScaleDstMin;
-    double dfScaleDstMax;
-} GDALTranslateScaleParams;
+    double dfScaleDstMin = 0;
+    double dfScaleDstMax = 0;
+};
 
 /************************************************************************/
 /*                         GDALTranslateOptions                         */
@@ -114,189 +115,213 @@ struct GDALTranslateOptions
 {
 
     /*! output format. Use the short format name. */
-    char *pszFormat;
+    std::string osFormat{};
 
     /*! allow or suppress progress monitor and other non-error output */
-    bool bQuiet;
+    bool bQuiet = true;
 
     /*! the progress function to use */
-    GDALProgressFunc pfnProgress;
+    GDALProgressFunc pfnProgress = GDALDummyProgress;
 
     /*! pointer to the progress data variable */
-    void *pProgressData;
+    void *pProgressData = nullptr;
 
     /*! for the output bands to be of the indicated data type */
-    GDALDataType eOutputType;
+    GDALDataType eOutputType = GDT_Unknown;
 
-    MaskMode eMaskMode;
+    MaskMode eMaskMode = MASK_AUTO;
 
     /*! number of input bands to write to the output file, or to reorder bands */
-    int nBandCount;
+    int nBandCount = 0;
 
     /*! list of input bands to write to the output file, or to reorder bands. The
         value 1 corresponds to the 1st band. */
-    int *panBandList; /* negative value of panBandList[i] means mask band of ABS(panBandList[i]) */
+    std::vector<int> anBandList{}; /* negative value of panBandList[i] means mask band of ABS(panBandList[i]) */
 
     /*! size of the output file. GDALTranslateOptions::nOXSizePixel is in pixels and
         GDALTranslateOptions::nOYSizePixel is in lines. If one of the two values is
         set to 0, its value will be determined from the other one, while maintaining
         the aspect ratio of the source dataset */
-    int nOXSizePixel;
-    int nOYSizePixel;
+    int nOXSizePixel = 0;
+    int nOYSizePixel = 0;
 
     /*! size of the output file. GDALTranslateOptions::dfOXSizePct and GDALTranslateOptions::dfOYSizePct
         are fraction of the input image size. The value 100 means 100%. If one of the two values is set
         to 0, its value will be determined from the other one, while maintaining the aspect ratio of the
         source dataset */
-    double dfOXSizePct;
-    double dfOYSizePct;
+    double dfOXSizePct = 0;
+    double dfOYSizePct = 0;
 
     /*! list of creation options to the output format driver */
-    char **papszCreateOptions;
+    CPLStringList aosCreateOptions{};
 
     /*! subwindow from the source image for copying based on pixel/line location */
-    double adfSrcWin[4];
+    std::array<double, 4> adfSrcWin{{0,0,0,0}};
 
     /*! don't be forgiving of mismatches and lost data when translating to the output format */
-    bool bStrict;
+    bool bStrict = false;
 
     /*! apply the scale/offset metadata for the bands to convert scaled values to unscaled values.
      *  It is also often necessary to reset the output datatype with GDALTranslateOptions::eOutputType */
-    bool bUnscale;
+    bool bUnscale = false;
 
-    bool bSetScale;
+    bool bSetScale = false;
 
-    double dfScale;
+    double dfScale = 1;
 
-    bool bSetOffset;
+    bool bSetOffset = false;
 
-    double dfOffset;
-
-    /*! the size of pasScaleParams */
-    int nScaleRepeat;
+    double dfOffset = 0;
 
     /*! the list of scale parameters for each band. */
-    GDALTranslateScaleParams *pasScaleParams;
+    std::vector<GDALTranslateScaleParams> asScaleParams{};
 
     /*! It is set to TRUE, when scale parameters are specific to each band */
-    bool bHasUsedExplicitScaleBand;
-
-    /*! the size of the list padfExponent */
-    int nExponentRepeat;
+    bool bHasUsedExplicitScaleBand = false;
 
     /*! to apply non-linear scaling with a power function. It is the list of exponents of the power
-        function (must be positive). This option must be used with GDALTranslateOptions::pasScaleParams. If
-        GDALTranslateOptions::nExponentRepeat is 1, it is applied to all bands of the output image. */
-    double *padfExponent;
+        function (must be positive). This option must be used with GDALTranslateOptions::asScaleParams. If
+        GDALTranslateOptions::adfExponent.size() is 1, it is applied to all bands of the output image. */
+    std::vector<double> adfExponent{};
 
-    bool bHasUsedExplicitExponentBand;
+    bool bHasUsedExplicitExponentBand = false;
 
     /*! list of metadata key and value to set on the output dataset if possible.
      *  GDALTranslateOptionsSetMetadataOptions() and GDALTranslateOptionsAddMetadataOptions()
      *  should be used */
-    char **papszMetadataOptions;
+    CPLStringList aosMetadataOptions{};
 
     /*! override the projection for the output file. The SRS may be any of the usual
         GDAL/OGR forms, complete WKT, PROJ.4, EPSG:n or a file containing the WKT. */
-    char *pszOutputSRS;
+    std::string osOutputSRS{};
 
     /*! Coordinate epoch of output SRS */
-    double dfOutputCoordinateEpoch;
+    double dfOutputCoordinateEpoch = 0;
 
     /*! does not copy source GCP into destination dataset (when TRUE) */
-    bool bNoGCP;
+    bool bNoGCP = false;
 
     /*! number of GCPS to be added to the output dataset */
-    int nGCPCount;
+    int nGCPCount = 0;
 
     /*! list of GCPs to be added to the output dataset */
-    GDAL_GCP *pasGCPs;
+    GDAL_GCP *pasGCPs = nullptr;
 
     /*! assign/override the georeferenced bounds of the output file. This assigns
         georeferenced bounds to the output file, ignoring what would have been
         derived from the source file. So this does not cause reprojection to the
         specified SRS. */
-    double adfULLR[4];
+    std::array<double, 4> adfULLR{{0,0,0,0}};
 
-    /*! set a nodata value specified in GDALTranslateOptions::szNoData to the output bands */
-    bool bSetNoData;
+    /*! set a nodata value specified in GDALTranslateOptions::osNoData to the output bands */
+    bool bSetNoData = 0;
 
     /*! avoid setting a nodata value to the output file if one exists for the source file */
-    bool bUnsetNoData;
+    bool bUnsetNoData = 0;
 
     /*! Assign a specified nodata value to output bands ( GDALTranslateOptions::bSetNoData option
         should be set). Note that if the input dataset has a nodata value, this does not cause
         pixel values that are equal to that nodata value to be changed to the value specified. */
-    char szNoData[32];
+    std::string osNoData{};
 
     /*! to expose a dataset with 1 band with a color table as a dataset with
         3 (RGB) or 4 (RGBA) bands. Useful for output drivers such as JPEG,
         JPEG2000, MrSID, ECW that don't support color indexed datasets.
         The 1 value enables to expand a dataset with a color table that only
         contains gray levels to a gray indexed dataset. */
-    int nRGBExpand;
+    int nRGBExpand = 0;
 
-    int nMaskBand; /* negative value means mask band of ABS(nMaskBand) */
+    int nMaskBand = 0; /* negative value means mask band of ABS(nMaskBand) */
 
     /*! force recomputation of statistics */
-    bool bStats;
+    bool bStats = false;
 
-    bool bApproxStats;
+    bool bApproxStats = false;
 
     /*! If this option is set, GDALTranslateOptions::adfSrcWin or (GDALTranslateOptions::dfULX,
         GDALTranslateOptions::dfULY, GDALTranslateOptions::dfLRX, GDALTranslateOptions::dfLRY)
         values that falls partially outside the source raster extent will be considered
         as an error. The default behavior is to accept such requests. */
-    bool bErrorOnPartiallyOutside;
+    bool bErrorOnPartiallyOutside = false;
 
     /*! Same as bErrorOnPartiallyOutside, except that the criterion for
         erroring out is when the request falls completely outside the
         source raster extent. */
-    bool bErrorOnCompletelyOutside;
+    bool bErrorOnCompletelyOutside = false;
 
     /*! does not copy source RAT into destination dataset (when TRUE) */
-    bool bNoRAT;
+    bool bNoRAT = false;
 
     /*! resampling algorithm
         nearest (default), bilinear, cubic, cubicspline, lanczos, average, mode */
-    char *pszResampling;
+    std::string osResampling{};
 
     /*! target resolution. The values must be expressed in georeferenced units.
         Both must be positive values. This is exclusive with GDALTranslateOptions::nOXSizePixel
         (or GDALTranslateOptions::dfOXSizePct), GDALTranslateOptions::nOYSizePixel
         (or GDALTranslateOptions::dfOYSizePct) and GDALTranslateOptions::adfULLR */
-    double dfXRes;
-    double dfYRes;
+    double dfXRes = 0;
+    double dfYRes = 0;
 
     /*! subwindow from the source image for copying (like GDALTranslateOptions::adfSrcWin)
         but with the corners given in georeferenced coordinates (by default
         expressed in the SRS of the dataset. Can be changed with
-        pszProjSRS) */
-    double dfULX;
-    double dfULY;
-    double dfLRX;
-    double dfLRY;
+        osProjSRS) */
+    double dfULX = 0;
+    double dfULY = 0;
+    double dfLRX = 0;
+    double dfLRY = 0;
 
     /*! SRS in which to interpret the coordinates given with GDALTranslateOptions::dfULX,
         GDALTranslateOptions::dfULY, GDALTranslateOptions::dfLRX, GDALTranslateOptions::dfLRY.
         The SRS may be any of the usual GDAL/OGR forms, complete WKT, PROJ.4, EPSG:n or
         a file containing the WKT. Note that this does not cause reprojection of the
         dataset to the specified SRS. */
-    char *pszProjSRS;
+    std::string osProjSRS{};
 
-    int nLimitOutSize;
+    int nLimitOutSize = 0;
 
     // Array of color interpretations per band. Should be a GDALColorInterp
     // value, or -1 if no override.
-    int nColorInterpSize;
-    int* panColorInterp;
+    std::vector<int> anColorInterp{};
 
     /*! does not copy source XMP into destination dataset (when TRUE) */
-    bool bNoXMP;
+    bool bNoXMP = false;
 
     /*! overview level of source file to be used */
-    int nOvLevel;
+    int nOvLevel = OVR_LEVEL_AUTO;
+
+    GDALTranslateOptions() = default;
+    ~GDALTranslateOptions();
+    GDALTranslateOptions* Clone() const;
+
+private:
+    GDALTranslateOptions(const GDALTranslateOptions&) = default;
+    GDALTranslateOptions& operator=(const GDALTranslateOptions&) = delete;
 };
+
+/************************************************************************/
+/*             GDALTranslateOptions::~GDALTranslateOptions()            */
+/************************************************************************/
+
+GDALTranslateOptions::~GDALTranslateOptions()
+{
+    if( nGCPCount )
+        GDALDeinitGCPs(nGCPCount, pasGCPs);
+    CPLFree(pasGCPs);
+}
+
+/************************************************************************/
+/*                    GDALTranslateOptions::Clone(()                    */
+/************************************************************************/
+
+GDALTranslateOptions* GDALTranslateOptions::Clone() const
+{
+    GDALTranslateOptions* psOptions = new GDALTranslateOptions(*this);
+    if( nGCPCount )
+        psOptions->pasGCPs = GDALDuplicateGCPs( nGCPCount, pasGCPs );
+    return psOptions;
+}
 
 /************************************************************************/
 /*                              SrcToDst()                              */
@@ -318,7 +343,8 @@ static void SrcToDst( double dfX, double dfY,
 /*                          GetSrcDstWindow()                           */
 /************************************************************************/
 
-static bool FixSrcDstWindow( double* padfSrcWin, double* padfDstWin,
+static bool FixSrcDstWindow( std::array<double, 4>& padfSrcWin,
+                             std::array<double, 4>& padfDstWin,
                              int nSrcRasterXSize,
                              int nSrcRasterYSize )
 
@@ -454,56 +480,6 @@ static bool FixSrcDstWindow( double* padfSrcWin, double* padfDstWin,
 }
 
 /************************************************************************/
-/*                          GDALTranslateOptionsClone()                 */
-/************************************************************************/
-
-static
-GDALTranslateOptions* GDALTranslateOptionsClone(const GDALTranslateOptions *psOptionsIn)
-{
-    GDALTranslateOptions* psOptions = static_cast<GDALTranslateOptions*>(
-        CPLMalloc(sizeof(GDALTranslateOptions)));
-    memcpy(psOptions, psOptionsIn, sizeof(GDALTranslateOptions));
-    if( psOptionsIn->pszFormat ) psOptions->pszFormat = CPLStrdup(psOptionsIn->pszFormat);
-    if( psOptionsIn->panBandList )
-    {
-        psOptions->panBandList =
-            static_cast<int *>(CPLMalloc(sizeof(int) * psOptions->nBandCount));
-        memcpy(psOptions->panBandList, psOptionsIn->panBandList,
-               sizeof(int) * psOptions->nBandCount);
-    }
-    psOptions->papszCreateOptions = CSLDuplicate(psOptionsIn->papszCreateOptions);
-    if( psOptionsIn->pasScaleParams )
-    {
-        psOptions->pasScaleParams = static_cast<GDALTranslateScaleParams *>(
-            CPLMalloc(sizeof(GDALTranslateScaleParams) *
-                      psOptions->nScaleRepeat));
-        memcpy(psOptions->pasScaleParams, psOptionsIn->pasScaleParams,
-               sizeof(GDALTranslateScaleParams) * psOptions->nScaleRepeat);
-    }
-    if( psOptionsIn->padfExponent )
-    {
-        psOptions->padfExponent = static_cast<double *>(
-            CPLMalloc(sizeof(double) * psOptions->nExponentRepeat));
-        memcpy(psOptions->padfExponent, psOptionsIn->padfExponent,
-               sizeof(double) * psOptions->nExponentRepeat);
-    }
-    psOptions->papszMetadataOptions = CSLDuplicate(psOptionsIn->papszMetadataOptions);
-    if( psOptionsIn->pszOutputSRS ) psOptions->pszOutputSRS = CPLStrdup(psOptionsIn->pszOutputSRS);
-    if( psOptionsIn->nGCPCount )
-        psOptions->pasGCPs = GDALDuplicateGCPs( psOptionsIn->nGCPCount, psOptionsIn->pasGCPs );
-    if( psOptionsIn->pszResampling ) psOptions->pszResampling = CPLStrdup(psOptionsIn->pszResampling);
-    if( psOptionsIn->pszProjSRS ) psOptions->pszProjSRS = CPLStrdup(psOptionsIn->pszProjSRS);
-    if( psOptionsIn->panColorInterp )
-    {
-        psOptions->panColorInterp =
-            static_cast<int *>(CPLMalloc(sizeof(int) * psOptions->nColorInterpSize));
-        memcpy(psOptions->panColorInterp, psOptionsIn->panColorInterp,
-               sizeof(int) * psOptions->nColorInterpSize);
-    }
-    return psOptions;
-}
-
-/************************************************************************/
 /*                        GDALTranslateFlush()                          */
 /************************************************************************/
 
@@ -544,9 +520,9 @@ static void ReworkArray(CPLJSONObject& container, const CPLJSONObject& obj,
     if( oArray.Size() == nSrcBandCount )
     {
         CPLJSONArray oNewArray;
-        for( int i = 0; i < psOptions->nBandCount; i++ )
+        for( int nBand: psOptions->anBandList )
         {
-            const int iSrcIdx = psOptions->panBandList[i]-1;
+            const int iSrcIdx = nBand-1;
             oNewArray.Add(oArray[iSrcIdx]);
         }
         const auto childName(obj.GetName());
@@ -611,7 +587,7 @@ static double AdjustNoDataValue( double dfInputNoDataValue,
                                  const GDALTranslateOptions *psOptions )
 {
     bool bSignedByte = false;
-    const char* pszPixelType = CSLFetchNameValue( psOptions->papszCreateOptions, "PIXELTYPE" );
+    const char* pszPixelType = psOptions->aosCreateOptions.FetchNameValue( "PIXELTYPE" );
     if( pszPixelType == nullptr && poBand->GetRasterDataType() == GDT_Byte )
     {
         poBand->EnablePixelTypeSignedByteWarning(false);
@@ -710,7 +686,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     }
 
     GDALTranslateOptions* psOptions =
-        (psOptionsIn) ? GDALTranslateOptionsClone(psOptionsIn) :
+        (psOptionsIn) ? psOptionsIn->Clone() :
                         GDALTranslateOptionsNew(nullptr, nullptr);
 
     GDALDatasetH hOutDS = nullptr;
@@ -738,15 +714,15 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 
     CPLString osProjSRS;
 
-    if(psOptions->pszProjSRS != nullptr)
+    if( !psOptions->osProjSRS.empty() )
     {
         OGRSpatialReference oSRS;
         oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-        if( oSRS.SetFromUserInput( psOptions->pszProjSRS ) != OGRERR_NONE )
+        if( oSRS.SetFromUserInput( psOptions->osProjSRS.c_str() ) != OGRERR_NONE )
         {
             CPLError( CE_Failure, CPLE_AppDefined, "Failed to process SRS definition: %s",
-                      psOptions->pszProjSRS );
+                      psOptions->osProjSRS.c_str() );
             GDALTranslateOptionsFree(psOptions);
             return nullptr;
         }
@@ -758,13 +734,13 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         CPLFree( pszSRS );
     }
 
-    if(psOptions->pszOutputSRS != nullptr)
+    if( !psOptions->osOutputSRS.empty() )
     {
         OGRSpatialReference oOutputSRS;
-        if( oOutputSRS.SetFromUserInput( psOptions->pszOutputSRS ) != OGRERR_NONE )
+        if( oOutputSRS.SetFromUserInput( psOptions->osOutputSRS.c_str() ) != OGRERR_NONE )
         {
             CPLError( CE_Failure, CPLE_AppDefined, "Failed to process SRS definition: %s",
-                      psOptions->pszOutputSRS );
+                      psOptions->osOutputSRS.c_str() );
             GDALTranslateOptionsFree(psOptions);
             return nullptr;
         }
@@ -806,7 +782,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /* -------------------------------------------------------------------- */
     bool bAllBandsInOrder = true;
 
-    if( psOptions->panBandList == nullptr )
+    if( psOptions->anBandList.empty() )
     {
 
         psOptions->nBandCount = poSrcDS->GetRasterCount();
@@ -818,27 +794,26 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
             return nullptr;
         }
 
-        psOptions->panBandList = static_cast<int *>(
-            CPLMalloc(sizeof(int) * psOptions->nBandCount));
+        psOptions->anBandList.resize(psOptions->nBandCount);
         for( int i = 0; i < psOptions->nBandCount; i++ )
-            psOptions->panBandList[i] = i+1;
+            psOptions->anBandList[i] = i+1;
     }
     else
     {
         for( int i = 0; i < psOptions->nBandCount; i++ )
         {
-            if( std::abs(psOptions->panBandList[i]) >
+            if( std::abs(psOptions->anBandList[i]) >
                 poSrcDS->GetRasterCount() )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Band %d requested, but only bands 1 to %d available.",
-                         std::abs(psOptions->panBandList[i]),
+                         std::abs(psOptions->anBandList[i]),
                          poSrcDS->GetRasterCount() );
                 GDALTranslateOptionsFree(psOptions);
                 return nullptr;
             }
 
-            if( psOptions->panBandList[i] != i+1 )
+            if( psOptions->anBandList[i] != i+1 )
                 bAllBandsInOrder = FALSE;
         }
 
@@ -846,7 +821,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
             bAllBandsInOrder = FALSE;
     }
 
-    if( psOptions->nScaleRepeat > psOptions->nBandCount )
+    if( static_cast<int>(psOptions->asScaleParams.size()) > psOptions->nBandCount )
     {
         if( !psOptions->bHasUsedExplicitScaleBand )
             CPLError( CE_Failure, CPLE_IllegalArg, "-scale has been specified more times than the number of output bands");
@@ -858,7 +833,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         return nullptr;
     }
 
-    if( psOptions->nExponentRepeat > psOptions->nBandCount )
+    if( static_cast<int>(psOptions->adfExponent.size()) > psOptions->nBandCount )
     {
         if( !psOptions->bHasUsedExplicitExponentBand )
             CPLError( CE_Failure, CPLE_IllegalArg, "-exponent has been specified more times than the number of output bands");
@@ -942,8 +917,8 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         psOptions->adfSrcWin[3] = (psOptions->dfLRY - psOptions->dfULY) / adfGeoTransform[5];
 
         // In case of nearest resampling, round to integer pixels (#6610)
-        if( psOptions->pszResampling == nullptr ||
-            EQUALN(psOptions->pszResampling, "NEAR", 4) )
+        if( psOptions->osResampling.empty() ||
+            EQUALN(psOptions->osResampling.c_str(), "NEAR", 4) )
         {
             psOptions->adfSrcWin[0] = floor(psOptions->adfSrcWin[0] + 0.001);
             psOptions->adfSrcWin[1] = floor(psOptions->adfSrcWin[1] + 0.001);
@@ -1015,7 +990,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /* -------------------------------------------------------------------- */
 /*      Find the output driver.                                         */
 /* -------------------------------------------------------------------- */
-    if( psOptions->pszFormat == nullptr )
+    if( psOptions->osFormat.empty() )
     {
         CPLString osFormat = GetOutputDriverForRaster(pszDest);
         if( osFormat.empty() )
@@ -1023,14 +998,14 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
             GDALTranslateOptionsFree(psOptions);
             return nullptr;
         }
-        psOptions->pszFormat = CPLStrdup(osFormat);
+        psOptions->osFormat = osFormat;
     }
 
-    GDALDriverH hDriver = GDALGetDriverByName(psOptions->pszFormat);
+    GDALDriverH hDriver = GDALGetDriverByName(psOptions->osFormat.c_str());
     if( hDriver == nullptr )
     {
         CPLError( CE_Failure, CPLE_IllegalArg, "Output driver `%s' not recognised.",
-                  psOptions->pszFormat);
+                  psOptions->osFormat.c_str());
         GDALTranslateOptionsFree(psOptions);
         return nullptr;
     }
@@ -1042,15 +1017,15 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /*      This is needed for                                              */
 /*      gdal_translate foo.tif foo.tif.ovr -outsize 50% 50%             */
 /* -------------------------------------------------------------------- */
-    if( !CPLFetchBool(psOptions->papszCreateOptions, "APPEND_SUBDATASET", false) )
+    if( !psOptions->aosCreateOptions.FetchBool("APPEND_SUBDATASET", false) )
     {
         // Someone issuing Create("foo.tif") on a
         // memory driver doesn't expect files with those names to be deleted
         // on a file system...
         // This is somewhat messy. Ideally there should be a way for the
         // driver to overload the default behavior
-        if( !EQUAL(psOptions->pszFormat, "MEM") &&
-            !EQUAL(psOptions->pszFormat, "Memory") )
+        if( !EQUAL(psOptions->osFormat.c_str(), "MEM") &&
+            !EQUAL(psOptions->osFormat.c_str(), "Memory") )
         {
 /* -------------------------------------------------------------------- */
 /*      Establish list of files of output dataset if it already exists. */
@@ -1058,7 +1033,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
             std::set<std::string> oSetExistingDestFiles;
             {
                 CPLPushErrorHandler(CPLQuietErrorHandler);
-                const char* const apszAllowedDrivers[] = { psOptions->pszFormat, nullptr };
+                const char* const apszAllowedDrivers[] = { psOptions->osFormat.c_str(), nullptr };
                 auto poExistingOutputDS = std::unique_ptr<GDALDataset>(
                     GDALDataset::Open(pszDest, GDAL_OF_RASTER, apszAllowedDrivers));
                 if( poExistingOutputDS )
@@ -1139,7 +1114,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s driver has no raster capabilities.",
-                  psOptions->pszFormat );
+                  psOptions->osFormat.c_str() );
         GDALTranslateOptionsFree(psOptions);
         return nullptr;
     }
@@ -1151,7 +1126,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s driver has no creation capabilities.",
-                  psOptions->pszFormat );
+                  psOptions->osFormat.c_str() );
         GDALTranslateOptionsFree(psOptions);
         return nullptr;
     }
@@ -1172,18 +1147,18 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         psOptions->dfXRes == 0.0;
 
     if( psOptions->eOutputType == GDT_Unknown
-        && psOptions->nScaleRepeat == 0 && psOptions->nExponentRepeat == 0 && !psOptions->bUnscale
+        && psOptions->asScaleParams.empty() && psOptions->adfExponent.empty() && !psOptions->bUnscale
         && !psOptions->bSetScale && !psOptions->bSetOffset
-        && CSLCount(psOptions->papszMetadataOptions) == 0 && bAllBandsInOrder
+        && psOptions->aosMetadataOptions.empty() && bAllBandsInOrder
         && psOptions->eMaskMode == MASK_AUTO
         && bSpatialArrangementPreserved
         && !psOptions->bNoGCP
         && psOptions->nGCPCount == 0 && !bGotBounds
-        && psOptions->pszOutputSRS == nullptr
+        && psOptions->osOutputSRS.empty()
         && psOptions->dfOutputCoordinateEpoch == 0
         && !psOptions->bSetNoData && !psOptions->bUnsetNoData
         && psOptions->nRGBExpand == 0 && !psOptions->bNoRAT
-        && psOptions->panColorInterp == nullptr
+        && psOptions->anColorInterp.empty()
         && !psOptions->bNoXMP
         && psOptions->nOvLevel == OVR_LEVEL_AUTO )
     {
@@ -1226,7 +1201,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         }
 
         hOutDS = GDALCreateCopy( hDriver, pszDest, GDALDataset::ToHandle(poSrcDS),
-                                 psOptions->bStrict, psOptions->papszCreateOptions,
+                                 psOptions->bStrict, psOptions->aosCreateOptions.List(),
                                  psOptions->pfnProgress, psOptions->pProgressData );
         hOutDS = GDALTranslateFlush(hOutDS);
 
@@ -1234,7 +1209,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         return hOutDS;
     }
 
-    if( CSLFetchNameValue(psOptions->papszCreateOptions, "COPY_SRC_OVERVIEWS") )
+    if( psOptions->aosCreateOptions.FetchNameValue("COPY_SRC_OVERVIEWS") )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "General options of gdal_translate make the "
@@ -1483,9 +1458,9 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     if( psOptions->nGCPCount == 0 )
     {
         OGRSpatialReference oSRS;
-        if( psOptions->pszOutputSRS != nullptr )
+        if( !psOptions->osOutputSRS.empty() )
         {
-            oSRS.SetFromUserInput( psOptions->pszOutputSRS );
+            oSRS.SetFromUserInput( psOptions->osOutputSRS.c_str() );
             oSRS.SetAxisMappingStrategy( OAMS_TRADITIONAL_GIS_ORDER );
         }
         else
@@ -1546,9 +1521,9 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     if( psOptions->nGCPCount != 0 )
     {
         OGRSpatialReference oSRS;
-        if( psOptions->pszOutputSRS != nullptr )
+        if( !psOptions->osOutputSRS.empty() )
         {
-            oSRS.SetFromUserInput( psOptions->pszOutputSRS );
+            oSRS.SetFromUserInput( psOptions->osOutputSRS.c_str() );
             oSRS.SetAxisMappingStrategy( OAMS_TRADITIONAL_GIS_ORDER );
         }
         else
@@ -1586,7 +1561,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /*      To make the VRT to look less awkward (but this is optional      */
 /*      in fact), avoid negative values.                                */
 /* -------------------------------------------------------------------- */
-    double adfDstWin[4] =
+    std::array<double, 4> adfDstWin =
         {0.0, 0.0, static_cast<double>(nOXSize), static_cast<double>(nOYSize)};
 
     // When specifying -tr with non-nearest resampling, make sure that the
@@ -1594,17 +1569,14 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     // avoid any shift.
     if( bHasSrcGeoTransform && bHasDstGeoTransform &&
         psOptions->dfXRes != 0.0 &&
-        psOptions->pszResampling != nullptr &&
-        !EQUALN(psOptions->pszResampling, "NEAR", 4) )
+        !psOptions->osResampling.empty() &&
+        !EQUALN(psOptions->osResampling.c_str(), "NEAR", 4) )
     {
         adfDstWin[2] = psOptions->adfSrcWin[2] * adfSrcGeoTransform[1] / adfDstGeoTransform[1];
         adfDstWin[3] = psOptions->adfSrcWin[3] * fabs(adfSrcGeoTransform[5] / adfDstGeoTransform[5]);
     }
 
-    double adfSrcWinOri[4];
-    static_assert(sizeof(adfSrcWinOri) == sizeof(psOptions->adfSrcWin),
-                  "inconsistent adfSrcWin size");
-    memcpy(adfSrcWinOri, psOptions->adfSrcWin, sizeof(psOptions->adfSrcWin));
+    const auto adfSrcWinOri = psOptions->adfSrcWin;
     const double dfRatioX = poSrcDS->GetRasterXSize() == 0 ? 1.0 :
         static_cast<double>(poSrcDSOri->GetRasterXSize()) / poSrcDS->GetRasterXSize();
     const double dfRatioY = poSrcDS->GetRasterYSize() == 0 ? 1.0 :
@@ -1620,7 +1592,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /*      Transfer generally applicable metadata.                         */
 /* -------------------------------------------------------------------- */
     char** papszMetadata = CSLDuplicate(poSrcDS->GetMetadata());
-    if ( psOptions->nScaleRepeat > 0 || psOptions->bUnscale || psOptions->eOutputType != GDT_Unknown )
+    if ( !psOptions->asScaleParams.empty() || psOptions->bUnscale || psOptions->eOutputType != GDT_Unknown )
     {
         /* Remove TIFFTAG_MINSAMPLEVALUE and TIFFTAG_MAXSAMPLEVALUE */
         /* if the data range may change because of options */
@@ -1674,7 +1646,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 
     poVDS->SetMetadata( papszMetadata );
     CSLDestroy( papszMetadata );
-    AttachMetadata( GDALDataset::ToHandle(poVDS), psOptions->papszMetadataOptions );
+    AttachMetadata( GDALDataset::ToHandle(poVDS), psOptions->aosMetadataOptions );
 
     const char* pszInterleave = poSrcDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
     if (pszInterleave)
@@ -1709,7 +1681,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     }
 
     // PDS4 -> PDS4 special case
-    if( EQUAL(psOptions->pszFormat, "PDS4") )
+    if( EQUAL(psOptions->osFormat.c_str(), "PDS4") )
     {
         char** papszMD_PDS4 = poSrcDS->GetMetadata("xml:PDS4");
         if( papszMD_PDS4 != nullptr)
@@ -1717,7 +1689,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     }
 
     // VICAR -> VICAR special case
-    if( EQUAL(psOptions->pszFormat, "VICAR") )
+    if( EQUAL(psOptions->osFormat.c_str(), "VICAR") )
     {
         char** papszMD_VICAR = poSrcDS->GetMetadata("json:VICAR");
         if( papszMD_VICAR != nullptr)
@@ -1794,15 +1766,15 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     if (psOptions->nRGBExpand != 0)
     {
         GDALRasterBand *poSrcBand = poSrcDS->
-                GetRasterBand(std::abs(psOptions->panBandList[0]));
-        if (psOptions->panBandList[0] < 0)
+                GetRasterBand(std::abs(psOptions->anBandList[0]));
+        if (psOptions->anBandList[0] < 0)
             poSrcBand = poSrcBand->GetMaskBand();
         GDALColorTable* poColorTable = poSrcBand->GetColorTable();
         if (poColorTable == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Error : band %d has no color table",
-                     std::abs(psOptions->panBandList[0]));
+                     std::abs(psOptions->anBandList[0]));
             GDALClose(poVDS);
             GDALTranslateOptionsFree(psOptions);
             return nullptr;
@@ -1843,10 +1815,10 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 
     // Can be set to TRUE in the band loop too
     bool bFilterOutStatsMetadata =
-        psOptions->nScaleRepeat > 0 || psOptions->bUnscale ||
+        !psOptions->asScaleParams.empty() || psOptions->bUnscale ||
         !bSpatialArrangementPreserved || psOptions->nRGBExpand != 0;
 
-    if( psOptions->nColorInterpSize > psOptions->nBandCount )
+    if( static_cast<int>(psOptions->anColorInterp.size()) > psOptions->nBandCount )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "More bands defined in -colorinterp than output bands");
@@ -1863,16 +1835,16 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         if (psOptions->nRGBExpand != 0)
         {
             if (nSrcBandCount == 2 && psOptions->nRGBExpand == 4 && i == 3)
-                nSrcBand = psOptions->panBandList[1];
+                nSrcBand = psOptions->anBandList[1];
             else
             {
-                nSrcBand = psOptions->panBandList[0];
+                nSrcBand = psOptions->anBandList[0];
                 nComponent = i + 1;
             }
         }
         else
         {
-            nSrcBand = psOptions->panBandList[i];
+            nSrcBand = psOptions->anBandList[i];
         }
 
         GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand(std::abs(nSrcBand));
@@ -1993,17 +1965,17 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 
         // Preserve NBITS if no option change values
         const char* pszNBits = poSrcBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
-        if( pszNBits && psOptions->nRGBExpand == 0 && psOptions->nScaleRepeat == 0 &&
-            !psOptions->bUnscale && psOptions->eOutputType == GDT_Unknown && psOptions->pszResampling == nullptr )
+        if( pszNBits && psOptions->nRGBExpand == 0 && psOptions->asScaleParams.empty() &&
+            !psOptions->bUnscale && psOptions->eOutputType == GDT_Unknown && psOptions->osResampling.empty() )
         {
             poVRTBand->SetMetadataItem("NBITS", pszNBits, "IMAGE_STRUCTURE");
         }
 
         // Preserve PIXELTYPE if no option change values
         if( poSrcBand->GetRasterDataType() == GDT_Byte &&
-            psOptions->nRGBExpand == 0 && psOptions->nScaleRepeat == 0 &&
+            psOptions->nRGBExpand == 0 && psOptions->asScaleParams.empty() &&
             !psOptions->bUnscale && psOptions->eOutputType == GDT_Unknown &&
-            psOptions->pszResampling == nullptr )
+            psOptions->osResampling.empty() )
         {
             poSrcBand->EnablePixelTypeSignedByteWarning(false);
             const char* pszPixelType = poSrcBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
@@ -2025,7 +1997,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /* -------------------------------------------------------------------- */
         double dfScale = 1.0;
         double dfOffset = 0.0;
-        int bScale = FALSE;
+        bool bScale = false;
         bool bHaveScaleSrc = false;
         double dfScaleSrcMin = 0.0;
         double dfScaleSrcMax = 0.0;
@@ -2034,35 +2006,34 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         bool bExponentScaling = false;
         double dfExponent = 0.0;
 
-        // TODO(schwehr): Is bScale a bool?
-        if( i < psOptions->nScaleRepeat && psOptions->pasScaleParams[i].bScale )
+        if( i < static_cast<int>(psOptions->asScaleParams.size()) && psOptions->asScaleParams[i].bScale )
         {
-            bScale = psOptions->pasScaleParams[i].bScale;
-            bHaveScaleSrc = psOptions->pasScaleParams[i].bHaveScaleSrc;
-            dfScaleSrcMin = psOptions->pasScaleParams[i].dfScaleSrcMin;
-            dfScaleSrcMax = psOptions->pasScaleParams[i].dfScaleSrcMax;
-            dfScaleDstMin = psOptions->pasScaleParams[i].dfScaleDstMin;
-            dfScaleDstMax = psOptions->pasScaleParams[i].dfScaleDstMax;
+            bScale = psOptions->asScaleParams[i].bScale;
+            bHaveScaleSrc = psOptions->asScaleParams[i].bHaveScaleSrc;
+            dfScaleSrcMin = psOptions->asScaleParams[i].dfScaleSrcMin;
+            dfScaleSrcMax = psOptions->asScaleParams[i].dfScaleSrcMax;
+            dfScaleDstMin = psOptions->asScaleParams[i].dfScaleDstMin;
+            dfScaleDstMax = psOptions->asScaleParams[i].dfScaleDstMax;
         }
-        else if( psOptions->nScaleRepeat == 1 && !psOptions->bHasUsedExplicitScaleBand )
+        else if( psOptions->asScaleParams.size() == 1 && !psOptions->bHasUsedExplicitScaleBand )
         {
-            bScale = psOptions->pasScaleParams[0].bScale;
-            bHaveScaleSrc = psOptions->pasScaleParams[0].bHaveScaleSrc;
-            dfScaleSrcMin = psOptions->pasScaleParams[0].dfScaleSrcMin;
-            dfScaleSrcMax = psOptions->pasScaleParams[0].dfScaleSrcMax;
-            dfScaleDstMin = psOptions->pasScaleParams[0].dfScaleDstMin;
-            dfScaleDstMax = psOptions->pasScaleParams[0].dfScaleDstMax;
+            bScale = psOptions->asScaleParams[0].bScale;
+            bHaveScaleSrc = psOptions->asScaleParams[0].bHaveScaleSrc;
+            dfScaleSrcMin = psOptions->asScaleParams[0].dfScaleSrcMin;
+            dfScaleSrcMax = psOptions->asScaleParams[0].dfScaleSrcMax;
+            dfScaleDstMin = psOptions->asScaleParams[0].dfScaleDstMin;
+            dfScaleDstMax = psOptions->asScaleParams[0].dfScaleDstMax;
         }
 
-        if( i < psOptions->nExponentRepeat && psOptions->padfExponent[i] != 0.0 )
+        if( i < static_cast<int>(psOptions->adfExponent.size()) && psOptions->adfExponent[i] != 0.0 )
         {
             bExponentScaling = TRUE;
-            dfExponent = psOptions->padfExponent[i];
+            dfExponent = psOptions->adfExponent[i];
         }
-        else if( psOptions->nExponentRepeat == 1 && !psOptions->bHasUsedExplicitExponentBand )
+        else if( psOptions->adfExponent.size() == 1 && !psOptions->bHasUsedExplicitExponentBand )
         {
             bExponentScaling = TRUE;
-            dfExponent = psOptions->padfExponent[0];
+            dfExponent = psOptions->adfExponent[0];
         }
 
         if( bExponentScaling && !bScale )
@@ -2156,7 +2127,8 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
             poSimpleSource = new VRTSimpleSource();
         }
 
-        poSimpleSource->SetResampling(psOptions->pszResampling);
+        poSimpleSource->SetResampling(
+            psOptions->osResampling.empty() ? nullptr : psOptions->osResampling.c_str());
         poVRTBand->ConfigureSource( poSimpleSource,
                                     poSrcBand,
                                     FALSE,
@@ -2193,9 +2165,9 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
                           !psOptions->bSetNoData && !psOptions->bUnsetNoData,
                           !psOptions->bNoRAT,
                           psOptions );
-            if( psOptions->nScaleRepeat == 0 &&
-                psOptions->nExponentRepeat == 0 &&
-                EQUAL(psOptions->pszFormat, "GRIB") )
+            if( psOptions->asScaleParams.empty() &&
+                psOptions->adfExponent.empty() &&
+                EQUAL(psOptions->osFormat.c_str(), "GRIB") )
             {
                 char** papszMD_GRIB = poSrcBand->GetMetadata("GRIB");
                 if( papszMD_GRIB != nullptr)
@@ -2204,13 +2176,13 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         }
 
         // Color interpretation override
-        if( psOptions->panColorInterp )
+        if( !psOptions->anColorInterp.empty() )
         {
-            if( i < psOptions->nColorInterpSize &&
-                psOptions->panColorInterp[i] >= 0 )
+            if( i < static_cast<int>(psOptions->anColorInterp.size()) &&
+                psOptions->anColorInterp[i] >= 0 )
             {
                 poVRTBand->SetColorInterpretation(
-                    static_cast<GDALColorInterp>(psOptions->panColorInterp[i]));
+                    static_cast<GDALColorInterp>(psOptions->anColorInterp[i]));
             }
         }
 
@@ -2221,10 +2193,10 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         {
             if( poVRTBand->GetRasterDataType() == GDT_Int64 )
             {
-                if( strchr(psOptions->szNoData, '.') ||
-                    CPLGetValueType(psOptions->szNoData) == CPL_VALUE_STRING )
+                if( psOptions->osNoData.find('.') != std::string::npos ||
+                    CPLGetValueType(psOptions->osNoData.c_str()) == CPL_VALUE_STRING )
                 {
-                    const double dfNoData = CPLAtof(psOptions->szNoData);
+                    const double dfNoData = CPLAtof(psOptions->osNoData.c_str());
                     if( dfNoData >= static_cast<double>(std::numeric_limits<int64_t>::min()) &&
                         dfNoData <= static_cast<double>(std::numeric_limits<int64_t>::max()) &&
                         dfNoData == static_cast<double>(static_cast<int64_t>(dfNoData)) )
@@ -2236,13 +2208,13 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
                     {
                         CPLError(CE_Warning, CPLE_AppDefined,
                                  "Cannot set nodata value %s on a Int64 band",
-                                 psOptions->szNoData);
+                                 psOptions->osNoData.c_str());
                     }
                 }
                 else
                 {
                     errno = 0;
-                    const auto val = std::strtoll(psOptions->szNoData, nullptr, 10);
+                    const auto val = std::strtoll(psOptions->osNoData.c_str(), nullptr, 10);
                     if( errno == 0 )
                     {
                         poVRTBand->SetNoDataValueAsInt64(static_cast<int64_t>(val));
@@ -2251,16 +2223,16 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
                     {
                         CPLError(CE_Warning, CPLE_AppDefined,
                                  "Cannot set nodata value %s on a Int64 band",
-                                 psOptions->szNoData);
+                                 psOptions->osNoData.c_str());
                     }
                 }
             }
             else if( poVRTBand->GetRasterDataType() == GDT_UInt64 )
             {
-                if( strchr(psOptions->szNoData, '.') ||
-                    CPLGetValueType(psOptions->szNoData) == CPL_VALUE_STRING )
+                if( psOptions->osNoData.find('.') != std::string::npos ||
+                    CPLGetValueType(psOptions->osNoData.c_str()) == CPL_VALUE_STRING )
                 {
-                    const double dfNoData = CPLAtof(psOptions->szNoData);
+                    const double dfNoData = CPLAtof(psOptions->osNoData.c_str());
                     if( dfNoData >= static_cast<double>(std::numeric_limits<uint64_t>::min()) &&
                         dfNoData <= static_cast<double>(std::numeric_limits<uint64_t>::max()) &&
                         dfNoData == static_cast<double>(static_cast<uint64_t>(dfNoData)) )
@@ -2272,13 +2244,13 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
                     {
                         CPLError(CE_Warning, CPLE_AppDefined,
                                  "Cannot set nodata value %s on a UInt64 band",
-                                 psOptions->szNoData);
+                                 psOptions->osNoData.c_str());
                     }
                 }
                 else
                 {
                     errno = 0;
-                    const auto val = std::strtoull(psOptions->szNoData, nullptr, 10);
+                    const auto val = std::strtoull(psOptions->osNoData.c_str(), nullptr, 10);
                     if( errno == 0 )
                     {
                         poVRTBand->SetNoDataValueAsUInt64(static_cast<uint64_t>(val));
@@ -2287,14 +2259,14 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
                     {
                         CPLError(CE_Warning, CPLE_AppDefined,
                                  "Cannot set nodata value %s on a UInt64 band",
-                                 psOptions->szNoData);
+                                 psOptions->osNoData.c_str());
                     }
                 }
             }
             else
             {
                 const double dfVal = AdjustNoDataValue(
-                    CPLAtof(psOptions->szNoData), poVRTBand, psOptions);
+                    CPLAtof(psOptions->osNoData.c_str()), poVRTBand, psOptions);
                 poVRTBand->SetNoDataValue( dfVal );
             }
         }
@@ -2375,8 +2347,8 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /* -------------------------------------------------------------------- */
 /*      Write to the output file using CopyCreate().                    */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(psOptions->pszFormat, "VRT") &&
-        psOptions->papszCreateOptions == nullptr )
+    if( EQUAL(psOptions->osFormat.c_str(), "VRT") &&
+        psOptions->aosCreateOptions.empty() )
     {
         poVDS->SetDescription(pszDest);
         hOutDS = GDALDataset::ToHandle(poVDS);
@@ -2388,7 +2360,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     else
     {
         hOutDS = GDALCreateCopy( hDriver, pszDest, GDALDataset::ToHandle(poVDS),
-                                psOptions->bStrict, psOptions->papszCreateOptions,
+                                psOptions->bStrict, psOptions->aosCreateOptions.List(),
                                 psOptions->pfnProgress, psOptions->pProgressData );
         hOutDS = GDALTranslateFlush(hOutDS);
 
@@ -2405,16 +2377,16 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /*                           AttachMetadata()                           */
 /************************************************************************/
 
-static void AttachMetadata( GDALDatasetH hDS, char **papszMetadataOptions )
+static void AttachMetadata( GDALDatasetH hDS, const CPLStringList& aosMetadataOptions )
 
 {
-    const int nCount = CSLCount(papszMetadataOptions);
+    const int nCount = aosMetadataOptions.size();
 
     for( int i = 0; i < nCount; i++ )
     {
         char *pszKey = nullptr;
         const char *pszValue =
-            CPLParseNameValue(papszMetadataOptions[i], &pszKey);
+            CPLParseNameValue(aosMetadataOptions[i], &pszKey);
         if( pszKey && pszValue )
         {
             GDALSetMetadataItem(hDS,pszKey,pszValue,nullptr);
@@ -2565,66 +2537,7 @@ static int GetColorInterp( const char* pszStr )
 
 GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOptionsForBinary* psOptionsForBinary)
 {
-    GDALTranslateOptions *psOptions = static_cast<GDALTranslateOptions *>(
-        CPLCalloc( 1, sizeof(GDALTranslateOptions)));
-
-    psOptions->pszFormat = nullptr;
-    psOptions->bQuiet = true;
-    psOptions->pfnProgress = GDALDummyProgress;
-    psOptions->pProgressData = nullptr;
-    psOptions->eOutputType = GDT_Unknown;
-    psOptions->eMaskMode = MASK_AUTO;
-    psOptions->nBandCount = 0;
-    psOptions->panBandList = nullptr;
-    psOptions->nOXSizePixel = 0;
-    psOptions->nOYSizePixel = 0;
-    psOptions->dfOXSizePct = 0.0;
-    psOptions->dfOYSizePct = 0.0;
-    psOptions->adfSrcWin[0] = 0;
-    psOptions->adfSrcWin[1] = 0;
-    psOptions->adfSrcWin[2] = 0;
-    psOptions->adfSrcWin[3] = 0;
-    psOptions->bStrict = false;
-    psOptions->bUnscale = false;
-    psOptions->bSetScale = false;
-    psOptions->dfScale = 1.0;
-    psOptions->bSetOffset = false;
-    psOptions->dfOffset = 0.0;
-    psOptions->nScaleRepeat = 0;
-    psOptions->pasScaleParams = nullptr;
-    psOptions->bHasUsedExplicitScaleBand = false;
-    psOptions->nExponentRepeat = 0;
-    psOptions->padfExponent = nullptr;
-    psOptions->bHasUsedExplicitExponentBand = false;
-    psOptions->dfULX = 0.0;
-    psOptions->dfULY = 0.0;
-    psOptions->dfLRX = 0.0;
-    psOptions->dfLRY = 0.0;
-    psOptions->pszOutputSRS = nullptr;
-    psOptions->bNoGCP = false;
-    psOptions->nGCPCount = 0;
-    psOptions->pasGCPs = nullptr;
-    psOptions->adfULLR[0] = 0;
-    psOptions->adfULLR[1] = 0;
-    psOptions->adfULLR[2] = 0;
-    psOptions->adfULLR[3] = 0;
-    psOptions->bSetNoData = false;
-    psOptions->bUnsetNoData = false;
-    psOptions->szNoData[0] = 0;
-    psOptions->nRGBExpand = 0;
-    psOptions->nMaskBand = 0;
-    psOptions->bStats = false;
-    psOptions->bApproxStats = false;
-    psOptions->bErrorOnPartiallyOutside = false;
-    psOptions->bErrorOnCompletelyOutside = false;
-    psOptions->bNoRAT = false;
-    psOptions->pszResampling = nullptr;
-    psOptions->dfXRes = 0.0;
-    psOptions->dfYRes = 0.0;
-    psOptions->pszProjSRS = nullptr;
-    psOptions->nLimitOutSize = 0;
-    psOptions->bNoXMP = false;
-    psOptions->nOvLevel = OVR_LEVEL_AUTO;
+    GDALTranslateOptions *psOptions = new GDALTranslateOptions;
 
     bool bParsedMaskArgument = false;
     bool bOutsizeExplicitlySet = false;
@@ -2640,8 +2553,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
         if( i < argc-1 && (EQUAL(papszArgv[i],"-of") || EQUAL(papszArgv[i],"-f")) )
         {
             ++i;
-            CPLFree(psOptions->pszFormat);
-            psOptions->pszFormat = CPLStrdup(papszArgv[i]);
+            psOptions->osFormat = papszArgv[i];
         }
 
         else if( EQUAL(papszArgv[i],"-q") || EQUAL(papszArgv[i],"-quiet") )
@@ -2696,12 +2608,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
             i++;
 
             psOptions->nBandCount++;
-            psOptions->panBandList = static_cast<int *>(
-                CPLRealloc(psOptions->panBandList,
-                           sizeof(int) * psOptions->nBandCount));
-            psOptions->panBandList[psOptions->nBandCount-1] = nBand;
-            if (bMask)
-                psOptions->panBandList[psOptions->nBandCount-1] *= -1;
+            psOptions->anBandList.emplace_back(nBand * (bMask ? -1 : 1));
         }
         else if( EQUAL(papszArgv[i],"-mask") &&  papszArgv[i+1] )
         {
@@ -2794,8 +2701,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
             else
             {
                 psOptions->bSetNoData = true;
-                snprintf(psOptions->szNoData, sizeof(psOptions->szNoData),
-                         "%s", papszArgv[i+1]);
+                psOptions->osNoData = papszArgv[i+1];
             }
             i += 1;
         }
@@ -2827,7 +2733,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
 
         else if( EQUAL(papszArgv[i],"-co") && papszArgv[i+1] )
         {
-            psOptions->papszCreateOptions = CSLAddString( psOptions->papszCreateOptions, papszArgv[++i] );
+            psOptions->aosCreateOptions.AddString( papszArgv[++i] );
         }
 
         else if( EQUAL(papszArgv[i],"-scale") || STARTS_WITH_CI(papszArgv[i], "-scale_") )
@@ -2835,7 +2741,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
             int nIndex = 0;
             if( STARTS_WITH_CI(papszArgv[i], "-scale_") )
             {
-                if( !psOptions->bHasUsedExplicitScaleBand && psOptions->nScaleRepeat != 0 )
+                if( !psOptions->bHasUsedExplicitScaleBand && !psOptions->asScaleParams.empty() )
                 {
                     CPLError(CE_Failure, CPLE_NotSupported, "Cannot mix -scale and -scale_XX syntax");
                     GDALTranslateOptionsFree(psOptions);
@@ -2859,39 +2765,32 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
                     GDALTranslateOptionsFree(psOptions);
                     return nullptr;
                 }
-                nIndex = psOptions->nScaleRepeat;
+                nIndex = static_cast<int>(psOptions->asScaleParams.size());
             }
 
-            if( nIndex >= psOptions->nScaleRepeat )
+            if( nIndex >= static_cast<int>(psOptions->asScaleParams.size()) )
             {
-                psOptions->pasScaleParams =
-                    static_cast<GDALTranslateScaleParams*>(
-                        CPLRealloc(psOptions->pasScaleParams,
-                                   (nIndex + 1) *
-                                   sizeof(GDALTranslateScaleParams)));
-                memset(psOptions->pasScaleParams + psOptions->nScaleRepeat, 0,
-                        sizeof(GDALTranslateScaleParams) * (nIndex - psOptions->nScaleRepeat + 1));
-                psOptions->nScaleRepeat = nIndex + 1;
+                psOptions->asScaleParams.resize(nIndex + 1);
             }
-            psOptions->pasScaleParams[nIndex].bScale = TRUE;
-            psOptions->pasScaleParams[nIndex].bHaveScaleSrc = false;
+            psOptions->asScaleParams[nIndex].bScale = true;
+            psOptions->asScaleParams[nIndex].bHaveScaleSrc = false;
             if( i < argc-2 && ArgIsNumeric(papszArgv[i+1]) )
             {
-                psOptions->pasScaleParams[nIndex].bHaveScaleSrc = true;
-                psOptions->pasScaleParams[nIndex].dfScaleSrcMin = CPLAtofM(papszArgv[i+1]);
-                psOptions->pasScaleParams[nIndex].dfScaleSrcMax = CPLAtofM(papszArgv[i+2]);
+                psOptions->asScaleParams[nIndex].bHaveScaleSrc = true;
+                psOptions->asScaleParams[nIndex].dfScaleSrcMin = CPLAtofM(papszArgv[i+1]);
+                psOptions->asScaleParams[nIndex].dfScaleSrcMax = CPLAtofM(papszArgv[i+2]);
                 i += 2;
             }
-            if( i < argc-2 && psOptions->pasScaleParams[nIndex].bHaveScaleSrc && ArgIsNumeric(papszArgv[i+1]) )
+            if( i < argc-2 && psOptions->asScaleParams[nIndex].bHaveScaleSrc && ArgIsNumeric(papszArgv[i+1]) )
             {
-                psOptions->pasScaleParams[nIndex].dfScaleDstMin = CPLAtofM(papszArgv[i+1]);
-                psOptions->pasScaleParams[nIndex].dfScaleDstMax = CPLAtofM(papszArgv[i+2]);
+                psOptions->asScaleParams[nIndex].dfScaleDstMin = CPLAtofM(papszArgv[i+1]);
+                psOptions->asScaleParams[nIndex].dfScaleDstMax = CPLAtofM(papszArgv[i+2]);
                 i += 2;
             }
             else
             {
-                psOptions->pasScaleParams[nIndex].dfScaleDstMin = 0.0;
-                psOptions->pasScaleParams[nIndex].dfScaleDstMax = 255.999;
+                psOptions->asScaleParams[nIndex].dfScaleDstMin = 0.0;
+                psOptions->asScaleParams[nIndex].dfScaleDstMax = 255.999;
             }
         }
 
@@ -2901,7 +2800,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
             int nIndex = 0;
             if( STARTS_WITH_CI(papszArgv[i], "-exponent_") )
             {
-                if( !psOptions->bHasUsedExplicitExponentBand && psOptions->nExponentRepeat != 0 )
+                if( !psOptions->bHasUsedExplicitExponentBand && !psOptions->adfExponent.empty() )
                 {
                     CPLError(CE_Failure, CPLE_NotSupported, "Cannot mix -exponent and -exponent_XX syntax");
                     GDALTranslateOptionsFree(psOptions);
@@ -2925,21 +2824,15 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
                     GDALTranslateOptionsFree(psOptions);
                     return nullptr;
                 }
-                nIndex = psOptions->nExponentRepeat;
+                nIndex = static_cast<int>(psOptions->adfExponent.size());
             }
 
-            if( nIndex >= psOptions->nExponentRepeat )
+            if( nIndex >= static_cast<int>(psOptions->adfExponent.size()) )
             {
-              psOptions->padfExponent = static_cast<double *>(
-                  CPLRealloc(psOptions->padfExponent,
-                             (nIndex + 1) * sizeof(double)));
-                if( nIndex > psOptions->nExponentRepeat )
-                    memset(psOptions->padfExponent + psOptions->nExponentRepeat, 0,
-                        sizeof(double) * (nIndex - psOptions->nExponentRepeat));
-                psOptions->nExponentRepeat = nIndex + 1;
+              psOptions->adfExponent.resize(nIndex + 1);
             }
             double dfExponent = CPLAtofM(papszArgv[++i]);
-            psOptions->padfExponent[nIndex] = dfExponent;
+            psOptions->adfExponent[nIndex] = dfExponent;
         }
 
         else if( EQUAL(papszArgv[i], "-unscale") )
@@ -2949,8 +2842,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
 
         else if( EQUAL(papszArgv[i],"-mo") && papszArgv[i+1] )
         {
-            psOptions->papszMetadataOptions = CSLAddString( psOptions->papszMetadataOptions,
-                                                 papszArgv[++i] );
+            psOptions->aosMetadataOptions.AddString( papszArgv[++i] );
         }
 
         else if( i+2 < argc && EQUAL(papszArgv[i],"-outsize") && papszArgv[i+1] != nullptr )
@@ -3000,8 +2892,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
 
         else if( i+1 < argc && EQUAL(papszArgv[i],"-projwin_srs") )
         {
-            CPLFree(psOptions->pszProjSRS);
-            psOptions->pszProjSRS = CPLStrdup(papszArgv[i+1]);
+            psOptions->osProjSRS = papszArgv[i+1];
             i++;
         }
 
@@ -3018,8 +2909,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
 
         else if( i+1 < argc && EQUAL(papszArgv[i],"-a_srs") )
         {
-            CPLFree(psOptions->pszOutputSRS);
-            psOptions->pszOutputSRS = CPLStrdup(papszArgv[i+1]);
+            psOptions->osOutputSRS = papszArgv[i+1];
             i++;
         }
 
@@ -3074,21 +2964,17 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
         }
         else if( i+1 < argc && EQUAL(papszArgv[i],"-r") )
         {
-            CPLFree(psOptions->pszResampling);
-            psOptions->pszResampling = CPLStrdup(papszArgv[++i]);
+            psOptions->osResampling = papszArgv[++i];
         }
 
         else if( EQUAL(papszArgv[i],"-colorinterp") && papszArgv[i+1] )
         {
             ++i;
             CPLStringList aosList(CSLTokenizeString2(papszArgv[i], ",", 0));
-            psOptions->nColorInterpSize = aosList.size();
-            psOptions->panColorInterp = static_cast<int *>(
-                  CPLRealloc(psOptions->panColorInterp,
-                             psOptions->nColorInterpSize * sizeof(int)));
+            psOptions->anColorInterp.resize(aosList.size());
             for( int j = 0; j < aosList.size(); j++ )
             {
-                psOptions->panColorInterp[j] = GetColorInterp(aosList[j]);
+                psOptions->anColorInterp[j] = GetColorInterp(aosList[j]);
             }
         }
 
@@ -3104,22 +2990,12 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
             }
             nIndex --;
 
-            if( nIndex >= psOptions->nColorInterpSize )
+            if( nIndex >= static_cast<int>(psOptions->anColorInterp.size()) )
             {
-                psOptions->panColorInterp = static_cast<int *>(
-                    CPLRealloc(psOptions->panColorInterp,
-                                (nIndex + 1) * sizeof(int)));
-                if( nIndex > psOptions->nColorInterpSize )
-                {
-                    memset(psOptions->panColorInterp +
-                                psOptions->nColorInterpSize,
-                           0xFF, // -1
-                           sizeof(int) * (nIndex - psOptions->nColorInterpSize));
-                }
-                psOptions->nColorInterpSize = nIndex + 1;
+                psOptions->anColorInterp.resize(nIndex + 1, -1);
             }
             ++i;
-            psOptions->panColorInterp[nIndex] = GetColorInterp(papszArgv[i]);
+            psOptions->anColorInterp[nIndex] = GetColorInterp(papszArgv[i]);
         }
 
 
@@ -3217,8 +3093,8 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
 
     if( psOptionsForBinary )
     {
-        if( psOptions->pszFormat )
-            psOptionsForBinary->pszFormat = CPLStrdup(psOptions->pszFormat);
+        if( !psOptions->osFormat.empty() )
+            psOptionsForBinary->pszFormat = CPLStrdup(psOptions->osFormat.c_str());
     }
 
     return psOptions;
@@ -3238,23 +3114,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
 
 void GDALTranslateOptionsFree(GDALTranslateOptions *psOptions)
 {
-    if( psOptions == nullptr ) return;
-
-    CPLFree(psOptions->pszFormat);
-    CPLFree(psOptions->panBandList);
-    CSLDestroy(psOptions->papszCreateOptions);
-    CPLFree(psOptions->pasScaleParams);
-    CPLFree(psOptions->padfExponent);
-    CSLDestroy(psOptions->papszMetadataOptions);
-    CPLFree(psOptions->pszOutputSRS);
-    if( psOptions->nGCPCount )
-        GDALDeinitGCPs(psOptions->nGCPCount, psOptions->pasGCPs);
-    CPLFree(psOptions->pasGCPs);
-    CPLFree(psOptions->pszResampling);
-    CPLFree(psOptions->pszProjSRS);
-    CPLFree(psOptions->panColorInterp);
-
-    CPLFree(psOptions);
+    delete psOptions;
 }
 
 /************************************************************************/
