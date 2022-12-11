@@ -40,7 +40,7 @@ import gdaltest
 import pytest
 import test_cli_utilities
 
-from osgeo import gdal
+from osgeo import gdal, osr
 
 ###############################################################################
 # When imported build a list of units based on the files available.
@@ -1441,6 +1441,10 @@ def test_vrt_protocol():
     assert ds.GetRasterBand(1).Checksum() == 4672
     assert ds.GetRasterBand(2).Checksum() == 4873
     assert ds.GetRasterBand(3).Checksum() == 4672
+
+    ds = gdal.Open("vrt://data/byte.tif?bands=1&a_srs=EPSG:3031")
+    crs = osr.SpatialReference(wkt=ds.GetProjection())
+    assert crs.GetAttrValue("AUTHORITY", 1) == "3031"
 
 
 def test_vrt_source_no_dstrect():

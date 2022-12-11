@@ -1607,18 +1607,39 @@ the dataset name since GDAL 3.1
 
     vrt://{path_to_gdal_dataset}?[bands=num1,...,numN]
 
+::
+
+    vrt://{path_to_gdal_dataset}?[a_srs=srs_def]
+
+
 For example:
 
 ::
 
     vrt://my.tif?bands=3,2,1
 
-The only supported option currently is bands. Other may be added in the future.
+::
 
-The effect of this option is to change the band composition. The values specified
+    vrt://my.tif?a_srs=OGC:CRS84
+    
+    
+The only supported options currently is bands and a_srs. Other may be added in the future.
+
+The effect of the bands option is to change the band composition. The values specified
 are the source band numbers (between 1 and N), possibly out-of-order or with repetitions.
 The ``mask`` value can be used to specify the global mask band. This can also
 be seen as an equivalent of running `gdal_translate -of VRT -b num1 ... -b numN`.
+
+The effect of the a_srs option is to assign the coordinate reference system of the source 
+in the same way as (:ref:`gdal_translate`), it may be missing, or incorrect.
+
+The options may be chained together separated by '&'. 
+
+::
+
+    vrt://my.tif?a_srs=OGC:CRS84&bands=2,1
+    
+
 
 Multi-threading optimizations
 -----------------------------
