@@ -1250,6 +1250,49 @@ def test_ogr_pgdump_16():
 
 
 ###############################################################################
+# Test temporary layer creation option
+
+
+def test_ogr_pgdump_17():
+
+    ds = ogr.GetDriverByName("PGDump").CreateDataSource(
+        "/vsimem/ogr_pgdump_17.sql", options=["LINEFORMAT=LF"]
+    )
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint, options=["TEMPORARY=ON"])
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1)"))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    f = gdal.VSIFOpenL("/vsimem/ogr_pgdump_17.sql", "rb")
+    sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
+    gdal.VSIFCloseL(f)
+
+    gdal.Unlink("/vsimem/ogr_pgdump_17.sql")
+
+    assert not (
+        sql.find("""DROP TABLE IF EXISTS "pg_temp"."test" CASCADE;""") == -1
+        or sql.find(
+            """CREATE TEMPORARY TABLE "test" ( "ogc_fid" SERIAL, CONSTRAINT "test_pk" PRIMARY KEY ("ogc_fid") )"""
+        )
+        == -1
+        or sql.find(
+            """SELECT AddGeometryColumn('','test','wkb_geometry',0,'POINT',2)"""
+        )
+        == -1
+        or sql.find(
+            """CREATE INDEX "test_wkb_geometry_geom_idx" ON "pg_temp"."test" USING GIST ("wkb_geometry")"""
+        )
+        == -1
+        or sql.find(
+            """INSERT INTO "pg_temp"."test" ("wkb_geometry" ) VALUES ('01010000000000000000000000000000000000F03F')"""
+        )
+        == -1
+    )
+
+
+###############################################################################
 # Cleanup
 
 

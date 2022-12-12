@@ -298,6 +298,13 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
         }
     }
 
+    const bool bTemporary = CPLFetchBool( papszOptions, "TEMPORARY", false );
+    if( bTemporary )
+    {
+        CPLFree(pszSchemaName);
+        pszSchemaName = CPLStrdup("pg_temp");
+    }
+
     if ( pszSchemaName == nullptr)
     {
         pszSchemaName = CPLStrdup("public");
@@ -436,11 +443,8 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
     const char* pszSerialType = bFID64 ? "BIGSERIAL": "SERIAL";
 
     CPLString osCreateTable;
-    const bool bTemporary = CPLFetchBool( papszOptions, "TEMPORARY", false );
     if( bTemporary )
     {
-        CPLFree(pszSchemaName);
-        pszSchemaName = CPLStrdup("pg_temp_1");
         osCreateTable.Printf("CREATE TEMPORARY TABLE \"%s\"", pszTableName);
     }
     else
@@ -534,7 +538,7 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
 
         osCommand.Printf(
                 "SELECT AddGeometryColumn('%s',%s,'%s',%d,'%s%s',%d)",
-                pszSchemaName, pszEscapedTableNameSingleQuote, pszGFldName,
+                bTemporary ? "": pszSchemaName, pszEscapedTableNameSingleQuote, pszGFldName,
                 nSRSId, pszGeometryType, suffix, nDimension );
         Log(osCommand);
     }

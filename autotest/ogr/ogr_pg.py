@@ -6149,6 +6149,36 @@ def test_ogr_pg_insert_single_feature_of_fid_0():
 
 
 ###############################################################################
+
+
+def test_ogr_pg_temp():
+
+    if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
+        pytest.skip()
+
+    try:
+        layer_name = "test_ogr_pg_temp"
+        lyr = gdaltest.pg_ds.CreateLayer(
+            layer_name, geom_type=ogr.wkbPoint, options=["TEMPORARY=ON"]
+        )
+        lyr.CreateField(ogr.FieldDefn("foo"))
+        sql_lyr = gdaltest.pg_ds.ExecuteSQL(
+            "SELECT TRUE FROM pg_class WHERE relpersistence = 't' AND oid = '"
+            + layer_name
+            + "'::REGCLASS"
+        )
+        assert sql_lyr.GetNextFeature() is not None
+        gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1)"))
+        f["foo"] = "bar"
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+        assert lyr.GetLayerDefn().GetGeomFieldDefn(0).GetName() == "wkb_geometry"
+    finally:
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:" + layer_name)
+
+
+###############################################################################
 #
 
 
