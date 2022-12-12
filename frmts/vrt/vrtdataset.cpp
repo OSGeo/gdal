@@ -1013,6 +1013,32 @@ GDALDataset *VRTDataset::OpenVRTProtocol( const char* pszSpec )
                 argv.AddString(pszValue);
             }
             
+            else if ( EQUAL(pszKey, "a_ullr")) 
+            {
+              double xmin,xmax,ymin,ymax;
+              
+              // Parse the limits
+              CPLStringList aosUllr(CSLTokenizeString2(pszValue, " ", 0));
+              // fail if not four values 
+              if(aosUllr.size() != 4)
+              {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid a_ullr option: %s", pszValue);
+                poSrcDS->ReleaseRef();
+                CPLFree(pszKey);
+                return nullptr;
+              }
+              xmin = atof(aosUllr[0]);
+              xmax = atof(aosUllr[2]);
+              ymin = atof(aosUllr[3]);
+              ymax = atof(aosUllr[1]);
+              
+              argv.AddString("-a_ullr"); 
+              argv.AddString(CPLSPrintf("%f", xmin));
+              argv.AddString(CPLSPrintf("%f", ymax));
+              argv.AddString(CPLSPrintf("%f", xmax));
+              argv.AddString(CPLSPrintf("%f", ymin));
+            }
             else
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
