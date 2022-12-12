@@ -1448,7 +1448,7 @@ def test_vrt_protocol():
 
     ds = gdal.Open("vrt://data/byte.tif?a_ullr=0,10,20,0")
     geotransform = ds.GetGeoTransform()
-    assert geotransform == (0.0, 1.0, 0.0, 20.0, 0.0, -0.5)
+    assert geotransform == (0.0, 1.0, 0.0, 10.0, 0.0, -0.5)
 
 
 def test_vrt_source_no_dstrect():
