@@ -69,7 +69,8 @@ output coordinate system or even reprojecting the features during translation.
 
 .. option:: -append
 
-    Append to existing layer instead of creating new
+    Append to existing layer instead of creating new. This option also enables
+    :option:`-update`.
 
 .. option:: -upsert
 
@@ -553,11 +554,11 @@ Change the coordinate reference system from ``EPSG:4326`` to ``EPSG:3857``:
     -f GPKG output.gpkg \
     input.gpkg
 
-Example appending to an existing layer (both ``-update`` and ``-append`` flags need to be used):
+Example appending to an existing layer:
 
 .. code-block::
 
-    ogr2ogr -update -append -f PostgreSQL PG:dbname=warmerda abc.tab
+    ogr2ogr -append -f PostgreSQL PG:dbname=warmerda abc.tab
 
 Clip input layer with a bounding box (<xmin> <ymin> <xmax> <ymax>):
 
