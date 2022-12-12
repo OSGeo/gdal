@@ -1613,7 +1613,7 @@ the dataset name since GDAL 3.1
 
 ::
 
-    vrt://{path_to_gdal_dataset}?[a_ullr=ulx,uly,llx,lly]
+    vrt://{path_to_gdal_dataset}?[a_ullr=ulx,uly,lrx,lry]
 
 
 For example:
