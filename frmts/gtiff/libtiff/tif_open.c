@@ -26,6 +26,7 @@
  * TIFF Library.
  */
 #include "tiffiop.h"
+#include <limits.h>
 
 /*
  * Dummy functions to fill the omitted client procedures.
@@ -241,7 +242,7 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
     tif->tif_name = (char *)tif + sizeof(TIFF);
     strcpy(tif->tif_name, name);
     tif->tif_mode = m & ~(O_CREAT | O_TRUNC);
-    tif->tif_curdir = (uint16_t)-1; /* non-existent directory */
+    tif->tif_curdir = TIFF_NON_EXISTENT_DIR_NUMBER; /* non-existent directory */
     tif->tif_curoff = 0;
     tif->tif_curstrip = (uint32_t)-1; /* invalid strip */
     tif->tif_row = (uint32_t)-1;      /* read/write pre-increment */
@@ -484,9 +485,6 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
             goto bad;
         tif->tif_diroff = 0;
         tif->tif_lastdiroff = 0;
-        tif->tif_dirlistoff = NULL;
-        tif->tif_dirlistdirn = NULL;
-        tif->tif_dirlistsize = 0;
         tif->tif_dirnumber = 0;
         return (tif);
     }
@@ -724,7 +722,7 @@ uint32_t TIFFCurrentRow(TIFF *tif) { return (tif->tif_row); }
 /*
  * Return index of the current directory.
  */
-uint16_t TIFFCurrentDirectory(TIFF *tif) { return (tif->tif_curdir); }
+tdir_t TIFFCurrentDirectory(TIFF *tif) { return (tif->tif_curdir); }
 
 /*
  * Return current strip.

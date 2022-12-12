@@ -69,7 +69,7 @@ typedef uint64_t toff_t; /* file offset */
 /* the following are deprecated and should be replaced by their defining
    counterparts */
 typedef uint32_t ttag_t;    /* directory tag */
-typedef uint16_t tdir_t;    /* directory index */
+typedef uint32_t tdir_t;    /* directory index */
 typedef uint16_t tsample_t; /* sample number */
 typedef uint32_t tstrile_t; /* strip or tile number */
 typedef tstrile_t tstrip_t; /* strip number */
@@ -414,8 +414,8 @@ extern "C"
     extern TIFFMapFileProc TIFFGetMapFileProc(TIFF *);
     extern TIFFUnmapFileProc TIFFGetUnmapFileProc(TIFF *);
     extern uint32_t TIFFCurrentRow(TIFF *);
-    extern uint16_t TIFFCurrentDirectory(TIFF *);
-    extern uint16_t TIFFNumberOfDirectories(TIFF *);
+    extern tdir_t TIFFCurrentDirectory(TIFF *);
+    extern tdir_t TIFFNumberOfDirectories(TIFF *);
     extern uint64_t TIFFCurrentDirOffset(TIFF *);
     extern uint32_t TIFFCurrentStrip(TIFF *);
     extern uint32_t TIFFCurrentTile(TIFF *tif);
@@ -429,9 +429,9 @@ extern "C"
     extern int TIFFCreateEXIFDirectory(TIFF *);
     extern int TIFFCreateGPSDirectory(TIFF *);
     extern int TIFFLastDirectory(TIFF *);
-    extern int TIFFSetDirectory(TIFF *, uint16_t);
+    extern int TIFFSetDirectory(TIFF *, tdir_t);
     extern int TIFFSetSubDirectory(TIFF *, uint64_t);
-    extern int TIFFUnlinkDirectory(TIFF *, uint16_t);
+    extern int TIFFUnlinkDirectory(TIFF *, tdir_t);
     extern int TIFFSetField(TIFF *, uint32_t, ...);
     extern int TIFFVSetField(TIFF *, uint32_t, va_list);
     extern int TIFFUnsetField(TIFF *, uint32_t);
