@@ -1646,7 +1646,7 @@ definition.
 
 The effect of the ``a_ullr`` option (added in GDAL 3.7) is to assign (override) the georeferenced
 bounds of the source in the same way as (:ref:`gdal_translate`). The value consists of four numeric
-values separated by commas. 
+values separated by commas, in the order 'xmin,ymax,xmax,ymin' (upper left x,y, lower right x,y). 
 
 The options may be chained together separated by '&'. (Beware the need for quoting to protect
 the ampersand).
