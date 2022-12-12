@@ -333,6 +333,38 @@ GDALWarpCutlineMasker( void *pMaskFuncArg,
         return CE_None;
     }
 
+    // And now check if the chunk to warp is fully contained within the cutline
+    // to save rasterization.
+    if( OGRGeometryFactory::haveGEOS()
+#ifdef DEBUG
+        // Env var just for debugging purposes
+         && !CPLTestBool(CPLGetConfigOption("GDALCUTLINE_SKIP_CONTAINMENT_TEST", "NO"))
+#endif
+    )
+    {
+        OGRLinearRing* poRing = new OGRLinearRing();
+        poRing->addPoint(-psWO->dfCutlineBlendDist + nXOff,
+                         -psWO->dfCutlineBlendDist + nYOff);
+        poRing->addPoint(-psWO->dfCutlineBlendDist + nXOff,
+                         psWO->dfCutlineBlendDist + nYOff + nYSize);
+        poRing->addPoint(psWO->dfCutlineBlendDist + nXOff + nXSize,
+                         psWO->dfCutlineBlendDist + nYOff + nYSize);
+        poRing->addPoint(psWO->dfCutlineBlendDist + nXOff + nXSize,
+                         -psWO->dfCutlineBlendDist + nYOff);
+        poRing->addPoint(-psWO->dfCutlineBlendDist + nXOff,
+                         -psWO->dfCutlineBlendDist + nYOff);
+        OGRPolygon oChunkFootprint;
+        oChunkFootprint.addRingDirectly(poRing);
+        OGREnvelope sChunkEnvelope;
+        oChunkFootprint.getEnvelope(&sChunkEnvelope );
+        if( sEnvelope.Contains(sChunkEnvelope) &&
+            OGRGeometry::FromHandle(hPolygon)->Contains(&oChunkFootprint) )
+        {
+            CPLDebug("WARP", "Source chunk fully contained within cutline.");
+            return CE_None;
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Create a byte buffer into which we can burn the                 */
 /*      mask polygon and wrap it up as a memory dataset.                */

@@ -463,6 +463,46 @@ def test_gdalwarp_lib_21():
 
 
 ###############################################################################
+# Test cutline whose extent is larger than the source data
+
+
+@pytest.mark.parametrize(
+    "options", [{}, {"GDALWARP_SKIP_CUTLINE_CONTAINMENT_TEST": "YES"}]
+)
+def test_gdalwarp_lib_cutline_larger_source_dataset(options):
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(26711)
+    cutline_ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(
+        "/vsimem/cutline.shp"
+    )
+    cutline_lyr = cutline_ds.CreateLayer("cutline", srs=srs)
+    f = ogr.Feature(cutline_lyr.GetLayerDefn())
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "POLYGON((400000 3000000,400000 4000000,500000 4000000,500000 3000000,400000 3000000))"
+        )
+    )
+    cutline_lyr.CreateFeature(f)
+    cutline_ds = None
+
+    with gdaltest.config_options(options):
+        ds = gdal.Warp(
+            "",
+            "../gcore/data/byte.tif",
+            format="MEM",
+            cutlineDSName="/vsimem/cutline.shp",
+            cutlineLayer="cutline",
+        )
+    assert ds is not None
+
+    assert ds.GetRasterBand(1).Checksum() == 4672
+
+    ds = None
+    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("/vsimem/cutline.shp")
+
+
+###############################################################################
 # Test cutline with ALL_TOUCHED enabled.
 
 
