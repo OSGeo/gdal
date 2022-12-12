@@ -20,6 +20,8 @@ point to a directory. For a directory to be recognised as a .csv
 datasource at least half the files in the directory need to have the
 extension .csv. One layer (table) is produced from each .csv file
 accessed.
+Starting with GDAL 3.7, pipe separated values files with .psv extension
+are also recognized.
 
 For files structured as CSV, but not ending
 with .CSV extension, the 'CSV:' prefix can be added before the filename
@@ -77,7 +79,7 @@ CSV files have one line for each feature (record) in the layer (table).
 The attribute field values are separated by commas. At least two fields
 per line must be present. Lines may be terminated by a DOS (CR/LF) or
 Unix (LF) style line terminators. Each record should have the same
-number of fields. The driver will also accept a semicolon, a tabulation, 
+number of fields. The driver will also accept a semicolon, a tabulation,
 a pipe, or a space character as field separator .
 This autodetection will work only if there's no other potential
 separator on the first line of the CSV file. Otherwise it will default

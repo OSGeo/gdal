@@ -478,6 +478,9 @@ CPLString OGRCSVDataSource::GetRealExtension(CPLString osFilename)
         else if( osFilename.size() > 7 &&
                  EQUAL(osFilename + osFilename.size() - 7, ".tsv.gz") )
             return "tsv";
+        else if( osFilename.size() > 7 &&
+                 EQUAL(osFilename + osFilename.size() - 7, ".psv.gz") )
+            return "psv";
     }
     return osExt;
 }
@@ -570,7 +573,8 @@ int OGRCSVDataSource::Open( const char *pszFilename, int bUpdateIn,
 
     // Is this a single CSV file?
     if( VSI_ISREG(sStatBuf.st_mode)
-        && (bIgnoreExtension || EQUAL(osExt, "csv") || EQUAL(osExt, "tsv")) )
+        && (bIgnoreExtension || EQUAL(osExt, "csv") || EQUAL(osExt, "tsv") ||
+            EQUAL(osExt, "psv")) )
     {
         if (EQUAL(CPLGetFilename(osFilename), "NfdcFacilities.xls"))
         {
@@ -750,6 +754,12 @@ bool OGRCSVDataSource::OpenTable( const char *pszFilename,
         {
             osLayerName = osLayerName.substr(0, osLayerName.size() - 4);
             osExt = "tsv";
+        }
+        else if( strlen(pszFilename) > 7 &&
+                 EQUAL(pszFilename + strlen(pszFilename) - 7, ".psv.gz") )
+        {
+            osLayerName = osLayerName.substr(0, osLayerName.size() - 4);
+            osExt = "psv";
         }
     }
 
