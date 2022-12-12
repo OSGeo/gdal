@@ -523,10 +523,11 @@ static void CSVIngest( const char *pszFilename )
 
 /** Detect which field separator is used.
  *
- * Currently, it can detect comma, semicolon, space or tabulation. In case of
- * ambiguity or no separator found, comma will be considered as the separator.
+ * Currently, it can detect comma, semicolon, space, tabulation or pipe.
+ * In case of ambiguity or no separator found, comma will be considered as the
+ * separator.
  *
- * @return ',', ';', ' ' or tabulation character.
+ * @return ',', ';', ' ', tabulation character or '|'.
  */
 char CSVDetectSeperator( const char* pszLine )
 {
@@ -537,7 +538,7 @@ char CSVDetectSeperator( const char* pszLine )
     for( ; *pszLine != '\0'; pszLine++ )
     {
         if( !bInString && ( *pszLine == ',' || *pszLine == ';'
-                            || *pszLine == '\t'))
+                            || *pszLine == '\t' || *pszLine == '|'))
         {
             if( chDelimiter == '\0' )
             {

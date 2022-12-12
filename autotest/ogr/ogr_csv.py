@@ -2750,3 +2750,24 @@ def test_ogr_csv_iter_and_set_feature():
     gdal.Unlink("/vsimem/ogr_csv_iter_and_set_feature.csv")
 
     assert count == 2
+
+
+###############################################################################
+
+
+def test_ogr_csv_pipe_separated():
+    gdal.FileFromMemBuffer(
+        "/vsimem/test_ogr_csv_pipe_separated.psv",
+        """id|str
+1|foo
+""",
+    )
+
+    ds = gdal.OpenEx("/vsimem/test_ogr_csv_pipe_separated.psv")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["id"] == "1"
+    assert f["str"] == "foo"
+    ds = None
+
+    gdal.Unlink("/vsimem/test_ogr_csv_pipe_separated.psv")

@@ -94,7 +94,7 @@ static int OGRCSVDriverIdentify( GDALOpenInfo *poOpenInfo )
         {
             return TRUE;
         }
-        else if( EQUAL(osExt, "csv") || EQUAL(osExt, "tsv") )
+        else if( EQUAL(osExt, "csv") || EQUAL(osExt, "tsv") || EQUAL(osExt, "psv") )
         {
             return TRUE;
         }
@@ -313,7 +313,7 @@ void RegisterOGRCSV()
 
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
                               "Comma Separated Value (.csv)");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "csv");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "csv tsv psv");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/csv.html");
     poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
 
