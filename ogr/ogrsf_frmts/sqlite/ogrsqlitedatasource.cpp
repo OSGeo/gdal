@@ -1072,7 +1072,7 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, bool bRegisterOGR2SQLit
 #ifdef _WIN32
         osFilenameForURI.replaceAll('\\', '/');
 #endif
-        if( !STARTS_WITH(m_pszFilename, "/vsicurl/http") )
+        if( !STARTS_WITH(m_pszFilename, "/vsi") )
         {
             osFilenameForURI.replaceAll("//", '/');
         }
