@@ -114,6 +114,9 @@ int CPL_DLL OGRParseRFC822DateTime( const char* pszRFC822DateTime,
 char CPL_DLL * OGRGetRFC822DateTime(const OGRField* psField);
 char CPL_DLL * OGRGetXMLDateTime(const OGRField* psField);
 char CPL_DLL * OGRGetXMLDateTime(const OGRField* psField, bool bAlwaysMillisecond);
+// 30 = strlen("YYYY-MM-DDThh:mm:ss.sss+hh:mm") + 1
+#define OGR_SIZEOF_ISO8601_DATETIME_BUFFER 30
+int CPL_DLL OGRGetISO8601DateTime(const OGRField* psField, bool bAlwaysMillisecond, char szBuffer[OGR_SIZEOF_ISO8601_DATETIME_BUFFER]);
 char CPL_DLL * OGRGetXML_UTF8_EscapedString(const char* pszString);
 bool CPL_DLL OGRParseDateTimeYYYYMMDDTHHMMSSZ( const char *pszInput, size_t nLen, OGRField *psField );
 bool CPL_DLL OGRParseDateTimeYYYYMMDDTHHMMSSsssZ( const char *pszInput, size_t nLen, OGRField *psField );

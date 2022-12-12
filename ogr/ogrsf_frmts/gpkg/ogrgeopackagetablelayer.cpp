@@ -254,6 +254,11 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
 
     /* Bind the attributes using appropriate SQLite data types */
     const int nFieldCount = poFeatureDefn->GetFieldCount();
+
+    size_t nInsertionBufferPos = 0;
+    if( m_osInsertionBuffer.empty() )
+        m_osInsertionBuffer.resize(OGR_SIZEOF_ISO8601_DATETIME_BUFFER * nFieldCount);
+
     for( int i = 0;
          err == SQLITE_OK && i < nFieldCount;
          i++ )
@@ -297,23 +302,50 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
                 {
                     const char *pszVal = "";
                     int nValLengthBytes = -1;
-                    char szVal[32];
                     sqlite3_destructor_type destructorType = SQLITE_TRANSIENT;
                     if( poFieldDefn->GetType() == OFTDate )
                     {
-                        int nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZFlag;
-                        poFeature->GetFieldAsDateTime(i, &nYear, &nMonth, &nDay, &nHour, &nMinute, &nSecond, &nTZFlag);
-                        snprintf(szVal, sizeof(szVal), "%04d-%02d-%02d", nYear, nMonth, nDay);
-                        pszVal = szVal;
+                        destructorType = SQLITE_STATIC;
+                        const auto psFieldRaw = poFeature->GetRawFieldRef(i);
+                        char* pszValEdit = &m_osInsertionBuffer[nInsertionBufferPos];
+                        pszVal = pszValEdit;
+                        if( psFieldRaw->Date.Year < 0 || psFieldRaw->Date.Year >= 10000 )
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                "OGRGetISO8601DateTime(): year %d unsupported ",
+                                     psFieldRaw->Date.Year);
+                            nValLengthBytes = 0;
+                        }
+                        else
+                        {
+                            int nYear = psFieldRaw->Date.Year;
+                            pszValEdit[3] = (nYear % 10) + '0';
+                            nYear /= 10;
+                            pszValEdit[2] = (nYear % 10) + '0';
+                            nYear /= 10;
+                            pszValEdit[1] = (nYear % 10) + '0';
+                            nYear /= 10;
+                            pszValEdit[0] = static_cast<char>(nYear /*% 10*/ + '0');
+                            pszValEdit[4] = '-';
+                            pszValEdit[5] = ((psFieldRaw->Date.Month / 10) % 10) + '0';
+                            pszValEdit[6] = (psFieldRaw->Date.Month % 10) + '0';
+                            pszValEdit[7] = '-';
+                            pszValEdit[8] = ((psFieldRaw->Date.Day / 10) % 10) + '0';
+                            pszValEdit[9] = (psFieldRaw->Date.Day % 10) + '0';
+                            nValLengthBytes = 10;
+                            nInsertionBufferPos += 10;
+                        }
                     }
                     else if( poFieldDefn->GetType() == OFTDateTime )
                     {
+                        destructorType = SQLITE_STATIC;
                         constexpr bool bAlwaysMillisecond = true;
-                        destructorType = CPLFree;
                         const auto psFieldRaw = poFeature->GetRawFieldRef(i);
+                        char* pszValEdit = &m_osInsertionBuffer[nInsertionBufferPos];
+                        pszVal = pszValEdit;
                         if( m_poDS->m_bDateTimeWithTZ || psFieldRaw->Date.TZFlag == 100 )
                         {
-                            pszVal = OGRGetXMLDateTime(psFieldRaw, bAlwaysMillisecond);
+                            nValLengthBytes = OGRGetISO8601DateTime(psFieldRaw, bAlwaysMillisecond, pszValEdit);
                         }
                         else
                         {
@@ -343,9 +375,9 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
                                 sField.Date.TZFlag = 100;
                             }
 
-                            pszVal = OGRGetXMLDateTime(&sField, bAlwaysMillisecond);
+                            nValLengthBytes = OGRGetISO8601DateTime(&sField, bAlwaysMillisecond, pszValEdit);
                         }
-
+                        nInsertionBufferPos += nValLengthBytes;
                     }
                     else if( poFieldDefn->GetType() == OFTString )
                     {
@@ -4809,9 +4841,9 @@ CPLString OGRGeoPackageTableLayer::GetColumnsOfCreateTable(const std::vector<OGR
             if( poFieldDefn->GetType() == OFTDateTime &&
                 OGRParseDate(pszDefault, &sField, 0) )
             {
-                char* pszXML = OGRGetXMLDateTime(&sField);
-                osSQL += pszXML;
-                CPLFree(pszXML);
+                char szBuffer[OGR_SIZEOF_ISO8601_DATETIME_BUFFER];
+                OGRGetISO8601DateTime(&sField, false, szBuffer);
+                osSQL += szBuffer;
             }
             /* Make sure CURRENT_TIMESTAMP is translated into appropriate format for GeoPackage */
             else if( poFieldDefn->GetType() == OFTDateTime &&

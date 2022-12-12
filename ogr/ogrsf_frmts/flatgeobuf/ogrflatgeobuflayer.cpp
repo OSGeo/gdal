@@ -1740,13 +1740,12 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
             case OGRFieldType::OFTDate:
             case OGRFieldType::OFTTime:
             case OGRFieldType::OFTDateTime: {
-                char *str = OGRGetXMLDateTime(field);
-                const size_t len = strlen(str);
+                char szBuffer[OGR_SIZEOF_ISO8601_DATETIME_BUFFER];
+                const size_t len = OGRGetISO8601DateTime(field, false, szBuffer);
                 uint32_t l_le = static_cast<uint32_t>(len);
                 CPL_LSBPTR32(&l_le);
                 std::copy(reinterpret_cast<const uint8_t *>(&l_le), reinterpret_cast<const uint8_t *>(&l_le + 1), std::back_inserter(properties));
-                std::copy(str, str + len, std::back_inserter(properties));
-                CPLFree(str);
+                std::copy(szBuffer, szBuffer + len, std::back_inserter(properties));
                 break;
             }
             case OGRFieldType::OFTString: {

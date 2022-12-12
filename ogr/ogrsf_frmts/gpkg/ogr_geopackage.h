@@ -570,6 +570,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     bool                        m_bDeferredCreation = false;
     bool                        m_bTableCreatedInTransaction = false;
     int                         m_iFIDAsRegularColumnIndex = -1;
+    std::string                 m_osInsertionBuffer{}; // used by FeatureBindParameters to store datetime values
 
     CPLString                   m_osIdentifierLCO{};
     CPLString                   m_osDescriptionLCO{};
