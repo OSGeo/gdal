@@ -537,7 +537,7 @@ char CSVDetectSeperator( const char* pszLine )
     for( ; *pszLine != '\0'; pszLine++ )
     {
         if( !bInString && ( *pszLine == ',' || *pszLine == ';'
-                            || *pszLine == '\t'))
+                            || *pszLine == '\t' || *pszLine == '|'))
         {
             if( chDelimiter == '\0' )
             {

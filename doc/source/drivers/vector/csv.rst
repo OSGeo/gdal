@@ -77,8 +77,8 @@ CSV files have one line for each feature (record) in the layer (table).
 The attribute field values are separated by commas. At least two fields
 per line must be present. Lines may be terminated by a DOS (CR/LF) or
 Unix (LF) style line terminators. Each record should have the same
-number of fields. The driver will also accept a semicolon, a tabulation
-or a space character as field separator .
+number of fields. The driver will also accept a semicolon, a tabulation, 
+a pipe, or a space character as field separator .
 This autodetection will work only if there's no other potential
 separator on the first line of the CSV file. Otherwise it will default
 to comma as separator.
