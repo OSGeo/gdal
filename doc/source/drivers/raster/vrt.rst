@@ -1611,6 +1611,10 @@ the dataset name since GDAL 3.1
 
     vrt://{path_to_gdal_dataset}?[a_srs=srs_def]
 
+::
+
+    vrt://{path_to_gdal_dataset}?[a_ullr=ulx,uly,llx,lly]
+
 
 For example:
 
@@ -1622,12 +1626,11 @@ For example:
 
     vrt://my.tif?a_srs=OGC:CRS84
     
-
 ::
 
-    "vrt://my.tif?a_ullr=0 1 1 -1"
+    vrt://my.tif?a_ullr=0,1,1,-1
     
-    
+
 The supported options currently are ``bands``, ``a_srs`` and ``a_ullr``. Other options may be 
 added in the future.
 
@@ -1643,14 +1646,14 @@ definition.
 
 The effect of the ``a_ullr`` option (added in GDAL 3.7) is to assign (override) the georeferenced
 bounds of the source in the same way as (:ref:`gdal_translate`). The value consists of four numeric
-values separated by spaces. 
+values separated by commas. 
 
 The options may be chained together separated by '&'. (Beware the need for quoting to protect
-the ampersand and spaces).
+the ampersand).
 
 ::
 
-    "vrt://my.tif?a_srs=OGC:CRS84&bands=2,1&a_ullr=-180 90 180 -90"
+    "vrt://my.tif?a_srs=OGC:CRS84&bands=2,1&a_ullr=-180,90,180,-90"
     
 
 

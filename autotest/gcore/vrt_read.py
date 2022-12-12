@@ -1446,7 +1446,7 @@ def test_vrt_protocol():
     crs = ds.GetSpatialRef()
     assert crs.GetAuthorityCode(None) == "3031"
 
-    ds = gdal.Open("vrt://data/byte.tif?a_ullr=0 10 20 0")
+    ds = gdal.Open("vrt://data/byte.tif?a_ullr=0,10,20,0")
     geotransform = ds.GetGeoTransform()
     assert geotransform == (0.0, 1.0, 0.0, 20.0, 0.0, -0.5)
 

@@ -1018,7 +1018,7 @@ GDALDataset *VRTDataset::OpenVRTProtocol( const char* pszSpec )
               double xmin,xmax,ymin,ymax;
               
               // Parse the limits
-              CPLStringList aosUllr(CSLTokenizeString2(pszValue, " ", 0));
+              CPLStringList aosUllr(CSLTokenizeString2(pszValue, ",", 0));
               // fail if not four values 
               if(aosUllr.size() != 4)
               {
