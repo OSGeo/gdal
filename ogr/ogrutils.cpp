@@ -1439,12 +1439,10 @@ char* OGRGetRFC822DateTime( const OGRField* psField )
 /*                            OGRGetXMLDateTime()                       */
 /************************************************************************/
 
-char* OGRGetXMLDateTime(const OGRField* psField)
-{
-    return OGRGetXMLDateTime(psField, false);
-}
+#define OGR_SIZEOF_ISO8601_DATETIME_BUFFER 30
 
-char* OGRGetXMLDateTime(const OGRField* psField, bool bAlwaysMillisecond)
+static
+int OGRGetISO8601DateTime(const OGRField* psField, bool bAlwaysMillisecond, char szBuffer[OGR_SIZEOF_ISO8601_DATETIME_BUFFER])
 {
     const GInt16 year = psField->Date.Year;
     const GByte month = psField->Date.Month;
@@ -1454,18 +1452,82 @@ char* OGRGetXMLDateTime(const OGRField* psField, bool bAlwaysMillisecond)
     const float second = psField->Date.Second;
     const GByte TZFlag = psField->Date.TZFlag;
 
-    char szTimeZone[7];
+    if( year < 0 || year >= 10000 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRGetISO8601DateTime(): year %d unsupported ", year);
+        szBuffer[0] = 0;
+        return 0;
+    }
+
+    int nYear = year;
+    szBuffer[3] = (nYear % 10) + '0';
+    nYear /= 10;
+    szBuffer[2] = (nYear % 10) + '0';
+    nYear /= 10;
+    szBuffer[1] = (nYear % 10) + '0';
+    nYear /= 10;
+    szBuffer[0] = static_cast<char>(nYear /*% 10*/ + '0');
+    szBuffer[4] = '-';
+    szBuffer[5] = ((month / 10) % 10) + '0';
+    szBuffer[6] = (month % 10) + '0';
+    szBuffer[7] = '-';
+    szBuffer[8] = ((day / 10) % 10) + '0';
+    szBuffer[9] = (day % 10) + '0';
+    szBuffer[10] = 'T';
+    szBuffer[11] = ((hour / 10) % 10) + '0';
+    szBuffer[12] = (hour % 10) + '0';
+    szBuffer[13] = ':';
+    szBuffer[14] = ((minute / 10) % 10) + '0';
+    szBuffer[15] = (minute % 10) + '0';
+    szBuffer[16] = ':';
+
+    int nPos;
+    if( bAlwaysMillisecond || OGR_GET_MS(second) )
+    {
+        /* Below is equivalent of the below snprintf(), but hand-made for
+         * faster execution. */
+        /* snprintf(szBuffer, nMaxSize,
+                               "%04d-%02u-%02uT%02u:%02u:%06.3f%s",
+                               year, month, day, hour, minute, second,
+                               szTimeZone);
+        */
+        int nMilliSecond = static_cast<int>(second * 1000.0f + 0.5f);
+        szBuffer[22] = (nMilliSecond % 10) + '0';
+        nMilliSecond /= 10;
+        szBuffer[21] = (nMilliSecond % 10) + '0';
+        nMilliSecond /= 10;
+        szBuffer[20] = (nMilliSecond % 10) + '0';
+        nMilliSecond /= 10;
+        szBuffer[19] = '.';
+        szBuffer[18] = (nMilliSecond % 10) + '0';
+        nMilliSecond /= 10;
+        szBuffer[17] = (nMilliSecond % 10) + '0';
+        nPos = 23;
+    }
+    else
+    {
+        /* Below is equivalent of the below snprintf(), but hand-made for
+         * faster execution. */
+        /* snprintf(szBuffer, nMaxSize,
+                               "%04d-%02u-%02uT%02u:%02u:%02u%s",
+                               year, month, day, hour, minute,
+                               static_cast<GByte>(second), szTimeZone);
+        */
+        int nSecond = static_cast<int>(second + 0.5f);
+        szBuffer[17] = ((nSecond / 10) % 10) + '0';
+        szBuffer[18] = (nSecond % 10) + '0';
+        nPos = 19;
+    }
 
     switch( TZFlag )
     {
         case 0:    // Unknown time zone
         case 1:    // Local time zone (not specified)
-            szTimeZone[0] = 0;
             break;
 
         case 100:  // GMT
-            szTimeZone[0] = 'Z';
-            szTimeZone[1] = 0;
+            szBuffer[nPos++] = 'Z';
             break;
 
         default:   // Offset (in quarter-hour units) from GMT
@@ -1473,24 +1535,30 @@ char* OGRGetXMLDateTime(const OGRField* psField, bool bAlwaysMillisecond)
             const int TZHour = TZOffset / 60;
             const int TZMinute = TZOffset % 60;
 
-            snprintf(szTimeZone, 7, "%c%02d:%02d",
-                     (TZFlag > 100) ? '+' : '-', TZHour, TZMinute);
+            szBuffer[nPos++] = (TZFlag > 100) ? '+' : '-';
+            szBuffer[nPos++] = ((TZHour / 10) % 10) + '0';
+            szBuffer[nPos++] = (TZHour % 10) + '0';
+            szBuffer[nPos++] = ':';
+            szBuffer[nPos++] = ((TZMinute / 10) % 10) + '0';
+            szBuffer[nPos++] = (TZMinute % 10) + '0';
     }
 
-    // sizeof() includes null terminator. +6 is to make -Wformat-truncation= happy
-    constexpr size_t nMaxSize = sizeof("YYYY-MM-DDThh:mm:ss.sss+hh:mm")+6;
-    char* pszRet = static_cast<char*>(CPLMalloc(nMaxSize));
-    if( OGR_GET_MS(second) || bAlwaysMillisecond )
-        snprintf(pszRet, nMaxSize,
-                               "%04d-%02u-%02uT%02u:%02u:%06.3f%s",
-                               year, month, day, hour, minute, second,
-                               szTimeZone);
-    else
-        snprintf(pszRet, nMaxSize,
-                               "%04d-%02u-%02uT%02u:%02u:%02u%s",
-                               year, month, day, hour, minute,
-                               static_cast<GByte>(second), szTimeZone);
+    szBuffer[nPos] = 0;
 
+    return nPos;
+}
+
+char* OGRGetXMLDateTime(const OGRField* psField)
+{
+    char* pszRet = static_cast<char*>(CPLMalloc(OGR_SIZEOF_ISO8601_DATETIME_BUFFER));
+    OGRGetISO8601DateTime(psField, false, pszRet);
+    return pszRet;
+}
+
+char* OGRGetXMLDateTime(const OGRField* psField, bool bAlwaysMillisecond)
+{
+    char* pszRet = static_cast<char*>(CPLMalloc(OGR_SIZEOF_ISO8601_DATETIME_BUFFER));
+    OGRGetISO8601DateTime(psField, bAlwaysMillisecond, pszRet);
     return pszRet;
 }
 
