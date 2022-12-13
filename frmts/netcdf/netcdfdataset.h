@@ -90,6 +90,11 @@
 /* Config Options
 
    GDAL_NETCDF_BOTTOMUP=YES/NO overrides bottom-up value on import
+   GDAL_NETCDF_VERIFY_DIMS=[YES/STRICT] : Try to guess which dimensions represent the latitude and longitude only by their attributes (STRICT) or also by guessing the name (YES), default is YES.
+   GDAL_NETCDF_IGNORE_XY_AXIS_NAME_CHECKS=[YES/NO] Whether X/Y dimensions should be always considered as geospatial axis, even if the lack conventional attributes confirming it. Default is NO.
+   GDAL_NETCDF_ASSUME_LONGLAT=[YES/NO] Whether when all else has failed for determining a CRS, a meaningful geotransform has been found, and is within the bounds -180,360 -90,90, if YES assume OGC:CRS84. Default is NO. 
+ 
+   // TODO: this unusued and a few others occur in the source that are not documented, flush out unused opts and document the rest mdsumner@gmail.com 
    GDAL_NETCDF_CONVERT_LAT_180=YES/NO convert longitude values from ]180,360] to [-180,180]
 */
 
@@ -752,6 +757,7 @@ class netCDFDataset final: public GDALPamDataset
     int          nYDimID;
     bool         bIsProjected;
     bool         bIsGeographic;
+    bool         bAssumedLongLat; 
     bool         bSwitchedXY = false;
 
     /* state vars */
