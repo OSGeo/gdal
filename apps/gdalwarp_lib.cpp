@@ -4422,6 +4422,43 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, OGRGeometryH hCutline,
         return CE_Failure;
     }
 
+    // Optimization: if the cutline contains the footprint of the source
+    // dataset, no need to use the cutline.
+    if( OGRGeometryFactory::haveGEOS()
+#ifdef DEBUG
+        // Env var just for debugging purposes
+        && !CPLTestBool(CPLGetConfigOption("GDALWARP_SKIP_CUTLINE_CONTAINMENT_TEST", "NO"))
+#endif
+        )
+    {
+        const double dfCutlineBlendDist = CPLAtof(
+            CSLFetchNameValueDef( *ppapszWarpOptions, "CUTLINE_BLEND_DIST", "0") );
+        OGRLinearRing* poRing = new OGRLinearRing();
+        poRing->addPoint(-dfCutlineBlendDist,
+                         -dfCutlineBlendDist);
+        poRing->addPoint(-dfCutlineBlendDist,
+                         dfCutlineBlendDist + GDALGetRasterYSize(hSrcDS));
+        poRing->addPoint(dfCutlineBlendDist + GDALGetRasterXSize(hSrcDS),
+                         dfCutlineBlendDist + GDALGetRasterYSize(hSrcDS));
+        poRing->addPoint(dfCutlineBlendDist + GDALGetRasterXSize(hSrcDS),
+                         -dfCutlineBlendDist);
+        poRing->addPoint(-dfCutlineBlendDist,
+                         -dfCutlineBlendDist);
+        OGRPolygon oSrcDSFootprint;
+        oSrcDSFootprint.addRingDirectly(poRing);
+        OGREnvelope sSrcDSEnvelope;
+        oSrcDSFootprint.getEnvelope(&sSrcDSEnvelope );
+        OGREnvelope sCutlineEnvelope;
+        OGRGeometry::FromHandle(hMultiPolygon)->getEnvelope(&sCutlineEnvelope );
+        if( sCutlineEnvelope.Contains(sSrcDSEnvelope) &&
+            OGRGeometry::FromHandle(hMultiPolygon)->Contains(&oSrcDSFootprint) )
+        {
+            CPLDebug("WARP", "Source dataset fully contained within cutline.");
+            OGR_G_DestroyGeometry( hMultiPolygon );
+            return CE_None;
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Convert aggregate geometry into WKT.                            */
 /* -------------------------------------------------------------------- */
