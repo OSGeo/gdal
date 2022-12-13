@@ -1982,8 +1982,8 @@ static int TIFFAdvanceDirectory(TIFF *tif, uint64_t *nextdiroff, uint64_t *off,
         {
             TIFFWarningExtR(
                 tif, module,
-                "the next directory %" PRIu16 " at offset 0x%" PRIx64
-                " (%" PRIu64 ") might be an IFD loop. Treating directory %d as "
+                "the next directory %u at offset 0x%" PRIx64 " (%" PRIu64
+                ") might be an IFD loop. Treating directory %d as "
                 "last directory",
                 *nextdirnum, *nextdiroff, *nextdiroff, (int)(*nextdirnum) - 1);
             *nextdiroff = 0;
@@ -2160,8 +2160,7 @@ int TIFFUnlinkDirectory(TIFF *tif, tdir_t dirn)
     {
         if (nextdir == 0)
         {
-            TIFFErrorExtR(tif, module, "Directory %" PRIu16 " does not exist",
-                          dirn);
+            TIFFErrorExtR(tif, module, "Directory %u does not exist", dirn);
             return (0);
         }
         if (!TIFFAdvanceDirectory(tif, &nextdir, &off, &nextdirnum))

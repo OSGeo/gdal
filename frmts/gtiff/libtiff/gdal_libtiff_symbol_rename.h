@@ -18,6 +18,8 @@
 #define DumpModeDecode gdal_DumpModeDecode
 #define DumpModeEncode gdal_DumpModeEncode
 #define DumpModeSeek gdal_DumpModeSeek
+#define equalFuncNumberToOffset gdal_equalFuncNumberToOffset
+#define equalFuncOffsetToNumber gdal_equalFuncOffsetToNumber
 #define EstimateStripByteCounts gdal_EstimateStripByteCounts
 #define Fax3BadLength gdal_Fax3BadLength
 #define Fax3Cleanup gdal_Fax3Cleanup
@@ -55,6 +57,8 @@
 #define gtStripSeparate gdal_gtStripSeparate
 #define gtTileContig gdal_gtTileContig
 #define gtTileSeparate gdal_gtTileSeparate
+#define hashFuncNumberToOffset gdal_hashFuncNumberToOffset
+#define hashFuncOffsetToNumber gdal_hashFuncOffsetToNumber
 #define horAcc16 gdal_horAcc16
 #define horAcc32 gdal_horAcc32
 #define horAcc64 gdal_horAcc64
@@ -435,6 +439,19 @@
 #define TIFFGetVersion gdal_TIFFGetVersion
 #define TIFFGetWriteProc gdal_TIFFGetWriteProc
 #define TIFFGrowStrips gdal_TIFFGrowStrips
+#define TIFFHashSetClearInternal gdal_TIFFHashSetClearInternal
+#define TIFFHashSetDestroy gdal_TIFFHashSetDestroy
+#define TIFFHashSetEqualPointer gdal_TIFFHashSetEqualPointer
+#define TIFFHashSetFindPtr gdal_TIFFHashSetFindPtr
+#define TIFFHashSetGetNewListElt gdal_TIFFHashSetGetNewListElt
+#define TIFFHashSetHashPointer gdal_TIFFHashSetHashPointer
+#define TIFFHashSetInsert gdal_TIFFHashSetInsert
+#define TIFFHashSetLookup gdal_TIFFHashSetLookup
+#define TIFFHashSetNew gdal_TIFFHashSetNew
+#define TIFFHashSetRehash gdal_TIFFHashSetRehash
+#define TIFFHashSetRemove gdal_TIFFHashSetRemove
+#define TIFFHashSetRemoveInternal gdal_TIFFHashSetRemoveInternal
+#define TIFFHashSetReturnListElt gdal_TIFFHashSetReturnListElt
 #define TIFFIsBigEndian gdal_TIFFIsBigEndian
 #define TIFFIsBigTIFF gdal_TIFFIsBigTIFF
 #define TIFFIsByteSwapped gdal_TIFFIsByteSwapped
@@ -445,6 +462,7 @@
 #define tiff_itrunc gdal_tiff_itrunc
 #define TIFFLastDirectory gdal_TIFFLastDirectory
 #define TIFFLinkDirectory gdal_TIFFLinkDirectory
+#define TIFFListDestroy gdal_TIFFListDestroy
 #define _TIFFmalloc gdal__TIFFmalloc
 #define _TIFFmallocExt gdal__TIFFmallocExt
 #define _tiffMapProc gdal__tiffMapProc
@@ -810,6 +828,7 @@
 #define vcodes gdal_vcodes
 #define photoTag gdal_photoTag
 #define display_sRGB gdal_display_sRGB
+#define anPrimes gdal_anPrimes
 #define uv_row gdal_uv_row
 #define TIFFBitRevTable gdal_TIFFBitRevTable
 #define TIFFNoBitRevTable gdal_TIFFNoBitRevTable
