@@ -2205,6 +2205,10 @@ OGRErr OGRGeoPackageTableLayer::CreateOrUpsertFeature( OGRFeature *poFeature, bo
             else if( !bUpsert && m_bAllowedRTreeThread && !m_bErrorDuringRTreeThread )
             {
                 GPKGRTreeEntry sEntry;
+#ifdef DEBUG_VERBOSE
+                if( m_aoRTreeEntries.empty() )
+                    CPLDebug("GPKG", "Starting to fill m_aoRTreeEntries at FID " CPL_FRMT_GIB, nFID);
+#endif
                 sEntry.nId = nFID;
                 sEntry.fMinX = rtreeValueDown(oEnv.MinX);
                 sEntry.fMaxX = rtreeValueUp(oEnv.MaxX);
@@ -2258,7 +2262,7 @@ void OGRGeoPackageTableLayer::SetDeferredSpatialIndexCreation( bool bFlag )
         // For unit tests
         if( CPLTestBool(CPLGetConfigOption("OGR_GPKG_THREADED_RTREE_AT_FIRST_FEATURE", "NO")) )
         {
-            m_nRTreeBatchSize = 1;
+            m_nRTreeBatchSize = 10;
             m_nRTreeBatchesBeforeStart = 1;
         }
     }
@@ -2395,11 +2399,21 @@ void OGRGeoPackageTableLayer::AsyncRTreeThreadFunction()
     }
 
     SQLCommand(m_hAsyncDBHandle, "BEGIN");
+    GIntBig nCount = 0;
     while( true )
     {
         const auto aoEntries = m_oQueueRTreeEntries.get_and_pop_front();
         if( aoEntries.empty() )
             break;
+#ifdef DEBUG_VERBOSE
+        CPLDebug("GPKG", "AsyncRTreeThreadFunction(): "
+                 "Processing batch of %d features, "
+                 "starting at FID " CPL_FRMT_GIB " and ending "
+                 "at FID " CPL_FRMT_GIB,
+                 static_cast<int>(aoEntries.size()),
+                 aoEntries.front().nId,
+                 aoEntries.back().nId);
+#endif
         for( const auto& entry: aoEntries )
         {
             if( (entry.nId % 500000) == 0 )
@@ -2414,6 +2428,7 @@ void OGRGeoPackageTableLayer::AsyncRTreeThreadFunction()
             }
             sqlite3_reset(hStmt);
 
+            nCount ++;
             sqlite3_bind_int64(hStmt,1,entry.nId);
             sqlite3_bind_double(hStmt,2,entry.fMinX);
             sqlite3_bind_double(hStmt,3,entry.fMaxX);
@@ -2440,6 +2455,7 @@ void OGRGeoPackageTableLayer::AsyncRTreeThreadFunction()
     }
 
     sqlite3_finalize(hStmt);
+    CPLDebug("GPKG", "AsyncRTreeThreadFunction(): " CPL_FRMT_GIB " rows inserted into RTree", nCount);
 
     if( m_bErrorDuringRTreeThread )
     {
