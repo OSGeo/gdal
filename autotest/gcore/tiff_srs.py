@@ -1203,3 +1203,12 @@ def test_tiff_srs_try_write_derived_projected():
     ds = None
 
     gdal.Unlink(tmpfile)
+
+
+def test_tiff_srs_epsg_2193_override():
+
+    ds = gdal.Open("data/gtiff/epsg_2193_override.tif")
+    gdal.ErrorReset()
+    srs = ds.GetSpatialRef()
+    assert gdal.GetLastErrorMsg() == "", srs.ExportToWkt(["FORMAT=WKT2_2019"])
+    assert srs.GetAuthorityCode(None) == "2193"

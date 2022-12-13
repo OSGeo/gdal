@@ -1518,9 +1518,16 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *hGTIF, GTIFDefn * psDefn )
     if( psDefn->Model == ModelTypeProjected && psDefn->PCS != KvUserDefined &&
         !bGotFromEPSG )
     {
+        OGRSpatialReference oSRSTest(oSRS);
         OGRSpatialReference oSRSTmp;
+
         const bool bPCSCodeValid = oSRSTmp.importFromEPSG(psDefn->PCS) == OGRERR_NONE;
         oSRSTmp.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
+        // Force axis to avoid issues with SRS with northing, easting order
+        oSRSTest.SetAxes(nullptr, "X", OAO_East, "Y", OAO_North);
+        oSRSTmp.SetAxes(nullptr, "X", OAO_East, "Y", OAO_North);
+
         const std::string osGTiffSRSSource = CPLGetConfigOption("GTIFF_SRS_SOURCE", "");
         const char* const apszOptions[] = { "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES", nullptr };
         if( !bHasWarnedInconsistentGeogCRSEPSG &&
