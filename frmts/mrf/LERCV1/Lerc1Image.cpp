@@ -22,6 +22,7 @@ Contributors:  Thomas Maurer
 */
 
 #include "Lerc1Image.h"
+#include <cstdint>
 #include <cmath>
 #include <cfloat>
 #include <string>

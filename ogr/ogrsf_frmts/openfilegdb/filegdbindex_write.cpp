@@ -32,6 +32,7 @@
 #include "filegdbtable_priv.h"
 
 #include <cctype>
+#include <cstdint>
 #include <algorithm>
 #include <limits>
 
