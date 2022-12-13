@@ -6,14 +6,6 @@ if ! (clang-format --version >/dev/null); then
   exit 1
 fi
 
-# GNU prefix command for mac os support (gsed)
-GP=
-# shellcheck disable=SC2039
-case "${OSTYPE:-}" in
-  darwin*)
-    GP=g
-    ;;
-esac
 
 # determine changed files
 FILES=$(git diff --diff-filter=AM --name-only HEAD~1| tr '\n' ' ' | sort -u)
