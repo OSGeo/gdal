@@ -7244,10 +7244,15 @@ def test_ogr_gpkg_background_rtree_build(filename):
     ds = gdaltest.gpkg_dr.CreateDataSource(filename)
     with gdaltest.config_option("OGR_GPKG_THREADED_RTREE_AT_FIRST_FEATURE", "YES"):
         lyr = ds.CreateLayer("foo")
+    assert lyr.StartTransaction() == ogr.OGRERR_NONE
     for i in range(1000):
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(%d %d)" % (i, i)))
         assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+        if i == 500:
+            assert lyr.CommitTransaction() == ogr.OGRERR_NONE
+            assert lyr.StartTransaction() == ogr.OGRERR_NONE
+    assert lyr.CommitTransaction() == ogr.OGRERR_NONE
     ds = None
     assert gdal.VSIStatL(filename + ".tmp_rtree_foo.db") is None
 
