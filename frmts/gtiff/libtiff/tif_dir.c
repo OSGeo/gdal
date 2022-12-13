@@ -30,6 +30,7 @@
  */
 #include "tiffiop.h"
 #include <float.h> /*--: for Rational2Double */
+#include <limits.h>
 
 /*
  * These are used in the backwards compatibility code...
@@ -1812,7 +1813,7 @@ int TIFFDefaultDirectory(TIFF *tif)
 }
 
 static int TIFFAdvanceDirectory(TIFF *tif, uint64_t *nextdiroff, uint64_t *off,
-                                uint16_t *nextdirnum)
+                                tdir_t *nextdirnum)
 {
     static const char module[] = "TIFFAdvanceDirectory";
 
@@ -1820,8 +1821,8 @@ static int TIFFAdvanceDirectory(TIFF *tif, uint64_t *nextdiroff, uint64_t *off,
     if (!_TIFFCheckDirNumberAndOffset(tif, *nextdirnum, *nextdiroff))
     {
         TIFFErrorExtR(tif, module,
-                      "Starting directory %" PRIu16 " at offset 0x%" PRIx64
-                      " (%" PRIu64 ") might cause an IFD loop",
+                      "Starting directory %u at offset 0x%" PRIx64 " (%" PRIu64
+                      ") might cause an IFD loop",
                       *nextdirnum, *nextdiroff, *nextdiroff);
         *nextdiroff = 0;
         *nextdirnum = 0;
@@ -1995,12 +1996,11 @@ static int TIFFAdvanceDirectory(TIFF *tif, uint64_t *nextdiroff, uint64_t *off,
 /*
  * Count the number of directories in a file.
  */
-uint16_t TIFFNumberOfDirectories(TIFF *tif)
+tdir_t TIFFNumberOfDirectories(TIFF *tif)
 {
-    static const char module[] = "TIFFNumberOfDirectories";
     uint64_t nextdiroff;
-    uint16_t nextdirnum;
-    uint16_t n;
+    tdir_t nextdirnum;
+    tdir_t n;
     if (!(tif->tif_flags & TIFF_BIGTIFF))
         nextdiroff = tif->tif_header.classic.tiff_diroff;
     else
@@ -2010,17 +2010,7 @@ uint16_t TIFFNumberOfDirectories(TIFF *tif)
     while (nextdiroff != 0 &&
            TIFFAdvanceDirectory(tif, &nextdiroff, NULL, &nextdirnum))
     {
-        if (n != 65535)
-        {
-            ++n;
-        }
-        else
-        {
-            TIFFErrorExtR(tif, module,
-                          "Directory count exceeded 65535 limit,"
-                          " giving up on counting.");
-            return (65535);
-        }
+        ++n;
     }
     return (n);
 }
@@ -2029,11 +2019,11 @@ uint16_t TIFFNumberOfDirectories(TIFF *tif)
  * Set the n-th directory as the current directory.
  * NB: Directories are numbered starting at 0.
  */
-int TIFFSetDirectory(TIFF *tif, uint16_t dirn)
+int TIFFSetDirectory(TIFF *tif, tdir_t dirn)
 {
     uint64_t nextdiroff;
-    uint16_t nextdirnum;
-    uint16_t n;
+    tdir_t nextdirnum;
+    tdir_t n;
 
     if (!(tif->tif_flags & TIFF_BIGTIFF))
         nextdiroff = tif->tif_header.classic.tiff_diroff;
@@ -2076,12 +2066,12 @@ int TIFFSetSubDirectory(TIFF *tif, uint64_t diroff)
      * https://www.awaresystems.be/imaging/tiff/specification/TIFFPM6.pdf.)
      */
     int retval;
-    uint16_t curdir = 0;
+    uint32_t curdir = 0;
     int8_t probablySubIFD = 0;
     if (diroff == 0)
     {
         /* Special case to invalidate the tif_lastdiroff member. */
-        tif->tif_curdir = 65535;
+        tif->tif_curdir = TIFF_NON_EXISTENT_DIR_NUMBER;
     }
     else
     {
@@ -2091,7 +2081,8 @@ int TIFFSetSubDirectory(TIFF *tif, uint64_t diroff)
             probablySubIFD = 1;
         }
         /* -1 because TIFFReadDirectory() will increment tif_curdir. */
-        tif->tif_curdir = curdir - 1;
+        tif->tif_curdir =
+            curdir == 0 ? TIFF_NON_EXISTENT_DIR_NUMBER : curdir - 1;
     }
 
     tif->tif_nextdiroff = diroff;
@@ -2099,7 +2090,12 @@ int TIFFSetSubDirectory(TIFF *tif, uint64_t diroff)
     /* If failed, curdir was not incremented in TIFFReadDirectory(), so set it
      * back. */
     if (!retval)
-        tif->tif_curdir++;
+    {
+        if (tif->tif_curdir == TIFF_NON_EXISTENT_DIR_NUMBER)
+            tif->tif_curdir = 0;
+        else
+            tif->tif_curdir++;
+    }
     if (retval && probablySubIFD)
     {
         /* Reset IFD list to start new one for SubIFD chain and also start
@@ -2129,13 +2125,13 @@ int TIFFLastDirectory(TIFF *tif) { return (tif->tif_nextdiroff == 0); }
  * This is different to TIFFSetDirectory() where the first directory starts with
  * zero.
  */
-int TIFFUnlinkDirectory(TIFF *tif, uint16_t dirn)
+int TIFFUnlinkDirectory(TIFF *tif, tdir_t dirn)
 {
     static const char module[] = "TIFFUnlinkDirectory";
     uint64_t nextdir;
-    uint16_t nextdirnum;
+    tdir_t nextdirnum;
     uint64_t off;
-    uint16_t n;
+    tdir_t n;
 
     if (tif->tif_mode == O_RDONLY)
     {

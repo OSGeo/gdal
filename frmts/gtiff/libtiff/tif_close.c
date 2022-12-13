@@ -51,10 +51,8 @@ void TIFFCleanup(TIFF *tif)
     (*tif->tif_cleanup)(tif);
     TIFFFreeDirectory(tif);
 
-    if (tif->tif_dirlistoff)
-        _TIFFfreeExt(tif, tif->tif_dirlistoff);
-    if (tif->tif_dirlistdirn)
-        _TIFFfreeExt(tif, tif->tif_dirlistdirn);
+    TIFFHashSetDestroy(tif->tif_map_dir_offset_to_number);
+    TIFFHashSetDestroy(tif->tif_map_dir_number_to_offset);
 
     /*
      * Clean up client info links.

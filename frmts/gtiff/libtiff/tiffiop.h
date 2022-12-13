@@ -46,13 +46,22 @@
 #define assert(x)
 #endif
 
+#include "tif_hash_set.h"
 #include "tiffio.h"
 
 #include "tif_dir.h"
 
+#include <limits.h>
+
 #ifndef STRIP_SIZE_DEFAULT
 #define STRIP_SIZE_DEFAULT 8192
 #endif
+
+#ifndef TIFF_MAX_DIR_COUNT
+#define TIFF_MAX_DIR_COUNT 1048576
+#endif
+
+#define TIFF_NON_EXISTENT_DIR_NUMBER UINT_MAX
 
 #define streq(a, b) (strcmp(a, b) == 0)
 #define strneq(a, b, n) (strncmp(a, b, n) == 0)
@@ -85,6 +94,13 @@ typedef int (*TIFFSeekMethod)(TIFF *, uint32_t);
 typedef void (*TIFFPostMethod)(TIFF *tif, uint8_t *buf, tmsize_t size);
 typedef uint32_t (*TIFFStripMethod)(TIFF *, uint32_t);
 typedef void (*TIFFTileMethod)(TIFF *, uint32_t *, uint32_t *);
+
+struct TIFFOffsetAndDirNumber
+{
+    uint64_t offset;
+    tdir_t dirNumber;
+};
+typedef struct TIFFOffsetAndDirNumber TIFFOffsetAndDirNumber;
 
 struct tiff
 {
@@ -132,11 +148,10 @@ struct tiff
     uint64_t tif_lastdiroff;  /* file offset of last directory written so far */
     uint64_t *tif_dirlistoff; /* list of offsets to already seen directories to
                                  prevent IFD looping */
-    uint16_t *tif_dirlistdirn; /* list of directory numbers to already seen
-                                  directories to prevent IFD looping */
-    uint16_t tif_dirlistsize;  /* number of entries in offset list */
-    uint16_t tif_dirnumber;    /* number of already seen directories */
-    TIFFDirectory tif_dir;     /* internal rep of current directory */
+    TIFFHashSet *tif_map_dir_offset_to_number;
+    TIFFHashSet *tif_map_dir_number_to_offset;
+    tdir_t tif_dirnumber;  /* number of already seen directories */
+    TIFFDirectory tif_dir; /* internal rep of current directory */
     TIFFDirectory
         tif_customdir; /* custom IFDs are separated from the main ones */
     union
@@ -147,7 +162,7 @@ struct tiff
     } tif_header;
     uint16_t tif_header_size;  /* file's header block and its length */
     uint32_t tif_row;          /* current scanline */
-    uint16_t tif_curdir;       /* current directory (index) */
+    tdir_t tif_curdir;         /* current directory (index) */
     uint32_t tif_curstrip;     /* current strip for read/write */
     uint64_t tif_curoff;       /* current offset for read/write */
     uint64_t tif_lastvalidoff; /* last valid offset allowed for rewrite in

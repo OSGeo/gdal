@@ -50,6 +50,7 @@ add_library(
   tif_predict.c
   tif_version.c
   tif_lerc.c
+  tif_hash_set.c
   tiffio.h)
 target_include_directories(libtiff PRIVATE $<TARGET_PROPERTY:cpl,SOURCE_DIR> $<TARGET_PROPERTY:cpl,BINARY_DIR>)
 target_compile_definitions(libtiff PRIVATE -DDONT_DEPRECATE_SPRINTF -DHOST_FILLORDER=FILLORDER_LSB2MSB)
