@@ -7853,10 +7853,15 @@ def test_ogr_gpkg_background_rtree_build(filename):
     ds = gdaltest.gpkg_dr.CreateDataSource(filename)
     with gdaltest.config_option("OGR_GPKG_THREADED_RTREE_AT_FIRST_FEATURE", "YES"):
         lyr = ds.CreateLayer("foo")
+    assert lyr.StartTransaction() == ogr.OGRERR_NONE
     for i in range(1000):
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(%d %d)" % (i, i)))
         assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+        if i == 500:
+            assert lyr.CommitTransaction() == ogr.OGRERR_NONE
+            assert lyr.StartTransaction() == ogr.OGRERR_NONE
+    assert lyr.CommitTransaction() == ogr.OGRERR_NONE
     ds = None
     assert gdal.VSIStatL(filename + ".tmp_rtree_foo.db") is None
 
@@ -7931,6 +7936,45 @@ def test_ogr_gpkg_background_rtree_build(filename):
     lyr.SetSpatialFilterRect(-0.5, -0.5, 0.5, 0.5)
     assert lyr.GetFeatureCount() == 1
     ds = None
+
+    gdal.Unlink(filename)
+
+
+###############################################################################
+
+
+def test_ogr_gpkg_detect_broken_rtree_gdal_3_6_0():
+
+    filename = "/vsimem/test_ogr_gpkg_detect_broken_rtree_gdal_3_6_0.gpkg"
+
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    lyr = ds.CreateLayer("foo")
+    for i in range(100):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(
+            ogr.CreateGeometryFromWkt("POINT(%d %d)" % (i % 10, i // 10))
+        )
+        lyr.CreateFeature(f)
+    ds = None
+
+    # Voluntary corrupt the RTree by removing the entry for the last feature
+    ds = ogr.Open(filename, update=1)
+    sql_lyr = ds.ExecuteSQL("DELETE FROM rtree_foo_geom WHERE id = 100")
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
+    with gdaltest.config_option("OGR_GPKG_THRESHOLD_DETECT_BROKEN_RTREE", "100"):
+        ds = ogr.Open(filename)
+        lyr = ds.GetLayer(0)
+        with gdaltest.error_handler():
+            gdal.ErrorReset()
+            lyr.SetSpatialFilterRect(8.5, 8.5, 9.5, 9.5)
+            assert (
+                "Spatial index (perhaps created with GDAL 3.6.0) of table foo is corrupted"
+                in gdal.GetLastErrorMsg()
+            )
+        assert lyr.GetFeatureCount() == 1
+        ds = None
 
     gdal.Unlink(filename)
 
