@@ -4780,8 +4780,6 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
 
     // wish of 6195
     // we don't have CS/SRS, but we do have GT, and we live in -180,360 -90,90
-    // TODO and we check a user settable option "NETCDF_ASSUME_WGS84_IN_VERY_LIMITED_CIRCUMSTANCES"
-    // and maybe TODO also require lon*,lat* alike coord var/dim names?
     if (!bGotGeogCS && !bGotCfSRS && !bGotGdalSRS && !bGotCfWktSRS)  
     {
       if (bGotCfGT || bGotGdalGT) 
