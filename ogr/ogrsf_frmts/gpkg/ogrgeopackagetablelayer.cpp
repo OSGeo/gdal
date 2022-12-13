@@ -2868,6 +2868,9 @@ OGRErr OGRGeoPackageTableLayer::DeleteFeature(GIntBig nFID)
 
 bool OGRGeoPackageTableLayer::DoJobAtTransactionCommit()
 {
+    if( m_bAllowedRTreeThread )
+        return true;
+
     bool ret = RunDeferredCreationIfNecessary() == OGRERR_NONE &&
                RunDeferredSpatialIndexUpdate();
     m_nCountInsertInTransaction = 0;
