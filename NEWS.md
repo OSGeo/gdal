@@ -1,4 +1,220 @@
+# GDAL/OGR 3.6.1 Release Notes
+
+GDAL 3.6.1 is a bugfix release. It officially retracts GDAL 3.6.0 which
+could cause corruption of the spatial index of GeoPackage files it created
+(in tables with 100 000 features or more):
+cf https://github.com/qgis/QGIS/issues/51188 and
+https://github.com/OSGeo/gdal/pull/6911. GDAL 3.6.1 fixes that issue. Setting
+OGR_GPKG_ALLOW_THREADED_RTREE=NO environment variable (at generation time)
+also works around the issue with GDAL 3.6.0. Users who have generated corrupted
+GeoPackage files with 3.6.0 can regnerate them with 3.6.1 with, for example,
+"ogr2ogr out_ok.gpkg in_corrupted.gpkg" (assuming a GeoPackage file with vector
+content only)
+
+## Build
+
+* Fix build with -DOGR_ENABLE_DRIVER_GML=OFF (#6647)
+* Add build support for libhdf5 1.13.2 and 1.13.3 (#6657)
+* remove RECOMMENDED flag to BRUNSLI and QB3. Add it for CURL (cf
+  https://github.com/spack/spack/pull/33856#issue-1446090634)
+* configure.cmake: fix wrong detection of pread64 for iOS
+* FindSQLite3.cmake: add logic to invalidate SQLite3_HAS_ variables if
+  the library changes
+* detect if sqlite3 is missing mutex support
+* Fix build when sqlite3_progress_handler() is missing
+* do not use Armadillo if it lacks LAPACK support (such as on Alpine)
+* make it a FATAL_ERROR if the user used -DGDAL_USE_ARMADILLO=ON and it
+  can't be used
+* Fix static HDF4 libraries not found on Windows
+* Internal libjpeg: rename extra symbol for iOS compatibility (#6725)
+* gdaldataset: fix false-positive gcc 12.2.1 -O2 warning about truncation
+  of buffer
+* Add minimal support for reading 12-bit JPEG images with libjpeg-turbo
+  2.2dev and internal libjpeg12
+* Fix detection of blosc version number
+* Add missing includes to fix build with upcoming gcc 13
+
+## GDAL 3.6.1
+
+### Port
+
+* CPLGetExecPath(): add MacOSX and FreeBSD implementations; prevent
+  potential one-byte overflow on Linux&Windows
+* /vsiaz/: make AppendBlob operation compatible of Azurite (#6759)
+* /vsiaz/: accept Azure connection string with only BlobEndpoint and
+  SharedAccessSignature (#6870)
+* S3: fix issue with EC2 IDMSv2 request failing inside Docker container
+  with default networking
+
+### Algorithms
+
+* warp: Also log number of chunks in warp operation progress debug logs (#6709)
+* Warper: use exact coordinate transformer on source raster edges to avoid
+  missing pixels (#6777)
+
+### Utilities
+
+* gdalbuildvrt: make -addalpha working when there's a mix of bands with or
+  without alpha (#6794)
+* gdalwarp: fix issue with vertical shift, in particular when CRS has US
+  survey foot as vertical unit (#6839)
+* gdalwarp: speed-up warping with cutline when the source dataset or
+  processing chunks are fully contained within the cutline (#6905)
+* validate_gpkg.py: make it work with SRID=-1 in geometry blobs
+
+### Core
+
+* GDALMDReader: avoid possible stack overflow on hostile XML metadata
+  (ossfuzz #53988)
+
+### Raster drivers
+
+GeoRaster driver:
+ * add internal OCI connection support to vsilocilob which is used only
+    by the GeoRaster driver. (#6654)
+
+GPKG driver:
+ * implement setting the nodata value for Byte dataset (#1569)
+
+GTiff driver:
+ * DISCARD_LSB: reduce range of validity to 0-7 range for Byte to avoid
+   unsigned integer overflow if 8. (ossfuzz #53570)
+ * if CRS is DerivedProjected, write it to PAM .aux.xml file (#6758)
+ * SRS reader: do not emit warning when reading a projected CRS with GeoTIFF
+   keys override and northing, easting axis order (related to #6905)
+
+netCDF driver:
+ * fix exposing geotransform when there's x,y and lat,lon coordinates and
+   the CRS is retrieved from crs_wkt attribute (#6656)
+
+HDF4 driver:
+ * fix regression of CMake builds, related to opening more than 32 simultaneous
+   HDF4_EOS files (#6665)
+
+OGCAPI driver:
+ * update for map api; also for tiles but not working properly due to
+   churn in tilematrixset spec (#6832)
+
+RMF driver:
+ * Implement GetSuggestedBlockAccessPattern
+
+SAR_CEOS driver:
+ * fix small memleak
+
+XYZ driver:
+ * support more datasets with rather sparse content in first lines (#6736)
+
+## OGR 3.6.1
+
+### Core
+
+* OGRArrowArrayHelper::SetDate(): simplify implementation
+* OGRSpatialReference::importFromWkt(): fix compatibility with PROJ master
+  9.2.0dev for DerivedProjectedCRS
+* OGR layer algebra: make sure result layer has no duplicated field names
+  (#6851)
+
+### Utilities
+
+* ogr2ogr: densify points of spatial filter specified with -spat_srs to
+  avoid reprojection artifacts
+* ogr2ogr: discard features whose intersection with -clipsrc/-clipdst
+  result in a lower dimensionality geometry than the target layer geometry
+  type (#6836)
+* ogr2ogr: add warning when -t_srs is ignored by drivers that
+  automatically reproject to WGS 84 (#6859)
+* ogr2ogr: make sure an error in GDALClose() of the output dataset result
+  in a non-zero return code (https://github.com/Toblerity/Fiona/issues/1169)
+
+### Vector drivers
+
+CSV driver:
+ * accept comma as decimal separator in X_POSSIBLE_NAMES, Y_POSSIBLE_NAMES
+   and Z_POSSIBLE_NAMES fields
+
+FileGDB driver:
+ * avoid crash in the SDK if passing incompatible geometry type (#6836)
+
+FlatGeoBuf driver:
+ * speed-up writing of DateTime/Date values
+
+GPKG driver:
+ * fix corruption of spatial index on layers with >= 100 000 features,
+   with the default background RTree building mechanism introduced in
+   3.6.0 (https://github.com/qgis/QGIS/issues/51188, #6911) when flushing
+   transactions while adding features (triggered by ogr2ogr). See announcement
+   at top of release notes of this version.
+ * avoid nullptr dereference on corrupted databases
+ * add support for reading tables with generated columns (#6638)
+ * fix bad performance of ST_Transform() by caching the
+   OGRCoordinateTransformation object
+ * improve multi-threaded implementation of GetNextArrowArray() on tables
+   with FID without holes and when no filters are applied (full bulk
+   loading)
+ * FixupWrongRTreeTrigger(): make it work with table names that need to be
+   quoted (https://github.com/georust/gdal/issues/235)
+ * Fix opening /vsizip//path/to/my.zip/my.gpkg with NOLOCK=YES open option
+ * speed-up writing of DateTime/Date values, and fix writing DateTime with
+   milliseconds with a locale where the decimal point is not dot, and when
+   spatialite is not loaded
+
+MITAB driver:
+ * add support for 'Philippine Reference System 1992' datum
+
+MSSQLSPATIAL driver:
+ * Get UID and PWD from configuration options (#6818)
+
+OpenFileGDB driver:
+ * do not use buggy .spx spatial index found in some datasets
+   (geopandas/geopandas#2253)
+
+Parquet driver:
+ * make sure that ArrowLayer destructor is available (for plugin building)
+
+PCIDSK driver:
+ * advertise missing capabilities
+
+PGDump driver:
+ * Fix support for the TEMPORARY layer creation option
+
+PostgreSQL driver:
+ * avoid error when inserting single feature of FID 0 (#6728)
+ * Fix support for the TEMPORARY layer creation option
+
+SOSI driver:
+ * do not advertise GDAL_DCAP_CREATE_FIELD as it is not implemented
+
+SQLite driver:
+ * Fix relationships determined through foreign keys have tables reversed
+ * Use 'features' as related table type instead of 'feature' to match
+   gpkg/filegdb
+
+VDV driver:
+ * make creation of temporary .gpkg files more robust on some platforms
+
+WFS driver:
+ * do not remove single or double quote character in a LIKE filter (also
+   applies to CSW driver)
+
+## SWIG bindings:
+ * add gdal.GetNumCPUs() and gdal.GetUsablePhysicalRAM()
+
+## CSharp bindings
+
+* Default to dotnet 6 (#6843)
+
+## Python bindings
+
+* make Geometry.__str__() use ExportToIsoWkt() (#6842)
+* setup.py: improve numpy fixing (#6700)
+* add a 'python_generated_files' target that facilitate generation of bindings without building the lib
+
 # GDAL/OGR 3.6.0 Release Notes
+
+*Warning*: this version has been retracted because of a corruption when creating
+a spatial index in GeoPackage files (in tables with 100 000 features or more).
+Users should use 3.6.1 instead, and potentially regenerate GeoPackage files they
+have produced with GDAL 3.6.0.
 
 Those notes include changes since GDAL 3.5.0, but not already included in a GDAL 3.5.x bugfix release.
 
