@@ -323,7 +323,8 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
                 if( strcmp(it.key, "name") == 0 )
                 {
                     bFoundNameInNativeData = true;
-                    if( !CPLFetchBool(papszOptions, "WRITE_NAME", true) )
+                    if( !CPLFetchBool(papszOptions, "WRITE_NAME", true) ||
+                        CSLFetchNameValue(papszOptions, "@NAME") != nullptr )
                     {
                         continue;
                     }
@@ -348,7 +349,16 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
         }
     }
 
-    if( !bFoundNameInNativeData &&
+    // Used by ogr2ogr in -nln mode
+    const char* pszAtName = CSLFetchNameValue(papszOptions, "@NAME");
+    if( pszAtName && CPLFetchBool(papszOptions, "WRITE_NAME", true) )
+    {
+        json_object* poName = json_object_new_string(pszAtName);
+        VSIFPrintfL( fpOut_, "\"name\": %s,\n",
+                     json_object_to_json_string(poName) );
+        json_object_put(poName);
+    }
+    else if( !bFoundNameInNativeData &&
         CPLFetchBool(papszOptions, "WRITE_NAME", true) &&
         !EQUAL(pszNameIn, OGRGeoJSONLayer::DefaultName) &&
         !EQUAL(pszNameIn, "") )
