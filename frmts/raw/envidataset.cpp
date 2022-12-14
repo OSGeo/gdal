@@ -2897,10 +2897,17 @@ GDALDataset *ENVIDataset::Create( const char *pszFilename,
 
     // Write out the header.
 #ifdef CPL_LSB
-    const int iBigEndian = 0;
+    int iBigEndian = 0;
 #else
-    const int iBigEndian = 1;
+    int iBigEndian = 1;
 #endif
+
+    // Undocumented
+    const char* pszByteOrder = CSLFetchNameValue(papszOptions, "@BYTE_ORDER");
+    if( pszByteOrder && EQUAL(pszByteOrder, "LITTLE_ENDIAN") )
+        iBigEndian = 0;
+    else if( pszByteOrder && EQUAL(pszByteOrder, "BIG_ENDIAN") )
+        iBigEndian = 1;
 
     bool bRet = VSIFPrintfL(fp, "ENVI\n") > 0;
     bRet &= VSIFPrintfL(fp, "samples = %d\nlines   = %d\nbands   = %d\n",
