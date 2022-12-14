@@ -4805,7 +4805,6 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
           // seems odd to use 4326 so OGC:CRS84
           oSRS.SetFromUserInput("OGC:CRS84");
           oSRS.exportToWkt(&pszTempProjection);
-          bGotGeogCS = true;
           if(returnProjStr != nullptr)
           {
             (*returnProjStr) = std::string(pszTempProjection);
