@@ -2457,6 +2457,17 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                 CPLFree( pszKey );
             }
         }
+
+        // When writing to GeoJSON and using -nln, set the @NAME layer
+        // creation option to avoid the GeoJSON driver to potentially reuse
+        // the source feature collection name if the input is also GeoJSON.
+        if( psOptions->pszNewLayerName != nullptr &&
+            EQUAL(psOptions->pszFormat, "GeoJSON") )
+        {
+            psOptions->papszLCO = CSLSetNameValue(psOptions->papszLCO,
+                                                  "@NAME",
+                                                  psOptions->pszNewLayerName);
+        }
     }
 
     // Some syntaxic sugar to make "ogr2ogr [-f PostgreSQL] PG:dbname=.... source [srclayer] -lco OVERWRITE=YES"
