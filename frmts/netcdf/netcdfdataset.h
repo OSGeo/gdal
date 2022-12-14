@@ -757,7 +757,6 @@ class netCDFDataset final: public GDALPamDataset
     int          nYDimID;
     bool         bIsProjected;
     bool         bIsGeographic;
-    bool         bAssumedLongLat; 
     bool         bSwitchedXY = false;
 
     /* state vars */

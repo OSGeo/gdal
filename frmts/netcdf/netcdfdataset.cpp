@@ -2873,7 +2873,6 @@ netCDFDataset::netCDFDataset() :
     nYDimID(-1),
     bIsProjected(false),
     bIsGeographic(false),  // Can be not projected, and also not geographic
-    bAssumedLongLat(false), // GDAL_NETCDF_ASSUME_LONGLAT config option
     
     // State vars.
     bDefineMode(true),
@@ -4784,16 +4783,17 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
     {
       if (bGotCfGT || bGotGdalGT) 
       {
+        bool bAssumedLongLat = false; 
         // check setting of GDAL_NETCDF_ASSUME_LONGLAT config option.
         const char *pszCfgValue = CPLGetConfigOption("GDAL_NETCDF_ASSUME_LONGLAT", nullptr);
         if( pszCfgValue )
         {
-          poDS->bAssumedLongLat = CPLTestBool(pszCfgValue);
+          bAssumedLongLat = CPLTestBool(pszCfgValue);
           CPLDebug("GDAL_netCDF",
                    "set bAssumedLongLat=%d because GDAL_NETCDF_ASSUME_LONGLAT=%s",
-                   static_cast<int>(poDS->bAssumedLongLat), pszCfgValue);
+                   static_cast<int>(bAssumedLongLat), pszCfgValue);
         }
-        if (poDS->bAssumedLongLat && 
+        if (bAssumedLongLat && 
             adfTempGeoTransform[0] >= -180 && adfTempGeoTransform[0] < 360 &&
             (adfTempGeoTransform[0] + adfTempGeoTransform[1] * poDS->GetRasterXSize()) <= 360 &&
             adfTempGeoTransform[3] <= 90 && adfTempGeoTransform[3] > -90 &&
