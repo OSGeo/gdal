@@ -1114,7 +1114,12 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
         if (tif->tif_dataoff & 1)
             tif->tif_dataoff++;
         if (isimage)
-            tif->tif_curdir++;
+        {
+            if (tif->tif_curdir == TIFF_NON_EXISTENT_DIR_NUMBER)
+                tif->tif_curdir = 0;
+            else
+                tif->tif_curdir++;
+        }
     }
     if (isimage)
     {
