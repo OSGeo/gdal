@@ -4499,6 +4499,12 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
             {
                 xMinMax[0] = adfActualRange[0];
                 xMinMax[1] = adfActualRange[1];
+
+                // Present xMinMax[] in the same order as padfXCoord
+                if( (xMinMax[0] - xMinMax[1]) * (pdfXCoord[0] - pdfXCoord[xdim - 1]) < 0 )
+                {
+                    std::swap(xMinMax[0], xMinMax[1]);
+                }
             }
             else
             {
@@ -4512,6 +4518,12 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
             {
                 yMinMax[0] = adfActualRange[0];
                 yMinMax[1] = adfActualRange[1];
+
+                // Present yMinMax[] in the same order as pdfYCoord
+                if( (yMinMax[0] - yMinMax[1]) * (pdfYCoord[0] - pdfYCoord[ydim - 1]) < 0 )
+                {
+                    std::swap(yMinMax[0], yMinMax[1]);
+                }
             }
             else
             {

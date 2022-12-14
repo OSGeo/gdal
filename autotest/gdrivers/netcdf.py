@@ -6193,6 +6193,20 @@ def test_netcdf_warning_get_metadata_item_PIXELTYPE():
     )
 
 
+###############################################################################
+
+
+def test_netcdf_read_actual_range_with_order_different_than_latitude():
+
+    ds = gdal.Open("data/netcdf/actual_range_with_order_different_than_latitude.nc")
+    assert ds.GetGeoTransform() == pytest.approx(
+        (-150.4, 0.05, 0.0, -16.85, 0.0, -0.05), rel=1e-4
+    )
+    assert struct.unpack("d" * 4, ds.ReadRaster()) == pytest.approx(
+        (-1.51, -1.53, -1.54, -1.55)
+    )
+
+
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.
