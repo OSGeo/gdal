@@ -283,6 +283,12 @@ The following open options are available:
    same dimensions, then they should be reported as multiple bands of a same dataset.
    Default is NO (that is each variable will be reported as a separate
    subdataset)
+   
+-  **ASSUME_LONGLAT=[YES/NO]** :  Whether a Geographic CRS should
+    be assumed and applied when, none has otherwise been found, a meaningful 
+    geotransform has been found, and that geotransform is within the bounds 
+    -180,360 -90,90, if YES assume OGC:CRS84. Default is NO.
+
 
 Creation Issues
 ---------------

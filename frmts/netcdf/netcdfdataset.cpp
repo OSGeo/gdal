@@ -4783,16 +4783,10 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
     {
       if (bGotCfGT || bGotGdalGT) 
       {
-        bool bAssumedLongLat = false; 
-        // check setting of GDAL_NETCDF_ASSUME_LONGLAT config option.
-        const char *pszCfgValue = CPLGetConfigOption("GDAL_NETCDF_ASSUME_LONGLAT", nullptr);
-        if( pszCfgValue )
-        {
-          bAssumedLongLat = CPLTestBool(pszCfgValue);
-          CPLDebug("GDAL_netCDF",
-                   "set bAssumedLongLat=%d because GDAL_NETCDF_ASSUME_LONGLAT=%s",
-                   static_cast<int>(bAssumedLongLat), pszCfgValue);
-        }
+        bool bAssumedLongLat = CPLTestBool(
+          CSLFetchNameValueDef(papszOpenOptions, "ASSUME_LONGLAT",
+                               CPLGetConfigOption("GDAL_NETCDF_ASSUME_LONGLAT", "NO"))); 
+ 
         if (bAssumedLongLat && 
             adfTempGeoTransform[0] >= -180 && adfTempGeoTransform[0] < 360 &&
             (adfTempGeoTransform[0] + adfTempGeoTransform[1] * poDS->GetRasterXSize()) <= 360 &&
@@ -4816,6 +4810,12 @@ void netCDFDataset::SetProjectionFromVar( int nGroupId, int nVarId,
             SetSpatialRefNoUpdate(&oSRS);
           }
           CPLFree(pszTempProjection);
+          
+          CPLDebug("netCDF",
+                   "Assummed Longitude Latitude CRS 'OGC:CRS84' because "
+                   "none otherwise available and geotransform within suitable bounds. "
+                   "Set GDAL_NETCDF_ASSUME_LONGLAT=NO as configuration option or "
+                   "    ASSUME_LONGLAT=NO as open option to bypass this assumption.");
         }
       }
     }
@@ -10610,6 +10610,10 @@ void GDALRegister_netCDF()
     "description='Whether 2D variables that share the same indexing dimensions "
     "should be exposed as several bands of a same dataset instead of several "
     "subdatasets.' default='NO'/>"
+"   <Option name='ASSUME_LONGLAT' type='boolean' scope='raster' "
+    "description='Whether when all else has failed for determining a CRS, a "
+    "meaningful geotransform has been found, and is within the  "
+    "bounds -180,360 -90,90, assume OGC:CRS84.' default='NO'/>"
 "</OpenOptionList>" );
 
 
