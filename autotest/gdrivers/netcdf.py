@@ -6177,6 +6177,20 @@ def test_netcdf_read_cf_xy_latlon_crs_wkt():
     assert ds.GetGeoTransform() == (3500000.0, 1000.0, 0.0, 2102000.0, 0.0, -1000.0)
 
 
+###############################################################################
+
+
+def test_netcdf_read_actual_range_with_order_different_than_latitude():
+
+    ds = gdal.Open("data/netcdf/actual_range_with_order_different_than_latitude.nc")
+    assert ds.GetGeoTransform() == pytest.approx(
+        (-150.4, 0.05, 0.0, -16.85, 0.0, -0.05), rel=1e-4
+    )
+    assert struct.unpack("d" * 4, ds.ReadRaster()) == pytest.approx(
+        (-1.51, -1.53, -1.54, -1.55)
+    )
+
+
 def test_clean_tmp():
     # [KEEP THIS AS THE LAST TEST]
     # i.e. please do not add any tests after this one. Put new ones above.
