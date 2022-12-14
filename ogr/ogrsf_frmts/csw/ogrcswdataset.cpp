@@ -150,6 +150,10 @@ OGRCSWLayer::OGRCSWLayer( OGRCSWDataSource* poDSIn ) :
         poFeatureDefn->AddFieldDefn(&oField);
     }
     {
+        OGRFieldDefn oField("title", OFTString);
+        poFeatureDefn->AddFieldDefn(&oField);
+    }
+    {
         OGRFieldDefn oField("type", OFTString);
         poFeatureDefn->AddFieldDefn(&oField);
     }
