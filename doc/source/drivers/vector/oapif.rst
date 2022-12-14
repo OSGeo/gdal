@@ -49,6 +49,22 @@ evaluated on client-side.
 
 Rectangular spatial filtering is forward to the server as well.
 
+CRS support
+-----------
+
+Starting with GDAL 3.7, the driver supports the
+`OGC API - Features - Part 2: Coordinate Reference Systems by Reference <https://docs.ogc.org/is/18-058/18-058.html>`__
+extension. If a server reports a storageCRS property, that property will be
+used to set the CRS of the OGR layer. Otherwise the default will be OGC:CRS84
+(WGS84 longitude, latitude).
+As most all OGR drivers, the OAPIF driver will report the SRS and geometries,
+and expect spatial filters, in the "GIS-friendly" order,
+with longitude/easting first (X component), latitude/northing second (Y component),
+potentially overriding the axis order of the authority.
+
+The CRS of layers can also be controlled with the CRS or PREFERRED_CRS open
+options documented below.
+
 Open options
 ------------
 
@@ -62,6 +78,21 @@ The following options are available:
    and password to the remote server.
 -  **IGNORE_SCHEMA**\ = YES/NO. (GDAL >= 3.1) Set to YES to ignore the XML
    Schema or JSON schema that may be offered by the server.
+-  **CRS** = string. (GDAL >= 3.7) Set to a CRS identifier, e.g ``EPSG:3067``
+   or ``http://www.opengis.net/def/crs/EPSG/0/3067``, to use as the layer CRS.
+   That CRS must be listed in the lists of CRS supported by the layers of the
+   dataset, otherwise layers not listing it cannot be opened.
+-  **PREFERRED_CRS** = string. (GDAL >= 3.7) Identical to the CRS option, except
+   that if a layer does not list the PREFERRED_CRS in its list of supported CRS,
+   the default CRS (storageCRS when present, otherwise EPSG:4326) will be used.
+   CRS and PREFERRED_CRS option are mutually exclusive.
+-  **SERVER_FEATURE_AXIS_ORDER** = AUTHORITY_COMPLIANT/GIS_FRIENDLY.
+   AUTHORITY_COMPLIANT is the default.
+   This option can be set to GIS_FRIENDLY if axis order issue are noticed in
+   features received from the server, indicating that the server does not return
+   them in the axis order mandated by the CRS authority, but in a more traditional
+   "GIS friendly" order, with longitude/easting first, latitude/northing second.
+   Do not set this option unless actual problems arise.
 
 Examples
 --------
@@ -176,4 +207,6 @@ See Also
 
 -  `"OGC API - Features - Part 1: Core" Standard
    <http://docs.opengeospatial.org/is/17-069r3/17-069r3.html>`__
+-  `"OGC API - Features - Part 2: Coordinate Reference Systems by Reference" Standard
+   <https://docs.ogc.org/is/18-058/18-058.html>`__
 -  :ref:`WFS (1.0,1.1,2.0) driver documentation <vector.wfs>`

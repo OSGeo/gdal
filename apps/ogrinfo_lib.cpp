@@ -618,6 +618,11 @@ static void ReportOnLayer( CPLString& osRet,
         const int nGeomFieldCount =
             psOptions->bGeomType ? poLayer->GetLayerDefn()->GetGeomFieldCount() : 0;
 
+        CPLString osWKTFormat("FORMAT=");
+        osWKTFormat += psOptions->osWKTFormat;
+        const char* const apszWKTOptions[] =
+            { osWKTFormat.c_str(), "MULTILINE=YES", nullptr };
+
         OGREnvelope oExt;
         if( bJson || nGeomFieldCount > 1 )
         {
@@ -654,10 +659,6 @@ static void ReportOnLayer( CPLString& osRet,
                         CPLJSONObject oCRS;
                         oGeometryField.Add("coordinateSystem", oCRS);
                         char* pszWKT = nullptr;
-                        CPLString osWKTFormat("FORMAT=");
-                        osWKTFormat += psOptions->osWKTFormat;
-                        const char* const apszWKTOptions[] =
-                            { osWKTFormat.c_str(), nullptr };
                         poSRS->exportToWkt(&pszWKT, apszWKTOptions);
                         if( pszWKT )
                         {
@@ -694,6 +695,38 @@ static void ReportOnLayer( CPLString& osRet,
                     else
                     {
                         oGeometryField.SetNull("coordinateSystem");
+                    }
+
+                    const auto& srsList = poLayer->GetSupportedSRSList(iGeom);
+                    if( !srsList.empty() )
+                    {
+                        CPLJSONArray oSupportedSRSList;
+                        for( const auto& poSupportedSRS: srsList )
+                        {
+                            const char* pszAuthName = poSupportedSRS->GetAuthorityName(nullptr);
+                            const char* pszAuthCode = poSupportedSRS->GetAuthorityCode(nullptr);
+                            CPLJSONObject oSupportedSRS;
+                            if( pszAuthName && pszAuthCode )
+                            {
+                                CPLJSONObject id;
+                                id.Set("authority", pszAuthName);
+                                id.Set("code", pszAuthCode);
+                                oSupportedSRS.Add("id", id);
+                                oSupportedSRSList.Add(oSupportedSRS);
+                            }
+                            else
+                            {
+                                char* pszWKT = nullptr;
+                                poSupportedSRS->exportToWkt(&pszWKT, apszWKTOptions);
+                                if( pszWKT )
+                                {
+                                    oSupportedSRS.Add("wkt", pszWKT);
+                                    oSupportedSRSList.Add(oSupportedSRS);
+                                }
+                                CPLFree(pszWKT);
+                            }
+                        }
+                        oGeometryField.Add("supportedSRSList", oSupportedSRSList);
                     }
                 }
                 else
@@ -770,8 +803,36 @@ static void ReportOnLayer( CPLString& osRet,
             Concat(osRet, psOptions->bStdoutOutput, "\n");
         };
 
+        const auto DisplaySupportedCRSList = [&](int iGeomField)
+        {
+            const auto& srsList = poLayer->GetSupportedSRSList(iGeomField);
+            if( !srsList.empty() )
+            {
+                Concat(osRet, psOptions->bStdoutOutput, "Supported SRS: ");
+                bool bFirst = true;
+                for( const auto& poSupportedSRS: srsList )
+                {
+                    const char* pszAuthName = poSupportedSRS->GetAuthorityName(nullptr);
+                    const char* pszAuthCode = poSupportedSRS->GetAuthorityCode(nullptr);
+                    if( !bFirst )
+                        Concat(osRet, psOptions->bStdoutOutput, ", ");
+                    bFirst = false;
+                    if( pszAuthName && pszAuthCode )
+                    {
+                        Concat(osRet, psOptions->bStdoutOutput, "%s:%s", pszAuthName, pszAuthCode);
+                    }
+                    else
+                    {
+                        Concat(osRet, psOptions->bStdoutOutput, "%s", poSupportedSRS->GetName());
+                    }
+                }
+                Concat(osRet, psOptions->bStdoutOutput, "\n");
+            }
+        };
+
         if( !bJson && nGeomFieldCount > 1 )
         {
+
             for(int iGeom = 0;iGeom < nGeomFieldCount; iGeom ++ )
             {
                 OGRGeomFieldDefn* poGFldDefn =
@@ -784,10 +845,6 @@ static void ReportOnLayer( CPLString& osRet,
                 }
                 else
                 {
-                    CPLString osWKTFormat("FORMAT=");
-                    osWKTFormat += psOptions->osWKTFormat;
-                    const char* const apszWKTOptions[] =
-                        { osWKTFormat.c_str(), "MULTILINE=YES", nullptr };
                     poSRS->exportToWkt(&pszWKT, apszWKTOptions);
                 }
 
@@ -798,6 +855,7 @@ static void ReportOnLayer( CPLString& osRet,
                 {
                     displayExtraInfoSRS(poSRS);
                 }
+                DisplaySupportedCRSList(iGeom);
             }
         }
         else if( !bJson )
@@ -810,10 +868,6 @@ static void ReportOnLayer( CPLString& osRet,
             }
             else
             {
-                CPLString osWKTFormat("FORMAT=");
-                osWKTFormat += psOptions->osWKTFormat;
-                const char* const apszWKTOptions[] =
-                    { osWKTFormat.c_str(), "MULTILINE=YES", nullptr };
                 poSRS->exportToWkt(&pszWKT, apszWKTOptions);
             }
 
@@ -823,6 +877,7 @@ static void ReportOnLayer( CPLString& osRet,
             {
                 displayExtraInfoSRS(poSRS);
             }
+            DisplaySupportedCRSList(0);
         }
 
         const char* pszFIDColumn = poLayer->GetFIDColumn();

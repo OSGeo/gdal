@@ -192,6 +192,11 @@ class CPL_DLL OGRLayer : public GDALMajorObject
 
     virtual OGRSpatialReference *GetSpatialRef();
 
+    /** Return type of OGRLayer::GetSupportedSRSList() */
+    typedef std::vector<std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>> GetSupportedSRSListRetType;
+    virtual const GetSupportedSRSListRetType& GetSupportedSRSList(int iGeomField);
+    virtual OGRErr      SetActiveSRS(int iGeomField, const OGRSpatialReference* poSRS);
+
     virtual GIntBig     GetFeatureCount( int bForce = TRUE );
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE)  CPL_WARN_UNUSED_RESULT;
     virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent,
