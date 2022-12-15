@@ -2041,10 +2041,14 @@ int TIFFSetDirectory(TIFF *tif, tdir_t dirn)
     tif->tif_nextdiroff = nextdiroff;
     /*
      * Set curdir to the actual directory index.  The
-     * -1 is because TIFFReadDirectory will increment
+     * -1 decrement is because TIFFReadDirectory will increment
      * tif_curdir after successfully reading the directory.
      */
-    tif->tif_curdir = (dirn - n) - 1;
+    tif->tif_curdir = (dirn - n);
+    if (tif->tif_curdir == 0)
+        tif->tif_curdir = TIFF_NON_EXISTENT_DIR_NUMBER;
+    else
+        tif->tif_curdir--;
     return (TIFFReadDirectory(tif));
 }
 
