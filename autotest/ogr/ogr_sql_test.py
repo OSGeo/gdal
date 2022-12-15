@@ -54,6 +54,13 @@ def test_ogr_sql_1():
         "Got wrong count with GetFeatureCount() - %d, expecting 10" % count
     )
 
+    sql_lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM poly WHERE eas_id < 167")
+    try:
+        assert sql_lyr.GetFeatureCount(force=0) < 0
+        assert sql_lyr.GetFeatureCount(force=1) == 3
+    finally:
+        gdaltest.ds.ReleaseResultSet(sql_lyr)
+
 
 ###############################################################################
 # Test DISTINCT handling
