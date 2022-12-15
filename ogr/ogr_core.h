@@ -241,6 +241,14 @@ class CPL_DLL OGREnvelope3D : public OGREnvelope
         MaxZ = MAX(MaxZ,sOther.MaxZ);
     }
 
+    /** Update the current object by computing its union with the other rectangle */
+    void Merge( OGREnvelope const& sOther ) {
+        MinX = MIN(MinX,sOther.MinX);
+        MaxX = MAX(MaxX,sOther.MaxX);
+        MinY = MIN(MinY,sOther.MinY);
+        MaxY = MAX(MaxY,sOther.MaxY);
+    }
+
     /** Update the current object by computing its union with the provided point */
     void Merge( double dfX, double dfY, double dfZ ) {
         MinX = MIN(MinX,dfX);

@@ -85,7 +85,8 @@ void OGRParquetLayerBase::LoadGeoMetadata(const std::shared_ptr<const arrow::Key
                 if( osVersion != "0.1.0" &&
                     osVersion != "0.2.0" &&
                     osVersion != "0.3.0" &&
-                    osVersion != "0.4.0" )
+                    osVersion != "0.4.0" &&
+                    osVersion != "1.0.0-beta.1" )
                 {
                     CPLDebug("PARQUET",
                              "version = %s not explicitly handled by the driver",
@@ -221,9 +222,13 @@ bool OGRParquetLayerBase::DealWithGeometryColumn(int iFieldIdx,
                 m_aeGeomEncoding.push_back(eGeomEncoding);
                 if( eGeomType == wkbUnknown )
                 {
-                    const auto oType = oJSONDef.GetObj("geometry_type");
+                    // geometry_types since 1.0.0-beta1. Was geometry_type before
+                    auto oType = oJSONDef.GetObj("geometry_types");
+                    if( !oType.IsValid() )
+                        oType = oJSONDef.GetObj("geometry_type");
                     if( oType.GetType() == CPLJSONObject::Type::String )
                     {
+                        // string is no longer valid since 1.0.0-beta1
                         const auto osType = oType.ToString();
                         if( osType != "Unknown" )
                             eGeomType = GetGeometryTypeFromString(osType);
@@ -231,30 +236,49 @@ bool OGRParquetLayerBase::DealWithGeometryColumn(int iFieldIdx,
                     else if( oType.GetType() == CPLJSONObject::Type::Array )
                     {
                         const auto oTypeArray = oType.ToArray();
-                        if( oTypeArray.Size() == 2 )
+                        if( oTypeArray.Size() == 1 )
                         {
-                            const auto eGeom1 = GetGeometryTypeFromString(oTypeArray[0].ToString());
-                            const auto eGeom2 = GetGeometryTypeFromString(oTypeArray[1].ToString());
-                            if( OGR_GT_HasZ(eGeom1) == OGR_GT_HasZ(eGeom2) &&
-                                OGR_GT_HasM(eGeom1) == OGR_GT_HasM(eGeom2) )
+                            eGeomType = GetGeometryTypeFromString(oTypeArray[0].ToString());
+                        }
+                        else if( oTypeArray.Size() > 1 )
+                        {
+                            const auto PromoteToCollection = [](OGRwkbGeometryType eType)
                             {
-                                const auto eMinFlatGeom = std::min(
-                                    wkbFlatten(eGeom1), wkbFlatten(eGeom2));
-                                const auto eMaxFlatGeom = std::max(
-                                    wkbFlatten(eGeom1), wkbFlatten(eGeom2));
-                                if( eMinFlatGeom == wkbPolygon &&
-                                    eMaxFlatGeom == wkbMultiPolygon )
+                                if( eType == wkbPoint )
+                                    return wkbMultiPoint;
+                                if( eType == wkbLineString )
+                                    return wkbMultiLineString;
+                                if( eType == wkbPolygon )
+                                    return wkbMultiPolygon;
+                                return eType;
+                            };
+                            bool bMixed = false;
+                            bool bHasMulti = false;
+                            bool bHasZ = false;
+                            bool bHasM = false;
+                            const auto eFirstType = OGR_GT_Flatten(GetGeometryTypeFromString(oTypeArray[0].ToString()));
+                            const auto eFirstTypeCollection = PromoteToCollection(eFirstType);
+                            for( int i = 0; i < oTypeArray.Size(); ++i )
+                            {
+                                const auto eThisGeom = GetGeometryTypeFromString(oTypeArray[i].ToString());
+                                if( PromoteToCollection(OGR_GT_Flatten(eThisGeom)) != eFirstTypeCollection )
                                 {
-                                    eGeomType = OGR_GT_SetModifier(wkbMultiPolygon,
-                                                                   OGR_GT_HasZ(eGeom1),
-                                                                   OGR_GT_HasM(eGeom1));
+                                    bMixed = true;
+                                    break;
                                 }
-                                else if( eMinFlatGeom == wkbLineString &&
-                                         eMaxFlatGeom == wkbMultiLineString )
+                                bHasZ |= OGR_GT_HasZ(eThisGeom) != FALSE;
+                                bHasM |= OGR_GT_HasM(eThisGeom) != FALSE;
+                                bHasMulti |= (PromoteToCollection(OGR_GT_Flatten(eThisGeom)) == OGR_GT_Flatten(eThisGeom));
+                            }
+                            if( !bMixed )
+                            {
+                                if( eFirstTypeCollection == wkbMultiPolygon ||
+                                    eFirstTypeCollection == wkbMultiLineString )
                                 {
-                                    eGeomType = OGR_GT_SetModifier(wkbMultiLineString,
-                                                                   OGR_GT_HasZ(eGeom1),
-                                                                   OGR_GT_HasM(eGeom1));
+                                    if( bHasMulti )
+                                        eGeomType = OGR_GT_SetModifier(eFirstTypeCollection, bHasZ, bHasM);
+                                    else
+                                        eGeomType = OGR_GT_SetModifier(eFirstType, bHasZ, bHasM);
                                 }
                             }
                         }
