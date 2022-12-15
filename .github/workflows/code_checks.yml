@@ -74,7 +74,7 @@ jobs:
       - uses: pre-commit/action@v3.0.0
 
   doxygen:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
