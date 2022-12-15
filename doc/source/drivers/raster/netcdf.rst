@@ -284,7 +284,7 @@ The following open options are available:
    Default is NO (that is each variable will be reported as a separate
    subdataset)
    
--  **ASSUME_LONGLAT=[YES/NO]** :  Whether a Geographic CRS should
+-  **ASSUME_LONGLAT=[YES/NO]** :  (GDAL >= 3.7) Whether a Geographic CRS should
     be assumed and applied when, none has otherwise been found, a meaningful 
     geotransform has been found, and that geotransform is within the bounds 
     -180,360 -90,90, if YES assume OGC:CRS84. Default is NO.
