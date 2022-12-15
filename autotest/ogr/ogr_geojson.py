@@ -4075,3 +4075,21 @@ def test_ogr_geojson_feature_large():
         with gdaltest.error_handler():
             assert ogr.Open(filename) is None
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test ogr2ogr -nln with a input dataset being a GeoJSON file with a name
+
+
+def test_ogr_geojson_ogr2ogr_nln_with_input_dataset_having_name():
+
+    filename = "/vsimem/test_ogr_geojson_feature_large.geojson"
+    gdal.VectorTranslate(
+        filename,
+        '{"type":"FeatureCollection","name":"to_be_overriden","features":[]}',
+        layerName="new_name",
+    )
+    ds = ogr.Open(filename)
+    assert ds.GetLayer(0).GetName() == "new_name"
+    ds = None
+    gdal.Unlink(filename)
