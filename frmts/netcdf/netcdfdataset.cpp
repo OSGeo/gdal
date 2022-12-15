@@ -2873,7 +2873,6 @@ netCDFDataset::netCDFDataset() :
     nYDimID(-1),
     bIsProjected(false),
     bIsGeographic(false),  // Can be not projected, and also not geographic
-    
     // State vars.
     bDefineMode(true),
     bAddedGridMappingRef(false),
