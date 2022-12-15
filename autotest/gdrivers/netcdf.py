@@ -1130,7 +1130,8 @@ def test_netcdf_assume_longlat():
         assert srs is None
     with gdaltest.config_option("GDAL_NETCDF_ASSUME_LONGLAT", "NO"):
         ds = gdal.OpenEx("data/netcdf/trmm-nc2.nc", open_options=["ASSUME_LONGLAT=YES"])
-        assert ds.GetSpatialRef() is not None
+        srs = ds.GetSpatialRef()
+        assert srs is not None
         assert srs.ExportToWkt().startswith('GEOGCS["WGS 84')
 
 ###############################################################################
