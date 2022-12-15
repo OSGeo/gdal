@@ -1134,6 +1134,7 @@ def test_netcdf_assume_longlat():
         assert srs is not None
         assert srs.ExportToWkt().startswith('GEOGCS["WGS 84')
 
+
 ###############################################################################
 # check support for writing multi-dimensional files (helper function)
 
