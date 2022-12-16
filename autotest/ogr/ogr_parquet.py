@@ -40,6 +40,24 @@ from osgeo import gdal, ogr, osr
 pytestmark = pytest.mark.require_driver("Parquet")
 
 ###############################################################################
+# Validate against GeoParquet json schema
+
+
+def _validate_json_output(instance):
+
+    try:
+        from jsonschema import validate
+    except ImportError:
+        pytest.skip("jsonschema module not available")
+
+    import json
+
+    schema = json.loads(open("data/parquet/schema.json", "rb").read())
+
+    validate(instance=instance, schema=schema)
+
+
+###############################################################################
 # Read invalid file
 
 
@@ -682,6 +700,7 @@ def test_ogr_parquet_coordinate_epoch(epsg_code):
     assert "geometry" in j["columns"]
     if epsg_code == 4326:
         assert "crs" not in j["columns"]["geometry"]
+        _validate_json_output(j)
     else:
         assert "crs" in j["columns"]["geometry"]
         assert j["columns"]["geometry"]["crs"]["type"] == "GeographicCRS"
@@ -775,6 +794,8 @@ def test_ogr_parquet_crs_identification_on_write(input_definition, expected_crs)
         assert "crs" not in j["columns"]["geometry"]
     else:
         assert "crs" in j["columns"]["geometry"]
+        if expected_crs == "4269":
+            _validate_json_output(j)
 
     srs = lyr.GetSpatialRef()
     assert srs is not None
@@ -808,6 +829,13 @@ def test_ogr_parquet_edges(edges):
         assert lyr.GetMetadataItem("EDGES") == "SPHERICAL"
     else:
         assert lyr.GetMetadataItem("EDGES") is None
+
+    geo = lyr.GetMetadataItem("geo", "_PARQUET_METADATA_")
+    assert geo is not None
+    j = json.loads(geo)
+    assert j is not None
+    _validate_json_output(j)
+
     ds = None
 
     gdal.Unlink(outfilename)
@@ -959,6 +987,10 @@ def test_ogr_parquet_geometry_types(
     assert set(j["columns"]["geometry"]["geometry_types"]) == set(
         expected_geometry_types
     )
+
+    if expected_geometry_types == ["LineString Z", "MultiLineString"]:
+        _validate_json_output(j)
+
     ds = None
 
     gdal.Unlink(outfilename)
@@ -1019,6 +1051,10 @@ def test_ogr_parquet_polygon_orientation(option_value, written_wkt, expected_wkt
         assert j["columns"]["geometry"]["orientation"] == "counterclockwise"
     else:
         assert "orientation" not in j["columns"]["geometry"]
+
+    _validate_json_output(j)
+
+    ds = None
 
     gdal.Unlink(outfilename)
 
