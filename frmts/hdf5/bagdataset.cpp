@@ -2215,11 +2215,11 @@ bool BAGDataset::OpenRaster(GDALOpenInfo* poOpenInfo,
     else if( !osGeorefMetadataLayer.empty() )
     {
         auto poGeoref_metadataLayer = m_poRootGroup->OpenGroupFromFullname(
-            "/BAG_root/Georef_metadata/" + osGeorefMetadataLayer, nullptr);
+            "/BAG_root/georef_metadata/" + osGeorefMetadataLayer, nullptr);
         if( poGeoref_metadataLayer == nullptr )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cannot find Georef_metadata layer %s",
+                     "Cannot find georef_metadata layer %s",
                      osGeorefMetadataLayer.c_str());
             delete poElevBand;
             return false;
@@ -2254,7 +2254,7 @@ bool BAGDataset::OpenRaster(GDALOpenInfo* poOpenInfo,
         if( poValues == nullptr )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cannot find array values of Georef_metadata layer %s",
+                     "Cannot find array values of georef_metadata layer %s",
                      osGeorefMetadataLayer.c_str());
             delete poElevBand;
             return false;
@@ -2377,7 +2377,7 @@ bool BAGDataset::OpenRaster(GDALOpenInfo* poOpenInfo,
 
     if( osGeorefMetadataLayer.empty() )
     {
-        auto poGeoref_metadata = m_poRootGroup->OpenGroupFromFullname("/BAG_root/Georef_metadata", nullptr);
+        auto poGeoref_metadata = m_poRootGroup->OpenGroupFromFullname("/BAG_root/georef_metadata", nullptr);
         if( poGeoref_metadata )
         {
             const auto groupNames = poGeoref_metadata->GetGroupNames(nullptr);
@@ -2692,11 +2692,11 @@ bool BAGDataset::OpenRaster(GDALOpenInfo* poOpenInfo,
         if( !osGeorefMetadataLayer.empty() )
         {
             auto poGeoref_metadataLayer = m_poRootGroup->OpenGroupFromFullname(
-                "/BAG_root/Georef_metadata/" + osGeorefMetadataLayer, nullptr);
+                "/BAG_root/georef_metadata/" + osGeorefMetadataLayer, nullptr);
             if( poGeoref_metadataLayer == nullptr )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                        "Cannot find Georef_metadata layer %s",
+                        "Cannot find georef_metadata layer %s",
                         osGeorefMetadataLayer.c_str());
                 return false;
             }
@@ -2728,7 +2728,7 @@ bool BAGDataset::OpenRaster(GDALOpenInfo* poOpenInfo,
             if( poValues == nullptr )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                        "Cannot find array values of Georef_metadata layer %s",
+                        "Cannot find array values of georef_metadata layer %s",
                         osGeorefMetadataLayer.c_str());
                 return false;
             }
@@ -3607,7 +3607,7 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
 
 
     std::vector<std::string> georefMDLayerNames;
-    auto poGeoref_metadata = m_poRootGroup->OpenGroupFromFullname("/BAG_root/Georef_metadata", nullptr);
+    auto poGeoref_metadata = m_poRootGroup->OpenGroupFromFullname("/BAG_root/georef_metadata", nullptr);
     if( poGeoref_metadata )
     {
         const auto groupNames = poGeoref_metadata->GetGroupNames(nullptr);
