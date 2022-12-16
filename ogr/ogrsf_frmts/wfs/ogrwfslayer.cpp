@@ -87,7 +87,7 @@ OGRWFSLayer::OGRWFSLayer( OGRWFSDataSource* poDSIn,
     bGotApproximateLayerDefn(false),
     poGMLFeatureClass(nullptr),
     bAxisOrderAlreadyInverted(bAxisOrderAlreadyInvertedIn),
-    poSRS(poSRSIn),
+    m_poSRS(poSRSIn),
     pszBaseURL(CPLStrdup(pszBaseURLIn)),
     pszName(CPLStrdup(pszNameIn)),
     pszNS(pszNSIn ? CPLStrdup(pszNSIn) : nullptr),
@@ -100,11 +100,6 @@ OGRWFSLayer::OGRWFSLayer( OGRWFSDataSource* poDSIn,
     eGeomType(wkbUnknown),
     nFeatures(-1),
     bCountFeaturesInGetNextFeature(false),
-    dfMinX(0.0),
-    dfMinY(0.0),
-    dfMaxX(0.0),
-    dfMaxY(0.0),
-    bHasExtents(false),
     poFetchedFilterGeom(nullptr),
     nExpectedInserts(0),
     bInTransaction(false),
@@ -124,10 +119,10 @@ OGRWFSLayer::OGRWFSLayer( OGRWFSDataSource* poDSIn,
 
 OGRWFSLayer* OGRWFSLayer::Clone()
 {
-    OGRWFSLayer* poDupLayer = new OGRWFSLayer(poDS, poSRS, bAxisOrderAlreadyInverted,
+    OGRWFSLayer* poDupLayer = new OGRWFSLayer(poDS, m_poSRS, bAxisOrderAlreadyInverted,
                                               pszBaseURL, pszName, pszNS, pszNSVal);
-    if (poSRS)
-        poSRS->Reference();
+    if (m_poSRS)
+        m_poSRS->Reference();
     poDupLayer->poFeatureDefn = GetLayerDefn()->Clone();
     poDupLayer->poFeatureDefn->Reference();
     poDupLayer->bGotApproximateLayerDefn = bGotApproximateLayerDefn;
@@ -152,8 +147,8 @@ OGRWFSLayer::~OGRWFSLayer()
     if( bInTransaction )
         OGRWFSLayer::CommitTransaction();
 
-    if( poSRS != nullptr )
-        poSRS->Release();
+    if( m_poSRS != nullptr )
+        m_poSRS->Release();
 
     if( poFeatureDefn != nullptr )
         poFeatureDefn->Release();
@@ -172,6 +167,63 @@ OGRWFSLayer::~OGRWFSLayer()
     OGRWFSRecursiveUnlink(osTmpDirName);
 
     CPLFree(pszRequiredOutputFormat);
+}
+
+/************************************************************************/
+/*                          SetActiveSRS()                              */
+/************************************************************************/
+
+OGRErr OGRWFSLayer::SetActiveSRS(int /*iGeomField*/, const OGRSpatialReference* poSRS)
+{
+    if( poSRS == nullptr )
+        return OGRERR_FAILURE;
+    const char* const apszOptions[] = { "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES", nullptr };
+    size_t i = 0;
+    for( const auto& poSupportedSRS: m_apoSupportedCRSList )
+    {
+        if( poSupportedSRS->IsSame(poSRS, apszOptions) )
+        {
+            m_osSRSName = m_aosSupportedCRSList[i];
+            if( m_poSRS )
+                m_poSRS->Release();
+            m_poSRS = poSRS->Clone();
+            m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            if( poFeatureDefn )
+            {
+                auto poGeomFieldDefn = poFeatureDefn->GetGeomFieldDefn(0);
+                if( poGeomFieldDefn )
+                {
+                    poGeomFieldDefn->SetSpatialRef(m_poSRS);
+                }
+            }
+            m_oExtents = OGREnvelope();
+            if( m_oWGS84Extents.IsInit() )
+            {
+                OGRSpatialReference oWGS84;
+                oWGS84.SetWellKnownGeogCS("WGS84");
+                oWGS84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
+                    OGRCreateCoordinateTransformation(&oWGS84, m_poSRS));
+                if( poCT )
+                {
+                    poCT->TransformBounds(m_oWGS84Extents.MinX,
+                                          m_oWGS84Extents.MinY,
+                                          m_oWGS84Extents.MaxX,
+                                          m_oWGS84Extents.MaxY,
+                                          &m_oExtents.MinX,
+                                          &m_oExtents.MinY,
+                                          &m_oExtents.MaxX,
+                                          &m_oExtents.MaxY,
+                                          20);
+                }
+            }
+            SetSpatialFilter(nullptr);
+            ResetReading();
+            return OGRERR_NONE;
+        }
+        ++i;
+    }
+    return OGRERR_FAILURE;
 }
 
 /************************************************************************/
@@ -313,7 +365,7 @@ OGRFeatureDefn* OGRWFSLayer::BuildLayerDefnFromFeatureClass(GMLFeatureClass* poC
     if( poGMLFeatureClass->GetGeometryPropertyCount() > 0 )
     {
         poFDefn->SetGeomType( (OGRwkbGeometryType)poGMLFeatureClass->GetGeometryProperty(0)->GetType() );
-        poFDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
+        poFDefn->GetGeomFieldDefn(0)->SetSpatialRef(m_poSRS);
     }
 
 /* -------------------------------------------------------------------- */
@@ -377,6 +429,8 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nRequestMaxFeatures, int bRequestHi
         osURL = CPLURLAddKVP(osURL, "TYPENAMES", WFS_EscapeURL(pszName));
     else
         osURL = CPLURLAddKVP(osURL, "TYPENAME", WFS_EscapeURL(pszName));
+    if( !m_osSRSName.empty() )
+        osURL = CPLURLAddKVP(osURL, "SRSNAME", WFS_EscapeURL(m_osSRSName.c_str()));
     if (pszRequiredOutputFormat)
         osURL = CPLURLAddKVP(osURL, "OUTPUTFORMAT", WFS_EscapeURL(pszRequiredOutputFormat));
 
@@ -1054,7 +1108,7 @@ OGRFeatureDefn * OGRWFSLayer::BuildLayerDefn(OGRFeatureDefn* poSrcFDefn)
     bool bUnsetWidthPrecision = false;
 
     poFeatureDefn = new OGRFeatureDefn( pszName );
-    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
+    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(m_poSRS);
     poFeatureDefn->Reference();
 
     GDALDataset* l_poDS = nullptr;
@@ -1122,7 +1176,8 @@ OGRFeatureDefn * OGRWFSLayer::BuildLayerDefn(OGRFeatureDefn* poSrcFDefn)
 void OGRWFSLayer::ResetReading()
 
 {
-    GetLayerDefn();
+    if( poFeatureDefn == nullptr )
+        return;
     if( bPagingActive )
         bReloadNeeded = true;
     nPagingStartIndex = 0;
@@ -1279,8 +1334,8 @@ OGRFeature *OGRWFSLayer::GetNextFeature()
             poGeom->swapXY();
         }
 
-        if (poGeom && poSRS)
-            poGeom->assignSpatialReference(poSRS);
+        if (poGeom && m_poSRS)
+            poGeom->assignSpatialReference(m_poSRS);
         delete poSrcFeature;
         return poNewFeature;
     }
@@ -1419,7 +1474,7 @@ int OGRWFSLayer::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCFastGetExtent) )
     {
-        if( bHasExtents )
+        if( m_oExtents.IsInit() )
             return TRUE;
 
         return poBaseLayer != nullptr &&
@@ -1601,7 +1656,7 @@ int OGRWFSLayer::CanRunGetFeatureCountAndGetExtentTogether()
     /* In some cases, we can evaluate the result of GetFeatureCount() */
     /* and GetExtent() with the same data */
     CPLString osRequestURL = MakeGetFeatureURL(0, FALSE);
-    return( !bHasExtents && nFeatures < 0 &&
+    return( !m_oExtents.IsInit() && nFeatures < 0 &&
             osRequestURL.ifind("FILTER") == std::string::npos &&
             osRequestURL.ifind("MAXFEATURES") == std::string::npos &&
             osRequestURL.ifind("COUNT") == std::string::npos &&
@@ -1658,17 +1713,29 @@ GIntBig OGRWFSLayer::GetFeatureCount( int bForce )
 }
 
 /************************************************************************/
-/*                              SetExtent()                             */
+/*                              SetExtents()                            */
 /************************************************************************/
 
 void OGRWFSLayer::SetExtents( double dfMinXIn, double dfMinYIn,
                               double dfMaxXIn, double dfMaxYIn )
 {
-    dfMinX = dfMinXIn;
-    dfMinY = dfMinYIn;
-    dfMaxX = dfMaxXIn;
-    dfMaxY = dfMaxYIn;
-    bHasExtents = true;
+    m_oExtents.MinX = dfMinXIn;
+    m_oExtents.MinY = dfMinYIn;
+    m_oExtents.MaxX = dfMaxXIn;
+    m_oExtents.MaxY = dfMaxYIn;
+}
+
+/************************************************************************/
+/*                            SetWGS84Extents()                         */
+/************************************************************************/
+
+void OGRWFSLayer::SetWGS84Extents( double dfMinXIn, double dfMinYIn,
+                                   double dfMaxXIn, double dfMaxYIn )
+{
+    m_oWGS84Extents.MinX = dfMinXIn;
+    m_oWGS84Extents.MinY = dfMinYIn;
+    m_oWGS84Extents.MaxX = dfMaxXIn;
+    m_oWGS84Extents.MaxY = dfMaxYIn;
 }
 
 /************************************************************************/
@@ -1677,12 +1744,9 @@ void OGRWFSLayer::SetExtents( double dfMinXIn, double dfMinYIn,
 
 OGRErr OGRWFSLayer::GetExtent( OGREnvelope *psExtent, int bForce )
 {
-    if( bHasExtents )
+    if( m_oExtents.IsInit() )
     {
-        psExtent->MinX = dfMinX;
-        psExtent->MinY = dfMinY;
-        psExtent->MaxX = dfMaxX;
-        psExtent->MaxY = dfMaxY;
+        *psExtent = m_oExtents;
         return OGRERR_NONE;
     }
 
@@ -1715,11 +1779,7 @@ OGRErr OGRWFSLayer::GetExtent( OGREnvelope *psExtent, int bForce )
     {
         if( eErr == OGRERR_NONE )
         {
-            dfMinX = psExtent->MinX;
-            dfMinY = psExtent->MinY;
-            dfMaxX = psExtent->MaxX;
-            dfMaxY = psExtent->MaxY;
-            bHasExtents = true;
+            m_oExtents = *psExtent;
         }
         else
         {
@@ -1833,7 +1893,7 @@ OGRErr OGRWFSLayer::ICreateFeature( OGRFeature *poFeature )
             if (poGeom != nullptr && !osGeometryColumnName.empty())
             {
                 if (poGeom->getSpatialReference() == nullptr)
-                    poGeom->assignSpatialReference(poSRS);
+                    poGeom->assignSpatialReference(m_poSRS);
                 char* pszGML = nullptr;
                 if (strcmp(poDS->GetVersion(), "1.1.0") == 0 || atoi(poDS->GetVersion()) >= 2)
                 {
@@ -2027,7 +2087,7 @@ OGRErr OGRWFSLayer::ICreateFeature( OGRFeature *poFeature )
     /* Invalidate layer */
     bReloadNeeded = true;
     nFeatures = -1;
-    bHasExtents = false;
+    m_oExtents = OGREnvelope();
 
     return OGRERR_NONE;
 }
@@ -2085,7 +2145,7 @@ OGRErr OGRWFSLayer::ISetFeature( OGRFeature *poFeature )
         if (poGeom != nullptr)
         {
             if (poGeom->getSpatialReference() == nullptr)
-                poGeom->assignSpatialReference(poSRS);
+                poGeom->assignSpatialReference(m_poSRS);
             char* pszGML = nullptr;
             if (strcmp(poDS->GetVersion(), "1.1.0") == 0 || atoi(poDS->GetVersion()) >= 2)
             {
@@ -2215,7 +2275,7 @@ OGRErr OGRWFSLayer::ISetFeature( OGRFeature *poFeature )
     /* Invalidate layer */
     bReloadNeeded = true;
     nFeatures = -1;
-    bHasExtents = false;
+    m_oExtents = OGREnvelope();
 
     return OGRERR_NONE;
 }
@@ -2351,7 +2411,7 @@ OGRErr OGRWFSLayer::DeleteFromFilter( CPLString osOGCFilter )
     /* Invalidate layer */
     bReloadNeeded = true;
     nFeatures = -1;
-    bHasExtents = false;
+    m_oExtents = OGREnvelope();
 
     return OGRERR_NONE;
 }

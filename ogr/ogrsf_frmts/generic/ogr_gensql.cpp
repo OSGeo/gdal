@@ -741,6 +741,8 @@ GIntBig OGRGenSQLResultsLayer::GetFeatureCount( int bForce )
     {
         nRet = OGRLayer::GetFeatureCount( bForce );
     }
+    if( nRet < 0 )
+        return nRet;
 
     nRet = std::max(static_cast<GIntBig>(0), nRet - psSelectInfo->offset);
     if( psSelectInfo->limit >= 0 )

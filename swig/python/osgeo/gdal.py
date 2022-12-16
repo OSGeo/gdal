@@ -313,6 +313,8 @@ def VectorInfoOptions(options=None,
                       deserialize=True,
                       layers=None,
                       dumpFeatures=False,
+                      featureCount=True,
+                      extent=True,
                       SQLStatement=None,
                       SQLDialect=None,
                       where=None,
@@ -336,6 +338,10 @@ def VectorInfoOptions(options=None,
             WHERE clause to apply to source layer(s)
         layers:
             list of layers of interest
+        featureCount:
+            whether to compute and display the feature count
+        extent:
+            whether to compute and display the layer extent
         dumpFeatures:
             set to True to get the dump of all features
     """
@@ -364,6 +370,10 @@ def VectorInfoOptions(options=None,
             new_options += ['-where', where]
         if wktFormat:
             new_options += ['-wkt_format', wktFormat]
+        if not featureCount:
+            new_options += ['-nocount']
+        if not extent:
+            new_options += ['-noextent']
         if layers:
             new_options += ["dummy_dataset_name"]
             for layer in layers:

@@ -1460,6 +1460,20 @@ public:
     }
 #endif
 
+#ifdef SWIGPYTHON
+    %feature( "kwargs" ) GetSupportedSRSList;
+    void GetSupportedSRSList(OGRSpatialReferenceH** ppRet, int* pnEntryCount,
+                             int geom_field = 0)
+    {
+        *ppRet = OGR_L_GetSupportedSRSList(self, geom_field, pnEntryCount);
+    }
+#endif
+
+    OGRErr SetActiveSRS(int geom_field, OSRSpatialReferenceShadow* srs)
+    {
+        return OGR_L_SetActiveSRS(self, geom_field, srs);
+    }
+
 } /* %extend */
 
 

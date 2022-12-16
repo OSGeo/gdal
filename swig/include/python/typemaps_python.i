@@ -2917,3 +2917,42 @@ OBJECT_LIST_INPUT(GDALEDTComponentHS)
     /* %typemap(freearg)  (OGRGeometryTypeCounter** ppRet, int* pnEntryCount) */
     VSIFree(*$1);
 }
+
+/***************************************************
+ * Typemaps for Layer.GetSupportedSRSList()
+ ***************************************************/
+%typemap(in,numinputs=0) (OGRSpatialReferenceH** ppRet, int* pnEntryCount) ( OGRSpatialReferenceH* pRet = NULL, int nEntryCount = 0 )
+{
+  /* %typemap(in,numinputs=0) (OGRSpatialReferenceH** ppRet, int* pnEntryCount) */
+  $1 = &pRet;
+  $2 = &nEntryCount;
+}
+
+%typemap(argout)  (OGRSpatialReferenceH** ppRet, int* pnEntryCount)
+{
+  /* %typemap(argout)  (OGRSpatialReferenceH** ppRet, int* pnEntryCount) */
+  Py_DECREF($result);
+  int nEntryCount = *($2);
+  OGRSpatialReferenceH* pRet = *($1);
+  if( nEntryCount == 0)
+  {
+    Py_INCREF(Py_None);
+    $result = Py_None;
+  }
+  else
+  {
+    $result = PyList_New(nEntryCount);
+    for(int i = 0; i < nEntryCount; ++ i)
+    {
+      OSRReference(pRet[i]);
+      PyList_SetItem($result, i, SWIG_NewPointerObj(
+          SWIG_as_voidptr(pRet[i]),SWIGTYPE_p_OSRSpatialReferenceShadow, SWIG_POINTER_OWN) );
+    }
+  }
+}
+
+%typemap(freearg)  (OGRSpatialReferenceH** ppRet, int* pnEntryCount)
+{
+    /* %typemap(freearg)  (OGRSpatialReferenceH** ppRet, int* pnEntryCount) */
+    OSRFreeSRSArray(*$1);
+}

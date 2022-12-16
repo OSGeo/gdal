@@ -391,6 +391,9 @@ struct TargetLayerInfo
     bool         m_bPreserveFID = false;
     const char  *m_pszCTPipeline = nullptr;
     bool         m_bCanAvoidSetFrom = false;
+    const char*  m_pszSpatSRSDef = nullptr;
+    OGRGeometryH m_hSpatialFilter = nullptr;
+    const char*  m_pszGeomField = nullptr;
 };
 
 struct AssociatedLayers
@@ -4546,6 +4549,10 @@ std::unique_ptr<TargetLayerInfo> SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         }
     }
 
+    psInfo->m_pszSpatSRSDef = psOptions->pszSpatSRSDef;
+    psInfo->m_hSpatialFilter = psOptions->hSpatialFilter;
+    psInfo->m_pszGeomField = psOptions->pszGeomField;
+
     return psInfo;
 }
 
@@ -4561,7 +4568,8 @@ static bool SetupCT( TargetLayerInfo* psInfo,
                     OGRSpatialReference* poUserSourceSRS,
                     OGRFeature* poFeature,
                     OGRSpatialReference* poOutputSRS,
-                    OGRCoordinateTransformation* poGCPCoordTrans)
+                    OGRCoordinateTransformation* poGCPCoordTrans,
+                    bool bVerboseError )
 {
     OGRLayer    *poDstLayer = psInfo->m_poDstLayer;
     const int nDstGeomFieldCount =
@@ -4613,6 +4621,15 @@ static bool SetupCT( TargetLayerInfo* psInfo,
         }
         if( poSourceSRS == nullptr )
         {
+            if( poFeature == nullptr )
+            {
+                if( bVerboseError )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Non-null feature expected to set transformation");
+                }
+                return false;
+            }
             OGRGeometry* poSrcGeometry =
                 poFeature->GetGeomFieldRef(iSrcGeomField);
             if( poSrcGeometry )
@@ -4636,7 +4653,52 @@ static bool SetupCT( TargetLayerInfo* psInfo,
                 CPLAssert( nullptr != poOutputSRS );
             }
 
-            if( psInfo->m_apoCT[iGeom] != nullptr &&
+            if( psInfo->m_nFeaturesRead == 0 && !psInfo->m_bPerFeatureCT )
+            {
+                const auto& supportedSRSList = poSrcLayer->GetSupportedSRSList(iGeom);
+                if( !supportedSRSList.empty() )
+                {
+                    const char* const apszOptions[] = { "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES", nullptr };
+                    for( const auto& poSRS: supportedSRSList )
+                    {
+                        if( poSRS->IsSame(poOutputSRS, apszOptions) )
+                        {
+                            OGRSpatialReference oSourceSRSBackup;
+                            if( poSourceSRS )
+                                oSourceSRSBackup = *poSourceSRS;
+                            if( poSrcLayer->SetActiveSRS(iGeom, poSRS.get()) == OGRERR_NONE )
+                            {
+                                CPLDebug("ogr2ogr", "Switching layer active SRS to %s", poSRS->GetName());
+
+                                if( psInfo->m_hSpatialFilter != nullptr &&
+                                    ((psInfo->m_iRequestedSrcGeomField < 0 && iGeom == 0) ||
+                                     (iGeom == psInfo->m_iRequestedSrcGeomField)) )
+                                {
+                                    OGRSpatialReference oSpatSRS;
+                                    oSpatSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                                    if( psInfo->m_pszSpatSRSDef )
+                                        oSpatSRS.SetFromUserInput( psInfo->m_pszSpatSRSDef );
+                                    ApplySpatialFilter(poSrcLayer,
+                                                       OGRGeometry::FromHandle(psInfo->m_hSpatialFilter),
+                                                       !oSpatSRS.IsEmpty() ? &oSpatSRS :
+                                                           !oSourceSRSBackup.IsEmpty() ? &oSourceSRSBackup : nullptr,
+                                                       psInfo->m_pszGeomField,
+                                                       poOutputSRS);
+                                }
+
+                                bTransform = false;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if( !bTransform )
+            {
+                // do nothing
+            }
+            else if( psInfo->m_apoCT[iGeom] != nullptr &&
                 psInfo->m_apoCT[iGeom]->GetSourceCS() == poSourceSRS )
             {
                 poCT = psInfo->m_apoCT[iGeom].get();
@@ -4810,6 +4872,15 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
 
     bool bRet = true;
     CPLErrorReset();
+
+    bool bSetupCTOK = false;
+    if( m_bTransform && psInfo->m_nFeaturesRead == 0 && !psInfo->m_bPerFeatureCT )
+    {
+        bSetupCTOK = SetupCT( psInfo, poSrcLayer, m_bTransform, m_bWrapDateline,
+                              m_osDateLineOffset, m_poUserSourceSRS,
+                              nullptr, poOutputSRS, m_poGCPCoordTrans, false);
+    }
+
     while( true )
     {
         if( m_nLimit >= 0 && psInfo->m_nFeaturesRead >= m_nLimit )
@@ -4833,11 +4904,11 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
             break;
         }
 
-        if( psInfo->m_nFeaturesRead == 0 || psInfo->m_bPerFeatureCT )
+        if( !bSetupCTOK && (psInfo->m_nFeaturesRead == 0 || psInfo->m_bPerFeatureCT) )
         {
             if( !SetupCT( psInfo, poSrcLayer, m_bTransform, m_bWrapDateline,
                           m_osDateLineOffset, m_poUserSourceSRS,
-                          poFeature.get(), poOutputSRS, m_poGCPCoordTrans) )
+                          poFeature.get(), poOutputSRS, m_poGCPCoordTrans, true) )
             {
                 return false;
             }

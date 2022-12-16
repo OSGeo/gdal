@@ -1108,6 +1108,34 @@ def test_netcdf_27():
 
 
 ###############################################################################
+# check support for GDAL_NETCDF_ASSUME_LONGLAT configuration option
+
+
+def test_netcdf_assume_longlat():
+
+    # test default config
+    with gdaltest.config_option("GDAL_NETCDF_ASSUME_LONGLAT", "YES"):
+        ds = gdal.Open("data/netcdf/trmm-nc2.nc")
+        srs = ds.GetSpatialRef()
+        assert srs is not None
+        assert srs.ExportToWkt().startswith('GEOGCS["WGS 84')
+    with gdaltest.config_option("GDAL_NETCDF_ASSUME_LONGLAT", "NO"):
+        ds = gdal.Open("data/netcdf/trmm-nc2.nc")
+        assert ds.GetSpatialRef() is None
+
+    # test open option and config overrides
+    with gdaltest.config_option("GDAL_NETCDF_ASSUME_LONGLAT", "YES"):
+        ds = gdal.OpenEx("data/netcdf/trmm-nc2.nc", open_options=["ASSUME_LONGLAT=NO"])
+        srs = ds.GetSpatialRef()
+        assert srs is None
+    with gdaltest.config_option("GDAL_NETCDF_ASSUME_LONGLAT", "NO"):
+        ds = gdal.OpenEx("data/netcdf/trmm-nc2.nc", open_options=["ASSUME_LONGLAT=YES"])
+        srs = ds.GetSpatialRef()
+        assert srs is not None
+        assert srs.ExportToWkt().startswith('GEOGCS["WGS 84')
+
+
+###############################################################################
 # check support for writing multi-dimensional files (helper function)
 
 
