@@ -19,6 +19,7 @@ This driver also supports geometry columns using the GeoParquet specification.
 
 .. note:: The driver should be considered experimental as the GeoParquet specification is not finalized yet.
 
+The GeoParquet 1.0.0-beta1 specification is supported since GDAL 3.6.2
 
 Driver capabilities
 -------------------

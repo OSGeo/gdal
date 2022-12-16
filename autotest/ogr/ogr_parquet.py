@@ -40,6 +40,24 @@ from osgeo import gdal, ogr, osr
 pytestmark = pytest.mark.require_driver("Parquet")
 
 ###############################################################################
+# Validate against GeoParquet json schema
+
+
+def _validate_json_output(instance):
+
+    try:
+        from jsonschema import validate
+    except ImportError:
+        pytest.skip("jsonschema module not available")
+
+    import json
+
+    schema = json.loads(open("data/parquet/schema.json", "rb").read())
+
+    validate(instance=instance, schema=schema)
+
+
+###############################################################################
 # Read invalid file
 
 
@@ -510,7 +528,7 @@ def test_ogr_parquet_write_from_another_dataset(use_vsi, row_group_size, fid):
         j = json.loads(geo)
         assert j is not None
         assert "version" in j
-        assert j["version"] == "0.4.0"
+        assert j["version"] == "1.0.0-beta.1"
         assert "primary_column" in j
         assert j["primary_column"] == "geometry"
         assert "columns" in j
@@ -682,6 +700,7 @@ def test_ogr_parquet_coordinate_epoch(epsg_code):
     assert "geometry" in j["columns"]
     if epsg_code == 4326:
         assert "crs" not in j["columns"]["geometry"]
+        _validate_json_output(j)
     else:
         assert "crs" in j["columns"]["geometry"]
         assert j["columns"]["geometry"]["crs"]["type"] == "GeographicCRS"
@@ -775,6 +794,8 @@ def test_ogr_parquet_crs_identification_on_write(input_definition, expected_crs)
         assert "crs" not in j["columns"]["geometry"]
     else:
         assert "crs" in j["columns"]["geometry"]
+        if expected_crs == "4269":
+            _validate_json_output(j)
 
     srs = lyr.GetSpatialRef()
     assert srs is not None
@@ -808,20 +829,33 @@ def test_ogr_parquet_edges(edges):
         assert lyr.GetMetadataItem("EDGES") == "SPHERICAL"
     else:
         assert lyr.GetMetadataItem("EDGES") is None
+
+    geo = lyr.GetMetadataItem("geo", "_PARQUET_METADATA_")
+    assert geo is not None
+    j = json.loads(geo)
+    assert j is not None
+    _validate_json_output(j)
+
     ds = None
 
     gdal.Unlink(outfilename)
 
 
 ###############################################################################
-# Test geometry_type support
+# Test geometry_types support
 
 
 @pytest.mark.parametrize(
-    "written_geom_type,written_wkt,expected_geom_type,expected_wkts",
+    "written_geom_type,written_wkt,expected_ogr_geom_type,expected_wkts,expected_geometry_types",
     [
-        (ogr.wkbPoint, ["POINT (1 2)"], ogr.wkbPoint, None),
-        (ogr.wkbLineString, ["LINESTRING (1 2,3 4)"], ogr.wkbLineString, None),
+        (ogr.wkbPoint, ["POINT (1 2)"], ogr.wkbPoint, None, ["Point"]),
+        (
+            ogr.wkbLineString,
+            ["LINESTRING (1 2,3 4)"],
+            ogr.wkbLineString,
+            None,
+            ["LineString"],
+        ),
         (
             ogr.wkbPolygon,
             [
@@ -833,29 +867,39 @@ def test_ogr_parquet_edges(edges):
                 "POLYGON ((0 0,1 0,1 1,0 1,0 0))",
                 "POLYGON ((0 0,1 0,1 1,0 1,0 0),(0.2 0.2,0.2 0.8,0.8 0.8,0.2 0.2))",
             ],
+            ["Polygon"],
         ),
-        (ogr.wkbMultiPoint, ["MULTIPOINT ((1 2))"], ogr.wkbMultiPoint, None),
+        (
+            ogr.wkbMultiPoint,
+            ["MULTIPOINT ((1 2))"],
+            ogr.wkbMultiPoint,
+            None,
+            ["MultiPoint"],
+        ),
         (
             ogr.wkbMultiLineString,
             ["MULTILINESTRING ((1 2,3 4))"],
             ogr.wkbMultiLineString,
             None,
+            ["MultiLineString"],
         ),
         (
             ogr.wkbMultiPolygon,
             ["MULTIPOLYGON (((0 0,1 0,1 1,0 1,0 0)))"],
             ogr.wkbMultiPolygon,
             None,
+            ["MultiPolygon"],
         ),
         (
             ogr.wkbGeometryCollection,
             ["GEOMETRYCOLLECTION (POINT (1 2))"],
             ogr.wkbGeometryCollection,
             None,
+            ["GeometryCollection"],
         ),
-        (ogr.wkbPoint25D, ["POINT Z (1 2 3)"], ogr.wkbPoint25D, None),
-        (ogr.wkbUnknown, ["POINT (1 2)"], ogr.wkbPoint, None),
-        (ogr.wkbUnknown, ["POINT Z (1 2 3)"], ogr.wkbPoint25D, None),
+        (ogr.wkbPoint25D, ["POINT Z (1 2 3)"], ogr.wkbPoint25D, None, ["Point Z"]),
+        (ogr.wkbUnknown, ["POINT (1 2)"], ogr.wkbPoint, None, ["Point"]),
+        (ogr.wkbUnknown, ["POINT Z (1 2 3)"], ogr.wkbPoint25D, None, ["Point Z"]),
         (
             ogr.wkbUnknown,
             [
@@ -867,12 +911,14 @@ def test_ogr_parquet_edges(edges):
                 "MULTIPOLYGON (((0 0,1 0,1 1,0 1,0 0)))",
                 "MULTIPOLYGON (((0 0,1 0,1 1,0 1,0 0)))",
             ],
+            ["Polygon", "MultiPolygon"],
         ),
         (
             ogr.wkbUnknown,
             ["LINESTRING (1 2,3 4)", "MULTILINESTRING ((10 2,3 4))"],
             ogr.wkbMultiLineString,
             ["MULTILINESTRING ((1 2,3 4))", "MULTILINESTRING ((10 2,3 4))"],
+            ["LineString", "MultiLineString"],
         ),
         (
             ogr.wkbUnknown,
@@ -882,12 +928,33 @@ def test_ogr_parquet_edges(edges):
                 "MULTILINESTRING Z ((1 2 10,3 4 20))",
                 "MULTILINESTRING Z ((1 2 10,3 4 20))",
             ],
+            ["LineString Z", "MultiLineString Z"],
         ),
-        (ogr.wkbUnknown, ["POINT (1 2)", "LINESTRING (1 2,3 4)"], ogr.wkbUnknown, None),
+        (
+            ogr.wkbUnknown,
+            ["POINT (1 2)", "LINESTRING (1 2,3 4)"],
+            ogr.wkbUnknown,
+            None,
+            ["Point", "LineString"],
+        ),
+        (
+            ogr.wkbUnknown,
+            ["LINESTRING Z (1 2 10,3 4 20)", "MULTILINESTRING ((1 2,3 4))"],
+            ogr.wkbMultiLineString25D,
+            [
+                "MULTILINESTRING Z ((1 2 10,3 4 20))",
+                "MULTILINESTRING Z ((1 2 0,3 4 0))",
+            ],
+            ["LineString Z", "MultiLineString"],
+        ),
     ],
 )
-def test_ogr_parquet_geometry_type(
-    written_geom_type, written_wkt, expected_geom_type, expected_wkts
+def test_ogr_parquet_geometry_types(
+    written_geom_type,
+    written_wkt,
+    expected_ogr_geom_type,
+    expected_wkts,
+    expected_geometry_types,
 ):
 
     outfilename = "/vsimem/out.parquet"
@@ -902,13 +969,29 @@ def test_ogr_parquet_geometry_type(
     ds = ogr.Open(outfilename)
     assert ds is not None
     lyr = ds.GetLayer(0)
-    assert lyr.GetGeomType() == expected_geom_type
+    assert lyr.GetGeomType() == expected_ogr_geom_type
     assert lyr.GetSpatialRef() is None
     if expected_wkts is None:
         expected_wkts = written_wkt
     for wkt in expected_wkts:
         f = lyr.GetNextFeature()
         assert f.GetGeometryRef().ExportToIsoWkt() == wkt
+
+    geo = lyr.GetMetadataItem("geo", "_PARQUET_METADATA_")
+    assert geo is not None
+    j = json.loads(geo)
+    assert j is not None
+    assert "columns" in j
+    assert "geometry" in j["columns"]
+    assert "geometry_types" in j["columns"]["geometry"]
+    assert set(j["columns"]["geometry"]["geometry_types"]) == set(
+        expected_geometry_types
+    )
+
+    if expected_geometry_types == ["LineString Z", "MultiLineString"]:
+        _validate_json_output(j)
+
+    ds = None
 
     gdal.Unlink(outfilename)
 
@@ -968,6 +1051,10 @@ def test_ogr_parquet_polygon_orientation(option_value, written_wkt, expected_wkt
         assert j["columns"]["geometry"]["orientation"] == "counterclockwise"
     else:
         assert "orientation" not in j["columns"]["geometry"]
+
+    _validate_json_output(j)
+
+    ds = None
 
     gdal.Unlink(outfilename)
 
@@ -1512,3 +1599,46 @@ def test_ogr_parquet_arrow_stream_numpy():
         len(batch.keys())
         == lyr.GetLayerDefn().GetFieldCount() - len(ignored_fields) + 1 + 1
     )
+
+
+###############################################################################
+# Test bbox
+
+
+@pytest.mark.parametrize(
+    "input_geometries,expected_bbox",
+    [
+        (["POINT(1 2)"], [1, 2, 1, 2]),
+        (["POINT(1 2 3)"], [1, 2, 3, 1, 2, 3]),
+        (["POINT(3 4)", "POINT(1 2)"], [1, 2, 3, 4]),
+        (["POINT(4 5 6)", "POINT(1 2 3)"], [1, 2, 3, 4, 5, 6]),
+        (["POINT(4 5 6)", "POINT(1 2)"], [1, 2, 6, 4, 5, 6]),
+    ],
+)
+def test_ogr_parquet_bbox(input_geometries, expected_bbox):
+
+    outfilename = "/vsimem/out.parquet"
+    ds = gdal.GetDriverByName("Parquet").Create(outfilename, 0, 0, 0, gdal.GDT_Unknown)
+    lyr = ds.CreateLayer("out")
+    for input_geom in input_geometries:
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(input_geom))
+        lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(outfilename)
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    assert lyr is not None
+
+    geo = lyr.GetMetadataItem("geo", "_PARQUET_METADATA_")
+    assert geo is not None
+    j = json.loads(geo)
+    assert j is not None
+    assert "columns" in j
+    assert "geometry" in j["columns"]
+    assert "bbox" in j["columns"]["geometry"]
+    assert j["columns"]["geometry"]["bbox"] == expected_bbox
+    ds = None
+
+    gdal.Unlink(outfilename)
