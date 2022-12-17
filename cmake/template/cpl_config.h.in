@@ -169,6 +169,9 @@
 /* Define to 1 if you have the _SC_PHYS_PAGES' constant. */
 #cmakedefine HAVE_SC_PHYS_PAGES 1
 
+/* Define to 1 if you have the `sched_getaffinity' function. */
+#cmakedefine HAVE_SCHED_GETAFFINITY 1
+
 /* Define to 1 if you have the `uselocale' function. */
 #cmakedefine HAVE_USELOCALE 1
 
