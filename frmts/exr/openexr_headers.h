@@ -36,8 +36,9 @@
 #endif
 
 #ifdef _MSC_VER
-#pragma warning( push )
-#pragma warning( disable : 4244 ) // conversion from 'int' to 'unsigned short', possible loss of data
+#pragma warning(push)
+#pragma warning(disable : 4244)  // conversion from 'int' to 'unsigned short',
+                                 // possible loss of data
 #endif
 
 #include "ImathMatrix.h"
@@ -56,7 +57,7 @@
 #include "ImfTiledOutputPart.h"
 
 #ifdef _MSC_VER
-#pragma warning( pop )
+#pragma warning(pop)
 #endif
 
 #endif
