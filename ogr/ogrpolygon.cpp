@@ -43,7 +43,6 @@
 #include "ogr_sfcgal.h"
 #include "ogr_p.h"
 
-
 /************************************************************************/
 /*                             OGRPolygon()                             */
 /************************************************************************/
@@ -67,7 +66,7 @@ OGRPolygon::OGRPolygon() = default;
  * @since GDAL 2.1
  */
 
-OGRPolygon::OGRPolygon( const OGRPolygon& ) = default;
+OGRPolygon::OGRPolygon(const OGRPolygon &) = default;
 
 /************************************************************************/
 /*                            ~OGRPolygon()                             */
@@ -88,11 +87,11 @@ OGRPolygon::~OGRPolygon() = default;
  * @since GDAL 2.1
  */
 
-OGRPolygon& OGRPolygon::operator=( const OGRPolygon& other )
+OGRPolygon &OGRPolygon::operator=(const OGRPolygon &other)
 {
-    if( this != &other)
+    if (this != &other)
     {
-        OGRCurvePolygon::operator=( other );
+        OGRCurvePolygon::operator=(other);
     }
     return *this;
 }
@@ -114,11 +113,11 @@ OGRPolygon *OGRPolygon::clone() const
 OGRwkbGeometryType OGRPolygon::getGeometryType() const
 
 {
-    if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
+    if ((flags & OGR_G_3D) && (flags & OGR_G_MEASURED))
         return wkbPolygonZM;
-    else if( flags & OGR_G_MEASURED )
+    else if (flags & OGR_G_MEASURED)
         return wkbPolygonM;
-    else if( flags & OGR_G_3D )
+    else if (flags & OGR_G_3D)
         return wkbPolygon25D;
     else
         return wkbPolygon;
@@ -128,7 +127,7 @@ OGRwkbGeometryType OGRPolygon::getGeometryType() const
 /*                          getGeometryName()                           */
 /************************************************************************/
 
-const char * OGRPolygon::getGeometryName() const
+const char *OGRPolygon::getGeometryName() const
 
 {
     return "POLYGON";
@@ -155,7 +154,7 @@ const char * OGRPolygon::getGeometryName() const
 OGRLinearRing *OGRPolygon::getExteriorRing()
 
 {
-    if( oCC.nCurveCount > 0 )
+    if (oCC.nCurveCount > 0)
         return oCC.papoCurves[0]->toLinearRing();
 
     return nullptr;
@@ -178,7 +177,7 @@ OGRLinearRing *OGRPolygon::getExteriorRing()
 const OGRLinearRing *OGRPolygon::getExteriorRing() const
 
 {
-    if( oCC.nCurveCount > 0 )
+    if (oCC.nCurveCount > 0)
         return oCC.papoCurves[0]->toLinearRing();
 
     return nullptr;
@@ -222,13 +221,13 @@ OGRLinearRing *OGRPolygon::stealExteriorRing()
  * @return pointer to interior ring.  May be NULL.
  */
 
-OGRLinearRing *OGRPolygon::getInteriorRing( int iRing )
+OGRLinearRing *OGRPolygon::getInteriorRing(int iRing)
 
 {
-    if( iRing < 0 || iRing >= oCC.nCurveCount-1 )
+    if (iRing < 0 || iRing >= oCC.nCurveCount - 1)
         return nullptr;
 
-    return oCC.papoCurves[iRing+1]->toLinearRing();
+    return oCC.papoCurves[iRing + 1]->toLinearRing();
 }
 
 /**
@@ -247,13 +246,13 @@ OGRLinearRing *OGRPolygon::getInteriorRing( int iRing )
  * @return pointer to interior ring.  May be NULL.
  */
 
-const OGRLinearRing *OGRPolygon::getInteriorRing( int iRing ) const
+const OGRLinearRing *OGRPolygon::getInteriorRing(int iRing) const
 
 {
-    if( iRing < 0 || iRing >= oCC.nCurveCount-1 )
+    if (iRing < 0 || iRing >= oCC.nCurveCount - 1)
         return nullptr;
 
-    return oCC.papoCurves[iRing+1]->toLinearRing();
+    return oCC.papoCurves[iRing + 1]->toLinearRing();
 }
 
 /************************************************************************/
@@ -270,12 +269,12 @@ const OGRLinearRing *OGRPolygon::getInteriorRing( int iRing ) const
  * @return pointer to interior ring.  May be NULL.
  */
 
-OGRLinearRing *OGRPolygon::stealInteriorRing( int iRing )
+OGRLinearRing *OGRPolygon::stealInteriorRing(int iRing)
 {
-    if( iRing < 0 || iRing >= oCC.nCurveCount-1 )
+    if (iRing < 0 || iRing >= oCC.nCurveCount - 1)
         return nullptr;
-    OGRLinearRing *poRet = oCC.papoCurves[iRing+1]->toLinearRing();
-    oCC.papoCurves[iRing+1] = nullptr;
+    OGRLinearRing *poRet = oCC.papoCurves[iRing + 1]->toLinearRing();
+    oCC.papoCurves[iRing + 1] = nullptr;
     return poRet;
 }
 
@@ -284,21 +283,23 @@ OGRLinearRing *OGRPolygon::stealInteriorRing( int iRing )
 /*                            checkRing()                               */
 /************************************************************************/
 
-int OGRPolygon::checkRing( OGRCurve * poNewRing ) const
+int OGRPolygon::checkRing(OGRCurve *poNewRing) const
 {
-    if( poNewRing == nullptr ||
-        !(EQUAL(poNewRing->getGeometryName(), "LINEARRING")) )
+    if (poNewRing == nullptr ||
+        !(EQUAL(poNewRing->getGeometryName(), "LINEARRING")))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Wrong curve type. Expected LINEARRING.");
         return FALSE;
     }
 
-    if( !poNewRing->IsEmpty() && !poNewRing->get_IsClosed() )
+    if (!poNewRing->IsEmpty() && !poNewRing->get_IsClosed())
     {
-        // This configuration option name must be the same as in OGRCurvePolygon::checkRing()
-        const char* pszEnvVar = CPLGetConfigOption("OGR_GEOMETRY_ACCEPT_UNCLOSED_RING", nullptr);
-        if( pszEnvVar != nullptr && !CPLTestBool(pszEnvVar) )
+        // This configuration option name must be the same as in
+        // OGRCurvePolygon::checkRing()
+        const char *pszEnvVar =
+            CPLGetConfigOption("OGR_GEOMETRY_ACCEPT_UNCLOSED_RING", nullptr);
+        if (pszEnvVar != nullptr && !CPLTestBool(pszEnvVar))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Non closed ring detected.");
             return FALSE;
@@ -306,10 +307,11 @@ int OGRPolygon::checkRing( OGRCurve * poNewRing ) const
         else
         {
             CPLError(CE_Warning, CPLE_AppDefined, "Non closed ring detected.%s",
-                     pszEnvVar == nullptr ?
-                         " To avoid accepting it, set the "
-                         "OGR_GEOMETRY_ACCEPT_UNCLOSED_RING configuration "
-                         "option to NO" : "");
+                     pszEnvVar == nullptr
+                         ? " To avoid accepting it, set the "
+                           "OGR_GEOMETRY_ACCEPT_UNCLOSED_RING configuration "
+                           "option to NO"
+                         : "");
         }
     }
 
@@ -329,9 +331,9 @@ size_t OGRPolygon::WkbSize() const
 {
     size_t nSize = 9;
 
-    for( auto&& poRing: *this )
+    for (auto &&poRing : *this)
     {
-        nSize += poRing->_WkbSize( flags );
+        nSize += poRing->_WkbSize(flags);
     }
 
     return nSize;
@@ -344,10 +346,9 @@ size_t OGRPolygon::WkbSize() const
 /*      format.                                                         */
 /************************************************************************/
 
-OGRErr OGRPolygon::importFromWkb( const unsigned char * pabyData,
-                                  size_t nSize,
-                                  OGRwkbVariant eWkbVariant,
-                                  size_t& nBytesConsumedOut )
+OGRErr OGRPolygon::importFromWkb(const unsigned char *pabyData, size_t nSize,
+                                 OGRwkbVariant eWkbVariant,
+                                 size_t &nBytesConsumedOut)
 
 {
     nBytesConsumedOut = 0;
@@ -355,33 +356,31 @@ OGRErr OGRPolygon::importFromWkb( const unsigned char * pabyData,
     size_t nDataOffset = 0;
     // coverity[tainted_data]
     OGRErr eErr = oCC.importPreambleFromWkb(this, pabyData, nSize, nDataOffset,
-                                             eByteOrder, 4, eWkbVariant);
-    if( eErr != OGRERR_NONE )
+                                            eByteOrder, 4, eWkbVariant);
+    if (eErr != OGRERR_NONE)
         return eErr;
 
-/* -------------------------------------------------------------------- */
-/*      Get the rings.                                                  */
-/* -------------------------------------------------------------------- */
-    for( int iRing = 0; iRing < oCC.nCurveCount; iRing++ )
+    /* -------------------------------------------------------------------- */
+    /*      Get the rings.                                                  */
+    /* -------------------------------------------------------------------- */
+    for (int iRing = 0; iRing < oCC.nCurveCount; iRing++)
     {
-        OGRLinearRing* poLR = new OGRLinearRing();
+        OGRLinearRing *poLR = new OGRLinearRing();
         oCC.papoCurves[iRing] = poLR;
         size_t nBytesConsumedRing = 0;
-        eErr = poLR->_importFromWkb( eByteOrder, flags,
-                                     pabyData + nDataOffset,
-                                     nSize,
-                                     nBytesConsumedRing );
-        if( eErr != OGRERR_NONE )
+        eErr = poLR->_importFromWkb(eByteOrder, flags, pabyData + nDataOffset,
+                                    nSize, nBytesConsumedRing);
+        if (eErr != OGRERR_NONE)
         {
             delete oCC.papoCurves[iRing];
             oCC.nCurveCount = iRing;
             return eErr;
         }
 
-        CPLAssert( nBytesConsumedRing > 0 );
-        if( nSize != static_cast<size_t>(-1) )
+        CPLAssert(nBytesConsumedRing > 0);
+        if (nSize != static_cast<size_t>(-1))
         {
-            CPLAssert( nSize >= nBytesConsumedRing );
+            CPLAssert(nSize >= nBytesConsumedRing);
             nSize -= nBytesConsumedRing;
         }
 
@@ -398,67 +397,66 @@ OGRErr OGRPolygon::importFromWkb( const unsigned char * pabyData,
 /*      Build a well known binary representation of this object.        */
 /************************************************************************/
 
-OGRErr OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
-                                unsigned char * pabyData,
-                                OGRwkbVariant eWkbVariant ) const
+OGRErr OGRPolygon::exportToWkb(OGRwkbByteOrder eByteOrder,
+                               unsigned char *pabyData,
+                               OGRwkbVariant eWkbVariant) const
 
 {
 
-/* -------------------------------------------------------------------- */
-/*      Set the byte order.                                             */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Set the byte order.                                             */
+    /* -------------------------------------------------------------------- */
     pabyData[0] =
         DB2_V72_UNFIX_BYTE_ORDER(static_cast<unsigned char>(eByteOrder));
 
-/* -------------------------------------------------------------------- */
-/*      Set the geometry feature type.                                  */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Set the geometry feature type.                                  */
+    /* -------------------------------------------------------------------- */
     GUInt32 nGType = getGeometryType();
 
-    if( eWkbVariant == wkbVariantPostGIS1 )
+    if (eWkbVariant == wkbVariantPostGIS1)
     {
         nGType = wkbFlatten(nGType);
-        if( Is3D() )
+        if (Is3D())
             // Explicitly set wkb25DBit.
             nGType =
                 static_cast<OGRwkbGeometryType>(nGType | wkb25DBitInternalUse);
-        if( IsMeasured() )
+        if (IsMeasured())
             nGType = static_cast<OGRwkbGeometryType>(nGType | 0x40000000);
     }
-    else if( eWkbVariant == wkbVariantIso )
+    else if (eWkbVariant == wkbVariantIso)
         nGType = getIsoGeometryType();
 
-    if( OGR_SWAP( eByteOrder ) )
+    if (OGR_SWAP(eByteOrder))
     {
         nGType = CPL_SWAP32(nGType);
     }
 
-    memcpy( pabyData + 1, &nGType, 4 );
+    memcpy(pabyData + 1, &nGType, 4);
 
-/* -------------------------------------------------------------------- */
-/*      Copy in the raw data.                                           */
-/* -------------------------------------------------------------------- */
-    if( OGR_SWAP( eByteOrder ) )
+    /* -------------------------------------------------------------------- */
+    /*      Copy in the raw data.                                           */
+    /* -------------------------------------------------------------------- */
+    if (OGR_SWAP(eByteOrder))
     {
-        const int nCount = CPL_SWAP32( oCC.nCurveCount );
-        memcpy( pabyData+5, &nCount, 4 );
+        const int nCount = CPL_SWAP32(oCC.nCurveCount);
+        memcpy(pabyData + 5, &nCount, 4);
     }
     else
     {
-        memcpy( pabyData+5, &oCC.nCurveCount, 4 );
+        memcpy(pabyData + 5, &oCC.nCurveCount, 4);
     }
 
-/* ==================================================================== */
-/*      Serialize each of the rings.                                    */
-/* ==================================================================== */
+    /* ==================================================================== */
+    /*      Serialize each of the rings.                                    */
+    /* ==================================================================== */
     size_t nOffset = 9;
 
-    for( auto&& poRing: *this )
+    for (auto &&poRing : *this)
     {
-        poRing->_exportToWkb( eByteOrder, flags,
-                            pabyData + nOffset );
+        poRing->_exportToWkb(eByteOrder, flags, pabyData + nOffset);
 
-        nOffset += poRing->_WkbSize( flags );
+        nOffset += poRing->_WkbSize(flags);
     }
 
     return OGRERR_NONE;
@@ -471,7 +469,7 @@ OGRErr OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
 /*      `POLYGON ((x y, x y, ...),(x y, ...),...)'.                     */
 /************************************************************************/
 
-OGRErr OGRPolygon::importFromWkt( const char ** ppszInput )
+OGRErr OGRPolygon::importFromWkt(const char **ppszInput)
 
 {
     int bHasZ = FALSE;
@@ -479,22 +477,24 @@ OGRErr OGRPolygon::importFromWkt( const char ** ppszInput )
     bool bIsEmpty = false;
     OGRErr eErr = importPreambleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
     flags = 0;
-    if( eErr != OGRERR_NONE )
+    if (eErr != OGRERR_NONE)
         return eErr;
-    if( bHasZ ) flags |= OGR_G_3D;
-    if( bHasM ) flags |= OGR_G_MEASURED;
-    if( bIsEmpty )
+    if (bHasZ)
+        flags |= OGR_G_3D;
+    if (bHasM)
+        flags |= OGR_G_MEASURED;
+    if (bIsEmpty)
         return OGRERR_NONE;
 
     OGRRawPoint *paoPoints = nullptr;
     int nMaxPoints = 0;
     double *padfZ = nullptr;
 
-    eErr = importFromWKTListOnly( ppszInput, bHasZ, bHasM,
-                                  paoPoints, nMaxPoints, padfZ );
+    eErr = importFromWKTListOnly(ppszInput, bHasZ, bHasM, paoPoints, nMaxPoints,
+                                 padfZ);
 
-    CPLFree( paoPoints );
-    CPLFree( padfZ );
+    CPLFree(paoPoints);
+    CPLFree(padfZ);
 
     return eErr;
 }
@@ -506,133 +506,139 @@ OGRErr OGRPolygon::importFromWkt( const char ** ppszInput )
 /*      Instantiate from "((x y, x y, ...),(x y, ...),...)"             */
 /************************************************************************/
 
-OGRErr OGRPolygon::importFromWKTListOnly( const char ** ppszInput,
-                                          int bHasZ, int bHasM,
-                                          OGRRawPoint*& paoPoints,
-                                          int& nMaxPoints,
-                                          double*& padfZ )
+OGRErr OGRPolygon::importFromWKTListOnly(const char **ppszInput, int bHasZ,
+                                         int bHasM, OGRRawPoint *&paoPoints,
+                                         int &nMaxPoints, double *&padfZ)
 
 {
     char szToken[OGR_WKT_TOKEN_MAX] = {};
     const char *pszInput = *ppszInput;
 
     // Skip first '('.
-    pszInput = OGRWktReadToken( pszInput, szToken );
-    if( EQUAL(szToken, "EMPTY") )
+    pszInput = OGRWktReadToken(pszInput, szToken);
+    if (EQUAL(szToken, "EMPTY"))
     {
         *ppszInput = pszInput;
         return OGRERR_NONE;
     }
-    if( !EQUAL(szToken, "(") )
+    if (!EQUAL(szToken, "("))
         return OGRERR_CORRUPT_DATA;
 
-/* ==================================================================== */
-/*      Read each ring in turn.  Note that we try to reuse the same     */
-/*      point list buffer from ring to ring to cut down on              */
-/*      allocate/deallocate overhead.                                   */
-/* ==================================================================== */
+    /* ==================================================================== */
+    /*      Read each ring in turn.  Note that we try to reuse the same     */
+    /*      point list buffer from ring to ring to cut down on              */
+    /*      allocate/deallocate overhead.                                   */
+    /* ==================================================================== */
     int nMaxRings = 0;
     double *padfM = nullptr;
 
     do
     {
-        const char* pszNext = OGRWktReadToken( pszInput, szToken );
-        if( EQUAL(szToken, "EMPTY") )
+        const char *pszNext = OGRWktReadToken(pszInput, szToken);
+        if (EQUAL(szToken, "EMPTY"))
         {
-/* -------------------------------------------------------------------- */
-/*      Do we need to grow the ring array?                              */
-/* -------------------------------------------------------------------- */
-            if( oCC.nCurveCount == nMaxRings )
+            /* --------------------------------------------------------------------
+             */
+            /*      Do we need to grow the ring array? */
+            /* --------------------------------------------------------------------
+             */
+            if (oCC.nCurveCount == nMaxRings)
             {
                 nMaxRings = nMaxRings * 2 + 1;
-                oCC.papoCurves = static_cast<OGRCurve **>(
-                    CPLRealloc(oCC.papoCurves,
-                               nMaxRings * sizeof(OGRLinearRing*)));
+                oCC.papoCurves = static_cast<OGRCurve **>(CPLRealloc(
+                    oCC.papoCurves, nMaxRings * sizeof(OGRLinearRing *)));
             }
             oCC.papoCurves[oCC.nCurveCount] = new OGRLinearRing();
             oCC.nCurveCount++;
 
-            pszInput = OGRWktReadToken( pszNext, szToken );
-            if( !EQUAL(szToken, ",") )
+            pszInput = OGRWktReadToken(pszNext, szToken);
+            if (!EQUAL(szToken, ","))
                 break;
 
             continue;
         }
 
-/* -------------------------------------------------------------------- */
-/*      Read points for one ring from input.                            */
-/* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      Read points for one ring from input. */
+        /* --------------------------------------------------------------------
+         */
         int nPoints = 0;
         int flagsFromInput = flags;
-        if( flagsFromInput == 0 )
+        if (flagsFromInput == 0)
         {
             // Flags was not set, this is not called by us.
-            if( bHasM )
+            if (bHasM)
                 flagsFromInput |= OGR_G_MEASURED;
-            if( bHasZ )
+            if (bHasZ)
                 flagsFromInput |= OGR_G_3D;
         }
 
-        pszInput = OGRWktReadPointsM( pszInput, &paoPoints, &padfZ, &padfM,
-                                      &flagsFromInput,
-                                      &nMaxPoints, &nPoints );
-        if( pszInput == nullptr || nPoints == 0 )
+        pszInput = OGRWktReadPointsM(pszInput, &paoPoints, &padfZ, &padfM,
+                                     &flagsFromInput, &nMaxPoints, &nPoints);
+        if (pszInput == nullptr || nPoints == 0)
         {
             CPLFree(padfM);
             return OGRERR_CORRUPT_DATA;
         }
-        if( (flagsFromInput & OGR_G_3D) && !(flags & OGR_G_3D) )
+        if ((flagsFromInput & OGR_G_3D) && !(flags & OGR_G_3D))
         {
             flags |= OGR_G_3D;
             bHasZ = TRUE;
         }
-        if( (flagsFromInput & OGR_G_MEASURED) && !(flags & OGR_G_MEASURED) )
+        if ((flagsFromInput & OGR_G_MEASURED) && !(flags & OGR_G_MEASURED))
         {
             flags |= OGR_G_MEASURED;
             bHasM = TRUE;
         }
 
-/* -------------------------------------------------------------------- */
-/*      Do we need to grow the ring array?                              */
-/* -------------------------------------------------------------------- */
-        if( oCC.nCurveCount == nMaxRings )
+        /* --------------------------------------------------------------------
+         */
+        /*      Do we need to grow the ring array? */
+        /* --------------------------------------------------------------------
+         */
+        if (oCC.nCurveCount == nMaxRings)
         {
             nMaxRings = nMaxRings * 2 + 1;
-            oCC.papoCurves = static_cast<OGRCurve **>(
-                CPLRealloc(oCC.papoCurves, nMaxRings * sizeof(OGRLinearRing*)));
+            oCC.papoCurves = static_cast<OGRCurve **>(CPLRealloc(
+                oCC.papoCurves, nMaxRings * sizeof(OGRLinearRing *)));
         }
 
-/* -------------------------------------------------------------------- */
-/*      Create the new ring, and assign to ring list.                   */
-/* -------------------------------------------------------------------- */
-        OGRLinearRing* poLR = new OGRLinearRing();
+        /* --------------------------------------------------------------------
+         */
+        /*      Create the new ring, and assign to ring list. */
+        /* --------------------------------------------------------------------
+         */
+        OGRLinearRing *poLR = new OGRLinearRing();
         oCC.papoCurves[oCC.nCurveCount] = poLR;
 
-        if( bHasM && bHasZ )
+        if (bHasM && bHasZ)
             poLR->setPoints(nPoints, paoPoints, padfZ, padfM);
-        else if( bHasM )
+        else if (bHasM)
             poLR->setPointsM(nPoints, paoPoints, padfM);
-        else if( bHasZ )
+        else if (bHasZ)
             poLR->setPoints(nPoints, paoPoints, padfZ);
         else
             poLR->setPoints(nPoints, paoPoints);
 
         oCC.nCurveCount++;
 
-/* -------------------------------------------------------------------- */
-/*      Read the delimiter following the ring.                          */
-/* -------------------------------------------------------------------- */
+        /* --------------------------------------------------------------------
+         */
+        /*      Read the delimiter following the ring. */
+        /* --------------------------------------------------------------------
+         */
 
-        pszInput = OGRWktReadToken( pszInput, szToken );
-    } while( szToken[0] == ',' );
+        pszInput = OGRWktReadToken(pszInput, szToken);
+    } while (szToken[0] == ',');
 
-    CPLFree( padfM );
+    CPLFree(padfM);
 
-/* -------------------------------------------------------------------- */
-/*      freak if we don't get a closing bracket.                        */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      freak if we don't get a closing bracket.                        */
+    /* -------------------------------------------------------------------- */
 
-    if( szToken[0] != ')' )
+    if (szToken[0] != ')')
         return OGRERR_CORRUPT_DATA;
 
     *ppszInput = pszInput;
@@ -647,21 +653,21 @@ OGRErr OGRPolygon::importFromWKTListOnly( const char ** ppszInput,
 /*      equivalent.  This could be made a lot more CPU efficient.       */
 /************************************************************************/
 
-std::string OGRPolygon::exportToWkt(const OGRWktOptions& opts,
+std::string OGRPolygon::exportToWkt(const OGRWktOptions &opts,
                                     OGRErr *err) const
 {
     std::string wkt;
-/* -------------------------------------------------------------------- */
-/*      If we have no valid exterior ring, return POLYGON EMPTY.        */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      If we have no valid exterior ring, return POLYGON EMPTY.        */
+    /* -------------------------------------------------------------------- */
     wkt = getGeometryName();
     wkt += wktTypeString(opts.variant);
-    if( getExteriorRing() == nullptr || getExteriorRing()->IsEmpty() )
+    if (getExteriorRing() == nullptr || getExteriorRing()->IsEmpty())
         wkt += "EMPTY";
 
-/* -------------------------------------------------------------------- */
-/*      Build a list of strings containing the stuff for each ring.     */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Build a list of strings containing the stuff for each ring.     */
+    /* -------------------------------------------------------------------- */
 
     else
     {
@@ -669,19 +675,19 @@ std::string OGRPolygon::exportToWkt(const OGRWktOptions& opts,
         {
             bool first(true);
             wkt += '(';
-            for( int iRing = 0; iRing < oCC.nCurveCount; iRing++ )
+            for (int iRing = 0; iRing < oCC.nCurveCount; iRing++)
             {
-                OGRLinearRing* poLR = oCC.papoCurves[iRing]->toLinearRing();
-                if( poLR->getNumPoints() )
+                OGRLinearRing *poLR = oCC.papoCurves[iRing]->toLinearRing();
+                if (poLR->getNumPoints())
                 {
                     if (!first)
                         wkt += ',';
                     first = false;
                     OGRErr subgeomErr = OGRERR_NONE;
                     std::string tempWkt = poLR->exportToWkt(opts, &subgeomErr);
-                    if ( subgeomErr != OGRERR_NONE )
+                    if (subgeomErr != OGRERR_NONE)
                     {
-                        if( err )
+                        if (err)
                             *err = subgeomErr;
                         return std::string();
                     }
@@ -692,7 +698,7 @@ std::string OGRPolygon::exportToWkt(const OGRWktOptions& opts,
             }
             wkt += ')';
         }
-        catch( const std::bad_alloc& e )
+        catch (const std::bad_alloc &e)
         {
             CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
             if (err)
@@ -713,19 +719,19 @@ std::string OGRPolygon::exportToWkt(const OGRWktOptions& opts,
 /** Return whether the point is on the surface.
  * @return TRUE or FALSE
  */
-OGRBoolean OGRPolygon::IsPointOnSurface( const OGRPoint * pt ) const
+OGRBoolean OGRPolygon::IsPointOnSurface(const OGRPoint *pt) const
 {
-    if( nullptr == pt)
+    if (nullptr == pt)
         return FALSE;
 
     bool bOnSurface = false;
     // The point must be in the outer ring, but not in the inner rings
     int iRing = 0;
-    for( auto&& poRing: *this )
+    for (auto &&poRing : *this)
     {
-        if( poRing->isPointInRing(pt) )
+        if (poRing->isPointInRing(pt))
         {
-            if( iRing == 0 )
+            if (iRing == 0)
             {
                 bOnSurface = true;
             }
@@ -736,12 +742,12 @@ OGRBoolean OGRPolygon::IsPointOnSurface( const OGRPoint * pt ) const
         }
         else
         {
-            if( iRing == 0 )
+            if (iRing == 0)
             {
                 return false;
             }
         }
-        iRing ++;
+        iRing++;
     }
 
     return bOnSurface;
@@ -754,7 +760,7 @@ OGRBoolean OGRPolygon::IsPointOnSurface( const OGRPoint * pt ) const
 void OGRPolygon::closeRings()
 
 {
-    for( auto&& poRing: *this )
+    for (auto &&poRing : *this)
         poRing->closeRings();
 }
 
@@ -762,9 +768,9 @@ void OGRPolygon::closeRings()
 /*                           CurvePolyToPoly()                          */
 /************************************************************************/
 
-OGRPolygon* OGRPolygon::CurvePolyToPoly(
-    CPL_UNUSED double dfMaxAngleStepSizeDegrees,
-    CPL_UNUSED const char* const* papszOptions ) const
+OGRPolygon *
+OGRPolygon::CurvePolyToPoly(CPL_UNUSED double dfMaxAngleStepSizeDegrees,
+                            CPL_UNUSED const char *const *papszOptions) const
 {
     return clone();
 }
@@ -782,33 +788,31 @@ OGRBoolean OGRPolygon::hasCurveGeometry(CPL_UNUSED int bLookForNonLinear) const
 /*                         getLinearGeometry()                        */
 /************************************************************************/
 
-OGRGeometry* OGRPolygon::getLinearGeometry(
-    double dfMaxAngleStepSizeDegrees,
-    const char* const* papszOptions ) const
+OGRGeometry *
+OGRPolygon::getLinearGeometry(double dfMaxAngleStepSizeDegrees,
+                              const char *const *papszOptions) const
 {
-    return
-        OGRGeometry::getLinearGeometry(dfMaxAngleStepSizeDegrees, papszOptions);
+    return OGRGeometry::getLinearGeometry(dfMaxAngleStepSizeDegrees,
+                                          papszOptions);
 }
 
 /************************************************************************/
 /*                             getCurveGeometry()                       */
 /************************************************************************/
 
-OGRGeometry *
-OGRPolygon::getCurveGeometry( const char* const* papszOptions ) const
+OGRGeometry *OGRPolygon::getCurveGeometry(const char *const *papszOptions) const
 {
-    OGRCurvePolygon* poCC = new OGRCurvePolygon();
-    poCC->assignSpatialReference( getSpatialReference() );
+    OGRCurvePolygon *poCC = new OGRCurvePolygon();
+    poCC->assignSpatialReference(getSpatialReference());
     bool bHasCurveGeometry = false;
-    for( auto&& poRing: *this )
+    for (auto &&poRing : *this)
     {
-        auto poSubGeom =
-            poRing->getCurveGeometry(papszOptions);
-        if( wkbFlatten(poSubGeom->getGeometryType()) != wkbLineString )
+        auto poSubGeom = poRing->getCurveGeometry(papszOptions);
+        if (wkbFlatten(poSubGeom->getGeometryType()) != wkbLineString)
             bHasCurveGeometry = true;
-        poCC->addRingDirectly( poSubGeom->toCurve() );
+        poCC->addRingDirectly(poSubGeom->toCurve());
     }
-    if( !bHasCurveGeometry )
+    if (!bHasCurveGeometry)
     {
         delete poCC;
         return clone();
@@ -830,9 +834,9 @@ OGRPolygon::getCurveGeometry( const char* const* papszOptions ) const
  * @return new geometry.
  */
 
-OGRCurvePolygon* OGRPolygon::CastToCurvePolygon( OGRPolygon* poPoly )
+OGRCurvePolygon *OGRPolygon::CastToCurvePolygon(OGRPolygon *poPoly)
 {
-    OGRCurvePolygon* poCP = new OGRCurvePolygon();
+    OGRCurvePolygon *poCP = new OGRCurvePolygon();
     poCP->set3D(poPoly->Is3D());
     poCP->setMeasured(poPoly->IsMeasured());
     poCP->assignSpatialReference(poPoly->getSpatialReference());
@@ -841,7 +845,7 @@ OGRCurvePolygon* OGRPolygon::CastToCurvePolygon( OGRPolygon* poPoly )
     poPoly->oCC.nCurveCount = 0;
     poPoly->oCC.papoCurves = nullptr;
 
-    for( auto&& poRing: *poCP )
+    for (auto &&poRing : *poCP)
     {
         poRing = OGRLinearRing::CastToLineString(poRing->toLinearRing());
     }
@@ -854,7 +858,7 @@ OGRCurvePolygon* OGRPolygon::CastToCurvePolygon( OGRPolygon* poPoly )
 /*                      GetCasterToPolygon()                            */
 /************************************************************************/
 
-static OGRPolygon* CasterToPolygon(OGRSurface* poSurface)
+static OGRPolygon *CasterToPolygon(OGRSurface *poSurface)
 {
     return poSurface->toPolygon();
 }
@@ -868,7 +872,7 @@ OGRSurfaceCasterToPolygon OGRPolygon::GetCasterToPolygon() const
 /*                      OGRSurfaceCasterToCurvePolygon()                */
 /************************************************************************/
 
-OGRCurvePolygon* OGRPolygon::CasterToCurvePolygon(OGRSurface* poSurface)
+OGRCurvePolygon *OGRPolygon::CasterToCurvePolygon(OGRSurface *poSurface)
 {
     return OGRPolygon::CastToCurvePolygon(poSurface->toPolygon());
 }

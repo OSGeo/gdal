@@ -36,56 +36,54 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
-
 //! @cond Doxygen_Suppress
-static swq_field_type SWQColumnFuncChecker(
-    swq_expr_node *poNode, int bAllowMismatchTypeOnFieldComparison );
+static swq_field_type
+SWQColumnFuncChecker(swq_expr_node *poNode,
+                     int bAllowMismatchTypeOnFieldComparison);
 
-static const swq_operation swq_apsOperations[] =
-{
-    { "OR", SWQ_OR, SWQGeneralEvaluator, SWQGeneralChecker },
-    { "AND", SWQ_AND, SWQGeneralEvaluator, SWQGeneralChecker },
-    { "NOT", SWQ_NOT , SWQGeneralEvaluator, SWQGeneralChecker },
-    { "=", SWQ_EQ , SWQGeneralEvaluator, SWQGeneralChecker },
-    { "<>", SWQ_NE , SWQGeneralEvaluator, SWQGeneralChecker },
-    { ">=", SWQ_GE , SWQGeneralEvaluator, SWQGeneralChecker },
-    { "<=", SWQ_LE , SWQGeneralEvaluator, SWQGeneralChecker },
-    { "<", SWQ_LT , SWQGeneralEvaluator, SWQGeneralChecker },
-    { ">", SWQ_GT , SWQGeneralEvaluator, SWQGeneralChecker },
-    { "LIKE", SWQ_LIKE , SWQGeneralEvaluator, SWQGeneralChecker },
-    { "ILIKE", SWQ_ILIKE , SWQGeneralEvaluator, SWQGeneralChecker },
-    { "IS NULL", SWQ_ISNULL , SWQGeneralEvaluator, SWQGeneralChecker },
-    { "IN", SWQ_IN , SWQGeneralEvaluator, SWQGeneralChecker },
-    { "BETWEEN", SWQ_BETWEEN , SWQGeneralEvaluator, SWQGeneralChecker },
-    { "+", SWQ_ADD , SWQGeneralEvaluator, SWQGeneralChecker },
-    { "-", SWQ_SUBTRACT , SWQGeneralEvaluator, SWQGeneralChecker },
-    { "*", SWQ_MULTIPLY , SWQGeneralEvaluator, SWQGeneralChecker },
-    { "/", SWQ_DIVIDE , SWQGeneralEvaluator, SWQGeneralChecker },
-    { "%", SWQ_MODULUS , SWQGeneralEvaluator, SWQGeneralChecker },
-    { "CONCAT", SWQ_CONCAT , SWQGeneralEvaluator, SWQGeneralChecker },
-    { "SUBSTR", SWQ_SUBSTR , SWQGeneralEvaluator, SWQGeneralChecker },
-    { "HSTORE_GET_VALUE", SWQ_HSTORE_GET_VALUE , SWQGeneralEvaluator,
-        SWQGeneralChecker },
+static const swq_operation swq_apsOperations[] = {
+    {"OR", SWQ_OR, SWQGeneralEvaluator, SWQGeneralChecker},
+    {"AND", SWQ_AND, SWQGeneralEvaluator, SWQGeneralChecker},
+    {"NOT", SWQ_NOT, SWQGeneralEvaluator, SWQGeneralChecker},
+    {"=", SWQ_EQ, SWQGeneralEvaluator, SWQGeneralChecker},
+    {"<>", SWQ_NE, SWQGeneralEvaluator, SWQGeneralChecker},
+    {">=", SWQ_GE, SWQGeneralEvaluator, SWQGeneralChecker},
+    {"<=", SWQ_LE, SWQGeneralEvaluator, SWQGeneralChecker},
+    {"<", SWQ_LT, SWQGeneralEvaluator, SWQGeneralChecker},
+    {">", SWQ_GT, SWQGeneralEvaluator, SWQGeneralChecker},
+    {"LIKE", SWQ_LIKE, SWQGeneralEvaluator, SWQGeneralChecker},
+    {"ILIKE", SWQ_ILIKE, SWQGeneralEvaluator, SWQGeneralChecker},
+    {"IS NULL", SWQ_ISNULL, SWQGeneralEvaluator, SWQGeneralChecker},
+    {"IN", SWQ_IN, SWQGeneralEvaluator, SWQGeneralChecker},
+    {"BETWEEN", SWQ_BETWEEN, SWQGeneralEvaluator, SWQGeneralChecker},
+    {"+", SWQ_ADD, SWQGeneralEvaluator, SWQGeneralChecker},
+    {"-", SWQ_SUBTRACT, SWQGeneralEvaluator, SWQGeneralChecker},
+    {"*", SWQ_MULTIPLY, SWQGeneralEvaluator, SWQGeneralChecker},
+    {"/", SWQ_DIVIDE, SWQGeneralEvaluator, SWQGeneralChecker},
+    {"%", SWQ_MODULUS, SWQGeneralEvaluator, SWQGeneralChecker},
+    {"CONCAT", SWQ_CONCAT, SWQGeneralEvaluator, SWQGeneralChecker},
+    {"SUBSTR", SWQ_SUBSTR, SWQGeneralEvaluator, SWQGeneralChecker},
+    {"HSTORE_GET_VALUE", SWQ_HSTORE_GET_VALUE, SWQGeneralEvaluator,
+     SWQGeneralChecker},
 
-    { "AVG", SWQ_AVG, SWQGeneralEvaluator, SWQColumnFuncChecker },
-    { "MIN", SWQ_MIN, SWQGeneralEvaluator, SWQColumnFuncChecker },
-    { "MAX", SWQ_MAX, SWQGeneralEvaluator, SWQColumnFuncChecker },
-    { "COUNT", SWQ_COUNT, SWQGeneralEvaluator, SWQColumnFuncChecker },
-    { "SUM", SWQ_SUM, SWQGeneralEvaluator, SWQColumnFuncChecker },
+    {"AVG", SWQ_AVG, SWQGeneralEvaluator, SWQColumnFuncChecker},
+    {"MIN", SWQ_MIN, SWQGeneralEvaluator, SWQColumnFuncChecker},
+    {"MAX", SWQ_MAX, SWQGeneralEvaluator, SWQColumnFuncChecker},
+    {"COUNT", SWQ_COUNT, SWQGeneralEvaluator, SWQColumnFuncChecker},
+    {"SUM", SWQ_SUM, SWQGeneralEvaluator, SWQColumnFuncChecker},
 
-    { "CAST", SWQ_CAST, SWQCastEvaluator, SWQCastChecker }
-};
+    {"CAST", SWQ_CAST, SWQCastEvaluator, SWQCastChecker}};
 
 /************************************************************************/
 /*                            GetOperator()                             */
 /************************************************************************/
 
-const swq_operation *swq_op_registrar::GetOperator( const char *pszName )
+const swq_operation *swq_op_registrar::GetOperator(const char *pszName)
 
 {
-    for( const auto& op: swq_apsOperations )
+    for (const auto &op : swq_apsOperations)
     {
-        if( EQUAL(pszName, op.pszName) )
+        if (EQUAL(pszName, op.pszName))
             return &op;
     }
 
@@ -96,12 +94,12 @@ const swq_operation *swq_op_registrar::GetOperator( const char *pszName )
 /*                            GetOperator()                             */
 /************************************************************************/
 
-const swq_operation *swq_op_registrar::GetOperator( swq_op eOperator )
+const swq_operation *swq_op_registrar::GetOperator(swq_op eOperator)
 
 {
-    for( const auto& op: swq_apsOperations )
+    for (const auto &op : swq_apsOperations)
     {
-        if( eOperator == op.eOperation )
+        if (eOperator == op.eOperation)
             return &op;
     }
 
@@ -117,14 +115,15 @@ const swq_operation *swq_op_registrar::GetOperator( swq_op eOperator )
 /*      error if they are used in any other context.                    */
 /************************************************************************/
 
-static swq_field_type SWQColumnFuncChecker(
-    swq_expr_node *poNode, int /* bAllowMismatchTypeOnFieldComparison */ )
+static swq_field_type
+SWQColumnFuncChecker(swq_expr_node *poNode,
+                     int /* bAllowMismatchTypeOnFieldComparison */)
 {
     const swq_operation *poOp =
         swq_op_registrar::GetOperator(static_cast<swq_op>(poNode->nOperation));
-    CPLError( CE_Failure, CPLE_AppDefined,
-              "Column Summary Function '%s' found in an inappropriate context.",
-              poOp != nullptr ? poOp->pszName : "" );
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "Column Summary Function '%s' found in an inappropriate context.",
+             poOp != nullptr ? poOp->pszName : "");
     return SWQ_ERROR;
 }
 //! @endcond

@@ -31,9 +31,11 @@
 
 #include "cpl_port.h"
 
-bool OGRWKBGetGeomType(const GByte* pabyWkb, size_t nWKBSize,
-                       bool& bNeedSwap, uint32_t& nType);
-bool OGRWKBPolygonGetArea(const GByte*& pabyWkb, size_t& nWKBSize, double& dfArea);
-bool OGRWKBMultiPolygonGetArea(const GByte*& pabyWkb, size_t& nWKBSize, double& dfArea);
+bool OGRWKBGetGeomType(const GByte *pabyWkb, size_t nWKBSize, bool &bNeedSwap,
+                       uint32_t &nType);
+bool OGRWKBPolygonGetArea(const GByte *&pabyWkb, size_t &nWKBSize,
+                          double &dfArea);
+bool OGRWKBMultiPolygonGetArea(const GByte *&pabyWkb, size_t &nWKBSize,
+                               double &dfArea);
 
-#endif // OGR_WKB_H_INCLUDED
+#endif  // OGR_WKB_H_INCLUDED

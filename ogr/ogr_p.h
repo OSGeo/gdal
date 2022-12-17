@@ -45,18 +45,18 @@
 #include "ogr_feature.h"
 
 /* A default name for the default geometry column, instead of '' */
-#define OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME     "_ogr_geometry_"
+#define OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME "_ogr_geometry_"
 
 #ifdef CPL_MSB
-#  define OGR_SWAP(x)   (x == wkbNDR)
+#define OGR_SWAP(x) (x == wkbNDR)
 #else
-#  define OGR_SWAP(x)   (x == wkbXDR)
+#define OGR_SWAP(x) (x == wkbXDR)
 #endif
 
 /* PostGIS 1.X has non standard codes for the following geometry types */
-#define POSTGIS15_CURVEPOLYGON  13  /* instead of 10 */
-#define POSTGIS15_MULTICURVE    14  /* instead of 11 */
-#define POSTGIS15_MULTISURFACE  15  /* instead of 12 */
+#define POSTGIS15_CURVEPOLYGON 13 /* instead of 10 */
+#define POSTGIS15_MULTICURVE 14   /* instead of 11 */
+#define POSTGIS15_MULTISURFACE 15 /* instead of 12 */
 
 /* Has been deprecated. Can only be used in very specific circumstances */
 #ifdef GDAL_COMPILATION
@@ -68,37 +68,39 @@
 /* -------------------------------------------------------------------- */
 
 #ifdef OGR_GEOMETRY_H_INCLUDED
-#define OGR_WKT_TOKEN_MAX       64
+#define OGR_WKT_TOKEN_MAX 64
 
-const char CPL_DLL * OGRWktReadToken( const char * pszInput, char * pszToken );
+const char CPL_DLL *OGRWktReadToken(const char *pszInput, char *pszToken);
 
-const char CPL_DLL * OGRWktReadPoints( const char * pszInput,
-                                       OGRRawPoint **ppaoPoints,
-                                       double **ppadfZ,
-                                       int * pnMaxPoints,
-                                       int * pnReadPoints );
+const char CPL_DLL *OGRWktReadPoints(const char *pszInput,
+                                     OGRRawPoint **ppaoPoints, double **ppadfZ,
+                                     int *pnMaxPoints, int *pnReadPoints);
 
-const char CPL_DLL * OGRWktReadPointsM( const char * pszInput,
-                                        OGRRawPoint **ppaoPoints,
-                                        double **ppadfZ,
-                                        double **ppadfM,
-                                        int * flags, /* geometry flags, are we expecting Z, M, or both; may change due to input */
-                                        int * pnMaxPoints,
-                                        int * pnReadPoints );
+const char CPL_DLL *
+OGRWktReadPointsM(const char *pszInput, OGRRawPoint **ppaoPoints,
+                  double **ppadfZ, double **ppadfM,
+                  int *flags, /* geometry flags, are we expecting Z, M, or both;
+                                 may change due to input */
+                  int *pnMaxPoints, int *pnReadPoints);
 
-void CPL_DLL OGRMakeWktCoordinate( char *, double, double, double, int );
-std::string CPL_DLL OGRMakeWktCoordinate(double, double, double, int, OGRWktOptions opts );
-void CPL_DLL OGRMakeWktCoordinateM( char *, double, double, double, double, OGRBoolean, OGRBoolean );
-std::string CPL_DLL OGRMakeWktCoordinateM( double, double, double, double, OGRBoolean, OGRBoolean, OGRWktOptions opts );
+void CPL_DLL OGRMakeWktCoordinate(char *, double, double, double, int);
+std::string CPL_DLL OGRMakeWktCoordinate(double, double, double, int,
+                                         OGRWktOptions opts);
+void CPL_DLL OGRMakeWktCoordinateM(char *, double, double, double, double,
+                                   OGRBoolean, OGRBoolean);
+std::string CPL_DLL OGRMakeWktCoordinateM(double, double, double, double,
+                                          OGRBoolean, OGRBoolean,
+                                          OGRWktOptions opts);
 
 #endif
 
-void CPL_DLL OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
-                      char chDecimalSep, int nPrecision = 15, char chConversionSpecifier = 'f' );
-std::string CPL_DLL OGRFormatDouble(double val, const OGRWktOptions& opts);
+void CPL_DLL OGRFormatDouble(char *pszBuffer, int nBufferLen, double dfVal,
+                             char chDecimalSep, int nPrecision = 15,
+                             char chConversionSpecifier = 'f');
+std::string CPL_DLL OGRFormatDouble(double val, const OGRWktOptions &opts);
 
-int OGRFormatFloat(char *pszBuffer, int nBufferLen, float fVal,
-                   int nPrecision, char chConversionSpecifier);
+int OGRFormatFloat(char *pszBuffer, int nBufferLen, float fVal, int nPrecision,
+                   char chConversionSpecifier);
 
 /* -------------------------------------------------------------------- */
 /*      Date-time parsing and processing functions                      */
@@ -107,22 +109,27 @@ int OGRFormatFloat(char *pszBuffer, int nBufferLen, float fVal,
 /* Internal use by OGR drivers only, CPL_DLL is just there in case */
 /* they are compiled as plugins  */
 int CPL_DLL OGRGetDayOfWeek(int day, int month, int year);
-int CPL_DLL OGRParseXMLDateTime( const char* pszXMLDateTime,
-                                 OGRField* psField );
-int CPL_DLL OGRParseRFC822DateTime( const char* pszRFC822DateTime,
-                                    OGRField* psField );
-char CPL_DLL * OGRGetRFC822DateTime(const OGRField* psField);
-char CPL_DLL * OGRGetXMLDateTime(const OGRField* psField);
-char CPL_DLL * OGRGetXMLDateTime(const OGRField* psField, bool bAlwaysMillisecond);
-char CPL_DLL * OGRGetXML_UTF8_EscapedString(const char* pszString);
-bool CPL_DLL OGRParseDateTimeYYYYMMDDTHHMMSSZ( const char *pszInput, size_t nLen, OGRField *psField );
-bool CPL_DLL OGRParseDateTimeYYYYMMDDTHHMMSSsssZ( const char *pszInput, size_t nLen, OGRField *psField );
+int CPL_DLL OGRParseXMLDateTime(const char *pszXMLDateTime, OGRField *psField);
+int CPL_DLL OGRParseRFC822DateTime(const char *pszRFC822DateTime,
+                                   OGRField *psField);
+char CPL_DLL *OGRGetRFC822DateTime(const OGRField *psField);
+char CPL_DLL *OGRGetXMLDateTime(const OGRField *psField);
+char CPL_DLL *OGRGetXMLDateTime(const OGRField *psField,
+                                bool bAlwaysMillisecond);
+char CPL_DLL *OGRGetXML_UTF8_EscapedString(const char *pszString);
+bool CPL_DLL OGRParseDateTimeYYYYMMDDTHHMMSSZ(const char *pszInput, size_t nLen,
+                                              OGRField *psField);
+bool CPL_DLL OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(const char *pszInput,
+                                                 size_t nLen,
+                                                 OGRField *psField);
 
 int OGRCompareDate(const OGRField *psFirstTuple,
-                   const OGRField *psSecondTuple ); /* used by ogr_gensql.cpp and ogrfeaturequery.cpp */
+                   const OGRField *psSecondTuple); /* used by ogr_gensql.cpp and
+                                                      ogrfeaturequery.cpp */
 
 /* General utility option processing. */
-int CPL_DLL OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions );
+int CPL_DLL OGRGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
+                                       int nOptions);
 
 /************************************************************************/
 /*     Support for special attributes (feature query and selection)     */
@@ -134,7 +141,7 @@ int CPL_DLL OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOpti
 #define SPF_OGR_GEOM_AREA 4
 #define SPECIAL_FIELD_COUNT 5
 
-extern const char* const SpecialFieldNames[SPECIAL_FIELD_COUNT];
+extern const char *const SpecialFieldNames[SPECIAL_FIELD_COUNT];
 
 #ifdef SWQ_H_INCLUDED_
 extern const swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT];
@@ -144,55 +151,53 @@ extern const swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT];
 /*     Some SRS related stuff, search in SRS data files.                */
 /************************************************************************/
 
-OGRErr CPL_DLL OSRGetEllipsoidInfo( int, char **, double *, double *);
+OGRErr CPL_DLL OSRGetEllipsoidInfo(int, char **, double *, double *);
 
 /* Fast atof function */
-double OGRFastAtof(const char* pszStr);
+double OGRFastAtof(const char *pszStr);
 
-OGRErr CPL_DLL OGRCheckPermutation(const int* panPermutation, int nSize);
+OGRErr CPL_DLL OGRCheckPermutation(const int *panPermutation, int nSize);
 
 /* GML related */
 
-OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
-                                      int nPseudoBoolGetSecondaryGeometryOption,
-                                      int nRecLevel = 0,
-                                      int nSRSDimension = 0,
-                                      bool bIgnoreGSG = false,
-                                      bool bOrientation = true,
-                                      bool bFaceHoleNegative = false);
+OGRGeometry *GML2OGRGeometry_XMLNode(const CPLXMLNode *psNode,
+                                     int nPseudoBoolGetSecondaryGeometryOption,
+                                     int nRecLevel = 0, int nSRSDimension = 0,
+                                     bool bIgnoreGSG = false,
+                                     bool bOrientation = true,
+                                     bool bFaceHoleNegative = false);
 
 /************************************************************************/
 /*                        PostGIS EWKB encoding                         */
 /************************************************************************/
 
-OGRGeometry CPL_DLL *OGRGeometryFromEWKB( GByte *pabyWKB, int nLength, int* pnSRID,
-                                          int bIsPostGIS1_EWKB  );
-OGRGeometry CPL_DLL *OGRGeometryFromHexEWKB( const char *pszBytea, int* pnSRID,
-                                             int bIsPostGIS1_EWKB );
-char CPL_DLL * OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
-                                     int nPostGISMajor, int nPostGISMinor );
+OGRGeometry CPL_DLL *OGRGeometryFromEWKB(GByte *pabyWKB, int nLength,
+                                         int *pnSRID, int bIsPostGIS1_EWKB);
+OGRGeometry CPL_DLL *OGRGeometryFromHexEWKB(const char *pszBytea, int *pnSRID,
+                                            int bIsPostGIS1_EWKB);
+char CPL_DLL *OGRGeometryToHexEWKB(OGRGeometry *poGeometry, int nSRSId,
+                                   int nPostGISMajor, int nPostGISMinor);
 
 /************************************************************************/
 /*                        WKB Type Handling encoding                    */
 /************************************************************************/
 
-OGRErr CPL_DLL OGRReadWKBGeometryType( const unsigned char * pabyData,
-                               OGRwkbVariant wkbVariant,
-                               OGRwkbGeometryType *eGeometryType );
+OGRErr CPL_DLL OGRReadWKBGeometryType(const unsigned char *pabyData,
+                                      OGRwkbVariant wkbVariant,
+                                      OGRwkbGeometryType *eGeometryType);
 
 /************************************************************************/
 /*                        WKT Type Handling encoding                    */
 /************************************************************************/
 
-OGRErr CPL_DLL OGRReadWKTGeometryType( const char* pszWKT,
-                                       OGRwkbGeometryType *peGeometryType );
+OGRErr CPL_DLL OGRReadWKTGeometryType(const char *pszWKT,
+                                      OGRwkbGeometryType *peGeometryType);
 
 /************************************************************************/
 /*                            Other                                     */
 /************************************************************************/
 
-void CPL_DLL OGRUpdateFieldType( OGRFieldDefn* poFDefn,
-                                 OGRFieldType eNewType,
-                                 OGRFieldSubType eNewSubType );
+void CPL_DLL OGRUpdateFieldType(OGRFieldDefn *poFDefn, OGRFieldType eNewType,
+                                OGRFieldSubType eNewSubType);
 
 #endif /* ndef OGR_P_H_INCLUDED */
