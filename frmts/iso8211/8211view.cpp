@@ -31,76 +31,73 @@
 
 #include <algorithm>
 
-
-static void ViewRecordField( DDFField * poField );
-static int ViewSubfield( DDFSubfieldDefn *poSFDefn,
-                         const char * pachFieldData,
-                         int nBytesRemaining );
+static void ViewRecordField(DDFField *poField);
+static int ViewSubfield(DDFSubfieldDefn *poSFDefn, const char *pachFieldData,
+                        int nBytesRemaining);
 
 /* **********************************************************************/
 /*                                main()                                */
 /* **********************************************************************/
 
-int main( int nArgc, char ** papszArgv )
+int main(int nArgc, char **papszArgv)
 
 {
-    DDFModule   oModule;
-    const char  *pszFilename = nullptr;
-    int         bFSPTHack = FALSE;
+    DDFModule oModule;
+    const char *pszFilename = nullptr;
+    int bFSPTHack = FALSE;
 
-    for( int iArg = 1; iArg < nArgc; iArg++ )
+    for (int iArg = 1; iArg < nArgc; iArg++)
     {
-        if( EQUAL(papszArgv[iArg],"-fspt_repeating") )
+        if (EQUAL(papszArgv[iArg], "-fspt_repeating"))
             bFSPTHack = TRUE;
         else
             pszFilename = papszArgv[iArg];
     }
 
-    if( pszFilename == nullptr )
+    if (pszFilename == nullptr)
     {
-        printf( "Usage: 8211view filename\n" );
-        exit( 1 );
+        printf("Usage: 8211view filename\n");
+        exit(1);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Open the file.  Note that by default errors are reported to     */
-/*      stderr, so we don't bother doing it ourselves.                  */
-/* -------------------------------------------------------------------- */
-    if( !oModule.Open( pszFilename ) )
+    /* -------------------------------------------------------------------- */
+    /*      Open the file.  Note that by default errors are reported to     */
+    /*      stderr, so we don't bother doing it ourselves.                  */
+    /* -------------------------------------------------------------------- */
+    if (!oModule.Open(pszFilename))
     {
-        exit( 1 );
+        exit(1);
     }
 
-    if( bFSPTHack )
+    if (bFSPTHack)
     {
-        DDFFieldDefn *poFSPT = oModule.FindFieldDefn( "FSPT" );
+        DDFFieldDefn *poFSPT = oModule.FindFieldDefn("FSPT");
 
-        if( poFSPT == nullptr )
-            fprintf( stderr,
-                     "unable to find FSPT field to set repeating flag.\n" );
+        if (poFSPT == nullptr)
+            fprintf(stderr,
+                    "unable to find FSPT field to set repeating flag.\n");
         else
-            poFSPT->SetRepeatingFlag( TRUE );
+            poFSPT->SetRepeatingFlag(TRUE);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Loop reading records till there are none left.                  */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Loop reading records till there are none left.                  */
+    /* -------------------------------------------------------------------- */
     DDFRecord *poRecord = nullptr;
     int iRecord = 0;
 
-    while( (poRecord = oModule.ReadRecord()) != nullptr )
+    while ((poRecord = oModule.ReadRecord()) != nullptr)
     {
-        printf( "Record %d (%d bytes)\n",
-                ++iRecord, poRecord->GetDataSize() );
+        printf("Record %d (%d bytes)\n", ++iRecord, poRecord->GetDataSize());
 
         /* ------------------------------------------------------------ */
         /*      Loop over each field in this particular record.         */
         /* ------------------------------------------------------------ */
-        for( int iField = 0; iField < poRecord->GetFieldCount(); iField++ )
+        for (int iField = 0; iField < poRecord->GetFieldCount(); iField++)
         {
-            DDFField    *poField = poRecord->GetField( iField );
+            DDFField *poField = poRecord->GetField(iField);
 
-            ViewRecordField( poField );
+            ViewRecordField(poField);
         }
     }
 }
@@ -111,19 +108,19 @@ int main( int nArgc, char ** papszArgv )
 /*      Dump the contents of a field instance in a record.              */
 /* **********************************************************************/
 
-static void ViewRecordField( DDFField * poField )
+static void ViewRecordField(DDFField *poField)
 
 {
     DDFFieldDefn *poFieldDefn = poField->GetFieldDefn();
 
     // Report general information about the field.
-    printf( "    Field %s: %s\n",
-            poFieldDefn->GetName(), poFieldDefn->GetDescription() );
+    printf("    Field %s: %s\n", poFieldDefn->GetName(),
+           poFieldDefn->GetDescription());
 
     // Get pointer to this fields raw data.  We will move through
     // it consuming data as we report subfield values.
 
-    const char  *pachFieldData = poField->GetData();
+    const char *pachFieldData = poField->GetData();
     int nBytesRemaining = poField->GetDataSize();
 
     /* -------------------------------------------------------- */
@@ -131,18 +128,18 @@ static void ViewRecordField( DDFField * poField )
     /*      subfields.  The repeat count will almost            */
     /*      always be one.                                      */
     /* -------------------------------------------------------- */
-    for( int iRepeat = 0; iRepeat < poField->GetRepeatCount(); iRepeat++ )
+    for (int iRepeat = 0; iRepeat < poField->GetRepeatCount(); iRepeat++)
     {
 
         /* -------------------------------------------------------- */
         /*   Loop over all the subfields of this field, advancing   */
         /*   the data pointer as we consume data.                   */
         /* -------------------------------------------------------- */
-        for( int iSF = 0; iSF < poFieldDefn->GetSubfieldCount(); iSF++ )
+        for (int iSF = 0; iSF < poFieldDefn->GetSubfieldCount(); iSF++)
         {
-            DDFSubfieldDefn *poSFDefn = poFieldDefn->GetSubfield( iSF );
+            DDFSubfieldDefn *poSFDefn = poFieldDefn->GetSubfield(iSF);
             int nBytesConsumed =
-                ViewSubfield( poSFDefn, pachFieldData, nBytesRemaining );
+                ViewSubfield(poSFDefn, pachFieldData, nBytesRemaining);
 
             nBytesRemaining -= nBytesConsumed;
             pachFieldData += nBytesConsumed;
@@ -154,77 +151,73 @@ static void ViewRecordField( DDFField * poField )
 /*                            ViewSubfield()                            */
 /* **********************************************************************/
 
-static int ViewSubfield( DDFSubfieldDefn *poSFDefn,
-                         const char * pachFieldData,
-                         int nBytesRemaining )
+static int ViewSubfield(DDFSubfieldDefn *poSFDefn, const char *pachFieldData,
+                        int nBytesRemaining)
 
 {
-    int         nBytesConsumed = 0;
+    int nBytesConsumed = 0;
 
-    switch( poSFDefn->GetType() )
+    switch (poSFDefn->GetType())
     {
-      case DDFInt:
-        if( poSFDefn->GetBinaryFormat() == DDFSubfieldDefn::UInt )
-            printf( "        %s = %u\n",
-                    poSFDefn->GetName(),
-                    static_cast<unsigned int>(
-                        poSFDefn->ExtractIntData( pachFieldData, nBytesRemaining,
-                                              &nBytesConsumed )) );
-        else
-            printf( "        %s = %d\n",
-                    poSFDefn->GetName(),
-                    poSFDefn->ExtractIntData( pachFieldData, nBytesRemaining,
-                                              &nBytesConsumed ) );
+        case DDFInt:
+            if (poSFDefn->GetBinaryFormat() == DDFSubfieldDefn::UInt)
+                printf("        %s = %u\n", poSFDefn->GetName(),
+                       static_cast<unsigned int>(poSFDefn->ExtractIntData(
+                           pachFieldData, nBytesRemaining, &nBytesConsumed)));
+            else
+                printf("        %s = %d\n", poSFDefn->GetName(),
+                       poSFDefn->ExtractIntData(pachFieldData, nBytesRemaining,
+                                                &nBytesConsumed));
+            break;
+
+        case DDFFloat:
+            printf("        %s = %f\n", poSFDefn->GetName(),
+                   poSFDefn->ExtractFloatData(pachFieldData, nBytesRemaining,
+                                              &nBytesConsumed));
+            break;
+
+        case DDFString:
+            printf("        %s = `%s'\n", poSFDefn->GetName(),
+                   poSFDefn->ExtractStringData(pachFieldData, nBytesRemaining,
+                                               &nBytesConsumed));
+            break;
+
+        case DDFBinaryString:
+        {
+            GByte *pabyBString = (GByte *)poSFDefn->ExtractStringData(
+                pachFieldData, nBytesRemaining, &nBytesConsumed);
+
+            printf("        %s = 0x", poSFDefn->GetName());
+            for (int i = 0; i < std::min(nBytesConsumed, 24); i++)
+                printf("%02X", pabyBString[i]);
+
+            if (nBytesConsumed > 24)
+                printf("%s", "...");
+
+            // rjensen 19-Feb-2002 S57 quick hack. decode NAME and LNAM
+            // bitfields
+            if (EQUAL(poSFDefn->GetName(), "NAME"))
+            {
+                const int vrid_rcnm = pabyBString[0];
+                const int vrid_rcid = pabyBString[1] + (pabyBString[2] * 256) +
+                                      (pabyBString[3] * 65536) +
+                                      (pabyBString[4] * 16777216);
+                printf("\tVRID RCNM = %d,RCID = %d", vrid_rcnm, vrid_rcid);
+            }
+            else if (EQUAL(poSFDefn->GetName(), "LNAM"))
+            {
+                const int foid_agen = pabyBString[0] + (pabyBString[1] * 256);
+                const int foid_find = pabyBString[2] + (pabyBString[3] * 256) +
+                                      (pabyBString[4] * 65536) +
+                                      (pabyBString[5] * 16777216);
+                const int foid_fids = pabyBString[6] + (pabyBString[7] * 256);
+                printf("\tFOID AGEN = %d,FIDN = %d,FIDS = %d", foid_agen,
+                       foid_find, foid_fids);
+            }
+
+            printf("\n");
+        }
         break;
-
-      case DDFFloat:
-        printf( "        %s = %f\n",
-                poSFDefn->GetName(),
-                poSFDefn->ExtractFloatData( pachFieldData, nBytesRemaining,
-                                            &nBytesConsumed ) );
-        break;
-
-      case DDFString:
-        printf( "        %s = `%s'\n",
-                poSFDefn->GetName(),
-                poSFDefn->ExtractStringData( pachFieldData, nBytesRemaining,
-                                             &nBytesConsumed ) );
-        break;
-
-      case DDFBinaryString:
-      {
-          GByte *pabyBString = (GByte *)
-              poSFDefn->ExtractStringData( pachFieldData, nBytesRemaining,
-                                           &nBytesConsumed );
-
-          printf( "        %s = 0x", poSFDefn->GetName() );
-          for( int i = 0; i < std::min(nBytesConsumed, 24); i++ )
-              printf( "%02X", pabyBString[i] );
-
-          if( nBytesConsumed > 24 )
-              printf( "%s", "..." );
-
-          // rjensen 19-Feb-2002 S57 quick hack. decode NAME and LNAM bitfields
-          if ( EQUAL(poSFDefn->GetName(),"NAME") )
-          {
-              const int vrid_rcnm=pabyBString[0];
-              const int vrid_rcid=pabyBString[1] + (pabyBString[2]*256)+
-                  (pabyBString[3]*65536)+ (pabyBString[4]*16777216);
-              printf("\tVRID RCNM = %d,RCID = %d",vrid_rcnm,vrid_rcid);
-          }
-          else if ( EQUAL(poSFDefn->GetName(),"LNAM") )
-          {
-              const int foid_agen=pabyBString[0] + (pabyBString[1]*256);
-              const int foid_find=pabyBString[2] + (pabyBString[3]*256)+
-                  (pabyBString[4]*65536)+ (pabyBString[5]*16777216);
-              const int foid_fids=pabyBString[6] + (pabyBString[7]*256);
-              printf("\tFOID AGEN = %d,FIDN = %d,FIDS = %d",
-                     foid_agen,foid_find,foid_fids);
-          }
-
-          printf( "\n" );
-      }
-      break;
     }
 
     return nBytesConsumed;
