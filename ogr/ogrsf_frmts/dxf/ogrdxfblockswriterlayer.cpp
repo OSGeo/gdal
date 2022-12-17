@@ -32,19 +32,16 @@
 #include "cpl_string.h"
 #include "ogr_featurestyle.h"
 
-
 /************************************************************************/
 /*                      OGRDXFBlocksWriterLayer()                       */
 /************************************************************************/
 
-OGRDXFBlocksWriterLayer::OGRDXFBlocksWriterLayer(
-    OGRDXFWriterDS * /* poDS */ ) :
-    poFeatureDefn(new OGRFeatureDefn( "blocks" ))
+OGRDXFBlocksWriterLayer::OGRDXFBlocksWriterLayer(OGRDXFWriterDS * /* poDS */)
+    : poFeatureDefn(new OGRFeatureDefn("blocks"))
 {
     poFeatureDefn->Reference();
-    
-    OGRDXFDataSource::AddStandardFields( poFeatureDefn,
-        ODFM_IncludeBlockFields );
+
+    OGRDXFDataSource::AddStandardFields(poFeatureDefn, ODFM_IncludeBlockFields);
 }
 
 /************************************************************************/
@@ -54,10 +51,10 @@ OGRDXFBlocksWriterLayer::OGRDXFBlocksWriterLayer(
 OGRDXFBlocksWriterLayer::~OGRDXFBlocksWriterLayer()
 
 {
-    for( size_t i=0; i < apoBlocks.size(); i++ )
+    for (size_t i = 0; i < apoBlocks.size(); i++)
         delete apoBlocks[i];
 
-    if( poFeatureDefn )
+    if (poFeatureDefn)
         poFeatureDefn->Release();
 }
 
@@ -65,10 +62,10 @@ OGRDXFBlocksWriterLayer::~OGRDXFBlocksWriterLayer()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRDXFBlocksWriterLayer::TestCapability( const char * pszCap )
+int OGRDXFBlocksWriterLayer::TestCapability(const char *pszCap)
 
 {
-    return EQUAL(pszCap,OLCSequentialWrite);
+    return EQUAL(pszCap, OLCSequentialWrite);
 }
 
 /************************************************************************/
@@ -77,17 +74,17 @@ int OGRDXFBlocksWriterLayer::TestCapability( const char * pszCap )
 /*      This is really a dummy as our fields are precreated.            */
 /************************************************************************/
 
-OGRErr OGRDXFBlocksWriterLayer::CreateField( OGRFieldDefn *poField,
-                                             int bApproxOK )
+OGRErr OGRDXFBlocksWriterLayer::CreateField(OGRFieldDefn *poField,
+                                            int bApproxOK)
 
 {
-    if( poFeatureDefn->GetFieldIndex(poField->GetNameRef()) >= 0
-        && bApproxOK )
+    if (poFeatureDefn->GetFieldIndex(poField->GetNameRef()) >= 0 && bApproxOK)
         return OGRERR_NONE;
 
-    CPLError( CE_Failure, CPLE_AppDefined,
-              "DXF layer does not support arbitrary field creation, field '%s' not created.",
-              poField->GetNameRef() );
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "DXF layer does not support arbitrary field creation, field '%s' "
+             "not created.",
+             poField->GetNameRef());
 
     return OGRERR_FAILURE;
 }
@@ -99,10 +96,10 @@ OGRErr OGRDXFBlocksWriterLayer::CreateField( OGRFieldDefn *poField,
 /*      the blocks section of the header.                               */
 /************************************************************************/
 
-OGRErr OGRDXFBlocksWriterLayer::ICreateFeature( OGRFeature *poFeature )
+OGRErr OGRDXFBlocksWriterLayer::ICreateFeature(OGRFeature *poFeature)
 
 {
-    apoBlocks.push_back( poFeature->Clone() );
+    apoBlocks.push_back(poFeature->Clone());
 
     return OGRERR_NONE;
 }
@@ -111,14 +108,14 @@ OGRErr OGRDXFBlocksWriterLayer::ICreateFeature( OGRFeature *poFeature )
 /*                             FindBlock()                              */
 /************************************************************************/
 
-OGRFeature *OGRDXFBlocksWriterLayer::FindBlock( const char *pszBlockName )
+OGRFeature *OGRDXFBlocksWriterLayer::FindBlock(const char *pszBlockName)
 
 {
-    for( size_t i=0; i < apoBlocks.size(); i++ )
+    for (size_t i = 0; i < apoBlocks.size(); i++)
     {
         const char *pszThisName = apoBlocks[i]->GetFieldAsString("Block");
 
-        if( pszThisName != nullptr && strcmp(pszBlockName,pszThisName) == 0 )
+        if (pszThisName != nullptr && strcmp(pszBlockName, pszThisName) == 0)
             return apoBlocks[i];
     }
 

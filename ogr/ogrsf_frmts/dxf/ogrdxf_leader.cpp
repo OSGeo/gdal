@@ -33,24 +33,23 @@
 #include <stdexcept>
 #include <algorithm>
 
-
-static void InterpolateSpline( OGRLineString* const poLine,
-    const DXFTriple& oEndTangentDirection );
+static void InterpolateSpline(OGRLineString *const poLine,
+                              const DXFTriple &oEndTangentDirection);
 
 /************************************************************************/
 /*                             PointDist()                              */
 /************************************************************************/
 
-inline static double PointDist( double x1, double y1, double x2, double y2 )
+inline static double PointDist(double x1, double y1, double x2, double y2)
 {
-    return sqrt( (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) );
+    return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
 }
 
-inline static double PointDist( double x1, double y1, double z1, double x2,
-    double y2, double z2 )
+inline static double PointDist(double x1, double y1, double z1, double x2,
+                               double y2, double z2)
 {
-    return sqrt( (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) +
-        (z2 - z1) * (z2 - z1) );
+    return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) +
+                (z2 - z1) * (z2 - z1));
 }
 
 /************************************************************************/
@@ -62,7 +61,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateLEADER()
 {
     char szLineBuf[257];
     int nCode;
-    OGRDXFFeature *poFeature = new OGRDXFFeature( poFeatureDefn );
+    OGRDXFFeature *poFeature = new OGRDXFFeature(poFeatureDefn);
 
     OGRLineString *poLine = new OGRLineString();
     bool bHaveX = false;
@@ -86,118 +85,122 @@ OGRDXFFeature *OGRDXFLayer::TranslateLEADER()
 
     bool bReadyForDimstyleOverride = false;
 
-    std::map<CPLString,CPLString> oDimStyleProperties;
+    std::map<CPLString, CPLString> oDimStyleProperties;
     poDS->PopulateDefaultDimStyleProperties(oDimStyleProperties);
 
-    while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
+    while ((nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf))) > 0)
     {
-        switch( nCode )
+        switch (nCode)
         {
-          case 3:
-            // 3 is the dimension style name. We don't need to store it,
-            // let's just fetch the dimension style properties
-            poDS->LookupDimStyle(szLineBuf, oDimStyleProperties);
-            break;
+            case 3:
+                // 3 is the dimension style name. We don't need to store it,
+                // let's just fetch the dimension style properties
+                poDS->LookupDimStyle(szLineBuf, oDimStyleProperties);
+                break;
 
-          case 10:
-            // add the previous point onto the linestring
-            if( bHaveX && bHaveY && bHaveZ ) {
-                poLine->setPoint( nNumVertices++,
-                    dfCurrentX, dfCurrentY, dfCurrentZ );
-                bHaveY = bHaveZ = false;
-            }
-            dfCurrentX = CPLAtof(szLineBuf);
-            bHaveX = true;
-            break;
-
-          case 20:
-            // add the previous point onto the linestring
-            if( bHaveX && bHaveY && bHaveZ ) {
-                poLine->setPoint( nNumVertices++,
-                    dfCurrentX, dfCurrentY, dfCurrentZ );
-                bHaveX = bHaveZ = false;
-            }
-            dfCurrentY = CPLAtof(szLineBuf);
-            bHaveY = true;
-            break;
-
-          case 30:
-            // add the previous point onto the linestring
-            if( bHaveX && bHaveY && bHaveZ ) {
-                poLine->setPoint( nNumVertices++,
-                    dfCurrentX, dfCurrentY, dfCurrentZ );
-                bHaveX = bHaveY = false;
-            }
-            dfCurrentZ = CPLAtof(szLineBuf);
-            bHaveZ = true;
-            break;
-
-          case 41:
-            dfTextAnnotationWidth = CPLAtof(szLineBuf);
-            break;
-
-          case 71:
-            bWantArrowhead = atoi(szLineBuf) != 0;
-            break;
-
-          case 72:
-            bIsSpline = atoi(szLineBuf) != 0;
-            break;
-
-          case 73:
-            bHasTextAnnotation = atoi(szLineBuf) == 0;
-            break;
-
-          case 74:
-            // DXF spec seems to have this backwards. A value of 0 actually
-            // indicates no flipping occurs, and 1 (flip) is the default
-            bHorizontalDirectionFlip = atoi(szLineBuf) != 0;
-            break;
-
-          case 211:
-            dfHorizontalDirectionX = CPLAtof(szLineBuf);
-            break;
-
-          case 221:
-            dfHorizontalDirectionY = CPLAtof(szLineBuf);
-            break;
-
-          case 231:
-            dfHorizontalDirectionZ = CPLAtof(szLineBuf);
-            break;
-
-          case 1001:
-            bReadyForDimstyleOverride = EQUAL(szLineBuf, "ACAD");
-            break;
-
-          case 1070:
-            if( bReadyForDimstyleOverride )
-            {
-                // Store DIMSTYLE override values in the dimension
-                // style property map. The nInnerCode values match the
-                // group codes used in the DIMSTYLE table.
-                const int nInnerCode = atoi(szLineBuf);
-                const char* pszProperty = ACGetDimStylePropertyName(nInnerCode);
-                if( pszProperty )
+            case 10:
+                // add the previous point onto the linestring
+                if (bHaveX && bHaveY && bHaveZ)
                 {
-                    nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf));
-                    if( nCode == 1005 || nCode == 1040 || nCode == 1070 )
-                        oDimStyleProperties[pszProperty] = szLineBuf;
+                    poLine->setPoint(nNumVertices++, dfCurrentX, dfCurrentY,
+                                     dfCurrentZ);
+                    bHaveY = bHaveZ = false;
                 }
-            }
-            break;
+                dfCurrentX = CPLAtof(szLineBuf);
+                bHaveX = true;
+                break;
 
-          default:
-            TranslateGenericProperty( poFeature, nCode, szLineBuf );
-            break;
+            case 20:
+                // add the previous point onto the linestring
+                if (bHaveX && bHaveY && bHaveZ)
+                {
+                    poLine->setPoint(nNumVertices++, dfCurrentX, dfCurrentY,
+                                     dfCurrentZ);
+                    bHaveX = bHaveZ = false;
+                }
+                dfCurrentY = CPLAtof(szLineBuf);
+                bHaveY = true;
+                break;
+
+            case 30:
+                // add the previous point onto the linestring
+                if (bHaveX && bHaveY && bHaveZ)
+                {
+                    poLine->setPoint(nNumVertices++, dfCurrentX, dfCurrentY,
+                                     dfCurrentZ);
+                    bHaveX = bHaveY = false;
+                }
+                dfCurrentZ = CPLAtof(szLineBuf);
+                bHaveZ = true;
+                break;
+
+            case 41:
+                dfTextAnnotationWidth = CPLAtof(szLineBuf);
+                break;
+
+            case 71:
+                bWantArrowhead = atoi(szLineBuf) != 0;
+                break;
+
+            case 72:
+                bIsSpline = atoi(szLineBuf) != 0;
+                break;
+
+            case 73:
+                bHasTextAnnotation = atoi(szLineBuf) == 0;
+                break;
+
+            case 74:
+                // DXF spec seems to have this backwards. A value of 0 actually
+                // indicates no flipping occurs, and 1 (flip) is the default
+                bHorizontalDirectionFlip = atoi(szLineBuf) != 0;
+                break;
+
+            case 211:
+                dfHorizontalDirectionX = CPLAtof(szLineBuf);
+                break;
+
+            case 221:
+                dfHorizontalDirectionY = CPLAtof(szLineBuf);
+                break;
+
+            case 231:
+                dfHorizontalDirectionZ = CPLAtof(szLineBuf);
+                break;
+
+            case 1001:
+                bReadyForDimstyleOverride = EQUAL(szLineBuf, "ACAD");
+                break;
+
+            case 1070:
+                if (bReadyForDimstyleOverride)
+                {
+                    // Store DIMSTYLE override values in the dimension
+                    // style property map. The nInnerCode values match the
+                    // group codes used in the DIMSTYLE table.
+                    const int nInnerCode = atoi(szLineBuf);
+                    const char *pszProperty =
+                        ACGetDimStylePropertyName(nInnerCode);
+                    if (pszProperty)
+                    {
+                        nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf));
+                        if (nCode == 1005 || nCode == 1040 || nCode == 1070)
+                            oDimStyleProperties[pszProperty] = szLineBuf;
+                    }
+                }
+                break;
+
+            default:
+                TranslateGenericProperty(poFeature, nCode, szLineBuf);
+                break;
         }
     }
 
-    if( nCode == 0 )
+    if (nCode == 0)
         poDS->UnreadValue();
 
-    if( bHaveX && bHaveY && bHaveZ )
-        poLine->setPoint( nNumVertices++, dfCurrentX, dfCurrentY, dfCurrentZ );
+    if (bHaveX && bHaveY && bHaveZ)
+        poLine->setPoint(nNumVertices++, dfCurrentX, dfCurrentY, dfCurrentZ);
 
     // Unpack the dimension style
     bool bWantExtension = atoi(oDimStyleProperties["DIMTAD"]) > 0;
@@ -211,79 +214,79 @@ OGRDXFFeature *OGRDXFLayer::TranslateLEADER()
 
     // Zero scale has a special meaning which we aren't interested in,
     // so we can change it to 1.0
-    if( dfScale == 0.0 )
+    if (dfScale == 0.0)
         dfScale = 1.0;
 
     // Use the color from the dimension style if it is not ByBlock
-    if( nLeaderColor > 0 )
+    if (nLeaderColor > 0)
         poFeature->oStyleProperties["Color"] = oDimStyleProperties["DIMCLRD"];
 
-/* -------------------------------------------------------------------- */
-/*      Add an arrowhead to the start of the leader line.               */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Add an arrowhead to the start of the leader line.               */
+    /* -------------------------------------------------------------------- */
 
-    if( bWantArrowhead && nNumVertices >= 2 )
+    if (bWantArrowhead && nNumVertices >= 2)
     {
-        InsertArrowhead( poFeature, osArrowheadBlockHandle, poLine,
-            dfArrowheadSize * dfScale );
+        InsertArrowhead(poFeature, osArrowheadBlockHandle, poLine,
+                        dfArrowheadSize * dfScale);
     }
 
-
-    if( bHorizontalDirectionFlip )
+    if (bHorizontalDirectionFlip)
     {
         dfHorizontalDirectionX *= -1;
         dfHorizontalDirectionX *= -1;
         dfHorizontalDirectionX *= -1;
     }
 
-/* -------------------------------------------------------------------- */
-/*      For a spline leader, determine the end tangent direction        */
-/*      and interpolate the spline vertices.                            */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      For a spline leader, determine the end tangent direction        */
+    /*      and interpolate the spline vertices.                            */
+    /* -------------------------------------------------------------------- */
 
-    if( bIsSpline )
+    if (bIsSpline)
     {
         DXFTriple oEndTangent;
-        if( bHasTextAnnotation )
+        if (bHasTextAnnotation)
         {
-            oEndTangent = DXFTriple( dfHorizontalDirectionX,
-                dfHorizontalDirectionY, dfHorizontalDirectionZ );
+            oEndTangent =
+                DXFTriple(dfHorizontalDirectionX, dfHorizontalDirectionY,
+                          dfHorizontalDirectionZ);
         }
-        InterpolateSpline( poLine, oEndTangent );
+        InterpolateSpline(poLine, oEndTangent);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Add an extension to the end of the leader line. This is not     */
-/*      properly documented in the DXF spec, but it is needed to        */
-/*      replicate the way AutoCAD displays leader objects.              */
-/*                                                                      */
-/*      When $DIMTAD (77) is nonzero, the leader line is extended       */
-/*      under the text annotation. This extension is not stored as an   */
-/*      additional vertex, so we need to create it ourselves.           */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Add an extension to the end of the leader line. This is not     */
+    /*      properly documented in the DXF spec, but it is needed to        */
+    /*      replicate the way AutoCAD displays leader objects.              */
+    /*                                                                      */
+    /*      When $DIMTAD (77) is nonzero, the leader line is extended       */
+    /*      under the text annotation. This extension is not stored as an   */
+    /*      additional vertex, so we need to create it ourselves.           */
+    /* -------------------------------------------------------------------- */
 
-    if( bWantExtension && bHasTextAnnotation && poLine->getNumPoints() >= 2 )
+    if (bWantExtension && bHasTextAnnotation && poLine->getNumPoints() >= 2)
     {
         OGRPoint oLastVertex;
-        poLine->getPoint( poLine->getNumPoints() - 1, &oLastVertex );
+        poLine->getPoint(poLine->getNumPoints() - 1, &oLastVertex);
 
         double dfExtensionX = oLastVertex.getX();
         double dfExtensionY = oLastVertex.getY();
         double dfExtensionZ = oLastVertex.getZ();
 
-        double dfExtensionLength = ( dfTextOffset * dfScale ) +
-            dfTextAnnotationWidth;
+        double dfExtensionLength =
+            (dfTextOffset * dfScale) + dfTextAnnotationWidth;
         dfExtensionX += dfHorizontalDirectionX * dfExtensionLength;
         dfExtensionY += dfHorizontalDirectionY * dfExtensionLength;
         dfExtensionZ += dfHorizontalDirectionZ * dfExtensionLength;
 
-        poLine->setPoint( poLine->getNumPoints(), dfExtensionX, dfExtensionY,
-            dfExtensionZ );
+        poLine->setPoint(poLine->getNumPoints(), dfExtensionX, dfExtensionY,
+                         dfExtensionZ);
     }
 
-    poFeature->SetGeometryDirectly( poLine );
+    poFeature->SetGeometryDirectly(poLine);
 
-    PrepareLineStyle( poFeature );
+    PrepareLineStyle(poFeature);
 
     return poFeature;
 }
@@ -292,20 +295,23 @@ OGRDXFFeature *OGRDXFLayer::TranslateLEADER()
 /*       DXFMLEADERVertex, DXFMLEADERLeaderLine, DXFMLEADERLeader       */
 /************************************************************************/
 
-struct DXFMLEADERVertex {
-    DXFTriple                oCoords;
+struct DXFMLEADERVertex
+{
+    DXFTriple oCoords;
     std::vector<std::pair<DXFTriple, DXFTriple>> aoBreaks;
 
-    DXFMLEADERVertex( double dfX, double dfY )
-        : oCoords( DXFTriple( dfX, dfY, 0.0 ) ) {}
+    DXFMLEADERVertex(double dfX, double dfY) : oCoords(DXFTriple(dfX, dfY, 0.0))
+    {
+    }
 };
 
-struct DXFMLEADERLeader {
-    double                   dfLandingX = 0;
-    double                   dfLandingY = 0;
-    double                   dfDoglegVectorX = 0;
-    double                   dfDoglegVectorY = 0;
-    double                   dfDoglegLength = 0;
+struct DXFMLEADERLeader
+{
+    double dfLandingX = 0;
+    double dfLandingY = 0;
+    double dfDoglegVectorX = 0;
+    double dfDoglegVectorY = 0;
+    double dfDoglegLength = 0;
     std::vector<std::pair<DXFTriple, DXFTriple>> aoDoglegBreaks;
     std::vector<std::vector<DXFMLEADERVertex>> aaoLeaderLines;
 };
@@ -324,7 +330,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
 
     // This is a dummy feature object used to store style properties
     // and the like. We end up deleting it without returning it
-    OGRDXFFeature *poOverallFeature = new OGRDXFFeature( poFeatureDefn );
+    OGRDXFFeature *poOverallFeature = new OGRDXFFeature(poFeatureDefn);
 
     DXFMLEADERLeader oLeader;
     std::vector<DXFMLEADERLeader> aoLeaders;
@@ -344,7 +350,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
     CPLString osTextStyleHandle;
     double dfTextX = 0.0;
     double dfTextY = 0.0;
-    int nTextAlignment = 1; // 1 = left, 2 = center, 3 = right
+    int nTextAlignment = 1;  // 1 = left, 2 = center, 3 = right
     double dfTextAngle = 0.0;
     double dfTextHeight = 4.0;
 
@@ -394,269 +400,275 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
     // 301 }
     // ... [MLS_COMMON]
 
-    while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
+    while ((nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf))) > 0)
     {
-        switch( nSection )
+        switch (nSection)
         {
-          case MLS_COMMON:
-            switch( nCode )
-            {
-              case 300:
-                nSection = MLS_CONTEXT_DATA;
-                break;
-
-              case 342:
-                // 342 is the entity handle of the BLOCK_RECORD table entry that
-                // corresponds to the arrowhead block.
-                osArrowheadBlockHandle = szLineBuf;
-                break;
-
-              case 42:
-                // TODO figure out difference between 42 and 140 for arrowheadsize
-                dfArrowheadSize = CPLAtof( szLineBuf );
-                break;
-
-              case 330:
-                osBlockAttributeHandle = szLineBuf;
-                break;
-
-              case 302:
-                if( osBlockAttributeHandle != "" )
+            case MLS_COMMON:
+                switch (nCode)
                 {
-                    oBlockAttributes[osBlockAttributeHandle] =
-                        TextUnescape( szLineBuf, true );
-                    osBlockAttributeHandle = "";
+                    case 300:
+                        nSection = MLS_CONTEXT_DATA;
+                        break;
+
+                    case 342:
+                        // 342 is the entity handle of the BLOCK_RECORD table
+                        // entry that corresponds to the arrowhead block.
+                        osArrowheadBlockHandle = szLineBuf;
+                        break;
+
+                    case 42:
+                        // TODO figure out difference between 42 and 140 for
+                        // arrowheadsize
+                        dfArrowheadSize = CPLAtof(szLineBuf);
+                        break;
+
+                    case 330:
+                        osBlockAttributeHandle = szLineBuf;
+                        break;
+
+                    case 302:
+                        if (osBlockAttributeHandle != "")
+                        {
+                            oBlockAttributes[osBlockAttributeHandle] =
+                                TextUnescape(szLineBuf, true);
+                            osBlockAttributeHandle = "";
+                        }
+                        break;
+
+                    case 91:
+                        osLeaderColor = szLineBuf;
+                        break;
+
+                    case 170:
+                        nLeaderLineType = atoi(szLineBuf);
+                        break;
+
+                    case 291:
+                        bHasDogleg = atoi(szLineBuf) != 0;
+                        break;
+
+                    default:
+                        TranslateGenericProperty(poOverallFeature, nCode,
+                                                 szLineBuf);
+                        break;
                 }
                 break;
 
-              case 91:
-                osLeaderColor = szLineBuf;
-                break;
-
-              case 170:
-                nLeaderLineType = atoi(szLineBuf);
-                break;
-
-              case 291:
-                bHasDogleg = atoi(szLineBuf) != 0;
-                break;
-
-              default:
-                TranslateGenericProperty( poOverallFeature, nCode, szLineBuf );
-                break;
-            }
-            break;
-
-          case MLS_CONTEXT_DATA:
-            switch( nCode )
-            {
-              case 301:
-                nSection = MLS_COMMON;
-                break;
-
-              case 302:
-                nSection = MLS_LEADER;
-                break;
-
-              case 304:
-                osText = TextUnescape(szLineBuf, true);
-                break;
-
-              case 40:
-                dfScale = CPLAtof( szLineBuf );
-                break;
-
-              case 340:
-                // 340 is the entity handle of the STYLE table entry that
-                // corresponds to the text style.
-                osTextStyleHandle = szLineBuf;
-                break;
-
-              case 12:
-                dfTextX = CPLAtof( szLineBuf );
-                break;
-
-              case 22:
-                dfTextY = CPLAtof( szLineBuf );
-                break;
-
-              case 41:
-                dfTextHeight = CPLAtof( szLineBuf );
-                break;
-
-              case 42:
-                dfTextAngle = CPLAtof( szLineBuf ) * 180 / M_PI;
-                break;
-
-              case 171:
-                nTextAlignment = atoi( szLineBuf );
-                break;
-
-              case 341:
-                // 341 is the entity handle of the BLOCK_RECORD table entry that
-                // corresponds to the block content of this MLEADER.
-                osBlockHandle = szLineBuf;
-                break;
-
-              case 15:
-                oBlockTransformer.dfXOffset = CPLAtof( szLineBuf );
-                break;
-
-              case 25:
-                oBlockTransformer.dfYOffset = CPLAtof( szLineBuf );
-                break;
-
-              case 16:
-                oBlockTransformer.dfXScale = CPLAtof( szLineBuf );
-                break;
-
-              case 26:
-                oBlockTransformer.dfYScale = CPLAtof( szLineBuf );
-                break;
-
-              case 46:
-                oBlockTransformer.dfAngle = CPLAtof( szLineBuf );
-                break;
-            }
-            break;
-
-          case MLS_LEADER:
-            switch( nCode )
-            {
-              case 303:
-                nSection = MLS_CONTEXT_DATA;
-                aoLeaders.emplace_back( std::move(oLeader) );
-                oLeader = DXFMLEADERLeader();
-                break;
-
-              case 304:
-                nSection = MLS_LEADER_LINE;
-                break;
-
-              case 10:
-                oLeader.dfLandingX = CPLAtof(szLineBuf);
-                break;
-
-              case 20:
-                oLeader.dfLandingY = CPLAtof(szLineBuf);
-                break;
-
-              case 11:
-                oLeader.dfDoglegVectorX = CPLAtof(szLineBuf);
-                break;
-
-              case 21:
-                oLeader.dfDoglegVectorY = CPLAtof(szLineBuf);
-                break;
-
-              case 12:
-                dfCurrentX = CPLAtof(szLineBuf);
-                break;
-
-              case 22:
-                dfCurrentY = CPLAtof(szLineBuf);
-                break;
-
-              case 13:
-                dfCurrentX2 = CPLAtof(szLineBuf);
-                break;
-
-              case 23:
-                dfCurrentY2 = CPLAtof(szLineBuf);
-                oLeader.aoDoglegBreaks.push_back( std::make_pair(
-                    DXFTriple( dfCurrentX, dfCurrentY, 0.0 ),
-                    DXFTriple( dfCurrentX2, dfCurrentY2, 0.0 ) ) );
-                break;
-
-              case 40:
-                oLeader.dfDoglegLength = CPLAtof(szLineBuf);
-                break;
-            }
-            break;
-
-          case MLS_LEADER_LINE:
-            switch( nCode )
-            {
-              case 305:
-                nSection = MLS_LEADER;
-                oLeader.aaoLeaderLines.emplace_back( std::move(oLeaderLine) );
-                oLeaderLine = std::vector<DXFMLEADERVertex>();
-                break;
-
-              case 10:
-                dfCurrentX = CPLAtof(szLineBuf);
-                break;
-
-              case 20:
-                dfCurrentY = CPLAtof(szLineBuf);
-                oLeaderLine.push_back(
-                    DXFMLEADERVertex( dfCurrentX, dfCurrentY ) );
-                break;
-
-              case 90:
-                nCurrentVertex = atoi(szLineBuf);
-                if( nCurrentVertex >= oLeaderLine.size() )
+            case MLS_CONTEXT_DATA:
+                switch (nCode)
                 {
-                    CPLError( CE_Warning, CPLE_AppDefined,
-                        "Wrong group code 90 in LEADER_LINE: %s", szLineBuf );
-                    DXF_LAYER_READER_ERROR();
-                    delete poOverallFeature;
-                    return nullptr;
+                    case 301:
+                        nSection = MLS_COMMON;
+                        break;
+
+                    case 302:
+                        nSection = MLS_LEADER;
+                        break;
+
+                    case 304:
+                        osText = TextUnescape(szLineBuf, true);
+                        break;
+
+                    case 40:
+                        dfScale = CPLAtof(szLineBuf);
+                        break;
+
+                    case 340:
+                        // 340 is the entity handle of the STYLE table entry
+                        // that corresponds to the text style.
+                        osTextStyleHandle = szLineBuf;
+                        break;
+
+                    case 12:
+                        dfTextX = CPLAtof(szLineBuf);
+                        break;
+
+                    case 22:
+                        dfTextY = CPLAtof(szLineBuf);
+                        break;
+
+                    case 41:
+                        dfTextHeight = CPLAtof(szLineBuf);
+                        break;
+
+                    case 42:
+                        dfTextAngle = CPLAtof(szLineBuf) * 180 / M_PI;
+                        break;
+
+                    case 171:
+                        nTextAlignment = atoi(szLineBuf);
+                        break;
+
+                    case 341:
+                        // 341 is the entity handle of the BLOCK_RECORD table
+                        // entry that corresponds to the block content of this
+                        // MLEADER.
+                        osBlockHandle = szLineBuf;
+                        break;
+
+                    case 15:
+                        oBlockTransformer.dfXOffset = CPLAtof(szLineBuf);
+                        break;
+
+                    case 25:
+                        oBlockTransformer.dfYOffset = CPLAtof(szLineBuf);
+                        break;
+
+                    case 16:
+                        oBlockTransformer.dfXScale = CPLAtof(szLineBuf);
+                        break;
+
+                    case 26:
+                        oBlockTransformer.dfYScale = CPLAtof(szLineBuf);
+                        break;
+
+                    case 46:
+                        oBlockTransformer.dfAngle = CPLAtof(szLineBuf);
+                        break;
                 }
                 break;
 
-              case 11:
-                dfCurrentX = CPLAtof(szLineBuf);
-                break;
-
-              case 21:
-                dfCurrentY = CPLAtof(szLineBuf);
-                break;
-
-              case 12:
-                dfCurrentX2 = CPLAtof(szLineBuf);
-                break;
-
-              case 22:
-                if( nCurrentVertex >= oLeaderLine.size() )
+            case MLS_LEADER:
+                switch (nCode)
                 {
-                    CPLError( CE_Warning, CPLE_AppDefined,
-                        "Misplaced group code 22 in LEADER_LINE" );
-                    DXF_LAYER_READER_ERROR();
-                    delete poOverallFeature;
-                    return nullptr;
+                    case 303:
+                        nSection = MLS_CONTEXT_DATA;
+                        aoLeaders.emplace_back(std::move(oLeader));
+                        oLeader = DXFMLEADERLeader();
+                        break;
+
+                    case 304:
+                        nSection = MLS_LEADER_LINE;
+                        break;
+
+                    case 10:
+                        oLeader.dfLandingX = CPLAtof(szLineBuf);
+                        break;
+
+                    case 20:
+                        oLeader.dfLandingY = CPLAtof(szLineBuf);
+                        break;
+
+                    case 11:
+                        oLeader.dfDoglegVectorX = CPLAtof(szLineBuf);
+                        break;
+
+                    case 21:
+                        oLeader.dfDoglegVectorY = CPLAtof(szLineBuf);
+                        break;
+
+                    case 12:
+                        dfCurrentX = CPLAtof(szLineBuf);
+                        break;
+
+                    case 22:
+                        dfCurrentY = CPLAtof(szLineBuf);
+                        break;
+
+                    case 13:
+                        dfCurrentX2 = CPLAtof(szLineBuf);
+                        break;
+
+                    case 23:
+                        dfCurrentY2 = CPLAtof(szLineBuf);
+                        oLeader.aoDoglegBreaks.push_back(std::make_pair(
+                            DXFTriple(dfCurrentX, dfCurrentY, 0.0),
+                            DXFTriple(dfCurrentX2, dfCurrentY2, 0.0)));
+                        break;
+
+                    case 40:
+                        oLeader.dfDoglegLength = CPLAtof(szLineBuf);
+                        break;
                 }
-                dfCurrentY2 = CPLAtof(szLineBuf);
-                oLeaderLine[nCurrentVertex].aoBreaks.push_back( std::make_pair(
-                    DXFTriple( dfCurrentX, dfCurrentY, 0.0 ),
-                    DXFTriple( dfCurrentX2, dfCurrentY2, 0.0 ) ) );
                 break;
-            }
-            break;
+
+            case MLS_LEADER_LINE:
+                switch (nCode)
+                {
+                    case 305:
+                        nSection = MLS_LEADER;
+                        oLeader.aaoLeaderLines.emplace_back(
+                            std::move(oLeaderLine));
+                        oLeaderLine = std::vector<DXFMLEADERVertex>();
+                        break;
+
+                    case 10:
+                        dfCurrentX = CPLAtof(szLineBuf);
+                        break;
+
+                    case 20:
+                        dfCurrentY = CPLAtof(szLineBuf);
+                        oLeaderLine.push_back(
+                            DXFMLEADERVertex(dfCurrentX, dfCurrentY));
+                        break;
+
+                    case 90:
+                        nCurrentVertex = atoi(szLineBuf);
+                        if (nCurrentVertex >= oLeaderLine.size())
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "Wrong group code 90 in LEADER_LINE: %s",
+                                     szLineBuf);
+                            DXF_LAYER_READER_ERROR();
+                            delete poOverallFeature;
+                            return nullptr;
+                        }
+                        break;
+
+                    case 11:
+                        dfCurrentX = CPLAtof(szLineBuf);
+                        break;
+
+                    case 21:
+                        dfCurrentY = CPLAtof(szLineBuf);
+                        break;
+
+                    case 12:
+                        dfCurrentX2 = CPLAtof(szLineBuf);
+                        break;
+
+                    case 22:
+                        if (nCurrentVertex >= oLeaderLine.size())
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "Misplaced group code 22 in LEADER_LINE");
+                            DXF_LAYER_READER_ERROR();
+                            delete poOverallFeature;
+                            return nullptr;
+                        }
+                        dfCurrentY2 = CPLAtof(szLineBuf);
+                        oLeaderLine[nCurrentVertex].aoBreaks.push_back(
+                            std::make_pair(
+                                DXFTriple(dfCurrentX, dfCurrentY, 0.0),
+                                DXFTriple(dfCurrentX2, dfCurrentY2, 0.0)));
+                        break;
+                }
+                break;
         }
     }
 
-    if( nCode < 0 )
+    if (nCode < 0)
     {
         DXF_LAYER_READER_ERROR();
         delete poOverallFeature;
         return nullptr;
     }
-    if( nCode == 0 )
+    if (nCode == 0)
         poDS->UnreadValue();
 
     // Convert the block handle to a block name. If there is no block,
     // osBlockName will remain empty.
     CPLString osBlockName;
 
-    if( osBlockHandle != "" )
-        osBlockName = poDS->GetBlockNameByRecordHandle( osBlockHandle );
+    if (osBlockHandle != "")
+        osBlockName = poDS->GetBlockNameByRecordHandle(osBlockHandle);
 
-/* -------------------------------------------------------------------- */
-/*      Add the landing and arrowhead onto each leader line, and add    */
-/*      the dogleg, if present, onto the leader.                        */
-/* -------------------------------------------------------------------- */
-    OGRDXFFeature* poLeaderFeature = poOverallFeature->CloneDXFFeature();
+    /* -------------------------------------------------------------------- */
+    /*      Add the landing and arrowhead onto each leader line, and add    */
+    /*      the dogleg, if present, onto the leader.                        */
+    /* -------------------------------------------------------------------- */
+    OGRDXFFeature *poLeaderFeature = poOverallFeature->CloneDXFFeature();
     poLeaderFeature->oStyleProperties["Color"] = osLeaderColor;
 
     OGRMultiLineString *poMLS = new OGRMultiLineString();
@@ -664,171 +676,161 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
     // Arrowheads should be the same color as the leader line. If the leader
     // line is ByBlock or ByLayer then the arrowhead should be "owned" by the
     // overall feature for styling purposes.
-    OGRDXFFeature* poArrowheadOwningFeature = poLeaderFeature;
-    if( ( atoi(osLeaderColor) & 0xC2000000 ) == 0xC0000000 )
+    OGRDXFFeature *poArrowheadOwningFeature = poLeaderFeature;
+    if ((atoi(osLeaderColor) & 0xC2000000) == 0xC0000000)
         poArrowheadOwningFeature = poOverallFeature;
 
-    for( std::vector<DXFMLEADERLeader>::iterator oIt = aoLeaders.begin();
-         nLeaderLineType != MLT_NONE && oIt != aoLeaders.end();
-         ++oIt )
+    for (std::vector<DXFMLEADERLeader>::iterator oIt = aoLeaders.begin();
+         nLeaderLineType != MLT_NONE && oIt != aoLeaders.end(); ++oIt)
     {
-        const bool bLeaderHasDogleg = bHasDogleg &&
-            nLeaderLineType != MLT_SPLINE &&
+        const bool bLeaderHasDogleg =
+            bHasDogleg && nLeaderLineType != MLT_SPLINE &&
             oIt->dfDoglegLength != 0.0 &&
-            ( oIt->dfDoglegVectorX != 0.0 || oIt->dfDoglegVectorY != 0.0 );
+            (oIt->dfDoglegVectorX != 0.0 || oIt->dfDoglegVectorY != 0.0);
 
         // We assume that the dogleg vector in the DXF is a unit vector.
         // Safe assumption? Who knows. The documentation is so bad.
-        const double dfDoglegX = oIt->dfLandingX +
-            oIt->dfDoglegVectorX * oIt->dfDoglegLength;
-        const double dfDoglegY = oIt->dfLandingY +
-            oIt->dfDoglegVectorY * oIt->dfDoglegLength;
+        const double dfDoglegX =
+            oIt->dfLandingX + oIt->dfDoglegVectorX * oIt->dfDoglegLength;
+        const double dfDoglegY =
+            oIt->dfLandingY + oIt->dfDoglegVectorY * oIt->dfDoglegLength;
 
         // When the dogleg is turned off or we are in spline mode, it seems
         // that the dogleg and landing data are still present in the DXF file,
         // but they are not supposed to be drawn.
-        if( !bHasDogleg || nLeaderLineType == MLT_SPLINE )
+        if (!bHasDogleg || nLeaderLineType == MLT_SPLINE)
         {
             oIt->dfLandingX = dfDoglegX;
             oIt->dfLandingY = dfDoglegY;
         }
 
         // Iterate through each leader line
-        for( const auto& aoLineVertices : oIt->aaoLeaderLines )
+        for (const auto &aoLineVertices : oIt->aaoLeaderLines)
         {
-            if( aoLineVertices.empty() )
+            if (aoLineVertices.empty())
                 continue;
 
-            OGRLineString* poLeaderLine = new OGRLineString();
+            OGRLineString *poLeaderLine = new OGRLineString();
 
             // Get the first line segment for arrowhead purposes
-            poLeaderLine->addPoint(
-                aoLineVertices[0].oCoords.dfX,
-                aoLineVertices[0].oCoords.dfY );
+            poLeaderLine->addPoint(aoLineVertices[0].oCoords.dfX,
+                                   aoLineVertices[0].oCoords.dfY);
 
-            if( aoLineVertices.size() > 1 )
+            if (aoLineVertices.size() > 1)
             {
-                poLeaderLine->addPoint(
-                    aoLineVertices[1].oCoords.dfX,
-                    aoLineVertices[1].oCoords.dfY );
+                poLeaderLine->addPoint(aoLineVertices[1].oCoords.dfX,
+                                       aoLineVertices[1].oCoords.dfY);
             }
             else
             {
-                poLeaderLine->addPoint( oIt->dfLandingX, oIt->dfLandingY );
+                poLeaderLine->addPoint(oIt->dfLandingX, oIt->dfLandingY);
             }
 
             // Add an arrowhead if required
-            InsertArrowhead( poArrowheadOwningFeature,
-                osArrowheadBlockHandle, poLeaderLine,
-                dfArrowheadSize * dfScale );
+            InsertArrowhead(poArrowheadOwningFeature, osArrowheadBlockHandle,
+                            poLeaderLine, dfArrowheadSize * dfScale);
 
-            poLeaderLine->setNumPoints( 1 );
+            poLeaderLine->setNumPoints(1);
 
             // Go through the vertices of the leader line, adding them,
             // as well as break start and end points, to the linestring.
-            for( size_t iVertex = 0; iVertex < aoLineVertices.size();
-                 iVertex++ )
+            for (size_t iVertex = 0; iVertex < aoLineVertices.size(); iVertex++)
             {
-                if( iVertex > 0 )
+                if (iVertex > 0)
                 {
-                    poLeaderLine->addPoint(
-                        aoLineVertices[iVertex].oCoords.dfX,
-                        aoLineVertices[iVertex].oCoords.dfY );
+                    poLeaderLine->addPoint(aoLineVertices[iVertex].oCoords.dfX,
+                                           aoLineVertices[iVertex].oCoords.dfY);
                 }
 
                 // Breaks are ignored for spline leaders
-                if( nLeaderLineType != MLT_SPLINE )
+                if (nLeaderLineType != MLT_SPLINE)
                 {
-                    for( const auto& oBreak :
-                         aoLineVertices[iVertex].aoBreaks )
+                    for (const auto &oBreak : aoLineVertices[iVertex].aoBreaks)
                     {
-                        poLeaderLine->addPoint( oBreak.first.dfX,
-                            oBreak.first.dfY );
+                        poLeaderLine->addPoint(oBreak.first.dfX,
+                                               oBreak.first.dfY);
 
-                        poMLS->addGeometryDirectly( poLeaderLine );
+                        poMLS->addGeometryDirectly(poLeaderLine);
                         poLeaderLine = new OGRLineString();
 
-                        poLeaderLine->addPoint( oBreak.second.dfX,
-                            oBreak.second.dfY );
+                        poLeaderLine->addPoint(oBreak.second.dfX,
+                                               oBreak.second.dfY);
                     }
                 }
             }
 
             // Add the final vertex (the landing) to the end of the line
-            poLeaderLine->addPoint( oIt->dfLandingX, oIt->dfLandingY );
+            poLeaderLine->addPoint(oIt->dfLandingX, oIt->dfLandingY);
 
             // Make the spline geometry for spline leaders
-            if( nLeaderLineType == MLT_SPLINE )
+            if (nLeaderLineType == MLT_SPLINE)
             {
                 DXFTriple oEndTangent;
-                if( osBlockName.empty() )
+                if (osBlockName.empty())
                 {
-                    oEndTangent = DXFTriple( oIt->dfDoglegVectorX,
-                        oIt->dfDoglegVectorY, 0 );
+                    oEndTangent = DXFTriple(oIt->dfDoglegVectorX,
+                                            oIt->dfDoglegVectorY, 0);
                 }
-                InterpolateSpline( poLeaderLine, oEndTangent );
+                InterpolateSpline(poLeaderLine, oEndTangent);
             }
 
-            poMLS->addGeometryDirectly( poLeaderLine );
+            poMLS->addGeometryDirectly(poLeaderLine);
         }
 
         // Add the dogleg as a separate line in the MLS
-        if( bLeaderHasDogleg )
+        if (bLeaderHasDogleg)
         {
             OGRLineString *poDoglegLine = new OGRLineString();
-            poDoglegLine->addPoint( oIt->dfLandingX, oIt->dfLandingY );
+            poDoglegLine->addPoint(oIt->dfLandingX, oIt->dfLandingY);
 
             // Interrupt the dogleg line at breaks
-            for( const auto& oBreak : oIt->aoDoglegBreaks )
+            for (const auto &oBreak : oIt->aoDoglegBreaks)
             {
-                poDoglegLine->addPoint( oBreak.first.dfX,
-                    oBreak.first.dfY );
+                poDoglegLine->addPoint(oBreak.first.dfX, oBreak.first.dfY);
 
-                poMLS->addGeometryDirectly( poDoglegLine );
+                poMLS->addGeometryDirectly(poDoglegLine);
                 poDoglegLine = new OGRLineString();
 
-                poDoglegLine->addPoint( oBreak.second.dfX,
-                    oBreak.second.dfY );
+                poDoglegLine->addPoint(oBreak.second.dfX, oBreak.second.dfY);
             }
 
-            poDoglegLine->addPoint( dfDoglegX, dfDoglegY );
-            poMLS->addGeometryDirectly( poDoglegLine );
+            poDoglegLine->addPoint(dfDoglegX, dfDoglegY);
+            poMLS->addGeometryDirectly(poDoglegLine);
         }
     }
 
-    poLeaderFeature->SetGeometryDirectly( poMLS );
+    poLeaderFeature->SetGeometryDirectly(poMLS);
 
-    PrepareLineStyle( poLeaderFeature, poOverallFeature );
+    PrepareLineStyle(poLeaderFeature, poOverallFeature);
 
-/* -------------------------------------------------------------------- */
-/*      If we have block content, insert that block.                    */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      If we have block content, insert that block.                    */
+    /* -------------------------------------------------------------------- */
 
-    if( osBlockName != "" )
+    if (osBlockName != "")
     {
         oBlockTransformer.dfXScale *= dfScale;
         oBlockTransformer.dfYScale *= dfScale;
 
-        DXFBlockDefinition *poBlock = poDS->LookupBlock( osBlockName );
+        DXFBlockDefinition *poBlock = poDS->LookupBlock(osBlockName);
 
         std::map<OGRDXFFeature *, CPLString> oBlockAttributeValues;
 
         // If we have block attributes and will need to output them,
         // go through all the features on this block, looking for
         // ATTDEFs whose handle is in our list of attribute handles
-        if( poBlock && !oBlockAttributes.empty() &&
-            ( poDS->InlineBlocks() ||
-            poOverallFeature->GetFieldIndex( "BlockAttributes" ) != -1 ) )
+        if (poBlock && !oBlockAttributes.empty() &&
+            (poDS->InlineBlocks() ||
+             poOverallFeature->GetFieldIndex("BlockAttributes") != -1))
         {
-            for( std::vector<OGRDXFFeature *>::iterator oIt =
-                poBlock->apoFeatures.begin();
-                oIt != poBlock->apoFeatures.end();
-                ++oIt )
+            for (std::vector<OGRDXFFeature *>::iterator oIt =
+                     poBlock->apoFeatures.begin();
+                 oIt != poBlock->apoFeatures.end(); ++oIt)
             {
-                const char* pszHandle =
-                    (*oIt)->GetFieldAsString( "EntityHandle" );
+                const char *pszHandle =
+                    (*oIt)->GetFieldAsString("EntityHandle");
 
-                if( pszHandle && oBlockAttributes.count( pszHandle ) > 0 )
+                if (pszHandle && oBlockAttributes.count(pszHandle) > 0)
                     oBlockAttributeValues[*oIt] = oBlockAttributes[pszHandle];
             }
         }
@@ -837,20 +839,19 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
 
         // If not inlining the block, insert a reference and add attributes
         // to this feature.
-        if( !poDS->InlineBlocks() )
+        if (!poDS->InlineBlocks())
         {
-            poBlockFeature = InsertBlockReference( osBlockName,
-                oBlockTransformer, poBlockFeature );
+            poBlockFeature = InsertBlockReference(
+                osBlockName, oBlockTransformer, poBlockFeature);
 
-            if( !oBlockAttributes.empty() &&
-                poOverallFeature->GetFieldIndex( "BlockAttributes" ) != -1 )
+            if (!oBlockAttributes.empty() &&
+                poOverallFeature->GetFieldIndex("BlockAttributes") != -1)
             {
                 std::vector<char *> apszAttribs;
 
-                for( std::map<OGRDXFFeature *, CPLString>::iterator oIt =
-                    oBlockAttributeValues.begin();
-                    oIt != oBlockAttributeValues.end();
-                    ++oIt )
+                for (std::map<OGRDXFFeature *, CPLString>::iterator oIt =
+                         oBlockAttributeValues.begin();
+                     oIt != oBlockAttributeValues.end(); ++oIt)
                 {
                     // Store the attribute tag and the text value as
                     // a space-separated entry in the BlockAttributes field
@@ -859,17 +860,17 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
                     osAttribString += oIt->second;
 
                     apszAttribs.push_back(
-                        new char[osAttribString.length() + 1] );
-                    CPLStrlcpy( apszAttribs.back(), osAttribString.c_str(),
-                        osAttribString.length() + 1 );
+                        new char[osAttribString.length() + 1]);
+                    CPLStrlcpy(apszAttribs.back(), osAttribString.c_str(),
+                               osAttribString.length() + 1);
                 }
 
-                apszAttribs.push_back( nullptr );
+                apszAttribs.push_back(nullptr);
 
-                poBlockFeature->SetField( "BlockAttributes", &apszAttribs[0] );
+                poBlockFeature->SetField("BlockAttributes", &apszAttribs[0]);
             }
 
-            apoPendingFeatures.push( poBlockFeature );
+            apoPendingFeatures.push(poBlockFeature);
         }
         else
         {
@@ -878,11 +879,11 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
             try
             {
                 poBlockFeature = InsertBlockInline(
-                    CPLGetErrorCounter(), osBlockName,
-                    oBlockTransformer, poBlockFeature, apoExtraFeatures,
-                    true, poDS->ShouldMergeBlockGeometries() );
+                    CPLGetErrorCounter(), osBlockName, oBlockTransformer,
+                    poBlockFeature, apoExtraFeatures, true,
+                    poDS->ShouldMergeBlockGeometries());
             }
-            catch( const std::invalid_argument& )
+            catch (const std::invalid_argument &)
             {
                 // Block doesn't exist
                 delete poBlockFeature;
@@ -890,93 +891,93 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
             }
 
             // Add the block geometries to the pending feature stack.
-            if( poBlockFeature )
+            if (poBlockFeature)
             {
-                apoPendingFeatures.push( poBlockFeature );
+                apoPendingFeatures.push(poBlockFeature);
             }
-            while( !apoExtraFeatures.empty() )
+            while (!apoExtraFeatures.empty())
             {
-                apoPendingFeatures.push( apoExtraFeatures.front() );
+                apoPendingFeatures.push(apoExtraFeatures.front());
                 apoExtraFeatures.pop();
             }
 
             // Also add any attributes to the pending feature stack.
-            for( std::map<OGRDXFFeature *, CPLString>::iterator oIt =
+            for (std::map<OGRDXFFeature *, CPLString>::iterator oIt =
                      oBlockAttributeValues.begin();
-                 oIt != oBlockAttributeValues.end();
-                 ++oIt )
+                 oIt != oBlockAttributeValues.end(); ++oIt)
             {
                 OGRDXFFeature *poAttribFeature = oIt->first->CloneDXFFeature();
 
-                poAttribFeature->SetField( "Text", oIt->second );
+                poAttribFeature->SetField("Text", oIt->second);
 
                 // Replace text in the style string
-                const char* poStyleString = poAttribFeature->GetStyleString();
-                if( poStyleString && STARTS_WITH(poStyleString, "LABEL(") )
+                const char *poStyleString = poAttribFeature->GetStyleString();
+                if (poStyleString && STARTS_WITH(poStyleString, "LABEL("))
                 {
                     CPLString osNewStyle = poStyleString;
-                    const size_t nTextStartPos = osNewStyle.find( ",t:\"" );
-                    if( nTextStartPos != std::string::npos )
+                    const size_t nTextStartPos = osNewStyle.find(",t:\"");
+                    if (nTextStartPos != std::string::npos)
                     {
                         size_t nTextEndPos = nTextStartPos + 4;
-                        while( nTextEndPos < osNewStyle.size() &&
-                            osNewStyle[nTextEndPos] != '\"' )
+                        while (nTextEndPos < osNewStyle.size() &&
+                               osNewStyle[nTextEndPos] != '\"')
                         {
                             nTextEndPos++;
-                            if( osNewStyle[nTextEndPos] == '\\' )
+                            if (osNewStyle[nTextEndPos] == '\\')
                                 nTextEndPos++;
                         }
 
-                        if( nTextEndPos < osNewStyle.size() )
+                        if (nTextEndPos < osNewStyle.size())
                         {
-                            osNewStyle.replace( nTextStartPos + 4,
-                                nTextEndPos - ( nTextStartPos + 4 ),
-                                oIt->second );
-                            poAttribFeature->SetStyleString( osNewStyle );
+                            osNewStyle.replace(
+                                nTextStartPos + 4,
+                                nTextEndPos - (nTextStartPos + 4), oIt->second);
+                            poAttribFeature->SetStyleString(osNewStyle);
                         }
                     }
                 }
 
                 // The following bits are copied from
                 // OGRDXFLayer::InsertBlockInline
-                if( poAttribFeature->GetGeometryRef() )
+                if (poAttribFeature->GetGeometryRef())
                 {
                     poAttribFeature->GetGeometryRef()->transform(
-                        &oBlockTransformer );
+                        &oBlockTransformer);
                 }
 
-                if( EQUAL( poAttribFeature->GetFieldAsString( "Layer" ), "0" ) &&
-                    !EQUAL( poOverallFeature->GetFieldAsString( "Layer" ), "" ) )
+                if (EQUAL(poAttribFeature->GetFieldAsString("Layer"), "0") &&
+                    !EQUAL(poOverallFeature->GetFieldAsString("Layer"), ""))
                 {
-                    poAttribFeature->SetField( "Layer",
-                        poOverallFeature->GetFieldAsString( "Layer" ) );
+                    poAttribFeature->SetField(
+                        "Layer", poOverallFeature->GetFieldAsString("Layer"));
                 }
 
-                PrepareFeatureStyle( poAttribFeature, poOverallFeature );
+                PrepareFeatureStyle(poAttribFeature, poOverallFeature);
 
-                ACAdjustText( oBlockTransformer.dfAngle * 180 / M_PI,
-                    oBlockTransformer.dfXScale, oBlockTransformer.dfYScale,
-                    poAttribFeature );
+                ACAdjustText(oBlockTransformer.dfAngle * 180 / M_PI,
+                             oBlockTransformer.dfXScale,
+                             oBlockTransformer.dfYScale, poAttribFeature);
 
-                if ( !EQUAL( poOverallFeature->GetFieldAsString(
-                    "EntityHandle" ), "" ) )
+                if (!EQUAL(poOverallFeature->GetFieldAsString("EntityHandle"),
+                           ""))
                 {
-                    poAttribFeature->SetField( "EntityHandle",
-                        poOverallFeature->GetFieldAsString( "EntityHandle" ) );
+                    poAttribFeature->SetField(
+                        "EntityHandle",
+                        poOverallFeature->GetFieldAsString("EntityHandle"));
                 }
 
-                apoPendingFeatures.push( poAttribFeature );
+                apoPendingFeatures.push(poAttribFeature);
             }
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Prepare a new feature to serve as the leader text label         */
-/*      refeature.  We will push it onto the layer as a pending           */
-/*      feature for the next feature read.                              */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Prepare a new feature to serve as the leader text label         */
+    /*      refeature.  We will push it onto the layer as a pending           */
+    /*      feature for the next feature read.                              */
+    /* -------------------------------------------------------------------- */
 
-    if( osText.empty() || osText == " " )
+    if (osText.empty() || osText == " ")
     {
         delete poOverallFeature;
         return poLeaderFeature;
@@ -984,68 +985,67 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
 
     OGRDXFFeature *poLabelFeature = poOverallFeature->CloneDXFFeature();
 
-    poLabelFeature->SetField( "Text", osText );
-    poLabelFeature->SetGeometryDirectly( new OGRPoint( dfTextX, dfTextY ) );
+    poLabelFeature->SetField("Text", osText);
+    poLabelFeature->SetGeometryDirectly(new OGRPoint(dfTextX, dfTextY));
 
     CPLString osStyle;
     char szBuffer[64];
 
     const CPLString osStyleName =
-        poDS->GetTextStyleNameByHandle( osTextStyleHandle );
+        poDS->GetTextStyleNameByHandle(osTextStyleHandle);
 
     // Font name
     osStyle.Printf("LABEL(f:\"");
 
     // Preserve legacy behavior of specifying "Arial" as a default font name.
-    osStyle += poDS->LookupTextStyleProperty( osStyleName, "Font", "Arial" );
+    osStyle += poDS->LookupTextStyleProperty(osStyleName, "Font", "Arial");
 
     osStyle += "\"";
 
     // Bold, italic
-    if( EQUAL( poDS->LookupTextStyleProperty( osStyleName,
-        "Bold", "0" ), "1" ) )
+    if (EQUAL(poDS->LookupTextStyleProperty(osStyleName, "Bold", "0"), "1"))
     {
         osStyle += ",bo:1";
     }
-    if( EQUAL( poDS->LookupTextStyleProperty( osStyleName,
-        "Italic", "0" ), "1" ) )
+    if (EQUAL(poDS->LookupTextStyleProperty(osStyleName, "Italic", "0"), "1"))
     {
         osStyle += ",it:1";
     }
 
-    osStyle += CPLString().Printf(",t:\"%s\",p:%d", osText.c_str(),
-        nTextAlignment + 6); // 7,8,9: vertical align top
+    osStyle +=
+        CPLString().Printf(",t:\"%s\",p:%d", osText.c_str(),
+                           nTextAlignment + 6);  // 7,8,9: vertical align top
 
-    if( dfTextAngle != 0.0 )
+    if (dfTextAngle != 0.0)
     {
         CPLsnprintf(szBuffer, sizeof(szBuffer), "%.3g", dfTextAngle);
         osStyle += CPLString().Printf(",a:%s", szBuffer);
     }
 
-    if( dfTextHeight != 0.0 )
+    if (dfTextHeight != 0.0)
     {
         CPLsnprintf(szBuffer, sizeof(szBuffer), "%.3g", dfTextHeight);
         osStyle += CPLString().Printf(",s:%sg", szBuffer);
     }
 
-    const char *pszWidthFactor = poDS->LookupTextStyleProperty( osStyleName,
-        "Width", "1" );
-    if( pszWidthFactor && CPLAtof( pszWidthFactor ) != 1.0 )
+    const char *pszWidthFactor =
+        poDS->LookupTextStyleProperty(osStyleName, "Width", "1");
+    if (pszWidthFactor && CPLAtof(pszWidthFactor) != 1.0)
     {
         CPLsnprintf(szBuffer, sizeof(szBuffer), "%.4g",
-            CPLAtof( pszWidthFactor ) * 100.0);
+                    CPLAtof(pszWidthFactor) * 100.0);
         osStyle += CPLString().Printf(",w:%s", szBuffer);
     }
 
     // Color
     osStyle += ",c:";
-    osStyle += poLabelFeature->GetColor( poDS );
+    osStyle += poLabelFeature->GetColor(poDS);
 
     osStyle += ")";
 
-    poLabelFeature->SetStyleString( osStyle );
+    poLabelFeature->SetStyleString(osStyle);
 
-    apoPendingFeatures.push( poLabelFeature );
+    apoPendingFeatures.push(poLabelFeature);
 
     delete poOverallFeature;
     return poLeaderFeature;
@@ -1058,39 +1058,35 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
 /*      with a 3:1 aspect ratio) on the end of the line segment         */
 /*      defined by the two points.                                      */
 /************************************************************************/
-static void GenerateDefaultArrowhead( OGRDXFFeature* const poArrowheadFeature,
-    const OGRPoint& oPoint1, const OGRPoint& oPoint2,
-    const double dfArrowheadScale )
+static void GenerateDefaultArrowhead(OGRDXFFeature *const poArrowheadFeature,
+                                     const OGRPoint &oPoint1,
+                                     const OGRPoint &oPoint2,
+                                     const double dfArrowheadScale)
 
 {
     // calculate the baseline to be expanded out into arrowheads
-    const double dfParallelPartX = dfArrowheadScale *
-        (oPoint2.getX() - oPoint1.getX());
-    const double dfParallelPartY = dfArrowheadScale *
-        (oPoint2.getY() - oPoint1.getY());
+    const double dfParallelPartX =
+        dfArrowheadScale * (oPoint2.getX() - oPoint1.getX());
+    const double dfParallelPartY =
+        dfArrowheadScale * (oPoint2.getY() - oPoint1.getY());
     // ...and drop a perpendicular
     const double dfPerpPartX = dfParallelPartY;
     const double dfPerpPartY = -dfParallelPartX;
 
     OGRLinearRing *poLinearRing = new OGRLinearRing();
-    poLinearRing->setPoint( 0,
-        oPoint1.getX() + dfParallelPartX + dfPerpPartX/6,
-        oPoint1.getY() + dfParallelPartY + dfPerpPartY/6,
-        oPoint1.getZ() );
-    poLinearRing->setPoint( 1,
-        oPoint1.getX(),
-        oPoint1.getY(),
-        oPoint1.getZ() );
-    poLinearRing->setPoint( 2,
-        oPoint1.getX() + dfParallelPartX - dfPerpPartX/6,
-        oPoint1.getY() + dfParallelPartY - dfPerpPartY/6,
-        oPoint1.getZ() );
+    poLinearRing->setPoint(
+        0, oPoint1.getX() + dfParallelPartX + dfPerpPartX / 6,
+        oPoint1.getY() + dfParallelPartY + dfPerpPartY / 6, oPoint1.getZ());
+    poLinearRing->setPoint(1, oPoint1.getX(), oPoint1.getY(), oPoint1.getZ());
+    poLinearRing->setPoint(
+        2, oPoint1.getX() + dfParallelPartX - dfPerpPartX / 6,
+        oPoint1.getY() + dfParallelPartY - dfPerpPartY / 6, oPoint1.getZ());
     poLinearRing->closeRings();
 
-    OGRPolygon* poPoly = new OGRPolygon();
-    poPoly->addRingDirectly( poLinearRing );
+    OGRPolygon *poPoly = new OGRPolygon();
+    poPoly->addRingDirectly(poLinearRing);
 
-    poArrowheadFeature->SetGeometryDirectly( poPoly );
+    poArrowheadFeature->SetGeometryDirectly(poPoly);
 }
 
 /************************************************************************/
@@ -1102,21 +1098,23 @@ static void GenerateDefaultArrowhead( OGRDXFFeature* const poArrowheadFeature,
 /*                                                                      */
 /*      The first (last) point of the line string may be updated.       */
 /************************************************************************/
-void OGRDXFLayer::InsertArrowhead( OGRDXFFeature* const poFeature,
-    const CPLString& osBlockHandle, OGRLineString* const poLine,
-    const double dfArrowheadSize, const bool bReverse /* = false */ )
+void OGRDXFLayer::InsertArrowhead(OGRDXFFeature *const poFeature,
+                                  const CPLString &osBlockHandle,
+                                  OGRLineString *const poLine,
+                                  const double dfArrowheadSize,
+                                  const bool bReverse /* = false */)
 {
     OGRPoint oPoint1, oPoint2;
-    poLine->getPoint( bReverse ? poLine->getNumPoints() - 1 : 0, &oPoint1 );
-    poLine->getPoint( bReverse ? poLine->getNumPoints() - 2 : 1, &oPoint2 );
+    poLine->getPoint(bReverse ? poLine->getNumPoints() - 1 : 0, &oPoint1);
+    poLine->getPoint(bReverse ? poLine->getNumPoints() - 2 : 1, &oPoint2);
 
-    const double dfFirstSegmentLength = PointDist( oPoint1.getX(),
-        oPoint1.getY(), oPoint2.getX(), oPoint2.getY() );
+    const double dfFirstSegmentLength = PointDist(
+        oPoint1.getX(), oPoint1.getY(), oPoint2.getX(), oPoint2.getY());
 
     // AutoCAD only displays an arrowhead if the length of the arrowhead
     // is less than or equal to half the length of the line segment
-    if( dfArrowheadSize == 0.0 || dfFirstSegmentLength == 0.0 ||
-        dfArrowheadSize > 0.5 * dfFirstSegmentLength )
+    if (dfArrowheadSize == 0.0 || dfFirstSegmentLength == 0.0 ||
+        dfArrowheadSize > 0.5 * dfFirstSegmentLength)
     {
         return;
     }
@@ -1126,19 +1124,19 @@ void OGRDXFLayer::InsertArrowhead( OGRDXFFeature* const poFeature,
     // Convert the block handle to a block name.
     CPLString osBlockName = "";
 
-    if( osBlockHandle != "" )
-        osBlockName = poDS->GetBlockNameByRecordHandle( osBlockHandle );
+    if (osBlockHandle != "")
+        osBlockName = poDS->GetBlockNameByRecordHandle(osBlockHandle);
 
     OGRDXFFeatureQueue apoExtraFeatures;
 
     // If the block doesn't exist, we need to fall back to the
     // default arrowhead.
-    if( osBlockName == "" )
+    if (osBlockName == "")
     {
-        GenerateDefaultArrowhead( poArrowheadFeature, oPoint1, oPoint2,
-            dfArrowheadSize / dfFirstSegmentLength );
+        GenerateDefaultArrowhead(poArrowheadFeature, oPoint1, oPoint2,
+                                 dfArrowheadSize / dfFirstSegmentLength);
 
-        PrepareBrushStyle( poArrowheadFeature );
+        PrepareBrushStyle(poArrowheadFeature);
     }
     else
     {
@@ -1149,20 +1147,20 @@ void OGRDXFLayer::InsertArrowhead( OGRDXFFeature* const poFeature,
         oTransformer.dfYOffset = oPoint1.getY();
         oTransformer.dfZOffset = oPoint1.getZ();
         // Arrowhead blocks always point to the right (--->)
-        oTransformer.dfAngle = atan2( oPoint2.getY() - oPoint1.getY(),
-            oPoint2.getX() - oPoint1.getX() ) + M_PI;
-        oTransformer.dfXScale = oTransformer.dfYScale =
-            oTransformer.dfZScale = dfArrowheadSize;
+        oTransformer.dfAngle = atan2(oPoint2.getY() - oPoint1.getY(),
+                                     oPoint2.getX() - oPoint1.getX()) +
+                               M_PI;
+        oTransformer.dfXScale = oTransformer.dfYScale = oTransformer.dfZScale =
+            dfArrowheadSize;
 
         // Insert the block.
         try
         {
             poArrowheadFeature = InsertBlockInline(
-                CPLGetErrorCounter(), osBlockName,
-                oTransformer, poArrowheadFeature, apoExtraFeatures,
-                true, false );
+                CPLGetErrorCounter(), osBlockName, oTransformer,
+                poArrowheadFeature, apoExtraFeatures, true, false);
         }
-        catch( const std::invalid_argument& )
+        catch (const std::invalid_argument &)
         {
             // Supposedly the block doesn't exist. But what has probably
             // happened is that the block exists in the DXF, but it contains
@@ -1174,13 +1172,13 @@ void OGRDXFLayer::InsertArrowhead( OGRDXFFeature* const poFeature,
     }
 
     // Add the arrowhead geometries to the pending feature stack.
-    if( poArrowheadFeature )
+    if (poArrowheadFeature)
     {
-        apoPendingFeatures.push( poArrowheadFeature );
+        apoPendingFeatures.push(poArrowheadFeature);
     }
-    while( !apoExtraFeatures.empty() )
+    while (!apoExtraFeatures.empty())
     {
-        apoPendingFeatures.push( apoExtraFeatures.front() );
+        apoPendingFeatures.push(apoExtraFeatures.front());
         apoExtraFeatures.pop();
     }
 
@@ -1188,25 +1186,20 @@ void OGRDXFLayer::InsertArrowhead( OGRDXFFeature* const poFeature,
     // We assume that arrowheads are 1 unit long, except for a list
     // of specific block names which are treated as having no length
 
-    static const char* apszSpecialArrowheads[] = {
-        "_ArchTick",
-        "_DotSmall",
-        "_Integral",
-        "_None",
-        "_Oblique",
-        "_Small"
-    };
+    static const char *apszSpecialArrowheads[] = {
+        "_ArchTick", "_DotSmall", "_Integral", "_None", "_Oblique", "_Small"};
 
-    if( std::find( apszSpecialArrowheads, apszSpecialArrowheads + 6,
-        osBlockName ) == ( apszSpecialArrowheads + 6 ) )
+    if (std::find(apszSpecialArrowheads, apszSpecialArrowheads + 6,
+                  osBlockName) == (apszSpecialArrowheads + 6))
     {
-        oPoint1.setX( oPoint1.getX() + dfArrowheadSize *
-            ( oPoint2.getX() - oPoint1.getX() ) / dfFirstSegmentLength );
-        oPoint1.setY( oPoint1.getY() + dfArrowheadSize *
-            ( oPoint2.getY() - oPoint1.getY() ) / dfFirstSegmentLength );
+        oPoint1.setX(oPoint1.getX() + dfArrowheadSize *
+                                          (oPoint2.getX() - oPoint1.getX()) /
+                                          dfFirstSegmentLength);
+        oPoint1.setY(oPoint1.getY() + dfArrowheadSize *
+                                          (oPoint2.getY() - oPoint1.getY()) /
+                                          dfFirstSegmentLength);
 
-        poLine->setPoint( bReverse ? poLine->getNumPoints() - 1 : 0,
-            &oPoint1 );
+        poLine->setPoint(bReverse ? poLine->getNumPoints() - 1 : 0, &oPoint1);
     }
 }
 
@@ -1215,24 +1208,24 @@ void OGRDXFLayer::InsertArrowhead( OGRDXFFeature* const poFeature,
 /*                                                                      */
 /*      Spline calculation functions defined in intronurbs.cpp.         */
 /************************************************************************/
-void basis( int c, double t, int npts, double x[], double N[] );
-void rbspline2( int npts,int k,int p1,double b[],double h[],
-    bool bCalculateKnots, double x[], double p[] );
-
+void basis(int c, double t, int npts, double x[], double N[]);
+void rbspline2(int npts, int k, int p1, double b[], double h[],
+               bool bCalculateKnots, double x[], double p[]);
 
 #if defined(__GNUC__) && __GNUC__ >= 6
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wnull-dereference"
 #endif
 
-namespace {
-    inline void setRow(GDALMatrix & m, int row, DXFTriple const & t)
-    {
-        m(row, 0) = t.dfX;
-        m(row, 1) = t.dfY;
-        m(row, 2) = t.dfZ;
-    }
+namespace
+{
+inline void setRow(GDALMatrix &m, int row, DXFTriple const &t)
+{
+    m(row, 0) = t.dfX;
+    m(row, 1) = t.dfY;
+    m(row, 2) = t.dfZ;
 }
+}  // namespace
 
 /************************************************************************/
 /*                      GetBSplineControlPoints()                       */
@@ -1260,31 +1253,33 @@ namespace {
 /*      concepts discussed in the book and was written without          */
 /*      reference to Piegl and Tiller's implementations.                */
 /************************************************************************/
-static std::vector<DXFTriple> GetBSplineControlPoints(
-    const std::vector<double>& adfParameters,
-    const std::vector<double>& adfKnots,
-    const std::vector<DXFTriple>& aoDataPoints, const int nDegree,
-    DXFTriple oStartTangent, DXFTriple oEndTangent )
+static std::vector<DXFTriple>
+GetBSplineControlPoints(const std::vector<double> &adfParameters,
+                        const std::vector<double> &adfKnots,
+                        const std::vector<DXFTriple> &aoDataPoints,
+                        const int nDegree, DXFTriple oStartTangent,
+                        DXFTriple oEndTangent)
 {
-    CPLAssert( nDegree > 1 );
+    CPLAssert(nDegree > 1);
 
     // Count the number of data points
     // Note: The literature often sets n to one less than the number of data
     // points for some reason, but we don't do that here
-    const int nPoints = static_cast<int>( aoDataPoints.size() );
+    const int nPoints = static_cast<int>(aoDataPoints.size());
 
-    CPLAssert( nPoints > 0 );
-    CPLAssert( nPoints == static_cast<int>( adfParameters.size() ) );
+    CPLAssert(nPoints > 0);
+    CPLAssert(nPoints == static_cast<int>(adfParameters.size()));
 
     // RAM consumption is quadratic in the number of control points.
-    if( nPoints > atoi(CPLGetConfigOption(
-                        "DXF_MAX_BSPLINE_CONTROL_POINTS", "2000")) )
+    if (nPoints >
+        atoi(CPLGetConfigOption("DXF_MAX_BSPLINE_CONTROL_POINTS", "2000")))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Too many control points (%d) for spline leader. "
                  "Set DXF_MAX_BSPLINE_CONTROL_POINTS configuration "
                  "option to a higher value to remove this limitation "
-                 "(at the cost of significant RAM consumption)", nPoints);
+                 "(at the cost of significant RAM consumption)",
+                 nPoints);
         return std::vector<DXFTriple>();
     }
 
@@ -1297,52 +1292,51 @@ static std::vector<DXFTriple> GetBSplineControlPoints(
     GDALMatrix D(nPoints + 2, 3);
 
     setRow(D, 0, aoDataPoints[0]);
-    for( int iIndex = 1; iIndex < nPoints - 1; iIndex++ )
+    for (int iIndex = 1; iIndex < nPoints - 1; iIndex++)
         setRow(D, iIndex + 1, aoDataPoints[iIndex]);
     setRow(D, nPoints + 1, aoDataPoints[nPoints - 1]);
-
 
     const double dfStartMultiplier = adfKnots[nDegree + 1] / nDegree;
     oStartTangent *= dfStartMultiplier;
     setRow(D, 1, oStartTangent);
 
-    const double dfEndMultiplier = ( 1.0 - adfKnots[nPoints + 1] ) / nDegree;
+    const double dfEndMultiplier = (1.0 - adfKnots[nPoints + 1]) / nDegree;
     oEndTangent *= dfEndMultiplier;
     setRow(D, nPoints, oEndTangent);
 
     GDALMatrix N(nPoints + 2, nPoints + 2);
     // First control point will be the first data point
-    N(0,0) = 1.0;
+    N(0, 0) = 1.0;
 
     // Start tangent determines the second control point
-    N(1,0) = -1.0;
-    N(1,1) = 1.0;
+    N(1, 0) = -1.0;
+    N(1, 1) = 1.0;
 
     // Fill the middle rows of the matrix with basis function values. We
     // have to use a temporary vector, because intronurbs' basis function
     // requires an additional nDegree entries for temporary storage.
-    std::vector<double> adfTempRow( nPoints + 2 + nDegree, 0.0 );
-    for( int iRow = 2; iRow < nPoints; iRow++ )
+    std::vector<double> adfTempRow(nPoints + 2 + nDegree, 0.0);
+    for (int iRow = 2; iRow < nPoints; iRow++)
     {
-        basis( nDegree + 1, adfParameters[iRow - 1], nPoints + 2,
-            const_cast<double *>( &adfKnots[0] ) - 1, &adfTempRow[0] - 1 );
-        for(int iCol = 0; iCol < nPoints + 2; ++iCol)
+        basis(nDegree + 1, adfParameters[iRow - 1], nPoints + 2,
+              const_cast<double *>(&adfKnots[0]) - 1, &adfTempRow[0] - 1);
+        for (int iCol = 0; iCol < nPoints + 2; ++iCol)
             N(iRow, iCol) = adfTempRow[iCol];
     }
 
     // End tangent determines the second-last control point
-    N(nPoints,nPoints) = -1.0;
-    N(nPoints,nPoints + 1) = 1.0;
+    N(nPoints, nPoints) = -1.0;
+    N(nPoints, nPoints + 1) = 1.0;
 
     // Last control point will be the last data point
-    N(nPoints + 1,nPoints + 1) = 1.0;
+    N(nPoints + 1, nPoints + 1) = 1.0;
 
     // Solve the linear system
     GDALMatrix P(nPoints + 2, 3);
-    GDALLinearSystemSolve( N, D, P );
+    GDALLinearSystemSolve(N, D, P);
 
-    std::vector<DXFTriple> aoControlPoints( nPoints + 2 );
-    for( int iRow = 0; iRow < nPoints + 2; iRow++ )
+    std::vector<DXFTriple> aoControlPoints(nPoints + 2);
+    for (int iRow = 0; iRow < nPoints + 2; iRow++)
     {
         aoControlPoints[iRow].dfX = P(iRow, 0);
         aoControlPoints[iRow].dfY = P(iRow, 1);
@@ -1356,7 +1350,6 @@ static std::vector<DXFTriple> GetBSplineControlPoints(
 #pragma GCC diagnostic pop
 #endif
 
-
 /************************************************************************/
 /*                         InterpolateSpline()                          */
 /*                                                                      */
@@ -1367,75 +1360,73 @@ static std::vector<DXFTriple> GetBSplineControlPoints(
 /*      If an end tangent of (0,0,0) is given, the direction vector     */
 /*      of the last chord (line segment) is used.                       */
 /************************************************************************/
-static void InterpolateSpline( OGRLineString* const poLine,
-    const DXFTriple& oEndTangentDirection )
+static void InterpolateSpline(OGRLineString *const poLine,
+                              const DXFTriple &oEndTangentDirection)
 {
-    int nDataPoints = static_cast<int>( poLine->getNumPoints() );
-    if ( nDataPoints < 2 )
+    int nDataPoints = static_cast<int>(poLine->getNumPoints());
+    if (nDataPoints < 2)
         return;
 
     // Transfer line vertices into DXFTriple objects
     std::vector<DXFTriple> aoDataPoints;
     OGRPoint oPrevPoint;
-    for( int iIndex = 0; iIndex < nDataPoints; iIndex++ )
+    for (int iIndex = 0; iIndex < nDataPoints; iIndex++)
     {
         OGRPoint oPoint;
-        poLine->getPoint( iIndex, &oPoint );
+        poLine->getPoint(iIndex, &oPoint);
 
         // Remove sequential duplicate points
-        if( iIndex > 0 && oPrevPoint.Equals( &oPoint ) )
+        if (iIndex > 0 && oPrevPoint.Equals(&oPoint))
             continue;
 
-        aoDataPoints.push_back( DXFTriple( oPoint.getX(), oPoint.getY(),
-            oPoint.getZ() ) );
+        aoDataPoints.push_back(
+            DXFTriple(oPoint.getX(), oPoint.getY(), oPoint.getZ()));
         oPrevPoint = oPoint;
     }
-    nDataPoints = static_cast<int>( aoDataPoints.size() );
-    if( nDataPoints < 2 )
+    nDataPoints = static_cast<int>(aoDataPoints.size());
+    if (nDataPoints < 2)
         return;
 
     // Work out the chord length parameterisation
     std::vector<double> adfParameters;
-    adfParameters.push_back( 0.0 );
-    for( int iIndex = 1; iIndex < nDataPoints; iIndex++ )
+    adfParameters.push_back(0.0);
+    for (int iIndex = 1; iIndex < nDataPoints; iIndex++)
     {
-        const double dfParameter = adfParameters[iIndex - 1] +
-            PointDist( aoDataPoints[iIndex - 1].dfX,
-                aoDataPoints[iIndex - 1].dfY,
-                aoDataPoints[iIndex - 1].dfZ,
-                aoDataPoints[iIndex].dfX,
-                aoDataPoints[iIndex].dfY,
-                aoDataPoints[iIndex].dfZ );
+        const double dfParameter =
+            adfParameters[iIndex - 1] +
+            PointDist(aoDataPoints[iIndex - 1].dfX,
+                      aoDataPoints[iIndex - 1].dfY,
+                      aoDataPoints[iIndex - 1].dfZ, aoDataPoints[iIndex].dfX,
+                      aoDataPoints[iIndex].dfY, aoDataPoints[iIndex].dfZ);
 
         // Bail out in pathological cases. This will happen when
         // some lengths are very large (above 10^16) and others are
         // very small (such as 1)
-        if( dfParameter == adfParameters[iIndex - 1] )
+        if (dfParameter == adfParameters[iIndex - 1])
             return;
 
-        adfParameters.push_back( dfParameter );
+        adfParameters.push_back(dfParameter);
     }
 
     const double dfTotalChordLength = adfParameters[adfParameters.size() - 1];
 
     // Start tangent can be worked out from the first chord
-    DXFTriple oStartTangent( aoDataPoints[1].dfX - aoDataPoints[0].dfX,
-        aoDataPoints[1].dfY - aoDataPoints[0].dfY,
-        aoDataPoints[1].dfZ - aoDataPoints[0].dfZ );
+    DXFTriple oStartTangent(aoDataPoints[1].dfX - aoDataPoints[0].dfX,
+                            aoDataPoints[1].dfY - aoDataPoints[0].dfY,
+                            aoDataPoints[1].dfZ - aoDataPoints[0].dfZ);
     oStartTangent *= dfTotalChordLength / adfParameters[1];
 
     // If end tangent is zero, it is worked out from the last chord
     DXFTriple oEndTangent = oEndTangentDirection;
-    if( oEndTangent.dfX == 0.0 && oEndTangent.dfY == 0.0 &&
-        oEndTangent.dfZ == 0.0 )
+    if (oEndTangent.dfX == 0.0 && oEndTangent.dfY == 0.0 &&
+        oEndTangent.dfZ == 0.0)
     {
-        oEndTangent = DXFTriple(
-            aoDataPoints[nDataPoints - 1].dfX -
-                aoDataPoints[nDataPoints - 2].dfX,
-            aoDataPoints[nDataPoints - 1].dfY -
-                aoDataPoints[nDataPoints - 2].dfY,
-            aoDataPoints[nDataPoints - 1].dfZ -
-                aoDataPoints[nDataPoints - 2].dfZ );
+        oEndTangent = DXFTriple(aoDataPoints[nDataPoints - 1].dfX -
+                                    aoDataPoints[nDataPoints - 2].dfX,
+                                aoDataPoints[nDataPoints - 1].dfY -
+                                    aoDataPoints[nDataPoints - 2].dfY,
+                                aoDataPoints[nDataPoints - 1].dfZ -
+                                    aoDataPoints[nDataPoints - 2].dfZ);
         oEndTangent /= dfTotalChordLength - adfParameters[nDataPoints - 2];
     }
 
@@ -1443,42 +1434,42 @@ static void InterpolateSpline( OGRLineString* const poLine,
     oEndTangent *= dfTotalChordLength;
 
     // Normalise the parameter vector
-    for( int iIndex = 1; iIndex < nDataPoints; iIndex++ )
+    for (int iIndex = 1; iIndex < nDataPoints; iIndex++)
         adfParameters[iIndex] /= dfTotalChordLength;
 
     // Generate a knot vector
     const int nDegree = 3;
-    std::vector<double> adfKnots( aoDataPoints.size() + nDegree + 3, 0.0 );
-    std::copy( adfParameters.begin(), adfParameters.end(),
-        adfKnots.begin() + nDegree );
-    std::fill( adfKnots.end() - nDegree, adfKnots.end(), 1.0 );
+    std::vector<double> adfKnots(aoDataPoints.size() + nDegree + 3, 0.0);
+    std::copy(adfParameters.begin(), adfParameters.end(),
+              adfKnots.begin() + nDegree);
+    std::fill(adfKnots.end() - nDegree, adfKnots.end(), 1.0);
 
     // Calculate the spline control points
-    std::vector<DXFTriple> aoControlPoints = GetBSplineControlPoints(
-        adfParameters, adfKnots, aoDataPoints, nDegree,
-        oStartTangent, oEndTangent );
-    const int nControlPoints = static_cast<int>( aoControlPoints.size() );
+    std::vector<DXFTriple> aoControlPoints =
+        GetBSplineControlPoints(adfParameters, adfKnots, aoDataPoints, nDegree,
+                                oStartTangent, oEndTangent);
+    const int nControlPoints = static_cast<int>(aoControlPoints.size());
 
-    if( nControlPoints == 0 )
+    if (nControlPoints == 0)
         return;
 
     // Interpolate the spline using the intronurbs code
     int nWantedPoints = nControlPoints * 8;
-    std::vector<double> adfWeights( nControlPoints, 1.0 );
-    std::vector<double> adfPoints( 3 * nWantedPoints, 0.0 );
+    std::vector<double> adfWeights(nControlPoints, 1.0);
+    std::vector<double> adfPoints(3 * nWantedPoints, 0.0);
 
-    rbspline2( nControlPoints, nDegree + 1, nWantedPoints,
-        reinterpret_cast<double*>( &aoControlPoints[0] ) - 1,
-        &adfWeights[0] - 1, false, &adfKnots[0] - 1, &adfPoints[0] - 1 );
+    rbspline2(nControlPoints, nDegree + 1, nWantedPoints,
+              reinterpret_cast<double *>(&aoControlPoints[0]) - 1,
+              &adfWeights[0] - 1, false, &adfKnots[0] - 1, &adfPoints[0] - 1);
 
     // Preserve 2D/3D status as we add the interpolated points to the line
     const int bIs3D = poLine->Is3D();
     poLine->empty();
-    for( int iIndex = 0; iIndex < nWantedPoints; iIndex++ )
+    for (int iIndex = 0; iIndex < nWantedPoints; iIndex++)
     {
-        poLine->addPoint( adfPoints[iIndex * 3], adfPoints[iIndex * 3 + 1],
-            adfPoints[iIndex * 3 + 2] );
+        poLine->addPoint(adfPoints[iIndex * 3], adfPoints[iIndex * 3 + 1],
+                         adfPoints[iIndex * 3 + 2]);
     }
-    if( !bIs3D )
+    if (!bIs3D)
         poLine->flattenTo2D();
 }
