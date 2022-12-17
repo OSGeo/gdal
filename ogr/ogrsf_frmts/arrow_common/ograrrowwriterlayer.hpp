@@ -1156,9 +1156,18 @@ OGRErr OGRArrowWriterLayer::ICreateFeature( OGRFeature* poFeature )
         const bool bIsEmpty = poGeom != nullptr && poGeom->IsEmpty();
         if( poGeom != nullptr && !bIsEmpty )
         {
-            OGREnvelope oEnvelope;
-            poGeom->getEnvelope(&oEnvelope);
-            m_aoEnvelopes[i].Merge(oEnvelope);
+            if( poGeom->Is3D() )
+            {
+                OGREnvelope3D oEnvelope;
+                poGeom->getEnvelope(&oEnvelope);
+                m_aoEnvelopes[i].Merge(oEnvelope);
+            }
+            else
+            {
+                OGREnvelope oEnvelope;
+                poGeom->getEnvelope(&oEnvelope);
+                m_aoEnvelopes[i].Merge(oEnvelope);
+            }
             m_oSetWrittenGeometryTypes[i].insert(eGType);
         }
 

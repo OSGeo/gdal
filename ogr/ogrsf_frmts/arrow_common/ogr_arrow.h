@@ -253,7 +253,7 @@ protected:
         std::vector<uint8_t>                        m_abyBuffer{};
 
         std::vector<int>                            m_anTZFlag{};    // size: GetFieldCount()
-        std::vector<OGREnvelope>                    m_aoEnvelopes{}; // size: GetGeomFieldCount()
+        std::vector<OGREnvelope3D>                  m_aoEnvelopes{}; // size: GetGeomFieldCount()
         std::vector<std::set<OGRwkbGeometryType>>   m_oSetWrittenGeometryTypes{}; // size: GetGeomFieldCount()
 
         static OGRArrowGeomEncoding GetPreciseArrowGeomEncoding(

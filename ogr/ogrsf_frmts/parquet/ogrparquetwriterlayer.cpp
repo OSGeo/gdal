@@ -350,7 +350,7 @@ std::string OGRParquetWriterLayer::GetGeoMetadata() const
         CPLTestBool(CPLGetConfigOption("OGR_PARQUET_WRITE_GEO", "YES")) )
     {
         CPLJSONObject oRoot;
-        oRoot.Add("version", "0.4.0");
+        oRoot.Add("version", "1.0.0-beta.1");
         oRoot.Add("primary_column",
                   m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef());
         CPLJSONObject oColumns;
@@ -435,11 +435,22 @@ std::string OGRParquetWriterLayer::GetGeoMetadata() const
                 CPLTestBool(CPLGetConfigOption(
                     "OGR_PARQUET_WRITE_BBOX", "YES")) )
             {
+                bool bHasZ = false;
+                for( const auto eGeomType: m_oSetWrittenGeometryTypes[i] )
+                {
+                    bHasZ = OGR_GT_HasZ(eGeomType);
+                    if( bHasZ )
+                        break;
+                }
                 CPLJSONArray oBBOX;
                 oBBOX.Add(m_aoEnvelopes[i].MinX);
                 oBBOX.Add(m_aoEnvelopes[i].MinY);
+                if( bHasZ )
+                    oBBOX.Add(m_aoEnvelopes[i].MinZ);
                 oBBOX.Add(m_aoEnvelopes[i].MaxX);
                 oBBOX.Add(m_aoEnvelopes[i].MaxY);
+                if( bHasZ )
+                    oBBOX.Add(m_aoEnvelopes[i].MaxZ);
                 oColumn.Add("bbox", oBBOX);
             }
 
@@ -478,25 +489,12 @@ std::string OGRParquetWriterLayer::GetGeoMetadata() const
             if( m_bForceCounterClockwiseOrientation )
                 oColumn.Add("orientation", "counterclockwise");
 
-            if( m_oSetWrittenGeometryTypes[i].empty() )
+            CPLJSONArray oArray;
+            for( const auto eType: m_oSetWrittenGeometryTypes[i] )
             {
-                const auto eType = poGeomFieldDefn->GetType();
-                oColumn.Add("geometry_type", GetStringGeometryType(eType));
+                oArray.Add(GetStringGeometryType(eType));
             }
-            else if( m_oSetWrittenGeometryTypes[i].size() == 1 )
-            {
-                const auto eType = *(m_oSetWrittenGeometryTypes[i].begin());
-                oColumn.Add("geometry_type", GetStringGeometryType(eType));
-            }
-            else
-            {
-                CPLJSONArray oArray;
-                for( const auto eType: m_oSetWrittenGeometryTypes[i] )
-                {
-                    oArray.Add(GetStringGeometryType(eType));
-                }
-                oColumn.Add("geometry_type", oArray);
-            }
+            oColumn.Add("geometry_types", oArray);
         }
 
         return oRoot.Format(CPLJSONObject::PrettyFormat::Plain);
