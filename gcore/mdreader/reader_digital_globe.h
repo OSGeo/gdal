@@ -54,21 +54,23 @@ Common metadata (from metadata filename):
 
 */
 
-class GDALMDReaderDigitalGlobe: public GDALMDReaderBase
+class GDALMDReaderDigitalGlobe : public GDALMDReaderBase
 {
-public:
+  public:
     GDALMDReaderDigitalGlobe(const char *pszPath, char **papszSiblingFiles);
     virtual ~GDALMDReaderDigitalGlobe();
     virtual bool HasRequiredFiles() const override;
-    virtual char** GetMetadataFiles() const override;
-protected:
+    virtual char **GetMetadataFiles() const override;
+
+  protected:
     virtual void LoadMetadata() override;
-    char** LoadRPBXmlNode(CPLXMLNode* psNode);
-    char** LoadIMDXmlNode(CPLXMLNode* psNode);
-protected:
+    char **LoadRPBXmlNode(CPLXMLNode *psNode);
+    char **LoadIMDXmlNode(CPLXMLNode *psNode);
+
+  protected:
     CPLString m_osXMLSourceFilename{};
     CPLString m_osIMDSourceFilename{};
     CPLString m_osRPBSourceFilename{};
 };
 
-#endif //READER_DIGITAL_GLOBE_H_INCLUDED
+#endif  // READER_DIGITAL_GLOBE_H_INCLUDED

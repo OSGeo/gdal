@@ -37,16 +37,14 @@
 #include "cpl_string.h"
 #include "gdal.h"
 
-
 CPL_C_START
-GDALAsyncReader *
-GDALGetDefaultAsyncReader( GDALDataset* poDS,
-                           int nXOff, int nYOff, int nXSize, int nYSize,
-                           void *pBuf, int nBufXSize, int nBufYSize,
-                           GDALDataType eBufType,
-                           int nBandCount, int* panBandMap,
-                           int nPixelSpace, int nLineSpace,
-                           int nBandSpace, char **papszOptions );
+GDALAsyncReader *GDALGetDefaultAsyncReader(GDALDataset *poDS, int nXOff,
+                                           int nYOff, int nXSize, int nYSize,
+                                           void *pBuf, int nBufXSize,
+                                           int nBufYSize, GDALDataType eBufType,
+                                           int nBandCount, int *panBandMap,
+                                           int nPixelSpace, int nLineSpace,
+                                           int nBandSpace, char **papszOptions);
 CPL_C_END
 
 /************************************************************************/
@@ -59,21 +57,10 @@ CPL_C_END
 /*                          GDALAsyncReader()                           */
 /************************************************************************/
 
-GDALAsyncReader::GDALAsyncReader() :
-    poDS(nullptr),
-    nXOff(0),
-    nYOff(0),
-    nXSize(0),
-    nYSize(0),
-    pBuf(nullptr),
-    nBufXSize(0),
-    nBufYSize(0),
-    eBufType(GDT_Unknown),
-    nBandCount(0),
-    panBandMap(nullptr),
-    nPixelSpace(0),
-    nLineSpace(0),
-    nBandSpace(0)
+GDALAsyncReader::GDALAsyncReader()
+    : poDS(nullptr), nXOff(0), nYOff(0), nXSize(0), nYSize(0), pBuf(nullptr),
+      nBufXSize(0), nBufYSize(0), eBufType(GDT_Unknown), nBandCount(0),
+      panBandMap(nullptr), nPixelSpace(0), nLineSpace(0), nBandSpace(0)
 {
 }
 
@@ -87,7 +74,9 @@ GDALAsyncReader::~GDALAsyncReader() = default;
 /************************************************************************/
 
 /**
- * \fn GDALAsyncStatusType GDALAsyncReader::GetNextUpdatedRegion( double dfTimeout, int* pnBufXOff, int* pnBufYOff, int* pnBufXSize, int* pnBufYSize) = 0;
+ * \fn GDALAsyncStatusType GDALAsyncReader::GetNextUpdatedRegion( double
+ * dfTimeout, int* pnBufXOff, int* pnBufYOff, int* pnBufXSize, int* pnBufYSize)
+ * = 0;
  *
  * \brief Get async IO update
  *
@@ -169,10 +158,9 @@ GDALAsyncReader::~GDALAsyncReader() = default;
  * @return GARIO_ status, details described above.
  */
 
-GDALAsyncStatusType CPL_STDCALL
-GDALARGetNextUpdatedRegion(GDALAsyncReaderH hARIO, double dfTimeout,
-                           int* pnBufXOff, int* pnBufYOff,
-                           int* pnBufXSize, int* pnBufYSize)
+GDALAsyncStatusType CPL_STDCALL GDALARGetNextUpdatedRegion(
+    GDALAsyncReaderH hARIO, double dfTimeout, int *pnBufXOff, int *pnBufYOff,
+    int *pnBufXSize, int *pnBufYSize)
 {
     VALIDATE_POINTER1(hARIO, "GDALARGetNextUpdatedRegion", GARIO_ERROR);
     return static_cast<GDALAsyncReader *>(hARIO)->GetNextUpdatedRegion(
@@ -202,7 +190,7 @@ GDALARGetNextUpdatedRegion(GDALAsyncReaderH hARIO, double dfTimeout,
 /**/
 /**/
 
-int GDALAsyncReader::LockBuffer( double /* dfTimeout */ )
+int GDALAsyncReader::LockBuffer(double /* dfTimeout */)
 {
     return TRUE;
 }
@@ -229,10 +217,10 @@ int GDALAsyncReader::LockBuffer( double /* dfTimeout */ )
  * @return TRUE if successful, or FALSE on an error.
  */
 
-int CPL_STDCALL GDALARLockBuffer(GDALAsyncReaderH hARIO, double dfTimeout )
+int CPL_STDCALL GDALARLockBuffer(GDALAsyncReaderH hARIO, double dfTimeout)
 {
-    VALIDATE_POINTER1(hARIO, "GDALARLockBuffer",FALSE);
-    return static_cast<GDALAsyncReader *>(hARIO)->LockBuffer( dfTimeout );
+    VALIDATE_POINTER1(hARIO, "GDALARLockBuffer", FALSE);
+    return static_cast<GDALAsyncReader *>(hARIO)->LockBuffer(dfTimeout);
 }
 
 /************************************************************************/
@@ -284,62 +272,46 @@ class GDALDefaultAsyncReader : public GDALAsyncReader
     CPL_DISALLOW_COPY_ASSIGN(GDALDefaultAsyncReader)
 
   public:
-    GDALDefaultAsyncReader(GDALDataset* poDS,
-                             int nXOff, int nYOff,
-                             int nXSize, int nYSize,
-                             void *pBuf,
-                             int nBufXSize, int nBufYSize,
-                             GDALDataType eBufType,
-                             int nBandCount, int* panBandMap,
-                             int nPixelSpace, int nLineSpace,
-                             int nBandSpace, char **papszOptions);
+    GDALDefaultAsyncReader(GDALDataset *poDS, int nXOff, int nYOff, int nXSize,
+                           int nYSize, void *pBuf, int nBufXSize, int nBufYSize,
+                           GDALDataType eBufType, int nBandCount,
+                           int *panBandMap, int nPixelSpace, int nLineSpace,
+                           int nBandSpace, char **papszOptions);
     ~GDALDefaultAsyncReader() override;
 
-    GDALAsyncStatusType GetNextUpdatedRegion(double dfTimeout,
-                                             int* pnBufXOff,
-                                             int* pnBufYOff,
-                                             int* pnBufXSize,
-                                             int* pnBufYSize) override;
+    GDALAsyncStatusType GetNextUpdatedRegion(double dfTimeout, int *pnBufXOff,
+                                             int *pnBufYOff, int *pnBufXSize,
+                                             int *pnBufYSize) override;
 };
 
 /************************************************************************/
 /*                     GDALGetDefaultAsyncReader()                      */
 /************************************************************************/
 
-GDALAsyncReader *
-GDALGetDefaultAsyncReader( GDALDataset* poDS,
-                             int nXOff, int nYOff,
-                             int nXSize, int nYSize,
-                             void *pBuf,
-                             int nBufXSize, int nBufYSize,
-                             GDALDataType eBufType,
-                             int nBandCount, int* panBandMap,
-                             int nPixelSpace, int nLineSpace,
-                             int nBandSpace, char **papszOptions)
+GDALAsyncReader *GDALGetDefaultAsyncReader(GDALDataset *poDS, int nXOff,
+                                           int nYOff, int nXSize, int nYSize,
+                                           void *pBuf, int nBufXSize,
+                                           int nBufYSize, GDALDataType eBufType,
+                                           int nBandCount, int *panBandMap,
+                                           int nPixelSpace, int nLineSpace,
+                                           int nBandSpace, char **papszOptions)
 
 {
-    return new GDALDefaultAsyncReader( poDS,
-                                         nXOff, nYOff, nXSize, nYSize,
-                                         pBuf, nBufXSize, nBufYSize, eBufType,
-                                         nBandCount, panBandMap,
-                                         nPixelSpace, nLineSpace, nBandSpace,
-                                         papszOptions );
+    return new GDALDefaultAsyncReader(poDS, nXOff, nYOff, nXSize, nYSize, pBuf,
+                                      nBufXSize, nBufYSize, eBufType,
+                                      nBandCount, panBandMap, nPixelSpace,
+                                      nLineSpace, nBandSpace, papszOptions);
 }
 
 /************************************************************************/
 /*                       GDALDefaultAsyncReader()                       */
 /************************************************************************/
 
-GDALDefaultAsyncReader::
-GDALDefaultAsyncReader( GDALDataset* poDSIn,
-                          int nXOffIn, int nYOffIn,
-                          int nXSizeIn, int nYSizeIn,
-                          void *pBufIn,
-                          int nBufXSizeIn, int nBufYSizeIn,
-                          GDALDataType eBufTypeIn,
-                          int nBandCountIn, int* panBandMapIn,
-                          int nPixelSpaceIn, int nLineSpaceIn,
-                          int nBandSpaceIn, char **papszOptionsIn)
+GDALDefaultAsyncReader::GDALDefaultAsyncReader(
+    GDALDataset *poDSIn, int nXOffIn, int nYOffIn, int nXSizeIn, int nYSizeIn,
+    void *pBufIn, int nBufXSizeIn, int nBufYSizeIn, GDALDataType eBufTypeIn,
+    int nBandCountIn, int *panBandMapIn, int nPixelSpaceIn, int nLineSpaceIn,
+    int nBandSpaceIn, char **papszOptionsIn)
 
 {
     poDS = poDSIn;
@@ -352,14 +324,14 @@ GDALDefaultAsyncReader( GDALDataset* poDSIn,
     nBufYSize = nBufYSizeIn;
     eBufType = eBufTypeIn;
     nBandCount = nBandCountIn;
-    panBandMap = static_cast<int*>(CPLMalloc(sizeof(int)*nBandCountIn));
+    panBandMap = static_cast<int *>(CPLMalloc(sizeof(int) * nBandCountIn));
 
-    if( panBandMapIn != nullptr )
-        memcpy( panBandMap, panBandMapIn, sizeof(int)*nBandCount );
+    if (panBandMapIn != nullptr)
+        memcpy(panBandMap, panBandMapIn, sizeof(int) * nBandCount);
     else
     {
-        for( int i = 0; i < nBandCount; i++ )
-            panBandMap[i] = i+1;
+        for (int i = 0; i < nBandCount; i++)
+            panBandMap[i] = i + 1;
     }
 
     nPixelSpace = nPixelSpaceIn;
@@ -376,8 +348,8 @@ GDALDefaultAsyncReader( GDALDataset* poDSIn,
 GDALDefaultAsyncReader::~GDALDefaultAsyncReader()
 
 {
-    CPLFree( panBandMap );
-    CSLDestroy( papszOptions );
+    CPLFree(panBandMap);
+    CSLDestroy(papszOptions);
 }
 
 /************************************************************************/
@@ -385,26 +357,23 @@ GDALDefaultAsyncReader::~GDALDefaultAsyncReader()
 /************************************************************************/
 
 GDALAsyncStatusType
-GDALDefaultAsyncReader::GetNextUpdatedRegion( double /*dfTimeout*/,
-                                              int* pnBufXOff,
-                                              int* pnBufYOff,
-                                              int* pnBufXSize,
-                                              int* pnBufYSize )
+GDALDefaultAsyncReader::GetNextUpdatedRegion(double /*dfTimeout*/,
+                                             int *pnBufXOff, int *pnBufYOff,
+                                             int *pnBufXSize, int *pnBufYSize)
 {
     CPLErr eErr;
 
-    eErr = poDS->RasterIO( GF_Read, nXOff, nYOff, nXSize, nYSize,
-                           pBuf, nBufXSize, nBufYSize, eBufType,
-                           nBandCount, panBandMap,
-                           nPixelSpace, nLineSpace, nBandSpace,
-                           nullptr );
+    eErr =
+        poDS->RasterIO(GF_Read, nXOff, nYOff, nXSize, nYSize, pBuf, nBufXSize,
+                       nBufYSize, eBufType, nBandCount, panBandMap, nPixelSpace,
+                       nLineSpace, nBandSpace, nullptr);
 
     *pnBufXOff = 0;
     *pnBufYOff = 0;
     *pnBufXSize = nBufXSize;
     *pnBufYSize = nBufYSize;
 
-    if( eErr == CE_None )
+    if (eErr == CE_None)
         return GARIO_COMPLETE;
     else
         return GARIO_ERROR;
