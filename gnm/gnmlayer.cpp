@@ -30,23 +30,22 @@
 #include "gnm.h"
 #include "gnm_priv.h"
 
-
 /**
  * GNMGenericLayer
  */
-GNMGenericLayer::GNMGenericLayer(OGRLayer* poLayer,
-                                 GNMGenericNetwork* poNetwork) :
-    OGRLayer(),
-    m_soLayerName( poLayer->GetName() ),
-    m_poLayer( poLayer ),
-    m_poNetwork( poNetwork )
+GNMGenericLayer::GNMGenericLayer(OGRLayer *poLayer,
+                                 GNMGenericNetwork *poNetwork)
+    : OGRLayer(), m_soLayerName(poLayer->GetName()), m_poLayer(poLayer),
+      m_poNetwork(poNetwork)
 {
 }
 
 /**
  * ~GNMGenericLayer
  */
-GNMGenericLayer::~GNMGenericLayer() {}
+GNMGenericLayer::~GNMGenericLayer()
+{
+}
 
 const char *GNMGenericLayer::GetFIDColumn()
 {
@@ -78,31 +77,34 @@ OGRErr GNMGenericLayer::Union(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
                               void *pProgressArg)
 {
     return m_poLayer->Union(pLayerMethod, pLayerResult, papszOptions,
-                                   pfnProgress, pProgressArg);
+                            pfnProgress, pProgressArg);
 }
 
 OGRErr GNMGenericLayer::SymDifference(OGRLayer *pLayerMethod,
-                                      OGRLayer *pLayerResult, char **papszOptions,
-                                      GDALProgressFunc pfnProgress, void *pProgressArg)
+                                      OGRLayer *pLayerResult,
+                                      char **papszOptions,
+                                      GDALProgressFunc pfnProgress,
+                                      void *pProgressArg)
 {
     return m_poLayer->Union(pLayerMethod, pLayerResult, papszOptions,
-                                   pfnProgress, pProgressArg);
+                            pfnProgress, pProgressArg);
 }
 
-OGRErr GNMGenericLayer::Identity(OGRLayer *pLayerMethod,
-                                 OGRLayer *pLayerResult, char **papszOptions,
-                                 GDALProgressFunc pfnProgress, void *pProgressArg)
+OGRErr GNMGenericLayer::Identity(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
+                                 char **papszOptions,
+                                 GDALProgressFunc pfnProgress,
+                                 void *pProgressArg)
 {
     return m_poLayer->Union(pLayerMethod, pLayerResult, papszOptions,
-                                   pfnProgress, pProgressArg);
+                            pfnProgress, pProgressArg);
 }
 
 OGRErr GNMGenericLayer::Update(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                               char **papszOptions, GDALProgressFunc pfnProgress,
-                               void *pProgressArg)
+                               char **papszOptions,
+                               GDALProgressFunc pfnProgress, void *pProgressArg)
 {
     return m_poLayer->Update(pLayerMethod, pLayerResult, papszOptions,
-                                   pfnProgress, pProgressArg);
+                             pfnProgress, pProgressArg);
 }
 
 OGRErr GNMGenericLayer::Clip(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
@@ -110,7 +112,7 @@ OGRErr GNMGenericLayer::Clip(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
                              void *pProgressArg)
 {
     return m_poLayer->Clip(pLayerMethod, pLayerResult, papszOptions,
-                                   pfnProgress, pProgressArg);
+                           pfnProgress, pProgressArg);
 }
 
 OGRErr GNMGenericLayer::Erase(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
@@ -118,7 +120,7 @@ OGRErr GNMGenericLayer::Erase(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
                               void *pProgressArg)
 {
     return m_poLayer->Erase(pLayerMethod, pLayerResult, papszOptions,
-                                   pfnProgress, pProgressArg);
+                            pfnProgress, pProgressArg);
 }
 
 GIntBig GNMGenericLayer::GetFeaturesRead()
@@ -145,11 +147,12 @@ OGRLayerAttrIndex *GNMGenericLayer::GetIndex()
 OGRErr GNMGenericLayer::ISetFeature(OGRFeature *poFeature)
 {
     VALIDATE_POINTER1(poFeature, "GNMGenericLayer::ISetFeature", CE_Failure);
-    std::map<GNMGFID, GIntBig>::iterator it = m_mnFIDMap.find(poFeature->GetFID());
+    std::map<GNMGFID, GIntBig>::iterator it =
+        m_mnFIDMap.find(poFeature->GetFID());
     if (it == m_mnFIDMap.end())
     {
-        CPLError( CE_Failure, CPLE_IllegalArg, "The FID " CPL_FRMT_GIB " is invalid",
-                  poFeature->GetFID() );
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "The FID " CPL_FRMT_GIB " is invalid", poFeature->GetFID());
         return OGRERR_NON_EXISTING_FEATURE;
     }
 
@@ -166,7 +169,7 @@ OGRErr GNMGenericLayer::ICreateFeature(OGRFeature *poFeature)
     poFeature->SetFID(nFID);
     poFeature->SetField(GNM_SYSFIELD_GFID, nFID);
     poFeature->SetField(GNM_SYSFIELD_BLOCKED, GNM_BLOCK_NONE);
-    if(m_poNetwork->AddFeatureGlobalFID(nFID, GetName()) != CE_None)
+    if (m_poNetwork->AddFeatureGlobalFID(nFID, GetName()) != CE_None)
         return OGRERR_FAILURE;
     return m_poLayer->CreateFeature(poFeature);
 }
@@ -190,12 +193,12 @@ void GNMGenericLayer::SetSpatialFilterRect(double dfMinX, double dfMinY,
 
 void GNMGenericLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeometry)
 {
-    m_poLayer->SetSpatialFilter(iGeomField ,poGeometry);
+    m_poLayer->SetSpatialFilter(iGeomField, poGeometry);
 }
 
-void GNMGenericLayer::SetSpatialFilterRect(int iGeomField,
-                                           double dfMinX, double dfMinY,
-                                           double dfMaxX, double dfMaxY)
+void GNMGenericLayer::SetSpatialFilterRect(int iGeomField, double dfMinX,
+                                           double dfMinY, double dfMaxX,
+                                           double dfMaxY)
 {
     m_poLayer->SetSpatialFilterRect(iGeomField, dfMinX, dfMinY, dfMaxX, dfMaxY);
 }
@@ -212,8 +215,8 @@ void GNMGenericLayer::ResetReading()
 
 OGRFeature *GNMGenericLayer::GetNextFeature()
 {
-    OGRFeature* pFeature = m_poLayer->GetNextFeature();
-    if(nullptr == pFeature)
+    OGRFeature *pFeature = m_poLayer->GetNextFeature();
+    if (nullptr == pFeature)
         return nullptr;
     GNMGFID nGFID = pFeature->GetFieldAsGNMGFID(GNM_SYSFIELD_GFID);
     m_mnFIDMap[nGFID] = pFeature->GetFID();
@@ -229,23 +232,22 @@ OGRErr GNMGenericLayer::SetNextByIndex(GIntBig nIndex)
 OGRErr GNMGenericLayer::DeleteFeature(GIntBig nFID)
 {
     OGRFeature *poFeature = GetFeature(nFID);
-    if(nullptr == poFeature)
+    if (nullptr == poFeature)
         return CE_Failure;
 
     nFID = poFeature->GetFID();
     std::map<GNMGFID, GIntBig>::iterator it = m_mnFIDMap.find(nFID);
     if (it == m_mnFIDMap.end())
     {
-        CPLError( CE_Failure, CPLE_IllegalArg, "The FID " CPL_FRMT_GIB " is invalid",
-                  nFID );
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "The FID " CPL_FRMT_GIB " is invalid", nFID);
         return OGRERR_NON_EXISTING_FEATURE;
     }
 
     OGRFeature::DestroyFeature(poFeature);
 
-    //delete from graph
-    if(m_poNetwork->DisconnectFeaturesWithId((GNMGFID)nFID) !=
-            CE_None)
+    // delete from graph
+    if (m_poNetwork->DisconnectFeaturesWithId((GNMGFID)nFID) != CE_None)
         return CE_Failure;
 
     return m_poLayer->DeleteFeature(it->second);
@@ -281,7 +283,8 @@ OGRErr GNMGenericLayer::GetExtent(OGREnvelope *psExtent, int bForce)
     return m_poLayer->GetExtent(psExtent, bForce);
 }
 
-OGRErr GNMGenericLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+OGRErr GNMGenericLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
+                                  int bForce)
 {
     return m_poLayer->GetExtent(iGeomField, psExtent, bForce);
 }
@@ -298,9 +301,9 @@ OGRErr GNMGenericLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
 
 OGRErr GNMGenericLayer::DeleteField(int iField)
 {
-    if(iField == FindFieldIndex(GNM_SYSFIELD_GFID, TRUE))
+    if (iField == FindFieldIndex(GNM_SYSFIELD_GFID, TRUE))
         return OGRERR_UNSUPPORTED_OPERATION;
-    if(iField == FindFieldIndex(GNM_SYSFIELD_BLOCKED, TRUE))
+    if (iField == FindFieldIndex(GNM_SYSFIELD_BLOCKED, TRUE))
         return OGRERR_UNSUPPORTED_OPERATION;
     return m_poLayer->DeleteField(iField);
 }
@@ -310,16 +313,18 @@ OGRErr GNMGenericLayer::ReorderFields(int *panMap)
     return m_poLayer->ReorderFields(panMap);
 }
 
-OGRErr GNMGenericLayer::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn, int nFlagsIn)
+OGRErr GNMGenericLayer::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
+                                       int nFlagsIn)
 {
-    if(iField == FindFieldIndex(GNM_SYSFIELD_GFID, TRUE))
+    if (iField == FindFieldIndex(GNM_SYSFIELD_GFID, TRUE))
         return OGRERR_UNSUPPORTED_OPERATION;
-    if(iField == FindFieldIndex(GNM_SYSFIELD_BLOCKED, TRUE))
+    if (iField == FindFieldIndex(GNM_SYSFIELD_BLOCKED, TRUE))
         return OGRERR_UNSUPPORTED_OPERATION;
     return m_poLayer->AlterFieldDefn(iField, poNewFieldDefn, nFlagsIn);
 }
 
-OGRErr GNMGenericLayer::CreateGeomField(OGRGeomFieldDefn *poField, int bApproxOK)
+OGRErr GNMGenericLayer::CreateGeomField(OGRGeomFieldDefn *poField,
+                                        int bApproxOK)
 {
     return m_poLayer->CreateGeomField(poField, bApproxOK);
 }
@@ -361,6 +366,6 @@ OGRErr GNMGenericLayer::RollbackTransaction()
 
 OGRFeatureDefn *GNMGenericLayer::GetLayerDefn()
 {
-    //TODO: hide GNM_SYSFIELD_GFID filed
+    // TODO: hide GNM_SYSFIELD_GFID filed
     return m_poLayer->GetLayerDefn();
 }
