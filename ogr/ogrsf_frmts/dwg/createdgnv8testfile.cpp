@@ -40,8 +40,8 @@ const double DEG_TO_RAD = 3.141592653589793 / 180.0;
 class OGRDGNV8Services : public OdExDgnSystemServices,
                          public OdExDgnHostAppServices
 {
-protected:
-  ODRX_USING_HEAP_OPERATORS(OdExDgnSystemServices);
+  protected:
+    ODRX_USING_HEAP_OPERATORS(OdExDgnSystemServices);
 };
 
 static OdStaticRxObject<OGRDGNV8Services> oServices;
@@ -49,18 +49,19 @@ static OdStaticRxObject<OGRDGNV8Services> oServices;
 int main()
 {
     odrxInitialize(&oServices);
-    oServices.disableProgressMeterOutput( true );
+    oServices.disableProgressMeterOutput(true);
     ::odrxDynamicLinker()->loadModule(L"TG_Db", false);
 
     OdDgDatabasePtr pDb = oServices.createDatabase();
 
     OdDgModelPtr pModel = pDb->getActiveModelId().openObject(OdDg::kForWrite);
-    pModel->setWorkingUnit( OdDgModel::kWuMasterUnit );
-    pModel->setName( "my_model" );
-    pModel->setDescription( "my_description" );
+    pModel->setWorkingUnit(OdDgModel::kWuMasterUnit);
+    pModel->setName("my_model");
+    pModel->setDescription("my_description");
 
     // Add font
-    OdDgFontTablePtr pFontTable = pModel->database()->getFontTable(OdDg::kForWrite);
+    OdDgFontTablePtr pFontTable =
+        pModel->database()->getFontTable(OdDg::kForWrite);
     {
         OdDgFontTableRecordPtr pFont = OdDgFontTableRecord::createObject();
         pFont->setName("Arial");
@@ -73,7 +74,7 @@ int main()
     {
         OdDgLine3dPtr line = OdDgLine3d::createObject();
         pModel->addElement(line);
-        OdGePoint3d point;  
+        OdGePoint3d point;
         point.x = 0;
         point.y = 1;
         point.z = 2;
@@ -86,7 +87,7 @@ int main()
         line->setLineStyleEntryId(4);
         line->setLineWeight(5);
     }
-    
+
     // Read as point by OGR
     {
         OdDgLine2dPtr line = OdDgLine2d::createObject();
@@ -133,14 +134,14 @@ int main()
         text->setOrigin(point);
         text->setText(L"myT\u00e9.xt");
         text->setRotation(-45 * DEG_TO_RAD);
-        text->setHeightMultiplier( 1.0 );
-        text->setLengthMultiplier( 1.0 );
+        text->setHeightMultiplier(1.0);
+        text->setLengthMultiplier(1.0);
         OdUInt32 nIdx = OdDgColorTable::getColorIndexByRGB(
-            text->database(), ODRGB( 255, 200, 150 ) );
+            text->database(), ODRGB(255, 200, 150));
         text->setColorIndex(nIdx);
 
-        OdDgElementId idFont = pFontTable->getAt( "Arial" );
-        if( !idFont.isNull() )
+        OdDgElementId idFont = pFontTable->getAt("Arial");
+        if (!idFont.isNull())
         {
             OdDgFontTableRecordPtr pFont = idFont.openObject(OdDg::kForRead);
             OdUInt32 uFontEntryId = pFont->getNumber();
@@ -157,8 +158,8 @@ int main()
         point.z = 2;
         text->setOrigin(point);
         text->setText("x");
-        text->setHeightMultiplier( 1.0 );
-        text->setLengthMultiplier( 1.0 );
+        text->setHeightMultiplier(1.0);
+        text->setLengthMultiplier(1.0);
     }
 
     {
@@ -172,8 +173,8 @@ int main()
         point.y = 1;
         text->setOrigin(point);
         text->setText("z");
-        text->setHeightMultiplier( 1.0 );
-        text->setLengthMultiplier( 1.0 );
+        text->setHeightMultiplier(1.0);
+        text->setLengthMultiplier(1.0);
     }
 
     {
@@ -188,8 +189,8 @@ int main()
         point.z = 2;
         text->setOrigin(point);
         text->setText("z");
-        text->setHeightMultiplier( 1.0 );
-        text->setLengthMultiplier( 1.0 );
+        text->setHeightMultiplier(1.0);
+        text->setLengthMultiplier(1.0);
     }
 
     {
@@ -244,10 +245,10 @@ int main()
         point.x = 0;
         point.y = 1;
         point.z = 2;
-        line->addVertex(point, OdGeQuaternion( 1., 0., 0., 0. ));
+        line->addVertex(point, OdGeQuaternion(1., 0., 0., 0.));
         point.x = 3;
         point.y = 4;
-        line->addVertex(point, OdGeQuaternion( 1., 0., 0., 0. ));
+        line->addVertex(point, OdGeQuaternion(1., 0., 0., 0.));
     }
 
     {
@@ -259,7 +260,7 @@ int main()
         point.y = 1;
         point.z = 2;
         multilinePoint.setPoint(point);
-        multiline->addPoint( multilinePoint );
+        multiline->addPoint(multilinePoint);
     }
 
     // True ellipse
@@ -409,74 +410,90 @@ int main()
 
     {
         OdDgBSplineCurve3dPtr curve = OdDgBSplineCurve3d::createObject();
-        pModel->addElement( curve );
+        pModel->addElement(curve);
 
         OdGePoint3dArray arrCtrlPts;
         OdGePoint3d center;
         double major = 1.0;
         double minor = 0.5;
-        arrCtrlPts.push_back( center + OdGeVector3d( -1. * major,  1. * minor, 0. ) );
-        arrCtrlPts.push_back( center + OdGeVector3d( -1. * major,  2. * minor, 0. ) );
-        arrCtrlPts.push_back( center + OdGeVector3d( -2. * major,  2. * minor, 0. ) );
-        arrCtrlPts.push_back( center + OdGeVector3d( -2. * major,  1. * minor, 0. ) );
-        arrCtrlPts.push_back( center + OdGeVector3d( -1. * major,  1. * minor, 0. ) );
-        arrCtrlPts.push_back( center + OdGeVector3d(  1. * major,  1. * minor, 0. ) );
-        arrCtrlPts.push_back( center + OdGeVector3d(  2. * major,  1. * minor, 0. ) );
-        arrCtrlPts.push_back( center + OdGeVector3d(  2. * major,  2. * minor, 0. ) );
-        arrCtrlPts.push_back( center + OdGeVector3d(  1. * major,  2. * minor, 0. ) );
-        arrCtrlPts.push_back( center + OdGeVector3d(  1. * major,  1. * minor, 0. ) );
-        arrCtrlPts.push_back( center + OdGeVector3d(  1. * major, -1. * minor, 0. ) );
-        arrCtrlPts.push_back( center + OdGeVector3d(  1. * major, -2. * minor, 0. ) );
-        arrCtrlPts.push_back( center + OdGeVector3d(  2. * major, -2. * minor, 0. ) );
-        arrCtrlPts.push_back( center + OdGeVector3d(  2. * major, -1. * minor, 0. ) );
-        arrCtrlPts.push_back( center + OdGeVector3d(  1. * major, -1. * minor, 0. ) );
-        arrCtrlPts.push_back( center + OdGeVector3d( -1. * major, -1. * minor, 0. ) );
-        arrCtrlPts.push_back( center + OdGeVector3d( -2. * major, -1. * minor, 0. ) );
-        arrCtrlPts.push_back( center + OdGeVector3d( -2. * major, -2. * minor, 0. ) );
-        arrCtrlPts.push_back( center + OdGeVector3d( -1. * major, -2. * minor, 0. ) );
-        arrCtrlPts.push_back( center + OdGeVector3d( -1. * major, -1. * minor, 0. ) );
-        arrCtrlPts.push_back( center + OdGeVector3d( -1. * major,  1. * minor, 0. ) );
+        arrCtrlPts.push_back(center +
+                             OdGeVector3d(-1. * major, 1. * minor, 0.));
+        arrCtrlPts.push_back(center +
+                             OdGeVector3d(-1. * major, 2. * minor, 0.));
+        arrCtrlPts.push_back(center +
+                             OdGeVector3d(-2. * major, 2. * minor, 0.));
+        arrCtrlPts.push_back(center +
+                             OdGeVector3d(-2. * major, 1. * minor, 0.));
+        arrCtrlPts.push_back(center +
+                             OdGeVector3d(-1. * major, 1. * minor, 0.));
+        arrCtrlPts.push_back(center + OdGeVector3d(1. * major, 1. * minor, 0.));
+        arrCtrlPts.push_back(center + OdGeVector3d(2. * major, 1. * minor, 0.));
+        arrCtrlPts.push_back(center + OdGeVector3d(2. * major, 2. * minor, 0.));
+        arrCtrlPts.push_back(center + OdGeVector3d(1. * major, 2. * minor, 0.));
+        arrCtrlPts.push_back(center + OdGeVector3d(1. * major, 1. * minor, 0.));
+        arrCtrlPts.push_back(center +
+                             OdGeVector3d(1. * major, -1. * minor, 0.));
+        arrCtrlPts.push_back(center +
+                             OdGeVector3d(1. * major, -2. * minor, 0.));
+        arrCtrlPts.push_back(center +
+                             OdGeVector3d(2. * major, -2. * minor, 0.));
+        arrCtrlPts.push_back(center +
+                             OdGeVector3d(2. * major, -1. * minor, 0.));
+        arrCtrlPts.push_back(center +
+                             OdGeVector3d(1. * major, -1. * minor, 0.));
+        arrCtrlPts.push_back(center +
+                             OdGeVector3d(-1. * major, -1. * minor, 0.));
+        arrCtrlPts.push_back(center +
+                             OdGeVector3d(-2. * major, -1. * minor, 0.));
+        arrCtrlPts.push_back(center +
+                             OdGeVector3d(-2. * major, -2. * minor, 0.));
+        arrCtrlPts.push_back(center +
+                             OdGeVector3d(-1. * major, -2. * minor, 0.));
+        arrCtrlPts.push_back(center +
+                             OdGeVector3d(-1. * major, -1. * minor, 0.));
+        arrCtrlPts.push_back(center +
+                             OdGeVector3d(-1. * major, 1. * minor, 0.));
 
         OdGeKnotVector vrKnots;
         OdGeDoubleArray arrWeights;
 
-        curve->setNurbsData( 4, false, true, arrCtrlPts, vrKnots, arrWeights );
+        curve->setNurbsData(4, false, true, arrCtrlPts, vrKnots, arrWeights);
     }
 
     {
         OdDgBSplineCurve2dPtr curve = OdDgBSplineCurve2d::createObject();
-        pModel->addElement( curve );
+        pModel->addElement(curve);
 
         OdGePoint2dArray arrCtrlPts;
         OdGePoint2d center;
         double major = 1.0;
         double minor = 0.5;
-        arrCtrlPts.push_back( center + OdGeVector2d( -1. * major,  1. * minor ) );
-        arrCtrlPts.push_back( center + OdGeVector2d( -1. * major,  2. * minor ) );
-        arrCtrlPts.push_back( center + OdGeVector2d( -2. * major,  2. * minor ) );
-        arrCtrlPts.push_back( center + OdGeVector2d( -2. * major,  1. * minor ) );
-        arrCtrlPts.push_back( center + OdGeVector2d( -1. * major,  1. * minor ) );
-        arrCtrlPts.push_back( center + OdGeVector2d(  1. * major,  1. * minor ) );
-        arrCtrlPts.push_back( center + OdGeVector2d(  2. * major,  1. * minor ) );
-        arrCtrlPts.push_back( center + OdGeVector2d(  2. * major,  2. * minor ) );
-        arrCtrlPts.push_back( center + OdGeVector2d(  1. * major,  2. * minor ) );
-        arrCtrlPts.push_back( center + OdGeVector2d(  1. * major,  1. * minor ) );
-        arrCtrlPts.push_back( center + OdGeVector2d(  1. * major, -1. * minor ) );
-        arrCtrlPts.push_back( center + OdGeVector2d(  1. * major, -2. * minor ) );
-        arrCtrlPts.push_back( center + OdGeVector2d(  2. * major, -2. * minor ) );
-        arrCtrlPts.push_back( center + OdGeVector2d(  2. * major, -1. * minor ) );
-        arrCtrlPts.push_back( center + OdGeVector2d(  1. * major, -1. * minor ) );
-        arrCtrlPts.push_back( center + OdGeVector2d( -1. * major, -1. * minor ) );
-        arrCtrlPts.push_back( center + OdGeVector2d( -2. * major, -1. * minor ) );
-        arrCtrlPts.push_back( center + OdGeVector2d( -2. * major, -2. * minor ) );
-        arrCtrlPts.push_back( center + OdGeVector2d( -1. * major, -2. * minor ) );
-        arrCtrlPts.push_back( center + OdGeVector2d( -1. * major, -1. * minor ) );
-        arrCtrlPts.push_back( center + OdGeVector2d( -1. * major,  1. * minor ) );
+        arrCtrlPts.push_back(center + OdGeVector2d(-1. * major, 1. * minor));
+        arrCtrlPts.push_back(center + OdGeVector2d(-1. * major, 2. * minor));
+        arrCtrlPts.push_back(center + OdGeVector2d(-2. * major, 2. * minor));
+        arrCtrlPts.push_back(center + OdGeVector2d(-2. * major, 1. * minor));
+        arrCtrlPts.push_back(center + OdGeVector2d(-1. * major, 1. * minor));
+        arrCtrlPts.push_back(center + OdGeVector2d(1. * major, 1. * minor));
+        arrCtrlPts.push_back(center + OdGeVector2d(2. * major, 1. * minor));
+        arrCtrlPts.push_back(center + OdGeVector2d(2. * major, 2. * minor));
+        arrCtrlPts.push_back(center + OdGeVector2d(1. * major, 2. * minor));
+        arrCtrlPts.push_back(center + OdGeVector2d(1. * major, 1. * minor));
+        arrCtrlPts.push_back(center + OdGeVector2d(1. * major, -1. * minor));
+        arrCtrlPts.push_back(center + OdGeVector2d(1. * major, -2. * minor));
+        arrCtrlPts.push_back(center + OdGeVector2d(2. * major, -2. * minor));
+        arrCtrlPts.push_back(center + OdGeVector2d(2. * major, -1. * minor));
+        arrCtrlPts.push_back(center + OdGeVector2d(1. * major, -1. * minor));
+        arrCtrlPts.push_back(center + OdGeVector2d(-1. * major, -1. * minor));
+        arrCtrlPts.push_back(center + OdGeVector2d(-2. * major, -1. * minor));
+        arrCtrlPts.push_back(center + OdGeVector2d(-2. * major, -2. * minor));
+        arrCtrlPts.push_back(center + OdGeVector2d(-1. * major, -2. * minor));
+        arrCtrlPts.push_back(center + OdGeVector2d(-1. * major, -1. * minor));
+        arrCtrlPts.push_back(center + OdGeVector2d(-1. * major, 1. * minor));
 
         OdGeKnotVector vrKnots;
         OdGeDoubleArray arrWeights;
 
-        curve->setNurbsData( 4, false, true, arrCtrlPts, vrKnots, arrWeights );
+        curve->setNurbsData(4, false, true, arrCtrlPts, vrKnots, arrWeights);
     }
 
     // ComplexString
@@ -575,12 +592,11 @@ int main()
         shape->addVertex(point);
 
         OdDgFillColorLinkagePtr fillColor =
-                OdDgFillColorLinkage::createObject();
+            OdDgFillColorLinkage::createObject();
         OdUInt32 nIdx = OdDgColorTable::getColorIndexByRGB(
-            shape->database(), ODRGB( 200, 255, 150 ) );
-        fillColor->setColorIndex( nIdx );
-        shape->addLinkage( fillColor->getPrimaryId(),
-                           fillColor.get() );
+            shape->database(), ODRGB(200, 255, 150));
+        fillColor->setColorIndex(nIdx);
+        shape->addLinkage(fillColor->getPrimaryId(), fillColor.get());
     }
 
     // Polygon 3D
@@ -605,7 +621,7 @@ int main()
 
     // Polygon 2D with hole
     {
-        OdDgCellHeader2dPtr pCell = OdDgCellHeader2d::createObject(); 
+        OdDgCellHeader2dPtr pCell = OdDgCellHeader2d::createObject();
         pModel->addElement(pCell);
 
         OdDgShape2dPtr shape = OdDgShape2d::createObject();
@@ -643,7 +659,7 @@ int main()
 
     // Polygon 3D with hole
     {
-        OdDgCellHeader3dPtr pCell = OdDgCellHeader3d::createObject(); 
+        OdDgCellHeader3dPtr pCell = OdDgCellHeader3d::createObject();
         pModel->addElement(pCell);
 
         OdDgShape3dPtr shape = OdDgShape3d::createObject();
@@ -749,7 +765,8 @@ int main()
         line->setEndPoint(point);
     }
 
-    // ComplexShape (out of order rings, we handle that, not sure this is legal though)
+    // ComplexShape (out of order rings, we handle that, not sure this is legal
+    // though)
     {
         OdDgComplexShapePtr complex = OdDgComplexShape::createObject();
         pModel->addElement(complex);
@@ -783,41 +800,42 @@ int main()
         line->setEndPoint(point);
     }
 
-    //create a definition and reference
+    // create a definition and reference
     {
         OdDgSharedCellDefinitionPtr definition;
-        OdDgSharedCellDefinitionTablePtr table = pDb->getSharedCellDefinitionTable(OdDg::kForWrite);
+        OdDgSharedCellDefinitionTablePtr table =
+            pDb->getSharedCellDefinitionTable(OdDg::kForWrite);
 
         definition = OdDgSharedCellDefinition::createObject();
-        definition->setName( "Named definition" );
-        table->add( definition );
+        definition->setName("Named definition");
+        table->add(definition);
 
         OdDgEllipse3dPtr ellipse;
         ellipse = OdDgEllipse3d::createObject();
-        ellipse->setPrimaryAxis( 1. );
-        ellipse->setSecondaryAxis( 1. );
-        definition->add( ellipse );
+        ellipse->setPrimaryAxis(1.);
+        ellipse->setSecondaryAxis(1.);
+        definition->add(ellipse);
 
         OdDgSharedCellReferencePtr reference;
-  
+
         reference = OdDgSharedCellReference::createObject();
-        reference->setDefinitionName( "Named definition" );
+        reference->setDefinitionName("Named definition");
         OdGePoint3d point;
         point.x = 0;
         point.y = 1;
         point.z = 2;
-        reference->setOrigin( point );
-        pModel->addElement( reference );
+        reference->setOrigin(point);
+        pModel->addElement(reference);
     }
 
     // Unhandled element.
     {
         OdDgTagElementPtr tag = OdDgTagElement::createObject();
-        pModel->addElement( tag );
+        pModel->addElement(tag);
     }
 
     pModel->fitToView();
-    pDb->writeFile( "test_dgnv8.dgn" );
+    pDb->writeFile("test_dgnv8.dgn");
     pDb = nullptr;
 
     ::odrxUninitialize();

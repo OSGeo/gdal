@@ -76,4 +76,4 @@
 #include "DgText.h"
 #include "DgTextNode.h"
 
-#endif // DGNV8_HEADERS_H
+#endif  // DGNV8_HEADERS_H

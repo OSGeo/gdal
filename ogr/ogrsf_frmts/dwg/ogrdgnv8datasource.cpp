@@ -30,20 +30,16 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-
 /************************************************************************/
 /*                        OGRDGNV8DataSource()                          */
 /************************************************************************/
 
-OGRDGNV8DataSource::OGRDGNV8DataSource(OGRDGNV8Services* poServices) :
-    m_poServices(poServices),
-    m_papoLayers(nullptr),
-    m_nLayers(0),
-    m_papszOptions(nullptr),
-    m_poDb(static_cast<const OdRxObject*>(nullptr)),
-    m_bUpdate(false),
-    m_bModified(false)
-{}
+OGRDGNV8DataSource::OGRDGNV8DataSource(OGRDGNV8Services *poServices)
+    : m_poServices(poServices), m_papoLayers(nullptr), m_nLayers(0),
+      m_papszOptions(nullptr), m_poDb(static_cast<const OdRxObject *>(nullptr)),
+      m_bUpdate(false), m_bModified(false)
+{
+}
 
 /************************************************************************/
 /*                       ~OGRDGNV8DataSource()                          */
@@ -54,13 +50,12 @@ OGRDGNV8DataSource::~OGRDGNV8DataSource()
 {
     OGRDGNV8DataSource::FlushCache(true);
 
-    for( int i = 0; i < m_nLayers; i++ )
+    for (int i = 0; i < m_nLayers; i++)
         delete m_papoLayers[i];
 
-    CPLFree( m_papoLayers );
-    CSLDestroy( m_papszOptions );
+    CPLFree(m_papoLayers);
+    CSLDestroy(m_papszOptions);
 }
-
 
 /************************************************************************/
 /*                              FlushCache()                            */
@@ -68,35 +63,33 @@ OGRDGNV8DataSource::~OGRDGNV8DataSource()
 
 void OGRDGNV8DataSource::FlushCache(bool /* bAtClosing */)
 {
-    if( m_poDb.isNull() || !m_bModified )
+    if (m_poDb.isNull() || !m_bModified)
         return;
     m_bModified = false;
 
-    for( int i = 0; i < m_nLayers; i++ )
+    for (int i = 0; i < m_nLayers; i++)
     {
-       m_papoLayers[i]->m_pModel->fitToView();
+        m_papoLayers[i]->m_pModel->fitToView();
     }
 
-    OdString oFilename( FromUTF8(GetDescription()) );
+    OdString oFilename(FromUTF8(GetDescription()));
     try
     {
-        m_poDb->writeFile( oFilename );
+        m_poDb->writeFile(oFilename);
     }
-    catch (const OdError& e)
+    catch (const OdError &e)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Teigha DGN error occurred: %s",
+        CPLError(CE_Failure, CPLE_AppDefined, "Teigha DGN error occurred: %s",
                  ToUTF8(e.description()).c_str());
     }
     catch (const std::exception &exc)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "std::exception occurred: %s", exc.what());
+        CPLError(CE_Failure, CPLE_AppDefined, "std::exception occurred: %s",
+                 exc.what());
     }
     catch (...)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unknown exception occurred");
+        CPLError(CE_Failure, CPLE_AppDefined, "Unknown exception occurred");
     }
 }
 
@@ -104,58 +97,53 @@ void OGRDGNV8DataSource::FlushCache(bool /* bAtClosing */)
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRDGNV8DataSource::Open( const char * pszFilename, bool bUpdate )
+int OGRDGNV8DataSource::Open(const char *pszFilename, bool bUpdate)
 
 {
     SetDescription(pszFilename);
 
-    OdString oFilename( FromUTF8(pszFilename) );
+    OdString oFilename(FromUTF8(pszFilename));
     try
     {
-        m_poDb = m_poServices->readFile( oFilename );
+        m_poDb = m_poServices->readFile(oFilename);
     }
-    catch (const OdError& e)
+    catch (const OdError &e)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Teigha DGN error occurred: %s",
+        CPLError(CE_Failure, CPLE_AppDefined, "Teigha DGN error occurred: %s",
                  ToUTF8(e.description()).c_str());
         return FALSE;
     }
     catch (const std::exception &exc)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "std::exception occurred: %s", exc.what());
+        CPLError(CE_Failure, CPLE_AppDefined, "std::exception occurred: %s",
+                 exc.what());
         return FALSE;
     }
     catch (...)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unknown exception occurred");
+        CPLError(CE_Failure, CPLE_AppDefined, "Unknown exception occurred");
         return FALSE;
     }
 
     OdDgModelTablePtr pModelTable = m_poDb->getModelTable();
     if (pModelTable.isNull())
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "No model table found");
+        CPLError(CE_Failure, CPLE_AppDefined, "No model table found");
         return FALSE;
     }
 
     // Loop over models
     OdDgElementIteratorPtr pIter = pModelTable->createIterator();
-    for ( ; !pIter.isNull() && !pIter->done(); pIter->step() )
+    for (; !pIter.isNull() && !pIter->done(); pIter->step())
     {
-        OdDgModelPtr pModel = OdDgModel::cast(
-                pIter->item().openObject(
-                    bUpdate ? OdDg::kForWrite : OdDg::kForRead ) );
-        if ( !pModel.isNull() )
+        OdDgModelPtr pModel = OdDgModel::cast(pIter->item().openObject(
+            bUpdate ? OdDg::kForWrite : OdDg::kForRead));
+        if (!pModel.isNull())
         {
-            OGRDGNV8Layer* poLayer = new OGRDGNV8Layer(this, pModel);
-            m_papoLayers = static_cast<OGRDGNV8Layer**>(
-                    CPLRealloc(m_papoLayers,
-                               sizeof(OGRDGNV8Layer*) * (m_nLayers + 1)));
-            m_papoLayers[ m_nLayers++ ] = poLayer;
+            OGRDGNV8Layer *poLayer = new OGRDGNV8Layer(this, pModel);
+            m_papoLayers = static_cast<OGRDGNV8Layer **>(CPLRealloc(
+                m_papoLayers, sizeof(OGRDGNV8Layer *) * (m_nLayers + 1)));
+            m_papoLayers[m_nLayers++] = poLayer;
         }
     }
 
@@ -168,14 +156,14 @@ int OGRDGNV8DataSource::Open( const char * pszFilename, bool bUpdate )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRDGNV8DataSource::TestCapability( const char * pszCap )
+int OGRDGNV8DataSource::TestCapability(const char *pszCap)
 
 {
-    if( EQUAL(pszCap,ODsCCreateLayer) )
+    if (EQUAL(pszCap, ODsCCreateLayer))
         return m_bUpdate;
-    else if( EQUAL(pszCap,ODsCCurveGeometries) )
+    else if (EQUAL(pszCap, ODsCCurveGeometries))
         return TRUE;
-    else if( EQUAL(pszCap,ODsCZGeometries) )
+    else if (EQUAL(pszCap, ODsCZGeometries))
         return TRUE;
 
     return FALSE;
@@ -185,10 +173,10 @@ int OGRDGNV8DataSource::TestCapability( const char * pszCap )
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRDGNV8DataSource::GetLayer( int iLayer )
+OGRLayer *OGRDGNV8DataSource::GetLayer(int iLayer)
 
 {
-    if( iLayer < 0 || iLayer >= m_nLayers )
+    if (iLayer < 0 || iLayer >= m_nLayers)
         return nullptr;
 
     return m_papoLayers[iLayer];
@@ -198,16 +186,15 @@ OGRLayer *OGRDGNV8DataSource::GetLayer( int iLayer )
 /*                         EraseSubElements()                           */
 /************************************************************************/
 
-template<class T> static void EraseSubElements(T container)
+template <class T> static void EraseSubElements(T container)
 {
-    if( !container.isNull() )
+    if (!container.isNull())
     {
         OdDgElementIteratorPtr pIter = container->createIterator();
-        for(; !pIter.isNull() && !pIter->done(); pIter->step() )
+        for (; !pIter.isNull() && !pIter->done(); pIter->step())
         {
-            OdDgElementPtr pElement =
-                pIter->item().openObject(OdDg::kForWrite);
-            if( !pElement.isNull() )
+            OdDgElementPtr pElement = pIter->item().openObject(OdDg::kForWrite);
+            if (!pElement.isNull())
             {
                 pElement->erase(true);
             }
@@ -225,13 +212,13 @@ void OGRDGNV8DataSource::InitWithSeed()
     EraseSubElements(m_poDb->getLevelTable(OdDg::kForWrite));
 #endif
 
-    if( !CPLTestBool(CSLFetchNameValueDef(
-            m_papszOptions, "COPY_SEED_FILE_COLOR_TABLE", "NO")) )
+    if (!CPLTestBool(CSLFetchNameValueDef(m_papszOptions,
+                                          "COPY_SEED_FILE_COLOR_TABLE", "NO")))
     {
         OdDgColorTablePtr colorTable = m_poDb->getColorTable(OdDg::kForWrite);
-        if( !colorTable.isNull() )
+        if (!colorTable.isNull())
         {
-            const ODCOLORREF* defColors = OdDgColorTable::defaultPalette();
+            const ODCOLORREF *defColors = OdDgColorTable::defaultPalette();
             OdArray<ODCOLORREF> palette;
             palette.insert(palette.begin(), defColors, defColors + 256);
             colorTable->setPalette(palette);
@@ -240,42 +227,41 @@ void OGRDGNV8DataSource::InitWithSeed()
 
     OdDgModelTablePtr pModelTable = m_poDb->getModelTable();
 
-    if( CPLTestBool(CSLFetchNameValueDef(
-            m_papszOptions, "COPY_SEED_FILE_MODEL", "YES")) )
+    if (CPLTestBool(CSLFetchNameValueDef(m_papszOptions, "COPY_SEED_FILE_MODEL",
+                                         "YES")))
     {
-        if( !pModelTable.isNull() )
+        if (!pModelTable.isNull())
         {
             OdDgElementIteratorPtr pIter = pModelTable->createIterator();
-            for(; !pIter.isNull() && !pIter->done(); pIter->step() )
+            for (; !pIter.isNull() && !pIter->done(); pIter->step())
             {
-                OdDgModelPtr pModel = OdDgModel::cast(
-                    pIter->item().openObject( OdDg::kForWrite ) );
-                if( !pModel.isNull() )
+                OdDgModelPtr pModel =
+                    OdDgModel::cast(pIter->item().openObject(OdDg::kForWrite));
+                if (!pModel.isNull())
                 {
                     OdDgElementIteratorPtr pIter2 =
                         pModel->createGraphicsElementsIterator();
-                    for(; !pIter2.isNull() && !pIter2->done(); pIter2->step() )
+                    for (; !pIter2.isNull() && !pIter2->done(); pIter2->step())
                     {
                         OdDgElementPtr pElement =
                             pIter2->item().openObject(OdDg::kForWrite);
-                        if( !pElement.isNull() )
+                        if (!pElement.isNull())
                         {
                             pElement->erase(true);
                         }
                     }
 
-                    if( !CPLTestBool(CSLFetchNameValueDef(
+                    if (!CPLTestBool(CSLFetchNameValueDef(
                             m_papszOptions,
-                            "COPY_SEED_FILE_MODEL_CONTROL_ELEMENTS", "YES")) )
+                            "COPY_SEED_FILE_MODEL_CONTROL_ELEMENTS", "YES")))
                     {
-                        pIter2 =
-                            pModel->createControlElementsIterator();
-                        for(; !pIter2.isNull() && !pIter2->done();
-                            pIter2->step() )
+                        pIter2 = pModel->createControlElementsIterator();
+                        for (; !pIter2.isNull() && !pIter2->done();
+                             pIter2->step())
                         {
                             OdDgElementPtr pElement =
                                 pIter2->item().openObject(OdDg::kForWrite);
-                            if( !pElement.isNull() )
+                            if (!pElement.isNull())
                             {
                                 pElement->erase(true);
                             }
@@ -292,10 +278,10 @@ void OGRDGNV8DataSource::InitWithSeed()
 
         // Recreate a new model and bind it as default
         OdDgModelPtr model = OdDgModel::createObject();
-        pModelTable->add( model );
+        pModelTable->add(model);
 
-        m_poDb->setActiveModelId( model->elementId() );
-        m_poDb->setDefaultModelId( model->elementId() );
+        m_poDb->setActiveModelId(model->elementId());
+        m_poDb->setDefaultModelId(model->elementId());
 
         // Erase existing views
         EraseSubElements(m_poDb->getNamedViewTable());
@@ -322,10 +308,10 @@ void OGRDGNV8DataSource::InitWithSeed()
 /*                            FillMD()                                  */
 /************************************************************************/
 
-static void FillMD( CPLStringList& osDGNMD, const char* pszKey, OdString str )
+static void FillMD(CPLStringList &osDGNMD, const char *pszKey, OdString str)
 {
-    CPLString osVal( OGRDGNV8DataSource::ToUTF8(str) );
-    if( !osVal.empty() )
+    CPLString osVal(OGRDGNV8DataSource::ToUTF8(str));
+    if (!osVal.empty())
         osDGNMD.SetNameValue(pszKey, osVal);
 }
 
@@ -335,8 +321,7 @@ static void FillMD( CPLStringList& osDGNMD, const char* pszKey, OdString str )
 
 char **OGRDGNV8DataSource::GetMetadataDomainList()
 {
-    return BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(),
-                                   TRUE,
+    return BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(), TRUE,
                                    "DGN", nullptr);
 }
 
@@ -344,26 +329,26 @@ char **OGRDGNV8DataSource::GetMetadataDomainList()
 /*                          GetMetadata()                              */
 /************************************************************************/
 
-char** OGRDGNV8DataSource::GetMetadata(const char* pszDomain)
+char **OGRDGNV8DataSource::GetMetadata(const char *pszDomain)
 {
-    if( pszDomain != nullptr && EQUAL(pszDomain, "DGN") )
+    if (pszDomain != nullptr && EQUAL(pszDomain, "DGN"))
     {
         m_osDGNMD.Clear();
         OdDgSummaryInformationPtr summary = oddgGetSummaryInformation(m_poDb);
-        FillMD( m_osDGNMD, "APPLICATION", summary->getApplicationName() );
-        FillMD( m_osDGNMD, "TITLE", summary->getTitle() );
-        FillMD( m_osDGNMD, "SUBJECT", summary->getSubject() );
-        FillMD( m_osDGNMD, "AUTHOR", summary->getAuthor() );
-        FillMD( m_osDGNMD, "KEYWORDS", summary->getKeywords() );
-        FillMD( m_osDGNMD, "TEMPLATE", summary->getTemplate() );
-        FillMD( m_osDGNMD, "COMMENTS", summary->getComments() );
-        FillMD( m_osDGNMD, "LAST_SAVED_BY", summary->getLastSavedBy() );
-        FillMD( m_osDGNMD, "REVISION_NUMBER", summary->getRevisionNumber() );
+        FillMD(m_osDGNMD, "APPLICATION", summary->getApplicationName());
+        FillMD(m_osDGNMD, "TITLE", summary->getTitle());
+        FillMD(m_osDGNMD, "SUBJECT", summary->getSubject());
+        FillMD(m_osDGNMD, "AUTHOR", summary->getAuthor());
+        FillMD(m_osDGNMD, "KEYWORDS", summary->getKeywords());
+        FillMD(m_osDGNMD, "TEMPLATE", summary->getTemplate());
+        FillMD(m_osDGNMD, "COMMENTS", summary->getComments());
+        FillMD(m_osDGNMD, "LAST_SAVED_BY", summary->getLastSavedBy());
+        FillMD(m_osDGNMD, "REVISION_NUMBER", summary->getRevisionNumber());
         OdDgDocumentSummaryInformationPtr docSummaryInfo =
-                                oddgGetDocumentSummaryInformation(m_poDb);
-        FillMD( m_osDGNMD, "CATEGORY", docSummaryInfo->getCategory() );
-        FillMD( m_osDGNMD, "MANAGER", docSummaryInfo->getManager() );
-        FillMD( m_osDGNMD, "COMPANY", docSummaryInfo->getCompany() );
+            oddgGetDocumentSummaryInformation(m_poDb);
+        FillMD(m_osDGNMD, "CATEGORY", docSummaryInfo->getCategory());
+        FillMD(m_osDGNMD, "MANAGER", docSummaryInfo->getManager());
+        FillMD(m_osDGNMD, "COMPANY", docSummaryInfo->getCompany());
         return m_osDGNMD.List();
     }
     return GDALDataset::GetMetadata(pszDomain);
@@ -373,10 +358,10 @@ char** OGRDGNV8DataSource::GetMetadata(const char* pszDomain)
 /*                        GetMetadataItem()                             */
 /************************************************************************/
 
-const char* OGRDGNV8DataSource::GetMetadataItem(const char* pszName,
-                                                const char* pszDomain)
+const char *OGRDGNV8DataSource::GetMetadataItem(const char *pszName,
+                                                const char *pszDomain)
 {
-    return CSLFetchNameValue( GetMetadata(pszDomain), pszName );
+    return CSLFetchNameValue(GetMetadata(pszDomain), pszName);
 }
 
 /************************************************************************/
@@ -387,55 +372,52 @@ const char* OGRDGNV8DataSource::GetMetadataItem(const char* pszName,
 /*      yet.                                                            */
 /************************************************************************/
 
-bool OGRDGNV8DataSource::PreCreate( const char *pszFilename,
-                                    char **papszOptionsIn )
+bool OGRDGNV8DataSource::PreCreate(const char *pszFilename,
+                                   char **papszOptionsIn)
 
 {
     m_bUpdate = true;
     m_bModified = true;
-    m_papszOptions = CSLDuplicate( papszOptionsIn );
-    SetDescription( pszFilename );
+    m_papszOptions = CSLDuplicate(papszOptionsIn);
+    SetDescription(pszFilename);
 
-    VSILFILE* fp = VSIFOpenL(pszFilename, "wb");
-    if( fp == nullptr )
+    VSILFILE *fp = VSIFOpenL(pszFilename, "wb");
+    if (fp == nullptr)
     {
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "Cannot write %s", pszFilename);
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot write %s", pszFilename);
         return false;
     }
     VSIFCloseL(fp);
 
-    const char* pszSeed = CSLFetchNameValue(m_papszOptions, "SEED");
+    const char *pszSeed = CSLFetchNameValue(m_papszOptions, "SEED");
 
     try
     {
-        if( pszSeed )
-            m_poDb = m_poServices->readFile( FromUTF8(pszSeed) );
+        if (pszSeed)
+            m_poDb = m_poServices->readFile(FromUTF8(pszSeed));
         else
             m_poDb = m_poServices->createDatabase();
 
-        if( pszSeed )
+        if (pszSeed)
         {
             InitWithSeed();
         }
     }
-    catch (const OdError& e)
+    catch (const OdError &e)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Teigha DGN error occurred: %s",
+        CPLError(CE_Failure, CPLE_AppDefined, "Teigha DGN error occurred: %s",
                  ToUTF8(e.description()).c_str());
         return false;
     }
     catch (const std::exception &exc)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "std::exception occurred: %s", exc.what());
+        CPLError(CE_Failure, CPLE_AppDefined, "std::exception occurred: %s",
+                 exc.what());
         return false;
     }
     catch (...)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unknown exception occurred");
+        CPLError(CE_Failure, CPLE_AppDefined, "Unknown exception occurred");
         return false;
     }
 
@@ -443,60 +425,59 @@ bool OGRDGNV8DataSource::PreCreate( const char *pszFilename,
     CPLString osDefaultAppName("GDAL ");
     osDefaultAppName += GDALVersionInfo("RELEASE_NAME");
     osDefaultAppName += " with " + ToUTF8(summary->getApplicationName());
-    const char* pszAppName = CSLFetchNameValue(m_papszOptions,
-                                                  "APPLICATION");
-    if( pszSeed == nullptr && pszAppName == nullptr )
+    const char *pszAppName = CSLFetchNameValue(m_papszOptions, "APPLICATION");
+    if (pszSeed == nullptr && pszAppName == nullptr)
         pszAppName = osDefaultAppName;
-    if( pszAppName )
+    if (pszAppName)
         summary->setApplicationName(FromUTF8(pszAppName));
 
-    const char* pszTitle = CSLFetchNameValue(m_papszOptions, "TITLE");
-    if( pszTitle )
+    const char *pszTitle = CSLFetchNameValue(m_papszOptions, "TITLE");
+    if (pszTitle)
         summary->setTitle(FromUTF8(pszTitle));
 
-    const char* pszSubject = CSLFetchNameValue(m_papszOptions, "SUBJECT");
-    if( pszSubject )
+    const char *pszSubject = CSLFetchNameValue(m_papszOptions, "SUBJECT");
+    if (pszSubject)
         summary->setSubject(FromUTF8(pszSubject));
 
-    const char* pszAuthor = CSLFetchNameValue(m_papszOptions, "AUTHOR");
-    if( pszAuthor )
+    const char *pszAuthor = CSLFetchNameValue(m_papszOptions, "AUTHOR");
+    if (pszAuthor)
         summary->setAuthor(FromUTF8(pszAuthor));
 
-    const char* pszKeywords = CSLFetchNameValue(m_papszOptions, "KEYWORDS");
-    if( pszKeywords )
+    const char *pszKeywords = CSLFetchNameValue(m_papszOptions, "KEYWORDS");
+    if (pszKeywords)
         summary->setKeywords(FromUTF8(pszKeywords));
 
-    const char* pszTemplate = CSLFetchNameValue(m_papszOptions, "TEMPLATE");
-    if( pszTemplate )
+    const char *pszTemplate = CSLFetchNameValue(m_papszOptions, "TEMPLATE");
+    if (pszTemplate)
         summary->setTemplate(FromUTF8(pszTemplate));
 
-    const char* pszComments = CSLFetchNameValue(m_papszOptions, "COMMENTS");
-    if( pszComments )
+    const char *pszComments = CSLFetchNameValue(m_papszOptions, "COMMENTS");
+    if (pszComments)
         summary->setComments(FromUTF8(pszComments));
 
-    const char* pszLastSavedBy = CSLFetchNameValue(m_papszOptions,
-                                                   "LAST_SAVED_BY");
-    if( pszLastSavedBy )
+    const char *pszLastSavedBy =
+        CSLFetchNameValue(m_papszOptions, "LAST_SAVED_BY");
+    if (pszLastSavedBy)
         summary->setLastSavedBy(FromUTF8(pszLastSavedBy));
 
-    const char* pszRevisionNumber = CSLFetchNameValue(m_papszOptions,
-                                                      "REVISION_NUMBER");
-    if( pszRevisionNumber )
+    const char *pszRevisionNumber =
+        CSLFetchNameValue(m_papszOptions, "REVISION_NUMBER");
+    if (pszRevisionNumber)
         summary->setRevisionNumber(FromUTF8(pszRevisionNumber));
 
     OdDgDocumentSummaryInformationPtr docSummaryInfo =
         oddgGetDocumentSummaryInformation(m_poDb);
 
-    const char* pszCategory = CSLFetchNameValue(m_papszOptions, "CATEGORY");
-    if( pszCategory )
+    const char *pszCategory = CSLFetchNameValue(m_papszOptions, "CATEGORY");
+    if (pszCategory)
         docSummaryInfo->setCategory(FromUTF8(pszCategory));
 
-    const char* pszManager = CSLFetchNameValue(m_papszOptions, "MANAGER");
-    if( pszManager )
+    const char *pszManager = CSLFetchNameValue(m_papszOptions, "MANAGER");
+    if (pszManager)
         docSummaryInfo->setManager(FromUTF8(pszManager));
 
-    const char* pszCompany = CSLFetchNameValue(m_papszOptions, "COMPANY");
-    if( pszCompany )
+    const char *pszCompany = CSLFetchNameValue(m_papszOptions, "COMPANY");
+    if (pszCompany)
         docSummaryInfo->setCompany(FromUTF8(pszCompany));
 
     return true;
@@ -506,13 +487,12 @@ bool OGRDGNV8DataSource::PreCreate( const char *pszFilename,
 /*                             ToUTF8()                                 */
 /************************************************************************/
 
-CPLString OGRDGNV8DataSource::ToUTF8(const OdString& str)
+CPLString OGRDGNV8DataSource::ToUTF8(const OdString &str)
 {
-    CPL_STATIC_ASSERT( sizeof(OdChar) == sizeof(wchar_t) );
-    char* pszUTF8 = CPLRecodeFromWChar(
-        reinterpret_cast<const wchar_t*>(str.c_str()),
-        "WCHAR_T",
-        CPL_ENC_UTF8);
+    CPL_STATIC_ASSERT(sizeof(OdChar) == sizeof(wchar_t));
+    char *pszUTF8 =
+        CPLRecodeFromWChar(reinterpret_cast<const wchar_t *>(str.c_str()),
+                           "WCHAR_T", CPL_ENC_UTF8);
     CPLString osRet(pszUTF8);
     CPLFree(pszUTF8);
     return osRet;
@@ -522,13 +502,11 @@ CPLString OGRDGNV8DataSource::ToUTF8(const OdString& str)
 /*                            FromUTF8()                                */
 /************************************************************************/
 
-OdString OGRDGNV8DataSource::FromUTF8(const CPLString& str)
+OdString OGRDGNV8DataSource::FromUTF8(const CPLString &str)
 {
-    CPL_STATIC_ASSERT( sizeof(OdChar) == sizeof(wchar_t) );
-    OdChar* pwszWide = reinterpret_cast<OdChar*>(CPLRecodeToWChar(
-        str.c_str(),
-        CPL_ENC_UTF8,
-        "WCHAR_T"));
+    CPL_STATIC_ASSERT(sizeof(OdChar) == sizeof(wchar_t));
+    OdChar *pwszWide = reinterpret_cast<OdChar *>(
+        CPLRecodeToWChar(str.c_str(), CPL_ENC_UTF8, "WCHAR_T"));
     OdString osRet(pwszWide);
     CPLFree(pwszWide);
     return osRet;
@@ -538,16 +516,16 @@ OdString OGRDGNV8DataSource::FromUTF8(const CPLString& str)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRDGNV8DataSource::ICreateLayer( const char *pszLayerName,
-                                            OGRSpatialReference * /*poSRS*/,
-                                            OGRwkbGeometryType /*eGeomType*/,
-                                            char **papszOptions )
+OGRLayer *OGRDGNV8DataSource::ICreateLayer(const char *pszLayerName,
+                                           OGRSpatialReference * /*poSRS*/,
+                                           OGRwkbGeometryType /*eGeomType*/,
+                                           char **papszOptions)
 
 {
-    if( !m_bUpdate )
+    if (!m_bUpdate)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "CreateLayer() only supported on update mode." );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "CreateLayer() only supported on update mode.");
         return nullptr;
     }
 
@@ -558,13 +536,13 @@ OGRLayer *OGRDGNV8DataSource::ICreateLayer( const char *pszLayerName,
         // First try to find a model that matches the layer name (case of a seed
         // file)
         OdDgElementIteratorPtr pIter = pModelTable->createIterator();
-        for ( ; !pIter->done(); pIter->step() )
+        for (; !pIter->done(); pIter->step())
         {
-            OdDgModelPtr pModel = OdDgModel::cast(
-                    pIter->item().openObject( OdDg::kForWrite ) );
-            if ( !pModel.isNull() )
+            OdDgModelPtr pModel =
+                OdDgModel::cast(pIter->item().openObject(OdDg::kForWrite));
+            if (!pModel.isNull())
             {
-                if( ToUTF8(pModel->getName()) == CPLString(pszLayerName) )
+                if (ToUTF8(pModel->getName()) == CPLString(pszLayerName))
                 {
                     model = pModel;
                     break;
@@ -573,55 +551,52 @@ OGRLayer *OGRDGNV8DataSource::ICreateLayer( const char *pszLayerName,
         }
         // If we don't find a match, but there's at least one model, pick
         // the default one
-        if( model.isNull() && m_nLayers == 0 )
-            model = m_poDb->getActiveModelId().openObject( OdDg::kForWrite );
-        if( model.isNull() )
+        if (model.isNull() && m_nLayers == 0)
+            model = m_poDb->getActiveModelId().openObject(OdDg::kForWrite);
+        if (model.isNull())
         {
             model = OdDgModel::createObject();
-            pModelTable->add( model );
+            pModelTable->add(model);
         }
 
-        const char* pszDim = CSLFetchNameValue(papszOptions, "DIM");
-        if( pszDim != nullptr )
+        const char *pszDim = CSLFetchNameValue(papszOptions, "DIM");
+        if (pszDim != nullptr)
         {
-            model->setModelIs3dFlag( EQUAL(pszDim, "3") );
+            model->setModelIs3dFlag(EQUAL(pszDim, "3"));
         }
 
-        model->setWorkingUnit( OdDgModel::kWuMasterUnit );
+        model->setWorkingUnit(OdDgModel::kWuMasterUnit);
 
-        model->setName( FromUTF8(pszLayerName) );
+        model->setName(FromUTF8(pszLayerName));
 
-        const char* pszDescription = CSLFetchNameValue(papszOptions,
-                                                       "DESCRIPTION");
-        if( pszDescription )
-            model->setDescription( FromUTF8(pszDescription) );
+        const char *pszDescription =
+            CSLFetchNameValue(papszOptions, "DESCRIPTION");
+        if (pszDescription)
+            model->setDescription(FromUTF8(pszDescription));
     }
-    catch (const OdError& e)
+    catch (const OdError &e)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Teigha DGN error occurred: %s",
+        CPLError(CE_Failure, CPLE_AppDefined, "Teigha DGN error occurred: %s",
                  ToUTF8(e.description()).c_str());
         return nullptr;
     }
     catch (const std::exception &exc)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "std::exception occurred: %s", exc.what());
+        CPLError(CE_Failure, CPLE_AppDefined, "std::exception occurred: %s",
+                 exc.what());
         return nullptr;
     }
     catch (...)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unknown exception occurred");
+        CPLError(CE_Failure, CPLE_AppDefined, "Unknown exception occurred");
         return nullptr;
     }
 
     m_bModified = true;
 
-    OGRDGNV8Layer* poLayer = new OGRDGNV8Layer(this, model);
-    m_papoLayers = static_cast<OGRDGNV8Layer**>(
-                    CPLRealloc(m_papoLayers,
-                               sizeof(OGRDGNV8Layer*) * (m_nLayers + 1)));
-    m_papoLayers[ m_nLayers++ ] = poLayer;
+    OGRDGNV8Layer *poLayer = new OGRDGNV8Layer(this, model);
+    m_papoLayers = static_cast<OGRDGNV8Layer **>(
+        CPLRealloc(m_papoLayers, sizeof(OGRDGNV8Layer *) * (m_nLayers + 1)));
+    m_papoLayers[m_nLayers++] = poLayer;
     return poLayer;
 }
