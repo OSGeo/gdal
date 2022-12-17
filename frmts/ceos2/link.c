@@ -29,16 +29,14 @@
 
 #include "ceos.h"
 
-
-
 /************************************************************************/
 /*                             ceos2CreateLink()                             */
 /************************************************************************/
 
-Link_t *ceos2CreateLink( void *pObject )
+Link_t *ceos2CreateLink(void *pObject)
 
 {
-    Link_t    *psLink = (Link_t *) CPLCalloc(sizeof(Link_t),1);
+    Link_t *psLink = (Link_t *)CPLCalloc(sizeof(Link_t), 1);
 
     psLink->object = pObject;
 
@@ -49,14 +47,14 @@ Link_t *ceos2CreateLink( void *pObject )
 /*                            DestroyList()                             */
 /************************************************************************/
 
-void DestroyList( Link_t * psList )
+void DestroyList(Link_t *psList)
 
 {
-    while( psList != NULL )
+    while (psList != NULL)
     {
-        Link_t    *psNext = psList->next;
+        Link_t *psNext = psList->next;
 
-        CPLFree( psList );
+        CPLFree(psList);
         psList = psNext;
     }
 }
@@ -65,7 +63,7 @@ void DestroyList( Link_t * psList )
 /*                             InsertLink()                             */
 /************************************************************************/
 
-Link_t *InsertLink( Link_t *psList, Link_t *psLink )
+Link_t *InsertLink(Link_t *psList, Link_t *psLink)
 
 {
     psLink->next = psList;
@@ -77,15 +75,17 @@ Link_t *InsertLink( Link_t *psList, Link_t *psLink )
 /*                              AddLink()                               */
 /************************************************************************/
 
-Link_t *AddLink( Link_t *psList, Link_t *psLink )
+Link_t *AddLink(Link_t *psList, Link_t *psLink)
 
 {
-    Link_t    *psNode;
+    Link_t *psNode;
 
-    if( psList == NULL )
+    if (psList == NULL)
         return psLink;
 
-    for( psNode = psList; psNode->next != NULL; psNode = psNode->next ) {}
+    for (psNode = psList; psNode->next != NULL; psNode = psNode->next)
+    {
+    }
 
     psNode->next = psLink;
 
