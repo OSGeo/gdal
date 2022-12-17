@@ -1,8 +1,8 @@
 /******************************************************************************
  *
  * Project:  MSSQL Spatial driver
- * Purpose:  Implements OGRMSSQLGeometryParser class to parse native SqlGeometries.
- * Author:   Tamas Szekeres, szekerest at gmail.com
+ * Purpose:  Implements OGRMSSQLGeometryParser class to parse native
+ *SqlGeometries. Author:   Tamas Szekeres, szekerest at gmail.com
  *
  ******************************************************************************
  * Copyright (c) 2010, Tamas Szekeres
@@ -28,7 +28,6 @@
 
 #include "cpl_conv.h"
 #include "ogr_mssqlspatial.h"
-
 
 /*   SqlGeometry/SqlGeography serialization format
 
@@ -61,9 +60,9 @@ SerializationProps (bitmask) 1 byte
   0x10 = IsSingleLineSegment
   0x20 = IsLargerThanAHemisphere
 
-Point (2-4)x8 bytes, size depends on SerializationProps & HasZValues & HasMValues
-  [x][y]                  - SqlGeometry
-  [latitude][longitude]   - SqlGeography
+Point (2-4)x8 bytes, size depends on SerializationProps & HasZValues &
+HasMValues [x][y]                  - SqlGeometry [latitude][longitude]   -
+SqlGeography
 
 Figure
   [FigureAttribute][PointOffset]
@@ -109,20 +108,21 @@ SegmentType (1 byte)
 /*                         Geometry parser macros                       */
 /************************************************************************/
 
-#define ReadInt32(nPos) (*((int*)(pszData + (nPos))))
+#define ReadInt32(nPos) (*((int *)(pszData + (nPos))))
 
 #define ReadByte(nPos) (pszData[nPos])
 
-#define ReadDouble(nPos) (*((double*)(pszData + (nPos))))
+#define ReadDouble(nPos) (*((double *)(pszData + (nPos))))
 
-#define ParentOffset(iShape) (ReadInt32(nShapePos + (iShape) * 9 ))
-#define FigureOffset(iShape) (ReadInt32(nShapePos + (iShape) * 9 + 4))
-#define ShapeType(iShape) (ReadByte(nShapePos + (iShape) * 9 + 8))
+#define ParentOffset(iShape) (ReadInt32(nShapePos + (iShape)*9))
+#define FigureOffset(iShape) (ReadInt32(nShapePos + (iShape)*9 + 4))
+#define ShapeType(iShape) (ReadByte(nShapePos + (iShape)*9 + 8))
 #define SegmentType(iSegment) (ReadByte(nSegmentPos + (iSegment)))
 
-#define FigureAttribute(iFigure) (ReadByte(nFigurePos + (iFigure) * 5))
-#define PointOffset(iFigure) (ReadInt32(nFigurePos + (iFigure) * 5 + 1))
-#define NextPointOffset(iFigure) (iFigure + 1 < nNumFigures? PointOffset((iFigure) +1) : nNumPoints)
+#define FigureAttribute(iFigure) (ReadByte(nFigurePos + (iFigure)*5))
+#define PointOffset(iFigure) (ReadInt32(nFigurePos + (iFigure)*5 + 1))
+#define NextPointOffset(iFigure)                                               \
+    (iFigure + 1 < nNumFigures ? PointOffset((iFigure) + 1) : nNumPoints)
 
 #define ReadX(iPoint) (ReadDouble(nPointPos + 16 * (iPoint)))
 #define ReadY(iPoint) (ReadDouble(nPointPos + 16 * (iPoint) + 8))
@@ -156,12 +156,12 @@ OGRMSSQLGeometryParser::OGRMSSQLGeometryParser(int nGeomColumnType)
 /*                         ReadPoint()                                  */
 /************************************************************************/
 
-OGRPoint* OGRMSSQLGeometryParser::ReadPoint(int iFigure)
+OGRPoint *OGRMSSQLGeometryParser::ReadPoint(int iFigure)
 {
     if (iFigure == -1)
     {
         /* creating an empty point */
-        OGRPoint* poPoint = new OGRPoint();
+        OGRPoint *poPoint = new OGRPoint();
         if (chProps & SP_HASZVALUES)
             poPoint->setCoordinateDimension(3);
 
@@ -171,40 +171,46 @@ OGRPoint* OGRMSSQLGeometryParser::ReadPoint(int iFigure)
         return poPoint;
     }
 
-    if ( iFigure < nNumFigures )
+    if (iFigure < nNumFigures)
     {
         int iPoint = PointOffset(iFigure);
-        if ( iPoint < nNumPoints )
+        if (iPoint < nNumPoints)
         {
             if (nColType == MSSQLCOLTYPE_GEOGRAPHY)
             {
-                if ( (chProps & SP_HASZVALUES) && (chProps & SP_HASMVALUES) )
-                    return new OGRPoint(ReadY(iPoint), ReadX(iPoint), ReadZ(iPoint), ReadM(iPoint) );
-                else if ( chProps & SP_HASZVALUES )
-                    return new OGRPoint( ReadY(iPoint), ReadX(iPoint), ReadZ(iPoint) );
-                else if ( chProps & SP_HASMVALUES )
+                if ((chProps & SP_HASZVALUES) && (chProps & SP_HASMVALUES))
+                    return new OGRPoint(ReadY(iPoint), ReadX(iPoint),
+                                        ReadZ(iPoint), ReadM(iPoint));
+                else if (chProps & SP_HASZVALUES)
+                    return new OGRPoint(ReadY(iPoint), ReadX(iPoint),
+                                        ReadZ(iPoint));
+                else if (chProps & SP_HASMVALUES)
                 {
-                    OGRPoint* poPoint = new OGRPoint( ReadY(iPoint), ReadX(iPoint) );
-                    poPoint->setM( ReadZ(iPoint) );
+                    OGRPoint *poPoint =
+                        new OGRPoint(ReadY(iPoint), ReadX(iPoint));
+                    poPoint->setM(ReadZ(iPoint));
                     return poPoint;
                 }
                 else
-                    return new OGRPoint( ReadY(iPoint), ReadX(iPoint) );
+                    return new OGRPoint(ReadY(iPoint), ReadX(iPoint));
             }
             else
             {
-                if ( (chProps & SP_HASZVALUES) && (chProps & SP_HASMVALUES) )
-                    return new OGRPoint( ReadX(iPoint), ReadY(iPoint), ReadZ(iPoint), ReadM(iPoint) );
-                else if ( chProps & SP_HASZVALUES )
-                    return new OGRPoint( ReadX(iPoint), ReadY(iPoint), ReadZ(iPoint) );
-                else if ( chProps & SP_HASMVALUES )
+                if ((chProps & SP_HASZVALUES) && (chProps & SP_HASMVALUES))
+                    return new OGRPoint(ReadX(iPoint), ReadY(iPoint),
+                                        ReadZ(iPoint), ReadM(iPoint));
+                else if (chProps & SP_HASZVALUES)
+                    return new OGRPoint(ReadX(iPoint), ReadY(iPoint),
+                                        ReadZ(iPoint));
+                else if (chProps & SP_HASMVALUES)
                 {
-                    OGRPoint* poPoint = new OGRPoint( ReadX(iPoint), ReadY(iPoint) );
-                    poPoint->setM( ReadZ(iPoint) );
+                    OGRPoint *poPoint =
+                        new OGRPoint(ReadX(iPoint), ReadY(iPoint));
+                    poPoint->setM(ReadZ(iPoint));
                     return poPoint;
                 }
                 else
-                    return new OGRPoint( ReadX(iPoint), ReadY(iPoint) );
+                    return new OGRPoint(ReadX(iPoint), ReadY(iPoint));
             }
         }
     }
@@ -215,21 +221,21 @@ OGRPoint* OGRMSSQLGeometryParser::ReadPoint(int iFigure)
 /*                         ReadMultiPoint()                             */
 /************************************************************************/
 
-OGRMultiPoint* OGRMSSQLGeometryParser::ReadMultiPoint(int iShape)
+OGRMultiPoint *OGRMSSQLGeometryParser::ReadMultiPoint(int iShape)
 {
-    OGRMultiPoint* poMultiPoint = new OGRMultiPoint();
-    OGRGeometry* poGeom;
+    OGRMultiPoint *poMultiPoint = new OGRMultiPoint();
+    OGRGeometry *poGeom;
 
     for (int i = iShape + 1; i < nNumShapes; i++)
     {
         poGeom = nullptr;
         if (ParentOffset(i) == iShape)
         {
-            if  ( ShapeType(i) == ST_POINT )
+            if (ShapeType(i) == ST_POINT)
                 poGeom = ReadPoint(FigureOffset(i));
         }
-        if ( poGeom )
-            poMultiPoint->addGeometryDirectly( poGeom );
+        if (poGeom)
+            poMultiPoint->addGeometryDirectly(poGeom);
     }
 
     return poMultiPoint;
@@ -239,7 +245,8 @@ OGRMultiPoint* OGRMSSQLGeometryParser::ReadMultiPoint(int iShape)
 /*                         ReadSimpleCurve()                            */
 /************************************************************************/
 
-OGRErr OGRMSSQLGeometryParser::ReadSimpleCurve(OGRSimpleCurve* poCurve, int iPoint, int iNextPoint)
+OGRErr OGRMSSQLGeometryParser::ReadSimpleCurve(OGRSimpleCurve *poCurve,
+                                               int iPoint, int iNextPoint)
 {
     if (iPoint >= iNextPoint)
         return OGRERR_NOT_ENOUGH_DATA;
@@ -251,22 +258,28 @@ OGRErr OGRMSSQLGeometryParser::ReadSimpleCurve(OGRSimpleCurve* poCurve, int iPoi
         if (nColType == MSSQLCOLTYPE_GEOGRAPHY)
         {
             if ((chProps & SP_HASZVALUES) && (chProps & SP_HASMVALUES))
-                poCurve->setPoint(i, ReadY(iPoint), ReadX(iPoint), ReadZ(iPoint), ReadM(iPoint));
+                poCurve->setPoint(i, ReadY(iPoint), ReadX(iPoint),
+                                  ReadZ(iPoint), ReadM(iPoint));
             else if (chProps & SP_HASZVALUES)
-                poCurve->setPoint(i, ReadY(iPoint), ReadX(iPoint), ReadZ(iPoint));
+                poCurve->setPoint(i, ReadY(iPoint), ReadX(iPoint),
+                                  ReadZ(iPoint));
             else if (chProps & SP_HASMVALUES)
-                poCurve->setPointM(i, ReadY(iPoint), ReadX(iPoint), ReadZ(iPoint));
+                poCurve->setPointM(i, ReadY(iPoint), ReadX(iPoint),
+                                   ReadZ(iPoint));
             else
                 poCurve->setPoint(i, ReadY(iPoint), ReadX(iPoint));
         }
         else
         {
             if ((chProps & SP_HASZVALUES) && (chProps & SP_HASMVALUES))
-                poCurve->setPoint(i, ReadX(iPoint), ReadY(iPoint), ReadZ(iPoint), ReadM(iPoint));
+                poCurve->setPoint(i, ReadX(iPoint), ReadY(iPoint),
+                                  ReadZ(iPoint), ReadM(iPoint));
             else if (chProps & SP_HASZVALUES)
-                poCurve->setPoint(i, ReadX(iPoint), ReadY(iPoint), ReadZ(iPoint));
+                poCurve->setPoint(i, ReadX(iPoint), ReadY(iPoint),
+                                  ReadZ(iPoint));
             else if (chProps & SP_HASMVALUES)
-                poCurve->setPointM(i, ReadX(iPoint), ReadY(iPoint), ReadZ(iPoint));
+                poCurve->setPointM(i, ReadX(iPoint), ReadY(iPoint),
+                                   ReadZ(iPoint));
             else
                 poCurve->setPoint(i, ReadX(iPoint), ReadY(iPoint));
         }
@@ -282,9 +295,9 @@ OGRErr OGRMSSQLGeometryParser::ReadSimpleCurve(OGRSimpleCurve* poCurve, int iPoi
 /*                         ReadLineString()                             */
 /************************************************************************/
 
-OGRLineString* OGRMSSQLGeometryParser::ReadLineString(int iFigure)
+OGRLineString *OGRMSSQLGeometryParser::ReadLineString(int iFigure)
 {
-    OGRLineString* poLineString = new OGRLineString();
+    OGRLineString *poLineString = new OGRLineString();
     if (iFigure == -1)
     {
         if (chProps & SP_HASZVALUES)
@@ -294,7 +307,8 @@ OGRLineString* OGRMSSQLGeometryParser::ReadLineString(int iFigure)
             poLineString->setMeasured(TRUE);
     }
     else
-        ReadSimpleCurve(poLineString, PointOffset(iFigure), NextPointOffset(iFigure));
+        ReadSimpleCurve(poLineString, PointOffset(iFigure),
+                        NextPointOffset(iFigure));
 
     return poLineString;
 }
@@ -303,10 +317,11 @@ OGRLineString* OGRMSSQLGeometryParser::ReadLineString(int iFigure)
 /*                         ReadLinearRing()                             */
 /************************************************************************/
 
-OGRLinearRing* OGRMSSQLGeometryParser::ReadLinearRing(int iFigure)
+OGRLinearRing *OGRMSSQLGeometryParser::ReadLinearRing(int iFigure)
 {
-    OGRLinearRing* poLinearRing = new OGRLinearRing();
-    ReadSimpleCurve(poLinearRing, PointOffset(iFigure), NextPointOffset(iFigure));
+    OGRLinearRing *poLinearRing = new OGRLinearRing();
+    ReadSimpleCurve(poLinearRing, PointOffset(iFigure),
+                    NextPointOffset(iFigure));
     return poLinearRing;
 }
 
@@ -314,9 +329,9 @@ OGRLinearRing* OGRMSSQLGeometryParser::ReadLinearRing(int iFigure)
 /*                         ReadCircularString()                         */
 /************************************************************************/
 
-OGRCircularString* OGRMSSQLGeometryParser::ReadCircularString(int iFigure)
+OGRCircularString *OGRMSSQLGeometryParser::ReadCircularString(int iFigure)
 {
-    OGRCircularString* poCircularString = new OGRCircularString();
+    OGRCircularString *poCircularString = new OGRCircularString();
     if (iFigure == -1)
     {
         if (chProps & SP_HASZVALUES)
@@ -326,7 +341,8 @@ OGRCircularString* OGRMSSQLGeometryParser::ReadCircularString(int iFigure)
             poCircularString->setMeasured(TRUE);
     }
     else
-        ReadSimpleCurve(poCircularString, PointOffset(iFigure), NextPointOffset(iFigure));
+        ReadSimpleCurve(poCircularString, PointOffset(iFigure),
+                        NextPointOffset(iFigure));
 
     return poCircularString;
 }
@@ -335,21 +351,21 @@ OGRCircularString* OGRMSSQLGeometryParser::ReadCircularString(int iFigure)
 /*                         ReadMultiLineString()                        */
 /************************************************************************/
 
-OGRMultiLineString* OGRMSSQLGeometryParser::ReadMultiLineString(int iShape)
+OGRMultiLineString *OGRMSSQLGeometryParser::ReadMultiLineString(int iShape)
 {
-    OGRMultiLineString* poMultiLineString = new OGRMultiLineString();
-    OGRGeometry* poGeom;
+    OGRMultiLineString *poMultiLineString = new OGRMultiLineString();
+    OGRGeometry *poGeom;
 
     for (int i = iShape + 1; i < nNumShapes; i++)
     {
         poGeom = nullptr;
         if (ParentOffset(i) == iShape)
         {
-            if  ( ShapeType(i) == ST_LINESTRING )
+            if (ShapeType(i) == ST_LINESTRING)
                 poGeom = ReadLineString(FigureOffset(i));
         }
-        if ( poGeom )
-            poMultiLineString->addGeometryDirectly( poGeom );
+        if (poGeom)
+            poMultiLineString->addGeometryDirectly(poGeom);
     }
 
     return poMultiLineString;
@@ -359,11 +375,11 @@ OGRMultiLineString* OGRMSSQLGeometryParser::ReadMultiLineString(int iShape)
 /*                         ReadPolygon()                                */
 /************************************************************************/
 
-OGRPolygon* OGRMSSQLGeometryParser::ReadPolygon(int iShape)
+OGRPolygon *OGRMSSQLGeometryParser::ReadPolygon(int iShape)
 {
     int iFigure, iNextFigure;
 
-    OGRPolygon* poPoly = new OGRPolygon();
+    OGRPolygon *poPoly = new OGRPolygon();
 
     if ((iFigure = FigureOffset(iShape)) == -1)
         return poPoly;
@@ -392,21 +408,21 @@ OGRPolygon* OGRMSSQLGeometryParser::ReadPolygon(int iShape)
 /*                         ReadMultiPolygon()                           */
 /************************************************************************/
 
-OGRMultiPolygon* OGRMSSQLGeometryParser::ReadMultiPolygon(int iShape)
+OGRMultiPolygon *OGRMSSQLGeometryParser::ReadMultiPolygon(int iShape)
 {
-    OGRMultiPolygon* poMultiPolygon = new OGRMultiPolygon();
-    OGRGeometry* poGeom;
+    OGRMultiPolygon *poMultiPolygon = new OGRMultiPolygon();
+    OGRGeometry *poGeom;
 
     for (int i = iShape + 1; i < nNumShapes; i++)
     {
         poGeom = nullptr;
         if (ParentOffset(i) == iShape)
         {
-            if ( ShapeType(i) == ST_POLYGON )
+            if (ShapeType(i) == ST_POLYGON)
                 poGeom = ReadPolygon(i);
         }
-        if ( poGeom )
-            poMultiPolygon->addGeometryDirectly( poGeom );
+        if (poGeom)
+            poMultiPolygon->addGeometryDirectly(poGeom);
     }
 
     return poMultiPolygon;
@@ -416,8 +432,9 @@ OGRMultiPolygon* OGRMSSQLGeometryParser::ReadMultiPolygon(int iShape)
 /*                         AddCurveSegment()                            */
 /************************************************************************/
 
-void OGRMSSQLGeometryParser::AddCurveSegment(OGRCompoundCurve* poCompoundCurve,
-    OGRSimpleCurve* poCurve, int iPoint, int iNextPoint)
+void OGRMSSQLGeometryParser::AddCurveSegment(OGRCompoundCurve *poCompoundCurve,
+                                             OGRSimpleCurve *poCurve,
+                                             int iPoint, int iNextPoint)
 {
     if (poCurve != nullptr)
     {
@@ -435,10 +452,10 @@ void OGRMSSQLGeometryParser::AddCurveSegment(OGRCompoundCurve* poCompoundCurve,
 /*                         ReadCompoundCurve()                          */
 /************************************************************************/
 
-OGRCompoundCurve* OGRMSSQLGeometryParser::ReadCompoundCurve(int iFigure)
+OGRCompoundCurve *OGRMSSQLGeometryParser::ReadCompoundCurve(int iFigure)
 {
     int iPoint, iNextPoint, nPointsPrepared;
-    OGRCompoundCurve* poCompoundCurve = new OGRCompoundCurve();
+    OGRCompoundCurve *poCompoundCurve = new OGRCompoundCurve();
 
     if (iFigure == -1)
     {
@@ -454,40 +471,43 @@ OGRCompoundCurve* OGRMSSQLGeometryParser::ReadCompoundCurve(int iFigure)
     iPoint = PointOffset(iFigure);
     iNextPoint = NextPointOffset(iFigure) - 1;
 
-    OGRSimpleCurve* poCurve = nullptr;
+    OGRSimpleCurve *poCurve = nullptr;
 
     nPointsPrepared = 0;
     while (iPoint < iNextPoint && iSegment < nNumSegments)
     {
         switch (SegmentType(iSegment))
         {
-        case SMT_FIRSTLINE:
-            AddCurveSegment(poCompoundCurve, poCurve, iPoint - nPointsPrepared, iPoint + 1);
-            poCurve = new OGRLineString();
-            nPointsPrepared = 1;
-            ++iPoint;
-            break;
-        case SMT_LINE:
-            ++nPointsPrepared;
-            ++iPoint;
-            break;
-        case SMT_FIRSTARC:
-            AddCurveSegment(poCompoundCurve, poCurve, iPoint - nPointsPrepared, iPoint + 1);
-            poCurve = new OGRCircularString();
-            nPointsPrepared = 2;
-            iPoint += 2;
-            break;
-        case SMT_ARC:
-            nPointsPrepared += 2;
-            iPoint += 2;
-            break;
+            case SMT_FIRSTLINE:
+                AddCurveSegment(poCompoundCurve, poCurve,
+                                iPoint - nPointsPrepared, iPoint + 1);
+                poCurve = new OGRLineString();
+                nPointsPrepared = 1;
+                ++iPoint;
+                break;
+            case SMT_LINE:
+                ++nPointsPrepared;
+                ++iPoint;
+                break;
+            case SMT_FIRSTARC:
+                AddCurveSegment(poCompoundCurve, poCurve,
+                                iPoint - nPointsPrepared, iPoint + 1);
+                poCurve = new OGRCircularString();
+                nPointsPrepared = 2;
+                iPoint += 2;
+                break;
+            case SMT_ARC:
+                nPointsPrepared += 2;
+                iPoint += 2;
+                break;
         }
         ++iSegment;
     }
 
     // adding the last curve
     if (iPoint == iNextPoint)
-        AddCurveSegment(poCompoundCurve, poCurve, iPoint - nPointsPrepared, iPoint + 1);
+        AddCurveSegment(poCompoundCurve, poCurve, iPoint - nPointsPrepared,
+                        iPoint + 1);
     else
         delete poCurve;
 
@@ -498,11 +518,11 @@ OGRCompoundCurve* OGRMSSQLGeometryParser::ReadCompoundCurve(int iFigure)
 /*                         ReadCurvePolygon()                         */
 /************************************************************************/
 
-OGRCurvePolygon* OGRMSSQLGeometryParser::ReadCurvePolygon(int iShape)
+OGRCurvePolygon *OGRMSSQLGeometryParser::ReadCurvePolygon(int iShape)
 {
     int iFigure, iNextFigure;
 
-    OGRCurvePolygon* poPoly = new OGRCurvePolygon();
+    OGRCurvePolygon *poPoly = new OGRCurvePolygon();
 
     if ((iFigure = FigureOffset(iShape)) == -1)
         return poPoly;
@@ -521,15 +541,15 @@ OGRCurvePolygon* OGRMSSQLGeometryParser::ReadCurvePolygon(int iShape)
     {
         switch (FigureAttribute(iFigure))
         {
-        case FA_LINE:
-            poPoly->addRingDirectly(ReadLineString(iFigure));
-            break;
-        case FA_ARC:
-            poPoly->addRingDirectly(ReadCircularString(iFigure));
-            break;
-        case FA_CURVE:
-            poPoly->addRingDirectly(ReadCompoundCurve(iFigure));
-            break;
+            case FA_LINE:
+                poPoly->addRingDirectly(ReadLineString(iFigure));
+                break;
+            case FA_ARC:
+                poPoly->addRingDirectly(ReadCircularString(iFigure));
+                break;
+            case FA_CURVE:
+                poPoly->addRingDirectly(ReadCompoundCurve(iFigure));
+                break;
         }
         ++iFigure;
     }
@@ -541,10 +561,11 @@ OGRCurvePolygon* OGRMSSQLGeometryParser::ReadCurvePolygon(int iShape)
 /*                         ReadGeometryCollection()                     */
 /************************************************************************/
 
-OGRGeometryCollection* OGRMSSQLGeometryParser::ReadGeometryCollection(int iShape)
+OGRGeometryCollection *
+OGRMSSQLGeometryParser::ReadGeometryCollection(int iShape)
 {
-    OGRGeometryCollection* poGeomColl = new OGRGeometryCollection();
-    OGRGeometry* poGeom;
+    OGRGeometryCollection *poGeomColl = new OGRGeometryCollection();
+    OGRGeometry *poGeom;
 
     for (int i = iShape + 1; i < nNumShapes; i++)
     {
@@ -553,40 +574,40 @@ OGRGeometryCollection* OGRMSSQLGeometryParser::ReadGeometryCollection(int iShape
         {
             switch (ShapeType(i))
             {
-            case ST_POINT:
-                poGeom = ReadPoint(FigureOffset(i));
-                break;
-            case ST_LINESTRING:
-                poGeom = ReadLineString(FigureOffset(i));
-                break;
-            case ST_POLYGON:
-                poGeom = ReadPolygon(i);
-                break;
-            case ST_MULTIPOINT:
-                poGeom = ReadMultiPoint(i);
-                break;
-            case ST_MULTILINESTRING:
-                poGeom = ReadMultiLineString(i);
-                break;
-            case ST_MULTIPOLYGON:
-                poGeom = ReadMultiPolygon(i);
-                break;
-            case ST_GEOMETRYCOLLECTION:
-                poGeom = ReadGeometryCollection(i);
-                break;
-            case ST_CIRCULARSTRING:
-                poGeom = ReadCircularString(FigureOffset(i));
-                break;
-            case ST_COMPOUNDCURVE:
-                poGeom = ReadCompoundCurve(FigureOffset(i));
-                break;
-            case ST_CURVEPOLYGON:
-                poGeom = ReadCurvePolygon(i);
-                break;
+                case ST_POINT:
+                    poGeom = ReadPoint(FigureOffset(i));
+                    break;
+                case ST_LINESTRING:
+                    poGeom = ReadLineString(FigureOffset(i));
+                    break;
+                case ST_POLYGON:
+                    poGeom = ReadPolygon(i);
+                    break;
+                case ST_MULTIPOINT:
+                    poGeom = ReadMultiPoint(i);
+                    break;
+                case ST_MULTILINESTRING:
+                    poGeom = ReadMultiLineString(i);
+                    break;
+                case ST_MULTIPOLYGON:
+                    poGeom = ReadMultiPolygon(i);
+                    break;
+                case ST_GEOMETRYCOLLECTION:
+                    poGeom = ReadGeometryCollection(i);
+                    break;
+                case ST_CIRCULARSTRING:
+                    poGeom = ReadCircularString(FigureOffset(i));
+                    break;
+                case ST_COMPOUNDCURVE:
+                    poGeom = ReadCompoundCurve(FigureOffset(i));
+                    break;
+                case ST_CURVEPOLYGON:
+                    poGeom = ReadCurvePolygon(i);
+                    break;
             }
         }
-        if ( poGeom )
-            poGeomColl->addGeometryDirectly( poGeom );
+        if (poGeom)
+            poGeomColl->addGeometryDirectly(poGeom);
     }
 
     return poGeomColl;
@@ -596,8 +617,8 @@ OGRGeometryCollection* OGRMSSQLGeometryParser::ReadGeometryCollection(int iShape
 /*                         ParseSqlGeometry()                           */
 /************************************************************************/
 
-OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput,
-                                int nLen, OGRGeometry **poGeom)
+OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char *pszInput,
+                                                int nLen, OGRGeometry **poGeom)
 {
     if (nLen < 10)
         return OGRERR_NOT_ENOUGH_DATA;
@@ -624,7 +645,7 @@ OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput,
     if (chProps & SP_HASMVALUES)
         nPointSize += 8;
 
-    if ( chProps & SP_ISSINGLEPOINT )
+    if (chProps & SP_ISSINGLEPOINT)
     {
         // single point geometry
         nNumPoints = 1;
@@ -644,7 +665,7 @@ OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput,
             else if (chProps & SP_HASMVALUES)
             {
                 *poGeom = new OGRPoint(ReadY(0), ReadX(0));
-                ((OGRPoint*)(*poGeom))->setM(ReadZ(0));
+                ((OGRPoint *)(*poGeom))->setM(ReadZ(0));
             }
             else
                 *poGeom = new OGRPoint(ReadY(0), ReadX(0));
@@ -658,13 +679,13 @@ OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput,
             else if (chProps & SP_HASMVALUES)
             {
                 *poGeom = new OGRPoint(ReadX(0), ReadY(0));
-                ((OGRPoint*)(*poGeom))->setM(ReadZ(0));
+                ((OGRPoint *)(*poGeom))->setM(ReadZ(0));
             }
             else
                 *poGeom = new OGRPoint(ReadX(0), ReadY(0));
         }
     }
-    else if ( chProps & SP_ISSINGLELINESEGMENT )
+    else if (chProps & SP_ISSINGLELINESEGMENT)
     {
         // single line segment with 2 points
         nNumPoints = 2;
@@ -675,22 +696,22 @@ OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput,
             return OGRERR_NOT_ENOUGH_DATA;
         }
 
-        OGRLineString* line = new OGRLineString();
+        OGRLineString *line = new OGRLineString();
         line->setNumPoints(2);
 
         if (nColType == MSSQLCOLTYPE_GEOGRAPHY)
         {
-            if ( (chProps & SP_HASZVALUES) && (chProps & SP_HASMVALUES) )
+            if ((chProps & SP_HASZVALUES) && (chProps & SP_HASMVALUES))
             {
                 line->setPoint(0, ReadY(0), ReadX(0), ReadZ(0), ReadM(0));
                 line->setPoint(1, ReadY(1), ReadX(1), ReadZ(1), ReadM(1));
             }
-            else if ( chProps & SP_HASZVALUES )
+            else if (chProps & SP_HASZVALUES)
             {
                 line->setPoint(0, ReadY(0), ReadX(0), ReadZ(0));
                 line->setPoint(1, ReadY(1), ReadX(1), ReadZ(1));
             }
-            else if ( chProps & SP_HASMVALUES )
+            else if (chProps & SP_HASMVALUES)
             {
                 line->setPointM(0, ReadY(0), ReadX(0), ReadZ(0));
                 line->setPointM(1, ReadY(1), ReadX(1), ReadZ(1));
@@ -703,17 +724,17 @@ OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput,
         }
         else
         {
-            if ( (chProps & SP_HASZVALUES) && (chProps & SP_HASMVALUES) )
+            if ((chProps & SP_HASZVALUES) && (chProps & SP_HASMVALUES))
             {
                 line->setPoint(0, ReadX(0), ReadY(0), ReadZ(0), ReadM(0));
                 line->setPoint(1, ReadX(1), ReadY(1), ReadZ(1), ReadM(1));
             }
-            else if ( chProps & SP_HASZVALUES )
+            else if (chProps & SP_HASZVALUES)
             {
                 line->setPoint(0, ReadX(0), ReadY(0), ReadZ(0));
                 line->setPoint(1, ReadX(1), ReadY(1), ReadZ(1));
             }
-            else if ( chProps & SP_HASMVALUES )
+            else if (chProps & SP_HASMVALUES)
             {
                 line->setPointM(0, ReadX(0), ReadY(0), ReadZ(0));
                 line->setPointM(1, ReadX(1), ReadY(1), ReadZ(1));
@@ -732,7 +753,7 @@ OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput,
         // complex geometries
         nNumPoints = ReadInt32(6);
 
-        if ( nNumPoints < 0 )
+        if (nNumPoints < 0)
         {
             return OGRERR_NONE;
         }
@@ -750,7 +771,7 @@ OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput,
 
         nNumFigures = ReadInt32(nFigurePos - 4);
 
-        if ( nNumFigures < 0 )
+        if (nNumFigures < 0)
         {
             return OGRERR_NONE;
         }
@@ -770,7 +791,7 @@ OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput,
             return OGRERR_NOT_ENOUGH_DATA;
         }
 
-        if ( nNumShapes <= 0 )
+        if (nNumShapes <= 0)
         {
             return OGRERR_NONE;
         }
@@ -792,7 +813,7 @@ OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput,
         }
 
         // pick up the root shape
-        if ( ParentOffset(0) != -1 )
+        if (ParentOffset(0) != -1)
         {
             return OGRERR_CORRUPT_DATA;
         }
@@ -800,38 +821,38 @@ OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput,
         // determine the shape type
         switch (ShapeType(0))
         {
-        case ST_POINT:
-            *poGeom = ReadPoint(FigureOffset(0));
-            break;
-        case ST_LINESTRING:
-            *poGeom = ReadLineString(FigureOffset(0));
-            break;
-        case ST_POLYGON:
-            *poGeom = ReadPolygon(0);
-            break;
-        case ST_MULTIPOINT:
-            *poGeom = ReadMultiPoint(0);
-            break;
-        case ST_MULTILINESTRING:
-            *poGeom = ReadMultiLineString(0);
-            break;
-        case ST_MULTIPOLYGON:
-            *poGeom = ReadMultiPolygon(0);
-            break;
-        case ST_GEOMETRYCOLLECTION:
-            *poGeom = ReadGeometryCollection(0);
-            break;
-        case ST_CIRCULARSTRING:
-            *poGeom = ReadCircularString(FigureOffset(0));
-            break;
-        case ST_COMPOUNDCURVE:
-            *poGeom = ReadCompoundCurve(FigureOffset(0));
-            break;
-        case ST_CURVEPOLYGON:
-            *poGeom = ReadCurvePolygon(0);
-            break;
-        default:
-            return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+            case ST_POINT:
+                *poGeom = ReadPoint(FigureOffset(0));
+                break;
+            case ST_LINESTRING:
+                *poGeom = ReadLineString(FigureOffset(0));
+                break;
+            case ST_POLYGON:
+                *poGeom = ReadPolygon(0);
+                break;
+            case ST_MULTIPOINT:
+                *poGeom = ReadMultiPoint(0);
+                break;
+            case ST_MULTILINESTRING:
+                *poGeom = ReadMultiLineString(0);
+                break;
+            case ST_MULTIPOLYGON:
+                *poGeom = ReadMultiPolygon(0);
+                break;
+            case ST_GEOMETRYCOLLECTION:
+                *poGeom = ReadGeometryCollection(0);
+                break;
+            case ST_CIRCULARSTRING:
+                *poGeom = ReadCircularString(FigureOffset(0));
+                break;
+            case ST_COMPOUNDCURVE:
+                *poGeom = ReadCompoundCurve(FigureOffset(0));
+                break;
+            case ST_CURVEPOLYGON:
+                *poGeom = ReadCurvePolygon(0);
+                break;
+            default:
+                return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
         }
     }
 
