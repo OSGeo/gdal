@@ -35,6 +35,7 @@
 
 #include "libkea_headers.h"
 
-bool KEACopyFile( GDALDataset *pDataset, kealib::KEAImageIO *pImageIO, GDALProgressFunc pfnProgress, void *pProgressData );
+bool KEACopyFile(GDALDataset *pDataset, kealib::KEAImageIO *pImageIO,
+                 GDALProgressFunc pfnProgress, void *pProgressData);
 
 #endif
