@@ -38,8 +38,8 @@
 #include "geotiff.h"
 
 CPL_C_START
-char CPL_DLL *GTIFGetOGISDefn( GTIF *, GTIFDefn * );
-int  CPL_DLL GTIFSetFromOGISDefn( GTIF *, const char * );
+char CPL_DLL *GTIFGetOGISDefn(GTIF *, GTIFDefn *);
+int CPL_DLL GTIFSetFromOGISDefn(GTIF *, const char *);
 
 typedef enum
 {
@@ -54,11 +54,11 @@ typedef enum
     GEOTIFF_VERSION_1_1
 } GeoTIFFVersionEnum;
 
-OGRSpatialReferenceH GTIFGetOGISDefnAsOSR( GTIF *, GTIFDefn * );
+OGRSpatialReferenceH GTIFGetOGISDefnAsOSR(GTIF *, GTIFDefn *);
 
-int GTIFSetFromOGISDefnEx( GTIF *, OGRSpatialReferenceH, GTIFFKeysFlavorEnum,
-                           GeoTIFFVersionEnum );
+int GTIFSetFromOGISDefnEx(GTIF *, OGRSpatialReferenceH, GTIFFKeysFlavorEnum,
+                          GeoTIFFVersionEnum);
 
 CPL_C_END
 
-#endif // GT_WKT_SRS_H_INCLUDED
+#endif  // GT_WKT_SRS_H_INCLUDED
