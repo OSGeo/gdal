@@ -37,7 +37,10 @@
 #ifdef HAVE_SSE_AT_COMPILE_TIME
 #if (defined(_M_X64) || defined(__x86_64))
 #define HAVE_INLINE_SSE
-static bool inline CPLHaveRuntimeSSE() { return true; }
+static bool inline CPLHaveRuntimeSSE()
+{
+    return true;
+}
 #else
 bool CPLHaveRuntimeSSE();
 #endif
@@ -49,7 +52,7 @@ bool CPLHaveRuntimeSSE();
 static bool inline CPLHaveRuntimeSSSE3()
 {
 #ifdef DEBUG
-    if( !CPLTestBool(CPLGetConfigOption("GDAL_USE_SSSE3", "YES")) )
+    if (!CPLTestBool(CPLGetConfigOption("GDAL_USE_SSSE3", "YES")))
         return false;
 #endif
     return true;
@@ -57,7 +60,10 @@ static bool inline CPLHaveRuntimeSSSE3()
 #else
 #if defined(__GNUC__) && !defined(DEBUG)
 extern bool bCPLHasSSSE3;
-static bool inline CPLHaveRuntimeSSSE3() { return bCPLHasSSSE3; }
+static bool inline CPLHaveRuntimeSSSE3()
+{
+    return bCPLHasSSSE3;
+}
 #else
 bool CPLHaveRuntimeSSSE3();
 #endif
@@ -67,10 +73,16 @@ bool CPLHaveRuntimeSSSE3();
 #ifdef HAVE_AVX_AT_COMPILE_TIME
 #if __AVX__
 #define HAVE_INLINE_AVX
-static bool inline CPLHaveRuntimeAVX() { return true; }
+static bool inline CPLHaveRuntimeAVX()
+{
+    return true;
+}
 #elif defined(__GNUC__)
 extern bool bCPLHasAVX;
-static bool inline CPLHaveRuntimeAVX() { return bCPLHasAVX; }
+static bool inline CPLHaveRuntimeAVX()
+{
+    return bCPLHasAVX;
+}
 #else
 bool CPLHaveRuntimeAVX();
 #endif
@@ -78,4 +90,4 @@ bool CPLHaveRuntimeAVX();
 
 //! @endcond
 
-#endif // CPL_CPU_FEATURES_H
+#endif  // CPL_CPU_FEATURES_H

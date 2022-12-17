@@ -43,11 +43,11 @@ CPL_C_START
 /** XML node type */
 typedef enum
 {
-    /*! Node is an element */           CXT_Element = 0,
-    /*! Node is a raw text value */     CXT_Text = 1,
-    /*! Node is attribute */            CXT_Attribute = 2,
-    /*! Node is an XML comment. */      CXT_Comment = 3,
-    /*! Node is a special literal */    CXT_Literal = 4
+    /*! Node is an element */ CXT_Element = 0,
+    /*! Node is a raw text value */ CXT_Text = 1,
+    /*! Node is attribute */ CXT_Attribute = 2,
+    /*! Node is an XML comment. */ CXT_Comment = 3,
+    /*! Node is a special literal */ CXT_Literal = 4
 } CPLXMLNodeType;
 
 /*! @cond Doxygen_Suppress */
@@ -74,7 +74,7 @@ struct CPLXMLNode
      * One of CXT_Element, CXT_Text, CXT_Attribute, CXT_Comment,
      * or CXT_Literal.
      */
-    CPLXMLNodeType      eType;
+    CPLXMLNodeType eType;
 
     /**
      * \brief Node value
@@ -97,7 +97,7 @@ struct CPLXMLNode
      * For CXT_Comment the value is all the literal text within the comment,
      * but not including the comment start/end indicators ("<--" and "-->").
      */
-    char                *pszValue;
+    char *pszValue;
 
     /**
      * \brief Next sibling.
@@ -106,7 +106,7 @@ struct CPLXMLNode
      * one that has the same parent as this node.  NULL if this node is the
      * last child of the parent element.
      */
-    struct CPLXMLNode  *psNext;
+    struct CPLXMLNode *psNext;
 
     /**
      * \brief Child node.
@@ -118,69 +118,64 @@ struct CPLXMLNode
      * psNext's starting with the psChild node.
      */
 
-    struct CPLXMLNode  *psChild;
+    struct CPLXMLNode *psChild;
 };
 
-CPLXMLNode CPL_DLL *CPLParseXMLString( const char * );
-void       CPL_DLL  CPLDestroyXMLNode( CPLXMLNode * );
-CPLXMLNode CPL_DLL *CPLGetXMLNode( CPLXMLNode *poRoot,
-                                   const char *pszPath );
+CPLXMLNode CPL_DLL *CPLParseXMLString(const char *);
+void CPL_DLL CPLDestroyXMLNode(CPLXMLNode *);
+CPLXMLNode CPL_DLL *CPLGetXMLNode(CPLXMLNode *poRoot, const char *pszPath);
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 /*! @cond Doxygen_Suppress */
 extern "C++"
 {
-inline const CPLXMLNode *CPLGetXMLNode( const CPLXMLNode *poRoot,
-                                        const char *pszPath ) {
-    return const_cast<const CPLXMLNode*>(CPLGetXMLNode(
-        const_cast<CPLXMLNode*>(poRoot), pszPath));
-}
+    inline const CPLXMLNode *CPLGetXMLNode(const CPLXMLNode *poRoot,
+                                           const char *pszPath)
+    {
+        return const_cast<const CPLXMLNode *>(
+            CPLGetXMLNode(const_cast<CPLXMLNode *>(poRoot), pszPath));
+    }
 }
 /*! @endcond */
 #endif
-CPLXMLNode CPL_DLL *CPLSearchXMLNode( CPLXMLNode *poRoot,
-                                      const char *pszTarget );
+CPLXMLNode CPL_DLL *CPLSearchXMLNode(CPLXMLNode *poRoot, const char *pszTarget);
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 /*! @cond Doxygen_Suppress */
 extern "C++"
 {
-inline const CPLXMLNode *CPLSearchXMLNode( const CPLXMLNode *poRoot,
-                                           const char *pszTarget ) {
-    return const_cast<const CPLXMLNode*>(CPLSearchXMLNode(
-        const_cast<CPLXMLNode*>(poRoot), pszTarget));
-}
+    inline const CPLXMLNode *CPLSearchXMLNode(const CPLXMLNode *poRoot,
+                                              const char *pszTarget)
+    {
+        return const_cast<const CPLXMLNode *>(
+            CPLSearchXMLNode(const_cast<CPLXMLNode *>(poRoot), pszTarget));
+    }
 }
 /*! @endcond */
 #endif
-const char CPL_DLL *CPLGetXMLValue( const CPLXMLNode *poRoot,
-                                    const char *pszPath,
-                                    const char *pszDefault );
-CPLXMLNode CPL_DLL *CPLCreateXMLNode( CPLXMLNode *poParent,
-                                      CPLXMLNodeType eType,
-                                      const char *pszText );
-char       CPL_DLL *CPLSerializeXMLTree( const CPLXMLNode *psNode );
-void       CPL_DLL  CPLAddXMLChild( CPLXMLNode *psParent,
-                                    CPLXMLNode *psChild );
-int        CPL_DLL  CPLRemoveXMLChild( CPLXMLNode *psParent,
-                                       CPLXMLNode *psChild );
-void       CPL_DLL  CPLAddXMLSibling( CPLXMLNode *psOlderSibling,
-                                      CPLXMLNode *psNewSibling );
-CPLXMLNode CPL_DLL *CPLCreateXMLElementAndValue( CPLXMLNode *psParent,
-                                                 const char *pszName,
-                                                 const char *pszValue );
-void       CPL_DLL CPLAddXMLAttributeAndValue( CPLXMLNode *psParent,
-                                                 const char *pszName,
-                                                 const char *pszValue );
-CPLXMLNode CPL_DLL *CPLCloneXMLTree( const CPLXMLNode *psTree );
-int        CPL_DLL CPLSetXMLValue( CPLXMLNode *psRoot,  const char *pszPath,
-                                   const char *pszValue );
-void       CPL_DLL CPLStripXMLNamespace( CPLXMLNode *psRoot,
-                                         const char *pszNameSpace,
-                                         int bRecurse );
-void       CPL_DLL CPLCleanXMLElementName( char * );
+const char CPL_DLL *CPLGetXMLValue(const CPLXMLNode *poRoot,
+                                   const char *pszPath, const char *pszDefault);
+CPLXMLNode CPL_DLL *CPLCreateXMLNode(CPLXMLNode *poParent, CPLXMLNodeType eType,
+                                     const char *pszText);
+char CPL_DLL *CPLSerializeXMLTree(const CPLXMLNode *psNode);
+void CPL_DLL CPLAddXMLChild(CPLXMLNode *psParent, CPLXMLNode *psChild);
+int CPL_DLL CPLRemoveXMLChild(CPLXMLNode *psParent, CPLXMLNode *psChild);
+void CPL_DLL CPLAddXMLSibling(CPLXMLNode *psOlderSibling,
+                              CPLXMLNode *psNewSibling);
+CPLXMLNode CPL_DLL *CPLCreateXMLElementAndValue(CPLXMLNode *psParent,
+                                                const char *pszName,
+                                                const char *pszValue);
+void CPL_DLL CPLAddXMLAttributeAndValue(CPLXMLNode *psParent,
+                                        const char *pszName,
+                                        const char *pszValue);
+CPLXMLNode CPL_DLL *CPLCloneXMLTree(const CPLXMLNode *psTree);
+int CPL_DLL CPLSetXMLValue(CPLXMLNode *psRoot, const char *pszPath,
+                           const char *pszValue);
+void CPL_DLL CPLStripXMLNamespace(CPLXMLNode *psRoot, const char *pszNameSpace,
+                                  int bRecurse);
+void CPL_DLL CPLCleanXMLElementName(char *);
 
-CPLXMLNode CPL_DLL *CPLParseXMLFile( const char *pszFilename );
-int        CPL_DLL CPLSerializeXMLTreeToFile( const CPLXMLNode *psTree,
-                                              const char *pszFilename );
+CPLXMLNode CPL_DLL *CPLParseXMLFile(const char *pszFilename);
+int CPL_DLL CPLSerializeXMLTreeToFile(const CPLXMLNode *psTree,
+                                      const char *pszFilename);
 
 CPL_C_END
 
@@ -192,29 +187,36 @@ extern "C++"
 #include <memory>
 #endif
 
-/*! @cond Doxygen_Suppress */
-struct CPL_DLL CPLXMLTreeCloserDeleter
-{
-    void operator()(CPLXMLNode* psNode) const { CPLDestroyXMLNode(psNode); }
-};
-/*! @endcond */
+    /*! @cond Doxygen_Suppress */
+    struct CPL_DLL CPLXMLTreeCloserDeleter
+    {
+        void operator()(CPLXMLNode *psNode) const
+        {
+            CPLDestroyXMLNode(psNode);
+        }
+    };
+    /*! @endcond */
 
-/** Manage a tree of XML nodes so that all nodes are freed when the instance goes
- * out of scope.  Only the top level node should be in a CPLXMLTreeCloser.
- */
-class CPL_DLL CPLXMLTreeCloser: public std::unique_ptr<CPLXMLNode, CPLXMLTreeCloserDeleter>
-{
- public:
-  /** Constructor */
-  explicit CPLXMLTreeCloser(CPLXMLNode* data):
-    std::unique_ptr<CPLXMLNode, CPLXMLTreeCloserDeleter>(data) {}
+    /** Manage a tree of XML nodes so that all nodes are freed when the instance
+     * goes out of scope.  Only the top level node should be in a
+     * CPLXMLTreeCloser.
+     */
+    class CPL_DLL CPLXMLTreeCloser
+        : public std::unique_ptr<CPLXMLNode, CPLXMLTreeCloserDeleter>
+    {
+      public:
+        /** Constructor */
+        explicit CPLXMLTreeCloser(CPLXMLNode *data)
+            : std::unique_ptr<CPLXMLNode, CPLXMLTreeCloserDeleter>(data)
+        {
+        }
 
-  /** Returns a pointer to the document (root) element
-   * @return the node pointer */
-  CPLXMLNode* getDocumentElement();
-};
+        /** Returns a pointer to the document (root) element
+         * @return the node pointer */
+        CPLXMLNode *getDocumentElement();
+    };
 
-} // extern "C++"
+}  // extern "C++"
 
 #endif /* __cplusplus */
 

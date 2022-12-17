@@ -44,10 +44,10 @@ CPL_C_START
  * Virtual memory management.
  *
  * This file provides mechanism to define virtual memory mappings, whose content
- * is allocated transparently and filled on-the-fly. Those virtual memory mappings
- * can be much larger than the available RAM, but only parts of the virtual
- * memory mapping, in the limit of the allowed the cache size, will actually be
- * physically allocated.
+ * is allocated transparently and filled on-the-fly. Those virtual memory
+ * mappings can be much larger than the available RAM, but only parts of the
+ * virtual memory mapping, in the limit of the allowed the cache size, will
+ * actually be physically allocated.
  *
  * This exploits low-level mechanisms of the operating system (virtual memory
  * allocation, page protection and handler of virtual memory exceptions).
@@ -62,53 +62,52 @@ CPL_C_START
 typedef struct CPLVirtualMem CPLVirtualMem;
 
 /** Callback triggered when a still unmapped page of virtual memory is accessed.
-  * The callback has the responsibility of filling the page with relevant values
-  *
-  * @param ctxt virtual memory handle.
-  * @param nOffset offset of the page in the memory mapping.
-  * @param pPageToFill address of the page to fill. Note that the address might
-  *                    be a temporary location, and not at CPLVirtualMemGetAddr() + nOffset.
-  * @param nToFill number of bytes of the page.
-  * @param pUserData user data that was passed to CPLVirtualMemNew().
-  */
-typedef void (*CPLVirtualMemCachePageCbk)(CPLVirtualMem* ctxt,
-                                    size_t nOffset,
-                                    void* pPageToFill,
-                                    size_t nToFill,
-                                    void* pUserData);
+ * The callback has the responsibility of filling the page with relevant values
+ *
+ * @param ctxt virtual memory handle.
+ * @param nOffset offset of the page in the memory mapping.
+ * @param pPageToFill address of the page to fill. Note that the address might
+ *                    be a temporary location, and not at CPLVirtualMemGetAddr()
+ * + nOffset.
+ * @param nToFill number of bytes of the page.
+ * @param pUserData user data that was passed to CPLVirtualMemNew().
+ */
+typedef void (*CPLVirtualMemCachePageCbk)(CPLVirtualMem *ctxt, size_t nOffset,
+                                          void *pPageToFill, size_t nToFill,
+                                          void *pUserData);
 
 /** Callback triggered when a dirty mapped page is going to be freed.
-  * (saturation of cache, or termination of the virtual memory mapping).
-  *
-  * @param ctxt virtual memory handle.
-  * @param nOffset offset of the page in the memory mapping.
-  * @param pPageToBeEvicted address of the page that will be flushed. Note that the address might
-  *                    be a temporary location, and not at CPLVirtualMemGetAddr() + nOffset.
-  * @param nToBeEvicted number of bytes of the page.
-  * @param pUserData user data that was passed to CPLVirtualMemNew().
-  */
-typedef void (*CPLVirtualMemUnCachePageCbk)(CPLVirtualMem* ctxt,
-                                      size_t nOffset,
-                                      const void* pPageToBeEvicted,
-                                      size_t nToBeEvicted,
-                                      void* pUserData);
+ * (saturation of cache, or termination of the virtual memory mapping).
+ *
+ * @param ctxt virtual memory handle.
+ * @param nOffset offset of the page in the memory mapping.
+ * @param pPageToBeEvicted address of the page that will be flushed. Note that
+ * the address might be a temporary location, and not at CPLVirtualMemGetAddr()
+ * + nOffset.
+ * @param nToBeEvicted number of bytes of the page.
+ * @param pUserData user data that was passed to CPLVirtualMemNew().
+ */
+typedef void (*CPLVirtualMemUnCachePageCbk)(CPLVirtualMem *ctxt, size_t nOffset,
+                                            const void *pPageToBeEvicted,
+                                            size_t nToBeEvicted,
+                                            void *pUserData);
 
 /** Callback triggered when a virtual memory mapping is destroyed.
-  * @param pUserData user data that was passed to CPLVirtualMemNew().
+ * @param pUserData user data that was passed to CPLVirtualMemNew().
  */
-typedef void (*CPLVirtualMemFreeUserData)(void* pUserData);
+typedef void (*CPLVirtualMemFreeUserData)(void *pUserData);
 
 /** Access mode of a virtual memory mapping. */
 typedef enum
 {
-    /*! The mapping is meant at being read-only, but writes will not be prevented.
-        Note that any content written will be lost. */
+    /*! The mapping is meant at being read-only, but writes will not be
+       prevented. Note that any content written will be lost. */
     VIRTUALMEM_READONLY,
     /*! The mapping is meant at being read-only, and this will be enforced
         through the operating system page protection mechanism. */
     VIRTUALMEM_READONLY_ENFORCED,
-    /*! The mapping is meant at being read-write, and modified pages can be saved
-        thanks to the pfnUnCachePage callback */
+    /*! The mapping is meant at being read-write, and modified pages can be
+       saved thanks to the pfnUnCachePage callback */
     VIRTUALMEM_READWRITE
 } CPLVirtualMemAccessMode;
 
@@ -123,11 +122,11 @@ size_t CPL_DLL CPLGetPageSize(void);
 /** Create a new virtual memory mapping.
  *
  * This will reserve an area of virtual memory of size nSize, whose size
- * might be potentially much larger than the physical memory available. Initially,
- * no physical memory will be allocated. As soon as memory pages will be accessed,
- * they will be allocated transparently and filled with the pfnCachePage callback.
- * When the allowed cache size is reached, the least recently used pages will
- * be unallocated.
+ * might be potentially much larger than the physical memory available.
+ * Initially, no physical memory will be allocated. As soon as memory pages will
+ * be accessed, they will be allocated transparently and filled with the
+ * pfnCachePage callback. When the allowed cache size is reached, the least
+ * recently used pages will be unallocated.
  *
  * On Linux AMD64 platforms, the maximum value for nSize is 128 TB.
  * On Linux x86 platforms, the maximum value for nSize is 2 GB.
@@ -145,8 +144,8 @@ size_t CPL_DLL CPLGetPageSize(void);
  *                      Minimum value is generally 4096. Might be set to 0 to
  *                      let the function determine a default page size.
  * @param bSingleThreadUsage set to TRUE if there will be no concurrent threads
- *                           that will access the virtual memory mapping. This can
- *                           optimize performance a bit.
+ *                           that will access the virtual memory mapping. This
+ * can optimize performance a bit.
  * @param eAccessMode permission to use for the virtual memory mapping.
  * @param pfnCachePage callback triggered when a still unmapped page of virtual
  *                     memory is accessed. The callback has the responsibility
@@ -154,8 +153,8 @@ size_t CPL_DLL CPLGetPageSize(void);
  * @param pfnUnCachePage callback triggered when a dirty mapped page is going to
  *                       be freed (saturation of cache, or termination of the
  *                       virtual memory mapping). Might be NULL.
- * @param pfnFreeUserData callback that can be used to free pCbkUserData. Might be
- *                        NULL
+ * @param pfnFreeUserData callback that can be used to free pCbkUserData. Might
+ * be NULL
  * @param pCbkUserData user data passed to pfnCachePage and pfnUnCachePage.
  *
  * @return a virtual memory object that must be freed by CPLVirtualMemFree(),
@@ -164,15 +163,12 @@ size_t CPL_DLL CPLGetPageSize(void);
  * @since GDAL 1.11
  */
 
-CPLVirtualMem CPL_DLL *CPLVirtualMemNew(size_t nSize,
-                                        size_t nCacheSize,
-                                        size_t nPageSizeHint,
-                                        int bSingleThreadUsage,
-                                        CPLVirtualMemAccessMode eAccessMode,
-                                        CPLVirtualMemCachePageCbk pfnCachePage,
-                                        CPLVirtualMemUnCachePageCbk pfnUnCachePage,
-                                        CPLVirtualMemFreeUserData pfnFreeUserData,
-                                        void *pCbkUserData);
+CPLVirtualMem CPL_DLL *
+CPLVirtualMemNew(size_t nSize, size_t nCacheSize, size_t nPageSizeHint,
+                 int bSingleThreadUsage, CPLVirtualMemAccessMode eAccessMode,
+                 CPLVirtualMemCachePageCbk pfnCachePage,
+                 CPLVirtualMemUnCachePageCbk pfnUnCachePage,
+                 CPLVirtualMemFreeUserData pfnFreeUserData, void *pCbkUserData);
 
 /** Return if virtual memory mapping of a file is available.
  *
@@ -198,8 +194,8 @@ int CPL_DLL CPLIsVirtualMemFileMapAvailable(void);
  * @param  fp       Virtual file handle.
  * @param  nOffset  Offset in the file to start the mapping from.
  * @param  nLength  Length of the portion of the file to map into memory.
- * @param eAccessMode Permission to use for the virtual memory mapping. This must
- *                    be consistent with how the file has been opened.
+ * @param eAccessMode Permission to use for the virtual memory mapping. This
+ * must be consistent with how the file has been opened.
  * @param pfnFreeUserData callback that is called when the object is destroyed.
  * @param pCbkUserData user data passed to pfnFreeUserData.
  * @return a virtual memory object that must be freed by CPLVirtualMemFree(),
@@ -207,12 +203,10 @@ int CPL_DLL CPLIsVirtualMemFileMapAvailable(void);
  *
  * @since GDAL 1.11
  */
-CPLVirtualMem CPL_DLL *CPLVirtualMemFileMapNew( VSILFILE* fp,
-                                                vsi_l_offset nOffset,
-                                                vsi_l_offset nLength,
-                                                CPLVirtualMemAccessMode eAccessMode,
-                                                CPLVirtualMemFreeUserData pfnFreeUserData,
-                                                void *pCbkUserData );
+CPLVirtualMem CPL_DLL *CPLVirtualMemFileMapNew(
+    VSILFILE *fp, vsi_l_offset nOffset, vsi_l_offset nLength,
+    CPLVirtualMemAccessMode eAccessMode,
+    CPLVirtualMemFreeUserData pfnFreeUserData, void *pCbkUserData);
 
 /** Create a new virtual memory mapping derived from an other virtual memory
  *  mapping.
@@ -222,8 +216,8 @@ CPLVirtualMem CPL_DLL *CPLVirtualMemFileMapNew( VSILFILE* fp,
  * The new mapping takes a reference on the base mapping.
  *
  * @param pVMemBase Base virtual memory mapping
- * @param nOffset   Offset in the base virtual memory mapping from which to start
- *                  the new mapping.
+ * @param nOffset   Offset in the base virtual memory mapping from which to
+ * start the new mapping.
  * @param nSize     Size of the base virtual memory mapping to expose in the
  *                  the new mapping.
  * @param pfnFreeUserData callback that is called when the object is destroyed.
@@ -233,24 +227,22 @@ CPLVirtualMem CPL_DLL *CPLVirtualMemFileMapNew( VSILFILE* fp,
  *
  * @since GDAL 1.11
  */
-CPLVirtualMem CPL_DLL *CPLVirtualMemDerivedNew(CPLVirtualMem* pVMemBase,
-                                               vsi_l_offset nOffset,
-                                               vsi_l_offset nSize,
-                                               CPLVirtualMemFreeUserData pfnFreeUserData,
-                                               void *pCbkUserData);
+CPLVirtualMem CPL_DLL *CPLVirtualMemDerivedNew(
+    CPLVirtualMem *pVMemBase, vsi_l_offset nOffset, vsi_l_offset nSize,
+    CPLVirtualMemFreeUserData pfnFreeUserData, void *pCbkUserData);
 
 /** Free a virtual memory mapping.
  *
  * The pointer returned by CPLVirtualMemGetAddr() will no longer be valid.
- * If the virtual memory mapping was created with read/write permissions and that
- * they are dirty (i.e. modified) pages, they will be flushed through the
+ * If the virtual memory mapping was created with read/write permissions and
+ * that they are dirty (i.e. modified) pages, they will be flushed through the
  * pfnUnCachePage callback before being freed.
  *
  * @param ctxt context returned by CPLVirtualMemNew().
  *
  * @since GDAL 1.11
  */
-void CPL_DLL CPLVirtualMemFree(CPLVirtualMem* ctxt);
+void CPL_DLL CPLVirtualMemFree(CPLVirtualMem *ctxt);
 
 /** Return the pointer to the start of a virtual memory mapping.
  *
@@ -267,7 +259,7 @@ void CPL_DLL CPLVirtualMemFree(CPLVirtualMem* ctxt);
  *
  * @since GDAL 1.11
  */
-void CPL_DLL *CPLVirtualMemGetAddr(CPLVirtualMem* ctxt);
+void CPL_DLL *CPLVirtualMemGetAddr(CPLVirtualMem *ctxt);
 
 /** Return the size of the virtual memory mapping.
  *
@@ -276,7 +268,7 @@ void CPL_DLL *CPLVirtualMemGetAddr(CPLVirtualMem* ctxt);
  *
  * @since GDAL 1.11
  */
-size_t CPL_DLL CPLVirtualMemGetSize(CPLVirtualMem* ctxt);
+size_t CPL_DLL CPLVirtualMemGetSize(CPLVirtualMem *ctxt);
 
 /** Return if the virtual memory mapping is a direct file mapping.
  *
@@ -285,7 +277,7 @@ size_t CPL_DLL CPLVirtualMemGetSize(CPLVirtualMem* ctxt);
  *
  * @since GDAL 1.11
  */
-int CPL_DLL CPLVirtualMemIsFileMapping(CPLVirtualMem* ctxt);
+int CPL_DLL CPLVirtualMemIsFileMapping(CPLVirtualMem *ctxt);
 
 /** Return the access mode of the virtual memory mapping.
  *
@@ -294,7 +286,7 @@ int CPL_DLL CPLVirtualMemIsFileMapping(CPLVirtualMem* ctxt);
  *
  * @since GDAL 1.11
  */
-CPLVirtualMemAccessMode CPL_DLL CPLVirtualMemGetAccessMode(CPLVirtualMem* ctxt);
+CPLVirtualMemAccessMode CPL_DLL CPLVirtualMemGetAccessMode(CPLVirtualMem *ctxt);
 
 /** Return the page size associated to a virtual memory mapping.
  *
@@ -306,7 +298,7 @@ CPLVirtualMemAccessMode CPL_DLL CPLVirtualMemGetAccessMode(CPLVirtualMem* ctxt);
  *
  * @since GDAL 1.11
  */
-size_t CPL_DLL CPLVirtualMemGetPageSize(CPLVirtualMem* ctxt);
+size_t CPL_DLL CPLVirtualMemGetPageSize(CPLVirtualMem *ctxt);
 
 /** Return TRUE if this memory mapping can be accessed safely from concurrent
  *  threads.
@@ -325,7 +317,7 @@ size_t CPL_DLL CPLVirtualMemGetPageSize(CPLVirtualMem* ctxt);
  *
  * @since GDAL 1.11
  */
-int CPL_DLL CPLVirtualMemIsAccessThreadSafe(CPLVirtualMem* ctxt);
+int CPL_DLL CPLVirtualMemIsAccessThreadSafe(CPLVirtualMem *ctxt);
 
 /** Declare that a thread will access a virtual memory mapping.
  *
@@ -339,7 +331,7 @@ int CPL_DLL CPLVirtualMemIsAccessThreadSafe(CPLVirtualMem* ctxt);
  *
  * @since GDAL 1.11
  */
-void CPL_DLL CPLVirtualMemDeclareThread(CPLVirtualMem* ctxt);
+void CPL_DLL CPLVirtualMemDeclareThread(CPLVirtualMem *ctxt);
 
 /** Declare that a thread will stop accessing a virtual memory mapping.
  *
@@ -353,7 +345,7 @@ void CPL_DLL CPLVirtualMemDeclareThread(CPLVirtualMem* ctxt);
  *
  * @since GDAL 1.11
  */
-void CPL_DLL CPLVirtualMemUnDeclareThread(CPLVirtualMem* ctxt);
+void CPL_DLL CPLVirtualMemUnDeclareThread(CPLVirtualMem *ctxt);
 
 /** Make sure that a region of virtual memory will be realized.
  *
@@ -372,8 +364,8 @@ void CPL_DLL CPLVirtualMemUnDeclareThread(CPLVirtualMem* ctxt);
  *
  * @since GDAL 1.11
  */
-void CPL_DLL CPLVirtualMemPin(CPLVirtualMem* ctxt,
-                              void* pAddr, size_t nSize, int bWriteOp);
+void CPL_DLL CPLVirtualMemPin(CPLVirtualMem *ctxt, void *pAddr, size_t nSize,
+                              int bWriteOp);
 
 /** Cleanup any resource and handlers related to virtual memory.
  *

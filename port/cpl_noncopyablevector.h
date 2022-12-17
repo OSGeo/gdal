@@ -35,24 +35,26 @@ namespace cpl
 {
 
 /** Derived class of std::vector<> without copy capabilities */
-template<class T> struct NonCopyableVector: public std::vector<T>
+template <class T> struct NonCopyableVector : public std::vector<T>
 {
     /** Constructor
      * @param siz Initial size of vector.
      */
-    explicit inline NonCopyableVector(size_t siz = 0): std::vector<T>(siz) {}
+    explicit inline NonCopyableVector(size_t siz = 0) : std::vector<T>(siz)
+    {
+    }
 
     /** Move constructor */
-    NonCopyableVector(NonCopyableVector&&) = default;
+    NonCopyableVector(NonCopyableVector &&) = default;
 
     /** Move assignment operator */
-    NonCopyableVector& operator=(NonCopyableVector&&) = default;
+    NonCopyableVector &operator=(NonCopyableVector &&) = default;
 
-private:
-    NonCopyableVector(const NonCopyableVector&) = delete;
-    NonCopyableVector& operator=(const NonCopyableVector&) = delete;
+  private:
+    NonCopyableVector(const NonCopyableVector &) = delete;
+    NonCopyableVector &operator=(const NonCopyableVector &) = delete;
 };
 
-} // namespace
+}  // namespace cpl
 
-#endif // CPL_NONCOPYABLEVECOTR_H_INCLUDED
+#endif  // CPL_NONCOPYABLEVECOTR_H_INCLUDED

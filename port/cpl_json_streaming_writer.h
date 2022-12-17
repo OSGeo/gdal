@@ -40,16 +40,16 @@
 
 class CPL_DLL CPLJSonStreamingWriter
 {
-public:
-    typedef void (*SerializationFuncType)(const char* pszTxt, void* pUserData);
+  public:
+    typedef void (*SerializationFuncType)(const char *pszTxt, void *pUserData);
 
-private:
-    CPLJSonStreamingWriter(const CPLJSonStreamingWriter&) = delete;
-    CPLJSonStreamingWriter& operator=(const CPLJSonStreamingWriter&) = delete;
+  private:
+    CPLJSonStreamingWriter(const CPLJSonStreamingWriter &) = delete;
+    CPLJSonStreamingWriter &operator=(const CPLJSonStreamingWriter &) = delete;
 
     std::string m_osStr{};
     SerializationFuncType m_pfnSerializationFunc = nullptr;
-    void* m_pUserData = nullptr;
+    void *m_pUserData = nullptr;
     bool m_bPretty = true;
     std::string m_osIndent = std::string("  ");
     std::string m_osIndentAcc{};
@@ -59,33 +59,47 @@ private:
     {
         bool bIsObj = false;
         bool bFirstChild = true;
-        explicit State(bool bIsObjIn): bIsObj(bIsObjIn) {}
+        explicit State(bool bIsObjIn) : bIsObj(bIsObjIn)
+        {
+        }
     };
     std::vector<State> m_states{};
     bool m_bWaitForValue = false;
 
-    void Print(const std::string& text);
+    void Print(const std::string &text);
     void IncIndent();
     void DecIndent();
-    static std::string FormatString(const std::string& str);
+    static std::string FormatString(const std::string &str);
     void EmitCommaIfNeeded();
 
-public:
+  public:
     CPLJSonStreamingWriter(SerializationFuncType pfnSerializationFunc,
-                           void* pUserData);
+                           void *pUserData);
     ~CPLJSonStreamingWriter();
 
-    void SetPrettyFormatting(bool bPretty) { m_bPretty = bPretty; }
+    void SetPrettyFormatting(bool bPretty)
+    {
+        m_bPretty = bPretty;
+    }
     void SetIndentationSize(int nSpaces);
 
     // cppcheck-suppress functionStatic
-    const std::string& GetString() const { return m_osStr; }
+    const std::string &GetString() const
+    {
+        return m_osStr;
+    }
 
-    void Add(const std::string& str);
-    void Add(const char* pszStr);
+    void Add(const std::string &str);
+    void Add(const char *pszStr);
     void Add(bool bVal);
-    void Add(int nVal) { Add(static_cast<std::int64_t>(nVal)); }
-    void Add(unsigned int nVal) { Add(static_cast<std::int64_t>(nVal)); }
+    void Add(int nVal)
+    {
+        Add(static_cast<std::int64_t>(nVal));
+    }
+    void Add(unsigned int nVal)
+    {
+        Add(static_cast<std::int64_t>(nVal));
+    }
     void Add(std::int64_t nVal);
     void Add(std::uint64_t nVal);
     void Add(float fVal, int nPrecision = 9);
@@ -94,58 +108,73 @@ public:
 
     void StartObj();
     void EndObj();
-    void AddObjKey(const std::string& key);
+    void AddObjKey(const std::string &key);
     struct CPL_DLL ObjectContext
     {
-        CPLJSonStreamingWriter& m_serializer;
+        CPLJSonStreamingWriter &m_serializer;
 
         ObjectContext(const ObjectContext &) = delete;
-        ObjectContext(ObjectContext&&) = default;
+        ObjectContext(ObjectContext &&) = default;
 
-        explicit inline ObjectContext(CPLJSonStreamingWriter& serializer):
-            m_serializer(serializer) { m_serializer.StartObj(); }
-        ~ObjectContext() { m_serializer.EndObj(); }
+        explicit inline ObjectContext(CPLJSonStreamingWriter &serializer)
+            : m_serializer(serializer)
+        {
+            m_serializer.StartObj();
+        }
+        ~ObjectContext()
+        {
+            m_serializer.EndObj();
+        }
     };
-    inline ObjectContext MakeObjectContext() { return ObjectContext(*this); }
+    inline ObjectContext MakeObjectContext()
+    {
+        return ObjectContext(*this);
+    }
 
     void StartArray();
     void EndArray();
     struct CPL_DLL ArrayContext
     {
-        CPLJSonStreamingWriter& m_serializer;
+        CPLJSonStreamingWriter &m_serializer;
         bool m_bForceSingleLine;
         bool m_bNewLineEnabledBackup;
 
         ArrayContext(const ArrayContext &) = delete;
-        ArrayContext(ArrayContext&&) = default;
+        ArrayContext(ArrayContext &&) = default;
 
-        inline explicit ArrayContext(CPLJSonStreamingWriter& serializer,
-                     bool bForceSingleLine = false):
-            m_serializer(serializer),
-            m_bForceSingleLine(bForceSingleLine),
-            m_bNewLineEnabledBackup(serializer.GetNewLine())
+        inline explicit ArrayContext(CPLJSonStreamingWriter &serializer,
+                                     bool bForceSingleLine = false)
+            : m_serializer(serializer), m_bForceSingleLine(bForceSingleLine),
+              m_bNewLineEnabledBackup(serializer.GetNewLine())
         {
-            if( m_bForceSingleLine )
+            if (m_bForceSingleLine)
                 serializer.SetNewline(false);
             m_serializer.StartArray();
-
         }
         ~ArrayContext()
         {
             m_serializer.EndArray();
-            if( m_bForceSingleLine )
+            if (m_bForceSingleLine)
                 m_serializer.SetNewline(m_bNewLineEnabledBackup);
         }
     };
     inline ArrayContext MakeArrayContext(bool bForceSingleLine = false)
-        { return ArrayContext(*this, bForceSingleLine); }
+    {
+        return ArrayContext(*this, bForceSingleLine);
+    }
 
-    bool GetNewLine() const { return m_bNewLineEnabled; }
-    void SetNewline(bool bEnabled) { m_bNewLineEnabled = bEnabled; }
+    bool GetNewLine() const
+    {
+        return m_bNewLineEnabled;
+    }
+    void SetNewline(bool bEnabled)
+    {
+        m_bNewLineEnabled = bEnabled;
+    }
 };
 
-#endif // __cplusplus
+#endif  // __cplusplus
 
 /*! @endcond */
 
-#endif // CPL_JSON_STREAMING_WRITER_H
+#endif  // CPL_JSON_STREAMING_WRITER_H
