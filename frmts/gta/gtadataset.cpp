@@ -86,35 +86,34 @@
  */
 
 #include <limits.h>
-#include "cpl_port.h" // for snprintf for MSVC
+#include "cpl_port.h"  // for snprintf for MSVC
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "gta_headers.h"
-
 
 /************************************************************************/
 /* Helper functions                                                     */
 /************************************************************************/
 
-static void ScanDoubles( const char *pszString, double *padfDoubles, int nCount )
+static void ScanDoubles(const char *pszString, double *padfDoubles, int nCount)
 
 {
     char *pszRemainingString = (char *)pszString;
-    for( int i = 0; i < nCount; i++ )
+    for (int i = 0; i < nCount; i++)
     {
-        padfDoubles[i] = 0.0;   // fallback value
-        padfDoubles[i] = CPLStrtod( pszRemainingString, &pszRemainingString );
+        padfDoubles[i] = 0.0;  // fallback value
+        padfDoubles[i] = CPLStrtod(pszRemainingString, &pszRemainingString);
     }
 }
 
-static CPLString PrintDoubles( const double *padfDoubles, int nCount )
+static CPLString PrintDoubles(const double *padfDoubles, int nCount)
 
 {
     CPLString oString;
-    for( int i = 0; i < nCount; i++ )
+    for (int i = 0; i < nCount; i++)
     {
-        oString.FormatC( padfDoubles[i], "%.16g" );
-        if( i < nCount - 1)
+        oString.FormatC(padfDoubles[i], "%.16g");
+        if (i < nCount - 1)
         {
             oString += ' ';
         }
@@ -122,10 +121,10 @@ static CPLString PrintDoubles( const double *padfDoubles, int nCount )
     return oString;
 }
 
-static CPLString PrintDouble( double dfVal )
+static CPLString PrintDouble(double dfVal)
 
 {
-    return CPLString ().FormatC( dfVal, "%.16g" );
+    return CPLString().FormatC(dfVal, "%.16g");
 }
 
 /************************************************************************/
@@ -136,51 +135,51 @@ static CPLString PrintDouble( double dfVal )
 
 #if defined(__GNUC__)
 #pragma GCC diagnostic push
-// Suppresses warning: base class ‘class gta::custom_io’ has accessible non-virtual destructor [-Wnon-virtual-dtor]
+// Suppresses warning: base class ‘class gta::custom_io’ has accessible
+// non-virtual destructor [-Wnon-virtual-dtor]
 #pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
 #endif
 
-class GTAIO final: public gta::custom_io
+class GTAIO final : public gta::custom_io
 {
   private:
     VSILFILE *fp;
 
   public:
-    GTAIO( ) throw ()
-        : fp( nullptr )
+    GTAIO() throw() : fp(nullptr)
     {
     }
 
-    ~GTAIO( )
+    ~GTAIO()
     {
-        close( );
+        close();
     }
 
-    int open( const char *pszFilename, const char *pszMode )
+    int open(const char *pszFilename, const char *pszMode)
     {
-        fp = VSIFOpenL( pszFilename, pszMode );
+        fp = VSIFOpenL(pszFilename, pszMode);
         return fp == nullptr ? -1 : 0;
     }
 
-    void close( )
+    void close()
     {
-        if( fp != nullptr )
+        if (fp != nullptr)
         {
-            VSIFCloseL( fp );
+            VSIFCloseL(fp);
             fp = nullptr;
         }
     }
 
-    vsi_l_offset tell( )
+    vsi_l_offset tell()
     {
-        return VSIFTellL( fp );
+        return VSIFTellL(fp);
     }
 
-    virtual size_t read(void *buffer, size_t size, bool *error) throw () override
+    virtual size_t read(void *buffer, size_t size, bool *error) throw() override
     {
         size_t s;
-        s = VSIFReadL( buffer, 1, size, fp );
-        if( s != size )
+        s = VSIFReadL(buffer, 1, size, fp);
+        if (s != size)
         {
             errno = EIO;
             *error = true;
@@ -188,11 +187,12 @@ class GTAIO final: public gta::custom_io
         return size;
     }
 
-    virtual size_t write(const void *buffer, size_t size, bool *error) throw () override
+    virtual size_t write(const void *buffer, size_t size,
+                         bool *error) throw() override
     {
         size_t s;
-        s = VSIFWriteL( buffer, 1, size, fp );
-        if( s != size )
+        s = VSIFWriteL(buffer, 1, size, fp);
+        if (s != size)
         {
             errno = EIO;
             *error = true;
@@ -200,16 +200,16 @@ class GTAIO final: public gta::custom_io
         return size;
     }
 
-    virtual bool seekable() throw () override
+    virtual bool seekable() throw() override
     {
         return true;
     }
 
-    virtual void seek(intmax_t offset, int whence, bool *error) throw () override
+    virtual void seek(intmax_t offset, int whence, bool *error) throw() override
     {
         int r;
-        r = VSIFSeekL( fp, offset, whence );
-        if( r != 0 )
+        r = VSIFSeekL(fp, offset, whence);
+        if (r != 0)
         {
             errno = EIO;
             *error = true;
@@ -229,51 +229,51 @@ class GTAIO final: public gta::custom_io
 
 class GTARasterBand;
 
-class GTADataset final: public GDALPamDataset
+class GTADataset final : public GDALPamDataset
 {
     friend class GTARasterBand;
 
   private:
     // GTA input/output via VSIF*L functions
-    GTAIO       oGTAIO;
+    GTAIO oGTAIO;
     // GTA information
     gta::header oHeader;
     vsi_l_offset DataOffset = 0;
     // Metadata
-    bool        bHaveGeoTransform = false;
-    double      adfGeoTransform[6];
-    int         nGCPs = 0;
+    bool bHaveGeoTransform = false;
+    double adfGeoTransform[6];
+    int nGCPs = 0;
     mutable OGRSpatialReference m_oSRS{};
     OGRSpatialReference m_oGCPSRS{};
-    GDAL_GCP    *pasGCPs = nullptr;
+    GDAL_GCP *pasGCPs = nullptr;
     // Cached data block for block-based input/output
-    int         nLastBlockXOff = -1;
-    int         nLastBlockYOff = -1;
-    void        *pBlock = nullptr;
+    int nLastBlockXOff = -1;
+    int nLastBlockYOff = -1;
+    void *pBlock = nullptr;
 
     // Block-based input/output of all bands at once. This is used
     // by the GTARasterBand input/output functions.
-    CPLErr      ReadBlock( int, int );
-    CPLErr      WriteBlock( );
+    CPLErr ReadBlock(int, int);
+    CPLErr WriteBlock();
 
   public:
-                GTADataset();
-                ~GTADataset();
+    GTADataset();
+    ~GTADataset();
 
-    static GDALDataset *Open( GDALOpenInfo * );
+    static GDALDataset *Open(GDALOpenInfo *);
 
-    CPLErr      GetGeoTransform( double * padfTransform ) override;
-    CPLErr      SetGeoTransform( double * padfTransform ) override;
+    CPLErr GetGeoTransform(double *padfTransform) override;
+    CPLErr SetGeoTransform(double *padfTransform) override;
 
-    const OGRSpatialReference* GetSpatialRef() const override;
-    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
+    const OGRSpatialReference *GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    int         GetGCPCount( ) override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override;
-    const GDAL_GCP *GetGCPs( ) override;
+    int GetGCPCount() override;
+    const OGRSpatialReference *GetGCPSpatialRef() const override;
+    const GDAL_GCP *GetGCPs() override;
     using GDALPamDataset::SetGCPs;
-    CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                    const OGRSpatialReference* poSRS ) override;
+    CPLErr SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList,
+                   const OGRSpatialReference *poSRS) override;
 };
 
 /************************************************************************/
@@ -282,91 +282,92 @@ class GTADataset final: public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class GTARasterBand final: public GDALPamRasterBand
+class GTARasterBand final : public GDALPamRasterBand
 {
     friend class GTADataset;
+
   private:
     // Size of the component represented by this band
-    size_t      sComponentSize;
+    size_t sComponentSize;
     // Offset of the component represented by this band inside a GTA element
-    size_t      sComponentOffset;
+    size_t sComponentOffset;
     // StringList for category names
-    char      **papszCategoryNames;
+    char **papszCategoryNames;
     // StringList for metadata
-    char      **papszMetaData;
+    char **papszMetaData;
 
   public:
-                GTARasterBand( GTADataset *, int );
-                ~GTARasterBand( );
+    GTARasterBand(GTADataset *, int);
+    ~GTARasterBand();
 
-    CPLErr      IReadBlock( int, int, void * ) override;
-    CPLErr      IWriteBlock( int, int, void * ) override;
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
 
-    char      **GetCategoryNames( ) override;
-    CPLErr      SetCategoryNames( char ** ) override;
+    char **GetCategoryNames() override;
+    CPLErr SetCategoryNames(char **) override;
 
-    double      GetMinimum( int * ) override;
-    double      GetMaximum( int * ) override;
+    double GetMinimum(int *) override;
+    double GetMaximum(int *) override;
 
-    double      GetNoDataValue( int * ) override;
-    CPLErr      SetNoDataValue( double ) override;
-    double      GetOffset( int * ) override;
-    CPLErr      SetOffset( double ) override;
-    double      GetScale( int * ) override;
-    CPLErr      SetScale( double ) override;
-    const char *GetUnitType( ) override;
-    CPLErr      SetUnitType( const char * ) override;
-    GDALColorInterp GetColorInterpretation( ) override;
-    CPLErr      SetColorInterpretation( GDALColorInterp ) override;
+    double GetNoDataValue(int *) override;
+    CPLErr SetNoDataValue(double) override;
+    double GetOffset(int *) override;
+    CPLErr SetOffset(double) override;
+    double GetScale(int *) override;
+    CPLErr SetScale(double) override;
+    const char *GetUnitType() override;
+    CPLErr SetUnitType(const char *) override;
+    GDALColorInterp GetColorInterpretation() override;
+    CPLErr SetColorInterpretation(GDALColorInterp) override;
 };
 
 /************************************************************************/
 /*                           GTARasterBand()                            */
 /************************************************************************/
 
-GTARasterBand::GTARasterBand( GTADataset *poDSIn, int nBandIn )
+GTARasterBand::GTARasterBand(GTADataset *poDSIn, int nBandIn)
 
 {
     this->poDS = poDSIn;
     this->nBand = nBandIn;
 
     // Data type
-    switch( poDSIn->oHeader.component_type( nBand-1 ) )
+    switch (poDSIn->oHeader.component_type(nBand - 1))
     {
-    case gta::int8:
-        eDataType = GDT_Byte;
-        SetMetadataItem("PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE");
-        break;
-    case gta::uint8:
-        eDataType = GDT_Byte;
-        break;
-    case gta::int16:
-        eDataType = GDT_Int16;
-        break;
-    case gta::uint16:
-        eDataType = GDT_UInt16;
-        break;
-    case gta::int32:
-        eDataType = GDT_Int32;
-        break;
-    case gta::uint32:
-        eDataType = GDT_UInt32;
-        break;
-    case gta::float32:
-        eDataType = GDT_Float32;
-        break;
-    case gta::float64:
-        eDataType = GDT_Float64;
-        break;
-    case gta::cfloat32:
-        eDataType = GDT_CFloat32;
-        break;
-    case gta::cfloat64:
-        eDataType = GDT_CFloat64;
-        break;
-    default:
-        // cannot happen because we checked this in GTADataset::Open()
-        break;
+        case gta::int8:
+            eDataType = GDT_Byte;
+            SetMetadataItem("PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE");
+            break;
+        case gta::uint8:
+            eDataType = GDT_Byte;
+            break;
+        case gta::int16:
+            eDataType = GDT_Int16;
+            break;
+        case gta::uint16:
+            eDataType = GDT_UInt16;
+            break;
+        case gta::int32:
+            eDataType = GDT_Int32;
+            break;
+        case gta::uint32:
+            eDataType = GDT_UInt32;
+            break;
+        case gta::float32:
+            eDataType = GDT_Float32;
+            break;
+        case gta::float64:
+            eDataType = GDT_Float64;
+            break;
+        case gta::cfloat32:
+            eDataType = GDT_CFloat32;
+            break;
+        case gta::cfloat64:
+            eDataType = GDT_CFloat64;
+            break;
+        default:
+            // cannot happen because we checked this in GTADataset::Open()
+            break;
     }
 
     // Block size
@@ -374,44 +375,51 @@ GTARasterBand::GTARasterBand( GTADataset *poDSIn, int nBandIn )
     nBlockYSize = 1;
 
     // Component information
-    sComponentSize = static_cast<size_t>(poDSIn->oHeader.component_size( nBand-1 ));
+    sComponentSize =
+        static_cast<size_t>(poDSIn->oHeader.component_size(nBand - 1));
     sComponentOffset = 0;
-    for( int i = 0; i < nBand-1; i++ )
+    for (int i = 0; i < nBand - 1; i++)
     {
-        sComponentOffset += poDSIn->oHeader.component_size( i );
+        sComponentOffset += poDSIn->oHeader.component_size(i);
     }
 
     // Metadata
     papszCategoryNames = nullptr;
     papszMetaData = nullptr;
-    if( poDSIn->oHeader.component_taglist( nBand-1 ).get( "DESCRIPTION" ) )
+    if (poDSIn->oHeader.component_taglist(nBand - 1).get("DESCRIPTION"))
     {
-        SetDescription( poDSIn->oHeader.component_taglist( nBand-1 ).get( "DESCRIPTION" ) );
+        SetDescription(
+            poDSIn->oHeader.component_taglist(nBand - 1).get("DESCRIPTION"));
     }
-    for( uintmax_t i = 0; i < poDSIn->oHeader.component_taglist( nBand-1 ).tags(); i++)
+    for (uintmax_t i = 0;
+         i < poDSIn->oHeader.component_taglist(nBand - 1).tags(); i++)
     {
-        const char *pszTagName = poDSIn->oHeader.component_taglist( nBand-1 ).name( i );
-        if( STARTS_WITH(pszTagName, "GDAL/META/") )
+        const char *pszTagName =
+            poDSIn->oHeader.component_taglist(nBand - 1).name(i);
+        if (STARTS_WITH(pszTagName, "GDAL/META/"))
         {
-            const char *pDomainEnd = strchr( pszTagName + 10, '/' );
-            if( pDomainEnd && pDomainEnd - (pszTagName + 10) > 0 )
+            const char *pDomainEnd = strchr(pszTagName + 10, '/');
+            if (pDomainEnd && pDomainEnd - (pszTagName + 10) > 0)
             {
-                char *pszDomain = (char *)VSIMalloc( pDomainEnd - (pszTagName + 10) + 1 );
-                if( !pszDomain )
+                char *pszDomain =
+                    (char *)VSIMalloc(pDomainEnd - (pszTagName + 10) + 1);
+                if (!pszDomain)
                 {
                     continue;
                 }
                 int j;
-                for( j = 0; j < pDomainEnd - (pszTagName + 10); j++ )
+                for (j = 0; j < pDomainEnd - (pszTagName + 10); j++)
                 {
                     pszDomain[j] = pszTagName[10 + j];
                 }
                 pszDomain[j] = '\0';
                 const char *pszName = pszTagName + 10 + j + 1;
-                const char *pszValue = poDSIn->oHeader.component_taglist( nBand-1 ).value( i );
-                SetMetadataItem( pszName, pszValue,
-                        strcmp( pszDomain, "DEFAULT" ) == 0 ? nullptr : pszDomain );
-                VSIFree( pszDomain );
+                const char *pszValue =
+                    poDSIn->oHeader.component_taglist(nBand - 1).value(i);
+                SetMetadataItem(pszName, pszValue,
+                                strcmp(pszDomain, "DEFAULT") == 0 ? nullptr
+                                                                  : pszDomain);
+                VSIFree(pszDomain);
             }
         }
     }
@@ -421,36 +429,40 @@ GTARasterBand::GTARasterBand( GTADataset *poDSIn, int nBandIn )
 /*                           ~GTARasterBand()                           */
 /************************************************************************/
 
-GTARasterBand::~GTARasterBand( )
+GTARasterBand::~GTARasterBand()
 
 {
-    CSLDestroy( papszCategoryNames );
-    CSLDestroy( papszMetaData );
+    CSLDestroy(papszCategoryNames);
+    CSLDestroy(papszMetaData);
 }
 
 /************************************************************************/
 /*                             GetCategoryNames()                       */
 /************************************************************************/
 
-char **GTARasterBand::GetCategoryNames( )
+char **GTARasterBand::GetCategoryNames()
 
 {
-    if( !papszCategoryNames )
+    if (!papszCategoryNames)
     {
-        GTADataset *poGDS = (GTADataset *) poDS;
-        const char *pszCatCount = poGDS->oHeader.component_taglist( nBand-1 ).get( "GDAL/CATEGORY_COUNT" );
+        GTADataset *poGDS = (GTADataset *)poDS;
+        const char *pszCatCount =
+            poGDS->oHeader.component_taglist(nBand - 1).get(
+                "GDAL/CATEGORY_COUNT");
         int nCatCount = 0;
-        if( pszCatCount )
+        if (pszCatCount)
         {
-            nCatCount = atoi( pszCatCount );
+            nCatCount = atoi(pszCatCount);
         }
-        if( nCatCount > 0 )
+        if (nCatCount > 0)
         {
-            for( int i = 0; i < nCatCount; i++ )
+            for (int i = 0; i < nCatCount; i++)
             {
-                const char *pszCatName = poGDS->oHeader.component_taglist( nBand-1 ).get(
-                        CPLSPrintf( "GDAL/CATEGORY%d", i ) );
-                papszCategoryNames = CSLAddString( papszCategoryNames, pszCatName ? pszCatName : "" );
+                const char *pszCatName =
+                    poGDS->oHeader.component_taglist(nBand - 1).get(
+                        CPLSPrintf("GDAL/CATEGORY%d", i));
+                papszCategoryNames = CSLAddString(papszCategoryNames,
+                                                  pszCatName ? pszCatName : "");
             }
         }
     }
@@ -461,11 +473,11 @@ char **GTARasterBand::GetCategoryNames( )
 /*                             SetCategoryName()                        */
 /************************************************************************/
 
-CPLErr GTARasterBand::SetCategoryNames( char ** )
+CPLErr GTARasterBand::SetCategoryNames(char **)
 
 {
-    CPLError( CE_Warning, CPLE_NotSupported,
-            "The GTA driver does not support metadata updates.\n" );
+    CPLError(CE_Warning, CPLE_NotSupported,
+             "The GTA driver does not support metadata updates.\n");
     return CE_Failure;
 }
 
@@ -473,20 +485,21 @@ CPLErr GTARasterBand::SetCategoryNames( char ** )
 /*                             GetMinimum()                             */
 /************************************************************************/
 
-double GTARasterBand::GetMinimum( int *pbSuccess )
+double GTARasterBand::GetMinimum(int *pbSuccess)
 
 {
-    GTADataset *poGDS = (GTADataset *) poDS;
-    const char *pszValue = poGDS->oHeader.component_taglist( nBand-1 ).get( "MIN_VALUE" );
-    if( pszValue )
+    GTADataset *poGDS = (GTADataset *)poDS;
+    const char *pszValue =
+        poGDS->oHeader.component_taglist(nBand - 1).get("MIN_VALUE");
+    if (pszValue)
     {
-        if( pbSuccess )
+        if (pbSuccess)
             *pbSuccess = true;
-        return CPLAtof( pszValue );
+        return CPLAtof(pszValue);
     }
     else
     {
-        return GDALRasterBand::GetMinimum( pbSuccess );
+        return GDALRasterBand::GetMinimum(pbSuccess);
     }
 }
 
@@ -494,20 +507,21 @@ double GTARasterBand::GetMinimum( int *pbSuccess )
 /*                             GetMaximum()                             */
 /************************************************************************/
 
-double GTARasterBand::GetMaximum( int *pbSuccess  )
+double GTARasterBand::GetMaximum(int *pbSuccess)
 
 {
-    GTADataset *poGDS = (GTADataset *) poDS;
-    const char *pszValue = poGDS->oHeader.component_taglist( nBand-1 ).get( "MAX_VALUE" );
-    if( pszValue )
+    GTADataset *poGDS = (GTADataset *)poDS;
+    const char *pszValue =
+        poGDS->oHeader.component_taglist(nBand - 1).get("MAX_VALUE");
+    if (pszValue)
     {
-        if( pbSuccess )
+        if (pbSuccess)
             *pbSuccess = true;
-        return CPLAtof( pszValue );
+        return CPLAtof(pszValue);
     }
     else
     {
-        return GDALRasterBand::GetMaximum( pbSuccess );
+        return GDALRasterBand::GetMaximum(pbSuccess);
     }
 }
 
@@ -515,20 +529,21 @@ double GTARasterBand::GetMaximum( int *pbSuccess  )
 /*                             GetNoDataValue()                         */
 /************************************************************************/
 
-double GTARasterBand::GetNoDataValue( int *pbSuccess )
+double GTARasterBand::GetNoDataValue(int *pbSuccess)
 
 {
-    GTADataset *poGDS = (GTADataset *) poDS;
-    const char *pszValue = poGDS->oHeader.component_taglist( nBand-1 ).get( "NO_DATA_VALUE" );
-    if( pszValue )
+    GTADataset *poGDS = (GTADataset *)poDS;
+    const char *pszValue =
+        poGDS->oHeader.component_taglist(nBand - 1).get("NO_DATA_VALUE");
+    if (pszValue)
     {
-        if( pbSuccess )
+        if (pbSuccess)
             *pbSuccess = true;
-        return CPLAtof( pszValue );
+        return CPLAtof(pszValue);
     }
     else
     {
-        return GDALRasterBand::GetNoDataValue( pbSuccess );
+        return GDALRasterBand::GetNoDataValue(pbSuccess);
     }
 }
 
@@ -536,11 +551,11 @@ double GTARasterBand::GetNoDataValue( int *pbSuccess )
 /*                             SetNoDataValue()                         */
 /************************************************************************/
 
-CPLErr GTARasterBand::SetNoDataValue( double )
+CPLErr GTARasterBand::SetNoDataValue(double)
 
 {
-    CPLError( CE_Warning, CPLE_NotSupported,
-            "The GTA driver does not support metadata updates.\n" );
+    CPLError(CE_Warning, CPLE_NotSupported,
+             "The GTA driver does not support metadata updates.\n");
     return CE_Failure;
 }
 
@@ -548,20 +563,21 @@ CPLErr GTARasterBand::SetNoDataValue( double )
 /*                             GetOffset()                              */
 /************************************************************************/
 
-double GTARasterBand::GetOffset( int *pbSuccess )
+double GTARasterBand::GetOffset(int *pbSuccess)
 
 {
-    GTADataset *poGDS = (GTADataset *) poDS;
-    const char *pszValue = poGDS->oHeader.component_taglist( nBand-1 ).get( "GDAL/OFFSET" );
-    if( pszValue )
+    GTADataset *poGDS = (GTADataset *)poDS;
+    const char *pszValue =
+        poGDS->oHeader.component_taglist(nBand - 1).get("GDAL/OFFSET");
+    if (pszValue)
     {
-        if( pbSuccess )
+        if (pbSuccess)
             *pbSuccess = true;
-        return CPLAtof( pszValue );
+        return CPLAtof(pszValue);
     }
     else
     {
-        return GDALRasterBand::GetOffset( pbSuccess );
+        return GDALRasterBand::GetOffset(pbSuccess);
     }
 }
 
@@ -569,11 +585,11 @@ double GTARasterBand::GetOffset( int *pbSuccess )
 /*                             SetOffset()                              */
 /************************************************************************/
 
-CPLErr GTARasterBand::SetOffset( double )
+CPLErr GTARasterBand::SetOffset(double)
 
 {
-    CPLError( CE_Warning, CPLE_NotSupported,
-            "The GTA driver does not support metadata updates.\n" );
+    CPLError(CE_Warning, CPLE_NotSupported,
+             "The GTA driver does not support metadata updates.\n");
     return CE_Failure;
 }
 
@@ -581,20 +597,21 @@ CPLErr GTARasterBand::SetOffset( double )
 /*                             GetScale()                               */
 /************************************************************************/
 
-double GTARasterBand::GetScale( int *pbSuccess )
+double GTARasterBand::GetScale(int *pbSuccess)
 
 {
-    GTADataset *poGDS = (GTADataset *) poDS;
-    const char *pszValue = poGDS->oHeader.component_taglist( nBand-1 ).get( "GDAL/SCALE" );
-    if( pszValue )
+    GTADataset *poGDS = (GTADataset *)poDS;
+    const char *pszValue =
+        poGDS->oHeader.component_taglist(nBand - 1).get("GDAL/SCALE");
+    if (pszValue)
     {
-        if( pbSuccess )
+        if (pbSuccess)
             *pbSuccess = true;
-        return CPLAtof( pszValue );
+        return CPLAtof(pszValue);
     }
     else
     {
-        return GDALRasterBand::GetScale( pbSuccess );
+        return GDALRasterBand::GetScale(pbSuccess);
     }
 }
 
@@ -602,11 +619,11 @@ double GTARasterBand::GetScale( int *pbSuccess )
 /*                             SetScale()                               */
 /************************************************************************/
 
-CPLErr GTARasterBand::SetScale( double )
+CPLErr GTARasterBand::SetScale(double)
 
 {
-    CPLError( CE_Warning, CPLE_NotSupported,
-            "The GTA driver does not support metadata updates.\n" );
+    CPLError(CE_Warning, CPLE_NotSupported,
+             "The GTA driver does not support metadata updates.\n");
     return CE_Failure;
 }
 
@@ -614,11 +631,12 @@ CPLErr GTARasterBand::SetScale( double )
 /*                             GetUnitType()                            */
 /************************************************************************/
 
-const char *GTARasterBand::GetUnitType( )
+const char *GTARasterBand::GetUnitType()
 
 {
-    GTADataset *poGDS = (GTADataset *) poDS;
-    const char *pszValue = poGDS->oHeader.component_taglist( nBand-1 ).get( "UNIT" );
+    GTADataset *poGDS = (GTADataset *)poDS;
+    const char *pszValue =
+        poGDS->oHeader.component_taglist(nBand - 1).get("UNIT");
     return pszValue ? pszValue : "";
 }
 
@@ -626,11 +644,11 @@ const char *GTARasterBand::GetUnitType( )
 /*                             SetUnitType()                            */
 /************************************************************************/
 
-CPLErr GTARasterBand::SetUnitType( const char * )
+CPLErr GTARasterBand::SetUnitType(const char *)
 
 {
-    CPLError( CE_Warning, CPLE_NotSupported,
-            "The GTA driver does not support metadata updates.\n" );
+    CPLError(CE_Warning, CPLE_NotSupported,
+             "The GTA driver does not support metadata updates.\n");
     return CE_Failure;
 }
 
@@ -638,44 +656,43 @@ CPLErr GTARasterBand::SetUnitType( const char * )
 /*                             GetColorInterpretation()                 */
 /************************************************************************/
 
-GDALColorInterp GTARasterBand::GetColorInterpretation( )
+GDALColorInterp GTARasterBand::GetColorInterpretation()
 
 {
-    GTADataset *poGDS = (GTADataset *) poDS;
+    GTADataset *poGDS = (GTADataset *)poDS;
     const char *pszColorInterpretation =
-        poGDS->oHeader.component_taglist( nBand-1 ).get(
-                "INTERPRETATION" );
-    if( pszColorInterpretation )
+        poGDS->oHeader.component_taglist(nBand - 1).get("INTERPRETATION");
+    if (pszColorInterpretation)
     {
-        if( EQUAL( pszColorInterpretation, "GRAY" ) )
-            return GCI_GrayIndex ;
-        else if ( EQUAL( pszColorInterpretation, "RED" ) )
-            return GCI_RedBand ;
-        else if ( EQUAL( pszColorInterpretation, "GREEN" ) )
-            return GCI_GreenBand ;
-        else if ( EQUAL( pszColorInterpretation, "BLUE" ) )
-            return GCI_BlueBand ;
-        else if ( EQUAL( pszColorInterpretation, "ALPHA" ) )
-            return GCI_AlphaBand ;
-        else if ( EQUAL( pszColorInterpretation, "HSL/H" ) )
-            return GCI_HueBand ;
-        else if ( EQUAL( pszColorInterpretation, "HSL/S" ) )
-            return GCI_SaturationBand ;
-        else if ( EQUAL( pszColorInterpretation, "HSL/L" ) )
-            return GCI_LightnessBand ;
-        else if ( EQUAL( pszColorInterpretation, "CMYK/C" ) )
-            return GCI_CyanBand ;
-        else if ( EQUAL( pszColorInterpretation, "CMYK/M" ) )
-            return GCI_MagentaBand ;
-        else if ( EQUAL( pszColorInterpretation, "CMYK/Y" ) )
-            return GCI_YellowBand ;
-        else if ( EQUAL( pszColorInterpretation, "CMYK/K" ) )
-            return GCI_BlackBand ;
-        else if ( EQUAL( pszColorInterpretation, "YCBCR/Y" ) )
+        if (EQUAL(pszColorInterpretation, "GRAY"))
+            return GCI_GrayIndex;
+        else if (EQUAL(pszColorInterpretation, "RED"))
+            return GCI_RedBand;
+        else if (EQUAL(pszColorInterpretation, "GREEN"))
+            return GCI_GreenBand;
+        else if (EQUAL(pszColorInterpretation, "BLUE"))
+            return GCI_BlueBand;
+        else if (EQUAL(pszColorInterpretation, "ALPHA"))
+            return GCI_AlphaBand;
+        else if (EQUAL(pszColorInterpretation, "HSL/H"))
+            return GCI_HueBand;
+        else if (EQUAL(pszColorInterpretation, "HSL/S"))
+            return GCI_SaturationBand;
+        else if (EQUAL(pszColorInterpretation, "HSL/L"))
+            return GCI_LightnessBand;
+        else if (EQUAL(pszColorInterpretation, "CMYK/C"))
+            return GCI_CyanBand;
+        else if (EQUAL(pszColorInterpretation, "CMYK/M"))
+            return GCI_MagentaBand;
+        else if (EQUAL(pszColorInterpretation, "CMYK/Y"))
+            return GCI_YellowBand;
+        else if (EQUAL(pszColorInterpretation, "CMYK/K"))
+            return GCI_BlackBand;
+        else if (EQUAL(pszColorInterpretation, "YCBCR/Y"))
             return GCI_YCbCr_YBand;
-        else if ( EQUAL( pszColorInterpretation, "YCBCR/CB" ) )
+        else if (EQUAL(pszColorInterpretation, "YCBCR/CB"))
             return GCI_YCbCr_CbBand;
-        else if ( EQUAL( pszColorInterpretation, "YCBCR/CR" ) )
+        else if (EQUAL(pszColorInterpretation, "YCBCR/CR"))
             return GCI_YCbCr_CrBand;
     }
     return GCI_Undefined;
@@ -685,11 +702,11 @@ GDALColorInterp GTARasterBand::GetColorInterpretation( )
 /*                             SetColorInterpretation()                 */
 /************************************************************************/
 
-CPLErr GTARasterBand::SetColorInterpretation( GDALColorInterp )
+CPLErr GTARasterBand::SetColorInterpretation(GDALColorInterp)
 
 {
-    CPLError( CE_Warning, CPLE_NotSupported,
-            "The GTA driver does not support metadata updates.\n" );
+    CPLError(CE_Warning, CPLE_NotSupported,
+             "The GTA driver does not support metadata updates.\n");
     return CE_Failure;
 }
 
@@ -697,20 +714,19 @@ CPLErr GTARasterBand::SetColorInterpretation( GDALColorInterp )
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr GTARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+CPLErr GTARasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
 {
-    GTADataset *poGDS = (GTADataset *) poDS;
+    GTADataset *poGDS = (GTADataset *)poDS;
 
     // Read and cache block containing all bands at once
-    if( poGDS->ReadBlock( nBlockXOff, nBlockYOff ) != CE_None )
+    if (poGDS->ReadBlock(nBlockXOff, nBlockYOff) != CE_None)
     {
         return CE_Failure;
     }
 
     char *pBlock = (char *)poGDS->pBlock;
-    if( poGDS->oHeader.compression() != gta::none )
+    if (poGDS->oHeader.compression() != gta::none)
     {
         // pBlock contains the complete data set. Add the offset into the
         // requested block. This assumes that nBlockYSize == 1 and
@@ -719,11 +735,12 @@ CPLErr GTARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
     // Copy the data for this band from the cached block
-    for( int i = 0; i < nBlockXSize; i++ )
+    for (int i = 0; i < nBlockXSize; i++)
     {
-        char *pSrc = pBlock + i * poGDS->oHeader.element_size() + sComponentOffset;
-        char *pDst = (char *) pImage + i * sComponentSize;
-        memcpy( (void *) pDst, (void *) pSrc, sComponentSize );
+        char *pSrc =
+            pBlock + i * poGDS->oHeader.element_size() + sComponentOffset;
+        char *pDst = (char *)pImage + i * sComponentSize;
+        memcpy((void *)pDst, (void *)pSrc, sComponentSize);
     }
 
     return CE_None;
@@ -733,36 +750,36 @@ CPLErr GTARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*                             IWriteBlock()                            */
 /************************************************************************/
 
-CPLErr GTARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+CPLErr GTARasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
 {
-    GTADataset *poGDS = (GTADataset *) poDS;
+    GTADataset *poGDS = (GTADataset *)poDS;
 
-    if( poGDS->oHeader.compression() != gta::none )
+    if (poGDS->oHeader.compression() != gta::none)
     {
-        CPLError( CE_Warning, CPLE_NotSupported,
-                "The GTA driver cannot update compressed GTAs.\n" );
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "The GTA driver cannot update compressed GTAs.\n");
         return CE_Failure;
     }
 
     // Read and cache block containing all bands at once
-    if( poGDS->ReadBlock( nBlockXOff, nBlockYOff ) != CE_None )
+    if (poGDS->ReadBlock(nBlockXOff, nBlockYOff) != CE_None)
     {
         return CE_Failure;
     }
     char *pBlock = (char *)poGDS->pBlock;
 
     // Copy the data for this band into the cached block
-    for( int i = 0; i < nBlockXSize; i++ )
+    for (int i = 0; i < nBlockXSize; i++)
     {
-        char *pSrc = (char *) pImage + i * sComponentSize;
-        char *pDst = pBlock + i * poGDS->oHeader.element_size() + sComponentOffset;
-        memcpy( (void *) pDst, (void *) pSrc, sComponentSize );
+        char *pSrc = (char *)pImage + i * sComponentSize;
+        char *pDst =
+            pBlock + i * poGDS->oHeader.element_size() + sComponentOffset;
+        memcpy((void *)pDst, (void *)pSrc, sComponentSize);
     }
 
     // Write the block that contains all bands at once
-    if( poGDS->WriteBlock( ) != CE_None )
+    if (poGDS->WriteBlock() != CE_None)
     {
         return CE_Failure;
     }
@@ -785,7 +802,7 @@ GTADataset::GTADataset()
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
+    memset(adfGeoTransform, 0, sizeof(adfGeoTransform));
 }
 
 /************************************************************************/
@@ -796,46 +813,47 @@ GTADataset::~GTADataset()
 
 {
     FlushCache(true);
-    for( int i = 0; i < nGCPs; i++ )
+    for (int i = 0; i < nGCPs; i++)
     {
-        VSIFree( pasGCPs[i].pszId );
-        VSIFree( pasGCPs[i].pszInfo );
+        VSIFree(pasGCPs[i].pszId);
+        VSIFree(pasGCPs[i].pszInfo);
     }
-    VSIFree( pasGCPs );
-    VSIFree( pBlock );
+    VSIFree(pasGCPs);
+    VSIFree(pBlock);
 }
 
 /************************************************************************/
 /*                             ReadBlock()                              */
 /************************************************************************/
 
-CPLErr GTADataset::ReadBlock( int nBlockXOff, int nBlockYOff )
+CPLErr GTADataset::ReadBlock(int nBlockXOff, int nBlockYOff)
 
 {
     /* Compressed data sets must be read into memory completely.
      * Uncompressed data sets are read block-wise. */
 
-    if( oHeader.compression() != gta::none )
+    if (oHeader.compression() != gta::none)
     {
-        if( pBlock == nullptr )
+        if (pBlock == nullptr)
         {
-            if( oHeader.data_size() > (size_t)(-1)
-                    || ( pBlock = VSI_MALLOC_VERBOSE( static_cast<size_t>(oHeader.data_size()) ) ) == nullptr )
+            if (oHeader.data_size() > (size_t)(-1) ||
+                (pBlock = VSI_MALLOC_VERBOSE(
+                     static_cast<size_t>(oHeader.data_size()))) == nullptr)
             {
-                CPLError( CE_Failure, CPLE_OutOfMemory,
-                        "Cannot allocate buffer for the complete data set.\n"
-                        "Try to uncompress the data set to allow block-wise "
-                        "reading.\n" );
+                CPLError(CE_Failure, CPLE_OutOfMemory,
+                         "Cannot allocate buffer for the complete data set.\n"
+                         "Try to uncompress the data set to allow block-wise "
+                         "reading.\n");
                 return CE_Failure;
             }
 
             try
             {
-                oHeader.read_data( oGTAIO, pBlock );
+                oHeader.read_data(oGTAIO, pBlock);
             }
-            catch( gta::exception &e )
+            catch (gta::exception &e)
             {
-                CPLError( CE_Failure, CPLE_FileIO, "GTA error: %s\n", e.what() );
+                CPLError(CE_Failure, CPLE_FileIO, "GTA error: %s\n", e.what());
                 return CE_Failure;
             }
         }
@@ -846,13 +864,14 @@ CPLErr GTADataset::ReadBlock( int nBlockXOff, int nBlockYOff )
         int nBlockXSize = GetRasterXSize();
         int nBlockYSize = 1;
 
-        if( nLastBlockXOff == nBlockXOff && nLastBlockYOff == nBlockYOff )
+        if (nLastBlockXOff == nBlockXOff && nLastBlockYOff == nBlockYOff)
             return CE_None;
 
-        if( pBlock == nullptr )
+        if (pBlock == nullptr)
         {
-            pBlock = VSI_MALLOC2_VERBOSE( static_cast<size_t>(oHeader.element_size()), nBlockXSize );
-            if( pBlock == nullptr )
+            pBlock = VSI_MALLOC2_VERBOSE(
+                static_cast<size_t>(oHeader.element_size()), nBlockXSize);
+            if (pBlock == nullptr)
             {
                 return CE_Failure;
             }
@@ -860,13 +879,15 @@ CPLErr GTADataset::ReadBlock( int nBlockXOff, int nBlockYOff )
 
         try
         {
-            uintmax_t lo[2] = { (uintmax_t)nBlockXOff * nBlockXSize, (uintmax_t)nBlockYOff * nBlockYSize};
-            uintmax_t hi[2] = { lo[0] + nBlockXSize - 1, lo[1] + nBlockYSize - 1 };
-            oHeader.read_block( oGTAIO, DataOffset, lo, hi, pBlock );
+            uintmax_t lo[2] = {(uintmax_t)nBlockXOff * nBlockXSize,
+                               (uintmax_t)nBlockYOff * nBlockYSize};
+            uintmax_t hi[2] = {lo[0] + nBlockXSize - 1,
+                               lo[1] + nBlockYSize - 1};
+            oHeader.read_block(oGTAIO, DataOffset, lo, hi, pBlock);
         }
-        catch( gta::exception &e )
+        catch (gta::exception &e)
         {
-            CPLError( CE_Failure, CPLE_FileIO, "GTA error: %s\n", e.what() );
+            CPLError(CE_Failure, CPLE_FileIO, "GTA error: %s\n", e.what());
             return CE_Failure;
         }
 
@@ -880,7 +901,7 @@ CPLErr GTADataset::ReadBlock( int nBlockXOff, int nBlockYOff )
 /*                             WriteBlock()                             */
 /************************************************************************/
 
-CPLErr GTADataset::WriteBlock( )
+CPLErr GTADataset::WriteBlock()
 
 {
     // This has to be the same as in the RasterBand constructor!
@@ -890,13 +911,14 @@ CPLErr GTADataset::WriteBlock( )
     // Write the block (nLastBlockXOff, nLastBlockYOff) stored in pBlock.
     try
     {
-        uintmax_t lo[2] = { (uintmax_t)nLastBlockXOff * nBlockXSize, (uintmax_t)nLastBlockYOff * nBlockYSize};
-        uintmax_t hi[2] = { lo[0] + nBlockXSize - 1, lo[1] + nBlockYSize - 1 };
-        oHeader.write_block( oGTAIO, DataOffset, lo, hi, pBlock );
+        uintmax_t lo[2] = {(uintmax_t)nLastBlockXOff * nBlockXSize,
+                           (uintmax_t)nLastBlockYOff * nBlockYSize};
+        uintmax_t hi[2] = {lo[0] + nBlockXSize - 1, lo[1] + nBlockYSize - 1};
+        oHeader.write_block(oGTAIO, DataOffset, lo, hi, pBlock);
     }
-    catch( gta::exception &e )
+    catch (gta::exception &e)
     {
-        CPLError( CE_Failure, CPLE_FileIO, "GTA error: %s\n", e.what() );
+        CPLError(CE_Failure, CPLE_FileIO, "GTA error: %s\n", e.what());
         return CE_Failure;
     }
 
@@ -907,12 +929,12 @@ CPLErr GTADataset::WriteBlock( )
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GTADataset::GetGeoTransform( double * padfTransform )
+CPLErr GTADataset::GetGeoTransform(double *padfTransform)
 
 {
-    if( bHaveGeoTransform )
+    if (bHaveGeoTransform)
     {
-        memcpy( padfTransform, adfGeoTransform, 6*sizeof(double) );
+        memcpy(padfTransform, adfGeoTransform, 6 * sizeof(double));
         return CE_None;
     }
     else
@@ -925,11 +947,11 @@ CPLErr GTADataset::GetGeoTransform( double * padfTransform )
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GTADataset::SetGeoTransform( double * )
+CPLErr GTADataset::SetGeoTransform(double *)
 
 {
-    CPLError( CE_Warning, CPLE_NotSupported,
-            "The GTA driver does not support metadata updates.\n" );
+    CPLError(CE_Warning, CPLE_NotSupported,
+             "The GTA driver does not support metadata updates.\n");
     return CE_Failure;
 }
 
@@ -940,10 +962,10 @@ CPLErr GTADataset::SetGeoTransform( double * )
 const OGRSpatialReference *GTADataset::GetSpatialRef() const
 
 {
-    if( !m_oSRS.IsEmpty() )
+    if (!m_oSRS.IsEmpty())
         return &m_oSRS;
     const char *p = oHeader.global_taglist().get("GDAL/PROJECTION");
-    if( p )
+    if (p)
         m_oSRS.importFromWkt(p);
     return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
@@ -952,11 +974,11 @@ const OGRSpatialReference *GTADataset::GetSpatialRef() const
 /*                          SetSpatialRef()                             */
 /************************************************************************/
 
-CPLErr GTADataset::SetSpatialRef( const OGRSpatialReference * )
+CPLErr GTADataset::SetSpatialRef(const OGRSpatialReference *)
 
 {
-    CPLError( CE_Warning, CPLE_NotSupported,
-            "The GTA driver does not support metadata updates.\n" );
+    CPLError(CE_Warning, CPLE_NotSupported,
+             "The GTA driver does not support metadata updates.\n");
     return CE_Failure;
 }
 
@@ -964,7 +986,7 @@ CPLErr GTADataset::SetSpatialRef( const OGRSpatialReference * )
 /*                          GetGCPCount()                               */
 /************************************************************************/
 
-int GTADataset::GetGCPCount( )
+int GTADataset::GetGCPCount()
 
 {
     return nGCPs;
@@ -974,7 +996,7 @@ int GTADataset::GetGCPCount( )
 /*                          GetGCPSpatialRef()                          */
 /************************************************************************/
 
-const OGRSpatialReference * GTADataset::GetGCPSpatialRef( ) const
+const OGRSpatialReference *GTADataset::GetGCPSpatialRef() const
 
 {
     return m_oGCPSRS.IsEmpty() ? nullptr : &m_oGCPSRS;
@@ -984,7 +1006,7 @@ const OGRSpatialReference * GTADataset::GetGCPSpatialRef( ) const
 /*                          GetGCPs()                                   */
 /************************************************************************/
 
-const GDAL_GCP * GTADataset::GetGCPs( )
+const GDAL_GCP *GTADataset::GetGCPs()
 
 {
     return pasGCPs;
@@ -994,11 +1016,11 @@ const GDAL_GCP * GTADataset::GetGCPs( )
 /*                          SetGCPs()                                   */
 /************************************************************************/
 
-CPLErr GTADataset::SetGCPs( int, const GDAL_GCP *, const OGRSpatialReference * )
+CPLErr GTADataset::SetGCPs(int, const GDAL_GCP *, const OGRSpatialReference *)
 
 {
-    CPLError( CE_Warning, CPLE_NotSupported,
-            "The GTA driver does not support metadata updates.\n" );
+    CPLError(CE_Warning, CPLE_NotSupported,
+             "The GTA driver does not support metadata updates.\n");
     return CE_Failure;
 }
 
@@ -1006,72 +1028,73 @@ CPLErr GTADataset::SetGCPs( int, const GDAL_GCP *, const OGRSpatialReference * )
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *GTADataset::Open( GDALOpenInfo * poOpenInfo )
+GDALDataset *GTADataset::Open(GDALOpenInfo *poOpenInfo)
 
 {
-    if( poOpenInfo->nHeaderBytes < 5 )
+    if (poOpenInfo->nHeaderBytes < 5)
         return nullptr;
 
-    if( !STARTS_WITH_CI((char *)poOpenInfo->pabyHeader, "GTA") )
+    if (!STARTS_WITH_CI((char *)poOpenInfo->pabyHeader, "GTA"))
         return nullptr;
 
-/* -------------------------------------------------------------------- */
-/*      Create a corresponding GDALDataset.                             */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Create a corresponding GDALDataset.                             */
+    /* -------------------------------------------------------------------- */
     GTADataset *poDS = new GTADataset();
 
-    if( poDS->oGTAIO.open( poOpenInfo->pszFilename,
-            poOpenInfo->eAccess == GA_Update ? "r+" : "r" ) != 0 )
+    if (poDS->oGTAIO.open(poOpenInfo->pszFilename,
+                          poOpenInfo->eAccess == GA_Update ? "r+" : "r") != 0)
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, "Cannot open file.\n" );
+        CPLError(CE_Failure, CPLE_OpenFailed, "Cannot open file.\n");
         delete poDS;
         return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Read the header.                                                */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Read the header.                                                */
+    /* -------------------------------------------------------------------- */
 
     try
     {
-        poDS->oHeader.read_from( poDS->oGTAIO );
+        poDS->oHeader.read_from(poDS->oGTAIO);
     }
-    catch( gta::exception &e )
+    catch (gta::exception &e)
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, "GTA error: %s\n", e.what() );
+        CPLError(CE_Failure, CPLE_OpenFailed, "GTA error: %s\n", e.what());
         delete poDS;
         return nullptr;
     }
     poDS->DataOffset = poDS->oGTAIO.tell();
     poDS->eAccess = poOpenInfo->eAccess;
 
-    if( poDS->oHeader.compression() != gta::none
-            && poOpenInfo->eAccess == GA_Update )
+    if (poDS->oHeader.compression() != gta::none &&
+        poOpenInfo->eAccess == GA_Update)
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "The GTA driver does not support update access to compressed "
-                  "data sets.\nUncompress the data set first.\n" );
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "The GTA driver does not support update access to compressed "
+                 "data sets.\nUncompress the data set first.\n");
         delete poDS;
         return nullptr;
     }
 
-    if( poDS->oHeader.dimensions() != 2 )
+    if (poDS->oHeader.dimensions() != 2)
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                "The GTA driver does not support GTAs with %s than 2 "
-                "dimensions.\n",
-                poDS->oHeader.dimensions() < 2 ? "less" : "more" );
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "The GTA driver does not support GTAs with %s than 2 "
+                 "dimensions.\n",
+                 poDS->oHeader.dimensions() < 2 ? "less" : "more");
         delete poDS;
         return nullptr;
     }
 
     // We know the dimensions are > 0 (guaranteed by libgta), but they may be
     // unrepresentable in GDAL.
-    if( poDS->oHeader.dimension_size(0) > INT_MAX
-            || poDS->oHeader.dimension_size(1) > INT_MAX )
+    if (poDS->oHeader.dimension_size(0) > INT_MAX ||
+        poDS->oHeader.dimension_size(1) > INT_MAX)
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                "The GTA driver does not support the size of this data set.\n" );
+        CPLError(
+            CE_Failure, CPLE_NotSupported,
+            "The GTA driver does not support the size of this data set.\n");
         delete poDS;
         return nullptr;
     }
@@ -1079,74 +1102,77 @@ GDALDataset *GTADataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterYSize = static_cast<int>(poDS->oHeader.dimension_size(1));
 
     // Check the number of bands (called components in GTA)
-    if( poDS->oHeader.components() > INT_MAX-1
-            || poDS->oHeader.element_size() > ((size_t)-1) )
+    if (poDS->oHeader.components() > INT_MAX - 1 ||
+        poDS->oHeader.element_size() > ((size_t)-1))
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                "The GTA driver does not support the number or size of bands "
-                "in this data set.\n" );
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "The GTA driver does not support the number or size of bands "
+                 "in this data set.\n");
         delete poDS;
         return nullptr;
     }
     poDS->nBands = static_cast<int>(poDS->oHeader.components());
 
     // Check the data types (called component types in GTA)
-    for( int iBand = 0; iBand < poDS->nBands; iBand++ )
+    for (int iBand = 0; iBand < poDS->nBands; iBand++)
     {
-        if( poDS->oHeader.component_type(iBand) != gta::uint8
-                && poDS->oHeader.component_type(iBand) != gta::int8
-                && poDS->oHeader.component_type(iBand) != gta::uint16
-                && poDS->oHeader.component_type(iBand) != gta::int16
-                && poDS->oHeader.component_type(iBand) != gta::uint32
-                && poDS->oHeader.component_type(iBand) != gta::int32
-                && poDS->oHeader.component_type(iBand) != gta::float32
-                && poDS->oHeader.component_type(iBand) != gta::float64
-                && poDS->oHeader.component_type(iBand) != gta::cfloat32
-                && poDS->oHeader.component_type(iBand) != gta::cfloat64 )
+        if (poDS->oHeader.component_type(iBand) != gta::uint8 &&
+            poDS->oHeader.component_type(iBand) != gta::int8 &&
+            poDS->oHeader.component_type(iBand) != gta::uint16 &&
+            poDS->oHeader.component_type(iBand) != gta::int16 &&
+            poDS->oHeader.component_type(iBand) != gta::uint32 &&
+            poDS->oHeader.component_type(iBand) != gta::int32 &&
+            poDS->oHeader.component_type(iBand) != gta::float32 &&
+            poDS->oHeader.component_type(iBand) != gta::float64 &&
+            poDS->oHeader.component_type(iBand) != gta::cfloat32 &&
+            poDS->oHeader.component_type(iBand) != gta::cfloat64)
         {
-            CPLError( CE_Failure, CPLE_NotSupported,
-                    "The GTA driver does not support some of the data types "
-                    "used in this data set.\n" );
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "The GTA driver does not support some of the data types "
+                     "used in this data set.\n");
             delete poDS;
             return nullptr;
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Read and set meta information.                                  */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Read and set meta information.                                  */
+    /* -------------------------------------------------------------------- */
 
-    if( poDS->oHeader.global_taglist().get("GDAL/GEO_TRANSFORM") )
+    if (poDS->oHeader.global_taglist().get("GDAL/GEO_TRANSFORM"))
     {
         poDS->bHaveGeoTransform = true;
-        ScanDoubles( poDS->oHeader.global_taglist().get( "GDAL/GEO_TRANSFORM" ),
-                poDS->adfGeoTransform, 6 );
+        ScanDoubles(poDS->oHeader.global_taglist().get("GDAL/GEO_TRANSFORM"),
+                    poDS->adfGeoTransform, 6);
     }
     else
     {
         poDS->bHaveGeoTransform = false;
     }
 
-    if( poDS->oHeader.global_taglist().get("GDAL/GCP_PROJECTION") )
+    if (poDS->oHeader.global_taglist().get("GDAL/GCP_PROJECTION"))
     {
-        poDS->m_oGCPSRS.importFromWkt( poDS->oHeader.global_taglist().get("GDAL/GCP_PROJECTION") );
+        poDS->m_oGCPSRS.importFromWkt(
+            poDS->oHeader.global_taglist().get("GDAL/GCP_PROJECTION"));
     }
-    if( poDS->oHeader.global_taglist().get("GDAL/GCP_COUNT") )
+    if (poDS->oHeader.global_taglist().get("GDAL/GCP_COUNT"))
     {
-        poDS->nGCPs = atoi( poDS->oHeader.global_taglist().get("GDAL/GCP_COUNT") );
-        if( poDS->nGCPs < 1 )
+        poDS->nGCPs =
+            atoi(poDS->oHeader.global_taglist().get("GDAL/GCP_COUNT"));
+        if (poDS->nGCPs < 1)
         {
             poDS->nGCPs = 0;
         }
         else
         {
-            poDS->pasGCPs = (GDAL_GCP *)VSI_MALLOC2_VERBOSE( poDS->nGCPs, sizeof(GDAL_GCP) );
-            if( poDS->pasGCPs == nullptr )
+            poDS->pasGCPs =
+                (GDAL_GCP *)VSI_MALLOC2_VERBOSE(poDS->nGCPs, sizeof(GDAL_GCP));
+            if (poDS->pasGCPs == nullptr)
             {
                 delete poDS;
                 return nullptr;
             }
-            for( int i = 0; i < poDS->nGCPs; i++ )
+            for (int i = 0; i < poDS->nGCPs; i++)
             {
                 poDS->pasGCPs[i].pszInfo = nullptr;
                 poDS->pasGCPs[i].dfGCPPixel = 0.0;
@@ -1154,23 +1180,27 @@ GDALDataset *GTADataset::Open( GDALOpenInfo * poOpenInfo )
                 poDS->pasGCPs[i].dfGCPX = 0.0;
                 poDS->pasGCPs[i].dfGCPY = 0.0;
                 poDS->pasGCPs[i].dfGCPZ = 0.0;
-                poDS->pasGCPs[i].pszId = VSIStrdup( CPLSPrintf( "%d", i ) );
+                poDS->pasGCPs[i].pszId = VSIStrdup(CPLSPrintf("%d", i));
                 char pszGCPTagName[64];
                 char pszGCPInfoTagName[64];
-                snprintf( pszGCPTagName, sizeof(pszGCPTagName), "GDAL/GCP%d", i );
-                snprintf( pszGCPInfoTagName, sizeof(pszGCPTagName), "GDAL/GCP%d_INFO", i );
-                if( poDS->oHeader.global_taglist().get(pszGCPInfoTagName) )
+                snprintf(pszGCPTagName, sizeof(pszGCPTagName), "GDAL/GCP%d", i);
+                snprintf(pszGCPInfoTagName, sizeof(pszGCPTagName),
+                         "GDAL/GCP%d_INFO", i);
+                if (poDS->oHeader.global_taglist().get(pszGCPInfoTagName))
                 {
-                    poDS->pasGCPs[i].pszInfo = VSIStrdup( poDS->oHeader.global_taglist().get(pszGCPInfoTagName) );
+                    poDS->pasGCPs[i].pszInfo = VSIStrdup(
+                        poDS->oHeader.global_taglist().get(pszGCPInfoTagName));
                 }
                 else
                 {
-                    poDS->pasGCPs[i].pszInfo = VSIStrdup( "" );
+                    poDS->pasGCPs[i].pszInfo = VSIStrdup("");
                 }
-                if( poDS->oHeader.global_taglist().get(pszGCPTagName) )
+                if (poDS->oHeader.global_taglist().get(pszGCPTagName))
                 {
                     double adfTempDoubles[5];
-                    ScanDoubles( poDS->oHeader.global_taglist().get(pszGCPTagName), adfTempDoubles, 5 );
+                    ScanDoubles(
+                        poDS->oHeader.global_taglist().get(pszGCPTagName),
+                        adfTempDoubles, 5);
                     poDS->pasGCPs[i].dfGCPPixel = adfTempDoubles[0];
                     poDS->pasGCPs[i].dfGCPLine = adfTempDoubles[1];
                     poDS->pasGCPs[i].dfGCPX = adfTempDoubles[2];
@@ -1181,86 +1211,88 @@ GDALDataset *GTADataset::Open( GDALOpenInfo * poOpenInfo )
         }
     }
 
-    if( poDS->oHeader.global_taglist().get("DESCRIPTION") )
+    if (poDS->oHeader.global_taglist().get("DESCRIPTION"))
     {
-        poDS->SetDescription( poDS->oHeader.global_taglist().get("DESCRIPTION") );
+        poDS->SetDescription(poDS->oHeader.global_taglist().get("DESCRIPTION"));
     }
-    for( uintmax_t i = 0; i < poDS->oHeader.global_taglist().tags(); i++)
+    for (uintmax_t i = 0; i < poDS->oHeader.global_taglist().tags(); i++)
     {
-        const char *pszTagName = poDS->oHeader.global_taglist().name( i );
-        if( STARTS_WITH(pszTagName, "GDAL/META/") )
+        const char *pszTagName = poDS->oHeader.global_taglist().name(i);
+        if (STARTS_WITH(pszTagName, "GDAL/META/"))
         {
-            const char *pDomainEnd = strchr( pszTagName + 10, '/' );
-            if( pDomainEnd && pDomainEnd - (pszTagName + 10) > 0 )
+            const char *pDomainEnd = strchr(pszTagName + 10, '/');
+            if (pDomainEnd && pDomainEnd - (pszTagName + 10) > 0)
             {
-                char *pszDomain = (char *)VSI_MALLOC_VERBOSE( pDomainEnd - (pszTagName + 10) + 1 );
-                if( !pszDomain )
+                char *pszDomain = (char *)VSI_MALLOC_VERBOSE(
+                    pDomainEnd - (pszTagName + 10) + 1);
+                if (!pszDomain)
                 {
                     delete poDS;
                     return nullptr;
                 }
                 int j;
-                for( j = 0; j < pDomainEnd - (pszTagName + 10); j++ )
+                for (j = 0; j < pDomainEnd - (pszTagName + 10); j++)
                 {
                     pszDomain[j] = pszTagName[10 + j];
                 }
                 pszDomain[j] = '\0';
                 const char *pszName = pszTagName + 10 + j + 1;
-                const char *pszValue = poDS->oHeader.global_taglist().value( i );
-                poDS->SetMetadataItem( pszName, pszValue,
-                        strcmp( pszDomain, "DEFAULT" ) == 0 ? nullptr : pszDomain );
-                VSIFree( pszDomain );
+                const char *pszValue = poDS->oHeader.global_taglist().value(i);
+                poDS->SetMetadataItem(
+                    pszName, pszValue,
+                    strcmp(pszDomain, "DEFAULT") == 0 ? nullptr : pszDomain);
+                VSIFree(pszDomain);
             }
         }
     }
 
-    if( poDS->nBands > 0 )
+    if (poDS->nBands > 0)
     {
-        poDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
+        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
     }
-    if( poDS->oHeader.compression() == gta::bzip2 )
-        poDS->SetMetadataItem( "COMPRESSION", "BZIP2", "IMAGE_STRUCTURE" );
-    else if( poDS->oHeader.compression() == gta::xz )
-        poDS->SetMetadataItem( "COMPRESSION", "XZ", "IMAGE_STRUCTURE" );
-    else if( poDS->oHeader.compression() == gta::zlib )
-        poDS->SetMetadataItem( "COMPRESSION", "ZLIB", "IMAGE_STRUCTURE" );
-    else if( poDS->oHeader.compression() == gta::zlib1 )
-        poDS->SetMetadataItem( "COMPRESSION", "ZLIB1", "IMAGE_STRUCTURE" );
-    else if( poDS->oHeader.compression() == gta::zlib2 )
-        poDS->SetMetadataItem( "COMPRESSION", "ZLIB2", "IMAGE_STRUCTURE" );
-    else if( poDS->oHeader.compression() == gta::zlib3 )
-        poDS->SetMetadataItem( "COMPRESSION", "ZLIB3", "IMAGE_STRUCTURE" );
-    else if( poDS->oHeader.compression() == gta::zlib4 )
-        poDS->SetMetadataItem( "COMPRESSION", "ZLIB4", "IMAGE_STRUCTURE" );
-    else if( poDS->oHeader.compression() == gta::zlib5 )
-        poDS->SetMetadataItem( "COMPRESSION", "ZLIB5", "IMAGE_STRUCTURE" );
-    else if( poDS->oHeader.compression() == gta::zlib6 )
-        poDS->SetMetadataItem( "COMPRESSION", "ZLIB6", "IMAGE_STRUCTURE" );
-    else if( poDS->oHeader.compression() == gta::zlib7 )
-        poDS->SetMetadataItem( "COMPRESSION", "ZLIB7", "IMAGE_STRUCTURE" );
-    else if( poDS->oHeader.compression() == gta::zlib8 )
-        poDS->SetMetadataItem( "COMPRESSION", "ZLIB8", "IMAGE_STRUCTURE" );
-    else if( poDS->oHeader.compression() == gta::zlib9 )
-        poDS->SetMetadataItem( "COMPRESSION", "ZLIB9", "IMAGE_STRUCTURE" );
+    if (poDS->oHeader.compression() == gta::bzip2)
+        poDS->SetMetadataItem("COMPRESSION", "BZIP2", "IMAGE_STRUCTURE");
+    else if (poDS->oHeader.compression() == gta::xz)
+        poDS->SetMetadataItem("COMPRESSION", "XZ", "IMAGE_STRUCTURE");
+    else if (poDS->oHeader.compression() == gta::zlib)
+        poDS->SetMetadataItem("COMPRESSION", "ZLIB", "IMAGE_STRUCTURE");
+    else if (poDS->oHeader.compression() == gta::zlib1)
+        poDS->SetMetadataItem("COMPRESSION", "ZLIB1", "IMAGE_STRUCTURE");
+    else if (poDS->oHeader.compression() == gta::zlib2)
+        poDS->SetMetadataItem("COMPRESSION", "ZLIB2", "IMAGE_STRUCTURE");
+    else if (poDS->oHeader.compression() == gta::zlib3)
+        poDS->SetMetadataItem("COMPRESSION", "ZLIB3", "IMAGE_STRUCTURE");
+    else if (poDS->oHeader.compression() == gta::zlib4)
+        poDS->SetMetadataItem("COMPRESSION", "ZLIB4", "IMAGE_STRUCTURE");
+    else if (poDS->oHeader.compression() == gta::zlib5)
+        poDS->SetMetadataItem("COMPRESSION", "ZLIB5", "IMAGE_STRUCTURE");
+    else if (poDS->oHeader.compression() == gta::zlib6)
+        poDS->SetMetadataItem("COMPRESSION", "ZLIB6", "IMAGE_STRUCTURE");
+    else if (poDS->oHeader.compression() == gta::zlib7)
+        poDS->SetMetadataItem("COMPRESSION", "ZLIB7", "IMAGE_STRUCTURE");
+    else if (poDS->oHeader.compression() == gta::zlib8)
+        poDS->SetMetadataItem("COMPRESSION", "ZLIB8", "IMAGE_STRUCTURE");
+    else if (poDS->oHeader.compression() == gta::zlib9)
+        poDS->SetMetadataItem("COMPRESSION", "ZLIB9", "IMAGE_STRUCTURE");
 
-/* -------------------------------------------------------------------- */
-/*      Create band information objects.                                */
-/* -------------------------------------------------------------------- */
-    for( int iBand = 0; iBand < poDS->nBands; iBand++ )
+    /* -------------------------------------------------------------------- */
+    /*      Create band information objects.                                */
+    /* -------------------------------------------------------------------- */
+    for (int iBand = 0; iBand < poDS->nBands; iBand++)
     {
-        poDS->SetBand( iBand+1, new GTARasterBand( poDS, iBand+1 ) );
+        poDS->SetBand(iBand + 1, new GTARasterBand(poDS, iBand + 1));
     }
 
-/* -------------------------------------------------------------------- */
-/*      Initialize any PAM information.                                 */
-/* -------------------------------------------------------------------- */
-    poDS->SetDescription( poOpenInfo->pszFilename );
+    /* -------------------------------------------------------------------- */
+    /*      Initialize any PAM information.                                 */
+    /* -------------------------------------------------------------------- */
+    poDS->SetDescription(poOpenInfo->pszFilename);
     poDS->TryLoadXML();
 
-/* -------------------------------------------------------------------- */
-/*      Check for overviews.                                            */
-/* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+    /* -------------------------------------------------------------------- */
+    /*      Check for overviews.                                            */
+    /* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
 
     return poDS;
 }
@@ -1269,172 +1301,180 @@ GDALDataset *GTADataset::Open( GDALOpenInfo * poOpenInfo )
 /*                             CreateCopy()                             */
 /************************************************************************/
 
-static GDALDataset*
-GTACreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
-                int bStrict, char ** papszOptions,
-                GDALProgressFunc pfnProgress, void * pProgressData )
+static GDALDataset *GTACreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
+                                  int bStrict, char **papszOptions,
+                                  GDALProgressFunc pfnProgress,
+                                  void *pProgressData)
 
 {
-    if( !pfnProgress( 0.0, nullptr, pProgressData ) )
+    if (!pfnProgress(0.0, nullptr, pProgressData))
         return nullptr;
 
-/* -------------------------------------------------------------------- */
-/*      Create a GTA header                                             */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Create a GTA header                                             */
+    /* -------------------------------------------------------------------- */
 
     gta::compression eGTACompression = gta::none;
-    const char *pszCompressionValue = CSLFetchNameValue( papszOptions,
-            "COMPRESS" );
-    if( pszCompressionValue != nullptr )
+    const char *pszCompressionValue =
+        CSLFetchNameValue(papszOptions, "COMPRESS");
+    if (pszCompressionValue != nullptr)
     {
-        if( EQUAL( pszCompressionValue, "NONE" ) )
+        if (EQUAL(pszCompressionValue, "NONE"))
             eGTACompression = gta::none;
-        else if( EQUAL( pszCompressionValue, "BZIP2" ) )
+        else if (EQUAL(pszCompressionValue, "BZIP2"))
             eGTACompression = gta::bzip2;
-        else if( EQUAL( pszCompressionValue, "XZ" ) )
+        else if (EQUAL(pszCompressionValue, "XZ"))
             eGTACompression = gta::xz;
-        else if( EQUAL( pszCompressionValue, "ZLIB" ))
+        else if (EQUAL(pszCompressionValue, "ZLIB"))
             eGTACompression = gta::zlib;
-        else if( EQUAL( pszCompressionValue, "ZLIB1" ))
+        else if (EQUAL(pszCompressionValue, "ZLIB1"))
             eGTACompression = gta::zlib1;
-        else if( EQUAL( pszCompressionValue, "ZLIB2" ))
+        else if (EQUAL(pszCompressionValue, "ZLIB2"))
             eGTACompression = gta::zlib2;
-        else if( EQUAL( pszCompressionValue, "ZLIB3" ))
+        else if (EQUAL(pszCompressionValue, "ZLIB3"))
             eGTACompression = gta::zlib3;
-        else if( EQUAL( pszCompressionValue, "ZLIB4" ))
+        else if (EQUAL(pszCompressionValue, "ZLIB4"))
             eGTACompression = gta::zlib4;
-        else if( EQUAL( pszCompressionValue, "ZLIB5" ))
+        else if (EQUAL(pszCompressionValue, "ZLIB5"))
             eGTACompression = gta::zlib5;
-        else if( EQUAL( pszCompressionValue, "ZLIB6" ))
+        else if (EQUAL(pszCompressionValue, "ZLIB6"))
             eGTACompression = gta::zlib6;
-        else if( EQUAL( pszCompressionValue, "ZLIB7" ))
+        else if (EQUAL(pszCompressionValue, "ZLIB7"))
             eGTACompression = gta::zlib7;
-        else if( EQUAL( pszCompressionValue, "ZLIB8" ))
+        else if (EQUAL(pszCompressionValue, "ZLIB8"))
             eGTACompression = gta::zlib8;
-        else if( EQUAL( pszCompressionValue, "ZLIB9" ))
+        else if (EQUAL(pszCompressionValue, "ZLIB9"))
             eGTACompression = gta::zlib9;
         else
-            CPLError( CE_Warning, CPLE_IllegalArg,
-                      "COMPRESS=%s value not recognised, ignoring.",
-                      pszCompressionValue );
+            CPLError(CE_Warning, CPLE_IllegalArg,
+                     "COMPRESS=%s value not recognised, ignoring.",
+                     pszCompressionValue);
     }
 
-    gta::type *peGTATypes = (gta::type *)VSI_MALLOC2_VERBOSE( poSrcDS->GetRasterCount(), sizeof(gta::type) );
-    if( peGTATypes == nullptr )
+    gta::type *peGTATypes = (gta::type *)VSI_MALLOC2_VERBOSE(
+        poSrcDS->GetRasterCount(), sizeof(gta::type));
+    if (peGTATypes == nullptr)
     {
         return nullptr;
     }
-    for( int i = 0; i < poSrcDS->GetRasterCount(); i++ )
+    for (int i = 0; i < poSrcDS->GetRasterCount(); i++)
     {
-        GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( i+1 );
-        if( poSrcBand->GetColorInterpretation() == GCI_PaletteIndex )
+        GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand(i + 1);
+        if (poSrcBand->GetColorInterpretation() == GCI_PaletteIndex)
         {
-            CPLError( CE_Failure, CPLE_NotSupported,
-                    "The GTA driver does not support color palettes.\n" );
-            VSIFree( peGTATypes );
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "The GTA driver does not support color palettes.\n");
+            VSIFree(peGTATypes);
             return nullptr;
         }
         GDALDataType eDT = poSrcBand->GetRasterDataType();
-        switch( eDT )
+        switch (eDT)
         {
-        case GDT_Byte:
-        {
-            const char *pszPixelType = poSrcBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
-            if (pszPixelType && EQUAL(pszPixelType, "SIGNEDBYTE"))
-                peGTATypes[i] = gta::int8;
-            else
-                peGTATypes[i] = gta::uint8;
-            break;
-        }
-        case GDT_UInt16:
-            peGTATypes[i] = gta::uint16;
-            break;
-        case GDT_Int16:
-            peGTATypes[i] = gta::int16;
-            break;
-        case GDT_UInt32:
-            peGTATypes[i] = gta::uint32;
-            break;
-        case GDT_Int32:
-            peGTATypes[i] = gta::int32;
-            break;
-        case GDT_Float32:
-            peGTATypes[i] = gta::float32;
-            break;
-        case GDT_Float64:
-            peGTATypes[i] = gta::float64;
-            break;
-        case GDT_CInt16:
-            if( bStrict )
+            case GDT_Byte:
             {
-                CPLError( CE_Failure, CPLE_NotSupported,
-                        "The GTA driver does not support the CInt16 data "
-                        "type.\n"
-                        "(If no strict copy is required, the driver can "
-                        "use CFloat32 instead.)\n" );
-                VSIFree( peGTATypes );
-                return nullptr;
+                const char *pszPixelType =
+                    poSrcBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+                if (pszPixelType && EQUAL(pszPixelType, "SIGNEDBYTE"))
+                    peGTATypes[i] = gta::int8;
+                else
+                    peGTATypes[i] = gta::uint8;
+                break;
             }
-            peGTATypes[i] = gta::cfloat32;
-            break;
-        case GDT_CInt32:
-            if( bStrict )
-            {
-                CPLError( CE_Failure, CPLE_NotSupported,
-                        "The GTA driver does not support the CInt32 data "
-                        "type.\n"
-                        "(If no strict copy is required, the driver can "
-                        "use CFloat64 instead.)\n" );
-                VSIFree( peGTATypes );
-                return nullptr;
-            }
-            peGTATypes[i] = gta::cfloat64;
-            break;
-        case GDT_CFloat32:
-            peGTATypes[i] = gta::cfloat32;
-            break;
-        case GDT_CFloat64:
-            peGTATypes[i] = gta::cfloat64;
-            break;
-        default:
-            CPLError( CE_Failure, CPLE_NotSupported,
+            case GDT_UInt16:
+                peGTATypes[i] = gta::uint16;
+                break;
+            case GDT_Int16:
+                peGTATypes[i] = gta::int16;
+                break;
+            case GDT_UInt32:
+                peGTATypes[i] = gta::uint32;
+                break;
+            case GDT_Int32:
+                peGTATypes[i] = gta::int32;
+                break;
+            case GDT_Float32:
+                peGTATypes[i] = gta::float32;
+                break;
+            case GDT_Float64:
+                peGTATypes[i] = gta::float64;
+                break;
+            case GDT_CInt16:
+                if (bStrict)
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "The GTA driver does not support the CInt16 data "
+                             "type.\n"
+                             "(If no strict copy is required, the driver can "
+                             "use CFloat32 instead.)\n");
+                    VSIFree(peGTATypes);
+                    return nullptr;
+                }
+                peGTATypes[i] = gta::cfloat32;
+                break;
+            case GDT_CInt32:
+                if (bStrict)
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "The GTA driver does not support the CInt32 data "
+                             "type.\n"
+                             "(If no strict copy is required, the driver can "
+                             "use CFloat64 instead.)\n");
+                    VSIFree(peGTATypes);
+                    return nullptr;
+                }
+                peGTATypes[i] = gta::cfloat64;
+                break;
+            case GDT_CFloat32:
+                peGTATypes[i] = gta::cfloat32;
+                break;
+            case GDT_CFloat64:
+                peGTATypes[i] = gta::cfloat64;
+                break;
+            default:
+                CPLError(
+                    CE_Failure, CPLE_NotSupported,
                     "The GTA driver does not support source data sets using "
                     "unknown data types.\n");
-            VSIFree( peGTATypes );
-            return nullptr;
+                VSIFree(peGTATypes);
+                return nullptr;
         }
     }
 
     gta::header oHeader;
     try
     {
-        oHeader.set_compression( eGTACompression );
-        oHeader.set_dimensions( poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize() );
-        oHeader.set_components( poSrcDS->GetRasterCount(), peGTATypes );
+        oHeader.set_compression(eGTACompression);
+        oHeader.set_dimensions(poSrcDS->GetRasterXSize(),
+                               poSrcDS->GetRasterYSize());
+        oHeader.set_components(poSrcDS->GetRasterCount(), peGTATypes);
         const char *pszDescription = poSrcDS->GetDescription();
         // Metadata from GDALMajorObject
-        if( pszDescription && pszDescription[0] != '\0' )
+        if (pszDescription && pszDescription[0] != '\0')
         {
-            oHeader.global_taglist().set( "DESCRIPTION", pszDescription );
+            oHeader.global_taglist().set("DESCRIPTION", pszDescription);
         }
-        const char *papszMetadataDomains[] = { nullptr /* default */, "RPC" };
-        size_t nMetadataDomains = sizeof( papszMetadataDomains ) / sizeof( papszMetadataDomains[0] );
-        for( size_t iDomain = 0; iDomain < nMetadataDomains; iDomain++ )
+        const char *papszMetadataDomains[] = {nullptr /* default */, "RPC"};
+        size_t nMetadataDomains =
+            sizeof(papszMetadataDomains) / sizeof(papszMetadataDomains[0]);
+        for (size_t iDomain = 0; iDomain < nMetadataDomains; iDomain++)
         {
-            char **papszMetadata = poSrcDS->GetMetadata( papszMetadataDomains[iDomain] );
-            if( papszMetadata )
+            char **papszMetadata =
+                poSrcDS->GetMetadata(papszMetadataDomains[iDomain]);
+            if (papszMetadata)
             {
-                for( int i = 0; papszMetadata[i]; i++ )
+                for (int i = 0; papszMetadata[i]; i++)
                 {
-                    char *pEqualSign = strchr( papszMetadata[i], '=' );
-                    if( pEqualSign && pEqualSign - papszMetadata[i] > 0 )
+                    char *pEqualSign = strchr(papszMetadata[i], '=');
+                    if (pEqualSign && pEqualSign - papszMetadata[i] > 0)
                     {
                         *pEqualSign = '\0';
                         oHeader.global_taglist().set(
-                                CPLSPrintf( "GDAL/META/%s/%s",
-                                    papszMetadataDomains[iDomain] ? papszMetadataDomains[iDomain] : "DEFAULT",
-                                    papszMetadata[i] ),
-                                pEqualSign + 1 );
+                            CPLSPrintf("GDAL/META/%s/%s",
+                                       papszMetadataDomains[iDomain]
+                                           ? papszMetadataDomains[iDomain]
+                                           : "DEFAULT",
+                                       papszMetadata[i]),
+                            pEqualSign + 1);
                         *pEqualSign = '=';
                     }
                 }
@@ -1442,31 +1482,35 @@ GTACreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
         // Projection and transformation
         const char *pszWKT = poSrcDS->GetProjectionRef();
-        if( pszWKT && pszWKT[0] != '\0' )
+        if (pszWKT && pszWKT[0] != '\0')
         {
-            oHeader.global_taglist().set( "GDAL/PROJECTION", pszWKT );
+            oHeader.global_taglist().set("GDAL/PROJECTION", pszWKT);
         }
         double adfTransform[6];
-        if( poSrcDS->GetGeoTransform( adfTransform ) == CE_None )
+        if (poSrcDS->GetGeoTransform(adfTransform) == CE_None)
         {
-            oHeader.global_taglist().set( "GDAL/GEO_TRANSFORM",
-                    PrintDoubles( adfTransform, 6 ).c_str() );
+            oHeader.global_taglist().set("GDAL/GEO_TRANSFORM",
+                                         PrintDoubles(adfTransform, 6).c_str());
         }
         // GCPs
-        if( poSrcDS->GetGCPCount() > 0 )
+        if (poSrcDS->GetGCPCount() > 0)
         {
-            oHeader.global_taglist().set( "GDAL/GCP_COUNT", CPLSPrintf( "%d", poSrcDS->GetGCPCount() ) );
-            oHeader.global_taglist().set( "GDAL/GCP_PROJECTION", poSrcDS->GetGCPProjection() );
+            oHeader.global_taglist().set(
+                "GDAL/GCP_COUNT", CPLSPrintf("%d", poSrcDS->GetGCPCount()));
+            oHeader.global_taglist().set("GDAL/GCP_PROJECTION",
+                                         poSrcDS->GetGCPProjection());
             const GDAL_GCP *pasGCPs = poSrcDS->GetGCPs();
-            for( int i = 0; i < poSrcDS->GetGCPCount(); i++ )
+            for (int i = 0; i < poSrcDS->GetGCPCount(); i++)
             {
                 char pszGCPTagName[64];
                 char pszGCPInfoTagName[64];
-                snprintf( pszGCPTagName, sizeof(pszGCPTagName), "GDAL/GCP%d", i );
-                snprintf( pszGCPInfoTagName, sizeof(pszGCPInfoTagName), "GDAL/GCP%d_INFO", i );
-                if( pasGCPs[i].pszInfo && pasGCPs[i].pszInfo[0] != '\0' )
+                snprintf(pszGCPTagName, sizeof(pszGCPTagName), "GDAL/GCP%d", i);
+                snprintf(pszGCPInfoTagName, sizeof(pszGCPInfoTagName),
+                         "GDAL/GCP%d_INFO", i);
+                if (pasGCPs[i].pszInfo && pasGCPs[i].pszInfo[0] != '\0')
                 {
-                    oHeader.global_taglist().set( pszGCPInfoTagName, pasGCPs[i].pszInfo );
+                    oHeader.global_taglist().set(pszGCPInfoTagName,
+                                                 pasGCPs[i].pszInfo);
                 }
                 double adfTempDoubles[5];
                 adfTempDoubles[0] = pasGCPs[i].dfGCPPixel;
@@ -1474,215 +1518,232 @@ GTACreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 adfTempDoubles[2] = pasGCPs[i].dfGCPX;
                 adfTempDoubles[3] = pasGCPs[i].dfGCPY;
                 adfTempDoubles[4] = pasGCPs[i].dfGCPZ;
-                oHeader.global_taglist().set( pszGCPTagName, PrintDoubles( adfTempDoubles, 5 ).c_str() );
+                oHeader.global_taglist().set(
+                    pszGCPTagName, PrintDoubles(adfTempDoubles, 5).c_str());
             }
         }
         // Now the bands
-        for( int iBand = 0; iBand < poSrcDS->GetRasterCount(); iBand++ )
+        for (int iBand = 0; iBand < poSrcDS->GetRasterCount(); iBand++)
         {
-            GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
+            GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand(iBand + 1);
             // Metadata from GDALMajorObject
             const char *pszBandDescription = poSrcBand->GetDescription();
-            if( pszBandDescription && pszBandDescription[0] != '\0' )
+            if (pszBandDescription && pszBandDescription[0] != '\0')
             {
-                oHeader.component_taglist( iBand ).set( "DESCRIPTION", pszBandDescription );
+                oHeader.component_taglist(iBand).set("DESCRIPTION",
+                                                     pszBandDescription);
             }
-            for( size_t iDomain = 0; iDomain < nMetadataDomains; iDomain++ )
+            for (size_t iDomain = 0; iDomain < nMetadataDomains; iDomain++)
             {
-                char **papszBandMetadata = poSrcBand->GetMetadata( papszMetadataDomains[iDomain] );
-                if( papszBandMetadata )
+                char **papszBandMetadata =
+                    poSrcBand->GetMetadata(papszMetadataDomains[iDomain]);
+                if (papszBandMetadata)
                 {
-                    for( int i = 0; papszBandMetadata[i]; i++ )
+                    for (int i = 0; papszBandMetadata[i]; i++)
                     {
-                        char *pEqualSign = strchr( papszBandMetadata[i], '=' );
-                        if( pEqualSign && pEqualSign - papszBandMetadata[i] > 0 )
+                        char *pEqualSign = strchr(papszBandMetadata[i], '=');
+                        if (pEqualSign && pEqualSign - papszBandMetadata[i] > 0)
                         {
                             *pEqualSign = '\0';
-                            oHeader.component_taglist( iBand ).set(
-                                    CPLSPrintf( "GDAL/META/%s/%s",
-                                        papszMetadataDomains[iDomain] ? papszMetadataDomains[iDomain] : "DEFAULT",
-                                        papszBandMetadata[i] ),
-                                    pEqualSign + 1 );
+                            oHeader.component_taglist(iBand).set(
+                                CPLSPrintf("GDAL/META/%s/%s",
+                                           papszMetadataDomains[iDomain]
+                                               ? papszMetadataDomains[iDomain]
+                                               : "DEFAULT",
+                                           papszBandMetadata[i]),
+                                pEqualSign + 1);
                             *pEqualSign = '=';
                         }
                     }
                 }
             }
             // Category names
-            char **papszCategoryNames = poSrcBand->GetCategoryNames( );
-            if( papszCategoryNames )
+            char **papszCategoryNames = poSrcBand->GetCategoryNames();
+            if (papszCategoryNames)
             {
                 int i;
-                for( i = 0; papszCategoryNames[i]; i++ )
+                for (i = 0; papszCategoryNames[i]; i++)
                 {
-                    oHeader.component_taglist( iBand ).set(
-                            CPLSPrintf( "GDAL/CATEGORY%d", i ),
-                            papszCategoryNames[i] );
+                    oHeader.component_taglist(iBand).set(
+                        CPLSPrintf("GDAL/CATEGORY%d", i),
+                        papszCategoryNames[i]);
                 }
-                oHeader.component_taglist( iBand ).set(
-                        "GDAL/CATEGORY_COUNT", CPLSPrintf( "%d", i ) );
+                oHeader.component_taglist(iBand).set("GDAL/CATEGORY_COUNT",
+                                                     CPLSPrintf("%d", i));
             }
             // No data value
             int bHaveNoDataValue;
             double dfNoDataValue;
-            dfNoDataValue = poSrcBand->GetNoDataValue( &bHaveNoDataValue );
-            if( bHaveNoDataValue )
-                oHeader.component_taglist( iBand ).set( "NO_DATA_VALUE",
-                        PrintDouble( dfNoDataValue ).c_str() );
+            dfNoDataValue = poSrcBand->GetNoDataValue(&bHaveNoDataValue);
+            if (bHaveNoDataValue)
+                oHeader.component_taglist(iBand).set(
+                    "NO_DATA_VALUE", PrintDouble(dfNoDataValue).c_str());
             // Min/max values
             int bHaveMinValue;
             double dfMinValue;
-            dfMinValue = poSrcBand->GetMinimum( &bHaveMinValue );
-            if( bHaveMinValue )
-                oHeader.component_taglist( iBand ).set( "MIN_VALUE",
-                        PrintDouble( dfMinValue ).c_str() );
+            dfMinValue = poSrcBand->GetMinimum(&bHaveMinValue);
+            if (bHaveMinValue)
+                oHeader.component_taglist(iBand).set(
+                    "MIN_VALUE", PrintDouble(dfMinValue).c_str());
             int bHaveMaxValue;
             double dfMaxValue;
-            dfMaxValue = poSrcBand->GetMaximum( &bHaveMaxValue );
-            if( bHaveMaxValue )
-                oHeader.component_taglist( iBand ).set( "MAX_VALUE",
-                        PrintDouble( dfMaxValue ).c_str() );
+            dfMaxValue = poSrcBand->GetMaximum(&bHaveMaxValue);
+            if (bHaveMaxValue)
+                oHeader.component_taglist(iBand).set(
+                    "MAX_VALUE", PrintDouble(dfMaxValue).c_str());
             // Offset/scale values
             int bHaveOffsetValue;
             double dfOffsetValue;
-            dfOffsetValue = poSrcBand->GetOffset( &bHaveOffsetValue );
-            if( bHaveOffsetValue )
-                oHeader.component_taglist( iBand ).set( "GDAL/OFFSET",
-                        PrintDouble( dfOffsetValue ).c_str() );
+            dfOffsetValue = poSrcBand->GetOffset(&bHaveOffsetValue);
+            if (bHaveOffsetValue)
+                oHeader.component_taglist(iBand).set(
+                    "GDAL/OFFSET", PrintDouble(dfOffsetValue).c_str());
             int bHaveScaleValue;
             double dfScaleValue;
-            dfScaleValue = poSrcBand->GetScale( &bHaveScaleValue );
-            if( bHaveScaleValue )
-                oHeader.component_taglist( iBand ).set( "GDAL/SCALE",
-                        PrintDouble( dfScaleValue ).c_str() );
+            dfScaleValue = poSrcBand->GetScale(&bHaveScaleValue);
+            if (bHaveScaleValue)
+                oHeader.component_taglist(iBand).set(
+                    "GDAL/SCALE", PrintDouble(dfScaleValue).c_str());
             // Unit
-            const char *pszUnit = poSrcBand->GetUnitType( );
-            if( pszUnit != nullptr && pszUnit[0] != '\0' )
-                oHeader.component_taglist( iBand ).set( "UNIT", pszUnit );
+            const char *pszUnit = poSrcBand->GetUnitType();
+            if (pszUnit != nullptr && pszUnit[0] != '\0')
+                oHeader.component_taglist(iBand).set("UNIT", pszUnit);
             // Color interpretation
             GDALColorInterp eCI = poSrcBand->GetColorInterpretation();
-            if( eCI == GCI_GrayIndex )
-                oHeader.component_taglist( iBand ).set( "INTERPRETATION", "GRAY" );
-            else if( eCI == GCI_RedBand )
-                oHeader.component_taglist( iBand ).set( "INTERPRETATION", "RED" );
-            else if( eCI == GCI_GreenBand )
-                oHeader.component_taglist( iBand ).set( "INTERPRETATION", "GREEN" );
-            else if( eCI == GCI_BlueBand )
-                oHeader.component_taglist( iBand ).set( "INTERPRETATION", "BLUE" );
-            else if( eCI == GCI_AlphaBand )
-                oHeader.component_taglist( iBand ).set( "INTERPRETATION", "ALPHA" );
-            else if( eCI == GCI_HueBand )
-                oHeader.component_taglist( iBand ).set( "INTERPRETATION", "HSL/H" );
-            else if( eCI == GCI_SaturationBand )
-                oHeader.component_taglist( iBand ).set( "INTERPRETATION", "HSL/S" );
-            else if( eCI == GCI_LightnessBand )
-                oHeader.component_taglist( iBand ).set( "INTERPRETATION", "HSL/L" );
-            else if( eCI == GCI_CyanBand )
-                oHeader.component_taglist( iBand ).set( "INTERPRETATION", "CMYK/C" );
-            else if( eCI == GCI_MagentaBand )
-                oHeader.component_taglist( iBand ).set( "INTERPRETATION", "CMYK/M" );
-            else if( eCI == GCI_YellowBand )
-                oHeader.component_taglist( iBand ).set( "INTERPRETATION", "CMYK/Y" );
-            else if( eCI == GCI_BlackBand )
-                oHeader.component_taglist( iBand ).set( "INTERPRETATION", "CMYK/K" );
-            else if( eCI == GCI_YCbCr_YBand )
-                oHeader.component_taglist( iBand ).set( "INTERPRETATION", "YCBCR/Y" );
-            else if( eCI == GCI_YCbCr_CbBand )
-                oHeader.component_taglist( iBand ).set( "INTERPRETATION", "YCBCR/CB" );
-            else if( eCI == GCI_YCbCr_CrBand )
-                oHeader.component_taglist( iBand ).set( "INTERPRETATION", "YCBCR/CR" );
+            if (eCI == GCI_GrayIndex)
+                oHeader.component_taglist(iBand).set("INTERPRETATION", "GRAY");
+            else if (eCI == GCI_RedBand)
+                oHeader.component_taglist(iBand).set("INTERPRETATION", "RED");
+            else if (eCI == GCI_GreenBand)
+                oHeader.component_taglist(iBand).set("INTERPRETATION", "GREEN");
+            else if (eCI == GCI_BlueBand)
+                oHeader.component_taglist(iBand).set("INTERPRETATION", "BLUE");
+            else if (eCI == GCI_AlphaBand)
+                oHeader.component_taglist(iBand).set("INTERPRETATION", "ALPHA");
+            else if (eCI == GCI_HueBand)
+                oHeader.component_taglist(iBand).set("INTERPRETATION", "HSL/H");
+            else if (eCI == GCI_SaturationBand)
+                oHeader.component_taglist(iBand).set("INTERPRETATION", "HSL/S");
+            else if (eCI == GCI_LightnessBand)
+                oHeader.component_taglist(iBand).set("INTERPRETATION", "HSL/L");
+            else if (eCI == GCI_CyanBand)
+                oHeader.component_taglist(iBand).set("INTERPRETATION",
+                                                     "CMYK/C");
+            else if (eCI == GCI_MagentaBand)
+                oHeader.component_taglist(iBand).set("INTERPRETATION",
+                                                     "CMYK/M");
+            else if (eCI == GCI_YellowBand)
+                oHeader.component_taglist(iBand).set("INTERPRETATION",
+                                                     "CMYK/Y");
+            else if (eCI == GCI_BlackBand)
+                oHeader.component_taglist(iBand).set("INTERPRETATION",
+                                                     "CMYK/K");
+            else if (eCI == GCI_YCbCr_YBand)
+                oHeader.component_taglist(iBand).set("INTERPRETATION",
+                                                     "YCBCR/Y");
+            else if (eCI == GCI_YCbCr_CbBand)
+                oHeader.component_taglist(iBand).set("INTERPRETATION",
+                                                     "YCBCR/CB");
+            else if (eCI == GCI_YCbCr_CrBand)
+                oHeader.component_taglist(iBand).set("INTERPRETATION",
+                                                     "YCBCR/CR");
         }
     }
-    catch( gta::exception &e )
+    catch (gta::exception &e)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, "GTA error: %s\n", e.what() );
-        VSIFree( peGTATypes );
+        CPLError(CE_Failure, CPLE_NotSupported, "GTA error: %s\n", e.what());
+        VSIFree(peGTATypes);
         return nullptr;
     }
-    VSIFree( peGTATypes );
+    VSIFree(peGTATypes);
 
-/* -------------------------------------------------------------------- */
-/*      Write header and data to the file                               */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Write header and data to the file                               */
+    /* -------------------------------------------------------------------- */
 
     GTAIO oGTAIO;
-    if( oGTAIO.open( pszFilename, "w" ) != 0 )
+    if (oGTAIO.open(pszFilename, "w") != 0)
     {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                "Cannot create GTA file %s.\n", pszFilename );
+        CPLError(CE_Failure, CPLE_OpenFailed, "Cannot create GTA file %s.\n",
+                 pszFilename);
         return nullptr;
     }
 
-    void *pLine = VSI_MALLOC2_VERBOSE( static_cast<size_t>(oHeader.element_size()), static_cast<size_t>(oHeader.dimension_size(0)) );
-    if( pLine == nullptr )
+    void *pLine =
+        VSI_MALLOC2_VERBOSE(static_cast<size_t>(oHeader.element_size()),
+                            static_cast<size_t>(oHeader.dimension_size(0)));
+    if (pLine == nullptr)
     {
-        VSIFree( pLine );
+        VSIFree(pLine);
         return nullptr;
     }
 
     try
     {
         // Write header
-        oHeader.write_to( oGTAIO );
+        oHeader.write_to(oGTAIO);
         // Write data line by line
         gta::io_state oGTAIOState;
-        for( int iLine = 0; iLine < poSrcDS->GetRasterYSize(); iLine++ )
+        for (int iLine = 0; iLine < poSrcDS->GetRasterYSize(); iLine++)
         {
             size_t nComponentOffset = 0;
-            for( int iBand = 0; iBand < poSrcDS->GetRasterCount(); iBand++ )
+            for (int iBand = 0; iBand < poSrcDS->GetRasterCount(); iBand++)
             {
-                GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
+                GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand(iBand + 1);
                 GDALDataType eDT = poSrcBand->GetRasterDataType();
-                if( eDT == GDT_CInt16 )
+                if (eDT == GDT_CInt16)
                 {
                     eDT = GDT_CFloat32;
                 }
-                else if( eDT == GDT_CInt32 )
+                else if (eDT == GDT_CInt32)
                 {
                     eDT = GDT_CFloat64;
                 }
                 char *pDst = (char *)pLine + nComponentOffset;
-                CPLErr eErr = poSrcBand->RasterIO( GF_Read, 0, iLine,
-                        poSrcDS->GetRasterXSize(), 1,
-                        pDst, poSrcDS->GetRasterXSize(), 1, eDT,
-                        oHeader.element_size(), 0, nullptr );
-                if( eErr != CE_None )
+                CPLErr eErr = poSrcBand->RasterIO(
+                    GF_Read, 0, iLine, poSrcDS->GetRasterXSize(), 1, pDst,
+                    poSrcDS->GetRasterXSize(), 1, eDT, oHeader.element_size(),
+                    0, nullptr);
+                if (eErr != CE_None)
                 {
-                    CPLError( CE_Failure, CPLE_FileIO, "Cannot read source data set.\n" );
-                    VSIFree( pLine );
+                    CPLError(CE_Failure, CPLE_FileIO,
+                             "Cannot read source data set.\n");
+                    VSIFree(pLine);
                     return nullptr;
                 }
-                nComponentOffset += oHeader.component_size( iBand );
+                nComponentOffset += oHeader.component_size(iBand);
             }
-            oHeader.write_elements( oGTAIOState, oGTAIO, poSrcDS->GetRasterXSize(), pLine );
-            if( !pfnProgress( (iLine+1) / (double) poSrcDS->GetRasterYSize(),
-                        nullptr, pProgressData ) )
+            oHeader.write_elements(oGTAIOState, oGTAIO,
+                                   poSrcDS->GetRasterXSize(), pLine);
+            if (!pfnProgress((iLine + 1) / (double)poSrcDS->GetRasterYSize(),
+                             nullptr, pProgressData))
             {
-                CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated CreateCopy()" );
-                VSIFree( pLine );
+                CPLError(CE_Failure, CPLE_UserInterrupt,
+                         "User terminated CreateCopy()");
+                VSIFree(pLine);
                 return nullptr;
             }
         }
     }
-    catch( gta::exception &e )
+    catch (gta::exception &e)
     {
-        CPLError( CE_Failure, CPLE_FileIO, "GTA write error: %s\n", e.what() );
-        VSIFree( pLine );
+        CPLError(CE_Failure, CPLE_FileIO, "GTA write error: %s\n", e.what());
+        VSIFree(pLine);
         return nullptr;
     }
-    VSIFree( pLine );
+    VSIFree(pLine);
 
     oGTAIO.close();
 
-/* -------------------------------------------------------------------- */
-/*      Re-open dataset, and copy any auxiliary pam information.         */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Re-open dataset, and copy any auxiliary pam information.         */
+    /* -------------------------------------------------------------------- */
 
-    GTADataset *poDS = (GTADataset *) GDALOpen( pszFilename,
-            eGTACompression == gta::none ? GA_Update : GA_ReadOnly );
+    GTADataset *poDS = (GTADataset *)GDALOpen(
+        pszFilename, eGTACompression == gta::none ? GA_Update : GA_ReadOnly);
 
-    if( poDS )
-        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+    if (poDS)
+        poDS->CloneInfo(poSrcDS, GCIF_PAM_DEFAULT);
 
     return poDS;
 }
@@ -1694,44 +1755,43 @@ GTACreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 void GDALRegister_GTA()
 
 {
-    if( GDALGetDriverByName( "GTA" ) != nullptr )
+    if (GDALGetDriverByName("GTA") != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "GTA" );
-    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "Generic Tagged Arrays (.gta)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/gta.html" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gta" );
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                               "Byte UInt16 Int16 UInt32 Int32 Float32 Float64 "
-                               "CInt16 CInt32 CFloat32 CFloat64" );
-    poDriver->SetMetadataItem(
-        GDAL_DMD_CREATIONOPTIONLIST,
-        "<CreationOptionList>"
-        "  <Option name='COMPRESS' type='string-select'>"
-        "    <Value>NONE</Value>"
-        "    <Value>BZIP2</Value>"
-        "    <Value>XZ</Value>"
-        "    <Value>ZLIB</Value>"
-        "    <Value>ZLIB1</Value>"
-        "    <Value>ZLIB2</Value>"
-        "    <Value>ZLIB3</Value>"
-        "    <Value>ZLIB4</Value>"
-        "    <Value>ZLIB5</Value>"
-        "    <Value>ZLIB6</Value>"
-        "    <Value>ZLIB7</Value>"
-        "    <Value>ZLIB8</Value>"
-        "    <Value>ZLIB9</Value>"
-        "  </Option>"
-        "</CreationOptionList>" );
+    poDriver->SetDescription("GTA");
+    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
+                              "Generic Tagged Arrays (.gta)");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/gta.html");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "gta");
+    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
+                              "Byte UInt16 Int16 UInt32 Int32 Float32 Float64 "
+                              "CInt16 CInt32 CFloat32 CFloat64");
+    poDriver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,
+                              "<CreationOptionList>"
+                              "  <Option name='COMPRESS' type='string-select'>"
+                              "    <Value>NONE</Value>"
+                              "    <Value>BZIP2</Value>"
+                              "    <Value>XZ</Value>"
+                              "    <Value>ZLIB</Value>"
+                              "    <Value>ZLIB1</Value>"
+                              "    <Value>ZLIB2</Value>"
+                              "    <Value>ZLIB3</Value>"
+                              "    <Value>ZLIB4</Value>"
+                              "    <Value>ZLIB5</Value>"
+                              "    <Value>ZLIB6</Value>"
+                              "    <Value>ZLIB7</Value>"
+                              "    <Value>ZLIB8</Value>"
+                              "    <Value>ZLIB9</Value>"
+                              "  </Option>"
+                              "</CreationOptionList>");
 
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
     poDriver->pfnOpen = GTADataset::Open;
     poDriver->pfnCreateCopy = GTACreateCopy;
 
-    GetGDALDriverManager()->RegisterDriver( poDriver );
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }
