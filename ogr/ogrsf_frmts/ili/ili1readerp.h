@@ -42,32 +42,35 @@ class OGRILI1Layer;
 
 class ILI1Reader : public IILI1Reader
 {
-private:
-    VSILFILE    *fpItf;
-    int          nLayers;
+  private:
+    VSILFILE *fpItf;
+    int nLayers;
     OGRILI1Layer **papoLayers;
     OGRILI1Layer *curLayer;
-    char         codeBlank;
-    char         codeUndefined;
-    char         codeContinue;
+    char codeBlank;
+    char codeUndefined;
+    char codeContinue;
 
-public:
-                 ILI1Reader();
-                ~ILI1Reader();
+  public:
+    ILI1Reader();
+    ~ILI1Reader();
 
-    int          OpenFile( const char *pszFilename ) override;
-    int          ReadModel( ImdReader *poImdReader, const char *pszModelFilename, OGRILI1DataSource *poDS ) override;
-    int          ReadFeatures() override;
-    int          ReadTable(const char *layername);
-    void         ReadGeom(char **stgeom, int geomIdx, OGRwkbGeometryType eType, OGRFeature *feature);
-    char         **ReadParseLine();
+    int OpenFile(const char *pszFilename) override;
+    int ReadModel(ImdReader *poImdReader, const char *pszModelFilename,
+                  OGRILI1DataSource *poDS) override;
+    int ReadFeatures() override;
+    int ReadTable(const char *layername);
+    void ReadGeom(char **stgeom, int geomIdx, OGRwkbGeometryType eType,
+                  OGRFeature *feature);
+    char **ReadParseLine();
 
-    void         AddLayer( OGRILI1Layer * poNewLayer );
-    OGRILI1Layer *GetLayer( int ) override;
-    OGRILI1Layer *GetLayerByName( const char* ) override;
-    int          GetLayerCount() override;
+    void AddLayer(OGRILI1Layer *poNewLayer);
+    OGRILI1Layer *GetLayer(int) override;
+    OGRILI1Layer *GetLayerByName(const char *) override;
+    int GetLayerCount() override;
 
-    static const char*  GetLayerNameString(const char* topicname, const char* tablename);
+    static const char *GetLayerNameString(const char *topicname,
+                                          const char *tablename);
 };
 
 #endif
