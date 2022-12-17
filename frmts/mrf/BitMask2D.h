@@ -16,7 +16,7 @@ Contributors:  Lucian Plesea
 /*
 
 A 2D bitmask stored in 4x4 or 8x8 units
-While it is a template over unit type, the only valid types are 
+While it is a template over unit type, the only valid types are
 unsigned 16bit and unsigned 64bit
 
 Obviously not thread safe while any bit gets modified
@@ -26,7 +26,6 @@ Obviously not thread safe while any bit gets modified
 #define BITMASK2D_H
 #include <vector>
 #include <stdexcept>
-
 
 // For CPL_MSB and swap functions
 #include "cpl_port.h"
@@ -39,40 +38,44 @@ Obviously not thread safe while any bit gets modified
 NAMESPACE_MRF_START
 // integer sqrt at compile time
 // N is the number, M is the number of refining iterations
-template<int N, int M = 4> struct Sqrt {
-    static const int value = 
+template <int N, int M = 4> struct Sqrt
+{
+    static const int value =
         (Sqrt<N, M - 1>::value + N / Sqrt<N, M - 1>::value) / 2;
 };
 
 // End condition
-template<int N> struct Sqrt<N, 0> {
+template <int N> struct Sqrt<N, 0>
+{
     static const int value = N / 2;
 };
 
 // Round up division by N
-template<unsigned int N> static int Chunks(int x) {
+template <unsigned int N> static int Chunks(int x)
+{
     return 1 + (x - 1) / N;
 }
 
 //// These exist in C++11, so we name them with upper case
-//template < typename T1, typename T2 > struct Is_Same {
-//    enum { value = false }; // is_same represents a bool.
-//    typedef Is_Same<T1, T2> type; // to qualify as a metafunction.
-//};
+// template < typename T1, typename T2 > struct Is_Same {
+//     enum { value = false }; // is_same represents a bool.
+//     typedef Is_Same<T1, T2> type; // to qualify as a metafunction.
+// };
 //
 //
 ////// Specialization
-//template < typename T > struct Is_Same<T,T> {
-//    enum { value = true };
-//    typedef Is_Same<T, T> type;
-//};
+// template < typename T > struct Is_Same<T,T> {
+//     enum { value = true };
+//     typedef Is_Same<T, T> type;
+// };
 //
 
 // linear size of storage unit, 4 or 8
-#define TGSIZE Sqrt<sizeof(T)*8>::value
+#define TGSIZE Sqrt<sizeof(T) * 8>::value
 
-template<typename T = unsigned long long> class BitMap2D {
-public:
+template <typename T = unsigned long long> class BitMap2D
+{
+  public:
     // Initialized to all bits set
     BitMap2D(unsigned int width, unsigned int height) : _w(width), _h(height)
     {
@@ -83,7 +86,8 @@ public:
         // Is_Same<T, unsigned long long>::type a;
         // Is_Same<T, unsigned short>::type b;
         // if (!(a.value || b.value))
-        //   throw std::out_of_range("Only bitmap units of unsigned 16 and 64 bits work");
+        //   throw std::out_of_range("Only bitmap units of unsigned 16 and 64
+        //   bits work");
 
         // Precalculate row size in storage units, for speed
         _lw = Chunks<TGSIZE>(_w);
@@ -94,52 +98,71 @@ public:
 #endif
     }
 
-    int getWidth() const { return _w; }
-    int getHeight() const { return _h; }
+    int getWidth() const
+    {
+        return _w;
+    }
+    int getHeight() const
+    {
+        return _h;
+    }
 
     // Size in bytes
-    size_t size() const {
-        return _bits.size() * sizeof(T); 
+    size_t size() const
+    {
+        return _bits.size() * sizeof(T);
     }
 
     // Returns the condition of a specific bit
-    bool isSet(int x, int y) const {
+    bool isSet(int x, int y) const
+    {
         return 0 != (_bits[_idx(x, y)] & _bitmask(x, y));
     }
 
-    void set(int x, int y) {
+    void set(int x, int y)
+    {
         _bits[_idx(x, y)] |= _bitmask(x, y);
     }
 
-    void clear(int x, int y) {
+    void clear(int x, int y)
+    {
         _bits[_idx(x, y)] &= ~_bitmask(x, y);
     }
 
     // Set a location bit to true or false
-    void assign(int x, int y, bool val = true) {
-        if (val) set(x,y);
-        else clear(x,y);
+    void assign(int x, int y, bool val = true)
+    {
+        if (val)
+            set(x, y);
+        else
+            clear(x, y);
     }
 
     // Flip a bit
-    void flip(int x, int y) {
+    void flip(int x, int y)
+    {
         _bits[_idx(x, y)] ^= _bitmask(x, y);
     }
 
     // Set all units to same bit pattern by unit
     // Use init(~(T)0)) for all set
-    void init(T val) {
+    void init(T val)
+    {
         _bits.assign(Chunks<TGSIZE>(_w) * Chunks<TGSIZE>(_h), val);
     }
 
- // Support for store and load
+    // Support for store and load
 #if defined(PACKER)
 
-    void set_packer(Packer *packer) { _packer = packer; }
+    void set_packer(Packer *packer)
+    {
+        _packer = packer;
+    }
 
-    int store(storage_manager *dst) {
+    int store(storage_manager *dst)
+    {
         int result;
-        storage_manager src = { reinterpret_cast<char *>(&_bits[0]), size() };
+        storage_manager src = {reinterpret_cast<char *>(&_bits[0]), size()};
         // Store the bytes in little endian format
         swab();
         if (_packer)
@@ -150,9 +173,10 @@ public:
         return result;
     }
 
-    int load(storage_manager *src) {
+    int load(storage_manager *src)
+    {
         int result;
-        storage_manager dst = { reinterpret_cast<char *>(&_bits[0]), size() };
+        storage_manager dst = {reinterpret_cast<char *>(&_bits[0]), size()};
         if (_packer)
             result = _packer->load(src, &dst);
         else
@@ -162,23 +186,28 @@ public:
     }
 #endif
 
-private:
+  private:
     // unit index
-    unsigned int _idx(int x, int y) const {
-        return  _lw * (y / TGSIZE) + x / TGSIZE;
+    unsigned int _idx(int x, int y) const
+    {
+        return _lw * (y / TGSIZE) + x / TGSIZE;
     }
 
     // one bit mask within a unit
-    static T _bitmask(int x, int y) {
+    static T _bitmask(int x, int y)
+    {
         return static_cast<T>(1) << (TGSIZE * (y % TGSIZE) + x % TGSIZE);
     }
 
 #if defined(PACKER)
 // Swap bytes of storage units within the bitmap to low endian
 #if defined(CPL_LSB)
-    static void swab() {}
+    static void swab()
+    {
+    }
 #else
-    void swab() {
+    void swab()
+    {
         for (size_t i = 0; i < _bits.size(); i++)
         {
             if (sizeof(T) == sizeof(GUIntBig))
@@ -187,7 +216,7 @@ private:
             }
             else
             {
-                CPL_SWAP16PTR(reinterpret_cast<GUInt16 *> (&_bits[i]));
+                CPL_SWAP16PTR(reinterpret_cast<GUInt16 *>(&_bits[i]));
             }
         }
     }
