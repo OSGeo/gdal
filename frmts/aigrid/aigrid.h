@@ -42,60 +42,62 @@ CPL_C_START
 /*      Grid Instance                                                   */
 /* ==================================================================== */
 
-typedef struct {
-    int         nBlocks;
-    GUInt32     *panBlockOffset;
-    int         *panBlockSize;
+typedef struct
+{
+    int nBlocks;
+    GUInt32 *panBlockOffset;
+    int *panBlockSize;
 
-    VSILFILE    *fpGrid;  // The w001001.adf file.
-    int         bTriedToLoad;
+    VSILFILE *fpGrid;  // The w001001.adf file.
+    int bTriedToLoad;
 } AIGTileInfo;
 
-typedef struct {
+typedef struct
+{
     /* Private information */
 
     AIGTileInfo *pasTileInfo;
 
-    int         bHasWarned;
-    int         nFailedOpenings;
+    int bHasWarned;
+    int nFailedOpenings;
 
     /* public information */
 
-    char        *pszCoverName; // Path of coverage directory.
+    char *pszCoverName;  // Path of coverage directory.
 
-    GInt32      nCellType;
-    GInt32      bCompressed;
+    GInt32 nCellType;
+    GInt32 bCompressed;
 
-#define AIG_CELLTYPE_INT                1
-#define AIG_CELLTYPE_FLOAT              2
+#define AIG_CELLTYPE_INT 1
+#define AIG_CELLTYPE_FLOAT 2
 
-    GInt32      nBlockXSize;
-    GInt32      nBlockYSize;
+    GInt32 nBlockXSize;
+    GInt32 nBlockYSize;
 
-    GInt32      nBlocksPerRow;
-    GInt32      nBlocksPerColumn;
+    GInt32 nBlocksPerRow;
+    GInt32 nBlocksPerColumn;
 
-    int         nTileXSize;
-    int         nTileYSize;
+    int nTileXSize;
+    int nTileYSize;
 
-    int         nTilesPerRow;
-    int         nTilesPerColumn;
+    int nTilesPerRow;
+    int nTilesPerColumn;
 
-    double      dfLLX;
-    double      dfLLY;
-    double      dfURX;
-    double      dfURY;
+    double dfLLX;
+    double dfLLY;
+    double dfURX;
+    double dfURY;
 
-    double      dfCellSizeX;
-    double      dfCellSizeY;
+    double dfCellSizeX;
+    double dfCellSizeY;
 
-    int         nPixels;
-    int         nLines;
+    int nPixels;
+    int nLines;
 
-    double      dfMin;
-    double      dfMax;
-    double      dfMean;
-    double      dfStdDev;
+    double dfMin;
+    double dfMax;
+    double dfMean;
+    double dfStdDev;
 
 } AIGInfo_t;
 
@@ -103,33 +105,32 @@ typedef struct {
 /*      Private APIs                                                    */
 /* ==================================================================== */
 
-CPLErr AIGAccessTile( AIGInfo_t *psInfo, int iTileX, int iTileY );
-CPLErr AIGReadBlock( VSILFILE * fp, GUInt32 nBlockOffset, int nBlockSize,
-                     int nBlockXSize, int nBlockYSize, GInt32 * panData,
-                     int nCellType, int bCompressed );
+CPLErr AIGAccessTile(AIGInfo_t *psInfo, int iTileX, int iTileY);
+CPLErr AIGReadBlock(VSILFILE *fp, GUInt32 nBlockOffset, int nBlockSize,
+                    int nBlockXSize, int nBlockYSize, GInt32 *panData,
+                    int nCellType, int bCompressed);
 
-CPLErr AIGReadHeader( const char *, AIGInfo_t * );
-CPLErr AIGReadBlockIndex( AIGInfo_t *, AIGTileInfo *,
-                          const char *pszBasename );
-CPLErr AIGReadBounds( const char *, AIGInfo_t * );
-CPLErr AIGReadStatistics( const char *, AIGInfo_t * );
+CPLErr AIGReadHeader(const char *, AIGInfo_t *);
+CPLErr AIGReadBlockIndex(AIGInfo_t *, AIGTileInfo *, const char *pszBasename);
+CPLErr AIGReadBounds(const char *, AIGInfo_t *);
+CPLErr AIGReadStatistics(const char *, AIGInfo_t *);
 
-CPLErr DecompressCCITTRLETile( unsigned char *pabySrcData, int nSrcBytes,
-                               unsigned char *pabyDstData, int nDstBytes,
-                               int nBlockXSize, int nBlockYSize );
+CPLErr DecompressCCITTRLETile(unsigned char *pabySrcData, int nSrcBytes,
+                              unsigned char *pabyDstData, int nDstBytes,
+                              int nBlockXSize, int nBlockYSize);
 
 /* ==================================================================== */
 /*      Public APIs                                                     */
 /* ==================================================================== */
 
-AIGInfo_t       *AIGOpen( const char *, const char * );
+AIGInfo_t *AIGOpen(const char *, const char *);
 
-CPLErr          AIGReadTile( AIGInfo_t *, int, int, GInt32 * );
-CPLErr          AIGReadFloatTile( AIGInfo_t *, int, int, float * );
+CPLErr AIGReadTile(AIGInfo_t *, int, int, GInt32 *);
+CPLErr AIGReadFloatTile(AIGInfo_t *, int, int, float *);
 
-void            AIGClose( AIGInfo_t * );
+void AIGClose(AIGInfo_t *);
 
-VSILFILE           *AIGLLOpen( const char *, const char * );
+VSILFILE *AIGLLOpen(const char *, const char *);
 
 CPL_C_END
 
