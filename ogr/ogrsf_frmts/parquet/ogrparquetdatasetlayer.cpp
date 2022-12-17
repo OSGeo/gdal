@@ -42,51 +42,54 @@
 /*                        OGRParquetLayer()                             */
 /************************************************************************/
 
-OGRParquetDatasetLayer::OGRParquetDatasetLayer(OGRParquetDataset* poDS,
-                               const char* pszLayerName,
-                               const std::shared_ptr<arrow::dataset::Scanner>& scanner,
-                               const std::shared_ptr<arrow::Schema>& schema):
-    OGRParquetLayerBase(poDS, pszLayerName),
-    m_poScanner(scanner)
+OGRParquetDatasetLayer::OGRParquetDatasetLayer(
+    OGRParquetDataset *poDS, const char *pszLayerName,
+    const std::shared_ptr<arrow::dataset::Scanner> &scanner,
+    const std::shared_ptr<arrow::Schema> &schema)
+    : OGRParquetLayerBase(poDS, pszLayerName), m_poScanner(scanner)
 {
     EstablishFeatureDefn(schema);
-    CPLAssert( static_cast<int>(m_aeGeomEncoding.size()) == m_poFeatureDefn->GetGeomFieldCount() );
+    CPLAssert(static_cast<int>(m_aeGeomEncoding.size()) ==
+              m_poFeatureDefn->GetGeomFieldCount());
 }
 
 /************************************************************************/
 /*                        EstablishFeatureDefn()                        */
 /************************************************************************/
 
-void OGRParquetDatasetLayer::EstablishFeatureDefn(const std::shared_ptr<arrow::Schema>& schema)
+void OGRParquetDatasetLayer::EstablishFeatureDefn(
+    const std::shared_ptr<arrow::Schema> &schema)
 {
-    const auto& kv_metadata = schema->metadata();
+    const auto &kv_metadata = schema->metadata();
 
     LoadGeoMetadata(kv_metadata);
-    const auto oMapFieldNameToGDALSchemaFieldDefn = LoadGDALMetadata(kv_metadata.get());
+    const auto oMapFieldNameToGDALSchemaFieldDefn =
+        LoadGDALMetadata(kv_metadata.get());
 
     const auto fields = schema->fields();
-    for( int i = 0; i < schema->num_fields(); ++i )
+    for (int i = 0; i < schema->num_fields(); ++i)
     {
-        const auto& field = fields[i];
+        const auto &field = fields[i];
 
-        if( !m_osFIDColumn.empty() &&
-            field->name() == m_osFIDColumn )
+        if (!m_osFIDColumn.empty() && field->name() == m_osFIDColumn)
         {
             m_iFIDArrowColumn = i;
             continue;
         }
 
-        const bool bGeometryField = DealWithGeometryColumn(
-                                i, field, []() { return wkbUnknown; });
-        if( !bGeometryField )
+        const bool bGeometryField =
+            DealWithGeometryColumn(i, field, []() { return wkbUnknown; });
+        if (!bGeometryField)
         {
             CreateFieldFromSchema(field, {i},
                                   oMapFieldNameToGDALSchemaFieldDefn);
         }
     }
 
-    CPLAssert( static_cast<int>(m_anMapFieldIndexToArrowColumn.size()) == m_poFeatureDefn->GetFieldCount() );
-    CPLAssert( static_cast<int>(m_anMapGeomFieldIndexToArrowColumn.size()) == m_poFeatureDefn->GetGeomFieldCount() );
+    CPLAssert(static_cast<int>(m_anMapFieldIndexToArrowColumn.size()) ==
+              m_poFeatureDefn->GetFieldCount());
+    CPLAssert(static_cast<int>(m_anMapGeomFieldIndexToArrowColumn.size()) ==
+              m_poFeatureDefn->GetGeomFieldCount());
 }
 
 /************************************************************************/
@@ -107,10 +110,10 @@ bool OGRParquetDatasetLayer::ReadNextBatch()
 {
     m_nIdxInBatch = 0;
 
-    if( m_poRecordBatchReader == nullptr )
+    if (m_poRecordBatchReader == nullptr)
     {
         auto result = m_poScanner->ToRecordBatchReader();
-        if( !result.ok() )
+        if (!result.ok())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "ToRecordBatchReader() failed: %s",
@@ -118,7 +121,7 @@ bool OGRParquetDatasetLayer::ReadNextBatch()
             return false;
         }
         m_poRecordBatchReader = *result;
-        if( m_poRecordBatchReader == nullptr )
+        if (m_poRecordBatchReader == nullptr)
             return false;
     }
 
@@ -126,14 +129,13 @@ bool OGRParquetDatasetLayer::ReadNextBatch()
 
     std::shared_ptr<arrow::RecordBatch> poNextBatch;
     auto status = m_poRecordBatchReader->ReadNext(&poNextBatch);
-    if( !status.ok() )
+    if (!status.ok())
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "ReadNext() failed: %s",
+        CPLError(CE_Failure, CPLE_AppDefined, "ReadNext() failed: %s",
                  status.message().c_str());
         poNextBatch.reset();
     }
-    if( poNextBatch == nullptr )
+    if (poNextBatch == nullptr)
     {
         m_poBatch.reset();
         return false;
@@ -149,10 +151,10 @@ bool OGRParquetDatasetLayer::ReadNextBatch()
 
 GIntBig OGRParquetDatasetLayer::GetFeatureCount(int bForce)
 {
-    if( m_poAttrQuery == nullptr && m_poFilterGeom == nullptr )
+    if (m_poAttrQuery == nullptr && m_poFilterGeom == nullptr)
     {
         auto status = m_poScanner->CountRows();
-        if( status.ok() )
+        if (status.ok())
             return *status;
     }
     return OGRLayer::GetFeatureCount(bForce);
@@ -171,10 +173,11 @@ OGRErr OGRParquetDatasetLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 /*                         GetFastExtent()                              */
 /************************************************************************/
 
-bool OGRParquetDatasetLayer::GetFastExtent(int iGeomField, OGREnvelope *psExtent) const
+bool OGRParquetDatasetLayer::GetFastExtent(int iGeomField,
+                                           OGREnvelope *psExtent) const
 {
     const auto oIter = m_oMapExtents.find(iGeomField);
-    if( oIter != m_oMapExtents.end() )
+    if (oIter != m_oMapExtents.end())
     {
         *psExtent = oIter->second;
         return true;
@@ -190,9 +193,9 @@ bool OGRParquetDatasetLayer::GetFastExtent(int iGeomField, OGREnvelope *psExtent
 OGRErr OGRParquetDatasetLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
                                          int bForce)
 {
-    if( iGeomField < 0 || iGeomField >= m_poFeatureDefn->GetGeomFieldCount() )
+    if (iGeomField < 0 || iGeomField >= m_poFeatureDefn->GetGeomFieldCount())
     {
-        if( iGeomField != 0 )
+        if (iGeomField != 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Invalid geometry field index : %d", iGeomField);
@@ -200,60 +203,66 @@ OGRErr OGRParquetDatasetLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
         return OGRERR_FAILURE;
     }
 
-    if( GetFastExtent(iGeomField, psExtent) )
+    if (GetFastExtent(iGeomField, psExtent))
     {
         return OGRERR_NONE;
     }
 
     // bbox in general m_oMapGeometryColumns can not be trusted (at least at
     // time of writing), so we have to iterate over each fragment.
-    const char* pszGeomFieldName =
+    const char *pszGeomFieldName =
         m_poFeatureDefn->GetGeomFieldDefn(iGeomField)->GetNameRef();
     auto oIter = m_oMapGeometryColumns.find(pszGeomFieldName);
-    if( oIter != m_oMapGeometryColumns.end() )
+    if (oIter != m_oMapGeometryColumns.end())
     {
         auto statusFragments = m_poScanner->dataset()->GetFragments();
-        if( statusFragments.ok() )
+        if (statusFragments.ok())
         {
             *psExtent = OGREnvelope();
             int nFragmentCount = 0;
             int nBBoxFragmentCount = 0;
-            for( auto oFragmentStatus: *statusFragments )
+            for (auto oFragmentStatus : *statusFragments)
             {
-                if( oFragmentStatus.ok() )
+                if (oFragmentStatus.ok())
                 {
-                    auto statusSchema = (*oFragmentStatus)->ReadPhysicalSchema();
-                    if( statusSchema.ok() )
+                    auto statusSchema =
+                        (*oFragmentStatus)->ReadPhysicalSchema();
+                    if (statusSchema.ok())
                     {
-                        nFragmentCount ++;
-                        const auto& kv_metadata = (*statusSchema)->metadata();
-                        if( kv_metadata && kv_metadata->Contains("geo") )
+                        nFragmentCount++;
+                        const auto &kv_metadata = (*statusSchema)->metadata();
+                        if (kv_metadata && kv_metadata->Contains("geo"))
                         {
                             auto geo = kv_metadata->Get("geo");
                             CPLJSONDocument oDoc;
-                            if( geo.ok() && oDoc.LoadMemory(*geo) )
+                            if (geo.ok() && oDoc.LoadMemory(*geo))
                             {
                                 auto oRoot = oDoc.GetRoot();
                                 auto oColumns = oRoot.GetObj("columns");
                                 auto oCol = oColumns.GetObj(pszGeomFieldName);
                                 OGREnvelope sFragmentExtent;
-                                if( oCol.IsValid() &&
-                                    GetExtentFromMetadata(oCol, &sFragmentExtent) == OGRERR_NONE )
+                                if (oCol.IsValid() &&
+                                    GetExtentFromMetadata(
+                                        oCol, &sFragmentExtent) == OGRERR_NONE)
                                 {
                                     nBBoxFragmentCount++;
-                                    psExtent->MinX = std::min(psExtent->MinX, sFragmentExtent.MinX);
-                                    psExtent->MinY = std::min(psExtent->MinY, sFragmentExtent.MinY);
-                                    psExtent->MaxX = std::max(psExtent->MaxX, sFragmentExtent.MaxX);
-                                    psExtent->MaxY = std::max(psExtent->MaxY, sFragmentExtent.MaxY);
+                                    psExtent->MinX = std::min(
+                                        psExtent->MinX, sFragmentExtent.MinX);
+                                    psExtent->MinY = std::min(
+                                        psExtent->MinY, sFragmentExtent.MinY);
+                                    psExtent->MaxX = std::max(
+                                        psExtent->MaxX, sFragmentExtent.MaxX);
+                                    psExtent->MaxY = std::max(
+                                        psExtent->MaxY, sFragmentExtent.MaxY);
                                 }
                             }
                         }
-                        if( nFragmentCount != nBBoxFragmentCount )
+                        if (nFragmentCount != nBBoxFragmentCount)
                             break;
                     }
                 }
             }
-            if( nFragmentCount == nBBoxFragmentCount )
+            if (nFragmentCount == nBBoxFragmentCount)
             {
                 m_oMapExtents[iGeomField] = *psExtent;
                 return OGRERR_NONE;
