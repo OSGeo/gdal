@@ -48,6 +48,7 @@
 #include "cpl_minizip_zip.h"
 
 #include <algorithm>
+#include <limits>
 
 #include <cassert>
 #include <cstddef>

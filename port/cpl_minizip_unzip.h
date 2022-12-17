@@ -254,6 +254,13 @@ typedef voidp unzFile;
 
     extern uLong64 ZEXPORT cpl_unzGetCurrentFileZStreamPos(unzFile file);
 
+    extern int cpl_unzGetLocalHeaderPos(unzFile file,
+                                        uLong64 *pos_local_header);
+
+    extern int cpl_unzCurrentFileInfoFromLocalHeader(
+        unzFile file, uLong64 pos_local_header, unz_file_info *pfile_info,
+        char *szFileName, size_t fileNameBufferSize, uLong64 *posData);
+
     /** Addition for GDAL : END */
 
     /***************************************************************************/
