@@ -37,22 +37,13 @@
 #include "cpl_vsi.h"
 #include "hfa.h"
 
-
-HFACompress::HFACompress( void *pData, GUInt32 nBlockSize, EPTType eDataType ) :
-    m_pData(pData),
-    m_nBlockSize(nBlockSize),
-    m_nBlockCount((nBlockSize * 8) / HFAGetDataTypeBits(eDataType)),
-    m_eDataType(eDataType),
-    m_nDataTypeNumBits(HFAGetDataTypeBits(eDataType)),
-    m_pCounts(nullptr),
-    m_pCurrCount(nullptr),
-    m_nSizeCounts(0),
-    m_pValues(nullptr),
-    m_pCurrValues(nullptr),
-    m_nSizeValues(0),
-    m_nMin(0),
-    m_nNumRuns(0),
-    m_nNumBits(0)
+HFACompress::HFACompress(void *pData, GUInt32 nBlockSize, EPTType eDataType)
+    : m_pData(pData), m_nBlockSize(nBlockSize),
+      m_nBlockCount((nBlockSize * 8) / HFAGetDataTypeBits(eDataType)),
+      m_eDataType(eDataType), m_nDataTypeNumBits(HFAGetDataTypeBits(eDataType)),
+      m_pCounts(nullptr), m_pCurrCount(nullptr), m_nSizeCounts(0),
+      m_pValues(nullptr), m_pCurrValues(nullptr), m_nSizeValues(0), m_nMin(0),
+      m_nNumRuns(0), m_nNumBits(0)
 {
     // Allocate some memory for the count and values - probably too big.
     // About right for worst case scenario.
@@ -71,14 +62,14 @@ HFACompress::~HFACompress()
 }
 
 // Returns the number of bits needed to encode a count.
-static GByte _FindNumBits( GUInt32 range )
+static GByte _FindNumBits(GUInt32 range)
 {
-    if( range < 0xff )
+    if (range < 0xff)
     {
         return 8;
     }
 
-    if( range < 0xffff )
+    if (range < 0xffff)
     {
         return 16;
     }
@@ -88,43 +79,43 @@ static GByte _FindNumBits( GUInt32 range )
 
 // Gets the value from the uncompressed block as a GUInt32 no matter
 // the data type.
-GUInt32 HFACompress::valueAsUInt32( GUInt32 iPixel )
+GUInt32 HFACompress::valueAsUInt32(GUInt32 iPixel)
 {
     GUInt32 val = 0;
 
-    if( m_nDataTypeNumBits == 8 )
+    if (m_nDataTypeNumBits == 8)
     {
         val = ((GByte *)m_pData)[iPixel];
     }
-    else if( m_nDataTypeNumBits == 16 )
+    else if (m_nDataTypeNumBits == 16)
     {
         val = ((GUInt16 *)m_pData)[iPixel];
     }
-    else if( m_nDataTypeNumBits == 32 )
+    else if (m_nDataTypeNumBits == 32)
     {
         val = ((GUInt32 *)m_pData)[iPixel];
     }
-    else if( m_nDataTypeNumBits == 4 )
+    else if (m_nDataTypeNumBits == 4)
     {
-        if( iPixel % 2 == 0 )
+        if (iPixel % 2 == 0)
             val = ((GByte *)m_pData)[iPixel / 2] & 0x0f;
         else
             val = (((GByte *)m_pData)[iPixel / 2] & 0xf0) >> 4;
     }
-    else if( m_nDataTypeNumBits == 2 )
+    else if (m_nDataTypeNumBits == 2)
     {
-        if( iPixel % 4 == 0 )
+        if (iPixel % 4 == 0)
             val = ((GByte *)m_pData)[iPixel / 4] & 0x03;
-        else if( iPixel % 4 == 1 )
+        else if (iPixel % 4 == 1)
             val = (((GByte *)m_pData)[iPixel / 4] & 0x0c) >> 2;
-        else if( iPixel % 4 == 2 )
+        else if (iPixel % 4 == 2)
             val = (((GByte *)m_pData)[iPixel / 4] & 0x30) >> 4;
         else
             val = (((GByte *)m_pData)[iPixel / 4] & 0xc0) >> 6;
     }
-    else if( m_nDataTypeNumBits == 1 )
+    else if (m_nDataTypeNumBits == 1)
     {
-        if( ((GByte *)m_pData)[iPixel >> 3] & (0x1 << (iPixel & 0x07)) )
+        if (((GByte *)m_pData)[iPixel >> 3] & (0x1 << (iPixel & 0x07)))
             val = 1;
         else
             val = 0;
@@ -134,8 +125,7 @@ GUInt32 HFACompress::valueAsUInt32( GUInt32 iPixel )
         // Should not get to here.  Check in compressBlock() should return false
         // if we can't compress this block because we don't know about the type.
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Imagine Datatype 0x%x (0x%x bits) not supported",
-                 m_eDataType,
+                 "Imagine Datatype 0x%x (0x%x bits) not supported", m_eDataType,
                  m_nDataTypeNumBits);
         CPLAssert(false);
     }
@@ -150,17 +140,17 @@ GUInt32 HFACompress::valueAsUInt32( GUInt32 iPixel )
 //
 // TODO: Minimum value returned as pNumBits is now 8 - Imagine
 // can handle 1, 2, and 4 bits as well.
-GUInt32 HFACompress::findMin( GByte *pNumBits )
+GUInt32 HFACompress::findMin(GByte *pNumBits)
 {
     GUInt32 u32Min = valueAsUInt32(0);
     GUInt32 u32Max = u32Min;
 
-    for( GUInt32 count = 1; count < m_nBlockCount; count++ )
+    for (GUInt32 count = 1; count < m_nBlockCount; count++)
     {
-        GUInt32 u32Val = valueAsUInt32( count );
-        if( u32Val < u32Min )
+        GUInt32 u32Val = valueAsUInt32(count);
+        if (u32Val < u32Min)
             u32Min = u32Val;
-        else if( u32Val > u32Max )
+        else if (u32Val > u32Max)
             u32Max = u32Val;
     }
 
@@ -171,24 +161,24 @@ GUInt32 HFACompress::findMin( GByte *pNumBits )
 
 // Codes the count in the way expected by Imagine - i.e. the lower 2 bits
 // specify how many bytes the count takes up.
-void HFACompress::makeCount( GUInt32 count, GByte *pCounter,
-                             GUInt32 *pnSizeCount )
+void HFACompress::makeCount(GUInt32 count, GByte *pCounter,
+                            GUInt32 *pnSizeCount)
 {
     // Because Imagine stores the number of bits used in the lower 2 bits of the
     // data it restricts what we can use.
-    if( count < 0x40 )
+    if (count < 0x40)
     {
         pCounter[0] = static_cast<GByte>(count);
         *pnSizeCount = 1;
     }
-    else if( count < 0x4000 )
+    else if (count < 0x4000)
     {
         pCounter[1] = count & 0xff;
         count /= 256;
         pCounter[0] = static_cast<GByte>(count | 0x40);
         *pnSizeCount = 2;
     }
-    else if( count < 0x400000 )
+    else if (count < 0x400000)
     {
         pCounter[2] = count & 0xff;
         count /= 256;
@@ -211,19 +201,19 @@ void HFACompress::makeCount( GUInt32 count, GByte *pCounter,
 }
 
 // Encodes the value depending on the number of bits we are using.
-void HFACompress::encodeValue( GUInt32 val, GUInt32 repeat )
+void HFACompress::encodeValue(GUInt32 val, GUInt32 repeat)
 {
     GUInt32 nSizeCount = 0;
 
     makeCount(repeat, m_pCurrCount, &nSizeCount);
     m_pCurrCount += nSizeCount;
-    if( m_nNumBits == 8 )
+    if (m_nNumBits == 8)
     {
         // Only storing 8 bits per value as the range is small.
-        *(GByte*)m_pCurrValues = GByte(val - m_nMin);
+        *(GByte *)m_pCurrValues = GByte(val - m_nMin);
         m_pCurrValues += sizeof(GByte);
     }
-    else if( m_nNumBits == 16 )
+    else if (m_nNumBits == 16)
     {
         // Only storing 16 bits per value as the range is small.
         *(GUInt16 *)m_pCurrValues = GUInt16(val - m_nMin);
@@ -252,12 +242,12 @@ bool HFACompress::compressBlock()
     // If we can't compress it we should return false so that
     // the block cannot be compressed (we can handle just about
     // any type uncompressed).
-    if( !QueryDataTypeSupported(m_eDataType) )
+    if (!QueryDataTypeSupported(m_eDataType))
     {
-        CPLDebug("HFA", "Cannot compress HFA datatype 0x%x (0x%x bits). "
+        CPLDebug("HFA",
+                 "Cannot compress HFA datatype 0x%x (0x%x bits). "
                  "Writing uncompressed instead.",
-                 m_eDataType,
-                 m_nDataTypeNumBits);
+                 m_eDataType, m_nDataTypeNumBits);
         return false;
     }
 
@@ -271,15 +261,15 @@ bool HFACompress::compressBlock()
 
     // Go through the block.
     GUInt32 u32Last = valueAsUInt32(0);
-    for( GUInt32 count = 1; count < m_nBlockCount; count++ )
+    for (GUInt32 count = 1; count < m_nBlockCount; count++)
     {
         const GUInt32 u32Val = valueAsUInt32(count);
-        if( u32Val != u32Last )
+        if (u32Val != u32Last)
         {
             // The values have changed - i.e. a run has come to and end.
             encodeValue(u32Last, count - nLastUnique);
 
-            if( (m_pCurrValues - m_pValues) > static_cast<int>(m_nBlockSize) )
+            if ((m_pCurrValues - m_pValues) > static_cast<int>(m_nBlockSize))
             {
                 return false;
             }
@@ -304,15 +294,10 @@ bool HFACompress::compressBlock()
     return (m_nSizeCounts + m_nSizeValues + 13) < m_nBlockSize;
 }
 
-bool HFACompress::QueryDataTypeSupported( EPTType eHFADataType )
+bool HFACompress::QueryDataTypeSupported(EPTType eHFADataType)
 {
     const int nBits = HFAGetDataTypeBits(eHFADataType);
 
-    return
-        nBits == 1 ||
-        nBits == 2 ||
-        nBits == 4 ||
-        nBits == 8 ||
-        nBits == 16 ||
-        nBits == 32;
+    return nBits == 1 || nBits == 2 || nBits == 4 || nBits == 8 ||
+           nBits == 16 || nBits == 32;
 }
