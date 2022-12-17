@@ -36,9 +36,10 @@
 #pragma GCC system_header
 #endif
 
-/* stdio.h needed before including crnlib.h, since the later needs NULL to be defined */
+/* stdio.h needed before including crnlib.h, since the later needs NULL to be
+ * defined */
 #include <stdio.h>
 #include "crnlib.h"
 #include "dds_defs.h"
 
-#endif // CRUNCH_HEADERS_H
+#endif  // CRUNCH_HEADERS_H
