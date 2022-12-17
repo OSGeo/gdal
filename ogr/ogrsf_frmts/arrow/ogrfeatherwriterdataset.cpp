@@ -35,11 +35,11 @@
 /************************************************************************/
 
 OGRFeatherWriterDataset::OGRFeatherWriterDataset(
-            const char* pszFilename,
-            const std::shared_ptr<arrow::io::OutputStream>& poOutputStream):
-    m_osFilename(pszFilename),
-    m_poMemoryPool(arrow::MemoryPool::CreateDefault()),
-    m_poOutputStream(poOutputStream)
+    const char *pszFilename,
+    const std::shared_ptr<arrow::io::OutputStream> &poOutputStream)
+    : m_osFilename(pszFilename),
+      m_poMemoryPool(arrow::MemoryPool::CreateDefault()),
+      m_poOutputStream(poOutputStream)
 {
 }
 
@@ -56,7 +56,7 @@ int OGRFeatherWriterDataset::GetLayerCount()
 /*                             GetLayer()                               */
 /************************************************************************/
 
-OGRLayer* OGRFeatherWriterDataset::GetLayer(int idx)
+OGRLayer *OGRFeatherWriterDataset::GetLayer(int idx)
 {
     return idx == 0 ? m_poLayer.get() : nullptr;
 }
@@ -65,11 +65,11 @@ OGRLayer* OGRFeatherWriterDataset::GetLayer(int idx)
 /*                         TestCapability()                             */
 /************************************************************************/
 
-int OGRFeatherWriterDataset::TestCapability(const char* pszCap)
+int OGRFeatherWriterDataset::TestCapability(const char *pszCap)
 {
-    if( EQUAL(pszCap, ODsCCreateLayer) )
+    if (EQUAL(pszCap, ODsCCreateLayer))
         return m_poLayer == nullptr;
-    if( EQUAL(pszCap, ODsCAddFieldDomain) )
+    if (EQUAL(pszCap, ODsCAddFieldDomain))
         return m_poLayer != nullptr;
     return false;
 }
@@ -78,21 +78,20 @@ int OGRFeatherWriterDataset::TestCapability(const char* pszCap)
 /*                          ICreateLayer()                              */
 /************************************************************************/
 
-OGRLayer* OGRFeatherWriterDataset::ICreateLayer( const char *pszName,
-                                                 OGRSpatialReference *poSpatialRef,
-                                                 OGRwkbGeometryType eGType,
-                                                 char ** papszOptions )
+OGRLayer *OGRFeatherWriterDataset::ICreateLayer(
+    const char *pszName, OGRSpatialReference *poSpatialRef,
+    OGRwkbGeometryType eGType, char **papszOptions)
 {
-    if( m_poLayer )
+    if (m_poLayer)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Can write only one layer in a Feather file");
         return nullptr;
     }
-    m_poLayer = cpl::make_unique<OGRFeatherWriterLayer>(m_poMemoryPool.get(),
-                                                        m_poOutputStream,
-                                                        pszName);
-    if( !m_poLayer->SetOptions(m_osFilename, papszOptions, poSpatialRef, eGType) )
+    m_poLayer = cpl::make_unique<OGRFeatherWriterLayer>(
+        m_poMemoryPool.get(), m_poOutputStream, pszName);
+    if (!m_poLayer->SetOptions(m_osFilename, papszOptions, poSpatialRef,
+                               eGType))
     {
         m_poLayer.reset();
         return nullptr;
@@ -104,10 +103,10 @@ OGRLayer* OGRFeatherWriterDataset::ICreateLayer( const char *pszName,
 /*                          AddFieldDomain()                            */
 /************************************************************************/
 
-bool OGRFeatherWriterDataset::AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& domain,
-                                             std::string& failureReason)
+bool OGRFeatherWriterDataset::AddFieldDomain(
+    std::unique_ptr<OGRFieldDomain> &&domain, std::string &failureReason)
 {
-    if( m_poLayer == nullptr )
+    if (m_poLayer == nullptr)
     {
         failureReason = "Layer must be created";
         return false;
@@ -119,16 +118,19 @@ bool OGRFeatherWriterDataset::AddFieldDomain(std::unique_ptr<OGRFieldDomain>&& d
 /*                          GetFieldDomainNames()                       */
 /************************************************************************/
 
-std::vector<std::string> OGRFeatherWriterDataset::GetFieldDomainNames(CSLConstList) const
+std::vector<std::string>
+OGRFeatherWriterDataset::GetFieldDomainNames(CSLConstList) const
 {
-    return m_poLayer ? m_poLayer->GetFieldDomainNames() : std::vector<std::string>();
+    return m_poLayer ? m_poLayer->GetFieldDomainNames()
+                     : std::vector<std::string>();
 }
 
 /************************************************************************/
 /*                          GetFieldDomain()                            */
 /************************************************************************/
 
-const OGRFieldDomain* OGRFeatherWriterDataset::GetFieldDomain(const std::string& name) const
+const OGRFieldDomain *
+OGRFeatherWriterDataset::GetFieldDomain(const std::string &name) const
 {
-    return m_poLayer ? m_poLayer->GetFieldDomain(name): nullptr;
+    return m_poLayer ? m_poLayer->GetFieldDomain(name) : nullptr;
 }
