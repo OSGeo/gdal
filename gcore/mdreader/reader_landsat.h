@@ -49,17 +49,19 @@ Common metadata (from metadata filename):
 
 */
 
-class GDALMDReaderLandsat: public GDALMDReaderBase
+class GDALMDReaderLandsat : public GDALMDReaderBase
 {
-public:
+  public:
     GDALMDReaderLandsat(const char *pszPath, char **papszSiblingFiles);
     virtual ~GDALMDReaderLandsat();
     virtual bool HasRequiredFiles() const override;
-    virtual char** GetMetadataFiles() const override;
-protected:
+    virtual char **GetMetadataFiles() const override;
+
+  protected:
     virtual void LoadMetadata() override;
-protected:
+
+  protected:
     CPLString m_osIMDSourceFilename{};
 };
 
-#endif // READER_LANDSAT_H_INCLUDED
+#endif  // READER_LANDSAT_H_INCLUDED

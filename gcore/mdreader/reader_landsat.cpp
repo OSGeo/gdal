@@ -39,26 +39,27 @@
 #include "cpl_string.h"
 #include "cpl_time.h"
 
-
 /**
  * GDALMDReaderLandsat()
  */
 GDALMDReaderLandsat::GDALMDReaderLandsat(const char *pszPath,
-        char **papszSiblingFiles) : GDALMDReaderBase(pszPath, papszSiblingFiles)
+                                         char **papszSiblingFiles)
+    : GDALMDReaderBase(pszPath, papszSiblingFiles)
 {
-    const char* pszBaseName = CPLGetBasename(pszPath);
-    const char* pszDirName = CPLGetDirname(pszPath);
+    const char *pszBaseName = CPLGetBasename(pszPath);
+    const char *pszDirName = CPLGetDirname(pszPath);
     size_t nBaseNameLen = strlen(pszBaseName);
-    if( nBaseNameLen > 511 )
+    if (nBaseNameLen > 511)
         return;
 
     // split file name by _B or _b
     char szMetadataName[512] = {0};
     size_t i;
-    for(i = 0; i < nBaseNameLen; i++)
+    for (i = 0; i < nBaseNameLen; i++)
     {
         szMetadataName[i] = pszBaseName[i];
-        if(STARTS_WITH_CI(pszBaseName + i, "_B") || STARTS_WITH_CI(pszBaseName + i, "_b"))
+        if (STARTS_WITH_CI(pszBaseName + i, "_B") ||
+            STARTS_WITH_CI(pszBaseName + i, "_b"))
         {
             break;
         }
@@ -67,8 +68,8 @@ GDALMDReaderLandsat::GDALMDReaderLandsat(const char *pszPath,
     // form metadata file name
     CPLStrlcpy(szMetadataName + i, "_MTL.txt", 9);
 
-    CPLString osIMDSourceFilename = CPLFormFilename( pszDirName,
-                                                        szMetadataName, nullptr );
+    CPLString osIMDSourceFilename =
+        CPLFormFilename(pszDirName, szMetadataName, nullptr);
     if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
     {
         m_osIMDSourceFilename = osIMDSourceFilename;
@@ -76,16 +77,17 @@ GDALMDReaderLandsat::GDALMDReaderLandsat(const char *pszPath,
     else
     {
         CPLStrlcpy(szMetadataName + i, "_MTL.TXT", 9);
-        osIMDSourceFilename = CPLFormFilename( pszDirName, szMetadataName, nullptr );
+        osIMDSourceFilename =
+            CPLFormFilename(pszDirName, szMetadataName, nullptr);
         if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
         {
             m_osIMDSourceFilename = osIMDSourceFilename;
         }
     }
 
-    if( !m_osIMDSourceFilename.empty() )
-        CPLDebug( "MDReaderLandsat", "IMD Filename: %s",
-                  m_osIMDSourceFilename.c_str() );
+    if (!m_osIMDSourceFilename.empty())
+        CPLDebug("MDReaderLandsat", "IMD Filename: %s",
+                 m_osIMDSourceFilename.c_str());
 }
 
 /**
@@ -109,11 +111,11 @@ bool GDALMDReaderLandsat::HasRequiredFiles() const
 /**
  * GetMetadataFiles()
  */
-char** GDALMDReaderLandsat::GetMetadataFiles() const
+char **GDALMDReaderLandsat::GetMetadataFiles() const
 {
     char **papszFileList = nullptr;
-    if(!m_osIMDSourceFilename.empty())
-        papszFileList= CSLAddString( papszFileList, m_osIMDSourceFilename );
+    if (!m_osIMDSourceFilename.empty())
+        papszFileList = CSLAddString(papszFileList, m_osIMDSourceFilename);
 
     return papszFileList;
 }
@@ -123,12 +125,12 @@ char** GDALMDReaderLandsat::GetMetadataFiles() const
  */
 void GDALMDReaderLandsat::LoadMetadata()
 {
-    if(m_bIsMetadataLoad)
+    if (m_bIsMetadataLoad)
         return;
 
     if (!m_osIMDSourceFilename.empty())
     {
-        m_papszIMDMD = GDALLoadIMDFile( m_osIMDSourceFilename );
+        m_papszIMDMD = GDALLoadIMDFile(m_osIMDSourceFilename);
     }
 
     m_papszDEFAULTMD = CSLAddNameValue(m_papszDEFAULTMD, MD_NAME_MDTYPE, "ODL");
@@ -140,29 +142,30 @@ void GDALMDReaderLandsat::LoadMetadata()
     // SCENE_CENTER_TIME = 15:47:03.0882620Z
 
     // L1_METADATA_FILE.PRODUCT_METADATA.SPACECRAFT_ID
-    const char* pszSatId = CSLFetchNameValue(m_papszIMDMD,
-                            "L1_METADATA_FILE.PRODUCT_METADATA.SPACECRAFT_ID");
-    if(nullptr != pszSatId)
+    const char *pszSatId = CSLFetchNameValue(
+        m_papszIMDMD, "L1_METADATA_FILE.PRODUCT_METADATA.SPACECRAFT_ID");
+    if (nullptr != pszSatId)
     {
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_SATELLITE,
                                            CPLStripQuotes(pszSatId));
     }
 
     // L1_METADATA_FILE.IMAGE_ATTRIBUTES.CLOUD_COVER
-    const char* pszCloudCover = CSLFetchNameValue(m_papszIMDMD,
-                            "L1_METADATA_FILE.IMAGE_ATTRIBUTES.CLOUD_COVER");
-    if(nullptr != pszCloudCover)
+    const char *pszCloudCover = CSLFetchNameValue(
+        m_papszIMDMD, "L1_METADATA_FILE.IMAGE_ATTRIBUTES.CLOUD_COVER");
+    if (nullptr != pszCloudCover)
     {
         double fCC = CPLAtofM(pszCloudCover);
-        if(fCC < 0)
+        if (fCC < 0)
         {
-            m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_CLOUDCOVER,
-                                               MD_CLOUDCOVER_NA);
+            m_papszIMAGERYMD = CSLAddNameValue(
+                m_papszIMAGERYMD, MD_NAME_CLOUDCOVER, MD_CLOUDCOVER_NA);
         }
         else
         {
-            m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
-                          MD_NAME_CLOUDCOVER, CPLSPrintf("%d", int(fCC)));
+            m_papszIMAGERYMD =
+                CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_CLOUDCOVER,
+                                CPLSPrintf("%d", int(fCC)));
         }
     }
 
@@ -172,32 +175,35 @@ void GDALMDReaderLandsat::LoadMetadata()
     // L1_METADATA_FILE.PRODUCT_METADATA.DATE_ACQUIRED
     // L1_METADATA_FILE.PRODUCT_METADATA.SCENE_CENTER_TIME
 
-    const char* pszDate = CSLFetchNameValue(m_papszIMDMD,
-                          "L1_METADATA_FILE.PRODUCT_METADATA.ACQUISITION_DATE");
-    if(nullptr == pszDate)
+    const char *pszDate = CSLFetchNameValue(
+        m_papszIMDMD, "L1_METADATA_FILE.PRODUCT_METADATA.ACQUISITION_DATE");
+    if (nullptr == pszDate)
     {
-        pszDate = CSLFetchNameValue(m_papszIMDMD,
-                             "L1_METADATA_FILE.PRODUCT_METADATA.DATE_ACQUIRED");
+        pszDate = CSLFetchNameValue(
+            m_papszIMDMD, "L1_METADATA_FILE.PRODUCT_METADATA.DATE_ACQUIRED");
     }
 
-    if(nullptr != pszDate)
+    if (nullptr != pszDate)
     {
-        const char* pszTime = CSLFetchNameValue(m_papszIMDMD,
-                    "L1_METADATA_FILE.PRODUCT_METADATA.SCENE_CENTER_SCAN_TIME");
-        if(nullptr == pszTime)
+        const char *pszTime = CSLFetchNameValue(
+            m_papszIMDMD,
+            "L1_METADATA_FILE.PRODUCT_METADATA.SCENE_CENTER_SCAN_TIME");
+        if (nullptr == pszTime)
         {
-            pszTime = CSLFetchNameValue(m_papszIMDMD,
-                         "L1_METADATA_FILE.PRODUCT_METADATA.SCENE_CENTER_TIME");
+            pszTime = CSLFetchNameValue(
+                m_papszIMDMD,
+                "L1_METADATA_FILE.PRODUCT_METADATA.SCENE_CENTER_TIME");
         }
-        if(nullptr == pszTime)
+        if (nullptr == pszTime)
             pszTime = "00:00:00.000000Z";
 
         char buffer[80];
-        GIntBig timeMid = GetAcquisitionTimeFromString(CPLSPrintf( "%sT%s",
-                                                     pszDate, pszTime));
+        GIntBig timeMid =
+            GetAcquisitionTimeFromString(CPLSPrintf("%sT%s", pszDate, pszTime));
         struct tm tmBuf;
-        strftime (buffer, 80, MD_DATETIMEFORMAT, CPLUnixTimeToYMDHMS(timeMid, &tmBuf));
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
-                                           MD_NAME_ACQDATETIME, buffer);
+        strftime(buffer, 80, MD_DATETIMEFORMAT,
+                 CPLUnixTimeToYMDHMS(timeMid, &tmBuf));
+        m_papszIMAGERYMD =
+            CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_ACQDATETIME, buffer);
     }
 }
