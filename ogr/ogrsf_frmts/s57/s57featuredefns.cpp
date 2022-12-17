@@ -32,7 +32,6 @@
 #include "ogr_api.h"
 #include "s57.h"
 
-
 /************************************************************************/
 /*                     S57GenerateGeomFeatureDefn()                     */
 /************************************************************************/
@@ -40,131 +39,131 @@
 OGRFeatureDefn *S57GenerateDSIDFeatureDefn()
 
 {
-    OGRFeatureDefn      *poFDefn = new OGRFeatureDefn( "DSID" );
+    OGRFeatureDefn *poFDefn = new OGRFeatureDefn("DSID");
 
-    poFDefn->SetGeomType( wkbNone );
+    poFDefn->SetGeomType(wkbNone);
     poFDefn->Reference();
 
-/* -------------------------------------------------------------------- */
-/*      DSID fields.                                                    */
-/* -------------------------------------------------------------------- */
-    OGRFieldDefn oField( "", OFTInteger );
+    /* -------------------------------------------------------------------- */
+    /*      DSID fields.                                                    */
+    /* -------------------------------------------------------------------- */
+    OGRFieldDefn oField("", OFTInteger);
 
-    oField.Set( "DSID_EXPP", OFTInteger, 3, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSID_EXPP", OFTInteger, 3, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSID_INTU", OFTInteger, 3, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSID_INTU", OFTInteger, 3, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSID_DSNM", OFTString, 0, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSID_DSNM", OFTString, 0, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSID_EDTN", OFTString, 0, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSID_EDTN", OFTString, 0, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSID_UPDN", OFTString, 0, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSID_UPDN", OFTString, 0, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSID_UADT", OFTString, 8, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSID_UADT", OFTString, 8, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSID_ISDT", OFTString, 8, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSID_ISDT", OFTString, 8, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSID_STED", OFTReal, 11, 6 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSID_STED", OFTReal, 11, 6);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSID_PRSP", OFTInteger, 3, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSID_PRSP", OFTInteger, 3, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSID_PSDN", OFTString, 0, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSID_PSDN", OFTString, 0, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSID_PRED", OFTString, 0, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSID_PRED", OFTString, 0, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSID_PROF", OFTInteger, 3, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSID_PROF", OFTInteger, 3, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSID_AGEN", OFTInteger, 5, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSID_AGEN", OFTInteger, 5, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSID_COMT", OFTString, 0, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSID_COMT", OFTString, 0, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-/* -------------------------------------------------------------------- */
-/*      DSSI fields.                                                    */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      DSSI fields.                                                    */
+    /* -------------------------------------------------------------------- */
 
-    oField.Set( "DSSI_DSTR", OFTInteger, 3, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSSI_DSTR", OFTInteger, 3, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSSI_AALL", OFTInteger, 3, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSSI_AALL", OFTInteger, 3, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSSI_NALL", OFTInteger, 3, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSSI_NALL", OFTInteger, 3, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSSI_NOMR", OFTInteger, 10, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSSI_NOMR", OFTInteger, 10, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSSI_NOCR", OFTInteger, 10, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSSI_NOCR", OFTInteger, 10, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSSI_NOGR", OFTInteger, 10, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSSI_NOGR", OFTInteger, 10, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSSI_NOLR", OFTInteger, 10, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSSI_NOLR", OFTInteger, 10, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSSI_NOIN", OFTInteger, 10, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSSI_NOIN", OFTInteger, 10, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSSI_NOCN", OFTInteger, 10, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSSI_NOCN", OFTInteger, 10, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSSI_NOED", OFTInteger, 10, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSSI_NOED", OFTInteger, 10, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSSI_NOFA", OFTInteger, 10, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSSI_NOFA", OFTInteger, 10, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-/* -------------------------------------------------------------------- */
-/*      DSPM fields.                                                    */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      DSPM fields.                                                    */
+    /* -------------------------------------------------------------------- */
 
-    oField.Set( "DSPM_HDAT", OFTInteger, 3, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSPM_HDAT", OFTInteger, 3, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSPM_VDAT", OFTInteger, 3, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSPM_VDAT", OFTInteger, 3, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSPM_SDAT", OFTInteger, 3, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSPM_SDAT", OFTInteger, 3, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSPM_CSCL", OFTInteger, 10, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSPM_CSCL", OFTInteger, 10, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSPM_DUNI", OFTInteger, 3, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSPM_DUNI", OFTInteger, 3, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSPM_HUNI", OFTInteger, 3, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSPM_HUNI", OFTInteger, 3, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSPM_PUNI", OFTInteger, 3, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSPM_PUNI", OFTInteger, 3, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSPM_COUN", OFTInteger, 3, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSPM_COUN", OFTInteger, 3, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSPM_COMF", OFTInteger, 10, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSPM_COMF", OFTInteger, 10, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSPM_SOMF", OFTInteger, 10, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSPM_SOMF", OFTInteger, 10, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "DSPM_COMT", OFTString, 0, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("DSPM_COMT", OFTString, 0, 0);
+    poFDefn->AddFieldDefn(&oField);
 
     return poFDefn;
 }
@@ -173,42 +172,42 @@ OGRFeatureDefn *S57GenerateDSIDFeatureDefn()
 /*                     S57GenerateGeomFeatureDefn()                     */
 /************************************************************************/
 
-OGRFeatureDefn *S57GenerateGeomFeatureDefn( OGRwkbGeometryType eGType,
-                                            int nOptionFlags )
+OGRFeatureDefn *S57GenerateGeomFeatureDefn(OGRwkbGeometryType eGType,
+                                           int nOptionFlags)
 
 {
-    OGRFeatureDefn      *poFDefn = nullptr;
+    OGRFeatureDefn *poFDefn = nullptr;
 
-    if( eGType == wkbPoint )
+    if (eGType == wkbPoint)
     {
-        poFDefn = new OGRFeatureDefn( "Point" );
-        poFDefn->SetGeomType( eGType );
+        poFDefn = new OGRFeatureDefn("Point");
+        poFDefn->SetGeomType(eGType);
     }
-    else if( eGType == wkbLineString )
+    else if (eGType == wkbLineString)
     {
-        poFDefn = new OGRFeatureDefn( "Line" );
-        poFDefn->SetGeomType( eGType );
+        poFDefn = new OGRFeatureDefn("Line");
+        poFDefn->SetGeomType(eGType);
     }
-    else if( eGType == wkbPolygon )
+    else if (eGType == wkbPolygon)
     {
-        poFDefn = new OGRFeatureDefn( "Area" );
-        poFDefn->SetGeomType( eGType );
+        poFDefn = new OGRFeatureDefn("Area");
+        poFDefn->SetGeomType(eGType);
     }
-    else if( eGType == wkbNone )
+    else if (eGType == wkbNone)
     {
-        poFDefn = new OGRFeatureDefn( "Meta" );
-        poFDefn->SetGeomType( eGType );
+        poFDefn = new OGRFeatureDefn("Meta");
+        poFDefn->SetGeomType(eGType);
     }
-    else if( eGType == wkbUnknown )
+    else if (eGType == wkbUnknown)
     {
-        poFDefn = new OGRFeatureDefn( "Generic" );
-        poFDefn->SetGeomType( eGType );
+        poFDefn = new OGRFeatureDefn("Generic");
+        poFDefn->SetGeomType(eGType);
     }
     else
         return nullptr;
 
     poFDefn->Reference();
-    S57GenerateStandardAttributes( poFDefn, nOptionFlags );
+    S57GenerateStandardAttributes(poFDefn, nOptionFlags);
 
     return poFDefn;
 }
@@ -217,104 +216,103 @@ OGRFeatureDefn *S57GenerateGeomFeatureDefn( OGRwkbGeometryType eGType,
 /*               S57GenerateVectorPrimitiveFeatureDefn()                */
 /************************************************************************/
 
-OGRFeatureDefn *
-S57GenerateVectorPrimitiveFeatureDefn( int nRCNM,
-                                       int /* nOptionFlags */ )
+OGRFeatureDefn *S57GenerateVectorPrimitiveFeatureDefn(int nRCNM,
+                                                      int /* nOptionFlags */)
 {
-    OGRFeatureDefn      *poFDefn = nullptr;
+    OGRFeatureDefn *poFDefn = nullptr;
 
-    if( nRCNM == RCNM_VI )
+    if (nRCNM == RCNM_VI)
     {
-        poFDefn = new OGRFeatureDefn( OGRN_VI );
-        poFDefn->SetGeomType( wkbPoint );
+        poFDefn = new OGRFeatureDefn(OGRN_VI);
+        poFDefn->SetGeomType(wkbPoint);
     }
-    else if( nRCNM == RCNM_VC )
+    else if (nRCNM == RCNM_VC)
     {
-        poFDefn = new OGRFeatureDefn( OGRN_VC );
-        poFDefn->SetGeomType( wkbPoint );
+        poFDefn = new OGRFeatureDefn(OGRN_VC);
+        poFDefn->SetGeomType(wkbPoint);
     }
-    else if( nRCNM == RCNM_VE )
+    else if (nRCNM == RCNM_VE)
     {
-        poFDefn = new OGRFeatureDefn( OGRN_VE );
-        poFDefn->SetGeomType( wkbUnknown );
+        poFDefn = new OGRFeatureDefn(OGRN_VE);
+        poFDefn->SetGeomType(wkbUnknown);
     }
-    else if( nRCNM == RCNM_VF )
+    else if (nRCNM == RCNM_VF)
     {
-        poFDefn = new OGRFeatureDefn( OGRN_VF );
-        poFDefn->SetGeomType( wkbPolygon );
+        poFDefn = new OGRFeatureDefn(OGRN_VF);
+        poFDefn->SetGeomType(wkbPolygon);
     }
     else
         return nullptr;
 
     poFDefn->Reference();
 
-/* -------------------------------------------------------------------- */
-/*      Core vector primitive attributes                                */
-/* -------------------------------------------------------------------- */
-    OGRFieldDefn oField("",OFTInteger);
+    /* -------------------------------------------------------------------- */
+    /*      Core vector primitive attributes                                */
+    /* -------------------------------------------------------------------- */
+    OGRFieldDefn oField("", OFTInteger);
 
-    oField.Set( "RCNM", OFTInteger, 3, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("RCNM", OFTInteger, 3, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "RCID", OFTInteger, 8, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("RCID", OFTInteger, 8, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "RVER", OFTInteger, 2, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("RVER", OFTInteger, 2, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "RUIN", OFTInteger, 2, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("RUIN", OFTInteger, 2, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-/* -------------------------------------------------------------------- */
-/*      Geometric primitive attributes                                  */
-/* -------------------------------------------------------------------- */
-    oField.Set( "POSACC", OFTReal, 10, 2 );
-    poFDefn->AddFieldDefn( &oField );
+    /* -------------------------------------------------------------------- */
+    /*      Geometric primitive attributes                                  */
+    /* -------------------------------------------------------------------- */
+    oField.Set("POSACC", OFTReal, 10, 2);
+    poFDefn->AddFieldDefn(&oField);
 
-    oField.Set( "QUAPOS", OFTInteger, 2, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    oField.Set("QUAPOS", OFTInteger, 2, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-/* -------------------------------------------------------------------- */
-/*      For lines we want to capture the point links for the first      */
-/*      and last nodes.                                                 */
-/* -------------------------------------------------------------------- */
-    if( nRCNM == RCNM_VE )
+    /* -------------------------------------------------------------------- */
+    /*      For lines we want to capture the point links for the first      */
+    /*      and last nodes.                                                 */
+    /* -------------------------------------------------------------------- */
+    if (nRCNM == RCNM_VE)
     {
-        oField.Set( "NAME_RCNM_0", OFTInteger, 3, 0 );
-        poFDefn->AddFieldDefn( &oField );
+        oField.Set("NAME_RCNM_0", OFTInteger, 3, 0);
+        poFDefn->AddFieldDefn(&oField);
 
-        oField.Set( "NAME_RCID_0", OFTInteger, 8, 0 );
-        poFDefn->AddFieldDefn( &oField );
+        oField.Set("NAME_RCID_0", OFTInteger, 8, 0);
+        poFDefn->AddFieldDefn(&oField);
 
-        oField.Set( "ORNT_0", OFTInteger, 3, 0 );
-        poFDefn->AddFieldDefn( &oField );
+        oField.Set("ORNT_0", OFTInteger, 3, 0);
+        poFDefn->AddFieldDefn(&oField);
 
-        oField.Set( "USAG_0", OFTInteger, 3, 0 );
-        poFDefn->AddFieldDefn( &oField );
+        oField.Set("USAG_0", OFTInteger, 3, 0);
+        poFDefn->AddFieldDefn(&oField);
 
-        oField.Set( "TOPI_0", OFTInteger, 1, 0 );
-        poFDefn->AddFieldDefn( &oField );
+        oField.Set("TOPI_0", OFTInteger, 1, 0);
+        poFDefn->AddFieldDefn(&oField);
 
-        oField.Set( "MASK_0", OFTInteger, 3, 0 );
-        poFDefn->AddFieldDefn( &oField );
+        oField.Set("MASK_0", OFTInteger, 3, 0);
+        poFDefn->AddFieldDefn(&oField);
 
-        oField.Set( "NAME_RCNM_1", OFTInteger, 3, 0 );
-        poFDefn->AddFieldDefn( &oField );
+        oField.Set("NAME_RCNM_1", OFTInteger, 3, 0);
+        poFDefn->AddFieldDefn(&oField);
 
-        oField.Set( "NAME_RCID_1", OFTInteger, 8, 0 );
-        poFDefn->AddFieldDefn( &oField );
+        oField.Set("NAME_RCID_1", OFTInteger, 8, 0);
+        poFDefn->AddFieldDefn(&oField);
 
-        oField.Set( "ORNT_1", OFTInteger, 3, 0 );
-        poFDefn->AddFieldDefn( &oField );
+        oField.Set("ORNT_1", OFTInteger, 3, 0);
+        poFDefn->AddFieldDefn(&oField);
 
-        oField.Set( "USAG_1", OFTInteger, 3, 0 );
-        poFDefn->AddFieldDefn( &oField );
+        oField.Set("USAG_1", OFTInteger, 3, 0);
+        poFDefn->AddFieldDefn(&oField);
 
-        oField.Set( "TOPI_1", OFTInteger, 1, 0 );
-        poFDefn->AddFieldDefn( &oField );
+        oField.Set("TOPI_1", OFTInteger, 1, 0);
+        poFDefn->AddFieldDefn(&oField);
 
-        oField.Set( "MASK_1", OFTInteger, 3, 0 );
-        poFDefn->AddFieldDefn( &oField );
+        oField.Set("MASK_1", OFTInteger, 3, 0);
+        poFDefn->AddFieldDefn(&oField);
     }
 
     return poFDefn;
@@ -324,126 +322,124 @@ S57GenerateVectorPrimitiveFeatureDefn( int nRCNM,
 /*                     S57GenerateObjectClassDefn()                     */
 /************************************************************************/
 
-OGRFeatureDefn *S57GenerateObjectClassDefn(
-    S57ClassRegistrar *poCR,
-    S57ClassContentExplorer* poClassContentExplorer,
-    int nOBJL, int nOptionFlags )
+OGRFeatureDefn *
+S57GenerateObjectClassDefn(S57ClassRegistrar *poCR,
+                           S57ClassContentExplorer *poClassContentExplorer,
+                           int nOBJL, int nOptionFlags)
 
 {
-    if( !poClassContentExplorer->SelectClass( nOBJL ) )
+    if (!poClassContentExplorer->SelectClass(nOBJL))
         return nullptr;
 
-/* -------------------------------------------------------------------- */
-/*      Create the feature definition based on the object class         */
-/*      acronym.                                                        */
-/* -------------------------------------------------------------------- */
-    OGRFeatureDefn *poFDefn
-        = new OGRFeatureDefn( poClassContentExplorer->GetAcronym() );
+    /* -------------------------------------------------------------------- */
+    /*      Create the feature definition based on the object class         */
+    /*      acronym.                                                        */
+    /* -------------------------------------------------------------------- */
+    OGRFeatureDefn *poFDefn =
+        new OGRFeatureDefn(poClassContentExplorer->GetAcronym());
     poFDefn->Reference();
 
-/* -------------------------------------------------------------------- */
-/*      Try and establish the geometry type.  If more than one          */
-/*      geometry type is allowed we just fall back to wkbUnknown.       */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Try and establish the geometry type.  If more than one          */
+    /*      geometry type is allowed we just fall back to wkbUnknown.       */
+    /* -------------------------------------------------------------------- */
     char **papszGeomPrim = poClassContentExplorer->GetPrimitives();
-    if( CSLCount(papszGeomPrim) == 0 )
+    if (CSLCount(papszGeomPrim) == 0)
     {
-        poFDefn->SetGeomType( wkbNone );
+        poFDefn->SetGeomType(wkbNone);
     }
-    else if( CSLCount(papszGeomPrim) > 1 )
+    else if (CSLCount(papszGeomPrim) > 1)
     {
         // leave as unknown geometry type.
     }
-    else if( papszGeomPrim[0][0] == 'P' )
+    else if (papszGeomPrim[0][0] == 'P')
     {
-        if( EQUAL(poClassContentExplorer->GetAcronym(),"SOUNDG") )
+        if (EQUAL(poClassContentExplorer->GetAcronym(), "SOUNDG"))
         {
-            if( nOptionFlags & S57M_SPLIT_MULTIPOINT )
-                poFDefn->SetGeomType( wkbPoint25D );
+            if (nOptionFlags & S57M_SPLIT_MULTIPOINT)
+                poFDefn->SetGeomType(wkbPoint25D);
             else
-                poFDefn->SetGeomType( wkbMultiPoint25D );
+                poFDefn->SetGeomType(wkbMultiPoint25D);
         }
         else
-            poFDefn->SetGeomType( wkbPoint );
+            poFDefn->SetGeomType(wkbPoint);
     }
-    else if( papszGeomPrim[0][0] == 'A' )
+    else if (papszGeomPrim[0][0] == 'A')
     {
-        poFDefn->SetGeomType( wkbPolygon );
+        poFDefn->SetGeomType(wkbPolygon);
     }
-    else if( papszGeomPrim[0][0] == 'L' )
+    else if (papszGeomPrim[0][0] == 'L')
     {
         // unfortunately this could be a multilinestring
-        poFDefn->SetGeomType( wkbUnknown );
+        poFDefn->SetGeomType(wkbUnknown);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Add the standard attributes.                                    */
-/* -------------------------------------------------------------------- */
-    S57GenerateStandardAttributes( poFDefn, nOptionFlags );
+    /* -------------------------------------------------------------------- */
+    /*      Add the standard attributes.                                    */
+    /* -------------------------------------------------------------------- */
+    S57GenerateStandardAttributes(poFDefn, nOptionFlags);
 
-/* -------------------------------------------------------------------- */
-/*      Add the attributes specific to this object class.               */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Add the attributes specific to this object class.               */
+    /* -------------------------------------------------------------------- */
     char **papszAttrList = poClassContentExplorer->GetAttributeList();
 
-    for( int iAttr = 0;
-         papszAttrList != nullptr && papszAttrList[iAttr] != nullptr;
-         iAttr++ )
+    for (int iAttr = 0;
+         papszAttrList != nullptr && papszAttrList[iAttr] != nullptr; iAttr++)
     {
-        const int iAttrIndex = poCR->FindAttrByAcronym( papszAttrList[iAttr] );
+        const int iAttrIndex = poCR->FindAttrByAcronym(papszAttrList[iAttr]);
 
-        if( iAttrIndex == -1 )
+        if (iAttrIndex == -1)
         {
-            CPLDebug( "S57", "Can't find attribute %s from class %s:%s.",
-                      papszAttrList[iAttr],
-                      poClassContentExplorer->GetAcronym(),
-                      poClassContentExplorer->GetDescription() );
+            CPLDebug("S57", "Can't find attribute %s from class %s:%s.",
+                     papszAttrList[iAttr], poClassContentExplorer->GetAcronym(),
+                     poClassContentExplorer->GetDescription());
             continue;
         }
 
-        OGRFieldDefn oField( papszAttrList[iAttr], OFTInteger );
+        OGRFieldDefn oField(papszAttrList[iAttr], OFTInteger);
 
-        switch( poCR->GetAttrType( iAttrIndex ) )
+        switch (poCR->GetAttrType(iAttrIndex))
         {
-          case SAT_ENUM:
-          case SAT_INT:
-            oField.SetType( OFTInteger );
-            break;
+            case SAT_ENUM:
+            case SAT_INT:
+                oField.SetType(OFTInteger);
+                break;
 
-          case SAT_FLOAT:
-            oField.SetType( OFTReal );
-            break;
+            case SAT_FLOAT:
+                oField.SetType(OFTReal);
+                break;
 
-          case SAT_CODE_STRING:
-          case SAT_FREE_TEXT:
-            oField.SetType( OFTString );
-            break;
+            case SAT_CODE_STRING:
+            case SAT_FREE_TEXT:
+                oField.SetType(OFTString);
+                break;
 
-          case SAT_LIST:
-            if( (nOptionFlags & S57M_LIST_AS_STRING) )
-            {
-                // Legacy behavior
-                oField.SetType( OFTString );
-            }
-            else
-            {
-                oField.SetType( OFTStringList );
-            }
-            break;
+            case SAT_LIST:
+                if ((nOptionFlags & S57M_LIST_AS_STRING))
+                {
+                    // Legacy behavior
+                    oField.SetType(OFTString);
+                }
+                else
+                {
+                    oField.SetType(OFTStringList);
+                }
+                break;
         }
 
-        poFDefn->AddFieldDefn( &oField );
+        poFDefn->AddFieldDefn(&oField);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Do we need to add DEPTH attributes to soundings?                */
-/* -------------------------------------------------------------------- */
-    const char* pszClassAcronym = poClassContentExplorer->GetAcronym();
-    if( pszClassAcronym != nullptr && EQUAL(pszClassAcronym, "SOUNDG")
-        && (nOptionFlags & S57M_ADD_SOUNDG_DEPTH) )
+    /* -------------------------------------------------------------------- */
+    /*      Do we need to add DEPTH attributes to soundings?                */
+    /* -------------------------------------------------------------------- */
+    const char *pszClassAcronym = poClassContentExplorer->GetAcronym();
+    if (pszClassAcronym != nullptr && EQUAL(pszClassAcronym, "SOUNDG") &&
+        (nOptionFlags & S57M_ADD_SOUNDG_DEPTH))
     {
-        OGRFieldDefn oField( "DEPTH", OFTReal );
-        poFDefn->AddFieldDefn( &oField );
+        OGRFieldDefn oField("DEPTH", OFTReal);
+        poFDefn->AddFieldDefn(&oField);
     }
 
     return poFDefn;
@@ -455,94 +451,94 @@ OGRFeatureDefn *S57GenerateObjectClassDefn(
 /*      Attach standard feature attributes to a feature definition.     */
 /************************************************************************/
 
-void S57GenerateStandardAttributes( OGRFeatureDefn *poFDefn, int nOptionFlags )
+void S57GenerateStandardAttributes(OGRFeatureDefn *poFDefn, int nOptionFlags)
 
 {
-    OGRFieldDefn        oField( "", OFTInteger );
+    OGRFieldDefn oField("", OFTInteger);
 
-/* -------------------------------------------------------------------- */
-/*      RCID                                                            */
-/* -------------------------------------------------------------------- */
-    oField.Set( "RCID", OFTInteger, 10, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    /* -------------------------------------------------------------------- */
+    /*      RCID                                                            */
+    /* -------------------------------------------------------------------- */
+    oField.Set("RCID", OFTInteger, 10, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-/* -------------------------------------------------------------------- */
-/*      PRIM                                                            */
-/* -------------------------------------------------------------------- */
-    oField.Set( "PRIM", OFTInteger, 3, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    /* -------------------------------------------------------------------- */
+    /*      PRIM                                                            */
+    /* -------------------------------------------------------------------- */
+    oField.Set("PRIM", OFTInteger, 3, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-/* -------------------------------------------------------------------- */
-/*      GRUP                                                            */
-/* -------------------------------------------------------------------- */
-    oField.Set( "GRUP", OFTInteger, 3, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    /* -------------------------------------------------------------------- */
+    /*      GRUP                                                            */
+    /* -------------------------------------------------------------------- */
+    oField.Set("GRUP", OFTInteger, 3, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-/* -------------------------------------------------------------------- */
-/*      OBJL                                                            */
-/* -------------------------------------------------------------------- */
-    oField.Set( "OBJL", OFTInteger, 5, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    /* -------------------------------------------------------------------- */
+    /*      OBJL                                                            */
+    /* -------------------------------------------------------------------- */
+    oField.Set("OBJL", OFTInteger, 5, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-/* -------------------------------------------------------------------- */
-/*      RVER                                                            */
-/* -------------------------------------------------------------------- */
-    oField.Set( "RVER", OFTInteger, 3, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    /* -------------------------------------------------------------------- */
+    /*      RVER                                                            */
+    /* -------------------------------------------------------------------- */
+    oField.Set("RVER", OFTInteger, 3, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-/* -------------------------------------------------------------------- */
-/*      AGEN                                                            */
-/* -------------------------------------------------------------------- */
-    oField.Set( "AGEN", OFTInteger, 5, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    /* -------------------------------------------------------------------- */
+    /*      AGEN                                                            */
+    /* -------------------------------------------------------------------- */
+    oField.Set("AGEN", OFTInteger, 5, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-/* -------------------------------------------------------------------- */
-/*      FIDN                                                            */
-/* -------------------------------------------------------------------- */
-    oField.Set( "FIDN", OFTInteger, 10, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    /* -------------------------------------------------------------------- */
+    /*      FIDN                                                            */
+    /* -------------------------------------------------------------------- */
+    oField.Set("FIDN", OFTInteger, 10, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-/* -------------------------------------------------------------------- */
-/*      FIDS                                                            */
-/* -------------------------------------------------------------------- */
-    oField.Set( "FIDS", OFTInteger, 5, 0 );
-    poFDefn->AddFieldDefn( &oField );
+    /* -------------------------------------------------------------------- */
+    /*      FIDS                                                            */
+    /* -------------------------------------------------------------------- */
+    oField.Set("FIDS", OFTInteger, 5, 0);
+    poFDefn->AddFieldDefn(&oField);
 
-/* -------------------------------------------------------------------- */
-/*      LNAM - only generated when LNAM strings are being used.         */
-/* -------------------------------------------------------------------- */
-    if( nOptionFlags & S57M_LNAM_REFS )
+    /* -------------------------------------------------------------------- */
+    /*      LNAM - only generated when LNAM strings are being used.         */
+    /* -------------------------------------------------------------------- */
+    if (nOptionFlags & S57M_LNAM_REFS)
     {
-        oField.Set( "LNAM", OFTString, 16, 0 );
-        poFDefn->AddFieldDefn( &oField );
+        oField.Set("LNAM", OFTString, 16, 0);
+        poFDefn->AddFieldDefn(&oField);
 
-        oField.Set( "LNAM_REFS", OFTStringList, 16, 0 );
-        poFDefn->AddFieldDefn( &oField );
+        oField.Set("LNAM_REFS", OFTStringList, 16, 0);
+        poFDefn->AddFieldDefn(&oField);
 
-        oField.Set( "FFPT_RIND", OFTIntegerList, 1, 0 );
-        poFDefn->AddFieldDefn( &oField );
+        oField.Set("FFPT_RIND", OFTIntegerList, 1, 0);
+        poFDefn->AddFieldDefn(&oField);
 
         // We should likely include FFPT_COMT here.
     }
 
-/* -------------------------------------------------------------------- */
-/*      Values from FSPT field.                                         */
-/* -------------------------------------------------------------------- */
-    if( nOptionFlags & S57M_RETURN_LINKAGES )
+    /* -------------------------------------------------------------------- */
+    /*      Values from FSPT field.                                         */
+    /* -------------------------------------------------------------------- */
+    if (nOptionFlags & S57M_RETURN_LINKAGES)
     {
-        oField.Set( "NAME_RCNM", OFTIntegerList, 3, 0 );
-        poFDefn->AddFieldDefn( &oField );
+        oField.Set("NAME_RCNM", OFTIntegerList, 3, 0);
+        poFDefn->AddFieldDefn(&oField);
 
-        oField.Set( "NAME_RCID", OFTIntegerList, 10, 0 );
-        poFDefn->AddFieldDefn( &oField );
+        oField.Set("NAME_RCID", OFTIntegerList, 10, 0);
+        poFDefn->AddFieldDefn(&oField);
 
-        oField.Set( "ORNT", OFTIntegerList, 1, 0 );
-        poFDefn->AddFieldDefn( &oField );
+        oField.Set("ORNT", OFTIntegerList, 1, 0);
+        poFDefn->AddFieldDefn(&oField);
 
-        oField.Set( "USAG", OFTIntegerList, 1, 0 );
-        poFDefn->AddFieldDefn( &oField );
+        oField.Set("USAG", OFTIntegerList, 1, 0);
+        poFDefn->AddFieldDefn(&oField);
 
-        oField.Set( "MASK", OFTIntegerList, 3, 0 );
-        poFDefn->AddFieldDefn( &oField );
+        oField.Set("MASK", OFTIntegerList, 3, 0);
+        poFDefn->AddFieldDefn(&oField);
     }
 }
