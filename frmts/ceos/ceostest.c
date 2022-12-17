@@ -33,37 +33,35 @@
 /*                                main()                                */
 /************************************************************************/
 
-int main( int nArgc, char ** papszArgv )
+int main(int nArgc, char **papszArgv)
 
 {
-    const char  *pszFilename;
-    FILE	*fp;
+    const char *pszFilename;
+    FILE *fp;
     CEOSRecord *psRecord;
     int nPosition = 0;
 
-    if( nArgc > 1 )
+    if (nArgc > 1)
         pszFilename = papszArgv[1];
     else
         pszFilename = "imag_01.dat";
 
-    fp = VSIFOpenL( pszFilename, "rb" );
-    if( fp == NULL )
+    fp = VSIFOpenL(pszFilename, "rb");
+    if (fp == NULL)
     {
-        fprintf( stderr, "Can't open %s at all.\n", pszFilename );
-        exit( 1 );
+        fprintf(stderr, "Can't open %s at all.\n", pszFilename);
+        exit(1);
     }
 
-    while( !VSIFEofL(fp)
-           && (psRecord = CEOSReadRecord( fp )) != NULL )
+    while (!VSIFEofL(fp) && (psRecord = CEOSReadRecord(fp)) != NULL)
     {
-        printf( "%9d:%4d:%8x:%d\n",
-                nPosition, psRecord->nRecordNum,
-                psRecord->nRecordType, psRecord->nLength );
-        CEOSDestroyRecord( psRecord );
+        printf("%9d:%4d:%8x:%d\n", nPosition, psRecord->nRecordNum,
+               psRecord->nRecordType, psRecord->nLength);
+        CEOSDestroyRecord(psRecord);
 
-        nPosition = (int) VSIFTellL( fp );
+        nPosition = (int)VSIFTellL(fp);
     }
-    VSIFCloseL( fp );
+    VSIFCloseL(fp);
 
-    exit( 0 );
+    exit(0);
 }
