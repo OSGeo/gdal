@@ -29,33 +29,35 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define CPUID_SSSE3_ECX_BIT     9
-#define CPUID_OSXSAVE_ECX_BIT   27
-#define CPUID_AVX_ECX_BIT       28
+#define CPUID_SSSE3_ECX_BIT 9
+#define CPUID_OSXSAVE_ECX_BIT 27
+#define CPUID_AVX_ECX_BIT 28
 
-#define CPUID_AVX2_EBX_BIT      5
+#define CPUID_AVX2_EBX_BIT 5
 
-#define CPUID_SSE_EDX_BIT       25
+#define CPUID_SSE_EDX_BIT 25
 
-#define BIT_XMM_STATE           (1 << 1)
-#define BIT_YMM_STATE           (2 << 1)
+#define BIT_XMM_STATE (1 << 1)
+#define BIT_YMM_STATE (2 << 1)
 
-#define REG_EAX                 0
-#define REG_EBX                 1
-#define REG_ECX                 2
-#define REG_EDX                 3
+#define REG_EAX 0
+#define REG_EBX 1
+#define REG_ECX 2
+#define REG_EDX 3
 
-#if defined(__GNUC__) && (defined(__i386__) ||defined(__x86_64))
+#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64))
 
 #include <cpuid.h>
 
-#define CPL_CPUID(level, subfunction, array) __cpuid_count(level, subfunction, array[0], array[1], array[2], array[3])
+#define CPL_CPUID(level, subfunction, array)                                   \
+    __cpuid_count(level, subfunction, array[0], array[1], array[2], array[3])
 
 #elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
 
 #include <intrin.h>
 
-#define CPL_CPUID(level, subfunction, array) __cpuidex(array, level, subfunction)
+#define CPL_CPUID(level, subfunction, array)                                   \
+    __cpuidex(array, level, subfunction)
 
 #else
 
@@ -63,23 +65,25 @@
 
 #endif
 
-#if defined(__GNUC__) && (defined(__i386__) ||defined(__x86_64))
+#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64))
 
 int CPLHaveRuntimeAVX()
 {
-    int cpuinfo[4] = { 0, 0, 0, 0 };
+    int cpuinfo[4] = {0, 0, 0, 0};
     unsigned int nXCRLow;
     unsigned int nXCRHigh;
 
     CPL_CPUID(1, 0, cpuinfo);
 
     // Check OSXSAVE feature.
-    if ((cpuinfo[REG_ECX] & (1 << CPUID_OSXSAVE_ECX_BIT)) == 0) {
+    if ((cpuinfo[REG_ECX] & (1 << CPUID_OSXSAVE_ECX_BIT)) == 0)
+    {
         return 0;
     }
 
     // Check AVX feature.
-    if ((cpuinfo[REG_ECX] & (1 << CPUID_AVX_ECX_BIT)) == 0) {
+    if ((cpuinfo[REG_ECX] & (1 << CPUID_AVX_ECX_BIT)) == 0)
+    {
         return 0;
     }
 
@@ -87,37 +91,42 @@ int CPLHaveRuntimeAVX()
 
     __asm__("xgetbv" : "=a"(nXCRLow), "=d"(nXCRHigh) : "c"(0));
     if ((nXCRLow & (BIT_XMM_STATE | BIT_YMM_STATE)) !=
-            (BIT_XMM_STATE | BIT_YMM_STATE)) {
+        (BIT_XMM_STATE | BIT_YMM_STATE))
+    {
         return 0;
     }
 
     return 1;
 }
 
-#elif defined(_MSC_FULL_VER) && (_MSC_FULL_VER >= 160040219) && (defined(_M_IX86) || defined(_M_X64))
+#elif defined(_MSC_FULL_VER) && (_MSC_FULL_VER >= 160040219) &&                \
+    (defined(_M_IX86) || defined(_M_X64))
 // _xgetbv available only in Visual Studio 2010 SP1 or later
 
 int CPLHaveRuntimeAVX()
 {
-    int cpuinfo[4] = { 0, 0, 0, 0 };
+    int cpuinfo[4] = {0, 0, 0, 0};
     unsigned __int64 xcrFeatureMask;
 
     CPL_CPUID(1, 0, cpuinfo);
 
     // Check OSXSAVE feature.
-    if ((cpuinfo[REG_ECX] & (1 << CPUID_OSXSAVE_ECX_BIT)) == 0) {
+    if ((cpuinfo[REG_ECX] & (1 << CPUID_OSXSAVE_ECX_BIT)) == 0)
+    {
         return 0;
     }
 
     // Check AVX feature.
-    if ((cpuinfo[REG_ECX] & (1 << CPUID_AVX_ECX_BIT)) == 0) {
+    if ((cpuinfo[REG_ECX] & (1 << CPUID_AVX_ECX_BIT)) == 0)
+    {
         return 0;
     }
 
     // Issue XGETBV and check the XMM and YMM state bit.
     xcrFeatureMask = _xgetbv(_XCR_XFEATURE_ENABLED_MASK);
     if ((xcrFeatureMask & (BIT_XMM_STATE | BIT_YMM_STATE)) !=
-            (BIT_XMM_STATE | BIT_YMM_STATE)) {
+        (BIT_XMM_STATE | BIT_YMM_STATE))
+    {
         return 0;
     }
 
@@ -128,15 +137,17 @@ int CPLHaveRuntimeAVX()
 
 int CPLHaveRuntimeAVX2()
 {
-    int cpuinfo[4] = { 0, 0, 0, 0 };
-    if (!CPLHaveRuntimeAVX()) {
+    int cpuinfo[4] = {0, 0, 0, 0};
+    if (!CPLHaveRuntimeAVX())
+    {
         return 0;
     }
 
     CPL_CPUID(7, 0, cpuinfo);
 
     // Check AVX2 feature.
-    if ((cpuinfo[REG_EBX] & (1 << CPUID_AVX2_EBX_BIT)) == 0) {
+    if ((cpuinfo[REG_EBX] & (1 << CPUID_AVX2_EBX_BIT)) == 0)
+    {
         return 0;
     }
 
@@ -145,7 +156,8 @@ int CPLHaveRuntimeAVX2()
 
 int main()
 {
-    if (CPLHaveRuntimeAVX2()) {
+    if (CPLHaveRuntimeAVX2())
+    {
         return 0;
     }
     return 1;
