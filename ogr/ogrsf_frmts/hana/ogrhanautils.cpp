@@ -30,20 +30,18 @@
 
 #include <algorithm>
 
+namespace OGRHANA
+{
 
-namespace OGRHANA {
-
-const char* SkipLeadingSpaces(const char* value)
+const char *SkipLeadingSpaces(const char *value)
 {
     while (*value == ' ')
         value++;
     return value;
 }
 
-CPLString JoinStrings(
-    const std::vector<CPLString>& strs,
-    const char* delimiter,
-    CPLString (*decorator)(const CPLString& str))
+CPLString JoinStrings(const std::vector<CPLString> &strs, const char *delimiter,
+                      CPLString (*decorator)(const CPLString &str))
 {
     CPLString ret;
     for (std::size_t i = 0; i < strs.size(); ++i)
@@ -55,12 +53,12 @@ CPLString JoinStrings(
     return ret;
 }
 
-std::vector<CPLString> SplitStrings(const char* str, const char* delimiter)
+std::vector<CPLString> SplitStrings(const char *str, const char *delimiter)
 {
     std::vector<CPLString> ret;
     if (str != nullptr)
     {
-        char** items = CSLTokenizeString2(str, delimiter, CSLT_HONOURSTRINGS);
+        char **items = CSLTokenizeString2(str, delimiter, CSLT_HONOURSTRINGS);
         for (int i = 0; items[i] != nullptr; ++i)
         {
             CPLString item(items[i]);
@@ -73,89 +71,94 @@ std::vector<CPLString> SplitStrings(const char* str, const char* delimiter)
     return ret;
 }
 
-CPLString GetFullTableName(
-    const CPLString& schemaName, const CPLString& tableName)
+CPLString GetFullTableName(const CPLString &schemaName,
+                           const CPLString &tableName)
 {
     if (schemaName.empty())
         return tableName;
     return schemaName + "." + tableName;
 }
 
-CPLString GetFullTableNameQuoted(
-    const CPLString& schemaName, const CPLString& tableName)
+CPLString GetFullTableNameQuoted(const CPLString &schemaName,
+                                 const CPLString &tableName)
 {
     if (schemaName.empty())
         return QuotedIdentifier(tableName);
     return QuotedIdentifier(schemaName) + "." + QuotedIdentifier(tableName);
 }
 
-CPLString GetFullColumnNameQuoted(
-    const CPLString& schemaName,
-    const CPLString& tableName,
-    const CPLString& columnName)
+CPLString GetFullColumnNameQuoted(const CPLString &schemaName,
+                                  const CPLString &tableName,
+                                  const CPLString &columnName)
 {
-    return GetFullTableNameQuoted(schemaName, tableName) + "."
-           + QuotedIdentifier(columnName);
+    return GetFullTableNameQuoted(schemaName, tableName) + "." +
+           QuotedIdentifier(columnName);
 }
 
-CPLString Literal(const CPLString& value)
+CPLString Literal(const CPLString &value)
 {
     CPLString ret("'");
-    char* tmp = CPLEscapeString(value, -1, CPLES_SQL);
+    char *tmp = CPLEscapeString(value, -1, CPLES_SQL);
     ret += tmp;
     CPLFree(tmp);
     ret += "'";
     return ret;
 }
 
-CPLString QuotedIdentifier(const CPLString& value)
+CPLString QuotedIdentifier(const CPLString &value)
 {
     return "\"" + value + "\"";
 }
 
 bool IsArrayField(OGRFieldType fieldType)
 {
-    return (
-        fieldType == OFTIntegerList || fieldType == OFTInteger64List
-        || fieldType == OFTRealList || fieldType == OFTStringList  || fieldType == OFTWideStringList);
+    return (fieldType == OFTIntegerList || fieldType == OFTInteger64List ||
+            fieldType == OFTRealList || fieldType == OFTStringList ||
+            fieldType == OFTWideStringList);
 }
 
 bool IsGeometryTypeSupported(OGRwkbGeometryType wkbType)
 {
     switch (wkbFlatten(wkbType))
     {
-    case OGRwkbGeometryType::wkbPoint:
-    case OGRwkbGeometryType::wkbLineString:
-    case OGRwkbGeometryType::wkbPolygon:
-    case OGRwkbGeometryType::wkbMultiPoint:
-    case OGRwkbGeometryType::wkbMultiLineString:
-    case OGRwkbGeometryType::wkbMultiPolygon:
-    case OGRwkbGeometryType::wkbCircularString:
-    case OGRwkbGeometryType::wkbGeometryCollection:
-        return true;
-    default:
-        return false;
+        case OGRwkbGeometryType::wkbPoint:
+        case OGRwkbGeometryType::wkbLineString:
+        case OGRwkbGeometryType::wkbPolygon:
+        case OGRwkbGeometryType::wkbMultiPoint:
+        case OGRwkbGeometryType::wkbMultiLineString:
+        case OGRwkbGeometryType::wkbMultiPolygon:
+        case OGRwkbGeometryType::wkbCircularString:
+        case OGRwkbGeometryType::wkbGeometryCollection:
+            return true;
+        default:
+            return false;
     }
 }
 
-OGRwkbGeometryType ToWkbType(const char* type, bool hasZ, bool hasM)
+OGRwkbGeometryType ToWkbType(const char *type, bool hasZ, bool hasM)
 {
     if (strcmp(type, "ST_POINT") == 0)
         return OGR_GT_SetModifier(OGRwkbGeometryType::wkbPoint, hasZ, hasM);
     else if (strcmp(type, "ST_MULTIPOINT") == 0)
-        return OGR_GT_SetModifier(OGRwkbGeometryType::wkbMultiPoint, hasZ, hasM);
+        return OGR_GT_SetModifier(OGRwkbGeometryType::wkbMultiPoint, hasZ,
+                                  hasM);
     else if (strcmp(type, "ST_LINESTRING") == 0)
-        return OGR_GT_SetModifier(OGRwkbGeometryType::wkbLineString, hasZ, hasM);
+        return OGR_GT_SetModifier(OGRwkbGeometryType::wkbLineString, hasZ,
+                                  hasM);
     else if (strcmp(type, "ST_MULTILINESTRING") == 0)
-        return OGR_GT_SetModifier(OGRwkbGeometryType::wkbMultiLineString, hasZ, hasM);
+        return OGR_GT_SetModifier(OGRwkbGeometryType::wkbMultiLineString, hasZ,
+                                  hasM);
     else if (strcmp(type, "ST_POLYGON") == 0)
         return OGR_GT_SetModifier(OGRwkbGeometryType::wkbPolygon, hasZ, hasM);
     else if (strcmp(type, "ST_MULTIPOLYGON") == 0)
-        return OGR_GT_SetModifier(OGRwkbGeometryType::wkbMultiPolygon, hasZ, hasM);
+        return OGR_GT_SetModifier(OGRwkbGeometryType::wkbMultiPolygon, hasZ,
+                                  hasM);
     else if (strcmp(type, "ST_CIRCULARSTRING") == 0)
-        return OGR_GT_SetModifier(OGRwkbGeometryType::wkbCircularString, hasZ, hasM);
+        return OGR_GT_SetModifier(OGRwkbGeometryType::wkbCircularString, hasZ,
+                                  hasM);
     else if (strcmp(type, "ST_GEOMETRYCOLLECTION") == 0)
-        return OGR_GT_SetModifier(OGRwkbGeometryType::wkbGeometryCollection, hasZ, hasM);
+        return OGR_GT_SetModifier(OGRwkbGeometryType::wkbGeometryCollection,
+                                  hasZ, hasM);
     return OGRwkbGeometryType::wkbUnknown;
 }
 
@@ -166,4 +169,4 @@ int ToPlanarSRID(int srid)
     return srid < PLANAR_SRID_OFFSET ? PLANAR_SRID_OFFSET + srid : srid;
 }
 
-} // namespace hana_utils
+}  // namespace OGRHANA

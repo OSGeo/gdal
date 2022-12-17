@@ -33,12 +33,13 @@
 #include "gdal_priv.h"
 #include "odbc/Types.h"
 
-namespace OGRHANA {
+namespace OGRHANA
+{
 
 class OGRHanaFeatureReader
 {
-public:
-    explicit OGRHanaFeatureReader(OGRFeature& feature);
+  public:
+    explicit OGRHanaFeatureReader(OGRFeature &feature);
 
     odbc::Boolean GetFieldAsBoolean(int fieldIndex) const;
     odbc::Byte GetFieldAsByte(int fieldIndex) const;
@@ -60,14 +61,14 @@ public:
     odbc::String GetFieldAsDoubleArray(int fieldIndex) const;
     odbc::String GetFieldAsStringArray(int fieldIndex) const;
 
-private:
-    const char* GetDefaultValue(int fieldIndex) const;
+  private:
+    const char *GetDefaultValue(int fieldIndex) const;
     bool IsFieldSet(int fieldIndex) const;
 
-private:
-    const OGRFeature& feature_;
+  private:
+    const OGRFeature &feature_;
 };
 
-} /* end of OGRHANA namespace */
+}  // namespace OGRHANA
 
-#endif // OGRHANAFEATUREREADER_H_INCLUDED
+#endif  // OGRHANAFEATUREREADER_H_INCLUDED

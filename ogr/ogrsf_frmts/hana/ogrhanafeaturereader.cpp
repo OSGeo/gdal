@@ -39,13 +39,14 @@
 
 #include "odbc/Types.h"
 
+namespace OGRHANA
+{
+namespace
+{
 
-namespace OGRHANA {
-namespace {
-
-template<typename T>
-odbc::String CreateStringFromValues(
-    const T* elements, int numElements, std::string (*toString)(T e))
+template <typename T>
+odbc::String CreateStringFromValues(const T *elements, int numElements,
+                                    std::string (*toString)(T e))
 {
     if (numElements == 0)
         return odbc::String();
@@ -60,8 +61,7 @@ odbc::String CreateStringFromValues(
     return odbc::String(os.str());
 }
 
-template<typename T>
-T castInt(int value)
+template <typename T> T castInt(int value)
 {
     if (value < std::numeric_limits<T>::min() ||
         value > std::numeric_limits<T>::max())
@@ -70,20 +70,19 @@ T castInt(int value)
 }
 
 // Specialization to make Coverity Scan happy
-template<> int castInt(int value)
+template <> int castInt(int value)
 {
     return value;
 }
 
-template<typename T>
-T strToInt(const char* value)
+template <typename T> T strToInt(const char *value)
 {
     return castInt<T>(std::stoi(value));
 }
 
-} // anonymous namespace
+}  // anonymous namespace
 
-OGRHanaFeatureReader::OGRHanaFeatureReader(OGRFeature& feature)
+OGRHanaFeatureReader::OGRHanaFeatureReader(OGRFeature &feature)
     : feature_(feature)
 {
 }
@@ -93,7 +92,7 @@ odbc::Boolean OGRHanaFeatureReader::GetFieldAsBoolean(int fieldIndex) const
     if (IsFieldSet(fieldIndex))
         return feature_.GetFieldAsInteger(fieldIndex) == 1;
 
-    const char* defaultValue = GetDefaultValue(fieldIndex);
+    const char *defaultValue = GetDefaultValue(fieldIndex);
     if (defaultValue == nullptr)
         return odbc::Boolean();
 
@@ -106,7 +105,7 @@ odbc::Byte OGRHanaFeatureReader::GetFieldAsByte(int fieldIndex) const
         return odbc::Byte(
             castInt<std::int8_t>(feature_.GetFieldAsInteger(fieldIndex)));
 
-    const char* defaultValue = GetDefaultValue(fieldIndex);
+    const char *defaultValue = GetDefaultValue(fieldIndex);
     if (defaultValue == nullptr)
         return odbc::Byte();
     return odbc::Byte(strToInt<std::int8_t>(defaultValue));
@@ -118,7 +117,7 @@ odbc::Short OGRHanaFeatureReader::GetFieldAsShort(int fieldIndex) const
         return odbc::Short(
             castInt<std::int16_t>(feature_.GetFieldAsInteger(fieldIndex)));
 
-    const char* defaultValue = GetDefaultValue(fieldIndex);
+    const char *defaultValue = GetDefaultValue(fieldIndex);
     if (defaultValue == nullptr)
         return odbc::Short();
     return odbc::Short(strToInt<std::int16_t>(defaultValue));
@@ -129,7 +128,7 @@ odbc::Int OGRHanaFeatureReader::GetFieldAsInt(int fieldIndex) const
     if (IsFieldSet(fieldIndex))
         return odbc::Int(feature_.GetFieldAsInteger(fieldIndex));
 
-    const char* defaultValue = GetDefaultValue(fieldIndex);
+    const char *defaultValue = GetDefaultValue(fieldIndex);
     if (defaultValue == nullptr)
         return odbc::Int();
     return odbc::Int(strToInt<int>(defaultValue));
@@ -140,7 +139,7 @@ odbc::Long OGRHanaFeatureReader::GetFieldAsLong(int fieldIndex) const
     if (IsFieldSet(fieldIndex))
         return odbc::Long(feature_.GetFieldAsInteger64(fieldIndex));
 
-    const char* defaultValue = GetDefaultValue(fieldIndex);
+    const char *defaultValue = GetDefaultValue(fieldIndex);
     if (defaultValue == nullptr)
         return odbc::Long();
     return odbc::Long(std::stol(defaultValue));
@@ -154,7 +153,7 @@ odbc::Float OGRHanaFeatureReader::GetFieldAsFloat(int fieldIndex) const
         return odbc::Float(static_cast<float>(dValue));
     }
 
-    const char* defaultValue = GetDefaultValue(fieldIndex);
+    const char *defaultValue = GetDefaultValue(fieldIndex);
     if (defaultValue == nullptr)
         return odbc::Float();
     return odbc::Float(std::stof(defaultValue));
@@ -164,21 +163,22 @@ odbc::Double OGRHanaFeatureReader::GetFieldAsDouble(int fieldIndex) const
 {
     if (IsFieldSet(fieldIndex))
         return odbc::Double(feature_.GetFieldAsDouble(fieldIndex));
-    const char* defaultValue = GetDefaultValue(fieldIndex);
+    const char *defaultValue = GetDefaultValue(fieldIndex);
     if (defaultValue == nullptr)
         return odbc::Double();
     return odbc::Double(std::stod(defaultValue));
 }
 
-odbc::String OGRHanaFeatureReader::GetFieldAsString(
-    int fieldIndex, int maxCharLength) const
+odbc::String OGRHanaFeatureReader::GetFieldAsString(int fieldIndex,
+                                                    int maxCharLength) const
 {
-    auto getString = [&](const char* str) {
+    auto getString = [&](const char *str)
+    {
         if (str == nullptr)
             return odbc::String();
 
-        if (maxCharLength > 0
-            && std::strlen(str) > static_cast<std::size_t>(maxCharLength))
+        if (maxCharLength > 0 &&
+            std::strlen(str) > static_cast<std::size_t>(maxCharLength))
             return odbc::String(
                 std::string(str, static_cast<std::size_t>(maxCharLength)));
         return odbc::String(str);
@@ -187,16 +187,16 @@ odbc::String OGRHanaFeatureReader::GetFieldAsString(
     if (IsFieldSet(fieldIndex))
         return getString(feature_.GetFieldAsString(fieldIndex));
 
-    const char* defaultValue = GetDefaultValue(fieldIndex);
+    const char *defaultValue = GetDefaultValue(fieldIndex);
     if (defaultValue == nullptr)
         return odbc::String();
 
-    if (defaultValue[0] == '\''
-        && defaultValue[strlen(defaultValue) - 1] == '\'')
+    if (defaultValue[0] == '\'' &&
+        defaultValue[strlen(defaultValue) - 1] == '\'')
     {
         CPLString str(defaultValue + 1);
         str.resize(str.size() - 1);
-        char* tmp = CPLUnescapeString(str, nullptr, CPLES_SQL);
+        char *tmp = CPLUnescapeString(str, nullptr, CPLES_SQL);
         odbc::String ret = getString(tmp);
         CPLFree(tmp);
         return ret;
@@ -205,10 +205,11 @@ odbc::String OGRHanaFeatureReader::GetFieldAsString(
     return odbc::String(defaultValue);
 }
 
-odbc::String OGRHanaFeatureReader::GetFieldAsNString(
-    int fieldIndex, int maxCharLength) const
+odbc::String OGRHanaFeatureReader::GetFieldAsNString(int fieldIndex,
+                                                     int maxCharLength) const
 {
-    auto getString = [&](const char* str) {
+    auto getString = [&](const char *str)
+    {
         if (str == nullptr)
             return odbc::String();
 
@@ -239,22 +240,23 @@ odbc::String OGRHanaFeatureReader::GetFieldAsNString(
             }
         }
 
-        return odbc::String(std::string(str, static_cast<std::size_t>(nSrcLen)));
+        return odbc::String(
+            std::string(str, static_cast<std::size_t>(nSrcLen)));
     };
 
     if (IsFieldSet(fieldIndex))
         return getString(feature_.GetFieldAsString(fieldIndex));
 
-    const char* defaultValue = GetDefaultValue(fieldIndex);
+    const char *defaultValue = GetDefaultValue(fieldIndex);
     if (defaultValue == nullptr)
         return odbc::String();
 
-    if (defaultValue[0] == '\''
-        && defaultValue[strlen(defaultValue) - 1] == '\'')
+    if (defaultValue[0] == '\'' &&
+        defaultValue[strlen(defaultValue) - 1] == '\'')
     {
         CPLString str(defaultValue + 1);
         str.resize(str.size() - 1);
-        char* tmp = CPLUnescapeString(str, nullptr, CPLES_SQL);
+        char *tmp = CPLUnescapeString(str, nullptr, CPLES_SQL);
         odbc::String ret = getString(tmp);
         CPLFree(tmp);
         return ret;
@@ -274,25 +276,24 @@ odbc::Date OGRHanaFeatureReader::GetFieldAsDate(int fieldIndex) const
         int minute = 0;
         int timeZoneFlag = 0;
         float second = 0.0f;
-        feature_.GetFieldAsDateTime(
-            fieldIndex, &year, &month, &day, &hour, &minute, &second,
-            &timeZoneFlag);
+        feature_.GetFieldAsDateTime(fieldIndex, &year, &month, &day, &hour,
+                                    &minute, &second, &timeZoneFlag);
 
         return odbc::makeNullable<odbc::date>(year, month, day);
     }
 
-    const char* defaultValue = GetDefaultValue(fieldIndex);
+    const char *defaultValue = GetDefaultValue(fieldIndex);
     if (defaultValue == nullptr)
         return odbc::Date();
 
     if (EQUAL(defaultValue, "CURRENT_DATE"))
     {
         std::time_t t = std::time(nullptr);
-        tm* now = std::localtime(&t);
+        tm *now = std::localtime(&t);
         if (now == nullptr)
             return odbc::Date();
-        return odbc::makeNullable<odbc::date>(
-            now->tm_year + 1900, now->tm_mon + 1, now->tm_mday);
+        return odbc::makeNullable<odbc::date>(now->tm_year + 1900,
+                                              now->tm_mon + 1, now->tm_mday);
     }
 
     int year, month, day;
@@ -312,25 +313,24 @@ odbc::Time OGRHanaFeatureReader::GetFieldAsTime(int fieldIndex) const
         int minute = 0;
         int timeZoneFlag = 0;
         float second = 0.0f;
-        feature_.GetFieldAsDateTime(
-            fieldIndex, &year, &month, &day, &hour, &minute, &second,
-            &timeZoneFlag);
-        return odbc::makeNullable<odbc::time>(
-            hour, minute, static_cast<int>(round(second)));
+        feature_.GetFieldAsDateTime(fieldIndex, &year, &month, &day, &hour,
+                                    &minute, &second, &timeZoneFlag);
+        return odbc::makeNullable<odbc::time>(hour, minute,
+                                              static_cast<int>(round(second)));
     }
 
-    const char* defaultValue = GetDefaultValue(fieldIndex);
+    const char *defaultValue = GetDefaultValue(fieldIndex);
     if (defaultValue == nullptr)
         return odbc::Time();
 
     if (EQUAL(defaultValue, "CURRENT_TIME"))
     {
         std::time_t t = std::time(nullptr);
-        tm* now = std::localtime(&t);
+        tm *now = std::localtime(&t);
         if (now == nullptr)
             return odbc::Time();
-        return odbc::makeNullable<odbc::time>(
-            now->tm_hour, now->tm_min, now->tm_sec);
+        return odbc::makeNullable<odbc::time>(now->tm_hour, now->tm_min,
+                                              now->tm_sec);
     }
 
     int hour = 0;
@@ -351,11 +351,12 @@ odbc::Timestamp OGRHanaFeatureReader::GetFieldAsTimestamp(int fieldIndex) const
         int minute = 0;
         float secondWithMillisecond = 0.0f;
         int timeZoneFlag = 0;
-        feature_.GetFieldAsDateTime(
-            fieldIndex, &year, &month, &day, &hour, &minute,
-            &secondWithMillisecond, &timeZoneFlag);
+        feature_.GetFieldAsDateTime(fieldIndex, &year, &month, &day, &hour,
+                                    &minute, &secondWithMillisecond,
+                                    &timeZoneFlag);
         double seconds = 0.0;
-        double milliseconds = std::modf(static_cast<double>(secondWithMillisecond), &seconds);
+        double milliseconds =
+            std::modf(static_cast<double>(secondWithMillisecond), &seconds);
         int second = static_cast<int>(std::floor(seconds));
         int millisecond = static_cast<int>(std::floor(milliseconds * 1000));
 
@@ -380,18 +381,18 @@ odbc::Timestamp OGRHanaFeatureReader::GetFieldAsTimestamp(int fieldIndex) const
             second = time.tm_sec;
         }
 
-        return odbc::makeNullable<odbc::timestamp>(
-            year, month, day, hour, minute, second, millisecond);
+        return odbc::makeNullable<odbc::timestamp>(year, month, day, hour,
+                                                   minute, second, millisecond);
     }
 
-    const char* defaultValue = GetDefaultValue(fieldIndex);
+    const char *defaultValue = GetDefaultValue(fieldIndex);
     if (defaultValue == nullptr)
         return odbc::Timestamp();
 
     if (EQUAL(defaultValue, "CURRENT_TIMESTAMP"))
     {
         time_t t = std::time(nullptr);
-        tm* now = std::localtime(&t);
+        tm *now = std::localtime(&t);
         if (now == nullptr)
             return odbc::Timestamp();
         return odbc::makeNullable<odbc::timestamp>(
@@ -408,16 +409,14 @@ odbc::Timestamp OGRHanaFeatureReader::GetFieldAsTimestamp(int fieldIndex) const
     int millisecond = 0;
 
     if (strchr(defaultValue, '.') == nullptr)
-        sscanf(
-            defaultValue, "'%04d/%02d/%02d %02d:%02d:%02d'", &year, &month,
-            &day, &hour, &minute, &second);
+        sscanf(defaultValue, "'%04d/%02d/%02d %02d:%02d:%02d'", &year, &month,
+               &day, &hour, &minute, &second);
     else
-        sscanf(
-            defaultValue, "'%04d/%02d/%02d %02d:%02d:%02d.%03d'", &year, &month,
-            &day, &hour, &minute, &second, &millisecond);
+        sscanf(defaultValue, "'%04d/%02d/%02d %02d:%02d:%02d.%03d'", &year,
+               &month, &day, &hour, &minute, &second, &millisecond);
 
-    return odbc::makeNullable<odbc::timestamp>(
-        year, month, day, hour, minute, second, millisecond);
+    return odbc::makeNullable<odbc::timestamp>(year, month, day, hour, minute,
+                                               second, millisecond);
 }
 
 Binary OGRHanaFeatureReader::GetFieldAsBinary(int fieldIndex) const
@@ -425,15 +424,15 @@ Binary OGRHanaFeatureReader::GetFieldAsBinary(int fieldIndex) const
     if (IsFieldSet(fieldIndex))
     {
         int size = 0;
-        GByte* data = feature_.GetFieldAsBinary(fieldIndex, &size);
+        GByte *data = feature_.GetFieldAsBinary(fieldIndex, &size);
         return {data, static_cast<std::size_t>(size)};
     }
 
-    const char* defaultValue = GetDefaultValue(fieldIndex);
+    const char *defaultValue = GetDefaultValue(fieldIndex);
     if (defaultValue == nullptr)
         return {nullptr, 0U};
 
-    return {const_cast<GByte*>(reinterpret_cast<const GByte*>(defaultValue)),
+    return {const_cast<GByte *>(reinterpret_cast<const GByte *>(defaultValue)),
             std::strlen(defaultValue)};
 }
 
@@ -443,7 +442,7 @@ odbc::String OGRHanaFeatureReader::GetFieldAsIntArray(int fieldIndex) const
         return odbc::String();
 
     int numElements;
-    const int* values =
+    const int *values =
         feature_.GetFieldAsIntegerList(fieldIndex, &numElements);
     return CreateStringFromValues<int>(values, numElements, &std::to_string);
 }
@@ -454,10 +453,10 @@ odbc::String OGRHanaFeatureReader::GetFieldAsBigIntArray(int fieldIndex) const
         return odbc::String();
 
     int numElements;
-    const GIntBig* values =
+    const GIntBig *values =
         feature_.GetFieldAsInteger64List(fieldIndex, &numElements);
-    return CreateStringFromValues<GIntBig>(
-        values, numElements, &std::to_string);
+    return CreateStringFromValues<GIntBig>(values, numElements,
+                                           &std::to_string);
 }
 
 odbc::String OGRHanaFeatureReader::GetFieldAsRealArray(int fieldIndex) const
@@ -466,10 +465,12 @@ odbc::String OGRHanaFeatureReader::GetFieldAsRealArray(int fieldIndex) const
         return odbc::String();
 
     int numElements;
-    const double* values =
+    const double *values =
         feature_.GetFieldAsDoubleList(fieldIndex, &numElements);
     return CreateStringFromValues<double>(
-        values, numElements, [](double value) {
+        values, numElements,
+        [](double value)
+        {
             return std::isnan(value)
                        ? "NULL"
                        : std::to_string(static_cast<float>(value));
@@ -482,12 +483,12 @@ odbc::String OGRHanaFeatureReader::GetFieldAsDoubleArray(int fieldIndex) const
         return odbc::String();
 
     int numElements;
-    const double* values =
+    const double *values =
         feature_.GetFieldAsDoubleList(fieldIndex, &numElements);
     return CreateStringFromValues<double>(
-        values, numElements, [](double value) {
-            return std::isnan(value) ? "NULL" : std::to_string(value);
-        });
+        values, numElements,
+        [](double value)
+        { return std::isnan(value) ? "NULL" : std::to_string(value); });
 }
 
 odbc::String OGRHanaFeatureReader::GetFieldAsStringArray(int fieldIndex) const
@@ -495,7 +496,7 @@ odbc::String OGRHanaFeatureReader::GetFieldAsStringArray(int fieldIndex) const
     if (!IsFieldSet(fieldIndex))
         return odbc::String();
 
-    char** items = feature_.GetFieldAsStringList(fieldIndex);
+    char **items = feature_.GetFieldAsStringList(fieldIndex);
     if (items == nullptr)
         return odbc::String();
 
@@ -506,7 +507,7 @@ odbc::String OGRHanaFeatureReader::GetFieldAsStringArray(int fieldIndex) const
         if (!firstItem)
             os << ARRAY_VALUES_DELIMITER;
 
-        char* itemValue = *items;
+        char *itemValue = *items;
         if (*itemValue != '\0')
         {
             os << '\'';
@@ -527,9 +528,9 @@ odbc::String OGRHanaFeatureReader::GetFieldAsStringArray(int fieldIndex) const
     return odbc::String(os.str());
 }
 
-const char* OGRHanaFeatureReader::GetDefaultValue(int fieldIndex) const
+const char *OGRHanaFeatureReader::GetDefaultValue(int fieldIndex) const
 {
-    const OGRFieldDefn* fieldDef = feature_.GetFieldDefnRef(fieldIndex);
+    const OGRFieldDefn *fieldDef = feature_.GetFieldDefnRef(fieldIndex);
     return fieldDef->GetDefault();
 }
 
@@ -538,4 +539,4 @@ bool OGRHanaFeatureReader::IsFieldSet(int fieldIndex) const
     return feature_.IsFieldSet(fieldIndex) && !feature_.IsFieldNull(fieldIndex);
 }
 
-} /* end of OGRHANA namespace */
+}  // namespace OGRHANA
