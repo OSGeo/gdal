@@ -34,7 +34,7 @@ class OGRDGNV8Services;
 
 bool OGRTEIGHAInitialize();
 void OGRTEIGHADeinitialize();
-OGRDWGServices* OGRDWGGetServices();
-OGRDGNV8Services* OGRDGNV8GetServices();
+OGRDWGServices *OGRDWGGetServices();
+OGRDGNV8Services *OGRDGNV8GetServices();
 
-#endif // OGR_TEIGHA_H
+#endif  // OGR_TEIGHA_H

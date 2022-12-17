@@ -79,7 +79,6 @@
 #include "Ge/GeCircArc2d.h"
 #include "Ge/GeEllipArc2d.h"
 
-
 #include "OdCharMapper.h"
 #include "RxObjectImpl.h"
 
@@ -89,4 +88,4 @@
 #include "RxDynamicModule.h"
 #include "FdField.h"
 
-#endif // TEIGHA_HEADERS_H
+#endif  // TEIGHA_HEADERS_H
