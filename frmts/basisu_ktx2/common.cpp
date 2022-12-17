@@ -40,7 +40,7 @@
 void GDALInitBasisUTranscoder()
 {
     static std::once_flag flag;
-    std::call_once( flag, basist::basisu_transcoder_init );
+    std::call_once(flag, basist::basisu_transcoder_init);
 }
 
 /************************************************************************/
@@ -50,7 +50,7 @@ void GDALInitBasisUTranscoder()
 void GDALInitBasisUEncoder()
 {
     static std::once_flag flag;
-    std::call_once( flag, []() { basisu::basisu_encoder_init(); } );
+    std::call_once(flag, []() { basisu::basisu_encoder_init(); });
 }
 
 /************************************************************************/
@@ -70,20 +70,19 @@ void GDALRegister_BASISU_KTX2()
 /*                     GDAL_KTX2_BASISU_CreateCopy()                    */
 /************************************************************************/
 
-bool GDAL_KTX2_BASISU_CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
-                                 bool bIsKTX2,
-                                 CSLConstList papszOptions,
+bool GDAL_KTX2_BASISU_CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
+                                 bool bIsKTX2, CSLConstList papszOptions,
                                  GDALProgressFunc pfnProgress,
-                                 void* pProgressData)
+                                 void *pProgressData)
 {
     const int nBands = poSrcDS->GetRasterCount();
-    if( nBands == 0 || nBands > 4 )
+    if (nBands == 0 || nBands > 4)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Only band count >= 1 and <= 4 is supported");
         return false;
     }
-    if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte )
+    if (poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Only Byte data type supported");
@@ -92,16 +91,14 @@ bool GDAL_KTX2_BASISU_CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
 
     const int nXSize = poSrcDS->GetRasterXSize();
     const int nYSize = poSrcDS->GetRasterYSize();
-    void* pSrcData = VSI_MALLOC3_VERBOSE(nXSize, nYSize, nBands);
-    if( pSrcData == nullptr )
+    void *pSrcData = VSI_MALLOC3_VERBOSE(nXSize, nYSize, nBands);
+    if (pSrcData == nullptr)
         return false;
 
-    if( poSrcDS->RasterIO(GF_Read, 0, 0, nXSize, nYSize,
-                      pSrcData, nXSize, nYSize,
-                      GDT_Byte,
-                      nBands, nullptr,
-                      nBands, static_cast<GSpacing>(nBands) * nXSize, 1,
-                      nullptr) != CE_None )
+    if (poSrcDS->RasterIO(GF_Read, 0, 0, nXSize, nYSize, pSrcData, nXSize,
+                          nYSize, GDT_Byte, nBands, nullptr, nBands,
+                          static_cast<GSpacing>(nBands) * nXSize, 1,
+                          nullptr) != CE_None)
     {
         VSIFree(pSrcData);
         return false;
@@ -110,10 +107,11 @@ bool GDAL_KTX2_BASISU_CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
     basisu::image img;
     try
     {
-        img.init(static_cast<const uint8_t*>(pSrcData), nXSize, nYSize, nBands);
+        img.init(static_cast<const uint8_t *>(pSrcData), nXSize, nYSize,
+                 nBands);
         VSIFree(pSrcData);
     }
-    catch( const std::exception& e )
+    catch (const std::exception &e)
     {
         VSIFree(pSrcData);
         CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
@@ -129,20 +127,21 @@ bool GDAL_KTX2_BASISU_CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
 
     params.m_source_images.push_back(img);
 
-    params.m_perceptual = EQUAL(CSLFetchNameValueDef(
-        papszOptions, "COLORSPACE", "PERCEPTUAL_SRGB"), "PERCEPTUAL_SRGB");
+    params.m_perceptual = EQUAL(
+        CSLFetchNameValueDef(papszOptions, "COLORSPACE", "PERCEPTUAL_SRGB"),
+        "PERCEPTUAL_SRGB");
 
     params.m_write_output_basis_files = true;
 
     std::string osTempFilename;
     bool bUseTempFilename = STARTS_WITH(pszFilename, "/vsi");
 #ifdef _WIN32
-    if( !bUseTempFilename )
+    if (!bUseTempFilename)
     {
         bUseTempFilename = !CPLIsASCII(pszFilename, static_cast<size_t>(-1));
     }
 #endif
-    if( bUseTempFilename )
+    if (bUseTempFilename)
     {
         osTempFilename = CPLGenerateTempFilename(nullptr);
         CPLDebug("KTX2", "Using temporary file %s", osTempFilename.c_str());
@@ -153,49 +152,46 @@ bool GDAL_KTX2_BASISU_CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
         params.m_out_filename = pszFilename;
     }
 
-    params.m_uastc = EQUAL(CSLFetchNameValueDef(papszOptions,
-        "COMPRESSION", "ETC1S"), "UASTC");
-    if( params.m_uastc )
+    params.m_uastc = EQUAL(
+        CSLFetchNameValueDef(papszOptions, "COMPRESSION", "ETC1S"), "UASTC");
+    if (params.m_uastc)
     {
-        if( bIsKTX2 )
+        if (bIsKTX2)
         {
-            const char* pszSuperCompression = CSLFetchNameValueDef(papszOptions,
-                "UASTC_SUPER_COMPRESSION", "ZSTD");
+            const char *pszSuperCompression = CSLFetchNameValueDef(
+                papszOptions, "UASTC_SUPER_COMPRESSION", "ZSTD");
             params.m_ktx2_uastc_supercompression =
-                 EQUAL(pszSuperCompression, "ZSTD") ? basist::KTX2_SS_ZSTANDARD:
-                                                      basist::KTX2_SS_NONE;
+                EQUAL(pszSuperCompression, "ZSTD") ? basist::KTX2_SS_ZSTANDARD
+                                                   : basist::KTX2_SS_NONE;
         }
 
-        const int nLevel = std::min(std::max(0, atoi(
-            CSLFetchNameValueDef(papszOptions, "UASTC_LEVEL", "2"))),
-            static_cast<int>(basisu::TOTAL_PACK_UASTC_LEVELS - 1));
+        const int nLevel =
+            std::min(std::max(0, atoi(CSLFetchNameValueDef(
+                                     papszOptions, "UASTC_LEVEL", "2"))),
+                     static_cast<int>(basisu::TOTAL_PACK_UASTC_LEVELS - 1));
         static const uint32_t anLevelFlags[] = {
-            basisu::cPackUASTCLevelFastest,
-            basisu::cPackUASTCLevelFaster,
-            basisu::cPackUASTCLevelDefault,
-            basisu::cPackUASTCLevelSlower,
-            basisu::cPackUASTCLevelVerySlow
-        };
+            basisu::cPackUASTCLevelFastest, basisu::cPackUASTCLevelFaster,
+            basisu::cPackUASTCLevelDefault, basisu::cPackUASTCLevelSlower,
+            basisu::cPackUASTCLevelVerySlow};
         CPL_STATIC_ASSERT(CPL_ARRAYSIZE(anLevelFlags) ==
-                                basisu::TOTAL_PACK_UASTC_LEVELS);
+                          basisu::TOTAL_PACK_UASTC_LEVELS);
         params.m_pack_uastc_flags &= ~basisu::cPackUASTCLevelMask;
         params.m_pack_uastc_flags |= anLevelFlags[nLevel];
 
-        const char* pszUASTC_RDO_LEVEL =
+        const char *pszUASTC_RDO_LEVEL =
             CSLFetchNameValue(papszOptions, "UASTC_RDO_LEVEL");
-        if( pszUASTC_RDO_LEVEL )
+        if (pszUASTC_RDO_LEVEL)
         {
-            params.m_rdo_uastc_quality_scalar = static_cast<float>(
-                                                CPLAtof(pszUASTC_RDO_LEVEL));
+            params.m_rdo_uastc_quality_scalar =
+                static_cast<float>(CPLAtof(pszUASTC_RDO_LEVEL));
             params.m_rdo_uastc = true;
         }
 
-        for( const char* pszOption : { "ETC1S_LEVEL",
-                                       "ETC1S_QUALITY_LEVEL",
-                                       "ETC1S_MAX_SELECTOR_CLUSTERS",
-                                       "ETC1S_MAX_SELECTOR_CLUSTERS" } )
+        for (const char *pszOption :
+             {"ETC1S_LEVEL", "ETC1S_QUALITY_LEVEL",
+              "ETC1S_MAX_SELECTOR_CLUSTERS", "ETC1S_MAX_SELECTOR_CLUSTERS"})
         {
-            if( CSLFetchNameValue(papszOptions, pszOption) != nullptr )
+            if (CSLFetchNameValue(papszOptions, pszOption) != nullptr)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "%s ignored for COMPRESSION=UASTC", pszOption);
@@ -206,32 +202,33 @@ bool GDAL_KTX2_BASISU_CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
     {
         // CPL_STATIC_ASSERT(basisu::BASISU_MIN_COMPRESSION_LEVEL == 0);
         CPL_STATIC_ASSERT(basisu::BASISU_MAX_COMPRESSION_LEVEL == 6);
-        params.m_compression_level = std::min(std::max(0, atoi(
-                CSLFetchNameValueDef(papszOptions, "ETC1S_LEVEL", "1"))),
-                static_cast<int>(basisu::BASISU_MAX_COMPRESSION_LEVEL));
+        params.m_compression_level =
+            std::min(std::max(0, atoi(CSLFetchNameValueDef(
+                                     papszOptions, "ETC1S_LEVEL", "1"))),
+                     static_cast<int>(basisu::BASISU_MAX_COMPRESSION_LEVEL));
         CPL_STATIC_ASSERT(basisu::BASISU_QUALITY_MIN == 1);
         CPL_STATIC_ASSERT(basisu::BASISU_QUALITY_MAX == 255);
-        const char* pszQualityLevel = CSLFetchNameValue(
-            papszOptions, "ETC1S_QUALITY_LEVEL");
-        params.m_quality_level = std::min(std::max(
-            static_cast<int>(basisu::BASISU_QUALITY_MIN), atoi(
-                pszQualityLevel ? pszQualityLevel : "128")),
-                static_cast<int>(basisu::BASISU_QUALITY_MAX));
+        const char *pszQualityLevel =
+            CSLFetchNameValue(papszOptions, "ETC1S_QUALITY_LEVEL");
+        params.m_quality_level =
+            std::min(std::max(static_cast<int>(basisu::BASISU_QUALITY_MIN),
+                              atoi(pszQualityLevel ? pszQualityLevel : "128")),
+                     static_cast<int>(basisu::BASISU_QUALITY_MAX));
         params.m_max_endpoint_clusters = 0;
         params.m_max_selector_clusters = 0;
 
-        const char* pszMaxEndpointClusters = CSLFetchNameValue(
-            papszOptions, "ETC1S_MAX_ENDPOINTS_CLUSTERS");
-        const char* pszMaxSelectorClusters = CSLFetchNameValue(
-            papszOptions, "ETC1S_MAX_SELECTOR_CLUSTERS");
-        if( pszQualityLevel == nullptr &&
-            (pszMaxEndpointClusters != nullptr || pszMaxSelectorClusters != nullptr) )
+        const char *pszMaxEndpointClusters =
+            CSLFetchNameValue(papszOptions, "ETC1S_MAX_ENDPOINTS_CLUSTERS");
+        const char *pszMaxSelectorClusters =
+            CSLFetchNameValue(papszOptions, "ETC1S_MAX_SELECTOR_CLUSTERS");
+        if (pszQualityLevel == nullptr && (pszMaxEndpointClusters != nullptr ||
+                                           pszMaxSelectorClusters != nullptr))
         {
             params.m_quality_level = -1;
-            if( pszMaxEndpointClusters != nullptr )
+            if (pszMaxEndpointClusters != nullptr)
             {
                 params.m_max_endpoint_clusters = atoi(pszMaxEndpointClusters);
-                if( pszMaxSelectorClusters == nullptr )
+                if (pszMaxSelectorClusters == nullptr)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "ETC1S_MAX_SELECTOR_CLUSTERS must be set when "
@@ -240,10 +237,10 @@ bool GDAL_KTX2_BASISU_CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
                 }
             }
 
-            if( pszMaxSelectorClusters != nullptr  )
+            if (pszMaxSelectorClusters != nullptr)
             {
                 params.m_max_selector_clusters = atoi(pszMaxSelectorClusters);
-                if( pszMaxEndpointClusters == nullptr )
+                if (pszMaxEndpointClusters == nullptr)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "ETC1S_MAX_ENDPOINTS_CLUSTERS must be set when "
@@ -254,10 +251,10 @@ bool GDAL_KTX2_BASISU_CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
         }
         else
         {
-            for( const char* pszOption : { "ETC1S_MAX_ENDPOINTS_CLUSTERS",
-                                           "ETC1S_MAX_SELECTOR_CLUSTERS" } )
+            for (const char *pszOption : {"ETC1S_MAX_ENDPOINTS_CLUSTERS",
+                                          "ETC1S_MAX_SELECTOR_CLUSTERS"})
             {
-                if( CSLFetchNameValue(papszOptions, pszOption) != nullptr )
+                if (CSLFetchNameValue(papszOptions, pszOption) != nullptr)
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "%s ignored when ETC1S_QUALITY_LEVEL is specified",
@@ -266,9 +263,9 @@ bool GDAL_KTX2_BASISU_CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
             }
         }
 
-        for( const char* pszOption : { "UASTC_LEVEL", "UASTC_RDO_LEVEL" } )
+        for (const char *pszOption : {"UASTC_LEVEL", "UASTC_RDO_LEVEL"})
         {
-            if( CSLFetchNameValue(papszOptions, pszOption) != nullptr )
+            if (CSLFetchNameValue(papszOptions, pszOption) != nullptr)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "%s ignored for COMPRESSION=ETC1S", pszOption);
@@ -276,18 +273,19 @@ bool GDAL_KTX2_BASISU_CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
         }
     }
 
-    if( CPLTestBool(CSLFetchNameValueDef(papszOptions, "MIPMAP", "NO")) )
+    if (CPLTestBool(CSLFetchNameValueDef(papszOptions, "MIPMAP", "NO")))
     {
         params.m_mip_gen = true;
         params.m_mip_srgb = params.m_perceptual;
     }
 
-    const int nNumThreads = std::max(1, atoi(CSLFetchNameValueDef(
-        papszOptions, "NUM_THREADS",
-        CPLGetConfigOption("GDAL_NUM_THREADS",
-                           CPLSPrintf("%d", CPLGetNumCPUs())))));
+    const int nNumThreads = std::max(
+        1, atoi(CSLFetchNameValueDef(
+               papszOptions, "NUM_THREADS",
+               CPLGetConfigOption("GDAL_NUM_THREADS",
+                                  CPLSPrintf("%d", CPLGetNumCPUs())))));
     CPLDebug("KTX2", "Using %d threads", nNumThreads);
-    if( params.m_uastc )
+    if (params.m_uastc)
     {
         params.m_rdo_uastc_multithreading = nNumThreads > 1;
     }
@@ -302,7 +300,7 @@ bool GDAL_KTX2_BASISU_CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
     basisu::basis_compressor comp;
     basisu::enable_debug_printf(bVerbose);
 
-    if( !comp.init(params) )
+    if (!comp.init(params))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "basis_compressor::init() failed");
@@ -317,9 +315,9 @@ bool GDAL_KTX2_BASISU_CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
         return false;
     }
 
-    if( !osTempFilename.empty() )
+    if (!osTempFilename.empty())
     {
-        if( CPLCopyFile( pszFilename, osTempFilename.c_str() ) != 0 )
+        if (CPLCopyFile(pszFilename, osTempFilename.c_str()) != 0)
         {
             VSIUnlink(osTempFilename.c_str());
             return false;
@@ -327,7 +325,7 @@ bool GDAL_KTX2_BASISU_CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
         VSIUnlink(osTempFilename.c_str());
     }
 
-    if( pfnProgress )
+    if (pfnProgress)
         pfnProgress(1.0, "", pProgressData);
 
     return true;
@@ -339,47 +337,54 @@ bool GDAL_KTX2_BASISU_CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
 
 std::string GDAL_KTX2_BASISU_GetCreationOptions(bool bIsKTX2)
 {
-    std::string osRet = "<CreationOptionList>"
-"   <Option name='COMPRESSION' type='string-select' default='ETC1S'>"
-"       <Value>ETC1S</Value>"
-"       <Value>UASTC</Value>"
-"   </Option>";
-    if( bIsKTX2 )
-        osRet +=
-"   <Option name='UASTC_SUPER_COMPRESSION' type='string-select' default='ZSTD'>"
-"       <Value>NONE</Value>"
-"       <Value>ZSTD</Value>"
-"   </Option>";
+    std::string osRet =
+        "<CreationOptionList>"
+        "   <Option name='COMPRESSION' type='string-select' default='ETC1S'>"
+        "       <Value>ETC1S</Value>"
+        "       <Value>UASTC</Value>"
+        "   </Option>";
+    if (bIsKTX2)
+        osRet += "   <Option name='UASTC_SUPER_COMPRESSION' "
+                 "type='string-select' default='ZSTD'>"
+                 "       <Value>NONE</Value>"
+                 "       <Value>ZSTD</Value>"
+                 "   </Option>";
     osRet +=
-"   <Option name='UASTC_LEVEL' type='int' min='0' max='4' default='2' "
-    "description='The higher value, the higher the quality but the slower "
-    "computing time. 4 is impractically slow'/>"
-"   <Option name='UASTC_RDO_LEVEL' type='float' min='0' default='1' "
-    "description='Rate distortion optimization level. "
-    "The lower value, the higher the quality, but the larger the file size. "
-    "Usual range is [0.2,3]'/>"
-"   <Option name='ETC1S_LEVEL' type='int' min='0' max='6' default='1' "
-    "description='The higher value, the higher the quality but the slower "
-    "computing time.'/>"
-"   <Option name='ETC1S_QUALITY_LEVEL' type='int' min='1' max='255' default='128' "
-    "description='The higher value, the higher the quality, "
-    "but the larger the file size.'/>"
-"   <Option name='ETC1S_MAX_ENDPOINTS_CLUSTERS' type='int' min='1' max='16128' "
-    "description='Maximum number of endpoint clusters. "
-    "When set, ETC1S_MAX_SELECTOR_CLUSTERS must also be set. "
-    "Mutually exclusive with ETC1S_QUALITY_LEVEL.'/>"
-"   <Option name='ETC1S_MAX_SELECTOR_CLUSTERS' type='int' min='1' max='16128' "
-    "description='Maximum number of selector clusters. "
-    "When set, ETC1S_MAX_ENDPOINTS_CLUSTERS must also be set. "
-    "Mutually exclusive with ETC1S_QUALITY_LEVEL.'/>"
-"   <Option name='NUM_THREADS' type='int' description='Number of threads to use. "
+        "   <Option name='UASTC_LEVEL' type='int' min='0' max='4' default='2' "
+        "description='The higher value, the higher the quality but the slower "
+        "computing time. 4 is impractically slow'/>"
+        "   <Option name='UASTC_RDO_LEVEL' type='float' min='0' default='1' "
+        "description='Rate distortion optimization level. "
+        "The lower value, the higher the quality, but the larger the file "
+        "size. "
+        "Usual range is [0.2,3]'/>"
+        "   <Option name='ETC1S_LEVEL' type='int' min='0' max='6' default='1' "
+        "description='The higher value, the higher the quality but the slower "
+        "computing time.'/>"
+        "   <Option name='ETC1S_QUALITY_LEVEL' type='int' min='1' max='255' "
+        "default='128' "
+        "description='The higher value, the higher the quality, "
+        "but the larger the file size.'/>"
+        "   <Option name='ETC1S_MAX_ENDPOINTS_CLUSTERS' type='int' min='1' "
+        "max='16128' "
+        "description='Maximum number of endpoint clusters. "
+        "When set, ETC1S_MAX_SELECTOR_CLUSTERS must also be set. "
+        "Mutually exclusive with ETC1S_QUALITY_LEVEL.'/>"
+        "   <Option name='ETC1S_MAX_SELECTOR_CLUSTERS' type='int' min='1' "
+        "max='16128' "
+        "description='Maximum number of selector clusters. "
+        "When set, ETC1S_MAX_ENDPOINTS_CLUSTERS must also be set. "
+        "Mutually exclusive with ETC1S_QUALITY_LEVEL.'/>"
+        "   <Option name='NUM_THREADS' type='int' description='Number of "
+        "threads to use. "
         "By default, maximum number of virtual CPUs available'/>"
-"   <Option name='MIPMAP' type='boolean' "
+        "   <Option name='MIPMAP' type='boolean' "
         "description='Whether to enable MIPMAP generation.' default='NO'/>"
-"   <Option name='COLORSPACE' type='string-select' default='PERCEPTUAL_SRGB'>"
-"       <Value>PERCEPTUAL_SRGB</Value>"
-"       <Value>LINEAR</Value>"
-"   </Option>"
-"</CreationOptionList>";
+        "   <Option name='COLORSPACE' type='string-select' "
+        "default='PERCEPTUAL_SRGB'>"
+        "       <Value>PERCEPTUAL_SRGB</Value>"
+        "       <Value>LINEAR</Value>"
+        "   </Option>"
+        "</CreationOptionList>";
     return osRet;
 }
