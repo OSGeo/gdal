@@ -28,7 +28,6 @@
 
 #include "dgnlibp.h"
 
-
 /************************************************************************/
 /*                            DGNTestOpen()                             */
 /************************************************************************/
@@ -42,23 +41,20 @@
  * @return TRUE if the header appears to be from a DGN file, otherwise FALSE.
  */
 
-int DGNTestOpen( GByte *pabyHeader, int nByteCount )
+int DGNTestOpen(GByte *pabyHeader, int nByteCount)
 
 {
-    if( nByteCount < 4 )
+    if (nByteCount < 4)
         return FALSE;
 
     // Is it a cell library?
-    if( pabyHeader[0] == 0x08
-        && pabyHeader[1] == 0x05
-        && pabyHeader[2] == 0x17
-        && pabyHeader[3] == 0x00 )
+    if (pabyHeader[0] == 0x08 && pabyHeader[1] == 0x05 &&
+        pabyHeader[2] == 0x17 && pabyHeader[3] == 0x00)
         return TRUE;
 
     // Is it not a regular 2D or 3D file?
-    if( (pabyHeader[0] != 0x08 && pabyHeader[0] != 0xC8)
-        || pabyHeader[1] != 0x09
-        || pabyHeader[2] != 0xFE || pabyHeader[3] != 0x02 )
+    if ((pabyHeader[0] != 0x08 && pabyHeader[0] != 0xC8) ||
+        pabyHeader[1] != 0x09 || pabyHeader[2] != 0xFE || pabyHeader[3] != 0x02)
         return FALSE;
 
     return TRUE;
@@ -91,41 +87,39 @@ int DGNTestOpen( GByte *pabyHeader, int nByteCount )
  * if open fails.
  */
 
-DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
+DGNHandle DGNOpen(const char *pszFilename, int bUpdate)
 
 {
-/* -------------------------------------------------------------------- */
-/*      Open the file.                                                  */
-/* -------------------------------------------------------------------- */
-    VSILFILE *fp = VSIFOpenL( pszFilename, bUpdate ? "rb+" : "rb");
-    if( fp == nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Open the file.                                                  */
+    /* -------------------------------------------------------------------- */
+    VSILFILE *fp = VSIFOpenL(pszFilename, bUpdate ? "rb+" : "rb");
+    if (fp == nullptr)
     {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Unable to open `%s' for read access.\n",
-                  pszFilename );
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "Unable to open `%s' for read access.\n", pszFilename);
         return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Verify the format ... add later.                                */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Verify the format ... add later.                                */
+    /* -------------------------------------------------------------------- */
     GByte abyHeader[512];
     const int nHeaderBytes =
-        static_cast<int>(VSIFReadL( abyHeader, 1, sizeof(abyHeader), fp ));
-    if( !DGNTestOpen( abyHeader, nHeaderBytes ) )
+        static_cast<int>(VSIFReadL(abyHeader, 1, sizeof(abyHeader), fp));
+    if (!DGNTestOpen(abyHeader, nHeaderBytes))
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "File `%s' does not have expected DGN header.\n",
-                  pszFilename );
-        VSIFCloseL( fp );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "File `%s' does not have expected DGN header.\n", pszFilename);
+        VSIFCloseL(fp);
         return nullptr;
     }
 
-    VSIRewindL( fp );
+    VSIRewindL(fp);
 
-/* -------------------------------------------------------------------- */
-/*      Create the info structure.                                      */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Create the info structure.                                      */
+    /* -------------------------------------------------------------------- */
     DGNInfo *psDGN = static_cast<DGNInfo *>(CPLCalloc(sizeof(DGNInfo), 1));
     psDGN->fp = fp;
     psDGN->next_element_id = 0;
@@ -142,7 +136,7 @@ DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
 
     psDGN->got_bounds = false;
 
-    if( abyHeader[0] == 0xC8 )
+    if (abyHeader[0] == 0xC8)
         psDGN->dimension = 3;
     else
         psDGN->dimension = 2;
@@ -152,7 +146,7 @@ DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
     psDGN->select_complex_group = false;
     psDGN->in_complex_group = false;
 
-    return (DGNHandle) psDGN;
+    return (DGNHandle)psDGN;
 }
 
 /************************************************************************/
@@ -177,10 +171,10 @@ DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
  * @param nOptions ORed option flags.
  */
 
-void DGNSetOptions( DGNHandle hDGN, int nOptions )
+void DGNSetOptions(DGNHandle hDGN, int nOptions)
 
 {
-    DGNInfo     *psDGN = (DGNInfo *) hDGN;
+    DGNInfo *psDGN = (DGNInfo *)hDGN;
 
     psDGN->options = nOptions;
 }
@@ -210,15 +204,13 @@ void DGNSetOptions( DGNHandle hDGN, int nOptions )
  * @param dfYMax maximum y coordinate for extents (georeferenced coordinates).
  */
 
-void DGNSetSpatialFilter( DGNHandle hDGN,
-                          double dfXMin, double dfYMin,
-                          double dfXMax, double dfYMax )
+void DGNSetSpatialFilter(DGNHandle hDGN, double dfXMin, double dfYMin,
+                         double dfXMax, double dfYMax)
 
 {
-    DGNInfo *psDGN = (DGNInfo *) hDGN;
+    DGNInfo *psDGN = (DGNInfo *)hDGN;
 
-    if( dfXMin == 0.0 && dfXMax == 0.0
-        && dfYMin == 0.0 && dfYMax == 0.0 )
+    if (dfXMin == 0.0 && dfXMax == 0.0 && dfYMin == 0.0 && dfYMax == 0.0)
     {
         psDGN->has_spatial_filter = false;
         return;
@@ -232,40 +224,31 @@ void DGNSetSpatialFilter( DGNHandle hDGN,
     psDGN->sf_max_x_geo = dfXMax;
     psDGN->sf_max_y_geo = dfYMax;
 
-    DGNSpatialFilterToUOR( psDGN );
+    DGNSpatialFilterToUOR(psDGN);
 }
 
 /************************************************************************/
 /*                       DGNSpatialFilterToUOR()                        */
 /************************************************************************/
 
-void DGNSpatialFilterToUOR( DGNInfo *psDGN )
+void DGNSpatialFilterToUOR(DGNInfo *psDGN)
 
 {
-    if( psDGN->sf_converted_to_uor
-        || !psDGN->has_spatial_filter
-        || !psDGN->got_tcb )
+    if (psDGN->sf_converted_to_uor || !psDGN->has_spatial_filter ||
+        !psDGN->got_tcb)
         return;
 
-    DGNPoint sMin = {
-        psDGN->sf_min_x_geo,
-        psDGN->sf_min_y_geo,
-        0
-    };
+    DGNPoint sMin = {psDGN->sf_min_x_geo, psDGN->sf_min_y_geo, 0};
 
-    DGNPoint sMax = {
-        psDGN->sf_max_x_geo,
-        psDGN->sf_max_y_geo,
-        0
-    };
+    DGNPoint sMax = {psDGN->sf_max_x_geo, psDGN->sf_max_y_geo, 0};
 
-    DGNInverseTransformPoint( psDGN, &sMin );
-    DGNInverseTransformPoint( psDGN, &sMax );
+    DGNInverseTransformPoint(psDGN, &sMin);
+    DGNInverseTransformPoint(psDGN, &sMax);
 
-    psDGN->sf_min_x = (GUInt32) (sMin.x + 2147483648.0);
-    psDGN->sf_min_y = (GUInt32) (sMin.y + 2147483648.0);
-    psDGN->sf_max_x = (GUInt32) (sMax.x + 2147483648.0);
-    psDGN->sf_max_y = (GUInt32) (sMax.y + 2147483648.0);
+    psDGN->sf_min_x = (GUInt32)(sMin.x + 2147483648.0);
+    psDGN->sf_min_y = (GUInt32)(sMin.y + 2147483648.0);
+    psDGN->sf_max_x = (GUInt32)(sMax.x + 2147483648.0);
+    psDGN->sf_max_y = (GUInt32)(sMax.y + 2147483648.0);
 
     psDGN->sf_converted_to_uor = true;
 }
@@ -280,14 +263,14 @@ void DGNSpatialFilterToUOR( DGNInfo *psDGN )
  * @param hDGN Handle from DGNOpen() for file to close.
  */
 
-void DGNClose( DGNHandle hDGN )
+void DGNClose(DGNHandle hDGN)
 
 {
-    DGNInfo     *psDGN = (DGNInfo *) hDGN;
+    DGNInfo *psDGN = (DGNInfo *)hDGN;
 
-    VSIFCloseL( psDGN->fp );
-    CPLFree( psDGN->element_index );
-    CPLFree( psDGN );
+    VSIFCloseL(psDGN->fp);
+    CPLFree(psDGN->element_index);
+    CPLFree(psDGN);
 }
 
 /************************************************************************/
@@ -300,10 +283,10 @@ void DGNClose( DGNHandle hDGN )
  * Return 2 or 3 depending on the dimension value of the provided file.
  */
 
-int DGNGetDimension( DGNHandle hDGN )
+int DGNGetDimension(DGNHandle hDGN)
 
 {
-    DGNInfo     *psDGN = (DGNInfo *) hDGN;
+    DGNInfo *psDGN = (DGNInfo *)hDGN;
 
     return psDGN->dimension;
 }
