@@ -6806,17 +6806,16 @@ bool OGRLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
 /** Get a Arrow C stream.
  *
  * On successful return, and when the stream interfaces is no longer needed, it
-must must
- * be freed with out_stream->release(out_stream). Please carefully read
+ * must be freed with out_stream->release(out_stream). Please carefully read
  * https://arrow.apache.org/docs/format/CStreamInterface.html for more details
  * on using Arrow C stream.
  *
  * The method may take into account ignored fields set with SetIgnoredFields()
  * (the default implementation does), and should take into account filters set
-with
- * SetSpatialFilter() and SetAttributeFilter(). Note however that specialized
- * implementations may fallback to the default (slower) implementation when
- * filters are set. Drivers that have a specialized implementation should
+ * with SetSpatialFilter() and SetAttributeFilter(). Note however that
+ * specialized implementations may fallback to the default (slower)
+ * implementation when filters are set.
+ * Drivers that have a specialized implementation should
  * advertise the OLCFastGetArrowStream capability.
  *
  * There are extra precautions to take into account in a OGR context. Unless
@@ -6827,27 +6826,26 @@ with
  * dataset closing). The reason is that those function pointers will typically
  * point to methods of the OGRLayer instance.
  * However, the ArrowSchema and ArrowArray structures filled from those
-callbacks
- * can be used and must be released independently from the
+ * callbacks can be used and must be released independently from the
  * ArrowArrayStream or the layer.
  *
  * Furthermore, unless otherwise specified by a particular driver
  * implementation, only one ArrowArrayStream can be active at a time on
  * a given layer (that is the last active one must be explicitly released before
  * a next one is asked). Changing filter state, ignored columns, modifying the
-schema
- * or using ResetReading()/GetNextFeature() while using a ArrowArrayStream is
- * strongly discouraged and may lead to unexpected results. As a rule of thumb,
- * no OGRLayer methods that affect the state of a layer should be called on a
- * layer, while an ArrowArrayStream on it is active.
+ * schema or using ResetReading()/GetNextFeature() while using a
+ * ArrowArrayStream is strongly discouraged and may lead to unexpected results.
+ * As a rule of thumb, no OGRLayer methods that affect the state of a layer
+ * should be called on a layer, while an ArrowArrayStream on it is active.
  *
  * A potential usage can be:
 \code{.cpp}
     struct ArrowArrayStream stream;
     if( !OGR_L_GetArrowStream(hLayer, &stream, nullptr))
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "OGR_L_GetArrowStream()
-failed\n"); exit(1);
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGR_L_GetArrowStream() failed\n");
+        exit(1);
     }
     struct ArrowSchema schema;
     if( stream.get_schema(&stream, &schema) == 0 )
