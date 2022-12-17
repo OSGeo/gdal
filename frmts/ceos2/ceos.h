@@ -40,18 +40,18 @@ CPL_C_START
 
 typedef struct Link_t_struct
 {
-  struct Link_t_struct *next;
-  void          *object;
+    struct Link_t_struct *next;
+    void *object;
 } Link_t;
 
 #define HMalloc CPLMalloc
 #define HFree CPLFree
 #define HCalloc CPLCalloc
 
-Link_t *ceos2CreateLink( void * pObject );
+Link_t *ceos2CreateLink(void *pObject);
 Link_t *InsertLink(Link_t *psList, Link_t *psLink);
-void    DestroyList( Link_t *psList );
-Link_t *AddLink( Link_t *psList, Link_t *psLink );
+void DestroyList(Link_t *psList);
+Link_t *AddLink(Link_t *psList, Link_t *psLink);
 
 /* Basic CEOS header defs */
 
@@ -63,8 +63,8 @@ Link_t *AddLink( Link_t *psList, Link_t *psLink );
 /* Defines for CEOS banding type */
 
 #define CEOS_IL_PIXEL 1
-#define CEOS_IL_LINE  2
-#define CEOS_IL_BAND  3
+#define CEOS_IL_LINE 2
+#define CEOS_IL_BAND 3
 
 /* Defines for CEOS data types */
 
@@ -83,16 +83,16 @@ Link_t *AddLink( Link_t *psList, Link_t *psLink );
 #define CEOS_TYP_COMPLEX_LONG 13
 #define CEOS_TYP_COMPLEX_ULONG 14
 #define CEOS_TYP_COMPLEX_FLOAT 15
-#define CEOS_TYP_CCP_COMPLEX_FLOAT 16 /* COMPRESSED CROSS PRODUCT */
+#define CEOS_TYP_CCP_COMPLEX_FLOAT 16    /* COMPRESSED CROSS PRODUCT */
 #define CEOS_TYP_PALSAR_COMPLEX_SHORT 17 /* PALSAR - treat as COMPLEX SHORT*/
 
 /* Defines for CEOS file names */
 
 #define CEOS_VOLUME_DIR_FILE 0
-#define CEOS_LEADER_FILE    1
+#define CEOS_LEADER_FILE 1
 #define CEOS_IMAGRY_OPT_FILE 2
-#define CEOS_TRAILER_FILE    3
-#define CEOS_NULL_VOL_FILE   4
+#define CEOS_TRAILER_FILE 3
+#define CEOS_NULL_VOL_FILE 4
 #define CEOS_ANY_FILE -1
 
 /* Defines for Recipe values */
@@ -121,14 +121,14 @@ Link_t *AddLink( Link_t *psList, Link_t *psLink );
 
 /* Defines for Recipe Types */
 
-#define CEOS_REC_TYP_A  1
-#define CEOS_REC_TYP_B  2
-#define CEOS_REC_TYP_I  3
+#define CEOS_REC_TYP_A 1
+#define CEOS_REC_TYP_B 2
+#define CEOS_REC_TYP_I 3
 
 /* Defines for SAR Embedded info */
 
 #define CEOS_SAR_ACQ_YEAR 1
-#define CEOS_SAR_ACQ_DAY  2
+#define CEOS_SAR_ACQ_DAY 2
 #define CEOS_SAR_ACQ_MSEC 4
 #define CEOS_SAR_TRANS_POL 8
 #define CEOS_SAR_PULSE_REP 16
@@ -148,81 +148,80 @@ Link_t *AddLink( Link_t *psList, Link_t *psLink );
 
 typedef union
 {
-    int32          Int32Code;
+    int32 Int32Code;
     struct
     {
-        uchar      Subtype1;
-        uchar      Type;
-        uchar      Subtype2;
-        uchar      Subtype3;
+        uchar Subtype1;
+        uchar Type;
+        uchar Subtype2;
+        uchar Subtype3;
     } UCharCode;
 } CeosTypeCode_t;
 
 typedef struct
 {
-    int32          Sequence;
+    int32 Sequence;
     CeosTypeCode_t TypeCode;
-    int32          Length;
-    int32          Flavor;
-    int32          Subsequence;
-    int32          FileId;
-    uchar *        Buffer;
+    int32 Length;
+    int32 Flavor;
+    int32 Subsequence;
+    int32 FileId;
+    uchar *Buffer;
 } CeosRecord_t;
 
 struct CeosSARImageDesc
 {
     TBool ImageDescValid;
-    int   NumChannels;
+    int NumChannels;
     int32 ChannelInterleaving;
     int32 DataType;
-    int   BytesPerRecord;
-    int   Lines;
-    int   TopBorderPixels;
-    int   BottomBorderPixels;
-    int   PixelsPerLine;
-    int   LeftBorderPixels;
-    int   RightBorderPixels;
-    int   BytesPerPixel;
-    int   RecordsPerLine;
-    int   PixelsPerRecord;
-    int   ImageDataStart;
-    int   ImageSuffixData;
-    int   FileDescriptorLength;
+    int BytesPerRecord;
+    int Lines;
+    int TopBorderPixels;
+    int BottomBorderPixels;
+    int PixelsPerLine;
+    int LeftBorderPixels;
+    int RightBorderPixels;
+    int BytesPerPixel;
+    int RecordsPerLine;
+    int PixelsPerRecord;
+    int ImageDataStart;
+    int ImageSuffixData;
+    int FileDescriptorLength;
     int32 PixelOrder;
     int32 LineOrder;
-    int   PixelDataBytesPerRecord;
+    int PixelDataBytesPerRecord;
 };
 
 typedef struct
 {
-    int32          Flavor;
-    int32          Sensor;
-    int32          ProductType;
-    int32          FileNamingConvention;
-    TBool          VolumeDirectoryFile;
-    TBool          SARLeaderFile;
-    TBool          ImagryOptionsFile;
-    TBool          SARTrailerFile;
-    TBool          NullVolumeDirectoryFile;
+    int32 Flavor;
+    int32 Sensor;
+    int32 ProductType;
+    int32 FileNamingConvention;
+    TBool VolumeDirectoryFile;
+    TBool SARLeaderFile;
+    TBool ImagryOptionsFile;
+    TBool SARTrailerFile;
+    TBool NullVolumeDirectoryFile;
 
-    struct         CeosSARImageDesc     ImageDesc;
+    struct CeosSARImageDesc ImageDesc;
 
-    Link_t *       RecordList;
+    Link_t *RecordList;
 } CeosSARVolume_t;
 
 typedef struct
 {
-    int            ImageDescValue;
-    int            Override;
-    int            FileId;
-    struct         { unsigned char Subtype1,
-                                   Type,
-                                   Subtype2,
-                                   Subtype3;
-                   } TypeCode;
-    int            Offset;
-    int            Length;
-    int            Type;
+    int ImageDescValue;
+    int Override;
+    int FileId;
+    struct
+    {
+        unsigned char Subtype1, Type, Subtype2, Subtype3;
+    } TypeCode;
+    int Offset;
+    int Length;
+    int Type;
 } CeosRecipeType_t;
 
 typedef struct
@@ -232,23 +231,23 @@ typedef struct
 
 typedef struct
 {
-    int32     ValidFields;
-    TBool     SensorUpdate;
-    int32     AcquisitionYear;
-    int32     AcquisitionDay;
-    int32     AcquisitionMsec;
-    int32     TransmittedPolarization;
-    int32     ReceivedPolarization;
-    int32     PulseRepetitionFrequency;
-    int32     SlantRangeFirstPixel;
-    int32     SlantRangeMidPixel;
-    int32     SlantRangeLastPixel;
+    int32 ValidFields;
+    TBool SensorUpdate;
+    int32 AcquisitionYear;
+    int32 AcquisitionDay;
+    int32 AcquisitionMsec;
+    int32 TransmittedPolarization;
+    int32 ReceivedPolarization;
+    int32 PulseRepetitionFrequency;
+    int32 SlantRangeFirstPixel;
+    int32 SlantRangeMidPixel;
+    int32 SlantRangeLastPixel;
 } CeosSAREmbeddedInfo_t;
 
 typedef struct
 {
-    double Slant[ 6 ];
-    double Lut[ 512 ];
+    double Slant[6];
+    double Lut[512];
     double SemiMajorAxis;
     double PlatformLatitude;
     double CalibrationScale;
@@ -259,11 +258,13 @@ typedef struct
 
 /* Function prototypes */
 
-void InitEmptyCeosRecord(CeosRecord_t *record, int32 sequence, CeosTypeCode_t typecode, int32 length);
+void InitEmptyCeosRecord(CeosRecord_t *record, int32 sequence,
+                         CeosTypeCode_t typecode, int32 length);
 
 void InitCeosRecord(CeosRecord_t *record, uchar *buffer);
 
-void InitCeosRecordWithHeader(CeosRecord_t *record, uchar *header, uchar *buffer);
+void InitCeosRecordWithHeader(CeosRecord_t *record, uchar *header,
+                              uchar *buffer);
 
 int DetermineCeosRecordBodyLength(const uchar *header);
 
@@ -275,53 +276,63 @@ void PutCeosRecordStruct(CeosRecord_t *record, const void *struct_ptr);
 
 void GetCeosField(CeosRecord_t *, int32, const char *, void *);
 
-void SetCeosField(CeosRecord_t *record, int32 start_byte, const char *format, int intValue, double dblValue);
+void SetCeosField(CeosRecord_t *record, int32 start_byte, const char *format,
+                  int intValue, double dblValue);
 
-void SetIntCeosField(CeosRecord_t *record, int32 start_byte, int32 length, int32 value);
+void SetIntCeosField(CeosRecord_t *record, int32 start_byte, int32 length,
+                     int32 value);
 
-CeosRecord_t *FindCeosRecord(Link_t *record_list, CeosTypeCode_t typecode, int32 fileid, int32 flavor, int32 subsequence);
+CeosRecord_t *FindCeosRecord(Link_t *record_list, CeosTypeCode_t typecode,
+                             int32 fileid, int32 flavor, int32 subsequence);
 
 void SerializeCeosRecordsToFile(Link_t *record_list, VSILFILE *fp);
 
-void SerializeCeosRecordsFromFile( Link_t *record_list, VSILFILE *fp );
+void SerializeCeosRecordsFromFile(Link_t *record_list, VSILFILE *fp);
 
-void InitCeosSARVolume( CeosSARVolume_t *volume, int32 file_name_convention );
+void InitCeosSARVolume(CeosSARVolume_t *volume, int32 file_name_convention);
 
-void GetCeosSARImageDesc( CeosSARVolume_t *volume );
+void GetCeosSARImageDesc(CeosSARVolume_t *volume);
 
-void GetCeosSARImageDescInfo(CeosSARVolume_t *volume, CeosSARImageDescRecipe_t *recipe);
+void GetCeosSARImageDescInfo(CeosSARVolume_t *volume,
+                             CeosSARImageDescRecipe_t *recipe);
 
-void CalcCeosSARImageFilePosition(CeosSARVolume_t *volume, int channel, int line, int *record, int *file_offset);
+void CalcCeosSARImageFilePosition(CeosSARVolume_t *volume, int channel,
+                                  int line, int *record, int *file_offset);
 
-int32 GetCeosSARImageData(CeosSARVolume_t *volume, CeosRecord_t *processed_data_record, int channel, int xoff, int xsize, int bufsize, uchar *buffer);
+int32 GetCeosSARImageData(CeosSARVolume_t *volume,
+                          CeosRecord_t *processed_data_record, int channel,
+                          int xoff, int xsize, int bufsize, uchar *buffer);
 
-void DetermineCeosSARPixelOrder(CeosSARVolume_t *volume, CeosRecord_t *record );
+void DetermineCeosSARPixelOrder(CeosSARVolume_t *volume, CeosRecord_t *record);
 
-void GetCeosSAREmbeddedInfo(CeosSARVolume_t *volume, CeosRecord_t *processed_data_record, CeosSAREmbeddedInfo_t *info);
+void GetCeosSAREmbeddedInfo(CeosSARVolume_t *volume,
+                            CeosRecord_t *processed_data_record,
+                            CeosSAREmbeddedInfo_t *info);
 
 void DeleteCeosSARVolume(CeosSARVolume_t *volume);
 
 void RegisterRecipes(void);
 void FreeRecipes(void);
 
-void AddRecipe( int ( *function )( CeosSARVolume_t *volume, const void *token ),
-                const void *token, const char *name );
+void AddRecipe(int (*function)(CeosSARVolume_t *volume, const void *token),
+               const void *token, const char *name);
 
-int CeosDefaultRecipe( CeosSARVolume_t *volume, const void *token );
-int ScanSARRecipeFCN( CeosSARVolume_t *volume, const void *token );
+int CeosDefaultRecipe(CeosSARVolume_t *volume, const void *token);
+int ScanSARRecipeFCN(CeosSARVolume_t *volume, const void *token);
 
 /* ceoscalib.c function declarations */
 
-CeosRadarCalibration_t *GetCeosRadarCalibration( CeosSARVolume_t *volume );
+CeosRadarCalibration_t *GetCeosRadarCalibration(CeosSARVolume_t *volume);
 
 /* CEOS byte swapping stuff */
 
 #if defined(CPL_MSB)
-#define NativeToCeos(a,b,c,d) memcpy(a,b,c)
-#define CeosToNative(a,b,c,d) memcpy(a,b,c)
+#define NativeToCeos(a, b, c, d) memcpy(a, b, c)
+#define CeosToNative(a, b, c, d) memcpy(a, b, c)
 #else
-void NativeToCeos( void *dst, const void *src, const size_t len, const size_t swap_unit);
-#define CeosToNative(a,b,c,d) NativeToCeos(a,b,c,d)
+void NativeToCeos(void *dst, const void *src, const size_t len,
+                  const size_t swap_unit);
+#define CeosToNative(a, b, c, d) NativeToCeos(a, b, c, d)
 #endif
 
 /* Recipe defines */
