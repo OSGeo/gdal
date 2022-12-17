@@ -28,16 +28,21 @@
 #include "wmsdriver.h"
 #include "minidriver_ogcapimaps.h"
 
-
-CPLErr WMSMiniDriver_OGCAPIMaps::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
+CPLErr WMSMiniDriver_OGCAPIMaps::Initialize(CPLXMLNode *config,
+                                            CPL_UNUSED char **papszOpenOptions)
+{
     CPLErr ret = CE_None;
 
     {
         const char *base_url = CPLGetXMLValue(config, "ServerURL", "");
-        if (base_url[0] != '\0') {
+        if (base_url[0] != '\0')
+        {
             m_base_url = base_url;
-        } else {
-            CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS, OGCAPIMaps mini-driver: ServerURL missing.");
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GDALWMS, OGCAPIMaps mini-driver: ServerURL missing.");
             ret = CE_Failure;
         }
     }
@@ -45,22 +50,18 @@ CPLErr WMSMiniDriver_OGCAPIMaps::Initialize(CPLXMLNode *config, CPL_UNUSED char 
     return ret;
 }
 
-CPLErr WMSMiniDriver_OGCAPIMaps::TiledImageRequest(WMSHTTPRequest &request,
-                                            const GDALWMSImageRequestInfo &iri,
-                                            const GDALWMSTiledImageRequestInfo &)
+CPLErr WMSMiniDriver_OGCAPIMaps::TiledImageRequest(
+    WMSHTTPRequest &request, const GDALWMSImageRequestInfo &iri,
+    const GDALWMSTiledImageRequestInfo &)
 {
     CPLString &url = request.URL;
 
     url = m_base_url;
 
     URLPrepare(url);
-    url += CPLOPrintf("width=%d&height=%d&bbox=%.18g,%.18g,%.18g,%.18g",
-                        iri.m_sx,
-                        iri.m_sy,
-                        iri.m_x0,
-                        iri.m_y1,
-                        iri.m_x1,
-                        iri.m_y0);
+    url +=
+        CPLOPrintf("width=%d&height=%d&bbox=%.18g,%.18g,%.18g,%.18g", iri.m_sx,
+                   iri.m_sy, iri.m_x0, iri.m_y1, iri.m_x1, iri.m_y0);
 
     return CE_None;
 }
