@@ -37,25 +37,21 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
-
 /*!
   \brief VFK Data Block constructor
 
   \param pszName data block name
 */
-IVFKDataBlock::IVFKDataBlock( const char *pszName, const IVFKReader *poReader ) :
-    m_papoFeature(nullptr),
-    m_nPropertyCount(0),
-    m_papoProperty(nullptr),
-    m_pszName(CPLStrdup(pszName)),
-    m_bGeometry(false),   // Geometry is not loaded by default.
-    m_nGeometryType(wkbUnknown),
-    m_bGeometryPerBlock(true),    // Load geometry per block/feature.
-    m_nFeatureCount(-1),  // Load data on first request.
-    m_iNextFeature(-1),
-    m_poReader(const_cast<IVFKReader *>(poReader))
+IVFKDataBlock::IVFKDataBlock(const char *pszName, const IVFKReader *poReader)
+    : m_papoFeature(nullptr), m_nPropertyCount(0), m_papoProperty(nullptr),
+      m_pszName(CPLStrdup(pszName)),
+      m_bGeometry(false),  // Geometry is not loaded by default.
+      m_nGeometryType(wkbUnknown),
+      m_bGeometryPerBlock(true),  // Load geometry per block/feature.
+      m_nFeatureCount(-1),        // Load data on first request.
+      m_iNextFeature(-1), m_poReader(const_cast<IVFKReader *>(poReader))
 {
-    m_nRecordCount[RecordValid] = 0L;  // Number of valid records.
+    m_nRecordCount[RecordValid] = 0L;    // Number of valid records.
     m_nRecordCount[RecordSkipped] = 0L;  // Number of skipped (invalid) records.
     m_nRecordCount[RecordDuplicated] = 0L;  // Number of duplicated records.
 }
@@ -67,16 +63,16 @@ IVFKDataBlock::~IVFKDataBlock()
 {
     CPLFree(m_pszName);
 
-    for( int i = 0; i < m_nPropertyCount; i++ )
+    for (int i = 0; i < m_nPropertyCount; i++)
     {
-        if( m_papoProperty[i] )
+        if (m_papoProperty[i])
             delete m_papoProperty[i];
     }
     CPLFree(m_papoProperty);
 
-    for( int i = 0; i < m_nFeatureCount; i++ )
+    for (int i = 0; i < m_nFeatureCount; i++)
     {
-        if( m_papoFeature[i] )
+        if (m_papoFeature[i])
             delete m_papoFeature[i];
     }
     CPLFree(m_papoFeature);
@@ -91,7 +87,7 @@ IVFKDataBlock::~IVFKDataBlock()
 */
 VFKPropertyDefn *IVFKDataBlock::GetProperty(int iIndex) const
 {
-    if(iIndex < 0 || iIndex >= m_nPropertyCount)
+    if (iIndex < 0 || iIndex >= m_nPropertyCount)
         return nullptr;
 
     return m_papoProperty[iIndex];
@@ -106,54 +102,55 @@ void IVFKDataBlock::SetProperties(const char *poLine)
 {
     /* skip data block name */
     const char *poChar = strchr(poLine, ';');
-    if( poChar == nullptr )
+    if (poChar == nullptr)
         return;
 
     poChar++;
 
     /* read property name/type */
-    const char *poProp  = poChar;
+    const char *poProp = poChar;
     char *pszName = nullptr;
     char *pszType = nullptr;
     int nLength = 0;
-    while(*poChar != '\0') {
-        if (*poChar == ' ') {
-            pszName = (char *) CPLRealloc(pszName, nLength + 1);
+    while (*poChar != '\0')
+    {
+        if (*poChar == ' ')
+        {
+            pszName = (char *)CPLRealloc(pszName, nLength + 1);
             strncpy(pszName, poProp, nLength);
             pszName[nLength] = '\0';
 
             poProp = ++poChar;
             nLength = 0;
-            if( *poProp == '\0' )
+            if (*poProp == '\0')
                 break;
         }
-        else if (*poChar == ';') {
-            pszType = (char *) CPLRealloc(pszType, nLength + 1);
+        else if (*poChar == ';')
+        {
+            pszType = (char *)CPLRealloc(pszType, nLength + 1);
             strncpy(pszType, poProp, nLength);
             pszType[nLength] = '\0';
 
             /* add property */
-            if (pszName && *pszName != '\0' &&
-                *pszType != '\0')
+            if (pszName && *pszName != '\0' && *pszType != '\0')
                 AddProperty(pszName, pszType);
 
             poProp = ++poChar;
             nLength = 0;
-            if( *poProp == '\0' )
+            if (*poProp == '\0')
                 break;
         }
         poChar++;
         nLength++;
     }
 
-    pszType = (char *) CPLRealloc(pszType, nLength + 1);
-    if( nLength > 0 )
+    pszType = (char *)CPLRealloc(pszType, nLength + 1);
+    if (nLength > 0)
         strncpy(pszType, poProp, nLength);
     pszType[nLength] = '\0';
 
     /* add property */
-    if (pszName && *pszName != '\0' &&
-        *pszType != '\0')
+    if (pszName && *pszName != '\0' && *pszType != '\0')
         AddProperty(pszName, pszType);
 
     CPLFree(pszName);
@@ -172,19 +169,18 @@ int IVFKDataBlock::AddProperty(const char *pszName, const char *pszType)
 {
     /* Force text attributes to avoid int64 overflow
        see https://github.com/OSGeo/gdal/issues/672 */
-    if( EQUAL( m_pszName, "VLA" ) &&
-        ( EQUAL( pszName, "PODIL_CITATEL" ) ||
-          EQUAL( pszName, "PODIL_JMENOVATEL" ) ) )
+    if (EQUAL(m_pszName, "VLA") &&
+        (EQUAL(pszName, "PODIL_CITATEL") || EQUAL(pszName, "PODIL_JMENOVATEL")))
         pszType = "T30";
 
-    VFKPropertyDefn *poNewProperty = new VFKPropertyDefn(pszName, pszType,
-                                                         m_poReader->GetEncoding());
+    VFKPropertyDefn *poNewProperty =
+        new VFKPropertyDefn(pszName, pszType, m_poReader->GetEncoding());
 
     m_nPropertyCount++;
 
-    m_papoProperty = (VFKPropertyDefn **)
-        CPLRealloc(m_papoProperty, sizeof (VFKPropertyDefn *) * m_nPropertyCount);
-    m_papoProperty[m_nPropertyCount-1] = poNewProperty;
+    m_papoProperty = (VFKPropertyDefn **)CPLRealloc(
+        m_papoProperty, sizeof(VFKPropertyDefn *) * m_nPropertyCount);
+    m_papoProperty[m_nPropertyCount - 1] = poNewProperty;
 
     return m_nPropertyCount;
 }
@@ -196,12 +192,12 @@ int IVFKDataBlock::AddProperty(const char *pszName, const char *pszType)
 
   \return number of features
 */
-GIntBig IVFKDataBlock::GetFeatureCount( bool bForce )
+GIntBig IVFKDataBlock::GetFeatureCount(bool bForce)
 {
-    if( bForce && m_nFeatureCount == -1 )
+    if (bForce && m_nFeatureCount == -1)
     {
         m_poReader->ReadDataRecords(this); /* read VFK data records */
-        if( m_bGeometryPerBlock && !m_bGeometry )
+        if (m_bGeometryPerBlock && !m_bGeometry)
         {
             LoadGeometry(); /* get real number of features */
         }
@@ -218,10 +214,12 @@ GIntBig IVFKDataBlock::GetFeatureCount( bool bForce )
 */
 void IVFKDataBlock::SetFeatureCount(int nNewCount, bool bIncrement)
 {
-    if (bIncrement) {
+    if (bIncrement)
+    {
         m_nFeatureCount += nNewCount;
     }
-    else {
+    else
+    {
         m_nFeatureCount = nNewCount;
     }
 }
@@ -233,10 +231,12 @@ void IVFKDataBlock::SetFeatureCount(int nNewCount, bool bIncrement)
 */
 void IVFKDataBlock::ResetReading(int iIdx)
 {
-    if (iIdx > -1) {
+    if (iIdx > -1)
+    {
         m_iNextFeature = iIdx;
     }
-    else {
+    else
+    {
         m_iNextFeature = 0;
     }
 }
@@ -248,11 +248,13 @@ void IVFKDataBlock::ResetReading(int iIdx)
 */
 IVFKFeature *IVFKDataBlock::GetNextFeature()
 {
-    if (m_nFeatureCount < 0) {
+    if (m_nFeatureCount < 0)
+    {
         m_poReader->ReadDataRecords(this);
     }
 
-    if (m_bGeometryPerBlock && !m_bGeometry) {
+    if (m_bGeometryPerBlock && !m_bGeometry)
+    {
         LoadGeometry();
     }
 
@@ -272,12 +274,14 @@ IVFKFeature *IVFKDataBlock::GetNextFeature()
 */
 IVFKFeature *IVFKDataBlock::GetPreviousFeature()
 {
-    if (m_nFeatureCount < 0) {
+    if (m_nFeatureCount < 0)
+    {
         m_poReader->ReadDataRecords(this);
     }
 
-    if (m_bGeometryPerBlock && !m_bGeometry) {
-       LoadGeometry();
+    if (m_bGeometryPerBlock && !m_bGeometry)
+    {
+        LoadGeometry();
     }
 
     if (m_iNextFeature < 0)
@@ -296,11 +300,13 @@ IVFKFeature *IVFKDataBlock::GetPreviousFeature()
 */
 IVFKFeature *IVFKDataBlock::GetFirstFeature()
 {
-    if (m_nFeatureCount < 0) {
+    if (m_nFeatureCount < 0)
+    {
         m_poReader->ReadDataRecords(this);
     }
 
-    if (m_bGeometryPerBlock && !m_bGeometry) {
+    if (m_bGeometryPerBlock && !m_bGeometry)
+    {
         LoadGeometry();
     }
 
@@ -317,18 +323,20 @@ IVFKFeature *IVFKDataBlock::GetFirstFeature()
 */
 IVFKFeature *IVFKDataBlock::GetLastFeature()
 {
-    if (m_nFeatureCount < 0) {
+    if (m_nFeatureCount < 0)
+    {
         m_poReader->ReadDataRecords(this);
     }
 
-    if (m_bGeometryPerBlock && !m_bGeometry) {
+    if (m_bGeometryPerBlock && !m_bGeometry)
+    {
         LoadGeometry();
     }
 
     if (m_nFeatureCount < 1)
         return nullptr;
 
-    return m_papoFeature[m_nFeatureCount-1];
+    return m_papoFeature[m_nFeatureCount - 1];
 }
 
 /*!
@@ -341,7 +349,7 @@ IVFKFeature *IVFKDataBlock::GetLastFeature()
 int IVFKDataBlock::GetPropertyIndex(const char *pszName) const
 {
     for (int i = 0; i < m_nPropertyCount; i++)
-        if (EQUAL(pszName,m_papoProperty[i]->GetName()))
+        if (EQUAL(pszName, m_papoProperty[i]->GetName()))
             return i;
 
     return -1;
@@ -357,29 +365,24 @@ int IVFKDataBlock::GetPropertyIndex(const char *pszName) const
 OGRwkbGeometryType IVFKDataBlock::SetGeometryType(bool bSuppressGeometry)
 {
     m_nGeometryType = wkbNone; /* pure attribute records */
-    if ( bSuppressGeometry ) {
+    if (bSuppressGeometry)
+    {
         m_bGeometry = true; /* pretend that geometry is already loaded */
 
         return m_nGeometryType;
     }
 
-    if (EQUAL (m_pszName, "SOBR") ||
-        EQUAL (m_pszName, "OBBP") ||
-        EQUAL (m_pszName, "SPOL") ||
-        EQUAL (m_pszName, "OB") ||
-        EQUAL (m_pszName, "OP") ||
-        EQUAL (m_pszName, "OBPEJ"))
+    if (EQUAL(m_pszName, "SOBR") || EQUAL(m_pszName, "OBBP") ||
+        EQUAL(m_pszName, "SPOL") || EQUAL(m_pszName, "OB") ||
+        EQUAL(m_pszName, "OP") || EQUAL(m_pszName, "OBPEJ"))
         m_nGeometryType = wkbPoint;
 
-    else if (EQUAL (m_pszName, "SBP") ||
-             EQUAL (m_pszName, "SBPG") ||
-             EQUAL (m_pszName, "HP") ||
-             EQUAL (m_pszName, "DPM") ||
-             EQUAL (m_pszName, "ZVB"))
+    else if (EQUAL(m_pszName, "SBP") || EQUAL(m_pszName, "SBPG") ||
+             EQUAL(m_pszName, "HP") || EQUAL(m_pszName, "DPM") ||
+             EQUAL(m_pszName, "ZVB"))
         m_nGeometryType = wkbLineString;
 
-    else if (EQUAL (m_pszName, "PAR") ||
-             EQUAL (m_pszName, "BUD"))
+    else if (EQUAL(m_pszName, "PAR") || EQUAL(m_pszName, "BUD"))
         m_nGeometryType = wkbPolygon;
 
     return m_nGeometryType;
@@ -404,7 +407,7 @@ OGRwkbGeometryType IVFKDataBlock::GetGeometryType() const
 */
 IVFKFeature *IVFKDataBlock::GetFeatureByIndex(int iIndex) const
 {
-    if(iIndex < 0 || iIndex >= m_nFeatureCount)
+    if (iIndex < 0 || iIndex >= m_nFeatureCount)
         return nullptr;
 
     return m_papoFeature[iIndex];
@@ -421,18 +424,20 @@ IVFKFeature *IVFKDataBlock::GetFeatureByIndex(int iIndex) const
 */
 IVFKFeature *IVFKDataBlock::GetFeature(GIntBig nFID)
 {
-    if (m_nFeatureCount < 0) {
+    if (m_nFeatureCount < 0)
+    {
         m_poReader->ReadDataRecords(this);
     }
 
     if (nFID < 1 || nFID > m_nFeatureCount)
         return nullptr;
 
-    if (m_bGeometryPerBlock && !m_bGeometry) {
+    if (m_bGeometryPerBlock && !m_bGeometry)
+    {
         LoadGeometry();
     }
 
-    return GetFeatureByIndex(int (nFID) - 1); /* zero-based index */
+    return GetFeatureByIndex(int(nFID) - 1); /* zero-based index */
 }
 
 /*!
@@ -444,42 +449,41 @@ IVFKFeature *IVFKDataBlock::GetFeature(GIntBig nFID)
 */
 int IVFKDataBlock::LoadGeometry()
 {
-    if( m_bGeometry )
+    if (m_bGeometry)
         return 0;
 
     m_bGeometry = true;
     int nInvalid = 0;
 
 #ifdef DEBUG_TIMING
-    const clock_t start       = clock();
+    const clock_t start = clock();
 #endif
 
-    if (m_nFeatureCount < 0) {
+    if (m_nFeatureCount < 0)
+    {
         m_poReader->ReadDataRecords(this);
     }
 
-    if (EQUAL (m_pszName, "SOBR") ||
-        EQUAL (m_pszName, "SPOL") ||
-        EQUAL (m_pszName, "OP") ||
-        EQUAL (m_pszName, "OBPEJ") ||
-        EQUAL (m_pszName, "OB") ||
-        EQUAL (m_pszName, "OBBP")) {
+    if (EQUAL(m_pszName, "SOBR") || EQUAL(m_pszName, "SPOL") ||
+        EQUAL(m_pszName, "OP") || EQUAL(m_pszName, "OBPEJ") ||
+        EQUAL(m_pszName, "OB") || EQUAL(m_pszName, "OBBP"))
+    {
         /* -> wkbPoint */
         nInvalid = LoadGeometryPoint();
     }
-    else if (EQUAL (m_pszName, "SBP") ||
-             EQUAL (m_pszName, "SBPG")) {
+    else if (EQUAL(m_pszName, "SBP") || EQUAL(m_pszName, "SBPG"))
+    {
         /* -> wkbLineString */
         nInvalid = LoadGeometryLineStringSBP();
     }
-    else if (EQUAL (m_pszName, "HP") ||
-             EQUAL (m_pszName, "DPM") ||
-             EQUAL (m_pszName, "ZVB")) {
+    else if (EQUAL(m_pszName, "HP") || EQUAL(m_pszName, "DPM") ||
+             EQUAL(m_pszName, "ZVB"))
+    {
         /* -> wkbLineString */
         nInvalid = LoadGeometryLineStringHP();
     }
-    else if (EQUAL (m_pszName, "PAR") ||
-             EQUAL (m_pszName, "BUD")) {
+    else if (EQUAL(m_pszName, "PAR") || EQUAL(m_pszName, "BUD"))
+    {
         /* -> wkbPolygon */
         nInvalid = LoadGeometryPolygon();
     }
@@ -488,9 +492,11 @@ int IVFKDataBlock::LoadGeometry()
     const clock_t end = clock();
 #endif
 
-    if (nInvalid > 0) {
+    if (nInvalid > 0)
+    {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "%s: %d features with invalid or empty geometry", m_pszName, nInvalid);
+                 "%s: %d features with invalid or empty geometry", m_pszName,
+                 nInvalid);
     }
 
 #ifdef DEBUG_TIMING
@@ -501,12 +507,13 @@ int IVFKDataBlock::LoadGeometry()
     return nInvalid;
 }
 
-void IVFKDataBlock::FillPointList(PointList* poList, const OGRLineString *poLine)
+void IVFKDataBlock::FillPointList(PointList *poList,
+                                  const OGRLineString *poLine)
 {
     poList->reserve(poLine->getNumPoints());
 
     /* OGRLineString -> PointList */
-    for( int i = 0; i < poLine->getNumPoints(); i++ )
+    for (int i = 0; i < poLine->getNumPoints(); i++)
     {
         OGRPoint pt;
         poLine->getPoint(i, &pt);
@@ -524,64 +531,67 @@ void IVFKDataBlock::FillPointList(PointList* poList, const OGRLineString *poLine
 
   \return true on success or false on failure
 */
-bool IVFKDataBlock::AppendLineToRing(PointListArray *papoRing, const OGRLineString *poLine,
-                                     bool bNewRing, bool bBackward)
+bool IVFKDataBlock::AppendLineToRing(PointListArray *papoRing,
+                                     const OGRLineString *poLine, bool bNewRing,
+                                     bool bBackward)
 {
     /* create new ring */
-    if (bNewRing) {
-        PointList* poList = new PointList();
+    if (bNewRing)
+    {
+        PointList *poList = new PointList();
         FillPointList(poList, poLine);
         papoRing->emplace_back(poList);
         return true;
     }
 
-    if( poLine->getNumPoints() < 2)
+    if (poLine->getNumPoints() < 2)
         return false;
     OGRPoint oFirstNew;
     OGRPoint oLastNew;
     poLine->StartPoint(&oFirstNew);
     poLine->EndPoint(&oLastNew);
 
-    for( PointList *ring: *papoRing )
+    for (PointList *ring : *papoRing)
     {
-        const OGRPoint& oFirst = ring->front();
-        const OGRPoint& oLast  = ring->back();
+        const OGRPoint &oFirst = ring->front();
+        const OGRPoint &oLast = ring->back();
 
         if (oFirstNew.getX() == oLast.getX() &&
-            oFirstNew.getY() == oLast.getY()) {
+            oFirstNew.getY() == oLast.getY())
+        {
             PointList oList;
             FillPointList(&oList, poLine);
             /* forward, skip first point */
-            ring->insert(ring->end(), oList.begin()+1, oList.end());
+            ring->insert(ring->end(), oList.begin() + 1, oList.end());
             return true;
         }
 
-        if (bBackward &&
-            oFirstNew.getX() == oFirst.getX() &&
-            oFirstNew.getY() == oFirst.getY()) {
+        if (bBackward && oFirstNew.getX() == oFirst.getX() &&
+            oFirstNew.getY() == oFirst.getY())
+        {
             PointList oList;
             FillPointList(&oList, poLine);
             /* backward, skip last point */
-            ring->insert(ring->begin(), oList.rbegin(), oList.rend()-1);
+            ring->insert(ring->begin(), oList.rbegin(), oList.rend() - 1);
             return true;
         }
 
-        if (oLastNew.getX() == oLast.getX() &&
-            oLastNew.getY() == oLast.getY()) {
+        if (oLastNew.getX() == oLast.getX() && oLastNew.getY() == oLast.getY())
+        {
             PointList oList;
             FillPointList(&oList, poLine);
             /* backward, skip first point */
-            ring->insert(ring->end(), oList.rbegin()+1, oList.rend());
+            ring->insert(ring->end(), oList.rbegin() + 1, oList.rend());
             return true;
         }
 
-        if (bBackward &&
-            oLastNew.getX() == oFirst.getX() &&
-            oLastNew.getY() == oFirst.getY()) {
+        if (bBackward && oLastNew.getX() == oFirst.getX() &&
+            oLastNew.getY() == oFirst.getY())
+        {
             PointList oList;
             FillPointList(&oList, poLine);
             /* forward, skip last point */
-            ring->insert(ring->begin(), oList.begin(), oList.end()-1);
+            ring->insert(ring->begin(), oList.begin(), oList.end() - 1);
             return true;
         }
     }
@@ -598,8 +608,10 @@ bool IVFKDataBlock::AppendLineToRing(PointListArray *papoRing, const OGRLineStri
 */
 int IVFKDataBlock::SetNextFeature(const IVFKFeature *poFeature)
 {
-    for (int i = 0; i < m_nFeatureCount; i++) {
-        if (m_papoFeature[i] == poFeature) {
+    for (int i = 0; i < m_nFeatureCount; i++)
+    {
+        if (m_papoFeature[i] == poFeature)
+        {
             m_iNextFeature = i + 1;
             return i;
         }
@@ -617,9 +629,9 @@ void IVFKDataBlock::AddFeature(IVFKFeature *poNewFeature)
 {
     m_nFeatureCount++;
 
-    m_papoFeature = (IVFKFeature **)
-        CPLRealloc(m_papoFeature, sizeof (IVFKFeature *) * m_nFeatureCount);
-    m_papoFeature[m_nFeatureCount-1] = poNewFeature;
+    m_papoFeature = (IVFKFeature **)CPLRealloc(
+        m_papoFeature, sizeof(IVFKFeature *) * m_nFeatureCount);
+    m_papoFeature[m_nFeatureCount - 1] = poNewFeature;
 }
 
 /*!
@@ -631,7 +643,7 @@ void IVFKDataBlock::AddFeature(IVFKFeature *poNewFeature)
 */
 int IVFKDataBlock::GetRecordCount(RecordType iRec) const
 {
-    return (int) m_nRecordCount[iRec];
+    return (int)m_nRecordCount[iRec];
 }
 
 /*!
@@ -655,17 +667,19 @@ void IVFKDataBlock::SetIncRecordCount(RecordType iRec)
 
   \return pointer to feature definition or NULL on failure (not found)
 */
-VFKFeature *VFKDataBlock::GetFeature(int idx, GUIntBig value, VFKFeatureList *poList)
+VFKFeature *VFKDataBlock::GetFeature(int idx, GUIntBig value,
+                                     VFKFeatureList *poList)
 {
-    if (poList) {
-        for( VFKFeatureList::iterator i = poList->begin(), e = poList->end();
-             i != e;
-             ++i )
+    if (poList)
+    {
+        for (VFKFeatureList::iterator i = poList->begin(), e = poList->end();
+             i != e; ++i)
         {
             VFKFeature *poVfkFeature = *i;
-            const GUIntBig iPropertyValue =
-                strtoul(poVfkFeature->GetProperty(idx)->GetValueS(), nullptr, 0);
-            if (iPropertyValue == value) {
+            const GUIntBig iPropertyValue = strtoul(
+                poVfkFeature->GetProperty(idx)->GetValueS(), nullptr, 0);
+            if (iPropertyValue == value)
+            {
                 poList->erase(i); /* ??? */
                 return poVfkFeature;
             }
@@ -673,12 +687,13 @@ VFKFeature *VFKDataBlock::GetFeature(int idx, GUIntBig value, VFKFeatureList *po
     }
     else
     {
-        for( int i = 0; i < m_nFeatureCount; i++ )
+        for (int i = 0; i < m_nFeatureCount; i++)
         {
-            VFKFeature *poVfkFeature = (VFKFeature *) GetFeatureByIndex(i);
-            const GUIntBig iPropertyValue =
-                strtoul(poVfkFeature->GetProperty(idx)->GetValueS(), nullptr, 0);
-            if (iPropertyValue == value) {
+            VFKFeature *poVfkFeature = (VFKFeature *)GetFeatureByIndex(i);
+            const GUIntBig iPropertyValue = strtoul(
+                poVfkFeature->GetProperty(idx)->GetValueS(), nullptr, 0);
+            if (iPropertyValue == value)
+            {
                 m_iNextFeature = i + 1;
                 return poVfkFeature;
             }
@@ -700,11 +715,13 @@ VFKFeatureList VFKDataBlock::GetFeatures(int idx, GUIntBig value)
 {
     std::vector<VFKFeature *> poResult;
 
-    for (int i = 0; i < m_nFeatureCount; i++) {
-        VFKFeature *poVfkFeature = (VFKFeature *) GetFeatureByIndex(i);
+    for (int i = 0; i < m_nFeatureCount; i++)
+    {
+        VFKFeature *poVfkFeature = (VFKFeature *)GetFeatureByIndex(i);
         const GUIntBig iPropertyValue =
             strtoul(poVfkFeature->GetProperty(idx)->GetValueS(), nullptr, 0);
-        if (iPropertyValue == value) {
+        if (iPropertyValue == value)
+        {
             poResult.push_back(poVfkFeature);
         }
     }
@@ -725,21 +742,24 @@ VFKFeatureList VFKDataBlock::GetFeatures(int idx1, int idx2, GUIntBig value)
 {
     std::vector<VFKFeature *> poResult;
 
-    for( int i = 0; i < m_nFeatureCount; i++ )
+    for (int i = 0; i < m_nFeatureCount; i++)
     {
-        VFKFeature *poVfkFeature = (VFKFeature *) GetFeatureByIndex(i);
+        VFKFeature *poVfkFeature = (VFKFeature *)GetFeatureByIndex(i);
         const GUIntBig iPropertyValue1 =
             strtoul(poVfkFeature->GetProperty(idx1)->GetValueS(), nullptr, 0);
-        if (idx2 < 0) {
-            if (iPropertyValue1 == value) {
+        if (idx2 < 0)
+        {
+            if (iPropertyValue1 == value)
+            {
                 poResult.push_back(poVfkFeature);
             }
         }
         else
         {
-            const GUIntBig iPropertyValue2 =
-                strtoul(poVfkFeature->GetProperty(idx2)->GetValueS(), nullptr, 0);
-            if (iPropertyValue1 == value || iPropertyValue2 == value) {
+            const GUIntBig iPropertyValue2 = strtoul(
+                poVfkFeature->GetProperty(idx2)->GetValueS(), nullptr, 0);
+            if (iPropertyValue1 == value || iPropertyValue2 == value)
+            {
                 poResult.push_back(poVfkFeature);
             }
         }
@@ -763,12 +783,13 @@ GIntBig VFKDataBlock::GetFeatureCount(const char *pszName, const char *pszValue)
         return -1;
 
     int nfeatures = 0;
-    for (int i = 0; i < ((IVFKDataBlock *) this)->GetFeatureCount(); i++) {
+    for (int i = 0; i < ((IVFKDataBlock *)this)->GetFeatureCount(); i++)
+    {
         VFKFeature *poVFKFeature =
-            (VFKFeature *) ((IVFKDataBlock *) this)->GetFeature(i);
+            (VFKFeature *)((IVFKDataBlock *)this)->GetFeature(i);
         if (!poVFKFeature)
             return -1;
-        if (EQUAL (poVFKFeature->GetProperty(propIdx)->GetValueS(), pszValue))
+        if (EQUAL(poVFKFeature->GetProperty(propIdx)->GetValueS(), pszValue))
             nfeatures++;
     }
 
@@ -785,14 +806,16 @@ int VFKDataBlock::LoadGeometryPoint()
     int nInvalid = 0;
     int i_idxY = GetPropertyIndex("SOURADNICE_Y");
     int i_idxX = GetPropertyIndex("SOURADNICE_X");
-    if (i_idxY < 0 || i_idxX < 0) {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Corrupted data (%s).\n", m_pszName);
+    if (i_idxY < 0 || i_idxX < 0)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Corrupted data (%s).\n",
+                 m_pszName);
         return nInvalid;
     }
 
-    for (int j = 0; j < ((IVFKDataBlock *) this)->GetFeatureCount(); j++) {
-        VFKFeature *poFeature = (VFKFeature *) GetFeatureByIndex(j);
+    for (int j = 0; j < ((IVFKDataBlock *)this)->GetFeatureCount(); j++)
+    {
+        VFKFeature *poFeature = (VFKFeature *)GetFeatureByIndex(j);
         double x = -1.0 * poFeature->GetProperty(i_idxY)->GetValueD();
         double y = -1.0 * poFeature->GetProperty(i_idxX)->GetValueD();
         OGRPoint pt(x, y);
@@ -810,36 +833,44 @@ int VFKDataBlock::LoadGeometryPoint()
 */
 int VFKDataBlock::LoadGeometryLineStringSBP()
 {
-    VFKDataBlock *poDataBlockPoints = (VFKDataBlock *) m_poReader->GetDataBlock("SOBR");
-    if (nullptr == poDataBlockPoints) {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Data block %s not found.\n", m_pszName);
+    VFKDataBlock *poDataBlockPoints =
+        (VFKDataBlock *)m_poReader->GetDataBlock("SOBR");
+    if (nullptr == poDataBlockPoints)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Data block %s not found.\n",
+                 m_pszName);
         return 0;
     }
 
     poDataBlockPoints->LoadGeometry();
-    int idxId    = poDataBlockPoints->GetPropertyIndex("ID");
+    int idxId = poDataBlockPoints->GetPropertyIndex("ID");
     int idxBp_Id = GetPropertyIndex("BP_ID");
-    int idxPCB   = GetPropertyIndex("PORADOVE_CISLO_BODU");
-    if (idxId < 0 || idxBp_Id < 0 || idxPCB < 0) {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Corrupted data (%s).\n", m_pszName);
+    int idxPCB = GetPropertyIndex("PORADOVE_CISLO_BODU");
+    if (idxId < 0 || idxBp_Id < 0 || idxPCB < 0)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Corrupted data (%s).\n",
+                 m_pszName);
         return 0;
     }
 
     OGRLineString oOGRLine;
-    VFKFeature   *poLine = nullptr;
+    VFKFeature *poLine = nullptr;
     int nInvalid = 0;
 
-    for (int j = 0; j < ((IVFKDataBlock *) this)->GetFeatureCount(); j++) {
-        VFKFeature *poFeature = (VFKFeature *) GetFeatureByIndex(j);
+    for (int j = 0; j < ((IVFKDataBlock *)this)->GetFeatureCount(); j++)
+    {
+        VFKFeature *poFeature = (VFKFeature *)GetFeatureByIndex(j);
         CPLAssert(nullptr != poFeature);
 
         poFeature->SetGeometry(nullptr);
-        GUIntBig id   = strtoul(poFeature->GetProperty(idxBp_Id)->GetValueS(), nullptr, 0);
-        GUIntBig ipcb = strtoul(poFeature->GetProperty(idxPCB)->GetValueS(), nullptr, 0);
-        if (ipcb == 1) {
-            if (!oOGRLine.IsEmpty()) {
+        GUIntBig id =
+            strtoul(poFeature->GetProperty(idxBp_Id)->GetValueS(), nullptr, 0);
+        GUIntBig ipcb =
+            strtoul(poFeature->GetProperty(idxPCB)->GetValueS(), nullptr, 0);
+        if (ipcb == 1)
+        {
+            if (!oOGRLine.IsEmpty())
+            {
                 oOGRLine.setCoordinateDimension(2); /* force 2D */
                 if (poLine != nullptr && !poLine->SetGeometry(&oOGRLine))
                     nInvalid++;
@@ -847,7 +878,8 @@ int VFKDataBlock::LoadGeometryLineStringSBP()
             }
             poLine = poFeature;
         }
-        else {
+        else
+        {
             poFeature->SetGeometryType(wkbUnknown);
         }
         VFKFeature *poPoint = poDataBlockPoints->GetFeature(idxId, id);
@@ -858,7 +890,8 @@ int VFKDataBlock::LoadGeometryLineStringSBP()
     }
     /* add last line */
     oOGRLine.setCoordinateDimension(2); /* force 2D */
-    if (poLine) {
+    if (poLine)
+    {
         if (!poLine->SetGeometry(&oOGRLine))
             nInvalid++;
     }
@@ -876,11 +909,12 @@ int VFKDataBlock::LoadGeometryLineStringHP()
 {
     int nInvalid = 0;
 
-    VFKDataBlock  *poDataBlockLines
-        = (VFKDataBlock *) m_poReader->GetDataBlock("SBP");
-    if (nullptr == poDataBlockLines) {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Data block %s not found.\n", m_pszName);
+    VFKDataBlock *poDataBlockLines =
+        (VFKDataBlock *)m_poReader->GetDataBlock("SBP");
+    if (nullptr == poDataBlockLines)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Data block %s not found.\n",
+                 m_pszName);
         return nInvalid;
     }
 
@@ -889,21 +923,25 @@ int VFKDataBlock::LoadGeometryLineStringHP()
     CPLString osColumn;
     osColumn.Printf("%s_ID", m_pszName);
     const int idxMy_Id = poDataBlockLines->GetPropertyIndex(osColumn);
-    const int idxPCB = poDataBlockLines->GetPropertyIndex("PORADOVE_CISLO_BODU");
-    if (idxId < 0 || idxMy_Id < 0 || idxPCB < 0) {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Corrupted data (%s).\n", m_pszName);
+    const int idxPCB =
+        poDataBlockLines->GetPropertyIndex("PORADOVE_CISLO_BODU");
+    if (idxId < 0 || idxMy_Id < 0 || idxPCB < 0)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Corrupted data (%s).\n",
+                 m_pszName);
         return nInvalid;
     }
 
     // Reduce to first segment.
     VFKFeatureList poLineList = poDataBlockLines->GetFeatures(idxPCB, 1);
-    for (int i = 0; i < ((IVFKDataBlock *) this)->GetFeatureCount(); i++) {
-        VFKFeature *poFeature = (VFKFeature *) GetFeatureByIndex(i);
+    for (int i = 0; i < ((IVFKDataBlock *)this)->GetFeatureCount(); i++)
+    {
+        VFKFeature *poFeature = (VFKFeature *)GetFeatureByIndex(i);
         CPLAssert(nullptr != poFeature);
-        GUIntBig id = strtoul(poFeature->GetProperty(idxId)->GetValueS(), nullptr, 0);
-        VFKFeature *poLine
-            = poDataBlockLines->GetFeature(idxMy_Id, id, &poLineList);
+        GUIntBig id =
+            strtoul(poFeature->GetProperty(idxId)->GetValueS(), nullptr, 0);
+        VFKFeature *poLine =
+            poDataBlockLines->GetFeature(idxMy_Id, id, &poLineList);
         if (!poLine || !poLine->GetGeometry())
             continue;
         if (!poFeature->SetGeometry(poLine->GetGeometry()))
@@ -925,30 +963,34 @@ int VFKDataBlock::LoadGeometryPolygon()
     VFKDataBlock *poDataBlockLines2 = nullptr;
 
     bool bIsPar = false;
-    if (EQUAL (m_pszName, "PAR")) {
-        poDataBlockLines1 = (VFKDataBlock *) m_poReader->GetDataBlock("HP");
+    if (EQUAL(m_pszName, "PAR"))
+    {
+        poDataBlockLines1 = (VFKDataBlock *)m_poReader->GetDataBlock("HP");
         poDataBlockLines2 = poDataBlockLines1;
         bIsPar = true;
     }
-    else {
-        poDataBlockLines1 = (VFKDataBlock *) m_poReader->GetDataBlock("OB");
-        poDataBlockLines2 = (VFKDataBlock *) m_poReader->GetDataBlock("SBP");
+    else
+    {
+        poDataBlockLines1 = (VFKDataBlock *)m_poReader->GetDataBlock("OB");
+        poDataBlockLines2 = (VFKDataBlock *)m_poReader->GetDataBlock("SBP");
         bIsPar = false;
     }
 
     int nInvalid = 0;
-    if (nullptr == poDataBlockLines1 || nullptr == poDataBlockLines2) {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Data block %s not found.\n", m_pszName);
+    if (nullptr == poDataBlockLines1 || nullptr == poDataBlockLines2)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Data block %s not found.\n",
+                 m_pszName);
         return nInvalid;
     }
 
     poDataBlockLines1->LoadGeometry();
     poDataBlockLines2->LoadGeometry();
     int idxId = GetPropertyIndex("ID");
-    if (idxId < 0) {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Corrupted data (%s).\n", m_pszName);
+    if (idxId < 0)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Corrupted data (%s).\n",
+                 m_pszName);
         return nInvalid;
     }
 
@@ -957,23 +999,26 @@ int VFKDataBlock::LoadGeometryPolygon()
     int idxIdOb = 0;
     int idxPar1 = 0;
     int idxPar2 = 0;
-    if( bIsPar )
+    if (bIsPar)
     {
         idxPar1 = poDataBlockLines1->GetPropertyIndex("PAR_ID_1");
         idxPar2 = poDataBlockLines1->GetPropertyIndex("PAR_ID_2");
-        if (idxPar1 < 0 || idxPar2 < 0) {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "Corrupted data (%s).\n", m_pszName);
+        if (idxPar1 < 0 || idxPar2 < 0)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported, "Corrupted data (%s).\n",
+                     m_pszName);
             return nInvalid;
         }
     }
-    else { /* BUD */
-        idxIdOb  = poDataBlockLines1->GetPropertyIndex("ID");
+    else
+    { /* BUD */
+        idxIdOb = poDataBlockLines1->GetPropertyIndex("ID");
         idxBud = poDataBlockLines1->GetPropertyIndex("BUD_ID");
-        idxOb  = poDataBlockLines2->GetPropertyIndex("OB_ID");
-        if (idxIdOb < 0 || idxBud < 0 || idxOb < 0) {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "Corrupted data (%s).\n", m_pszName);
+        idxOb = poDataBlockLines2->GetPropertyIndex("OB_ID");
+        if (idxIdOb < 0 || idxBud < 0 || idxOb < 0)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported, "Corrupted data (%s).\n",
+                     m_pszName);
             return nInvalid;
         }
     }
@@ -983,23 +1028,29 @@ int VFKDataBlock::LoadGeometryPolygon()
     OGRLinearRing ogrRing;
     OGRPolygon ogrPolygon;
 
-    for( int i = 0; i < ((IVFKDataBlock *) this)->GetFeatureCount(); i++ )
+    for (int i = 0; i < ((IVFKDataBlock *)this)->GetFeatureCount(); i++)
     {
-        VFKFeature *poFeature = (VFKFeature *) GetFeatureByIndex(i);
+        VFKFeature *poFeature = (VFKFeature *)GetFeatureByIndex(i);
         CPLAssert(nullptr != poFeature);
         const GUIntBig id =
             strtoul(poFeature->GetProperty(idxId)->GetValueS(), nullptr, 0);
-        if (bIsPar) {
+        if (bIsPar)
+        {
             poLineList = poDataBlockLines1->GetFeatures(idxPar1, idxPar2, id);
         }
-        else {
+        else
+        {
             VFKFeature *poLineOb, *poLineSbp;
             std::vector<VFKFeature *> poLineListOb;
             poLineListOb = poDataBlockLines1->GetFeatures(idxBud, id);
-            for (std::vector<VFKFeature *>::const_iterator iOb = poLineListOb.begin(), eOb = poLineListOb.end();
-                 iOb != eOb; ++iOb) {
+            for (std::vector<VFKFeature *>::const_iterator
+                     iOb = poLineListOb.begin(),
+                     eOb = poLineListOb.end();
+                 iOb != eOb; ++iOb)
+            {
                 poLineOb = (*iOb);
-                GUIntBig idOb = strtoul(poLineOb->GetProperty(idxIdOb)->GetValueS(), nullptr, 0);
+                GUIntBig idOb = strtoul(
+                    poLineOb->GetProperty(idxIdOb)->GetValueS(), nullptr, 0);
                 poLineSbp = poDataBlockLines2->GetFeature(idxOb, idOb);
                 if (poLineSbp)
                     poLineList.push_back(poLineSbp);
@@ -1016,13 +1067,18 @@ int VFKDataBlock::LoadGeometryPolygon()
         bool bFound = false;
         int nCount = 0;
         int nCountMax = static_cast<int>(poLineList.size()) * 2;
-        while (!poLineList.empty() && nCount < nCountMax) {
+        while (!poLineList.empty() && nCount < nCountMax)
+        {
             bool bNewRing = !bFound;
             bFound = false;
-            for (VFKFeatureList::iterator iHp = poLineList.begin(), eHp = poLineList.end();
-                 iHp != eHp; ++iHp) {
+            for (VFKFeatureList::iterator iHp = poLineList.begin(),
+                                          eHp = poLineList.end();
+                 iHp != eHp; ++iHp)
+            {
                 auto pGeom = (*iHp)->GetGeometry();
-                if (pGeom && AppendLineToRing(&poRingList, pGeom->toLineString(), bNewRing)) {
+                if (pGeom && AppendLineToRing(&poRingList,
+                                              pGeom->toLineString(), bNewRing))
+                {
                     bFound = true;
                     poLineList.erase(iHp);
                     break;
@@ -1031,12 +1087,16 @@ int VFKDataBlock::LoadGeometryPolygon()
             nCount++;
         }
         /* create rings */
-        for (PointListArray::const_iterator iRing = poRingList.begin(), eRing = poRingList.end();
-             iRing != eRing; ++iRing) {
+        for (PointListArray::const_iterator iRing = poRingList.begin(),
+                                            eRing = poRingList.end();
+             iRing != eRing; ++iRing)
+        {
             PointList *poList = *iRing;
             ogrRing.empty();
-            for (PointList::iterator iPoint = poList->begin(), ePoint = poList->end();
-                 iPoint != ePoint; ++iPoint) {
+            for (PointList::iterator iPoint = poList->begin(),
+                                     ePoint = poList->end();
+                 iPoint != ePoint; ++iPoint)
+            {
                 ogrRing.addPoint(&(*iPoint));
             }
             ogrPolygon.addRing(&ogrRing);
@@ -1049,7 +1109,9 @@ int VFKDataBlock::LoadGeometryPolygon()
 
     /* free ring list */
     for (PointListArray::iterator iRing = poRingList.begin(),
-             eRing = poRingList.end(); iRing != eRing; ++iRing) {
+                                  eRing = poRingList.end();
+         iRing != eRing; ++iRing)
+    {
         delete (*iRing);
         *iRing = nullptr;
     }
