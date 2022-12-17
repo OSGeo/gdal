@@ -34,13 +34,13 @@
 
 class OGR2SQLITEModule;
 
-OGR2SQLITEModule* OGR2SQLITE_Setup(GDALDataset* poDS,
-                                   OGRSQLiteDataSource* poSQLiteDS);
+OGR2SQLITEModule *OGR2SQLITE_Setup(GDALDataset *poDS,
+                                   OGRSQLiteDataSource *poSQLiteDS);
 
-int OGR2SQLITE_AddExtraDS(OGR2SQLITEModule* poModule, OGRDataSource* poDS);
+int OGR2SQLITE_AddExtraDS(OGR2SQLITEModule *poModule, OGRDataSource *poDS);
 
 void OGR2SQLITE_Register();
 
-CPLString OGR2SQLITE_GetNameForGeometryColumn(OGRLayer* poLayer);
+CPLString OGR2SQLITE_GetNameForGeometryColumn(OGRLayer *poLayer);
 
-#endif // OGR_SQLITE_VIRTUAL_OGR_H_INCLUDED
+#endif  // OGR_SQLITE_VIRTUAL_OGR_H_INCLUDED
