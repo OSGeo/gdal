@@ -6,7 +6,8 @@
  * Author:   Norman Barker, ITT VIS, norman.barker@gmail.com
  *
  ******************************************************************************
- * ITT Visual Information Systems grants you use of this code, under the following license:
+ * ITT Visual Information Systems grants you use of this code, under the
+following license:
  *
  * Copyright (c) 2000-2007, ITT Visual Information Solutions
  *
@@ -41,8 +42,8 @@
 #include <time.h>
 
 #if KDU_MAJOR_VERSION > 7 || (KDU_MAJOR_VERSION == 7 && KDU_MINOR_VERSION >= 5)
-    using namespace kdu_core;
-    using namespace kdu_supp;
+using namespace kdu_core;
+using namespace kdu_supp;
 #endif
 
 static void JPIPWorkerFunc(void *);
@@ -54,36 +55,91 @@ static void JPIPWorkerFunc(void *);
 /************************************************************************/
 class JPIPDataSegment
 {
-private:
+  private:
     long nId;
     long nAux;
     long nClassId;
     long nCodestream;
     long nOffset;
     long nLen;
-    GByte* pabyData;
+    GByte *pabyData;
     int bIsFinal;
     int bIsEOR;
-public:
-    long GetId() const {return nId;}
-    long GetAux() const {return nAux;}
-    long GetClassId() const {return nClassId;}
-    long GetCodestreamIdx() const {return nCodestream;}
-    long GetOffset() const {return nOffset;}
-    long GetLen() const {return nLen;}
-    GByte* GetData(){return pabyData;}
-    int IsFinal() const {return bIsFinal;}
-    int IsEOR() const {return bIsEOR;}
 
-    void SetId(long nIdIn){this->nId = nIdIn;}
-    void SetAux(long nAuxIn){this->nAux = nAuxIn;}
-    void SetClassId(long nClassIdIn){this->nClassId = nClassIdIn;}
-    void SetCodestreamIdx(long nCodestreamIn){this->nCodestream = nCodestreamIn;}
-    void SetOffset(long nOffsetIn){this->nOffset = nOffsetIn;}
-    void SetLen(long nLenIn){this->nLen = nLenIn;}
-    void SetData(GByte* pabyDataIn){this->pabyData = pabyDataIn;}
-    void SetFinal(int bIsFinalIn){this->bIsFinal = bIsFinalIn;}
-    void SetEOR(int bIsEORIn){this->bIsEOR = bIsEORIn;}
+  public:
+    long GetId() const
+    {
+        return nId;
+    }
+    long GetAux() const
+    {
+        return nAux;
+    }
+    long GetClassId() const
+    {
+        return nClassId;
+    }
+    long GetCodestreamIdx() const
+    {
+        return nCodestream;
+    }
+    long GetOffset() const
+    {
+        return nOffset;
+    }
+    long GetLen() const
+    {
+        return nLen;
+    }
+    GByte *GetData()
+    {
+        return pabyData;
+    }
+    int IsFinal() const
+    {
+        return bIsFinal;
+    }
+    int IsEOR() const
+    {
+        return bIsEOR;
+    }
+
+    void SetId(long nIdIn)
+    {
+        this->nId = nIdIn;
+    }
+    void SetAux(long nAuxIn)
+    {
+        this->nAux = nAuxIn;
+    }
+    void SetClassId(long nClassIdIn)
+    {
+        this->nClassId = nClassIdIn;
+    }
+    void SetCodestreamIdx(long nCodestreamIn)
+    {
+        this->nCodestream = nCodestreamIn;
+    }
+    void SetOffset(long nOffsetIn)
+    {
+        this->nOffset = nOffsetIn;
+    }
+    void SetLen(long nLenIn)
+    {
+        this->nLen = nLenIn;
+    }
+    void SetData(GByte *pabyDataIn)
+    {
+        this->pabyData = pabyDataIn;
+    }
+    void SetFinal(int bIsFinalIn)
+    {
+        this->bIsFinal = bIsFinalIn;
+    }
+    void SetEOR(int bIsEORIn)
+    {
+        this->bIsEOR = bIsEORIn;
+    }
     JPIPDataSegment();
     ~JPIPDataSegment();
 };
@@ -94,13 +150,13 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class JPIPKAKDataset final: public GDALPamDataset
+class JPIPKAKDataset final : public GDALPamDataset
 {
-private:
-    int       bNeedReinitialize = FALSE;
+  private:
+    int bNeedReinitialize = FALSE;
     CPLString osRequestUrl;
-    char* pszPath = nullptr;
-    char* pszCid = nullptr;
+    char *pszPath = nullptr;
+    char *pszCid = nullptr;
     OGRSpatialReference m_oSRS{};
 
     int nPos = 0;
@@ -130,15 +186,16 @@ private:
     kdu_region_decompressor *poDecompressor = nullptr;
     kdu_cache *poCache = nullptr;
 
-    long ReadVBAS(GByte* pabyData, int nLen);
-    JPIPDataSegment* ReadSegment(GByte* pabyData, int nLen, int& bError);
-    int Initialize(const char* url, int bReinitializing );
+    long ReadVBAS(GByte *pabyData, int nLen);
+    JPIPDataSegment *ReadSegment(GByte *pabyData, int nLen, int &bError);
+    int Initialize(const char *url, int bReinitializing);
     void Deinitialize();
     static int KakaduClassId(int nClassId);
 
     CPLMutex *pGlobalMutex = nullptr;
 
-    // support two communication threads to the server, a main and an overview thread
+    // support two communication threads to the server, a main and an overview
+    // thread
     volatile int bHighThreadRunning = 0;
     volatile int bLowThreadRunning = 0;
     volatile int bHighThreadFinished = 0;
@@ -150,46 +207,51 @@ private:
 
     static void KakaduInitialize();
 
-public:
+  public:
     JPIPKAKDataset();
     virtual ~JPIPKAKDataset();
 
     // progressive methods
-    virtual GDALAsyncReader* BeginAsyncReader(int xOff, int yOff,
-                                              int xSize, int ySize,
-                                              void *pBuf,
-                                              int bufXSize, int bufYSize,
-                                              GDALDataType bufType,
-                                              int nBandCount, int* bandMap,
-                                              int nPixelSpace, int nLineSpace,
-                                              int nBandSpace,
-                                              char **papszOptions) override;
+    virtual GDALAsyncReader *
+    BeginAsyncReader(int xOff, int yOff, int xSize, int ySize, void *pBuf,
+                     int bufXSize, int bufYSize, GDALDataType bufType,
+                     int nBandCount, int *bandMap, int nPixelSpace,
+                     int nLineSpace, int nBandSpace,
+                     char **papszOptions) override;
 
     virtual void EndAsyncReader(GDALAsyncReader *) override;
-    int GetNQualityLayers() const {return nQualityLayers;}
-    int GetNResolutionLevels() const {return nResLevels;}
-    int GetNComponents() const {return nComps;}
+    int GetNQualityLayers() const
+    {
+        return nQualityLayers;
+    }
+    int GetNResolutionLevels() const
+    {
+        return nResLevels;
+    }
+    int GetNComponents() const
+    {
+        return nComps;
+    }
 
-    int ReadFromInput(GByte* pabyData, int nLen, int& bError );
+    int ReadFromInput(GByte *pabyData, int nLen, int &bError);
 
-    int TestUseBlockIO( int nXOff, int nYOff, int nXSize, int nYSize,
-                        int nBufXSize, int nBufYSize, GDALDataType eDataType,
-                        int nBandCount, const int *panBandList ) const;
+    int TestUseBlockIO(int nXOff, int nYOff, int nXSize, int nYSize,
+                       int nBufXSize, int nBufYSize, GDALDataType eDataType,
+                       int nBandCount, const int *panBandList) const;
 
-    //gdaldataset methods
-    virtual CPLErr GetGeoTransform( double * ) override;
-    const OGRSpatialReference* GetSpatialRef() const override;
-    virtual int    GetGCPCount() override;
-    const OGRSpatialReference* GetGCPSpatialRef() const override;
+    // gdaldataset methods
+    virtual CPLErr GetGeoTransform(double *) override;
+    const OGRSpatialReference *GetSpatialRef() const override;
+    virtual int GetGCPCount() override;
+    const OGRSpatialReference *GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
-    virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
-                              int nXOff, int nYOff, int nXSize, int nYSize,
-                              void * pData, int nBufXSize, int nBufYSize,
-                              GDALDataType eBufType,
-                              int nBandCount, int *panBandMap,
-                              GSpacing nPixelSpace, GSpacing nLineSpace,
-                              GSpacing nBandSpace,
-                              GDALRasterIOExtraArg* psExtraArg) override;
+    virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                             int nXSize, int nYSize, void *pData, int nBufXSize,
+                             int nBufYSize, GDALDataType eBufType,
+                             int nBandCount, int *panBandMap,
+                             GSpacing nPixelSpace, GSpacing nLineSpace,
+                             GSpacing nBandSpace,
+                             GDALRasterIOExtraArg *psExtraArg) override;
 
     static GDALDataset *Open(GDALOpenInfo *);
     static const GByte JPIP_EOR_IMAGE_DONE = 1;
@@ -202,7 +264,7 @@ public:
 
     friend class JPIPKAKAsyncReader;
     friend class JPIPKAKRasterBand;
-    friend void JPIPWorkerFunc(void*);
+    friend void JPIPWorkerFunc(void *);
 };
 
 /************************************************************************/
@@ -211,17 +273,17 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class JPIPKAKRasterBand final: public GDALPamRasterBand
+class JPIPKAKRasterBand final : public GDALPamRasterBand
 {
     friend class JPIPKAKDataset;
 
     JPIPKAKDataset *poBaseDS;
 
-    int         nDiscardLevels;
+    int nDiscardLevels;
 
-    kdu_dims    band_dims;
+    kdu_dims band_dims;
 
-    int         nOverviewCount;
+    int nOverviewCount;
     JPIPKAKRasterBand **papoOverviewBand;
 
     kdu_codestream *oCodeStream;
@@ -229,20 +291,18 @@ class JPIPKAKRasterBand final: public GDALPamRasterBand
     GDALColorTable oCT;
     GDALColorInterp eInterp;
 
-public:
-
-    JPIPKAKRasterBand( int, int, kdu_codestream *, int,
-                       JPIPKAKDataset * );
+  public:
+    JPIPKAKRasterBand(int, int, kdu_codestream *, int, JPIPKAKDataset *);
     virtual ~JPIPKAKRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
-    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
-                              void *, int, int, GDALDataType,
-                              GSpacing nPixelSpace, GSpacing nLineSpace,
-                              GDALRasterIOExtraArg* psExtraArg ) override;
+    virtual CPLErr IReadBlock(int, int, void *) override;
+    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                             GDALDataType, GSpacing nPixelSpace,
+                             GSpacing nLineSpace,
+                             GDALRasterIOExtraArg *psExtraArg) override;
 
-    virtual int    GetOverviewCount() override;
-    virtual GDALRasterBand *GetOverview( int ) override;
+    virtual int GetOverviewCount() override;
+    virtual GDALRasterBand *GetOverview(int) override;
 };
 
 /************************************************************************/
@@ -251,11 +311,11 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class JPIPKAKAsyncReader final: public GDALAsyncReader
+class JPIPKAKAsyncReader final : public GDALAsyncReader
 {
-private:
+  private:
     void *pAppBuf;
-    int  nAppPixelSpace, nAppLineSpace, nAppBandSpace;
+    int nAppPixelSpace, nAppLineSpace, nAppBandSpace;
 
     int nDataRead;
     int nLevel;
@@ -265,25 +325,26 @@ private:
     kdu_channel_mapping channels;
     kdu_coords exp_numerator, exp_denominator;
 
-    kdu_dims rr_win; // user requested window expressed on reduced res level
+    kdu_dims rr_win;  // user requested window expressed on reduced res level
 
     void Start();
     void Stop();
 
-public:
+  public:
     JPIPKAKAsyncReader();
     virtual ~JPIPKAKAsyncReader();
 
-    virtual GDALAsyncStatusType GetNextUpdatedRegion(double timeout,
-                                                     int* pnxbufoff,
-                                                     int* pnybufoff,
-                                                     int* pnxbufsize,
-                                                     int* pnybufsize) override;
-    void SetComplete(int bFinished){this->bComplete = bFinished;}
+    virtual GDALAsyncStatusType
+    GetNextUpdatedRegion(double timeout, int *pnxbufoff, int *pnybufoff,
+                         int *pnxbufsize, int *pnybufsize) override;
+    void SetComplete(int bFinished)
+    {
+        this->bComplete = bFinished;
+    }
 
     friend class JPIPKAKDataset;
 
-    CPLString  osErrorMsg;
+    CPLString osErrorMsg;
 };
 
 /************************************************************************/
@@ -295,5 +356,5 @@ struct JPIPRequest
 {
     int bPriority;
     CPLString osRequest;
-    JPIPKAKAsyncReader* poARIO;
+    JPIPKAKAsyncReader *poARIO;
 };
