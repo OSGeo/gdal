@@ -2205,16 +2205,18 @@ class CPL_DLL GDALIHasAttribute
 /*                               GDALGroup                              */
 /* ******************************************************************** */
 
+/* clang-format off */
 /**
  * Class modeling a named container of GDALAttribute, GDALMDArray, OGRLayer or
  * other GDALGroup. Hence GDALGroup can describe a hierarchy of objects.
  *
- * This is based on the <a
- * href="https://portal.opengeospatial.org/files/81716#_hdf5_group">HDF5 group
+ * This is based on the <a href="https://portal.opengeospatial.org/files/81716#_hdf5_group">HDF5 group
  * concept</a>
  *
  * @since GDAL 3.1
  */
+/* clang-format on */
+
 class CPL_DLL GDALGroup : public GDALIHasAttribute
 {
   protected:
@@ -2408,27 +2410,30 @@ class CPL_DLL GDALAbstractMDArray
     virtual std::vector<size_t>
     GetProcessingChunkSize(size_t nMaxChunkMemory) const;
 
+    /* clang-format off */
     /** Type of pfnFunc argument of ProcessPerChunk().
      * @param array Array on which ProcessPerChunk was called.
      * @param chunkArrayStartIdx Values representing the starting index to use
-     *                           in each dimension (in [0,
-     * aoDims[i].GetSize()-1] range) for the current chunk. Will be nullptr for
-     * a zero-dimensional array.
-     * @param chunkCount         Values representing the number of values to use
-     * in each dimension for the current chunk. Will be nullptr for a
-     * zero-dimensional array.
+     *                           in each dimension (in [0, aoDims[i].GetSize()-1] range)
+     *                           for the current chunk.
+     *                           Will be nullptr for a zero-dimensional array.
+     * @param chunkCount         Values representing the number of values to use in
+     *                           each dimension for the current chunk.
+     *                           Will be nullptr for a zero-dimensional array.
      * @param iCurChunk          Number of current chunk being processed.
      *                           In [1, nChunkCount] range.
      * @param nChunkCount        Total number of chunks to process.
      * @param pUserData          User data.
      * @return return true in case of success.
      */
-    typedef bool (*FuncProcessPerChunkType)(GDALAbstractMDArray *array,
-                                            const GUInt64 *chunkArrayStartIdx,
-                                            const size_t *chunkCount,
-                                            GUInt64 iCurChunk,
-                                            GUInt64 nChunkCount,
-                                            void *pUserData);
+    typedef bool (*FuncProcessPerChunkType)(
+                        GDALAbstractMDArray *array,
+                        const GUInt64 *chunkArrayStartIdx,
+                        const size_t *chunkCount,
+                        GUInt64 iCurChunk,
+                        GUInt64 nChunkCount,
+                        void *pUserData);
+    /* clang-format on */
 
     virtual bool ProcessPerChunk(const GUInt64 *arrayStartIdx,
                                  const GUInt64 *count, const size_t *chunkSize,
@@ -2513,18 +2518,20 @@ class CPL_DLL GDALRawResult
 /*                              GDALAttribute                           */
 /* ******************************************************************** */
 
+/* clang-format off */
 /**
  * Class modeling an attribute that has a name, a value and a type, and is
  * typically used to describe a metadata item. The value can be (for the
  * HDF5 format) in the general case a multidimensional array of "any" type
  * (in most cases, this will be a single value of string or numeric type)
  *
- * This is based on the <a
- * href="https://portal.opengeospatial.org/files/81716#_hdf5_attribute">HDF5
+ * This is based on the <a href="https://portal.opengeospatial.org/files/81716#_hdf5_attribute">HDF5
  * attribute concept</a>
  *
  * @since GDAL 3.1
  */
+/* clang-format on */
+
 class CPL_DLL GDALAttribute : virtual public GDALAbstractMDArray
 {
     mutable std::string m_osCachedVal{};
@@ -2624,16 +2631,18 @@ class CPL_DLL GDALAttributeNumeric final : public GDALAttribute
 /*                              GDALMDArray                             */
 /* ******************************************************************** */
 
+/* clang-format off */
 /**
  * Class modeling a multi-dimensional array. It has a name, values organized
  * as an array and a list of GDALAttribute.
  *
- * This is based on the <a
- * href="https://portal.opengeospatial.org/files/81716#_hdf5_dataset">HDF5
+ * This is based on the <a href="https://portal.opengeospatial.org/files/81716#_hdf5_dataset">HDF5
  * dataset concept</a>
  *
  * @since GDAL 3.1
  */
+/* clang-format on */
+
 class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
                             public GDALIHasAttribute
 {

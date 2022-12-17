@@ -686,11 +686,12 @@ static double AdjustNoDataValue(double dfInputNoDataValue,
 /*                             GDALTranslate()                          */
 /************************************************************************/
 
+/* clang-format off */
 /**
  * Converts raster data between different formats.
  *
- * This is the equivalent of the <a
- * href="/programs/gdal_translate.html">gdal_translate</a> utility.
+ * This is the equivalent of the
+ * <a href="/programs/gdal_translate.html">gdal_translate</a> utility.
  *
  * GDALTranslateOptions* must be allocated and freed with
  * GDALTranslateOptionsNew() and GDALTranslateOptionsFree() respectively.
@@ -706,6 +707,7 @@ static double AdjustNoDataValue(double dfInputNoDataValue,
  *
  * @since GDAL 2.1
  */
+/* clang-format on */
 
 GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                            const GDALTranslateOptions *psOptionsIn,

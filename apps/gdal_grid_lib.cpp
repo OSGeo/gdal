@@ -592,11 +592,12 @@ static OGRGeometryCollection *LoadGeometry(const char *pszDS,
 /*                               GDALGrid()                             */
 /************************************************************************/
 
+/* clang-format off */
 /**
  * Create raster from the scattered data.
  *
- * This is the equivalent of the <a
- * href="/programs/gdal_grid.html">gdal_grid</a> utility.
+ * This is the equivalent of the
+ * <a href="/programs/gdal_grid.html">gdal_grid</a> utility.
  *
  * GDALGridOptions* must be allocated and freed with GDALGridOptionsNew()
  * and GDALGridOptionsFree() respectively.
@@ -612,6 +613,7 @@ static OGRGeometryCollection *LoadGeometry(const char *pszDS,
  *
  * @since GDAL 2.1
  */
+/* clang-format on */
 
 GDALDatasetH GDALGrid(const char *pszDest, GDALDatasetH hSrcDataset,
                       const GDALGridOptions *psOptionsIn, int *pbUsageError)
