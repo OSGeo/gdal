@@ -30,7 +30,6 @@
 #include "ogr_oci.h"
 #include "cpl_conv.h"
 
-
 /************************************************************************/
 /*                          OGROCIStringBuf()                           */
 /************************************************************************/
@@ -38,7 +37,7 @@
 OGROCIStringBuf::OGROCIStringBuf()
 {
     nBufSize = 25;
-    pszString = (char *) CPLMalloc(nBufSize);
+    pszString = (char *)CPLMalloc(nBufSize);
     nLen = 0;
     pszString[0] = '\0';
 }
@@ -50,22 +49,22 @@ OGROCIStringBuf::OGROCIStringBuf()
 OGROCIStringBuf::~OGROCIStringBuf()
 
 {
-    CPLFree( pszString );
+    CPLFree(pszString);
 }
 
 /************************************************************************/
 /*                            MakeRoomFor()                             */
 /************************************************************************/
 
-void OGROCIStringBuf::MakeRoomFor( int nCharacters )
+void OGROCIStringBuf::MakeRoomFor(int nCharacters)
 
 {
     UpdateEnd();
 
-    if( nLen + nCharacters > nBufSize - 2 )
+    if (nLen + nCharacters > nBufSize - 2)
     {
-        nBufSize = (int) ((nLen + nCharacters) * 1.3);
-        pszString = (char *) CPLRealloc(pszString,nBufSize);
+        nBufSize = (int)((nLen + nCharacters) * 1.3);
+        pszString = (char *)CPLRealloc(pszString, nBufSize);
     }
 }
 
@@ -73,13 +72,13 @@ void OGROCIStringBuf::MakeRoomFor( int nCharacters )
 /*                               Append()                               */
 /************************************************************************/
 
-void OGROCIStringBuf::Append( const char *pszNewText )
+void OGROCIStringBuf::Append(const char *pszNewText)
 
 {
-    int  nNewLen = static_cast<int>(strlen(pszNewText));
+    int nNewLen = static_cast<int>(strlen(pszNewText));
 
-    MakeRoomFor( nNewLen );
-    strcat( pszString+nLen, pszNewText );
+    MakeRoomFor(nNewLen);
+    strcat(pszString + nLen, pszNewText);
     nLen += nNewLen;
 }
 
@@ -87,15 +86,15 @@ void OGROCIStringBuf::Append( const char *pszNewText )
 /*                              Appendf()                               */
 /************************************************************************/
 
-void OGROCIStringBuf::Appendf( int nMax, const char *pszFormat, ... )
+void OGROCIStringBuf::Appendf(int nMax, const char *pszFormat, ...)
 
 {
     va_list args;
-    char    szSimpleBuf[100];
-    char    *pszBuffer;
+    char szSimpleBuf[100];
+    char *pszBuffer;
 
-    if( nMax > (int) sizeof(szSimpleBuf)-1 )
-        pszBuffer = (char *) CPLMalloc(nMax+1);
+    if (nMax > (int)sizeof(szSimpleBuf) - 1)
+        pszBuffer = (char *)CPLMalloc(nMax + 1);
     else
         pszBuffer = szSimpleBuf;
 
@@ -103,9 +102,9 @@ void OGROCIStringBuf::Appendf( int nMax, const char *pszFormat, ... )
     CPLvsnprintf(pszBuffer, nMax, pszFormat, args);
     va_end(args);
 
-    Append( pszBuffer );
-    if( pszBuffer != szSimpleBuf )
-        CPLFree( pszBuffer );
+    Append(pszBuffer);
+    if (pszBuffer != szSimpleBuf)
+        CPLFree(pszBuffer);
 }
 
 /************************************************************************/
@@ -115,7 +114,7 @@ void OGROCIStringBuf::Appendf( int nMax, const char *pszFormat, ... )
 void OGROCIStringBuf::UpdateEnd()
 
 {
-    nLen += static_cast<int>(strlen(pszString+nLen));
+    nLen += static_cast<int>(strlen(pszString + nLen));
 }
 
 /************************************************************************/
@@ -128,7 +127,7 @@ char *OGROCIStringBuf::StealString()
     char *pszStolenString = pszString;
 
     nBufSize = 100;
-    pszString = (char *) CPLMalloc(nBufSize);
+    pszString = (char *)CPLMalloc(nBufSize);
     nLen = 0;
 
     return pszStolenString;
@@ -141,8 +140,8 @@ char *OGROCIStringBuf::StealString()
 char OGROCIStringBuf::GetLast()
 
 {
-    if( nLen != 0 )
-        return pszString[nLen-1];
+    if (nLen != 0)
+        return pszString[nLen - 1];
     else
         return '\0';
 }
