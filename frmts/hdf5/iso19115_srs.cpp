@@ -40,19 +40,18 @@
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
 
-
 /************************************************************************/
 /*                     OGR_SRS_ImportFromISO19115()                     */
 /************************************************************************/
 
-OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
-                                   const char *pszISOXML )
+OGRErr OGR_SRS_ImportFromISO19115(OGRSpatialReference *poThis,
+                                  const char *pszISOXML)
 
 {
     // Parse the XML into tree form.
     CPLXMLNode *psRoot = CPLParseXMLString(pszISOXML);
 
-    if( psRoot == nullptr )
+    if (psRoot == nullptr)
         return OGRERR_FAILURE;
 
     CPLStripXMLNamespace(psRoot, nullptr, TRUE);
@@ -61,7 +60,7 @@ OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
     // format (see ons_fsd.pdf: Metadata Dataset Character String
     // Constants).
     CPLXMLNode *psRSI = CPLSearchXMLNode(psRoot, "=referenceSystemInfo");
-    if( psRSI == nullptr )
+    if (psRSI == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unable to find <referenceSystemInfo> in metadata.");
@@ -76,8 +75,8 @@ OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
     const char *pszDatum =
         CPLGetXMLValue(psRSI, "MD_CRS.datum.RS_Identifier.code", "");
 
-    if( strlen(pszDatum) > 0 &&
-        poThis->SetWellKnownGeogCS(pszDatum) != OGRERR_NONE )
+    if (strlen(pszDatum) > 0 &&
+        poThis->SetWellKnownGeogCS(pszDatum) != OGRERR_NONE)
     {
         CPLDestroyXMLNode(psRoot);
         return OGRERR_FAILURE;
@@ -87,7 +86,7 @@ OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
     const char *pszProjection =
         CPLGetXMLValue(psRSI, "MD_CRS.projection.RS_Identifier.code", "");
 
-    if( EQUAL(pszProjection, "UTM") )
+    if (EQUAL(pszProjection, "UTM"))
     {
         int nZone = atoi(CPLGetXMLValue(
             psRSI, "MD_CRS.projectionParameters.MD_ProjectionParameters.zone",
@@ -98,19 +97,20 @@ OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
         // code checked for negative zones, but it isn't clear if any actual
         // files use that.
         int bNorth = nZone > 0;
-        if( bNorth )
+        if (bNorth)
         {
             const char *pszFalseNorthing =
-                CPLGetXMLValue(psRSI, "MD_CRS.projectionParameters.MD_"
-                                      "ProjectionParameters.falseNorthing",
+                CPLGetXMLValue(psRSI,
+                               "MD_CRS.projectionParameters.MD_"
+                               "ProjectionParameters.falseNorthing",
                                "");
-            if( strlen(pszFalseNorthing) > 0 )
+            if (strlen(pszFalseNorthing) > 0)
             {
-                if( CPLAtof(pszFalseNorthing) == 0.0 )
+                if (CPLAtof(pszFalseNorthing) == 0.0)
                 {
                     bNorth = TRUE;
                 }
-                else if( CPLAtof(pszFalseNorthing) == 10000000.0 )
+                else if (CPLAtof(pszFalseNorthing) == 10000000.0)
                 {
                     bNorth = FALSE;
                 }
@@ -124,12 +124,12 @@ OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
         }
         poThis->SetUTM(std::abs(nZone), bNorth);
     }
-    else if( EQUAL(pszProjection, "Geodetic") )
+    else if (EQUAL(pszProjection, "Geodetic"))
     {
         const char *pszEllipsoid =
             CPLGetXMLValue(psRSI, "MD_CRS.ellipsoid.RS_Identifier.code", "");
 
-        if( !EQUAL(pszDatum, "WGS84") || !EQUAL(pszEllipsoid, "WGS84") )
+        if (!EQUAL(pszDatum, "WGS84") || !EQUAL(pszEllipsoid, "WGS84"))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "ISO 19115 parser does not support custom GCS.");
@@ -139,11 +139,11 @@ OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
     }
     else
     {
-        if( !EQUAL(pszProjection, "") )
+        if (!EQUAL(pszProjection, ""))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                    "projection = %s not recognised by ISO 19115 parser.",
-                    pszProjection);
+                     "projection = %s not recognised by ISO 19115 parser.",
+                     pszProjection);
         }
         CPLDestroyXMLNode(psRoot);
         return OGRERR_FAILURE;
