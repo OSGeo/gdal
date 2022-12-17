@@ -30,18 +30,15 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-
 /************************************************************************/
 /*                          OGRSDTSDataSource()                          */
 /************************************************************************/
 
-OGRSDTSDataSource::OGRSDTSDataSource() :
-    poTransfer(nullptr),
-    pszName(nullptr),
-    nLayers(0),
-    papoLayers(nullptr),
-    poSRS(nullptr)
-{}
+OGRSDTSDataSource::OGRSDTSDataSource()
+    : poTransfer(nullptr), pszName(nullptr), nLayers(0), papoLayers(nullptr),
+      poSRS(nullptr)
+{
+}
 
 /************************************************************************/
 /*                         ~OGRSDTSDataSource()                          */
@@ -50,17 +47,17 @@ OGRSDTSDataSource::OGRSDTSDataSource() :
 OGRSDTSDataSource::~OGRSDTSDataSource()
 
 {
-    for( int i = 0; i < nLayers; i++ )
+    for (int i = 0; i < nLayers; i++)
         delete papoLayers[i];
 
-    CPLFree( papoLayers );
+    CPLFree(papoLayers);
 
-    CPLFree( pszName );
+    CPLFree(pszName);
 
-    if( poSRS )
+    if (poSRS)
         poSRS->Release();
 
-    if( poTransfer )
+    if (poTransfer)
         delete poTransfer;
 }
 
@@ -68,7 +65,7 @@ OGRSDTSDataSource::~OGRSDTSDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSDTSDataSource::TestCapability( const char * )
+int OGRSDTSDataSource::TestCapability(const char *)
 
 {
     return FALSE;
@@ -78,10 +75,10 @@ int OGRSDTSDataSource::TestCapability( const char * )
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRSDTSDataSource::GetLayer( int iLayer )
+OGRLayer *OGRSDTSDataSource::GetLayer(int iLayer)
 
 {
-    if( iLayer < 0 || iLayer >= nLayers )
+    if (iLayer < 0 || iLayer >= nLayers)
         return nullptr;
     else
         return papoLayers[iLayer];
@@ -91,50 +88,50 @@ OGRLayer *OGRSDTSDataSource::GetLayer( int iLayer )
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
+int OGRSDTSDataSource::Open(const char *pszFilename, int bTestOpen)
 
 {
-    pszName = CPLStrdup( pszFilename );
+    pszName = CPLStrdup(pszFilename);
 
-/* -------------------------------------------------------------------- */
-/*      Verify that the extension is DDF if we are testopening.         */
-/* -------------------------------------------------------------------- */
-    if( bTestOpen && !(strlen(pszFilename) > 4 &&
-        EQUAL(pszFilename+strlen(pszFilename)-4,".ddf")) )
+    /* -------------------------------------------------------------------- */
+    /*      Verify that the extension is DDF if we are testopening.         */
+    /* -------------------------------------------------------------------- */
+    if (bTestOpen && !(strlen(pszFilename) > 4 &&
+                       EQUAL(pszFilename + strlen(pszFilename) - 4, ".ddf")))
         return FALSE;
 
-/* -------------------------------------------------------------------- */
-/*      Check a few bits of the header to see if it looks like an       */
-/*      SDTS file (really, if it looks like an ISO8211 file).           */
-/* -------------------------------------------------------------------- */
-    if( bTestOpen )
+    /* -------------------------------------------------------------------- */
+    /*      Check a few bits of the header to see if it looks like an       */
+    /*      SDTS file (really, if it looks like an ISO8211 file).           */
+    /* -------------------------------------------------------------------- */
+    if (bTestOpen)
     {
-        VSILFILE *fp = VSIFOpenL( pszFilename, "rb" );
-        if( fp == nullptr )
+        VSILFILE *fp = VSIFOpenL(pszFilename, "rb");
+        if (fp == nullptr)
             return FALSE;
 
         char pachLeader[10] = {};
-        if( VSIFReadL( pachLeader, 1, 10, fp ) != 10
-            || (pachLeader[5] != '1' && pachLeader[5] != '2'
-                && pachLeader[5] != '3' )
-            || pachLeader[6] != 'L'
-            || (pachLeader[8] != '1' && pachLeader[8] != ' ') )
+        if (VSIFReadL(pachLeader, 1, 10, fp) != 10 ||
+            (pachLeader[5] != '1' && pachLeader[5] != '2' &&
+             pachLeader[5] != '3') ||
+            pachLeader[6] != 'L' ||
+            (pachLeader[8] != '1' && pachLeader[8] != ' '))
         {
-            VSIFCloseL( fp );
+            VSIFCloseL(fp);
             return FALSE;
         }
 
-        VSIFCloseL( fp );
+        VSIFCloseL(fp);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Create a transfer, and open it.                                 */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Create a transfer, and open it.                                 */
+    /* -------------------------------------------------------------------- */
     poTransfer = new SDTSTransfer();
 
     GUInt32 nInitialErrorCounter = CPLGetErrorCounter();
-    if( !poTransfer->Open( pszFilename ) ||
-        CPLGetErrorCounter() > nInitialErrorCounter + 100 )
+    if (!poTransfer->Open(pszFilename) ||
+        CPLGetErrorCounter() > nInitialErrorCounter + 100)
     {
         delete poTransfer;
         poTransfer = nullptr;
@@ -142,53 +139,52 @@ int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
         return FALSE;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Initialize the projection.                                      */
-/* -------------------------------------------------------------------- */
-    SDTS_XREF   *poXREF = poTransfer->GetXREF();
+    /* -------------------------------------------------------------------- */
+    /*      Initialize the projection.                                      */
+    /* -------------------------------------------------------------------- */
+    SDTS_XREF *poXREF = poTransfer->GetXREF();
 
     poSRS = new OGRSpatialReference();
     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-    if( EQUAL(poXREF->pszSystemName,"UTM") )
+    if (EQUAL(poXREF->pszSystemName, "UTM"))
     {
-        poSRS->SetUTM( poXREF->nZone, TRUE );
+        poSRS->SetUTM(poXREF->nZone, TRUE);
     }
 
-    if( EQUAL(poXREF->pszDatum,"NAS") )
-        poSRS->SetGeogCS("NAD27", "North_American_Datum_1927",
-                         "Clarke 1866", 6378206.4, 294.978698213901 );
+    if (EQUAL(poXREF->pszDatum, "NAS"))
+        poSRS->SetGeogCS("NAD27", "North_American_Datum_1927", "Clarke 1866",
+                         6378206.4, 294.978698213901);
 
-    else if( EQUAL(poXREF->pszDatum,"NAX") )
-        poSRS->SetGeogCS("NAD83", "North_American_Datum_1983",
-                         "GRS 1980", 6378137, 298.257222101 );
+    else if (EQUAL(poXREF->pszDatum, "NAX"))
+        poSRS->SetGeogCS("NAD83", "North_American_Datum_1983", "GRS 1980",
+                         6378137, 298.257222101);
 
-    else if( EQUAL(poXREF->pszDatum,"WGC") )
-        poSRS->SetGeogCS("WGS 72", "WGS_1972", "NWL 10D", 6378135, 298.26 );
+    else if (EQUAL(poXREF->pszDatum, "WGC"))
+        poSRS->SetGeogCS("WGS 72", "WGS_1972", "NWL 10D", 6378135, 298.26);
 
     else /* if( EQUAL(poXREF->pszDatum,"WGE") ) or default case */
-        poSRS->SetGeogCS("WGS 84", "WGS_1984",
-                         "WGS 84", 6378137, 298.257223563 );
+        poSRS->SetGeogCS("WGS 84", "WGS_1984", "WGS 84", 6378137,
+                         298.257223563);
 
-/* -------------------------------------------------------------------- */
-/*      Initialize a layer for each source dataset layer.               */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Initialize a layer for each source dataset layer.               */
+    /* -------------------------------------------------------------------- */
 
-    for( int iLayer = 0; iLayer < poTransfer->GetLayerCount(); iLayer++ )
+    for (int iLayer = 0; iLayer < poTransfer->GetLayerCount(); iLayer++)
     {
-        if( poTransfer->GetLayerType( iLayer ) == SLTRaster )
+        if (poTransfer->GetLayerType(iLayer) == SLTRaster)
             continue;
 
-        SDTSIndexedReader *poReader =
-            poTransfer->GetLayerIndexedReader( iLayer );
-        if( poReader == nullptr )
+        SDTSIndexedReader *poReader = poTransfer->GetLayerIndexedReader(iLayer);
+        if (poReader == nullptr)
             continue;
-        if( CPLGetErrorCounter() > nInitialErrorCounter + 100 )
+        if (CPLGetErrorCounter() > nInitialErrorCounter + 100)
             return FALSE;
 
-        papoLayers = (OGRSDTSLayer **)
-            CPLRealloc( papoLayers, sizeof(void*) * ++nLayers );
-        papoLayers[nLayers-1] = new OGRSDTSLayer( poTransfer, iLayer, this );
+        papoLayers =
+            (OGRSDTSLayer **)CPLRealloc(papoLayers, sizeof(void *) * ++nLayers);
+        papoLayers[nLayers - 1] = new OGRSDTSLayer(poTransfer, iLayer, this);
     }
 
     return TRUE;
