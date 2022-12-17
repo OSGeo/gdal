@@ -28,15 +28,13 @@
 
 #include "ogr_avc.h"
 
-
 /************************************************************************/
 /*                          OGRAVCDataSource()                          */
 /************************************************************************/
 
-OGRAVCDataSource::OGRAVCDataSource() :
-    poSRS(nullptr),
-    pszCoverageName(nullptr)
-{}
+OGRAVCDataSource::OGRAVCDataSource() : poSRS(nullptr), pszCoverageName(nullptr)
+{
+}
 
 /************************************************************************/
 /*                         ~OGRAVCDataSource()                          */
@@ -45,9 +43,9 @@ OGRAVCDataSource::OGRAVCDataSource() :
 OGRAVCDataSource::~OGRAVCDataSource()
 
 {
-    if( poSRS )
+    if (poSRS)
         poSRS->Release();
-    CPLFree( pszCoverageName );
+    CPLFree(pszCoverageName);
 }
 
 /************************************************************************/
@@ -67,7 +65,7 @@ OGRSpatialReference *OGRAVCDataSource::DSGetSpatialRef()
 const char *OGRAVCDataSource::GetCoverageName()
 
 {
-    if( pszCoverageName == nullptr )
+    if (pszCoverageName == nullptr)
         return "";
 
     return pszCoverageName;
