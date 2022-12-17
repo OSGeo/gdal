@@ -38,19 +38,18 @@
 
 class KMLVector : public KML
 {
-public:
+  public:
     ~KMLVector();
 
     // Container - FeatureContainer - Feature
-    bool isFeature(std::string const& sIn) const override;
-    bool isFeatureContainer(std::string const& sIn) const override;
-    bool isContainer(std::string const& sIn) const override;
-    bool isLeaf(std::string const& sIn) const override;
-    bool isRest(std::string const& sIn) const override;
-    void findLayers(KMLNode* poNode, int bKeepEmptyContainers) override;
+    bool isFeature(std::string const &sIn) const override;
+    bool isFeatureContainer(std::string const &sIn) const override;
+    bool isContainer(std::string const &sIn) const override;
+    bool isLeaf(std::string const &sIn) const override;
+    bool isRest(std::string const &sIn) const override;
+    void findLayers(KMLNode *poNode, int bKeepEmptyContainers) override;
 };
 
-#endif // HAVE_EXPAT
+#endif  // HAVE_EXPAT
 
 #endif /* OGR_KMLVECTOR_H_INCLUDED */
-
