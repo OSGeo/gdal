@@ -1180,23 +1180,23 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
                 double dfXMinFromFile;
                 VSIFReadL(&dfXMinFromFile, 1, sizeof(dfXMinFromFile),
                           m_fpTable);
-                fprintf(stderr, "%f %f\n", dfXMinFromFile,
-                        poField->m_dfXMin); /*ok*/
+                fprintf(stderr, "%f %f\n", dfXMinFromFile, /*ok*/
+                        poField->m_dfXMin);
                 double dfYMinFromFile;
                 VSIFReadL(&dfYMinFromFile, 1, sizeof(dfYMinFromFile),
                           m_fpTable);
-                fprintf(stderr, "%f %f\n", dfYMinFromFile,
-                        poField->m_dfYMin); /*ok*/
+                fprintf(stderr, "%f %f\n", dfYMinFromFile, /*ok*/
+                        poField->m_dfYMin);
                 double dfXMaxFromFile;
                 VSIFReadL(&dfXMaxFromFile, 1, sizeof(dfXMaxFromFile),
                           m_fpTable);
-                fprintf(stderr, "%f %f\n", dfXMaxFromFile,
-                        poField->m_dfXMax); /*ok*/
+                fprintf(stderr, "%f %f\n", dfXMaxFromFile, /*ok*/
+                        poField->m_dfXMax);
                 double dfYMaxFromFile;
                 VSIFReadL(&dfYMaxFromFile, 1, sizeof(dfYMaxFromFile),
                           m_fpTable);
-                fprintf(stderr, "%f %f\n", dfYMaxFromFile,
-                        poField->m_dfYMax); /*ok*/
+                fprintf(stderr, "%f %f\n", dfYMaxFromFile, /*ok*/
+                        poField->m_dfYMax);
                 VSIFSeekL(m_fpTable, nCurrentPos, SEEK_SET);
 #endif
                 if (m_bGeomTypeHasZ)

@@ -193,8 +193,8 @@ void GDALDatasetPool::ShowContent()
     int i = 0;
     while (cur)
     {
-        printf("[%d] pszFileName=%s, owner=%s, refCount=%d, "
-               "responsiblePID=%d\n", /*ok*/
+        printf("[%d] pszFileName=%s, owner=%s, refCount=%d, " /*ok*/
+               "responsiblePID=%d\n",
                i, cur->pszFileNameAndOpenOptions,
                cur->pszOwner ? cur->pszOwner : "(null)", cur->refCount,
                (int)cur->responsiblePID);

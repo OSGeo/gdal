@@ -2788,9 +2788,9 @@ CPLErr L1BSolarZenithAnglesRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
         {
             GByte val = pabyRecordHeader[poL1BDS->nRecordDataEnd + i];
             for (int j = 0; j < 8; j++)
-                fprintf(stderr, "%c",
-                        ((val >> (7 - j)) & 1) ? '1' : '0'); /*ok*/
-            fprintf(stderr, " ");                            /*ok*/
+                fprintf(stderr, "%c", /*ok*/
+                        ((val >> (7 - j)) & 1) ? '1' : '0');
+            fprintf(stderr, " "); /*ok*/
         }
         fprintf(stderr, "\n"); /*ok*/
     }

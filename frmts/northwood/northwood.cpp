@@ -504,9 +504,8 @@ void nwtPrintGridHeader(NWT_GRID *pGrd)
 
     if (!(pGrd->cFormat & 0x80))  // print the numeric specific stuff
     {
-        printf("\nMin Z = %f Max Z = %f Z Units = %d \"%s\"",
-               pGrd->fZMin, /*ok*/
-               pGrd->fZMax, pGrd->iZUnits, pGrd->cZUnits);
+        printf("\nMin Z = %f Max Z = %f Z Units = %d \"%s\"", /*ok*/
+               pGrd->fZMin, pGrd->fZMax, pGrd->iZUnits, pGrd->cZUnits);
 
         printf("\n\nDisplay Mode ="); /*ok*/
         if (pGrd->bShowGradient)

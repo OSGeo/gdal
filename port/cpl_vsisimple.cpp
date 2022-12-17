@@ -507,8 +507,8 @@ void *VSICalloc(size_t nCount, size_t nSize)
 #ifdef DEBUG_VSIMALLOC_VERBOSE
         if (nMul > THRESHOLD_PRINT)
         {
-            fprintf(stderr,
-                    "Thread[%p] VSICalloc(%d,%d) = %p" /*ok*/
+            fprintf(stderr, /*ok*/
+                    "Thread[%p] VSICalloc(%d,%d) = %p"
 #ifdef DEBUG_VSIMALLOC_STATS
                     ", current_cumul = " CPL_FRMT_GUIB
 #ifdef DEBUG_BLOCK_CACHE_USE
@@ -614,8 +614,8 @@ void *VSIMalloc(size_t nSize)
 #ifdef DEBUG_VSIMALLOC_VERBOSE
         if (nSize > THRESHOLD_PRINT)
         {
-            fprintf(stderr,
-                    "Thread[%p] VSIMalloc(%d) = %p" /*ok*/
+            fprintf(stderr, /*ok*/
+                    "Thread[%p] VSIMalloc(%d) = %p"
 #ifdef DEBUG_VSIMALLOC_STATS
                     ", current_cumul = " CPL_FRMT_GUIB
 #ifdef DEBUG_BLOCK_CACHE_USE
