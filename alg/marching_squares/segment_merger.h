@@ -35,11 +35,12 @@
 
 #include <iostream>
 
-namespace marching_squares {
+namespace marching_squares
+{
 
-// SegmentMerger: join segments into linestrings and possibly into rings of polygons
-template <typename LineWriter, typename LevelGenerator>
-struct SegmentMerger
+// SegmentMerger: join segments into linestrings and possibly into rings of
+// polygons
+template <typename LineWriter, typename LevelGenerator> struct SegmentMerger
 {
     struct LineStringEx
     {
@@ -48,30 +49,32 @@ struct SegmentMerger
     };
     // a collection of unmerged linestrings
     typedef std::list<LineStringEx> Lines;
-    
-    SegmentMerger( LineWriter& lineWriter, const LevelGenerator& levelGenerator, bool polygonize_ )
-        : polygonize( polygonize_ )
-        , lineWriter_( lineWriter )
-        , lines_()
-        , levelGenerator_(levelGenerator)
-    {}
+
+    SegmentMerger(LineWriter &lineWriter, const LevelGenerator &levelGenerator,
+                  bool polygonize_)
+        : polygonize(polygonize_), lineWriter_(lineWriter), lines_(),
+          levelGenerator_(levelGenerator)
+    {
+    }
 
     ~SegmentMerger()
     {
-        if ( polygonize )
+        if (polygonize)
         {
-            for (auto it =lines_.begin(); it!=lines_.end(); ++it) {
-                if ( ! it->second.empty() )
+            for (auto it = lines_.begin(); it != lines_.end(); ++it)
+            {
+                if (!it->second.empty())
                     debug("remaining unclosed contour");
             }
         }
         // write all remaining (non-closed) lines
-        for (auto it = lines_.begin(); it!=lines_.end(); ++it)
+        for (auto it = lines_.begin(); it != lines_.end(); ++it)
         {
             const int levelIdx = it->first;
             while (it->second.begin() != it->second.end())
             {
-                lineWriter_.addLine( levelGenerator_.level( levelIdx ), it->second.begin()->ls, /* closed */ false );
+                lineWriter_.addLine(levelGenerator_.level(levelIdx),
+                                    it->second.begin()->ls, /* closed */ false);
                 it->second.pop_front();
             }
         }
@@ -89,11 +92,14 @@ struct SegmentMerger
 
     void beginningOfLine()
     {
-        if ( polygonize ) return;
+        if (polygonize)
+            return;
 
         // mark lines as non merged
-        for ( auto& l : lines_ ) {
-            for ( auto& ls : l.second ) {
+        for (auto &l : lines_)
+        {
+            for (auto &ls : l.second)
+            {
                 ls.isMerged = false;
             }
         }
@@ -101,22 +107,28 @@ struct SegmentMerger
 
     void endOfLine()
     {
-        if ( polygonize ) return;
+        if (polygonize)
+            return;
 
-        // At the end of the line, we know that if no segment has been merged to an
-        // existing line, it means there won't be anything more in the future,
-        // we can then emit the line (this both speeds up and saves memory)
+        // At the end of the line, we know that if no segment has been merged to
+        // an existing line, it means there won't be anything more in the
+        // future, we can then emit the line (this both speeds up and saves
+        // memory)
 
-        for ( auto& l : lines_ ) {
+        for (auto &l : lines_)
+        {
             const int levelIdx = l.first;
             auto it = l.second.begin();
-            while ( it != l.second.end() ) {
-                if ( ! it->isMerged ) {
-                    // Note that emitLine_ erases `it` and returns an iterator advanced
-                    // to the next element.
-                    it = emitLine_( levelIdx, it, /* closed */ false );
+            while (it != l.second.end())
+            {
+                if (!it->isMerged)
+                {
+                    // Note that emitLine_ erases `it` and returns an iterator
+                    // advanced to the next element.
+                    it = emitLine_(levelIdx, it, /* closed */ false);
                 }
-                else {
+                else
+                {
                     ++it;
                 }
             }
@@ -124,19 +136,21 @@ struct SegmentMerger
     }
 
     // non copyable
-    SegmentMerger( const SegmentMerger<LineWriter, LevelGenerator>& ) = delete;
-    SegmentMerger<LineWriter, LevelGenerator>& operator=( const SegmentMerger<LineWriter, LevelGenerator>& ) = delete;
+    SegmentMerger(const SegmentMerger<LineWriter, LevelGenerator> &) = delete;
+    SegmentMerger<LineWriter, LevelGenerator> &
+    operator=(const SegmentMerger<LineWriter, LevelGenerator> &) = delete;
 
     const bool polygonize;
-private:
+
+  private:
     LineWriter &lineWriter_;
     // lines of each level
-    std::map< int, Lines > lines_;
+    std::map<int, Lines> lines_;
     const LevelGenerator &levelGenerator_;
 
     void addSegment_(int levelIdx, const Point &start, const Point &end)
     {
-        Lines& lines = lines_[levelIdx];
+        Lines &lines = lines_[levelIdx];
 
         if (start == end)
         {
@@ -145,25 +159,29 @@ private:
         }
         // attempt to merge segment with existing line
         auto it = lines.begin();
-        for(; it != lines.end(); ++it)
+        for (; it != lines.end(); ++it)
         {
-            if ( it->ls.back() == end ) {
-                it->ls.push_back( start );
+            if (it->ls.back() == end)
+            {
+                it->ls.push_back(start);
                 it->isMerged = true;
                 break;
             }
-            if ( it->ls.front() == end ) {
-                it->ls.push_front( start );
+            if (it->ls.front() == end)
+            {
+                it->ls.push_front(start);
                 it->isMerged = true;
                 break;
             }
-            if ( it->ls.back() == start ) {
-                it->ls.push_back( end );
+            if (it->ls.back() == start)
+            {
+                it->ls.push_back(end);
                 it->isMerged = true;
                 break;
             }
-            if ( it->ls.front() == start ) {
-                it->ls.push_front( end );
+            if (it->ls.front() == start)
+            {
+                it->ls.push_front(end);
                 it->isMerged = true;
                 break;
             }
@@ -177,9 +195,10 @@ private:
             lines.back().ls.push_back(end);
             lines.back().isMerged = true;
         }
-        else if ( polygonize && (it->ls.front() == it->ls.back()) ) {
+        else if (polygonize && (it->ls.front() == it->ls.back()))
+        {
             // ring closed
-            emitLine_( levelIdx, it, /* closed */ true );
+            emitLine_(levelIdx, it, /* closed */ true);
             return;
         }
         else
@@ -187,10 +206,11 @@ private:
             // try to perform linemerge with another line
             // since we got out of the previous loop on the first match
             // there is no need to test previous elements
-            // also: a segment merges at most two lines, no need to stall here ;)
+            // also: a segment merges at most two lines, no need to stall here
+            // ;)
             auto other = it;
             ++other;
-            for(; other != lines.end(); ++other)
+            for (; other != lines.end(); ++other)
             {
                 if (it->ls.back() == other->ls.front())
                 {
@@ -199,8 +219,8 @@ private:
                     it->isMerged = true;
                     lines.erase(other);
                     // if that makes a closed ring, returns it
-                    if ( it->ls.front() == it->ls.back() )
-                        emitLine_( levelIdx, it, /* closed */ true );
+                    if (it->ls.front() == it->ls.back())
+                        emitLine_(levelIdx, it, /* closed */ true);
                     break;
                 }
                 else if (other->ls.back() == it->ls.front())
@@ -210,52 +230,57 @@ private:
                     other->isMerged = true;
                     lines.erase(it);
                     // if that makes a closed ring, returns it
-                    if ( other->ls.front() == other->ls.back() )
-                        emitLine_( levelIdx, other, /* closed */ true );
+                    if (other->ls.front() == other->ls.back())
+                        emitLine_(levelIdx, other, /* closed */ true);
                     break;
                 }
                 // two lists must be merged but one is in the opposite direction
                 else if (it->ls.back() == other->ls.back())
                 {
                     it->ls.pop_back();
-                    for ( auto rit = other->ls.rbegin(); rit != other->ls.rend(); ++rit ) {
-                        it->ls.push_back( *rit );
+                    for (auto rit = other->ls.rbegin(); rit != other->ls.rend();
+                         ++rit)
+                    {
+                        it->ls.push_back(*rit);
                     }
                     it->isMerged = true;
                     lines.erase(other);
                     // if that makes a closed ring, returns it
-                    if ( it->ls.front() == it->ls.back() )
-                        emitLine_( levelIdx, it, /* closed */ true );
+                    if (it->ls.front() == it->ls.back())
+                        emitLine_(levelIdx, it, /* closed */ true);
                     break;
                 }
                 else if (it->ls.front() == other->ls.front())
                 {
                     it->ls.pop_front();
-                    for ( auto rit = other->ls.begin(); rit != other->ls.end(); ++rit ) {
-                        it->ls.push_front( *rit );
+                    for (auto rit = other->ls.begin(); rit != other->ls.end();
+                         ++rit)
+                    {
+                        it->ls.push_front(*rit);
                     }
                     it->isMerged = true;
                     lines.erase(other);
                     // if that makes a closed ring, returns it
-                    if ( it->ls.front() == it->ls.back() )
-                        emitLine_( levelIdx, it, /* closed */ true );
+                    if (it->ls.front() == it->ls.back())
+                        emitLine_(levelIdx, it, /* closed */ true);
                     break;
                 }
             }
         }
     }
 
-    typename Lines::iterator emitLine_( int levelIdx, typename Lines::iterator it, bool closed )
+    typename Lines::iterator emitLine_(int levelIdx,
+                                       typename Lines::iterator it, bool closed)
     {
-        Lines& lines = lines_[levelIdx];
-        if ( lines.empty() )
-            lines_.erase( levelIdx );
+        Lines &lines = lines_[levelIdx];
+        if (lines.empty())
+            lines_.erase(levelIdx);
 
         // consume "it" and remove it from the list
-        lineWriter_.addLine( levelGenerator_.level( levelIdx ), it->ls, closed );
-        return lines.erase( it );
+        lineWriter_.addLine(levelGenerator_.level(levelIdx), it->ls, closed);
+        return lines.erase(it);
     }
 };
 
-}
+}  // namespace marching_squares
 #endif

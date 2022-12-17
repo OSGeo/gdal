@@ -37,42 +37,48 @@ CPL_CVSID("$Id$")
 
 GDALIntegralImage::GDALIntegralImage() = default;
 
-int GDALIntegralImage::GetHeight() { return nHeight; }
-
-int GDALIntegralImage::GetWidth() { return nWidth; }
-
-void GDALIntegralImage::Initialize( const double **padfImg,
-                                    int nHeightIn, int nWidthIn )
+int GDALIntegralImage::GetHeight()
 {
-    if( pMatrix )
+    return nHeight;
+}
+
+int GDALIntegralImage::GetWidth()
+{
+    return nWidth;
+}
+
+void GDALIntegralImage::Initialize(const double **padfImg, int nHeightIn,
+                                   int nWidthIn)
+{
+    if (pMatrix)
     {
-        for( int i = 0; i < nHeight; i++ )
+        for (int i = 0; i < nHeight; i++)
             delete[] pMatrix[i];
         delete[] pMatrix;
     }
 
     // Memory allocation.
-    pMatrix = new double*[nHeightIn];
-    for( int i = 0; i < nHeightIn; i++ )
+    pMatrix = new double *[nHeightIn];
+    for (int i = 0; i < nHeightIn; i++)
         pMatrix[i] = new double[nWidthIn];
 
     nHeight = nHeightIn;
     nWidth = nWidthIn;
 
     // Integral image calculation.
-    for( int i = 0; i < nHeight; i++ )
-        for( int j = 0; j < nWidth; j++ )
+    for (int i = 0; i < nHeight; i++)
+        for (int j = 0; j < nWidth; j++)
         {
             const double val = padfImg[i][j];
             double a = 0.0;
             double b = 0.0;
             double c = 0.0;
 
-            if( i - 1 >= 0 && j - 1 >= 0 )
+            if (i - 1 >= 0 && j - 1 >= 0)
                 a = pMatrix[i - 1][j - 1];
-            if( j - 1 >= 0 )
+            if (j - 1 >= 0)
                 b = pMatrix[i][j - 1];
-            if( i - 1 >= 0 )
+            if (i - 1 >= 0)
                 c = pMatrix[i - 1][j];
 
             // New value based on previous calculations.
@@ -83,16 +89,16 @@ void GDALIntegralImage::Initialize( const double **padfImg,
 /*
  * Returns value of specified cell.
  */
-double GDALIntegralImage::GetValue( int nRow, int nCol )
+double GDALIntegralImage::GetValue(int nRow, int nCol)
 {
-    if( !((nRow >= 0 && nRow < nHeight) && (nCol >= 0 && nCol < nWidth)) )
+    if (!((nRow >= 0 && nRow < nHeight) && (nCol >= 0 && nCol < nWidth)))
         return 0;
 
     return pMatrix[nRow][nCol];
 }
 
-double GDALIntegralImage::GetRectangleSum( int nRow, int nCol,
-                                           int nWidthIn, int nHeightIn )
+double GDALIntegralImage::GetRectangleSum(int nRow, int nCol, int nWidthIn,
+                                          int nHeightIn)
 {
     // Left top point of rectangle is first.
     const int w = nWidthIn - 1;
@@ -113,16 +119,16 @@ double GDALIntegralImage::GetRectangleSum( int nRow, int nCol,
     double c = 0.0;
     double d = 0.0;
 
-    if( lt_row >= 0 && lt_col >= 0 )
+    if (lt_row >= 0 && lt_col >= 0)
         a = GetValue(lt_row, lt_col);
 
-    if( lt_row >= 0 && rb_col >= 0 )
+    if (lt_row >= 0 && rb_col >= 0)
         b = GetValue(lt_row, rb_col);
 
-    if( rb_row >= 0 && rb_col >= 0 )
+    if (rb_row >= 0 && rb_col >= 0)
         c = GetValue(rb_row, rb_col);
 
-    if( rb_row >= 0 && lt_col >= 0 )
+    if (rb_row >= 0 && lt_col >= 0)
         d = GetValue(rb_row, lt_col);
 
     const double res = a + c - b - d;
@@ -130,22 +136,22 @@ double GDALIntegralImage::GetRectangleSum( int nRow, int nCol,
     return res > 0 ? res : 0;
 }
 
-double GDALIntegralImage::HaarWavelet_X( int nRow, int nCol, int nSize )
+double GDALIntegralImage::HaarWavelet_X(int nRow, int nCol, int nSize)
 {
-    return GetRectangleSum(nRow, nCol + nSize / 2, nSize / 2, nSize)
-        - GetRectangleSum(nRow, nCol, nSize / 2, nSize);
+    return GetRectangleSum(nRow, nCol + nSize / 2, nSize / 2, nSize) -
+           GetRectangleSum(nRow, nCol, nSize / 2, nSize);
 }
 
-double GDALIntegralImage::HaarWavelet_Y( int nRow, int nCol, int nSize )
+double GDALIntegralImage::HaarWavelet_Y(int nRow, int nCol, int nSize)
 {
-    return GetRectangleSum(nRow + nSize / 2, nCol, nSize, nSize / 2)
-        - GetRectangleSum(nRow, nCol, nSize, nSize / 2);
+    return GetRectangleSum(nRow + nSize / 2, nCol, nSize, nSize / 2) -
+           GetRectangleSum(nRow, nCol, nSize, nSize / 2);
 }
 
 GDALIntegralImage::~GDALIntegralImage()
 {
     // Clean up memory.
-    for( int i = 0; i < nHeight; i++ )
+    for (int i = 0; i < nHeight; i++)
         delete[] pMatrix[i];
 
     delete[] pMatrix;
@@ -157,18 +163,15 @@ GDALIntegralImage::~GDALIntegralImage()
 /* ==================================================================== */
 /************************************************************************/
 
-GDALOctaveLayer::GDALOctaveLayer( int nOctave, int nInterval ) :
-    octaveNum(nOctave),
-    filterSize(3 * static_cast<int>(pow(2.0, nOctave)) * nInterval + 1),
-    radius((filterSize - 1) / 2),
-    scale(static_cast<int>(pow(2.0, nOctave))),
-    width(0),
-    height(0),
-    detHessians(nullptr),
-    signs(nullptr)
-{}
+GDALOctaveLayer::GDALOctaveLayer(int nOctave, int nInterval)
+    : octaveNum(nOctave),
+      filterSize(3 * static_cast<int>(pow(2.0, nOctave)) * nInterval + 1),
+      radius((filterSize - 1) / 2), scale(static_cast<int>(pow(2.0, nOctave))),
+      width(0), height(0), detHessians(nullptr), signs(nullptr)
+{
+}
 
-void GDALOctaveLayer::ComputeLayer( GDALIntegralImage *poImg )
+void GDALOctaveLayer::ComputeLayer(GDALIntegralImage *poImg)
 {
     width = poImg->GetWidth();
     height = poImg->GetHeight();
@@ -177,7 +180,7 @@ void GDALOctaveLayer::ComputeLayer( GDALIntegralImage *poImg )
     detHessians = new double *[height];
     signs = new int *[height];
 
-    for( int i = 0; i < height; i++ )
+    for (int i = 0; i < height; i++)
     {
         detHessians[i] = new double[width];
         signs[i] = new int[width];
@@ -193,22 +196,24 @@ void GDALOctaveLayer::ComputeLayer( GDALIntegralImage *poImg )
 
     // Loop over image pixels.
     // Filter should remain into image borders.
-    for( int r = radius; r <= height - radius; r++ )
-        for( int c = radius; c <= width - radius; c++ )
+    for (int r = radius; r <= height - radius; r++)
+        for (int c = radius; c <= width - radius; c++)
         {
             // Values of Fast Hessian filters.
-            double dxx = poImg->GetRectangleSum(r - lobe + 1, c - radius,
-                                         filterSize, longPart)
-                - 3 * poImg->GetRectangleSum(r - lobe + 1, c - (lobe - 1) / 2,
-                                             lobe, longPart);
+            double dxx =
+                poImg->GetRectangleSum(r - lobe + 1, c - radius, filterSize,
+                                       longPart) -
+                3 * poImg->GetRectangleSum(r - lobe + 1, c - (lobe - 1) / 2,
+                                           lobe, longPart);
             double dyy = poImg->GetRectangleSum(r - radius, c - lobe - 1,
-                                         longPart, filterSize)
-                - 3 * poImg->GetRectangleSum(r - lobe + 1, c - lobe + 1,
-                                             longPart, lobe);
-            double dxy = poImg->GetRectangleSum(r - lobe, c - lobe, lobe, lobe)
-                + poImg->GetRectangleSum(r + 1, c + 1, lobe, lobe)
-                - poImg->GetRectangleSum(r - lobe, c + 1, lobe, lobe)
-                - poImg->GetRectangleSum(r + 1, c - lobe, lobe, lobe);
+                                                longPart, filterSize) -
+                         3 * poImg->GetRectangleSum(r - lobe + 1, c - lobe + 1,
+                                                    longPart, lobe);
+            double dxy =
+                poImg->GetRectangleSum(r - lobe, c - lobe, lobe, lobe) +
+                poImg->GetRectangleSum(r + 1, c + 1, lobe, lobe) -
+                poImg->GetRectangleSum(r - lobe, c + 1, lobe, lobe) -
+                poImg->GetRectangleSum(r + 1, c - lobe, lobe, lobe);
 
             dxx /= normalization;
             dyy /= normalization;
@@ -222,7 +227,7 @@ void GDALOctaveLayer::ComputeLayer( GDALIntegralImage *poImg )
 
 GDALOctaveLayer::~GDALOctaveLayer()
 {
-    for( int i = 0; i < height; i++ )
+    for (int i = 0; i < height; i++)
     {
         delete[] detHessians[i];
         delete[] signs[i];
@@ -238,54 +243,53 @@ GDALOctaveLayer::~GDALOctaveLayer()
 /* ==================================================================== */
 /************************************************************************/
 
-GDALOctaveMap::GDALOctaveMap( int nOctaveStartIn, int nOctaveEndIn ) :
-    pMap(new GDALOctaveLayer**[nOctaveEndIn]),
-    octaveStart(nOctaveStartIn),
-    octaveEnd(nOctaveEndIn)
+GDALOctaveMap::GDALOctaveMap(int nOctaveStartIn, int nOctaveEndIn)
+    : pMap(new GDALOctaveLayer **[nOctaveEndIn]), octaveStart(nOctaveStartIn),
+      octaveEnd(nOctaveEndIn)
 {
-    for( int i = 0; i < octaveEnd; i++ )
+    for (int i = 0; i < octaveEnd; i++)
         pMap[i] = new GDALOctaveLayer *[INTERVALS];
 
-    for( int oct = octaveStart; oct <= octaveEnd; oct++ )
-        for( int i = 1; i <= INTERVALS; i++ )
+    for (int oct = octaveStart; oct <= octaveEnd; oct++)
+        for (int i = 1; i <= INTERVALS; i++)
             pMap[oct - 1][i - 1] = new GDALOctaveLayer(oct, i);
 }
 
-void GDALOctaveMap::ComputeMap( GDALIntegralImage *poImg )
+void GDALOctaveMap::ComputeMap(GDALIntegralImage *poImg)
 {
-    for( int oct = octaveStart; oct <= octaveEnd; oct++ )
-        for( int i = 1; i <= INTERVALS; i++ )
+    for (int oct = octaveStart; oct <= octaveEnd; oct++)
+        for (int i = 1; i <= INTERVALS; i++)
             pMap[oct - 1][i - 1]->ComputeLayer(poImg);
 }
 
-bool GDALOctaveMap::PointIsExtremum( int row, int col, GDALOctaveLayer *bot,
-                                     GDALOctaveLayer *mid, GDALOctaveLayer *top,
-                                     double threshold )
+bool GDALOctaveMap::PointIsExtremum(int row, int col, GDALOctaveLayer *bot,
+                                    GDALOctaveLayer *mid, GDALOctaveLayer *top,
+                                    double threshold)
 {
     // Check that point in middle layer has all neighbors.
-    if( row <= top->radius || col <= top->radius ||
-        row + top->radius >= top->height || col + top->radius >= top->width )
+    if (row <= top->radius || col <= top->radius ||
+        row + top->radius >= top->height || col + top->radius >= top->width)
         return false;
 
     const double curPoint = mid->detHessians[row][col];
 
     // Hessian should be higher than threshold.
-    if( curPoint < threshold )
+    if (curPoint < threshold)
         return false;
 
     // Hessian should be higher than Hessians of all neighbors.
-    for( int i = -1; i <= 1; i++ )
-        for( int j = -1; j <= 1; j++ )
+    for (int i = -1; i <= 1; i++)
+        for (int j = -1; j <= 1; j++)
         {
             const double topPoint = top->detHessians[row + i][col + j];
             const double midPoint = mid->detHessians[row + i][col + j];
             const double botPoint = bot->detHessians[row + i][col + j];
 
-            if( topPoint >= curPoint || botPoint >= curPoint )
+            if (topPoint >= curPoint || botPoint >= curPoint)
                 return false;
 
-            if( i != 0 || j != 0 )
-                if( midPoint >= curPoint )
+            if (i != 0 || j != 0)
+                if (midPoint >= curPoint)
                     return false;
         }
 
@@ -295,12 +299,12 @@ bool GDALOctaveMap::PointIsExtremum( int row, int col, GDALOctaveLayer *bot,
 GDALOctaveMap::~GDALOctaveMap()
 {
     // Clean up Octave layers.
-    for( int oct = octaveStart; oct <= octaveEnd; oct++ )
-        for( int i = 0; i < INTERVALS; i++ )
+    for (int oct = octaveStart; oct <= octaveEnd; oct++)
+        for (int i = 0; i < INTERVALS; i++)
             delete pMap[oct - 1][i];
 
     // Clean up allocated memory.
-    for( int oct = 0; oct < octaveEnd; oct++ )
+    for (int oct = 0; oct < octaveEnd; oct++)
         delete[] pMap[oct];
 
     delete[] pMap;

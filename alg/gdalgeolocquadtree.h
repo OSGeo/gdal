@@ -32,13 +32,10 @@
 
 #include "gdal_alg_priv.h"
 
-bool GDALGeoLocBuildQuadTree( GDALGeoLocTransformInfo *psTransform );
+bool GDALGeoLocBuildQuadTree(GDALGeoLocTransformInfo *psTransform);
 
 void GDALGeoLocInverseTransformQuadtree(
-                    const GDALGeoLocTransformInfo *psTransform,
-                    int nPointCount,
-                    double *padfX,
-                    double *padfY,
-                    int *panSuccess );
+    const GDALGeoLocTransformInfo *psTransform, int nPointCount, double *padfX,
+    double *padfY, int *panSuccess);
 
 #endif

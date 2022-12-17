@@ -37,40 +37,30 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-GDALFeaturePoint::GDALFeaturePoint() :
-    nX(-1),
-    nY(-1),
-    nScale(-1),
-    nRadius(-1),
-    nSign(-1),
-    padfDescriptor(new double[DESC_SIZE])
-{}
-
-GDALFeaturePoint::GDALFeaturePoint( const GDALFeaturePoint& fp ) :
-    nX(fp.nX),
-    nY(fp.nY),
-    nScale(fp.nScale),
-    nRadius(fp.nRadius),
-    nSign(fp.nSign),
-    padfDescriptor(new double[DESC_SIZE])
+GDALFeaturePoint::GDALFeaturePoint()
+    : nX(-1), nY(-1), nScale(-1), nRadius(-1), nSign(-1),
+      padfDescriptor(new double[DESC_SIZE])
 {
-    for( int i = 0; i < DESC_SIZE; i++ )
+}
+
+GDALFeaturePoint::GDALFeaturePoint(const GDALFeaturePoint &fp)
+    : nX(fp.nX), nY(fp.nY), nScale(fp.nScale), nRadius(fp.nRadius),
+      nSign(fp.nSign), padfDescriptor(new double[DESC_SIZE])
+{
+    for (int i = 0; i < DESC_SIZE; i++)
         padfDescriptor[i] = fp.padfDescriptor[i];
 }
 
-GDALFeaturePoint::GDALFeaturePoint( int nXIn, int nYIn,
-                                    int nScaleIn, int nRadiusIn, int nSignIn ) :
-    nX(nXIn),
-    nY(nYIn),
-    nScale(nScaleIn),
-    nRadius(nRadiusIn),
-    nSign(nSignIn),
-    padfDescriptor(new double[DESC_SIZE])
-{}
-
-GDALFeaturePoint& GDALFeaturePoint::operator=( const GDALFeaturePoint& point )
+GDALFeaturePoint::GDALFeaturePoint(int nXIn, int nYIn, int nScaleIn,
+                                   int nRadiusIn, int nSignIn)
+    : nX(nXIn), nY(nYIn), nScale(nScaleIn), nRadius(nRadiusIn), nSign(nSignIn),
+      padfDescriptor(new double[DESC_SIZE])
 {
-    if( this == &point )
+}
+
+GDALFeaturePoint &GDALFeaturePoint::operator=(const GDALFeaturePoint &point)
+{
+    if (this == &point)
         return *this;
 
     nX = point.nX;
@@ -84,30 +74,60 @@ GDALFeaturePoint& GDALFeaturePoint::operator=( const GDALFeaturePoint& point )
 
     // Copy descriptor values.
     padfDescriptor = new double[DESC_SIZE];
-    for( int i = 0; i < DESC_SIZE; i++ )
+    for (int i = 0; i < DESC_SIZE; i++)
         padfDescriptor[i] = point.padfDescriptor[i];
 
     return *this;
 }
 
-int  GDALFeaturePoint::GetX() const { return nX; }
-void GDALFeaturePoint::SetX( int nXIn ) { nX = nXIn; }
-
-int  GDALFeaturePoint::GetY() const { return nY; }
-void GDALFeaturePoint::SetY( int nYIn ) { nY = nYIn; }
-
-int  GDALFeaturePoint::GetScale() const { return nScale; }
-void GDALFeaturePoint::SetScale( int nScaleIn ) { nScale = nScaleIn; }
-
-int  GDALFeaturePoint::GetRadius() const { return nRadius; }
-void GDALFeaturePoint::SetRadius( int nRadiusIn ) { nRadius = nRadiusIn; }
-
-int  GDALFeaturePoint::GetSign() const { return nSign; }
-void GDALFeaturePoint::SetSign( int nSignIn ) { nSign = nSignIn; }
-
-double& GDALFeaturePoint::operator [] (int nIndex)
+int GDALFeaturePoint::GetX() const
 {
-    if( nIndex < 0 || nIndex >= DESC_SIZE )
+    return nX;
+}
+void GDALFeaturePoint::SetX(int nXIn)
+{
+    nX = nXIn;
+}
+
+int GDALFeaturePoint::GetY() const
+{
+    return nY;
+}
+void GDALFeaturePoint::SetY(int nYIn)
+{
+    nY = nYIn;
+}
+
+int GDALFeaturePoint::GetScale() const
+{
+    return nScale;
+}
+void GDALFeaturePoint::SetScale(int nScaleIn)
+{
+    nScale = nScaleIn;
+}
+
+int GDALFeaturePoint::GetRadius() const
+{
+    return nRadius;
+}
+void GDALFeaturePoint::SetRadius(int nRadiusIn)
+{
+    nRadius = nRadiusIn;
+}
+
+int GDALFeaturePoint::GetSign() const
+{
+    return nSign;
+}
+void GDALFeaturePoint::SetSign(int nSignIn)
+{
+    nSign = nSignIn;
+}
+
+double &GDALFeaturePoint::operator[](int nIndex)
+{
+    if (nIndex < 0 || nIndex >= DESC_SIZE)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Descriptor index is out of range");
@@ -116,7 +136,8 @@ double& GDALFeaturePoint::operator [] (int nIndex)
     return padfDescriptor[nIndex];
 }
 
-GDALFeaturePoint::~GDALFeaturePoint() {
+GDALFeaturePoint::~GDALFeaturePoint()
+{
     delete[] padfDescriptor;
 }
 
@@ -126,33 +147,34 @@ GDALFeaturePoint::~GDALFeaturePoint() {
 /* ==================================================================== */
 /************************************************************************/
 
-GDALSimpleSURF::GDALSimpleSURF( int nOctaveStartIn, int nOctaveEndIn ) :
-    octaveStart(nOctaveStartIn),
-    octaveEnd(nOctaveEndIn),
-    // Initialize Octave map with custom range.
-    poOctMap(new GDALOctaveMap(nOctaveStartIn, nOctaveEndIn))
+GDALSimpleSURF::GDALSimpleSURF(int nOctaveStartIn, int nOctaveEndIn)
+    : octaveStart(nOctaveStartIn), octaveEnd(nOctaveEndIn),
+      // Initialize Octave map with custom range.
+      poOctMap(new GDALOctaveMap(nOctaveStartIn, nOctaveEndIn))
 
-{}
-
-CPLErr GDALSimpleSURF::ConvertRGBToLuminosity(
-    GDALRasterBand *red, GDALRasterBand *green, GDALRasterBand *blue,
-    int nXSize, int nYSize, double **padfImg, int nHeight, int nWidth )
 {
-    if( red == nullptr || green == nullptr || blue == nullptr )
+}
+
+CPLErr GDALSimpleSURF::ConvertRGBToLuminosity(GDALRasterBand *red,
+                                              GDALRasterBand *green,
+                                              GDALRasterBand *blue, int nXSize,
+                                              int nYSize, double **padfImg,
+                                              int nHeight, int nWidth)
+{
+    if (red == nullptr || green == nullptr || blue == nullptr)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Raster bands are not specified");
+        CPLError(CE_Failure, CPLE_AppDefined, "Raster bands are not specified");
         return CE_Failure;
     }
 
-    if( nXSize > red->GetXSize() || nYSize > red->GetYSize() )
+    if (nXSize > red->GetXSize() || nYSize > red->GetYSize())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Red band has less size than has been requested");
         return CE_Failure;
     }
 
-    if( padfImg == nullptr )
+    if (padfImg == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Buffer isn't specified");
         return CE_Failure;
@@ -176,30 +198,28 @@ CPLErr GDALSimpleSURF::ConvertRGBToLuminosity(
 
     CPLErr eErr = red->RasterIO(GF_Read, 0, 0, nXSize, nYSize, paRedLayer,
                                 nWidth, nHeight, eRedType, 0, 0, nullptr);
-    if( eErr == CE_None )
+    if (eErr == CE_None)
         eErr = green->RasterIO(GF_Read, 0, 0, nXSize, nYSize, paGreenLayer,
                                nWidth, nHeight, eGreenType, 0, 0, nullptr);
-    if( eErr == CE_None )
+    if (eErr == CE_None)
         eErr = blue->RasterIO(GF_Read, 0, 0, nXSize, nYSize, paBlueLayer,
                               nWidth, nHeight, eBlueType, 0, 0, nullptr);
 
     double maxValue = 255.0;
-    for( int row = 0; row < nHeight && eErr == CE_None; row++ )
-        for( int col = 0; col < nWidth; col++ )
+    for (int row = 0; row < nHeight && eErr == CE_None; row++)
+        for (int col = 0; col < nWidth; col++)
         {
             // Get RGB values.
-            const double dfRedVal = SRCVAL(paRedLayer, eRedType,
-                                           nWidth * row + col * dataRedSize);
-            const double dfGreenVal =
-                SRCVAL(paGreenLayer, eGreenType,
-                       nWidth * row + col * dataGreenSize);
+            const double dfRedVal =
+                SRCVAL(paRedLayer, eRedType, nWidth * row + col * dataRedSize);
+            const double dfGreenVal = SRCVAL(
+                paGreenLayer, eGreenType, nWidth * row + col * dataGreenSize);
             const double dfBlueVal = SRCVAL(paBlueLayer, eBlueType,
                                             nWidth * row + col * dataBlueSize);
             // Compute luminosity value.
-            padfImg[row][col] = (
-                dfRedVal * forRed +
-                dfGreenVal * forGreen +
-                dfBlueVal * forBlue) / maxValue;
+            padfImg[row][col] = (dfRedVal * forRed + dfGreenVal * forGreen +
+                                 dfBlueVal * forBlue) /
+                                maxValue;
         }
 
     CPLFree(paRedLayer);
@@ -209,34 +229,34 @@ CPLErr GDALSimpleSURF::ConvertRGBToLuminosity(
     return eErr;
 }
 
-std::vector<GDALFeaturePoint>*
-GDALSimpleSURF::ExtractFeaturePoints( GDALIntegralImage *poImg,
-                                      double dfThreshold )
+std::vector<GDALFeaturePoint> *
+GDALSimpleSURF::ExtractFeaturePoints(GDALIntegralImage *poImg,
+                                     double dfThreshold)
 {
-    std::vector<GDALFeaturePoint>* poCollection =
+    std::vector<GDALFeaturePoint> *poCollection =
         new std::vector<GDALFeaturePoint>();
 
     // Calc Hessian values for layers.
     poOctMap->ComputeMap(poImg);
 
     // Search for extremum points.
-    for( int oct = octaveStart; oct <= octaveEnd; oct++ )
+    for (int oct = octaveStart; oct <= octaveEnd; oct++)
     {
-        for( int k = 0; k < GDALOctaveMap::INTERVALS - 2; k++ )
+        for (int k = 0; k < GDALOctaveMap::INTERVALS - 2; k++)
         {
             GDALOctaveLayer *bot = poOctMap->pMap[oct - 1][k];
             GDALOctaveLayer *mid = poOctMap->pMap[oct - 1][k + 1];
             GDALOctaveLayer *top = poOctMap->pMap[oct - 1][k + 2];
 
-            for( int i = 0; i < mid->height; i++ )
+            for (int i = 0; i < mid->height; i++)
             {
-                for( int j = 0; j < mid->width; j++ )
+                for (int j = 0; j < mid->width; j++)
                 {
-                    if( poOctMap->PointIsExtremum(i, j, bot, mid, top,
-                                                  dfThreshold) )
+                    if (poOctMap->PointIsExtremum(i, j, bot, mid, top,
+                                                  dfThreshold))
                     {
-                        GDALFeaturePoint oFP(j, i, mid->scale,
-                                             mid->radius, mid->signs[i][j]);
+                        GDALFeaturePoint oFP(j, i, mid->scale, mid->radius,
+                                             mid->signs[i][j]);
                         SetDescriptor(&oFP, poImg);
                         poCollection->push_back(oFP);
                     }
@@ -248,14 +268,14 @@ GDALSimpleSURF::ExtractFeaturePoints( GDALIntegralImage *poImg,
     return poCollection;
 }
 
-double GDALSimpleSURF::GetEuclideanDistance(
-    GDALFeaturePoint &firstPoint, GDALFeaturePoint &secondPoint)
+double GDALSimpleSURF::GetEuclideanDistance(GDALFeaturePoint &firstPoint,
+                                            GDALFeaturePoint &secondPoint)
 {
     double sum = 0.0;
 
-    for( int i = 0; i < GDALFeaturePoint::DESC_SIZE; i++ )
-        sum += (firstPoint[i] - secondPoint[i]) *
-               (firstPoint[i] - secondPoint[i]);
+    for (int i = 0; i < GDALFeaturePoint::DESC_SIZE; i++)
+        sum +=
+            (firstPoint[i] - secondPoint[i]) * (firstPoint[i] - secondPoint[i]);
 
     return sqrt(sum);
 }
@@ -265,19 +285,19 @@ void GDALSimpleSURF::NormalizeDistances(std::list<MatchedPointPairInfo> *poList)
     double max = 0.0;
 
     std::list<MatchedPointPairInfo>::iterator i;
-    for( i = poList->begin(); i != poList->end(); ++i )
-        if( (*i).euclideanDist > max )
+    for (i = poList->begin(); i != poList->end(); ++i)
+        if ((*i).euclideanDist > max)
             max = (*i).euclideanDist;
 
-    if( max != 0.0 )
+    if (max != 0.0)
     {
-        for( i = poList->begin(); i != poList->end(); ++i )
+        for (i = poList->begin(); i != poList->end(); ++i)
             (*i).euclideanDist /= max;
     }
 }
 
-void GDALSimpleSURF::SetDescriptor(
-    GDALFeaturePoint *poPoint, GDALIntegralImage *poImg )
+void GDALSimpleSURF::SetDescriptor(GDALFeaturePoint *poPoint,
+                                   GDALIntegralImage *poImg)
 {
     // Affects to the descriptor area.
     const int haarScale = 20;
@@ -299,16 +319,16 @@ void GDALSimpleSURF::SetDescriptor(
 
     int count = 0;
 
-    for( int r = leftTop_row; r < leftTop_row + descSide; r += quadStep )
-        for( int c = leftTop_col; c < leftTop_col + descSide; c += quadStep )
+    for (int r = leftTop_row; r < leftTop_row + descSide; r += quadStep)
+        for (int c = leftTop_col; c < leftTop_col + descSide; c += quadStep)
         {
             double dx = 0;
             double dy = 0;
             double abs_dx = 0;
             double abs_dy = 0;
 
-            for( int sub_r = r; sub_r < r + quadStep; sub_r += subQuadStep )
-                for( int sub_c = c; sub_c < c + quadStep; sub_c += subQuadStep )
+            for (int sub_r = r; sub_r < r + quadStep; sub_r += subQuadStep)
+                for (int sub_c = c; sub_c < c + quadStep; sub_c += subQuadStep)
                 {
                     // Approximate center of sub quadrant.
                     const int cntr_r = sub_r + subQuadStep / 2;
@@ -341,33 +361,31 @@ void GDALSimpleSURF::SetDescriptor(
 // TODO(schwehr): What does "value is 0,1." mean?  Is that 0 to 1 or 0.1?
 // TODO(schwehr): 0,001?
 
-
 CPLErr GDALSimpleSURF::MatchFeaturePoints(
-    std::vector<GDALFeaturePoint*> *poMatchPairs,
+    std::vector<GDALFeaturePoint *> *poMatchPairs,
     std::vector<GDALFeaturePoint> *poFirstCollect,
-    std::vector<GDALFeaturePoint> *poSecondCollect,
-    double dfThreshold )
+    std::vector<GDALFeaturePoint> *poSecondCollect, double dfThreshold)
 {
-/* -------------------------------------------------------------------- */
-/*      Validate parameters.                                            */
-/* -------------------------------------------------------------------- */
-    if( poMatchPairs == nullptr )
+    /* -------------------------------------------------------------------- */
+    /*      Validate parameters.                                            */
+    /* -------------------------------------------------------------------- */
+    if (poMatchPairs == nullptr)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Matched points collection isn't specified" );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Matched points collection isn't specified");
         return CE_Failure;
     }
 
-    if( poFirstCollect == nullptr || poSecondCollect == nullptr )
+    if (poFirstCollect == nullptr || poSecondCollect == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Feature point collections are not specified");
         return CE_Failure;
     }
 
-/* ==================================================================== */
-/*      Matching algorithm.                                             */
-/* ==================================================================== */
+    /* ==================================================================== */
+    /*      Matching algorithm.                                             */
+    /* ==================================================================== */
     // Affects to false matching pruning.
     const double ratioThreshold = 0.8;
 
@@ -383,7 +401,7 @@ CPLErr GDALSimpleSURF::MatchFeaturePoints(
     bool isSwap = false;
 
     // Assign p_1 - collection with minimal number of points.
-    if( minLength == len_2 )
+    if (minLength == len_2)
     {
         p_1 = poSecondCollect;
         p_2 = poFirstCollect;
@@ -405,10 +423,10 @@ CPLErr GDALSimpleSURF::MatchFeaturePoints(
 
     // Flags that points in the 2nd collection are matched or not.
     bool *alreadyMatched = new bool[len_2];
-    for( int i = 0; i < len_2; i++ )
+    for (int i = 0; i < len_2; i++)
         alreadyMatched[i] = false;
 
-    for( int i = 0; i < len_1; i++ )
+    for (int i = 0; i < len_1; i++)
     {
         // Distance to the nearest point.
         double bestDist = -1;
@@ -419,22 +437,22 @@ CPLErr GDALSimpleSURF::MatchFeaturePoints(
         double bestDist_2 = -1;
 
         // Find the nearest and 2nd nearest points.
-        for( int j = 0; j < len_2; j++ )
-            if( !alreadyMatched[j] )
-                if( p_1->at(i).GetSign() == p_2->at(j).GetSign() )
+        for (int j = 0; j < len_2; j++)
+            if (!alreadyMatched[j])
+                if (p_1->at(i).GetSign() == p_2->at(j).GetSign())
                 {
                     // Get distance between two feature points.
-                    double curDist = GetEuclideanDistance(
-                        p_1->at(i), p_2->at(j));
+                    double curDist =
+                        GetEuclideanDistance(p_1->at(i), p_2->at(j));
 
-                    if( bestDist == -1 )
+                    if (bestDist == -1)
                     {
                         bestDist = curDist;
                         bestIndex = j;
                     }
                     else
                     {
-                        if( curDist < bestDist )
+                        if (curDist < bestDist)
                         {
                             bestDist = curDist;
                             bestIndex = j;
@@ -442,20 +460,20 @@ CPLErr GDALSimpleSURF::MatchFeaturePoints(
                     }
 
                     // Findes the 2nd nearest point.
-                    if( bestDist_2 < 0 )
+                    if (bestDist_2 < 0)
                         bestDist_2 = curDist;
-                    else
-                        if( curDist > bestDist && curDist < bestDist_2 )
-                            bestDist_2 = curDist;
+                    else if (curDist > bestDist && curDist < bestDist_2)
+                        bestDist_2 = curDist;
                 }
-/* -------------------------------------------------------------------- */
-/*      False matching pruning.                                         */
-/* If ratio bestDist to bestDist_2 greater than 0.8 =>                  */
-/*     consider as false detection.                                     */
-/* Otherwise, add points as matched pair.                               */
-/*----------------------------------------------------------------------*/
-        if( bestDist_2 > 0 && bestDist >= 0 )
-            if( bestDist / bestDist_2 < ratioThreshold )
+        /* --------------------------------------------------------------------
+         */
+        /*      False matching pruning. */
+        /* If ratio bestDist to bestDist_2 greater than 0.8 => */
+        /*     consider as false detection. */
+        /* Otherwise, add points as matched pair. */
+        /*----------------------------------------------------------------------*/
+        if (bestDist_2 > 0 && bestDist >= 0)
+            if (bestDist / bestDist_2 < ratioThreshold)
             {
                 MatchedPointPairInfo info(i, bestIndex, bestDist);
                 poPairInfoList->push_back(info);
@@ -463,30 +481,30 @@ CPLErr GDALSimpleSURF::MatchFeaturePoints(
             }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Pruning based on the provided threshold                         */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Pruning based on the provided threshold                         */
+    /* -------------------------------------------------------------------- */
 
     NormalizeDistances(poPairInfoList);
 
     std::list<MatchedPointPairInfo>::const_iterator iter;
-    for( iter = poPairInfoList->begin(); iter != poPairInfoList->end(); ++iter )
+    for (iter = poPairInfoList->begin(); iter != poPairInfoList->end(); ++iter)
     {
-        if( (*iter).euclideanDist <= dfThreshold )
+        if ((*iter).euclideanDist <= dfThreshold)
         {
             const int i_1 = (*iter).ind_1;
             const int i_2 = (*iter).ind_2;
 
             // Add copies into MatchedCollection.
-            if( !isSwap )
+            if (!isSwap)
             {
-                poMatchPairs->push_back( &(p_1->at(i_1)) );
-                poMatchPairs->push_back( &(p_2->at(i_2)) );
+                poMatchPairs->push_back(&(p_1->at(i_1)));
+                poMatchPairs->push_back(&(p_2->at(i_2)));
             }
             else
             {
-                poMatchPairs->push_back( &(p_2->at(i_2)) );
-                poMatchPairs->push_back( &(p_1->at(i_1)) );
+                poMatchPairs->push_back(&(p_2->at(i_2)));
+                poMatchPairs->push_back(&(p_1->at(i_1)));
             }
         }
     }

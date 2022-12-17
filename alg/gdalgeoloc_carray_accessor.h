@@ -36,27 +36,29 @@ class GDALGeoLocCArrayAccessors
 {
     typedef class GDALGeoLocCArrayAccessors AccessorType;
 
-    GDALGeoLocTransformInfo*  m_psTransform;
-    double                   *m_padfGeoLocX = nullptr;
-    double                   *m_padfGeoLocY = nullptr;
-    float                    *m_pafBackMapX = nullptr;
-    float                    *m_pafBackMapY = nullptr;
-    float                    *m_wgtsBackMap = nullptr;
+    GDALGeoLocTransformInfo *m_psTransform;
+    double *m_padfGeoLocX = nullptr;
+    double *m_padfGeoLocY = nullptr;
+    float *m_pafBackMapX = nullptr;
+    float *m_pafBackMapY = nullptr;
+    float *m_wgtsBackMap = nullptr;
 
-    bool                      LoadGeoloc(bool bIsRegularGrid);
+    bool LoadGeoloc(bool bIsRegularGrid);
 
-public:
-
-    template<class Type> struct CArrayAccessor
+  public:
+    template <class Type> struct CArrayAccessor
     {
-        Type*  m_array;
+        Type *m_array;
         size_t m_nXSize;
 
-        CArrayAccessor(Type* array, size_t nXSize): m_array(array), m_nXSize(nXSize) {}
-
-        inline Type Get(int nX, int nY, bool* pbSuccess = nullptr)
+        CArrayAccessor(Type *array, size_t nXSize)
+            : m_array(array), m_nXSize(nXSize)
         {
-            if( pbSuccess )
+        }
+
+        inline Type Get(int nX, int nY, bool *pbSuccess = nullptr)
+        {
+            if (pbSuccess)
                 *pbSuccess = true;
             return m_array[nY * m_nXSize + nX];
         }
@@ -70,17 +72,14 @@ public:
 
     CArrayAccessor<double> geolocXAccessor;
     CArrayAccessor<double> geolocYAccessor;
-    CArrayAccessor<float>  backMapXAccessor;
-    CArrayAccessor<float>  backMapYAccessor;
-    CArrayAccessor<float>  backMapWeightAccessor;
+    CArrayAccessor<float> backMapXAccessor;
+    CArrayAccessor<float> backMapYAccessor;
+    CArrayAccessor<float> backMapWeightAccessor;
 
-    explicit GDALGeoLocCArrayAccessors(GDALGeoLocTransformInfo* psTransform):
-        m_psTransform(psTransform),
-        geolocXAccessor(nullptr, 0),
-        geolocYAccessor(nullptr, 0),
-        backMapXAccessor(nullptr, 0),
-        backMapYAccessor(nullptr, 0),
-        backMapWeightAccessor(nullptr, 0)
+    explicit GDALGeoLocCArrayAccessors(GDALGeoLocTransformInfo *psTransform)
+        : m_psTransform(psTransform), geolocXAccessor(nullptr, 0),
+          geolocYAccessor(nullptr, 0), backMapXAccessor(nullptr, 0),
+          backMapYAccessor(nullptr, 0), backMapWeightAccessor(nullptr, 0)
     {
     }
 
@@ -93,18 +92,24 @@ public:
         VSIFree(m_wgtsBackMap);
     }
 
-    GDALGeoLocCArrayAccessors(const GDALGeoLocCArrayAccessors&) = delete;
-    GDALGeoLocCArrayAccessors& operator= (const GDALGeoLocCArrayAccessors&) = delete;
+    GDALGeoLocCArrayAccessors(const GDALGeoLocCArrayAccessors &) = delete;
+    GDALGeoLocCArrayAccessors &
+    operator=(const GDALGeoLocCArrayAccessors &) = delete;
 
-    bool         Load(bool bIsRegularGrid, bool bUseQuadtree);
+    bool Load(bool bIsRegularGrid, bool bUseQuadtree);
 
-    bool         AllocateBackMap();
+    bool AllocateBackMap();
 
-    GDALDataset* GetBackmapDataset();
-    static void  FlushBackmapCaches() {}
-    static void  ReleaseBackmapDataset(GDALDataset* poDS) { delete poDS; }
+    GDALDataset *GetBackmapDataset();
+    static void FlushBackmapCaches()
+    {
+    }
+    static void ReleaseBackmapDataset(GDALDataset *poDS)
+    {
+        delete poDS;
+    }
 
-    void         FreeWghtsBackMap();
+    void FreeWghtsBackMap();
 };
 
 /************************************************************************/
@@ -124,16 +129,16 @@ bool GDALGeoLocCArrayAccessors::AllocateBackMap()
         VSI_MALLOC3_VERBOSE(m_psTransform->nBackMapWidth,
                             m_psTransform->nBackMapHeight, sizeof(float)));
 
-    if( m_pafBackMapX == nullptr ||
-        m_pafBackMapY == nullptr ||
+    if (m_pafBackMapX == nullptr || m_pafBackMapY == nullptr ||
         m_wgtsBackMap == nullptr)
     {
         return false;
     }
 
-    const size_t nBMXYCount = static_cast<size_t>(m_psTransform->nBackMapWidth) *
-                                m_psTransform->nBackMapHeight;
-    for( size_t i = 0; i < nBMXYCount; i++ )
+    const size_t nBMXYCount =
+        static_cast<size_t>(m_psTransform->nBackMapWidth) *
+        m_psTransform->nBackMapHeight;
+    for (size_t i = 0; i < nBMXYCount; i++)
     {
         m_pafBackMapX[i] = 0;
         m_pafBackMapY[i] = 0;
@@ -168,21 +173,17 @@ void GDALGeoLocCArrayAccessors::FreeWghtsBackMap()
 /*                        GetBackmapDataset()                           */
 /************************************************************************/
 
-GDALDataset* GDALGeoLocCArrayAccessors::GetBackmapDataset()
+GDALDataset *GDALGeoLocCArrayAccessors::GetBackmapDataset()
 {
-    auto poMEMDS = MEMDataset::Create( "",
-                              m_psTransform->nBackMapWidth,
-                              m_psTransform->nBackMapHeight,
-                              0, GDT_Float32, nullptr );
+    auto poMEMDS = MEMDataset::Create("", m_psTransform->nBackMapWidth,
+                                      m_psTransform->nBackMapHeight, 0,
+                                      GDT_Float32, nullptr);
 
-    for( int i = 1; i <= 2; i++ )
+    for (int i = 1; i <= 2; i++)
     {
-        void* ptr = (i == 1) ? m_pafBackMapX : m_pafBackMapY;
-        GDALRasterBandH hMEMBand = MEMCreateRasterBandEx( poMEMDS,
-                                                      i, static_cast<GByte*>(ptr),
-                                                      GDT_Float32,
-                                                      0, 0,
-                                                      false );
+        void *ptr = (i == 1) ? m_pafBackMapX : m_pafBackMapY;
+        GDALRasterBandH hMEMBand = MEMCreateRasterBandEx(
+            poMEMDS, i, static_cast<GByte *>(ptr), GDT_Float32, 0, 0, false);
         poMEMDS->AddMEMBand(hMEMBand);
         poMEMDS->GetRasterBand(i)->SetNoDataValue(INVALID_BMXY);
     }
@@ -197,7 +198,8 @@ bool GDALGeoLocCArrayAccessors::Load(bool bIsRegularGrid, bool bUseQuadtree)
 {
     return LoadGeoloc(bIsRegularGrid) &&
            ((bUseQuadtree && GDALGeoLocBuildQuadTree(m_psTransform)) ||
-            (!bUseQuadtree && GDALGeoLoc<AccessorType>::GenerateBackMap(m_psTransform)));
+            (!bUseQuadtree &&
+             GDALGeoLoc<AccessorType>::GenerateBackMap(m_psTransform)));
 }
 
 /************************************************************************/
@@ -215,23 +217,22 @@ bool GDALGeoLocCArrayAccessors::LoadGeoloc(bool bIsRegularGrid)
     m_padfGeoLocX = static_cast<double *>(
         VSI_MALLOC3_VERBOSE(sizeof(double), nXSize, nYSize));
 
-    if( m_padfGeoLocX == nullptr ||
-        m_padfGeoLocY == nullptr )
+    if (m_padfGeoLocX == nullptr || m_padfGeoLocY == nullptr)
     {
         return false;
     }
 
-    if( bIsRegularGrid )
+    if (bIsRegularGrid)
     {
         // Case of regular grid.
         // The XBAND contains the x coordinates for all lines.
         // The YBAND contains the y coordinates for all columns.
 
-        double* padfTempX = static_cast<double *>(
-            VSI_MALLOC2_VERBOSE(nXSize, sizeof(double)));
-        double* padfTempY = static_cast<double *>(
-            VSI_MALLOC2_VERBOSE(nYSize, sizeof(double)));
-        if( padfTempX == nullptr || padfTempY == nullptr )
+        double *padfTempX =
+            static_cast<double *>(VSI_MALLOC2_VERBOSE(nXSize, sizeof(double)));
+        double *padfTempY =
+            static_cast<double *>(VSI_MALLOC2_VERBOSE(nYSize, sizeof(double)));
+        if (padfTempX == nullptr || padfTempY == nullptr)
         {
             CPLFree(padfTempX);
             CPLFree(padfTempY);
@@ -239,28 +240,23 @@ bool GDALGeoLocCArrayAccessors::LoadGeoloc(bool bIsRegularGrid)
         }
 
         CPLErr eErr =
-            GDALRasterIO( m_psTransform->hBand_X, GF_Read,
-                          0, 0, nXSize, 1,
-                          padfTempX, nXSize, 1,
-                          GDT_Float64, 0, 0 );
+            GDALRasterIO(m_psTransform->hBand_X, GF_Read, 0, 0, nXSize, 1,
+                         padfTempX, nXSize, 1, GDT_Float64, 0, 0);
 
-        for( size_t j = 0; j < static_cast<size_t>(nYSize); j++ )
+        for (size_t j = 0; j < static_cast<size_t>(nYSize); j++)
         {
-            memcpy( m_padfGeoLocX + j * nXSize,
-                    padfTempX,
-                    nXSize * sizeof(double) );
+            memcpy(m_padfGeoLocX + j * nXSize, padfTempX,
+                   nXSize * sizeof(double));
         }
 
-        if( eErr == CE_None )
+        if (eErr == CE_None)
         {
-            eErr = GDALRasterIO( m_psTransform->hBand_Y, GF_Read,
-                                 0, 0, nYSize, 1,
-                                 padfTempY, nYSize, 1,
-                                 GDT_Float64, 0, 0 );
+            eErr = GDALRasterIO(m_psTransform->hBand_Y, GF_Read, 0, 0, nYSize,
+                                1, padfTempY, nYSize, 1, GDT_Float64, 0, 0);
 
-            for( size_t j = 0; j < static_cast<size_t>(nYSize); j++ )
+            for (size_t j = 0; j < static_cast<size_t>(nYSize); j++)
             {
-                for( size_t i = 0; i < static_cast<size_t>(nXSize); i++ )
+                for (size_t i = 0; i < static_cast<size_t>(nXSize); i++)
                 {
                     m_padfGeoLocY[j * nXSize + i] = padfTempY[j];
                 }
@@ -270,19 +266,17 @@ bool GDALGeoLocCArrayAccessors::LoadGeoloc(bool bIsRegularGrid)
         CPLFree(padfTempX);
         CPLFree(padfTempY);
 
-        if( eErr != CE_None )
+        if (eErr != CE_None)
             return false;
     }
     else
     {
-        if( GDALRasterIO( m_psTransform->hBand_X, GF_Read,
-                          0, 0, nXSize, nYSize,
-                          m_padfGeoLocX, nXSize, nYSize,
-                          GDT_Float64, 0, 0 ) != CE_None
-            || GDALRasterIO( m_psTransform->hBand_Y, GF_Read,
-                             0, 0, nXSize, nYSize,
-                             m_padfGeoLocY, nXSize, nYSize,
-                             GDT_Float64, 0, 0 ) != CE_None )
+        if (GDALRasterIO(m_psTransform->hBand_X, GF_Read, 0, 0, nXSize, nYSize,
+                         m_padfGeoLocX, nXSize, nYSize, GDT_Float64, 0,
+                         0) != CE_None ||
+            GDALRasterIO(m_psTransform->hBand_Y, GF_Read, 0, 0, nXSize, nYSize,
+                         m_padfGeoLocY, nXSize, nYSize, GDT_Float64, 0,
+                         0) != CE_None)
             return false;
     }
 
@@ -292,7 +286,8 @@ bool GDALGeoLocCArrayAccessors::LoadGeoloc(bool bIsRegularGrid)
     geolocYAccessor.m_array = m_padfGeoLocY;
     geolocYAccessor.m_nXSize = m_psTransform->nGeoLocXSize;
 
-    return GDALGeoLoc<GDALGeoLocCArrayAccessors>::LoadGeolocFinish(m_psTransform);
+    return GDALGeoLoc<GDALGeoLocCArrayAccessors>::LoadGeolocFinish(
+        m_psTransform);
 }
 
 /*! @endcond */
