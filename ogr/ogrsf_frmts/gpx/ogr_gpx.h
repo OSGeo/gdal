@@ -52,113 +52,115 @@ typedef enum
 /*                             OGRGPXLayer                              */
 /************************************************************************/
 
-class OGRGPXLayer final: public OGRLayer
+class OGRGPXLayer final : public OGRLayer
 {
-    OGRFeatureDefn*    poFeatureDefn;
+    OGRFeatureDefn *poFeatureDefn;
     OGRSpatialReference *poSRS;
-    OGRGPXDataSource*  poDS;
+    OGRGPXDataSource *poDS;
 
-    GPXGeometryType    gpxGeomType;
+    GPXGeometryType gpxGeomType;
 
-    int                nGPXFields;
+    int nGPXFields;
 
-    bool               bWriteMode;
-    int                nNextFID;
-    VSILFILE*          fpGPX; /* Large file API */
+    bool bWriteMode;
+    int nNextFID;
+    VSILFILE *fpGPX; /* Large file API */
 #ifdef HAVE_EXPAT
-    XML_Parser         oParser;
-    XML_Parser         oSchemaParser;
+    XML_Parser oParser;
+    XML_Parser oSchemaParser;
 #endif
-    bool               inInterestingElement;
-    bool               hasFoundLat;
-    bool               hasFoundLon;
+    bool inInterestingElement;
+    bool hasFoundLat;
+    bool hasFoundLon;
 #ifdef HAVE_EXPAT
-    double             latVal;
-    double             lonVal;
+    double latVal;
+    double lonVal;
 #endif
-    char*              pszSubElementName;
-    char*              pszSubElementValue;
-    int                nSubElementValueLen;
+    char *pszSubElementName;
+    char *pszSubElementValue;
+    int nSubElementValueLen;
 #ifdef HAVE_EXPAT
-    int                iCurrentField;
-#endif
-
-    OGRFeature*        poFeature;
-    OGRFeature **      ppoFeatureTab;
-    int                nFeatureTabLength;
-    int                nFeatureTabIndex;
-
-    OGRMultiLineString* multiLineString;
-    OGRLineString*      lineString;
-
-    int                depthLevel;
-    int                interestingDepthLevel;
-
-#ifdef HAVE_EXPAT
-    OGRFieldDefn*      currentFieldDefn;
-    bool               inExtensions;
-    int                extensionsDepthLevel;
-
-    bool               inLink;
-    int                iCountLink;
-#endif
-    int                nMaxLinks;
-
-    bool               bEleAs25D;
-
-    int                trkFID;
-    int                trkSegId;
-    int                trkSegPtId;
-
-    int                rteFID;
-    int                rtePtId;
-
-#ifdef HAVE_EXPAT
-    bool               bStopParsing;
-    int                nWithoutEventCounter;
-    int                nDataHandlerCounter;
+    int iCurrentField;
 #endif
 
-    int                iFirstGPXField;
+    OGRFeature *poFeature;
+    OGRFeature **ppoFeatureTab;
+    int nFeatureTabLength;
+    int nFeatureTabIndex;
+
+    OGRMultiLineString *multiLineString;
+    OGRLineString *lineString;
+
+    int depthLevel;
+    int interestingDepthLevel;
+
+#ifdef HAVE_EXPAT
+    OGRFieldDefn *currentFieldDefn;
+    bool inExtensions;
+    int extensionsDepthLevel;
+
+    bool inLink;
+    int iCountLink;
+#endif
+    int nMaxLinks;
+
+    bool bEleAs25D;
+
+    int trkFID;
+    int trkSegId;
+    int trkSegPtId;
+
+    int rteFID;
+    int rtePtId;
+
+#ifdef HAVE_EXPAT
+    bool bStopParsing;
+    int nWithoutEventCounter;
+    int nDataHandlerCounter;
+#endif
+
+    int iFirstGPXField;
 
   private:
-    void               WriteFeatureAttributes( OGRFeature *poFeature, int nIdentLevel = 1 );
-    void               LoadExtensionsSchema();
+    void WriteFeatureAttributes(OGRFeature *poFeature, int nIdentLevel = 1);
+    void LoadExtensionsSchema();
 #ifdef HAVE_EXPAT
-    void               AddStrToSubElementValue(const char* pszStr);
+    void AddStrToSubElementValue(const char *pszStr);
 #endif
-    bool               OGRGPX_WriteXMLExtension(const char* pszTagName,
-                                                const char* pszContent);
+    bool OGRGPX_WriteXMLExtension(const char *pszTagName,
+                                  const char *pszContent);
 
   public:
-                        OGRGPXLayer(const char *pszFilename,
-                                    const char* layerName,
-                                    GPXGeometryType gpxGeomType,
-                                    OGRGPXDataSource* poDS,
-                                    int bWriteMode = FALSE);
-                        ~OGRGPXLayer();
+    OGRGPXLayer(const char *pszFilename, const char *layerName,
+                GPXGeometryType gpxGeomType, OGRGPXDataSource *poDS,
+                int bWriteMode = FALSE);
+    ~OGRGPXLayer();
 
-    void                ResetReading() override;
-    OGRFeature *        GetNextFeature() override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
 
-    OGRErr              ICreateFeature( OGRFeature *poFeature ) override;
-    OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK ) override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK) override;
 
-    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
+    OGRFeatureDefn *GetLayerDefn() override
+    {
+        return poFeatureDefn;
+    }
 
-    int                 TestCapability( const char * ) override;
+    int TestCapability(const char *) override;
 
 #ifdef HAVE_EXPAT
-    void                startElementCbk(const char *pszName, const char **ppszAttr);
-    void                endElementCbk(const char *pszName);
-    void                dataHandlerCbk(const char *data, int nLen);
+    void startElementCbk(const char *pszName, const char **ppszAttr);
+    void endElementCbk(const char *pszName);
+    void dataHandlerCbk(const char *data, int nLen);
 
-    void                startElementLoadSchemaCbk(const char *pszName, const char **ppszAttr);
-    void                endElementLoadSchemaCbk(const char *pszName);
-    void                dataHandlerLoadSchemaCbk(const char *data, int nLen);
+    void startElementLoadSchemaCbk(const char *pszName, const char **ppszAttr);
+    void endElementLoadSchemaCbk(const char *pszName);
+    void dataHandlerLoadSchemaCbk(const char *data, int nLen);
 #endif
 
-    static OGRErr       CheckAndFixCoordinatesValidity( double* pdfLatitude, double* pdfLongitude );
+    static OGRErr CheckAndFixCoordinatesValidity(double *pdfLatitude,
+                                                 double *pdfLongitude);
 };
 
 /************************************************************************/
@@ -172,79 +174,99 @@ typedef enum
     GPX_VALIDITY_VALID
 } OGRGPXValidity;
 
-class OGRGPXDataSource final: public OGRDataSource
+class OGRGPXDataSource final : public OGRDataSource
 {
-    char*               pszName;
+    char *pszName;
 
-    OGRGPXLayer**       papoLayers;
-    int                 nLayers;
+    OGRGPXLayer **papoLayers;
+    int nLayers;
 
     /*  Export related */
-    VSILFILE           *fpOutput; /* Large file API */
-    bool                bIsBackSeekable;
-    const char         *pszEOL;
-    int                 nOffsetBounds;
-    double              dfMinLat;
-    double              dfMinLon;
-    double              dfMaxLat;
-    double              dfMaxLon;
+    VSILFILE *fpOutput; /* Large file API */
+    bool bIsBackSeekable;
+    const char *pszEOL;
+    int nOffsetBounds;
+    double dfMinLat;
+    double dfMinLon;
+    double dfMaxLat;
+    double dfMaxLon;
 
-    GPXGeometryType     lastGPXGeomTypeWritten;
+    GPXGeometryType lastGPXGeomTypeWritten;
 
-    bool                bUseExtensions;
-    char*               pszExtensionsNS;
+    bool bUseExtensions;
+    char *pszExtensionsNS;
 
 #ifdef HAVE_EXPAT
-    OGRGPXValidity      validity;
-    int                 nElementsRead;
-    char*               pszVersion;
-    XML_Parser          oCurrentParser;
-    int                 nDataHandlerCounter;
+    OGRGPXValidity validity;
+    int nElementsRead;
+    char *pszVersion;
+    XML_Parser oCurrentParser;
+    int nDataHandlerCounter;
 #endif
 
   public:
-                        OGRGPXDataSource();
-                        ~OGRGPXDataSource();
+    OGRGPXDataSource();
+    ~OGRGPXDataSource();
 
-    int                nLastRteId;
-    int                nLastTrkId;
-    int                nLastTrkSegId;
+    int nLastRteId;
+    int nLastTrkId;
+    int nLastTrkSegId;
 
-    int                 Open( const char * pszFilename,
-                              int bUpdate );
+    int Open(const char *pszFilename, int bUpdate);
 
-    int                 Create( const char *pszFilename,
-                              char **papszOptions );
+    int Create(const char *pszFilename, char **papszOptions);
 
-    const char*         GetName() override { return pszName; }
+    const char *GetName() override
+    {
+        return pszName;
+    }
 
-    int                 GetLayerCount() override { return nLayers; }
-    OGRLayer*           GetLayer( int ) override;
+    int GetLayerCount() override
+    {
+        return nLayers;
+    }
+    OGRLayer *GetLayer(int) override;
 
-    OGRLayer *          ICreateLayer( const char * pszLayerName,
-                                    OGRSpatialReference *poSRS,
-                                    OGRwkbGeometryType eType,
-                                    char ** papszOptions ) override;
+    OGRLayer *ICreateLayer(const char *pszLayerName, OGRSpatialReference *poSRS,
+                           OGRwkbGeometryType eType,
+                           char **papszOptions) override;
 
-    int                 TestCapability( const char * ) override;
+    int TestCapability(const char *) override;
 
-    VSILFILE *              GetOutputFP() { return fpOutput; }
-    void                SetLastGPXGeomTypeWritten(GPXGeometryType gpxGeomType)
-                            { lastGPXGeomTypeWritten = gpxGeomType; }
-    GPXGeometryType     GetLastGPXGeomTypeWritten() { return lastGPXGeomTypeWritten; }
+    VSILFILE *GetOutputFP()
+    {
+        return fpOutput;
+    }
+    void SetLastGPXGeomTypeWritten(GPXGeometryType gpxGeomType)
+    {
+        lastGPXGeomTypeWritten = gpxGeomType;
+    }
+    GPXGeometryType GetLastGPXGeomTypeWritten()
+    {
+        return lastGPXGeomTypeWritten;
+    }
 
-    int                 GetUseExtensions() { return bUseExtensions; }
-    const char*         GetExtensionsNS() { return pszExtensionsNS; }
+    int GetUseExtensions()
+    {
+        return bUseExtensions;
+    }
+    const char *GetExtensionsNS()
+    {
+        return pszExtensionsNS;
+    }
 
 #ifdef HAVE_EXPAT
-    void                startElementValidateCbk(const char *pszName, const char **ppszAttr);
-    void                dataHandlerValidateCbk(const char *data, int nLen);
-    const char*         GetVersion() { return pszVersion; }
+    void startElementValidateCbk(const char *pszName, const char **ppszAttr);
+    void dataHandlerValidateCbk(const char *data, int nLen);
+    const char *GetVersion()
+    {
+        return pszVersion;
+    }
 #endif
 
-    void                AddCoord(double dfLon, double dfLat);
+    void AddCoord(double dfLon, double dfLat);
 
-    void                PrintLine(const char *fmt, ...) CPL_PRINT_FUNC_FORMAT (2, 3);
+    void PrintLine(const char *fmt, ...) CPL_PRINT_FUNC_FORMAT(2, 3);
 };
 
 #endif /* ndef OGR_GPX_H_INCLUDED */
