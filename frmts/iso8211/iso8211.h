@@ -36,7 +36,8 @@
 /**
   General data type
     */
-typedef enum {
+typedef enum
+{
     DDFInt,
     DDFFloat,
     DDFString,
@@ -48,14 +49,15 @@ typedef enum {
 /*      mostly conveniences.                                            */
 /************************************************************************/
 
-int CPL_ODLL  DDFScanInt( const char *pszString, int nMaxChars );
-int  CPL_ODLL DDFScanVariable( const char * pszString, int nMaxChars, int nDelimChar );
-char CPL_ODLL *DDFFetchVariable( const char *pszString, int nMaxChars,
-                        int nDelimChar1, int nDelimChar2,
-                        int *pnConsumedChars );
+int CPL_ODLL DDFScanInt(const char *pszString, int nMaxChars);
+int CPL_ODLL DDFScanVariable(const char *pszString, int nMaxChars,
+                             int nDelimChar);
+char CPL_ODLL *DDFFetchVariable(const char *pszString, int nMaxChars,
+                                int nDelimChar1, int nDelimChar2,
+                                int *pnConsumedChars);
 
-#define DDF_FIELD_TERMINATOR    30
-#define DDF_UNIT_TERMINATOR     31
+#define DDF_FIELD_TERMINATOR 30
+#define DDF_UNIT_TERMINATOR 31
 
 /************************************************************************/
 /*                           Predeclarations                            */
@@ -79,67 +81,103 @@ class DDFField;
 class CPL_ODLL DDFModule
 {
   public:
-                DDFModule();
-                ~DDFModule();
+    DDFModule();
+    ~DDFModule();
 
-    int         Open( const char * pszFilename, int bFailQuietly = FALSE );
-    int         Create( const char *pszFilename );
-    void        Close();
+    int Open(const char *pszFilename, int bFailQuietly = FALSE);
+    int Create(const char *pszFilename);
+    void Close();
 
-    int         Initialize( char chInterchangeLevel = '3',
-                            char chLeaderIden = 'L',
-                            char chCodeExtensionIndicator = 'E',
-                            char chVersionNumber = '1',
-                            char chAppIndicator = ' ',
-                            const char *pszExtendedCharSet = " ! ",
-                            int nSizeFieldLength = 3,
-                            int nSizeFieldPos = 4,
-                            int nSizeFieldTag = 4 );
+    int Initialize(char chInterchangeLevel = '3', char chLeaderIden = 'L',
+                   char chCodeExtensionIndicator = 'E',
+                   char chVersionNumber = '1', char chAppIndicator = ' ',
+                   const char *pszExtendedCharSet = " ! ",
+                   int nSizeFieldLength = 3, int nSizeFieldPos = 4,
+                   int nSizeFieldTag = 4);
 
-    void        Dump( FILE * fp );
+    void Dump(FILE *fp);
 
-    DDFRecord   *ReadRecord();
-    void        Rewind( long nOffset = -1 );
+    DDFRecord *ReadRecord();
+    void Rewind(long nOffset = -1);
 
-    DDFFieldDefn *FindFieldDefn( const char * );
+    DDFFieldDefn *FindFieldDefn(const char *);
 
     /** Fetch the number of defined fields. */
 
-    int         GetFieldCount() const { return nFieldDefnCount; }
+    int GetFieldCount() const
+    {
+        return nFieldDefnCount;
+    }
     DDFFieldDefn *GetField(int);
-    void        AddField( DDFFieldDefn *poNewFDefn );
+    void AddField(DDFFieldDefn *poNewFDefn);
 
     // This is really just for internal use.
-    int         GetFieldControlLength() const { return _fieldControlLength; }
-    void        AddCloneRecord( DDFRecord * );
-    void        RemoveCloneRecord( DDFRecord * );
+    int GetFieldControlLength() const
+    {
+        return _fieldControlLength;
+    }
+    void AddCloneRecord(DDFRecord *);
+    void RemoveCloneRecord(DDFRecord *);
 
     // This is just for DDFRecord.
-    VSILFILE   *GetFP() { return fpDDF; }
-    int         GetSizeFieldTag() const { return (int)_sizeFieldTag; }
+    VSILFILE *GetFP()
+    {
+        return fpDDF;
+    }
+    int GetSizeFieldTag() const
+    {
+        return (int)_sizeFieldTag;
+    }
 
     // Advanced uses for 8211dump/8211createfromxml
-    int         GetSizeFieldPos() const { return _sizeFieldPos; }
-    int         GetSizeFieldLength() const { return _sizeFieldLength; }
-    char        GetInterchangeLevel() const { return _interchangeLevel; }
-    char        GetLeaderIden() const { return _leaderIden; }
-    char        GetCodeExtensionIndicator() const { return _inlineCodeExtensionIndicator; }
-    char        GetVersionNumber() const { return _versionNumber; }
-    char        GetAppIndicator() const { return _appIndicator; }
-    const char* GetExtendedCharSet() const { return _extendedCharSet; }
-    void        SetFieldControlLength(int nVal) { _fieldControlLength = nVal; }
+    int GetSizeFieldPos() const
+    {
+        return _sizeFieldPos;
+    }
+    int GetSizeFieldLength() const
+    {
+        return _sizeFieldLength;
+    }
+    char GetInterchangeLevel() const
+    {
+        return _interchangeLevel;
+    }
+    char GetLeaderIden() const
+    {
+        return _leaderIden;
+    }
+    char GetCodeExtensionIndicator() const
+    {
+        return _inlineCodeExtensionIndicator;
+    }
+    char GetVersionNumber() const
+    {
+        return _versionNumber;
+    }
+    char GetAppIndicator() const
+    {
+        return _appIndicator;
+    }
+    const char *GetExtendedCharSet() const
+    {
+        return _extendedCharSet;
+    }
+    void SetFieldControlLength(int nVal)
+    {
+        _fieldControlLength = nVal;
+    }
 
   private:
-    VSILFILE    *fpDDF;
-    int         bReadOnly;
-    long        nFirstRecordOffset;
+    VSILFILE *fpDDF;
+    int bReadOnly;
+    long nFirstRecordOffset;
 
-    char        _interchangeLevel;
-    char        _inlineCodeExtensionIndicator;
-    char        _versionNumber;
-    char        _appIndicator;
-    int         _fieldControlLength;
-    char        _extendedCharSet[4];
+    char _interchangeLevel;
+    char _inlineCodeExtensionIndicator;
+    char _versionNumber;
+    char _appIndicator;
+    int _fieldControlLength;
+    char _extendedCharSet[4];
 
     int _recLength;
     char _leaderIden;
@@ -149,28 +187,37 @@ class CPL_ODLL DDFModule
     int _sizeFieldTag;
 
     // One DirEntry per field.
-    int         nFieldDefnCount;
+    int nFieldDefnCount;
     DDFFieldDefn **papoFieldDefns;
 
-    DDFRecord   *poRecord;
+    DDFRecord *poRecord;
 
-    int         nCloneCount;
-    int         nMaxCloneCount;
-    DDFRecord   **papoClones;
+    int nCloneCount;
+    int nMaxCloneCount;
+    DDFRecord **papoClones;
 };
 
 /************************************************************************/
 /*                             DDFFieldDefn                             */
 /************************************************************************/
 
-  typedef enum { dsc_elementary, dsc_vector, dsc_array, dsc_concatenated } DDF_data_struct_code;
-  typedef enum { dtc_char_string,
-                 dtc_implicit_point,
-                 dtc_explicit_point,
-                 dtc_explicit_point_scaled,
-                 dtc_char_bit_string,
-                 dtc_bit_string,
-                 dtc_mixed_data_type } DDF_data_type_code;
+typedef enum
+{
+    dsc_elementary,
+    dsc_vector,
+    dsc_array,
+    dsc_concatenated
+} DDF_data_struct_code;
+typedef enum
+{
+    dtc_char_string,
+    dtc_implicit_point,
+    dtc_explicit_point,
+    dtc_explicit_point_scaled,
+    dtc_char_bit_string,
+    dtc_bit_string,
+    dtc_mixed_data_type
+} DDF_data_type_code;
 
 /**
  * Information from the DDR defining one field.  Note that just because
@@ -182,39 +229,47 @@ class CPL_ODLL DDFModule
 class CPL_ODLL DDFFieldDefn
 {
   public:
-                DDFFieldDefn();
-                ~DDFFieldDefn();
+    DDFFieldDefn();
+    ~DDFFieldDefn();
 
-    int         Create( const char *pszTag, const char *pszFieldName,
-                        const char *pszDescription,
-                        DDF_data_struct_code eDataStructCode,
-                        DDF_data_type_code   eDataTypeCode,
-                        const char *pszFormat = nullptr );
-    void        AddSubfield( DDFSubfieldDefn *poNewSFDefn,
-                             int bDontAddToFormat = FALSE );
-    void        AddSubfield( const char *pszName, const char *pszFormat );
-    int         GenerateDDREntry( DDFModule * poModule, char **ppachData, int *pnLength );
+    int Create(const char *pszTag, const char *pszFieldName,
+               const char *pszDescription, DDF_data_struct_code eDataStructCode,
+               DDF_data_type_code eDataTypeCode,
+               const char *pszFormat = nullptr);
+    void AddSubfield(DDFSubfieldDefn *poNewSFDefn,
+                     int bDontAddToFormat = FALSE);
+    void AddSubfield(const char *pszName, const char *pszFormat);
+    int GenerateDDREntry(DDFModule *poModule, char **ppachData, int *pnLength);
 
-    int         Initialize( DDFModule * poModule, const char *pszTag,
-                            int nSize, const char * pachRecord );
+    int Initialize(DDFModule *poModule, const char *pszTag, int nSize,
+                   const char *pachRecord);
 
-    void        Dump( FILE * fp );
+    void Dump(FILE *fp);
 
     /** Fetch a pointer to the field name (tag).
      * @return this is an internal copy and should not be freed.
      */
-    const char  *GetName() const { return pszTag; }
+    const char *GetName() const
+    {
+        return pszTag;
+    }
 
     /** Fetch a longer description of this field.
      * @return this is an internal copy and should not be freed.
      */
-    const char  *GetDescription() const { return _fieldName; }
+    const char *GetDescription() const
+    {
+        return _fieldName;
+    }
 
     /** Get the number of subfields. */
-    int         GetSubfieldCount() const { return nSubfieldCount; }
+    int GetSubfieldCount() const
+    {
+        return nSubfieldCount;
+    }
 
-    DDFSubfieldDefn *GetSubfield( int i );
-    DDFSubfieldDefn *FindSubfieldDefn( const char * );
+    DDFSubfieldDefn *GetSubfield(int i);
+    DDFSubfieldDefn *FindSubfieldDefn(const char *);
 
     /**
      * Get the width of this field.  This function isn't normally used
@@ -223,51 +278,71 @@ class CPL_ODLL DDFFieldDefn
      * @return The width of the field in bytes, or zero if the field is not
      * apparently of a fixed width.
      */
-    int         GetFixedWidth() const { return nFixedWidth; }
+    int GetFixedWidth() const
+    {
+        return nFixedWidth;
+    }
 
     /**
      * Fetch repeating flag.
      * @see DDFField::GetRepeatCount()
      * @return TRUE if the field is marked as repeating.
      */
-    int         IsRepeating() const { return bRepeatingSubfields; }
+    int IsRepeating() const
+    {
+        return bRepeatingSubfields;
+    }
 
-    static char       *ExpandFormat( const char * );
+    static char *ExpandFormat(const char *);
 
     /** this is just for an S-57 hack for swedish data */
-    void SetRepeatingFlag( int n ) { bRepeatingSubfields = n; }
+    void SetRepeatingFlag(int n)
+    {
+        bRepeatingSubfields = n;
+    }
 
-    char        *GetDefaultValue( int *pnSize );
+    char *GetDefaultValue(int *pnSize);
 
-    const char  *GetArrayDescr() const { return _arrayDescr; }
-    const char  *GetFormatControls() const { return _formatControls; }
-    DDF_data_struct_code GetDataStructCode() const { return _data_struct_code; }
-    DDF_data_type_code GetDataTypeCode() const { return _data_type_code; }
+    const char *GetArrayDescr() const
+    {
+        return _arrayDescr;
+    }
+    const char *GetFormatControls() const
+    {
+        return _formatControls;
+    }
+    DDF_data_struct_code GetDataStructCode() const
+    {
+        return _data_struct_code;
+    }
+    DDF_data_type_code GetDataTypeCode() const
+    {
+        return _data_type_code;
+    }
 
-    void        SetFormatControls(const char* pszVal);
+    void SetFormatControls(const char *pszVal);
 
   private:
+    static char *ExtractSubstring(const char *);
 
-    static char       *ExtractSubstring( const char * );
+    DDFModule *poModule;
+    char *pszTag;
 
-    DDFModule * poModule;
-    char *      pszTag;
+    char *_fieldName;
+    char *_arrayDescr;
+    char *_formatControls;
 
-    char *      _fieldName;
-    char *      _arrayDescr;
-    char *      _formatControls;
+    int bRepeatingSubfields;
+    int nFixedWidth;  // zero if variable.
 
-    int         bRepeatingSubfields;
-    int         nFixedWidth;    // zero if variable.
-
-    int         BuildSubfields();
-    int         ApplyFormats();
+    int BuildSubfields();
+    int ApplyFormats();
 
     DDF_data_struct_code _data_struct_code;
 
-    DDF_data_type_code   _data_type_code;
+    DDF_data_type_code _data_type_code;
 
-    int         nSubfieldCount;
+    int nSubfieldCount;
     DDFSubfieldDefn **papoSubfields;
 };
 
@@ -287,19 +362,24 @@ class CPL_ODLL DDFFieldDefn
 
 class CPL_ODLL DDFSubfieldDefn
 {
-public:
+  public:
+    DDFSubfieldDefn();
+    ~DDFSubfieldDefn();
 
-                DDFSubfieldDefn();
-                ~DDFSubfieldDefn();
-
-    void        SetName( const char * pszName );
+    void SetName(const char *pszName);
 
     /** Get pointer to subfield name. */
-    const char  *GetName() const { return pszName; }
+    const char *GetName() const
+    {
+        return pszName;
+    }
 
     /** Get pointer to subfield format string */
-    const char  *GetFormat() const { return pszFormatString; }
-    int         SetFormat( const char * pszFormat );
+    const char *GetFormat() const
+    {
+        return pszFormatString;
+    }
+    int SetFormat(const char *pszFormat);
 
     /**
      * Get the general type of the subfield.  This can be used to
@@ -309,72 +389,81 @@ public:
      * DDFBinaryString.
      */
 
-    DDFDataType GetType() const { return eType; }
+    DDFDataType GetType() const
+    {
+        return eType;
+    }
 
-    double      ExtractFloatData( const char *pachData, int nMaxBytes,
-                                  int * pnConsumedBytes );
-    int         ExtractIntData( const char *pachData, int nMaxBytes,
-                                int * pnConsumedBytes );
-    const char  *ExtractStringData( const char *pachData, int nMaxBytes,
-                                    int * pnConsumedBytes );
-    int         GetDataLength( const char *, int, int * );
-    void        DumpData( const char *pachData, int nMaxBytes, FILE * fp );
+    double ExtractFloatData(const char *pachData, int nMaxBytes,
+                            int *pnConsumedBytes);
+    int ExtractIntData(const char *pachData, int nMaxBytes,
+                       int *pnConsumedBytes);
+    const char *ExtractStringData(const char *pachData, int nMaxBytes,
+                                  int *pnConsumedBytes);
+    int GetDataLength(const char *, int, int *);
+    void DumpData(const char *pachData, int nMaxBytes, FILE *fp);
 
-    int         FormatStringValue( char *pachData, int nBytesAvailable,
-                                   int *pnBytesUsed, const char *pszValue,
-                                   int nValueLength = -1 ) const;
+    int FormatStringValue(char *pachData, int nBytesAvailable, int *pnBytesUsed,
+                          const char *pszValue, int nValueLength = -1) const;
 
-    int         FormatIntValue( char *pachData, int nBytesAvailable,
-                                int *pnBytesUsed, int nNewValue ) const;
+    int FormatIntValue(char *pachData, int nBytesAvailable, int *pnBytesUsed,
+                       int nNewValue) const;
 
-    int         FormatFloatValue( char *pachData, int nBytesAvailable,
-                                  int *pnBytesUsed, double dfNewValue ) const;
+    int FormatFloatValue(char *pachData, int nBytesAvailable, int *pnBytesUsed,
+                         double dfNewValue) const;
 
     /** Get the subfield width (zero for variable). */
-    int         GetWidth() const { return nFormatWidth; } // zero for variable.
+    int GetWidth() const
+    {
+        return nFormatWidth;
+    }  // zero for variable.
 
-    int         GetDefaultValue( char *pachData, int nBytesAvailable,
-                                 int *pnBytesUsed ) const;
+    int GetDefaultValue(char *pachData, int nBytesAvailable,
+                        int *pnBytesUsed) const;
 
-    void        Dump( FILE * fp );
+    void Dump(FILE *fp);
 
-/**
-  Binary format: this is the digit immediately following the B or b for
-  binary formats.
-  */
-typedef enum {
-    NotBinary=0,
-    UInt=1,
-    SInt=2,
-    FPReal=3,
-    FloatReal=4,
-    FloatComplex=5
-} DDFBinaryFormat;
+    /**
+      Binary format: this is the digit immediately following the B or b for
+      binary formats.
+      */
+    typedef enum
+    {
+        NotBinary = 0,
+        UInt = 1,
+        SInt = 2,
+        FPReal = 3,
+        FloatReal = 4,
+        FloatComplex = 5
+    } DDFBinaryFormat;
 
-    DDFBinaryFormat GetBinaryFormat() const { return eBinaryFormat; }
+    DDFBinaryFormat GetBinaryFormat() const
+    {
+        return eBinaryFormat;
+    }
 
-private:
-  char      *pszName;   // a.k.a. subfield mnemonic
-  char      *pszFormatString;
+  private:
+    char *pszName;  // a.k.a. subfield mnemonic
+    char *pszFormatString;
 
-  DDFDataType           eType;
-  DDFBinaryFormat       eBinaryFormat;
+    DDFDataType eType;
+    DDFBinaryFormat eBinaryFormat;
 
-/* -------------------------------------------------------------------- */
-/*      bIsVariable determines whether we using the                     */
-/*      chFormatDelimiter (TRUE), or the fixed width (FALSE).           */
-/* -------------------------------------------------------------------- */
-  int        bIsVariable;
+    /* -------------------------------------------------------------------- */
+    /*      bIsVariable determines whether we using the                     */
+    /*      chFormatDelimiter (TRUE), or the fixed width (FALSE).           */
+    /* -------------------------------------------------------------------- */
+    int bIsVariable;
 
-  char       chFormatDelimiter;
-  int        nFormatWidth;
+    char chFormatDelimiter;
+    int nFormatWidth;
 
-/* -------------------------------------------------------------------- */
-/*      Fetched string cache.  This is where we hold the values         */
-/*      returned from ExtractStringData().                              */
-/* -------------------------------------------------------------------- */
-  int        nMaxBufChars;
-  char       *pachBuffer;
+    /* -------------------------------------------------------------------- */
+    /*      Fetched string cache.  This is where we hold the values         */
+    /*      returned from ExtractStringData().                              */
+    /* -------------------------------------------------------------------- */
+    int nMaxBufChars;
+    char *pachBuffer;
 };
 
 /************************************************************************/
@@ -393,104 +482,137 @@ private:
 class CPL_ODLL DDFRecord
 {
   public:
-    explicit     DDFRecord( DDFModule * );
-                ~DDFRecord();
+    explicit DDFRecord(DDFModule *);
+    ~DDFRecord();
 
-    DDFRecord  *Clone();
-    DDFRecord  *CloneOn( DDFModule * );
+    DDFRecord *Clone();
+    DDFRecord *CloneOn(DDFModule *);
 
-    void        Dump( FILE * );
+    void Dump(FILE *);
 
     /** Get the number of DDFFields on this record. */
-    int         GetFieldCount() const { return nFieldCount; }
+    int GetFieldCount() const
+    {
+        return nFieldCount;
+    }
 
-    DDFField    *FindField( const char *, int = 0 );
-    DDFField    *GetField( int );
+    DDFField *FindField(const char *, int = 0);
+    DDFField *GetField(int);
 
-    int         GetIntSubfield( const char *, int, const char *, int,
-                                int * = nullptr );
-    double      GetFloatSubfield( const char *, int, const char *, int,
-                                  int * = nullptr );
-    const char *GetStringSubfield( const char *, int, const char *, int,
-                                   int * = nullptr );
+    int GetIntSubfield(const char *, int, const char *, int, int * = nullptr);
+    double GetFloatSubfield(const char *, int, const char *, int,
+                            int * = nullptr);
+    const char *GetStringSubfield(const char *, int, const char *, int,
+                                  int * = nullptr);
 
-    int         SetIntSubfield( const char *pszField, int iFieldIndex,
-                                const char *pszSubfield, int iSubfieldIndex,
-                                int nValue );
-    int         SetStringSubfield( const char *pszField, int iFieldIndex,
-                                   const char *pszSubfield, int iSubfieldIndex,
-                                   const char *pszValue, int nValueLength=-1 );
-    int         SetFloatSubfield( const char *pszField, int iFieldIndex,
-                                  const char *pszSubfield, int iSubfieldIndex,
-                                  double dfNewValue );
+    int SetIntSubfield(const char *pszField, int iFieldIndex,
+                       const char *pszSubfield, int iSubfieldIndex, int nValue);
+    int SetStringSubfield(const char *pszField, int iFieldIndex,
+                          const char *pszSubfield, int iSubfieldIndex,
+                          const char *pszValue, int nValueLength = -1);
+    int SetFloatSubfield(const char *pszField, int iFieldIndex,
+                         const char *pszSubfield, int iSubfieldIndex,
+                         double dfNewValue);
 
     /** Fetch size of records raw data (GetData()) in bytes. */
-    int         GetDataSize() const { return nDataSize; }
+    int GetDataSize() const
+    {
+        return nDataSize;
+    }
 
     /**
      * Fetch the raw data for this record.  The returned pointer is effectively
      * to the data for the first field of the record, and is of size
      * GetDataSize().
      */
-    const char  *GetData() const { return pachData; }
+    const char *GetData() const
+    {
+        return pachData;
+    }
 
     /**
      * Fetch the DDFModule with which this record is associated.
      */
 
-    DDFModule * GetModule() { return poModule; }
+    DDFModule *GetModule()
+    {
+        return poModule;
+    }
 
-    int ResizeField( DDFField *poField, int nNewDataSize );
-    int DeleteField( DDFField *poField );
-    DDFField* AddField( DDFFieldDefn * );
+    int ResizeField(DDFField *poField, int nNewDataSize);
+    int DeleteField(DDFField *poField);
+    DDFField *AddField(DDFFieldDefn *);
 
-    int CreateDefaultFieldInstance( DDFField *poField, int iIndexWithinField );
+    int CreateDefaultFieldInstance(DDFField *poField, int iIndexWithinField);
 
-    int SetFieldRaw( DDFField *poField, int iIndexWithinField,
-                     const char *pachRawData, int nRawDataSize );
-    int UpdateFieldRaw( DDFField *poField, int iIndexWithinField,
-                        int nStartOffset, int nOldSize,
-                        const char *pachRawData, int nRawDataSize );
+    int SetFieldRaw(DDFField *poField, int iIndexWithinField,
+                    const char *pachRawData, int nRawDataSize);
+    int UpdateFieldRaw(DDFField *poField, int iIndexWithinField,
+                       int nStartOffset, int nOldSize, const char *pachRawData,
+                       int nRawDataSize);
 
-    int         Write();
+    int Write();
 
     // Advanced uses for 8211dump/8211createfromxml
-    int         GetReuseHeader() const { return nReuseHeader; }
-    int         GetSizeFieldTag() const { return _sizeFieldTag; }
-    int         GetSizeFieldPos() const { return _sizeFieldPos; }
-    int         GetSizeFieldLength() const { return _sizeFieldLength; }
-    //void        SetReuseHeader(int bFlag) { nReuseHeader = bFlag; }
-    void        SetSizeFieldTag(int nVal) { _sizeFieldTag = nVal; }
-    void        SetSizeFieldPos(int nVal) { _sizeFieldPos = nVal; }
-    void        SetSizeFieldLength(int nVal) { _sizeFieldLength = nVal; }
+    int GetReuseHeader() const
+    {
+        return nReuseHeader;
+    }
+    int GetSizeFieldTag() const
+    {
+        return _sizeFieldTag;
+    }
+    int GetSizeFieldPos() const
+    {
+        return _sizeFieldPos;
+    }
+    int GetSizeFieldLength() const
+    {
+        return _sizeFieldLength;
+    }
+    // void        SetReuseHeader(int bFlag) { nReuseHeader = bFlag; }
+    void SetSizeFieldTag(int nVal)
+    {
+        _sizeFieldTag = nVal;
+    }
+    void SetSizeFieldPos(int nVal)
+    {
+        _sizeFieldPos = nVal;
+    }
+    void SetSizeFieldLength(int nVal)
+    {
+        _sizeFieldLength = nVal;
+    }
 
     // This is really just for the DDFModule class.
-    int         Read();
-    void        Clear();
-    int         ResetDirectory();
-    void        RemoveIsCloneFlag() { bIsClone = FALSE; }
+    int Read();
+    void Clear();
+    int ResetDirectory();
+    void RemoveIsCloneFlag()
+    {
+        bIsClone = FALSE;
+    }
 
   private:
+    int ReadHeader();
 
-    int         ReadHeader();
+    DDFModule *poModule;
 
-    DDFModule   *poModule;
+    int nReuseHeader;
 
-    int         nReuseHeader;
+    int nFieldOffset;  // field data area, not dir entries.
 
-    int         nFieldOffset;   // field data area, not dir entries.
+    int _sizeFieldTag;
+    int _sizeFieldPos;
+    int _sizeFieldLength;
 
-    int         _sizeFieldTag;
-    int         _sizeFieldPos;
-    int         _sizeFieldLength;
+    int nDataSize;  // Whole record except leader with header
+    char *pachData;
 
-    int         nDataSize;      // Whole record except leader with header
-    char        *pachData;
+    int nFieldCount;
+    DDFField *paoFields;
 
-    int         nFieldCount;
-    DDFField    *paoFields;
-
-    int         bIsClone;
+    int bIsClone;
 };
 
 /************************************************************************/
@@ -511,38 +633,47 @@ class CPL_ODLL DDFRecord
 class CPL_ODLL DDFField
 {
   public:
-    DDFField() : poDefn(nullptr), nDataSize(0), pachData(nullptr) {}
+    DDFField() : poDefn(nullptr), nDataSize(0), pachData(nullptr)
+    {
+    }
 
-    void                Initialize( DDFFieldDefn *, const char *pszData,
-                                    int nSize );
+    void Initialize(DDFFieldDefn *, const char *pszData, int nSize);
 
-    void                Dump( FILE * fp );
+    void Dump(FILE *fp);
 
-    const char         *GetSubfieldData( DDFSubfieldDefn *,
-                                         int * = nullptr, int = 0 );
+    const char *GetSubfieldData(DDFSubfieldDefn *, int * = nullptr, int = 0);
 
-    const char         *GetInstanceData( int nInstance, int *pnSize );
+    const char *GetInstanceData(int nInstance, int *pnSize);
 
     /**
      * Return the pointer to the entire data block for this record. This
      * is an internal copy, and should not be freed by the application.
      */
-    const char         *GetData() const { return pachData; }
+    const char *GetData() const
+    {
+        return pachData;
+    }
 
     /** Return the number of bytes in the data block returned by GetData(). */
-    int                 GetDataSize() const { return nDataSize; }
+    int GetDataSize() const
+    {
+        return nDataSize;
+    }
 
-    int                 GetRepeatCount();
+    int GetRepeatCount();
 
     /** Fetch the corresponding DDFFieldDefn. */
-    DDFFieldDefn        *GetFieldDefn() { return poDefn; }
+    DDFFieldDefn *GetFieldDefn()
+    {
+        return poDefn;
+    }
 
   private:
-    DDFFieldDefn        *poDefn;
+    DDFFieldDefn *poDefn;
 
-    int                 nDataSize;
+    int nDataSize;
 
-    const char          *pachData;
+    const char *pachData;
 };
 
 #endif /* ndef ISO8211_H_INCLUDED */
