@@ -40,7 +40,6 @@
 #include "mitab_priv.h"
 #include "mitab_utils.h"
 
-
 /*=====================================================================
  *                      class TABToolDefTable
  *====================================================================*/
@@ -50,20 +49,13 @@
  *
  * Constructor.
  **********************************************************************/
-TABToolDefTable::TABToolDefTable() :
-    m_papsPen(nullptr),
-    m_numPen(0),
-    m_numAllocatedPen(0),
-    m_papsBrush(nullptr),
-    m_numBrushes(0),
-    m_numAllocatedBrushes(0),
-    m_papsFont(nullptr),
-    m_numFonts(0),
-    m_numAllocatedFonts(0),
-    m_papsSymbol(nullptr),
-    m_numSymbols(0),
-    m_numAllocatedSymbols(0)
-{}
+TABToolDefTable::TABToolDefTable()
+    : m_papsPen(nullptr), m_numPen(0), m_numAllocatedPen(0),
+      m_papsBrush(nullptr), m_numBrushes(0), m_numAllocatedBrushes(0),
+      m_papsFont(nullptr), m_numFonts(0), m_numAllocatedFonts(0),
+      m_papsSymbol(nullptr), m_numSymbols(0), m_numAllocatedSymbols(0)
+{
+}
 
 /**********************************************************************
  *                   TABToolDefTable::~TABToolDefTable()
@@ -72,19 +64,19 @@ TABToolDefTable::TABToolDefTable() :
  **********************************************************************/
 TABToolDefTable::~TABToolDefTable()
 {
-    for( int i = 0; m_papsPen && i < m_numPen; i++ )
+    for (int i = 0; m_papsPen && i < m_numPen; i++)
         CPLFree(m_papsPen[i]);
     CPLFree(m_papsPen);
 
-    for( int i = 0; m_papsBrush && i < m_numBrushes; i++ )
+    for (int i = 0; m_papsBrush && i < m_numBrushes; i++)
         CPLFree(m_papsBrush[i]);
     CPLFree(m_papsBrush);
 
-    for( int i = 0; m_papsFont && i < m_numFonts; i++ )
+    for (int i = 0; m_papsFont && i < m_numFonts; i++)
         CPLFree(m_papsFont[i]);
     CPLFree(m_papsFont);
 
-    for( int i = 0; m_papsSymbol && i < m_numSymbols; i++ )
+    for (int i = 0; m_papsSymbol && i < m_numSymbols; i++)
         CPLFree(m_papsSymbol[i]);
     CPLFree(m_papsSymbol);
 }
@@ -98,7 +90,7 @@ TABToolDefTable::~TABToolDefTable()
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABToolDefTable::ReadAllToolDefs( TABMAPToolBlock *poBlock )
+int TABToolDefTable::ReadAllToolDefs(TABMAPToolBlock *poBlock)
 {
     int nStatus = 0;
 
@@ -106,111 +98,118 @@ int TABToolDefTable::ReadAllToolDefs( TABMAPToolBlock *poBlock )
      * Loop until we reach the end of the chain of blocks... we assume
      * that the first block of data is already pre-loaded.
      *----------------------------------------------------------------*/
-    while( ! poBlock->EndOfChain() )
+    while (!poBlock->EndOfChain())
     {
         const int nDefType = poBlock->ReadByte();
-        switch(nDefType)
+        switch (nDefType)
         {
-          case TABMAP_TOOL_PEN:       // PEN
-            if (m_numPen >= m_numAllocatedPen)
-            {
-                // Realloc array by blocks of 20 items
-                m_numAllocatedPen += 20;
-                m_papsPen = static_cast<TABPenDef**>(CPLRealloc(m_papsPen,
-                                        m_numAllocatedPen*sizeof(TABPenDef*)));
-            }
-            m_papsPen[m_numPen] = static_cast<TABPenDef*>(CPLCalloc(1, sizeof(TABPenDef)));
+            case TABMAP_TOOL_PEN:  // PEN
+                if (m_numPen >= m_numAllocatedPen)
+                {
+                    // Realloc array by blocks of 20 items
+                    m_numAllocatedPen += 20;
+                    m_papsPen = static_cast<TABPenDef **>(CPLRealloc(
+                        m_papsPen, m_numAllocatedPen * sizeof(TABPenDef *)));
+                }
+                m_papsPen[m_numPen] =
+                    static_cast<TABPenDef *>(CPLCalloc(1, sizeof(TABPenDef)));
 
-            m_papsPen[m_numPen]->nRefCount  = poBlock->ReadInt32();
-            m_papsPen[m_numPen]->nPixelWidth = poBlock->ReadByte();
-            m_papsPen[m_numPen]->nLinePattern = poBlock->ReadByte();
-            m_papsPen[m_numPen]->nPointWidth = poBlock->ReadByte();
-            m_papsPen[m_numPen]->rgbColor   = poBlock->ReadByte()*256*256+
-                                              poBlock->ReadByte()*256 +
-                                              poBlock->ReadByte();
+                m_papsPen[m_numPen]->nRefCount = poBlock->ReadInt32();
+                m_papsPen[m_numPen]->nPixelWidth = poBlock->ReadByte();
+                m_papsPen[m_numPen]->nLinePattern = poBlock->ReadByte();
+                m_papsPen[m_numPen]->nPointWidth = poBlock->ReadByte();
+                m_papsPen[m_numPen]->rgbColor =
+                    poBlock->ReadByte() * 256 * 256 +
+                    poBlock->ReadByte() * 256 + poBlock->ReadByte();
 
-            // Adjust width value...
-            // High bits for point width values > 255 are stored in the
-            // pixel width byte
-            if (m_papsPen[m_numPen]->nPixelWidth > 7)
-            {
-                m_papsPen[m_numPen]->nPointWidth +=
-                         (m_papsPen[m_numPen]->nPixelWidth-8)*0x100;
-                m_papsPen[m_numPen]->nPixelWidth = 1;
-            }
+                // Adjust width value...
+                // High bits for point width values > 255 are stored in the
+                // pixel width byte
+                if (m_papsPen[m_numPen]->nPixelWidth > 7)
+                {
+                    m_papsPen[m_numPen]->nPointWidth +=
+                        (m_papsPen[m_numPen]->nPixelWidth - 8) * 0x100;
+                    m_papsPen[m_numPen]->nPixelWidth = 1;
+                }
 
-            m_numPen++;
+                m_numPen++;
 
-            break;
-          case TABMAP_TOOL_BRUSH:       // BRUSH
-            if (m_numBrushes >= m_numAllocatedBrushes)
-            {
-                // Realloc array by blocks of 20 items
-                m_numAllocatedBrushes += 20;
-                m_papsBrush = static_cast<TABBrushDef**>(CPLRealloc(m_papsBrush,
-                                 m_numAllocatedBrushes*sizeof(TABBrushDef*)));
-            }
-            m_papsBrush[m_numBrushes] =
-                static_cast<TABBrushDef*>(CPLCalloc(1,sizeof(TABBrushDef)));
+                break;
+            case TABMAP_TOOL_BRUSH:  // BRUSH
+                if (m_numBrushes >= m_numAllocatedBrushes)
+                {
+                    // Realloc array by blocks of 20 items
+                    m_numAllocatedBrushes += 20;
+                    m_papsBrush = static_cast<TABBrushDef **>(
+                        CPLRealloc(m_papsBrush, m_numAllocatedBrushes *
+                                                    sizeof(TABBrushDef *)));
+                }
+                m_papsBrush[m_numBrushes] = static_cast<TABBrushDef *>(
+                    CPLCalloc(1, sizeof(TABBrushDef)));
 
-            m_papsBrush[m_numBrushes]->nRefCount    = poBlock->ReadInt32();
-            m_papsBrush[m_numBrushes]->nFillPattern = poBlock->ReadByte();
-            m_papsBrush[m_numBrushes]->bTransparentFill = poBlock->ReadByte();
-            m_papsBrush[m_numBrushes]->rgbFGColor =poBlock->ReadByte()*256*256+
-                                                   poBlock->ReadByte()*256 +
-                                                   poBlock->ReadByte();
-            m_papsBrush[m_numBrushes]->rgbBGColor =poBlock->ReadByte()*256*256+
-                                                   poBlock->ReadByte()*256 +
-                                                   poBlock->ReadByte();
+                m_papsBrush[m_numBrushes]->nRefCount = poBlock->ReadInt32();
+                m_papsBrush[m_numBrushes]->nFillPattern = poBlock->ReadByte();
+                m_papsBrush[m_numBrushes]->bTransparentFill =
+                    poBlock->ReadByte();
+                m_papsBrush[m_numBrushes]->rgbFGColor =
+                    poBlock->ReadByte() * 256 * 256 +
+                    poBlock->ReadByte() * 256 + poBlock->ReadByte();
+                m_papsBrush[m_numBrushes]->rgbBGColor =
+                    poBlock->ReadByte() * 256 * 256 +
+                    poBlock->ReadByte() * 256 + poBlock->ReadByte();
 
-            m_numBrushes++;
+                m_numBrushes++;
 
-            break;
-          case TABMAP_TOOL_FONT:       // FONT NAME
-            if (m_numFonts >= m_numAllocatedFonts)
-            {
-                // Realloc array by blocks of 20 items
-                m_numAllocatedFonts += 20;
-                m_papsFont = static_cast<TABFontDef**>(CPLRealloc(m_papsFont,
-                                 m_numAllocatedFonts*sizeof(TABFontDef*)));
-            }
-            m_papsFont[m_numFonts] =
-                static_cast<TABFontDef*>(CPLCalloc(1,sizeof(TABFontDef)));
+                break;
+            case TABMAP_TOOL_FONT:  // FONT NAME
+                if (m_numFonts >= m_numAllocatedFonts)
+                {
+                    // Realloc array by blocks of 20 items
+                    m_numAllocatedFonts += 20;
+                    m_papsFont = static_cast<TABFontDef **>(
+                        CPLRealloc(m_papsFont,
+                                   m_numAllocatedFonts * sizeof(TABFontDef *)));
+                }
+                m_papsFont[m_numFonts] =
+                    static_cast<TABFontDef *>(CPLCalloc(1, sizeof(TABFontDef)));
 
-            m_papsFont[m_numFonts]->nRefCount    = poBlock->ReadInt32();
-            poBlock->ReadBytes(32, reinterpret_cast<GByte*>(m_papsFont[m_numFonts]->szFontName));
-            m_papsFont[m_numFonts]->szFontName[32] = '\0';
+                m_papsFont[m_numFonts]->nRefCount = poBlock->ReadInt32();
+                poBlock->ReadBytes(32, reinterpret_cast<GByte *>(
+                                           m_papsFont[m_numFonts]->szFontName));
+                m_papsFont[m_numFonts]->szFontName[32] = '\0';
 
-            m_numFonts++;
+                m_numFonts++;
 
-            break;
-          case TABMAP_TOOL_SYMBOL:       // SYMBOL
-            if (m_numSymbols >= m_numAllocatedSymbols)
-            {
-                // Realloc array by blocks of 20 items
-                m_numAllocatedSymbols += 20;
-                m_papsSymbol = static_cast<TABSymbolDef**>(CPLRealloc(m_papsSymbol,
-                                 m_numAllocatedSymbols*sizeof(TABSymbolDef*)));
-            }
-            m_papsSymbol[m_numSymbols] =
-                static_cast<TABSymbolDef*>(CPLCalloc(1,sizeof(TABSymbolDef)));
+                break;
+            case TABMAP_TOOL_SYMBOL:  // SYMBOL
+                if (m_numSymbols >= m_numAllocatedSymbols)
+                {
+                    // Realloc array by blocks of 20 items
+                    m_numAllocatedSymbols += 20;
+                    m_papsSymbol = static_cast<TABSymbolDef **>(
+                        CPLRealloc(m_papsSymbol, m_numAllocatedSymbols *
+                                                     sizeof(TABSymbolDef *)));
+                }
+                m_papsSymbol[m_numSymbols] = static_cast<TABSymbolDef *>(
+                    CPLCalloc(1, sizeof(TABSymbolDef)));
 
-            m_papsSymbol[m_numSymbols]->nRefCount    = poBlock->ReadInt32();
-            m_papsSymbol[m_numSymbols]->nSymbolNo    = poBlock->ReadInt16();
-            m_papsSymbol[m_numSymbols]->nPointSize   = poBlock->ReadInt16();
-            m_papsSymbol[m_numSymbols]->_nUnknownValue_ = poBlock->ReadByte();
-            m_papsSymbol[m_numSymbols]->rgbColor = poBlock->ReadByte()*256*256+
-                                                   poBlock->ReadByte()*256 +
-                                                   poBlock->ReadByte();
+                m_papsSymbol[m_numSymbols]->nRefCount = poBlock->ReadInt32();
+                m_papsSymbol[m_numSymbols]->nSymbolNo = poBlock->ReadInt16();
+                m_papsSymbol[m_numSymbols]->nPointSize = poBlock->ReadInt16();
+                m_papsSymbol[m_numSymbols]->_nUnknownValue_ =
+                    poBlock->ReadByte();
+                m_papsSymbol[m_numSymbols]->rgbColor =
+                    poBlock->ReadByte() * 256 * 256 +
+                    poBlock->ReadByte() * 256 + poBlock->ReadByte();
 
-            m_numSymbols++;
+                m_numSymbols++;
 
-            break;
-          default:
-            /* Unsupported Tool type!!! */
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "Unsupported drawing tool type: `%d'", nDefType);
-            nStatus = -1;
+                break;
+            default:
+                /* Unsupported Tool type!!! */
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Unsupported drawing tool type: `%d'", nDefType);
+                nStatus = -1;
         }
 
         if (CPLGetLastErrorType() == CE_Failure)
@@ -234,31 +233,31 @@ int TABToolDefTable::ReadAllToolDefs( TABMAPToolBlock *poBlock )
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABToolDefTable::WriteAllToolDefs( TABMAPToolBlock *poBlock )
+int TABToolDefTable::WriteAllToolDefs(TABMAPToolBlock *poBlock)
 {
     int nStatus = 0;
 
     /*-----------------------------------------------------------------
      * Write Pen Defs
      *----------------------------------------------------------------*/
-    for( int i = 0; nStatus == 0 && i< m_numPen; i++ )
+    for (int i = 0; nStatus == 0 && i < m_numPen; i++)
     {
         // The pen width is encoded over 2 bytes
-        GByte byPixelWidth=1;
+        GByte byPixelWidth = 1;
         GByte byPointWidth = 0;
         if (m_papsPen[i]->nPointWidth > 0)
         {
             byPointWidth = static_cast<GByte>(m_papsPen[i]->nPointWidth & 0xff);
             if (m_papsPen[i]->nPointWidth > 255)
-                byPixelWidth = 8 + static_cast<GByte>(m_papsPen[i]->nPointWidth/0x100);
+                byPixelWidth =
+                    8 + static_cast<GByte>(m_papsPen[i]->nPointWidth / 0x100);
         }
         else
         {
             const GByte nMinWidth = 1;
             const GByte nMaxWidth = 7;
-            byPixelWidth =
-                std::min(
-                    std::max(m_papsPen[i]->nPixelWidth, nMinWidth), nMaxWidth);
+            byPixelWidth = std::min(
+                std::max(m_papsPen[i]->nPixelWidth, nMinWidth), nMaxWidth);
         }
 
         poBlock->CheckAvailableSpace(TABMAP_TOOL_PEN);
@@ -282,7 +281,7 @@ int TABToolDefTable::WriteAllToolDefs( TABMAPToolBlock *poBlock )
     /*-----------------------------------------------------------------
      * Write Brush Defs
      *----------------------------------------------------------------*/
-    for( int i = 0; nStatus == 0 && i< m_numBrushes; i++ )
+    for (int i = 0; nStatus == 0 && i < m_numBrushes; i++)
     {
         poBlock->CheckAvailableSpace(TABMAP_TOOL_BRUSH);
 
@@ -291,12 +290,18 @@ int TABToolDefTable::WriteAllToolDefs( TABMAPToolBlock *poBlock )
 
         poBlock->WriteByte(m_papsBrush[i]->nFillPattern);
         poBlock->WriteByte(m_papsBrush[i]->bTransparentFill);
-        poBlock->WriteByte(static_cast<GByte>(COLOR_R(m_papsBrush[i]->rgbFGColor)));
-        poBlock->WriteByte(static_cast<GByte>(COLOR_G(m_papsBrush[i]->rgbFGColor)));
-        poBlock->WriteByte(static_cast<GByte>(COLOR_B(m_papsBrush[i]->rgbFGColor)));
-        poBlock->WriteByte(static_cast<GByte>(COLOR_R(m_papsBrush[i]->rgbBGColor)));
-        poBlock->WriteByte(static_cast<GByte>(COLOR_G(m_papsBrush[i]->rgbBGColor)));
-        poBlock->WriteByte(static_cast<GByte>(COLOR_B(m_papsBrush[i]->rgbBGColor)));
+        poBlock->WriteByte(
+            static_cast<GByte>(COLOR_R(m_papsBrush[i]->rgbFGColor)));
+        poBlock->WriteByte(
+            static_cast<GByte>(COLOR_G(m_papsBrush[i]->rgbFGColor)));
+        poBlock->WriteByte(
+            static_cast<GByte>(COLOR_B(m_papsBrush[i]->rgbFGColor)));
+        poBlock->WriteByte(
+            static_cast<GByte>(COLOR_R(m_papsBrush[i]->rgbBGColor)));
+        poBlock->WriteByte(
+            static_cast<GByte>(COLOR_G(m_papsBrush[i]->rgbBGColor)));
+        poBlock->WriteByte(
+            static_cast<GByte>(COLOR_B(m_papsBrush[i]->rgbBGColor)));
 
         if (CPLGetLastErrorType() == CE_Failure)
         {
@@ -308,14 +313,15 @@ int TABToolDefTable::WriteAllToolDefs( TABMAPToolBlock *poBlock )
     /*-----------------------------------------------------------------
      * Write Font Defs
      *----------------------------------------------------------------*/
-    for( int i = 0; nStatus == 0 && i< m_numFonts; i++ )
+    for (int i = 0; nStatus == 0 && i < m_numFonts; i++)
     {
         poBlock->CheckAvailableSpace(TABMAP_TOOL_FONT);
 
         poBlock->WriteByte(TABMAP_TOOL_FONT);  // Def Type = Font name
         poBlock->WriteInt32(m_papsFont[i]->nRefCount);
 
-        poBlock->WriteBytes(32, reinterpret_cast<GByte*>(m_papsFont[i]->szFontName));
+        poBlock->WriteBytes(
+            32, reinterpret_cast<GByte *>(m_papsFont[i]->szFontName));
 
         if (CPLGetLastErrorType() == CE_Failure)
         {
@@ -327,7 +333,7 @@ int TABToolDefTable::WriteAllToolDefs( TABMAPToolBlock *poBlock )
     /*-----------------------------------------------------------------
      * Write Symbol Defs
      *----------------------------------------------------------------*/
-    for( int i = 0; nStatus == 0 && i< m_numSymbols; i++ )
+    for (int i = 0; nStatus == 0 && i < m_numSymbols; i++)
     {
         poBlock->CheckAvailableSpace(TABMAP_TOOL_SYMBOL);
 
@@ -337,9 +343,12 @@ int TABToolDefTable::WriteAllToolDefs( TABMAPToolBlock *poBlock )
         poBlock->WriteInt16(m_papsSymbol[i]->nSymbolNo);
         poBlock->WriteInt16(m_papsSymbol[i]->nPointSize);
         poBlock->WriteByte(m_papsSymbol[i]->_nUnknownValue_);
-        poBlock->WriteByte(static_cast<GByte>(COLOR_R(m_papsSymbol[i]->rgbColor)));
-        poBlock->WriteByte(static_cast<GByte>(COLOR_G(m_papsSymbol[i]->rgbColor)));
-        poBlock->WriteByte(static_cast<GByte>(COLOR_B(m_papsSymbol[i]->rgbColor)));
+        poBlock->WriteByte(
+            static_cast<GByte>(COLOR_R(m_papsSymbol[i]->rgbColor)));
+        poBlock->WriteByte(
+            static_cast<GByte>(COLOR_G(m_papsSymbol[i]->rgbColor)));
+        poBlock->WriteByte(
+            static_cast<GByte>(COLOR_B(m_papsSymbol[i]->rgbColor)));
 
         if (CPLGetLastErrorType() == CE_Failure)
         {
@@ -359,7 +368,7 @@ int TABToolDefTable::WriteAllToolDefs( TABMAPToolBlock *poBlock )
  *
  * Return the number of valid pen indexes for this .MAP file
  **********************************************************************/
-int     TABToolDefTable::GetNumPen()
+int TABToolDefTable::GetNumPen()
 {
     return m_numPen;
 }
@@ -375,8 +384,8 @@ int     TABToolDefTable::GetNumPen()
  **********************************************************************/
 TABPenDef *TABToolDefTable::GetPenDefRef(int nIndex)
 {
-    if (nIndex >0 && nIndex <= m_numPen)
-        return m_papsPen[nIndex-1];
+    if (nIndex > 0 && nIndex <= m_numPen)
+        return m_papsPen[nIndex - 1];
 
     return nullptr;
 }
@@ -407,7 +416,7 @@ int TABToolDefTable::AddPenDefRef(TABPenDef *poNewPenDef)
      * Start by searching the list of existing pens
      *----------------------------------------------------------------*/
     int nNewPenIndex = 0;
-    for( int i = 0; nNewPenIndex == 0 && i<m_numPen; i++ )
+    for (int i = 0; nNewPenIndex == 0 && i < m_numPen; i++)
     {
         TABPenDef *poDef = m_papsPen[i];
         if (poDef->nPixelWidth == poNewPenDef->nPixelWidth &&
@@ -415,7 +424,7 @@ int TABToolDefTable::AddPenDefRef(TABPenDef *poNewPenDef)
             poDef->nPointWidth == poNewPenDef->nPointWidth &&
             poDef->rgbColor == poNewPenDef->rgbColor)
         {
-            nNewPenIndex = i+1; // Fount it!
+            nNewPenIndex = i + 1;  // Fount it!
             poDef->nRefCount++;
         }
     }
@@ -429,10 +438,11 @@ int TABToolDefTable::AddPenDefRef(TABPenDef *poNewPenDef)
         {
             // Realloc array by blocks of 20 items
             m_numAllocatedPen += 20;
-            m_papsPen = static_cast<TABPenDef**>(CPLRealloc(m_papsPen,
-                                       m_numAllocatedPen*sizeof(TABPenDef*)));
+            m_papsPen = static_cast<TABPenDef **>(
+                CPLRealloc(m_papsPen, m_numAllocatedPen * sizeof(TABPenDef *)));
         }
-        m_papsPen[m_numPen] = static_cast<TABPenDef*>(CPLCalloc(1, sizeof(TABPenDef)));
+        m_papsPen[m_numPen] =
+            static_cast<TABPenDef *>(CPLCalloc(1, sizeof(TABPenDef)));
 
         *m_papsPen[m_numPen] = *poNewPenDef;
         m_papsPen[m_numPen]->nRefCount = 1;
@@ -447,7 +457,7 @@ int TABToolDefTable::AddPenDefRef(TABPenDef *poNewPenDef)
  *
  * Return the number of valid Brush indexes for this .MAP file
  **********************************************************************/
-int     TABToolDefTable::GetNumBrushes()
+int TABToolDefTable::GetNumBrushes()
 {
     return m_numBrushes;
 }
@@ -463,8 +473,8 @@ int     TABToolDefTable::GetNumBrushes()
  **********************************************************************/
 TABBrushDef *TABToolDefTable::GetBrushDefRef(int nIndex)
 {
-    if (nIndex >0 && nIndex <= m_numBrushes)
-        return m_papsBrush[nIndex-1];
+    if (nIndex > 0 && nIndex <= m_numBrushes)
+        return m_papsBrush[nIndex - 1];
 
     return nullptr;
 }
@@ -495,7 +505,7 @@ int TABToolDefTable::AddBrushDefRef(TABBrushDef *poNewBrushDef)
      * Start by searching the list of existing Brushs
      *----------------------------------------------------------------*/
     int nNewBrushIndex = 0;
-    for( int i = 0; nNewBrushIndex == 0 && i<m_numBrushes; i++ )
+    for (int i = 0; nNewBrushIndex == 0 && i < m_numBrushes; i++)
     {
         TABBrushDef *poDef = m_papsBrush[i];
         if (poDef->nFillPattern == poNewBrushDef->nFillPattern &&
@@ -503,7 +513,7 @@ int TABToolDefTable::AddBrushDefRef(TABBrushDef *poNewBrushDef)
             poDef->rgbFGColor == poNewBrushDef->rgbFGColor &&
             poDef->rgbBGColor == poNewBrushDef->rgbBGColor)
         {
-            nNewBrushIndex = i+1; // Fount it!
+            nNewBrushIndex = i + 1;  // Fount it!
             poDef->nRefCount++;
         }
     }
@@ -517,11 +527,11 @@ int TABToolDefTable::AddBrushDefRef(TABBrushDef *poNewBrushDef)
         {
             // Realloc array by blocks of 20 items
             m_numAllocatedBrushes += 20;
-            m_papsBrush = static_cast<TABBrushDef**>(CPLRealloc(m_papsBrush,
-                                 m_numAllocatedBrushes*sizeof(TABBrushDef*)));
+            m_papsBrush = static_cast<TABBrushDef **>(CPLRealloc(
+                m_papsBrush, m_numAllocatedBrushes * sizeof(TABBrushDef *)));
         }
-        m_papsBrush[m_numBrushes]= static_cast<TABBrushDef*>(CPLCalloc(1,
-                                                          sizeof(TABBrushDef)));
+        m_papsBrush[m_numBrushes] =
+            static_cast<TABBrushDef *>(CPLCalloc(1, sizeof(TABBrushDef)));
 
         *m_papsBrush[m_numBrushes] = *poNewBrushDef;
         m_papsBrush[m_numBrushes]->nRefCount = 1;
@@ -536,7 +546,7 @@ int TABToolDefTable::AddBrushDefRef(TABBrushDef *poNewBrushDef)
  *
  * Return the number of valid Font indexes for this .MAP file
  **********************************************************************/
-int     TABToolDefTable::GetNumFonts()
+int TABToolDefTable::GetNumFonts()
 {
     return m_numFonts;
 }
@@ -552,8 +562,8 @@ int     TABToolDefTable::GetNumFonts()
  **********************************************************************/
 TABFontDef *TABToolDefTable::GetFontDefRef(int nIndex)
 {
-    if (nIndex >0 && nIndex <= m_numFonts)
-        return m_papsFont[nIndex-1];
+    if (nIndex > 0 && nIndex <= m_numFonts)
+        return m_papsFont[nIndex - 1];
 
     return nullptr;
 }
@@ -578,12 +588,12 @@ int TABToolDefTable::AddFontDefRef(TABFontDef *poNewFontDef)
      * Start by searching the list of existing Fonts
      *----------------------------------------------------------------*/
     int nNewFontIndex = 0;
-    for( int i = 0; nNewFontIndex == 0 && i<m_numFonts; i++ )
+    for (int i = 0; nNewFontIndex == 0 && i < m_numFonts; i++)
     {
         TABFontDef *poDef = m_papsFont[i];
         if (EQUAL(poDef->szFontName, poNewFontDef->szFontName))
         {
-            nNewFontIndex = i+1; // Fount it!
+            nNewFontIndex = i + 1;  // Fount it!
             poDef->nRefCount++;
         }
     }
@@ -597,11 +607,11 @@ int TABToolDefTable::AddFontDefRef(TABFontDef *poNewFontDef)
         {
             // Realloc array by blocks of 20 items
             m_numAllocatedFonts += 20;
-            m_papsFont =  static_cast<TABFontDef**>(CPLRealloc(m_papsFont,
-                                 m_numAllocatedFonts*sizeof(TABFontDef*)));
+            m_papsFont = static_cast<TABFontDef **>(CPLRealloc(
+                m_papsFont, m_numAllocatedFonts * sizeof(TABFontDef *)));
         }
-        m_papsFont[m_numFonts]= static_cast<TABFontDef*>(CPLCalloc(1,
-                                                          sizeof(TABFontDef)));
+        m_papsFont[m_numFonts] =
+            static_cast<TABFontDef *>(CPLCalloc(1, sizeof(TABFontDef)));
 
         *m_papsFont[m_numFonts] = *poNewFontDef;
         m_papsFont[m_numFonts]->nRefCount = 1;
@@ -616,7 +626,7 @@ int TABToolDefTable::AddFontDefRef(TABFontDef *poNewFontDef)
  *
  * Return the number of valid Symbol indexes for this .MAP file
  **********************************************************************/
-int     TABToolDefTable::GetNumSymbols()
+int TABToolDefTable::GetNumSymbols()
 {
     return m_numSymbols;
 }
@@ -632,8 +642,8 @@ int     TABToolDefTable::GetNumSymbols()
  **********************************************************************/
 TABSymbolDef *TABToolDefTable::GetSymbolDefRef(int nIndex)
 {
-    if (nIndex >0 && nIndex <= m_numSymbols)
-        return m_papsSymbol[nIndex-1];
+    if (nIndex > 0 && nIndex <= m_numSymbols)
+        return m_papsSymbol[nIndex - 1];
 
     return nullptr;
 }
@@ -658,15 +668,15 @@ int TABToolDefTable::AddSymbolDefRef(TABSymbolDef *poNewSymbolDef)
      * Start by searching the list of existing Symbols
      *----------------------------------------------------------------*/
     int nNewSymbolIndex = 0;
-    for( int i = 0; nNewSymbolIndex == 0 && i<m_numSymbols; i++ )
+    for (int i = 0; nNewSymbolIndex == 0 && i < m_numSymbols; i++)
     {
         TABSymbolDef *poDef = m_papsSymbol[i];
         if (poDef->nSymbolNo == poNewSymbolDef->nSymbolNo &&
             poDef->nPointSize == poNewSymbolDef->nPointSize &&
             poDef->_nUnknownValue_ == poNewSymbolDef->_nUnknownValue_ &&
-            poDef->rgbColor == poNewSymbolDef->rgbColor )
+            poDef->rgbColor == poNewSymbolDef->rgbColor)
         {
-            nNewSymbolIndex = i+1; // Fount it!
+            nNewSymbolIndex = i + 1;  // Fount it!
             poDef->nRefCount++;
         }
     }
@@ -680,11 +690,11 @@ int TABToolDefTable::AddSymbolDefRef(TABSymbolDef *poNewSymbolDef)
         {
             // Realloc array by blocks of 20 items
             m_numAllocatedSymbols += 20;
-            m_papsSymbol = static_cast<TABSymbolDef**>(CPLRealloc(m_papsSymbol,
-                                 m_numAllocatedSymbols*sizeof(TABSymbolDef*)));
+            m_papsSymbol = static_cast<TABSymbolDef **>(CPLRealloc(
+                m_papsSymbol, m_numAllocatedSymbols * sizeof(TABSymbolDef *)));
         }
-        m_papsSymbol[m_numSymbols]= static_cast<TABSymbolDef*>(CPLCalloc(1,
-                                                       sizeof(TABSymbolDef)));
+        m_papsSymbol[m_numSymbols] =
+            static_cast<TABSymbolDef *>(CPLCalloc(1, sizeof(TABSymbolDef)));
 
         *m_papsSymbol[m_numSymbols] = *poNewSymbolDef;
         m_papsSymbol[m_numSymbols]->nRefCount = 1;
@@ -703,16 +713,16 @@ int TABToolDefTable::AddSymbolDefRef(TABSymbolDef *poNewSymbolDef)
  * Default is 300, and currently 450 can be returned if file contains
  * pen widths defined in points.
  **********************************************************************/
-int     TABToolDefTable::GetMinVersionNumber()
+int TABToolDefTable::GetMinVersionNumber()
 {
     int i, nVersion = 300;
 
     /*-----------------------------------------------------------------
      * Scan Pen Defs
      *----------------------------------------------------------------*/
-    for(i=0; i< m_numPen; i++)
+    for (i = 0; i < m_numPen; i++)
     {
-        if (m_papsPen[i]->nPointWidth > 0 )
+        if (m_papsPen[i]->nPointWidth > 0)
         {
             nVersion = std::max(nVersion, 450);  // Raise version to 450
         }

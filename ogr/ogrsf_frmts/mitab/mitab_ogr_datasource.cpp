@@ -32,7 +32,6 @@
 
 #include "mitab_ogr_driver.h"
 
-
 /*=======================================================================
  *                 OGRTABDataSource
  *
@@ -45,18 +44,13 @@
 /*                         OGRTABDataSource()                           */
 /************************************************************************/
 
-OGRTABDataSource::OGRTABDataSource() :
-    m_pszName(nullptr),
-    m_pszDirectory(nullptr),
-    m_nLayerCount(0),
-    m_papoLayers(nullptr),
-    m_papszOptions(nullptr),
-    m_bCreateMIF(FALSE),
-    m_bSingleFile(FALSE),
-    m_bSingleLayerAlreadyCreated(FALSE),
-    m_bQuickSpatialIndexMode(-1),
-    m_nBlockSize(512)
-{}
+OGRTABDataSource::OGRTABDataSource()
+    : m_pszName(nullptr), m_pszDirectory(nullptr), m_nLayerCount(0),
+      m_papoLayers(nullptr), m_papszOptions(nullptr), m_bCreateMIF(FALSE),
+      m_bSingleFile(FALSE), m_bSingleLayerAlreadyCreated(FALSE),
+      m_bQuickSpatialIndexMode(-1), m_nBlockSize(512)
+{
+}
 
 /************************************************************************/
 /*                         ~OGRTABDataSource()                          */
@@ -68,7 +62,7 @@ OGRTABDataSource::~OGRTABDataSource()
     CPLFree(m_pszName);
     CPLFree(m_pszDirectory);
 
-    for( int i = 0; i < m_nLayerCount; i++ )
+    for (int i = 0; i < m_nLayerCount; i++)
         delete m_papoLayers[i];
 
     CPLFree(m_papoLayers);
@@ -81,7 +75,7 @@ OGRTABDataSource::~OGRTABDataSource()
 /*      Create a new dataset (directory or file).                       */
 /************************************************************************/
 
-int OGRTABDataSource::Create( const char * pszName, char **papszOptions )
+int OGRTABDataSource::Create(const char *pszName, char **papszOptions)
 
 {
     CPLAssert(m_pszName == nullptr);
@@ -91,31 +85,31 @@ int OGRTABDataSource::Create( const char * pszName, char **papszOptions )
     eAccess = GA_Update;
 
     const char *pszOpt = CSLFetchNameValue(papszOptions, "FORMAT");
-    if( pszOpt != nullptr && EQUAL(pszOpt, "MIF") )
+    if (pszOpt != nullptr && EQUAL(pszOpt, "MIF"))
         m_bCreateMIF = TRUE;
-    else if( EQUAL(CPLGetExtension(pszName),"mif") ||
-             EQUAL(CPLGetExtension(pszName),"mid") )
+    else if (EQUAL(CPLGetExtension(pszName), "mif") ||
+             EQUAL(CPLGetExtension(pszName), "mid"))
         m_bCreateMIF = TRUE;
 
-    if( (pszOpt = CSLFetchNameValue(papszOptions,"SPATIAL_INDEX_MODE")) != nullptr )
+    if ((pszOpt = CSLFetchNameValue(papszOptions, "SPATIAL_INDEX_MODE")) !=
+        nullptr)
     {
-        if( EQUAL(pszOpt, "QUICK") )
+        if (EQUAL(pszOpt, "QUICK"))
             m_bQuickSpatialIndexMode = TRUE;
-        else if( EQUAL(pszOpt, "OPTIMIZED") )
+        else if (EQUAL(pszOpt, "OPTIMIZED"))
             m_bQuickSpatialIndexMode = FALSE;
     }
 
     m_nBlockSize = atoi(CSLFetchNameValueDef(papszOptions, "BLOCKSIZE", "512"));
 
-
     // Create a new empty directory.
     VSIStatBufL sStat;
 
-    if( strlen(CPLGetExtension(pszName)) == 0 )
+    if (strlen(CPLGetExtension(pszName)) == 0)
     {
-        if( VSIStatL( pszName, &sStat ) == 0 )
+        if (VSIStatL(pszName, &sStat) == 0)
         {
-            if( !VSI_ISDIR(sStat.st_mode) )
+            if (!VSI_ISDIR(sStat.st_mode))
             {
                 CPLError(CE_Failure, CPLE_OpenFailed,
                          "Attempt to create dataset named %s,\n"
@@ -126,11 +120,10 @@ int OGRTABDataSource::Create( const char * pszName, char **papszOptions )
         }
         else
         {
-            if( VSIMkdir(pszName, 0755) != 0 )
+            if (VSIMkdir(pszName, 0755) != 0)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Unable to create directory %s.",
-                         pszName);
+                         "Unable to create directory %s.", pszName);
                 return FALSE;
             }
         }
@@ -138,18 +131,17 @@ int OGRTABDataSource::Create( const char * pszName, char **papszOptions )
         m_pszDirectory = CPLStrdup(pszName);
     }
 
-
     // Create a new single file.
     else
     {
         IMapInfoFile *poFile = nullptr;
-        const char *pszEncoding( CSLFetchNameValue( papszOptions, "ENCODING" ) );
-        const char *pszCharset( IMapInfoFile::EncodingToCharset( pszEncoding ) );
+        const char *pszEncoding(CSLFetchNameValue(papszOptions, "ENCODING"));
+        const char *pszCharset(IMapInfoFile::EncodingToCharset(pszEncoding));
 
-        if( m_bCreateMIF )
+        if (m_bCreateMIF)
         {
             poFile = new MIFFile;
-            if( poFile->Open(m_pszName, TABWrite, FALSE, pszCharset) != 0 )
+            if (poFile->Open(m_pszName, TABWrite, FALSE, pszCharset) != 0)
             {
                 delete poFile;
                 return FALSE;
@@ -158,8 +150,8 @@ int OGRTABDataSource::Create( const char * pszName, char **papszOptions )
         else
         {
             TABFile *poTabFile = new TABFile;
-            if( poTabFile->Open( m_pszName, TABWrite, FALSE,
-                                 m_nBlockSize, pszCharset) != 0 )
+            if (poTabFile->Open(m_pszName, TABWrite, FALSE, m_nBlockSize,
+                                pszCharset) != 0)
             {
                 delete poTabFile;
                 return FALSE;
@@ -184,7 +176,7 @@ int OGRTABDataSource::Create( const char * pszName, char **papszOptions )
 /*      Open an existing file, or directory of files.                   */
 /************************************************************************/
 
-int OGRTABDataSource::Open( GDALOpenInfo *poOpenInfo, int bTestOpen )
+int OGRTABDataSource::Open(GDALOpenInfo *poOpenInfo, int bTestOpen)
 
 {
     CPLAssert(m_pszName == nullptr);
@@ -193,11 +185,11 @@ int OGRTABDataSource::Open( GDALOpenInfo *poOpenInfo, int bTestOpen )
     eAccess = poOpenInfo->eAccess;
 
     // If it is a file, try to open as a Mapinfo file.
-    if( !poOpenInfo->bIsDirectory )
+    if (!poOpenInfo->bIsDirectory)
     {
         IMapInfoFile *poFile =
             IMapInfoFile::SmartOpen(m_pszName, GetUpdate(), bTestOpen);
-        if( poFile == nullptr )
+        if (poFile == nullptr)
             return FALSE;
 
         poFile->SetDescription(poFile->GetName());
@@ -220,13 +212,13 @@ int OGRTABDataSource::Open( GDALOpenInfo *poOpenInfo, int bTestOpen )
 
         m_pszDirectory = CPLStrdup(m_pszName);
 
-        for( int iFile = 0;
+        for (int iFile = 0;
              papszFileList != nullptr && papszFileList[iFile] != nullptr;
-             iFile++ )
+             iFile++)
         {
             const char *pszExtension = CPLGetExtension(papszFileList[iFile]);
 
-            if( !EQUAL(pszExtension, "tab") && !EQUAL(pszExtension, "mif") )
+            if (!EQUAL(pszExtension, "tab") && !EQUAL(pszExtension, "mif"))
                 continue;
 
             char *pszSubFilename = CPLStrdup(
@@ -236,24 +228,24 @@ int OGRTABDataSource::Open( GDALOpenInfo *poOpenInfo, int bTestOpen )
                 IMapInfoFile::SmartOpen(pszSubFilename, GetUpdate(), bTestOpen);
             CPLFree(pszSubFilename);
 
-            if( poFile == nullptr )
+            if (poFile == nullptr)
             {
                 CSLDestroy(papszFileList);
                 return FALSE;
             }
-            poFile->SetDescription( poFile->GetName() );
+            poFile->SetDescription(poFile->GetName());
 
             m_nLayerCount++;
             m_papoLayers = static_cast<IMapInfoFile **>(
-                CPLRealloc(m_papoLayers,sizeof(void *) * m_nLayerCount));
-            m_papoLayers[m_nLayerCount-1] = poFile;
+                CPLRealloc(m_papoLayers, sizeof(void *) * m_nLayerCount));
+            m_papoLayers[m_nLayerCount - 1] = poFile;
         }
 
         CSLDestroy(papszFileList);
 
-        if( m_nLayerCount == 0 )
+        if (m_nLayerCount == 0)
         {
-            if( !bTestOpen )
+            if (!bTestOpen)
                 CPLError(CE_Failure, CPLE_OpenFailed,
                          "No mapinfo files found in directory %s.",
                          m_pszDirectory);
@@ -272,7 +264,7 @@ int OGRTABDataSource::Open( GDALOpenInfo *poOpenInfo, int bTestOpen )
 int OGRTABDataSource::GetLayerCount()
 
 {
-    if( m_bSingleFile && !m_bSingleLayerAlreadyCreated )
+    if (m_bSingleFile && !m_bSingleLayerAlreadyCreated)
         return 0;
     else
         return m_nLayerCount;
@@ -282,10 +274,10 @@ int OGRTABDataSource::GetLayerCount()
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRTABDataSource::GetLayer( int iLayer )
+OGRLayer *OGRTABDataSource::GetLayer(int iLayer)
 
 {
-    if( iLayer < 0 || iLayer >= GetLayerCount() )
+    if (iLayer < 0 || iLayer >= GetLayerCount())
         return nullptr;
     else
         return m_papoLayers[iLayer];
@@ -295,17 +287,16 @@ OGRLayer *OGRTABDataSource::GetLayer( int iLayer )
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *
-OGRTABDataSource::ICreateLayer( const char *pszLayerName,
-                                OGRSpatialReference *poSRSIn,
-                                OGRwkbGeometryType /* eGeomTypeIn */,
-                                char **papszOptions )
+OGRLayer *OGRTABDataSource::ICreateLayer(const char *pszLayerName,
+                                         OGRSpatialReference *poSRSIn,
+                                         OGRwkbGeometryType /* eGeomTypeIn */,
+                                         char **papszOptions)
 
 {
-    if( !GetUpdate() )
+    if (!GetUpdate())
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                    "Cannot create layer on read-only dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot create layer on read-only dataset.");
         return nullptr;
     }
 
@@ -315,13 +306,13 @@ OGRTABDataSource::ICreateLayer( const char *pszLayerName,
     IMapInfoFile *poFile = nullptr;
     char *pszFullFilename = nullptr;
 
-    const char *pszEncoding = CSLFetchNameValue( papszOptions, "ENCODING" );
-    const char *pszCharset( IMapInfoFile::EncodingToCharset( pszEncoding ) );
-    const char *pszDescription( CSLFetchNameValue(papszOptions, "DESCRIPTION") );
+    const char *pszEncoding = CSLFetchNameValue(papszOptions, "ENCODING");
+    const char *pszCharset(IMapInfoFile::EncodingToCharset(pszEncoding));
+    const char *pszDescription(CSLFetchNameValue(papszOptions, "DESCRIPTION"));
 
-    if( m_bSingleFile )
+    if (m_bSingleFile)
     {
-        if( m_bSingleLayerAlreadyCreated )
+        if (m_bSingleLayerAlreadyCreated)
         {
             CPLError(
                 CE_Failure, CPLE_AppDefined,
@@ -332,24 +323,23 @@ OGRTABDataSource::ICreateLayer( const char *pszLayerName,
         m_bSingleLayerAlreadyCreated = TRUE;
 
         poFile = m_papoLayers[0];
-        if( pszEncoding )
-            poFile->SetCharset( pszCharset );
+        if (pszEncoding)
+            poFile->SetCharset(pszCharset);
 
-        if(poFile->GetFileClass() == TABFC_TABFile)
-            poFile->SetMetadataItem( "DESCRIPTION", pszDescription );
+        if (poFile->GetFileClass() == TABFC_TABFile)
+            poFile->SetMetadataItem("DESCRIPTION", pszDescription);
     }
 
     else
     {
-        if( m_bCreateMIF )
+        if (m_bCreateMIF)
         {
             pszFullFilename =
                 CPLStrdup(CPLFormFilename(m_pszDirectory, pszLayerName, "mif"));
 
             poFile = new MIFFile;
 
-            if( poFile->Open(pszFullFilename, TABWrite,
-                             FALSE, pszCharset) != 0 )
+            if (poFile->Open(pszFullFilename, TABWrite, FALSE, pszCharset) != 0)
             {
                 CPLFree(pszFullFilename);
                 delete poFile;
@@ -363,21 +353,21 @@ OGRTABDataSource::ICreateLayer( const char *pszLayerName,
 
             TABFile *poTABFile = new TABFile;
 
-            if( poTABFile->Open(pszFullFilename, TABWrite, FALSE,
-                                m_nBlockSize, pszCharset) != 0 )
+            if (poTABFile->Open(pszFullFilename, TABWrite, FALSE, m_nBlockSize,
+                                pszCharset) != 0)
             {
                 CPLFree(pszFullFilename);
                 delete poTABFile;
                 return nullptr;
             }
             poFile = poTABFile;
-            poFile->SetMetadataItem( "DESCRIPTION", pszDescription );
+            poFile->SetMetadataItem("DESCRIPTION", pszDescription);
         }
 
         m_nLayerCount++;
         m_papoLayers = static_cast<IMapInfoFile **>(
-            CPLRealloc(m_papoLayers,sizeof(void*)*m_nLayerCount));
-        m_papoLayers[m_nLayerCount-1] = poFile;
+            CPLRealloc(m_papoLayers, sizeof(void *) * m_nLayerCount));
+        m_papoLayers[m_nLayerCount - 1] = poFile;
 
         CPLFree(pszFullFilename);
     }
@@ -386,7 +376,7 @@ OGRTABDataSource::ICreateLayer( const char *pszLayerName,
 
     // Assign the coordinate system (if provided) and set
     // reasonable bounds.
-    if( poSRSIn != nullptr )
+    if (poSRSIn != nullptr)
     {
         auto poSRSClone = poSRSIn->Clone();
         poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
@@ -399,12 +389,11 @@ OGRTABDataSource::ICreateLayer( const char *pszLayerName,
 
     // Pull out the bounds if supplied
     const char *pszOpt = nullptr;
-    if( (pszOpt = CSLFetchNameValue(papszOptions, "BOUNDS")) != nullptr ) {
+    if ((pszOpt = CSLFetchNameValue(papszOptions, "BOUNDS")) != nullptr)
+    {
         double dfBounds[4];
-        if( CPLsscanf(pszOpt, "%lf,%lf,%lf,%lf", &dfBounds[0],
-                                          &dfBounds[1],
-                                          &dfBounds[2],
-                                          &dfBounds[3]) != 4 )
+        if (CPLsscanf(pszOpt, "%lf,%lf,%lf,%lf", &dfBounds[0], &dfBounds[1],
+                      &dfBounds[2], &dfBounds[3]) != 4)
         {
             CPLError(
                 CE_Failure, CPLE_IllegalArg,
@@ -417,28 +406,29 @@ OGRTABDataSource::ICreateLayer( const char *pszLayerName,
         }
     }
 
-    if( !poFile->IsBoundsSet() && !m_bCreateMIF )
+    if (!poFile->IsBoundsSet() && !m_bCreateMIF)
     {
-        if( poSRSIn != nullptr && poSRSIn->IsGeographic() )
+        if (poSRSIn != nullptr && poSRSIn->IsGeographic())
             poFile->SetBounds(-1000, -1000, 1000, 1000);
-        else if( poSRSIn != nullptr && poSRSIn->IsProjected() )
+        else if (poSRSIn != nullptr && poSRSIn->IsProjected())
         {
-            const double FE = poSRSIn->GetProjParm( SRS_PP_FALSE_EASTING, 0.0 );
-            const double FN = poSRSIn->GetProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
-            poFile->SetBounds(-30000000 + FE, -15000000 + FN, 30000000 + FE, 15000000 + FN);
+            const double FE = poSRSIn->GetProjParm(SRS_PP_FALSE_EASTING, 0.0);
+            const double FN = poSRSIn->GetProjParm(SRS_PP_FALSE_NORTHING, 0.0);
+            poFile->SetBounds(-30000000 + FE, -15000000 + FN, 30000000 + FE,
+                              15000000 + FN);
         }
         else
             poFile->SetBounds(-30000000, -15000000, 30000000, 15000000);
     }
 
-    if(m_bQuickSpatialIndexMode == TRUE &&
-       poFile->SetQuickSpatialIndexMode(TRUE) != 0)
+    if (m_bQuickSpatialIndexMode == TRUE &&
+        poFile->SetQuickSpatialIndexMode(TRUE) != 0)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Setting Quick Spatial Index Mode failed.");
     }
-    else if(m_bQuickSpatialIndexMode == FALSE &&
-            poFile->SetQuickSpatialIndexMode(FALSE) != 0)
+    else if (m_bQuickSpatialIndexMode == FALSE &&
+             poFile->SetQuickSpatialIndexMode(FALSE) != 0)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Setting Normal Spatial Index Mode failed.");
@@ -451,12 +441,12 @@ OGRTABDataSource::ICreateLayer( const char *pszLayerName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRTABDataSource::TestCapability( const char *pszCap )
+int OGRTABDataSource::TestCapability(const char *pszCap)
 
 {
-    if( EQUAL(pszCap, ODsCCreateLayer) )
+    if (EQUAL(pszCap, ODsCCreateLayer))
         return GetUpdate() && (!m_bSingleFile || !m_bSingleLayerAlreadyCreated);
-    else if( EQUAL(pszCap, ODsCRandomLayerWrite) )
+    else if (EQUAL(pszCap, ODsCRandomLayerWrite))
         return GetUpdate();
     else
         return FALSE;
@@ -471,21 +461,21 @@ char **OGRTABDataSource::GetFileList()
     VSIStatBufL sStatBuf;
     CPLStringList osList;
 
-    if( VSIStatL(m_pszName, &sStatBuf) == 0 && VSI_ISDIR(sStatBuf.st_mode) )
+    if (VSIStatL(m_pszName, &sStatBuf) == 0 && VSI_ISDIR(sStatBuf.st_mode))
     {
-        static const char * const apszExtensions[] =
-            { "mif", "mid", "tab", "map", "ind", "dat", "id", nullptr };
+        static const char *const apszExtensions[] = {
+            "mif", "mid", "tab", "map", "ind", "dat", "id", nullptr};
         char **papszDirEntries = VSIReadDir(m_pszName);
 
-        for( int iFile = 0;
+        for (int iFile = 0;
              papszDirEntries != nullptr && papszDirEntries[iFile] != nullptr;
-             iFile++ )
+             iFile++)
         {
-            if( CSLFindString(apszExtensions,
+            if (CSLFindString(apszExtensions,
                               CPLGetExtension(papszDirEntries[iFile])) != -1)
             {
-                osList.AddString(
-                    CPLFormFilename(m_pszName, papszDirEntries[iFile], nullptr));
+                osList.AddString(CPLFormFilename(
+                    m_pszName, papszDirEntries[iFile], nullptr));
             }
         }
 
@@ -493,11 +483,12 @@ char **OGRTABDataSource::GetFileList()
     }
     else
     {
-        static const char *const apszMIFExtensions[] = { "mif", "mid", nullptr };
-        static const char *const apszTABExtensions[] = { "tab", "map", "ind", "dat", "id", nullptr };
+        static const char *const apszMIFExtensions[] = {"mif", "mid", nullptr};
+        static const char *const apszTABExtensions[] = {"tab", "map", "ind",
+                                                        "dat", "id",  nullptr};
         const char *const *papszExtensions = nullptr;
-        if( EQUAL(CPLGetExtension(m_pszName), "mif") ||
-            EQUAL(CPLGetExtension(m_pszName), "mid") )
+        if (EQUAL(CPLGetExtension(m_pszName), "mif") ||
+            EQUAL(CPLGetExtension(m_pszName), "mid"))
         {
             papszExtensions = apszMIFExtensions;
         }
@@ -506,18 +497,19 @@ char **OGRTABDataSource::GetFileList()
             papszExtensions = apszTABExtensions;
         }
         const char *const *papszIter = papszExtensions;
-        while( *papszIter )
+        while (*papszIter)
         {
             const char *pszFile = CPLResetExtension(m_pszName, *papszIter);
-            if( VSIStatL(pszFile, &sStatBuf) != 0)
+            if (VSIStatL(pszFile, &sStatBuf) != 0)
             {
-                pszFile = CPLResetExtension(m_pszName, CPLString(*papszIter).toupper() );
-                if( VSIStatL(pszFile, &sStatBuf) != 0)
+                pszFile = CPLResetExtension(m_pszName,
+                                            CPLString(*papszIter).toupper());
+                if (VSIStatL(pszFile, &sStatBuf) != 0)
                 {
                     pszFile = nullptr;
                 }
             }
-            if( pszFile )
+            if (pszFile)
                 osList.AddString(pszFile);
             papszIter++;
         }
@@ -529,34 +521,31 @@ char **OGRTABDataSource::GetFileList()
 /*                            ExecuteSQL()                              */
 /************************************************************************/
 
-OGRLayer* OGRTABDataSource::ExecuteSQL( const char *pszStatement,
-                                        OGRGeometry *poSpatialFilter,
-                                        const char *pszDialect )
+OGRLayer *OGRTABDataSource::ExecuteSQL(const char *pszStatement,
+                                       OGRGeometry *poSpatialFilter,
+                                       const char *pszDialect)
 {
     char **papszTokens = CSLTokenizeString(pszStatement);
-    if( CSLCount(papszTokens) == 6 &&
-        EQUAL(papszTokens[0], "CREATE") &&
-        EQUAL(papszTokens[1], "INDEX") &&
-        EQUAL(papszTokens[2], "ON") &&
-        EQUAL(papszTokens[4], "USING") )
+    if (CSLCount(papszTokens) == 6 && EQUAL(papszTokens[0], "CREATE") &&
+        EQUAL(papszTokens[1], "INDEX") && EQUAL(papszTokens[2], "ON") &&
+        EQUAL(papszTokens[4], "USING"))
     {
-        IMapInfoFile* poLayer = dynamic_cast<IMapInfoFile*>(
-            GetLayerByName(papszTokens[3]));
-        if( poLayer == nullptr )
+        IMapInfoFile *poLayer =
+            dynamic_cast<IMapInfoFile *>(GetLayerByName(papszTokens[3]));
+        if (poLayer == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "`%s' failed failed, no such layer as `%s'.",
-                     pszStatement, papszTokens[3]);
+                     "`%s' failed failed, no such layer as `%s'.", pszStatement,
+                     papszTokens[3]);
             CSLDestroy(papszTokens);
             return nullptr;
         }
         int nFieldIdx = poLayer->GetLayerDefn()->GetFieldIndex(papszTokens[5]);
         CSLDestroy(papszTokens);
-        if( nFieldIdx < 0 )
+        if (nFieldIdx < 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                      "`%s' failed, field not found.",
-                      pszStatement);
+                     "`%s' failed, field not found.", pszStatement);
             return nullptr;
         }
         poLayer->SetFieldIndexed(nFieldIdx);
