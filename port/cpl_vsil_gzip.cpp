@@ -98,6 +98,7 @@
 #endif
 
 #include <algorithm>
+#include <limits>
 #include <list>
 #include <map>
 #include <memory>
@@ -1976,6 +1977,9 @@ class VSIGZipWriteHandleMT final : public VSIVirtualHandle
     std::list<Job *> apoFinishedJobs_{};
     std::list<Job *> apoCRCFinishedJobs_{};
     std::list<Job *> apoFreeJobs_{};
+    vsi_l_offset nStartOffset_ = 0;
+    size_t nSOZIPIndexEltSize_ = 0;
+    std::vector<uint8_t> *panSOZIPIndex_ = nullptr;
 
     static void DeflateCompress(void *inData);
     static void CRCCompute(void *inData);
@@ -1986,8 +1990,10 @@ class VSIGZipWriteHandleMT final : public VSIVirtualHandle
 #endif
 
   public:
-    VSIGZipWriteHandleMT(VSIVirtualHandle *poBaseHandle, int nThreads,
-                         int nDeflateType, bool bAutoCloseBaseHandleIn);
+    VSIGZipWriteHandleMT(VSIVirtualHandle *poBaseHandle, int nDeflateType,
+                         bool bAutoCloseBaseHandleIn, int nThreads,
+                         size_t nChunkSize, size_t nSOZIPIndexEltSize,
+                         std::vector<uint8_t> *panSOZIPIndex);
 
     ~VSIGZipWriteHandleMT() override;
 
@@ -2005,25 +2011,34 @@ class VSIGZipWriteHandleMT final : public VSIVirtualHandle
 /************************************************************************/
 
 VSIGZipWriteHandleMT::VSIGZipWriteHandleMT(VSIVirtualHandle *poBaseHandle,
-                                           int nThreads, int nDeflateType,
-                                           bool bAutoCloseBaseHandleIn)
+                                           int nDeflateType,
+                                           bool bAutoCloseBaseHandleIn,
+                                           int nThreads, size_t nChunkSize,
+                                           size_t nSOZIPIndexEltSize,
+                                           std::vector<uint8_t> *panSOZIPIndex)
     : poBaseHandle_(poBaseHandle), nDeflateType_(nDeflateType),
-      bAutoCloseBaseHandle_(bAutoCloseBaseHandleIn), nThreads_(nThreads)
+      bAutoCloseBaseHandle_(bAutoCloseBaseHandleIn), nThreads_(nThreads),
+      nChunkSize_(nChunkSize), nSOZIPIndexEltSize_(nSOZIPIndexEltSize),
+      panSOZIPIndex_(panSOZIPIndex)
 {
-    const char *pszChunkSize =
-        CPLGetConfigOption("CPL_VSIL_DEFLATE_CHUNK_SIZE", "1024K");
-    nChunkSize_ = static_cast<size_t>(atoi(pszChunkSize));
-    if (strchr(pszChunkSize, 'K'))
-        nChunkSize_ *= 1024;
-    else if (strchr(pszChunkSize, 'M'))
-        nChunkSize_ *= 1024 * 1024;
-    nChunkSize_ =
-        std::max(static_cast<size_t>(32 * 1024),
-                 std::min(static_cast<size_t>(UINT_MAX), nChunkSize_));
+    if (nChunkSize_ == 0)
+    {
+        const char *pszChunkSize =
+            CPLGetConfigOption("CPL_VSIL_DEFLATE_CHUNK_SIZE", "1024K");
+        nChunkSize_ = static_cast<size_t>(atoi(pszChunkSize));
+        if (strchr(pszChunkSize, 'K'))
+            nChunkSize_ *= 1024;
+        else if (strchr(pszChunkSize, 'M'))
+            nChunkSize_ *= 1024 * 1024;
+        nChunkSize_ =
+            std::max(static_cast<size_t>(4 * 1024),
+                     std::min(static_cast<size_t>(UINT_MAX), nChunkSize_));
+    }
 
     for (int i = 0; i < 1 + nThreads_; i++)
         aposBuffers_.emplace_back(new std::string());
 
+    nStartOffset_ = poBaseHandle_->Tell();
     if (nDeflateType == CPL_DEFLATE_TYPE_GZIP)
     {
         char header[11] = {};
@@ -2322,6 +2337,41 @@ bool VSIGZipWriteHandleMT::ProcessCompletedJobs()
                 sMutex_.unlock();
 
                 const size_t nToWrite = psJob->sCompressedData_.size();
+                if (panSOZIPIndex_ && nSeqNumberExpected_ != 0 &&
+                    !psJob->pBuffer_->empty())
+                {
+                    uint64_t nOffset = poBaseHandle_->Tell() - nStartOffset_;
+                    if (nSOZIPIndexEltSize_ == 8)
+                    {
+                        CPL_LSBPTR64(&nOffset);
+                        std::copy(reinterpret_cast<const uint8_t *>(&nOffset),
+                                  reinterpret_cast<const uint8_t *>(&nOffset) +
+                                      sizeof(nOffset),
+                                  std::back_inserter(*panSOZIPIndex_));
+                    }
+                    else
+                    {
+                        if (nOffset > std::numeric_limits<uint32_t>::max())
+                        {
+                            // shouldn't happen normally...
+                            CPLError(
+                                CE_Failure, CPLE_AppDefined,
+                                "Too big offset for SOZIP_OFFSET_SIZE = 4");
+                            panSOZIPIndex_->clear();
+                            panSOZIPIndex_ = nullptr;
+                        }
+                        else
+                        {
+                            uint32_t nOffset32 = static_cast<uint32_t>(nOffset);
+                            CPL_LSBPTR32(&nOffset32);
+                            std::copy(
+                                reinterpret_cast<const uint8_t *>(&nOffset32),
+                                reinterpret_cast<const uint8_t *>(&nOffset32) +
+                                    sizeof(nOffset32),
+                                std::back_inserter(*panSOZIPIndex_));
+                        }
+                    }
+                }
                 bool bError =
                     poBaseHandle_->Write(psJob->sCompressedData_.data(), 1,
                                          nToWrite) < nToWrite;
@@ -2608,25 +2658,39 @@ VSIVirtualHandle *VSICreateGZipWritable(VSIVirtualHandle *poBaseHandle,
                                         int nDeflateTypeIn,
                                         int bAutoCloseBaseHandle)
 {
+    return VSICreateGZipWritable(poBaseHandle, nDeflateTypeIn,
+                                 CPL_TO_BOOL(bAutoCloseBaseHandle), 0, 0, 0,
+                                 nullptr);
+}
+
+VSIVirtualHandle *VSICreateGZipWritable(VSIVirtualHandle *poBaseHandle,
+                                        int nDeflateTypeIn,
+                                        bool bAutoCloseBaseHandle, int nThreads,
+                                        size_t nChunkSize,
+                                        size_t nSOZIPIndexEltSize,
+                                        std::vector<uint8_t> *panSOZIPIndex)
+{
     const char *pszThreads = CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-    if (pszThreads)
+    if (pszThreads || nThreads > 0 || nChunkSize > 0)
     {
-        int nThreads = 0;
-        if (EQUAL(pszThreads, "ALL_CPUS"))
-            nThreads = CPLGetNumCPUs();
-        else
-            nThreads = atoi(pszThreads);
-        nThreads = std::max(1, std::min(128, nThreads));
-        if (nThreads > 1)
+        if (nThreads == 0)
+        {
+            if (pszThreads == nullptr || EQUAL(pszThreads, "ALL_CPUS"))
+                nThreads = CPLGetNumCPUs();
+            else
+                nThreads = atoi(pszThreads);
+            nThreads = std::max(1, std::min(128, nThreads));
+        }
+        if (nThreads > 1 || nChunkSize > 0)
         {
             // coverity[tainted_data]
-            return new VSIGZipWriteHandleMT(poBaseHandle, nThreads,
-                                            nDeflateTypeIn,
-                                            CPL_TO_BOOL(bAutoCloseBaseHandle));
+            return new VSIGZipWriteHandleMT(
+                poBaseHandle, nDeflateTypeIn, bAutoCloseBaseHandle, nThreads,
+                nChunkSize, nSOZIPIndexEltSize, panSOZIPIndex);
         }
     }
     return new VSIGZipWriteHandle(poBaseHandle, nDeflateTypeIn,
-                                  CPL_TO_BOOL(bAutoCloseBaseHandle));
+                                  bAutoCloseBaseHandle);
 }
 
 /************************************************************************/

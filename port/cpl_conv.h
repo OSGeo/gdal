@@ -270,6 +270,11 @@ CPLErr CPL_DLL CPLCreateFileInZip(void *hZip, const char *pszFilename,
 CPLErr CPL_DLL CPLWriteFileInZip(void *hZip, const void *pBuffer,
                                  int nBufferSize);
 CPLErr CPL_DLL CPLCloseFileInZip(void *hZip);
+CPLErr CPL_DLL CPLAddFileInZip(void *hZip, const char *pszArchiveFilename,
+                               const char *pszInputFilename, VSILFILE *fpInput,
+                               CSLConstList papszOptions,
+                               GDALProgressFunc pProgressFunc,
+                               void *pProgressData);
 CPLErr CPL_DLL CPLCloseZip(void *hZip);
 
 /* -------------------------------------------------------------------- */

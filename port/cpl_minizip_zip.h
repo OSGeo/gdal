@@ -79,6 +79,8 @@ extern "C"
 #include "cpl_minizip_ioapi.h"
 #endif
 
+#include <stdbool.h>
+
 #define NOCRYPT
 #undef ZEXPORT
 #define ZEXPORT
@@ -196,7 +198,8 @@ typedef voidp zipFile;
         const void *extrafield_local, uInt size_extrafield_local,
         const void *extrafield_global, uInt size_extrafield_global,
         const char *comment, int method, int level, int raw, int windowBits,
-        int memLevel, int strategy, const char *password, uLong crcForCtypting);
+        int memLevel, int strategy, const char *password, uLong crcForCtypting,
+        bool bZip64, bool bIncludeInCentralDirectory);
 
     /*
       Same than zipOpenNewFileInZip2, except

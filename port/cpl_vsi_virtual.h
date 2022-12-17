@@ -419,6 +419,13 @@ VSIVirtualHandle CPL_DLL *VSICreateGZipWritable(VSIVirtualHandle *poBaseHandle,
                                                 int nDeflateType,
                                                 int bAutoCloseBaseHandle);
 
+VSIVirtualHandle *VSICreateGZipWritable(VSIVirtualHandle *poBaseHandle,
+                                        int nDeflateType,
+                                        bool bAutoCloseBaseHandle, int nThreads,
+                                        size_t nChunkSize,
+                                        size_t nSOZIPIndexEltSize,
+                                        std::vector<uint8_t> *panSOZIPIndex);
+
 VSIVirtualHandle *VSICreateUploadOnCloseFile(VSIVirtualHandle *poBaseHandle);
 
 #endif /* ndef CPL_VSI_VIRTUAL_H_INCLUDED */
