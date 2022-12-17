@@ -32,39 +32,53 @@
 
 #include <algorithm>
 
+WMSMiniDriver_AGS::WMSMiniDriver_AGS()
+{
+}
 
-WMSMiniDriver_AGS::WMSMiniDriver_AGS() {}
-
-WMSMiniDriver_AGS::~WMSMiniDriver_AGS() {}
+WMSMiniDriver_AGS::~WMSMiniDriver_AGS()
+{
+}
 
 static double GetBBoxCoord(const GDALWMSImageRequestInfo &iri, char what)
 {
     switch (what)
     {
-    case 'x': return std::min(iri.m_x0, iri.m_x1);
-    case 'y': return std::min(iri.m_y0, iri.m_y1);
-    case 'X': return std::max(iri.m_x0, iri.m_x1);
-    case 'Y': return std::max(iri.m_y0, iri.m_y1);
+        case 'x':
+            return std::min(iri.m_x0, iri.m_x1);
+        case 'y':
+            return std::min(iri.m_y0, iri.m_y1);
+        case 'X':
+            return std::max(iri.m_x0, iri.m_x1);
+        case 'Y':
+            return std::max(iri.m_y0, iri.m_y1);
     }
     return 0.0;
 }
 
-char **WMSMiniDriver_AGS::GetMetadataDomainList(void) {
+char **WMSMiniDriver_AGS::GetMetadataDomainList(void)
+{
     return CSLAddString(nullptr, "LocationInfo");
 }
 
-CPLErr WMSMiniDriver_AGS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions)
+CPLErr WMSMiniDriver_AGS::Initialize(CPLXMLNode *config,
+                                     CPL_UNUSED char **papszOpenOptions)
 {
     // Bounding box, if specified, has to be xyXY.
     m_bbox_order = CPLGetXMLValue(config, "BBoxOrder", "xyXY");
-    if (m_bbox_order.size() < 4 || m_bbox_order.find("xyXY") != 0) {
-        CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: ArcGIS BBoxOrder value has to be xyXY");
+    if (m_bbox_order.size() < 4 || m_bbox_order.find("xyXY") != 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GDALWMS: ArcGIS BBoxOrder value has to be xyXY");
         return CE_Failure;
     }
 
-    m_base_url = CPLGetXMLValue(config, "ServerURL", CPLGetXMLValue(config, "ServerUrl", ""));
-    if (m_base_url.empty()) {
-        CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: ArcGIS Server mini-driver: ServerURL missing.");
+    m_base_url = CPLGetXMLValue(config, "ServerURL",
+                                CPLGetXMLValue(config, "ServerUrl", ""));
+    if (m_base_url.empty())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GDALWMS: ArcGIS Server mini-driver: ServerURL missing.");
         return CE_Failure;
     }
 
@@ -74,23 +88,25 @@ CPLErr WMSMiniDriver_AGS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papsz
     m_transparent.tolower();
     m_layers = CPLGetXMLValue(config, "Layers", "");
 
-    const char* irs = CPLGetXMLValue(config, "SRS", "102100");
+    const char *irs = CPLGetXMLValue(config, "SRS", "102100");
 
-    if( irs != nullptr )
+    if (irs != nullptr)
     {
-        if( STARTS_WITH_CI(irs, "EPSG:") ) // If we have EPSG code just convert it to WKT.
+        if (STARTS_WITH_CI(
+                irs, "EPSG:"))  // If we have EPSG code just convert it to WKT.
         {
             m_oSRS = ProjToSRS(irs);
             m_irs = irs + 5;
         }
-        else // If we have AGS code - try if it's EPSG.
+        else  // If we have AGS code - try if it's EPSG.
         {
             m_irs = irs;
             m_oSRS = ProjToSRS("EPSG:" + m_irs);
         }
         // TODO: If we have AGS JSON.
     }
-    m_identification_tolerance = CPLGetXMLValue(config, "IdentificationTolerance", "2");
+    m_identification_tolerance =
+        CPLGetXMLValue(config, "IdentificationTolerance", "2");
 
     return CE_None;
 }
@@ -100,16 +116,16 @@ void WMSMiniDriver_AGS::GetCapabilities(WMSMiniDriverCapabilities *caps)
     caps->m_has_getinfo = 1;
 }
 
-CPLErr WMSMiniDriver_AGS::TiledImageRequest(WMSHTTPRequest &request,
-                                            const GDALWMSImageRequestInfo &iri,
-                                            CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri)
+CPLErr WMSMiniDriver_AGS::TiledImageRequest(
+    WMSHTTPRequest &request, const GDALWMSImageRequestInfo &iri,
+    CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri)
 {
     CPLString &url = request.URL;
     url = m_base_url;
 
     // Assume map service if exportImage is not explicitly requested.
-    if( (url.ifind("/export?") == std::string::npos) &&
-        (url.ifind("/exportImage?") == std::string::npos) )
+    if ((url.ifind("/export?") == std::string::npos) &&
+        (url.ifind("/exportImage?") == std::string::npos))
     {
         url += "/export?";
     }
@@ -118,25 +134,27 @@ CPLErr WMSMiniDriver_AGS::TiledImageRequest(WMSHTTPRequest &request,
     url += "f=image";
     char *pszEscapedValue = CPLEscapeString(m_layers, -1, CPLES_URL);
     url += CPLOPrintf("&bbox=%.8f%%2C%.8f%%2C%.8f%%2C%.8f",
-                GetBBoxCoord(iri, m_bbox_order[0]), GetBBoxCoord(iri, m_bbox_order[1]),
-                GetBBoxCoord(iri, m_bbox_order[2]), GetBBoxCoord(iri, m_bbox_order[3]))
-        + CPLOPrintf("&size=%d%%2C%d", iri.m_sx, iri.m_sy)
-        + CPLOPrintf("&imageSR=%s", m_irs.c_str())
-        + CPLOPrintf("&bboxSR=%s", m_irs.c_str())
-        + CPLOPrintf("&format=%s", m_image_format.c_str())
-        + CPLOPrintf("&layers=%s", pszEscapedValue);
+                      GetBBoxCoord(iri, m_bbox_order[0]),
+                      GetBBoxCoord(iri, m_bbox_order[1]),
+                      GetBBoxCoord(iri, m_bbox_order[2]),
+                      GetBBoxCoord(iri, m_bbox_order[3])) +
+           CPLOPrintf("&size=%d%%2C%d", iri.m_sx, iri.m_sy) +
+           CPLOPrintf("&imageSR=%s", m_irs.c_str()) +
+           CPLOPrintf("&bboxSR=%s", m_irs.c_str()) +
+           CPLOPrintf("&format=%s", m_image_format.c_str()) +
+           CPLOPrintf("&layers=%s", pszEscapedValue);
     CPLFree(pszEscapedValue);
 
-    if( !m_transparent.empty() )
+    if (!m_transparent.empty())
     {
-        url +=  "&transparent=" + m_transparent;
+        url += "&transparent=" + m_transparent;
     }
     else
     {
         url += "&transparent=false";
     }
 
-    if( !m_time_range.empty() )
+    if (!m_time_range.empty())
     {
         pszEscapedValue = CPLEscapeString(m_time_range, -1, CPLES_URL);
         url += CPLOPrintf("&time=%s", pszEscapedValue);
@@ -150,15 +168,14 @@ CPLErr WMSMiniDriver_AGS::TiledImageRequest(WMSHTTPRequest &request,
     return CE_None;
 }
 
-void WMSMiniDriver_AGS::GetTiledImageInfo(CPLString &url,
-                                          const GDALWMSImageRequestInfo &iri,
-                                          CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri,
-                                          int nXInBlock,
-                                          int nYInBlock)
+void WMSMiniDriver_AGS::GetTiledImageInfo(
+    CPLString &url, const GDALWMSImageRequestInfo &iri,
+    CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri, int nXInBlock,
+    int nYInBlock)
 {
     url = m_base_url;
 
-    if( m_base_url.ifind("/identify?") == std::string::npos )
+    if (m_base_url.ifind("/identify?") == std::string::npos)
     {
         url += "/identify?";
     }
@@ -168,23 +185,27 @@ void WMSMiniDriver_AGS::GetTiledImageInfo(CPLString &url,
     url += "f=json&geometryType=esriGeometryPoint&returnGeometry=false"
            "&layerdefs=&time=&layerTimeOptions=&maxAllowableOffset=";
 
-    double fX = GetBBoxCoord(iri, 'x') + nXInBlock * (GetBBoxCoord(iri, 'X') -
-                GetBBoxCoord(iri, 'x')) / iri.m_sx;
-    double fY = GetBBoxCoord(iri, 'y') + (iri.m_sy - nYInBlock) * (GetBBoxCoord(iri, 'Y') -
-                GetBBoxCoord(iri, 'y')) / iri.m_sy;
+    double fX = GetBBoxCoord(iri, 'x') +
+                nXInBlock * (GetBBoxCoord(iri, 'X') - GetBBoxCoord(iri, 'x')) /
+                    iri.m_sx;
+    double fY = GetBBoxCoord(iri, 'y') +
+                (iri.m_sy - nYInBlock) *
+                    (GetBBoxCoord(iri, 'Y') - GetBBoxCoord(iri, 'y')) /
+                    iri.m_sy;
 
-    url += "&geometry=" + std::to_string(fX) + "%2C" + std::to_string(fY) + "&sr=" + m_irs;
+    url += "&geometry=" + std::to_string(fX) + "%2C" + std::to_string(fY) +
+           "&sr=" + m_irs;
 
     CPLString layers("visible");
-    if( m_layers.find("show") != std::string::npos )
+    if (m_layers.find("show") != std::string::npos)
     {
         layers = m_layers;
         layers.replace(layers.find("show"), 4, "all");
     }
 
-    if( m_layers.find("hide") != std::string::npos
-        || m_layers.find("include") != std::string::npos
-        || m_layers.find("exclude") != std::string::npos )
+    if (m_layers.find("hide") != std::string::npos ||
+        m_layers.find("include") != std::string::npos ||
+        m_layers.find("exclude") != std::string::npos)
     {
         layers = "top";
     }
@@ -192,7 +213,9 @@ void WMSMiniDriver_AGS::GetTiledImageInfo(CPLString &url,
     url += "&layers=" + layers;
     url += "&tolerance=" + m_identification_tolerance;
     url += CPLOPrintf("&mapExtent=%.8f%%2C%.8f%%2C%.8f%%2C%.8f",
-        GetBBoxCoord(iri, m_bbox_order[0]), GetBBoxCoord(iri, m_bbox_order[1]),
-        GetBBoxCoord(iri, m_bbox_order[2]), GetBBoxCoord(iri, m_bbox_order[3]))
-        + CPLOPrintf("&imageDisplay=%d%%2C%d%%2C96", iri.m_sx, iri.m_sy);
+                      GetBBoxCoord(iri, m_bbox_order[0]),
+                      GetBBoxCoord(iri, m_bbox_order[1]),
+                      GetBBoxCoord(iri, m_bbox_order[2]),
+                      GetBBoxCoord(iri, m_bbox_order[3])) +
+           CPLOPrintf("&imageDisplay=%d%%2C%d%%2C96", iri.m_sx, iri.m_sy);
 }

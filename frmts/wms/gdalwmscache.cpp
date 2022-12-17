@@ -32,9 +32,7 @@
 #include "cpl_md5.h"
 #include "wmsdriver.h"
 
-
-
-static void CleanCacheThread( void *pData )
+static void CleanCacheThread(void *pData)
 {
     GDALWMSCache *pCache = static_cast<GDALWMSCache *>(pData);
     pCache->Clean();
@@ -45,39 +43,42 @@ static void CleanCacheThread( void *pData )
 //------------------------------------------------------------------------------
 class GDALWMSFileCache : public GDALWMSCacheImpl
 {
-public:
-    GDALWMSFileCache(const CPLString& soPath, CPLXMLNode *pConfig) :
-        GDALWMSCacheImpl(soPath, pConfig),
-        m_osPostfix(""),
-        m_nDepth(2),
-        m_nExpires(604800),   // 7 days
-        m_nMaxSize(67108864),  // 64 Mb
-        m_nCleanThreadRunTimeout(120)  // 3 min
+  public:
+    GDALWMSFileCache(const CPLString &soPath, CPLXMLNode *pConfig)
+        : GDALWMSCacheImpl(soPath, pConfig), m_osPostfix(""), m_nDepth(2),
+          m_nExpires(604800),            // 7 days
+          m_nMaxSize(67108864),          // 64 Mb
+          m_nCleanThreadRunTimeout(120)  // 3 min
     {
-        const char *pszCacheDepth = CPLGetXMLValue( pConfig, "Depth", "2" );
-        if( pszCacheDepth != nullptr )
-            m_nDepth = atoi( pszCacheDepth );
+        const char *pszCacheDepth = CPLGetXMLValue(pConfig, "Depth", "2");
+        if (pszCacheDepth != nullptr)
+            m_nDepth = atoi(pszCacheDepth);
 
-        const char *pszCacheExtension = CPLGetXMLValue( pConfig, "Extension", nullptr );
-        if( pszCacheExtension != nullptr )
+        const char *pszCacheExtension =
+            CPLGetXMLValue(pConfig, "Extension", nullptr);
+        if (pszCacheExtension != nullptr)
             m_osPostfix = pszCacheExtension;
 
-        const char *pszCacheExpires = CPLGetXMLValue( pConfig, "Expires", nullptr );
-        if( pszCacheExpires != nullptr )
+        const char *pszCacheExpires =
+            CPLGetXMLValue(pConfig, "Expires", nullptr);
+        if (pszCacheExpires != nullptr)
         {
-            m_nExpires = atoi( pszCacheExpires );
+            m_nExpires = atoi(pszCacheExpires);
             CPLDebug("WMS", "Cache expires in %d sec", m_nExpires);
         }
 
-        const char *pszCacheMaxSize = CPLGetXMLValue( pConfig, "MaxSize", nullptr );
-        if( pszCacheMaxSize != nullptr )
-            m_nMaxSize = atol( pszCacheMaxSize );
+        const char *pszCacheMaxSize =
+            CPLGetXMLValue(pConfig, "MaxSize", nullptr);
+        if (pszCacheMaxSize != nullptr)
+            m_nMaxSize = atol(pszCacheMaxSize);
 
-        const char *pszCleanThreadRunTimeout = CPLGetXMLValue( pConfig, "CleanTimeout", nullptr );
-        if( pszCleanThreadRunTimeout != nullptr )
+        const char *pszCleanThreadRunTimeout =
+            CPLGetXMLValue(pConfig, "CleanTimeout", nullptr);
+        if (pszCleanThreadRunTimeout != nullptr)
         {
-            m_nCleanThreadRunTimeout = atoi( pszCleanThreadRunTimeout );
-            CPLDebug("WMS", "Clean Thread Run Timeout is %d sec", m_nCleanThreadRunTimeout);
+            m_nCleanThreadRunTimeout = atoi(pszCleanThreadRunTimeout);
+            CPLDebug("WMS", "Clean Thread Run Timeout is %d sec",
+                     m_nCleanThreadRunTimeout);
         }
     }
 
@@ -86,42 +87,45 @@ public:
         return m_nCleanThreadRunTimeout;
     }
 
-    virtual CPLErr Insert(const char *pszKey, const CPLString &osFileName) override
+    virtual CPLErr Insert(const char *pszKey,
+                          const CPLString &osFileName) override
     {
         // Warns if it fails to write, but returns success
-        CPLString soFilePath = GetFilePath( pszKey );
-        MakeDirs( CPLGetDirname(soFilePath) );
-        if ( CPLCopyFile( soFilePath, osFileName ) == CE_None)
+        CPLString soFilePath = GetFilePath(pszKey);
+        MakeDirs(CPLGetDirname(soFilePath));
+        if (CPLCopyFile(soFilePath, osFileName) == CE_None)
             return CE_None;
         // Warn if it fails after folder creation
-        CPLError( CE_Warning, CPLE_FileIO, "Error writing to WMS cache %s",
-                 m_soPath.c_str() );
+        CPLError(CE_Warning, CPLE_FileIO, "Error writing to WMS cache %s",
+                 m_soPath.c_str());
         return CE_None;
     }
 
-    virtual enum GDALWMSCacheItemStatus GetItemStatus(const char *pszKey) const override
+    virtual enum GDALWMSCacheItemStatus
+    GetItemStatus(const char *pszKey) const override
     {
-        VSIStatBufL  sStatBuf;
-        if( VSIStatL( GetFilePath(pszKey), &sStatBuf ) == 0 )
+        VSIStatBufL sStatBuf;
+        if (VSIStatL(GetFilePath(pszKey), &sStatBuf) == 0)
         {
-            long seconds = static_cast<long>( time( nullptr ) - sStatBuf.st_mtime );
+            long seconds = static_cast<long>(time(nullptr) - sStatBuf.st_mtime);
             return seconds < m_nExpires ? CACHE_ITEM_OK : CACHE_ITEM_EXPIRED;
         }
-        return  CACHE_ITEM_NOT_FOUND;
+        return CACHE_ITEM_NOT_FOUND;
     }
 
-    virtual GDALDataset* GetDataset(const char *pszKey, char **papszOpenOptions) const override
+    virtual GDALDataset *GetDataset(const char *pszKey,
+                                    char **papszOpenOptions) const override
     {
-        return reinterpret_cast<GDALDataset*>(
-                    GDALOpenEx( GetFilePath( pszKey ), GDAL_OF_RASTER |
-                               GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR, nullptr,
-                               papszOpenOptions, nullptr ) );
+        return reinterpret_cast<GDALDataset *>(GDALOpenEx(
+            GetFilePath(pszKey),
+            GDAL_OF_RASTER | GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR, nullptr,
+            papszOpenOptions, nullptr));
     }
 
     virtual void Clean() override
     {
-        char **papszList = VSIReadDirRecursive( m_soPath );
-        if( papszList == nullptr )
+        char **papszList = VSIReadDirRecursive(m_soPath);
+        if (papszList == nullptr)
         {
             return;
         }
@@ -129,84 +133,84 @@ public:
         int counter = 0;
         std::vector<int> toDelete;
         long nSize = 0;
-        time_t nTime = time( nullptr );
-        while( papszList[counter] != nullptr )
+        time_t nTime = time(nullptr);
+        while (papszList[counter] != nullptr)
         {
-            const char* pszPath = CPLFormFilename( m_soPath, papszList[counter], nullptr );
+            const char *pszPath =
+                CPLFormFilename(m_soPath, papszList[counter], nullptr);
             VSIStatBufL sStatBuf;
-            if( VSIStatL( pszPath, &sStatBuf ) == 0 )
+            if (VSIStatL(pszPath, &sStatBuf) == 0)
             {
-                if( !VSI_ISDIR( sStatBuf.st_mode ) )
+                if (!VSI_ISDIR(sStatBuf.st_mode))
                 {
-                    long seconds = static_cast<long>( nTime - sStatBuf.st_mtime );
-                    if(seconds > m_nExpires)
+                    long seconds = static_cast<long>(nTime - sStatBuf.st_mtime);
+                    if (seconds > m_nExpires)
                     {
                         toDelete.push_back(counter);
                     }
 
-                    nSize += static_cast<long>( sStatBuf.st_size );
+                    nSize += static_cast<long>(sStatBuf.st_size);
                 }
             }
             counter++;
         }
 
-        if( nSize > m_nMaxSize )
+        if (nSize > m_nMaxSize)
         {
-            CPLDebug( "WMS", "Delete %u items from cache",
-                                    static_cast<unsigned int>(toDelete.size()) );
-            for( size_t i = 0; i < toDelete.size(); ++i )
+            CPLDebug("WMS", "Delete %u items from cache",
+                     static_cast<unsigned int>(toDelete.size()));
+            for (size_t i = 0; i < toDelete.size(); ++i)
             {
-                const char* pszPath = CPLFormFilename( m_soPath,
-                                                       papszList[toDelete[i]],
-                                                       nullptr );
-                VSIUnlink( pszPath );
+                const char *pszPath =
+                    CPLFormFilename(m_soPath, papszList[toDelete[i]], nullptr);
+                VSIUnlink(pszPath);
             }
         }
 
         CSLDestroy(papszList);
     }
 
-private:
-    CPLString GetFilePath(const char* pszKey) const
+  private:
+    CPLString GetFilePath(const char *pszKey) const
     {
-        CPLString soHash( CPLMD5String( pszKey ) );
-        CPLString soCacheFile( m_soPath );
+        CPLString soHash(CPLMD5String(pszKey));
+        CPLString soCacheFile(m_soPath);
 
-        if( !soCacheFile.empty() && soCacheFile.back() != '/' )
+        if (!soCacheFile.empty() && soCacheFile.back() != '/')
         {
             soCacheFile.append(1, '/');
         }
 
-        for( int i = 0; i < m_nDepth; ++i )
+        for (int i = 0; i < m_nDepth; ++i)
         {
-            soCacheFile.append( 1, soHash[i] );
-            soCacheFile.append( 1, '/' );
+            soCacheFile.append(1, soHash[i]);
+            soCacheFile.append(1, '/');
         }
-        soCacheFile.append( soHash );
-        soCacheFile.append( m_osPostfix );
+        soCacheFile.append(soHash);
+        soCacheFile.append(m_osPostfix);
         return soCacheFile;
     }
 
     static void MakeDirs(const char *pszPath)
     {
-        if( IsPathExists( pszPath ) )
+        if (IsPathExists(pszPath))
         {
             return;
         }
         // Recursive makedirs, ignoring errors
-        const char *pszDirPath = CPLGetDirname( pszPath );
-        MakeDirs( pszDirPath );
+        const char *pszDirPath = CPLGetDirname(pszPath);
+        MakeDirs(pszDirPath);
 
-        VSIMkdir( pszPath, 0744 );
+        VSIMkdir(pszPath, 0744);
     }
 
     static bool IsPathExists(const char *pszPath)
     {
         VSIStatBufL sbuf;
-        return VSIStatL( pszPath, &sbuf ) == 0;
+        return VSIStatL(pszPath, &sbuf) == 0;
     }
 
-private:
+  private:
     CPLString m_osPostfix;
     int m_nDepth;
     int m_nExpires;
@@ -218,45 +222,43 @@ private:
 // GDALWMSCache
 //------------------------------------------------------------------------------
 
-GDALWMSCache::GDALWMSCache() :
-    m_osCachePath("./gdalwmscache"),
-    m_bIsCleanThreadRunning(false),
-    m_nCleanThreadLastRunTime(0),
-    m_poCache(nullptr),
-    m_hThread(nullptr)
+GDALWMSCache::GDALWMSCache()
+    : m_osCachePath("./gdalwmscache"), m_bIsCleanThreadRunning(false),
+      m_nCleanThreadLastRunTime(0), m_poCache(nullptr), m_hThread(nullptr)
 {
-
 }
 
 GDALWMSCache::~GDALWMSCache()
 {
-    if( m_hThread )
+    if (m_hThread)
         CPLJoinThread(m_hThread);
     delete m_poCache;
 }
 
-CPLErr GDALWMSCache::Initialize(const char *pszUrl, CPLXMLNode *pConfig) {
-    const char *pszXmlCachePath = CPLGetXMLValue( pConfig, "Path", nullptr );
-    const char *pszUserCachePath = CPLGetConfigOption( "GDAL_DEFAULT_WMS_CACHE_PATH",
-                                                     nullptr );
-    if( pszXmlCachePath != nullptr )
+CPLErr GDALWMSCache::Initialize(const char *pszUrl, CPLXMLNode *pConfig)
+{
+    const char *pszXmlCachePath = CPLGetXMLValue(pConfig, "Path", nullptr);
+    const char *pszUserCachePath =
+        CPLGetConfigOption("GDAL_DEFAULT_WMS_CACHE_PATH", nullptr);
+    if (pszXmlCachePath != nullptr)
     {
         m_osCachePath = pszXmlCachePath;
     }
-    else if( pszUserCachePath != nullptr )
+    else if (pszUserCachePath != nullptr)
     {
         m_osCachePath = pszUserCachePath;
     }
 
     // Separate folder for each unique dataset url
-    if( CPLTestBool( CPLGetXMLValue( pConfig, "Unique", "True" ) ) )
+    if (CPLTestBool(CPLGetXMLValue(pConfig, "Unique", "True")))
     {
-        m_osCachePath = CPLFormFilename( m_osCachePath, CPLMD5String( pszUrl ), nullptr );
+        m_osCachePath =
+            CPLFormFilename(m_osCachePath, CPLMD5String(pszUrl), nullptr);
     }
 
     // TODO: Add sqlite db cache type
-    const char *pszType = CPLGetXMLValue( pConfig, "Type", "file" );
-    if( EQUAL(pszType, "file") )
+    const char *pszType = CPLGetXMLValue(pConfig, "Type", "file");
+    if (EQUAL(pszType, "file"))
     {
         m_poCache = new GDALWMSFileCache(m_osCachePath, pConfig);
     }
@@ -266,19 +268,19 @@ CPLErr GDALWMSCache::Initialize(const char *pszUrl, CPLXMLNode *pConfig) {
 
 CPLErr GDALWMSCache::Insert(const char *pszKey, const CPLString &soFileName)
 {
-    if( m_poCache != nullptr && pszKey != nullptr )
+    if (m_poCache != nullptr && pszKey != nullptr)
     {
         // Add file to cache
         CPLErr result = m_poCache->Insert(pszKey, soFileName);
-        if( result == CE_None )
+        if (result == CE_None)
         {
             // Start clean thread
             int cleanThreadRunTimeout = m_poCache->GetCleanThreadRunTimeout();
-            if(  cleanThreadRunTimeout > 0 &&
-                !m_bIsCleanThreadRunning && 
-                time(nullptr) - m_nCleanThreadLastRunTime > cleanThreadRunTimeout ) 
+            if (cleanThreadRunTimeout > 0 && !m_bIsCleanThreadRunning &&
+                time(nullptr) - m_nCleanThreadLastRunTime >
+                    cleanThreadRunTimeout)
             {
-                if( m_hThread )
+                if (m_hThread)
                     CPLJoinThread(m_hThread);
                 m_bIsCleanThreadRunning = true;
                 m_hThread = CPLCreateJoinableThread(CleanCacheThread, this);
@@ -290,19 +292,20 @@ CPLErr GDALWMSCache::Insert(const char *pszKey, const CPLString &soFileName)
     return CE_Failure;
 }
 
-enum GDALWMSCacheItemStatus GDALWMSCache::GetItemStatus(const char *pszKey) const
+enum GDALWMSCacheItemStatus
+GDALWMSCache::GetItemStatus(const char *pszKey) const
 {
-    if( m_poCache != nullptr )
+    if (m_poCache != nullptr)
     {
         return m_poCache->GetItemStatus(pszKey);
     }
     return CACHE_ITEM_NOT_FOUND;
 }
 
-GDALDataset* GDALWMSCache::GetDataset(const char *pszKey,
+GDALDataset *GDALWMSCache::GetDataset(const char *pszKey,
                                       char **papszOpenOptions) const
 {
-    if( m_poCache != nullptr )
+    if (m_poCache != nullptr)
     {
         return m_poCache->GetDataset(pszKey, papszOpenOptions);
     }
@@ -311,12 +314,12 @@ GDALDataset* GDALWMSCache::GetDataset(const char *pszKey,
 
 void GDALWMSCache::Clean()
 {
-    if( m_poCache != nullptr )
+    if (m_poCache != nullptr)
     {
         CPLDebug("WMS", "Clean cache");
         m_poCache->Clean();
     }
 
-    m_nCleanThreadLastRunTime = time( nullptr );
+    m_nCleanThreadLastRunTime = time(nullptr);
     m_bIsCleanThreadRunning = false;
 }
