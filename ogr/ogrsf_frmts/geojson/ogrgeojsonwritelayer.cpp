@@ -32,43 +32,39 @@
 
 #include <algorithm>
 
-
 /************************************************************************/
 /*                         OGRGeoJSONWriteLayer()                       */
 /************************************************************************/
 
-OGRGeoJSONWriteLayer::OGRGeoJSONWriteLayer( const char* pszName,
-                                            OGRwkbGeometryType eGType,
-                                            char** papszOptions,
-                                            bool bWriteFC_BBOXIn,
-                                            OGRCoordinateTransformation* poCT,
-                                            OGRGeoJSONDataSource* poDS ) :
-    poDS_(poDS),
-    poFeatureDefn_(new OGRFeatureDefn( pszName )),
-    nOutCounter_(0),
-    bWriteBBOX(CPLTestBool(
-        CSLFetchNameValueDef(papszOptions, "WRITE_BBOX", "FALSE"))),
-    bBBOX3D(false),
-    bWriteFC_BBOX(bWriteFC_BBOXIn),
-    nCoordPrecision_(atoi(
-        CSLFetchNameValueDef(papszOptions, "COORDINATE_PRECISION", "-1"))),
-    nSignificantFigures_(atoi(
-        CSLFetchNameValueDef(papszOptions, "SIGNIFICANT_FIGURES", "-1"))),
-    bRFC7946_(CPLTestBool(
-        CSLFetchNameValueDef(papszOptions, "RFC7946", "FALSE"))),
-    bWrapDateLine_(CPLTestBool(
-        CSLFetchNameValueDef(papszOptions, "WRAPDATELINE", "YES"))),
-    poCT_(poCT)
+OGRGeoJSONWriteLayer::OGRGeoJSONWriteLayer(const char *pszName,
+                                           OGRwkbGeometryType eGType,
+                                           char **papszOptions,
+                                           bool bWriteFC_BBOXIn,
+                                           OGRCoordinateTransformation *poCT,
+                                           OGRGeoJSONDataSource *poDS)
+    : poDS_(poDS), poFeatureDefn_(new OGRFeatureDefn(pszName)), nOutCounter_(0),
+      bWriteBBOX(CPLTestBool(
+          CSLFetchNameValueDef(papszOptions, "WRITE_BBOX", "FALSE"))),
+      bBBOX3D(false), bWriteFC_BBOX(bWriteFC_BBOXIn),
+      nCoordPrecision_(atoi(
+          CSLFetchNameValueDef(papszOptions, "COORDINATE_PRECISION", "-1"))),
+      nSignificantFigures_(atoi(
+          CSLFetchNameValueDef(papszOptions, "SIGNIFICANT_FIGURES", "-1"))),
+      bRFC7946_(
+          CPLTestBool(CSLFetchNameValueDef(papszOptions, "RFC7946", "FALSE"))),
+      bWrapDateLine_(CPLTestBool(
+          CSLFetchNameValueDef(papszOptions, "WRAPDATELINE", "YES"))),
+      poCT_(poCT)
 {
     poFeatureDefn_->Reference();
-    poFeatureDefn_->SetGeomType( eGType );
-    SetDescription( poFeatureDefn_->GetName() );
-    if( bRFC7946_ && nCoordPrecision_ < 0 )
+    poFeatureDefn_->SetGeomType(eGType);
+    SetDescription(poFeatureDefn_->GetName());
+    if (bRFC7946_ && nCoordPrecision_ < 0)
         nCoordPrecision_ = 7;
     oWriteOptions_.bWriteBBOX = bWriteBBOX;
     oWriteOptions_.nCoordPrecision = nCoordPrecision_;
     oWriteOptions_.nSignificantFigures = nSignificantFigures_;
-    if( bRFC7946_ )
+    if (bRFC7946_)
     {
         oWriteOptions_.SetRFC7946Settings();
     }
@@ -83,14 +79,14 @@ OGRGeoJSONWriteLayer::OGRGeoJSONWriteLayer( const char* pszName,
 
 OGRGeoJSONWriteLayer::~OGRGeoJSONWriteLayer()
 {
-    VSILFILE* fp = poDS_->GetOutputFile();
+    VSILFILE *fp = poDS_->GetOutputFile();
 
-    VSIFPrintfL( fp, "\n]" );
+    VSIFPrintfL(fp, "\n]");
 
-    if( bWriteFC_BBOX && sEnvelopeLayer.IsInit() )
+    if (bWriteFC_BBOX && sEnvelopeLayer.IsInit())
     {
         CPLString osBBOX = "[ ";
-        if( bRFC7946_ )
+        if (bRFC7946_)
         {
             char szFormat[32];
             snprintf(szFormat, sizeof(szFormat), "%%.%df", nCoordPrecision_);
@@ -98,7 +94,7 @@ OGRGeoJSONWriteLayer::~OGRGeoJSONWriteLayer()
             osBBOX += ", ";
             osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MinY);
             osBBOX += ", ";
-            if( bBBOX3D )
+            if (bBBOX3D)
             {
                 osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MinZ);
                 osBBOX += ", ";
@@ -106,7 +102,7 @@ OGRGeoJSONWriteLayer::~OGRGeoJSONWriteLayer()
             osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MaxX);
             osBBOX += ", ";
             osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MaxY);
-            if( bBBOX3D )
+            if (bBBOX3D)
             {
                 osBBOX += ", ";
                 osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MaxZ);
@@ -116,31 +112,31 @@ OGRGeoJSONWriteLayer::~OGRGeoJSONWriteLayer()
         {
             osBBOX += CPLSPrintf("%.15g, ", sEnvelopeLayer.MinX);
             osBBOX += CPLSPrintf("%.15g, ", sEnvelopeLayer.MinY);
-            if( bBBOX3D )
+            if (bBBOX3D)
                 osBBOX += CPLSPrintf("%.15g, ", sEnvelopeLayer.MinZ);
             osBBOX += CPLSPrintf("%.15g, ", sEnvelopeLayer.MaxX);
             osBBOX += CPLSPrintf("%.15g", sEnvelopeLayer.MaxY);
-            if( bBBOX3D )
+            if (bBBOX3D)
                 osBBOX += CPLSPrintf(", %.15g", sEnvelopeLayer.MaxZ);
         }
         osBBOX += " ]";
 
-        if( poDS_->GetFpOutputIsSeekable() &&
-            osBBOX.size() + 9 < OGRGeoJSONDataSource::SPACE_FOR_BBOX )
+        if (poDS_->GetFpOutputIsSeekable() &&
+            osBBOX.size() + 9 < OGRGeoJSONDataSource::SPACE_FOR_BBOX)
         {
             VSIFSeekL(fp, poDS_->GetBBOXInsertLocation(), SEEK_SET);
-            VSIFPrintfL( fp, "\"bbox\": %s,", osBBOX.c_str() );
+            VSIFPrintfL(fp, "\"bbox\": %s,", osBBOX.c_str());
             VSIFSeekL(fp, 0, SEEK_END);
         }
         else
         {
-            VSIFPrintfL( fp, ",\n\"bbox\": %s", osBBOX.c_str() );
+            VSIFPrintfL(fp, ",\n\"bbox\": %s", osBBOX.c_str());
         }
     }
 
-    VSIFPrintfL( fp, "\n}\n" );
+    VSIFPrintfL(fp, "\n}\n");
 
-    if( nullptr != poFeatureDefn_ )
+    if (nullptr != poFeatureDefn_)
     {
         poFeatureDefn_->Release();
     }
@@ -152,25 +148,25 @@ OGRGeoJSONWriteLayer::~OGRGeoJSONWriteLayer()
 /*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRGeoJSONWriteLayer::ICreateFeature( OGRFeature* poFeature )
+OGRErr OGRGeoJSONWriteLayer::ICreateFeature(OGRFeature *poFeature)
 {
-    VSILFILE* fp = poDS_->GetOutputFile();
+    VSILFILE *fp = poDS_->GetOutputFile();
 
-    OGRFeature* poFeatureToWrite;
-    if( poCT_ != nullptr || bRFC7946_ )
+    OGRFeature *poFeatureToWrite;
+    if (poCT_ != nullptr || bRFC7946_)
     {
         poFeatureToWrite = new OGRFeature(poFeatureDefn_);
-        poFeatureToWrite->SetFrom( poFeature );
-        poFeatureToWrite->SetFID( poFeature->GetFID() );
-        OGRGeometry* poGeometry = poFeatureToWrite->GetGeometryRef();
-        if( poGeometry )
+        poFeatureToWrite->SetFrom(poFeature);
+        poFeatureToWrite->SetFID(poFeature->GetFID());
+        OGRGeometry *poGeometry = poFeatureToWrite->GetGeometryRef();
+        if (poGeometry)
         {
-            const char* const apszOptions[] = { bWrapDateLine_ ? "WRAPDATELINE=YES" : nullptr, nullptr };
-            OGRGeometry* poNewGeom =
-                OGRGeometryFactory::transformWithOptions(
-                    poGeometry, poCT_, const_cast<char**>(apszOptions),
-                    oTransformCache_);
-            if( poNewGeom == nullptr )
+            const char *const apszOptions[] = {
+                bWrapDateLine_ ? "WRAPDATELINE=YES" : nullptr, nullptr};
+            OGRGeometry *poNewGeom = OGRGeometryFactory::transformWithOptions(
+                poGeometry, poCT_, const_cast<char **>(apszOptions),
+                oTransformCache_);
+            if (poNewGeom == nullptr)
             {
                 delete poFeatureToWrite;
                 return OGRERR_FAILURE;
@@ -178,16 +174,17 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature( OGRFeature* poFeature )
 
             OGREnvelope sEnvelope;
             poNewGeom->getEnvelope(&sEnvelope);
-            if( sEnvelope.MinX < -180.0 || sEnvelope.MaxX > 180.0 ||
-                sEnvelope.MinY < -90.0 || sEnvelope.MaxY > 90.0 )
+            if (sEnvelope.MinX < -180.0 || sEnvelope.MaxX > 180.0 ||
+                sEnvelope.MinY < -90.0 || sEnvelope.MaxY > 90.0)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Geometry extent outside of [-180.0,180.0]x[-90.0,90.0] bounds");
+                         "Geometry extent outside of "
+                         "[-180.0,180.0]x[-90.0,90.0] bounds");
                 delete poFeatureToWrite;
                 return OGRERR_FAILURE;
             }
 
-            poFeatureToWrite->SetGeometryDirectly( poNewGeom );
+            poFeatureToWrite->SetGeometryDirectly(poNewGeom);
         }
     }
     else
@@ -195,67 +192,68 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature( OGRFeature* poFeature )
         poFeatureToWrite = poFeature;
     }
 
-    if (oWriteOptions_.bGenerateID && poFeatureToWrite->GetFID() == OGRNullFID) {
+    if (oWriteOptions_.bGenerateID && poFeatureToWrite->GetFID() == OGRNullFID)
+    {
         poFeatureToWrite->SetFID(nOutCounter_);
     }
-    json_object* poObj =
-        OGRGeoJSONWriteFeature( poFeatureToWrite, oWriteOptions_ );
-    CPLAssert( nullptr != poObj );
+    json_object *poObj =
+        OGRGeoJSONWriteFeature(poFeatureToWrite, oWriteOptions_);
+    CPLAssert(nullptr != poObj);
 
-    if( nOutCounter_ > 0 )
+    if (nOutCounter_ > 0)
     {
         /* Separate "Feature" entries in "FeatureCollection" object. */
-        VSIFPrintfL( fp, ",\n" );
+        VSIFPrintfL(fp, ",\n");
     }
-    VSIFPrintfL( fp, "%s", json_object_to_json_string_ext( poObj,
-        JSON_C_TO_STRING_SPACED
+    VSIFPrintfL(fp, "%s",
+                json_object_to_json_string_ext(
+                    poObj, JSON_C_TO_STRING_SPACED
 #ifdef JSON_C_TO_STRING_NOSLASHESCAPE
-        | JSON_C_TO_STRING_NOSLASHESCAPE
+                               | JSON_C_TO_STRING_NOSLASHESCAPE
 #endif
-    ) );
+                    ));
 
-    json_object_put( poObj );
+    json_object_put(poObj);
 
     ++nOutCounter_;
 
-    OGRGeometry* poGeometry = poFeatureToWrite->GetGeometryRef();
-    if( poGeometry != nullptr && !poGeometry->IsEmpty() )
+    OGRGeometry *poGeometry = poFeatureToWrite->GetGeometryRef();
+    if (poGeometry != nullptr && !poGeometry->IsEmpty())
     {
-        OGREnvelope3D sEnvelope = OGRGeoJSONGetBBox( poGeometry,
-                                                     oWriteOptions_ );
-        if( poGeometry->getCoordinateDimension() == 3 )
+        OGREnvelope3D sEnvelope = OGRGeoJSONGetBBox(poGeometry, oWriteOptions_);
+        if (poGeometry->getCoordinateDimension() == 3)
             bBBOX3D = true;
 
-        if( !sEnvelopeLayer.IsInit() )
+        if (!sEnvelopeLayer.IsInit())
         {
             sEnvelopeLayer = sEnvelope;
         }
-        else if( oWriteOptions_.bBBOXRFC7946 )
+        else if (oWriteOptions_.bBBOXRFC7946)
         {
-            const bool bEnvelopeCrossAM = ( sEnvelope.MinX > sEnvelope.MaxX );
+            const bool bEnvelopeCrossAM = (sEnvelope.MinX > sEnvelope.MaxX);
             const bool bEnvelopeLayerCrossAM =
-                                ( sEnvelopeLayer.MinX > sEnvelopeLayer.MaxX );
-            if( bEnvelopeCrossAM )
+                (sEnvelopeLayer.MinX > sEnvelopeLayer.MaxX);
+            if (bEnvelopeCrossAM)
             {
-                if( bEnvelopeLayerCrossAM )
+                if (bEnvelopeLayerCrossAM)
                 {
-                    sEnvelopeLayer.MinX = std::min(sEnvelopeLayer.MinX,
-                                                   sEnvelope.MinX);
-                    sEnvelopeLayer.MaxX = std::max(sEnvelopeLayer.MaxX,
-                                                   sEnvelope.MaxX);
+                    sEnvelopeLayer.MinX =
+                        std::min(sEnvelopeLayer.MinX, sEnvelope.MinX);
+                    sEnvelopeLayer.MaxX =
+                        std::max(sEnvelopeLayer.MaxX, sEnvelope.MaxX);
                 }
                 else
                 {
-                    if( sEnvelopeLayer.MinX > 0 )
+                    if (sEnvelopeLayer.MinX > 0)
                     {
-                        sEnvelopeLayer.MinX = std::min(sEnvelopeLayer.MinX,
-                                                       sEnvelope.MinX);
+                        sEnvelopeLayer.MinX =
+                            std::min(sEnvelopeLayer.MinX, sEnvelope.MinX);
                         sEnvelopeLayer.MaxX = sEnvelope.MaxX;
                     }
-                    else if( sEnvelopeLayer.MaxX < 0 )
+                    else if (sEnvelopeLayer.MaxX < 0)
                     {
-                        sEnvelopeLayer.MaxX = std::max(sEnvelopeLayer.MaxX,
-                                                       sEnvelope.MaxX);
+                        sEnvelopeLayer.MaxX =
+                            std::max(sEnvelopeLayer.MaxX, sEnvelope.MaxX);
                         sEnvelopeLayer.MinX = sEnvelope.MinX;
                     }
                     else
@@ -265,17 +263,17 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature( OGRFeature* poFeature )
                     }
                 }
             }
-            else if( bEnvelopeLayerCrossAM )
+            else if (bEnvelopeLayerCrossAM)
             {
-                if( sEnvelope.MinX > 0 )
+                if (sEnvelope.MinX > 0)
                 {
-                    sEnvelopeLayer.MinX = std::min(sEnvelopeLayer.MinX,
-                                                   sEnvelope.MinX);
+                    sEnvelopeLayer.MinX =
+                        std::min(sEnvelopeLayer.MinX, sEnvelope.MinX);
                 }
-                else if( sEnvelope.MaxX < 0 )
+                else if (sEnvelope.MaxX < 0)
                 {
-                    sEnvelopeLayer.MaxX = std::max(sEnvelopeLayer.MaxX,
-                                                   sEnvelope.MaxX);
+                    sEnvelopeLayer.MaxX =
+                        std::max(sEnvelopeLayer.MaxX, sEnvelope.MaxX);
                 }
                 else
                 {
@@ -285,10 +283,10 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature( OGRFeature* poFeature )
             }
             else
             {
-                sEnvelopeLayer.MinX = std::min(sEnvelopeLayer.MinX,
-                                               sEnvelope.MinX);
-                sEnvelopeLayer.MaxX = std::max(sEnvelopeLayer.MaxX,
-                                               sEnvelope.MaxX);
+                sEnvelopeLayer.MinX =
+                    std::min(sEnvelopeLayer.MinX, sEnvelope.MinX);
+                sEnvelopeLayer.MaxX =
+                    std::max(sEnvelopeLayer.MaxX, sEnvelope.MaxX);
             }
 
             sEnvelopeLayer.MinY = std::min(sEnvelopeLayer.MinY, sEnvelope.MinY);
@@ -300,7 +298,7 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature( OGRFeature* poFeature )
         }
     }
 
-    if( poFeatureToWrite != poFeature )
+    if (poFeatureToWrite != poFeature)
         delete poFeatureToWrite;
 
     return OGRERR_NONE;
@@ -310,19 +308,19 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature( OGRFeature* poFeature )
 /*                           CreateField()                              */
 /************************************************************************/
 
-OGRErr OGRGeoJSONWriteLayer::CreateField( OGRFieldDefn* poField,
-                                          int /* bApproxOK */  )
+OGRErr OGRGeoJSONWriteLayer::CreateField(OGRFieldDefn *poField,
+                                         int /* bApproxOK */)
 {
-    if( poFeatureDefn_->GetFieldIndexCaseSensitive(poField->GetNameRef()) >= 0 )
+    if (poFeatureDefn_->GetFieldIndexCaseSensitive(poField->GetNameRef()) >= 0)
     {
-        CPLDebug( "GeoJSON", "Field '%s' already present in schema",
-                    poField->GetNameRef() );
+        CPLDebug("GeoJSON", "Field '%s' already present in schema",
+                 poField->GetNameRef());
 
         // TODO - mloskot: Is this return code correct?
         return OGRERR_NONE;
     }
 
-    poFeatureDefn_->AddFieldDefn( poField );
+    poFeatureDefn_->AddFieldDefn(poField);
 
     return OGRERR_NONE;
 }
@@ -331,13 +329,13 @@ OGRErr OGRGeoJSONWriteLayer::CreateField( OGRFieldDefn* poField,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGeoJSONWriteLayer::TestCapability( const char* pszCap )
+int OGRGeoJSONWriteLayer::TestCapability(const char *pszCap)
 {
-    if( EQUAL(pszCap, OLCCreateField) )
+    if (EQUAL(pszCap, OLCCreateField))
         return TRUE;
-    else if( EQUAL(pszCap, OLCSequentialWrite) )
+    else if (EQUAL(pszCap, OLCSequentialWrite))
         return TRUE;
-    else if( EQUAL(pszCap, OLCStringsAsUTF8) )
+    else if (EQUAL(pszCap, OLCStringsAsUTF8))
         return TRUE;
     return FALSE;
 }
@@ -348,7 +346,7 @@ int OGRGeoJSONWriteLayer::TestCapability( const char* pszCap )
 
 OGRErr OGRGeoJSONWriteLayer::GetExtent(OGREnvelope *psExtent, int)
 {
-    if( sEnvelopeLayer.IsInit() )
+    if (sEnvelopeLayer.IsInit())
     {
         *psExtent = sEnvelopeLayer;
         return OGRERR_NONE;
