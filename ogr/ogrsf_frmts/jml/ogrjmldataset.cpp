@@ -31,18 +31,18 @@
 #include "ogr_jml.h"
 #include "ogrsf_frmts.h"
 
-// g++ -DHAVE_EXPAT -fPIC -shared -Wall -g -DDEBUG ogr/ogrsf_frmts/jml/*.cpp -o ogr_JML.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/jml -L. -lgdal
-
+// g++ -DHAVE_EXPAT -fPIC -shared -Wall -g -DDEBUG ogr/ogrsf_frmts/jml/*.cpp -o
+// ogr_JML.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/jml -L.
+// -lgdal
 
 /************************************************************************/
 /*                          OGRJMLDataset()                             */
 /************************************************************************/
 
-OGRJMLDataset::OGRJMLDataset() :
-    poLayer(nullptr),
-    fp(nullptr),
-    bWriteMode(false)
-{}
+OGRJMLDataset::OGRJMLDataset()
+    : poLayer(nullptr), fp(nullptr), bWriteMode(false)
+{
+}
 
 /************************************************************************/
 /*                         ~OGRJMLDataset()                             */
@@ -53,20 +53,20 @@ OGRJMLDataset::~OGRJMLDataset()
 {
     delete poLayer;
 
-    if ( fp != nullptr )
-        VSIFCloseL( fp);
+    if (fp != nullptr)
+        VSIFCloseL(fp);
 }
 
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRJMLDataset::TestCapability( const char * pszCap )
+int OGRJMLDataset::TestCapability(const char *pszCap)
 
 {
-    if( EQUAL(pszCap,ODsCCreateLayer) )
+    if (EQUAL(pszCap, ODsCCreateLayer))
         return bWriteMode && poLayer == nullptr;
-    if( EQUAL(pszCap,ODsCZGeometries) )
+    if (EQUAL(pszCap, ODsCZGeometries))
         return true;
 
     return false;
@@ -76,10 +76,10 @@ int OGRJMLDataset::TestCapability( const char * pszCap )
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRJMLDataset::GetLayer( int iLayer )
+OGRLayer *OGRJMLDataset::GetLayer(int iLayer)
 
 {
-    if( iLayer != 0 )
+    if (iLayer != 0)
         return nullptr;
 
     return poLayer;
@@ -89,38 +89,38 @@ OGRLayer *OGRJMLDataset::GetLayer( int iLayer )
 /*                            Identify()                                */
 /************************************************************************/
 
-int OGRJMLDataset::Identify( GDALOpenInfo* poOpenInfo )
+int OGRJMLDataset::Identify(GDALOpenInfo *poOpenInfo)
 {
     return poOpenInfo->nHeaderBytes != 0 &&
-      strstr(reinterpret_cast<char*>(poOpenInfo->pabyHeader),
-             "<JCSDataFile") != nullptr;
+           strstr(reinterpret_cast<char *>(poOpenInfo->pabyHeader),
+                  "<JCSDataFile") != nullptr;
 }
 
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset* OGRJMLDataset::Open( GDALOpenInfo* poOpenInfo )
+GDALDataset *OGRJMLDataset::Open(GDALOpenInfo *poOpenInfo)
 
 {
-    if( !Identify(poOpenInfo) || poOpenInfo->fpL == nullptr ||
-        poOpenInfo->eAccess == GA_Update )
+    if (!Identify(poOpenInfo) || poOpenInfo->fpL == nullptr ||
+        poOpenInfo->eAccess == GA_Update)
         return nullptr;
 
 #ifndef HAVE_EXPAT
-    CPLError( CE_Failure, CPLE_NotSupported,
-              "OGR/JML driver has not been built with read support. "
-              "Expat library required" );
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "OGR/JML driver has not been built with read support. "
+             "Expat library required");
     return nullptr;
 #else
-    OGRJMLDataset* poDS = new OGRJMLDataset();
-    poDS->SetDescription( poOpenInfo->pszFilename );
+    OGRJMLDataset *poDS = new OGRJMLDataset();
+    poDS->SetDescription(poOpenInfo->pszFilename);
 
     poDS->fp = poOpenInfo->fpL;
     poOpenInfo->fpL = nullptr;
 
-    poDS->poLayer = new OGRJMLLayer(
-        CPLGetBasename(poOpenInfo->pszFilename), poDS, poDS->fp );
+    poDS->poLayer = new OGRJMLLayer(CPLGetBasename(poOpenInfo->pszFilename),
+                                    poDS, poDS->fp);
 
     return poDS;
 #endif
@@ -130,44 +130,41 @@ GDALDataset* OGRJMLDataset::Open( GDALOpenInfo* poOpenInfo )
 /*                               Create()                               */
 /************************************************************************/
 
-GDALDataset* OGRJMLDataset::Create( const char *pszFilename,
-                                    int /* nXSize */,
-                                    int /* nYSize */,
-                                    int /* nBands */,
-                                    GDALDataType /* eDT */,
-                                    char ** /* papszOptions */ )
+GDALDataset *OGRJMLDataset::Create(const char *pszFilename, int /* nXSize */,
+                                   int /* nYSize */, int /* nBands */,
+                                   GDALDataType /* eDT */,
+                                   char ** /* papszOptions */)
 {
     if (strcmp(pszFilename, "/dev/stdout") == 0)
         pszFilename = "/vsistdout/";
 
-/* -------------------------------------------------------------------- */
-/*     Do not override exiting file.                                    */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*     Do not override exiting file.                                    */
+    /* -------------------------------------------------------------------- */
     VSIStatBufL sStatBuf;
 
-    if( VSIStatL( pszFilename, &sStatBuf ) == 0 )
+    if (VSIStatL(pszFilename, &sStatBuf) == 0)
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "You have to delete %s before being able to create it "
-                  "with the JML driver",
-                  pszFilename);
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "You have to delete %s before being able to create it "
+                 "with the JML driver",
+                 pszFilename);
         return nullptr;
     }
 
-    OGRJMLDataset* poDS = new OGRJMLDataset();
+    OGRJMLDataset *poDS = new OGRJMLDataset();
 
-/* -------------------------------------------------------------------- */
-/*      Create the output file.                                         */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Create the output file.                                         */
+    /* -------------------------------------------------------------------- */
     poDS->bWriteMode = true;
-    poDS->SetDescription( pszFilename );
+    poDS->SetDescription(pszFilename);
 
-    poDS->fp = VSIFOpenL( pszFilename, "w" );
-    if( poDS->fp == nullptr )
+    poDS->fp = VSIFOpenL(pszFilename, "w");
+    if (poDS->fp == nullptr)
     {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to create JML file %s.",
-                  pszFilename );
+        CPLError(CE_Failure, CPLE_OpenFailed, "Failed to create JML file %s.",
+                 pszFilename);
         delete poDS;
         return nullptr;
     }
@@ -179,10 +176,10 @@ GDALDataset* OGRJMLDataset::Create( const char *pszFilename,
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer * OGRJMLDataset::ICreateLayer( const char * pszLayerName,
-                                        OGRSpatialReference * poSRS,
-                                        OGRwkbGeometryType /* eType */,
-                                        char ** papszOptions )
+OGRLayer *OGRJMLDataset::ICreateLayer(const char *pszLayerName,
+                                      OGRSpatialReference *poSRS,
+                                      OGRwkbGeometryType /* eType */,
+                                      char **papszOptions)
 {
     if (!bWriteMode || poLayer != nullptr)
         return nullptr;
@@ -191,18 +188,18 @@ OGRLayer * OGRJMLDataset::ICreateLayer( const char * pszLayerName,
         CSLFetchNameValueDef(papszOptions, "CREATE_R_G_B_FIELD", "YES"));
     bool bAddOGRStyleField = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "CREATE_OGR_STYLE_FIELD", "NO"));
-    bool bClassicGML = CPLTestBool(
-        CSLFetchNameValueDef(papszOptions, "CLASSIC_GML", "NO"));
+    bool bClassicGML =
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "CLASSIC_GML", "NO"));
     auto poSRSClone = poSRS;
-    if( poSRSClone )
+    if (poSRSClone)
     {
         poSRSClone = poSRSClone->Clone();
         poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
-    poLayer = new OGRJMLWriterLayer( pszLayerName, poSRSClone, this, fp,
-                                     bAddRGBField, bAddOGRStyleField,
-                                     bClassicGML);
-    if( poSRSClone )
+    poLayer =
+        new OGRJMLWriterLayer(pszLayerName, poSRSClone, this, fp, bAddRGBField,
+                              bAddOGRStyleField, bClassicGML);
+    if (poSRSClone)
         poSRSClone->Release();
 
     return poLayer;
@@ -214,39 +211,42 @@ OGRLayer * OGRJMLDataset::ICreateLayer( const char * pszLayerName,
 
 void RegisterOGRJML()
 {
-    if( GDALGetDriverByName( "JML" ) != nullptr )
+    if (GDALGetDriverByName("JML") != nullptr)
         return;
 
-    GDALDriver  *poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "JML" );
-    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "OpenJUMP JML" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jml" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/jml.html" );
+    poDriver->SetDescription("JML");
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "OpenJUMP JML");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "jml");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/jml.html");
 
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_FEATURE_STYLES, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
 
-    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
-"<LayerCreationOptionList>"
-"   <Option name='CREATE_R_G_B_FIELD' type='boolean' description='Whether to create a R_G_B field' default='YES'/>"
-"   <Option name='CREATE_OGR_STYLE_FIELD' type='boolean' description='Whether to create a OGR_STYLE field' default='NO'/>"
-"</LayerCreationOptionList>" );
+    poDriver->SetMetadataItem(
+        GDAL_DS_LAYER_CREATIONOPTIONLIST,
+        "<LayerCreationOptionList>"
+        "   <Option name='CREATE_R_G_B_FIELD' type='boolean' "
+        "description='Whether to create a R_G_B field' default='YES'/>"
+        "   <Option name='CREATE_OGR_STYLE_FIELD' type='boolean' "
+        "description='Whether to create a OGR_STYLE field' default='NO'/>"
+        "</LayerCreationOptionList>");
 
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
-                               "<CreationOptionList/>" );
+    poDriver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,
+                              "<CreationOptionList/>");
 
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
-                               "Integer Integer64 Real String Date DateTime" );
+    poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES,
+                              "Integer Integer64 Real String Date DateTime");
 
     poDriver->pfnOpen = OGRJMLDataset::Open;
     poDriver->pfnIdentify = OGRJMLDataset::Identify;
     poDriver->pfnCreate = OGRJMLDataset::Create;
 
-    GetGDALDriverManager()->RegisterDriver( poDriver );
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }
