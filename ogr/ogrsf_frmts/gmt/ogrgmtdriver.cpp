@@ -30,19 +30,19 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-
 /************************************************************************/
 /*                    OGRGMTDriverIdentify()                            */
 /************************************************************************/
 
-static int OGRGMTDriverIdentify( GDALOpenInfo *poOpenInfo )
+static int OGRGMTDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 {
-    const char* pszHeader = reinterpret_cast<const char*>(poOpenInfo->pabyHeader);
-    if( poOpenInfo->nHeaderBytes && strstr(pszHeader, "@VGMT") != nullptr )
+    const char *pszHeader =
+        reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
+    if (poOpenInfo->nHeaderBytes && strstr(pszHeader, "@VGMT") != nullptr)
         return true;
 
-    if( EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "GMT") )
+    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "GMT"))
         return true;
 
     return false;
@@ -52,16 +52,16 @@ static int OGRGMTDriverIdentify( GDALOpenInfo *poOpenInfo )
 /*                           OGRGMTDriverOpen()                         */
 /************************************************************************/
 
-static GDALDataset *OGRGMTDriverOpen( GDALOpenInfo* poOpenInfo )
+static GDALDataset *OGRGMTDriverOpen(GDALOpenInfo *poOpenInfo)
 
 {
-    if( !OGRGMTDriverIdentify(poOpenInfo) )
+    if (!OGRGMTDriverIdentify(poOpenInfo))
         return nullptr;
 
     OGRGmtDataSource *poDS = new OGRGmtDataSource();
 
-    if( !poDS->Open( poOpenInfo->pszFilename, nullptr, nullptr,
-                     poOpenInfo->eAccess == GA_Update ) )
+    if (!poDS->Open(poOpenInfo->pszFilename, nullptr, nullptr,
+                    poOpenInfo->eAccess == GA_Update))
     {
         delete poDS;
         return nullptr;
@@ -74,23 +74,19 @@ static GDALDataset *OGRGMTDriverOpen( GDALOpenInfo* poOpenInfo )
 /*                         OGRGMTDriverCreate()                         */
 /************************************************************************/
 
-
-static GDALDataset *OGRGMTDriverCreate( const char *pszName,
-                                        CPL_UNUSED int nBands,
-                                        CPL_UNUSED int nXSize,
-                                        CPL_UNUSED int nYSize,
-                                        CPL_UNUSED GDALDataType eDT,
-                                        char **papszOptions )
+static GDALDataset *
+OGRGMTDriverCreate(const char *pszName, CPL_UNUSED int nBands,
+                   CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
+                   CPL_UNUSED GDALDataType eDT, char **papszOptions)
 {
     OGRGmtDataSource *poDS = new OGRGmtDataSource();
 
-    if( poDS->Create( pszName, papszOptions ) )
+    if (poDS->Create(pszName, papszOptions))
         return poDS;
 
     delete poDS;
     return nullptr;
 }
-
 
 /************************************************************************/
 /*                           RegisterOGRGMT()                           */
@@ -99,20 +95,20 @@ static GDALDataset *OGRGMTDriverCreate( const char *pszName,
 void RegisterOGRGMT()
 
 {
-    if( GDALGetDriverByName("OGR_GMT") != nullptr )
+    if (GDALGetDriverByName("OGR_GMT") != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
     poDriver->SetDescription("OGR_GMT");
-    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_LAYER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GMT ASCII Vectors (.gmt)" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gmt" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/gmt.html" );
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_Z_GEOMETRIES, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE" );
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "GMT ASCII Vectors (.gmt)");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "gmt");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/gmt.html");
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
 
     poDriver->pfnOpen = OGRGMTDriverOpen;
     poDriver->pfnIdentify = OGRGMTDriverIdentify;
