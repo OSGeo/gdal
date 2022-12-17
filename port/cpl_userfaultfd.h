@@ -40,13 +40,14 @@
 #include <sys/types.h>
 #include <linux/userfaultfd.h>
 
-
 #define GDAL_UFFD_LIMIT "GDAL_UFFD_LIMIT"
 
 typedef struct cpl_uffd_context cpl_uffd_context;
 
 bool CPL_DLL CPLIsUserFaultMappingSupported();
-cpl_uffd_context CPL_DLL * CPLCreateUserFaultMapping(const char * pszFilename, void ** ppVma, uint64_t * pnVmaSize);
-void CPL_DLL CPLDeleteUserFaultMapping(cpl_uffd_context * ctx);
+cpl_uffd_context CPL_DLL *CPLCreateUserFaultMapping(const char *pszFilename,
+                                                    void **ppVma,
+                                                    uint64_t *pnVmaSize);
+void CPL_DLL CPLDeleteUserFaultMapping(cpl_uffd_context *ctx);
 
 #endif

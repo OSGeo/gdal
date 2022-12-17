@@ -39,92 +39,120 @@
 
 class CPL_DLL CPLJSonStreamingParser
 {
-        CPL_DISALLOW_COPY_ASSIGN(CPLJSonStreamingParser)
+    CPL_DISALLOW_COPY_ASSIGN(CPLJSonStreamingParser)
 
-        enum State
-        {
-            INIT,
-            OBJECT,
-            ARRAY,
-            STRING,
-            NUMBER,
-            STATE_TRUE,
-            STATE_FALSE,
-            STATE_NULL
-        };
+    enum State
+    {
+        INIT,
+        OBJECT,
+        ARRAY,
+        STRING,
+        NUMBER,
+        STATE_TRUE,
+        STATE_FALSE,
+        STATE_NULL
+    };
 
-        bool m_bExceptionOccurred = false;
-        bool m_bElementFound = false;
-        int m_nLastChar = 0;
-        int m_nLineCounter = 1;
-        int m_nCharCounter = 1;
-        std::vector<State> m_aState{};
-        std::string m_osToken{};
-        enum class ArrayState
-        {
-            INIT,
-            AFTER_COMMA,
-            AFTER_VALUE
-        };
-        std::vector<ArrayState> m_abArrayState{};
-        bool m_bInStringEscape = false;
-        bool m_bInUnicode = false;
-        std::string m_osUnicodeHex{};
-        size_t m_nMaxDepth = 1024;
-        size_t m_nMaxStringSize = 10000000;
+    bool m_bExceptionOccurred = false;
+    bool m_bElementFound = false;
+    int m_nLastChar = 0;
+    int m_nLineCounter = 1;
+    int m_nCharCounter = 1;
+    std::vector<State> m_aState{};
+    std::string m_osToken{};
+    enum class ArrayState
+    {
+        INIT,
+        AFTER_COMMA,
+        AFTER_VALUE
+    };
+    std::vector<ArrayState> m_abArrayState{};
+    bool m_bInStringEscape = false;
+    bool m_bInUnicode = false;
+    std::string m_osUnicodeHex{};
+    size_t m_nMaxDepth = 1024;
+    size_t m_nMaxStringSize = 10000000;
 
-        enum MemberState
-        {
-            WAITING_KEY,
-            IN_KEY,
-            KEY_FINISHED,
-            IN_VALUE
-        };
-        std::vector<MemberState> m_aeObjectState{};
+    enum MemberState
+    {
+        WAITING_KEY,
+        IN_KEY,
+        KEY_FINISHED,
+        IN_VALUE
+    };
+    std::vector<MemberState> m_aeObjectState{};
 
-        enum State currentState() { return m_aState.back(); }
-        void SkipSpace(const char*& pStr, size_t& nLength);
-        void AdvanceChar(const char*& pStr, size_t& nLength);
-        bool EmitUnexpectedChar(char ch, const char* pszExpecting = nullptr);
-        bool StartNewToken(const char*& pStr, size_t& nLength);
-        bool CheckAndEmitTrueFalseOrNull(char ch);
-        bool CheckStackEmpty();
-        void DecodeUnicode();
+    enum State currentState()
+    {
+        return m_aState.back();
+    }
+    void SkipSpace(const char *&pStr, size_t &nLength);
+    void AdvanceChar(const char *&pStr, size_t &nLength);
+    bool EmitUnexpectedChar(char ch, const char *pszExpecting = nullptr);
+    bool StartNewToken(const char *&pStr, size_t &nLength);
+    bool CheckAndEmitTrueFalseOrNull(char ch);
+    bool CheckStackEmpty();
+    void DecodeUnicode();
 
-    protected:
-        bool EmitException(const char* pszMessage);
+  protected:
+    bool EmitException(const char *pszMessage);
 
-    public:
-        CPLJSonStreamingParser();
-        virtual ~CPLJSonStreamingParser();
+  public:
+    CPLJSonStreamingParser();
+    virtual ~CPLJSonStreamingParser();
 
-        void SetMaxDepth(size_t nVal);
-        void SetMaxStringSize(size_t nVal);
-        bool ExceptionOccurred() const { return m_bExceptionOccurred; }
+    void SetMaxDepth(size_t nVal);
+    void SetMaxStringSize(size_t nVal);
+    bool ExceptionOccurred() const
+    {
+        return m_bExceptionOccurred;
+    }
 
-        static std::string GetSerializedString(const char* pszStr);
+    static std::string GetSerializedString(const char *pszStr);
 
-        virtual void Reset();
-        virtual bool Parse(const char* pStr, size_t nLength, bool bFinished);
+    virtual void Reset();
+    virtual bool Parse(const char *pStr, size_t nLength, bool bFinished);
 
-        virtual void String(const char* /*pszValue*/, size_t /*nLength*/) {}
-        virtual void Number(const char* /*pszValue*/, size_t /*nLength*/) {}
-        virtual void Boolean(bool /*b*/) {}
-        virtual void Null() {}
+    virtual void String(const char * /*pszValue*/, size_t /*nLength*/)
+    {
+    }
+    virtual void Number(const char * /*pszValue*/, size_t /*nLength*/)
+    {
+    }
+    virtual void Boolean(bool /*b*/)
+    {
+    }
+    virtual void Null()
+    {
+    }
 
-        virtual void StartObject() {}
-        virtual void EndObject() {}
-        virtual void StartObjectMember(const char* /*pszKey*/, size_t /*nLength*/) {}
+    virtual void StartObject()
+    {
+    }
+    virtual void EndObject()
+    {
+    }
+    virtual void StartObjectMember(const char * /*pszKey*/, size_t /*nLength*/)
+    {
+    }
 
-        virtual void StartArray() {}
-        virtual void EndArray() {}
-        virtual void StartArrayMember() {}
+    virtual void StartArray()
+    {
+    }
+    virtual void EndArray()
+    {
+    }
+    virtual void StartArrayMember()
+    {
+    }
 
-        virtual void Exception(const char* /*pszMessage*/) {}
+    virtual void Exception(const char * /*pszMessage*/)
+    {
+    }
 };
 
-#endif // __cplusplus
+#endif  // __cplusplus
 
 /*! @endcond */
 
-#endif // CPL_JSON_STREAMIN_PARSER_H
+#endif  // CPL_JSON_STREAMIN_PARSER_H

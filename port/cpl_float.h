@@ -51,12 +51,12 @@
 #include "cpl_port.h"
 
 CPL_C_START
-GUInt32 CPL_DLL CPLHalfToFloat( GUInt16 iHalf );
-GUInt32 CPL_DLL CPLTripleToFloat( GUInt32 iTriple );
+GUInt32 CPL_DLL CPLHalfToFloat(GUInt16 iHalf);
+GUInt32 CPL_DLL CPLTripleToFloat(GUInt32 iTriple);
 CPL_C_END
 
 #ifdef __cplusplus
-GUInt16 CPL_DLL CPLFloatToHalf( GUInt32 iFloat32, bool& bHasWarned );
+GUInt16 CPL_DLL CPLFloatToHalf(GUInt32 iFloat32, bool &bHasWarned);
 #endif
 
-#endif // CPL_FLOAT_H_INCLUDED
+#endif  // CPL_FLOAT_H_INCLUDED

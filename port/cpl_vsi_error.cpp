@@ -52,7 +52,6 @@
 #define TIMESTAMP_DEBUG
 // #define MEMORY_DEBUG
 
-
 constexpr int DEFAULT_LAST_ERR_MSG_SIZE =
 #if !defined(HAVE_VSNPRINTF)
     20000
@@ -61,10 +60,11 @@ constexpr int DEFAULT_LAST_ERR_MSG_SIZE =
 #endif
     ;
 
-typedef struct {
+typedef struct
+{
     VSIErrorNum nLastErrNo;
-    int     nLastErrMsgMax;
-    char    szLastErrMsg[DEFAULT_LAST_ERR_MSG_SIZE];
+    int nLastErrMsgMax;
+    char szLastErrMsg[DEFAULT_LAST_ERR_MSG_SIZE];
     // Do not add anything here. szLastErrMsg must be the last field. See
     // CPLRealloc() below.
 } VSIErrorContext;
@@ -77,17 +77,16 @@ static VSIErrorContext *VSIGetErrorContext()
 
 {
     int bError = FALSE;
-    VSIErrorContext *psCtx =
-        reinterpret_cast<VSIErrorContext *>(
-            CPLGetTLSEx( CTLS_VSIERRORCONTEXT, &bError ) );
-    if( bError )
+    VSIErrorContext *psCtx = reinterpret_cast<VSIErrorContext *>(
+        CPLGetTLSEx(CTLS_VSIERRORCONTEXT, &bError));
+    if (bError)
         return nullptr;
 
-    if( psCtx == nullptr )
+    if (psCtx == nullptr)
     {
         psCtx = static_cast<VSIErrorContext *>(
-            VSICalloc( sizeof(VSIErrorContext), 1) );
-        if( psCtx == nullptr )
+            VSICalloc(sizeof(VSIErrorContext), 1));
+        if (psCtx == nullptr)
         {
             fprintf(stderr, /*ok*/
                     "Out of memory attempting to record a VSI error.\n");
@@ -95,7 +94,7 @@ static VSIErrorContext *VSIGetErrorContext()
         }
         psCtx->nLastErrNo = VSIE_None;
         psCtx->nLastErrMsgMax = sizeof(psCtx->szLastErrMsg);
-        CPLSetTLS( CTLS_VSIERRORCONTEXT, psCtx, TRUE );
+        CPLSetTLS(CTLS_VSIERRORCONTEXT, psCtx, TRUE);
     }
 
     return psCtx;
@@ -105,11 +104,11 @@ static VSIErrorContext *VSIGetErrorContext()
 /*                             VSIErrorV()                              */
 /************************************************************************/
 
-static void VSIErrorV( VSIErrorNum err_no, const char *fmt, va_list args )
+static void VSIErrorV(VSIErrorNum err_no, const char *fmt, va_list args)
 {
     VSIErrorContext *psCtx = VSIGetErrorContext();
-    if( psCtx == nullptr )
-      return;
+    if (psCtx == nullptr)
+        return;
 
 /* -------------------------------------------------------------------- */
 /*      Expand the error message                                        */
@@ -119,38 +118,36 @@ static void VSIErrorV( VSIErrorNum err_no, const char *fmt, va_list args )
         va_list wrk_args;
 
 #ifdef va_copy
-        va_copy( wrk_args, args );
+        va_copy(wrk_args, args);
 #else
         wrk_args = args;
 #endif
 
         int nPreviousSize = 0;
         int nPR = 0;
-        while( ((nPR = CPLvsnprintf(
-                     psCtx->szLastErrMsg+nPreviousSize,
-                     psCtx->nLastErrMsgMax-nPreviousSize, fmt, wrk_args )) == -1
-                || nPR >= psCtx->nLastErrMsgMax-nPreviousSize-1)
-               && psCtx->nLastErrMsgMax < 1000000 )
+        while (((nPR = CPLvsnprintf(psCtx->szLastErrMsg + nPreviousSize,
+                                    psCtx->nLastErrMsgMax - nPreviousSize, fmt,
+                                    wrk_args)) == -1 ||
+                nPR >= psCtx->nLastErrMsgMax - nPreviousSize - 1) &&
+               psCtx->nLastErrMsgMax < 1000000)
         {
 #ifdef va_copy
-            va_end( wrk_args );
-            va_copy( wrk_args, args );
+            va_end(wrk_args);
+            va_copy(wrk_args, args);
 #else
             wrk_args = args;
 #endif
             psCtx->nLastErrMsgMax *= 3;
-            psCtx = static_cast<VSIErrorContext *> (
-                CPLRealloc( psCtx,
-                            sizeof(VSIErrorContext)
-                            - DEFAULT_LAST_ERR_MSG_SIZE
-                            + psCtx->nLastErrMsgMax + 1) );
-            CPLSetTLS( CTLS_VSIERRORCONTEXT, psCtx, TRUE );
+            psCtx = static_cast<VSIErrorContext *>(CPLRealloc(
+                psCtx, sizeof(VSIErrorContext) - DEFAULT_LAST_ERR_MSG_SIZE +
+                           psCtx->nLastErrMsgMax + 1));
+            CPLSetTLS(CTLS_VSIERRORCONTEXT, psCtx, TRUE);
         }
 
-        va_end( wrk_args );
+        va_end(wrk_args);
     }
-#else // !HAVE_VSNPRINTF
-    CPLvsnprintf( psCtx->szLastErrMsg, psCtx->nLastErrMsgMax, fmt, args);
+#else  // !HAVE_VSNPRINTF
+    CPLvsnprintf(psCtx->szLastErrMsg, psCtx->nLastErrMsgMax, fmt, args);
 #endif
 
     psCtx->nLastErrNo = err_no;
@@ -174,13 +171,13 @@ static void VSIErrorV( VSIErrorNum err_no, const char *fmt, va_list args )
  * similar to printf().
  */
 
-void VSIError( VSIErrorNum err_no, CPL_FORMAT_STRING(const char *fmt), ... )
+void VSIError(VSIErrorNum err_no, CPL_FORMAT_STRING(const char *fmt), ...)
 {
     va_list args;
 
     // Expand the error message.
     va_start(args, fmt);
-    VSIErrorV( err_no, fmt, args );
+    VSIErrorV(err_no, fmt, args);
     va_end(args);
 }
 
@@ -198,7 +195,7 @@ void VSIError( VSIErrorNum err_no, CPL_FORMAT_STRING(const char *fmt), ... )
 void CPL_STDCALL VSIErrorReset()
 {
     VSIErrorContext *psCtx = VSIGetErrorContext();
-    if( psCtx == nullptr )
+    if (psCtx == nullptr)
         return;
 
     psCtx->nLastErrNo = VSIE_None;
@@ -223,7 +220,7 @@ void CPL_STDCALL VSIErrorReset()
 VSIErrorNum CPL_STDCALL VSIGetLastErrorNo()
 {
     VSIErrorContext *psCtx = VSIGetErrorContext();
-    if( psCtx == nullptr )
+    if (psCtx == nullptr)
         return 0;
 
     return psCtx->nLastErrNo;
@@ -244,10 +241,10 @@ VSIErrorNum CPL_STDCALL VSIGetLastErrorNo()
  * message.
  */
 
-const char* CPL_STDCALL VSIGetLastErrorMsg()
+const char *CPL_STDCALL VSIGetLastErrorMsg()
 {
     VSIErrorContext *psCtx = VSIGetErrorContext();
-    if( psCtx == nullptr )
+    if (psCtx == nullptr)
         return "";
 
     return psCtx->szLastErrMsg;
@@ -267,11 +264,11 @@ const char* CPL_STDCALL VSIGetLastErrorMsg()
  * @return TRUE if a CPLError was issued, or FALSE if not.
  */
 
-int CPL_DLL CPL_STDCALL VSIToCPLError( CPLErr eErrClass,
-                                       CPLErrorNum eDefaultErrorNo )
+int CPL_DLL CPL_STDCALL VSIToCPLError(CPLErr eErrClass,
+                                      CPLErrorNum eDefaultErrorNo)
 {
     const int err = VSIGetLastErrorNo();
-    switch( err )
+    switch (err)
     {
         case VSIE_None:
             return FALSE;
@@ -282,28 +279,27 @@ int CPL_DLL CPL_STDCALL VSIToCPLError( CPLErr eErrClass,
             CPLError(eErrClass, CPLE_HttpResponse, "%s", VSIGetLastErrorMsg());
             break;
         case VSIE_AWSError:
-            CPLError(eErrClass, CPLE_AWSError,
-                     "%s", VSIGetLastErrorMsg());
+            CPLError(eErrClass, CPLE_AWSError, "%s", VSIGetLastErrorMsg());
             break;
         case VSIE_AWSAccessDenied:
-            CPLError(eErrClass, CPLE_AWSAccessDenied,
-                     "%s", VSIGetLastErrorMsg());
+            CPLError(eErrClass, CPLE_AWSAccessDenied, "%s",
+                     VSIGetLastErrorMsg());
             break;
         case VSIE_AWSBucketNotFound:
-            CPLError(eErrClass, CPLE_AWSBucketNotFound,
-                     "%s", VSIGetLastErrorMsg());
+            CPLError(eErrClass, CPLE_AWSBucketNotFound, "%s",
+                     VSIGetLastErrorMsg());
             break;
         case VSIE_AWSObjectNotFound:
-            CPLError(eErrClass, CPLE_AWSObjectNotFound,
-                     "%s", VSIGetLastErrorMsg());
+            CPLError(eErrClass, CPLE_AWSObjectNotFound, "%s",
+                     VSIGetLastErrorMsg());
             break;
         case VSIE_AWSInvalidCredentials:
-            CPLError(eErrClass, CPLE_AWSInvalidCredentials,
-                     "%s", VSIGetLastErrorMsg());
+            CPLError(eErrClass, CPLE_AWSInvalidCredentials, "%s",
+                     VSIGetLastErrorMsg());
             break;
         case VSIE_AWSSignatureDoesNotMatch:
-            CPLError(eErrClass, CPLE_AWSSignatureDoesNotMatch,
-                     "%s", VSIGetLastErrorMsg());
+            CPLError(eErrClass, CPLE_AWSSignatureDoesNotMatch, "%s",
+                     VSIGetLastErrorMsg());
             break;
         default:
             CPLError(eErrClass, CPLE_HttpResponse,

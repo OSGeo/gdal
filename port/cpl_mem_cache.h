@@ -40,33 +40,49 @@
 #include <thread>
 #include <unordered_map>
 
-namespace lru11 {
+namespace lru11
+{
 /*
  * a noop lockable concept that can be used in place of std::mutex
  */
-class NullLock {
- public:
-  void lock() {}
-  void unlock() {}
-  bool try_lock() { return true; }
+class NullLock
+{
+  public:
+    void lock()
+    {
+    }
+    void unlock()
+    {
+    }
+    bool try_lock()
+    {
+        return true;
+    }
 };
 
 /**
  * error raised when a key not in cache is passed to get()
  */
-class KeyNotFound : public std::invalid_argument {
- public:
-  KeyNotFound() : std::invalid_argument("key_not_found") {}
+class KeyNotFound : public std::invalid_argument
+{
+  public:
+    KeyNotFound() : std::invalid_argument("key_not_found")
+    {
+    }
 };
 
-template <typename K, typename V>
-struct KeyValuePair {
- public:
-  K key;
-  V value;
+template <typename K, typename V> struct KeyValuePair
+{
+  public:
+    K key;
+    V value;
 
-  KeyValuePair(const K& k, const V& v) : key(k), value(v) {}
-  KeyValuePair(const K& k, V&& v): key(k), value(std::move(v)) {}
+    KeyValuePair(const K &k, const V &v) : key(k), value(v)
+    {
+    }
+    KeyValuePair(const K &k, V &&v) : key(k), value(std::move(v))
+    {
+    }
 };
 
 /**
@@ -84,181 +100,216 @@ struct KeyValuePair {
 template <class Key, class Value, class Lock = NullLock,
           class Map = std::unordered_map<
               Key, typename std::list<KeyValuePair<Key, Value>>::iterator>>
-class Cache {
- public:
-  typedef KeyValuePair<Key, Value> node_type;
-  typedef std::list<KeyValuePair<Key, Value>> list_type;
-  typedef Map map_type;
-  typedef Lock lock_type;
-  using Guard = std::lock_guard<lock_type>;
-  /**
-   * the max size is the hard limit of keys and (maxSize + elasticity) is the
-   * soft limit
-   * the cache is allowed to grow till maxSize + elasticity and is pruned back
-   * to maxSize keys
-   * set maxSize = 0 for an unbounded cache (but in that case, you're better off
-   * using a std::unordered_map
-   * directly anyway! :)
-   */
-  explicit Cache(size_t maxSize = 64, size_t elasticity = 10)
-      : maxSize_(maxSize), elasticity_(elasticity) {}
-  virtual ~Cache() = default;
-  size_t size() const {
-    Guard g(lock_);
-    return cache_.size();
-  }
-  bool empty() const {
-    Guard g(lock_);
-    return cache_.empty();
-  }
-  void clear() {
-    Guard g(lock_);
-    cache_.clear();
-    keys_.clear();
-  }
-  void insert(const Key& k, const Value& v) {
-    Guard g(lock_);
-    const auto iter = cache_.find(k);
-    if (iter != cache_.end()) {
-      iter->second->value = v;
-      keys_.splice(keys_.begin(), keys_, iter->second);
-      return;
+class Cache
+{
+  public:
+    typedef KeyValuePair<Key, Value> node_type;
+    typedef std::list<KeyValuePair<Key, Value>> list_type;
+    typedef Map map_type;
+    typedef Lock lock_type;
+    using Guard = std::lock_guard<lock_type>;
+    /**
+     * the max size is the hard limit of keys and (maxSize + elasticity) is the
+     * soft limit
+     * the cache is allowed to grow till maxSize + elasticity and is pruned back
+     * to maxSize keys
+     * set maxSize = 0 for an unbounded cache (but in that case, you're better
+     * off using a std::unordered_map directly anyway! :)
+     */
+    explicit Cache(size_t maxSize = 64, size_t elasticity = 10)
+        : maxSize_(maxSize), elasticity_(elasticity)
+    {
+    }
+    virtual ~Cache() = default;
+    size_t size() const
+    {
+        Guard g(lock_);
+        return cache_.size();
+    }
+    bool empty() const
+    {
+        Guard g(lock_);
+        return cache_.empty();
+    }
+    void clear()
+    {
+        Guard g(lock_);
+        cache_.clear();
+        keys_.clear();
+    }
+    void insert(const Key &k, const Value &v)
+    {
+        Guard g(lock_);
+        const auto iter = cache_.find(k);
+        if (iter != cache_.end())
+        {
+            iter->second->value = v;
+            keys_.splice(keys_.begin(), keys_, iter->second);
+            return;
+        }
+
+        keys_.emplace_front(k, v);
+        cache_[k] = keys_.begin();
+        prune();
+    }
+    Value &insert(const Key &k, Value &&v)
+    {
+        Guard g(lock_);
+        const auto iter = cache_.find(k);
+        if (iter != cache_.end())
+        {
+            iter->second->value = std::move(v);
+            keys_.splice(keys_.begin(), keys_, iter->second);
+            return keys_.front().value;
+        }
+
+        keys_.emplace_front(k, std::move(v));
+        cache_[k] = keys_.begin();
+        prune();
+        return keys_.front().value;
+    }
+    bool tryGet(const Key &kIn, Value &vOut)
+    {
+        Guard g(lock_);
+        const auto iter = cache_.find(kIn);
+        if (iter == cache_.end())
+        {
+            return false;
+        }
+        keys_.splice(keys_.begin(), keys_, iter->second);
+        vOut = iter->second->value;
+        return true;
+    }
+    /**
+     *	The const reference returned here is only
+     *    guaranteed to be valid till the next insert/delete
+     */
+    const Value &get(const Key &k)
+    {
+        Guard g(lock_);
+        const auto iter = cache_.find(k);
+        if (iter == cache_.end())
+        {
+            throw KeyNotFound();
+        }
+        keys_.splice(keys_.begin(), keys_, iter->second);
+        return iter->second->value;
+    }
+    Value *getPtr(const Key &k)
+    {
+        Guard g(lock_);
+        const auto iter = cache_.find(k);
+        if (iter == cache_.end())
+        {
+            return nullptr;
+        }
+        keys_.splice(keys_.begin(), keys_, iter->second);
+        return &(iter->second->value);
+    }
+    /**
+     * returns a copy of the stored object (if found)
+     */
+    Value getCopy(const Key &k)
+    {
+        return get(k);
+    }
+    bool remove(const Key &k)
+    {
+        Guard g(lock_);
+        auto iter = cache_.find(k);
+        if (iter == cache_.end())
+        {
+            return false;
+        }
+        keys_.erase(iter->second);
+        cache_.erase(iter);
+        return true;
+    }
+    bool contains(const Key &k)
+    {
+        Guard g(lock_);
+        return cache_.find(k) != cache_.end();
     }
 
-    keys_.emplace_front(k, v);
-    cache_[k] = keys_.begin();
-    prune();
-  }
-  Value& insert(const Key& k, Value&& v) {
-    Guard g(lock_);
-    const auto iter = cache_.find(k);
-    if (iter != cache_.end()) {
-      iter->second->value = std::move(v);
-      keys_.splice(keys_.begin(), keys_, iter->second);
-      return keys_.front().value;
+    bool getOldestEntry(Key &kOut, Value &vOut)
+    {
+        Guard g(lock_);
+        if (keys_.empty())
+        {
+            return false;
+        }
+        kOut = keys_.back().key;
+        vOut = keys_.back().value;
+        return true;
     }
 
-    keys_.emplace_front(k, std::move(v));
-    cache_[k] = keys_.begin();
-    prune();
-    return keys_.front().value;
-  }
-  bool tryGet(const Key& kIn, Value& vOut) {
-    Guard g(lock_);
-    const auto iter = cache_.find(kIn);
-    if (iter == cache_.end()) {
-      return false;
+    bool removeAndRecycleOldestEntry(Value &vOut)
+    {
+        Guard g(lock_);
+        if (keys_.empty())
+        {
+            return false;
+        }
+        vOut = std::move(keys_.back().value);
+        cache_.erase(keys_.back().key);
+        keys_.pop_back();
+        return true;
     }
-    keys_.splice(keys_.begin(), keys_, iter->second);
-    vOut = iter->second->value;
-    return true;
-  }
-  /**
-   *	The const reference returned here is only
-   *    guaranteed to be valid till the next insert/delete
-   */
-  const Value& get(const Key& k) {
-    Guard g(lock_);
-    const auto iter = cache_.find(k);
-    if (iter == cache_.end()) {
-      throw KeyNotFound();
-    }
-    keys_.splice(keys_.begin(), keys_, iter->second);
-    return iter->second->value;
-  }
-  Value* getPtr(const Key& k) {
-    Guard g(lock_);
-    const auto iter = cache_.find(k);
-    if (iter == cache_.end()) {
-      return nullptr;
-    }
-    keys_.splice(keys_.begin(), keys_, iter->second);
-    return &(iter->second->value);
-  }
-  /**
-   * returns a copy of the stored object (if found)
-   */
-  Value getCopy(const Key& k) {
-   return get(k);
-  }
-  bool remove(const Key& k) {
-    Guard g(lock_);
-    auto iter = cache_.find(k);
-    if (iter == cache_.end()) {
-      return false;
-    }
-    keys_.erase(iter->second);
-    cache_.erase(iter);
-    return true;
-  }
-  bool contains(const Key& k) {
-    Guard g(lock_);
-    return cache_.find(k) != cache_.end();
-  }
 
-  bool getOldestEntry(Key& kOut, Value& vOut) {
-    Guard g(lock_);
-    if( keys_.empty() ) {
-        return false;
+    size_t getMaxSize() const
+    {
+        return maxSize_;
     }
-    kOut = keys_.back().key;
-    vOut = keys_.back().value;
-    return true;
-  }
-
-  bool removeAndRecycleOldestEntry(Value& vOut) {
-    Guard g(lock_);
-    if( keys_.empty() ) {
-        return false;
+    size_t getElasticity() const
+    {
+        return elasticity_;
     }
-    vOut = std::move(keys_.back().value);
-    cache_.erase(keys_.back().key);
-    keys_.pop_back();
-    return true;
-  }
-
-  size_t getMaxSize() const { return maxSize_; }
-  size_t getElasticity() const { return elasticity_; }
-  size_t getMaxAllowedSize() const { return maxSize_ + elasticity_; }
-  template <typename F>
-  void cwalk(F& f) const {
-    Guard g(lock_);
-    std::for_each(keys_.begin(), keys_.end(), f);
-  }
-
-  Cache(Cache&& other):
-    cache_(std::move(other.cache_)),
-    keys_(std::move(other.keys_)),
-    maxSize_(other.maxSize_),
-    elasticity_(other.elasticity_) {}
-
- protected:
-  size_t prune() {
-    size_t maxAllowed = maxSize_ + elasticity_;
-    if (maxSize_ == 0 || cache_.size() <= maxAllowed) { /* ERO: changed < to <= */
-      return 0;
+    size_t getMaxAllowedSize() const
+    {
+        return maxSize_ + elasticity_;
     }
-    size_t count = 0;
-    while (cache_.size() > maxSize_) {
-      cache_.erase(keys_.back().key);
-      keys_.pop_back();
-      ++count;
+    template <typename F> void cwalk(F &f) const
+    {
+        Guard g(lock_);
+        std::for_each(keys_.begin(), keys_.end(), f);
     }
-    return count;
-  }
 
- private:
-  // Disallow copying.
-  Cache(const Cache&) = delete;
-  Cache& operator=(const Cache&) = delete;
+    Cache(Cache &&other)
+        : cache_(std::move(other.cache_)), keys_(std::move(other.keys_)),
+          maxSize_(other.maxSize_), elasticity_(other.elasticity_)
+    {
+    }
 
-  mutable Lock lock_{};
-  Map cache_{};
-  list_type keys_{};
-  size_t maxSize_;
-  size_t elasticity_;
+  protected:
+    size_t prune()
+    {
+        size_t maxAllowed = maxSize_ + elasticity_;
+        if (maxSize_ == 0 || cache_.size() <= maxAllowed)
+        { /* ERO: changed < to <= */
+            return 0;
+        }
+        size_t count = 0;
+        while (cache_.size() > maxSize_)
+        {
+            cache_.erase(keys_.back().key);
+            keys_.pop_back();
+            ++count;
+        }
+        return count;
+    }
+
+  private:
+    // Disallow copying.
+    Cache(const Cache &) = delete;
+    Cache &operator=(const Cache &) = delete;
+
+    mutable Lock lock_{};
+    Map cache_{};
+    list_type keys_{};
+    size_t maxSize_;
+    size_t elasticity_;
 };
 
-} // namespace LRUCache11
+}  // namespace lru11
 
 /*! @endcond */
