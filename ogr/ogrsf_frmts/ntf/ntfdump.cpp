@@ -30,44 +30,41 @@
 #include "cpl_vsi.h"
 #include "cpl_string.h"
 
-
-static void NTFDump( const char * pszFile, char **papszOptions );
-static void NTFCount( const char * pszFile );
+static void NTFDump(const char *pszFile, char **papszOptions);
+static void NTFCount(const char *pszFile);
 
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
-int main( int argc, char ** argv )
+int main(int argc, char **argv)
 
 {
-    const char  *pszMode = "-d";
-    char        **papszOptions = NULL;
+    const char *pszMode = "-d";
+    char **papszOptions = NULL;
 
-    if( argc == 1 )
-        printf( "Usage: ntfdump [-s n] [-g] [-d] [-c] [-codelist] files\n" );
+    if (argc == 1)
+        printf("Usage: ntfdump [-s n] [-g] [-d] [-c] [-codelist] files\n");
 
-    for( int i = 1; i < argc; i++ )
+    for (int i = 1; i < argc; i++)
     {
-        if( EQUAL(argv[i],"-g") )
-            papszOptions = CSLSetNameValue( papszOptions,
-                                            "FORCE_GENERIC", "ON" );
-        else if( EQUAL(argv[i],"-s") )
+        if (EQUAL(argv[i], "-g"))
+            papszOptions = CSLSetNameValue(papszOptions, "FORCE_GENERIC", "ON");
+        else if (EQUAL(argv[i], "-s"))
         {
-            papszOptions = CSLSetNameValue( papszOptions,
-                                            "DEM_SAMPLE", argv[++i] );
+            papszOptions =
+                CSLSetNameValue(papszOptions, "DEM_SAMPLE", argv[++i]);
         }
-        else if( EQUAL(argv[i],"-codelist") )
+        else if (EQUAL(argv[i], "-codelist"))
         {
-            papszOptions = CSLSetNameValue( papszOptions,
-                                            "CODELIST", "ON" );
+            papszOptions = CSLSetNameValue(papszOptions, "CODELIST", "ON");
         }
-        else if( argv[i][0] == '-' )
+        else if (argv[i][0] == '-')
             pszMode = argv[i];
-        else if( EQUAL(pszMode,"-d") )
-            NTFDump( argv[i], papszOptions );
-        else if( EQUAL(pszMode,"-c") )
-            NTFCount( argv[i] );
+        else if (EQUAL(pszMode, "-d"))
+            NTFDump(argv[i], papszOptions);
+        else if (EQUAL(pszMode, "-c"))
+            NTFCount(argv[i]);
     }
 
     return 0;
@@ -77,31 +74,32 @@ int main( int argc, char ** argv )
 /*                              NTFCount()                              */
 /************************************************************************/
 
-static void NTFCount( const char * pszFile )
+static void NTFCount(const char *pszFile)
 
 {
-    FILE *fp = VSIFOpen( pszFile, "r" );
-    if( fp == NULL )
+    FILE *fp = VSIFOpen(pszFile, "r");
+    if (fp == NULL)
         return;
 
     int anCount[100] = {};
 
     NTFRecord *poRecord = NULL;
-    do {
-        if( poRecord != NULL )
+    do
+    {
+        if (poRecord != NULL)
             delete poRecord;
 
-        poRecord = new NTFRecord( fp );
+        poRecord = new NTFRecord(fp);
         anCount[poRecord->GetType()]++;
-    } while( poRecord->GetType() != 99 );
+    } while (poRecord->GetType() != 99);
 
-    VSIFClose( fp );
+    VSIFClose(fp);
 
-    printf( "\nReporting on: %s\n", pszFile );
-    for( int i = 0; i < 100; i++ )
+    printf("\nReporting on: %s\n", pszFile);
+    for (int i = 0; i < 100; i++)
     {
-        if( anCount[i] > 0 )
-            printf( "Found %d records of type %d\n", anCount[i], i );
+        if (anCount[i] > 0)
+            printf("Found %d records of type %d\n", anCount[i], i);
     }
 }
 
@@ -109,21 +107,21 @@ static void NTFCount( const char * pszFile )
 /*                              NTFDump()                               */
 /************************************************************************/
 
-static void NTFDump( const char * pszFile, char **papszOptions )
+static void NTFDump(const char *pszFile, char **papszOptions)
 
 {
     OGRNTFDataSource oDS;
 
-    oDS.SetOptionList( papszOptions );
+    oDS.SetOptionList(papszOptions);
 
-    if( !oDS.Open( pszFile ) )
+    if (!oDS.Open(pszFile))
         return;
 
     OGRFeature *poFeature = NULL;
-    while( (poFeature = oDS.GetNextFeature()) != NULL )
+    while ((poFeature = oDS.GetNextFeature()) != NULL)
     {
-        printf( "-------------------------------------\n" );
-        poFeature->DumpReadable( stdout );
+        printf("-------------------------------------\n");
+        poFeature->DumpReadable(stdout);
         delete poFeature;
     }
 }
